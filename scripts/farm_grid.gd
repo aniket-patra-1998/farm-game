@@ -120,6 +120,18 @@ func _draw() -> void:
 			_draw_plot(i, row, col)
 			for o in after_tile.get(i, []):
 				_draw_object(o)
+	# Count signs last, so the ground in front of a building never hides them.
+	for o in Game.objects:
+		if int(o["uid"]) == lifted or Game.under_construction(o):
+			continue
+		var counts := Vector2i(-1, -1)
+		if o["id"] == "barn" and not o.get("broken", false):
+			counts = Vector2i(Game.stored.size(), Game.barn_capacity())
+		elif Game.is_building(o):
+			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
+		if counts.x >= 0:
+			var fp := Game.footprint(o["id"])
+			PlaceholderArt.draw_count_sign(self, corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y), counts.x, counts.y)
 	_draw_placing()
 
 

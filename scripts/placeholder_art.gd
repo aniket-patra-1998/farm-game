@@ -377,17 +377,22 @@ static func _plain_building(ci: CanvasItem, g: PackedVector2Array, it: Dictionar
 	_signs(ci, g, r_b + Vector2(0, -26), level, inside, capacity)
 
 
-## Level badge over the building and an "inside / spaces" sign in front of it.
-static func _signs(ci: CanvasItem, g: PackedVector2Array, badge: Vector2, level: int, inside: int, capacity: int) -> void:
+## Level badge over the building.
+static func _signs(ci: CanvasItem, _g: PackedVector2Array, badge: Vector2, level: int, _inside: int, _capacity: int) -> void:
 	var font := ThemeDB.fallback_font
 	ci.draw_circle(badge, 16, Color("#ffd34d"))
 	ci.draw_arc(badge, 16, 0, TAU, 24, Color("#5c3a1e"), 2.5)
 	ci.draw_string(font, badge + Vector2(-16, 7), str(level), HORIZONTAL_ALIGNMENT_CENTER, 32, 20, Color("#3a2614"))
+
+
+## The "inside / spaces" sign in front of a building. Drawn after the whole farm,
+## because it hangs past the footprint and the ground in front would cover it.
+static func draw_count_sign(ci: CanvasItem, g: PackedVector2Array, inside: int, capacity: int) -> void:
 	var c := (g[0] + g[2]) / 2.0
 	var sign_pos := c.lerp(g[2], 0.78) + Vector2(-34, 22)
 	ci.draw_rect(Rect2(sign_pos, Vector2(68, 24)), Color("#fbefd2"))
 	ci.draw_rect(Rect2(sign_pos, Vector2(68, 24)), Color("#5c3a1e"), false, 2)
-	ci.draw_string(font, sign_pos + Vector2(0, 18), "%d/%d" % [inside, capacity], HORIZONTAL_ALIGNMENT_CENTER, 68, 16, Color("#3a2614"))
+	ci.draw_string(ThemeDB.fallback_font, sign_pos + Vector2(0, 18), "%d/%d" % [inside, capacity], HORIZONTAL_ALIGNMENT_CENTER, 68, 16, Color("#3a2614"))
 
 
 # ---------------------------------------------------------------- building shapes
