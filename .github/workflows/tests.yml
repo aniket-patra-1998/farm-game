@@ -13,8 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Catalog document is up to date
-        run: python3 tools/make_catalog.py --check
+      - name: Catalog document and art manifest are up to date
+        run: |
+          python3 tools/make_catalog.py --check
+          python3 tools/make_art_manifest.py --check
 
       # Keep the Godot binary between runs, so each push doesn't download it again.
       - name: Cache Godot

@@ -208,6 +208,10 @@ static func draw_twinkle(ci: CanvasItem, center: Vector2, size: float, alpha: fl
 # ---------------------------------------------------------------- placed objects
 
 ## corners: the footprint's top, right, bottom and left points on the ground.
+## false when drawing art references: no level badges for the AI to copy.
+static var show_badges := true
+
+
 static func draw_object(ci: CanvasItem, it: Dictionary, corners: PackedVector2Array, ready: bool, level: int, inside: int, capacity: int, broken := false) -> void:
 	var center := (corners[0] + corners[2]) / 2.0
 	var s := (corners[1].x - corners[3].x) / 128.0 # 1.0 for a one-tile object
@@ -332,7 +336,8 @@ static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 			"rabbit_hutch":
 				badge = _hutch(ci, g, it, inside)
 		if badge != Vector2.ZERO:
-			_signs(ci, g, badge, level, inside, capacity)
+			if show_badges:
+				_signs(ci, g, badge, level, inside, capacity)
 			return
 	_plain_building(ci, g, it, level, inside, capacity, s, show_sign, broken)
 
@@ -388,7 +393,8 @@ static func _plain_building(ci: CanvasItem, g: PackedVector2Array, it: Dictionar
 		_upgrade_trim(ci, g, left, bottom, right, up, roof)
 	if level >= 3:
 		_upgrade_top(ci, right, bottom, up, r_a, s)
-	_signs(ci, g, r_b + Vector2(0, -26), level, inside, capacity)
+	if show_badges:
+		_signs(ci, g, r_b + Vector2(0, -26), level, inside, capacity)
 
 
 ## Level badge over the building.

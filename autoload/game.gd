@@ -752,6 +752,43 @@ func is_building(obj: Dictionary) -> bool:
 	return item_data(obj["id"]).get("kind", "") == "building"
 
 
+## Art id to draw for a placed object right now, by its lifecycle stage (see data/catalog/schema.json).
+## Returns "" when there's no art for that stage yet, so the code drawing is used.
+func art_for(obj: Dictionary) -> String:
+	var id: String = obj["id"]
+	var candidates: Array[String] = []
+	match kind_of(obj):
+		"tree":
+			var stage := "ready"
+			if not is_ready(obj):
+				var age := float(now() - int(obj.get("t", now())))
+				stage = "fruiting" if age >= cycle_of(obj) * 0.5 else "harvested"
+			candidates = [id + "_" + stage, id]
+		"building", "barn":
+			candidates = ["%s_size%d" % [id, level_of(obj)], id + "_size1", id]
+		_:
+			candidates = [id]
+	for c in candidates:
+		if SpriteBank.has(c):
+			return c
+	return ""
+
+
+## Art id for a planted plot's stage: planted until half grown, growing, ripe, withered.
+func crop_art_for(i: int) -> String:
+	var ph := phase(i)
+	var stage := "growing"
+	match ph:
+		Phase.RIPE:
+			stage = "ripe"
+		Phase.WITHERED:
+			stage = "withered"
+		Phase.GROWING:
+			stage = "planted" if growth(i) < 0.5 else "growing"
+	var art := "crop_%s_%s" % [crop_at(i), stage]
+	return art if SpriteBank.has(art) else ""
+
+
 func is_ready(obj: Dictionary) -> bool:
 	if obj.get("stray", false):
 		return false

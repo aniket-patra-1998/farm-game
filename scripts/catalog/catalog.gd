@@ -80,6 +80,28 @@ func homes_of(item_id: String) -> Array[String]:
 	return out
 
 
+## A class's lifecycle (stages, art pattern, fill), from the nearest class that defines one.
+func lifecycle_of(cls: String) -> Dictionary:
+	var c := cls
+	while c != "":
+		if schema["classes"][c].has("lifecycle"):
+			return schema["classes"][c]["lifecycle"]
+		c = str(schema["classes"][c].get("extends", ""))
+	return {"stages": ["placed"], "pattern": "{id}", "fill": 0.7}
+
+
+## The schema class an item was built from.
+func class_of(id: String) -> String:
+	var d := get_def(id)
+	return str(d.data.get("_class", "")) if d else ""
+
+
+## Every art id an item needs, by its class's lifecycle.
+func art_ids_of(id: String) -> Array[String]:
+	var d := get_def(id)
+	return d.art_ids(lifecycle_of(class_of(id))) if d else []
+
+
 ## Every field of a class, its parents' first.
 func fields_of(cls: String) -> Dictionary:
 	var classes: Dictionary = schema["classes"]
@@ -112,6 +134,7 @@ func _load_file(path: String, category: String, file_cls: String) -> void:
 			var entry := _build(cls, file_defaults, fam.get("defaults", {}), v)
 			entry["family"] = fam_id
 			entry["category"] = category
+			entry["_class"] = cls
 			var id := str(entry.get("id", ""))
 			record["ids"].append(id)
 			if defs.has(id) or planned.has(id):

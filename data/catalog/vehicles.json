@@ -29,7 +29,8 @@
           "cost": 5000,
           "job": "plow",
           "color": "#c0392b",
-          "accent": "#2b2b30"
+          "accent": "#2b2b30",
+          "look": "a classic red farm tractor with big black rear wheels and a small cab"
         }
       ]
     },
@@ -45,7 +46,8 @@
           "cost": 30000,
           "job": "harvest",
           "color": "#f2c230",
-          "accent": "#2b2b30"
+          "accent": "#2b2b30",
+          "look": "a yellow combine-style crop harvester with a wide reel at the front and a grain tank on top"
         }
       ]
     },
@@ -61,7 +63,8 @@
           "cost": 30000,
           "job": "plant",
           "color": "#3f8f4f",
-          "accent": "#2b2b30"
+          "accent": "#2b2b30",
+          "look": "a small green tractor pulling a seed drill hopper with seed tubes"
         }
       ]
     },
@@ -94,7 +97,8 @@
             31,
             41,
             41
-          ]
+          ],
+          "look": "a large blue farm combine with a wide header, a grain tank, a plow blade and a seed box"
         }
       ]
     }

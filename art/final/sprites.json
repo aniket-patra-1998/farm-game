@@ -1,0 +1,51 @@
+{
+ "apple_tree": {
+  "anchor": [
+   121.5,
+   204
+  ],
+  "scale": 0.5
+ },
+ "chicken_coop": {
+  "anchor": [
+   364.5,
+   322
+  ],
+  "scale": 0.5
+ },
+ "cow": {
+  "anchor": [
+   121.5,
+   187
+  ],
+  "scale": 0.4
+ },
+ "crop_strawberries_growing": {
+  "anchor": [
+   121.5,
+   118
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_ripe": {
+  "anchor": [
+   121.5,
+   111
+  ],
+  "scale": 0.5
+ },
+ "farmhouse": {
+  "anchor": [
+   364.5,
+   581
+  ],
+  "scale": 0.5
+ },
+ "hay_bale": {
+  "anchor": [
+   121.5,
+   143
+  ],
+  "scale": 0.5
+ }
+}

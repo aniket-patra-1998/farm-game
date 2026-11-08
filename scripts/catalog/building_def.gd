@@ -68,3 +68,11 @@ func validate(catalog) -> Array[String]:
 		if catalog.get_def(str(baby)) == null or catalog.get_def(str(grows[baby])) == null:
 			out.append(_err("grows_into has an unknown animal (%s -> %s)" % [baby, grows[baby]]))
 	return out
+
+
+## A building's stages are its sizes: 1, 2, 3...
+func art_stages(_lifecycle: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	for n in range(1, max_level() + 1):
+		out.append(str(n))
+	return out

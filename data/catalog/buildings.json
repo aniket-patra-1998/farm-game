@@ -44,7 +44,8 @@
             "nails": 10,
             "boards": 10
           },
-          "special": "mystery_eggs"
+          "special": "mystery_eggs",
+          "look": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens"
         },
         {
           "id": "duck_pond",
@@ -71,7 +72,8 @@
             "boards": 10
           },
           "color": "#5fa8d3",
-          "roof": "#7a5230"
+          "roof": "#7a5230",
+          "look": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming"
         },
         {
           "id": "cow_shed",
@@ -103,7 +105,8 @@
             "nails": 10,
             "boards": 10
           },
-          "special": "calves"
+          "special": "calves",
+          "look": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door"
         },
         {
           "id": "sheep_pen",
@@ -135,7 +138,8 @@
           "one_each": [
             "ram"
           ],
-          "special": "lambs"
+          "special": "lambs",
+          "look": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep"
         },
         {
           "id": "goat_pen",
@@ -161,7 +165,8 @@
             "boards": 10
           },
           "color": "#c9b48a",
-          "roof": "#6b4a2a"
+          "roof": "#6b4a2a",
+          "look": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats"
         },
         {
           "id": "rabbit_hutch",
@@ -189,7 +194,8 @@
             "boards": 10
           },
           "color": "#e8c9a0",
-          "roof": "#a8743f"
+          "roof": "#a8743f",
+          "look": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it"
         },
         {
           "id": "pig_pen",
@@ -216,7 +222,8 @@
           "roof": "#7a5230",
           "one_each": [
             "boar"
-          ]
+          ],
+          "look": "a fenced muddy pig yard with a lean-to wooden shed, a mud puddle and a feeding trough, a few pink pigs"
         },
         {
           "id": "horse_stable",
@@ -256,7 +263,8 @@
             "harnesses": 10,
             "horseshoes": 10
           },
-          "special": "foals"
+          "special": "foals",
+          "look": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front"
         }
       ]
     },
@@ -305,7 +313,8 @@
             "piglet": "pig"
           },
           "color": "#e9d8a6",
-          "roof": "#7a9e7e"
+          "roof": "#7a9e7e",
+          "look": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals"
         }
       ]
     },
@@ -335,7 +344,8 @@
             "nails": 10,
             "boards": 10
           },
-          "special": "saplings"
+          "special": "saplings",
+          "look": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket"
         }
       ]
     },
@@ -366,7 +376,8 @@
             "nails": 10,
             "bricks": 10
           },
-          "special": "beehive"
+          "special": "beehive",
+          "look": "stacked white wooden beehive boxes on a small stand, surrounded by colourful flowers, bees buzzing around"
         },
         {
           "id": "greenhouse",
@@ -436,7 +447,8 @@
           "repair_coins": 500,
           "repair_xp": 50,
           "color": "#b03a2e",
-          "roof": "#5c3a1e"
+          "roof": "#5c3a1e",
+          "look": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors"
         },
         {
           "id": "garage",
@@ -458,7 +470,8 @@
           "special": "garage",
           "produces": false,
           "color": "#9aa4ad",
-          "roof": "#4a5560"
+          "roof": "#4a5560",
+          "look": "a grey corrugated-metal farm garage with a big roll-up door, a wrench sign and a red fuel pump outside"
         },
         {
           "id": "storage_shed",

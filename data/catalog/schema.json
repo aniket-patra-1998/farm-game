@@ -63,6 +63,14 @@
         "category": {
           "type": "string",
           "doc": "Set by the loader: the catalog file it's in."
+        },
+        "look": {
+          "type": "string",
+          "doc": "How it looks, in a few words, for art generation (defaults to its name)."
+        },
+        "art_fill": {
+          "type": "number",
+          "doc": "Share of its footprint width its art should fill (overrides the class's)."
         }
       }
     },
@@ -113,6 +121,17 @@
           "default": false,
           "doc": "Flower harvests can bring bees and Queen Bees."
         }
+      },
+      "lifecycle": {
+        "stages": [
+          "planted",
+          "growing",
+          "ripe",
+          "withered"
+        ],
+        "pattern": "crop_{id}_{stage}",
+        "fill": 1.0,
+        "doc": "planted until half grown, then growing, ripe when grown, withered when left too long."
       }
     },
     "Material": {
@@ -125,6 +144,14 @@
           "default": false,
           "doc": "Basic materials always drop; others only once you own something that uses them."
         }
+      },
+      "lifecycle": {
+        "stages": [
+          "icon"
+        ],
+        "pattern": "material_{id}",
+        "fill": 0.5,
+        "doc": "An icon for menus."
       }
     },
     "Placeable": {
@@ -198,6 +225,16 @@
           "ref": "Tree",
           "doc": "For a rare variety: the tree it sprouts from."
         }
+      },
+      "lifecycle": {
+        "stages": [
+          "harvested",
+          "fruiting",
+          "ready"
+        ],
+        "pattern": "{id}_{stage}",
+        "fill": 0.8,
+        "doc": "harvested just after picking, fruiting from halfway through its cycle, ready to harvest."
       }
     },
     "Animal": {
@@ -224,6 +261,14 @@
           "default": false,
           "doc": "A rare breed traded for truffles at the Pig Pen."
         }
+      },
+      "lifecycle": {
+        "stages": [
+          "adult"
+        ],
+        "pattern": "{id}",
+        "fill": 0.62,
+        "doc": "One look per animal. Babies are their own items (calf, foal, lamb, piglet) that grow into adults in the Nursery, as in FarmVille."
       }
     },
     "Building": {
@@ -305,6 +350,12 @@
           "ref": "Animal",
           "doc": "Nursery: baby id -> adult id."
         }
+      },
+      "lifecycle": {
+        "stages": "sizes",
+        "pattern": "{id}_size{n}",
+        "fill": 0.96,
+        "doc": "One look per size; each size bigger and grander. Frames keep their construction drawing."
       }
     },
     "Barn": {
@@ -369,6 +420,14 @@
           "default": 0,
           "doc": "XP when the chassis is finished."
         }
+      },
+      "lifecycle": {
+        "stages": [
+          "parked"
+        ],
+        "pattern": "{id}",
+        "fill": 0.75,
+        "doc": "One look."
       }
     },
     "Decoration": {
@@ -384,6 +443,14 @@
           "type": "string",
           "doc": "Shape variant (pine, oak, willow for shade trees)."
         }
+      },
+      "lifecycle": {
+        "stages": [
+          "placed"
+        ],
+        "pattern": "{id}",
+        "fill": 0.7,
+        "doc": "One look."
       }
     }
   },
@@ -400,5 +467,6 @@
     "barn": "Barn",
     "bee": "Animal"
   },
-  "layout": "Each data file: {class, _note, defaults, families: [{id, name, doc, defaults, variants: [entries]}]}. Category = file, family = a group of variants sharing defaults (Cows: Cow, Bull, Calf)."
+  "layout": "Each data file: {class, _note, defaults, families: [{id, name, doc, defaults, variants: [entries]}]}. Category = file, family = a group of variants sharing defaults (Cows: Cow, Bull, Calf).",
+  "lifecycle_note": "Each class's lifecycle: the stages it shows, the art id for each (pattern), and how wide its art is (fill, as a share of its footprint). {id} = item id, {stage} = stage name, {n} = building size number."
 }

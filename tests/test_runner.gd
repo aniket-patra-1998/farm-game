@@ -1685,14 +1685,46 @@ func test_69_art_manifest_is_complete() -> void:
 	var g := _farm()
 	var m = JSON.parse_string(FileAccess.get_file_as_string("res://art/manifest.json"))
 	_check(typeof(m) == TYPE_DICTIONARY, "art/manifest.json parses")
-	_check((m["styles"] as Dictionary).size() >= 1, "at least one style")
-	for item in m["items"]:
-		_check(int(item.get("tiles", 0)) >= 1, "%s has a footprint" % item["id"])
-		_check(str(item.get("subject", "")) != "", "%s says what to draw" % item["id"])
-		_check((item["refs"] as Array).size() >= 1, "%s has a reference" % item["id"])
-		var id: String = item["id"]
-		_check(g.items.has(id) or id.begins_with("crop_"), "%s is a real item or crop stage" % id)
+	_check((m["styles"] as Dictionary).has("painterly"), "painterly is the style")
+	var in_manifest := {}
+	for entry in m["items"]:
+		in_manifest[entry["id"]] = entry
+		_check(float(entry["fill"]) > 0.0 and float(entry["fill"]) <= 1.0, "%s has a sensible width" % entry["id"])
+		_check(str(entry["subject"]) != "", "%s says what to draw" % entry["id"])
+		_check(entry["class"] == "Ground" or g.catalog.get_def(entry["item"]) != null, "%s belongs to a real item" % entry["id"])
+	# The template: every in-game item has art for every stage of its lifecycle, named the same way
+	# by the game (GDScript) and the generator (Python).
+	for id in g.catalog.order:
+		for art in g.catalog.art_ids_of(id):
+			_check(in_manifest.has(art), "%s has its art entry %s" % [id, art])
+	_eq(g.catalog.art_ids_of("strawberries"), ["crop_strawberries_planted", "crop_strawberries_growing", "crop_strawberries_ripe", "crop_strawberries_withered"], "crops: planted, growing, ripe, withered")
+	_eq(g.catalog.art_ids_of("apple_tree"), ["apple_tree_harvested", "apple_tree_fruiting", "apple_tree_ready"], "trees: harvested, fruiting, ready")
+	_eq(g.catalog.art_ids_of("chicken_coop"), ["chicken_coop_size1", "chicken_coop_size2", "chicken_coop_size3"], "buildings: one per size")
+	_eq(g.catalog.art_ids_of("cow"), ["cow"], "animals: one look")
 	_check(not SpriteBank.has("no_such_item"), "missing art falls back to drawings")
+	_done(g)
+
+
+func test_72_art_follows_the_lifecycle() -> void:
+	var g := _farm()
+	SpriteBank.use_dir("res://art/pilot/painterly")
+	# Strawberries: no art for planted in the pilot, art for growing and ripe.
+	var i := _free(g)
+	g.plow(i)
+	g.plant(i, "strawberries")
+	_eq(g.crop_art_for(i), "", "no planted art yet: the code drawing is used")
+	_skip(g, int(int(g.crops["strawberries"]["grow_seconds"]) * 0.6))
+	_eq(g.crop_art_for(i), "crop_strawberries_growing", "half grown picks the growing art")
+	SpriteBank.use_dir("res://art/final")
+	_skip(g, int(g.crops["strawberries"]["grow_seconds"]))
+	_eq(g.crop_art_for(i), "crop_strawberries_ripe", "ripe picks the ripe art")
+	# Buildings fall back from their size to the plain id.
+	g.coins = 1000000
+	g.xp = g.xp_for_level(10)
+	g.buy_and_place("chicken_coop", 0, 4)
+	_eq(g.art_for(g.object_at(g.index_of(0, 4))), "chicken_coop", "the coop uses its art until size art exists")
+	g.buy_and_place("tractor", 8, 8)
+	_eq(g.art_for(g.object_at(g.index_of(8, 8))), "", "no tractor art yet: drawn in code")
 	_done(g)
 
 

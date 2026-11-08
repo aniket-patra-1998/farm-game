@@ -46,3 +46,24 @@ func buy_xp() -> int:
 
 func _err(msg: String) -> String:
 	return "%s: %s" % [id, msg]
+
+
+## Lifecycle stages this item shows, from its class in schema.json.
+func art_stages(lifecycle: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	for s in lifecycle.get("stages", []):
+		out.append(str(s))
+	return out
+
+
+## Art id for one stage, from the class's pattern.
+func art_id(lifecycle: Dictionary, stage: String) -> String:
+	return str(lifecycle.get("pattern", "{id}")).replace("{id}", id).replace("{stage}", stage).replace("{n}", stage)
+
+
+## Every art id this item needs.
+func art_ids(lifecycle: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	for s in art_stages(lifecycle):
+		out.append(art_id(lifecycle, s))
+	return out
