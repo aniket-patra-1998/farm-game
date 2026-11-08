@@ -18,8 +18,9 @@ const COLOR_XP := Color("#9be7ff")
 const COLOR_COST := Color("#ffb4a8")
 const COLOR_FIND := Color("#ff9ad5")
 const COLOR_GOLDEN := Color("#ffe066")
+const COLOR_FERT := Color("#8fe36b")
 
-var tool := "plow"       # "plow", "plant", "hand" or "move"
+var tool := "plow"       # "plow", "plant", "fertilize", "hand" or "move"
 var selected_crop := ""  # crop id when tool == "plant"
 
 var _painting := false
@@ -159,6 +160,8 @@ func _draw_plot(i: int, row: int, col: int) -> void:
 		PlaceholderArt.draw_grass(self, top, TILE_W, TILE_H, i * 7919, (row + col) % 2 == 0)
 		return
 	PlaceholderArt.draw_soil(self, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
+	if Game.is_fertilized(i):
+		PlaceholderArt.draw_fertilizer(self, top, TILE_W, TILE_H)
 	if ph == GameState.Phase.PLOWED:
 		return
 	var crop: Dictionary = Game.crops[Game.crop_at(i)]
@@ -324,6 +327,16 @@ func _act(i: int, first_touch: bool) -> void:
 					_float(at, "-%d" % int(Game.crops[selected_crop]["seed_cost"]), COLOR_COST)
 			elif first_touch:
 				_explain(i, ph)
+		"fertilize":
+			if ph == GameState.Phase.GROWING and not Game.is_fertilized(i):
+				if Game.fertilize(i):
+					_float(at, "-%d" % GameState.FERTILIZER_COST, COLOR_COST)
+					_sparkle(at, COLOR_FERT)
+			elif first_touch:
+				if Game.is_fertilized(i):
+					info.emit("Already fertilized: this harvest pays 20% more")
+				else:
+					info.emit("Fertilize growing crops for 20% more coins at harvest")
 		"hand":
 			if first_touch:
 				_explain(i, ph)

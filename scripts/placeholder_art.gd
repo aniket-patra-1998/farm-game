@@ -324,3 +324,12 @@ static func draw_footprint(ci: CanvasItem, corners: PackedVector2Array, ok: bool
 	var edge := PackedVector2Array(corners)
 	edge.append(corners[0])
 	ci.draw_polyline(edge, Color(1, 1, 1, 0.9), 2.5)
+
+
+## Small green pellets on the soil mark a fertilized plot.
+static func draw_fertilizer(ci: CanvasItem, top: Vector2, w: float, h: float) -> void:
+	var c := top + Vector2(0, h / 2.0)
+	var pellet := Color("#7fd35b")
+	for o in [Vector2(-0.3, 0.05), Vector2(0.28, -0.04), Vector2(-0.1, 0.28), Vector2(0.12, -0.3), Vector2(0.34, 0.2), Vector2(-0.36, -0.18)]:
+		ci.draw_circle(c + Vector2(o.x * w * 0.5, o.y * h * 0.5), 3.2, pellet)
+		ci.draw_circle(c + Vector2(o.x * w * 0.5 - 1, o.y * h * 0.5 - 1), 1.2, Color(1, 1, 1, 0.6))

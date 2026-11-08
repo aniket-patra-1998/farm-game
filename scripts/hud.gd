@@ -154,6 +154,10 @@ func _build_toolbar(root: Control) -> void:
 	hand.pressed.connect(func() -> void: tool_selected.emit("hand", ""))
 	row.add_child(hand)
 
+	var fert := _tool_button("Fertilize\n%d coins · +20%%" % GameState.FERTILIZER_COST)
+	fert.pressed.connect(func() -> void: tool_selected.emit("fertilize", ""))
+	row.add_child(fert)
+
 	var move := _tool_button("Move\nbuildings & more")
 	move.pressed.connect(func() -> void: tool_selected.emit("move", ""))
 	row.add_child(move)
@@ -530,7 +534,7 @@ func _build_collections(content: VBoxContainer) -> void:
 		inner.add_theme_constant_override("separation", 10)
 
 		var crop_names: Array[String] = []
-		for crop_id in coll["crops"]:
+		for crop_id in coll.get("crops", []):
 			crop_names.append(Game.crops[crop_id]["name"])
 		var head := HBoxContainer.new()
 		var title := BookPanel.text(coll["name"], 26)
@@ -546,7 +550,10 @@ func _build_collections(content: VBoxContainer) -> void:
 		head.add_child(trade)
 		inner.add_child(head)
 
-		inner.add_child(BookPanel.text("Found while harvesting: " + ", ".join(PackedStringArray(crop_names)), 18))
+		if coll.get("birds", false):
+			inner.add_child(BookPanel.text("Birds can land during any harvest or collection.", 18))
+		else:
+			inner.add_child(BookPanel.text("Found while harvesting: " + ", ".join(PackedStringArray(crop_names)), 18))
 
 		var items := HFlowContainer.new()
 		items.add_theme_constant_override("h_separation", 8)

@@ -33,7 +33,10 @@ const GOLDEN_COIN_MULTIPLIER := 5
 const GOLDEN_XP := 10
 const COLLECTIBLE_CHANCE := 0.05  # one item from the crop's collection
 const COLLECTIBLE_PITY := 30
-const BONUS_COINS_CHANCE := 0.08  # +50% coins
+const SUPER_HARVEST_CHANCE := 0.06  # super harvest: double coins
+const BIRD_CHANCE := 0.03          # a bird visits: one item from the bird collection
+const FERTILIZER_COST := 10
+const FERTILIZER_BONUS := 0.2      # +20% coins on a fertilized plot
 const BONUS_XP_CHANCE := 0.05     # +2 XP
 const BONUS_XP := 2
 const MASTERY_LUCK_BONUS := 0.15  # per mastery star, multiplies golden and collectible chances
@@ -76,6 +79,7 @@ var tutorial_step: int = Tutorial.HARVEST
 
 var collections: Array = []        # from data/collections.json
 var collection_of_crop := {}       # crop id -> collection dictionary
+var bird_collection := {}          # the collection whose items are birds
 var item_names := {}               # item id -> display name
 var ribbon_data := {}              # data/ribbons.json
 var owned := {}                    # item id -> count held
@@ -236,15 +240,34 @@ func plant(i: int, crop_id: String) -> bool:
 	return true
 
 
+func is_fertilized(i: int) -> bool:
+	return plots[i].get("fert", false)
+
+
+## Fertilizer goes on a planted crop that isn't ripe or withered yet.
+func fertilize(i: int) -> bool:
+	if phase(i) != Phase.GROWING or is_fertilized(i):
+		return false
+	if not spend(FERTILIZER_COST):
+		message.emit("Not enough coins for fertilizer")
+		return false
+	plots[i]["fert"] = true
+	_bump("fertilized", 1)
+	_plot_updated(i)
+	return true
+
+
 ## Returns {"coins", "xp", "crop", "drop", "drop_text"} or {} if nothing was harvested.
-## "drop" is "", "golden", "collectible", "bonus_coins" or "bonus_xp".
+## "drop" is "", "golden", "bird", "collectible", "super_harvest" or "bonus_xp".
 func harvest(i: int) -> Dictionary:
 	if phase(i) != Phase.RIPE:
 		return {}
 	var crop_id: String = plots[i]["crop"]
 	var crop: Dictionary = crops[crop_id]
 	var stars_before := mastery_stars(crop_id)
-	var earned := int(round(float(crop["sell_price"]) * (1.0 + MASTERY_PRICE_BONUS * stars_before)))
+	var fertilized: bool = plots[i].get("fert", false)
+	var bonus := MASTERY_PRICE_BONUS * stars_before + (FERTILIZER_BONUS if fertilized else 0.0)
+	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)))
 	var gained := int(crop["xp"])
 
 	var drop := _roll_drop(crop_id, stars_before)
@@ -252,13 +275,14 @@ func harvest(i: int) -> Dictionary:
 		"golden":
 			earned *= GOLDEN_COIN_MULTIPLIER
 			gained += GOLDEN_XP
-		"bonus_coins":
-			earned += int(earned / 2.0)
+		"super_harvest":
+			earned *= 2
 		"bonus_xp":
 			gained += BONUS_XP
 
 	plots[i] = {"state": "plowed"}
-	mastery[crop_id] = int(mastery.get(crop_id, 0)) + 1
+	# A fertilized harvest counts double toward mastery.
+	mastery[crop_id] = int(mastery.get(crop_id, 0)) + (2 if fertilized else 1)
 	add_coins(earned)
 	add_xp(gained)
 	_bump("harvests", 1)
@@ -267,6 +291,8 @@ func harvest(i: int) -> Dictionary:
 		message.emit("Golden harvest! %s paid %dx coins" % [crop["name"], GOLDEN_COIN_MULTIPLIER])
 	elif drop.get("type", "") == "collectible":
 		message.emit("You found a %s! (%s collection)" % [drop["name"], drop["collection"]])
+	elif drop.get("type", "") == "bird":
+		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	var stars_after := mastery_stars(crop_id)
 	if stars_after > stars_before:
 		_award_mastery_star(crop_id, stars_after)
@@ -290,6 +316,13 @@ func _roll_drop(crop_id: String, stars: int) -> Dictionary:
 		pity["golden"] = 0
 		return {"type": "golden", "text": "Golden harvest!"}
 
+	if not bird_collection.is_empty() and rng.randf() < BIRD_CHANCE:
+		var bird_id := _pick_item(bird_collection)
+		owned[bird_id] = int(owned.get(bird_id, 0)) + 1
+		collections_changed.emit()
+		return {"type": "bird", "text": "A %s visited!" % item_names[bird_id].to_lower(),
+			"name": item_names[bird_id], "collection": bird_collection["name"]}
+
 	var coll: Dictionary = collection_of_crop.get(crop_id, {})
 	if not coll.is_empty() and (int(pity["collectible"]) >= COLLECTIBLE_PITY or rng.randf() < COLLECTIBLE_CHANCE * luck):
 		pity["collectible"] = 0
@@ -300,9 +333,9 @@ func _roll_drop(crop_id: String, stars: int) -> Dictionary:
 			"name": item_names[item_id], "collection": coll["name"]}
 
 	var r := rng.randf()
-	if r < BONUS_COINS_CHANCE:
-		return {"type": "bonus_coins", "text": "Bonus coins!"}
-	if r < BONUS_COINS_CHANCE + BONUS_XP_CHANCE:
+	if r < SUPER_HARVEST_CHANCE:
+		return {"type": "super_harvest", "text": "Super harvest! 2x coins"}
+	if r < SUPER_HARVEST_CHANCE + BONUS_XP_CHANCE:
 		return {"type": "bonus_xp", "text": "Bonus XP!"}
 	return {}
 
@@ -528,8 +561,8 @@ func collect(uid: int) -> Dictionary:
 		"golden":
 			earned *= GOLDEN_COIN_MULTIPLIER
 			gained += GOLDEN_XP
-		"bonus_coins":
-			earned += int(earned / 2.0)
+		"super_harvest":
+			earned *= 2
 		"bonus_xp":
 			gained += BONUS_XP
 	obj["t"] = now()
@@ -539,6 +572,8 @@ func collect(uid: int) -> Dictionary:
 	if drop.get("type", "") == "golden":
 		_bump("golden_finds", 1)
 		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
+	elif drop.get("type", "") == "bird":
+		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	_objects_updated()
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
 		"drop_text": drop.get("text", ""), "name": item_data(obj["id"])["name"]}
@@ -802,7 +837,9 @@ func _load_collections() -> void:
 	var parsed := _read_json("res://data/collections.json")
 	collections = parsed.get("collections", [])
 	for coll in collections:
-		for crop_id in coll["crops"]:
+		if coll.get("birds", false):
+			bird_collection = coll
+		for crop_id in coll.get("crops", []):
 			collection_of_crop[crop_id] = coll
 		for item in coll["items"]:
 			item_names[item["id"]] = item["name"]

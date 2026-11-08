@@ -1,14 +1,107 @@
 {
   "_note": "Each ribbon has four tiers. `stat` is a lifetime counter kept in the save. Rewards are per tier.",
-  "tiers": ["Yellow", "White", "Red", "Blue"],
-  "tier_reward_coins": [100, 500, 2000, 5000],
-  "tier_reward_xp": [5, 20, 50, 100],
+  "tiers": [
+    "Yellow",
+    "White",
+    "Red",
+    "Blue"
+  ],
+  "tier_reward_coins": [
+    100,
+    500,
+    2000,
+    5000
+  ],
+  "tier_reward_xp": [
+    5,
+    20,
+    50,
+    100
+  ],
   "ribbons": [
-    {"id": "green_thumb",   "name": "Green Thumb",   "stat": "harvests",           "what": "crops harvested",      "thresholds": [25, 100, 500, 2000]},
-    {"id": "plow_pro",      "name": "Plow Pro",      "stat": "plowed",             "what": "plots plowed",         "thresholds": [20, 100, 500, 2000]},
-    {"id": "money_bags",    "name": "Money Bags",    "stat": "coins_earned",       "what": "coins earned",         "thresholds": [1000, 10000, 100000, 1000000]},
-    {"id": "collector",     "name": "Collector",     "stat": "collections_traded", "what": "collections traded in", "thresholds": [1, 5, 15, 40]},
-    {"id": "master_farmer", "name": "Master Farmer", "stat": "mastery_stars",      "what": "mastery stars earned", "thresholds": [1, 5, 15, 30]},
-    {"id": "lucky_find",    "name": "Lucky Find",    "stat": "golden_finds",       "what": "golden harvests",      "thresholds": [1, 5, 15, 40]}
+    {
+      "id": "green_thumb",
+      "name": "Green Thumb",
+      "stat": "harvests",
+      "what": "crops harvested",
+      "thresholds": [
+        25,
+        100,
+        500,
+        2000
+      ]
+    },
+    {
+      "id": "plow_pro",
+      "name": "Plow Pro",
+      "stat": "plowed",
+      "what": "plots plowed",
+      "thresholds": [
+        20,
+        100,
+        500,
+        2000
+      ]
+    },
+    {
+      "id": "money_bags",
+      "name": "Money Bags",
+      "stat": "coins_earned",
+      "what": "coins earned",
+      "thresholds": [
+        1000,
+        10000,
+        100000,
+        1000000
+      ]
+    },
+    {
+      "id": "collector",
+      "name": "Collector",
+      "stat": "collections_traded",
+      "what": "collections traded in",
+      "thresholds": [
+        1,
+        5,
+        15,
+        40
+      ]
+    },
+    {
+      "id": "master_farmer",
+      "name": "Master Farmer",
+      "stat": "mastery_stars",
+      "what": "mastery stars earned",
+      "thresholds": [
+        1,
+        5,
+        15,
+        30
+      ]
+    },
+    {
+      "id": "lucky_find",
+      "name": "Lucky Find",
+      "stat": "golden_finds",
+      "what": "golden harvests",
+      "thresholds": [
+        1,
+        5,
+        15,
+        40
+      ]
+    },
+    {
+      "id": "plant_food",
+      "name": "Plant Food",
+      "stat": "fertilized",
+      "what": "plots fertilized",
+      "thresholds": [
+        10,
+        50,
+        250,
+        1000
+      ]
+    }
   ]
 }
