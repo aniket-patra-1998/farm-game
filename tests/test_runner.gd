@@ -744,3 +744,58 @@ func _frames_test_tap_and_drag() -> void:
 	await _touch(wobble_at + Vector2(4, 3), false)
 	_eq(Game.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
 	main.free()
+
+
+# ---------------------------------------------------------------- building upgrades
+
+func test_38_upgrades_earn_more_work_faster_and_pay_xp() -> void:
+	var g := _farm()
+	g.coins = 10000000
+	g.add_xp(g.xp_for_level(4))
+	_check(g.buy_and_place("chicken_coop", 8, 8), "coop placed")
+	var coop := g.object_at(g.index_of(8, 8))
+	var uid := int(coop["uid"])
+	g.fill_building(uid) # the 2 starter chickens
+	_eq(g.object_payout(coop).x, 80, "level 1: 2 chickens x 40")
+	var day := 86400
+	_eq(g.cycle_of(coop), day, "level 1 takes a full day")
+
+	var xp := g.xp
+	g.ribbon_tiers["upgrades"] = 4
+	_check(g.upgrade_building(uid), "upgrade to level 2")
+	_check(g.xp >= xp + GameState.UPGRADE_XP_PER_LEVEL * 2, "level 2 pays 100 XP or more (level-up rewards may add)")
+	_eq(g.object_payout(coop).x, 88, "level 2: +10%")
+	_eq(g.cycle_of(coop), day, "level 2 isn't faster yet")
+
+	_check(g.upgrade_building(uid), "upgrade to level 3")
+	_eq(g.object_payout(coop).x, 96, "level 3: +20%")
+	_eq(g.cycle_of(coop), int(day * 0.85), "level 3 is 15% faster")
+	_check(not g.upgrade_building(uid), "no level 4")
+
+	var perks := g.perks_at("chicken_coop", 3)
+	_eq(int(perks["capacity"]), 40, "level 3 holds 40")
+	_eq(int(perks["earnings_pct"]), 20, "level 3 earnings perk")
+	_eq(int(perks["faster_pct"]), 15, "level 3 speed perk")
+	_eq(int(perks["luck"]), 2, "level 3 luck perk")
+
+	# The faster cycle really is faster: ready after 85% of a day.
+	g.coins = 0
+	_skip(g, int(day * 0.86))
+	var paid := g.collect(uid)
+	_eq(int(paid.get("coins", 0)), 96, "collects after 85% of a day")
+	_done(g)
+
+
+func test_39_upgrades_never_reduce_anything() -> void:
+	var g := _farm()
+	for id in g.items:
+		if g.items[id]["kind"] != "building":
+			continue
+		var levels: Array = g.items[id]["levels"]
+		for lvl in range(2, levels.size() + 1):
+			var a := g.perks_at(id, lvl - 1)
+			var b := g.perks_at(id, lvl)
+			_check(int(b["capacity"]) > int(a["capacity"]), "%s level %d holds more" % [id, lvl])
+			_check(int(b["earnings_pct"]) > int(a["earnings_pct"]), "%s level %d earns more" % [id, lvl])
+			_check(int(b["luck"]) > int(a["luck"]), "%s level %d is luckier" % [id, lvl])
+	_done(g)

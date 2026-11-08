@@ -39,6 +39,7 @@ var placing := {}
 
 func _ready() -> void:
 	Game.plot_changed.connect(func(_i: int) -> void: queue_redraw())
+	Game.building_upgraded.connect(_on_building_upgraded)
 	# Crops change growth stage over time and ripe crops twinkle; redraw ten times a second.
 	var timer := Timer.new()
 	timer.wait_time = 0.1
@@ -477,6 +478,20 @@ static func format_duration(seconds: int) -> String:
 	if h > 0:
 		return "%dh %dm" % [h, m]
 	return "%dm" % m
+
+
+## Celebrates an upgrade on the building itself: a big sparkle burst and a level popup.
+func _on_building_upgraded(uid: int, level: int) -> void:
+	var o := Game.object_by_uid(uid)
+	if o.is_empty():
+		return
+	var fp := Game.footprint(o["id"])
+	var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+	var at := (g[0] + g[2]) / 2.0 + Vector2(0, -60)
+	_float(at, "Level %d!" % level, COLOR_GOLDEN, 2.0)
+	_float(at + Vector2(0, 34), "+%d XP" % (GameState.UPGRADE_XP_PER_LEVEL * level), COLOR_XP, 2.0)
+	for k in 3:
+		_sparkle(at + Vector2(-50 + 50 * k, 20), COLOR_GOLDEN)
 
 
 ## A short burst of dots for surprise drops, so a find feels like an event.

@@ -13,6 +13,7 @@ signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
 signal objects_changed
+signal building_upgraded(uid: int, level: int)
 signal farm_expanded(size: int)
 signal inventory_changed
 
@@ -30,6 +31,12 @@ const PARTS := ["bricks", "nails", "boards"]
 const PART_NAMES := {"bricks": "Bricks", "nails": "Nails", "boards": "Wooden Boards"}
 const PART_CHANCE := 0.08          # per harvest or collection
 const DAILY_PARTS := 2
+
+# Building upgrades: each level above 1 earns more and finds better drops; the top level also works faster.
+const UPGRADE_EARNINGS_BONUS := 0.10   # +10% per level above 1
+const TOP_LEVEL_SPEEDUP := 0.85        # level 3 and up: cycles take 85% as long
+const TOP_LEVEL := 3
+const UPGRADE_XP_PER_LEVEL := 50       # one-time XP for reaching a level: 50 x the new level
 
 # Rescue: if a player can't afford seeds and has nothing growing, top them up to this.
 const RESCUE_COINS := 50
@@ -574,7 +581,25 @@ func move_object(uid: int, row: int, col: int) -> bool:
 
 
 func cycle_of(obj: Dictionary) -> int:
-	return int(item_data(obj["id"]).get("cycle_seconds", 86400))
+	var base := int(item_data(obj["id"]).get("cycle_seconds", 86400))
+	if is_building(obj) and level_of(obj) >= TOP_LEVEL:
+		return int(base * TOP_LEVEL_SPEEDUP)
+	return base
+
+
+func level_of(obj: Dictionary) -> int:
+	return int(obj.get("level", 1))
+
+
+## What a building gets at a given level: capacity, earnings bonus %, speed-up %, extra luck.
+func perks_at(building_id: String, lvl: int) -> Dictionary:
+	var levels: Array = item_data(building_id).get("levels", [0])
+	return {
+		"capacity": int(levels[clampi(lvl - 1, 0, levels.size() - 1)]),
+		"earnings_pct": int(round(UPGRADE_EARNINGS_BONUS * (lvl - 1) * 100.0)),
+		"faster_pct": int(round((1.0 - TOP_LEVEL_SPEEDUP) * 100.0)) if lvl >= TOP_LEVEL else 0,
+		"luck": lvl - 1,
+	}
 
 
 func kind_of(obj: Dictionary) -> String:
@@ -609,6 +634,8 @@ func object_payout(obj: Dictionary) -> Vector2i:
 	for id in inside:
 		var it2 := item_data(id)
 		total += Vector2i(int(it2["payout"]), int(it2["xp"])) * int(inside[id])
+	# Upgraded buildings earn more coins per collection.
+	total.x = int(round(total.x * (1.0 + UPGRADE_EARNINGS_BONUS * (level_of(obj) - 1))))
 	return total
 
 
@@ -620,7 +647,8 @@ func collect(uid: int) -> Dictionary:
 	var pay := object_payout(obj)
 	var earned := pay.x
 	var gained := pay.y
-	var drop := _roll_drop("", 0)
+	# Upgrades count like mastery stars for luck: better odds of rare finds.
+	var drop := _roll_drop("", level_of(obj) - 1 if is_building(obj) else 0)
 	match drop.get("type", ""):
 		"golden":
 			earned *= GOLDEN_COIN_MULTIPLIER
@@ -718,8 +746,15 @@ func upgrade_building(uid: int) -> bool:
 		message.emit("Not enough coins to upgrade")
 		return false
 	b["level"] = int(b["level"]) + 1
-	message.emit("%s upgraded to level %d: holds %d" % [item_data(b["id"])["name"], int(b["level"]), capacity(b)])
+	var lvl := int(b["level"])
+	var perks := perks_at(b["id"], lvl)
+	var parts_of_msg: Array[String] = ["holds %d" % capacity(b), "+%d%% earnings" % int(perks["earnings_pct"])]
+	if int(perks["faster_pct"]) > 0:
+		parts_of_msg.append("%d%% faster" % int(perks["faster_pct"]))
+	message.emit("%s is now level %d: %s" % [item_data(b["id"])["name"], lvl, ", ".join(PackedStringArray(parts_of_msg))])
+	add_xp(UPGRADE_XP_PER_LEVEL * lvl)
 	_bump("upgrades", 1)
+	building_upgraded.emit(uid, lvl)
 	_house_waiting_bees()
 	_objects_updated()
 	return true

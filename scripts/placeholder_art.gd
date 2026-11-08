@@ -344,6 +344,11 @@ static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 		return
 	if not show_sign:
 		return
+	# Upgrades show on the building itself.
+	if level >= 2:
+		_upgrade_trim(ci, g, left, bottom, right, up, roof)
+	if level >= 3:
+		_upgrade_top(ci, right, bottom, up, r_a, s)
 	# Level badge and count sign.
 	var font := ThemeDB.fallback_font
 	var badge := r_b + Vector2(0, -26)
@@ -419,3 +424,48 @@ static func _farm_stand(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void
 	for k in 4:
 		var x := -30.0 + k * 15.0
 		ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(x, -52), ground + Vector2(x + 15, -52), ground + Vector2(x + 15, -42), ground + Vector2(x, -42)]), awning if k % 2 == 0 else Color("#fbefd2"))
+
+
+
+## Level 2: a white trim along the eaves and a picket fence around the front of the yard.
+static func _upgrade_trim(ci: CanvasItem, g: PackedVector2Array, left: Vector2, bottom: Vector2, right: Vector2, up: Vector2, roof: Color) -> void:
+	var trim := Color("#fbf6ec")
+	ci.draw_polyline(PackedVector2Array([left + up, bottom + up, right + up]), trim, 4.0)
+	var fence := Color("#f4efe4")
+	var shade := Color("#cfc6b4")
+	# Pickets along the two front edges of the footprint, set in a little from the corners.
+	for edge in [[g[3], g[2]], [g[2], g[1]]]:
+		var a: Vector2 = edge[0]
+		var b: Vector2 = edge[1]
+		var steps := 10
+		for k in range(1, steps):
+			var p := a.lerp(b, float(k) / steps) + Vector2(0, -2)
+			ci.draw_line(p, p + Vector2(0, -14), fence, 3.0)
+			ci.draw_circle(p + Vector2(0, -14), 1.6, fence)
+		ci.draw_line(a.lerp(b, 0.08) + Vector2(0, -9), a.lerp(b, 0.92) + Vector2(0, -9), shade, 2.0)
+
+
+## Level 3: a silo beside the building, flower boxes and a golden weathervane on the roof.
+static func _upgrade_top(ci: CanvasItem, right: Vector2, bottom: Vector2, up: Vector2, ridge: Vector2, s: float) -> void:
+	# Silo: a cylinder standing just behind the right wall.
+	var base := right.lerp(bottom, 0.18) + Vector2(14, -4)
+	var w := 22.0 * maxf(1.0, s * 0.6)
+	var h := -up.y + 26.0
+	ci.draw_rect(Rect2(base + Vector2(-w / 2.0, -h), Vector2(w, h)), Color("#d7dde3"))
+	ci.draw_rect(Rect2(base + Vector2(-w / 2.0, -h), Vector2(w * 0.35, h)), Color("#eef2f5"))
+	for k in 4:
+		ci.draw_line(base + Vector2(-w / 2.0, -h * (0.2 + k * 0.2)), base + Vector2(w / 2.0, -h * (0.2 + k * 0.2)), Color("#aab3bb"), 1.5)
+	var dome := base + Vector2(0, -h)
+	ci.draw_circle(dome, w / 2.0, Color("#b84a3a"))
+	ci.draw_rect(Rect2(dome + Vector2(-w / 2.0, 0), Vector2(w, 3)), Color("#8f3528"))
+	# Flower boxes under the front wall.
+	for k in 2:
+		var c := bottom.lerp(right, 0.3 + 0.4 * k) + up * 0.35
+		ci.draw_rect(Rect2(c + Vector2(-9, 0), Vector2(18, 6)), Color("#7a4f2c"))
+		for f in 3:
+			ci.draw_circle(c + Vector2(-6 + f * 6, -2), 3.0, [Color("#ff6b8a"), Color("#ffd34d"), Color("#ff8a4d")][f])
+	# Golden weathervane on the ridge.
+	var gold := Color("#f2c230")
+	ci.draw_line(ridge, ridge + Vector2(0, -26), Color("#5c3a1e"), 2.5)
+	ci.draw_colored_polygon(PackedVector2Array([ridge + Vector2(0, -26), ridge + Vector2(16, -21), ridge + Vector2(0, -16)]), gold)
+	ci.draw_circle(ridge + Vector2(0, -28), 3.0, gold)

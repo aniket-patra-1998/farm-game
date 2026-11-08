@@ -594,14 +594,43 @@ func _build_building(content: VBoxContainer) -> void:
 		maxed.disabled = true
 		actions.add_child(maxed)
 	else:
-		var next_cap := int(it["levels"][int(o["level"])])
-		var up := _panel_button("Upgrade: holds %d · %d coins" % [next_cap, cost])
+		var up := _panel_button("Upgrade to level %d · %s coins" % [int(o["level"]) + 1, _thousands(cost)])
 		up.disabled = Game.coins < cost
 		up.pressed.connect(func() -> void: Game.upgrade_building(uid))
 		actions.add_child(up)
 	content.add_child(actions)
+
+	# What this level gives, and what the next one adds.
+	var lvl := Game.level_of(o)
+	var now_perks := Game.perks_at(o["id"], lvl)
+	content.add_child(BookPanel.card_frame(_perk_card("Now: level %d" % lvl, now_perks, {})))
 	if cost >= 0:
+		var next_perks := Game.perks_at(o["id"], lvl + 1)
+		var next_card := _perk_card("Level %d adds" % (lvl + 1), next_perks, now_perks)
+		next_card.add_child(BookPanel.text("+%d XP when you upgrade, and the building gets a new look" % (GameState.UPGRADE_XP_PER_LEVEL * (lvl + 1)), 17))
+		content.add_child(BookPanel.card_frame(next_card))
 		content.add_child(BookPanel.text("Upgrades will use building parts in a later update; coins for now.", 16, BookPanel.CREAM))
+
+
+## Lists a level's perks. With `before`, shows only what changes from it.
+func _perk_card(title: String, perks: Dictionary, before: Dictionary) -> VBoxContainer:
+	var card := BookPanel.card()
+	card.add_theme_constant_override("separation", 6)
+	card.add_child(BookPanel.text(title, 22))
+	var lines: Array[String] = []
+	if before.is_empty() or int(perks["capacity"]) != int(before["capacity"]):
+		lines.append("Holds %d%s" % [int(perks["capacity"]), "" if before.is_empty() else " (+%d)" % (int(perks["capacity"]) - int(before["capacity"]))])
+	if int(perks["earnings_pct"]) > 0 and (before.is_empty() or int(perks["earnings_pct"]) != int(before["earnings_pct"])):
+		lines.append("+%d%% coins every collection" % int(perks["earnings_pct"]))
+	if int(perks["faster_pct"]) > 0 and (before.is_empty() or int(perks["faster_pct"]) != int(before["faster_pct"])):
+		lines.append("Produces %d%% faster" % int(perks["faster_pct"]))
+	if int(perks["luck"]) > 0 and (before.is_empty() or int(perks["luck"]) != int(before["luck"])):
+		lines.append("Better odds of rare finds when collecting")
+	if lines.is_empty():
+		lines.append("Basic building")
+	for line in lines:
+		card.add_child(BookPanel.text("•  " + line, 18))
+	return card
 
 
 func _build_barn(content: VBoxContainer) -> void:
