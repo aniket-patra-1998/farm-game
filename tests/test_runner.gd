@@ -192,6 +192,9 @@ func test_09_collection_trade_in() -> void:
 	_check(not g.can_trade_in(coll), "empty set can't be traded")
 	for it in coll["items"]:
 		g.owned[it["id"]] = 1
+	# Isolate the trade-in: no first-ribbon reward, and no level-up from its XP.
+	g.ribbon_tiers["collector"] = 4
+	g.xp = g.xp_for_level(10)
 	var coins := g.coins
 	var unwithers := g.unwithers
 	_check(g.trade_in(coll["id"]), "full set trades in")
@@ -289,6 +292,7 @@ func test_15_strays_arrive_get_adopted_or_leave() -> void:
 	_eq(strays.size(), 1, "one stray arrives")
 	var s: Dictionary = strays[0]
 	_check(not g.is_ready(s), "strays don't produce")
+	g.ribbon_tiers["animal_lover"] = 4 # isolate the adoption XP from the first-ribbon reward
 	var xp := g.xp
 	_check(g.adopt_stray(int(s["uid"])), "adopt")
 	_check(not s.get("stray", false), "no longer a stray")
