@@ -24,8 +24,13 @@ const COLOR_PART := Color("#f4c27a")
 var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move" or "store"
 var selected_crop := ""  # crop id when tool == "plant"
 
-var _painting := false
-var _last_index := -1
+# Tap versus drag: a press only acts if the finger lifts without moving far.
+# Anything further is a drag, which moves the camera (main.gd) instead of farming.
+const DRAG_THRESHOLD := 14.0 # screen pixels
+var _press_pos := Vector2.ZERO
+var _pressing := false
+var _dragged := false
+var _press_on_farm := false
 
 ## While placing: {"item": id, "uid": -1 for a new purchase or the uid being moved,
 ## "row", "col"} for the footprint's back corner; row is -1 until the first touch.
@@ -207,8 +212,14 @@ func _draw_plot(i: int, row: int, col: int) -> void:
 		PlaceholderArt.draw_twinkle(self, spot, 9.0 + 5.0 * glow, glow)
 
 
+## Called when a second finger lands: that's a pinch, so the first finger's tap is off.
 func cancel_paint() -> void:
-	_painting = false
+	_dragged = true
+
+
+## True once the current press has moved far enough to count as a drag on the farm.
+func is_dragging() -> bool:
+	return _pressing and _dragged and _press_on_farm
 
 
 # ---------------------------------------------------------------- input
@@ -223,16 +234,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		if touch.index != 0:
 			return
 		if touch.pressed:
-			_painting = true
-			_last_index = -1
-			_apply_at(touch.position, true)
+			_pressing = true
+			_dragged = false
+			_press_pos = touch.position
+			_press_on_farm = _on_farm_area(touch.position)
 		else:
-			_painting = false
+			# A tap: act on the plot under the finger. A drag already moved the camera.
+			if _pressing and not _dragged and _press_on_farm:
+				_apply_at(touch.position)
+			_pressing = false
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
-		# With the Hand tool a drag moves the camera (main.gd), so it never farms.
-		if _painting and drag.index == 0 and tool != "hand" and tool != "move":
-			_apply_at(drag.position, false)
+		if _pressing and drag.index == 0 and drag.position.distance_to(_press_pos) > DRAG_THRESHOLD:
+			_dragged = true
 
 
 func _on_farm_area(screen_pos: Vector2) -> bool:
@@ -322,20 +336,19 @@ func _placing_input(event: InputEvent) -> void:
 		cancel_placing()
 
 
-func _apply_at(screen_pos: Vector2, first_touch: bool) -> void:
+func _apply_at(screen_pos: Vector2) -> void:
 	# Ignore touches on the top bar, the toolbar, or while a menu covers the farm.
 	if not _on_farm_area(screen_pos):
 		return
 	var world := get_canvas_transform().affine_inverse() * screen_pos
 	var i := index_at(to_local(world))
-	if i < 0 or i == _last_index:
+	if i < 0:
 		return
-	_last_index = i
-	_act(i, first_touch)
+	_act(i, true)
 
 
-## first_touch is true for the plot under the finger when it went down;
-## dragging across plots repeats the action without info popups.
+## first_touch is always true now that each tap acts on one plot; it stays so
+## multi-plot tools (vehicles, later) can reuse _act without info popups.
 func _act(i: int, first_touch: bool) -> void:
 	var obj := Game.object_at(i)
 	if not obj.is_empty():

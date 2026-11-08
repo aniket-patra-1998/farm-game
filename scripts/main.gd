@@ -126,7 +126,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_zoom_at(_two_finger_center(), dist / _pinch_dist)
 			_pinch_dist = dist
 			_pan(d.relative / 2.0)
-		elif grid.tool == "hand" and d.index == 0 and grid.placing.is_empty():
+		elif d.index == 0 and grid.placing.is_empty() and grid.is_dragging():
 			_pan(d.relative)
 
 

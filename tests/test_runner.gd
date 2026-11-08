@@ -648,4 +648,74 @@ func test_36_the_whole_game_scene_loads() -> void:
 	_check(main.get("grid") != null, "farm grid created")
 	_check(main.get("hud") != null, "HUD created")
 	_check(main.get("sky") != null, "sky created")
-	main.queue_free()
+	main.free() # free now, so the next test doesn't share the screen with this one
+
+
+
+# ---------------------------------------------------------------- touch input
+
+func _touch(pos: Vector2, pressed: bool) -> void:
+	var ev := InputEventScreenTouch.new()
+	ev.index = 0
+	ev.position = pos
+	ev.pressed = pressed
+	get_viewport().push_input(ev)
+
+
+func _drag(pos: Vector2, relative: Vector2) -> void:
+	var ev := InputEventScreenDrag.new()
+	ev.index = 0
+	ev.position = pos
+	ev.relative = relative
+	get_viewport().push_input(ev)
+
+
+func _screen_pos(grid: FarmGrid, i: int) -> Vector2:
+	return get_viewport().get_canvas_transform() * grid.to_global(grid.center_of(i))
+
+
+func test_37_tap_farms_and_drag_moves_the_view() -> void:
+	var main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	add_child(main)
+	var cam: Camera2D = main.get("camera")
+	var grid: FarmGrid = main.get("grid")
+	cam.force_update_scroll()
+	var view := get_viewport().get_visible_rect().size
+
+	# A tap on grass plows it.
+	var i := Game.index_of(11, 11)
+	_eq(Game.phase(i), GameState.Phase.GRASS, "tile starts as grass")
+	var tap_at := _screen_pos(grid, i)
+	_check(grid._on_farm_area(tap_at), "the tile is on screen (view %s, tile at %s)" % [str(view), str(tap_at)])
+	_touch(tap_at, true)
+	_touch(tap_at, false)
+	_eq(Game.phase(i), GameState.Phase.PLOWED, "a tap plows")
+
+	# A drag moves the view and leaves the plot under the finger alone.
+	main.call("_zoom_at", view / 2.0, 2.0)
+	cam.force_update_scroll()
+	var start := view / 2.0
+	var under := grid.index_at(grid.to_local(get_viewport().get_canvas_transform().affine_inverse() * start))
+	var before_plot: Dictionary = Game.plots[under].duplicate() if under >= 0 else {}
+	var objects_before := Game.objects.size()
+	var cam_before := cam.position
+	_touch(start, true)
+	for k in range(1, 11):
+		_drag(start + Vector2(20 * k, 0), Vector2(20, 0))
+	_touch(start + Vector2(200, 0), false)
+	if under >= 0:
+		_eq(Game.plots[under], before_plot, "the plot under the drag is unchanged")
+	_eq(Game.objects.size(), objects_before, "nothing placed or removed by a drag")
+	_check(not cam.position.is_equal_approx(cam_before), "the drag moved the view")
+
+	# A tiny wobble while tapping still counts as a tap.
+	var k2 := Game.index_of(11, 10)
+	cam.position = cam_before
+	main.call("_fit_camera")
+	cam.force_update_scroll()
+	var wobble_at := _screen_pos(grid, k2)
+	_touch(wobble_at, true)
+	_drag(wobble_at + Vector2(4, 3), Vector2(4, 3))
+	_touch(wobble_at + Vector2(4, 3), false)
+	_eq(Game.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
+	main.free()

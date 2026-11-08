@@ -167,7 +167,7 @@ func _build_toolbar(root: Control) -> void:
 	plow.pressed.connect(func() -> void: tool_selected.emit("plow", ""))
 	row.add_child(plow)
 
-	var hand := _tool_button("Hand\nmove & inspect")
+	var hand := _tool_button("Inspect\ntap to check")
 	hand.pressed.connect(func() -> void: tool_selected.emit("hand", ""))
 	row.add_child(hand)
 
