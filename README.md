@@ -40,6 +40,13 @@ This is milestone 1 of the V1 plan: the core farm.
 - Gems: premium currency (working name), shown under coins; uses come with the gem shop milestone
 - Debug buttons (test builds only): +10,000 coins (and +10 gems), level up, skip 1 h, new farm
 
+### Land expansion and unwither
+
+- Farm grows from 12x12 to 30x30 in 9 steps (Market > Land). Coins need a level; gems expand right away
+- The next expansion shows on the farm as a dashed area of wild grass
+- Unwither revives every withered crop: start with 2, earn 1 per collection trade-in and every 5 levels, or pay 3 gems
+- Older saves carry over automatically
+
 ## Run it
 
 1. Install Godot 4.7 or newer (standard build) from godotengine.org.
@@ -63,6 +70,7 @@ Use AAB format for the Play Store.
 | `data/collections.json` | Collection sets, which crops drop them, rewards |
 | `data/ribbons.json` | Ribbons, tier thresholds and rewards |
 | `data/items.json` | Trees, animals and buildings: prices, timers, sizes, capacities, upgrade costs |
+| `data/expansions.json` | Land expansion steps: size, level, coin and gem prices |
 | `scripts/book_panel.gd` | The pop-up menu used for Collections and Ribbons |
 | `scripts/farm_grid.gd` | Draws the farm and turns taps into actions |
 | `scripts/placeholder_art.gd` | Every visual, drawn with simple shapes; swap for sprites here |

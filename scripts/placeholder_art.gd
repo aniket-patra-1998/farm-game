@@ -333,3 +333,15 @@ static func draw_fertilizer(ci: CanvasItem, top: Vector2, w: float, h: float) ->
 	for o in [Vector2(-0.3, 0.05), Vector2(0.28, -0.04), Vector2(-0.1, 0.28), Vector2(0.12, -0.3), Vector2(0.34, 0.2), Vector2(-0.36, -0.18)]:
 		ci.draw_circle(c + Vector2(o.x * w * 0.5, o.y * h * 0.5), 3.2, pellet)
 		ci.draw_circle(c + Vector2(o.x * w * 0.5 - 1, o.y * h * 0.5 - 1), 1.2, Color(1, 1, 1, 0.6))
+
+
+## Land not yet bought: a dim, dashed-edged area the farm can grow into.
+static func draw_wild_land(ci: CanvasItem, corners: PackedVector2Array) -> void:
+	ci.draw_colored_polygon(corners, Color(0.42, 0.62, 0.3, 0.45))
+	for k in 4:
+		var a := corners[k]
+		var b := corners[(k + 1) % 4]
+		var steps := 24
+		for j in steps:
+			if j % 2 == 0:
+				ci.draw_line(a.lerp(b, float(j) / steps), a.lerp(b, float(j + 1) / steps), Color(1, 1, 1, 0.5), 2.0)

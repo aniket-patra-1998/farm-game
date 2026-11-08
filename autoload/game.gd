@@ -13,6 +13,8 @@ signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
 signal objects_changed
+signal farm_expanded(size: int)
+signal inventory_changed
 
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
@@ -43,7 +45,11 @@ const MASTERY_LUCK_BONUS := 0.15  # per mastery star, multiplies golden and coll
 
 const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
-const GRID_SIZE := 12
+const MAX_SIZE := 30   # plots are stored for the largest farm; farm_size says how much is usable
+const START_SIZE := 12
+const OLD_GRID_SIZE := 12 # saves from before land expansion stored a 12x12 grid
+const START_UNWITHERS := 2
+const UNWITHER_GEM_COST := 3
 const START_COINS := 200
 const START_GEMS := 5
 const GEMS_PER_LEVEL := 1
@@ -72,7 +78,10 @@ var crop_order: Array[String] = [] # display order
 var coins := START_COINS
 var gems := START_GEMS           # premium currency
 var xp := 0
-var plots: Array[Dictionary] = []  # GRID_SIZE * GRID_SIZE entries
+var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
+var farm_size := START_SIZE        # usable width and depth in tiles
+var expansion_steps: Array = []    # from data/expansions.json
+var unwithers := START_UNWITHERS   # Unwither items held
 var mastery := {}                  # crop id -> lifetime harvest count
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
 var tutorial_step: int = Tutorial.HARVEST
@@ -103,6 +112,7 @@ func _ready() -> void:
 	_load_collections()
 	_load_ribbons()
 	_load_items()
+	expansion_steps = _read_json("res://data/expansions.json").get("steps", [])
 	if not load_game():
 		_new_game()
 	# Deferred so the HUD is connected and can show the message.
@@ -159,7 +169,11 @@ func debug_skip(seconds: int) -> void:
 # ---------------------------------------------------------------- plots
 
 func index_of(row: int, col: int) -> int:
-	return row * GRID_SIZE + col
+	return row * MAX_SIZE + col
+
+
+func in_farm(row: int, col: int) -> bool:
+	return row >= 0 and col >= 0 and row < farm_size and col < farm_size
 
 
 func phase(i: int) -> Phase:
@@ -378,6 +392,7 @@ func trade_in(coll_id: String) -> bool:
 		message.emit("%s collection traded in: +%d coins, +%d XP" % [
 			coll["name"], int(coll["reward_coins"]), int(coll["reward_xp"])])
 		_bump("collections_traded", 1)
+		add_unwithers(1)
 		collections_changed.emit()
 		queue_save()
 		return true
@@ -458,7 +473,7 @@ func _rebuild_occupancy() -> void:
 ## Objects go on grass or empty plowed plots, never on planted crops or other objects.
 func can_place(item_id: String, row: int, col: int, ignore_uid := -1) -> bool:
 	var fp := footprint(item_id)
-	if row < 0 or col < 0 or row + fp.y > GRID_SIZE or col + fp.x > GRID_SIZE:
+	if row < 0 or col < 0 or row + fp.y > farm_size or col + fp.x > farm_size:
 		return false
 	for r in range(row, row + fp.y):
 		for c in range(col, col + fp.x):
@@ -666,6 +681,98 @@ func _objects_updated() -> void:
 	queue_save()
 
 
+# ---------------------------------------------------------------- land expansion
+
+## The next expansion step, or {} when the farm is at full size.
+func next_expansion() -> Dictionary:
+	for step in expansion_steps:
+		if int(step["size"]) > farm_size:
+			return step
+	return {}
+
+
+func can_expand_with_coins() -> bool:
+	var step := next_expansion()
+	return not step.is_empty() and level() >= int(step["level"]) and coins >= int(step["coins"])
+
+
+## Coins need the step's level; gems skip the level requirement.
+func expand(use_gems: bool) -> bool:
+	var step := next_expansion()
+	if step.is_empty():
+		return false
+	if use_gems:
+		if not spend_gems(int(step["gems"])):
+			message.emit("Not enough gems to expand")
+			return false
+	else:
+		if level() < int(step["level"]):
+			message.emit("Reach level %d to expand with coins" % int(step["level"]))
+			return false
+		if not spend(int(step["coins"])):
+			message.emit("Not enough coins to expand")
+			return false
+	farm_size = int(step["size"])
+	message.emit("Your farm grew to %d x %d!" % [farm_size, farm_size])
+	_bump("expansions", 1)
+	farm_expanded.emit(farm_size)
+	plot_changed.emit(-1)
+	queue_save()
+	return true
+
+
+## Old saves: copy the 12x12 grid into the top-left of the full-size grid.
+func _widen_old_grid(old: Array) -> Array:
+	var wide: Array = []
+	for i in MAX_SIZE * MAX_SIZE:
+		wide.append({"state": "grass"})
+	for r in OLD_GRID_SIZE:
+		for c in OLD_GRID_SIZE:
+			wide[r * MAX_SIZE + c] = old[r * OLD_GRID_SIZE + c]
+	return wide
+
+
+# ---------------------------------------------------------------- unwither
+
+func withered_count() -> int:
+	var n := 0
+	for r in farm_size:
+		for c in farm_size:
+			if phase(index_of(r, c)) == Phase.WITHERED:
+				n += 1
+	return n
+
+
+## Brings every withered crop back to ripe. Uses an Unwither item, or gems if none are left.
+func use_unwither() -> bool:
+	var count := withered_count()
+	if count == 0:
+		message.emit("Nothing has withered. Save it for when crops go bad.")
+		return false
+	if unwithers > 0:
+		unwithers -= 1
+	elif not spend_gems(UNWITHER_GEM_COST):
+		message.emit("No Unwither left, and not enough gems for one")
+		return false
+	var t := now()
+	for r in farm_size:
+		for c in farm_size:
+			var i := index_of(r, c)
+			if phase(i) == Phase.WITHERED:
+				plots[i]["planted_at"] = t - int(crops[plots[i]["crop"]]["grow_seconds"])
+	message.emit("Unwithered %d plots! They're ready to harvest." % count)
+	inventory_changed.emit()
+	plot_changed.emit(-1)
+	queue_save()
+	return true
+
+
+func add_unwithers(n: int) -> void:
+	unwithers += n
+	inventory_changed.emit()
+	queue_save()
+
+
 # ---------------------------------------------------------------- safety net
 
 func cheapest_seed_cost() -> int:
@@ -809,6 +916,8 @@ func _on_level_reached(lvl: int) -> void:
 	# The reward is a gift, so it doesn't count toward the coins-earned ribbon.
 	add_coins(level_reward(lvl), false)
 	add_gems(GEMS_PER_LEVEL)
+	if lvl % 5 == 0:
+		add_unwithers(1)
 	leveled_up.emit(lvl) # the HUD shows the celebration popup
 
 
@@ -871,7 +980,9 @@ func _new_game() -> void:
 	next_uid = 1
 	_occupied.clear()
 	plots.clear()
-	for i in GRID_SIZE * GRID_SIZE:
+	farm_size = START_SIZE
+	unwithers = START_UNWITHERS
+	for i in MAX_SIZE * MAX_SIZE:
 		plots.append({"state": "grass"})
 	# Starter farm, modelled on the classic opening: 2 plots ripe to harvest,
 	# 2 half-grown (a first-day safety net), 2 plowed and ready for seeds.
@@ -921,6 +1032,8 @@ func save_game() -> void:
 		"ribbon_tiers": ribbon_tiers,
 		"pity": pity,
 		"objects": objects,
+		"farm_size": farm_size,
+		"unwithers": unwithers,
 		"next_uid": next_uid,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -940,8 +1053,12 @@ func load_game() -> bool:
 	if typeof(data) != TYPE_DICTIONARY or int(data.get("version", 0)) != SAVE_VERSION:
 		return false
 	var saved_plots: Array = data.get("plots", [])
-	if saved_plots.size() != GRID_SIZE * GRID_SIZE:
+	if saved_plots.size() == OLD_GRID_SIZE * OLD_GRID_SIZE:
+		saved_plots = _widen_old_grid(saved_plots)
+	if saved_plots.size() != MAX_SIZE * MAX_SIZE:
 		return false
+	farm_size = clampi(int(data.get("farm_size", START_SIZE)), START_SIZE, MAX_SIZE)
+	unwithers = int(data.get("unwithers", START_UNWITHERS))
 	coins = int(data.get("coins", START_COINS))
 	gems = int(data.get("gems", START_GEMS))
 	xp = int(data.get("xp", 0))
@@ -988,6 +1105,8 @@ func reset_game() -> void:
 	collections_changed.emit()
 	ribbons_changed.emit()
 	objects_changed.emit()
+	inventory_changed.emit()
+	farm_expanded.emit(farm_size)
 	plot_changed.emit(-1)
 
 

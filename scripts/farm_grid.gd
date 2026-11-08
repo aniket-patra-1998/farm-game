@@ -7,7 +7,7 @@ signal info(text: String)
 signal object_tapped(uid: int)        # a building was tapped while not ready
 signal placing_changed(text: String)  # "" when placement ends
 
-const N := GameState.GRID_SIZE
+const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
 const TILE_W := 128.0
 const TILE_H := 64.0
 const EDGE_DEPTH := 28.0
@@ -48,8 +48,8 @@ func set_tool(tool_name: String, crop_id: String) -> void:
 
 func get_bounds() -> Rect2:
 	return Rect2(
-		Vector2(-N * TILE_W / 2.0, -HEADROOM),
-		Vector2(N * TILE_W, N * TILE_H + EDGE_DEPTH + HEADROOM))
+		Vector2(-Game.farm_size * TILE_W / 2.0, -HEADROOM),
+		Vector2(Game.farm_size * TILE_W, Game.farm_size * TILE_H + EDGE_DEPTH + HEADROOM))
 
 
 # ---------------------------------------------------------------- geometry
@@ -68,23 +68,25 @@ func index_at(local_pos: Vector2) -> int:
 	var dy := local_pos.y / (TILE_H / 2.0)
 	var col := int(floor((dy + dx) / 2.0))
 	var row := int(floor((dy - dx) / 2.0))
-	if row < 0 or col < 0 or row >= N or col >= N:
+	if not Game.in_farm(row, col):
 		return -1
 	return Game.index_of(row, col)
 
 
 func _row(i: int) -> int:
-	return int(float(i) / N)
+	return int(float(i) / MAX)
 
 
 func _col(i: int) -> int:
-	return i % N
+	return i % MAX
 
 
 # ---------------------------------------------------------------- drawing
 
 func _draw() -> void:
-	PlaceholderArt.draw_farm_edges(self, N, TILE_W, TILE_H, EDGE_DEPTH)
+	var n := Game.farm_size
+	_draw_next_expansion()
+	PlaceholderArt.draw_farm_edges(self, n, TILE_W, TILE_H, EDGE_DEPTH)
 	# Each object is drawn right after its front tile, so depth order stays right.
 	var after_tile := {}
 	var lifted := int(placing.get("uid", -1))
@@ -97,16 +99,26 @@ func _draw() -> void:
 			after_tile[front] = []
 		after_tile[front].append(o)
 	# Back to front, so taller crops overlap the plots behind them.
-	for diag in range(2 * N - 1):
-		for row in range(N):
+	for diag in range(2 * n - 1):
+		for row in range(n):
 			var col := diag - row
-			if col < 0 or col >= N:
+			if col < 0 or col >= n:
 				continue
 			var i := Game.index_of(row, col)
 			_draw_plot(i, row, col)
 			for o in after_tile.get(i, []):
 				_draw_object(o)
 	_draw_placing()
+
+
+## The land the next expansion would add, drawn as dim wild grass around the farm.
+func _draw_next_expansion() -> void:
+	var step := Game.next_expansion()
+	if step.is_empty():
+		return
+	var size := int(step["size"])
+	var outer := corners_of(0, 0, size, size)
+	PlaceholderArt.draw_wild_land(self, outer)
 
 
 ## The four ground corners (top, right, bottom, left) of a footprint.

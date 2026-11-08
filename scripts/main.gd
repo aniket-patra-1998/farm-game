@@ -38,6 +38,7 @@ func _ready() -> void:
 	Game.message.connect(hud.show_message)
 
 	get_viewport().size_changed.connect(_fit_camera)
+	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
 
 

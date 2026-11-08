@@ -31,6 +31,7 @@ var _reset_button: Button
 var _tool_group := ButtonGroup.new()
 var _seed_buttons := {} # crop id -> Button
 var _book: BookPanel
+var _unwither_button: Button
 var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
 var _placing_label: Label
@@ -59,6 +60,8 @@ func _ready() -> void:
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.gems_changed.connect(func(_g: int) -> void: _refresh())
+	Game.inventory_changed.connect(_refresh_unwither)
+	Game.farm_expanded.connect(func(_s: int) -> void: _refresh_book())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
 	Game.leveled_up.connect(func(_l: int) -> void: _refresh_seed_buttons())
 	Game.tutorial_changed.connect(func(_s: int) -> void: _refresh_tutorial())
@@ -157,6 +160,14 @@ func _build_toolbar(root: Control) -> void:
 	var fert := _tool_button("Fertilize\n%d coins · +20%%" % GameState.FERTILIZER_COST)
 	fert.pressed.connect(func() -> void: tool_selected.emit("fertilize", ""))
 	row.add_child(fert)
+
+	# Unwither is an action, not a tool, so it isn't part of the tool group.
+	_unwither_button = Button.new()
+	_unwither_button.custom_minimum_size = BUTTON_SIZE
+	_unwither_button.focus_mode = Control.FOCUS_NONE
+	_unwither_button.pressed.connect(Game.use_unwither)
+	row.add_child(_unwither_button)
+	_refresh_unwither()
 
 	var move := _tool_button("Move\nbuildings & more")
 	move.pressed.connect(func() -> void: tool_selected.emit("move", ""))
@@ -397,7 +408,18 @@ func show_building(uid: int) -> void:
 	_book.open_panel(Game.item_data(o["id"])["name"], _build_building)
 
 
+func _refresh_unwither() -> void:
+	if not _unwither_button:
+		return
+	if Game.unwithers > 0:
+		_unwither_button.text = "Unwither\n%d left" % Game.unwithers
+	else:
+		_unwither_button.text = "Unwither\n%d gems" % GameState.UNWITHER_GEM_COST
+
+
 func _build_market(content: VBoxContainer) -> void:
+	content.add_child(BookPanel.text("Land", 26, BookPanel.SUN))
+	content.add_child(_land_card())
 	content.add_child(BookPanel.text(
 		"Buy, then drag onto an open grassy spot and let go. Use the Move tool to rearrange later.", 20, BookPanel.CREAM))
 	for section in [["tree", "Trees"], ["animal", "Animals"], ["building", "Buildings"]]:
@@ -407,6 +429,38 @@ func _build_market(content: VBoxContainer) -> void:
 			if it["kind"] != section[0]:
 				continue
 			content.add_child(_market_row(id, it))
+
+
+func _land_card() -> Control:
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 10)
+	var step := Game.next_expansion()
+	var size := Game.farm_size
+	if step.is_empty():
+		inner.add_child(BookPanel.text("Your farm is full size: %d x %d." % [size, size], 22))
+		return BookPanel.card_frame(inner)
+	var next := int(step["size"])
+	inner.add_child(BookPanel.text("Expand from %d x %d to %d x %d" % [size, size, next, next], 22))
+	inner.add_child(BookPanel.text(
+		"Adds %d plots. The dashed area on your farm shows the new land." % (next * next - size * size), 17))
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 12)
+	row.add_theme_constant_override("v_separation", 12)
+	var with_coins := _panel_button("")
+	if Game.level() < int(step["level"]):
+		with_coins.text = "Coins: reach level %d" % int(step["level"])
+		with_coins.disabled = true
+	else:
+		with_coins.text = "Expand: %s coins" % _thousands(int(step["coins"]))
+		with_coins.disabled = Game.coins < int(step["coins"])
+	with_coins.pressed.connect(func() -> void: Game.expand(false))
+	row.add_child(with_coins)
+	var with_gems := _panel_button("Expand now: %d gems" % int(step["gems"]))
+	with_gems.disabled = Game.gems < int(step["gems"])
+	with_gems.pressed.connect(func() -> void: Game.expand(true))
+	row.add_child(with_gems)
+	inner.add_child(row)
+	return BookPanel.card_frame(inner)
 
 
 func _market_row(id: String, it: Dictionary) -> Control:
