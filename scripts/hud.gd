@@ -221,6 +221,13 @@ func _build_toolbar(root: Control) -> void:
 		rich.pressed.connect(func() -> void: Game.debug_add_coins(10000))
 		row.add_child(rich)
 
+		var mats := Button.new()
+		mats.text = "Debug\n+10 materials"
+		mats.custom_minimum_size = BUTTON_SIZE
+		mats.focus_mode = Control.FOCUS_NONE
+		mats.pressed.connect(func() -> void: Game.debug_add_materials(10))
+		row.add_child(mats)
+
 		var lvl_up := Button.new()
 		lvl_up.text = "Debug\nlevel up"
 		lvl_up.custom_minimum_size = BUTTON_SIZE

@@ -203,6 +203,14 @@ func debug_add_coins(amount: int) -> void:
 		add_gems(int(amount / 1000.0))
 
 
+func debug_add_materials(n: int) -> void:
+	if OS.is_debug_build():
+		for m in PARTS:
+			parts[m] = int(parts.get(m, 0)) + n
+		inventory_changed.emit()
+		queue_save()
+
+
 func debug_level_up() -> void:
 	if OS.is_debug_build():
 		add_xp(xp_for_level(level() + 1) - xp)
