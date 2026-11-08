@@ -59,14 +59,24 @@
           "name": "Blackberries",
           "unlock_level": 29,
           "grow_seconds": 14400,
-          "status": "planned"
+          "seed_cost": 15,
+          "sell_price": 40,
+          "xp": 1,
+          "shape": "berry",
+          "color": "#3a2340",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "elderberries",
           "name": "Elderberries",
           "unlock_level": 39,
           "grow_seconds": 43200,
-          "status": "planned"
+          "seed_cost": 25,
+          "sell_price": 100,
+          "xp": 1,
+          "shape": "berry",
+          "color": "#4a2a5a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -112,35 +122,60 @@
           "name": "Rye",
           "unlock_level": 21,
           "grow_seconds": 72000,
-          "status": "planned"
+          "seed_cost": 35,
+          "sell_price": 125,
+          "xp": 2,
+          "shape": "grain",
+          "color": "#c9a25a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "red_wheat",
           "name": "Red Wheat",
           "unlock_level": 30,
           "grow_seconds": 259200,
-          "status": "planned"
+          "seed_cost": 135,
+          "sell_price": 495,
+          "xp": 4,
+          "shape": "grain",
+          "color": "#b0562e",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "oats",
           "name": "Oats",
           "unlock_level": 53,
           "grow_seconds": 28800,
-          "status": "planned"
+          "seed_cost": 25,
+          "sell_price": 90,
+          "xp": 1,
+          "shape": "grain",
+          "color": "#d8c08a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "posole_corn",
           "name": "Posole Corn",
           "unlock_level": 54,
           "grow_seconds": 43200,
-          "status": "planned"
+          "seed_cost": 30,
+          "sell_price": 105,
+          "xp": 1,
+          "shape": "stalk",
+          "color": "#e8dcb0",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "amaranth",
           "name": "Amaranth",
           "unlock_level": 76,
           "grow_seconds": 57600,
-          "status": "planned"
+          "seed_cost": 45,
+          "sell_price": 160,
+          "xp": 2,
+          "shape": "spike",
+          "color": "#a8304a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -176,21 +211,36 @@
           "name": "Peas",
           "unlock_level": 32,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 45,
+          "sell_price": 165,
+          "xp": 2,
+          "shape": "fruit",
+          "color": "#6ab04c",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "purple_pod_peas",
           "name": "Purple Pod Peas",
           "unlock_level": 40,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 50,
+          "sell_price": 180,
+          "xp": 2,
+          "shape": "fruit",
+          "color": "#7a3a8a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "coffee",
           "name": "Coffee",
           "unlock_level": 23,
           "grow_seconds": 57600,
-          "status": "planned"
+          "seed_cost": 30,
+          "sell_price": 110,
+          "xp": 2,
+          "shape": "berry",
+          "color": "#8a2a1a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -276,56 +326,104 @@
           "name": "Gladiolus",
           "unlock_level": 28,
           "grow_seconds": 21600,
-          "status": "planned"
+          "seed_cost": 15,
+          "sell_price": 55,
+          "xp": 1,
+          "shape": "spike",
+          "color": "#e85a8a",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "lilies",
           "name": "Lilies",
           "unlock_level": 35,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 45,
+          "sell_price": 170,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#f8f0e0",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "purple_poppies",
           "name": "Purple Poppies",
           "unlock_level": 38,
           "grow_seconds": 28800,
-          "status": "planned"
+          "seed_cost": 20,
+          "sell_price": 75,
+          "xp": 1,
+          "shape": "flower",
+          "color": "#7a3aa0",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "columbine",
           "name": "Columbine",
           "unlock_level": 44,
           "grow_seconds": 14400,
-          "status": "planned"
+          "seed_cost": 15,
+          "sell_price": 45,
+          "xp": 1,
+          "shape": "flower",
+          "color": "#6a7ae0",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "iris",
           "name": "Iris",
           "unlock_level": 45,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 50,
+          "sell_price": 190,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#5a4ac0",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "orange_daisies",
           "name": "Orange Daisies",
           "unlock_level": 59,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 55,
+          "sell_price": 210,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#f2902a",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "white_roses",
           "name": "White Roses",
           "unlock_level": 80,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 65,
+          "sell_price": 245,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#f8f8f2",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "forget_me_nots",
           "name": "Forget-me-nots",
           "unlock_level": 90,
           "grow_seconds": 64800,
-          "status": "planned"
+          "seed_cost": 55,
+          "sell_price": 200,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#6aa8e8",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -361,21 +459,36 @@
           "name": "Onions",
           "unlock_level": 34,
           "grow_seconds": 43200,
-          "status": "planned"
+          "seed_cost": 25,
+          "sell_price": 100,
+          "xp": 1,
+          "shape": "root",
+          "color": "#d8b070",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "ginger",
           "name": "Ginger",
           "unlock_level": 42,
           "grow_seconds": 64800,
-          "status": "planned"
+          "seed_cost": 35,
+          "sell_price": 135,
+          "xp": 2,
+          "shape": "root",
+          "color": "#c8a060",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "heirloom_carrots",
           "name": "Heirloom Carrots",
           "unlock_level": 57,
           "grow_seconds": 43200,
-          "status": "planned"
+          "seed_cost": 30,
+          "sell_price": 105,
+          "xp": 1,
+          "shape": "root",
+          "color": "#a04ab0",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -422,42 +535,72 @@
           "name": "Zucchini",
           "unlock_level": 27,
           "grow_seconds": 57600,
-          "status": "planned"
+          "seed_cost": 30,
+          "sell_price": 110,
+          "xp": 2,
+          "shape": "gourd",
+          "color": "#3a7a3a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "yellow_melon",
           "name": "Yellow Melon",
           "unlock_level": 33,
           "grow_seconds": 345600,
-          "status": "planned"
+          "seed_cost": 185,
+          "sell_price": 680,
+          "xp": 5,
+          "shape": "gourd",
+          "color": "#f2d040",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "acorn_squash",
           "name": "Acorn Squash",
           "unlock_level": 36,
           "grow_seconds": 36000,
-          "status": "planned"
+          "seed_cost": 20,
+          "sell_price": 90,
+          "xp": 1,
+          "shape": "gourd",
+          "color": "#2f4a2a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "square_melon",
           "name": "Square Melon",
           "unlock_level": 52,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 55,
+          "sell_price": 200,
+          "xp": 2,
+          "shape": "gourd",
+          "color": "#4a8a3a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "carnival_squash",
           "name": "Carnival Squash",
           "unlock_level": 63,
           "grow_seconds": 28800,
-          "status": "planned"
+          "seed_cost": 25,
+          "sell_price": 95,
+          "xp": 1,
+          "shape": "gourd",
+          "color": "#e8a040",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "cucumber",
           "name": "Cucumber",
           "unlock_level": 43,
           "grow_seconds": 86400,
-          "status": "planned"
+          "seed_cost": 50,
+          "sell_price": 185,
+          "xp": 2,
+          "shape": "fruit",
+          "color": "#4a8a3a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -525,28 +668,48 @@
           "name": "Ghost Chili",
           "unlock_level": 26,
           "grow_seconds": 21600,
-          "status": "planned"
+          "seed_cost": 15,
+          "sell_price": 55,
+          "xp": 1,
+          "shape": "fruit",
+          "color": "#d8301a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "cabbage",
           "name": "Cabbage",
           "unlock_level": 27,
           "grow_seconds": 172800,
-          "status": "planned"
+          "seed_cost": 85,
+          "sell_price": 320,
+          "xp": 3,
+          "shape": "leafy",
+          "color": "#9ac870",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "broccoli",
           "name": "Broccoli",
           "unlock_level": 35,
           "grow_seconds": 172800,
-          "status": "planned"
+          "seed_cost": 95,
+          "sell_price": 345,
+          "xp": 3,
+          "shape": "leafy",
+          "color": "#3a7a3a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "asparagus",
           "name": "Asparagus",
           "unlock_level": 37,
           "grow_seconds": 57600,
-          "status": "planned"
+          "seed_cost": 30,
+          "sell_price": 115,
+          "xp": 2,
+          "shape": "spike",
+          "color": "#6a9a4a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -593,7 +756,12 @@
           "name": "White Grapes",
           "unlock_level": 29,
           "grow_seconds": 43200,
-          "status": "planned"
+          "seed_cost": 20,
+          "sell_price": 95,
+          "xp": 1,
+          "shape": "berry",
+          "color": "#c8d88a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -618,7 +786,12 @@
           "name": "Bamboo",
           "unlock_level": 60,
           "grow_seconds": 57600,
-          "status": "planned"
+          "seed_cost": 40,
+          "sell_price": 145,
+          "xp": 2,
+          "shape": "stalk",
+          "color": "#7aaa4a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -632,35 +805,61 @@
           "name": "Green Tea",
           "unlock_level": 28,
           "grow_seconds": 36000,
-          "status": "planned"
+          "seed_cost": 20,
+          "sell_price": 90,
+          "xp": 1,
+          "shape": "leafy",
+          "color": "#4a8a3a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "basil",
           "name": "Basil",
           "unlock_level": 48,
           "grow_seconds": 36000,
-          "status": "planned"
+          "seed_cost": 20,
+          "sell_price": 90,
+          "xp": 1,
+          "shape": "leafy",
+          "color": "#3a9a3a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "lemon_balm",
           "name": "Lemon Balm",
           "unlock_level": 50,
           "grow_seconds": 21600,
-          "status": "planned"
+          "seed_cost": 15,
+          "sell_price": 60,
+          "xp": 1,
+          "shape": "leafy",
+          "color": "#8ac04a",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "saffron",
           "name": "Saffron",
           "unlock_level": 64,
           "grow_seconds": 36000,
-          "status": "planned"
+          "seed_cost": 25,
+          "sell_price": 100,
+          "xp": 1,
+          "shape": "flower",
+          "color": "#8a4ac0",
+          "flower": true,
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "clover",
           "name": "Clover",
           "unlock_level": 70,
           "grow_seconds": 14400,
-          "status": "planned"
+          "seed_cost": 15,
+          "sell_price": 50,
+          "xp": 1,
+          "shape": "leafy",
+          "color": "#4aa04a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     }

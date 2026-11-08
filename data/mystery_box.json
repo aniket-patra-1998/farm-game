@@ -1,0 +1,18 @@
+{
+  "_note": "FarmVille's Mystery Box: bought with premium currency (gems here), opens into one random prize. The Donkey comes only from here, as in FarmVille. Each prize: [kind, amount or item, weight]; kinds as in mystery_eggs.json plus item (any 1x1 object) and fertilize_all.",
+  "gem_cost": 12,
+  "prizes": [
+    ["item", "donkey", 10],
+    ["item", "garden_gnome", 12],
+    ["item", "sundial", 8],
+    ["item", "pink_flamingo", 12],
+    ["item", "lamp_post", 10],
+    ["item", "birdbath", 10],
+    ["coins", 2500, 14],
+    ["gems", 20, 2],
+    ["fertilize_all", 2, 8],
+    ["unwither", 2, 6],
+    ["farmhand", 2, 4],
+    ["arborist", 2, 4]
+  ]
+}

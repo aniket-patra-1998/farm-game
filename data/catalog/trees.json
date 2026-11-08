@@ -405,234 +405,334 @@
     {
       "id": "lime",
       "name": "Lime Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "lime_tree",
           "name": "Lime Tree",
           "cycle_seconds": 432000,
-          "status": "planned"
+          "unlock_level": 21,
+          "payout": 1245,
+          "cost": 4350,
+          "xp": 5,
+          "color": "#7ac043",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "grapefruit",
       "name": "Grapefruit Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "grapefruit_tree",
           "name": "Grapefruit Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 22,
+          "payout": 775,
+          "cost": 2700,
+          "xp": 3,
+          "color": "#f2a06a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "mandarin",
       "name": "Mandarin Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "mandarin_tree",
           "name": "Mandarin Tree",
           "cycle_seconds": 345600,
-          "status": "planned"
+          "unlock_level": 24,
+          "payout": 1105,
+          "cost": 3850,
+          "xp": 4,
+          "color": "#f28a1e",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "date",
       "name": "Date Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "date_tree",
           "name": "Date Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 26,
+          "payout": 880,
+          "cost": 3100,
+          "xp": 4,
+          "color": "#8a4a1e",
+          "look": "a date palm tree with a tall rough trunk and a crown of long feathery fronds",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "guava",
       "name": "Guava Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "guava_tree",
           "name": "Guava Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 27,
+          "payout": 910,
+          "cost": 3200,
+          "xp": 4,
+          "color": "#c8d870",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "persimmon",
       "name": "Persimmon Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "persimmon_tree",
           "name": "Persimmon Tree",
           "cycle_seconds": 345600,
-          "status": "planned"
+          "unlock_level": 29,
+          "payout": 1285,
+          "cost": 4500,
+          "xp": 5,
+          "color": "#f2741e",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "starfruit",
       "name": "Starfruit Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "starfruit_tree",
           "name": "Starfruit Tree",
           "cycle_seconds": 345600,
-          "status": "planned"
+          "unlock_level": 31,
+          "payout": 1355,
+          "cost": 4750,
+          "xp": 5,
+          "color": "#e8d040",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "passion_fruit",
       "name": "Passion Fruit Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "passion_fruit_tree",
           "name": "Passion Fruit Tree",
           "cycle_seconds": 432000,
-          "status": "planned"
+          "unlock_level": 33,
+          "payout": 1785,
+          "cost": 6250,
+          "xp": 5,
+          "color": "#6a2a5a",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "jackfruit",
       "name": "Jackfruit Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "jackfruit_tree",
           "name": "Jackfruit Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 35,
+          "payout": 1125,
+          "cost": 3950,
+          "xp": 4,
+          "color": "#b8b040",
+          "look": "a jackfruit tree with huge knobbly green fruit hanging from the trunk",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "asian_pear",
       "name": "Asian Pear Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "asian_pear_tree",
           "name": "Asian Pear Tree",
           "cycle_seconds": 172800,
-          "status": "planned"
+          "unlock_level": 37,
+          "payout": 785,
+          "cost": 2750,
+          "xp": 3,
+          "color": "#e8d8a0",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "tamarind",
       "name": "Tamarind Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "tamarind_tree",
           "name": "Tamarind Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 39,
+          "payout": 1235,
+          "cost": 4300,
+          "xp": 5,
+          "color": "#8a5a2e",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
     {
       "id": "almond",
       "name": "Almond Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "almond_tree",
           "name": "Almond Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 5,
+          "payout": 255,
+          "cost": 0,
+          "gem_cost": 3,
+          "xp": 1,
+          "color": "#c8a070",
+          "note": "values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash"
         }
       ]
     },
     {
       "id": "walnut",
       "name": "Walnut Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "walnut_tree",
           "name": "Walnut Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 11,
+          "payout": 405,
+          "cost": 0,
+          "gem_cost": 5,
+          "xp": 2,
+          "color": "#8a6a42",
+          "note": "values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash"
         }
       ]
     },
     {
       "id": "cashew",
       "name": "Cashew Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "cashew_tree",
           "name": "Cashew Tree",
           "cycle_seconds": 259200,
-          "status": "planned"
+          "unlock_level": 17,
+          "payout": 525,
+          "cost": 0,
+          "gem_cost": 6,
+          "xp": 2,
+          "color": "#e8a040",
+          "look": "a cashew tree with red-yellow cashew apples, each with a nut hanging below",
+          "note": "values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash"
         }
       ]
     },
     {
       "id": "chestnut",
       "name": "Chestnut Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "chestnut_tree",
           "name": "Chestnut Tree",
           "cycle_seconds": 172800,
-          "status": "planned"
+          "unlock_level": 8,
+          "payout": 260,
+          "cost": 0,
+          "gem_cost": 6,
+          "xp": 1,
+          "color": "#7a4a22",
+          "note": "values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash"
         }
       ]
     },
     {
       "id": "hazelnut",
       "name": "Hazelnut Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "hazelnut_tree",
           "name": "Hazelnut Tree",
           "cycle_seconds": 172800,
-          "status": "planned"
+          "unlock_level": 14,
+          "payout": 300,
+          "cost": 0,
+          "gem_cost": 5,
+          "xp": 1,
+          "color": "#a07040",
+          "note": "values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash"
         }
       ]
     },
     {
       "id": "pecan",
       "name": "Pecan Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "pecan_tree",
           "name": "Pecan Tree",
           "cycle_seconds": 172800,
-          "status": "planned"
+          "unlock_level": 20,
+          "payout": 400,
+          "cost": 0,
+          "gem_cost": 7,
+          "xp": 2,
+          "color": "#8a5a2e",
+          "note": "values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash"
         }
       ]
     },
     {
       "id": "pistachio",
       "name": "Pistachio Trees",
-      "doc": "From FarmVille's tree list; not built yet.",
+      "doc": "From FarmVille's tree list.",
       "variants": [
         {
           "id": "pistachio_tree",
           "name": "Pistachio Tree",
           "cycle_seconds": 172800,
-          "status": "planned"
+          "unlock_level": 23,
+          "payout": 450,
+          "cost": 0,
+          "gem_cost": 8,
+          "xp": 2,
+          "color": "#a0b860",
+          "note": "values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash"
         }
       ]
     }

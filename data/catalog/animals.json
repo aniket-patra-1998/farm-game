@@ -83,13 +83,26 @@
           "color": "#f2c230",
           "accent": "#e2453c",
           "breed": "golden"
+        },
+        {
+          "id": "cornish_chicken",
+          "name": "Cornish Hen",
+          "product": "Eggs",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 70,
+          "xp": 1,
+          "color": "#c08a4a",
+          "accent": "#e2453c",
+          "breed": "cornish",
+          "look": "a plump Cornish hen with glossy chestnut-brown feathers laced with black"
         }
       ]
     },
     {
       "id": "turkey",
       "name": "Turkeys",
-      "doc": "Share the Chicken Coop.",
+      "doc": "Share the Chicken Coop. A Baby Turkey grows up after its first collection.",
       "variants": [
         {
           "id": "turkey",
@@ -100,13 +113,40 @@
           "payout": 120,
           "color": "#8a5a3c",
           "accent": "#c0392b"
+        },
+        {
+          "id": "baby_turkey",
+          "name": "Baby Turkey",
+          "product": "Feathers",
+          "unlock_level": 10,
+          "cost": 0,
+          "gem_cost": 7,
+          "payout": 40,
+          "xp": 1,
+          "color": "#a07a5a",
+          "accent": "#c0392b",
+          "young": true,
+          "grows_into": "turkey",
+          "look": "a fluffy brown baby turkey chick"
+        },
+        {
+          "id": "wild_turkey",
+          "name": "Wild Turkey",
+          "product": "Feathers",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 160,
+          "color": "#5a3a22",
+          "accent": "#c0392b",
+          "lost": true,
+          "look": "a wild turkey with bronze-brown feathers and a fanned tail"
         }
       ]
     },
     {
       "id": "duck",
       "name": "Ducks",
-      "doc": "Live in the Duck Pond.",
+      "doc": "Live in the Duck Pond. The Ugly Duckling grows into a Swan.",
       "variants": [
         {
           "id": "duck",
@@ -118,6 +158,44 @@
           "xp": 1,
           "color": "#fbfaf4",
           "accent": "#f2a33a"
+        },
+        {
+          "id": "ugly_duckling",
+          "name": "Ugly Duckling",
+          "product": "Feathers",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 60,
+          "color": "#9a9a8a",
+          "accent": "#f2a33a",
+          "lost": true,
+          "young": true,
+          "grows_into": "swan",
+          "look": "a scruffy grey ugly duckling with fluffy down"
+        },
+        {
+          "id": "swan",
+          "name": "Swan",
+          "product": "Feathers",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 180,
+          "xp": 2,
+          "color": "#fbfaf4",
+          "accent": "#f2702a",
+          "look": "a graceful white swan with an orange beak"
+        },
+        {
+          "id": "belted_duck",
+          "name": "Belted Duck",
+          "product": "Feathers",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 90,
+          "color": "#2b2b30",
+          "accent": "#f2a33a",
+          "lost": true,
+          "look": "a black duck with a white belt of feathers around its middle"
         }
       ]
     },
@@ -141,7 +219,7 @@
     {
       "id": "cow",
       "name": "Cows",
-      "doc": "Live in the Dairy Farm. A bull brings calves, raised in the Nursery.",
+      "doc": "Live in the Dairy Farm. A bull brings calves of the breeds inside, raised in the Nursery.",
       "variants": [
         {
           "id": "cow",
@@ -176,25 +254,238 @@
           "payout": 20,
           "xp": 1,
           "color": "#f4f1ea",
-          "accent": "#3b3330"
+          "accent": "#3b3330",
+          "young": true
         },
         {
           "id": "brown_cow",
           "name": "Brown Cow",
-          "note": "verify against FarmVille before building",
-          "status": "planned"
+          "product": "Chocolate Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 110,
+          "color": "#8a5a3a",
+          "accent": "#f4f1ea",
+          "lost": true,
+          "baby": "brown_calf"
         },
         {
           "id": "pink_cow",
           "name": "Pink Cow",
-          "note": "verify against FarmVille before building",
-          "status": "planned"
+          "product": "Strawberry Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 140,
+          "color": "#f4a8c0",
+          "accent": "#fbe3ea",
+          "lost": true,
+          "baby": "pink_calf"
+        },
+        {
+          "id": "jersey_cow",
+          "name": "Jersey Cow",
+          "product": "Milk",
+          "unlock_level": 8,
+          "cost": 0,
+          "gem_cost": 18,
+          "payout": 120,
+          "xp": 2,
+          "color": "#c08a50",
+          "accent": "#3b2a1e",
+          "baby": "jersey_calf",
+          "note": "values estimated in FarmVille's style"
         },
         {
           "id": "longhorn",
           "name": "Longhorn Cattle",
-          "note": "verify against FarmVille before building",
-          "status": "planned"
+          "product": "Milk",
+          "unlock_level": 10,
+          "cost": 0,
+          "gem_cost": 20,
+          "payout": 130,
+          "xp": 2,
+          "color": "#b5652e",
+          "accent": "#f0e6d0",
+          "baby": "longhorn_calf",
+          "look": "a Texas longhorn steer with very long, wide curved horns and a reddish-brown and white coat"
+        },
+        {
+          "id": "hereford_cow",
+          "name": "Hereford Cow",
+          "product": "Milk",
+          "unlock_level": 12,
+          "cost": 0,
+          "gem_cost": 22,
+          "payout": 140,
+          "xp": 2,
+          "color": "#8a3a1e",
+          "accent": "#f6f2ea",
+          "baby": "hereford_calf",
+          "look": "a Hereford cow: deep red body with a white face, white chest and white socks"
+        },
+        {
+          "id": "gelbvieh_cow",
+          "name": "Gelbvieh Cow",
+          "product": "Milk",
+          "unlock_level": 14,
+          "cost": 0,
+          "gem_cost": 22,
+          "payout": 140,
+          "xp": 2,
+          "color": "#c0802a",
+          "accent": "#7a4a1e",
+          "baby": "gelbvieh_calf",
+          "look": "a Gelbvieh cow: a sturdy golden-red cow with a solid coat"
+        },
+        {
+          "id": "galician_blond_cow",
+          "name": "Galician Blond Cow",
+          "product": "Milk",
+          "unlock_level": 16,
+          "cost": 0,
+          "gem_cost": 24,
+          "payout": 150,
+          "xp": 2,
+          "color": "#e0b070",
+          "accent": "#8a6030",
+          "baby": "galician_blond_calf",
+          "look": "a Galician Blond cow: a big, pale wheat-blond cow"
+        },
+        {
+          "id": "red_cow",
+          "name": "Red Cow",
+          "product": "Milk",
+          "unlock_level": 30,
+          "cost": 100000,
+          "payout": 600,
+          "xp": 10,
+          "color": "#b0301e",
+          "accent": "#f6f2ea",
+          "baby": "red_calf",
+          "look": "a bright red cow with a glossy coat",
+          "note": "values estimated in FarmVille's style"
+        },
+        {
+          "id": "belted_cow",
+          "name": "Belted Cow",
+          "product": "Milk",
+          "unlock_level": 40,
+          "cost": 25000,
+          "payout": 300,
+          "xp": 5,
+          "color": "#2b2b30",
+          "accent": "#f6f2ea",
+          "baby": "belted_calf",
+          "look": "a Belted Galloway cow: shaggy black with a wide white belt around its middle",
+          "note": "values estimated in FarmVille's style"
+        },
+        {
+          "id": "brown_calf",
+          "name": "Brown Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#8a5a3a",
+          "accent": "#f4f1ea",
+          "young": true
+        },
+        {
+          "id": "pink_calf",
+          "name": "Pink Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#f4a8c0",
+          "accent": "#fbe3ea",
+          "young": true
+        },
+        {
+          "id": "jersey_calf",
+          "name": "Jersey Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#c08a50",
+          "accent": "#3b2a1e",
+          "young": true
+        },
+        {
+          "id": "longhorn_calf",
+          "name": "Longhorn Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#b5652e",
+          "accent": "#f0e6d0",
+          "young": true
+        },
+        {
+          "id": "hereford_calf",
+          "name": "Hereford Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#8a3a1e",
+          "accent": "#f6f2ea",
+          "young": true
+        },
+        {
+          "id": "gelbvieh_calf",
+          "name": "Gelbvieh Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#c0802a",
+          "accent": "#7a4a1e",
+          "young": true
+        },
+        {
+          "id": "galician_blond_calf",
+          "name": "Galician Blond Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#e0b070",
+          "accent": "#8a6030",
+          "young": true
+        },
+        {
+          "id": "red_calf",
+          "name": "Red Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#b0301e",
+          "accent": "#f6f2ea",
+          "young": true
+        },
+        {
+          "id": "belted_calf",
+          "name": "Belted Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#2b2b30",
+          "accent": "#f6f2ea",
+          "young": true
         }
       ]
     },
@@ -254,13 +545,31 @@
           "payout": 20,
           "xp": 1,
           "color": "#fbf6ec",
-          "accent": "#d9cfc0"
+          "accent": "#d9cfc0",
+          "young": true
         },
         {
           "id": "black_sheep",
           "name": "Black Sheep",
-          "note": "verify against FarmVille before building",
-          "status": "planned"
+          "product": "Black Wool",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 190,
+          "color": "#2b2b30",
+          "accent": "#1a1a1e",
+          "lost": true
+        },
+        {
+          "id": "mouflon_sheep",
+          "name": "Mouflon Sheep",
+          "product": "Wool",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 210,
+          "color": "#8a5a32",
+          "accent": "#e8dcc4",
+          "lost": true,
+          "look": "a mouflon wild sheep: chestnut-brown coat, pale belly and big curled horns"
         }
       ]
     },
@@ -375,7 +684,21 @@
           "payout": 20,
           "xp": 1,
           "color": "#f9c8ca",
-          "accent": "#d9878b"
+          "accent": "#d9878b",
+          "young": true
+        },
+        {
+          "id": "saddleback_pig",
+          "name": "Saddleback Pig",
+          "product": "Truffles",
+          "unlock_level": 35,
+          "cost": 5000,
+          "payout": 260,
+          "xp": 4,
+          "color": "#2b2b30",
+          "accent": "#f4f1ea",
+          "look": "a Saddleback pig: black with a white band over its shoulders and front legs",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -394,6 +717,33 @@
           "payout": 200,
           "color": "#d8c7a8",
           "accent": "#7a6650"
+        },
+        {
+          "id": "boer_goat",
+          "name": "Boer Goat",
+          "product": "Goat Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 260,
+          "color": "#f4f1ea",
+          "accent": "#8a3a1e",
+          "lost": true,
+          "cycle_seconds": 172800,
+          "look": "a Boer goat: white body with a red-brown head and floppy ears"
+        },
+        {
+          "id": "arapawa_goat",
+          "name": "Arapawa Goat",
+          "product": "Goat Milk",
+          "unlock_level": 55,
+          "cost": 8000,
+          "cycle_seconds": 172800,
+          "payout": 420,
+          "xp": 5,
+          "color": "#6a4a32",
+          "accent": "#2b1a10",
+          "look": "an Arapawa goat: dark brown and black shaggy coat with long swept-back horns",
+          "note": "values estimated in FarmVille's style"
         }
       ]
     },
@@ -447,7 +797,72 @@
           "payout": 20,
           "xp": 1,
           "color": "#b07a48",
-          "accent": "#4a2c18"
+          "accent": "#4a2c18",
+          "young": true
+        },
+        {
+          "id": "gray_horse",
+          "name": "Gray Horse",
+          "product": "Horse Hair",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 340,
+          "color": "#a0a0a8",
+          "accent": "#5a5a62",
+          "lost": true,
+          "cycle_seconds": 259200,
+          "baby": "gray_foal",
+          "xp": 3
+        },
+        {
+          "id": "black_pony",
+          "name": "Black Pony",
+          "product": "Horse Hair",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 110,
+          "color": "#2b2b30",
+          "accent": "#5a5a62",
+          "lost": true,
+          "cycle_seconds": 172800
+        },
+        {
+          "id": "mustang",
+          "name": "Mustang",
+          "product": "Horse Hair",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 360,
+          "color": "#8a4a22",
+          "accent": "#2b1a10",
+          "lost": true,
+          "cycle_seconds": 259200,
+          "baby": "mustang_foal",
+          "xp": 3
+        },
+        {
+          "id": "gray_foal",
+          "name": "Gray Foal",
+          "product": "Horse Hair",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#b8b8c0",
+          "accent": "#5a5a62",
+          "young": true
+        },
+        {
+          "id": "mustang_foal",
+          "name": "Mustang Foal",
+          "product": "Horse Hair",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#9a5a2e",
+          "accent": "#2b1a10",
+          "young": true
         }
       ]
     },
@@ -460,13 +875,14 @@
           "id": "donkey",
           "name": "Donkey",
           "product": "Donkey Milk",
-          "unlock_level": 15,
+          "unlock_level": 99,
           "cost": 800,
           "cycle_seconds": 172800,
           "payout": 270,
           "xp": 3,
           "color": "#9c9289",
-          "accent": "#4a403a"
+          "accent": "#4a403a",
+          "note": "Mystery Box only, as in FarmVille"
         }
       ]
     },
@@ -503,6 +919,26 @@
           "xp": 0,
           "color": "#f2c230",
           "unlock_level": 99
+        }
+      ]
+    },
+    {
+      "id": "turtle",
+      "name": "Turtles",
+      "doc": "A lost animal that lives in the Duck Pond.",
+      "variants": [
+        {
+          "id": "turtle",
+          "name": "Turtle",
+          "product": "Shells",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 130,
+          "color": "#4a7a3a",
+          "accent": "#c8b070",
+          "lost": true,
+          "cycle_seconds": 172800,
+          "look": "a friendly box turtle with a domed green and tan shell"
         }
       ]
     }

@@ -112,6 +112,8 @@ const STRAY_MIN_GAP := 3 * 3600    # a new stray turns up 3 to 6 hours after the
 const STRAY_MAX_GAP := 6 * 3600
 const STRAY_STAYS := 86400         # a stray nobody adopts wanders off after a day
 const STRAY_ADOPT_XP := 5
+const LOST_WEIGHT := 0.25           # each lost animal's share of the stray pool (a 100-coin animal is 1.0)
+const MYSTERY_BOX_GEM_COST := 12
 const UNWITHER_GEM_COST := 3
 const START_COINS := 200
 const START_GEMS := 5
@@ -163,6 +165,7 @@ var farmhands := 0                 # collect every animal at once
 var arborists := 0                 # collect every tree at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
 var egg_data := {}                 # data/mystery_eggs.json
+var box_data := {}                 # data/mystery_box.json
 var last_daily_day := 0            # day number of the last daily gift
 var daily_streak := 0              # consecutive days the daily bonus was collected
 var stored: Array = []             # objects put away in the barn (no row or col)
@@ -203,6 +206,7 @@ func _ready() -> void:
 	_load_items()
 	expansion_steps = _read_json("res://data/expansions.json").get("steps", [])
 	egg_data = _read_json("res://data/mystery_eggs.json")
+	box_data = _read_json("res://data/mystery_box.json")
 	if not saving_enabled or not load_game():
 		_new_game()
 	# Deferred so the HUD is connected and can show the message.
@@ -843,8 +847,16 @@ func collect(uid: int) -> Dictionary:
 	_bump("collected", 1)
 	var part := _roll_part()
 	var extras: Array[String] = []
+	var name_before: String = item_data(obj["id"])["name"]
 	if is_building(obj):
 		extras = _building_specials(obj)
+		extras.append_array(_grow_up_inside(obj))
+	else:
+		var adult := _grows_into(obj["id"])
+		if adult != "":
+			obj["id"] = adult
+			message.emit("Your %s grew up into a %s!" % [name_before.to_lower(), item_data(adult)["name"].to_lower()])
+			extras.append("Grew up!")
 	if drop.get("type", "") == "golden":
 		_bump("golden_finds", 1)
 		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
@@ -852,7 +864,47 @@ func collect(uid: int) -> Dictionary:
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	_objects_updated()
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
-		"drop_text": drop.get("text", ""), "name": item_data(obj["id"])["name"], "part": part, "extras": extras}
+		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras}
+
+
+## FarmVille's Baby Turkey and Ugly Duckling grow up after their first collection.
+func _grows_into(item_id: String) -> String:
+	var d := catalog.get_def(item_id)
+	return (d as AnimalDef).grows_into() if d is AnimalDef else ""
+
+
+func _grow_up_inside(b: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	var inside: Dictionary = b.get("inside", {})
+	for id in inside.keys():
+		var adult := _grows_into(id)
+		if adult == "" or int(inside[id]) <= 0:
+			continue
+		inside[adult] = int(inside.get(adult, 0)) + int(inside[id])
+		out.append("%d %s grew up!" % [int(inside[id]), item_data(id)["name"]])
+		inside.erase(id)
+	return out
+
+
+## Which baby a Dairy Farm or Horse Stable brings: a breed's own baby, likelier for the breeds it holds more of.
+func _pick_baby(b: Dictionary, plain: String) -> String:
+	var inside: Dictionary = b.get("inside", {})
+	var total := 0
+	for id in inside:
+		var d := catalog.get_def(id)
+		if d is AnimalDef and not (d as AnimalDef).is_stray_only() and not (d as AnimalDef).is_young():
+			total += int(inside[id])
+	if total == 0:
+		return plain
+	var pick := rng.randi_range(1, total)
+	for id in inside:
+		var d := catalog.get_def(id)
+		if d is AnimalDef and not (d as AnimalDef).is_stray_only() and not (d as AnimalDef).is_young():
+			pick -= int(inside[id])
+			if pick <= 0:
+				var baby := (d as AnimalDef).baby()
+				return baby if baby != "" else plain
+	return plain
 
 
 # ---------------------------------------------------------------- buildings
@@ -1033,15 +1085,17 @@ func _building_specials(b: Dictionary) -> Array[String]:
 				fertilizer_bags += 1
 				out.append("+1 Fertilizer")
 			if has_inside(b, "bull") and drops_enabled and rng.randf() < CALF_CHANCE:
-				if place_somewhere("calf"):
-					message.emit("A calf was born! Raise it in a Nursery Barn.")
-					out.append("A calf!")
+				var calf := _pick_baby(b, "calf")
+				if place_somewhere(calf):
+					message.emit("A %s was born! Raise it in a Nursery Barn." % item_data(calf)["name"].to_lower())
+					out.append("A %s!" % item_data(calf)["name"].to_lower())
 		"foals":
 			var with_stallion := has_inside(b, "stallion")
 			if drops_enabled and with_stallion and rng.randf() < FOAL_CHANCE:
-				if place_somewhere("foal"):
-					message.emit("A foal was born! Raise it in a Nursery Barn.")
-					out.append("A foal!")
+				var foal := _pick_baby(b, "foal")
+				if place_somewhere(foal):
+					message.emit("A %s was born! Raise it in a Nursery Barn." % item_data(foal)["name"].to_lower())
+					out.append("A %s!" % item_data(foal)["name"].to_lower())
 			if drops_enabled and rng.randf() < STABLE_HELPER_CHANCE:
 				farmhands += 1
 				out.append("+1 Farmhand")
@@ -1100,18 +1154,7 @@ func open_mystery_egg(colour: String) -> String:
 	if int(mystery_eggs.get(colour, 0)) <= 0:
 		return ""
 	mystery_eggs[colour] = int(mystery_eggs[colour]) - 1
-	var prizes: Array = egg_data["colours"][colour]["prizes"]
-	var total := 0
-	for p in prizes:
-		total += int(p[2])
-	var roll := rng.randi_range(1, total)
-	var prize: Array = prizes[-1]
-	for p in prizes:
-		roll -= int(p[2])
-		if roll <= 0:
-			prize = p
-			break
-	var text := _give_prize(prize)
+	var text := _give_prize(_weighted_prize(egg_data["colours"][colour]["prizes"]))
 	_bump("eggs_opened", 1)
 	message.emit("%s: %s" % [egg_data["colours"][colour]["name"], text])
 	inventory_changed.emit()
@@ -1131,7 +1174,7 @@ func _give_prize(prize: Array) -> String:
 		"gems":
 			add_gems(int(prize[1]))
 			return "%d gems" % int(prize[1])
-		"chicken":
+		"chicken", "item":
 			if place_somewhere(prize[1]):
 				return "a %s" % item_data(prize[1])["name"]
 			add_coins(200)
@@ -1152,7 +1195,41 @@ func _give_prize(prize: Array) -> String:
 		"arborist":
 			arborists += int(prize[1])
 			return "%d Arborist" % int(prize[1])
+		"fertilize_all":
+			fertilize_alls += int(prize[1])
+			return "%d Fertilize All" % int(prize[1])
 	return ""
+
+
+## Picks one prize from a weighted list: [kind, amount or item, weight].
+func _weighted_prize(prizes: Array) -> Array:
+	var total := 0
+	for p in prizes:
+		total += int(p[2])
+	var roll := rng.randi_range(1, total)
+	for p in prizes:
+		roll -= int(p[2])
+		if roll <= 0:
+			return p
+	return prizes[-1]
+
+
+## FarmVille's Mystery Box: bought with premium currency, opens into one random prize.
+## Some things (the Donkey) come only from here.
+func buy_mystery_box() -> String:
+	if box_data.is_empty() or not spend_gems(int(box_data.get("gem_cost", MYSTERY_BOX_GEM_COST))):
+		return ""
+	return _open_box()
+
+
+func _open_box() -> String:
+	var text := _give_prize(_weighted_prize(box_data["prizes"]))
+	_bump("boxes_opened", 1)
+	message.emit("Mystery Box: %s" % text)
+	inventory_changed.emit()
+	_objects_updated()
+	queue_save()
+	return text
 
 
 ## Nursery Barn: each baby grows a day per collection; grown ones move out as adults.
@@ -1960,6 +2037,9 @@ func _spawn_stray() -> bool:
 			# FarmVille's lonely bull, wandering stallion, ram and boar: only once you have their home.
 			if _owns(str(it.get("home", ""))):
 				w = 0.6
+		elif it.get("lost", false):
+			# FarmVille's lost animals (Pink Cow, Black Sheep, Ugly Duckling...): never sold, only adopted.
+			w = LOST_WEIGHT
 		elif int(it["unlock_level"]) <= level() + 2 and not it.has("gem_cost"):
 			w = 1.0 / maxf(1.0, float(it["cost"]) / 100.0)
 		if w > 0.0:

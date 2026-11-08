@@ -1789,3 +1789,115 @@ func test_73_tool_scripts_compile() -> void:
 	for path in ["res://tools/render_refs.gd", "res://tools/render_sprites.gd", "res://tools/style_preview.gd", "res://tests/shots.gd"]:
 		var script := load(path) as GDScript
 		_check(script != null and script.can_instantiate(), "%s compiles" % path)
+
+
+# ---------------------------------------------------------------- FarmVille's random events, round 2
+
+func test_74_lost_animals_wander_in_and_are_never_sold() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(5)
+	var lost: Array[String] = []
+	for id in g.item_order:
+		var d := g.catalog.get_def(id)
+		if d is AnimalDef and (d as AnimalDef).is_lost():
+			lost.append(id)
+			_check(not d.in_market(), "%s isn't sold in the Market" % id)
+	for id in ["brown_cow", "pink_cow", "black_sheep", "ugly_duckling", "wild_turkey", "gray_horse", "black_pony", "turtle"]:
+		_check(lost.has(id), "%s is a lost animal, as in FarmVille" % id)
+	var seen := {}
+	for k in 400:
+		if g._spawn_stray():
+			seen[g.objects[-1]["id"]] = true
+			g.objects.pop_back()
+			g._rebuild_occupancy()
+	var lost_seen := 0
+	for id in lost:
+		if seen.has(id):
+			lost_seen += 1
+	_check(lost_seen >= lost.size() / 2.0, "most lost animals turn up over time (%d of %d)" % [lost_seen, lost.size()])
+	_check(not seen.has("hereford_cow") and not seen.has("baby_turkey"), "gem animals never wander in")
+	_done(g)
+
+
+func test_75_breeds_have_their_own_babies() -> void:
+	var g := _farm(true)
+	_eq((g.catalog.get_def("hereford_cow") as AnimalDef).baby(), "hereford_calf", "a Hereford Cow has Hereford Calves")
+	_check((g.catalog.get_def("hereford_calf") as AnimalDef).is_young(), "a calf is young")
+	_eq(g._pick_baby({"inside": {"cow": 4, "bull": 1}}, "calf"), "calf", "plain cows have plain calves")
+	_eq(g._pick_baby({"inside": {"hereford_cow": 3, "bull": 1}}, "calf"), "hereford_calf", "Herefords have Hereford calves")
+	_eq(g._pick_baby({"inside": {"gray_horse": 2, "stallion": 1}}, "foal"), "gray_foal", "gray horses have gray foals")
+	var nursery := g.catalog.get_def("nursery_barn") as BuildingDef
+	for baby in ["hereford_calf", "pink_calf", "gray_foal", "mustang_foal"]:
+		_check(nursery.accepts(baby, "animal"), "the Nursery raises %s" % baby)
+	_eq(nursery.data["grows_into"]["pink_calf"], "pink_cow", "a pink calf grows into a pink cow")
+	# In a real Dairy Farm with a bull, calves follow the breeds inside.
+	g.coins = 1000000
+	g.xp = g.xp_for_level(6)
+	g.buy_and_place("cow_shed", 8, 8)
+	var dairy := g.object_at(g.index_of(8, 8))
+	dairy["inside"] = {"jersey_cow": 4, "bull": 1}
+	for d in 40:
+		_skip(g, 86400)
+		g.collect(int(dairy["uid"]))
+	_check(_count(g, "jersey_calf") > 0, "Jersey calves were born (%d)" % _count(g, "jersey_calf"))
+	_eq(_count(g, "calf"), 0, "and no plain calves")
+	_done(g)
+
+
+func test_76_baby_turkey_and_ugly_duckling_grow_up() -> void:
+	var g := _farm()
+	_check(g.place_somewhere("baby_turkey"), "a baby turkey on the farm")
+	var t: Dictionary = g.objects[-1]
+	_skip(g, 2 * 86400)
+	var r := g.collect(int(t["uid"]))
+	_eq(r.get("name", ""), "Baby Turkey", "it was collected as a baby")
+	_eq(t["id"], "turkey", "and grew into a turkey after its first collection")
+	_check(r["extras"].has("Grew up!"), "the collection says so")
+	# Inside a home too.
+	g.coins = 1000000
+	g.xp = g.xp_for_level(6)
+	g.buy_and_place("duck_pond", 8, 8)
+	var pond := g.object_at(g.index_of(8, 8))
+	pond.erase("construction")
+	pond["inside"] = {"ugly_duckling": 2, "duck": 1}
+	_skip(g, 2 * 86400)
+	g.collect(int(pond["uid"]))
+	_eq(int(pond["inside"].get("swan", 0)), 2, "ugly ducklings grew into swans")
+	_check(not pond["inside"].has("ugly_duckling"), "no ducklings left")
+	_done(g)
+
+
+func test_77_mystery_box_and_cornish_eggs() -> void:
+	var g := _farm()
+	_check(not g.catalog.get_def("donkey").in_market(), "the Donkey only comes in a Mystery Box")
+	_check(g.box_data["prizes"].any(func(p): return p[1] is String and p[1] == "donkey"), "the box can hold a Donkey")
+	g.gems = 0
+	_eq(g.buy_mystery_box(), "", "no box without gems")
+	var got := {}
+	for k in 30:
+		g.gems = GameState.MYSTERY_BOX_GEM_COST
+		var prize := g.buy_mystery_box()
+		_check(prize != "", "a box opens into a prize")
+		_check(g.gems == 0 or prize.ends_with("gems"), "a box costs %d gems" % GameState.MYSTERY_BOX_GEM_COST)
+		got[prize] = true
+	_check(got.size() >= 4, "boxes give different things (%d kinds)" % got.size())
+	_eq(g.stat("boxes_opened"), 30, "boxes are counted")
+	# Cornish hens lay Cornish eggs.
+	_check(g.egg_data["colours"].has("cornish"), "there is a Cornish Mystery Egg")
+	_eq(g.item_data("cornish_chicken")["breed"], "cornish", "Cornish hens are their own breed")
+	g.mystery_eggs["cornish"] = 3
+	for k in 3:
+		_check(g.open_mystery_egg("cornish") != "", "a Cornish egg opens")
+	_done(g)
+
+
+func test_78_every_new_item_has_a_home_and_art() -> void:
+	var g := _farm()
+	for id in g.item_order:
+		var d := g.catalog.get_def(id)
+		if d is AnimalDef:
+			_check(not g.catalog.homes_of(id).is_empty(), "%s has a home" % id)
+	_check(g.crops.has("forget_me_nots") and g.crops.has("saffron"), "every FarmVille market crop to level 90 is in the game")
+	_check(g.items.has("pistachio_tree") and g.items.has("date_tree"), "the extra fruit and nut trees are in the game")
+	_eq(int(g.items["almond_tree"]["gem_cost"]), 3, "nut trees cost gems, as Farm Cash trees did in FarmVille")
+	_done(g)

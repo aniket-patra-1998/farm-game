@@ -523,6 +523,7 @@ func _refresh_unwither() -> void:
 func _build_market(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text("Land", 26, BookPanel.SUN))
 	content.add_child(_land_card())
+	content.add_child(_mystery_box_card())
 	content.add_child(BookPanel.text(
 		"Buy, then drag onto an open grassy spot and let go. Use the Move tool to rearrange later.", 20, BookPanel.CREAM))
 	for section in [["tree", "Trees"], ["animal", "Animals"], ["building", "Buildings"], ["vehicle", "Vehicles"], ["decor", "Decorations"]]:
@@ -532,6 +533,24 @@ func _build_market(content: VBoxContainer) -> void:
 			if it["kind"] != section[0] or int(it["unlock_level"]) >= 99:
 				continue
 			content.add_child(_market_row(id, it))
+
+
+## FarmVille's Mystery Box: one random prize, and the only way to get a Donkey.
+func _mystery_box_card() -> Control:
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 10)
+	inner.add_child(BookPanel.text("Mystery Box", 22))
+	inner.add_child(BookPanel.text("One surprise inside: a rare decoration, coins, gems, helpers, or the Donkey, which only comes in a box.", 17))
+	var cost := int(Game.box_data.get("gem_cost", GameState.MYSTERY_BOX_GEM_COST))
+	var buy := _panel_button("Open one: %d gems" % cost)
+	buy.disabled = Game.gems < cost
+	buy.pressed.connect(func() -> void:
+		var prize := Game.buy_mystery_box()
+		if prize != "":
+			show_message("You got " + prize)
+			_book.refresh())
+	inner.add_child(buy)
+	return BookPanel.card_frame(inner)
 
 
 func _land_card() -> Control:

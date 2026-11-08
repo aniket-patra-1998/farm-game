@@ -1,5 +1,5 @@
 {
-  "_note": "Mystery Eggs from the Chicken Coop. Colour follows the breeds in the coop; rarer colours give better prizes. Each prize: kind (coins, xp, chicken, materials, unwither, farmhand, arborist, gems), amount or item, weight.",
+  "_note": "Mystery Eggs from the Chicken Coop. Colour follows the breeds in the coop; rarer colours give better prizes. Each prize: kind (coins, xp, chicken, item, materials, unwither, farmhand, arborist, gems), amount or item, weight.",
   "chance_per_chicken": 0.005,
   "max_chance": 0.4,
   "colours": {
@@ -110,6 +110,41 @@
           "chicken",
           "grey_chicken",
           15
+        ],
+        [
+          "chicken",
+          "cornish_chicken",
+          8
+        ]
+      ]
+    },
+    "cornish": {
+      "name": "Cornish Mystery Egg",
+      "prizes": [
+        [
+          "chicken",
+          "cornish_chicken",
+          30
+        ],
+        [
+          "materials",
+          6,
+          25
+        ],
+        [
+          "xp",
+          80,
+          20
+        ],
+        [
+          "fertilize_all",
+          1,
+          15
+        ],
+        [
+          "gems",
+          1,
+          10
         ]
       ]
     },
@@ -145,6 +180,11 @@
           "gems",
           1,
           5
+        ],
+        [
+          "chicken",
+          "cornish_chicken",
+          10
         ]
       ]
     },

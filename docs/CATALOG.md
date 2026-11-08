@@ -7,15 +7,15 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 
 | Category | Families | In game | Planned |
 |---|---|---|---|
-| Crops | 10 | 29 | 38 |
+| Crops | 10 | 67 | 0 |
 | Materials | 2 | 10 | 0 |
-| Trees | 32 | 28 | 18 |
-| Animals | 14 | 33 | 4 |
+| Trees | 32 | 46 | 0 |
+| Animals | 15 | 68 | 0 |
 | Buildings | 6 | 13 | 9 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 37 | 0 |
-| Collectibles | 11 sets | 55 | 0 |
-| **All** | **86** | **209** | **69** |
+| Collectibles | 20 sets | 100 | 0 |
+| **All** | **96** | **345** | **9** |
 
 ## Adding an item
 
@@ -126,6 +126,10 @@ Animals, loose on the farm or inside their home.
 | `stray_only` | bool | false |  | Only wanders in as a stray; never bought. |
 | `home` | string → Building |  |  | For strays: the building the player must own before it can appear. |
 | `rare_pig` | bool | false |  | A rare breed traded for truffles at the Pig Pen. |
+| `lost` | bool | false |  | A lost animal: only wanders onto the farm (FarmVille's lost animals) and is adopted for free; never in the Market. |
+| `young` | bool | false |  | A baby: drawn small and painted as a young animal. |
+| `baby` | string → Animal |  |  | The baby this breed has when its home brings one (a Hereford Cow has Hereford Calves). Empty: the plain calf or foal. |
+| `grows_into` | string → Animal |  |  | Grows into this animal after its first collection (Baby Turkey into Turkey, Ugly Duckling into Swan). |
 
 ### Building (extends Placeable)
 
@@ -193,8 +197,8 @@ Berries.
 | ✅ | Raspberries | `raspberries` | 8 | 20 | 2 h | 40 | 1 |
 | ✅ | Blueberries | `blueberries` | 16 | 40 | 4 h | 75 | 1 |
 | ✅ | Cranberries | `cranberries` | 10 | 45 | 10 h | 110 | 2 |
-| 🕓 | Blackberries | `blackberries` | 29 |  | 4 h |  |  |
-| 🕓 | Elderberries | `elderberries` | 39 |  | 12 h |  |  |
+| ✅ | Blackberries (values estimated in FarmVille's style) | `blackberries` | 29 | 15 | 4 h | 40 | 1 |
+| ✅ | Elderberries (values estimated in FarmVille's style) | `elderberries` | 39 | 25 | 12 h | 100 | 1 |
 
 ### Grains
 
@@ -205,11 +209,11 @@ Grains.
 | ✅ | Wheat | `wheat` | 1 | 15 | 12 h | 60 | 1 |
 | ✅ | Corn | `corn` | 20 | 110 | 3 days | 400 | 4 |
 | ✅ | Rice | `rice` | 7 | 40 | 12 h | 105 | 2 |
-| 🕓 | Rye | `rye` | 21 |  | 20 h |  |  |
-| 🕓 | Red Wheat | `red_wheat` | 30 |  | 3 days |  |  |
-| 🕓 | Oats | `oats` | 53 |  | 8 h |  |  |
-| 🕓 | Posole Corn | `posole_corn` | 54 |  | 12 h |  |  |
-| 🕓 | Amaranth | `amaranth` | 76 |  | 16 h |  |  |
+| ✅ | Rye (values estimated in FarmVille's style) | `rye` | 21 | 35 | 20 h | 125 | 2 |
+| ✅ | Red Wheat (values estimated in FarmVille's style) | `red_wheat` | 30 | 135 | 3 days | 495 | 4 |
+| ✅ | Oats (values estimated in FarmVille's style) | `oats` | 53 | 25 | 8 h | 90 | 1 |
+| ✅ | Posole Corn (values estimated in FarmVille's style) | `posole_corn` | 54 | 30 | 12 h | 105 | 1 |
+| ✅ | Amaranth (values estimated in FarmVille's style) | `amaranth` | 76 | 45 | 16 h | 160 | 2 |
 
 ### Beans and Nuts
 
@@ -219,9 +223,9 @@ Beans and Nuts.
 |---|---|---|---|---|---|---|---|
 | ✅ | Soybeans | `soybeans` | 2 | 20 | 1 day | 80 | 2 |
 | ✅ | Peanuts | `peanuts` | 3 | 25 | 16 h | 80 | 2 |
-| 🕓 | Peas | `peas` | 32 |  | 1 day |  |  |
-| 🕓 | Purple Pod Peas | `purple_pod_peas` | 40 |  | 1 day |  |  |
-| 🕓 | Coffee | `coffee` | 23 |  | 16 h |  |  |
+| ✅ | Peas (values estimated in FarmVille's style) | `peas` | 32 | 45 | 1 day | 165 | 2 |
+| ✅ | Purple Pod Peas (values estimated in FarmVille's style) | `purple_pod_peas` | 40 | 50 | 1 day | 180 | 2 |
+| ✅ | Coffee (values estimated in FarmVille's style) | `coffee` | 23 | 30 | 16 h | 110 | 2 |
 
 ### Flowers
 
@@ -235,14 +239,14 @@ Flowers.
 | ✅ | Morning Glory | `morning_glory` | 13 | 50 | 12 h | 125 | 2 |
 | ✅ | Red Tulips | `red_tulips` | 15 | 60 | 1 day | 190 | 2 |
 | ✅ | Lavender | `lavender` | 17 | 80 | 2 days | 300 | 3 |
-| 🕓 | Gladiolus | `gladiolus` | 28 |  | 6 h |  |  |
-| 🕓 | Lilies | `lilies` | 35 |  | 1 day |  |  |
-| 🕓 | Purple Poppies | `purple_poppies` | 38 |  | 8 h |  |  |
-| 🕓 | Columbine | `columbine` | 44 |  | 4 h |  |  |
-| 🕓 | Iris | `iris` | 45 |  | 1 day |  |  |
-| 🕓 | Orange Daisies | `orange_daisies` | 59 |  | 1 day |  |  |
-| 🕓 | White Roses | `white_roses` | 80 |  | 1 day |  |  |
-| 🕓 | Forget-me-nots | `forget_me_nots` | 90 |  | 18 h |  |  |
+| ✅ | Gladiolus (values estimated in FarmVille's style) | `gladiolus` | 28 | 15 | 6 h | 55 | 1 |
+| ✅ | Lilies (values estimated in FarmVille's style) | `lilies` | 35 | 45 | 1 day | 170 | 2 |
+| ✅ | Purple Poppies (values estimated in FarmVille's style) | `purple_poppies` | 38 | 20 | 8 h | 75 | 1 |
+| ✅ | Columbine (values estimated in FarmVille's style) | `columbine` | 44 | 15 | 4 h | 45 | 1 |
+| ✅ | Iris (values estimated in FarmVille's style) | `iris` | 45 | 50 | 1 day | 190 | 2 |
+| ✅ | Orange Daisies (values estimated in FarmVille's style) | `orange_daisies` | 59 | 55 | 1 day | 210 | 2 |
+| ✅ | White Roses (values estimated in FarmVille's style) | `white_roses` | 80 | 65 | 1 day | 245 | 2 |
+| ✅ | Forget-me-nots (values estimated in FarmVille's style) | `forget_me_nots` | 90 | 55 | 18 h | 200 | 2 |
 
 ### Roots
 
@@ -252,9 +256,9 @@ Roots.
 |---|---|---|---|---|---|---|---|
 | ✅ | Potatoes | `potatoes` | 20 | 100 | 3 days | 380 | 4 |
 | ✅ | Carrots | `carrots` | 9 | 40 | 12 h | 110 | 2 |
-| 🕓 | Onions | `onions` | 34 |  | 12 h |  |  |
-| 🕓 | Ginger | `ginger` | 42 |  | 18 h |  |  |
-| 🕓 | Heirloom Carrots | `heirloom_carrots` | 57 |  | 12 h |  |  |
+| ✅ | Onions (values estimated in FarmVille's style) | `onions` | 34 | 25 | 12 h | 100 | 1 |
+| ✅ | Ginger (values estimated in FarmVille's style) | `ginger` | 42 | 35 | 18 h | 135 | 2 |
+| ✅ | Heirloom Carrots (values estimated in FarmVille's style) | `heirloom_carrots` | 57 | 30 | 12 h | 105 | 1 |
 
 ### Gourds and Melons
 
@@ -265,12 +269,12 @@ Gourds and Melons.
 | ✅ | Pumpkins | `pumpkins` | 5 | 30 | 8 h | 70 | 1 |
 | ✅ | Squash | `squash` | 4 | 35 | 2 days | 150 | 3 |
 | ✅ | Watermelon | `watermelon` | 18 | 110 | 4 days | 460 | 5 |
-| 🕓 | Zucchini | `zucchini` | 27 |  | 16 h |  |  |
-| 🕓 | Yellow Melon | `yellow_melon` | 33 |  | 4 days |  |  |
-| 🕓 | Acorn Squash | `acorn_squash` | 36 |  | 10 h |  |  |
-| 🕓 | Square Melon | `square_melon` | 52 |  | 1 day |  |  |
-| 🕓 | Carnival Squash | `carnival_squash` | 63 |  | 8 h |  |  |
-| 🕓 | Cucumber | `cucumber` | 43 |  | 1 day |  |  |
+| ✅ | Zucchini (values estimated in FarmVille's style) | `zucchini` | 27 | 30 | 16 h | 110 | 2 |
+| ✅ | Yellow Melon (values estimated in FarmVille's style) | `yellow_melon` | 33 | 185 | 4 days | 680 | 5 |
+| ✅ | Acorn Squash (values estimated in FarmVille's style) | `acorn_squash` | 36 | 20 | 10 h | 90 | 1 |
+| ✅ | Square Melon (values estimated in FarmVille's style) | `square_melon` | 52 | 55 | 1 day | 200 | 2 |
+| ✅ | Carnival Squash (values estimated in FarmVille's style) | `carnival_squash` | 63 | 25 | 8 h | 95 | 1 |
+| ✅ | Cucumber (values estimated in FarmVille's style) | `cucumber` | 43 | 50 | 1 day | 185 | 2 |
 
 ### Vegetables
 
@@ -283,10 +287,10 @@ Vegetables.
 | ✅ | Bell Peppers | `bell_peppers` | 11 | 60 | 2 days | 220 | 3 |
 | ✅ | Spinach | `spinach` | 6 | 35 | 14 h | 100 | 2 |
 | ✅ | Artichokes | `artichokes` | 6 | 60 | 4 days | 260 | 4 |
-| 🕓 | Ghost Chili | `ghost_chili` | 26 |  | 6 h |  |  |
-| 🕓 | Cabbage | `cabbage` | 27 |  | 2 days |  |  |
-| 🕓 | Broccoli | `broccoli` | 35 |  | 2 days |  |  |
-| 🕓 | Asparagus | `asparagus` | 37 |  | 16 h |  |  |
+| ✅ | Ghost Chili (values estimated in FarmVille's style) | `ghost_chili` | 26 | 15 | 6 h | 55 | 1 |
+| ✅ | Cabbage (values estimated in FarmVille's style) | `cabbage` | 27 | 85 | 2 days | 320 | 3 |
+| ✅ | Broccoli (values estimated in FarmVille's style) | `broccoli` | 35 | 95 | 2 days | 345 | 3 |
+| ✅ | Asparagus (values estimated in FarmVille's style) | `asparagus` | 37 | 30 | 16 h | 115 | 2 |
 
 ### Sweet Crops
 
@@ -297,7 +301,7 @@ Sweet Crops.
 | ✅ | Sugarcane | `sugarcane` | 19 | 60 | 8 h | 125 | 2 |
 | ✅ | Pineapples | `pineapples` | 15 | 75 | 2 days | 280 | 3 |
 | ✅ | Grapes | `grapes` | 19 | 80 | 1 day | 230 | 3 |
-| 🕓 | White Grapes | `white_grapes` | 29 |  | 12 h |  |  |
+| ✅ | White Grapes (values estimated in FarmVille's style) | `white_grapes` | 29 | 20 | 12 h | 95 | 1 |
 
 ### Fibre
 
@@ -306,7 +310,7 @@ Fibre.
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
 | ✅ | Cotton | `cotton` | 9 | 60 | 3 days | 240 | 3 |
-| 🕓 | Bamboo | `bamboo` | 60 |  | 16 h |  |  |
+| ✅ | Bamboo (values estimated in FarmVille's style) | `bamboo` | 60 | 40 | 16 h | 145 | 2 |
 
 ### Herbs and Teas
 
@@ -314,11 +318,11 @@ Herbs and Teas.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Green Tea | `green_tea` | 28 |  | 10 h |  |  |
-| 🕓 | Basil | `basil` | 48 |  | 10 h |  |  |
-| 🕓 | Lemon Balm | `lemon_balm` | 50 |  | 6 h |  |  |
-| 🕓 | Saffron | `saffron` | 64 |  | 10 h |  |  |
-| 🕓 | Clover | `clover` | 70 |  | 4 h |  |  |
+| ✅ | Green Tea (values estimated in FarmVille's style) | `green_tea` | 28 | 20 | 10 h | 90 | 1 |
+| ✅ | Basil (values estimated in FarmVille's style) | `basil` | 48 | 20 | 10 h | 90 | 1 |
+| ✅ | Lemon Balm (values estimated in FarmVille's style) | `lemon_balm` | 50 | 15 | 6 h | 60 | 1 |
+| ✅ | Saffron (values estimated in FarmVille's style) | `saffron` | 64 | 25 | 10 h | 100 | 1 |
+| ✅ | Clover (values estimated in FarmVille's style) | `clover` | 70 | 15 | 4 h | 50 | 1 |
 
 ## Materials
 
@@ -494,147 +498,147 @@ Coconut trees, and the rare variety an Orchard can sprout from them.
 
 ### Lime Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Lime Tree | `lime_tree` | 1 |  | 5 days |  |  |
+| ✅ | Lime Tree (values estimated in FarmVille's style) | `lime_tree` | 21 | 4,350 | 5 days | 1245 |  |
 
 ### Grapefruit Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Grapefruit Tree | `grapefruit_tree` | 1 |  | 3 days |  |  |
+| ✅ | Grapefruit Tree (values estimated in FarmVille's style) | `grapefruit_tree` | 22 | 2,700 | 3 days | 775 |  |
 
 ### Mandarin Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Mandarin Tree | `mandarin_tree` | 1 |  | 4 days |  |  |
+| ✅ | Mandarin Tree (values estimated in FarmVille's style) | `mandarin_tree` | 24 | 3,850 | 4 days | 1105 |  |
 
 ### Date Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Date Tree | `date_tree` | 1 |  | 3 days |  |  |
+| ✅ | Date Tree (values estimated in FarmVille's style) | `date_tree` | 26 | 3,100 | 3 days | 880 |  |
 
 ### Guava Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Guava Tree | `guava_tree` | 1 |  | 3 days |  |  |
+| ✅ | Guava Tree (values estimated in FarmVille's style) | `guava_tree` | 27 | 3,200 | 3 days | 910 |  |
 
 ### Persimmon Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Persimmon Tree | `persimmon_tree` | 1 |  | 4 days |  |  |
+| ✅ | Persimmon Tree (values estimated in FarmVille's style) | `persimmon_tree` | 29 | 4,500 | 4 days | 1285 |  |
 
 ### Starfruit Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Starfruit Tree | `starfruit_tree` | 1 |  | 4 days |  |  |
+| ✅ | Starfruit Tree (values estimated in FarmVille's style) | `starfruit_tree` | 31 | 4,750 | 4 days | 1355 |  |
 
 ### Passion Fruit Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Passion Fruit Tree | `passion_fruit_tree` | 1 |  | 5 days |  |  |
+| ✅ | Passion Fruit Tree (values estimated in FarmVille's style) | `passion_fruit_tree` | 33 | 6,250 | 5 days | 1785 |  |
 
 ### Jackfruit Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Jackfruit Tree | `jackfruit_tree` | 1 |  | 3 days |  |  |
+| ✅ | Jackfruit Tree (values estimated in FarmVille's style) | `jackfruit_tree` | 35 | 3,950 | 3 days | 1125 |  |
 
 ### Asian Pear Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Asian Pear Tree | `asian_pear_tree` | 1 |  | 2 days |  |  |
+| ✅ | Asian Pear Tree (values estimated in FarmVille's style) | `asian_pear_tree` | 37 | 2,750 | 2 days | 785 |  |
 
 ### Tamarind Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Tamarind Tree | `tamarind_tree` | 1 |  | 3 days |  |  |
+| ✅ | Tamarind Tree (values estimated in FarmVille's style) | `tamarind_tree` | 39 | 4,300 | 3 days | 1235 |  |
 
 ### Almond Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Almond Tree | `almond_tree` | 1 |  | 3 days |  |  |
+| ✅ | Almond Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `almond_tree` | 5 | 3 gems | 3 days | 255 |  |
 
 ### Walnut Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Walnut Tree | `walnut_tree` | 1 |  | 3 days |  |  |
+| ✅ | Walnut Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `walnut_tree` | 11 | 5 gems | 3 days | 405 |  |
 
 ### Cashew Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Cashew Tree | `cashew_tree` | 1 |  | 3 days |  |  |
+| ✅ | Cashew Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `cashew_tree` | 17 | 6 gems | 3 days | 525 |  |
 
 ### Chestnut Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Chestnut Tree | `chestnut_tree` | 1 |  | 2 days |  |  |
+| ✅ | Chestnut Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `chestnut_tree` | 8 | 6 gems | 2 days | 260 |  |
 
 ### Hazelnut Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Hazelnut Tree | `hazelnut_tree` | 1 |  | 2 days |  |  |
+| ✅ | Hazelnut Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `hazelnut_tree` | 14 | 5 gems | 2 days | 300 |  |
 
 ### Pecan Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Pecan Tree | `pecan_tree` | 1 |  | 2 days |  |  |
+| ✅ | Pecan Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `pecan_tree` | 20 | 7 gems | 2 days | 400 |  |
 
 ### Pistachio Trees
 
-From FarmVille's tree list; not built yet.
+From FarmVille's tree list.
 
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
-| 🕓 | Pistachio Tree | `pistachio_tree` | 1 |  | 2 days |  |  |
+| ✅ | Pistachio Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `pistachio_tree` | 23 | 8 gems | 2 days | 450 |  |
 
 ## Animals
 
@@ -652,22 +656,28 @@ Live in the Chicken Coop; breeds decide which Mystery Eggs turn up.
 | ✅ | Scots Grey | `grey_chicken` | 12 | 12 gems | Eggs | 1 day | 55 | breed: grey |
 | ✅ | Black Chicken | `black_chicken` | never sold | free | Eggs | 1 day | 60 | breed: black |
 | ✅ | Golden Chicken | `golden_chicken` | never sold | free | Golden Eggs | 1 day | 90 | breed: golden |
+| ✅ | Cornish Hen | `cornish_chicken` | never sold | free | Eggs | 1 day | 70 | breed: cornish |
 
 ### Turkeys
 
-Share the Chicken Coop.
+Share the Chicken Coop. A Baby Turkey grows up after its first collection.
 
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Turkey | `turkey` | 10 | 500 | Feathers | 1 day | 120 |  |
+| ✅ | Baby Turkey | `baby_turkey` | 10 | 7 gems | Feathers | 1 day | 40 |  |
+| ✅ | Wild Turkey | `wild_turkey` | never sold | free | Feathers | 1 day | 160 |  |
 
 ### Ducks
 
-Live in the Duck Pond.
+Live in the Duck Pond. The Ugly Duckling grows into a Swan.
 
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Duck | `duck` | 4 | 200 | Feathers | 1 day | 60 |  |
+| ✅ | Ugly Duckling | `ugly_duckling` | never sold | free | Feathers | 1 day | 60 |  |
+| ✅ | Swan | `swan` | never sold | free | Feathers | 1 day | 180 |  |
+| ✅ | Belted Duck | `belted_duck` | never sold | free | Feathers | 1 day | 90 |  |
 
 ### Geese
 
@@ -679,16 +689,31 @@ Share the Duck Pond.
 
 ### Cows
 
-Live in the Dairy Farm. A bull brings calves, raised in the Nursery.
+Live in the Dairy Farm. A bull brings calves of the breeds inside, raised in the Nursery.
 
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Cow | `cow` | 3 | 300 | Milk | 1 day | 85 |  |
 | ✅ | Bull | `bull` | never sold | free | Nothing | 1 day | 0 | stray, needs a cow shed |
 | ✅ | Calf | `calf` | never sold | free | Milk | 1 day | 20 |  |
-| 🕓 | Brown Cow (verify against FarmVille before building) | `brown_cow` | 1 |  |  | 1 day |  |  |
-| 🕓 | Pink Cow (verify against FarmVille before building) | `pink_cow` | 1 |  |  | 1 day |  |  |
-| 🕓 | Longhorn Cattle (verify against FarmVille before building) | `longhorn` | 1 |  |  | 1 day |  |  |
+| ✅ | Brown Cow | `brown_cow` | never sold | free | Chocolate Milk | 1 day | 110 |  |
+| ✅ | Pink Cow | `pink_cow` | never sold | free | Strawberry Milk | 1 day | 140 |  |
+| ✅ | Jersey Cow (values estimated in FarmVille's style) | `jersey_cow` | 8 | 18 gems | Milk | 1 day | 120 |  |
+| ✅ | Longhorn Cattle | `longhorn` | 10 | 20 gems | Milk | 1 day | 130 |  |
+| ✅ | Hereford Cow | `hereford_cow` | 12 | 22 gems | Milk | 1 day | 140 |  |
+| ✅ | Gelbvieh Cow | `gelbvieh_cow` | 14 | 22 gems | Milk | 1 day | 140 |  |
+| ✅ | Galician Blond Cow | `galician_blond_cow` | 16 | 24 gems | Milk | 1 day | 150 |  |
+| ✅ | Red Cow (values estimated in FarmVille's style) | `red_cow` | 30 | 100,000 | Milk | 1 day | 600 |  |
+| ✅ | Belted Cow (values estimated in FarmVille's style) | `belted_cow` | 40 | 25,000 | Milk | 1 day | 300 |  |
+| ✅ | Brown Calf | `brown_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Pink Calf | `pink_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Jersey Calf | `jersey_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Longhorn Calf | `longhorn_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Hereford Calf | `hereford_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Gelbvieh Calf | `gelbvieh_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Galician Blond Calf | `galician_blond_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Red Calf | `red_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Belted Calf | `belted_calf` | never sold | free | Milk | 1 day | 20 |  |
 
 ### Oxen
 
@@ -707,7 +732,8 @@ Live in the Sheep Pen. A ram brings lambs.
 | ✅ | Sheep | `sheep` | 5 | 350 | Wool | 1 day | 95 |  |
 | ✅ | Ram | `ram` | never sold | free | Nothing | 1 day | 0 | stray, needs a sheep pen |
 | ✅ | Lamb | `lamb` | never sold | free | Wool | 1 day | 20 |  |
-| 🕓 | Black Sheep (verify against FarmVille before building) | `black_sheep` | 1 |  |  | 1 day |  |  |
+| ✅ | Black Sheep | `black_sheep` | never sold | free | Black Wool | 1 day | 190 |  |
+| ✅ | Mouflon Sheep | `mouflon_sheep` | never sold | free | Wool | 1 day | 210 |  |
 
 ### Llamas and Alpacas
 
@@ -733,6 +759,7 @@ Live in the Pig Pen and forage for truffles. Rare breeds are traded for truffles
 | ✅ | Kunekune Pig | `kunekune_pig` | never sold | free | Truffles | 1 day | 200 | traded for truffles |
 | ✅ | Boar | `boar` | never sold | free | Nothing | 1 day | 0 | stray, needs a pig pen |
 | ✅ | Piglet | `piglet` | never sold | free | Truffles | 1 day | 20 |  |
+| ✅ | Saddleback Pig (values estimated in FarmVille's style) | `saddleback_pig` | 35 | 5,000 | Truffles | 1 day | 260 |  |
 
 ### Goats
 
@@ -741,6 +768,8 @@ Live in the Goat Pen.
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Goat | `goat` | 9 | 600 | Goat Milk | 2 days | 200 |  |
+| ✅ | Boer Goat | `boer_goat` | never sold | free | Goat Milk | 2 days | 260 |  |
+| ✅ | Arapawa Goat (values estimated in FarmVille's style) | `arapawa_goat` | 55 | 8,000 | Goat Milk | 2 days | 420 |  |
 
 ### Horses
 
@@ -752,6 +781,11 @@ Live in the Horse Stable. A stallion brings foals.
 | ✅ | Pony | `pony` | 10 | 1,500 | Horse Hair | 2 days | 95 |  |
 | ✅ | Stallion | `stallion` | never sold | free | Nothing | 1 day | 0 | stray, needs a horse stable |
 | ✅ | Foal | `foal` | never sold | free | Horse Hair | 1 day | 20 |  |
+| ✅ | Gray Horse | `gray_horse` | never sold | free | Horse Hair | 3 days | 340 |  |
+| ✅ | Black Pony | `black_pony` | never sold | free | Horse Hair | 2 days | 110 |  |
+| ✅ | Mustang | `mustang` | never sold | free | Horse Hair | 3 days | 360 |  |
+| ✅ | Gray Foal | `gray_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
+| ✅ | Mustang Foal | `mustang_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
 
 ### Donkeys
 
@@ -759,7 +793,7 @@ Share the Horse Stable.
 
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
-| ✅ | Donkey | `donkey` | 15 | 800 | Donkey Milk | 2 days | 270 |  |
+| ✅ | Donkey (Mystery Box only, as in FarmVille) | `donkey` | never sold | 800 | Donkey Milk | 2 days | 270 |  |
 
 ### Rabbits
 
@@ -776,6 +810,14 @@ Join a Beehive that has a Queen Bee; make honey and pollinate crops.
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Bee | `bee` | never sold | free | Honey | 1 day | 6 |  |
+
+### Turtles
+
+A lost animal that lives in the Duck Pond.
+
+| | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
+|---|---|---|---|---|---|---|---|---|
+| ✅ | Turtle | `turtle` | never sold | free | Shells | 2 days | 130 |  |
 
 ## Buildings
 
@@ -1034,6 +1076,60 @@ Candy Cane, Pineapple Crown, Grape Press, Sugar Cube, Honey Dipper
 Found from cotton. Trade-in reward: 1,200 coins, 50 XP.
 
 Spindle, Cotton Boll, Thimble, Bobbin, Quilt Square
+
+### Bramble Patch
+
+Found from blackberries, elderberries, white grapes, coffee. Trade-in reward: 1,000 coins, 40 XP.
+
+Thorn Gloves, Jam Jar, Bramble Hook, Picking Pail, Berry Stain
+
+### Grain Silo
+
+Found from rye, red wheat, oats, posole corn, amaranth. Trade-in reward: 1,250 coins, 45 XP.
+
+Flail, Seed Drill, Winnowing Basket, Grain Scoop, Silo Key
+
+### Pea Pod
+
+Found from peas, purple pod peas. Trade-in reward: 1,500 coins, 50 XP.
+
+Pea Shooter, Pod Clip, Shelling Tray, Twine Ball, Pea Trellis Tag
+
+### Wildflower Meadow
+
+Found from gladiolus, lilies, purple poppies, columbine. Trade-in reward: 1,750 coins, 55 XP.
+
+Meadow Map, Butterfly Net, Dried Poppy, Lily Pad, Field Guide
+
+### Bridal Bouquet
+
+Found from iris, orange daisies, white roses, forget me nots. Trade-in reward: 2,000 coins, 60 XP.
+
+Lace Ribbon, Silver Pin, Rose Thorn, Daisy Chain, Keepsake Box
+
+### Kitchen Roots
+
+Found from onions, ginger, heirloom carrots. Trade-in reward: 2,250 coins, 65 XP.
+
+Braided Onions, Ginger Grater, Root Brush, Clay Crock, Recipe Card
+
+### Vine Harvest
+
+Found from zucchini, yellow melon, acorn squash, square melon, carnival squash, cucumber. Trade-in reward: 2,500 coins, 70 XP.
+
+Vine Snips, Melon Scale, Square Mould, Pickling Jar, Blue Ribbon
+
+### Veg Patch
+
+Found from ghost chili, cabbage, broccoli, asparagus. Trade-in reward: 2,750 coins, 75 XP.
+
+Chili Ristra, Cabbage Crate, Asparagus Knife, Slug Trap, Garden Kneeler
+
+### Herb Garden
+
+Found from green tea, basil, lemon balm, saffron, clover, bamboo. Trade-in reward: 3,000 coins, 80 XP.
+
+Tea Tin, Mortar and Pestle, Saffron Thread, Four-Leaf Clover, Bamboo Whisk
 
 ### Farm Birds
 

@@ -25,7 +25,10 @@
             "grey_chicken",
             "black_chicken",
             "golden_chicken",
-            "turkey"
+            "turkey",
+            "cornish_chicken",
+            "baby_turkey",
+            "wild_turkey"
           ],
           "levels": [
             20,
@@ -54,7 +57,11 @@
           "cost": 4000,
           "holds": [
             "duck",
-            "goose"
+            "goose",
+            "ugly_duckling",
+            "swan",
+            "belted_duck",
+            "turtle"
           ],
           "levels": [
             20,
@@ -83,7 +90,16 @@
           "w": 4,
           "holds": [
             "cow",
-            "ox"
+            "ox",
+            "brown_cow",
+            "pink_cow",
+            "jersey_cow",
+            "longhorn",
+            "hereford_cow",
+            "gelbvieh_cow",
+            "galician_blond_cow",
+            "red_cow",
+            "belted_cow"
           ],
           "levels": [
             20,
@@ -116,7 +132,9 @@
           "holds": [
             "sheep",
             "llama",
-            "alpaca"
+            "alpaca",
+            "black_sheep",
+            "mouflon_sheep"
           ],
           "levels": [
             20,
@@ -147,7 +165,9 @@
           "unlock_level": 9,
           "cost": 6000,
           "holds": [
-            "goat"
+            "goat",
+            "boer_goat",
+            "arapawa_goat"
           ],
           "levels": [
             20,
@@ -207,7 +227,8 @@
             "berkshire_pig",
             "tamworth_pig",
             "spotted_pig",
-            "kunekune_pig"
+            "kunekune_pig",
+            "saddleback_pig"
           ],
           "levels": [
             30
@@ -235,7 +256,10 @@
           "holds": [
             "horse",
             "pony",
-            "donkey"
+            "donkey",
+            "gray_horse",
+            "black_pony",
+            "mustang"
           ],
           "levels": [
             20,
@@ -283,7 +307,18 @@
             "calf",
             "foal",
             "lamb",
-            "piglet"
+            "piglet",
+            "brown_calf",
+            "pink_calf",
+            "jersey_calf",
+            "longhorn_calf",
+            "hereford_calf",
+            "gelbvieh_calf",
+            "galician_blond_calf",
+            "red_calf",
+            "belted_calf",
+            "gray_foal",
+            "mustang_foal"
           ],
           "levels": [
             20,
@@ -310,7 +345,18 @@
             "calf": "cow",
             "foal": "horse",
             "lamb": "sheep",
-            "piglet": "pig"
+            "piglet": "pig",
+            "brown_calf": "brown_cow",
+            "pink_calf": "pink_cow",
+            "jersey_calf": "jersey_cow",
+            "longhorn_calf": "longhorn",
+            "hereford_calf": "hereford_cow",
+            "gelbvieh_calf": "gelbvieh_cow",
+            "galician_blond_calf": "galician_blond_cow",
+            "red_calf": "red_cow",
+            "belted_calf": "belted_cow",
+            "gray_foal": "gray_horse",
+            "mustang_foal": "mustang"
           },
           "color": "#e9d8a6",
           "roof": "#7a9e7e",

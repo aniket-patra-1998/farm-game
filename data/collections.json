@@ -331,6 +331,314 @@
       ]
     },
     {
+      "id": "bramble",
+      "name": "Bramble Patch",
+      "crops": [
+        "blackberries",
+        "elderberries",
+        "white_grapes",
+        "coffee"
+      ],
+      "reward_coins": 1000,
+      "reward_xp": 40,
+      "items": [
+        {
+          "id": "bramble_thorn_gloves",
+          "name": "Thorn Gloves"
+        },
+        {
+          "id": "bramble_jam_jar",
+          "name": "Jam Jar"
+        },
+        {
+          "id": "bramble_bramble_hook",
+          "name": "Bramble Hook"
+        },
+        {
+          "id": "bramble_picking_pail",
+          "name": "Picking Pail"
+        },
+        {
+          "id": "bramble_berry_stain",
+          "name": "Berry Stain"
+        }
+      ]
+    },
+    {
+      "id": "grain_silo",
+      "name": "Grain Silo",
+      "crops": [
+        "rye",
+        "red_wheat",
+        "oats",
+        "posole_corn",
+        "amaranth"
+      ],
+      "reward_coins": 1250,
+      "reward_xp": 45,
+      "items": [
+        {
+          "id": "grain_silo_flail",
+          "name": "Flail"
+        },
+        {
+          "id": "grain_silo_seed_drill",
+          "name": "Seed Drill"
+        },
+        {
+          "id": "grain_silo_winnowing_basket",
+          "name": "Winnowing Basket"
+        },
+        {
+          "id": "grain_silo_grain_scoop",
+          "name": "Grain Scoop"
+        },
+        {
+          "id": "grain_silo_silo_key",
+          "name": "Silo Key"
+        }
+      ]
+    },
+    {
+      "id": "pea_pod",
+      "name": "Pea Pod",
+      "crops": [
+        "peas",
+        "purple_pod_peas"
+      ],
+      "reward_coins": 1500,
+      "reward_xp": 50,
+      "items": [
+        {
+          "id": "pea_pod_pea_shooter",
+          "name": "Pea Shooter"
+        },
+        {
+          "id": "pea_pod_pod_clip",
+          "name": "Pod Clip"
+        },
+        {
+          "id": "pea_pod_shelling_tray",
+          "name": "Shelling Tray"
+        },
+        {
+          "id": "pea_pod_twine_ball",
+          "name": "Twine Ball"
+        },
+        {
+          "id": "pea_pod_pea_trellis_tag",
+          "name": "Pea Trellis Tag"
+        }
+      ]
+    },
+    {
+      "id": "wildflowers",
+      "name": "Wildflower Meadow",
+      "crops": [
+        "gladiolus",
+        "lilies",
+        "purple_poppies",
+        "columbine"
+      ],
+      "reward_coins": 1750,
+      "reward_xp": 55,
+      "items": [
+        {
+          "id": "wildflowers_meadow_map",
+          "name": "Meadow Map"
+        },
+        {
+          "id": "wildflowers_butterfly_net",
+          "name": "Butterfly Net"
+        },
+        {
+          "id": "wildflowers_dried_poppy",
+          "name": "Dried Poppy"
+        },
+        {
+          "id": "wildflowers_lily_pad",
+          "name": "Lily Pad"
+        },
+        {
+          "id": "wildflowers_field_guide",
+          "name": "Field Guide"
+        }
+      ]
+    },
+    {
+      "id": "bridal_bouquet",
+      "name": "Bridal Bouquet",
+      "crops": [
+        "iris",
+        "orange_daisies",
+        "white_roses",
+        "forget_me_nots"
+      ],
+      "reward_coins": 2000,
+      "reward_xp": 60,
+      "items": [
+        {
+          "id": "bridal_bouquet_lace_ribbon",
+          "name": "Lace Ribbon"
+        },
+        {
+          "id": "bridal_bouquet_silver_pin",
+          "name": "Silver Pin"
+        },
+        {
+          "id": "bridal_bouquet_rose_thorn",
+          "name": "Rose Thorn"
+        },
+        {
+          "id": "bridal_bouquet_daisy_chain",
+          "name": "Daisy Chain"
+        },
+        {
+          "id": "bridal_bouquet_keepsake_box",
+          "name": "Keepsake Box"
+        }
+      ]
+    },
+    {
+      "id": "kitchen_roots",
+      "name": "Kitchen Roots",
+      "crops": [
+        "onions",
+        "ginger",
+        "heirloom_carrots"
+      ],
+      "reward_coins": 2250,
+      "reward_xp": 65,
+      "items": [
+        {
+          "id": "kitchen_roots_braided_onions",
+          "name": "Braided Onions"
+        },
+        {
+          "id": "kitchen_roots_ginger_grater",
+          "name": "Ginger Grater"
+        },
+        {
+          "id": "kitchen_roots_root_brush",
+          "name": "Root Brush"
+        },
+        {
+          "id": "kitchen_roots_clay_crock",
+          "name": "Clay Crock"
+        },
+        {
+          "id": "kitchen_roots_recipe_card",
+          "name": "Recipe Card"
+        }
+      ]
+    },
+    {
+      "id": "vine_harvest",
+      "name": "Vine Harvest",
+      "crops": [
+        "zucchini",
+        "yellow_melon",
+        "acorn_squash",
+        "square_melon",
+        "carnival_squash",
+        "cucumber"
+      ],
+      "reward_coins": 2500,
+      "reward_xp": 70,
+      "items": [
+        {
+          "id": "vine_harvest_vine_snips",
+          "name": "Vine Snips"
+        },
+        {
+          "id": "vine_harvest_melon_scale",
+          "name": "Melon Scale"
+        },
+        {
+          "id": "vine_harvest_square_mould",
+          "name": "Square Mould"
+        },
+        {
+          "id": "vine_harvest_pickling_jar",
+          "name": "Pickling Jar"
+        },
+        {
+          "id": "vine_harvest_blue_ribbon",
+          "name": "Blue Ribbon"
+        }
+      ]
+    },
+    {
+      "id": "veg_patch",
+      "name": "Veg Patch",
+      "crops": [
+        "ghost_chili",
+        "cabbage",
+        "broccoli",
+        "asparagus"
+      ],
+      "reward_coins": 2750,
+      "reward_xp": 75,
+      "items": [
+        {
+          "id": "veg_patch_chili_ristra",
+          "name": "Chili Ristra"
+        },
+        {
+          "id": "veg_patch_cabbage_crate",
+          "name": "Cabbage Crate"
+        },
+        {
+          "id": "veg_patch_asparagus_knife",
+          "name": "Asparagus Knife"
+        },
+        {
+          "id": "veg_patch_slug_trap",
+          "name": "Slug Trap"
+        },
+        {
+          "id": "veg_patch_garden_kneeler",
+          "name": "Garden Kneeler"
+        }
+      ]
+    },
+    {
+      "id": "herb_garden",
+      "name": "Herb Garden",
+      "crops": [
+        "green_tea",
+        "basil",
+        "lemon_balm",
+        "saffron",
+        "clover",
+        "bamboo"
+      ],
+      "reward_coins": 3000,
+      "reward_xp": 80,
+      "items": [
+        {
+          "id": "herb_garden_tea_tin",
+          "name": "Tea Tin"
+        },
+        {
+          "id": "herb_garden_mortar_and_pestle",
+          "name": "Mortar and Pestle"
+        },
+        {
+          "id": "herb_garden_saffron_thread",
+          "name": "Saffron Thread"
+        },
+        {
+          "id": "herb_garden_four_leaf_clover",
+          "name": "Four-Leaf Clover"
+        },
+        {
+          "id": "herb_garden_bamboo_whisk",
+          "name": "Bamboo Whisk"
+        }
+      ]
+    },
+    {
       "id": "farm_birds",
       "name": "Farm Birds",
       "birds": true,
