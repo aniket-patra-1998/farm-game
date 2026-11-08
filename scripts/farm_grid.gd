@@ -134,6 +134,10 @@ func _draw_object(o: Dictionary) -> void:
 	var building := Game.is_building(o)
 	PlaceholderArt.draw_object(self, it, corners, is_ready_now, int(o.get("level", 1)),
 		Game.inside_total(o) if building else 0, Game.capacity(o) if building else 0)
+	if o.get("stray", false):
+		var c1 := (corners[0] + corners[2]) / 2.0
+		var bob := sin(Time.get_ticks_msec() / 300.0) * 4.0
+		PlaceholderArt.draw_stray_marker(self, c1 + Vector2(0, -78 + bob))
 	if is_ready_now:
 		var t := Time.get_ticks_msec() / 1000.0
 		var glow := 0.5 + 0.5 * sin(t * 2.6 + float(int(o["uid"]) % 7))
@@ -320,6 +324,8 @@ func _act(i: int, first_touch: bool) -> void:
 		if not result.is_empty():
 			_float(at, "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
+			if result.get("bee", false):
+				_float(at + Vector2(0, -96), "A bee!", COLOR_GOLDEN, 1.6)
 			if result["drop"] != "":
 				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
 				_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)
@@ -356,6 +362,14 @@ func _act(i: int, first_touch: bool) -> void:
 
 func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	var uid := int(obj["uid"])
+	if obj.get("stray", false) and tool != "move":
+		if first_touch and Game.adopt_stray(uid):
+			var fp0 := Game.footprint(obj["id"])
+			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
+			var at0 := (c0[0] + c0[2]) / 2.0
+			_float(at0 + Vector2(0, -40), "Adopted! +%d XP" % GameState.STRAY_ADOPT_XP, COLOR_FIND, 1.4)
+			_sparkle(at0, COLOR_FIND)
+		return
 	if tool == "move":
 		if first_touch:
 			start_placing(obj["id"], uid)

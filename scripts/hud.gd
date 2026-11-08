@@ -550,11 +550,17 @@ func _build_building(content: VBoxContainer) -> void:
 				show_message("+%d coins, +%d XP" % [r["coins"], r["xp"]]))
 		actions.add_child(collect)
 
-	var loose := Game.loose_matching(o)
-	var fill := _panel_button("Move %d in" % mini(loose, cap - total) if loose > 0 else "None on farm")
-	fill.disabled = loose == 0 or total >= cap
-	fill.pressed.connect(func() -> void: Game.fill_building(uid))
-	actions.add_child(fill)
+	if o["id"] == "beehive":
+		var note := "Bees arrive while you harvest flowers."
+		if Game.waiting_bees > 0:
+			note += " %d bees are waiting for space: upgrade to make room." % Game.waiting_bees
+		content.add_child(BookPanel.text(note, 18, BookPanel.CREAM))
+	else:
+		var loose := Game.loose_matching(o)
+		var fill := _panel_button("Move %d in" % mini(loose, cap - total) if loose > 0 else "None on farm")
+		fill.disabled = loose == 0 or total >= cap
+		fill.pressed.connect(func() -> void: Game.fill_building(uid))
+		actions.add_child(fill)
 
 	var cost := Game.upgrade_cost(o)
 	if cost < 0:

@@ -47,6 +47,12 @@ This is milestone 1 of the V1 plan: the core farm.
 - Unwither revives every withered crop: start with 2, earn 1 per collection trade-in and every 5 levels, or pay 3 gems
 - Older saves carry over automatically
 
+### Bees and strays
+
+- Harvesting flowers can attract a bee (12%). Bees live in a Beehive (Market, level 3) and make honey daily; up to 10 wait if there's no room
+- Every 3 to 6 hours a lonely animal may wander onto open grass, marked with a heart. Tap to adopt it; unadopted strays leave after a day
+- New ribbons: Animal Lover and Beekeeper
+
 ## Run it
 
 1. Install Godot 4.7 or newer (standard build) from godotengine.org.
@@ -55,6 +61,16 @@ This is milestone 1 of the V1 plan: the core farm.
 
 To test phone and tablet layouts, resize the game window, or set a test size under
 Project Settings > Display > Window.
+
+## Tests
+
+Automated tests cover the game rules: farming, drops, collections, ribbons, buildings,
+land expansion, bees, strays, saving and the data files.
+
+- **In Godot:** open `tests/run_tests.tscn` and press F6 (Run Current Scene). Results print in the Output panel.
+- **On GitHub:** every push runs the tests automatically (Actions tab). A red cross on a commit means a test failed.
+
+Tests use a throwaway farm with saving off, so they never touch your real save.
 
 ## Build for Android (later)
 
@@ -84,7 +100,6 @@ All art is original placeholder art drawn in code. Replacing it means editing on
 
 ## Next milestones
 
-3. (part 2) Bees and hives, stray animals
 4. Vehicles, parts, upgrades, fuel
 5. Crafting, decor, storage, land expansion
 6. Breeding, greenhouse, rare animal home

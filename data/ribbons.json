@@ -102,6 +102,30 @@
         250,
         1000
       ]
+    },
+    {
+      "id": "animal_lover",
+      "name": "Animal Lover",
+      "stat": "strays_adopted",
+      "what": "strays adopted",
+      "thresholds": [
+        1,
+        5,
+        20,
+        50
+      ]
+    },
+    {
+      "id": "beekeeper",
+      "name": "Beekeeper",
+      "stat": "bees_found",
+      "what": "bees found",
+      "thresholds": [
+        5,
+        25,
+        100,
+        300
+      ]
     }
   ]
 }

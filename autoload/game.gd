@@ -49,6 +49,12 @@ const MAX_SIZE := 30   # plots are stored for the largest farm; farm_size says h
 const START_SIZE := 12
 const OLD_GRID_SIZE := 12 # saves from before land expansion stored a 12x12 grid
 const START_UNWITHERS := 2
+const BEE_CHANCE := 0.12           # per flower harvest
+const MAX_WAITING_BEES := 10       # bees that wait for hive space
+const STRAY_MIN_GAP := 3 * 3600    # a new stray turns up 3 to 6 hours after the last
+const STRAY_MAX_GAP := 6 * 3600
+const STRAY_STAYS := 86400         # a stray nobody adopts wanders off after a day
+const STRAY_ADOPT_XP := 5
 const UNWITHER_GEM_COST := 3
 const START_COINS := 200
 const START_GEMS := 5
@@ -82,6 +88,8 @@ var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
 var farm_size := START_SIZE        # usable width and depth in tiles
 var expansion_steps: Array = []    # from data/expansions.json
 var unwithers := START_UNWITHERS   # Unwither items held
+var waiting_bees := 0              # bees found with no hive space
+var next_stray_at := 0             # when the next stray may turn up
 var mastery := {}                  # crop id -> lifetime harvest count
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
 var tutorial_step: int = Tutorial.HARVEST
@@ -103,6 +111,10 @@ var _occupied := {}                # tile index -> uid of the object covering it
 var modal_open := false            # true while a menu covers the farm
 
 var rng := RandomNumberGenerator.new()
+# Test hooks: tests turn saving off (or point it at a scratch file) and can switch off random drops.
+var saving_enabled := true
+var save_path := SAVE_PATH
+var drops_enabled := true
 var _save_queued := false
 
 
@@ -113,10 +125,16 @@ func _ready() -> void:
 	_load_ribbons()
 	_load_items()
 	expansion_steps = _read_json("res://data/expansions.json").get("steps", [])
-	if not load_game():
+	if not saving_enabled or not load_game():
 		_new_game()
 	# Deferred so the HUD is connected and can show the message.
 	call_deferred("check_rescue")
+	call_deferred("check_strays")
+	var stray_timer := Timer.new()
+	stray_timer.wait_time = 30.0
+	stray_timer.autostart = true
+	stray_timer.timeout.connect(check_strays)
+	add_child(stray_timer)
 
 
 func _notification(what: int) -> void:
@@ -161,6 +179,7 @@ func debug_skip(seconds: int) -> void:
 	if not OS.is_debug_build():
 		return
 	debug_time_offset += seconds
+	check_strays()
 	plot_changed.emit(-1)
 	check_rescue()
 	queue_save()
@@ -307,13 +326,16 @@ func harvest(i: int) -> Dictionary:
 		message.emit("You found a %s! (%s collection)" % [drop["name"], drop["collection"]])
 	elif drop.get("type", "") == "bird":
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
+	var found_bee: bool = crop.get("flower", false) and rng.randf() < BEE_CHANCE
+	if found_bee:
+		_add_bee()
 	var stars_after := mastery_stars(crop_id)
 	if stars_after > stars_before:
 		_award_mastery_star(crop_id, stars_after)
 	if tutorial_step == Tutorial.HARVEST and not _any_plot_in(Phase.RIPE):
 		_advance_tutorial(Tutorial.HARVEST)
 	_plot_updated(i)
-	return {"coins": earned, "xp": gained, "crop": crop_id,
+	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": found_bee,
 		"drop": drop.get("type", ""), "drop_text": drop.get("text", "")}
 
 
@@ -322,6 +344,8 @@ func harvest(i: int) -> Dictionary:
 ## One roll per harvest. Rarest outcomes are checked first; pity counters
 ## guarantee a golden harvest or a collectible after a long dry spell.
 func _roll_drop(crop_id: String, stars: int) -> Dictionary:
+	if not drops_enabled:
+		return {}
 	pity["golden"] = int(pity["golden"]) + 1
 	pity["collectible"] = int(pity["collectible"]) + 1
 	var luck := 1.0 + MASTERY_LUCK_BONUS * stars
@@ -330,7 +354,9 @@ func _roll_drop(crop_id: String, stars: int) -> Dictionary:
 		pity["golden"] = 0
 		return {"type": "golden", "text": "Golden harvest!"}
 
-	if not bird_collection.is_empty() and rng.randf() < BIRD_CHANCE:
+	# A due collectible (pity) always wins over a bird visit.
+	var collectible_due := int(pity["collectible"]) >= COLLECTIBLE_PITY
+	if not bird_collection.is_empty() and not collectible_due and rng.randf() < BIRD_CHANCE:
 		var bird_id := _pick_item(bird_collection)
 		owned[bird_id] = int(owned.get(bird_id, 0)) + 1
 		collections_changed.emit()
@@ -517,6 +543,7 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	next_uid += 1
 	_grass_over(item_id, row, col)
 	objects.append(obj)
+	_house_waiting_bees()
 	_objects_updated()
 	return true
 
@@ -541,6 +568,8 @@ func is_building(obj: Dictionary) -> bool:
 
 
 func is_ready(obj: Dictionary) -> bool:
+	if obj.get("stray", false):
+		return false
 	if is_building(obj) and inside_total(obj) == 0:
 		return false
 	return now() - int(obj["t"]) >= cycle_of(obj)
@@ -619,7 +648,7 @@ func inside_total(building: Dictionary) -> int:
 func loose_matching(building: Dictionary) -> int:
 	var n := 0
 	for o in objects:
-		if not is_building(o) and building_accepts(building, o["id"]):
+		if not is_building(o) and not o.get("stray", false) and building_accepts(building, o["id"]):
 			n += 1
 	return n
 
@@ -634,7 +663,7 @@ func fill_building(uid: int) -> int:
 	var moved := 0
 	var keep: Array = []
 	for o in objects:
-		if moved < room and not is_building(o) and building_accepts(b, o["id"]):
+		if moved < room and not is_building(o) and not o.get("stray", false) and building_accepts(b, o["id"]):
 			var inside: Dictionary = b["inside"]
 			inside[o["id"]] = int(inside.get(o["id"], 0)) + 1
 			moved += 1
@@ -670,6 +699,131 @@ func upgrade_building(uid: int) -> bool:
 	b["level"] = int(b["level"]) + 1
 	message.emit("%s upgraded to level %d: holds %d" % [item_data(b["id"])["name"], int(b["level"]), capacity(b)])
 	_bump("upgrades", 1)
+	_house_waiting_bees()
+	_objects_updated()
+	return true
+
+
+# ---------------------------------------------------------------- bees
+
+func _hive_with_room() -> Dictionary:
+	for o in objects:
+		if o["id"] == "beehive" and inside_total(o) < capacity(o):
+			return o
+	return {}
+
+
+func _add_bee() -> void:
+	_bump("bees_found", 1)
+	var hive := _hive_with_room()
+	if not hive.is_empty():
+		_put_bee_in(hive)
+		message.emit("A bee followed you home to the hive!")
+	elif waiting_bees < MAX_WAITING_BEES:
+		waiting_bees += 1
+		message.emit("A bee is buzzing around. Build a Beehive to keep it (%d waiting)" % waiting_bees)
+	else:
+		message.emit("A bee flew off: build or upgrade a Beehive to keep more")
+	inventory_changed.emit()
+	_objects_updated()
+
+
+func _put_bee_in(hive: Dictionary) -> void:
+	var inside: Dictionary = hive["inside"]
+	if inside_total(hive) == 0:
+		hive["t"] = now() # honey starts once the first bee moves in
+	inside["bee"] = int(inside.get("bee", 0)) + 1
+
+
+func _house_waiting_bees() -> void:
+	var moved := 0
+	while waiting_bees > 0:
+		var hive := _hive_with_room()
+		if hive.is_empty():
+			break
+		_put_bee_in(hive)
+		waiting_bees -= 1
+		moved += 1
+	if moved > 0:
+		message.emit("%d waiting bees moved into the hive" % moved)
+		inventory_changed.emit()
+
+
+# ---------------------------------------------------------------- strays
+
+## Called on start, every 30 seconds, and after a debug time skip.
+func check_strays() -> void:
+	var t := now()
+	var changed := false
+	var keep: Array = []
+	for o in objects:
+		if o.get("stray", false) and t - int(o["t"]) > STRAY_STAYS:
+			message.emit("The lonely %s wandered off." % item_data(o["id"])["name"].to_lower())
+			changed = true
+		else:
+			keep.append(o)
+	objects = keep
+	if t >= next_stray_at and not _has_stray():
+		if _spawn_stray():
+			changed = true
+		next_stray_at = t + rng.randi_range(STRAY_MIN_GAP, STRAY_MAX_GAP)
+		queue_save()
+	if changed:
+		_objects_updated()
+
+
+func _has_stray() -> bool:
+	for o in objects:
+		if o.get("stray", false):
+			return true
+	return false
+
+
+## Picks an animal near the player's level (cheaper ones more often) and an open grass tile.
+func _spawn_stray() -> bool:
+	var choices: Array[String] = []
+	var weights: Array[float] = []
+	var total := 0.0
+	for id in item_order:
+		var it: Dictionary = items[id]
+		if it["kind"] == "animal" and int(it["unlock_level"]) <= level() + 2:
+			var w := 1.0 / maxf(1.0, float(it["cost"]) / 100.0)
+			choices.append(id)
+			weights.append(w)
+			total += w
+	if choices.is_empty():
+		return false
+	var pick := rng.randf() * total
+	var animal_id := choices[-1]
+	for k in choices.size():
+		pick -= weights[k]
+		if pick <= 0.0:
+			animal_id = choices[k]
+			break
+	var spots: Array[Vector2i] = []
+	for r in farm_size:
+		for c in farm_size:
+			var i := index_of(r, c)
+			if plots[i].get("state", "grass") == "grass" and not is_occupied(i):
+				spots.append(Vector2i(r, c))
+	if spots.is_empty():
+		return false
+	var spot := spots[rng.randi_range(0, spots.size() - 1)]
+	objects.append({"uid": next_uid, "id": animal_id, "row": spot.x, "col": spot.y, "t": now(), "stray": true})
+	next_uid += 1
+	message.emit("A lonely %s wandered onto your farm! Tap it to adopt." % item_data(animal_id)["name"].to_lower())
+	return true
+
+
+func adopt_stray(uid: int) -> bool:
+	var o := object_by_uid(uid)
+	if o.is_empty() or not o.get("stray", false):
+		return false
+	o.erase("stray")
+	o["t"] = now() # starts producing from today
+	add_xp(STRAY_ADOPT_XP)
+	_bump("strays_adopted", 1)
+	message.emit("You adopted the %s! It's part of your farm now." % item_data(o["id"])["name"].to_lower())
 	_objects_updated()
 	return true
 
@@ -982,6 +1136,8 @@ func _new_game() -> void:
 	plots.clear()
 	farm_size = START_SIZE
 	unwithers = START_UNWITHERS
+	waiting_bees = 0
+	next_stray_at = now() + STRAY_MIN_GAP
 	for i in MAX_SIZE * MAX_SIZE:
 		plots.append({"state": "grass"})
 	# Starter farm, modelled on the classic opening: 2 plots ripe to harvest,
@@ -1017,6 +1173,8 @@ func _flush_save() -> void:
 
 
 func save_game() -> void:
+	if not saving_enabled:
+		return
 	var data := {
 		"version": SAVE_VERSION,
 		"saved_at": now(),
@@ -1034,9 +1192,11 @@ func save_game() -> void:
 		"objects": objects,
 		"farm_size": farm_size,
 		"unwithers": unwithers,
+		"waiting_bees": waiting_bees,
+		"next_stray_at": next_stray_at,
 		"next_uid": next_uid,
 	}
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var f := FileAccess.open(save_path, FileAccess.WRITE)
 	if f == null:
 		push_warning("Could not write save file")
 		return
@@ -1044,9 +1204,9 @@ func save_game() -> void:
 
 
 func load_game() -> bool:
-	if not FileAccess.file_exists(SAVE_PATH):
+	if not FileAccess.file_exists(save_path):
 		return false
-	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var f := FileAccess.open(save_path, FileAccess.READ)
 	if f == null:
 		return false
 	var data = JSON.parse_string(f.get_as_text())
@@ -1059,6 +1219,8 @@ func load_game() -> bool:
 		return false
 	farm_size = clampi(int(data.get("farm_size", START_SIZE)), START_SIZE, MAX_SIZE)
 	unwithers = int(data.get("unwithers", START_UNWITHERS))
+	waiting_bees = int(data.get("waiting_bees", 0))
+	next_stray_at = int(data.get("next_stray_at", 0))
 	coins = int(data.get("coins", START_COINS))
 	gems = int(data.get("gems", START_GEMS))
 	xp = int(data.get("xp", 0))

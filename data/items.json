@@ -1,23 +1,279 @@
 {
   "_note": "Placeable objects. kind: tree, animal or building. w = width in tiles (columns), h = depth in tiles (rows). Times in seconds. Buildings: holds lists the animal ids they accept, or holds_kind accepts every item of that kind. levels gives capacity per level; upgrade_costs[n] is the price to go from level n+1 to n+2. Upgrades use coins until parts arrive in milestone 4.",
   "items": [
-    {"id": "apple_tree",  "kind": "tree", "name": "Apple Tree",  "unlock_level": 2,  "cost": 150,  "cycle_seconds": 172800, "payout": 60,  "xp": 1, "color": "#d93b30"},
-    {"id": "lemon_tree",  "kind": "tree", "name": "Lemon Tree",  "unlock_level": 4,  "cost": 250,  "cycle_seconds": 172800, "payout": 85,  "xp": 1, "color": "#f2d43a"},
-    {"id": "cherry_tree", "kind": "tree", "name": "Cherry Tree", "unlock_level": 6,  "cost": 400,  "cycle_seconds": 259200, "payout": 140, "xp": 2, "color": "#a3122e"},
-    {"id": "orange_tree", "kind": "tree", "name": "Orange Tree", "unlock_level": 8,  "cost": 500,  "cycle_seconds": 172800, "payout": 120, "xp": 2, "color": "#f28c1c"},
-    {"id": "peach_tree",  "kind": "tree", "name": "Peach Tree",  "unlock_level": 10, "cost": 800,  "cycle_seconds": 259200, "payout": 200, "xp": 2, "color": "#f7a07a"},
-    {"id": "mango_tree",  "kind": "tree", "name": "Mango Tree",  "unlock_level": 12, "cost": 1200, "cycle_seconds": 259200, "payout": 280, "xp": 3, "color": "#f5b324"},
-
-    {"id": "chicken", "kind": "animal", "name": "Chicken", "product": "Eggs",       "unlock_level": 1,  "cost": 120, "cycle_seconds": 86400,  "payout": 40,  "xp": 1, "color": "#fbfaf4", "accent": "#e2453c"},
-    {"id": "cow",     "kind": "animal", "name": "Cow",     "product": "Milk",       "unlock_level": 3,  "cost": 300, "cycle_seconds": 86400,  "payout": 85,  "xp": 1, "color": "#f4f1ea", "accent": "#3b3330"},
-    {"id": "sheep",   "kind": "animal", "name": "Sheep",   "product": "Wool",       "unlock_level": 5,  "cost": 350, "cycle_seconds": 86400,  "payout": 95,  "xp": 1, "color": "#eeeae0", "accent": "#5a4a42"},
-    {"id": "pig",     "kind": "animal", "name": "Pig",     "product": "Truffles",   "unlock_level": 7,  "cost": 450, "cycle_seconds": 86400,  "payout": 110, "xp": 2, "color": "#f4b6b8", "accent": "#d9878b"},
-    {"id": "goat",    "kind": "animal", "name": "Goat",    "product": "Goat Milk",  "unlock_level": 9,  "cost": 600, "cycle_seconds": 172800, "payout": 200, "xp": 2, "color": "#d8c7a8", "accent": "#7a6650"},
-    {"id": "horse",   "kind": "animal", "name": "Horse",   "product": "Horse Hair", "unlock_level": 11, "cost": 900, "cycle_seconds": 259200, "payout": 320, "xp": 3, "color": "#9a6438", "accent": "#4a2c18"},
-
-    {"id": "chicken_coop", "kind": "building", "name": "Chicken Coop", "unlock_level": 4,  "cost": 3000,  "w": 3, "h": 3, "holds": ["chicken"],         "cycle_seconds": 86400,  "levels": [20, 30, 40], "upgrade_costs": [5000, 12000],  "color": "#e9c46a", "roof": "#b5482f"},
-    {"id": "cow_shed",     "kind": "building", "name": "Cow Shed",     "unlock_level": 6,  "cost": 5000,  "w": 4, "h": 3, "holds": ["cow"],             "cycle_seconds": 86400,  "levels": [20, 30, 40], "upgrade_costs": [8000, 20000],  "color": "#c0392b", "roof": "#6b4a3a"},
-    {"id": "orchard",      "kind": "building", "name": "Orchard",      "unlock_level": 8,  "cost": 6000,  "w": 4, "h": 4, "holds_kind": "tree",         "cycle_seconds": 172800, "levels": [20, 30, 40], "upgrade_costs": [9000, 22000],  "color": "#8fbf5a", "roof": "#7a5230"},
-    {"id": "horse_stable", "kind": "building", "name": "Horse Stable", "unlock_level": 12, "cost": 10000, "w": 4, "h": 4, "holds": ["horse"],           "cycle_seconds": 259200, "levels": [10, 15, 20], "upgrade_costs": [15000, 35000], "color": "#a8743f", "roof": "#3f5f7a"}
+    {
+      "id": "apple_tree",
+      "kind": "tree",
+      "name": "Apple Tree",
+      "unlock_level": 2,
+      "cost": 150,
+      "cycle_seconds": 172800,
+      "payout": 60,
+      "xp": 1,
+      "color": "#d93b30"
+    },
+    {
+      "id": "lemon_tree",
+      "kind": "tree",
+      "name": "Lemon Tree",
+      "unlock_level": 4,
+      "cost": 250,
+      "cycle_seconds": 172800,
+      "payout": 85,
+      "xp": 1,
+      "color": "#f2d43a"
+    },
+    {
+      "id": "cherry_tree",
+      "kind": "tree",
+      "name": "Cherry Tree",
+      "unlock_level": 6,
+      "cost": 400,
+      "cycle_seconds": 259200,
+      "payout": 140,
+      "xp": 2,
+      "color": "#a3122e"
+    },
+    {
+      "id": "orange_tree",
+      "kind": "tree",
+      "name": "Orange Tree",
+      "unlock_level": 8,
+      "cost": 500,
+      "cycle_seconds": 172800,
+      "payout": 120,
+      "xp": 2,
+      "color": "#f28c1c"
+    },
+    {
+      "id": "peach_tree",
+      "kind": "tree",
+      "name": "Peach Tree",
+      "unlock_level": 10,
+      "cost": 800,
+      "cycle_seconds": 259200,
+      "payout": 200,
+      "xp": 2,
+      "color": "#f7a07a"
+    },
+    {
+      "id": "mango_tree",
+      "kind": "tree",
+      "name": "Mango Tree",
+      "unlock_level": 12,
+      "cost": 1200,
+      "cycle_seconds": 259200,
+      "payout": 280,
+      "xp": 3,
+      "color": "#f5b324"
+    },
+    {
+      "id": "chicken",
+      "kind": "animal",
+      "name": "Chicken",
+      "product": "Eggs",
+      "unlock_level": 1,
+      "cost": 120,
+      "cycle_seconds": 86400,
+      "payout": 40,
+      "xp": 1,
+      "color": "#fbfaf4",
+      "accent": "#e2453c"
+    },
+    {
+      "id": "cow",
+      "kind": "animal",
+      "name": "Cow",
+      "product": "Milk",
+      "unlock_level": 3,
+      "cost": 300,
+      "cycle_seconds": 86400,
+      "payout": 85,
+      "xp": 1,
+      "color": "#f4f1ea",
+      "accent": "#3b3330"
+    },
+    {
+      "id": "sheep",
+      "kind": "animal",
+      "name": "Sheep",
+      "product": "Wool",
+      "unlock_level": 5,
+      "cost": 350,
+      "cycle_seconds": 86400,
+      "payout": 95,
+      "xp": 1,
+      "color": "#eeeae0",
+      "accent": "#5a4a42"
+    },
+    {
+      "id": "pig",
+      "kind": "animal",
+      "name": "Pig",
+      "product": "Truffles",
+      "unlock_level": 7,
+      "cost": 450,
+      "cycle_seconds": 86400,
+      "payout": 110,
+      "xp": 2,
+      "color": "#f4b6b8",
+      "accent": "#d9878b"
+    },
+    {
+      "id": "goat",
+      "kind": "animal",
+      "name": "Goat",
+      "product": "Goat Milk",
+      "unlock_level": 9,
+      "cost": 600,
+      "cycle_seconds": 172800,
+      "payout": 200,
+      "xp": 2,
+      "color": "#d8c7a8",
+      "accent": "#7a6650"
+    },
+    {
+      "id": "horse",
+      "kind": "animal",
+      "name": "Horse",
+      "product": "Horse Hair",
+      "unlock_level": 11,
+      "cost": 900,
+      "cycle_seconds": 259200,
+      "payout": 320,
+      "xp": 3,
+      "color": "#9a6438",
+      "accent": "#4a2c18"
+    },
+    {
+      "id": "chicken_coop",
+      "kind": "building",
+      "name": "Chicken Coop",
+      "unlock_level": 4,
+      "cost": 3000,
+      "w": 3,
+      "h": 3,
+      "holds": [
+        "chicken"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "upgrade_costs": [
+        5000,
+        12000
+      ],
+      "color": "#e9c46a",
+      "roof": "#b5482f"
+    },
+    {
+      "id": "cow_shed",
+      "kind": "building",
+      "name": "Cow Shed",
+      "unlock_level": 6,
+      "cost": 5000,
+      "w": 4,
+      "h": 3,
+      "holds": [
+        "cow"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "upgrade_costs": [
+        8000,
+        20000
+      ],
+      "color": "#c0392b",
+      "roof": "#6b4a3a"
+    },
+    {
+      "id": "orchard",
+      "kind": "building",
+      "name": "Orchard",
+      "unlock_level": 8,
+      "cost": 6000,
+      "w": 4,
+      "h": 4,
+      "holds_kind": "tree",
+      "cycle_seconds": 172800,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "upgrade_costs": [
+        9000,
+        22000
+      ],
+      "color": "#8fbf5a",
+      "roof": "#7a5230"
+    },
+    {
+      "id": "horse_stable",
+      "kind": "building",
+      "name": "Horse Stable",
+      "unlock_level": 12,
+      "cost": 10000,
+      "w": 4,
+      "h": 4,
+      "holds": [
+        "horse"
+      ],
+      "cycle_seconds": 259200,
+      "levels": [
+        10,
+        15,
+        20
+      ],
+      "upgrade_costs": [
+        15000,
+        35000
+      ],
+      "color": "#a8743f",
+      "roof": "#3f5f7a"
+    },
+    {
+      "id": "bee",
+      "kind": "bee",
+      "name": "Bee",
+      "product": "Honey",
+      "unlock_level": 1,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 30,
+      "xp": 1,
+      "color": "#f2c230"
+    },
+    {
+      "id": "beehive",
+      "kind": "building",
+      "name": "Beehive",
+      "unlock_level": 3,
+      "cost": 1500,
+      "w": 2,
+      "h": 2,
+      "holds": [
+        "bee"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        10,
+        20,
+        30
+      ],
+      "upgrade_costs": [
+        4000,
+        10000
+      ],
+      "color": "#f2c230",
+      "roof": "#c98a1a"
+    }
   ]
 }

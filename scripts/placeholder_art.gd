@@ -345,3 +345,13 @@ static func draw_wild_land(ci: CanvasItem, corners: PackedVector2Array) -> void:
 		for j in steps:
 			if j % 2 == 0:
 				ci.draw_line(a.lerp(b, float(j) / steps), a.lerp(b, float(j + 1) / steps), Color(1, 1, 1, 0.5), 2.0)
+
+
+## A heart in a bubble over a stray animal: tap to adopt.
+static func draw_stray_marker(ci: CanvasItem, at: Vector2) -> void:
+	ci.draw_circle(at, 16, Color("#fffaf0"))
+	ci.draw_arc(at, 16, 0, TAU, 24, Color("#5c3a1e"), 2)
+	var red := Color("#e2453c")
+	ci.draw_circle(at + Vector2(-4, -2), 5, red)
+	ci.draw_circle(at + Vector2(4, -2), 5, red)
+	ci.draw_colored_polygon(PackedVector2Array([at + Vector2(-9, 0), at + Vector2(9, 0), at + Vector2(0, 10)]), red)
