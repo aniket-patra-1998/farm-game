@@ -1,8 +1,8 @@
-# name | page that links the zip (CC0 packs only)
-kenney_iso_farm | https://kenney.nl/assets/isometric-miniature-farm
-kenney_nature | https://kenney.nl/assets/nature-kit
-kenney_food | https://kenney.nl/assets/food-kit
-kenney_car | https://kenney.nl/assets/car-kit
-kenney_survival | https://kenney.nl/assets/survival-kit
-kenney_fantasy_town | https://kenney.nl/assets/fantasy-town-kit
+# name | page that links the zip (CC0 packs only; Kenney's packs via their OpenGameArt mirrors)
+kenney_iso_farm | https://opengameart.org/node/142159
+kenney_nature | https://opengameart.org/content/nature-kit
+kenney_food | https://opengameart.org/content/food-kit
+kenney_car | https://opengameart.org/content/car-kit
+kenney_survival | https://opengameart.org/content/survival-kit
+kenney_fantasy_town | https://opengameart.org/content/fantasy-town-kit
 quaternius_farm_animals | https://opengameart.org/content/lowpoly-animated-farm-animal-pack
