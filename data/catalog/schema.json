@@ -472,6 +472,69 @@
         "fill": 0.7,
         "doc": "One look."
       }
+    },
+    "Crafting": {
+      "extends": "Building",
+      "kind": "crafting",
+      "doc": "FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels; each star adds a crafting slot and 3 recipes.",
+      "fields": {
+        "craft_seconds": {
+          "type": "int",
+          "default": 21600,
+          "doc": "How long one craft takes (FarmVille: 6 hours)."
+        },
+        "star_coins": {
+          "type": "list<int>",
+          "doc": "Coins to reach stars 2, 3, 4 and 5."
+        },
+        "star_recipe_stars": {
+          "type": "list<int>",
+          "doc": "Recipe mastery stars (summed over this building's recipes) needed for stars 2 to 5."
+        },
+        "star_gems": {
+          "type": "list<int>",
+          "doc": "Or gems instead, for stars 2 to 5."
+        },
+        "extra_gem_cost": {
+          "type": "int",
+          "doc": "Price in gems once you already own a crafting building (FarmVille: the first was coins, the rest Farm Cash)."
+        }
+      }
+    },
+    "Recipe": {
+      "extends": "Item",
+      "kind": "recipe",
+      "doc": "Something a crafting building makes from bushels.",
+      "fields": {
+        "building": {
+          "type": "string",
+          "ref": "Crafting",
+          "required": true,
+          "doc": "Where it's made."
+        },
+        "star": {
+          "type": "int",
+          "default": 1,
+          "doc": "The building's star level that unlocks it."
+        },
+        "inputs": {
+          "type": "map<int>",
+          "required": true,
+          "doc": "Bushels used: crop id -> how many."
+        },
+        "product": {
+          "type": "string",
+          "doc": "What kind of good (bread, wine, perfume)."
+        }
+      },
+      "lifecycle": {
+        "stages": [
+          "good"
+        ],
+        "pattern": "good_{id}",
+        "fill": 0.5,
+        "doc": "One icon per good, shown in the crafting panel."
+      }
     }
   },
   "files": {
@@ -481,11 +544,13 @@
     "animals": "Animal",
     "buildings": "Building",
     "vehicles": "Vehicle",
-    "decorations": "Decoration"
+    "decorations": "Decoration",
+    "recipes": "Recipe"
   },
   "kind_classes": {
     "barn": "Barn",
-    "bee": "Animal"
+    "bee": "Animal",
+    "crafting": "Crafting"
   },
   "layout": "Each data file: {class, _note, defaults, families: [{id, name, doc, defaults, variants: [entries]}]}. Category = file, family = a group of variants sharing defaults (Cows: Cow, Bull, Calf).",
   "lifecycle_note": "Each class's lifecycle: the stages it shows, the art id for each (pattern), and how wide its art is (fill, as a share of its footprint). {id} = item id, {stage} = stage name, {n} = building size number."

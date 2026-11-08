@@ -64,7 +64,7 @@ func _draw_job() -> void:
 			PlaceholderArt.draw_crop(_canvas, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, phase, progress)
 		"Tree":
 			PlaceholderArt.draw_object(_canvas, Game.item_data(item_id), corners, stage == "ready", 1, 0, 0)
-		"Building", "Barn":
+		"Building", "Barn", "Crafting":
 			var it := Game.item_data(item_id)
 			PlaceholderArt.draw_object(_canvas, it, corners, false, int(stage), 5, int((it["levels"] as Array)[int(stage) - 1]))
 		_:

@@ -114,6 +114,12 @@ const STRAY_STAYS := 86400         # a stray nobody adopts wanders off after a d
 const STRAY_ADOPT_XP := 5
 const LOST_WEIGHT := 0.25           # each lost animal's share of the stray pool (a 100-coin animal is 1.0)
 const MYSTERY_BOX_GEM_COST := 12
+const BUSHEL_CHANCE := 0.2          # a harvest drops a bushel of its crop, once you own a crafting building
+const BUSHEL_CAP := 100             # bushels held at once (FarmVille's stall held 100)
+const STALL_CROPS := 6              # the Farmers Market offers this many crops a day
+const STALL_EACH := 3               # 3 bushels of each, like 3 a day from each neighbour in FarmVille
+const BUSHEL_GEM_COST := 1          # "Buy all ingredients" with premium currency
+const CRAFT_XP_PER_STAR := 5
 const UNWITHER_GEM_COST := 3
 const START_COINS := 200
 const START_GEMS := 5
@@ -166,6 +172,11 @@ var arborists := 0                 # collect every tree at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
 var egg_data := {}                 # data/mystery_eggs.json
 var box_data := {}                 # data/mystery_box.json
+var bushels := {}                  # crop id -> bushels held, for crafting
+var goods := {}                    # recipe id -> crafted goods held
+var crafted := {}                  # recipe id -> lifetime crafts (recipe mastery)
+var stall := {}                    # crop id -> bushels for sale at the Farmers Market today
+var stall_day := 0
 var last_daily_day := 0            # day number of the last daily gift
 var daily_streak := 0              # consecutive days the daily bonus was collected
 var stored: Array = []             # objects put away in the barn (no row or col)
@@ -459,6 +470,7 @@ func harvest(i: int) -> Dictionary:
 	elif drop.get("type", "") == "bird":
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	var part := _roll_part()
+	var bushel := _roll_bushel(crop_id)
 	var bee_news := ""
 	if crop.get("flower", false):
 		bee_news = _flower_harvest_bees()
@@ -470,7 +482,7 @@ func harvest(i: int) -> Dictionary:
 		_advance_tutorial(Tutorial.HARVEST)
 	_plot_updated(i)
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
-		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part}
+		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel}
 
 
 # ---------------------------------------------------------------- surprise drops
@@ -657,6 +669,9 @@ func _grass_over(item_id: String, row: int, col: int) -> void:
 
 func can_afford_item(item_id: String) -> bool:
 	var it := item_data(item_id)
+	if it.get("kind", "") == "crafting":
+		var price := crafting_price(item_id)
+		return gems >= int(price["gems"]) if price.has("gems") else coins >= int(price["coins"])
 	if it.has("gem_cost"):
 		return gems >= int(it["gem_cost"])
 	return coins >= int(it.get("cost", 0))
@@ -671,7 +686,13 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 		return false
 	if not can_place(item_id, row, col):
 		return false
-	if it.has("gem_cost"):
+	if it["kind"] == "crafting":
+		var price := crafting_price(item_id)
+		var paid := spend_gems(int(price["gems"])) if price.has("gems") else spend(int(price["coins"]))
+		if not paid:
+			message.emit("Not enough %s for a %s" % ["gems" if price.has("gems") else "coins", it["name"]])
+			return false
+	elif it.has("gem_cost"):
 		if not spend_gems(int(it["gem_cost"])):
 			message.emit("Not enough gems for a %s" % it["name"])
 			return false
@@ -684,6 +705,11 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 		add_xp(bought_xp)
 	if it["kind"] == "decor":
 		_bump("decor_bought", 1)
+	if it["kind"] == "crafting":
+		obj["level"] = 1
+		obj["slots"] = []
+		stall_day = 0 # restock the Farmers Market with this building's crops
+		message.emit("%s built! Harvests now drop bushels. Tap it to craft." % it["name"])
 	if it["kind"] == "building":
 		obj["level"] = 1
 		obj["inside"] = {}
@@ -768,7 +794,7 @@ func art_for(obj: Dictionary) -> String:
 				var age := float(now() - int(obj.get("t", now())))
 				stage = "fruiting" if age >= cycle_of(obj) * 0.5 else "harvested"
 			candidates = [id + "_" + stage, id]
-		"building", "barn":
+		"building", "barn", "crafting":
 			candidates = ["%s_size%d" % [id, level_of(obj)], id + "_size1", id]
 		_:
 			candidates = [id]
@@ -2097,6 +2123,301 @@ func _objects_updated() -> void:
 	queue_save()
 
 
+# ---------------------------------------------------------------- crafting (FarmVille's Bakery, Winery and Spa)
+
+func _int_map(d) -> Dictionary:
+	var out := {}
+	if typeof(d) == TYPE_DICTIONARY:
+		for k in d:
+			out[str(k)] = int(d[k])
+	return out
+
+
+func is_crafting(obj: Dictionary) -> bool:
+	return kind_of(obj) == "crafting"
+
+
+func owns_crafting() -> bool:
+	for o in objects:
+		if is_crafting(o):
+			return true
+	return false
+
+
+## FarmVille: your first crafting building costs coins; every one after that, premium currency.
+func crafting_price(item_id: String) -> Dictionary:
+	var it := item_data(item_id)
+	if owns_crafting():
+		return {"gems": int(it.get("extra_gem_cost", 80))}
+	return {"coins": int(it.get("cost", 0))}
+
+
+func _crafting_def(obj: Dictionary) -> CraftingDef:
+	return catalog.get_def(obj["id"]) as CraftingDef
+
+
+func _recipe(rid: String) -> RecipeDef:
+	return catalog.get_def(rid) as RecipeDef
+
+
+## Every recipe the building knows, unlocked or not, by star.
+func recipes_of(building_id: String) -> Array[RecipeDef]:
+	return catalog.recipes_of(building_id)
+
+
+func recipe_unlocked(obj: Dictionary, rid: String) -> bool:
+	var r := _recipe(rid)
+	return r != null and r.building() == obj["id"] and r.star() <= level_of(obj)
+
+
+func recipe_stars(rid: String) -> int:
+	return CraftingDef.recipe_stars(int(crafted.get(rid, 0)))
+
+
+## Recipe mastery stars across one building's recipes; going up a star needs enough of them.
+func building_recipe_stars(building_id: String) -> int:
+	var n := 0
+	for r in recipes_of(building_id):
+		n += recipe_stars(r.id)
+	return n
+
+
+func total_bushels() -> int:
+	var n := 0
+	for c in bushels:
+		n += int(bushels[c])
+	return n
+
+
+func add_bushels(crop_id: String, n: int) -> int:
+	var room := maxi(0, BUSHEL_CAP - total_bushels())
+	var got := mini(n, room)
+	if got > 0:
+		bushels[crop_id] = int(bushels.get(crop_id, 0)) + got
+		inventory_changed.emit()
+	return got
+
+
+func _roll_bushel(crop_id: String) -> String:
+	if not drops_enabled or not owns_crafting() or rng.randf() >= BUSHEL_CHANCE:
+		return ""
+	return crop_id if add_bushels(crop_id, 1) > 0 else ""
+
+
+## Bushels still needed for one craft: crop id -> how many more.
+func missing_bushels(rid: String) -> Dictionary:
+	var out := {}
+	var ins := _recipe(rid).inputs()
+	for c in ins:
+		var short := int(ins[c]) - int(bushels.get(c, 0))
+		if short > 0:
+			out[c] = short
+	return out
+
+
+func free_slots(obj: Dictionary) -> int:
+	return _crafting_def(obj).slots(level_of(obj)) - (obj.get("slots", []) as Array).size()
+
+
+## Why a craft can't start right now, or "" if it can.
+func craft_problem(uid: int, rid: String) -> String:
+	var obj := object_by_uid(uid)
+	if obj.is_empty() or not is_crafting(obj):
+		return "That isn't a crafting building"
+	if not recipe_unlocked(obj, rid):
+		return "Unlocks at %d stars" % _recipe(rid).star() if _recipe(rid) else "Unknown recipe"
+	if free_slots(obj) <= 0:
+		return "Every slot is busy"
+	if not missing_bushels(rid).is_empty():
+		return "Not enough bushels"
+	return ""
+
+
+func start_craft(uid: int, rid: String) -> bool:
+	if craft_problem(uid, rid) != "":
+		return false
+	var obj := object_by_uid(uid)
+	var ins := _recipe(rid).inputs()
+	for c in ins:
+		bushels[c] = int(bushels[c]) - int(ins[c])
+		if int(bushels[c]) <= 0:
+			bushels.erase(c)
+	(obj["slots"] as Array).append({"r": rid, "done": now() + _crafting_def(obj).craft_seconds()})
+	_bump("crafts_started", 1)
+	inventory_changed.emit()
+	_objects_updated()
+	return true
+
+
+## FarmVille's "Buy all ingredients": the missing bushels for gems, then start crafting.
+func buy_missing_and_craft(uid: int, rid: String) -> bool:
+	var missing := missing_bushels(rid)
+	var n := 0
+	for c in missing:
+		n += int(missing[c])
+	var obj := object_by_uid(uid)
+	if obj.is_empty() or not recipe_unlocked(obj, rid) or free_slots(obj) <= 0:
+		return false
+	if n > 0 and not spend_gems(n * BUSHEL_GEM_COST):
+		message.emit("Not enough gems")
+		return false
+	for c in missing:
+		bushels[c] = int(bushels.get(c, 0)) + int(missing[c]) # may go past the cap: used straight away
+	return start_craft(uid, rid)
+
+
+func crafts_done(obj: Dictionary) -> int:
+	var n := 0
+	for slot in obj.get("slots", []):
+		if now() >= int(slot["done"]):
+			n += 1
+	return n
+
+
+## Moves finished crafts into goods. Returns how many finished.
+func finish_crafts(uid: int) -> int:
+	var obj := object_by_uid(uid)
+	if obj.is_empty() or not is_crafting(obj):
+		return 0
+	var still: Array = []
+	var n := 0
+	for slot in obj.get("slots", []):
+		if now() >= int(slot["done"]):
+			var rid: String = slot["r"]
+			var before := recipe_stars(rid)
+			goods[rid] = int(goods.get(rid, 0)) + 1
+			crafted[rid] = int(crafted.get(rid, 0)) + 1
+			add_xp(CRAFT_XP_PER_STAR * _recipe(rid).star())
+			_bump("crafted", 1)
+			if recipe_stars(rid) > before:
+				message.emit("%s mastery: %d stars!" % [_recipe(rid).name, recipe_stars(rid)])
+			n += 1
+		else:
+			still.append(slot)
+	obj["slots"] = still
+	if n > 0:
+		message.emit("Finished %d %s" % [n, "good" if n == 1 else "goods"])
+		inventory_changed.emit()
+		_objects_updated()
+	return n
+
+
+func good_price(rid: String) -> int:
+	return _recipe(rid).sell_price(crops, recipe_stars(rid))
+
+
+func good_fuel(rid: String) -> int:
+	return _recipe(rid).fuel(recipe_stars(rid))
+
+
+func sell_good(rid: String) -> int:
+	if int(goods.get(rid, 0)) <= 0:
+		return 0
+	var price := good_price(rid)
+	_take_good(rid)
+	add_coins(price)
+	_bump("goods_sold", 1)
+	return price
+
+
+## FarmVille's "Use": a good becomes fuel. Fuel past a full tank fills spare tanks.
+func use_good(rid: String) -> int:
+	if int(goods.get(rid, 0)) <= 0:
+		return 0
+	var f := good_fuel(rid)
+	_take_good(rid)
+	if not fuel_unlocked:
+		fuel_unlocked = true
+		fuel_t = now()
+	fuel = fuel_now() + f
+	while fuel > FUEL_TANK:
+		fuel -= FUEL_TANK
+		fuel_tanks += 1
+	if fuel >= FUEL_TANK:
+		fuel_t = now()
+	return f
+
+
+func _take_good(rid: String) -> void:
+	goods[rid] = int(goods[rid]) - 1
+	if int(goods[rid]) <= 0:
+		goods.erase(rid)
+	inventory_changed.emit()
+	queue_save()
+
+
+func star_cost(obj: Dictionary) -> Dictionary:
+	return _crafting_def(obj).star_cost(level_of(obj))
+
+
+func can_add_star(uid: int, with_gems: bool) -> bool:
+	var obj := object_by_uid(uid)
+	if obj.is_empty() or not is_crafting(obj):
+		return false
+	var cost := star_cost(obj)
+	if cost.is_empty():
+		return false
+	if with_gems:
+		return gems >= int(cost["gems"])
+	return coins >= int(cost["coins"]) and building_recipe_stars(obj["id"]) >= int(cost["recipe_stars"])
+
+
+func add_star(uid: int, with_gems: bool) -> bool:
+	if not can_add_star(uid, with_gems):
+		return false
+	var obj := object_by_uid(uid)
+	var cost := star_cost(obj)
+	if with_gems:
+		spend_gems(int(cost["gems"]))
+	else:
+		spend(int(cost["coins"]))
+	obj["level"] = level_of(obj) + 1
+	message.emit("Your %s now has %d stars: a new slot and 3 new recipes!" % [item_data(obj["id"])["name"], level_of(obj)])
+	_objects_updated()
+	return true
+
+
+## The Farmers Market: a few crops' bushels for coins, new each day (standing in for neighbours' stalls).
+func _refresh_stall() -> void:
+	var today := day_number()
+	if stall_day == today:
+		return
+	stall_day = today
+	stall = {}
+	var pool: Array[String] = []
+	for b in objects:
+		if is_crafting(b):
+			for r in recipes_of(b["id"]):
+				for c in r.inputs():
+					if not pool.has(str(c)):
+						pool.append(str(c))
+	for k in mini(STALL_CROPS, pool.size()):
+		var c := pool[rng.randi_range(0, pool.size() - 1)]
+		pool.erase(c)
+		stall[c] = STALL_EACH
+
+
+func market_stall() -> Dictionary:
+	_refresh_stall()
+	return stall
+
+
+func bushel_price(crop_id: String) -> int:
+	return int(crops[crop_id]["sell_price"])
+
+
+func buy_bushel(crop_id: String) -> bool:
+	_refresh_stall()
+	if int(stall.get(crop_id, 0)) <= 0 or total_bushels() >= BUSHEL_CAP:
+		return false
+	if not spend(bushel_price(crop_id)):
+		return false
+	stall[crop_id] = int(stall[crop_id]) - 1
+	add_bushels(crop_id, 1)
+	queue_save()
+	return true
+
+
 # ---------------------------------------------------------------- land expansion
 
 ## The next expansion step, or {} when the farm is at full size.
@@ -2397,7 +2718,7 @@ func _load_items() -> void:
 	_load_catalog()
 	for id in catalog.order:
 		var d := catalog.get_def(id)
-		if d.kind == "crop" or d.kind == "material":
+		if d.kind == "crop" or d.kind == "material" or d.kind == "recipe":
 			continue
 		items[id] = d.data
 		item_order.append(id)
@@ -2455,6 +2776,11 @@ func _new_game() -> void:
 	parts = {}
 	for p in PARTS:
 		parts[p] = 0
+	bushels = {}
+	goods = {}
+	crafted = {}
+	stall = {}
+	stall_day = 0
 	mystery_eggs = {}
 	farmhands = 0
 	arborists = 0
@@ -2530,6 +2856,11 @@ func save_game() -> void:
 		"stored": stored,
 		"next_stray_at": next_stray_at,
 		"next_uid": next_uid,
+		"bushels": bushels,
+		"goods": goods,
+		"crafted": crafted,
+		"stall": stall,
+		"stall_day": stall_day,
 	}
 	var f := FileAccess.open(save_path, FileAccess.WRITE)
 	if f == null:
@@ -2577,6 +2908,11 @@ func load_game() -> bool:
 		parts[p] = int(saved_parts.get(p, 0))
 	last_daily_day = int(data.get("last_daily_day", day_number()))
 	daily_streak = int(data.get("daily_streak", 0))
+	bushels = _int_map(data.get("bushels", {}))
+	goods = _int_map(data.get("goods", {}))
+	crafted = _int_map(data.get("crafted", {}))
+	stall = _int_map(data.get("stall", {}))
+	stall_day = int(data.get("stall_day", 0))
 	mystery_eggs = {}
 	var saved_eggs: Dictionary = data.get("mystery_eggs", {})
 	for colour in saved_eggs:

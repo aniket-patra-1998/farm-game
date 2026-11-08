@@ -176,7 +176,7 @@ func _draw_object(o: Dictionary) -> void:
 		else:
 			PlaceholderArt.draw_frame(self, corners, it)
 		return
-	var is_ready_now := Game.is_ready(o)
+	var is_ready_now := Game.is_ready(o) or (Game.is_crafting(o) and Game.crafts_done(o) > 0)
 	var building := Game.is_building(o)
 	var inside := Game.inside_total(o) if building else 0
 	var cap := Game.capacity(o) if building else 0
@@ -450,6 +450,8 @@ func _act(i: int, first_touch: bool) -> void:
 			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
 				_float(at + Vector2(0, -128), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
+			if result.get("bushel", "") != "":
+				_float(at + Vector2(0, -160), "+1 %s bushel" % Game.crops[result["bushel"]]["name"], COLOR_PART, 1.6)
 			if result.get("bee", "") != "":
 				_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
 			if int(result.get("pollinated", 0)) > 0:
@@ -552,7 +554,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if not first_touch:
 		return
-	if Game.is_building(obj):
+	if Game.is_building(obj) or Game.is_crafting(obj):
 		object_tapped.emit(uid)
 		return
 	var it := Game.item_data(obj["id"])

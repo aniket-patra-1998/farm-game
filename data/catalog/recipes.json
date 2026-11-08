@@ -1,0 +1,494 @@
+{
+  "class": "Recipe",
+  "_note": "FarmVille's 2010 crafting recipes, 3 per star level per building (from the SuperCheats crafting guide). Inputs are bushels.",
+  "defaults": {
+    "unlock_level": 99
+  },
+  "families": [
+    {
+      "id": "bakery_recipes",
+      "name": "Bakery recipes",
+      "doc": "Made in the Bakery.",
+      "defaults": {
+        "building": "bakery",
+        "product": "Baked goods"
+      },
+      "variants": [
+        {
+          "id": "pumpkin_bread",
+          "name": "Pumpkin Bread",
+          "star": 1,
+          "inputs": {
+            "pumpkins": 4,
+            "wheat": 4
+          }
+        },
+        {
+          "id": "spicy_muffins",
+          "name": "Spicy Muffins",
+          "star": 1,
+          "inputs": {
+            "carrots": 3,
+            "ghost_chili": 3,
+            "bell_peppers": 1
+          }
+        },
+        {
+          "id": "strawberry_shortcake",
+          "name": "Strawberry Shortcake",
+          "star": 1,
+          "inputs": {
+            "strawberries": 4,
+            "wheat": 4
+          }
+        },
+        {
+          "id": "pattypan_tart",
+          "name": "Pattypan Tart",
+          "star": 2,
+          "inputs": {
+            "onions": 2,
+            "pattypan_squash": 3,
+            "rice": 3
+          }
+        },
+        {
+          "id": "peanut_butter_cookies",
+          "name": "Peanut Butter Cookies",
+          "star": 2,
+          "inputs": {
+            "peanuts": 2,
+            "rice": 3,
+            "sugarcane": 3
+          }
+        },
+        {
+          "id": "triple_berry_pie",
+          "name": "Triple Berry Pie",
+          "star": 2,
+          "inputs": {
+            "blackberries": 2,
+            "blueberries": 3,
+            "raspberries": 3
+          }
+        },
+        {
+          "id": "mocha_blackberry_cake",
+          "name": "Mocha Blackberry Cake",
+          "star": 3,
+          "inputs": {
+            "blackberries": 3,
+            "coffee": 3,
+            "rice": 2
+          }
+        },
+        {
+          "id": "raspberry_blondie",
+          "name": "Raspberry Blondie",
+          "star": 3,
+          "inputs": {
+            "raspberries": 3,
+            "rice": 3,
+            "wheat": 2
+          }
+        },
+        {
+          "id": "vegetable_tart",
+          "name": "Vegetable Tart",
+          "star": 3,
+          "inputs": {
+            "asparagus": 2,
+            "broccoli": 1,
+            "peas": 1
+          }
+        },
+        {
+          "id": "baked_cucumber",
+          "name": "Baked Cucumber",
+          "star": 4,
+          "inputs": {
+            "basil": 4,
+            "cucumber": 1,
+            "bell_peppers": 1
+          }
+        },
+        {
+          "id": "oatmeal_cookies",
+          "name": "Oatmeal Cookies",
+          "star": 4,
+          "inputs": {
+            "oats": 4,
+            "sugarcane": 2,
+            "wheat": 2
+          }
+        },
+        {
+          "id": "pizza_bread",
+          "name": "Pizza Bread",
+          "star": 4,
+          "inputs": {
+            "basil": 2,
+            "tomatoes": 2,
+            "wheat": 4
+          }
+        },
+        {
+          "id": "carrot_cake",
+          "name": "Carrot Cake",
+          "star": 5,
+          "inputs": {
+            "carrots": 2,
+            "cranberries": 2,
+            "red_wheat": 1,
+            "soybeans": 1
+          }
+        },
+        {
+          "id": "ginger_snaps",
+          "name": "Ginger Snaps",
+          "star": 5,
+          "inputs": {
+            "ginger": 2,
+            "oats": 2,
+            "rice": 2,
+            "sugarcane": 2
+          }
+        },
+        {
+          "id": "potato_and_onion_bread",
+          "name": "Potato and Onion Bread",
+          "star": 5,
+          "inputs": {
+            "onions": 2,
+            "posole_corn": 1,
+            "potatoes": 1,
+            "wheat": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "spa_recipes",
+      "name": "Spa recipes",
+      "doc": "Made in the Spa.",
+      "defaults": {
+        "building": "spa",
+        "product": "Spa goods"
+      },
+      "variants": [
+        {
+          "id": "floral_perfume",
+          "name": "Floral Perfume",
+          "star": 1,
+          "inputs": {
+            "blueberries": 4,
+            "morning_glory": 4
+          }
+        },
+        {
+          "id": "fresh_sachet",
+          "name": "Fresh Sachet",
+          "star": 1,
+          "inputs": {
+            "cranberries": 3,
+            "pumpkins": 3,
+            "sunflowers": 1
+          }
+        },
+        {
+          "id": "soothing_herbal_lotion",
+          "name": "Soothing Herbal Lotion",
+          "star": 1,
+          "inputs": {
+            "aloe_vera": 4,
+            "green_tea": 4
+          }
+        },
+        {
+          "id": "devotion_perfume",
+          "name": "Devotion Perfume",
+          "star": 2,
+          "inputs": {
+            "basil": 3,
+            "blueberries": 3,
+            "lilac": 3
+          }
+        },
+        {
+          "id": "petal_sachet",
+          "name": "Petal Sachet",
+          "star": 2,
+          "inputs": {
+            "iris": 1,
+            "bell_peppers": 1,
+            "sunflowers": 2
+          }
+        },
+        {
+          "id": "relaxation_oil",
+          "name": "Relaxation Oil",
+          "star": 2,
+          "inputs": {
+            "blackberries": 4,
+            "morning_glory": 4
+          }
+        },
+        {
+          "id": "energizing_lotion",
+          "name": "Energizing Lotion",
+          "star": 3,
+          "inputs": {
+            "aloe_vera": 3,
+            "blackberries": 3,
+            "red_tulips": 1
+          }
+        },
+        {
+          "id": "lily_of_the_valley_soap",
+          "name": "Lily of the Valley Soap",
+          "star": 3,
+          "inputs": {
+            "blueberries": 3,
+            "lilies": 1,
+            "morning_glory": 3
+          }
+        },
+        {
+          "id": "restoring_candle",
+          "name": "Restoring Candle",
+          "star": 3,
+          "inputs": {
+            "ghost_chili": 2,
+            "green_tea": 4,
+            "sunflowers": 1
+          }
+        },
+        {
+          "id": "iris_soap",
+          "name": "Iris Soap",
+          "star": 4,
+          "inputs": {
+            "aloe_vera": 3,
+            "iris": 2,
+            "sunflowers": 1
+          }
+        },
+        {
+          "id": "meditation_candle",
+          "name": "Meditation Candle",
+          "star": 4,
+          "inputs": {
+            "ginger": 2,
+            "green_tea": 3,
+            "lemon_balm": 3
+          }
+        },
+        {
+          "id": "pick_me_up_sachet",
+          "name": "Pick Me Up Sachet",
+          "star": 4,
+          "inputs": {
+            "basil": 3,
+            "coffee": 2,
+            "lemon_balm": 3
+          }
+        },
+        {
+          "id": "daffodil_lotion",
+          "name": "Daffodil Lotion",
+          "star": 5,
+          "inputs": {
+            "aloe_vera": 2,
+            "daffodils": 1,
+            "lilies": 1,
+            "strawberries": 2
+          }
+        },
+        {
+          "id": "farmers_frenzy_perfume",
+          "name": "Farmers Frenzy Perfume",
+          "star": 5,
+          "inputs": {
+            "ginger": 2,
+            "lavender": 1,
+            "lilac": 2,
+            "purple_poppies": 2
+          }
+        },
+        {
+          "id": "transcendent_candle",
+          "name": "Transcendent Candle",
+          "star": 5,
+          "inputs": {
+            "daffodils": 1,
+            "lilac": 2,
+            "morning_glory": 2,
+            "pink_roses": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "winery_recipes",
+      "name": "Winery recipes",
+      "doc": "Made in the Winery.",
+      "defaults": {
+        "building": "winery",
+        "product": "Drinks"
+      },
+      "variants": [
+        {
+          "id": "red_table_wine",
+          "name": "Red Table Wine",
+          "star": 1,
+          "inputs": {
+            "grapes": 2,
+            "white_grapes": 5
+          }
+        },
+        {
+          "id": "sweet_saki",
+          "name": "Sweet Saki",
+          "star": 1,
+          "inputs": {
+            "cranberries": 3,
+            "rice": 5
+          }
+        },
+        {
+          "id": "white_sangria",
+          "name": "White Sangria",
+          "star": 1,
+          "inputs": {
+            "strawberries": 3,
+            "sugarcane": 2,
+            "white_grapes": 3
+          }
+        },
+        {
+          "id": "dry_saki",
+          "name": "Dry Saki",
+          "star": 2,
+          "inputs": {
+            "green_tea": 2,
+            "lilac": 2,
+            "rice": 4
+          }
+        },
+        {
+          "id": "fruit_wine",
+          "name": "Fruit Wine",
+          "star": 2,
+          "inputs": {
+            "blueberries": 3,
+            "raspberries": 3,
+            "sugarcane": 2
+          }
+        },
+        {
+          "id": "spicy_tomato_juice",
+          "name": "Spicy Tomato Juice",
+          "star": 2,
+          "inputs": {
+            "carrots": 3,
+            "bell_peppers": 1,
+            "tomatoes": 3
+          }
+        },
+        {
+          "id": "blackberry_wine",
+          "name": "Blackberry Wine",
+          "star": 3,
+          "inputs": {
+            "blackberries": 3,
+            "grapes": 1,
+            "white_grapes": 3
+          }
+        },
+        {
+          "id": "raspberry_wine",
+          "name": "Raspberry Wine",
+          "star": 3,
+          "inputs": {
+            "blackberries": 2,
+            "grapes": 2,
+            "raspberries": 3
+          }
+        },
+        {
+          "id": "strawberry_cranberry_juice",
+          "name": "Strawberry Cranberry Juice",
+          "star": 3,
+          "inputs": {
+            "cranberries": 3,
+            "raspberries": 2,
+            "strawberries": 3
+          }
+        },
+        {
+          "id": "blueberry_wine",
+          "name": "Blueberry Wine",
+          "star": 4,
+          "inputs": {
+            "blackberries": 2,
+            "blueberries": 4,
+            "white_grapes": 2
+          }
+        },
+        {
+          "id": "herbal_elixir",
+          "name": "Herbal Elixir",
+          "star": 4,
+          "inputs": {
+            "basil": 3,
+            "ginger": 3,
+            "green_tea": 2
+          }
+        },
+        {
+          "id": "pumpkin_vinegar",
+          "name": "Pumpkin Vinegar",
+          "star": 4,
+          "inputs": {
+            "acorn_squash": 2,
+            "pumpkins": 4,
+            "rice": 2
+          }
+        },
+        {
+          "id": "cucumber_wine",
+          "name": "Cucumber Wine",
+          "star": 5,
+          "inputs": {
+            "acorn_squash": 2,
+            "cucumber": 2,
+            "rice": 1,
+            "squash": 1
+          }
+        },
+        {
+          "id": "melon_juice",
+          "name": "Melon Juice",
+          "star": 5,
+          "inputs": {
+            "carrots": 2,
+            "strawberries": 1,
+            "watermelon": 1,
+            "yellow_melon": 1
+          }
+        },
+        {
+          "id": "rose_petal_water",
+          "name": "Rose Petal Water",
+          "star": 5,
+          "inputs": {
+            "lavender": 1,
+            "morning_glory": 2,
+            "pink_roses": 1,
+            "sunflowers": 1
+          }
+        }
+      ]
+    }
+  ]
+}

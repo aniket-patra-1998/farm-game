@@ -472,7 +472,8 @@
         "iris",
         "orange_daisies",
         "white_roses",
-        "forget_me_nots"
+        "forget_me_nots",
+        "pink_roses"
       ],
       "reward_coins": 2000,
       "reward_xp": 60,
@@ -541,7 +542,8 @@
         "acorn_squash",
         "square_melon",
         "carnival_squash",
-        "cucumber"
+        "cucumber",
+        "pattypan_squash"
       ],
       "reward_coins": 2500,
       "reward_xp": 70,
@@ -611,7 +613,8 @@
         "lemon_balm",
         "saffron",
         "clover",
-        "bamboo"
+        "bamboo",
+        "aloe_vera"
       ],
       "reward_coins": 3000,
       "reward_xp": 80,

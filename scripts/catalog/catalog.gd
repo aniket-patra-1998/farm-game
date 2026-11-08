@@ -20,6 +20,8 @@ static func new_def(cls: String) -> ItemDef:
 		"Animal": return AnimalDef.new()
 		"Building": return BuildingDef.new()
 		"Barn": return BarnDef.new()
+		"Crafting": return CraftingDef.new()
+		"Recipe": return RecipeDef.new()
 		"Vehicle": return VehicleDef.new()
 		"Decoration": return DecorationDef.new()
 	push_error("Catalog: no class for %s" % cls)
@@ -60,6 +62,16 @@ func of_kind(kind: String) -> Array[ItemDef]:
 	for id in order:
 		if defs[id].kind == kind:
 			out.append(defs[id])
+	return out
+
+
+## Recipes made in one crafting building, by star then catalog order.
+func recipes_of(building_id: String) -> Array[RecipeDef]:
+	var out: Array[RecipeDef] = []
+	for star in range(1, 11):
+		for d in of_kind("recipe"):
+			if (d as RecipeDef).building() == building_id and (d as RecipeDef).star() == star:
+				out.append(d as RecipeDef)
 	return out
 
 
@@ -206,6 +218,13 @@ func _type_problem(spec: Dictionary, v) -> String:
 			return "" if typeof(v) == TYPE_STRING and Color.html_is_valid(v) else "should be a colour like #a8743f"
 		"enum":
 			return "" if (spec.get("values", []) as Array).has(v) else "should be one of %s" % [spec.get("values", [])]
+		"map<int>":
+			if typeof(v) != TYPE_DICTIONARY:
+				return "should be a map of names to numbers"
+			for k in v:
+				if typeof(v[k]) != TYPE_INT and typeof(v[k]) != TYPE_FLOAT:
+					return "should map names to numbers"
+			return ""
 		"list<string>", "list<int>":
 			if typeof(v) != TYPE_ARRAY:
 				return "should be a list"

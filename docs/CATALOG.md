@@ -7,15 +7,16 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 
 | Category | Families | In game | Planned |
 |---|---|---|---|
-| Crops | 10 | 67 | 0 |
+| Crops | 10 | 70 | 0 |
 | Materials | 2 | 10 | 0 |
 | Trees | 32 | 46 | 0 |
 | Animals | 15 | 68 | 0 |
-| Buildings | 6 | 13 | 9 |
+| Buildings | 6 | 16 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 37 | 0 |
+| recipes | 3 | 45 | 0 |
 | Collectibles | 20 sets | 100 | 0 |
-| **All** | **96** | **345** | **9** |
+| **All** | **99** | **396** | **6** |
 
 ## Adding an item
 
@@ -40,8 +41,10 @@ Item - Anything in the catalog.
       Animal - Animals, loose on the farm or inside their home.
     Building - Holds animals, trees or vehicles; may be built from a frame and expanded.
       Barn - The starter barn: broken until repaired, then storage.
+      Crafting - FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels; each star adds a crafting slot and 3 recipes.
     Vehicle - Works an area of plots per tap and burns fuel.
     Decoration - Scenery. 1 XP per 100 coins (at least 5).
+  Recipe - Something a crafting building makes from bushels.
 ```
 
 ### Item
@@ -183,6 +186,29 @@ Scenery. 1 XP per 100 coins (at least 5).
 | `shape` | string |  |  | Placeholder drawing (fence, hedge, haybale, ...). Starter scenery is drawn by id instead. |
 | `variant` | string |  |  | Shape variant (pine, oak, willow for shade trees). |
 
+### Crafting (extends Building)
+
+FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels; each star adds a crafting slot and 3 recipes.
+
+| Field | Type | Default | Required | Meaning |
+|---|---|---|---|---|
+| `craft_seconds` | int | 21600 |  | How long one craft takes (FarmVille: 6 hours). |
+| `star_coins` | list<int> |  |  | Coins to reach stars 2, 3, 4 and 5. |
+| `star_recipe_stars` | list<int> |  |  | Recipe mastery stars (summed over this building's recipes) needed for stars 2 to 5. |
+| `star_gems` | list<int> |  |  | Or gems instead, for stars 2 to 5. |
+| `extra_gem_cost` | int |  |  | Price in gems once you already own a crafting building (FarmVille: the first was coins, the rest Farm Cash). |
+
+### Recipe (extends Item)
+
+Something a crafting building makes from bushels.
+
+| Field | Type | Default | Required | Meaning |
+|---|---|---|---|---|
+| `building` | string → Crafting |  | yes | Where it's made. |
+| `star` | int | 1 |  | The building's star level that unlocks it. |
+| `inputs` | map<int> |  | yes | Bushels used: crop id -> how many. |
+| `product` | string |  |  | What kind of good (bread, wine, perfume). |
+
 ## Crops
 
 Crops planted in plowed plots. Ripe window = grow time, clamped to 4 hours to 2 days.
@@ -247,6 +273,7 @@ Flowers.
 | ✅ | Orange Daisies (values estimated in FarmVille's style) | `orange_daisies` | 59 | 55 | 1 day | 210 | 2 |
 | ✅ | White Roses (values estimated in FarmVille's style) | `white_roses` | 80 | 65 | 1 day | 245 | 2 |
 | ✅ | Forget-me-nots (values estimated in FarmVille's style) | `forget_me_nots` | 90 | 55 | 18 h | 200 | 2 |
+| ✅ | Pink Roses (values estimated in FarmVille's style) | `pink_roses` | 26 | 85 | 2 days | 315 | 3 |
 
 ### Roots
 
@@ -275,6 +302,7 @@ Gourds and Melons.
 | ✅ | Square Melon (values estimated in FarmVille's style) | `square_melon` | 52 | 55 | 1 day | 200 | 2 |
 | ✅ | Carnival Squash (values estimated in FarmVille's style) | `carnival_squash` | 63 | 25 | 8 h | 95 | 1 |
 | ✅ | Cucumber (values estimated in FarmVille's style) | `cucumber` | 43 | 50 | 1 day | 185 | 2 |
+| ✅ | Pattypan Squash (values estimated in FarmVille's style) | `pattypan_squash` | 24 | 30 | 16 h | 110 | 2 |
 
 ### Vegetables
 
@@ -323,6 +351,7 @@ Herbs and Teas.
 | ✅ | Lemon Balm (values estimated in FarmVille's style) | `lemon_balm` | 50 | 15 | 6 h | 60 | 1 |
 | ✅ | Saffron (values estimated in FarmVille's style) | `saffron` | 64 | 25 | 10 h | 100 | 1 |
 | ✅ | Clover (values estimated in FarmVille's style) | `clover` | 70 | 15 | 4 h | 50 | 1 |
+| ✅ | Aloe Vera (values estimated in FarmVille's style) | `aloe_vera` | 22 | 20 | 8 h | 70 | 1 |
 
 ## Materials
 
@@ -866,13 +895,13 @@ Make goods from what the farm grows.
 
 ### Crafting
 
-FarmVille's crafting cottages: crops in, goods out.
+FarmVille's crafting cottages (level 25): bushels from your harvests in, goods out. Sell goods for coins or turn them into fuel.
 
 | | Item | id | Unlock | Cost | Size | Holds | Built from | Special |
 |---|---|---|---|---|---|---|---|---|
-| 🕓 | Bakery | `bakery` | 1 |  |  |  |  |  |
-| 🕓 | Winery | `winery` | 1 |  |  |  |  |  |
-| 🕓 | Spa | `spa` | 1 |  |  |  |  |  |
+| ✅ | Bakery | `bakery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 |  |  |
+| ✅ | Winery | `winery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 |  |  |
+| ✅ | Spa | `spa` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 |  |  |
 | 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |
 | 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |
 
@@ -1013,6 +1042,82 @@ Given, never bought.
 |---|---|---|---|---|---|---|
 | ✅ | Mastery Sign | `mastery_sign` | never sold | free | 1x1 | mastery |
 
+## recipes
+
+FarmVille's 2010 crafting recipes, 3 per star level per building (from the SuperCheats crafting guide). Inputs are bushels.
+
+### Bakery recipes
+
+Made in the Bakery.
+
+Shared: `building` = "bakery", `product` = "Baked goods"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Pumpkin Bread | `pumpkin_bread` |  |
+| ✅ | Spicy Muffins | `spicy_muffins` |  |
+| ✅ | Strawberry Shortcake | `strawberry_shortcake` |  |
+| ✅ | Pattypan Tart | `pattypan_tart` |  |
+| ✅ | Peanut Butter Cookies | `peanut_butter_cookies` |  |
+| ✅ | Triple Berry Pie | `triple_berry_pie` |  |
+| ✅ | Mocha Blackberry Cake | `mocha_blackberry_cake` |  |
+| ✅ | Raspberry Blondie | `raspberry_blondie` |  |
+| ✅ | Vegetable Tart | `vegetable_tart` |  |
+| ✅ | Baked Cucumber | `baked_cucumber` |  |
+| ✅ | Oatmeal Cookies | `oatmeal_cookies` |  |
+| ✅ | Pizza Bread | `pizza_bread` |  |
+| ✅ | Carrot Cake | `carrot_cake` |  |
+| ✅ | Ginger Snaps | `ginger_snaps` |  |
+| ✅ | Potato and Onion Bread | `potato_and_onion_bread` |  |
+
+### Spa recipes
+
+Made in the Spa.
+
+Shared: `building` = "spa", `product` = "Spa goods"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Floral Perfume | `floral_perfume` |  |
+| ✅ | Fresh Sachet | `fresh_sachet` |  |
+| ✅ | Soothing Herbal Lotion | `soothing_herbal_lotion` |  |
+| ✅ | Devotion Perfume | `devotion_perfume` |  |
+| ✅ | Petal Sachet | `petal_sachet` |  |
+| ✅ | Relaxation Oil | `relaxation_oil` |  |
+| ✅ | Energizing Lotion | `energizing_lotion` |  |
+| ✅ | Lily of the Valley Soap | `lily_of_the_valley_soap` |  |
+| ✅ | Restoring Candle | `restoring_candle` |  |
+| ✅ | Iris Soap | `iris_soap` |  |
+| ✅ | Meditation Candle | `meditation_candle` |  |
+| ✅ | Pick Me Up Sachet | `pick_me_up_sachet` |  |
+| ✅ | Daffodil Lotion | `daffodil_lotion` |  |
+| ✅ | Farmers Frenzy Perfume | `farmers_frenzy_perfume` |  |
+| ✅ | Transcendent Candle | `transcendent_candle` |  |
+
+### Winery recipes
+
+Made in the Winery.
+
+Shared: `building` = "winery", `product` = "Drinks"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Red Table Wine | `red_table_wine` |  |
+| ✅ | Sweet Saki | `sweet_saki` |  |
+| ✅ | White Sangria | `white_sangria` |  |
+| ✅ | Dry Saki | `dry_saki` |  |
+| ✅ | Fruit Wine | `fruit_wine` |  |
+| ✅ | Spicy Tomato Juice | `spicy_tomato_juice` |  |
+| ✅ | Blackberry Wine | `blackberry_wine` |  |
+| ✅ | Raspberry Wine | `raspberry_wine` |  |
+| ✅ | Strawberry Cranberry Juice | `strawberry_cranberry_juice` |  |
+| ✅ | Blueberry Wine | `blueberry_wine` |  |
+| ✅ | Herbal Elixir | `herbal_elixir` |  |
+| ✅ | Pumpkin Vinegar | `pumpkin_vinegar` |  |
+| ✅ | Cucumber Wine | `cucumber_wine` |  |
+| ✅ | Melon Juice | `melon_juice` |  |
+| ✅ | Rose Petal Water | `rose_petal_water` |  |
+
 ## Collectibles
 
 Drops found while harvesting, gathered into sets and traded in for rewards (`data/collections.json`).
@@ -1103,7 +1208,7 @@ Meadow Map, Butterfly Net, Dried Poppy, Lily Pad, Field Guide
 
 ### Bridal Bouquet
 
-Found from iris, orange daisies, white roses, forget me nots. Trade-in reward: 2,000 coins, 60 XP.
+Found from iris, orange daisies, white roses, forget me nots, pink roses. Trade-in reward: 2,000 coins, 60 XP.
 
 Lace Ribbon, Silver Pin, Rose Thorn, Daisy Chain, Keepsake Box
 
@@ -1115,7 +1220,7 @@ Braided Onions, Ginger Grater, Root Brush, Clay Crock, Recipe Card
 
 ### Vine Harvest
 
-Found from zucchini, yellow melon, acorn squash, square melon, carnival squash, cucumber. Trade-in reward: 2,500 coins, 70 XP.
+Found from zucchini, yellow melon, acorn squash, square melon, carnival squash, cucumber, pattypan squash. Trade-in reward: 2,500 coins, 70 XP.
 
 Vine Snips, Melon Scale, Square Mould, Pickling Jar, Blue Ribbon
 
@@ -1127,7 +1232,7 @@ Chili Ristra, Cabbage Crate, Asparagus Knife, Slug Trap, Garden Kneeler
 
 ### Herb Garden
 
-Found from green tea, basil, lemon balm, saffron, clover, bamboo. Trade-in reward: 3,000 coins, 80 XP.
+Found from green tea, basil, lemon balm, saffron, clover, bamboo, aloe vera. Trade-in reward: 3,000 coins, 80 XP.
 
 Tea Tin, Mortar and Pestle, Saffron Thread, Four-Leaf Clover, Bamboo Whisk
 

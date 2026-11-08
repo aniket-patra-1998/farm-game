@@ -442,22 +442,145 @@
     {
       "id": "crafting",
       "name": "Crafting",
-      "doc": "FarmVille's crafting cottages: crops in, goods out.",
+      "doc": "FarmVille's crafting cottages (level 25): bushels from your harvests in, goods out. Sell goods for coins or turn them into fuel.",
       "variants": [
         {
           "id": "bakery",
           "name": "Bakery",
-          "status": "planned"
+          "kind": "crafting",
+          "unlock_level": 25,
+          "cost": 100000,
+          "extra_gem_cost": 80,
+          "w": 4,
+          "h": 4,
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "level_names": [
+            "Bakery",
+            "2-Star Bakery",
+            "3-Star Bakery",
+            "4-Star Bakery",
+            "5-Star Bakery"
+          ],
+          "star_coins": [
+            50000,
+            100000,
+            400000,
+            1000000
+          ],
+          "star_recipe_stars": [
+            6,
+            18,
+            27,
+            36
+          ],
+          "star_gems": [
+            15,
+            25,
+            40,
+            60
+          ],
+          "produces": false,
+          "color": "#f2e2c4",
+          "roof": "#b5452e",
+          "look": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign"
         },
         {
           "id": "winery",
           "name": "Winery",
-          "status": "planned"
+          "kind": "crafting",
+          "unlock_level": 25,
+          "cost": 100000,
+          "extra_gem_cost": 80,
+          "w": 4,
+          "h": 4,
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "level_names": [
+            "Winery",
+            "2-Star Winery",
+            "3-Star Winery",
+            "4-Star Winery",
+            "5-Star Winery"
+          ],
+          "star_coins": [
+            50000,
+            100000,
+            400000,
+            1000000
+          ],
+          "star_recipe_stars": [
+            6,
+            18,
+            27,
+            36
+          ],
+          "star_gems": [
+            15,
+            25,
+            40,
+            60
+          ],
+          "produces": false,
+          "color": "#d8c7a8",
+          "roof": "#6a2a3a",
+          "look": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign"
         },
         {
           "id": "spa",
           "name": "Spa",
-          "status": "planned"
+          "kind": "crafting",
+          "unlock_level": 25,
+          "cost": 100000,
+          "extra_gem_cost": 80,
+          "w": 4,
+          "h": 4,
+          "levels": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "level_names": [
+            "Spa",
+            "2-Star Spa",
+            "3-Star Spa",
+            "4-Star Spa",
+            "5-Star Spa"
+          ],
+          "star_coins": [
+            50000,
+            100000,
+            400000,
+            1000000
+          ],
+          "star_recipe_stars": [
+            6,
+            18,
+            27,
+            36
+          ],
+          "star_gems": [
+            15,
+            25,
+            40,
+            60
+          ],
+          "produces": false,
+          "color": "#e8f0ee",
+          "roof": "#5a9a8a",
+          "look": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower"
         },
         {
           "id": "juice_press",

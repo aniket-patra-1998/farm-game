@@ -424,6 +424,19 @@
           "color": "#6aa8e8",
           "flower": true,
           "note": "values estimated in FarmVille's style"
+        },
+        {
+          "id": "pink_roses",
+          "name": "Pink Roses",
+          "unlock_level": 26,
+          "grow_seconds": 172800,
+          "seed_cost": 85,
+          "sell_price": 315,
+          "xp": 3,
+          "shape": "flower",
+          "color": "#f29ab8",
+          "note": "values estimated in FarmVille's style",
+          "flower": true
         }
       ]
     },
@@ -600,6 +613,18 @@
           "xp": 2,
           "shape": "fruit",
           "color": "#4a8a3a",
+          "note": "values estimated in FarmVille's style"
+        },
+        {
+          "id": "pattypan_squash",
+          "name": "Pattypan Squash",
+          "unlock_level": 24,
+          "grow_seconds": 57600,
+          "seed_cost": 30,
+          "sell_price": 110,
+          "xp": 2,
+          "shape": "gourd",
+          "color": "#e8d870",
           "note": "values estimated in FarmVille's style"
         }
       ]
@@ -859,6 +884,18 @@
           "xp": 1,
           "shape": "leafy",
           "color": "#4aa04a",
+          "note": "values estimated in FarmVille's style"
+        },
+        {
+          "id": "aloe_vera",
+          "name": "Aloe Vera",
+          "unlock_level": 22,
+          "grow_seconds": 28800,
+          "seed_cost": 20,
+          "sell_price": 70,
+          "xp": 1,
+          "shape": "spike",
+          "color": "#6aa86a",
           "note": "values estimated in FarmVille's style"
         }
       ]

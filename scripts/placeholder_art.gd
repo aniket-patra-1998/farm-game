@@ -226,6 +226,8 @@ static func draw_object(ci: CanvasItem, it: Dictionary, corners: PackedVector2Ar
 			_building(ci, corners, it, level, inside, capacity, s)
 		"barn":
 			_building(ci, corners, it, level, inside, capacity, s, not broken, broken)
+		"crafting":
+			_crafting(ci, corners, it, level, s)
 		"decor":
 			match it.get("id", ""):
 				"farmhouse":
@@ -1297,3 +1299,44 @@ static func _hutch(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside
 		ci.draw_line(cp, cp + Vector2(0, -8), STEM, 2)
 		ci.draw_colored_polygon(PackedVector2Array([cp + Vector2(-2, 0), cp + Vector2(2, 0), cp + Vector2(0, 6)]), Color("#f28a2e"))
 	return (t[0] + t[2]) / 2.0 + Vector2(0, -30)
+
+
+## FarmVille's crafting cottages: one silhouette each, a bit grander per star.
+static func _crafting(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, s: float) -> void:
+	var c := (g[0] + g[2]) / 2.0
+	var front := c.lerp(g[2], 0.86)
+	_plain_building(ci, g, it, level, 0, 0, s, false)
+	var roof := Color.html(str(it.get("roof", "#6b4a3a")))
+	match it.get("id", ""):
+		"bakery":
+			var chim := c.lerp(g[1], 0.35) + Vector2(0, -60.0 * s - 12.0 * level)
+			ci.draw_rect(Rect2(chim + Vector2(-9, -34), Vector2(18, 40)), Color("#9a4a32"))
+			for k in 3:
+				ci.draw_circle(chim + Vector2(6 + k * 7, -44 - k * 14), 7 + k * 2, Color(1, 1, 1, 0.55 - k * 0.12))
+			for k in 5: # striped awning over the window
+				var x := c.lerp(g[3], 0.45) + Vector2(k * 14, k * 7) + Vector2(0, -36 * s)
+				ci.draw_colored_polygon(PackedVector2Array([x, x + Vector2(14, 7), x + Vector2(14, 21), x + Vector2(0, 14)]), Color("#d94a3a") if k % 2 == 0 else Color("#fbf3e4"))
+			_ellipse(ci, front + Vector2(-34, -6), 14, 7, Color("#d9a35a")) # loaf on the sign board
+		"winery":
+			for k in 3:
+				var b := front + Vector2(-46 + k * 26, -4 + (k % 2) * 6)
+				_ellipse(ci, b + Vector2(0, -12), 12, 15, Color("#8a5a32"))
+				ci.draw_line(b + Vector2(-12, -18), b + Vector2(12, -18), Color("#3b3330"), 2.5)
+				ci.draw_line(b + Vector2(-12, -6), b + Vector2(12, -6), Color("#3b3330"), 2.5)
+			for k in 4: # grapevine on the wall
+				ci.draw_circle(c.lerp(g[3], 0.5) + Vector2(10 + k * 9, -50 * s + (k % 2) * 8), 5, Color("#6a2a5a"))
+		"spa":
+			var tub := front + Vector2(34, -4)
+			_ellipse(ci, tub, 26, 12, Color("#f4f1ea"))
+			_ellipse(ci, tub + Vector2(0, -3), 20, 8, Color("#8fd0e0"))
+			for k in 3:
+				ci.draw_arc(tub + Vector2(-8 + k * 8, -18 - k * 4), 5, PI, TAU, 8, Color(1, 1, 1, 0.7), 2)
+			for k in 4: # flower box
+				ci.draw_circle(c.lerp(g[3], 0.5) + Vector2(4 + k * 10, -30 * s + k * 5), 5, Color("#f29ab8") if k % 2 == 0 else Color("#f2d04a"))
+	if not show_badges:
+		return
+	# A star per level on the sign.
+	for k in level:
+		var p := front + Vector2(-20 + k * 10 - level * 5 + 20, -100.0 * s - 10.0 * level)
+		ci.draw_circle(p, 4.5, Color("#ffd34d"))
+		ci.draw_arc(p, 4.5, 0, TAU, 10, roof.darkened(0.3), 1.0)

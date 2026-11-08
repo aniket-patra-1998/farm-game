@@ -258,6 +258,18 @@
         60,
         150
       ]
+    },
+    {
+      "id": "crafty",
+      "name": "Crafty",
+      "stat": "crafted",
+      "what": "goods crafted",
+      "thresholds": [
+        5,
+        25,
+        100,
+        500
+      ]
     }
   ]
 }

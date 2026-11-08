@@ -1,0 +1,50 @@
+{
+  "_note": "Art that isn't a catalog item: the farmer avatar's poses and the menu icons. tools/make_art_manifest.py turns this (plus collections, mystery eggs, the Mystery Box and ribbons) into art/manifest.json entries.",
+  "avatar": {
+    "farmers": {
+      "farmer_m": "a friendly young farmer man with short brown hair, a red plaid shirt with rolled-up sleeves, blue denim overalls, brown work boots and a woven straw hat",
+      "farmer_f": "a friendly young farmer woman with a brown ponytail, a yellow gingham shirt with rolled-up sleeves, blue denim overalls, brown work boots and a woven straw sun hat"
+    },
+    "poses": {
+      "idle": "standing relaxed with arms at the sides, smiling",
+      "walk_a": "walking, mid-stride with the left foot forward and arms swinging",
+      "walk_b": "walking, mid-stride with the right foot forward and arms swinging",
+      "hoe": "swinging a wooden hoe down into the ground with both hands, plowing",
+      "plant": "crouching down and sprinkling seeds from one hand onto the ground",
+      "harvest": "bending forward to pick crops, holding a woven wicker basket"
+    },
+    "facings": {
+      "front": "facing toward the bottom-right of the picture, toward the viewer (front three-quarter view)",
+      "back": "facing away toward the top-left of the picture (back three-quarter view, we see the back of the farmer)"
+    }
+  },
+  "icons": {
+    "coins": "a small stack of shiny gold coins",
+    "gems": "a sparkling emerald-green cut gem",
+    "xp": "a glowing golden star",
+    "fuel": "a red metal jerry can of fuel",
+    "level": "a blue prize rosette ribbon",
+    "plow": "a wooden-handled steel farm plow blade",
+    "seeds": "a small burlap seed bag spilling a few seeds",
+    "fertilizer": "a sack of fertilizer with a green leaf on it",
+    "fertilize_all": "a big sack of fertilizer with golden sparkles around it",
+    "unwither": "a blue watering can with magic sparkles",
+    "move": "an open friendly cartoon hand",
+    "sell": "a gold coin with a little paper price tag tied on",
+    "rotate": "two curved green arrows chasing each other in a circle",
+    "market": "a little red-and-white striped market stall with crates of produce",
+    "farmhand": "a straw hat and a pitchfork crossed together",
+    "arborist": "a pair of green-handled pruning shears",
+    "queen_bee": "a cute queen honey bee wearing a tiny golden crown",
+    "truffle": "a dark knobbly truffle on a green leaf",
+    "bushel": "an empty woven wicker bushel basket",
+    "goods": "a woven basket with a loaf of bread, a wine bottle and a candle",
+    "gift": "a wrapped present box with a red ribbon and bow",
+    "collection": "an open wooden keepsake box with small treasures inside",
+    "ribbon_book": "a green scrapbook with prize ribbons pinned on the cover",
+    "mastery": "a wooden farm sign with three gold stars on it",
+    "garage": "a big silver wrench",
+    "expand": "a wooden fence post with a measuring tape around it",
+    "storage": "a red barn door with a padlock"
+  }
+}

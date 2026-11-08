@@ -22,8 +22,18 @@ COMMON = ("A single isometric game asset for a cozy farming game, seen from 30 d
           "The first image is the layout reference for this item; the last three images are style references only: "
           "match their painting style, brushwork, palette and lighting exactly, but don't copy their subjects.")
 # Bump when items are added, so the Colab notebook asks for the new references zip.
-MANIFEST_VERSION = 2
+MANIFEST_VERSION = 3
 STYLE_REFS = ["style/farmhouse.png", "style/cow.png", "style/apple_tree.png"]
+ICON = ("A single game icon for a cozy farming game's menus: one object, centered, front three-quarter view, slightly from above, "
+        "complete and uncropped, a bold readable silhouette that reads at small size, isolated on a plain flat light grey (#e8e8e8) "
+        "background with nothing else: no text, no letters, no numbers, no border, no frame, no watermark. All the images given are "
+        "style references only: match their painting style, brushwork, palette and lighting exactly, but don't copy their subjects.")
+AVATAR = ("A single full-body character for a cozy isometric farming game, seen from 30 degrees above like the rest of the game, "
+          "standing on flat ground, centered, complete from hat to boots and uncropped, isolated on a plain flat light grey (#e8e8e8) "
+          "background with nothing else: no shadow on the background, no text, no border, no watermark. If the first image shows this "
+          "same farmer, keep exactly the same person: face, hair, body, clothes and colours, changing only the pose and direction. "
+          "The last three images are style references only: match their painting style, brushwork, palette and lighting exactly.")
+COMMONS = {"Icon": ICON, "Material": ICON, "Recipe": ICON, "Avatar": AVATAR}
 STYLES = {"painterly": "Style: hand-painted cozy cartoon game art, soft painterly brushwork, warm golden-hour sunlight from the "
                        "upper left, gentle ambient occlusion, rich but natural colors, crisp readable silhouette with a soft dark "
                        "outline, premium mobile game quality."}
@@ -80,6 +90,11 @@ def subject(cls, e, stage, n_sizes):
             return f"a cute baby farm animal: {look if e.get('look') else 'a ' + name.lower()}, small and young, full body, standing"
         article = "" if look.startswith(("a ", "an ")) else "a "
         return f"{article}{look}, a farm animal, full body, standing calmly"
+    if cls == "Crafting":
+        n = int(stage)
+        return (f"{look}. Star level {n} of {n_sizes}: " + ["a modest cottage", "a little bigger, with more trim and a second window",
+                "bigger again, with a porch and more decoration", "a grand version with an extra wing and flower boxes",
+                "the grandest, most charming version, with golden details and a little tower"][min(n - 1, 4)])
     if cls in ("Building", "Barn"):
         if n_sizes <= 1:
             return look
@@ -88,11 +103,49 @@ def subject(cls, e, stage, n_sizes):
                 "the biggest, grandest version, with extra decoration and flourishes",
                 "an even larger deluxe version", "the largest, most luxurious version"][min(n - 1, 4)]
         return f"{look}. Size {n} of {n_sizes}: {size}"
+    if cls == "Recipe":
+        return f"{name}, a homemade {e.get('product', 'good').lower().rstrip('s')} from a country farm, made from {', '.join(c.replace('_', ' ') for c in e['inputs'])}; appetising and charming"
     if cls == "Material":
         return f"a game icon of {name.lower()}, a building material, simple, bold and readable at small size"
     if cls == "Decoration" and not e.get("look"):
         return f"a {name.lower()}, a farm decoration"
     return look
+
+
+def icon(id, subject, item=""):
+    return {"id": "icon_" + id, "item": item, "class": "Icon", "stage": "icon", "tiles": 1, "fill": 0.5, "refs": [], "subject": subject}
+
+
+def extra_art():
+    """The farmer's poses and the menu icons (data/ui_art.json, collections, eggs, box and ribbons)."""
+    ui = json.load(open(os.path.join(ROOT, "data", "ui_art.json")))
+    out = []
+    av = ui["avatar"]
+    for who, look in av["farmers"].items():
+        base = f"avatar_{who}_idle_front"
+        for pose, doing in av["poses"].items():
+            for facing, way in av["facings"].items():
+                aid = f"avatar_{who}_{pose}_{facing}"
+                out.append({"id": aid, "item": who, "class": "Avatar", "stage": f"{pose}_{facing}", "tiles": 1, "fill": 0.42,
+                            "refs": [], "chain": "" if aid == base else base,
+                            "subject": f"{look}, {doing}, {way}"})
+    for id, subject in ui["icons"].items():
+        out.append(icon(id, subject))
+    eggs = json.load(open(os.path.join(ROOT, "data", "mystery_eggs.json")))
+    for colour in eggs["colours"]:
+        look = {"golden": "shining gold", "grey": "soft grey", "cornish": "chestnut brown with black speckles"}.get(colour, colour)
+        out.append(icon("egg_" + colour, f"a large {look} egg with a swirly golden pattern and a little sparkle, a mystery egg"))
+    out.append(icon("mystery_box", "a cardboard mystery gift box with a big red ribbon, the lid slightly open with a glow coming out"))
+    cols = json.load(open(os.path.join(ROOT, "data", "collections.json")))
+    for c in cols["collections"]:
+        for it in c["items"]:
+            bird = c["id"] == "farm_birds"
+            out.append(icon("collect_" + it["id"], f"a cute {it['name'].lower()} bird perched" if bird else
+                            f"a {it['name'].lower()}, a little collectible keepsake from a country farm"))
+    rib = json.load(open(os.path.join(ROOT, "data", "ribbons.json")))
+    for r in rib["ribbons"]:
+        out.append(icon("ribbon_" + r["id"], f"a white prize rosette ribbon with a small emblem in the middle that shows {r['what']}"))
+    return out
 
 
 def build():
@@ -110,12 +163,13 @@ def build():
                 stages = [str(n) for n in range(1, len(e.get("levels", [1])) + 1)] if lc["stages"] == "sizes" else lc["stages"]
                 for stage in stages:
                     art = lc["pattern"].replace("{id}", e["id"]).replace("{stage}", stage).replace("{n}", stage)
-                    refs = [] if cls == "Material" else [f"refs/{art}.png"]
+                    refs = [] if cls in ("Material", "Recipe") else [f"refs/{art}.png"]
                     if os.path.exists(os.path.join(ROOT, "art", "refs3d", e["id"] + ".png")):
                         refs.append(f"refs3d/{e['id']}.png")
                     items.append({"id": art, "item": e["id"], "class": cls, "stage": stage,
                                   "tiles": int(e.get("w", 1)), "fill": float(e.get("art_fill", lc.get("fill", 0.7))),
                                   "refs": refs, "subject": subject(cls, e, stage, len(stages))})
+    items += extra_art()
     # Ground tiles under everything.
     items.append({"id": "ground_grass", "item": "", "class": "Ground", "stage": "grass", "tiles": 1, "fill": 1.0,
                   "refs": ["refs/ground_grass.png"], "subject": "one flat square tile of lush, short, sunlit green grass filling the whole tile edge to edge, nothing on it"})
@@ -123,7 +177,7 @@ def build():
                   "refs": ["refs/ground_plowed.png"], "subject": "one flat square plot of freshly plowed dark brown soil in neat furrows, filling the whole tile, nothing growing"})
     return {"_note": "Generated by tools/make_art_manifest.py from data/catalog/. Don't edit by hand: change the catalog "
                      "(look, art_fill) or the generator.",
-            "version": MANIFEST_VERSION, "common": COMMON, "styles": STYLES, "style_refs": STYLE_REFS, "items": items}
+            "version": MANIFEST_VERSION, "common": COMMON, "commons": COMMONS, "styles": STYLES, "style_refs": STYLE_REFS, "items": items}
 
 
 if __name__ == "__main__":
