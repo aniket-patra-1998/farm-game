@@ -703,6 +703,7 @@ func _frames_test_tap_and_drag() -> void:
 	var tap_at := _screen_pos(grid, i)
 	_check(grid._on_farm_area(tap_at), "the tile is on screen (view %s, tile at %s)" % [str(view), str(tap_at)])
 	await _touch(tap_at, true)
+	_check(grid.get("_pressing") == true, "checkpoint: the press reached the farm (modal %s, farm area %s, display %s)" % [str(Game.modal_open), str(grid._on_farm_area(tap_at)), DisplayServer.get_name()])
 	await _touch(tap_at, false)
 	_eq(Game.phase(i), GameState.Phase.PLOWED, "a tap plows")
 
