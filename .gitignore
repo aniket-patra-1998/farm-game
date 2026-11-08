@@ -6,3 +6,6 @@ export_presets.cfg
 *.aab
 .DS_Store
 Thumbs.db
+
+# CI cache folder
+godot-bin/

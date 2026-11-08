@@ -7,23 +7,41 @@ on:
 jobs:
   game-rules:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       GODOT_VERSION: 4.7.2
     steps:
       - uses: actions/checkout@v4
 
+      # Keep the Godot binary between runs, so each push doesn't download it again.
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
       - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
         run: |
-          # Retry: GitHub release downloads occasionally fail for a moment.
-          curl -sSL --retry 5 --retry-delay 5 --retry-all-errors -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mkdir -p godot-bin
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          # -f makes HTTP errors count as failures, so the retries actually happen.
+          for attempt in 1 2 3 4 5; do
+            if curl -fsSL --retry 3 --retry-delay 5 -o godot.zip "$url" && unzip -tq godot.zip; then
+              break
+            fi
+            echo "Download attempt $attempt failed; retrying in 15 s"
+            rm -f godot.zip
+            sleep 15
+          done
           unzip -q godot.zip
-          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
-          chmod +x godot
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot
+          chmod +x godot-bin/godot
 
       - name: Import project
         # Builds Godot's class list so class_name scripts resolve when run headless.
-        run: ./godot --headless --path . --import || true
+        run: ./godot-bin/godot --headless --path . --import || true
 
       - name: Run tests
-        run: ./godot --headless --path . res://tests/run_tests.tscn
+        run: ./godot-bin/godot --headless --path . res://tests/run_tests.tscn
