@@ -1708,17 +1708,31 @@ func test_69_art_manifest_is_complete() -> void:
 	_done(g)
 
 
+## A throwaway art folder holding only these ids, so tests don't depend on what's been generated.
+func _art_dir(ids: Array) -> String:
+	var dir := "user://test_art"
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+	var meta := {}
+	var img := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	for id in ids:
+		img.save_png(ProjectSettings.globalize_path("%s/%s.png" % [dir, id]))
+		meta[id] = {"anchor": [4, 8], "scale": 0.5}
+	var f := FileAccess.open(dir + "/sprites.json", FileAccess.WRITE)
+	f.store_string(JSON.stringify(meta))
+	f.close()
+	return dir
+
+
 func test_72_art_follows_the_lifecycle() -> void:
 	var g := _farm()
-	SpriteBank.use_dir("res://art/pilot/painterly")
-	# Strawberries: no art for planted in the pilot, art for growing and ripe.
+	SpriteBank.use_dir(_art_dir(["crop_strawberries_growing", "crop_strawberries_ripe", "chicken_coop"]))
+	# Strawberries: no art for planted, art for growing and ripe.
 	var i := _free(g)
 	g.plow(i)
 	g.plant(i, "strawberries")
-	_eq(g.crop_art_for(i), "", "no planted art yet: the code drawing is used")
+	_eq(g.crop_art_for(i), "", "no planted art: the code drawing is used")
 	_skip(g, int(int(g.crops["strawberries"]["grow_seconds"]) * 0.6))
 	_eq(g.crop_art_for(i), "crop_strawberries_growing", "half grown picks the growing art")
-	SpriteBank.use_dir("res://art/final")
 	_skip(g, int(g.crops["strawberries"]["grow_seconds"]))
 	_eq(g.crop_art_for(i), "crop_strawberries_ripe", "ripe picks the ripe art")
 	# Buildings fall back from their size to the plain id.
@@ -1729,7 +1743,8 @@ func test_72_art_follows_the_lifecycle() -> void:
 	g.buy_and_place("chicken_coop", 0, 4)
 	_eq(g.art_for(g.object_at(g.index_of(0, 4))), "chicken_coop", "the coop uses its art until size art exists")
 	_check(g.buy_and_place("tractor", 8, 8), "tractor placed")
-	_eq(g.art_for(g.object_at(g.index_of(8, 8))), "", "no tractor art yet: drawn in code")
+	_eq(g.art_for(g.object_at(g.index_of(8, 8))), "", "no tractor art: drawn in code")
+	SpriteBank.use_dir("res://art/final")
 	_done(g)
 
 
