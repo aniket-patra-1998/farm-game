@@ -1,0 +1,17 @@
+{
+  "_note": "Starting values from the V1 design doc. Times in seconds, money in coins. Tune freely.",
+  "crops": [
+    {"id": "strawberries", "name": "Strawberries", "unlock_level": 1,  "seed_cost": 10, "grow_seconds": 14400,  "sell_price": 35,  "xp": 1, "shape": "berry",  "color": "#e2453c", "flower": false},
+    {"id": "wheat",        "name": "Wheat",        "unlock_level": 1,  "seed_cost": 15, "grow_seconds": 86400,  "sell_price": 115, "xp": 1, "shape": "grain",  "color": "#e8c04a", "flower": false},
+    {"id": "carrots",      "name": "Carrots",      "unlock_level": 2,  "seed_cost": 20, "grow_seconds": 7200,   "sell_price": 40,  "xp": 1, "shape": "root",   "color": "#f28a2e", "flower": false},
+    {"id": "corn",         "name": "Corn",         "unlock_level": 3,  "seed_cost": 30, "grow_seconds": 57600,  "sell_price": 120, "xp": 2, "shape": "stalk",  "color": "#f4d03f", "flower": false},
+    {"id": "sunflowers",   "name": "Sunflowers",   "unlock_level": 4,  "seed_cost": 25, "grow_seconds": 21600,  "sell_price": 80,  "xp": 2, "shape": "flower", "color": "#f7c51e", "flower": true},
+    {"id": "tomatoes",     "name": "Tomatoes",     "unlock_level": 5,  "seed_cost": 35, "grow_seconds": 28800,  "sell_price": 105, "xp": 2, "shape": "fruit",  "color": "#e0392f", "flower": false},
+    {"id": "potatoes",     "name": "Potatoes",     "unlock_level": 6,  "seed_cost": 40, "grow_seconds": 43200,  "sell_price": 130, "xp": 2, "shape": "root",   "color": "#c9a16b", "flower": false},
+    {"id": "pumpkins",     "name": "Pumpkins",     "unlock_level": 8,  "seed_cost": 45, "grow_seconds": 172800, "sell_price": 240, "xp": 3, "shape": "gourd",  "color": "#ef8a22", "flower": false},
+    {"id": "lavender",     "name": "Lavender",     "unlock_level": 10, "seed_cost": 50, "grow_seconds": 86400,  "sell_price": 170, "xp": 3, "shape": "spike",  "color": "#9b7fd4", "flower": true},
+    {"id": "rice",         "name": "Rice",         "unlock_level": 12, "seed_cost": 55, "grow_seconds": 43200,  "sell_price": 155, "xp": 3, "shape": "grain",  "color": "#d9d38a", "flower": false},
+    {"id": "sugarcane",    "name": "Sugarcane",    "unlock_level": 14, "seed_cost": 65, "grow_seconds": 86400,  "sell_price": 200, "xp": 3, "shape": "stalk",  "color": "#9ccc65", "flower": false},
+    {"id": "cotton",       "name": "Cotton",       "unlock_level": 16, "seed_cost": 75, "grow_seconds": 172800, "sell_price": 300, "xp": 4, "shape": "fluff",  "color": "#f5f5f0", "flower": false}
+  ]
+}
