@@ -35,8 +35,8 @@ func _process(delta: float) -> void:
 	hour = DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
 	var w := get_viewport().get_visible_rect().size.x
 	for c in _clouds:
-		var scale: float = c["scale"]
-		c["x"] = float(c["x"]) + float(c["speed"]) * scale * delta / maxf(1.0, w)
+		var cloud_scale: float = c["scale"]
+		c["x"] = float(c["x"]) + float(c["speed"]) * cloud_scale * delta / maxf(1.0, w)
 		if float(c["x"]) > 1.15:
 			c["x"] = -0.15
 	_canvas.queue_redraw()

@@ -1,5 +1,5 @@
 {
-  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w/h = footprint in tiles. Times in seconds. Buildings, the FarmVille way: bought with coins; build_materials means it arrives as a frame finished with those materials; expand_materials is paid per expansion; levels = capacity per size; one_each items (bull, stallion) live inside without taking a space; special = mystery_eggs, calves, foals or nursery. gem_cost = bought with gems instead of coins (like Farm Cash). unlock_level 99 = never sold in the market (strays, eggs, babies).",
+  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w/h = footprint in tiles. Times in seconds. Buildings, the FarmVille way: bought with coins; build_materials means it arrives as a frame finished with those materials; expand_materials is paid per expansion; levels = capacity per size; one_each items (bull, stallion) live inside without taking a space; special = mystery_eggs, calves, foals or nursery. gem_cost = bought with gems instead of coins (like Farm Cash). unlock_level 99 = never sold in the market (strays, eggs, babies). special also = beehive (Queen Bee, pollination), truffles (pig foraging) or saplings (rare tree varieties). rare_sapling / rare_of link a tree to its rare variety.",
   "items": [
     {
       "id": "apple_tree",
@@ -10,7 +10,8 @@
       "cycle_seconds": 172800,
       "payout": 60,
       "xp": 1,
-      "color": "#d93b30"
+      "color": "#d93b30",
+      "rare_sapling": "honeycrisp_apple_tree"
     },
     {
       "id": "lemon_tree",
@@ -21,7 +22,8 @@
       "cycle_seconds": 172800,
       "payout": 85,
       "xp": 1,
-      "color": "#f2d43a"
+      "color": "#f2d43a",
+      "rare_sapling": "meyer_lemon_tree"
     },
     {
       "id": "cherry_tree",
@@ -32,7 +34,8 @@
       "cycle_seconds": 259200,
       "payout": 140,
       "xp": 2,
-      "color": "#a3122e"
+      "color": "#a3122e",
+      "rare_sapling": "rainier_cherry_tree"
     },
     {
       "id": "orange_tree",
@@ -43,7 +46,8 @@
       "cycle_seconds": 172800,
       "payout": 120,
       "xp": 2,
-      "color": "#f28c1c"
+      "color": "#f28c1c",
+      "rare_sapling": "blood_orange_tree"
     },
     {
       "id": "peach_tree",
@@ -54,7 +58,8 @@
       "cycle_seconds": 259200,
       "payout": 200,
       "xp": 2,
-      "color": "#f7a07a"
+      "color": "#f7a07a",
+      "rare_sapling": "elberta_peach_tree"
     },
     {
       "id": "mango_tree",
@@ -65,7 +70,8 @@
       "cycle_seconds": 259200,
       "payout": 280,
       "xp": 3,
-      "color": "#f5b324"
+      "color": "#f5b324",
+      "rare_sapling": "alphonso_mango_tree"
     },
     {
       "id": "chicken",
@@ -192,6 +198,62 @@
       "xp": 2,
       "color": "#f4b6b8",
       "accent": "#d9878b"
+    },
+    {
+      "id": "kunekune_pig",
+      "kind": "animal",
+      "name": "Kunekune Pig",
+      "product": "Truffles",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 200,
+      "xp": 2,
+      "color": "#d9b48a",
+      "accent": "#5a3a22",
+      "rare_pig": true
+    },
+    {
+      "id": "spotted_pig",
+      "kind": "animal",
+      "name": "Spotted Pig",
+      "product": "Truffles",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 180,
+      "xp": 2,
+      "color": "#f2d6cf",
+      "accent": "#3b3330",
+      "rare_pig": true
+    },
+    {
+      "id": "tamworth_pig",
+      "kind": "animal",
+      "name": "Tamworth Pig",
+      "product": "Truffles",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 170,
+      "xp": 2,
+      "color": "#c0602a",
+      "accent": "#8a3a1a",
+      "rare_pig": true
+    },
+    {
+      "id": "berkshire_pig",
+      "kind": "animal",
+      "name": "Berkshire Pig",
+      "product": "Truffles",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 160,
+      "xp": 2,
+      "color": "#2b2b30",
+      "accent": "#f4b6b8",
+      "rare_pig": true
     },
     {
       "id": "goat",
@@ -364,7 +426,8 @@
         "bricks": 10,
         "nails": 10,
         "boards": 10
-      }
+      },
+      "special": "saplings"
     },
     {
       "id": "horse_stable",
@@ -448,6 +511,34 @@
       "roof": "#7a9e7e"
     },
     {
+      "id": "pig_pen",
+      "kind": "building",
+      "name": "Pig Pen",
+      "unlock_level": 16,
+      "cost": 5000,
+      "w": 3,
+      "h": 3,
+      "holds": [
+        "pig",
+        "berkshire_pig",
+        "tamworth_pig",
+        "spotted_pig",
+        "kunekune_pig"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        30
+      ],
+      "build_materials": {
+        "boards": 8,
+        "bricks": 8,
+        "nails": 8
+      },
+      "special": "truffles",
+      "color": "#c98a5a",
+      "roof": "#7a5230"
+    },
+    {
       "id": "bee",
       "kind": "bee",
       "name": "Bee",
@@ -455,8 +546,8 @@
       "unlock_level": 1,
       "cost": 0,
       "cycle_seconds": 86400,
-      "payout": 30,
-      "xp": 1,
+      "payout": 6,
+      "xp": 0,
       "color": "#f2c230"
     },
     {
@@ -464,7 +555,7 @@
       "kind": "building",
       "name": "Beehive",
       "unlock_level": 3,
-      "cost": 1500,
+      "cost": 5000,
       "w": 2,
       "h": 2,
       "holds": [
@@ -472,17 +563,18 @@
       ],
       "cycle_seconds": 86400,
       "levels": [
-        10,
-        20,
-        30
+        200
       ],
       "color": "#f2c230",
       "roof": "#c98a1a",
-      "expand_materials": {
-        "bricks": 10,
+      "build_materials": {
+        "smokers": 10,
+        "beeswax": 10,
+        "boards": 10,
         "nails": 10,
-        "boards": 10
-      }
+        "bricks": 10
+      },
+      "special": "beehive"
     },
     {
       "id": "plum_tree",
@@ -493,7 +585,8 @@
       "cycle_seconds": 259200,
       "payout": 75,
       "xp": 1,
-      "color": "#7b3f8c"
+      "color": "#7b3f8c",
+      "rare_sapling": "golden_plum_tree"
     },
     {
       "id": "fig_tree",
@@ -504,7 +597,8 @@
       "cycle_seconds": 259200,
       "payout": 105,
       "xp": 1,
-      "color": "#6d4c6f"
+      "color": "#6d4c6f",
+      "rare_sapling": "black_mission_fig_tree"
     },
     {
       "id": "banana_tree",
@@ -515,7 +609,8 @@
       "cycle_seconds": 259200,
       "payout": 150,
       "xp": 2,
-      "color": "#f2dc5d"
+      "color": "#f2dc5d",
+      "rare_sapling": "red_banana_tree"
     },
     {
       "id": "avocado_tree",
@@ -526,7 +621,8 @@
       "cycle_seconds": 259200,
       "payout": 180,
       "xp": 2,
-      "color": "#4f7a28"
+      "color": "#4f7a28",
+      "rare_sapling": "hass_avocado_tree"
     },
     {
       "id": "apricot_tree",
@@ -537,7 +633,8 @@
       "cycle_seconds": 345600,
       "payout": 250,
       "xp": 2,
-      "color": "#f4a259"
+      "color": "#f4a259",
+      "rare_sapling": "golden_apricot_tree"
     },
     {
       "id": "pomegranate_tree",
@@ -548,7 +645,8 @@
       "cycle_seconds": 432000,
       "payout": 340,
       "xp": 3,
-      "color": "#b3202e"
+      "color": "#b3202e",
+      "rare_sapling": "wonderful_pomegranate_tree"
     },
     {
       "id": "olive_tree",
@@ -559,7 +657,8 @@
       "cycle_seconds": 345600,
       "payout": 360,
       "xp": 3,
-      "color": "#6b7d3a"
+      "color": "#6b7d3a",
+      "rare_sapling": "mission_olive_tree"
     },
     {
       "id": "coconut_tree",
@@ -570,7 +669,8 @@
       "cycle_seconds": 259200,
       "payout": 380,
       "xp": 3,
-      "color": "#7a5230"
+      "color": "#7a5230",
+      "rare_sapling": "king_coconut_tree"
     },
     {
       "id": "duck",
@@ -697,6 +797,174 @@
       "repair_xp": 50,
       "color": "#b03a2e",
       "roof": "#5c3a1e"
+    },
+    {
+      "id": "honeycrisp_apple_tree",
+      "kind": "tree",
+      "name": "Honeycrisp Apple Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 172800,
+      "payout": 90,
+      "xp": 2,
+      "color": "#e8463a",
+      "rare_of": "apple_tree"
+    },
+    {
+      "id": "rainier_cherry_tree",
+      "kind": "tree",
+      "name": "Rainier Cherry Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 210,
+      "xp": 3,
+      "color": "#f2c4a0",
+      "rare_of": "cherry_tree"
+    },
+    {
+      "id": "meyer_lemon_tree",
+      "kind": "tree",
+      "name": "Meyer Lemon Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 172800,
+      "payout": 128,
+      "xp": 2,
+      "color": "#f7c948",
+      "rare_of": "lemon_tree"
+    },
+    {
+      "id": "blood_orange_tree",
+      "kind": "tree",
+      "name": "Blood Orange Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 172800,
+      "payout": 180,
+      "xp": 3,
+      "color": "#b8322a",
+      "rare_of": "orange_tree"
+    },
+    {
+      "id": "elberta_peach_tree",
+      "kind": "tree",
+      "name": "Elberta Peach Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 300,
+      "xp": 3,
+      "color": "#f59a5a",
+      "rare_of": "peach_tree"
+    },
+    {
+      "id": "alphonso_mango_tree",
+      "kind": "tree",
+      "name": "Alphonso Mango Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 420,
+      "xp": 4,
+      "color": "#f6a623",
+      "rare_of": "mango_tree"
+    },
+    {
+      "id": "golden_plum_tree",
+      "kind": "tree",
+      "name": "Golden Plum Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 112,
+      "xp": 2,
+      "color": "#e8c23a",
+      "rare_of": "plum_tree"
+    },
+    {
+      "id": "black_mission_fig_tree",
+      "kind": "tree",
+      "name": "Black Mission Fig Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 158,
+      "xp": 2,
+      "color": "#3a2a3a",
+      "rare_of": "fig_tree"
+    },
+    {
+      "id": "red_banana_tree",
+      "kind": "tree",
+      "name": "Red Banana Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 225,
+      "xp": 3,
+      "color": "#b8402e",
+      "rare_of": "banana_tree"
+    },
+    {
+      "id": "hass_avocado_tree",
+      "kind": "tree",
+      "name": "Hass Avocado Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 270,
+      "xp": 3,
+      "color": "#2f3d22",
+      "rare_of": "avocado_tree"
+    },
+    {
+      "id": "golden_apricot_tree",
+      "kind": "tree",
+      "name": "Golden Apricot Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 345600,
+      "payout": 375,
+      "xp": 3,
+      "color": "#f2b13a",
+      "rare_of": "apricot_tree"
+    },
+    {
+      "id": "wonderful_pomegranate_tree",
+      "kind": "tree",
+      "name": "Wonderful Pomegranate Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 432000,
+      "payout": 510,
+      "xp": 4,
+      "color": "#8f1426",
+      "rare_of": "pomegranate_tree"
+    },
+    {
+      "id": "mission_olive_tree",
+      "kind": "tree",
+      "name": "Mission Olive Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 345600,
+      "payout": 540,
+      "xp": 4,
+      "color": "#3f4a2a",
+      "rare_of": "olive_tree"
+    },
+    {
+      "id": "king_coconut_tree",
+      "kind": "tree",
+      "name": "King Coconut Tree",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 259200,
+      "payout": 570,
+      "xp": 4,
+      "color": "#f29a2e",
+      "rare_of": "coconut_tree"
     }
   ]
 }

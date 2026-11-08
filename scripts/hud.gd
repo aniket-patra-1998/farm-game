@@ -36,6 +36,7 @@ var _book: BookPanel
 var _unwither_button: Button
 var _farmhand_button: Button
 var _arborist_button: Button
+var _fert_all_button: Button
 var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
 var _placing_label: Label
@@ -66,6 +67,7 @@ func _ready() -> void:
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.gems_changed.connect(func(_g: int) -> void: _refresh())
 	Game.inventory_changed.connect(_refresh_unwither)
+	Game.inventory_changed.connect(_refresh_seed_buttons)
 	Game.inventory_changed.connect(_refresh_book)
 	Game.farm_expanded.connect(func(_s: int) -> void: _refresh_book())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
@@ -177,6 +179,12 @@ func _build_toolbar(root: Control) -> void:
 	fert.pressed.connect(func() -> void: tool_selected.emit("fertilize", ""))
 	row.add_child(fert)
 
+	_fert_all_button = Button.new()
+	_fert_all_button.custom_minimum_size = BUTTON_SIZE
+	_fert_all_button.focus_mode = Control.FOCUS_NONE
+	_fert_all_button.pressed.connect(func() -> void: Game.use_fertilize_all())
+	row.add_child(_fert_all_button)
+
 	# Unwither is an action, not a tool, so it isn't part of the tool group.
 	_unwither_button = Button.new()
 	_unwither_button.custom_minimum_size = BUTTON_SIZE
@@ -220,6 +228,13 @@ func _build_toolbar(root: Control) -> void:
 		rich.focus_mode = Control.FOCUS_NONE
 		rich.pressed.connect(func() -> void: Game.debug_add_coins(10000))
 		row.add_child(rich)
+
+		var bees := Button.new()
+		bees.text = "Debug\n+20 bees"
+		bees.custom_minimum_size = BUTTON_SIZE
+		bees.focus_mode = Control.FOCUS_NONE
+		bees.pressed.connect(func() -> void: Game.debug_add_bees(20))
+		row.add_child(bees)
 
 		var mats := Button.new()
 		mats.text = "Debug\n+10 materials"
@@ -415,7 +430,11 @@ func _refresh_seed_buttons() -> void:
 	for id in _seed_buttons:
 		var crop: Dictionary = Game.crops[id]
 		var b: Button = _seed_buttons[id]
-		if Game.is_unlocked(id):
+		var pol := Game.pollinated_seeds(id)
+		if Game.is_unlocked(id) and pol > 0:
+			b.disabled = false
+			b.text = "%s\n%d pollinated · free" % [crop["name"], pol]
+		elif Game.is_unlocked(id):
 			b.disabled = false
 			b.text = "%s\n%d coins · %s" % [crop["name"], int(crop["seed_cost"]),
 				FarmGrid.format_duration(int(crop["grow_seconds"]))]
@@ -463,6 +482,9 @@ func _refresh_unwither() -> void:
 		_farmhand_button.disabled = Game.farmhands <= 0
 		_arborist_button.text = "Arborist\n%d left" % Game.arborists
 		_arborist_button.disabled = Game.arborists <= 0
+	if _fert_all_button:
+		_fert_all_button.text = "Fertilize All\n%d left" % Game.fertilize_alls
+		_fert_all_button.disabled = Game.fertilize_alls <= 0
 	if Game.unwithers > 0:
 		_unwither_button.text = "Unwither\n%d left" % Game.unwithers
 	else:
@@ -676,8 +698,67 @@ func _add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 			if not lines.is_empty():
 				txt += "\n" + "\n".join(PackedStringArray(lines))
 			content.add_child(BookPanel.text(txt, 17, BookPanel.CREAM))
-	if o["id"] == "beehive" and Game.waiting_bees > 0:
-		content.add_child(BookPanel.text("%d bees are waiting for space." % Game.waiting_bees, 17, BookPanel.CREAM))
+		"beehive":
+			_add_hive_info(content, o)
+		"truffles":
+			_add_pig_pen_info(content, o)
+		"saplings":
+			content.add_child(BookPanel.text("Harvests can sprout a rare sapling of a tree inside: a Rainier Cherry from cherry trees, a Honeycrisp from apple trees... Rare trees pay half as much again. The more of a tree you keep here, the likelier its sapling.", 17, BookPanel.CREAM))
+
+
+func _add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
+	var uid := int(o["uid"])
+	if Game.has_queen(o):
+		content.add_child(BookPanel.text("The Queen Bee lives here. Worker bees join while you harvest flowers, up to %d. Each bee makes honey daily." % Game.capacity(o), 17, BookPanel.CREAM))
+	else:
+		content.add_child(BookPanel.text("This hive needs a Queen Bee before worker bees will join. One may turn up while harvesting flowers, or buy one.", 17, BookPanel.CREAM))
+		var row := HFlowContainer.new()
+		row.add_theme_constant_override("h_separation", 12)
+		var put := _panel_button("Add Queen Bee (%d held)" % Game.queen_bees)
+		put.disabled = Game.queen_bees <= 0
+		put.pressed.connect(func() -> void: Game.add_queen(uid))
+		row.add_child(put)
+		var buy := _panel_button("Buy Queen Bee: %d gems" % GameState.QUEEN_GEM_COST)
+		buy.disabled = Game.gems < GameState.QUEEN_GEM_COST
+		buy.pressed.connect(func() -> void: Game.add_queen(uid, true))
+		row.add_child(buy)
+		content.add_child(row)
+	content.add_child(BookPanel.text("Pollination: harvesting a fertilized crop has a %d%% chance to give 5 pollinated seeds of it (free, last 2 days). Their crops stay ripe twice as long and super-harvest three times as often. Collecting honey can leave a Fertilize All. Bees drift off if you stay away more than %d days." % [int(round(Game.pollination_chance() * 100)), GameState.BEES_STAY_DAYS], 17, BookPanel.CREAM))
+
+
+func _add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
+	var uid := int(o["uid"])
+	var pigs := Game.inside_total(o)
+	var card := BookPanel.card()
+	card.add_theme_constant_override("separation", 8)
+	card.add_child(BookPanel.text("Truffles held: %d" % Game.truffles, 21))
+	if not Game.is_foraging(o):
+		card.add_child(BookPanel.text("Feed the pigs slop and they forage for 8 hours: 1 truffle for every %d pigs, at least 1." % GameState.PIGS_PER_TRUFFLE, 17))
+		var feed := _panel_button("Feed slop: %d coins" % GameState.SLOP_COST)
+		feed.disabled = pigs == 0 or Game.coins < GameState.SLOP_COST
+		feed.pressed.connect(func() -> void: Game.feed_slop(uid))
+		card.add_child(feed)
+	elif Game.forage_seconds_left(o) > 0:
+		card.add_child(BookPanel.text("Foraging... back in " + FarmGrid.format_duration(Game.forage_seconds_left(o)), 18))
+	else:
+		var dig := _panel_button("Collect truffles")
+		dig.pressed.connect(func() -> void:
+			var n := Game.collect_truffles(uid)
+			if n > 0:
+				show_message("+%d truffles" % n))
+		card.add_child(dig)
+	card.add_child(BookPanel.text("Trade %d truffles for a rare pig:" % GameState.TRUFFLES_PER_PIG, 18))
+	var breeds := HFlowContainer.new()
+	breeds.add_theme_constant_override("h_separation", 10)
+	breeds.add_theme_constant_override("v_separation", 10)
+	for id in Game.rare_pigs():
+		var b := _panel_button(Game.item_data(id)["name"])
+		b.disabled = Game.truffles < GameState.TRUFFLES_PER_PIG
+		var breed: String = id
+		b.pressed.connect(func() -> void: Game.trade_truffles(breed))
+		breeds.add_child(b)
+	card.add_child(breeds)
+	content.add_child(BookPanel.card_frame(card))
 
 
 ## Next size and its material cost.
@@ -752,9 +833,9 @@ func _build_barn_storage(content: VBoxContainer) -> void:
 	for k in Game.stored.size():
 		var o: Dictionary = Game.stored[k]
 		var row := HBoxContainer.new()
-		var name := BookPanel.text(Game.item_data(o["id"])["name"], 22)
-		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(name)
+		var label := BookPanel.text(Game.item_data(o["id"])["name"], 22)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
 		var place := _panel_button("Place")
 		var index := k
 		place.pressed.connect(func() -> void:

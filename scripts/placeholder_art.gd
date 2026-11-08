@@ -297,8 +297,33 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 		ci.draw_circle(bubble, 6, accent if id != "chicken" else Color("#f6e7c1"))
 
 
+## Each animal building has its own shape, so you can tell them apart at a glance.
 ## show_sign: level badge and count sign; broken: weathered colours, missing roof and boarded door.
 static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, inside: int, capacity: int, s: float, show_sign := true, broken := false) -> void:
+	if show_sign and not broken:
+		var badge := Vector2.ZERO
+		match it.get("id", ""):
+			"chicken_coop":
+				badge = _coop(ci, g, it, level, inside, capacity, s)
+			"cow_shed":
+				badge = _dairy(ci, g, it, level, s)
+			"horse_stable":
+				badge = _stable(ci, g, it, level, s)
+			"nursery_barn":
+				badge = _nursery(ci, g, it, level, s)
+			"beehive":
+				badge = _hive(ci, g, inside, capacity, s)
+			"orchard":
+				badge = _orchard(ci, g, level, inside, s)
+			"pig_pen":
+				badge = _pig_pen(ci, g, it, inside, s)
+		if badge != Vector2.ZERO:
+			_signs(ci, g, badge, level, inside, capacity)
+			return
+	_plain_building(ci, g, it, level, inside, capacity, s, show_sign, broken)
+
+
+static func _plain_building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, inside: int, capacity: int, s: float, show_sign := true, broken := false) -> void:
 	var wall := Color.html(str(it.get("color", "#c0392b")))
 	var roof := Color.html(str(it.get("roof", "#6b4a3a")))
 	if broken:
@@ -349,16 +374,363 @@ static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 		_upgrade_trim(ci, g, left, bottom, right, up, roof)
 	if level >= 3:
 		_upgrade_top(ci, right, bottom, up, r_a, s)
-	# Level badge and count sign.
+	_signs(ci, g, r_b + Vector2(0, -26), level, inside, capacity)
+
+
+## Level badge over the building and an "inside / spaces" sign in front of it.
+static func _signs(ci: CanvasItem, g: PackedVector2Array, badge: Vector2, level: int, inside: int, capacity: int) -> void:
 	var font := ThemeDB.fallback_font
-	var badge := r_b + Vector2(0, -26)
 	ci.draw_circle(badge, 16, Color("#ffd34d"))
 	ci.draw_arc(badge, 16, 0, TAU, 24, Color("#5c3a1e"), 2.5)
 	ci.draw_string(font, badge + Vector2(-16, 7), str(level), HORIZONTAL_ALIGNMENT_CENTER, 32, 20, Color("#3a2614"))
-	var sign_pos := bottom + Vector2(-34, 22)
+	var c := (g[0] + g[2]) / 2.0
+	var sign_pos := c.lerp(g[2], 0.78) + Vector2(-34, 22)
 	ci.draw_rect(Rect2(sign_pos, Vector2(68, 24)), Color("#fbefd2"))
 	ci.draw_rect(Rect2(sign_pos, Vector2(68, 24)), Color("#5c3a1e"), false, 2)
 	ci.draw_string(font, sign_pos + Vector2(0, 18), "%d/%d" % [inside, capacity], HORIZONTAL_ALIGNMENT_CENTER, 68, 16, Color("#3a2614"))
+
+
+# ---------------------------------------------------------------- building shapes
+
+## Footprint corners pulled toward the centre: [top, right, bottom, left].
+static func _inset(g: PackedVector2Array, f: float) -> PackedVector2Array:
+	var c := (g[0] + g[2]) / 2.0
+	return PackedVector2Array([c.lerp(g[0], f), c.lerp(g[1], f), c.lerp(g[2], f), c.lerp(g[3], f)])
+
+
+## The two walls you can see of a box standing on base (raised by lift). Returns the wall-top corners.
+static func _box(ci: CanvasItem, base: PackedVector2Array, hgt: float, wall: Color, lift := 0.0) -> PackedVector2Array:
+	var l := Vector2(0, -lift)
+	var up := Vector2(0, -hgt - lift)
+	ci.draw_colored_polygon(PackedVector2Array([base[3] + l, base[2] + l, base[2] + up, base[3] + up]), wall.darkened(0.12))
+	ci.draw_colored_polygon(PackedVector2Array([base[2] + l, base[1] + l, base[1] + up, base[2] + up]), wall.darkened(0.3))
+	return PackedVector2Array([base[0] + up, base[1] + up, base[2] + up, base[3] + up])
+
+
+## A pitched roof over wall tops; the ridge runs back-left to front-right. Returns the ridge ends.
+static func _gable(ci: CanvasItem, t: PackedVector2Array, rise: float, roof: Color, gable_wall: Color) -> PackedVector2Array:
+	var r_a := t[0].lerp(t[3], 0.5) + Vector2(0, -rise)
+	var r_b := t[1].lerp(t[2], 0.5) + Vector2(0, -rise)
+	ci.draw_colored_polygon(PackedVector2Array([t[3], t[2], r_b, r_a]), roof)
+	ci.draw_colored_polygon(PackedVector2Array([t[0], t[1], r_b, r_a]), roof.darkened(0.2))
+	ci.draw_colored_polygon(PackedVector2Array([t[2], t[1], r_b]), gable_wall.darkened(0.3))
+	ci.draw_line(r_a, r_b, roof.lightened(0.25), 3)
+	return PackedVector2Array([r_a, r_b])
+
+
+## A door on the left wall at a fraction along it.
+static func _door(ci: CanvasItem, base: PackedVector2Array, at: float, width: float, hgt: float, col: Color, lift := 0.0) -> void:
+	var foot := base[3].lerp(base[2], at) + Vector2(0, -lift)
+	var dw := (base[2] - base[3]) * width
+	var dh := Vector2(0, -hgt)
+	ci.draw_colored_polygon(PackedVector2Array([foot - dw, foot + dw, foot + dw + dh, foot - dw + dh]), col)
+
+
+static func _weathervane(ci: CanvasItem, ridge: Vector2) -> void:
+	var gold := Color("#f2c230")
+	ci.draw_line(ridge, ridge + Vector2(0, -26), Color("#5c3a1e"), 2.5)
+	ci.draw_colored_polygon(PackedVector2Array([ridge + Vector2(0, -26), ridge + Vector2(16, -21), ridge + Vector2(0, -16)]), gold)
+	ci.draw_circle(ridge + Vector2(0, -28), 3.0, gold)
+
+
+## Fence posts and two rails around a ground outline, with a gap for a gate on the front-left side.
+static func _fence(ci: CanvasItem, base: PackedVector2Array, wood: Color) -> void:
+	for k in 4:
+		var a := base[k]
+		var b := base[(k + 1) % 4]
+		var steps := 8
+		for j in steps + 1:
+			if k == 2 and j >= 3 and j <= 5:
+				continue # the gate
+			var p := a.lerp(b, float(j) / steps)
+			ci.draw_line(p, p + Vector2(0, -16), wood.darkened(0.2), 3.5)
+		for h in [-6.0, -13.0]:
+			if k == 2:
+				ci.draw_line(a + Vector2(0, h), a.lerp(b, 3.0 / 8) + Vector2(0, h), wood, 2.5)
+				ci.draw_line(a.lerp(b, 5.0 / 8) + Vector2(0, h), b + Vector2(0, h), wood, 2.5)
+			else:
+				ci.draw_line(a + Vector2(0, h), b + Vector2(0, h), wood, 2.5)
+
+
+static func _yard_shadow(ci: CanvasItem, g: PackedVector2Array, f := 0.42) -> void:
+	var c := (g[0] + g[2]) / 2.0
+	_ellipse(ci, c + Vector2(0, 6), (g[1].x - g[3].x) * f, (g[2].y - g[0].y) * f, Color(0, 0, 0, 0.12))
+
+
+## Chicken Coop: a small hen house up on legs, with a ramp, nesting boxes and a run.
+static func _coop(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, inside: int, capacity: int, s: float) -> Vector2:
+	var wall := Color.html(str(it.get("color", "#e9c46a")))
+	var roof := Color.html(str(it.get("roof", "#b5482f")))
+	var wood := Color("#8a5a32")
+	_yard_shadow(ci, g)
+	# Wire run in front, with a few hens pecking.
+	var run := _inset(g, 0.9)
+	ci.draw_colored_polygon(run, Color(0.85, 0.75, 0.5, 0.35))
+	_fence(ci, run, Color("#d8d2c4"))
+	var hens := mini(5, int(ceil(inside * 5.0 / maxf(1.0, capacity))))
+	for k in hens:
+		var p := run[3].lerp(run[2], 0.25 + 0.14 * k) + Vector2(6, -6)
+		_ellipse(ci, p, 7, 6, Color("#fbf6ec"))
+		ci.draw_circle(p + Vector2(5, -6), 4, Color("#fbf6ec"))
+		ci.draw_circle(p + Vector2(5, -10), 2, Color("#e2453c"))
+	var f := 0.5 + 0.06 * level
+	var base := _inset(g, f)
+	var lift := 16.0 * s * 0.5
+	for p in [base[3], base[2], base[1]]:
+		ci.draw_line(p, p + Vector2(0, -lift), wood, 4.0)
+	var t := _box(ci, base, 26.0 * s * 0.6 + 6.0 * level, wall, lift)
+	# Nesting boxes stick out of the right wall.
+	for k in 2 + level:
+		var at := base[2].lerp(base[1], 0.2 + 0.6 * k / float(1 + level)) + Vector2(0, -lift - 10)
+		ci.draw_rect(Rect2(at + Vector2(-7, -10), Vector2(14, 10)), roof.darkened(0.1))
+		ci.draw_circle(at + Vector2(0, -6), 3, Color("#f6e7c1"))
+	# Pop-hole and ramp down to the ground.
+	_door(ci, base, 0.5, 0.12, 16, Color("#3a2614"), lift)
+	var hole := base[3].lerp(base[2], 0.5) + Vector2(0, -lift)
+	var foot := hole + Vector2(-34, 22)
+	ci.draw_line(hole, foot, wood.lightened(0.15), 7.0)
+	for k in 4:
+		var q := hole.lerp(foot, 0.2 + 0.2 * k)
+		ci.draw_line(q + Vector2(-3, -3), q + Vector2(3, 3), wood.darkened(0.2), 2.0)
+	var ridge := _gable(ci, t, 22.0 * s * 0.6, roof, wall)
+	if level >= 2:
+		ci.draw_polyline(PackedVector2Array([t[3], t[2], t[1]]), Color("#fbf6ec"), 3.0)
+	if level >= 3:
+		_weathervane(ci, ridge[0].lerp(ridge[1], 0.5))
+	return ridge[1] + Vector2(0, -26)
+
+
+## Dairy Farm: a tall red barn with a two-slope (gambrel) roof, a silo and milk cans.
+static func _dairy(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, _s: float) -> Vector2:
+	var wall := Color.html(str(it.get("color", "#c0392b")))
+	var roof := Color.html(str(it.get("roof", "#6b4a3a")))
+	_yard_shadow(ci, g)
+	var base := _inset(g, 0.66 + 0.06 * level)
+	# Silo behind the barn's right end.
+	var silo := base[1].lerp(base[0], 0.4) + Vector2(10, 0)
+	var sw := 30.0
+	var sh := 120.0 + 14.0 * level
+	ci.draw_rect(Rect2(silo + Vector2(-sw / 2.0, -sh), Vector2(sw, sh)), Color("#d7dde3"))
+	ci.draw_rect(Rect2(silo + Vector2(-sw / 2.0, -sh), Vector2(sw * 0.35, sh)), Color("#eef2f5"))
+	for k in 5:
+		ci.draw_line(silo + Vector2(-sw / 2.0, -sh * (0.15 + k * 0.17)), silo + Vector2(sw / 2.0, -sh * (0.15 + k * 0.17)), Color("#aab3bb"), 1.5)
+	ci.draw_circle(silo + Vector2(0, -sh), sw / 2.0, roof.lightened(0.15))
+	var hgt := 52.0 + 8.0 * level
+	var t := _box(ci, base, hgt, wall)
+	# Big doors with the white X.
+	var foot := base[3].lerp(base[2], 0.5)
+	var dw := (base[2] - base[3]) * 0.16
+	var dh := Vector2(0, -hgt * 0.72)
+	ci.draw_colored_polygon(PackedVector2Array([foot - dw, foot + dw, foot + dw + dh, foot - dw + dh]), wall.darkened(0.35))
+	var white := Color("#fbf6ec")
+	ci.draw_polyline(PackedVector2Array([foot - dw, foot + dw, foot + dw + dh, foot - dw + dh, foot - dw]), white, 2.5)
+	ci.draw_line(foot - dw, foot + dw + dh, white, 2.5)
+	ci.draw_line(foot + dw, foot - dw + dh, white, 2.5)
+	ci.draw_polyline(PackedVector2Array([base[3] + Vector2(0, -hgt), base[2] + Vector2(0, -hgt), base[1] + Vector2(0, -hgt)]), white, 3.0)
+	# Gambrel roof: steep lower slopes, shallow upper ones.
+	var mid_l := PackedVector2Array([t[3].lerp(t[0], 0.18) + Vector2(0, -22), t[2].lerp(t[1], 0.18) + Vector2(0, -22)])
+	var mid_r := PackedVector2Array([t[0].lerp(t[3], 0.18) + Vector2(0, -22), t[1].lerp(t[2], 0.18) + Vector2(0, -22)])
+	var r_a := t[0].lerp(t[3], 0.5) + Vector2(0, -36)
+	var r_b := t[1].lerp(t[2], 0.5) + Vector2(0, -36)
+	ci.draw_colored_polygon(PackedVector2Array([t[3], t[2], mid_l[1], mid_l[0]]), roof)
+	ci.draw_colored_polygon(PackedVector2Array([mid_l[0], mid_l[1], r_b, r_a]), roof.lightened(0.1))
+	ci.draw_colored_polygon(PackedVector2Array([t[0], t[1], mid_r[1], mid_r[0]]), roof.darkened(0.25))
+	ci.draw_colored_polygon(PackedVector2Array([mid_r[0], mid_r[1], r_b, r_a]), roof.darkened(0.15))
+	ci.draw_colored_polygon(PackedVector2Array([t[2], t[1], mid_r[1], r_b, mid_l[1]]), wall.darkened(0.3))
+	ci.draw_circle(t[2].lerp(t[1], 0.5) + Vector2(0, -18), 7, Color("#f4e3c3")) # hayloft window
+	ci.draw_line(r_a, r_b, roof.lightened(0.3), 3)
+	# Milk cans by the door.
+	for k in 2 + mini(level, 2):
+		var cp := base[2] + Vector2(-34 + k * 12, 12)
+		ci.draw_rect(Rect2(cp + Vector2(-5, -16), Vector2(10, 16)), Color("#c9d1d8"))
+		ci.draw_rect(Rect2(cp + Vector2(-3, -20), Vector2(6, 4)), Color("#9aa4ad"))
+	if level >= 3:
+		_weathervane(ci, r_a.lerp(r_b, 0.5))
+	return r_b + Vector2(0, -26)
+
+
+## Horse Stable: long and low, a row of half-doors with horses looking out, hay bales in front.
+static func _stable(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, _s: float) -> Vector2:
+	var wall := Color.html(str(it.get("color", "#a8743f")))
+	var roof := Color.html(str(it.get("roof", "#3f5f7a")))
+	_yard_shadow(ci, g)
+	var base := _inset(g, 0.82)
+	# Make it long: squash the depth so the left wall runs the length of the footprint.
+	var c := (base[0] + base[2]) / 2.0
+	base[0] = base[0].lerp(base[3], 0.55)
+	base[1] = base[1].lerp(base[2], 0.55)
+	var hgt := 34.0 + 2.0 * level
+	var t := _box(ci, base, hgt, wall)
+	var stalls := 2 + level
+	var horse := Color("#7a4a2a")
+	for k in stalls:
+		var at := (k + 0.5) / stalls
+		var foot := base[3].lerp(base[2], at)
+		var dw := (base[2] - base[3]) * (0.3 / stalls)
+		var top_half := Vector2(0, -hgt * 0.75)
+		var mid := Vector2(0, -hgt * 0.4)
+		ci.draw_colored_polygon(PackedVector2Array([foot - dw, foot + dw, foot + dw + mid, foot - dw + mid]), wall.darkened(0.4))
+		ci.draw_colored_polygon(PackedVector2Array([foot - dw + mid, foot + dw + mid, foot + dw + top_half, foot - dw + top_half]), Color("#2b1d12"))
+		ci.draw_line(foot - dw + mid, foot + dw + mid, Color("#f4e3c3"), 2.0)
+		if k % 2 == 0:
+			ci.draw_circle(foot + mid + Vector2(0, -8), 6, horse) # a horse looking out
+	# Low hip roof with a little cupola.
+	var r_a := t[0].lerp(t[3], 0.5) + Vector2(0, -18)
+	var r_b := t[1].lerp(t[2], 0.5) + Vector2(0, -18)
+	r_a = r_a.lerp(r_b, 0.12)
+	r_b = r_b.lerp(r_a, 0.12)
+	ci.draw_colored_polygon(PackedVector2Array([t[3], t[2], r_b, r_a]), roof)
+	ci.draw_colored_polygon(PackedVector2Array([t[0], t[1], r_b, r_a]), roof.darkened(0.2))
+	ci.draw_colored_polygon(PackedVector2Array([t[2], t[1], r_b]), roof.darkened(0.3))
+	var cup := r_a.lerp(r_b, 0.5)
+	ci.draw_rect(Rect2(cup + Vector2(-8, -14), Vector2(16, 14)), Color("#fbf6ec"))
+	ci.draw_colored_polygon(PackedVector2Array([cup + Vector2(-11, -14), cup + Vector2(11, -14), cup + Vector2(0, -26)]), roof.lightened(0.15))
+	# Hay bales in front.
+	for k in mini(level, 3):
+		var hp := base[2] + Vector2(-46 + k * 20, 16)
+		ci.draw_rect(Rect2(hp + Vector2(-9, -12), Vector2(18, 12)), Color("#e3c46a"))
+		ci.draw_line(hp + Vector2(-9, -6), hp + Vector2(9, -6), Color("#b8963e"), 1.5)
+	if level >= 3:
+		_weathervane(ci, cup + Vector2(0, -26))
+	return c + Vector2(0, -hgt - 60)
+
+
+## Nursery Barn: a small pastel barn with a heart sign and a little pen for the babies.
+static func _nursery(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, _s: float) -> Vector2:
+	var wall := Color.html(str(it.get("color", "#e9d8a6")))
+	var roof := Color.html(str(it.get("roof", "#7a9e7e")))
+	_yard_shadow(ci, g)
+	# Pen on the front half of the footprint.
+	var pen := PackedVector2Array([g[0].lerp(g[2], 0.45).lerp(g[3], 0.1), g[1].lerp(g[3], 0.1).lerp(g[2], 0.45),
+		g[2].lerp(g[0], 0.08), g[3].lerp(g[1], 0.1).lerp(g[2], 0.45)])
+	ci.draw_colored_polygon(pen, Color("#b9df8a"))
+	_fence(ci, pen, Color("#f4efe4"))
+	var base := _inset(g, 0.5 + 0.05 * level)
+	var shift := (g[0] - g[2]) * 0.18
+	for k in 4:
+		base[k] += shift
+	var hgt := 40.0 + 6.0 * level
+	var t := _box(ci, base, hgt, wall)
+	_door(ci, base, 0.5, 0.14, hgt * 0.6, Color("#c98fa0"))
+	var ridge := _gable(ci, t, 26.0, roof, wall)
+	# Heart on the gable end.
+	var heart := t[2].lerp(t[1], 0.5) + Vector2(0, -12)
+	var pink := Color("#ef6f8f")
+	ci.draw_circle(heart + Vector2(-4, -2), 5, pink)
+	ci.draw_circle(heart + Vector2(4, -2), 5, pink)
+	ci.draw_colored_polygon(PackedVector2Array([heart + Vector2(-9, 0), heart + Vector2(9, 0), heart + Vector2(0, 10)]), pink)
+	# Baby bottle by the pen.
+	var bottle := pen[2] + Vector2(18, -4)
+	ci.draw_rect(Rect2(bottle + Vector2(-4, -14), Vector2(8, 14)), Color("#fbf6ec"))
+	ci.draw_rect(Rect2(bottle + Vector2(-2, -19), Vector2(4, 5)), Color("#f2a33a"))
+	if level >= 2:
+		ci.draw_polyline(PackedVector2Array([t[3], t[2], t[1]]), Color("#fbf6ec"), 3.0)
+	if level >= 3:
+		_weathervane(ci, ridge[0].lerp(ridge[1], 0.5))
+	return ridge[1] + Vector2(0, -26)
+
+
+## Beehive: stacked white hive boxes on a stand. More bees, more boxes, and bees buzz around it.
+static func _hive(ci: CanvasItem, g: PackedVector2Array, inside: int, capacity: int, _s: float) -> Vector2:
+	_yard_shadow(ci, g, 0.3)
+	var c := (g[0] + g[2]) / 2.0
+	# Flowers around the stand.
+	var petals := [Color("#ff6b8a"), Color("#ffd34d"), Color("#b98cff"), Color("#ff8a4d")]
+	for k in 8:
+		var a := TAU * k / 8.0
+		var p := c + Vector2(cos(a) * 58, sin(a) * 26)
+		ci.draw_line(p, p + Vector2(0, -8), STEM, 2.0)
+		ci.draw_circle(p + Vector2(0, -9), 4, petals[k % 4])
+	var base := _inset(g, 0.34)
+	for p in [base[3], base[2], base[1]]:
+		ci.draw_line(p, p + Vector2(0, -12), Color("#7a4f2c"), 4.0)
+	var boxes := 1 + clampi(int(3.0 * inside / maxf(1.0, capacity) + 0.999), 0, 3)
+	var white := Color("#f6f1e4")
+	var t := PackedVector2Array()
+	for k in boxes:
+		t = _box(ci, base, 20.0, white if k % 2 == 0 else Color("#f2e3b8"), 12.0 + 20.0 * k)
+		ci.draw_line(base[3].lerp(base[2], 0.2) + Vector2(0, -22 - 20.0 * k), base[3].lerp(base[2], 0.8) + Vector2(0, -22 - 20.0 * k), Color("#c9b98f"), 1.5)
+	# Flat lid and the entrance slot.
+	var lid := Vector2(0, -6)
+	ci.draw_colored_polygon(PackedVector2Array([t[0] + lid, t[1] + lid, t[2] + lid, t[3] + lid]), Color("#c98a1a"))
+	ci.draw_colored_polygon(PackedVector2Array([t[3], t[2], t[2] + lid, t[3] + lid]), Color("#a8700f"))
+	ci.draw_colored_polygon(PackedVector2Array([t[2], t[1], t[1] + lid, t[2] + lid]), Color("#8a5c0c"))
+	var slot := base[3].lerp(base[2], 0.5) + Vector2(0, -15)
+	ci.draw_line(slot + Vector2(-8, 0), slot + Vector2(8, 0), Color("#3a2614"), 3.0)
+	# Bees buzzing around: one for every 25 inside.
+	var tsec := Time.get_ticks_msec() / 1000.0
+	var top_c := (t[0] + t[2]) / 2.0
+	for k in mini(8, int(ceil(inside / 25.0))):
+		var a := tsec * (1.4 + 0.2 * k) + k * 1.7
+		var p := top_c + Vector2(cos(a) * (30 + 6 * k), sin(a * 1.3) * 14 - 10)
+		ci.draw_circle(p, 3.5, Color("#f2c230"))
+		ci.draw_line(p + Vector2(-1, -3), p + Vector2(-1, 3), Color("#2b2420"), 1.5)
+		ci.draw_circle(p + Vector2(0, -4), 2, Color(1, 1, 1, 0.7))
+	return top_c + Vector2(0, -34)
+
+
+## Orchard: a fenced field with trees in rows, filling up as trees move in.
+static func _orchard(ci: CanvasItem, g: PackedVector2Array, level: int, inside: int, _s: float) -> Vector2:
+	var field := _inset(g, 0.94)
+	ci.draw_colored_polygon(field, Color("#9fd36c"))
+	var rows := 3
+	var shown := mini(inside, rows * rows)
+	var k := 0
+	for r in rows:
+		for col in rows:
+			var u := (r + 0.5) / rows
+			var v := (col + 0.5) / rows
+			var p := field[0].lerp(field[3], u).lerp(field[1].lerp(field[2], u), v)
+			if k < shown:
+				ci.draw_rect(Rect2(p + Vector2(-3, -16), Vector2(6, 16)), Color("#7a4f2c"))
+				ci.draw_circle(p + Vector2(0, -26), 15, LEAF_DARK)
+				ci.draw_circle(p + Vector2(-3, -30), 11, LEAF)
+				ci.draw_circle(p + Vector2(6, -24), 3, Color("#e2453c"))
+				ci.draw_circle(p + Vector2(-7, -22), 3, Color("#e2453c"))
+			else:
+				_ellipse(ci, p, 10, 5, SOIL) # an empty spot waiting for a tree
+			k += 1
+	_fence(ci, field, Color("#c9a26a") if level < 2 else Color("#f4efe4"))
+	# Ladder and fruit basket by the gate.
+	var gate := field[3].lerp(field[2], 0.5)
+	ci.draw_rect(Rect2(gate + Vector2(14, -10), Vector2(18, 10)), Color("#a8743f"))
+	for j in 3:
+		ci.draw_circle(gate + Vector2(18 + j * 5, -11), 3.5, Color("#e2453c"))
+	if level >= 3:
+		var arch_l := field[3].lerp(field[2], 3.0 / 8)
+		var arch_r := field[3].lerp(field[2], 5.0 / 8)
+		ci.draw_line(arch_l, arch_l + Vector2(0, -34), Color("#7a4f2c"), 4)
+		ci.draw_line(arch_r, arch_r + Vector2(0, -34), Color("#7a4f2c"), 4)
+		ci.draw_line(arch_l + Vector2(0, -34), arch_r + Vector2(0, -34), Color("#7a4f2c"), 5)
+	return (field[0] + field[2]) / 2.0 + Vector2(0, -80)
+
+
+## Pig Pen: a fenced mud yard with a puddle, a trough and a little lean-to shed.
+static func _pig_pen(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: int, _s: float) -> Vector2:
+	var roof := Color.html(str(it.get("roof", "#7a5230")))
+	var yard := _inset(g, 0.94)
+	ci.draw_colored_polygon(yard, Color("#b98a5a"))
+	var c := (yard[0] + yard[2]) / 2.0
+	_ellipse(ci, c + Vector2(-10, 16), 54, 20, Color("#6e4a2c"))
+	_ellipse(ci, c + Vector2(-18, 12), 22, 7, Color(1, 1, 1, 0.12))
+	# Lean-to shed at the back corner.
+	var shed := PackedVector2Array([yard[0], yard[0].lerp(yard[1], 0.45), Vector2.ZERO, yard[0].lerp(yard[3], 0.4)])
+	shed[2] = shed[1] + (shed[3] - shed[0])
+	var t := _box(ci, shed, 30.0, Color("#a8743f"))
+	ci.draw_colored_polygon(PackedVector2Array([t[0] + Vector2(0, -12), t[1] + Vector2(0, -12), t[2], t[3]]), roof)
+	ci.draw_colored_polygon(PackedVector2Array([t[3], t[2], t[2] + Vector2(0, 6), t[3] + Vector2(0, 6)]), roof.darkened(0.25))
+	# Trough.
+	var trough := yard[2].lerp(yard[1], 0.35) + Vector2(-6, -14)
+	ci.draw_colored_polygon(PackedVector2Array([trough + Vector2(-22, 0), trough + Vector2(10, -12), trough + Vector2(18, -8), trough + Vector2(-14, 4)]), Color("#8a5a32"))
+	# Pigs: one drawn for every few inside.
+	var pink := Color("#f4b6b8")
+	for k in mini(5, int(ceil(inside / 6.0))):
+		var p := c + Vector2(-40 + k * 22, -6 + (k % 2) * 18)
+		_ellipse(ci, p, 13, 8, pink)
+		ci.draw_circle(p + Vector2(12, -3), 6, pink)
+		_ellipse(ci, p + Vector2(17, -2), 3, 2.5, Color("#d9878b"))
+	_fence(ci, yard, Color("#9a6a3a"))
+	return c + Vector2(0, -78)
 
 
 ## Tinted footprint shown while placing: green where it fits, red where it doesn't.

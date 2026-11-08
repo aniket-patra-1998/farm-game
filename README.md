@@ -49,9 +49,22 @@ This is milestone 1 of the V1 plan: the core farm.
 
 ### Bees and strays
 
-- Harvesting flowers can attract a bee (12%). Bees live in a Beehive (Market, level 3) and make honey daily; up to 10 wait if there's no room
+- Beehive (level 3) is built from a frame (smokers, beeswax, boards, nails, bricks) and needs a Queen Bee:
+  a rare find on flower harvests, or 10 gems. Worker bees then join on flower harvests (25%), up to 200, for 6 coins of honey each a day
+- Bees pollinate fertilized crops as you harvest them (bees / 400, up to 50%): 5 free pollinated seeds of that crop, lasting 2 days.
+  Pollinated crops stay ripe twice as long and super-harvest 3x as often
+- Collecting honey can leave a Fertilize All (fertilizes every growing crop). Bees leave if you're away more than 3 days, the queen after 14
 - Every 3 to 6 hours a lonely animal may wander onto open grass, marked with a heart. Tap to adopt it; unadopted strays leave after a day
 - New ribbons: Animal Lover and Beekeeper
+
+### Buildings module, the FarmVille way
+
+- Every building has its own shape: a coop on legs with a ramp and nesting boxes, a dairy barn with a gambrel roof, silo and milk cans,
+  a long stable with half-doors, a pastel nursery with a heart and a pen, stacked hive boxes, a fenced orchard, a muddy pig pen
+- Pig Pen (level 16, from a frame): feed slop (150 coins) and the pigs forage 8 hours for truffles, 1 per 5 pigs.
+  10 truffles trade for a rare breed: Berkshire, Tamworth, Spotted or Kunekune
+- Orchard harvests can sprout a rare sapling of a tree inside (10%): Rainier Cherry, Honeycrisp Apple, Alphonso Mango and 11 more, paying 1.5x
+- Debug button: +20 bees (puts a queen in your hives)
 
 ### FarmVille roster, rebalance, starter farm and the barn
 

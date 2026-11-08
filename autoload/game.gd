@@ -70,8 +70,28 @@ const MAX_SIZE := 30   # plots are stored for the largest farm; farm_size says h
 const START_SIZE := 12
 const OLD_GRID_SIZE := 12 # saves from before land expansion stored a 12x12 grid
 const START_UNWITHERS := 2
-const BEE_CHANCE := 0.12           # per flower harvest
-const MAX_WAITING_BEES := 10       # bees that wait for hive space
+# Beehive, as in FarmVille: a Queen Bee makes the hive work, worker bees join it,
+# and the bees pollinate fertilized crops nearby.
+const QUEEN_CHANCE := 0.008        # a Queen Bee found on a flower harvest
+const QUEEN_GEM_COST := 10
+const BEE_CHANCE := 0.25           # per flower harvest, only into a hive with a queen
+const POLLINATION_PER_BEE := 1.0 / 400.0
+const MAX_POLLINATION := 0.5
+const POLLINATED_SEEDS := 5        # given per pollination
+const POLLINATED_LIFETIME := 2 * 86400
+const POLLINATED_RIPE_MULT := 2    # pollinated crops stay ripe twice as long
+const POLLINATED_SUPER_MULT := 3   # and triple the super-harvest chance
+const FERTILIZE_ALL_CHANCE := 0.10 # per hive collection
+const BEES_STAY_DAYS := 3          # away longer than this, bees start to leave
+const BEES_LEAVE_PER_DAY := 0.15
+const QUEEN_STAYS_DAYS := 14
+# Pig Pen: feed slop, the pigs forage, and truffles trade for rare breeds.
+const SLOP_COST := 150
+const FORAGE_SECONDS := 8 * 3600
+const PIGS_PER_TRUFFLE := 5
+const TRUFFLES_PER_PIG := 10
+# Orchard: rare sapling varieties of the trees inside.
+const SAPLING_CHANCE := 0.10
 const STRAY_MIN_GAP := 3 * 3600    # a new stray turns up 3 to 6 hours after the last
 const STRAY_MAX_GAP := 6 * 3600
 const STRAY_STAYS := 86400         # a stray nobody adopts wanders off after a day
@@ -110,7 +130,11 @@ var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
 var farm_size := START_SIZE        # usable width and depth in tiles
 var expansion_steps: Array = []    # from data/expansions.json
 var unwithers := START_UNWITHERS   # Unwither items held
-var waiting_bees := 0              # bees found with no hive space
+var queen_bees := 0                # Queen Bees held, waiting for a hive
+var fertilize_alls := 0            # fertilize every growing crop at once
+var pollinated := {}               # crop id -> [seed count, expires at]
+var truffles := 0
+var absence_note := ""             # what happened while the player was away, shown on start
 var next_stray_at := 0             # when the next stray may turn up
 var parts := {}                    # building material -> count (see PARTS)
 var mystery_eggs := {}             # egg colour -> count
@@ -162,12 +186,19 @@ func _ready() -> void:
 	call_deferred("check_rescue")
 	call_deferred("check_strays")
 	call_deferred("check_daily_gift")
+	call_deferred("_show_absence")
 	var stray_timer := Timer.new()
 	stray_timer.wait_time = 30.0
 	stray_timer.autostart = true
 	stray_timer.timeout.connect(check_strays)
 	stray_timer.timeout.connect(check_daily_gift)
 	add_child(stray_timer)
+
+
+func _show_absence() -> void:
+	if absence_note != "":
+		message.emit(absence_note)
+		absence_note = ""
 
 
 func _notification(what: int) -> void:
@@ -211,6 +242,23 @@ func debug_add_materials(n: int) -> void:
 		queue_save()
 
 
+## Adds bees to finished hives (with a queen, so the hive works). Test helper.
+func debug_add_bees(n: int) -> void:
+	if not OS.is_debug_build():
+		return
+	var all := hives()
+	if all.is_empty():
+		message.emit("Build a Beehive first")
+		return
+	for h in all:
+		h["queen"] = true
+		var room := capacity(h) - inside_total(h)
+		for k in mini(n, room):
+			_put_bee_in(h)
+		n -= mini(n, room)
+	_objects_updated()
+
+
 func debug_level_up() -> void:
 	if OS.is_debug_build():
 		add_xp(xp_for_level(level() + 1) - xp)
@@ -248,7 +296,8 @@ func phase(i: int) -> Phase:
 			var grow := int(crop["grow_seconds"])
 			if age < grow:
 				return Phase.GROWING
-			if age < grow + ripe_window(crop):
+			var window := ripe_window(crop) * (POLLINATED_RIPE_MULT if p.get("pol", false) else 1)
+			if age < grow + window:
 				return Phase.RIPE
 			return Phase.WITHERED
 	return Phase.GRASS
@@ -306,10 +355,20 @@ func plant(i: int, crop_id: String) -> bool:
 	if level() < int(crop["unlock_level"]):
 		message.emit("%s unlocks at level %d" % [crop["name"], int(crop["unlock_level"])])
 		return false
-	if not spend(int(crop["seed_cost"])):
+	# Pollinated seeds are planted first, for free.
+	var use_pollinated := pollinated_seeds(crop_id) > 0
+	if use_pollinated:
+		var entry: Array = pollinated[crop_id]
+		entry[0] = int(entry[0]) - 1
+		if int(entry[0]) <= 0:
+			pollinated.erase(crop_id)
+		inventory_changed.emit()
+	elif not spend(int(crop["seed_cost"])):
 		message.emit("Not enough coins for %s seeds" % crop["name"])
 		return false
 	plots[i] = {"state": "planted", "crop": crop_id, "planted_at": now()}
+	if use_pollinated:
+		plots[i]["pol"] = true
 	_advance_tutorial(Tutorial.PLANT)
 	_plot_updated(i)
 	return true
@@ -348,7 +407,8 @@ func harvest(i: int) -> Dictionary:
 	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)))
 	var gained := int(crop["xp"])
 
-	var drop := _roll_drop(crop_id, stars_before)
+	var was_pollinated: bool = plots[i].get("pol", false)
+	var drop := _roll_drop(crop_id, stars_before, POLLINATED_SUPER_MULT if was_pollinated else 1)
 	match drop.get("type", ""):
 		"golden":
 			earned *= GOLDEN_COIN_MULTIPLIER
@@ -372,24 +432,25 @@ func harvest(i: int) -> Dictionary:
 	elif drop.get("type", "") == "bird":
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	var part := _roll_part()
-	var found_bee: bool = crop.get("flower", false) and rng.randf() < BEE_CHANCE
-	if found_bee:
-		_add_bee()
+	var bee_news := ""
+	if crop.get("flower", false):
+		bee_news = _flower_harvest_bees()
+	var seeds := _pollinate(crop_id) if fertilized else 0
 	var stars_after := mastery_stars(crop_id)
 	if stars_after > stars_before:
 		_award_mastery_star(crop_id, stars_after)
 	if tutorial_step == Tutorial.HARVEST and not _any_plot_in(Phase.RIPE):
 		_advance_tutorial(Tutorial.HARVEST)
 	_plot_updated(i)
-	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": found_bee,
-		"drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part}
+	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
+		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part}
 
 
 # ---------------------------------------------------------------- surprise drops
 
 ## One roll per harvest. Rarest outcomes are checked first; pity counters
 ## guarantee a golden harvest or a collectible after a long dry spell.
-func _roll_drop(crop_id: String, stars: int) -> Dictionary:
+func _roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 	if not drops_enabled:
 		return {}
 	pity["golden"] = int(pity["golden"]) + 1
@@ -419,9 +480,10 @@ func _roll_drop(crop_id: String, stars: int) -> Dictionary:
 			"name": item_names[item_id], "collection": coll["name"]}
 
 	var r := rng.randf()
-	if r < SUPER_HARVEST_CHANCE:
+	var super_chance := SUPER_HARVEST_CHANCE * super_mult
+	if r < super_chance:
 		return {"type": "super_harvest", "text": "Super harvest! 2x coins"}
-	if r < SUPER_HARVEST_CHANCE + BONUS_XP_CHANCE:
+	if r < super_chance + BONUS_XP_CHANCE:
 		return {"type": "bonus_xp", "text": "Bonus XP!"}
 	return {}
 
@@ -600,7 +662,6 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	next_uid += 1
 	_grass_over(item_id, row, col)
 	objects.append(obj)
-	_house_waiting_bees()
 	_objects_updated()
 	return true
 
@@ -865,7 +926,6 @@ func upgrade_building(uid: int) -> bool:
 	message.emit("%s now holds %d!" % [size_name(b), capacity(b)])
 	_bump("upgrades", 1)
 	building_upgraded.emit(uid, level_of(b))
-	_house_waiting_bees()
 	inventory_changed.emit()
 	_objects_updated()
 	return true
@@ -881,9 +941,9 @@ func _building_specials(b: Dictionary) -> Array[String]:
 			var colour := _roll_mystery_egg(b)
 			if colour != "":
 				mystery_eggs[colour] = int(mystery_eggs.get(colour, 0)) + 1
-				var name: String = egg_data["colours"][colour]["name"]
-				message.emit("You found a %s! Open it from the coop." % name)
-				out.append(name + "!")
+				var egg_name: String = egg_data["colours"][colour]["name"]
+				message.emit("You found a %s! Open it from the coop." % egg_name)
+				out.append(egg_name + "!")
 		"calves":
 			if drops_enabled and rng.randf() < FERTILIZER_CHANCE:
 				fertilizer_bags += 1
@@ -909,6 +969,16 @@ func _building_specials(b: Dictionary) -> Array[String]:
 				out.append("+%d XP" % STABLE_XP)
 		"nursery":
 			out.append_array(_grow_babies(b))
+		"beehive":
+			if drops_enabled and rng.randf() < FERTILIZE_ALL_CHANCE:
+				fertilize_alls += 1
+				message.emit("The bees left a Fertilize All!")
+				out.append("+1 Fertilize All")
+		"saplings":
+			var sapling := _roll_sapling(b)
+			if sapling != "" and place_somewhere(sapling):
+				message.emit("A rare sapling sprouted: %s!" % item_data(sapling)["name"])
+				out.append("Rare sapling!")
 	if not out.is_empty():
 		inventory_changed.emit()
 	return out
@@ -1223,28 +1293,74 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	return true
 
 
-# ---------------------------------------------------------------- bees
+# ---------------------------------------------------------------- beehive
 
-func _hive_with_room() -> Dictionary:
+func hives() -> Array:
+	var out: Array = []
 	for o in objects:
-		if o["id"] == "beehive" and inside_total(o) < capacity(o):
-			return o
-	return {}
+		if o["id"] == "beehive" and not under_construction(o):
+			out.append(o)
+	return out
 
 
-func _add_bee() -> void:
-	_bump("bees_found", 1)
-	var hive := _hive_with_room()
-	if not hive.is_empty():
-		_put_bee_in(hive)
-		message.emit("A bee followed you home to the hive!")
-	elif waiting_bees < MAX_WAITING_BEES:
-		waiting_bees += 1
-		message.emit("A bee is buzzing around. Build a Beehive to keep it (%d waiting)" % waiting_bees)
+func bee_count() -> int:
+	var n := 0
+	for h in hives():
+		n += inside_total(h)
+	return n
+
+
+func has_queen(hive: Dictionary) -> bool:
+	return hive.get("queen", false)
+
+
+## Chance that harvesting a fertilized crop gives pollinated seeds.
+func pollination_chance() -> float:
+	return minf(MAX_POLLINATION, bee_count() * POLLINATION_PER_BEE)
+
+
+## Puts a Queen Bee in a finished hive: one you hold, or one bought for gems.
+func add_queen(uid: int, buy := false) -> bool:
+	var hive := object_by_uid(uid)
+	if hive.is_empty() or hive["id"] != "beehive" or under_construction(hive) or has_queen(hive):
+		return false
+	if not buy and queen_bees > 0:
+		queen_bees -= 1
+	elif buy:
+		if not spend_gems(QUEEN_GEM_COST):
+			message.emit("Not enough gems for a Queen Bee")
+			return false
 	else:
-		message.emit("A bee flew off: build or upgrade a Beehive to keep more")
+		message.emit("No Queen Bee yet. One may turn up while harvesting flowers.")
+		return false
+	hive["queen"] = true
+	message.emit("The Queen Bee moved in! Worker bees will now join while you harvest flowers.")
 	inventory_changed.emit()
 	_objects_updated()
+	return true
+
+
+## Flower harvests: a rare Queen Bee, or a worker bee joining a hive that has a queen.
+func _flower_harvest_bees() -> String:
+	if not drops_enabled:
+		return ""
+	var all := hives()
+	var queenless := all.filter(func(h: Dictionary) -> bool: return not has_queen(h))
+	if (all.is_empty() or not queenless.is_empty()) and queen_bees == 0 and rng.randf() < QUEEN_CHANCE:
+		queen_bees += 1
+		_bump("queens_found", 1)
+		message.emit("You found a Queen Bee! Put her in a Beehive.")
+		inventory_changed.emit()
+		return "A Queen Bee!"
+	for h in all:
+		if has_queen(h) and inside_total(h) < capacity(h):
+			if rng.randf() >= BEE_CHANCE:
+				return ""
+			_put_bee_in(h)
+			_bump("bees_found", 1)
+			_objects_updated()
+			return "A bee joined!"
+	return ""
 
 
 func _put_bee_in(hive: Dictionary) -> void:
@@ -1254,18 +1370,163 @@ func _put_bee_in(hive: Dictionary) -> void:
 	inside["bee"] = int(inside.get("bee", 0)) + 1
 
 
-func _house_waiting_bees() -> void:
-	var moved := 0
-	while waiting_bees > 0:
-		var hive := _hive_with_room()
-		if hive.is_empty():
-			break
-		_put_bee_in(hive)
-		waiting_bees -= 1
-		moved += 1
-	if moved > 0:
-		message.emit("%d waiting bees moved into the hive" % moved)
-		inventory_changed.emit()
+## Bees pollinate a fertilized crop as it's harvested: pollinated seeds of that crop.
+func _pollinate(crop_id: String) -> int:
+	if not drops_enabled or rng.randf() >= pollination_chance():
+		return 0
+	var n := pollinated_seeds(crop_id) + POLLINATED_SEEDS
+	pollinated[crop_id] = [n, now() + POLLINATED_LIFETIME]
+	_bump("pollinated", 1)
+	message.emit("Your bees pollinated the %s! %d pollinated seeds for 2 days." % [crops[crop_id]["name"].to_lower(), n])
+	inventory_changed.emit()
+	return POLLINATED_SEEDS
+
+
+## Pollinated seeds held for a crop, dropping any that expired.
+func pollinated_seeds(crop_id: String) -> int:
+	if not pollinated.has(crop_id):
+		return 0
+	var entry: Array = pollinated[crop_id]
+	if now() >= int(entry[1]):
+		pollinated.erase(crop_id)
+		return 0
+	return int(entry[0])
+
+
+## Fertilizes every growing crop for free.
+func use_fertilize_all() -> int:
+	if fertilize_alls <= 0:
+		message.emit("No Fertilize All left")
+		return 0
+	var done := 0
+	for r in farm_size:
+		for c in farm_size:
+			var i := index_of(r, c)
+			if phase(i) == Phase.GROWING and not is_fertilized(i):
+				plots[i]["fert"] = true
+				done += 1
+	if done == 0:
+		message.emit("Nothing growing to fertilize")
+		return 0
+	fertilize_alls -= 1
+	_bump("fertilized", done)
+	message.emit("Fertilized %d crops" % done)
+	inventory_changed.emit()
+	plot_changed.emit(-1)
+	queue_save()
+	return done
+
+
+## FarmVille's bees left when nobody came for days, and the queen after weeks.
+## Returns a note for the player, or "".
+func apply_absence(seconds_away: int) -> String:
+	var days := seconds_away / 86400.0
+	if days <= BEES_STAY_DAYS:
+		return ""
+	var notes: Array[String] = []
+	var share := minf(1.0, (days - BEES_STAY_DAYS) * BEES_LEAVE_PER_DAY)
+	for h in hives():
+		var bees := inside_total(h)
+		var gone := mini(bees, int(ceil(bees * share)))
+		if gone > 0:
+			var inside: Dictionary = h["inside"]
+			inside["bee"] = bees - gone
+			if int(inside["bee"]) <= 0:
+				inside.erase("bee")
+			notes.append("%d bees left the hive while you were away" % gone)
+		if days > QUEEN_STAYS_DAYS and has_queen(h):
+			h.erase("queen")
+			notes.append("the Queen Bee flew off")
+	return "; ".join(PackedStringArray(notes))
+
+
+# ---------------------------------------------------------------- pig pen
+
+func is_foraging(pen: Dictionary) -> bool:
+	return int(pen.get("forage_until", 0)) > 0
+
+
+func forage_seconds_left(pen: Dictionary) -> int:
+	return maxi(0, int(pen.get("forage_until", 0)) - now())
+
+
+## Feeds slop to the pigs inside; they forage for truffles for 8 hours.
+func feed_slop(uid: int) -> bool:
+	var pen := object_by_uid(uid)
+	if pen.is_empty() or pen["id"] != "pig_pen" or under_construction(pen) or is_foraging(pen):
+		return false
+	if inside_total(pen) == 0:
+		message.emit("Move some pigs in first")
+		return false
+	if not spend(SLOP_COST):
+		message.emit("Not enough coins for slop")
+		return false
+	pen["forage_until"] = now() + FORAGE_SECONDS
+	message.emit("The pigs are out looking for truffles")
+	_objects_updated()
+	return true
+
+
+## Truffles found by the pigs once foraging is over: one per 5 pigs, at least one.
+func collect_truffles(uid: int) -> int:
+	var pen := object_by_uid(uid)
+	if pen.is_empty() or not is_foraging(pen) or forage_seconds_left(pen) > 0:
+		return 0
+	var found := maxi(1, int(inside_total(pen) / float(PIGS_PER_TRUFFLE)))
+	pen.erase("forage_until")
+	truffles += found
+	_bump("truffles", found)
+	message.emit("Your pigs found %d truffles!" % found)
+	inventory_changed.emit()
+	_objects_updated()
+	return found
+
+
+func rare_pigs() -> Array[String]:
+	var out: Array[String] = []
+	for id in item_order:
+		if items[id].get("rare_pig", false):
+			out.append(id)
+	return out
+
+
+## Trades 10 truffles for a rare pig breed, placed on the farm.
+func trade_truffles(breed: String) -> bool:
+	if not item_data(breed).get("rare_pig", false) or truffles < TRUFFLES_PER_PIG:
+		return false
+	if not place_somewhere(breed):
+		message.emit("No room on the farm for a new pig")
+		return false
+	truffles -= TRUFFLES_PER_PIG
+	message.emit("A %s joined your farm!" % item_data(breed)["name"])
+	inventory_changed.emit()
+	_objects_updated()
+	return true
+
+
+# ---------------------------------------------------------------- orchard
+
+## A rare sapling of one of the trees inside, likelier for the trees you have more of.
+func _roll_sapling(orchard: Dictionary) -> String:
+	if not drops_enabled or rng.randf() >= SAPLING_CHANCE:
+		return ""
+	var inside: Dictionary = orchard["inside"]
+	var pool: Array[String] = []
+	var weights: Array[int] = []
+	var total := 0
+	for id in inside:
+		if item_data(id).has("rare_sapling") and int(inside[id]) > 0:
+			pool.append(id)
+			weights.append(int(inside[id]))
+			total += int(inside[id])
+	if total == 0:
+		return ""
+	var pick := rng.randi_range(1, total)
+	for k in pool.size():
+		pick -= weights[k]
+		if pick <= 0:
+			return item_data(pool[k])["rare_sapling"]
+	return ""
 
 
 # ---------------------------------------------------------------- strays
@@ -1671,7 +1932,11 @@ func _new_game() -> void:
 	plots.clear()
 	farm_size = START_SIZE
 	unwithers = START_UNWITHERS
-	waiting_bees = 0
+	queen_bees = 0
+	fertilize_alls = 0
+	pollinated = {}
+	truffles = 0
+	absence_note = ""
 	next_stray_at = now() + STRAY_MIN_GAP
 	for i in MAX_SIZE * MAX_SIZE:
 		plots.append({"state": "grass"})
@@ -1752,7 +2017,10 @@ func save_game() -> void:
 		"objects": objects,
 		"farm_size": farm_size,
 		"unwithers": unwithers,
-		"waiting_bees": waiting_bees,
+		"queen_bees": queen_bees,
+	"fertilize_alls": fertilize_alls,
+	"pollinated": pollinated,
+	"truffles": truffles,
 		"parts": parts,
 		"mystery_eggs": mystery_eggs,
 		"farmhands": farmhands,
@@ -1786,7 +2054,15 @@ func load_game() -> bool:
 		return false
 	farm_size = clampi(int(data.get("farm_size", START_SIZE)), START_SIZE, MAX_SIZE)
 	unwithers = int(data.get("unwithers", START_UNWITHERS))
-	waiting_bees = int(data.get("waiting_bees", 0))
+	queen_bees = int(data.get("queen_bees", 0))
+	fertilize_alls = int(data.get("fertilize_alls", 0))
+	truffles = int(data.get("truffles", 0))
+	pollinated = {}
+	var saved_pol: Dictionary = data.get("pollinated", {})
+	for c in saved_pol:
+		var e: Array = saved_pol[c]
+		if crops.has(c) and e.size() == 2:
+			pollinated[c] = [int(e[0]), int(e[1])]
 	var saved_parts: Dictionary = data.get("parts", {})
 	parts = {}
 	for p in PARTS:
@@ -1830,8 +2106,11 @@ func load_game() -> bool:
 		obj["t"] = int(obj["t"])
 		if obj.has("level"):
 			obj["level"] = int(obj["level"])
+		if obj.has("forage_until"):
+			obj["forage_until"] = int(obj["forage_until"])
 		objects.append(obj)
 	next_uid = int(data.get("next_uid", 1))
+	absence_note = apply_absence(now() - int(data.get("saved_at", now())))
 	plots.clear()
 	for p in saved_plots:
 		var plot: Dictionary = p

@@ -296,18 +296,37 @@ func test_13_old_12x12_saves_migrate() -> void:
 
 # ---------------------------------------------------------------- bees and strays
 
-func test_14_bees_wait_then_move_into_a_hive() -> void:
-	var g := _farm()
-	g.coins = 100000
-	g._add_bee()
-	_eq(g.waiting_bees, 1, "bee waits without a hive")
-	g.add_xp(g.xp_for_level(3))
-	_check(g.buy_and_place("beehive", 8, 8), "buy beehive")
-	_eq(g.waiting_bees, 0, "waiting bee moved in")
-	var hive := g.object_at(g.index_of(8, 8))
-	_eq(g.inside_total(hive), 1, "hive holds the bee")
+func test_14_bees_only_join_a_hive_with_a_queen() -> void:
+	var g := _farm(true)
+	var hive := _built_hive(g)
+	g.queen_bees = 0
+	var queens_found := 0
+	for k in 200:
+		if g._flower_harvest_bees() == "A Queen Bee!":
+			queens_found += 1
+			g.queen_bees = 0 # keep her out of the hive for this part
+	_eq(g.inside_total(hive), 0, "no bees join a hive without a queen")
+	_check(queens_found <= 6, "Queen Bees are rare (%d in 200 flower harvests)" % queens_found)
+	g.queen_bees = 1
+	_check(g.add_queen(int(hive["uid"])), "the queen moves in")
+	_eq(g.queen_bees, 0, "the held queen was used")
+	for k in 200:
+		g._flower_harvest_bees()
+	var bees := g.inside_total(hive)
+	_check(bees >= 30 and bees <= 70, "about a quarter of flower harvests bring a bee (%d of 200)" % bees)
 	_skip(g, 86400)
-	_eq(g.collect(int(hive["uid"]))["coins"], 30, "one bee makes 30 coins of honey")
+	var drops := g.drops_enabled
+	g.drops_enabled = false
+	_eq(int(g.collect(int(hive["uid"]))["coins"]), 6 * bees, "honey pays 6 coins a bee")
+	g.drops_enabled = drops
+	# Real flower harvests report the bee.
+	g.xp = maxi(g.xp, g.xp_for_level(4))
+	var seen := false
+	for k in 30:
+		var r := _grow_and_harvest(g, _free(g), "lilac")
+		if str(r.get("bee", "")) != "":
+			seen = true
+	_check(seen, "a lilac harvest brought a bee")
 	_done(g)
 
 
@@ -1002,3 +1021,274 @@ func test_46_bull_and_stallion_only_wander_in_with_their_building() -> void:
 	_check(seen.has("bull"), "a lonely bull can wander in once you own a Dairy Farm")
 	_check(not seen.has("stallion"), "still no stallion without a stable")
 	_done(g)
+
+
+# ---------------------------------------------------------------- beehive, pig pen, orchard
+
+## A finished Beehive at 8,8 (frame placed, materials added).
+func _built_hive(g: GameState) -> Dictionary:
+	g.coins = 1000000
+	g.xp = maxi(g.xp, g.xp_for_level(3))
+	g.buy_and_place("beehive", 8, 8)
+	var hive := g.object_at(g.index_of(8, 8))
+	_all_materials(g, 10)
+	g.add_materials(int(hive["uid"]))
+	return hive
+
+
+func test_47_beehive_frame_and_queen_bee() -> void:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(3)
+	_check(g.buy_and_place("beehive", 8, 8), "hive frame placed")
+	var hive := g.object_at(g.index_of(8, 8))
+	var uid := int(hive["uid"])
+	_check(g.under_construction(hive), "the Beehive is built from a frame")
+	g.gems = 100
+	_check(not g.add_queen(uid, true), "no queen in an unfinished frame")
+	_all_materials(g, 10)
+	g.add_materials(uid)
+	_check(not g.under_construction(hive), "frame finished with smokers, beeswax and the basics")
+	_eq(int(g.parts["smokers"]), 0, "smokers used")
+	_eq(g.capacity(hive), 200, "holds up to 200 bees")
+	_check(g.expansion_needs(hive).is_empty(), "a hive isn't expanded: it grows as bees join")
+	g.queen_bees = 0
+	_check(not g.add_queen(uid), "no queen held")
+	g.gems = GameState.QUEEN_GEM_COST
+	_check(g.add_queen(uid, true), "queen bought with gems")
+	_eq(g.gems, 0, "%d gems spent" % GameState.QUEEN_GEM_COST)
+	_check(g.has_queen(hive), "the hive has its queen")
+	g.queen_bees = 1
+	_check(not g.add_queen(uid), "only one queen per hive")
+	_eq(g.queen_bees, 1, "the spare queen is kept")
+	_check(g.wanted_parts().has("smokers"), "smokers drop once you own a hive")
+	_done(g)
+
+
+func test_48_bees_pollinate_fertilized_crops() -> void:
+	var g := _farm(true)
+	_eq(g.pollination_chance(), 0.0, "no bees, no pollination")
+	var none := 0
+	for k in 100:
+		none += g._pollinate("strawberries")
+	_eq(none, 0, "nothing pollinated without bees")
+	var hive := _built_hive(g)
+	hive["queen"] = true
+	hive["inside"] = {"bee": 100}
+	_eq(g.pollination_chance(), 0.25, "100 bees: 25%")
+	hive["inside"] = {"bee": 200}
+	_eq(g.pollination_chance(), 0.5, "200 bees: 50%, the most")
+	# Harvesting fertilized crops gives pollinated seeds; unfertilized ones never do.
+	var i := _free(g)
+	var from_plain := 0
+	for k in 20:
+		from_plain += int(_grow_and_harvest(g, i, "strawberries").get("pollinated", 0))
+	_eq(from_plain, 0, "unfertilized crops aren't pollinated")
+	var got := 0
+	for k in 20:
+		g.plow(i)
+		g.pollinated.clear()
+		g.plant(i, "strawberries")
+		g.fertilize(i)
+		_skip(g, int(g.crops["strawberries"]["grow_seconds"]))
+		got += int(g.harvest(i).get("pollinated", 0))
+	_check(got >= 25, "about half of fertilized harvests were pollinated (%d seeds)" % got)
+	# Planting pollinated seeds: free, and the crop stays ripe twice as long.
+	g.pollinated = {"strawberries": [2, g.now() + GameState.POLLINATED_LIFETIME]}
+	var j := g.index_of(10, 10)
+	g.plow(i)
+	g.plow(j)
+	var coins := g.coins
+	_check(g.plant(i, "strawberries"), "plant a pollinated seed")
+	_eq(g.coins, coins, "pollinated seeds are free")
+	_eq(g.pollinated_seeds("strawberries"), 1, "one pollinated seed left")
+	_check(g.plots[i].get("pol", false), "the plot is pollinated")
+	g.pollinated.clear()
+	g.plant(j, "strawberries")
+	_check(not g.plots[j].get("pol", false), "an ordinary seed")
+	var grow := int(g.crops["strawberries"]["grow_seconds"])
+	var window := g.ripe_window(g.crops["strawberries"])
+	_skip(g, grow + window + 3600)
+	_eq(g.phase(j), GameState.Phase.WITHERED, "the ordinary crop withered")
+	_eq(g.phase(i), GameState.Phase.RIPE, "the pollinated crop is still ripe")
+	_skip(g, window)
+	_eq(g.phase(i), GameState.Phase.WITHERED, "but not forever")
+	# Pollinated seeds expire after 2 days.
+	g.pollinated = {"wheat": [5, g.now() + GameState.POLLINATED_LIFETIME]}
+	_eq(g.pollinated_seeds("wheat"), 5, "5 pollinated wheat seeds")
+	_skip(g, GameState.POLLINATED_LIFETIME)
+	_eq(g.pollinated_seeds("wheat"), 0, "expired after 2 days")
+	_done(g)
+
+
+func test_49_pollinated_crops_super_harvest_three_times_as_often() -> void:
+	var g := _farm(true)
+	var plain := 0
+	var boosted := 0
+	g.pity = {"golden": 0, "collectible": 0}
+	for k in 6000:
+		if str(g._roll_drop("", 0).get("type", "")) == "super_harvest":
+			plain += 1
+		if str(g._roll_drop("", 0, GameState.POLLINATED_SUPER_MULT).get("type", "")) == "super_harvest":
+			boosted += 1
+	var ratio := float(boosted) / maxf(1.0, plain)
+	_check(ratio > 2.3 and ratio < 3.7, "about 3x the super harvests (%d vs %d)" % [boosted, plain])
+	_done(g)
+
+
+func test_50_fertilize_all_from_the_hive() -> void:
+	var g := _farm(true)
+	var hive := _built_hive(g)
+	hive["queen"] = true
+	hive["inside"] = {"bee": 50}
+	hive["t"] = g.now()
+	for d in 60:
+		_skip(g, 86400)
+		g.collect(int(hive["uid"]))
+	_check(g.fertilize_alls > 0, "collecting honey left a Fertilize All (%d in 60 days)" % g.fertilize_alls)
+	# Using it fertilizes every growing crop for free.
+	g.drops_enabled = false
+	var spots := [g.index_of(9, 0), g.index_of(9, 1), g.index_of(10, 0)]
+	for i in spots:
+		if g.phase(i) != GameState.Phase.PLOWED:
+			g.plow(i)
+		g.plant(i, "wheat")
+	g.fertilize_alls = 1
+	g.fertilizer_bags = 0
+	var coins := g.coins
+	_check(g.use_fertilize_all() >= 3, "every growing crop fertilized")
+	for i in spots:
+		_check(g.is_fertilized(i), "plot %d fertilized" % i)
+	_eq(g.coins, coins, "no coins spent")
+	_eq(g.fertilize_alls, 0, "used up")
+	_eq(g.use_fertilize_all(), 0, "none left")
+	_done(g)
+
+
+func test_51_bees_leave_when_you_stay_away() -> void:
+	var g := _farm()
+	var hive := _built_hive(g)
+	hive["queen"] = true
+	hive["inside"] = {"bee": 100}
+	_eq(g.apply_absence(2 * 86400), "", "2 days away: nothing happens")
+	_eq(g.inside_total(hive), 100, "all bees stay")
+	var note := g.apply_absence(5 * 86400)
+	_eq(g.inside_total(hive), 70, "5 days away: 2 days past the limit, 30% leave")
+	_check(note.contains("30 bees"), "the player is told (%s)" % note)
+	_check(g.has_queen(hive), "the queen stays two weeks")
+	g.apply_absence(15 * 86400)
+	_eq(g.inside_total(hive), 0, "15 days away: every bee is gone")
+	_check(not g.has_queen(hive), "and the queen flew off")
+	_done(g)
+
+
+func test_52_pig_pen_truffles_and_rare_breeds() -> void:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(15)
+	_check(not g.buy_and_place("pig_pen", 8, 8), "Pig Pen unlocks at level 16")
+	g.xp = g.xp_for_level(16)
+	_check(g.buy_and_place("pig_pen", 8, 8), "pig pen frame placed")
+	var pen := g.object_at(g.index_of(8, 8))
+	var uid := int(pen["uid"])
+	_check(g.under_construction(pen), "built from a frame")
+	_all_materials(g, 8)
+	g.add_materials(uid)
+	_check(not g.under_construction(pen), "boards, bricks and nails finish it")
+	_check(not g.feed_slop(uid), "no slop without pigs")
+	for k in 12:
+		g.place_somewhere("pig")
+	_eq(g.fill_building(uid), 12, "12 pigs move in")
+	var coins := g.coins
+	_check(g.feed_slop(uid), "feed slop")
+	_eq(g.coins, coins - GameState.SLOP_COST, "slop costs %d coins" % GameState.SLOP_COST)
+	_check(not g.feed_slop(uid), "already foraging")
+	_eq(g.collect_truffles(uid), 0, "nothing until foraging is over")
+	_skip(g, GameState.FORAGE_SECONDS)
+	_eq(g.collect_truffles(uid), 2, "12 pigs find 2 truffles")
+	_eq(g.truffles, 2, "truffles held")
+	_eq(g.collect_truffles(uid), 0, "collected once")
+	# Truffles buy rare breeds; rare breeds aren't in the market.
+	_check(not g.trade_truffles("berkshire_pig"), "10 truffles needed")
+	g.truffles = 10
+	_check(not g.trade_truffles("pig"), "only rare breeds")
+	_check(g.trade_truffles("berkshire_pig"), "trade for a Berkshire")
+	_eq(g.truffles, 0, "10 truffles spent")
+	_eq(_count(g, "berkshire_pig"), 1, "the Berkshire is on the farm")
+	_eq(g.fill_building(uid), 1, "and moves into the pen")
+	_eq(g.rare_pigs().size(), 4, "4 rare breeds")
+	for id in g.rare_pigs():
+		_check(int(g.item_data(id)["payout"]) > int(g.item_data("pig")["payout"]), "%s pays more than a pig" % id)
+		_eq(int(g.item_data(id)["unlock_level"]), 99, "%s can't be bought" % id)
+	# A pen with a single pig still finds one truffle.
+	pen["inside"] = {"pig": 1}
+	g.feed_slop(uid)
+	_skip(g, GameState.FORAGE_SECONDS)
+	_eq(g.collect_truffles(uid), 1, "one pig finds one truffle")
+	_done(g)
+
+
+func test_53_orchard_sprouts_rare_saplings() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = g.xp_for_level(8)
+	_check(g.buy_and_place("orchard", 8, 8), "orchard bought")
+	var orch := g.object_at(g.index_of(8, 8))
+	orch["inside"] = {"cherry_tree": 10}
+	orch["t"] = g.now()
+	for k in 60:
+		_skip(g, g.cycle_of(orch))
+		g.collect(int(orch["uid"]))
+	var rare := _count(g, "rainier_cherry_tree")
+	_check(rare >= 2 and rare <= 14, "about 1 in 10 harvests sprouts a Rainier Cherry (%d in 60)" % rare)
+	_eq(_count(g, "honeycrisp_apple_tree"), 0, "only rare kinds of the trees inside")
+	_check(g.building_accepts(orch, "rainier_cherry_tree"), "rare trees can live in the orchard")
+	for id in g.item_order:
+		var it: Dictionary = g.items[id]
+		if it.has("rare_sapling"):
+			var r := g.item_data(it["rare_sapling"])
+			_check(not r.is_empty(), "%s has its rare variety" % id)
+			_eq(r.get("rare_of", ""), id, "%s links back" % r.get("id", "?"))
+			_check(int(r["payout"]) > int(it["payout"]), "%s pays more" % r.get("id", "?"))
+			_eq(int(r["unlock_level"]), 99, "%s can't be bought" % r.get("id", "?"))
+	_done(g)
+
+
+func test_54_new_building_state_survives_a_save() -> void:
+	var path := "user://test_save_buildings.json"
+	var g := _farm()
+	g.save_path = path
+	var hive := _built_hive(g)
+	hive["queen"] = true
+	hive["inside"] = {"bee": 42}
+	g.queen_bees = 1
+	g.fertilize_alls = 2
+	g.truffles = 7
+	g.pollinated = {"wheat": [3, g.now() + 3600]}
+	g.xp = g.xp_for_level(16)
+	g.buy_and_place("pig_pen", 0, 4)
+	var pen := g.object_at(g.index_of(0, 4))
+	pen.erase("construction")
+	pen["inside"] = {"pig": 5}
+	g.feed_slop(int(pen["uid"]))
+	g.saving_enabled = true
+	g.save_game()
+	g.saving_enabled = false
+	_done(g)
+
+	var h := GameState.new()
+	h.save_path = path
+	add_child(h)
+	h.saving_enabled = false
+	var hive2 := h.object_at(h.index_of(8, 8))
+	_check(h.has_queen(hive2), "queen restored")
+	_eq(h.inside_total(hive2), 42, "bees restored")
+	_eq(h.queen_bees, 1, "held queen restored")
+	_eq(h.fertilize_alls, 2, "Fertilize All restored")
+	_eq(h.truffles, 7, "truffles restored")
+	_eq(h.pollinated_seeds("wheat"), 3, "pollinated seeds restored")
+	var pen2 := h.object_at(h.index_of(0, 4))
+	_check(h.is_foraging(pen2), "foraging restored")
+	_check(h.forage_seconds_left(pen2) > 0, "foraging time restored")
+	h.queue_free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

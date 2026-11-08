@@ -369,8 +369,11 @@ func _act(i: int, first_touch: bool) -> void:
 			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
 				_float(at + Vector2(0, -128), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
-			if result.get("bee", false):
-				_float(at + Vector2(0, -96), "A bee!", COLOR_GOLDEN, 1.6)
+			if result.get("bee", "") != "":
+				_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
+			if int(result.get("pollinated", 0)) > 0:
+				_float(at + Vector2(0, -160), "Pollinated! +%d seeds" % int(result["pollinated"]), COLOR_FIND, 1.8)
+				_sparkle(at, COLOR_FIND)
 			if result["drop"] != "":
 				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
 				_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)

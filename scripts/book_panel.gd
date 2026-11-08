@@ -127,10 +127,10 @@ static func card_frame(inner: Control) -> PanelContainer:
 	return frame
 
 
-static func text(words: String, size := 22, color := INK) -> Label:
+static func text(words: String, font_size := 22, color := INK) -> Label:
 	var l := Label.new()
 	l.text = words
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", font_size)
 	l.add_theme_color_override("font_color", color)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l
