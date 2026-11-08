@@ -57,6 +57,8 @@ jobs:
             echo "Drawing errors found"; exit 1
           fi
           ls ci_shots
+          # Also printed into the log, for tools that can read logs but not artifacts.
+          for f in ci_shots/*.png; do echo "SHOT $(basename "$f") $(base64 -w0 "$f")"; done
 
       - name: Upload screenshots
         if: always()
