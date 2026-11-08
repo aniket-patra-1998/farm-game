@@ -1,0 +1,23 @@
+# id | pack | model file name | footprint in tiles | turn (degrees)
+tractor | kenney_car | tractor.glb | 1 | 0
+cow | quaternius_farm_animals | Cow.fbx | 1 | 0
+pig | quaternius_farm_animals | Pig.fbx | 1 | 0
+sheep | quaternius_farm_animals | Sheep.fbx | 1 | 0
+horse | quaternius_farm_animals | Horse.fbx | 1 | 0
+llama | quaternius_farm_animals | Llama.fbx | 1 | 0
+farm_stand | kenney_fantasy_town | stall-red.glb | 1 | 0
+fountain | kenney_fantasy_town | fountain-round.glb | 2 | 0
+wooden_fence | kenney_fantasy_town | fence.glb | 1 | 0
+hedge | kenney_fantasy_town | hedge.glb | 1 | 0
+lamp_post | kenney_fantasy_town | lantern.glb | 1 | 0
+oak_tree | kenney_fantasy_town | tree.glb | 1 | 0
+pine_tree | kenney_survival | tree-tall.glb | 1 | 0
+bonfire | kenney_survival | campfire-pit.glb | 1 | 0
+wheelbarrow | kenney_fantasy_town | cart.glb | 1 | 0
+demo_windmill | kenney_fantasy_town | windmill.glb | 2 | 0
+crop_strawberries | kenney_food | strawberry.glb | 1 | 0
+crop_carrots | kenney_food | carrot.glb | 1 | 0
+crop_corn | kenney_food | corn.glb | 1 | 0
+crop_pumpkins | kenney_food | pumpkin.glb | 1 | 0
+crop_tomatoes | kenney_food | tomato.glb | 1 | 0
+crop_watermelon | kenney_food | watermelon.glb | 1 | 0
