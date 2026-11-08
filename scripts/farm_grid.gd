@@ -142,6 +142,9 @@ func _draw_object(o: Dictionary) -> void:
 	var it := Game.item_data(o["id"])
 	var fp := Game.footprint(o["id"])
 	var corners := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+	if Game.under_construction(o):
+		PlaceholderArt.draw_frame(self, corners_of(int(o["row"]), int(o["col"]), Game.footprint(o["id"]).x, Game.footprint(o["id"]).y), Game.item_data(o["id"]))
+		return
 	var is_ready_now := Game.is_ready(o)
 	var building := Game.is_building(o)
 	var inside := Game.inside_total(o) if building else 0
@@ -439,6 +442,12 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			_float(at + Vector2(0, -50), "+%d XP" % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
 				_float(at + Vector2(0, -118), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
+			var lift := -150
+			for extra in result.get("extras", []):
+				_float(at + Vector2(0, lift), extra, COLOR_GOLDEN, 1.8)
+				lift -= 32
+			if not result.get("extras", []).is_empty():
+				_sparkle(at, COLOR_GOLDEN)
 			if result["drop"] != "":
 				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
 				_float(at + Vector2(0, -84), result["drop_text"], c, 1.6)
@@ -488,8 +497,8 @@ func _on_building_upgraded(uid: int, level: int) -> void:
 	var fp := Game.footprint(o["id"])
 	var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	var at := (g[0] + g[2]) / 2.0 + Vector2(0, -60)
-	_float(at, "Level %d!" % level, COLOR_GOLDEN, 2.0)
-	_float(at + Vector2(0, 34), "+%d XP" % (GameState.UPGRADE_XP_PER_LEVEL * level), COLOR_XP, 2.0)
+	_float(at, ("Built!" if level == 1 else "%s!" % Game.size_name(o)), COLOR_GOLDEN, 2.0)
+	_float(at + Vector2(0, 34), "Holds %d" % Game.capacity(o), COLOR_XP, 2.0)
 	for k in 3:
 		_sparkle(at + Vector2(-50 + 50 * k, 20), COLOR_GOLDEN)
 

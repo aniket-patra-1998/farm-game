@@ -258,8 +258,13 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 	_check(g.collect(uid).is_empty(), "not ready straight away")
 	_skip(g, 86400)
 	_eq(g.collect(uid)["coins"], 200, "5 chickens x 40 coins")
-	_check(g.upgrade_building(uid), "upgrade")
-	_eq(g.capacity(coop), 30, "level 2 holds 30")
+	_check(not g.upgrade_building(uid), "can't expand without materials")
+	for m in GameState.BASIC_PARTS:
+		g.parts[m] = 10
+	_check(g.upgrade_building(uid), "expand with 10 bricks, nails and boards")
+	_eq(g.capacity(coop), 40, "Big Chicken Coop holds 40")
+	_eq(g.size_name(coop), "Big Chicken Coop", "named like FarmVille")
+	_eq(int(g.parts["bricks"]), 0, "materials used up")
 	_done(g)
 
 
@@ -379,8 +384,12 @@ func test_17_data_files_are_consistent() -> void:
 	for id in g.items:
 		var it: Dictionary = g.items[id]
 		if it["kind"] == "building":
-			_eq((it["upgrade_costs"] as Array).size(), (it["levels"] as Array).size() - 1, "%s upgrade costs match its levels" % id)
-			for held in it.get("holds", []):
+			_check(it.has("expand_materials") or (it["levels"] as Array).size() == 1, "%s says what expanding costs" % id)
+			for m in it.get("expand_materials", {}):
+				_check(GameState.PARTS.has(m), "%s expands with a real material (%s)" % [id, m])
+			for m in it.get("build_materials", {}):
+				_check(GameState.PARTS.has(m), "%s is built with a real material (%s)" % [id, m])
+			for held in it.get("holds", []) + it.get("one_each", []):
 				_check(g.items.has(held), "%s holds a real item (%s)" % [id, held])
 	var last := GameState.START_SIZE
 	for step in g.expansion_steps:
@@ -746,56 +755,250 @@ func _frames_test_tap_and_drag() -> void:
 	main.free()
 
 
-# ---------------------------------------------------------------- building upgrades
 
-func test_38_upgrades_earn_more_work_faster_and_pay_xp() -> void:
+
+# ---------------------------------------------------------------- buildings, the FarmVille way
+
+func _count(g: GameState, item_id: String) -> int:
+	var n := 0
+	for o in g.objects:
+		if o["id"] == item_id and not o.get("stray", false):
+			n += 1
+	return n
+
+
+func _all_materials(g: GameState, n: int) -> void:
+	for m in GameState.PARTS:
+		g.parts[m] = n
+
+
+func test_38_stable_is_built_from_a_frame_with_materials() -> void:
 	var g := _farm()
-	g.coins = 10000000
-	g.add_xp(g.xp_for_level(4))
-	_check(g.buy_and_place("chicken_coop", 8, 8), "coop placed")
-	var coop := g.object_at(g.index_of(8, 8))
-	var uid := int(coop["uid"])
-	g.fill_building(uid) # the 2 starter chickens
-	_eq(g.object_payout(coop).x, 80, "level 1: 2 chickens x 40")
-	var day := 86400
-	_eq(g.cycle_of(coop), day, "level 1 takes a full day")
-
-	var xp := g.xp
-	g.ribbon_tiers["upgrades"] = 4
-	_check(g.upgrade_building(uid), "upgrade to level 2")
-	_check(g.xp >= xp + GameState.UPGRADE_XP_PER_LEVEL * 2, "level 2 pays 100 XP or more (level-up rewards may add)")
-	_eq(g.object_payout(coop).x, 88, "level 2: +10%")
-	_eq(g.cycle_of(coop), day, "level 2 isn't faster yet")
-
-	_check(g.upgrade_building(uid), "upgrade to level 3")
-	_eq(g.object_payout(coop).x, 96, "level 3: +20%")
-	_eq(g.cycle_of(coop), int(day * 0.85), "level 3 is 15% faster")
-	_check(not g.upgrade_building(uid), "no level 4")
-
-	var perks := g.perks_at("chicken_coop", 3)
-	_eq(int(perks["capacity"]), 40, "level 3 holds 40")
-	_eq(int(perks["earnings_pct"]), 20, "level 3 earnings perk")
-	_eq(int(perks["faster_pct"]), 15, "level 3 speed perk")
-	_eq(int(perks["luck"]), 2, "level 3 luck perk")
-
-	# The faster cycle really is faster: ready after 85% of a day.
-	g.coins = 0
-	_skip(g, int(day * 0.86))
-	var paid := g.collect(uid)
-	_eq(int(paid.get("coins", 0)), 96, "collects after 85% of a day")
+	g.coins = 1000000
+	g.xp = g.xp_for_level(12)
+	_check(g.buy_and_place("horse_stable", 8, 8), "stable frame placed")
+	var st := g.object_at(g.index_of(8, 8))
+	var uid := int(st["uid"])
+	_check(g.under_construction(st), "it arrives as a frame")
+	_check(not g.is_ready(st), "a frame never produces")
+	g.place_somewhere("horse")
+	_eq(g.fill_building(uid), 0, "can't move horses into a frame")
+	_eq(g.add_materials(uid), 0, "nothing to add with no materials")
+	g.parts["bricks"] = 4
+	_eq(g.add_materials(uid), 4, "adds the 4 bricks held")
+	_eq(int(g.construction_needs(st)["bricks"]), 6, "6 bricks still missing")
+	_all_materials(g, 10)
+	g.add_materials(uid)
+	_check(not g.under_construction(st), "finished once every material is in")
+	_eq(int(g.parts["harnesses"]), 0, "harnesses used")
+	_eq(int(g.parts["bricks"]), 4, "spare bricks kept (4 were already in)")
+	_eq(g.fill_building(uid), 1, "the horse moves in")
 	_done(g)
 
 
-func test_39_upgrades_never_reduce_anything() -> void:
+func test_39_stable_horses_daily_stallion_brings_foals() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = g.xp_for_level(12)
+	g.buy_and_place("horse_stable", 8, 8)
+	var st := g.object_at(g.index_of(8, 8))
+	var uid := int(st["uid"])
+	_all_materials(g, 10)
+	g.add_materials(uid)
+	for k in 4:
+		g.place_somewhere("horse")
+	_eq(g.cycle_of(g.objects.filter(func(o): return o["id"] == "horse")[0]), 3 * 86400, "a loose horse takes 3 days")
+	_eq(g.cycle_of(st), 86400, "horses in the stable are ready daily")
+	g.fill_building(uid)
+	# No stallion: no foals, ever.
+	for d in 20:
+		_skip(g, 86400)
+		g.collect(uid)
+	_eq(_count(g, "foal"), 0, "no stallion, no foals")
+	# With a stallion: foals arrive, and he takes no space.
+	g.place_somewhere("stallion")
+	var inside_before := g.inside_total(st)
+	g.fill_building(uid)
+	_check(g.has_inside(st, "stallion"), "stallion moved in")
+	_eq(g.inside_total(st), inside_before, "the stallion doesn't take a space")
+	g.place_somewhere("stallion")
+	g.fill_building(uid)
+	_eq(int(st["inside"]["stallion"]), 1, "only one stallion lives inside")
+	for d in 40:
+		_skip(g, 86400)
+		g.collect(uid)
+	_check(_count(g, "foal") > 0, "foals were born (%d)" % _count(g, "foal"))
+	_check(g.farmhands + g.arborists > 0, "harvests gave farmhands or arborists")
+	_done(g)
+
+
+func test_40_dairy_bull_brings_calves_and_fertilizer() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = g.xp_for_level(6)
+	_check(g.buy_and_place("cow_shed", 8, 8), "Dairy Farm bought outright, no frame")
+	var dairy := g.object_at(g.index_of(8, 8))
+	var uid := int(dairy["uid"])
+	_check(not g.under_construction(dairy), "no construction needed")
+	for k in 3:
+		g.place_somewhere("cow")
+	g.place_somewhere("bull")
+	g.fill_building(uid)
+	_check(g.has_inside(dairy, "bull"), "the bull lives inside")
+	_eq(g.inside_total(dairy), 4, "4 cows take spaces; the bull doesn't")
+	for d in 40:
+		_skip(g, 86400)
+		g.collect(uid)
+	_check(_count(g, "calf") > 0, "calves were born (%d)" % _count(g, "calf"))
+	_check(g.fertilizer_bags > 0, "harvests left fertilizer")
+	# A fertilizer bag is used before coins.
+	var i := _free(g)
+	if g.is_occupied(i):
+		i = g.index_of(7, 4)
+	if g.phase(i) != GameState.Phase.PLOWED:
+		g.plow(i)
+	g.plant(i, "strawberries")
+	var coins := g.coins
+	var bags := g.fertilizer_bags
+	_check(g.fertilize(i), "fertilize")
+	_eq(g.coins, coins, "no coins spent while a bag is held")
+	_eq(g.fertilizer_bags, bags - 1, "a bag was used")
+	_done(g)
+
+
+func test_41_nursery_raises_babies_into_adults() -> void:
 	var g := _farm()
-	for id in g.items:
-		if g.items[id]["kind"] != "building":
-			continue
-		var levels: Array = g.items[id]["levels"]
-		for lvl in range(2, levels.size() + 1):
-			var a := g.perks_at(id, lvl - 1)
-			var b := g.perks_at(id, lvl)
-			_check(int(b["capacity"]) > int(a["capacity"]), "%s level %d holds more" % [id, lvl])
-			_check(int(b["earnings_pct"]) > int(a["earnings_pct"]), "%s level %d earns more" % [id, lvl])
-			_check(int(b["luck"]) > int(a["luck"]), "%s level %d is luckier" % [id, lvl])
+	g.coins = 1000000
+	g.xp = g.xp_for_level(8)
+	_check(g.buy_and_place("nursery_barn", 8, 8), "nursery frame placed")
+	var n := g.object_at(g.index_of(8, 8))
+	var uid := int(n["uid"])
+	_all_materials(g, 10)
+	g.add_materials(uid)
+	_check(not g.under_construction(n), "nursery finished")
+	g.place_somewhere("calf")
+	g.place_somewhere("foal")
+	_eq(g.fill_building(uid), 2, "a calf and a foal move in")
+	var cows := _count(g, "cow")
+	var horses := _count(g, "horse")
+	for d in 3:
+		_skip(g, 86400)
+		g.collect(uid)
+	_eq(_count(g, "cow"), cows, "not grown after 3 days")
+	_skip(g, 86400)
+	g.collect(uid)
+	_eq(_count(g, "cow"), cows + 1, "the calf grew into a cow")
+	_eq(_count(g, "horse"), horses + 1, "the foal grew into a horse")
+	_eq(g.inside_total(n), 0, "the babies left the nursery")
+	# Outside the nursery, babies never grow.
+	g.place_somewhere("calf")
+	for d in 10:
+		_skip(g, 86400)
+	_eq(_count(g, "calf"), 1, "a calf outside stays a calf")
+	_done(g)
+
+
+func test_42_coop_mystery_eggs_follow_breeds() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = g.xp_for_level(4)
+	g.buy_and_place("chicken_coop", 8, 8)
+	var coop := g.object_at(g.index_of(8, 8))
+	var uid := int(coop["uid"])
+	coop["level"] = 3
+	coop["inside"] = {"chicken": 40, "brown_chicken": 20}
+	coop["t"] = g.now()
+	for d in 40:
+		_skip(g, 86400)
+		g.collect(uid)
+	var total := 0
+	for colour in g.mystery_eggs:
+		total += int(g.mystery_eggs[colour])
+		_check(colour == "white" or colour == "brown", "egg colours match the breeds (got %s)" % colour)
+	_check(total >= 4, "60 chickens find eggs regularly (%d in 40 days)" % total)
+	var colour: String = "white" if int(g.mystery_eggs.get("white", 0)) > 0 else "brown"
+	var before := int(g.mystery_eggs[colour])
+	var prize := g.open_mystery_egg(colour)
+	_check(prize != "", "opening an egg gives a prize (%s)" % prize)
+	_eq(int(g.mystery_eggs[colour]), before - 1, "the egg is used up")
+	_eq(g.open_mystery_egg("golden"), "", "can't open an egg you don't have")
+	_done(g)
+
+
+func test_43_expansions_cost_materials_and_follow_farmville_sizes() -> void:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(12)
+	g.buy_and_place("horse_stable", 8, 8)
+	var st := g.object_at(g.index_of(8, 8))
+	var uid := int(st["uid"])
+	_all_materials(g, 1000)
+	g.add_materials(uid)
+	var sizes: Array[int] = [g.capacity(st)]
+	while g.upgrade_building(uid):
+		sizes.append(g.capacity(st))
+	_eq(sizes, [20, 25, 30, 35, 40] as Array[int], "stable grows 20 to 40 in steps of 5")
+	_check(not g.can_expand(st), "no expansion past full size")
+	_eq(g.cycle_of(st), 86400, "expanding doesn't change timing")
+	var coop_sizes: Array = g.item_data("chicken_coop")["levels"]
+	_eq(coop_sizes, [20, 40, 60], "Chicken Coop, Big, Huge: 20, 40, 60")
+	_done(g)
+
+
+func test_44_specific_materials_only_drop_for_buildings_you_own() -> void:
+	var g := _farm()
+	var pool := g.wanted_parts()
+	_check(not pool.has("harnesses"), "no harnesses before owning a stable")
+	_check(not pool.has("bottles"), "no bottles before owning a nursery")
+	g.coins = 1000000
+	g.xp = g.xp_for_level(12)
+	g.buy_and_place("horse_stable", 8, 8)
+	pool = g.wanted_parts()
+	_check(pool.has("harnesses") and pool.has("horseshoes"), "stable materials drop once you own the frame")
+	_check(not pool.has("smokers"), "beehive materials still don't")
+	_done(g)
+
+
+func test_45_gem_breeds_and_helpers() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(5)
+	var coins := g.coins
+	g.gems = 5
+	_check(g.buy_and_place("brown_chicken", 8, 8), "brown chicken bought with gems")
+	_eq(g.gems, 0, "5 gems spent")
+	_eq(g.coins, coins, "no coins spent")
+	_check(not g.buy_and_place("brown_chicken", 8, 9), "no gems left for another")
+	# A farmhand collects every ready animal at once.
+	_skip(g, 86400)
+	g.farmhands = 1
+	var collected := g.use_helper("animal")
+	_check(collected >= 4, "farmhand collected every animal (%d)" % collected)
+	_eq(g.farmhands, 0, "farmhand used")
+	for o in g.objects:
+		if g.kind_of(o) == "animal":
+			_check(not g.is_ready(o), "%s collected" % o["id"])
+	_done(g)
+
+
+func test_46_bull_and_stallion_only_wander_in_with_their_building() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(20)
+	var seen := {}
+	for k in 300:
+		if g._spawn_stray():
+			var s: Dictionary = g.objects[-1]
+			seen[s["id"]] = true
+			g.objects.pop_back()
+			g._rebuild_occupancy()
+	_check(not seen.has("bull") and not seen.has("stallion"), "no bull or stallion without their buildings")
+	g.coins = 10000000
+	g.buy_and_place("cow_shed", 8, 8)
+	seen = {}
+	for k in 300:
+		if g._spawn_stray():
+			seen[g.objects[-1]["id"]] = true
+			g.objects.pop_back()
+			g._rebuild_occupancy()
+	_check(seen.has("bull"), "a lonely bull can wander in once you own a Dairy Farm")
+	_check(not seen.has("stallion"), "still no stallion without a stable")
 	_done(g)

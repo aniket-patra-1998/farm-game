@@ -1,0 +1,177 @@
+{
+  "_note": "Mystery Eggs from the Chicken Coop. Colour follows the breeds in the coop; rarer colours give better prizes. Each prize: kind (coins, xp, chicken, materials, unwither, farmhand, arborist, gems), amount or item, weight.",
+  "chance_per_chicken": 0.005,
+  "max_chance": 0.4,
+  "colours": {
+    "white": {
+      "name": "White Mystery Egg",
+      "prizes": [
+        [
+          "coins",
+          150,
+          50
+        ],
+        [
+          "xp",
+          15,
+          30
+        ],
+        [
+          "chicken",
+          "chicken",
+          15
+        ],
+        [
+          "materials",
+          2,
+          5
+        ]
+      ]
+    },
+    "brown": {
+      "name": "Brown Mystery Egg",
+      "prizes": [
+        [
+          "coins",
+          350,
+          40
+        ],
+        [
+          "xp",
+          30,
+          25
+        ],
+        [
+          "materials",
+          3,
+          20
+        ],
+        [
+          "chicken",
+          "brown_chicken",
+          15
+        ]
+      ]
+    },
+    "red": {
+      "name": "Red Mystery Egg",
+      "prizes": [
+        [
+          "coins",
+          500,
+          35
+        ],
+        [
+          "xp",
+          40,
+          20
+        ],
+        [
+          "materials",
+          4,
+          25
+        ],
+        [
+          "chicken",
+          "red_chicken",
+          15
+        ],
+        [
+          "farmhand",
+          1,
+          5
+        ]
+      ]
+    },
+    "grey": {
+      "name": "Grey Mystery Egg",
+      "prizes": [
+        [
+          "materials",
+          5,
+          35
+        ],
+        [
+          "xp",
+          60,
+          20
+        ],
+        [
+          "farmhand",
+          1,
+          15
+        ],
+        [
+          "arborist",
+          1,
+          15
+        ],
+        [
+          "chicken",
+          "grey_chicken",
+          15
+        ]
+      ]
+    },
+    "black": {
+      "name": "Black Mystery Egg",
+      "prizes": [
+        [
+          "materials",
+          8,
+          30
+        ],
+        [
+          "unwither",
+          1,
+          20
+        ],
+        [
+          "farmhand",
+          2,
+          15
+        ],
+        [
+          "chicken",
+          "black_chicken",
+          25
+        ],
+        [
+          "chicken",
+          "golden_chicken",
+          5
+        ],
+        [
+          "gems",
+          1,
+          5
+        ]
+      ]
+    },
+    "golden": {
+      "name": "Golden Mystery Egg",
+      "prizes": [
+        [
+          "chicken",
+          "golden_chicken",
+          35
+        ],
+        [
+          "gems",
+          2,
+          20
+        ],
+        [
+          "materials",
+          10,
+          25
+        ],
+        [
+          "xp",
+          150,
+          20
+        ]
+      ]
+    }
+  }
+}

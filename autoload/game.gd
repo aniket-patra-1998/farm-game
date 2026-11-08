@@ -27,16 +27,24 @@ const TUTORIAL_TEXT := {
 }
 
 # Building parts: found while harvesting and collecting, plus a daily gift.
-const PARTS := ["bricks", "nails", "boards"]
-const PART_NAMES := {"bricks": "Bricks", "nails": "Nails", "boards": "Wooden Boards"}
+# Building materials, the FarmVille set: three basic ones every building uses,
+# plus two specific to some buildings (they only drop once you own that building).
+const BASIC_PARTS := ["bricks", "nails", "boards"]
+const PARTS := ["bricks", "nails", "boards", "harnesses", "horseshoes", "bottles", "blankets", "smokers", "beeswax"]
+const PART_NAMES := {"bricks": "Bricks", "nails": "Nails", "boards": "Wooden Boards",
+	"harnesses": "Harnesses", "horseshoes": "Horseshoes", "bottles": "Baby Bottles", "blankets": "Blankets",
+	"smokers": "Smokers", "beeswax": "Beeswax"}
 const PART_CHANCE := 0.08          # per harvest or collection
 const DAILY_PARTS := 2
 
-# Building upgrades: each level above 1 earns more and finds better drops; the top level also works faster.
-const UPGRADE_EARNINGS_BONUS := 0.10   # +10% per level above 1
-const TOP_LEVEL_SPEEDUP := 0.85        # level 3 and up: cycles take 85% as long
-const TOP_LEVEL := 3
-const UPGRADE_XP_PER_LEVEL := 50       # one-time XP for reaching a level: 50 x the new level
+# Building specials, the FarmVille way.
+const CALF_CHANCE := 0.25          # Dairy Farm harvest with a bull inside
+const FERTILIZER_CHANCE := 0.10    # Dairy Farm harvest drops a bag of fertilizer
+const FOAL_CHANCE := 0.25          # Horse Stable harvest with a stallion inside
+const STABLE_HELPER_CHANCE := 0.15 # Stable harvest: a farmhand, and separately an arborist
+const STABLE_XP_CHANCE := 0.10     # Stable harvest with a stallion: 100 XP
+const STABLE_XP := 100
+const NURSERY_SPARE_XP := 25       # stands in for FarmVille's spare baby to gift a friend
 
 # Rescue: if a player can't afford seeds and has nothing growing, top them up to this.
 const RESCUE_COINS := 50
@@ -104,7 +112,12 @@ var expansion_steps: Array = []    # from data/expansions.json
 var unwithers := START_UNWITHERS   # Unwither items held
 var waiting_bees := 0              # bees found with no hive space
 var next_stray_at := 0             # when the next stray may turn up
-var parts := {"bricks": 0, "nails": 0, "boards": 0}
+var parts := {}                    # building material -> count (see PARTS)
+var mystery_eggs := {}             # egg colour -> count
+var farmhands := 0                 # collect every animal at once
+var arborists := 0                 # collect every tree at once
+var fertilizer_bags := 0           # free fertilizer, used before coins
+var egg_data := {}                 # data/mystery_eggs.json
 var last_daily_day := 0            # day number of the last daily gift
 var stored: Array = []             # objects put away in the barn (no row or col)
 var mastery := {}                  # crop id -> lifetime harvest count
@@ -142,6 +155,7 @@ func _ready() -> void:
 	_load_ribbons()
 	_load_items()
 	expansion_steps = _read_json("res://data/expansions.json").get("steps", [])
+	egg_data = _read_json("res://data/mystery_eggs.json")
 	if not saving_enabled or not load_game():
 		_new_game()
 	# Deferred so the HUD is connected and can show the message.
@@ -301,7 +315,10 @@ func is_fertilized(i: int) -> bool:
 func fertilize(i: int) -> bool:
 	if phase(i) != Phase.GROWING or is_fertilized(i):
 		return false
-	if not spend(FERTILIZER_COST):
+	if fertilizer_bags > 0:
+		fertilizer_bags -= 1
+		inventory_changed.emit()
+	elif not spend(FERTILIZER_COST):
 		message.emit("Not enough coins for fertilizer")
 		return false
 	plots[i]["fert"] = true
@@ -541,7 +558,10 @@ func _grass_over(item_id: String, row: int, col: int) -> void:
 
 
 func can_afford_item(item_id: String) -> bool:
-	return coins >= int(item_data(item_id).get("cost", 0))
+	var it := item_data(item_id)
+	if it.has("gem_cost"):
+		return gems >= int(it["gem_cost"])
+	return coins >= int(it.get("cost", 0))
 
 
 func buy_and_place(item_id: String, row: int, col: int) -> bool:
@@ -553,14 +573,22 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 		return false
 	if not can_place(item_id, row, col):
 		return false
-	if not spend(int(it["cost"])):
+	if it.has("gem_cost"):
+		if not spend_gems(int(it["gem_cost"])):
+			message.emit("Not enough gems for a %s" % it["name"])
+			return false
+	elif not spend(int(it["cost"])):
 		message.emit("Not enough coins for a %s" % it["name"])
 		return false
 	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
 	if it["kind"] == "building":
 		obj["level"] = 1
 		obj["inside"] = {}
-		message.emit("%s built! Open it to move animals in." % it["name"])
+		if it.has("build_materials"):
+			obj["construction"] = {} # a frame: finished with materials, like FarmVille
+			message.emit("%s frame placed! Tap it to add building materials." % it["name"])
+		else:
+			message.emit("%s built! Open it to move animals in." % it["name"])
 	next_uid += 1
 	_grass_over(item_id, row, col)
 	objects.append(obj)
@@ -580,26 +608,31 @@ func move_object(uid: int, row: int, col: int) -> bool:
 	return true
 
 
+## A building's own cycle (the Stable's 1 day beats a loose horse's 3) or the item's.
 func cycle_of(obj: Dictionary) -> int:
-	var base := int(item_data(obj["id"]).get("cycle_seconds", 86400))
-	if is_building(obj) and level_of(obj) >= TOP_LEVEL:
-		return int(base * TOP_LEVEL_SPEEDUP)
-	return base
+	return int(item_data(obj["id"]).get("cycle_seconds", 86400))
 
 
 func level_of(obj: Dictionary) -> int:
 	return int(obj.get("level", 1))
 
 
-## What a building gets at a given level: capacity, earnings bonus %, speed-up %, extra luck.
-func perks_at(building_id: String, lvl: int) -> Dictionary:
-	var levels: Array = item_data(building_id).get("levels", [0])
-	return {
-		"capacity": int(levels[clampi(lvl - 1, 0, levels.size() - 1)]),
-		"earnings_pct": int(round(UPGRADE_EARNINGS_BONUS * (lvl - 1) * 100.0)),
-		"faster_pct": int(round((1.0 - TOP_LEVEL_SPEEDUP) * 100.0)) if lvl >= TOP_LEVEL else 0,
-		"luck": lvl - 1,
-	}
+func max_level(building_id: String) -> int:
+	return (item_data(building_id).get("levels", [0]) as Array).size()
+
+
+## The building's name at its size: Big Chicken Coop, Huge Dairy Farm...
+func size_name(obj: Dictionary) -> String:
+	var it := item_data(obj["id"])
+	var names: Array = it.get("level_names", [])
+	var lvl := level_of(obj)
+	if lvl - 1 < names.size():
+		return names[lvl - 1]
+	return it["name"] if lvl == 1 else "%s (size %d)" % [it["name"], lvl]
+
+
+func under_construction(obj: Dictionary) -> bool:
+	return obj.has("construction")
 
 
 func kind_of(obj: Dictionary) -> String:
@@ -615,6 +648,8 @@ func is_ready(obj: Dictionary) -> bool:
 		return false
 	if kind_of(obj) == "decor" or kind_of(obj) == "barn":
 		return false # scenery and the barn never produce
+	if under_construction(obj):
+		return false
 	if is_building(obj) and inside_total(obj) == 0:
 		return false
 	return now() - int(obj["t"]) >= cycle_of(obj)
@@ -634,8 +669,6 @@ func object_payout(obj: Dictionary) -> Vector2i:
 	for id in inside:
 		var it2 := item_data(id)
 		total += Vector2i(int(it2["payout"]), int(it2["xp"])) * int(inside[id])
-	# Upgraded buildings earn more coins per collection.
-	total.x = int(round(total.x * (1.0 + UPGRADE_EARNINGS_BONUS * (level_of(obj) - 1))))
 	return total
 
 
@@ -647,8 +680,7 @@ func collect(uid: int) -> Dictionary:
 	var pay := object_payout(obj)
 	var earned := pay.x
 	var gained := pay.y
-	# Upgrades count like mastery stars for luck: better odds of rare finds.
-	var drop := _roll_drop("", level_of(obj) - 1 if is_building(obj) else 0)
+	var drop := _roll_drop("", 0)
 	match drop.get("type", ""):
 		"golden":
 			earned *= GOLDEN_COIN_MULTIPLIER
@@ -662,6 +694,7 @@ func collect(uid: int) -> Dictionary:
 	add_xp(gained)
 	_bump("collected", 1)
 	var part := _roll_part()
+	var extras: Array[String] = _building_specials(obj) if is_building(obj) else []
 	if drop.get("type", "") == "golden":
 		_bump("golden_finds", 1)
 		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
@@ -669,7 +702,7 @@ func collect(uid: int) -> Dictionary:
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	_objects_updated()
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
-		"drop_text": drop.get("text", ""), "name": item_data(obj["id"])["name"], "part": part}
+		"drop_text": drop.get("text", ""), "name": item_data(obj["id"])["name"], "part": part, "extras": extras}
 
 
 # ---------------------------------------------------------------- buildings
@@ -678,7 +711,16 @@ func building_accepts(building: Dictionary, item_id: String) -> bool:
 	var b := item_data(building["id"])
 	if b.has("holds_kind"):
 		return item_data(item_id).get("kind", "") == b["holds_kind"]
-	return (b.get("holds", []) as Array).has(item_id)
+	return (b.get("holds", []) as Array).has(item_id) or is_one_each(building, item_id)
+
+
+## A bull or stallion: one lives inside, alongside the animals, without taking a space.
+func is_one_each(building: Dictionary, item_id: String) -> bool:
+	return (item_data(building["id"]).get("one_each", []) as Array).has(item_id)
+
+
+func has_inside(building: Dictionary, item_id: String) -> bool:
+	return int((building.get("inside", {}) as Dictionary).get(item_id, 0)) > 0
 
 
 func capacity(building: Dictionary) -> int:
@@ -686,11 +728,13 @@ func capacity(building: Dictionary) -> int:
 	return int(levels[clampi(int(building["level"]) - 1, 0, levels.size() - 1)])
 
 
+## Animals taking up spaces (a bull or stallion doesn't count).
 func inside_total(building: Dictionary) -> int:
 	var total := 0
 	var inside: Dictionary = building.get("inside", {})
 	for id in inside:
-		total += int(inside[id])
+		if not is_one_each(building, id):
+			total += int(inside[id])
 	return total
 
 
@@ -705,16 +749,24 @@ func loose_matching(building: Dictionary) -> int:
 ## Moves loose animals or trees of the right type into the building, up to its capacity.
 func fill_building(uid: int) -> int:
 	var b := object_by_uid(uid)
-	if b.is_empty() or not is_building(b):
+	if b.is_empty() or not is_building(b) or under_construction(b):
 		return 0
 	var was_empty := inside_total(b) == 0
 	var room := capacity(b) - inside_total(b)
 	var moved := 0
+	var regular := 0 # moves that take a space (the bull or stallion doesn't)
 	var keep: Array = []
 	for o in objects:
-		if moved < room and not is_building(o) and not o.get("stray", false) and building_accepts(b, o["id"]):
-			var inside: Dictionary = b["inside"]
+		var movable: bool = not is_building(o) and not o.get("stray", false) and building_accepts(b, o["id"])
+		var inside: Dictionary = b["inside"]
+		if movable and is_one_each(b, o["id"]) and not has_inside(b, o["id"]):
+			inside[o["id"]] = 1 # the one bull or stallion
+			moved += 1
+		elif movable and not is_one_each(b, o["id"]) and regular < room:
+			regular += 1
 			inside[o["id"]] = int(inside.get(o["id"], 0)) + 1
+			if b["id"] == "nursery_barn":
+				(b.get_or_add("growing", []) as Array).append([o["id"], 0])
 			moved += 1
 		else:
 			keep.append(o)
@@ -728,36 +780,273 @@ func fill_building(uid: int) -> int:
 	return moved
 
 
-## Coins to reach the next level, or -1 at the top level.
-func upgrade_cost(building: Dictionary) -> int:
-	var costs: Array = item_data(building["id"]).get("upgrade_costs", [])
-	var idx := int(building["level"]) - 1
-	return int(costs[idx]) if idx < costs.size() else -1
+# ---------------------------------------------------------------- construction and expansion
+
+## Materials still needed to finish a frame: {material: count}. Empty when done.
+func construction_needs(b: Dictionary) -> Dictionary:
+	if not under_construction(b):
+		return {}
+	var need: Dictionary = item_data(b["id"]).get("build_materials", {})
+	var have: Dictionary = b["construction"]
+	var left := {}
+	for m in need:
+		var short := int(need[m]) - int(have.get(m, 0))
+		if short > 0:
+			left[m] = short
+	return left
 
 
+## Puts held materials into a frame. Finishes the building when nothing is missing.
+func add_materials(uid: int) -> int:
+	var b := object_by_uid(uid)
+	if b.is_empty() or not under_construction(b):
+		return 0
+	var left := construction_needs(b)
+	var added := 0
+	var have: Dictionary = b["construction"]
+	for m in left:
+		var give := mini(int(left[m]), int(parts.get(m, 0)))
+		if give > 0:
+			parts[m] = int(parts[m]) - give
+			have[m] = int(have.get(m, 0)) + give
+			added += give
+	if added == 0:
+		message.emit("No materials to add yet. They turn up while harvesting and as daily gifts.")
+		return 0
+	if construction_needs(b).is_empty():
+		b.erase("construction")
+		b["t"] = now()
+		message.emit("%s finished! Open it to move animals in." % item_data(b["id"])["name"])
+		_bump("buildings_built", 1)
+		building_upgraded.emit(uid, 1)
+	else:
+		message.emit("Added %d materials to the %s" % [added, item_data(b["id"])["name"]])
+	inventory_changed.emit()
+	_objects_updated()
+	return added
+
+
+## Materials for the next expansion, or {} at full size.
+func expansion_needs(b: Dictionary) -> Dictionary:
+	if level_of(b) >= max_level(b["id"]):
+		return {}
+	return item_data(b["id"]).get("expand_materials", {})
+
+
+func can_expand(b: Dictionary) -> bool:
+	var need := expansion_needs(b)
+	if need.is_empty() or under_construction(b):
+		return false
+	for m in need:
+		if int(parts.get(m, 0)) < int(need[m]):
+			return false
+	return true
+
+
+## Expands a building one size, paying its materials (FarmVille's Big and Huge sizes).
 func upgrade_building(uid: int) -> bool:
 	var b := object_by_uid(uid)
-	if b.is_empty() or not is_building(b):
+	if b.is_empty() or not is_building(b) or not can_expand(b):
 		return false
-	var cost := upgrade_cost(b)
-	if cost < 0:
-		return false
-	if not spend(cost):
-		message.emit("Not enough coins to upgrade")
-		return false
-	b["level"] = int(b["level"]) + 1
-	var lvl := int(b["level"])
-	var perks := perks_at(b["id"], lvl)
-	var parts_of_msg: Array[String] = ["holds %d" % capacity(b), "+%d%% earnings" % int(perks["earnings_pct"])]
-	if int(perks["faster_pct"]) > 0:
-		parts_of_msg.append("%d%% faster" % int(perks["faster_pct"]))
-	message.emit("%s is now level %d: %s" % [item_data(b["id"])["name"], lvl, ", ".join(PackedStringArray(parts_of_msg))])
-	add_xp(UPGRADE_XP_PER_LEVEL * lvl)
+	var need := expansion_needs(b)
+	for m in need:
+		parts[m] = int(parts[m]) - int(need[m])
+	b["level"] = level_of(b) + 1
+	message.emit("%s now holds %d!" % [size_name(b), capacity(b)])
 	_bump("upgrades", 1)
-	building_upgraded.emit(uid, lvl)
+	building_upgraded.emit(uid, level_of(b))
 	_house_waiting_bees()
+	inventory_changed.emit()
 	_objects_updated()
 	return true
+
+
+# ---------------------------------------------------------------- building specials
+
+## Extra results of collecting a building, as short popup texts.
+func _building_specials(b: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	match item_data(b["id"]).get("special", ""):
+		"mystery_eggs":
+			var colour := _roll_mystery_egg(b)
+			if colour != "":
+				mystery_eggs[colour] = int(mystery_eggs.get(colour, 0)) + 1
+				var name: String = egg_data["colours"][colour]["name"]
+				message.emit("You found a %s! Open it from the coop." % name)
+				out.append(name + "!")
+		"calves":
+			if drops_enabled and rng.randf() < FERTILIZER_CHANCE:
+				fertilizer_bags += 1
+				out.append("+1 Fertilizer")
+			if has_inside(b, "bull") and drops_enabled and rng.randf() < CALF_CHANCE:
+				if place_somewhere("calf"):
+					message.emit("A calf was born! Raise it in a Nursery Barn.")
+					out.append("A calf!")
+		"foals":
+			var with_stallion := has_inside(b, "stallion")
+			if drops_enabled and with_stallion and rng.randf() < FOAL_CHANCE:
+				if place_somewhere("foal"):
+					message.emit("A foal was born! Raise it in a Nursery Barn.")
+					out.append("A foal!")
+			if drops_enabled and rng.randf() < STABLE_HELPER_CHANCE:
+				farmhands += 1
+				out.append("+1 Farmhand")
+			if drops_enabled and rng.randf() < STABLE_HELPER_CHANCE:
+				arborists += 1
+				out.append("+1 Arborist")
+			if drops_enabled and with_stallion and rng.randf() < STABLE_XP_CHANCE:
+				add_xp(STABLE_XP)
+				out.append("+%d XP" % STABLE_XP)
+		"nursery":
+			out.append_array(_grow_babies(b))
+	if not out.is_empty():
+		inventory_changed.emit()
+	return out
+
+
+## Mystery Egg chance grows with the chickens inside; colour follows the breeds there.
+func _roll_mystery_egg(coop: Dictionary) -> String:
+	if not drops_enabled or egg_data.is_empty():
+		return ""
+	var chickens := inside_total(coop)
+	var chance := minf(float(egg_data.get("max_chance", 0.4)), chickens * float(egg_data.get("chance_per_chicken", 0.005)))
+	if rng.randf() >= chance:
+		return ""
+	var pick := rng.randi_range(1, chickens)
+	var inside: Dictionary = coop["inside"]
+	for id in inside:
+		pick -= int(inside[id])
+		if pick <= 0:
+			return item_data(id).get("breed", "white")
+	return "white"
+
+
+## Opens one Mystery Egg of a colour. Returns the prize text, or "" if none held.
+func open_mystery_egg(colour: String) -> String:
+	if int(mystery_eggs.get(colour, 0)) <= 0:
+		return ""
+	mystery_eggs[colour] = int(mystery_eggs[colour]) - 1
+	var prizes: Array = egg_data["colours"][colour]["prizes"]
+	var total := 0
+	for p in prizes:
+		total += int(p[2])
+	var roll := rng.randi_range(1, total)
+	var prize: Array = prizes[-1]
+	for p in prizes:
+		roll -= int(p[2])
+		if roll <= 0:
+			prize = p
+			break
+	var text := _give_prize(prize)
+	_bump("eggs_opened", 1)
+	message.emit("%s: %s" % [egg_data["colours"][colour]["name"], text])
+	inventory_changed.emit()
+	queue_save()
+	return text
+
+
+func _give_prize(prize: Array) -> String:
+	var kind: String = prize[0]
+	match kind:
+		"coins":
+			add_coins(int(prize[1]))
+			return "%d coins" % int(prize[1])
+		"xp":
+			add_xp(int(prize[1]))
+			return "%d XP" % int(prize[1])
+		"gems":
+			add_gems(int(prize[1]))
+			return "%d gems" % int(prize[1])
+		"chicken":
+			if place_somewhere(prize[1]):
+				return "a %s" % item_data(prize[1])["name"]
+			add_coins(200)
+			return "200 coins (no room for a %s)" % item_data(prize[1])["name"]
+		"materials":
+			var got: Array[String] = []
+			for k in int(prize[1]):
+				var m := _pick_part()
+				add_part(m, 1)
+				got.append(PART_NAMES[m])
+			return ", ".join(PackedStringArray(got))
+		"unwither":
+			add_unwithers(int(prize[1]))
+			return "%d Unwither" % int(prize[1])
+		"farmhand":
+			farmhands += int(prize[1])
+			return "%d Farmhand" % int(prize[1])
+		"arborist":
+			arborists += int(prize[1])
+			return "%d Arborist" % int(prize[1])
+	return ""
+
+
+## Nursery Barn: each baby grows a day per collection; grown ones move out as adults.
+func _grow_babies(nursery: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	var it := item_data(nursery["id"])
+	var grow_days := int(it.get("grow_days", 4))
+	var into: Dictionary = it.get("grows_into", {})
+	var still: Array = []
+	var inside: Dictionary = nursery["inside"]
+	for baby in nursery.get("growing", []):
+		baby[1] = int(baby[1]) + 1
+		if int(baby[1]) >= grow_days and place_somewhere(into.get(baby[0], baby[0])):
+			inside[baby[0]] = int(inside.get(baby[0], 0)) - 1
+			if int(inside[baby[0]]) <= 0:
+				inside.erase(baby[0])
+			add_xp(NURSERY_SPARE_XP)
+			var adult_name: String = item_data(into.get(baby[0], baby[0]))["name"]
+			message.emit("Your %s grew up into a %s!" % [item_data(baby[0])["name"].to_lower(), adult_name.to_lower()])
+			out.append("A %s grew up!" % adult_name.to_lower())
+		else:
+			still.append(baby)
+	nursery["growing"] = still
+	return out
+
+
+## Puts a new animal on an open grass tile. False if the farm is full.
+func place_somewhere(item_id: String) -> bool:
+	var spots: Array[Vector2i] = []
+	for r in farm_size:
+		for c in farm_size:
+			var i := index_of(r, c)
+			if plots[i].get("state", "grass") == "grass" and not is_occupied(i):
+				spots.append(Vector2i(r, c))
+	if spots.is_empty():
+		return false
+	var spot := spots[rng.randi_range(0, spots.size() - 1)]
+	objects.append({"uid": next_uid, "id": item_id, "row": spot.x, "col": spot.y, "t": now()})
+	next_uid += 1
+	_rebuild_occupancy()
+	return true
+
+
+# ---------------------------------------------------------------- farmhands and arborists
+
+## Farmhand: collects every ready animal on the farm. Arborist: every ready tree.
+func use_helper(kind: String) -> int:
+	var held := farmhands if kind == "animal" else arborists
+	if held <= 0:
+		message.emit("No %s left" % ("Farmhands" if kind == "animal" else "Arborists"))
+		return 0
+	var ready: Array = []
+	for o in objects:
+		if kind_of(o) == kind and is_ready(o):
+			ready.append(int(o["uid"]))
+	if ready.is_empty():
+		message.emit("Nothing is ready to collect yet")
+		return 0
+	if kind == "animal":
+		farmhands -= 1
+	else:
+		arborists -= 1
+	var coins_total := 0
+	for uid in ready:
+		coins_total += int(collect(uid).get("coins", 0))
+	message.emit("Collected %d %s for %d coins" % [ready.size(), "animals" if kind == "animal" else "trees", coins_total])
+	inventory_changed.emit()
+	return ready.size()
 
 
 # ---------------------------------------------------------------- parts and the daily gift
@@ -775,19 +1064,33 @@ func _roll_part() -> String:
 	return p
 
 
+## Which materials can drop: the basic three, plus the specific ones of buildings you own.
+func wanted_parts() -> Array[String]:
+	var out: Array[String] = []
+	out.assign(BASIC_PARTS)
+	for o in objects:
+		var it := item_data(o["id"])
+		for key in ["build_materials", "expand_materials"]:
+			for m in it.get(key, {}):
+				if not out.has(m):
+					out.append(m)
+	return out
+
+
 func _pick_part() -> String:
+	var pool := wanted_parts()
 	var weights: Array[float] = []
 	var total := 0.0
-	for p in PARTS:
+	for p in pool:
 		var w := 1.0 / (1.0 + int(parts.get(p, 0)))
 		weights.append(w)
 		total += w
 	var pick := rng.randf() * total
-	for k in PARTS.size():
+	for k in pool.size():
 		pick -= weights[k]
 		if pick <= 0.0:
-			return PARTS[k]
-	return PARTS[-1]
+			return pool[k]
+	return pool[-1]
 
 
 func add_part(part: String, n: int) -> void:
@@ -992,8 +1295,17 @@ func _spawn_stray() -> bool:
 	var total := 0.0
 	for id in item_order:
 		var it: Dictionary = items[id]
-		if it["kind"] == "animal" and int(it["unlock_level"]) <= level() + 2:
-			var w := 1.0 / maxf(1.0, float(it["cost"]) / 100.0)
+		if it["kind"] != "animal":
+			continue
+		var w := 0.0
+		if it.get("stray_only", false):
+			# FarmVille's lonely bull and wandering stallion: only once you have their building.
+			var home := "cow_shed" if id == "bull" else "horse_stable"
+			if _owns(home):
+				w = 0.6
+		elif int(it["unlock_level"]) <= level() + 2 and not it.has("gem_cost"):
+			w = 1.0 / maxf(1.0, float(it["cost"]) / 100.0)
+		if w > 0.0:
 			choices.append(id)
 			weights.append(w)
 			total += w
@@ -1019,6 +1331,13 @@ func _spawn_stray() -> bool:
 	next_uid += 1
 	message.emit("A lonely %s wandered onto your farm! Tap it to adopt." % item_data(animal_id)["name"].to_lower())
 	return true
+
+
+func _owns(item_id: String) -> bool:
+	for o in objects:
+		if o["id"] == item_id:
+			return true
+	return false
 
 
 func adopt_stray(uid: int) -> bool:
@@ -1365,7 +1684,13 @@ func _new_game() -> void:
 	_add_starter_object("chicken", 9, 2)
 	_add_starter_object("chicken", 9, 3)
 	_add_starter_object("cow", 10, 6)
-	parts = {"bricks": 0, "nails": 0, "boards": 0}
+	parts = {}
+	for p in PARTS:
+		parts[p] = 0
+	mystery_eggs = {}
+	farmhands = 0
+	arborists = 0
+	fertilizer_bags = 0
 	stored = []
 	last_daily_day = day_number()
 	_rebuild_occupancy()
@@ -1419,6 +1744,10 @@ func save_game() -> void:
 		"unwithers": unwithers,
 		"waiting_bees": waiting_bees,
 		"parts": parts,
+		"mystery_eggs": mystery_eggs,
+		"farmhands": farmhands,
+		"arborists": arborists,
+		"fertilizer_bags": fertilizer_bags,
 		"last_daily_day": last_daily_day,
 		"stored": stored,
 		"next_stray_at": next_stray_at,
@@ -1453,6 +1782,13 @@ func load_game() -> bool:
 	for p in PARTS:
 		parts[p] = int(saved_parts.get(p, 0))
 	last_daily_day = int(data.get("last_daily_day", day_number()))
+	mystery_eggs = {}
+	var saved_eggs: Dictionary = data.get("mystery_eggs", {})
+	for colour in saved_eggs:
+		mystery_eggs[colour] = int(saved_eggs[colour])
+	farmhands = int(data.get("farmhands", 0))
+	arborists = int(data.get("arborists", 0))
+	fertilizer_bags = int(data.get("fertilizer_bags", 0))
 	stored = []
 	for o in data.get("stored", []):
 		if items.has(o.get("id", "")):

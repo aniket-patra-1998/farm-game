@@ -255,7 +255,7 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 	var accent := Color.html(str(it.get("accent", "#333333")))
 	var id: String = it.get("id", "")
 	_shadow(ci, ground + Vector2(0, 2), 30, 11)
-	if id == "chicken" or id == "duck" or id == "goose" or id == "turkey":
+	if id.ends_with("chicken") or id == "duck" or id == "goose" or id == "turkey":
 		var tall := 1.2 if id == "goose" or id == "turkey" else 1.0
 		_ellipse(ci, ground + Vector2(0, -16), 15 * tall, 13 * tall, body)
 		ci.draw_circle(ground + Vector2(11, -30 * tall), 9, body)
@@ -270,7 +270,7 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 		ci.draw_line(ground + Vector2(-4, -4), ground + Vector2(-4, 4), Color("#f2a33a"), 2.5)
 		ci.draw_line(ground + Vector2(4, -4), ground + Vector2(4, 4), Color("#f2a33a"), 2.5)
 	else:
-		var big := 1.25 if id == "horse" else 1.0
+		var big := 1.25 if id == "horse" or id == "stallion" or id == "bull" else (0.7 if id == "calf" or id == "foal" else 1.0)
 		for x in [-16.0, -8.0, 10.0, 18.0]:
 			ci.draw_line(ground + Vector2(x * big, -14), ground + Vector2(x * big, 2), accent if id == "horse" else body.darkened(0.25), 4.5)
 		_ellipse(ci, ground + Vector2(0, -22 * big), 26 * big, 15 * big, body)
@@ -469,3 +469,33 @@ static func _upgrade_top(ci: CanvasItem, right: Vector2, bottom: Vector2, up: Ve
 	ci.draw_line(ridge, ridge + Vector2(0, -26), Color("#5c3a1e"), 2.5)
 	ci.draw_colored_polygon(PackedVector2Array([ridge + Vector2(0, -26), ridge + Vector2(16, -21), ridge + Vector2(0, -16)]), gold)
 	ci.draw_circle(ridge + Vector2(0, -28), 3.0, gold)
+
+
+
+## A building frame under construction: a floor, wooden posts and scaffold rails.
+static func draw_frame(ci: CanvasItem, g: PackedVector2Array, it: Dictionary) -> void:
+	var c := (g[0] + g[2]) / 2.0
+	var top := c.lerp(g[0], 0.78)
+	var right := c.lerp(g[1], 0.78)
+	var bottom := c.lerp(g[2], 0.78)
+	var left := c.lerp(g[3], 0.78)
+	var floor_col := Color("#c9a77a")
+	ci.draw_colored_polygon(PackedVector2Array([top, right, bottom, left]), floor_col)
+	ci.draw_polyline(PackedVector2Array([top, right, bottom, left, top]), floor_col.darkened(0.3), 2.0)
+	var wood := Color("#a8743f")
+	var up := Vector2(0, -46)
+	for p in [left, bottom, right, top]:
+		ci.draw_line(p, p + up, wood, 5.0)
+	for k in 2:
+		var h := up * (0.45 + 0.5 * k)
+		ci.draw_polyline(PackedVector2Array([left + h, bottom + h, right + h]), wood.darkened(0.15), 3.0)
+	ci.draw_line(left + up * 0.95, bottom + up * 0.1, wood.darkened(0.25), 2.5) # cross brace
+	# A little stack of bricks and boards in front.
+	var pile := bottom + Vector2(-26, 10)
+	for k in 3:
+		ci.draw_rect(Rect2(pile + Vector2(k * 9, -6), Vector2(8, 6)), Color("#b5523b"))
+	ci.draw_rect(Rect2(pile + Vector2(0, -12), Vector2(30, 5)), Color("#d4a76a"))
+	var sign_pos := c + Vector2(-40, -70)
+	ci.draw_rect(Rect2(sign_pos, Vector2(80, 22)), Color("#ffd34d"))
+	ci.draw_rect(Rect2(sign_pos, Vector2(80, 22)), Color("#5c3a1e"), false, 2)
+	ci.draw_string(ThemeDB.fallback_font, sign_pos + Vector2(0, 16), "Building", HORIZONTAL_ALIGNMENT_CENTER, 80, 15, Color("#3a2614"))

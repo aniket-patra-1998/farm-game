@@ -1,5 +1,5 @@
 {
-  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w = width in tiles (columns), h = depth in tiles (rows). Times in seconds. Buildings: holds lists the item ids they accept, or holds_kind accepts every item of that kind. levels gives capacity per level; upgrade_costs[n] is the price to go from level n+1 to n+2. The barn is repaired with parts and then stores items.",
+  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w/h = footprint in tiles. Times in seconds. Buildings, the FarmVille way: bought with coins; build_materials means it arrives as a frame finished with those materials; expand_materials is paid per expansion; levels = capacity per size; one_each items (bull, stallion) live inside without taking a space; special = mystery_eggs, calves, foals or nursery. gem_cost = bought with gems instead of coins (like Farm Cash). unlock_level 99 = never sold in the market (strays, eggs, babies).",
   "items": [
     {
       "id": "apple_tree",
@@ -70,7 +70,7 @@
     {
       "id": "chicken",
       "kind": "animal",
-      "name": "Chicken",
+      "name": "White Chicken",
       "product": "Eggs",
       "unlock_level": 1,
       "cost": 120,
@@ -78,7 +78,81 @@
       "payout": 40,
       "xp": 1,
       "color": "#fbfaf4",
-      "accent": "#e2453c"
+      "accent": "#e2453c",
+      "breed": "white"
+    },
+    {
+      "id": "golden_chicken",
+      "kind": "animal",
+      "name": "Golden Chicken",
+      "product": "Golden Eggs",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 90,
+      "xp": 2,
+      "color": "#f2c230",
+      "accent": "#e2453c",
+      "breed": "golden"
+    },
+    {
+      "id": "black_chicken",
+      "kind": "animal",
+      "name": "Black Chicken",
+      "product": "Eggs",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 60,
+      "xp": 2,
+      "color": "#2b2b30",
+      "accent": "#e2453c",
+      "breed": "black"
+    },
+    {
+      "id": "grey_chicken",
+      "kind": "animal",
+      "name": "Scots Grey",
+      "product": "Eggs",
+      "unlock_level": 12,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 55,
+      "xp": 1,
+      "color": "#8a8f96",
+      "accent": "#e2453c",
+      "gem_cost": 12,
+      "breed": "grey"
+    },
+    {
+      "id": "red_chicken",
+      "kind": "animal",
+      "name": "Rhode Island Red",
+      "product": "Eggs",
+      "unlock_level": 9,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 50,
+      "xp": 1,
+      "color": "#9c3a22",
+      "accent": "#e2453c",
+      "gem_cost": 8,
+      "breed": "red"
+    },
+    {
+      "id": "brown_chicken",
+      "kind": "animal",
+      "name": "Brown Chicken",
+      "product": "Brown Eggs",
+      "unlock_level": 5,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 45,
+      "xp": 1,
+      "color": "#a8703e",
+      "accent": "#e2453c",
+      "gem_cost": 5,
+      "breed": "brown"
     },
     {
       "id": "cow",
@@ -146,35 +220,101 @@
       "accent": "#4a2c18"
     },
     {
+      "id": "foal",
+      "kind": "animal",
+      "name": "Foal",
+      "product": "Horse Hair",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 20,
+      "xp": 1,
+      "color": "#b07a48",
+      "accent": "#4a2c18"
+    },
+    {
+      "id": "calf",
+      "kind": "animal",
+      "name": "Calf",
+      "product": "Milk",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 20,
+      "xp": 1,
+      "color": "#f4f1ea",
+      "accent": "#3b3330"
+    },
+    {
+      "id": "stallion",
+      "kind": "animal",
+      "name": "Stallion",
+      "product": "Nothing",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 0,
+      "xp": 0,
+      "color": "#f4f1ea",
+      "accent": "#c9c2b4",
+      "stray_only": true
+    },
+    {
+      "id": "bull",
+      "kind": "animal",
+      "name": "Bull",
+      "product": "Nothing",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 0,
+      "xp": 0,
+      "color": "#7a4a2c",
+      "accent": "#2b2420",
+      "stray_only": true
+    },
+    {
       "id": "chicken_coop",
       "kind": "building",
       "name": "Chicken Coop",
       "unlock_level": 4,
-      "cost": 3000,
+      "cost": 5000,
       "w": 3,
       "h": 3,
       "holds": [
-        "chicken"
+        "chicken",
+        "brown_chicken",
+        "red_chicken",
+        "grey_chicken",
+        "black_chicken",
+        "golden_chicken"
       ],
       "cycle_seconds": 86400,
       "levels": [
         20,
-        30,
-        40
-      ],
-      "upgrade_costs": [
-        5000,
-        12000
+        40,
+        60
       ],
       "color": "#e9c46a",
-      "roof": "#b5482f"
+      "roof": "#b5482f",
+      "level_names": [
+        "Chicken Coop",
+        "Big Chicken Coop",
+        "Huge Chicken Coop"
+      ],
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      },
+      "special": "mystery_eggs"
     },
     {
       "id": "cow_shed",
       "kind": "building",
-      "name": "Cow Shed",
+      "name": "Dairy Farm",
       "unlock_level": 6,
-      "cost": 5000,
+      "cost": 10000,
       "w": 4,
       "h": 3,
       "holds": [
@@ -186,12 +326,22 @@
         30,
         40
       ],
-      "upgrade_costs": [
-        8000,
-        20000
-      ],
       "color": "#c0392b",
-      "roof": "#6b4a3a"
+      "roof": "#6b4a3a",
+      "level_names": [
+        "Dairy Farm",
+        "Big Dairy Farm",
+        "Huge Dairy Farm"
+      ],
+      "one_each": [
+        "bull"
+      ],
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      },
+      "special": "calves"
     },
     {
       "id": "orchard",
@@ -208,36 +358,94 @@
         30,
         40
       ],
-      "upgrade_costs": [
-        9000,
-        22000
-      ],
       "color": "#8fbf5a",
-      "roof": "#7a5230"
+      "roof": "#7a5230",
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      }
     },
     {
       "id": "horse_stable",
       "kind": "building",
       "name": "Horse Stable",
       "unlock_level": 12,
-      "cost": 10000,
+      "cost": 5000,
       "w": 4,
       "h": 4,
       "holds": [
         "horse"
       ],
-      "cycle_seconds": 259200,
+      "cycle_seconds": 86400,
       "levels": [
-        10,
-        15,
-        20
-      ],
-      "upgrade_costs": [
-        15000,
-        35000
+        20,
+        25,
+        30,
+        35,
+        40
       ],
       "color": "#a8743f",
-      "roof": "#3f5f7a"
+      "roof": "#3f5f7a",
+      "one_each": [
+        "stallion"
+      ],
+      "build_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10,
+        "harnesses": 10,
+        "horseshoes": 10
+      },
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10,
+        "harnesses": 10,
+        "horseshoes": 10
+      },
+      "special": "foals"
+    },
+    {
+      "id": "nursery_barn",
+      "kind": "building",
+      "name": "Nursery Barn",
+      "unlock_level": 8,
+      "cost": 0,
+      "w": 4,
+      "h": 3,
+      "holds": [
+        "calf",
+        "foal"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "build_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10,
+        "bottles": 10,
+        "blankets": 10
+      },
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10,
+        "bottles": 10,
+        "blankets": 10
+      },
+      "special": "nursery",
+      "grow_days": 4,
+      "grows_into": {
+        "calf": "cow",
+        "foal": "horse"
+      },
+      "color": "#e9d8a6",
+      "roof": "#7a9e7e"
     },
     {
       "id": "bee",
@@ -268,12 +476,13 @@
         20,
         30
       ],
-      "upgrade_costs": [
-        4000,
-        10000
-      ],
       "color": "#f2c230",
-      "roof": "#c98a1a"
+      "roof": "#c98a1a",
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      }
     },
     {
       "id": "plum_tree",
