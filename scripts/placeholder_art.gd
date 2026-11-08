@@ -216,6 +216,8 @@ static func draw_object(ci: CanvasItem, it: Dictionary, corners: PackedVector2Ar
 			_tree(ci, center, it, ready)
 		"animal":
 			_animal(ci, center, it, ready)
+		"vehicle":
+			_vehicle(ci, center, it)
 		"building":
 			_building(ci, corners, it, level, inside, capacity, s)
 		"barn":
@@ -317,6 +319,8 @@ static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 				badge = _orchard(ci, g, level, inside, s)
 			"pig_pen":
 				badge = _pig_pen(ci, g, it, inside, s)
+			"garage":
+				badge = _garage(ci, g, it, inside, s)
 		if badge != Vector2.ZERO:
 			_signs(ci, g, badge, level, inside, capacity)
 			return
@@ -876,3 +880,105 @@ static func draw_frame(ci: CanvasItem, g: PackedVector2Array, it: Dictionary) ->
 	ci.draw_rect(Rect2(sign_pos, Vector2(80, 22)), Color("#ffd34d"))
 	ci.draw_rect(Rect2(sign_pos, Vector2(80, 22)), Color("#5c3a1e"), false, 2)
 	ci.draw_string(ThemeDB.fallback_font, sign_pos + Vector2(0, 16), "Building", HORIZONTAL_ALIGNMENT_CENTER, 80, 15, Color("#3a2614"))
+
+
+# ---------------------------------------------------------------- vehicles
+
+## Side-on vehicles facing right: body, cab, big back wheel, small front wheel, and each one's tool.
+static func _vehicle(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
+	var body := Color.html(str(it.get("color", "#c0392b")))
+	var dark := Color.html(str(it.get("accent", "#2b2b30")))
+	var id: String = it.get("id", "")
+	var big := 1.25 if id == "combine" else 1.0
+	_shadow(ci, ground + Vector2(0, 2), 40 * big, 13 * big)
+	var o := ground + Vector2(0, -6)
+	match id:
+		"harvester", "combine":
+			# A wide header with a reel at the front, a grain tank on top.
+			ci.draw_rect(Rect2(o + Vector2(-30, -40) * big, Vector2(52, 26) * big), body)
+			ci.draw_rect(Rect2(o + Vector2(-26, -58) * big, Vector2(26, 18) * big), body.lightened(0.15))
+			ci.draw_rect(Rect2(o + Vector2(-24, -56) * big, Vector2(10, 10) * big), Color("#bfe3f2"))
+			ci.draw_rect(Rect2(o + Vector2(22, -26) * big, Vector2(16, 18) * big), dark)
+			for k in 4:
+				ci.draw_line(o + Vector2(24, -24 + k * 5) * big, o + Vector2(36, -24 + k * 5) * big, body, 2)
+			if id == "combine":
+				ci.draw_rect(Rect2(o + Vector2(-40, -36), Vector2(10, 18)), dark.darkened(0.1)) # seed box
+				ci.draw_line(o + Vector2(-48, -16), o + Vector2(-34, -24), dark, 3) # plow blade
+		"seeder":
+			# A tractor body pulling a hopper with seed tubes.
+			ci.draw_rect(Rect2(o + Vector2(-6, -34), Vector2(34, 20)), body)
+			ci.draw_rect(Rect2(o + Vector2(0, -50), Vector2(18, 16)), body.lightened(0.15))
+			ci.draw_rect(Rect2(o + Vector2(3, -47), Vector2(8, 8)), Color("#bfe3f2"))
+			ci.draw_rect(Rect2(o + Vector2(-40, -36), Vector2(26, 18)), Color("#e3c46a"))
+			for k in 3:
+				ci.draw_line(o + Vector2(-36 + k * 9, -18), o + Vector2(-36 + k * 9, -4), dark, 2)
+		_:
+			# Tractor: a hood, a cab and an exhaust stack.
+			ci.draw_rect(Rect2(o + Vector2(-20, -34), Vector2(44, 20)), body)
+			ci.draw_rect(Rect2(o + Vector2(-18, -54), Vector2(20, 20)), body.lightened(0.15))
+			ci.draw_rect(Rect2(o + Vector2(-15, -51), Vector2(9, 9)), Color("#bfe3f2"))
+			ci.draw_line(o + Vector2(14, -34), o + Vector2(14, -48), dark, 3)
+			ci.draw_line(o + Vector2(-30, -16), o + Vector2(-22, -24), dark, 3) # hitch
+	# Wheels.
+	ci.draw_circle(o + Vector2(-12, -12) * big, 13 * big, dark)
+	ci.draw_circle(o + Vector2(-12, -12) * big, 5 * big, body.lightened(0.3))
+	ci.draw_circle(o + Vector2(18, -8) * big, 8 * big, dark)
+	ci.draw_circle(o + Vector2(18, -8) * big, 3 * big, body.lightened(0.3))
+
+
+## The Combine's chassis before it's finished: a bare frame on wheels with a parts pile.
+static func draw_chassis(ci: CanvasItem, g: PackedVector2Array, _it: Dictionary) -> void:
+	var c := (g[0] + g[2]) / 2.0 + Vector2(0, -6)
+	_shadow(ci, c + Vector2(0, 8), 44, 14)
+	var steel := Color("#8a949c")
+	ci.draw_line(c + Vector2(-34, -16), c + Vector2(30, -16), steel, 5)
+	ci.draw_line(c + Vector2(-34, -30), c + Vector2(16, -30), steel, 4)
+	for x in [-30.0, -6.0, 14.0]:
+		ci.draw_line(c + Vector2(x, -16), c + Vector2(x, -30), steel, 3)
+	ci.draw_circle(c + Vector2(-16, -8), 13, Color("#2b2b30"))
+	ci.draw_circle(c + Vector2(20, -6), 8, Color("#2b2b30"))
+	for k in 3:
+		ci.draw_rect(Rect2(c + Vector2(30 + k * 7, -4 - k * 3), Vector2(8, 6)), Color("#c9d1d8"))
+	var sign_pos := c + Vector2(-40, -70)
+	ci.draw_rect(Rect2(sign_pos, Vector2(80, 22)), Color("#ffd34d"))
+	ci.draw_rect(Rect2(sign_pos, Vector2(80, 22)), Color("#5c3a1e"), false, 2)
+	ci.draw_string(ThemeDB.fallback_font, sign_pos + Vector2(0, 16), "Chassis", HORIZONTAL_ALIGNMENT_CENTER, 80, 15, Color("#3a2614"))
+
+
+## Garage: a grey workshop with a big roll-up door, a wrench sign and a fuel pump.
+static func _garage(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: int, _s: float) -> Vector2:
+	var wall := Color.html(str(it.get("color", "#9aa4ad")))
+	var roof := Color.html(str(it.get("roof", "#4a5560")))
+	_yard_shadow(ci, g)
+	# Concrete apron in front.
+	var apron := _inset(g, 0.92)
+	ci.draw_colored_polygon(PackedVector2Array([apron[3], apron[2], apron[2].lerp(apron[1], 0.5), apron[3].lerp(apron[0], 0.5)]), Color("#cfcabf"))
+	var base := _inset(g, 0.68)
+	var hgt := 48.0
+	var t := _box(ci, base, hgt, wall)
+	# Roll-up door with slats; parked vehicles peek out when there are any.
+	var foot := base[3].lerp(base[2], 0.5)
+	var dw := (base[2] - base[3]) * 0.3
+	var dh := Vector2(0, -hgt * 0.75)
+	ci.draw_colored_polygon(PackedVector2Array([foot - dw, foot + dw, foot + dw + dh, foot - dw + dh]), Color("#3a3f45") if inside > 0 else wall.lightened(0.2))
+	for k in 5:
+		var y := dh * (0.2 + 0.16 * k)
+		ci.draw_line(foot - dw + y, foot + dw + y, wall.darkened(0.2), 1.5)
+	if inside > 0:
+		ci.draw_circle(foot + Vector2(-6, -8), 7, Color("#2b2b30"))
+		ci.draw_rect(Rect2(foot + Vector2(-14, -26), Vector2(26, 12)), Color("#c0392b"))
+	# Flat roof with a lip.
+	ci.draw_colored_polygon(PackedVector2Array([t[0] + Vector2(0, -6), t[1] + Vector2(0, -6), t[2] + Vector2(0, -6), t[3] + Vector2(0, -6)]), roof)
+	ci.draw_colored_polygon(PackedVector2Array([t[3], t[2], t[2] + Vector2(0, -6), t[3] + Vector2(0, -6)]), roof.darkened(0.2))
+	ci.draw_colored_polygon(PackedVector2Array([t[2], t[1], t[1] + Vector2(0, -6), t[2] + Vector2(0, -6)]), roof.darkened(0.35))
+	# Wrench sign on the right wall.
+	var sign_c := base[2].lerp(base[1], 0.5) + Vector2(0, -hgt * 0.55)
+	ci.draw_circle(sign_c, 11, Color("#ffd34d"))
+	ci.draw_line(sign_c + Vector2(-5, 5), sign_c + Vector2(5, -5), Color("#3a2614"), 3)
+	ci.draw_circle(sign_c + Vector2(5, -5), 3.5, Color("#3a2614"))
+	# Fuel pump by the apron.
+	var pump := apron[2].lerp(apron[1], 0.25) + Vector2(-4, -6)
+	ci.draw_rect(Rect2(pump + Vector2(-7, -26), Vector2(14, 26)), Color("#e2453c"))
+	ci.draw_rect(Rect2(pump + Vector2(-4, -22), Vector2(8, 6)), Color("#fbefd2"))
+	ci.draw_line(pump + Vector2(7, -16), pump + Vector2(12, -4), Color("#2b2b30"), 2)
+	return (t[0] + t[2]) / 2.0 + Vector2(0, -36)

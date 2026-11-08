@@ -126,6 +126,18 @@
         100,
         300
       ]
+    },
+    {
+      "id": "gearhead",
+      "name": "Gearhead",
+      "stat": "vehicle_upgrades",
+      "what": "vehicle upgrades",
+      "thresholds": [
+        1,
+        4,
+        8,
+        16
+      ]
     }
   ]
 }

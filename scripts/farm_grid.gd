@@ -22,7 +22,9 @@ const COLOR_FERT := Color("#8fe36b")
 const COLOR_PART := Color("#f4c27a")
 
 var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move" or "store"
-var selected_crop := ""  # crop id when tool == "plant"
+var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
+var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
+var _vehicle_flash := {} # the area a vehicle just worked: {"row", "col", "w", "h", "until"}
 
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
@@ -51,6 +53,15 @@ func _ready() -> void:
 func set_tool(tool_name: String, crop_id: String) -> void:
 	tool = tool_name
 	selected_crop = crop_id
+	if tool_name == "plant":
+		last_crop = crop_id
+	elif tool_name == "vehicle":
+		var area := Game.vehicle_area(crop_id)
+		var job: String = Game.item_data(crop_id).get("job", "")
+		var hint := "Tap the field: the %s works %dx%d plots" % [Game.item_data(crop_id)["name"], area.x, area.y]
+		if job == "plant" or job == "all":
+			hint += (", planting %s" % Game.crops[last_crop]["name"].to_lower()) if last_crop != "" else ". Pick a seed first to plant"
+		info.emit(hint)
 
 
 func get_bounds() -> Rect2:
@@ -120,6 +131,9 @@ func _draw() -> void:
 			_draw_plot(i, row, col)
 			for o in after_tile.get(i, []):
 				_draw_object(o)
+	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
+		PlaceholderArt.draw_footprint(self, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
+			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
 	# Count signs last, so the ground in front of a building never hides them.
 	for o in Game.objects:
 		if int(o["uid"]) == lifted or Game.under_construction(o):
@@ -155,7 +169,10 @@ func _draw_object(o: Dictionary) -> void:
 	var fp := Game.footprint(o["id"])
 	var corners := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	if Game.under_construction(o):
-		PlaceholderArt.draw_frame(self, corners_of(int(o["row"]), int(o["col"]), Game.footprint(o["id"]).x, Game.footprint(o["id"]).y), Game.item_data(o["id"]))
+		if Game.kind_of(o) == "vehicle":
+			PlaceholderArt.draw_chassis(self, corners, it)
+		else:
+			PlaceholderArt.draw_frame(self, corners, it)
 		return
 	var is_ready_now := Game.is_ready(o)
 	var building := Game.is_building(o)
@@ -360,7 +377,39 @@ func _apply_at(screen_pos: Vector2) -> void:
 	var i := index_at(to_local(world))
 	if i < 0:
 		return
+	if tool == "vehicle" and Game.object_at(i).is_empty():
+		_drive(i)
+		return
 	_act(i, true)
+
+
+## Sends the chosen vehicle over the area around the tapped plot.
+func _drive(i: int) -> void:
+	var id := selected_crop
+	var area := Game.vehicle_area(id)
+	var row := int(i / float(MAX)) - int((area.y - 1) / 2.0)
+	var col := i % MAX - int((area.x - 1) / 2.0)
+	var job: String = Game.item_data(id).get("job", "")
+	var crop := last_crop if (job == "plant" or job == "all") else ""
+	var r := Game.use_vehicle(id, row, col, crop)
+	_vehicle_flash = {"row": row, "col": col, "w": area.x, "h": area.y, "until": Time.get_ticks_msec() + 500}
+	queue_redraw()
+	if r.is_empty():
+		return
+	var at := center_of(Game.index_of(clampi(row + int(area.y / 2.0), 0, MAX - 1), clampi(col + int(area.x / 2.0), 0, MAX - 1)))
+	if int(r["plots"]) == 0:
+		info.emit("Nothing for the %s to do there" % Game.item_data(id)["name"])
+		return
+	var coins_moved := int(r["coins"])
+	if coins_moved != 0:
+		_float(at, ("+%d" if coins_moved > 0 else "%d") % coins_moved, COLOR_COINS if coins_moved > 0 else COLOR_COST)
+	if int(r["xp"]) > 0:
+		_float(at + Vector2(0, -30), "+%d XP" % int(r["xp"]), COLOR_XP)
+	_float(at + Vector2(0, -60), "%d plots · -%d fuel" % [int(r["plots"]), int(r["fuel"])], COLOR_PART, 1.4)
+	var lift := -96
+	for d in r["drops"]:
+		_float(at + Vector2(0, lift), d, COLOR_GOLDEN, 1.6)
+		lift -= 32
 
 
 ## first_touch is always true now that each tap acts on one plot; it stays so
@@ -431,6 +480,13 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if kind == "barn" and tool != "move":
 		if first_touch:
 			object_tapped.emit(uid)
+		return
+	if kind == "vehicle" and tool != "move":
+		if first_touch:
+			if Game.under_construction(obj):
+				object_tapped.emit(uid)
+			else:
+				info.emit("Pick the %s in the toolbar, then tap the field" % Game.item_data(obj["id"])["name"])
 		return
 	if kind == "decor" and tool != "move":
 		if first_touch:

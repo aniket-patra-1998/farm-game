@@ -1,5 +1,5 @@
 {
-  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w/h = footprint in tiles. Times in seconds. Buildings, the FarmVille way: bought with coins; build_materials means it arrives as a frame finished with those materials; expand_materials is paid per expansion; levels = capacity per size; one_each items (bull, stallion) live inside without taking a space; special = mystery_eggs, calves, foals or nursery. gem_cost = bought with gems instead of coins (like Farm Cash). unlock_level 99 = never sold in the market (strays, eggs, babies). special also = beehive (Queen Bee, pollination), truffles (pig foraging) or saplings (rare tree varieties). rare_sapling / rare_of link a tree to its rare variety.",
+  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w/h = footprint in tiles. Times in seconds. Buildings, the FarmVille way: bought with coins; build_materials means it arrives as a frame finished with those materials; expand_materials is paid per expansion; levels = capacity per size; one_each items (bull, stallion) live inside without taking a space; special = mystery_eggs, calves, foals or nursery. gem_cost = bought with gems instead of coins (like Farm Cash). unlock_level 99 = never sold in the market (strays, eggs, babies). special also = beehive (Queen Bee, pollination), truffles (pig foraging) or saplings (rare tree varieties). rare_sapling / rare_of link a tree to its rare variety. kind vehicle: job = plow, plant, harvest or all; works a 2x2 area, growing with upgrade_parts (needing upgrade_levels) to 4x4; fuel_per_plot. produces:false = never ready to collect.",
   "items": [
     {
       "id": "apple_tree",
@@ -965,6 +965,128 @@
       "xp": 4,
       "color": "#f29a2e",
       "rare_of": "coconut_tree"
+    },
+    {
+      "id": "tractor",
+      "kind": "vehicle",
+      "name": "Tractor",
+      "unlock_level": 12,
+      "cost": 5000,
+      "job": "plow",
+      "color": "#c0392b",
+      "accent": "#2b2b30",
+      "upgrade_parts": [
+        2,
+        5,
+        10,
+        15
+      ],
+      "upgrade_levels": [
+        0,
+        0,
+        26,
+        26
+      ],
+      "fuel_per_plot": 1
+    },
+    {
+      "id": "harvester",
+      "kind": "vehicle",
+      "name": "Harvester",
+      "unlock_level": 13,
+      "cost": 30000,
+      "job": "harvest",
+      "color": "#f2c230",
+      "accent": "#2b2b30",
+      "upgrade_parts": [
+        2,
+        5,
+        10,
+        15
+      ],
+      "upgrade_levels": [
+        0,
+        0,
+        26,
+        26
+      ],
+      "fuel_per_plot": 1
+    },
+    {
+      "id": "seeder",
+      "kind": "vehicle",
+      "name": "Seeder",
+      "unlock_level": 14,
+      "cost": 30000,
+      "job": "plant",
+      "color": "#3f8f4f",
+      "accent": "#2b2b30",
+      "upgrade_parts": [
+        2,
+        5,
+        10,
+        15
+      ],
+      "upgrade_levels": [
+        0,
+        0,
+        26,
+        26
+      ],
+      "fuel_per_plot": 1
+    },
+    {
+      "id": "combine",
+      "kind": "vehicle",
+      "name": "Combine",
+      "unlock_level": 31,
+      "cost": 500000,
+      "job": "all",
+      "color": "#2f6fb5",
+      "accent": "#f2c230",
+      "fuel_per_plot": 3,
+      "build_materials": {
+        "vehicle_parts": 40
+      },
+      "build_xp": 5000,
+      "upgrade_parts": [
+        6,
+        15,
+        30,
+        45
+      ],
+      "upgrade_levels": [
+        31,
+        31,
+        41,
+        41
+      ]
+    },
+    {
+      "id": "garage",
+      "kind": "building",
+      "name": "Garage",
+      "unlock_level": 22,
+      "cost": 50000,
+      "w": 3,
+      "h": 3,
+      "holds_kind": "vehicle",
+      "levels": [
+        20
+      ],
+      "build_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      },
+      "uses_materials": [
+        "vehicle_parts"
+      ],
+      "special": "garage",
+      "produces": false,
+      "cycle_seconds": 86400,
+      "color": "#9aa4ad",
+      "roof": "#4a5560"
     }
   ]
 }

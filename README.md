@@ -66,6 +66,16 @@ This is milestone 1 of the V1 plan: the core farm.
 - Orchard harvests can sprout a rare sapling of a tree inside (10%): Rainier Cherry, Honeycrisp Apple, Alphonso Mango and 11 more, paying 1.5x
 - Debug button: +20 bees (puts a queen in your hives)
 
+### Vehicles, fuel and the Garage (FarmVille's rules)
+
+- Tractor (level 12, 5,000 coins) plows, Harvester (13, 30,000) harvests, Seeder (14, 30,000) plants the last seed you picked.
+  Each works a 2x2 area per tap. Pick it in the toolbar, then tap the field
+- Combine (level 31): a 500,000-coin chassis finished with 40 Vehicle Parts (+5,000 XP); harvests, plows and plants in one tap, 3 fuel a plot
+- One shared fuel tank of 150, 1 fuel a plot. It refills by itself (1 every 10 minutes); spare tanks cost 3 gems and open when it runs dry
+- Garage (level 22, 50,000 coins, frame of bricks, nails and boards): parks up to 20 vehicles and upgrades them with Vehicle Parts:
+  2, 5, 10, 15 parts for 3x2, 3x3, 4x3, 4x4 (the last two at level 26). Gearhead ribbon for upgrades
+- Vehicle Parts came from neighbours in FarmVille; here they drop while farming once you own a Garage or a Combine chassis
+
 ### FarmVille roster, rebalance, starter farm and the barn
 
 - 29 crops and flowers in FarmVille's unlock order and grow times, compressed into levels 1-20

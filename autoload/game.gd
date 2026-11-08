@@ -30,10 +30,10 @@ const TUTORIAL_TEXT := {
 # Building materials, the FarmVille set: three basic ones every building uses,
 # plus two specific to some buildings (they only drop once you own that building).
 const BASIC_PARTS := ["bricks", "nails", "boards"]
-const PARTS := ["bricks", "nails", "boards", "harnesses", "horseshoes", "bottles", "blankets", "smokers", "beeswax"]
+const PARTS := ["bricks", "nails", "boards", "harnesses", "horseshoes", "bottles", "blankets", "smokers", "beeswax", "vehicle_parts"]
 const PART_NAMES := {"bricks": "Bricks", "nails": "Nails", "boards": "Wooden Boards",
 	"harnesses": "Harnesses", "horseshoes": "Horseshoes", "bottles": "Baby Bottles", "blankets": "Blankets",
-	"smokers": "Smokers", "beeswax": "Beeswax"}
+	"smokers": "Smokers", "beeswax": "Beeswax", "vehicle_parts": "Vehicle Parts"}
 const PART_CHANCE := 0.08          # per harvest or collection
 const DAILY_PARTS := 2
 
@@ -92,6 +92,14 @@ const PIGS_PER_TRUFFLE := 5
 const TRUFFLES_PER_PIG := 10
 # Orchard: rare sapling varieties of the trees inside.
 const SAPLING_CHANCE := 0.10
+# Vehicles, as in FarmVille: one shared fuel tank of 150, 1 fuel a plot (the Combine 3),
+# a 2x2 area that grows with Vehicle Parts in the Garage, up to 4x4.
+const VEHICLE_SIZES := [Vector2i(2, 2), Vector2i(3, 2), Vector2i(3, 3), Vector2i(4, 3), Vector2i(4, 4)]
+const FUEL_TANK := 150
+const FUEL_REGEN_SECONDS := 600    # the tank slowly refills: 1 fuel every 10 minutes
+const FUEL_TANK_GEM_COST := 3
+const TRACTOR_COIN_CHANCE := 0.05  # coins pop out of the ground while a vehicle plows
+const TRACTOR_COINS := 10
 const STRAY_MIN_GAP := 3 * 3600    # a new stray turns up 3 to 6 hours after the last
 const STRAY_MAX_GAP := 6 * 3600
 const STRAY_STAYS := 86400         # a stray nobody adopts wanders off after a day
@@ -134,6 +142,11 @@ var queen_bees := 0                # Queen Bees held, waiting for a hive
 var fertilize_alls := 0            # fertilize every growing crop at once
 var pollinated := {}               # crop id -> [seed count, expires at]
 var truffles := 0
+var fuel := 0                      # in the shared tank
+var fuel_t := 0                    # when fuel last refilled itself
+var fuel_tanks := 0                # spare full tanks, opened when the tank runs dry
+var fuel_unlocked := false         # true once the first vehicle is bought
+var vehicle_levels := {}           # vehicle id -> upgrades bought (0..4)
 var absence_note := ""             # what happened while the player was away, shown on start
 var next_stray_at := 0             # when the next stray may turn up
 var parts := {}                    # building material -> count (see PARTS)
@@ -659,6 +672,16 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 			message.emit("%s frame placed! Tap it to add building materials." % it["name"])
 		else:
 			message.emit("%s built! Open it to move animals in." % it["name"])
+	elif it["kind"] == "vehicle":
+		if it.has("build_materials"):
+			obj["construction"] = {} # the Combine's chassis, finished with Vehicle Parts
+			message.emit("%s chassis placed! Tap it to add Vehicle Parts." % it["name"])
+		else:
+			message.emit("%s bought! Pick it in the toolbar, then tap the field." % it["name"])
+		if not fuel_unlocked:
+			fuel_unlocked = true
+			fuel = FUEL_TANK
+			fuel_t = now()
 	next_uid += 1
 	_grass_over(item_id, row, col)
 	objects.append(obj)
@@ -715,8 +738,10 @@ func is_building(obj: Dictionary) -> bool:
 func is_ready(obj: Dictionary) -> bool:
 	if obj.get("stray", false):
 		return false
-	if kind_of(obj) == "decor" or kind_of(obj) == "barn":
-		return false # scenery and the barn never produce
+	if kind_of(obj) == "decor" or kind_of(obj) == "barn" or kind_of(obj) == "vehicle":
+		return false # scenery, the barn and vehicles never produce
+	if not item_data(obj["id"]).get("produces", true):
+		return false # the garage only stores
 	if under_construction(obj):
 		return false
 	if is_building(obj) and inside_total(obj) == 0:
@@ -812,7 +837,7 @@ func inside_total(building: Dictionary) -> int:
 func loose_matching(building: Dictionary) -> int:
 	var n := 0
 	for o in objects:
-		if not is_building(o) and not o.get("stray", false) and building_accepts(building, o["id"]):
+		if not is_building(o) and not o.get("stray", false) and not under_construction(o) and building_accepts(building, o["id"]):
 			n += 1
 	return n
 
@@ -828,7 +853,7 @@ func fill_building(uid: int) -> int:
 	var regular := 0 # moves that take a space (the bull or stallion doesn't)
 	var keep: Array = []
 	for o in objects:
-		var movable: bool = not is_building(o) and not o.get("stray", false) and building_accepts(b, o["id"])
+		var movable: bool = not is_building(o) and not o.get("stray", false) and not under_construction(o) and building_accepts(b, o["id"])
 		var inside: Dictionary = b["inside"]
 		if movable and is_one_each(b, o["id"]) and not has_inside(b, o["id"]):
 			inside[o["id"]] = 1 # the one bull or stallion
@@ -887,7 +912,15 @@ func add_materials(uid: int) -> int:
 	if construction_needs(b).is_empty():
 		b.erase("construction")
 		b["t"] = now()
-		message.emit("%s finished! Open it to move animals in." % item_data(b["id"])["name"])
+		var done_it := item_data(b["id"])
+		if done_it["kind"] == "vehicle":
+			message.emit("%s built! Pick it in the toolbar, then tap the field." % done_it["name"])
+		elif done_it.get("special", "") == "garage":
+			message.emit("Garage finished! Park vehicles inside and upgrade them with Vehicle Parts.")
+		else:
+			message.emit("%s finished! Open it to move animals in." % done_it["name"])
+		if done_it.has("build_xp"):
+			add_xp(int(done_it["build_xp"]))
 		_bump("buildings_built", 1)
 		building_upgraded.emit(uid, 1)
 	else:
@@ -1150,7 +1183,7 @@ func wanted_parts() -> Array[String]:
 	out.assign(BASIC_PARTS)
 	for o in objects:
 		var it := item_data(o["id"])
-		for key in ["build_materials", "expand_materials"]:
+		for key in ["build_materials", "expand_materials", "uses_materials"]:
 			for m in it.get(key, {}):
 				if not out.has(m):
 					out.append(m)
@@ -1527,6 +1560,200 @@ func _roll_sapling(orchard: Dictionary) -> String:
 		if pick <= 0:
 			return item_data(pool[k])["rare_sapling"]
 	return ""
+
+
+# ---------------------------------------------------------------- vehicles and fuel
+
+## Vehicle types you can drive: finished ones on the farm or parked in a garage.
+func owned_vehicles() -> Array[String]:
+	var out: Array[String] = []
+	for o in objects:
+		if kind_of(o) == "vehicle" and not under_construction(o) and not out.has(o["id"]):
+			out.append(o["id"])
+		elif o["id"] == "garage":
+			for id in o.get("inside", {}):
+				if int(o["inside"][id]) > 0 and not out.has(id):
+					out.append(id)
+	var ordered: Array[String] = []
+	for id in item_order:
+		if out.has(id):
+			ordered.append(id)
+	return ordered
+
+
+func vehicle_level(id: String) -> int:
+	return int(vehicle_levels.get(id, 0))
+
+
+## Plots a vehicle works in one tap: columns x rows.
+func vehicle_area(id: String) -> Vector2i:
+	return VEHICLE_SIZES[clampi(vehicle_level(id), 0, VEHICLE_SIZES.size() - 1)]
+
+
+## Fuel in the tank now, after its slow refill.
+func fuel_now() -> int:
+	if not fuel_unlocked:
+		return 0
+	var t := now()
+	if fuel >= FUEL_TANK:
+		fuel_t = t
+		return fuel
+	var gained := int((t - fuel_t) / float(FUEL_REGEN_SECONDS))
+	if gained > 0:
+		fuel = mini(FUEL_TANK, fuel + gained)
+		fuel_t = t if fuel >= FUEL_TANK else fuel_t + gained * FUEL_REGEN_SECONDS
+	return fuel
+
+
+## Takes fuel for one plot, opening a spare tank when the tank runs dry.
+func _burn_fuel(n: int) -> bool:
+	fuel_now()
+	if fuel < n and fuel_tanks > 0:
+		fuel_tanks -= 1
+		fuel = mini(FUEL_TANK, fuel + FUEL_TANK)
+		message.emit("Opened a spare fuel tank")
+	if fuel < n:
+		return false
+	if fuel >= FUEL_TANK:
+		fuel_t = now() # the refill clock starts once the tank is below full
+	fuel -= n
+	return true
+
+
+func buy_fuel_tank() -> bool:
+	if not spend_gems(FUEL_TANK_GEM_COST):
+		message.emit("Not enough gems for a fuel tank")
+		return false
+	fuel_tanks += 1
+	message.emit("Bought a full fuel tank")
+	inventory_changed.emit()
+	return true
+
+
+## Drives a vehicle over the area whose back corner is row, col.
+## Tractor plows, Seeder plants crop_id, Harvester harvests, Combine does all three.
+## Returns {"plots", "coins", "xp", "fuel", "drops":[texts]}, or {} if it couldn't run.
+func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
+	if not owned_vehicles().has(id):
+		return {}
+	var it := item_data(id)
+	var job: String = it["job"]
+	if job == "plant" and crop_id == "":
+		message.emit("Pick a seed first, then the Seeder")
+		return {}
+	if fuel_now() + fuel_tanks * FUEL_TANK <= 0:
+		message.emit("Out of fuel. It refills slowly, or buy a tank.")
+		return {}
+	var per := int(it.get("fuel_per_plot", 1))
+	var area := vehicle_area(id)
+	var out := {"plots": 0, "coins": 0, "xp": 0, "fuel": 0, "drops": []}
+	var coins_before := coins
+	var xp_before := xp
+	var out_of_fuel := false
+	for r in range(row, row + area.y):
+		for c in range(col, col + area.x):
+			if not in_farm(r, c):
+				continue
+			var i := index_of(r, c)
+			if is_occupied(i) or not _vehicle_has_work(job, i, crop_id):
+				continue
+			if not _burn_fuel(per):
+				out_of_fuel = true
+				break
+			out["fuel"] = int(out["fuel"]) + per
+			if _vehicle_work(job, i, crop_id, out):
+				out["plots"] = int(out["plots"]) + 1
+		if out_of_fuel:
+			break
+	out["coins"] = coins - coins_before
+	out["xp"] = xp - xp_before
+	if int(out["plots"]) > 0:
+		_bump("vehicle_plots", int(out["plots"]))
+	if out_of_fuel:
+		message.emit("Out of fuel. It refills slowly, or buy a tank.")
+	inventory_changed.emit()
+	queue_save()
+	return out
+
+
+func _vehicle_has_work(job: String, i: int, crop_id: String) -> bool:
+	var ph := phase(i)
+	match job:
+		"plow":
+			return ph == Phase.GRASS or ph == Phase.WITHERED
+		"plant":
+			return ph == Phase.PLOWED
+		"harvest":
+			return ph == Phase.RIPE
+		"all":
+			return ph == Phase.RIPE or ph == Phase.GRASS or ph == Phase.WITHERED or (ph == Phase.PLOWED and crop_id != "")
+	return false
+
+
+func _vehicle_work(job: String, i: int, crop_id: String, out: Dictionary) -> bool:
+	var did := false
+	if (job == "harvest" or job == "all") and phase(i) == Phase.RIPE:
+		var r := harvest(i)
+		if not r.is_empty():
+			did = true
+			if r.get("drop_text", "") != "":
+				(out["drops"] as Array).append(r["drop_text"])
+	if (job == "plow" or job == "all") and (phase(i) == Phase.GRASS or phase(i) == Phase.WITHERED):
+		if plow(i):
+			did = true
+			if drops_enabled and rng.randf() < TRACTOR_COIN_CHANCE:
+				add_coins(TRACTOR_COINS)
+	if (job == "plant" or job == "all") and crop_id != "" and phase(i) == Phase.PLOWED:
+		if plant(i, crop_id):
+			did = true
+	return did
+
+
+## FarmVille's Garage upgrades: Vehicle Parts make a vehicle cover more plots, up to 4x4.
+func vehicle_upgrade_cost(id: String) -> int:
+	var costs: Array = item_data(id).get("upgrade_parts", [])
+	var lvl := vehicle_level(id)
+	return int(costs[lvl]) if lvl < costs.size() else -1
+
+
+func vehicle_upgrade_level_needed(id: String) -> int:
+	var lvls: Array = item_data(id).get("upgrade_levels", [])
+	var lvl := vehicle_level(id)
+	return int(lvls[lvl]) if lvl < lvls.size() else 0
+
+
+func has_garage() -> bool:
+	for o in objects:
+		if o["id"] == "garage" and not under_construction(o):
+			return true
+	return false
+
+
+func can_upgrade_vehicle(id: String) -> bool:
+	var cost := vehicle_upgrade_cost(id)
+	return has_garage() and owned_vehicles().has(id) and cost > 0 \
+		and level() >= vehicle_upgrade_level_needed(id) and int(parts.get("vehicle_parts", 0)) >= cost
+
+
+func upgrade_vehicle(id: String) -> bool:
+	if not can_upgrade_vehicle(id):
+		if not has_garage():
+			message.emit("Build a Garage to upgrade vehicles")
+		elif vehicle_upgrade_cost(id) < 0:
+			message.emit("Your %s is fully upgraded" % item_data(id)["name"])
+		elif level() < vehicle_upgrade_level_needed(id):
+			message.emit("This upgrade unlocks at level %d" % vehicle_upgrade_level_needed(id))
+		else:
+			message.emit("Not enough Vehicle Parts yet")
+		return false
+	parts["vehicle_parts"] = int(parts["vehicle_parts"]) - vehicle_upgrade_cost(id)
+	vehicle_levels[id] = vehicle_level(id) + 1
+	var area := vehicle_area(id)
+	_bump("vehicle_upgrades", 1)
+	message.emit("%s upgraded! It now works %dx%d plots." % [item_data(id)["name"], area.x, area.y])
+	inventory_changed.emit()
+	_objects_updated()
+	return true
 
 
 # ---------------------------------------------------------------- strays
@@ -1936,6 +2163,11 @@ func _new_game() -> void:
 	fertilize_alls = 0
 	pollinated = {}
 	truffles = 0
+	fuel = 0
+	fuel_t = 0
+	fuel_tanks = 0
+	fuel_unlocked = false
+	vehicle_levels = {}
 	absence_note = ""
 	next_stray_at = now() + STRAY_MIN_GAP
 	for i in MAX_SIZE * MAX_SIZE:
@@ -2018,9 +2250,14 @@ func save_game() -> void:
 		"farm_size": farm_size,
 		"unwithers": unwithers,
 		"queen_bees": queen_bees,
-	"fertilize_alls": fertilize_alls,
-	"pollinated": pollinated,
-	"truffles": truffles,
+		"fertilize_alls": fertilize_alls,
+		"pollinated": pollinated,
+		"truffles": truffles,
+		"fuel": fuel,
+		"fuel_t": fuel_t,
+		"fuel_tanks": fuel_tanks,
+		"fuel_unlocked": fuel_unlocked,
+		"vehicle_levels": vehicle_levels,
 		"parts": parts,
 		"mystery_eggs": mystery_eggs,
 		"farmhands": farmhands,
@@ -2057,6 +2294,14 @@ func load_game() -> bool:
 	queen_bees = int(data.get("queen_bees", 0))
 	fertilize_alls = int(data.get("fertilize_alls", 0))
 	truffles = int(data.get("truffles", 0))
+	fuel = int(data.get("fuel", 0))
+	fuel_t = int(data.get("fuel_t", 0))
+	fuel_tanks = int(data.get("fuel_tanks", 0))
+	fuel_unlocked = bool(data.get("fuel_unlocked", false))
+	vehicle_levels = {}
+	var saved_levels: Dictionary = data.get("vehicle_levels", {})
+	for v in saved_levels:
+		vehicle_levels[v] = int(saved_levels[v])
 	pollinated = {}
 	var saved_pol: Dictionary = data.get("pollinated", {})
 	for c in saved_pol:

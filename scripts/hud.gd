@@ -37,6 +37,9 @@ var _unwither_button: Button
 var _farmhand_button: Button
 var _arborist_button: Button
 var _fert_all_button: Button
+var _vehicle_row: HBoxContainer
+var _vehicle_buttons := {} # vehicle id -> Button
+var _fuel_button: Button
 var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
 var _placing_label: Label
@@ -68,6 +71,8 @@ func _ready() -> void:
 	Game.gems_changed.connect(func(_g: int) -> void: _refresh())
 	Game.inventory_changed.connect(_refresh_unwither)
 	Game.inventory_changed.connect(_refresh_seed_buttons)
+	Game.inventory_changed.connect(_refresh_vehicles)
+	Game.objects_changed.connect(_refresh_vehicles)
 	Game.inventory_changed.connect(_refresh_book)
 	Game.farm_expanded.connect(func(_s: int) -> void: _refresh_book())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
@@ -212,6 +217,22 @@ func _build_toolbar(root: Control) -> void:
 	var move := _tool_button("Move\nbuildings & more")
 	move.pressed.connect(func() -> void: tool_selected.emit("move", ""))
 	row.add_child(move)
+
+	# Vehicles you own, and the shared fuel tank. Hidden until the first vehicle.
+	_vehicle_row = HBoxContainer.new()
+	_vehicle_row.add_theme_constant_override("separation", 12)
+	row.add_child(_vehicle_row)
+	_fuel_button = Button.new()
+	_fuel_button.custom_minimum_size = BUTTON_SIZE
+	_fuel_button.focus_mode = Control.FOCUS_NONE
+	_fuel_button.pressed.connect(func() -> void: _book.open_panel("Fuel", _build_fuel))
+	row.add_child(_fuel_button)
+	var fuel_tick := Timer.new()
+	fuel_tick.wait_time = 5.0
+	fuel_tick.autostart = true
+	fuel_tick.timeout.connect(_refresh_vehicles)
+	add_child(fuel_tick)
+	_refresh_vehicles()
 
 	for id in Game.crop_order:
 		var b := _tool_button("")
@@ -496,7 +517,7 @@ func _build_market(content: VBoxContainer) -> void:
 	content.add_child(_land_card())
 	content.add_child(BookPanel.text(
 		"Buy, then drag onto an open grassy spot and let go. Use the Move tool to rearrange later.", 20, BookPanel.CREAM))
-	for section in [["tree", "Trees"], ["animal", "Animals"], ["building", "Buildings"]]:
+	for section in [["tree", "Trees"], ["animal", "Animals"], ["building", "Buildings"], ["vehicle", "Vehicles"]]:
 		content.add_child(BookPanel.text(section[1], 26, BookPanel.SUN))
 		for id in Game.item_order:
 			var it := Game.item_data(id)
@@ -549,7 +570,7 @@ func _market_row(id: String, it: Dictionary) -> Control:
 		"building":
 			var holds: String
 			if it.has("holds_kind"):
-				holds = "fruit trees"
+				holds = "vehicles" if it["holds_kind"] == "vehicle" else "fruit trees"
 			else:
 				var names: Array[String] = []
 				for a in it["holds"]:
@@ -558,6 +579,11 @@ func _market_row(id: String, it: Dictionary) -> Control:
 			var fp := Game.footprint(id)
 			detail = "Holds %d %s · %dx%d tiles · upgrades to %d" % [
 				int(it["levels"][0]), holds, fp.x, fp.y, int(it["levels"][-1])]
+		"vehicle":
+			var verbs := {"plow": "Plows", "plant": "Plants", "harvest": "Harvests", "all": "Harvests, plows and plants"}
+			detail = "%s 2x2 plots a tap · %d fuel a plot · upgrades to 4x4" % [verbs.get(it["job"], ""), int(it.get("fuel_per_plot", 1))]
+			if it.has("build_materials"):
+				detail += " · chassis finished with %d Vehicle Parts" % int(it["build_materials"]["vehicle_parts"])
 		_:
 			var what: String = it.get("product", "Fruit")
 			detail = "%s every %s · %d coins, %d XP" % [
@@ -702,8 +728,81 @@ func _add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 			_add_hive_info(content, o)
 		"truffles":
 			_add_pig_pen_info(content, o)
+		"garage":
+			_add_garage_info(content)
 		"saplings":
 			content.add_child(BookPanel.text("Harvests can sprout a rare sapling of a tree inside: a Rainier Cherry from cherry trees, a Honeycrisp from apple trees... Rare trees pay half as much again. The more of a tree you keep here, the likelier its sapling.", 17, BookPanel.CREAM))
+
+
+func _add_garage_info(content: VBoxContainer) -> void:
+	content.add_child(BookPanel.text("Vehicle Parts held: %d. They turn up while farming and as daily gifts now that you have a Garage. Parked vehicles still work from the toolbar." % int(Game.parts.get("vehicle_parts", 0)), 17, BookPanel.CREAM))
+	var owned := Game.owned_vehicles()
+	if owned.is_empty():
+		content.add_child(BookPanel.text("No vehicles yet. Buy a Tractor, Seeder or Harvester in the Market.", 18, BookPanel.CREAM))
+		return
+	for id in owned:
+		var it := Game.item_data(id)
+		var area := Game.vehicle_area(id)
+		var card := BookPanel.card()
+		card.add_theme_constant_override("separation", 6)
+		card.add_child(BookPanel.text("%s · works %dx%d plots · upgrade %d of 4" % [it["name"], area.x, area.y, Game.vehicle_level(id)], 21))
+		var cost := Game.vehicle_upgrade_cost(id)
+		var vid: String = id
+		if cost < 0:
+			card.add_child(BookPanel.text("Fully upgraded.", 18))
+		else:
+			var next: Vector2i = GameState.VEHICLE_SIZES[Game.vehicle_level(id) + 1]
+			var need_lvl := Game.vehicle_upgrade_level_needed(id)
+			var line := "Next: %dx%d for %d Vehicle Parts" % [next.x, next.y, cost]
+			if need_lvl > Game.level():
+				line += " (level %d)" % need_lvl
+			card.add_child(BookPanel.text(line, 18))
+			var up := _panel_button("Upgrade")
+			up.disabled = not Game.can_upgrade_vehicle(id)
+			up.pressed.connect(func() -> void: Game.upgrade_vehicle(vid))
+			card.add_child(up)
+		content.add_child(BookPanel.card_frame(card))
+
+
+func _build_fuel(content: VBoxContainer) -> void:
+	var fuel := Game.fuel_now()
+	content.add_child(BookPanel.text("All vehicles share one tank of %d. Each plot a vehicle works uses 1 fuel (the Combine 3). The tank refills by itself, 1 fuel every %d minutes, and a spare tank is opened when it runs dry." % [GameState.FUEL_TANK, int(GameState.FUEL_REGEN_SECONDS / 60.0)], 18, BookPanel.CREAM))
+	var card := BookPanel.card()
+	card.add_theme_constant_override("separation", 8)
+	card.add_child(BookPanel.text("Tank: %d of %d · spare tanks: %d" % [fuel, GameState.FUEL_TANK, Game.fuel_tanks], 21))
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = 18
+	bar.max_value = GameState.FUEL_TANK
+	bar.value = fuel
+	card.add_child(bar)
+	var buy := _panel_button("Buy a full tank: %d gems" % GameState.FUEL_TANK_GEM_COST)
+	buy.disabled = Game.gems < GameState.FUEL_TANK_GEM_COST
+	buy.pressed.connect(func() -> void: Game.buy_fuel_tank())
+	card.add_child(buy)
+	content.add_child(BookPanel.card_frame(card))
+
+
+## One toolbar button per vehicle type you own, with its area and the fuel left.
+func _refresh_vehicles() -> void:
+	if not _vehicle_row:
+		return
+	var owned := Game.owned_vehicles()
+	for id in _vehicle_buttons.keys():
+		if not owned.has(id):
+			(_vehicle_buttons[id] as Button).queue_free()
+			_vehicle_buttons.erase(id)
+	for id in owned:
+		if not _vehicle_buttons.has(id):
+			var b := _tool_button("")
+			var vid: String = id
+			b.pressed.connect(func() -> void: tool_selected.emit("vehicle", vid))
+			_vehicle_row.add_child(b)
+			_vehicle_buttons[id] = b
+		var area := Game.vehicle_area(id)
+		(_vehicle_buttons[id] as Button).text = "%s\n%dx%d · %d fuel" % [Game.item_data(id)["name"], area.x, area.y, int(Game.item_data(id).get("fuel_per_plot", 1)) * area.x * area.y]
+	_fuel_button.visible = Game.fuel_unlocked
+	_fuel_button.text = "Fuel %d/%d\n+%d tanks" % [Game.fuel_now(), GameState.FUEL_TANK, Game.fuel_tanks]
 
 
 func _add_hive_info(content: VBoxContainer, o: Dictionary) -> void:

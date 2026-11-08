@@ -28,6 +28,12 @@ func _ready() -> void:
 	_put("beehive", 18, 19, 1, {"bee": 200}, {"queen": true})
 	_put("orchard", 8, 12, 1, {"apple_tree": 3})
 	_put("orchard", 8, 18, 3, {"cherry_tree": 9})
+	_put("garage", 2, 13, 1, {"tractor": 1})
+	_put("tractor", 3, 17, 1, {})
+	_put("harvester", 3, 18, 1, {})
+	_put("seeder", 4, 17, 1, {})
+	_put("combine", 4, 18, 1, {})
+	_put("combine", 5, 17, 1, {}, {"construction": {}})
 	for o in Game.objects:
 		o["t"] = old
 	Game._rebuild_occupancy()
@@ -42,7 +48,7 @@ func _ready() -> void:
 	# Close-ups of each row of buildings.
 	var grid: FarmGrid = _main.get("grid")
 	var cam: Camera2D = _main.get("camera")
-	for spot in [[8, 16, "orchards"], [13, 2, "small_left"], [13, 13, "small_mid"], [13, 21, "small_right"],
+	for spot in [[3, 16, "vehicles"], [8, 16, "orchards"], [13, 2, "small_left"], [13, 13, "small_mid"], [13, 21, "small_right"],
 			[18, 2, "big_left"], [18, 13, "big_mid"], [18, 21, "big_right"]]:
 		cam.zoom = Vector2(0.9, 0.9)
 		cam.position = grid.to_global(grid.center_of(Game.index_of(int(spot[0]) + 1, int(spot[1]))))
