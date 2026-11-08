@@ -60,6 +60,8 @@ Anything in the catalog.
 | `note` | string |  |  | Anything a developer should know about this entry. |
 | `family` | string |  |  | Set by the loader: the family it's listed under. |
 | `category` | string |  |  | Set by the loader: the catalog file it's in. |
+| `look` | string |  |  | How it looks, in a few words, for art generation (defaults to its name). |
+| `art_fill` | number |  |  | Share of its footprint width its art should fill (overrides the class's). |
 
 ### Crop (extends Item)
 
@@ -897,6 +899,8 @@ On every new farm.
 
 Ground tiles.
 
+Shared: `art_fill` = 1.0
+
 | | Item | id | Unlock | Cost | Size | Shape |
 |---|---|---|---|---|---|---|
 | ✅ | Dirt Path | `dirt_path` | 1 | 20 | 1x1 | path |
@@ -906,6 +910,8 @@ Ground tiles.
 ### Fences and Walls
 
 Run along a tile; Rotate turns them.
+
+Shared: `art_fill` = 1.0
 
 | | Item | id | Unlock | Cost | Size | Shape |
 |---|---|---|---|---|---|---|
