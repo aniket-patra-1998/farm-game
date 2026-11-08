@@ -1,0 +1,39 @@
+name: Asset inventory
+
+# Downloads the CC0 packs listed in tools/asset_sources.txt and prints what each contains.
+# Run by hand from the Actions tab, or by changing the list.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - tools/asset_sources.txt
+      - .github/workflows/assets.yml
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and list every pack
+        run: |
+          mkdir -p vendor
+          grep -v '^#' tools/asset_sources.txt | while IFS='|' read -r name page; do
+            name=$(echo "$name" | xargs); page=$(echo "$page" | xargs)
+            [ -z "$name" ] && continue
+            echo "=== $name ($page)"
+            html=$(curl -fsSL --retry 3 "$page" || true)
+            zip=$(echo "$html" | grep -oE 'https?://[^"]+\.zip' | head -1)
+            if [ -z "$zip" ]; then
+              rel=$(echo "$html" | grep -oE '/sites/default/files/[^"]+\.zip' | head -1)
+              [ -n "$rel" ] && zip="https://opengameart.org$rel"
+            fi
+            echo "ZIP $zip"
+            [ -z "$zip" ] && continue
+            curl -fsSL --retry 3 -o "vendor/$name.zip" "$zip" || { echo "DOWNLOAD FAILED"; continue; }
+            mkdir -p "vendor/$name" && unzip -q -o "vendor/$name.zip" -d "vendor/$name"
+            echo "SIZE $(du -sh vendor/$name | cut -f1)"
+            find "vendor/$name" -type f | sed "s|vendor/$name/||" | grep -viE '\.(meta|tsx|tmx|unity|prefab|mat|asset)$' \
+              | awk -F/ '{print}' | sed 's/^/FILE /' | head -800
+            find "vendor/$name" -type f | sed 's/.*\.//' | sort | uniq -c | sed 's/^/EXT /'
+          done
