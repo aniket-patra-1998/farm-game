@@ -14,8 +14,10 @@ const HEADROOM := 48.0 # space above the back row for tall crops
 const COLOR_COINS := Color("#ffd23f")
 const COLOR_XP := Color("#9be7ff")
 const COLOR_COST := Color("#ffb4a8")
+const COLOR_FIND := Color("#ff9ad5")
+const COLOR_GOLDEN := Color("#ffe066")
 
-var tool := "plow"       # "plow", "plant" or "harvest"
+var tool := "plow"       # "plow", "plant" or "hand"
 var selected_crop := ""  # crop id when tool == "plant"
 
 var _painting := false
@@ -24,9 +26,9 @@ var _last_index := -1
 
 func _ready() -> void:
 	Game.plot_changed.connect(func(_i: int) -> void: queue_redraw())
-	# Crops change growth stage over time; redraw once a second.
+	# Crops change growth stage over time and ripe crops twinkle; redraw ten times a second.
 	var timer := Timer.new()
-	timer.wait_time = 1.0
+	timer.wait_time = 0.1
 	timer.autostart = true
 	timer.timeout.connect(queue_redraw)
 	add_child(timer)
@@ -101,6 +103,17 @@ func _draw_plot(i: int, row: int, col: int) -> void:
 	elif ph == GameState.Phase.WITHERED:
 		stage = "withered"
 	PlaceholderArt.draw_crop(self, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, stage, Game.growth(i))
+	if stage == "ripe":
+		# Each plot twinkles on its own beat, so a ripe field shimmers instead of blinking.
+		var t := Time.get_ticks_msec() / 1000.0
+		var phase_offset := float(i % 7) * 0.9
+		var glow := 0.5 + 0.5 * sin(t * 2.6 + phase_offset)
+		var spot := top + Vector2(TILE_W * 0.12 * (1 if i % 2 == 0 else -1), TILE_H * 0.05)
+		PlaceholderArt.draw_twinkle(self, spot, 9.0 + 5.0 * glow, glow)
+
+
+func cancel_paint() -> void:
+	_painting = false
 
 
 # ---------------------------------------------------------------- input
@@ -119,11 +132,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_painting = false
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
-		if _painting and drag.index == 0:
+		# With the Hand tool a drag moves the camera (main.gd), so it never farms.
+		if _painting and drag.index == 0 and tool != "hand":
 			_apply_at(drag.position, false)
 
 
 func _apply_at(screen_pos: Vector2, first_touch: bool) -> void:
+	# Ignore touches on the top bar, the toolbar, or while a menu covers the farm.
+	var view_h := get_viewport().get_visible_rect().size.y
+	if Game.modal_open or screen_pos.y < FarmHud.TOP_H or screen_pos.y > view_h - FarmHud.BOTTOM_H:
+		return
 	var world := get_canvas_transform().affine_inverse() * screen_pos
 	var i := index_at(to_local(world))
 	if i < 0 or i == _last_index:
@@ -144,6 +162,10 @@ func _act(i: int, first_touch: bool) -> void:
 		if not result.is_empty():
 			_float(at, "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
+			if result["drop"] != "":
+				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
+				_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)
+				_sparkle(at, c)
 		return
 
 	match tool:
@@ -159,7 +181,7 @@ func _act(i: int, first_touch: bool) -> void:
 					_float(at, "-%d" % int(Game.crops[selected_crop]["seed_cost"]), COLOR_COST)
 			elif first_touch:
 				_explain(i, ph)
-		"harvest":
+		"hand":
 			if first_touch:
 				_explain(i, ph)
 
@@ -190,12 +212,33 @@ static func format_duration(seconds: int) -> String:
 	return "%dm" % m
 
 
-func _float(pos: Vector2, text: String, color: Color) -> void:
+## A short burst of dots for surprise drops, so a find feels like an event.
+func _sparkle(pos: Vector2, color: Color) -> void:
+	for k in 10:
+		var dot := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for j in 4:
+			var a := TAU * j / 4.0 + PI / 4.0
+			pts.append(Vector2(cos(a), sin(a)) * (6.0 if j % 2 == 0 else 3.0))
+		dot.polygon = pts
+		dot.color = color
+		dot.position = pos + Vector2(0, -20)
+		dot.z_index = 11
+		add_child(dot)
+		var dir := Vector2.from_angle(TAU * k / 10.0) * randf_range(50.0, 90.0)
+		var tween := dot.create_tween().set_parallel(true)
+		tween.tween_property(dot, "position", dot.position + dir, 0.7).set_ease(Tween.EASE_OUT)
+		tween.tween_property(dot, "rotation", PI, 0.7)
+		tween.tween_property(dot, "modulate:a", 0.0, 0.7).set_delay(0.2)
+		tween.chain().tween_callback(dot.queue_free)
+
+
+func _float(pos: Vector2, text: String, color: Color, duration := 1.0) -> void:
 	var label := Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.size = Vector2(160, 40)
-	label.position = pos - Vector2(80, 30)
+	label.size = Vector2(320, 40)
+	label.position = pos - Vector2(160, 30)
 	label.z_index = 10
 	label.add_theme_font_size_override("font_size", 30)
 	label.add_theme_color_override("font_color", color)
@@ -203,6 +246,6 @@ func _float(pos: Vector2, text: String, color: Color) -> void:
 	label.add_theme_constant_override("outline_size", 8)
 	add_child(label)
 	var tween := label.create_tween().set_parallel(true)
-	tween.tween_property(label, "position:y", label.position.y - 60.0, 1.0).set_ease(Tween.EASE_OUT)
-	tween.tween_property(label, "modulate:a", 0.0, 1.0).set_delay(0.3)
+	tween.tween_property(label, "position:y", label.position.y - 60.0, duration).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, duration).set_delay(0.3 * duration)
 	tween.chain().tween_callback(label.queue_free)

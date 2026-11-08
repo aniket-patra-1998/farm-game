@@ -27,6 +27,7 @@ var _tutorial: Label
 var _reset_button: Button
 var _tool_group := ButtonGroup.new()
 var _seed_buttons := {} # crop id -> Button
+var _book: BookPanel
 
 
 func _ready() -> void:
@@ -39,6 +40,10 @@ func _ready() -> void:
 	_build_toolbar(root)
 	_build_tutorial(root)
 	_build_toast(root)
+	_book = BookPanel.new()
+	root.add_child(_book)
+	Game.collections_changed.connect(_refresh_book)
+	Game.ribbons_changed.connect(_refresh_book)
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
 	Game.leveled_up.connect(func(_l: int) -> void: _refresh_seed_buttons())
@@ -56,7 +61,7 @@ func _build_top_bar(root: Control) -> void:
 	root.add_child(bar)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 24)
+	row.add_theme_constant_override("separation", 16)
 	bar.add_child(row)
 
 	_coins_label = Label.new()
@@ -64,27 +69,39 @@ func _build_top_bar(root: Control) -> void:
 	_coins_label.add_theme_font_size_override("font_size", 34)
 	row.add_child(_coins_label)
 
+	for entry in [["Collections", _show_collections], ["Ribbons", _show_ribbons]]:
+		var b := Button.new()
+		b.text = entry[0]
+		b.custom_minimum_size = Vector2(130, 56)
+		b.toggle_mode = false
+		b.focus_mode = Control.FOCUS_NONE
+		b.pressed.connect(entry[1])
+		row.add_child(b)
+
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
 
-	_level_label = Label.new()
-	_level_label.add_theme_font_size_override("font_size", 30)
-	row.add_child(_level_label)
-
+	# Level, XP bar and XP numbers stack in one column so the bar fits portrait screens.
 	var xp_box := VBoxContainer.new()
 	xp_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	xp_box.custom_minimum_size.x = 260
+	xp_box.custom_minimum_size.x = 220
+	xp_box.add_theme_constant_override("separation", 2)
 	row.add_child(xp_box)
+
+	_level_label = Label.new()
+	_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_level_label.add_theme_font_size_override("font_size", 22)
+	xp_box.add_child(_level_label)
 
 	_xp_bar = ProgressBar.new()
 	_xp_bar.show_percentage = false
-	_xp_bar.custom_minimum_size.y = 22
+	_xp_bar.custom_minimum_size.y = 16
 	xp_box.add_child(_xp_bar)
 
 	_xp_label = Label.new()
 	_xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_xp_label.add_theme_font_size_override("font_size", 20)
+	_xp_label.add_theme_font_size_override("font_size", 16)
 	xp_box.add_child(_xp_label)
 
 
@@ -109,9 +126,9 @@ func _build_toolbar(root: Control) -> void:
 	plow.pressed.connect(func() -> void: tool_selected.emit("plow", ""))
 	row.add_child(plow)
 
-	var harvest := _tool_button("Harvest\nor inspect")
-	harvest.pressed.connect(func() -> void: tool_selected.emit("harvest", ""))
-	row.add_child(harvest)
+	var hand := _tool_button("Hand\nmove & inspect")
+	hand.pressed.connect(func() -> void: tool_selected.emit("hand", ""))
+	row.add_child(hand)
 
 	for id in Game.crop_order:
 		var b := _tool_button("")
@@ -258,6 +275,102 @@ func _refresh_seed_buttons() -> void:
 		else:
 			b.disabled = true
 			b.text = "%s\nLevel %d" % [crop["name"], int(crop["unlock_level"])]
+
+
+# ---------------------------------------------------------------- menus
+
+func _refresh_book() -> void:
+	if _book.visible:
+		_book.refresh()
+
+
+func _show_collections() -> void:
+	_book.open_panel("Collections", _build_collections)
+
+
+func _show_ribbons() -> void:
+	_book.open_panel("Ribbons", _build_ribbons)
+
+
+func _build_collections(content: VBoxContainer) -> void:
+	content.add_child(BookPanel.text(
+		"Items turn up while harvesting. Find all five in a set, then trade it in.", 20, BookPanel.CREAM))
+	for coll in Game.collections:
+		var inner := BookPanel.card()
+		inner.add_theme_constant_override("separation", 10)
+
+		var crop_names: Array[String] = []
+		for crop_id in coll["crops"]:
+			crop_names.append(Game.crops[crop_id]["name"])
+		var head := HBoxContainer.new()
+		var title := BookPanel.text(coll["name"], 26)
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(title)
+		var trade := Button.new()
+		trade.text = "Trade in"
+		trade.custom_minimum_size = Vector2(140, 48)
+		trade.focus_mode = Control.FOCUS_NONE
+		trade.disabled = not Game.can_trade_in(coll)
+		var coll_id: String = coll["id"]
+		trade.pressed.connect(func() -> void: Game.trade_in(coll_id))
+		head.add_child(trade)
+		inner.add_child(head)
+
+		inner.add_child(BookPanel.text("Found while harvesting: " + ", ".join(PackedStringArray(crop_names)), 18))
+
+		var items := HFlowContainer.new()
+		items.add_theme_constant_override("h_separation", 8)
+		items.add_theme_constant_override("v_separation", 8)
+		for item in coll["items"]:
+			var count := int(Game.owned.get(item["id"], 0))
+			var label: String = item["name"] + ("  x%d" % count if count > 1 else "")
+			items.add_child(BookPanel.chip(label, count > 0))
+		inner.add_child(items)
+
+		inner.add_child(BookPanel.text("Reward: %d coins, %d XP" % [int(coll["reward_coins"]), int(coll["reward_xp"])], 18))
+		content.add_child(BookPanel.card_frame(inner))
+
+
+func _build_ribbons(content: VBoxContainer) -> void:
+	var data: Dictionary = Game.ribbon_data
+	var tier_names: Array = data.get("tiers", [])
+	content.add_child(BookPanel.text(
+		"Each ribbon has four tiers: Yellow, White, Red and Blue.", 20, BookPanel.CREAM))
+	for r in data.get("ribbons", []):
+		var earned := int(Game.ribbon_tiers.get(r["id"], 0))
+		var thresholds: Array = r["thresholds"]
+		var value := Game.stat(r["stat"])
+
+		var inner := BookPanel.card()
+		inner.add_theme_constant_override("separation", 8)
+		var head := HBoxContainer.new()
+		var title := BookPanel.text(r["name"], 26)
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(title)
+		var tiers := HBoxContainer.new()
+		tiers.add_theme_constant_override("separation", 6)
+		for k in tier_names.size():
+			tiers.add_child(BookPanel.chip(tier_names[k], k < earned))
+		head.add_child(tiers)
+		inner.add_child(head)
+
+		var line: String
+		if earned >= thresholds.size():
+			line = "Complete! %d %s" % [value, r["what"]]
+		else:
+			var goal := int(thresholds[earned])
+			line = "%d / %d %s for %s" % [mini(value, goal), goal, r["what"], tier_names[earned]]
+			var bar := ProgressBar.new()
+			bar.show_percentage = false
+			bar.custom_minimum_size.y = 18
+			bar.max_value = goal
+			bar.value = mini(value, goal)
+			inner.add_child(BookPanel.text(line, 18))
+			inner.add_child(bar)
+			content.add_child(BookPanel.card_frame(inner))
+			continue
+		inner.add_child(BookPanel.text(line, 18))
+		content.add_child(BookPanel.card_frame(inner))
 
 
 # ---------------------------------------------------------------- theme

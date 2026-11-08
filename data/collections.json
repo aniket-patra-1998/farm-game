@@ -1,0 +1,61 @@
+{
+  "_note": "Collectibles drop while harvesting the listed crops. Trade in a full set for the reward. Names are original.",
+  "collections": [
+    {
+      "id": "berry_patch",
+      "name": "Berry Patch",
+      "crops": ["strawberries", "carrots", "tomatoes"],
+      "reward_coins": 500,
+      "reward_xp": 25,
+      "items": [
+        {"id": "ladybug_pin",   "name": "Ladybug Pin"},
+        {"id": "berry_basket",  "name": "Berry Basket"},
+        {"id": "garden_gloves", "name": "Garden Gloves"},
+        {"id": "straw_hat",     "name": "Straw Hat"},
+        {"id": "tin_watering_can", "name": "Tin Watering Can"}
+      ]
+    },
+    {
+      "id": "golden_fields",
+      "name": "Golden Fields",
+      "crops": ["wheat", "corn", "rice"],
+      "reward_coins": 800,
+      "reward_xp": 40,
+      "items": [
+        {"id": "scarecrow_button", "name": "Scarecrow Button"},
+        {"id": "grain_sack",       "name": "Grain Sack"},
+        {"id": "old_sickle",       "name": "Old Sickle"},
+        {"id": "corn_doll",        "name": "Corn Doll"},
+        {"id": "harvest_charm",    "name": "Harvest Charm"}
+      ]
+    },
+    {
+      "id": "flower_show",
+      "name": "Flower Show",
+      "crops": ["sunflowers", "lavender"],
+      "reward_coins": 1000,
+      "reward_xp": 50,
+      "items": [
+        {"id": "bee_badge",     "name": "Bee Badge"},
+        {"id": "seed_packet",   "name": "Seed Packet"},
+        {"id": "pressed_petal", "name": "Pressed Petal"},
+        {"id": "flower_press",  "name": "Flower Press"},
+        {"id": "garden_trowel", "name": "Garden Trowel"}
+      ]
+    },
+    {
+      "id": "root_cellar",
+      "name": "Root Cellar",
+      "crops": ["potatoes", "pumpkins", "sugarcane", "cotton"],
+      "reward_coins": 1500,
+      "reward_xp": 75,
+      "items": [
+        {"id": "oil_lantern",   "name": "Oil Lantern"},
+        {"id": "pickle_jar",    "name": "Pickle Jar"},
+        {"id": "rusty_key",     "name": "Rusty Key"},
+        {"id": "old_almanac",   "name": "Old Almanac"},
+        {"id": "spinning_top",  "name": "Spinning Top"}
+      ]
+    }
+  ]
+}

@@ -186,3 +186,16 @@ static func _ellipse(ci: CanvasItem, center: Vector2, rx: float, ry: float, colo
 		var a := TAU * k / 16.0
 		pts.append(center + Vector2(cos(a) * rx, sin(a) * ry))
 	ci.draw_colored_polygon(pts, color)
+
+
+## A four-point sparkle; alpha 0..1. Used to make ripe crops shimmer.
+static func draw_twinkle(ci: CanvasItem, center: Vector2, size: float, alpha: float) -> void:
+	var c := Color(1.0, 0.98, 0.8, 0.35 + 0.65 * alpha)
+	var thin := size * 0.22
+	ci.draw_colored_polygon(PackedVector2Array([
+		center + Vector2(0, -size), center + Vector2(thin, -thin),
+		center + Vector2(size, 0), center + Vector2(thin, thin),
+		center + Vector2(0, size), center + Vector2(-thin, thin),
+		center + Vector2(-size, 0), center + Vector2(-thin, -thin),
+	]), c)
+	ci.draw_circle(center, thin * 1.1, Color(1, 1, 1, c.a))

@@ -9,6 +9,8 @@ signal leveled_up(level: int)
 signal plot_changed(index: int) # -1 means "everything changed"
 signal message(text: String)
 signal tutorial_changed(step: int)
+signal collections_changed
+signal ribbons_changed
 
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
@@ -21,6 +23,18 @@ const TUTORIAL_TEXT := {
 
 # Rescue: if a player can't afford seeds and has nothing growing, top them up to this.
 const RESCUE_COINS := 50
+
+# Surprise drops, rolled on every harvest. Chances are per harvest.
+const GOLDEN_CHANCE := 0.004      # golden harvest: 5x coins, +10 XP
+const GOLDEN_PITY := 250          # guaranteed after this many harvests without one
+const GOLDEN_COIN_MULTIPLIER := 5
+const GOLDEN_XP := 10
+const COLLECTIBLE_CHANCE := 0.05  # one item from the crop's collection
+const COLLECTIBLE_PITY := 30
+const BONUS_COINS_CHANCE := 0.08  # +50% coins
+const BONUS_XP_CHANCE := 0.05     # +2 XP
+const BONUS_XP := 2
+const MASTERY_LUCK_BONUS := 0.15  # per mastery star, multiplies golden and collectible chances
 
 const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
@@ -55,11 +69,25 @@ var mastery := {}                  # crop id -> lifetime harvest count
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
 var tutorial_step: int = Tutorial.HARVEST
 
+var collections: Array = []        # from data/collections.json
+var collection_of_crop := {}       # crop id -> collection dictionary
+var item_names := {}               # item id -> display name
+var ribbon_data := {}              # data/ribbons.json
+var owned := {}                    # item id -> count held
+var stats := {}                    # lifetime counters for ribbons
+var ribbon_tiers := {}             # ribbon id -> tiers earned (0..4)
+var pity := {"golden": 0, "collectible": 0}
+var modal_open := false            # true while a menu covers the farm
+
+var rng := RandomNumberGenerator.new()
 var _save_queued := false
 
 
 func _ready() -> void:
+	rng.randomize()
 	_load_crops()
+	_load_collections()
+	_load_ribbons()
 	if not load_game():
 		_new_game()
 	# Deferred so the HUD is connected and can show the message.
@@ -143,6 +171,7 @@ func plow(i: int) -> bool:
 		return false
 	plots[i] = {"state": "plowed"}
 	add_xp(PLOW_XP)
+	_bump("plowed", 1)
 	if coins < cheapest_seed_cost():
 		message.emit("Careful: keep some coins for seeds!")
 	_advance_tutorial(Tutorial.PLOW)
@@ -167,7 +196,8 @@ func plant(i: int, crop_id: String) -> bool:
 	return true
 
 
-## Returns {"coins": int, "xp": int, "crop": String} or {} if nothing was harvested.
+## Returns {"coins", "xp", "crop", "drop", "drop_text"} or {} if nothing was harvested.
+## "drop" is "", "golden", "collectible", "bonus_coins" or "bonus_xp".
 func harvest(i: int) -> Dictionary:
 	if phase(i) != Phase.RIPE:
 		return {}
@@ -176,17 +206,142 @@ func harvest(i: int) -> Dictionary:
 	var stars_before := mastery_stars(crop_id)
 	var earned := int(round(float(crop["sell_price"]) * (1.0 + MASTERY_PRICE_BONUS * stars_before)))
 	var gained := int(crop["xp"])
+
+	var drop := _roll_drop(crop_id, stars_before)
+	match drop.get("type", ""):
+		"golden":
+			earned *= GOLDEN_COIN_MULTIPLIER
+			gained += GOLDEN_XP
+		"bonus_coins":
+			earned += int(earned / 2.0)
+		"bonus_xp":
+			gained += BONUS_XP
+
 	plots[i] = {"state": "plowed"}
 	mastery[crop_id] = int(mastery.get(crop_id, 0)) + 1
 	add_coins(earned)
 	add_xp(gained)
+	_bump("harvests", 1)
+	if drop.get("type", "") == "golden":
+		_bump("golden_finds", 1)
+		message.emit("Golden harvest! %s paid %dx coins" % [crop["name"], GOLDEN_COIN_MULTIPLIER])
+	elif drop.get("type", "") == "collectible":
+		message.emit("You found a %s! (%s collection)" % [drop["name"], drop["collection"]])
 	var stars_after := mastery_stars(crop_id)
 	if stars_after > stars_before:
 		_award_mastery_star(crop_id, stars_after)
 	if tutorial_step == Tutorial.HARVEST and not _any_plot_in(Phase.RIPE):
 		_advance_tutorial(Tutorial.HARVEST)
 	_plot_updated(i)
-	return {"coins": earned, "xp": gained, "crop": crop_id}
+	return {"coins": earned, "xp": gained, "crop": crop_id,
+		"drop": drop.get("type", ""), "drop_text": drop.get("text", "")}
+
+
+# ---------------------------------------------------------------- surprise drops
+
+## One roll per harvest. Rarest outcomes are checked first; pity counters
+## guarantee a golden harvest or a collectible after a long dry spell.
+func _roll_drop(crop_id: String, stars: int) -> Dictionary:
+	pity["golden"] = int(pity["golden"]) + 1
+	pity["collectible"] = int(pity["collectible"]) + 1
+	var luck := 1.0 + MASTERY_LUCK_BONUS * stars
+
+	if int(pity["golden"]) >= GOLDEN_PITY or rng.randf() < GOLDEN_CHANCE * luck:
+		pity["golden"] = 0
+		return {"type": "golden", "text": "Golden harvest!"}
+
+	var coll: Dictionary = collection_of_crop.get(crop_id, {})
+	if not coll.is_empty() and (int(pity["collectible"]) >= COLLECTIBLE_PITY or rng.randf() < COLLECTIBLE_CHANCE * luck):
+		pity["collectible"] = 0
+		var item_id := _pick_item(coll)
+		owned[item_id] = int(owned.get(item_id, 0)) + 1
+		collections_changed.emit()
+		return {"type": "collectible", "text": "Found: " + item_names[item_id],
+			"name": item_names[item_id], "collection": coll["name"]}
+
+	var r := rng.randf()
+	if r < BONUS_COINS_CHANCE:
+		return {"type": "bonus_coins", "text": "Bonus coins!"}
+	if r < BONUS_COINS_CHANCE + BONUS_XP_CHANCE:
+		return {"type": "bonus_xp", "text": "Bonus XP!"}
+	return {}
+
+
+## Items you hold fewer of are more likely, so sets fill up instead of piling duplicates.
+func _pick_item(coll: Dictionary) -> String:
+	var weights: Array[float] = []
+	var total := 0.0
+	for item in coll["items"]:
+		var w := 1.0 / (1.0 + 2.0 * int(owned.get(item["id"], 0)))
+		weights.append(w)
+		total += w
+	var pick := rng.randf() * total
+	for k in weights.size():
+		pick -= weights[k]
+		if pick <= 0.0:
+			return coll["items"][k]["id"]
+	return coll["items"][-1]["id"]
+
+
+# ---------------------------------------------------------------- collections
+
+func can_trade_in(coll: Dictionary) -> bool:
+	for item in coll["items"]:
+		if int(owned.get(item["id"], 0)) < 1:
+			return false
+	return true
+
+
+func trade_in(coll_id: String) -> bool:
+	for coll in collections:
+		if coll["id"] != coll_id:
+			continue
+		if not can_trade_in(coll):
+			return false
+		for item in coll["items"]:
+			owned[item["id"]] = int(owned[item["id"]]) - 1
+		add_coins(int(coll["reward_coins"]))
+		add_xp(int(coll["reward_xp"]))
+		message.emit("%s collection traded in: +%d coins, +%d XP" % [
+			coll["name"], int(coll["reward_coins"]), int(coll["reward_xp"])])
+		_bump("collections_traded", 1)
+		collections_changed.emit()
+		queue_save()
+		return true
+	return false
+
+
+# ---------------------------------------------------------------- ribbons
+
+func stat(stat_name: String) -> int:
+	return int(stats.get(stat_name, 0))
+
+
+func _bump(stat_name: String, amount: int) -> void:
+	stats[stat_name] = stat(stat_name) + amount
+	_check_ribbons(stat_name)
+
+
+func _check_ribbons(stat_name: String) -> void:
+	if ribbon_data.is_empty():
+		return
+	var tier_names: Array = ribbon_data["tiers"]
+	for r in ribbon_data["ribbons"]:
+		if r["stat"] != stat_name:
+			continue
+		var earned := int(ribbon_tiers.get(r["id"], 0))
+		var thresholds: Array = r["thresholds"]
+		while earned < thresholds.size() and stat(stat_name) >= int(thresholds[earned]):
+			earned += 1
+			ribbon_tiers[r["id"]] = earned
+			# Rewards are paid without counting toward "coins earned", so ribbons can't chain.
+			coins += int(ribbon_data["tier_reward_coins"][earned - 1])
+			coins_changed.emit(coins)
+			add_xp(int(ribbon_data["tier_reward_xp"][earned - 1]))
+			message.emit("%s ribbon: %s! +%d coins" % [
+				tier_names[earned - 1], r["name"], int(ribbon_data["tier_reward_coins"][earned - 1])])
+			ribbons_changed.emit()
+	queue_save()
 
 
 # ---------------------------------------------------------------- safety net
@@ -207,7 +362,7 @@ func check_rescue() -> void:
 	if _any_plot_in(Phase.GROWING) or _any_plot_in(Phase.RIPE):
 		return
 	var gift := RESCUE_COINS - coins
-	add_coins(gift)
+	add_coins(gift, false)
 	message.emit("You found %d coins in the barn. Plant some seeds!" % gift)
 
 
@@ -259,6 +414,7 @@ func _award_mastery_star(crop_id: String, star: int) -> void:
 	add_coins(MASTERY_STAR_COINS[star - 1])
 	add_xp(MASTERY_STAR_XP[star - 1])
 	message.emit("%s mastery: star %d!" % [crops[crop_id]["name"], star])
+	_bump("mastery_stars", 1)
 
 
 # ---------------------------------------------------------------- economy
@@ -272,9 +428,12 @@ func spend(amount: int) -> bool:
 	return true
 
 
-func add_coins(amount: int) -> void:
+## counts_as_earned: false for gifts like the barn rescue, so they don't advance ribbons.
+func add_coins(amount: int, counts_as_earned := true) -> void:
 	coins += amount
 	coins_changed.emit(coins)
+	if counts_as_earned:
+		_bump("coins_earned", amount)
 	queue_save()
 
 
@@ -321,18 +480,37 @@ func _on_level_reached(lvl: int) -> void:
 
 # ---------------------------------------------------------------- data
 
-func _load_crops() -> void:
-	var f := FileAccess.open("res://data/crops.json", FileAccess.READ)
+func _read_json(path: String) -> Dictionary:
+	var f := FileAccess.open(path, FileAccess.READ)
 	if f == null:
-		push_error("Missing data/crops.json")
-		return
+		push_error("Missing " + path)
+		return {}
 	var parsed = JSON.parse_string(f.get_as_text())
 	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error("data/crops.json is not valid JSON")
-		return
-	for c in parsed["crops"]:
+		push_error(path + " is not valid JSON")
+		return {}
+	return parsed
+
+
+func _load_crops() -> void:
+	var parsed := _read_json("res://data/crops.json")
+	for c in parsed.get("crops", []):
 		crops[c["id"]] = c
 		crop_order.append(c["id"])
+
+
+func _load_collections() -> void:
+	var parsed := _read_json("res://data/collections.json")
+	collections = parsed.get("collections", [])
+	for coll in collections:
+		for crop_id in coll["crops"]:
+			collection_of_crop[crop_id] = coll
+		for item in coll["items"]:
+			item_names[item["id"]] = item["name"]
+
+
+func _load_ribbons() -> void:
+	ribbon_data = _read_json("res://data/ribbons.json")
 
 
 func _new_game() -> void:
@@ -341,6 +519,10 @@ func _new_game() -> void:
 	mastery = {}
 	debug_time_offset = 0
 	tutorial_step = Tutorial.HARVEST
+	owned = {}
+	stats = {}
+	ribbon_tiers = {}
+	pity = {"golden": 0, "collectible": 0}
 	plots.clear()
 	for i in GRID_SIZE * GRID_SIZE:
 		plots.append({"state": "grass"})
@@ -386,6 +568,10 @@ func save_game() -> void:
 		"plots": plots,
 		"debug_time_offset": debug_time_offset,
 		"tutorial_step": tutorial_step,
+		"owned": owned,
+		"stats": stats,
+		"ribbon_tiers": ribbon_tiers,
+		"pity": pity,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -412,6 +598,12 @@ func load_game() -> bool:
 	debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
 	# Saves from before the tutorial existed belong to players who already know the basics.
 	tutorial_step = int(data.get("tutorial_step", Tutorial.DONE))
+	# Fields added in milestone 2 default to empty for older saves.
+	owned = data.get("owned", {})
+	stats = data.get("stats", {})
+	ribbon_tiers = data.get("ribbon_tiers", {})
+	var saved_pity: Dictionary = data.get("pity", {})
+	pity = {"golden": int(saved_pity.get("golden", 0)), "collectible": int(saved_pity.get("collectible", 0))}
 	plots.clear()
 	for p in saved_plots:
 		var plot: Dictionary = p
@@ -427,6 +619,8 @@ func reset_game() -> void:
 	coins_changed.emit(coins)
 	xp_changed.emit(xp, level())
 	tutorial_changed.emit(tutorial_step)
+	collections_changed.emit()
+	ribbons_changed.emit()
 	plot_changed.emit(-1)
 
 
