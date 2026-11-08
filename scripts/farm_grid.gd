@@ -19,8 +19,9 @@ const COLOR_COST := Color("#ffb4a8")
 const COLOR_FIND := Color("#ff9ad5")
 const COLOR_GOLDEN := Color("#ffe066")
 const COLOR_FERT := Color("#8fe36b")
+const COLOR_PART := Color("#f4c27a")
 
-var tool := "plow"       # "plow", "plant", "fertilize", "hand" or "move"
+var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move" or "store"
 var selected_crop := ""  # crop id when tool == "plant"
 
 var _painting := false
@@ -132,8 +133,13 @@ func _draw_object(o: Dictionary) -> void:
 	var corners := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	var is_ready_now := Game.is_ready(o)
 	var building := Game.is_building(o)
+	var inside := Game.inside_total(o) if building else 0
+	var cap := Game.capacity(o) if building else 0
+	if o["id"] == "barn":
+		inside = Game.stored.size()
+		cap = Game.barn_capacity()
 	PlaceholderArt.draw_object(self, it, corners, is_ready_now, int(o.get("level", 1)),
-		Game.inside_total(o) if building else 0, Game.capacity(o) if building else 0)
+		inside, cap, o.get("broken", false))
 	if o.get("stray", false):
 		var c1 := (corners[0] + corners[2]) / 2.0
 		var bob := sin(Time.get_ticks_msec() / 300.0) * 4.0
@@ -250,6 +256,14 @@ func start_placing(item_id: String, uid := -1) -> void:
 	queue_redraw()
 
 
+## Placing something taken back out of the barn (free; it keeps its timers reset).
+func start_placing_stored(index: int) -> void:
+	var o: Dictionary = Game.stored[index]
+	placing = {"item": o["id"], "uid": -1, "stored": index, "row": -1, "col": -1}
+	placing_changed.emit("Drag to place the %s, then let go" % Game.item_data(o["id"])["name"])
+	queue_redraw()
+
+
 func cancel_placing() -> void:
 	placing = {}
 	placing_changed.emit("")
@@ -289,9 +303,16 @@ func _placing_input(event: InputEvent) -> void:
 	if not Game.can_place(placing["item"], row, col, uid):
 		info.emit("It doesn't fit there. Try an open grassy spot.")
 		return
-	var ok := Game.move_object(uid, row, col) if uid != -1 else Game.buy_and_place(placing["item"], row, col)
+	var from_storage := int(placing.get("stored", -1))
+	var ok: bool
+	if from_storage >= 0:
+		ok = Game.place_from_storage(from_storage, row, col)
+	elif uid != -1:
+		ok = Game.move_object(uid, row, col)
+	else:
+		ok = Game.buy_and_place(placing["item"], row, col)
 	if ok:
-		if uid == -1:
+		if uid == -1 and from_storage < 0:
 			_float(corners_of(row, col, fp.x, fp.y)[2], "-%d" % int(Game.item_data(placing["item"])["cost"]), COLOR_COST)
 		cancel_placing()
 
@@ -324,6 +345,8 @@ func _act(i: int, first_touch: bool) -> void:
 		if not result.is_empty():
 			_float(at, "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
+			if result.get("part", "") != "":
+				_float(at + Vector2(0, -128), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
 			if result.get("bee", false):
 				_float(at + Vector2(0, -96), "A bee!", COLOR_GOLDEN, 1.6)
 			if result["drop"] != "":
@@ -362,6 +385,20 @@ func _act(i: int, first_touch: bool) -> void:
 
 func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	var uid := int(obj["uid"])
+	var kind := Game.kind_of(obj)
+	if tool == "store" and first_touch:
+		if Game.store_object(uid):
+			var fps := Game.footprint(obj["id"])
+			_float(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], "Stored", COLOR_XP)
+		return
+	if kind == "barn" and tool != "move":
+		if first_touch:
+			object_tapped.emit(uid)
+		return
+	if kind == "decor" and tool != "move":
+		if first_touch:
+			info.emit("Your %s" % Game.item_data(obj["id"])["name"].to_lower())
+		return
 	if obj.get("stray", false) and tool != "move":
 		if first_touch and Game.adopt_stray(uid):
 			var fp0 := Game.footprint(obj["id"])
@@ -381,6 +418,8 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		if not result.is_empty():
 			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -50), "+%d XP" % result["xp"], COLOR_XP)
+			if result.get("part", "") != "":
+				_float(at + Vector2(0, -118), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
 			if result["drop"] != "":
 				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
 				_float(at + Vector2(0, -84), result["drop_text"], c, 1.6)

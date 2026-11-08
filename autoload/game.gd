@@ -25,6 +25,12 @@ const TUTORIAL_TEXT := {
 	Tutorial.PLANT: "Choose Strawberries, then tap a plowed plot to plant.",
 }
 
+# Building parts: found while harvesting and collecting, plus a daily gift.
+const PARTS := ["bricks", "nails", "boards"]
+const PART_NAMES := {"bricks": "Bricks", "nails": "Nails", "boards": "Wooden Boards"}
+const PART_CHANCE := 0.08          # per harvest or collection
+const DAILY_PARTS := 2
+
 # Rescue: if a player can't afford seeds and has nothing growing, top them up to this.
 const RESCUE_COINS := 50
 
@@ -66,10 +72,11 @@ const PLOW_XP := 1
 const MIN_RIPE_WINDOW := 4 * 3600
 const MAX_RIPE_WINDOW := 2 * 86400
 
-# Total XP needed to reach level n is LEVEL_XP[n - 1]. Past the table, +700 per level.
-const LEVEL_XP := [0, 15, 40, 80, 140, 220, 320, 450, 600, 780,
-	1000, 1250, 1550, 1900, 2300, 2750, 3250, 3800, 4400, 5050]
-const XP_PER_LEVEL_AFTER_TABLE := 700
+# Total XP needed to reach level n is LEVEL_XP[n - 1]. Past the table, +250 per level.
+# Tuned so level 20 takes about two weeks of regular play (the beta test window).
+const LEVEL_XP := [0, 15, 40, 75, 120, 175, 240, 320, 410, 510,
+	620, 740, 870, 1010, 1160, 1320, 1490, 1670, 1860, 2060]
+const XP_PER_LEVEL_AFTER_TABLE := 250
 
 # Mastery: harvests needed for stars 1, 2, 3, by crop speed.
 const MASTERY_FAST := [150, 450, 900]   # grows in 6 h or less
@@ -90,6 +97,9 @@ var expansion_steps: Array = []    # from data/expansions.json
 var unwithers := START_UNWITHERS   # Unwither items held
 var waiting_bees := 0              # bees found with no hive space
 var next_stray_at := 0             # when the next stray may turn up
+var parts := {"bricks": 0, "nails": 0, "boards": 0}
+var last_daily_day := 0            # day number of the last daily gift
+var stored: Array = []             # objects put away in the barn (no row or col)
 var mastery := {}                  # crop id -> lifetime harvest count
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
 var tutorial_step: int = Tutorial.HARVEST
@@ -130,10 +140,12 @@ func _ready() -> void:
 	# Deferred so the HUD is connected and can show the message.
 	call_deferred("check_rescue")
 	call_deferred("check_strays")
+	call_deferred("check_daily_gift")
 	var stray_timer := Timer.new()
 	stray_timer.wait_time = 30.0
 	stray_timer.autostart = true
 	stray_timer.timeout.connect(check_strays)
+	stray_timer.timeout.connect(check_daily_gift)
 	add_child(stray_timer)
 
 
@@ -180,6 +192,7 @@ func debug_skip(seconds: int) -> void:
 		return
 	debug_time_offset += seconds
 	check_strays()
+	check_daily_gift()
 	plot_changed.emit(-1)
 	check_rescue()
 	queue_save()
@@ -326,6 +339,7 @@ func harvest(i: int) -> Dictionary:
 		message.emit("You found a %s! (%s collection)" % [drop["name"], drop["collection"]])
 	elif drop.get("type", "") == "bird":
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
+	var part := _roll_part()
 	var found_bee: bool = crop.get("flower", false) and rng.randf() < BEE_CHANCE
 	if found_bee:
 		_add_bee()
@@ -336,7 +350,7 @@ func harvest(i: int) -> Dictionary:
 		_advance_tutorial(Tutorial.HARVEST)
 	_plot_updated(i)
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": found_bee,
-		"drop": drop.get("type", ""), "drop_text": drop.get("text", "")}
+		"drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part}
 
 
 # ---------------------------------------------------------------- surprise drops
@@ -563,6 +577,10 @@ func cycle_of(obj: Dictionary) -> int:
 	return int(item_data(obj["id"]).get("cycle_seconds", 86400))
 
 
+func kind_of(obj: Dictionary) -> String:
+	return item_data(obj["id"]).get("kind", "")
+
+
 func is_building(obj: Dictionary) -> bool:
 	return item_data(obj["id"]).get("kind", "") == "building"
 
@@ -570,6 +588,8 @@ func is_building(obj: Dictionary) -> bool:
 func is_ready(obj: Dictionary) -> bool:
 	if obj.get("stray", false):
 		return false
+	if kind_of(obj) == "decor" or kind_of(obj) == "barn":
+		return false # scenery and the barn never produce
 	if is_building(obj) and inside_total(obj) == 0:
 		return false
 	return now() - int(obj["t"]) >= cycle_of(obj)
@@ -613,6 +633,7 @@ func collect(uid: int) -> Dictionary:
 	add_coins(earned)
 	add_xp(gained)
 	_bump("collected", 1)
+	var part := _roll_part()
 	if drop.get("type", "") == "golden":
 		_bump("golden_finds", 1)
 		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
@@ -620,7 +641,7 @@ func collect(uid: int) -> Dictionary:
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	_objects_updated()
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
-		"drop_text": drop.get("text", ""), "name": item_data(obj["id"])["name"]}
+		"drop_text": drop.get("text", ""), "name": item_data(obj["id"])["name"], "part": part}
 
 
 # ---------------------------------------------------------------- buildings
@@ -700,6 +721,156 @@ func upgrade_building(uid: int) -> bool:
 	message.emit("%s upgraded to level %d: holds %d" % [item_data(b["id"])["name"], int(b["level"]), capacity(b)])
 	_bump("upgrades", 1)
 	_house_waiting_bees()
+	_objects_updated()
+	return true
+
+
+# ---------------------------------------------------------------- parts and the daily gift
+
+func day_number() -> int:
+	return int(now() / 86400.0)
+
+
+## A part for this harvest or collection, or "" for none. Fewer-held parts are likelier.
+func _roll_part() -> String:
+	if not drops_enabled or rng.randf() >= PART_CHANCE:
+		return ""
+	var p := _pick_part()
+	add_part(p, 1)
+	return p
+
+
+func _pick_part() -> String:
+	var weights: Array[float] = []
+	var total := 0.0
+	for p in PARTS:
+		var w := 1.0 / (1.0 + int(parts.get(p, 0)))
+		weights.append(w)
+		total += w
+	var pick := rng.randf() * total
+	for k in PARTS.size():
+		pick -= weights[k]
+		if pick <= 0.0:
+			return PARTS[k]
+	return PARTS[-1]
+
+
+func add_part(part: String, n: int) -> void:
+	parts[part] = int(parts.get(part, 0)) + n
+	_bump("parts_found", n)
+	inventory_changed.emit()
+	queue_save()
+
+
+## Once per calendar day: a couple of free parts.
+func check_daily_gift() -> void:
+	var today := day_number()
+	if today <= last_daily_day:
+		return
+	last_daily_day = today
+	var got: Array[String] = []
+	for k in DAILY_PARTS:
+		var p := _pick_part()
+		add_part(p, 1)
+		got.append(PART_NAMES[p])
+	message.emit("Daily gift: " + ", ".join(PackedStringArray(got)))
+	queue_save()
+
+
+# ---------------------------------------------------------------- barn
+
+func barn() -> Dictionary:
+	for o in objects:
+		if o["id"] == "barn":
+			return o
+	return {}
+
+
+func barn_repaired() -> bool:
+	var b := barn()
+	return not b.is_empty() and not b.get("broken", false)
+
+
+func repair_needs() -> Dictionary:
+	return item_data("barn").get("repair_parts", {})
+
+
+func can_repair_barn() -> bool:
+	var b := barn()
+	if b.is_empty() or not b.get("broken", false):
+		return false
+	var need := repair_needs()
+	for p in need:
+		if int(parts.get(p, 0)) < int(need[p]):
+			return false
+	return true
+
+
+func repair_barn() -> bool:
+	if not can_repair_barn():
+		return false
+	var need := repair_needs()
+	for p in need:
+		parts[p] = int(parts[p]) - int(need[p])
+	var b := barn()
+	b.erase("broken")
+	var it := item_data("barn")
+	add_coins(int(it.get("repair_coins", 0)))
+	add_xp(int(it.get("repair_xp", 0)))
+	message.emit("The Barn is fixed! Use the Store tool to put things away in it.")
+	_bump("buildings_repaired", 1)
+	inventory_changed.emit()
+	_objects_updated()
+	return true
+
+
+func barn_capacity() -> int:
+	var levels: Array = item_data("barn").get("levels", [0])
+	return int(levels[0])
+
+
+## Trees, animals and scenery can be stored; shelters, the barn and strays can't.
+func can_store(obj: Dictionary) -> bool:
+	if obj.is_empty() or obj.get("stray", false):
+		return false
+	var k := kind_of(obj)
+	return k == "tree" or k == "animal" or k == "decor"
+
+
+func store_object(uid: int) -> bool:
+	var o := object_by_uid(uid)
+	if not barn_repaired():
+		message.emit("Fix the Barn first to store things")
+		return false
+	if not can_store(o):
+		message.emit("That can't go in the barn")
+		return false
+	if stored.size() >= barn_capacity():
+		message.emit("The barn is full")
+		return false
+	objects.erase(o)
+	o.erase("row")
+	o.erase("col")
+	stored.append(o)
+	message.emit("%s stored in the barn" % item_data(o["id"])["name"])
+	inventory_changed.emit()
+	_objects_updated()
+	return true
+
+
+func place_from_storage(index: int, row: int, col: int) -> bool:
+	if index < 0 or index >= stored.size():
+		return false
+	var o: Dictionary = stored[index]
+	if not can_place(o["id"], row, col):
+		return false
+	stored.remove_at(index)
+	o["row"] = row
+	o["col"] = col
+	o["t"] = now() # production restarts when it comes back out
+	_grass_over(o["id"], row, col)
+	objects.append(o)
+	inventory_changed.emit()
 	_objects_updated()
 	return true
 
@@ -1151,7 +1322,26 @@ func _new_game() -> void:
 	_set_starter(6, 5, "wheat", t - int(wheat_grow / 2.0))
 	plots[index_of(7, 4)] = {"state": "plowed"}
 	plots[index_of(7, 5)] = {"state": "plowed"}
+	# Scenery, a few animals and a run-down barn, so the farm feels lived in from the start.
+	_add_starter_object("farmhouse", 0, 0)
+	_add_starter_object("barn", 0, 8, {"broken": true})
+	_add_starter_object("mailbox", 4, 0)
+	_add_starter_object("farm_stand", 4, 1)
+	_add_starter_object("chicken", 9, 2)
+	_add_starter_object("chicken", 9, 3)
+	_add_starter_object("cow", 10, 6)
+	parts = {"bricks": 0, "nails": 0, "boards": 0}
+	stored = []
+	last_daily_day = day_number()
+	_rebuild_occupancy()
 	save_game()
+
+
+func _add_starter_object(item_id: String, row: int, col: int, extra := {}) -> void:
+	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
+	obj.merge(extra)
+	objects.append(obj)
+	next_uid += 1
 
 
 func _set_starter(row: int, col: int, crop_id: String, planted_at: int) -> void:
@@ -1193,6 +1383,9 @@ func save_game() -> void:
 		"farm_size": farm_size,
 		"unwithers": unwithers,
 		"waiting_bees": waiting_bees,
+		"parts": parts,
+		"last_daily_day": last_daily_day,
+		"stored": stored,
 		"next_stray_at": next_stray_at,
 		"next_uid": next_uid,
 	}
@@ -1220,6 +1413,17 @@ func load_game() -> bool:
 	farm_size = clampi(int(data.get("farm_size", START_SIZE)), START_SIZE, MAX_SIZE)
 	unwithers = int(data.get("unwithers", START_UNWITHERS))
 	waiting_bees = int(data.get("waiting_bees", 0))
+	var saved_parts: Dictionary = data.get("parts", {})
+	parts = {}
+	for p in PARTS:
+		parts[p] = int(saved_parts.get(p, 0))
+	last_daily_day = int(data.get("last_daily_day", day_number()))
+	stored = []
+	for o in data.get("stored", []):
+		if items.has(o.get("id", "")):
+			o["uid"] = int(o["uid"])
+			o["t"] = int(o.get("t", 0))
+			stored.append(o)
 	next_stray_at = int(data.get("next_stray_at", 0))
 	coins = int(data.get("coins", START_COINS))
 	gems = int(data.get("gems", START_GEMS))

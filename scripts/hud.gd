@@ -6,6 +6,7 @@ extends CanvasLayer
 signal tool_selected(tool: String, crop_id: String)
 signal place_requested(item_id: String)
 signal cancel_place_requested
+signal place_stored_requested(index: int)
 
 const TOP_H := 84.0
 const BOTTOM_H := 150.0
@@ -61,6 +62,7 @@ func _ready() -> void:
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.gems_changed.connect(func(_g: int) -> void: _refresh())
 	Game.inventory_changed.connect(_refresh_unwither)
+	Game.inventory_changed.connect(_refresh_book)
 	Game.farm_expanded.connect(func(_s: int) -> void: _refresh_book())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
 	Game.leveled_up.connect(func(_l: int) -> void: _refresh_seed_buttons())
@@ -168,6 +170,10 @@ func _build_toolbar(root: Control) -> void:
 	_unwither_button.pressed.connect(Game.use_unwither)
 	row.add_child(_unwither_button)
 	_refresh_unwither()
+
+	var store := _tool_button("Store\nin the barn")
+	store.pressed.connect(func() -> void: tool_selected.emit("store", ""))
+	row.add_child(store)
 
 	var move := _tool_button("Move\nbuildings & more")
 	move.pressed.connect(func() -> void: tool_selected.emit("move", ""))
@@ -405,7 +411,10 @@ func show_building(uid: int) -> void:
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
 		return
-	_book.open_panel(Game.item_data(o["id"])["name"], _build_building)
+	if o["id"] == "barn":
+		_book.open_panel("Barn", _build_barn)
+	else:
+		_book.open_panel(Game.item_data(o["id"])["name"], _build_building)
 
 
 func _refresh_unwither() -> void:
@@ -576,6 +585,68 @@ func _build_building(content: VBoxContainer) -> void:
 	content.add_child(actions)
 	if cost >= 0:
 		content.add_child(BookPanel.text("Upgrades will use building parts in a later update; coins for now.", 16, BookPanel.CREAM))
+
+
+func _build_barn(content: VBoxContainer) -> void:
+	var b := Game.barn()
+	if b.is_empty():
+		_book.close_panel()
+		return
+	if b.get("broken", false):
+		_build_barn_repair(content)
+	else:
+		_build_barn_storage(content)
+
+
+func _build_barn_repair(content: VBoxContainer) -> void:
+	var it := Game.item_data("barn")
+	content.add_child(BookPanel.text(
+		"This old barn needs fixing. Collect building parts while you harvest and collect from animals and trees. A few arrive as a daily gift too.", 20, BookPanel.CREAM))
+	var card := BookPanel.card()
+	card.add_theme_constant_override("separation", 10)
+	var need := Game.repair_needs()
+	for p in GameState.PARTS:
+		var want := int(need.get(p, 0))
+		var have := int(Game.parts.get(p, 0))
+		card.add_child(BookPanel.text("%s: %d of %d" % [GameState.PART_NAMES[p], mini(have, want), want], 20))
+		var bar := ProgressBar.new()
+		bar.show_percentage = false
+		bar.custom_minimum_size.y = 16
+		bar.max_value = want
+		bar.value = mini(have, want)
+		card.add_child(bar)
+	card.add_child(BookPanel.text("Reward: %d coins, %d XP, and a barn to store things in" % [int(it.get("repair_coins", 0)), int(it.get("repair_xp", 0))], 17))
+	content.add_child(BookPanel.card_frame(card))
+	var fix := _panel_button("Repair the barn" if Game.can_repair_barn() else "Not enough parts yet")
+	fix.disabled = not Game.can_repair_barn()
+	fix.pressed.connect(func() -> void: Game.repair_barn())
+	content.add_child(fix)
+
+
+func _build_barn_storage(content: VBoxContainer) -> void:
+	var cap := Game.barn_capacity()
+	content.add_child(BookPanel.text(
+		"Holds %d of %d. Use the Store tool on trees, animals or scenery to put them away. Tap Place to bring one back out." % [Game.stored.size(), cap], 20, BookPanel.CREAM))
+	var parts_line: Array[String] = []
+	for p in GameState.PARTS:
+		parts_line.append("%s %d" % [GameState.PART_NAMES[p], int(Game.parts.get(p, 0))])
+	content.add_child(BookPanel.text("Parts: " + ", ".join(PackedStringArray(parts_line)), 17, BookPanel.CREAM))
+	if Game.stored.is_empty():
+		content.add_child(BookPanel.card_frame(BookPanel.text("Nothing stored yet.", 20)))
+		return
+	for k in Game.stored.size():
+		var o: Dictionary = Game.stored[k]
+		var row := HBoxContainer.new()
+		var name := BookPanel.text(Game.item_data(o["id"])["name"], 22)
+		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(name)
+		var place := _panel_button("Place")
+		var index := k
+		place.pressed.connect(func() -> void:
+			_book.close_panel()
+			place_stored_requested.emit(index))
+		row.add_child(place)
+		content.add_child(BookPanel.card_frame(row))
 
 
 func _panel_button(words: String) -> Button:

@@ -7,7 +7,11 @@
       "crops": [
         "strawberries",
         "carrots",
-        "tomatoes"
+        "tomatoes",
+        "raspberries",
+        "cranberries",
+        "blueberries",
+        "grapes"
       ],
       "reward_coins": 500,
       "reward_xp": 25,
@@ -40,7 +44,9 @@
       "crops": [
         "wheat",
         "corn",
-        "rice"
+        "rice",
+        "soybeans",
+        "peanuts"
       ],
       "reward_coins": 800,
       "reward_xp": 40,
@@ -72,7 +78,11 @@
       "name": "Flower Show",
       "crops": [
         "sunflowers",
-        "lavender"
+        "lavender",
+        "lilac",
+        "daffodils",
+        "morning_glory",
+        "red_tulips"
       ],
       "reward_coins": 1000,
       "reward_xp": 50,
@@ -106,7 +116,14 @@
         "potatoes",
         "pumpkins",
         "sugarcane",
-        "cotton"
+        "cotton",
+        "eggplant",
+        "squash",
+        "spinach",
+        "artichokes",
+        "bell_peppers",
+        "pineapples",
+        "watermelon"
       ],
       "reward_coins": 1500,
       "reward_xp": 75,

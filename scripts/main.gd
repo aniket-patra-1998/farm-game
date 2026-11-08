@@ -32,6 +32,7 @@ func _ready() -> void:
 	hud.tool_selected.connect(grid.set_tool)
 	hud.place_requested.connect(grid.start_placing)
 	hud.cancel_place_requested.connect(grid.cancel_placing)
+	hud.place_stored_requested.connect(grid.start_placing_stored)
 	grid.placing_changed.connect(hud.show_placing)
 	grid.object_tapped.connect(hud.show_building)
 	grid.info.connect(hud.show_message)

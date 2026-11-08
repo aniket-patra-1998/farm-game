@@ -53,6 +53,16 @@ This is milestone 1 of the V1 plan: the core farm.
 - Every 3 to 6 hours a lonely animal may wander onto open grass, marked with a heart. Tap to adopt it; unadopted strays leave after a day
 - New ribbons: Animal Lover and Beekeeper
 
+### FarmVille roster, rebalance, starter farm and the barn
+
+- 29 crops and flowers in FarmVille's unlock order and grow times, compressed into levels 1-20
+- Economy: every crop profits after plowing; slower crops always pay more per harvest
+- Faster level curve: level 20 in about two weeks of regular play (the beta window)
+- 14 fruit trees and 12 animals, including ducks, geese, turkeys, rabbits, donkeys and llamas
+- Starter farm: farmhouse, mailbox, farm stand, 2 chickens, a cow and a run-down Barn
+- Building parts (bricks, nails, wooden boards) from harvests, collecting and a daily gift
+- Repair the Barn with 5 of each part; it then stores trees, animals and scenery (Store tool)
+
 ## Run it
 
 1. Install Godot 4.7 or newer (standard build) from godotengine.org.

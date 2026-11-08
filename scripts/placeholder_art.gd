@@ -167,6 +167,10 @@ static func _ripe(ci: CanvasItem, p: Vector2, s: float, crop: Dictionary) -> voi
 			_ellipse(ci, p + Vector2(0, -6) * s, 11 * s, 8 * s, c)
 			ci.draw_line(p + Vector2(0, -13) * s, p + Vector2(0, 1) * s, c.darkened(0.2), 1.5 * s)
 			ci.draw_line(p + Vector2(0, -14) * s, p + Vector2(2, -18) * s, STEM, 3 * s)
+		"leafy":
+			for o in [Vector2(-7, -6), Vector2(7, -6), Vector2(0, -12), Vector2(0, -2)]:
+				_ellipse(ci, p + o * s, 9 * s, 6 * s, c.darkened(0.1) if o.y < -8 else c)
+			_ellipse(ci, p + Vector2(0, -8) * s, 4 * s, 3 * s, c.lightened(0.25))
 		"spike":
 			for dx in [-6, 0, 6]:
 				var b3: Vector2 = p + Vector2(dx, 0) * s
@@ -204,7 +208,7 @@ static func draw_twinkle(ci: CanvasItem, center: Vector2, size: float, alpha: fl
 # ---------------------------------------------------------------- placed objects
 
 ## corners: the footprint's top, right, bottom and left points on the ground.
-static func draw_object(ci: CanvasItem, it: Dictionary, corners: PackedVector2Array, ready: bool, level: int, inside: int, capacity: int) -> void:
+static func draw_object(ci: CanvasItem, it: Dictionary, corners: PackedVector2Array, ready: bool, level: int, inside: int, capacity: int, broken := false) -> void:
 	var center := (corners[0] + corners[2]) / 2.0
 	var s := (corners[1].x - corners[3].x) / 128.0 # 1.0 for a one-tile object
 	match it.get("kind", ""):
@@ -214,6 +218,16 @@ static func draw_object(ci: CanvasItem, it: Dictionary, corners: PackedVector2Ar
 			_animal(ci, center, it, ready)
 		"building":
 			_building(ci, corners, it, level, inside, capacity, s)
+		"barn":
+			_building(ci, corners, it, level, inside, capacity, s, not broken, broken)
+		"decor":
+			match it.get("id", ""):
+				"farmhouse":
+					_building(ci, corners, it, 1, 0, 0, s, false)
+				"mailbox":
+					_mailbox(ci, center, it)
+				"farm_stand":
+					_farm_stand(ci, center, it)
 
 
 static func _shadow(ci: CanvasItem, center: Vector2, rx: float, ry: float) -> void:
@@ -241,10 +255,16 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 	var accent := Color.html(str(it.get("accent", "#333333")))
 	var id: String = it.get("id", "")
 	_shadow(ci, ground + Vector2(0, 2), 30, 11)
-	if id == "chicken":
-		_ellipse(ci, ground + Vector2(0, -16), 15, 13, body)
-		ci.draw_circle(ground + Vector2(11, -30), 9, body)
-		_ellipse(ci, ground + Vector2(11, -40), 4, 5, accent)       # comb
+	if id == "chicken" or id == "duck" or id == "goose" or id == "turkey":
+		var tall := 1.2 if id == "goose" or id == "turkey" else 1.0
+		_ellipse(ci, ground + Vector2(0, -16), 15 * tall, 13 * tall, body)
+		ci.draw_circle(ground + Vector2(11, -30 * tall), 9, body)
+		if id == "chicken" or id == "turkey":
+			_ellipse(ci, ground + Vector2(11, -40 * tall), 4, 5, accent)       # comb or wattle
+		if id == "turkey":
+			for k in 5:
+				var a := PI + 0.35 + k * 0.32
+				ci.draw_circle(ground + Vector2(-8, -20) + Vector2(cos(a), sin(a)) * 16, 7, accent.lerp(body, 0.3 + 0.12 * k))
 		ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(19, -31), ground + Vector2(27, -28), ground + Vector2(19, -26)]), Color("#f2a33a"))
 		ci.draw_circle(ground + Vector2(14, -32), 1.8, Color("#222222"))
 		ci.draw_line(ground + Vector2(-4, -4), ground + Vector2(-4, 4), Color("#f2a33a"), 2.5)
@@ -277,9 +297,13 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 		ci.draw_circle(bubble, 6, accent if id != "chicken" else Color("#f6e7c1"))
 
 
-static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, inside: int, capacity: int, s: float) -> void:
+## show_sign: level badge and count sign; broken: weathered colours, missing roof and boarded door.
+static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, inside: int, capacity: int, s: float, show_sign := true, broken := false) -> void:
 	var wall := Color.html(str(it.get("color", "#c0392b")))
 	var roof := Color.html(str(it.get("roof", "#6b4a3a")))
+	if broken:
+		wall = wall.lerp(Color("#8a7f72"), 0.55)
+		roof = roof.lerp(Color("#6e675e"), 0.5)
 	# Inset the walls from the footprint edge so a yard shows around the building.
 	var c := (g[0] + g[2]) / 2.0
 	var top := c.lerp(g[0], 0.78)
@@ -305,6 +329,21 @@ static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 	ci.draw_colored_polygon(PackedVector2Array([top + up, right + up, r_b, r_a]), roof.darkened(0.2))
 	ci.draw_colored_polygon(PackedVector2Array([bottom + up, right + up, r_b]), wall.darkened(0.3))
 	ci.draw_line(r_a, r_b, roof.lightened(0.25), 3)
+	if broken:
+		# Holes in the roof, a boarded-up door and loose planks.
+		ci.draw_colored_polygon(PackedVector2Array([left.lerp(r_a, 0.4) + up * 0.0, left.lerp(r_a, 0.7), bottom.lerp(r_b, 0.55) + up, bottom.lerp(r_b, 0.3) + up]), Color("#2b2420"))
+		var plank := Color("#a07850")
+		ci.draw_line(door_base - dw + dh * 0.2, door_base + dw + dh * 0.8, plank, 5)
+		ci.draw_line(door_base + dw + dh * 0.2, door_base - dw + dh * 0.8, plank, 5)
+		ci.draw_line(bottom + Vector2(10, 14), bottom + Vector2(46, 4), plank, 6)
+		ci.draw_line(bottom + Vector2(18, 22), bottom + Vector2(52, 18), plank.darkened(0.2), 6)
+		var mark := r_b + Vector2(0, -30)
+		ci.draw_circle(mark, 17, Color("#ffd34d"))
+		ci.draw_arc(mark, 17, 0, TAU, 24, Color("#5c3a1e"), 2.5)
+		ci.draw_string(ThemeDB.fallback_font, mark + Vector2(-16, 8), "!", HORIZONTAL_ALIGNMENT_CENTER, 32, 24, Color("#3a2614"))
+		return
+	if not show_sign:
+		return
 	# Level badge and count sign.
 	var font := ThemeDB.fallback_font
 	var badge := r_b + Vector2(0, -26)
@@ -355,3 +394,28 @@ static func draw_stray_marker(ci: CanvasItem, at: Vector2) -> void:
 	ci.draw_circle(at + Vector2(-4, -2), 5, red)
 	ci.draw_circle(at + Vector2(4, -2), 5, red)
 	ci.draw_colored_polygon(PackedVector2Array([at + Vector2(-9, 0), at + Vector2(9, 0), at + Vector2(0, 10)]), red)
+
+
+
+static func _mailbox(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
+	var box := Color.html(str(it.get("color", "#3f6fb5")))
+	_shadow(ci, ground + Vector2(0, 2), 16, 6)
+	ci.draw_line(ground, ground + Vector2(0, -30), Color("#7a4f2c"), 5)
+	ci.draw_rect(Rect2(ground + Vector2(-14, -48), Vector2(28, 18)), box)
+	ci.draw_circle(ground + Vector2(-14, -39), 9, box.lightened(0.1))
+	ci.draw_line(ground + Vector2(12, -48), ground + Vector2(12, -60), Color("#e2453c"), 3)
+	ci.draw_rect(Rect2(ground + Vector2(12, -60), Vector2(9, 6)), Color("#e2453c"))
+
+
+static func _farm_stand(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
+	var awning := Color.html(str(it.get("color", "#c0392b")))
+	_shadow(ci, ground + Vector2(0, 2), 30, 10)
+	var wood := Color("#a8743f")
+	ci.draw_line(ground + Vector2(-24, 0), ground + Vector2(-24, -44), wood, 4)
+	ci.draw_line(ground + Vector2(24, 0), ground + Vector2(24, -44), wood, 4)
+	ci.draw_rect(Rect2(ground + Vector2(-28, -18), Vector2(56, 10)), wood.darkened(0.15))
+	for k in 4:
+		ci.draw_circle(ground + Vector2(-16 + k * 11, -22), 5, [Color("#e2453c"), Color("#f28a2e"), Color("#7ccf5a"), Color("#f7c51e")][k])
+	for k in 4:
+		var x := -30.0 + k * 15.0
+		ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(x, -52), ground + Vector2(x + 15, -52), ground + Vector2(x + 15, -42), ground + Vector2(x, -42)]), awning if k % 2 == 0 else Color("#fbefd2"))
