@@ -940,7 +940,7 @@ func test_43_expansions_cost_materials_and_follow_farmville_sizes() -> void:
 	_eq(sizes, [20, 25, 30, 35, 40] as Array[int], "stable grows 20 to 40 in steps of 5")
 	_check(not g.can_expand(st), "no expansion past full size")
 	_eq(g.cycle_of(st), 86400, "expanding doesn't change timing")
-	var coop_sizes: Array = g.item_data("chicken_coop")["levels"]
+	var coop_sizes: Array = (g.item_data("chicken_coop")["levels"] as Array).map(func(v): return int(v))
 	_eq(coop_sizes, [20, 40, 60], "Chicken Coop, Big, Huge: 20, 40, 60")
 	_done(g)
 

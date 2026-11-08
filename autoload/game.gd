@@ -694,7 +694,9 @@ func collect(uid: int) -> Dictionary:
 	add_xp(gained)
 	_bump("collected", 1)
 	var part := _roll_part()
-	var extras: Array[String] = _building_specials(obj) if is_building(obj) else []
+	var extras: Array[String] = []
+	if is_building(obj):
+		extras = _building_specials(obj)
 	if drop.get("type", "") == "golden":
 		_bump("golden_finds", 1)
 		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
