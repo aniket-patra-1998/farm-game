@@ -11,10 +11,20 @@ const DIR := "res://data/catalog"
 const NEVER_IN_MARKET := 99
 const FREE_IN_MARKET := ["orchard", "nursery_barn"]  ## free in FarmVille too
 
-const CLASSES := {
-	"Crop": CropDef, "Material": MaterialDef, "Tree": TreeDef, "Animal": AnimalDef,
-	"Building": BuildingDef, "Barn": BarnDef, "Vehicle": VehicleDef, "Decoration": DecorationDef,
-}
+## The class for each schema class name. Add a line here with every new class.
+static func new_def(cls: String) -> ItemDef:
+	match cls:
+		"Crop": return CropDef.new()
+		"Material": return MaterialDef.new()
+		"Tree": return TreeDef.new()
+		"Animal": return AnimalDef.new()
+		"Building": return BuildingDef.new()
+		"Barn": return BarnDef.new()
+		"Vehicle": return VehicleDef.new()
+		"Decoration": return DecorationDef.new()
+	push_error("Catalog: no class for %s" % cls)
+	return ItemDef.new()
+
 
 var schema := {}
 var defs := {}                       ## id -> ItemDef, in-game items only
@@ -112,7 +122,7 @@ func _load_file(path: String, category: String, file_cls: String) -> void:
 				continue
 			for e in _check_types(cls, entry):
 				errors.append(e)
-			var d: ItemDef = CLASSES[cls].new()
+			var d := new_def(cls)
 			d.setup(entry)
 			defs[id] = d
 			order.append(id)
