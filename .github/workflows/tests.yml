@@ -45,3 +45,22 @@ jobs:
 
       - name: Run tests
         run: ./godot-bin/godot --headless --path . res://tests/run_tests.tscn
+
+      # Draws every building with a real (software) renderer, so drawing errors fail the build
+      # and the pictures can be checked. Download them from the run's "screenshots" artifact.
+      - name: Render building screenshots
+        run: |
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+          xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+            --rendering-driver opengl3 --resolution 1280x720 --path . res://tests/shots.tscn 2>&1 | tee shots.log
+          if grep -E "SCRIPT ERROR|triangulat|Invalid polygon" shots.log; then
+            echo "Drawing errors found"; exit 1
+          fi
+          ls ci_shots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: ci_shots/

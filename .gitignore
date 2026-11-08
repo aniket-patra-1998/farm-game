@@ -9,3 +9,4 @@ Thumbs.db
 
 # CI cache folder
 godot-bin/
+ci_shots/
