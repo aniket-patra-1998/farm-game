@@ -25,6 +25,11 @@ jobs:
             html=$(curl -fsSL --retry 3 "$page" || true)
             zip=$(echo "$html" | grep -oE 'https?://[^"]+\.zip' | head -1)
             if [ -z "$zip" ]; then
+              rel=$(echo "$html" | grep -oE '"[^"]*\.zip[^"]*"' | tr -d '"' | head -1)
+              case "$rel" in /*) zip="https://kenney.nl$rel";; http*) zip="$rel";; esac
+            fi
+            [ -z "$zip" ] && echo "$html" | grep -ioE 'href="[^"]*(download|zip)[^"]*"' | head -5 | sed 's/^/HINT /'
+            if [ -z "$zip" ]; then
               rel=$(echo "$html" | grep -oE '/sites/default/files/[^"]+\.zip' | head -1)
               [ -n "$rel" ] && zip="https://opengameart.org$rel"
             fi
