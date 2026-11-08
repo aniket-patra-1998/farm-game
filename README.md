@@ -16,7 +16,7 @@ This is milestone 1 of the V1 plan: the core farm.
 
 ## Run it
 
-1. Install Godot 4.3 or newer (standard build) from godotengine.org.
+1. Install Godot 4.7 or newer (standard build) from godotengine.org.
 2. Open Godot, choose Import, and select `project.godot` in this folder.
 3. Press F5 to run. Mouse clicks act as touches.
 
