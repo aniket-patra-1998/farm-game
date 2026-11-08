@@ -1,1 +1,156 @@
-{}
+{
+	"bonfire": {
+		"anchor": [
+			78.0,
+			85.0
+		],
+		"scale": 0.5
+	},
+	"cow": {
+		"anchor": [
+			61.0,
+			100.0
+		],
+		"scale": 0.5
+	},
+	"crop_carrots": {
+		"anchor": [
+			61.0,
+			293.0
+		],
+		"scale": 0.5
+	},
+	"crop_corn": {
+		"anchor": [
+			75.0,
+			135.0
+		],
+		"scale": 0.5
+	},
+	"crop_pumpkins": {
+		"anchor": [
+			80.0,
+			99.0
+		],
+		"scale": 0.5
+	},
+	"crop_strawberries": {
+		"anchor": [
+			82.0,
+			223.0
+		],
+		"scale": 0.5
+	},
+	"crop_tomatoes": {
+		"anchor": [
+			82.0,
+			134.0
+		],
+		"scale": 0.5
+	},
+	"crop_watermelon": {
+		"anchor": [
+			82.0,
+			155.0
+		],
+		"scale": 0.5
+	},
+	"demo_windmill": {
+		"anchor": [
+			117.0,
+			321.5
+		],
+		"scale": 0.5
+	},
+	"farm_stand": {
+		"anchor": [
+			116.0,
+			205.0
+		],
+		"scale": 0.5
+	},
+	"fountain": {
+		"anchor": [
+			163.0,
+			115.5
+		],
+		"scale": 0.5
+	},
+	"hedge": {
+		"anchor": [
+			72.0,
+			66.0
+		],
+		"scale": 0.5
+	},
+	"horse": {
+		"anchor": [
+			60.0,
+			100.0
+		],
+		"scale": 0.5
+	},
+	"lamp_post": {
+		"anchor": [
+			80.0,
+			345.0
+		],
+		"scale": 0.5
+	},
+	"llama": {
+		"anchor": [
+			61.0,
+			157.0
+		],
+		"scale": 0.5
+	},
+	"oak_tree": {
+		"anchor": [
+			82.0,
+			332.0
+		],
+		"scale": 0.5
+	},
+	"pig": {
+		"anchor": [
+			63.0,
+			87.0
+		],
+		"scale": 0.5
+	},
+	"pine_tree": {
+		"anchor": [
+			79.0,
+			345.0
+		],
+		"scale": 0.5
+	},
+	"sheep": {
+		"anchor": [
+			6.0,
+			241.0
+		],
+		"scale": 0.5
+	},
+	"tractor": {
+		"anchor": [
+			83.0,
+			133.0
+		],
+		"scale": 0.5
+	},
+	"wheelbarrow": {
+		"anchor": [
+			86.0,
+			85.0
+		],
+		"scale": 0.5
+	},
+	"wooden_fence": {
+		"anchor": [
+			62.0,
+			85.0
+		],
+		"scale": 0.5
+	}
+}
