@@ -27,6 +27,15 @@ func _ready() -> void:
 		if not ok:
 			failed_tests += 1
 		print("%s  %s" % ["PASS" if ok else "FAIL", n])
+	# Tests that need real frames (input, rendering) run after, one at a time.
+	_current = "test_37_tap_farms_and_drag_moves_the_view"
+	var before_async := _failures.size()
+	await _frames_test_tap_and_drag()
+	var ok_async := _failures.size() == before_async
+	if not ok_async:
+		failed_tests += 1
+	print("%s  %s" % ["PASS" if ok_async else "FAIL", _current])
+	names.append(_current)
 	print("")
 	for f in _failures:
 		print("  - " + f)
@@ -654,12 +663,14 @@ func test_36_the_whole_game_scene_loads() -> void:
 
 # ---------------------------------------------------------------- touch input
 
+## Sends input the way the OS does, then lets a frame run so it's delivered.
 func _touch(pos: Vector2, pressed: bool) -> void:
 	var ev := InputEventScreenTouch.new()
 	ev.index = 0
 	ev.position = pos
 	ev.pressed = pressed
-	get_viewport().push_input(ev)
+	Input.parse_input_event(ev)
+	await get_tree().process_frame
 
 
 func _drag(pos: Vector2, relative: Vector2) -> void:
@@ -667,16 +678,20 @@ func _drag(pos: Vector2, relative: Vector2) -> void:
 	ev.index = 0
 	ev.position = pos
 	ev.relative = relative
-	get_viewport().push_input(ev)
+	Input.parse_input_event(ev)
+	await get_tree().process_frame
 
 
 func _screen_pos(grid: FarmGrid, i: int) -> Vector2:
 	return get_viewport().get_canvas_transform() * grid.to_global(grid.center_of(i))
 
 
-func test_37_tap_farms_and_drag_moves_the_view() -> void:
+## Runs after the plain tests (see _ready): it needs real frames for input to arrive.
+func _frames_test_tap_and_drag() -> void:
 	var main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
 	var cam: Camera2D = main.get("camera")
 	var grid: FarmGrid = main.get("grid")
 	cam.force_update_scroll()
@@ -687,22 +702,23 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	_eq(Game.phase(i), GameState.Phase.GRASS, "tile starts as grass")
 	var tap_at := _screen_pos(grid, i)
 	_check(grid._on_farm_area(tap_at), "the tile is on screen (view %s, tile at %s)" % [str(view), str(tap_at)])
-	_touch(tap_at, true)
-	_touch(tap_at, false)
+	await _touch(tap_at, true)
+	await _touch(tap_at, false)
 	_eq(Game.phase(i), GameState.Phase.PLOWED, "a tap plows")
 
 	# A drag moves the view and leaves the plot under the finger alone.
 	main.call("_zoom_at", view / 2.0, 2.0)
+	await get_tree().process_frame
 	cam.force_update_scroll()
 	var start := view / 2.0
 	var under := grid.index_at(grid.to_local(get_viewport().get_canvas_transform().affine_inverse() * start))
 	var before_plot: Dictionary = Game.plots[under].duplicate() if under >= 0 else {}
 	var objects_before := Game.objects.size()
 	var cam_before := cam.position
-	_touch(start, true)
+	await _touch(start, true)
 	for k in range(1, 11):
-		_drag(start + Vector2(20 * k, 0), Vector2(20, 0))
-	_touch(start + Vector2(200, 0), false)
+		await _drag(start + Vector2(20 * k, 0), Vector2(20, 0))
+	await _touch(start + Vector2(200, 0), false)
 	if under >= 0:
 		_eq(Game.plots[under], before_plot, "the plot under the drag is unchanged")
 	_eq(Game.objects.size(), objects_before, "nothing placed or removed by a drag")
@@ -712,10 +728,11 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	var k2 := Game.index_of(11, 10)
 	cam.position = cam_before
 	main.call("_fit_camera")
+	await get_tree().process_frame
 	cam.force_update_scroll()
 	var wobble_at := _screen_pos(grid, k2)
-	_touch(wobble_at, true)
-	_drag(wobble_at + Vector2(4, 3), Vector2(4, 3))
-	_touch(wobble_at + Vector2(4, 3), false)
+	await _touch(wobble_at, true)
+	await _drag(wobble_at + Vector2(4, 3), Vector2(4, 3))
+	await _touch(wobble_at + Vector2(4, 3), false)
 	_eq(Game.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
 	main.free()
