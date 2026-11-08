@@ -25,6 +25,15 @@ This is milestone 1 of the V1 plan: the core farm.
 - Zoom and move: pinch or mouse wheel to zoom; two fingers, the Hand tool, or right-drag to move
 - Ripe crops twinkle
 
+### Milestone 3 (part 1): placement, trees, animals, buildings
+
+- Market for 6 fruit trees, 6 animals and 4 buildings, unlocked by level
+- Placement system: drag the outline onto grass (green fits, red doesn't), let go to place
+- Move tool to rearrange anything; objects can't overlap crops or each other
+- Trees and animals produce on real-time timers; tap when ready to collect
+- Chicken Coop, Cow Shed, Horse Stable and Orchard: move loose animals or trees in,
+  collect from all of them in one tap, upgrade through 3 levels for more space
+
 ## Run it
 
 1. Install Godot 4.7 or newer (standard build) from godotengine.org.
@@ -47,6 +56,7 @@ Use AAB format for the Play Store.
 | `data/crops.json` | Crop list and numbers; edit to rebalance without touching code |
 | `data/collections.json` | Collection sets, which crops drop them, rewards |
 | `data/ribbons.json` | Ribbons, tier thresholds and rewards |
+| `data/items.json` | Trees, animals and buildings: prices, timers, sizes, capacities, upgrade costs |
 | `scripts/book_panel.gd` | The pop-up menu used for Collections and Ribbons |
 | `scripts/farm_grid.gd` | Draws the farm and turns taps into actions |
 | `scripts/placeholder_art.gd` | Every visual, drawn with simple shapes; swap for sprites here |
@@ -60,7 +70,7 @@ All art is original placeholder art drawn in code. Replacing it means editing on
 
 ## Next milestones
 
-3. Trees, animals, bees, strays
+3. (part 2) Bees and hives, stray animals
 4. Vehicles, parts, upgrades, fuel
 5. Crafting, decor, storage, land expansion
 6. Breeding, greenhouse, rare animal home

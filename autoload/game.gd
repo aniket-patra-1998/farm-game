@@ -11,6 +11,7 @@ signal message(text: String)
 signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
+signal objects_changed
 
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
@@ -77,6 +78,11 @@ var owned := {}                    # item id -> count held
 var stats := {}                    # lifetime counters for ribbons
 var ribbon_tiers := {}             # ribbon id -> tiers earned (0..4)
 var pity := {"golden": 0, "collectible": 0}
+var items := {}                    # placeable objects from data/items.json
+var item_order: Array[String] = []
+var objects: Array = []            # placed trees, animals and buildings
+var next_uid := 1
+var _occupied := {}                # tile index -> uid of the object covering it
 var modal_open := false            # true while a menu covers the farm
 
 var rng := RandomNumberGenerator.new()
@@ -88,6 +94,7 @@ func _ready() -> void:
 	_load_crops()
 	_load_collections()
 	_load_ribbons()
+	_load_items()
 	if not load_game():
 		_new_game()
 	# Deferred so the HUD is connected and can show the message.
@@ -165,6 +172,8 @@ func crop_at(i: int) -> String:
 func plow(i: int) -> bool:
 	var ph := phase(i)
 	if ph != Phase.GRASS and ph != Phase.WITHERED:
+		return false
+	if is_occupied(i):
 		return false
 	if not spend(PLOW_COST):
 		message.emit("Not enough coins to plow")
@@ -344,6 +353,253 @@ func _check_ribbons(stat_name: String) -> void:
 	queue_save()
 
 
+# ---------------------------------------------------------------- placed objects
+# Trees, animals and buildings sit on grass tiles. Each object is a dictionary:
+# {"uid", "id", "row", "col", "t"} where t is when its current cycle started.
+# Buildings also have "level" and "inside" (item id -> count).
+
+func item_data(item_id: String) -> Dictionary:
+	return items.get(item_id, {})
+
+
+func footprint(item_id: String) -> Vector2i:
+	var it := item_data(item_id)
+	return Vector2i(int(it.get("w", 1)), int(it.get("h", 1)))
+
+
+func object_at(i: int) -> Dictionary:
+	return object_by_uid(int(_occupied.get(i, -1)))
+
+
+func object_by_uid(uid: int) -> Dictionary:
+	for o in objects:
+		if int(o["uid"]) == uid:
+			return o
+	return {}
+
+
+func is_occupied(i: int) -> bool:
+	return _occupied.has(i)
+
+
+func _rebuild_occupancy() -> void:
+	_occupied.clear()
+	for o in objects:
+		var fp := footprint(o["id"])
+		for r in range(int(o["row"]), int(o["row"]) + fp.y):
+			for c in range(int(o["col"]), int(o["col"]) + fp.x):
+				_occupied[index_of(r, c)] = int(o["uid"])
+
+
+## Objects go on grass or empty plowed plots, never on planted crops or other objects.
+func can_place(item_id: String, row: int, col: int, ignore_uid := -1) -> bool:
+	var fp := footprint(item_id)
+	if row < 0 or col < 0 or row + fp.y > GRID_SIZE or col + fp.x > GRID_SIZE:
+		return false
+	for r in range(row, row + fp.y):
+		for c in range(col, col + fp.x):
+			var i := index_of(r, c)
+			var holder := int(_occupied.get(i, -1))
+			if holder != -1 and holder != ignore_uid:
+				return false
+			if plots[i].get("state", "grass") == "planted":
+				return false
+	return true
+
+
+func _grass_over(item_id: String, row: int, col: int) -> void:
+	var fp := footprint(item_id)
+	for r in range(row, row + fp.y):
+		for c in range(col, col + fp.x):
+			plots[index_of(r, c)] = {"state": "grass"}
+
+
+func can_afford_item(item_id: String) -> bool:
+	return coins >= int(item_data(item_id).get("cost", 0))
+
+
+func buy_and_place(item_id: String, row: int, col: int) -> bool:
+	var it := item_data(item_id)
+	if it.is_empty():
+		return false
+	if level() < int(it["unlock_level"]):
+		message.emit("%s unlocks at level %d" % [it["name"], int(it["unlock_level"])])
+		return false
+	if not can_place(item_id, row, col):
+		return false
+	if not spend(int(it["cost"])):
+		message.emit("Not enough coins for a %s" % it["name"])
+		return false
+	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
+	if it["kind"] == "building":
+		obj["level"] = 1
+		obj["inside"] = {}
+		message.emit("%s built! Open it to move animals in." % it["name"])
+	next_uid += 1
+	_grass_over(item_id, row, col)
+	objects.append(obj)
+	_objects_updated()
+	return true
+
+
+func move_object(uid: int, row: int, col: int) -> bool:
+	var obj := object_by_uid(uid)
+	if obj.is_empty() or not can_place(obj["id"], row, col, uid):
+		return false
+	obj["row"] = row
+	obj["col"] = col
+	_grass_over(obj["id"], row, col)
+	_objects_updated()
+	return true
+
+
+func cycle_of(obj: Dictionary) -> int:
+	return int(item_data(obj["id"]).get("cycle_seconds", 86400))
+
+
+func is_building(obj: Dictionary) -> bool:
+	return item_data(obj["id"]).get("kind", "") == "building"
+
+
+func is_ready(obj: Dictionary) -> bool:
+	if is_building(obj) and inside_total(obj) == 0:
+		return false
+	return now() - int(obj["t"]) >= cycle_of(obj)
+
+
+func seconds_until_ready(obj: Dictionary) -> int:
+	return maxi(0, int(obj["t"]) + cycle_of(obj) - now())
+
+
+## Coins and XP one collection pays.
+func object_payout(obj: Dictionary) -> Vector2i:
+	if not is_building(obj):
+		var it := item_data(obj["id"])
+		return Vector2i(int(it["payout"]), int(it["xp"]))
+	var total := Vector2i.ZERO
+	var inside: Dictionary = obj["inside"]
+	for id in inside:
+		var it2 := item_data(id)
+		total += Vector2i(int(it2["payout"]), int(it2["xp"])) * int(inside[id])
+	return total
+
+
+## Returns {"coins", "xp", "drop", "drop_text", "name"} or {} if nothing was ready.
+func collect(uid: int) -> Dictionary:
+	var obj := object_by_uid(uid)
+	if obj.is_empty() or not is_ready(obj):
+		return {}
+	var pay := object_payout(obj)
+	var earned := pay.x
+	var gained := pay.y
+	var drop := _roll_drop("", 0)
+	match drop.get("type", ""):
+		"golden":
+			earned *= GOLDEN_COIN_MULTIPLIER
+			gained += GOLDEN_XP
+		"bonus_coins":
+			earned += int(earned / 2.0)
+		"bonus_xp":
+			gained += BONUS_XP
+	obj["t"] = now()
+	add_coins(earned)
+	add_xp(gained)
+	_bump("collected", 1)
+	if drop.get("type", "") == "golden":
+		_bump("golden_finds", 1)
+		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
+	_objects_updated()
+	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
+		"drop_text": drop.get("text", ""), "name": item_data(obj["id"])["name"]}
+
+
+# ---------------------------------------------------------------- buildings
+
+func building_accepts(building: Dictionary, item_id: String) -> bool:
+	var b := item_data(building["id"])
+	if b.has("holds_kind"):
+		return item_data(item_id).get("kind", "") == b["holds_kind"]
+	return (b.get("holds", []) as Array).has(item_id)
+
+
+func capacity(building: Dictionary) -> int:
+	var levels: Array = item_data(building["id"])["levels"]
+	return int(levels[clampi(int(building["level"]) - 1, 0, levels.size() - 1)])
+
+
+func inside_total(building: Dictionary) -> int:
+	var total := 0
+	var inside: Dictionary = building.get("inside", {})
+	for id in inside:
+		total += int(inside[id])
+	return total
+
+
+func loose_matching(building: Dictionary) -> int:
+	var n := 0
+	for o in objects:
+		if not is_building(o) and building_accepts(building, o["id"]):
+			n += 1
+	return n
+
+
+## Moves loose animals or trees of the right type into the building, up to its capacity.
+func fill_building(uid: int) -> int:
+	var b := object_by_uid(uid)
+	if b.is_empty() or not is_building(b):
+		return 0
+	var was_empty := inside_total(b) == 0
+	var room := capacity(b) - inside_total(b)
+	var moved := 0
+	var keep: Array = []
+	for o in objects:
+		if moved < room and not is_building(o) and building_accepts(b, o["id"]):
+			var inside: Dictionary = b["inside"]
+			inside[o["id"]] = int(inside.get(o["id"], 0)) + 1
+			moved += 1
+		else:
+			keep.append(o)
+	if moved == 0:
+		return 0
+	objects = keep
+	if was_empty:
+		b["t"] = now() # the first cycle starts when something moves in
+	message.emit("Moved %d into the %s" % [moved, item_data(b["id"])["name"]])
+	_objects_updated()
+	return moved
+
+
+## Coins to reach the next level, or -1 at the top level.
+func upgrade_cost(building: Dictionary) -> int:
+	var costs: Array = item_data(building["id"]).get("upgrade_costs", [])
+	var idx := int(building["level"]) - 1
+	return int(costs[idx]) if idx < costs.size() else -1
+
+
+func upgrade_building(uid: int) -> bool:
+	var b := object_by_uid(uid)
+	if b.is_empty() or not is_building(b):
+		return false
+	var cost := upgrade_cost(b)
+	if cost < 0:
+		return false
+	if not spend(cost):
+		message.emit("Not enough coins to upgrade")
+		return false
+	b["level"] = int(b["level"]) + 1
+	message.emit("%s upgraded to level %d: holds %d" % [item_data(b["id"])["name"], int(b["level"]), capacity(b)])
+	_bump("upgrades", 1)
+	_objects_updated()
+	return true
+
+
+func _objects_updated() -> void:
+	_rebuild_occupancy()
+	objects_changed.emit()
+	plot_changed.emit(-1)
+	queue_save()
+
+
 # ---------------------------------------------------------------- safety net
 
 func cheapest_seed_cost() -> int:
@@ -513,6 +769,13 @@ func _load_ribbons() -> void:
 	ribbon_data = _read_json("res://data/ribbons.json")
 
 
+func _load_items() -> void:
+	var parsed := _read_json("res://data/items.json")
+	for it in parsed.get("items", []):
+		items[it["id"]] = it
+		item_order.append(it["id"])
+
+
 func _new_game() -> void:
 	coins = START_COINS
 	xp = 0
@@ -523,6 +786,9 @@ func _new_game() -> void:
 	stats = {}
 	ribbon_tiers = {}
 	pity = {"golden": 0, "collectible": 0}
+	objects = []
+	next_uid = 1
+	_occupied.clear()
 	plots.clear()
 	for i in GRID_SIZE * GRID_SIZE:
 		plots.append({"state": "grass"})
@@ -572,6 +838,8 @@ func save_game() -> void:
 		"stats": stats,
 		"ribbon_tiers": ribbon_tiers,
 		"pity": pity,
+		"objects": objects,
+		"next_uid": next_uid,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -604,6 +872,19 @@ func load_game() -> bool:
 	ribbon_tiers = data.get("ribbon_tiers", {})
 	var saved_pity: Dictionary = data.get("pity", {})
 	pity = {"golden": int(saved_pity.get("golden", 0)), "collectible": int(saved_pity.get("collectible", 0))}
+	objects = []
+	for o in data.get("objects", []):
+		var obj: Dictionary = o
+		if not items.has(obj.get("id", "")):
+			continue # item removed from the data file
+		obj["uid"] = int(obj["uid"])
+		obj["row"] = int(obj["row"])
+		obj["col"] = int(obj["col"])
+		obj["t"] = int(obj["t"])
+		if obj.has("level"):
+			obj["level"] = int(obj["level"])
+		objects.append(obj)
+	next_uid = int(data.get("next_uid", 1))
 	plots.clear()
 	for p in saved_plots:
 		var plot: Dictionary = p
@@ -611,6 +892,7 @@ func load_game() -> bool:
 		if plot.get("state") == "planted" and not crops.has(plot.get("crop", "")):
 			plot = {"state": "plowed"}
 		plots.append(plot)
+	_rebuild_occupancy()
 	return true
 
 
@@ -621,6 +903,7 @@ func reset_game() -> void:
 	tutorial_changed.emit(tutorial_step)
 	collections_changed.emit()
 	ribbons_changed.emit()
+	objects_changed.emit()
 	plot_changed.emit(-1)
 
 

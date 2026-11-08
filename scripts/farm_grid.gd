@@ -4,6 +4,8 @@ extends Node2D
 ## Rules live in the Game autoload; this script only decides what a tap means.
 
 signal info(text: String)
+signal object_tapped(uid: int)        # a building was tapped while not ready
+signal placing_changed(text: String)  # "" when placement ends
 
 const N := GameState.GRID_SIZE
 const TILE_W := 128.0
@@ -17,11 +19,15 @@ const COLOR_COST := Color("#ffb4a8")
 const COLOR_FIND := Color("#ff9ad5")
 const COLOR_GOLDEN := Color("#ffe066")
 
-var tool := "plow"       # "plow", "plant" or "hand"
+var tool := "plow"       # "plow", "plant", "hand" or "move"
 var selected_crop := ""  # crop id when tool == "plant"
 
 var _painting := false
 var _last_index := -1
+
+## While placing: {"item": id, "uid": -1 for a new purchase or the uid being moved,
+## "row", "col"} for the footprint's back corner; row is -1 until the first touch.
+var placing := {}
 
 
 func _ready() -> void:
@@ -78,19 +84,78 @@ func _col(i: int) -> int:
 
 func _draw() -> void:
 	PlaceholderArt.draw_farm_edges(self, N, TILE_W, TILE_H, EDGE_DEPTH)
+	# Each object is drawn right after its front tile, so depth order stays right.
+	var after_tile := {}
+	var lifted := int(placing.get("uid", -1))
+	for o in Game.objects:
+		if int(o["uid"]) == lifted:
+			continue
+		var fp := Game.footprint(o["id"])
+		var front := Game.index_of(int(o["row"]) + fp.y - 1, int(o["col"]) + fp.x - 1)
+		if not after_tile.has(front):
+			after_tile[front] = []
+		after_tile[front].append(o)
 	# Back to front, so taller crops overlap the plots behind them.
 	for diag in range(2 * N - 1):
 		for row in range(N):
 			var col := diag - row
 			if col < 0 or col >= N:
 				continue
-			_draw_plot(Game.index_of(row, col), row, col)
+			var i := Game.index_of(row, col)
+			_draw_plot(i, row, col)
+			for o in after_tile.get(i, []):
+				_draw_object(o)
+	_draw_placing()
+
+
+## The four ground corners (top, right, bottom, left) of a footprint.
+func corners_of(row: int, col: int, w: int, h: int) -> PackedVector2Array:
+	return PackedVector2Array([top_of(row, col), top_of(row, col + w), top_of(row + h, col + w), top_of(row + h, col)])
+
+
+func _draw_object(o: Dictionary) -> void:
+	var it := Game.item_data(o["id"])
+	var fp := Game.footprint(o["id"])
+	var corners := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+	var is_ready_now := Game.is_ready(o)
+	var building := Game.is_building(o)
+	PlaceholderArt.draw_object(self, it, corners, is_ready_now, int(o.get("level", 1)),
+		Game.inside_total(o) if building else 0, Game.capacity(o) if building else 0)
+	if is_ready_now:
+		var t := Time.get_ticks_msec() / 1000.0
+		var glow := 0.5 + 0.5 * sin(t * 2.6 + float(int(o["uid"]) % 7))
+		var c := (corners[0] + corners[2]) / 2.0
+		PlaceholderArt.draw_twinkle(self, c + Vector2(22, -70 if not building else -110), 11.0 + 6.0 * glow, glow)
+
+
+func _draw_placing() -> void:
+	if placing.is_empty() or int(placing["row"]) < 0:
+		return
+	var it := Game.item_data(placing["item"])
+	var fp := Game.footprint(placing["item"])
+	var row := int(placing["row"])
+	var col := int(placing["col"])
+	var corners := corners_of(row, col, fp.x, fp.y)
+	var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
+	PlaceholderArt.draw_footprint(self, corners, ok)
+	var level := 1
+	var inside := 0
+	var cap := 0
+	if int(placing["uid"]) != -1:
+		var o := Game.object_by_uid(int(placing["uid"]))
+		level = int(o.get("level", 1))
+		if Game.is_building(o):
+			inside = Game.inside_total(o)
+			cap = Game.capacity(o)
+	elif it.get("kind", "") == "building":
+		cap = int(it["levels"][0])
+	PlaceholderArt.draw_object(self, it, corners, false, level, inside, cap)
 
 
 func _draw_plot(i: int, row: int, col: int) -> void:
 	var top := top_of(row, col)
 	var ph := Game.phase(i)
-	if ph == GameState.Phase.GRASS:
+	if ph == GameState.Phase.GRASS or Game.is_occupied(i):
 		PlaceholderArt.draw_grass(self, top, TILE_W, TILE_H, i * 7919, (row + col) % 2 == 0)
 		return
 	PlaceholderArt.draw_soil(self, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
@@ -119,6 +184,9 @@ func cancel_paint() -> void:
 # ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not placing.is_empty():
+		_placing_input(event)
+		return
 	# Mouse is emulated as touch (project setting), so this one path covers both.
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
@@ -133,14 +201,85 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
 		# With the Hand tool a drag moves the camera (main.gd), so it never farms.
-		if _painting and drag.index == 0 and tool != "hand":
+		if _painting and drag.index == 0 and tool != "hand" and tool != "move":
 			_apply_at(drag.position, false)
+
+
+func _on_farm_area(screen_pos: Vector2) -> bool:
+	var view_h := get_viewport().get_visible_rect().size.y
+	return not Game.modal_open and screen_pos.y >= FarmHud.TOP_H and screen_pos.y <= view_h - FarmHud.BOTTOM_H
+
+
+## Tile (row, col) under a screen point, even outside the farm.
+func _tile_at_screen(screen_pos: Vector2) -> Vector2i:
+	var local := to_local(get_canvas_transform().affine_inverse() * screen_pos)
+	var dx := local.x / (TILE_W / 2.0)
+	var dy := local.y / (TILE_H / 2.0)
+	return Vector2i(int(floor((dy - dx) / 2.0)), int(floor((dy + dx) / 2.0)))
+
+
+# ---------------------------------------------------------------- placing and moving
+
+func start_placing(item_id: String, uid := -1) -> void:
+	placing = {"item": item_id, "uid": uid, "row": -1, "col": -1}
+	if uid != -1:
+		var o := Game.object_by_uid(uid)
+		placing["row"] = int(o["row"])
+		placing["col"] = int(o["col"])
+	var verb := "move" if uid != -1 else "place"
+	placing_changed.emit("Drag to %s the %s, then let go" % [verb, Game.item_data(item_id)["name"]])
+	queue_redraw()
+
+
+func cancel_placing() -> void:
+	placing = {}
+	placing_changed.emit("")
+	queue_redraw()
+
+
+## Press or drag shows where the object will go; letting go places it if it fits.
+func _placing_input(event: InputEvent) -> void:
+	var pos := Vector2.ZERO
+	var released := false
+	if event is InputEventScreenTouch:
+		var t := event as InputEventScreenTouch
+		if t.index != 0:
+			return
+		pos = t.position
+		released = not t.pressed
+	elif event is InputEventScreenDrag:
+		var d := event as InputEventScreenDrag
+		if d.index != 0:
+			return
+		pos = d.position
+	else:
+		return
+	if not _on_farm_area(pos):
+		return
+	var fp := Game.footprint(placing["item"])
+	var tile := _tile_at_screen(pos)
+	# Centre the footprint under the finger.
+	placing["row"] = tile.x - int(fp.y / 2.0)
+	placing["col"] = tile.y - int(fp.x / 2.0)
+	queue_redraw()
+	if not released:
+		return
+	var row := int(placing["row"])
+	var col := int(placing["col"])
+	var uid := int(placing["uid"])
+	if not Game.can_place(placing["item"], row, col, uid):
+		info.emit("It doesn't fit there. Try an open grassy spot.")
+		return
+	var ok := Game.move_object(uid, row, col) if uid != -1 else Game.buy_and_place(placing["item"], row, col)
+	if ok:
+		if uid == -1:
+			_float(corners_of(row, col, fp.x, fp.y)[2], "-%d" % int(Game.item_data(placing["item"])["cost"]), COLOR_COST)
+		cancel_placing()
 
 
 func _apply_at(screen_pos: Vector2, first_touch: bool) -> void:
 	# Ignore touches on the top bar, the toolbar, or while a menu covers the farm.
-	var view_h := get_viewport().get_visible_rect().size.y
-	if Game.modal_open or screen_pos.y < FarmHud.TOP_H or screen_pos.y > view_h - FarmHud.BOTTOM_H:
+	if not _on_farm_area(screen_pos):
 		return
 	var world := get_canvas_transform().affine_inverse() * screen_pos
 	var i := index_at(to_local(world))
@@ -153,6 +292,10 @@ func _apply_at(screen_pos: Vector2, first_touch: bool) -> void:
 ## first_touch is true for the plot under the finger when it went down;
 ## dragging across plots repeats the action without info popups.
 func _act(i: int, first_touch: bool) -> void:
+	var obj := Game.object_at(i)
+	if not obj.is_empty():
+		_act_on_object(obj, first_touch)
+		return
 	var ph := Game.phase(i)
 	var at := center_of(i)
 
@@ -184,6 +327,34 @@ func _act(i: int, first_touch: bool) -> void:
 		"hand":
 			if first_touch:
 				_explain(i, ph)
+
+
+func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
+	var uid := int(obj["uid"])
+	if tool == "move":
+		if first_touch:
+			start_placing(obj["id"], uid)
+		return
+	var fp := Game.footprint(obj["id"])
+	var at := (corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[0] + corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]) / 2.0
+	if Game.is_ready(obj):
+		var result := Game.collect(uid)
+		if not result.is_empty():
+			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
+			_float(at + Vector2(0, -50), "+%d XP" % result["xp"], COLOR_XP)
+			if result["drop"] != "":
+				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
+				_float(at + Vector2(0, -84), result["drop_text"], c, 1.6)
+				_sparkle(at, c)
+		return
+	if not first_touch:
+		return
+	if Game.is_building(obj):
+		object_tapped.emit(uid)
+		return
+	var it := Game.item_data(obj["id"])
+	var what: String = it.get("product", "Fruit")
+	info.emit("%s: %s ready in %s" % [it["name"], what, format_duration(Game.seconds_until_ready(obj))])
 
 
 func _explain(i: int, ph: GameState.Phase) -> void:

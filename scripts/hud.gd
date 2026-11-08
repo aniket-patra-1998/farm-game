@@ -4,6 +4,8 @@ extends CanvasLayer
 ## Built in code so it scales cleanly between phone and tablet.
 
 signal tool_selected(tool: String, crop_id: String)
+signal place_requested(item_id: String)
+signal cancel_place_requested
 
 const TOP_H := 84.0
 const BOTTOM_H := 150.0
@@ -28,6 +30,9 @@ var _reset_button: Button
 var _tool_group := ButtonGroup.new()
 var _seed_buttons := {} # crop id -> Button
 var _book: BookPanel
+var _placing_bar: PanelContainer
+var _placing_label: Label
+var _building_uid := -1
 
 
 func _ready() -> void:
@@ -40,10 +45,13 @@ func _ready() -> void:
 	_build_toolbar(root)
 	_build_tutorial(root)
 	_build_toast(root)
+	_build_placing_bar(root)
 	_book = BookPanel.new()
 	root.add_child(_book)
 	Game.collections_changed.connect(_refresh_book)
 	Game.ribbons_changed.connect(_refresh_book)
+	Game.objects_changed.connect(_refresh_book)
+	Game.coins_changed.connect(func(_c: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
 	Game.leveled_up.connect(func(_l: int) -> void: _refresh_seed_buttons())
@@ -66,13 +74,14 @@ func _build_top_bar(root: Control) -> void:
 
 	_coins_label = Label.new()
 	_coins_label.add_theme_color_override("font_color", SUN)
-	_coins_label.add_theme_font_size_override("font_size", 34)
+	_coins_label.add_theme_font_size_override("font_size", 28)
 	row.add_child(_coins_label)
 
-	for entry in [["Collections", _show_collections], ["Ribbons", _show_ribbons]]:
+	for entry in [["Market", _show_market], ["Collections", _show_collections], ["Ribbons", _show_ribbons]]:
 		var b := Button.new()
 		b.text = entry[0]
-		b.custom_minimum_size = Vector2(130, 56)
+		b.custom_minimum_size = Vector2(104, 56)
+		b.add_theme_font_size_override("font_size", 18)
 		b.toggle_mode = false
 		b.focus_mode = Control.FOCUS_NONE
 		b.pressed.connect(entry[1])
@@ -85,7 +94,7 @@ func _build_top_bar(root: Control) -> void:
 	# Level, XP bar and XP numbers stack in one column so the bar fits portrait screens.
 	var xp_box := VBoxContainer.new()
 	xp_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	xp_box.custom_minimum_size.x = 220
+	xp_box.custom_minimum_size.x = 180
 	xp_box.add_theme_constant_override("separation", 2)
 	row.add_child(xp_box)
 
@@ -130,6 +139,10 @@ func _build_toolbar(root: Control) -> void:
 	hand.pressed.connect(func() -> void: tool_selected.emit("hand", ""))
 	row.add_child(hand)
 
+	var move := _tool_button("Move\nbuildings & more")
+	move.pressed.connect(func() -> void: tool_selected.emit("move", ""))
+	row.add_child(move)
+
 	for id in Game.crop_order:
 		var b := _tool_button("")
 		var crop_id: String = id
@@ -170,6 +183,42 @@ func _restore_reset_label() -> void:
 		_reset_button.text = "Debug\nnew farm"
 
 
+func _build_placing_bar(root: Control) -> void:
+	_placing_bar = PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = CREAM
+	sb.border_color = WOOD_DARK
+	sb.set_border_width_all(3)
+	sb.set_corner_radius_all(14)
+	sb.content_margin_left = 20
+	sb.content_margin_right = 10
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	_placing_bar.add_theme_stylebox_override("panel", sb)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	_placing_bar.add_child(row)
+	_placing_label = Label.new()
+	_placing_label.add_theme_color_override("font_color", INK)
+	_placing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_placing_label)
+	var cancel := Button.new()
+	cancel.text = "Cancel"
+	cancel.custom_minimum_size = Vector2(110, 48)
+	cancel.focus_mode = Control.FOCUS_NONE
+	cancel.pressed.connect(func() -> void: cancel_place_requested.emit())
+	row.add_child(cancel)
+	_placing_bar.visible = false
+	_top_holder(root, TOP_H + 10).add_child(_placing_bar)
+
+
+## Shows the placement banner; empty text hides it.
+func show_placing(text: String) -> void:
+	_placing_label.text = text
+	_placing_bar.visible = text != ""
+	_refresh_tutorial()
+
+
 func _build_tutorial(root: Control) -> void:
 	_tutorial = Label.new()
 	_tutorial.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -192,7 +241,7 @@ func _build_tutorial(root: Control) -> void:
 func _refresh_tutorial() -> void:
 	var text := Game.tutorial_text()
 	_tutorial.text = text
-	_tutorial.visible = text != ""
+	_tutorial.visible = text != "" and not (_placing_bar and _placing_bar.visible)
 	# Keep messages clear of the tutorial banner while it shows.
 	var y := TOP_H + (80.0 if _tutorial.visible else 16.0)
 	_toast_holder.offset_top = y
@@ -290,6 +339,148 @@ func _show_collections() -> void:
 
 func _show_ribbons() -> void:
 	_book.open_panel("Ribbons", _build_ribbons)
+
+
+func _show_market() -> void:
+	_book.open_panel("Market", _build_market)
+
+
+## Opened when a building that isn't ready is tapped.
+func show_building(uid: int) -> void:
+	_building_uid = uid
+	var o := Game.object_by_uid(uid)
+	if o.is_empty():
+		return
+	_book.open_panel(Game.item_data(o["id"])["name"], _build_building)
+
+
+func _build_market(content: VBoxContainer) -> void:
+	content.add_child(BookPanel.text(
+		"Buy, then drag onto an open grassy spot and let go. Use the Move tool to rearrange later.", 20, BookPanel.CREAM))
+	for section in [["tree", "Trees"], ["animal", "Animals"], ["building", "Buildings"]]:
+		content.add_child(BookPanel.text(section[1], 26, BookPanel.SUN))
+		for id in Game.item_order:
+			var it := Game.item_data(id)
+			if it["kind"] != section[0]:
+				continue
+			content.add_child(_market_row(id, it))
+
+
+func _market_row(id: String, it: Dictionary) -> Control:
+	var locked := Game.level() < int(it["unlock_level"])
+	var inner := HBoxContainer.new()
+	inner.add_theme_constant_override("separation", 12)
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_child(BookPanel.text(it["name"], 22))
+	var detail: String
+	match it["kind"]:
+		"building":
+			var holds: String
+			if it.has("holds_kind"):
+				holds = "fruit trees"
+			else:
+				var names: Array[String] = []
+				for a in it["holds"]:
+					names.append(Game.item_data(a)["name"].to_lower() + "s")
+				holds = ", ".join(PackedStringArray(names))
+			var fp := Game.footprint(id)
+			detail = "Holds %d %s · %dx%d tiles · upgrades to %d" % [
+				int(it["levels"][0]), holds, fp.x, fp.y, int(it["levels"][-1])]
+		_:
+			var what: String = it.get("product", "Fruit")
+			detail = "%s every %s · %d coins, %d XP" % [
+				what, FarmGrid.format_duration(int(it["cycle_seconds"])), int(it["payout"]), int(it["xp"])]
+	info.add_child(BookPanel.text(detail, 17))
+	inner.add_child(info)
+	var buy := Button.new()
+	buy.custom_minimum_size = Vector2(150, 52)
+	buy.focus_mode = Control.FOCUS_NONE
+	if locked:
+		buy.text = "Level %d" % int(it["unlock_level"])
+		buy.disabled = true
+	else:
+		buy.text = "%d coins" % int(it["cost"])
+		buy.disabled = not Game.can_afford_item(id)
+		buy.pressed.connect(func() -> void:
+			_book.close_panel()
+			place_requested.emit(id))
+	inner.add_child(buy)
+	return BookPanel.card_frame(inner)
+
+
+func _build_building(content: VBoxContainer) -> void:
+	var o := Game.object_by_uid(_building_uid)
+	if o.is_empty():
+		_book.close_panel()
+		return
+	var it := Game.item_data(o["id"])
+	var total := Game.inside_total(o)
+	var cap := Game.capacity(o)
+	var pay := Game.object_payout(o)
+
+	var status := BookPanel.card()
+	status.add_theme_constant_override("separation", 8)
+	status.add_child(BookPanel.text("Level %d · %d of %d spaces used" % [int(o["level"]), total, cap], 22))
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = 18
+	bar.max_value = cap
+	bar.value = total
+	status.add_child(bar)
+	var inside: Dictionary = o["inside"]
+	if total == 0:
+		status.add_child(BookPanel.text("Empty. Move animals in to start producing.", 18))
+	else:
+		var parts: Array[String] = []
+		for id in inside:
+			parts.append("%d %s" % [int(inside[id]), Game.item_data(id)["name"]])
+		status.add_child(BookPanel.text("Inside: " + ", ".join(PackedStringArray(parts)), 18))
+		var when := "Ready to collect!" if Game.is_ready(o) else "Ready in " + FarmGrid.format_duration(Game.seconds_until_ready(o))
+		status.add_child(BookPanel.text("%s · pays %d coins, %d XP" % [when, pay.x, pay.y], 18))
+	content.add_child(BookPanel.card_frame(status))
+
+	var uid := _building_uid
+	var actions := HFlowContainer.new()
+	actions.add_theme_constant_override("h_separation", 12)
+	actions.add_theme_constant_override("v_separation", 12)
+
+	if Game.is_ready(o):
+		var collect := _panel_button("Collect")
+		collect.pressed.connect(func() -> void:
+			var r := Game.collect(uid)
+			if not r.is_empty():
+				show_message("+%d coins, +%d XP" % [r["coins"], r["xp"]]))
+		actions.add_child(collect)
+
+	var loose := Game.loose_matching(o)
+	var fill := _panel_button("Move %d in" % mini(loose, cap - total) if loose > 0 else "None on farm")
+	fill.disabled = loose == 0 or total >= cap
+	fill.pressed.connect(func() -> void: Game.fill_building(uid))
+	actions.add_child(fill)
+
+	var cost := Game.upgrade_cost(o)
+	if cost < 0:
+		var maxed := _panel_button("Fully upgraded")
+		maxed.disabled = true
+		actions.add_child(maxed)
+	else:
+		var next_cap := int(it["levels"][int(o["level"])])
+		var up := _panel_button("Upgrade: holds %d · %d coins" % [next_cap, cost])
+		up.disabled = Game.coins < cost
+		up.pressed.connect(func() -> void: Game.upgrade_building(uid))
+		actions.add_child(up)
+	content.add_child(actions)
+	if cost >= 0:
+		content.add_child(BookPanel.text("Upgrades will use building parts in a later update; coins for now.", 16, BookPanel.CREAM))
+
+
+func _panel_button(words: String) -> Button:
+	var b := Button.new()
+	b.text = words
+	b.custom_minimum_size = Vector2(180, 56)
+	b.focus_mode = Control.FOCUS_NONE
+	return b
 
 
 func _build_collections(content: VBoxContainer) -> void:

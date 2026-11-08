@@ -30,6 +30,10 @@ func _ready() -> void:
 	add_child(hud)
 
 	hud.tool_selected.connect(grid.set_tool)
+	hud.place_requested.connect(grid.start_placing)
+	hud.cancel_place_requested.connect(grid.cancel_placing)
+	grid.placing_changed.connect(hud.show_placing)
+	grid.object_tapped.connect(hud.show_building)
 	grid.info.connect(hud.show_message)
 	Game.message.connect(hud.show_message)
 
@@ -99,7 +103,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_zoom_at(_two_finger_center(), dist / _pinch_dist)
 			_pinch_dist = dist
 			_pan(d.relative / 2.0)
-		elif grid.tool == "hand" and d.index == 0:
+		elif grid.tool == "hand" and d.index == 0 and grid.placing.is_empty():
 			_pan(d.relative)
 
 
