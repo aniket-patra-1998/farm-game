@@ -76,6 +76,13 @@ This is milestone 1 of the V1 plan: the core farm.
   2, 5, 10, 15 parts for 3x2, 3x3, 4x3, 4x4 (the last two at level 26). Gearhead ribbon for upgrades
 - Vehicle Parts came from neighbours in FarmVille; here they drop while farming once you own a Garage or a Combine chassis
 
+### Art pipeline (FLUX 3 Image Klein, in Colab)
+
+- `art/manifest.json` lists each piece of art: what to draw, its footprint, and reference images that fix the camera angle
+- CI renders the references: today's drawings into `art/refs/`, free CC0 3D models into `art/refs3d/`
+- `tools/generate_art.ipynb` (Colab, A100) restyles them with FLUX 3 Image Klein, cuts them out, sizes them to the grid and pushes them
+- The game draws anything in `art/final/` and keeps the code drawings for the rest
+
 ### FarmVille roster, rebalance, starter farm and the barn
 
 - 29 crops and flowers in FarmVille's unlock order and grow times, compressed into levels 1-20

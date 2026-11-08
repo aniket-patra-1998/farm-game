@@ -1,6 +1,6 @@
 name: Render sprites
 
-# Renders the models listed in tools/sprite_list.txt to isometric sprites and commits them to sprites/.
+# Renders the models listed in tools/sprite_list.txt to isometric sprites and commits them to art/refs3d/ (used as references for AI art).
 on:
   workflow_dispatch:
   push:
@@ -61,5 +61,5 @@ jobs:
         run: |
           git config user.name "Aniket"
           git config user.email "aniketpatra001@gmail.com"
-          git add sprites
+          git add art/refs3d
           git diff --cached --quiet || { git commit -q -m "Render sprites from CC0 packs" && git push -q; }

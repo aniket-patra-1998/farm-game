@@ -1,0 +1,52 @@
+name: Render art references
+
+# Draws the reference images listed in art/manifest.json (current code art, at 2x) and commits them to art/refs/.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - art/manifest.json
+      - tools/render_refs.gd
+      - .github/workflows/refs.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GODOT_VERSION: 4.7.2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-linux
+      - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p godot-bin
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          for attempt in 1 2 3 4 5; do
+            curl -fsSL --retry 3 -o godot.zip "$url" && unzip -tq godot.zip && break
+            sleep 15
+          done
+          unzip -q godot.zip && mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot && chmod +x godot-bin/godot
+      - name: Import
+        run: ./godot-bin/godot --headless --path . --import || true
+      - name: Render references
+        run: |
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+          xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+            --rendering-driver opengl3 --path . res://tools/render_refs.tscn 2>&1 | tee refs.log
+          ls art/refs
+      - name: Commit references
+        run: |
+          git config user.name "Aniket"
+          git config user.email "aniketpatra001@gmail.com"
+          git add art/refs
+          git diff --cached --quiet || { git commit -q -m "Render art references" && git pull -q --rebase && git push -q; }

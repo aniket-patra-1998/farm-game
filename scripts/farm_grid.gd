@@ -191,8 +191,11 @@ func _draw_object(o: Dictionary) -> void:
 		# Mirror around the object's own centre line.
 		var cx := (corners[1].x + corners[3].x) / 2.0
 		draw_set_transform(Vector2(2.0 * cx, 0), 0.0, Vector2(-1, 1))
-	PlaceholderArt.draw_object(self, it, corners, is_ready_now, int(o.get("level", 1)),
-		inside, cap, o.get("broken", false))
+	if SpriteBank.has(o["id"]) and not o.get("broken", false):
+		SpriteBank.draw(self, o["id"], (corners[0] + corners[2]) / 2.0)
+	else:
+		PlaceholderArt.draw_object(self, it, corners, is_ready_now, int(o.get("level", 1)),
+			inside, cap, o.get("broken", false))
 	if flipped:
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if o.get("stray", false):
@@ -247,7 +250,15 @@ func _draw_plot(i: int, row: int, col: int) -> void:
 		stage = "ripe"
 	elif ph == GameState.Phase.WITHERED:
 		stage = "withered"
-	PlaceholderArt.draw_crop(self, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, stage, Game.growth(i))
+	# AI art per stage when it exists: sprout (first third), growing, ripe; withered stays drawn.
+	var art_stage := stage
+	if stage == "growing":
+		art_stage = "sprout" if Game.growth(i) < 0.34 else "growing"
+	var art_id := "crop_%s_%s" % [Game.crop_at(i), art_stage]
+	if stage != "withered" and SpriteBank.has(art_id):
+		SpriteBank.draw(self, art_id, top + Vector2(0, TILE_H / 2.0))
+	else:
+		PlaceholderArt.draw_crop(self, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, stage, Game.growth(i))
 	if stage == "ripe":
 		# Each plot twinkles on its own beat, so a ripe field shimmers instead of blinking.
 		var t := Time.get_ticks_msec() / 1000.0

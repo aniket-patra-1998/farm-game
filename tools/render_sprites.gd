@@ -1,7 +1,7 @@
 extends Node
 ## Renders 3D models (CC0 packs, imported into res://art_src) to isometric sprites that match
 ## the farm grid: camera 30 degrees above the ground, turned 45 degrees, orthographic.
-## Writes res://sprites/<id>.png, res://sprites/sprites.json (anchor = ground centre in the image)
+## Writes res://art/refs3d/<id>.png, res://art/refs3d/sprites.json (anchor = ground centre in the image)
 ## and res://ci_shots/contact.png (every sprite on one sheet, for checking).
 
 const PX_PER_TILE := 256.0          # sprites are drawn at 2x and shown at half size
@@ -41,7 +41,7 @@ func _ready() -> void:
 
 
 func _render_all() -> void:
-	var out_dir := ProjectSettings.globalize_path("res://sprites")
+	var out_dir := ProjectSettings.globalize_path("res://art/refs3d")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://ci_shots"))
 	var meta := {}

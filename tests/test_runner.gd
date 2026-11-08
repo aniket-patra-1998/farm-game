@@ -1679,3 +1679,18 @@ func test_68_every_decoration_has_art() -> void:
 		if it["kind"] == "decor" and not ["farmhouse", "mailbox", "farm_stand"].has(id):
 			_check(shapes.has(it.get("shape", "")), "%s has a drawn shape" % id)
 	_done(g)
+
+
+func test_69_art_manifest_is_complete() -> void:
+	var g := _farm()
+	var m = JSON.parse_string(FileAccess.get_file_as_string("res://art/manifest.json"))
+	_check(typeof(m) == TYPE_DICTIONARY, "art/manifest.json parses")
+	_check((m["styles"] as Dictionary).size() >= 1, "at least one style")
+	for item in m["items"]:
+		_check(int(item.get("tiles", 0)) >= 1, "%s has a footprint" % item["id"])
+		_check(str(item.get("subject", "")) != "", "%s says what to draw" % item["id"])
+		_check((item["refs"] as Array).size() >= 1, "%s has a reference" % item["id"])
+		var id: String = item["id"]
+		_check(g.items.has(id) or id.begins_with("crop_"), "%s is a real item or crop stage" % id)
+	_check(not SpriteBank.has("no_such_item"), "missing art falls back to drawings")
+	_done(g)

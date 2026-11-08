@@ -1,0 +1,27 @@
+{
+  "_note": "Every piece of art the game needs. refs = images (in art/) that fix the angle, shape and proportions; Klein restyles them. tiles = footprint width, used to size the result.",
+  "common": "A single isometric game asset for a cozy farming game, seen from 30 degrees above and turned 45 degrees, matching the reference image's camera angle, outline, proportions and footprint exactly. Centered, complete and uncropped, isolated on a plain flat light grey (#e8e8e8) background with nothing else in the scene: no ground beyond its own footprint, no cast shadow on the background, no text, no border, no watermark.",
+  "styles": {
+    "painterly": "Style: hand-painted cozy cartoon game art, soft painterly brushwork, warm golden-hour sunlight from the upper left, gentle ambient occlusion, rich but natural colors, crisp readable silhouette, premium mobile game quality.",
+    "toon3d": "Style: polished stylized 3D cartoon render, smooth rounded chunky shapes, soft global illumination and ambient occlusion, warm sunlight from the upper left, saturated yet natural colors, glossy subtle highlights, premium mobile farming game quality.",
+    "semireal": "Style: semi-realistic detailed game illustration, natural materials with fine texture (weathered wood, straw, fur, leaves), soft natural daylight from the upper left, subtle realism, rich detail that still reads clearly at small size, premium game asset."
+  },
+  "items": [
+    {"id": "farmhouse", "tiles": 3, "refs": ["refs/farmhouse.png"],
+     "subject": "a charming two-storey red wooden farmhouse with white window trim, a covered front porch, a shingled roof and a brick chimney"},
+    {"id": "cow", "tiles": 1, "refs": ["refs3d/cow.png"],
+     "subject": "a friendly black-and-white dairy cow standing calmly, full body"},
+    {"id": "chicken_coop", "tiles": 3, "refs": ["refs/chicken_coop.png"],
+     "subject": "a small wooden chicken coop raised on short legs, with a little ramp, nesting boxes on the side, a red roof and a small wire-fenced run with a few white hens"},
+    {"id": "apple_tree", "tiles": 1, "refs": ["refs/apple_tree.png", "refs3d/oak_tree.png"],
+     "subject": "a lush round apple tree with a sturdy trunk, full green canopy and plenty of shiny red apples"},
+    {"id": "crop_strawberries_sprout", "tiles": 1, "refs": ["refs/crop_strawberries_sprout.png"],
+     "subject": "one square plot of freshly tilled dark brown soil in neat furrows with four tiny strawberry seedlings just sprouting"},
+    {"id": "crop_strawberries_growing", "tiles": 1, "refs": ["refs/crop_strawberries_growing.png"],
+     "subject": "one square plot of tilled brown soil with four leafy strawberry plants in bloom with small white flowers"},
+    {"id": "crop_strawberries_ripe", "tiles": 1, "refs": ["refs/crop_strawberries_ripe.png"],
+     "subject": "one square plot of tilled brown soil with four lush strawberry plants heavy with ripe glossy red strawberries"},
+    {"id": "hay_bale", "tiles": 1, "refs": ["refs/hay_bale.png"],
+     "subject": "a single rectangular golden straw hay bale tied with two strands of twine"}
+  ]
+}
