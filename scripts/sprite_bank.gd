@@ -4,14 +4,21 @@ extends RefCounted
 ## anchor (the ground centre, in image pixels) lands on the object's ground centre on the farm.
 ## Anything without art keeps its code-drawn placeholder.
 
-const DIR := "res://art/final"
+static var dir := "res://art/final"  ## where art is read from; tools can point it at a pilot style
 static var _loaded := false
 static var _sprites := {} # id -> {"tex": Texture2D, "anchor": Vector2, "scale": float}
 
 
+## Reads art from another folder (used to preview pilot styles).
+static func use_dir(path: String) -> void:
+	dir = path
+	_loaded = false
+	_sprites.clear()
+
+
 static func _load() -> void:
 	_loaded = true
-	var path := DIR + "/sprites.json"
+	var path := dir + "/sprites.json"
 	if not FileAccess.file_exists(path):
 		return
 	var meta = JSON.parse_string(FileAccess.get_file_as_string(path))
@@ -21,7 +28,7 @@ static func _load() -> void:
 		var id := str(name).split("__")[0] # "cow__0" -> "cow"; the first variant wins
 		if _sprites.has(id):
 			continue
-		var file := DIR + "/" + str(name) + ".png"
+		var file := dir + "/" + str(name) + ".png"
 		if not ResourceLoader.exists(file) and not FileAccess.file_exists(file):
 			continue
 		var tex: Texture2D = load(file) if ResourceLoader.exists(file) else ImageTexture.create_from_image(Image.load_from_file(ProjectSettings.globalize_path(file)))

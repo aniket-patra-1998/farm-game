@@ -60,6 +60,8 @@ jobs:
             echo "Drawing errors found"; exit 1
           fi
           ls ci_shots
+          timeout 120 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+            --rendering-driver opengl3 --resolution 1280x720 --path . res://tools/style_preview.tscn 2>&1 | grep -E "STYLE|ERROR" || true
           # Also printed into the log, for tools that can read logs but not artifacts.
           for f in ci_shots/*.png; do echo "SHOT $(basename "$f") $(base64 -w0 "$f")"; done
 

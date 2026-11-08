@@ -1,0 +1,114 @@
+{
+ "apple_tree__0": {
+  "anchor": [
+   121.5,
+   214
+  ],
+  "scale": 0.5
+ },
+ "apple_tree__1": {
+  "anchor": [
+   121.5,
+   211
+  ],
+  "scale": 0.5
+ },
+ "chicken_coop__0": {
+  "anchor": [
+   364.5,
+   460
+  ],
+  "scale": 0.5
+ },
+ "chicken_coop__1": {
+  "anchor": [
+   364.5,
+   334
+  ],
+  "scale": 0.5
+ },
+ "cow__0": {
+  "anchor": [
+   121.5,
+   208
+  ],
+  "scale": 0.5
+ },
+ "cow__1": {
+  "anchor": [
+   121.5,
+   184
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_growing__0": {
+  "anchor": [
+   121.5,
+   114
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_growing__1": {
+  "anchor": [
+   121.5,
+   127
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_ripe__0": {
+  "anchor": [
+   121.5,
+   112
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_ripe__1": {
+  "anchor": [
+   121.5,
+   120
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_sprout__0": {
+  "anchor": [
+   121.5,
+   120
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_sprout__1": {
+  "anchor": [
+   121.5,
+   130
+  ],
+  "scale": 0.5
+ },
+ "farmhouse__0": {
+  "anchor": [
+   364.5,
+   640
+  ],
+  "scale": 0.5
+ },
+ "farmhouse__1": {
+  "anchor": [
+   364.5,
+   592
+  ],
+  "scale": 0.5
+ },
+ "hay_bale__0": {
+  "anchor": [
+   121.5,
+   149
+  ],
+  "scale": 0.5
+ },
+ "hay_bale__1": {
+  "anchor": [
+   121.5,
+   157
+  ],
+  "scale": 0.5
+ }
+}
