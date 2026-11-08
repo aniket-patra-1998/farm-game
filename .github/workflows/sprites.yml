@@ -38,25 +38,18 @@ jobs:
           unzip -q godot.zip && mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot && chmod +x godot-bin/godot
       - name: Fetch CC0 packs
         run: ./tools/fetch_packs.sh
-      - name: Copy the listed models into the project and resolve their paths
+      - name: Resolve model paths
         run: |
-          mkdir -p art_src
           : > tools/resolved.txt
-          echo "Nature Kit models:"; find vendor/kenney_nature -name '*.glb' | sed 's|.*/||' | sort | tr '\n' ' '; echo
           grep -v '^#' tools/sprite_list.txt | while IFS='|' read -r id pack file tiles turn; do
             id=$(echo "$id" | xargs); pack=$(echo "$pack" | xargs); file=$(echo "$file" | xargs)
             [ -z "$id" ] && continue
-            src=$(find "vendor/$pack" -type f -name "$file" | head -1)
+            src=$(find "$PWD/vendor/$pack" -type f -name "$file" | grep -v -i "/obj/" | head -1)
             [ -z "$src" ] && { echo "MISSING $id $pack $file"; continue; }
-            dir=$(dirname "$src")
-            mkdir -p "art_src/$pack"
-            # Bring the model's folder along, so textures it points to come too.
-            cp -rn "$dir"/. "art_src/$pack/" 2>/dev/null || true
-            [ -d "$dir/Textures" ] || { [ -d "$dir/../Textures" ] && cp -rn "$dir/../Textures" "art_src/$pack/" || true; }
-            echo "$id | res://art_src/$pack/$file | $(echo $tiles | xargs) | $(echo $turn | xargs)" >> tools/resolved.txt
+            echo "$id | $src | $(echo $tiles | xargs) | $(echo $turn | xargs)" >> tools/resolved.txt
           done
           cat tools/resolved.txt
-      - name: Import
+      - name: Import project scripts
         run: ./godot-bin/godot --headless --path . --import || true
       - name: Render
         run: |

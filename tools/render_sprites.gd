@@ -76,14 +76,7 @@ func _render_all() -> void:
 
 ## Renders one model; the footprint centre sits at 3/4 down the image, centred left to right.
 func _render(path: String, tiles: float, turn: float) -> Image:
-	var res := load(path)
-	var node: Node3D
-	if res is PackedScene:
-		node = (res as PackedScene).instantiate() as Node3D
-	elif res is Mesh:
-		var mi := MeshInstance3D.new()
-		mi.mesh = res
-		node = mi
+	var node := _load_model(path)
 	if node == null:
 		return null
 	_holder.add_child(node)
@@ -114,6 +107,17 @@ func _render(path: String, tiles: float, turn: float) -> Image:
 	node.queue_free()
 	await get_tree().process_frame
 	return img
+
+
+## Loads a .glb or .fbx straight from disk, no editor import needed.
+func _load_model(path: String) -> Node3D:
+	var doc: GLTFDocument = FBXDocument.new() if path.to_lower().ends_with(".fbx") else GLTFDocument.new()
+	var state: GLTFState = FBXState.new() if path.to_lower().ends_with(".fbx") else GLTFState.new()
+	var err := doc.append_from_file(path, state)
+	if err != OK:
+		print("LOAD ERROR ", err, " ", path)
+		return null
+	return doc.generate_scene(state) as Node3D
 
 
 func _aabb(n: Node) -> AABB:
