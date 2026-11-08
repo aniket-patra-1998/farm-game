@@ -1723,12 +1723,12 @@ func test_72_art_follows_the_lifecycle() -> void:
 	_eq(g.crop_art_for(i), "crop_strawberries_ripe", "ripe picks the ripe art")
 	# Buildings fall back from their size to the plain id.
 	g.coins = 1000000
-	g.xp = g.xp_for_level(10)
+	g.xp = g.xp_for_level(15) # the tractor unlocks at 12
 	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal") # starter animals wander anywhere
 	g._rebuild_occupancy()
 	g.buy_and_place("chicken_coop", 0, 4)
 	_eq(g.art_for(g.object_at(g.index_of(0, 4))), "chicken_coop", "the coop uses its art until size art exists")
-	g.buy_and_place("tractor", 8, 8)
+	_check(g.buy_and_place("tractor", 8, 8), "tractor placed")
 	_eq(g.art_for(g.object_at(g.index_of(8, 8))), "", "no tractor art yet: drawn in code")
 	_done(g)
 

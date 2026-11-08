@@ -25,7 +25,9 @@
             "barn",
             "vehicle",
             "decor",
-            "material"
+            "material",
+            "crafting",
+            "recipe"
           ],
           "doc": "Set by the class; only override for special cases (bee, barn)."
         },
