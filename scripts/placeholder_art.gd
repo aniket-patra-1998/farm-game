@@ -230,6 +230,8 @@ static func draw_object(ci: CanvasItem, it: Dictionary, corners: PackedVector2Ar
 					_mailbox(ci, center, it)
 				"farm_stand":
 					_farm_stand(ci, center, it)
+				_:
+					_decor(ci, corners, center, it)
 
 
 static func _shadow(ci: CanvasItem, center: Vector2, rx: float, ry: float) -> void:
@@ -272,14 +274,14 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 		ci.draw_line(ground + Vector2(-4, -4), ground + Vector2(-4, 4), Color("#f2a33a"), 2.5)
 		ci.draw_line(ground + Vector2(4, -4), ground + Vector2(4, 4), Color("#f2a33a"), 2.5)
 	else:
-		var big := 1.25 if id == "horse" or id == "stallion" or id == "bull" else (0.7 if id == "calf" or id == "foal" else 1.0)
+		var big := 1.25 if id in ["horse", "stallion", "bull", "ox"] else (0.7 if id in ["calf", "foal", "lamb", "piglet"] else (0.9 if id == "pony" else 1.0))
 		for x in [-16.0, -8.0, 10.0, 18.0]:
 			ci.draw_line(ground + Vector2(x * big, -14), ground + Vector2(x * big, 2), accent if id == "horse" else body.darkened(0.25), 4.5)
 		_ellipse(ci, ground + Vector2(0, -22 * big), 26 * big, 15 * big, body)
 		if id == "cow":
 			_ellipse(ci, ground + Vector2(-8, -24), 8, 6, accent)
 			_ellipse(ci, ground + Vector2(10, -18), 6, 5, accent)
-		if id == "sheep":
+		if id in ["sheep", "ram", "lamb", "alpaca", "llama"]:
 			for k in 6:
 				ci.draw_circle(ground + Vector2(-18 + k * 7, -32 + (k % 2) * 4), 7, body.lightened(0.3))
 		var head := ground + Vector2(26 * big, -32 * big)
@@ -287,8 +289,10 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 		if id == "horse":
 			_ellipse(ci, head + Vector2(6, 4), 9, 7, body)
 			ci.draw_line(head + Vector2(-8, -4), ground + Vector2(10, -34), accent, 6) # mane
-		if id == "pig":
+		if id.ends_with("pig") or id == "piglet" or id == "boar":
 			_ellipse(ci, head + Vector2(8, 2), 5, 4, accent)
+		if id == "ram" or id == "bull" or id == "ox":
+			ci.draw_arc(head + Vector2(-2, -6), 7, PI, TAU, 8, Color("#e8e2d4") if id != "ram" else accent, 3) # horns
 		ci.draw_circle(head + Vector2(2, -2), 1.8, Color("#222222"))
 		ci.draw_line(ground + Vector2(-26 * big, -24 * big), ground + Vector2(-32 * big, -16 * big), accent, 3) # tail
 	if ready:
@@ -321,6 +325,12 @@ static func _building(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 				badge = _pig_pen(ci, g, it, inside, s)
 			"garage":
 				badge = _garage(ci, g, it, inside, s)
+			"duck_pond":
+				badge = _duck_pond(ci, g, it, inside)
+			"sheep_pen", "goat_pen":
+				badge = _pen(ci, g, it, inside)
+			"rabbit_hutch":
+				badge = _hutch(ci, g, it, inside)
 		if badge != Vector2.ZERO:
 			_signs(ci, g, badge, level, inside, capacity)
 			return
@@ -982,3 +992,300 @@ static func _garage(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, insid
 	ci.draw_rect(Rect2(pump + Vector2(-4, -22), Vector2(8, 6)), Color("#fbefd2"))
 	ci.draw_line(pump + Vector2(7, -16), pump + Vector2(12, -4), Color("#2b2b30"), 2)
 	return (t[0] + t[2]) / 2.0 + Vector2(0, -36)
+
+
+# ---------------------------------------------------------------- decorations
+
+## Decorations by shape. corners = the footprint on the ground, ground = its centre.
+static func _decor(ci: CanvasItem, g: PackedVector2Array, ground: Vector2, it: Dictionary) -> void:
+	var col := Color.html(str(it.get("color", "#a8743f")))
+	var acc := Color.html(str(it.get("accent", "#5c3a1e")))
+	match it.get("shape", ""):
+		"path":
+			var tile := _inset(g, 0.98)
+			ci.draw_colored_polygon(tile, col)
+			var rng := RandomNumberGenerator.new()
+			rng.seed = hash(it.get("id", ""))
+			for k in 6:
+				var p := ground + Vector2(rng.randf_range(-34, 34), rng.randf_range(-12, 12))
+				_ellipse(ci, p, 9, 4, col.darkened(0.15))
+		"fence", "hedge", "wall":
+			# Runs along the tile's back-left to front-right diagonal; Rotate turns it.
+			var a := g[3].lerp(g[0], 0.5)
+			var b := g[1].lerp(g[2], 0.5)
+			if it["shape"] == "hedge":
+				for k in 5:
+					var p := a.lerp(b, 0.1 + 0.2 * k)
+					ci.draw_circle(p + Vector2(0, -12), 13, col)
+					ci.draw_circle(p + Vector2(-3, -17), 6, col.lightened(0.15))
+			elif it["shape"] == "wall":
+				for row in 3:
+					for k in 4:
+						var p := a.lerp(b, 0.12 + 0.25 * k + (0.12 if row % 2 == 1 else 0.0) * 0.5) + Vector2(0, -6 - row * 9)
+						_ellipse(ci, p, 11, 5, col.darkened(0.05 * ((k + row) % 3)))
+			else:
+				for k in 5:
+					var p := a.lerp(b, 0.1 + 0.2 * k)
+					ci.draw_line(p, p + Vector2(0, -24), col.darkened(0.15), 4.0)
+					ci.draw_colored_polygon(PackedVector2Array([p + Vector2(-2, -24), p + Vector2(2, -24), p + Vector2(0, -28)]), col.darkened(0.15))
+				for h in [-9.0, -18.0]:
+					ci.draw_line(a + Vector2(0, h), b + Vector2(0, h), col, 3.0)
+		"haybale":
+			_shadow(ci, ground + Vector2(0, 2), 26, 9)
+			ci.draw_rect(Rect2(ground + Vector2(-22, -22), Vector2(44, 22)), col)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-22, -22), ground + Vector2(22, -22), ground + Vector2(30, -30), ground + Vector2(-14, -30)]), col.lightened(0.1))
+			ci.draw_line(ground + Vector2(-8, -22), ground + Vector2(-8, 0), acc, 2)
+			ci.draw_line(ground + Vector2(10, -22), ground + Vector2(10, 0), acc, 2)
+		"haystack":
+			_shadow(ci, ground + Vector2(0, 2), 28, 10)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-26, 0), ground + Vector2(26, 0), ground + Vector2(12, -34), ground + Vector2(0, -44), ground + Vector2(-12, -34)]), col)
+			for k in 4:
+				ci.draw_line(ground + Vector2(-18 + k * 12, -2), ground + Vector2(-10 + k * 7, -30), acc, 1.5)
+		"scarecrow":
+			ci.draw_line(ground, ground + Vector2(0, -58), Color("#7a4f2c"), 4)
+			ci.draw_line(ground + Vector2(-20, -42), ground + Vector2(20, -42), Color("#7a4f2c"), 4)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-12, -46), ground + Vector2(12, -46), ground + Vector2(14, -20), ground + Vector2(-14, -20)]), Color("#3f6fb5"))
+			ci.draw_circle(ground + Vector2(0, -58), 9, col)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-14, -64), ground + Vector2(14, -64), ground + Vector2(0, -78)]), acc)
+		"flowerbed":
+			var bed := _inset(g, 0.8)
+			ci.draw_colored_polygon(bed, SOIL)
+			var cols := [col, acc, Color("#b98cff"), Color("#ffffff")]
+			for k in 9:
+				var p := bed[0].lerp(bed[2], 0.15 + 0.35 * (k % 3)).lerp(bed[3].lerp(bed[1], 0.15 + 0.35 * int(k / 3.0)), 0.5)
+				ci.draw_line(p, p + Vector2(0, -8), STEM, 2)
+				ci.draw_circle(p + Vector2(0, -10), 4.5, cols[k % 4])
+		"flamingo":
+			ci.draw_line(ground, ground + Vector2(0, -26), acc, 2)
+			_ellipse(ci, ground + Vector2(0, -30), 12, 8, col)
+			ci.draw_line(ground + Vector2(8, -32), ground + Vector2(10, -50), col, 4)
+			ci.draw_circle(ground + Vector2(12, -52), 5, col)
+			ci.draw_line(ground + Vector2(15, -52), ground + Vector2(21, -48), acc, 2.5)
+		"bench":
+			_shadow(ci, ground + Vector2(0, 2), 26, 8)
+			ci.draw_rect(Rect2(ground + Vector2(-24, -18), Vector2(48, 6)), col)
+			ci.draw_rect(Rect2(ground + Vector2(-24, -34), Vector2(48, 5)), col)
+			ci.draw_rect(Rect2(ground + Vector2(-24, -27), Vector2(48, 5)), col.darkened(0.1))
+			for x in [-20.0, 18.0]:
+				ci.draw_line(ground + Vector2(x, -12), ground + Vector2(x, 0), acc, 3)
+		"shadetree":
+			_shadow(ci, ground + Vector2(0, 4), 36, 14)
+			match it.get("variant", "oak"):
+				"pine":
+					ci.draw_rect(Rect2(ground + Vector2(-4, -16), Vector2(8, 16)), Color("#7a4f2c"))
+					for k in 3:
+						var y := -16.0 - k * 20.0
+						ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-30 + k * 7, y), ground + Vector2(30 - k * 7, y), ground + Vector2(0, y - 34)]), col.lightened(0.08 * k))
+				"willow":
+					ci.draw_rect(Rect2(ground + Vector2(-5, -40), Vector2(10, 40)), Color("#7a4f2c"))
+					ci.draw_circle(ground + Vector2(0, -62), 30, col)
+					for k in 9:
+						var x := -30.0 + k * 7.5
+						ci.draw_line(ground + Vector2(x, -58), ground + Vector2(x * 1.15, -14), col.darkened(0.15), 3)
+				_:
+					ci.draw_rect(Rect2(ground + Vector2(-6, -44), Vector2(12, 44)), Color("#7a4f2c"))
+					ci.draw_circle(ground + Vector2(-20, -60), 24, col.darkened(0.12))
+					ci.draw_circle(ground + Vector2(20, -60), 24, col.darkened(0.12))
+					ci.draw_circle(ground + Vector2(0, -78), 30, col)
+		"trough":
+			_shadow(ci, ground + Vector2(0, 2), 28, 8)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-28, -18), ground + Vector2(28, -18), ground + Vector2(22, 0), ground + Vector2(-22, 0)]), col)
+			_ellipse(ci, ground + Vector2(0, -18), 26, 5, acc)
+		"bonfire":
+			for k in 5:
+				var a := TAU * k / 5.0
+				ci.draw_circle(ground + Vector2(cos(a) * 16, sin(a) * 7), 5, Color("#8a949c"))
+			ci.draw_line(ground + Vector2(-12, -2), ground + Vector2(12, -10), acc, 4)
+			ci.draw_line(ground + Vector2(12, -2), ground + Vector2(-12, -10), acc, 4)
+			var flick := sin(Time.get_ticks_msec() / 120.0) * 3.0
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-12, -6), ground + Vector2(12, -6), ground + Vector2(0, -38 - flick)]), col)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-6, -6), ground + Vector2(6, -6), ground + Vector2(0, -24 + flick)]), Color("#ffe066"))
+		"wheelbarrow":
+			_shadow(ci, ground + Vector2(0, 2), 24, 8)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-22, -26), ground + Vector2(14, -26), ground + Vector2(8, -10), ground + Vector2(-16, -10)]), col)
+			ci.draw_circle(ground + Vector2(12, -8), 7, acc)
+			ci.draw_line(ground + Vector2(-20, -24), ground + Vector2(-34, -16), Color("#7a4f2c"), 3)
+			ci.draw_line(ground + Vector2(-12, -10), ground + Vector2(-14, 0), acc, 3)
+		"birdhouse":
+			ci.draw_line(ground, ground + Vector2(0, -40), Color("#7a4f2c"), 4)
+			ci.draw_rect(Rect2(ground + Vector2(-11, -60), Vector2(22, 20)), acc)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-15, -60), ground + Vector2(15, -60), ground + Vector2(0, -74)]), col)
+			ci.draw_circle(ground + Vector2(0, -50), 4, Color("#2b2420"))
+		"birdbath":
+			ci.draw_rect(Rect2(ground + Vector2(-4, -24), Vector2(8, 24)), col.darkened(0.1))
+			_ellipse(ci, ground + Vector2(0, -26), 22, 8, col)
+			_ellipse(ci, ground + Vector2(0, -27), 16, 5, acc)
+		"picnic":
+			_shadow(ci, ground + Vector2(0, 2), 30, 10)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-30, -22), ground + Vector2(20, -22), ground + Vector2(30, -14), ground + Vector2(-20, -14)]), col)
+			for k in 3:
+				ci.draw_line(ground + Vector2(-22 + k * 18, -21), ground + Vector2(-14 + k * 18, -15), acc, 3)
+			for x in [-20.0, 20.0]:
+				ci.draw_line(ground + Vector2(x, -14), ground + Vector2(x - 6, 0), col.darkened(0.2), 3)
+		"well":
+			_shadow(ci, ground + Vector2(0, 2), 26, 10)
+			ci.draw_rect(Rect2(ground + Vector2(-20, -24), Vector2(40, 24)), col)
+			_ellipse(ci, ground + Vector2(0, -24), 20, 7, Color("#2b3a4a"))
+			for x in [-18.0, 18.0]:
+				ci.draw_line(ground + Vector2(x, -24), ground + Vector2(x, -54), acc, 3)
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-26, -52), ground + Vector2(26, -52), ground + Vector2(0, -70)]), acc.lightened(0.1))
+		"gnome":
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-9, 0), ground + Vector2(9, 0), ground + Vector2(7, -18), ground + Vector2(-7, -18)]), acc)
+			ci.draw_circle(ground + Vector2(0, -22), 6, Color("#f2c7a8"))
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-6, -16), ground + Vector2(6, -16), ground + Vector2(0, -8)]), Color("#fbf6ec"))
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-8, -26), ground + Vector2(8, -26), ground + Vector2(0, -44)]), col)
+		"lamp":
+			ci.draw_line(ground, ground + Vector2(0, -60), col, 4)
+			ci.draw_rect(Rect2(ground + Vector2(-8, -74), Vector2(16, 14)), acc)
+			ci.draw_rect(Rect2(ground + Vector2(-10, -78), Vector2(20, 4)), col)
+		"sundial":
+			ci.draw_rect(Rect2(ground + Vector2(-8, -26), Vector2(16, 26)), col)
+			_ellipse(ci, ground + Vector2(0, -27), 16, 6, col.lightened(0.15))
+			ci.draw_colored_polygon(PackedVector2Array([ground + Vector2(-2, -28), ground + Vector2(10, -28), ground + Vector2(-2, -40)]), acc)
+		"pond":
+			var pond := _inset(g, 0.75)
+			var c := (pond[0] + pond[2]) / 2.0
+			_ellipse(ci, c, (pond[1].x - pond[3].x) * 0.5, (pond[2].y - pond[0].y) * 0.5, col.darkened(0.15))
+			_ellipse(ci, c + Vector2(0, -3), (pond[1].x - pond[3].x) * 0.44, (pond[2].y - pond[0].y) * 0.4, col)
+			for k in 3:
+				_ellipse(ci, c + Vector2(-40 + k * 34, -4 + (k % 2) * 10), 9, 4, acc)
+			for k in 4:
+				var p := pond[3].lerp(pond[2], 0.2 + 0.2 * k)
+				ci.draw_line(p, p + Vector2(0, -16), STEM, 2)
+		"arbor":
+			for x in [-22.0, 22.0]:
+				ci.draw_line(ground + Vector2(x, 0), ground + Vector2(x, -50), col, 4)
+			ci.draw_arc(ground + Vector2(0, -50), 22, PI, TAU, 16, col, 4)
+			for k in 8:
+				var a := PI + PI * k / 7.0
+				ci.draw_circle(ground + Vector2(0, -50) + Vector2(cos(a), sin(a)) * 22, 4, acc if k % 2 == 0 else LEAF)
+		"bridge":
+			var a2 := g[3].lerp(g[2], 0.5)
+			var b2 := g[0].lerp(g[1], 0.5)
+			_ellipse(ci, ground, 40, 14, acc)
+			ci.draw_line(a2 + Vector2(0, -4), b2 + Vector2(0, -4), col, 14)
+			for k in 6:
+				var p := a2.lerp(b2, 0.1 + 0.16 * k)
+				ci.draw_line(p + Vector2(-5, -10), p + Vector2(5, 2), col.darkened(0.2), 2)
+			ci.draw_line(a2 + Vector2(0, -22), b2 + Vector2(0, -22), col.darkened(0.15), 3)
+		"fountain":
+			var fc := (g[0] + g[2]) / 2.0
+			_shadow(ci, fc + Vector2(0, 6), 70, 24)
+			_ellipse(ci, fc, 62, 22, col.darkened(0.15))
+			_ellipse(ci, fc + Vector2(0, -6), 56, 18, acc)
+			ci.draw_rect(Rect2(fc + Vector2(-7, -50), Vector2(14, 44)), col)
+			_ellipse(ci, fc + Vector2(0, -50), 22, 8, col)
+			var sp := sin(Time.get_ticks_msec() / 200.0) * 2.0
+			for k in 5:
+				ci.draw_line(fc + Vector2(0, -56), fc + Vector2(-20 + k * 10, -20 + sp), acc.lightened(0.3), 2)
+		"gazebo":
+			var gc := (g[0] + g[2]) / 2.0
+			_shadow(ci, gc + Vector2(0, 6), 64, 22)
+			_ellipse(ci, gc, 58, 20, col.darkened(0.1))
+			for k in 6:
+				var a := PI * 0.1 + PI * 0.8 * k / 5.0
+				var p := gc + Vector2(cos(a) * -52, sin(a) * 16)
+				ci.draw_line(p, p + Vector2(0, -60), col, 4)
+			ci.draw_colored_polygon(PackedVector2Array([gc + Vector2(-66, -60), gc + Vector2(66, -60), gc + Vector2(0, -104)]), acc)
+			ci.draw_line(gc + Vector2(0, -104), gc + Vector2(0, -116), acc.darkened(0.3), 3)
+		"cabin":
+			var base := _inset(g, 0.7)
+			_yard_shadow(ci, g)
+			var t := _box(ci, base, 56.0, col)
+			for k in 6:
+				var y := Vector2(0, -8.0 - k * 8.0)
+				ci.draw_line(base[3] + y, base[2] + y, col.darkened(0.3), 2)
+				ci.draw_line(base[2] + y, base[1] + y, col.darkened(0.45), 2)
+			_door(ci, base, 0.5, 0.12, 34, acc.darkened(0.3))
+			_gable(ci, t, 34.0, acc, col)
+			var chim := t[0].lerp(t[1], 0.3) + Vector2(0, -18)
+			ci.draw_rect(Rect2(chim + Vector2(-6, -30), Vector2(12, 30)), Color("#8a949c"))
+		"mastery":
+			ci.draw_line(ground, ground + Vector2(0, -36), Color("#7a4f2c"), 4)
+			ci.draw_rect(Rect2(ground + Vector2(-24, -62), Vector2(48, 28)), Color("#fbefd2"))
+			ci.draw_rect(Rect2(ground + Vector2(-24, -62), Vector2(48, 28)), acc, false, 2)
+			ci.draw_circle(ground + Vector2(-12, -48), 8, col)
+			for k in 3:
+				var sc := ground + Vector2(4 + k * 8, -48)
+				ci.draw_colored_polygon(PackedVector2Array([sc + Vector2(0, -5), sc + Vector2(2, -1), sc + Vector2(5, -1), sc + Vector2(2, 1), sc + Vector2(3, 5), sc + Vector2(0, 2), sc + Vector2(-3, 5), sc + Vector2(-2, 1), sc + Vector2(-5, -1), sc + Vector2(-2, -1)]), Color("#f2c230"))
+		_:
+			_shadow(ci, ground, 16, 6)
+			ci.draw_circle(ground + Vector2(0, -12), 10, col)
+
+
+## Duck Pond: water with a little duck house on stilts and ducks bobbing.
+static func _duck_pond(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: int) -> Vector2:
+	var water := Color.html(str(it.get("color", "#5fa8d3")))
+	var field := _inset(g, 0.9)
+	ci.draw_colored_polygon(field, Color("#9fd36c"))
+	var c := (field[0] + field[2]) / 2.0
+	_ellipse(ci, c + Vector2(0, 6), (field[1].x - field[3].x) * 0.42, (field[2].y - field[0].y) * 0.38, water.darkened(0.15))
+	_ellipse(ci, c + Vector2(0, 4), (field[1].x - field[3].x) * 0.38, (field[2].y - field[0].y) * 0.32, water)
+	for k in mini(5, int(ceil(inside / 4.0))):
+		var p := c + Vector2(-50 + k * 24, 4 + (k % 2) * 10)
+		_ellipse(ci, p, 8, 5, Color("#fbf6ec"))
+		ci.draw_circle(p + Vector2(6, -5), 4, Color("#fbf6ec"))
+		ci.draw_colored_polygon(PackedVector2Array([p + Vector2(9, -6), p + Vector2(14, -4), p + Vector2(9, -3)]), Color("#f2a33a"))
+	var house := field[0].lerp(c, 0.45)
+	for x in [-14.0, 14.0]:
+		ci.draw_line(house + Vector2(x, 0), house + Vector2(x, -14), Color("#7a5230"), 3)
+	ci.draw_rect(Rect2(house + Vector2(-18, -34), Vector2(36, 20)), Color("#e9d8a6"))
+	ci.draw_colored_polygon(PackedVector2Array([house + Vector2(-22, -34), house + Vector2(22, -34), house + Vector2(0, -50)]), Color.html(str(it.get("roof", "#7a5230"))))
+	ci.draw_circle(house + Vector2(0, -24), 5, Color("#3a2614"))
+	return c + Vector2(0, -70)
+
+
+## Sheep Pen and Goat Pen: a fenced grassy yard with a small shed and the flock grazing.
+static func _pen(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: int) -> Vector2:
+	var wall := Color.html(str(it.get("color", "#d9c9a3")))
+	var roof := Color.html(str(it.get("roof", "#8a5a32")))
+	var yard := _inset(g, 0.94)
+	ci.draw_colored_polygon(yard, Color("#a9d97a"))
+	var c := (yard[0] + yard[2]) / 2.0
+	var shed := PackedVector2Array([yard[0], yard[0].lerp(yard[1], 0.42), Vector2.ZERO, yard[0].lerp(yard[3], 0.42)])
+	shed[2] = shed[1] + (shed[3] - shed[0])
+	var t := _box(ci, shed, 30.0, wall)
+	_gable(ci, t, 16.0, roof, wall)
+	var goat: bool = it.get("id", "") == "goat_pen"
+	var body := Color("#e8e2d4") if goat else Color("#fbf6ec")
+	for k in mini(5, int(ceil(inside / 5.0))):
+		var p := c + Vector2(-34 + k * 20, 4 + (k % 2) * 16)
+		if goat:
+			_ellipse(ci, p, 11, 7, body)
+			ci.draw_circle(p + Vector2(10, -6), 5, body)
+			ci.draw_line(p + Vector2(9, -10), p + Vector2(6, -16), Color("#8a7a5a"), 2)
+		else:
+			for j in 4:
+				ci.draw_circle(p + Vector2(-6 + j * 4, -2 + (j % 2) * 3), 6, body)
+			ci.draw_circle(p + Vector2(11, -4), 4, Color("#3b3330"))
+	var trough := yard[2].lerp(yard[1], 0.3) + Vector2(-6, -12)
+	ci.draw_rect(Rect2(trough + Vector2(-14, -6), Vector2(28, 8)), Color("#8a5a32"))
+	_fence(ci, yard, Color("#c9a26a"))
+	return c + Vector2(0, -72)
+
+
+## Rabbit Hutch: a small wooden hutch on legs with a wire front and a carrot patch.
+static func _hutch(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: int) -> Vector2:
+	var wall := Color.html(str(it.get("color", "#e8c9a0")))
+	var roof := Color.html(str(it.get("roof", "#a8743f")))
+	_yard_shadow(ci, g, 0.36)
+	var base := _inset(g, 0.62)
+	for p in [base[3], base[2], base[1]]:
+		ci.draw_line(p, p + Vector2(0, -14), Color("#7a5230"), 4.0)
+	var t := _box(ci, base, 26.0, wall, 14.0)
+	# Wire mesh on the front wall.
+	for k in 6:
+		var a := base[3].lerp(base[2], 0.15 + 0.12 * k) + Vector2(0, -14)
+		ci.draw_line(a, a + Vector2(0, -22), Color("#5c6670"), 1.2)
+	ci.draw_line(base[3].lerp(base[2], 0.15) + Vector2(0, -26), base[3].lerp(base[2], 0.87) + Vector2(0, -26), Color("#5c6670"), 1.2)
+	_gable(ci, t, 14.0, roof, wall)
+	if inside > 0:
+		var r := base[3].lerp(base[2], 0.5) + Vector2(0, -22)
+		_ellipse(ci, r, 7, 5, Color("#f4efe4"))
+		_ellipse(ci, r + Vector2(-2, -8), 2, 5, Color("#f4efe4"))
+		_ellipse(ci, r + Vector2(3, -8), 2, 5, Color("#f4efe4"))
+	for k in 3:
+		var cp := g[2].lerp(g[1], 0.25 + 0.15 * k) + Vector2(0, -10)
+		ci.draw_line(cp, cp + Vector2(0, -8), STEM, 2)
+		ci.draw_colored_polygon(PackedVector2Array([cp + Vector2(-2, 0), cp + Vector2(2, 0), cp + Vector2(0, 6)]), Color("#f28a2e"))
+	return (t[0] + t[2]) / 2.0 + Vector2(0, -30)

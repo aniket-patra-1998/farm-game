@@ -218,6 +218,14 @@ func _build_toolbar(root: Control) -> void:
 	move.pressed.connect(func() -> void: tool_selected.emit("move", ""))
 	row.add_child(move)
 
+	var turn := _tool_button("Rotate\nturn decorations")
+	turn.pressed.connect(func() -> void: tool_selected.emit("rotate", ""))
+	row.add_child(turn)
+
+	var sell := _tool_button("Sell\n5% back")
+	sell.pressed.connect(func() -> void: tool_selected.emit("sell", ""))
+	row.add_child(sell)
+
 	# Vehicles you own, and the shared fuel tank. Hidden until the first vehicle.
 	_vehicle_row = HBoxContainer.new()
 	_vehicle_row.add_theme_constant_override("separation", 12)
@@ -517,7 +525,7 @@ func _build_market(content: VBoxContainer) -> void:
 	content.add_child(_land_card())
 	content.add_child(BookPanel.text(
 		"Buy, then drag onto an open grassy spot and let go. Use the Move tool to rearrange later.", 20, BookPanel.CREAM))
-	for section in [["tree", "Trees"], ["animal", "Animals"], ["building", "Buildings"], ["vehicle", "Vehicles"]]:
+	for section in [["tree", "Trees"], ["animal", "Animals"], ["building", "Buildings"], ["vehicle", "Vehicles"], ["decor", "Decorations"]]:
 		content.add_child(BookPanel.text(section[1], 26, BookPanel.SUN))
 		for id in Game.item_order:
 			var it := Game.item_data(id)
@@ -584,6 +592,9 @@ func _market_row(id: String, it: Dictionary) -> Control:
 			detail = "%s 2x2 plots a tap · %d fuel a plot · upgrades to 4x4" % [verbs.get(it["job"], ""), int(it.get("fuel_per_plot", 1))]
 			if it.has("build_materials"):
 				detail += " · chassis finished with %d Vehicle Parts" % int(it["build_materials"]["vehicle_parts"])
+		"decor":
+			var fpd := Game.footprint(id)
+			detail = "Decoration · +%d XP · %dx%d · sells for %d" % [Game.buy_xp(id), fpd.x, fpd.y, int(round(int(it["cost"]) * GameState.SELL_SHARE))]
 		_:
 			var what: String = it.get("product", "Fruit")
 			detail = "%s every %s · %d coins, %d XP" % [

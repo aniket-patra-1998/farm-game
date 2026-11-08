@@ -36,6 +36,15 @@ const PART_NAMES := {"bricks": "Bricks", "nails": "Nails", "boards": "Wooden Boa
 	"smokers": "Smokers", "beeswax": "Beeswax", "vehicle_parts": "Vehicle Parts"}
 const PART_CHANCE := 0.08          # per harvest or collection
 const DAILY_PARTS := 2
+# FarmVille's daily bonus: come back on consecutive days for a bigger reward, up to day 5.
+const DAILY_STREAK := [
+	{"coins": 100}, {"coins": 250}, {"coins": 500, "fertilizer": 1},
+	{"coins": 750, "unwither": 1}, {"coins": 1000, "gems": 1}]
+const SELL_SHARE := 0.05           # FarmVille sold anything back for 5% of its price
+const SELL_COINS_PER_GEM := 50     # our guess for items bought with gems
+const DECOR_MIN_XP := 5            # decorations: 1 XP per 100 coins, at least 5
+const LAMB_CHANCE := 0.25          # Sheep Pen harvest with a ram inside
+const PIGLET_CHANCE := 0.25        # Pig Pen harvest with a boar inside
 
 # Building specials, the FarmVille way.
 const CALF_CHANCE := 0.25          # Dairy Farm harvest with a bull inside
@@ -156,6 +165,7 @@ var arborists := 0                 # collect every tree at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
 var egg_data := {}                 # data/mystery_eggs.json
 var last_daily_day := 0            # day number of the last daily gift
+var daily_streak := 0              # consecutive days the daily bonus was collected
 var stored: Array = []             # objects put away in the barn (no row or col)
 var mastery := {}                  # crop id -> lifetime harvest count
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
@@ -479,6 +489,7 @@ func _roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 	if not bird_collection.is_empty() and not collectible_due and rng.randf() < BIRD_CHANCE:
 		var bird_id := _pick_item(bird_collection)
 		owned[bird_id] = int(owned.get(bird_id, 0)) + 1
+		_bump("birds_seen", 1)
 		collections_changed.emit()
 		return {"type": "bird", "text": "A %s visited!" % item_names[bird_id].to_lower(),
 			"name": item_names[bird_id], "collection": bird_collection["name"]}
@@ -664,6 +675,11 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 		message.emit("Not enough coins for a %s" % it["name"])
 		return false
 	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
+	var bought_xp := buy_xp(item_id)
+	if bought_xp > 0:
+		add_xp(bought_xp)
+	if it["kind"] == "decor":
+		_bump("decor_bought", 1)
 	if it["kind"] == "building":
 		obj["level"] = 1
 		obj["inside"] = {}
@@ -1002,6 +1018,16 @@ func _building_specials(b: Dictionary) -> Array[String]:
 				out.append("+%d XP" % STABLE_XP)
 		"nursery":
 			out.append_array(_grow_babies(b))
+		"lambs":
+			if has_inside(b, "ram") and drops_enabled and rng.randf() < LAMB_CHANCE:
+				if place_somewhere("lamb"):
+					message.emit("A lamb was born! Raise it in a Nursery Barn.")
+					out.append("A lamb!")
+		"truffles":
+			if has_inside(b, "boar") and drops_enabled and rng.randf() < PIGLET_CHANCE:
+				if place_somewhere("piglet"):
+					message.emit("A piglet was born! Raise it in a Nursery Barn.")
+					out.append("A piglet!")
 		"beehive":
 			if drops_enabled and rng.randf() < FERTILIZE_ALL_CHANCE:
 				fertilize_alls += 1
@@ -1109,6 +1135,7 @@ func _grow_babies(nursery: Dictionary) -> Array[String]:
 			if int(inside[baby[0]]) <= 0:
 				inside.erase(baby[0])
 			add_xp(NURSERY_SPARE_XP)
+			_bump("babies_raised", 1)
 			var adult_name: String = item_data(into.get(baby[0], baby[0]))["name"]
 			message.emit("Your %s grew up into a %s!" % [item_data(baby[0])["name"].to_lower(), adult_name.to_lower()])
 			out.append("A %s grew up!" % adult_name.to_lower())
@@ -1218,14 +1245,39 @@ func check_daily_gift() -> void:
 	var today := day_number()
 	if today <= last_daily_day:
 		return
+	daily_streak = daily_streak + 1 if today == last_daily_day + 1 else 1
 	last_daily_day = today
-	var got: Array[String] = []
+	var got: Array[String] = _give_daily_bonus(daily_streak)
 	for k in DAILY_PARTS:
 		var p := _pick_part()
 		add_part(p, 1)
 		got.append(PART_NAMES[p])
-	message.emit("Daily gift: " + ", ".join(PackedStringArray(got)))
+	_bump("daily_bonuses", 1)
+	message.emit("Day %d bonus: %s" % [mini(daily_streak, DAILY_STREAK.size()), ", ".join(PackedStringArray(got))])
 	queue_save()
+
+
+## The reward for this day of the streak; day 5 and on repeat the biggest one.
+func daily_reward(day: int) -> Dictionary:
+	return DAILY_STREAK[clampi(day, 1, DAILY_STREAK.size()) - 1]
+
+
+func _give_daily_bonus(day: int) -> Array[String]:
+	var got: Array[String] = []
+	var reward := daily_reward(day)
+	if reward.has("coins"):
+		add_coins(int(reward["coins"]), false)
+		got.append("%d coins" % int(reward["coins"]))
+	if reward.has("fertilizer"):
+		fertilizer_bags += int(reward["fertilizer"])
+		got.append("%d Fertilizer" % int(reward["fertilizer"]))
+	if reward.has("unwither"):
+		add_unwithers(int(reward["unwither"]))
+		got.append("%d Unwither" % int(reward["unwither"]))
+	if reward.has("gems"):
+		add_gems(int(reward["gems"]))
+		got.append("%d gem" % int(reward["gems"]))
+	return got
 
 
 # ---------------------------------------------------------------- barn
@@ -1562,6 +1614,92 @@ func _roll_sapling(orchard: Dictionary) -> String:
 	return ""
 
 
+# ---------------------------------------------------------------- buying XP, selling and turning
+
+## FarmVille gave XP for what you bought: 1 per 100 coins, and at least 5 for a decoration.
+func buy_xp(item_id: String) -> int:
+	var it := item_data(item_id)
+	if it.has("gem_cost"):
+		return 0
+	var xp_gain := int(int(it.get("cost", 0)) / 100.0)
+	if it.get("kind", "") == "decor" and int(it.get("cost", 0)) > 0:
+		xp_gain = maxi(DECOR_MIN_XP, xp_gain)
+	return xp_gain
+
+
+## What selling an object returns: 5% of its price, as in FarmVille.
+func sell_value(obj: Dictionary) -> int:
+	var it := item_data(obj["id"])
+	if it.has("gem_cost"):
+		return int(it["gem_cost"]) * SELL_COINS_PER_GEM
+	return int(round(int(it.get("cost", 0)) * SELL_SHARE))
+
+
+func can_sell(obj: Dictionary) -> bool:
+	if obj.is_empty() or obj.get("stray", false):
+		return false
+	return obj["id"] != "barn" and obj["id"] != "farmhouse"
+
+
+## Sells an object. Animals, trees or vehicles inside a building move back onto the farm first.
+func sell_object(uid: int) -> bool:
+	var o := object_by_uid(uid)
+	if not can_sell(o):
+		message.emit("That can't be sold")
+		return false
+	var held: Array[String] = []
+	for id in o.get("inside", {}):
+		for k in int(o["inside"][id]):
+			held.append(id)
+	objects.erase(o)
+	_rebuild_occupancy()
+	if held.size() > 0:
+		# Room check: the building's own tiles are free now that it's gone.
+		var free := 0
+		for r in farm_size:
+			for c in farm_size:
+				var i := index_of(r, c)
+				if plots[i].get("state", "grass") == "grass" and not is_occupied(i):
+					free += 1
+		if free < held.size():
+			objects.append(o)
+			_rebuild_occupancy()
+			message.emit("Not enough open grass for the %d inside. Make room first." % held.size())
+			return false
+		for id in held:
+			place_somewhere(id)
+	var value := sell_value(o)
+	add_coins(value)
+	_bump("items_sold", 1)
+	var moved := (" · %d moved out onto the farm" % held.size()) if held.size() > 0 else ""
+	message.emit("Sold the %s for %d coins%s" % [item_data(o["id"])["name"], value, moved])
+	inventory_changed.emit()
+	_objects_updated()
+	return true
+
+
+## Turns an object to face the other way. Only square ones turn, so nothing changes size.
+func can_rotate(obj: Dictionary) -> bool:
+	if obj.is_empty():
+		return false
+	# Buildings carry a level badge and signs, so they keep facing the same way.
+	var k := kind_of(obj)
+	if k == "building" or k == "barn":
+		return false
+	var fp := footprint(obj["id"])
+	return fp.x == fp.y
+
+
+func rotate_object(uid: int) -> bool:
+	var o := object_by_uid(uid)
+	if not can_rotate(o):
+		message.emit("Buildings and big pieces can't turn")
+		return false
+	o["flip"] = not o.get("flip", false)
+	_objects_updated()
+	return true
+
+
 # ---------------------------------------------------------------- vehicles and fuel
 
 ## Vehicle types you can drive: finished ones on the farm or parked in a garage.
@@ -1797,9 +1935,8 @@ func _spawn_stray() -> bool:
 			continue
 		var w := 0.0
 		if it.get("stray_only", false):
-			# FarmVille's lonely bull and wandering stallion: only once you have their building.
-			var home := "cow_shed" if id == "bull" else "horse_stable"
-			if _owns(home):
+			# FarmVille's lonely bull, wandering stallion, ram and boar: only once you have their home.
+			if _owns(str(it.get("home", ""))):
 				w = 0.6
 		elif int(it["unlock_level"]) <= level() + 2 and not it.has("gem_cost"):
 			w = 1.0 / maxf(1.0, float(it["cost"]) / 100.0)
@@ -2021,6 +2158,10 @@ func _award_mastery_star(crop_id: String, star: int) -> void:
 	add_xp(MASTERY_STAR_XP[star - 1])
 	message.emit("%s mastery: star %d!" % [crops[crop_id]["name"], star])
 	_bump("mastery_stars", 1)
+	if star == 3 and place_somewhere("mastery_sign"):
+		objects[-1]["crop"] = crop_id # FarmVille's mastery sign, to show off on the farm
+		message.emit("%s mastered! A mastery sign was put on your farm." % crops[crop_id]["name"])
+		_objects_updated()
 
 
 # ---------------------------------------------------------------- economy
@@ -2200,6 +2341,7 @@ func _new_game() -> void:
 	fertilizer_bags = 0
 	stored = []
 	last_daily_day = day_number()
+	daily_streak = 0
 	_rebuild_occupancy()
 	save_game()
 
@@ -2264,6 +2406,7 @@ func save_game() -> void:
 		"arborists": arborists,
 		"fertilizer_bags": fertilizer_bags,
 		"last_daily_day": last_daily_day,
+		"daily_streak": daily_streak,
 		"stored": stored,
 		"next_stray_at": next_stray_at,
 		"next_uid": next_uid,
@@ -2313,6 +2456,7 @@ func load_game() -> bool:
 	for p in PARTS:
 		parts[p] = int(saved_parts.get(p, 0))
 	last_daily_day = int(data.get("last_daily_day", day_number()))
+	daily_streak = int(data.get("daily_streak", 0))
 	mystery_eggs = {}
 	var saved_eggs: Dictionary = data.get("mystery_eggs", {})
 	for colour in saved_eggs:

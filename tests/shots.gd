@@ -9,6 +9,10 @@ var _main: Node
 func _ready() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
+	# A clean field, so every piece can be seen.
+	Game.objects.clear()
+	for i in Game.plots.size():
+		Game.plots[i] = {"state": "grass"}
 	# Midday, so the colours show without night tint.
 	var t := Game.now()
 	Game.debug_time_offset = (12 * 3600 - t % 86400 + 86400) % 86400
@@ -34,6 +38,20 @@ func _ready() -> void:
 	_put("seeder", 4, 17, 1, {})
 	_put("combine", 4, 18, 1, {})
 	_put("combine", 5, 17, 1, {}, {"construction": {}})
+	_put("duck_pond", 2, 0, 1, {"duck": 8})
+	_put("sheep_pen", 2, 3, 1, {"sheep": 10})
+	_put("goat_pen", 2, 6, 1, {"goat": 6})
+	_put("rabbit_hutch", 2, 9, 1, {"rabbit": 3})
+	var decor := ["hay_bale", "haystack", "scarecrow", "flower_bed", "pink_flamingo", "bench", "pine_tree", "water_trough",
+		"bonfire", "wheelbarrow", "oak_tree", "birdhouse", "stone_wall", "birdbath", "picnic_table", "water_well",
+		"garden_gnome", "lamp_post", "maple_tree", "sundial", "arbor", "wooden_bridge", "willow_tree", "hedge",
+		"wooden_fence", "white_picket_fence", "dirt_path", "brick_path", "stone_path", "mastery_sign"]
+	for k in decor.size():
+		_put(decor[k], 6 + int(k / 6.0), k % 6, 1, {}, {"crop": "wheat"} if decor[k] == "mastery_sign" else {})
+	_put("small_pond", 6, 7, 1, {})
+	_put("fountain", 9, 7, 1, {})
+	_put("gazebo", 6, 9, 1, {})
+	_put("log_cabin", 9, 9, 1, {})
 	for o in Game.objects:
 		o["t"] = old
 	Game._rebuild_occupancy()
@@ -48,7 +66,7 @@ func _ready() -> void:
 	# Close-ups of each row of buildings.
 	var grid: FarmGrid = _main.get("grid")
 	var cam: Camera2D = _main.get("camera")
-	for spot in [[3, 16, "vehicles"], [8, 16, "orchards"], [13, 2, "small_left"], [13, 13, "small_mid"], [13, 21, "small_right"],
+	for spot in [[3, 4, "homes"], [7, 2, "decor_left"], [8, 8, "decor_right"], [3, 16, "vehicles"], [8, 16, "orchards"], [13, 2, "small_left"], [13, 13, "small_mid"], [13, 21, "small_right"],
 			[18, 2, "big_left"], [18, 13, "big_mid"], [18, 21, "big_right"]]:
 		cam.zoom = Vector2(0.9, 0.9)
 		cam.position = grid.to_global(grid.center_of(Game.index_of(int(spot[0]) + 1, int(spot[1]))))

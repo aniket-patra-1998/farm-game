@@ -1487,3 +1487,193 @@ func test_60_garage_parks_vehicles_and_state_saves() -> void:
 	_check(h.owned_vehicles().has("tractor"), "the parked tractor is still there")
 	h.queue_free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+# ---------------------------------------------------------------- gap pass: decorations, selling, homes, daily bonus
+
+func test_61_decorations_give_xp_like_farmville() -> void:
+	var g := _farm()
+	g.coins = 10000000
+	_eq(g.buy_xp("hay_bale"), 5, "a 100-coin hay bale gives 5 XP")
+	_eq(g.buy_xp("white_picket_fence"), 5, "a 300-coin fence gives 5 XP")
+	_eq(g.buy_xp("log_cabin"), 2500, "a 250,000-coin Log Cabin gives 2,500 XP")
+	_eq(g.buy_xp("tractor"), 50, "other buys give 1 XP per 100 coins")
+	_eq(g.buy_xp("brown_chicken"), 0, "gem buys give none")
+	var xp := g.xp
+	_check(g.buy_and_place("hay_bale", 8, 8), "buy a hay bale")
+	_eq(g.xp - xp, 5, "5 XP for it")
+	_eq(g.stat("decor_bought"), 1, "decorations counted for the Decorator ribbon")
+	var count := 0
+	for id in g.item_order:
+		var it: Dictionary = g.items[id]
+		if it["kind"] == "decor" and int(it["unlock_level"]) < 99:
+			count += 1
+	_check(count >= 30, "at least 30 decorations in the Market (%d)" % count)
+	_done(g)
+
+
+func test_62_sell_anything_for_five_percent() -> void:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(10)
+	g.buy_and_place("hay_bale", 8, 8)
+	var bale := g.object_at(g.index_of(8, 8))
+	var coins := g.coins
+	_eq(g.sell_value(bale), 5, "a hay bale sells for 5")
+	_check(g.sell_object(int(bale["uid"])), "sold")
+	_eq(g.coins, coins + 5, "5 coins back")
+	_check(g.object_at(g.index_of(8, 8)).is_empty(), "it's gone")
+	_check(not g.sell_object(int(g.barn()["uid"])), "the barn can't be sold")
+	_check(not g.can_sell(g.object_at(g.index_of(0, 0))), "nor the farmhouse")
+	g.gems = 10
+	g.buy_and_place("brown_chicken", 8, 9)
+	_eq(g.sell_value(g.object_at(g.index_of(8, 9))), 5 * GameState.SELL_COINS_PER_GEM, "gem items sell for coins")
+	# A building's animals move back out when it's sold.
+	g.buy_and_place("chicken_coop", 0, 4)
+	var coop := g.object_at(g.index_of(0, 4))
+	for k in 5:
+		g.place_somewhere("chicken")
+	var before := _count(g, "chicken")
+	g.fill_building(int(coop["uid"]))
+	_eq(_count(g, "chicken"), before - 5, "5 chickens in the coop")
+	_check(g.sell_object(int(coop["uid"])), "sell the coop")
+	_eq(_count(g, "chicken"), before, "the chickens are back on the farm")
+	_eq(_count(g, "chicken_coop"), 0, "the coop is gone")
+	_eq(g.stat("items_sold"), 2, "sales counted")
+	_done(g)
+
+
+func test_63_rotate_decorations() -> void:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(10)
+	g.buy_and_place("wooden_fence", 8, 8)
+	var fence := g.object_at(g.index_of(8, 8))
+	_check(g.rotate_object(int(fence["uid"])), "a fence turns")
+	_check(fence.get("flip", false), "it faces the other way")
+	g.rotate_object(int(fence["uid"]))
+	_check(not fence.get("flip", false), "and back")
+	g.buy_and_place("chicken_coop", 0, 4)
+	_check(not g.rotate_object(int(g.object_at(g.index_of(0, 4))["uid"])), "buildings don't turn")
+	_done(g)
+
+
+func test_64_new_homes_rams_boars_lambs_piglets() -> void:
+	var g := _farm(true)
+	g.coins = 10000000
+	g.xp = g.xp_for_level(20)
+	_check(g.buy_and_place("sheep_pen", 0, 4), "Sheep Pen")
+	var pen := g.object_at(g.index_of(0, 4))
+	for id in ["sheep", "sheep", "llama", "alpaca", "ram"]:
+		g.place_somewhere(id)
+	_eq(g.fill_building(int(pen["uid"])), 5, "sheep, llama, alpaca and the ram move in")
+	_eq(g.inside_total(pen), 4, "the ram takes no space")
+	for d in 40:
+		_skip(g, 86400)
+		g.collect(int(pen["uid"]))
+	_check(_count(g, "lamb") > 0, "lambs were born (%d)" % _count(g, "lamb"))
+	_check(g.buy_and_place("pig_pen", 8, 8), "Pig Pen")
+	var pigs := g.object_at(g.index_of(8, 8))
+	pigs.erase("construction")
+	g.place_somewhere("pig")
+	g.place_somewhere("boar")
+	g.fill_building(int(pigs["uid"]))
+	_check(g.has_inside(pigs, "boar"), "the boar lives in the pig pen")
+	pigs["t"] = g.now()
+	for d in 40:
+		_skip(g, 86400)
+		g.collect(int(pigs["uid"]))
+	_check(_count(g, "piglet") > 0, "piglets were born (%d)" % _count(g, "piglet"))
+	# The nursery raises them.
+	g.buy_and_place("nursery_barn", 3, 6)
+	var nursery := g.object_at(g.index_of(3, 6))
+	nursery.erase("construction")
+	var sheep := _count(g, "sheep")
+	g.fill_building(int(nursery["uid"]))
+	for d in 4:
+		_skip(g, 86400)
+		g.collect(int(nursery["uid"]))
+	_check(_count(g, "sheep") > sheep, "lambs grew into sheep")
+	_check(g.stat("babies_raised") > 0, "babies counted for the Nanny ribbon")
+	# The other homes.
+	for pair in [["duck_pond", "duck"], ["duck_pond", "goose"], ["goat_pen", "goat"], ["rabbit_hutch", "rabbit"],
+			["horse_stable", "pony"], ["horse_stable", "donkey"], ["cow_shed", "ox"], ["chicken_coop", "turkey"]]:
+		_check(g.building_accepts({"id": pair[0]}, pair[1]), "%s holds %s" % pair)
+	_done(g)
+
+
+func test_65_rams_and_boars_wander_in_only_with_their_home() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(20)
+	var seen := {}
+	for k in 300:
+		if g._spawn_stray():
+			seen[g.objects[-1]["id"]] = true
+			g.objects.pop_back()
+			g._rebuild_occupancy()
+	_check(not seen.has("ram") and not seen.has("boar"), "no ram or boar without their homes")
+	g.coins = 10000000
+	g.buy_and_place("sheep_pen", 0, 4)
+	seen = {}
+	for k in 300:
+		if g._spawn_stray():
+			seen[g.objects[-1]["id"]] = true
+			g.objects.pop_back()
+			g._rebuild_occupancy()
+	_check(seen.has("ram"), "a ram wanders in once you have a Sheep Pen")
+	_check(not seen.has("boar"), "still no boar")
+	_done(g)
+
+
+func test_66_daily_bonus_streak() -> void:
+	var g := _farm()
+	g.last_daily_day = g.day_number() - 1
+	var expected := [100, 250, 500, 750, 1000, 1000]
+	for d in 6:
+		var coins := g.coins
+		var gems := g.gems
+		g.check_daily_gift()
+		_eq(g.daily_streak, d + 1, "day %d of the streak" % (d + 1))
+		_eq(g.coins - coins, expected[d], "day %d pays %d coins" % [d + 1, expected[d]])
+		if d >= 4:
+			_eq(g.gems - gems, 1, "day 5 and on add a gem")
+		g.check_daily_gift()
+		_eq(g.daily_streak, d + 1, "only once a day")
+		_skip(g, 86400)
+	_skip(g, 86400) # miss a day
+	g.check_daily_gift()
+	_eq(g.daily_streak, 1, "missing a day starts the streak again")
+	_check(g.stat("daily_bonuses") >= 7, "bonuses counted for the Regular ribbon")
+	_done(g)
+
+
+func test_67_mastery_sign_collections_and_ribbons() -> void:
+	var g := _farm()
+	g._award_mastery_star("wheat", 3)
+	var signs := g.objects.filter(func(o): return o["id"] == "mastery_sign")
+	_eq(signs.size(), 1, "mastering a crop puts a mastery sign on the farm")
+	_eq(signs[0].get("crop", ""), "wheat", "the sign is for wheat")
+	_check(g.can_sell(signs[0]) and g.can_rotate(signs[0]), "it can be sold or turned like any decoration")
+	var crop_sets := 0
+	var seen := {}
+	for coll in g.collections:
+		if not coll.get("crops", []).is_empty():
+			crop_sets += 1
+		for crop_id in coll.get("crops", []):
+			_check(not seen.has(crop_id), "%s is in only one collection" % crop_id)
+			seen[crop_id] = true
+	_check(crop_sets >= 10, "at least 10 crop collections (%d)" % crop_sets)
+	_check((g.ribbon_data["ribbons"] as Array).size() >= 20, "at least 20 ribbons")
+	_done(g)
+
+
+func test_68_every_decoration_has_art() -> void:
+	var g := _farm()
+	var shapes := ["path", "fence", "hedge", "wall", "haybale", "haystack", "scarecrow", "flowerbed", "flamingo", "bench",
+		"shadetree", "trough", "bonfire", "wheelbarrow", "birdhouse", "birdbath", "picnic", "well", "gnome", "lamp",
+		"sundial", "pond", "arbor", "bridge", "fountain", "gazebo", "cabin", "mastery"]
+	for id in g.item_order:
+		var it: Dictionary = g.items[id]
+		if it["kind"] == "decor" and not ["farmhouse", "mailbox", "farm_stand"].has(id):
+			_check(shapes.has(it.get("shape", "")), "%s has a drawn shape" % id)
+	_done(g)

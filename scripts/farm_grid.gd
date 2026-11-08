@@ -21,7 +21,9 @@ const COLOR_GOLDEN := Color("#ffe066")
 const COLOR_FERT := Color("#8fe36b")
 const COLOR_PART := Color("#f4c27a")
 
-var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move" or "store"
+var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move", "store", "sell", "rotate" or "vehicle"
+var _sell_pending := -1  # uid tapped once with the Sell tool; a second tap sells it
+var _sell_pending_until := 0
 var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
 var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
 var _vehicle_flash := {} # the area a vehicle just worked: {"row", "col", "w", "h", "until"}
@@ -181,8 +183,18 @@ func _draw_object(o: Dictionary) -> void:
 	if o["id"] == "barn":
 		inside = Game.stored.size()
 		cap = Game.barn_capacity()
+	if o["id"] == "mastery_sign" and Game.crops.has(o.get("crop", "")):
+		it = it.duplicate()
+		it["color"] = Game.crops[o["crop"]]["color"]
+	var flipped: bool = o.get("flip", false)
+	if flipped:
+		# Mirror around the object's own centre line.
+		var cx := (corners[1].x + corners[3].x) / 2.0
+		draw_set_transform(Vector2(2.0 * cx, 0), 0.0, Vector2(-1, 1))
 	PlaceholderArt.draw_object(self, it, corners, is_ready_now, int(o.get("level", 1)),
 		inside, cap, o.get("broken", false))
+	if flipped:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if o.get("stray", false):
 		var c1 := (corners[0] + corners[2]) / 2.0
 		var bob := sin(Time.get_ticks_msec() / 300.0) * 4.0
@@ -472,6 +484,12 @@ func _act(i: int, first_touch: bool) -> void:
 func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	var uid := int(obj["uid"])
 	var kind := Game.kind_of(obj)
+	if tool == "sell" and first_touch:
+		_try_sell(obj)
+		return
+	if tool == "rotate" and first_touch:
+		Game.rotate_object(uid)
+		return
 	if tool == "store" and first_touch:
 		if Game.store_object(uid):
 			var fps := Game.footprint(obj["id"])
@@ -532,6 +550,27 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	var it := Game.item_data(obj["id"])
 	var what: String = it.get("product", "Fruit")
 	info.emit("%s: %s ready in %s" % [it["name"], what, format_duration(Game.seconds_until_ready(obj))])
+
+
+## Sell needs two taps on the same thing, so a stray tap can't sell a building.
+func _try_sell(obj: Dictionary) -> void:
+	var uid := int(obj["uid"])
+	if not Game.can_sell(obj):
+		info.emit("That can't be sold")
+		return
+	var now_ms := Time.get_ticks_msec()
+	if _sell_pending == uid and now_ms < _sell_pending_until:
+		_sell_pending = -1
+		var fp := Game.footprint(obj["id"])
+		var at := corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]
+		var value := Game.sell_value(obj)
+		if Game.sell_object(uid):
+			_float(at, "+%d" % value, COLOR_COINS)
+		return
+	_sell_pending = uid
+	_sell_pending_until = now_ms + 3000
+	var extra := " (what's inside moves out)" if Game.inside_total(obj) > 0 else ""
+	info.emit("Tap again to sell the %s for %d coins%s" % [Game.item_data(obj["id"])["name"], Game.sell_value(obj), extra])
 
 
 func _explain(i: int, ph: GameState.Phase) -> void:

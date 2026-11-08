@@ -6,12 +6,9 @@
       "name": "Berry Patch",
       "crops": [
         "strawberries",
-        "carrots",
-        "tomatoes",
         "raspberries",
-        "cranberries",
         "blueberries",
-        "grapes"
+        "cranberries"
       ],
       "reward_coins": 500,
       "reward_xp": 25,
@@ -44,9 +41,7 @@
       "crops": [
         "wheat",
         "corn",
-        "rice",
-        "soybeans",
-        "peanuts"
+        "rice"
       ],
       "reward_coins": 800,
       "reward_xp": 40,
@@ -74,15 +69,44 @@
       ]
     },
     {
+      "id": "bean_counter",
+      "name": "Bean Counter",
+      "crops": [
+        "soybeans",
+        "peanuts"
+      ],
+      "reward_coins": 600,
+      "reward_xp": 30,
+      "items": [
+        {
+          "id": "bean_counter_seed_pouch",
+          "name": "Seed Pouch"
+        },
+        {
+          "id": "bean_counter_pod_peeler",
+          "name": "Pod Peeler"
+        },
+        {
+          "id": "bean_counter_peanut_jar",
+          "name": "Peanut Jar"
+        },
+        {
+          "id": "bean_counter_bean_scoop",
+          "name": "Bean Scoop"
+        },
+        {
+          "id": "bean_counter_shelling_bowl",
+          "name": "Shelling Bowl"
+        }
+      ]
+    },
+    {
       "id": "flower_show",
       "name": "Flower Show",
       "crops": [
         "sunflowers",
-        "lavender",
         "lilac",
-        "daffodils",
-        "morning_glory",
-        "red_tulips"
+        "daffodils"
       ],
       "reward_coins": 1000,
       "reward_xp": 50,
@@ -110,20 +134,44 @@
       ]
     },
     {
+      "id": "bouquet",
+      "name": "Bouquet",
+      "crops": [
+        "morning_glory",
+        "red_tulips",
+        "lavender"
+      ],
+      "reward_coins": 1200,
+      "reward_xp": 50,
+      "items": [
+        {
+          "id": "bouquet_ribbon_bow",
+          "name": "Ribbon Bow"
+        },
+        {
+          "id": "bouquet_flower_snips",
+          "name": "Flower Snips"
+        },
+        {
+          "id": "bouquet_tulip_bulb",
+          "name": "Tulip Bulb"
+        },
+        {
+          "id": "bouquet_lavender_sachet",
+          "name": "Lavender Sachet"
+        },
+        {
+          "id": "bouquet_glass_vase",
+          "name": "Glass Vase"
+        }
+      ]
+    },
+    {
       "id": "root_cellar",
       "name": "Root Cellar",
       "crops": [
         "potatoes",
-        "pumpkins",
-        "sugarcane",
-        "cotton",
-        "eggplant",
-        "squash",
-        "spinach",
-        "artichokes",
-        "bell_peppers",
-        "pineapples",
-        "watermelon"
+        "carrots"
       ],
       "reward_coins": 1500,
       "reward_xp": 75,
@@ -147,6 +195,138 @@
         {
           "id": "spinning_top",
           "name": "Spinning Top"
+        }
+      ]
+    },
+    {
+      "id": "gourd_gallery",
+      "name": "Gourd Gallery",
+      "crops": [
+        "pumpkins",
+        "squash",
+        "watermelon"
+      ],
+      "reward_coins": 1000,
+      "reward_xp": 45,
+      "items": [
+        {
+          "id": "gourd_gallery_carving_knife",
+          "name": "Carving Knife"
+        },
+        {
+          "id": "gourd_gallery_vine_clip",
+          "name": "Vine Clip"
+        },
+        {
+          "id": "gourd_gallery_melon_baller",
+          "name": "Melon Baller"
+        },
+        {
+          "id": "gourd_gallery_gourd_rattle",
+          "name": "Gourd Rattle"
+        },
+        {
+          "id": "gourd_gallery_prize_ribbon",
+          "name": "Prize Ribbon"
+        }
+      ]
+    },
+    {
+      "id": "market_garden",
+      "name": "Market Garden",
+      "crops": [
+        "tomatoes",
+        "eggplant",
+        "bell_peppers",
+        "spinach",
+        "artichokes"
+      ],
+      "reward_coins": 1000,
+      "reward_xp": 45,
+      "items": [
+        {
+          "id": "market_garden_trowel",
+          "name": "Trowel"
+        },
+        {
+          "id": "market_garden_garden_twine",
+          "name": "Garden Twine"
+        },
+        {
+          "id": "market_garden_pepper_pot",
+          "name": "Pepper Pot"
+        },
+        {
+          "id": "market_garden_salad_spinner",
+          "name": "Salad Spinner"
+        },
+        {
+          "id": "market_garden_seed_packet",
+          "name": "Seed Packet"
+        }
+      ]
+    },
+    {
+      "id": "sweet_tooth",
+      "name": "Sweet Tooth",
+      "crops": [
+        "sugarcane",
+        "pineapples",
+        "grapes"
+      ],
+      "reward_coins": 1500,
+      "reward_xp": 60,
+      "items": [
+        {
+          "id": "sweet_tooth_candy_cane",
+          "name": "Candy Cane"
+        },
+        {
+          "id": "sweet_tooth_pineapple_crown",
+          "name": "Pineapple Crown"
+        },
+        {
+          "id": "sweet_tooth_grape_press",
+          "name": "Grape Press"
+        },
+        {
+          "id": "sweet_tooth_sugar_cube",
+          "name": "Sugar Cube"
+        },
+        {
+          "id": "sweet_tooth_honey_dipper",
+          "name": "Honey Dipper"
+        }
+      ]
+    },
+    {
+      "id": "cotton_mill",
+      "name": "Cotton Mill",
+      "crops": [
+        "cotton"
+      ],
+      "reward_coins": 1200,
+      "reward_xp": 50,
+      "items": [
+        {
+          "id": "cotton_mill_spindle",
+          "name": "Spindle"
+        },
+        {
+          "id": "cotton_mill_cotton_boll",
+          "name": "Cotton Boll"
+        },
+        {
+          "id": "cotton_mill_thimble",
+          "name": "Thimble"
+        },
+        {
+          "id": "cotton_mill_bobbin",
+          "name": "Bobbin"
+        },
+        {
+          "id": "cotton_mill_quilt_square",
+          "name": "Quilt Square"
         }
       ]
     },

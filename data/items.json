@@ -1,5 +1,5 @@
 {
-  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w/h = footprint in tiles. Times in seconds. Buildings, the FarmVille way: bought with coins; build_materials means it arrives as a frame finished with those materials; expand_materials is paid per expansion; levels = capacity per size; one_each items (bull, stallion) live inside without taking a space; special = mystery_eggs, calves, foals or nursery. gem_cost = bought with gems instead of coins (like Farm Cash). unlock_level 99 = never sold in the market (strays, eggs, babies). special also = beehive (Queen Bee, pollination), truffles (pig foraging) or saplings (rare tree varieties). rare_sapling / rare_of link a tree to its rare variety. kind vehicle: job = plow, plant, harvest or all; works a 2x2 area, growing with upgrade_parts (needing upgrade_levels) to 4x4; fuel_per_plot. produces:false = never ready to collect.",
+  "_note": "Placeable objects. kind: tree, animal, building, bee (lives in hives, not sold), decor (starter scenery, not sold yet) or barn. w/h = footprint in tiles. Times in seconds. Buildings, the FarmVille way: bought with coins; build_materials means it arrives as a frame finished with those materials; expand_materials is paid per expansion; levels = capacity per size; one_each items (bull, stallion) live inside without taking a space; special = mystery_eggs, calves, foals or nursery. gem_cost = bought with gems instead of coins (like Farm Cash). unlock_level 99 = never sold in the market (strays, eggs, babies). special also = beehive (Queen Bee, pollination), truffles (pig foraging) or saplings (rare tree varieties). rare_sapling / rare_of link a tree to its rare variety. kind vehicle: job = plow, plant, harvest or all; works a 2x2 area, growing with upgrade_parts (needing upgrade_levels) to 4x4; fuel_per_plot. produces:false = never ready to collect. Decorations (kind decor) have a shape for their art. home = the building a stray male lives in.",
   "items": [
     {
       "id": "apple_tree",
@@ -174,6 +174,19 @@
       "accent": "#3b3330"
     },
     {
+      "id": "ox",
+      "kind": "animal",
+      "name": "Ox",
+      "product": "Fertilizer",
+      "unlock_level": 12,
+      "cost": 2000,
+      "cycle_seconds": 172800,
+      "payout": 120,
+      "xp": 2,
+      "color": "#8a5a3a",
+      "accent": "#3b2a1e"
+    },
+    {
       "id": "sheep",
       "kind": "animal",
       "name": "Sheep",
@@ -282,6 +295,19 @@
       "accent": "#4a2c18"
     },
     {
+      "id": "pony",
+      "kind": "animal",
+      "name": "Pony",
+      "product": "Horse Hair",
+      "unlock_level": 10,
+      "cost": 1500,
+      "cycle_seconds": 172800,
+      "payout": 95,
+      "xp": 2,
+      "color": "#c9a37a",
+      "accent": "#6b4a2a"
+    },
+    {
       "id": "foal",
       "kind": "animal",
       "name": "Foal",
@@ -308,6 +334,32 @@
       "accent": "#3b3330"
     },
     {
+      "id": "lamb",
+      "kind": "animal",
+      "name": "Lamb",
+      "product": "Wool",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 20,
+      "xp": 1,
+      "color": "#fbf6ec",
+      "accent": "#d9cfc0"
+    },
+    {
+      "id": "piglet",
+      "kind": "animal",
+      "name": "Piglet",
+      "product": "Truffles",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 20,
+      "xp": 1,
+      "color": "#f9c8ca",
+      "accent": "#d9878b"
+    },
+    {
       "id": "stallion",
       "kind": "animal",
       "name": "Stallion",
@@ -319,7 +371,8 @@
       "xp": 0,
       "color": "#f4f1ea",
       "accent": "#c9c2b4",
-      "stray_only": true
+      "stray_only": true,
+      "home": "horse_stable"
     },
     {
       "id": "bull",
@@ -333,7 +386,38 @@
       "xp": 0,
       "color": "#7a4a2c",
       "accent": "#2b2420",
-      "stray_only": true
+      "stray_only": true,
+      "home": "cow_shed"
+    },
+    {
+      "id": "ram",
+      "kind": "animal",
+      "name": "Ram",
+      "product": "Nothing",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 0,
+      "xp": 0,
+      "color": "#e8e2d4",
+      "accent": "#8a7a5a",
+      "stray_only": true,
+      "home": "sheep_pen"
+    },
+    {
+      "id": "boar",
+      "kind": "animal",
+      "name": "Boar",
+      "product": "Nothing",
+      "unlock_level": 99,
+      "cost": 0,
+      "cycle_seconds": 86400,
+      "payout": 0,
+      "xp": 0,
+      "color": "#8a5a4a",
+      "accent": "#3b2a1e",
+      "stray_only": true,
+      "home": "pig_pen"
     },
     {
       "id": "chicken_coop",
@@ -349,7 +433,8 @@
         "red_chicken",
         "grey_chicken",
         "black_chicken",
-        "golden_chicken"
+        "golden_chicken",
+        "turkey"
       ],
       "cycle_seconds": 86400,
       "levels": [
@@ -372,6 +457,37 @@
       "special": "mystery_eggs"
     },
     {
+      "id": "duck_pond",
+      "kind": "building",
+      "name": "Duck Pond",
+      "unlock_level": 5,
+      "cost": 4000,
+      "w": 3,
+      "h": 3,
+      "holds": [
+        "duck",
+        "goose"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "level_names": [
+        "Duck Pond",
+        "Big Duck Pond",
+        "Huge Duck Pond"
+      ],
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      },
+      "color": "#5fa8d3",
+      "roof": "#7a5230"
+    },
+    {
       "id": "cow_shed",
       "kind": "building",
       "name": "Dairy Farm",
@@ -380,7 +496,8 @@
       "w": 4,
       "h": 3,
       "holds": [
-        "cow"
+        "cow",
+        "ox"
       ],
       "cycle_seconds": 86400,
       "levels": [
@@ -404,6 +521,102 @@
         "boards": 10
       },
       "special": "calves"
+    },
+    {
+      "id": "sheep_pen",
+      "kind": "building",
+      "name": "Sheep Pen",
+      "unlock_level": 7,
+      "cost": 6000,
+      "w": 3,
+      "h": 3,
+      "holds": [
+        "sheep",
+        "llama",
+        "alpaca"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "level_names": [
+        "Sheep Pen",
+        "Big Sheep Pen",
+        "Huge Sheep Pen"
+      ],
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      },
+      "color": "#d9c9a3",
+      "roof": "#8a5a32",
+      "one_each": [
+        "ram"
+      ],
+      "special": "lambs"
+    },
+    {
+      "id": "goat_pen",
+      "kind": "building",
+      "name": "Goat Pen",
+      "unlock_level": 9,
+      "cost": 6000,
+      "w": 3,
+      "h": 3,
+      "holds": [
+        "goat"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "level_names": [
+        "Goat Pen",
+        "Big Goat Pen",
+        "Huge Goat Pen"
+      ],
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      },
+      "color": "#c9b48a",
+      "roof": "#6b4a2a"
+    },
+    {
+      "id": "rabbit_hutch",
+      "kind": "building",
+      "name": "Rabbit Hutch",
+      "unlock_level": 8,
+      "cost": 4000,
+      "w": 2,
+      "h": 2,
+      "holds": [
+        "rabbit"
+      ],
+      "cycle_seconds": 86400,
+      "levels": [
+        20,
+        30,
+        40
+      ],
+      "level_names": [
+        "Rabbit Hutch",
+        "Big Rabbit Hutch",
+        "Huge Rabbit Hutch"
+      ],
+      "expand_materials": {
+        "bricks": 10,
+        "nails": 10,
+        "boards": 10
+      },
+      "color": "#e8c9a0",
+      "roof": "#a8743f"
     },
     {
       "id": "orchard",
@@ -438,7 +651,9 @@
       "w": 4,
       "h": 4,
       "holds": [
-        "horse"
+        "horse",
+        "pony",
+        "donkey"
       ],
       "cycle_seconds": 86400,
       "levels": [
@@ -479,7 +694,9 @@
       "h": 3,
       "holds": [
         "calf",
-        "foal"
+        "foal",
+        "lamb",
+        "piglet"
       ],
       "cycle_seconds": 86400,
       "levels": [
@@ -505,7 +722,9 @@
       "grow_days": 4,
       "grows_into": {
         "calf": "cow",
-        "foal": "horse"
+        "foal": "horse",
+        "lamb": "sheep",
+        "piglet": "pig"
       },
       "color": "#e9d8a6",
       "roof": "#7a9e7e"
@@ -536,7 +755,10 @@
       },
       "special": "truffles",
       "color": "#c98a5a",
-      "roof": "#7a5230"
+      "roof": "#7a5230",
+      "one_each": [
+        "boar"
+      ]
     },
     {
       "id": "bee",
@@ -748,6 +970,19 @@
       "payout": 320,
       "xp": 3,
       "color": "#e8dcc4",
+      "accent": "#8a6a4a"
+    },
+    {
+      "id": "alpaca",
+      "kind": "animal",
+      "name": "Alpaca",
+      "product": "Fleece",
+      "unlock_level": 16,
+      "cost": 3000,
+      "cycle_seconds": 172800,
+      "payout": 150,
+      "xp": 2,
+      "color": "#f2e6d0",
       "accent": "#8a6a4a"
     },
     {
@@ -1087,6 +1322,358 @@
       "cycle_seconds": 86400,
       "color": "#9aa4ad",
       "roof": "#4a5560"
+    },
+    {
+      "id": "dirt_path",
+      "kind": "decor",
+      "name": "Dirt Path",
+      "unlock_level": 1,
+      "cost": 20,
+      "shape": "path",
+      "color": "#b88a5a",
+      "accent": "#5c3a1e"
+    },
+    {
+      "id": "hay_bale",
+      "kind": "decor",
+      "name": "Hay Bale",
+      "unlock_level": 1,
+      "cost": 100,
+      "shape": "haybale",
+      "color": "#e3c46a",
+      "accent": "#b8963e"
+    },
+    {
+      "id": "wooden_fence",
+      "kind": "decor",
+      "name": "Wooden Fence",
+      "unlock_level": 1,
+      "cost": 50,
+      "shape": "fence",
+      "color": "#a8743f",
+      "accent": "#5c3a1e"
+    },
+    {
+      "id": "flower_bed",
+      "kind": "decor",
+      "name": "Flower Bed",
+      "unlock_level": 2,
+      "cost": 300,
+      "shape": "flowerbed",
+      "color": "#ff6b8a",
+      "accent": "#ffd34d"
+    },
+    {
+      "id": "scarecrow",
+      "kind": "decor",
+      "name": "Scarecrow",
+      "unlock_level": 2,
+      "cost": 500,
+      "shape": "scarecrow",
+      "color": "#d9b46a",
+      "accent": "#6b4a2a"
+    },
+    {
+      "id": "white_picket_fence",
+      "kind": "decor",
+      "name": "White Picket Fence",
+      "unlock_level": 3,
+      "cost": 300,
+      "shape": "fence",
+      "color": "#f4efe4",
+      "accent": "#5c3a1e"
+    },
+    {
+      "id": "pink_flamingo",
+      "kind": "decor",
+      "name": "Pink Flamingo",
+      "unlock_level": 3,
+      "cost": 200,
+      "shape": "flamingo",
+      "color": "#ff8fb3",
+      "accent": "#2b2b30"
+    },
+    {
+      "id": "bench",
+      "kind": "decor",
+      "name": "Bench",
+      "unlock_level": 3,
+      "cost": 400,
+      "shape": "bench",
+      "color": "#a8743f",
+      "accent": "#5c3a1e"
+    },
+    {
+      "id": "haystack",
+      "kind": "decor",
+      "name": "Haystack",
+      "unlock_level": 3,
+      "cost": 300,
+      "shape": "haystack",
+      "color": "#e3c46a",
+      "accent": "#b8963e"
+    },
+    {
+      "id": "hedge",
+      "kind": "decor",
+      "name": "Hedge",
+      "unlock_level": 4,
+      "cost": 250,
+      "shape": "hedge",
+      "color": "#3c8a2e",
+      "accent": "#2e6b23"
+    },
+    {
+      "id": "pine_tree",
+      "kind": "decor",
+      "name": "Pine Tree",
+      "unlock_level": 4,
+      "cost": 800,
+      "shape": "shadetree",
+      "color": "#2f6b3a",
+      "accent": "#5c3a1e",
+      "variant": "pine"
+    },
+    {
+      "id": "water_trough",
+      "kind": "decor",
+      "name": "Water Trough",
+      "unlock_level": 4,
+      "cost": 800,
+      "shape": "trough",
+      "color": "#8a5a32",
+      "accent": "#5fa8d3"
+    },
+    {
+      "id": "bonfire",
+      "kind": "decor",
+      "name": "Bonfire",
+      "unlock_level": 4,
+      "cost": 400,
+      "shape": "bonfire",
+      "color": "#f28a2e",
+      "accent": "#6b4a2a"
+    },
+    {
+      "id": "brick_path",
+      "kind": "decor",
+      "name": "Brick Path",
+      "unlock_level": 5,
+      "cost": 50,
+      "shape": "path",
+      "color": "#b5523b",
+      "accent": "#5c3a1e"
+    },
+    {
+      "id": "wheelbarrow",
+      "kind": "decor",
+      "name": "Wheelbarrow",
+      "unlock_level": 5,
+      "cost": 600,
+      "shape": "wheelbarrow",
+      "color": "#c0392b",
+      "accent": "#2b2b30"
+    },
+    {
+      "id": "oak_tree",
+      "kind": "decor",
+      "name": "Oak Tree",
+      "unlock_level": 5,
+      "cost": 1000,
+      "shape": "shadetree",
+      "color": "#4fa83d",
+      "accent": "#5c3a1e",
+      "variant": "oak"
+    },
+    {
+      "id": "birdhouse",
+      "kind": "decor",
+      "name": "Birdhouse",
+      "unlock_level": 5,
+      "cost": 600,
+      "shape": "birdhouse",
+      "color": "#e2453c",
+      "accent": "#f4e3c3"
+    },
+    {
+      "id": "stone_wall",
+      "kind": "decor",
+      "name": "Stone Wall",
+      "unlock_level": 6,
+      "cost": 400,
+      "shape": "wall",
+      "color": "#9aa4ad",
+      "accent": "#5c3a1e"
+    },
+    {
+      "id": "birdbath",
+      "kind": "decor",
+      "name": "Birdbath",
+      "unlock_level": 6,
+      "cost": 700,
+      "shape": "birdbath",
+      "color": "#c9d1d8",
+      "accent": "#5fa8d3"
+    },
+    {
+      "id": "picnic_table",
+      "kind": "decor",
+      "name": "Picnic Table",
+      "unlock_level": 6,
+      "cost": 1500,
+      "shape": "picnic",
+      "color": "#a8743f",
+      "accent": "#e2453c"
+    },
+    {
+      "id": "water_well",
+      "kind": "decor",
+      "name": "Water Well",
+      "unlock_level": 7,
+      "cost": 1500,
+      "shape": "well",
+      "color": "#9aa4ad",
+      "accent": "#7a5230"
+    },
+    {
+      "id": "garden_gnome",
+      "kind": "decor",
+      "name": "Garden Gnome",
+      "unlock_level": 7,
+      "cost": 500,
+      "shape": "gnome",
+      "color": "#e2453c",
+      "accent": "#3f6fb5"
+    },
+    {
+      "id": "stone_path",
+      "kind": "decor",
+      "name": "Stone Path",
+      "unlock_level": 8,
+      "cost": 80,
+      "shape": "path",
+      "color": "#aeb5bb",
+      "accent": "#5c3a1e"
+    },
+    {
+      "id": "lamp_post",
+      "kind": "decor",
+      "name": "Lamp Post",
+      "unlock_level": 8,
+      "cost": 900,
+      "shape": "lamp",
+      "color": "#2b2b30",
+      "accent": "#ffe066"
+    },
+    {
+      "id": "maple_tree",
+      "kind": "decor",
+      "name": "Maple Tree",
+      "unlock_level": 9,
+      "cost": 1200,
+      "shape": "shadetree",
+      "color": "#d9622b",
+      "accent": "#5c3a1e",
+      "variant": "oak"
+    },
+    {
+      "id": "sundial",
+      "kind": "decor",
+      "name": "Sundial",
+      "unlock_level": 9,
+      "cost": 2500,
+      "shape": "sundial",
+      "color": "#c9d1d8",
+      "accent": "#7a5230"
+    },
+    {
+      "id": "small_pond",
+      "kind": "decor",
+      "name": "Small Pond",
+      "unlock_level": 10,
+      "cost": 2500,
+      "shape": "pond",
+      "color": "#5fa8d3",
+      "accent": "#4fa83d",
+      "w": 2,
+      "h": 2
+    },
+    {
+      "id": "arbor",
+      "kind": "decor",
+      "name": "Arbor",
+      "unlock_level": 10,
+      "cost": 5000,
+      "shape": "arbor",
+      "color": "#f4efe4",
+      "accent": "#ff6b8a"
+    },
+    {
+      "id": "wooden_bridge",
+      "kind": "decor",
+      "name": "Wooden Bridge",
+      "unlock_level": 11,
+      "cost": 3000,
+      "shape": "bridge",
+      "color": "#a8743f",
+      "accent": "#5fa8d3"
+    },
+    {
+      "id": "willow_tree",
+      "kind": "decor",
+      "name": "Willow Tree",
+      "unlock_level": 12,
+      "cost": 2000,
+      "shape": "shadetree",
+      "color": "#7fbf5a",
+      "accent": "#5c3a1e",
+      "variant": "willow"
+    },
+    {
+      "id": "fountain",
+      "kind": "decor",
+      "name": "Fountain",
+      "unlock_level": 14,
+      "cost": 15000,
+      "shape": "fountain",
+      "color": "#d7dde3",
+      "accent": "#5fa8d3",
+      "w": 2,
+      "h": 2
+    },
+    {
+      "id": "gazebo",
+      "kind": "decor",
+      "name": "Gazebo",
+      "unlock_level": 15,
+      "cost": 25000,
+      "shape": "gazebo",
+      "color": "#f4efe4",
+      "accent": "#b5482f",
+      "w": 2,
+      "h": 2
+    },
+    {
+      "id": "log_cabin",
+      "kind": "decor",
+      "name": "Log Cabin",
+      "unlock_level": 20,
+      "cost": 250000,
+      "shape": "cabin",
+      "color": "#8a5a32",
+      "accent": "#5c3a1e",
+      "w": 3,
+      "h": 3
+    },
+    {
+      "id": "mastery_sign",
+      "kind": "decor",
+      "name": "Mastery Sign",
+      "unlock_level": 99,
+      "cost": 0,
+      "shape": "mastery",
+      "color": "#ffd34d",
+      "accent": "#5c3a1e"
     }
   ]
 }
