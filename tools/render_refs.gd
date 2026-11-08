@@ -59,6 +59,6 @@ func _draw_job() -> void:
 		PlaceholderArt.draw_crop(_canvas, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, phase, progress)
 		return
 	var it := Game.item_data(id)
-	var ready := it.get("kind", "") == "tree"
-	var cap := 20 if it.get("kind", "") == "building" else 0
+	var ready: bool = it.get("kind", "") == "tree"
+	var cap: int = 20 if it.get("kind", "") == "building" else 0
 	PlaceholderArt.draw_object(_canvas, it, corners, ready, 1, 5 if cap > 0 else 0, cap)

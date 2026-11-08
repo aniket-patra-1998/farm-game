@@ -41,7 +41,7 @@ jobs:
       - name: Render references
         run: |
           sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
-          xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+          timeout 300 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
             --rendering-driver opengl3 --path . res://tools/render_refs.tscn 2>&1 | tee refs.log
           ls art/refs
       - name: Commit references
