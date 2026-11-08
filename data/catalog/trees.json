@@ -1,0 +1,640 @@
+{
+  "class": "Tree",
+  "_note": "Fruit and nut trees: harvested every cycle; can live in an Orchard. Rare varieties link both ways with rare_sapling / rare_of.",
+  "defaults": {
+    "unlock_level": 1,
+    "cycle_seconds": 259200
+  },
+  "families": [
+    {
+      "id": "apple",
+      "name": "Apple Trees",
+      "doc": "Apple trees, and the rare variety an Orchard can sprout from them.",
+      "defaults": {
+        "cycle_seconds": 172800
+      },
+      "variants": [
+        {
+          "id": "apple_tree",
+          "name": "Apple Tree",
+          "unlock_level": 2,
+          "cost": 150,
+          "payout": 60,
+          "xp": 1,
+          "color": "#d93b30",
+          "rare_sapling": "honeycrisp_apple_tree"
+        },
+        {
+          "id": "honeycrisp_apple_tree",
+          "name": "Honeycrisp Apple Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 90,
+          "xp": 2,
+          "color": "#e8463a",
+          "rare_of": "apple_tree"
+        }
+      ]
+    },
+    {
+      "id": "lemon",
+      "name": "Lemon Trees",
+      "doc": "Lemon trees, and the rare variety an Orchard can sprout from them.",
+      "defaults": {
+        "cycle_seconds": 172800
+      },
+      "variants": [
+        {
+          "id": "lemon_tree",
+          "name": "Lemon Tree",
+          "unlock_level": 4,
+          "cost": 250,
+          "payout": 85,
+          "xp": 1,
+          "color": "#f2d43a",
+          "rare_sapling": "meyer_lemon_tree"
+        },
+        {
+          "id": "meyer_lemon_tree",
+          "name": "Meyer Lemon Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 128,
+          "xp": 2,
+          "color": "#f7c948",
+          "rare_of": "lemon_tree"
+        }
+      ]
+    },
+    {
+      "id": "cherry",
+      "name": "Cherry Trees",
+      "doc": "Cherry trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "cherry_tree",
+          "name": "Cherry Tree",
+          "unlock_level": 6,
+          "cost": 400,
+          "payout": 140,
+          "xp": 2,
+          "color": "#a3122e",
+          "rare_sapling": "rainier_cherry_tree"
+        },
+        {
+          "id": "rainier_cherry_tree",
+          "name": "Rainier Cherry Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 210,
+          "xp": 3,
+          "color": "#f2c4a0",
+          "rare_of": "cherry_tree"
+        }
+      ]
+    },
+    {
+      "id": "orange",
+      "name": "Orange Trees",
+      "doc": "Orange trees, and the rare variety an Orchard can sprout from them.",
+      "defaults": {
+        "cycle_seconds": 172800
+      },
+      "variants": [
+        {
+          "id": "orange_tree",
+          "name": "Orange Tree",
+          "unlock_level": 8,
+          "cost": 500,
+          "payout": 120,
+          "xp": 2,
+          "color": "#f28c1c",
+          "rare_sapling": "blood_orange_tree"
+        },
+        {
+          "id": "blood_orange_tree",
+          "name": "Blood Orange Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 180,
+          "xp": 3,
+          "color": "#b8322a",
+          "rare_of": "orange_tree"
+        }
+      ]
+    },
+    {
+      "id": "peach",
+      "name": "Peach Trees",
+      "doc": "Peach trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "peach_tree",
+          "name": "Peach Tree",
+          "unlock_level": 10,
+          "cost": 800,
+          "payout": 200,
+          "xp": 2,
+          "color": "#f7a07a",
+          "rare_sapling": "elberta_peach_tree"
+        },
+        {
+          "id": "elberta_peach_tree",
+          "name": "Elberta Peach Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 300,
+          "xp": 3,
+          "color": "#f59a5a",
+          "rare_of": "peach_tree"
+        }
+      ]
+    },
+    {
+      "id": "mango",
+      "name": "Mango Trees",
+      "doc": "Mango trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "mango_tree",
+          "name": "Mango Tree",
+          "unlock_level": 12,
+          "cost": 1200,
+          "payout": 280,
+          "xp": 3,
+          "color": "#f5b324",
+          "rare_sapling": "alphonso_mango_tree"
+        },
+        {
+          "id": "alphonso_mango_tree",
+          "name": "Alphonso Mango Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 420,
+          "xp": 4,
+          "color": "#f6a623",
+          "rare_of": "mango_tree"
+        }
+      ]
+    },
+    {
+      "id": "plum",
+      "name": "Plum Trees",
+      "doc": "Plum trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "plum_tree",
+          "name": "Plum Tree",
+          "unlock_level": 3,
+          "cost": 200,
+          "payout": 75,
+          "xp": 1,
+          "color": "#7b3f8c",
+          "rare_sapling": "golden_plum_tree"
+        },
+        {
+          "id": "golden_plum_tree",
+          "name": "Golden Plum Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 112,
+          "xp": 2,
+          "color": "#e8c23a",
+          "rare_of": "plum_tree"
+        }
+      ]
+    },
+    {
+      "id": "fig",
+      "name": "Fig Trees",
+      "doc": "Fig trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "fig_tree",
+          "name": "Fig Tree",
+          "unlock_level": 5,
+          "cost": 300,
+          "payout": 105,
+          "xp": 1,
+          "color": "#6d4c6f",
+          "rare_sapling": "black_mission_fig_tree"
+        },
+        {
+          "id": "black_mission_fig_tree",
+          "name": "Black Mission Fig Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 158,
+          "xp": 2,
+          "color": "#3a2a3a",
+          "rare_of": "fig_tree"
+        }
+      ]
+    },
+    {
+      "id": "banana",
+      "name": "Banana Trees",
+      "doc": "Banana trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "banana_tree",
+          "name": "Banana Tree",
+          "unlock_level": 7,
+          "cost": 450,
+          "payout": 150,
+          "xp": 2,
+          "color": "#f2dc5d",
+          "rare_sapling": "red_banana_tree"
+        },
+        {
+          "id": "red_banana_tree",
+          "name": "Red Banana Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 225,
+          "xp": 3,
+          "color": "#b8402e",
+          "rare_of": "banana_tree"
+        }
+      ]
+    },
+    {
+      "id": "avocado",
+      "name": "Avocado Trees",
+      "doc": "Avocado trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "avocado_tree",
+          "name": "Avocado Tree",
+          "unlock_level": 9,
+          "cost": 550,
+          "payout": 180,
+          "xp": 2,
+          "color": "#4f7a28",
+          "rare_sapling": "hass_avocado_tree"
+        },
+        {
+          "id": "hass_avocado_tree",
+          "name": "Hass Avocado Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 270,
+          "xp": 3,
+          "color": "#2f3d22",
+          "rare_of": "avocado_tree"
+        }
+      ]
+    },
+    {
+      "id": "apricot",
+      "name": "Apricot Trees",
+      "doc": "Apricot trees, and the rare variety an Orchard can sprout from them.",
+      "defaults": {
+        "cycle_seconds": 345600
+      },
+      "variants": [
+        {
+          "id": "apricot_tree",
+          "name": "Apricot Tree",
+          "unlock_level": 11,
+          "cost": 700,
+          "payout": 250,
+          "xp": 2,
+          "color": "#f4a259",
+          "rare_sapling": "golden_apricot_tree"
+        },
+        {
+          "id": "golden_apricot_tree",
+          "name": "Golden Apricot Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 375,
+          "xp": 3,
+          "color": "#f2b13a",
+          "rare_of": "apricot_tree"
+        }
+      ]
+    },
+    {
+      "id": "pomegranate",
+      "name": "Pomegranate Trees",
+      "doc": "Pomegranate trees, and the rare variety an Orchard can sprout from them.",
+      "defaults": {
+        "cycle_seconds": 432000
+      },
+      "variants": [
+        {
+          "id": "pomegranate_tree",
+          "name": "Pomegranate Tree",
+          "unlock_level": 14,
+          "cost": 900,
+          "payout": 340,
+          "xp": 3,
+          "color": "#b3202e",
+          "rare_sapling": "wonderful_pomegranate_tree"
+        },
+        {
+          "id": "wonderful_pomegranate_tree",
+          "name": "Wonderful Pomegranate Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 510,
+          "xp": 4,
+          "color": "#8f1426",
+          "rare_of": "pomegranate_tree"
+        }
+      ]
+    },
+    {
+      "id": "olive",
+      "name": "Olive Trees",
+      "doc": "Olive trees, and the rare variety an Orchard can sprout from them.",
+      "defaults": {
+        "cycle_seconds": 345600
+      },
+      "variants": [
+        {
+          "id": "olive_tree",
+          "name": "Olive Tree",
+          "unlock_level": 16,
+          "cost": 1100,
+          "payout": 360,
+          "xp": 3,
+          "color": "#6b7d3a",
+          "rare_sapling": "mission_olive_tree"
+        },
+        {
+          "id": "mission_olive_tree",
+          "name": "Mission Olive Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 540,
+          "xp": 4,
+          "color": "#3f4a2a",
+          "rare_of": "olive_tree"
+        }
+      ]
+    },
+    {
+      "id": "coconut",
+      "name": "Coconut Trees",
+      "doc": "Coconut trees, and the rare variety an Orchard can sprout from them.",
+      "variants": [
+        {
+          "id": "coconut_tree",
+          "name": "Coconut Tree",
+          "unlock_level": 18,
+          "cost": 1400,
+          "payout": 380,
+          "xp": 3,
+          "color": "#7a5230",
+          "rare_sapling": "king_coconut_tree"
+        },
+        {
+          "id": "king_coconut_tree",
+          "name": "King Coconut Tree",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 570,
+          "xp": 4,
+          "color": "#f29a2e",
+          "rare_of": "coconut_tree"
+        }
+      ]
+    },
+    {
+      "id": "lime",
+      "name": "Lime Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "lime_tree",
+          "name": "Lime Tree",
+          "cycle_seconds": 432000,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "grapefruit",
+      "name": "Grapefruit Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "grapefruit_tree",
+          "name": "Grapefruit Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "mandarin",
+      "name": "Mandarin Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "mandarin_tree",
+          "name": "Mandarin Tree",
+          "cycle_seconds": 345600,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "date",
+      "name": "Date Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "date_tree",
+          "name": "Date Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "guava",
+      "name": "Guava Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "guava_tree",
+          "name": "Guava Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "persimmon",
+      "name": "Persimmon Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "persimmon_tree",
+          "name": "Persimmon Tree",
+          "cycle_seconds": 345600,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "starfruit",
+      "name": "Starfruit Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "starfruit_tree",
+          "name": "Starfruit Tree",
+          "cycle_seconds": 345600,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "passion_fruit",
+      "name": "Passion Fruit Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "passion_fruit_tree",
+          "name": "Passion Fruit Tree",
+          "cycle_seconds": 432000,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "jackfruit",
+      "name": "Jackfruit Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "jackfruit_tree",
+          "name": "Jackfruit Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "asian_pear",
+      "name": "Asian Pear Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "asian_pear_tree",
+          "name": "Asian Pear Tree",
+          "cycle_seconds": 172800,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "tamarind",
+      "name": "Tamarind Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "tamarind_tree",
+          "name": "Tamarind Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "almond",
+      "name": "Almond Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "almond_tree",
+          "name": "Almond Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "walnut",
+      "name": "Walnut Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "walnut_tree",
+          "name": "Walnut Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "cashew",
+      "name": "Cashew Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "cashew_tree",
+          "name": "Cashew Tree",
+          "cycle_seconds": 259200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "chestnut",
+      "name": "Chestnut Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "chestnut_tree",
+          "name": "Chestnut Tree",
+          "cycle_seconds": 172800,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "hazelnut",
+      "name": "Hazelnut Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "hazelnut_tree",
+          "name": "Hazelnut Tree",
+          "cycle_seconds": 172800,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "pecan",
+      "name": "Pecan Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "pecan_tree",
+          "name": "Pecan Tree",
+          "cycle_seconds": 172800,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "pistachio",
+      "name": "Pistachio Trees",
+      "doc": "From FarmVille's tree list; not built yet.",
+      "variants": [
+        {
+          "id": "pistachio_tree",
+          "name": "Pistachio Tree",
+          "cycle_seconds": 172800,
+          "status": "planned"
+        }
+      ]
+    }
+  ]
+}

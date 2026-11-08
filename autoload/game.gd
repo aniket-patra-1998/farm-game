@@ -29,20 +29,19 @@ const TUTORIAL_TEXT := {
 # Building parts: found while harvesting and collecting, plus a daily gift.
 # Building materials, the FarmVille set: three basic ones every building uses,
 # plus two specific to some buildings (they only drop once you own that building).
-const BASIC_PARTS := ["bricks", "nails", "boards"]
-const PARTS := ["bricks", "nails", "boards", "harnesses", "horseshoes", "bottles", "blankets", "smokers", "beeswax", "vehicle_parts"]
-const PART_NAMES := {"bricks": "Bricks", "nails": "Nails", "boards": "Wooden Boards",
-	"harnesses": "Harnesses", "horseshoes": "Horseshoes", "bottles": "Baby Bottles", "blankets": "Blankets",
-	"smokers": "Smokers", "beeswax": "Beeswax", "vehicle_parts": "Vehicle Parts"}
+# Materials come from data/catalog/materials.json (filled in when the catalog loads).
+static var BASIC_PARTS: Array[String] = []
+static var PARTS: Array[String] = []
+static var PART_NAMES := {}
 const PART_CHANCE := 0.08          # per harvest or collection
 const DAILY_PARTS := 2
 # FarmVille's daily bonus: come back on consecutive days for a bigger reward, up to day 5.
 const DAILY_STREAK := [
 	{"coins": 100}, {"coins": 250}, {"coins": 500, "fertilizer": 1},
 	{"coins": 750, "unwither": 1}, {"coins": 1000, "gems": 1}]
-const SELL_SHARE := 0.05           # FarmVille sold anything back for 5% of its price
-const SELL_COINS_PER_GEM := 50     # our guess for items bought with gems
-const DECOR_MIN_XP := 5            # decorations: 1 XP per 100 coins, at least 5
+const SELL_SHARE := PlaceableDef.SELL_SHARE
+const SELL_COINS_PER_GEM := PlaceableDef.SELL_COINS_PER_GEM
+const DECOR_MIN_XP := DecorationDef.MIN_XP
 const LAMB_CHANCE := 0.25          # Sheep Pen harvest with a ram inside
 const PIGLET_CHANCE := 0.25        # Pig Pen harvest with a boar inside
 
@@ -103,7 +102,7 @@ const TRUFFLES_PER_PIG := 10
 const SAPLING_CHANCE := 0.10
 # Vehicles, as in FarmVille: one shared fuel tank of 150, 1 fuel a plot (the Combine 3),
 # a 2x2 area that grows with Vehicle Parts in the Garage, up to 4x4.
-const VEHICLE_SIZES := [Vector2i(2, 2), Vector2i(3, 2), Vector2i(3, 3), Vector2i(4, 3), Vector2i(4, 4)]
+const VEHICLE_SIZES := VehicleDef.SIZES
 const FUEL_TANK := 150
 const FUEL_REGEN_SECONDS := 600    # the tank slowly refills: 1 fuel every 10 minutes
 const FUEL_TANK_GEM_COST := 3
@@ -121,8 +120,8 @@ const PLOW_COST := 15
 const PLOW_XP := 1
 
 # A ripe crop stays ripe as long as it took to grow, clamped to this window.
-const MIN_RIPE_WINDOW := 4 * 3600
-const MAX_RIPE_WINDOW := 2 * 86400
+const MIN_RIPE_WINDOW := CropDef.MIN_RIPE_WINDOW
+const MAX_RIPE_WINDOW := CropDef.MAX_RIPE_WINDOW
 
 # Total XP needed to reach level n is LEVEL_XP[n - 1]. Past the table, +250 per level.
 # Tuned so level 20 takes about two weeks of regular play (the beta test window).
@@ -138,7 +137,7 @@ const MASTERY_PRICE_BONUS := 0.05       # per star
 const MASTERY_STAR_COINS := [100, 300, 1000]
 const MASTERY_STAR_XP := [10, 30, 100]
 
-var crops := {}                    # id -> crop dictionary from data/crops.json
+var crops := {}                    # id -> crop dictionary from data/catalog/crops.json
 var crop_order: Array[String] = [] # display order
 var coins := START_COINS
 var gems := START_GEMS           # premium currency
@@ -180,7 +179,8 @@ var owned := {}                    # item id -> count held
 var stats := {}                    # lifetime counters for ribbons
 var ribbon_tiers := {}             # ribbon id -> tiers earned (0..4)
 var pity := {"golden": 0, "collectible": 0}
-var items := {}                    # placeable objects from data/items.json
+var catalog: Catalog               # every item, as typed definitions (scripts/catalog/)
+var items := {}                    # placeable objects from data/catalog/, as dictionaries
 var item_order: Array[String] = []
 var objects: Array = []            # placed trees, animals and buildings
 var next_uid := 1
@@ -327,7 +327,7 @@ func phase(i: int) -> Phase:
 
 
 func ripe_window(crop: Dictionary) -> int:
-	return clampi(int(crop["grow_seconds"]), MIN_RIPE_WINDOW, MAX_RIPE_WINDOW)
+	return (catalog.get_def(crop["id"]) as CropDef).ripe_window()
 
 
 ## 0.0 just planted .. 1.0 ripe.
@@ -600,8 +600,8 @@ func item_data(item_id: String) -> Dictionary:
 
 
 func footprint(item_id: String) -> Vector2i:
-	var it := item_data(item_id)
-	return Vector2i(int(it.get("w", 1)), int(it.get("h", 1)))
+	var d := catalog.get_def(item_id)
+	return (d as PlaceableDef).footprint() if d is PlaceableDef else Vector2i.ONE
 
 
 func object_at(i: int) -> Dictionary:
@@ -726,7 +726,8 @@ func level_of(obj: Dictionary) -> int:
 
 
 func max_level(building_id: String) -> int:
-	return (item_data(building_id).get("levels", [0]) as Array).size()
+	var d := catalog.get_def(building_id)
+	return (d as BuildingDef).max_level() if d is BuildingDef else 1
 
 
 ## The building's name at its size: Big Chicken Coop, Huge Dairy Farm...
@@ -820,10 +821,8 @@ func collect(uid: int) -> Dictionary:
 # ---------------------------------------------------------------- buildings
 
 func building_accepts(building: Dictionary, item_id: String) -> bool:
-	var b := item_data(building["id"])
-	if b.has("holds_kind"):
-		return item_data(item_id).get("kind", "") == b["holds_kind"]
-	return (b.get("holds", []) as Array).has(item_id) or is_one_each(building, item_id)
+	var b := catalog.get_def(building["id"])
+	return b is BuildingDef and (b as BuildingDef).accepts(item_id, item_data(item_id).get("kind", ""))
 
 
 ## A bull or stallion: one lives inside, alongside the animals, without taking a space.
@@ -836,8 +835,7 @@ func has_inside(building: Dictionary, item_id: String) -> bool:
 
 
 func capacity(building: Dictionary) -> int:
-	var levels: Array = item_data(building["id"])["levels"]
-	return int(levels[clampi(int(building["level"]) - 1, 0, levels.size() - 1)])
+	return (catalog.get_def(building["id"]) as BuildingDef).capacity(int(building["level"]))
 
 
 ## Animals taking up spaces (a bull or stallion doesn't count).
@@ -1618,21 +1616,14 @@ func _roll_sapling(orchard: Dictionary) -> String:
 
 ## FarmVille gave XP for what you bought: 1 per 100 coins, and at least 5 for a decoration.
 func buy_xp(item_id: String) -> int:
-	var it := item_data(item_id)
-	if it.has("gem_cost"):
-		return 0
-	var xp_gain := int(int(it.get("cost", 0)) / 100.0)
-	if it.get("kind", "") == "decor" and int(it.get("cost", 0)) > 0:
-		xp_gain = maxi(DECOR_MIN_XP, xp_gain)
-	return xp_gain
+	var d := catalog.get_def(item_id)
+	return d.buy_xp() if d else 0
 
 
 ## What selling an object returns: 5% of its price, as in FarmVille.
 func sell_value(obj: Dictionary) -> int:
-	var it := item_data(obj["id"])
-	if it.has("gem_cost"):
-		return int(it["gem_cost"]) * SELL_COINS_PER_GEM
-	return int(round(int(it.get("cost", 0)) * SELL_SHARE))
+	var d := catalog.get_def(obj["id"])
+	return (d as PlaceableDef).sell_value() if d is PlaceableDef else 0
 
 
 func can_sell(obj: Dictionary) -> bool:
@@ -1682,12 +1673,8 @@ func sell_object(uid: int) -> bool:
 func can_rotate(obj: Dictionary) -> bool:
 	if obj.is_empty():
 		return false
-	# Buildings carry a level badge and signs, so they keep facing the same way.
-	var k := kind_of(obj)
-	if k == "building" or k == "barn":
-		return false
-	var fp := footprint(obj["id"])
-	return fp.x == fp.y
+	var d := catalog.get_def(obj["id"])
+	return d is PlaceableDef and (d as PlaceableDef).can_rotate()
 
 
 func rotate_object(uid: int) -> bool:
@@ -1725,7 +1712,7 @@ func vehicle_level(id: String) -> int:
 
 ## Plots a vehicle works in one tap: columns x rows.
 func vehicle_area(id: String) -> Vector2i:
-	return VEHICLE_SIZES[clampi(vehicle_level(id), 0, VEHICLE_SIZES.size() - 1)]
+	return VehicleDef.SIZES[clampi(vehicle_level(id), 0, VehicleDef.SIZES.size() - 1)]
 
 
 ## Fuel in the tank now, after its slow refill.
@@ -1849,15 +1836,13 @@ func _vehicle_work(job: String, i: int, crop_id: String, out: Dictionary) -> boo
 
 ## FarmVille's Garage upgrades: Vehicle Parts make a vehicle cover more plots, up to 4x4.
 func vehicle_upgrade_cost(id: String) -> int:
-	var costs: Array = item_data(id).get("upgrade_parts", [])
-	var lvl := vehicle_level(id)
-	return int(costs[lvl]) if lvl < costs.size() else -1
+	var d := catalog.get_def(id)
+	return (d as VehicleDef).upgrade_cost(vehicle_level(id)) if d is VehicleDef else -1
 
 
 func vehicle_upgrade_level_needed(id: String) -> int:
-	var lvls: Array = item_data(id).get("upgrade_levels", [])
-	var lvl := vehicle_level(id)
-	return int(lvls[lvl]) if lvl < lvls.size() else 0
+	var d := catalog.get_def(id)
+	return (d as VehicleDef).upgrade_level_needed(vehicle_level(id)) if d is VehicleDef else 0
 
 
 func has_garage() -> bool:
@@ -2253,11 +2238,26 @@ func _read_json(path: String) -> Dictionary:
 	return parsed
 
 
+## Loads the catalog once; crops, items and materials all come from it.
+func _load_catalog() -> void:
+	if catalog != null:
+		return
+	catalog = Catalog.load_default()
+	for e in catalog.errors:
+		push_error("Catalog: " + e)
+	if PARTS.is_empty():
+		for d in catalog.of_kind("material"):
+			PARTS.append(d.id)
+			PART_NAMES[d.id] = d.name
+			if (d as MaterialDef).is_basic():
+				BASIC_PARTS.append(d.id)
+
+
 func _load_crops() -> void:
-	var parsed := _read_json("res://data/crops.json")
-	for c in parsed.get("crops", []):
-		crops[c["id"]] = c
-		crop_order.append(c["id"])
+	_load_catalog()
+	for d in catalog.of_kind("crop"):
+		crops[d.id] = d.data
+		crop_order.append(d.id)
 
 
 func _load_collections() -> void:
@@ -2277,10 +2277,13 @@ func _load_ribbons() -> void:
 
 
 func _load_items() -> void:
-	var parsed := _read_json("res://data/items.json")
-	for it in parsed.get("items", []):
-		items[it["id"]] = it
-		item_order.append(it["id"])
+	_load_catalog()
+	for id in catalog.order:
+		var d := catalog.get_def(id)
+		if d.kind == "crop" or d.kind == "material":
+			continue
+		items[id] = d.data
+		item_order.append(id)
 
 
 func _new_game() -> void:

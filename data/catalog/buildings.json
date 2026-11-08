@@ -1,0 +1,476 @@
+{
+  "class": "Building",
+  "_note": "Buildings that hold animals, trees or vehicles. levels = capacity at each size; frames (build_materials) are finished with materials; expand_materials pay for each size up.",
+  "defaults": {
+    "unlock_level": 1,
+    "cycle_seconds": 86400,
+    "w": 3,
+    "h": 3
+  },
+  "families": [
+    {
+      "id": "animal_homes",
+      "name": "Animal Homes",
+      "doc": "Hold animals; one tap collects everyone inside.",
+      "variants": [
+        {
+          "id": "chicken_coop",
+          "name": "Chicken Coop",
+          "unlock_level": 4,
+          "cost": 5000,
+          "holds": [
+            "chicken",
+            "brown_chicken",
+            "red_chicken",
+            "grey_chicken",
+            "black_chicken",
+            "golden_chicken",
+            "turkey"
+          ],
+          "levels": [
+            20,
+            40,
+            60
+          ],
+          "color": "#e9c46a",
+          "roof": "#b5482f",
+          "level_names": [
+            "Chicken Coop",
+            "Big Chicken Coop",
+            "Huge Chicken Coop"
+          ],
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "special": "mystery_eggs"
+        },
+        {
+          "id": "duck_pond",
+          "name": "Duck Pond",
+          "unlock_level": 5,
+          "cost": 4000,
+          "holds": [
+            "duck",
+            "goose"
+          ],
+          "levels": [
+            20,
+            30,
+            40
+          ],
+          "level_names": [
+            "Duck Pond",
+            "Big Duck Pond",
+            "Huge Duck Pond"
+          ],
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "color": "#5fa8d3",
+          "roof": "#7a5230"
+        },
+        {
+          "id": "cow_shed",
+          "name": "Dairy Farm",
+          "unlock_level": 6,
+          "cost": 10000,
+          "w": 4,
+          "holds": [
+            "cow",
+            "ox"
+          ],
+          "levels": [
+            20,
+            30,
+            40
+          ],
+          "color": "#c0392b",
+          "roof": "#6b4a3a",
+          "level_names": [
+            "Dairy Farm",
+            "Big Dairy Farm",
+            "Huge Dairy Farm"
+          ],
+          "one_each": [
+            "bull"
+          ],
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "special": "calves"
+        },
+        {
+          "id": "sheep_pen",
+          "name": "Sheep Pen",
+          "unlock_level": 7,
+          "cost": 6000,
+          "holds": [
+            "sheep",
+            "llama",
+            "alpaca"
+          ],
+          "levels": [
+            20,
+            30,
+            40
+          ],
+          "level_names": [
+            "Sheep Pen",
+            "Big Sheep Pen",
+            "Huge Sheep Pen"
+          ],
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "color": "#d9c9a3",
+          "roof": "#8a5a32",
+          "one_each": [
+            "ram"
+          ],
+          "special": "lambs"
+        },
+        {
+          "id": "goat_pen",
+          "name": "Goat Pen",
+          "unlock_level": 9,
+          "cost": 6000,
+          "holds": [
+            "goat"
+          ],
+          "levels": [
+            20,
+            30,
+            40
+          ],
+          "level_names": [
+            "Goat Pen",
+            "Big Goat Pen",
+            "Huge Goat Pen"
+          ],
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "color": "#c9b48a",
+          "roof": "#6b4a2a"
+        },
+        {
+          "id": "rabbit_hutch",
+          "name": "Rabbit Hutch",
+          "unlock_level": 8,
+          "cost": 4000,
+          "w": 2,
+          "h": 2,
+          "holds": [
+            "rabbit"
+          ],
+          "levels": [
+            20,
+            30,
+            40
+          ],
+          "level_names": [
+            "Rabbit Hutch",
+            "Big Rabbit Hutch",
+            "Huge Rabbit Hutch"
+          ],
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "color": "#e8c9a0",
+          "roof": "#a8743f"
+        },
+        {
+          "id": "pig_pen",
+          "name": "Pig Pen",
+          "unlock_level": 16,
+          "cost": 5000,
+          "holds": [
+            "pig",
+            "berkshire_pig",
+            "tamworth_pig",
+            "spotted_pig",
+            "kunekune_pig"
+          ],
+          "levels": [
+            30
+          ],
+          "build_materials": {
+            "boards": 8,
+            "bricks": 8,
+            "nails": 8
+          },
+          "special": "truffles",
+          "color": "#c98a5a",
+          "roof": "#7a5230",
+          "one_each": [
+            "boar"
+          ]
+        },
+        {
+          "id": "horse_stable",
+          "name": "Horse Stable",
+          "unlock_level": 12,
+          "cost": 5000,
+          "w": 4,
+          "h": 4,
+          "holds": [
+            "horse",
+            "pony",
+            "donkey"
+          ],
+          "levels": [
+            20,
+            25,
+            30,
+            35,
+            40
+          ],
+          "color": "#a8743f",
+          "roof": "#3f5f7a",
+          "one_each": [
+            "stallion"
+          ],
+          "build_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10,
+            "harnesses": 10,
+            "horseshoes": 10
+          },
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10,
+            "harnesses": 10,
+            "horseshoes": 10
+          },
+          "special": "foals"
+        }
+      ]
+    },
+    {
+      "id": "nursery",
+      "name": "Nursery",
+      "doc": "Raises baby animals into adults.",
+      "variants": [
+        {
+          "id": "nursery_barn",
+          "name": "Nursery Barn",
+          "unlock_level": 8,
+          "cost": 0,
+          "w": 4,
+          "holds": [
+            "calf",
+            "foal",
+            "lamb",
+            "piglet"
+          ],
+          "levels": [
+            20,
+            30,
+            40
+          ],
+          "build_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10,
+            "bottles": 10,
+            "blankets": 10
+          },
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10,
+            "bottles": 10,
+            "blankets": 10
+          },
+          "special": "nursery",
+          "grow_days": 4,
+          "grows_into": {
+            "calf": "cow",
+            "foal": "horse",
+            "lamb": "sheep",
+            "piglet": "pig"
+          },
+          "color": "#e9d8a6",
+          "roof": "#7a9e7e"
+        }
+      ]
+    },
+    {
+      "id": "orchard",
+      "name": "Orchards",
+      "doc": "Hold trees.",
+      "variants": [
+        {
+          "id": "orchard",
+          "name": "Orchard",
+          "unlock_level": 8,
+          "cost": 6000,
+          "w": 4,
+          "h": 4,
+          "holds_kind": "tree",
+          "cycle_seconds": 172800,
+          "levels": [
+            20,
+            30,
+            40
+          ],
+          "color": "#8fbf5a",
+          "roof": "#7a5230",
+          "expand_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "special": "saplings"
+        }
+      ]
+    },
+    {
+      "id": "production",
+      "name": "Production",
+      "doc": "Make goods from what the farm grows.",
+      "variants": [
+        {
+          "id": "beehive",
+          "name": "Beehive",
+          "unlock_level": 3,
+          "cost": 5000,
+          "w": 2,
+          "h": 2,
+          "holds": [
+            "bee"
+          ],
+          "levels": [
+            200
+          ],
+          "color": "#f2c230",
+          "roof": "#c98a1a",
+          "build_materials": {
+            "smokers": 10,
+            "beeswax": 10,
+            "boards": 10,
+            "nails": 10,
+            "bricks": 10
+          },
+          "special": "beehive"
+        },
+        {
+          "id": "greenhouse",
+          "name": "Greenhouse",
+          "note": "breeds hybrid crop seeds",
+          "status": "planned"
+        },
+        {
+          "id": "windmill",
+          "name": "Windmill",
+          "note": "grinds grain into flour",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "crafting",
+      "name": "Crafting",
+      "doc": "FarmVille's crafting cottages: crops in, goods out.",
+      "variants": [
+        {
+          "id": "bakery",
+          "name": "Bakery",
+          "status": "planned"
+        },
+        {
+          "id": "winery",
+          "name": "Winery",
+          "status": "planned"
+        },
+        {
+          "id": "spa",
+          "name": "Spa",
+          "status": "planned"
+        },
+        {
+          "id": "juice_press",
+          "name": "Juice Press",
+          "status": "planned"
+        },
+        {
+          "id": "spinning_mill",
+          "name": "Spinning Mill",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "name": "Storage",
+      "doc": "Keep things off the farm.",
+      "variants": [
+        {
+          "id": "barn",
+          "kind": "barn",
+          "name": "Barn",
+          "unlock_level": 99,
+          "cost": 0,
+          "levels": [
+            30
+          ],
+          "repair_parts": {
+            "bricks": 5,
+            "nails": 5,
+            "boards": 5
+          },
+          "repair_coins": 500,
+          "repair_xp": 50,
+          "color": "#b03a2e",
+          "roof": "#5c3a1e"
+        },
+        {
+          "id": "garage",
+          "name": "Garage",
+          "unlock_level": 22,
+          "cost": 50000,
+          "holds_kind": "vehicle",
+          "levels": [
+            20
+          ],
+          "build_materials": {
+            "bricks": 10,
+            "nails": 10,
+            "boards": 10
+          },
+          "uses_materials": [
+            "vehicle_parts"
+          ],
+          "special": "garage",
+          "produces": false,
+          "color": "#9aa4ad",
+          "roof": "#4a5560"
+        },
+        {
+          "id": "storage_shed",
+          "name": "Storage Shed",
+          "status": "planned"
+        },
+        {
+          "id": "silo",
+          "name": "Silo",
+          "status": "planned"
+        }
+      ]
+    }
+  ]
+}

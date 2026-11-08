@@ -1,0 +1,668 @@
+{
+  "class": "Crop",
+  "_note": "Crops planted in plowed plots. Ripe window = grow time, clamped to 4 hours to 2 days.",
+  "defaults": {
+    "unlock_level": 1,
+    "flower": false
+  },
+  "families": [
+    {
+      "id": "berries",
+      "name": "Berries",
+      "doc": "Berries.",
+      "variants": [
+        {
+          "id": "strawberries",
+          "name": "Strawberries",
+          "seed_cost": 10,
+          "grow_seconds": 14400,
+          "sell_price": 35,
+          "xp": 1,
+          "shape": "berry",
+          "color": "#e2453c"
+        },
+        {
+          "id": "raspberries",
+          "name": "Raspberries",
+          "unlock_level": 8,
+          "seed_cost": 20,
+          "grow_seconds": 7200,
+          "sell_price": 40,
+          "xp": 1,
+          "shape": "berry",
+          "color": "#d6336c"
+        },
+        {
+          "id": "blueberries",
+          "name": "Blueberries",
+          "unlock_level": 16,
+          "seed_cost": 40,
+          "grow_seconds": 14400,
+          "sell_price": 75,
+          "xp": 1,
+          "shape": "berry",
+          "color": "#3d5bd9"
+        },
+        {
+          "id": "cranberries",
+          "name": "Cranberries",
+          "unlock_level": 10,
+          "seed_cost": 45,
+          "grow_seconds": 36000,
+          "sell_price": 110,
+          "xp": 2,
+          "shape": "berry",
+          "color": "#a3122e"
+        },
+        {
+          "id": "blackberries",
+          "name": "Blackberries",
+          "unlock_level": 29,
+          "grow_seconds": 14400,
+          "status": "planned"
+        },
+        {
+          "id": "elderberries",
+          "name": "Elderberries",
+          "unlock_level": 39,
+          "grow_seconds": 43200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "grains",
+      "name": "Grains",
+      "doc": "Grains.",
+      "variants": [
+        {
+          "id": "wheat",
+          "name": "Wheat",
+          "seed_cost": 15,
+          "grow_seconds": 43200,
+          "sell_price": 60,
+          "xp": 1,
+          "shape": "grain",
+          "color": "#e8c04a"
+        },
+        {
+          "id": "corn",
+          "name": "Corn",
+          "unlock_level": 20,
+          "seed_cost": 110,
+          "grow_seconds": 259200,
+          "sell_price": 400,
+          "xp": 4,
+          "shape": "stalk",
+          "color": "#f4d03f"
+        },
+        {
+          "id": "rice",
+          "name": "Rice",
+          "unlock_level": 7,
+          "seed_cost": 40,
+          "grow_seconds": 43200,
+          "sell_price": 105,
+          "xp": 2,
+          "shape": "grain",
+          "color": "#d9d38a"
+        },
+        {
+          "id": "rye",
+          "name": "Rye",
+          "unlock_level": 21,
+          "grow_seconds": 72000,
+          "status": "planned"
+        },
+        {
+          "id": "red_wheat",
+          "name": "Red Wheat",
+          "unlock_level": 30,
+          "grow_seconds": 259200,
+          "status": "planned"
+        },
+        {
+          "id": "oats",
+          "name": "Oats",
+          "unlock_level": 53,
+          "grow_seconds": 28800,
+          "status": "planned"
+        },
+        {
+          "id": "posole_corn",
+          "name": "Posole Corn",
+          "unlock_level": 54,
+          "grow_seconds": 43200,
+          "status": "planned"
+        },
+        {
+          "id": "amaranth",
+          "name": "Amaranth",
+          "unlock_level": 76,
+          "grow_seconds": 57600,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "beans",
+      "name": "Beans and Nuts",
+      "doc": "Beans and Nuts.",
+      "variants": [
+        {
+          "id": "soybeans",
+          "name": "Soybeans",
+          "unlock_level": 2,
+          "seed_cost": 20,
+          "grow_seconds": 86400,
+          "sell_price": 80,
+          "xp": 2,
+          "shape": "grain",
+          "color": "#9cbf4f"
+        },
+        {
+          "id": "peanuts",
+          "name": "Peanuts",
+          "unlock_level": 3,
+          "seed_cost": 25,
+          "grow_seconds": 57600,
+          "sell_price": 80,
+          "xp": 2,
+          "shape": "root",
+          "color": "#c9a16b"
+        },
+        {
+          "id": "peas",
+          "name": "Peas",
+          "unlock_level": 32,
+          "grow_seconds": 86400,
+          "status": "planned"
+        },
+        {
+          "id": "purple_pod_peas",
+          "name": "Purple Pod Peas",
+          "unlock_level": 40,
+          "grow_seconds": 86400,
+          "status": "planned"
+        },
+        {
+          "id": "coffee",
+          "name": "Coffee",
+          "unlock_level": 23,
+          "grow_seconds": 57600,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "flowers",
+      "name": "Flowers",
+      "doc": "Flowers.",
+      "variants": [
+        {
+          "id": "sunflowers",
+          "name": "Sunflowers",
+          "unlock_level": 12,
+          "seed_cost": 50,
+          "grow_seconds": 86400,
+          "sell_price": 160,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#f7c51e",
+          "flower": true
+        },
+        {
+          "id": "lilac",
+          "name": "Lilac",
+          "unlock_level": 4,
+          "seed_cost": 30,
+          "grow_seconds": 36000,
+          "sell_price": 75,
+          "xp": 1,
+          "shape": "spike",
+          "color": "#b58ad6",
+          "flower": true
+        },
+        {
+          "id": "daffodils",
+          "name": "Daffodils",
+          "unlock_level": 8,
+          "seed_cost": 50,
+          "grow_seconds": 172800,
+          "sell_price": 180,
+          "xp": 3,
+          "shape": "flower",
+          "color": "#f7d23e",
+          "flower": true
+        },
+        {
+          "id": "morning_glory",
+          "name": "Morning Glory",
+          "unlock_level": 13,
+          "seed_cost": 50,
+          "grow_seconds": 43200,
+          "sell_price": 125,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#5b8def",
+          "flower": true
+        },
+        {
+          "id": "red_tulips",
+          "name": "Red Tulips",
+          "unlock_level": 15,
+          "seed_cost": 60,
+          "grow_seconds": 86400,
+          "sell_price": 190,
+          "xp": 2,
+          "shape": "flower",
+          "color": "#d62839",
+          "flower": true
+        },
+        {
+          "id": "lavender",
+          "name": "Lavender",
+          "unlock_level": 17,
+          "seed_cost": 80,
+          "grow_seconds": 172800,
+          "sell_price": 300,
+          "xp": 3,
+          "shape": "spike",
+          "color": "#9b7fd4",
+          "flower": true
+        },
+        {
+          "id": "gladiolus",
+          "name": "Gladiolus",
+          "unlock_level": 28,
+          "grow_seconds": 21600,
+          "status": "planned"
+        },
+        {
+          "id": "lilies",
+          "name": "Lilies",
+          "unlock_level": 35,
+          "grow_seconds": 86400,
+          "status": "planned"
+        },
+        {
+          "id": "purple_poppies",
+          "name": "Purple Poppies",
+          "unlock_level": 38,
+          "grow_seconds": 28800,
+          "status": "planned"
+        },
+        {
+          "id": "columbine",
+          "name": "Columbine",
+          "unlock_level": 44,
+          "grow_seconds": 14400,
+          "status": "planned"
+        },
+        {
+          "id": "iris",
+          "name": "Iris",
+          "unlock_level": 45,
+          "grow_seconds": 86400,
+          "status": "planned"
+        },
+        {
+          "id": "orange_daisies",
+          "name": "Orange Daisies",
+          "unlock_level": 59,
+          "grow_seconds": 86400,
+          "status": "planned"
+        },
+        {
+          "id": "white_roses",
+          "name": "White Roses",
+          "unlock_level": 80,
+          "grow_seconds": 86400,
+          "status": "planned"
+        },
+        {
+          "id": "forget_me_nots",
+          "name": "Forget-me-nots",
+          "unlock_level": 90,
+          "grow_seconds": 64800,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "roots",
+      "name": "Roots",
+      "doc": "Roots.",
+      "variants": [
+        {
+          "id": "potatoes",
+          "name": "Potatoes",
+          "unlock_level": 20,
+          "seed_cost": 100,
+          "grow_seconds": 259200,
+          "sell_price": 380,
+          "xp": 4,
+          "shape": "root",
+          "color": "#c9a16b"
+        },
+        {
+          "id": "carrots",
+          "name": "Carrots",
+          "unlock_level": 9,
+          "seed_cost": 40,
+          "grow_seconds": 43200,
+          "sell_price": 110,
+          "xp": 2,
+          "shape": "root",
+          "color": "#f28a2e"
+        },
+        {
+          "id": "onions",
+          "name": "Onions",
+          "unlock_level": 34,
+          "grow_seconds": 43200,
+          "status": "planned"
+        },
+        {
+          "id": "ginger",
+          "name": "Ginger",
+          "unlock_level": 42,
+          "grow_seconds": 64800,
+          "status": "planned"
+        },
+        {
+          "id": "heirloom_carrots",
+          "name": "Heirloom Carrots",
+          "unlock_level": 57,
+          "grow_seconds": 43200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "gourds",
+      "name": "Gourds and Melons",
+      "doc": "Gourds and Melons.",
+      "variants": [
+        {
+          "id": "pumpkins",
+          "name": "Pumpkins",
+          "unlock_level": 5,
+          "seed_cost": 30,
+          "grow_seconds": 28800,
+          "sell_price": 70,
+          "xp": 1,
+          "shape": "gourd",
+          "color": "#ef8a22"
+        },
+        {
+          "id": "squash",
+          "name": "Squash",
+          "unlock_level": 4,
+          "seed_cost": 35,
+          "grow_seconds": 172800,
+          "sell_price": 150,
+          "xp": 3,
+          "shape": "gourd",
+          "color": "#f2c94c"
+        },
+        {
+          "id": "watermelon",
+          "name": "Watermelon",
+          "unlock_level": 18,
+          "seed_cost": 110,
+          "grow_seconds": 345600,
+          "sell_price": 460,
+          "xp": 5,
+          "shape": "gourd",
+          "color": "#3f8f3a"
+        },
+        {
+          "id": "zucchini",
+          "name": "Zucchini",
+          "unlock_level": 27,
+          "grow_seconds": 57600,
+          "status": "planned"
+        },
+        {
+          "id": "yellow_melon",
+          "name": "Yellow Melon",
+          "unlock_level": 33,
+          "grow_seconds": 345600,
+          "status": "planned"
+        },
+        {
+          "id": "acorn_squash",
+          "name": "Acorn Squash",
+          "unlock_level": 36,
+          "grow_seconds": 36000,
+          "status": "planned"
+        },
+        {
+          "id": "square_melon",
+          "name": "Square Melon",
+          "unlock_level": 52,
+          "grow_seconds": 86400,
+          "status": "planned"
+        },
+        {
+          "id": "carnival_squash",
+          "name": "Carnival Squash",
+          "unlock_level": 63,
+          "grow_seconds": 28800,
+          "status": "planned"
+        },
+        {
+          "id": "cucumber",
+          "name": "Cucumber",
+          "unlock_level": 43,
+          "grow_seconds": 86400,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "vegetables",
+      "name": "Vegetables",
+      "doc": "Vegetables.",
+      "variants": [
+        {
+          "id": "tomatoes",
+          "name": "Tomatoes",
+          "unlock_level": 14,
+          "seed_cost": 50,
+          "grow_seconds": 28800,
+          "sell_price": 110,
+          "xp": 2,
+          "shape": "fruit",
+          "color": "#e0392f"
+        },
+        {
+          "id": "eggplant",
+          "name": "Eggplant",
+          "seed_cost": 25,
+          "grow_seconds": 172800,
+          "sell_price": 110,
+          "xp": 2,
+          "shape": "fruit",
+          "color": "#6a3d9a"
+        },
+        {
+          "id": "bell_peppers",
+          "name": "Bell Peppers",
+          "unlock_level": 11,
+          "seed_cost": 60,
+          "grow_seconds": 172800,
+          "sell_price": 220,
+          "xp": 3,
+          "shape": "fruit",
+          "color": "#e53935"
+        },
+        {
+          "id": "spinach",
+          "name": "Spinach",
+          "unlock_level": 6,
+          "seed_cost": 35,
+          "grow_seconds": 50400,
+          "sell_price": 100,
+          "xp": 2,
+          "shape": "leafy",
+          "color": "#3f9b3a"
+        },
+        {
+          "id": "artichokes",
+          "name": "Artichokes",
+          "unlock_level": 6,
+          "seed_cost": 60,
+          "grow_seconds": 345600,
+          "sell_price": 260,
+          "xp": 4,
+          "shape": "leafy",
+          "color": "#7aa66a"
+        },
+        {
+          "id": "ghost_chili",
+          "name": "Ghost Chili",
+          "unlock_level": 26,
+          "grow_seconds": 21600,
+          "status": "planned"
+        },
+        {
+          "id": "cabbage",
+          "name": "Cabbage",
+          "unlock_level": 27,
+          "grow_seconds": 172800,
+          "status": "planned"
+        },
+        {
+          "id": "broccoli",
+          "name": "Broccoli",
+          "unlock_level": 35,
+          "grow_seconds": 172800,
+          "status": "planned"
+        },
+        {
+          "id": "asparagus",
+          "name": "Asparagus",
+          "unlock_level": 37,
+          "grow_seconds": 57600,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "sweets",
+      "name": "Sweet Crops",
+      "doc": "Sweet Crops.",
+      "variants": [
+        {
+          "id": "sugarcane",
+          "name": "Sugarcane",
+          "unlock_level": 19,
+          "seed_cost": 60,
+          "grow_seconds": 28800,
+          "sell_price": 125,
+          "xp": 2,
+          "shape": "stalk",
+          "color": "#9ccc65"
+        },
+        {
+          "id": "pineapples",
+          "name": "Pineapples",
+          "unlock_level": 15,
+          "seed_cost": 75,
+          "grow_seconds": 172800,
+          "sell_price": 280,
+          "xp": 3,
+          "shape": "gourd",
+          "color": "#e8b923"
+        },
+        {
+          "id": "grapes",
+          "name": "Grapes",
+          "unlock_level": 19,
+          "seed_cost": 80,
+          "grow_seconds": 86400,
+          "sell_price": 230,
+          "xp": 3,
+          "shape": "berry",
+          "color": "#6b2f8a"
+        },
+        {
+          "id": "white_grapes",
+          "name": "White Grapes",
+          "unlock_level": 29,
+          "grow_seconds": 43200,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "fibre",
+      "name": "Fibre",
+      "doc": "Fibre.",
+      "variants": [
+        {
+          "id": "cotton",
+          "name": "Cotton",
+          "unlock_level": 9,
+          "seed_cost": 60,
+          "grow_seconds": 259200,
+          "sell_price": 240,
+          "xp": 3,
+          "shape": "fluff",
+          "color": "#f5f5f0"
+        },
+        {
+          "id": "bamboo",
+          "name": "Bamboo",
+          "unlock_level": 60,
+          "grow_seconds": 57600,
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "herbs",
+      "name": "Herbs and Teas",
+      "doc": "Herbs and Teas.",
+      "variants": [
+        {
+          "id": "green_tea",
+          "name": "Green Tea",
+          "unlock_level": 28,
+          "grow_seconds": 36000,
+          "status": "planned"
+        },
+        {
+          "id": "basil",
+          "name": "Basil",
+          "unlock_level": 48,
+          "grow_seconds": 36000,
+          "status": "planned"
+        },
+        {
+          "id": "lemon_balm",
+          "name": "Lemon Balm",
+          "unlock_level": 50,
+          "grow_seconds": 21600,
+          "status": "planned"
+        },
+        {
+          "id": "saffron",
+          "name": "Saffron",
+          "unlock_level": 64,
+          "grow_seconds": 36000,
+          "status": "planned"
+        },
+        {
+          "id": "clover",
+          "name": "Clover",
+          "unlock_level": 70,
+          "grow_seconds": 14400,
+          "status": "planned"
+        }
+      ]
+    }
+  ]
+}

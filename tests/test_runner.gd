@@ -1694,3 +1694,59 @@ func test_69_art_manifest_is_complete() -> void:
 		_check(g.items.has(id) or id.begins_with("crop_"), "%s is a real item or crop stage" % id)
 	_check(not SpriteBank.has("no_such_item"), "missing art falls back to drawings")
 	_done(g)
+
+
+# ---------------------------------------------------------------- the catalog
+
+func test_70_catalog_loads_with_no_problems() -> void:
+	var g := _farm()
+	_eq(g.catalog.errors, [], "every catalog entry passes its class's checks")
+	_check(g.catalog.order.size() >= 150, "the catalog holds the whole game (%d items)" % g.catalog.order.size())
+	_check(g.catalog.families.size() >= 70, "items are grouped into families (%d)" % g.catalog.families.size())
+	_check(g.catalog.planned.size() > 0, "planned FarmVille items are catalogued")
+	for id in g.catalog.planned:
+		_check(not g.items.has(id) and not g.crops.has(id), "planned %s isn't loaded into the game" % id)
+	# Every in-game item has the right class.
+	var expect := {"crop": CropDef, "tree": TreeDef, "animal": AnimalDef, "building": BuildingDef, "barn": BarnDef,
+		"vehicle": VehicleDef, "decor": DecorationDef, "material": MaterialDef}
+	for id in g.catalog.order:
+		var d := g.catalog.get_def(id)
+		if expect.has(d.kind):
+			_check(is_instance_of(d, expect[d.kind]), "%s is a %s" % [id, d.kind])
+	_eq(g.catalog.get_def("cow").data["family"], "cow", "the cow is in the Cows family")
+	_eq(g.catalog.get_def("bull").data["family"], "cow", "so is the bull")
+	_eq(GameState.PARTS.size(), g.catalog.of_kind("material").size(), "materials come from the catalog")
+	_check(GameState.BASIC_PARTS == ["bricks", "nails", "boards"], "the basic materials")
+	_done(g)
+
+
+func test_71_defaults_stack_and_classes_add_rules() -> void:
+	var g := _farm()
+	var c: Catalog = g.catalog
+	# A new decoration needs only an id, a name, a price and a shape; the rest comes from defaults.
+	var entry := c._build("Decoration", {"unlock_level": 1}, {}, {"id": "test_gnome", "name": "Test Gnome", "cost": 300, "shape": "gnome"})
+	_eq(c._check_types("Decoration", entry), [], "a minimal decoration is valid")
+	var d := DecorationDef.new()
+	d.setup(entry)
+	_eq(d.kind, "decor", "its kind comes from its class")
+	_eq(d.footprint(), Vector2i(1, 1), "1x1 by default")
+	_eq(d.buy_xp(), 5, "decorations give at least 5 XP (Decoration overrides Item)")
+	_eq(d.sell_value(), 15, "sells for 5% (from Placeable)")
+	# Family defaults sit between the file's and the entry's.
+	var stacked := c._build("Animal", {"cycle_seconds": 86400}, {"product": "Milk", "cycle_seconds": 172800}, {"id": "t", "name": "T", "payout": 5})
+	_eq(int(stacked["cycle_seconds"]), 172800, "family defaults beat file defaults")
+	_eq(stacked["product"], "Milk", "variants inherit the family's product")
+	# Mistakes are named.
+	var bad := c._check_types("Animal", {"id": "oops", "name": "Oops", "cycle_seconds": "daily", "payot": 5, "kind": "animal"})
+	_check(bad.any(func(e): return e.contains("cycle_seconds should be a number")), "a wrong type is reported")
+	_check(bad.any(func(e): return e.contains("unknown field payot")), "a misspelt field is reported")
+	# Class rules catch bad references.
+	var tree := TreeDef.new()
+	tree.setup(c._build("Tree", {}, {}, {"id": "odd_tree", "name": "Odd", "cycle_seconds": 100, "rare_sapling": "apple_tree"}))
+	_check(tree.validate(c).any(func(e): return e.contains("doesn't link back")), "a rare variety must link both ways")
+	var b := BuildingDef.new()
+	b.setup(c._build("Building", {}, {}, {"id": "odd_pen", "name": "Odd", "cost": 5, "levels": [10, 5], "holds": ["unicorn"]}))
+	var berr := b.validate(c)
+	_check(berr.any(func(e): return e.contains("more than the last")), "sizes must grow")
+	_check(berr.any(func(e): return e.contains("unknown item unicorn")), "it can only hold real items")
+	_done(g)

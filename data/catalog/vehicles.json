@@ -1,0 +1,102 @@
+{
+  "class": "Vehicle",
+  "_note": "Vehicles work an area of plots per tap (2x2 up to 4x4) and burn fuel. Upgrades in the Garage cost Vehicle Parts.",
+  "defaults": {
+    "fuel_per_plot": 1,
+    "upgrade_parts": [
+      2,
+      5,
+      10,
+      15
+    ],
+    "upgrade_levels": [
+      0,
+      0,
+      26,
+      26
+    ]
+  },
+  "families": [
+    {
+      "id": "tractor",
+      "name": "Tractors",
+      "doc": "Plow.",
+      "variants": [
+        {
+          "id": "tractor",
+          "name": "Tractor",
+          "unlock_level": 12,
+          "cost": 5000,
+          "job": "plow",
+          "color": "#c0392b",
+          "accent": "#2b2b30"
+        }
+      ]
+    },
+    {
+      "id": "harvester",
+      "name": "Harvesters",
+      "doc": "Harvest.",
+      "variants": [
+        {
+          "id": "harvester",
+          "name": "Harvester",
+          "unlock_level": 13,
+          "cost": 30000,
+          "job": "harvest",
+          "color": "#f2c230",
+          "accent": "#2b2b30"
+        }
+      ]
+    },
+    {
+      "id": "seeder",
+      "name": "Seeders",
+      "doc": "Plant.",
+      "variants": [
+        {
+          "id": "seeder",
+          "name": "Seeder",
+          "unlock_level": 14,
+          "cost": 30000,
+          "job": "plant",
+          "color": "#3f8f4f",
+          "accent": "#2b2b30"
+        }
+      ]
+    },
+    {
+      "id": "combine",
+      "name": "Combines",
+      "doc": "Harvest, plow and plant in one tap.",
+      "variants": [
+        {
+          "id": "combine",
+          "name": "Combine",
+          "unlock_level": 31,
+          "cost": 500000,
+          "job": "all",
+          "color": "#2f6fb5",
+          "accent": "#f2c230",
+          "fuel_per_plot": 3,
+          "build_materials": {
+            "vehicle_parts": 40
+          },
+          "build_xp": 5000,
+          "upgrade_parts": [
+            6,
+            15,
+            30,
+            45
+          ],
+          "upgrade_levels": [
+            31,
+            31,
+            41,
+            41
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "class": "Material",
+  "_note": "Building materials. basic ones always drop; the others drop once you own something that uses them.",
+  "defaults": {
+    "basic": false
+  },
+  "families": [
+    {
+      "id": "basic",
+      "name": "Basic Materials",
+      "doc": "Always drop: frames, expansions and the barn need them.",
+      "defaults": {
+        "basic": true
+      },
+      "variants": [
+        {
+          "id": "bricks",
+          "name": "Bricks"
+        },
+        {
+          "id": "nails",
+          "name": "Nails"
+        },
+        {
+          "id": "boards",
+          "name": "Wooden Boards"
+        }
+      ]
+    },
+    {
+      "id": "special",
+      "name": "Special Materials",
+      "doc": "Drop once you own something that uses them.",
+      "variants": [
+        {
+          "id": "harnesses",
+          "name": "Harnesses"
+        },
+        {
+          "id": "horseshoes",
+          "name": "Horseshoes"
+        },
+        {
+          "id": "bottles",
+          "name": "Baby Bottles"
+        },
+        {
+          "id": "blankets",
+          "name": "Blankets"
+        },
+        {
+          "id": "smokers",
+          "name": "Smokers"
+        },
+        {
+          "id": "beeswax",
+          "name": "Beeswax"
+        },
+        {
+          "id": "vehicle_parts",
+          "name": "Vehicle Parts"
+        }
+      ]
+    }
+  ]
+}

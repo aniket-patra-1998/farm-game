@@ -76,6 +76,14 @@ This is milestone 1 of the V1 plan: the core farm.
   2, 5, 10, 15 parts for 3x2, 3x3, 4x3, 4x4 (the last two at level 26). Gearhead ribbon for upgrades
 - Vehicle Parts came from neighbours in FarmVille; here they drop while farming once you own a Garage or a Combine chassis
 
+### Catalog: every item, as data with classes
+
+- `data/catalog/` holds every item: one file per category, grouped into families (Cows: Cow, Bull, Calf) that share defaults,
+  plus planned FarmVille items marked `"status": "planned"`
+- `data/catalog/schema.json` defines each class's fields, types and defaults; classes inherit (Item → Placeable → Producer → Animal)
+- `scripts/catalog/` has a class per kind with its rules (capacity, sell value, XP, vehicle area...) and checks
+- `docs/CATALOG.md` is generated from the data (`python3 tools/make_catalog.py`); CI fails if it's out of date
+
 ### Art pipeline (FLUX 3 Image Klein, in Colab)
 
 - `art/manifest.json` lists each piece of art: what to draw, its footprint, and reference images that fix the camera angle

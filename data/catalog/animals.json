@@ -1,0 +1,510 @@
+{
+  "class": "Animal",
+  "_note": "Animals: collected every cycle; live in the building whose holds lists them. stray_only animals wander in and are adopted, never bought.",
+  "defaults": {
+    "unlock_level": 1,
+    "cycle_seconds": 86400,
+    "xp": 2
+  },
+  "families": [
+    {
+      "id": "chicken",
+      "name": "Chickens",
+      "doc": "Live in the Chicken Coop; breeds decide which Mystery Eggs turn up.",
+      "variants": [
+        {
+          "id": "chicken",
+          "name": "White Chicken",
+          "product": "Eggs",
+          "cost": 120,
+          "payout": 40,
+          "xp": 1,
+          "color": "#fbfaf4",
+          "accent": "#e2453c",
+          "breed": "white"
+        },
+        {
+          "id": "brown_chicken",
+          "name": "Brown Chicken",
+          "product": "Brown Eggs",
+          "unlock_level": 5,
+          "cost": 0,
+          "payout": 45,
+          "xp": 1,
+          "color": "#a8703e",
+          "accent": "#e2453c",
+          "gem_cost": 5,
+          "breed": "brown"
+        },
+        {
+          "id": "red_chicken",
+          "name": "Rhode Island Red",
+          "product": "Eggs",
+          "unlock_level": 9,
+          "cost": 0,
+          "payout": 50,
+          "xp": 1,
+          "color": "#9c3a22",
+          "accent": "#e2453c",
+          "gem_cost": 8,
+          "breed": "red"
+        },
+        {
+          "id": "grey_chicken",
+          "name": "Scots Grey",
+          "product": "Eggs",
+          "unlock_level": 12,
+          "cost": 0,
+          "payout": 55,
+          "xp": 1,
+          "color": "#8a8f96",
+          "accent": "#e2453c",
+          "gem_cost": 12,
+          "breed": "grey"
+        },
+        {
+          "id": "black_chicken",
+          "name": "Black Chicken",
+          "product": "Eggs",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 60,
+          "color": "#2b2b30",
+          "accent": "#e2453c",
+          "breed": "black"
+        },
+        {
+          "id": "golden_chicken",
+          "name": "Golden Chicken",
+          "product": "Golden Eggs",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 90,
+          "color": "#f2c230",
+          "accent": "#e2453c",
+          "breed": "golden"
+        }
+      ]
+    },
+    {
+      "id": "turkey",
+      "name": "Turkeys",
+      "doc": "Share the Chicken Coop.",
+      "variants": [
+        {
+          "id": "turkey",
+          "name": "Turkey",
+          "product": "Feathers",
+          "unlock_level": 10,
+          "cost": 500,
+          "payout": 120,
+          "color": "#8a5a3c",
+          "accent": "#c0392b"
+        }
+      ]
+    },
+    {
+      "id": "duck",
+      "name": "Ducks",
+      "doc": "Live in the Duck Pond.",
+      "variants": [
+        {
+          "id": "duck",
+          "name": "Duck",
+          "product": "Feathers",
+          "unlock_level": 4,
+          "cost": 200,
+          "payout": 60,
+          "xp": 1,
+          "color": "#fbfaf4",
+          "accent": "#f2a33a"
+        }
+      ]
+    },
+    {
+      "id": "goose",
+      "name": "Geese",
+      "doc": "Share the Duck Pond.",
+      "variants": [
+        {
+          "id": "goose",
+          "name": "Goose",
+          "product": "Down",
+          "unlock_level": 13,
+          "cost": 650,
+          "payout": 150,
+          "color": "#f4f4f4",
+          "accent": "#f2a33a"
+        }
+      ]
+    },
+    {
+      "id": "cow",
+      "name": "Cows",
+      "doc": "Live in the Dairy Farm. A bull brings calves, raised in the Nursery.",
+      "variants": [
+        {
+          "id": "cow",
+          "name": "Cow",
+          "product": "Milk",
+          "unlock_level": 3,
+          "cost": 300,
+          "payout": 85,
+          "xp": 1,
+          "color": "#f4f1ea",
+          "accent": "#3b3330"
+        },
+        {
+          "id": "bull",
+          "name": "Bull",
+          "product": "Nothing",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 0,
+          "xp": 0,
+          "color": "#7a4a2c",
+          "accent": "#2b2420",
+          "stray_only": true,
+          "home": "cow_shed"
+        },
+        {
+          "id": "calf",
+          "name": "Calf",
+          "product": "Milk",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#f4f1ea",
+          "accent": "#3b3330"
+        },
+        {
+          "id": "brown_cow",
+          "name": "Brown Cow",
+          "note": "verify against FarmVille before building",
+          "status": "planned"
+        },
+        {
+          "id": "pink_cow",
+          "name": "Pink Cow",
+          "note": "verify against FarmVille before building",
+          "status": "planned"
+        },
+        {
+          "id": "longhorn",
+          "name": "Longhorn Cattle",
+          "note": "verify against FarmVille before building",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "ox",
+      "name": "Oxen",
+      "doc": "Share the Dairy Farm.",
+      "variants": [
+        {
+          "id": "ox",
+          "name": "Ox",
+          "product": "Fertilizer",
+          "unlock_level": 12,
+          "cost": 2000,
+          "cycle_seconds": 172800,
+          "payout": 120,
+          "color": "#8a5a3a",
+          "accent": "#3b2a1e"
+        }
+      ]
+    },
+    {
+      "id": "sheep",
+      "name": "Sheep",
+      "doc": "Live in the Sheep Pen. A ram brings lambs.",
+      "variants": [
+        {
+          "id": "sheep",
+          "name": "Sheep",
+          "product": "Wool",
+          "unlock_level": 5,
+          "cost": 350,
+          "payout": 95,
+          "xp": 1,
+          "color": "#eeeae0",
+          "accent": "#5a4a42"
+        },
+        {
+          "id": "ram",
+          "name": "Ram",
+          "product": "Nothing",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 0,
+          "xp": 0,
+          "color": "#e8e2d4",
+          "accent": "#8a7a5a",
+          "stray_only": true,
+          "home": "sheep_pen"
+        },
+        {
+          "id": "lamb",
+          "name": "Lamb",
+          "product": "Wool",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#fbf6ec",
+          "accent": "#d9cfc0"
+        },
+        {
+          "id": "black_sheep",
+          "name": "Black Sheep",
+          "note": "verify against FarmVille before building",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "id": "camelid",
+      "name": "Llamas and Alpacas",
+      "doc": "Share the Sheep Pen; give fleece.",
+      "defaults": {
+        "product": "Fleece",
+        "cycle_seconds": 172800
+      },
+      "variants": [
+        {
+          "id": "llama",
+          "name": "Llama",
+          "unlock_level": 18,
+          "cost": 1000,
+          "payout": 320,
+          "xp": 3,
+          "color": "#e8dcc4",
+          "accent": "#8a6a4a"
+        },
+        {
+          "id": "alpaca",
+          "name": "Alpaca",
+          "unlock_level": 16,
+          "cost": 3000,
+          "payout": 150,
+          "color": "#f2e6d0",
+          "accent": "#8a6a4a"
+        }
+      ]
+    },
+    {
+      "id": "pig",
+      "name": "Pigs",
+      "doc": "Live in the Pig Pen and forage for truffles. Rare breeds are traded for truffles; a boar brings piglets.",
+      "variants": [
+        {
+          "id": "pig",
+          "name": "Pig",
+          "product": "Truffles",
+          "unlock_level": 7,
+          "cost": 450,
+          "payout": 110,
+          "color": "#f4b6b8",
+          "accent": "#d9878b"
+        },
+        {
+          "id": "berkshire_pig",
+          "name": "Berkshire Pig",
+          "product": "Truffles",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 160,
+          "color": "#2b2b30",
+          "accent": "#f4b6b8",
+          "rare_pig": true
+        },
+        {
+          "id": "tamworth_pig",
+          "name": "Tamworth Pig",
+          "product": "Truffles",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 170,
+          "color": "#c0602a",
+          "accent": "#8a3a1a",
+          "rare_pig": true
+        },
+        {
+          "id": "spotted_pig",
+          "name": "Spotted Pig",
+          "product": "Truffles",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 180,
+          "color": "#f2d6cf",
+          "accent": "#3b3330",
+          "rare_pig": true
+        },
+        {
+          "id": "kunekune_pig",
+          "name": "Kunekune Pig",
+          "product": "Truffles",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 200,
+          "color": "#d9b48a",
+          "accent": "#5a3a22",
+          "rare_pig": true
+        },
+        {
+          "id": "boar",
+          "name": "Boar",
+          "product": "Nothing",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 0,
+          "xp": 0,
+          "color": "#8a5a4a",
+          "accent": "#3b2a1e",
+          "stray_only": true,
+          "home": "pig_pen"
+        },
+        {
+          "id": "piglet",
+          "name": "Piglet",
+          "product": "Truffles",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#f9c8ca",
+          "accent": "#d9878b"
+        }
+      ]
+    },
+    {
+      "id": "goat",
+      "name": "Goats",
+      "doc": "Live in the Goat Pen.",
+      "variants": [
+        {
+          "id": "goat",
+          "name": "Goat",
+          "product": "Goat Milk",
+          "unlock_level": 9,
+          "cost": 600,
+          "cycle_seconds": 172800,
+          "payout": 200,
+          "color": "#d8c7a8",
+          "accent": "#7a6650"
+        }
+      ]
+    },
+    {
+      "id": "horse",
+      "name": "Horses",
+      "doc": "Live in the Horse Stable. A stallion brings foals.",
+      "variants": [
+        {
+          "id": "horse",
+          "name": "Horse",
+          "product": "Horse Hair",
+          "unlock_level": 11,
+          "cost": 900,
+          "cycle_seconds": 259200,
+          "payout": 320,
+          "xp": 3,
+          "color": "#9a6438",
+          "accent": "#4a2c18"
+        },
+        {
+          "id": "pony",
+          "name": "Pony",
+          "product": "Horse Hair",
+          "unlock_level": 10,
+          "cost": 1500,
+          "cycle_seconds": 172800,
+          "payout": 95,
+          "color": "#c9a37a",
+          "accent": "#6b4a2a"
+        },
+        {
+          "id": "stallion",
+          "name": "Stallion",
+          "product": "Nothing",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 0,
+          "xp": 0,
+          "color": "#f4f1ea",
+          "accent": "#c9c2b4",
+          "stray_only": true,
+          "home": "horse_stable"
+        },
+        {
+          "id": "foal",
+          "name": "Foal",
+          "product": "Horse Hair",
+          "unlock_level": 99,
+          "cost": 0,
+          "payout": 20,
+          "xp": 1,
+          "color": "#b07a48",
+          "accent": "#4a2c18"
+        }
+      ]
+    },
+    {
+      "id": "donkey",
+      "name": "Donkeys",
+      "doc": "Share the Horse Stable.",
+      "variants": [
+        {
+          "id": "donkey",
+          "name": "Donkey",
+          "product": "Donkey Milk",
+          "unlock_level": 15,
+          "cost": 800,
+          "cycle_seconds": 172800,
+          "payout": 270,
+          "xp": 3,
+          "color": "#9c9289",
+          "accent": "#4a403a"
+        }
+      ]
+    },
+    {
+      "id": "rabbit",
+      "name": "Rabbits",
+      "doc": "Live in the Rabbit Hutch.",
+      "variants": [
+        {
+          "id": "rabbit",
+          "name": "Rabbit",
+          "product": "Fur",
+          "unlock_level": 8,
+          "cost": 400,
+          "payout": 100,
+          "xp": 1,
+          "color": "#d9cfc1",
+          "accent": "#8a7a6a"
+        }
+      ]
+    },
+    {
+      "id": "bee",
+      "name": "Bees",
+      "doc": "Join a Beehive that has a Queen Bee; make honey and pollinate crops.",
+      "variants": [
+        {
+          "id": "bee",
+          "kind": "bee",
+          "name": "Bee",
+          "product": "Honey",
+          "cost": 0,
+          "payout": 6,
+          "xp": 0,
+          "color": "#f2c230",
+          "unlock_level": 99
+        }
+      ]
+    }
+  ]
+}

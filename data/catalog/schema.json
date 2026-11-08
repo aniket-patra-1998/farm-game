@@ -1,0 +1,404 @@
+{
+  "_note": "The rules for every kind of thing in the game. Each class lists its own fields and inherits its parent's. Order of defaults: the field's default here, then the data file's defaults, then the entry itself. Types: string, int, number, bool, color, list<string>, list<int>, materials (material id -> count), map (string -> string), enum (see values). An entry whose kind differs from its file's class uses kind_classes to pick its class.",
+  "classes": {
+    "Item": {
+      "doc": "Anything in the catalog.",
+      "fields": {
+        "id": {
+          "type": "string",
+          "required": true,
+          "doc": "Unique snake_case id. Saves refer to it, so never rename one that has shipped."
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "doc": "Shown to the player."
+        },
+        "kind": {
+          "type": "enum",
+          "values": [
+            "crop",
+            "tree",
+            "animal",
+            "bee",
+            "building",
+            "barn",
+            "vehicle",
+            "decor",
+            "material"
+          ],
+          "doc": "Set by the class; only override for special cases (bee, barn)."
+        },
+        "unlock_level": {
+          "type": "int",
+          "default": 1,
+          "doc": "Level that unlocks it. 99 = never in the Market (earned, traded or starter only)."
+        },
+        "color": {
+          "type": "color",
+          "default": "#999999",
+          "doc": "Main colour of the code-drawn placeholder."
+        },
+        "accent": {
+          "type": "color",
+          "doc": "Second colour of the placeholder."
+        },
+        "status": {
+          "type": "enum",
+          "values": [
+            "in_game",
+            "planned"
+          ],
+          "default": "in_game",
+          "doc": "planned = in the catalog for reference only; the game doesn't load it, and only id and name are required."
+        },
+        "note": {
+          "type": "string",
+          "doc": "Anything a developer should know about this entry."
+        },
+        "family": {
+          "type": "string",
+          "doc": "Set by the loader: the family it's listed under."
+        },
+        "category": {
+          "type": "string",
+          "doc": "Set by the loader: the catalog file it's in."
+        }
+      }
+    },
+    "Crop": {
+      "extends": "Item",
+      "kind": "crop",
+      "doc": "Planted in plowed plots, harvested when ripe.",
+      "fields": {
+        "seed_cost": {
+          "type": "int",
+          "required": true,
+          "doc": "Coins to plant one plot."
+        },
+        "grow_seconds": {
+          "type": "int",
+          "required": true,
+          "doc": "Time from planting to ripe."
+        },
+        "sell_price": {
+          "type": "int",
+          "required": true,
+          "doc": "Coins per harvest before bonuses."
+        },
+        "xp": {
+          "type": "int",
+          "default": 1,
+          "doc": "XP per harvest."
+        },
+        "shape": {
+          "type": "enum",
+          "values": [
+            "berry",
+            "grain",
+            "root",
+            "stalk",
+            "flower",
+            "fruit",
+            "gourd",
+            "spike",
+            "fluff",
+            "leafy"
+          ],
+          "required": true,
+          "doc": "Placeholder drawing."
+        },
+        "flower": {
+          "type": "bool",
+          "default": false,
+          "doc": "Flower harvests can bring bees and Queen Bees."
+        }
+      }
+    },
+    "Material": {
+      "extends": "Item",
+      "kind": "material",
+      "doc": "Building materials that drop while farming.",
+      "fields": {
+        "basic": {
+          "type": "bool",
+          "default": false,
+          "doc": "Basic materials always drop; others only once you own something that uses them."
+        }
+      }
+    },
+    "Placeable": {
+      "extends": "Item",
+      "abstract": true,
+      "doc": "Anything placed on the farm.",
+      "fields": {
+        "cost": {
+          "type": "int",
+          "default": 0,
+          "doc": "Coins in the Market."
+        },
+        "gem_cost": {
+          "type": "int",
+          "doc": "Gems in the Market instead of coins."
+        },
+        "w": {
+          "type": "int",
+          "default": 1,
+          "doc": "Footprint width in tiles."
+        },
+        "h": {
+          "type": "int",
+          "default": 1,
+          "doc": "Footprint depth in tiles."
+        },
+        "roof": {
+          "type": "color",
+          "doc": "Roof colour of the placeholder."
+        }
+      }
+    },
+    "Producer": {
+      "extends": "Placeable",
+      "abstract": true,
+      "doc": "Placeables that are collected every cycle.",
+      "fields": {
+        "cycle_seconds": {
+          "type": "int",
+          "required": true,
+          "doc": "Time between collections."
+        },
+        "payout": {
+          "type": "int",
+          "default": 0,
+          "doc": "Coins per collection."
+        },
+        "xp": {
+          "type": "int",
+          "default": 1,
+          "doc": "XP per collection."
+        },
+        "product": {
+          "type": "string",
+          "doc": "What it gives, as shown to the player."
+        }
+      }
+    },
+    "Tree": {
+      "extends": "Producer",
+      "kind": "tree",
+      "doc": "Fruit and nut trees.",
+      "fields": {
+        "rare_sapling": {
+          "type": "string",
+          "ref": "Tree",
+          "doc": "The rare variety an Orchard can sprout from this tree."
+        },
+        "rare_of": {
+          "type": "string",
+          "ref": "Tree",
+          "doc": "For a rare variety: the tree it sprouts from."
+        }
+      }
+    },
+    "Animal": {
+      "extends": "Producer",
+      "kind": "animal",
+      "doc": "Animals, loose on the farm or inside their home.",
+      "fields": {
+        "breed": {
+          "type": "string",
+          "doc": "Chicken breed for Mystery Eggs (white, brown, red, grey, black, golden)."
+        },
+        "stray_only": {
+          "type": "bool",
+          "default": false,
+          "doc": "Only wanders in as a stray; never bought."
+        },
+        "home": {
+          "type": "string",
+          "ref": "Building",
+          "doc": "For strays: the building the player must own before it can appear."
+        },
+        "rare_pig": {
+          "type": "bool",
+          "default": false,
+          "doc": "A rare breed traded for truffles at the Pig Pen."
+        }
+      }
+    },
+    "Building": {
+      "extends": "Placeable",
+      "kind": "building",
+      "doc": "Holds animals, trees or vehicles; may be built from a frame and expanded.",
+      "fields": {
+        "cycle_seconds": {
+          "type": "int",
+          "default": 86400,
+          "doc": "Time between collections."
+        },
+        "levels": {
+          "type": "list<int>",
+          "required": true,
+          "doc": "Capacity at each size, smallest first."
+        },
+        "level_names": {
+          "type": "list<string>",
+          "doc": "Name at each size (e.g. Coop, Big Coop, Huge Coop)."
+        },
+        "holds": {
+          "type": "list<string>",
+          "ref": "Animal|Tree",
+          "doc": "Item ids that can move in."
+        },
+        "holds_kind": {
+          "type": "enum",
+          "values": [
+            "tree",
+            "vehicle"
+          ],
+          "doc": "Any item of this kind can move in."
+        },
+        "one_each": {
+          "type": "list<string>",
+          "ref": "Animal",
+          "doc": "Specials kept one at a time, taking no space (a bull, a ram)."
+        },
+        "build_materials": {
+          "type": "materials",
+          "doc": "If set, it arrives as a frame finished with these."
+        },
+        "expand_materials": {
+          "type": "materials",
+          "doc": "Paid for each size up."
+        },
+        "uses_materials": {
+          "type": "list<string>",
+          "ref": "Material",
+          "doc": "Materials that start dropping once you own it."
+        },
+        "special": {
+          "type": "enum",
+          "values": [
+            "mystery_eggs",
+            "calves",
+            "foals",
+            "lambs",
+            "truffles",
+            "nursery",
+            "beehive",
+            "saplings",
+            "garage"
+          ],
+          "doc": "Its FarmVille extra on each collection."
+        },
+        "produces": {
+          "type": "bool",
+          "default": true,
+          "doc": "false = never ready to collect (the Garage)."
+        },
+        "grow_days": {
+          "type": "int",
+          "doc": "Nursery: days for a baby to grow up."
+        },
+        "grows_into": {
+          "type": "map",
+          "ref": "Animal",
+          "doc": "Nursery: baby id -> adult id."
+        }
+      }
+    },
+    "Barn": {
+      "extends": "Building",
+      "kind": "barn",
+      "doc": "The starter barn: broken until repaired, then storage.",
+      "fields": {
+        "repair_parts": {
+          "type": "materials",
+          "required": true,
+          "doc": "Materials needed to repair it."
+        },
+        "repair_coins": {
+          "type": "int",
+          "default": 0,
+          "doc": "Coins to repair it."
+        },
+        "repair_xp": {
+          "type": "int",
+          "default": 0,
+          "doc": "XP for repairing it."
+        }
+      }
+    },
+    "Vehicle": {
+      "extends": "Placeable",
+      "kind": "vehicle",
+      "doc": "Works an area of plots per tap and burns fuel.",
+      "fields": {
+        "job": {
+          "type": "enum",
+          "values": [
+            "plow",
+            "plant",
+            "harvest",
+            "all"
+          ],
+          "required": true,
+          "doc": "What it does to each plot."
+        },
+        "fuel_per_plot": {
+          "type": "int",
+          "default": 1,
+          "doc": "Fuel per plot worked."
+        },
+        "upgrade_parts": {
+          "type": "list<int>",
+          "required": true,
+          "doc": "Vehicle Parts for each Garage upgrade (2x2 to 3x2, 3x3, 4x3, 4x4)."
+        },
+        "upgrade_levels": {
+          "type": "list<int>",
+          "required": true,
+          "doc": "Player level each upgrade needs; same length as upgrade_parts."
+        },
+        "build_materials": {
+          "type": "materials",
+          "doc": "If set, it arrives as a chassis finished with these."
+        },
+        "build_xp": {
+          "type": "int",
+          "default": 0,
+          "doc": "XP when the chassis is finished."
+        }
+      }
+    },
+    "Decoration": {
+      "extends": "Placeable",
+      "kind": "decor",
+      "doc": "Scenery. 1 XP per 100 coins (at least 5).",
+      "fields": {
+        "shape": {
+          "type": "string",
+          "doc": "Placeholder drawing (fence, hedge, haybale, ...). Starter scenery is drawn by id instead."
+        },
+        "variant": {
+          "type": "string",
+          "doc": "Shape variant (pine, oak, willow for shade trees)."
+        }
+      }
+    }
+  },
+  "files": {
+    "crops": "Crop",
+    "materials": "Material",
+    "trees": "Tree",
+    "animals": "Animal",
+    "buildings": "Building",
+    "vehicles": "Vehicle",
+    "decorations": "Decoration"
+  },
+  "kind_classes": {
+    "barn": "Barn",
+    "bee": "Animal"
+  },
+  "layout": "Each data file: {class, _note, defaults, families: [{id, name, doc, defaults, variants: [entries]}]}. Category = file, family = a group of variants sharing defaults (Cows: Cow, Bull, Calf)."
+}
