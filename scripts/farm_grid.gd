@@ -60,6 +60,11 @@ func top_of(row: int, col: int) -> Vector2:
 	return Vector2((col - row) * TILE_W / 2.0, (col + row) * TILE_H / 2.0)
 
 
+## Same as top_of, for fractional rows and columns (used by things that drift, like fireflies).
+func top_of_f(row: float, col: float) -> Vector2:
+	return Vector2((col - row) * TILE_W / 2.0, (col + row) * TILE_H / 2.0)
+
+
 func center_of(i: int) -> Vector2:
 	return top_of(_row(i), _col(i)) + Vector2(0, TILE_H / 2.0)
 

@@ -590,3 +590,62 @@ func test_32_new_trees_animals_and_birds_work() -> void:
 			col = 7
 			row += 1
 	_done(g)
+
+
+# ---------------------------------------------------------------- day and night
+
+func test_33_day_and_night_follow_the_clock() -> void:
+	_eq(DayCycle.darkness(12.0), 0.0, "noon is full daylight")
+	_eq(DayCycle.darkness(0.0), 1.0, "midnight is full night")
+	_eq(DayCycle.darkness(23.0), 1.0, "11 pm is night")
+	var dawn := DayCycle.darkness(DayCycle.SUNRISE)
+	_check(dawn > 0.0 and dawn < 1.0, "sunrise is part-way (got %.2f)" % dawn)
+	_eq(DayCycle.phase_name(12.0), "midday", "noon label")
+	_eq(DayCycle.phase_name(2.0), "night", "2 am label")
+	_eq(DayCycle.phase_name(6.0), "dawn", "6 am label")
+	_check(DayCycle.sun_progress(12.0) > 0.0 and DayCycle.sun_progress(12.0) < 1.0, "sun is up at noon")
+	_eq(DayCycle.sun_progress(23.0), -1.0, "sun is down at night")
+	_check(DayCycle.moon_progress(23.0) >= 0.0, "moon is up at night")
+	_eq(DayCycle.moon_progress(12.0), -1.0, "moon is down at noon")
+
+
+func test_34_day_colours_change_smoothly_and_wrap_at_midnight() -> void:
+	var before := DayCycle.sample(23.99)
+	var after := DayCycle.sample(0.0)
+	_check((before["top"] as Color).is_equal_approx(after["top"]), "sky matches across midnight")
+	# No jumps: a minute apart the light changes by only a little, all day long.
+	var worst := 0.0
+	for m in range(0, 24 * 60, 5):
+		var a: Color = DayCycle.sample(m / 60.0)["light"]
+		var b: Color = DayCycle.sample((m + 1) / 60.0)["light"]
+		worst = maxf(worst, absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b))
+	_check(worst < 0.05, "light never jumps between minutes (worst %.3f)" % worst)
+	var noon: Color = DayCycle.sample(12.0)["light"]
+	var night: Color = DayCycle.sample(1.0)["light"]
+	_check(noon.get_luminance() > night.get_luminance() + 0.2, "noon is clearly brighter than night")
+
+
+func test_35_local_time_and_clock_text() -> void:
+	_eq(DayCycle.local_hour(0, 0), 0.0, "unix 0 is midnight UTC")
+	_eq(DayCycle.local_hour(0, 330), 5.5, "India is 5 h 30 m ahead")
+	_eq(DayCycle.local_hour(3600, -300), 20.0, "behind UTC wraps to the previous evening")
+	_eq(DayCycle.clock_text(19.7), "7:42 pm", "evening clock")
+	_eq(DayCycle.clock_text(0.25), "12:15 am", "just after midnight")
+	_eq(DayCycle.clock_text(12.0), "12:00 pm", "noon")
+
+
+func test_36_the_whole_game_scene_loads() -> void:
+	# Catches broken scripts anywhere in the game, not just the rules.
+	var packed := load("res://scenes/main.tscn") as PackedScene
+	_check(packed != null, "main scene loads")
+	if packed == null:
+		return
+	var main := packed.instantiate()
+	_check(main != null, "main scene instantiates")
+	if main == null:
+		return
+	add_child(main)
+	_check(main.get("grid") != null, "farm grid created")
+	_check(main.get("hud") != null, "HUD created")
+	_check(main.get("sky") != null, "sky created")
+	main.queue_free()

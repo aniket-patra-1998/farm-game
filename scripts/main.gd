@@ -11,6 +11,9 @@ const WHEEL_STEP := 1.1
 var grid: FarmGrid
 var camera: Camera2D
 var hud: FarmHud
+var sky: SkyLayer
+var light: CanvasModulate  # tints the whole farm for the time of day
+var night: NightGlow
 
 var _base_zoom := 1.0       # zoom that shows the whole farm; also the furthest out
 var _touches := {}          # finger index -> screen position
@@ -19,8 +22,18 @@ var _mouse_panning := false
 
 
 func _ready() -> void:
+	sky = SkyLayer.new()
+	add_child(sky)
+
+	light = CanvasModulate.new()
+	add_child(light)
+
 	grid = FarmGrid.new()
 	add_child(grid)
+
+	night = NightGlow.new()
+	night.grid = grid
+	add_child(night)
 
 	camera = Camera2D.new()
 	add_child(camera)
@@ -54,6 +67,14 @@ func _fit_camera() -> void:
 	# The free area is shifted down by half the difference between the bars.
 	var shift := (FarmHud.TOP_H - FarmHud.BOTTOM_H) / 2.0
 	camera.position = bounds.get_center() - Vector2(0, shift / _base_zoom)
+
+
+# ---------------------------------------------------------------- time of day
+
+func _process(_delta: float) -> void:
+	var look := DayCycle.sample(sky.hour)
+	light.color = look["light"]
+	night.dark = look["dark"]
 
 
 # ---------------------------------------------------------------- zoom and move

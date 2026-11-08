@@ -21,6 +21,7 @@ const LOCKED := Color("#d8cbb0")
 
 var _coins_label: Label
 var _gems_label: Label
+var _clock_label: Label
 var _level_label: Label
 var _xp_bar: ProgressBar
 var _xp_label: Label
@@ -40,6 +41,7 @@ var _building_uid := -1
 
 
 func _ready() -> void:
+	layer = 10 # above the sky, the farm and the night lights
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -68,6 +70,7 @@ func _ready() -> void:
 	Game.leveled_up.connect(func(_l: int) -> void: _refresh_seed_buttons())
 	Game.tutorial_changed.connect(func(_s: int) -> void: _refresh_tutorial())
 	_refresh()
+	_refresh_clock()
 	_refresh_tutorial()
 
 
@@ -96,6 +99,15 @@ func _build_top_bar(root: Control) -> void:
 	_gems_label.add_theme_color_override("font_color", Color("#9be7ff"))
 	_gems_label.add_theme_font_size_override("font_size", 20)
 	money.add_child(_gems_label)
+
+	_clock_label = Label.new()
+	_clock_label.add_theme_font_size_override("font_size", 16)
+	money.add_child(_clock_label)
+	var tick := Timer.new()
+	tick.wait_time = 1.0
+	tick.autostart = true
+	tick.timeout.connect(_refresh_clock)
+	add_child(tick)
 
 	for entry in [["Market", _show_market], ["Collections", _show_collections], ["Ribbons", _show_ribbons]]:
 		var b := Button.new()
@@ -371,6 +383,11 @@ static func _thousands(n: int) -> String:
 		out = "," + digits.substr(digits.length() - 3) + out
 		digits = digits.substr(0, digits.length() - 3)
 	return ("-" if n < 0 else "") + digits + out
+
+
+func _refresh_clock() -> void:
+	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
+	_clock_label.text = "%s · %s" % [DayCycle.SEASON, DayCycle.clock_text(hour)]
 
 
 func _refresh_seed_buttons() -> void:
