@@ -1782,3 +1782,10 @@ func test_71_defaults_stack_and_classes_add_rules() -> void:
 	_check(berr.any(func(e): return e.contains("more than the last")), "sizes must grow")
 	_check(berr.any(func(e): return e.contains("unknown item unicorn")), "it can only hold real items")
 	_done(g)
+
+
+func test_73_tool_scripts_compile() -> void:
+	# The CI tools (reference and sprite renderers, previews) don't run in the game, so check they compile here.
+	for path in ["res://tools/render_refs.gd", "res://tools/render_sprites.gd", "res://tools/style_preview.gd", "res://tests/shots.gd"]:
+		var script := load(path) as GDScript
+		_check(script != null and script.can_instantiate(), "%s compiles" % path)

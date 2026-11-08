@@ -59,7 +59,7 @@ func _draw_job() -> void:
 		"Crop":
 			var crop: Dictionary = Game.crops[item_id]
 			PlaceholderArt.draw_soil(_canvas, top, TILE_W, TILE_H, true)
-			var phase := {"planted": "growing", "growing": "growing", "ripe": "ripe", "withered": "withered"}[stage]
+			var phase: String = {"planted": "growing", "growing": "growing", "ripe": "ripe", "withered": "withered"}[stage]
 			var progress := 0.12 if stage == "planted" else 0.7
 			PlaceholderArt.draw_crop(_canvas, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, phase, progress)
 		"Tree":
