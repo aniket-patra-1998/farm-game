@@ -1535,7 +1535,7 @@ func test_62_sell_anything_for_five_percent() -> void:
 		g.place_somewhere("chicken")
 	var before := _count(g, "chicken")
 	g.fill_building(int(coop["uid"]))
-	_eq(_count(g, "chicken"), before - 5, "5 chickens in the coop")
+	_eq(g.inside_total(coop), before, "every loose chicken moved into the coop")
 	_check(g.sell_object(int(coop["uid"])), "sell the coop")
 	_eq(_count(g, "chicken"), before, "the chickens are back on the farm")
 	_eq(_count(g, "chicken_coop"), 0, "the coop is gone")
@@ -1562,8 +1562,13 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	var g := _farm(true)
 	g.coins = 10000000
 	g.xp = g.xp_for_level(20)
+	# Buildings first, so the animals placed below can't land on their spots.
 	_check(g.buy_and_place("sheep_pen", 0, 4), "Sheep Pen")
 	var pen := g.object_at(g.index_of(0, 4))
+	_check(g.buy_and_place("pig_pen", 8, 8), "Pig Pen")
+	var pigs := g.object_at(g.index_of(8, 8))
+	g.buy_and_place("nursery_barn", 3, 6)
+	var nursery := g.object_at(g.index_of(3, 6))
 	for id in ["sheep", "sheep", "llama", "alpaca", "ram"]:
 		g.place_somewhere(id)
 	_eq(g.fill_building(int(pen["uid"])), 5, "sheep, llama, alpaca and the ram move in")
@@ -1572,8 +1577,6 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 		_skip(g, 86400)
 		g.collect(int(pen["uid"]))
 	_check(_count(g, "lamb") > 0, "lambs were born (%d)" % _count(g, "lamb"))
-	_check(g.buy_and_place("pig_pen", 8, 8), "Pig Pen")
-	var pigs := g.object_at(g.index_of(8, 8))
 	pigs.erase("construction")
 	g.place_somewhere("pig")
 	g.place_somewhere("boar")
@@ -1585,8 +1588,6 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 		g.collect(int(pigs["uid"]))
 	_check(_count(g, "piglet") > 0, "piglets were born (%d)" % _count(g, "piglet"))
 	# The nursery raises them.
-	g.buy_and_place("nursery_barn", 3, 6)
-	var nursery := g.object_at(g.index_of(3, 6))
 	nursery.erase("construction")
 	var sheep := _count(g, "sheep")
 	g.fill_building(int(nursery["uid"]))
@@ -1627,6 +1628,7 @@ func test_65_rams_and_boars_wander_in_only_with_their_home() -> void:
 
 func test_66_daily_bonus_streak() -> void:
 	var g := _farm()
+	g.ribbon_tiers["regular"] = 4 # isolate the bonus from the ribbon's own reward
 	g.last_daily_day = g.day_number() - 1
 	var expected := [100, 250, 500, 750, 1000, 1000]
 	for d in 6:
