@@ -1535,7 +1535,7 @@ func test_62_sell_anything_for_five_percent() -> void:
 		g.place_somewhere("chicken")
 	var before := _count(g, "chicken")
 	g.fill_building(int(coop["uid"]))
-	_eq(g.inside_total(coop), before, "every loose chicken moved into the coop")
+	_eq(g.inside_total(coop), before + 1, "every loose chicken (and the brown one) moved into the coop")
 	_check(g.sell_object(int(coop["uid"])), "sell the coop")
 	_eq(_count(g, "chicken"), before, "the chickens are back on the farm")
 	_eq(_count(g, "chicken_coop"), 0, "the coop is gone")
