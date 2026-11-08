@@ -34,6 +34,12 @@ This is milestone 1 of the V1 plan: the core farm.
 - Chicken Coop, Cow Shed, Horse Stable and Orchard: move loose animals or trees in,
   collect from all of them in one tap, upgrade through 3 levels for more space
 
+### Level-ups, gems and test tools
+
+- Level-up celebration: popup with confetti, +100 coins per level, +1 gem, and what just unlocked
+- Gems: premium currency (working name), shown under coins; uses come with the gem shop milestone
+- Debug buttons (test builds only): +10,000 coins (and +10 gems), level up, skip 1 h, new farm
+
 ## Run it
 
 1. Install Godot 4.7 or newer (standard build) from godotengine.org.

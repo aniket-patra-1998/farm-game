@@ -4,6 +4,7 @@ extends Node
 ## Autoloaded as `Game`. All rules live here; scenes only display and call in.
 
 signal coins_changed(coins: int)
+signal gems_changed(gems: int)
 signal xp_changed(xp: int, level: int)
 signal leveled_up(level: int)
 signal plot_changed(index: int) # -1 means "everything changed"
@@ -41,6 +42,8 @@ const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
 const GRID_SIZE := 12
 const START_COINS := 200
+const START_GEMS := 5
+const GEMS_PER_LEVEL := 1
 const PLOW_COST := 15
 const PLOW_XP := 1
 
@@ -64,6 +67,7 @@ const MASTERY_STAR_XP := [10, 30, 100]
 var crops := {}                    # id -> crop dictionary from data/crops.json
 var crop_order: Array[String] = [] # display order
 var coins := START_COINS
+var gems := START_GEMS           # premium currency
 var xp := 0
 var plots: Array[Dictionary] = []  # GRID_SIZE * GRID_SIZE entries
 var mastery := {}                  # crop id -> lifetime harvest count
@@ -110,6 +114,33 @@ func _notification(what: int) -> void:
 
 func now() -> int:
 	return int(Time.get_unix_time_from_system()) + debug_time_offset
+
+
+func add_gems(amount: int) -> void:
+	gems += amount
+	gems_changed.emit(gems)
+	queue_save()
+
+
+func spend_gems(amount: int) -> bool:
+	if gems < amount:
+		return false
+	gems -= amount
+	gems_changed.emit(gems)
+	queue_save()
+	return true
+
+
+## Test helpers. They do nothing in release builds.
+func debug_add_coins(amount: int) -> void:
+	if OS.is_debug_build():
+		add_coins(amount, false)
+		add_gems(int(amount / 1000.0))
+
+
+func debug_level_up() -> void:
+	if OS.is_debug_build():
+		add_xp(xp_for_level(level() + 1) - xp)
 
 
 func debug_skip(seconds: int) -> void:
@@ -722,16 +753,28 @@ func is_unlocked(crop_id: String) -> bool:
 	return level() >= int(crops[crop_id]["unlock_level"])
 
 
-func _on_level_reached(lvl: int) -> void:
-	var unlocked: Array[String] = []
+## Coins paid on reaching a level: grows with level so later levels still feel big.
+func level_reward(lvl: int) -> int:
+	return 100 * lvl
+
+
+## Names of crops, trees, animals and buildings that unlock at exactly this level.
+func unlocks_at(lvl: int) -> Array[String]:
+	var names: Array[String] = []
 	for id in crop_order:
 		if int(crops[id]["unlock_level"]) == lvl:
-			unlocked.append(crops[id]["name"])
-	var text := "Level %d!" % lvl
-	if not unlocked.is_empty():
-		text += " Unlocked: " + ", ".join(PackedStringArray(unlocked))
-	leveled_up.emit(lvl)
-	message.emit(text)
+			names.append(crops[id]["name"] + " seeds")
+	for id in item_order:
+		if int(items[id]["unlock_level"]) == lvl:
+			names.append(items[id]["name"])
+	return names
+
+
+func _on_level_reached(lvl: int) -> void:
+	# The reward is a gift, so it doesn't count toward the coins-earned ribbon.
+	add_coins(level_reward(lvl), false)
+	add_gems(GEMS_PER_LEVEL)
+	leveled_up.emit(lvl) # the HUD shows the celebration popup
 
 
 # ---------------------------------------------------------------- data
@@ -778,6 +821,7 @@ func _load_items() -> void:
 
 func _new_game() -> void:
 	coins = START_COINS
+	gems = START_GEMS
 	xp = 0
 	mastery = {}
 	debug_time_offset = 0
@@ -829,6 +873,7 @@ func save_game() -> void:
 		"version": SAVE_VERSION,
 		"saved_at": now(),
 		"coins": coins,
+		"gems": gems,
 		"xp": xp,
 		"mastery": mastery,
 		"plots": plots,
@@ -861,6 +906,7 @@ func load_game() -> bool:
 	if saved_plots.size() != GRID_SIZE * GRID_SIZE:
 		return false
 	coins = int(data.get("coins", START_COINS))
+	gems = int(data.get("gems", START_GEMS))
 	xp = int(data.get("xp", 0))
 	mastery = data.get("mastery", {})
 	debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
@@ -899,6 +945,7 @@ func load_game() -> bool:
 func reset_game() -> void:
 	_new_game()
 	coins_changed.emit(coins)
+	gems_changed.emit(gems)
 	xp_changed.emit(xp, level())
 	tutorial_changed.emit(tutorial_step)
 	collections_changed.emit()

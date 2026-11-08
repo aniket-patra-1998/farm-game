@@ -19,6 +19,7 @@ const SUN := Color("#ffd34d")
 const LOCKED := Color("#d8cbb0")
 
 var _coins_label: Label
+var _gems_label: Label
 var _level_label: Label
 var _xp_bar: ProgressBar
 var _xp_label: Label
@@ -30,6 +31,7 @@ var _reset_button: Button
 var _tool_group := ButtonGroup.new()
 var _seed_buttons := {} # crop id -> Button
 var _book: BookPanel
+var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
 var _placing_label: Label
 var _building_uid := -1
@@ -48,11 +50,15 @@ func _ready() -> void:
 	_build_placing_bar(root)
 	_book = BookPanel.new()
 	root.add_child(_book)
+	_level_popup = LevelUpPopup.new()
+	root.add_child(_level_popup)
+	Game.leveled_up.connect(_level_popup.celebrate)
 	Game.collections_changed.connect(_refresh_book)
 	Game.ribbons_changed.connect(_refresh_book)
 	Game.objects_changed.connect(_refresh_book)
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
+	Game.gems_changed.connect(func(_g: int) -> void: _refresh())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
 	Game.leveled_up.connect(func(_l: int) -> void: _refresh_seed_buttons())
 	Game.tutorial_changed.connect(func(_s: int) -> void: _refresh_tutorial())
@@ -72,10 +78,19 @@ func _build_top_bar(root: Control) -> void:
 	row.add_theme_constant_override("separation", 16)
 	bar.add_child(row)
 
+	# Coins on top, gems underneath, so both fit beside the menu buttons.
+	var money := VBoxContainer.new()
+	money.alignment = BoxContainer.ALIGNMENT_CENTER
+	money.add_theme_constant_override("separation", 0)
+	row.add_child(money)
 	_coins_label = Label.new()
 	_coins_label.add_theme_color_override("font_color", SUN)
-	_coins_label.add_theme_font_size_override("font_size", 28)
-	row.add_child(_coins_label)
+	_coins_label.add_theme_font_size_override("font_size", 26)
+	money.add_child(_coins_label)
+	_gems_label = Label.new()
+	_gems_label.add_theme_color_override("font_color", Color("#9be7ff"))
+	_gems_label.add_theme_font_size_override("font_size", 20)
+	money.add_child(_gems_label)
 
 	for entry in [["Market", _show_market], ["Collections", _show_collections], ["Ribbons", _show_ribbons]]:
 		var b := Button.new()
@@ -152,6 +167,20 @@ func _build_toolbar(root: Control) -> void:
 	_refresh_seed_buttons()
 
 	if OS.is_debug_build():
+		var rich := Button.new()
+		rich.text = "Debug\n+10,000 coins"
+		rich.custom_minimum_size = BUTTON_SIZE
+		rich.focus_mode = Control.FOCUS_NONE
+		rich.pressed.connect(func() -> void: Game.debug_add_coins(10000))
+		row.add_child(rich)
+
+		var lvl_up := Button.new()
+		lvl_up.text = "Debug\nlevel up"
+		lvl_up.custom_minimum_size = BUTTON_SIZE
+		lvl_up.focus_mode = Control.FOCUS_NONE
+		lvl_up.pressed.connect(Game.debug_level_up)
+		row.add_child(lvl_up)
+
 		var skip := Button.new()
 		skip.text = "Debug\nskip 1 h"
 		skip.custom_minimum_size = BUTTON_SIZE
@@ -305,12 +334,22 @@ func _refresh() -> void:
 	var lvl := Game.level()
 	var lo := Game.xp_for_level(lvl)
 	var hi := Game.xp_for_level(lvl + 1)
-	_coins_label.text = "%d coins" % Game.coins
+	_coins_label.text = "%s coins" % _thousands(Game.coins)
+	_gems_label.text = "%d gems" % Game.gems
 	_level_label.text = "Level %d" % lvl
 	_xp_bar.min_value = lo
 	_xp_bar.max_value = hi
 	_xp_bar.value = Game.xp
 	_xp_label.text = "%d / %d XP" % [Game.xp, hi]
+
+
+static func _thousands(n: int) -> String:
+	var digits := str(absi(n))
+	var out := ""
+	while digits.length() > 3:
+		out = "," + digits.substr(digits.length() - 3) + out
+		digits = digits.substr(0, digits.length() - 3)
+	return ("-" if n < 0 else "") + digits + out
 
 
 func _refresh_seed_buttons() -> void:
