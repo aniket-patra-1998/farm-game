@@ -84,8 +84,10 @@ static func moon_progress(hour: float) -> float:
 
 ## "7:42 pm" style clock text.
 static func clock_text(hour: float) -> String:
-	var h := int(fposmod(hour, 24.0))
-	var m := int((fposmod(hour, 24.0) - h) * 60.0)
+	# Round to the nearest minute so float error never shows 7:41 for 7:42.
+	var total := int(round(fposmod(hour, 24.0) * 60.0)) % 1440
+	var h := int(total / 60.0)
+	var m := total % 60
 	var suffix := "am" if h < 12 else "pm"
 	var h12 := h % 12
 	if h12 == 0:
