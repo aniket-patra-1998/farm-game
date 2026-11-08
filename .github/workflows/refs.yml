@@ -44,7 +44,7 @@ jobs:
           timeout 900 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
             --rendering-driver opengl3 --path . res://tools/render_refs.tscn 2>&1 | tee refs.log
           ls art/refs | wc -l
-          cd art && zip -q -r ../farm_art_refs.zip manifest.json refs refs3d && cd .. && ls -la farm_art_refs.zip
+          cd art && zip -q -r ../farm_art_refs.zip manifest.json refs refs3d style && cd .. && ls -la farm_art_refs.zip
       - name: Upload the references zip
         uses: actions/upload-artifact@v4
         with:
