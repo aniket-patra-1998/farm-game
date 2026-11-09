@@ -40,7 +40,7 @@ func _ready() -> void:
 	var grid: FarmGrid = main.get("grid")
 	for style in ["code"] + STYLES:
 		SpriteBank.use_dir("res://art/pilot/" + style)
-		grid.queue_redraw()
+		grid.redraw_world()
 		cam.zoom = Vector2(0.62, 0.62)
 		cam.position = grid.to_global(grid.center_of(Game.index_of(4, 5)))
 		for k in 4:

@@ -44,17 +44,53 @@ var _press_on_farm := false
 var placing := {}
 
 
+## The farm is drawn in layers, back to front: ground, shadows, the depth-sorted pieces, then the overlay.
+## Floating texts and sparkles are added on top as they happen.
+var ground: GroundLayer
+var shadows: ShadowLayer
+var pieces: ObjectLayer
+var overlay: OverlayLayer
+
+
 func _ready() -> void:
-	Game.plot_changed.connect(func(_i: int) -> void: queue_redraw())
+	ground = GroundLayer.new()
+	ground.grid = self
+	ground.z_index = -3000
+	add_child(ground)
+	shadows = ShadowLayer.new()
+	shadows.grid = self
+	shadows.z_index = -2600
+	add_child(shadows)
+	pieces = ObjectLayer.new()
+	pieces.grid = self
+	add_child(pieces)
+	overlay = OverlayLayer.new()
+	overlay.grid = self
+	overlay.objects = pieces
+	overlay.z_index = 5
+	add_child(overlay)
+	Game.plot_changed.connect(pieces.on_plot)
+	Game.objects_changed.connect(_on_objects_changed)
+	Game.farm_expanded.connect(func(_n: int) -> void:
+		ground.queue_redraw()
+		pieces.queue_sync())
+	placing_changed.connect(func(_t: String) -> void: _on_objects_changed())
+	pieces.sync()
 	Game.building_upgraded.connect(_on_building_upgraded)
 	# Finds while farming (fuel, collectibles, Perfect Bunches) float up from their plot.
 	Game.found.connect(func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, COLOR_PART, 1.8))
-	# Crops change growth stage over time and ripe crops twinkle; redraw ten times a second.
-	var timer := Timer.new()
-	timer.wait_time = 0.1
-	timer.autostart = true
-	timer.timeout.connect(queue_redraw)
-	add_child(timer)
+
+
+func _on_objects_changed() -> void:
+	pieces.queue_sync()
+	shadows.queue_redraw()
+
+
+## Everything redrawn from scratch, e.g. after new art was loaded.
+func redraw_world() -> void:
+	ground.queue_redraw()
+	shadows.queue_redraw()
+	pieces.redraw_all()
 
 
 func set_tool(tool_name: String, crop_id: String) -> void:
@@ -113,39 +149,34 @@ func _col(i: int) -> int:
 
 # ---------------------------------------------------------------- drawing
 
-func _draw() -> void:
+# ---------------------------------------------------------------- drawing (called by the layers)
+
+## Ground layer: countryside, trees around the farm, the next expansion and your grass.
+func draw_ground_on(ci: CanvasItem) -> void:
 	var n := Game.farm_size
-	PlaceholderArt.draw_meadow(self, n, TILE_W, TILE_H, MEADOW_MARGIN)
-	_draw_scenery(n)
-	_draw_next_expansion()
-	PlaceholderArt.draw_farm_border(self, n, TILE_W, TILE_H)
-	# Each object is drawn right after its front tile, so depth order stays right.
-	var after_tile := {}
+	PlaceholderArt.draw_meadow(ci, n, TILE_W, TILE_H, MEADOW_MARGIN)
+	_draw_scenery(ci, n)
+	_draw_next_expansion(ci)
+	PlaceholderArt.draw_field(ci, n, TILE_W, TILE_H)
+	PlaceholderArt.draw_farm_border(ci, n, TILE_W, TILE_H)
+
+
+## Overlay: vehicle area, count signs, twinkles and hearts, and the ghost of what's being placed.
+func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
+	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
+		PlaceholderArt.draw_footprint(ci, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
+			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
 	var lifted := int(placing.get("uid", -1))
+	var t := Time.get_ticks_msec() / 1000.0
 	for o in Game.objects:
 		if int(o["uid"]) == lifted:
 			continue
 		var fp := Game.footprint(o["id"])
-		var front := Game.index_of(int(o["row"]) + fp.y - 1, int(o["col"]) + fp.x - 1)
-		if not after_tile.has(front):
-			after_tile[front] = []
-		after_tile[front].append(o)
-	# Back to front, so taller crops overlap the plots behind them.
-	for diag in range(2 * n - 1):
-		for row in range(n):
-			var col := diag - row
-			if col < 0 or col >= n:
-				continue
-			var i := Game.index_of(row, col)
-			_draw_plot(i, row, col)
-			for o in after_tile.get(i, []):
-				_draw_object(o)
-	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
-		PlaceholderArt.draw_footprint(self, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
-			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
-	# Count signs last, so the ground in front of a building never hides them.
-	for o in Game.objects:
-		if int(o["uid"]) == lifted or Game.under_construction(o):
+		var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+		if o.get("stray", false):
+			var bob := sin(Time.get_ticks_msec() / 300.0) * 4.0
+			PlaceholderArt.draw_stray_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, -78 + bob))
+		if Game.under_construction(o):
 			continue
 		var counts := Vector2i(-1, -1)
 		if o["id"] == "barn" and not o.get("broken", false):
@@ -153,14 +184,30 @@ func _draw() -> void:
 		elif Game.is_building(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
 		if counts.x >= 0:
+			PlaceholderArt.draw_count_sign(ci, g, counts.x, counts.y)
+	# Twinkles: each on its own beat, so a ripe field shimmers instead of blinking.
+	for p in ready:
+		var piece := p as FarmPiece
+		if piece.plot >= 0:
+			var i := piece.plot
+			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(i % 7) * 0.9)
+			var spot := top_of(_row(i), _col(i)) + Vector2(TILE_W * 0.12 * (1 if i % 2 == 0 else -1), TILE_H * 0.05 - PlaceholderArt.SLAB)
+			PlaceholderArt.draw_twinkle(ci, spot, 9.0 + 5.0 * glow, glow)
+		else:
+			var o := Game.object_by_uid(piece.uid)
+			if o.is_empty():
+				continue
 			var fp := Game.footprint(o["id"])
-			PlaceholderArt.draw_count_sign(self, corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y), counts.x, counts.y)
-	_draw_placing()
+			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(piece.uid % 7))
+			var high := -110.0 if Game.is_building(o) or Game.is_crafting(o) else -70.0
+			PlaceholderArt.draw_twinkle(ci, (g[0] + g[2]) / 2.0 + Vector2(22, high), 11.0 + 6.0 * glow, glow)
+	_draw_placing(ci)
 
 
 ## The land the next expansion would add, drawn as dim wild grass around the farm.
 ## Trees scattered along the back two sides of the farm (never in front, so nothing hides your land).
-func _draw_scenery(n: int) -> void:
+func _draw_scenery(ci: CanvasItem, n: int) -> void:
 	if _scenery.is_empty():
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 909
@@ -180,19 +227,19 @@ func _draw_scenery(n: int) -> void:
 		var id: String = t[2]
 		var at := top_of_f(r + 0.5, c + 0.5) + Vector2(0, TILE_H / 2.0)
 		if SpriteBank.has(id):
-			SpriteBank.draw(self, id, at)
+			SpriteBank.draw(ci, id, at)
 		else:
 			var g := PackedVector2Array([top_of_f(r, c), top_of_f(r, c + 1), top_of_f(r + 1, c + 1), top_of_f(r + 1, c)])
-			PlaceholderArt.draw_object(self, Game.item_data(id), g, false, 1, 0, 0)
+			PlaceholderArt.draw_object(ci, Game.item_data(id), g, false, 1, 0, 0)
 
 
-func _draw_next_expansion() -> void:
+func _draw_next_expansion(ci: CanvasItem) -> void:
 	var step := Game.next_expansion()
 	if step.is_empty():
 		return
 	var size := int(step["size"])
 	var outer := corners_of(0, 0, size, size)
-	PlaceholderArt.draw_wild_land(self, outer)
+	PlaceholderArt.draw_wild_land(ci, outer)
 
 
 ## The four ground corners (top, right, bottom, left) of a footprint.
@@ -200,15 +247,16 @@ func corners_of(row: int, col: int, w: int, h: int) -> PackedVector2Array:
 	return PackedVector2Array([top_of(row, col), top_of(row, col + w), top_of(row + h, col + w), top_of(row + h, col)])
 
 
-func _draw_object(o: Dictionary) -> void:
+## One object (FarmPiece): its sprite or code drawing. Marks and twinkles are on the overlay.
+func draw_object_on(ci: CanvasItem, o: Dictionary) -> void:
 	var it := Game.item_data(o["id"])
 	var fp := Game.footprint(o["id"])
 	var corners := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	if Game.under_construction(o):
 		if Game.kind_of(o) == "vehicle":
-			PlaceholderArt.draw_chassis(self, corners, it)
+			PlaceholderArt.draw_chassis(ci, corners, it)
 		else:
-			PlaceholderArt.draw_frame(self, corners, it)
+			PlaceholderArt.draw_frame(ci, corners, it)
 		return
 	var is_ready_now := Game.is_ready(o) or (Game.is_crafting(o) and Game.crafts_done(o) > 0)
 	var building := Game.is_building(o)
@@ -224,27 +272,18 @@ func _draw_object(o: Dictionary) -> void:
 	if flipped:
 		# Mirror around the object's own centre line.
 		var cx := (corners[1].x + corners[3].x) / 2.0
-		draw_set_transform(Vector2(2.0 * cx, 0), 0.0, Vector2(-1, 1))
+		ci.draw_set_transform(Vector2(2.0 * cx, 0), 0.0, Vector2(-1, 1))
 	var art := "" if o.get("broken", false) else Game.art_for(o)
 	if art != "":
-		SpriteBank.draw(self, art, (corners[0] + corners[2]) / 2.0)
+		SpriteBank.draw(ci, art, (corners[0] + corners[2]) / 2.0)
 	else:
-		PlaceholderArt.draw_object(self, it, corners, is_ready_now, int(o.get("level", 1)),
+		PlaceholderArt.draw_object(ci, it, corners, is_ready_now, int(o.get("level", 1)),
 			inside, cap, o.get("broken", false))
 	if flipped:
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if o.get("stray", false):
-		var c1 := (corners[0] + corners[2]) / 2.0
-		var bob := sin(Time.get_ticks_msec() / 300.0) * 4.0
-		PlaceholderArt.draw_stray_marker(self, c1 + Vector2(0, -78 + bob))
-	if is_ready_now:
-		var t := Time.get_ticks_msec() / 1000.0
-		var glow := 0.5 + 0.5 * sin(t * 2.6 + float(int(o["uid"]) % 7))
-		var c := (corners[0] + corners[2]) / 2.0
-		PlaceholderArt.draw_twinkle(self, c + Vector2(22, -70 if not building else -110), 11.0 + 6.0 * glow, glow)
+		ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
-func _draw_placing() -> void:
+func _draw_placing(ci: CanvasItem) -> void:
 	if placing.is_empty() or int(placing["row"]) < 0:
 		return
 	var it := Game.item_data(placing["item"])
@@ -253,7 +292,7 @@ func _draw_placing() -> void:
 	var col := int(placing["col"])
 	var corners := corners_of(row, col, fp.x, fp.y)
 	var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
-	PlaceholderArt.draw_footprint(self, corners, ok)
+	PlaceholderArt.draw_footprint(ci, corners, ok)
 	var level := 1
 	var inside := 0
 	var cap := 0
@@ -265,20 +304,20 @@ func _draw_placing() -> void:
 			cap = Game.capacity(o)
 	elif it.get("kind", "") == "building":
 		cap = int(it["levels"][0])
-	PlaceholderArt.draw_object(self, it, corners, false, level, inside, cap)
+	PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
 
 
-func _draw_plot(i: int, row: int, col: int) -> void:
-	var top := top_of(row, col)
+## One plowed or planted plot (FarmPiece): a raised bed, and the crop on it.
+func draw_plot_on(ci: CanvasItem, i: int) -> void:
+	var top := top_of(_row(i), _col(i))
 	var ph := Game.phase(i)
-	if ph == GameState.Phase.GRASS or Game.is_occupied(i):
-		PlaceholderArt.draw_grass(self, top, TILE_W, TILE_H, i * 7919, (row + col) % 2 == 0)
+	if ph == GameState.Phase.GRASS:
 		return
 	var art := Game.crop_art_for(i) if ph != GameState.Phase.PLOWED else ""
 	if art == "":  # painted crops bring their own raised bed
-		PlaceholderArt.draw_soil(self, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
+		PlaceholderArt.draw_soil(ci, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
 	if Game.is_fertilized(i):
-		PlaceholderArt.draw_fertilizer(self, top, TILE_W, TILE_H)
+		PlaceholderArt.draw_fertilizer(ci, top + Vector2(0, -PlaceholderArt.SLAB), TILE_W, TILE_H)
 	if ph == GameState.Phase.PLOWED:
 		return
 	var crop: Dictionary = Game.crops[Game.crop_at(i)]
@@ -288,16 +327,9 @@ func _draw_plot(i: int, row: int, col: int) -> void:
 	elif ph == GameState.Phase.WITHERED:
 		stage = "withered"
 	if art != "":
-		SpriteBank.draw(self, art, top + Vector2(0, TILE_H / 2.0))
+		SpriteBank.draw(ci, art, top + Vector2(0, TILE_H / 2.0))
 	else:
-		PlaceholderArt.draw_crop(self, top + Vector2(0, TILE_H / 2.0 - PlaceholderArt.SLAB), TILE_W, TILE_H, crop, stage, Game.growth(i))
-	if stage == "ripe":
-		# Each plot twinkles on its own beat, so a ripe field shimmers instead of blinking.
-		var t := Time.get_ticks_msec() / 1000.0
-		var phase_offset := float(i % 7) * 0.9
-		var glow := 0.5 + 0.5 * sin(t * 2.6 + phase_offset)
-		var spot := top + Vector2(TILE_W * 0.12 * (1 if i % 2 == 0 else -1), TILE_H * 0.05)
-		PlaceholderArt.draw_twinkle(self, spot, 9.0 + 5.0 * glow, glow)
+		PlaceholderArt.draw_crop(ci, top + Vector2(0, TILE_H / 2.0 - PlaceholderArt.SLAB), TILE_W, TILE_H, crop, stage, Game.growth(i))
 
 
 ## Called when a second finger lands: that's a pinch, so the first finger's tap is off.

@@ -72,6 +72,32 @@ static func draw_ellipse_at(ci: CanvasItem, center: Vector2, rx: float, ry: floa
 	ci.draw_colored_polygon(pts, col)
 
 
+## Your land's grass as one continuous field: a base colour with soft patches of lighter and darker
+## grass and tufts, the same every time (no checkerboard).
+static func draw_field(ci: CanvasItem, n: int, w: float, h: float) -> void:
+	var t := Vector2(0, 0)
+	var r := Vector2(n * w / 2.0, n * h / 2.0)
+	var b := Vector2(0, n * h)
+	var l := Vector2(-n * w / 2.0, n * h / 2.0)
+	ci.draw_colored_polygon(PackedVector2Array([t, r, b, l]), GRASS_A)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1717
+	var light := GRASS_A.lightened(0.06)
+	var dark := GRASS_A.darkened(0.06)
+	for k in n * n / 3:
+		var row := rng.randf_range(0.3, n - 0.3)
+		var col := rng.randf_range(0.3, n - 0.3)
+		var p := Vector2((col - row) * w / 2.0, (col + row) * h / 2.0)
+		draw_ellipse_at(ci, p, w * rng.randf_range(0.25, 0.6), h * rng.randf_range(0.2, 0.5), light if k % 2 == 0 else dark)
+	for k in n * n * 2:
+		var row := rng.randf_range(0.1, n - 0.1)
+		var col := rng.randf_range(0.1, n - 0.1)
+		var p := Vector2((col - row) * w / 2.0, (col + row) * h / 2.0)
+		ci.draw_line(p, p + Vector2(-3, -7), GRASS_TUFT, 2.0)
+		ci.draw_line(p, p + Vector2(0, -9), GRASS_TUFT, 2.0)
+		ci.draw_line(p, p + Vector2(3, -7), GRASS_TUFT, 2.0)
+
+
 ## A soft line where your land ends, instead of the old floating-island edges.
 static func draw_farm_border(ci: CanvasItem, n: int, w: float, h: float) -> void:
 	var t := Vector2(0, 0)
