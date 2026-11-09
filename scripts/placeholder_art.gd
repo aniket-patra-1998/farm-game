@@ -170,6 +170,8 @@ static func draw_soil(ci: CanvasItem, top: Vector2, w: float, h: float, planted:
 		ci.draw_circle(p, rng.randf_range(1.0, 2.2) * w / 128.0, top_col.darkened(0.25))
 	# A soft dark rim where the top meets the sides, instead of a hard outline.
 	ci.draw_polyline(PackedVector2Array([pts[3], pts[2], pts[1]]), BED_LEFT.darkened(0.3), 1.5)
+	# A faint seam along the back edges, so each plot still reads as its own square, as in FarmVille.
+	ci.draw_polyline(PackedVector2Array([pts[3], pts[0], pts[1]]), Color(0.12, 0.07, 0.04, 0.35), 1.2)
 
 
 # ---------------------------------------------------------------- crops
