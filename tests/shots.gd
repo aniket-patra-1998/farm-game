@@ -3,6 +3,8 @@ extends Node
 ## CI runs it with a real renderer: xvfb-run godot --rendering-method gl_compatibility res://tests/shots.tscn
 ## Images land in ci_shots/ next to the project. Your real save is never touched.
 
+const MAIN_SCENE := preload("res://scenes/main.tscn")
+
 var _main: Node
 
 
@@ -55,7 +57,7 @@ func _ready() -> void:
 	for o in Game.objects:
 		o["t"] = old
 	Game.rebuild_occupancy()
-	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	_main = MAIN_SCENE.instantiate()
 	add_child(_main)
 	Game.objects_changed.emit()
 	Game.farm_expanded.emit(Game.farm_size)
@@ -308,7 +310,7 @@ func _shots_3d(dir: String) -> void:
 			Game.plots[Game.index_of(r, c)] = {"state": "plowed"} if (r + c) % 3 else {"state": "planted",
 				"crop": "wheat", "planted_at": 0}
 	Game.rebuild_occupancy()
-	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	_main = MAIN_SCENE.instantiate()
 	add_child(_main)
 	Game.objects_changed.emit()
 	Game.plot_changed.emit(-1)
