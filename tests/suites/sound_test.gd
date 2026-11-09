@@ -49,7 +49,8 @@ func test_99_every_sound_the_game_plays_exists() -> void:
 	for event: String in asked:
 		_check(Sound.has_sound(event), "%s (asked for in %s) is in sounds.json" % [event, asked[event]])
 	# Sounds are built ahead of time and cached: asking twice gives the same audio.
-	_check(Sound.stream_of("harvest") == Sound.stream_of("harvest"), "a sound is built once and kept")
+	var first := Sound.stream_of("harvest")
+	_check(first != null and Sound.stream_of("harvest") == first, "a sound is built once and kept")
 
 
 func test_100_the_players_sound_settings_are_kept() -> void:
