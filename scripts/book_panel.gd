@@ -62,7 +62,7 @@ func _ready() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(_title)
 	var close := Button.new()
-	close.text = "Close"
+	close.text = tr("CLOSE")
 	close.custom_minimum_size = Vector2(120, 56)
 	close.focus_mode = Control.FOCUS_NONE
 	close.pressed.connect(close_panel)

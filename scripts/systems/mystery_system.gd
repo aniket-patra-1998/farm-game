@@ -72,7 +72,7 @@ func give_prize(prize: Array) -> String:
 			return "%d coins" % int(prize[1])
 		"xp":
 			game.add_xp(int(prize[1]))
-			return "%d XP" % int(prize[1])
+			return tr("XP_3") % int(prize[1])
 		"gems":
 			game.add_gems(int(prize[1]))
 			return "%d gems" % int(prize[1])
@@ -80,7 +80,7 @@ func give_prize(prize: Array) -> String:
 			if game.place_somewhere(prize[1]):
 				return "a %s" % game.item_data(prize[1])["name"]
 			game.add_coins(200)
-			return "200 coins (no room for a %s)" % game.item_data(prize[1])["name"]
+			return tr("COINS_NO_ROOM_FOR_A") % game.item_data(prize[1])["name"]
 		"materials":
 			var got: Array[String] = []
 			for k in int(prize[1]):
@@ -90,19 +90,19 @@ func give_prize(prize: Array) -> String:
 			return ", ".join(PackedStringArray(got))
 		"unwither":
 			game.add_unwithers(int(prize[1]))
-			return "%d Unwither" % int(prize[1])
+			return tr("UNWITHER") % int(prize[1])
 		"farmhand":
 			game.farmhands += int(prize[1])
-			return "%d Farmhand" % int(prize[1])
+			return tr("FARMHAND_2") % int(prize[1])
 		"arborist":
 			game.arborists += int(prize[1])
-			return "%d Arborist" % int(prize[1])
+			return tr("ARBORIST_2") % int(prize[1])
 		"fuel":
 			game.vehicles.add_fuel(int(prize[1]))
 			return "%d fuel" % int(prize[1])
 		"fertilize_all":
 			game.fertilize_alls += int(prize[1])
-			return "%d Fertilize All" % int(prize[1])
+			return tr("FERTILIZE_ALL") % int(prize[1])
 	return ""
 
 
@@ -130,7 +130,7 @@ func buy_mystery_box() -> String:
 func _open_box() -> String:
 	var text := give_prize(_weighted_prize(box_data["prizes"]))
 	game.ribbons.bump("boxes_opened", 1)
-	game.message.emit("Mystery Box: %s" % text)
+	game.message.emit(tr("MYSTERY_BOX_2") % text)
 	game.inventory_changed.emit()
 	game.objects_updated()
 	game.queue_save()

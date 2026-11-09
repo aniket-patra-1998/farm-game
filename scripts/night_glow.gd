@@ -33,7 +33,9 @@ func _ready() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 77
 	for k in FIREFLIES:
-		_flies.append({"tile": Vector2(rng.randf(), rng.randf()), "phase": rng.randf() * TAU, "speed": rng.randf_range(0.6, 1.4)})
+		_flies.append(
+			{"tile": Vector2(rng.randf(), rng.randf()), "phase": rng.randf() * TAU, "speed": rng.randf_range(0.6, 1.4)}
+		)
 
 
 func _process(_delta: float) -> void:
@@ -62,12 +64,18 @@ func _draw_glow() -> void:
 		var flicker := 0.9 + 0.1 * sin(t * 3.1 + float(o["uid"]))
 		for spot in spots:
 			var along: float = spot[0]
-			var at := (left.lerp(bottom, along * 2.0) if along <= 0.5 else bottom.lerp(right, along * 2.0 - 1.0)) + Vector2(0, -float(spot[1]))
+			var at := (
+				left.lerp(bottom, along * 2.0) if along <= 0.5 else bottom.lerp(right, along * 2.0 - 1.0)
+			) + Vector2(0, -float(spot[1]))
 			var sz: float = spot[2]
 			var col: Color = Color(1.0, 0.55, 0.2) if o["id"] == "bonfire" else Color(1.0, 0.78, 0.4)
 			var fl := flicker if o["id"] != "bonfire" else 0.75 + 0.25 * sin(t * 9.0 + float(o["uid"]))
 			for r in 4:
-				_canvas.draw_circle(at, (18.0 + r * 16.0) * sz, Color(col.r, col.g, col.b, dark * fl * (0.16 - r * 0.035)))
+				_canvas.draw_circle(
+					at,
+					(18.0 + r * 16.0) * sz,
+					Color(col.r, col.g, col.b, dark * fl * (0.16 - r * 0.035))
+				)
 			_canvas.draw_circle(at, 7.0 * sz, Color(1.0, 0.86, 0.55, dark * fl * 0.9))
 
 	# Fireflies wander slowly over the farm and blink.

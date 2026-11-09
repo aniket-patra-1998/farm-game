@@ -1326,7 +1326,7 @@ static func draw_frame(ci: CanvasItem, g: PackedVector2Array, it: Dictionary) ->
 	ci.draw_string(
 		ThemeDB.fallback_font,
 		sign_pos + Vector2(0, 16),
-		"Building",
+		TranslationServer.translate("BUILDING"),
 		HORIZONTAL_ALIGNMENT_CENTER,
 		80,
 		15,
@@ -1402,7 +1402,7 @@ static func draw_chassis(ci: CanvasItem, g: PackedVector2Array, _it: Dictionary)
 	ci.draw_string(
 		ThemeDB.fallback_font,
 		sign_pos + Vector2(0, 16),
-		"Chassis",
+		TranslationServer.translate("CHASSIS"),
 		HORIZONTAL_ALIGNMENT_CENTER,
 		80,
 		15,
@@ -1442,7 +1442,9 @@ static func _garage(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, insid
 		ci.draw_rect(Rect2(foot + Vector2(-14, -26), Vector2(26, 12)), Color("#c0392b"))
 	# Flat roof with a lip.
 	ci.draw_colored_polygon(
-		PackedVector2Array([t[0] + Vector2(0, -6), t[1] + Vector2(0, -6), t[2] + Vector2(0, -6), t[3] + Vector2(0, -6)]),
+		PackedVector2Array(
+			[t[0] + Vector2(0, -6), t[1] + Vector2(0, -6), t[2] + Vector2(0, -6), t[3] + Vector2(0, -6)]
+		),
 		roof
 	)
 	ci.draw_colored_polygon(

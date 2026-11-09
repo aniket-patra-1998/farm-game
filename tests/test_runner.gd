@@ -1929,7 +1929,11 @@ func test_69_art_manifest_is_complete() -> void:
 		"crafting: one per star"
 	)
 	_eq(g.catalog.art_ids_of("pumpkin_bread"), ["good_pumpkin_bread"], "goods: one icon")
-	_check(in_manifest.has("avatar_farmer_m_hoe_back") and in_manifest.has("icon_coins") and in_manifest.has("icon_egg_cornish"), "the farmer and the menu icons are in the art run")
+	_check(
+		in_manifest.has("avatar_farmer_m_hoe_back") and in_manifest.has("icon_coins")
+			and in_manifest.has("icon_egg_cornish"),
+		"the farmer and the menu icons are in the art run"
+	)
 	_check(not SpriteBank.has("no_such_item"), "missing art falls back to drawings")
 	_done(g)
 
@@ -2617,4 +2621,64 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	_skip(g, 15 * 86400)
 	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o["id"] == "perfect_bunch").size(), 0, "then wilts away")
+	_done(g)
+
+
+func test_88_every_system_saves_and_loads_its_own_fields() -> void:
+	var g := _farm(true)
+	g.crafting.bushels = {"wheat": 3}
+	g.vehicles.fuel_tanks = 2
+	g.vehicles.vehicle_levels = {"tractor": 1}
+	g.bees.queen_bees = 1
+	g.pigpen.truffles = 7
+	g.shed.bunches = ["lilac"]
+	g.mystery.mystery_eggs = {"white": 2}
+	g.collectibles.coll_levels = {"berries": 1}
+	g.ribbons.stats = {"harvests": 12}
+	var owners := {}
+	var data := {}
+	for system in g.systems:
+		var mine := {}
+		system.save_to(mine)
+		for k in mine:
+			_check(not owners.has(k), "save key %s is written by one system only" % k)
+			owners[k] = system
+		data.merge(mine)
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(data))
+	var h := GameState.new()
+	h.saving_enabled = false
+	add_child(h)
+	for system in h.systems:
+		system.load_from(saved)
+	var again := {}
+	for system in h.systems:
+		system.save_to(again)
+	_eq(JSON.stringify(again), JSON.stringify(data), "every system's state survives a save and load")
+	_eq(h.crafting.bushels, {"wheat": 3}, "numbers come back as whole numbers")
+	_eq(h.systems.size(), 14, "all subsystems are registered")
+	h.queue_free()
+	_done(g)
+
+
+func test_89_player_text_comes_from_the_strings_file() -> void:
+	var f := FileAccess.open("res://locale/strings.csv", FileAccess.READ)
+	_check(f != null, "locale/strings.csv is there")
+	if f == null:
+		return
+	var header := f.get_csv_line()
+	_eq(Array(header), ["keys", "en"], "keys, then English")
+	var rows := 0
+	var wrong: Array[String] = []
+	while not f.eof_reached():
+		var row := f.get_csv_line()
+		if row.size() < 2 or row[0] == "":
+			continue
+		rows += 1
+		if tr(row[0]) != row[1]:
+			wrong.append(row[0])
+	_check(rows > 300, "the strings file has the game's text (%d keys)" % rows)
+	_eq(wrong.size(), 0, "every key reads back as its English text %s" % [wrong])
+	var g := _farm(true)
+	g.tutorial_step = GameState.Tutorial.PLOW
+	_check(g.tutorial_text().begins_with("Choose Plow"), "tutorial hints are translated, not shown as keys")
 	_done(g)

@@ -67,12 +67,14 @@ func add_fuel(n: int) -> void:
 
 ## FarmVille: plowing your own farm can turn up fuel, at most once a day.
 func roll_fuel_find(i: int) -> int:
-	if not game.drops_enabled or game.level() < FUEL_LEVEL or fuel_found_day == game.day_number() or game.rng.randf() >= FUEL_FIND_CHANCE:
+	if not game.drops_enabled or game.level() < FUEL_LEVEL or fuel_found_day == game.day_number():
+		return 0
+	if game.rng.randf() >= FUEL_FIND_CHANCE:
 		return 0
 	fuel_found_day = game.day_number()
 	var n := int(FUEL_TANK * FUEL_FIND_SHARE)
 	add_fuel(n)
-	game.found.emit(i, "Found fuel! +%d" % n)
+	game.found.emit(i, tr("FOUND_FUEL") % n)
 	return n
 
 
@@ -123,7 +125,7 @@ func _burn_fuel(n: int) -> bool:
 	if fuel < n and fuel_tanks > 0:
 		fuel_tanks -= 1
 		fuel = mini(FUEL_TANK, fuel + FUEL_TANK)
-		game.message.emit("Opened a spare fuel tank")
+		game.message.emit(tr("OPENED_A_SPARE_FUEL_TANK"))
 	if fuel < n:
 		return false
 	if fuel >= FUEL_TANK:
@@ -134,10 +136,10 @@ func _burn_fuel(n: int) -> bool:
 
 func buy_fuel_tank() -> bool:
 	if not game.spend_gems(FUEL_TANK_GEM_COST):
-		game.message.emit("Not enough gems for a fuel tank")
+		game.message.emit(tr("NOT_ENOUGH_GEMS_FOR_A_FUEL"))
 		return false
 	fuel_tanks += 1
-	game.message.emit("Bought a full fuel tank")
+	game.message.emit(tr("BOUGHT_A_FULL_FUEL_TANK"))
 	game.inventory_changed.emit()
 	return true
 
@@ -151,10 +153,10 @@ func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
 	var it := game.item_data(id)
 	var job: String = it["job"]
 	if job == "plant" and crop_id == "":
-		game.message.emit("Pick a seed first, then the Seeder")
+		game.message.emit(tr("PICK_A_SEED_FIRST_THEN_THE"))
 		return {}
 	if fuel_now() + fuel_tanks * FUEL_TANK <= 0:
-		game.message.emit("Out of fuel. It refills slowly, or buy a tank.")
+		game.message.emit(tr("OUT_OF_FUEL_IT_REFILLS_SLOWLY"))
 		return {}
 	var per := int(it.get("fuel_per_plot", 1))
 	var area := vehicle_area(id)
@@ -182,7 +184,7 @@ func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
 	if int(out["plots"]) > 0:
 		game.ribbons.bump("vehicle_plots", int(out["plots"]))
 	if out_of_fuel:
-		game.message.emit("Out of fuel. It refills slowly, or buy a tank.")
+		game.message.emit(tr("OUT_OF_FUEL_IT_REFILLS_SLOWLY"))
 	game.inventory_changed.emit()
 	game.queue_save()
 	return out
@@ -252,19 +254,19 @@ func can_upgrade_vehicle(id: String) -> bool:
 func upgrade_vehicle(id: String) -> bool:
 	if not can_upgrade_vehicle(id):
 		if not has_garage():
-			game.message.emit("Build a Garage to upgrade vehicles")
+			game.message.emit(tr("BUILD_A_GARAGE_TO_UPGRADE_VEHICLES"))
 		elif vehicle_upgrade_cost(id) < 0:
-			game.message.emit("Your %s is fully upgraded" % game.item_data(id)["name"])
+			game.message.emit(tr("YOUR_IS_FULLY_UPGRADED") % game.item_data(id)["name"])
 		elif game.level() < vehicle_upgrade_level_needed(id):
-			game.message.emit("This upgrade unlocks at level %d" % vehicle_upgrade_level_needed(id))
+			game.message.emit(tr("THIS_UPGRADE_UNLOCKS_AT_LEVEL") % vehicle_upgrade_level_needed(id))
 		else:
-			game.message.emit("Not enough Vehicle Parts yet")
+			game.message.emit(tr("NOT_ENOUGH_VEHICLE_PARTS_YET"))
 		return false
 	game.parts["vehicle_parts"] = int(game.parts["vehicle_parts"]) - vehicle_upgrade_cost(id)
 	vehicle_levels[id] = vehicle_level(id) + 1
 	var area := vehicle_area(id)
 	game.ribbons.bump("vehicle_upgrades", 1)
-	game.message.emit("%s upgraded! It now works %dx%d plots." % [game.item_data(id)["name"], area.x, area.y])
+	game.message.emit(tr("UPGRADED_IT_NOW_WORKS_X_PLOTS") % [game.item_data(id)["name"], area.x, area.y])
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true

@@ -23,8 +23,8 @@ func save_to(data: Dictionary) -> void:
 
 
 func load_from(data: Dictionary) -> void:
-	stats = data.get("stats", {})
-	ribbon_tiers = data.get("ribbon_tiers", {})
+	stats = int_map(data.get("stats", {}))
+	ribbon_tiers = int_map(data.get("ribbon_tiers", {}))
 
 
 func stat(stat_name: String) -> int:
@@ -52,7 +52,7 @@ func _check_ribbons(stat_name: String) -> void:
 			game.coins += int(ribbon_data["tier_reward_coins"][earned - 1])
 			game.coins_changed.emit(game.coins)
 			game.add_xp(int(ribbon_data["tier_reward_xp"][earned - 1]))
-			game.message.emit("%s ribbon: %s! +%d coins" % [
+			game.message.emit(tr("RIBBON_COINS") % [
 				tier_names[earned - 1], r["name"], int(ribbon_data["tier_reward_coins"][earned - 1])])
 			game.ribbons_changed.emit()
 	game.queue_save()

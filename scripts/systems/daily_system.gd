@@ -92,7 +92,7 @@ func check_daily_gift() -> void:
 		add_part(p, 1)
 		got.append(GameState.part_names[p])
 	game.ribbons.bump("daily_bonuses", 1)
-	game.message.emit("Day %d bonus: %s" % [mini(daily_streak, DAILY_STREAK.size()), ", ".join(PackedStringArray(got))])
+	game.message.emit(tr("DAY_BONUS") % [mini(daily_streak, DAILY_STREAK.size()), ", ".join(PackedStringArray(got))])
 	game.queue_save()
 
 
@@ -109,10 +109,10 @@ func _give_daily_bonus(day: int) -> Array[String]:
 		got.append("%d coins" % int(reward["coins"]))
 	if reward.has("fertilizer"):
 		game.fertilizer_bags += int(reward["fertilizer"])
-		got.append("%d Fertilizer" % int(reward["fertilizer"]))
+		got.append(tr("FERTILIZER_2") % int(reward["fertilizer"]))
 	if reward.has("unwither"):
 		game.add_unwithers(int(reward["unwither"]))
-		got.append("%d Unwither" % int(reward["unwither"]))
+		got.append(tr("UNWITHER") % int(reward["unwither"]))
 	if reward.has("gems"):
 		game.add_gems(int(reward["gems"]))
 		got.append("%d gem" % int(reward["gems"]))

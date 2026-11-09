@@ -44,7 +44,7 @@ func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 
 	if int(pity["golden"]) >= GOLDEN_PITY or game.rng.randf() < GOLDEN_CHANCE * luck:
 		pity["golden"] = 0
-		return {"type": "golden", "text": "Golden harvest!"}
+		return {"type": "golden", "text": tr("GOLDEN_HARVEST")}
 
 	# A due collectible (pity) always wins over a bird visit.
 	var collectible_due := int(pity["collectible"]) >= COLLECTIBLE_PITY
@@ -53,7 +53,7 @@ func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 		game.collectibles.owned[bird_id] = int(game.collectibles.owned.get(bird_id, 0)) + 1
 		game.ribbons.bump("birds_seen", 1)
 		game.collections_changed.emit()
-		return {"type": "bird", "text": "A %s visited!" % game.collectibles.item_names[bird_id].to_lower(),
+		return {"type": "bird", "text": tr("A_VISITED") % game.collectibles.item_names[bird_id].to_lower(),
 			"name": game.collectibles.item_names[bird_id], "collection": game.collectibles.bird_collection["name"]}
 
 	var coll: Dictionary = game.collectibles.collection_of_crop.get(crop_id, {})
@@ -64,13 +64,13 @@ func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 		var item_id := game.collectibles.pick_item(coll)
 		game.collectibles.owned[item_id] = int(game.collectibles.owned.get(item_id, 0)) + 1
 		game.collections_changed.emit()
-		return {"type": "collectible", "text": "Found: " + game.collectibles.item_names[item_id],
+		return {"type": "collectible", "text": tr("FOUND") + game.collectibles.item_names[item_id],
 			"name": game.collectibles.item_names[item_id], "collection": coll["name"]}
 
 	var r := game.rng.randf()
 	var super_chance := SUPER_HARVEST_CHANCE * super_mult
 	if r < super_chance:
-		return {"type": "super_harvest", "text": "Super harvest! 2x coins"}
+		return {"type": "super_harvest", "text": tr("SUPER_HARVEST_X_COINS")}
 	if r < super_chance + BONUS_XP_CHANCE:
-		return {"type": "bonus_xp", "text": "Bonus XP!"}
+		return {"type": "bonus_xp", "text": tr("BONUS_XP")}
 	return {}

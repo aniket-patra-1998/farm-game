@@ -43,24 +43,24 @@ func add_materials(uid: int) -> int:
 			have[m] = int(have.get(m, 0)) + give
 			added += give
 	if added == 0:
-		game.message.emit("No materials to add yet. They turn up while harvesting and as daily gifts.")
+		game.message.emit(tr("NO_MATERIALS_TO_ADD_YET_THEY"))
 		return 0
 	if construction_needs(b).is_empty():
 		b.erase("construction")
 		b["t"] = game.now()
 		var done_it := game.item_data(b["id"])
 		if done_it["kind"] == "vehicle":
-			game.message.emit("%s built! Pick it in the toolbar, then tap the field." % done_it["name"])
+			game.message.emit(tr("BUILT_PICK_IT_IN_THE_TOOLBAR") % done_it["name"])
 		elif done_it.get("special", "") == "garage":
-			game.message.emit("Garage finished! Park vehicles inside and upgrade them with Vehicle Parts.")
+			game.message.emit(tr("GARAGE_FINISHED_PARK_VEHICLES_INSIDE_AND"))
 		else:
-			game.message.emit("%s finished! Open it to move animals in." % done_it["name"])
+			game.message.emit(tr("FINISHED_OPEN_IT_TO_MOVE_ANIMALS") % done_it["name"])
 		if done_it.has("build_xp"):
 			game.add_xp(int(done_it["build_xp"]))
 		game.ribbons.bump("buildings_built", 1)
 		game.building_upgraded.emit(uid, 1)
 	else:
-		game.message.emit("Added %d materials to the %s" % [added, game.item_data(b["id"])["name"]])
+		game.message.emit(tr("ADDED_MATERIALS_TO_THE") % [added, game.item_data(b["id"])["name"]])
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return added
@@ -92,7 +92,7 @@ func upgrade_building(uid: int) -> bool:
 	for m in need:
 		game.parts[m] = int(game.parts[m]) - int(need[m])
 	b["level"] = game.level_of(b) + 1
-	game.message.emit("%s now holds %d!" % [game.size_name(b), game.capacity(b)])
+	game.message.emit(tr("NOW_HOLDS") % [game.size_name(b), game.capacity(b)])
 	game.ribbons.bump("upgrades", 1)
 	game.building_upgraded.emit(uid, game.level_of(b))
 	game.inventory_changed.emit()
@@ -120,17 +120,17 @@ func expand(use_gems: bool) -> bool:
 		return false
 	if use_gems:
 		if not game.spend_gems(int(step["gems"])):
-			game.message.emit("Not enough gems to expand")
+			game.message.emit(tr("NOT_ENOUGH_GEMS_TO_EXPAND"))
 			return false
 	else:
 		if game.level() < int(step["level"]):
-			game.message.emit("Reach level %d to expand with coins" % int(step["level"]))
+			game.message.emit(tr("REACH_LEVEL_TO_EXPAND_WITH_COINS") % int(step["level"]))
 			return false
 		if not game.spend(int(step["coins"])):
-			game.message.emit("Not enough coins to expand")
+			game.message.emit(tr("NOT_ENOUGH_COINS_TO_EXPAND"))
 			return false
 	game.farm_size = int(step["size"])
-	game.message.emit("Your farm grew to %d x %d!" % [game.farm_size, game.farm_size])
+	game.message.emit(tr("YOUR_FARM_GREW_TO_X") % [game.farm_size, game.farm_size])
 	game.ribbons.bump("expansions", 1)
 	game.farm_expanded.emit(game.farm_size)
 	game.plot_changed.emit(-1)

@@ -36,7 +36,7 @@ func check_strays() -> void:
 	var keep: Array = []
 	for o in game.objects:
 		if o.get("stray", false) and t - int(o["t"]) > STRAY_STAYS:
-			game.message.emit("The lonely %s wandered off." % game.item_data(o["id"])["name"].to_lower())
+			game.message.emit(tr("THE_LONELY_WANDERED_OFF") % game.item_data(o["id"])["name"].to_lower())
 			changed = true
 		else:
 			keep.append(o)
@@ -103,7 +103,7 @@ func _spawn_stray() -> bool:
 	)
 	game.next_uid += 1
 	game.message.emit(
-		"A lonely %s wandered onto your farm! Tap it to adopt." % game.item_data(animal_id)["name"].to_lower()
+		tr("A_LONELY_WANDERED_ONTO_YOUR_FARM") % game.item_data(animal_id)["name"].to_lower()
 	)
 	return true
 
@@ -123,6 +123,6 @@ func adopt_stray(uid: int) -> bool:
 	o["t"] = game.now() # starts producing from today
 	game.add_xp(STRAY_ADOPT_XP)
 	game.ribbons.bump("strays_adopted", 1)
-	game.message.emit("You adopted the %s! It's part of your farm now." % game.item_data(o["id"])["name"].to_lower())
+	game.message.emit(tr("YOU_ADOPTED_THE_IT_S_PART") % game.item_data(o["id"])["name"].to_lower())
 	game.objects_updated()
 	return true

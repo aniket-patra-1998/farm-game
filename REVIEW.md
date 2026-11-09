@@ -21,7 +21,9 @@ phones) · **Minor** (clarity, naming, small duplication) · **Nit** (style).
      data, not by `if id == "cow"` checks scattered around the code.
    - Composition over deep inheritance; signals over reaching into another node's internals.
 3. **Generality.** New content should need data, not code: a new crop, animal, recipe or building is a
-   catalog entry. Tunable numbers are named constants or data, never magic numbers inline.
+   catalog entry. Tunable numbers are named constants or data, never magic numbers inline. Player-facing
+   text is a key in `locale/strings.csv` shown with `tr()`, never a sentence in code, and whole sentences
+   are one key (no gluing words together or adding "s" for plurals: use one key per form).
 4. **Transferability.** Could a new developer pick this up? Clear names, a doc comment on every class and
    public function saying *why*, no dead code, no clever tricks without a comment.
 5. **Performance on a phone.** Nothing heavy every frame: redraw only what changed, no per-frame

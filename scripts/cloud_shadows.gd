@@ -14,7 +14,9 @@ func _ready() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 311
 	for k in COUNT:
-		_clouds.append({"u": rng.randf(), "v": rng.randf(), "r": rng.randf_range(2.0, 4.0), "speed": rng.randf_range(0.006, 0.012)})
+		_clouds.append(
+			{"u": rng.randf(), "v": rng.randf(), "r": rng.randf_range(2.0, 4.0), "speed": rng.randf_range(0.006, 0.012)}
+		)
 
 
 func _process(delta: float) -> void:

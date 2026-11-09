@@ -147,11 +147,11 @@ func set_tool(tool_name: String, crop_id: String) -> void:
 	elif tool_name == "vehicle":
 		var area := Game.vehicles.vehicle_area(crop_id)
 		var job: String = Game.item_data(crop_id).get("job", "")
-		var hint := "Tap the field: the %s works %dx%d plots" % [Game.item_data(crop_id)["name"], area.x, area.y]
+		var hint := tr("TAP_THE_FIELD_THE_WORKS_X") % [Game.item_data(crop_id)["name"], area.x, area.y]
 		if job == "plant" or job == "all":
 			hint += (
-				", planting %s" % Game.crops[last_crop]["name"].to_lower()
-			) if last_crop != "" else ". Pick a seed first to plant"
+				tr("PLANTING") % Game.crops[last_crop]["name"].to_lower()
+			) if last_crop != "" else tr("PICK_A_SEED_FIRST_TO_PLANT")
 		info.emit(hint)
 
 
@@ -498,8 +498,8 @@ func start_placing(item_id: String, uid := -1) -> void:
 		var o := Game.object_by_uid(uid)
 		placing["row"] = int(o["row"])
 		placing["col"] = int(o["col"])
-	var verb := "move" if uid != -1 else "place"
-	placing_changed.emit("Drag to %s the %s, then let go" % [verb, Game.item_data(item_id)["name"]])
+	var hint := tr("DRAG_TO_MOVE_THE_THEN_LET") if uid != -1 else tr("DRAG_TO_PLACE_THE_THEN_LET")
+	placing_changed.emit(hint % Game.item_data(item_id)["name"])
 	queue_redraw()
 
 
@@ -509,7 +509,7 @@ func start_placing(item_id: String, uid := -1) -> void:
 func start_placing_stored(index: int) -> void:
 	var o: Dictionary = Game.storage.stored[index]
 	placing = {"item": o["id"], "uid": -1, "stored": index, "row": -1, "col": -1}
-	placing_changed.emit("Drag to place the %s, then let go" % Game.item_data(o["id"])["name"])
+	placing_changed.emit(tr("DRAG_TO_PLACE_THE_THEN_LET") % Game.item_data(o["id"])["name"])
 	queue_redraw()
 
 
@@ -554,7 +554,7 @@ func _placing_input(event: InputEvent) -> void:
 	var col := int(placing["col"])
 	var uid := int(placing["uid"])
 	if not Game.can_place(placing["item"], row, col, uid):
-		info.emit("It doesn't fit there. Try an open grassy spot.")
+		info.emit(tr("IT_DOESN_T_FIT_THERE_TRY"))
 		return
 	var from_storage := int(placing.get("stored", -1))
 	var ok: bool
@@ -609,14 +609,14 @@ func _drive(i: int) -> void:
 		Game.index_of(clampi(row + int(area.y / 2.0), 0, MAX - 1), clampi(col + int(area.x / 2.0), 0, MAX - 1))
 	)
 	if int(r["plots"]) == 0:
-		info.emit("Nothing for the %s to do there" % Game.item_data(id)["name"])
+		info.emit(tr("NOTHING_FOR_THE_TO_DO_THERE") % Game.item_data(id)["name"])
 		return
 	var coins_moved := int(r["coins"])
 	if coins_moved != 0:
 		_float(at, ("+%d" if coins_moved > 0 else "%d") % coins_moved, COLOR_COINS if coins_moved > 0 else COLOR_COST)
 	if int(r["xp"]) > 0:
-		_float(at + Vector2(0, -30), "+%d XP" % int(r["xp"]), COLOR_XP)
-	_float(at + Vector2(0, -60), "%d plots · -%d fuel" % [int(r["plots"]), int(r["fuel"])], COLOR_PART, 1.4)
+		_float(at + Vector2(0, -30), tr("XP") % int(r["xp"]), COLOR_XP)
+	_float(at + Vector2(0, -60), tr("PLOTS_FUEL") % [int(r["plots"]), int(r["fuel"])], COLOR_PART, 1.4)
 	var lift := -96
 	for d in r["drops"]:
 		_float(at + Vector2(0, lift), d, COLOR_GOLDEN, 1.6)
@@ -645,21 +645,21 @@ func _act(i: int, first_touch: bool) -> void:
 			world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
 			_reward(at, int(result["coins"]), int(result["xp"]))
 			_float(at, "+%d" % result["coins"], COLOR_COINS)
-			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
+			_float(at + Vector2(0, -30), tr("XP") % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
 				_float(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
 			if result.get("bushel", "") != "":
 				var nb := int(result.get("bushels", 1))
 				_float(
 					at + Vector2(0, -160),
-					"+%d %s bushel%s" % [nb, Game.crops[result["bushel"]]["name"], "" if nb == 1 else "s"],
+					(tr("ONE_BUSHEL") if nb == 1 else tr("N_BUSHELS")) % [nb, Game.crops[result["bushel"]]["name"]],
 					COLOR_PART,
 					1.6
 				)
 			if result.get("bee", "") != "":
 				_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
 			if int(result.get("pollinated", 0)) > 0:
-				_float(at + Vector2(0, -160), "Pollinated! +%d seeds" % int(result["pollinated"]), COLOR_FIND, 1.8)
+				_float(at + Vector2(0, -160), tr("POLLINATED_SEEDS") % int(result["pollinated"]), COLOR_FIND, 1.8)
 				_sparkle(at, COLOR_FIND)
 			if result["drop"] != "":
 				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
@@ -689,9 +689,9 @@ func _act(i: int, first_touch: bool) -> void:
 					_sparkle(at, COLOR_FERT)
 			elif first_touch:
 				if Game.is_fertilized(i):
-					info.emit("Already fertilized: this harvest pays 20% more")
+					info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
 				else:
-					info.emit("Fertilize growing crops for 20% more coins at harvest")
+					info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS"))
 		"hand":
 			if first_touch:
 				_explain(i, ph)
@@ -711,7 +711,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if tool == "store" and first_touch:
 		if Game.storage.store_object(uid):
 			var fps := Game.footprint(obj["id"])
-			_float(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], "Stored", COLOR_XP)
+			_float(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], tr("STORED"), COLOR_XP)
 		return
 	if kind == "barn" and tool != "move":
 		if first_touch:
@@ -723,19 +723,19 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			if Game.under_construction(obj):
 				object_tapped.emit(uid)
 			else:
-				info.emit("Pick the %s in the toolbar, then tap the field" % Game.item_data(obj["id"])["name"])
+				info.emit(tr("PICK_THE_IN_THE_TOOLBAR_THEN") % Game.item_data(obj["id"])["name"])
 		return
 	if kind == "decor" and tool != "move":
 		if first_touch:
 			pieces.bounce(uid)
-			info.emit("Your %s" % Game.item_data(obj["id"])["name"].to_lower())
+			info.emit(tr("YOUR") % Game.item_data(obj["id"])["name"].to_lower())
 		return
 	if obj.get("stray", false) and tool != "move":
 		if first_touch and Game.strays.adopt_stray(uid):
 			var fp0 := Game.footprint(obj["id"])
 			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
 			var at0 := (c0[0] + c0[2]) / 2.0
-			_float(at0 + Vector2(0, -40), "Adopted! +%d XP" % StraySystem.STRAY_ADOPT_XP, COLOR_FIND, 1.4)
+			_float(at0 + Vector2(0, -40), tr("ADOPTED_XP") % StraySystem.STRAY_ADOPT_XP, COLOR_FIND, 1.4)
 			_sparkle(at0, COLOR_FIND)
 		return
 	if tool == "move":
@@ -758,7 +758,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			world_fx.burst("sparkle", at + Vector2(0, -40))
 			_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
 			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
-			_float(at + Vector2(0, -50), "+%d XP" % result["xp"], COLOR_XP)
+			_float(at + Vector2(0, -50), tr("XP") % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
 				_float(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
 			var lift := -150
@@ -779,8 +779,8 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		object_tapped.emit(uid)
 		return
 	var it := Game.item_data(obj["id"])
-	var what: String = it.get("product", "Fruit")
-	info.emit("%s: %s ready in %s" % [it["name"], what, format_duration(Game.seconds_until_ready(obj))])
+	var what: String = it.get("product", tr("FRUIT"))
+	info.emit(tr("READY_IN") % [it["name"], what, format_duration(Game.seconds_until_ready(obj))])
 
 
 
@@ -789,7 +789,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 func _try_sell(obj: Dictionary) -> void:
 	var uid := int(obj["uid"])
 	if not Game.can_sell(obj):
-		info.emit("That can't be sold")
+		info.emit(tr("THAT_CAN_T_BE_SOLD"))
 		return
 	var now_ms := Time.get_ticks_msec()
 	if _sell_pending == uid and now_ms < _sell_pending_until:
@@ -802,9 +802,9 @@ func _try_sell(obj: Dictionary) -> void:
 		return
 	_sell_pending = uid
 	_sell_pending_until = now_ms + 3000
-	var extra := " (what's inside moves out)" if Game.inside_total(obj) > 0 else ""
+	var extra := tr("WHAT_S_INSIDE_MOVES_OUT") if Game.inside_total(obj) > 0 else ""
 	info.emit(
-		"Tap again to sell the %s for %d coins%s" % [Game.item_data(obj["id"])["name"], Game.sell_value(obj), extra]
+		tr("TAP_AGAIN_TO_SELL_THE_FOR") % [Game.item_data(obj["id"])["name"], Game.sell_value(obj), extra]
 	)
 
 
@@ -813,21 +813,21 @@ func _try_sell(obj: Dictionary) -> void:
 func _explain(i: int, ph: GameState.Phase) -> void:
 	match ph:
 		GameState.Phase.GRASS:
-			info.emit("Plow this plot first")
+			info.emit(tr("PLOW_THIS_PLOT_FIRST"))
 		GameState.Phase.PLOWED:
-			info.emit("Pick a seed to plant here")
+			info.emit(tr("PICK_A_SEED_TO_PLANT_HERE"))
 		GameState.Phase.GROWING:
 			var crop: Dictionary = Game.crops[Game.crop_at(i)]
-			info.emit("%s: ready in %s" % [crop["name"], format_duration(Game.seconds_until_ripe(i))])
+			info.emit(tr("READY_IN_2") % [crop["name"], format_duration(Game.seconds_until_ripe(i))])
 		GameState.Phase.WITHERED:
-			info.emit("These crops withered. Plow to clear the plot.")
+			info.emit(tr("THESE_CROPS_WITHERED_PLOW_TO_CLEAR"))
 
 
 
 
 static func format_duration(seconds: int) -> String:
 	if seconds < 60:
-		return "less than a minute"
+		return TranslationServer.translate("LESS_THAN_A_MINUTE")
 	var d := int(seconds / 86400.0)
 	var h := int((seconds % 86400) / 3600.0)
 	var m := int((seconds % 3600) / 60.0)
@@ -848,8 +848,8 @@ func _on_building_upgraded(uid: int, level: int) -> void:
 	var fp := Game.footprint(o["id"])
 	var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	var at := (g[0] + g[2]) / 2.0 + Vector2(0, -60)
-	_float(at, ("Built!" if level == 1 else "%s!" % Game.size_name(o)), COLOR_GOLDEN, 2.0)
-	_float(at + Vector2(0, 34), "Holds %d" % Game.capacity(o), COLOR_XP, 2.0)
+	_float(at, (tr("BUILT") if level == 1 else "%s!" % Game.size_name(o)), COLOR_GOLDEN, 2.0)
+	_float(at + Vector2(0, 34), tr("HOLDS") % Game.capacity(o), COLOR_XP, 2.0)
 	for k in 3:
 		_sparkle(at + Vector2(-50 + 50 * k, 20), COLOR_GOLDEN)
 

@@ -31,9 +31,15 @@ static func _load() -> void:
 		var file := dir + "/" + str(name) + ".png"
 		if not ResourceLoader.exists(file) and not FileAccess.file_exists(file):
 			continue
-		var tex: Texture2D = load(file) if ResourceLoader.exists(file) else ImageTexture.create_from_image(Image.load_from_file(ProjectSettings.globalize_path(file)))
+		var tex: Texture2D = load(file) if ResourceLoader.exists(file) else ImageTexture.create_from_image(
+			Image.load_from_file(ProjectSettings.globalize_path(file))
+		)
 		var a: Array = meta[name]["anchor"]
-		_sprites[id] = {"tex": tex, "anchor": Vector2(float(a[0]), float(a[1])), "scale": float(meta[name].get("scale", 0.5))}
+		_sprites[id] = {
+			"tex": tex,
+			"anchor": Vector2(float(a[0]), float(a[1])),
+			"scale": float(meta[name].get("scale", 0.5))
+		}
 
 
 static func has(id: String) -> bool:

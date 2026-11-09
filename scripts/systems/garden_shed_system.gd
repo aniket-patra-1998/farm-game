@@ -47,7 +47,7 @@ func roll_bunch(crop_id: String, i: int) -> String:
 	if not add_bunch(crop_id):
 		return ""
 	game.ribbons.bump("perfect_bunches", 1)
-	game.found.emit(i, "Perfect Bunch of %s!" % game.crops[crop_id]["name"])
+	game.found.emit(i, tr("PERFECT_BUNCH_OF") % game.crops[crop_id]["name"])
 	return crop_id
 
 
@@ -73,7 +73,7 @@ func expire_bunches() -> void:
 	)
 	if game.objects.size() != before:
 		game.rebuild_occupancy()
-		game.message.emit("A Perfect Bunch has wilted away")
+		game.message.emit(tr("A_PERFECT_BUNCH_HAS_WILTED_AWAY"))
 		game.objects_updated()
 
 
@@ -86,4 +86,4 @@ func on_shed_built() -> void:
 	for k in SHED_FREE_BUNCHES:
 		if not flowers.is_empty():
 			bunches.append(flowers[game.rng.randi_range(0, flowers.size() - 1)])
-	game.message.emit("Garden Shed built! It holds 100 Perfect Bunches, and here are %d to start." % SHED_FREE_BUNCHES)
+	game.message.emit(tr("GARDEN_SHED_BUILT_IT_HOLDS_PERFECT") % SHED_FREE_BUNCHES)

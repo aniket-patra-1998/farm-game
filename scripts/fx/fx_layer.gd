@@ -45,7 +45,8 @@ func _spray(from: Vector2, n: int, kind: int, to: Vector2, on_land: Callable) ->
 		tw.tween_property(f, "position", out, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_method(func(t: float) -> void:
 			f.position = _bezier(out, out + lift, to, t)
-			f.scale = Vector2.ONE * lerpf(1.0, 0.65, t), 0.0, 1.0, randf_range(0.48, 0.62)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+			f.scale = Vector2.ONE * lerpf(1.0, 0.65, t), 0.0, 1.0, randf_range(0.48, 0.62)
+		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 		tw.tween_callback(func() -> void:
 			on_land.call()
 			_flying -= 1

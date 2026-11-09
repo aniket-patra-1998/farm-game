@@ -45,7 +45,7 @@ func save_to(data: Dictionary) -> void:
 
 
 func load_from(data: Dictionary) -> void:
-	owned = data.get("owned", {})
+	owned = int_map(data.get("owned", {}))
 	coll_levels = int_map(data.get("coll_levels", {}))
 
 
@@ -111,7 +111,7 @@ func trade_in(coll_id: String) -> bool:
 		var prize := game.mystery.give_prize(reward["prize"])
 		coll_levels[coll_id] = int(coll_levels.get(coll_id, 0)) + 1
 		game.message.emit(
-			"%s level %d! +%d coins, +%d XP and %s" % [
+			tr("LEVEL_COINS_XP_AND") % [
 				coll["name"],
 				lvl,
 				int(reward["coins"]),
@@ -133,11 +133,11 @@ func roll_collectible(coll: Dictionary, chance: float, index := -1) -> String:
 	var item_id := pick_item(coll)
 	owned[item_id] = int(owned.get(item_id, 0)) + 1
 	game.collections_changed.emit()
-	var text: String = "Found: " + str(item_names[item_id])
+	var text: String = tr("FOUND") + str(item_names[item_id])
 	if index >= 0:
 		game.found.emit(index, text)
 	else:
-		game.message.emit("%s (%s collection)" % [text, coll["name"]])
+		game.message.emit(tr("COLLECTION") % [text, coll["name"]])
 	return item_names[item_id]
 
 

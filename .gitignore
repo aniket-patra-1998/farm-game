@@ -19,3 +19,7 @@ art/refs/**/*.import
 art/refs3d/**/*.import
 art/style/**/*.import
 art/pilot/**/*.import
+
+# Built from locale/strings.csv when Godot imports the project
+locale/*.translation
+__pycache__/

@@ -21,5 +21,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 
 ## Rules
 - Follow `REVIEW.md`. Item behaviour on catalog classes; numbers as named constants or data.
+- Player-facing text lives in `locale/strings.csv` (keys, en) and code shows it with `tr("KEY")`
+  (`TranslationServer.translate` in static functions; constants hold keys). `tools/strings_lint.py` checks it in CI.
 - Regenerate `docs/CATALOG.md`, `art/manifest.json` and `tools/generate_art.ipynb` with their tools after
   catalog or art changes (CI checks them).

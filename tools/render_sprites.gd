@@ -95,7 +95,11 @@ func _render(path: String, tiles: float, turn: float) -> Image:
 	_vp.size = Vector2i(w, h)
 	var ppu := PX_PER_TILE / TILE_DIAGONAL
 	_cam.size = h / ppu
-	var dir := Vector3(sin(deg_to_rad(45)) * cos(deg_to_rad(30)), sin(deg_to_rad(30)), cos(deg_to_rad(45)) * cos(deg_to_rad(30)))
+	var dir := Vector3(
+		sin(deg_to_rad(45)) * cos(deg_to_rad(30)),
+		sin(deg_to_rad(30)),
+		cos(deg_to_rad(45)) * cos(deg_to_rad(30))
+	)
 	# Put the ground centre 3/4 of the way down: look at a point above it.
 	var up := Vector3(0, 1, 0)
 	var look_at_pt := Vector3.ZERO + (up - dir * dir.dot(up)).normalized() * (h * 0.25 / ppu)
@@ -143,6 +147,9 @@ func _contact_sheet(images: Array[Image], names: Array[String]) -> void:
 		var img := images[k].duplicate() as Image
 		var sc := minf(1.0, (cell - 10) / float(maxi(img.get_width(), img.get_height())))
 		img.resize(maxi(1, int(img.get_width() * sc)), maxi(1, int(img.get_height() * sc)))
-		var at := Vector2i((k % cols) * cell + (cell - img.get_width()) / 2, int(k / float(cols)) * cell + (cell - img.get_height()) / 2)
+		var at := Vector2i(
+			(k % cols) * cell + (cell - img.get_width()) / 2,
+			int(k / float(cols)) * cell + (cell - img.get_height()) / 2
+		)
 		sheet.blend_rect(img, Rect2i(Vector2i.ZERO, img.get_size()), at)
 	sheet.save_png(ProjectSettings.globalize_path("res://ci_shots/contact.png"))

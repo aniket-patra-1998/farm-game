@@ -23,10 +23,11 @@ signal inventory_changed
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
 
+# Each step's hint, as keys in locale/strings.csv (tutorial_text() translates it).
 const TUTORIAL_TEXT := {
-	Tutorial.HARVEST: "Your first crops are ready! Tap them to harvest.",
-	Tutorial.PLOW: "Choose Plow, then tap a grassy or empty spot to plow a plot.",
-	Tutorial.PLANT: "Choose Strawberries, then tap a plowed plot to plant.",
+	Tutorial.HARVEST: "YOUR_FIRST_CROPS_ARE_READY_TAP",
+	Tutorial.PLOW: "CHOOSE_PLOW_THEN_TAP_A_GRASSY",
+	Tutorial.PLANT: "CHOOSE_STRAWBERRIES_THEN_TAP_A_PLOWED",
 }
 
 const SELL_SHARE := PlaceableDef.SELL_SHARE
@@ -51,7 +52,8 @@ const POLLINATED_SUPER_MULT := 3   # and triple the super-harvest chance
 
 # A vehicle's working area at each upgrade: 2x2, growing with Vehicle Parts in the Garage up to 4x4.
 const VEHICLE_SIZES := VehicleDef.SIZES
-const COLLECTIBLE_ACTION_CHANCE := 0.02  # FarmVille: any action can drop one (plow, plant, fertilize); harvests are likelier
+# FarmVille: any action can drop a collectible (plow, plant, fertilize); harvests are likelier.
+const COLLECTIBLE_ACTION_CHANCE := 0.02
 const ANIMAL_COLLECTIBLE_CHANCE := 0.05  # collecting animals, trees and buildings (barnyard and orchard sets)
 const UNWITHER_GEM_COST := 3
 const START_COINS := 200
@@ -233,7 +235,7 @@ func debug_add_bees(n: int) -> void:
 		return
 	var all := bees.hives()
 	if all.is_empty():
-		message.emit("Build a Beehive first")
+		message.emit(tr("BUILD_A_BEEHIVE_FIRST"))
 		return
 	for h in all:
 		h["queen"] = true
@@ -325,7 +327,7 @@ func plow(i: int) -> bool:
 	if is_occupied(i):
 		return false
 	if not spend(PLOW_COST):
-		message.emit("Not enough coins to plow")
+		message.emit(tr("NOT_ENOUGH_COINS_TO_PLOW"))
 		return false
 	var old_crop := str(plots[i].get("crop", ""))
 	plots[i] = {"state": "plowed"}
@@ -334,7 +336,7 @@ func plow(i: int) -> bool:
 	vehicles.roll_fuel_find(i)
 	collectibles.roll_collectible(collectibles.plow_collection(old_crop), COLLECTIBLE_ACTION_CHANCE, i)
 	if coins < cheapest_seed_cost():
-		message.emit("Careful: keep some coins for seeds!")
+		message.emit(tr("CAREFUL_KEEP_SOME_COINS_FOR_SEEDS"))
 	_advance_tutorial(Tutorial.PLOW)
 	_plot_updated(i)
 	check_rescue()
@@ -351,7 +353,7 @@ func plant(i: int, crop_id: String) -> bool:
 	# Pollinated seeds are planted first, for free.
 	var use_pollinated := bees.take_pollinated_seed(crop_id)
 	if not use_pollinated and not spend(int(crop["seed_cost"])):
-		message.emit("Not enough coins for %s seeds" % crop["name"])
+		message.emit(tr("NOT_ENOUGH_COINS_FOR_SEEDS") % crop["name"])
 		return false
 	plots[i] = {"state": "planted", "crop": crop_id, "planted_at": now()}
 	if use_pollinated:
@@ -374,7 +376,7 @@ func fertilize(i: int) -> bool:
 		fertilizer_bags -= 1
 		inventory_changed.emit()
 	elif not spend(FERTILIZER_COST):
-		message.emit("Not enough coins for fertilizer")
+		message.emit(tr("NOT_ENOUGH_COINS_FOR_FERTILIZER"))
 		return false
 	plots[i]["fert"] = true
 	ribbons.bump("fertilized", 1)
@@ -419,11 +421,11 @@ func harvest(i: int) -> Dictionary:
 	ribbons.bump("harvests", 1)
 	if drop.get("type", "") == "golden":
 		ribbons.bump("golden_finds", 1)
-		message.emit("Golden harvest! %s paid %dx coins" % [crop["name"], GOLDEN_COIN_MULTIPLIER])
+		message.emit(tr("GOLDEN_HARVEST_PAID_X_COINS") % [crop["name"], GOLDEN_COIN_MULTIPLIER])
 	elif drop.get("type", "") == "collectible":
-		message.emit("You found a %s! (%s collection)" % [drop["name"], drop["collection"]])
+		message.emit(tr("YOU_FOUND_A_COLLECTION") % [drop["name"], drop["collection"]])
 	elif drop.get("type", "") == "bird":
-		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
+		message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
 	var part := daily.roll_part()
 	var bushel := crafting.roll_bushel(crop_id)
 	var bunch := shed.roll_bunch(crop_id, i)
@@ -527,14 +529,16 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 		var price := crafting.crafting_price(item_id)
 		var paid := spend_gems(int(price["gems"])) if price.has("gems") else spend(int(price["coins"]))
 		if not paid:
-			message.emit("Not enough %s for a %s" % ["gems" if price.has("gems") else "coins", it["name"]])
+			message.emit(
+				(tr("NOT_ENOUGH_GEMS_FOR_A") if price.has("gems") else tr("NOT_ENOUGH_COINS_FOR_A")) % it["name"]
+			)
 			return false
 	elif it.has("gem_cost"):
 		if not spend_gems(int(it["gem_cost"])):
-			message.emit("Not enough gems for a %s" % it["name"])
+			message.emit(tr("NOT_ENOUGH_GEMS_FOR_A") % it["name"])
 			return false
 	elif not spend(int(it["cost"])):
-		message.emit("Not enough coins for a %s" % it["name"])
+		message.emit(tr("NOT_ENOUGH_COINS_FOR_A") % it["name"])
 		return false
 	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
 	var bought_xp := buy_xp(item_id)
@@ -551,15 +555,15 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 		obj["inside"] = {}
 		if it.has("build_materials"):
 			obj["construction"] = {} # a frame: finished with materials, like FarmVille
-			message.emit("%s frame placed! Tap it to add building materials." % it["name"])
+			message.emit(tr("FRAME_PLACED_TAP_IT_TO_ADD") % it["name"])
 		else:
-			message.emit("%s built! Open it to move animals in." % it["name"])
+			message.emit(tr("BUILT_OPEN_IT_TO_MOVE_ANIMALS") % it["name"])
 	elif it["kind"] == "vehicle":
 		if it.has("build_materials"):
 			obj["construction"] = {} # the Combine's chassis, finished with Vehicle Parts
-			message.emit("%s chassis placed! Tap it to add Vehicle Parts." % it["name"])
+			message.emit(tr("CHASSIS_PLACED_TAP_IT_TO_ADD") % it["name"])
 		else:
-			message.emit("%s bought! Pick it in the toolbar, then tap the field." % it["name"])
+			message.emit(tr("BOUGHT_PICK_IT_IN_THE_TOOLBAR") % it["name"])
 		vehicles.on_vehicle_bought()
 	next_uid += 1
 	grass_over(item_id, row, col)
@@ -600,7 +604,7 @@ func size_name(obj: Dictionary) -> String:
 	var lvl := level_of(obj)
 	if lvl - 1 < names.size():
 		return names[lvl - 1]
-	return it["name"] if lvl == 1 else "%s (size %d)" % [it["name"], lvl]
+	return it["name"] if lvl == 1 else tr("SIZE") % [it["name"], lvl]
 
 
 func under_construction(obj: Dictionary) -> bool:
@@ -714,20 +718,20 @@ func collect(uid: int) -> Dictionary:
 		var adult := specials.grows_into(obj["id"])
 		if adult != "":
 			obj["id"] = adult
-			message.emit("Your %s grew up into a %s!" % [name_before.to_lower(), item_data(adult)["name"].to_lower()])
-			extras.append("Grew up!")
+			message.emit(tr("YOUR_GREW_UP_INTO_A") % [name_before.to_lower(), item_data(adult)["name"].to_lower()])
+			extras.append(tr("GREW_UP"))
 	var coll_find := ""
 	if kind_of(obj) == "tree":
 		coll_find = collectibles.roll_collectible(collectibles.tree_collection, ANIMAL_COLLECTIBLE_CHANCE)
 	elif kind_of(obj) == "animal" or is_building(obj):
 		coll_find = collectibles.roll_collectible(collectibles.animal_collection, ANIMAL_COLLECTIBLE_CHANCE)
 	if coll_find != "":
-		extras.append("Found: " + coll_find)
+		extras.append(tr("FOUND") + coll_find)
 	if drop.get("type", "") == "golden":
 		ribbons.bump("golden_finds", 1)
-		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
+		message.emit(tr("GOLDEN_COLLECTION_X_COINS") % GOLDEN_COIN_MULTIPLIER)
 	elif drop.get("type", "") == "bird":
-		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
+		message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
 	objects_updated()
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
 		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras}
@@ -767,9 +771,15 @@ func inside_total(building: Dictionary) -> int:
 func loose_matching(building: Dictionary) -> int:
 	var n := 0
 	for o in objects:
-		if not is_building(o) and not o.get("stray", false) and not under_construction(o) and building_accepts(building, o["id"]):
+		if _can_move_into(building, o):
 			n += 1
 	return n
+
+
+## A loose animal or tree on the farm that this building takes (not a building, a stray or a frame).
+func _can_move_into(building: Dictionary, o: Dictionary) -> bool:
+	return not is_building(o) and not o.get("stray", false) and not under_construction(o) \
+		and building_accepts(building, o["id"])
 
 
 ## Moves loose animals or trees of the right type into the building, up to its capacity.
@@ -783,7 +793,7 @@ func fill_building(uid: int) -> int:
 	var regular := 0 # moves that take a space (the bull or stallion doesn't)
 	var keep: Array = []
 	for o in objects:
-		var movable: bool = not is_building(o) and not o.get("stray", false) and not under_construction(o) and building_accepts(b, o["id"])
+		var movable := _can_move_into(b, o)
 		var inside: Dictionary = b["inside"]
 		if movable and is_one_each(b, o["id"]) and not has_inside(b, o["id"]):
 			inside[o["id"]] = 1 # the one bull or stallion
@@ -801,7 +811,7 @@ func fill_building(uid: int) -> int:
 	objects = keep
 	if was_empty:
 		b["t"] = now() # the first cycle starts when something moves in
-	message.emit("Moved %d into the %s" % [moved, item_data(b["id"])["name"]])
+	message.emit(tr("MOVED_INTO_THE") % [moved, item_data(b["id"])["name"]])
 	objects_updated()
 	return moved
 
@@ -833,14 +843,14 @@ func place_somewhere(item_id: String) -> bool:
 func use_helper(kind: String) -> int:
 	var held := farmhands if kind == "animal" else arborists
 	if held <= 0:
-		message.emit("No %s left" % ("Farmhands" if kind == "animal" else "Arborists"))
+		message.emit(tr("NO_LEFT") % (tr("FARMHANDS") if kind == "animal" else tr("ARBORISTS")))
 		return 0
 	var ready: Array = []
 	for o in objects:
 		if kind_of(o) == kind and is_ready(o):
 			ready.append(int(o["uid"]))
 	if ready.is_empty():
-		message.emit("Nothing is ready to collect yet")
+		message.emit(tr("NOTHING_IS_READY_TO_COLLECT_YET"))
 		return 0
 	if kind == "animal":
 		farmhands -= 1
@@ -850,7 +860,8 @@ func use_helper(kind: String) -> int:
 	for uid in ready:
 		coins_total += int(collect(uid).get("coins", 0))
 	message.emit(
-		"Collected %d %s for %d coins" % [ready.size(), "animals" if kind == "animal" else "trees", coins_total]
+		(tr("COLLECTED_ANIMALS_FOR_COINS") if kind == "animal" else tr("COLLECTED_TREES_FOR_COINS")) % [
+			ready.size(), coins_total]
 	)
 	inventory_changed.emit()
 	return ready.size()
@@ -881,7 +892,7 @@ func can_sell(obj: Dictionary) -> bool:
 func sell_object(uid: int) -> bool:
 	var o := object_by_uid(uid)
 	if not can_sell(o):
-		message.emit("That can't be sold")
+		message.emit(tr("THAT_CAN_T_BE_SOLD"))
 		return false
 	var held: Array[String] = []
 	for id in o.get("inside", {}):
@@ -900,15 +911,15 @@ func sell_object(uid: int) -> bool:
 		if free < held.size():
 			objects.append(o)
 			rebuild_occupancy()
-			message.emit("Not enough open grass for the %d inside. Make room first." % held.size())
+			message.emit(tr("NOT_ENOUGH_OPEN_GRASS_FOR_THE") % held.size())
 			return false
 		for id in held:
 			place_somewhere(id)
 	var value := sell_value(o)
 	add_coins(value)
 	ribbons.bump("items_sold", 1)
-	var moved := (" · %d moved out onto the farm" % held.size()) if held.size() > 0 else ""
-	message.emit("Sold the %s for %d coins%s" % [item_data(o["id"])["name"], value, moved])
+	var moved := (tr("MOVED_OUT_ONTO_THE_FARM") % held.size()) if held.size() > 0 else ""
+	message.emit(tr("SOLD_THE_FOR_COINS") % [item_data(o["id"])["name"], value, moved])
 	inventory_changed.emit()
 	objects_updated()
 	return true
@@ -925,7 +936,7 @@ func can_rotate(obj: Dictionary) -> bool:
 func rotate_object(uid: int) -> bool:
 	var o := object_by_uid(uid)
 	if not can_rotate(o):
-		message.emit("Buildings and big pieces can't turn")
+		message.emit(tr("BUILDINGS_AND_BIG_PIECES_CAN_T"))
 		return false
 	o["flip"] = not o.get("flip", false)
 	objects_updated()
@@ -971,12 +982,12 @@ func withered_count() -> int:
 func use_unwither() -> bool:
 	var count := withered_count()
 	if count == 0:
-		message.emit("Nothing has withered. Save it for when crops go bad.")
+		message.emit(tr("NOTHING_HAS_WITHERED_SAVE_IT_FOR"))
 		return false
 	if unwithers > 0:
 		unwithers -= 1
 	elif not spend_gems(UNWITHER_GEM_COST):
-		message.emit("No Unwither left, and not enough gems for one")
+		message.emit(tr("NO_UNWITHER_LEFT_AND_NOT_ENOUGH"))
 		return false
 	var t := now()
 	for r in farm_size:
@@ -984,7 +995,7 @@ func use_unwither() -> bool:
 			var i := index_of(r, c)
 			if phase(i) == Phase.WITHERED:
 				plots[i]["planted_at"] = t - int(crops[plots[i]["crop"]]["grow_seconds"])
-	message.emit("Unwithered %d plots! They're ready to harvest." % count)
+	message.emit(tr("UNWITHERED_PLOTS_THEY_RE_READY_TO") % count)
 	inventory_changed.emit()
 	plot_changed.emit(-1)
 	queue_save()
@@ -1017,7 +1028,7 @@ func check_rescue() -> void:
 		return
 	var gift := RESCUE_COINS - coins
 	add_coins(gift, false)
-	message.emit("You found %d coins in the barn. Plant some seeds!" % gift)
+	message.emit(tr("YOU_FOUND_COINS_IN_THE_BARN") % gift)
 
 
 func _any_plot_in(wanted: Phase) -> bool:
@@ -1031,7 +1042,7 @@ func _any_plot_in(wanted: Phase) -> bool:
 
 
 func tutorial_text() -> String:
-	return TUTORIAL_TEXT.get(tutorial_step, "")
+	return tr(TUTORIAL_TEXT[tutorial_step]) if TUTORIAL_TEXT.has(tutorial_step) else ""
 
 
 ## Moves to the next step only when the finished step is the current one.
@@ -1041,7 +1052,7 @@ func _advance_tutorial(finished: Tutorial) -> void:
 	tutorial_step += 1
 	tutorial_changed.emit(tutorial_step)
 	if tutorial_step == Tutorial.DONE:
-		message.emit("Nice! Crops grow in real time. Come back when they're ready.")
+		message.emit(tr("NICE_CROPS_GROW_IN_REAL_TIME"))
 	queue_save()
 
 
@@ -1069,11 +1080,11 @@ func mastery_stars(crop_id: String) -> int:
 func _award_mastery_star(crop_id: String, star: int) -> void:
 	add_coins(MASTERY_STAR_COINS[star - 1])
 	add_xp(MASTERY_STAR_XP[star - 1])
-	message.emit("%s mastery: star %d!" % [crops[crop_id]["name"], star])
+	message.emit(tr("MASTERY_STAR") % [crops[crop_id]["name"], star])
 	ribbons.bump("mastery_stars", 1)
 	if star == 3 and place_somewhere("mastery_sign"):
 		objects[-1]["crop"] = crop_id # FarmVille's mastery sign, to show off on the farm
-		message.emit("%s mastered! A mastery sign was put on your farm." % crops[crop_id]["name"])
+		message.emit(tr("MASTERED_A_MASTERY_SIGN_WAS_PUT") % crops[crop_id]["name"])
 		objects_updated()
 
 
@@ -1137,7 +1148,7 @@ func unlocks_at(lvl: int) -> Array[String]:
 	var names: Array[String] = []
 	for id in crop_order:
 		if int(crops[id]["unlock_level"]) == lvl:
-			names.append(crops[id]["name"] + " seeds")
+			names.append(crops[id]["name"] + tr("SEEDS"))
 	for id in item_order:
 		if int(items[id]["unlock_level"]) == lvl:
 			names.append(items[id]["name"])
@@ -1333,7 +1344,7 @@ func load_game() -> bool:
 	coins = int(data.get("coins", START_COINS))
 	gems = int(data.get("gems", START_GEMS))
 	xp = int(data.get("xp", 0))
-	mastery = data.get("mastery", {})
+	mastery = GameSystem.int_map(data.get("mastery", {}))
 	debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
 	# Saves from before the tutorial existed belong to players who already know the basics.
 	tutorial_step = int(data.get("tutorial_step", Tutorial.DONE))

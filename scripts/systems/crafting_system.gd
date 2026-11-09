@@ -136,13 +136,13 @@ func free_slots(obj: Dictionary) -> int:
 func craft_problem(uid: int, rid: String) -> String:
 	var obj := game.object_by_uid(uid)
 	if obj.is_empty() or not is_crafting(obj):
-		return "That isn't a crafting building"
+		return tr("THAT_ISN_T_A_CRAFTING_BUILDING")
 	if not recipe_unlocked(obj, rid):
-		return "Unlocks at %d stars" % _recipe(rid).star() if _recipe(rid) else "Unknown recipe"
+		return tr("UNLOCKS_AT_STARS") % _recipe(rid).star() if _recipe(rid) else tr("UNKNOWN_RECIPE")
 	if free_slots(obj) <= 0:
-		return "Every slot is busy"
+		return tr("EVERY_SLOT_IS_BUSY")
 	if not missing_bushels(rid).is_empty():
-		return "Not enough bushels"
+		return tr("NOT_ENOUGH_BUSHELS")
 	return ""
 
 
@@ -172,7 +172,7 @@ func buy_missing_and_craft(uid: int, rid: String) -> bool:
 	if obj.is_empty() or not recipe_unlocked(obj, rid) or free_slots(obj) <= 0:
 		return false
 	if n > 0 and not game.spend_gems(n * BUSHEL_GEM_COST):
-		game.message.emit("Not enough gems")
+		game.message.emit(tr("NOT_ENOUGH_GEMS"))
 		return false
 	for c in missing:
 		bushels[c] = int(bushels.get(c, 0)) + int(missing[c]) # may go past the cap: used straight away
@@ -203,13 +203,13 @@ func finish_crafts(uid: int) -> int:
 			game.add_xp(CRAFT_XP_PER_STAR * _recipe(rid).star())
 			game.ribbons.bump("crafted", 1)
 			if recipe_stars(rid) > before:
-				game.message.emit("%s mastery: %d stars!" % [_recipe(rid).name, recipe_stars(rid)])
+				game.message.emit(tr("MASTERY_STARS") % [_recipe(rid).name, recipe_stars(rid)])
 			n += 1
 		else:
 			still.append(slot)
 	obj["slots"] = still
 	if n > 0:
-		game.message.emit("Finished %d %s" % [n, "good" if n == 1 else "goods"])
+		game.message.emit((tr("FINISHED_ONE_GOOD") if n == 1 else tr("FINISHED_GOODS")) % n)
 		game.inventory_changed.emit()
 		game.objects_updated()
 	return n
@@ -278,7 +278,7 @@ func add_star(uid: int, with_gems: bool) -> bool:
 		game.spend(int(cost["coins"]))
 	obj["level"] = game.level_of(obj) + 1
 	game.message.emit(
-		"Your %s now has %d stars: a new slot and 3 new recipes!" % [
+		tr("YOUR_NOW_HAS_STARS_A_NEW") % [
 			game.item_data(obj["id"])["name"],
 			game.level_of(obj)
 		]
@@ -333,4 +333,4 @@ func on_crafting_built(obj: Dictionary) -> void:
 	obj["level"] = 1
 	obj["slots"] = []
 	stall_day = 0 # restock the Farmers Market with this building's crops
-	game.message.emit("%s built! Harvests now drop bushels. Tap it to craft." % game.item_data(obj["id"])["name"])
+	game.message.emit(tr("BUILT_HARVESTS_NOW_DROP_BUSHELS_TAP") % game.item_data(obj["id"])["name"])

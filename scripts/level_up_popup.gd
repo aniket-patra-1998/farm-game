@@ -8,7 +8,14 @@ const WOOD_DARK := Color("#5c3a1e")
 const CREAM := Color("#fbefd2")
 const INK := Color("#3a2614")
 const SUN := Color("#ffd34d")
-const CONFETTI := [Color("#ffd34d"), Color("#ff6b6b"), Color("#7ccf5a"), Color("#5bc0eb"), Color("#ff9ad5"), Color("#fbefd2")]
+const CONFETTI := [
+	Color("#ffd34d"),
+	Color("#ff6b6b"),
+	Color("#7ccf5a"),
+	Color("#5bc0eb"),
+	Color("#ff9ad5"),
+	Color("#fbefd2")
+]
 
 var _queue: Array[int] = []
 var _card: PanelContainer
@@ -51,7 +58,7 @@ func _ready() -> void:
 	col.add_theme_constant_override("separation", 14)
 	_card.add_child(col)
 
-	var eyebrow := _label("Level up!", 28, CREAM)
+	var eyebrow := _label(tr("LEVEL_UP"), 28, CREAM)
 	col.add_child(eyebrow)
 
 	_level_label = _label("", 96, SUN)
@@ -62,7 +69,7 @@ func _ready() -> void:
 	_reward_label = _label("", 30, CREAM)
 	col.add_child(_reward_label)
 
-	_unlock_title = _label("New in the market", 22, SUN)
+	_unlock_title = _label(tr("NEW_IN_THE_MARKET"), 22, SUN)
 	col.add_child(_unlock_title)
 
 	_unlocks = HFlowContainer.new()
@@ -72,7 +79,7 @@ func _ready() -> void:
 	col.add_child(_unlocks)
 
 	var go := Button.new()
-	go.text = "Keep farming"
+	go.text = tr("KEEP_FARMING")
 	go.custom_minimum_size = Vector2(260, 64)
 	go.focus_mode = Control.FOCUS_NONE
 	go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -96,7 +103,7 @@ func _show(lvl: int) -> void:
 	visible = true
 	Game.modal_open = true
 	_level_label.text = str(lvl)
-	_reward_label.text = "+%d coins   +%d gem" % [Game.level_reward(lvl), GameState.GEMS_PER_LEVEL]
+	_reward_label.text = tr("COINS_GEM") % [Game.level_reward(lvl), GameState.GEMS_PER_LEVEL]
 	for child in _unlocks.get_children():
 		child.queue_free()
 	var names := Game.unlocks_at(lvl)

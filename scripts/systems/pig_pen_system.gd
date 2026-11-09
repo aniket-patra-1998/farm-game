@@ -42,13 +42,13 @@ func feed_slop(uid: int) -> bool:
 	if pen.is_empty() or pen["id"] != "pig_pen" or game.under_construction(pen) or is_foraging(pen):
 		return false
 	if game.inside_total(pen) == 0:
-		game.message.emit("Move some pigs in first")
+		game.message.emit(tr("MOVE_SOME_PIGS_IN_FIRST"))
 		return false
 	if not game.spend(SLOP_COST):
-		game.message.emit("Not enough coins for slop")
+		game.message.emit(tr("NOT_ENOUGH_COINS_FOR_SLOP"))
 		return false
 	pen["forage_until"] = game.now() + FORAGE_SECONDS
-	game.message.emit("The pigs are out looking for truffles")
+	game.message.emit(tr("THE_PIGS_ARE_OUT_LOOKING_FOR"))
 	game.objects_updated()
 	return true
 
@@ -62,7 +62,7 @@ func collect_truffles(uid: int) -> int:
 	pen.erase("forage_until")
 	truffles += dug
 	game.ribbons.bump("truffles", dug)
-	game.message.emit("Your pigs found %d truffles!" % dug)
+	game.message.emit(tr("YOUR_PIGS_FOUND_TRUFFLES") % dug)
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return dug
@@ -81,10 +81,10 @@ func trade_truffles(breed: String) -> bool:
 	if not game.item_data(breed).get("rare_pig", false) or truffles < TRUFFLES_PER_PIG:
 		return false
 	if not game.place_somewhere(breed):
-		game.message.emit("No room on the farm for a new pig")
+		game.message.emit(tr("NO_ROOM_ON_THE_FARM_FOR"))
 		return false
 	truffles -= TRUFFLES_PER_PIG
-	game.message.emit("A %s joined your farm!" % game.item_data(breed)["name"])
+	game.message.emit(tr("A_JOINED_YOUR_FARM") % game.item_data(breed)["name"])
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true

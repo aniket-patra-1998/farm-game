@@ -64,7 +64,14 @@ func _draw_sky() -> void:
 		var c0 := top.lerp(horizon, pow(t0, 1.4))
 		var c1 := top.lerp(horizon, pow(t1, 1.4))
 		_canvas.draw_polygon(
-			PackedVector2Array([Vector2(0, size.y * t0), Vector2(size.x, size.y * t0), Vector2(size.x, size.y * t1), Vector2(0, size.y * t1)]),
+			PackedVector2Array(
+				[
+					Vector2(0, size.y * t0),
+					Vector2(size.x, size.y * t0),
+					Vector2(size.x, size.y * t1),
+					Vector2(0, size.y * t1)
+				]
+			),
 			PackedColorArray([c0, c0, c1, c1]))
 
 	# Stars fade in after dusk and twinkle.

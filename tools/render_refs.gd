@@ -59,13 +59,26 @@ func _draw_job() -> void:
 		"Crop":
 			var crop: Dictionary = Game.crops[item_id]
 			# Plants only: the game draws the soil, so the art mustn't include any.
-			var phase: String = {"planted": "growing", "growing": "growing", "ripe": "ripe", "withered": "withered"}[stage]
+			var phase: String = {
+				"planted": "growing",
+				"growing": "growing",
+				"ripe": "ripe",
+				"withered": "withered"
+			}[stage]
 			var progress := 0.12 if stage == "planted" else 0.7
 			PlaceholderArt.draw_crop(_canvas, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, phase, progress)
 		"Tree":
 			PlaceholderArt.draw_object(_canvas, Game.item_data(item_id), corners, stage == "ready", 1, 0, 0)
 		"Building", "Barn", "Crafting":
 			var it := Game.item_data(item_id)
-			PlaceholderArt.draw_object(_canvas, it, corners, false, int(stage), 5, int((it["levels"] as Array)[int(stage) - 1]))
+			PlaceholderArt.draw_object(
+				_canvas,
+				it,
+				corners,
+				false,
+				int(stage),
+				5,
+				int((it["levels"] as Array)[int(stage) - 1])
+			)
 		_:
 			PlaceholderArt.draw_object(_canvas, Game.item_data(item_id), corners, false, 1, 0, 0)

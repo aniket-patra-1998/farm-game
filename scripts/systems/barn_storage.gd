@@ -67,7 +67,7 @@ func repair_barn() -> bool:
 	var it := game.item_data("barn")
 	game.add_coins(int(it.get("repair_coins", 0)))
 	game.add_xp(int(it.get("repair_xp", 0)))
-	game.message.emit("The Barn is fixed! Use the Store tool to put things away in it.")
+	game.message.emit(tr("THE_BARN_IS_FIXED_USE_THE"))
 	game.ribbons.bump("buildings_repaired", 1)
 	game.inventory_changed.emit()
 	game.objects_updated()
@@ -90,13 +90,13 @@ func can_store(obj: Dictionary) -> bool:
 func store_object(uid: int) -> bool:
 	var o := game.object_by_uid(uid)
 	if not barn_repaired():
-		game.message.emit("Fix the Barn first to store things")
+		game.message.emit(tr("FIX_THE_BARN_FIRST_TO_STORE"))
 		return false
 	if not can_store(o):
-		game.message.emit("That can't go in the barn")
+		game.message.emit(tr("THAT_CAN_T_GO_IN_THE"))
 		return false
 	if stored.size() >= barn_capacity():
-		game.message.emit("The barn is full")
+		game.message.emit(tr("THE_BARN_IS_FULL"))
 		return false
 	game.objects.erase(o)
 	o.erase("row")

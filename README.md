@@ -130,6 +130,7 @@ Use AAB format for the Play Store.
 | Path | What it holds |
 | --- | --- |
 | `autoload/game.gd` | The shared core of the rules: plots, crops, coins, XP, levels, mastery, placed objects, save/load |
+| `locale/strings.csv` | Every sentence the player sees, by key (code shows them with `tr("KEY")`); add a column to translate the game |
 | `scripts/systems/` | One class per feature (crafting, vehicles and fuel, beehive, barn, strays, collections, ribbons, daily gift...), each with its own state and saving |
 | `data/crops.json` | Crop list and numbers; edit to rebalance without touching code |
 | `data/collections.json` | Collection sets, which crops drop them, rewards |

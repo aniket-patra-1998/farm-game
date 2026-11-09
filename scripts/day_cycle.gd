@@ -3,7 +3,7 @@ extends RefCounted
 ## Time of day and the colours that go with it. Pure functions, so they're easy to test.
 ## The season is fixed to summer for now; regional seasons come later.
 
-const SEASON := "Summer"
+const SEASON := "Summer"  # not-ui: a season id (ODDS key); shown as tr("SEASON_SUMMER")
 const SUNRISE := 5.5   # hours, local time (summer)
 const SUNSET := 18.75
 
@@ -48,7 +48,12 @@ static func sample(hour: float) -> Dictionary:
 				"light": Color.html(a[3]).lerp(Color.html(b[3]), t),
 				"dark": darkness(h),
 			}
-	return {"top": Color.html(KEYS[0][1]), "horizon": Color.html(KEYS[0][2]), "light": Color.html(KEYS[0][3]), "dark": 1.0}
+	return {
+		"top": Color.html(KEYS[0][1]),
+		"horizon": Color.html(KEYS[0][2]),
+		"light": Color.html(KEYS[0][3]),
+		"dark": 1.0
+	}
 
 
 ## 0 in daylight, 1 at night, easing over the hour around sunrise and sunset.
@@ -88,7 +93,7 @@ static func clock_text(hour: float) -> String:
 	var total := int(round(fposmod(hour, 24.0) * 60.0)) % 1440
 	var h := int(total / 60.0)
 	var m := total % 60
-	var suffix := "am" if h < 12 else "pm"
+	var suffix := TranslationServer.translate("CLOCK_AM") if h < 12 else TranslationServer.translate("CLOCK_PM")
 	var h12 := h % 12
 	if h12 == 0:
 		h12 = 12

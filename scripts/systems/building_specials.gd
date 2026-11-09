@@ -38,7 +38,7 @@ func grow_up_inside(b: Dictionary) -> Array[String]:
 		if adult == "" or int(inside[id]) <= 0:
 			continue
 		inside[adult] = int(inside.get(adult, 0)) + int(inside[id])
-		out.append("%d %s grew up!" % [int(inside[id]), game.item_data(id)["name"]])
+		out.append(tr("GREW_UP_2") % [int(inside[id]), game.item_data(id)["name"]])
 		inside.erase(id)
 	return out
 
@@ -73,17 +73,17 @@ func building_specials(b: Dictionary) -> Array[String]:
 			if colour != "":
 				game.mystery.mystery_eggs[colour] = int(game.mystery.mystery_eggs.get(colour, 0)) + 1
 				var egg_name: String = game.mystery.egg_data["colours"][colour]["name"]
-				game.message.emit("You found a %s! Open it from the coop." % egg_name)
+				game.message.emit(tr("YOU_FOUND_A_OPEN_IT_FROM") % egg_name)
 				out.append(egg_name + "!")
 		"calves":
 			if game.drops_enabled and game.rng.randf() < FERTILIZER_CHANCE:
 				game.fertilizer_bags += 1
-				out.append("+1 Fertilizer")
+				out.append(tr("FERTILIZER"))
 			if game.has_inside(b, "bull") and game.drops_enabled and game.rng.randf() < CALF_CHANCE:
 				var calf := _pick_baby(b, "calf")
 				if game.place_somewhere(calf):
 					game.message.emit(
-						"A %s was born! Raise it in a Nursery Barn." % game.item_data(calf)["name"].to_lower()
+						tr("A_WAS_BORN_RAISE_IT_IN") % game.item_data(calf)["name"].to_lower()
 					)
 					out.append("A %s!" % game.item_data(calf)["name"].to_lower())
 		"foals":
@@ -92,40 +92,40 @@ func building_specials(b: Dictionary) -> Array[String]:
 				var foal := _pick_baby(b, "foal")
 				if game.place_somewhere(foal):
 					game.message.emit(
-						"A %s was born! Raise it in a Nursery Barn." % game.item_data(foal)["name"].to_lower()
+						tr("A_WAS_BORN_RAISE_IT_IN") % game.item_data(foal)["name"].to_lower()
 					)
 					out.append("A %s!" % game.item_data(foal)["name"].to_lower())
 			if game.drops_enabled and game.rng.randf() < STABLE_HELPER_CHANCE:
 				game.farmhands += 1
-				out.append("+1 Farmhand")
+				out.append(tr("FARMHAND"))
 			if game.drops_enabled and game.rng.randf() < STABLE_HELPER_CHANCE:
 				game.arborists += 1
-				out.append("+1 Arborist")
+				out.append(tr("ARBORIST"))
 			if game.drops_enabled and with_stallion and game.rng.randf() < STABLE_XP_CHANCE:
 				game.add_xp(STABLE_XP)
-				out.append("+%d XP" % STABLE_XP)
+				out.append(tr("XP") % STABLE_XP)
 		"nursery":
 			out.append_array(_grow_babies(b))
 		"lambs":
 			if game.has_inside(b, "ram") and game.drops_enabled and game.rng.randf() < LAMB_CHANCE:
 				if game.place_somewhere("lamb"):
-					game.message.emit("A lamb was born! Raise it in a Nursery Barn.")
-					out.append("A lamb!")
+					game.message.emit(tr("A_LAMB_WAS_BORN_RAISE_IT"))
+					out.append(tr("A_LAMB"))
 		"truffles":
 			if game.has_inside(b, "boar") and game.drops_enabled and game.rng.randf() < PIGLET_CHANCE:
 				if game.place_somewhere("piglet"):
-					game.message.emit("A piglet was born! Raise it in a Nursery Barn.")
-					out.append("A piglet!")
+					game.message.emit(tr("A_PIGLET_WAS_BORN_RAISE_IT"))
+					out.append(tr("A_PIGLET"))
 		"beehive":
 			if game.drops_enabled and game.rng.randf() < FERTILIZE_ALL_CHANCE:
 				game.fertilize_alls += 1
-				game.message.emit("The bees left a Fertilize All!")
-				out.append("+1 Fertilize All")
+				game.message.emit(tr("THE_BEES_LEFT_A_FERTILIZE_ALL"))
+				out.append(tr("FERTILIZE_ALL_2"))
 		"saplings":
 			var sapling := _roll_sapling(b)
 			if sapling != "" and game.place_somewhere(sapling):
-				game.message.emit("A rare sapling sprouted: %s!" % game.item_data(sapling)["name"])
-				out.append("Rare sapling!")
+				game.message.emit(tr("A_RARE_SAPLING_SPROUTED") % game.item_data(sapling)["name"])
+				out.append(tr("RARE_SAPLING"))
 	if not out.is_empty():
 		game.inventory_changed.emit()
 	return out
@@ -149,9 +149,9 @@ func _grow_babies(nursery: Dictionary) -> Array[String]:
 			game.ribbons.bump("babies_raised", 1)
 			var adult_name: String = game.item_data(into.get(baby[0], baby[0]))["name"]
 			game.message.emit(
-				"Your %s grew up into a %s!" % [game.item_data(baby[0])["name"].to_lower(), adult_name.to_lower()]
+				tr("YOUR_GREW_UP_INTO_A") % [game.item_data(baby[0])["name"].to_lower(), adult_name.to_lower()]
 			)
-			out.append("A %s grew up!" % adult_name.to_lower())
+			out.append(tr("A_GREW_UP") % adult_name.to_lower())
 		else:
 			still.append(baby)
 	nursery["growing"] = still

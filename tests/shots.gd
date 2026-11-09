@@ -66,8 +66,10 @@ func _ready() -> void:
 	# Close-ups of each row of buildings.
 	var grid: FarmGrid = _main.get("grid")
 	var cam: Camera2D = _main.get("camera")
-	for spot in [[3, 4, "homes"], [7, 2, "decor_left"], [8, 8, "decor_right"], [3, 16, "vehicles"], [8, 16, "orchards"], [13, 2, "small_left"], [13, 13, "small_mid"], [13, 21, "small_right"],
-			[18, 2, "big_left"], [18, 13, "big_mid"], [18, 21, "big_right"]]:
+	var spots := [[3, 4, "homes"], [7, 2, "decor_left"], [8, 8, "decor_right"], [3, 16, "vehicles"],
+		[8, 16, "orchards"], [13, 2, "small_left"], [13, 13, "small_mid"], [13, 21, "small_right"],
+		[18, 2, "big_left"], [18, 13, "big_mid"], [18, 21, "big_right"]]
+	for spot in spots:
 		(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(int(spot[0]) + 1, int(spot[1])))), 0.9)
 		await _frames(4)
 		_shot(dir + "/%s.png" % spot[2])
@@ -78,7 +80,8 @@ func _ready() -> void:
 	_put("spa", 2, 11, 5, {}, {"slots": []})
 	var bakery_uid := int(Game.objects[0]["uid"])
 	Game.objects[0]["slots"] = [{"r": "pumpkin_bread", "done": Game.now() + 7200}]
-	var animals := ["brown_cow", "pink_cow", "jersey_cow", "longhorn", "hereford_cow", "gelbvieh_cow", "galician_blond_cow",
+	var animals := ["brown_cow", "pink_cow", "jersey_cow", "longhorn", "hereford_cow", "gelbvieh_cow",
+		"galician_blond_cow",
 		"red_cow", "belted_cow", "hereford_calf", "pink_calf", "gray_horse", "black_pony", "mustang", "gray_foal",
 		"black_sheep", "mouflon_sheep", "saddleback_pig", "boer_goat", "arapawa_goat", "ugly_duckling", "swan",
 		"belted_duck", "baby_turkey", "wild_turkey", "cornish_chicken", "turtle"]
@@ -127,8 +130,10 @@ func _ready() -> void:
 	_put("sheep", 13, 7, 1, {})
 	Game.rebuild_occupancy()
 	(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(8, 10))), 0.75)
-	for scene in [["noon_clear", 12.5, "clear"], ["partly_cloudy", 11.0, "partly_cloudy"], ["golden_hour", 18.3, "clear"],
-			["night", 22.0, "clear"], ["rain", 14.0, "rain"], ["storm", 16.0, "storm"], ["fog", 6.8, "fog"], ["snow", 13.0, "snow"]]:
+	var scenes := [["noon_clear", 12.5, "clear"], ["partly_cloudy", 11.0, "partly_cloudy"],
+		["golden_hour", 18.3, "clear"], ["night", 22.0, "clear"], ["rain", 14.0, "rain"], ["storm", 16.0, "storm"],
+		["fog", 6.8, "fog"], ["snow", 13.0, "snow"]]
+	for scene in scenes:
 		var wall := int(Time.get_unix_time_from_system())
 		Game.debug_time_offset = (int(float(scene[1]) * 3600) - wall % 86400 + 86400) % 86400
 		Game.weather_override = scene[2]

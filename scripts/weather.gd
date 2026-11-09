@@ -7,8 +7,9 @@ extends RefCounted
 const BLOCK := 10800          # seconds per weather block (3 hours)
 const EASE := 1200            # seconds to fade between blocks (20 minutes)
 const STATES := ["clear", "partly_cloudy", "cloudy", "rain", "storm", "fog", "snow"]
-const NAMES := {"clear": "Sunny", "partly_cloudy": "Partly cloudy", "cloudy": "Cloudy", "rain": "Rain",
-	"storm": "Storm", "fog": "Fog", "snow": "Snow"}
+# Display names, as keys in locale/strings.csv (shown with tr()).
+const NAMES := {"clear": "WEATHER_SUNNY", "partly_cloudy": "WEATHER_PARTLY_CLOUDY", "cloudy": "WEATHER_CLOUDY",
+	"rain": "WEATHER_RAIN", "storm": "WEATHER_STORM", "fog": "WEATHER_FOG", "snow": "WEATHER_SNOW"}
 ## How often each state comes up, by season. Fog only in the early morning, snow only in winter.
 const ODDS := {
 	"Summer": {"clear": 46, "partly_cloudy": 26, "cloudy": 11, "rain": 9, "storm": 3, "fog": 5},
@@ -18,13 +19,69 @@ const ODDS := {
 }
 ## What each state does to the picture, at full strength.
 const LOOKS := {
-	"clear":         {"cover": 0.10, "dim": 0.00, "desat": 0.00, "rain": 0.0, "snow": 0.0, "fog": 0.0, "lightning": 0.0},
-	"partly_cloudy": {"cover": 0.40, "dim": 0.04, "desat": 0.05, "rain": 0.0, "snow": 0.0, "fog": 0.0, "lightning": 0.0},
-	"cloudy":        {"cover": 0.80, "dim": 0.14, "desat": 0.22, "rain": 0.0, "snow": 0.0, "fog": 0.0, "lightning": 0.0},
-	"rain":          {"cover": 0.95, "dim": 0.22, "desat": 0.30, "rain": 0.7, "snow": 0.0, "fog": 0.10, "lightning": 0.0},
-	"storm":         {"cover": 1.00, "dim": 0.38, "desat": 0.40, "rain": 1.0, "snow": 0.0, "fog": 0.15, "lightning": 1.0},
-	"fog":           {"cover": 0.60, "dim": 0.08, "desat": 0.30, "rain": 0.0, "snow": 0.0, "fog": 0.75, "lightning": 0.0},
-	"snow":          {"cover": 0.85, "dim": 0.06, "desat": 0.25, "rain": 0.0, "snow": 0.8, "fog": 0.15, "lightning": 0.0},
+	"clear":         {
+		"cover": 0.10,
+		"dim": 0.00,
+		"desat": 0.00,
+		"rain": 0.0,
+		"snow": 0.0,
+		"fog": 0.0,
+		"lightning": 0.0
+	},
+	"partly_cloudy": {
+		"cover": 0.40,
+		"dim": 0.04,
+		"desat": 0.05,
+		"rain": 0.0,
+		"snow": 0.0,
+		"fog": 0.0,
+		"lightning": 0.0
+	},
+	"cloudy":        {
+		"cover": 0.80,
+		"dim": 0.14,
+		"desat": 0.22,
+		"rain": 0.0,
+		"snow": 0.0,
+		"fog": 0.0,
+		"lightning": 0.0
+	},
+	"rain":          {
+		"cover": 0.95,
+		"dim": 0.22,
+		"desat": 0.30,
+		"rain": 0.7,
+		"snow": 0.0,
+		"fog": 0.10,
+		"lightning": 0.0
+	},
+	"storm":         {
+		"cover": 1.00,
+		"dim": 0.38,
+		"desat": 0.40,
+		"rain": 1.0,
+		"snow": 0.0,
+		"fog": 0.15,
+		"lightning": 1.0
+	},
+	"fog":           {
+		"cover": 0.60,
+		"dim": 0.08,
+		"desat": 0.30,
+		"rain": 0.0,
+		"snow": 0.0,
+		"fog": 0.75,
+		"lightning": 0.0
+	},
+	"snow":          {
+		"cover": 0.85,
+		"dim": 0.06,
+		"desat": 0.25,
+		"rain": 0.0,
+		"snow": 0.8,
+		"fog": 0.15,
+		"lightning": 0.0
+	},
 }
 
 

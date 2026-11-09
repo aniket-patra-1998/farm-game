@@ -77,13 +77,13 @@ func add_queen(uid: int, buy := false) -> bool:
 		queen_bees -= 1
 	elif buy:
 		if not game.spend_gems(QUEEN_GEM_COST):
-			game.message.emit("Not enough gems for a Queen Bee")
+			game.message.emit(tr("NOT_ENOUGH_GEMS_FOR_A_QUEEN"))
 			return false
 	else:
-		game.message.emit("No Queen Bee yet. One may turn up while harvesting flowers.")
+		game.message.emit(tr("NO_QUEEN_BEE_YET_ONE_MAY"))
 		return false
 	hive["queen"] = true
-	game.message.emit("The Queen Bee moved in! Worker bees will now join while you harvest flowers.")
+	game.message.emit(tr("THE_QUEEN_BEE_MOVED_IN_WORKER"))
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true
@@ -98,9 +98,9 @@ func flower_harvest_bees() -> String:
 	if (all.is_empty() or not queenless.is_empty()) and queen_bees == 0 and game.rng.randf() < QUEEN_CHANCE:
 		queen_bees += 1
 		game.ribbons.bump("queens_found", 1)
-		game.message.emit("You found a Queen Bee! Put her in a Beehive.")
+		game.message.emit(tr("YOU_FOUND_A_QUEEN_BEE_PUT"))
 		game.inventory_changed.emit()
-		return "A Queen Bee!"
+		return tr("A_QUEEN_BEE")
 	for h in all:
 		if has_queen(h) and game.inside_total(h) < game.capacity(h):
 			if game.rng.randf() >= BEE_CHANCE:
@@ -108,7 +108,7 @@ func flower_harvest_bees() -> String:
 			put_bee_in(h)
 			game.ribbons.bump("bees_found", 1)
 			game.objects_updated()
-			return "A bee joined!"
+			return tr("A_BEE_JOINED")
 	return ""
 
 
@@ -139,7 +139,7 @@ func pollinate(crop_id: String) -> int:
 	pollinated[crop_id] = [n, game.now() + POLLINATED_LIFETIME]
 	game.ribbons.bump("pollinated", 1)
 	game.message.emit(
-		"Your bees pollinated the %s! %d pollinated seeds for 2 days." % [game.crops[crop_id]["name"].to_lower(), n]
+		tr("YOUR_BEES_POLLINATED_THE_POLLINATED_SEEDS") % [game.crops[crop_id]["name"].to_lower(), n]
 	)
 	game.inventory_changed.emit()
 	return POLLINATED_SEEDS
@@ -159,7 +159,7 @@ func pollinated_seeds(crop_id: String) -> int:
 ## Fertilizes every growing crop for free.
 func use_fertilize_all() -> int:
 	if game.fertilize_alls <= 0:
-		game.message.emit("No Fertilize All left")
+		game.message.emit(tr("NO_FERTILIZE_ALL_LEFT"))
 		return 0
 	var done := 0
 	for r in game.farm_size:
@@ -169,11 +169,11 @@ func use_fertilize_all() -> int:
 				game.plots[i]["fert"] = true
 				done += 1
 	if done == 0:
-		game.message.emit("Nothing growing to fertilize")
+		game.message.emit(tr("NOTHING_GROWING_TO_FERTILIZE"))
 		return 0
 	game.fertilize_alls -= 1
 	game.ribbons.bump("fertilized", done)
-	game.message.emit("Fertilized %d crops" % done)
+	game.message.emit(tr("FERTILIZED_CROPS") % done)
 	game.inventory_changed.emit()
 	game.plot_changed.emit(-1)
 	game.queue_save()
@@ -199,5 +199,5 @@ func apply_absence(seconds_away: int) -> String:
 			notes.append("%d bees left the hive while you were away" % gone)
 		if days > QUEEN_STAYS_DAYS and has_queen(h):
 			h.erase("queen")
-			notes.append("the Queen Bee flew off")
+			notes.append(tr("THE_QUEEN_BEE_FLEW_OFF"))
 	return "; ".join(PackedStringArray(notes))
