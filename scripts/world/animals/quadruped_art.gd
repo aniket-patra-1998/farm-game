@@ -193,17 +193,8 @@ static func _neck_and_head(ci: CanvasItem, g: Vector2, c: Vector2, r: Vector2, r
 	var tilt := rig.num("head_tilt", 0.3)
 	var angle := lerpf(tilt, 1.2, down) - p.look * 0.2
 	AnimalArt.limb(ci, chest, hc, neck.y * 1.9, neck.y * 1.45, body, k)
-	match rig.text("mane", ""):
-		"long", "short":
-			var long_mane := rig.text("mane") == "long"
-			var d := (hc - chest).normalized()
-			var up := Vector2(d.y, -d.x)
-			for i in 6:
-				var t := 0.15 + 0.75 * i / 5.0
-				var root := chest.lerp(hc, t) + up * neck.y * 0.85
-				var sway := sin(p.time * 3.0 + i) * 0.8 * k + p.stride * sin(p.gait * TAU * 2.0 + i) * 1.2 * k
-				var tip := root + (Vector2(-5.5 * k, 3.0 * k + sway) if long_mane else up * 3.0 * k)
-				ci.draw_line(root, tip, accent, (3.0 if long_mane else 2.4) * k, true)
+	if rig.text("mane", "") != "":
+		_mane(ci, chest, hc, neck.y, rig, p, accent)
 	_head(ci, hc, angle, head, rig, p, head_col, body, accent)
 	return minf(c.y - r.y, hc.y - head.y * 0.9) - 6.0 * k
 
@@ -290,3 +281,26 @@ static func _horns(ci: CanvasItem, at: Callable, angle: float, hl: float, hh: fl
 			var reach := 1.8 if kind == "long_back" else 1.0
 			ci.draw_polyline(PackedVector2Array([root, root + Vector2(-2.0, -4.0) * k * reach,
 				root + Vector2(-6.5, -5.0) * k * reach]), HORN.darkened(0.15), w, true)
+
+
+## A mane along the top of the neck: a band of hair that follows the neck as it lowers, with strands
+## hanging off it that sway with the walk.
+static func _mane(ci: CanvasItem, chest: Vector2, hc: Vector2, neck_w: float, rig: AnimalRig, p: AnimalPose,
+		accent: Color) -> void:
+	var k := rig.scale
+	var long_mane := rig.text("mane") == "long"
+	var d := (hc - chest).normalized()
+	var up := Vector2(d.y, -d.x)
+	if up.y > 0.0:
+		up = -up  # the crest is always the upper side of the neck
+	var crest := PackedVector2Array()
+	for i in 7:
+		crest.append(chest.lerp(hc, 0.1 + 0.8 * i / 6.0) + up * neck_w * 0.8)
+	ci.draw_polyline(crest, AnimalArt.OUTLINE, (4.6 if long_mane else 3.6) * k, true)
+	ci.draw_polyline(crest, accent, (3.4 if long_mane else 2.6) * k, true)
+	if not long_mane:
+		return
+	for i in range(1, 6):
+		var sway := sin(p.time * 3.0 + i) * 0.6 * k + p.stride * sin(p.gait * TAU * 2.0 + i) * 1.0 * k
+		var hang := -d * 2.5 * k - up * (3.5 * k) + Vector2(sway, 0)
+		ci.draw_line(crest[i], crest[i] + hang, accent, 2.0 * k, true)
