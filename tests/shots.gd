@@ -68,8 +68,7 @@ func _ready() -> void:
 	var cam: Camera2D = _main.get("camera")
 	for spot in [[3, 4, "homes"], [7, 2, "decor_left"], [8, 8, "decor_right"], [3, 16, "vehicles"], [8, 16, "orchards"], [13, 2, "small_left"], [13, 13, "small_mid"], [13, 21, "small_right"],
 			[18, 2, "big_left"], [18, 13, "big_mid"], [18, 21, "big_right"]]:
-		cam.zoom = Vector2(0.9, 0.9)
-		cam.position = grid.to_global(grid.center_of(Game.index_of(int(spot[0]) + 1, int(spot[1]))))
+		(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(int(spot[0]) + 1, int(spot[1])))), 0.9)
 		await _frames(4)
 		_shot(dir + "/%s.png" % spot[2])
 	# Crafting buildings at 1, 3 and 5 stars, and the newer animals, on a fresh field.
@@ -90,8 +89,7 @@ func _ready() -> void:
 			o["t"] = Game.now()
 	Game._rebuild_occupancy()
 	Game.objects_changed.emit()
-	cam.zoom = Vector2(0.62, 0.62)
-	cam.position = grid.to_global(grid.center_of(Game.index_of(8, 9)))
+	(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(8, 9))), 0.62)
 	await _frames(6)
 	_shot(dir + "/crafting_and_animals.png")
 	# The Bakery's panel, mid-game.
@@ -119,8 +117,7 @@ func _ready() -> void:
 	_put("cow", 13, 4, 1, {})
 	_put("sheep", 13, 7, 1, {})
 	Game._rebuild_occupancy()
-	cam.zoom = Vector2(0.75, 0.75)
-	cam.position = grid.to_global(grid.center_of(Game.index_of(8, 10)))
+	(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(8, 10))), 0.75)
 	for scene in [["noon_clear", 12.5, "clear"], ["partly_cloudy", 11.0, "partly_cloudy"], ["golden_hour", 18.3, "clear"],
 			["night", 22.0, "clear"], ["rain", 14.0, "rain"], ["storm", 16.0, "storm"], ["fog", 6.8, "fog"], ["snow", 13.0, "snow"]]:
 		var wall := int(Time.get_unix_time_from_system())

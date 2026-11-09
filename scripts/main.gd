@@ -9,7 +9,7 @@ const MAX_ZOOM_FACTOR := 3.5 # how far you can zoom in, relative to the whole-fa
 const WHEEL_STEP := 1.1
 
 var grid: FarmGrid
-var camera: Camera2D
+var camera: FarmCamera
 var hud: FarmHud
 var sky: SkyLayer
 var light: CanvasModulate  # tints the whole farm for the time of day
@@ -56,12 +56,23 @@ func _ready() -> void:
 	night.grid = grid
 	add_child(night)
 
-	camera = Camera2D.new()
+	camera = FarmCamera.new()
+	camera.top_margin = FarmHud.TOP_H
+	camera.bottom_margin = FarmHud.BOTTOM_H
+	# You can look out over the countryside a little, but not off into nothing.
+	camera.area_provider = func() -> Rect2:
+		var pad := FarmGrid.TILE_W * 4.0
+		return grid.get_bounds().grow_individual(pad, pad / 2.0, pad, pad / 2.0)
 	add_child(camera)
 	camera.make_current()
 
 	hud = FarmHud.new()
 	add_child(hud)
+
+	var fx := FxLayer.new()
+	fx.hud = hud
+	add_child(fx)
+	grid.fx = fx
 
 	hud.tool_selected.connect(grid.set_tool)
 	hud.place_requested.connect(grid.start_placing)
@@ -84,10 +95,11 @@ func _fit_camera() -> void:
 	var bounds := grid.get_bounds()
 	var usable := view - Vector2(0, FarmHud.TOP_H + FarmHud.BOTTOM_H)
 	_base_zoom = minf(usable.x / (bounds.size.x * 1.04), usable.y / (bounds.size.y * 1.04))
-	camera.zoom = Vector2(_base_zoom, _base_zoom)
+	camera.min_zoom = _base_zoom
+	camera.max_zoom = _base_zoom * MAX_ZOOM_FACTOR
 	# The free area is shifted down by half the difference between the bars.
 	var shift := (FarmHud.TOP_H - FarmHud.BOTTOM_H) / 2.0
-	camera.position = bounds.get_center() - Vector2(0, shift / _base_zoom)
+	camera.snap(bounds.get_center() - Vector2(0, shift / _base_zoom), _base_zoom)
 
 
 # ---------------------------------------------------------------- time of day
@@ -132,18 +144,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_zoom_at(mb.position, WHEEL_STEP)
+			camera.zoom_by(WHEEL_STEP, mb.position)
 		elif mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_zoom_at(mb.position, 1.0 / WHEEL_STEP)
+			camera.zoom_by(1.0 / WHEEL_STEP, mb.position)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT or mb.button_index == MOUSE_BUTTON_MIDDLE:
 			_mouse_panning = mb.pressed
+			if mb.pressed:
+				camera.begin_drag()
+			else:
+				camera.end_drag()
 
 	elif event is InputEventMouseMotion and _mouse_panning:
 		_pan((event as InputEventMouseMotion).relative)
 
 	elif event is InputEventMagnifyGesture:
 		var mg := event as InputEventMagnifyGesture
-		_zoom_at(mg.position, mg.factor)
+		camera.zoom_by(mg.factor, mg.position, true)
 
 	elif event is InputEventPanGesture:
 		_pan(-(event as InputEventPanGesture).delta * 24.0)
@@ -154,10 +170,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_touches[t.index] = t.position
 		else:
 			_touches.erase(t.index)
+			if _touches.is_empty():
+				camera.end_drag()  # let go: the view glides on and settles
 		if _touches.size() == 2:
 			# A second finger means zoom or move, never farming.
 			grid.cancel_paint()
 			_pinch_dist = _two_finger_distance()
+			camera.begin_drag()
 
 	elif event is InputEventScreenDrag:
 		var d := event as InputEventScreenDrag
@@ -171,6 +190,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pinch_dist = dist
 			_pan(d.relative / 2.0)
 		elif d.index == 0 and grid.placing.is_empty() and grid.is_dragging():
+			if not camera.is_dragging():
+				camera.begin_drag()
 			_pan(d.relative)
 
 
@@ -184,35 +205,15 @@ func _two_finger_center() -> Vector2:
 	return ((pts[0] as Vector2) + (pts[1] as Vector2)) / 2.0
 
 
-## Screen point -> world point for the current camera (the camera is centred on the view).
+## Screen point -> world point for the current camera.
 func _to_world(screen_pos: Vector2) -> Vector2:
-	var view := get_viewport_rect().size
-	return camera.position + (screen_pos - view / 2.0) / camera.zoom.x
+	return camera.to_world(screen_pos)
 
 
-## Zooms keeping the point under the finger or cursor in place.
+## Zooms keeping the point under the finger or cursor in place (instantly: pinches follow the fingers).
 func _zoom_at(screen_pos: Vector2, factor: float) -> void:
-	var before := _to_world(screen_pos)
-	var z := clampf(camera.zoom.x * factor, _base_zoom, _base_zoom * MAX_ZOOM_FACTOR)
-	camera.zoom = Vector2(z, z)
-	camera.position += before - _to_world(screen_pos)
-	_clamp_camera()
+	camera.zoom_by(factor, screen_pos, true)
 
 
 func _pan(screen_delta: Vector2) -> void:
-	camera.position -= screen_delta / camera.zoom.x
-	_clamp_camera()
-
-
-## Keeps the farm on screen. At the whole-farm zoom this pins the camera to the framed view.
-func _clamp_camera() -> void:
-	var z := camera.zoom.x
-	var view := get_viewport_rect().size
-	# You can pan out over the countryside a little, but not off into nothing.
-	var pad := FarmGrid.TILE_W * 4.0
-	var area := grid.get_bounds().grow_individual(pad, FarmHud.TOP_H / z + pad / 2.0, pad, FarmHud.BOTTOM_H / z + pad / 2.0)
-	var half := view / (2.0 * z)
-	var lo := area.position + half
-	var hi := area.end - half
-	camera.position.x = clampf(camera.position.x, lo.x, hi.x) if lo.x <= hi.x else area.get_center().x
-	camera.position.y = clampf(camera.position.y, lo.y, hi.y) if lo.y <= hi.y else area.get_center().y
+	camera.pan_by(screen_delta)

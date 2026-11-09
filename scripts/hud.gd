@@ -428,16 +428,64 @@ func show_message(text: String) -> void:
 	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
 
 
+# ---------------------------------------------------------------- rolling counters and reward targets
+
+var _shown_coins := -1.0   # the number the coin counter shows while it rolls toward Game.coins
+var _coin_roll: Tween
+
+
+## Where flying coins and XP stars land (screen positions).
+func coins_target() -> Vector2:
+	return _coins_label.get_global_rect().get_center()
+
+
+func xp_target() -> Vector2:
+	return _xp_bar.get_global_rect().get_center()
+
+
+## A quick swell as a reward lands on a counter.
+func pulse(which: String) -> void:
+	var c: Control = _coins_label if which == "coins" else _xp_bar
+	c.pivot_offset = c.size / 2.0
+	var tw := c.create_tween()
+	tw.tween_property(c, "scale", Vector2(1.18, 1.18), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(c, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+func _set_shown_coins(v: float) -> void:
+	_shown_coins = v
+	_coins_label.text = "%s coins" % _thousands(int(round(v)))
+
+
+## The coin counter rolls to the new amount instead of jumping (spends snap down at once).
+func _roll_coins() -> void:
+	if _shown_coins < 0.0 or Game.coins < _shown_coins:
+		if _coin_roll != null and _coin_roll.is_valid():
+			_coin_roll.kill()
+		_set_shown_coins(Game.coins)
+		return
+	if is_equal_approx(_shown_coins, float(Game.coins)):
+		return
+	if _coin_roll != null and _coin_roll.is_valid():
+		_coin_roll.kill()
+	_coin_roll = create_tween()
+	_coin_roll.tween_method(_set_shown_coins, _shown_coins, float(Game.coins), 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
 func _refresh() -> void:
 	var lvl := Game.level()
 	var lo := Game.xp_for_level(lvl)
 	var hi := Game.xp_for_level(lvl + 1)
-	_coins_label.text = "%s coins" % _thousands(Game.coins)
+	_roll_coins()
 	_gems_label.text = "%d gems" % Game.gems
 	_level_label.text = "Level %d" % lvl
 	_xp_bar.min_value = lo
 	_xp_bar.max_value = hi
-	_xp_bar.value = Game.xp
+	# The bar fills smoothly; on a level-up it starts again from the new level.
+	if Game.xp < _xp_bar.value or Game.xp > hi:
+		_xp_bar.value = Game.xp
+	else:
+		_xp_bar.create_tween().tween_property(_xp_bar, "value", float(Game.xp), 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_xp_label.text = "%d / %d XP" % [Game.xp, hi]
 
 

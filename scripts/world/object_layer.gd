@@ -13,6 +13,7 @@ const Z_BASE := -2000   # pieces sit below the overlay and effects (z >= 0) and 
 var grid: FarmGrid
 var pieces := {}        # "p<index>" or "o<uid>" -> FarmPiece
 var _sync_queued := false
+var _settled := false   # after the first sync, new pieces arrive with an animation (not on loading)
 var _ready_list: Array = []  # pieces showing something ready, kept fresh by refresh_all and sync
 
 
@@ -81,9 +82,28 @@ func sync() -> void:
 			p.next_move = randf_range(1.0, 8.0)
 			pieces[key] = p
 			add_child(p)
+			_place(p)
+			p.refresh()
+			if _settled:
+				if p.plot >= 0:
+					p.rise()
+				else:
+					p.drop_in()
+			continue
+		var moved_from := p.base
 		_place(p)
 		p.refresh()
+		if _settled and p.plot < 0 and moved_from != p.base:
+			p.drop_in()  # moved: it lands in its new spot
 	_ready_list = pieces.values().filter(func(p): return p.is_ready())
+	_settled = true
+
+
+## A tapped object squashes and springs back.
+func bounce(uid: int) -> void:
+	var p: FarmPiece = pieces.get("o%d" % uid)
+	if p != null:
+		p.bounce()
 
 
 func refresh_all() -> void:
@@ -136,9 +156,7 @@ func _place(p: FarmPiece) -> void:
 		p.base = new_base
 		p.motion = motion_of(o)
 		p.flip = -1.0 if o.get("flip", false) else 1.0
-		if p.motion != "animal" and p.motion != "bird":
-			p.scale = Vector2(p.flip, 1.0)
-	p.position = p.base + p.wander
+	p._apply_pose()
 
 
 ## How a thing moves: animals wander and breathe, birds also peck, trees sway; buildings stay put.
@@ -195,9 +213,9 @@ func _animate_animal(p: FarmPiece, t: float, delta: float) -> void:
 		if absf(to.x) > 0.5:
 			p.facing = -1.0 if to.x < 0.0 else 1.0
 	var hop := absf(sin(t * 9.0 + p.phase)) * 2.5 if walking else 0.0
-	p.position = p.base + p.wander - Vector2(0, hop)
+	p.position = p.base + p.wander - Vector2(0, hop + p.lift)
 	var breathe := 1.0 + 0.018 * sin(t * 2.2 + p.phase)
-	p.scale = Vector2(p.facing * p.flip, breathe)
+	p.scale = Vector2(p.facing * p.flip, breathe) * p.squash
 	if p.motion == "bird" and not walking:
 		# A quick peck every few seconds.
 		var peck := maxf(0.0, sin(t * 1.3 + p.phase * 3.0) - 0.92) * 12.0

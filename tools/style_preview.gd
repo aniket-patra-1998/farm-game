@@ -41,8 +41,7 @@ func _ready() -> void:
 	for style in ["code"] + STYLES:
 		SpriteBank.use_dir("res://art/pilot/" + style)
 		grid.redraw_world()
-		cam.zoom = Vector2(0.62, 0.62)
-		cam.position = grid.to_global(grid.center_of(Game.index_of(4, 5)))
+		(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(4, 5))), 0.62)
 		for k in 4:
 			await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(dir + "/style_%s.png" % style)

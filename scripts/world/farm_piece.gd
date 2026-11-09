@@ -20,7 +20,81 @@ var flip := 1.0         # the object's own flip (rotate tool)
 var wander := Vector2.ZERO        # an animal's offset from its tile centre
 var wander_to := Vector2.ZERO
 var next_move := 0.0              # seconds until the animal picks a new spot
+## Squash and stretch, and a lift off the ground, for drop-ins, bounces and pops. Animated pieces
+## (animals) fold these into their own motion each frame; still ones apply them right away.
+var squash := Vector2.ONE: set = _set_squash
+var lift := 0.0: set = _set_lift
 var _key := ""
+var _phase_drawn := -1
+var _tween: Tween
+
+
+func _set_squash(v: Vector2) -> void:
+	squash = v
+	_apply_pose()
+
+
+func _set_lift(v: float) -> void:
+	lift = v
+	_apply_pose()
+
+
+func is_animal() -> bool:
+	return motion == "animal" or motion == "bird"
+
+
+func _apply_pose() -> void:
+	if is_animal():
+		return  # ObjectLayer poses animals every frame
+	scale = Vector2(flip, 1.0) * squash
+	position = base + wander - Vector2(0, lift)
+
+
+func _restart_tween() -> Tween:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	_tween = create_tween()
+	return _tween
+
+
+## Arrives on the farm: drops in from above, lands with a squash and a puff of dust.
+func drop_in() -> void:
+	lift = 70.0
+	squash = Vector2(0.86, 1.16)
+	modulate.a = 0.0
+	var tw := _restart_tween()
+	tw.set_parallel(true)
+	tw.tween_property(self, "modulate:a", 1.0, 0.12)
+	tw.tween_property(self, "lift", 0.0, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(func() -> void:
+		if grid != null and grid.world_fx != null:
+			grid.world_fx.burst("dust", base))
+	tw.chain().tween_property(self, "squash", Vector2(1.16, 0.84), 0.07).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_property(self, "squash", Vector2.ONE, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## A freshly plowed bed rises out of the grass.
+func rise() -> void:
+	squash = Vector2(1.0, 0.25)
+	var tw := _restart_tween()
+	tw.tween_property(self, "squash", Vector2.ONE, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## Tapped: a quick squash and spring back.
+func bounce() -> void:
+	var tw := _restart_tween()
+	tw.tween_property(self, "squash", Vector2(1.12, 0.88), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "squash", Vector2(0.95, 1.07), 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "squash", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## Seedlings grow in after planting.
+func grow_in() -> void:
+	if plants == null:
+		return
+	plants.scale = Vector2(0.15, 0.15)
+	var tw := plants.create_tween()
+	tw.tween_property(plants, "scale", Vector2.ONE, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _draw() -> void:
@@ -45,6 +119,11 @@ func refresh() -> void:
 		queue_redraw()
 		if plants != null:
 			plants.queue_redraw()
+			# Just planted (it was bare soil a moment ago): the seedlings grow in.
+			var ph := Game.phase(plot)
+			if _phase_drawn == GameState.Phase.PLOWED and ph == GameState.Phase.GROWING:
+				grow_in()
+			_phase_drawn = ph
 
 
 func force_redraw() -> void:

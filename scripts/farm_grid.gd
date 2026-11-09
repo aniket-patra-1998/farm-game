@@ -50,6 +50,8 @@ var ground: GroundLayer
 var shadows: ShadowLayer
 var pieces: ObjectLayer
 var overlay: OverlayLayer
+var world_fx: WorldFx    # bursts and pops on the farm
+var fx: FxLayer          # rewards flying to the top bar (set by main)
 
 
 func _ready() -> void:
@@ -69,6 +71,10 @@ func _ready() -> void:
 	overlay.objects = pieces
 	overlay.z_index = 5
 	add_child(overlay)
+	world_fx = WorldFx.new()
+	world_fx.grid = self
+	world_fx.z_index = 4
+	add_child(world_fx)
 	Game.plot_changed.connect(pieces.on_plot)
 	Game.objects_changed.connect(_on_objects_changed)
 	Game.farm_expanded.connect(func(_n: int) -> void:
@@ -79,6 +85,20 @@ func _ready() -> void:
 	Game.building_upgraded.connect(_on_building_upgraded)
 	# Finds while farming (fuel, collectibles, Perfect Bunches) float up from their plot.
 	Game.found.connect(func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, COLOR_PART, 1.8))
+
+
+## A farm position on screen (for rewards that fly to the top bar).
+func to_screen(at: Vector2) -> Vector2:
+	return get_global_transform_with_canvas() * at
+
+
+## Coins and XP fly from a farm position up to their counters.
+func _reward(at: Vector2, coins: int, xp: int) -> void:
+	if fx == null:
+		return
+	var from := to_screen(at)
+	fx.coins(from, coins)
+	fx.xp(from, xp)
 
 
 func _on_objects_changed() -> void:
@@ -515,8 +535,13 @@ func _act(i: int, first_touch: bool) -> void:
 
 	# A ripe crop is harvested by any tool: tapping ripe crops should always just work.
 	if ph == GameState.Phase.RIPE:
+		var crop_before := Game.crop_at(i)
+		var art_before := Game.crop_art_for(i)
 		var result := Game.harvest(i)
 		if not result.is_empty():
+			world_fx.pop_plants(i, crop_before, art_before)
+			world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
+			_reward(at, int(result["coins"]), int(result["xp"]))
 			_float(at, "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
@@ -539,12 +564,14 @@ func _act(i: int, first_touch: bool) -> void:
 		"plow":
 			if ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED:
 				if Game.plow(i):
+					world_fx.burst("dirt", at)
 					_float(at, "-%d" % GameState.PLOW_COST, COLOR_COST)
 			elif first_touch:
 				_explain(i, ph)
 		"plant":
 			if ph == GameState.Phase.PLOWED and selected_crop != "":
 				if Game.plant(i, selected_crop):
+					world_fx.burst("dirt", at + Vector2(0, -PlaceholderArt.SLAB))
 					_float(at, "-%d" % int(Game.crops[selected_crop]["seed_cost"]), COLOR_COST)
 			elif first_touch:
 				_explain(i, ph)
@@ -579,6 +606,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if kind == "barn" and tool != "move":
 		if first_touch:
+			pieces.bounce(uid)
 			object_tapped.emit(uid)
 		return
 	if kind == "vehicle" and tool != "move":
@@ -590,6 +618,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if kind == "decor" and tool != "move":
 		if first_touch:
+			pieces.bounce(uid)
 			info.emit("Your %s" % Game.item_data(obj["id"])["name"].to_lower())
 		return
 	if obj.get("stray", false) and tool != "move":
@@ -609,6 +638,9 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if Game.is_ready(obj):
 		var result := Game.collect(uid)
 		if not result.is_empty():
+			pieces.bounce(uid)
+			world_fx.burst("sparkle", at + Vector2(0, -40))
+			_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
 			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -50), "+%d XP" % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
@@ -626,6 +658,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if not first_touch:
 		return
+	pieces.bounce(uid)
 	if Game.is_building(obj) or Game.is_crafting(obj):
 		object_tapped.emit(uid)
 		return
