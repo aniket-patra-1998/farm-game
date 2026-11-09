@@ -230,6 +230,48 @@
   ],
   "scale": 0.5
  },
+ "crop_peanuts_ripe": {
+  "anchor": [
+   128.0,
+   130.0
+  ],
+  "scale": 0.5
+ },
+ "crop_peanuts_withered": {
+  "anchor": [
+   128.0,
+   122.0
+  ],
+  "scale": 0.5
+ },
+ "crop_peas_growing": {
+  "anchor": [
+   128.0,
+   120.0
+  ],
+  "scale": 0.5
+ },
+ "crop_peas_planted": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
+ "crop_peas_ripe": {
+  "anchor": [
+   128.0,
+   128.0
+  ],
+  "scale": 0.5
+ },
+ "crop_peas_withered": {
+  "anchor": [
+   128.0,
+   121.0
+  ],
+  "scale": 0.5
+ },
  "crop_posole_corn_growing": {
   "anchor": [
    128.0,
@@ -255,6 +297,34 @@
   "anchor": [
    128.0,
    123.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_pod_peas_growing": {
+  "anchor": [
+   128.0,
+   120.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_pod_peas_planted": {
+  "anchor": [
+   128.0,
+   124.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_pod_peas_ripe": {
+  "anchor": [
+   128.0,
+   130.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_pod_peas_withered": {
+  "anchor": [
+   128.0,
+   120.0
   ],
   "scale": 0.5
  },

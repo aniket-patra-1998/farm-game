@@ -209,6 +209,48 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_peanuts_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:35",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_peanuts_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:36",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_peas_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:37",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_peas_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:36",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_peas_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:37",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_peas_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:38",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_posole_corn_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:30",
@@ -233,6 +275,34 @@
  "crop_posole_corn_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:30",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_pod_peas_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:39",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_pod_peas_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:38",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_pod_peas_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:39",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_pod_peas_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:40",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
