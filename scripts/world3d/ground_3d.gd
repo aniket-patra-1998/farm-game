@@ -248,7 +248,7 @@ static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector
 func _scatter_tufts(n: int) -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_custom_data = true
+	mm.use_colors = true  # each clump's shade, multiplied into its blades' colours
 	mm.mesh = _tuft_mesh()
 	var spots: Array[Transform3D] = []
 	var tints: Array[Color] = []
@@ -286,7 +286,7 @@ func _scatter_tufts(n: int) -> void:
 	mm.instance_count = spots.size()
 	for i in spots.size():
 		mm.set_instance_transform(i, spots[i])
-		mm.set_instance_custom_data(i, tints[i])
+		mm.set_instance_color(i, tints[i])
 	_tufts.multimesh = mm
 
 
