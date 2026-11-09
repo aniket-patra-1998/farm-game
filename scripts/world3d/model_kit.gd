@@ -135,8 +135,12 @@ static func faces(parent: Node3D, list: Array, inside: Vector3, mat: Material) -
 		centre /= f.size()
 		if n.dot(centre - inside) < 0.0:
 			n = -n
-		var tris := [0, 1, 2] if f.size() == 3 else [0, 1, 2, 0, 2, 3]
-		for i: int in tris:
+		# Godot draws a triangle's front when its corners run clockwise seen from outside, i.e. when
+		# (b - a) x (c - a) points into the surface; list the corners the other way round if not.
+		var order := [0, 1, 2] if f.size() == 3 else [0, 1, 2, 0, 2, 3]
+		if (b - a).cross(c - a).dot(n) > 0.0:
+			order = [0, 2, 1] if f.size() == 3 else [0, 2, 1, 0, 3, 2]
+		for i: int in order:
 			st.set_normal(n)
 			st.add_vertex(f[i])
 	var mi := MeshInstance3D.new()
