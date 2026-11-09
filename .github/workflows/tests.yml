@@ -17,6 +17,7 @@ jobs:
         run: |
           python3 tools/make_catalog.py --check
           python3 tools/make_art_manifest.py --check
+          python3 tools/make_notebook.py --check
 
       # Keep the Godot binary between runs, so each push doesn't download it again.
       - name: Cache Godot
