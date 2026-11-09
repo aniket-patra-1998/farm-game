@@ -20,6 +20,34 @@
   ],
   "scale": 0.4
  },
+ "crop_amaranth_growing": {
+  "anchor": [
+   128.0,
+   118.0
+  ],
+  "scale": 0.5
+ },
+ "crop_amaranth_planted": {
+  "anchor": [
+   128.0,
+   123.0
+  ],
+  "scale": 0.5
+ },
+ "crop_amaranth_ripe": {
+  "anchor": [
+   128.0,
+   139.0
+  ],
+  "scale": 0.5
+ },
+ "crop_amaranth_withered": {
+  "anchor": [
+   128.0,
+   121.0
+  ],
+  "scale": 0.5
+ },
  "crop_blackberries_growing": {
   "anchor": [
    128.0,
@@ -188,6 +216,20 @@
   ],
   "scale": 0.5
  },
+ "crop_peanuts_growing": {
+  "anchor": [
+   128.0,
+   118.0
+  ],
+  "scale": 0.5
+ },
+ "crop_peanuts_planted": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
  "crop_posole_corn_growing": {
   "anchor": [
    128.0,
@@ -325,6 +367,34 @@
   "anchor": [
    128.0,
    126.0
+  ],
+  "scale": 0.5
+ },
+ "crop_soybeans_growing": {
+  "anchor": [
+   128.0,
+   118.0
+  ],
+  "scale": 0.5
+ },
+ "crop_soybeans_planted": {
+  "anchor": [
+   128.0,
+   127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_soybeans_ripe": {
+  "anchor": [
+   128.0,
+   124.0
+  ],
+  "scale": 0.5
+ },
+ "crop_soybeans_withered": {
+  "anchor": [
+   128.0,
+   121.0
   ],
   "scale": 0.5
  },

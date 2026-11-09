@@ -1,4 +1,32 @@
 {
+ "crop_amaranth_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:31",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_amaranth_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:31",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_amaranth_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:32",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_amaranth_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:32",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_blackberries_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:15",
@@ -167,6 +195,20 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_peanuts_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:35",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_peanuts_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:34",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_posole_corn_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:30",
@@ -303,6 +345,34 @@
  "crop_rye_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:25",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_soybeans_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:33",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_soybeans_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:33",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_soybeans_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:34",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_soybeans_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:34",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
