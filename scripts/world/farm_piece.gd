@@ -15,11 +15,8 @@ var base := Vector2.ZERO
 var motion := ""        # "", "animal", "bird", "tree": how ObjectLayer animates it
 var phase := 0.0        # each piece moves on its own beat
 var plants: CropPlants  # a plot's plants, drawn and swayed separately from its soil
-var facing := 1.0       # an animal's direction (1 or -1), times the object's own flip
 var flip := 1.0         # the object's own flip (rotate tool)
-var wander := Vector2.ZERO        # an animal's offset from its tile centre
-var wander_to := Vector2.ZERO
-var next_move := 0.0              # seconds until the animal picks a new spot
+var animal: AnimalBehaviour  # an animal's mind and pose: where it walks, what its legs, head and tail do
 ## Squash and stretch, and a lift off the ground, for drop-ins, bounces and pops. Animated pieces
 ## (animals) fold these into their own motion each frame; still ones apply them right away.
 var squash := Vector2.ONE: set = _set_squash
@@ -47,7 +44,7 @@ func _apply_pose() -> void:
 	if is_animal():
 		return  # ObjectLayer poses animals every frame
 	scale = Vector2(flip, 1.0) * squash
-	position = base + wander - Vector2(0, lift)
+	position = base - Vector2(0, lift)
 
 
 func _restart_tween() -> Tween:
@@ -109,17 +106,11 @@ func _draw() -> void:
 	else:
 		var o := Game.object_by_uid(uid)
 		if not o.is_empty():
-			if motion == "animal" or motion == "bird":
-				# A small shadow that walks with the animal.
-				var r := 0.32 if motion == "animal" else 0.2
-				PlaceholderArt.draw_ellipse_at(
-					self,
-					base + Vector2(0, 2),
-					FarmGrid.TILE_W * r,
-					FarmGrid.TILE_H * r,
-					Color(0.05, 0.09, 0.03, 0.22)
-				)
-			grid.draw_object_on(self, o, false)
+			if animal != null and Game.art_for(o) == "":
+				# Drawn from its rig in this frame's pose: legs, head, tail and all (with its own shadow).
+				AnimalArt.draw(self, base, Game.item_data(o["id"]), is_ready(), animal.pose)
+			else:
+				grid.draw_object_on(self, o, false)
 
 
 ## Redraws only if something that changes the picture has changed.

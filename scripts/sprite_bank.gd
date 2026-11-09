@@ -3,21 +3,39 @@ extends RefCounted
 ## Finished art from art/final/ (made by tools/generate_art.ipynb). Each image is drawn so its
 ## anchor (the ground centre, in image pixels) lands on the object's ground centre on the farm.
 ## Anything without art keeps its code-drawn placeholder.
+##
+## Painted art is off while the game's look is settled in code (project setting farm/art/use_painted_art):
+## everything is drawn and animated by code until the art is decided.
 
-static var dir := "res://art/final"  ## where art is read from; tools can point it at a pilot style
+const SETTING := "farm/art/use_painted_art"
+const DEFAULT_DIR := "res://art/final"
+
+static var dir := DEFAULT_DIR  ## where art is read from; tools can point it at a pilot style
 static var _loaded := false
 static var _sprites := {} # id -> {"tex": Texture2D, "anchor": Vector2, "scale": float}
 
 
-## Reads art from another folder (used to preview pilot styles).
+static var _forced := false  # an explicit folder (tools, tests) is used whatever the setting says
+
+
+## Reads art from another folder (used to preview pilot styles); always used, whatever the setting.
 static func use_dir(path: String) -> void:
 	dir = path
+	_forced = true
 	_loaded = false
 	_sprites.clear()
 
 
+## Back to the game's own art folder and the project setting.
+static func use_default() -> void:
+	use_dir(DEFAULT_DIR)
+	_forced = false
+
+
 static func _load() -> void:
 	_loaded = true
+	if not _forced and not bool(ProjectSettings.get_setting(SETTING, false)):
+		return
 	var path := dir + "/sprites.json"
 	if not FileAccess.file_exists(path):
 		return

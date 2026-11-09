@@ -1978,7 +1978,8 @@ func test_72_art_follows_the_lifecycle() -> void:
 	_eq(g.art_for(g.object_at(g.index_of(0, 4))), "chicken_coop", "the coop uses its art until size art exists")
 	_check(g.buy_and_place("tractor", 8, 8), "tractor placed")
 	_eq(g.art_for(g.object_at(g.index_of(8, 8))), "", "no tractor art: drawn in code")
-	SpriteBank.use_dir("res://art/final")
+	SpriteBank.use_default()
+	_check(not SpriteBank.has("cow"), "painted art is off by default: everything is drawn (and animated) in code")
 	_done(g)
 
 
@@ -2681,4 +2682,79 @@ func test_89_player_text_comes_from_the_strings_file() -> void:
 	var g := _farm(true)
 	g.tutorial_step = GameState.Tutorial.PLOW
 	_check(g.tutorial_text().begins_with("Choose Plow"), "tutorial hints are translated, not shown as keys")
+	_done(g)
+
+
+func test_90_animals_walk_on_their_legs() -> void:
+	var g := _farm(true)
+	# Every animal in the catalog has a rig, and every rig override is for a real animal.
+	for v in AnimalRig.variant_ids():
+		_check(g.items.has(v), "rig variant %s is a real animal" % v)
+	var families := AnimalRig.families()
+	var missing: Array[String] = []
+	for id in g.items:
+		var it: Dictionary = g.items[id]
+		if it.get("kind", "") == "animal" and not families.has(str(it.get("family", id))):
+			missing.append(id)
+	_eq(missing.size(), 0, "every animal has a rig for its family %s" % [missing])
+	# A foot's step cycle closes on itself, and on the ground it slides back exactly its reach.
+	var reach := 10.0
+	_check(AnimalArt.foot_offset(0.0, reach, 3.0).is_equal_approx(AnimalArt.foot_offset(1.0, reach, 3.0)),
+		"a step ends where the next begins")
+	_check(is_equal_approx(AnimalArt.foot_offset(0.0, reach, 3.0).x - AnimalArt.foot_offset(AnimalArt.STANCE - 0.0001,
+		reach, 3.0).x, reach), "a planted foot slides back its whole reach")
+	_eq(AnimalArt.foot_offset(0.3, reach, 3.0).y, 0.0, "a planted foot stays on the ground")
+	_check(AnimalArt.foot_offset(AnimalArt.STANCE + (1.0 - AnimalArt.STANCE) / 2.0, reach, 3.0).y < -2.9,
+		"a stepping foot lifts")
+	# The body moves one cycle length per walk cycle: exactly how far a planted foot slides, so feet don't skate.
+	var cow := AnimalRig.of(g.item_data("cow"))
+	var slide_per_cycle := AnimalArt.STRIDE * cow.size("leg", 12.0) / AnimalArt.STANCE
+	_check(is_equal_approx(cow.cycle_length(), slide_per_cycle), "the walk cycle matches the stride")
+	# The knee joint keeps both bones their length.
+	var hip := Vector2(0, 0)
+	var foot := Vector2(3, 14)
+	var knee := AnimalArt.joint(hip, foot, 8.0, 8.0, 1.0)
+	_check(is_equal_approx(knee.distance_to(hip), 8.0) and is_equal_approx(knee.distance_to(foot), 8.0),
+		"a leg bends at the knee without stretching")
+	# Behaviour: deterministic per animal, stays near home, walks only while its legs are moving.
+	var a := AnimalBehaviour.new(cow, 42, Vector2(14, 7))
+	var b := AnimalBehaviour.new(cow, 42, Vector2(14, 7))
+	var other := AnimalBehaviour.new(cow, 43, Vector2(14, 7))
+	var states := {}
+	var max_out := 0.0
+	var differs := false
+	var gait_moved_while_still := false
+	for i in 3000:
+		var before := a.offset
+		var gait_before := a.pose.gait
+		a.update(1.0 / 30.0)
+		b.update(1.0 / 30.0)
+		other.update(1.0 / 30.0)
+		states[a.state] = true
+		max_out = maxf(max_out, Vector2(a.offset.x / 14.0, a.offset.y / 7.0).length())
+		differs = differs or not a.offset.is_equal_approx(other.offset)
+		if a.offset.is_equal_approx(before) and not is_equal_approx(a.pose.gait, gait_before):
+			gait_moved_while_still = true
+	_check(a.offset.is_equal_approx(b.offset) and a.state == b.state, "the same animal moves the same way every load")
+	_check(differs, "two animals don't move in step")
+	_check(max_out <= 1.001, "an animal stays within its wander range (went %.2f)" % max_out)
+	_check(states.has(AnimalBehaviour.State.WALK) and states.has(AnimalBehaviour.State.GRAZE),
+		"over a few minutes a cow walks and grazes")
+	_check(not gait_moved_while_still, "legs only cycle while the body actually moves")
+	# A long frame (the app resuming) doesn't fling it.
+	var c := AnimalBehaviour.new(cow, 7, Vector2(14, 7))
+	c.update(5.0)
+	_check(c.offset.length() < 2.0, "a hitch doesn't teleport an animal")
+	# Birds peck, and a turkey displays.
+	var turkey := AnimalBehaviour.new(AnimalRig.of(g.item_data("turkey")), 3, Vector2(14, 7))
+	var pecked := false
+	var displayed := false
+	for i in 6000:
+		turkey.update(1.0 / 30.0)
+		pecked = pecked or turkey.pose.head > 0.9
+		displayed = displayed or turkey.pose.display > 0.9
+	_check(pecked and displayed, "a turkey pecks and fans its tail")
+	# Young animals are smaller with bigger heads.
+	var calf := AnimalRig.of(g.item_data("calf"))
+	_check(calf.young and calf.scale < cow.scale and calf.head_scale > 1.0, "a calf is small with a big head")
 	_done(g)

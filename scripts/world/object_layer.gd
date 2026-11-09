@@ -11,7 +11,9 @@ extends Node2D
 const Z_BASE := -2000   # pieces sit below the overlay and effects (z >= 0) and above the ground
 
 const WANDER := 0.22      # how far an animal strays from its tile centre, in tiles
-const WALK_SPEED := 16.0  # px per second
+const CULL_MARGIN := 120.0  # px around the screen within which animals keep redrawing
+const FULL_RATE_ZOOM := 0.55  # zoomed out further than this, animals redraw every other frame
+const MIN_TURN_WIDTH := 0.06  # an animal mid-turn is never drawn at zero width
 
 var grid: FarmGrid
 var pieces := {}        # "p<index>" or "o<uid>" -> FarmPiece
@@ -25,6 +27,7 @@ var _ready_list: Array = []  # pieces showing something ready, kept fresh by ref
 
 
 var _clock := 0.0
+var _frame := 0
 
 
 
@@ -101,7 +104,6 @@ func sync() -> void:
 			else:
 				p.uid = int(str(key).substr(1))
 			p.phase = randf() * TAU
-			p.next_move = randf_range(1.0, 8.0)
 			pieces[key] = p
 			add_child(p)
 			_place(p)
@@ -194,11 +196,15 @@ func _place(p: FarmPiece) -> void:
 		p.z_index = object_z(int(o["row"]), int(o["col"]), fp)
 		var g := grid.corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 		var new_base := (g[0] + g[2]) / 2.0
-		if new_base != p.base:
-			p.wander = Vector2.ZERO
-			p.wander_to = Vector2.ZERO
+		var moved := new_base != p.base
 		p.base = new_base
 		p.motion = motion_of(o)
+		if p.is_animal() and (moved or p.animal == null or p.animal.rig != AnimalRig.of(Game.item_data(o["id"]))):
+			# A new animal, or one moved to a new spot: it starts afresh there, on its own beat.
+			p.animal = AnimalBehaviour.new(AnimalRig.of(Game.item_data(o["id"])), int(o["uid"]) * 7919,
+				Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
+		elif not p.is_animal():
+			p.animal = null
 		p.flip = -1.0 if o.get("flip", false) else 1.0
 	p._apply_pose()
 
@@ -225,7 +231,10 @@ static func motion_of(o: Dictionary) -> String:
 
 func _process(delta: float) -> void:
 	_clock += delta
+	_frame += 1
 	var t := _clock
+	var view := _visible_rect()
+	var every_frame := get_global_transform_with_canvas().get_scale().x >= FULL_RATE_ZOOM
 	for v in pieces.values():
 		var p := v as FarmPiece
 		if p.plants != null:
@@ -236,34 +245,30 @@ func _process(delta: float) -> void:
 			"tree":
 				p.skew = sin(t * 0.8 + p.phase) * 0.018 * wind
 			"animal", "bird":
-				_animate_animal(p, t, delta)
+				if p.animal != null:
+					_animate_animal(p, delta, view, every_frame or (_frame + p.uid) % 2 == 0)
 
 
+## Moves an animal by its behaviour and redraws it in its new pose. Off screen it keeps living (so it
+## isn't frozen when scrolled to) but isn't redrawn; zoomed far out, it redraws on alternate frames.
+func _animate_animal(p: FarmPiece, delta: float, view: Rect2, redraw: bool) -> void:
+	var a := p.animal
+	a.update(delta)
+	p.position = p.base + a.offset - Vector2(0, p.lift)
+	# Turning: the facing eases through zero, so the body narrows and widens the other way. Never quite
+	# zero, which would make the node's transform impossible to invert.
+	var face := a.shown_facing
+	if absf(face) < MIN_TURN_WIDTH:
+		face = MIN_TURN_WIDTH * (1.0 if a.facing > 0.0 else -1.0)
+	p.scale = Vector2(face * p.flip, 1.0) * p.squash
+	p.rotation = 0.0
+	if redraw and view.has_point(p.position):
+		p.queue_redraw()
 
 
-func _animate_animal(p: FarmPiece, t: float, delta: float) -> void:
-	p.next_move -= delta
-	if p.next_move <= 0.0:
-		# Pick a new spot near home, or stay a while.
-		p.next_move = randf_range(3.0, 11.0)
-		if randf() < 0.6:
-			var a := randf() * TAU
-			var r := randf() * WANDER
-			p.wander_to = Vector2(cos(a) * r * FarmGrid.TILE_W / 2.0, sin(a) * r * FarmGrid.TILE_H / 2.0)
-	var to := p.wander_to - p.wander
-	var walking := to.length() > 0.5
-	if walking:
-		var step := minf(to.length(), WALK_SPEED * delta)
-		p.wander += to.normalized() * step
-		if absf(to.x) > 0.5:
-			p.facing = -1.0 if to.x < 0.0 else 1.0
-	var hop := absf(sin(t * 9.0 + p.phase)) * 2.5 if walking else 0.0
-	p.position = p.base + p.wander - Vector2(0, hop + p.lift)
-	var breathe := 1.0 + 0.018 * sin(t * 2.2 + p.phase)
-	p.scale = Vector2(p.facing * p.flip, breathe) * p.squash
-	if p.motion == "bird" and not walking:
-		# A quick peck every few seconds.
-		var peck := maxf(0.0, sin(t * 1.3 + p.phase * 3.0) - 0.92) * 12.0
-		p.rotation = peck * 0.25 * p.facing
-	else:
-		p.rotation = 0.0
+## The part of this layer that's on screen, plus a margin.
+func _visible_rect() -> Rect2:
+	var to_screen := get_global_transform_with_canvas()
+	var screen := get_viewport_rect()
+	var r := to_screen.affine_inverse() * screen
+	return r.grow(CULL_MARGIN / maxf(to_screen.get_scale().x, 0.01))

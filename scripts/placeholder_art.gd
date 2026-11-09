@@ -447,69 +447,9 @@ static func _tree(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool) 
 
 
 
+## Animals are drawn by AnimalArt from their rig; here they stand still (on the farm they're animated).
 static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool) -> void:
-	var body := Color.html(str(it.get("color", "#ffffff")))
-	var accent := Color.html(str(it.get("accent", "#333333")))
-	var id: String = it.get("id", "")
-	var sp := str(it.get("family", id))   # species: breeds of one family share a shape
-	var baby := bool(it.get("young", false))
-	_shadow(ci, ground + Vector2(0, 2), 30, 11)
-	if sp in ["chicken", "duck", "goose", "turkey"]:
-		var tall := (1.2 if sp == "goose" or sp == "turkey" or id == "swan" else 1.0) * (0.75 if baby else 1.0)
-		_ellipse(ci, ground + Vector2(0, -16), 15 * tall, 13 * tall, body)
-		ci.draw_circle(ground + Vector2(11, -30 * tall), 9, body)
-		if sp == "chicken" or sp == "turkey":
-			_ellipse(ci, ground + Vector2(11, -40 * tall), 4, 5, accent)       # comb or wattle
-		if id == "turkey" or id == "wild_turkey":
-			for k in 5:
-				var a := PI + 0.35 + k * 0.32
-				ci.draw_circle(
-					ground + Vector2(-8, -20) + Vector2(cos(a), sin(a)) * 16,
-					7,
-					accent.lerp(body, 0.3 + 0.12 * k)
-				)
-		ci.draw_colored_polygon(
-			PackedVector2Array([ground + Vector2(19, -31), ground + Vector2(27, -28), ground + Vector2(19, -26)]),
-			Color("#f2a33a")
-		)
-		ci.draw_circle(ground + Vector2(14, -32), 1.8, Color("#222222"))
-		ci.draw_line(ground + Vector2(-4, -4), ground + Vector2(-4, 4), Color("#f2a33a"), 2.5)
-		ci.draw_line(ground + Vector2(4, -4), ground + Vector2(4, 4), Color("#f2a33a"), 2.5)
-	else:
-		var big := 0.7 if baby else (
-			0.9 if id.ends_with("pony") else (1.25 if sp == "horse" or id in ["bull", "ox"] else 1.0)
-		)
-		for x in [-16.0, -8.0, 10.0, 18.0]:
-			ci.draw_line(
-				ground + Vector2(x * big, -14),
-				ground + Vector2(x * big, 2),
-				accent if sp == "horse" else body.darkened(0.25),
-				4.5
-			)
-		_ellipse(ci, ground + Vector2(0, -22 * big), 26 * big, 15 * big, body)
-		if sp == "cow" and id != "bull":
-			_ellipse(ci, ground + Vector2(-8, -24), 8, 6, accent)
-			_ellipse(ci, ground + Vector2(10, -18), 6, 5, accent)
-		if sp == "sheep" or sp == "camelid":
-			for k in 6:
-				ci.draw_circle(ground + Vector2(-18 + k * 7, -32 + (k % 2) * 4), 7, body.lightened(0.3))
-		var head := ground + Vector2(26 * big, -32 * big)
-		ci.draw_circle(head, 10 * big, accent if id == "sheep" else body)
-		if sp == "horse":
-			_ellipse(ci, head + Vector2(6, 4), 9, 7, body)
-			ci.draw_line(head + Vector2(-8, -4), ground + Vector2(10, -34), accent, 6) # mane
-		if sp == "pig":
-			_ellipse(ci, head + Vector2(8, 2), 5, 4, accent)
-		if id in ["ram", "bull", "ox", "longhorn", "mouflon_sheep", "arapawa_goat"]:
-			ci.draw_arc(head + Vector2(-2, -6), 7, PI, TAU, 8, Color("#e8e2d4") if id != "ram" else accent, 3) # horns
-		ci.draw_circle(head + Vector2(2, -2), 1.8, Color("#222222"))
-		ci.draw_line(ground + Vector2(-26 * big, -24 * big), ground + Vector2(-32 * big, -16 * big), accent, 3) # tail
-	if ready:
-		# A product bubble shows the animal is ready to collect.
-		var bubble := ground + Vector2(-4, -64)
-		ci.draw_circle(bubble, 13, Color("#fffaf0"))
-		ci.draw_arc(bubble, 13, 0, TAU, 24, Color("#5c3a1e"), 2)
-		ci.draw_circle(bubble, 6, accent if id != "chicken" else Color("#f6e7c1"))
+	AnimalArt.draw(ci, ground, it, ready)
 
 
 

@@ -95,6 +95,12 @@ func _ready() -> void:
 	(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(8, 9))), 0.62)
 	await _frames(6)
 	_shot(dir + "/crafting_and_animals.png")
+	# Every animal family through its walk cycle (four phases), grazing or pecking, and flapping or
+	# displaying: a sheet for checking the rigs and gaits frame by frame.
+	await _animal_sheet(dir + "/animals_walk.png")
+	# The same farm a moment later, so the animals are caught mid-stride.
+	await _frames(40)
+	_shot(dir + "/animals_moving.png")
 	# The Bakery's panel, mid-game.
 	Game.crafting.bushels = {"pumpkins": 6, "wheat": 9, "strawberries": 2, "carrots": 3}
 	Game.crafting.goods = {"pumpkin_bread": 2, "spicy_muffins": 1}
@@ -175,3 +181,46 @@ func _frames(n: int) -> void:
 
 func _shot(path: String) -> void:
 	get_viewport().get_texture().get_image().save_png(path)
+
+
+func _animal_sheet(path: String) -> void:
+	var ids := ["cow", "bull", "horse", "sheep", "goat", "pig", "donkey", "alpaca", "calf", "chicken", "turkey",
+		"duck", "goose", "rabbit", "turtle", "bee"]
+	var layer := CanvasLayer.new()
+	layer.layer = 50
+	var bg := ColorRect.new()
+	bg.color = Color("#8fbf5a")
+	bg.size = Vector2(1280, 720)
+	layer.add_child(bg)
+	var sheet := Node2D.new()
+	sheet.draw.connect(func() -> void:
+		for row in ids.size():
+			var it := Game.item_data(ids[row])
+			if it.is_empty():
+				continue
+			var col_x := 45.0 + (row % 2) * 630.0
+			var y := 66.0 + int(row / 2.0) * 84.0
+			for k in 7:
+				var p := AnimalPose.new()
+				p.time = 0.4 * k
+				if k < 4:
+					p.stride = 1.0
+					p.gait = k * 0.25
+				elif k == 4:
+					p.head = 1.0
+					p.jaw = 0.6
+				elif k == 5:
+					p.wing = 1.0
+					p.display = 1.0
+					p.hop = 1.0
+				else:
+					p.look = 1.0
+					p.blink = 1.0
+					p.tail = 0.4
+				AnimalArt.draw(sheet, Vector2(col_x + 86.0 * k, y), it, k == 6, p))
+	layer.add_child(sheet)
+	add_child(layer)
+	await _frames(4)
+	_shot(path)
+	layer.queue_free()
+	await _frames(1)
