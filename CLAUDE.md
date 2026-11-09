@@ -17,7 +17,10 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `scripts/world/farm_camera.gd`: eased zoom, momentum, elastic edges.
 - `scripts/hud.gd`: top bar, toolbar, menus. `scripts/placeholder_art.gd`: code-drawn art until painted art
   (`art/final`, via `SpriteBank`) replaces it.
-- `tests/test_runner.gd`: rule tests (run headless in CI). `tests/shots.gd`: screenshots in CI.
+- `tests/suites/*_test.gd`: rule tests, one `TestSuite` per area (helpers in `tests/test_suite.gd`), run by
+  `tests/test_runner.gd` headless in CI. `tests/shots.gd`: screenshots in CI.
+- `scripts/world/animals/`: code-drawn, procedurally animated animals: `AnimalRig` (data/animal_rigs.json),
+  `AnimalBehaviour` (what each animal does), `AnimalPose` (one frame), `AnimalArt` and its shape classes.
 
 ## Rules
 - Follow `REVIEW.md`. Item behaviour on catalog classes; numbers as named constants or data.
