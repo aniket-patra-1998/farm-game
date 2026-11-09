@@ -225,7 +225,8 @@ func test_102_bigger_buildings_look_bigger_and_sites_build_up() -> void:
 	var given := 0
 	for m in half:
 		given += int(half[m])
-	_check(is_equal_approx(g.land.construction_progress(frame), float(given) / total), "half the materials, about half built")
+	_check(is_equal_approx(g.land.construction_progress(frame), float(given) / total),
+		"half the materials, about half built")
 	_done(g)
 
 

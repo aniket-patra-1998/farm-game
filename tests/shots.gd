@@ -389,5 +389,42 @@ func _shots_3d(dir: String) -> void:
 	cam.snap(grid.to_global(grid.center_of(Game.index_of(21, 11))), 1.3)
 	await _frames(12)
 	_shot(dir + "/world3d_homes.png")
+	await _shots_progress(dir, cam, grid)
 	Game.weather_override = ""
 	ProjectSettings.set_setting(Farm3D.SETTING, false)
+
+
+
+## Buildings going up and growing: a horse stable at every stage of construction, then the buildings with
+## sizes at each size, smallest to biggest.
+func _shots_progress(dir: String, cam: FarmCamera, grid: FarmGrid) -> void:
+	Game.objects.clear()
+	for i in Game.plots.size():
+		Game.plots[i] = {"state": "grass"}
+	var need: Dictionary = Game.item_data("horse_stable")["build_materials"]
+	var stages: Array[float] = [0.0, 0.2, 0.35, 0.55, 0.7, 0.85, 0.95]
+	for k in stages.size():
+		var have := {}
+		for m in need:
+			have[m] = int(round(int(need[m]) * stages[k]))
+		_put("horse_stable", 1 + 4 * (k / 4), 1 + 5 * (k % 4), 1, {}, {"construction": have})
+	# [id, level, row, col]
+	var sized: Array = [["chicken_coop", 1, 10, 0], ["chicken_coop", 2, 10, 4], ["chicken_coop", 3, 10, 8],
+		["bakery", 1, 10, 12], ["bakery", 3, 10, 16], ["bakery", 5, 10, 20],
+		["cow_shed", 1, 14, 0], ["cow_shed", 2, 14, 5], ["cow_shed", 3, 14, 10], ["orchard", 2, 14, 15],
+		["orchard", 3, 14, 19], ["horse_stable", 1, 18, 0], ["horse_stable", 2, 18, 4], ["horse_stable", 3, 18, 8],
+		["horse_stable", 4, 18, 12], ["horse_stable", 5, 18, 16]]
+	for b: Array in sized:
+		_put(b[0], b[2], b[3], b[1], {})
+	Game.rebuild_occupancy()
+	Game.objects_changed.emit()
+	await _frames(10)
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(4, 10))), 1.15)
+	await _frames(12)
+	_shot(dir + "/world3d_sites.png")
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(13, 11))), 1.0)
+	await _frames(12)
+	_shot(dir + "/world3d_sizes.png")
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(19, 10))), 1.15)
+	await _frames(12)
+	_shot(dir + "/world3d_sizes_big.png")
