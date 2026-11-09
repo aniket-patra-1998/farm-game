@@ -139,6 +139,62 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_oats_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:28",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_oats_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:27",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_oats_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:28",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_oats_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:29",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_posole_corn_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:30",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_posole_corn_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:29",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_posole_corn_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:30",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_posole_corn_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:30",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_raspberries_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:09",
@@ -177,6 +233,20 @@
  "crop_red_wheat_planted": {
   "class": "Crop",
   "made": "2026-11-09 05:25",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_red_wheat_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:26",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_red_wheat_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:27",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
