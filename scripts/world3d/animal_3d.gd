@@ -31,6 +31,7 @@ var _tail: Node3D
 var _legs: Array[Dictionary] = []   # {"hip": Vector3, "upper": MeshInstance3D, "lower": MeshInstance3D, ...}
 var _wings: Array[Node3D] = []
 var _ears: Array[Node3D] = []
+var drop := 0.0                  # height above the ground while dropping in (tweened by land())
 var _last := Vector3.ZERO
 var _r := Vector3.ONE            # body half-sizes (length, height, width)
 var _leg := 0.2
@@ -378,6 +379,21 @@ static func _place(seg: MeshInstance3D, a: Vector3, b: Vector3) -> void:
 	seg.transform = Transform3D(Basis(side, up * length, fwd), (a + b) / 2.0)
 
 
+## How far it reaches from its feet (radius) and how tall it stands: its box for taps.
+func reach() -> Vector2:
+	var r := maxf(_r.x, _r.z) * 1.6
+	return Vector2(maxf(r, 0.12), _leg + _r.y * 2.6 + 0.05)
+
+
+## Dropped onto the farm (just bought): falls in and lands with a little hop.
+func land() -> void:
+	drop = Objects3D.DROP_HEIGHT
+	var tw := create_tween()
+	tw.tween_property(self, "drop", 0.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	if behaviour != null:
+		tw.tween_callback(behaviour.poke)
+
+
 # ---------------------------------------------------------------- moving
 
 
@@ -385,7 +401,7 @@ static func _place(seg: MeshInstance3D, a: Vector3, b: Vector3) -> void:
 func update(delta: float) -> void:
 	var p: AnimalPose = behaviour.pose if behaviour != null else AnimalPose.rest()
 	if behaviour != null:
-		position = home + IsoProjection.ground_of(behaviour.offset)
+		position = home + IsoProjection.ground_of(behaviour.offset) + Vector3(0, drop, 0)
 	# Face where it's going: turn smoothly toward its direction of travel.
 	var moved := position - _last
 	_last = position

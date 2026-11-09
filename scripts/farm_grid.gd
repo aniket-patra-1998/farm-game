@@ -7,6 +7,8 @@ signal info(text: String)
 signal object_tapped(uid: int)        # a building was tapped while not ready
 
 signal placing_changed(text: String)  # "" when placement ends
+signal object_poked(uid: int)         # something on the farm was tapped: it reacts (bounce, an animal looks round)
+signal plants_popped(index: int, crop_id: String)  # a plot was harvested: its plants pop off
 
 
 const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
@@ -51,6 +53,9 @@ var pieces: ObjectLayer
 var overlay: OverlayLayer
 var world_fx: WorldFx    # bursts and pops on the farm
 var life: FarmLife       # the animals' minds, read by the 2D and 3D worlds
+## In 3D, finds what's drawn under a screen point (Farm3D.pick): the uid of the object, or -1. Taps go to
+## what the player sees, even an animal that has wandered off its tile.
+var picker := Callable()
 
 var fx: FxLayer          # rewards flying to the top bar (set by main)
 
@@ -670,6 +675,12 @@ func _apply_at(screen_pos: Vector2) -> void:
 	# Ignore touches on the top bar, the toolbar, or while a menu covers the farm.
 	if not _on_farm_area(screen_pos):
 		return
+	if picker.is_valid() and tool != "vehicle":
+		var uid: int = picker.call(screen_pos)
+		var picked := Game.object_by_uid(uid)
+		if not picked.is_empty():
+			_act_on_object(picked, true)
+			return
 	var world := get_canvas_transform().affine_inverse() * screen_pos
 	var i := index_at(to_local(world))
 	if i < 0:
@@ -680,6 +691,20 @@ func _apply_at(screen_pos: Vector2) -> void:
 	_act(i, true)
 
 
+
+
+## Something on the farm reacts to a tap: it bounces, and an animal looks round at you.
+func _poke(uid: int) -> void:
+	pieces.bounce(uid)
+	object_poked.emit(uid)
+
+
+## A harvested plot's plants pop off: in 3D the 3D world shows it, in 2D the 2D effects layer.
+func _pop_plants(i: int, crop_id: String, art: String) -> void:
+	if pieces.three_d:
+		plants_popped.emit(i, crop_id)
+	else:
+		world_fx.pop_plants(i, crop_id, art)
 
 
 ## Sends the chosen vehicle over the area around the tapped plot.
@@ -731,7 +756,7 @@ func _act(i: int, first_touch: bool) -> void:
 		var art_before := Game.crop_art_for(i)
 		var result := Game.harvest(i)
 		if not result.is_empty():
-			world_fx.pop_plants(i, crop_before, art_before)
+			_pop_plants(i, crop_before, art_before)
 			world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
 			_reward(at, int(result["coins"]), int(result["xp"]))
 			_float(at, "+%d" % result["coins"], COLOR_COINS)
@@ -805,11 +830,12 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if kind == "barn" and tool != "move":
 		if first_touch:
-			pieces.bounce(uid)
+			_poke(uid)
 			object_tapped.emit(uid)
 		return
 	if kind == "vehicle" and tool != "move":
 		if first_touch:
+			_poke(uid)
 			if Game.under_construction(obj):
 				object_tapped.emit(uid)
 			else:
@@ -817,10 +843,12 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if kind == "decor" and tool != "move":
 		if first_touch:
-			pieces.bounce(uid)
+			_poke(uid)
 			info.emit(tr("YOUR") % Game.item_data(obj["id"])["name"].to_lower())
 		return
 	if obj.get("stray", false) and tool != "move":
+		if first_touch:
+			_poke(uid)
 		if first_touch and Game.strays.adopt_stray(uid):
 			var fp0 := Game.footprint(obj["id"])
 			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
@@ -844,7 +872,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if Game.is_ready(obj):
 		var result := Game.collect(uid)
 		if not result.is_empty():
-			pieces.bounce(uid)
+			_poke(uid)
 			world_fx.burst("sparkle", at + Vector2(0, -40))
 			_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
 			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
@@ -864,7 +892,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if not first_touch:
 		return
-	pieces.bounce(uid)
+	_poke(uid)
 	if Game.is_building(obj) or Game.crafting.is_crafting(obj):
 		object_tapped.emit(uid)
 		return

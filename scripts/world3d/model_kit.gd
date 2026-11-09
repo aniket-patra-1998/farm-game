@@ -271,7 +271,6 @@ static func bake(root: Node3D) -> Node3D:
 	_collect(root, Transform3D.IDENTITY, groups)
 	var out := Node3D.new()
 	out.transform = root.transform
-	out.name = root.name
 	for shadow: bool in [true, false]:
 		var mesh := ArrayMesh.new()
 		var mats: Array[Material] = []

@@ -73,6 +73,21 @@ func _ready() -> void:
 		ground.rebuild()
 		plots.rebuild())
 	Game.objects_changed.connect(objects.queue_sync)
+	if grid != null:
+		# Taps go to what's drawn under the finger; tapped things react; harvests pop; landings puff.
+		grid.picker = func(screen_pos: Vector2) -> int: return objects.pick(camera, screen_pos)
+		grid.object_poked.connect(_poked)
+		grid.plants_popped.connect(crops.pop)
+		objects.landed.connect(func(at: Vector3) -> void:
+			grid.world_fx.burst("dust", IsoProjection.grid_of(at)))
+
+
+## Something was tapped: it bounces, and an animal looks round at you.
+func _poked(uid: int) -> void:
+	objects.bounce(uid)
+	var mind := grid.life.mind(uid)
+	if mind != null:
+		mind.poke()
 
 
 func _plots_changed() -> void:

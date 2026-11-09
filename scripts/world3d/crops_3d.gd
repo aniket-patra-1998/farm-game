@@ -7,6 +7,8 @@ extends Node3D
 
 const SPOTS := [Vector2(-0.2, -0.2), Vector2(0.2, -0.2), Vector2(-0.2, 0.2), Vector2(0.2, 0.2)]
 const GROW_REFRESH := 3.0   # seconds between growth updates
+const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
+const POP_TIME := 0.42
 const PLANT_SCALE := 1.8    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
 var wind := 0.6: set = _set_wind
@@ -93,3 +95,35 @@ func rebuild() -> void:
 			mm.set_instance_transform(k, list[k][0])
 			mm.set_instance_custom_data(k, list[k][1])
 		mmi.multimesh = mm
+
+
+## A harvested plot's plants pop: they spring up out of the bed, spin a little and shrink away.
+func pop(i: int, crop_id: String) -> void:
+	if not Game.crops.has(crop_id):
+		return
+	var crop: Dictionary = Game.crops[crop_id]
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_custom_data = true
+	mm.mesh = CropModels.mesh(str(crop.get("shape", "berry")), "ripe")
+	mm.instance_count = SPOTS.size()
+	for k in SPOTS.size():
+		var spot: Vector2 = SPOTS[k]
+		mm.set_instance_transform(k, Transform3D(Basis().scaled(Vector3.ONE * PLANT_SCALE), Vector3(spot.x, 0, spot.y)))
+		mm.set_instance_custom_data(k, Color.html(str(crop.get("color", "#e2453c"))))
+	var ghost := MultiMeshInstance3D.new()
+	ghost.multimesh = mm
+	ghost.material_override = _material
+	var r := int(i / float(GameState.MAX_SIZE))
+	var c := i % GameState.MAX_SIZE
+	ghost.position = Vector3(c + 0.5, Plots3D.HEIGHT, r + 0.5)
+	add_child(ghost)
+	var tw := ghost.create_tween()
+	tw.tween_property(ghost, "scale", Vector3(1.2, 0.75, 1.2), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ghost, "scale", Vector3(0.9, 1.25, 0.9), 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.set_parallel(true)
+	tw.tween_property(ghost, "position:y", Plots3D.HEIGHT + POP_HEIGHT, POP_TIME).set_trans(Tween.TRANS_CUBIC) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(ghost, "rotation:y", 0.8, POP_TIME)
+	tw.tween_property(ghost, "scale", Vector3.ONE * 0.05, POP_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(ghost.queue_free)

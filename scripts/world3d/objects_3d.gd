@@ -8,11 +8,16 @@ const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", 
 const SCENERY_Y := -Ground3D.SLAB
 const PINE := Color("#2f6b3a")
 
+signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust there
+
+const DROP_HEIGHT := 1.4      # tiles above the ground a new thing falls from
+
 var life: FarmLife  # the animals' minds (shared with the 2D world)
 var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
 
 var _views := {}   # uid -> {"node": Node3D, "key": String}
 var _animals: Array[Animal3D] = []
+var _synced_once := false   # the farm's first sync places everything quietly; later ones drop new things in
 var _ghost: Node3D
 var _ghost_key := ""
 var _lifted := -1
@@ -59,11 +64,15 @@ func sync() -> void:
 			(v["node"] as Node3D).queue_free()
 		var node := _build(o)
 		add_child(node)
-		_views[uid] = {"node": node, "key": key}
+		var fresh := not v.has("node")
+		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o)}
+		if fresh and _synced_once:
+			drop_in(uid)  # newly bought or placed: it drops onto the farm
 	for uid in _views.keys():
 		if not seen.has(uid):
 			(_views[uid]["node"] as Node3D).queue_free()
 			_views.erase(uid)
+	_synced_once = true
 	_animals.clear()
 	for v in _views.values():
 		if v["node"] is Animal3D:
@@ -118,11 +127,19 @@ func _build(o: Dictionary) -> Node3D:
 				node = ModelKit.bake(BuildingModel.build_frame(it, fp))
 			else:
 				node = ModelKit.bake(BuildingModel.build(it, fp))
-	node.position = Vector3(int(o["col"]), 0, int(o["row"]))
+	# The view stands at the footprint's centre on the ground, so it squashes, bounces and lands about
+	# its base; the model hangs under it, shifted back to the footprint's corner.
+	var holder := Node3D.new()
+	holder.position = Vector3(int(o["col"]) + fp.x / 2.0, 0, int(o["row"]) + fp.y / 2.0)
+	var centre := Vector3(fp.x / 2.0, 0, fp.y / 2.0)
+	var basis := Basis.IDENTITY
 	if o.get("flip", false):
-		# Turned: mirrored across the footprint's diagonal, as the 2D art flips left to right on screen.
-		node.transform = Transform3D(Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)), node.position)
-	return node
+		# Turned: mirrored across the footprint's diagonal (square things only turn), as the 2D art flips
+		# left to right on screen.
+		basis = Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0))
+	node.transform = Transform3D(basis, -(basis * centre))
+	holder.add_child(node)
+	return holder
 
 
 ## Woods along the back two sides of the farm (FarmGrid.scenery(), the same spots as the 2D world).
@@ -197,7 +214,7 @@ func _update_placing() -> void:
 		(_ghost as Animal3D).home = Vector3(col + fp.x / 2.0, lift, row + fp.y / 2.0)
 		_ghost.position = (_ghost as Animal3D).home
 	else:
-		_ghost.position = Vector3(col, lift, row)
+		_ghost.position = Vector3(col + fp.x / 2.0, lift, row + fp.y / 2.0)
 
 
 func _clear_ghost() -> void:
@@ -227,3 +244,101 @@ static func _tint_with(node: Node, m: Material) -> void:
 		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for c in node.get_children():
 		_tint_with(c, m)
+
+
+# ---------------------------------------------------------------- touch and reactions
+
+
+## The object drawn under a screen point: the nearest one along the ray from the camera, tested against
+## each object's box (an animal's box goes where the animal is now). -1 if none.
+func pick(camera: Camera3D, screen_pos: Vector2) -> int:
+	var from := camera.project_ray_origin(screen_pos)
+	var dir := camera.project_ray_normal(screen_pos)
+	var best := -1
+	var best_d := INF
+	for uid in _views:
+		var v: Dictionary = _views[uid]
+		var node := v["node"] as Node3D
+		if not node.visible:
+			continue
+		var box: AABB = v["box"]
+		if node is Animal3D:
+			box = AABB(node.position + box.position, box.size)
+		var hit: Variant = box.intersects_ray(from, dir)
+		if hit == null:
+			continue
+		var d := from.distance_to(hit)
+		# Animals sit in front of what they stand by: they win close calls with buildings behind them.
+		if node is Animal3D:
+			d -= 0.5
+		if d < best_d:
+			best_d = d
+			best = int(uid)
+	return best
+
+
+## The box around a model, in the farm's space (for an animal, around its feet, to move with it).
+func _bounds(node: Node3D, o: Dictionary) -> AABB:
+	if node is Animal3D:
+		var r := (node as Animal3D).reach()
+		return AABB(Vector3(-r.x, 0, -r.x), Vector3(r.x * 2.0, r.y, r.x * 2.0))
+	var box := AABB()
+	var first := true
+	for model in node.get_children():
+		for c in model.get_children():
+			if c is MeshInstance3D:
+				var b := (model as Node3D).transform * ((c as MeshInstance3D).transform * (c as MeshInstance3D).get_aabb())
+				box = b if first else box.merge(b)
+				first = false
+	if first:
+		var fp := Game.footprint(o["id"])
+		box = AABB(Vector3(-fp.x / 2.0, 0, -fp.y / 2.0), Vector3(fp.x, 0.3, fp.y))
+	return node.transform * box
+
+
+## Tapped: it squashes down and springs back (from its base, so it stays on the ground).
+func bounce(uid: int) -> void:
+	var node := _node(uid)
+	if node == null:
+		return
+	var base := Vector3.ONE
+	var tw := _tween(node)
+	tw.tween_property(node, "scale", base * Vector3(1.12, 0.84, 1.12), 0.07).set_trans(Tween.TRANS_QUAD) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "scale", base * Vector3(0.95, 1.08, 0.95), 0.09).set_trans(Tween.TRANS_QUAD) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "scale", base, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## Newly on the farm: it falls in from above, lands with a squash and settles.
+func drop_in(uid: int) -> void:
+	var node := _node(uid)
+	if node == null or node is Animal3D:
+		if node is Animal3D:
+			(node as Animal3D).land()
+		return
+	var base := Vector3.ONE
+	var ground := node.position
+	node.position = ground + Vector3(0, DROP_HEIGHT, 0)
+	node.scale = base * Vector3(0.88, 1.15, 0.88)
+	var tw := _tween(node)
+	tw.tween_property(node, "position", ground, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(node, "scale", base * Vector3(1.14, 0.82, 1.14), 0.07).set_trans(Tween.TRANS_QUAD) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "scale", base, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	landed.emit(ground)
+
+
+func _node(uid: int) -> Node3D:
+	var v: Dictionary = _views.get(uid, {})
+	return v.get("node") as Node3D
+
+
+func _tween(node: Node3D) -> Tween:
+	if node.has_meta("tween"):
+		var old: Tween = node.get_meta("tween")
+		if old != null and old.is_valid():
+			old.kill()
+	var tw := node.create_tween()
+	node.set_meta("tween", tw)
+	return tw

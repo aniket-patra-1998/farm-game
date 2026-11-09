@@ -28,6 +28,8 @@ const ARRIVED := 0.6             # px
 const FROLIC_SPEED := 2.4        # a frolic is a dash: this many times walking speed
 const BOUNCE_RATE := 3.0         # bounces a second while frolicking
 const FROLIC_AGAIN := 0.45       # chance a frolic runs straight into another
+const POKE_LOOK := 1.6           # seconds a tapped animal looks round at you
+const POKE_HOP := 0.45           # how high it starts when tapped (of a frolic's bounce)
 
 const DURATIONS := {
 	State.IDLE: Vector2(1.5, 4.0),
@@ -91,6 +93,17 @@ func update(delta: float) -> void:
 
 
 ## Seconds left in what it's doing (tests).
+## Tapped: it stops what it's doing, gives a little start (a hop, or a flap for a bird) and looks round at
+## you for a moment before carrying on.
+func poke() -> void:
+	_enter(State.LOOK, POKE_LOOK)
+	_look_to = 1.0
+	_target = offset
+	pose.hop = maxf(pose.hop, POKE_HOP)
+	if is_bird():
+		pose.wing = 1.0
+
+
 func time_left() -> float:
 	return _left
 

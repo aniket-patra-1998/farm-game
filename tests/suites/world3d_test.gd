@@ -93,3 +93,45 @@ func _count_vertices(node: Node) -> int:
 	for c in node.get_children():
 		n += _count_vertices(c)
 	return n
+
+
+## Needs real frames (the camera aims itself each frame): the runner awaits it.
+func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.objects.clear()
+	var cow := {"uid": 9001, "id": "cow", "row": 5, "col": 5, "t": Game.now()}
+	var dairy := {"uid": 9002, "id": "cow_shed", "row": 5, "col": 8, "t": Game.now(), "level": 1, "inside": {}}
+	Game.objects.append(cow)
+	Game.objects.append(dairy)
+	Game.rebuild_occupancy()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var world: Farm3D = main.get("world_3d")
+	_check(world != null, "the farm is drawn in 3D")
+	if world == null:
+		main.free()
+		return
+	var grid: FarmGrid = main.get("grid")
+	# Make the cow wander off its tile centre, then tap where it's drawn.
+	var mind := grid.life.mind(9001)
+	_check(mind != null, "the cow has a mind")
+	if mind != null:
+		mind.offset = Vector2(20, 8)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var cam: Camera3D = world.camera
+	var cow_view: Node3D = world.objects.get("_views")[9001]["node"]
+	var at := cam.unproject_position(cow_view.global_position + Vector3(0, 0.2, 0))
+	_eq(grid.picker.call(at), 9001, "a tap on the cow where it stands now picks the cow")
+	var dairy_view: Node3D = world.objects.get("_views")[9002]["node"]
+	var on_dairy := cam.unproject_position(dairy_view.global_position + Vector3(0, 0.5, 0))
+	_eq(grid.picker.call(on_dairy), 9002, "a tap on the Dairy Farm's walls picks the Dairy Farm")
+	_eq(grid.picker.call(Vector2(5, FarmHud.TOP_H + 5)), -1, "a tap on open grass picks nothing")
+	# Tapped, the cow stops and looks round, and gives a little start.
+	grid.object_poked.emit(9001)
+	_eq(mind.state, AnimalBehaviour.State.LOOK, "a tapped cow looks round")
+	_check(mind.pose.hop > 0.0, "with a little start")
+	main.free()

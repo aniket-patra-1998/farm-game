@@ -63,6 +63,8 @@ jobs:
           # A script that fails to load can let the runner exit cleanly: fail on that, and on anything but "0 failed".
           if grep -E "Parse Error|Compile Error|Failed to load script" tests.log; then echo "A script didn't load"; exit 1; fi
           grep -E "checks, 0 failed" tests.log || { echo "Tests didn't all pass"; exit 1; }
+          # Any engine or script error (what the editor's Errors panel would show) fails the build too.
+          python3 tools/check_godot_log.py tests.log
 
       # Draws every building with a real (software) renderer, so drawing errors fail the build
       # and the pictures can be checked. Download them from the run's "screenshots" artifact.
@@ -74,6 +76,7 @@ jobs:
           if grep -E "SCRIPT ERROR|triangulat|Invalid polygon" shots.log; then
             echo "Drawing errors found"; exit 1
           fi
+          python3 tools/check_godot_log.py shots.log
           ls ci_shots
           timeout 120 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
             --rendering-driver opengl3 --resolution 1280x720 --path . res://tools/style_preview.tscn 2>&1 | grep -E "STYLE|ERROR" || true
