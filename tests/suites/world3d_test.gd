@@ -150,6 +150,7 @@ func test_101_the_ground_knows_what_stands_on_it() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.objects.clear()
+	Game.farm_size = 24  # room for everything below (a new farm starts smaller)
 	Game.objects.append({"uid": 9101, "id": "cow_shed", "row": 6, "col": 6, "t": Game.now(), "level": 1, "inside": {}})
 	Game.objects.append({"uid": 9102, "id": "cow", "row": 15, "col": 15, "t": Game.now()})
 	Game.rebuild_occupancy()
