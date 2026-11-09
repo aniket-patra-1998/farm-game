@@ -1,4 +1,32 @@
 {
+ "crop_acorn_squash_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:29",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_acorn_squash_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:29",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_acorn_squash_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:29",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_acorn_squash_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:30",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_amaranth_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:31",
@@ -1007,6 +1035,20 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_square_melon_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:31",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_square_melon_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:30",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_squash_growing": {
   "class": "Crop",
   "made": "2026-11-09 06:21",
@@ -1157,6 +1199,34 @@
  "crop_white_roses_withered": {
   "class": "Crop",
   "made": "2026-11-09 06:06",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_yellow_melon_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:27",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_yellow_melon_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:27",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_yellow_melon_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:28",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_yellow_melon_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:28",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"

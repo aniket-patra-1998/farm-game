@@ -20,6 +20,34 @@
   ],
   "scale": 0.4
  },
+ "crop_acorn_squash_growing": {
+  "anchor": [
+   128.0,
+   144.0
+  ],
+  "scale": 0.5
+ },
+ "crop_acorn_squash_planted": {
+  "anchor": [
+   128.0,
+   146.0
+  ],
+  "scale": 0.5
+ },
+ "crop_acorn_squash_ripe": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_acorn_squash_withered": {
+  "anchor": [
+   128.0,
+   138.0
+  ],
+  "scale": 0.5
+ },
  "crop_amaranth_growing": {
   "anchor": [
    128.0,
@@ -1028,6 +1056,20 @@
   ],
   "scale": 0.5
  },
+ "crop_square_melon_growing": {
+  "anchor": [
+   128.0,
+   146.0
+  ],
+  "scale": 0.5
+ },
+ "crop_square_melon_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
  "crop_squash_growing": {
   "anchor": [
    128.0,
@@ -1193,6 +1235,34 @@
   "anchor": [
    128.0,
    140.0
+  ],
+  "scale": 0.5
+ },
+ "crop_yellow_melon_growing": {
+  "anchor": [
+   128.0,
+   143.0
+  ],
+  "scale": 0.5
+ },
+ "crop_yellow_melon_planted": {
+  "anchor": [
+   128.0,
+   146.0
+  ],
+  "scale": 0.5
+ },
+ "crop_yellow_melon_ripe": {
+  "anchor": [
+   128.0,
+   146.0
+  ],
+  "scale": 0.5
+ },
+ "crop_yellow_melon_withered": {
+  "anchor": [
+   128.0,
+   138.0
   ],
   "scale": 0.5
  },
