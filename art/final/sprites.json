@@ -1042,6 +1042,20 @@
   ],
   "scale": 0.5
  },
+ "crop_squash_ripe": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_squash_withered": {
+  "anchor": [
+   128.0,
+   141.0
+  ],
+  "scale": 0.5
+ },
  "crop_strawberries_growing": {
   "anchor": [
    121.5,
@@ -1098,6 +1112,34 @@
   ],
   "scale": 0.5
  },
+ "crop_watermelon_growing": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_watermelon_planted": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_watermelon_ripe": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_watermelon_withered": {
+  "anchor": [
+   128.0,
+   140.0
+  ],
+  "scale": 0.5
+ },
  "crop_wheat_growing": {
   "anchor": [
    128.0,
@@ -1151,6 +1193,34 @@
   "anchor": [
    128.0,
    140.0
+  ],
+  "scale": 0.5
+ },
+ "crop_zucchini_growing": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_zucchini_planted": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_zucchini_ripe": {
+  "anchor": [
+   128.0,
+   146.0
+  ],
+  "scale": 0.5
+ },
+ "crop_zucchini_withered": {
+  "anchor": [
+   128.0,
+   143.0
   ],
   "scale": 0.5
  },

@@ -1021,6 +1021,20 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_squash_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:22",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_squash_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:22",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_strawberries_planted": {
   "class": "Crop",
   "made": "2026-11-09 05:08",
@@ -1059,6 +1073,34 @@
  "crop_sunflowers_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:44",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_watermelon_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:23",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_watermelon_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:23",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_watermelon_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:24",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_watermelon_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:24",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
@@ -1115,6 +1157,34 @@
  "crop_white_roses_withered": {
   "class": "Crop",
   "made": "2026-11-09 06:06",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_zucchini_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:25",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_zucchini_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:25",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_zucchini_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:26",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_zucchini_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:26",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
