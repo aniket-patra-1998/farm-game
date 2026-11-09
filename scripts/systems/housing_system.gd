@@ -15,9 +15,9 @@ enum Fit { FITS, WRONG_KIND, FULL, NOT_BUILT, HAS_ONE, BARN_BROKEN, BUILD_FIRST 
 
 ## Can this building take one more `item_id` from `source`?
 func fit(building: Dictionary, item_id: String, source := {}) -> Fit:
-	if building.is_empty() or not game.is_building(building):
+	if building.is_empty():
 		return Fit.WRONG_KIND
-	var def := game.catalog.get_def(building["id"]) as BuildingDef
+	var def := game.catalog.get_def(building["id"]) as BuildingDef  # the Barn too
 	if def == null:
 		return Fit.WRONG_KIND
 	if def.stores_anything():
