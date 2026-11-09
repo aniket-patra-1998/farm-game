@@ -8,6 +8,13 @@ extends RefCounted
 
 const PATH := "res://data/building_models.json"
 const PLINTH := 0.09
+# A building site's stages, as shares of the materials put in (see build_site).
+const SITE_FOOTING := 0.08
+const SITE_FLOOR := 0.25
+const SITE_BEAMS := 0.38
+const SITE_WALLS := 0.45
+const SITE_RAFTERS := 0.75
+const SITE_BOARDS := 0.92
 const STONE := Color("#9b958a")
 const WOOD := Color("#8a5a36")
 const DARK := Color("#3b2a20")
@@ -20,26 +27,58 @@ const GROUNDS := {"dirt": Color("#9a7a52"), "straw": Color("#d9bf6a"), "grass": 
 static var _data := {}
 
 
-static func spec(id: String) -> Dictionary:
-	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-		_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {"default": {}, "buildings": {}}
-		if typeof(parsed) != TYPE_DICTIONARY:
-			push_error(PATH + " is missing or not valid JSON")
+## How a building is built at a size (`level`, 1 the smallest): its own description over the defaults,
+## then each size's changes up to `level` laid on in turn (data "levels": {"2": {...}, "3": {...}}).
+## A size's "drop" first removes features of those types; its "features" are added; anything else
+## (body, roof, door: merged; windows, window_rows: replaced) changes the building itself.
+static func spec(id: String, level := 1) -> Dictionary:
+	_load()
 	var out: Dictionary = (_data["default"] as Dictionary).duplicate(true)
-	var own: Dictionary = (_data.get("buildings", {}) as Dictionary).get(id, {})
-	for k in own:
-		if typeof(own[k]) == TYPE_DICTIONARY and typeof(out.get(k)) == TYPE_DICTIONARY:
-			(out[k] as Dictionary).merge(own[k], true)
-		else:
-			out[k] = own[k]
+	var own: Dictionary = ((_data.get("buildings", {}) as Dictionary).get(id, {}) as Dictionary).duplicate(true)
+	var sizes: Dictionary = own.get("levels", {})
+	own.erase("levels")
+	_lay_on(out, own)
+	for l in range(2, level + 1):
+		var step: Dictionary = sizes.get(str(l), {})
+		var dropped: Array = step.get("drop", [])
+		out["features"] = (out.get("features", []) as Array).filter(
+			func(f: Dictionary) -> bool: return not dropped.has(f.get("type")))
+		(out["features"] as Array).append_array(step.get("features", []))
+		var rest := step.duplicate(true)
+		rest.erase("drop")
+		rest.erase("features")
+		_lay_on(out, rest)
 	return out
 
 
-## The whole building, under a new node. `fp` is the footprint in tiles (columns, rows).
-static func build(it: Dictionary, fp: Vector2i) -> Node3D:
+## The sizes a building has changes for (2, 3...), from its description (tests check them).
+static func sizes_of(id: String) -> Array:
+	_load()
+	var own: Dictionary = (_data.get("buildings", {}) as Dictionary).get(id, {})
+	return (own.get("levels", {}) as Dictionary).keys().map(func(k: String) -> int: return int(k))
+
+
+static func _load() -> void:
+	if not _data.is_empty():
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {"default": {}, "buildings": {}}
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_error(PATH + " is missing or not valid JSON")
+
+
+static func _lay_on(out: Dictionary, changes: Dictionary) -> void:
+	for k in changes:
+		if typeof(changes[k]) == TYPE_DICTIONARY and typeof(out.get(k)) == TYPE_DICTIONARY:
+			(out[k] as Dictionary).merge(changes[k], true)
+		else:
+			out[k] = changes[k]
+
+
+## The whole building at its size, under a new node. `fp` is the footprint in tiles (columns, rows).
+static func build(it: Dictionary, fp: Vector2i, level := 1) -> Node3D:
 	var root := Node3D.new()
-	var s := spec(str(it.get("id", "")))
+	var s := spec(str(it.get("id", "")), level)
 	var fw := float(fp.x)
 	var fd := float(fp.y)
 	var body: Dictionary = s["body"]
@@ -67,11 +106,14 @@ static func build(it: Dictionary, fp: Vector2i) -> Node3D:
 	return root
 
 
-## A building still under construction (FarmVille's frame): a stone footing, timber posts and beams, a
-## ladder, and a stack of boards waiting to go up.
-static func build_frame(it: Dictionary, fp: Vector2i) -> Node3D:
+## A building going up (FarmVille's frame), at `progress` 0..1, the share of its materials put in. It
+## builds up as they arrive, in the order a real one would: stakes and string over bare earth, the stone
+## footing laid side by side, a plank floor and the timber posts, beams across the top, walls (its own
+## kind) rising inside scaffolding, the roof's rafters, then its boards. The pile of materials beside it
+## shrinks as they're used. Its size is the finished building's, so it ends where the building begins.
+static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1) -> Node3D:
 	var root := Node3D.new()
-	var s := spec(str(it.get("id", "")))
+	var s := spec(str(it.get("id", "")), level)
 	var body: Dictionary = s["body"]
 	var fw := float(fp.x)
 	var fd := float(fp.y)
@@ -82,39 +124,172 @@ static func build_frame(it: Dictionary, fp: Vector2i) -> Node3D:
 	var c := Vector3(float(at[0]) * fw, 0, float(at[1]) * fd)
 	var lo := Vector3(c.x - bw / 2.0, 0, c.z - bd / 2.0)
 	var hi := Vector3(c.x + bw / 2.0, bh, c.z + bd / 2.0)
+	var p := clampf(progress, 0.0, 1.0)
 	var timber := ModelKit.surface(Color("#c79a62"), "boards", 0.3)
-	ModelKit.box(
-		root,
-		lo - Vector3(0.04, 0, 0.04),
-		Vector3(hi.x + 0.04, PLINTH, hi.z + 0.04),
-		ModelKit.surface(STONE, "stone", 0.3)
-	)
-	var posts := 3
-	for i in posts:
-		for j in posts:
-			if i != 0 and i != posts - 1 and j != 0 and j != posts - 1:
-				continue
-			var p := Vector3(lerpf(lo.x, hi.x, i / (posts - 1.0)), PLINTH, lerpf(lo.z, hi.z, j / (posts - 1.0)))
-			ModelKit.box(root, p - Vector3(0.03, 0, 0.03), p + Vector3(0.03, bh, 0.03), timber)
-	for y: float in [bh * 0.5, bh]:
-		_rail(root, Vector3(lo.x, 0, lo.z), Vector3(hi.x, 0, lo.z), y, timber)
-		_rail(root, Vector3(lo.x, 0, hi.z), Vector3(hi.x, 0, hi.z), y, timber)
-		_rail(root, Vector3(lo.x, 0, lo.z), Vector3(lo.x, 0, hi.z), y, timber)
-		_rail(root, Vector3(hi.x, 0, lo.z), Vector3(hi.x, 0, hi.z), y, timber)
-	# A stack of boards and a ladder against the front.
-	for k in 4:
-		var y := k * 0.035
-		ModelKit.box(root, Vector3(hi.x + 0.08, y, c.z - 0.25), Vector3(hi.x + 0.32, y + 0.03, c.z + 0.25), timber)
-	var ladder := Node3D.new()
-	ladder.position = Vector3(c.x, PLINTH, hi.z + 0.1)
-	ladder.rotation.x = -0.25
-	root.add_child(ladder)
-	for side: float in [-0.08, 0.08]:
-		ModelKit.box(ladder, Vector3(side - 0.012, 0, -0.012), Vector3(side + 0.012, bh * 0.9, 0.012), timber)
-	for k in 5:
-		var y := (k + 0.5) * bh * 0.9 / 5.0
-		ModelKit.box(ladder, Vector3(-0.08, y - 0.01, -0.01), Vector3(0.08, y + 0.01, 0.01), timber)
+	# Bare, trodden earth over the site.
+	ModelKit.box(root, Vector3(lo.x - 0.18, 0, lo.z - 0.18), Vector3(hi.x + 0.18, 0.01, hi.z + 0.18),
+		ModelKit.surface(GROUNDS["dirt"], "plaster", 0.0), false)
+	if p < SITE_FOOTING:
+		_stakes(root, lo, hi)
+	# The footing, a side at a time.
+	var footing := _stage(p, SITE_FOOTING, SITE_FLOOR)
+	if footing > 0.0:
+		var sides := [[Vector3(lo.x, 0, lo.z), Vector3(hi.x, 0, lo.z)], [Vector3(hi.x, 0, lo.z), Vector3(hi.x, 0, hi.z)],
+			[Vector3(hi.x, 0, hi.z), Vector3(lo.x, 0, hi.z)], [Vector3(lo.x, 0, hi.z), Vector3(lo.x, 0, lo.z)]]
+		for k in 4:
+			var share := clampf(footing * 4.0 - k, 0.0, 1.0)
+			if share <= 0.0:
+				break
+			var a: Vector3 = sides[k][0]
+			var b: Vector3 = a.lerp(sides[k][1], share)
+			ModelKit.box(root, Vector3(minf(a.x, b.x), 0, minf(a.z, b.z)) - Vector3(0.05, 0, 0.05),
+				Vector3(maxf(a.x, b.x), PLINTH, maxf(a.z, b.z)) + Vector3(0.05, 0, 0.05), ModelKit.surface(STONE, "stone", 0.3))
+	if p >= SITE_FLOOR:
+		ModelKit.box(root, Vector3(lo.x, PLINTH * 0.5, lo.z), Vector3(hi.x, PLINTH + 0.01, hi.z), timber)
+		_posts(root, lo, hi, timber)
+	if p >= SITE_BEAMS:
+		for y: float in [bh * 0.5, bh]:
+			_rail(root, Vector3(lo.x, 0, lo.z), Vector3(hi.x, 0, lo.z), y, timber)
+			_rail(root, Vector3(lo.x, 0, hi.z), Vector3(hi.x, 0, hi.z), y, timber)
+			_rail(root, Vector3(lo.x, 0, lo.z), Vector3(lo.x, 0, hi.z), y, timber)
+			_rail(root, Vector3(hi.x, 0, lo.z), Vector3(hi.x, 0, hi.z), y, timber)
+	# The walls, rising inside the frame: thin panels of the building's own walls, open at the top.
+	var rising := _stage(p, SITE_WALLS, SITE_RAFTERS)
+	var wall_top := PLINTH
+	if rising > 0.0:
+		wall_top = lerpf(PLINTH + 0.1, bh, rising)
+		var wall := ModelKit.surface(Color.html(str(it.get("color", "#c0392b"))), str(body.get("walls", "boards")))
+		var t := 0.03
+		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(hi.x, wall_top, lo.z + t), wall)
+		ModelKit.box(root, Vector3(lo.x, PLINTH, hi.z - t), Vector3(hi.x, wall_top, hi.z), wall)
+		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(lo.x + t, wall_top, hi.z), wall)
+		ModelKit.box(root, Vector3(hi.x - t, PLINTH, lo.z), Vector3(hi.x, wall_top, hi.z), wall)
+	if p >= SITE_FLOOR:
+		_scaffold(root, lo, hi, minf(wall_top + 0.12, bh + 0.05), timber)
+	# The roof: rafters across the ridge, then boards over them.
+	var r: Dictionary = s["roof"]
+	var span := minf(bw, bd)
+	var rise := float(r.get("pitch", 0.7)) * span / 2.0
+	var rafters := _stage(p, SITE_RAFTERS, SITE_BOARDS)
+	if rafters > 0.0 and str(r.get("type", "gable")) != "none":
+		_rafters(root, lo, hi, rise, rafters, timber)
+	if p >= SITE_BOARDS and str(r.get("type", "gable")) != "none":
+		ModelKit.roof(root, "gable", lo, hi, rise, 0.06, ModelKit.surface(Color("#d8b483"), "boards", 0.0), timber)
+	_materials_pile(root, Vector3(minf(hi.x + 0.3, fw - 0.2), 0, minf(c.z + 0.1, fd - 0.3)), 1.0 - p, timber)
 	return root
+
+
+## How far into a stage the site is, 0..1, for a stage running from `start` to `end` of the progress.
+static func _stage(p: float, start: float, end: float) -> float:
+	return clampf((p - start) / (end - start), 0.0, 1.0)
+
+
+## Stakes at the corners and string between them: where it will stand.
+static func _stakes(root: Node3D, lo: Vector3, hi: Vector3) -> void:
+	var wood := ModelKit.paint(Color("#b98a55"))
+	var string := ModelKit.paint(Color("#f1ece0"))
+	var corners := [Vector3(lo.x, 0, lo.z), Vector3(hi.x, 0, lo.z), Vector3(hi.x, 0, hi.z), Vector3(lo.x, 0, hi.z)]
+	for k in 4:
+		var a: Vector3 = corners[k]
+		ModelKit.box(root, a - Vector3(0.015, 0, 0.015), a + Vector3(0.015, 0.16, 0.015), wood)
+		var b: Vector3 = corners[(k + 1) % 4]
+		ModelKit.box(root, Vector3(minf(a.x, b.x), 0.12, minf(a.z, b.z)) - Vector3(0.004, 0, 0.004),
+			Vector3(maxf(a.x, b.x), 0.128, maxf(a.z, b.z)) + Vector3(0.004, 0, 0.004), string)
+
+
+## The frame's posts: at the corners and along the walls, full height.
+static func _posts(root: Node3D, lo: Vector3, hi: Vector3, timber: Material) -> void:
+	var nx := maxi(2, int(ceil((hi.x - lo.x) / 0.45)) + 1)
+	var nz := maxi(2, int(ceil((hi.z - lo.z) / 0.45)) + 1)
+	for i in nx:
+		for j in nz:
+			if i != 0 and i != nx - 1 and j != 0 and j != nz - 1:
+				continue
+			var p := Vector3(lerpf(lo.x, hi.x, i / (nx - 1.0)), PLINTH, lerpf(lo.z, hi.z, j / (nz - 1.0)))
+			ModelKit.box(root, p - Vector3(0.03, 0, 0.03), Vector3(p.x + 0.03, hi.y, p.z + 0.03), timber)
+
+
+## Scaffolding on the two sides the camera sees: poles a hand's width out, planks at each lift up to
+## where the work is, and a ladder.
+static func _scaffold(root: Node3D, lo: Vector3, hi: Vector3, up_to: float, timber: Material) -> void:
+	var pole := ModelKit.paint(Color("#9aa0a4"), 0.4)
+	var plank := ModelKit.surface(Color("#d6b07a"), "boards", 0.0)
+	var out := 0.16
+	var top := up_to + 0.25
+	var x := hi.x + out
+	var z := hi.z + out
+	for k in 3:
+		var pz := lerpf(lo.z, hi.z, k / 2.0)
+		ModelKit.box(root, Vector3(x - 0.012, 0, pz - 0.012), Vector3(x + 0.012, top, pz + 0.012), pole)
+		var px := lerpf(lo.x, hi.x, k / 2.0)
+		ModelKit.box(root, Vector3(px - 0.012, 0, z - 0.012), Vector3(px + 0.012, top, z + 0.012), pole)
+	var lift := 0.3
+	var y := lift
+	while y <= up_to + 0.001:
+		ModelKit.box(root, Vector3(hi.x + 0.03, y, lo.z), Vector3(x + 0.04, y + 0.025, hi.z + out), plank)
+		ModelKit.box(root, Vector3(lo.x, y, hi.z + 0.03), Vector3(hi.x + out, y + 0.025, z + 0.04), plank)
+		y += lift
+	# A ladder up the front scaffold.
+	var lx := lo.x + 0.15
+	for side: float in [-0.07, 0.07]:
+		ModelKit.box(root, Vector3(lx + side - 0.01, 0, z + 0.05), Vector3(lx + side + 0.01, top - 0.1, z + 0.07), timber)
+	var rung := 0.1
+	while rung < top - 0.15:
+		ModelKit.box(root, Vector3(lx - 0.07, rung, z + 0.05), Vector3(lx + 0.07, rung + 0.015, z + 0.07), timber)
+		rung += 0.1
+
+
+## Rafters: A-frames across the ridge, put up one after another along it (`share` of them so far), and the
+## ridge beam once the first two stand.
+static func _rafters(root: Node3D, lo: Vector3, hi: Vector3, rise: float, share: float, timber: Material) -> void:
+	var along_x := (hi.x - lo.x) >= (hi.z - lo.z)
+	var u0 := lo.x if along_x else lo.z
+	var u1 := hi.x if along_x else hi.z
+	var v0 := lo.z if along_x else lo.x
+	var v1 := hi.z if along_x else hi.x
+	var vm := (v0 + v1) / 2.0
+	var y := hi.y
+	var count := maxi(3, int(ceil((u1 - u0) / 0.22)) + 1)
+	var up := int(ceil(count * share))
+	for k in up:
+		var u := lerpf(u0, u1, k / (count - 1.0))
+		for v: float in [v0, v1]:
+			var a := Vector3(u, y, v) if along_x else Vector3(v, y, u)
+			var b := Vector3(u, y + rise, vm) if along_x else Vector3(vm, y + rise, u)
+			_beam(root, a, b, 0.03, timber)
+	if up >= 2:
+		var a := Vector3(u0, y + rise, vm) if along_x else Vector3(vm, y + rise, u0)
+		var u_end := lerpf(u0, u1, (up - 1) / (count - 1.0))
+		var b := Vector3(u_end, y + rise, vm) if along_x else Vector3(vm, y + rise, u_end)
+		_beam(root, a, b, 0.035, timber)
+
+
+## A square timber from `a` to `b`.
+static func _beam(root: Node3D, a: Vector3, b: Vector3, t: float, mat: Material) -> void:
+	var length := a.distance_to(b)
+	if length < 0.001:
+		return
+	var mi := ModelKit.box(root, Vector3(-t / 2.0, -t / 2.0, -length / 2.0), Vector3(t / 2.0, t / 2.0, length / 2.0), mat)
+	var dir := (b - a) / length
+	var up := Vector3.UP if absf(dir.y) < 0.99 else Vector3.FORWARD
+	mi.transform = Transform3D(Basis.looking_at(dir, up), (a + b) / 2.0)
+
+
+## The materials still to go in: stacked boards, a pallet of bricks, a keg of nails; less as `left` falls.
+static func _materials_pile(root: Node3D, at: Vector3, left: float, timber: Material) -> void:
+	if left <= 0.02:
+		return
+	var boards := maxi(1, int(ceil(left * 6.0)))
+	for k in boards:
+		var y := k * 0.03
+		ModelKit.box(root, at + Vector3(-0.12, y, -0.22), at + Vector3(0.12, y + 0.026, 0.22), timber)
+	var bricks := maxi(1, int(ceil(left * 3.0)))
+	var b := at + Vector3(0.0, 0, 0.42)
+	ModelKit.box(root, b + Vector3(-0.12, 0, -0.1), b + Vector3(0.12, 0.03, 0.1), ModelKit.paint(WOOD))
+	ModelKit.box(root, b + Vector3(-0.1, 0.03, -0.08), b + Vector3(0.1, 0.03 + bricks * 0.04, 0.08),
+		ModelKit.surface(Color("#b4553c"), "stone", 0.0))
+	if left > 0.4:
+		ModelKit.cylinder(root, at + Vector3(0.0, 0, -0.38), 0.06, 0.12, ModelKit.surface(Color("#7c4a2a"), "boards", 0.2))
 
 
 # ---------------------------------------------------------------- the main block
@@ -157,7 +332,7 @@ static func _body(ctx: Dictionary) -> void:
 	ctx["lo"] = lo
 	ctx["hi"] = hi
 	_door(ctx, trim)
-	_windows(ctx, int(s.get("windows", 2)), trim)
+	_windows(ctx, int(s.get("windows", 2)), trim, int(s.get("window_rows", 1)))
 
 
 ## The door, on the front (the +z face, toward the camera's left).
@@ -220,15 +395,22 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 			ModelKit.surface(STONE, "stone", 0.2))
 
 
-## Windows on the side the camera sees (+x), and on the front beside the door if the wall is wide.
-static func _windows(ctx: Dictionary, count: int, trim: Color) -> void:
+## Windows on the side the camera sees (+x): `count` to a row, a row to a floor.
+static func _windows(ctx: Dictionary, count: int, trim: Color, rows := 1) -> void:
 	if count <= 0:
 		return
+	var wall_h: float = (ctx["hi"] as Vector3).y - (ctx["lo"] as Vector3).y
+	var size := minf(0.2, wall_h * (0.3 if rows == 1 else 0.42 / rows))
+	for row in rows:
+		var share := 0.58 if rows == 1 else lerpf(0.32, 0.74, row / (rows - 1.0))
+		_window_row(ctx, count, trim, share, size)
+
+
+static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, size: float) -> void:
 	var root: Node3D = ctx["root"]
 	var lo: Vector3 = ctx["lo"]
 	var hi: Vector3 = ctx["hi"]
-	var y := lo.y + (hi.y - lo.y) * 0.58
-	var size := minf(0.2, (hi.y - lo.y) * 0.3)
+	var y := lo.y + (hi.y - lo.y) * share
 	for k in count:
 		var z := lerpf(lo.z, hi.z, (k + 1.0) / (count + 1.0))
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - 0.025, z - size / 2 - 0.025),
@@ -450,7 +632,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.cylinder(root, centre + Vector3(cos(a) * rx * 0.8, 0, sin(a) * rz * 0.8), 0.006, 0.22,
 					ModelKit.paint(Color("#5d7a2c")))
 		"duck_house":
-			var p := Vector3(fw * 0.82, 0, fd * 0.2)
+			var spot: Array = f.get("at", [0.82, 0.2])
+			var p := Vector3(fw * float(spot[0]), 0, fd * float(spot[1]))
 			for k in 4:
 				ModelKit.box(root, p + Vector3(
 					-0.15 + (k % 2) * 0.27,
@@ -467,10 +650,32 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			ModelKit.roof(root, "gable", p + Vector3(-0.17, 0.15, -0.14), p + Vector3(0.17, 0.35, 0.14), 0.12, 0.04,
 				ModelKit.surface(Color("#b5492f"), "shingles", 0.0), ModelKit.surface(Color("#e9d7a8"), "boards"))
 		"trees":
+			# Rows of three, spread over the yard; more trees, more rows, a little smaller.
 			var n := int(f.get("count", 6))
+			var rows := ceili(n / 3.0)
+			var size := 0.55 if rows <= 2 else 0.55 * 2.0 / rows + 0.1
 			for k in n:
-				var p := Vector3(fw * (0.25 + 0.5 * (k % 3) / 2.0), 0, fd * (0.3 + 0.4 * (k / 3)))
-				TreeModel.build_at(root, p, {"color": "#d63c2f"}, 0.55, true)
+				var row := k / 3
+				var z := fd * (0.3 + 0.4 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else fd * 0.5
+				var p := Vector3(fw * (0.25 + 0.25 * (k % 3)), 0, z)
+				TreeModel.build_at(root, p, {"color": "#d63c2f", "id": "orchard_%d" % k}, size, true, k)
+		"wing":
+			_wing(ctx, f)
+		"lean_to":
+			_lean_to(ctx, f)
+		"weathervane":
+			var top: float = ctx.get("top", hi.y)
+			var x := (lo.x + hi.x) / 2.0 + float(f.get("shift", 0.0))
+			var z := (lo.z + hi.z) / 2.0
+			var iron := ModelKit.paint(Color("#2e2e2e"), 0.3)
+			ModelKit.box(root, Vector3(x - 0.008, top, z - 0.008), Vector3(x + 0.008, top + 0.34, z + 0.008), iron)
+			ModelKit.box(root, Vector3(x - 0.12, top + 0.22, z - 0.004), Vector3(x + 0.12, top + 0.235, z + 0.004), iron)
+			ModelKit.box(root, Vector3(x - 0.004, top + 0.22, z - 0.09), Vector3(x + 0.004, top + 0.235, z + 0.09), iron)
+			# The cockerel on top.
+			ModelKit.ball(root, Vector3(x, top + 0.33, z), 0.045, ModelKit.paint(Color("#c9a24a"), 0.6),
+				Vector3(1.6, 1.0, 0.35))
+			ModelKit.ball(root, Vector3(x + 0.06, top + 0.37, z), 0.025, ModelKit.paint(Color("#c9a24a"), 0.6),
+				Vector3(1, 1, 0.4))
 		"sign":
 			var p := Vector3(
 				minf(hi.x + 0.15, fw - 0.1),
@@ -484,6 +689,87 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				p + Vector3(0.14, 0.42, 0.025),
 				ModelKit.surface(Color("#c8a26a"), "boards", 0.0)
 			)
+
+
+## An annex built onto the main block (a milking parlour, a tack room, a bigger kitchen): lower walls of
+## the same kind against the side the camera sees (+x, or the front +z with "side": "front"), its own
+## gabled roof, footing and window. "depth" is how far it stands out, "span" how much of the wall it
+## covers, "h" its wall height.
+static func _wing(ctx: Dictionary, f: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
+	var lo: Vector3 = ctx["lo"]
+	var hi: Vector3 = ctx["hi"]
+	var s: Dictionary = ctx["spec"]
+	var front := str(f.get("side", "right")) == "front"
+	var depth := float(f.get("depth", 0.32))
+	var span := float(f.get("span", 0.7))
+	var h := float(f.get("h", (hi.y - lo.y) * 0.62))
+	var wlo: Vector3
+	var whi: Vector3
+	if front:
+		var xc := (lo.x + hi.x) / 2.0 + float(f.get("shift", 0.0))
+		var half := (hi.x - lo.x) * span / 2.0
+		wlo = Vector3(xc - half, lo.y, hi.z - 0.02)
+		whi = Vector3(xc + half, lo.y + h, minf(hi.z + depth, float(ctx["fd"]) - 0.08))
+	else:
+		var zc := (lo.z + hi.z) / 2.0 + float(f.get("shift", 0.0))
+		var half := (hi.z - lo.z) * span / 2.0
+		wlo = Vector3(hi.x - 0.02, lo.y, zc - half)
+		whi = Vector3(minf(hi.x + depth, float(ctx["fw"]) - 0.08), lo.y + h, zc + half)
+	if whi.x - wlo.x < 0.1 or whi.z - wlo.z < 0.1:
+		return  # no room on this footprint
+	var wall_mat := ModelKit.surface(ctx["wall"], str((s["body"] as Dictionary).get("walls", "boards")))
+	if lo.y <= 0.0:
+		ModelKit.box(root, wlo - Vector3(0.03, 0, 0.03), Vector3(whi.x + 0.03, PLINTH, whi.z + 0.03),
+			ModelKit.surface(STONE, "stone", 0.3))
+	ModelKit.box(root, Vector3(wlo.x, maxf(wlo.y, PLINTH * 0.5), wlo.z), whi, wall_mat)
+	var r: Dictionary = s["roof"]
+	var roof_mat := ModelKit.surface(Color.html(str(f.get("roof", r.get("color", "#8e3b2c")))),
+		str(r.get("style", "shingles")), 0.0)
+	var rise := minf(whi.x - wlo.x, whi.z - wlo.z) * 0.35
+	ModelKit.roof(root, "gable", wlo, whi, rise, 0.05, roof_mat, wall_mat)
+	# A window in its outer wall.
+	var trim := Color.html(str(s.get("trim", "#f3eee2")))
+	var y := wlo.y + h * 0.55
+	var w := minf(0.16, h * 0.35)
+	if front:
+		var x := (wlo.x + whi.x) / 2.0
+		ModelKit.box(root, Vector3(x - w / 2 - 0.02, y - w / 2 - 0.02, whi.z), Vector3(x + w / 2 + 0.02, y + w / 2 + 0.02,
+			whi.z + 0.02), ModelKit.paint(trim))
+		ModelKit.box(root, Vector3(x - w / 2, y - w / 2, whi.z + 0.02), Vector3(x + w / 2, y + w / 2, whi.z + 0.03),
+			ModelKit.glass())
+	else:
+		var z := (wlo.z + whi.z) / 2.0
+		ModelKit.box(root, Vector3(whi.x, y - w / 2 - 0.02, z - w / 2 - 0.02), Vector3(whi.x + 0.02, y + w / 2 + 0.02,
+			z + w / 2 + 0.02), ModelKit.paint(trim))
+		ModelKit.box(root, Vector3(whi.x + 0.02, y - w / 2, z - w / 2), Vector3(whi.x + 0.03, y + w / 2, z + w / 2),
+			ModelKit.glass())
+
+
+## An open-sided shelter against the side wall: two posts and a sloping plank roof, hay stacked under it.
+static func _lean_to(ctx: Dictionary, f: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
+	var lo: Vector3 = ctx["lo"]
+	var hi: Vector3 = ctx["hi"]
+	var depth := minf(float(f.get("depth", 0.34)), float(ctx["fw"]) - 0.08 - hi.x)
+	if depth < 0.12:
+		return
+	var z0 := lo.z + 0.04
+	var z1 := hi.z - 0.04
+	var high := lo.y + (hi.y - lo.y) * 0.8
+	var low := high - depth * 0.55
+	var x1 := hi.x + depth
+	var wood := ModelKit.paint(WOOD)
+	for z: float in [z0 + 0.02, z1 - 0.02]:
+		ModelKit.box(root, Vector3(x1 - 0.05, 0, z - 0.02), Vector3(x1 - 0.01, low, z + 0.02), wood)
+	var plank := ModelKit.box(root, Vector3(-depth / 2.0 - 0.04, -0.015, -(z1 - z0) / 2.0 - 0.03),
+		Vector3(depth / 2.0 + 0.04, 0.015, (z1 - z0) / 2.0 + 0.03), ModelKit.surface(Color("#9a6b45"), "boards", 0.0))
+	if plank != null:
+		plank.position = Vector3(hi.x + depth / 2.0, (high + low) / 2.0, (z0 + z1) / 2.0)
+		plank.rotation.z = -atan2(high - low, depth)
+	for k in 2:
+		var at := Vector3(hi.x + depth * 0.45, 0.0, lerpf(z0 + 0.12, z1 - 0.12, k))
+		ModelKit.box(root, at + Vector3(-0.1, 0, -0.08), at + Vector3(0.1, 0.13, 0.08), ModelKit.paint(HAY))
 
 
 ## A yard on the footprint around the building: a patch of dirt, straw, grass or mud, and a fence.

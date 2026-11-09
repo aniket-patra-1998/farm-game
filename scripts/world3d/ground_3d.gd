@@ -196,6 +196,47 @@ static func _kind_at(r: int, c: int) -> String:
 	return "animal" if o.get("stray", false) else Game.kind_of(o)
 
 
+## The farm: a box whose top is turf and whose sides are earth, with a darker lip under the turf.
+func _build_slab(n: int) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var top := 0.0
+	var bottom := -SLAB - 0.02
+	# Top (turf) in surface 0.
+	_quad(st, Vector3(0, top, 0), Vector3(n, top, 0), Vector3(n, top, n), Vector3(0, top, n), Vector3.UP)
+	var turf := st.commit()
+	st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# The two sides the camera sees (+x and +z), and the hidden two for shadows.
+	var sides := [
+		[Vector3(n, top, 0), Vector3(n, top, n), Vector3.RIGHT], [Vector3(n, top, n), Vector3(0, top, n), Vector3.BACK],
+		[
+			Vector3(0, top, n),
+			Vector3(0, top, 0),
+			Vector3.LEFT
+		], [Vector3(0, top, 0), Vector3(n, top, 0), Vector3.FORWARD]]
+	for side in sides:
+		var a: Vector3 = side[0]
+		var b: Vector3 = side[1]
+		_quad(st, a, b, Vector3(b.x, bottom, b.z), Vector3(a.x, bottom, a.z), side[2], EARTH, EARTH.darkened(0.35))
+	st.commit(turf)
+	_slab.mesh = turf
+	_slab.set_surface_override_material(0, _slab.get_meta("grass"))
+	var earth := StandardMaterial3D.new()
+	earth.vertex_color_use_as_albedo = true
+	earth.roughness = 1.0
+	earth.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_slab.set_surface_override_material(1, earth)
+
+
+static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, normal: Vector3,
+		top_col := Color.WHITE, bottom_col := Color.WHITE) -> void:
+	st.set_normal(normal)
+	for v: Vector3 in [a, b, c, a, c, d]:
+		st.set_color(top_col if v.y >= 0.0 else bottom_col)
+		st.add_vertex(v)
+
+
 ## Tufts in clumps over the grass: how thick they grow follows a slow noise over the land (so there are
 ## lush patches and thin ones), thinning where the grass is worn, and none through anything that covers
 ## the ground. Seeded by position, so they don't move when rebuilt.

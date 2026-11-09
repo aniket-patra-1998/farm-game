@@ -28,6 +28,20 @@ func construction_needs(b: Dictionary) -> Dictionary:
 	return left
 
 
+## How far a frame has got, 0..1: the share of its materials put in (1 once it's finished).
+func construction_progress(b: Dictionary) -> float:
+	if not game.under_construction(b):
+		return 1.0
+	var need: Dictionary = game.item_data(b["id"]).get("build_materials", {})
+	var have: Dictionary = b["construction"]
+	var total := 0
+	var given := 0
+	for m in need:
+		total += int(need[m])
+		given += mini(int(have.get(m, 0)), int(need[m]))
+	return float(given) / total if total > 0 else 0.0
+
+
 ## Puts held materials into a frame. Finishes the building when nothing is missing.
 func add_materials(uid: int) -> int:
 	var b := game.object_by_uid(uid)

@@ -34,11 +34,14 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 	# Building features are all ones BuildingModel knows how to build.
 	var known := ["yard", "silo", "stilts", "ramp", "chimney", "cupola", "loft_door", "stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
-		"duck_house"]
+		"duck_house", "wing", "lean_to", "weathervane"]
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))
 	for id in data["buildings"]:
 		for f: Dictionary in (data["buildings"][id] as Dictionary).get("features", []):
 			_check(known.has(f.get("type")), "%s: feature %s is buildable" % [id, f.get("type")])
+		for size: String in ((data["buildings"][id] as Dictionary).get("levels", {}) as Dictionary):
+			for f: Dictionary in (data["buildings"][id]["levels"][size] as Dictionary).get("features", []):
+				_check(known.has(f.get("type")), "%s size %s: feature %s is buildable" % [id, size, f.get("type")])
 	# Every crop shape at every stage makes a mesh with something in it.
 	for shape in ["grain", "stalk", "berry", "fruit", "gourd", "root", "leafy", "flower", "spike", "fluff"]:
 		for stage in CropModels.STAGES:
@@ -173,3 +176,83 @@ func test_101_the_ground_knows_what_stands_on_it() -> void:
 	await get_tree().process_frame
 	_check(ground.shade_at(inside).x < 0.05, "moved away, its old spot is open grass again")
 	ground.queue_free()
+
+
+
+func test_102_bigger_buildings_look_bigger_and_sites_build_up() -> void:
+	var g := _farm()
+	for id in g.items:
+		if not g.items[id].get("kind", "") == "building":
+			continue
+		var fp := g.footprint(id)
+		var most := g.max_level(id)
+		for size: int in BuildingModel.sizes_of(id):
+			_check(size >= 2 and size <= most, "%s: changes for size %d, which it has (1..%d)" % [id, size, most])
+		# Each size up that changes anything adds to the building, and it stays on its footprint.
+		var last := 0
+		for level in range(1, most + 1):
+			var built := BuildingModel.build(g.item_data(id), fp, level)
+			var verts := _count_vertices(built)
+			var box := _bounds(built)
+			built.free()
+			if level == 1 or BuildingModel.sizes_of(id).has(level):
+				_check(verts > last, "%s size %d has more to it than the size before (%d > %d)" % [id, level, verts, last])
+			_check(box.position.x > -0.2 and box.position.z > -0.2 and box.end.x < fp.x + 0.2 and box.end.z < fp.y + 0.2,
+				"%s size %d stays on its footprint (%s)" % [id, level, box])
+			last = verts
+	# A building site shows how far it has got: every stage looks different, and it never spills off.
+	for id in ["horse_stable", "pig_pen", "nursery_barn", "garage"]:
+		var fp := g.footprint(id)
+		var seen := {}
+		for p: float in [0.0, 0.15, 0.3, 0.42, 0.6, 0.85, 0.95]:
+			var site := BuildingModel.build_site(g.item_data(id), fp, p)
+			var verts := _count_vertices(site)
+			var box := _bounds(site)
+			site.free()
+			_check(not seen.has(verts), "%s at %d%% looks different from the stage before" % [id, int(p * 100)])
+			seen[verts] = true
+			_check(box.end.x < fp.x + 0.35 and box.end.z < fp.y + 0.35, "%s site stays near its footprint" % id)
+	# Progress is the share of the materials put in.
+	var frame := {"uid": 1, "id": "horse_stable", "row": 0, "col": 0, "t": 0, "construction": {}}
+	_eq(g.land.construction_progress(frame), 0.0, "a new frame has nothing in it")
+	var need: Dictionary = g.item_data("horse_stable")["build_materials"]
+	var half := {}
+	var total := 0
+	for m in need:
+		half[m] = int(need[m]) / 2
+		total += int(need[m])
+	frame["construction"] = half
+	var given := 0
+	for m in half:
+		given += int(half[m])
+	_check(is_equal_approx(g.land.construction_progress(frame), float(given) / total), "half the materials, about half built")
+	_done(g)
+
+
+## The space a model takes up (its meshes' boxes, in the model's own space).
+func _bounds(node: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for mi: MeshInstance3D in _meshes_in(node):
+		var box := _local_xf(mi, node) * mi.get_aabb()
+		out = box if first else out.merge(box)
+		first = false
+	return out
+
+
+func _meshes_in(node: Node) -> Array[MeshInstance3D]:
+	var out: Array[MeshInstance3D] = []
+	if node is MeshInstance3D:
+		out.append(node)
+	for c in node.get_children():
+		out.append_array(_meshes_in(c))
+	return out
+
+
+func _local_xf(n: Node3D, root: Node3D) -> Transform3D:
+	var xf := Transform3D.IDENTITY
+	var at: Node = n
+	while at != root and at is Node3D:
+		xf = (at as Node3D).transform * xf
+		at = at.get_parent()
+	return xf

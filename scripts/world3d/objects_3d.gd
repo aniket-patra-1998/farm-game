@@ -119,8 +119,10 @@ func _mind_of(a: Animal3D) -> AnimalBehaviour:
 
 ## What a view shows: when this changes, it's rebuilt.
 func _key(o: Dictionary) -> String:
-	return "%s|%d|%d|%d|%s|%s|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
-		o.get("flip", false), Game.under_construction(o), Game.kind_of(o) == "tree" and Game.is_ready(o),
+	# A building site is rebuilt as each tenth of its materials goes in.
+	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
+	return "%s|%d|%d|%d|%s|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
+		o.get("flip", false), site, Game.kind_of(o) == "tree" and Game.is_ready(o),
 		o.get("crop", o.get("flower", ""))]
 
 
@@ -147,9 +149,9 @@ func _build(o: Dictionary) -> Node3D:
 			node = DecorModel.build(it, fp, o)
 		_:
 			if Game.under_construction(o):
-				node = ModelKit.bake(BuildingModel.build_frame(it, fp))
+				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 			else:
-				node = ModelKit.bake(BuildingModel.build(it, fp))
+				node = ModelKit.bake(BuildingModel.build(it, fp, Game.level_of(o)))
 	# The view stands at the footprint's centre on the ground, so it squashes, bounces and lands about
 	# its base; the model hangs under it, shifted back to the footprint's corner.
 	var holder := Node3D.new()
