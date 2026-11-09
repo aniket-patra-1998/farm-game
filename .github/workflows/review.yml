@@ -1,0 +1,65 @@
+name: Code review
+# An independent reviewer reads every push to main against REVIEW.md and posts its findings on the commit
+# and in the "Code review log" issue, so the next change can fix them.
+# Needs the Claude GitHub App installed on the repo and one secret: CLAUDE_CODE_OAUTH_TOKEN (a Claude
+# subscription, from `claude setup-token`) or ANTHROPIC_API_KEY (Claude Console). Without either, it skips.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "art/**"
+      - "docs/CATALOG.md"
+concurrency:
+  group: code-review
+  cancel-in-progress: false
+jobs:
+  review:
+    if: ${{ !contains(github.event.head_commit.message, '[skip review]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
+      id-token: write
+    steps:
+      - name: Check for a reviewer key
+        id: key
+        env:
+          OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          API: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$OAUTH$API" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; echo "No reviewer key set: skipping the review."; fi
+      - uses: actions/checkout@v6
+        if: steps.key.outputs.ok == 'true'
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        if: steps.key.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: |
+            --model claude-opus-5-5
+            --max-turns 40
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh api:*),Bash(gh issue:*)"
+          prompt: |
+            You are an independent senior game developer reviewing a push to ${{ github.repository }}.
+            Read CLAUDE.md and REVIEW.md first. Then review the changes in this push:
+            `git log --oneline ${{ github.event.before }}..${{ github.sha }}` and
+            `git diff ${{ github.event.before }}..${{ github.sha }}` (if the first commit id is all zeros, review
+            `git show ${{ github.sha }}`). Read the surrounding code as needed so you judge the change in context.
+
+            Judge it against every point in REVIEW.md: correctness, design and object orientation, generality,
+            transferability, phone performance, feel, tests and FarmVille fidelity. Be concrete and honest:
+            each finding has a severity (Blocker, Major, Minor, Nit), the file and line, what is wrong and
+            the fix. Say what is good too, briefly. End with a score out of 10 and the top three things to fix.
+            Don't nitpick generated files (docs/CATALOG.md, art/manifest.json, tools/generate_art.ipynb).
+
+            Post the review as a commit comment:
+            `gh api repos/${{ github.repository }}/commits/${{ github.sha }}/comments -f body="<review>"`.
+            Then add a short entry (date, commit, score, Blockers and Majors, one line each) to the open issue
+            titled "Code review log", creating it if it doesn't exist (`gh issue list --search "Code review log in:title"`,
+            `gh issue create`, `gh issue comment`). Don't change any code.

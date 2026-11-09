@@ -13,6 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Lint GDScript (gdlint)
+        run: |
+          pip install -q "gdtoolkit==4.*"
+          gdlint autoload scripts tests tools
+
       - name: Catalog document and art manifest are up to date
         run: |
           python3 tools/make_catalog.py --check

@@ -1,0 +1,10 @@
+# gdlint (GDScript Toolkit) settings: CI runs `gdlint` on every push.
+max-line-length: 170
+max-file-lines: 3600
+max-public-methods: 300
+max-returns: 12
+function-arguments-number: 10
+disable:
+  - no-elif-return
+  - no-else-return
+  - unused-argument
