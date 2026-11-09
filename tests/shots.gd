@@ -73,6 +73,15 @@ func _ready() -> void:
 		(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(int(spot[0]) + 1, int(spot[1])))), 0.9)
 		await _frames(4)
 		_shot(dir + "/%s.png" % spot[2])
+	# Dragging a cow: the Dairy Farms light up (the full one amber), the one under the finger brightest.
+	(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(16, 5))), 0.6)
+	grid.start_placing("cow")
+	grid.placing["row"] = 18
+	grid.placing["col"] = 5
+	grid.call("_hover_home", Vector2i(13, 5))
+	await _frames(6)
+	_shot(dir + "/homes_highlight.png")
+	grid.cancel_placing()
 	# Crafting buildings at 1, 3 and 5 stars, and the newer animals, on a fresh field.
 	Game.objects.clear()
 	_put("bakery", 2, 1, 1, {}, {"slots": []})
