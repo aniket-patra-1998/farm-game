@@ -72,6 +72,36 @@ func _ready() -> void:
 		cam.position = grid.to_global(grid.center_of(Game.index_of(int(spot[0]) + 1, int(spot[1]))))
 		await _frames(4)
 		_shot(dir + "/%s.png" % spot[2])
+	# Crafting buildings at 1, 3 and 5 stars, and the newer animals, on a fresh field.
+	Game.objects.clear()
+	_put("bakery", 2, 1, 1, {}, {"slots": []})
+	_put("winery", 2, 6, 3, {}, {"slots": []})
+	_put("spa", 2, 11, 5, {}, {"slots": []})
+	var bakery_uid := int(Game.objects[0]["uid"])
+	Game.objects[0]["slots"] = [{"r": "pumpkin_bread", "done": Game.now() + 7200}]
+	var animals := ["brown_cow", "pink_cow", "jersey_cow", "longhorn", "hereford_cow", "gelbvieh_cow", "galician_blond_cow",
+		"red_cow", "belted_cow", "hereford_calf", "pink_calf", "gray_horse", "black_pony", "mustang", "gray_foal",
+		"black_sheep", "mouflon_sheep", "saddleback_pig", "boer_goat", "arapawa_goat", "ugly_duckling", "swan",
+		"belted_duck", "baby_turkey", "wild_turkey", "cornish_chicken", "turtle"]
+	for k in animals.size():
+		_put(animals[k], 8 + 2 * int(k / 9.0), 1 + 2 * (k % 9), 1, {})
+	for o in Game.objects:
+		if not Game.is_crafting(o):
+			o["t"] = Game.now()
+	Game._rebuild_occupancy()
+	Game.objects_changed.emit()
+	cam.zoom = Vector2(0.62, 0.62)
+	cam.position = grid.to_global(grid.center_of(Game.index_of(8, 9)))
+	await _frames(6)
+	_shot(dir + "/crafting_and_animals.png")
+	# The Bakery's panel, mid-game.
+	Game.bushels = {"pumpkins": 6, "wheat": 9, "strawberries": 2, "carrots": 3}
+	Game.goods = {"pumpkin_bread": 2, "spicy_muffins": 1}
+	Game.crafted = {"pumpkin_bread": 16, "spicy_muffins": 6}
+	Game.objects[0]["level"] = 2
+	(_main.get("hud") as FarmHud).show_building(bakery_uid)
+	await _frames(6)
+	_shot(dir + "/crafting_panel.png")
 	print("Screenshots saved to " + dir)
 	get_tree().quit()
 
