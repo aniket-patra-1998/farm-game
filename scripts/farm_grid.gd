@@ -12,7 +12,7 @@ const TILE_W := 128.0
 const TILE_H := 64.0
 const EDGE_DEPTH := 28.0
 const HEADROOM := 230.0 # room above the back corner for tall things (the farmhouse sits there)
-const MEADOW_MARGIN := 14  # tiles of countryside drawn around the farm
+const MEADOW_MARGIN := 40  # tiles of countryside drawn around the farm
 ## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id].
 static var _scenery: Array = []
 
