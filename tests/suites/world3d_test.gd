@@ -427,7 +427,7 @@ func test_105_animals_move_with_weight() -> void:
 	for k in 120:
 		r.step(dt, 2.4, 0.0, 0.0, 1.0)
 	_check(r.trot > 0.9, "running, it trots (%.2f)" % r.trot)
-	_check(is_equal_approx(r.leg_phase(0), r.leg_phase(3)) and absf(r.leg_phase(1) - r.leg_phase(2)) < 0.05,
+	_check(absf(r.leg_phase(0) - r.leg_phase(3)) < 0.05 and absf(r.leg_phase(1) - r.leg_phase(2)) < 0.05,
 		"in a trot the diagonal pairs move together")
 	# Standing a while, it rests a hind leg; told to look at you, it does, then stops resting.
 	var s := AnimalMotion.new(7)

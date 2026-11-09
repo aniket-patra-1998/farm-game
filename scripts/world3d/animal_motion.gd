@@ -46,7 +46,7 @@ var _trot := Spring.new()
 var _speed := 0.0
 var _heading := 0.0
 var _started := false
-var _air := 0.0
+var _air := 0.0                # the top of the hop it is in (0 on the ground)
 var _rng := RandomNumberGenerator.new()
 var _rest_in := 0.0
 var _rest_left := 0.0
@@ -92,9 +92,12 @@ func _step(dt: float, speed: float, heading: float, hop: float, stride: float, l
 	tail = _tail.step(clampf(-turn * TAIL_SWING, -0.9, 0.9) + pitch * 1.5, dt, 1.6, 0.25)
 	ears = _ears.step(clampf(-turn * 0.08 - accel * 0.02, -0.5, 0.5), dt, 2.4, 0.3)
 	# Landing from a hop squashes it, and it springs back.
-	if _air > 0.05 and hop <= 0.02:
+	# (The higher the hop, the harder the landing.)
+	if hop > 0.02:
+		_air = maxf(_air, hop)
+	elif _air > 0.05:
 		_squash.v -= _air * SQUASH * 18.0
-	_air = hop
+		_air = 0.0
 	squash = -_squash.step(0.0, dt, 4.0, 0.35)
 	# Into a trot when it runs.
 	trot = clampf(_trot.step(smoothstep(TROT_FROM - 0.25, TROT_FROM + 0.25, speed), dt, 3.0, 1.0), 0.0, 1.0)
