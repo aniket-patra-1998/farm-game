@@ -84,7 +84,7 @@ static func turtle(ci: CanvasItem, g: Vector2, rig: AnimalRig, p: AnimalPose, bo
 static func bee(ci: CanvasItem, g: Vector2, rig: AnimalRig, p: AnimalPose, body: Color) -> float:
 	var k := rig.scale
 	var r := rig.pair("body", Vector2(6, 4))
-	var hover := rig.size("leg", 18.0) + sin(p.time * 3.3) * 2.0 * k
+	var hover := rig.size("hover", 18.0) + sin(p.time * 3.3) * 2.0 * k
 	var c := g + Vector2(sin(p.time * 1.7) * 1.5 * k, -hover)
 	AnimalArt.shadow(ci, g + Vector2(0, 1), r.x * 0.9, r.y * 0.35, 0.6)
 	var beat := sin(p.time * 60.0)

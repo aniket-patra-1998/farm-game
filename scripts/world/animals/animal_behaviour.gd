@@ -1,9 +1,10 @@
 class_name AnimalBehaviour
 extends RefCounted
-## What one animal is doing, decided like FarmVille's animals did it: little walks around its spot,
-## long spells of grazing or pecking, looking around, the odd flap or tail fan. Babies of every
-## species share one temperament (their rig's young behaviour): restless, with bursts of bouncing play.
-## Runs a small state machine and writes an AnimalPose every frame; the animal's piece reads `offset` and `facing`.
+## What one animal is doing. FarmVille's animals stood, wandered a little near their spot and ate; this
+## keeps that rhythm and adds our own touch: real walk cycles, grazing and chewing, looking around, the
+## odd flap or tail fan, and babies of every species sharing one temperament (their rig's young
+## behaviour): restless, with bursts of bouncing play. Runs a small state machine and writes an
+## AnimalPose every frame; the animal's piece reads `offset` and `facing`.
 ##
 ## Every value eases toward its target (no snapping), the walk cycle advances with the distance actually
 ## walked (so feet stay planted), and each animal has its own random stream, seeded by its uid, so a farm

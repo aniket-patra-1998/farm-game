@@ -31,7 +31,7 @@
       "speed": 14, "behaviour": {"graze": 0.4, "walk": 0.3, "idle": 0.2, "look": 0.1}},
     "turtle": {"type": "shell", "body": [16, 10], "leg": 4, "head": [7, 5], "speed": 4,
       "behaviour": {"graze": 0.3, "walk": 0.3, "idle": 0.4, "look": 0.0}},
-    "bee": {"type": "bug", "body": [6, 4], "leg": 18, "speed": 10,
+    "bee": {"type": "bug", "body": [6, 4], "hover": 18, "speed": 10,
       "behaviour": {"graze": 0.0, "walk": 0.6, "idle": 0.4, "look": 0.0}},
     "chicken": {"type": "bird", "body": [13, 11], "leg": 9, "neck": [7, 7], "neck_up": -1.25, "head": [6.5, 6.5],
       "beak": "pointed", "comb": true, "wattle": true, "tail": "fan", "speed": 13,

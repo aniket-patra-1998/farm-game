@@ -3,6 +3,10 @@ extends BuildingDef
 ## The starter barn: broken until repaired with materials, then storage.
 
 
+func stores_anything() -> bool:
+	return true
+
+
 func validate(catalog) -> Array[String]:
 	var out := super.validate(catalog)
 	for m in data.get("repair_parts", {}):

@@ -518,9 +518,11 @@ func can_afford_item(item_id: String) -> bool:
 	return coins >= int(it.get("cost", 0))
 
 
-## Pays for buying one of an item: checks its level, takes its price (coins, gems, or a crafting
-## building's rising price) and gives the XP for buying it. False, with a message, if it can't be bought.
-func pay_for(item_id: String) -> bool:
+## Buys one of an item, wherever it's going (onto the farm or straight into a home): checks its level,
+## takes its price (coins, gems, or a crafting building's rising price), and applies what buying it does
+## (its XP, the decorating ribbon, a first vehicle filling the fuel tank). False, with a message, if it
+## can't be bought.
+func buy_item(item_id: String) -> bool:
 	var it := item_data(item_id)
 	if it.is_empty():
 		return false
@@ -547,12 +549,14 @@ func pay_for(item_id: String) -> bool:
 		add_xp(bought_xp)
 	if it["kind"] == "decor":
 		ribbons.bump("decor_bought", 1)
+	if it["kind"] == "vehicle":
+		vehicles.on_vehicle_bought()
 	return true
 
 
 func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	var it := item_data(item_id)
-	if it.is_empty() or not can_place(item_id, row, col) or not pay_for(item_id):
+	if it.is_empty() or not can_place(item_id, row, col) or not buy_item(item_id):
 		return false
 	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
 	if it.get("special", "") == "garden_shed":
@@ -573,7 +577,6 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 			message.emit(tr("CHASSIS_PLACED_TAP_IT_TO_ADD") % it["name"])
 		else:
 			message.emit(tr("BOUGHT_PICK_IT_IN_THE_TOOLBAR") % it["name"])
-		vehicles.on_vehicle_bought()
 	next_uid += 1
 	grass_over(item_id, row, col)
 	objects.append(obj)
@@ -747,6 +750,13 @@ func collect(uid: int) -> Dictionary:
 
 
 # ---------------------------------------------------------------- buildings
+
+
+## Can this be bought straight into a home? Not if it's finished with materials on the farm (a frame or
+## the Combine's chassis): that happens where it stands.
+func can_buy_into_home(item_id: String) -> bool:
+	var d := catalog.get_def(item_id)
+	return d is PlaceableDef and not (d as PlaceableDef).built_in_place()
 
 
 func building_accepts(building: Dictionary, item_id: String) -> bool:

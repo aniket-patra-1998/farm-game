@@ -41,6 +41,16 @@ func one_each() -> Array:
 	return data.get("one_each", [])
 
 
+## Stores anything already on the farm, instead of housing one kind (the Barn).
+func stores_anything() -> bool:
+	return false
+
+
+## Babies moved in here grow up (the Nursery Barn).
+func grows_young() -> bool:
+	return str(data.get("special", "")) == "nursery"
+
+
 ## Whether item item_kind/item_id can move in.
 func accepts(item_id: String, item_kind: String) -> bool:
 	if holds().has(item_id) or one_each().has(item_id):

@@ -17,6 +17,8 @@ var young := false
 var scale := 1.0         ## the whole animal
 var head_scale := 1.0    ## the head on top of that (babies have big heads)
 var values := {}         ## every field, merged
+var body_color := Color.WHITE    ## the coat (lighter for babies), parsed once
+var accent_color := Color.BLACK  ## markings, mane, comb
 
 
 static func of(it: Dictionary) -> AnimalRig:
@@ -63,6 +65,8 @@ static func _build(it: Dictionary) -> AnimalRig:
 		_make_young(r, v)
 	r.type = str(v.get("type", "quad"))
 	r.values = v
+	r.body_color = Color.html(str(it.get("color", "#ffffff"))).lightened(float(v.get("lighten", 0.0)))
+	r.accent_color = Color.html(str(it.get("accent", "#333333")))
 	return r
 
 

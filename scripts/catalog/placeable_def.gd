@@ -16,6 +16,12 @@ func sell_value() -> int:
 	return int(round(coin_cost() * SELL_SHARE))
 
 
+## Arrives as a frame or a chassis and is finished with materials on the farm (FarmVille's way), so it
+## can't be bought straight into a home.
+func built_in_place() -> bool:
+	return data.has("build_materials")
+
+
 ## Square things turn without changing size. Buildings keep their level badge readable.
 func can_rotate() -> bool:
 	var fp := footprint()

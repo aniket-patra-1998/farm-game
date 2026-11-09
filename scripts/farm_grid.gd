@@ -124,6 +124,7 @@ func _reward(at: Vector2, coins: int, xp: int) -> void:
 
 
 func _on_objects_changed() -> void:
+	_refresh_homes()  # a home may have filled up, or gone
 	pieces.queue_sync()
 	shadows.queue_redraw()
 
@@ -380,11 +381,14 @@ func _draw_placing(ci: CanvasItem) -> void:
 	# Every home that takes it lights up; the one under the finger glows brightest.
 	var t := Time.get_ticks_msec() / 1000.0
 	var hovered := int(placing.get("home", -1))
-	for b in Game.homes.homes_for(placing["item"], int(placing["uid"])):
+	var homes: Dictionary = placing.get("homes", {})
+	for uid in homes:
+		var b := Game.object_by_uid(int(uid))
+		if b.is_empty():
+			continue
 		var bfp := Game.footprint(b["id"])
-		var fits := Game.homes.fit(b, placing["item"], int(placing["uid"])) == HousingSystem.Fit.FITS
-		PlaceholderArt.draw_home_highlight(ci, corners_of(int(b["row"]), int(b["col"]), bfp.x, bfp.y), fits,
-			int(b["uid"]) == hovered, t)
+		PlaceholderArt.draw_home_highlight(ci, corners_of(int(b["row"]), int(b["col"]), bfp.x, bfp.y),
+			homes[uid] == HousingSystem.Fit.FITS, int(uid) == hovered, t)
 	if hovered == -1:
 		var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
 		PlaceholderArt.draw_footprint(ci, corners, ok)
@@ -508,20 +512,42 @@ func start_placing(item_id: String, uid := -1) -> void:
 		placing["row"] = int(o["row"])
 		placing["col"] = int(o["col"])
 	var hint := tr("DRAG_TO_MOVE_THE_THEN_LET") if uid != -1 else tr("DRAG_TO_PLACE_THE_THEN_LET")
+	_refresh_homes()
 	placing_changed.emit(hint % Game.item_data(item_id)["name"])
 	queue_redraw()
 
 
 
 
+## Where the thing being placed comes from, as HousingSystem expects it.
+func _placing_source() -> Dictionary:
+	if int(placing.get("uid", -1)) != -1:
+		return {"uid": int(placing["uid"])}
+	if int(placing.get("stored", -1)) >= 0:
+		return {"stored": int(placing["stored"])}
+	return {"buy": true}
+
+
+## The homes that take what's being placed, with how each fits: worked out when placing starts and when
+## the farm changes, so drawing them every frame costs nothing.
+func _refresh_homes() -> void:
+	if placing.is_empty():
+		return
+	var fits := {}
+	for pair in Game.homes.homes_for(placing["item"], _placing_source()):
+		fits[int(pair[0]["uid"])] = pair[1]
+	placing["homes"] = fits
+	if not fits.has(int(placing.get("home", -1))):
+		placing["home"] = -1
+
+
 ## Under the finger, a home that takes what's being placed? Remembers it and says what a drop would do.
 func _hover_home(tile: Vector2i) -> void:
 	var home := -1
+	var homes: Dictionary = placing.get("homes", {})
 	if tile.x >= 0 and tile.x < Game.farm_size and tile.y >= 0 and tile.y < Game.farm_size:
 		var b := Game.object_at(Game.index_of(tile.x, tile.y))
-		var uid := int(placing["uid"])
-		if not b.is_empty() and int(b["uid"]) != uid \
-				and Game.homes.fit(b, placing["item"], uid) != HousingSystem.Fit.WRONG_KIND:
+		if not b.is_empty() and homes.has(int(b["uid"])):
 			home = int(b["uid"])
 	if home == int(placing.get("home", -1)):
 		return
@@ -532,7 +558,7 @@ func _hover_home(tile: Vector2i) -> void:
 			else tr("DRAG_TO_PLACE_THE_THEN_LET")) % thing)
 		return
 	var b := Game.object_by_uid(home)
-	var why := Game.homes.fit(b, placing["item"], int(placing["uid"]))
+	var why: HousingSystem.Fit = homes[home]
 	placing_changed.emit(tr("DROP_TO_MOVE_INTO") % [thing, Game.item_data(b["id"])["name"]]
 		if why == HousingSystem.Fit.FITS else Game.homes.refusal(b, placing["item"], why))
 
@@ -541,6 +567,7 @@ func _hover_home(tile: Vector2i) -> void:
 func start_placing_stored(index: int) -> void:
 	var o: Dictionary = Game.storage.stored[index]
 	placing = {"item": o["id"], "uid": -1, "stored": index, "row": -1, "col": -1}
+	_refresh_homes()
 	placing_changed.emit(tr("DRAG_TO_PLACE_THE_THEN_LET") % Game.item_data(o["id"])["name"])
 	queue_redraw()
 
@@ -585,12 +612,13 @@ func _placing_input(event: InputEvent) -> void:
 		return
 	if int(placing.get("home", -1)) != -1:
 		# Dropped on a home: in it goes (or a message says why not, and it stays in hand).
-		var source := {}
-		if int(placing["uid"]) != -1:
-			source = {"uid": int(placing["uid"])}
-		elif int(placing.get("stored", -1)) >= 0:
-			source = {"stored": int(placing["stored"])}
+		var home := Game.object_by_uid(int(placing["home"]))
+		var source := _placing_source()
 		if Game.homes.put_in_home(int(placing["home"]), placing["item"], source):
+			if source.has("buy"):
+				var hfp := Game.footprint(home["id"])
+				_float(corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
+					"-%d" % int(Game.item_data(placing["item"])["cost"]), COLOR_COST)
 			cancel_placing()
 		return
 	var row := int(placing["row"])

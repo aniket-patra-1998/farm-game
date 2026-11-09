@@ -207,29 +207,29 @@ static func _head(ci: CanvasItem, hc: Vector2, angle: float, size: Vector2, rig:
 	var k := rig.scale * rig.head_scale
 	var hl := size.x
 	var hh := size.y
-	var at := func(v: Vector2) -> Vector2: return hc + v.rotated(angle)
-	_ears(ci, at, angle, hl, hh, k, rig, p, col)
-	var skull := AnimalArt.ellipse(at.call(Vector2(-hl * 0.12, 0)), hl * 0.44, hh * 0.5, angle, 20)
+	_ears(ci, hc, angle, hl, hh, k, rig, p, col)
+	var skull := AnimalArt.ellipse(_at(hc, angle, Vector2(-hl * 0.12, 0)), hl * 0.44, hh * 0.5, angle, 20)
 	AnimalArt.fill_lit(ci, skull, col, k)
 	var muzzle_col := _muzzle_colour(rig.text("muzzle", "light"), col)
 	var jaw := Vector2(0, p.jaw * 0.6 * k)
 	if rig.text("muzzle") == "snout":
-		var sc: Vector2 = at.call(Vector2(hl * 0.42, hh * 0.06) + jaw)
+		var sc: Vector2 = _at(hc, angle, Vector2(hl * 0.42, hh * 0.06) + jaw)
 		AnimalArt.fill(ci, AnimalArt.ellipse(sc, 2.6 * k, hh * 0.34, angle, 14), muzzle_col, k)
-		ci.draw_circle(at.call(Vector2(hl * 0.47, -hh * 0.06) + jaw), 0.9 * k, AnimalArt.EYE)
-		ci.draw_circle(at.call(Vector2(hl * 0.47, hh * 0.18) + jaw), 0.9 * k, AnimalArt.EYE)
+		ci.draw_circle(_at(hc, angle, Vector2(hl * 0.47, -hh * 0.06) + jaw), 0.9 * k, AnimalArt.EYE)
+		ci.draw_circle(_at(hc, angle, Vector2(hl * 0.47, hh * 0.18) + jaw), 0.9 * k, AnimalArt.EYE)
 	else:
-		var mc: Vector2 = at.call(Vector2(hl * 0.3, hh * 0.12) + jaw)
+		var mc: Vector2 = _at(hc, angle, Vector2(hl * 0.3, hh * 0.12) + jaw)
 		AnimalArt.fill(ci, AnimalArt.ellipse(mc, hl * 0.3, hh * 0.38, angle, 18), muzzle_col, k)
-		ci.draw_circle(at.call(Vector2(hl * 0.5, hh * 0.02) + jaw), 0.9 * k, AnimalArt.EYE)
+		ci.draw_circle(_at(hc, angle, Vector2(hl * 0.5, hh * 0.02) + jaw), 0.9 * k, AnimalArt.EYE)
 	if rig.flag("beard"):
-		AnimalArt.fill(ci, AnimalArt.leaf(at.call(Vector2(hl * 0.25, hh * 0.42)), angle + PI * 0.55, 5.0 * k, 3.0 * k),
-			col.darkened(0.2), k)
+		var chin := _at(hc, angle, Vector2(hl * 0.25, hh * 0.42))
+		AnimalArt.fill(ci, AnimalArt.leaf(chin, angle + PI * 0.55, 5.0 * k, 3.0 * k), col.darkened(0.2), k)
 	if rig.flag("tusks"):
-		ci.draw_arc(at.call(Vector2(hl * 0.36, hh * 0.3)), 2.0 * k, angle - PI * 0.9, angle - PI * 0.1, 6, AnimalArt.CREAM,
-			1.6 * k, true)
-	_horns(ci, at, angle, hl, hh, k, rig.text("horns", "none"), accent)
-	AnimalArt.eye(ci, at.call(Vector2(-hl * 0.06, -hh * 0.16)), 1.7 * k * rig.num("eye_scale", 1.0), p.blink, col, k)
+		ci.draw_arc(_at(hc, angle, Vector2(hl * 0.36, hh * 0.3)), 2.0 * k, angle - PI * 0.9, angle - PI * 0.1, 6,
+			AnimalArt.CREAM, 1.6 * k, true)
+	_horns(ci, hc, angle, hl, hh, k, rig.text("horns", "none"), accent)
+	AnimalArt.eye(ci, _at(hc, angle, Vector2(-hl * 0.06, -hh * 0.16)), 1.7 * k * rig.num("eye_scale", 1.0), p.blink,
+		col, k)
 
 
 static func _muzzle_colour(kind: String, head_col: Color) -> Color:
@@ -243,9 +243,9 @@ static func _muzzle_colour(kind: String, head_col: Color) -> Color:
 	return head_col.lightened(0.25)
 
 
-static func _ears(ci: CanvasItem, at: Callable, angle: float, hl: float, hh: float, k: float, rig: AnimalRig,
+static func _ears(ci: CanvasItem, hc: Vector2, angle: float, hl: float, hh: float, k: float, rig: AnimalRig,
 		p: AnimalPose, col: Color) -> void:
-	var base: Vector2 = at.call(Vector2(-hl * 0.34, -hh * 0.36))
+	var base: Vector2 = _at(hc, angle, Vector2(-hl * 0.34, -hh * 0.36))
 	var flick := p.ear * 0.55
 	match rig.text("ears", "side"):
 		"up":
@@ -262,9 +262,9 @@ static func _ears(ci: CanvasItem, at: Callable, angle: float, hl: float, hh: flo
 				1.0 * k, true)
 
 
-static func _horns(ci: CanvasItem, at: Callable, angle: float, hl: float, hh: float, k: float, kind: String,
+static func _horns(ci: CanvasItem, hc: Vector2, angle: float, hl: float, hh: float, k: float, kind: String,
 		accent: Color) -> void:
-	var root: Vector2 = at.call(Vector2(-hl * 0.18, -hh * 0.46))
+	var root: Vector2 = _at(hc, angle, Vector2(-hl * 0.18, -hh * 0.46))
 	var w := 2.4 * k
 	match kind:
 		"nubs":
@@ -306,3 +306,8 @@ static func _mane(ci: CanvasItem, chest: Vector2, hc: Vector2, neck_w: float, ri
 		var sway := sin(p.time * 3.0 + i) * 0.6 * k + p.stride * sin(p.gait * TAU * 2.0 + i) * 1.0 * k
 		var hang := -d * 2.5 * k - up * (3.5 * k) + Vector2(sway, 0)
 		ci.draw_line(crest[i], crest[i] + hang, accent, 2.0 * k, true)
+
+
+## A point in the head's own frame (x down the muzzle), on the canvas.
+static func _at(hc: Vector2, angle: float, v: Vector2) -> Vector2:
+	return hc + v.rotated(angle)

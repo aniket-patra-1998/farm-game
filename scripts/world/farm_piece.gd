@@ -16,6 +16,7 @@ var motion := ""        # "", "animal", "bird", "tree": how ObjectLayer animates
 var phase := 0.0        # each piece moves on its own beat
 var plants: CropPlants  # a plot's plants, drawn and swayed separately from its soil
 var flip := 1.0         # the object's own flip (rotate tool)
+var redraw_wait := 0.0  # an idle animal's seconds until its next redraw (ObjectLayer)
 var animal: AnimalBehaviour  # an animal's mind and pose: where it walks, what its legs, head and tail do
 ## Squash and stretch, and a lift off the ground, for drop-ins, bounces and pops. Animated pieces
 ## (animals) fold these into their own motion each frame; still ones apply them right away.

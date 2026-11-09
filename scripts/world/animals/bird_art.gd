@@ -146,10 +146,9 @@ static func _neck_and_head(ci: CanvasItem, g: Vector2, c: Vector2, r: Vector2, r
 static func _head(ci: CanvasItem, hc: Vector2, angle: float, size: Vector2, rig: AnimalRig, p: AnimalPose,
 		body: Color, accent: Color) -> void:
 	var k := rig.scale * rig.head_scale
-	var at := func(v: Vector2) -> Vector2: return hc + v.rotated(angle)
 	if rig.flag("comb"):
 		for i in 3:
-			ci.draw_circle(at.call(Vector2((-0.3 + 0.3 * i) * size.x, -size.y * (1.0 - 0.06 * absf(i - 1.0)))),
+			ci.draw_circle(_at(hc, angle, Vector2((-0.3 + 0.3 * i) * size.x, -size.y * (1.0 - 0.06 * absf(i - 1.0)))),
 				(2.2 - 0.3 * absf(i - 1.0)) * k, COMB)
 	var head_col := body
 	if rig.family == "turkey":
@@ -158,19 +157,19 @@ static func _head(ci: CanvasItem, hc: Vector2, angle: float, size: Vector2, rig:
 	var open := 0.0 if p.head < 0.8 else absf(sin(p.time * 18.0)) * 0.25  # nibbling at the ground
 	match rig.text("beak", "pointed"):
 		"bill":
-			var b0: Vector2 = at.call(Vector2(size.x * 0.8, -size.y * 0.1))
+			var b0: Vector2 = _at(hc, angle, Vector2(size.x * 0.8, -size.y * 0.1))
 			AnimalArt.fill(ci, AnimalArt.ellipse(b0 + Vector2.from_angle(angle) * size.x * 0.45, size.x * 0.62,
 				size.y * 0.3, angle + open * 0.3, 12), BEAK, k)
 		_:
-			var root: Vector2 = at.call(Vector2(size.x * 0.75, -size.y * 0.05))
-			var tip: Vector2 = at.call(Vector2(size.x * 1.55, size.y * 0.15))
-			var low: Vector2 = at.call(Vector2(size.x * 0.75, size.y * (0.35 + open)))
+			var root: Vector2 = _at(hc, angle, Vector2(size.x * 0.75, -size.y * 0.05))
+			var tip: Vector2 = _at(hc, angle, Vector2(size.x * 1.55, size.y * 0.15))
+			var low: Vector2 = _at(hc, angle, Vector2(size.x * 0.75, size.y * (0.35 + open)))
 			AnimalArt.fill(ci, PackedVector2Array([root, tip, low]), BEAK, k)
 	if rig.flag("wattle"):
-		var wc: Vector2 = at.call(Vector2(size.x * 0.75, size.y * 0.85))
+		var wc: Vector2 = _at(hc, angle, Vector2(size.x * 0.75, size.y * 0.85))
 		AnimalArt.fill(ci, AnimalArt.ellipse(wc + Vector2(0, sin(p.time * 7.0) * 0.4 * k), 1.6 * k, 2.6 * k, 0.0, 10),
 			COMB, k)
-	AnimalArt.eye(ci, at.call(Vector2(size.x * 0.2, -size.y * 0.2)), 1.5 * k * rig.num("eye_scale", 1.0), p.blink,
+	AnimalArt.eye(ci, _at(hc, angle, Vector2(size.x * 0.2, -size.y * 0.2)), 1.5 * k * rig.num("eye_scale", 1.0), p.blink,
 		head_col, k)
 
 
@@ -195,3 +194,8 @@ static func _fluff(ci: CanvasItem, c: Vector2, r: Vector2, tilt: float, body: Co
 	for i in 4:
 		var at := c + Vector2((-0.45 + 0.3 * i) * r.x, (-0.15 + 0.2 * (i % 2)) * r.y).rotated(tilt)
 		ci.draw_arc(at, 1.8 * k, PI * 1.1, PI * 1.9, 5, body.darkened(0.1), maxf(1.0, k), true)
+
+
+## A point in the head's own frame (x down the muzzle), on the canvas.
+static func _at(hc: Vector2, angle: float, v: Vector2) -> Vector2:
+	return hc + v.rotated(angle)

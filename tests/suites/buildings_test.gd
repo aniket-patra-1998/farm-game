@@ -365,7 +365,7 @@ func test_92_animals_only_go_into_homes_made_for_them() -> void:
 	_eq(g.homes.fit(coop, "cow"), FIT.WRONG_KIND, "a cow can't live in the Coop")
 	_eq(g.homes.fit(coop, "turkey"), FIT.FITS, "the Coop takes turkeys as well as chickens")
 	_eq(g.homes.fit(stable, "horse"), FIT.NOT_BUILT, "a frame takes no one yet")
-	var cow_homes: Array = g.homes.homes_for("cow").map(func(b: Dictionary) -> String: return b["id"])
+	var cow_homes: Array = g.homes.homes_for("cow").map(func(pair: Array) -> String: return pair[0]["id"])
 	_check(cow_homes.has("cow_shed") and not cow_homes.has("chicken_coop") and not cow_homes.has("horse_stable"),
 		"only the Dairy Farm lights up for a cow (%s)" % [cow_homes])
 	# A cow on the farm, dropped on the wrong home, stays put; on the right one, it moves in.
@@ -382,12 +382,12 @@ func test_92_animals_only_go_into_homes_made_for_them() -> void:
 	# Bought straight into its home: paid for once, no spot on the farm needed.
 	var coins := g.coins
 	var objects := g.objects.size()
-	_check(g.homes.put_in_home(int(coop["uid"]), "chicken", {}), "a chicken bought straight into the Coop")
+	_check(g.homes.put_in_home(int(coop["uid"]), "chicken", {"buy": true}), "a chicken bought straight into the Coop")
 	_eq(g.coins, coins - int(g.item_data("chicken")["cost"]), "paid its price")
 	_eq(g.objects.size(), objects, "nothing new standing on the farm")
 	_eq(int(coop["inside"]["chicken"]), 1, "it's inside")
 	# A bull is one-each: the second is turned away, without taking a space.
-	_check(not g.homes.put_in_home(int(dairy["uid"]), "bull", {}), "a bull can't be bought (it's won)")
+	_check(not g.homes.put_in_home(int(dairy["uid"]), "bull", {"buy": true}), "a bull can't be bought (it's won)")
 	g.place_somewhere("bull")
 	var bull := int(g.objects[-1]["uid"])
 	g.place_somewhere("bull")
@@ -401,7 +401,7 @@ func test_92_animals_only_go_into_homes_made_for_them() -> void:
 	# A full home is lit amber and refuses more.
 	dairy["inside"]["cow"] = g.capacity(dairy)
 	_eq(g.homes.fit(dairy, "cow"), FIT.FULL, "a full Dairy Farm")
-	_check(g.homes.homes_for("cow").has(dairy), "still lit (amber) while full")
+	_check(g.homes.homes_for("cow").has([dairy, FIT.FULL]), "still lit (amber) while full")
 	# From the Barn into a home.
 	g.storage.stored.append({"uid": 9999, "id": "turkey", "t": 0})
 	var stored_n := g.storage.stored.size()
@@ -420,5 +420,44 @@ func test_92_animals_only_go_into_homes_made_for_them() -> void:
 			_check(g.homes.put_in_home(int(barn["uid"]), "pink_flamingo", {"uid": int(flamingo["uid"])}),
 				"the Barn stores a decoration dropped on it")
 		else:
-			_eq(g.homes.fit(barn, "pink_flamingo", int(flamingo["uid"])), FIT.BARN_BROKEN, "a broken Barn")
+			_eq(g.homes.fit(barn, "pink_flamingo", {"uid": int(flamingo["uid"])}), FIT.BARN_BROKEN, "a broken Barn")
+	_done(g)
+
+
+func test_93_vehicles_and_babies_through_the_drop() -> void:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(35)
+	g.farm_size = 24
+	const FIT := HousingSystem.Fit
+	_check(g.buy_and_place("garage", 8, 8), "a Garage")
+	var garage := g.object_at(g.index_of(8, 8))
+	_all_materials(g, 100)
+	if g.under_construction(garage):
+		g.land.add_materials(int(garage["uid"]))
+	_check(not g.under_construction(garage), "the Garage is built")
+	# The first vehicle bought straight into the Garage still fills the fuel tank.
+	_check(not g.vehicles.fuel_unlocked, "no fuel before any vehicle")
+	_check(g.homes.put_in_home(int(garage["uid"]), "tractor", {"buy": true}), "a tractor bought into the Garage")
+	_check(g.vehicles.fuel_unlocked and g.vehicles.fuel > 0, "buying it filled the fuel tank")
+	# A Combine is built from its chassis on the farm: it can't skip that by going straight in.
+	_eq(g.homes.fit(garage, "combine", {"buy": true}), FIT.BUILD_FIRST, "a Combine is built where it stands")
+	var coins := g.coins
+	_check(not g.homes.put_in_home(int(garage["uid"]), "combine", {"buy": true}), "refused")
+	_eq(g.coins, coins, "and not charged")
+	_check(g.buy_and_place("combine", 14, 14), "a Combine chassis on the farm")
+	var chassis := g.object_at(g.index_of(14, 14))
+	_eq(g.homes.fit(garage, "combine", {"uid": int(chassis["uid"])}), FIT.BUILD_FIRST,
+		"an unfinished chassis isn't lit up as fitting")
+	_check(not g.homes.put_in_home(int(garage["uid"]), "combine", {"uid": int(chassis["uid"])}),
+		"but an unfinished chassis can't park")
+	# A calf dropped in the Nursery Barn starts growing up.
+	_check(g.buy_and_place("nursery_barn", 8, 14), "a Nursery Barn")
+	var nursery := g.object_at(g.index_of(8, 14))
+	g.land.add_materials(int(nursery["uid"]))
+	_check(not g.under_construction(nursery), "the Nursery is built")
+	g.place_somewhere("calf")
+	var calf := int(g.objects[-1]["uid"])
+	_check(g.homes.put_in_home(int(nursery["uid"]), "calf", {"uid": calf}), "the calf moves in")
+	_eq((nursery.get("growing", []) as Array).size(), 1, "and starts growing up")
 	_done(g)

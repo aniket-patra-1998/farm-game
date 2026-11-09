@@ -115,6 +115,12 @@ func _ready() -> void:
 	# The same farm a moment later, so the animals are caught mid-stride.
 	await _frames(40)
 	_shot(dir + "/animals_moving.png")
+	# How long a frame's game logic and drawing take with these animals walking about (printed for the log).
+	var process_ms := 0.0
+	for k in 120:
+		await RenderingServer.frame_post_draw
+		process_ms += Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+	print("PERF animals=%d process_ms_avg=%.2f" % [Game.objects.size(), process_ms / 120.0])
 	# The Bakery's panel, mid-game.
 	Game.crafting.bushels = {"pumpkins": 6, "wheat": 9, "strawberries": 2, "carrots": 3}
 	Game.crafting.goods = {"pumpkin_bread": 2, "spicy_muffins": 1}

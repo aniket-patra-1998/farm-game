@@ -20,14 +20,17 @@ const BUBBLE := Color("#fffaf0")
 const BUBBLE_EDGE := Color("#5c3a1e")
 const EGG := Color("#f6e7c1")
 
+static var _circles := {}  # n -> unit circle points
+static var _barrels := {}  # n -> unit barrel points
+
 
 ## Draws one animal standing on `ground` (the middle of its feet). Pass the animal's pose to animate it;
 ## without one it stands still.
 static func draw(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool, pose: AnimalPose = null) -> void:
 	var p: AnimalPose = pose if pose != null else AnimalPose.rest()
 	var rig := AnimalRig.of(it)
-	var body := Color.html(str(it.get("color", "#ffffff"))).lightened(rig.num("lighten", 0.0))
-	var accent := Color.html(str(it.get("accent", "#333333")))
+	var body := rig.body_color
+	var accent := rig.accent_color
 	var top: float
 	match rig.type:
 		"bird":
@@ -83,12 +86,24 @@ static func joint(hip: Vector2, foot: Vector2, a: float, b: float, bend: float) 
 # ---------------------------------------------------------------- shapes
 
 
-## Points around an ellipse, rotated by `angle`.
+## Points around an ellipse, rotated by `angle` (from a cached unit circle: no trigonometry per point).
 static func ellipse(c: Vector2, rx: float, ry: float, angle := 0.0, n := 20) -> PackedVector2Array:
+	var unit := _circle(n)
 	var pts := PackedVector2Array()
+	pts.resize(n)
+	var xf := Transform2D(angle, c) * Transform2D(Vector2(rx, 0), Vector2(0, ry), Vector2.ZERO)
 	for i in n:
-		var a := TAU * i / n
-		pts.append(c + Vector2(cos(a) * rx, sin(a) * ry).rotated(angle))
+		pts[i] = xf * unit[i]
+	return pts
+
+
+static func _circle(n: int) -> PackedVector2Array:
+	var pts: PackedVector2Array = _circles.get(n, PackedVector2Array())
+	if pts.is_empty():
+		pts.resize(n)
+		for i in n:
+			pts[i] = Vector2.from_angle(TAU * i / n)
+		_circles[n] = pts
 	return pts
 
 
@@ -117,9 +132,9 @@ static func fill_lit(ci: CanvasItem, pts: PackedVector2Array, col: Color, k: flo
 
 
 static func outline(ci: CanvasItem, pts: PackedVector2Array, k: float) -> void:
-	var closed := pts.duplicate()
-	closed.append(pts[0])
-	ci.draw_polyline(closed, OUTLINE, maxf(1.0, 1.5 * k), true)
+	var w := maxf(1.0, 1.5 * k)
+	ci.draw_polyline(pts, OUTLINE, w, true)
+	ci.draw_line(pts[pts.size() - 1], pts[0], OUTLINE, w, true)
 
 
 ## A tapered limb from a (width wa) to b (width wb), with rounded joints and outlined sides.
@@ -169,14 +184,21 @@ static func shadow(ci: CanvasItem, c: Vector2, rx: float, ry: float, strength :=
 	ci.draw_colored_polygon(ellipse(c, rx, ry, 0.0, 18), Color(0.05, 0.09, 0.03, 0.22 * strength))
 
 
-## Points on a body-shaped superellipse (boxier than an ellipse, like a barrel).
+## Points on a body-shaped superellipse (boxier than an ellipse, like a barrel); the unit shape is cached.
 static func barrel(c: Vector2, rx: float, ry: float, angle := 0.0, n := 28) -> PackedVector2Array:
+	var unit: PackedVector2Array = _barrels.get(n, PackedVector2Array())
+	if unit.is_empty():
+		unit.resize(n)
+		for i in n:
+			var a := TAU * i / n
+			var sy := signf(sin(a)) * pow(absf(sin(a)), 0.77)
+			unit[i] = Vector2(signf(cos(a)) * pow(absf(cos(a)), 0.77), sy * (1.06 if sy > 0.0 else 1.0))
+		_barrels[n] = unit
+	var xf := Transform2D(angle, c) * Transform2D(Vector2(rx, 0), Vector2(0, ry), Vector2.ZERO)
 	var pts := PackedVector2Array()
+	pts.resize(n)
 	for i in n:
-		var a := TAU * i / n
-		var cx := signf(cos(a)) * pow(absf(cos(a)), 0.77)
-		var sy := signf(sin(a)) * pow(absf(sin(a)), 0.77)
-		pts.append(c + Vector2(cx * rx, sy * ry * (1.06 if sy > 0.0 else 1.0)).rotated(angle))
+		pts[i] = xf * unit[i]
 	return pts
 
 

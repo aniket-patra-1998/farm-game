@@ -13,6 +13,7 @@ const Z_BASE := -2000   # pieces sit below the overlay and effects (z >= 0) and 
 const WANDER := 0.22      # how far an animal strays from its tile centre, in tiles
 const CULL_MARGIN := 120.0  # px around the screen within which animals keep redrawing
 const FULL_RATE_ZOOM := 0.55  # zoomed out further than this, animals redraw every other frame
+const IDLE_REDRAW := 1.0 / 20.0  # seconds between redraws of an animal standing still
 const MIN_TURN_WIDTH := 0.06  # an animal mid-turn is never drawn at zero width
 
 var grid: FarmGrid
@@ -262,7 +263,13 @@ func _animate_animal(p: FarmPiece, delta: float, view: Rect2, redraw: bool) -> v
 		face = MIN_TURN_WIDTH * (1.0 if a.facing > 0.0 else -1.0)
 	p.scale = Vector2(face * p.flip, 1.0) * p.squash
 	p.rotation = 0.0
-	if redraw and view.has_point(p.position):
+	if not redraw or not view.has_point(p.position):
+		return
+	# Walking, the legs need every frame; standing, only blinks, ears and tails move: a lower rate does.
+	var moving := a.pose.stride > 0.02 or a.pose.hop > 0.0 or a.pose.wing > 0.0
+	p.redraw_wait -= delta
+	if moving or p.redraw_wait <= 0.0:
+		p.redraw_wait = IDLE_REDRAW
 		p.queue_redraw()
 
 
