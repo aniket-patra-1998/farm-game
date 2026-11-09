@@ -223,6 +223,48 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_gladiolus_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:54",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_gladiolus_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:53",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lavender_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:52",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lavender_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:51",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lavender_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:52",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lavender_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:53",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_lilac_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:44",
@@ -443,6 +485,34 @@
  "crop_raspberries_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:10",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_red_tulips_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:50",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_red_tulips_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:50",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_red_tulips_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:50",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_red_tulips_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:51",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"

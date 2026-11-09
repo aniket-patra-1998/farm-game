@@ -244,6 +244,48 @@
   ],
   "scale": 0.5
  },
+ "crop_gladiolus_growing": {
+  "anchor": [
+   128.0,
+   143.0
+  ],
+  "scale": 0.5
+ },
+ "crop_gladiolus_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lavender_growing": {
+  "anchor": [
+   128.0,
+   137.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lavender_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lavender_ripe": {
+  "anchor": [
+   128.0,
+   140.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lavender_withered": {
+  "anchor": [
+   128.0,
+   138.0
+  ],
+  "scale": 0.5
+ },
  "crop_lilac_growing": {
   "anchor": [
    128.0,
@@ -465,6 +507,34 @@
   "anchor": [
    128.0,
    126.0
+  ],
+  "scale": 0.5
+ },
+ "crop_red_tulips_growing": {
+  "anchor": [
+   128.0,
+   136.0
+  ],
+  "scale": 0.5
+ },
+ "crop_red_tulips_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_red_tulips_ripe": {
+  "anchor": [
+   128.0,
+   138.0
+  ],
+  "scale": 0.5
+ },
+ "crop_red_tulips_withered": {
+  "anchor": [
+   128.0,
+   134.0
   ],
   "scale": 0.5
  },
