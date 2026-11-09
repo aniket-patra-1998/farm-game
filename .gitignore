@@ -13,3 +13,9 @@ ci_shots/
 vendor/
 art_src/
 tools/resolved.txt
+
+# Godot import files for the art reference sketches: made locally, never needed in git
+art/refs/**/*.import
+art/refs3d/**/*.import
+art/style/**/*.import
+art/pilot/**/*.import
