@@ -17,12 +17,17 @@ const PINK := Color("#eba9a3")
 const BEAK := Color("#f2a33a")
 const COMB := Color("#d8382f")
 const LEG_NAMES := ["hind_far", "fore_far", "hind_near", "fore_near"]
+
 const LEG_PHASES := [0.5, 0.75, 0.0, 0.25]      # the four-beat walk, as in QuadrupedArt
 
+
 var rig: AnimalRig
-var behaviour: AnimalBehaviour   # shared with the 2D piece; ObjectLayer updates it each frame
+var behaviour: AnimalBehaviour   # its mind, owned and updated by FarmLife
 var heading := 0.0               # radians around +y; 0 faces +x
+
 var home := Vector3.ZERO         # the tile centre it wanders around
+
+var drop := 0.0                  # height above the ground while dropping in (tweened by land())
 
 var _body: Node3D
 var _head: Node3D
@@ -31,10 +36,12 @@ var _tail: Node3D
 var _legs: Array[Dictionary] = []   # {"hip": Vector3, "upper": MeshInstance3D, "lower": MeshInstance3D, ...}
 var _wings: Array[Node3D] = []
 var _ears: Array[Node3D] = []
-var drop := 0.0                  # height above the ground while dropping in (tweened by land())
 var _last := Vector3.ZERO
 var _r := Vector3.ONE            # body half-sizes (length, height, width)
+
 var _leg := 0.2
+
+
 
 
 static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3) -> Animal3D:
@@ -47,6 +54,8 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3) -> Animal
 	a.heading = PI * 0.75 if mind == null or mind.facing < 0.0 else -PI * 0.25
 	a._build()
 	return a
+
+
 
 
 # ---------------------------------------------------------------- building
@@ -67,8 +76,12 @@ func _build() -> void:
 	rotation.y = heading
 
 
+
+
 func _px(v: float) -> float:
 	return v * PX
+
+
 
 
 func _build_quad() -> void:
@@ -212,6 +225,8 @@ func _build_quad() -> void:
 				Vector3(1, 1.6, 1))
 
 
+
+
 func _markings(kind: String, accent: Color) -> void:
 	var white := Color("#f4f1ea")
 	match kind:
@@ -233,6 +248,8 @@ func _markings(kind: String, accent: Color) -> void:
 				Vector3(_r.x * 0.85, _r.y * 0.7, _r.z * 1.01))
 
 
+
+
 static func _muzzle_colour(kind: String, head_col: Color) -> Color:
 	match kind:
 		"pink":
@@ -242,6 +259,8 @@ static func _muzzle_colour(kind: String, head_col: Color) -> Color:
 		"snout":
 			return head_col.lerp(PINK, 0.35).darkened(0.08)
 	return head_col.lightened(0.25)
+
+
 
 
 func _build_bird() -> void:
@@ -318,6 +337,8 @@ func _build_bird() -> void:
 			ModelKit.paint(EYE, 0.8))
 
 
+
+
 func _build_turtle() -> void:
 	var b := rig.pair("body", Vector2(16, 10))
 	_r = Vector3(_px(b.x), _px(b.y) * 0.8, _px(b.x) * 0.8)
@@ -333,6 +354,8 @@ func _build_turtle() -> void:
 	ModelKit.ball(_head, Vector3.ZERO, _px(4.0), ModelKit.paint(skin), Vector3(1.3, 1, 1))
 	for side: float in [-1.0, 1.0]:
 		ModelKit.ball(_head, Vector3(_px(2.5), _px(1.5), side * _px(2.6)), _px(0.8), ModelKit.paint(EYE))
+
+
 
 
 func _build_bee() -> void:
@@ -351,6 +374,8 @@ func _build_bee() -> void:
 		_wings.append(wing)
 
 
+
+
 ## A limb segment: a unit cylinder, stretched between two points each frame by _place().
 func _segment(mat: Material, width: float) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
@@ -366,6 +391,8 @@ func _segment(mat: Material, width: float) -> MeshInstance3D:
 	return mi
 
 
+
+
 ## Stretches a segment from a to b (in the body's space).
 static func _place(seg: MeshInstance3D, a: Vector3, b: Vector3) -> void:
 	var d := b - a
@@ -379,10 +406,14 @@ static func _place(seg: MeshInstance3D, a: Vector3, b: Vector3) -> void:
 	seg.transform = Transform3D(Basis(side, up * length, fwd), (a + b) / 2.0)
 
 
+
+
 ## How far it reaches from its feet (radius) and how tall it stands: its box for taps.
 func reach() -> Vector2:
 	var r := maxf(_r.x, _r.z) * 1.6
 	return Vector2(maxf(r, 0.12), _leg + _r.y * 2.6 + 0.05)
+
+
 
 
 ## Dropped onto the farm (just bought): falls in and lands with a little hop.
@@ -392,6 +423,8 @@ func land() -> void:
 	tw.tween_property(self, "drop", 0.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	if behaviour != null:
 		tw.tween_callback(behaviour.poke)
+
+
 
 
 # ---------------------------------------------------------------- moving
@@ -418,6 +451,8 @@ func update(delta: float) -> void:
 			_pose_turtle(p)
 		_:
 			_pose_quad(p)
+
+
 
 
 func _pose_quad(p: AnimalPose) -> void:
@@ -451,11 +486,15 @@ func _pose_quad(p: AnimalPose) -> void:
 	_tail.rotation = Vector3(p.tail * 0.8, 0, 0.35)
 
 
+
+
 ## The knee (or hock) of a two-bone leg from hip to foot, bending forward for forelegs, back for hind.
 func _knee(hip: Vector3, foot: Vector3, fore: bool) -> Vector3:
 	var bone := absf(foot.y - hip.y) * 0.56
 	var j := AnimalArt.joint(Vector2(hip.x, -hip.y), Vector2(foot.x, -foot.y), bone, bone, -1.0 if fore else 1.0)
 	return Vector3(j.x, -j.y, hip.z)
+
+
 
 
 func _pose_bird(p: AnimalPose) -> void:
@@ -492,6 +531,8 @@ func _pose_bird(p: AnimalPose) -> void:
 		(f as Node3D).rotation.x = (i / maxf(n - 1.0, 1.0) - 0.5) * lerpf(1.0, 2.6, p.display)
 
 
+
+
 func _pose_turtle(p: AnimalPose) -> void:
 	_body.position = Vector3(0, _r.y * 0.6, 0)
 	for leg in _legs:
@@ -504,6 +545,8 @@ func _pose_turtle(p: AnimalPose) -> void:
 	var out := clampf(0.55 + 0.45 * maxf(p.stride, absf(p.look)), 0.0, 1.0)
 	_head.position = Vector3(_r.x * (0.75 + 0.35 * out), _r.y * 0.1 - p.head * _px(2.0), 0)
 	_head.rotation.y = p.look * 0.5
+
+
 
 
 func _pose_bee(p: AnimalPose) -> void:

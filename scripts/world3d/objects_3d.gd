@@ -4,16 +4,22 @@ extends Node3D
 ## shows changes (its id, size, ready state, a frame becoming a building). Also the countryside trees
 ## around the farm. Kinds without a 3D model yet keep their 2D piece (ObjectLayer asks handles()).
 
+signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust there
+
+
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor"]
 const SCENERY_Y := -Ground3D.SLAB
+
 const PINE := Color("#2f6b3a")
 
-signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust there
 
 const DROP_HEIGHT := 1.4      # tiles above the ground a new thing falls from
 
+
 var life: FarmLife  # the animals' minds (shared with the 2D world)
+
 var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
+
 
 var _views := {}   # uid -> {"node": Node3D, "key": String}
 var _animals: Array[Animal3D] = []
@@ -22,11 +28,16 @@ var _ghost: Node3D
 var _ghost_key := ""
 var _lifted := -1
 var _queued := false
+
 var _scenery: Node3D
+
+
 
 
 static func handles(o: Dictionary) -> bool:
 	return o.get("stray", false) or MODELLED.has(Game.kind_of(o))
+
+
 
 
 func _ready() -> void:
@@ -42,10 +53,14 @@ func _ready() -> void:
 	add_child(timer)
 
 
+
+
 func queue_sync() -> void:
 	if not _queued:
 		_queued = true
 		sync.call_deferred()
+
+
 
 
 func sync() -> void:
@@ -79,6 +94,8 @@ func sync() -> void:
 			_animals.append(v["node"])
 
 
+
+
 ## Animals move every frame, with their 2D twin's mind; those off screen keep their place but aren't posed.
 func _process(delta: float) -> void:
 	_update_placing()
@@ -92,8 +109,12 @@ func _process(delta: float) -> void:
 			a.update(delta)
 
 
+
+
 func _mind_of(a: Animal3D) -> AnimalBehaviour:
 	return life.mind(int(a.get_meta("uid", -1))) if life != null else null
+
+
 
 
 ## What a view shows: when this changes, it's rebuilt.
@@ -101,6 +122,8 @@ func _key(o: Dictionary) -> String:
 	return "%s|%d|%d|%d|%s|%s|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), Game.under_construction(o), Game.kind_of(o) == "tree" and Game.is_ready(o),
 		o.get("crop", o.get("flower", ""))]
+
+
 
 
 func _build(o: Dictionary) -> Node3D:
@@ -142,6 +165,8 @@ func _build(o: Dictionary) -> Node3D:
 	return holder
 
 
+
+
 ## Woods along the back two sides of the farm (FarmGrid.scenery(), the same spots as the 2D world).
 func _build_scenery() -> void:
 	for c in _scenery.get_children():
@@ -162,6 +187,8 @@ func _build_scenery() -> void:
 				TreeModel.build_at(_scenery, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false)
 
 
+
+
 ## A pine: a short trunk and three stacked cones of dark needles.
 static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 	var root := Node3D.new()
@@ -172,6 +199,8 @@ static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 		var y := (0.15 + 0.28 * k) * size
 		var r := (0.42 - 0.1 * k) * size
 		ModelKit.cylinder(root, Vector3(0, y, 0), r, 0.5 * size, ModelKit.paint(PINE.lightened(0.07 * k)), 0.0, 9)
+
+
 
 
 # ---------------------------------------------------------------- placing
@@ -217,6 +246,8 @@ func _update_placing() -> void:
 		_ghost.position = Vector3(col + fp.x / 2.0, lift, row + fp.y / 2.0)
 
 
+
+
 func _clear_ghost() -> void:
 	if _ghost != null:
 		_ghost.queue_free()
@@ -224,10 +255,14 @@ func _clear_ghost() -> void:
 	_ghost_key = ""
 
 
+
+
 func _show(uid: int, on: bool) -> void:
 	var v: Dictionary = _views.get(uid, {})
 	if v.has("node"):
 		(v["node"] as Node3D).visible = on
+
+
 
 
 static func _tint(node: Node, col: Color) -> void:
@@ -238,12 +273,16 @@ static func _tint(node: Node, col: Color) -> void:
 	_tint_with(node, m)
 
 
+
+
 static func _tint_with(node: Node, m: Material) -> void:
 	if node is GeometryInstance3D:
 		(node as GeometryInstance3D).material_override = m
 		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for c in node.get_children():
 		_tint_with(c, m)
+
+
 
 
 # ---------------------------------------------------------------- touch and reactions
@@ -277,6 +316,8 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 	return best
 
 
+
+
 ## The box around a model, in the farm's space (for an animal, around its feet, to move with it).
 func _bounds(node: Node3D, o: Dictionary) -> AABB:
 	if node is Animal3D:
@@ -296,6 +337,8 @@ func _bounds(node: Node3D, o: Dictionary) -> AABB:
 	return node.transform * box
 
 
+
+
 ## Tapped: it squashes down and springs back (from its base, so it stays on the ground).
 func bounce(uid: int) -> void:
 	var node := _node(uid)
@@ -308,6 +351,8 @@ func bounce(uid: int) -> void:
 	tw.tween_property(node, "scale", base * Vector3(0.95, 1.08, 0.95), 0.09).set_trans(Tween.TRANS_QUAD) \
 		.set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "scale", base, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
 
 
 ## Newly on the farm: it falls in from above, lands with a squash and settles.
@@ -329,9 +374,13 @@ func drop_in(uid: int) -> void:
 	landed.emit(ground)
 
 
+
+
 func _node(uid: int) -> Node3D:
 	var v: Dictionary = _views.get(uid, {})
 	return v.get("node") as Node3D
+
+
 
 
 func _tween(node: Node3D) -> Tween:
