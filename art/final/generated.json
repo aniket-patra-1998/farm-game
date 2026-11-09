@@ -111,6 +111,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_columbine_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:59",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_columbine_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:59",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_columbine_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:00",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_columbine_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:00",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_corn_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:20",
@@ -251,6 +279,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_iris_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:01",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_iris_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:01",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_iris_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:02",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_iris_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:02",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_lavender_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:52",
@@ -387,6 +443,20 @@
  "crop_oats_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:29",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_orange_daisies_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:03",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_orange_daisies_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:02",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"

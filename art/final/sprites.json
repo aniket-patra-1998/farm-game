@@ -132,6 +132,34 @@
   ],
   "scale": 0.5
  },
+ "crop_columbine_growing": {
+  "anchor": [
+   128.0,
+   144.0
+  ],
+  "scale": 0.5
+ },
+ "crop_columbine_planted": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_columbine_ripe": {
+  "anchor": [
+   128.0,
+   143.0
+  ],
+  "scale": 0.5
+ },
+ "crop_columbine_withered": {
+  "anchor": [
+   128.0,
+   140.0
+  ],
+  "scale": 0.5
+ },
  "crop_corn_growing": {
   "anchor": [
    128.0,
@@ -272,6 +300,34 @@
   ],
   "scale": 0.5
  },
+ "crop_iris_growing": {
+  "anchor": [
+   128.0,
+   140.0
+  ],
+  "scale": 0.5
+ },
+ "crop_iris_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_iris_ripe": {
+  "anchor": [
+   128.0,
+   141.0
+  ],
+  "scale": 0.5
+ },
+ "crop_iris_withered": {
+  "anchor": [
+   128.0,
+   136.0
+  ],
+  "scale": 0.5
+ },
  "crop_lavender_growing": {
   "anchor": [
    128.0,
@@ -409,6 +465,20 @@
   "anchor": [
    128.0,
    120.0
+  ],
+  "scale": 0.5
+ },
+ "crop_orange_daisies_growing": {
+  "anchor": [
+   128.0,
+   143.0
+  ],
+  "scale": 0.5
+ },
+ "crop_orange_daisies_planted": {
+  "anchor": [
+   128.0,
+   148.0
   ],
   "scale": 0.5
  },
