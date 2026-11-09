@@ -6,6 +6,9 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 ## Layout
 - `autoload/game.gd` (`Game`, class `GameState`): the shared core (coins, gems, XP, time, plots and crops,
   placed objects, mastery, tutorial), saving, and every signal. It owns one of each subsystem.
+- `autoload/sound.gd` (`Sound`): sound effects and vibration. Every sound is a recipe in `data/sounds.json`
+  (synthesised once, ahead of time) or a recording; code plays them by name (`Sound.play("harvest")`), and a
+  test checks every name it asks for exists. Volume, mute and vibration live in `user://settings.cfg`.
 - `scripts/systems/*.gd`: the subsystems, each a `GameSystem` with its own state and rules, reached as
   `Game.crafting`, `Game.vehicles`, `Game.bees`, `Game.strays`... Each saves its own fields
   (`reset`/`save_to`/`load_from`); a new feature with its own state gets its own system, not more `game.gd`.

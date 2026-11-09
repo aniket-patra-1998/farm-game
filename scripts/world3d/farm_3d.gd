@@ -78,8 +78,14 @@ func _ready() -> void:
 		grid.picker = func(screen_pos: Vector2) -> int: return objects.pick(camera, screen_pos)
 		grid.object_poked.connect(_poked)
 		grid.plants_popped.connect(crops.pop)
-		objects.landed.connect(func(at: Vector3) -> void:
-			grid.world_fx.burst("dust", IsoProjection.grid_of(at)))
+		objects.landed.connect(_landed)
+
+
+## Something dropped onto the farm: a puff of dust where it touched down, a thud, a jolt in the hand.
+func _landed(at: Vector3) -> void:
+	grid.world_fx.burst("dust", IsoProjection.grid_of(at))
+	Sound.play("place")
+	Sound.buzz(FarmGrid.BUZZ_PLACE)
 
 
 ## Something was tapped: it bounces, and an animal looks round at you.

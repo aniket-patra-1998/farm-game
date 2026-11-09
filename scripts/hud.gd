@@ -14,6 +14,8 @@ const TOP_H := 84.0
 const BOTTOM_H := 150.0
 
 const BUTTON_SIZE := Vector2(150, 112)
+const LEVEL_UP_BUZZ := 60     # ms of vibration for a level up
+const COIN_LAND_DB := -8.0  # each landing coin chinks softly; a shower of them adds up
 
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
@@ -76,6 +78,9 @@ func _ready() -> void:
 	_level_popup = LevelUpPopup.new()
 	root.add_child(_level_popup)
 	Game.leveled_up.connect(_level_popup.celebrate)
+	Game.leveled_up.connect(func(_l: int) -> void:
+		Sound.play("level_up")
+		Sound.buzz(LEVEL_UP_BUZZ))
 	Game.collections_changed.connect(_refresh_book)
 	Game.ribbons_changed.connect(_refresh_book)
 	Game.objects_changed.connect(_refresh_book)
@@ -134,7 +139,8 @@ func _build_top_bar(root: Control) -> void:
 	tick.timeout.connect(_refresh_clock)
 	add_child(tick)
 
-	for entry in [[tr("MARKET"), _show_market], [tr("COLLECTIONS"), _show_collections], [tr("RIBBONS"), _show_ribbons]]:
+	for entry in [[tr("MARKET"), _show_market], [tr("COLLECTIONS"), _show_collections], [tr("RIBBONS"), _show_ribbons],
+			[tr("SETTINGS"), _show_settings]]:
 		var b := Button.new()
 		b.text = entry[0]
 		b.custom_minimum_size = Vector2(104, 56)
@@ -485,8 +491,12 @@ func xp_target() -> Vector2:
 
 
 
+
+
 ## A quick swell as a reward lands on a counter.
 func pulse(which: String) -> void:
+	if which == "coins":
+		Sound.play("coin", COIN_LAND_DB)  # each coin chinks as it lands
 	var c: Control = _coins_label if which == "coins" else _xp_bar
 	c.pivot_offset = c.size / 2.0
 	var tw := c.create_tween()
@@ -604,6 +614,48 @@ func _show_collections() -> void:
 
 func _show_ribbons() -> void:
 	_book.open_panel(tr("RIBBONS"), _build_ribbons)
+
+
+
+
+
+
+func _show_settings() -> void:
+	_book.open_panel(tr("SETTINGS"), _build_settings)
+
+
+
+
+## Sound volume and mute, and vibration: the player's own, kept on the phone (not in the farm's save).
+func _build_settings(content: VBoxContainer) -> void:
+	var inner := BookPanel.card()
+	inner.add_theme_constant_override("separation", 12)
+	inner.add_child(BookPanel.text(tr("SOUND_EFFECTS"), 26))
+	var volume := HSlider.new()
+	volume.min_value = 0.0
+	volume.max_value = 1.0
+	volume.step = 0.05
+	volume.value = Sound.volume
+	volume.custom_minimum_size = Vector2(320, 40)
+	volume.focus_mode = Control.FOCUS_NONE
+	volume.value_changed.connect(func(v: float) -> void: Sound.volume = v)
+	volume.drag_ended.connect(func(_changed: bool) -> void: Sound.play("coin"))  # hear the new level
+	inner.add_child(volume)
+	var mute := CheckButton.new()
+	mute.text = tr("MUTE_SOUND")
+	mute.button_pressed = Sound.muted
+	mute.focus_mode = Control.FOCUS_NONE
+	mute.toggled.connect(func(on: bool) -> void: Sound.muted = on)
+	inner.add_child(mute)
+	var buzz := CheckButton.new()
+	buzz.text = tr("VIBRATION")
+	buzz.button_pressed = Sound.vibration
+	buzz.focus_mode = Control.FOCUS_NONE
+	buzz.toggled.connect(func(on: bool) -> void:
+		Sound.vibration = on
+		Sound.buzz(LEVEL_UP_BUZZ))  # feel it come on
+	inner.add_child(buzz)
+	content.add_child(BookPanel.card_frame(inner))
 
 
 

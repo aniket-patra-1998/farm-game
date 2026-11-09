@@ -26,6 +26,11 @@ const COLOR_FERT := Color("#8fe36b")
 
 const COLOR_PART := Color("#f4c27a")
 
+# Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
+const BUZZ_TAP := 8
+const BUZZ_HARVEST := 16
+const BUZZ_PLACE := 24
+const BUZZ_ERROR := 40
 
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
@@ -639,6 +644,7 @@ func _placing_input(event: InputEvent) -> void:
 		var home := Game.object_by_uid(int(placing["home"]))
 		var source := _placing_source()
 		if Game.homes.put_in_home(int(placing["home"]), placing["item"], source):
+			_feel("place", BUZZ_PLACE)
 			if source.has("buy"):
 				var hfp := Game.footprint(home["id"])
 				_float(corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
@@ -649,6 +655,7 @@ func _placing_input(event: InputEvent) -> void:
 	var col := int(placing["col"])
 	var uid := int(placing["uid"])
 	if not Game.can_place(placing["item"], row, col, uid):
+		_feel("error", BUZZ_ERROR)
 		info.emit(tr("IT_DOESN_T_FIT_THERE_TRY"))
 		return
 	var from_storage := int(placing.get("stored", -1))
@@ -660,6 +667,9 @@ func _placing_input(event: InputEvent) -> void:
 	else:
 		ok = Game.buy_and_place(placing["item"], row, col)
 	if ok:
+		# Something new drops onto the 3D farm, and thuds when it lands (Farm3D); a move settles at once.
+		if uid != -1 or not pieces.three_d:
+			_feel("place", BUZZ_PLACE)
 		if uid == -1 and from_storage < 0:
 			_float(
 				corners_of(row, col, fp.x, fp.y)[2],
@@ -697,6 +707,23 @@ func _apply_at(screen_pos: Vector2) -> void:
 func _poke(uid: int) -> void:
 	pieces.bounce(uid)
 	object_poked.emit(uid)
+	var obj := Game.object_by_uid(uid)
+	var kind := Game.kind_of(obj) if not obj.is_empty() else ""
+	if kind == "animal":
+		Sound.voice(AnimalRig.of(Game.item_data(obj["id"])).family)
+	_feel("", BUZZ_TAP)
+
+
+
+
+## A sound and a short vibration for something the player did (either may be left out).
+func _feel(event: String, buzz_ms := 0) -> void:
+	if event != "":
+		Sound.play(event)
+	if buzz_ms > 0:
+		Sound.buzz(buzz_ms)
+
+
 
 
 ## A harvested plot's plants pop off: in 3D the 3D world shows it, in 2D the 2D effects layer.
@@ -756,6 +783,7 @@ func _act(i: int, first_touch: bool) -> void:
 		var art_before := Game.crop_art_for(i)
 		var result := Game.harvest(i)
 		if not result.is_empty():
+			_feel("harvest", BUZZ_HARVEST)
 			_pop_plants(i, crop_before, art_before)
 			world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
 			_reward(at, int(result["coins"]), int(result["xp"]))
@@ -786,22 +814,31 @@ func _act(i: int, first_touch: bool) -> void:
 		"plow":
 			if ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED:
 				if Game.plow(i):
+					_feel("plow", BUZZ_TAP)
 					world_fx.burst("dirt", at)
 					_float(at, "-%d" % GameState.PLOW_COST, COLOR_COST)
+				else:
+					_feel("error", BUZZ_ERROR)
 			elif first_touch:
 				_explain(i, ph)
 		"plant":
 			if ph == GameState.Phase.PLOWED and selected_crop != "":
 				if Game.plant(i, selected_crop):
+					_feel("plant", BUZZ_TAP)
 					world_fx.burst("dirt", at + Vector2(0, -PlaceholderArt.SLAB))
 					_float(at, "-%d" % int(Game.crops[selected_crop]["seed_cost"]), COLOR_COST)
+				else:
+					_feel("error", BUZZ_ERROR)
 			elif first_touch:
 				_explain(i, ph)
 		"fertilize":
 			if ph == GameState.Phase.GROWING and not Game.is_fertilized(i):
 				if Game.fertilize(i):
+					_feel("fertilize", BUZZ_TAP)
 					_float(at, "-%d" % GameState.FERTILIZER_COST, COLOR_COST)
 					_sparkle(at, COLOR_FERT)
+				else:
+					_feel("error", BUZZ_ERROR)
 			elif first_touch:
 				if Game.is_fertilized(i):
 					info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
@@ -873,6 +910,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		var result := Game.collect(uid)
 		if not result.is_empty():
 			_poke(uid)
+			_feel("collect", BUZZ_HARVEST)
 			world_fx.burst("sparkle", at + Vector2(0, -40))
 			_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
 			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
@@ -916,6 +954,7 @@ func _try_sell(obj: Dictionary) -> void:
 		var at := corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]
 		var value := Game.sell_value(obj)
 		if Game.sell_object(uid):
+			_feel("coin", BUZZ_TAP)
 			_float(at, "+%d" % value, COLOR_COINS)
 		return
 	_sell_pending = uid

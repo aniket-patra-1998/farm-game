@@ -1,0 +1,63 @@
+{
+  "_doc": "Every sound the game makes, as a synthesis recipe (autoload/sound.gd builds each once, the first time it plays). A sound is a list of layers mixed together; each layer: wave (sine, square, saw, triangle, noise), freq and freq_end in Hz (a glide), dur and delay in seconds, attack and release (seconds of fade in and out), gain, lowpass (Hz, softens saw, square and noise), vibrato [rate Hz, depth as a share of pitch], tremolo [rate Hz, depth 0..1], repeat [count, gap seconds]. A real recording can replace any recipe later: give the event a \"file\" (res://...) instead of layers. pitch_jitter varies the pitch a little each time so repeats don't sound mechanical.",
+  "volume_db": -6.0,
+  "sounds": {
+    "tap": {"pitch_jitter": 0.06, "layers": [
+      {"wave": "sine", "freq": 880, "freq_end": 660, "dur": 0.05, "attack": 0.002, "release": 0.04, "gain": 0.35}]},
+    "plow": {"pitch_jitter": 0.1, "layers": [
+      {"wave": "noise", "lowpass": 900, "dur": 0.18, "attack": 0.005, "release": 0.14, "gain": 0.7},
+      {"wave": "sine", "freq": 120, "freq_end": 70, "dur": 0.16, "attack": 0.003, "release": 0.12, "gain": 0.6}]},
+    "plant": {"pitch_jitter": 0.1, "layers": [
+      {"wave": "noise", "lowpass": 2500, "dur": 0.07, "attack": 0.002, "release": 0.06, "gain": 0.35},
+      {"wave": "triangle", "freq": 520, "freq_end": 780, "dur": 0.09, "delay": 0.03, "attack": 0.005, "release": 0.07, "gain": 0.3}]},
+    "harvest": {"pitch_jitter": 0.08, "layers": [
+      {"wave": "noise", "lowpass": 3500, "dur": 0.12, "attack": 0.003, "release": 0.1, "gain": 0.35},
+      {"wave": "sine", "freq": 520, "freq_end": 1040, "dur": 0.12, "attack": 0.005, "release": 0.08, "gain": 0.4},
+      {"wave": "sine", "freq": 1320, "dur": 0.1, "delay": 0.08, "attack": 0.003, "release": 0.09, "gain": 0.25}]},
+    "coin": {"pitch_jitter": 0.04, "layers": [
+      {"wave": "square", "lowpass": 6000, "freq": 1568, "dur": 0.07, "attack": 0.002, "release": 0.05, "gain": 0.22},
+      {"wave": "square", "lowpass": 6000, "freq": 2093, "dur": 0.16, "delay": 0.06, "attack": 0.002, "release": 0.14, "gain": 0.22}]},
+    "collect": {"pitch_jitter": 0.04, "layers": [
+      {"wave": "triangle", "freq": 660, "dur": 0.1, "attack": 0.004, "release": 0.08, "gain": 0.35},
+      {"wave": "triangle", "freq": 880, "dur": 0.1, "delay": 0.08, "attack": 0.004, "release": 0.08, "gain": 0.35},
+      {"wave": "triangle", "freq": 1320, "dur": 0.22, "delay": 0.16, "attack": 0.004, "release": 0.2, "gain": 0.35}]},
+    "place": {"pitch_jitter": 0.08, "layers": [
+      {"wave": "sine", "freq": 160, "freq_end": 60, "dur": 0.22, "attack": 0.002, "release": 0.2, "gain": 0.8},
+      {"wave": "noise", "lowpass": 700, "dur": 0.2, "attack": 0.002, "release": 0.18, "gain": 0.45}]},
+    "fertilize": {"pitch_jitter": 0.06, "layers": [
+      {"wave": "noise", "lowpass": 5000, "dur": 0.25, "attack": 0.02, "release": 0.2, "gain": 0.25},
+      {"wave": "sine", "freq": 990, "freq_end": 1480, "dur": 0.2, "attack": 0.01, "release": 0.15, "gain": 0.2}]},
+    "error": {"pitch_jitter": 0.0, "layers": [
+      {"wave": "square", "lowpass": 1200, "freq": 220, "freq_end": 180, "dur": 0.16, "attack": 0.004, "release": 0.12, "gain": 0.3}]},
+    "level_up": {"pitch_jitter": 0.0, "layers": [
+      {"wave": "triangle", "freq": 523, "dur": 0.14, "attack": 0.005, "release": 0.1, "gain": 0.35},
+      {"wave": "triangle", "freq": 659, "dur": 0.14, "delay": 0.12, "attack": 0.005, "release": 0.1, "gain": 0.35},
+      {"wave": "triangle", "freq": 784, "dur": 0.14, "delay": 0.24, "attack": 0.005, "release": 0.1, "gain": 0.35},
+      {"wave": "triangle", "freq": 1047, "dur": 0.45, "delay": 0.36, "attack": 0.005, "release": 0.4, "gain": 0.4, "vibrato": [6, 0.01]}]},
+    "moo": {"pitch_jitter": 0.07, "layers": [
+      {"wave": "saw", "lowpass": 700, "freq": 118, "freq_end": 96, "dur": 0.95, "attack": 0.12, "release": 0.35, "gain": 0.55, "vibrato": [5, 0.015]},
+      {"wave": "saw", "lowpass": 1400, "freq": 236, "freq_end": 192, "dur": 0.95, "attack": 0.15, "release": 0.35, "gain": 0.18}]},
+    "baa": {"pitch_jitter": 0.08, "layers": [
+      {"wave": "square", "lowpass": 1800, "freq": 330, "freq_end": 300, "dur": 0.6, "attack": 0.04, "release": 0.2, "gain": 0.3, "tremolo": [22, 0.7]}]},
+    "oink": {"pitch_jitter": 0.1, "repeat": [2, 0.18], "layers": [
+      {"wave": "square", "lowpass": 900, "freq": 190, "freq_end": 150, "dur": 0.13, "attack": 0.01, "release": 0.06, "gain": 0.4},
+      {"wave": "noise", "lowpass": 600, "dur": 0.13, "attack": 0.01, "release": 0.06, "gain": 0.35}]},
+    "neigh": {"pitch_jitter": 0.06, "layers": [
+      {"wave": "saw", "lowpass": 2200, "freq": 720, "freq_end": 340, "dur": 0.85, "attack": 0.03, "release": 0.3, "gain": 0.3, "vibrato": [11, 0.05]}]},
+    "cluck": {"pitch_jitter": 0.1, "repeat": [3, 0.12], "layers": [
+      {"wave": "square", "lowpass": 2600, "freq": 780, "freq_end": 620, "dur": 0.06, "attack": 0.003, "release": 0.04, "gain": 0.3}]},
+    "gobble": {"pitch_jitter": 0.08, "layers": [
+      {"wave": "square", "lowpass": 2000, "freq": 420, "freq_end": 360, "dur": 0.55, "attack": 0.01, "release": 0.12, "gain": 0.3, "tremolo": [28, 0.9]}]},
+    "quack": {"pitch_jitter": 0.08, "repeat": [2, 0.2], "layers": [
+      {"wave": "saw", "lowpass": 1600, "freq": 460, "freq_end": 330, "dur": 0.14, "attack": 0.005, "release": 0.06, "gain": 0.35}]},
+    "bleat": {"pitch_jitter": 0.08, "layers": [
+      {"wave": "saw", "lowpass": 2000, "freq": 420, "freq_end": 380, "dur": 0.5, "attack": 0.03, "release": 0.15, "gain": 0.28, "tremolo": [16, 0.6]}]},
+    "squeak": {"pitch_jitter": 0.12, "layers": [
+      {"wave": "sine", "freq": 1800, "freq_end": 2400, "dur": 0.08, "attack": 0.004, "release": 0.05, "gain": 0.25}]},
+    "buzz": {"pitch_jitter": 0.1, "layers": [
+      {"wave": "saw", "lowpass": 1200, "freq": 220, "dur": 0.4, "attack": 0.05, "release": 0.15, "gain": 0.2, "vibrato": [9, 0.03]}]}
+  },
+  "voices": {"cow": "moo", "ox": "moo", "sheep": "baa", "pig": "oink", "horse": "neigh",
+    "donkey": "neigh", "camelid": "squeak", "goat": "bleat", "chicken": "cluck", "turkey": "gobble",
+    "duck": "quack", "goose": "quack", "rabbit": "squeak", "turtle": "squeak", "bee": "buzz"}
+}
