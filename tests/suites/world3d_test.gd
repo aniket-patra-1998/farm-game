@@ -376,3 +376,67 @@ func _residents_vertices(fill: BuildingFill) -> int:
 	for a in fill.residents:
 		n += _count_vertices(a)
 	return n
+
+
+func test_105_animals_move_with_weight() -> void:
+	var dt := 1.0 / 60.0
+	# Standing still, nothing moves.
+	var m := AnimalMotion.new(3)
+	for k in 60:
+		m.step(dt, 0.0, 0.0, 0.0, 0.0)
+	_check(absf(m.pitch) < 0.001 and absf(m.roll) < 0.001 and absf(m.tail) < 0.001, "standing still, it's still")
+	# Setting off lifts the front, then it settles level at a steady walk.
+	var most := 0.0
+	for k in 20:
+		m.step(dt, k / 20.0, 0.0, 0.0, k / 20.0)
+		most = maxf(most, m.pitch)
+	_check(most > 0.03, "setting off, the front lifts (%.3f)" % most)
+	for k in 180:
+		m.step(dt, 1.0, 0.0, 0.0, 1.0)
+	_check(absf(m.pitch) < 0.01, "and at a steady walk it's level again (%.3f)" % m.pitch)
+	# Pulling up, the weight comes onto the front.
+	var least := 0.0
+	for k in 12:
+		m.step(dt, 1.0 - k / 12.0, 0.0, 0.0, 1.0 - k / 12.0)
+		least = minf(least, m.pitch)
+	_check(least < -0.03, "pulling up, the front dips (%.3f)" % least)
+	# Turning left (heading rising) at a walk leans it in to its left, and its head and tail lag behind.
+	var t := AnimalMotion.new(4)
+	var heading := 0.0
+	for k in 40:
+		heading += 2.0 * dt
+		t.step(dt, 1.0, heading, 0.0, 1.0)
+	_check(t.roll < -0.02, "turning left it leans left (%.3f)" % t.roll)
+	_check(t.head_yaw < -0.02, "its head lags the turn (%.3f)" % t.head_yaw)
+	_check(t.tail < -0.02, "and its tail swings out (%.3f)" % t.tail)
+	# Landing from a hop, it squashes, and springs back.
+	var h := AnimalMotion.new(5)
+	for k in 10:
+		h.step(dt, 0.0, 0.0, 1.0 - k / 10.0, 0.0)
+	var squashed := 0.0
+	for k in 20:
+		h.step(dt, 0.0, 0.0, 0.0, 0.0)
+		squashed = maxf(squashed, h.squash)
+	_check(squashed > 0.03, "landing squashes it (%.3f)" % squashed)
+	for k in 120:
+		h.step(dt, 0.0, 0.0, 0.0, 0.0)
+	_check(absf(h.squash) < 0.005, "and it springs back")
+	# Running, it trots: diagonal legs together.
+	var r := AnimalMotion.new(6)
+	_check(is_equal_approx(r.leg_phase(1), 0.75), "walking, the four legs keep the four-beat walk")
+	for k in 120:
+		r.step(dt, 2.4, 0.0, 0.0, 1.0)
+	_check(r.trot > 0.9, "running, it trots (%.2f)" % r.trot)
+	_check(is_equal_approx(r.leg_phase(0), r.leg_phase(3)) and absf(r.leg_phase(1) - r.leg_phase(2)) < 0.05,
+		"in a trot the diagonal pairs move together")
+	# Standing a while, it rests a hind leg; told to look at you, it does, then stops resting.
+	var s := AnimalMotion.new(7)
+	var rested := 0.0
+	for k in 60 * 30:
+		s.step(dt, 0.0, 0.0, 0.0, 0.0)
+		rested = maxf(rested, s.rest)
+	_check(rested > 0.8, "standing a while, it rests a hind leg")
+	for k in 60:
+		s.step(dt, 0.0, 0.0, 0.0, 0.0, 0.8, 1.0)
+	_check(absf(s.head_yaw - 0.8) < 0.1, "tapped, it turns its head to look at you (%.2f)" % s.head_yaw)
+	_check(s.rest < 0.3, "standing square to do it")

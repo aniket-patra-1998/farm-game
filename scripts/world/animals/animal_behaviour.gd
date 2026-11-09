@@ -48,6 +48,7 @@ var offset := Vector2.ZERO       ## from the animal's home spot (its tile centre
 var facing := 1.0                ## the way it's heading: 1 right, -1 left
 var shown_facing := 1.0          ## eases toward facing (the turn)
 var range_px := Vector2(14, 7)   ## how far it may wander: an ellipse, flattened like the ground
+var noticed := 0.0               ## seconds left looking at whoever tapped it
 
 var _rng := RandomNumberGenerator.new()
 var _left := 0.0                 # seconds left in this state
@@ -83,6 +84,7 @@ func update(delta: float) -> void:
 	delta = minf(delta, 0.1)  # a long frame (a hitch, the app resuming) doesn't fling animals across the farm
 	pose.time += delta
 	_left -= delta
+	noticed = maxf(noticed - delta, 0.0)
 	if state == State.WALK or state == State.FROLIC:
 		_walk(delta)
 	if _left <= 0.0:
@@ -97,6 +99,7 @@ func update(delta: float) -> void:
 ## you for a moment before carrying on.
 func poke() -> void:
 	_enter(State.LOOK, POKE_LOOK)
+	noticed = POKE_LOOK
 	_look_to = 1.0
 	_target = offset
 	pose.hop = maxf(pose.hop, POKE_HOP)

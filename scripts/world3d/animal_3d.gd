@@ -27,6 +27,7 @@ static var _contact_material: ShaderMaterial    # one for every animal
 
 var rig: AnimalRig
 var behaviour: AnimalBehaviour   # its mind, owned and updated by FarmLife
+var motion: AnimalMotion         # its body's weight: leaning, swaying, lagging, settling (3D only)
 var heading := 0.0               # radians around +y; 0 faces +x
 
 var home := Vector3.ZERO         # the tile centre it wanders around
@@ -45,6 +46,8 @@ var _r := Vector3.ONE            # body half-sizes (length, height, width)
 
 var _leg := 0.2
 var _contact: MeshInstance3D     # the soft shade on the grass right under it
+var _eyes: Array[Node3D] = []    # (they blink)
+var _walk_speed := 1.0           # its walking speed, in units a second
 
 
 
@@ -57,6 +60,8 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3) -> Animal
 	a.position = at
 	a._last = at
 	a.heading = PI * 0.75 if mind == null or mind.facing < 0.0 else -PI * 0.25
+	a.motion = AnimalMotion.new(hash(str(it.get("id", ""))) + int(at.x * 97.0 + at.z * 31.0))
+	a._walk_speed = maxf(IsoProjection.ground_of(Vector2(a.rig.num("speed", 10.0) * a.rig.scale, 0)).length(), 0.001)
 	a._build()
 	return a
 
@@ -142,7 +147,8 @@ func _build_quad() -> void:
 		var hoof_col := HOOF if rig.family != "pig" else coat.darkened(0.45)
 		var hoof := ModelKit.box(_body, Vector3(-thick * 0.6, 0, -thick * 0.5),
 			Vector3(thick * 0.6, thick * 0.6, thick * 0.5), ModelKit.paint(hoof_col))
-		_legs.append({"hip": hip, "upper": upper, "lower": lower, "hoof": hoof, "phase": LEG_PHASES[k], "fore": fore})
+		_legs.append({"hip": hip, "upper": upper, "lower": lower, "hoof": hoof, "phase": LEG_PHASES[k], "fore": fore,
+			"k": k})
 	# Neck and head.
 	_neck = _segment(mat, _px(rig.pair("neck", Vector2(14, 9)).y) * 1.6)
 	_head = Node3D.new()
@@ -185,7 +191,7 @@ func _build_quad() -> void:
 		)
 	var eye_r := hh * 0.09 * rig.num("eye_scale", 1.0)
 	for side: float in [-1.0, 1.0]:
-		ModelKit.ball(_head, Vector3(hl * 0.05, hh * 0.15, side * hh * 0.4), eye_r, ModelKit.paint(EYE, 0.8))
+		_eyes.append(ModelKit.ball(_head, Vector3(hl * 0.05, hh * 0.15, side * hh * 0.4), eye_r, ModelKit.paint(EYE, 0.8)))
 		var ear := Node3D.new()
 		ear.position = Vector3(-hl * 0.3, hh * 0.3, side * hh * 0.35)
 		_head.add_child(ear)
@@ -355,8 +361,8 @@ func _build_bird() -> void:
 	if rig.flag("wattle"):
 		ModelKit.ball(_head, Vector3(hr * 0.7, -hr * 0.8, 0), hr * 0.22, ModelKit.paint(COMB), Vector3(1, 1.5, 1))
 	for side: float in [-1.0, 1.0]:
-		ModelKit.ball(_head, Vector3(hr * 0.4, hr * 0.25, side * hr * 0.75), hr * 0.16 * rig.num("eye_scale", 1.0),
-			ModelKit.paint(EYE, 0.8))
+		_eyes.append(ModelKit.ball(_head, Vector3(hr * 0.4, hr * 0.25, side * hr * 0.75),
+			hr * 0.16 * rig.num("eye_scale", 1.0), ModelKit.paint(EYE, 0.8)))
 
 
 
@@ -464,6 +470,13 @@ func update(delta: float) -> void:
 		var want := atan2(-moved.z, moved.x)
 		heading = rotate_toward(heading, want, TURN_RATE * delta)
 	rotation.y = heading
+	# The body's weight: how fast it's going (in walks), turning, hopping, and whether it's been tapped and
+	# should look round at you.
+	var speed := Vector2(moved.x, moved.z).length() / maxf(delta, 0.0001) / _walk_speed if delta > 0.0 else 0.0
+	var keen := clampf(behaviour.noticed / 0.4, 0.0, 1.0) if behaviour != null else 0.0
+	motion.step(delta, speed, heading, p.hop, p.stride, _yaw_to_camera() if keen > 0.0 else 0.0, keen)
+	for e in _eyes:
+		e.scale = Vector3(1.0, maxf(1.0 - p.blink, 0.1), 1.0)
 	match rig.type:
 		"bird":
 			_pose_bird(p)
@@ -474,6 +487,14 @@ func update(delta: float) -> void:
 		_:
 			_pose_quad(p)
 	_settle_contact(p)
+
+
+## Which way to turn the head to look at the camera, from straight ahead (radians, + to its left).
+func _yaw_to_camera() -> float:
+	if not is_inside_tree():
+		return 0.0
+	var local := global_transform.basis.inverse() * -IsoProjection.forward()
+	return atan2(-local.z, local.x)
 
 
 ## The contact shade stays on the ground and fades as the animal leaves it (a hop, dropping in, a bee).
@@ -490,34 +511,54 @@ func _settle_contact(p: AnimalPose) -> void:
 
 
 func _pose_quad(p: AnimalPose) -> void:
+	var m := motion
 	var rise := pow(sin(p.gait * TAU * 2.0), 2.0) * _leg * 0.06 * p.stride
 	var air := p.hop * _leg * 0.55
 	_body.position = Vector3(0, _leg + _r.y * 0.62 + rise + air + p.breath * _r.y * 0.01, 0)
-	var reach := AnimalArt.STRIDE * _leg
+	# Weight: leaning into turns and speed, the hips rolling with each step and dropping on a rested leg; a
+	# squash on landing; a slow breath.
+	var sway := sin(p.gait * TAU) * AnimalMotion.SWAY * p.stride * (1.0 - m.trot * 0.6)
+	_body.rotation = Vector3(m.roll + sway + m.rest * 0.05, 0, m.pitch - m.rest * 0.03)
+	var breathe := 1.0 + p.breath * 0.012
+	_body.scale = Vector3(1.0 + m.squash * 0.6, (1.0 - m.squash) * breathe, (1.0 + m.squash * 0.6) * breathe)
+	# Legs: the feet stay planted on the ground whatever the body does above them (worked out on the
+	# ground, then into the body's space for the leg's two bones).
+	var reach := AnimalArt.STRIDE * _leg * (1.0 + m.trot * 0.25)
+	var lift := AnimalArt.LIFT * _leg * (1.0 + m.trot * 0.5)
+	var to_body := _body.transform.affine_inverse()
 	for leg in _legs:
 		var hip: Vector3 = leg["hip"]
-		var u := fposmod(p.gait + float(leg["phase"]), 1.0)
-		var off := AnimalArt.foot_offset(u, reach, AnimalArt.LIFT * _leg) * p.stride
-		# Feet on the ground, below the hip (in body space the ground is at -_body.y).
-		var ground := -_body.position.y + p.hop * _leg * 0.4
-		var foot := Vector3(hip.x + off.x, ground - off.y, hip.z)
+		var k: int = leg["k"]
+		var u := fposmod(p.gait + m.leg_phase(k), 1.0)
+		var off := AnimalArt.foot_offset(u, reach, lift) * p.stride
+		var hip_on_ground := _body.transform * hip
+		var foot_on_ground := Vector3(hip_on_ground.x + off.x, p.hop * _leg * 0.4 - off.y, hip_on_ground.z)
+		if k == 2:
+			# The near hind leg is the one it rests: toe down, a little forward, the hock bent.
+			foot_on_ground += Vector3(_leg * 0.12, _leg * 0.07, 0) * m.rest
+		var foot := to_body * foot_on_ground
 		var knee := _knee(hip, foot, bool(leg["fore"]))
 		_place(leg["upper"], hip, knee)
 		_place(leg["lower"], knee, foot)
 		(leg["hoof"] as Node3D).position = foot
-	# Neck and head: up and looking about, or down to graze, chewing.
+	# Neck and head: up and looking about, or down to graze, chewing. The head lags the body's turns,
+	# rides out its bob, stays level when it leans, and turns to you when you tap.
 	var down := smoothstep(0.0, 1.0, p.head)
 	var neck_len := _px(rig.pair("neck", Vector2(14, 9)).x)
 	var chest := Vector3(_r.x * 0.72, _r.y * 0.3, 0)
 	var up_at := chest + Vector3(cos(-rig.num("neck_up", -0.6)), sin(-rig.num("neck_up", -0.6)), 0) * neck_len
 	var graze_at := Vector3(chest.x + neck_len * 0.8, -_body.position.y + _r.y * 0.35, 0)
 	var head_at := up_at.lerp(graze_at, down) + Vector3(0, p.look * _r.y * 0.1 * (1.0 - down), 0)
+	head_at.y -= rise * m.head_steady
+	var yaw := (p.look * 0.35 + m.head_yaw) * (1.0 - down * 0.7)
+	head_at.z -= sin(yaw) * neck_len * 0.35
 	_place(_neck, chest, head_at)
 	_head.position = head_at + Vector3(0, p.jaw * _px(0.4), 0)
-	_head.rotation = Vector3(0, p.look * 0.35 * (1.0 - down), -lerpf(rig.num("head_tilt", 0.3), 1.2, down))
+	_head.rotation = Vector3(-m.roll * 0.7, yaw, -lerpf(rig.num("head_tilt", 0.3), 1.2, down) - m.pitch * 0.7)
 	for k in _ears.size():
-		_ears[k].rotation.x = (1.0 if k % 2 else -1.0) * p.ear * 0.6
-	_tail.rotation = Vector3(p.tail * 0.8, 0, 0.35)
+		_ears[k].rotation = Vector3((1.0 if k % 2 else -1.0) * p.ear * 0.6, 0, m.ears)
+	# The tail swings on after the body, and lifts when it trots.
+	_tail.rotation = Vector3(p.tail * 0.8 + m.tail, 0, 0.35 - m.pitch * 0.8 + m.trot * 0.35)
 
 
 
@@ -535,12 +576,15 @@ func _pose_bird(p: AnimalPose) -> void:
 	var waddle := sin(p.gait * TAU) * 0.13 * p.stride if rig.flag("waddle") else 0.0
 	var air := p.hop * _leg * 0.8
 	_body.position = Vector3(0, _leg + _r.y * 0.8 + absf(sin(p.gait * TAU)) * _leg * 0.08 * p.stride + air, 0)
-	_body.rotation = Vector3(waddle, 0, 0.22 - 0.12 * p.head)
+	_body.rotation = Vector3(waddle + motion.roll, 0, 0.22 - 0.12 * p.head + motion.pitch)
+	_body.scale = Vector3(1.0 + motion.squash * 0.6, 1.0 - motion.squash, 1.0 + motion.squash * 0.6)
 	for leg in _legs:
 		var hip: Vector3 = leg["hip"]
 		var u := fposmod(p.gait + float(leg["phase"]), 1.0)
 		var off := AnimalArt.foot_offset(u, 0.9 * _leg, 0.45 * _leg) * p.stride
-		var foot := Vector3(hip.x + off.x, -_body.position.y - off.y, hip.z)
+		# Feet planted on the ground, whatever the body's lean (worked out on the ground, then into its space).
+		var on_ground := _body.transform * hip
+		var foot := _body.transform.affine_inverse() * Vector3(on_ground.x + off.x, -off.y, on_ground.z)
 		var knee := _knee(hip, foot, false)
 		_place(leg["upper"], hip, knee)
 		_place(leg["lower"], knee, foot)
@@ -554,11 +598,11 @@ func _pose_bird(p: AnimalPose) -> void:
 	var head_at := up_at.lerp(peck_at, down)
 	_place(_neck, shoulder, head_at)
 	_head.position = head_at
-	_head.rotation = Vector3(0, p.look * 0.4, -down * 0.9)
+	_head.rotation = Vector3(0, p.look * 0.4 + motion.head_yaw * (1.0 - down * 0.7), -down * 0.9 - motion.pitch * 0.6)
 	for k in _wings.size():
 		var side := -1.0 if k == 0 else 1.0
 		_wings[k].rotation = Vector3(side * (p.wing * 1.2 + sin(p.time * 26.0) * 0.5 * p.wing), 0, 0)
-	_tail.rotation = Vector3(p.tail * 0.5, 0, 0.6 + p.display * 0.9)
+	_tail.rotation = Vector3(p.tail * 0.5 + motion.tail * 0.6, 0, 0.6 + p.display * 0.9 - motion.pitch)
 	for f in _tail.get_children():
 		var n := _tail.get_child_count()
 		var i := f.get_index()
