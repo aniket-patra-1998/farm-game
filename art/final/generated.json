@@ -363,6 +363,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_heirloom_carrots_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:18",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_heirloom_carrots_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:17",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_heirloom_carrots_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:18",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_heirloom_carrots_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:19",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_iris_growing": {
   "class": "Crop",
   "made": "2026-11-09 06:01",
@@ -727,6 +755,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_pumpkins_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:20",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_pumpkins_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:19",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_pumpkins_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:20",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_pumpkins_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:21",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_purple_pod_peas_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:39",
@@ -947,6 +1003,20 @@
  "crop_soybeans_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:34",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_squash_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:21",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_squash_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:21",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"

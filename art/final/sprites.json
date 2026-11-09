@@ -384,6 +384,34 @@
   ],
   "scale": 0.5
  },
+ "crop_heirloom_carrots_growing": {
+  "anchor": [
+   128.0,
+   149.0
+  ],
+  "scale": 0.5
+ },
+ "crop_heirloom_carrots_planted": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_heirloom_carrots_ripe": {
+  "anchor": [
+   128.0,
+   150.0
+  ],
+  "scale": 0.5
+ },
+ "crop_heirloom_carrots_withered": {
+  "anchor": [
+   128.0,
+   149.0
+  ],
+  "scale": 0.5
+ },
  "crop_iris_growing": {
   "anchor": [
    128.0,
@@ -748,6 +776,34 @@
   ],
   "scale": 0.5
  },
+ "crop_pumpkins_growing": {
+  "anchor": [
+   128.0,
+   142.0
+  ],
+  "scale": 0.5
+ },
+ "crop_pumpkins_planted": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_pumpkins_ripe": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_pumpkins_withered": {
+  "anchor": [
+   128.0,
+   140.0
+  ],
+  "scale": 0.5
+ },
  "crop_purple_pod_peas_growing": {
   "anchor": [
    128.0,
@@ -969,6 +1025,20 @@
   "anchor": [
    128.0,
    121.0
+  ],
+  "scale": 0.5
+ },
+ "crop_squash_growing": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_squash_planted": {
+  "anchor": [
+   128.0,
+   147.0
   ],
   "scale": 0.5
  },
