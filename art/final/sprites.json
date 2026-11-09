@@ -188,6 +188,76 @@
   ],
   "scale": 0.5
  },
+ "crop_red_wheat_growing": {
+  "anchor": [
+   128.0,
+   126.0
+  ],
+  "scale": 0.5
+ },
+ "crop_red_wheat_planted": {
+  "anchor": [
+   128.0,
+   127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rice_growing": {
+  "anchor": [
+   128.0,
+   122.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rice_planted": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rice_ripe": {
+  "anchor": [
+   128.0,
+   132.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rice_withered": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rye_growing": {
+  "anchor": [
+   128.0,
+   124.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rye_planted": {
+  "anchor": [
+   128.0,
+   126.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rye_ripe": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
+ "crop_rye_withered": {
+  "anchor": [
+   128.0,
+   126.0
+  ],
+  "scale": 0.5
+ },
  "crop_strawberries_growing": {
   "anchor": [
    121.5,
