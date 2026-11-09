@@ -17,14 +17,20 @@ const LEAF_DARK := Color("#3c8a2e")
 const STEM := Color("#5c9e3a")
 const WITHERED := Color("#8b7355")
 const WITHERED_DARK := Color("#6e5a42")
+
 const OUTLINE := Color(0, 0, 0, 0.12)
+
+
 
 ## Earth sides under the front two edges of the farm, so it reads as a raised plot.
 ## The countryside around the farm: meadow out to the edges of the view, a little darker than your land,
 ## so the farm sits in open country (as in FarmVille) instead of floating in the sky.
 const MEADOW := Color("#7cb653")
 const MEADOW_DARK := Color("#6fa84a")
+
 const MEADOW_TUFT := Color("#5f9a3e")
+
+
 
 ## Plowed plots are raised beds, like FarmVille's and like the painted crop art: a soil top lifted by
 ## SLAB px over the tile, with darker sides.
@@ -34,11 +40,16 @@ const BED_TOP_WET := Color("#5f412f")
 const BED_LEFT := Color("#4a3123")
 const BED_RIGHT := Color("#33211a")
 const BED_FURROW := Color("#4e3426")
+
 const BED_RIDGE := Color("#8a6247")
+
+
 
 ## corners: the footprint's top, right, bottom and left points on the ground.
 ## false when drawing art references: no level badges for the AI to copy.
 static var show_badges := true
+
+
 
 
 # ---------------------------------------------------------------- ground
@@ -51,6 +62,8 @@ static func diamond(top: Vector2, w: float, h: float) -> PackedVector2Array:
 		top + Vector2(0, h),
 		top + Vector2(-w / 2.0, h / 2.0),
 	])
+
+
 
 
 static func draw_meadow(ci: CanvasItem, n: int, w: float, h: float, margin: int) -> void:
@@ -78,12 +91,16 @@ static func draw_meadow(ci: CanvasItem, n: int, w: float, h: float, margin: int)
 			ci.draw_line(p, p + Vector2(3, -7), MEADOW_TUFT, 2.0)
 
 
+
+
 static func draw_ellipse_at(ci: CanvasItem, center: Vector2, rx: float, ry: float, col: Color) -> void:
 	var pts := PackedVector2Array()
 	for k in 20:
 		var t := TAU * k / 20.0
 		pts.append(center + Vector2(cos(t) * rx, sin(t) * ry))
 	ci.draw_colored_polygon(pts, col)
+
+
 
 
 ## Your land's grass as one continuous field: a base colour with soft patches of lighter and darker
@@ -118,6 +135,8 @@ static func draw_field(ci: CanvasItem, n: int, w: float, h: float) -> void:
 		ci.draw_line(p, p + Vector2(3, -7), GRASS_TUFT, 2.0)
 
 
+
+
 ## A soft line where your land ends, instead of the old floating-island edges.
 static func draw_farm_border(ci: CanvasItem, n: int, w: float, h: float) -> void:
 	var t := Vector2(0, 0)
@@ -127,6 +146,8 @@ static func draw_farm_border(ci: CanvasItem, n: int, w: float, h: float) -> void
 	ci.draw_polyline(PackedVector2Array([t, r, b, l, t]), Color(0.25, 0.4, 0.15, 0.35), 3.0)
 
 
+
+
 static func draw_farm_edges(ci: CanvasItem, n: int, w: float, h: float, depth: float) -> void:
 	var left := Vector2(-n * w / 2.0, n * h / 2.0)
 	var bottom := Vector2(0, n * h)
@@ -134,6 +155,8 @@ static func draw_farm_edges(ci: CanvasItem, n: int, w: float, h: float, depth: f
 	var down := Vector2(0, depth)
 	ci.draw_colored_polygon(PackedVector2Array([left, bottom, bottom + down, left + down]), EDGE_LEFT)
 	ci.draw_colored_polygon(PackedVector2Array([bottom, right, right + down, bottom + down]), EDGE_RIGHT)
+
+
 
 
 static func draw_grass(ci: CanvasItem, top: Vector2, w: float, h: float, seed_value: int, checker: bool) -> void:
@@ -147,6 +170,8 @@ static func draw_grass(ci: CanvasItem, top: Vector2, w: float, h: float, seed_va
 		ci.draw_line(p, p + Vector2(-3, -7), GRASS_TUFT, 2.0)
 		ci.draw_line(p, p + Vector2(0, -9), GRASS_TUFT, 2.0)
 		ci.draw_line(p, p + Vector2(3, -7), GRASS_TUFT, 2.0)
+
+
 
 
 static func draw_soil(ci: CanvasItem, top: Vector2, w: float, h: float, planted: bool) -> void:
@@ -183,6 +208,8 @@ static func draw_soil(ci: CanvasItem, top: Vector2, w: float, h: float, planted:
 	ci.draw_polyline(PackedVector2Array([pts[3], pts[0], pts[1]]), Color(0.12, 0.07, 0.04, 0.35), 1.2)
 
 
+
+
 # ---------------------------------------------------------------- crops
 
 
@@ -194,6 +221,8 @@ static func plant_spots(w: float, h: float) -> Array[Vector2]:
 		Vector2(w * 0.18, 0),
 		Vector2(0, h * 0.2),
 	]
+
+
 
 
 ## stage: "growing" (uses progress 0..1), "ripe" or "withered".
@@ -223,15 +252,21 @@ static func draw_crop(
 					_young(ci, p, s)
 
 
+
+
 static func _seeds(ci: CanvasItem, p: Vector2, s: float) -> void:
 	ci.draw_circle(p + Vector2(-4, 0) * s, 2.5 * s, SOIL_FURROW)
 	ci.draw_circle(p + Vector2(4, 1) * s, 2.5 * s, SOIL_FURROW)
+
+
 
 
 static func _sprout(ci: CanvasItem, p: Vector2, s: float) -> void:
 	ci.draw_line(p, p + Vector2(0, -8) * s, STEM, 2.5 * s)
 	_ellipse(ci, p + Vector2(-5, -9) * s, 5 * s, 3 * s, LEAF)
 	_ellipse(ci, p + Vector2(5, -9) * s, 5 * s, 3 * s, LEAF)
+
+
 
 
 static func _young(ci: CanvasItem, p: Vector2, s: float) -> void:
@@ -241,10 +276,14 @@ static func _young(ci: CanvasItem, p: Vector2, s: float) -> void:
 	_ellipse(ci, p + Vector2(0, -19) * s, 5 * s, 4 * s, LEAF)
 
 
+
+
 static func _withered(ci: CanvasItem, p: Vector2, s: float) -> void:
 	ci.draw_line(p, p + Vector2(-2, -12) * s, WITHERED_DARK, 3 * s)
 	ci.draw_line(p + Vector2(-2, -12) * s, p + Vector2(-9, -6) * s, WITHERED, 2.5 * s)
 	ci.draw_line(p + Vector2(-1, -8) * s, p + Vector2(7, -4) * s, WITHERED, 2.5 * s)
+
+
 
 
 static func _ripe(ci: CanvasItem, p: Vector2, s: float, crop: Dictionary) -> void:
@@ -308,12 +347,16 @@ static func _ripe(ci: CanvasItem, p: Vector2, s: float, crop: Dictionary) -> voi
 			_young(ci, p, s)
 
 
+
+
 static func _ellipse(ci: CanvasItem, center: Vector2, rx: float, ry: float, color: Color) -> void:
 	var pts := PackedVector2Array()
 	for k in 16:
 		var a := TAU * k / 16.0
 		pts.append(center + Vector2(cos(a) * rx, sin(a) * ry))
 	ci.draw_colored_polygon(pts, color)
+
+
 
 
 ## A four-point sparkle; alpha 0..1. Used to make ripe crops shimmer.
@@ -327,6 +370,8 @@ static func draw_twinkle(ci: CanvasItem, center: Vector2, size: float, alpha: fl
 		center + Vector2(-size, 0), center + Vector2(-thin, -thin),
 	]), c)
 	ci.draw_circle(center, thin * 1.1, Color(1, 1, 1, c.a))
+
+
 
 
 # ---------------------------------------------------------------- placed objects
@@ -369,8 +414,12 @@ static func draw_object(
 					_decor(ci, corners, center, it)
 
 
+
+
 static func _shadow(ci: CanvasItem, center: Vector2, rx: float, ry: float) -> void:
 	_ellipse(ci, center, rx, ry, Color(0, 0, 0, 0.16))
+
+
 
 
 static func _tree(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool) -> void:
@@ -394,6 +443,8 @@ static func _tree(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool) 
 	var count := spots.size() if ready else 2
 	for k in count:
 		ci.draw_circle(canopy + spots[k], 6.5 if ready else 4.0, fruit if ready else fruit.lerp(LEAF, 0.6))
+
+
 
 
 static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool) -> void:
@@ -461,6 +512,8 @@ static func _animal(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool
 		ci.draw_circle(bubble, 6, accent if id != "chicken" else Color("#f6e7c1"))
 
 
+
+
 ## Each animal building has its own shape, so you can tell them apart at a glance.
 ## show_sign: level badge and count sign; broken: weathered colours, missing roof and boarded door.
 static func _building(
@@ -504,6 +557,8 @@ static func _building(
 				_signs(ci, g, badge, level, inside, capacity)
 			return
 	_plain_building(ci, g, it, level, inside, capacity, s, show_sign, broken)
+
+
 
 
 static func _plain_building(
@@ -592,6 +647,8 @@ static func _plain_building(
 		_signs(ci, g, r_b + Vector2(0, -26), level, inside, capacity)
 
 
+
+
 ## Level badge over the building.
 static func _signs(
 	ci: CanvasItem,
@@ -605,6 +662,8 @@ static func _signs(
 	ci.draw_circle(badge, 16, Color("#ffd34d"))
 	ci.draw_arc(badge, 16, 0, TAU, 24, Color("#5c3a1e"), 2.5)
 	ci.draw_string(font, badge + Vector2(-16, 7), str(level), HORIZONTAL_ALIGNMENT_CENTER, 32, 20, Color("#3a2614"))
+
+
 
 
 ## The "inside / spaces" sign in front of a building. Drawn after the whole farm,
@@ -625,6 +684,8 @@ static func draw_count_sign(ci: CanvasItem, g: PackedVector2Array, inside: int, 
 	)
 
 
+
+
 # ---------------------------------------------------------------- building shapes
 
 
@@ -632,6 +693,8 @@ static func draw_count_sign(ci: CanvasItem, g: PackedVector2Array, inside: int, 
 static func _inset(g: PackedVector2Array, f: float) -> PackedVector2Array:
 	var c := (g[0] + g[2]) / 2.0
 	return PackedVector2Array([c.lerp(g[0], f), c.lerp(g[1], f), c.lerp(g[2], f), c.lerp(g[3], f)])
+
+
 
 
 ## The two walls you can see of a box standing on base (raised by lift). Returns the wall-top corners.
@@ -647,6 +710,8 @@ static func _box(ci: CanvasItem, base: PackedVector2Array, hgt: float, wall: Col
 		wall.darkened(0.3)
 	)
 	return PackedVector2Array([base[0] + up, base[1] + up, base[2] + up, base[3] + up])
+
+
 
 
 ## A pitched roof over wall tops; the ridge runs back-left to front-right. Returns the ridge ends.
@@ -666,6 +731,8 @@ static func _gable(
 	return PackedVector2Array([r_a, r_b])
 
 
+
+
 ## A door on the left wall at a fraction along it.
 static func _door(
 	ci: CanvasItem,
@@ -682,6 +749,8 @@ static func _door(
 	ci.draw_colored_polygon(PackedVector2Array([foot - dw, foot + dw, foot + dw + dh, foot - dw + dh]), col)
 
 
+
+
 static func _weathervane(ci: CanvasItem, ridge: Vector2) -> void:
 	var gold := Color("#f2c230")
 	ci.draw_line(ridge, ridge + Vector2(0, -26), Color("#5c3a1e"), 2.5)
@@ -690,6 +759,8 @@ static func _weathervane(ci: CanvasItem, ridge: Vector2) -> void:
 		gold
 	)
 	ci.draw_circle(ridge + Vector2(0, -28), 3.0, gold)
+
+
 
 
 ## Fence posts and two rails around a ground outline, with a gap for a gate on the front-left side.
@@ -711,9 +782,13 @@ static func _fence(ci: CanvasItem, base: PackedVector2Array, wood: Color) -> voi
 				ci.draw_line(a + Vector2(0, h), b + Vector2(0, h), wood, 2.5)
 
 
+
+
 static func _yard_shadow(ci: CanvasItem, g: PackedVector2Array, f := 0.42) -> void:
 	var c := (g[0] + g[2]) / 2.0
 	_ellipse(ci, c + Vector2(0, 6), (g[1].x - g[3].x) * f, (g[2].y - g[0].y) * f, Color(0, 0, 0, 0.12))
+
+
 
 
 ## Chicken Coop: a small hen house up on legs, with a ramp, nesting boxes and a run.
@@ -765,6 +840,8 @@ static func _coop(
 	if level >= 3:
 		_weathervane(ci, ridge[0].lerp(ridge[1], 0.5))
 	return ridge[1] + Vector2(0, -26)
+
+
 
 
 ## Dairy Farm: a tall red barn with a two-slope (gambrel) roof, a silo and milk cans.
@@ -828,6 +905,8 @@ static func _dairy(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level:
 	return r_b + Vector2(0, -26)
 
 
+
+
 ## Horse Stable: long and low, a row of half-doors with horses looking out, hay bales in front.
 static func _stable(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, _s: float) -> Vector2:
 	var wall := Color.html(str(it.get("color", "#a8743f")))
@@ -883,6 +962,8 @@ static func _stable(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level
 	return c + Vector2(0, -hgt - 60)
 
 
+
+
 ## Nursery Barn: a small pastel barn with a heart sign and a little pen for the babies.
 static func _nursery(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, level: int, _s: float) -> Vector2:
 	var wall := Color.html(str(it.get("color", "#e9d8a6")))
@@ -919,6 +1000,8 @@ static func _nursery(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, leve
 	if level >= 3:
 		_weathervane(ci, ridge[0].lerp(ridge[1], 0.5))
 	return ridge[1] + Vector2(0, -26)
+
+
 
 
 ## Beehive: stacked white hive boxes on a stand. More bees, more boxes, and bees buzz around it.
@@ -965,6 +1048,8 @@ static func _hive(ci: CanvasItem, g: PackedVector2Array, inside: int, capacity: 
 	return top_c + Vector2(0, -34)
 
 
+
+
 ## Orchard: a fenced field with trees in rows, filling up as trees move in.
 static func _orchard(ci: CanvasItem, g: PackedVector2Array, level: int, inside: int, _s: float) -> Vector2:
 	var field := _inset(g, 0.94)
@@ -999,6 +1084,8 @@ static func _orchard(ci: CanvasItem, g: PackedVector2Array, level: int, inside: 
 		ci.draw_line(arch_r, arch_r + Vector2(0, -34), Color("#7a4f2c"), 4)
 		ci.draw_line(arch_l + Vector2(0, -34), arch_r + Vector2(0, -34), Color("#7a4f2c"), 5)
 	return (field[0] + field[2]) / 2.0 + Vector2(0, -80)
+
+
 
 
 ## Pig Pen: a fenced mud yard with a puddle, a trough and a little lean-to shed.
@@ -1037,6 +1124,8 @@ static func _pig_pen(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, insi
 	return c + Vector2(0, -78)
 
 
+
+
 ## Tinted footprint shown while placing: green where it fits, red where it doesn't.
 static func draw_footprint(ci: CanvasItem, corners: PackedVector2Array, ok: bool) -> void:
 	var fill := Color(0.45, 0.95, 0.4, 0.35) if ok else Color(1.0, 0.3, 0.25, 0.4)
@@ -1044,6 +1133,8 @@ static func draw_footprint(ci: CanvasItem, corners: PackedVector2Array, ok: bool
 	var edge := PackedVector2Array(corners)
 	edge.append(corners[0])
 	ci.draw_polyline(edge, Color(1, 1, 1, 0.9), 2.5)
+
+
 
 
 ## Small green pellets on the soil mark a fertilized plot.
@@ -1062,6 +1153,8 @@ static func draw_fertilizer(ci: CanvasItem, top: Vector2, w: float, h: float) ->
 		ci.draw_circle(c + Vector2(o.x * w * 0.5 - 1, o.y * h * 0.5 - 1), 1.2, Color(1, 1, 1, 0.6))
 
 
+
+
 ## Land not yet bought: a dim, dashed-edged area the farm can grow into.
 static func draw_wild_land(ci: CanvasItem, corners: PackedVector2Array) -> void:
 	ci.draw_colored_polygon(corners, Color(0.42, 0.62, 0.3, 0.45))
@@ -1074,6 +1167,8 @@ static func draw_wild_land(ci: CanvasItem, corners: PackedVector2Array) -> void:
 				ci.draw_line(a.lerp(b, float(j) / steps), a.lerp(b, float(j + 1) / steps), Color(1, 1, 1, 0.5), 2.0)
 
 
+
+
 ## A heart in a bubble over a stray animal: tap to adopt.
 static func draw_stray_marker(ci: CanvasItem, at: Vector2) -> void:
 	ci.draw_circle(at, 16, Color("#fffaf0"))
@@ -1084,6 +1179,9 @@ static func draw_stray_marker(ci: CanvasItem, at: Vector2) -> void:
 	ci.draw_colored_polygon(PackedVector2Array([at + Vector2(-9, 0), at + Vector2(9, 0), at + Vector2(0, 10)]), red)
 
 
+
+
+
 static func _mailbox(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
 	var box := Color.html(str(it.get("color", "#3f6fb5")))
 	_shadow(ci, ground + Vector2(0, 2), 16, 6)
@@ -1092,6 +1190,8 @@ static func _mailbox(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
 	ci.draw_circle(ground + Vector2(-14, -39), 9, box.lightened(0.1))
 	ci.draw_line(ground + Vector2(12, -48), ground + Vector2(12, -60), Color("#e2453c"), 3)
 	ci.draw_rect(Rect2(ground + Vector2(12, -60), Vector2(9, 6)), Color("#e2453c"))
+
+
 
 
 static func _farm_stand(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
@@ -1122,6 +1222,9 @@ static func _farm_stand(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void
 		)
 
 
+
+
+
 ## Level 2: a white trim along the eaves and a picket fence around the front of the yard.
 static func _upgrade_trim(
 	ci: CanvasItem,
@@ -1146,6 +1249,8 @@ static func _upgrade_trim(
 			ci.draw_line(p, p + Vector2(0, -14), fence, 3.0)
 			ci.draw_circle(p + Vector2(0, -14), 1.6, fence)
 		ci.draw_line(a.lerp(b, 0.08) + Vector2(0, -9), a.lerp(b, 0.92) + Vector2(0, -9), shade, 2.0)
+
+
 
 
 ## Level 3: a silo beside the building, flower boxes and a golden weathervane on the roof.
@@ -1189,6 +1294,9 @@ static func _upgrade_top(
 	ci.draw_circle(ridge + Vector2(0, -28), 3.0, gold)
 
 
+
+
+
 ## A building frame under construction: a floor, wooden posts and scaffold rails.
 static func draw_frame(ci: CanvasItem, g: PackedVector2Array, it: Dictionary) -> void:
 	var c := (g[0] + g[2]) / 2.0
@@ -1224,6 +1332,8 @@ static func draw_frame(ci: CanvasItem, g: PackedVector2Array, it: Dictionary) ->
 		15,
 		Color("#3a2614")
 	)
+
+
 
 
 # ---------------------------------------------------------------- vehicles
@@ -1271,6 +1381,8 @@ static func _vehicle(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
 	ci.draw_circle(o + Vector2(18, -8) * big, 3 * big, body.lightened(0.3))
 
 
+
+
 ## The Combine's chassis before it's finished: a bare frame on wheels with a parts pile.
 static func draw_chassis(ci: CanvasItem, g: PackedVector2Array, _it: Dictionary) -> void:
 	var c := (g[0] + g[2]) / 2.0 + Vector2(0, -6)
@@ -1296,6 +1408,8 @@ static func draw_chassis(ci: CanvasItem, g: PackedVector2Array, _it: Dictionary)
 		15,
 		Color("#3a2614")
 	)
+
+
 
 
 ## Garage: a grey workshop with a big roll-up door, a wrench sign and a fuel pump.
@@ -1350,6 +1464,8 @@ static func _garage(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, insid
 	ci.draw_rect(Rect2(pump + Vector2(-4, -22), Vector2(8, 6)), Color("#fbefd2"))
 	ci.draw_line(pump + Vector2(7, -16), pump + Vector2(12, -4), Color("#2b2b30"), 2)
 	return (t[0] + t[2]) / 2.0 + Vector2(0, -36)
+
+
 
 
 # ---------------------------------------------------------------- decorations
@@ -1708,6 +1824,8 @@ static func _decor(ci: CanvasItem, g: PackedVector2Array, ground: Vector2, it: D
 			ci.draw_circle(ground + Vector2(0, -12), 10, col)
 
 
+
+
 ## Duck Pond: water with a little duck house on stilts and ducks bobbing.
 static func _duck_pond(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: int) -> Vector2:
 	var water := Color.html(str(it.get("color", "#5fa8d3")))
@@ -1742,6 +1860,8 @@ static func _duck_pond(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, in
 	return c + Vector2(0, -70)
 
 
+
+
 ## Sheep Pen and Goat Pen: a fenced grassy yard with a small shed and the flock grazing.
 static func _pen(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: int) -> Vector2:
 	var wall := Color.html(str(it.get("color", "#d9c9a3")))
@@ -1769,6 +1889,8 @@ static func _pen(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside: 
 	ci.draw_rect(Rect2(trough + Vector2(-14, -6), Vector2(28, 8)), Color("#8a5a32"))
 	_fence(ci, yard, Color("#c9a26a"))
 	return c + Vector2(0, -72)
+
+
 
 
 ## Rabbit Hutch: a small wooden hutch on legs with a wire front and a carrot patch.
@@ -1804,6 +1926,8 @@ static func _hutch(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, inside
 			Color("#f28a2e")
 		)
 	return (t[0] + t[2]) / 2.0 + Vector2(0, -30)
+
+
 
 
 ## FarmVille's crafting cottages: one silhouette each, a bit grander per star.

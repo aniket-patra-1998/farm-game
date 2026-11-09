@@ -47,16 +47,17 @@ const KINDS := {
 		"spread": 180.0,
 		"up": false
 	},
+}
+
 
 static var _dot: Texture2D
+
+
 
 var grid: FarmGrid
 
 var _pools := {}   # kind -> Array[CPUParticles2D]
 var _next := {}    # kind -> next emitter to use
-
-
-}
 
 
 func _ready() -> void:
@@ -78,6 +79,8 @@ func _ready() -> void:
 			pool.append(_make_emitter(KINDS[kind]))
 		_pools[kind] = pool
 		_next[kind] = 0
+
+
 
 
 func _make_emitter(spec: Dictionary) -> CPUParticles2D:
@@ -110,6 +113,8 @@ func _make_emitter(spec: Dictionary) -> CPUParticles2D:
 	return e
 
 
+
+
 static func _initial_ramp(cols: Array) -> Gradient:
 	var g := Gradient.new()
 	g.set_color(0, Color.html(cols[0]))
@@ -117,6 +122,8 @@ static func _initial_ramp(cols: Array) -> Gradient:
 	if cols.size() > 2:
 		g.add_point(0.5, Color.html(cols[1]))
 	return g
+
+
 
 
 ## One burst of a kind ("dirt", "leaves", "dust", "sparkle") at a farm position.
@@ -129,6 +136,8 @@ func burst(kind: String, at: Vector2) -> void:
 	e.position = at
 	e.restart()
 	e.emitting = true
+
+
 
 
 ## The harvested plants jump, stretch and vanish upward, so a harvest feels like picking something.
@@ -153,6 +162,8 @@ func pop_plants(i: int, crop_id: String, art: String) -> void:
 	tw.tween_property(ghost, "scale", Vector2(0.45, 0.45), 0.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_property(ghost, "modulate:a", 0.0, 0.26).set_delay(0.08)
 	tw.chain().tween_callback(ghost.queue_free)
+
+
 
 
 ## A copy of a plot's plants, drawn around its own origin, for the harvest pop.

@@ -16,15 +16,21 @@ signal objects_changed
 signal found(index: int, text: String) # a find on a plot (fuel, a collectible...): floats up from it
 signal building_upgraded(uid: int, level: int)
 signal farm_expanded(size: int)
+
 signal inventory_changed
 
+
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
+
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
+
 
 const TUTORIAL_TEXT := {
 	Tutorial.HARVEST: "Your first crops are ready! Tap them to harvest.",
 	Tutorial.PLOW: "Choose Plow, then tap a grassy or empty spot to plow a plot.",
 	Tutorial.PLANT: "Choose Strawberries, then tap a plowed plot to plant.",
+}
+
 const PART_CHANCE := 0.08          # per harvest or collection
 const DAILY_PARTS := 2
 
@@ -36,7 +42,9 @@ const SELL_SHARE := PlaceableDef.SELL_SHARE
 const SELL_COINS_PER_GEM := PlaceableDef.SELL_COINS_PER_GEM
 const DECOR_MIN_XP := DecorationDef.MIN_XP
 const LAMB_CHANCE := 0.25          # Sheep Pen harvest with a ram inside
+
 const PIGLET_CHANCE := 0.25        # Pig Pen harvest with a boar inside
+
 
 # Building specials, the FarmVille way.
 const CALF_CHANCE := 0.25          # Dairy Farm harvest with a bull inside
@@ -45,10 +53,13 @@ const FOAL_CHANCE := 0.25          # Horse Stable harvest with a stallion inside
 const STABLE_HELPER_CHANCE := 0.15 # Stable harvest: a farmhand, and separately an arborist
 const STABLE_XP_CHANCE := 0.10     # Stable harvest with a stallion: 100 XP
 const STABLE_XP := 100
+
 const NURSERY_SPARE_XP := 25       # stands in for FarmVille's spare baby to gift a friend
+
 
 # Rescue: if a player can't afford seeds and has nothing growing, top them up to this.
 const RESCUE_COINS := 50
+
 
 # Surprise drops, rolled on every harvest. Chances are per harvest.
 const GOLDEN_CHANCE := 0.004      # golden harvest: 5x coins, +10 XP
@@ -63,7 +74,9 @@ const FERTILIZER_COST := 10
 const FERTILIZER_BONUS := 0.2      # +20% coins on a fertilized plot
 const BONUS_XP_CHANCE := 0.05     # +2 XP
 const BONUS_XP := 2
+
 const MASTERY_LUCK_BONUS := 0.15  # per mastery star, multiplies golden and collectible chances
+
 const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
 const MAX_SIZE := 30   # plots are stored for the largest farm; farm_size says how much is usable
@@ -130,17 +143,23 @@ const START_COINS := 200
 const START_GEMS := 5
 const GEMS_PER_LEVEL := 1
 const PLOW_COST := 15
+
 const PLOW_XP := 1
+
 
 # A ripe crop stays ripe as long as it took to grow, clamped to this window.
 const MIN_RIPE_WINDOW := CropDef.MIN_RIPE_WINDOW
+
 const MAX_RIPE_WINDOW := CropDef.MAX_RIPE_WINDOW
+
 
 # Total XP needed to reach level n is LEVEL_XP[n - 1]. Past the table, +250 per level.
 # Tuned so level 20 takes about two weeks of regular play (the beta test window).
 const LEVEL_XP := [0, 15, 40, 75, 120, 175, 240, 320, 410, 510,
 	620, 740, 870, 1010, 1160, 1320, 1490, 1670, 1860, 2060]
+
 const XP_PER_LEVEL_AFTER_TABLE := 250
+
 
 # Mastery: harvests needed for stars 1, 2, 3, by crop speed.
 const MASTERY_FAST := [150, 450, 900]   # grows in 6 h or less
@@ -148,7 +167,9 @@ const MASTERY_MEDIUM := [80, 240, 480]  # 8 to 16 h
 const MASTERY_SLOW := [40, 120, 240]    # 1 day or more
 const MASTERY_PRICE_BONUS := 0.05       # per star
 const MASTERY_STAR_COINS := [100, 300, 1000]
+
 const MASTERY_STAR_XP := [10, 30, 100]
+
 
 # Building parts: found while harvesting and collecting, plus a daily gift.
 # Building materials, the FarmVille set: three basic ones every building uses,
@@ -201,7 +222,9 @@ var daily_streak := 0              # consecutive days the daily bonus was collec
 var stored: Array = []             # objects put away in the barn (no row or col)
 var mastery := {}                  # crop id -> lifetime harvest count
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
+
 var tutorial_step: int = Tutorial.HARVEST
+
 var collections: Array = []        # from data/collections.json
 var collections_data := {}         # the whole file: levels, rarity weights
 var collection_of_crop := {}       # crop id -> collection dictionary
@@ -217,7 +240,9 @@ var items := {}                    # placeable objects from data/catalog/, as di
 var item_order: Array[String] = []
 var objects: Array = []            # placed trees, animals and buildings
 var next_uid := 1
+
 var modal_open := false            # true while a menu covers the farm
+
 var rng := RandomNumberGenerator.new()
 
 # Test hooks: tests turn saving off (or point it at a scratch file) and can switch off random drops.
@@ -226,10 +251,10 @@ var save_path := SAVE_PATH
 var drops_enabled := true
 
 var _occupied := {}                # tile index -> uid of the object covering it
+
 var _save_queued := false
 
 
-}
 
 
 func _ready() -> void:
@@ -256,15 +281,21 @@ func _ready() -> void:
 	add_child(stray_timer)
 
 
+
+
 func _show_absence() -> void:
 	if absence_note != "":
 		message.emit(absence_note)
 		absence_note = ""
 
 
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
+
+
 
 
 # ---------------------------------------------------------------- time
@@ -274,10 +305,14 @@ func now() -> int:
 	return int(Time.get_unix_time_from_system()) + debug_time_offset
 
 
+
+
 func add_gems(amount: int) -> void:
 	gems += amount
 	gems_changed.emit(gems)
 	queue_save()
+
+
 
 
 func spend_gems(amount: int) -> bool:
@@ -289,11 +324,15 @@ func spend_gems(amount: int) -> bool:
 	return true
 
 
+
+
 ## Test helpers. They do nothing in release builds.
 func debug_add_coins(amount: int) -> void:
 	if OS.is_debug_build():
 		add_coins(amount, false)
 		add_gems(int(amount / 1000.0))
+
+
 
 
 func debug_add_materials(n: int) -> void:
@@ -302,6 +341,8 @@ func debug_add_materials(n: int) -> void:
 			parts[m] = int(parts.get(m, 0)) + n
 		inventory_changed.emit()
 		queue_save()
+
+
 
 
 ## Adds bees to finished hives (with a queen, so the hive works). Test helper.
@@ -321,9 +362,13 @@ func debug_add_bees(n: int) -> void:
 	_objects_updated()
 
 
+
+
 func debug_level_up() -> void:
 	if OS.is_debug_build():
 		add_xp(xp_for_level(level() + 1) - xp)
+
+
 
 
 func debug_skip(seconds: int) -> void:
@@ -337,6 +382,8 @@ func debug_skip(seconds: int) -> void:
 	queue_save()
 
 
+
+
 # ---------------------------------------------------------------- plots
 
 
@@ -344,8 +391,12 @@ func index_of(row: int, col: int) -> int:
 	return row * MAX_SIZE + col
 
 
+
+
 func in_farm(row: int, col: int) -> bool:
 	return row >= 0 and col >= 0 and row < farm_size and col < farm_size
+
+
 
 
 func phase(i: int) -> Phase:
@@ -366,8 +417,12 @@ func phase(i: int) -> Phase:
 	return Phase.GRASS
 
 
+
+
 func ripe_window(crop: Dictionary) -> int:
 	return (catalog.get_def(crop["id"]) as CropDef).ripe_window()
+
+
 
 
 ## 0.0 just planted .. 1.0 ripe.
@@ -379,6 +434,8 @@ func growth(i: int) -> float:
 	return clampf(float(now() - int(p["planted_at"])) / grow, 0.0, 1.0)
 
 
+
+
 func seconds_until_ripe(i: int) -> int:
 	var p: Dictionary = plots[i]
 	if p.get("state") != "planted":
@@ -387,8 +444,12 @@ func seconds_until_ripe(i: int) -> int:
 	return maxi(0, int(p["planted_at"]) + grow - now())
 
 
+
+
 func crop_at(i: int) -> String:
 	return plots[i].get("crop", "")
+
+
 
 
 func plow(i: int) -> bool:
@@ -412,6 +473,8 @@ func plow(i: int) -> bool:
 	_plot_updated(i)
 	check_rescue()
 	return true
+
+
 
 
 func plant(i: int, crop_id: String) -> bool:
@@ -441,8 +504,12 @@ func plant(i: int, crop_id: String) -> bool:
 	return true
 
 
+
+
 func is_fertilized(i: int) -> bool:
 	return plots[i].get("fert", false)
+
+
 
 
 ## Fertilizer goes on a planted crop that isn't ripe or withered yet.
@@ -460,6 +527,8 @@ func fertilize(i: int) -> bool:
 	_roll_collectible(collection_of_crop.get(str(plots[i]["crop"]), {}), COLLECTIBLE_ACTION_CHANCE, i)
 	_plot_updated(i)
 	return true
+
+
 
 
 ## Returns {"coins", "xp", "crop", "drop", "drop_text"} or {} if nothing was harvested.
@@ -517,6 +586,8 @@ func harvest(i: int) -> Dictionary:
 		"bushels": (1 + mastery_stars(crop_id)) if bushel != "" else 0, "bunch": bunch}
 
 
+
+
 # ---------------------------------------------------------------- surprise drops
 
 
@@ -563,6 +634,8 @@ func _roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 	return {}
 
 
+
+
 ## Items you hold fewer of are more likely, so sets fill up instead of piling duplicates.
 func _pick_item(coll: Dictionary) -> String:
 	var weights: Array[float] = []
@@ -581,12 +654,16 @@ func _pick_item(coll: Dictionary) -> String:
 	return coll["items"][-1]["id"]
 
 
+
+
 # ---------------------------------------------------------------- collections
 
 
 ## The trade-in level this set is on next: 0, 1 or 2 (after level 3 it repeats from level 1).
 func coll_level(coll: Dictionary) -> int:
 	return int(coll_levels.get(coll["id"], 0)) % 3
+
+
 
 
 ## Item id -> how many the next trade-in takes (FarmVille: 3/2/1, then 6/4/2, then 12/8/4).
@@ -598,10 +675,14 @@ func coll_need(coll: Dictionary) -> Dictionary:
 	return out
 
 
+
+
 ## {"coins", "xp", "prize"} for the next trade-in.
 func coll_reward(coll: Dictionary) -> Dictionary:
 	var lvl: Dictionary = collections_data["levels"][coll_level(coll)]
 	return {"coins": int(lvl["coins"]), "xp": int(lvl["xp"]), "prize": coll["rewards"][coll_level(coll)]}
+
+
 
 
 func can_trade_in(coll: Dictionary) -> bool:
@@ -610,6 +691,8 @@ func can_trade_in(coll: Dictionary) -> bool:
 		if int(owned.get(id, 0)) < int(need[id]):
 			return false
 	return true
+
+
 
 
 func trade_in(coll_id: String) -> bool:
@@ -643,6 +726,8 @@ func trade_in(coll_id: String) -> bool:
 	return false
 
 
+
+
 ## One roll for a collectible from a set, outside harvests (no pity). Returns the item name or "".
 func _roll_collectible(coll: Dictionary, chance: float, index := -1) -> String:
 	if coll.is_empty() or not drops_enabled or rng.randf() >= chance:
@@ -658,6 +743,8 @@ func _roll_collectible(coll: Dictionary, chance: float, index := -1) -> String:
 	return item_names[item_id]
 
 
+
+
 ## A collection to roll on a plow: the set of the crop that was there, or one for a crop you can grow.
 func _plow_collection(old_crop: String) -> Dictionary:
 	if collection_of_crop.has(old_crop):
@@ -669,6 +756,8 @@ func _plow_collection(old_crop: String) -> Dictionary:
 				pool.append(coll)
 				break
 	return pool[rng.randi_range(0, pool.size() - 1)] if not pool.is_empty() else {}
+
+
 
 
 ## Adds fuel; past a full tank it fills spare tanks.
@@ -685,6 +774,8 @@ func _add_fuel(n: int) -> void:
 	inventory_changed.emit()
 
 
+
+
 ## FarmVille: plowing your own farm can turn up fuel, at most once a day.
 func _roll_fuel_find(i: int) -> int:
 	if not drops_enabled or level() < FUEL_LEVEL or fuel_found_day == day_number() or rng.randf() >= FUEL_FIND_CHANCE:
@@ -694,6 +785,8 @@ func _roll_fuel_find(i: int) -> int:
 	_add_fuel(n)
 	found.emit(i, "Found fuel! +%d" % n)
 	return n
+
+
 
 
 # ---------------------------------------------------------------- Perfect Bunches and the Garden Shed
@@ -706,12 +799,16 @@ func bunch_cap() -> int:
 	return BUNCH_CAP_NO_SHED
 
 
+
+
 func add_bunch(flower: String) -> bool:
 	if bunches.size() >= bunch_cap():
 		return false
 	bunches.append(flower)
 	inventory_changed.emit()
 	return true
+
+
 
 
 func _roll_bunch(crop_id: String, i: int) -> String:
@@ -722,6 +819,8 @@ func _roll_bunch(crop_id: String, i: int) -> String:
 	_bump("perfect_bunches", 1)
 	found.emit(i, "Perfect Bunch of %s!" % crops[crop_id]["name"])
 	return crop_id
+
+
 
 
 ## Takes a bunch out of the shed, ready to place: it goes to the end of the storage list. Returns its index.
@@ -736,6 +835,8 @@ func unpack_bunch(k: int) -> int:
 	return stored.size() - 1
 
 
+
+
 ## Placed bunches wilt away after BUNCH_DAYS days.
 func _expire_bunches() -> void:
 	var before := objects.size()
@@ -748,6 +849,8 @@ func _expire_bunches() -> void:
 		_objects_updated()
 
 
+
+
 # ---------------------------------------------------------------- ribbons
 
 
@@ -755,9 +858,13 @@ func stat(stat_name: String) -> int:
 	return int(stats.get(stat_name, 0))
 
 
+
+
 func _bump(stat_name: String, amount: int) -> void:
 	stats[stat_name] = stat(stat_name) + amount
 	_check_ribbons(stat_name)
+
+
 
 
 func _check_ribbons(stat_name: String) -> void:
@@ -782,6 +889,8 @@ func _check_ribbons(stat_name: String) -> void:
 	queue_save()
 
 
+
+
 # ---------------------------------------------------------------- placed objects
 # Trees, animals and buildings sit on grass tiles. Each object is a dictionary:
 # {"uid", "id", "row", "col", "t"} where t is when its current cycle started.
@@ -792,13 +901,19 @@ func item_data(item_id: String) -> Dictionary:
 	return items.get(item_id, {})
 
 
+
+
 func footprint(item_id: String) -> Vector2i:
 	var d := catalog.get_def(item_id)
 	return (d as PlaceableDef).footprint() if d is PlaceableDef else Vector2i.ONE
 
 
+
+
 func object_at(i: int) -> Dictionary:
 	return object_by_uid(int(_occupied.get(i, -1)))
+
+
 
 
 func object_by_uid(uid: int) -> Dictionary:
@@ -808,8 +923,12 @@ func object_by_uid(uid: int) -> Dictionary:
 	return {}
 
 
+
+
 func is_occupied(i: int) -> bool:
 	return _occupied.has(i)
+
+
 
 
 func _rebuild_occupancy() -> void:
@@ -819,6 +938,8 @@ func _rebuild_occupancy() -> void:
 		for r in range(int(o["row"]), int(o["row"]) + fp.y):
 			for c in range(int(o["col"]), int(o["col"]) + fp.x):
 				_occupied[index_of(r, c)] = int(o["uid"])
+
+
 
 
 ## Objects go on grass or empty plowed plots, never on planted crops or other objects.
@@ -837,11 +958,15 @@ func can_place(item_id: String, row: int, col: int, ignore_uid := -1) -> bool:
 	return true
 
 
+
+
 func _grass_over(item_id: String, row: int, col: int) -> void:
 	var fp := footprint(item_id)
 	for r in range(row, row + fp.y):
 		for c in range(col, col + fp.x):
 			plots[index_of(r, c)] = {"state": "grass"}
+
+
 
 
 func can_afford_item(item_id: String) -> bool:
@@ -852,6 +977,8 @@ func can_afford_item(item_id: String) -> bool:
 	if it.has("gem_cost"):
 		return gems >= int(it["gem_cost"])
 	return coins >= int(it.get("cost", 0))
+
+
 
 
 func buy_and_place(item_id: String, row: int, col: int) -> bool:
@@ -921,6 +1048,8 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	return true
 
 
+
+
 func move_object(uid: int, row: int, col: int) -> bool:
 	var obj := object_by_uid(uid)
 	if obj.is_empty() or not can_place(obj["id"], row, col, uid):
@@ -932,18 +1061,26 @@ func move_object(uid: int, row: int, col: int) -> bool:
 	return true
 
 
+
+
 ## A building's own cycle (the Stable's 1 day beats a loose horse's 3) or the item's.
 func cycle_of(obj: Dictionary) -> int:
 	return int(item_data(obj["id"]).get("cycle_seconds", 86400))
+
+
 
 
 func level_of(obj: Dictionary) -> int:
 	return int(obj.get("level", 1))
 
 
+
+
 func max_level(building_id: String) -> int:
 	var d := catalog.get_def(building_id)
 	return (d as BuildingDef).max_level() if d is BuildingDef else 1
+
+
 
 
 ## The building's name at its size: Big Chicken Coop, Huge Dairy Farm...
@@ -956,16 +1093,24 @@ func size_name(obj: Dictionary) -> String:
 	return it["name"] if lvl == 1 else "%s (size %d)" % [it["name"], lvl]
 
 
+
+
 func under_construction(obj: Dictionary) -> bool:
 	return obj.has("construction")
+
+
 
 
 func kind_of(obj: Dictionary) -> String:
 	return item_data(obj["id"]).get("kind", "")
 
 
+
+
 func is_building(obj: Dictionary) -> bool:
 	return item_data(obj["id"]).get("kind", "") == "building"
+
+
 
 
 ## Art id to draw for a placed object right now, by its lifecycle stage (see data/catalog/schema.json).
@@ -990,6 +1135,8 @@ func art_for(obj: Dictionary) -> String:
 	return ""
 
 
+
+
 ## Art id for a planted plot's stage: planted until half grown, growing, ripe, withered.
 func crop_art_for(i: int) -> String:
 	var ph := phase(i)
@@ -1003,6 +1150,8 @@ func crop_art_for(i: int) -> String:
 			stage = "planted" if growth(i) < 0.5 else "growing"
 	var art := "crop_%s_%s" % [crop_at(i), stage]
 	return art if SpriteBank.has(art) else ""
+
+
 
 
 func is_ready(obj: Dictionary) -> bool:
@@ -1019,8 +1168,12 @@ func is_ready(obj: Dictionary) -> bool:
 	return now() - int(obj["t"]) >= cycle_of(obj)
 
 
+
+
 func seconds_until_ready(obj: Dictionary) -> int:
 	return maxi(0, int(obj["t"]) + cycle_of(obj) - now())
+
+
 
 
 ## Coins and XP one collection pays.
@@ -1034,6 +1187,8 @@ func object_payout(obj: Dictionary) -> Vector2i:
 		var it2 := item_data(id)
 		total += Vector2i(int(it2["payout"]), int(it2["xp"])) * int(inside[id])
 	return total
+
+
 
 
 ## Returns {"coins", "xp", "drop", "drop_text", "name"} or {} if nothing was ready.
@@ -1086,10 +1241,14 @@ func collect(uid: int) -> Dictionary:
 		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras}
 
 
+
+
 ## FarmVille's Baby Turkey and Ugly Duckling grow up after their first collection.
 func _grows_into(item_id: String) -> String:
 	var d := catalog.get_def(item_id)
 	return (d as AnimalDef).grows_into() if d is AnimalDef else ""
+
+
 
 
 func _grow_up_inside(b: Dictionary) -> Array[String]:
@@ -1103,6 +1262,8 @@ func _grow_up_inside(b: Dictionary) -> Array[String]:
 		out.append("%d %s grew up!" % [int(inside[id]), item_data(id)["name"]])
 		inside.erase(id)
 	return out
+
+
 
 
 ## Which baby a Dairy Farm or Horse Stable brings: a breed's own baby, likelier for the breeds it holds more of.
@@ -1126,6 +1287,8 @@ func _pick_baby(b: Dictionary, plain: String) -> String:
 	return plain
 
 
+
+
 # ---------------------------------------------------------------- buildings
 
 
@@ -1134,17 +1297,25 @@ func building_accepts(building: Dictionary, item_id: String) -> bool:
 	return b is BuildingDef and (b as BuildingDef).accepts(item_id, item_data(item_id).get("kind", ""))
 
 
+
+
 ## A bull or stallion: one lives inside, alongside the animals, without taking a space.
 func is_one_each(building: Dictionary, item_id: String) -> bool:
 	return (item_data(building["id"]).get("one_each", []) as Array).has(item_id)
+
+
 
 
 func has_inside(building: Dictionary, item_id: String) -> bool:
 	return int((building.get("inside", {}) as Dictionary).get(item_id, 0)) > 0
 
 
+
+
 func capacity(building: Dictionary) -> int:
 	return (catalog.get_def(building["id"]) as BuildingDef).capacity(int(building["level"]))
+
+
 
 
 ## Animals taking up spaces (a bull or stallion doesn't count).
@@ -1157,12 +1328,16 @@ func inside_total(building: Dictionary) -> int:
 	return total
 
 
+
+
 func loose_matching(building: Dictionary) -> int:
 	var n := 0
 	for o in objects:
 		if not is_building(o) and not o.get("stray", false) and not under_construction(o) and building_accepts(building, o["id"]):
 			n += 1
 	return n
+
+
 
 
 ## Moves loose animals or trees of the right type into the building, up to its capacity.
@@ -1199,6 +1374,8 @@ func fill_building(uid: int) -> int:
 	return moved
 
 
+
+
 # ---------------------------------------------------------------- construction and expansion
 
 
@@ -1214,6 +1391,8 @@ func construction_needs(b: Dictionary) -> Dictionary:
 		if short > 0:
 			left[m] = short
 	return left
+
+
 
 
 ## Puts held materials into a frame. Finishes the building when nothing is missing.
@@ -1254,11 +1433,15 @@ func add_materials(uid: int) -> int:
 	return added
 
 
+
+
 ## Materials for the next expansion, or {} at full size.
 func expansion_needs(b: Dictionary) -> Dictionary:
 	if level_of(b) >= max_level(b["id"]):
 		return {}
 	return item_data(b["id"]).get("expand_materials", {})
+
+
 
 
 func can_expand(b: Dictionary) -> bool:
@@ -1269,6 +1452,8 @@ func can_expand(b: Dictionary) -> bool:
 		if int(parts.get(m, 0)) < int(need[m]):
 			return false
 	return true
+
+
 
 
 ## Expands a building one size, paying its materials (FarmVille's Big and Huge sizes).
@@ -1286,6 +1471,8 @@ func upgrade_building(uid: int) -> bool:
 	inventory_changed.emit()
 	_objects_updated()
 	return true
+
+
 
 
 # ---------------------------------------------------------------- building specials
@@ -1354,6 +1541,8 @@ func _building_specials(b: Dictionary) -> Array[String]:
 	return out
 
 
+
+
 ## Mystery Egg chance grows with the chickens inside; colour follows the breeds there.
 func _roll_mystery_egg(coop: Dictionary) -> String:
 	if not drops_enabled or egg_data.is_empty():
@@ -1374,6 +1563,8 @@ func _roll_mystery_egg(coop: Dictionary) -> String:
 	return "white"
 
 
+
+
 ## Opens one Mystery Egg of a colour. Returns the prize text, or "" if none held.
 func open_mystery_egg(colour: String) -> String:
 	if int(mystery_eggs.get(colour, 0)) <= 0:
@@ -1385,6 +1576,8 @@ func open_mystery_egg(colour: String) -> String:
 	inventory_changed.emit()
 	queue_save()
 	return text
+
+
 
 
 func _give_prize(prize: Array) -> String:
@@ -1429,6 +1622,8 @@ func _give_prize(prize: Array) -> String:
 	return ""
 
 
+
+
 ## Picks one prize from a weighted list: [kind, amount or item, weight].
 func _weighted_prize(prizes: Array) -> Array:
 	var total := 0
@@ -1442,12 +1637,16 @@ func _weighted_prize(prizes: Array) -> Array:
 	return prizes[-1]
 
 
+
+
 ## FarmVille's Mystery Box: bought with premium currency, opens into one random prize.
 ## Some things (the Donkey) come only from here.
 func buy_mystery_box() -> String:
 	if box_data.is_empty() or not spend_gems(int(box_data.get("gem_cost", MYSTERY_BOX_GEM_COST))):
 		return ""
 	return _open_box()
+
+
 
 
 func _open_box() -> String:
@@ -1458,6 +1657,8 @@ func _open_box() -> String:
 	_objects_updated()
 	queue_save()
 	return text
+
+
 
 
 ## Nursery Barn: each baby grows a day per collection; grown ones move out as adults.
@@ -1485,6 +1686,8 @@ func _grow_babies(nursery: Dictionary) -> Array[String]:
 	return out
 
 
+
+
 ## Puts a new animal on an open grass tile. False if the farm is full.
 func place_somewhere(item_id: String) -> bool:
 	var spots: Array[Vector2i] = []
@@ -1500,6 +1703,8 @@ func place_somewhere(item_id: String) -> bool:
 	next_uid += 1
 	_rebuild_occupancy()
 	return true
+
+
 
 
 # ---------------------------------------------------------------- farmhands and arborists
@@ -1532,11 +1737,15 @@ func use_helper(kind: String) -> int:
 	return ready.size()
 
 
+
+
 # ---------------------------------------------------------------- parts and the daily gift
 
 
 func day_number() -> int:
 	return int(now() / 86400.0)
+
+
 
 
 ## A part for this harvest or collection, or "" for none. Fewer-held parts are likelier.
@@ -1546,6 +1755,8 @@ func _roll_part() -> String:
 	var p := _pick_part()
 	add_part(p, 1)
 	return p
+
+
 
 
 ## Which materials can drop: the basic three, plus the specific ones of buildings you own.
@@ -1559,6 +1770,8 @@ func wanted_parts() -> Array[String]:
 				if not out.has(m):
 					out.append(m)
 	return out
+
+
 
 
 func _pick_part() -> String:
@@ -1577,11 +1790,15 @@ func _pick_part() -> String:
 	return pool[-1]
 
 
+
+
 func add_part(part: String, n: int) -> void:
 	parts[part] = int(parts.get(part, 0)) + n
 	_bump("parts_found", n)
 	inventory_changed.emit()
 	queue_save()
+
+
 
 
 ## Once per calendar day: a couple of free parts.
@@ -1601,9 +1818,13 @@ func check_daily_gift() -> void:
 	queue_save()
 
 
+
+
 ## The reward for this day of the streak; day 5 and on repeat the biggest one.
 func daily_reward(day: int) -> Dictionary:
 	return DAILY_STREAK[clampi(day, 1, DAILY_STREAK.size()) - 1]
+
+
 
 
 func _give_daily_bonus(day: int) -> Array[String]:
@@ -1624,6 +1845,8 @@ func _give_daily_bonus(day: int) -> Array[String]:
 	return got
 
 
+
+
 # ---------------------------------------------------------------- barn
 
 
@@ -1634,13 +1857,19 @@ func barn() -> Dictionary:
 	return {}
 
 
+
+
 func barn_repaired() -> bool:
 	var b := barn()
 	return not b.is_empty() and not b.get("broken", false)
 
 
+
+
 func repair_needs() -> Dictionary:
 	return item_data("barn").get("repair_parts", {})
+
+
 
 
 func can_repair_barn() -> bool:
@@ -1652,6 +1881,8 @@ func can_repair_barn() -> bool:
 		if int(parts.get(p, 0)) < int(need[p]):
 			return false
 	return true
+
+
 
 
 func repair_barn() -> bool:
@@ -1672,9 +1903,13 @@ func repair_barn() -> bool:
 	return true
 
 
+
+
 func barn_capacity() -> int:
 	var levels: Array = item_data("barn").get("levels", [0])
 	return int(levels[0])
+
+
 
 
 ## Trees, animals and scenery can be stored; shelters, the barn and strays can't.
@@ -1683,6 +1918,8 @@ func can_store(obj: Dictionary) -> bool:
 		return false
 	var k := kind_of(obj)
 	return k == "tree" or k == "animal" or k == "decor"
+
+
 
 
 func store_object(uid: int) -> bool:
@@ -1706,6 +1943,8 @@ func store_object(uid: int) -> bool:
 	return true
 
 
+
+
 func place_from_storage(index: int, row: int, col: int) -> bool:
 	if index < 0 or index >= stored.size():
 		return false
@@ -1725,6 +1964,8 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	return true
 
 
+
+
 # ---------------------------------------------------------------- beehive
 
 
@@ -1736,6 +1977,8 @@ func hives() -> Array:
 	return out
 
 
+
+
 func bee_count() -> int:
 	var n := 0
 	for h in hives():
@@ -1743,13 +1986,19 @@ func bee_count() -> int:
 	return n
 
 
+
+
 func has_queen(hive: Dictionary) -> bool:
 	return hive.get("queen", false)
+
+
 
 
 ## Chance that harvesting a fertilized crop gives pollinated seeds.
 func pollination_chance() -> float:
 	return minf(MAX_POLLINATION, bee_count() * POLLINATION_PER_BEE)
+
+
 
 
 ## Puts a Queen Bee in a finished hive: one you hold, or one bought for gems.
@@ -1771,6 +2020,8 @@ func add_queen(uid: int, buy := false) -> bool:
 	inventory_changed.emit()
 	_objects_updated()
 	return true
+
+
 
 
 ## Flower harvests: a rare Queen Bee, or a worker bee joining a hive that has a queen.
@@ -1796,11 +2047,15 @@ func _flower_harvest_bees() -> String:
 	return ""
 
 
+
+
 func _put_bee_in(hive: Dictionary) -> void:
 	var inside: Dictionary = hive["inside"]
 	if inside_total(hive) == 0:
 		hive["t"] = now() # honey starts once the first bee moves in
 	inside["bee"] = int(inside.get("bee", 0)) + 1
+
+
 
 
 ## Bees pollinate a fertilized crop as it's harvested: pollinated seeds of that crop.
@@ -1817,6 +2072,8 @@ func _pollinate(crop_id: String) -> int:
 	return POLLINATED_SEEDS
 
 
+
+
 ## Pollinated seeds held for a crop, dropping any that expired.
 func pollinated_seeds(crop_id: String) -> int:
 	if not pollinated.has(crop_id):
@@ -1826,6 +2083,8 @@ func pollinated_seeds(crop_id: String) -> int:
 		pollinated.erase(crop_id)
 		return 0
 	return int(entry[0])
+
+
 
 
 ## Fertilizes every growing crop for free.
@@ -1852,6 +2111,8 @@ func use_fertilize_all() -> int:
 	return done
 
 
+
+
 ## FarmVille's bees left when nobody came for days, and the queen after weeks.
 ## Returns a note for the player, or "".
 func apply_absence(seconds_away: int) -> String:
@@ -1875,6 +2136,8 @@ func apply_absence(seconds_away: int) -> String:
 	return "; ".join(PackedStringArray(notes))
 
 
+
+
 # ---------------------------------------------------------------- pig pen
 
 
@@ -1882,8 +2145,12 @@ func is_foraging(pen: Dictionary) -> bool:
 	return int(pen.get("forage_until", 0)) > 0
 
 
+
+
 func forage_seconds_left(pen: Dictionary) -> int:
 	return maxi(0, int(pen.get("forage_until", 0)) - now())
+
+
 
 
 ## Feeds slop to the pigs inside; they forage for truffles for 8 hours.
@@ -1903,6 +2170,8 @@ func feed_slop(uid: int) -> bool:
 	return true
 
 
+
+
 ## Truffles found by the pigs once foraging is over: one per 5 pigs, at least one.
 func collect_truffles(uid: int) -> int:
 	var pen := object_by_uid(uid)
@@ -1918,12 +2187,16 @@ func collect_truffles(uid: int) -> int:
 	return found
 
 
+
+
 func rare_pigs() -> Array[String]:
 	var out: Array[String] = []
 	for id in item_order:
 		if items[id].get("rare_pig", false):
 			out.append(id)
 	return out
+
+
 
 
 ## Trades 10 truffles for a rare pig breed, placed on the farm.
@@ -1938,6 +2211,8 @@ func trade_truffles(breed: String) -> bool:
 	inventory_changed.emit()
 	_objects_updated()
 	return true
+
+
 
 
 # ---------------------------------------------------------------- orchard
@@ -1966,6 +2241,8 @@ func _roll_sapling(orchard: Dictionary) -> String:
 	return ""
 
 
+
+
 # ---------------------------------------------------------------- buying XP, selling and turning
 
 
@@ -1975,16 +2252,22 @@ func buy_xp(item_id: String) -> int:
 	return d.buy_xp() if d else 0
 
 
+
+
 ## What selling an object returns: 5% of its price, as in FarmVille.
 func sell_value(obj: Dictionary) -> int:
 	var d := catalog.get_def(obj["id"])
 	return (d as PlaceableDef).sell_value() if d is PlaceableDef else 0
 
 
+
+
 func can_sell(obj: Dictionary) -> bool:
 	if obj.is_empty() or obj.get("stray", false):
 		return false
 	return obj["id"] != "barn" and obj["id"] != "farmhouse"
+
+
 
 
 ## Sells an object. Animals, trees or vehicles inside a building move back onto the farm first.
@@ -2024,12 +2307,16 @@ func sell_object(uid: int) -> bool:
 	return true
 
 
+
+
 ## Turns an object to face the other way. Only square ones turn, so nothing changes size.
 func can_rotate(obj: Dictionary) -> bool:
 	if obj.is_empty():
 		return false
 	var d := catalog.get_def(obj["id"])
 	return d is PlaceableDef and (d as PlaceableDef).can_rotate()
+
+
 
 
 func rotate_object(uid: int) -> bool:
@@ -2040,6 +2327,8 @@ func rotate_object(uid: int) -> bool:
 	o["flip"] = not o.get("flip", false)
 	_objects_updated()
 	return true
+
+
 
 
 # ---------------------------------------------------------------- vehicles and fuel
@@ -2062,13 +2351,19 @@ func owned_vehicles() -> Array[String]:
 	return ordered
 
 
+
+
 func vehicle_level(id: String) -> int:
 	return int(vehicle_levels.get(id, 0))
+
+
 
 
 ## Plots a vehicle works in one tap: columns x rows.
 func vehicle_area(id: String) -> Vector2i:
 	return VehicleDef.SIZES[clampi(vehicle_level(id), 0, VehicleDef.SIZES.size() - 1)]
+
+
 
 
 ## Fuel in the tank now, after its slow refill.
@@ -2086,6 +2381,8 @@ func fuel_now() -> int:
 	return fuel
 
 
+
+
 ## Takes fuel for one plot, opening a spare tank when the tank runs dry.
 func _burn_fuel(n: int) -> bool:
 	fuel_now()
@@ -2101,6 +2398,8 @@ func _burn_fuel(n: int) -> bool:
 	return true
 
 
+
+
 func buy_fuel_tank() -> bool:
 	if not spend_gems(FUEL_TANK_GEM_COST):
 		message.emit("Not enough gems for a fuel tank")
@@ -2109,6 +2408,8 @@ func buy_fuel_tank() -> bool:
 	message.emit("Bought a full fuel tank")
 	inventory_changed.emit()
 	return true
+
+
 
 
 ## Drives a vehicle over the area whose back corner is row, col.
@@ -2157,6 +2458,8 @@ func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
 	return out
 
 
+
+
 func _vehicle_has_work(job: String, i: int, crop_id: String) -> bool:
 	var ph := phase(i)
 	match job:
@@ -2169,6 +2472,8 @@ func _vehicle_has_work(job: String, i: int, crop_id: String) -> bool:
 		"all":
 			return ph == Phase.RIPE or ph == Phase.GRASS or ph == Phase.WITHERED or (ph == Phase.PLOWED and crop_id != "")
 	return false
+
+
 
 
 func _vehicle_work(job: String, i: int, crop_id: String, out: Dictionary) -> bool:
@@ -2190,15 +2495,21 @@ func _vehicle_work(job: String, i: int, crop_id: String, out: Dictionary) -> boo
 	return did
 
 
+
+
 ## FarmVille's Garage upgrades: Vehicle Parts make a vehicle cover more plots, up to 4x4.
 func vehicle_upgrade_cost(id: String) -> int:
 	var d := catalog.get_def(id)
 	return (d as VehicleDef).upgrade_cost(vehicle_level(id)) if d is VehicleDef else -1
 
 
+
+
 func vehicle_upgrade_level_needed(id: String) -> int:
 	var d := catalog.get_def(id)
 	return (d as VehicleDef).upgrade_level_needed(vehicle_level(id)) if d is VehicleDef else 0
+
+
 
 
 func has_garage() -> bool:
@@ -2208,10 +2519,14 @@ func has_garage() -> bool:
 	return false
 
 
+
+
 func can_upgrade_vehicle(id: String) -> bool:
 	var cost := vehicle_upgrade_cost(id)
 	return has_garage() and owned_vehicles().has(id) and cost > 0 \
 		and level() >= vehicle_upgrade_level_needed(id) and int(parts.get("vehicle_parts", 0)) >= cost
+
+
 
 
 func upgrade_vehicle(id: String) -> bool:
@@ -2233,6 +2548,8 @@ func upgrade_vehicle(id: String) -> bool:
 	inventory_changed.emit()
 	_objects_updated()
 	return true
+
+
 
 
 # ---------------------------------------------------------------- strays
@@ -2260,11 +2577,15 @@ func check_strays() -> void:
 		_objects_updated()
 
 
+
+
 func _has_stray() -> bool:
 	for o in objects:
 		if o.get("stray", false):
 			return true
 	return false
+
+
 
 
 ## Picks an animal near the player's level (cheaper ones more often) and an open grass tile.
@@ -2314,11 +2635,15 @@ func _spawn_stray() -> bool:
 	return true
 
 
+
+
 func _owns(item_id: String) -> bool:
 	for o in objects:
 		if o["id"] == item_id:
 			return true
 	return false
+
+
 
 
 func adopt_stray(uid: int) -> bool:
@@ -2334,11 +2659,15 @@ func adopt_stray(uid: int) -> bool:
 	return true
 
 
+
+
 func _objects_updated() -> void:
 	_rebuild_occupancy()
 	objects_changed.emit()
 	plot_changed.emit(-1)
 	queue_save()
+
+
 
 
 # ---------------------------------------------------------------- weather
@@ -2354,6 +2683,8 @@ func weather() -> Dictionary:
 	)
 
 
+
+
 # ---------------------------------------------------------------- crafting (FarmVille's Bakery, Winery and Spa)
 
 
@@ -2365,8 +2696,12 @@ func _int_map(d) -> Dictionary:
 	return out
 
 
+
+
 func is_crafting(obj: Dictionary) -> bool:
 	return kind_of(obj) == "crafting"
+
+
 
 
 func owns_crafting() -> bool:
@@ -2374,6 +2709,8 @@ func owns_crafting() -> bool:
 		if is_crafting(o):
 			return true
 	return false
+
+
 
 
 ## FarmVille: your first crafting building costs coins; every one after that, premium currency.
@@ -2384,12 +2721,18 @@ func crafting_price(item_id: String) -> Dictionary:
 	return {"coins": int(it.get("cost", 0))}
 
 
+
+
 func _crafting_def(obj: Dictionary) -> CraftingDef:
 	return catalog.get_def(obj["id"]) as CraftingDef
 
 
+
+
 func _recipe(rid: String) -> RecipeDef:
 	return catalog.get_def(rid) as RecipeDef
+
+
 
 
 ## Every recipe the building knows, unlocked or not, by star.
@@ -2397,13 +2740,19 @@ func recipes_of(building_id: String) -> Array[RecipeDef]:
 	return catalog.recipes_of(building_id)
 
 
+
+
 func recipe_unlocked(obj: Dictionary, rid: String) -> bool:
 	var r := _recipe(rid)
 	return r != null and r.building() == obj["id"] and r.star() <= level_of(obj)
 
 
+
+
 func recipe_stars(rid: String) -> int:
 	return CraftingDef.recipe_stars(int(crafted.get(rid, 0)))
+
+
 
 
 ## Recipe mastery stars across one building's recipes; going up a star needs enough of them.
@@ -2414,11 +2763,15 @@ func building_recipe_stars(building_id: String) -> int:
 	return n
 
 
+
+
 func total_bushels() -> int:
 	var n := 0
 	for c in bushels:
 		n += int(bushels[c])
 	return n
+
+
 
 
 func add_bushels(crop_id: String, n: int) -> int:
@@ -2430,11 +2783,15 @@ func add_bushels(crop_id: String, n: int) -> int:
 	return got
 
 
+
+
 func _roll_bushel(crop_id: String) -> String:
 	if not drops_enabled or not owns_crafting() or rng.randf() >= BUSHEL_CHANCE:
 		return ""
 	# FarmVille: each bushel found comes with one extra per mastery star on that crop.
 	return crop_id if add_bushels(crop_id, 1 + mastery_stars(crop_id)) > 0 else ""
+
+
 
 
 ## Bushels still needed for one craft: crop id -> how many more.
@@ -2448,8 +2805,12 @@ func missing_bushels(rid: String) -> Dictionary:
 	return out
 
 
+
+
 func free_slots(obj: Dictionary) -> int:
 	return _crafting_def(obj).slots(level_of(obj)) - (obj.get("slots", []) as Array).size()
+
+
 
 
 ## Why a craft can't start right now, or "" if it can.
@@ -2466,6 +2827,8 @@ func craft_problem(uid: int, rid: String) -> String:
 	return ""
 
 
+
+
 func start_craft(uid: int, rid: String) -> bool:
 	if craft_problem(uid, rid) != "":
 		return false
@@ -2480,6 +2843,8 @@ func start_craft(uid: int, rid: String) -> bool:
 	inventory_changed.emit()
 	_objects_updated()
 	return true
+
+
 
 
 ## FarmVille's "Buy all ingredients": the missing bushels for gems, then start crafting.
@@ -2499,12 +2864,16 @@ func buy_missing_and_craft(uid: int, rid: String) -> bool:
 	return start_craft(uid, rid)
 
 
+
+
 func crafts_done(obj: Dictionary) -> int:
 	var n := 0
 	for slot in obj.get("slots", []):
 		if now() >= int(slot["done"]):
 			n += 1
 	return n
+
+
 
 
 ## Moves finished crafts into goods. Returns how many finished.
@@ -2535,12 +2904,18 @@ func finish_crafts(uid: int) -> int:
 	return n
 
 
+
+
 func good_price(rid: String) -> int:
 	return _recipe(rid).sell_price(crops, recipe_stars(rid))
 
 
+
+
 func good_fuel(rid: String) -> int:
 	return _recipe(rid).fuel(recipe_stars(rid))
+
+
 
 
 func sell_good(rid: String) -> int:
@@ -2553,6 +2928,8 @@ func sell_good(rid: String) -> int:
 	return price
 
 
+
+
 ## FarmVille's "Use": a good becomes fuel. Fuel past a full tank fills spare tanks.
 func use_good(rid: String) -> int:
 	if int(goods.get(rid, 0)) <= 0:
@@ -2563,6 +2940,8 @@ func use_good(rid: String) -> int:
 	return f
 
 
+
+
 func _take_good(rid: String) -> void:
 	goods[rid] = int(goods[rid]) - 1
 	if int(goods[rid]) <= 0:
@@ -2571,8 +2950,12 @@ func _take_good(rid: String) -> void:
 	queue_save()
 
 
+
+
 func star_cost(obj: Dictionary) -> Dictionary:
 	return _crafting_def(obj).star_cost(level_of(obj))
+
+
 
 
 func can_add_star(uid: int, with_gems: bool) -> bool:
@@ -2585,6 +2968,8 @@ func can_add_star(uid: int, with_gems: bool) -> bool:
 	if with_gems:
 		return gems >= int(cost["gems"])
 	return coins >= int(cost["coins"]) and building_recipe_stars(obj["id"]) >= int(cost["recipe_stars"])
+
+
 
 
 func add_star(uid: int, with_gems: bool) -> bool:
@@ -2602,6 +2987,8 @@ func add_star(uid: int, with_gems: bool) -> bool:
 	)
 	_objects_updated()
 	return true
+
+
 
 
 ## The Farmers Market: a few crops' bushels for coins, new each day (standing in for neighbours' stalls).
@@ -2624,13 +3011,19 @@ func _refresh_stall() -> void:
 		stall[c] = STALL_EACH
 
 
+
+
 func market_stall() -> Dictionary:
 	_refresh_stall()
 	return stall
 
 
+
+
 func bushel_price(crop_id: String) -> int:
 	return int(crops[crop_id]["sell_price"])
+
+
 
 
 func buy_bushel(crop_id: String) -> bool:
@@ -2645,6 +3038,8 @@ func buy_bushel(crop_id: String) -> bool:
 	return true
 
 
+
+
 # ---------------------------------------------------------------- land expansion
 
 
@@ -2656,9 +3051,13 @@ func next_expansion() -> Dictionary:
 	return {}
 
 
+
+
 func can_expand_with_coins() -> bool:
 	var step := next_expansion()
 	return not step.is_empty() and level() >= int(step["level"]) and coins >= int(step["coins"])
+
+
 
 
 ## Coins need the step's level; gems skip the level requirement.
@@ -2686,6 +3085,8 @@ func expand(use_gems: bool) -> bool:
 	return true
 
 
+
+
 ## Old saves: copy the 12x12 grid into the top-left of the full-size grid.
 func _widen_old_grid(old: Array) -> Array:
 	var wide: Array = []
@@ -2695,6 +3096,8 @@ func _widen_old_grid(old: Array) -> Array:
 		for c in OLD_GRID_SIZE:
 			wide[r * MAX_SIZE + c] = old[r * OLD_GRID_SIZE + c]
 	return wide
+
+
 
 
 # ---------------------------------------------------------------- unwither
@@ -2707,6 +3110,8 @@ func withered_count() -> int:
 			if phase(index_of(r, c)) == Phase.WITHERED:
 				n += 1
 	return n
+
+
 
 
 ## Brings every withered crop back to ripe. Uses an Unwither item, or gems if none are left.
@@ -2733,10 +3138,14 @@ func use_unwither() -> bool:
 	return true
 
 
+
+
 func add_unwithers(n: int) -> void:
 	unwithers += n
 	inventory_changed.emit()
 	queue_save()
+
+
 
 
 # ---------------------------------------------------------------- safety net
@@ -2748,6 +3157,8 @@ func cheapest_seed_cost() -> int:
 		if is_unlocked(id):
 			cheapest = mini(cheapest, int(crops[id]["seed_cost"]))
 	return cheapest
+
+
 
 
 ## Quiet backstop: a player who can't buy seeds and has nothing growing or ripe
@@ -2762,6 +3173,8 @@ func check_rescue() -> void:
 	message.emit("You found %d coins in the barn. Plant some seeds!" % gift)
 
 
+
+
 func _any_plot_in(wanted: Phase) -> bool:
 	for i in plots.size():
 		if phase(i) == wanted:
@@ -2769,11 +3182,15 @@ func _any_plot_in(wanted: Phase) -> bool:
 	return false
 
 
+
+
 # ---------------------------------------------------------------- tutorial
 
 
 func tutorial_text() -> String:
 	return TUTORIAL_TEXT.get(tutorial_step, "")
+
+
 
 
 ## Moves to the next step only when the finished step is the current one.
@@ -2785,6 +3202,8 @@ func _advance_tutorial(finished: Tutorial) -> void:
 	if tutorial_step == Tutorial.DONE:
 		message.emit("Nice! Crops grow in real time. Come back when they're ready.")
 	queue_save()
+
+
 
 
 # ---------------------------------------------------------------- mastery
@@ -2799,6 +3218,8 @@ func mastery_thresholds(crop_id: String) -> Array:
 	return MASTERY_SLOW
 
 
+
+
 func mastery_stars(crop_id: String) -> int:
 	var count := int(mastery.get(crop_id, 0))
 	var stars := 0
@@ -2806,6 +3227,8 @@ func mastery_stars(crop_id: String) -> int:
 		if count >= int(need):
 			stars += 1
 	return stars
+
+
 
 
 func _award_mastery_star(crop_id: String, star: int) -> void:
@@ -2817,6 +3240,8 @@ func _award_mastery_star(crop_id: String, star: int) -> void:
 		objects[-1]["crop"] = crop_id # FarmVille's mastery sign, to show off on the farm
 		message.emit("%s mastered! A mastery sign was put on your farm." % crops[crop_id]["name"])
 		_objects_updated()
+
+
 
 
 # ---------------------------------------------------------------- economy
@@ -2831,6 +3256,8 @@ func spend(amount: int) -> bool:
 	return true
 
 
+
+
 ## counts_as_earned: false for gifts like the barn rescue, so they don't advance ribbons.
 func add_coins(amount: int, counts_as_earned := true) -> void:
 	coins += amount
@@ -2838,6 +3265,8 @@ func add_coins(amount: int, counts_as_earned := true) -> void:
 	if counts_as_earned:
 		_bump("coins_earned", amount)
 	queue_save()
+
+
 
 
 func add_xp(amount: int) -> void:
@@ -2850,12 +3279,16 @@ func add_xp(amount: int) -> void:
 	queue_save()
 
 
+
+
 func xp_for_level(lvl: int) -> int:
 	if lvl <= 1:
 		return 0
 	if lvl - 1 < LEVEL_XP.size():
 		return LEVEL_XP[lvl - 1]
 	return LEVEL_XP[-1] + (lvl - LEVEL_XP.size()) * XP_PER_LEVEL_AFTER_TABLE
+
+
 
 
 func level() -> int:
@@ -2865,13 +3298,19 @@ func level() -> int:
 	return lvl
 
 
+
+
 func is_unlocked(crop_id: String) -> bool:
 	return level() >= int(crops[crop_id]["unlock_level"])
+
+
 
 
 ## Coins paid on reaching a level: grows with level so later levels still feel big.
 func level_reward(lvl: int) -> int:
 	return 100 * lvl
+
+
 
 
 ## Names of crops, trees, animals and buildings that unlock at exactly this level.
@@ -2886,6 +3325,8 @@ func unlocks_at(lvl: int) -> Array[String]:
 	return names
 
 
+
+
 func _on_level_reached(lvl: int) -> void:
 	# The reward is a gift, so it doesn't count toward the coins-earned ribbon.
 	add_coins(level_reward(lvl), false)
@@ -2893,6 +3334,8 @@ func _on_level_reached(lvl: int) -> void:
 	if lvl % 5 == 0:
 		add_unwithers(1)
 	leveled_up.emit(lvl) # the HUD shows the celebration popup
+
+
 
 
 # ---------------------------------------------------------------- data
@@ -2910,6 +3353,8 @@ func _read_json(path: String) -> Dictionary:
 	return parsed
 
 
+
+
 ## Loads the catalog once; crops, items and materials all come from it.
 func _load_catalog() -> void:
 	if catalog != null:
@@ -2925,11 +3370,15 @@ func _load_catalog() -> void:
 				basic_parts.append(d.id)
 
 
+
+
 func _load_crops() -> void:
 	_load_catalog()
 	for d in catalog.of_kind("crop"):
 		crops[d.id] = d.data
 		crop_order.append(d.id)
+
+
 
 
 func _load_collections() -> void:
@@ -2948,8 +3397,12 @@ func _load_collections() -> void:
 			item_names[item["id"]] = item["name"]
 
 
+
+
 func _load_ribbons() -> void:
 	ribbon_data = _read_json("res://data/ribbons.json")
+
+
 
 
 func _load_items() -> void:
@@ -2960,6 +3413,8 @@ func _load_items() -> void:
 			continue
 		items[id] = d.data
 		item_order.append(id)
+
+
 
 
 func _new_game() -> void:
@@ -3033,6 +3488,8 @@ func _new_game() -> void:
 	save_game()
 
 
+
+
 func _add_starter_object(item_id: String, row: int, col: int, extra := {}) -> void:
 	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
 	obj.merge(extra)
@@ -3040,8 +3497,12 @@ func _add_starter_object(item_id: String, row: int, col: int, extra := {}) -> vo
 	next_uid += 1
 
 
+
+
 func _set_starter(row: int, col: int, crop_id: String, planted_at: int) -> void:
 	plots[index_of(row, col)] = {"state": "planted", "crop": crop_id, "planted_at": planted_at}
+
+
 
 
 # ---------------------------------------------------------------- save/load
@@ -3054,9 +3515,13 @@ func queue_save() -> void:
 	call_deferred("_flush_save")
 
 
+
+
 func _flush_save() -> void:
 	_save_queued = false
 	save_game()
+
+
 
 
 func save_game() -> void:
@@ -3112,6 +3577,8 @@ func save_game() -> void:
 		push_warning("Could not write save file")
 		return
 	f.store_string(JSON.stringify(data))
+
+
 
 
 func load_game() -> bool:
@@ -3215,6 +3682,8 @@ func load_game() -> bool:
 	return true
 
 
+
+
 func reset_game() -> void:
 	_new_game()
 	coins_changed.emit(coins)
@@ -3227,6 +3696,8 @@ func reset_game() -> void:
 	inventory_changed.emit()
 	farm_expanded.emit(farm_size)
 	plot_changed.emit(-1)
+
+
 
 
 func _plot_updated(i: int) -> void:

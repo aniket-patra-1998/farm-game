@@ -54,8 +54,8 @@ def chunks(lines):
         # Absorb the statement's indented lines (and blank lines inside it).
         while i < n:
             nxt = lines[i]
-            if nxt.startswith("\t") or nxt.startswith(" "):
-                body.append(nxt)
+            if nxt.startswith("\t") or nxt.startswith(" ") or nxt[:1] in ")]}":
+                body.append(nxt)  # the statement's body, or the bracket that closes it
                 i += 1
                 continue
             if nxt.strip() == "":

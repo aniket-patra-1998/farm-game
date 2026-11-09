@@ -9,14 +9,19 @@ extends RefCounted
 
 const DIR := "res://data/catalog"
 const NEVER_IN_MARKET := 99
+
 const FREE_IN_MARKET := ["orchard", "nursery_barn"]  ## free in FarmVille too
+
 
 var schema := {}
 var defs := {}                       ## id -> ItemDef, in-game items only
 var order: Array[String] = []        ## in-game ids in catalog order
 var planned := {}                    ## id -> entry dictionary
 var families := {}                   ## family id -> {"id", "name", "doc", "category", "ids": [...]}
+
 var errors: Array[String] = []
+
+
 
 
 ## The class for each schema class name. Add a line here with every new class.
@@ -36,10 +41,14 @@ static func new_def(cls: String) -> ItemDef:
 	return ItemDef.new()
 
 
+
+
 static func load_default() -> Catalog:
 	var c := Catalog.new()
 	c.load_dir(DIR)
 	return c
+
+
 
 
 func load_dir(dir: String) -> void:
@@ -52,8 +61,12 @@ func load_dir(dir: String) -> void:
 			errors.append(e)
 
 
+
+
 func get_def(id: String) -> ItemDef:
 	return defs.get(id, null)
+
+
 
 
 ## In-game items of one class or kind, in catalog order.
@@ -63,6 +76,8 @@ func of_kind(kind: String) -> Array[ItemDef]:
 		if defs[id].kind == kind:
 			out.append(defs[id])
 	return out
+
+
 
 
 ## Recipes made in one crafting building, by star then catalog order.
@@ -75,11 +90,15 @@ func recipes_of(building_id: String) -> Array[RecipeDef]:
 	return out
 
 
+
+
 func material_ids() -> Array[String]:
 	var out: Array[String] = []
 	for d in of_kind("material"):
 		out.append(d.id)
 	return out
+
+
 
 
 ## Buildings that can hold this item.
@@ -92,6 +111,8 @@ func homes_of(item_id: String) -> Array[String]:
 	return out
 
 
+
+
 ## A class's lifecycle (stages, art pattern, fill), from the nearest class that defines one.
 func lifecycle_of(cls: String) -> Dictionary:
 	var c := cls
@@ -102,16 +123,22 @@ func lifecycle_of(cls: String) -> Dictionary:
 	return {"stages": ["placed"], "pattern": "{id}", "fill": 0.7}
 
 
+
+
 ## The schema class an item was built from.
 func class_of(id: String) -> String:
 	var d := get_def(id)
 	return str(d.data.get("_class", "")) if d else ""
 
 
+
+
 ## Every art id an item needs, by its class's lifecycle.
 func art_ids_of(id: String) -> Array[String]:
 	var d := get_def(id)
 	return d.art_ids(lifecycle_of(class_of(id))) if d else []
+
+
 
 
 ## Every field of a class, its parents' first.
@@ -126,6 +153,8 @@ func fields_of(cls: String) -> Dictionary:
 	for k in chain:
 		out.merge(classes[k]["fields"], true)
 	return out
+
+
 
 
 func _load_file(path: String, category: String, file_cls: String) -> void:
@@ -169,6 +198,8 @@ func _load_file(path: String, category: String, file_cls: String) -> void:
 			order.append(id)
 
 
+
+
 ## Stacks the defaults and sets kind from the class.
 func _build(cls: String, file_defaults: Dictionary, fam_defaults: Dictionary, entry: Dictionary) -> Dictionary:
 	var out := {}
@@ -185,6 +216,8 @@ func _build(cls: String, file_defaults: Dictionary, fam_defaults: Dictionary, en
 	out.merge(fam_defaults, true)
 	out.merge(entry, true)
 	return out
+
+
 
 
 func _check_types(cls: String, entry: Dictionary) -> Array[String]:
@@ -205,6 +238,8 @@ func _check_types(cls: String, entry: Dictionary) -> Array[String]:
 		if problem != "":
 			out.append("%s: %s %s" % [id, name, problem])
 	return out
+
+
 
 
 func _type_problem(spec: Dictionary, v) -> String:
@@ -243,6 +278,8 @@ func _type_problem(spec: Dictionary, v) -> String:
 		"materials", "map":
 			return "" if typeof(v) == TYPE_DICTIONARY else "should be an object"
 	return ""
+
+
 
 
 static func _read(path: String) -> Dictionary:

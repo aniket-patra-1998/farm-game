@@ -9,6 +9,7 @@ extends Node2D
 ## which keeps tiles and objects correctly interleaved without any per-frame sorting.
 
 const Z_BASE := -2000   # pieces sit below the overlay and effects (z >= 0) and above the ground
+
 const WANDER := 0.22      # how far an animal strays from its tile centre, in tiles
 const WALK_SPEED := 16.0  # px per second
 
@@ -18,8 +19,14 @@ var wind := 0.6           # from the weather: how hard plants and trees sway
 
 var _sync_queued := false
 var _settled := false   # after the first sync, new pieces arrive with an animation (not on loading)
+
 var _ready_list: Array = []  # pieces showing something ready, kept fresh by refresh_all and sync
+
+
+
 var _clock := 0.0
+
+
 
 
 func _ready() -> void:
@@ -30,12 +37,18 @@ func _ready() -> void:
 	add_child(timer)
 
 
+
+
 static func plot_z(row: int, col: int) -> int:
 	return Z_BASE + 2 * (row + col)
 
 
+
+
 static func object_z(row: int, col: int, fp: Vector2i) -> int:
 	return Z_BASE + 2 * (row + col + mini(fp.x, fp.y) - 1) + 1
+
+
 
 
 ## Coalesces many change signals in one frame into a single sync.
@@ -45,12 +58,16 @@ func queue_sync() -> void:
 		call_deferred("sync")
 
 
+
+
 ## A single plot changed: add, drop or redraw just its piece.
 func on_plot(i: int) -> void:
 	if i < 0:
 		queue_sync()
 		return
 	_sync_plot(i)
+
+
 
 
 func sync() -> void:
@@ -104,11 +121,15 @@ func sync() -> void:
 	_settled = true
 
 
+
+
 ## A tapped object squashes and springs back.
 func bounce(uid: int) -> void:
 	var p: FarmPiece = pieces.get("o%d" % uid)
 	if p != null:
 		p.bounce()
+
+
 
 
 func refresh_all() -> void:
@@ -126,10 +147,14 @@ func refresh_all() -> void:
 	_ready_list = pieces.values().filter(func(p): return p.is_ready())
 
 
+
+
 ## Every piece redrawn (art arrived, day changed...).
 func redraw_all() -> void:
 	for p in pieces.values():
 		(p as FarmPiece).force_redraw()
+
+
 
 
 ## Pieces showing something ready to collect (the overlay twinkles over them).
@@ -137,8 +162,12 @@ func ready_pieces() -> Array:
 	return _ready_list.filter(func(p): return is_instance_valid(p) and p.is_ready())
 
 
+
+
 func _wants_plot(i: int) -> bool:
 	return Game.phase(i) != GameState.Phase.GRASS and not Game.is_occupied(i)
+
+
 
 
 func _sync_plot(i: int) -> void:
@@ -151,6 +180,8 @@ func _sync_plot(i: int) -> void:
 		p.refresh()
 		if p.is_ready() and not _ready_list.has(p):
 			_ready_list.append(p)
+
+
 
 
 func _place(p: FarmPiece) -> void:
@@ -172,6 +203,8 @@ func _place(p: FarmPiece) -> void:
 	p._apply_pose()
 
 
+
+
 ## How a thing moves: animals wander and breathe, birds also peck, trees sway; buildings stay put.
 static func motion_of(o: Dictionary) -> String:
 	if o.get("stray", false):
@@ -183,6 +216,8 @@ static func motion_of(o: Dictionary) -> String:
 		"tree":
 			return "tree"
 	return ""
+
+
 
 
 # ---------------------------------------------------------------- motion (FarmVille's farm was never still)
@@ -202,6 +237,8 @@ func _process(delta: float) -> void:
 				p.skew = sin(t * 0.8 + p.phase) * 0.018 * wind
 			"animal", "bird":
 				_animate_animal(p, t, delta)
+
+
 
 
 func _animate_animal(p: FarmPiece, t: float, delta: float) -> void:

@@ -5,7 +5,9 @@ extends Node2D
 
 signal info(text: String)
 signal object_tapped(uid: int)        # a building was tapped while not ready
+
 signal placing_changed(text: String)  # "" when placement ends
+
 
 const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
 const TILE_W := 128.0
@@ -19,7 +21,9 @@ const COLOR_COST := Color("#ffb4a8")
 const COLOR_FIND := Color("#ff9ad5")
 const COLOR_GOLDEN := Color("#ffe066")
 const COLOR_FERT := Color("#8fe36b")
+
 const COLOR_PART := Color("#f4c27a")
+
 
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
@@ -27,6 +31,7 @@ const DRAG_THRESHOLD := 14.0 # screen pixels
 
 ## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id].
 static var _scenery: Array = []
+
 
 var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move", "store", "sell", "rotate" or "vehicle"
 var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
@@ -36,6 +41,8 @@ var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
 ## "row", "col"} for the footprint's back corner; row is -1 until the first touch.
 var placing := {}
 
+
+
 ## The farm is drawn in layers, back to front: ground, shadows, the depth-sorted pieces, then the overlay.
 ## Floating texts and sparkles are added on top as they happen.
 var ground: GroundLayer
@@ -43,15 +50,22 @@ var shadows: ShadowLayer
 var pieces: ObjectLayer
 var overlay: OverlayLayer
 var world_fx: WorldFx    # bursts and pops on the farm
+
 var fx: FxLayer          # rewards flying to the top bar (set by main)
+
+
 
 var _sell_pending := -1  # uid tapped once with the Sell tool; a second tap sells it
 var _sell_pending_until := 0
+
 var _vehicle_flash := {} # the area a vehicle just worked: {"row", "col", "w", "h", "until"}
+
 var _press_pos := Vector2.ZERO
 var _pressing := false
 var _dragged := false
+
 var _press_on_farm := false
+
 
 
 func _ready() -> void:
@@ -89,9 +103,13 @@ func _ready() -> void:
 	)
 
 
+
+
 ## A farm position on screen (for rewards that fly to the top bar).
 func to_screen(at: Vector2) -> Vector2:
 	return get_global_transform_with_canvas() * at
+
+
 
 
 ## Coins and XP fly from a farm position up to their counters.
@@ -103,9 +121,13 @@ func _reward(at: Vector2, coins: int, xp: int) -> void:
 	fx.xp(from, xp)
 
 
+
+
 func _on_objects_changed() -> void:
 	pieces.queue_sync()
 	shadows.queue_redraw()
+
+
 
 
 ## Everything redrawn from scratch, e.g. after new art was loaded.
@@ -113,6 +135,8 @@ func redraw_world() -> void:
 	ground.queue_redraw()
 	shadows.queue_redraw()
 	pieces.redraw_all()
+
+
 
 
 func set_tool(tool_name: String, crop_id: String) -> void:
@@ -131,10 +155,14 @@ func set_tool(tool_name: String, crop_id: String) -> void:
 		info.emit(hint)
 
 
+
+
 func get_bounds() -> Rect2:
 	return Rect2(
 		Vector2(-Game.farm_size * TILE_W / 2.0, -HEADROOM),
 		Vector2(Game.farm_size * TILE_W, Game.farm_size * TILE_H + EDGE_DEPTH + HEADROOM))
+
+
 
 
 # ---------------------------------------------------------------- geometry
@@ -145,13 +173,19 @@ func top_of(row: int, col: int) -> Vector2:
 	return Vector2((col - row) * TILE_W / 2.0, (col + row) * TILE_H / 2.0)
 
 
+
+
 ## Same as top_of, for fractional rows and columns (used by things that drift, like fireflies).
 func top_of_f(row: float, col: float) -> Vector2:
 	return Vector2((col - row) * TILE_W / 2.0, (col + row) * TILE_H / 2.0)
 
 
+
+
 func center_of(i: int) -> Vector2:
 	return top_of(_row(i), _col(i)) + Vector2(0, TILE_H / 2.0)
+
+
 
 
 func index_at(local_pos: Vector2) -> int:
@@ -164,12 +198,18 @@ func index_at(local_pos: Vector2) -> int:
 	return Game.index_of(row, col)
 
 
+
+
 func _row(i: int) -> int:
 	return int(float(i) / MAX)
 
 
+
+
 func _col(i: int) -> int:
 	return i % MAX
+
+
 
 
 # ---------------------------------------------------------------- drawing
@@ -186,6 +226,8 @@ func draw_ground_on(ci: CanvasItem) -> void:
 	_draw_next_expansion(ci)
 	PlaceholderArt.draw_field(ci, n, TILE_W, TILE_H)
 	PlaceholderArt.draw_farm_border(ci, n, TILE_W, TILE_H)
+
+
 
 
 ## Overlay: vehicle area, count signs, twinkles and hearts, and the ghost of what's being placed.
@@ -235,6 +277,8 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 	_draw_placing(ci)
 
 
+
+
 ## The land the next expansion would add, drawn as dim wild grass around the farm.
 ## Trees scattered along the back two sides of the farm (never in front, so nothing hides your land).
 func _draw_scenery(ci: CanvasItem, n: int) -> void:
@@ -267,6 +311,8 @@ func _draw_scenery(ci: CanvasItem, n: int) -> void:
 			PlaceholderArt.draw_object(ci, Game.item_data(id), g, false, 1, 0, 0)
 
 
+
+
 func _draw_next_expansion(ci: CanvasItem) -> void:
 	var step := Game.next_expansion()
 	if step.is_empty():
@@ -276,9 +322,13 @@ func _draw_next_expansion(ci: CanvasItem) -> void:
 	PlaceholderArt.draw_wild_land(ci, outer)
 
 
+
+
 ## The four ground corners (top, right, bottom, left) of a footprint.
 func corners_of(row: int, col: int, w: int, h: int) -> PackedVector2Array:
 	return PackedVector2Array([top_of(row, col), top_of(row, col + w), top_of(row + h, col + w), top_of(row + h, col)])
+
+
 
 
 ## One object (FarmPiece): its sprite or code drawing. Marks and twinkles are on the overlay.
@@ -317,6 +367,8 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 		ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
+
+
 func _draw_placing(ci: CanvasItem) -> void:
 	if placing.is_empty() or int(placing["row"]) < 0:
 		return
@@ -341,6 +393,8 @@ func _draw_placing(ci: CanvasItem) -> void:
 	PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
 
 
+
+
 ## A plot's raised bed (FarmPiece): always drawn by the game, so every plot lines up into one tidy field.
 func draw_bed_on(ci: CanvasItem, i: int) -> void:
 	var top := top_of(_row(i), _col(i))
@@ -350,6 +404,8 @@ func draw_bed_on(ci: CanvasItem, i: int) -> void:
 	PlaceholderArt.draw_soil(ci, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
 	if Game.is_fertilized(i):
 		PlaceholderArt.draw_fertilizer(ci, top + Vector2(0, -PlaceholderArt.SLAB), TILE_W, TILE_H)
+
+
 
 
 ## The plants on a plot (CropPlants): painted art if there is some, otherwise the code drawing.
@@ -370,14 +426,20 @@ func draw_plants_on(ci: CanvasItem, i: int) -> void:
 	PlaceholderArt.draw_crop(ci, at, TILE_W, TILE_H, Game.crops[Game.crop_at(i)], stage, Game.growth(i))
 
 
+
+
 ## Called when a second finger lands: that's a pinch, so the first finger's tap is off.
 func cancel_paint() -> void:
 	_dragged = true
 
 
+
+
 ## True once the current press has moved far enough to count as a drag on the farm.
 func is_dragging() -> bool:
 	return _pressing and _dragged and _press_on_farm
+
+
 
 
 # ---------------------------------------------------------------- input
@@ -408,9 +470,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dragged = true
 
 
+
+
 func _on_farm_area(screen_pos: Vector2) -> bool:
 	var view_h := get_viewport().get_visible_rect().size.y
 	return not Game.modal_open and screen_pos.y >= FarmHud.TOP_H and screen_pos.y <= view_h - FarmHud.BOTTOM_H
+
+
 
 
 ## Tile (row, col) under a screen point, even outside the farm.
@@ -419,6 +485,8 @@ func _tile_at_screen(screen_pos: Vector2) -> Vector2i:
 	var dx := local.x / (TILE_W / 2.0)
 	var dy := local.y / (TILE_H / 2.0)
 	return Vector2i(int(floor((dy - dx) / 2.0)), int(floor((dy + dx) / 2.0)))
+
+
 
 
 # ---------------------------------------------------------------- placing and moving
@@ -435,6 +503,8 @@ func start_placing(item_id: String, uid := -1) -> void:
 	queue_redraw()
 
 
+
+
 ## Placing something taken back out of the barn (free; it keeps its timers reset).
 func start_placing_stored(index: int) -> void:
 	var o: Dictionary = Game.stored[index]
@@ -443,10 +513,14 @@ func start_placing_stored(index: int) -> void:
 	queue_redraw()
 
 
+
+
 func cancel_placing() -> void:
 	placing = {}
 	placing_changed.emit("")
 	queue_redraw()
+
+
 
 
 ## Press or drag shows where the object will go; letting go places it if it fits.
@@ -500,6 +574,8 @@ func _placing_input(event: InputEvent) -> void:
 		cancel_placing()
 
 
+
+
 func _apply_at(screen_pos: Vector2) -> void:
 	# Ignore touches on the top bar, the toolbar, or while a menu covers the farm.
 	if not _on_farm_area(screen_pos):
@@ -512,6 +588,8 @@ func _apply_at(screen_pos: Vector2) -> void:
 		_drive(i)
 		return
 	_act(i, true)
+
+
 
 
 ## Sends the chosen vehicle over the area around the tapped plot.
@@ -543,6 +621,8 @@ func _drive(i: int) -> void:
 	for d in r["drops"]:
 		_float(at + Vector2(0, lift), d, COLOR_GOLDEN, 1.6)
 		lift -= 32
+
+
 
 
 ## first_touch is always true now that each tap acts on one plot; it stays so
@@ -615,6 +695,8 @@ func _act(i: int, first_touch: bool) -> void:
 		"hand":
 			if first_touch:
 				_explain(i, ph)
+
+
 
 
 func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
@@ -701,6 +783,8 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	info.emit("%s: %s ready in %s" % [it["name"], what, format_duration(Game.seconds_until_ready(obj))])
 
 
+
+
 ## Sell needs two taps on the same thing, so a stray tap can't sell a building.
 func _try_sell(obj: Dictionary) -> void:
 	var uid := int(obj["uid"])
@@ -724,6 +808,8 @@ func _try_sell(obj: Dictionary) -> void:
 	)
 
 
+
+
 func _explain(i: int, ph: GameState.Phase) -> void:
 	match ph:
 		GameState.Phase.GRASS:
@@ -735,6 +821,8 @@ func _explain(i: int, ph: GameState.Phase) -> void:
 			info.emit("%s: ready in %s" % [crop["name"], format_duration(Game.seconds_until_ripe(i))])
 		GameState.Phase.WITHERED:
 			info.emit("These crops withered. Plow to clear the plot.")
+
+
 
 
 static func format_duration(seconds: int) -> String:
@@ -750,6 +838,8 @@ static func format_duration(seconds: int) -> String:
 	return "%dm" % m
 
 
+
+
 ## Celebrates an upgrade on the building itself: a big sparkle burst and a level popup.
 func _on_building_upgraded(uid: int, level: int) -> void:
 	var o := Game.object_by_uid(uid)
@@ -762,6 +852,8 @@ func _on_building_upgraded(uid: int, level: int) -> void:
 	_float(at + Vector2(0, 34), "Holds %d" % Game.capacity(o), COLOR_XP, 2.0)
 	for k in 3:
 		_sparkle(at + Vector2(-50 + 50 * k, 20), COLOR_GOLDEN)
+
+
 
 
 ## A short burst of dots for surprise drops, so a find feels like an event.
@@ -783,6 +875,8 @@ func _sparkle(pos: Vector2, color: Color) -> void:
 		tween.tween_property(dot, "rotation", PI, 0.7)
 		tween.tween_property(dot, "modulate:a", 0.0, 0.7).set_delay(0.2)
 		tween.chain().tween_callback(dot.queue_free)
+
+
 
 
 func _float(pos: Vector2, text: String, color: Color, duration := 1.0) -> void:

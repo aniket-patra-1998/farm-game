@@ -6,17 +6,23 @@ extends CanvasLayer
 signal tool_selected(tool: String, crop_id: String)
 signal place_requested(item_id: String)
 signal cancel_place_requested
+
 signal place_stored_requested(index: int)
+
 
 const TOP_H := 84.0
 const BOTTOM_H := 150.0
+
 const BUTTON_SIZE := Vector2(150, 112)
+
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
 const CREAM := Color("#fbefd2")
 const INK := Color("#3a2614")
 const SUN := Color("#ffd34d")
+
 const LOCKED := Color("#d8cbb0")
+
 
 var _coins_label: Label
 var _gems_label: Label
@@ -42,9 +48,15 @@ var _fuel_button: Button
 var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
 var _placing_label: Label
+
 var _building_uid := -1
+
+
 var _shown_coins := -1.0   # the number the coin counter shows while it rolls toward Game.coins
+
 var _coin_roll: Tween
+
+
 
 
 func _ready() -> void:
@@ -82,6 +94,8 @@ func _ready() -> void:
 	_refresh()
 	_refresh_clock()
 	_refresh_tutorial()
+
+
 
 
 # ---------------------------------------------------------------- layout
@@ -155,6 +169,8 @@ func _build_top_bar(root: Control) -> void:
 	_xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_xp_label.add_theme_font_size_override("font_size", 16)
 	xp_box.add_child(_xp_label)
+
+
 
 
 func _build_toolbar(root: Control) -> void:
@@ -296,6 +312,8 @@ func _build_toolbar(root: Control) -> void:
 		row.add_child(_reset_button)
 
 
+
+
 ## Two taps to reset, so a stray tap can't wipe the farm.
 func _on_reset_pressed() -> void:
 	if _reset_button.text.begins_with("Tap again"):
@@ -307,9 +325,13 @@ func _on_reset_pressed() -> void:
 	get_tree().create_timer(3.0).timeout.connect(_restore_reset_label)
 
 
+
+
 func _restore_reset_label() -> void:
 	if is_instance_valid(_reset_button):
 		_reset_button.text = "Debug\nnew farm"
+
+
 
 
 func _build_placing_bar(root: Control) -> void:
@@ -341,11 +363,15 @@ func _build_placing_bar(root: Control) -> void:
 	_top_holder(root, TOP_H + 10).add_child(_placing_bar)
 
 
+
+
 ## Shows the placement banner; empty text hides it.
 func show_placing(text: String) -> void:
 	_placing_label.text = text
 	_placing_bar.visible = text != ""
 	_refresh_tutorial()
+
+
 
 
 func _build_tutorial(root: Control) -> void:
@@ -367,6 +393,8 @@ func _build_tutorial(root: Control) -> void:
 	_top_holder(root, TOP_H + 12).add_child(_tutorial)
 
 
+
+
 func _refresh_tutorial() -> void:
 	var text := Game.tutorial_text()
 	_tutorial.text = text
@@ -375,6 +403,8 @@ func _refresh_tutorial() -> void:
 	var y := TOP_H + (80.0 if _tutorial.visible else 16.0)
 	_toast_holder.offset_top = y
 	_toast_holder.offset_bottom = y + 60.0
+
+
 
 
 ## A full-width strip under the top bar that keeps its child centred whatever its text.
@@ -386,6 +416,8 @@ func _top_holder(root: Control, y: float) -> CenterContainer:
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(holder)
 	return holder
+
+
 
 
 func _build_toast(root: Control) -> void:
@@ -408,6 +440,8 @@ func _build_toast(root: Control) -> void:
 	_toast_holder.add_child(_toast)
 
 
+
+
 func _tool_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
@@ -416,6 +450,8 @@ func _tool_button(text: String) -> Button:
 	b.custom_minimum_size = BUTTON_SIZE
 	b.focus_mode = Control.FOCUS_NONE
 	return b
+
+
 
 
 # ---------------------------------------------------------------- updates
@@ -431,6 +467,8 @@ func show_message(text: String) -> void:
 	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
 
 
+
+
 # ---------------------------------------------------------------- rolling counters and reward targets
 
 
@@ -439,8 +477,12 @@ func coins_target() -> Vector2:
 	return _coins_label.get_global_rect().get_center()
 
 
+
+
 func xp_target() -> Vector2:
 	return _xp_bar.get_global_rect().get_center()
+
+
 
 
 ## A quick swell as a reward lands on a counter.
@@ -452,9 +494,13 @@ func pulse(which: String) -> void:
 	tw.tween_property(c, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
+
+
 func _set_shown_coins(v: float) -> void:
 	_shown_coins = v
 	_coins_label.text = "%s coins" % _thousands(int(round(v)))
+
+
 
 
 ## The coin counter rolls to the new amount instead of jumping (spends snap down at once).
@@ -477,6 +523,8 @@ func _roll_coins() -> void:
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
+
+
 func _refresh() -> void:
 	var lvl := Game.level()
 	var lo := Game.xp_for_level(lvl)
@@ -494,6 +542,8 @@ func _refresh() -> void:
 	_xp_label.text = "%d / %d XP" % [Game.xp, hi]
 
 
+
+
 static func _thousands(n: int) -> String:
 	var digits := str(absi(n))
 	var out := ""
@@ -503,9 +553,13 @@ static func _thousands(n: int) -> String:
 	return ("-" if n < 0 else "") + digits + out
 
 
+
+
 func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
 	_clock_label.text = "%s · %s · %s" % [DayCycle.SEASON, Game.weather()["name"], DayCycle.clock_text(hour)]
+
+
 
 
 func _refresh_seed_buttons() -> void:
@@ -525,6 +579,8 @@ func _refresh_seed_buttons() -> void:
 			b.text = "%s\nLevel %d" % [crop["name"], int(crop["unlock_level"])]
 
 
+
+
 # ---------------------------------------------------------------- menus
 
 
@@ -533,16 +589,24 @@ func _refresh_book() -> void:
 		_book.refresh()
 
 
+
+
 func _show_collections() -> void:
 	_book.open_panel("Collections", _build_collections)
+
+
 
 
 func _show_ribbons() -> void:
 	_book.open_panel("Ribbons", _build_ribbons)
 
 
+
+
 func _show_market() -> void:
 	_book.open_panel("Market", _build_market)
+
+
 
 
 ## Opened when a building that isn't ready is tapped.
@@ -560,6 +624,8 @@ func show_building(uid: int) -> void:
 		_book.open_panel(Game.item_data(o["id"])["name"], _build_building)
 
 
+
+
 func _refresh_unwither() -> void:
 	if not _unwither_button:
 		return
@@ -575,6 +641,8 @@ func _refresh_unwither() -> void:
 		_unwither_button.text = "Unwither\n%d left" % Game.unwithers
 	else:
 		_unwither_button.text = "Unwither\n%d gems" % GameState.UNWITHER_GEM_COST
+
+
 
 
 func _build_market(content: VBoxContainer) -> void:
@@ -599,6 +667,8 @@ func _build_market(content: VBoxContainer) -> void:
 			content.add_child(_market_row(id, it))
 
 
+
+
 ## FarmVille's Mystery Box: one random prize, and the only way to get a Donkey.
 func _mystery_box_card() -> Control:
 	var inner := VBoxContainer.new()
@@ -620,6 +690,8 @@ func _mystery_box_card() -> Control:
 			_book.refresh())
 	inner.add_child(buy)
 	return BookPanel.card_frame(inner)
+
+
 
 
 ## A crafting building: slots in use, recipes by star, goods made, bushels and the Farmers Market.
@@ -738,6 +810,8 @@ func _build_crafting(content: VBoxContainer) -> void:
 	content.add_child(flow)
 
 
+
+
 func _recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	var inner := VBoxContainer.new()
 	var unlocked := Game.recipe_unlocked(o, r.id)
@@ -774,6 +848,8 @@ func _recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	return BookPanel.card_frame(inner)
 
 
+
+
 func _land_card() -> Control:
 	var inner := VBoxContainer.new()
 	inner.add_theme_constant_override("separation", 10)
@@ -804,6 +880,8 @@ func _land_card() -> Control:
 	row.add_child(with_gems)
 	inner.add_child(row)
 	return BookPanel.card_frame(inner)
+
+
 
 
 func _market_row(id: String, it: Dictionary) -> Control:
@@ -878,6 +956,8 @@ func _market_row(id: String, it: Dictionary) -> Control:
 	return BookPanel.card_frame(inner)
 
 
+
+
 func _build_building(content: VBoxContainer) -> void:
 	var o := Game.object_by_uid(_building_uid)
 	if o.is_empty():
@@ -935,6 +1015,8 @@ func _build_building(content: VBoxContainer) -> void:
 	_add_expansion_card(content, o, uid)
 
 
+
+
 ## Frame being built: what's in, what's missing, and a button to add held materials.
 func _build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> void:
 	var it := Game.item_data(o["id"])
@@ -968,6 +1050,8 @@ func _build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> voi
 	var add := _panel_button("Add my materials")
 	add.pressed.connect(func() -> void: Game.add_materials(uid))
 	content.add_child(add)
+
+
 
 
 ## What makes this building special, the FarmVille way.
@@ -1036,6 +1120,8 @@ func _add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 			)
 
 
+
+
 ## The Garden Shed: Perfect Bunches found while harvesting flowers, ready to place for 14 days.
 func _add_shed_info(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text("Perfect Bunches: %d of %d. Harvesting flowers sometimes gives one. Placed on the farm, a bunch lasts %d days." % [
@@ -1054,6 +1140,8 @@ func _add_shed_info(content: VBoxContainer) -> void:
 				place_stored_requested.emit(at))
 		flow.add_child(b)
 	content.add_child(flow)
+
+
 
 
 func _add_garage_info(content: VBoxContainer) -> void:
@@ -1093,6 +1181,8 @@ func _add_garage_info(content: VBoxContainer) -> void:
 		content.add_child(BookPanel.card_frame(card))
 
 
+
+
 func _build_fuel(content: VBoxContainer) -> void:
 	var fuel := Game.fuel_now()
 	content.add_child(
@@ -1123,6 +1213,8 @@ func _build_fuel(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.card_frame(card))
 
 
+
+
 ## One toolbar button per vehicle type you own, with its area and the fuel left.
 func _refresh_vehicles() -> void:
 	if not _vehicle_row:
@@ -1148,6 +1240,8 @@ func _refresh_vehicles() -> void:
 		]
 	_fuel_button.visible = Game.fuel_unlocked
 	_fuel_button.text = "Fuel %d/%d\n+%d tanks" % [Game.fuel_now(), GameState.FUEL_TANK, Game.fuel_tanks]
+
+
 
 
 func _add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
@@ -1184,6 +1278,8 @@ func _add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
 			BookPanel.CREAM
 		)
 	)
+
+
 
 
 func _add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
@@ -1223,6 +1319,8 @@ func _add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 	content.add_child(BookPanel.card_frame(card))
 
 
+
+
 ## Next size and its material cost.
 func _add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void:
 	var need := Game.expansion_needs(o)
@@ -1254,6 +1352,8 @@ func _add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> voi
 	content.add_child(BookPanel.card_frame(card))
 
 
+
+
 func _build_barn(content: VBoxContainer) -> void:
 	var b := Game.barn()
 	if b.is_empty():
@@ -1263,6 +1363,8 @@ func _build_barn(content: VBoxContainer) -> void:
 		_build_barn_repair(content)
 	else:
 		_build_barn_storage(content)
+
+
 
 
 func _build_barn_repair(content: VBoxContainer) -> void:
@@ -1298,6 +1400,8 @@ func _build_barn_repair(content: VBoxContainer) -> void:
 	content.add_child(fix)
 
 
+
+
 func _build_barn_storage(content: VBoxContainer) -> void:
 	var cap := Game.barn_capacity()
 	content.add_child(BookPanel.text(
@@ -1324,12 +1428,16 @@ func _build_barn_storage(content: VBoxContainer) -> void:
 		content.add_child(BookPanel.card_frame(row))
 
 
+
+
 func _panel_button(words: String) -> Button:
 	var b := Button.new()
 	b.text = words
 	b.custom_minimum_size = Vector2(180, 56)
 	b.focus_mode = Control.FOCUS_NONE
 	return b
+
+
 
 
 func _build_collections(content: VBoxContainer) -> void:
@@ -1396,6 +1504,8 @@ func _build_collections(content: VBoxContainer) -> void:
 		content.add_child(BookPanel.card_frame(inner))
 
 
+
+
 ## A prize ([kind, amount or item]) in words, for reward lines.
 func _prize_text(prize: Array) -> String:
 	match str(prize[0]):
@@ -1408,6 +1518,8 @@ func _prize_text(prize: Array) -> String:
 		"fuel":
 			return "%d fuel" % int(prize[1])
 	return "%d %s" % [int(prize[1]), str(prize[0]).capitalize()]
+
+
 
 
 func _build_ribbons(content: VBoxContainer) -> void:
@@ -1452,6 +1564,8 @@ func _build_ribbons(content: VBoxContainer) -> void:
 		content.add_child(BookPanel.card_frame(inner))
 
 
+
+
 # ---------------------------------------------------------------- theme
 
 
@@ -1491,6 +1605,8 @@ func _make_theme() -> Theme:
 	t.set_stylebox("background", "ProgressBar", bar_bg)
 	t.set_stylebox("fill", "ProgressBar", bar_fill)
 	return t
+
+
 
 
 func _button_box(fill: Color, border: Color) -> StyleBoxFlat:

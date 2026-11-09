@@ -9,10 +9,15 @@ extends Node
 const MAIN_SCENE := preload("res://scenes/main.tscn")
 var _failures: Array[String] = []
 var _current := ""
+
 var _checks := 0
+
+
 
 ## The farm grid and the main scene (camera), in the order Godot delivers input to them.
 var _input_targets: Array = []
+
+
 
 
 func _ready() -> void:
@@ -48,6 +53,8 @@ func _ready() -> void:
 		get_tree().quit(1 if failed_tests > 0 else 0)
 
 
+
+
 # ---------------------------------------------------------------- helpers
 
 
@@ -57,8 +64,12 @@ func _check(condition: bool, what: String) -> void:
 		_failures.append("%s: %s" % [_current, what])
 
 
+
+
 func _eq(actual: Variant, expected: Variant, what: String) -> void:
 	_check(actual == expected, "%s (expected %s, got %s)" % [what, str(expected), str(actual)])
+
+
 
 
 ## A fresh farm: saving off, drops off, fixed random seed.
@@ -71,8 +82,12 @@ func _farm(drops := false) -> GameState:
 	return g
 
 
+
+
 func _done(g: GameState) -> void:
 	g.queue_free()
+
+
 
 
 ## A tile that is open grass on a new farm (the farmhouse and barn sit along the back edge).
@@ -80,8 +95,12 @@ func _free(g: GameState) -> int:
 	return g.index_of(11, 11)
 
 
+
+
 func _skip(g: GameState, seconds: int) -> void:
 	g.debug_time_offset += seconds
+
+
 
 
 ## Plows (if needed), plants and fast-forwards one crop to ripe, then harvests it.
@@ -91,6 +110,8 @@ func _grow_and_harvest(g: GameState, i: int, crop_id: String) -> Dictionary:
 	g.plant(i, crop_id)
 	_skip(g, int(g.crops[crop_id]["grow_seconds"]))
 	return g.harvest(i)
+
+
 
 
 # ---------------------------------------------------------------- core farming
@@ -115,6 +136,8 @@ func test_01_new_farm_starts_like_the_classic_opening() -> void:
 	_done(g)
 
 
+
+
 func test_02_plow_plant_grow_wither() -> void:
 	var g := _farm()
 	var i := _free(g)
@@ -132,6 +155,8 @@ func test_02_plow_plant_grow_wither() -> void:
 	_done(g)
 
 
+
+
 func test_03_harvest_pays_and_counts_mastery() -> void:
 	var g := _farm()
 	var i := _free(g)
@@ -142,6 +167,8 @@ func test_03_harvest_pays_and_counts_mastery() -> void:
 	_eq(g.phase(i), GameState.Phase.PLOWED, "plot is plowed again after harvest")
 	_eq(int(g.mastery.get("strawberries", 0)), 1, "mastery count")
 	_done(g)
+
+
 
 
 func test_04_fertilizer_adds_twenty_percent_and_double_mastery() -> void:
@@ -159,6 +186,8 @@ func test_04_fertilizer_adds_twenty_percent_and_double_mastery() -> void:
 	_done(g)
 
 
+
+
 func test_05_unwither_revives_withered_crops() -> void:
 	var g := _farm()
 	var i := _free(g)
@@ -171,6 +200,8 @@ func test_05_unwither_revives_withered_crops() -> void:
 	_eq(g.phase(i), GameState.Phase.RIPE, "ripe again")
 	_eq(g.unwithers, held - 1, "one unwither used")
 	_done(g)
+
+
 
 
 # ---------------------------------------------------------------- progression
@@ -187,6 +218,8 @@ func test_06_level_up_pays_coins_and_a_gem() -> void:
 	_done(g)
 
 
+
+
 func test_07_ribbons_award_tiers() -> void:
 	var g := _farm()
 	g.coins = 10000
@@ -196,6 +229,8 @@ func test_07_ribbons_award_tiers() -> void:
 	_eq(g.stat("plowed"), 20, "plowed counter")
 	_eq(int(g.ribbon_tiers.get("plow_pro", 0)), 1, "Plow Pro yellow ribbon at 20 plots")
 	_done(g)
+
+
 
 
 # ---------------------------------------------------------------- surprises and collections
@@ -212,6 +247,8 @@ func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
 			found += 1
 	_check(found >= 1, "at least one collectible in %d harvests" % GameState.COLLECTIBLE_PITY)
 	_done(g)
+
+
 
 
 func test_09_collection_trade_in() -> void:
@@ -239,6 +276,8 @@ func test_09_collection_trade_in() -> void:
 	_done(g)
 
 
+
+
 # ---------------------------------------------------------------- placement and buildings
 
 
@@ -256,6 +295,8 @@ func test_10_place_and_move_objects() -> void:
 	_eq(int(g.object_at(g.index_of(11, 11))["uid"]), uid, "new tile holds it")
 	_check(not g.plow(g.index_of(11, 11)), "can't plow under an object")
 	_done(g)
+
+
 
 
 func test_11_shelter_fill_collect_upgrade() -> void:
@@ -284,6 +325,8 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 	_done(g)
 
 
+
+
 # ---------------------------------------------------------------- land
 
 
@@ -299,6 +342,8 @@ func test_12_expand_with_coins_needs_level_gems_do_not() -> void:
 	_done(g)
 
 
+
+
 func test_13_old_12x12_saves_migrate() -> void:
 	var g := _farm()
 	var old: Array = []
@@ -309,6 +354,8 @@ func test_13_old_12x12_saves_migrate() -> void:
 	_eq(wide.size(), GameState.MAX_SIZE * GameState.MAX_SIZE, "widened size")
 	_eq(wide[g.index_of(5, 7)]["state"], "plowed", "plot keeps its row and column")
 	_done(g)
+
+
 
 
 # ---------------------------------------------------------------- bees and strays
@@ -348,6 +395,8 @@ func test_14_bees_only_join_a_hive_with_a_queen() -> void:
 	_done(g)
 
 
+
+
 func test_15_strays_arrive_get_adopted_or_leave() -> void:
 	var g := _farm()
 	g.next_stray_at = 0
@@ -370,6 +419,8 @@ func test_15_strays_arrive_get_adopted_or_leave() -> void:
 	g.check_strays()
 	_eq(g.objects.filter(func(o): return o.get("stray", false)).size(), 0, "unadopted stray left")
 	_done(g)
+
+
 
 
 # ---------------------------------------------------------------- saving
@@ -409,6 +460,8 @@ func test_16_save_and_load_round_trip() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
+
+
 # ---------------------------------------------------------------- data files
 
 
@@ -441,6 +494,8 @@ func test_17_data_files_are_consistent() -> void:
 	_done(g)
 
 
+
+
 func test_18_drops_are_off_in_exact_value_tests() -> void:
 	var g := _farm(false)
 	var i := _free(g)
@@ -450,6 +505,8 @@ func test_18_drops_are_off_in_exact_value_tests() -> void:
 		if r["drop"] != "":
 			break
 	_done(g)
+
+
 
 
 # ---------------------------------------------------------------- economy and balance
@@ -464,6 +521,8 @@ func test_19_every_crop_makes_a_profit() -> void:
 		_check(int(c["xp"]) >= 1, "%s gives XP" % id)
 		_check(int(c["grow_seconds"]) > 0, "%s has a grow time" % id)
 	_done(g)
+
+
 
 
 func test_20_slower_crops_pay_more_per_harvest() -> void:
@@ -481,6 +540,8 @@ func test_20_slower_crops_pay_more_per_harvest() -> void:
 	_done(g)
 
 
+
+
 func test_21_every_level_to_20_unlocks_something() -> void:
 	var g := _farm()
 	for lvl in range(1, 21):
@@ -493,6 +554,8 @@ func test_21_every_level_to_20_unlocks_something() -> void:
 	_done(g)
 
 
+
+
 func test_22_level_curve_rises_and_paces_the_beta() -> void:
 	var g := _farm()
 	for lvl in range(2, 60):
@@ -501,6 +564,8 @@ func test_22_level_curve_rises_and_paces_the_beta() -> void:
 	var days := float(g.xp_for_level(20)) / (60.0 * 3.0)
 	_check(days >= 8.0 and days <= 16.0, "level 20 takes about two weeks (estimated %.1f days)" % days)
 	_done(g)
+
+
 
 
 func test_23_every_crop_and_item_has_art() -> void:
@@ -514,11 +579,15 @@ func test_23_every_crop_and_item_has_art() -> void:
 	_done(g)
 
 
+
+
 func test_24_every_crop_belongs_to_a_collection() -> void:
 	var g := _farm()
 	for id in g.crop_order:
 		_check(g.collection_of_crop.has(id), "%s can drop collectibles" % id)
 	_done(g)
+
+
 
 
 # ---------------------------------------------------------------- starter scenery, parts, barn, storage
@@ -533,6 +602,8 @@ func test_25_scenery_and_barn_never_produce() -> void:
 			_check(not g.is_ready(o), "%s never becomes ready" % o["id"])
 			_check(g.collect(int(o["uid"])).is_empty(), "%s can't be collected" % o["id"])
 	_done(g)
+
+
 
 
 func test_26_parts_drop_from_harvests() -> void:
@@ -553,12 +624,16 @@ func test_26_parts_drop_from_harvests() -> void:
 	_done(g)
 
 
+
+
 func test_27_no_parts_when_drops_are_off() -> void:
 	var g := _farm(false)
 	var i := _free(g)
 	for k in 30:
 		_eq(_grow_and_harvest(g, i, "strawberries").get("part", ""), "", "no part")
 	_done(g)
+
+
 
 
 func test_28_daily_gift_once_per_day() -> void:
@@ -574,6 +649,8 @@ func test_28_daily_gift_once_per_day() -> void:
 	g.check_daily_gift()
 	_eq(g.stat("parts_found"), 2 * GameState.DAILY_PARTS, "one gift after a long break, not a pile")
 	_done(g)
+
+
 
 
 func test_29_barn_repair_needs_every_part() -> void:
@@ -597,6 +674,8 @@ func test_29_barn_repair_needs_every_part() -> void:
 	_done(g)
 
 
+
+
 func test_30_storage_put_away_and_bring_back() -> void:
 	var g := _farm()
 	var chicken := g.object_at(g.index_of(9, 2))
@@ -613,6 +692,8 @@ func test_30_storage_put_away_and_bring_back() -> void:
 	_eq(g.object_at(g.index_of(11, 11)).get("id", ""), "chicken", "chicken is back")
 	_check(not g.is_ready(g.object_at(g.index_of(11, 11))), "its timer restarted")
 	_done(g)
+
+
 
 
 func test_31_storage_limits() -> void:
@@ -636,6 +717,8 @@ func test_31_storage_limits() -> void:
 	_done(g)
 
 
+
+
 func test_32_new_trees_animals_and_birds_work() -> void:
 	var g := _farm()
 	g.coins = 1000000
@@ -652,6 +735,8 @@ func test_32_new_trees_animals_and_birds_work() -> void:
 			col = 7
 			row += 1
 	_done(g)
+
+
 
 
 # ---------------------------------------------------------------- day and night
@@ -672,6 +757,8 @@ func test_33_day_and_night_follow_the_clock() -> void:
 	_eq(DayCycle.moon_progress(12.0), -1.0, "moon is down at noon")
 
 
+
+
 func test_34_day_colours_change_smoothly_and_wrap_at_midnight() -> void:
 	var before := DayCycle.sample(23.99)
 	var after := DayCycle.sample(0.0)
@@ -688,6 +775,8 @@ func test_34_day_colours_change_smoothly_and_wrap_at_midnight() -> void:
 	_check(noon.get_luminance() > night.get_luminance() + 0.2, "noon is clearly brighter than night")
 
 
+
+
 func test_35_local_time_and_clock_text() -> void:
 	_eq(DayCycle.local_hour(0, 0), 0.0, "unix 0 is midnight UTC")
 	_eq(DayCycle.local_hour(0, 330), 5.5, "India is 5 h 30 m ahead")
@@ -695,6 +784,8 @@ func test_35_local_time_and_clock_text() -> void:
 	_eq(DayCycle.clock_text(19.7), "7:42 pm", "evening clock")
 	_eq(DayCycle.clock_text(0.25), "12:15 am", "just after midnight")
 	_eq(DayCycle.clock_text(12.0), "12:00 pm", "noon")
+
+
 
 
 func test_36_the_whole_game_scene_loads() -> void:
@@ -714,6 +805,9 @@ func test_36_the_whole_game_scene_loads() -> void:
 	main.free() # free now, so the next test doesn't share the screen with this one
 
 
+
+
+
 # ---------------------------------------------------------------- touch input
 
 
@@ -729,6 +823,8 @@ func _touch(pos: Vector2, pressed: bool) -> void:
 	await get_tree().process_frame
 
 
+
+
 func _drag(pos: Vector2, relative: Vector2) -> void:
 	var ev := InputEventScreenDrag.new()
 	ev.index = 0
@@ -739,8 +835,12 @@ func _drag(pos: Vector2, relative: Vector2) -> void:
 	await get_tree().process_frame
 
 
+
+
 func _screen_pos(grid: FarmGrid, i: int) -> Vector2:
 	return get_viewport().get_canvas_transform() * grid.to_global(grid.center_of(i))
+
+
 
 
 ## Runs after the plain tests (see _ready): it needs real frames for input to arrive.
@@ -796,6 +896,10 @@ func _frames_test_tap_and_drag() -> void:
 	main.free()
 
 
+
+
+
+
 # ---------------------------------------------------------------- buildings, the FarmVille way
 
 
@@ -807,9 +911,13 @@ func _count(g: GameState, item_id: String) -> int:
 	return n
 
 
+
+
 func _all_materials(g: GameState, n: int) -> void:
 	for m in GameState.part_ids:
 		g.parts[m] = n
+
+
 
 
 func test_38_stable_is_built_from_a_frame_with_materials() -> void:
@@ -834,6 +942,8 @@ func test_38_stable_is_built_from_a_frame_with_materials() -> void:
 	_eq(int(g.parts["bricks"]), 4, "spare bricks kept (4 were already in)")
 	_eq(g.fill_building(uid), 1, "the horse moves in")
 	_done(g)
+
+
 
 
 func test_39_stable_horses_daily_stallion_brings_foals() -> void:
@@ -872,6 +982,8 @@ func test_39_stable_horses_daily_stallion_brings_foals() -> void:
 	_done(g)
 
 
+
+
 func test_40_dairy_bull_brings_calves_and_fertilizer() -> void:
 	var g := _farm(true)
 	g.coins = 1000000
@@ -906,6 +1018,8 @@ func test_40_dairy_bull_brings_calves_and_fertilizer() -> void:
 	_done(g)
 
 
+
+
 func test_41_nursery_raises_babies_into_adults() -> void:
 	var g := _farm()
 	g.coins = 1000000
@@ -938,6 +1052,8 @@ func test_41_nursery_raises_babies_into_adults() -> void:
 	_done(g)
 
 
+
+
 func test_42_coop_mystery_eggs_follow_breeds() -> void:
 	var g := _farm(true)
 	g.coins = 1000000
@@ -965,6 +1081,8 @@ func test_42_coop_mystery_eggs_follow_breeds() -> void:
 	_done(g)
 
 
+
+
 func test_43_expansions_cost_materials_and_follow_farmville_sizes() -> void:
 	var g := _farm()
 	g.coins = 1000000
@@ -985,6 +1103,8 @@ func test_43_expansions_cost_materials_and_follow_farmville_sizes() -> void:
 	_done(g)
 
 
+
+
 func test_44_specific_materials_only_drop_for_buildings_you_own() -> void:
 	var g := _farm()
 	var pool := g.wanted_parts()
@@ -997,6 +1117,8 @@ func test_44_specific_materials_only_drop_for_buildings_you_own() -> void:
 	_check(pool.has("harnesses") and pool.has("horseshoes"), "stable materials drop once you own the frame")
 	_check(not pool.has("smokers"), "beehive materials still don't")
 	_done(g)
+
+
 
 
 func test_45_gem_breeds_and_helpers() -> void:
@@ -1018,6 +1140,8 @@ func test_45_gem_breeds_and_helpers() -> void:
 		if g.kind_of(o) == "animal":
 			_check(not g.is_ready(o), "%s collected" % o["id"])
 	_done(g)
+
+
 
 
 func test_46_bull_and_stallion_only_wander_in_with_their_building() -> void:
@@ -1044,6 +1168,8 @@ func test_46_bull_and_stallion_only_wander_in_with_their_building() -> void:
 	_done(g)
 
 
+
+
 # ---------------------------------------------------------------- beehive, pig pen, orchard
 
 
@@ -1056,6 +1182,8 @@ func _built_hive(g: GameState) -> Dictionary:
 	_all_materials(g, 10)
 	g.add_materials(int(hive["uid"]))
 	return hive
+
+
 
 
 func test_47_beehive_frame_and_queen_bee() -> void:
@@ -1085,6 +1213,8 @@ func test_47_beehive_frame_and_queen_bee() -> void:
 	_eq(g.queen_bees, 1, "the spare queen is kept")
 	_check(g.wanted_parts().has("smokers"), "smokers drop once you own a hive")
 	_done(g)
+
+
 
 
 func test_48_bees_pollinate_fertilized_crops() -> void:
@@ -1143,6 +1273,8 @@ func test_48_bees_pollinate_fertilized_crops() -> void:
 	_done(g)
 
 
+
+
 func test_49_pollinated_crops_super_harvest_three_times_as_often() -> void:
 	var g := _farm(true)
 	var plain := 0
@@ -1156,6 +1288,8 @@ func test_49_pollinated_crops_super_harvest_three_times_as_often() -> void:
 	var ratio := float(boosted) / maxf(1.0, plain)
 	_check(ratio > 2.3 and ratio < 3.7, "about 3x the super harvests (%d vs %d)" % [boosted, plain])
 	_done(g)
+
+
 
 
 func test_50_fertilize_all_from_the_hive() -> void:
@@ -1187,6 +1321,8 @@ func test_50_fertilize_all_from_the_hive() -> void:
 	_done(g)
 
 
+
+
 func test_51_bees_leave_when_you_stay_away() -> void:
 	var g := _farm()
 	var hive := _built_hive(g)
@@ -1202,6 +1338,8 @@ func test_51_bees_leave_when_you_stay_away() -> void:
 	_eq(g.inside_total(hive), 0, "15 days away: every bee is gone")
 	_check(not g.has_queen(hive), "and the queen flew off")
 	_done(g)
+
+
 
 
 func test_52_pig_pen_truffles_and_rare_breeds() -> void:
@@ -1250,6 +1388,8 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 	_done(g)
 
 
+
+
 func test_53_orchard_sprouts_rare_saplings() -> void:
 	var g := _farm(true)
 	g.coins = 1000000
@@ -1274,6 +1414,8 @@ func test_53_orchard_sprouts_rare_saplings() -> void:
 			_check(int(r["payout"]) > int(it["payout"]), "%s pays more" % r.get("id", "?"))
 			_eq(int(r["unlock_level"]), 99, "%s can't be bought" % r.get("id", "?"))
 	_done(g)
+
+
 
 
 func test_54_new_building_state_survives_a_save() -> void:
@@ -1316,6 +1458,8 @@ func test_54_new_building_state_survives_a_save() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
+
+
 # ---------------------------------------------------------------- vehicles, fuel and the garage
 
 
@@ -1325,6 +1469,8 @@ func _all_plots(g: GameState, r0: int, c0: int, w: int, h: int, ph: GameState.Ph
 			if g.phase(g.index_of(r, c)) != ph:
 				return false
 	return true
+
+
 
 
 func test_55_tractor_plows_two_by_two_with_fuel() -> void:
@@ -1356,6 +1502,8 @@ func test_55_tractor_plows_two_by_two_with_fuel() -> void:
 	_done(g)
 
 
+
+
 func test_56_seeder_plants_and_harvester_harvests() -> void:
 	var g := _farm()
 	g.coins = 1000000
@@ -1377,6 +1525,8 @@ func test_56_seeder_plants_and_harvester_harvests() -> void:
 	_eq(g.stat("harvests") - before, 4, "they count as harvests")
 	_check(_all_plots(g, 8, 8, 2, 2, GameState.Phase.PLOWED), "plots left plowed")
 	_done(g)
+
+
 
 
 func test_57_fuel_refills_slowly_and_spare_tanks() -> void:
@@ -1403,6 +1553,8 @@ func test_57_fuel_refills_slowly_and_spare_tanks() -> void:
 	_eq(g.fuel_tanks, 1, "a spare tank held")
 	_check(not g.buy_fuel_tank(), "no gems left")
 	_done(g)
+
+
 
 
 func test_58_garage_upgrades_vehicles_with_parts() -> void:
@@ -1448,6 +1600,8 @@ func test_58_garage_upgrades_vehicles_with_parts() -> void:
 	_done(g)
 
 
+
+
 func test_59_combine_chassis_and_all_in_one() -> void:
 	var g := _farm()
 	g.coins = 10000000
@@ -1474,6 +1628,8 @@ func test_59_combine_chassis_and_all_in_one() -> void:
 	_eq(g.stat("harvests") - before, 4, "harvested")
 	_check(_all_plots(g, 8, 8, 2, 2, GameState.Phase.GROWING), "and planted again, in the same tap")
 	_done(g)
+
+
 
 
 func test_60_garage_parks_vehicles_and_state_saves() -> void:
@@ -1516,6 +1672,8 @@ func test_60_garage_parks_vehicles_and_state_saves() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
+
+
 # ---------------------------------------------------------------- gap pass: decorations, selling, homes, daily bonus
 
 
@@ -1538,6 +1696,8 @@ func test_61_decorations_give_xp_like_farmville() -> void:
 			count += 1
 	_check(count >= 30, "at least 30 decorations in the Market (%d)" % count)
 	_done(g)
+
+
 
 
 func test_62_sell_anything_for_five_percent() -> void:
@@ -1571,6 +1731,8 @@ func test_62_sell_anything_for_five_percent() -> void:
 	_done(g)
 
 
+
+
 func test_63_rotate_decorations() -> void:
 	var g := _farm()
 	g.coins = 1000000
@@ -1584,6 +1746,8 @@ func test_63_rotate_decorations() -> void:
 	g.buy_and_place("chicken_coop", 0, 4)
 	_check(not g.rotate_object(int(g.object_at(g.index_of(0, 4))["uid"])), "buildings don't turn")
 	_done(g)
+
+
 
 
 func test_64_new_homes_rams_boars_lambs_piglets() -> void:
@@ -1631,6 +1795,8 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	_done(g)
 
 
+
+
 func test_65_rams_and_boars_wander_in_only_with_their_home() -> void:
 	var g := _farm()
 	g.xp = g.xp_for_level(20)
@@ -1652,6 +1818,8 @@ func test_65_rams_and_boars_wander_in_only_with_their_home() -> void:
 	_check(seen.has("ram"), "a ram wanders in once you have a Sheep Pen")
 	_check(not seen.has("boar"), "still no boar")
 	_done(g)
+
+
 
 
 func test_66_daily_bonus_streak() -> void:
@@ -1677,6 +1845,8 @@ func test_66_daily_bonus_streak() -> void:
 	_done(g)
 
 
+
+
 func test_67_mastery_sign_collections_and_ribbons() -> void:
 	var g := _farm()
 	g._award_mastery_star("wheat", 3)
@@ -1697,6 +1867,8 @@ func test_67_mastery_sign_collections_and_ribbons() -> void:
 	_done(g)
 
 
+
+
 func test_68_every_decoration_has_art() -> void:
 	var g := _farm()
 	var shapes := ["path", "fence", "hedge", "wall", "haybale", "haystack", "scarecrow", "flowerbed", "flamingo", "bench",
@@ -1707,6 +1879,8 @@ func test_68_every_decoration_has_art() -> void:
 		if it["kind"] == "decor" and not ["farmhouse", "mailbox", "farm_stand"].has(id):
 			_check(shapes.has(it.get("shape", "")), "%s has a drawn shape" % id)
 	_done(g)
+
+
 
 
 func test_69_art_manifest_is_complete() -> void:
@@ -1760,6 +1934,8 @@ func test_69_art_manifest_is_complete() -> void:
 	_done(g)
 
 
+
+
 ## A throwaway art folder holding only these ids, so tests don't depend on what's been generated.
 func _art_dir(ids: Array) -> String:
 	var dir := "user://test_art"
@@ -1773,6 +1949,8 @@ func _art_dir(ids: Array) -> String:
 	f.store_string(JSON.stringify(meta))
 	f.close()
 	return dir
+
+
 
 
 func test_72_art_follows_the_lifecycle() -> void:
@@ -1800,6 +1978,8 @@ func test_72_art_follows_the_lifecycle() -> void:
 	_done(g)
 
 
+
+
 # ---------------------------------------------------------------- the catalog
 
 
@@ -1823,6 +2003,8 @@ func test_70_catalog_loads_with_no_problems() -> void:
 	_eq(GameState.part_ids.size(), g.catalog.of_kind("material").size(), "materials come from the catalog")
 	_check(GameState.basic_parts == ["bricks", "nails", "boards"], "the basic materials")
 	_done(g)
+
+
 
 
 func test_71_defaults_stack_and_classes_add_rules() -> void:
@@ -1879,6 +2061,8 @@ func test_71_defaults_stack_and_classes_add_rules() -> void:
 	_done(g)
 
 
+
+
 func test_73_tool_scripts_compile() -> void:
 	# The CI tools (reference and sprite renderers, previews) don't run in the game, so check they compile here.
 	for path in [
@@ -1889,6 +2073,8 @@ func test_73_tool_scripts_compile() -> void:
 	]:
 		var script := load(path) as GDScript
 		_check(script != null and script.can_instantiate(), "%s compiles" % path)
+
+
 
 
 # ---------------------------------------------------------------- FarmVille's random events, round 2
@@ -1929,6 +2115,8 @@ func test_74_lost_animals_wander_in_and_are_never_sold() -> void:
 	_done(g)
 
 
+
+
 func test_75_breeds_have_their_own_babies() -> void:
 	var g := _farm(true)
 	_eq((g.catalog.get_def("hereford_cow") as AnimalDef).baby(), "hereford_calf", "a Hereford Cow has Hereford Calves")
@@ -1958,6 +2146,8 @@ func test_75_breeds_have_their_own_babies() -> void:
 	_done(g)
 
 
+
+
 func test_76_baby_turkey_and_ugly_duckling_grow_up() -> void:
 	var g := _farm()
 	_check(g.place_somewhere("baby_turkey"), "a baby turkey on the farm")
@@ -1979,6 +2169,8 @@ func test_76_baby_turkey_and_ugly_duckling_grow_up() -> void:
 	_eq(int(pond["inside"].get("swan", 0)), 2, "ugly ducklings grew into swans")
 	_check(not pond["inside"].has("ugly_duckling"), "no ducklings left")
 	_done(g)
+
+
 
 
 func test_77_mystery_box_and_cornish_eggs() -> void:
@@ -2009,6 +2201,8 @@ func test_77_mystery_box_and_cornish_eggs() -> void:
 	_done(g)
 
 
+
+
 func test_78_every_new_item_has_a_home_and_art() -> void:
 	var g := _farm()
 	for id in g.item_order:
@@ -2024,6 +2218,8 @@ func test_78_every_new_item_has_a_home_and_art() -> void:
 	_done(g)
 
 
+
+
 # ---------------------------------------------------------------- crafting (FarmVille's Bakery, Winery, Spa)
 
 
@@ -2035,6 +2231,8 @@ func _crafting_building(g: GameState, id := "bakery") -> int:
 	g._rebuild_occupancy()
 	_check(g.buy_and_place(id, 8, 8), "%s placed" % id)
 	return int(g.object_at(g.index_of(8, 8))["uid"])
+
+
 
 
 func test_79_crafting_recipes_match_farmville() -> void:
@@ -2080,6 +2278,8 @@ func test_79_crafting_recipes_match_farmville() -> void:
 	_done(g)
 
 
+
+
 func test_80_first_crafting_building_is_coins_the_rest_gems() -> void:
 	var g := _farm()
 	_eq(g.crafting_price("bakery"), {"coins": 100000}, "the first costs coins")
@@ -2092,6 +2292,8 @@ func test_80_first_crafting_building_is_coins_the_rest_gems() -> void:
 	_done(g)
 
 
+
+
 ## A plot away from the crafting building at 8,8.
 func _open_plot(g: GameState) -> int:
 	for r in range(2, 8):
@@ -2102,11 +2304,15 @@ func _open_plot(g: GameState) -> int:
 	return g.index_of(7, 7)
 
 
+
+
 func _ints(d: Dictionary) -> Dictionary:
 	var out := {}
 	for k in d:
 		out[k] = int(d[k])
 	return out
+
+
 
 
 func test_81_bushels_craft_goods_sell_and_fuel() -> void:
@@ -2163,6 +2369,8 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	_done(g)
 
 
+
+
 func test_82_stars_mastery_and_the_farmers_market() -> void:
 	var g := _farm()
 	var uid := _crafting_building(g, "winery")
@@ -2209,6 +2417,8 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	_done(g)
 
 
+
+
 # ---------------------------------------------------------------- weather (looks only; FarmVille had none)
 
 
@@ -2253,6 +2463,8 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 	_done(g)
 
 
+
+
 # ---------------------------------------------------------------- FarmVille's random finds while farming
 
 
@@ -2294,6 +2506,8 @@ func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> vo
 	_done(g)
 
 
+
+
 func test_85_fuel_found_while_plowing_once_a_day() -> void:
 	var g := _farm(true)
 	g.coins = 1000000
@@ -2332,6 +2546,8 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 	_done(g)
 
 
+
+
 func test_86_bushels_come_with_one_extra_per_mastery_star() -> void:
 	var g := _farm(true)
 	_crafting_building(g)
@@ -2346,6 +2562,8 @@ func test_86_bushels_come_with_one_extra_per_mastery_star() -> void:
 	_eq(int(got.get("bushels", 0)), 1 + stars, "a bushel plus one per mastery star (FarmVille)")
 	_eq(int(g.bushels["wheat"]), 1 + stars, "all of them kept")
 	_done(g)
+
+
 
 
 func test_87_perfect_bunches_and_the_garden_shed() -> void:
