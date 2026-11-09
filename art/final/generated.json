@@ -1,4 +1,32 @@
 {
+ "crop_blackberries_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:15",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_blackberries_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:14",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_blackberries_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:15",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_blackberries_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:16",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_blueberries_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:11",
@@ -23,6 +51,48 @@
  "crop_blueberries_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:12",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_cranberries_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:13",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_cranberries_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:13",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_cranberries_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:14",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_cranberries_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:14",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_elderberries_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:17",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_elderberries_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:16",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"

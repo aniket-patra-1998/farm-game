@@ -20,6 +20,34 @@
   ],
   "scale": 0.4
  },
+ "crop_blackberries_growing": {
+  "anchor": [
+   128.0,
+   118.0
+  ],
+  "scale": 0.5
+ },
+ "crop_blackberries_planted": {
+  "anchor": [
+   128.0,
+   127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_blackberries_ripe": {
+  "anchor": [
+   128.0,
+   134.0
+  ],
+  "scale": 0.5
+ },
+ "crop_blackberries_withered": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
  "crop_blueberries_growing": {
   "anchor": [
    128.0,
@@ -45,6 +73,48 @@
   "anchor": [
    128.0,
    128.0
+  ],
+  "scale": 0.5
+ },
+ "crop_cranberries_growing": {
+  "anchor": [
+   128.0,
+   120.0
+  ],
+  "scale": 0.5
+ },
+ "crop_cranberries_planted": {
+  "anchor": [
+   128.0,
+   127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_cranberries_ripe": {
+  "anchor": [
+   128.0,
+   142.0
+  ],
+  "scale": 0.5
+ },
+ "crop_cranberries_withered": {
+  "anchor": [
+   128.0,
+   141.0
+  ],
+  "scale": 0.5
+ },
+ "crop_elderberries_growing": {
+  "anchor": [
+   128.0,
+   117.0
+  ],
+  "scale": 0.5
+ },
+ "crop_elderberries_planted": {
+  "anchor": [
+   128.0,
+   127.0
   ],
   "scale": 0.5
  },
