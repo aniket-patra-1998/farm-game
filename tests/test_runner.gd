@@ -2470,7 +2470,7 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 	_check(float(storm["lightning"]) > 0.0 and float(storm["dim"]) > 0.3, "with lightning, and dark")
 	var g := _farm()
 	g.weather_override = "fog"
-	_eq(g.weather()["name"], "Fog", "the game reports its weather")
+	_eq(tr(g.weather()["name"]), "Fog", "the game reports its weather, by a key in the strings file")
 	_done(g)
 
 
