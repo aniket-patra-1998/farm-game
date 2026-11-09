@@ -17,8 +17,8 @@ static func paint(col: Color, shine := 0.0) -> StandardMaterial3D:
 	if not _materials.has(key):
 		var m := StandardMaterial3D.new()
 		m.albedo_color = col
-		m.roughness = 1.0 - shine * 0.7
-		m.metallic_specular = 0.2 + shine * 0.4
+		m.roughness = 1.0 - shine * 0.6
+		m.metallic_specular = 0.1 + shine * 0.4
 		_materials[key] = m
 	return _materials[key]
 
@@ -247,7 +247,7 @@ static func _roof_edges(parent: Node3D, slopes: Array, mat: Material) -> void:
 	var edge := mat
 	if mat is ShaderMaterial:
 		var col: Color = (mat as ShaderMaterial).get_shader_parameter("base_color")
-		edge = paint(col.darkened(0.35))
+		edge = paint(col.darkened(0.2))
 	for s: Array in [slopes[0], slopes[slopes.size() / 2]]:
 		var a: Vector3 = s[0]
 		var b: Vector3 = s[1]

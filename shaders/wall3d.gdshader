@@ -54,5 +54,5 @@ void fragment() {
 	ALBEDO = col;
 	ROUGHNESS = style == 5 ? 0.45 : 0.9;
 	METALLIC = style == 5 ? 0.3 : 0.0;
-	SPECULAR = 0.25;
+	SPECULAR = style == 5 ? 0.35 : 0.08;
 }
