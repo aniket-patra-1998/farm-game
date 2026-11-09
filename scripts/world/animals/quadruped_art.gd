@@ -80,7 +80,7 @@ static func _leg(ci: CanvasItem, g: Vector2, c: Vector2, r: Vector2, rig: Animal
 			upper = lower
 	AnimalArt.limb(ci, hip, knee, 7.5 * k * thick, 5.0 * k * thick, upper, k)
 	AnimalArt.limb(ci, knee, foot, 5.0 * k * thick, 3.8 * k * thick, lower, k)
-	var hoof := HOOF if rig.family != "pig" else body.darkened(0.45)
+	var hoof := AnimalArt.HOOF if rig.family != "pig" else body.darkened(0.45)
 	ci.draw_rect(Rect2(foot + Vector2(-2.6, -2.6) * k * thick, Vector2(5.4, 3.2) * k * thick), hoof)
 
 

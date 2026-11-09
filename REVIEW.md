@@ -30,7 +30,7 @@ phones) · **Minor** (clarity, naming, small duplication) · **Nit** (style).
    allocation in hot loops, no work proportional to the whole farm on each tap.
 6. **Feel.** Motion is frame-rate independent (tweens, or exponential easing with `delta`), effects are
    pooled or capped, and nothing blocks input.
-7. **Tests.** New rules come with tests in `tests/test_runner.gd`; drawing changes come with a screenshot
+7. **Tests.** New rules come with tests in `tests/suites/`; drawing changes come with a screenshot
    in `tests/shots.gd`. CI must stay green.
 8. **FarmVille fidelity.** Where the change copies a FarmVille feature, it follows FarmVille's rules; our
    own additions are marked as ours.
