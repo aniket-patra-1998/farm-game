@@ -19,6 +19,8 @@ const COMB := Color("#d8382f")
 const LEG_NAMES := ["hind_far", "fore_far", "hind_near", "fore_near"]
 
 const LEG_PHASES := [0.5, 0.75, 0.0, 0.25]      # the four-beat walk, as in QuadrupedArt
+const CONTACT_SPREAD := 1.25                    # the contact shade reaches this far past the body
+const CONTACT_LIFT := 0.012                     # just above the grass, so it never flickers into it
 
 
 var rig: AnimalRig
@@ -40,6 +42,9 @@ var _last := Vector3.ZERO
 var _r := Vector3.ONE            # body half-sizes (length, height, width)
 
 var _leg := 0.2
+var _contact: MeshInstance3D     # the soft shade on the grass right under it
+
+static var _contact_material: ShaderMaterial
 
 
 
@@ -73,7 +78,24 @@ func _build() -> void:
 			_build_turtle()
 		_:
 			_build_quad()
+	_build_contact()
 	rotation.y = heading
+
+
+## A soft dark patch on the grass under the body, a little longer than it, so the animal stands on the
+## farm (ambient occlusion; the sun's shadow falls separately, and moves with the time of day).
+func _build_contact() -> void:
+	if _contact_material == null:
+		_contact_material = ShaderMaterial.new()
+		_contact_material.shader = load("res://shaders/contact3d.gdshader")
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(_r.x * 2.0 * CONTACT_SPREAD, maxf(_r.z, _r.x * 0.45) * 2.0 * CONTACT_SPREAD)
+	_contact = MeshInstance3D.new()
+	_contact.mesh = plane
+	_contact.material_override = _contact_material
+	_contact.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_contact.position.y = CONTACT_LIFT
+	add_child(_contact)
 
 
 
@@ -451,6 +473,18 @@ func update(delta: float) -> void:
 			_pose_turtle(p)
 		_:
 			_pose_quad(p)
+	_settle_contact(p)
+
+
+## The contact shade stays on the ground and fades as the animal leaves it (a hop, dropping in, a bee).
+func _settle_contact(p: AnimalPose) -> void:
+	var air := drop + p.hop * _leg * 0.55
+	if rig.type == "bug":
+		air += _body.position.y  # a bee hovers: only a faint patch under it
+	_contact.position.y = CONTACT_LIFT - drop
+	var fade := clampf(air / maxf(_r.y * 3.0, 0.05), 0.0, 0.85)
+	_contact.transparency = fade
+	_contact.scale = Vector3.ONE * (1.0 - fade * 0.3)
 
 
 

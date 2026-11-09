@@ -14,12 +14,15 @@ const SHADOW_DISTANCE := 90.0
 const SUN_MAX_ELEVATION := deg_to_rad(58.0)
 const SUN_MIN_ELEVATION := deg_to_rad(9.0)
 const MOON_ELEVATION := deg_to_rad(40.0)
+const FILL_ELEVATION := deg_to_rad(35.0)
+const FILL_ENERGY := 0.32        # of the sun's: the sky's light into the shade
 
 var grid: FarmGrid
 var camera_2d: Camera2D
 
 var camera: Camera3D
 var sun: DirectionalLight3D
+var fill: DirectionalLight3D     # soft sky light from the side away from the sun, so shade keeps its form
 var environment: Environment
 var ground: Ground3D
 var plots: Plots3D
@@ -44,6 +47,10 @@ func _ready() -> void:
 	sun.shadow_blur = 1.5
 	sun.shadow_normal_bias = 1.2
 	add_child(sun)
+	fill = DirectionalLight3D.new()
+	fill.shadow_enabled = false
+	fill.light_specular = 0.0
+	add_child(fill)
 	environment = Environment.new()
 	environment.background_mode = Environment.BG_COLOR
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
@@ -73,6 +80,7 @@ func _ready() -> void:
 		ground.rebuild()
 		plots.rebuild())
 	Game.objects_changed.connect(objects.queue_sync)
+	Game.objects_changed.connect(ground.queue_rebuild)  # shade, wear and grass follow what's on the farm
 	if grid != null:
 		# Taps go to what's drawn under the finger; tapped things react; harvests pop; landings puff.
 		grid.picker = func(screen_pos: Vector2) -> int: return objects.pick(camera, screen_pos)
@@ -137,10 +145,16 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 		sun.shadow_opacity = 0.5
 	var top: Color = look["top"]
 	var horizon: Color = look["horizon"]
+	# The fill comes from opposite the sun, sky-coloured, so the shaded side of a building or a cow is
+	# lit softly from the other way (form, not flat grey), as the open sky lights it.
+	var arc := (s if s >= 0.0 else maxf(DayCycle.moon_progress(hour), 0.0)) * PI
+	_aim(fill, arc + PI, FILL_ELEVATION)
+	fill.light_color = Color(0.78, 0.86, 1.0).lerp(top, 0.3)
+	fill.light_energy = sun.light_energy * FILL_ENERGY + 0.05 * (1.0 - dark)
 	environment.background_color = horizon
 	# Shade is lit by the sky, but mostly warm-neutral bounce light off the grass and earth.
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
-	environment.ambient_light_energy = lerpf(0.42, 0.3, dark) * (1.0 - dim * 0.4)
+	environment.ambient_light_energy = lerpf(0.36, 0.28, dark) * (1.0 - dim * 0.4)
 	environment.adjustment_saturation = lerpf(1.08, 0.75, dark) * (1.0 - float(weather.get("desat", 0.0)))
 	var fog := float(weather.get("fog", 0.0))
 	environment.fog_enabled = fog > 0.01
@@ -153,9 +167,13 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 ## Points the light from a spot on the sky: `arc` 0 is to the right of the screen, PI/2 behind the farm,
 ## PI to the left; so the morning sun throws shadows left, noon toward you, evening right.
 func _aim_light(arc: float, elevation: float) -> void:
+	_aim(sun, arc, elevation)
+
+
+func _aim(light: DirectionalLight3D, arc: float, elevation: float) -> void:
 	var right := Vector3(1, 0, -1).normalized()
 	var back := Vector3(-1, 0, -1).normalized()
 	var flat := right * cos(arc) + back * sin(arc)
 	var from := flat * cos(elevation) + Vector3.UP * sin(elevation)
 	var centre := Vector3(Game.farm_size / 2.0, 0.0, Game.farm_size / 2.0)
-	sun.look_at_from_position(centre + from * 50.0, centre, Vector3.UP if absf(from.y) < 0.99 else Vector3.BACK)
+	light.look_at_from_position(centre + from * 50.0, centre, Vector3.UP if absf(from.y) < 0.99 else Vector3.BACK)

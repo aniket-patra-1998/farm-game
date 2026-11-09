@@ -135,3 +135,41 @@ func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
 	_eq(mind.state, AnimalBehaviour.State.LOOK, "a tapped cow looks round")
 	_check(mind.pose.hop > 0.0, "with a little start")
 	main.free()
+
+
+func test_101_the_ground_knows_what_stands_on_it() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.objects.clear()
+	Game.objects.append({"uid": 9101, "id": "cow_shed", "row": 6, "col": 6, "t": Game.now(), "level": 1, "inside": {}})
+	Game.objects.append({"uid": 9102, "id": "cow", "row": 15, "col": 15, "t": Game.now()})
+	Game.rebuild_occupancy()
+	var ground := Ground3D.new()
+	add_child(ground)
+	var fp := Game.footprint("cow_shed")
+	var inside := Vector2(6 + fp.x / 2.0, 6 + fp.y / 2.0)  # x along columns, y along rows
+	var beside := Vector2(6 + fp.x + 0.15, 6 + fp.y / 2.0)
+	var far := Vector2(1.5, 20.5)
+	_check(ground.shade_at(inside).x > 0.5, "the grass under a building is in its shade (%s)" % ground.shade_at(inside))
+	_check(ground.shade_at(beside).x > 0.08, "and right beside it, shaded a little (%s)" % ground.shade_at(beside))
+	_check(ground.shade_at(beside).y > 0.3, "and worn where feet go round it (%s)" % ground.shade_at(beside))
+	_check(ground.shade_at(far) == Vector2.ZERO, "open grass far away is untouched")
+	_check(ground.shade_at(Vector2(15.5, 15.5)).y > 0.2, "a grazing animal wears its patch")
+	# No grass grows through the building.
+	var mm: MultiMesh = (ground.get("_tufts") as MultiMeshInstance3D).multimesh
+	var through := 0
+	for i in mm.instance_count:
+		var at := mm.get_instance_transform(i).origin
+		if Game.object_at(Game.index_of(int(at.z), int(at.x))).get("id", "") == "cow_shed":
+			through += 1
+	_eq(through, 0, "no tuft grows through the building")
+	_check(mm.instance_count > 500, "and plenty grow everywhere else (%d)" % mm.instance_count)
+	# Moving the building moves its shade (once things have settled, a frame later).
+	Game.objects[0]["row"] = 14
+	Game.objects[0]["col"] = 2
+	Game.rebuild_occupancy()
+	ground.queue_rebuild()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(ground.shade_at(inside).x < 0.05, "moved away, its old spot is open grass again")
+	ground.queue_free()

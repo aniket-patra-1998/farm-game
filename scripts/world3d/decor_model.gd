@@ -319,7 +319,8 @@ static func _rng(id: String) -> RandomNumberGenerator:
 
 
 static func _glow(col: Color) -> StandardMaterial3D:
-	var m := ModelKit.paint(col).duplicate() as StandardMaterial3D
+	var m := StandardMaterial3D.new()
+	m.albedo_color = col
 	m.emission_enabled = true
 	m.emission = col
 	m.emission_energy_multiplier = 2.0

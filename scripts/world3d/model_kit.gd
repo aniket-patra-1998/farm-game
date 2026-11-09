@@ -11,14 +11,15 @@ static var _meshes := {}     # key -> Mesh (shared unit shapes)
 # ---------------------------------------------------------------- materials
 
 
-## A plain coloured material (matte unless `shine`).
-static func paint(col: Color, shine := 0.0) -> StandardMaterial3D:
+## A plain coloured material (matte unless `shine`), darkening where it meets the ground (paint3d).
+static func paint(col: Color, shine := 0.0) -> ShaderMaterial:
 	var key := "paint:%s:%.2f" % [col.to_html(), shine]
 	if not _materials.has(key):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = col
-		m.roughness = 1.0 - shine * 0.6
-		m.metallic_specular = 0.1 + shine * 0.4
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/paint3d.gdshader")
+		m.set_shader_parameter("albedo", col)
+		m.set_shader_parameter("roughness", 1.0 - shine * 0.6)
+		m.set_shader_parameter("specular", 0.1 + shine * 0.4)
 		_materials[key] = m
 	return _materials[key]
 

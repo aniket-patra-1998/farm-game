@@ -9,6 +9,12 @@ uniform vec3 grass_dark : source_color = vec3(0.33, 0.58, 0.20);
 uniform vec3 dry : source_color = vec3(0.74, 0.74, 0.38);
 uniform float checker = 0.035;  // how much alternate tiles differ; 0 for the meadow
 uniform float dryness = 0.18;   // how much straw-coloured grass shows through
+// What stands on the farm (Ground3D): R darkens the grass round things that block the sky, G wears it to
+// trodden straw and earth. shade_rect is the map's corner and size in tiles.
+uniform sampler2D shade_map : filter_linear, repeat_disable;
+uniform vec4 shade_rect = vec4(0.0, 0.0, 1.0, 1.0);
+uniform vec3 worn : source_color = vec3(0.62, 0.58, 0.36);
+uniform float shade_strength = 0.42;
 
 varying vec3 world_pos;
 
@@ -47,6 +53,14 @@ void fragment() {
 	col *= 0.92 + 0.16 * fine;
 	float tile = mod(floor(p.x) + floor(p.y), 2.0);
 	col *= 1.0 + checker * (tile - 0.5);
+	vec2 suv = (p - shade_rect.xy) / shade_rect.zw;
+	if (suv.x > 0.0 && suv.y > 0.0 && suv.x < 1.0 && suv.y < 1.0) {
+		vec2 sw = texture(shade_map, suv).rg;
+		// Wear comes in ragged, so it reads as trodden ground and not a painted stain.
+		float ragged = smoothstep(0.2, 0.8, sw.g * (0.6 + 0.8 * fbm(p * 1.7 + 3.0)));
+		col = mix(col, worn * (0.9 + 0.2 * fine), ragged * 0.75);
+		col *= 1.0 - shade_strength * sw.r;
+	}
 	ALBEDO = col;
 	ROUGHNESS = 0.95;
 	SPECULAR = 0.15;
