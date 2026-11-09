@@ -50,7 +50,11 @@ jobs:
         run: ./godot-bin/godot --headless --path . --import || true
 
       - name: Run tests
-        run: ./godot-bin/godot --headless --path . res://tests/run_tests.tscn
+        run: |
+          ./godot-bin/godot --headless --path . res://tests/run_tests.tscn 2>&1 | tee tests.log
+          # A script that fails to load can let the runner exit cleanly: fail on that, and on anything but "0 failed".
+          if grep -E "Parse Error|Compile Error|Failed to load script" tests.log; then echo "A script didn't load"; exit 1; fi
+          grep -E "checks, 0 failed" tests.log || { echo "Tests didn't all pass"; exit 1; }
 
       # Draws every building with a real (software) renderer, so drawing errors fail the build
       # and the pictures can be checked. Download them from the run's "screenshots" artifact.
