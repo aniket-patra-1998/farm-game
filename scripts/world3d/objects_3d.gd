@@ -4,17 +4,20 @@ extends Node3D
 ## shows changes (its id, size, ready state, a frame becoming a building). Also the countryside trees
 ## around the farm. Kinds without a 3D model yet keep their 2D piece (ObjectLayer asks handles()).
 
-const MODELLED := ["building", "barn", "crafting", "tree"]
+const MODELLED := ["building", "barn", "crafting", "tree", "animal"]
 const SCENERY_Y := -Ground3D.SLAB
 const PINE := Color("#2f6b3a")
 
+var pieces: ObjectLayer  # the 2D layer, whose animals' minds (AnimalBehaviour) the 3D animals share
+
 var _views := {}   # uid -> {"node": Node3D, "key": String}
+var _animals: Array[Animal3D] = []
 var _queued := false
 var _scenery: Node3D
 
 
 static func handles(o: Dictionary) -> bool:
-	return not o.get("stray", false) and MODELLED.has(Game.kind_of(o))
+	return o.get("stray", false) or MODELLED.has(Game.kind_of(o))
 
 
 func _ready() -> void:
@@ -57,6 +60,29 @@ func sync() -> void:
 		if not seen.has(uid):
 			(_views[uid]["node"] as Node3D).queue_free()
 			_views.erase(uid)
+	_animals.clear()
+	for v in _views.values():
+		if v["node"] is Animal3D:
+			_animals.append(v["node"])
+
+
+## Animals move every frame, with their 2D twin's mind; those off screen keep their place but aren't posed.
+func _process(delta: float) -> void:
+	var cam := get_viewport().get_camera_3d()
+	for a in _animals:
+		if not is_instance_valid(a):
+			continue
+		if a.behaviour == null:
+			a.behaviour = _mind_of(a)
+		if cam == null or cam.is_position_in_frustum(a.global_position):
+			a.update(delta)
+
+
+func _mind_of(a: Animal3D) -> AnimalBehaviour:
+	if pieces == null:
+		return null
+	var p: FarmPiece = pieces.pieces.get("o%d" % int(a.get_meta("uid", -1)))
+	return p.animal if p != null else null
 
 
 ## What a view shows: when this changes, it's rebuilt.
@@ -69,6 +95,12 @@ func _build(o: Dictionary) -> Node3D:
 	var it := Game.item_data(o["id"])
 	var fp := Game.footprint(o["id"])
 	var node: Node3D
+	if Game.kind_of(o) == "animal" or o.get("stray", false):
+		var a := Animal3D.create(it, null, Vector3(int(o["col"]) + fp.x / 2.0, 0, int(o["row"]) + fp.y / 2.0))
+		a.set_meta("uid", int(o["uid"]))
+		a.behaviour = _mind_of(a)
+		a.update(0.0)
+		return a
 	if Game.kind_of(o) == "tree":
 		node = Node3D.new()
 		TreeModel.build_at(node, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, 1.0, Game.is_ready(o), int(o["uid"]))

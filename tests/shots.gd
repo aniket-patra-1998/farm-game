@@ -302,6 +302,10 @@ func _shots_3d(dir: String) -> void:
 	_put("orchard", 14, 17, 1, {"apple_tree": 3})
 	_put("horse_stable", 19, 2, 1, {}, {"construction": {}})
 	_put("garden_shed", 19, 8, 1, {})
+	var loose: Array[String] = ["cow", "horse", "sheep", "pig", "goat", "calf", "foal", "chicken", "turkey",
+		"duck", "brown_cow", "rabbit", "donkey", "lamb", "goose", "piglet"]
+	for k in loose.size():
+		_put(loose[k], 11 + int(k / 8.0), 2 + (k % 8) * 2, 1, {})
 	var fruit_trees: Array[String] = ["apple_tree", "cherry_tree", "lemon_tree"]
 	for k in 6:
 		_put(fruit_trees[k % 3], 20 + int(k / 3.0), 12 + 2 * (k % 3), 1, {})
@@ -327,5 +331,11 @@ func _shots_3d(dir: String) -> void:
 	cam.snap(grid.to_global(grid.center_of(Game.index_of(6, 8))), 1.1)
 	await _frames(12)
 	_shot(dir + "/world3d_closeup.png")
+	# The animals out on the farm, close up, then again a moment later, mid-stride.
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(12, 7))), 1.5)
+	await _frames(30)
+	_shot(dir + "/world3d_animals.png")
+	await _frames(45)
+	_shot(dir + "/world3d_animals_later.png")
 	Game.weather_override = ""
 	ProjectSettings.set_setting(Farm3D.SETTING, false)

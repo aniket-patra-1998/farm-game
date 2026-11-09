@@ -270,6 +270,13 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			var o := Game.object_by_uid(piece.uid)
 			if o.is_empty():
 				continue
+			if pieces.three_d and piece.is_animal():
+				# The 3D animal has no bubble of its own: draw it over where the animal stands now.
+				var rig := AnimalRig.of(Game.item_data(o["id"]))
+				var tall := (rig.size("leg", 12.0) + rig.pair("body").y * 1.7) * Animal3D.PX * IsoProjection.HEIGHT_PX
+				AnimalArt.bubble(ci, piece.position + Vector2(0, -tall - 26.0),
+					AnimalArt.EGG if rig.family == "chicken" else rig.accent_color, t)
+				continue
 			var fp := Game.footprint(o["id"])
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(piece.uid % 7))

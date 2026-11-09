@@ -268,8 +268,8 @@ func _animate_animal(p: FarmPiece, delta: float, view: Rect2, redraw: bool) -> v
 		face = MIN_TURN_WIDTH * (1.0 if a.facing > 0.0 else -1.0)
 	p.scale = Vector2(face * p.flip, 1.0) * p.squash
 	p.rotation = 0.0
-	if not redraw or not view.has_point(p.position):
-		return
+	if not redraw or not p.visible or not view.has_point(p.position):
+		return  # off screen, or drawn in 3D by its twin (Animal3D)
 	# Walking, the legs need every frame; standing, only blinks, ears and tails move: a lower rate does.
 	var moving := a.pose.stride > 0.02 or a.pose.hop > 0.0 or a.pose.wing > 0.0
 	p.redraw_wait -= delta
