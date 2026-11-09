@@ -25,6 +25,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: read
+      actions: read  # to read whether this commit's tests passed
       id-token: write
     env:
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
