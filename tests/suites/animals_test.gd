@@ -446,3 +446,44 @@ func test_90_animals_walk_on_their_legs() -> void:
 	var calf := AnimalRig.of(g.item_data("calf"))
 	_check(calf.young and calf.scale < cow.scale and calf.head_scale > 1.0, "a calf is small with a big head")
 	_done(g)
+
+
+func test_91_babies_look_and_play_alike() -> void:
+	var g := _farm(true)
+	var young_weights := {}
+	for id in g.items:
+		var it: Dictionary = g.items[id]
+		if it.get("kind", "") != "animal":
+			continue
+		var rig := AnimalRig.of(it)
+		if not rig.young:
+			continue
+		# One temperament for every baby, whatever the species.
+		var w := JSON.stringify(rig.behaviour())
+		young_weights[w] = true
+		_check(rig.behaviour().has("frolic"), "%s plays" % id)
+		_check(rig.num("eye_scale", 1.0) > 1.0, "%s has big baby eyes" % id)
+		_check(not rig.flag("udder") and rig.text("horns", "none") == "none", "%s has no udder or horns" % id)
+	_eq(young_weights.size(), 1, "every baby shares one way of behaving")
+	var cow := AnimalRig.of(g.item_data("cow"))
+	var calf := AnimalRig.of(g.item_data("calf"))
+	_check(calf.size("leg") / calf.pair("body").x > cow.size("leg") / cow.pair("body").x,
+		"a calf is leggy: long legs for its short body")
+	_check(AnimalRig.of(g.item_data("baby_turkey")).flag("fluff"), "a poult is fluffy")
+	# A calf frolics: it dashes and bounces off the ground, then settles.
+	var b := AnimalBehaviour.new(calf, 11, Vector2(14, 7))
+	var bounced := false
+	var dashed := false
+	for i in 4000:
+		b.update(1.0 / 30.0)
+		if b.state == AnimalBehaviour.State.FROLIC:
+			dashed = true
+			bounced = bounced or b.pose.hop > 0.8
+	_check(dashed and bounced, "a calf frolics and bounces")
+	var adult := AnimalBehaviour.new(cow, 11, Vector2(14, 7))
+	var adult_frolics := false
+	for i in 4000:
+		adult.update(1.0 / 30.0)
+		adult_frolics = adult_frolics or adult.state == AnimalBehaviour.State.FROLIC
+	_check(not adult_frolics, "grown cows don't frolic")
+	_done(g)

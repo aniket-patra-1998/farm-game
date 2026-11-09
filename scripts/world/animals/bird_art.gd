@@ -22,13 +22,17 @@ static func draw(ci: CanvasItem, g: Vector2, rig: AnimalRig, p: AnimalPose, body
 	var bob := absf(sin(p.gait * TAU)) * 1.2 * k * p.stride
 	var roll := sin(p.gait * TAU) * 0.13 * p.stride if waddle else 0.0
 	var tilt := -0.22 + roll - 0.12 * p.head  # rear up a little; tips forward to peck
-	var c := g + Vector2(0, -(leg + r.y * 0.8) - bob + p.breath * 0.25 * k)
+	var air := p.hop * leg * 0.8
+	var c := g + Vector2(0, -(leg + r.y * 0.8) - bob - air + p.breath * 0.25 * k)
 
 	AnimalArt.shadow(ci, g + Vector2(0, 1.5), r.x * 1.05, r.y * 0.42)
 	_leg(ci, g, c, r, rig, p, LEG_PHASES[0], false)
 	_tail(ci, c, r, rig, p, tilt, body, accent)
 	var shape := AnimalArt.ellipse(c, r.x, r.y, tilt, 24)
-	AnimalArt.fill_lit(ci, shape, body, k)
+	if rig.flag("fluff"):
+		_fluff(ci, c, r, tilt, body, k)
+	else:
+		AnimalArt.fill_lit(ci, shape, body, k)
 	if rig.flag("shine"):
 		_glints(ci, c, r, p, k)
 	_wing(ci, c, r, rig, p, tilt, body, accent, true)
@@ -44,7 +48,8 @@ static func _leg(ci: CanvasItem, g: Vector2, c: Vector2, r: Vector2, rig: Animal
 	var depth := Vector2.ZERO if near else Vector2(2.5 * k, -1.5 * k)
 	var hip := c + Vector2(r.x * 0.05, r.y * 0.62) + depth
 	var u := fposmod(p.gait + phase, 1.0)
-	var foot := Vector2(hip.x, g.y + depth.y) + AnimalArt.foot_offset(u, 0.9 * leg, 0.45 * leg) * p.stride
+	var foot := Vector2(hip.x, g.y + depth.y - p.hop * leg * 0.6) \
+		+ AnimalArt.foot_offset(u, 0.9 * leg, 0.45 * leg) * p.stride
 	var bone := (foot.y - hip.y) * 0.56
 	var ankle := AnimalArt.joint(hip, foot, bone, bone, 1.0)
 	var col := (BEAK if rig.flag("webbed") else SHANK).darkened(0.0 if near else 0.25)
@@ -82,6 +87,10 @@ static func _tail(ci: CanvasItem, c: Vector2, r: Vector2, rig: AnimalRig, p: Ani
 				var tip := base + Vector2.from_angle(a) * length
 				AnimalArt.fill(ci, AnimalArt.leaf(base, a, length, 6.5 * k), accent.lerp(body, 0.15), k)
 				ci.draw_line(base.lerp(tip, 0.78), base.lerp(tip, 0.88), AnimalArt.CREAM, 2.0 * k, true)
+		"nub":
+			# A chick's stub of down.
+			AnimalArt.fill(ci, AnimalArt.leaf(base, PI * 1.1 + tilt - 0.4 + p.tail * 0.6, 4.0 * k, 4.0 * k),
+				body.darkened(0.06), k)
 		_:
 			# A duck's short tail, flicking up.
 			AnimalArt.fill(ci, AnimalArt.leaf(base, PI * 1.05 + tilt - 0.35 + p.tail * 0.4, 7.0 * k, 5.0 * k),
@@ -161,7 +170,8 @@ static func _head(ci: CanvasItem, hc: Vector2, angle: float, size: Vector2, rig:
 		var wc: Vector2 = at.call(Vector2(size.x * 0.75, size.y * 0.85))
 		AnimalArt.fill(ci, AnimalArt.ellipse(wc + Vector2(0, sin(p.time * 7.0) * 0.4 * k), 1.6 * k, 2.6 * k, 0.0, 10),
 			COMB, k)
-	AnimalArt.eye(ci, at.call(Vector2(size.x * 0.2, -size.y * 0.2)), 1.5 * k, p.blink, head_col, k)
+	AnimalArt.eye(ci, at.call(Vector2(size.x * 0.2, -size.y * 0.2)), 1.5 * k * rig.num("eye_scale", 1.0), p.blink,
+		head_col, k)
 
 
 ## A golden bird glitters: small star glints come and go on its body.
@@ -172,3 +182,16 @@ static func _glints(ci: CanvasItem, c: Vector2, r: Vector2, p: AnimalPose, k: fl
 		var at := c + Vector2((-0.4 + 0.4 * i) * r.x, (-0.3 + 0.25 * (i % 2)) * r.y)
 		ci.draw_line(at - Vector2(s, 0), at + Vector2(s, 0), GLINT, 1.2, true)
 		ci.draw_line(at - Vector2(0, s), at + Vector2(0, s), GLINT, 1.2, true)
+
+
+## A chick's downy body: a soft round shape with a fuzzy edge of little tufts instead of a hard outline.
+static func _fluff(ci: CanvasItem, c: Vector2, r: Vector2, tilt: float, body: Color, k: float) -> void:
+	var edge := AnimalArt.ellipse(c, r.x, r.y, tilt, 18)
+	for v in edge:
+		ci.draw_circle(v, 2.6 * k, AnimalArt.OUTLINE)
+	for v in edge:
+		ci.draw_circle(v, 2.1 * k, body.lightened(0.06))
+	AnimalArt.fill_lit(ci, AnimalArt.ellipse(c, r.x * 0.98, r.y * 0.98, tilt, 22), body, k, false)
+	for i in 4:
+		var at := c + Vector2((-0.45 + 0.3 * i) * r.x, (-0.15 + 0.2 * (i % 2)) * r.y).rotated(tilt)
+		ci.draw_arc(at, 1.8 * k, PI * 1.1, PI * 1.9, 5, body.darkened(0.1), maxf(1.0, k), true)

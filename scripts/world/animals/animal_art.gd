@@ -26,7 +26,7 @@ const EGG := Color("#f6e7c1")
 static func draw(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool, pose: AnimalPose = null) -> void:
 	var p: AnimalPose = pose if pose != null else AnimalPose.rest()
 	var rig := AnimalRig.of(it)
-	var body := Color.html(str(it.get("color", "#ffffff")))
+	var body := Color.html(str(it.get("color", "#ffffff"))).lightened(rig.num("lighten", 0.0))
 	var accent := Color.html(str(it.get("accent", "#333333")))
 	var top: float
 	match rig.type:

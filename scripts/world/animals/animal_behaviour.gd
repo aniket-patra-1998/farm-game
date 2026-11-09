@@ -1,14 +1,15 @@
 class_name AnimalBehaviour
 extends RefCounted
 ## What one animal is doing, decided like FarmVille's animals did it: little walks around its spot,
-## long spells of grazing or pecking, looking around, the odd flap or tail fan. Runs a small state
+## long spells of grazing or pecking, looking around, the odd flap or tail fan. Babies of every species
+## share one temperament (their rig's young behaviour): restless, with bursts of bouncing play (frolic). Runs a small state
 ## machine and writes an AnimalPose every frame; the animal's piece reads `offset` and `facing`.
 ##
 ## Every value eases toward its target (no snapping), the walk cycle advances with the distance actually
 ## walked (so feet stay planted), and each animal has its own random stream, seeded by its uid, so a farm
 ## looks the same every time it loads but no two animals move in step.
 
-enum State { IDLE, WALK, GRAZE, LOOK, FLAP, DISPLAY }
+enum State { IDLE, WALK, GRAZE, LOOK, FLAP, DISPLAY, FROLIC }
 
 const TURN_SPEED := 7.0          # facing changes through 0: the body narrows, then widens the other way
 const STRIDE_EASE := 7.0         # how fast the legs blend between standing and walking
@@ -23,6 +24,9 @@ const SWISH_EVERY := Vector2(3.0, 9.0)
 const SWISH_TIME := 1.2
 const MIN_WALK := 0.35           # a walk covers at least this share of the wander range
 const ARRIVED := 0.6             # px
+const FROLIC_SPEED := 2.4        # a frolic is a dash: this many times walking speed
+const BOUNCE_RATE := 3.0         # bounces a second while frolicking
+const FROLIC_AGAIN := 0.45       # chance a frolic runs straight into another
 
 const DURATIONS := {
 	State.IDLE: Vector2(1.5, 4.0),
@@ -31,6 +35,7 @@ const DURATIONS := {
 	State.LOOK: Vector2(1.2, 2.6),
 	State.FLAP: Vector2(0.6, 0.9),
 	State.DISPLAY: Vector2(2.5, 4.0),
+	State.FROLIC: Vector2(1.0, 2.2),
 }
 
 var rig: AnimalRig
@@ -75,7 +80,7 @@ func update(delta: float) -> void:
 	delta = minf(delta, 0.1)  # a long frame (a hitch, the app resuming) doesn't fling animals across the farm
 	pose.time += delta
 	_left -= delta
-	if state == State.WALK:
+	if state == State.WALK or state == State.FROLIC:
 		_walk(delta)
 	if _left <= 0.0:
 		_choose_next()
@@ -104,6 +109,8 @@ func _choose_next() -> void:
 	match next:
 		"walk":
 			_start_walk()
+		"frolic":
+			_start_walk(true)
 		"graze", "peck":
 			_enter(State.GRAZE)
 		"look":
@@ -123,7 +130,7 @@ func _enter(s: State, seconds := -1.0) -> void:
 	_left = seconds if seconds >= 0.0 else _rng.randf_range(d.x, d.y)
 
 
-func _start_walk() -> void:
+func _start_walk(frolic := false) -> void:
 	# A spot inside the wander ellipse, far enough away to be worth the walk.
 	for attempt in 6:
 		var a := _rng.randf() * TAU
@@ -134,7 +141,7 @@ func _start_walk() -> void:
 			break
 	if absf(_target.x - offset.x) > 1.0:
 		facing = signf(_target.x - offset.x)
-	_enter(State.WALK)
+	_enter(State.FROLIC if frolic else State.WALK)
 
 
 ## Distance in units of the wander ellipse (1 = its edge).
@@ -145,16 +152,20 @@ func _norm(v: Vector2) -> float:
 func _walk(delta: float) -> void:
 	var to := _target - offset
 	if to.length() <= ARRIVED:
-		_enter(State.IDLE)
+		if state == State.FROLIC and _rng.randf() < FROLIC_AGAIN:
+			_start_walk(true)  # and off again
+		else:
+			_enter(State.IDLE)
 		return
 	# Speed follows the legs: slow while they blend in, full once walking.
-	var step := minf(to.length(), rig.num("speed", 10.0) * rig.scale * delta * maxf(pose.stride, 0.15))
+	var speed := rig.num("speed", 10.0) * rig.scale * (FROLIC_SPEED if state == State.FROLIC else 1.0)
+	var step := minf(to.length(), speed * delta * maxf(pose.stride, 0.15))
 	offset += to.normalized() * step
 	pose.gait = fposmod(pose.gait + step / maxf(rig.cycle_length(), 0.001), 1.0)
 
 
 func _ease_body(delta: float) -> void:
-	var walking := state == State.WALK
+	var walking := state == State.WALK or state == State.FROLIC
 	pose.stride = move_toward(pose.stride, 1.0 if walking else 0.0, delta * STRIDE_EASE)
 	var head_to := 0.0
 	var look_to := 0.0
@@ -178,7 +189,12 @@ func _ease_body(delta: float) -> void:
 	pose.jaw = sin(pose.time * 11.0) * pose.head if state == State.GRAZE and not is_bird() else 0.0
 	pose.wing = move_toward(pose.wing, 1.0 if state == State.FLAP else 0.0, delta * 9.0)
 	pose.display = move_toward(pose.display, 1.0 if state == State.DISPLAY else 0.0, delta * 2.5)
-	pose.hop = absf(sin(pose.gait * TAU)) * pose.stride if rig.type == "hop" else 0.0
+	if rig.type == "hop":
+		pose.hop = absf(sin(pose.gait * TAU)) * pose.stride
+	elif state == State.FROLIC:
+		pose.hop = pow(absf(sin(pose.time * BOUNCE_RATE * PI + _phase)), 0.7) * pose.stride
+	else:
+		pose.hop = move_toward(pose.hop, 0.0, delta * 6.0)
 
 
 func _idle_motions(delta: float) -> void:

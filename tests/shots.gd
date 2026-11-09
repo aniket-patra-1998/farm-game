@@ -97,7 +97,12 @@ func _ready() -> void:
 	_shot(dir + "/crafting_and_animals.png")
 	# Every animal family through its walk cycle (four phases), grazing or pecking, and flapping or
 	# displaying: a sheet for checking the rigs and gaits frame by frame.
-	await _animal_sheet(dir + "/animals_walk.png")
+	await _animal_sheet(dir + "/animals_walk.png", ["cow", "bull", "horse", "sheep", "goat", "pig", "donkey",
+		"alpaca", "calf", "chicken", "turkey", "duck", "goose", "rabbit", "turtle", "bee"])
+	# Grown-ups beside their babies: every baby shares one look (and one temperament).
+	await _animal_sheet(dir + "/animals_babies.png", ["cow", "calf", "horse", "foal", "sheep", "lamb", "pig",
+		"piglet", "turkey", "baby_turkey", "duck", "ugly_duckling", "hereford_cow", "hereford_calf", "black_pony",
+		"gray_foal"])
 	# The same farm a moment later, so the animals are caught mid-stride.
 	await _frames(40)
 	_shot(dir + "/animals_moving.png")
@@ -183,9 +188,7 @@ func _shot(path: String) -> void:
 	get_viewport().get_texture().get_image().save_png(path)
 
 
-func _animal_sheet(path: String) -> void:
-	var ids := ["cow", "bull", "horse", "sheep", "goat", "pig", "donkey", "alpaca", "calf", "chicken", "turkey",
-		"duck", "goose", "rabbit", "turtle", "bee"]
+func _animal_sheet(path: String, ids: Array) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 50
 	var bg := ColorRect.new()

@@ -22,11 +22,13 @@ static func draw(ci: CanvasItem, g: Vector2, rig: AnimalRig, p: AnimalPose, body
 	var leg := rig.size("leg", 15.0)
 	var walk := p.stride
 	var rise := pow(sin(p.gait * TAU * 2.0), 2.0) * 1.4 * k * walk  # the body rises as each leg passes under
-	var c := g + Vector2(0, -(leg + r.y * 0.62) - rise + p.breath * 0.35 * k)
+	# A frolicking youngster springs off the ground: the body leaves it and the legs tuck up.
+	var air := p.hop * leg * 0.55
+	var c := g + Vector2(0, -(leg + r.y * 0.62) - rise - air + p.breath * 0.35 * k)
 	var markings := rig.text("markings", "none")
 	var head_col := _head_colour(rig, body, accent, markings)
 
-	AnimalArt.shadow(ci, g + Vector2(0, 2), r.x * 1.15, r.y * 0.55)
+	AnimalArt.shadow(ci, g + Vector2(0, 2), r.x * 1.15 * (1.0 - 0.25 * p.hop), r.y * 0.55 * (1.0 - 0.25 * p.hop))
 	for spec in LEGS:
 		if not spec[2]:
 			_leg(ci, g, c, r, rig, p, spec, body, accent, markings)
@@ -61,7 +63,7 @@ static func _leg(ci: CanvasItem, g: Vector2, c: Vector2, r: Vector2, rig: Animal
 	var fore: bool = spec[3]
 	var depth := Vector2(0, 0) if near else Vector2(3.5 * k, -2.2 * k)
 	var hip := c + Vector2(float(spec[0]) * r.x, r.y * 0.35) + depth
-	var rest := Vector2(hip.x + (0.6 if fore else -0.6) * k, g.y + depth.y)
+	var rest := Vector2(hip.x + (0.6 if fore else -0.6) * k, g.y + depth.y - p.hop * leg * 0.4)
 	var u := fposmod(p.gait + float(spec[1]), 1.0)
 	var foot := rest + AnimalArt.foot_offset(u, AnimalArt.STRIDE * leg, AnimalArt.LIFT * leg) * p.stride
 	var bone := (rest.y - hip.y) * 0.56
@@ -227,7 +229,7 @@ static func _head(ci: CanvasItem, hc: Vector2, angle: float, size: Vector2, rig:
 		ci.draw_arc(at.call(Vector2(hl * 0.36, hh * 0.3)), 2.0 * k, angle - PI * 0.9, angle - PI * 0.1, 6, AnimalArt.CREAM,
 			1.6 * k, true)
 	_horns(ci, at, angle, hl, hh, k, rig.text("horns", "none"), accent)
-	AnimalArt.eye(ci, at.call(Vector2(-hl * 0.06, -hh * 0.16)), 1.7 * k, p.blink, col, k)
+	AnimalArt.eye(ci, at.call(Vector2(-hl * 0.06, -hh * 0.16)), 1.7 * k * rig.num("eye_scale", 1.0), p.blink, col, k)
 
 
 static func _muzzle_colour(kind: String, head_col: Color) -> Color:

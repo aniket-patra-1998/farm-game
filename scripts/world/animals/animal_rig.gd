@@ -58,18 +58,37 @@ static func _build(it: Dictionary) -> AnimalRig:
 	var v: Dictionary = (families_data.get(r.family, families_data.get(DEFAULT_FAMILY, {})) as Dictionary).duplicate(true)
 	v.merge((_data.get("variants", {}) as Dictionary).get(r.id, {}), true)
 	r.young = bool(it.get("young", false))
+	r.scale = float(v.get("scale", 1.0))
 	if r.young:
-		var y: Dictionary = _data.get("young", {})
-		r.scale = float(v.get("scale", 1.0)) * float(y.get("scale", 1.0))
-		r.head_scale = float(y.get("head_scale", 1.0))
-		for k in y:
-			if k != "scale" and k != "head_scale":
-				v[k] = y[k]
-	else:
-		r.scale = float(v.get("scale", 1.0))
+		_make_young(r, v)
 	r.type = str(v.get("type", "quad"))
 	r.values = v
 	return r
+
+
+## Turns a grown animal's build into its baby: one set of rules for every species (data/animal_rigs.json
+## "young", adjusted for its body type by "by_type"), so all babies look and behave alike.
+static func _make_young(r: AnimalRig, v: Dictionary) -> void:
+	var y: Dictionary = (_data.get("young", {}) as Dictionary).duplicate(true)
+	var type := str(v.get("type", "quad"))
+	y.merge(((y.get("by_type", {}) as Dictionary).get(type, {}) as Dictionary), true)
+	r.scale *= float(y.get("scale", 1.0))
+	r.head_scale = float(y.get("head_scale", 1.0))
+	_scale_pair(v, "body", y.get("body_scale", [1.0, 1.0]))
+	_scale_pair(v, "neck", [float(y.get("neck_scale", 1.0)), 1.0])
+	for k in [["leg", "leg_scale"], ["tail_len", "tail_scale"], ["speed", "speed_scale"]]:
+		if v.has(k[0]):
+			v[k[0]] = float(v[k[0]]) * float(y.get(k[1], 1.0))
+	for k in y:
+		if not (k in ["scale", "head_scale", "body_scale", "neck_scale", "leg_scale", "tail_scale", "speed_scale",
+				"by_type"]):
+			v[k] = y[k]
+
+
+static func _scale_pair(v: Dictionary, key: String, by: Variant) -> void:
+	var a = v.get(key)
+	if typeof(a) == TYPE_ARRAY and (a as Array).size() >= 2 and typeof(by) == TYPE_ARRAY:
+		v[key] = [float(a[0]) * float(by[0]), float(a[1]) * float(by[1])]
 
 
 func num(key: String, fallback := 0.0) -> float:
