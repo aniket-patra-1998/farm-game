@@ -23,6 +23,7 @@ var sun: DirectionalLight3D
 var environment: Environment
 var ground: Ground3D
 var plots: Plots3D
+var crops: Crops3D
 var objects: Objects3D
 
 
@@ -61,6 +62,8 @@ func _ready() -> void:
 	add_child(ground)
 	plots = Plots3D.new()
 	add_child(plots)
+	crops = Crops3D.new()
+	add_child(crops)
 	objects = Objects3D.new()
 	objects.pieces = grid.pieces if grid != null else null
 	add_child(objects)
@@ -78,6 +81,7 @@ func _plots_changed() -> void:
 		(func() -> void:
 			remove_meta("rebuild_queued")
 			plots.rebuild()
+			crops.rebuild()
 			ground.rebuild()).call_deferred()
 
 
@@ -121,6 +125,7 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.fog_light_color = horizon.lerp(Color(0.85, 0.88, 0.9), 0.6)
 	environment.fog_density = 0.012 * fog
 	ground.wind = float(weather.get("wind", 0.6))
+	crops.wind = ground.wind
 
 
 ## Points the light from a spot on the sky: `arc` 0 is to the right of the screen, PI/2 behind the farm,

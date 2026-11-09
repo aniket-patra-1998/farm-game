@@ -193,8 +193,8 @@ func _place(p: FarmPiece) -> void:
 		p.z_index = plot_z(int(p.plot / float(GameState.MAX_SIZE)), p.plot % GameState.MAX_SIZE)
 		p.base = grid.center_of(p.plot)
 		# In 3D the bed is Plots3D's; the plants sit on its top.
-		var bed := Plots3D.HEIGHT * IsoProjection.HEIGHT_PX if three_d else float(PlaceholderArt.SLAB)
-		p.plants.position = Vector2(0, -bed)
+		p.plants.position = Vector2(0, -PlaceholderArt.SLAB)
+		p.visible = not three_d  # in 3D, Plots3D and Crops3D draw the plot
 	else:
 		var o := Game.object_by_uid(p.uid)
 		var fp := Game.footprint(o["id"])

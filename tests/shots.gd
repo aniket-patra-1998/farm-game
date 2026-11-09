@@ -283,6 +283,8 @@ func _shots_3d(dir: String) -> void:
 	await _frames(2)
 	ProjectSettings.set_setting(Farm3D.SETTING, true)
 	Game.reset_game()
+	# Noon, so the crops planted below are at the stages they're planted at when the close-ups are taken.
+	Game.debug_time_offset = (int(12.5 * 3600) - int(Time.get_unix_time_from_system()) % 86400 + 86400) % 86400
 	Game.farm_size = 24
 	Game.xp = Game.xp_for_level(30)
 	Game.objects.clear()
@@ -299,20 +301,29 @@ func _shots_3d(dir: String) -> void:
 	_put("bakery", 14, 2, 1, {}, {"slots": []})
 	_put("winery", 14, 7, 1, {}, {"slots": []})
 	_put("garage", 14, 12, 1, {})
-	_put("orchard", 14, 17, 1, {"apple_tree": 3})
-	_put("horse_stable", 19, 2, 1, {}, {"construction": {}})
-	_put("garden_shed", 19, 8, 1, {})
+	_put("orchard", 13, 20, 1, {"apple_tree": 3})
+	_put("horse_stable", 18, 2, 1, {}, {"construction": {}})
+	_put("garden_shed", 18, 8, 1, {})
 	var loose: Array[String] = ["cow", "horse", "sheep", "pig", "goat", "calf", "foal", "chicken", "turkey",
 		"duck", "brown_cow", "rabbit", "donkey", "lamb", "goose", "piglet"]
 	for k in loose.size():
 		_put(loose[k], 11 + int(k / 8.0), 2 + (k % 8) * 2, 1, {})
 	var fruit_trees: Array[String] = ["apple_tree", "cherry_tree", "lemon_tree"]
 	for k in 6:
-		_put(fruit_trees[k % 3], 20 + int(k / 3.0), 12 + 2 * (k % 3), 1, {})
-	for r in range(19, 23):
-		for c in range(17, 23):
-			Game.plots[Game.index_of(r, c)] = {"state": "plowed"} if (r + c) % 3 else {"state": "planted",
-				"crop": "wheat", "planted_at": 0}
+		_put(fruit_trees[k % 3], 22 + int(k / 3.0), 2 + 2 * (k % 3), 1, {})
+	# A field of every plant shape at every stage: seeds, sprouting, young, ripe, withered, plowed.
+	var shapes: Array[String] = ["wheat", "corn", "strawberries", "tomatoes", "pumpkins", "carrots", "cabbage",
+		"sunflowers", "lavender", "cotton"]
+	var stages: Array[float] = [0.1, 0.3, 0.7, 1.05, 3.0, -1.0]
+	for k in shapes.size():
+		for s in stages.size():
+			var i := Game.index_of(17 + s, 12 + k)
+			if stages[s] < 0.0:
+				Game.plots[i] = {"state": "plowed"}
+				continue
+			var grow := int(Game.crops[shapes[k]]["grow_seconds"])
+			Game.plots[i] = {"state": "planted", "crop": shapes[k], "planted_at": Game.now() - int(grow * stages[s])
+				- (Game.ripe_window(Game.crops[shapes[k]]) if stages[s] > 2.0 else 0)}
 	Game.rebuild_occupancy()
 	_main = MAIN_SCENE.instantiate()
 	add_child(_main)
@@ -337,5 +348,8 @@ func _shots_3d(dir: String) -> void:
 	_shot(dir + "/world3d_animals.png")
 	await _frames(45)
 	_shot(dir + "/world3d_animals_later.png")
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(19, 16))), 1.7)
+	await _frames(12)
+	_shot(dir + "/world3d_crops.png")
 	Game.weather_override = ""
 	ProjectSettings.set_setting(Farm3D.SETTING, false)
