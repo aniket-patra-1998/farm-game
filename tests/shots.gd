@@ -123,8 +123,8 @@ func _ready() -> void:
 	cam.position = grid.to_global(grid.center_of(Game.index_of(8, 10)))
 	for scene in [["noon_clear", 12.5, "clear"], ["partly_cloudy", 11.0, "partly_cloudy"], ["golden_hour", 18.3, "clear"],
 			["night", 22.0, "clear"], ["rain", 14.0, "rain"], ["storm", 16.0, "storm"], ["fog", 6.8, "fog"], ["snow", 13.0, "snow"]]:
-		var t := int(Time.get_unix_time_from_system())
-		Game.debug_time_offset = (int(float(scene[1]) * 3600) - t % 86400 + 86400) % 86400
+		var wall := int(Time.get_unix_time_from_system())
+		Game.debug_time_offset = (int(float(scene[1]) * 3600) - wall % 86400 + 86400) % 86400
 		Game.weather_override = scene[2]
 		for k in plots.size():
 			var crop: Dictionary = Game.crops[Game.plots[plots[k]]["crop"]]

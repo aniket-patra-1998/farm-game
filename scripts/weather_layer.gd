@@ -79,7 +79,7 @@ func _draw_weather() -> void:
 			var p := Vector2(d.x * size.x, d.y * size.y)
 			_canvas.draw_line(p, p + streak * d.z, col, 1.4)
 		for s in _splashes:
-			var a := (1.0 - s.z / 0.25) * 0.5 * rain
+			var a: float = (1.0 - s.z / 0.25) * 0.5 * rain
 			var p := Vector2(s.x * size.x, s.y * size.y)
 			_canvas.draw_arc(p, 3.0 + s.z * 22.0, PI, TAU, 8, Color(0.85, 0.9, 1.0, a), 1.2)
 	if snow > 0.01:
