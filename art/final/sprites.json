@@ -188,6 +188,34 @@
   ],
   "scale": 0.5
  },
+ "crop_daffodils_growing": {
+  "anchor": [
+   128.0,
+   137.0
+  ],
+  "scale": 0.5
+ },
+ "crop_daffodils_planted": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_daffodils_ripe": {
+  "anchor": [
+   128.0,
+   138.0
+  ],
+  "scale": 0.5
+ },
+ "crop_daffodils_withered": {
+  "anchor": [
+   128.0,
+   137.0
+  ],
+  "scale": 0.5
+ },
  "crop_elderberries_growing": {
   "anchor": [
    128.0,
@@ -227,6 +255,48 @@
   "anchor": [
    128.0,
    148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilac_ripe": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilac_withered": {
+  "anchor": [
+   128.0,
+   137.0
+  ],
+  "scale": 0.5
+ },
+ "crop_morning_glory_growing": {
+  "anchor": [
+   128.0,
+   150.0
+  ],
+  "scale": 0.5
+ },
+ "crop_morning_glory_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_morning_glory_ripe": {
+  "anchor": [
+   128.0,
+   150.0
+  ],
+  "scale": 0.5
+ },
+ "crop_morning_glory_withered": {
+  "anchor": [
+   128.0,
+   137.0
   ],
   "scale": 0.5
  },

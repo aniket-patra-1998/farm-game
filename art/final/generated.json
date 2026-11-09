@@ -167,6 +167,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_daffodils_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:46",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_daffodils_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:46",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_daffodils_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:47",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_daffodils_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:47",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_elderberries_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:17",
@@ -205,6 +233,48 @@
  "crop_lilac_planted": {
   "class": "Crop",
   "made": "2026-11-09 05:44",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilac_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:45",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilac_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:45",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_morning_glory_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:48",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_morning_glory_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:48",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_morning_glory_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:49",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_morning_glory_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:49",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
