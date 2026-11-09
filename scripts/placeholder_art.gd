@@ -32,6 +32,55 @@ static func diamond(top: Vector2, w: float, h: float) -> PackedVector2Array:
 
 
 ## Earth sides under the front two edges of the farm, so it reads as a raised plot.
+## The countryside around the farm: meadow out to the edges of the view, a little darker than your land,
+## so the farm sits in open country (as in FarmVille) instead of floating in the sky.
+const MEADOW := Color("#7cb653")
+const MEADOW_DARK := Color("#6fa84a")
+const MEADOW_TUFT := Color("#5f9a3e")
+
+
+static func draw_meadow(ci: CanvasItem, n: int, w: float, h: float, margin: int) -> void:
+	var a := -float(margin)
+	var b := float(n + margin)
+	var top := Vector2((a - a) * w / 2.0, (a + a) * h / 2.0)
+	var right := Vector2((b - a) * w / 2.0, (b + a) * h / 2.0)
+	var bottom := Vector2((b - b) * w / 2.0, (b + b) * h / 2.0)
+	var left := Vector2((a - b) * w / 2.0, (a + b) * h / 2.0)
+	ci.draw_colored_polygon(PackedVector2Array([top, right, bottom, left]), MEADOW)
+	# Patches of darker grass and tufts, the same every time.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4242
+	for k in 260:
+		var r := rng.randf_range(a, b)
+		var c := rng.randf_range(a, b)
+		if r > -0.5 and r < n + 0.5 and c > -0.5 and c < n + 0.5:
+			continue
+		var p := Vector2((c - r) * w / 2.0, (c + r) * h / 2.0)
+		if k % 3 == 0:
+			draw_ellipse_at(ci, p, w * rng.randf_range(0.4, 1.1), h * rng.randf_range(0.35, 0.9), MEADOW_DARK)
+		else:
+			ci.draw_line(p, p + Vector2(-3, -7), MEADOW_TUFT, 2.0)
+			ci.draw_line(p, p + Vector2(0, -9), MEADOW_TUFT, 2.0)
+			ci.draw_line(p, p + Vector2(3, -7), MEADOW_TUFT, 2.0)
+
+
+static func draw_ellipse_at(ci: CanvasItem, center: Vector2, rx: float, ry: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	for k in 20:
+		var t := TAU * k / 20.0
+		pts.append(center + Vector2(cos(t) * rx, sin(t) * ry))
+	ci.draw_colored_polygon(pts, col)
+
+
+## A soft line where your land ends, instead of the old floating-island edges.
+static func draw_farm_border(ci: CanvasItem, n: int, w: float, h: float) -> void:
+	var t := Vector2(0, 0)
+	var r := Vector2(n * w / 2.0, n * h / 2.0)
+	var b := Vector2(0, n * h)
+	var l := Vector2(-n * w / 2.0, n * h / 2.0)
+	ci.draw_polyline(PackedVector2Array([t, r, b, l, t]), Color(0.25, 0.4, 0.15, 0.35), 3.0)
+
+
 static func draw_farm_edges(ci: CanvasItem, n: int, w: float, h: float, depth: float) -> void:
 	var left := Vector2(-n * w / 2.0, n * h / 2.0)
 	var bottom := Vector2(0, n * h)
@@ -54,18 +103,31 @@ static func draw_grass(ci: CanvasItem, top: Vector2, w: float, h: float, seed_va
 		ci.draw_line(p, p + Vector2(3, -7), GRASS_TUFT, 2.0)
 
 
+## Plowed plots are raised beds, like FarmVille's and like the painted crop art: a soil top lifted by
+## SLAB px over the tile, with darker sides.
+const SLAB := 10.0
+const BED_TOP := Color("#6e4c37")
+const BED_TOP_WET := Color("#5f412f")
+const BED_LEFT := Color("#4a3123")
+const BED_RIGHT := Color("#33211a")
+const BED_FURROW := Color("#4e3426")
+
+
 static func draw_soil(ci: CanvasItem, top: Vector2, w: float, h: float, planted: bool) -> void:
-	var pts := diamond(top, w, h)
-	ci.draw_colored_polygon(pts, SOIL_WET if planted else SOIL)
-	# Furrows run parallel to the top-right edge.
+	var base := diamond(top, w, h)
+	var up := Vector2(0, -SLAB * w / 128.0)
+	var pts := PackedVector2Array([base[0] + up, base[1] + up, base[2] + up, base[3] + up])
+	ci.draw_colored_polygon(PackedVector2Array([pts[3], pts[2], base[2], base[3]]), BED_LEFT)
+	ci.draw_colored_polygon(PackedVector2Array([pts[2], pts[1], base[1], base[2]]), BED_RIGHT)
+	ci.draw_colored_polygon(pts, BED_TOP_WET if planted else BED_TOP)
 	var t_ := pts[0]
 	var r_ := pts[1]
 	var b_ := pts[2]
 	var l_ := pts[3]
 	for k in range(1, 5):
 		var f := k / 5.0
-		ci.draw_line(t_.lerp(l_, f), r_.lerp(b_, f), SOIL_FURROW, 2.5)
-	ci.draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]), OUTLINE, 1.5)
+		ci.draw_line(t_.lerp(l_, f), r_.lerp(b_, f), BED_FURROW, 2.5)
+	ci.draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], base[2], base[3], pts[3], pts[0]]), Color("#241410"), 1.5)
 
 
 # ---------------------------------------------------------------- crops

@@ -208,7 +208,9 @@ func _pan(screen_delta: Vector2) -> void:
 func _clamp_camera() -> void:
 	var z := camera.zoom.x
 	var view := get_viewport_rect().size
-	var area := grid.get_bounds().grow_individual(0, FarmHud.TOP_H / z, 0, FarmHud.BOTTOM_H / z)
+	# You can pan out over the countryside a little, but not off into nothing.
+	var pad := FarmGrid.TILE_W * 4.0
+	var area := grid.get_bounds().grow_individual(pad, FarmHud.TOP_H / z + pad / 2.0, pad, FarmHud.BOTTOM_H / z + pad / 2.0)
 	var half := view / (2.0 * z)
 	var lo := area.position + half
 	var hi := area.end - half

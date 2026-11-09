@@ -11,7 +11,10 @@ const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
 const TILE_W := 128.0
 const TILE_H := 64.0
 const EDGE_DEPTH := 28.0
-const HEADROOM := 48.0 # space above the back row for tall crops
+const HEADROOM := 230.0 # room above the back corner for tall things (the farmhouse sits there)
+const MEADOW_MARGIN := 14  # tiles of countryside drawn around the farm
+## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id].
+static var _scenery: Array = []
 
 const COLOR_COINS := Color("#ffd23f")
 const COLOR_XP := Color("#9be7ff")
@@ -112,8 +115,10 @@ func _col(i: int) -> int:
 
 func _draw() -> void:
 	var n := Game.farm_size
+	PlaceholderArt.draw_meadow(self, n, TILE_W, TILE_H, MEADOW_MARGIN)
+	_draw_scenery(n)
 	_draw_next_expansion()
-	PlaceholderArt.draw_farm_edges(self, n, TILE_W, TILE_H, EDGE_DEPTH)
+	PlaceholderArt.draw_farm_border(self, n, TILE_W, TILE_H)
 	# Each object is drawn right after its front tile, so depth order stays right.
 	var after_tile := {}
 	var lifted := int(placing.get("uid", -1))
@@ -154,6 +159,33 @@ func _draw() -> void:
 
 
 ## The land the next expansion would add, drawn as dim wild grass around the farm.
+## Trees scattered along the back two sides of the farm (never in front, so nothing hides your land).
+func _draw_scenery(n: int) -> void:
+	if _scenery.is_empty():
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 909
+		var kinds := ["oak_tree", "pine_tree", "maple_tree", "oak_tree", "pine_tree", "willow_tree"]
+		for k in 70:
+			var along := rng.randf_range(-6.0, 34.0)
+			var out := rng.randf_range(1.6, 9.0)
+			_scenery.append([-out, along, kinds[k % kinds.size()]] if k % 2 == 0 else [along, -out, kinds[k % kinds.size()]])
+		_scenery.sort_custom(func(a, b): return float(a[0]) + float(a[1]) < float(b[0]) + float(b[1]))
+	for t in _scenery:
+		var r: float = t[0]
+		var c: float = t[1]
+		if r >= -1.0 and c >= -1.0:
+			continue
+		if r > n + 4 or c > n + 4:
+			continue
+		var id: String = t[2]
+		var at := top_of_f(r + 0.5, c + 0.5) + Vector2(0, TILE_H / 2.0)
+		if SpriteBank.has(id):
+			SpriteBank.draw(self, id, at)
+		else:
+			var g := PackedVector2Array([top_of_f(r, c), top_of_f(r, c + 1), top_of_f(r + 1, c + 1), top_of_f(r + 1, c)])
+			PlaceholderArt.draw_object(self, Game.item_data(id), g, false, 1, 0, 0)
+
+
 func _draw_next_expansion() -> void:
 	var step := Game.next_expansion()
 	if step.is_empty():
@@ -242,7 +274,9 @@ func _draw_plot(i: int, row: int, col: int) -> void:
 	if ph == GameState.Phase.GRASS or Game.is_occupied(i):
 		PlaceholderArt.draw_grass(self, top, TILE_W, TILE_H, i * 7919, (row + col) % 2 == 0)
 		return
-	PlaceholderArt.draw_soil(self, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
+	var art := Game.crop_art_for(i) if ph != GameState.Phase.PLOWED else ""
+	if art == "":  # painted crops bring their own raised bed
+		PlaceholderArt.draw_soil(self, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
 	if Game.is_fertilized(i):
 		PlaceholderArt.draw_fertilizer(self, top, TILE_W, TILE_H)
 	if ph == GameState.Phase.PLOWED:
@@ -253,11 +287,10 @@ func _draw_plot(i: int, row: int, col: int) -> void:
 		stage = "ripe"
 	elif ph == GameState.Phase.WITHERED:
 		stage = "withered"
-	var art := Game.crop_art_for(i)
 	if art != "":
 		SpriteBank.draw(self, art, top + Vector2(0, TILE_H / 2.0))
 	else:
-		PlaceholderArt.draw_crop(self, top + Vector2(0, TILE_H / 2.0), TILE_W, TILE_H, crop, stage, Game.growth(i))
+		PlaceholderArt.draw_crop(self, top + Vector2(0, TILE_H / 2.0 - PlaceholderArt.SLAB), TILE_W, TILE_H, crop, stage, Game.growth(i))
 	if stage == "ripe":
 		# Each plot twinkles on its own beat, so a ripe field shimmers instead of blinking.
 		var t := Time.get_ticks_msec() / 1000.0

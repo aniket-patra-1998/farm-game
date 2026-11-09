@@ -136,6 +136,14 @@ func _ready() -> void:
 		await _frames(30)
 		_shot(dir + "/time_%s.png" % scene[0])
 	Game.weather_override = ""
+	# A brand-new farm, framed the way a new player first sees it.
+	Game.debug_time_offset = (int(12.0 * 3600) - int(Time.get_unix_time_from_system()) % 86400 + 86400) % 86400
+	Game.reset_game()
+	Game.objects_changed.emit()
+	Game.plot_changed.emit(-1)
+	Game.farm_expanded.emit(Game.farm_size)
+	await _frames(20)
+	_shot(dir + "/start.png")
 	print("Screenshots saved to " + dir)
 	get_tree().quit()
 
