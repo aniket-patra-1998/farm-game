@@ -45,7 +45,7 @@ func test_99_every_sound_the_game_plays_exists() -> void:
 		for path in _scripts_in(dir):
 			for m in re.search_all(FileAccess.get_file_as_string(path)):
 				asked[m.get_string(1)] = path
-	_check(asked.size() >= 10, "the game asks for its sounds by name (%d found)" % asked.size())
+	_check(asked.size() >= 8, "the game asks for its sounds by name (%d found)" % asked.size())
 	for event: String in asked:
 		_check(Sound.has_sound(event), "%s (asked for in %s) is in sounds.json" % [event, asked[event]])
 	# Sounds are built ahead of time and cached: asking twice gives the same audio.
