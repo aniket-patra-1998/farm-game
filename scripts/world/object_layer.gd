@@ -13,7 +13,7 @@ const Z_BASE := -2000   # pieces sit below the overlay and effects (z >= 0) and 
 var grid: FarmGrid
 var pieces := {}        # "p<index>" or "o<uid>" -> FarmPiece
 var _sync_queued := false
-var _ready: Array = []  # pieces showing something ready, kept fresh by refresh_all and sync
+var _ready_list: Array = []  # pieces showing something ready, kept fresh by refresh_all and sync
 
 
 func _ready() -> void:
@@ -77,13 +77,13 @@ func sync() -> void:
 			add_child(p)
 		_place(p)
 		p.refresh()
-	_ready = pieces.values().filter(func(p): return p.is_ready())
+	_ready_list = pieces.values().filter(func(p): return p.is_ready())
 
 
 func refresh_all() -> void:
 	for p in pieces.values():
 		(p as FarmPiece).refresh()
-	_ready = pieces.values().filter(func(p): return p.is_ready())
+	_ready_list = pieces.values().filter(func(p): return p.is_ready())
 
 
 ## Every piece redrawn (art arrived, day changed...).
@@ -94,7 +94,7 @@ func redraw_all() -> void:
 
 ## Pieces showing something ready to collect (the overlay twinkles over them).
 func ready_pieces() -> Array:
-	return _ready.filter(func(p): return is_instance_valid(p) and p.is_ready())
+	return _ready_list.filter(func(p): return is_instance_valid(p) and p.is_ready())
 
 
 func _wants_plot(i: int) -> bool:
@@ -109,8 +109,8 @@ func _sync_plot(i: int) -> void:
 	elif has:
 		var p := pieces[key] as FarmPiece
 		p.refresh()
-		if p.is_ready() and not _ready.has(p):
-			_ready.append(p)
+		if p.is_ready() and not _ready_list.has(p):
+			_ready_list.append(p)
 
 
 func _place(p: FarmPiece) -> void:
