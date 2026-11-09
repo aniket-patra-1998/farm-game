@@ -83,6 +83,20 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_carrots_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:12",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_carrots_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:12",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_coffee_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:41",
@@ -559,6 +573,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_pink_roses_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:08",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_pink_roses_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:08",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_pink_roses_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:09",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_pink_roses_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:09",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_posole_corn_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:30",
@@ -583,6 +625,34 @@
  "crop_posole_corn_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:30",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_potatoes_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:10",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_potatoes_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:10",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_potatoes_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:11",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_potatoes_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:11",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"

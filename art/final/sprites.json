@@ -104,6 +104,20 @@
   ],
   "scale": 0.5
  },
+ "crop_carrots_growing": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_carrots_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
  "crop_coffee_growing": {
   "anchor": [
    128.0,
@@ -580,6 +594,34 @@
   ],
   "scale": 0.5
  },
+ "crop_pink_roses_growing": {
+  "anchor": [
+   128.0,
+   143.0
+  ],
+  "scale": 0.5
+ },
+ "crop_pink_roses_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_pink_roses_ripe": {
+  "anchor": [
+   128.0,
+   143.0
+  ],
+  "scale": 0.5
+ },
+ "crop_pink_roses_withered": {
+  "anchor": [
+   128.0,
+   136.0
+  ],
+  "scale": 0.5
+ },
  "crop_posole_corn_growing": {
   "anchor": [
    128.0,
@@ -605,6 +647,34 @@
   "anchor": [
    128.0,
    123.0
+  ],
+  "scale": 0.5
+ },
+ "crop_potatoes_growing": {
+  "anchor": [
+   128.0,
+   144.0
+  ],
+  "scale": 0.5
+ },
+ "crop_potatoes_planted": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_potatoes_ripe": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_potatoes_withered": {
+  "anchor": [
+   128.0,
+   145.0
   ],
   "scale": 0.5
  },
