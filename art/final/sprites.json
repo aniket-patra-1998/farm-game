@@ -20,6 +20,62 @@
   ],
   "scale": 0.4
  },
+ "crop_blueberries_growing": {
+  "anchor": [
+   128.0,
+   123.0
+  ],
+  "scale": 0.5
+ },
+ "crop_blueberries_planted": {
+  "anchor": [
+   128.0,
+   126.0
+  ],
+  "scale": 0.5
+ },
+ "crop_blueberries_ripe": {
+  "anchor": [
+   128.0,
+   133.0
+  ],
+  "scale": 0.5
+ },
+ "crop_blueberries_withered": {
+  "anchor": [
+   128.0,
+   128.0
+  ],
+  "scale": 0.5
+ },
+ "crop_raspberries_growing": {
+  "anchor": [
+   128.0,
+   119.0
+  ],
+  "scale": 0.5
+ },
+ "crop_raspberries_planted": {
+  "anchor": [
+   128.0,
+   127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_raspberries_ripe": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
+ "crop_raspberries_withered": {
+  "anchor": [
+   128.0,
+   126.0
+  ],
+  "scale": 0.5
+ },
  "crop_strawberries_growing": {
   "anchor": [
    121.5,
@@ -27,10 +83,24 @@
   ],
   "scale": 0.5
  },
+ "crop_strawberries_planted": {
+  "anchor": [
+   128.0,
+   124.0
+  ],
+  "scale": 0.5
+ },
  "crop_strawberries_ripe": {
   "anchor": [
    121.5,
    111
+  ],
+  "scale": 0.5
+ },
+ "crop_strawberries_withered": {
+  "anchor": [
+   128.0,
+   127.0
   ],
   "scale": 0.5
  },
