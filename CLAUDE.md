@@ -24,6 +24,11 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   `tests/test_runner.gd` headless in CI. `tests/shots.gd`: screenshots in CI.
 - `scripts/world/animals/`: code-drawn, procedurally animated animals: `AnimalRig` (data/animal_rigs.json),
   `AnimalBehaviour` (what each animal does), `AnimalPose` (one frame), `AnimalArt` and its shape classes.
+- `scripts/world3d/`: the farm in real 3D (`Farm3D`; the 2D world stays as a fallback). Models are built in
+  code from data and merged by `ModelKit.bake`: `BuildingModel` (data/building_models.json: each size's
+  changes, staged construction sites), `TreeModel` (data/tree_shapes.json), `VehicleModel`, `DecorModel`,
+  `CropModels`; `Animal3D` with `AnimalMotion` (springs: lean, sway, lag, squash, trot); `BuildingFill`
+  (animals out in yards, produce piling up, doors opening on collect); `Ground3D` (shade and wear map, tufts).
 
 ## Rules
 - Follow `REVIEW.md`. Item behaviour on catalog classes; numbers as named constants or data.
