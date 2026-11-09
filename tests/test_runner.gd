@@ -6,9 +6,13 @@ extends Node
 ##
 ## Every test builds its own throwaway farm with saving turned off, so your real save is never touched.
 
+const MAIN_SCENE := preload("res://scenes/main.tscn")
 var _failures: Array[String] = []
 var _current := ""
 var _checks := 0
+
+## The farm grid and the main scene (camera), in the order Godot delivers input to them.
+var _input_targets: Array = []
 
 
 func _ready() -> void:
@@ -45,6 +49,7 @@ func _ready() -> void:
 
 
 # ---------------------------------------------------------------- helpers
+
 
 func _check(condition: bool, what: String) -> void:
 	_checks += 1
@@ -89,6 +94,7 @@ func _grow_and_harvest(g: GameState, i: int, crop_id: String) -> Dictionary:
 
 
 # ---------------------------------------------------------------- core farming
+
 
 func test_01_new_farm_starts_like_the_classic_opening() -> void:
 	var g := _farm()
@@ -169,6 +175,7 @@ func test_05_unwither_revives_withered_crops() -> void:
 
 # ---------------------------------------------------------------- progression
 
+
 func test_06_level_up_pays_coins_and_a_gem() -> void:
 	var g := _farm()
 	var coins := g.coins
@@ -192,6 +199,7 @@ func test_07_ribbons_award_tiers() -> void:
 
 
 # ---------------------------------------------------------------- surprises and collections
+
 
 func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
 	var g := _farm(true)
@@ -233,6 +241,7 @@ func test_09_collection_trade_in() -> void:
 
 # ---------------------------------------------------------------- placement and buildings
 
+
 func test_10_place_and_move_objects() -> void:
 	var g := _farm()
 	_check(g.buy_and_place("chicken", 8, 8), "buy a chicken")
@@ -266,7 +275,7 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 	_skip(g, 86400)
 	_eq(g.collect(uid)["coins"], 200, "5 chickens x 40 coins")
 	_check(not g.upgrade_building(uid), "can't expand without materials")
-	for m in GameState.BASIC_PARTS:
+	for m in GameState.basic_parts:
 		g.parts[m] = 10
 	_check(g.upgrade_building(uid), "expand with 10 bricks, nails and boards")
 	_eq(g.capacity(coop), 40, "Big Chicken Coop holds 40")
@@ -276,6 +285,7 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 
 
 # ---------------------------------------------------------------- land
+
 
 func test_12_expand_with_coins_needs_level_gems_do_not() -> void:
 	var g := _farm()
@@ -302,6 +312,7 @@ func test_13_old_12x12_saves_migrate() -> void:
 
 
 # ---------------------------------------------------------------- bees and strays
+
 
 func test_14_bees_only_join_a_hive_with_a_queen() -> void:
 	var g := _farm(true)
@@ -363,6 +374,7 @@ func test_15_strays_arrive_get_adopted_or_leave() -> void:
 
 # ---------------------------------------------------------------- saving
 
+
 func test_16_save_and_load_round_trip() -> void:
 	var path := "user://test_save.json"
 	var g := _farm()
@@ -399,6 +411,7 @@ func test_16_save_and_load_round_trip() -> void:
 
 # ---------------------------------------------------------------- data files
 
+
 func test_17_data_files_are_consistent() -> void:
 	var g := _farm()
 	_check(g.crops.size() >= 12, "crops loaded")
@@ -410,11 +423,14 @@ func test_17_data_files_are_consistent() -> void:
 	for id in g.items:
 		var it: Dictionary = g.items[id]
 		if it["kind"] == "building":
-			_check(it.has("expand_materials") or (it["levels"] as Array).size() == 1, "%s says what expanding costs" % id)
+			_check(
+				it.has("expand_materials") or (it["levels"] as Array).size() == 1,
+				"%s says what expanding costs" % id
+			)
 			for m in it.get("expand_materials", {}):
-				_check(GameState.PARTS.has(m), "%s expands with a real material (%s)" % [id, m])
+				_check(GameState.part_ids.has(m), "%s expands with a real material (%s)" % [id, m])
 			for m in it.get("build_materials", {}):
-				_check(GameState.PARTS.has(m), "%s is built with a real material (%s)" % [id, m])
+				_check(GameState.part_ids.has(m), "%s is built with a real material (%s)" % [id, m])
 			for held in it.get("holds", []) + it.get("one_each", []):
 				_check(g.items.has(held), "%s holds a real item (%s)" % [id, held])
 	var last := GameState.START_SIZE
@@ -437,6 +453,7 @@ func test_18_drops_are_off_in_exact_value_tests() -> void:
 
 
 # ---------------------------------------------------------------- economy and balance
+
 
 func test_19_every_crop_makes_a_profit() -> void:
 	var g := _farm()
@@ -506,6 +523,7 @@ func test_24_every_crop_belongs_to_a_collection() -> void:
 
 # ---------------------------------------------------------------- starter scenery, parts, barn, storage
 
+
 func test_25_scenery_and_barn_never_produce() -> void:
 	var g := _farm()
 	_skip(g, 30 * 86400)
@@ -527,7 +545,7 @@ func test_26_parts_drop_from_harvests() -> void:
 		if r.get("part", "") != "":
 			found += 1
 	var held := 0
-	for p in GameState.PARTS:
+	for p in GameState.part_ids:
 		held += int(g.parts[p])
 	_eq(held, found, "every reported part was added")
 	# 8% of 200 harvests is 16; allow a wide margin for randomness.
@@ -638,6 +656,7 @@ func test_32_new_trees_animals_and_birds_work() -> void:
 
 # ---------------------------------------------------------------- day and night
 
+
 func test_33_day_and_night_follow_the_clock() -> void:
 	_eq(DayCycle.darkness(12.0), 0.0, "noon is full daylight")
 	_eq(DayCycle.darkness(0.0), 1.0, "midnight is full night")
@@ -680,7 +699,7 @@ func test_35_local_time_and_clock_text() -> void:
 
 func test_36_the_whole_game_scene_loads() -> void:
 	# Catches broken scripts anywhere in the game, not just the rules.
-	var packed := load("res://scenes/main.tscn") as PackedScene
+	var packed := MAIN_SCENE
 	_check(packed != null, "main scene loads")
 	if packed == null:
 		return
@@ -695,11 +714,7 @@ func test_36_the_whole_game_scene_loads() -> void:
 	main.free() # free now, so the next test doesn't share the screen with this one
 
 
-
 # ---------------------------------------------------------------- touch input
-
-## The farm grid and the main scene (camera), in the order Godot delivers input to them.
-var _input_targets: Array = []
 
 
 ## Hands a touch straight to the farm and camera handlers. (Faking touches through the
@@ -730,7 +745,7 @@ func _screen_pos(grid: FarmGrid, i: int) -> Vector2:
 
 ## Runs after the plain tests (see _ready): it needs real frames for input to arrive.
 func _frames_test_tap_and_drag() -> void:
-	var main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	var main = MAIN_SCENE.instantiate()
 	add_child(main)
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -781,9 +796,8 @@ func _frames_test_tap_and_drag() -> void:
 	main.free()
 
 
-
-
 # ---------------------------------------------------------------- buildings, the FarmVille way
+
 
 func _count(g: GameState, item_id: String) -> int:
 	var n := 0
@@ -794,7 +808,7 @@ func _count(g: GameState, item_id: String) -> int:
 
 
 func _all_materials(g: GameState, n: int) -> void:
-	for m in GameState.PARTS:
+	for m in GameState.part_ids:
 		g.parts[m] = n
 
 
@@ -1031,6 +1045,7 @@ func test_46_bull_and_stallion_only_wander_in_with_their_building() -> void:
 
 
 # ---------------------------------------------------------------- beehive, pig pen, orchard
+
 
 ## A finished Beehive at 8,8 (frame placed, materials added).
 func _built_hive(g: GameState) -> Dictionary:
@@ -1303,6 +1318,7 @@ func test_54_new_building_state_survives_a_save() -> void:
 
 # ---------------------------------------------------------------- vehicles, fuel and the garage
 
+
 func _all_plots(g: GameState, r0: int, c0: int, w: int, h: int, ph: GameState.Phase) -> bool:
 	for r in range(r0, r0 + h):
 		for c in range(c0, c0 + w):
@@ -1419,7 +1435,11 @@ func test_58_garage_upgrades_vehicles_with_parts() -> void:
 	_check(g.upgrade_vehicle("tractor"), "upgrade 4")
 	sizes.append(g.vehicle_area("tractor"))
 	_check(not g.upgrade_vehicle("tractor"), "fully upgraded")
-	_eq(sizes, [Vector2i(2, 2), Vector2i(3, 2), Vector2i(3, 3), Vector2i(4, 3), Vector2i(4, 4)], "2x2 up to 4x4, FarmVille's sizes")
+	_eq(
+		sizes,
+		[Vector2i(2, 2), Vector2i(3, 2), Vector2i(3, 3), Vector2i(4, 3), Vector2i(4, 4)],
+		"2x2 up to 4x4, FarmVille's sizes"
+	)
 	_eq(int(g.parts["vehicle_parts"]), 100 - 32, "32 parts in all")
 	_eq(g.stat("vehicle_upgrades"), 4, "upgrades counted for the Gearhead ribbon")
 	_check(int(g.ribbon_tiers.get("gearhead", 0)) >= 2, "Gearhead ribbon earned")
@@ -1497,6 +1517,7 @@ func test_60_garage_parks_vehicles_and_state_saves() -> void:
 
 
 # ---------------------------------------------------------------- gap pass: decorations, selling, homes, daily bonus
+
 
 func test_61_decorations_give_xp_like_farmville() -> void:
 	var g := _farm()
@@ -1698,17 +1719,41 @@ func test_69_art_manifest_is_complete() -> void:
 		in_manifest[entry["id"]] = entry
 		_check(float(entry["fill"]) > 0.0 and float(entry["fill"]) <= 1.0, "%s has a sensible width" % entry["id"])
 		_check(str(entry["subject"]) != "", "%s says what to draw" % entry["id"])
-		_check(entry["class"] in ["Ground", "Icon", "Avatar"] or g.catalog.get_def(entry["item"]) != null, "%s belongs to a real item" % entry["id"])
+		_check(
+			entry["class"] in ["Ground", "Icon", "Avatar"] or g.catalog.get_def(entry["item"]) != null,
+			"%s belongs to a real item" % entry["id"]
+		)
 	# The template: every in-game item has art for every stage of its lifecycle, named the same way
 	# by the game (GDScript) and the generator (Python).
 	for id in g.catalog.order:
 		for art in g.catalog.art_ids_of(id):
 			_check(in_manifest.has(art), "%s has its art entry %s" % [id, art])
-	_eq(g.catalog.art_ids_of("strawberries"), ["crop_strawberries_planted", "crop_strawberries_growing", "crop_strawberries_ripe", "crop_strawberries_withered"], "crops: planted, growing, ripe, withered")
-	_eq(g.catalog.art_ids_of("apple_tree"), ["apple_tree_harvested", "apple_tree_fruiting", "apple_tree_ready"], "trees: harvested, fruiting, ready")
-	_eq(g.catalog.art_ids_of("chicken_coop"), ["chicken_coop_size1", "chicken_coop_size2", "chicken_coop_size3"], "buildings: one per size")
+	_eq(
+		g.catalog.art_ids_of("strawberries"),
+		[
+			"crop_strawberries_planted",
+			"crop_strawberries_growing",
+			"crop_strawberries_ripe",
+			"crop_strawberries_withered"
+		],
+		"crops: planted, growing, ripe, withered"
+	)
+	_eq(
+		g.catalog.art_ids_of("apple_tree"),
+		["apple_tree_harvested", "apple_tree_fruiting", "apple_tree_ready"],
+		"trees: harvested, fruiting, ready"
+	)
+	_eq(
+		g.catalog.art_ids_of("chicken_coop"),
+		["chicken_coop_size1", "chicken_coop_size2", "chicken_coop_size3"],
+		"buildings: one per size"
+	)
 	_eq(g.catalog.art_ids_of("cow"), ["cow"], "animals: one look")
-	_eq(g.catalog.art_ids_of("bakery"), ["bakery_size1", "bakery_size2", "bakery_size3", "bakery_size4", "bakery_size5"], "crafting: one per star")
+	_eq(
+		g.catalog.art_ids_of("bakery"),
+		["bakery_size1", "bakery_size2", "bakery_size3", "bakery_size4", "bakery_size5"],
+		"crafting: one per star"
+	)
 	_eq(g.catalog.art_ids_of("pumpkin_bread"), ["good_pumpkin_bread"], "goods: one icon")
 	_check(in_manifest.has("avatar_farmer_m_hoe_back") and in_manifest.has("icon_coins") and in_manifest.has("icon_egg_cornish"), "the farmer and the menu icons are in the art run")
 	_check(not SpriteBank.has("no_such_item"), "missing art falls back to drawings")
@@ -1757,6 +1802,7 @@ func test_72_art_follows_the_lifecycle() -> void:
 
 # ---------------------------------------------------------------- the catalog
 
+
 func test_70_catalog_loads_with_no_problems() -> void:
 	var g := _farm()
 	_eq(g.catalog.errors, [], "every catalog entry passes its class's checks")
@@ -1774,8 +1820,8 @@ func test_70_catalog_loads_with_no_problems() -> void:
 			_check(is_instance_of(d, expect[d.kind]), "%s is a %s" % [id, d.kind])
 	_eq(g.catalog.get_def("cow").data["family"], "cow", "the cow is in the Cows family")
 	_eq(g.catalog.get_def("bull").data["family"], "cow", "so is the bull")
-	_eq(GameState.PARTS.size(), g.catalog.of_kind("material").size(), "materials come from the catalog")
-	_check(GameState.BASIC_PARTS == ["bricks", "nails", "boards"], "the basic materials")
+	_eq(GameState.part_ids.size(), g.catalog.of_kind("material").size(), "materials come from the catalog")
+	_check(GameState.basic_parts == ["bricks", "nails", "boards"], "the basic materials")
 	_done(g)
 
 
@@ -1783,7 +1829,12 @@ func test_71_defaults_stack_and_classes_add_rules() -> void:
 	var g := _farm()
 	var c: Catalog = g.catalog
 	# A new decoration needs only an id, a name, a price and a shape; the rest comes from defaults.
-	var entry := c._build("Decoration", {"unlock_level": 1}, {}, {"id": "test_gnome", "name": "Test Gnome", "cost": 300, "shape": "gnome"})
+	var entry := c._build(
+		"Decoration",
+		{"unlock_level": 1},
+		{},
+		{"id": "test_gnome", "name": "Test Gnome", "cost": 300, "shape": "gnome"}
+	)
 	_eq(c._check_types("Decoration", entry), [], "a minimal decoration is valid")
 	var d := DecorationDef.new()
 	d.setup(entry)
@@ -1792,19 +1843,36 @@ func test_71_defaults_stack_and_classes_add_rules() -> void:
 	_eq(d.buy_xp(), 5, "decorations give at least 5 XP (Decoration overrides Item)")
 	_eq(d.sell_value(), 15, "sells for 5% (from Placeable)")
 	# Family defaults sit between the file's and the entry's.
-	var stacked := c._build("Animal", {"cycle_seconds": 86400}, {"product": "Milk", "cycle_seconds": 172800}, {"id": "t", "name": "T", "payout": 5})
+	var stacked := c._build(
+		"Animal",
+		{"cycle_seconds": 86400},
+		{"product": "Milk", "cycle_seconds": 172800},
+		{"id": "t", "name": "T", "payout": 5}
+	)
 	_eq(int(stacked["cycle_seconds"]), 172800, "family defaults beat file defaults")
 	_eq(stacked["product"], "Milk", "variants inherit the family's product")
 	# Mistakes are named.
-	var bad := c._check_types("Animal", {"id": "oops", "name": "Oops", "cycle_seconds": "daily", "payot": 5, "kind": "animal"})
+	var bad := c._check_types(
+		"Animal",
+		{"id": "oops", "name": "Oops", "cycle_seconds": "daily", "payot": 5, "kind": "animal"}
+	)
 	_check(bad.any(func(e): return e.contains("cycle_seconds should be a number")), "a wrong type is reported")
 	_check(bad.any(func(e): return e.contains("unknown field payot")), "a misspelt field is reported")
 	# Class rules catch bad references.
 	var tree := TreeDef.new()
-	tree.setup(c._build("Tree", {}, {}, {"id": "odd_tree", "name": "Odd", "cycle_seconds": 100, "rare_sapling": "apple_tree"}))
+	tree.setup(
+		c._build("Tree", {}, {}, {"id": "odd_tree", "name": "Odd", "cycle_seconds": 100, "rare_sapling": "apple_tree"})
+	)
 	_check(tree.validate(c).any(func(e): return e.contains("doesn't link back")), "a rare variety must link both ways")
 	var b := BuildingDef.new()
-	b.setup(c._build("Building", {}, {}, {"id": "odd_pen", "name": "Odd", "cost": 5, "levels": [10, 5], "holds": ["unicorn"]}))
+	b.setup(
+		c._build(
+			"Building",
+			{},
+			{},
+			{"id": "odd_pen", "name": "Odd", "cost": 5, "levels": [10, 5], "holds": ["unicorn"]}
+		)
+	)
 	var berr := b.validate(c)
 	_check(berr.any(func(e): return e.contains("more than the last")), "sizes must grow")
 	_check(berr.any(func(e): return e.contains("unknown item unicorn")), "it can only hold real items")
@@ -1813,12 +1881,18 @@ func test_71_defaults_stack_and_classes_add_rules() -> void:
 
 func test_73_tool_scripts_compile() -> void:
 	# The CI tools (reference and sprite renderers, previews) don't run in the game, so check they compile here.
-	for path in ["res://tools/render_refs.gd", "res://tools/render_sprites.gd", "res://tools/style_preview.gd", "res://tests/shots.gd"]:
+	for path in [
+		"res://tools/render_refs.gd",
+		"res://tools/render_sprites.gd",
+		"res://tools/style_preview.gd",
+		"res://tests/shots.gd"
+	]:
 		var script := load(path) as GDScript
 		_check(script != null and script.can_instantiate(), "%s compiles" % path)
 
 
 # ---------------------------------------------------------------- FarmVille's random events, round 2
+
 
 func test_74_lost_animals_wander_in_and_are_never_sold() -> void:
 	var g := _farm()
@@ -1829,7 +1903,16 @@ func test_74_lost_animals_wander_in_and_are_never_sold() -> void:
 		if d is AnimalDef and (d as AnimalDef).is_lost():
 			lost.append(id)
 			_check(not d.in_market(), "%s isn't sold in the Market" % id)
-	for id in ["brown_cow", "pink_cow", "black_sheep", "ugly_duckling", "wild_turkey", "gray_horse", "black_pony", "turtle"]:
+	for id in [
+		"brown_cow",
+		"pink_cow",
+		"black_sheep",
+		"ugly_duckling",
+		"wild_turkey",
+		"gray_horse",
+		"black_pony",
+		"turtle"
+	]:
 		_check(lost.has(id), "%s is a lost animal, as in FarmVille" % id)
 	var seen := {}
 	for k in 400:
@@ -1851,7 +1934,11 @@ func test_75_breeds_have_their_own_babies() -> void:
 	_eq((g.catalog.get_def("hereford_cow") as AnimalDef).baby(), "hereford_calf", "a Hereford Cow has Hereford Calves")
 	_check((g.catalog.get_def("hereford_calf") as AnimalDef).is_young(), "a calf is young")
 	_eq(g._pick_baby({"inside": {"cow": 4, "bull": 1}}, "calf"), "calf", "plain cows have plain calves")
-	_eq(g._pick_baby({"inside": {"hereford_cow": 3, "bull": 1}}, "calf"), "hereford_calf", "Herefords have Hereford calves")
+	_eq(
+		g._pick_baby({"inside": {"hereford_cow": 3, "bull": 1}}, "calf"),
+		"hereford_calf",
+		"Herefords have Hereford calves"
+	)
 	_eq(g._pick_baby({"inside": {"gray_horse": 2, "stallion": 1}}, "foal"), "gray_foal", "gray horses have gray foals")
 	var nursery := g.catalog.get_def("nursery_barn") as BuildingDef
 	for baby in ["hereford_calf", "pink_calf", "gray_foal", "mustang_foal"]:
@@ -1906,7 +1993,10 @@ func test_77_mystery_box_and_cornish_eggs() -> void:
 		var prize := g.buy_mystery_box()
 		_check(prize != "", "a box opens into a prize")
 		# Coins can finish a ribbon that pays gems, so only check boxes that gave neither.
-		_check(g.gems == 0 or prize.ends_with("gems") or prize.ends_with("coins"), "a box costs %d gems (%s left %d)" % [GameState.MYSTERY_BOX_GEM_COST, prize, g.gems])
+		_check(
+			g.gems == 0 or prize.ends_with("gems") or prize.ends_with("coins"),
+			"a box costs %d gems (%s left %d)" % [GameState.MYSTERY_BOX_GEM_COST, prize, g.gems]
+		)
 		got[prize] = true
 	_check(got.size() >= 4, "boxes give different things (%d kinds)" % got.size())
 	_eq(g.stat("boxes_opened"), 30, "boxes are counted")
@@ -1925,13 +2015,17 @@ func test_78_every_new_item_has_a_home_and_art() -> void:
 		var d := g.catalog.get_def(id)
 		if d is AnimalDef:
 			_check(not g.catalog.homes_of(id).is_empty(), "%s has a home" % id)
-	_check(g.crops.has("forget_me_nots") and g.crops.has("saffron"), "every FarmVille market crop to level 90 is in the game")
+	_check(
+		g.crops.has("forget_me_nots") and g.crops.has("saffron"),
+		"every FarmVille market crop to level 90 is in the game"
+	)
 	_check(g.items.has("pistachio_tree") and g.items.has("date_tree"), "the extra fruit and nut trees are in the game")
 	_eq(int(g.items["almond_tree"]["gem_cost"]), 3, "nut trees cost gems, as Farm Cash trees did in FarmVille")
 	_done(g)
 
 
 # ---------------------------------------------------------------- crafting (FarmVille's Bakery, Winery, Spa)
+
 
 ## A Bakery (or another crafting building) bought and placed at 8,8; returns its uid.
 func _crafting_building(g: GameState, id := "bakery") -> int:
@@ -1950,14 +2044,37 @@ func test_79_crafting_recipes_match_farmville() -> void:
 		_eq(rs.size(), 15, "%s has 15 recipes" % b)
 		for star in range(1, 6):
 			_eq(rs.filter(func(r): return r.star() == star).size(), 3, "%s: 3 recipes at %d stars" % [b, star])
-	_eq(_ints((g.catalog.get_def("pumpkin_bread") as RecipeDef).inputs()), {"pumpkins": 4, "wheat": 4}, "Pumpkin Bread: 4 pumpkins, 4 wheat")
-	_eq(_ints((g.catalog.get_def("red_table_wine") as RecipeDef).inputs()), {"grapes": 2, "white_grapes": 5}, "Red Table Wine: 2 grapes, 5 white grapes")
-	_eq(_ints((g.catalog.get_def("floral_perfume") as RecipeDef).inputs()), {"blueberries": 4, "morning_glory": 4}, "Floral Perfume: 4 blueberries, 4 morning glory")
-	_check(g.crops.has("aloe_vera") and g.crops.has("pattypan_squash") and g.crops.has("pink_roses"), "the crops recipes need are in the game")
+	_eq(
+		_ints((g.catalog.get_def("pumpkin_bread") as RecipeDef).inputs()),
+		{"pumpkins": 4, "wheat": 4},
+		"Pumpkin Bread: 4 pumpkins, 4 wheat"
+	)
+	_eq(
+		_ints((g.catalog.get_def("red_table_wine") as RecipeDef).inputs()),
+		{"grapes": 2, "white_grapes": 5},
+		"Red Table Wine: 2 grapes, 5 white grapes"
+	)
+	_eq(
+		_ints((g.catalog.get_def("floral_perfume") as RecipeDef).inputs()),
+		{"blueberries": 4, "morning_glory": 4},
+		"Floral Perfume: 4 blueberries, 4 morning glory"
+	)
+	_check(
+		g.crops.has("aloe_vera") and g.crops.has("pattypan_squash") and g.crops.has("pink_roses"),
+		"the crops recipes need are in the game"
+	)
 	var bakery := g.catalog.get_def("bakery") as CraftingDef
 	_eq(bakery.unlock_level, 25, "crafting unlocks at level 25, as in FarmVille")
-	_eq(bakery.star_cost(1), {"coins": 50000, "recipe_stars": 6, "gems": 15}, "2 stars: 50,000 coins and 6 recipe stars, or 15 gems")
-	_eq(bakery.star_cost(4), {"coins": 1000000, "recipe_stars": 36, "gems": 60}, "5 stars: 1,000,000 coins and 36 recipe stars, or 60 gems")
+	_eq(
+		bakery.star_cost(1),
+		{"coins": 50000, "recipe_stars": 6, "gems": 15},
+		"2 stars: 50,000 coins and 6 recipe stars, or 15 gems"
+	)
+	_eq(
+		bakery.star_cost(4),
+		{"coins": 1000000, "recipe_stars": 36, "gems": 60},
+		"5 stars: 1,000,000 coins and 36 recipe stars, or 60 gems"
+	)
 	_eq(bakery.star_cost(5), {}, "5 stars is the top")
 	_check(not g.items.has("pumpkin_bread"), "recipes aren't placeable items")
 	_done(g)
@@ -2023,7 +2140,10 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	_eq(int(g.goods["pumpkin_bread"]), 1, "a loaf of pumpkin bread")
 	_eq(g.stat("crafted"), 1, "counted for the Crafty ribbon")
 	var price := g.good_price("pumpkin_bread")
-	_check(price > 4 * int(g.crops["pumpkins"]["sell_price"]) + 4 * int(g.crops["wheat"]["sell_price"]), "goods sell for more than their bushels (%d)" % price)
+	_check(
+		price > 4 * int(g.crops["pumpkins"]["sell_price"]) + 4 * int(g.crops["wheat"]["sell_price"]),
+		"goods sell for more than their bushels (%d)" % price
+	)
 	var coins := g.coins
 	_eq(g.sell_good("pumpkin_bread"), price, "sold")
 	_eq(g.coins, coins + price, "for coins")
@@ -2078,7 +2198,11 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	_check(not g.buy_bushel(crop), "sold out for today")
 	_eq(int(g.bushels[crop]), 3, "3 bushels")
 	_skip(g, 86400)
-	_eq(int(g.market_stall().values().reduce(func(a, b): return a + b, 0)), GameState.STALL_CROPS * GameState.STALL_EACH, "restocked the next day")
+	_eq(
+		int(g.market_stall().values().reduce(func(a, b): return a + b, 0)),
+		GameState.STALL_CROPS * GameState.STALL_EACH,
+		"restocked the next day"
+	)
 	# Bushels are capped.
 	g.bushels = {"rice": GameState.BUSHEL_CAP}
 	_eq(g.add_bushels("wheat", 1), 0, "no room past %d bushels" % GameState.BUSHEL_CAP)
@@ -2087,10 +2211,19 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 
 # ---------------------------------------------------------------- weather (looks only; FarmVille had none)
 
+
 func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 	var t0 := 1_800_000_000 - 1_800_000_000 % Weather.BLOCK
-	_eq(Weather.state_at(t0 + 100, "Summer", 12.0), Weather.state_at(t0 + 9000, "Summer", 14.5), "one weather per 3-hour block")
-	_eq(Weather.state_at(t0 + 100, "Summer", 12.0), Weather.state_at(t0 + 100, "Summer", 12.0), "the same every time you look")
+	_eq(
+		Weather.state_at(t0 + 100, "Summer", 12.0),
+		Weather.state_at(t0 + 9000, "Summer", 14.5),
+		"one weather per 3-hour block"
+	)
+	_eq(
+		Weather.state_at(t0 + 100, "Summer", 12.0),
+		Weather.state_at(t0 + 100, "Summer", 12.0),
+		"the same every time you look"
+	)
 	var count := {}
 	for b in 2000:
 		var t := t0 + b * Weather.BLOCK
@@ -2122,6 +2255,7 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 
 # ---------------------------------------------------------------- FarmVille's random finds while farming
 
+
 func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> void:
 	var g := _farm(true)
 	for coll in g.collections:
@@ -2139,7 +2273,10 @@ func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> vo
 		for it in coll["items"]:
 			if it["id"] == id:
 				seen[it["rarity"]] += 1
-	_check(seen["common"] > seen["uncommon"] and seen["uncommon"] > seen["rare"] and seen["rare"] > 0, "rarer items turn up less (%s)" % str(seen))
+	_check(
+		seen["common"] > seen["uncommon"] and seen["uncommon"] > seen["rare"] and seen["rare"] > 0,
+		"rarer items turn up less (%s)" % str(seen)
+	)
 	# Plowing, planting and fertilizing can all turn one up.
 	g.coins = 1000000
 	var finds := [0]

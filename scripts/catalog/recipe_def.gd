@@ -46,7 +46,15 @@ func validate(catalog) -> Array[String]:
 	if not (catalog.get_def(building()) is CraftingDef):
 		out.append(_err("made in unknown crafting building %s" % building()))
 	elif star() > (catalog.get_def(building()) as CraftingDef).max_level():
-		out.append(_err("needs star %d but %s only has %d" % [star(), building(), (catalog.get_def(building()) as CraftingDef).max_level()]))
+		out.append(
+			_err(
+				"needs star %d but %s only has %d" % [
+					star(),
+					building(),
+					(catalog.get_def(building()) as CraftingDef).max_level()
+				]
+			)
+		)
 	for c in inputs():
 		var d = catalog.get_def(str(c))
 		if not (d is CropDef):

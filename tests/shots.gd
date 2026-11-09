@@ -103,7 +103,16 @@ func _ready() -> void:
 	(_main.get("hud") as FarmHud)._book.close_panel()
 	# Times of day and weather, on a farm of crops (using whatever finished art is in art/final).
 	Game.objects.clear()
-	var art_crops := ["strawberries", "raspberries", "blueberries", "cranberries", "blackberries", "elderberries", "wheat", "corn"]
+	var art_crops := [
+		"strawberries",
+		"raspberries",
+		"blueberries",
+		"cranberries",
+		"blackberries",
+		"elderberries",
+		"wheat",
+		"corn"
+	]
 	var plots: Array[int] = []
 	for r in range(3, 13):
 		for c in range(3, 13):
@@ -127,7 +136,9 @@ func _ready() -> void:
 			var crop: Dictionary = Game.crops[Game.plots[plots[k]]["crop"]]
 			var grow := int(crop["grow_seconds"])
 			var stage: float = [0.2, 0.6, 1.05, 3.0][k % 4] # planted, growing, ripe, withered
-			Game.plots[plots[k]]["planted_at"] = Game.now() - int(grow * stage) - (Game.ripe_window(crop) if stage > 2.0 else 0)
+			Game.plots[plots[k]]["planted_at"] = Game.now() - int(grow * stage) - (
+				Game.ripe_window(crop) if stage > 2.0 else 0
+			)
 		Game.objects_changed.emit()
 		Game.plot_changed.emit(-1)
 		await _frames(30)

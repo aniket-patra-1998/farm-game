@@ -11,6 +11,14 @@ const DIR := "res://data/catalog"
 const NEVER_IN_MARKET := 99
 const FREE_IN_MARKET := ["orchard", "nursery_barn"]  ## free in FarmVille too
 
+var schema := {}
+var defs := {}                       ## id -> ItemDef, in-game items only
+var order: Array[String] = []        ## in-game ids in catalog order
+var planned := {}                    ## id -> entry dictionary
+var families := {}                   ## family id -> {"id", "name", "doc", "category", "ids": [...]}
+var errors: Array[String] = []
+
+
 ## The class for each schema class name. Add a line here with every new class.
 static func new_def(cls: String) -> ItemDef:
 	match cls:
@@ -26,14 +34,6 @@ static func new_def(cls: String) -> ItemDef:
 		"Decoration": return DecorationDef.new()
 	push_error("Catalog: no class for %s" % cls)
 	return ItemDef.new()
-
-
-var schema := {}
-var defs := {}                       ## id -> ItemDef, in-game items only
-var order: Array[String] = []        ## in-game ids in catalog order
-var planned := {}                    ## id -> entry dictionary
-var families := {}                   ## family id -> {"id", "name", "doc", "category", "ids": [...]}
-var errors: Array[String] = []
 
 
 static func load_default() -> Catalog:
@@ -136,7 +136,13 @@ func _load_file(path: String, category: String, file_cls: String) -> void:
 	var file_defaults: Dictionary = f.get("defaults", {})
 	for fam in f.get("families", []):
 		var fam_id := str(fam.get("id", ""))
-		var record := {"id": fam_id, "name": fam.get("name", fam_id), "doc": fam.get("doc", ""), "category": category, "ids": []}
+		var record := {
+			"id": fam_id,
+			"name": fam.get("name", fam_id),
+			"doc": fam.get("doc", ""),
+			"category": category,
+			"ids": []
+		}
 		families[fam_id] = record
 		for v in fam.get("variants", []):
 			var cls := file_cls

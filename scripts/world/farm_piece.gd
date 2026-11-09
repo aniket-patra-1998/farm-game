@@ -69,7 +69,12 @@ func drop_in() -> void:
 	tw.chain().tween_callback(func() -> void:
 		if grid != null and grid.world_fx != null:
 			grid.world_fx.burst("dust", base))
-	tw.chain().tween_property(self, "squash", Vector2(1.16, 0.84), 0.07).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_property(
+		self,
+		"squash",
+		Vector2(1.16, 0.84),
+		0.07
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_property(self, "squash", Vector2.ONE, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
@@ -107,7 +112,13 @@ func _draw() -> void:
 			if motion == "animal" or motion == "bird":
 				# A small shadow that walks with the animal.
 				var r := 0.32 if motion == "animal" else 0.2
-				PlaceholderArt.draw_ellipse_at(self, base + Vector2(0, 2), FarmGrid.TILE_W * r, FarmGrid.TILE_H * r, Color(0.05, 0.09, 0.03, 0.22))
+				PlaceholderArt.draw_ellipse_at(
+					self,
+					base + Vector2(0, 2),
+					FarmGrid.TILE_W * r,
+					FarmGrid.TILE_H * r,
+					Color(0.05, 0.09, 0.03, 0.22)
+				)
 			grid.draw_object_on(self, o, false)
 
 

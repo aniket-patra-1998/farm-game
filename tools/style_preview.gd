@@ -50,5 +50,15 @@ func _ready() -> void:
 
 
 func _put(id: String, row: int, col: int) -> void:
-	Game.objects.append({"uid": Game.next_uid, "id": id, "row": row, "col": col, "t": Game.now() - 86400 * 3, "level": 1, "inside": {"chicken": 8} if id == "chicken_coop" else {}})
+	Game.objects.append(
+		{
+			"uid": Game.next_uid,
+			"id": id,
+			"row": row,
+			"col": col,
+			"t": Game.now() - 86400 * 3,
+			"level": 1,
+			"inside": {"chicken": 8} if id == "chicken_coop" else {}
+		}
+	)
 	Game.next_uid += 1

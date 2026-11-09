@@ -9,12 +9,17 @@ extends Node2D
 ## which keeps tiles and objects correctly interleaved without any per-frame sorting.
 
 const Z_BASE := -2000   # pieces sit below the overlay and effects (z >= 0) and above the ground
+const WANDER := 0.22      # how far an animal strays from its tile centre, in tiles
+const WALK_SPEED := 16.0  # px per second
 
 var grid: FarmGrid
 var pieces := {}        # "p<index>" or "o<uid>" -> FarmPiece
+var wind := 0.6           # from the weather: how hard plants and trees sway
+
 var _sync_queued := false
 var _settled := false   # after the first sync, new pieces arrive with an animation (not on loading)
 var _ready_list: Array = []  # pieces showing something ready, kept fresh by refresh_all and sync
+var _clock := 0.0
 
 
 func _ready() -> void:
@@ -107,7 +112,15 @@ func bounce(uid: int) -> void:
 
 
 func refresh_all() -> void:
-	wind = {"clear": 0.6, "partly_cloudy": 0.8, "cloudy": 1.0, "rain": 1.5, "storm": 2.4, "fog": 0.35, "snow": 0.9}.get(Game.weather()["state"], 0.6)
+	wind = {
+		"clear": 0.6,
+		"partly_cloudy": 0.8,
+		"cloudy": 1.0,
+		"rain": 1.5,
+		"storm": 2.4,
+		"fog": 0.35,
+		"snow": 0.9
+	}.get(Game.weather()["state"], 0.6)
 	for p in pieces.values():
 		(p as FarmPiece).refresh()
 	_ready_list = pieces.values().filter(func(p): return p.is_ready())
@@ -173,11 +186,6 @@ static func motion_of(o: Dictionary) -> String:
 
 
 # ---------------------------------------------------------------- motion (FarmVille's farm was never still)
-
-const WANDER := 0.22      # how far an animal strays from its tile centre, in tiles
-const WALK_SPEED := 16.0  # px per second
-var wind := 0.6           # from the weather: how hard plants and trees sway
-var _clock := 0.0
 
 
 func _process(delta: float) -> void:

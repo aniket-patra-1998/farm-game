@@ -5,17 +5,58 @@ extends Node2D
 ## up and away. Bursts use Godot's CPU particle emitters, pooled and reused, so busy farming costs nothing.
 
 const POOL := 6
+
 const KINDS := {
-	"dirt":    {"colors": ["#6e4c37", "#8a6247", "#4e3426"], "amount": 14, "speed": [70.0, 150.0], "gravity": 520.0, "size": [3.0, 6.0], "life": 0.55, "spread": 70.0, "up": true},
-	"leaves":  {"colors": ["#5aa843", "#7cc65a", "#3f8a32"], "amount": 12, "speed": [80.0, 170.0], "gravity": 380.0, "size": [3.0, 6.0], "life": 0.7, "spread": 80.0, "up": true},
-	"dust":    {"colors": ["#efe6d2", "#d9cdb3"], "amount": 18, "speed": [60.0, 110.0], "gravity": -20.0, "size": [6.0, 12.0], "life": 0.6, "spread": 180.0, "up": false},
-	"sparkle": {"colors": ["#fff3b0", "#ffd23f", "#ffffff"], "amount": 16, "speed": [60.0, 160.0], "gravity": 60.0, "size": [2.5, 5.0], "life": 0.8, "spread": 180.0, "up": false},
-}
+	"dirt":    {
+		"colors": ["#6e4c37", "#8a6247", "#4e3426"],
+		"amount": 14,
+		"speed": [70.0, 150.0],
+		"gravity": 520.0,
+		"size": [3.0, 6.0],
+		"life": 0.55,
+		"spread": 70.0,
+		"up": true
+	},
+	"leaves":  {
+		"colors": ["#5aa843", "#7cc65a", "#3f8a32"],
+		"amount": 12,
+		"speed": [80.0, 170.0],
+		"gravity": 380.0,
+		"size": [3.0, 6.0],
+		"life": 0.7,
+		"spread": 80.0,
+		"up": true
+	},
+	"dust":    {
+		"colors": ["#efe6d2", "#d9cdb3"],
+		"amount": 18,
+		"speed": [60.0, 110.0],
+		"gravity": -20.0,
+		"size": [6.0, 12.0],
+		"life": 0.6,
+		"spread": 180.0,
+		"up": false
+	},
+	"sparkle": {
+		"colors": ["#fff3b0", "#ffd23f", "#ffffff"],
+		"amount": 16,
+		"speed": [60.0, 160.0],
+		"gravity": 60.0,
+		"size": [2.5, 5.0],
+		"life": 0.8,
+		"spread": 180.0,
+		"up": false
+	},
+
+static var _dot: Texture2D
 
 var grid: FarmGrid
+
 var _pools := {}   # kind -> Array[CPUParticles2D]
 var _next := {}    # kind -> next emitter to use
-static var _dot: Texture2D
+
+
+}
 
 
 func _ready() -> void:
@@ -103,7 +144,12 @@ func pop_plants(i: int, crop_id: String, art: String) -> void:
 	tw.tween_property(ghost, "scale", Vector2(1.22, 0.78), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(ghost, "scale", Vector2(0.86, 1.25), 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.set_parallel(true)
-	tw.tween_property(ghost, "position:y", ghost.position.y - 46.0, 0.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(
+		ghost,
+		"position:y",
+		ghost.position.y - 46.0,
+		0.32
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tw.tween_property(ghost, "scale", Vector2(0.45, 0.45), 0.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_property(ghost, "modulate:a", 0.0, 0.26).set_delay(0.08)
 	tw.chain().tween_callback(ghost.queue_free)

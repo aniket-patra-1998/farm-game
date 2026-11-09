@@ -13,9 +13,6 @@ const TILE_H := 64.0
 const EDGE_DEPTH := 28.0
 const HEADROOM := 230.0 # room above the back corner for tall things (the farmhouse sits there)
 const MEADOW_MARGIN := 40  # tiles of countryside drawn around the farm
-## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id].
-static var _scenery: Array = []
-
 const COLOR_COINS := Color("#ffd23f")
 const COLOR_XP := Color("#9be7ff")
 const COLOR_COST := Color("#ffb4a8")
@@ -24,25 +21,20 @@ const COLOR_GOLDEN := Color("#ffe066")
 const COLOR_FERT := Color("#8fe36b")
 const COLOR_PART := Color("#f4c27a")
 
-var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move", "store", "sell", "rotate" or "vehicle"
-var _sell_pending := -1  # uid tapped once with the Sell tool; a second tap sells it
-var _sell_pending_until := 0
-var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
-var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
-var _vehicle_flash := {} # the area a vehicle just worked: {"row", "col", "w", "h", "until"}
-
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
-var _press_pos := Vector2.ZERO
-var _pressing := false
-var _dragged := false
-var _press_on_farm := false
+
+## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id].
+static var _scenery: Array = []
+
+var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move", "store", "sell", "rotate" or "vehicle"
+var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
+var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
 
 ## While placing: {"item": id, "uid": -1 for a new purchase or the uid being moved,
 ## "row", "col"} for the footprint's back corner; row is -1 until the first touch.
 var placing := {}
-
 
 ## The farm is drawn in layers, back to front: ground, shadows, the depth-sorted pieces, then the overlay.
 ## Floating texts and sparkles are added on top as they happen.
@@ -52,6 +44,14 @@ var pieces: ObjectLayer
 var overlay: OverlayLayer
 var world_fx: WorldFx    # bursts and pops on the farm
 var fx: FxLayer          # rewards flying to the top bar (set by main)
+
+var _sell_pending := -1  # uid tapped once with the Sell tool; a second tap sells it
+var _sell_pending_until := 0
+var _vehicle_flash := {} # the area a vehicle just worked: {"row", "col", "w", "h", "until"}
+var _press_pos := Vector2.ZERO
+var _pressing := false
+var _dragged := false
+var _press_on_farm := false
 
 
 func _ready() -> void:
@@ -84,7 +84,9 @@ func _ready() -> void:
 	pieces.sync()
 	Game.building_upgraded.connect(_on_building_upgraded)
 	# Finds while farming (fuel, collectibles, Perfect Bunches) float up from their plot.
-	Game.found.connect(func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, COLOR_PART, 1.8))
+	Game.found.connect(
+		func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, COLOR_PART, 1.8)
+	)
 
 
 ## A farm position on screen (for rewards that fly to the top bar).
@@ -123,7 +125,9 @@ func set_tool(tool_name: String, crop_id: String) -> void:
 		var job: String = Game.item_data(crop_id).get("job", "")
 		var hint := "Tap the field: the %s works %dx%d plots" % [Game.item_data(crop_id)["name"], area.x, area.y]
 		if job == "plant" or job == "all":
-			hint += (", planting %s" % Game.crops[last_crop]["name"].to_lower()) if last_crop != "" else ". Pick a seed first to plant"
+			hint += (
+				", planting %s" % Game.crops[last_crop]["name"].to_lower()
+			) if last_crop != "" else ". Pick a seed first to plant"
 		info.emit(hint)
 
 
@@ -134,6 +138,7 @@ func get_bounds() -> Rect2:
 
 
 # ---------------------------------------------------------------- geometry
+
 
 ## Screen position of a plot's top corner, in this node's local space.
 func top_of(row: int, col: int) -> Vector2:
@@ -169,7 +174,9 @@ func _col(i: int) -> int:
 
 # ---------------------------------------------------------------- drawing
 
+
 # ---------------------------------------------------------------- drawing (called by the layers)
+
 
 ## Ground layer: countryside, trees around the farm, the next expansion and your grass.
 func draw_ground_on(ci: CanvasItem) -> void:
@@ -211,7 +218,10 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 		if piece.plot >= 0:
 			var i := piece.plot
 			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(i % 7) * 0.9)
-			var spot := top_of(_row(i), _col(i)) + Vector2(TILE_W * 0.12 * (1 if i % 2 == 0 else -1), TILE_H * 0.05 - PlaceholderArt.SLAB)
+			var spot := top_of(_row(i), _col(i)) + Vector2(
+				TILE_W * 0.12 * (1 if i % 2 == 0 else -1),
+				TILE_H * 0.05 - PlaceholderArt.SLAB
+			)
 			PlaceholderArt.draw_twinkle(ci, spot, 9.0 + 5.0 * glow, glow)
 		else:
 			var o := Game.object_by_uid(piece.uid)
@@ -235,7 +245,9 @@ func _draw_scenery(ci: CanvasItem, n: int) -> void:
 		for k in 70:
 			var along := rng.randf_range(-6.0, 34.0)
 			var out := rng.randf_range(1.6, 9.0)
-			_scenery.append([-out, along, kinds[k % kinds.size()]] if k % 2 == 0 else [along, -out, kinds[k % kinds.size()]])
+			_scenery.append(
+				[-out, along, kinds[k % kinds.size()]] if k % 2 == 0 else [along, -out, kinds[k % kinds.size()]]
+			)
 		_scenery.sort_custom(func(a, b): return float(a[0]) + float(a[1]) < float(b[0]) + float(b[1]))
 	for t in _scenery:
 		var r: float = t[0]
@@ -249,7 +261,9 @@ func _draw_scenery(ci: CanvasItem, n: int) -> void:
 		if SpriteBank.has(id):
 			SpriteBank.draw(ci, id, at)
 		else:
-			var g := PackedVector2Array([top_of_f(r, c), top_of_f(r, c + 1), top_of_f(r + 1, c + 1), top_of_f(r + 1, c)])
+			var g := PackedVector2Array(
+				[top_of_f(r, c), top_of_f(r, c + 1), top_of_f(r + 1, c + 1), top_of_f(r + 1, c)]
+			)
 			PlaceholderArt.draw_object(ci, Game.item_data(id), g, false, 1, 0, 0)
 
 
@@ -368,6 +382,7 @@ func is_dragging() -> bool:
 
 # ---------------------------------------------------------------- input
 
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not placing.is_empty():
 		_placing_input(event)
@@ -407,6 +422,7 @@ func _tile_at_screen(screen_pos: Vector2) -> Vector2i:
 
 
 # ---------------------------------------------------------------- placing and moving
+
 
 func start_placing(item_id: String, uid := -1) -> void:
 	placing = {"item": item_id, "uid": uid, "row": -1, "col": -1}
@@ -476,7 +492,11 @@ func _placing_input(event: InputEvent) -> void:
 		ok = Game.buy_and_place(placing["item"], row, col)
 	if ok:
 		if uid == -1 and from_storage < 0:
-			_float(corners_of(row, col, fp.x, fp.y)[2], "-%d" % int(Game.item_data(placing["item"])["cost"]), COLOR_COST)
+			_float(
+				corners_of(row, col, fp.x, fp.y)[2],
+				"-%d" % int(Game.item_data(placing["item"])["cost"]),
+				COLOR_COST
+			)
 		cancel_placing()
 
 
@@ -507,7 +527,9 @@ func _drive(i: int) -> void:
 	queue_redraw()
 	if r.is_empty():
 		return
-	var at := center_of(Game.index_of(clampi(row + int(area.y / 2.0), 0, MAX - 1), clampi(col + int(area.x / 2.0), 0, MAX - 1)))
+	var at := center_of(
+		Game.index_of(clampi(row + int(area.y / 2.0), 0, MAX - 1), clampi(col + int(area.x / 2.0), 0, MAX - 1))
+	)
 	if int(r["plots"]) == 0:
 		info.emit("Nothing for the %s to do there" % Game.item_data(id)["name"])
 		return
@@ -545,10 +567,15 @@ func _act(i: int, first_touch: bool) -> void:
 			_float(at, "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -30), "+%d XP" % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
-				_float(at + Vector2(0, -128), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
+				_float(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
 			if result.get("bushel", "") != "":
 				var nb := int(result.get("bushels", 1))
-				_float(at + Vector2(0, -160), "+%d %s bushel%s" % [nb, Game.crops[result["bushel"]]["name"], "" if nb == 1 else "s"], COLOR_PART, 1.6)
+				_float(
+					at + Vector2(0, -160),
+					"+%d %s bushel%s" % [nb, Game.crops[result["bushel"]]["name"], "" if nb == 1 else "s"],
+					COLOR_PART,
+					1.6
+				)
 			if result.get("bee", "") != "":
 				_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
 			if int(result.get("pollinated", 0)) > 0:
@@ -634,7 +661,14 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			start_placing(obj["id"], uid)
 		return
 	var fp := Game.footprint(obj["id"])
-	var at := (corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[0] + corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]) / 2.0
+	var at := (
+		corners_of(
+			int(obj["row"]),
+			int(obj["col"]),
+			fp.x,
+			fp.y
+		)[0] + corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]
+	) / 2.0
 	if Game.is_ready(obj):
 		var result := Game.collect(uid)
 		if not result.is_empty():
@@ -644,7 +678,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
 			_float(at + Vector2(0, -50), "+%d XP" % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
-				_float(at + Vector2(0, -118), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
+				_float(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
 			var lift := -150
 			for extra in result.get("extras", []):
 				_float(at + Vector2(0, lift), extra, COLOR_GOLDEN, 1.8)
@@ -685,7 +719,9 @@ func _try_sell(obj: Dictionary) -> void:
 	_sell_pending = uid
 	_sell_pending_until = now_ms + 3000
 	var extra := " (what's inside moves out)" if Game.inside_total(obj) > 0 else ""
-	info.emit("Tap again to sell the %s for %d coins%s" % [Game.item_data(obj["id"])["name"], Game.sell_value(obj), extra])
+	info.emit(
+		"Tap again to sell the %s for %d coins%s" % [Game.item_data(obj["id"])["name"], Game.sell_value(obj), extra]
+	)
 
 
 func _explain(i: int, ph: GameState.Phase) -> void:
