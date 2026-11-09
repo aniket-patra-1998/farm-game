@@ -126,7 +126,8 @@ func _paint_shade(n: int) -> void:
 			var spec: Array = SHADE_BY_KIND[kind]
 			var cell := Rect2i((c + SHADE_PAD) * SHADE_RES, (r + SHADE_PAD) * SHADE_RES, SHADE_RES, SHADE_RES)
 			_raise(shade, cell, float(spec[0]))
-			_raise(wear, cell, float(spec[1]))
+			# An animal wanders round its spot, so it wears the tiles round it too.
+			_raise(wear, cell.grow(SHADE_RES if kind == "animal" else 0), float(spec[1]))
 	blur(shade, SHADE_BLUR)
 	blur(wear, WEAR_REACH)
 	var s_data := shade.get_data()
@@ -165,8 +166,12 @@ static func _kinds(n: int) -> Array[String]:
 static func _raise(img: Image, cell: Rect2i, v: float) -> void:
 	if v <= 0.0:
 		return
-	if img.get_pixel(cell.position.x, cell.position.y).r < v:
-		img.fill_rect(cell, Color(v, v, v))
+	var inside := cell.intersection(Rect2i(Vector2i.ZERO, img.get_size()))
+	for y in range(inside.position.y, inside.end.y, SHADE_RES):
+		for x in range(inside.position.x, inside.end.x, SHADE_RES):
+			var block := Rect2i(x, y, SHADE_RES, SHADE_RES).intersection(inside)
+			if img.get_pixel(x, y).r < v:
+				img.fill_rect(block, Color(v, v, v))
 
 
 ## Softens an image by about `tiles` tiles: shrunk so a texel covers that much, then grown back smoothly.

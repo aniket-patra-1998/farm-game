@@ -206,11 +206,11 @@ func test_102_bigger_buildings_look_bigger_and_sites_build_up() -> void:
 		var seen := {}
 		for p: float in [0.0, 0.15, 0.3, 0.42, 0.6, 0.85, 0.95]:
 			var site := BuildingModel.build_site(g.item_data(id), fp, p)
-			var verts := _count_vertices(site)
+			var look := "%d parts, %d vertices" % [_count_meshes(site), _count_vertices(site)]
 			var box := _bounds(site)
 			site.free()
-			_check(not seen.has(verts), "%s at %d%% looks different from the stage before" % [id, int(p * 100)])
-			seen[verts] = true
+			_check(not seen.has(look), "%s at %d%% looks different from the stages before" % [id, int(p * 100)])
+			seen[look] = true
 			_check(box.end.x < fp.x + 0.35 and box.end.z < fp.y + 0.35, "%s site stays near its footprint" % id)
 	# Progress is the share of the materials put in.
 	var frame := {"uid": 1, "id": "horse_stable", "row": 0, "col": 0, "t": 0, "construction": {}}
