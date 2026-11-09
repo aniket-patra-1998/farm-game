@@ -104,6 +104,34 @@
   ],
   "scale": 0.5
  },
+ "crop_coffee_growing": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_coffee_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_coffee_ripe": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_coffee_withered": {
+  "anchor": [
+   128.0,
+   140.0
+  ],
+  "scale": 0.5
+ },
  "crop_corn_growing": {
   "anchor": [
    128.0,
@@ -185,6 +213,20 @@
   "anchor": [
    128.0,
    125.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilac_growing": {
+  "anchor": [
+   128.0,
+   149.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilac_planted": {
+  "anchor": [
+   128.0,
+   148.0
   ],
   "scale": 0.5
  },
@@ -493,6 +535,34 @@
   "anchor": [
    128.0,
    127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_sunflowers_growing": {
+  "anchor": [
+   128.0,
+   146.0
+  ],
+  "scale": 0.5
+ },
+ "crop_sunflowers_planted": {
+  "anchor": [
+   128.0,
+   146.0
+  ],
+  "scale": 0.5
+ },
+ "crop_sunflowers_ripe": {
+  "anchor": [
+   128.0,
+   144.0
+  ],
+  "scale": 0.5
+ },
+ "crop_sunflowers_withered": {
+  "anchor": [
+   128.0,
+   143.0
   ],
   "scale": 0.5
  },

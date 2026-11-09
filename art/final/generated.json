@@ -83,6 +83,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_coffee_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:41",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_coffee_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:40",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_coffee_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:41",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_coffee_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:42",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_corn_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:20",
@@ -163,6 +191,20 @@
  "crop_elderberries_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:18",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilac_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:44",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilac_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:44",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
@@ -457,6 +499,34 @@
  "crop_strawberries_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:08",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_sunflowers_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:43",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_sunflowers_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:42",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_sunflowers_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:43",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_sunflowers_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:44",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
