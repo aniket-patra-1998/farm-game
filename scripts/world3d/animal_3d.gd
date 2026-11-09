@@ -9,7 +9,7 @@ extends Node3D
 ## Local space: the animal faces +x, up is +y, its left side is -z. Sizes are the rig's pixels (made for a
 ## 128-pixel tile) times PX, so a cow is a little over half a tile long.
 
-const PX := 1.25 / IsoProjection.PX_PER_UNIT   # rig pixels to world units (a touch larger than 2D)
+const PX := 1.6 / IsoProjection.PX_PER_UNIT    # rig pixels to world units (larger than 2D: a cow fills most of a tile)
 const TURN_RATE := 6.0                          # how fast it turns to face where it's going (radians/s)
 const EYE := Color("#1b140f")
 const HOOF := Color("#3a2c22")
