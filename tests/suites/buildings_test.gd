@@ -352,6 +352,7 @@ func test_92_animals_only_go_into_homes_made_for_them() -> void:
 	var g := _farm()
 	g.coins = 1000000
 	g.xp = g.xp_for_level(15)
+	g.farm_size = 24  # room for three buildings
 	const FIT := HousingSystem.Fit
 	_check(g.buy_and_place("cow_shed", 8, 8), "a Dairy Farm")
 	_check(g.buy_and_place("chicken_coop", 8, 14), "a Chicken Coop")
