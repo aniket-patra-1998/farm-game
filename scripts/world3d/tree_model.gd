@@ -197,7 +197,8 @@ static func _palm(t: Dictionary) -> Vector3:
 
 
 ## A frond: a spine arching out and down, with a leaf blade along it in a few bent segments.
-static func _frond(root: Node3D, from: Vector3, dir: Vector3, reach: float, leaf: Color, rng: RandomNumberGenerator) -> void:
+static func _frond(root: Node3D, from: Vector3, dir: Vector3, reach: float, leaf: Color,
+		rng: RandomNumberGenerator) -> void:
 	var mat := ModelKit.paint(leaf.darkened(rng.randf_range(0.0, 0.12)))
 	var side := Vector3(-dir.z, 0, dir.x)
 	var prev := from
