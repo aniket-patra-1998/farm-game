@@ -28,7 +28,8 @@ jobs:
       id-token: write
     env:
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-      TESTS: ${{ github.event.workflow_run.conclusion || 'not run' }}
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
     steps:
       - name: Check for a reviewer key
         id: key
@@ -42,26 +43,59 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ env.SHA }}
-      - uses: anthropics/claude-code-action@v1
+      # Works out the range to review in plain shell, so it never depends on the reviewer reading the log:
+      # every commit after the last one in the "Code review log" issue, up to this one.
+      - name: Work out what to review
+        id: range
         if: steps.key.outputs.ok == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh api "repos/$REPO/issues?state=open&per_page=100" --jq '[.[] | select(.title == "Code review log")][0].number // empty')
+          if [ -z "$n" ]; then
+            n=$(gh api "repos/$REPO/issues" -f title="Code review log" \
+              -f body="One entry per review: date, the commit reviewed up to, score, Blockers and Majors." --jq .number)
+          fi
+          last=$(gh api "repos/$REPO/issues/$n/comments?per_page=100" --paginate --jq '.[].body' \
+            | grep -oE '\b[0-9a-f]{40}\b' | tail -1 || true)
+          if [ -n "$last" ] && ! git cat-file -e "$last^{commit}" 2>/dev/null; then last=""; fi
+          if [ -n "$last" ] && git merge-base --is-ancestor "$SHA" "$last"; then
+            echo "$SHA is already covered by the review of $last: nothing new."; echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ -n "$last" ] && git merge-base --is-ancestor "$last" "$SHA"; then
+            range="$last..$SHA"; files=$(git diff --name-only "$range")
+          else
+            range=""; files=$(git show --name-only --format= "$SHA")  # no earlier review on this line of history
+          fi
+          code=$(echo "$files" | grep -vE '^(art/|docs/CATALOG\.md$|tools/generate_art\.ipynb$)' || true)
+          if [ -z "$code" ]; then
+            echo "Only art or generated files changed: no review."; echo "go=false" >> "$GITHUB_OUTPUT"
+            gh api "repos/$REPO/issues/$n/comments" -f body="$(date -u +%F) $SHA: art or generated files only, not reviewed." > /dev/null
+            exit 0
+          fi
+          tests=$(gh api "repos/$REPO/actions/workflows/tests.yml/runs?head_sha=$SHA&per_page=1" \
+            --jq '.workflow_runs[0] | (.conclusion // .status) // "not run"')
+          {
+            echo "go=true"; echo "issue=$n"; echo "tests=${tests:-not run}"
+            if [ -n "$range" ]; then
+              echo "commands=git log --oneline $range && git diff $range -- . ':!art' ':!docs/CATALOG.md' ':!tools/generate_art.ipynb'"
+            else
+              echo "commands=git show $SHA -- . ':!art'"
+            fi
+          } >> "$GITHUB_OUTPUT"
+      - uses: anthropics/claude-code-action@v1
+        if: steps.key.outputs.ok == 'true' && steps.range.outputs.go == 'true'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: |
             --model claude-opus-5-5
             --max-turns 40
-            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh api:*),Bash(gh issue:*)"
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh api:*)"
           prompt: |
             You are an independent senior game developer reviewing ${{ github.repository }} at commit ${{ env.SHA }}
-            (its Tests workflow: ${{ env.TESTS }}). Read CLAUDE.md and REVIEW.md first.
-            Find what's new since the last review: the open issue titled "Code review log" lists each reviewed
-            commit (`gh issue list --search "Code review log in:title" --json number`, then
-            `gh issue view <number> --comments`). Review every commit after the last one listed, up to ${{ env.SHA }}:
-            `git log --oneline <last>..${{ env.SHA }}` and `git diff <last>..${{ env.SHA }}`. With no earlier
-            review, review `git show ${{ env.SHA }}`. Read the surrounding code as needed so you judge the change
-            in context. If the tests failed, say so first and look for the cause.
+            (its Tests workflow: ${{ steps.range.outputs.tests }}). Read CLAUDE.md and REVIEW.md first.
+            The changes to review (everything since the last review): `${{ steps.range.outputs.commands }}`.
+            Read the surrounding code as needed so you judge the change in context. If the tests didn't pass,
+            say so first and look for the cause.
 
             Judge it against every point in REVIEW.md: correctness, design and object orientation, generality,
             transferability, phone performance, feel, tests and FarmVille fidelity. Be concrete and honest:
@@ -71,6 +105,15 @@ jobs:
 
             Post the review as a commit comment:
             `gh api repos/${{ github.repository }}/commits/${{ env.SHA }}/comments -f body="<review>"`.
-            Then add a short entry (date, the full commit id ${{ env.SHA }}, score, Blockers and Majors, one line each) to the open issue
-            titled "Code review log", creating it if it doesn't exist (`gh issue list --search "Code review log in:title"`,
-            `gh issue create`, `gh issue comment`). Don't change any code.
+            Then add a short entry to the review log, issue #${{ steps.range.outputs.issue }}: the date, the full
+            commit id ${{ env.SHA }}, the score, and the Blockers and Majors, one line each
+            (`gh api repos/${{ github.repository }}/issues/${{ steps.range.outputs.issue }}/comments -f body="<entry>"`).
+            Don't change any code.
+      # The log must record this commit even if the reviewer ran out of turns, so the next review starts after it.
+      - name: Make sure the log records this review
+        if: always() && steps.range.outputs.go == 'true'
+        run: |
+          n=${{ steps.range.outputs.issue }}
+          if ! gh api "repos/$REPO/issues/$n/comments?per_page=100" --paginate --jq '.[].body' | grep -q "$SHA"; then
+            gh api "repos/$REPO/issues/$n/comments" -f body="$(date -u +%F) $SHA: reviewed (the reviewer didn't write a log entry; see the commit comment or the run)." > /dev/null
+          fi
