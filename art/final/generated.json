@@ -237,6 +237,20 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_gladiolus_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:54",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_gladiolus_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:55",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_lavender_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:52",
@@ -289,6 +303,34 @@
  "crop_lilac_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:45",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilies_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:56",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilies_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:55",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilies_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:56",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_lilies_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:56",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
@@ -457,6 +499,34 @@
  "crop_purple_pod_peas_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:40",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_poppies_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:57",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_poppies_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:57",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_poppies_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:58",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_purple_poppies_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:58",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"

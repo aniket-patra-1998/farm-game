@@ -258,6 +258,20 @@
   ],
   "scale": 0.5
  },
+ "crop_gladiolus_ripe": {
+  "anchor": [
+   128.0,
+   140.0
+  ],
+  "scale": 0.5
+ },
+ "crop_gladiolus_withered": {
+  "anchor": [
+   128.0,
+   139.0
+  ],
+  "scale": 0.5
+ },
  "crop_lavender_growing": {
   "anchor": [
    128.0,
@@ -311,6 +325,34 @@
   "anchor": [
    128.0,
    137.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilies_growing": {
+  "anchor": [
+   128.0,
+   138.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilies_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilies_ripe": {
+  "anchor": [
+   128.0,
+   139.0
+  ],
+  "scale": 0.5
+ },
+ "crop_lilies_withered": {
+  "anchor": [
+   128.0,
+   142.0
   ],
   "scale": 0.5
  },
@@ -479,6 +521,34 @@
   "anchor": [
    128.0,
    120.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_poppies_growing": {
+  "anchor": [
+   128.0,
+   139.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_poppies_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_poppies_ripe": {
+  "anchor": [
+   128.0,
+   142.0
+  ],
+  "scale": 0.5
+ },
+ "crop_purple_poppies_withered": {
+  "anchor": [
+   128.0,
+   134.0
   ],
   "scale": 0.5
  },
