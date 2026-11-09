@@ -306,7 +306,7 @@ static func _collect(node: Node, xf: Transform3D, groups: Dictionary) -> void:
 			for s in mi.mesh.get_surface_count():
 				var mat := mi.material_override if mi.material_override != null else mi.get_active_material(s)
 				# Surfaces only merge with the same vertex layout (a box has UVs, a hand-made face doesn't).
-				var fmt := mi.mesh.surface_get_format(s) & (Mesh.ARRAY_FORMAT_NORMAL | Mesh.ARRAY_FORMAT_TEX_UV
+				var fmt: int = mi.mesh.surface_get_format(s) & (Mesh.ARRAY_FORMAT_NORMAL | Mesh.ARRAY_FORMAT_TEX_UV
 					| Mesh.ARRAY_FORMAT_COLOR | Mesh.ARRAY_FORMAT_TANGENT)
 				var key := "%s|%d|%d" % [shadow, mat.get_instance_id() if mat != null else 0, fmt]
 				if not groups.has(key):
