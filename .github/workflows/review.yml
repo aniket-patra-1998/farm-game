@@ -3,19 +3,22 @@ name: Code review
 # and in the "Code review log" issue, so the next change can fix them.
 # Needs the Claude GitHub App installed on the repo and one secret: CLAUDE_CODE_OAUTH_TOKEN (a Claude
 # subscription, from `claude setup-token`) or ANTHROPIC_API_KEY (Claude Console). Without either, it skips.
+# The review action can't start from a push, so it runs once the Tests workflow finishes for a push to main
+# (whether tests passed or not: the review says so), or by hand from the Actions tab.
 on:
-  push:
+  workflow_run:
+    workflows: [Tests]
+    types: [completed]
     branches: [main]
-    paths-ignore:
-      - "art/**"
-      - "docs/CATALOG.md"
-  workflow_dispatch: # run it by hand from the Actions tab (reviews the latest commit)
+  workflow_dispatch:
 concurrency:
   group: code-review
   cancel-in-progress: false
 jobs:
   review:
-    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip review]') }}
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' && !contains(github.event.workflow_run.head_commit.message, '[skip review]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -23,6 +26,9 @@ jobs:
       issues: write
       pull-requests: read
       id-token: write
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      TESTS: ${{ github.event.workflow_run.conclusion || 'not run' }}
     steps:
       - name: Check for a reviewer key
         id: key
@@ -35,6 +41,7 @@ jobs:
         if: steps.key.outputs.ok == 'true'
         with:
           fetch-depth: 0
+          ref: ${{ env.SHA }}
       - uses: anthropics/claude-code-action@v1
         if: steps.key.outputs.ok == 'true'
         env:
@@ -47,11 +54,14 @@ jobs:
             --max-turns 40
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh api:*),Bash(gh issue:*)"
           prompt: |
-            You are an independent senior game developer reviewing a push to ${{ github.repository }}.
-            Read CLAUDE.md and REVIEW.md first. Then review the changes in this push:
-            `git log --oneline ${{ github.event.before }}..${{ github.sha }}` and
-            `git diff ${{ github.event.before }}..${{ github.sha }}` (if the first commit id is all zeros, review
-            `git show ${{ github.sha }}`). Read the surrounding code as needed so you judge the change in context.
+            You are an independent senior game developer reviewing ${{ github.repository }} at commit ${{ env.SHA }}
+            (its Tests workflow: ${{ env.TESTS }}). Read CLAUDE.md and REVIEW.md first.
+            Find what's new since the last review: the open issue titled "Code review log" lists each reviewed
+            commit (`gh issue list --search "Code review log in:title" --json number`, then
+            `gh issue view <number> --comments`). Review every commit after the last one listed, up to ${{ env.SHA }}:
+            `git log --oneline <last>..${{ env.SHA }}` and `git diff <last>..${{ env.SHA }}`. With no earlier
+            review, review `git show ${{ env.SHA }}`. Read the surrounding code as needed so you judge the change
+            in context. If the tests failed, say so first and look for the cause.
 
             Judge it against every point in REVIEW.md: correctness, design and object orientation, generality,
             transferability, phone performance, feel, tests and FarmVille fidelity. Be concrete and honest:
@@ -60,7 +70,7 @@ jobs:
             Don't nitpick generated files (docs/CATALOG.md, art/manifest.json, tools/generate_art.ipynb).
 
             Post the review as a commit comment:
-            `gh api repos/${{ github.repository }}/commits/${{ github.sha }}/comments -f body="<review>"`.
-            Then add a short entry (date, commit, score, Blockers and Majors, one line each) to the open issue
+            `gh api repos/${{ github.repository }}/commits/${{ env.SHA }}/comments -f body="<review>"`.
+            Then add a short entry (date, the full commit id ${{ env.SHA }}, score, Blockers and Majors, one line each) to the open issue
             titled "Code review log", creating it if it doesn't exist (`gh issue list --search "Code review log in:title"`,
             `gh issue create`, `gh issue comment`). Don't change any code.
