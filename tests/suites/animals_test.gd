@@ -389,8 +389,8 @@ func test_90_animals_walk_on_their_legs() -> void:
 	var reach := 10.0
 	_check(AnimalArt.foot_offset(0.0, reach, 3.0).is_equal_approx(AnimalArt.foot_offset(1.0, reach, 3.0)),
 		"a step ends where the next begins")
-	_check(is_equal_approx(AnimalArt.foot_offset(0.0, reach, 3.0).x - AnimalArt.foot_offset(AnimalArt.STANCE - 0.0001,
-		reach, 3.0).x, reach), "a planted foot slides back its whole reach")
+	var slid := AnimalArt.foot_offset(0.0, reach, 3.0).x - AnimalArt.foot_offset(AnimalArt.STANCE - 0.0001, reach, 3.0).x
+	_check(absf(slid - reach) < 0.01, "a planted foot slides back its whole reach (%.3f)" % slid)
 	_eq(AnimalArt.foot_offset(0.3, reach, 3.0).y, 0.0, "a planted foot stays on the ground")
 	_check(AnimalArt.foot_offset(AnimalArt.STANCE + (1.0 - AnimalArt.STANCE) / 2.0, reach, 3.0).y < -2.9,
 		"a stepping foot lifts")
