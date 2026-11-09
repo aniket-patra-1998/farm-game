@@ -302,7 +302,7 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 		"pine_tree":
 			Objects3D.pine(root, c, 1.1)
 		"oak_tree", "maple_tree", "willow_tree":
-			TreeModel.build_at(root, c, {"id": id}, 1.25, false, 0, false, col if id != "oak_tree" else TreeModel.LEAF)
+			TreeModel.build_at(root, c, {"id": id}, 1.25, false, int(o.get("uid", 0)), false)
 		"mastery_sign", "mailbox", "farm_stand", "perfect_bunch":
 			_small_sign(root, id, c, col, o)
 		_:

@@ -658,7 +658,7 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				var row := k / 3
 				var z := fd * (0.3 + 0.4 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else fd * 0.5
 				var p := Vector3(fw * (0.25 + 0.25 * (k % 3)), 0, z)
-				TreeModel.build_at(root, p, {"color": "#d63c2f", "id": "orchard_%d" % k}, size, true, k)
+				TreeModel.build_at(root, p, {"color": "#d63c2f", "id": "orchard", "family": "apple"}, size, true, k)
 		"wing":
 			_wing(ctx, f)
 		"lean_to":

@@ -257,3 +257,42 @@ func _local_xf(n: Node3D, root: Node3D) -> Transform3D:
 		xf = (at as Node3D).transform * xf
 		at = at.get_parent()
 	return xf
+
+
+func test_103_every_kind_of_tree_grows_its_own_way() -> void:
+	var g := _farm()
+	var shapes: Dictionary = (JSON.parse_string(FileAccess.get_file_as_string(TreeModel.PATH)) as Dictionary)["families"]
+	var forms := TreeModel.forms()
+	# Every fruit tree's family has a shape, and every shape is a form the model knows.
+	for id in g.items:
+		var it: Dictionary = g.items[id]
+		if it.get("kind", "") != "tree":
+			continue
+		_check(shapes.has(str(it.get("family", ""))), "%s (%s) has its own shape" % [id, it.get("family", "")])
+		_check(forms.has(TreeModel.shape_of(it)["form"]), "%s grows as a known form" % id)
+	# Each form builds, and builds differently from the others.
+	var by_form := {}
+	for form: String in forms:
+		var holder := Node3D.new()
+		TreeModel.build_at(holder, Vector3.ZERO, {"id": "test", "family": _family_with(shapes, form)}, 1.0, true, 1)
+		var verts := _count_vertices(holder)
+		holder.free()
+		_check(verts > 100, "a %s tree has a body (%d vertices)" % [form, verts])
+		_check(not by_form.values().has(verts), "a %s tree is built unlike the other forms" % form)
+		by_form[form] = verts
+	# Two trees of one kind differ: their own height, lean and crown.
+	var a := Node3D.new()
+	var b := Node3D.new()
+	TreeModel.build_at(a, Vector3.ZERO, g.item_data("apple_tree"), 1.0, true, 1)
+	TreeModel.build_at(b, Vector3.ZERO, g.item_data("apple_tree"), 1.0, true, 2)
+	_check(not _bounds(a).is_equal_approx(_bounds(b)), "two apple trees are not copies of each other")
+	a.free()
+	b.free()
+	_done(g)
+
+
+func _family_with(shapes: Dictionary, form: String) -> String:
+	for f in shapes:
+		if str((shapes[f] as Dictionary).get("form", "round")) == form:
+			return f
+	return ""
