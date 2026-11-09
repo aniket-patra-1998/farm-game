@@ -144,21 +144,32 @@ static func draw_soil(ci: CanvasItem, top: Vector2, w: float, h: float, planted:
 	var base := diamond(top, w, h)
 	var up := Vector2(0, -SLAB * w / 128.0)
 	var pts := PackedVector2Array([base[0] + up, base[1] + up, base[2] + up, base[3] + up])
+	# Sides of the bed: earth in shade.
 	ci.draw_colored_polygon(PackedVector2Array([pts[3], pts[2], base[2], base[3]]), BED_LEFT)
 	ci.draw_colored_polygon(PackedVector2Array([pts[2], pts[1], base[1], base[2]]), BED_RIGHT)
 	ci.draw_colored_polygon(pts, BED_TOP_WET if planted else BED_TOP)
+	# Soft mounded rows: each a lighter band that fades into the furrow beside it, with a few clods.
 	var t_ := pts[0]
 	var r_ := pts[1]
 	var b_ := pts[2]
 	var l_ := pts[3]
-	# Furrows: a dark groove with a sunlit ridge beside it, running with the top-right edge.
-	for k in range(1, 5):
-		var f := k / 5.0
-		var a := t_.lerp(l_, f)
-		var b := r_.lerp(b_, f)
-		ci.draw_line(a, b, BED_FURROW, 3.0)
-		ci.draw_line(a + Vector2(1.5, 2.0), b + Vector2(1.5, 2.0), BED_RIDGE, 1.5)
-	ci.draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], base[2], base[3], pts[3], pts[0]]), Color("#241410"), 1.5)
+	var top_col := BED_TOP_WET if planted else BED_TOP
+	for k in 4:
+		var f0 := (k + 0.18) / 4.0
+		var f1 := (k + 0.62) / 4.0
+		var ridge := PackedVector2Array([t_.lerp(l_, f0), r_.lerp(b_, f0), r_.lerp(b_, f1), t_.lerp(l_, f1)])
+		ci.draw_colored_polygon(ridge, top_col.lightened(0.09))
+		var g0 := (k + 0.78) / 4.0
+		ci.draw_line(t_.lerp(l_, g0), r_.lerp(b_, g0), BED_FURROW, 2.0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(top.x * 7.0 + top.y * 13.0)
+	for k in 7:
+		var u := rng.randf_range(0.1, 0.9)
+		var v := rng.randf_range(0.1, 0.9)
+		var p := t_.lerp(r_, u).lerp(l_.lerp(b_, u), v)
+		ci.draw_circle(p, rng.randf_range(1.0, 2.2) * w / 128.0, top_col.darkened(0.25))
+	# A soft dark rim where the top meets the sides, instead of a hard outline.
+	ci.draw_polyline(PackedVector2Array([pts[3], pts[2], pts[1]]), BED_LEFT.darkened(0.3), 1.5)
 
 
 # ---------------------------------------------------------------- crops
