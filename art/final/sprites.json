@@ -272,6 +272,34 @@
   ],
   "scale": 0.5
  },
+ "crop_forget_me_nots_growing": {
+  "anchor": [
+   128.0,
+   144.0
+  ],
+  "scale": 0.5
+ },
+ "crop_forget_me_nots_planted": {
+  "anchor": [
+   128.0,
+   148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_forget_me_nots_ripe": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_forget_me_nots_withered": {
+  "anchor": [
+   128.0,
+   138.0
+  ],
+  "scale": 0.5
+ },
  "crop_gladiolus_growing": {
   "anchor": [
    128.0,
@@ -479,6 +507,20 @@
   "anchor": [
    128.0,
    148.0
+  ],
+  "scale": 0.5
+ },
+ "crop_orange_daisies_ripe": {
+  "anchor": [
+   128.0,
+   144.0
+  ],
+  "scale": 0.5
+ },
+ "crop_orange_daisies_withered": {
+  "anchor": [
+   128.0,
+   134.0
   ],
   "scale": 0.5
  },
@@ -871,6 +913,34 @@
   "anchor": [
    128.0,
    124.0
+  ],
+  "scale": 0.5
+ },
+ "crop_white_roses_growing": {
+  "anchor": [
+   128.0,
+   145.0
+  ],
+  "scale": 0.5
+ },
+ "crop_white_roses_planted": {
+  "anchor": [
+   128.0,
+   147.0
+  ],
+  "scale": 0.5
+ },
+ "crop_white_roses_ripe": {
+  "anchor": [
+   128.0,
+   149.0
+  ],
+  "scale": 0.5
+ },
+ "crop_white_roses_withered": {
+  "anchor": [
+   128.0,
+   140.0
   ],
   "scale": 0.5
  },

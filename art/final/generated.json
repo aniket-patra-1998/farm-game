@@ -251,6 +251,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_forget_me_nots_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:07",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_forget_me_nots_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:06",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_forget_me_nots_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:07",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_forget_me_nots_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:07",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_gladiolus_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:54",
@@ -457,6 +485,20 @@
  "crop_orange_daisies_planted": {
   "class": "Crop",
   "made": "2026-11-09 06:02",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_orange_daisies_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:03",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_orange_daisies_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:04",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
@@ -835,6 +877,34 @@
  "crop_wheat_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:19",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_white_roses_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:05",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_white_roses_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:04",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_white_roses_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:05",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_white_roses_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:06",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
