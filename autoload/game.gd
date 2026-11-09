@@ -630,7 +630,7 @@ func _roll_collectible(coll: Dictionary, chance: float, index := -1) -> String:
 	var item_id := _pick_item(coll)
 	owned[item_id] = int(owned.get(item_id, 0)) + 1
 	collections_changed.emit()
-	var text := "Found: " + item_names[item_id]
+	var text: String = "Found: " + str(item_names[item_id])
 	if index >= 0:
 		found.emit(index, text)
 	else:
