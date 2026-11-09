@@ -97,6 +97,20 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_carrots_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:13",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_carrots_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:13",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_coffee_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:41",
@@ -293,6 +307,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_ginger_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:16",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_ginger_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:15",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_ginger_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:16",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_ginger_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:17",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_gladiolus_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:54",
@@ -485,6 +527,34 @@
  "crop_oats_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:29",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_onions_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 06:14",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_onions_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 06:13",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_onions_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 06:14",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_onions_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 06:15",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
