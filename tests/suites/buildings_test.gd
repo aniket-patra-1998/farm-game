@@ -32,9 +32,9 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 		_check(g.buy_and_place("chicken", 11, c), "buy chicken %d" % c)
 	var coop := g.object_at(g.index_of(8, 8))
 	var uid := int(coop["uid"])
-	_eq(g.fill_building(uid), 5, "3 bought + 2 starter chickens move in")
+	_eq(g.homes.fill_building(uid), 5, "3 bought + 2 starter chickens move in")
 	_eq(g.inside_total(coop), 5, "coop holds five")
-	_eq(g.loose_matching(coop), 0, "no loose chickens left")
+	_eq(g.homes.loose_matching(coop), 0, "no loose chickens left")
 	_check(g.collect(uid).is_empty(), "not ready straight away")
 	_skip(g, 86400)
 	_eq(g.collect(uid)["coins"], 200, "5 chickens x 40 coins")
@@ -94,7 +94,7 @@ func test_38_stable_is_built_from_a_frame_with_materials() -> void:
 	_check(g.under_construction(st), "it arrives as a frame")
 	_check(not g.is_ready(st), "a frame never produces")
 	g.place_somewhere("horse")
-	_eq(g.fill_building(uid), 0, "can't move horses into a frame")
+	_eq(g.homes.fill_building(uid), 0, "can't move horses into a frame")
 	_eq(g.land.add_materials(uid), 0, "nothing to add with no materials")
 	g.parts["bricks"] = 4
 	_eq(g.land.add_materials(uid), 4, "adds the 4 bricks held")
@@ -104,7 +104,7 @@ func test_38_stable_is_built_from_a_frame_with_materials() -> void:
 	_check(not g.under_construction(st), "finished once every material is in")
 	_eq(int(g.parts["harnesses"]), 0, "harnesses used")
 	_eq(int(g.parts["bricks"]), 4, "spare bricks kept (4 were already in)")
-	_eq(g.fill_building(uid), 1, "the horse moves in")
+	_eq(g.homes.fill_building(uid), 1, "the horse moves in")
 	_done(g)
 
 
@@ -125,7 +125,7 @@ func test_39_stable_horses_daily_stallion_brings_foals() -> void:
 		g.place_somewhere("horse")
 	_eq(g.cycle_of(g.objects.filter(func(o): return o["id"] == "horse")[0]), 3 * 86400, "a loose horse takes 3 days")
 	_eq(g.cycle_of(st), 86400, "horses in the stable are ready daily")
-	g.fill_building(uid)
+	g.homes.fill_building(uid)
 	# No stallion: no foals, ever.
 	for d in 20:
 		_skip(g, 86400)
@@ -134,11 +134,11 @@ func test_39_stable_horses_daily_stallion_brings_foals() -> void:
 	# With a stallion: foals arrive, and he takes no space.
 	g.place_somewhere("stallion")
 	var inside_before := g.inside_total(st)
-	g.fill_building(uid)
+	g.homes.fill_building(uid)
 	_check(g.has_inside(st, "stallion"), "stallion moved in")
 	_eq(g.inside_total(st), inside_before, "the stallion doesn't take a space")
 	g.place_somewhere("stallion")
-	g.fill_building(uid)
+	g.homes.fill_building(uid)
 	_eq(int(st["inside"]["stallion"]), 1, "only one stallion lives inside")
 	for d in 40:
 		_skip(g, 86400)
@@ -163,7 +163,7 @@ func test_40_dairy_bull_brings_calves_and_fertilizer() -> void:
 	for k in 3:
 		g.place_somewhere("cow")
 	g.place_somewhere("bull")
-	g.fill_building(uid)
+	g.homes.fill_building(uid)
 	_check(g.has_inside(dairy, "bull"), "the bull lives inside")
 	_eq(g.inside_total(dairy), 4, "4 cows take spaces; the bull doesn't")
 	for d in 40:
@@ -202,7 +202,7 @@ func test_41_nursery_raises_babies_into_adults() -> void:
 	_check(not g.under_construction(n), "nursery finished")
 	g.place_somewhere("calf")
 	g.place_somewhere("foal")
-	_eq(g.fill_building(uid), 2, "a calf and a foal move in")
+	_eq(g.homes.fill_building(uid), 2, "a calf and a foal move in")
 	var cows := _count(g, "cow")
 	var horses := _count(g, "horse")
 	for d in 3:
@@ -345,4 +345,73 @@ func test_46_bull_and_stallion_only_wander_in_with_their_building() -> void:
 			g.rebuild_occupancy()
 	_check(seen.has("bull"), "a lonely bull can wander in once you own a Dairy Farm")
 	_check(not seen.has("stallion"), "still no stallion without a stable")
+	_done(g)
+
+
+func test_92_animals_only_go_into_homes_made_for_them() -> void:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(15)
+	const FIT := HousingSystem.Fit
+	_check(g.buy_and_place("cow_shed", 8, 8), "a Dairy Farm")
+	_check(g.buy_and_place("chicken_coop", 8, 14), "a Chicken Coop")
+	_check(g.buy_and_place("horse_stable", 14, 8), "a Horse Stable frame")
+	var dairy := g.object_at(g.index_of(8, 8))
+	var coop := g.object_at(g.index_of(8, 14))
+	var stable := g.object_at(g.index_of(14, 8))
+	# What fits where.
+	_eq(g.homes.fit(dairy, "cow"), FIT.FITS, "a cow fits the Dairy Farm")
+	_eq(g.homes.fit(coop, "cow"), FIT.WRONG_KIND, "a cow can't live in the Coop")
+	_eq(g.homes.fit(coop, "turkey"), FIT.FITS, "the Coop takes turkeys as well as chickens")
+	_eq(g.homes.fit(stable, "horse"), FIT.NOT_BUILT, "a frame takes no one yet")
+	var cow_homes: Array = g.homes.homes_for("cow").map(func(b: Dictionary) -> String: return b["id"])
+	_check(cow_homes.has("cow_shed") and not cow_homes.has("chicken_coop") and not cow_homes.has("horse_stable"),
+		"only the Dairy Farm lights up for a cow (%s)" % [cow_homes])
+	# A cow on the farm, dropped on the wrong home, stays put; on the right one, it moves in.
+	_check(g.place_somewhere("cow"), "a cow on the farm")
+	var cow_uid := int(g.objects[-1]["uid"])
+	_check(not g.homes.put_in_home(int(coop["uid"]), "cow", {"uid": cow_uid}), "refused by the Coop")
+	_check(not g.object_by_uid(cow_uid).is_empty(), "and still on the farm")
+	var t0 := g.now()
+	_skip(g, 100)
+	_check(g.homes.put_in_home(int(dairy["uid"]), "cow", {"uid": cow_uid}), "the cow moves into the Dairy Farm")
+	_check(g.object_by_uid(cow_uid).is_empty(), "off the farm")
+	_eq(int(dairy["inside"]["cow"]), 1, "and inside")
+	_eq(int(dairy["t"]), t0 + 100, "the first one in starts the building's cycle")
+	# Bought straight into its home: paid for once, no spot on the farm needed.
+	var coins := g.coins
+	var objects := g.objects.size()
+	_check(g.homes.put_in_home(int(coop["uid"]), "chicken", {}), "a chicken bought straight into the Coop")
+	_eq(g.coins, coins - int(g.item_data("chicken")["cost"]), "paid its price")
+	_eq(g.objects.size(), objects, "nothing new standing on the farm")
+	_eq(int(coop["inside"]["chicken"]), 1, "it's inside")
+	# A bull is one-each: the second is turned away, without taking a space.
+	_check(g.homes.put_in_home(int(dairy["uid"]), "bull", {}), "a bull moves in")
+	_eq(g.homes.fit(dairy, "bull"), FIT.HAS_ONE, "only one bull")
+	coins = g.coins
+	_check(not g.homes.put_in_home(int(dairy["uid"]), "bull", {}), "a second bull is refused")
+	_eq(g.coins, coins, "and nothing is charged for it")
+	# A full home is lit amber and refuses more.
+	dairy["inside"]["cow"] = g.capacity(dairy)
+	_eq(g.homes.fit(dairy, "cow"), FIT.FULL, "a full Dairy Farm")
+	_check(g.homes.homes_for("cow").has(dairy), "still lit (amber) while full")
+	# From the Barn into a home.
+	g.storage.stored.append({"uid": 9999, "id": "turkey", "t": 0})
+	var stored_n := g.storage.stored.size()
+	_check(g.homes.put_in_home(int(coop["uid"]), "turkey", {"stored": stored_n - 1}),
+		"a stored turkey moves into the Coop")
+	_eq(g.storage.stored.size(), stored_n - 1, "out of the Barn")
+	# The Barn takes anything already on the farm (once it's fixed), but sells nothing.
+	var barn := {}
+	for o in g.objects:
+		if o["id"] == "barn":
+			barn = o
+	var flamingo: Dictionary = g.objects[-1] if g.place_somewhere("pink_flamingo") else {}
+	if not barn.is_empty() and not flamingo.is_empty():
+		_eq(g.homes.fit(barn, "chicken"), FIT.WRONG_KIND, "the Barn isn't a shop")
+		if g.storage.barn_repaired():
+			_check(g.homes.put_in_home(int(barn["uid"]), "pink_flamingo", {"uid": int(flamingo["uid"])}),
+				"the Barn stores a decoration dropped on it")
+		else:
+			_eq(g.homes.fit(barn, "pink_flamingo", int(flamingo["uid"])), FIT.BARN_BROKEN, "a broken Barn")
 	_done(g)

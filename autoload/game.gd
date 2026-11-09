@@ -135,6 +135,7 @@ var pigpen: PigPenSystem
 var vehicles: VehicleSystem
 var strays: StraySystem
 var crafting: CraftingSystem
+var homes: HousingSystem
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
 
 var _occupied := {}                # tile index -> uid of the object covering it
@@ -156,8 +157,9 @@ func _init() -> void:
 	vehicles = VehicleSystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
+	homes = HousingSystem.new(self)
 	systems = [drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
-		strays, crafting]
+		strays, crafting, homes]
 
 
 func _ready() -> void:
@@ -348,7 +350,7 @@ func plant(i: int, crop_id: String) -> bool:
 		return false
 	var crop: Dictionary = crops[crop_id]
 	if level() < int(crop["unlock_level"]):
-		message.emit("%s unlocks at level %d" % [crop["name"], int(crop["unlock_level"])])
+		message.emit(tr("UNLOCKS_AT_LEVEL") % [crop["name"], int(crop["unlock_level"])])
 		return false
 	# Pollinated seeds are planted first, for free.
 	var use_pollinated := bees.take_pollinated_seed(crop_id)
@@ -516,14 +518,14 @@ func can_afford_item(item_id: String) -> bool:
 	return coins >= int(it.get("cost", 0))
 
 
-func buy_and_place(item_id: String, row: int, col: int) -> bool:
+## Pays for buying one of an item: checks its level, takes its price (coins, gems, or a crafting
+## building's rising price) and gives the XP for buying it. False, with a message, if it can't be bought.
+func pay_for(item_id: String) -> bool:
 	var it := item_data(item_id)
 	if it.is_empty():
 		return false
 	if level() < int(it["unlock_level"]):
-		message.emit("%s unlocks at level %d" % [it["name"], int(it["unlock_level"])])
-		return false
-	if not can_place(item_id, row, col):
+		message.emit(tr("UNLOCKS_AT_LEVEL") % [it["name"], int(it["unlock_level"])])
 		return false
 	if it["kind"] == "crafting":
 		var price := crafting.crafting_price(item_id)
@@ -540,12 +542,19 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	elif not spend(int(it["cost"])):
 		message.emit(tr("NOT_ENOUGH_COINS_FOR_A") % it["name"])
 		return false
-	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
 	var bought_xp := buy_xp(item_id)
 	if bought_xp > 0:
 		add_xp(bought_xp)
 	if it["kind"] == "decor":
 		ribbons.bump("decor_bought", 1)
+	return true
+
+
+func buy_and_place(item_id: String, row: int, col: int) -> bool:
+	var it := item_data(item_id)
+	if it.is_empty() or not can_place(item_id, row, col) or not pay_for(item_id):
+		return false
+	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
 	if it.get("special", "") == "garden_shed":
 		shed.on_shed_built()
 	if it["kind"] == "crafting":
@@ -766,54 +775,6 @@ func inside_total(building: Dictionary) -> int:
 		if not is_one_each(building, id):
 			total += int(inside[id])
 	return total
-
-
-func loose_matching(building: Dictionary) -> int:
-	var n := 0
-	for o in objects:
-		if _can_move_into(building, o):
-			n += 1
-	return n
-
-
-## A loose animal or tree on the farm that this building takes (not a building, a stray or a frame).
-func _can_move_into(building: Dictionary, o: Dictionary) -> bool:
-	return not is_building(o) and not o.get("stray", false) and not under_construction(o) \
-		and building_accepts(building, o["id"])
-
-
-## Moves loose animals or trees of the right type into the building, up to its capacity.
-func fill_building(uid: int) -> int:
-	var b := object_by_uid(uid)
-	if b.is_empty() or not is_building(b) or under_construction(b):
-		return 0
-	var was_empty := inside_total(b) == 0
-	var room := capacity(b) - inside_total(b)
-	var moved := 0
-	var regular := 0 # moves that take a space (the bull or stallion doesn't)
-	var keep: Array = []
-	for o in objects:
-		var movable := _can_move_into(b, o)
-		var inside: Dictionary = b["inside"]
-		if movable and is_one_each(b, o["id"]) and not has_inside(b, o["id"]):
-			inside[o["id"]] = 1 # the one bull or stallion
-			moved += 1
-		elif movable and not is_one_each(b, o["id"]) and regular < room:
-			regular += 1
-			inside[o["id"]] = int(inside.get(o["id"], 0)) + 1
-			if b["id"] == "nursery_barn":
-				(b.get_or_add("growing", []) as Array).append([o["id"], 0])
-			moved += 1
-		else:
-			keep.append(o)
-	if moved == 0:
-		return 0
-	objects = keep
-	if was_empty:
-		b["t"] = now() # the first cycle starts when something moves in
-	message.emit(tr("MOVED_INTO_THE") % [moved, item_data(b["id"])["name"]])
-	objects_updated()
-	return moved
 
 
 # ---------------------------------------------------------------- placing new animals

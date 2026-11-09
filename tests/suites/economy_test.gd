@@ -301,7 +301,7 @@ func test_62_sell_anything_for_five_percent() -> void:
 	for k in 5:
 		g.place_somewhere("chicken")
 	var before := _count(g, "chicken")
-	g.fill_building(int(coop["uid"]))
+	g.homes.fill_building(int(coop["uid"]))
 	_eq(g.inside_total(coop), before + 1, "every loose chicken (and the brown one) moved into the coop")
 	_check(g.sell_object(int(coop["uid"])), "sell the coop")
 	_eq(_count(g, "chicken"), before, "the chickens are back on the farm")
@@ -346,7 +346,7 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	var nursery := g.object_at(g.index_of(3, 6))
 	for id in ["sheep", "sheep", "llama", "alpaca", "ram"]:
 		g.place_somewhere(id)
-	_eq(g.fill_building(int(pen["uid"])), 5, "sheep, llama, alpaca and the ram move in")
+	_eq(g.homes.fill_building(int(pen["uid"])), 5, "sheep, llama, alpaca and the ram move in")
 	_eq(g.inside_total(pen), 4, "the ram takes no space")
 	for d in 40:
 		_skip(g, 86400)
@@ -355,7 +355,7 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	pigs.erase("construction")
 	g.place_somewhere("pig")
 	g.place_somewhere("boar")
-	g.fill_building(int(pigs["uid"]))
+	g.homes.fill_building(int(pigs["uid"]))
 	_check(g.has_inside(pigs, "boar"), "the boar lives in the pig pen")
 	pigs["t"] = g.now()
 	for d in 40:
@@ -365,7 +365,7 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	# The nursery raises them.
 	nursery.erase("construction")
 	var sheep := _count(g, "sheep")
-	g.fill_building(int(nursery["uid"]))
+	g.homes.fill_building(int(nursery["uid"]))
 	for d in 4:
 		_skip(g, 86400)
 		g.collect(int(nursery["uid"]))

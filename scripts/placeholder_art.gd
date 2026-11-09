@@ -1077,6 +1077,26 @@ static func draw_footprint(ci: CanvasItem, corners: PackedVector2Array, ok: bool
 
 
 
+## A home lit up while an animal (or tree, or vehicle) is dragged: a glowing ring on its ground, green
+## if it has room, amber if not; brighter, with a pulse that grows, under the finger.
+static func draw_home_highlight(ci: CanvasItem, corners: PackedVector2Array, fits: bool, hovered: bool,
+		t: float) -> void:
+	var col := Color(0.45, 1.0, 0.45) if fits else Color(1.0, 0.72, 0.25)
+	var pulse := 0.5 + 0.5 * sin(t * (6.0 if hovered else 3.0))
+	var centre := (corners[0] + corners[2]) / 2.0
+	var grow := 1.0 + (0.06 + 0.05 * pulse if hovered else 0.02 * pulse)
+	var ring := PackedVector2Array()
+	for v in corners:
+		ring.append(centre + (v - centre) * grow)
+	ci.draw_colored_polygon(ring, Color(col, (0.28 if hovered else 0.14) + 0.1 * pulse))
+	var edge := PackedVector2Array(ring)
+	edge.append(ring[0])
+	ci.draw_polyline(edge, Color(col, 0.35), 9.0 if hovered else 6.0, true)
+	ci.draw_polyline(edge, Color(col.lightened(0.4), 0.95), 3.0 if hovered else 2.0, true)
+
+
+
+
 ## Small green pellets on the soil mark a fertilized plot.
 static func draw_fertilizer(ci: CanvasItem, top: Vector2, w: float, h: float) -> void:
 	var c := top + Vector2(0, h / 2.0)

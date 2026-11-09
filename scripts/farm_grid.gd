@@ -377,8 +377,17 @@ func _draw_placing(ci: CanvasItem) -> void:
 	var row := int(placing["row"])
 	var col := int(placing["col"])
 	var corners := corners_of(row, col, fp.x, fp.y)
-	var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
-	PlaceholderArt.draw_footprint(ci, corners, ok)
+	# Every home that takes it lights up; the one under the finger glows brightest.
+	var t := Time.get_ticks_msec() / 1000.0
+	var hovered := int(placing.get("home", -1))
+	for b in Game.homes.homes_for(placing["item"], int(placing["uid"])):
+		var bfp := Game.footprint(b["id"])
+		var fits := Game.homes.fit(b, placing["item"], int(placing["uid"])) == HousingSystem.Fit.FITS
+		PlaceholderArt.draw_home_highlight(ci, corners_of(int(b["row"]), int(b["col"]), bfp.x, bfp.y), fits,
+			int(b["uid"]) == hovered, t)
+	if hovered == -1:
+		var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
+		PlaceholderArt.draw_footprint(ci, corners, ok)
 	var level := 1
 	var inside := 0
 	var cap := 0
@@ -505,6 +514,29 @@ func start_placing(item_id: String, uid := -1) -> void:
 
 
 
+## Under the finger, a home that takes what's being placed? Remembers it and says what a drop would do.
+func _hover_home(tile: Vector2i) -> void:
+	var home := -1
+	if tile.x >= 0 and tile.x < Game.farm_size and tile.y >= 0 and tile.y < Game.farm_size:
+		var b := Game.object_at(Game.index_of(tile.x, tile.y))
+		var uid := int(placing["uid"])
+		if not b.is_empty() and int(b["uid"]) != uid \
+				and Game.homes.fit(b, placing["item"], uid) != HousingSystem.Fit.WRONG_KIND:
+			home = int(b["uid"])
+	if home == int(placing.get("home", -1)):
+		return
+	placing["home"] = home
+	var thing := str(Game.item_data(placing["item"])["name"])
+	if home == -1:
+		placing_changed.emit((tr("DRAG_TO_MOVE_THE_THEN_LET") if int(placing["uid"]) != -1
+			else tr("DRAG_TO_PLACE_THE_THEN_LET")) % thing)
+		return
+	var b := Game.object_by_uid(home)
+	var why := Game.homes.fit(b, placing["item"], int(placing["uid"]))
+	placing_changed.emit(tr("DROP_TO_MOVE_INTO") % [thing, Game.item_data(b["id"])["name"]]
+		if why == HousingSystem.Fit.FITS else Game.homes.refusal(b, placing["item"], why))
+
+
 ## Placing something taken back out of the barn (free; it keeps its timers reset).
 func start_placing_stored(index: int) -> void:
 	var o: Dictionary = Game.storage.stored[index]
@@ -547,8 +579,19 @@ func _placing_input(event: InputEvent) -> void:
 	# Centre the footprint under the finger.
 	placing["row"] = tile.x - int(fp.y / 2.0)
 	placing["col"] = tile.y - int(fp.x / 2.0)
+	_hover_home(tile)
 	queue_redraw()
 	if not released:
+		return
+	if int(placing.get("home", -1)) != -1:
+		# Dropped on a home: in it goes (or a message says why not, and it stays in hand).
+		var source := {}
+		if int(placing["uid"]) != -1:
+			source = {"uid": int(placing["uid"])}
+		elif int(placing.get("stored", -1)) >= 0:
+			source = {"stored": int(placing["stored"])}
+		if Game.homes.put_in_home(int(placing["home"]), placing["item"], source):
+			cancel_placing()
 		return
 	var row := int(placing["row"])
 	var col := int(placing["col"])

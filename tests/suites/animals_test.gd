@@ -265,7 +265,7 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 	_check(not g.pigpen.feed_slop(uid), "no slop without pigs")
 	for k in 12:
 		g.place_somewhere("pig")
-	_eq(g.fill_building(uid), 12, "12 pigs move in")
+	_eq(g.homes.fill_building(uid), 12, "12 pigs move in")
 	var coins := g.coins
 	_check(g.pigpen.feed_slop(uid), "feed slop")
 	_eq(g.coins, coins - PigPenSystem.SLOP_COST, "slop costs %d coins" % PigPenSystem.SLOP_COST)
@@ -282,7 +282,7 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 	_check(g.pigpen.trade_truffles("berkshire_pig"), "trade for a Berkshire")
 	_eq(g.pigpen.truffles, 0, "10 truffles spent")
 	_eq(_count(g, "berkshire_pig"), 1, "the Berkshire is on the farm")
-	_eq(g.fill_building(uid), 1, "and moves into the pen")
+	_eq(g.homes.fill_building(uid), 1, "and moves into the pen")
 	_eq(g.pigpen.rare_pigs().size(), 4, "4 rare breeds")
 	for id in g.pigpen.rare_pigs():
 		_check(int(g.item_data(id)["payout"]) > int(g.item_data("pig")["payout"]), "%s pays more than a pig" % id)

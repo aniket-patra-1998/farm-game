@@ -1023,10 +1023,10 @@ func _build_building(content: VBoxContainer) -> void:
 				show_message(tr("COINS_XP") % [r["coins"], r["xp"]]))
 		actions.add_child(collect)
 	if o["id"] != "beehive":
-		var loose := Game.loose_matching(o)
+		var loose := Game.homes.loose_matching(o)
 		var fill := _panel_button(tr("MOVE_IN") % loose if loose > 0 else tr("NONE_ON_FARM"))
 		fill.disabled = loose == 0
-		fill.pressed.connect(func() -> void: Game.fill_building(uid))
+		fill.pressed.connect(func() -> void: Game.homes.fill_building(uid))
 		actions.add_child(fill)
 	content.add_child(actions)
 

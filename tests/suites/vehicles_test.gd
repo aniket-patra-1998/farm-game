@@ -194,7 +194,7 @@ func test_60_garage_parks_vehicles_and_state_saves() -> void:
 	garage.erase("construction")
 	g.buy_and_place("tractor", 11, 0)
 	g.buy_and_place("combine", 11, 2)
-	_eq(g.fill_building(int(garage["uid"])), 1, "the tractor parks; the unfinished combine doesn't")
+	_eq(g.homes.fill_building(int(garage["uid"])), 1, "the tractor parks; the unfinished combine doesn't")
 	_check(g.object_at(g.index_of(11, 0)).is_empty(), "the tractor left the field")
 	_check(g.vehicles.owned_vehicles().has("tractor"), "a parked tractor still counts")
 	_eq(int(g.vehicles.use_vehicle("tractor", 8, 8)["plots"]), 4, "and still works from the toolbar")

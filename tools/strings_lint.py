@@ -62,8 +62,11 @@ def player_facing(s, keys=()):
         return False
     if re.fullmatch(r"[a-z0-9_:/.\-]+", s):           # ids, keys, paths, file names
         return False
-    if re.fullmatch(r"[%a-z0-9|_.\- ]*", s) and "%" in s:  # a format with no words
-        return False
+    if "%" in s:
+        # A format: player text if, without its placeholders, there are words separated by spaces.
+        words = re.sub(r"%[-+0-9.]*[a-zA-Z%]", " ", s)
+        if not (re.search(r"[A-Za-z]{2}", words) and re.search(r"[A-Za-z]\s+[A-Za-z]|[A-Za-z]{2}\s", words.strip())):
+            return False
     return True
 
 

@@ -196,7 +196,7 @@ func apply_absence(seconds_away: int) -> String:
 			inside["bee"] = count - gone
 			if int(inside["bee"]) <= 0:
 				inside.erase("bee")
-			notes.append("%d bees left the hive while you were away" % gone)
+			notes.append(tr("BEES_LEFT_WHILE_AWAY") % gone)
 		if days > QUEEN_STAYS_DAYS and has_queen(h):
 			h.erase("queen")
 			notes.append(tr("THE_QUEEN_BEE_FLEW_OFF"))

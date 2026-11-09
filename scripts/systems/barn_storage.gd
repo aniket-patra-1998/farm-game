@@ -102,9 +102,17 @@ func store_object(uid: int) -> bool:
 	o.erase("row")
 	o.erase("col")
 	stored.append(o)
-	game.message.emit("%s stored in the barn" % game.item_data(o["id"])["name"])
+	game.message.emit(tr("STORED_IN_THE_BARN") % game.item_data(o["id"])["name"])
 	game.inventory_changed.emit()
 	game.objects_updated()
+	return true
+
+
+## Takes one stored thing out of the Barn to go straight into a home (it must be the item expected).
+func take_out(index: int, item_id: String) -> bool:
+	if index < 0 or index >= stored.size() or stored[index]["id"] != item_id:
+		return false
+	stored.remove_at(index)
 	return true
 
 
