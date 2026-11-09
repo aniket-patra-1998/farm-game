@@ -115,7 +115,7 @@ func _process(_delta: float) -> void:
 	m.set_shader_parameter("contrast", lerpf(1.05, 0.95, dark))
 	m.set_shader_parameter("lift", Vector3(0.02, 0.035, 0.08) * dark)
 	var low := 0.0 if sun < 0.0 else pow(1.0 - sin(sun * PI), 3.0)  # 1 right at sunrise and sunset
-	m.set_shader_parameter("warm", Color(1.0, 0.62, 0.32, 0.45 * low * (1.0 - cover)))
+	m.set_shader_parameter("warm", Color(1.0, 0.7, 0.45, 0.22 * low * (1.0 - cover)))
 	m.set_shader_parameter("warm_from", Vector2(0.0 if sun < 0.5 else 1.0, 0.3))
 	m.set_shader_parameter("haze", Color(0.84, 0.87, 0.9, float(w["fog"]) * 0.75).lerp(Color(0.25, 0.3, 0.42, float(w["fog"]) * 0.6), dark))
 	m.set_shader_parameter("vignette", lerpf(0.18, 0.4, dark))
