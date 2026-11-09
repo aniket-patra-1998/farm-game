@@ -13,6 +13,7 @@ signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
 signal objects_changed
+signal found(index: int, text: String) # a find on a plot (fuel, a collectible...): floats up from it
 signal building_upgraded(uid: int, level: int)
 signal farm_expanded(size: int)
 signal inventory_changed
@@ -114,6 +115,15 @@ const STRAY_STAYS := 86400         # a stray nobody adopts wanders off after a d
 const STRAY_ADOPT_XP := 5
 const LOST_WEIGHT := 0.25           # each lost animal's share of the stray pool (a 100-coin animal is 1.0)
 const MYSTERY_BOX_GEM_COST := 12
+const COLLECTIBLE_ACTION_CHANCE := 0.02  # FarmVille: any action can drop one (plow, plant, fertilize); harvests are likelier
+const ANIMAL_COLLECTIBLE_CHANCE := 0.05  # collecting animals, trees and buildings (barnyard and orchard sets)
+const FUEL_LEVEL := 12               # FarmVille: fuel finds from level 12
+const FUEL_FIND_CHANCE := 0.08      # FarmVille: plowing your own farm can turn up fuel, once a day
+const FUEL_FIND_SHARE := 0.25       # of a full tank
+const PERFECT_BUNCH_CHANCE := 0.04  # FarmVille: a flower harvest can give a Perfect Bunch
+const BUNCH_DAYS := 14              # a placed Perfect Bunch lasts 14 days
+const BUNCH_CAP_NO_SHED := 10       # bunches kept without a Garden Shed
+const SHED_FREE_BUNCHES := 10       # FarmVille gave 10 bunches with the shed
 const BUSHEL_CHANCE := 0.2          # a harvest drops a bushel of its crop, once you own a crafting building
 const BUSHEL_CAP := 100             # bushels held at once (FarmVille's stall held 100)
 const STALL_CROPS := 6              # the Farmers Market offers this many crops a day
@@ -174,6 +184,11 @@ var egg_data := {}                 # data/mystery_eggs.json
 var box_data := {}                 # data/mystery_box.json
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var bushels := {}                  # crop id -> bushels held, for crafting
+var coll_levels := {}              # collection id -> trade-in levels done (3 levels, then it repeats)
+var fuel_found_day := 0            # the day fuel was last found while plowing
+var bunches: Array = []            # Perfect Bunches held: flower crop ids
+var tree_collection := {}          # the collection found while harvesting trees
+var animal_collection := {}        # the collection found while collecting animals
 var goods := {}                    # recipe id -> crafted goods held
 var crafted := {}                  # recipe id -> lifetime crafts (recipe mastery)
 var stall := {}                    # crop id -> bushels for sale at the Farmers Market today
@@ -186,6 +201,7 @@ var debug_time_offset := 0         # seconds; only changed by the debug skip but
 var tutorial_step: int = Tutorial.HARVEST
 
 var collections: Array = []        # from data/collections.json
+var collections_data := {}         # the whole file: levels, rarity weights
 var collection_of_crop := {}       # crop id -> collection dictionary
 var bird_collection := {}          # the collection whose items are birds
 var item_names := {}               # item id -> display name
@@ -376,9 +392,12 @@ func plow(i: int) -> bool:
 	if not spend(PLOW_COST):
 		message.emit("Not enough coins to plow")
 		return false
+	var old_crop := str(plots[i].get("crop", ""))
 	plots[i] = {"state": "plowed"}
 	add_xp(PLOW_XP)
 	_bump("plowed", 1)
+	_roll_fuel_find(i)
+	_roll_collectible(_plow_collection(old_crop), COLLECTIBLE_ACTION_CHANCE, i)
 	if coins < cheapest_seed_cost():
 		message.emit("Careful: keep some coins for seeds!")
 	_advance_tutorial(Tutorial.PLOW)
@@ -408,6 +427,7 @@ func plant(i: int, crop_id: String) -> bool:
 	plots[i] = {"state": "planted", "crop": crop_id, "planted_at": now()}
 	if use_pollinated:
 		plots[i]["pol"] = true
+	_roll_collectible(collection_of_crop.get(crop_id, {}), COLLECTIBLE_ACTION_CHANCE, i)
 	_advance_tutorial(Tutorial.PLANT)
 	_plot_updated(i)
 	return true
@@ -429,6 +449,7 @@ func fertilize(i: int) -> bool:
 		return false
 	plots[i]["fert"] = true
 	_bump("fertilized", 1)
+	_roll_collectible(collection_of_crop.get(str(plots[i]["crop"]), {}), COLLECTIBLE_ACTION_CHANCE, i)
 	_plot_updated(i)
 	return true
 
@@ -472,6 +493,7 @@ func harvest(i: int) -> Dictionary:
 		message.emit("A %s landed on your farm! (%s collection)" % [drop["name"].to_lower(), drop["collection"]])
 	var part := _roll_part()
 	var bushel := _roll_bushel(crop_id)
+	var bunch := _roll_bunch(crop_id, i)
 	var bee_news := ""
 	if crop.get("flower", false):
 		bee_news = _flower_harvest_bees()
@@ -483,7 +505,8 @@ func harvest(i: int) -> Dictionary:
 		_advance_tutorial(Tutorial.HARVEST)
 	_plot_updated(i)
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
-		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel}
+		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel,
+		"bushels": (1 + mastery_stars(crop_id)) if bushel != "" else 0, "bunch": bunch}
 
 
 # ---------------------------------------------------------------- surprise drops
@@ -533,8 +556,10 @@ func _roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 func _pick_item(coll: Dictionary) -> String:
 	var weights: Array[float] = []
 	var total := 0.0
+	var rarity: Dictionary = collections_data.get("rarity_weight", {})
 	for item in coll["items"]:
 		var w := 1.0 / (1.0 + 2.0 * int(owned.get(item["id"], 0)))
+		w *= float(rarity.get(item.get("rarity", "common"), 1))
 		weights.append(w)
 		total += w
 	var pick := rng.randf() * total
@@ -547,9 +572,30 @@ func _pick_item(coll: Dictionary) -> String:
 
 # ---------------------------------------------------------------- collections
 
-func can_trade_in(coll: Dictionary) -> bool:
+## The trade-in level this set is on next: 0, 1 or 2 (after level 3 it repeats from level 1).
+func coll_level(coll: Dictionary) -> int:
+	return int(coll_levels.get(coll["id"], 0)) % 3
+
+
+## Item id -> how many the next trade-in takes (FarmVille: 3/2/1, then 6/4/2, then 12/8/4).
+func coll_need(coll: Dictionary) -> Dictionary:
+	var need: Dictionary = collections_data["levels"][coll_level(coll)]["need"]
+	var out := {}
 	for item in coll["items"]:
-		if int(owned.get(item["id"], 0)) < 1:
+		out[item["id"]] = int(need.get(item.get("rarity", "common"), 1))
+	return out
+
+
+## {"coins", "xp", "prize"} for the next trade-in.
+func coll_reward(coll: Dictionary) -> Dictionary:
+	var lvl: Dictionary = collections_data["levels"][coll_level(coll)]
+	return {"coins": int(lvl["coins"]), "xp": int(lvl["xp"]), "prize": coll["rewards"][coll_level(coll)]}
+
+
+func can_trade_in(coll: Dictionary) -> bool:
+	var need := coll_need(coll)
+	for id in need:
+		if int(owned.get(id, 0)) < int(need[id]):
 			return false
 	return true
 
@@ -560,18 +606,123 @@ func trade_in(coll_id: String) -> bool:
 			continue
 		if not can_trade_in(coll):
 			return false
-		for item in coll["items"]:
-			owned[item["id"]] = int(owned[item["id"]]) - 1
-		add_coins(int(coll["reward_coins"]))
-		add_xp(int(coll["reward_xp"]))
-		message.emit("%s collection traded in: +%d coins, +%d XP" % [
-			coll["name"], int(coll["reward_coins"]), int(coll["reward_xp"])])
+		var need := coll_need(coll)
+		var reward := coll_reward(coll)
+		var lvl := coll_level(coll) + 1
+		for id in need:
+			owned[id] = int(owned[id]) - int(need[id])
+		add_coins(int(reward["coins"]))
+		add_xp(int(reward["xp"]))
+		var prize := _give_prize(reward["prize"])
+		coll_levels[coll_id] = int(coll_levels.get(coll_id, 0)) + 1
+		message.emit("%s level %d! +%d coins, +%d XP and %s" % [coll["name"], lvl, int(reward["coins"]), int(reward["xp"]), prize])
 		_bump("collections_traded", 1)
-		add_unwithers(1)
 		collections_changed.emit()
 		queue_save()
 		return true
 	return false
+
+
+## One roll for a collectible from a set, outside harvests (no pity). Returns the item name or "".
+func _roll_collectible(coll: Dictionary, chance: float, index := -1) -> String:
+	if coll.is_empty() or not drops_enabled or rng.randf() >= chance:
+		return ""
+	var item_id := _pick_item(coll)
+	owned[item_id] = int(owned.get(item_id, 0)) + 1
+	collections_changed.emit()
+	var text := "Found: " + item_names[item_id]
+	if index >= 0:
+		found.emit(index, text)
+	else:
+		message.emit("%s (%s collection)" % [text, coll["name"]])
+	return item_names[item_id]
+
+
+## A collection to roll on a plow: the set of the crop that was there, or one for a crop you can grow.
+func _plow_collection(old_crop: String) -> Dictionary:
+	if collection_of_crop.has(old_crop):
+		return collection_of_crop[old_crop]
+	var pool: Array = []
+	for coll in collections:
+		for c in coll.get("crops", []):
+			if crops.has(c) and int(crops[c]["unlock_level"]) <= level():
+				pool.append(coll)
+				break
+	return pool[rng.randi_range(0, pool.size() - 1)] if not pool.is_empty() else {}
+
+
+## Adds fuel; past a full tank it fills spare tanks.
+func _add_fuel(n: int) -> void:
+	if not fuel_unlocked:
+		fuel_unlocked = true
+		fuel_t = now()
+	fuel = fuel_now() + n
+	while fuel > FUEL_TANK:
+		fuel -= FUEL_TANK
+		fuel_tanks += 1
+	if fuel >= FUEL_TANK:
+		fuel_t = now()
+	inventory_changed.emit()
+
+
+## FarmVille: plowing your own farm can turn up fuel, at most once a day.
+func _roll_fuel_find(i: int) -> int:
+	if not drops_enabled or level() < FUEL_LEVEL or fuel_found_day == day_number() or rng.randf() >= FUEL_FIND_CHANCE:
+		return 0
+	fuel_found_day = day_number()
+	var n := int(FUEL_TANK * FUEL_FIND_SHARE)
+	_add_fuel(n)
+	found.emit(i, "Found fuel! +%d" % n)
+	return n
+
+
+# ---------------------------------------------------------------- Perfect Bunches and the Garden Shed
+
+func bunch_cap() -> int:
+	for o in objects:
+		if o["id"] == "garden_shed":
+			return int(item_data("garden_shed")["levels"][0])
+	return BUNCH_CAP_NO_SHED
+
+
+func add_bunch(flower: String) -> bool:
+	if bunches.size() >= bunch_cap():
+		return false
+	bunches.append(flower)
+	inventory_changed.emit()
+	return true
+
+
+func _roll_bunch(crop_id: String, i: int) -> String:
+	if not drops_enabled or not crops[crop_id].get("flower", false) or rng.randf() >= PERFECT_BUNCH_CHANCE:
+		return ""
+	if not add_bunch(crop_id):
+		return ""
+	_bump("perfect_bunches", 1)
+	found.emit(i, "Perfect Bunch of %s!" % crops[crop_id]["name"])
+	return crop_id
+
+
+## Takes a bunch out of the shed, ready to place: it goes to the end of the storage list. Returns its index.
+func unpack_bunch(k: int) -> int:
+	if k < 0 or k >= bunches.size():
+		return -1
+	var flower: String = bunches[k]
+	bunches.remove_at(k)
+	stored.append({"uid": next_uid, "id": "perfect_bunch", "flower": flower, "t": now(), "bunch": true})
+	next_uid += 1
+	inventory_changed.emit()
+	return stored.size() - 1
+
+
+## Placed bunches wilt away after BUNCH_DAYS days.
+func _expire_bunches() -> void:
+	var before := objects.size()
+	objects = objects.filter(func(o): return not (o["id"] == "perfect_bunch" and now() >= int(o.get("expires", now() + 1))))
+	if objects.size() != before:
+		_rebuild_occupancy()
+		message.emit("A Perfect Bunch has wilted away")
+		_objects_updated()
 
 
 # ---------------------------------------------------------------- ribbons
@@ -706,6 +857,15 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 		add_xp(bought_xp)
 	if it["kind"] == "decor":
 		_bump("decor_bought", 1)
+	if it.get("special", "") == "garden_shed":
+		var flowers: Array[String] = []
+		for c in crop_order:
+			if crops[c].get("flower", false) and int(crops[c]["unlock_level"]) <= level():
+				flowers.append(c)
+		for k in SHED_FREE_BUNCHES:
+			if not flowers.is_empty():
+				bunches.append(flowers[rng.randi_range(0, flowers.size() - 1)])
+		message.emit("Garden Shed built! It holds 100 Perfect Bunches, and here are %d to start." % SHED_FREE_BUNCHES)
 	if it["kind"] == "crafting":
 		obj["level"] = 1
 		obj["slots"] = []
@@ -884,6 +1044,13 @@ func collect(uid: int) -> Dictionary:
 			obj["id"] = adult
 			message.emit("Your %s grew up into a %s!" % [name_before.to_lower(), item_data(adult)["name"].to_lower()])
 			extras.append("Grew up!")
+	var coll_find := ""
+	if kind_of(obj) == "tree":
+		coll_find = _roll_collectible(tree_collection, ANIMAL_COLLECTIBLE_CHANCE)
+	elif kind_of(obj) == "animal" or is_building(obj):
+		coll_find = _roll_collectible(animal_collection, ANIMAL_COLLECTIBLE_CHANCE)
+	if coll_find != "":
+		extras.append("Found: " + coll_find)
 	if drop.get("type", "") == "golden":
 		_bump("golden_finds", 1)
 		message.emit("Golden collection! %dx coins" % GOLDEN_COIN_MULTIPLIER)
@@ -1222,6 +1389,9 @@ func _give_prize(prize: Array) -> String:
 		"arborist":
 			arborists += int(prize[1])
 			return "%d Arborist" % int(prize[1])
+		"fuel":
+			_add_fuel(int(prize[1]))
+			return "%d fuel" % int(prize[1])
 		"fertilize_all":
 			fertilize_alls += int(prize[1])
 			return "%d Fertilize All" % int(prize[1])
@@ -1510,6 +1680,8 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	o["row"] = row
 	o["col"] = col
 	o["t"] = now() # production restarts when it comes back out
+	if o.get("bunch", false) and not o.has("expires"):
+		o["expires"] = now() + BUNCH_DAYS * 86400
 	_grass_over(o["id"], row, col)
 	objects.append(o)
 	inventory_changed.emit()
@@ -2024,6 +2196,7 @@ func upgrade_vehicle(id: String) -> bool:
 
 ## Called on start, every 30 seconds, and after a debug time skip.
 func check_strays() -> void:
+	_expire_bunches()
 	var t := now()
 	var changed := false
 	var keep: Array = []
@@ -2209,7 +2382,8 @@ func add_bushels(crop_id: String, n: int) -> int:
 func _roll_bushel(crop_id: String) -> String:
 	if not drops_enabled or not owns_crafting() or rng.randf() >= BUSHEL_CHANCE:
 		return ""
-	return crop_id if add_bushels(crop_id, 1) > 0 else ""
+	# FarmVille: each bushel found comes with one extra per mastery star on that crop.
+	return crop_id if add_bushels(crop_id, 1 + mastery_stars(crop_id)) > 0 else ""
 
 
 ## Bushels still needed for one craft: crop id -> how many more.
@@ -2334,15 +2508,7 @@ func use_good(rid: String) -> int:
 		return 0
 	var f := good_fuel(rid)
 	_take_good(rid)
-	if not fuel_unlocked:
-		fuel_unlocked = true
-		fuel_t = now()
-	fuel = fuel_now() + f
-	while fuel > FUEL_TANK:
-		fuel -= FUEL_TANK
-		fuel_tanks += 1
-	if fuel >= FUEL_TANK:
-		fuel_t = now()
+	_add_fuel(f)
 	return f
 
 
@@ -2708,10 +2874,14 @@ func _load_crops() -> void:
 
 func _load_collections() -> void:
 	var parsed := _read_json("res://data/collections.json")
+	collections_data = parsed
 	collections = parsed.get("collections", [])
 	for coll in collections:
 		if coll.get("birds", false):
 			bird_collection = coll
+		match str(coll.get("source", "")):
+			"trees": tree_collection = coll
+			"animals": animal_collection = coll
 		for crop_id in coll.get("crops", []):
 			collection_of_crop[crop_id] = coll
 		for item in coll["items"]:
@@ -2784,6 +2954,9 @@ func _new_game() -> void:
 	parts = {}
 	for p in PARTS:
 		parts[p] = 0
+	coll_levels = {}
+	fuel_found_day = 0
+	bunches = []
 	bushels = {}
 	goods = {}
 	crafted = {}
@@ -2865,6 +3038,9 @@ func save_game() -> void:
 		"next_stray_at": next_stray_at,
 		"next_uid": next_uid,
 		"bushels": bushels,
+		"coll_levels": coll_levels,
+		"fuel_found_day": fuel_found_day,
+		"bunches": bunches,
 		"goods": goods,
 		"crafted": crafted,
 		"stall": stall,
@@ -2917,6 +3093,9 @@ func load_game() -> bool:
 	last_daily_day = int(data.get("last_daily_day", day_number()))
 	daily_streak = int(data.get("daily_streak", 0))
 	bushels = _int_map(data.get("bushels", {}))
+	coll_levels = _int_map(data.get("coll_levels", {}))
+	fuel_found_day = int(data.get("fuel_found_day", 0))
+	bunches = (data.get("bunches", []) as Array).duplicate()
 	goods = _int_map(data.get("goods", {}))
 	crafted = _int_map(data.get("crafted", {}))
 	stall = _int_map(data.get("stall", {}))

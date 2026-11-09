@@ -1,5 +1,5 @@
 {
-  "_note": "Collectibles drop while harvesting the listed crops. The bird collection has no crops: birds can visit any harvest or collection. Trade in a full set for the reward.",
+  "_note": "FarmVille's collections. Items turn up on any farm action: harvesting the listed crops (best odds), planting, plowing and fertilizing them, harvesting trees (orchard collection) and collecting animals (barnyard). Each set has 3 common items, 1 uncommon and 1 rare. Trade-ins go in 3 levels (FarmVille: 3 of each common, 2 uncommon, 1 rare; then 6/4/2; then 12/8/4), each paying coins, XP and that level's prize; after level 3 it repeats level 1. Prizes: [kind, amount or item] as in mystery_eggs.json.",
   "collections": [
     {
       "id": "berry_patch",
@@ -10,29 +10,46 @@
         "blueberries",
         "cranberries"
       ],
-      "reward_coins": 500,
-      "reward_xp": 25,
       "items": [
         {
           "id": "ladybug_pin",
-          "name": "Ladybug Pin"
+          "name": "Ladybug Pin",
+          "rarity": "common"
         },
         {
           "id": "berry_basket",
-          "name": "Berry Basket"
+          "name": "Berry Basket",
+          "rarity": "common"
         },
         {
           "id": "garden_gloves",
-          "name": "Garden Gloves"
+          "name": "Garden Gloves",
+          "rarity": "common"
         },
         {
           "id": "straw_hat",
-          "name": "Straw Hat"
+          "name": "Straw Hat",
+          "rarity": "uncommon"
         },
         {
           "id": "tin_watering_can",
-          "name": "Tin Watering Can"
+          "name": "Tin Watering Can",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fertilize_all",
+          1
+        ],
+        [
+          "item",
+          "garden_gnome"
+        ],
+        [
+          "item",
+          "pink_cow"
+        ]
       ]
     },
     {
@@ -43,29 +60,46 @@
         "corn",
         "rice"
       ],
-      "reward_coins": 800,
-      "reward_xp": 40,
       "items": [
         {
           "id": "scarecrow_button",
-          "name": "Scarecrow Button"
+          "name": "Scarecrow Button",
+          "rarity": "common"
         },
         {
           "id": "grain_sack",
-          "name": "Grain Sack"
+          "name": "Grain Sack",
+          "rarity": "common"
         },
         {
           "id": "old_sickle",
-          "name": "Old Sickle"
+          "name": "Old Sickle",
+          "rarity": "common"
         },
         {
           "id": "corn_doll",
-          "name": "Corn Doll"
+          "name": "Corn Doll",
+          "rarity": "uncommon"
         },
         {
           "id": "harvest_charm",
-          "name": "Harvest Charm"
+          "name": "Harvest Charm",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "arborist",
+          1
+        ],
+        [
+          "item",
+          "birdbath"
+        ],
+        [
+          "item",
+          "black_sheep"
+        ]
       ]
     },
     {
@@ -75,29 +109,46 @@
         "soybeans",
         "peanuts"
       ],
-      "reward_coins": 600,
-      "reward_xp": 30,
       "items": [
         {
           "id": "bean_counter_seed_pouch",
-          "name": "Seed Pouch"
+          "name": "Seed Pouch",
+          "rarity": "common"
         },
         {
           "id": "bean_counter_pod_peeler",
-          "name": "Pod Peeler"
+          "name": "Pod Peeler",
+          "rarity": "common"
         },
         {
           "id": "bean_counter_peanut_jar",
-          "name": "Peanut Jar"
+          "name": "Peanut Jar",
+          "rarity": "common"
         },
         {
           "id": "bean_counter_bean_scoop",
-          "name": "Bean Scoop"
+          "name": "Bean Scoop",
+          "rarity": "uncommon"
         },
         {
           "id": "bean_counter_shelling_bowl",
-          "name": "Shelling Bowl"
+          "name": "Shelling Bowl",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "farmhand",
+          1
+        ],
+        [
+          "item",
+          "sundial"
+        ],
+        [
+          "item",
+          "gray_horse"
+        ]
       ]
     },
     {
@@ -108,29 +159,46 @@
         "lilac",
         "daffodils"
       ],
-      "reward_coins": 1000,
-      "reward_xp": 50,
       "items": [
         {
           "id": "bee_badge",
-          "name": "Bee Badge"
+          "name": "Bee Badge",
+          "rarity": "common"
         },
         {
           "id": "seed_packet",
-          "name": "Seed Packet"
+          "name": "Seed Packet",
+          "rarity": "common"
         },
         {
           "id": "pressed_petal",
-          "name": "Pressed Petal"
+          "name": "Pressed Petal",
+          "rarity": "common"
         },
         {
           "id": "flower_press",
-          "name": "Flower Press"
+          "name": "Flower Press",
+          "rarity": "uncommon"
         },
         {
           "id": "garden_trowel",
-          "name": "Garden Trowel"
+          "name": "Garden Trowel",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fuel",
+          50
+        ],
+        [
+          "item",
+          "lamp_post"
+        ],
+        [
+          "item",
+          "brown_cow"
+        ]
       ]
     },
     {
@@ -141,29 +209,46 @@
         "red_tulips",
         "lavender"
       ],
-      "reward_coins": 1200,
-      "reward_xp": 50,
       "items": [
         {
           "id": "bouquet_ribbon_bow",
-          "name": "Ribbon Bow"
+          "name": "Ribbon Bow",
+          "rarity": "common"
         },
         {
           "id": "bouquet_flower_snips",
-          "name": "Flower Snips"
+          "name": "Flower Snips",
+          "rarity": "common"
         },
         {
           "id": "bouquet_tulip_bulb",
-          "name": "Tulip Bulb"
+          "name": "Tulip Bulb",
+          "rarity": "common"
         },
         {
           "id": "bouquet_lavender_sachet",
-          "name": "Lavender Sachet"
+          "name": "Lavender Sachet",
+          "rarity": "uncommon"
         },
         {
           "id": "bouquet_glass_vase",
-          "name": "Glass Vase"
+          "name": "Glass Vase",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "unwither",
+          2
+        ],
+        [
+          "item",
+          "pink_flamingo"
+        ],
+        [
+          "item",
+          "mouflon_sheep"
+        ]
       ]
     },
     {
@@ -173,29 +258,46 @@
         "potatoes",
         "carrots"
       ],
-      "reward_coins": 1500,
-      "reward_xp": 75,
       "items": [
         {
           "id": "oil_lantern",
-          "name": "Oil Lantern"
+          "name": "Oil Lantern",
+          "rarity": "common"
         },
         {
           "id": "pickle_jar",
-          "name": "Pickle Jar"
+          "name": "Pickle Jar",
+          "rarity": "common"
         },
         {
           "id": "rusty_key",
-          "name": "Rusty Key"
+          "name": "Rusty Key",
+          "rarity": "common"
         },
         {
           "id": "old_almanac",
-          "name": "Old Almanac"
+          "name": "Old Almanac",
+          "rarity": "uncommon"
         },
         {
           "id": "spinning_top",
-          "name": "Spinning Top"
+          "name": "Spinning Top",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fertilize_all",
+          1
+        ],
+        [
+          "item",
+          "scarecrow"
+        ],
+        [
+          "item",
+          "swan"
+        ]
       ]
     },
     {
@@ -206,29 +308,46 @@
         "squash",
         "watermelon"
       ],
-      "reward_coins": 1000,
-      "reward_xp": 45,
       "items": [
         {
           "id": "gourd_gallery_carving_knife",
-          "name": "Carving Knife"
+          "name": "Carving Knife",
+          "rarity": "common"
         },
         {
           "id": "gourd_gallery_vine_clip",
-          "name": "Vine Clip"
+          "name": "Vine Clip",
+          "rarity": "common"
         },
         {
           "id": "gourd_gallery_melon_baller",
-          "name": "Melon Baller"
+          "name": "Melon Baller",
+          "rarity": "common"
         },
         {
           "id": "gourd_gallery_gourd_rattle",
-          "name": "Gourd Rattle"
+          "name": "Gourd Rattle",
+          "rarity": "uncommon"
         },
         {
           "id": "gourd_gallery_prize_ribbon",
-          "name": "Prize Ribbon"
+          "name": "Prize Ribbon",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "arborist",
+          1
+        ],
+        [
+          "item",
+          "wheelbarrow"
+        ],
+        [
+          "item",
+          "mustang"
+        ]
       ]
     },
     {
@@ -241,29 +360,46 @@
         "spinach",
         "artichokes"
       ],
-      "reward_coins": 1000,
-      "reward_xp": 45,
       "items": [
         {
           "id": "market_garden_trowel",
-          "name": "Trowel"
+          "name": "Trowel",
+          "rarity": "common"
         },
         {
           "id": "market_garden_garden_twine",
-          "name": "Garden Twine"
+          "name": "Garden Twine",
+          "rarity": "common"
         },
         {
           "id": "market_garden_pepper_pot",
-          "name": "Pepper Pot"
+          "name": "Pepper Pot",
+          "rarity": "common"
         },
         {
           "id": "market_garden_salad_spinner",
-          "name": "Salad Spinner"
+          "name": "Salad Spinner",
+          "rarity": "uncommon"
         },
         {
           "id": "market_garden_seed_packet",
-          "name": "Seed Packet"
+          "name": "Seed Packet",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "farmhand",
+          1
+        ],
+        [
+          "item",
+          "garden_gnome"
+        ],
+        [
+          "item",
+          "belted_duck"
+        ]
       ]
     },
     {
@@ -274,29 +410,46 @@
         "pineapples",
         "grapes"
       ],
-      "reward_coins": 1500,
-      "reward_xp": 60,
       "items": [
         {
           "id": "sweet_tooth_candy_cane",
-          "name": "Candy Cane"
+          "name": "Candy Cane",
+          "rarity": "common"
         },
         {
           "id": "sweet_tooth_pineapple_crown",
-          "name": "Pineapple Crown"
+          "name": "Pineapple Crown",
+          "rarity": "common"
         },
         {
           "id": "sweet_tooth_grape_press",
-          "name": "Grape Press"
+          "name": "Grape Press",
+          "rarity": "common"
         },
         {
           "id": "sweet_tooth_sugar_cube",
-          "name": "Sugar Cube"
+          "name": "Sugar Cube",
+          "rarity": "uncommon"
         },
         {
           "id": "sweet_tooth_honey_dipper",
-          "name": "Honey Dipper"
+          "name": "Honey Dipper",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fuel",
+          50
+        ],
+        [
+          "item",
+          "birdbath"
+        ],
+        [
+          "item",
+          "boer_goat"
+        ]
       ]
     },
     {
@@ -305,29 +458,46 @@
       "crops": [
         "cotton"
       ],
-      "reward_coins": 1200,
-      "reward_xp": 50,
       "items": [
         {
           "id": "cotton_mill_spindle",
-          "name": "Spindle"
+          "name": "Spindle",
+          "rarity": "common"
         },
         {
           "id": "cotton_mill_cotton_boll",
-          "name": "Cotton Boll"
+          "name": "Cotton Boll",
+          "rarity": "common"
         },
         {
           "id": "cotton_mill_thimble",
-          "name": "Thimble"
+          "name": "Thimble",
+          "rarity": "common"
         },
         {
           "id": "cotton_mill_bobbin",
-          "name": "Bobbin"
+          "name": "Bobbin",
+          "rarity": "uncommon"
         },
         {
           "id": "cotton_mill_quilt_square",
-          "name": "Quilt Square"
+          "name": "Quilt Square",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "unwither",
+          2
+        ],
+        [
+          "item",
+          "sundial"
+        ],
+        [
+          "item",
+          "turtle"
+        ]
       ]
     },
     {
@@ -339,29 +509,46 @@
         "white_grapes",
         "coffee"
       ],
-      "reward_coins": 1000,
-      "reward_xp": 40,
       "items": [
         {
           "id": "bramble_thorn_gloves",
-          "name": "Thorn Gloves"
+          "name": "Thorn Gloves",
+          "rarity": "common"
         },
         {
           "id": "bramble_jam_jar",
-          "name": "Jam Jar"
+          "name": "Jam Jar",
+          "rarity": "common"
         },
         {
           "id": "bramble_bramble_hook",
-          "name": "Bramble Hook"
+          "name": "Bramble Hook",
+          "rarity": "common"
         },
         {
           "id": "bramble_picking_pail",
-          "name": "Picking Pail"
+          "name": "Picking Pail",
+          "rarity": "uncommon"
         },
         {
           "id": "bramble_berry_stain",
-          "name": "Berry Stain"
+          "name": "Berry Stain",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fertilize_all",
+          1
+        ],
+        [
+          "item",
+          "lamp_post"
+        ],
+        [
+          "item",
+          "wild_turkey"
+        ]
       ]
     },
     {
@@ -374,29 +561,46 @@
         "posole_corn",
         "amaranth"
       ],
-      "reward_coins": 1250,
-      "reward_xp": 45,
       "items": [
         {
           "id": "grain_silo_flail",
-          "name": "Flail"
+          "name": "Flail",
+          "rarity": "common"
         },
         {
           "id": "grain_silo_seed_drill",
-          "name": "Seed Drill"
+          "name": "Seed Drill",
+          "rarity": "common"
         },
         {
           "id": "grain_silo_winnowing_basket",
-          "name": "Winnowing Basket"
+          "name": "Winnowing Basket",
+          "rarity": "common"
         },
         {
           "id": "grain_silo_grain_scoop",
-          "name": "Grain Scoop"
+          "name": "Grain Scoop",
+          "rarity": "uncommon"
         },
         {
           "id": "grain_silo_silo_key",
-          "name": "Silo Key"
+          "name": "Silo Key",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "arborist",
+          1
+        ],
+        [
+          "item",
+          "pink_flamingo"
+        ],
+        [
+          "item",
+          "black_pony"
+        ]
       ]
     },
     {
@@ -406,29 +610,46 @@
         "peas",
         "purple_pod_peas"
       ],
-      "reward_coins": 1500,
-      "reward_xp": 50,
       "items": [
         {
           "id": "pea_pod_pea_shooter",
-          "name": "Pea Shooter"
+          "name": "Pea Shooter",
+          "rarity": "common"
         },
         {
           "id": "pea_pod_pod_clip",
-          "name": "Pod Clip"
+          "name": "Pod Clip",
+          "rarity": "common"
         },
         {
           "id": "pea_pod_shelling_tray",
-          "name": "Shelling Tray"
+          "name": "Shelling Tray",
+          "rarity": "common"
         },
         {
           "id": "pea_pod_twine_ball",
-          "name": "Twine Ball"
+          "name": "Twine Ball",
+          "rarity": "uncommon"
         },
         {
           "id": "pea_pod_pea_trellis_tag",
-          "name": "Pea Trellis Tag"
+          "name": "Pea Trellis Tag",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "farmhand",
+          1
+        ],
+        [
+          "item",
+          "scarecrow"
+        ],
+        [
+          "item",
+          "pink_cow"
+        ]
       ]
     },
     {
@@ -440,29 +661,46 @@
         "purple_poppies",
         "columbine"
       ],
-      "reward_coins": 1750,
-      "reward_xp": 55,
       "items": [
         {
           "id": "wildflowers_meadow_map",
-          "name": "Meadow Map"
+          "name": "Meadow Map",
+          "rarity": "common"
         },
         {
           "id": "wildflowers_butterfly_net",
-          "name": "Butterfly Net"
+          "name": "Butterfly Net",
+          "rarity": "common"
         },
         {
           "id": "wildflowers_dried_poppy",
-          "name": "Dried Poppy"
+          "name": "Dried Poppy",
+          "rarity": "common"
         },
         {
           "id": "wildflowers_lily_pad",
-          "name": "Lily Pad"
+          "name": "Lily Pad",
+          "rarity": "uncommon"
         },
         {
           "id": "wildflowers_field_guide",
-          "name": "Field Guide"
+          "name": "Field Guide",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fuel",
+          50
+        ],
+        [
+          "item",
+          "wheelbarrow"
+        ],
+        [
+          "item",
+          "black_sheep"
+        ]
       ]
     },
     {
@@ -475,29 +713,46 @@
         "forget_me_nots",
         "pink_roses"
       ],
-      "reward_coins": 2000,
-      "reward_xp": 60,
       "items": [
         {
           "id": "bridal_bouquet_lace_ribbon",
-          "name": "Lace Ribbon"
+          "name": "Lace Ribbon",
+          "rarity": "common"
         },
         {
           "id": "bridal_bouquet_silver_pin",
-          "name": "Silver Pin"
+          "name": "Silver Pin",
+          "rarity": "common"
         },
         {
           "id": "bridal_bouquet_rose_thorn",
-          "name": "Rose Thorn"
+          "name": "Rose Thorn",
+          "rarity": "common"
         },
         {
           "id": "bridal_bouquet_daisy_chain",
-          "name": "Daisy Chain"
+          "name": "Daisy Chain",
+          "rarity": "uncommon"
         },
         {
           "id": "bridal_bouquet_keepsake_box",
-          "name": "Keepsake Box"
+          "name": "Keepsake Box",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "unwither",
+          2
+        ],
+        [
+          "item",
+          "garden_gnome"
+        ],
+        [
+          "item",
+          "gray_horse"
+        ]
       ]
     },
     {
@@ -508,29 +763,46 @@
         "ginger",
         "heirloom_carrots"
       ],
-      "reward_coins": 2250,
-      "reward_xp": 65,
       "items": [
         {
           "id": "kitchen_roots_braided_onions",
-          "name": "Braided Onions"
+          "name": "Braided Onions",
+          "rarity": "common"
         },
         {
           "id": "kitchen_roots_ginger_grater",
-          "name": "Ginger Grater"
+          "name": "Ginger Grater",
+          "rarity": "common"
         },
         {
           "id": "kitchen_roots_root_brush",
-          "name": "Root Brush"
+          "name": "Root Brush",
+          "rarity": "common"
         },
         {
           "id": "kitchen_roots_clay_crock",
-          "name": "Clay Crock"
+          "name": "Clay Crock",
+          "rarity": "uncommon"
         },
         {
           "id": "kitchen_roots_recipe_card",
-          "name": "Recipe Card"
+          "name": "Recipe Card",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fertilize_all",
+          1
+        ],
+        [
+          "item",
+          "birdbath"
+        ],
+        [
+          "item",
+          "brown_cow"
+        ]
       ]
     },
     {
@@ -545,29 +817,46 @@
         "cucumber",
         "pattypan_squash"
       ],
-      "reward_coins": 2500,
-      "reward_xp": 70,
       "items": [
         {
           "id": "vine_harvest_vine_snips",
-          "name": "Vine Snips"
+          "name": "Vine Snips",
+          "rarity": "common"
         },
         {
           "id": "vine_harvest_melon_scale",
-          "name": "Melon Scale"
+          "name": "Melon Scale",
+          "rarity": "common"
         },
         {
           "id": "vine_harvest_square_mould",
-          "name": "Square Mould"
+          "name": "Square Mould",
+          "rarity": "common"
         },
         {
           "id": "vine_harvest_pickling_jar",
-          "name": "Pickling Jar"
+          "name": "Pickling Jar",
+          "rarity": "uncommon"
         },
         {
           "id": "vine_harvest_blue_ribbon",
-          "name": "Blue Ribbon"
+          "name": "Blue Ribbon",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "arborist",
+          1
+        ],
+        [
+          "item",
+          "sundial"
+        ],
+        [
+          "item",
+          "mouflon_sheep"
+        ]
       ]
     },
     {
@@ -579,29 +868,46 @@
         "broccoli",
         "asparagus"
       ],
-      "reward_coins": 2750,
-      "reward_xp": 75,
       "items": [
         {
           "id": "veg_patch_chili_ristra",
-          "name": "Chili Ristra"
+          "name": "Chili Ristra",
+          "rarity": "common"
         },
         {
           "id": "veg_patch_cabbage_crate",
-          "name": "Cabbage Crate"
+          "name": "Cabbage Crate",
+          "rarity": "common"
         },
         {
           "id": "veg_patch_asparagus_knife",
-          "name": "Asparagus Knife"
+          "name": "Asparagus Knife",
+          "rarity": "common"
         },
         {
           "id": "veg_patch_slug_trap",
-          "name": "Slug Trap"
+          "name": "Slug Trap",
+          "rarity": "uncommon"
         },
         {
           "id": "veg_patch_garden_kneeler",
-          "name": "Garden Kneeler"
+          "name": "Garden Kneeler",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "farmhand",
+          1
+        ],
+        [
+          "item",
+          "lamp_post"
+        ],
+        [
+          "item",
+          "swan"
+        ]
       ]
     },
     {
@@ -616,59 +922,219 @@
         "bamboo",
         "aloe_vera"
       ],
-      "reward_coins": 3000,
-      "reward_xp": 80,
       "items": [
         {
           "id": "herb_garden_tea_tin",
-          "name": "Tea Tin"
+          "name": "Tea Tin",
+          "rarity": "common"
         },
         {
           "id": "herb_garden_mortar_and_pestle",
-          "name": "Mortar and Pestle"
+          "name": "Mortar and Pestle",
+          "rarity": "common"
         },
         {
           "id": "herb_garden_saffron_thread",
-          "name": "Saffron Thread"
+          "name": "Saffron Thread",
+          "rarity": "common"
         },
         {
           "id": "herb_garden_four_leaf_clover",
-          "name": "Four-Leaf Clover"
+          "name": "Four-Leaf Clover",
+          "rarity": "uncommon"
         },
         {
           "id": "herb_garden_bamboo_whisk",
-          "name": "Bamboo Whisk"
+          "name": "Bamboo Whisk",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "fuel",
+          50
+        ],
+        [
+          "item",
+          "pink_flamingo"
+        ],
+        [
+          "item",
+          "mustang"
+        ]
+      ]
+    },
+    {
+      "id": "orchard_harvest",
+      "name": "Orchard Harvest",
+      "source": "trees",
+      "items": [
+        {
+          "id": "orchard_harvest_fruit_picker",
+          "name": "Fruit Picker",
+          "rarity": "common"
+        },
+        {
+          "id": "orchard_harvest_apple_peeler",
+          "name": "Apple Peeler",
+          "rarity": "common"
+        },
+        {
+          "id": "orchard_harvest_cider_jug",
+          "name": "Cider Jug",
+          "rarity": "common"
+        },
+        {
+          "id": "orchard_harvest_pruning_saw",
+          "name": "Pruning Saw",
+          "rarity": "uncommon"
+        },
+        {
+          "id": "orchard_harvest_golden_apple",
+          "name": "Golden Apple",
+          "rarity": "rare"
+        }
+      ],
+      "rewards": [
+        [
+          "unwither",
+          2
+        ],
+        [
+          "item",
+          "scarecrow"
+        ],
+        [
+          "item",
+          "belted_duck"
+        ]
+      ]
+    },
+    {
+      "id": "barnyard",
+      "name": "Barnyard",
+      "source": "animals",
+      "items": [
+        {
+          "id": "barnyard_cow_bell",
+          "name": "Cow Bell",
+          "rarity": "common"
+        },
+        {
+          "id": "barnyard_milk_pail",
+          "name": "Milk Pail",
+          "rarity": "common"
+        },
+        {
+          "id": "barnyard_horseshoe",
+          "name": "Horseshoe",
+          "rarity": "common"
+        },
+        {
+          "id": "barnyard_feed_scoop",
+          "name": "Feed Scoop",
+          "rarity": "uncommon"
+        },
+        {
+          "id": "barnyard_blue_ribbon_rosette",
+          "name": "Blue Ribbon Rosette",
+          "rarity": "rare"
+        }
+      ],
+      "rewards": [
+        [
+          "fertilize_all",
+          1
+        ],
+        [
+          "item",
+          "wheelbarrow"
+        ],
+        [
+          "item",
+          "boer_goat"
+        ]
       ]
     },
     {
       "id": "farm_birds",
       "name": "Farm Birds",
       "birds": true,
-      "reward_coins": 1200,
-      "reward_xp": 60,
       "items": [
         {
           "id": "robin",
-          "name": "Robin"
+          "name": "Robin",
+          "rarity": "common"
         },
         {
           "id": "sparrow",
-          "name": "Sparrow"
+          "name": "Sparrow",
+          "rarity": "common"
         },
         {
           "id": "bluebird",
-          "name": "Bluebird"
+          "name": "Bluebird",
+          "rarity": "common"
         },
         {
           "id": "cardinal",
-          "name": "Cardinal"
+          "name": "Cardinal",
+          "rarity": "uncommon"
         },
         {
           "id": "goldfinch",
-          "name": "Goldfinch"
+          "name": "Goldfinch",
+          "rarity": "rare"
         }
+      ],
+      "rewards": [
+        [
+          "arborist",
+          1
+        ],
+        [
+          "item",
+          "garden_gnome"
+        ],
+        [
+          "item",
+          "turtle"
+        ]
       ]
     }
-  ]
+  ],
+  "levels": [
+    {
+      "need": {
+        "common": 3,
+        "uncommon": 2,
+        "rare": 1
+      },
+      "coins": 500,
+      "xp": 50
+    },
+    {
+      "need": {
+        "common": 6,
+        "uncommon": 4,
+        "rare": 2
+      },
+      "coins": 1000,
+      "xp": 100
+    },
+    {
+      "need": {
+        "common": 12,
+        "uncommon": 8,
+        "rare": 4
+      },
+      "coins": 1500,
+      "xp": 150
+    }
+  ],
+  "rarity_weight": {
+    "common": 6,
+    "uncommon": 3,
+    "rare": 1
+  }
 }

@@ -643,6 +643,24 @@
           "look": "a grey corrugated-metal farm garage with a big roll-up door, a wrench sign and a red fuel pump outside"
         },
         {
+          "id": "garden_shed",
+          "name": "Garden Shed",
+          "unlock_level": 4,
+          "cost": 30000,
+          "w": 2,
+          "h": 2,
+          "holds": [],
+          "levels": [
+            100
+          ],
+          "special": "garden_shed",
+          "produces": false,
+          "color": "#e8dcc4",
+          "roof": "#6a8a4a",
+          "note": "FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built",
+          "look": "a small white-and-green wooden garden shed with a little window box of flowers, a watering can and flower pots by the door"
+        },
+        {
           "id": "storage_shed",
           "name": "Storage Shed",
           "status": "planned"

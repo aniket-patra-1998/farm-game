@@ -896,8 +896,30 @@ func _add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 			_add_pig_pen_info(content, o)
 		"garage":
 			_add_garage_info(content)
+		"garden_shed":
+			_add_shed_info(content)
 		"saplings":
 			content.add_child(BookPanel.text("Harvests can sprout a rare sapling of a tree inside: a Rainier Cherry from cherry trees, a Honeycrisp from apple trees... Rare trees pay half as much again. The more of a tree you keep here, the likelier its sapling.", 17, BookPanel.CREAM))
+
+
+## The Garden Shed: Perfect Bunches found while harvesting flowers, ready to place for 14 days.
+func _add_shed_info(content: VBoxContainer) -> void:
+	content.add_child(BookPanel.text("Perfect Bunches: %d of %d. Harvesting flowers sometimes gives one. Placed on the farm, a bunch lasts %d days." % [
+		Game.bunches.size(), Game.bunch_cap(), GameState.BUNCH_DAYS], 17, BookPanel.CREAM))
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 10)
+	flow.add_theme_constant_override("v_separation", 10)
+	for k in Game.bunches.size():
+		var flower: String = Game.bunches[k]
+		var b := _panel_button("Place: %s" % Game.crops[flower]["name"])
+		var idx := k
+		b.pressed.connect(func() -> void:
+			var at := Game.unpack_bunch(idx)
+			if at >= 0:
+				_book.close_panel()
+				place_stored_requested.emit(at))
+		flow.add_child(b)
+	content.add_child(flow)
 
 
 func _add_garage_info(content: VBoxContainer) -> void:
@@ -1120,7 +1142,7 @@ func _panel_button(words: String) -> Button:
 
 func _build_collections(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(
-		"Items turn up while harvesting. Find all five in a set, then trade it in.", 20, BookPanel.CREAM))
+		"Items turn up while you farm: most often when harvesting a set's crops, sometimes when plowing, planting or fertilizing them, and from trees and animals. Each set has 3 common items, 1 uncommon and 1 rare, and trades in over 3 levels.", 20, BookPanel.CREAM))
 	for coll in Game.collections:
 		var inner := BookPanel.card()
 		inner.add_theme_constant_override("separation", 10)
@@ -1144,20 +1166,41 @@ func _build_collections(content: VBoxContainer) -> void:
 
 		if coll.get("birds", false):
 			inner.add_child(BookPanel.text("Birds can land during any harvest or collection.", 18))
+		elif coll.get("source", "") == "trees":
+			inner.add_child(BookPanel.text("Found while harvesting trees.", 18))
+		elif coll.get("source", "") == "animals":
+			inner.add_child(BookPanel.text("Found while collecting from animals and their homes.", 18))
 		else:
 			inner.add_child(BookPanel.text("Found while harvesting: " + ", ".join(PackedStringArray(crop_names)), 18))
 
 		var items := HFlowContainer.new()
 		items.add_theme_constant_override("h_separation", 8)
 		items.add_theme_constant_override("v_separation", 8)
+		var need := Game.coll_need(coll)
 		for item in coll["items"]:
 			var count := int(Game.owned.get(item["id"], 0))
-			var label: String = item["name"] + ("  x%d" % count if count > 1 else "")
-			items.add_child(BookPanel.chip(label, count > 0))
+			var rarity: String = item.get("rarity", "common")
+			var label: String = "%s  %d/%d%s" % [item["name"], count, int(need[item["id"]]), "" if rarity == "common" else "  (" + rarity + ")"]
+			items.add_child(BookPanel.chip(label, count >= int(need[item["id"]])))
 		inner.add_child(items)
 
-		inner.add_child(BookPanel.text("Reward: %d coins, %d XP" % [int(coll["reward_coins"]), int(coll["reward_xp"])], 18))
+		var reward := Game.coll_reward(coll)
+		inner.add_child(BookPanel.text("Level %d reward: %d coins, %d XP and %s" % [Game.coll_level(coll) + 1, int(reward["coins"]), int(reward["xp"]), _prize_text(reward["prize"])], 18))
 		content.add_child(BookPanel.card_frame(inner))
+
+
+## A prize ([kind, amount or item]) in words, for reward lines.
+func _prize_text(prize: Array) -> String:
+	match str(prize[0]):
+		"item":
+			return "a " + str(Game.item_data(str(prize[1])).get("name", prize[1]))
+		"fertilize_all":
+			return "%d Fertilize All" % int(prize[1])
+		"unwither":
+			return "%d Unwither" % int(prize[1])
+		"fuel":
+			return "%d fuel" % int(prize[1])
+	return "%d %s" % [int(prize[1]), str(prize[0]).capitalize()]
 
 
 func _build_ribbons(content: VBoxContainer) -> void:

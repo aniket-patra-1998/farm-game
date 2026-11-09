@@ -11,12 +11,12 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Materials | 2 | 10 | 0 |
 | Trees | 32 | 46 | 0 |
 | Animals | 15 | 68 | 0 |
-| Buildings | 6 | 16 | 6 |
+| Buildings | 6 | 17 | 6 |
 | Vehicles | 4 | 4 | 0 |
-| Decorations | 7 | 37 | 0 |
+| Decorations | 7 | 38 | 0 |
 | recipes | 3 | 45 | 0 |
-| Collectibles | 20 sets | 100 | 0 |
-| **All** | **99** | **396** | **6** |
+| Collectibles | 22 sets | 110 | 0 |
+| **All** | **101** | **408** | **6** |
 
 ## Adding an item
 
@@ -913,6 +913,7 @@ Keep things off the farm.
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Barn | `barn` | never sold | free | 3x3 | 30 |  |  |
 | ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | frame | garage |
+| ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x2 | 100 |  | garden_shed |
 | 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |
 | 🕓 | Silo | `silo` | 1 |  |  |  |  |  |
 
@@ -1041,6 +1042,7 @@ Given, never bought.
 | | Item | id | Unlock | Cost | Size | Shape |
 |---|---|---|---|---|---|---|
 | ✅ | Mastery Sign | `mastery_sign` | never sold | free | 1x1 | mastery |
+| ✅ | Perfect Bunch (Found while harvesting flowers (FarmVille's Perfect Bunches); lasts 14 days once placed) | `perfect_bunch` | never sold | free | 1x1 |  |
 
 ## recipes
 
@@ -1124,120 +1126,132 @@ Drops found while harvesting, gathered into sets and traded in for rewards (`dat
 
 ### Berry Patch
 
-Found from strawberries, raspberries, blueberries, cranberries. Trade-in reward: 500 coins, 25 XP.
+Found from strawberries, raspberries, blueberries, cranberries.
 
 Ladybug Pin, Berry Basket, Garden Gloves, Straw Hat, Tin Watering Can
 
 ### Golden Fields
 
-Found from wheat, corn, rice. Trade-in reward: 800 coins, 40 XP.
+Found from wheat, corn, rice.
 
 Scarecrow Button, Grain Sack, Old Sickle, Corn Doll, Harvest Charm
 
 ### Bean Counter
 
-Found from soybeans, peanuts. Trade-in reward: 600 coins, 30 XP.
+Found from soybeans, peanuts.
 
 Seed Pouch, Pod Peeler, Peanut Jar, Bean Scoop, Shelling Bowl
 
 ### Flower Show
 
-Found from sunflowers, lilac, daffodils. Trade-in reward: 1,000 coins, 50 XP.
+Found from sunflowers, lilac, daffodils.
 
 Bee Badge, Seed Packet, Pressed Petal, Flower Press, Garden Trowel
 
 ### Bouquet
 
-Found from morning glory, red tulips, lavender. Trade-in reward: 1,200 coins, 50 XP.
+Found from morning glory, red tulips, lavender.
 
 Ribbon Bow, Flower Snips, Tulip Bulb, Lavender Sachet, Glass Vase
 
 ### Root Cellar
 
-Found from potatoes, carrots. Trade-in reward: 1,500 coins, 75 XP.
+Found from potatoes, carrots.
 
 Oil Lantern, Pickle Jar, Rusty Key, Old Almanac, Spinning Top
 
 ### Gourd Gallery
 
-Found from pumpkins, squash, watermelon. Trade-in reward: 1,000 coins, 45 XP.
+Found from pumpkins, squash, watermelon.
 
 Carving Knife, Vine Clip, Melon Baller, Gourd Rattle, Prize Ribbon
 
 ### Market Garden
 
-Found from tomatoes, eggplant, bell peppers, spinach, artichokes. Trade-in reward: 1,000 coins, 45 XP.
+Found from tomatoes, eggplant, bell peppers, spinach, artichokes.
 
 Trowel, Garden Twine, Pepper Pot, Salad Spinner, Seed Packet
 
 ### Sweet Tooth
 
-Found from sugarcane, pineapples, grapes. Trade-in reward: 1,500 coins, 60 XP.
+Found from sugarcane, pineapples, grapes.
 
 Candy Cane, Pineapple Crown, Grape Press, Sugar Cube, Honey Dipper
 
 ### Cotton Mill
 
-Found from cotton. Trade-in reward: 1,200 coins, 50 XP.
+Found from cotton.
 
 Spindle, Cotton Boll, Thimble, Bobbin, Quilt Square
 
 ### Bramble Patch
 
-Found from blackberries, elderberries, white grapes, coffee. Trade-in reward: 1,000 coins, 40 XP.
+Found from blackberries, elderberries, white grapes, coffee.
 
 Thorn Gloves, Jam Jar, Bramble Hook, Picking Pail, Berry Stain
 
 ### Grain Silo
 
-Found from rye, red wheat, oats, posole corn, amaranth. Trade-in reward: 1,250 coins, 45 XP.
+Found from rye, red wheat, oats, posole corn, amaranth.
 
 Flail, Seed Drill, Winnowing Basket, Grain Scoop, Silo Key
 
 ### Pea Pod
 
-Found from peas, purple pod peas. Trade-in reward: 1,500 coins, 50 XP.
+Found from peas, purple pod peas.
 
 Pea Shooter, Pod Clip, Shelling Tray, Twine Ball, Pea Trellis Tag
 
 ### Wildflower Meadow
 
-Found from gladiolus, lilies, purple poppies, columbine. Trade-in reward: 1,750 coins, 55 XP.
+Found from gladiolus, lilies, purple poppies, columbine.
 
 Meadow Map, Butterfly Net, Dried Poppy, Lily Pad, Field Guide
 
 ### Bridal Bouquet
 
-Found from iris, orange daisies, white roses, forget me nots, pink roses. Trade-in reward: 2,000 coins, 60 XP.
+Found from iris, orange daisies, white roses, forget me nots, pink roses.
 
 Lace Ribbon, Silver Pin, Rose Thorn, Daisy Chain, Keepsake Box
 
 ### Kitchen Roots
 
-Found from onions, ginger, heirloom carrots. Trade-in reward: 2,250 coins, 65 XP.
+Found from onions, ginger, heirloom carrots.
 
 Braided Onions, Ginger Grater, Root Brush, Clay Crock, Recipe Card
 
 ### Vine Harvest
 
-Found from zucchini, yellow melon, acorn squash, square melon, carnival squash, cucumber, pattypan squash. Trade-in reward: 2,500 coins, 70 XP.
+Found from zucchini, yellow melon, acorn squash, square melon, carnival squash, cucumber, pattypan squash.
 
 Vine Snips, Melon Scale, Square Mould, Pickling Jar, Blue Ribbon
 
 ### Veg Patch
 
-Found from ghost chili, cabbage, broccoli, asparagus. Trade-in reward: 2,750 coins, 75 XP.
+Found from ghost chili, cabbage, broccoli, asparagus.
 
 Chili Ristra, Cabbage Crate, Asparagus Knife, Slug Trap, Garden Kneeler
 
 ### Herb Garden
 
-Found from green tea, basil, lemon balm, saffron, clover, bamboo, aloe vera. Trade-in reward: 3,000 coins, 80 XP.
+Found from green tea, basil, lemon balm, saffron, clover, bamboo, aloe vera.
 
 Tea Tin, Mortar and Pestle, Saffron Thread, Four-Leaf Clover, Bamboo Whisk
 
+### Orchard Harvest
+
+Found spotted while farming.
+
+Fruit Picker, Apple Peeler, Cider Jug, Pruning Saw, Golden Apple
+
+### Barnyard
+
+Found spotted while farming.
+
+Cow Bell, Milk Pail, Horseshoe, Feed Scoop, Blue Ribbon Rosette
+
 ### Farm Birds
 
-Found spotted while farming. Trade-in reward: 1,200 coins, 60 XP.
+Found spotted while farming.
 
 Robin, Sparrow, Bluebird, Cardinal, Goldfinch

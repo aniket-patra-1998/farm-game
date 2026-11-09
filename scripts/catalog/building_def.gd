@@ -2,7 +2,7 @@ class_name BuildingDef
 extends PlaceableDef
 ## A building that holds things. Size N (1-based) holds levels[N-1]; expanding pays expand_materials.
 
-const SPECIALS := ["mystery_eggs", "calves", "foals", "lambs", "truffles", "nursery", "beehive", "saplings", "garage"]
+const SPECIALS := ["mystery_eggs", "calves", "foals", "lambs", "truffles", "nursery", "beehive", "saplings", "garage", "garden_shed"]
 
 
 func levels() -> Array:

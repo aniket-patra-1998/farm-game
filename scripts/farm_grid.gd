@@ -44,6 +44,8 @@ var placing := {}
 func _ready() -> void:
 	Game.plot_changed.connect(func(_i: int) -> void: queue_redraw())
 	Game.building_upgraded.connect(_on_building_upgraded)
+	# Finds while farming (fuel, collectibles, Perfect Bunches) float up from their plot.
+	Game.found.connect(func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, COLOR_PART, 1.8))
 	# Crops change growth stage over time and ripe crops twinkle; redraw ten times a second.
 	var timer := Timer.new()
 	timer.wait_time = 0.1
@@ -451,7 +453,8 @@ func _act(i: int, first_touch: bool) -> void:
 			if result.get("part", "") != "":
 				_float(at + Vector2(0, -128), "+1 " + GameState.PART_NAMES[result["part"]], COLOR_PART, 1.6)
 			if result.get("bushel", "") != "":
-				_float(at + Vector2(0, -160), "+1 %s bushel" % Game.crops[result["bushel"]]["name"], COLOR_PART, 1.6)
+				var nb := int(result.get("bushels", 1))
+				_float(at + Vector2(0, -160), "+%d %s bushel%s" % [nb, Game.crops[result["bushel"]]["name"], "" if nb == 1 else "s"], COLOR_PART, 1.6)
 			if result.get("bee", "") != "":
 				_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
 			if int(result.get("pollinated", 0)) > 0:

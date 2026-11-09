@@ -415,6 +415,15 @@
           "color": "#ffd34d",
           "accent": "#5c3a1e",
           "look": "a small wooden sign on a post with three gold stars"
+        },
+        {
+          "id": "perfect_bunch",
+          "name": "Perfect Bunch",
+          "unlock_level": 99,
+          "cost": 0,
+          "color": "#f29ab8",
+          "look": "a perfect bunch of fresh-cut garden flowers tied with a ribbon, standing in a little wicker basket",
+          "note": "Found while harvesting flowers (FarmVille's Perfect Bunches); lasts 14 days once placed"
         }
       ]
     }

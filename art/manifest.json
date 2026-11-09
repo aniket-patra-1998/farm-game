@@ -6531,6 +6531,18 @@
    "subject": "a grey corrugated-metal farm garage with a big roll-up door, a wrench sign and a red fuel pump outside"
   },
   {
+   "id": "garden_shed_size1",
+   "item": "garden_shed",
+   "class": "Building",
+   "stage": "1",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/garden_shed_size1.png"
+   ],
+   "subject": "a small white-and-green wooden garden shed with a little window box of flowers, a watering can and flower pots by the door"
+  },
+  {
    "id": "tractor",
    "item": "tractor",
    "class": "Vehicle",
@@ -7031,6 +7043,18 @@
     "refs/mastery_sign.png"
    ],
    "subject": "a small wooden sign on a post with three gold stars"
+  },
+  {
+   "id": "perfect_bunch",
+   "item": "perfect_bunch",
+   "class": "Decoration",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 0.7,
+   "refs": [
+    "refs/perfect_bunch.png"
+   ],
+   "subject": "a perfect bunch of fresh-cut garden flowers tied with a ribbon, standing in a little wicker basket"
   },
   {
    "id": "good_pumpkin_bread",
@@ -9045,6 +9069,106 @@
    "fill": 0.5,
    "refs": [],
    "subject": "a bamboo whisk, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_orchard_harvest_fruit_picker",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a fruit picker, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_orchard_harvest_apple_peeler",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a apple peeler, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_orchard_harvest_cider_jug",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a cider jug, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_orchard_harvest_pruning_saw",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a pruning saw, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_orchard_harvest_golden_apple",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a golden apple, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_barnyard_cow_bell",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a cow bell, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_barnyard_milk_pail",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a milk pail, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_barnyard_horseshoe",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a horseshoe, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_barnyard_feed_scoop",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a feed scoop, a little collectible keepsake from a country farm"
+  },
+  {
+   "id": "icon_collect_barnyard_blue_ribbon_rosette",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a blue ribbon rosette, a little collectible keepsake from a country farm"
   },
   {
    "id": "icon_collect_robin",

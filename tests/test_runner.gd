@@ -210,17 +210,24 @@ func test_09_collection_trade_in() -> void:
 	var g := _farm()
 	var coll: Dictionary = g.collections[0]
 	_check(not g.can_trade_in(coll), "empty set can't be traded")
-	for it in coll["items"]:
-		g.owned[it["id"]] = 1
+	var need := g.coll_need(coll)
+	_eq(need.values(), [3, 3, 3, 2, 1], "level 1: 3 of each common, 2 uncommon, 1 rare (FarmVille)")
+	for id in need:
+		g.owned[id] = int(need[id]) + 1
 	# Isolate the trade-in: no first-ribbon reward, and no level-up from its XP.
 	g.ribbon_tiers["collector"] = 4
 	g.xp = g.xp_for_level(10)
 	var coins := g.coins
-	var unwithers := g.unwithers
 	_check(g.trade_in(coll["id"]), "full set trades in")
-	_eq(g.coins, coins + int(coll["reward_coins"]), "trade-in coins")
-	_eq(g.unwithers, unwithers + 1, "trade-in gives an unwither")
-	_eq(int(g.owned[coll["items"][0]["id"]]), 0, "items used up")
+	_eq(g.coins, coins + 500, "level 1 pays 500 coins")
+	_eq(int(g.owned[coll["items"][0]["id"]]), 1, "the items it took are used up")
+	_eq(g.coll_level(coll), 1, "on to level 2")
+	_eq(g.coll_need(coll).values(), [6, 6, 6, 4, 2], "level 2: 6/4/2")
+	g.coll_levels[coll["id"]] = 2
+	_eq(g.coll_need(coll).values(), [12, 12, 12, 8, 4], "level 3: 12/8/4")
+	_eq(int(g.coll_reward(coll)["coins"]), 1500, "level 3 pays 1,500 coins")
+	g.coll_levels[coll["id"]] = 3
+	_eq(g.coll_level(coll), 0, "after level 3 it starts over")
 	_done(g)
 
 
@@ -2110,4 +2117,134 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 	var g := _farm()
 	g.weather_override = "fog"
 	_eq(g.weather()["name"], "Fog", "the game reports its weather")
+	_done(g)
+
+
+# ---------------------------------------------------------------- FarmVille's random finds while farming
+
+func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> void:
+	var g := _farm(true)
+	for coll in g.collections:
+		var r: Array = coll["items"].map(func(it): return it["rarity"])
+		_eq(r, ["common", "common", "common", "uncommon", "rare"], "%s: 3 common, 1 uncommon, 1 rare" % coll["id"])
+		_eq((coll["rewards"] as Array).size(), 3, "%s has a prize per level" % coll["id"])
+	_check(not g.tree_collection.is_empty() and not g.animal_collection.is_empty(), "sets for trees and for animals")
+	# Rarity: with nothing owned, commons come up most and the rare least.
+	var coll: Dictionary = g.collections[0]
+	var seen := {"common": 0, "uncommon": 0, "rare": 0}
+	for k in 3000:
+		for it in coll["items"]:
+			g.owned[it["id"]] = 0
+		var id := g._pick_item(coll)
+		for it in coll["items"]:
+			if it["id"] == id:
+				seen[it["rarity"]] += 1
+	_check(seen["common"] > seen["uncommon"] and seen["uncommon"] > seen["rare"] and seen["rare"] > 0, "rarer items turn up less (%s)" % str(seen))
+	# Plowing, planting and fertilizing can all turn one up.
+	g.coins = 1000000
+	var finds := [0]
+	g.found.connect(func(_i: int, text: String) -> void:
+		if text.begins_with("Found:"):
+			finds[0] += 1)
+	for k in 300:
+		var i := _free(g)
+		g.plow(i)
+		g.plant(i, "strawberries")
+		g.fertilize(i)
+		g.plots[i] = {"state": "grass"}
+	_check(finds[0] > 0, "plowing, planting and fertilizing found %d collectibles in 300 rounds" % finds[0])
+	_check(finds[0] < 60, "but not too many (%d)" % finds[0])
+	_done(g)
+
+
+func test_85_fuel_found_while_plowing_once_a_day() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = g.xp_for_level(12)
+	g.fuel_unlocked = true
+	g.fuel = 0
+	g.fuel_t = g.now()
+	g.fuel_tanks = 0
+	var fuel_finds := [0]
+	g.found.connect(func(_i: int, text: String) -> void:
+		if text.begins_with("Found fuel"):
+			fuel_finds[0] += 1)
+	for k in 200:
+		var i := _free(g)
+		g.plow(i)
+		g.plots[i] = {"state": "grass"}
+	_eq(fuel_finds[0], 1, "fuel turns up while plowing, but only once a day")
+	_eq(g.fuel_now(), int(GameState.FUEL_TANK * GameState.FUEL_FIND_SHARE), "a quarter of a tank")
+	_skip(g, 86400)
+	for k in 200:
+		var i := _free(g)
+		g.plow(i)
+		g.plots[i] = {"state": "grass"}
+	_eq(fuel_finds[0], 2, "and again the next day")
+	var low := _farm(true)
+	low.coins = 1000000
+	var low_found := [0]
+	low.found.connect(func(_i: int, text: String) -> void:
+		if text.begins_with("Found fuel"):
+			low_found[0] += 1)
+	for k in 100:
+		var i := _free(low)
+		low.plow(i)
+		low.plots[i] = {"state": "grass"}
+	_eq(low_found[0], 0, "not before level %d" % GameState.FUEL_LEVEL)
+	_done(g)
+
+
+func test_86_bushels_come_with_one_extra_per_mastery_star() -> void:
+	var g := _farm(true)
+	_crafting_building(g)
+	g.mastery["wheat"] = 100000
+	var stars := g.mastery_stars("wheat")
+	_check(stars >= 1, "wheat is mastered (%d stars)" % stars)
+	var got := {}
+	for k in 80:
+		got = _grow_and_harvest(g, _open_plot(g), "wheat")
+		if got.get("bushel", "") != "":
+			break
+	_eq(int(got.get("bushels", 0)), 1 + stars, "a bushel plus one per mastery star (FarmVille)")
+	_eq(int(g.bushels["wheat"]), 1 + stars, "all of them kept")
+	_done(g)
+
+
+func test_87_perfect_bunches_and_the_garden_shed() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = g.xp_for_level(15)
+	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal")
+	g._rebuild_occupancy()
+	var bunch := ""
+	for k in 400:
+		var r := _grow_and_harvest(g, _open_plot(g), "lilac")
+		if r.get("bunch", "") != "":
+			bunch = r["bunch"]
+			break
+	_eq(bunch, "lilac", "harvesting flowers gives a Perfect Bunch now and then")
+	_eq(g.bunches, ["lilac"], "kept")
+	var wheat_bunch := false
+	for k in 100:
+		if _grow_and_harvest(g, _open_plot(g), "wheat").get("bunch", "") != "":
+			wheat_bunch = true
+	_check(not wheat_bunch, "only flowers give bunches")
+	for k in 20:
+		g.add_bunch("lilac")
+	_eq(g.bunches.size(), GameState.BUNCH_CAP_NO_SHED, "10 at most without a Garden Shed")
+	var before := g.coins
+	_check(g.buy_and_place("garden_shed", 8, 8), "Garden Shed built")
+	_eq(g.coins, before - 30000, "for 30,000 coins, as in FarmVille")
+	_eq(g.bunch_cap(), 100, "the shed holds 100")
+	_eq(g.bunches.size(), GameState.BUNCH_CAP_NO_SHED + GameState.SHED_FREE_BUNCHES, "and comes with 10 free bunches")
+	var at := g.unpack_bunch(0)
+	_check(at >= 0, "a bunch taken out to place")
+	_check(g.place_from_storage(at, 2, 8) or g.place_from_storage(at, 3, 9), "placed on the farm")
+	var placed: Array = g.objects.filter(func(o): return o["id"] == "perfect_bunch")
+	_eq(placed.size(), 1, "one bunch on the farm")
+	_eq(int(placed[0]["expires"]) - g.now(), GameState.BUNCH_DAYS * 86400, "it lasts 14 days")
+	_skip(g, 15 * 86400)
+	g.check_strays()
+	_eq(g.objects.filter(func(o): return o["id"] == "perfect_bunch").size(), 0, "then wilts away")
 	_done(g)
