@@ -350,6 +350,10 @@ func _shots_3d(dir: String) -> void:
 			var grow := int(Game.crops[shapes[k]]["grow_seconds"])
 			Game.plots[i] = {"state": "planted", "crop": shapes[k], "planted_at": Game.now() - int(grow * stages[s])
 				- (Game.ripe_window(Game.crops[shapes[k]]) if stages[s] > 2.0 else 0)}
+	# Homes most of the way to ready, so what they make has piled up by their doors.
+	for o in Game.objects:
+		if Game.is_building(o) and not Game.under_construction(o):
+			o["t"] = Game.now() - int(Game.cycle_of(o) * 0.8)
 	Game.rebuild_occupancy()
 	_main = MAIN_SCENE.instantiate()
 	add_child(_main)

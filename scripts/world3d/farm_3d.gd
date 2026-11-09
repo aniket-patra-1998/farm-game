@@ -86,6 +86,7 @@ func _ready() -> void:
 		grid.picker = func(screen_pos: Vector2) -> int: return objects.pick(camera, screen_pos)
 		grid.object_poked.connect(_poked)
 		grid.plants_popped.connect(crops.pop)
+		grid.collected.connect(objects.celebrate)
 		objects.landed.connect(_landed)
 
 

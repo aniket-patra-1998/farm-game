@@ -4,6 +4,8 @@ extends RefCounted
 ## mesh with its normals facing out, placed under a parent node; and the shared materials they're made of
 ## (made once and reused, so a farm of buildings needs a handful of materials, not hundreds).
 
+const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leaves it whole
+
 static var _materials := {}  # key -> Material
 static var _meshes := {}     # key -> Mesh (shared unit shapes)
 
@@ -267,11 +269,24 @@ static func _roof_edges(parent: Node3D, slopes: Array, mat: Material) -> void:
 ## Merges every mesh under `root` into as few as possible: one MeshInstance3D for the parts that cast
 ## shadows and one for those that don't, each with one surface per material. A building authored from a
 ## hundred boxes is then drawn in a handful of draws. The parts' own transforms are kept; `root` is freed.
+## A part marked to move on its own (meta KEEP: a door on its hinge) is left whole and carried over, with
+## its place, so it can still swing.
 static func bake(root: Node3D) -> Node3D:
 	var groups := {}   # "shadow|material id|format" -> {"st": SurfaceTool, "mat": Material, "shadow": bool}
-	_collect(root, Transform3D.IDENTITY, groups)
+	var kept: Array = []  # [node, its transform in root's space]
+	_collect(root, Transform3D.IDENTITY, groups, kept)
 	var out := Node3D.new()
 	out.transform = root.transform
+	for k: Array in kept:
+		var n: Node3D = k[0]
+		n.get_parent().remove_child(n)
+		n.transform = k[1]
+		out.add_child(n)
+		# What hangs on it is baked too: a door is one or two draws, not a dozen boxes.
+		for part in n.get_children():
+			if part is Node3D:
+				n.remove_child(part)
+				n.add_child(bake(part))
 	for shadow: bool in [true, false]:
 		var mesh := ArrayMesh.new()
 		var mats: Array[Material] = []
@@ -294,12 +309,15 @@ static func bake(root: Node3D) -> Node3D:
 	return out
 
 
-static func _collect(node: Node, xf: Transform3D, groups: Dictionary) -> void:
+static func _collect(node: Node, xf: Transform3D, groups: Dictionary, kept: Array) -> void:
 	for child in node.get_children():
 		if not child is Node3D:
 			continue
 		var c := child as Node3D
 		var cxf := xf * c.transform
+		if c.has_meta(KEEP):
+			kept.append([c, cxf])
+			continue
 		if c is MeshInstance3D and (c as MeshInstance3D).mesh != null:
 			var mi := c as MeshInstance3D
 			var shadow := mi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -317,4 +335,4 @@ static func _collect(node: Node, xf: Transform3D, groups: Dictionary) -> void:
 					st.begin(Mesh.PRIMITIVE_TRIANGLES)
 					groups[key] = {"st": st, "mat": mat, "shadow": shadow}
 				(groups[key]["st"] as SurfaceTool).append_from(mi.mesh, s, cxf)
-		_collect(c, cxf, groups)
+		_collect(c, cxf, groups, kept)

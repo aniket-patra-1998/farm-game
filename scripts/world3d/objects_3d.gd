@@ -74,6 +74,9 @@ func sync() -> void:
 		var key := _key(o)
 		var v: Dictionary = _views.get(uid, {})
 		if v.get("key", "") == key:
+			var fill := fill_of(uid)
+			if fill != null:
+				fill.refresh(o)  # who's in, how near ready: shown without rebuilding the building
 			continue
 		if v.has("node"):
 			(v["node"] as Node3D).queue_free()
@@ -152,6 +155,8 @@ func _build(o: Dictionary) -> Node3D:
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 			else:
 				node = ModelKit.bake(BuildingModel.build(it, fp, Game.level_of(o)))
+				if BuildingFill.shows(o):
+					node.add_child(BuildingFill.create(o, node))
 	# The view stands at the footprint's centre on the ground, so it squashes, bounces and lands about
 	# its base; the model hangs under it, shifted back to the footprint's corner.
 	var holder := Node3D.new()
@@ -376,6 +381,24 @@ func drop_in(uid: int) -> void:
 	landed.emit(ground)
 
 
+
+
+## What shows how full building `uid` is (null for things that show nothing of what's inside).
+func fill_of(uid: int) -> BuildingFill:
+	var node := _node(uid)
+	if node == null or node.get_child_count() == 0:
+		return null
+	for c in node.get_child(0).get_children():
+		if c is BuildingFill:
+			return c
+	return null
+
+
+## Collected: the building's doors open and what it made pops off (BuildingFill.celebrate).
+func celebrate(uid: int) -> void:
+	var fill := fill_of(uid)
+	if fill != null:
+		fill.celebrate()
 
 
 func _node(uid: int) -> Node3D:

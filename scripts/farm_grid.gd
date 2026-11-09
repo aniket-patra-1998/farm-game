@@ -9,6 +9,7 @@ signal object_tapped(uid: int)        # a building was tapped while not ready
 signal placing_changed(text: String)  # "" when placement ends
 signal object_poked(uid: int)         # something on the farm was tapped: it reacts (bounce, an animal looks round)
 signal plants_popped(index: int, crop_id: String)  # a plot was harvested: its plants pop off
+signal collected(uid: int)                         # a building or animal was collected from
 
 
 const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
@@ -266,7 +267,9 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			counts = Vector2i(Game.storage.stored.size(), Game.storage.barn_capacity())
 		elif Game.is_building(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
-		if counts.x >= 0:
+		# In 3D a building shows how full it is on itself; the numbers come up only while you're placing
+		# something (deciding which home it goes in).
+		if counts.x >= 0 and (not pieces.three_d or not placing.is_empty()):
 			PlaceholderArt.draw_count_sign(ci, g, counts.x, counts.y)
 	# Twinkles: each on its own beat, so a ripe field shimmers instead of blinking.
 	for p in ready:
@@ -910,6 +913,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		var result := Game.collect(uid)
 		if not result.is_empty():
 			_poke(uid)
+			collected.emit(uid)
 			_feel("collect", BUZZ_HARVEST)
 			world_fx.burst("sparkle", at + Vector2(0, -40))
 			_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))

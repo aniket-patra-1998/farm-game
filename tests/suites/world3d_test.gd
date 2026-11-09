@@ -58,7 +58,13 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 	var verts := _count_vertices(built)
 	var baked := ModelKit.bake(built)
 	_check(parts > 40, "the Dairy Farm is built from many parts (%d)" % parts)
-	_check(_count_meshes(baked) <= 2, "and drawn as at most two meshes (%d)" % _count_meshes(baked))
+	var doors := baked.get_children().filter(func(n: Node) -> bool: return n.has_meta(BuildingModel.DOOR))
+	var door_meshes := 0
+	for d: Node in doors:
+		door_meshes += _count_meshes(d)
+	_check(_count_meshes(baked) - door_meshes <= 2, "and drawn as at most two meshes (%d)" % _count_meshes(baked))
+	_check(doors.size() == 2 and door_meshes <= 4, "its barn doors kept whole on hinges, a draw or two each (%d)"
+		% door_meshes)
 	_eq(_count_vertices(baked), verts, "with every vertex kept")
 	baked.free()
 	# MeshBuilder winds every triangle so its front faces along its normal (Godot: clockwise from outside).
@@ -219,7 +225,7 @@ func test_102_bigger_buildings_look_bigger_and_sites_build_up() -> void:
 	var half := {}
 	var total := 0
 	for m in need:
-		half[m] = int(need[m]) / 2
+		half[m] = int(int(need[m]) / 2.0)
 		total += int(need[m])
 	frame["construction"] = half
 	var given := 0
@@ -296,3 +302,76 @@ func _family_with(shapes: Dictionary, form: String) -> String:
 		if str((shapes[f] as Dictionary).get("form", "round")) == form:
 			return f
 	return ""
+
+
+func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.objects.clear()
+	var dairy := {"uid": 9201, "id": "cow_shed", "row": 2, "col": 2, "t": Game.now(), "level": 1, "inside": {}}
+	Game.objects.append(dairy)
+	Game.rebuild_occupancy()
+	var cap := Game.capacity(dairy)
+	# How many animals are out in the yard follows how full it is.
+	_eq(BuildingFill.shown_count(0, cap, 20), 0, "an empty building has nobody out")
+	_eq(BuildingFill.shown_count(1, cap, 20), 1, "one animal in: one out")
+	_check(BuildingFill.shown_count(int(cap / 2.0), cap, 20) > 1 and BuildingFill.shown_count(int(cap / 2.0), cap, 20)
+		< BuildingFill.shown_count(cap, cap, 20), "half full shows more than one, and fewer than full")
+	_eq(BuildingFill.shown_count(cap, cap, 20), BuildingFill.RESIDENTS, "full: the yard is busy")
+	# Every animal home has room in its yard, clear of the building and inside the fence.
+	for id in ["chicken_coop", "cow_shed", "sheep_pen", "goat_pen", "rabbit_hutch", "pig_pen", "horse_stable",
+			"nursery_barn", "duck_pond", "beehive"]:
+		for level in range(1, Game.max_level(id) + 1):
+			var spec := BuildingModel.spec(id, level)
+			var fp := Game.footprint(id)
+			var spots := BuildingFill.open_spots(spec, fp, 1)
+			_check(spots.size() >= mini(BuildingFill.RESIDENTS, 3), "%s size %d has room for animals in its yard (%d)"
+				% [id, level, spots.size()])
+			var clash := 0
+			for p in spots:
+				for r: Rect2 in BuildingModel.taken(spec, fp):
+					if r.has_point(Vector2(p.x, p.z)):
+						clash += 1
+				_check(p.x > 0.0 and p.z > 0.0 and p.x < fp.x and p.z < fp.y, "%s: its yard spots are on its footprint" % id)
+			_eq(clash, 0, "%s size %d: nobody stands inside the building" % [id, level])
+	# Half full and half way to ready: some cows out, milk churns by the door.
+	dairy["inside"] = {"cow": int(cap / 2.0)}
+	dairy["t"] = Game.now() - int(Game.cycle_of(dairy) / 2.0)
+	var model := ModelKit.bake(BuildingModel.build(Game.item_data("cow_shed"), Game.footprint("cow_shed")))
+	var fill := BuildingFill.create(dairy, model)
+	model.add_child(fill)
+	add_child(model)
+	_eq(fill.residents.size(), BuildingFill.shown_count(int(cap / 2.0), cap, 99), "half the yard's worth of cows are out")
+	var piled := _count_vertices(fill) - _residents_vertices(fill)
+	_check(piled > 0, "milk churns stand by the door as it nears ready")
+	dairy["t"] = Game.now() - Game.cycle_of(dairy) + 10
+	fill.refresh(dairy)
+	await get_tree().process_frame
+	_check(_count_vertices(fill) - _residents_vertices(fill) > piled, "more of them, nearer ready")
+	# Collected: the doors swing open, then close again.
+	_check(not fill.doors_open(), "the doors are shut")
+	fill.celebrate()
+	await get_tree().create_timer(0.45).timeout
+	_check(fill.doors_open(), "collecting opens the doors")
+	await get_tree().create_timer(BuildingFill.DOOR_HOLD + 0.8).timeout
+	_check(not fill.doors_open(), "and they close again")
+	model.queue_free()
+	# An orchard shows the trees it holds.
+	var orchard := {"uid": 9202, "id": "orchard", "row": 10, "col": 10, "t": Game.now(), "level": 1,
+		"inside": {"apple_tree": 2}}
+	var om := ModelKit.bake(BuildingModel.build(Game.item_data("orchard"), Game.footprint("orchard")))
+	var of := BuildingFill.create(orchard, om)
+	var two := _count_vertices(of)
+	orchard["inside"] = {"apple_tree": 2, "cherry_tree": 3}
+	of.refresh(orchard)
+	await get_tree().process_frame
+	_check(_count_vertices(of) > two, "five trees in an orchard show more than two")
+	of.free()
+	om.free()
+
+
+func _residents_vertices(fill: BuildingFill) -> int:
+	var n := 0
+	for a in fill.residents:
+		n += _count_vertices(a)
+	return n

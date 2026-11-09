@@ -8,6 +8,7 @@ extends RefCounted
 
 const PATH := "res://data/building_models.json"
 const PLINTH := 0.09
+const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 # A building site's stages, as shares of the materials put in (see build_site).
 const SITE_FOOTING := 0.08
 const SITE_FLOOR := 0.25
@@ -73,6 +74,56 @@ static func _lay_on(out: Dictionary, changes: Dictionary) -> void:
 			(out[k] as Dictionary).merge(changes[k], true)
 		else:
 			out[k] = changes[k]
+
+
+## What a building at `spec` takes up on its footprint, as rectangles on the ground (x along columns, y
+## along rows): its main block and its annexes, and what stands beside it (a silo, a trough, a deck...).
+## Where animals can stand in the yard is the rest (BuildingFill).
+static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
+	var fw := float(fp.x)
+	var fd := float(fp.y)
+	var body: Dictionary = s["body"]
+	var bw := float(body.get("w", 0.7)) * fw
+	var bd := float(body.get("d", 0.66)) * fd
+	var at: Array = body.get("at", [0.5, 0.42])
+	var lo := Vector2(float(at[0]) * fw - bw / 2.0, float(at[1]) * fd - bd / 2.0)
+	var hi := lo + Vector2(bw, bd)
+	var out: Array[Rect2] = []
+	if bw > 0.0:
+		out.append(Rect2(lo, hi - lo))
+	for f: Dictionary in s.get("features", []):
+		match str(f.get("type", "")):
+			"wing":
+				var depth := float(f.get("depth", 0.32))
+				if str(f.get("side", "right")) == "front":
+					out.append(Rect2(lo.x, hi.y, bw, depth))
+				else:
+					out.append(Rect2(hi.x, lo.y, depth, bd))
+			"lean_to", "terrace", "barrels", "hay_bales":
+				out.append(Rect2(hi.x, lo.y, minf(0.5, fw - hi.x), bd))
+			"porch", "stall_doors":
+				out.append(Rect2(lo.x, hi.y, bw, 0.32))
+			"water_trough":
+				var x := minf(hi.x + 0.45, fw - 0.3)
+				var z := minf(hi.y + 0.35, fd - 0.2)
+				out.append(Rect2(x - 0.22, z - 0.09, 0.44, 0.18))
+			"silo":
+				var p: Array = f.get("at", [0.85, 0.2])
+				var r := float(f.get("r", 0.22)) + 0.04
+				out.append(Rect2(float(p[0]) * fw - r, float(p[1]) * fd - r, r * 2.0, r * 2.0))
+			"duck_house":
+				var p: Array = f.get("at", [0.82, 0.2])
+				out.append(Rect2(float(p[0]) * fw - 0.2, float(p[1]) * fd - 0.17, 0.4, 0.34))
+			"beehives":
+				var n := int(f.get("count", 3))
+				for k in n:
+					var x := lerpf(0.4, fw - 0.4, k / maxf(n - 1.0, 1.0))
+					out.append(Rect2(x - 0.18, fd * (0.4 + 0.2 * (k % 2)) - 0.16, 0.36, 0.32))
+			"ramp":
+				out.append(Rect2((lo.x + hi.x) / 2.0 - 0.1, hi.y, 0.2, 0.45))
+			"nest_boxes":
+				out.append(Rect2(hi.x, lo.y, 0.14, bd))
+	return out
 
 
 ## The whole building at its size, under a new node. `fp` is the footprint in tiles (columns, rows).
@@ -350,41 +401,52 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 	var x := (lo.x + hi.x) / 2.0
 	var z := hi.z
 	var y0 := lo.y + (PLINTH if lo.y <= 0.0 else 0.0)
+	# A dark doorway behind the door itself, which hangs on hinges (kept whole when the building is baked)
+	# so it can swing open when you collect.
+	if style != "mesh":
+		ModelKit.box(root, Vector3(x - w / 2, y0, z), Vector3(x + w / 2, y0 + h, z + 0.004), ModelKit.paint(DARK))
 	match style:
 		"barn":
-			ModelKit.box(root, Vector3(x - w / 2, y0, z), Vector3(x + w / 2, y0 + h, z + 0.025),
-				ModelKit.surface((ctx["wall"] as Color).darkened(0.25), "boards"))
-			# The white X-braces of a barn door.
 			for side: float in [-1.0, 1.0]:
+				# Each half hinges at its outer edge and swings out toward you.
+				var leaf := _hinge(root, Vector3(x + side * w / 2.0, y0, z), side)
 				var cx := x + side * w / 4.0
+				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.004), Vector3(cx + w / 4.0, y0 + h, z + 0.029),
+					ModelKit.surface((ctx["wall"] as Color).darkened(0.25), "boards"))
+				# The white X-braces of a barn door.
 				var brace := ModelKit.paint(trim)
-				ModelKit.box(
-					root,
-					Vector3(cx - w / 4.0, y0, z + 0.025),
-					Vector3(cx + w / 4.0, y0 + 0.04, z + 0.04),
-					brace
-				)
-				ModelKit.box(root, Vector3(cx - w / 4.0, y0 + h - 0.04, z + 0.025), Vector3(cx + w / 4.0, y0 + h, z + 0.04),
+				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.029), Vector3(cx + w / 4.0, y0 + 0.04, z + 0.044),
 					brace)
-				var diag := ModelKit.box(root, Vector3(cx - 0.02, y0, z + 0.025), Vector3(cx + 0.02, y0 + h * 1.05, z + 0.04),
+				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0 + h - 0.04, z + 0.029),
+					Vector3(cx + w / 4.0, y0 + h, z + 0.044), brace)
+				var diag := ModelKit.box(leaf, Vector3(cx - 0.02, y0, z + 0.029), Vector3(cx + 0.02, y0 + h * 1.05, z + 0.044),
 					brace)
 				if diag != null:
 					diag.rotation.z = side * atan2(w / 2.0, h)
 			ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0 + h, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.04, z + 0.05),
 				ModelKit.paint(trim))
 		"roller":
-			ModelKit.box(root, Vector3(x - w / 2, y0, z), Vector3(x + w / 2, y0 + h, z + 0.02),
+			var shutter := _hinge(root, Vector3(x, y0, z), 0.0)
+			shutter.get_parent().set_meta("slide", h * 0.85)
+			ModelKit.box(shutter, Vector3(x - w / 2, y0, z + 0.004), Vector3(x + w / 2, y0 + h, z + 0.024),
 				ModelKit.surface(Color("#c9ced2"), "metal"))
 		"mesh", "hatch":
-			ModelKit.box(root, Vector3(x - w / 2, y0, z), Vector3(x + w / 2, y0 + h, z + 0.02), ModelKit.paint(DARK))
+			var flap := _hinge(root, Vector3(x - w / 2, y0, z), -1.0)
+			ModelKit.box(flap, Vector3(x - w / 2, y0, z + 0.004), Vector3(x + w / 2, y0 + h, z + 0.024), ModelKit.paint(DARK)
+				if style == "mesh" else ModelKit.surface(WOOD, "boards"))
 			ModelKit.box(root, Vector3(x - w / 2 - 0.02, y0 + h, z), Vector3(x + w / 2 + 0.02, y0 + h + 0.03, z + 0.04),
 				ModelKit.paint(trim))
 		_:
-			# A painted door with a frame (and, for an arch, a rounded top).
-			ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.03, z + 0.02),
+			# A painted door in a frame (and, for an arch, a rounded top).
+			ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0 + h, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.03, z + 0.02),
 				ModelKit.paint(trim))
-			ModelKit.box(root, Vector3(x - w / 2, y0, z + 0.02), Vector3(x + w / 2, y0 + h, z + 0.035),
+			for side: float in [-1.0, 1.0]:
+				ModelKit.box(root, Vector3(x + side * (w / 2 + 0.015) - 0.015, y0, z),
+					Vector3(x + side * (w / 2 + 0.015) + 0.015, y0 + h, z + 0.02), ModelKit.paint(trim))
+			var door := _hinge(root, Vector3(x - w / 2, y0, z), -1.0)
+			ModelKit.box(door, Vector3(x - w / 2, y0, z + 0.006), Vector3(x + w / 2, y0 + h, z + 0.026),
 				ModelKit.paint(Color("#6b3f26")))
+			ModelKit.ball(door, Vector3(x + w / 2 - 0.04, y0 + h * 0.5, z + 0.03), 0.012, ModelKit.paint(Color("#d4b04a"), 0.7))
 			if style == "arch":
 				var arch := ModelKit.cylinder(root, Vector3(x, y0 + h, z + 0.02), w / 2.0, 0.02, ModelKit.paint(trim))
 				arch.rotation.x = PI / 2.0
@@ -393,6 +455,20 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 	if lo.y <= 0.0:
 		ModelKit.box(root, Vector3(x - w / 2 - 0.05, 0, z), Vector3(x + w / 2 + 0.05, PLINTH * 0.7, z + 0.1),
 			ModelKit.surface(STONE, "stone", 0.2))
+
+
+## A hinge for a door at `at` (on its outer edge, at the foot): returns the node to build the door under,
+## in the building's own coordinates. `swing` is which way it opens (+1 or -1 turns, 0 for none).
+static func _hinge(root: Node3D, at: Vector3, swing: float) -> Node3D:
+	var hinge := Node3D.new()
+	hinge.position = at
+	hinge.set_meta(ModelKit.KEEP, true)
+	hinge.set_meta(DOOR, swing)
+	root.add_child(hinge)
+	var inner := Node3D.new()
+	inner.position = -at
+	hinge.add_child(inner)
+	return inner
 
 
 ## Windows on the side the camera sees (+x): `count` to a row, a row to a floor.

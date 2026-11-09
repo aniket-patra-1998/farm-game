@@ -1,5 +1,5 @@
 {
-  "_doc": "How each building is built in 3D (scripts/world3d/building_model.gd). Sizes are in tiles. body is the main block: w and d as shares of the footprint, h its wall height, at [x, z] its centre as shares of the footprint (0.5, 0.5 is the middle); walls: boards, logs, stone, plaster or metal. roof: gable (ridge along the longer side), hip, shed, flat or dome; pitch is rise over half-span. wall colour defaults to the catalog item's colour. features add the details that tell buildings apart: yard (a fenced dirt or straw yard on the rest of the footprint), silo, stilts, ramp, chimney, cupola, loft_door, stall_doors, porch, terrace, nest_boxes, water_trough, hay_bales, beehives, trees, pond, sign. levels: what each bigger size changes, keyed by size (\"2\", \"3\"...), laid on in turn: body, roof and door values replace the smaller size's, windows and window_rows replace, features are added, and drop removes features of the named types first. Upgrade features: wing (an annex with its own roof: side right or front, depth, span, h), lean_to (an open shelter on posts), weathervane. Under construction, a building is built in stages as materials arrive (building_model.gd build_site).",
+  "_doc": "How each building is built in 3D (scripts/world3d/building_model.gd). Sizes are in tiles. body is the main block: w and d as shares of the footprint, h its wall height, at [x, z] its centre as shares of the footprint (0.5, 0.5 is the middle); walls: boards, logs, stone, plaster or metal. roof: gable (ridge along the longer side), hip, shed, flat or dome; pitch is rise over half-span. wall colour defaults to the catalog item's colour. features add the details that tell buildings apart: yard (a fenced dirt or straw yard on the rest of the footprint), silo, stilts, ramp, chimney, cupola, loft_door, stall_doors, porch, terrace, nest_boxes, water_trough, hay_bales, beehives, trees, pond, sign. levels: what each bigger size changes, keyed by size (\"2\", \"3\"...), laid on in turn: body, roof and door values replace the smaller size's, windows and window_rows replace, features are added, and drop removes features of the named types first. Upgrade features: wing (an annex with its own roof: side right or front, depth, span, h), lean_to (an open shelter on posts), weathervane. Under construction, a building is built in stages as materials arrive (building_model.gd build_site). fill: what shows how full the building is (scripts/world3d/building_fill.gd): produce piles up at 'at' (eggs, milk, wool, truffles, honey, hay, crates) as collection nears; trees: how many of the trees it holds stand in it (an orchard). Animals inside wander out in the yard, more as it fills.",
   "default": {
     "body": {
       "w": 0.7,
@@ -98,6 +98,13 @@
             }
           ]
         }
+      },
+      "fill": {
+        "produce": "eggs",
+        "at": [
+          0.8,
+          0.82
+        ]
       }
     },
     "cow_shed": {
@@ -177,6 +184,13 @@
             }
           ]
         }
+      },
+      "fill": {
+        "produce": "milk",
+        "at": [
+          0.2,
+          0.9
+        ]
       }
     },
     "sheep_pen": {
@@ -227,6 +241,13 @@
             }
           ]
         }
+      },
+      "fill": {
+        "produce": "wool",
+        "at": [
+          0.82,
+          0.85
+        ]
       }
     },
     "goat_pen": {
@@ -283,6 +304,13 @@
             }
           ]
         }
+      },
+      "fill": {
+        "produce": "milk",
+        "at": [
+          0.2,
+          0.88
+        ]
       }
     },
     "rabbit_hutch": {
@@ -341,6 +369,13 @@
             }
           ]
         }
+      },
+      "fill": {
+        "produce": "wool",
+        "at": [
+          0.82,
+          0.85
+        ]
       }
     },
     "pig_pen": {
@@ -368,7 +403,14 @@
         {
           "type": "water_trough"
         }
-      ]
+      ],
+      "fill": {
+        "produce": "truffles",
+        "at": [
+          0.8,
+          0.85
+        ]
+      }
     },
     "horse_stable": {
       "body": {
@@ -466,6 +508,13 @@
             }
           ]
         }
+      },
+      "fill": {
+        "produce": "hay",
+        "at": [
+          0.88,
+          0.88
+        ]
       }
     },
     "nursery_barn": {
@@ -523,7 +572,8 @@
             }
           ]
         }
-      }
+      },
+      "fill": {}
     },
     "orchard": {
       "body": {
@@ -542,39 +592,38 @@
           "whole": true
         },
         {
-          "type": "trees",
-          "count": 6
-        },
-        {
           "type": "sign"
         }
       ],
       "levels": {
         "2": {
-          "drop": [
-            "trees"
-          ],
+          "fill": {
+            "trees": 9
+          },
           "features": [
             {
-              "type": "trees",
-              "count": 9
+              "type": "flowers"
             }
           ]
         },
         "3": {
-          "drop": [
-            "trees"
-          ],
+          "fill": {
+            "trees": 12
+          },
           "features": [
-            {
-              "type": "trees",
-              "count": 12
-            },
             {
               "type": "barrels"
             }
           ]
         }
+      },
+      "fill": {
+        "trees": 6,
+        "produce": "crates",
+        "at": [
+          0.85,
+          0.92
+        ]
       }
     },
     "beehive": {
@@ -594,7 +643,14 @@
         {
           "type": "flowers"
         }
-      ]
+      ],
+      "fill": {
+        "produce": "honey",
+        "at": [
+          0.5,
+          0.88
+        ]
+      }
     },
     "duck_pond": {
       "body": {
@@ -635,6 +691,13 @@
             }
           ]
         }
+      },
+      "fill": {
+        "produce": "eggs",
+        "at": [
+          0.15,
+          0.15
+        ]
       }
     },
     "barn": {
