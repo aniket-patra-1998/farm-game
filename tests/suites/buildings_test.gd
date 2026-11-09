@@ -387,11 +387,17 @@ func test_92_animals_only_go_into_homes_made_for_them() -> void:
 	_eq(g.objects.size(), objects, "nothing new standing on the farm")
 	_eq(int(coop["inside"]["chicken"]), 1, "it's inside")
 	# A bull is one-each: the second is turned away, without taking a space.
-	_check(g.homes.put_in_home(int(dairy["uid"]), "bull", {}), "a bull moves in")
+	_check(not g.homes.put_in_home(int(dairy["uid"]), "bull", {}), "a bull can't be bought (it's won)")
+	g.place_somewhere("bull")
+	var bull := int(g.objects[-1]["uid"])
+	g.place_somewhere("bull")
+	var bull2 := int(g.objects[-1]["uid"])
+	var spaces := g.inside_total(dairy)
+	_check(g.homes.put_in_home(int(dairy["uid"]), "bull", {"uid": bull}), "a bull moves in")
+	_eq(g.inside_total(dairy), spaces, "without taking a space")
 	_eq(g.homes.fit(dairy, "bull"), FIT.HAS_ONE, "only one bull")
-	coins = g.coins
-	_check(not g.homes.put_in_home(int(dairy["uid"]), "bull", {}), "a second bull is refused")
-	_eq(g.coins, coins, "and nothing is charged for it")
+	_check(not g.homes.put_in_home(int(dairy["uid"]), "bull", {"uid": bull2}), "a second bull is refused")
+	_check(not g.object_by_uid(bull2).is_empty(), "and stays on the farm")
 	# A full home is lit amber and refuses more.
 	dairy["inside"]["cow"] = g.capacity(dairy)
 	_eq(g.homes.fit(dairy, "cow"), FIT.FULL, "a full Dairy Farm")
