@@ -4,10 +4,11 @@ extends CanvasLayer
 ## the sun and moon on their arcs, stars at night and drifting clouds.
 ## Drawn in screen space, so it stays put while the camera zooms and pans.
 
-const CLOUD_COUNT := 7
+const CLOUD_COUNT := 18  # all of them show when it's overcast; a few on a clear day
 const STAR_COUNT := 70
 
 var hour := 12.0
+var weather := {}  # from Weather.current, set by main
 var _canvas: Node2D
 var _clouds: Array = []   # {x, y, scale, speed, puffs:[Vector3(dx, dy, r)]}
 var _stars: Array = []    # Vector3(x 0..1, y 0..1, phase)
@@ -48,6 +49,12 @@ func _draw_sky() -> void:
 	var dark: float = look["dark"]
 	var top: Color = look["top"]
 	var horizon: Color = look["horizon"]
+	var cover := float(weather.get("cover", 0.1))
+	var dim := float(weather.get("dim", 0.0))
+	# Cloud cover greys the sky; a storm darkens it.
+	var grey := Color("#9aa4b2").lerp(Color("#232836"), dark)
+	top = top.lerp(grey.darkened(dim), cover * 0.75)
+	horizon = horizon.lerp(grey.lightened(0.1).darkened(dim), cover * 0.7)
 
 	# Gradient: a few bands blended top to horizon (cheap and smooth enough at phone sizes).
 	var bands := 24
@@ -61,7 +68,7 @@ func _draw_sky() -> void:
 			PackedColorArray([c0, c0, c1, c1]))
 
 	# Stars fade in after dusk and twinkle.
-	if dark > 0.05:
+	if dark > 0.05 and cover < 0.7:
 		var now_s := Time.get_ticks_msec() / 1000.0
 		for s in _stars:
 			var tw := 0.55 + 0.45 * sin(now_s * 1.7 + s.z)
@@ -76,21 +83,23 @@ func _draw_sky() -> void:
 		var pos := Vector2(lerpf(size.x * 0.06, size.x * 0.94, sun_p), horizon_y - sin(sun_p * PI) * arc_h)
 		var low := 1.0 - sin(sun_p * PI) # 1 near the horizon
 		var core := Color("#fff6c8").lerp(Color("#ffb066"), low * 0.8)
+		core.a = clampf(1.2 - cover * 1.3, 0.0, 1.0)  # hidden behind thick cloud
 		for g in 4:
-			_canvas.draw_circle(pos, 34.0 + g * 18.0, Color(core.r, core.g, core.b, 0.10 - g * 0.02))
+			_canvas.draw_circle(pos, 34.0 + g * 18.0, Color(core.r, core.g, core.b, (0.10 - g * 0.02) * core.a))
 		_canvas.draw_circle(pos, 26.0, core)
 	var moon_p := DayCycle.moon_progress(hour)
-	if moon_p >= 0.0:
+	if moon_p >= 0.0 and cover < 0.75:
 		var mpos := Vector2(lerpf(size.x * 0.06, size.x * 0.94, moon_p), horizon_y - sin(moon_p * PI) * arc_h * 0.9)
 		_canvas.draw_circle(mpos, 40.0, Color(0.85, 0.9, 1.0, 0.08))
 		_canvas.draw_circle(mpos, 20.0, Color("#eef1ff"))
 		_canvas.draw_circle(mpos + Vector2(7, -5), 17.0, top.lerp(horizon, 0.3)) # crescent shadow
 
 	# Clouds take the light's colour: white by day, peach at sunset, slate at night.
-	var cloud_col := Color(1, 1, 1).lerp(look["light"], 0.65)
+	var cloud_col := Color(1, 1, 1).lerp(look["light"], 0.65).lerp(Color("#7d8796"), cover * 0.6).darkened(dim * 1.2)
 	cloud_col.a = 0.92 - 0.25 * dark
 	var shade := cloud_col.darkened(0.12)
-	for c in _clouds:
+	var shown := int(round(lerpf(5.0, float(CLOUD_COUNT), clampf(cover, 0.0, 1.0))))
+	for c in _clouds.slice(0, shown):
 		var base := Vector2(float(c["x"]) * size.x, float(c["y"]) * size.y)
 		var sc: float = c["scale"]
 		for puff in c["puffs"]:

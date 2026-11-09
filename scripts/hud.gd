@@ -452,7 +452,7 @@ static func _thousands(n: int) -> String:
 
 func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
-	_clock_label.text = "%s · %s" % [DayCycle.SEASON, DayCycle.clock_text(hour)]
+	_clock_label.text = "%s · %s · %s" % [DayCycle.SEASON, Game.weather()["name"], DayCycle.clock_text(hour)]
 
 
 func _refresh_seed_buttons() -> void:

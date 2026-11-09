@@ -14,6 +14,9 @@ var hud: FarmHud
 var sky: SkyLayer
 var light: CanvasModulate  # tints the whole farm for the time of day
 var night: NightGlow
+var shadows: CloudShadows
+var grade: ColorRect       # colour grade over the farm and sky
+var weather_fx: WeatherLayer
 
 var _base_zoom := 1.0       # zoom that shows the whole farm; also the furthest out
 var _touches := {}          # finger index -> screen position
@@ -30,6 +33,24 @@ func _ready() -> void:
 
 	grid = FarmGrid.new()
 	add_child(grid)
+
+	shadows = CloudShadows.new()
+	shadows.grid = grid
+	add_child(shadows)
+
+	var grade_layer := CanvasLayer.new()
+	grade_layer.layer = 1
+	add_child(grade_layer)
+	grade = ColorRect.new()
+	grade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	grade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/grade.gdshader")
+	grade.material = mat
+	grade_layer.add_child(grade)
+
+	weather_fx = WeatherLayer.new()
+	add_child(weather_fx)
 
 	night = NightGlow.new()
 	night.grid = grid
@@ -72,9 +93,32 @@ func _fit_camera() -> void:
 # ---------------------------------------------------------------- time of day
 
 func _process(_delta: float) -> void:
-	var look := DayCycle.sample(sky.hour)
-	light.color = look["light"]
-	night.dark = look["dark"]
+	var hour := sky.hour
+	var look := DayCycle.sample(hour)
+	var w := Game.weather()
+	var dark: float = look["dark"]
+	# Light on the farm: the time of day's colour, greyer and dimmer under cloud.
+	var l: Color = look["light"]
+	l = l.lerp(Color(l.v, l.v, l.v), float(w["desat"]) * 0.5).darkened(float(w["dim"]))
+	light.color = l
+	sky.weather = w
+	weather_fx.look = w
+	# Windows light up at night and in a dark storm.
+	night.dark = maxf(dark, clampf(float(w["dim"]) * 1.6 - 0.2, 0.0, 0.7))
+	# Cloud shadows need the sun out and some cloud about.
+	var sun := DayCycle.sun_progress(hour)
+	var cover: float = w["cover"]
+	shadows.strength = 0.0 if sun < 0.0 else (1.0 - dark) * clampf(1.0 - absf(cover - 0.45) / 0.4, 0.0, 1.0)
+	# Colour grade: richer by day, cool and soft at night, warm low sun, fog haze.
+	var m := grade.material as ShaderMaterial
+	m.set_shader_parameter("saturation", lerpf(1.1, 0.8, dark) * (1.0 - float(w["desat"])))
+	m.set_shader_parameter("contrast", lerpf(1.05, 0.95, dark))
+	m.set_shader_parameter("lift", Vector3(0.02, 0.035, 0.08) * dark)
+	var low := 0.0 if sun < 0.0 else pow(1.0 - sin(sun * PI), 3.0)  # 1 right at sunrise and sunset
+	m.set_shader_parameter("warm", Color(1.0, 0.62, 0.32, 0.45 * low * (1.0 - cover)))
+	m.set_shader_parameter("warm_from", Vector2(0.0 if sun < 0.5 else 1.0, 0.3))
+	m.set_shader_parameter("haze", Color(0.84, 0.87, 0.9, float(w["fog"]) * 0.75).lerp(Color(0.25, 0.3, 0.42, float(w["fog"]) * 0.6), dark))
+	m.set_shader_parameter("vignette", lerpf(0.18, 0.4, dark))
 
 
 # ---------------------------------------------------------------- zoom and move

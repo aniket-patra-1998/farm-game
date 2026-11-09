@@ -2076,3 +2076,38 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	g.bushels = {"rice": GameState.BUSHEL_CAP}
 	_eq(g.add_bushels("wheat", 1), 0, "no room past %d bushels" % GameState.BUSHEL_CAP)
 	_done(g)
+
+
+# ---------------------------------------------------------------- weather (looks only; FarmVille had none)
+
+func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
+	var t0 := 1_800_000_000 - 1_800_000_000 % Weather.BLOCK
+	_eq(Weather.state_at(t0 + 100, "Summer", 12.0), Weather.state_at(t0 + 9000, "Summer", 14.5), "one weather per 3-hour block")
+	_eq(Weather.state_at(t0 + 100, "Summer", 12.0), Weather.state_at(t0 + 100, "Summer", 12.0), "the same every time you look")
+	var count := {}
+	for b in 2000:
+		var t := t0 + b * Weather.BLOCK
+		var hour := fposmod(12.0 + b * 3.0, 24.0)
+		var s := Weather.state_at(t, "Summer", hour)
+		count[s] = int(count.get(s, 0)) + 1
+		_check(Weather.STATES.has(s), "%s is a known state" % s)
+		if s == "fog":
+			_check(hour >= 3.0 and hour < 9.0, "fog only in the early morning (got it at %.0f:00)" % hour)
+	_check(not count.has("snow"), "no snow in summer")
+	_check(int(count.get("clear", 0)) > int(count.get("rain", 0)) * 3, "summer is mostly sunny (%s)" % str(count))
+	_check(count.has("rain") and count.has("storm"), "but it rains sometimes")
+	var winter_snow := 0
+	for b in 500:
+		if Weather.state_at(t0 + b * Weather.BLOCK, "Winter", 12.0) == "snow":
+			winter_snow += 1
+	_check(winter_snow > 50, "winter brings snow (%d of 500)" % winter_snow)
+	_eq(Weather.strength_at(t0), 0.0, "weather starts faded out at a block's edge")
+	_eq(Weather.strength_at(t0 + Weather.BLOCK / 2), 1.0, "and is full strength mid-block")
+	var storm := Weather.current(t0, "Summer", 12.0, "storm")
+	_eq(storm["state"], "storm", "an override forces the weather")
+	_eq(float(storm["rain"]), 1.0, "a storm rains hard")
+	_check(float(storm["lightning"]) > 0.0 and float(storm["dim"]) > 0.3, "with lightning, and dark")
+	var g := _farm()
+	g.weather_override = "fog"
+	_eq(g.weather()["name"], "Fog", "the game reports its weather")
+	_done(g)

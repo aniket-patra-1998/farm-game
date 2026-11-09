@@ -172,6 +172,7 @@ var arborists := 0                 # collect every tree at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
 var egg_data := {}                 # data/mystery_eggs.json
 var box_data := {}                 # data/mystery_box.json
+var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var bushels := {}                  # crop id -> bushels held, for crafting
 var goods := {}                    # recipe id -> crafted goods held
 var crafted := {}                  # recipe id -> lifetime crafts (recipe mastery)
@@ -2121,6 +2122,13 @@ func _objects_updated() -> void:
 	objects_changed.emit()
 	plot_changed.emit(-1)
 	queue_save()
+
+
+# ---------------------------------------------------------------- weather
+
+## The weather right now (see Weather.current): looks only, FarmVille had none.
+func weather() -> Dictionary:
+	return Weather.current(now(), DayCycle.SEASON, DayCycle.local_hour(now(), DayCycle.device_bias_minutes()), weather_override)
 
 
 # ---------------------------------------------------------------- crafting (FarmVille's Bakery, Winery and Spa)

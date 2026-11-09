@@ -10,16 +10,16 @@ const SUNSET := 18.75
 ## Colour keyframes through the day: hour -> sky top, sky horizon, light on the farm.
 ## The last entry repeats the first so midnight wraps smoothly.
 const KEYS := [
-	[0.0,   "#0b1430", "#1d2b55", "#5d6aa6"],
-	[4.5,   "#141f48", "#3a3f6e", "#6a7299"],
+	[0.0,   "#0b1430", "#1d2b55", "#6b78b4"],
+	[4.5,   "#141f48", "#3a3f6e", "#7680aa"],
 	[5.5,   "#4a6fb0", "#f6a96b", "#e2b08f"],
 	[7.0,   "#5fb1e8", "#cfe9f5", "#f4ecdb"],
 	[12.0,  "#3fa6ea", "#bfe6fa", "#ffffff"],
 	[16.5,  "#4aa3df", "#f3e2b0", "#fff3dc"],
 	[18.75, "#5c5fa8", "#ff9a5c", "#eba27c"],
 	[19.75, "#26305e", "#7a5a8a", "#8d84b2"],
-	[21.0,  "#0b1430", "#1d2b55", "#5d6aa6"],
-	[24.0,  "#0b1430", "#1d2b55", "#5d6aa6"],
+	[21.0,  "#0b1430", "#1d2b55", "#6b78b4"],
+	[24.0,  "#0b1430", "#1d2b55", "#6b78b4"],
 ]
 
 

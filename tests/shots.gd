@@ -102,6 +102,40 @@ func _ready() -> void:
 	(_main.get("hud") as FarmHud).show_building(bakery_uid)
 	await _frames(6)
 	_shot(dir + "/crafting_panel.png")
+	(_main.get("hud") as FarmHud)._book.close_panel()
+	# Times of day and weather, on a farm of crops (using whatever finished art is in art/final).
+	Game.objects.clear()
+	var art_crops := ["strawberries", "raspberries", "blueberries", "cranberries", "blackberries", "elderberries", "wheat", "corn"]
+	var plots: Array[int] = []
+	for r in range(3, 13):
+		for c in range(3, 13):
+			var i := Game.index_of(r, c)
+			Game.plots[i] = {"state": "planted", "crop": art_crops[(r + c) % art_crops.size()], "planted_at": 0}
+			plots.append(i)
+	_put("farmhouse", 3, 14, 1, {})
+	_put("lamp_post", 8, 14, 1, {})
+	_put("bonfire", 10, 15, 1, {})
+	_put("bakery", 12, 14, 1, {}, {"slots": []})
+	_put("cow", 13, 4, 1, {})
+	_put("sheep", 13, 7, 1, {})
+	Game._rebuild_occupancy()
+	cam.zoom = Vector2(0.75, 0.75)
+	cam.position = grid.to_global(grid.center_of(Game.index_of(8, 10)))
+	for scene in [["noon_clear", 12.5, "clear"], ["partly_cloudy", 11.0, "partly_cloudy"], ["golden_hour", 18.3, "clear"],
+			["night", 22.0, "clear"], ["rain", 14.0, "rain"], ["storm", 16.0, "storm"], ["fog", 6.8, "fog"], ["snow", 13.0, "snow"]]:
+		var t := int(Time.get_unix_time_from_system())
+		Game.debug_time_offset = (int(float(scene[1]) * 3600) - t % 86400 + 86400) % 86400
+		Game.weather_override = scene[2]
+		for k in plots.size():
+			var crop: Dictionary = Game.crops[Game.plots[plots[k]]["crop"]]
+			var grow := int(crop["grow_seconds"])
+			var stage := [0.2, 0.6, 1.05, 3.0][k % 4] # planted, growing, ripe, withered
+			Game.plots[plots[k]]["planted_at"] = Game.now() - int(grow * stage) - (Game.ripe_window(crop) if stage > 2.0 else 0)
+		Game.objects_changed.emit()
+		Game.plot_changed.emit(-1)
+		await _frames(30)
+		_shot(dir + "/time_%s.png" % scene[0])
+	Game.weather_override = ""
 	print("Screenshots saved to " + dir)
 	get_tree().quit()
 
