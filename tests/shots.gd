@@ -212,6 +212,7 @@ func _ready() -> void:
 	Game.farm_expanded.emit(Game.farm_size)
 	await _frames(20)
 	_shot(dir + "/start.png")
+	await _shots_3d(dir)
 	print("Screenshots saved to " + dir)
 	get_tree().quit()
 
@@ -271,3 +272,58 @@ func _animal_sheet(path: String, ids: Array) -> void:
 	_shot(path)
 	layer.queue_free()
 	await _frames(1)
+
+
+## The same farm drawn in 3D (project setting farm/world/use_3d): a mixed farm at noon and at golden hour,
+## a close-up of the buildings, and a brand-new farm.
+func _shots_3d(dir: String) -> void:
+	_main.queue_free()
+	await _frames(2)
+	ProjectSettings.set_setting(Farm3D.SETTING, true)
+	Game.reset_game()
+	Game.farm_size = 24
+	Game.xp = Game.xp_for_level(30)
+	Game.objects.clear()
+	for i in Game.plots.size():
+		Game.plots[i] = {"state": "grass"}
+	_put("chicken_coop", 2, 2, 1, {"chicken": 8})
+	_put("cow_shed", 2, 7, 1, {"cow": 5})
+	_put("horse_stable", 2, 13, 1, {"horse": 4})
+	_put("barn", 2, 19, 1, {})
+	_put("pig_pen", 8, 2, 1, {"pig": 4})
+	_put("nursery_barn", 8, 7, 1, {"calf": 2})
+	_put("beehive", 8, 13, 1, {"bee": 10})
+	_put("duck_pond", 8, 17, 1, {"duck": 4})
+	_put("bakery", 14, 2, 1, {}, {"slots": []})
+	_put("winery", 14, 7, 1, {}, {"slots": []})
+	_put("garage", 14, 12, 1, {})
+	_put("orchard", 14, 17, 1, {"apple_tree": 3})
+	_put("horse_stable", 19, 2, 1, {}, {"construction": {}})
+	_put("garden_shed", 19, 8, 1, {})
+	var fruit_trees: Array[String] = ["apple_tree", "cherry_tree", "lemon_tree"]
+	for k in 6:
+		_put(fruit_trees[k % 3], 20 + int(k / 3.0), 12 + 2 * (k % 3), 1, {})
+	for r in range(19, 23):
+		for c in range(17, 23):
+			Game.plots[Game.index_of(r, c)] = {"state": "plowed"} if (r + c) % 3 else {"state": "planted",
+				"crop": "wheat", "planted_at": 0}
+	Game.rebuild_occupancy()
+	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+	add_child(_main)
+	Game.objects_changed.emit()
+	Game.plot_changed.emit(-1)
+	Game.farm_expanded.emit(Game.farm_size)
+	for scene in [["noon", 12.5, "clear"], ["golden_hour", 17.9, "clear"], ["night", 22.5, "clear"]]:
+		var wall := int(Time.get_unix_time_from_system())
+		Game.debug_time_offset = (int(float(scene[1]) * 3600) - wall % 86400 + 86400) % 86400
+		Game.weather_override = scene[2]
+		await _frames(20)
+		_shot(dir + "/world3d_%s.png" % scene[0])
+	var grid: FarmGrid = _main.get("grid")
+	var cam: FarmCamera = _main.get("camera")
+	Game.debug_time_offset = (int(12.5 * 3600) - int(Time.get_unix_time_from_system()) % 86400 + 86400) % 86400
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(6, 8))), 1.1)
+	await _frames(12)
+	_shot(dir + "/world3d_closeup.png")
+	Game.weather_override = ""
+	ProjectSettings.set_setting(Farm3D.SETTING, false)

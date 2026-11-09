@@ -1,0 +1,117 @@
+{
+  "_doc": "How each building is built in 3D (scripts/world3d/building_model.gd). Sizes are in tiles. body is the main block: w and d as shares of the footprint, h its wall height, at [x, z] its centre as shares of the footprint (0.5, 0.5 is the middle); walls: boards, logs, stone, plaster or metal. roof: gable (ridge along the longer side), hip, shed, flat or dome; pitch is rise over half-span. wall colour defaults to the catalog item's colour. features add the details that tell buildings apart: yard (a fenced dirt or straw yard on the rest of the footprint), silo, stilts, ramp, chimney, cupola, loft_door, stall_doors, porch, terrace, nest_boxes, water_trough, hay_bales, beehives, trees, pond, sign. A building's level adds its own features (levels[1] for the second size up, etc).",
+  "default": {
+    "body": {"w": 0.7, "d": 0.66, "h": 0.85, "at": [0.5, 0.42], "walls": "boards"},
+    "roof": {"type": "gable", "pitch": 0.75, "overhang": 0.08, "color": "#8e3b2c", "style": "shingles"},
+    "trim": "#f3eee2",
+    "door": {"w": 0.28, "h": 0.55, "style": "barn"},
+    "windows": 2,
+    "features": []
+  },
+  "buildings": {
+    "chicken_coop": {
+      "body": {"w": 0.52, "d": 0.5, "h": 0.6, "at": [0.32, 0.32], "walls": "boards"},
+      "roof": {"type": "shed", "pitch": 0.45, "color": "#b5492f"},
+      "door": {"w": 0.16, "h": 0.28, "style": "hatch"},
+      "windows": 1,
+      "features": [{"type": "stilts", "h": 0.22}, {"type": "ramp"}, {"type": "yard", "ground": "dirt"},
+        {"type": "nest_boxes"}]
+    },
+    "cow_shed": {
+      "body": {"w": 0.62, "d": 0.62, "h": 1.05, "at": [0.42, 0.4], "walls": "boards"},
+      "roof": {"type": "gambrel", "pitch": 1.0, "color": "#5c3b2e"},
+      "door": {"w": 0.34, "h": 0.66, "style": "barn"},
+      "features": [{"type": "silo", "at": [0.86, 0.2], "r": 0.22, "h": 1.7}, {"type": "loft_door"},
+        {"type": "yard", "ground": "straw"}, {"type": "water_trough"}]
+    },
+    "sheep_pen": {
+      "body": {"w": 0.42, "d": 0.42, "h": 0.6, "at": [0.28, 0.28], "walls": "boards"},
+      "roof": {"type": "shed", "pitch": 0.4, "color": "#6d5a43"},
+      "features": [{"type": "yard", "ground": "grass"}, {"type": "hay_bales"}]
+    },
+    "goat_pen": {
+      "body": {"w": 0.4, "d": 0.4, "h": 0.55, "at": [0.28, 0.28], "walls": "boards"},
+      "roof": {"type": "shed", "pitch": 0.4, "color": "#7a5a3a"},
+      "features": [{"type": "yard", "ground": "dirt"}, {"type": "terrace"}]
+    },
+    "rabbit_hutch": {
+      "body": {"w": 0.7, "d": 0.5, "h": 0.45, "at": [0.5, 0.35], "walls": "boards"},
+      "roof": {"type": "shed", "pitch": 0.35, "color": "#9a6b45"},
+      "door": {"w": 0.3, "h": 0.25, "style": "mesh"},
+      "features": [{"type": "stilts", "h": 0.18}, {"type": "yard", "ground": "grass"}]
+    },
+    "pig_pen": {
+      "body": {"w": 0.4, "d": 0.4, "h": 0.55, "at": [0.27, 0.27], "walls": "boards"},
+      "roof": {"type": "shed", "pitch": 0.4, "color": "#5f5a52", "style": "metal"},
+      "features": [{"type": "yard", "ground": "mud"}, {"type": "water_trough"}]
+    },
+    "horse_stable": {
+      "body": {"w": 0.9, "d": 0.5, "h": 0.8, "at": [0.5, 0.35], "walls": "boards"},
+      "roof": {"type": "gable", "pitch": 0.55, "overhang": 0.14, "color": "#2f4f6f"},
+      "door": {"w": 0.0, "h": 0.0, "style": "none"},
+      "windows": 0,
+      "features": [{"type": "stall_doors", "count": 4}, {"type": "cupola"}, {"type": "yard", "ground": "dirt"},
+        {"type": "hay_bales"}]
+    },
+    "nursery_barn": {
+      "body": {"w": 0.62, "d": 0.55, "h": 0.8, "at": [0.4, 0.36], "walls": "boards"},
+      "roof": {"type": "gable", "pitch": 0.7, "color": "#5f9a7a"},
+      "door": {"w": 0.3, "h": 0.5, "style": "barn"},
+      "features": [{"type": "yard", "ground": "grass", "fence": "picket"}, {"type": "porch"}]
+    },
+    "orchard": {
+      "body": {"w": 0.0, "d": 0.0, "h": 0.0},
+      "roof": {"type": "none"},
+      "features": [{"type": "yard", "ground": "grass", "fence": "rail", "whole": true}, {"type": "trees", "count": 6},
+        {"type": "sign"}]
+    },
+    "beehive": {
+      "body": {"w": 0.0, "d": 0.0, "h": 0.0},
+      "roof": {"type": "none"},
+      "features": [{"type": "beehives", "count": 3}, {"type": "flowers"}]
+    },
+    "duck_pond": {
+      "body": {"w": 0.0, "d": 0.0, "h": 0.0},
+      "roof": {"type": "none"},
+      "features": [{"type": "pond"}, {"type": "duck_house"}]
+    },
+    "barn": {
+      "body": {"w": 0.8, "d": 0.72, "h": 1.15, "at": [0.5, 0.42], "walls": "boards"},
+      "roof": {"type": "gambrel", "pitch": 1.0, "color": "#5a3a2c"},
+      "door": {"w": 0.4, "h": 0.75, "style": "barn"},
+      "features": [{"type": "loft_door"}, {"type": "cupola"}, {"type": "hay_bales"}]
+    },
+    "garage": {
+      "body": {"w": 0.86, "d": 0.7, "h": 0.9, "at": [0.5, 0.4], "walls": "metal"},
+      "roof": {"type": "shed", "pitch": 0.25, "color": "#7d858c", "style": "metal"},
+      "door": {"w": 0.55, "h": 0.65, "style": "roller"},
+      "windows": 1,
+      "features": [{"type": "sign"}]
+    },
+    "garden_shed": {
+      "body": {"w": 0.62, "d": 0.56, "h": 0.65, "at": [0.5, 0.42], "walls": "boards"},
+      "roof": {"type": "gable", "pitch": 0.8, "color": "#4f7f4a"},
+      "door": {"w": 0.28, "h": 0.48, "style": "plain"},
+      "windows": 1,
+      "features": [{"type": "flowers"}]
+    },
+    "bakery": {
+      "body": {"w": 0.72, "d": 0.62, "h": 0.95, "at": [0.48, 0.42], "walls": "plaster"},
+      "roof": {"type": "gable", "pitch": 0.8, "color": "#b55a3c"},
+      "door": {"w": 0.24, "h": 0.55, "style": "plain"},
+      "features": [{"type": "chimney"}, {"type": "porch"}, {"type": "sign"}]
+    },
+    "winery": {
+      "body": {"w": 0.74, "d": 0.62, "h": 0.95, "at": [0.48, 0.42], "walls": "stone"},
+      "roof": {"type": "hip", "pitch": 0.6, "color": "#7a2f3a"},
+      "door": {"w": 0.28, "h": 0.58, "style": "arch"},
+      "features": [{"type": "barrels"}, {"type": "terrace"}, {"type": "sign"}]
+    },
+    "spa": {
+      "body": {"w": 0.74, "d": 0.62, "h": 0.9, "at": [0.48, 0.42], "walls": "plaster"},
+      "roof": {"type": "hip", "pitch": 0.5, "color": "#4f8a8f"},
+      "door": {"w": 0.26, "h": 0.55, "style": "plain"},
+      "features": [{"type": "terrace"}, {"type": "flowers"}, {"type": "sign"}]
+    }
+  }
+}

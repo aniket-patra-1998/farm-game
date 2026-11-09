@@ -17,6 +17,7 @@ var night: NightGlow
 var shadows: CloudShadows
 var grade: ColorRect       # colour grade over the farm and sky
 var weather_fx: WeatherLayer
+var world_3d: Farm3D        # the farm in real 3D (project setting farm/world/use_3d), behind the 2D layers
 
 var _base_zoom := 1.0       # zoom that shows the whole farm; also the furthest out
 var _touches := {}          # finger index -> screen position
@@ -65,6 +66,8 @@ func _ready() -> void:
 		return grid.get_bounds().grow_individual(pad, pad / 2.0, pad, pad / 2.0)
 	add_child(camera)
 	camera.make_current()
+	if Farm3D.enabled():
+		_use_3d()
 
 	hud = FarmHud.new()
 	add_child(hud)
@@ -86,6 +89,23 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_fit_camera)
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
+
+
+## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that
+## now have 3D models step aside; taps, highlights, signs and effects stay in 2D on top.
+func _use_3d() -> void:
+	world_3d = Farm3D.new()
+	world_3d.grid = grid
+	world_3d.camera_2d = camera
+	add_child(world_3d)
+	sky.visible = false
+	shadows.visible = false
+	grid.ground.visible = false
+	grid.shadows.visible = false
+	light.color = Color.WHITE
+	grid.pieces.three_d = true
+	grid.pieces.sync()
+	grid.pieces.redraw_all()
 
 
 ## Zoom so the whole farm fits between the top bar and the toolbar,
@@ -112,7 +132,11 @@ func _process(_delta: float) -> void:
 	# Light on the farm: the time of day's colour, greyer and dimmer under cloud.
 	var l: Color = look["light"]
 	l = l.lerp(Color(l.v, l.v, l.v), float(w["desat"]) * 0.5).darkened(float(w["dim"]))
-	light.color = l
+	if world_3d != null:
+		world_3d.set_daylight(hour, w)
+		ModelKit.set_window_glow(dark)
+	else:
+		light.color = l
 	sky.weather = w
 	weather_fx.look = w
 	# Windows light up at night and in a dark storm.

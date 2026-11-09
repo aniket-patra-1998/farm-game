@@ -19,6 +19,7 @@ const MIN_TURN_WIDTH := 0.06  # an animal mid-turn is never drawn at zero width
 var grid: FarmGrid
 var pieces := {}        # "p<index>" or "o<uid>" -> FarmPiece
 var wind := 0.6           # from the weather: how hard plants and trees sway
+var three_d := false      # the farm is drawn in 3D: pieces with a 3D model are hidden (Objects3D draws them)
 
 var _sync_queued := false
 var _settled := false   # after the first sync, new pieces arrive with an animation (not on loading)
@@ -191,6 +192,9 @@ func _place(p: FarmPiece) -> void:
 	if p.plot >= 0:
 		p.z_index = plot_z(int(p.plot / float(GameState.MAX_SIZE)), p.plot % GameState.MAX_SIZE)
 		p.base = grid.center_of(p.plot)
+		# In 3D the bed is Plots3D's; the plants sit on its top.
+		var bed := Plots3D.HEIGHT * IsoProjection.HEIGHT_PX if three_d else float(PlaceholderArt.SLAB)
+		p.plants.position = Vector2(0, -bed)
 	else:
 		var o := Game.object_by_uid(p.uid)
 		var fp := Game.footprint(o["id"])
@@ -207,6 +211,7 @@ func _place(p: FarmPiece) -> void:
 		elif not p.is_animal():
 			p.animal = null
 		p.flip = -1.0 if o.get("flip", false) else 1.0
+		p.visible = not (three_d and Objects3D.handles(o))
 	p._apply_pose()
 
 

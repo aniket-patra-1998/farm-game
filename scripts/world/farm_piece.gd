@@ -103,7 +103,8 @@ func grow_in() -> void:
 func _draw() -> void:
 	draw_set_transform(-base)
 	if plot >= 0:
-		grid.draw_bed_on(self, plot)
+		if not grid.pieces.three_d:
+			grid.draw_bed_on(self, plot)
 	else:
 		var o := Game.object_by_uid(uid)
 		if not o.is_empty():

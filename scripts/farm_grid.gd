@@ -29,7 +29,7 @@ const COLOR_PART := Color("#f4c27a")
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
 
-## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id].
+## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id] (see scenery()).
 static var _scenery: Array = []
 
 
@@ -283,18 +283,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 ## The land the next expansion would add, drawn as dim wild grass around the farm.
 ## Trees scattered along the back two sides of the farm (never in front, so nothing hides your land).
 func _draw_scenery(ci: CanvasItem, n: int) -> void:
-	if _scenery.is_empty():
-		var rng := RandomNumberGenerator.new()
-		rng.seed = 909
-		var kinds := ["oak_tree", "pine_tree", "maple_tree", "oak_tree", "pine_tree", "willow_tree"]
-		for k in 70:
-			var along := rng.randf_range(-6.0, 34.0)
-			var out := rng.randf_range(1.6, 9.0)
-			_scenery.append(
-				[-out, along, kinds[k % kinds.size()]] if k % 2 == 0 else [along, -out, kinds[k % kinds.size()]]
-			)
-		_scenery.sort_custom(func(a, b): return float(a[0]) + float(a[1]) < float(b[0]) + float(b[1]))
-	for t in _scenery:
+	for t in scenery():
 		var r: float = t[0]
 		var c: float = t[1]
 		if r >= -1.0 and c >= -1.0:
@@ -312,6 +301,23 @@ func _draw_scenery(ci: CanvasItem, n: int) -> void:
 			PlaceholderArt.draw_object(ci, Game.item_data(id), g, false, 1, 0, 0)
 
 
+
+
+## The trees scattered along the back two sides of the farm: the same every time (a fixed seed), sorted
+## back to front. Shared by the 2D and 3D worlds.
+static func scenery() -> Array:
+	if _scenery.is_empty():
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 909
+		var kinds := ["oak_tree", "pine_tree", "maple_tree", "oak_tree", "pine_tree", "willow_tree"]
+		for k in 70:
+			var along := rng.randf_range(-6.0, 34.0)
+			var out := rng.randf_range(1.6, 9.0)
+			_scenery.append(
+				[-out, along, kinds[k % kinds.size()]] if k % 2 == 0 else [along, -out, kinds[k % kinds.size()]]
+			)
+		_scenery.sort_custom(func(a, b): return float(a[0]) + float(a[1]) < float(b[0]) + float(b[1]))
+	return _scenery
 
 
 func _draw_next_expansion(ci: CanvasItem) -> void:
