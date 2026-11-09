@@ -129,7 +129,7 @@ func _ready() -> void:
 		for k in plots.size():
 			var crop: Dictionary = Game.crops[Game.plots[plots[k]]["crop"]]
 			var grow := int(crop["grow_seconds"])
-			var stage := [0.2, 0.6, 1.05, 3.0][k % 4] # planted, growing, ripe, withered
+			var stage: float = [0.2, 0.6, 1.05, 3.0][k % 4] # planted, growing, ripe, withered
 			Game.plots[plots[k]]["planted_at"] = Game.now() - int(grow * stage) - (Game.ripe_window(crop) if stage > 2.0 else 0)
 		Game.objects_changed.emit()
 		Game.plot_changed.emit(-1)
