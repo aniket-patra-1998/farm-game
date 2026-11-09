@@ -121,6 +121,35 @@ func _ready() -> void:
 		await RenderingServer.frame_post_draw
 		process_ms += Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
 	print("PERF animals=%d process_ms_avg=%.2f" % [Game.objects.size(), process_ms / 120.0])
+	# Where it goes: drawing one animal, timed directly; and the same farm with the animals hidden.
+	var probe := Node2D.new()
+	var draw_us := [0]
+	probe.draw.connect(func() -> void:
+		var t0 := Time.get_ticks_usec()
+		for k in 100:
+			AnimalArt.draw(probe, Vector2(100, 100), Game.item_data("cow"), false, null)
+		draw_us[0] = Time.get_ticks_usec() - t0)
+	add_child(probe)
+	await _frames(3)
+	print("PERF one_cow_draw_us=%.1f" % (draw_us[0] / 100.0))
+	probe.queue_free()
+	var objects_layer: Node = grid.get("pieces")
+	var behaviour_us := 0
+	for k in 30:
+		var t1 := Time.get_ticks_usec()
+		for v in (objects_layer.get("pieces") as Dictionary).values():
+			var fp := v as FarmPiece
+			if fp.animal != null:
+				fp.animal.update(1.0 / 60.0)
+		behaviour_us += Time.get_ticks_usec() - t1
+	print("PERF behaviour_all_us=%.1f" % (behaviour_us / 30.0))
+	objects_layer.process_mode = Node.PROCESS_MODE_DISABLED
+	process_ms = 0.0
+	for k in 60:
+		await RenderingServer.frame_post_draw
+		process_ms += Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+	print("PERF without_object_layer_process_ms_avg=%.2f" % (process_ms / 60.0))
+	objects_layer.process_mode = Node.PROCESS_MODE_INHERIT
 	# The Bakery's panel, mid-game.
 	Game.crafting.bushels = {"pumpkins": 6, "wheat": 9, "strawberries": 2, "carrots": 3}
 	Game.crafting.goods = {"pumpkin_bread": 2, "spicy_muffins": 1}
