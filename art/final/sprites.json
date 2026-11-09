@@ -76,6 +76,34 @@
   ],
   "scale": 0.5
  },
+ "crop_corn_growing": {
+  "anchor": [
+   128.0,
+   124.0
+  ],
+  "scale": 0.5
+ },
+ "crop_corn_planted": {
+  "anchor": [
+   128.0,
+   123.0
+  ],
+  "scale": 0.5
+ },
+ "crop_corn_ripe": {
+  "anchor": [
+   128.0,
+   121.0
+  ],
+  "scale": 0.5
+ },
+ "crop_corn_withered": {
+  "anchor": [
+   128.0,
+   137.0
+  ],
+  "scale": 0.5
+ },
  "crop_cranberries_growing": {
   "anchor": [
    128.0,
@@ -115,6 +143,20 @@
   "anchor": [
    128.0,
    127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_elderberries_ripe": {
+  "anchor": [
+   128.0,
+   143.0
+  ],
+  "scale": 0.5
+ },
+ "crop_elderberries_withered": {
+  "anchor": [
+   128.0,
+   125.0
   ],
   "scale": 0.5
  },
@@ -171,6 +213,34 @@
   "anchor": [
    128.0,
    127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_wheat_growing": {
+  "anchor": [
+   128.0,
+   125.0
+  ],
+  "scale": 0.5
+ },
+ "crop_wheat_planted": {
+  "anchor": [
+   128.0,
+   123.0
+  ],
+  "scale": 0.5
+ },
+ "crop_wheat_ripe": {
+  "anchor": [
+   128.0,
+   127.0
+  ],
+  "scale": 0.5
+ },
+ "crop_wheat_withered": {
+  "anchor": [
+   128.0,
+   124.0
   ],
   "scale": 0.5
  },

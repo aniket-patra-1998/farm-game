@@ -55,6 +55,34 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_corn_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:20",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_corn_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:20",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_corn_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:21",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_corn_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:21",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_cranberries_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:13",
@@ -97,6 +125,20 @@
   "seed": 7,
   "style": "painterly"
  },
+ "crop_elderberries_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:17",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_elderberries_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:18",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
  "crop_raspberries_growing": {
   "class": "Crop",
   "made": "2026-11-09 05:09",
@@ -135,6 +177,34 @@
  "crop_strawberries_withered": {
   "class": "Crop",
   "made": "2026-11-09 05:08",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_wheat_growing": {
+  "class": "Crop",
+  "made": "2026-11-09 05:18",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_wheat_planted": {
+  "class": "Crop",
+  "made": "2026-11-09 05:18",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_wheat_ripe": {
+  "class": "Crop",
+  "made": "2026-11-09 05:19",
+  "model": "flux2",
+  "seed": 7,
+  "style": "painterly"
+ },
+ "crop_wheat_withered": {
+  "class": "Crop",
+  "made": "2026-11-09 05:19",
   "model": "flux2",
   "seed": 7,
   "style": "painterly"
