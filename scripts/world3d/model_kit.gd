@@ -253,7 +253,10 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 static func _roof_edges(parent: Node3D, slopes: Array, mat: Material) -> void:
 	var edge := mat
 	if mat is ShaderMaterial:
-		var col: Color = (mat as ShaderMaterial).get_shader_parameter("base_color")
+		# A patterned surface keeps its colour in base_color, a painted one in albedo.
+		var sm := mat as ShaderMaterial
+		var v: Variant = sm.get_shader_parameter("base_color")
+		var col: Color = v if v != null else sm.get_shader_parameter("albedo")
 		edge = paint(col.darkened(0.2))
 	for s: Array in [slopes[0], slopes[slopes.size() / 2]]:
 		var a: Vector3 = s[0]
