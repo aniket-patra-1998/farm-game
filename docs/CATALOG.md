@@ -149,7 +149,7 @@ Holds animals, trees or vehicles; may be built from a frame and expanded.
 | `build_materials` | materials |  |  | If set, it arrives as a frame finished with these. |
 | `expand_materials` | materials |  |  | Paid for each size up. |
 | `uses_materials` | list<string> → Material |  |  | Materials that start dropping once you own it. |
-| `special` | enum of mystery_eggs, calves, foals, lambs, truffles, nursery, beehive, saplings, garage |  |  | Its FarmVille extra on each collection. |
+| `special` | enum of mystery_eggs, calves, foals, lambs, truffles, nursery, beehive, saplings, garage, garden_shed |  |  | Its FarmVille extra on each collection. |
 | `produces` | bool | true |  | false = never ready to collect (the Garage). |
 | `grow_days` | int |  |  | Nursery: days for a baby to grow up. |
 | `grows_into` | map → Animal |  |  | Nursery: baby id -> adult id. |
@@ -1042,7 +1042,7 @@ Given, never bought.
 | | Item | id | Unlock | Cost | Size | Shape |
 |---|---|---|---|---|---|---|
 | ✅ | Mastery Sign | `mastery_sign` | never sold | free | 1x1 | mastery |
-| ✅ | Perfect Bunch (Found while harvesting flowers (FarmVille's Perfect Bunches); lasts 14 days once placed) | `perfect_bunch` | never sold | free | 1x1 |  |
+| ✅ | Perfect Bunch (Found while harvesting flowers (FarmVille's Perfect Bunches); lasts 14 days once placed) | `perfect_bunch` | never sold | free | 1x1 | flowerbed |
 
 ## recipes
 

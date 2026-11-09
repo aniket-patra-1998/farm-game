@@ -423,7 +423,8 @@
           "cost": 0,
           "color": "#f29ab8",
           "look": "a perfect bunch of fresh-cut garden flowers tied with a ribbon, standing in a little wicker basket",
-          "note": "Found while harvesting flowers (FarmVille's Perfect Bunches); lasts 14 days once placed"
+          "note": "Found while harvesting flowers (FarmVille's Perfect Bunches); lasts 14 days once placed",
+          "shape": "flowerbed"
         }
       ]
     }

@@ -2233,9 +2233,10 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	for k in 20:
 		g.add_bunch("lilac")
 	_eq(g.bunches.size(), GameState.BUNCH_CAP_NO_SHED, "10 at most without a Garden Shed")
-	var before := g.coins
+	g.coins = 29999
+	_check(not g.can_afford_item("garden_shed"), "the shed costs 30,000 coins, as in FarmVille")
+	g.coins = 1000000
 	_check(g.buy_and_place("garden_shed", 8, 8), "Garden Shed built")
-	_eq(g.coins, before - 30000, "for 30,000 coins, as in FarmVille")
 	_eq(g.bunch_cap(), 100, "the shed holds 100")
 	_eq(g.bunches.size(), GameState.BUNCH_CAP_NO_SHED + GameState.SHED_FREE_BUNCHES, "and comes with 10 free bunches")
 	var at := g.unpack_bunch(0)

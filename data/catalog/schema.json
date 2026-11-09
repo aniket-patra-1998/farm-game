@@ -354,7 +354,8 @@
             "nursery",
             "beehive",
             "saplings",
-            "garage"
+            "garage",
+            "garden_shed"
           ],
           "doc": "Its FarmVille extra on each collection."
         },
