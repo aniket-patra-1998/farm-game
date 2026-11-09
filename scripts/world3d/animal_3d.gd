@@ -156,7 +156,11 @@ func _build_quad() -> void:
 		var long_ears := rig.text("ears") == "long"
 		var up := rig.text("ears") in ["up", "long"]
 		var ear_at := Vector3(0, hh * (0.35 if up else 0.05), side * hh * (0.05 if up else 0.3))
-		var ear_size := Vector3(hh * 0.12, hh * (0.45 if long_ears else (0.3 if up else 0.12)), hh * (0.12 if up else 0.28))
+		var ear_size := Vector3(
+			hh * 0.12,
+			hh * (0.45 if long_ears else (0.3 if up else 0.12)),
+			hh * (0.12 if up else 0.28)
+		)
 		ModelKit.ball(ear, ear_at, 1.0, ModelKit.paint(head_col), ear_size)
 		_ears.append(ear)
 		match rig.text("horns", "none"):

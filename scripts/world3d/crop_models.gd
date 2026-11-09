@@ -161,5 +161,11 @@ static func _flower(mb: MeshBuilder, rng: RandomNumberGenerator, k: float, ripe:
 		else:
 			for j in 6:
 				var b := TAU * j / 6.0
-				mb.ellipsoid(top + Vector3(cos(b) * 0.025, 0, sin(b) * 0.025), Vector3(0.02, 0.008, 0.02), _p(0.95), 5, 3)
+				mb.ellipsoid(
+					top + Vector3(cos(b) * 0.025, 0, sin(b) * 0.025),
+					Vector3(0.02, 0.008, 0.02),
+					_p(0.95),
+					5,
+					3
+				)
 			mb.ellipsoid(top + Vector3(0, 0.006, 0), Vector3(0.013, 0.01, 0.013), Color("#f2c230"), 5, 3)

@@ -54,7 +54,12 @@ func box(xf: Transform3D, col: Color) -> void:
 		[1, 5, 6, 2, Vector3.RIGHT], [3, 2, 6, 7, Vector3.UP], [0, 1, 5, 4, Vector3.DOWN]]
 	for q: Array in quads:
 		var n: Vector3 = (xf.basis * q[4]).normalized()
-		var p := [xf * (c[q[0]] as Vector3), xf * (c[q[1]] as Vector3), xf * (c[q[2]] as Vector3), xf * (c[q[3]] as Vector3)]
+		var p := [
+			xf * (c[q[0]] as Vector3),
+			xf * (c[q[1]] as Vector3),
+			xf * (c[q[2]] as Vector3),
+			xf * (c[q[3]] as Vector3)
+		]
 		tri(p[0], p[1], p[2], n, col)
 		tri(p[0], p[2], p[3], n, col)
 

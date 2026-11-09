@@ -7,6 +7,7 @@ extends Node3D
 
 const SPOTS := [Vector2(-0.2, -0.2), Vector2(0.2, -0.2), Vector2(-0.2, 0.2), Vector2(0.2, 0.2)]
 const GROW_REFRESH := 3.0   # seconds between growth updates
+const PLANT_SCALE := 1.8    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
 var wind := 0.6: set = _set_wind
 
@@ -63,7 +64,7 @@ func rebuild() -> void:
 			var crop: Dictionary = Game.crops[crop_id]
 			var key := "%s|%s" % [str(crop.get("shape", "berry")), st[0]]
 			var col := Color.html(str(crop.get("color", "#e2453c")))
-			var size := lerpf(0.55, 1.0, float(st[1])) if st[0] in ["sprout", "young"] else 1.0
+			var size := PLANT_SCALE * (lerpf(0.55, 1.0, float(st[1])) if st[0] in ["sprout", "young"] else 1.0)
 			var list: Array = groups.get_or_add(key, [])
 			for k in SPOTS.size():
 				var spot: Vector2 = SPOTS[k]

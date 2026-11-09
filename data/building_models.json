@@ -107,6 +107,19 @@
       "door": {"w": 0.28, "h": 0.58, "style": "arch"},
       "features": [{"type": "barrels"}, {"type": "terrace"}, {"type": "sign"}]
     },
+    "farmhouse": {
+      "body": {"w": 0.72, "d": 0.6, "h": 1.35, "at": [0.48, 0.4], "walls": "boards"},
+      "roof": {"type": "gable", "pitch": 0.85, "overhang": 0.1, "color": "#8e3b2c"},
+      "door": {"w": 0.22, "h": 0.55, "style": "plain"},
+      "windows": 3,
+      "features": [{"type": "porch"}, {"type": "chimney"}, {"type": "flowers"}]
+    },
+    "log_cabin": {
+      "body": {"w": 0.7, "d": 0.62, "h": 0.9, "at": [0.48, 0.42], "walls": "logs"},
+      "roof": {"type": "gable", "pitch": 0.8, "overhang": 0.12, "color": "#5d6b3a"},
+      "door": {"w": 0.24, "h": 0.55, "style": "plain"},
+      "features": [{"type": "chimney"}, {"type": "porch"}]
+    },
     "spa": {
       "body": {"w": 0.74, "d": 0.62, "h": 0.9, "at": [0.48, 0.42], "walls": "plaster"},
       "roof": {"type": "hip", "pitch": 0.5, "color": "#4f8a8f"},

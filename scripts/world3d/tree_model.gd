@@ -11,7 +11,7 @@ const LEAF_TOP := Color("#7cc04e")
 
 ## A tree standing on `base` under `parent`; `size` 1 is a full tree on its own tile.
 static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0, ready := false,
-		seed_value := 0, fruit := true) -> Node3D:
+		seed_value := 0, fruit := true, leaf := LEAF) -> Node3D:
 	var root := Node3D.new()
 	root.position = base
 	parent.add_child(root)
@@ -38,7 +38,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		clumps.append(crown + Vector3(cos(a) * 0.2 * k, rng.randf_range(-0.06, 0.08) * k, sin(a) * 0.2 * k))
 	clumps.append(crown + Vector3(0, 0.15 * k, 0))
 	for i in clumps.size():
-		var col := LEAF.lerp(LEAF_TOP, clampf((clumps[i].y - crown.y) / (0.15 * k) * 0.5 + 0.4, 0.0, 1.0))
+		var col := leaf.lerp(leaf.lightened(0.3), clampf((clumps[i].y - crown.y) / (0.15 * k) * 0.5 + 0.4, 0.0, 1.0))
 		col = col.darkened(rng.randf_range(0.0, 0.08))
 		ModelKit.ball(root, clumps[i], rng.randf_range(0.17, 0.22) * k, ModelKit.paint(col), Vector3(1, 0.85, 1))
 	var fruit_col := Color.html(str(it.get("color", "#d93b30")))

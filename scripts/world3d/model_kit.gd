@@ -258,3 +258,60 @@ static func _roof_edges(parent: Node3D, slopes: Array, mat: Material) -> void:
 		var lo := Vector3(minf(a.x, b.x), a.y - 0.05, minf(a.z, b.z)) - Vector3(0.01, 0, 0.01)
 		var hi := Vector3(maxf(a.x, b.x), a.y + 0.005, maxf(a.z, b.z)) + Vector3(0.01, 0, 0.01)
 		box(parent, lo, hi, edge)
+
+
+# ---------------------------------------------------------------- merging
+
+
+## Merges every mesh under `root` into as few as possible: one MeshInstance3D for the parts that cast
+## shadows and one for those that don't, each with one surface per material. A building authored from a
+## hundred boxes is then drawn in a handful of draws. The parts' own transforms are kept; `root` is freed.
+static func bake(root: Node3D) -> Node3D:
+	var groups := {}   # "shadow|material id|format" -> {"st": SurfaceTool, "mat": Material, "shadow": bool}
+	_collect(root, Transform3D.IDENTITY, groups)
+	var out := Node3D.new()
+	out.transform = root.transform
+	out.name = root.name
+	for shadow: bool in [true, false]:
+		var mesh := ArrayMesh.new()
+		var mats: Array[Material] = []
+		for key in groups:
+			var g: Dictionary = groups[key]
+			if g["shadow"] != shadow:
+				continue
+			(g["st"] as SurfaceTool).commit(mesh)
+			mats.append(g["mat"])
+		if mesh.get_surface_count() == 0:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		for k in mats.size():
+			mi.set_surface_override_material(k, mats[k])
+		if not shadow:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		out.add_child(mi)
+	root.free()
+	return out
+
+
+static func _collect(node: Node, xf: Transform3D, groups: Dictionary) -> void:
+	for child in node.get_children():
+		if not child is Node3D:
+			continue
+		var c := child as Node3D
+		var cxf := xf * c.transform
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh != null:
+			var mi := c as MeshInstance3D
+			var shadow := mi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			for s in mi.mesh.get_surface_count():
+				var mat := mi.material_override if mi.material_override != null else mi.get_active_material(s)
+				# Surfaces only merge with the same vertex layout (a box has UVs, a hand-made face doesn't).
+				var fmt := mi.mesh.surface_get_format(s) & (Mesh.ARRAY_FORMAT_NORMAL | Mesh.ARRAY_FORMAT_TEX_UV
+					| Mesh.ARRAY_FORMAT_COLOR | Mesh.ARRAY_FORMAT_TANGENT)
+				var key := "%s|%d|%d" % [shadow, mat.get_instance_id() if mat != null else 0, fmt]
+				if not groups.has(key):
+					var st := SurfaceTool.new()
+					st.begin(Mesh.PRIMITIVE_TRIANGLES)
+					groups[key] = {"st": st, "mat": mat, "shadow": shadow}
+				(groups[key]["st"] as SurfaceTool).append_from(mi.mesh, s, cxf)
+		_collect(c, cxf, groups)

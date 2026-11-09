@@ -4,7 +4,7 @@ extends Node3D
 ## shows changes (its id, size, ready state, a frame becoming a building). Also the countryside trees
 ## around the farm. Kinds without a 3D model yet keep their 2D piece (ObjectLayer asks handles()).
 
-const MODELLED := ["building", "barn", "crafting", "tree", "animal"]
+const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor"]
 const SCENERY_Y := -Ground3D.SLAB
 const PINE := Color("#2f6b3a")
 
@@ -87,8 +87,9 @@ func _mind_of(a: Animal3D) -> AnimalBehaviour:
 
 ## What a view shows: when this changes, it's rebuilt.
 func _key(o: Dictionary) -> String:
-	return "%s|%d|%d|%d|%s|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
-		o.get("flip", false), Game.under_construction(o), Game.kind_of(o) == "tree" and Game.is_ready(o)]
+	return "%s|%d|%d|%d|%s|%s|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
+		o.get("flip", false), Game.under_construction(o), Game.kind_of(o) == "tree" and Game.is_ready(o),
+		o.get("crop", o.get("flower", ""))]
 
 
 func _build(o: Dictionary) -> Node3D:
@@ -101,13 +102,20 @@ func _build(o: Dictionary) -> Node3D:
 		a.behaviour = _mind_of(a)
 		a.update(0.0)
 		return a
-	if Game.kind_of(o) == "tree":
-		node = Node3D.new()
-		TreeModel.build_at(node, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, 1.0, Game.is_ready(o), int(o["uid"]))
-	elif Game.under_construction(o):
-		node = BuildingModel.build_frame(it, fp)
-	else:
-		node = BuildingModel.build(it, fp)
+	match Game.kind_of(o):
+		"tree":
+			node = Node3D.new()
+			TreeModel.build_at(node, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, 1.0, Game.is_ready(o), int(o["uid"]))
+			node = ModelKit.bake(node)
+		"vehicle":
+			node = VehicleModel.build(it, Game.under_construction(o))
+		"decor":
+			node = DecorModel.build(it, fp, o)
+		_:
+			if Game.under_construction(o):
+				node = ModelKit.bake(BuildingModel.build_frame(it, fp))
+			else:
+				node = ModelKit.bake(BuildingModel.build(it, fp))
 	node.position = Vector3(int(o["col"]), 0, int(o["row"]))
 	if o.get("flip", false):
 		# Turned: mirrored across the footprint's diagonal, as the 2D art flips left to right on screen.
@@ -128,7 +136,7 @@ func _build_scenery() -> void:
 		var at := Vector3(c + 0.5, SCENERY_Y, r + 0.5)
 		match str(t[2]):
 			"pine_tree":
-				_pine(_scenery, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
+				pine(_scenery, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
 			"willow_tree":
 				TreeModel.build_at(_scenery, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false)
 			_:
@@ -136,7 +144,7 @@ func _build_scenery() -> void:
 
 
 ## A pine: a short trunk and three stacked cones of dark needles.
-static func _pine(parent: Node3D, base: Vector3, size: float) -> void:
+static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 	var root := Node3D.new()
 	root.position = base
 	parent.add_child(root)

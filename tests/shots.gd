@@ -308,6 +308,32 @@ func _shots_3d(dir: String) -> void:
 		"duck", "brown_cow", "rabbit", "donkey", "lamb", "goose", "piglet"]
 	for k in loose.size():
 		_put(loose[k], 11 + int(k / 8.0), 2 + (k % 8) * 2, 1, {})
+	# Every decoration along the back of the farm, and the vehicles.
+	var decor: Array[String] = ["mailbox", "farm_stand", "dirt_path", "brick_path", "stone_path", "wooden_fence",
+		"white_picket_fence", "hedge", "stone_wall", "hay_bale", "haystack", "scarecrow", "water_trough", "bonfire",
+		"wheelbarrow", "water_well", "flower_bed", "pink_flamingo", "bench", "birdhouse", "birdbath",
+		"picnic_table", "garden_gnome", "lamp_post"]
+	for k in decor.size():
+		_put(decor[k], 0, k, 1, {})
+	_put("sundial", 1, 0, 1, {})
+	_put("arbor", 1, 1, 1, {})
+	_put("wooden_bridge", 1, 2, 1, {})
+	_put("pine_tree", 1, 3, 1, {})
+	_put("oak_tree", 1, 4, 1, {})
+	_put("maple_tree", 1, 5, 1, {})
+	_put("willow_tree", 1, 6, 1, {})
+	_put("mastery_sign", 1, 7, 1, {}, {"crop": "wheat"})
+	_put("perfect_bunch", 1, 8, 1, {}, {"flower": "red_tulips"})
+	_put("small_pond", 20, 7, 1, {})
+	_put("fountain", 20, 9, 1, {})
+	_put("gazebo", 22, 7, 1, {})
+	_put("log_cabin", 21, 12, 1, {})
+	_put("farmhouse", 21, 16, 1, {})
+	_put("tractor", 13, 15, 1, {})
+	_put("harvester", 13, 16, 1, {})
+	_put("seeder", 14, 15, 1, {})
+	_put("combine", 14, 16, 1, {})
+	_put("combine", 13, 17, 1, {}, {"construction": {}})
 	var fruit_trees: Array[String] = ["apple_tree", "cherry_tree", "lemon_tree"]
 	for k in 6:
 		_put(fruit_trees[k % 3], 22 + int(k / 3.0), 2 + 2 * (k % 3), 1, {})
@@ -351,5 +377,17 @@ func _shots_3d(dir: String) -> void:
 	cam.snap(grid.to_global(grid.center_of(Game.index_of(19, 16))), 1.7)
 	await _frames(12)
 	_shot(dir + "/world3d_crops.png")
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(1, 6))), 1.7)
+	await _frames(12)
+	_shot(dir + "/world3d_decor_left.png")
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(1, 18))), 1.7)
+	await _frames(12)
+	_shot(dir + "/world3d_decor_right.png")
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(14, 16))), 2.4)
+	await _frames(12)
+	_shot(dir + "/world3d_vehicles.png")
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(21, 11))), 1.3)
+	await _frames(12)
+	_shot(dir + "/world3d_homes.png")
 	Game.weather_override = ""
 	ProjectSettings.set_setting(Farm3D.SETTING, false)
