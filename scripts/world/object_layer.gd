@@ -71,8 +71,14 @@ func sync() -> void:
 			p.grid = grid
 			if str(key).begins_with("p"):
 				p.plot = int(str(key).substr(1))
+				p.plants = CropPlants.new()
+				p.plants.piece = p
+				p.plants.position = Vector2(0, -PlaceholderArt.SLAB)
+				p.add_child(p.plants)
 			else:
 				p.uid = int(str(key).substr(1))
+			p.phase = randf() * TAU
+			p.next_move = randf_range(1.0, 8.0)
 			pieces[key] = p
 			add_child(p)
 		_place(p)
@@ -81,6 +87,7 @@ func sync() -> void:
 
 
 func refresh_all() -> void:
+	wind = {"clear": 0.6, "partly_cloudy": 0.8, "cloudy": 1.0, "rain": 1.5, "storm": 2.4, "fog": 0.35, "snow": 0.9}.get(Game.weather()["state"], 0.6)
 	for p in pieces.values():
 		(p as FarmPiece).refresh()
 	_ready_list = pieces.values().filter(func(p): return p.is_ready())
@@ -116,6 +123,84 @@ func _sync_plot(i: int) -> void:
 func _place(p: FarmPiece) -> void:
 	if p.plot >= 0:
 		p.z_index = plot_z(int(p.plot / float(GameState.MAX_SIZE)), p.plot % GameState.MAX_SIZE)
+		p.base = grid.center_of(p.plot)
 	else:
 		var o := Game.object_by_uid(p.uid)
-		p.z_index = object_z(int(o["row"]), int(o["col"]), Game.footprint(o["id"]))
+		var fp := Game.footprint(o["id"])
+		p.z_index = object_z(int(o["row"]), int(o["col"]), fp)
+		var g := grid.corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+		var new_base := (g[0] + g[2]) / 2.0
+		if new_base != p.base:
+			p.wander = Vector2.ZERO
+			p.wander_to = Vector2.ZERO
+		p.base = new_base
+		p.motion = motion_of(o)
+		p.flip = -1.0 if o.get("flip", false) else 1.0
+		if p.motion != "animal" and p.motion != "bird":
+			p.scale = Vector2(p.flip, 1.0)
+	p.position = p.base + p.wander
+
+
+## How a thing moves: animals wander and breathe, birds also peck, trees sway; buildings stay put.
+static func motion_of(o: Dictionary) -> String:
+	if o.get("stray", false):
+		return "animal"
+	match Game.kind_of(o):
+		"animal":
+			var fam := str(Game.item_data(o["id"]).get("family", ""))
+			return "bird" if fam in ["chicken", "duck", "goose", "turkey"] else "animal"
+		"tree":
+			return "tree"
+	return ""
+
+
+# ---------------------------------------------------------------- motion (FarmVille's farm was never still)
+
+const WANDER := 0.22      # how far an animal strays from its tile centre, in tiles
+const WALK_SPEED := 16.0  # px per second
+var wind := 0.6           # from the weather: how hard plants and trees sway
+var _clock := 0.0
+
+
+func _process(delta: float) -> void:
+	_clock += delta
+	var t := _clock
+	for v in pieces.values():
+		var p := v as FarmPiece
+		if p.plants != null:
+			# Plants sway from the stem; each plot on its own beat, harder in wind.
+			p.plants.skew = sin(t * 1.7 + p.phase) * 0.05 * wind
+			continue
+		match p.motion:
+			"tree":
+				p.skew = sin(t * 0.8 + p.phase) * 0.018 * wind
+			"animal", "bird":
+				_animate_animal(p, t, delta)
+
+
+func _animate_animal(p: FarmPiece, t: float, delta: float) -> void:
+	p.next_move -= delta
+	if p.next_move <= 0.0:
+		# Pick a new spot near home, or stay a while.
+		p.next_move = randf_range(3.0, 11.0)
+		if randf() < 0.6:
+			var a := randf() * TAU
+			var r := randf() * WANDER
+			p.wander_to = Vector2(cos(a) * r * FarmGrid.TILE_W / 2.0, sin(a) * r * FarmGrid.TILE_H / 2.0)
+	var to := p.wander_to - p.wander
+	var walking := to.length() > 0.5
+	if walking:
+		var step := minf(to.length(), WALK_SPEED * delta)
+		p.wander += to.normalized() * step
+		if absf(to.x) > 0.5:
+			p.facing = -1.0 if to.x < 0.0 else 1.0
+	var hop := absf(sin(t * 9.0 + p.phase)) * 2.5 if walking else 0.0
+	p.position = p.base + p.wander - Vector2(0, hop)
+	var breathe := 1.0 + 0.018 * sin(t * 2.2 + p.phase)
+	p.scale = Vector2(p.facing * p.flip, breathe)
+	if p.motion == "bird" and not walking:
+		# A quick peck every few seconds.
+		var peck := maxf(0.0, sin(t * 1.3 + p.phase * 3.0) - 0.92) * 12.0
+		p.rotation = peck * 0.25 * p.facing
+	else:
+		p.rotation = 0.0

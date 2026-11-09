@@ -132,8 +132,8 @@
           "withered"
         ],
         "pattern": "crop_{id}_{stage}",
-        "fill": 1.0,
-        "doc": "planted until half grown, then growing, ripe when grown, withered when left too long."
+        "fill": 0.92,
+        "doc": "Plants only (no soil): the game draws the raised bed and stands the plants on it. planted until half grown, then growing, ripe when grown, withered when left too long."
       }
     },
     "Material": {

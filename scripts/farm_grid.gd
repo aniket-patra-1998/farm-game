@@ -248,7 +248,7 @@ func corners_of(row: int, col: int, w: int, h: int) -> PackedVector2Array:
 
 
 ## One object (FarmPiece): its sprite or code drawing. Marks and twinkles are on the overlay.
-func draw_object_on(ci: CanvasItem, o: Dictionary) -> void:
+func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 	var it := Game.item_data(o["id"])
 	var fp := Game.footprint(o["id"])
 	var corners := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
@@ -268,7 +268,7 @@ func draw_object_on(ci: CanvasItem, o: Dictionary) -> void:
 	if o["id"] == "mastery_sign" and Game.crops.has(o.get("crop", "")):
 		it = it.duplicate()
 		it["color"] = Game.crops[o["crop"]]["color"]
-	var flipped: bool = o.get("flip", false)
+	var flipped: bool = o.get("flip", false) and handle_flip  # pieces flip themselves
 	if flipped:
 		# Mirror around the object's own centre line.
 		var cx := (corners[1].x + corners[3].x) / 2.0
@@ -307,29 +307,33 @@ func _draw_placing(ci: CanvasItem) -> void:
 	PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
 
 
-## One plowed or planted plot (FarmPiece): a raised bed, and the crop on it.
-func draw_plot_on(ci: CanvasItem, i: int) -> void:
+## A plot's raised bed (FarmPiece): always drawn by the game, so every plot lines up into one tidy field.
+func draw_bed_on(ci: CanvasItem, i: int) -> void:
 	var top := top_of(_row(i), _col(i))
 	var ph := Game.phase(i)
 	if ph == GameState.Phase.GRASS:
 		return
-	var art := Game.crop_art_for(i) if ph != GameState.Phase.PLOWED else ""
-	if art == "":  # painted crops bring their own raised bed
-		PlaceholderArt.draw_soil(ci, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
+	PlaceholderArt.draw_soil(ci, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
 	if Game.is_fertilized(i):
 		PlaceholderArt.draw_fertilizer(ci, top + Vector2(0, -PlaceholderArt.SLAB), TILE_W, TILE_H)
-	if ph == GameState.Phase.PLOWED:
+
+
+## The plants on a plot (CropPlants): painted art if there is some, otherwise the code drawing.
+func draw_plants_on(ci: CanvasItem, i: int) -> void:
+	var ph := Game.phase(i)
+	if ph == GameState.Phase.GRASS or ph == GameState.Phase.PLOWED:
 		return
-	var crop: Dictionary = Game.crops[Game.crop_at(i)]
+	var at := center_of(i) + Vector2(0, -PlaceholderArt.SLAB)
+	var art := Game.crop_art_for(i)
+	if art != "":
+		SpriteBank.draw(ci, art, at)
+		return
 	var stage := "growing"
 	if ph == GameState.Phase.RIPE:
 		stage = "ripe"
 	elif ph == GameState.Phase.WITHERED:
 		stage = "withered"
-	if art != "":
-		SpriteBank.draw(ci, art, top + Vector2(0, TILE_H / 2.0))
-	else:
-		PlaceholderArt.draw_crop(ci, top + Vector2(0, TILE_H / 2.0 - PlaceholderArt.SLAB), TILE_W, TILE_H, crop, stage, Game.growth(i))
+	PlaceholderArt.draw_crop(ci, at, TILE_W, TILE_H, Game.crops[Game.crop_at(i)], stage, Game.growth(i))
 
 
 ## Called when a second finger lands: that's a pinch, so the first finger's tap is off.

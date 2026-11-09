@@ -22,7 +22,7 @@ COMMON = ("A single isometric game asset for a cozy farming game, seen from 30 d
           "The first image is the layout reference for this item; the last three images are style references only: "
           "match their painting style, brushwork, palette and lighting exactly, but don't copy their subjects.")
 # Bump when items are added, so the Colab notebook asks for the new references zip.
-MANIFEST_VERSION = 3
+MANIFEST_VERSION = 4
 STYLE_REFS = ["style/farmhouse.png", "style/cow.png", "style/apple_tree.png"]
 ICON = ("A single game icon for a cozy farming game's menus: one object, centered, front three-quarter view, slightly from above, "
         "complete and uncropped, a bold readable silhouette that reads at small size, isolated on a plain flat light grey (#e8e8e8) "
@@ -33,7 +33,13 @@ AVATAR = ("A single full-body character for a cozy isometric farming game, seen 
           "background with nothing else: no shadow on the background, no text, no border, no watermark. If the first image shows this "
           "same farmer, keep exactly the same person: face, hair, body, clothes and colours, changing only the pose and direction. "
           "The last three images are style references only: match their painting style, brushwork, palette and lighting exactly.")
-COMMONS = {"Icon": ICON, "Material": ICON, "Recipe": ICON, "Avatar": AVATAR}
+CROP = ("Four farm plants of one kind for a cozy isometric farming game, seen from 30 degrees above, standing in a diamond "
+        "(one at the back, one left, one right, one at the front) as if growing on a square plot. Only the plants: leaves, stems, "
+        "flowers and fruit, with their stems ending where they meet the ground. Absolutely no soil, no dirt, no plot, no tile, "
+        "no base, no ground, no shadow; isolated on a plain flat light grey (#e8e8e8) background with nothing else, no text, "
+        "no border, no watermark. The first image is a layout sketch showing where the four plants stand and how big they are. "
+        "The last three images are style references only: match their painting style, brushwork, palette and lighting exactly.")
+COMMONS = {"Icon": ICON, "Material": ICON, "Recipe": ICON, "Avatar": AVATAR, "Crop": CROP}
 STYLES = {"painterly": "Style: hand-painted cozy cartoon game art, soft painterly brushwork, warm golden-hour sunlight from the "
                        "upper left, gentle ambient occlusion, rich but natural colors, crisp readable silhouette with a soft dark "
                        "outline, premium mobile game quality."}
@@ -69,14 +75,14 @@ def subject(cls, e, stage, n_sizes):
     if cls == "Crop":
         thing = name.lower()
         if e.get("flower"):
-            return {"planted": f"one square plot of freshly tilled dark brown soil in neat furrows with tiny {thing} seedlings just sprouting; no flowers yet",
-                    "growing": f"one square plot of tilled brown soil with half-grown leafy {thing} plants with closed buds, not in bloom yet",
-                    "ripe": f"one square plot of tilled brown soil with {thing} plants in full colourful bloom, ready to pick",
-                    "withered": f"one square plot of dry cracked soil with wilted, dried-out brown {thing} plants drooping over"}[stage]
-        return {"planted": f"one square plot of freshly tilled dark brown soil in neat furrows with tiny {thing} seedlings just sprouting; no fruit, no flowers, nothing ripe yet",
-                "growing": f"one square plot of tilled brown soil with half-grown leafy {thing} plants, healthy and green but not ripe yet",
-                "ripe": f"one square plot of tilled brown soil with lush {thing} plants full of ripe {thing}, ready to harvest",
-                "withered": f"one square plot of dry cracked soil with wilted, dried-out brown {thing} plants drooping over"}[stage]
+            return {"planted": f"tiny {thing} seedlings just sprouting, a few small leaves each; no flowers yet",
+                    "growing": f"half-grown leafy {thing} plants with closed buds, not in bloom yet",
+                    "ripe": f"{thing} plants in full colourful bloom, ready to pick",
+                    "withered": f"wilted, dried-out brown {thing} plants drooping over"}[stage]
+        return {"planted": f"tiny {thing} seedlings just sprouting, a few small leaves each; no fruit, no flowers, nothing ripe yet",
+                "growing": f"half-grown leafy {thing} plants, healthy and green but not ripe yet",
+                "ripe": f"lush {thing} plants full of ripe {thing}, ready to harvest",
+                "withered": f"wilted, dried-out brown {thing} plants drooping over"}[stage]
     if cls == "Tree":
         fruit = name.replace(" Tree", "").lower()
         base = e["look"] if e.get("look") else f"a lush {name.lower()} with a sturdy trunk and a full green canopy"
@@ -170,11 +176,7 @@ def build():
                                   "tiles": int(e.get("w", 1)), "fill": float(e.get("art_fill", lc.get("fill", 0.7))),
                                   "refs": refs, "subject": subject(cls, e, stage, len(stages))})
     items += extra_art()
-    # Ground tiles under everything.
-    items.append({"id": "ground_grass", "item": "", "class": "Ground", "stage": "grass", "tiles": 1, "fill": 1.0,
-                  "refs": ["refs/ground_grass.png"], "subject": "one flat square tile of lush, short, sunlit green grass filling the whole tile edge to edge, nothing on it"})
-    items.append({"id": "ground_plowed", "item": "", "class": "Ground", "stage": "plowed", "tiles": 1, "fill": 1.0,
-                  "refs": ["refs/ground_plowed.png"], "subject": "one flat square plot of freshly plowed dark brown soil in neat furrows, filling the whole tile, nothing growing"})
+    # Ground (grass, soil) is drawn by the game so plots always line up; no ground tiles here.
     return {"_note": "Generated by tools/make_art_manifest.py from data/catalog/. Don't edit by hand: change the catalog "
                      "(look, art_fill) or the generator.",
             "version": MANIFEST_VERSION, "common": COMMON, "commons": COMMONS, "styles": STYLES, "style_refs": STYLE_REFS, "items": items}

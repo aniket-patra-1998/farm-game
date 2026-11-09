@@ -12,6 +12,8 @@ func _draw() -> void:
 		if int(o["uid"]) == lifted:
 			continue
 		var kind := Game.kind_of(o)
+		if ObjectLayer.motion_of(o) in ["animal", "bird"]:
+			continue  # animals carry their own shadow as they wander
 		if kind in ["path", "fence"] or str(Game.item_data(o["id"]).get("shape", "")) in ["path", "fence", "wall", "hedge"]:
 			continue
 		var fp := Game.footprint(o["id"])

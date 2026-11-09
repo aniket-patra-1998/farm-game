@@ -137,6 +137,7 @@ const BED_TOP_WET := Color("#5f412f")
 const BED_LEFT := Color("#4a3123")
 const BED_RIGHT := Color("#33211a")
 const BED_FURROW := Color("#4e3426")
+const BED_RIDGE := Color("#8a6247")
 
 
 static func draw_soil(ci: CanvasItem, top: Vector2, w: float, h: float, planted: bool) -> void:
@@ -150,9 +151,13 @@ static func draw_soil(ci: CanvasItem, top: Vector2, w: float, h: float, planted:
 	var r_ := pts[1]
 	var b_ := pts[2]
 	var l_ := pts[3]
+	# Furrows: a dark groove with a sunlit ridge beside it, running with the top-right edge.
 	for k in range(1, 5):
 		var f := k / 5.0
-		ci.draw_line(t_.lerp(l_, f), r_.lerp(b_, f), BED_FURROW, 2.5)
+		var a := t_.lerp(l_, f)
+		var b := r_.lerp(b_, f)
+		ci.draw_line(a, b, BED_FURROW, 3.0)
+		ci.draw_line(a + Vector2(1.5, 2.0), b + Vector2(1.5, 2.0), BED_RIDGE, 1.5)
 	ci.draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], base[2], base[3], pts[3], pts[0]]), Color("#241410"), 1.5)
 
 

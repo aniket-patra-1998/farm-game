@@ -152,7 +152,14 @@ def finish(item):
     w = int(TILE * item["tiles"] * item["fill"])
     cut = cut.resize((w, max(1, int(cut.height * w / cut.width))), Image.LANCZOS)
     cut.save(f"final/{item['id']}.png")
-    lift = 64 * item["tiles"] * item["fill"] if item["class"] in ("Crop", "Ground") or item["fill"] >= 0.95 else 0
+    # Anchor = the ground point the game stands the piece on. Plants: the front plant's base, a fifth of a
+    # tile in front of the plot's centre. Flat full-tile pieces: the tile's centre. Everything else: its base.
+    if item["class"] == "Crop":
+        lift = 0.2 * (TILE / 2) * item["tiles"] * item["fill"]
+    elif item["fill"] >= 0.95:
+        lift = 64 * item["tiles"] * item["fill"]
+    else:
+        lift = 0
     meta[item["id"]] = {"anchor": [cut.width / 2, cut.height - lift], "scale": 0.5}
     log[item["id"]] = {"class": item["class"], "model": BACKEND, "style": STYLE, "seed": SEED,
                        "size": paint_size(item), "made": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M")}
