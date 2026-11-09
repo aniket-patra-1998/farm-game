@@ -152,7 +152,7 @@ func state_key() -> String:
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
 		return ""
-	var ready := Game.is_ready(o) or (Game.is_crafting(o) and Game.crafts_done(o) > 0)
+	var ready := Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
 	var inside := Game.inside_total(o) if Game.is_building(o) else 0
 	return "%s|%d|%d|%s|%s|%s|%s|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)), ready,
 		o.get("flip", false), o.get("broken", false), inside, Game.under_construction(o), Game.art_for(o)]
@@ -162,4 +162,6 @@ func is_ready() -> bool:
 	if plot >= 0:
 		return Game.phase(plot) == GameState.Phase.RIPE
 	var o := Game.object_by_uid(uid)
-	return not o.is_empty() and (Game.is_ready(o) or (Game.is_crafting(o) and Game.crafts_done(o) > 0))
+	return not o.is_empty() and (
+		Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
+	)

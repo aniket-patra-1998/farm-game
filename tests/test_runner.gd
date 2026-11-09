@@ -131,7 +131,7 @@ func test_01_new_farm_starts_like_the_classic_opening() -> void:
 	for want in ["farmhouse", "barn", "mailbox", "farm_stand", "cow"]:
 		_check(ids.has(want), "starter farm has a %s" % want)
 	_eq(ids.count("chicken"), 2, "two starter chickens")
-	_check(g.barn().get("broken", false), "the barn starts broken")
+	_check(g.storage.barn().get("broken", false), "the barn starts broken")
 	_check(not g.is_occupied(g.index_of(5, 4)), "no object on the starter crops")
 	_done(g)
 
@@ -226,8 +226,8 @@ func test_07_ribbons_award_tiers() -> void:
 	for r in range(8, 12):
 		for c in range(7, 12):
 			g.plow(g.index_of(r, c))
-	_eq(g.stat("plowed"), 20, "plowed counter")
-	_eq(int(g.ribbon_tiers.get("plow_pro", 0)), 1, "Plow Pro yellow ribbon at 20 plots")
+	_eq(g.ribbons.stat("plowed"), 20, "plowed counter")
+	_eq(int(g.ribbons.ribbon_tiers.get("plow_pro", 0)), 1, "Plow Pro yellow ribbon at 20 plots")
 	_done(g)
 
 
@@ -241,11 +241,11 @@ func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
 	g.coins = 100000
 	var found := 0
 	var i := _free(g)
-	for k in GameState.COLLECTIBLE_PITY:
+	for k in HarvestDrops.COLLECTIBLE_PITY:
 		var r := _grow_and_harvest(g, i, "strawberries")
 		if r.get("drop", "") == "collectible":
 			found += 1
-	_check(found >= 1, "at least one collectible in %d harvests" % GameState.COLLECTIBLE_PITY)
+	_check(found >= 1, "at least one collectible in %d harvests" % HarvestDrops.COLLECTIBLE_PITY)
 	_done(g)
 
 
@@ -253,26 +253,26 @@ func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
 
 func test_09_collection_trade_in() -> void:
 	var g := _farm()
-	var coll: Dictionary = g.collections[0]
-	_check(not g.can_trade_in(coll), "empty set can't be traded")
-	var need := g.coll_need(coll)
+	var coll: Dictionary = g.collectibles.collections[0]
+	_check(not g.collectibles.can_trade_in(coll), "empty set can't be traded")
+	var need := g.collectibles.coll_need(coll)
 	_eq(need.values(), [3, 3, 3, 2, 1], "level 1: 3 of each common, 2 uncommon, 1 rare (FarmVille)")
 	for id in need:
-		g.owned[id] = int(need[id]) + 1
+		g.collectibles.owned[id] = int(need[id]) + 1
 	# Isolate the trade-in: no first-ribbon reward, and no level-up from its XP.
-	g.ribbon_tiers["collector"] = 4
+	g.ribbons.ribbon_tiers["collector"] = 4
 	g.xp = g.xp_for_level(10)
 	var coins := g.coins
-	_check(g.trade_in(coll["id"]), "full set trades in")
+	_check(g.collectibles.trade_in(coll["id"]), "full set trades in")
 	_eq(g.coins, coins + 500, "level 1 pays 500 coins")
-	_eq(int(g.owned[coll["items"][0]["id"]]), 1, "the items it took are used up")
-	_eq(g.coll_level(coll), 1, "on to level 2")
-	_eq(g.coll_need(coll).values(), [6, 6, 6, 4, 2], "level 2: 6/4/2")
-	g.coll_levels[coll["id"]] = 2
-	_eq(g.coll_need(coll).values(), [12, 12, 12, 8, 4], "level 3: 12/8/4")
-	_eq(int(g.coll_reward(coll)["coins"]), 1500, "level 3 pays 1,500 coins")
-	g.coll_levels[coll["id"]] = 3
-	_eq(g.coll_level(coll), 0, "after level 3 it starts over")
+	_eq(int(g.collectibles.owned[coll["items"][0]["id"]]), 1, "the items it took are used up")
+	_eq(g.collectibles.coll_level(coll), 1, "on to level 2")
+	_eq(g.collectibles.coll_need(coll).values(), [6, 6, 6, 4, 2], "level 2: 6/4/2")
+	g.collectibles.coll_levels[coll["id"]] = 2
+	_eq(g.collectibles.coll_need(coll).values(), [12, 12, 12, 8, 4], "level 3: 12/8/4")
+	_eq(int(g.collectibles.coll_reward(coll)["coins"]), 1500, "level 3 pays 1,500 coins")
+	g.collectibles.coll_levels[coll["id"]] = 3
+	_eq(g.collectibles.coll_level(coll), 0, "after level 3 it starts over")
 	_done(g)
 
 
@@ -315,10 +315,10 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 	_check(g.collect(uid).is_empty(), "not ready straight away")
 	_skip(g, 86400)
 	_eq(g.collect(uid)["coins"], 200, "5 chickens x 40 coins")
-	_check(not g.upgrade_building(uid), "can't expand without materials")
+	_check(not g.land.upgrade_building(uid), "can't expand without materials")
 	for m in GameState.basic_parts:
 		g.parts[m] = 10
-	_check(g.upgrade_building(uid), "expand with 10 bricks, nails and boards")
+	_check(g.land.upgrade_building(uid), "expand with 10 bricks, nails and boards")
 	_eq(g.capacity(coop), 40, "Big Chicken Coop holds 40")
 	_eq(g.size_name(coop), "Big Chicken Coop", "named like FarmVille")
 	_eq(int(g.parts["bricks"]), 0, "materials used up")
@@ -333,9 +333,9 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 func test_12_expand_with_coins_needs_level_gems_do_not() -> void:
 	var g := _farm()
 	g.coins = 100000
-	_check(not g.expand(false), "coins need level 5")
+	_check(not g.land.expand(false), "coins need level 5")
 	g.gems = 20
-	_check(g.expand(true), "gems expand at level 1")
+	_check(g.land.expand(true), "gems expand at level 1")
 	_eq(g.farm_size, 14, "farm grew to 14")
 	_eq(g.gems, 10, "10 gems spent")
 	_check(g.can_place("chicken", 13, 13), "new land is usable")
@@ -364,19 +364,19 @@ func test_13_old_12x12_saves_migrate() -> void:
 func test_14_bees_only_join_a_hive_with_a_queen() -> void:
 	var g := _farm(true)
 	var hive := _built_hive(g)
-	g.queen_bees = 0
+	g.bees.queen_bees = 0
 	var queens_found := 0
 	for k in 200:
-		if g._flower_harvest_bees() == "A Queen Bee!":
+		if g.bees.flower_harvest_bees() == "A Queen Bee!":
 			queens_found += 1
-			g.queen_bees = 0 # keep her out of the hive for this part
+			g.bees.queen_bees = 0 # keep her out of the hive for this part
 	_eq(g.inside_total(hive), 0, "no bees join a hive without a queen")
 	_check(queens_found <= 6, "Queen Bees are rare (%d in 200 flower harvests)" % queens_found)
-	g.queen_bees = 1
-	_check(g.add_queen(int(hive["uid"])), "the queen moves in")
-	_eq(g.queen_bees, 0, "the held queen was used")
+	g.bees.queen_bees = 1
+	_check(g.bees.add_queen(int(hive["uid"])), "the queen moves in")
+	_eq(g.bees.queen_bees, 0, "the held queen was used")
 	for k in 200:
-		g._flower_harvest_bees()
+		g.bees.flower_harvest_bees()
 	var bees := g.inside_total(hive)
 	_check(bees >= 30 and bees <= 70, "about a quarter of flower harvests bring a bee (%d of 200)" % bees)
 	_skip(g, 86400)
@@ -399,24 +399,24 @@ func test_14_bees_only_join_a_hive_with_a_queen() -> void:
 
 func test_15_strays_arrive_get_adopted_or_leave() -> void:
 	var g := _farm()
-	g.next_stray_at = 0
-	g.check_strays()
+	g.strays.next_stray_at = 0
+	g.strays.check_strays()
 	var strays := g.objects.filter(func(o): return o.get("stray", false))
 	_eq(strays.size(), 1, "one stray arrives")
 	var s: Dictionary = strays[0]
 	_check(not g.is_ready(s), "strays don't produce")
-	g.ribbon_tiers["animal_lover"] = 4 # isolate the adoption XP from the first-ribbon reward
+	g.ribbons.ribbon_tiers["animal_lover"] = 4 # isolate the adoption XP from the first-ribbon reward
 	var xp := g.xp
-	_check(g.adopt_stray(int(s["uid"])), "adopt")
+	_check(g.strays.adopt_stray(int(s["uid"])), "adopt")
 	_check(not s.get("stray", false), "no longer a stray")
-	_eq(g.xp, xp + GameState.STRAY_ADOPT_XP, "adoption XP")
+	_eq(g.xp, xp + StraySystem.STRAY_ADOPT_XP, "adoption XP")
 
-	g.next_stray_at = 0
-	g.check_strays()
+	g.strays.next_stray_at = 0
+	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o.get("stray", false)).size(), 1, "another stray")
-	g.next_stray_at = g.now() + 999999 # stop new arrivals
-	_skip(g, GameState.STRAY_STAYS + 1)
-	g.check_strays()
+	g.strays.next_stray_at = g.now() + 999999 # stop new arrivals
+	_skip(g, StraySystem.STRAY_STAYS + 1)
+	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o.get("stray", false)).size(), 0, "unadopted stray left")
 	_done(g)
 
@@ -437,8 +437,8 @@ func test_16_save_and_load_round_trip() -> void:
 	g.add_unwithers(3)
 	g.buy_and_place("chicken", 8, 8)
 	g.parts["nails"] = 3
-	g.barn().erase("broken")
-	g.store_object(int(g.object_at(g.index_of(4, 0))["uid"])) # the mailbox
+	g.storage.barn().erase("broken")
+	g.storage.store_object(int(g.object_at(g.index_of(4, 0))["uid"])) # the mailbox
 	g.save_game()
 	var held := g.unwithers
 	_done(g)
@@ -453,9 +453,9 @@ func test_16_save_and_load_round_trip() -> void:
 	_eq(h.unwithers, held, "unwithers restored")
 	_eq(h.object_at(h.index_of(8, 8)).get("id", ""), "chicken", "objects restored")
 	_eq(int(h.parts["nails"]), 3, "parts restored")
-	_check(h.barn_repaired(), "barn repair restored")
-	_eq(h.stored.size(), 1, "stored items restored")
-	_eq(h.stored[0]["id"], "mailbox", "the stored item is the mailbox")
+	_check(h.storage.barn_repaired(), "barn repair restored")
+	_eq(h.storage.stored.size(), 1, "stored items restored")
+	_eq(h.storage.stored[0]["id"], "mailbox", "the stored item is the mailbox")
 	h.queue_free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
@@ -469,7 +469,7 @@ func test_17_data_files_are_consistent() -> void:
 	var g := _farm()
 	_check(g.crops.size() >= 12, "crops loaded")
 	_check(g.items.size() >= 16, "items loaded")
-	for coll in g.collections:
+	for coll in g.collectibles.collections:
 		_eq(coll["items"].size(), 5, "%s has 5 items" % coll["name"])
 		for crop_id in coll.get("crops", []):
 			_check(g.crops.has(crop_id), "%s lists a real crop (%s)" % [coll["name"], crop_id])
@@ -487,7 +487,7 @@ func test_17_data_files_are_consistent() -> void:
 			for held in it.get("holds", []) + it.get("one_each", []):
 				_check(g.items.has(held), "%s holds a real item (%s)" % [id, held])
 	var last := GameState.START_SIZE
-	for step in g.expansion_steps:
+	for step in g.land.expansion_steps:
 		_check(int(step["size"]) > last, "expansion sizes grow")
 		last = int(step["size"])
 	_eq(last, GameState.MAX_SIZE, "last expansion reaches the max size")
@@ -584,7 +584,7 @@ func test_23_every_crop_and_item_has_art() -> void:
 func test_24_every_crop_belongs_to_a_collection() -> void:
 	var g := _farm()
 	for id in g.crop_order:
-		_check(g.collection_of_crop.has(id), "%s can drop collectibles" % id)
+		_check(g.collectibles.collection_of_crop.has(id), "%s can drop collectibles" % id)
 	_done(g)
 
 
@@ -638,16 +638,16 @@ func test_27_no_parts_when_drops_are_off() -> void:
 
 func test_28_daily_gift_once_per_day() -> void:
 	var g := _farm()
-	g.check_daily_gift()
-	_eq(g.stat("parts_found"), 0, "no gift on the first day")
+	g.daily.check_daily_gift()
+	_eq(g.ribbons.stat("parts_found"), 0, "no gift on the first day")
 	_skip(g, 86400)
-	g.check_daily_gift()
-	_eq(g.stat("parts_found"), GameState.DAILY_PARTS, "gift the next day")
-	g.check_daily_gift()
-	_eq(g.stat("parts_found"), GameState.DAILY_PARTS, "only once that day")
+	g.daily.check_daily_gift()
+	_eq(g.ribbons.stat("parts_found"), DailySystem.DAILY_PARTS, "gift the next day")
+	g.daily.check_daily_gift()
+	_eq(g.ribbons.stat("parts_found"), DailySystem.DAILY_PARTS, "only once that day")
 	_skip(g, 3 * 86400)
-	g.check_daily_gift()
-	_eq(g.stat("parts_found"), 2 * GameState.DAILY_PARTS, "one gift after a long break, not a pile")
+	g.daily.check_daily_gift()
+	_eq(g.ribbons.stat("parts_found"), 2 * DailySystem.DAILY_PARTS, "one gift after a long break, not a pile")
 	_done(g)
 
 
@@ -655,22 +655,22 @@ func test_28_daily_gift_once_per_day() -> void:
 
 func test_29_barn_repair_needs_every_part() -> void:
 	var g := _farm()
-	_check(not g.can_repair_barn(), "can't repair with no parts")
-	_check(not g.repair_barn(), "repair refused")
-	var need := g.repair_needs()
+	_check(not g.storage.can_repair_barn(), "can't repair with no parts")
+	_check(not g.storage.repair_barn(), "repair refused")
+	var need := g.storage.repair_needs()
 	g.parts["bricks"] = int(need["bricks"])
 	g.parts["nails"] = int(need["nails"])
 	g.parts["boards"] = int(need["boards"]) - 1
-	_check(not g.can_repair_barn(), "one board short")
+	_check(not g.storage.can_repair_barn(), "one board short")
 	g.parts["boards"] = int(need["boards"]) + 2
 	g.xp = g.xp_for_level(10) # keep the reward XP from triggering a level-up reward
 	var coins := g.coins
-	_check(g.repair_barn(), "repair with enough parts")
-	_check(g.barn_repaired(), "barn is fixed")
+	_check(g.storage.repair_barn(), "repair with enough parts")
+	_check(g.storage.barn_repaired(), "barn is fixed")
 	_eq(g.coins, coins + int(g.item_data("barn")["repair_coins"]), "repair reward coins")
 	_eq(int(g.parts["boards"]), 2, "spare boards kept")
 	_eq(int(g.parts["bricks"]), 0, "bricks used up")
-	_check(not g.repair_barn(), "can't repair twice")
+	_check(not g.storage.repair_barn(), "can't repair twice")
 	_done(g)
 
 
@@ -680,15 +680,15 @@ func test_30_storage_put_away_and_bring_back() -> void:
 	var g := _farm()
 	var chicken := g.object_at(g.index_of(9, 2))
 	_eq(chicken.get("id", ""), "chicken", "starter chicken in place")
-	_check(not g.store_object(int(chicken["uid"])), "can't store while the barn is broken")
-	g.barn().erase("broken")
-	_check(not g.store_object(int(g.barn()["uid"])), "the barn can't store itself")
-	_check(g.store_object(int(chicken["uid"])), "store the chicken")
+	_check(not g.storage.store_object(int(chicken["uid"])), "can't store while the barn is broken")
+	g.storage.barn().erase("broken")
+	_check(not g.storage.store_object(int(g.storage.barn()["uid"])), "the barn can't store itself")
+	_check(g.storage.store_object(int(chicken["uid"])), "store the chicken")
 	_check(g.object_at(g.index_of(9, 2)).is_empty(), "its tile is free")
-	_eq(g.stored.size(), 1, "one item stored")
-	_check(not g.place_from_storage(0, 1, 1), "can't place it on the farmhouse")
-	_check(g.place_from_storage(0, 11, 11), "place it back out")
-	_eq(g.stored.size(), 0, "storage empty again")
+	_eq(g.storage.stored.size(), 1, "one item stored")
+	_check(not g.storage.place_from_storage(0, 1, 1), "can't place it on the farmhouse")
+	_check(g.storage.place_from_storage(0, 11, 11), "place it back out")
+	_eq(g.storage.stored.size(), 0, "storage empty again")
 	_eq(g.object_at(g.index_of(11, 11)).get("id", ""), "chicken", "chicken is back")
 	_check(not g.is_ready(g.object_at(g.index_of(11, 11))), "its timer restarted")
 	_done(g)
@@ -698,22 +698,22 @@ func test_30_storage_put_away_and_bring_back() -> void:
 
 func test_31_storage_limits() -> void:
 	var g := _farm()
-	g.barn().erase("broken")
+	g.storage.barn().erase("broken")
 	g.coins = 1000000
 	g.add_xp(g.xp_for_level(4))
 	_check(g.buy_and_place("chicken_coop", 8, 8), "coop placed")
-	_check(not g.store_object(int(g.object_at(g.index_of(8, 8))["uid"])), "shelters can't be stored")
-	g.next_stray_at = 0
-	g.check_strays()
+	_check(not g.storage.store_object(int(g.object_at(g.index_of(8, 8))["uid"])), "shelters can't be stored")
+	g.strays.next_stray_at = 0
+	g.strays.check_strays()
 	var strays := 0
 	for o in g.objects:
 		if o.get("stray", false):
 			strays += 1
-			_check(not g.store_object(int(o["uid"])), "strays can't be stored")
+			_check(not g.storage.store_object(int(o["uid"])), "strays can't be stored")
 	_eq(strays, 1, "a stray arrived to test with")
-	for k in g.barn_capacity():
-		g.stored.append({"uid": 9000 + k, "id": "chicken", "t": 0})
-	_check(not g.store_object(int(g.object_at(g.index_of(9, 3))["uid"])), "a full barn refuses more")
+	for k in g.storage.barn_capacity():
+		g.storage.stored.append({"uid": 9000 + k, "id": "chicken", "t": 0})
+	_check(not g.storage.store_object(int(g.object_at(g.index_of(9, 3))["uid"])), "a full barn refuses more")
 	_done(g)
 
 
@@ -931,12 +931,12 @@ func test_38_stable_is_built_from_a_frame_with_materials() -> void:
 	_check(not g.is_ready(st), "a frame never produces")
 	g.place_somewhere("horse")
 	_eq(g.fill_building(uid), 0, "can't move horses into a frame")
-	_eq(g.add_materials(uid), 0, "nothing to add with no materials")
+	_eq(g.land.add_materials(uid), 0, "nothing to add with no materials")
 	g.parts["bricks"] = 4
-	_eq(g.add_materials(uid), 4, "adds the 4 bricks held")
-	_eq(int(g.construction_needs(st)["bricks"]), 6, "6 bricks still missing")
+	_eq(g.land.add_materials(uid), 4, "adds the 4 bricks held")
+	_eq(int(g.land.construction_needs(st)["bricks"]), 6, "6 bricks still missing")
 	_all_materials(g, 10)
-	g.add_materials(uid)
+	g.land.add_materials(uid)
 	_check(not g.under_construction(st), "finished once every material is in")
 	_eq(int(g.parts["harnesses"]), 0, "harnesses used")
 	_eq(int(g.parts["bricks"]), 4, "spare bricks kept (4 were already in)")
@@ -954,7 +954,7 @@ func test_39_stable_horses_daily_stallion_brings_foals() -> void:
 	var st := g.object_at(g.index_of(8, 8))
 	var uid := int(st["uid"])
 	_all_materials(g, 10)
-	g.add_materials(uid)
+	g.land.add_materials(uid)
 	for k in 4:
 		g.place_somewhere("horse")
 	_eq(g.cycle_of(g.objects.filter(func(o): return o["id"] == "horse")[0]), 3 * 86400, "a loose horse takes 3 days")
@@ -1028,7 +1028,7 @@ func test_41_nursery_raises_babies_into_adults() -> void:
 	var n := g.object_at(g.index_of(8, 8))
 	var uid := int(n["uid"])
 	_all_materials(g, 10)
-	g.add_materials(uid)
+	g.land.add_materials(uid)
 	_check(not g.under_construction(n), "nursery finished")
 	g.place_somewhere("calf")
 	g.place_somewhere("foal")
@@ -1068,16 +1068,16 @@ func test_42_coop_mystery_eggs_follow_breeds() -> void:
 		_skip(g, 86400)
 		g.collect(uid)
 	var total := 0
-	for colour in g.mystery_eggs:
-		total += int(g.mystery_eggs[colour])
+	for colour in g.mystery.mystery_eggs:
+		total += int(g.mystery.mystery_eggs[colour])
 		_check(colour == "white" or colour == "brown", "egg colours match the breeds (got %s)" % colour)
 	_check(total >= 4, "60 chickens find eggs regularly (%d in 40 days)" % total)
-	var colour: String = "white" if int(g.mystery_eggs.get("white", 0)) > 0 else "brown"
-	var before := int(g.mystery_eggs[colour])
-	var prize := g.open_mystery_egg(colour)
+	var colour: String = "white" if int(g.mystery.mystery_eggs.get("white", 0)) > 0 else "brown"
+	var before := int(g.mystery.mystery_eggs[colour])
+	var prize := g.mystery.open_mystery_egg(colour)
 	_check(prize != "", "opening an egg gives a prize (%s)" % prize)
-	_eq(int(g.mystery_eggs[colour]), before - 1, "the egg is used up")
-	_eq(g.open_mystery_egg("golden"), "", "can't open an egg you don't have")
+	_eq(int(g.mystery.mystery_eggs[colour]), before - 1, "the egg is used up")
+	_eq(g.mystery.open_mystery_egg("golden"), "", "can't open an egg you don't have")
 	_done(g)
 
 
@@ -1091,12 +1091,12 @@ func test_43_expansions_cost_materials_and_follow_farmville_sizes() -> void:
 	var st := g.object_at(g.index_of(8, 8))
 	var uid := int(st["uid"])
 	_all_materials(g, 1000)
-	g.add_materials(uid)
+	g.land.add_materials(uid)
 	var sizes: Array[int] = [g.capacity(st)]
-	while g.upgrade_building(uid):
+	while g.land.upgrade_building(uid):
 		sizes.append(g.capacity(st))
 	_eq(sizes, [20, 25, 30, 35, 40] as Array[int], "stable grows 20 to 40 in steps of 5")
-	_check(not g.can_expand(st), "no expansion past full size")
+	_check(not g.land.can_expand(st), "no expansion past full size")
 	_eq(g.cycle_of(st), 86400, "expanding doesn't change timing")
 	var coop_sizes: Array = (g.item_data("chicken_coop")["levels"] as Array).map(func(v): return int(v))
 	_eq(coop_sizes, [20, 40, 60], "Chicken Coop, Big, Huge: 20, 40, 60")
@@ -1107,13 +1107,13 @@ func test_43_expansions_cost_materials_and_follow_farmville_sizes() -> void:
 
 func test_44_specific_materials_only_drop_for_buildings_you_own() -> void:
 	var g := _farm()
-	var pool := g.wanted_parts()
+	var pool := g.daily.wanted_parts()
 	_check(not pool.has("harnesses"), "no harnesses before owning a stable")
 	_check(not pool.has("bottles"), "no bottles before owning a nursery")
 	g.coins = 1000000
 	g.xp = g.xp_for_level(12)
 	g.buy_and_place("horse_stable", 8, 8)
-	pool = g.wanted_parts()
+	pool = g.daily.wanted_parts()
 	_check(pool.has("harnesses") and pool.has("horseshoes"), "stable materials drop once you own the frame")
 	_check(not pool.has("smokers"), "beehive materials still don't")
 	_done(g)
@@ -1149,20 +1149,20 @@ func test_46_bull_and_stallion_only_wander_in_with_their_building() -> void:
 	g.xp = g.xp_for_level(20)
 	var seen := {}
 	for k in 300:
-		if g._spawn_stray():
+		if g.strays._spawn_stray():
 			var s: Dictionary = g.objects[-1]
 			seen[s["id"]] = true
 			g.objects.pop_back()
-			g._rebuild_occupancy()
+			g.rebuild_occupancy()
 	_check(not seen.has("bull") and not seen.has("stallion"), "no bull or stallion without their buildings")
 	g.coins = 10000000
 	g.buy_and_place("cow_shed", 8, 8)
 	seen = {}
 	for k in 300:
-		if g._spawn_stray():
+		if g.strays._spawn_stray():
 			seen[g.objects[-1]["id"]] = true
 			g.objects.pop_back()
-			g._rebuild_occupancy()
+			g.rebuild_occupancy()
 	_check(seen.has("bull"), "a lonely bull can wander in once you own a Dairy Farm")
 	_check(not seen.has("stallion"), "still no stallion without a stable")
 	_done(g)
@@ -1180,7 +1180,7 @@ func _built_hive(g: GameState) -> Dictionary:
 	g.buy_and_place("beehive", 8, 8)
 	var hive := g.object_at(g.index_of(8, 8))
 	_all_materials(g, 10)
-	g.add_materials(int(hive["uid"]))
+	g.land.add_materials(int(hive["uid"]))
 	return hive
 
 
@@ -1195,23 +1195,23 @@ func test_47_beehive_frame_and_queen_bee() -> void:
 	var uid := int(hive["uid"])
 	_check(g.under_construction(hive), "the Beehive is built from a frame")
 	g.gems = 100
-	_check(not g.add_queen(uid, true), "no queen in an unfinished frame")
+	_check(not g.bees.add_queen(uid, true), "no queen in an unfinished frame")
 	_all_materials(g, 10)
-	g.add_materials(uid)
+	g.land.add_materials(uid)
 	_check(not g.under_construction(hive), "frame finished with smokers, beeswax and the basics")
 	_eq(int(g.parts["smokers"]), 0, "smokers used")
 	_eq(g.capacity(hive), 200, "holds up to 200 bees")
-	_check(g.expansion_needs(hive).is_empty(), "a hive isn't expanded: it grows as bees join")
-	g.queen_bees = 0
-	_check(not g.add_queen(uid), "no queen held")
-	g.gems = GameState.QUEEN_GEM_COST
-	_check(g.add_queen(uid, true), "queen bought with gems")
-	_eq(g.gems, 0, "%d gems spent" % GameState.QUEEN_GEM_COST)
-	_check(g.has_queen(hive), "the hive has its queen")
-	g.queen_bees = 1
-	_check(not g.add_queen(uid), "only one queen per hive")
-	_eq(g.queen_bees, 1, "the spare queen is kept")
-	_check(g.wanted_parts().has("smokers"), "smokers drop once you own a hive")
+	_check(g.land.expansion_needs(hive).is_empty(), "a hive isn't expanded: it grows as bees join")
+	g.bees.queen_bees = 0
+	_check(not g.bees.add_queen(uid), "no queen held")
+	g.gems = BeehiveSystem.QUEEN_GEM_COST
+	_check(g.bees.add_queen(uid, true), "queen bought with gems")
+	_eq(g.gems, 0, "%d gems spent" % BeehiveSystem.QUEEN_GEM_COST)
+	_check(g.bees.has_queen(hive), "the hive has its queen")
+	g.bees.queen_bees = 1
+	_check(not g.bees.add_queen(uid), "only one queen per hive")
+	_eq(g.bees.queen_bees, 1, "the spare queen is kept")
+	_check(g.daily.wanted_parts().has("smokers"), "smokers drop once you own a hive")
 	_done(g)
 
 
@@ -1219,17 +1219,17 @@ func test_47_beehive_frame_and_queen_bee() -> void:
 
 func test_48_bees_pollinate_fertilized_crops() -> void:
 	var g := _farm(true)
-	_eq(g.pollination_chance(), 0.0, "no bees, no pollination")
+	_eq(g.bees.pollination_chance(), 0.0, "no bees, no pollination")
 	var none := 0
 	for k in 100:
-		none += g._pollinate("strawberries")
+		none += g.bees.pollinate("strawberries")
 	_eq(none, 0, "nothing pollinated without bees")
 	var hive := _built_hive(g)
 	hive["queen"] = true
 	hive["inside"] = {"bee": 100}
-	_eq(g.pollination_chance(), 0.25, "100 bees: 25%")
+	_eq(g.bees.pollination_chance(), 0.25, "100 bees: 25%")
 	hive["inside"] = {"bee": 200}
-	_eq(g.pollination_chance(), 0.5, "200 bees: 50%, the most")
+	_eq(g.bees.pollination_chance(), 0.5, "200 bees: 50%, the most")
 	# Harvesting fertilized crops gives pollinated seeds; unfertilized ones never do.
 	var i := _free(g)
 	var from_plain := 0
@@ -1239,23 +1239,23 @@ func test_48_bees_pollinate_fertilized_crops() -> void:
 	var got := 0
 	for k in 20:
 		g.plow(i)
-		g.pollinated.clear()
+		g.bees.pollinated.clear()
 		g.plant(i, "strawberries")
 		g.fertilize(i)
 		_skip(g, int(g.crops["strawberries"]["grow_seconds"]))
 		got += int(g.harvest(i).get("pollinated", 0))
 	_check(got >= 25, "about half of fertilized harvests were pollinated (%d seeds)" % got)
 	# Planting pollinated seeds: free, and the crop stays ripe twice as long.
-	g.pollinated = {"strawberries": [2, g.now() + GameState.POLLINATED_LIFETIME]}
+	g.bees.pollinated = {"strawberries": [2, g.now() + BeehiveSystem.POLLINATED_LIFETIME]}
 	var j := g.index_of(10, 10)
 	g.plow(i)
 	g.plow(j)
 	var coins := g.coins
 	_check(g.plant(i, "strawberries"), "plant a pollinated seed")
 	_eq(g.coins, coins, "pollinated seeds are free")
-	_eq(g.pollinated_seeds("strawberries"), 1, "one pollinated seed left")
+	_eq(g.bees.pollinated_seeds("strawberries"), 1, "one pollinated seed left")
 	_check(g.plots[i].get("pol", false), "the plot is pollinated")
-	g.pollinated.clear()
+	g.bees.pollinated.clear()
 	g.plant(j, "strawberries")
 	_check(not g.plots[j].get("pol", false), "an ordinary seed")
 	var grow := int(g.crops["strawberries"]["grow_seconds"])
@@ -1266,10 +1266,10 @@ func test_48_bees_pollinate_fertilized_crops() -> void:
 	_skip(g, window)
 	_eq(g.phase(i), GameState.Phase.WITHERED, "but not forever")
 	# Pollinated seeds expire after 2 days.
-	g.pollinated = {"wheat": [5, g.now() + GameState.POLLINATED_LIFETIME]}
-	_eq(g.pollinated_seeds("wheat"), 5, "5 pollinated wheat seeds")
-	_skip(g, GameState.POLLINATED_LIFETIME)
-	_eq(g.pollinated_seeds("wheat"), 0, "expired after 2 days")
+	g.bees.pollinated = {"wheat": [5, g.now() + BeehiveSystem.POLLINATED_LIFETIME]}
+	_eq(g.bees.pollinated_seeds("wheat"), 5, "5 pollinated wheat seeds")
+	_skip(g, BeehiveSystem.POLLINATED_LIFETIME)
+	_eq(g.bees.pollinated_seeds("wheat"), 0, "expired after 2 days")
 	_done(g)
 
 
@@ -1279,11 +1279,11 @@ func test_49_pollinated_crops_super_harvest_three_times_as_often() -> void:
 	var g := _farm(true)
 	var plain := 0
 	var boosted := 0
-	g.pity = {"golden": 0, "collectible": 0}
+	g.drops.pity = {"golden": 0, "collectible": 0}
 	for k in 6000:
-		if str(g._roll_drop("", 0).get("type", "")) == "super_harvest":
+		if str(g.drops.roll_drop("", 0).get("type", "")) == "super_harvest":
 			plain += 1
-		if str(g._roll_drop("", 0, GameState.POLLINATED_SUPER_MULT).get("type", "")) == "super_harvest":
+		if str(g.drops.roll_drop("", 0, GameState.POLLINATED_SUPER_MULT).get("type", "")) == "super_harvest":
 			boosted += 1
 	var ratio := float(boosted) / maxf(1.0, plain)
 	_check(ratio > 2.3 and ratio < 3.7, "about 3x the super harvests (%d vs %d)" % [boosted, plain])
@@ -1312,12 +1312,12 @@ func test_50_fertilize_all_from_the_hive() -> void:
 	g.fertilize_alls = 1
 	g.fertilizer_bags = 0
 	var coins := g.coins
-	_check(g.use_fertilize_all() >= 3, "every growing crop fertilized")
+	_check(g.bees.use_fertilize_all() >= 3, "every growing crop fertilized")
 	for i in spots:
 		_check(g.is_fertilized(i), "plot %d fertilized" % i)
 	_eq(g.coins, coins, "no coins spent")
 	_eq(g.fertilize_alls, 0, "used up")
-	_eq(g.use_fertilize_all(), 0, "none left")
+	_eq(g.bees.use_fertilize_all(), 0, "none left")
 	_done(g)
 
 
@@ -1328,15 +1328,15 @@ func test_51_bees_leave_when_you_stay_away() -> void:
 	var hive := _built_hive(g)
 	hive["queen"] = true
 	hive["inside"] = {"bee": 100}
-	_eq(g.apply_absence(2 * 86400), "", "2 days away: nothing happens")
+	_eq(g.bees.apply_absence(2 * 86400), "", "2 days away: nothing happens")
 	_eq(g.inside_total(hive), 100, "all bees stay")
-	var note := g.apply_absence(5 * 86400)
+	var note := g.bees.apply_absence(5 * 86400)
 	_eq(g.inside_total(hive), 70, "5 days away: 2 days past the limit, 30% leave")
 	_check(note.contains("30 bees"), "the player is told (%s)" % note)
-	_check(g.has_queen(hive), "the queen stays two weeks")
-	g.apply_absence(15 * 86400)
+	_check(g.bees.has_queen(hive), "the queen stays two weeks")
+	g.bees.apply_absence(15 * 86400)
 	_eq(g.inside_total(hive), 0, "15 days away: every bee is gone")
-	_check(not g.has_queen(hive), "and the queen flew off")
+	_check(not g.bees.has_queen(hive), "and the queen flew off")
 	_done(g)
 
 
@@ -1353,38 +1353,38 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 	var uid := int(pen["uid"])
 	_check(g.under_construction(pen), "built from a frame")
 	_all_materials(g, 8)
-	g.add_materials(uid)
+	g.land.add_materials(uid)
 	_check(not g.under_construction(pen), "boards, bricks and nails finish it")
-	_check(not g.feed_slop(uid), "no slop without pigs")
+	_check(not g.pigpen.feed_slop(uid), "no slop without pigs")
 	for k in 12:
 		g.place_somewhere("pig")
 	_eq(g.fill_building(uid), 12, "12 pigs move in")
 	var coins := g.coins
-	_check(g.feed_slop(uid), "feed slop")
-	_eq(g.coins, coins - GameState.SLOP_COST, "slop costs %d coins" % GameState.SLOP_COST)
-	_check(not g.feed_slop(uid), "already foraging")
-	_eq(g.collect_truffles(uid), 0, "nothing until foraging is over")
-	_skip(g, GameState.FORAGE_SECONDS)
-	_eq(g.collect_truffles(uid), 2, "12 pigs find 2 truffles")
-	_eq(g.truffles, 2, "truffles held")
-	_eq(g.collect_truffles(uid), 0, "collected once")
+	_check(g.pigpen.feed_slop(uid), "feed slop")
+	_eq(g.coins, coins - PigPenSystem.SLOP_COST, "slop costs %d coins" % PigPenSystem.SLOP_COST)
+	_check(not g.pigpen.feed_slop(uid), "already foraging")
+	_eq(g.pigpen.collect_truffles(uid), 0, "nothing until foraging is over")
+	_skip(g, PigPenSystem.FORAGE_SECONDS)
+	_eq(g.pigpen.collect_truffles(uid), 2, "12 pigs find 2 truffles")
+	_eq(g.pigpen.truffles, 2, "truffles held")
+	_eq(g.pigpen.collect_truffles(uid), 0, "collected once")
 	# Truffles buy rare breeds; rare breeds aren't in the market.
-	_check(not g.trade_truffles("berkshire_pig"), "10 truffles needed")
-	g.truffles = 10
-	_check(not g.trade_truffles("pig"), "only rare breeds")
-	_check(g.trade_truffles("berkshire_pig"), "trade for a Berkshire")
-	_eq(g.truffles, 0, "10 truffles spent")
+	_check(not g.pigpen.trade_truffles("berkshire_pig"), "10 truffles needed")
+	g.pigpen.truffles = 10
+	_check(not g.pigpen.trade_truffles("pig"), "only rare breeds")
+	_check(g.pigpen.trade_truffles("berkshire_pig"), "trade for a Berkshire")
+	_eq(g.pigpen.truffles, 0, "10 truffles spent")
 	_eq(_count(g, "berkshire_pig"), 1, "the Berkshire is on the farm")
 	_eq(g.fill_building(uid), 1, "and moves into the pen")
-	_eq(g.rare_pigs().size(), 4, "4 rare breeds")
-	for id in g.rare_pigs():
+	_eq(g.pigpen.rare_pigs().size(), 4, "4 rare breeds")
+	for id in g.pigpen.rare_pigs():
 		_check(int(g.item_data(id)["payout"]) > int(g.item_data("pig")["payout"]), "%s pays more than a pig" % id)
 		_eq(int(g.item_data(id)["unlock_level"]), 99, "%s can't be bought" % id)
 	# A pen with a single pig still finds one truffle.
 	pen["inside"] = {"pig": 1}
-	g.feed_slop(uid)
-	_skip(g, GameState.FORAGE_SECONDS)
-	_eq(g.collect_truffles(uid), 1, "one pig finds one truffle")
+	g.pigpen.feed_slop(uid)
+	_skip(g, PigPenSystem.FORAGE_SECONDS)
+	_eq(g.pigpen.collect_truffles(uid), 1, "one pig finds one truffle")
 	_done(g)
 
 
@@ -1425,16 +1425,16 @@ func test_54_new_building_state_survives_a_save() -> void:
 	var hive := _built_hive(g)
 	hive["queen"] = true
 	hive["inside"] = {"bee": 42}
-	g.queen_bees = 1
+	g.bees.queen_bees = 1
 	g.fertilize_alls = 2
-	g.truffles = 7
-	g.pollinated = {"wheat": [3, g.now() + 3600]}
+	g.pigpen.truffles = 7
+	g.bees.pollinated = {"wheat": [3, g.now() + 3600]}
 	g.xp = g.xp_for_level(16)
 	g.buy_and_place("pig_pen", 0, 4)
 	var pen := g.object_at(g.index_of(0, 4))
 	pen.erase("construction")
 	pen["inside"] = {"pig": 5}
-	g.feed_slop(int(pen["uid"]))
+	g.pigpen.feed_slop(int(pen["uid"]))
 	g.saving_enabled = true
 	g.save_game()
 	g.saving_enabled = false
@@ -1445,15 +1445,15 @@ func test_54_new_building_state_survives_a_save() -> void:
 	add_child(h)
 	h.saving_enabled = false
 	var hive2 := h.object_at(h.index_of(8, 8))
-	_check(h.has_queen(hive2), "queen restored")
+	_check(h.bees.has_queen(hive2), "queen restored")
 	_eq(h.inside_total(hive2), 42, "bees restored")
-	_eq(h.queen_bees, 1, "held queen restored")
+	_eq(h.bees.queen_bees, 1, "held queen restored")
 	_eq(h.fertilize_alls, 2, "Fertilize All restored")
-	_eq(h.truffles, 7, "truffles restored")
-	_eq(h.pollinated_seeds("wheat"), 3, "pollinated seeds restored")
+	_eq(h.pigpen.truffles, 7, "truffles restored")
+	_eq(h.bees.pollinated_seeds("wheat"), 3, "pollinated seeds restored")
 	var pen2 := h.object_at(h.index_of(0, 4))
-	_check(h.is_foraging(pen2), "foraging restored")
-	_check(h.forage_seconds_left(pen2) > 0, "foraging time restored")
+	_check(h.pigpen.is_foraging(pen2), "foraging restored")
+	_check(h.pigpen.forage_seconds_left(pen2) > 0, "foraging time restored")
 	h.queue_free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
@@ -1478,25 +1478,25 @@ func test_55_tractor_plows_two_by_two_with_fuel() -> void:
 	g.coins = 1000000
 	g.xp = g.xp_for_level(11)
 	_check(not g.buy_and_place("tractor", 11, 0), "Tractor unlocks at level 12")
-	_check(not g.fuel_unlocked, "no fuel before a vehicle")
+	_check(not g.vehicles.fuel_unlocked, "no fuel before a vehicle")
 	g.xp = g.xp_for_level(12)
 	_check(g.buy_and_place("tractor", 11, 0), "Tractor bought for 5,000 coins")
-	_check(g.fuel_unlocked, "the first vehicle unlocks the fuel tank")
-	_eq(g.fuel_now(), GameState.FUEL_TANK, "it starts full: 150")
-	_eq(g.vehicle_area("tractor"), Vector2i(2, 2), "a new tractor works 2x2")
-	_check(g.use_vehicle("seeder", 8, 8, "wheat").is_empty(), "can't drive a vehicle you don't own")
+	_check(g.vehicles.fuel_unlocked, "the first vehicle unlocks the fuel tank")
+	_eq(g.vehicles.fuel_now(), VehicleSystem.FUEL_TANK, "it starts full: 150")
+	_eq(g.vehicles.vehicle_area("tractor"), Vector2i(2, 2), "a new tractor works 2x2")
+	_check(g.vehicles.use_vehicle("seeder", 8, 8, "wheat").is_empty(), "can't drive a vehicle you don't own")
 	var coins := g.coins
-	var r := g.use_vehicle("tractor", 8, 8)
+	var r := g.vehicles.use_vehicle("tractor", 8, 8)
 	_eq(int(r["plots"]), 4, "one tap plows 4 plots")
 	_eq(int(r["fuel"]), 4, "1 fuel a plot")
-	_eq(g.fuel_now(), GameState.FUEL_TANK - 4, "fuel left")
+	_eq(g.vehicles.fuel_now(), VehicleSystem.FUEL_TANK - 4, "fuel left")
 	_eq(g.coins, coins - 4 * GameState.PLOW_COST, "plowing still costs coins")
 	_check(_all_plots(g, 8, 8, 2, 2, GameState.Phase.PLOWED), "all 4 plowed")
-	_eq(int(g.use_vehicle("tractor", 8, 8)["plots"]), 0, "nothing left to plow there")
-	_eq(g.fuel_now(), GameState.FUEL_TANK - 4, "no fuel used when there's no work")
+	_eq(int(g.vehicles.use_vehicle("tractor", 8, 8)["plots"]), 0, "nothing left to plow there")
+	_eq(g.vehicles.fuel_now(), VehicleSystem.FUEL_TANK - 4, "no fuel used when there's no work")
 	# Objects in the way are skipped, without using fuel.
 	g.buy_and_place("chicken", 9, 10)
-	r = g.use_vehicle("tractor", 8, 10)
+	r = g.vehicles.use_vehicle("tractor", 8, 10)
 	_eq(int(r["plots"]), 3, "the plot under the chicken is skipped")
 	_eq(int(r["fuel"]), 3, "and costs no fuel")
 	_done(g)
@@ -1510,19 +1510,19 @@ func test_56_seeder_plants_and_harvester_harvests() -> void:
 	g.xp = g.xp_for_level(14)
 	for v in ["tractor", "seeder", "harvester"]:
 		_check(g.buy_and_place(v, 11, ["tractor", "seeder", "harvester"].find(v)), "%s bought" % v)
-	g.use_vehicle("tractor", 8, 8)
-	_check(g.use_vehicle("seeder", 8, 8, "").is_empty(), "the seeder needs a seed")
+	g.vehicles.use_vehicle("tractor", 8, 8)
+	_check(g.vehicles.use_vehicle("seeder", 8, 8, "").is_empty(), "the seeder needs a seed")
 	var coins := g.coins
-	_eq(int(g.use_vehicle("seeder", 8, 8, "wheat")["plots"]), 4, "seeder plants 4 plots")
+	_eq(int(g.vehicles.use_vehicle("seeder", 8, 8, "wheat")["plots"]), 4, "seeder plants 4 plots")
 	_eq(g.coins, coins - 4 * int(g.crops["wheat"]["seed_cost"]), "seeds are paid for")
 	_check(_all_plots(g, 8, 8, 2, 2, GameState.Phase.GROWING), "all 4 growing")
-	_eq(int(g.use_vehicle("harvester", 8, 8)["plots"]), 0, "nothing ripe yet")
+	_eq(int(g.vehicles.use_vehicle("harvester", 8, 8)["plots"]), 0, "nothing ripe yet")
 	_skip(g, int(g.crops["wheat"]["grow_seconds"]))
-	var before := g.stat("harvests")
-	var r := g.use_vehicle("harvester", 8, 8)
+	var before := g.ribbons.stat("harvests")
+	var r := g.vehicles.use_vehicle("harvester", 8, 8)
 	_eq(int(r["plots"]), 4, "harvester harvests 4 plots")
 	_check(int(r["coins"]) > 0 and int(r["xp"]) > 0, "harvests pay coins and XP")
-	_eq(g.stat("harvests") - before, 4, "they count as harvests")
+	_eq(g.ribbons.stat("harvests") - before, 4, "they count as harvests")
 	_check(_all_plots(g, 8, 8, 2, 2, GameState.Phase.PLOWED), "plots left plowed")
 	_done(g)
 
@@ -1534,24 +1534,24 @@ func test_57_fuel_refills_slowly_and_spare_tanks() -> void:
 	g.coins = 1000000
 	g.xp = g.xp_for_level(12)
 	g.buy_and_place("tractor", 11, 0)
-	g.fuel = 0
-	g.fuel_t = g.now()
-	_check(g.use_vehicle("tractor", 8, 8).is_empty(), "nothing runs on an empty tank")
-	_skip(g, 10 * GameState.FUEL_REGEN_SECONDS)
-	_eq(g.fuel_now(), 10, "1 fuel every 10 minutes")
-	_skip(g, 1000 * GameState.FUEL_REGEN_SECONDS)
-	_eq(g.fuel_now(), GameState.FUEL_TANK, "never more than a full tank")
-	g.fuel = 2
-	g.fuel_t = g.now()
-	g.fuel_tanks = 1
-	var r := g.use_vehicle("tractor", 8, 8)
+	g.vehicles.fuel = 0
+	g.vehicles.fuel_t = g.now()
+	_check(g.vehicles.use_vehicle("tractor", 8, 8).is_empty(), "nothing runs on an empty tank")
+	_skip(g, 10 * VehicleSystem.FUEL_REGEN_SECONDS)
+	_eq(g.vehicles.fuel_now(), 10, "1 fuel every 10 minutes")
+	_skip(g, 1000 * VehicleSystem.FUEL_REGEN_SECONDS)
+	_eq(g.vehicles.fuel_now(), VehicleSystem.FUEL_TANK, "never more than a full tank")
+	g.vehicles.fuel = 2
+	g.vehicles.fuel_t = g.now()
+	g.vehicles.fuel_tanks = 1
+	var r := g.vehicles.use_vehicle("tractor", 8, 8)
 	_eq(int(r["plots"]), 4, "a spare tank is opened when the tank runs dry")
-	_eq(g.fuel_tanks, 0, "spare tank used")
-	_eq(g.fuel_now(), GameState.FUEL_TANK - 2, "the tank was refilled")
-	g.gems = GameState.FUEL_TANK_GEM_COST
-	_check(g.buy_fuel_tank(), "buy a tank for %d gems" % GameState.FUEL_TANK_GEM_COST)
-	_eq(g.fuel_tanks, 1, "a spare tank held")
-	_check(not g.buy_fuel_tank(), "no gems left")
+	_eq(g.vehicles.fuel_tanks, 0, "spare tank used")
+	_eq(g.vehicles.fuel_now(), VehicleSystem.FUEL_TANK - 2, "the tank was refilled")
+	g.gems = VehicleSystem.FUEL_TANK_GEM_COST
+	_check(g.vehicles.buy_fuel_tank(), "buy a tank for %d gems" % VehicleSystem.FUEL_TANK_GEM_COST)
+	_eq(g.vehicles.fuel_tanks, 1, "a spare tank held")
+	_check(not g.vehicles.buy_fuel_tank(), "no gems left")
 	_done(g)
 
 
@@ -1562,40 +1562,40 @@ func test_58_garage_upgrades_vehicles_with_parts() -> void:
 	g.coins = 10000000
 	g.xp = g.xp_for_level(22)
 	g.buy_and_place("tractor", 11, 0)
-	_check(not g.wanted_parts().has("vehicle_parts"), "no Vehicle Parts drop before a Garage")
+	_check(not g.daily.wanted_parts().has("vehicle_parts"), "no Vehicle Parts drop before a Garage")
 	g.parts["vehicle_parts"] = 100
-	_check(not g.upgrade_vehicle("tractor"), "no upgrades without a Garage")
+	_check(not g.vehicles.upgrade_vehicle("tractor"), "no upgrades without a Garage")
 	_check(g.buy_and_place("garage", 0, 4), "Garage frame placed")
 	var garage := g.object_at(g.index_of(0, 4))
 	_check(g.under_construction(garage), "the Garage is built from a frame")
-	_check(g.wanted_parts().has("vehicle_parts"), "Vehicle Parts drop once you own a Garage")
-	_check(not g.upgrade_vehicle("tractor"), "not until it's finished")
+	_check(g.daily.wanted_parts().has("vehicle_parts"), "Vehicle Parts drop once you own a Garage")
+	_check(not g.vehicles.upgrade_vehicle("tractor"), "not until it's finished")
 	for m in ["bricks", "nails", "boards"]:
 		g.parts[m] = 10
-	g.add_materials(int(garage["uid"]))
+	g.land.add_materials(int(garage["uid"]))
 	_check(not g.under_construction(garage), "10 bricks, nails and boards finish it")
-	var sizes: Array = [g.vehicle_area("tractor")]
-	_check(g.upgrade_vehicle("tractor"), "upgrade 1")
-	sizes.append(g.vehicle_area("tractor"))
-	_check(g.upgrade_vehicle("tractor"), "upgrade 2")
-	sizes.append(g.vehicle_area("tractor"))
+	var sizes: Array = [g.vehicles.vehicle_area("tractor")]
+	_check(g.vehicles.upgrade_vehicle("tractor"), "upgrade 1")
+	sizes.append(g.vehicles.vehicle_area("tractor"))
+	_check(g.vehicles.upgrade_vehicle("tractor"), "upgrade 2")
+	sizes.append(g.vehicles.vehicle_area("tractor"))
 	_eq(int(g.parts["vehicle_parts"]), 100 - 2 - 5, "2 then 5 parts")
-	_check(not g.upgrade_vehicle("tractor"), "upgrade 3 needs level 26")
+	_check(not g.vehicles.upgrade_vehicle("tractor"), "upgrade 3 needs level 26")
 	g.xp = g.xp_for_level(26)
-	_check(g.upgrade_vehicle("tractor"), "upgrade 3")
-	sizes.append(g.vehicle_area("tractor"))
-	_check(g.upgrade_vehicle("tractor"), "upgrade 4")
-	sizes.append(g.vehicle_area("tractor"))
-	_check(not g.upgrade_vehicle("tractor"), "fully upgraded")
+	_check(g.vehicles.upgrade_vehicle("tractor"), "upgrade 3")
+	sizes.append(g.vehicles.vehicle_area("tractor"))
+	_check(g.vehicles.upgrade_vehicle("tractor"), "upgrade 4")
+	sizes.append(g.vehicles.vehicle_area("tractor"))
+	_check(not g.vehicles.upgrade_vehicle("tractor"), "fully upgraded")
 	_eq(
 		sizes,
 		[Vector2i(2, 2), Vector2i(3, 2), Vector2i(3, 3), Vector2i(4, 3), Vector2i(4, 4)],
 		"2x2 up to 4x4, FarmVille's sizes"
 	)
 	_eq(int(g.parts["vehicle_parts"]), 100 - 32, "32 parts in all")
-	_eq(g.stat("vehicle_upgrades"), 4, "upgrades counted for the Gearhead ribbon")
-	_check(int(g.ribbon_tiers.get("gearhead", 0)) >= 2, "Gearhead ribbon earned")
-	var r := g.use_vehicle("tractor", 8, 8)
+	_eq(g.ribbons.stat("vehicle_upgrades"), 4, "upgrades counted for the Gearhead ribbon")
+	_check(int(g.ribbons.ribbon_tiers.get("gearhead", 0)) >= 2, "Gearhead ribbon earned")
+	var r := g.vehicles.use_vehicle("tractor", 8, 8)
 	_eq(int(r["plots"]), 16, "a 4x4 tractor plows 16 plots in one tap")
 	_done(g)
 
@@ -1611,21 +1611,21 @@ func test_59_combine_chassis_and_all_in_one() -> void:
 	_check(g.buy_and_place("combine", 11, 0), "Combine chassis bought")
 	var combine := g.object_at(g.index_of(11, 0))
 	_check(g.under_construction(combine), "it arrives as a chassis")
-	_check(g.use_vehicle("combine", 8, 8, "wheat").is_empty(), "a chassis can't drive")
-	_check(g.wanted_parts().has("vehicle_parts"), "Vehicle Parts drop for the chassis")
+	_check(g.vehicles.use_vehicle("combine", 8, 8, "wheat").is_empty(), "a chassis can't drive")
+	_check(g.daily.wanted_parts().has("vehicle_parts"), "Vehicle Parts drop for the chassis")
 	g.parts["vehicle_parts"] = 40
 	var xp_before := g.xp
-	g.add_materials(int(combine["uid"]))
+	g.land.add_materials(int(combine["uid"]))
 	_check(not g.under_construction(combine), "40 Vehicle Parts finish it")
 	_check(g.xp - xp_before >= 5000, "finishing it gives 5,000 XP")
-	var r := g.use_vehicle("combine", 8, 8, "wheat")
+	var r := g.vehicles.use_vehicle("combine", 8, 8, "wheat")
 	_eq(int(r["plots"]), 4, "plows and plants 4 plots in one tap")
 	_eq(int(r["fuel"]), 12, "3 fuel a plot")
 	_check(_all_plots(g, 8, 8, 2, 2, GameState.Phase.GROWING), "planted")
 	_skip(g, int(g.crops["wheat"]["grow_seconds"]))
-	var before := g.stat("harvests")
-	r = g.use_vehicle("combine", 8, 8, "wheat")
-	_eq(g.stat("harvests") - before, 4, "harvested")
+	var before := g.ribbons.stat("harvests")
+	r = g.vehicles.use_vehicle("combine", 8, 8, "wheat")
+	_eq(g.ribbons.stat("harvests") - before, 4, "harvested")
 	_check(_all_plots(g, 8, 8, 2, 2, GameState.Phase.GROWING), "and planted again, in the same tap")
 	_done(g)
 
@@ -1645,15 +1645,15 @@ func test_60_garage_parks_vehicles_and_state_saves() -> void:
 	g.buy_and_place("combine", 11, 2)
 	_eq(g.fill_building(int(garage["uid"])), 1, "the tractor parks; the unfinished combine doesn't")
 	_check(g.object_at(g.index_of(11, 0)).is_empty(), "the tractor left the field")
-	_check(g.owned_vehicles().has("tractor"), "a parked tractor still counts")
-	_eq(int(g.use_vehicle("tractor", 8, 8)["plots"]), 4, "and still works from the toolbar")
+	_check(g.vehicles.owned_vehicles().has("tractor"), "a parked tractor still counts")
+	_eq(int(g.vehicles.use_vehicle("tractor", 8, 8)["plots"]), 4, "and still works from the toolbar")
 	_skip(g, 30 * 86400)
 	_check(not g.is_ready(garage), "a garage never needs collecting")
 	_check(g.collect(int(garage["uid"])).is_empty(), "nothing to collect")
-	g.vehicle_levels["tractor"] = 2
-	g.fuel = 77
-	g.fuel_t = g.now()
-	g.fuel_tanks = 3
+	g.vehicles.vehicle_levels["tractor"] = 2
+	g.vehicles.fuel = 77
+	g.vehicles.fuel_t = g.now()
+	g.vehicles.fuel_tanks = 3
 	g.saving_enabled = true
 	g.save_game()
 	g.saving_enabled = false
@@ -1663,11 +1663,11 @@ func test_60_garage_parks_vehicles_and_state_saves() -> void:
 	h.save_path = path
 	add_child(h)
 	h.saving_enabled = false
-	_check(h.fuel_unlocked, "fuel tank restored")
-	_eq(h.fuel_now(), 77, "fuel restored")
-	_eq(h.fuel_tanks, 3, "spare tanks restored")
-	_eq(h.vehicle_area("tractor"), Vector2i(3, 3), "upgrades restored")
-	_check(h.owned_vehicles().has("tractor"), "the parked tractor is still there")
+	_check(h.vehicles.fuel_unlocked, "fuel tank restored")
+	_eq(h.vehicles.fuel_now(), 77, "fuel restored")
+	_eq(h.vehicles.fuel_tanks, 3, "spare tanks restored")
+	_eq(h.vehicles.vehicle_area("tractor"), Vector2i(3, 3), "upgrades restored")
+	_check(h.vehicles.owned_vehicles().has("tractor"), "the parked tractor is still there")
 	h.queue_free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
@@ -1688,7 +1688,7 @@ func test_61_decorations_give_xp_like_farmville() -> void:
 	var xp := g.xp
 	_check(g.buy_and_place("hay_bale", 8, 8), "buy a hay bale")
 	_eq(g.xp - xp, 5, "5 XP for it")
-	_eq(g.stat("decor_bought"), 1, "decorations counted for the Decorator ribbon")
+	_eq(g.ribbons.stat("decor_bought"), 1, "decorations counted for the Decorator ribbon")
 	var count := 0
 	for id in g.item_order:
 		var it: Dictionary = g.items[id]
@@ -1711,7 +1711,7 @@ func test_62_sell_anything_for_five_percent() -> void:
 	_check(g.sell_object(int(bale["uid"])), "sold")
 	_eq(g.coins, coins + 5, "5 coins back")
 	_check(g.object_at(g.index_of(8, 8)).is_empty(), "it's gone")
-	_check(not g.sell_object(int(g.barn()["uid"])), "the barn can't be sold")
+	_check(not g.sell_object(int(g.storage.barn()["uid"])), "the barn can't be sold")
 	_check(not g.can_sell(g.object_at(g.index_of(0, 0))), "nor the farmhouse")
 	g.gems = 10
 	g.buy_and_place("brown_chicken", 8, 9)
@@ -1727,7 +1727,7 @@ func test_62_sell_anything_for_five_percent() -> void:
 	_check(g.sell_object(int(coop["uid"])), "sell the coop")
 	_eq(_count(g, "chicken"), before, "the chickens are back on the farm")
 	_eq(_count(g, "chicken_coop"), 0, "the coop is gone")
-	_eq(g.stat("items_sold"), 2, "sales counted")
+	_eq(g.ribbons.stat("items_sold"), 2, "sales counted")
 	_done(g)
 
 
@@ -1787,7 +1787,7 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 		_skip(g, 86400)
 		g.collect(int(nursery["uid"]))
 	_check(_count(g, "sheep") > sheep, "lambs grew into sheep")
-	_check(g.stat("babies_raised") > 0, "babies counted for the Nanny ribbon")
+	_check(g.ribbons.stat("babies_raised") > 0, "babies counted for the Nanny ribbon")
 	# The other homes.
 	for pair in [["duck_pond", "duck"], ["duck_pond", "goose"], ["goat_pen", "goat"], ["rabbit_hutch", "rabbit"],
 			["horse_stable", "pony"], ["horse_stable", "donkey"], ["cow_shed", "ox"], ["chicken_coop", "turkey"]]:
@@ -1802,19 +1802,19 @@ func test_65_rams_and_boars_wander_in_only_with_their_home() -> void:
 	g.xp = g.xp_for_level(20)
 	var seen := {}
 	for k in 300:
-		if g._spawn_stray():
+		if g.strays._spawn_stray():
 			seen[g.objects[-1]["id"]] = true
 			g.objects.pop_back()
-			g._rebuild_occupancy()
+			g.rebuild_occupancy()
 	_check(not seen.has("ram") and not seen.has("boar"), "no ram or boar without their homes")
 	g.coins = 10000000
 	g.buy_and_place("sheep_pen", 0, 4)
 	seen = {}
 	for k in 300:
-		if g._spawn_stray():
+		if g.strays._spawn_stray():
 			seen[g.objects[-1]["id"]] = true
 			g.objects.pop_back()
-			g._rebuild_occupancy()
+			g.rebuild_occupancy()
 	_check(seen.has("ram"), "a ram wanders in once you have a Sheep Pen")
 	_check(not seen.has("boar"), "still no boar")
 	_done(g)
@@ -1824,24 +1824,24 @@ func test_65_rams_and_boars_wander_in_only_with_their_home() -> void:
 
 func test_66_daily_bonus_streak() -> void:
 	var g := _farm()
-	g.ribbon_tiers["regular"] = 4 # isolate the bonus from the ribbon's own reward
-	g.last_daily_day = g.day_number() - 1
+	g.ribbons.ribbon_tiers["regular"] = 4 # isolate the bonus from the ribbon's own reward
+	g.daily.last_daily_day = g.day_number() - 1
 	var expected := [100, 250, 500, 750, 1000, 1000]
 	for d in 6:
 		var coins := g.coins
 		var gems := g.gems
-		g.check_daily_gift()
-		_eq(g.daily_streak, d + 1, "day %d of the streak" % (d + 1))
+		g.daily.check_daily_gift()
+		_eq(g.daily.daily_streak, d + 1, "day %d of the streak" % (d + 1))
 		_eq(g.coins - coins, expected[d], "day %d pays %d coins" % [d + 1, expected[d]])
 		if d >= 4:
 			_eq(g.gems - gems, 1, "day 5 and on add a gem")
-		g.check_daily_gift()
-		_eq(g.daily_streak, d + 1, "only once a day")
+		g.daily.check_daily_gift()
+		_eq(g.daily.daily_streak, d + 1, "only once a day")
 		_skip(g, 86400)
 	_skip(g, 86400) # miss a day
-	g.check_daily_gift()
-	_eq(g.daily_streak, 1, "missing a day starts the streak again")
-	_check(g.stat("daily_bonuses") >= 7, "bonuses counted for the Regular ribbon")
+	g.daily.check_daily_gift()
+	_eq(g.daily.daily_streak, 1, "missing a day starts the streak again")
+	_check(g.ribbons.stat("daily_bonuses") >= 7, "bonuses counted for the Regular ribbon")
 	_done(g)
 
 
@@ -1856,14 +1856,14 @@ func test_67_mastery_sign_collections_and_ribbons() -> void:
 	_check(g.can_sell(signs[0]) and g.can_rotate(signs[0]), "it can be sold or turned like any decoration")
 	var crop_sets := 0
 	var seen := {}
-	for coll in g.collections:
+	for coll in g.collectibles.collections:
 		if not coll.get("crops", []).is_empty():
 			crop_sets += 1
 		for crop_id in coll.get("crops", []):
 			_check(not seen.has(crop_id), "%s is in only one collection" % crop_id)
 			seen[crop_id] = true
 	_check(crop_sets >= 10, "at least 10 crop collections (%d)" % crop_sets)
-	_check((g.ribbon_data["ribbons"] as Array).size() >= 20, "at least 20 ribbons")
+	_check((g.ribbons.ribbon_data["ribbons"] as Array).size() >= 20, "at least 20 ribbons")
 	_done(g)
 
 
@@ -1969,7 +1969,7 @@ func test_72_art_follows_the_lifecycle() -> void:
 	g.coins = 1000000
 	g.xp = g.xp_for_level(15) # the tractor unlocks at 12
 	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal") # starter animals wander anywhere
-	g._rebuild_occupancy()
+	g.rebuild_occupancy()
 	g.buy_and_place("chicken_coop", 0, 4)
 	_eq(g.art_for(g.object_at(g.index_of(0, 4))), "chicken_coop", "the coop uses its art until size art exists")
 	_check(g.buy_and_place("tractor", 8, 8), "tractor placed")
@@ -2102,10 +2102,10 @@ func test_74_lost_animals_wander_in_and_are_never_sold() -> void:
 		_check(lost.has(id), "%s is a lost animal, as in FarmVille" % id)
 	var seen := {}
 	for k in 400:
-		if g._spawn_stray():
+		if g.strays._spawn_stray():
 			seen[g.objects[-1]["id"]] = true
 			g.objects.pop_back()
-			g._rebuild_occupancy()
+			g.rebuild_occupancy()
 	var lost_seen := 0
 	for id in lost:
 		if seen.has(id):
@@ -2121,13 +2121,17 @@ func test_75_breeds_have_their_own_babies() -> void:
 	var g := _farm(true)
 	_eq((g.catalog.get_def("hereford_cow") as AnimalDef).baby(), "hereford_calf", "a Hereford Cow has Hereford Calves")
 	_check((g.catalog.get_def("hereford_calf") as AnimalDef).is_young(), "a calf is young")
-	_eq(g._pick_baby({"inside": {"cow": 4, "bull": 1}}, "calf"), "calf", "plain cows have plain calves")
+	_eq(g.specials._pick_baby({"inside": {"cow": 4, "bull": 1}}, "calf"), "calf", "plain cows have plain calves")
 	_eq(
-		g._pick_baby({"inside": {"hereford_cow": 3, "bull": 1}}, "calf"),
+		g.specials._pick_baby({"inside": {"hereford_cow": 3, "bull": 1}}, "calf"),
 		"hereford_calf",
 		"Herefords have Hereford calves"
 	)
-	_eq(g._pick_baby({"inside": {"gray_horse": 2, "stallion": 1}}, "foal"), "gray_foal", "gray horses have gray foals")
+	_eq(
+		g.specials._pick_baby({"inside": {"gray_horse": 2, "stallion": 1}}, "foal"),
+		"gray_foal",
+		"gray horses have gray foals"
+	)
 	var nursery := g.catalog.get_def("nursery_barn") as BuildingDef
 	for baby in ["hereford_calf", "pink_calf", "gray_foal", "mustang_foal"]:
 		_check(nursery.accepts(baby, "animal"), "the Nursery raises %s" % baby)
@@ -2176,28 +2180,31 @@ func test_76_baby_turkey_and_ugly_duckling_grow_up() -> void:
 func test_77_mystery_box_and_cornish_eggs() -> void:
 	var g := _farm()
 	_check(not g.catalog.get_def("donkey").in_market(), "the Donkey only comes in a Mystery Box")
-	_check(g.box_data["prizes"].any(func(p): return p[1] is String and p[1] == "donkey"), "the box can hold a Donkey")
+	_check(
+		g.mystery.box_data["prizes"].any(func(p): return p[1] is String and p[1] == "donkey"),
+		"the box can hold a Donkey"
+	)
 	g.gems = 0
-	_eq(g.buy_mystery_box(), "", "no box without gems")
+	_eq(g.mystery.buy_mystery_box(), "", "no box without gems")
 	var got := {}
 	for k in 30:
-		g.gems = GameState.MYSTERY_BOX_GEM_COST
-		var prize := g.buy_mystery_box()
+		g.gems = MysterySystem.MYSTERY_BOX_GEM_COST
+		var prize := g.mystery.buy_mystery_box()
 		_check(prize != "", "a box opens into a prize")
 		# Coins can finish a ribbon that pays gems, so only check boxes that gave neither.
 		_check(
 			g.gems == 0 or prize.ends_with("gems") or prize.ends_with("coins"),
-			"a box costs %d gems (%s left %d)" % [GameState.MYSTERY_BOX_GEM_COST, prize, g.gems]
+			"a box costs %d gems (%s left %d)" % [MysterySystem.MYSTERY_BOX_GEM_COST, prize, g.gems]
 		)
 		got[prize] = true
 	_check(got.size() >= 4, "boxes give different things (%d kinds)" % got.size())
-	_eq(g.stat("boxes_opened"), 30, "boxes are counted")
+	_eq(g.ribbons.stat("boxes_opened"), 30, "boxes are counted")
 	# Cornish hens lay Cornish eggs.
-	_check(g.egg_data["colours"].has("cornish"), "there is a Cornish Mystery Egg")
+	_check(g.mystery.egg_data["colours"].has("cornish"), "there is a Cornish Mystery Egg")
 	_eq(g.item_data("cornish_chicken")["breed"], "cornish", "Cornish hens are their own breed")
-	g.mystery_eggs["cornish"] = 3
+	g.mystery.mystery_eggs["cornish"] = 3
 	for k in 3:
-		_check(g.open_mystery_egg("cornish") != "", "a Cornish egg opens")
+		_check(g.mystery.open_mystery_egg("cornish") != "", "a Cornish egg opens")
 	_done(g)
 
 
@@ -2228,7 +2235,7 @@ func _crafting_building(g: GameState, id := "bakery") -> int:
 	g.coins = 10000000
 	g.xp = g.xp_for_level(25)
 	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal") # starter animals wander anywhere
-	g._rebuild_occupancy()
+	g.rebuild_occupancy()
 	_check(g.buy_and_place(id, 8, 8), "%s placed" % id)
 	return int(g.object_at(g.index_of(8, 8))["uid"])
 
@@ -2238,7 +2245,7 @@ func _crafting_building(g: GameState, id := "bakery") -> int:
 func test_79_crafting_recipes_match_farmville() -> void:
 	var g := _farm()
 	for b in ["bakery", "winery", "spa"]:
-		var rs := g.recipes_of(b)
+		var rs := g.crafting.recipes_of(b)
 		_eq(rs.size(), 15, "%s has 15 recipes" % b)
 		for star in range(1, 6):
 			_eq(rs.filter(func(r): return r.star() == star).size(), 3, "%s: 3 recipes at %d stars" % [b, star])
@@ -2282,11 +2289,11 @@ func test_79_crafting_recipes_match_farmville() -> void:
 
 func test_80_first_crafting_building_is_coins_the_rest_gems() -> void:
 	var g := _farm()
-	_eq(g.crafting_price("bakery"), {"coins": 100000}, "the first costs coins")
+	_eq(g.crafting.crafting_price("bakery"), {"coins": 100000}, "the first costs coins")
 	var uid := _crafting_building(g)
-	_check(g.is_crafting(g.object_by_uid(uid)), "it's a crafting building")
-	_eq(g.free_slots(g.object_by_uid(uid)), 1, "one slot at 1 star")
-	_eq(g.crafting_price("winery"), {"gems": 80}, "the next costs 80 gems")
+	_check(g.crafting.is_crafting(g.object_by_uid(uid)), "it's a crafting building")
+	_eq(g.crafting.free_slots(g.object_by_uid(uid)), 1, "one slot at 1 star")
+	_eq(g.crafting.crafting_price("winery"), {"gems": 80}, "the next costs 80 gems")
 	g.gems = 10
 	_check(not g.can_afford_item("winery"), "can't afford it without the gems")
 	_done(g)
@@ -2319,7 +2326,7 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	var g := _farm(true)
 	g.coins = 100000
 	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal")
-	g._rebuild_occupancy()
+	g.rebuild_occupancy()
 	# No crafting building: no bushels.
 	for k in 30:
 		var r := _grow_and_harvest(g, _open_plot(g), "strawberries")
@@ -2332,40 +2339,40 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 		if _grow_and_harvest(g, _open_plot(g), "wheat").get("bushel", "") == "wheat":
 			got += 1
 	_check(got > 0, "harvests drop bushels of their crop (%d in 60)" % got)
-	_eq(int(g.bushels.get("wheat", 0)), got, "bushels are kept")
+	_eq(int(g.crafting.bushels.get("wheat", 0)), got, "bushels are kept")
 	# Craft Pumpkin Bread.
-	g.bushels = {"pumpkins": 4, "wheat": 5}
-	_eq(g.craft_problem(uid, "pumpkin_bread"), "", "ready to bake")
-	_eq(g.craft_problem(uid, "pattypan_tart"), "Unlocks at 2 stars", "2-star recipes are locked")
-	_check(g.start_craft(uid, "pumpkin_bread"), "baking")
-	_eq(g.bushels, {"wheat": 1}, "bushels used")
-	_eq(g.craft_problem(uid, "strawberry_shortcake"), "Every slot is busy", "one slot at 1 star")
-	_eq(g.finish_crafts(uid), 0, "not done yet")
+	g.crafting.bushels = {"pumpkins": 4, "wheat": 5}
+	_eq(g.crafting.craft_problem(uid, "pumpkin_bread"), "", "ready to bake")
+	_eq(g.crafting.craft_problem(uid, "pattypan_tart"), "Unlocks at 2 stars", "2-star recipes are locked")
+	_check(g.crafting.start_craft(uid, "pumpkin_bread"), "baking")
+	_eq(g.crafting.bushels, {"wheat": 1}, "bushels used")
+	_eq(g.crafting.craft_problem(uid, "strawberry_shortcake"), "Every slot is busy", "one slot at 1 star")
+	_eq(g.crafting.finish_crafts(uid), 0, "not done yet")
 	_skip(g, 6 * 3600)
-	_eq(g.finish_crafts(uid), 1, "done after 6 hours")
-	_eq(int(g.goods["pumpkin_bread"]), 1, "a loaf of pumpkin bread")
-	_eq(g.stat("crafted"), 1, "counted for the Crafty ribbon")
-	var price := g.good_price("pumpkin_bread")
+	_eq(g.crafting.finish_crafts(uid), 1, "done after 6 hours")
+	_eq(int(g.crafting.goods["pumpkin_bread"]), 1, "a loaf of pumpkin bread")
+	_eq(g.ribbons.stat("crafted"), 1, "counted for the Crafty ribbon")
+	var price := g.crafting.good_price("pumpkin_bread")
 	_check(
 		price > 4 * int(g.crops["pumpkins"]["sell_price"]) + 4 * int(g.crops["wheat"]["sell_price"]),
 		"goods sell for more than their bushels (%d)" % price
 	)
 	var coins := g.coins
-	_eq(g.sell_good("pumpkin_bread"), price, "sold")
+	_eq(g.crafting.sell_good("pumpkin_bread"), price, "sold")
 	_eq(g.coins, coins + price, "for coins")
-	_check(not g.goods.has("pumpkin_bread"), "gone once sold")
+	_check(not g.crafting.goods.has("pumpkin_bread"), "gone once sold")
 	# Use a good for fuel.
-	g.goods["pumpkin_bread"] = 1
-	g.fuel_unlocked = true
-	g.fuel = GameState.FUEL_TANK - 5
-	g.fuel_tanks = 0
-	_eq(g.use_good("pumpkin_bread"), RecipeDef.FUEL_BASE, "a good gives fuel")
-	_eq(g.fuel_tanks, 1, "fuel past a full tank fills a spare tank")
+	g.crafting.goods["pumpkin_bread"] = 1
+	g.vehicles.fuel_unlocked = true
+	g.vehicles.fuel = VehicleSystem.FUEL_TANK - 5
+	g.vehicles.fuel_tanks = 0
+	_eq(g.crafting.use_good("pumpkin_bread"), RecipeDef.FUEL_BASE, "a good gives fuel")
+	_eq(g.vehicles.fuel_tanks, 1, "fuel past a full tank fills a spare tank")
 	# Buy the missing bushels with gems.
-	g.bushels = {}
+	g.crafting.bushels = {}
 	g.gems = 100
-	_check(g.buy_missing_and_craft(uid, "strawberry_shortcake"), "bought 8 bushels and started")
-	_eq(g.gems, 100 - 8 * GameState.BUSHEL_GEM_COST, "1 gem a bushel")
+	_check(g.crafting.buy_missing_and_craft(uid, "strawberry_shortcake"), "bought 8 bushels and started")
+	_eq(g.gems, 100 - 8 * CraftingSystem.BUSHEL_GEM_COST, "1 gem a bushel")
 	_done(g)
 
 
@@ -2375,45 +2382,45 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	var g := _farm()
 	var uid := _crafting_building(g, "winery")
 	var o := g.object_by_uid(uid)
-	_check(not g.can_add_star(uid, false), "no recipe stars yet")
-	g.crafted = {"red_table_wine": 15, "sweet_saki": 15, "white_sangria": 5}
-	_eq(g.recipe_stars("red_table_wine"), 2, "15 crafts: 2 mastery stars")
-	_eq(g.building_recipe_stars("winery"), 5, "5 stars across the Winery's recipes")
-	_check(not g.can_add_star(uid, false), "6 are needed")
-	g.crafted["white_sangria"] = 15
-	_check(g.can_add_star(uid, false), "now there are 6")
+	_check(not g.crafting.can_add_star(uid, false), "no recipe stars yet")
+	g.crafting.crafted = {"red_table_wine": 15, "sweet_saki": 15, "white_sangria": 5}
+	_eq(g.crafting.recipe_stars("red_table_wine"), 2, "15 crafts: 2 mastery stars")
+	_eq(g.crafting.building_recipe_stars("winery"), 5, "5 stars across the Winery's recipes")
+	_check(not g.crafting.can_add_star(uid, false), "6 are needed")
+	g.crafting.crafted["white_sangria"] = 15
+	_check(g.crafting.can_add_star(uid, false), "now there are 6")
 	var coins := g.coins
-	_check(g.add_star(uid, false), "2 stars")
+	_check(g.crafting.add_star(uid, false), "2 stars")
 	_eq(g.coins, coins - 50000, "for 50,000 coins")
-	_eq(g.free_slots(o), 2, "2 slots")
-	_check(g.recipe_unlocked(o, "dry_saki"), "2-star recipes unlocked")
+	_eq(g.crafting.free_slots(o), 2, "2 slots")
+	_check(g.crafting.recipe_unlocked(o, "dry_saki"), "2-star recipes unlocked")
 	g.gems = 25
-	_check(g.add_star(uid, true), "3 stars for gems")
+	_check(g.crafting.add_star(uid, true), "3 stars for gems")
 	_eq(g.gems, 0, "25 gems")
 	# The Farmers Market sells this building's crops, 3 bushels each, new every day.
-	var stall := g.market_stall()
-	_eq(stall.size(), GameState.STALL_CROPS, "%d crops on offer" % GameState.STALL_CROPS)
+	var stall := g.crafting.market_stall()
+	_eq(stall.size(), CraftingSystem.STALL_CROPS, "%d crops on offer" % CraftingSystem.STALL_CROPS)
 	var winery_crops := {}
-	for r in g.recipes_of("winery"):
+	for r in g.crafting.recipes_of("winery"):
 		for c in r.inputs():
 			winery_crops[c] = true
 	for c in stall:
 		_check(winery_crops.has(c), "%s is used by the Winery" % c)
-		_eq(int(stall[c]), GameState.STALL_EACH, "3 of each")
+		_eq(int(stall[c]), CraftingSystem.STALL_EACH, "3 of each")
 	var crop: String = stall.keys()[0]
 	for k in 3:
-		_check(g.buy_bushel(crop), "bought a %s bushel" % crop)
-	_check(not g.buy_bushel(crop), "sold out for today")
-	_eq(int(g.bushels[crop]), 3, "3 bushels")
+		_check(g.crafting.buy_bushel(crop), "bought a %s bushel" % crop)
+	_check(not g.crafting.buy_bushel(crop), "sold out for today")
+	_eq(int(g.crafting.bushels[crop]), 3, "3 bushels")
 	_skip(g, 86400)
 	_eq(
-		int(g.market_stall().values().reduce(func(a, b): return a + b, 0)),
-		GameState.STALL_CROPS * GameState.STALL_EACH,
+		int(g.crafting.market_stall().values().reduce(func(a, b): return a + b, 0)),
+		CraftingSystem.STALL_CROPS * CraftingSystem.STALL_EACH,
 		"restocked the next day"
 	)
 	# Bushels are capped.
-	g.bushels = {"rice": GameState.BUSHEL_CAP}
-	_eq(g.add_bushels("wheat", 1), 0, "no room past %d bushels" % GameState.BUSHEL_CAP)
+	g.crafting.bushels = {"rice": CraftingSystem.BUSHEL_CAP}
+	_eq(g.crafting.add_bushels("wheat", 1), 0, "no room past %d bushels" % CraftingSystem.BUSHEL_CAP)
 	_done(g)
 
 
@@ -2470,18 +2477,21 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 
 func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> void:
 	var g := _farm(true)
-	for coll in g.collections:
+	for coll in g.collectibles.collections:
 		var r: Array = coll["items"].map(func(it): return it["rarity"])
 		_eq(r, ["common", "common", "common", "uncommon", "rare"], "%s: 3 common, 1 uncommon, 1 rare" % coll["id"])
 		_eq((coll["rewards"] as Array).size(), 3, "%s has a prize per level" % coll["id"])
-	_check(not g.tree_collection.is_empty() and not g.animal_collection.is_empty(), "sets for trees and for animals")
+	_check(
+		not g.collectibles.tree_collection.is_empty() and not g.collectibles.animal_collection.is_empty(),
+		"sets for trees and for animals"
+	)
 	# Rarity: with nothing owned, commons come up most and the rare least.
-	var coll: Dictionary = g.collections[0]
+	var coll: Dictionary = g.collectibles.collections[0]
 	var seen := {"common": 0, "uncommon": 0, "rare": 0}
 	for k in 3000:
 		for it in coll["items"]:
-			g.owned[it["id"]] = 0
-		var id := g._pick_item(coll)
+			g.collectibles.owned[it["id"]] = 0
+		var id := g.collectibles.pick_item(coll)
 		for it in coll["items"]:
 			if it["id"] == id:
 				seen[it["rarity"]] += 1
@@ -2512,10 +2522,10 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 	var g := _farm(true)
 	g.coins = 1000000
 	g.xp = g.xp_for_level(12)
-	g.fuel_unlocked = true
-	g.fuel = 0
-	g.fuel_t = g.now()
-	g.fuel_tanks = 0
+	g.vehicles.fuel_unlocked = true
+	g.vehicles.fuel = 0
+	g.vehicles.fuel_t = g.now()
+	g.vehicles.fuel_tanks = 0
 	var fuel_finds := [0]
 	g.found.connect(func(_i: int, text: String) -> void:
 		if text.begins_with("Found fuel"):
@@ -2525,7 +2535,7 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 		g.plow(i)
 		g.plots[i] = {"state": "grass"}
 	_eq(fuel_finds[0], 1, "fuel turns up while plowing, but only once a day")
-	_eq(g.fuel_now(), int(GameState.FUEL_TANK * GameState.FUEL_FIND_SHARE), "a quarter of a tank")
+	_eq(g.vehicles.fuel_now(), int(VehicleSystem.FUEL_TANK * VehicleSystem.FUEL_FIND_SHARE), "a quarter of a tank")
 	_skip(g, 86400)
 	for k in 200:
 		var i := _free(g)
@@ -2542,7 +2552,7 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 		var i := _free(low)
 		low.plow(i)
 		low.plots[i] = {"state": "grass"}
-	_eq(low_found[0], 0, "not before level %d" % GameState.FUEL_LEVEL)
+	_eq(low_found[0], 0, "not before level %d" % VehicleSystem.FUEL_LEVEL)
 	_done(g)
 
 
@@ -2560,7 +2570,7 @@ func test_86_bushels_come_with_one_extra_per_mastery_star() -> void:
 		if got.get("bushel", "") != "":
 			break
 	_eq(int(got.get("bushels", 0)), 1 + stars, "a bushel plus one per mastery star (FarmVille)")
-	_eq(int(g.bushels["wheat"]), 1 + stars, "all of them kept")
+	_eq(int(g.crafting.bushels["wheat"]), 1 + stars, "all of them kept")
 	_done(g)
 
 
@@ -2571,7 +2581,7 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	g.coins = 1000000
 	g.xp = g.xp_for_level(15)
 	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal")
-	g._rebuild_occupancy()
+	g.rebuild_occupancy()
 	var bunch := ""
 	for k in 400:
 		var r := _grow_and_harvest(g, _open_plot(g), "lilac")
@@ -2579,28 +2589,32 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 			bunch = r["bunch"]
 			break
 	_eq(bunch, "lilac", "harvesting flowers gives a Perfect Bunch now and then")
-	_eq(g.bunches, ["lilac"], "kept")
+	_eq(g.shed.bunches, ["lilac"], "kept")
 	var wheat_bunch := false
 	for k in 100:
 		if _grow_and_harvest(g, _open_plot(g), "wheat").get("bunch", "") != "":
 			wheat_bunch = true
 	_check(not wheat_bunch, "only flowers give bunches")
 	for k in 20:
-		g.add_bunch("lilac")
-	_eq(g.bunches.size(), GameState.BUNCH_CAP_NO_SHED, "10 at most without a Garden Shed")
+		g.shed.add_bunch("lilac")
+	_eq(g.shed.bunches.size(), GardenShedSystem.BUNCH_CAP_NO_SHED, "10 at most without a Garden Shed")
 	g.coins = 29999
 	_check(not g.can_afford_item("garden_shed"), "the shed costs 30,000 coins, as in FarmVille")
 	g.coins = 1000000
 	_check(g.buy_and_place("garden_shed", 8, 8), "Garden Shed built")
-	_eq(g.bunch_cap(), 100, "the shed holds 100")
-	_eq(g.bunches.size(), GameState.BUNCH_CAP_NO_SHED + GameState.SHED_FREE_BUNCHES, "and comes with 10 free bunches")
-	var at := g.unpack_bunch(0)
+	_eq(g.shed.bunch_cap(), 100, "the shed holds 100")
+	_eq(
+		g.shed.bunches.size(),
+		GardenShedSystem.BUNCH_CAP_NO_SHED + GardenShedSystem.SHED_FREE_BUNCHES,
+		"and comes with 10 free bunches"
+	)
+	var at := g.shed.unpack_bunch(0)
 	_check(at >= 0, "a bunch taken out to place")
-	_check(g.place_from_storage(at, 2, 8) or g.place_from_storage(at, 3, 9), "placed on the farm")
+	_check(g.storage.place_from_storage(at, 2, 8) or g.storage.place_from_storage(at, 3, 9), "placed on the farm")
 	var placed: Array = g.objects.filter(func(o): return o["id"] == "perfect_bunch")
 	_eq(placed.size(), 1, "one bunch on the farm")
-	_eq(int(placed[0]["expires"]) - g.now(), GameState.BUNCH_DAYS * 86400, "it lasts 14 days")
+	_eq(int(placed[0]["expires"]) - g.now(), BarnStorage.BUNCH_DAYS * 86400, "it lasts 14 days")
 	_skip(g, 15 * 86400)
-	g.check_strays()
+	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o["id"] == "perfect_bunch").size(), 0, "then wilts away")
 	_done(g)

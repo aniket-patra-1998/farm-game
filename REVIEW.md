@@ -11,8 +11,10 @@ phones) · **Minor** (clarity, naming, small duplication) · **Nit** (style).
 1. **Correctness.** Does the logic do what the commit says? Edge cases: empty farm, full farm, level 1 and
    high levels, a save from an older version, time going backwards or jumping days ahead, zero coins.
 2. **Design and object orientation.**
-   - One responsibility per class. Game rules live in `autoload/game.gd` and the catalog classes
-     (`scripts/catalog/`); drawing lives in the world layers (`scripts/world/`) and `PlaceholderArt`;
+   - One responsibility per class. Game rules live in `autoload/game.gd` (the shared core), its
+     subsystems (`scripts/systems/`, one per feature: crafting, vehicles, the beehive...) and the catalog
+     classes (`scripts/catalog/`); a feature with its own state belongs in its own `GameSystem`, and a
+     system reaches others through `game`, never by copying their state; drawing lives in the world layers (`scripts/world/`) and `PlaceholderArt`;
      input lives in `FarmGrid` and `FarmCamera`; menus in `FarmHud`. Nothing crosses those lines without
      a reason.
    - Item behaviour belongs on its catalog class (`CropDef`, `AnimalDef`, `BuildingDef`...), chosen by

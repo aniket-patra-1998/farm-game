@@ -145,7 +145,7 @@ func set_tool(tool_name: String, crop_id: String) -> void:
 	if tool_name == "plant":
 		last_crop = crop_id
 	elif tool_name == "vehicle":
-		var area := Game.vehicle_area(crop_id)
+		var area := Game.vehicles.vehicle_area(crop_id)
 		var job: String = Game.item_data(crop_id).get("job", "")
 		var hint := "Tap the field: the %s works %dx%d plots" % [Game.item_data(crop_id)["name"], area.x, area.y]
 		if job == "plant" or job == "all":
@@ -249,7 +249,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			continue
 		var counts := Vector2i(-1, -1)
 		if o["id"] == "barn" and not o.get("broken", false):
-			counts = Vector2i(Game.stored.size(), Game.barn_capacity())
+			counts = Vector2i(Game.storage.stored.size(), Game.storage.barn_capacity())
 		elif Game.is_building(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
 		if counts.x >= 0:
@@ -272,7 +272,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			var fp := Game.footprint(o["id"])
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(piece.uid % 7))
-			var high := -110.0 if Game.is_building(o) or Game.is_crafting(o) else -70.0
+			var high := -110.0 if Game.is_building(o) or Game.crafting.is_crafting(o) else -70.0
 			PlaceholderArt.draw_twinkle(ci, (g[0] + g[2]) / 2.0 + Vector2(22, high), 11.0 + 6.0 * glow, glow)
 	_draw_placing(ci)
 
@@ -314,7 +314,7 @@ func _draw_scenery(ci: CanvasItem, n: int) -> void:
 
 
 func _draw_next_expansion(ci: CanvasItem) -> void:
-	var step := Game.next_expansion()
+	var step := Game.land.next_expansion()
 	if step.is_empty():
 		return
 	var size := int(step["size"])
@@ -342,13 +342,13 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 		else:
 			PlaceholderArt.draw_frame(ci, corners, it)
 		return
-	var is_ready_now := Game.is_ready(o) or (Game.is_crafting(o) and Game.crafts_done(o) > 0)
+	var is_ready_now := Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
 	var building := Game.is_building(o)
 	var inside := Game.inside_total(o) if building else 0
 	var cap := Game.capacity(o) if building else 0
 	if o["id"] == "barn":
-		inside = Game.stored.size()
-		cap = Game.barn_capacity()
+		inside = Game.storage.stored.size()
+		cap = Game.storage.barn_capacity()
 	if o["id"] == "mastery_sign" and Game.crops.has(o.get("crop", "")):
 		it = it.duplicate()
 		it["color"] = Game.crops[o["crop"]]["color"]
@@ -507,7 +507,7 @@ func start_placing(item_id: String, uid := -1) -> void:
 
 ## Placing something taken back out of the barn (free; it keeps its timers reset).
 func start_placing_stored(index: int) -> void:
-	var o: Dictionary = Game.stored[index]
+	var o: Dictionary = Game.storage.stored[index]
 	placing = {"item": o["id"], "uid": -1, "stored": index, "row": -1, "col": -1}
 	placing_changed.emit("Drag to place the %s, then let go" % Game.item_data(o["id"])["name"])
 	queue_redraw()
@@ -559,7 +559,7 @@ func _placing_input(event: InputEvent) -> void:
 	var from_storage := int(placing.get("stored", -1))
 	var ok: bool
 	if from_storage >= 0:
-		ok = Game.place_from_storage(from_storage, row, col)
+		ok = Game.storage.place_from_storage(from_storage, row, col)
 	elif uid != -1:
 		ok = Game.move_object(uid, row, col)
 	else:
@@ -595,12 +595,12 @@ func _apply_at(screen_pos: Vector2) -> void:
 ## Sends the chosen vehicle over the area around the tapped plot.
 func _drive(i: int) -> void:
 	var id := selected_crop
-	var area := Game.vehicle_area(id)
+	var area := Game.vehicles.vehicle_area(id)
 	var row := int(i / float(MAX)) - int((area.y - 1) / 2.0)
 	var col := i % MAX - int((area.x - 1) / 2.0)
 	var job: String = Game.item_data(id).get("job", "")
 	var crop := last_crop if (job == "plant" or job == "all") else ""
-	var r := Game.use_vehicle(id, row, col, crop)
+	var r := Game.vehicles.use_vehicle(id, row, col, crop)
 	_vehicle_flash = {"row": row, "col": col, "w": area.x, "h": area.y, "until": Time.get_ticks_msec() + 500}
 	queue_redraw()
 	if r.is_empty():
@@ -709,7 +709,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		Game.rotate_object(uid)
 		return
 	if tool == "store" and first_touch:
-		if Game.store_object(uid):
+		if Game.storage.store_object(uid):
 			var fps := Game.footprint(obj["id"])
 			_float(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], "Stored", COLOR_XP)
 		return
@@ -731,11 +731,11 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			info.emit("Your %s" % Game.item_data(obj["id"])["name"].to_lower())
 		return
 	if obj.get("stray", false) and tool != "move":
-		if first_touch and Game.adopt_stray(uid):
+		if first_touch and Game.strays.adopt_stray(uid):
 			var fp0 := Game.footprint(obj["id"])
 			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
 			var at0 := (c0[0] + c0[2]) / 2.0
-			_float(at0 + Vector2(0, -40), "Adopted! +%d XP" % GameState.STRAY_ADOPT_XP, COLOR_FIND, 1.4)
+			_float(at0 + Vector2(0, -40), "Adopted! +%d XP" % StraySystem.STRAY_ADOPT_XP, COLOR_FIND, 1.4)
 			_sparkle(at0, COLOR_FIND)
 		return
 	if tool == "move":
@@ -775,7 +775,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if not first_touch:
 		return
 	pieces.bounce(uid)
-	if Game.is_building(obj) or Game.is_crafting(obj):
+	if Game.is_building(obj) or Game.crafting.is_crafting(obj):
 		object_tapped.emit(uid)
 		return
 	var it := Game.item_data(obj["id"])

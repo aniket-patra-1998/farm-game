@@ -30,7 +30,7 @@ func _ready() -> void:
 			var i := Game.index_of(r, c)
 			var age: int = [int(grow * 0.1), int(grow * 0.6), grow + 60][(r - 4) % 3]
 			Game.plots[i] = {"state": "planted", "crop": "strawberries", "planted_at": now - age}
-	Game._rebuild_occupancy()
+	Game.rebuild_occupancy()
 	var main: Node = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	add_child(main)
 	Game.objects_changed.emit()

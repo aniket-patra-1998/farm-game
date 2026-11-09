@@ -1,6 +1,6 @@
 # gdlint (GDScript Toolkit) settings: CI runs `gdlint` on every push.
 max-line-length: 300  # target 120: long lines left are player-facing text, moving to a strings file
-max-file-lines: 4000  # game.gd is too big: splitting it into subsystems is the next refactor
+max-file-lines: 2700  # the largest are the rule tests and the code-drawn placeholder art; game.gd is ~1,400
 max-public-methods: 300
 max-returns: 20
 function-arguments-number: 10

@@ -54,7 +54,7 @@ func _ready() -> void:
 	_put("log_cabin", 9, 9, 1, {})
 	for o in Game.objects:
 		o["t"] = old
-	Game._rebuild_occupancy()
+	Game.rebuild_occupancy()
 	_main = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	add_child(_main)
 	Game.objects_changed.emit()
@@ -85,17 +85,17 @@ func _ready() -> void:
 	for k in animals.size():
 		_put(animals[k], 8 + 2 * int(k / 9.0), 1 + 2 * (k % 9), 1, {})
 	for o in Game.objects:
-		if not Game.is_crafting(o):
+		if not Game.crafting.is_crafting(o):
 			o["t"] = Game.now()
-	Game._rebuild_occupancy()
+	Game.rebuild_occupancy()
 	Game.objects_changed.emit()
 	(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(8, 9))), 0.62)
 	await _frames(6)
 	_shot(dir + "/crafting_and_animals.png")
 	# The Bakery's panel, mid-game.
-	Game.bushels = {"pumpkins": 6, "wheat": 9, "strawberries": 2, "carrots": 3}
-	Game.goods = {"pumpkin_bread": 2, "spicy_muffins": 1}
-	Game.crafted = {"pumpkin_bread": 16, "spicy_muffins": 6}
+	Game.crafting.bushels = {"pumpkins": 6, "wheat": 9, "strawberries": 2, "carrots": 3}
+	Game.crafting.goods = {"pumpkin_bread": 2, "spicy_muffins": 1}
+	Game.crafting.crafted = {"pumpkin_bread": 16, "spicy_muffins": 6}
 	Game.objects[0]["level"] = 2
 	(_main.get("hud") as FarmHud).show_building(bakery_uid)
 	await _frames(6)
@@ -125,7 +125,7 @@ func _ready() -> void:
 	_put("bakery", 12, 14, 1, {}, {"slots": []})
 	_put("cow", 13, 4, 1, {})
 	_put("sheep", 13, 7, 1, {})
-	Game._rebuild_occupancy()
+	Game.rebuild_occupancy()
 	(cam as FarmCamera).snap(grid.to_global(grid.center_of(Game.index_of(8, 10))), 0.75)
 	for scene in [["noon_clear", 12.5, "clear"], ["partly_cloudy", 11.0, "partly_cloudy"], ["golden_hour", 18.3, "clear"],
 			["night", 22.0, "clear"], ["rain", 14.0, "rain"], ["storm", 16.0, "storm"], ["fog", 6.8, "fog"], ["snow", 13.0, "snow"]]:

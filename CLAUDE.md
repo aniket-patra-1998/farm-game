@@ -4,7 +4,11 @@ A single-player recreation of the original FarmVille (2009) in Godot 4.7 (GDScri
 tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 
 ## Layout
-- `autoload/game.gd` (`Game`, class `GameState`): all game rules and state, saving, signals.
+- `autoload/game.gd` (`Game`, class `GameState`): the shared core (coins, gems, XP, time, plots and crops,
+  placed objects, mastery, tutorial), saving, and every signal. It owns one of each subsystem.
+- `scripts/systems/*.gd`: the subsystems, each a `GameSystem` with its own state and rules, reached as
+  `Game.crafting`, `Game.vehicles`, `Game.bees`, `Game.strays`... Each saves its own fields
+  (`reset`/`save_to`/`load_from`); a new feature with its own state gets its own system, not more `game.gd`.
 - `data/catalog/*.json` + `data/catalog/schema.json`: every item, by category -> family -> variant.
   Loaded into the classes in `scripts/catalog/` (ItemDef -> CropDef, PlaceableDef -> ProducerDef ->
   TreeDef/AnimalDef, BuildingDef -> BarnDef/CraftingDef, VehicleDef, DecorationDef, RecipeDef...).
