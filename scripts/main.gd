@@ -105,7 +105,9 @@ func _use_3d() -> void:
 	light.color = Color.WHITE
 	grid.pieces.three_d = true
 	grid.pieces.sync()
-	grid.pieces.redraw_all()
+	# The 2D pieces now only keep the list of ready things for the overlay: nothing to draw or animate.
+	grid.pieces.visible = false
+	grid.pieces.set_process(false)
 
 
 ## Zoom so the whole farm fits between the top bar and the toolbar,

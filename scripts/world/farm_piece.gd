@@ -37,6 +37,11 @@ func _set_lift(v: float) -> void:
 	_apply_pose()
 
 
+## Nothing to reset in the piece itself: a moved animal gets a fresh mind from FarmLife.
+func wander_reset() -> void:
+	redraw_wait = 0.0
+
+
 func is_animal() -> bool:
 	return motion == "animal" or motion == "bird"
 

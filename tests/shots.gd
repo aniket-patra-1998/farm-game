@@ -142,7 +142,7 @@ func _ready() -> void:
 		for v in (objects_layer.get("pieces") as Dictionary).values():
 			var fp := v as FarmPiece
 			if fp.animal != null:
-				fp.animal.update(1.0 / 60.0)
+				fp.animal.update(1.0 / 60.0)  # the same minds FarmLife updates
 		behaviour_us += Time.get_ticks_usec() - t1
 	print("PERF behaviour_all_us=%.1f" % (behaviour_us / 30.0))
 	objects_layer.process_mode = Node.PROCESS_MODE_DISABLED

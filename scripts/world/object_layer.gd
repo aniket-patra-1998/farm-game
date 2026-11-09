@@ -10,7 +10,6 @@ extends Node2D
 
 const Z_BASE := -2000   # pieces sit below the overlay and effects (z >= 0) and above the ground
 
-const WANDER := 0.22      # how far an animal strays from its tile centre, in tiles
 const CULL_MARGIN := 120.0  # px around the screen within which animals keep redrawing
 const FULL_RATE_ZOOM := 0.55  # zoomed out further than this, animals redraw every other frame
 const IDLE_REDRAW := 1.0 / 20.0  # seconds between redraws of an animal standing still
@@ -204,12 +203,10 @@ func _place(p: FarmPiece) -> void:
 		var moved := new_base != p.base
 		p.base = new_base
 		p.motion = motion_of(o)
-		if p.is_animal() and (moved or p.animal == null or p.animal.rig != AnimalRig.of(Game.item_data(o["id"]))):
-			# A new animal, or one moved to a new spot: it starts afresh there, on its own beat.
-			p.animal = AnimalBehaviour.new(AnimalRig.of(Game.item_data(o["id"])), int(o["uid"]) * 7919,
-				Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
-		elif not p.is_animal():
-			p.animal = null
+		if moved:
+			p.wander_reset()
+		# Its mind lives in FarmLife (shared with the 3D world); the piece only draws it.
+		p.animal = grid.life.mind(int(o["uid"])) if p.is_animal() else null
 		p.flip = -1.0 if o.get("flip", false) else 1.0
 		p.visible = not (three_d and Objects3D.handles(o))
 	p._apply_pose()
@@ -258,8 +255,7 @@ func _process(delta: float) -> void:
 ## Moves an animal by its behaviour and redraws it in its new pose. Off screen it keeps living (so it
 ## isn't frozen when scrolled to) but isn't redrawn; zoomed far out, it redraws on alternate frames.
 func _animate_animal(p: FarmPiece, delta: float, view: Rect2, redraw: bool) -> void:
-	var a := p.animal
-	a.update(delta)
+	var a := p.animal  # FarmLife updates the mind; this only follows it
 	p.position = p.base + a.offset - Vector2(0, p.lift)
 	# Turning: the facing eases through zero, so the body narrows and widens the other way. Never quite
 	# zero, which would make the node's transform impossible to invert.

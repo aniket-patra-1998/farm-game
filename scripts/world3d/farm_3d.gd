@@ -65,7 +65,8 @@ func _ready() -> void:
 	crops = Crops3D.new()
 	add_child(crops)
 	objects = Objects3D.new()
-	objects.pieces = grid.pieces if grid != null else null
+	objects.life = grid.life if grid != null else null
+	objects.grid = grid
 	add_child(objects)
 	Game.plot_changed.connect(func(_i: int) -> void: _plots_changed())
 	Game.farm_expanded.connect(func(_n: int) -> void:

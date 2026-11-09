@@ -8,10 +8,14 @@ const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", 
 const SCENERY_Y := -Ground3D.SLAB
 const PINE := Color("#2f6b3a")
 
-var pieces: ObjectLayer  # the 2D layer, whose animals' minds (AnimalBehaviour) the 3D animals share
+var life: FarmLife  # the animals' minds (shared with the 2D world)
+var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
 
 var _views := {}   # uid -> {"node": Node3D, "key": String}
 var _animals: Array[Animal3D] = []
+var _ghost: Node3D
+var _ghost_key := ""
+var _lifted := -1
 var _queued := false
 var _scenery: Node3D
 
@@ -68,6 +72,7 @@ func sync() -> void:
 
 ## Animals move every frame, with their 2D twin's mind; those off screen keep their place but aren't posed.
 func _process(delta: float) -> void:
+	_update_placing()
 	var cam := get_viewport().get_camera_3d()
 	for a in _animals:
 		if not is_instance_valid(a):
@@ -79,10 +84,7 @@ func _process(delta: float) -> void:
 
 
 func _mind_of(a: Animal3D) -> AnimalBehaviour:
-	if pieces == null:
-		return null
-	var p: FarmPiece = pieces.pieces.get("o%d" % int(a.get_meta("uid", -1)))
-	return p.animal if p != null else null
+	return life.mind(int(a.get_meta("uid", -1))) if life != null else null
 
 
 ## What a view shows: when this changes, it's rebuilt.
@@ -153,3 +155,75 @@ static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 		var y := (0.15 + 0.28 * k) * size
 		var r := (0.42 - 0.1 * k) * size
 		ModelKit.cylinder(root, Vector3(0, y, 0), r, 0.5 * size, ModelKit.paint(PINE.lightened(0.07 * k)), 0.0, 9)
+
+
+# ---------------------------------------------------------------- placing
+
+
+## While something is being placed: a see-through copy of it follows the finger, green where it fits and
+## red where it doesn't (or soft white over a home it would move into), and the thing being moved hides.
+func _update_placing() -> void:
+	var placing: Dictionary = grid.placing if grid != null else {}
+	var lifted := int(placing.get("uid", -1))
+	if lifted != _lifted:
+		_show(_lifted, true)
+		_show(lifted, false)
+		_lifted = lifted
+	if placing.is_empty() or int(placing.get("row", -1)) < 0:
+		_clear_ghost()
+		return
+	var item := str(placing["item"])
+	var row := int(placing["row"])
+	var col := int(placing["col"])
+	var home := int(placing.get("home", -1)) != -1
+	var ok := home or Game.can_place(item, row, col, lifted)
+	var key := "%s|%s|%s" % [item, ok, home]
+	if key != _ghost_key:
+		_clear_ghost()
+		_ghost_key = key
+		var fake := {"uid": -1, "id": item, "row": 0, "col": 0, "level": 1}
+		if lifted != -1:
+			fake = Game.object_by_uid(lifted).duplicate()
+			fake["row"] = 0
+			fake["col"] = 0
+		_ghost = _build(fake)
+		if _ghost is Animal3D:
+			_ghost.set_meta("uid", -1)  # a ghost has no mind: it stands still
+		_tint(_ghost, Color(1, 1, 1, 0.5) if home else (Color(0.5, 1.0, 0.5, 0.6) if ok else Color(1.0, 0.4, 0.35, 0.6)))
+		add_child(_ghost)
+	var fp := Game.footprint(item)
+	var lift := 0.25 if home else 0.0  # hovering over a home, it floats just above it
+	if _ghost is Animal3D:
+		(_ghost as Animal3D).home = Vector3(col + fp.x / 2.0, lift, row + fp.y / 2.0)
+		_ghost.position = (_ghost as Animal3D).home
+	else:
+		_ghost.position = Vector3(col, lift, row)
+
+
+func _clear_ghost() -> void:
+	if _ghost != null:
+		_ghost.queue_free()
+		_ghost = null
+	_ghost_key = ""
+
+
+func _show(uid: int, on: bool) -> void:
+	var v: Dictionary = _views.get(uid, {})
+	if v.has("node"):
+		(v["node"] as Node3D).visible = on
+
+
+static func _tint(node: Node, col: Color) -> void:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = col
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_tint_with(node, m)
+
+
+static func _tint_with(node: Node, m: Material) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).material_override = m
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for c in node.get_children():
+		_tint_with(c, m)

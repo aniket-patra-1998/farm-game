@@ -25,7 +25,7 @@ window/handheld/orientation=6
 [farm]
 
 art/use_painted_art=false
-world/use_3d=false
+world/use_3d=true
 
 [input_devices]
 

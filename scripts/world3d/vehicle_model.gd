@@ -10,12 +10,14 @@ const TYRE := Color("#2a2a2a")
 const RIM := Color("#e8d27a")
 const METAL := Color("#b9c0c4")
 const SEAT := Color("#3a3a3a")
+const SCALE := 1.45  # modelled at a little over half a tile; on the farm a vehicle nearly fills its tile
 
 
 static func build(it: Dictionary, chassis := false) -> Node3D:
 	var root := Node3D.new()
 	var body := Node3D.new()
 	body.position = Vector3(0.5, 0, 0.5)
+	body.scale = Vector3.ONE * SCALE
 	root.add_child(body)
 	var col := Color.html(str(it.get("color", "#c0392b")))
 	if chassis:

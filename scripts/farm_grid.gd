@@ -50,6 +50,7 @@ var shadows: ShadowLayer
 var pieces: ObjectLayer
 var overlay: OverlayLayer
 var world_fx: WorldFx    # bursts and pops on the farm
+var life: FarmLife       # the animals' minds, read by the 2D and 3D worlds
 
 var fx: FxLayer          # rewards flying to the top bar (set by main)
 
@@ -69,6 +70,8 @@ var _press_on_farm := false
 
 
 func _ready() -> void:
+	life = FarmLife.new()
+	add_child(life)
 	ground = GroundLayer.new()
 	ground.grid = self
 	ground.z_index = -3000
@@ -274,7 +277,9 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 				# The 3D animal has no bubble of its own: draw it over where the animal stands now.
 				var rig := AnimalRig.of(Game.item_data(o["id"]))
 				var tall := (rig.size("leg", 12.0) + rig.pair("body").y * 1.7) * Animal3D.PX * IsoProjection.HEIGHT_PX
-				AnimalArt.bubble(ci, piece.position + Vector2(0, -tall - 26.0),
+				var mind := life.mind(piece.uid)
+				var at := piece.base + (mind.offset if mind != null else Vector2.ZERO)
+				AnimalArt.bubble(ci, at + Vector2(0, -tall - 26.0),
 					AnimalArt.EGG if rig.family == "chicken" else rig.accent_color, t)
 				continue
 			var fp := Game.footprint(o["id"])
@@ -416,7 +421,8 @@ func _draw_placing(ci: CanvasItem) -> void:
 			cap = Game.capacity(o)
 	elif it.get("kind", "") == "building":
 		cap = int(it["levels"][0])
-	PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
+	if not pieces.three_d:  # in 3D, Objects3D shows a see-through model instead
+		PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
 
 
 
