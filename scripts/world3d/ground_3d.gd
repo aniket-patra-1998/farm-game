@@ -11,7 +11,6 @@ extends Node3D
 
 const SLAB := 0.22                 # how far the farm stands above the meadow
 const MEADOW := 40.0               # tiles of countryside around the farm
-const TUFTS_PER_TILE := 5
 const MEADOW_TUFTS_PER_TILE := 2
 const TUFT_REACH := 6.0            # meadow tufts only this far out (further, they're too small to see)
 const EARTH := Color("#7a5232")

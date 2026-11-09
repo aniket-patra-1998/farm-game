@@ -22,6 +22,8 @@ const LEG_PHASES := [0.5, 0.75, 0.0, 0.25]      # the four-beat walk, as in Quad
 const CONTACT_SPREAD := 1.25                    # the contact shade reaches this far past the body
 const CONTACT_LIFT := 0.012                     # just above the grass, so it never flickers into it
 
+static var _contact_material: ShaderMaterial    # one for every animal
+
 
 var rig: AnimalRig
 var behaviour: AnimalBehaviour   # its mind, owned and updated by FarmLife
@@ -43,8 +45,6 @@ var _r := Vector3.ONE            # body half-sizes (length, height, width)
 
 var _leg := 0.2
 var _contact: MeshInstance3D     # the soft shade on the grass right under it
-
-static var _contact_material: ShaderMaterial
 
 
 
