@@ -14,6 +14,9 @@ const PINE := Color("#2f6b3a")
 
 
 const DROP_HEIGHT := 1.4      # tiles above the ground a new thing falls from
+const YARD_HEIGHT := 0.3      # a building's yard and fence, for taps
+const PART_HEIGHT := 1.0      # what stands beside a building (a silo, an annex), for taps
+const ROOF_EXTRAS := 0.35     # chimneys, cupolas and vanes above the roof, for taps
 
 
 var life: FarmLife  # the animals' minds (shared with the 2D world)
@@ -83,7 +86,7 @@ func sync() -> void:
 		var node := _build(o)
 		add_child(node)
 		var fresh := not v.has("node")
-		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o)}
+		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o)}
 		if fresh and _synced_once:
 			drop_in(uid)  # newly bought or placed: it drops onto the farm
 	for uid in _views.keys():
@@ -307,13 +310,15 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 		var node := v["node"] as Node3D
 		if not node.visible:
 			continue
-		var box: AABB = v["box"]
+		var d := INF
 		if node is Animal3D:
-			box = AABB(node.position + box.position, box.size)
-		var hit: Variant = box.intersects_ray(from, dir)
-		if hit == null:
+			var box: AABB = v["box"]
+			d = _ray_to(AABB(node.position + box.position, box.size), from, dir)
+		else:
+			for part: AABB in v["parts"]:
+				d = minf(d, _ray_to(part, from, dir))
+		if d == INF:
 			continue
-		var d := from.distance_to(hit)
 		# Animals sit in front of what they stand by: they win close calls with buildings behind them.
 		if node is Animal3D:
 			d -= 0.5
@@ -323,6 +328,37 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 	return best
 
 
+
+
+## How far along the ray it meets the box (INF if it misses).
+static func _ray_to(box: AABB, from: Vector3, dir: Vector3) -> float:
+	var hit: Variant = box.intersects_ray(from, dir)
+	return from.distance_to(hit) if hit != null else INF
+
+
+## What a tap can land on, as boxes in the farm's space. A finished building is its walls and roof, its
+## low yard and fence, and each thing standing beside it (a silo, an annex): not one box round it all,
+## whose empty corners would catch taps meant for the animal standing behind its yard.
+func _parts(node: Node3D, o: Dictionary) -> Array[AABB]:
+	if node is Animal3D or not Game.is_building(o) or Game.under_construction(o) or node.get_child_count() == 0:
+		return [_bounds(node, o)]
+	var model := node.get_child(0) as Node3D
+	var fp := Game.footprint(o["id"])
+	var spec := BuildingModel.spec(str(o["id"]), Game.level_of(o))
+	var out: Array[AABB] = [node.transform * (model.transform * AABB(Vector3.ZERO, Vector3(fp.x, YARD_HEIGHT, fp.y)))]
+	var taken := BuildingModel.taken(spec, fp)
+	var body: Dictionary = spec["body"]
+	var roof: Dictionary = spec["roof"]
+	for k in taken.size():
+		var r: Rect2 = taken[k]
+		var top := PART_HEIGHT
+		if k == 0 and float(body.get("w", 0.0)) > 0.0:
+			# The main block: its walls, its roof, and what stands on the roof.
+			top = float(body.get("h", 0.85)) + float(roof.get("pitch", 0.75)) * minf(r.size.x, r.size.y) / 2.0 \
+				+ ROOF_EXTRAS
+		out.append(node.transform * (model.transform * AABB(Vector3(r.position.x, 0, r.position.y),
+			Vector3(r.size.x, top, r.size.y))))
+	return out
 
 
 ## The box around a model, in the farm's space (for an animal, around its feet, to move with it).
