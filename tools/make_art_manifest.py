@@ -166,7 +166,7 @@ def build():
                 e = defaults(cls)
                 e.update(d.get("defaults", {})); e.update(fam.get("defaults", {})); e.update(v)
                 lc = lifecycle(cls)
-                stages = [str(n) for n in range(1, len(e.get("levels", [1])) + 1)] if lc["stages"] == "sizes" else lc["stages"]
+                stages = [str(n) for n in range(1, len(e.get("sizes", [{}])) + 1)] if lc["stages"] == "sizes" else lc["stages"]
                 for stage in stages:
                     art = lc["pattern"].replace("{id}", e["id"]).replace("{stage}", stage).replace("{n}", stage)
                     refs = [] if cls in ("Material", "Recipe") else [f"refs/{art}.png"]

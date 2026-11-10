@@ -433,7 +433,7 @@ func _draw_placing(ci: CanvasItem) -> void:
 			inside = Game.inside_total(o)
 			cap = Game.capacity(o)
 	elif it.get("kind", "") == "building":
-		cap = int(it["levels"][0])
+		cap = Game.building_def(it["id"]).capacity(1)
 	if not pieces.three_d:  # in 3D, Objects3D shows a see-through model instead
 		PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
 

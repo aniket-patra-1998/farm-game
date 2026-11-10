@@ -13,12 +13,11 @@ func test_17_data_files_are_consistent() -> void:
 	for id in g.items:
 		var it: Dictionary = g.items[id]
 		if it["kind"] == "building":
-			_check(
-				it.has("expand_materials") or (it["levels"] as Array).size() == 1,
-				"%s says what expanding costs" % id
-			)
-			for m in it.get("expand_materials", {}):
-				_check(GameState.part_ids.has(m), "%s expands with a real material (%s)" % [id, m])
+			var def := g.building_def(id)
+			for k in range(2, def.max_level() + 1):
+				_check(not def.size_materials(k).is_empty(), "%s says what growing to size %d costs" % [id, k])
+				for m in def.size_materials(k):
+					_check(GameState.part_ids.has(m), "%s grows with a real material (%s)" % [id, m])
 			for m in it.get("build_materials", {}):
 				_check(GameState.part_ids.has(m), "%s is built with a real material (%s)" % [id, m])
 			for held in it.get("holds", []) + it.get("one_each", []):
@@ -121,12 +120,18 @@ func test_71_defaults_stack_and_classes_add_rules() -> void:
 			"Building",
 			{},
 			{},
-			{"id": "odd_pen", "name": "Odd", "cost": 5, "levels": [10, 5], "holds": ["unicorn"]}
+			{"id": "odd_pen", "name": "Odd", "cost": 5, "holds": ["unicorn"], "limit": 0,
+				"sizes": [{"capacity": 10, "materials": {"boards": 1}}, {"capacity": 5}]}
 		)
 	)
 	var berr := b.validate(c)
 	_check(berr.any(func(e): return e.contains("more than the last")), "sizes must grow")
 	_check(berr.any(func(e): return e.contains("unknown item unicorn")), "it can only hold real items")
+	_check(berr.any(func(e): return e.contains("first size can't cost")), "the first size is bought, not built up to")
+	_check(berr.any(func(e): return e.contains("materials to reach it")), "every size up says what it takes")
+	_check(berr.any(func(e): return e.contains("limit must be at least 1")), "a building can be had at least once")
+	_check(c._sizes_problem([{"capacity": 1, "colour": "red"}]).contains("unknown key"), "a size has only known keys")
+	_check(c._sizes_problem([]) != "", "a building has at least one size")
 	_done(g)
 
 

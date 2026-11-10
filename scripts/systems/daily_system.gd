@@ -49,10 +49,14 @@ func wanted_parts() -> Array[String]:
 	out.assign(GameState.basic_parts)
 	for o in game.objects:
 		var it := game.item_data(o["id"])
-		for key in ["build_materials", "expand_materials", "uses_materials"]:
-			for m in it.get(key, {}):
-				if not out.has(m):
-					out.append(m)
+		var used: Array = (it.get("build_materials", {}) as Dictionary).keys() + it.get("uses_materials", [])
+		var def := game.building_def(o["id"])
+		if def != null:
+			for k in range(2, def.max_level() + 1):
+				used.append_array(def.size_materials(k).keys())
+		for m in used:
+			if not out.has(m):
+				out.append(m)
 	return out
 
 

@@ -1,6 +1,6 @@
 {
   "class": "Building",
-  "_note": "Buildings that hold animals, trees or vehicles. levels = capacity at each size; frames (build_materials) are finished with materials; expand_materials pay for each size up.",
+  "_note": "Buildings: animal homes, storage, crafting. sizes = one record per size, smallest first: what it holds (capacity), its name, and what it takes to reach it from the size before (materials; for a crafting building's stars, coins and recipe stars, or gems instead). Frames (build_materials) are finished with materials first. tab = its Market tab; limit = how many one farm may have (limit_group + group_limit: a shared limit, e.g. 3 crafting buildings in all).",
   "defaults": {
     "unlock_level": 1,
     "cycle_seconds": 86400,
@@ -30,25 +30,34 @@
             "baby_turkey",
             "wild_turkey"
           ],
-          "levels": [
-            20,
-            40,
-            60
-          ],
           "color": "#e9c46a",
           "roof": "#b5482f",
-          "level_names": [
-            "Chicken Coop",
-            "Big Chicken Coop",
-            "Huge Chicken Coop"
-          ],
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10
-          },
           "special": "mystery_eggs",
-          "look": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens"
+          "look": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens",
+          "sizes": [
+            {
+              "capacity": 20,
+              "name": "Chicken Coop"
+            },
+            {
+              "capacity": 40,
+              "name": "Big Chicken Coop",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 60,
+              "name": "Huge Chicken Coop",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            }
+          ]
         },
         {
           "id": "duck_pond",
@@ -63,24 +72,33 @@
             "belted_duck",
             "turtle"
           ],
-          "levels": [
-            20,
-            30,
-            40
-          ],
-          "level_names": [
-            "Duck Pond",
-            "Big Duck Pond",
-            "Huge Duck Pond"
-          ],
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10
-          },
           "color": "#5fa8d3",
           "roof": "#7a5230",
-          "look": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming"
+          "look": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming",
+          "sizes": [
+            {
+              "capacity": 20,
+              "name": "Duck Pond"
+            },
+            {
+              "capacity": 30,
+              "name": "Big Duck Pond",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "name": "Huge Duck Pond",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            }
+          ]
         },
         {
           "id": "cow_shed",
@@ -101,28 +119,38 @@
             "red_cow",
             "belted_cow"
           ],
-          "levels": [
-            20,
-            30,
-            40
-          ],
           "color": "#c0392b",
           "roof": "#6b4a3a",
-          "level_names": [
-            "Dairy Farm",
-            "Big Dairy Farm",
-            "Huge Dairy Farm"
-          ],
           "one_each": [
             "bull"
           ],
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10
-          },
           "special": "calves",
-          "look": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door"
+          "look": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door",
+          "sizes": [
+            {
+              "capacity": 20,
+              "name": "Dairy Farm"
+            },
+            {
+              "capacity": 30,
+              "name": "Big Dairy Farm",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "name": "Huge Dairy Farm",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            }
+          ],
+          "limit": 5
         },
         {
           "id": "sheep_pen",
@@ -136,28 +164,37 @@
             "black_sheep",
             "mouflon_sheep"
           ],
-          "levels": [
-            20,
-            30,
-            40
-          ],
-          "level_names": [
-            "Sheep Pen",
-            "Big Sheep Pen",
-            "Huge Sheep Pen"
-          ],
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10
-          },
           "color": "#d9c9a3",
           "roof": "#8a5a32",
           "one_each": [
             "ram"
           ],
           "special": "lambs",
-          "look": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep"
+          "look": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep",
+          "sizes": [
+            {
+              "capacity": 20,
+              "name": "Sheep Pen"
+            },
+            {
+              "capacity": 30,
+              "name": "Big Sheep Pen",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "name": "Huge Sheep Pen",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            }
+          ]
         },
         {
           "id": "goat_pen",
@@ -169,24 +206,33 @@
             "boer_goat",
             "arapawa_goat"
           ],
-          "levels": [
-            20,
-            30,
-            40
-          ],
-          "level_names": [
-            "Goat Pen",
-            "Big Goat Pen",
-            "Huge Goat Pen"
-          ],
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10
-          },
           "color": "#c9b48a",
           "roof": "#6b4a2a",
-          "look": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats"
+          "look": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats",
+          "sizes": [
+            {
+              "capacity": 20,
+              "name": "Goat Pen"
+            },
+            {
+              "capacity": 30,
+              "name": "Big Goat Pen",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "name": "Huge Goat Pen",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            }
+          ]
         },
         {
           "id": "rabbit_hutch",
@@ -198,24 +244,33 @@
           "holds": [
             "rabbit"
           ],
-          "levels": [
-            20,
-            30,
-            40
-          ],
-          "level_names": [
-            "Rabbit Hutch",
-            "Big Rabbit Hutch",
-            "Huge Rabbit Hutch"
-          ],
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10
-          },
           "color": "#e8c9a0",
           "roof": "#a8743f",
-          "look": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it"
+          "look": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it",
+          "sizes": [
+            {
+              "capacity": 20,
+              "name": "Rabbit Hutch"
+            },
+            {
+              "capacity": 30,
+              "name": "Big Rabbit Hutch",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "name": "Huge Rabbit Hutch",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            }
+          ]
         },
         {
           "id": "pig_pen",
@@ -230,9 +285,6 @@
             "kunekune_pig",
             "saddleback_pig"
           ],
-          "levels": [
-            30
-          ],
           "build_materials": {
             "boards": 8,
             "bricks": 8,
@@ -244,7 +296,12 @@
           "one_each": [
             "boar"
           ],
-          "look": "a fenced muddy pig yard with a lean-to wooden shed, a mud puddle and a feeding trough, a few pink pigs"
+          "look": "a fenced muddy pig yard with a lean-to wooden shed, a mud puddle and a feeding trough, a few pink pigs",
+          "sizes": [
+            {
+              "capacity": 30
+            }
+          ]
         },
         {
           "id": "horse_stable",
@@ -261,13 +318,6 @@
             "black_pony",
             "mustang"
           ],
-          "levels": [
-            20,
-            25,
-            30,
-            35,
-            40
-          ],
           "color": "#a8743f",
           "roof": "#3f5f7a",
           "one_each": [
@@ -280,17 +330,58 @@
             "harnesses": 10,
             "horseshoes": 10
           },
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10,
-            "harnesses": 10,
-            "horseshoes": 10
-          },
           "special": "foals",
-          "look": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front"
+          "look": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front",
+          "sizes": [
+            {
+              "capacity": 20
+            },
+            {
+              "capacity": 25,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10,
+                "harnesses": 10,
+                "horseshoes": 10
+              }
+            },
+            {
+              "capacity": 30,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10,
+                "harnesses": 10,
+                "horseshoes": 10
+              }
+            },
+            {
+              "capacity": 35,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10,
+                "harnesses": 10,
+                "horseshoes": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10,
+                "harnesses": 10,
+                "horseshoes": 10
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "defaults": {
+        "tab": "animal"
+      }
     },
     {
       "id": "nursery",
@@ -320,19 +411,7 @@
             "gray_foal",
             "mustang_foal"
           ],
-          "levels": [
-            20,
-            30,
-            40
-          ],
           "build_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10,
-            "bottles": 10,
-            "blankets": 10
-          },
-          "expand_materials": {
             "bricks": 10,
             "nails": 10,
             "boards": 10,
@@ -360,9 +439,37 @@
           },
           "color": "#e9d8a6",
           "roof": "#7a9e7e",
-          "look": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals"
+          "look": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals",
+          "sizes": [
+            {
+              "capacity": 20
+            },
+            {
+              "capacity": 30,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10,
+                "bottles": 10,
+                "blankets": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10,
+                "bottles": 10,
+                "blankets": 10
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "defaults": {
+        "tab": "animal"
+      }
     },
     {
       "id": "orchard",
@@ -378,22 +485,36 @@
           "h": 4,
           "holds_kind": "tree",
           "cycle_seconds": 172800,
-          "levels": [
-            20,
-            30,
-            40
-          ],
           "color": "#8fbf5a",
           "roof": "#7a5230",
-          "expand_materials": {
-            "bricks": 10,
-            "nails": 10,
-            "boards": 10
-          },
           "special": "saplings",
-          "look": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket"
+          "look": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket",
+          "sizes": [
+            {
+              "capacity": 20
+            },
+            {
+              "capacity": 30,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            }
+          ]
         }
-      ]
+      ],
+      "defaults": {
+        "tab": "animal"
+      }
     },
     {
       "id": "production",
@@ -410,9 +531,6 @@
           "holds": [
             "bee"
           ],
-          "levels": [
-            200
-          ],
           "color": "#f2c230",
           "roof": "#c98a1a",
           "build_materials": {
@@ -423,7 +541,12 @@
             "bricks": 10
           },
           "special": "beehive",
-          "look": "stacked white wooden beehive boxes on a small stand, surrounded by colourful flowers, bees buzzing around"
+          "look": "stacked white wooden beehive boxes on a small stand, surrounded by colourful flowers, bees buzzing around",
+          "sizes": [
+            {
+              "capacity": 200
+            }
+          ]
         },
         {
           "id": "greenhouse",
@@ -437,7 +560,10 @@
           "note": "grinds grain into flour",
           "status": "planned"
         }
-      ]
+      ],
+      "defaults": {
+        "tab": "animal"
+      }
     },
     {
       "id": "crafting",
@@ -453,42 +579,44 @@
           "extra_gem_cost": 80,
           "w": 4,
           "h": 4,
-          "levels": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ],
-          "level_names": [
-            "Bakery",
-            "2-Star Bakery",
-            "3-Star Bakery",
-            "4-Star Bakery",
-            "5-Star Bakery"
-          ],
-          "star_coins": [
-            50000,
-            100000,
-            400000,
-            1000000
-          ],
-          "star_recipe_stars": [
-            6,
-            18,
-            27,
-            36
-          ],
-          "star_gems": [
-            15,
-            25,
-            40,
-            60
-          ],
           "produces": false,
           "color": "#f2e2c4",
           "roof": "#b5452e",
-          "look": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign"
+          "look": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign",
+          "sizes": [
+            {
+              "capacity": 1,
+              "name": "Bakery"
+            },
+            {
+              "capacity": 2,
+              "name": "2-Star Bakery",
+              "coins": 50000,
+              "recipe_stars": 6,
+              "gems": 15
+            },
+            {
+              "capacity": 3,
+              "name": "3-Star Bakery",
+              "coins": 100000,
+              "recipe_stars": 18,
+              "gems": 25
+            },
+            {
+              "capacity": 4,
+              "name": "4-Star Bakery",
+              "coins": 400000,
+              "recipe_stars": 27,
+              "gems": 40
+            },
+            {
+              "capacity": 5,
+              "name": "5-Star Bakery",
+              "coins": 1000000,
+              "recipe_stars": 36,
+              "gems": 60
+            }
+          ]
         },
         {
           "id": "winery",
@@ -499,42 +627,44 @@
           "extra_gem_cost": 80,
           "w": 4,
           "h": 4,
-          "levels": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ],
-          "level_names": [
-            "Winery",
-            "2-Star Winery",
-            "3-Star Winery",
-            "4-Star Winery",
-            "5-Star Winery"
-          ],
-          "star_coins": [
-            50000,
-            100000,
-            400000,
-            1000000
-          ],
-          "star_recipe_stars": [
-            6,
-            18,
-            27,
-            36
-          ],
-          "star_gems": [
-            15,
-            25,
-            40,
-            60
-          ],
           "produces": false,
           "color": "#d8c7a8",
           "roof": "#6a2a3a",
-          "look": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign"
+          "look": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign",
+          "sizes": [
+            {
+              "capacity": 1,
+              "name": "Winery"
+            },
+            {
+              "capacity": 2,
+              "name": "2-Star Winery",
+              "coins": 50000,
+              "recipe_stars": 6,
+              "gems": 15
+            },
+            {
+              "capacity": 3,
+              "name": "3-Star Winery",
+              "coins": 100000,
+              "recipe_stars": 18,
+              "gems": 25
+            },
+            {
+              "capacity": 4,
+              "name": "4-Star Winery",
+              "coins": 400000,
+              "recipe_stars": 27,
+              "gems": 40
+            },
+            {
+              "capacity": 5,
+              "name": "5-Star Winery",
+              "coins": 1000000,
+              "recipe_stars": 36,
+              "gems": 60
+            }
+          ]
         },
         {
           "id": "spa",
@@ -545,42 +675,44 @@
           "extra_gem_cost": 80,
           "w": 4,
           "h": 4,
-          "levels": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ],
-          "level_names": [
-            "Spa",
-            "2-Star Spa",
-            "3-Star Spa",
-            "4-Star Spa",
-            "5-Star Spa"
-          ],
-          "star_coins": [
-            50000,
-            100000,
-            400000,
-            1000000
-          ],
-          "star_recipe_stars": [
-            6,
-            18,
-            27,
-            36
-          ],
-          "star_gems": [
-            15,
-            25,
-            40,
-            60
-          ],
           "produces": false,
           "color": "#e8f0ee",
           "roof": "#5a9a8a",
-          "look": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower"
+          "look": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower",
+          "sizes": [
+            {
+              "capacity": 1,
+              "name": "Spa"
+            },
+            {
+              "capacity": 2,
+              "name": "2-Star Spa",
+              "coins": 50000,
+              "recipe_stars": 6,
+              "gems": 15
+            },
+            {
+              "capacity": 3,
+              "name": "3-Star Spa",
+              "coins": 100000,
+              "recipe_stars": 18,
+              "gems": 25
+            },
+            {
+              "capacity": 4,
+              "name": "4-Star Spa",
+              "coins": 400000,
+              "recipe_stars": 27,
+              "gems": 40
+            },
+            {
+              "capacity": 5,
+              "name": "5-Star Spa",
+              "coins": 1000000,
+              "recipe_stars": 36,
+              "gems": 60
+            }
+          ]
         },
         {
           "id": "juice_press",
@@ -592,7 +724,12 @@
           "name": "Spinning Mill",
           "status": "planned"
         }
-      ]
+      ],
+      "defaults": {
+        "tab": "crafting",
+        "limit_group": "crafting",
+        "group_limit": 3
+      }
     },
     {
       "id": "storage",
@@ -605,9 +742,6 @@
           "name": "Barn",
           "unlock_level": 99,
           "cost": 0,
-          "levels": [
-            30
-          ],
           "repair_parts": {
             "bricks": 5,
             "nails": 5,
@@ -617,7 +751,12 @@
           "repair_xp": 50,
           "color": "#b03a2e",
           "roof": "#5c3a1e",
-          "look": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors"
+          "look": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors",
+          "sizes": [
+            {
+              "capacity": 30
+            }
+          ]
         },
         {
           "id": "garage",
@@ -625,9 +764,6 @@
           "unlock_level": 22,
           "cost": 50000,
           "holds_kind": "vehicle",
-          "levels": [
-            20
-          ],
           "build_materials": {
             "bricks": 10,
             "nails": 10,
@@ -640,7 +776,12 @@
           "produces": false,
           "color": "#9aa4ad",
           "roof": "#4a5560",
-          "look": "a grey corrugated-metal farm garage with a big roll-up door, a wrench sign and a red fuel pump outside"
+          "look": "a grey corrugated-metal farm garage with a big roll-up door, a wrench sign and a red fuel pump outside",
+          "sizes": [
+            {
+              "capacity": 20
+            }
+          ]
         },
         {
           "id": "garden_shed",
@@ -650,15 +791,17 @@
           "w": 2,
           "h": 2,
           "holds": [],
-          "levels": [
-            100
-          ],
           "special": "garden_shed",
           "produces": false,
           "color": "#e8dcc4",
           "roof": "#6a8a4a",
           "note": "FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built",
-          "look": "a small white-and-green wooden garden shed with a little window box of flowers, a watering can and flower pots by the door"
+          "look": "a small white-and-green wooden garden shed with a little window box of flowers, a watering can and flower pots by the door",
+          "sizes": [
+            {
+              "capacity": 100
+            }
+          ]
         },
         {
           "id": "storage_shed",
@@ -670,7 +813,10 @@
           "name": "Silo",
           "status": "planned"
         }
-      ]
+      ],
+      "defaults": {
+        "tab": "storage"
+      }
     }
   ]
 }

@@ -75,8 +75,8 @@ func repair_barn() -> bool:
 
 
 func barn_capacity() -> int:
-	var levels: Array = game.item_data("barn").get("levels", [0])
-	return int(levels[0])
+	var b := barn()
+	return game.capacity(b) if not b.is_empty() else game.building_def("barn").capacity(1)
 
 
 ## Trees, animals and scenery can be stored; shelters, the barn and strays can't.

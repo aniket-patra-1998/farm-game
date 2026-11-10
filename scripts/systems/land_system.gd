@@ -84,7 +84,7 @@ func add_materials(uid: int) -> int:
 func expansion_needs(b: Dictionary) -> Dictionary:
 	if game.level_of(b) >= game.max_level(b["id"]):
 		return {}
-	return game.item_data(b["id"]).get("expand_materials", {})
+	return game.building_def(b["id"]).size_materials(game.level_of(b) + 1)
 
 
 func can_expand(b: Dictionary) -> bool:

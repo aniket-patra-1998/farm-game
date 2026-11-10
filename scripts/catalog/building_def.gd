@@ -1,6 +1,8 @@
 class_name BuildingDef
 extends PlaceableDef
-## A building that holds things. Size N (1-based) holds levels[N-1]; expanding pays expand_materials.
+## A building: what it holds, its sizes, its Market tab and how many one farm may have. Its sizes are
+## records (data "sizes"), smallest first: size N (1-based) holds capacity(N), is called size_name(N), and
+## reaching it from size N-1 takes size_cost(N) (materials, or a crafting building's coins and stars).
 
 const SPECIALS := [
 	"mystery_eggs",
@@ -16,21 +18,59 @@ const SPECIALS := [
 ]
 
 
-func levels() -> Array:
-	return data.get("levels", [])
+func sizes() -> Array:
+	return data.get("sizes", [])
 
 
 func max_level() -> int:
-	return levels().size()
+	return sizes().size()
+
+
+## The record for a size (clamped into range), or {} for a building with no sizes.
+func size(level: int) -> Dictionary:
+	return sizes()[clampi(level, 1, max_level()) - 1] if max_level() > 0 else {}
 
 
 func capacity(level: int) -> int:
-	return int(levels()[clampi(level, 1, max_level()) - 1])
+	return int(size(level).get("capacity", 0))
+
+
+## Capacities from smallest to biggest.
+func capacities() -> Array[int]:
+	var out: Array[int] = []
+	for s: Dictionary in sizes():
+		out.append(int(s["capacity"]))
+	return out
 
 
 func size_name(level: int) -> String:
-	var names: Array = data.get("level_names", [])
-	return str(names[level - 1]) if level >= 1 and level <= names.size() else name
+	return str(size(level).get("name", name)) if level >= 1 and level <= max_level() else name
+
+
+## Materials to grow from level - 1 to level ({} for the first size, or none needed).
+func size_materials(level: int) -> Dictionary:
+	if level < 2 or level > max_level():
+		return {}
+	return size(level).get("materials", {})
+
+
+## Its Market tab: animal, storage, crafting or decor.
+func tab() -> String:
+	return str(data.get("tab", "animal"))
+
+
+## How many one farm may have.
+func limit() -> int:
+	return int(data.get("limit", 1))
+
+
+## Buildings that share a limit (all crafting buildings), and how many of them one farm may have.
+func limit_group() -> String:
+	return str(data.get("limit_group", ""))
+
+
+func group_limit() -> int:
+	return int(data.get("group_limit", 0))
 
 
 func holds() -> Array:
@@ -62,25 +102,36 @@ func can_rotate() -> bool:
 	return false
 
 
+## Whether its sizes are bought with coins and recipe stars (a crafting building) rather than materials.
+func grows_by_stars() -> bool:
+	return false
+
+
 func validate(catalog) -> Array[String]:
 	var out := super.validate(catalog)
 	if max_level() == 0:
-		out.append(_err("needs at least one size in levels"))
-	for k in range(1, max_level()):
-		if int(levels()[k]) <= int(levels()[k - 1]):
+		out.append(_err("needs at least one size"))
+	for k in range(2, max_level() + 1):
+		if capacity(k) <= capacity(k - 1):
 			out.append(_err("each size must hold more than the last"))
-	var names: Array = data.get("level_names", [])
-	if not names.is_empty() and names.size() != max_level():
-		out.append(_err("level_names needs one name per size"))
-	if max_level() > 1 and not data.has("expand_materials"):
-		out.append(_err("has more than one size but no expand_materials"))
+		if size_materials(k).is_empty() and not grows_by_stars():
+			out.append(_err("size %d says nothing about the materials to reach it" % k))
+	if size(1).has("materials"):
+		out.append(_err("the first size can't cost materials (build_materials pays for a frame)"))
+	if limit() < 1:
+		out.append(_err("limit must be at least 1"))
+	if limit_group() != "" and group_limit() < 1:
+		out.append(_err("limit_group %s needs a group_limit of at least 1" % limit_group()))
 	for ref in holds() + one_each():
 		if catalog.get_def(str(ref)) == null:
 			out.append(_err("holds unknown item %s" % ref))
-	for key in ["build_materials", "expand_materials"]:
-		for m in data.get(key, {}):
+	for m in data.get("build_materials", {}):
+		if not catalog.material_ids().has(m):
+			out.append(_err("build_materials uses unknown material %s" % m))
+	for k in range(2, max_level() + 1):
+		for m in size_materials(k):
 			if not catalog.material_ids().has(m):
-				out.append(_err("%s uses unknown material %s" % [key, m]))
+				out.append(_err("size %d uses unknown material %s" % [k, m]))
 	for m in data.get("uses_materials", []):
 		if not catalog.material_ids().has(m):
 			out.append(_err("uses unknown material %s" % m))

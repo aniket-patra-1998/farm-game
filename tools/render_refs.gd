@@ -78,7 +78,7 @@ func _draw_job() -> void:
 				false,
 				int(stage),
 				5,
-				int((it["levels"] as Array)[int(stage) - 1])
+				Game.building_def(item_id).capacity(int(stage))
 			)
 		_:
 			PlaceholderArt.draw_object(_canvas, Game.item_data(item_id), corners, false, 1, 0, 0)

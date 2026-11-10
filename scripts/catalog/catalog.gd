@@ -9,6 +9,8 @@ extends RefCounted
 
 const DIR := "res://data/catalog"
 const NEVER_IN_MARKET := 99
+## What a building size record may hold (schema type list<size>).
+const SIZE_KEYS := ["capacity", "name", "materials", "coins", "recipe_stars", "gems"]  # not-ui
 
 const FREE_IN_MARKET := ["orchard", "nursery_barn"]  ## free in FarmVille too
 
@@ -277,6 +279,26 @@ func _type_problem(spec: Dictionary, v) -> String:
 			return ""
 		"materials", "map":
 			return "" if typeof(v) == TYPE_DICTIONARY else "should be an object"
+		"list<size>":
+			return _sizes_problem(v)
+	return ""
+
+
+## A building's sizes: a list of records, each with a capacity and only the keys a size can have.
+static func _sizes_problem(v) -> String:
+	if typeof(v) != TYPE_ARRAY or (v as Array).is_empty():
+		return "should be a list of at least one size"
+	for s in v:
+		if typeof(s) != TYPE_DICTIONARY:
+			return "should be a list of size records"
+		if not (s as Dictionary).has("capacity"):
+			return "has a size with no capacity"
+		for k in s:
+			if not SIZE_KEYS.has(k):
+				return "has a size with an unknown key %s (one of %s)" % [k, SIZE_KEYS]
+			var number: bool = k != "name" and k != "materials"
+			if number and typeof(s[k]) != TYPE_INT and typeof(s[k]) != TYPE_FLOAT:
+				return "has a size whose %s should be a number" % k
 	return ""
 
 

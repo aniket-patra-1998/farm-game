@@ -39,9 +39,9 @@ Item - Anything in the catalog.
     Producer (abstract) - Placeables that are collected every cycle.
       Tree - Fruit and nut trees.
       Animal - Animals, loose on the farm or inside their home.
-    Building - Holds animals, trees or vehicles; may be built from a frame and expanded.
+    Building - Holds animals, trees or vehicles; may be built from a frame and grown size by size.
       Barn - The starter barn: broken until repaired, then storage.
-      Crafting - FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels; each star adds a crafting slot and 3 recipes.
+      Crafting - FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels (capacity = crafting slots); each star up costs its size's coins and recipe stars, or its gems.
     Vehicle - Works an area of plots per tap and burns fuel.
     Decoration - Scenery. 1 XP per 100 coins (at least 5).
   Recipe - Something a crafting building makes from bushels.
@@ -136,18 +136,20 @@ Animals, loose on the farm or inside their home.
 
 ### Building (extends Placeable)
 
-Holds animals, trees or vehicles; may be built from a frame and expanded.
+Holds animals, trees or vehicles; may be built from a frame and grown size by size.
 
 | Field | Type | Default | Required | Meaning |
 |---|---|---|---|---|
 | `cycle_seconds` | int | 86400 |  | Time between collections. |
-| `levels` | list<int> |  | yes | Capacity at each size, smallest first. |
-| `level_names` | list<string> |  |  | Name at each size (e.g. Coop, Big Coop, Huge Coop). |
+| `sizes` | list<size> |  | yes | One record per size, smallest first: capacity (what it holds), name (shown; defaults to the building's), and what reaching it from the size before takes: materials, or for a crafting building's stars, coins and recipe_stars (or gems instead). |
+| `tab` | enum of animal, storage, crafting, decor | "animal" |  | Its Market tab, as FarmVille sorted buildings: Animal, Storage, Crafting, Decorative. |
+| `limit` | int | 1 |  | How many one farm may have (FarmVille: 5 Dairy Farms, 1 of most). |
+| `limit_group` | string |  |  | Buildings sharing a limit (FarmVille: 3 crafting buildings in all). |
+| `group_limit` | int |  |  | How many of the group one farm may have. |
 | `holds` | list<string> → Animal|Tree |  |  | Item ids that can move in. |
 | `holds_kind` | enum of tree, vehicle |  |  | Any item of this kind can move in. |
 | `one_each` | list<string> → Animal |  |  | Specials kept one at a time, taking no space (a bull, a ram). |
 | `build_materials` | materials |  |  | If set, it arrives as a frame finished with these. |
-| `expand_materials` | materials |  |  | Paid for each size up. |
 | `uses_materials` | list<string> → Material |  |  | Materials that start dropping once you own it. |
 | `special` | enum of mystery_eggs, calves, foals, lambs, truffles, nursery, beehive, saplings, garage, garden_shed |  |  | Its FarmVille extra on each collection. |
 | `produces` | bool | true |  | false = never ready to collect (the Garage). |
@@ -188,14 +190,11 @@ Scenery. 1 XP per 100 coins (at least 5).
 
 ### Crafting (extends Building)
 
-FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels; each star adds a crafting slot and 3 recipes.
+FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels (capacity = crafting slots); each star up costs its size's coins and recipe stars, or its gems.
 
 | Field | Type | Default | Required | Meaning |
 |---|---|---|---|---|
 | `craft_seconds` | int | 21600 |  | How long one craft takes (FarmVille: 6 hours). |
-| `star_coins` | list<int> |  |  | Coins to reach stars 2, 3, 4 and 5. |
-| `star_recipe_stars` | list<int> |  |  | Recipe mastery stars (summed over this building's recipes) needed for stars 2 to 5. |
-| `star_gems` | list<int> |  |  | Or gems instead, for stars 2 to 5. |
 | `extra_gem_cost` | int |  |  | Price in gems once you already own a crafting building (FarmVille: the first was coins, the rest Farm Cash). |
 
 ### Recipe (extends Item)
@@ -850,72 +849,84 @@ A lost animal that lives in the Duck Pond.
 
 ## Buildings
 
-Buildings that hold animals, trees or vehicles. levels = capacity at each size; frames (build_materials) are finished with materials; expand_materials pay for each size up.
+Buildings: animal homes, storage, crafting. sizes = one record per size, smallest first: what it holds (capacity), its name, and what it takes to reach it from the size before (materials; for a crafting building's stars, coins and recipe stars, or gems instead). Frames (build_materials) are finished with materials first. tab = its Market tab; limit = how many one farm may have (limit_group + group_limit: a shared limit, e.g. 3 crafting buildings in all).
 
 ### Animal Homes
 
 Hold animals; one tap collects everyone inside.
 
-| | Item | id | Unlock | Cost | Size | Holds | Built from | Special |
-|---|---|---|---|---|---|---|---|---|
-| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 3x3 | 20 / 40 / 60 |  | mystery_eggs |
-| ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 30 / 40 |  |  |
-| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 4x3 | 20 / 30 / 40 |  | calves |
-| ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 30 / 40 |  | lambs |
-| ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 30 / 40 |  |  |
-| ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 30 / 40 |  |  |
-| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x3 | 30 | frame | truffles |
-| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 4x4 | 20 / 25 / 30 / 35 / 40 | frame | foals |
+Shared: `tab` = "animal"
+
+| | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 3x3 | 20 / 40 / 60 | animal | 1 |  | mystery_eggs |
+| ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  |  |
+| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 4x3 | 20 / 30 / 40 | animal | 5 |  | calves |
+| ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  | lambs |
+| ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  |  |
+| ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 30 / 40 | animal | 1 |  |  |
+| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x3 | 30 | animal | 1 | frame | truffles |
+| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 4x4 | 20 / 25 / 30 / 35 / 40 | animal | 1 | frame | foals |
 
 ### Nursery
 
 Raises baby animals into adults.
 
-| | Item | id | Unlock | Cost | Size | Holds | Built from | Special |
-|---|---|---|---|---|---|---|---|---|
-| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 4x3 | 20 / 30 / 40 | frame | nursery |
+Shared: `tab` = "animal"
+
+| | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 4x3 | 20 / 30 / 40 | animal | 1 | frame | nursery |
 
 ### Orchards
 
 Hold trees.
 
-| | Item | id | Unlock | Cost | Size | Holds | Built from | Special |
-|---|---|---|---|---|---|---|---|---|
-| ✅ | Orchard | `orchard` | 8 | 6,000 | 4x4 | 20 / 30 / 40 |  | saplings |
+Shared: `tab` = "animal"
+
+| | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ✅ | Orchard | `orchard` | 8 | 6,000 | 4x4 | 20 / 30 / 40 | animal | 1 |  | saplings |
 
 ### Production
 
 Make goods from what the farm grows.
 
-| | Item | id | Unlock | Cost | Size | Holds | Built from | Special |
-|---|---|---|---|---|---|---|---|---|
-| ✅ | Beehive | `beehive` | 3 | 5,000 | 2x2 | 200 | frame | beehive |
-| 🕓 | Greenhouse (breeds hybrid crop seeds) | `greenhouse` | 1 |  |  |  |  |  |
-| 🕓 | Windmill (grinds grain into flour) | `windmill` | 1 |  |  |  |  |  |
+Shared: `tab` = "animal"
+
+| | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ✅ | Beehive | `beehive` | 3 | 5,000 | 2x2 | 200 | animal | 1 | frame | beehive |
+| 🕓 | Greenhouse (breeds hybrid crop seeds) | `greenhouse` | 1 |  |  |  |  |  |  |  |
+| 🕓 | Windmill (grinds grain into flour) | `windmill` | 1 |  |  |  |  |  |  |  |
 
 ### Crafting
 
 FarmVille's crafting cottages (level 25): bushels from your harvests in, goods out. Sell goods for coins or turn them into fuel.
 
-| | Item | id | Unlock | Cost | Size | Holds | Built from | Special |
-|---|---|---|---|---|---|---|---|---|
-| ✅ | Bakery | `bakery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 |  |  |
-| ✅ | Winery | `winery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 |  |  |
-| ✅ | Spa | `spa` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 |  |  |
-| 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |
-| 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |
+Shared: `tab` = "crafting", `limit_group` = "crafting", `group_limit` = 3
+
+| | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ✅ | Bakery | `bakery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Winery | `winery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Spa | `spa` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |  |  |
+| 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |  |  |
 
 ### Storage
 
 Keep things off the farm.
 
-| | Item | id | Unlock | Cost | Size | Holds | Built from | Special |
-|---|---|---|---|---|---|---|---|---|
-| ✅ | Barn | `barn` | never sold | free | 3x3 | 30 |  |  |
-| ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | frame | garage |
-| ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x2 | 100 |  | garden_shed |
-| 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |
-| 🕓 | Silo | `silo` | 1 |  |  |  |  |  |
+Shared: `tab` = "storage"
+
+| | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ✅ | Barn | `barn` | never sold | free | 3x3 | 30 | storage | 1 |  |  |
+| ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 1 | frame | garage |
+| ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x2 | 100 | storage | 1 |  | garden_shed |
+| 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |  |  |
+| 🕓 | Silo | `silo` | 1 |  |  |  |  |  |  |  |
 
 ## Vehicles
 

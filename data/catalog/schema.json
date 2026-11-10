@@ -1,5 +1,5 @@
 {
-  "_note": "The rules for every kind of thing in the game. Each class lists its own fields and inherits its parent's. Order of defaults: the field's default here, then the data file's defaults, then the entry itself. Types: string, int, number, bool, color, list<string>, list<int>, materials (material id -> count), map (string -> string), enum (see values). An entry whose kind differs from its file's class uses kind_classes to pick its class.",
+  "_note": "The rules for every kind of thing in the game. Each class lists its own fields and inherits its parent's. Order of defaults: the field's default here, then the data file's defaults, then the entry itself. Types: string, int, number, bool, color, list<string>, list<int>, materials (material id -> count), map (string -> string), enum (see values), list<size> (a building's sizes: records of capacity, name, materials, coins, recipe_stars, gems). An entry whose kind differs from its file's class uses kind_classes to pick its class.",
   "classes": {
     "Item": {
       "doc": "Anything in the catalog.",
@@ -296,21 +296,41 @@
     "Building": {
       "extends": "Placeable",
       "kind": "building",
-      "doc": "Holds animals, trees or vehicles; may be built from a frame and expanded.",
+      "doc": "Holds animals, trees or vehicles; may be built from a frame and grown size by size.",
       "fields": {
         "cycle_seconds": {
           "type": "int",
           "default": 86400,
           "doc": "Time between collections."
         },
-        "levels": {
-          "type": "list<int>",
+        "sizes": {
+          "type": "list<size>",
           "required": true,
-          "doc": "Capacity at each size, smallest first."
+          "doc": "One record per size, smallest first: capacity (what it holds), name (shown; defaults to the building's), and what reaching it from the size before takes: materials, or for a crafting building's stars, coins and recipe_stars (or gems instead)."
         },
-        "level_names": {
-          "type": "list<string>",
-          "doc": "Name at each size (e.g. Coop, Big Coop, Huge Coop)."
+        "tab": {
+          "type": "enum",
+          "values": [
+            "animal",
+            "storage",
+            "crafting",
+            "decor"
+          ],
+          "default": "animal",
+          "doc": "Its Market tab, as FarmVille sorted buildings: Animal, Storage, Crafting, Decorative."
+        },
+        "limit": {
+          "type": "int",
+          "default": 1,
+          "doc": "How many one farm may have (FarmVille: 5 Dairy Farms, 1 of most)."
+        },
+        "limit_group": {
+          "type": "string",
+          "doc": "Buildings sharing a limit (FarmVille: 3 crafting buildings in all)."
+        },
+        "group_limit": {
+          "type": "int",
+          "doc": "How many of the group one farm may have."
         },
         "holds": {
           "type": "list<string>",
@@ -333,10 +353,6 @@
         "build_materials": {
           "type": "materials",
           "doc": "If set, it arrives as a frame finished with these."
-        },
-        "expand_materials": {
-          "type": "materials",
-          "doc": "Paid for each size up."
         },
         "uses_materials": {
           "type": "list<string>",
@@ -479,24 +495,12 @@
     "Crafting": {
       "extends": "Building",
       "kind": "crafting",
-      "doc": "FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels; each star adds a crafting slot and 3 recipes.",
+      "doc": "FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels (capacity = crafting slots); each star up costs its size's coins and recipe stars, or its gems.",
       "fields": {
         "craft_seconds": {
           "type": "int",
           "default": 21600,
           "doc": "How long one craft takes (FarmVille: 6 hours)."
-        },
-        "star_coins": {
-          "type": "list<int>",
-          "doc": "Coins to reach stars 2, 3, 4 and 5."
-        },
-        "star_recipe_stars": {
-          "type": "list<int>",
-          "doc": "Recipe mastery stars (summed over this building's recipes) needed for stars 2 to 5."
-        },
-        "star_gems": {
-          "type": "list<int>",
-          "doc": "Or gems instead, for stars 2 to 5."
         },
         "extra_gem_cost": {
           "type": "int",

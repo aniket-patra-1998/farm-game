@@ -995,8 +995,8 @@ func _market_row(id: String, it: Dictionary) -> Control:
 					names.append(Game.item_data(a)["name"].to_lower() + "s")
 				holds = ", ".join(PackedStringArray(names))
 			var fp := Game.footprint(id)
-			detail = tr("HOLDS_X_TILES_UPGRADES_TO") % [
-				int(it["levels"][0]), holds, fp.x, fp.y, int(it["levels"][-1])]
+			var def := Game.building_def(id)
+			detail = tr("HOLDS_X_TILES_UPGRADES_TO") % [def.capacity(1), holds, fp.x, fp.y, def.capacity(def.max_level())]
 		"crafting":
 			detail = tr("CRAFTING_RECIPES_OVER_STARS_PER_CRAFT") % FarmGrid.format_duration(int(it.get("craft_seconds", 21600)))
 		"vehicle":
@@ -1441,13 +1441,11 @@ func _add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> voi
 	if need.is_empty():
 		content.add_child(BookPanel.text(tr("FULLY_EXPANDED"), 18, BookPanel.CREAM))
 		return
-	var lvl := Game.level_of(o)
-	var levels: Array = Game.item_data(o["id"])["levels"]
-	var names: Array = Game.item_data(o["id"]).get("level_names", [])
-	var next_name: String = names[lvl] if lvl < names.size() else tr("NEXT_SIZE")
+	var next := Game.building_def(o["id"]).size(Game.level_of(o) + 1)
+	var next_name := str(next.get("name", tr("NEXT_SIZE")))
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 6)
-	card.add_child(BookPanel.text(tr("EXPAND_TO_HOLDS") % [next_name, int(levels[lvl])], 21))
+	card.add_child(BookPanel.text(tr("EXPAND_TO_HOLDS") % [next_name, int(next["capacity"])], 21))
 	for m in need:
 		card.add_child(
 			BookPanel.text(

@@ -29,7 +29,7 @@ func load_from(data: Dictionary) -> void:
 func bunch_cap() -> int:
 	for o in game.objects:
 		if o["id"] == "garden_shed":
-			return int(game.item_data("garden_shed")["levels"][0])
+			return game.capacity(o)
 	return BUNCH_CAP_NO_SHED
 
 

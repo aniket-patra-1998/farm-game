@@ -615,11 +615,16 @@ func max_level(building_id: String) -> int:
 ## The building's name at its size: Big Chicken Coop, Huge Dairy Farm...
 func size_name(obj: Dictionary) -> String:
 	var it := item_data(obj["id"])
-	var names: Array = it.get("level_names", [])
+	var def := building_def(obj["id"])
 	var lvl := level_of(obj)
-	if lvl - 1 < names.size():
-		return names[lvl - 1]
+	if def != null and def.size(lvl).has("name"):
+		return str(def.size(lvl)["name"])
 	return it["name"] if lvl == 1 else tr("SIZE") % [it["name"], lvl]
+
+
+## A building's definition (null for anything else).
+func building_def(id: String) -> BuildingDef:
+	return catalog.get_def(id) as BuildingDef
 
 
 func under_construction(obj: Dictionary) -> bool:
@@ -777,7 +782,7 @@ func has_inside(building: Dictionary, item_id: String) -> bool:
 
 
 func capacity(building: Dictionary) -> int:
-	return (catalog.get_def(building["id"]) as BuildingDef).capacity(int(building["level"]))
+	return (catalog.get_def(building["id"]) as BuildingDef).capacity(level_of(building))
 
 
 ## Animals taking up spaces (a bull or stallion doesn't count).

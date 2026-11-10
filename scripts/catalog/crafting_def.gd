@@ -20,9 +20,13 @@ func slots(star: int) -> int:
 func star_cost(star: int) -> Dictionary:
 	if star < 1 or star >= max_level():
 		return {}
-	var k := star - 1
-	return {"coins": int(data["star_coins"][k]), "recipe_stars": int(data["star_recipe_stars"][k]),
-		"gems": int(data["star_gems"][k])}
+	var s := size(star + 1)
+	return {"coins": int(s.get("coins", 0)), "recipe_stars": int(s.get("recipe_stars", 0)),
+		"gems": int(s.get("gems", 0))}
+
+
+func grows_by_stars() -> bool:
+	return true
 
 
 static func recipe_stars(crafted: int) -> int:
@@ -34,12 +38,9 @@ static func recipe_stars(crafted: int) -> int:
 
 
 func validate(catalog) -> Array[String]:
-	# Stars go up with coins and recipes, not materials, so a crafting building needs no expand_materials.
-	var out: Array[String] = []
-	for e in super.validate(catalog):
-		if not e.contains("expand_materials"):
-			out.append(e)
-	for key in ["star_coins", "star_recipe_stars", "star_gems"]:
-		if (data.get(key, []) as Array).size() != max_level() - 1:
-			out.append(_err("%s needs one entry per star after the first" % key))
+	var out := super.validate(catalog)
+	for k in range(2, max_level() + 1):
+		for key in ["coins", "recipe_stars", "gems"]:
+			if not size(k).has(key):
+				out.append(_err("star %d needs %s" % [k, key]))
 	return out
