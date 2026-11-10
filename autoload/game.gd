@@ -137,6 +137,7 @@ var vehicles: VehicleSystem
 var strays: StraySystem
 var crafting: CraftingSystem
 var homes: HousingSystem
+var buildings: BuildingSystem
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
 
 var _occupied := {}                # tile index -> uid of the object covering it
@@ -159,8 +160,9 @@ func _init() -> void:
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
+	buildings = BuildingSystem.new(self)
 	systems = [drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
-		strays, crafting, homes]
+		strays, crafting, homes, buildings]
 
 
 func _ready() -> void:
@@ -512,13 +514,7 @@ func grass_over(item_id: String, row: int, col: int) -> void:
 
 
 func can_afford_item(item_id: String) -> bool:
-	var it := item_data(item_id)
-	if it.get("kind", "") == "crafting":
-		var price := crafting.crafting_price(item_id)
-		return gems >= int(price["gems"]) if price.has("gems") else coins >= int(price["coins"])
-	if it.has("gem_cost"):
-		return gems >= int(it["gem_cost"])
-	return coins >= int(it.get("cost", 0))
+	return buildings.can_buy(item_id).ok()
 
 
 ## Buys one of an item, wherever it's going (onto the farm or straight into a home): checks its level,
@@ -527,25 +523,13 @@ func can_afford_item(item_id: String) -> bool:
 ## can't be bought.
 func buy_item(item_id: String) -> bool:
 	var it := item_data(item_id)
-	if it.is_empty():
+	var verdict := buildings.can_buy(item_id)  # its level, the farm's limit, its price
+	if not verdict.ok():
+		if verdict.text != "":
+			message.emit(verdict.text)
 		return false
-	if level() < int(it["unlock_level"]):
-		message.emit(tr("UNLOCKS_AT_LEVEL") % [it["name"], int(it["unlock_level"])])
-		return false
-	if it["kind"] == "crafting":
-		var price := crafting.crafting_price(item_id)
-		var paid := spend_gems(int(price["gems"])) if price.has("gems") else spend(int(price["coins"]))
-		if not paid:
-			message.emit(
-				(tr("NOT_ENOUGH_GEMS_FOR_A") if price.has("gems") else tr("NOT_ENOUGH_COINS_FOR_A")) % it["name"]
-			)
-			return false
-	elif it.has("gem_cost"):
-		if not spend_gems(int(it["gem_cost"])):
-			message.emit(tr("NOT_ENOUGH_GEMS_FOR_A") % it["name"])
-			return false
-	elif not spend(int(it["cost"])):
-		message.emit(tr("NOT_ENOUGH_COINS_FOR_A") % it["name"])
+	var price := buildings.price_of(item_id)
+	if not (spend_gems(int(price["gems"])) if price.has("gems") else spend(int(price.get("coins", 0)))):
 		return false
 	var bought_xp := buy_xp(item_id)
 	if bought_xp > 0:
@@ -862,9 +846,7 @@ func sell_value(obj: Dictionary) -> int:
 
 
 func can_sell(obj: Dictionary) -> bool:
-	if obj.is_empty() or obj.get("stray", false):
-		return false
-	return obj["id"] != "barn" and obj["id"] != "farmhouse"
+	return buildings.can_sell(obj).ok()
 
 
 ## Sells an object. Animals, trees or vehicles inside a building move back onto the farm first.

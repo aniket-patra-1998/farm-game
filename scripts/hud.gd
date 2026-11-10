@@ -1029,8 +1029,11 @@ func _market_row(id: String, it: Dictionary) -> Control:
 	var buy := Button.new()
 	buy.custom_minimum_size = Vector2(150, 52)
 	buy.focus_mode = Control.FOCUS_NONE
-	if locked:
-		buy.text = tr("LEVEL") % int(it["unlock_level"])
+	var verdict := Game.buildings.can_buy(id)
+	if locked or verdict.why == BuildingSystem.Why.LIMIT or verdict.why == BuildingSystem.Why.GROUP_LIMIT:
+		# Not yet, or the farm has as many as it may: say which, on the button.
+		buy.text = verdict.short
+		buy.tooltip_text = verdict.text
 		buy.disabled = true
 	else:
 		if it["kind"] == "crafting":
@@ -1143,6 +1146,22 @@ func _build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> voi
 	var add := _panel_button(tr("ADD_MY_MATERIALS"))
 	add.pressed.connect(func() -> void: Game.land.add_materials(uid))
 	content.add_child(add)
+	_add_buy_missing(content, Game.land.construction_needs(o), func() -> void: Game.land.add_materials(uid))
+
+
+## FarmVille sold building materials for Farm Cash: a button to buy what's still missing with gems, then
+## use them (`then`). Nothing when nothing is missing.
+func _add_buy_missing(content: Control, need: Dictionary, then: Callable) -> void:
+	var gems := Game.buildings.gems_for(need)
+	if gems <= 0:
+		return
+	var buy := _panel_button(tr("BUY_MISSING_FOR_GEMS") % gems)
+	buy.disabled = Game.gems < gems
+	buy.pressed.connect(func() -> void:
+		if Game.buildings.buy_missing(need):
+			then.call()
+		_book.refresh())
+	content.add_child(buy)
 
 
 
@@ -1461,6 +1480,7 @@ func _add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> voi
 	up.disabled = not Game.land.can_expand(o)
 	up.pressed.connect(func() -> void: Game.land.upgrade_building(uid))
 	card.add_child(up)
+	_add_buy_missing(card, need, func() -> void: Game.land.upgrade_building(uid))
 	content.add_child(BookPanel.card_frame(card))
 
 

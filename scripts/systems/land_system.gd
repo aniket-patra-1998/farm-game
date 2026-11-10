@@ -88,13 +88,7 @@ func expansion_needs(b: Dictionary) -> Dictionary:
 
 
 func can_expand(b: Dictionary) -> bool:
-	var need := expansion_needs(b)
-	if need.is_empty() or game.under_construction(b):
-		return false
-	for m in need:
-		if int(game.parts.get(m, 0)) < int(need[m]):
-			return false
-	return true
+	return game.buildings.can_expand(b).ok()
 
 
 ## Expands a building one size, paying its materials (FarmVille's Big and Huge sizes).
