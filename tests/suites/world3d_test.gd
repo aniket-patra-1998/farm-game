@@ -442,3 +442,29 @@ func test_105_animals_move_with_weight() -> void:
 		s.step(dt, 0.0, 0.0, 0.0, 0.0, 0.8, 1.0)
 	_check(absf(s.head_yaw - 0.8) < 0.1, "tapped, it turns its head to look at you (%.2f)" % s.head_yaw)
 	_check(s.rest < 0.3, "standing square to do it")
+
+
+func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
+	# FarmVille drew its buildings as compact blocks about as tall as they're deep, under steep roofs, and
+	# grew them upward; never long low sheds. Every building, at every size, keeps to that.
+	var g := _farm()
+	for id in g.items:
+		if not ["building", "crafting", "barn"].has(str(g.items[id].get("kind", ""))):
+			continue
+		var fp := g.footprint(id)
+		var last_h := 0.0
+		for level in range(1, g.max_level(id) + 1):
+			var body: Dictionary = BuildingModel.spec(id, level)["body"]
+			var bw := float(body.get("w", 0.0)) * fp.x
+			var bd := float(body.get("d", 0.0)) * fp.y
+			if bw <= 0.0 or bd <= 0.0:
+				continue  # a yard with no building on it (a pond, an orchard, hives)
+			var h := float(body.get("h", 0.0))
+			var long_side := maxf(bw, bd)
+			var short_side := minf(bw, bd)
+			_check(long_side / short_side <= 1.4, "%s size %d is not a long shed (%.2f x %.2f)" % [id, level, bw, bd])
+			_check(h >= short_side * 0.5, "%s size %d stands tall for its size (%.2f high, %.2f deep)"
+				% [id, level, h, short_side])
+			_check(h >= last_h, "%s size %d is no lower than the size before" % [id, level])
+			last_h = h
+	_done(g)

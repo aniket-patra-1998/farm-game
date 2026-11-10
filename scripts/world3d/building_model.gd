@@ -9,6 +9,7 @@ extends RefCounted
 const PATH := "res://data/building_models.json"
 const PLINTH := 0.09
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
+const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 # A building site's stages, as shares of the materials put in (see build_site).
 const SITE_FOOTING := 0.08
 const SITE_FLOOR := 0.25
@@ -397,7 +398,8 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 	var hi: Vector3 = ctx["hi"]
 	var bw: float = ctx["bw"]
 	var w := float(d.get("w", 0.28)) * bw / 0.7
-	var h := float(d.get("h", 0.55))
+	# A barn's big doors grow with its walls (up to half again); a house door stays a house door.
+	var h := float(d.get("h", 0.55)) * (clampf((hi.y - lo.y) / DOOR_WALL, 1.0, 1.5) if style == "barn" else 1.0)
 	var x := (lo.x + hi.x) / 2.0
 	var z := hi.z
 	var y0 := lo.y + (PLINTH if lo.y <= 0.0 else 0.0)
