@@ -656,6 +656,28 @@ func _build_settings(content: VBoxContainer) -> void:
 		Sound.buzz(LEVEL_UP_BUZZ))  # feel it come on
 	inner.add_child(buzz)
 	content.add_child(BookPanel.card_frame(inner))
+	if OS.is_debug_build():
+		content.add_child(_showcase_card())
+
+
+## Debug builds only: switch to the farm with everything on it for testing, and back to your own.
+func _showcase_card() -> PanelContainer:
+	var inner := BookPanel.card()
+	inner.add_theme_constant_override("separation", 10)
+	inner.add_child(BookPanel.text(tr("TESTING"), 26))
+	inner.add_child(BookPanel.text(tr("SHOWCASE_HELP"), 18))
+	var go := Button.new()
+	go.text = tr("BACK_TO_MY_FARM") if Game.in_showcase() else tr("OPEN_SHOWCASE_FARM")
+	go.custom_minimum_size = Vector2(320, 56)
+	go.focus_mode = Control.FOCUS_NONE
+	go.pressed.connect(func() -> void:
+		_book.close_panel()
+		if Game.in_showcase():
+			Game.open_own_farm()
+		else:
+			Game.open_showcase())
+	inner.add_child(go)
+	return BookPanel.card_frame(inner)
 
 
 

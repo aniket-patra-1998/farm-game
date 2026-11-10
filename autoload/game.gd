@@ -43,6 +43,7 @@ const FERTILIZER_BONUS := 0.2      # +20% coins on a fertilized plot
 const BONUS_XP := 2
 const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
+const SHOWCASE_ARG := "--showcase"  # debug builds: start on the showcase farm (godot ... -- --showcase)
 const MAX_SIZE := 30   # plots are stored for the largest farm; farm_size says how much is usable
 const START_SIZE := 12
 const OLD_GRID_SIZE := 12 # saves from before land expansion stored a 12x12 grid
@@ -170,6 +171,8 @@ func _ready() -> void:
 		system.load_data()
 	if not saving_enabled or not load_game():
 		_new_game()
+	if OS.is_debug_build() and OS.get_cmdline_user_args().has(SHOWCASE_ARG):
+		open_showcase.call_deferred()  # straight into the farm with everything on it, for testing
 	# Deferred so the HUD is connected and can show the message.
 	check_rescue.call_deferred()
 	strays.check_strays.call_deferred()
@@ -1286,6 +1289,32 @@ func save_game() -> void:
 		push_warning("Could not write save file")
 		return
 	f.store_string(JSON.stringify(data))
+
+
+## Debug builds: the farm with everything on it, for testing (ShowcaseFarm), built fresh in its own save.
+## The player's own farm is saved first and never touched; open_own_farm brings it back. Returns what
+## didn't fit (nothing, normally).
+func open_showcase() -> Array[String]:
+	save_game()
+	save_path = ShowcaseFarm.SAVE_PATH
+	var left_out := ShowcaseFarm.build(self)
+	save_game()
+	message.emit(tr("SHOWCASE_OPENED"))
+	return left_out
+
+
+## Back from the showcase to the player's own farm, as it was left.
+func open_own_farm() -> void:
+	save_game()
+	save_path = SAVE_PATH
+	if not saving_enabled or not load_game():
+		_new_game()
+	rebuild_occupancy()
+	ShowcaseFarm.announce(self)
+
+
+func in_showcase() -> bool:
+	return save_path == ShowcaseFarm.SAVE_PATH
 
 
 func load_game() -> bool:
