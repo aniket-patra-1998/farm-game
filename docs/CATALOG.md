@@ -57,7 +57,7 @@ Anything in the catalog.
 |---|---|---|---|---|
 | `id` | string |  | yes | Unique snake_case id. Saves refer to it, so never rename one that has shipped. |
 | `name` | string |  | yes | Shown to the player. |
-| `kind` | enum of crop, tree, animal, bee, building, barn, vehicle, decor, material, crafting, recipe |  |  | Set by the class; only override for special cases (bee, barn). |
+| `kind` | enum of crop, tree, animal, bee, building, barn, vehicle, decor, material, crafting, recipe, young |  |  | Set by the class; only override for special cases (bee, barn). |
 | `unlock_level` | int | 1 |  | Level that unlocks it. 99 = never in the Market (earned, traded or starter only). |
 | `color` | color | "#999999" |  | Main colour of the code-drawn placeholder. |
 | `accent` | color |  |  | Second colour of the placeholder. |
