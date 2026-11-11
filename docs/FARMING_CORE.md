@@ -69,9 +69,42 @@ One mechanism serves all of it: `Inputs` (feed types, stocks, tastes, effects, d
 just names which feed it takes and what each does. Gophers, bees and the rest are special cases of "finds"
 (section 1) that land in the same stocks.
 
+## 7. Layout synergies: where you place things matters
+A farm is a base builder, so position should pay. One data-driven `Adjacency` rule serves every kind:
+- A building or field declares a **synergy group** and a bonus per touching neighbour of the same group, with a
+  cap: `{"group": "orchard", "per_neighbour": 0.10, "max_neighbours": 4, "boosts": ["coins", "xp"]}`.
+- Neighbours are footprints that share an edge (grid adjacency, checked when anything is placed, moved or
+  removed, kept in a cached map, recomputed only for the cells touched).
+- The farm shows it: touching members get a soft link glow and a "+10%" tag, a visible set bonus when 2, 3 and 4
+  meet (bigger at the top tier, e.g. 4 maxed orchards share one corner), and the placement preview shows the
+  bonus you would earn before you drop it.
+- Candidates: fully upgraded Orchards (coins and XP), Bloom Gardens (bunch chance), animal homes of one species
+  (produce), crop plots of the same crop planted side by side (a field of one crop), crafting buildings next to
+  the crops they use, paths and decor that boost the buildings they touch.
+- Note on sources: I could not confirm from the FarmVille sources I could reach that the original had an
+  orchard adjacency bonus (the original's "Super Orchard" was the 40-tree upgrade, harvested daily). So this
+  is a design from the owner's description, to be marked as "our touch" in the game.
+
+## 8. Other ties FarmVille made that we lack (audit)
+| Tie | How it linked systems | Ours |
+|---|---|---|
+| Crops feed crafting | Bakery/Winery/Spa recipes use harvested goods and animal produce | partial (recipes exist; ties to feed/bushels missing) |
+| Farm goods fuel vehicles | Crafted goods give fuel; fuel runs tractors | done |
+| Bushels | Dropped on harvest, held at the Market Stall, boost and feed crafting | partial |
+| Mastery signs | Mastering a crop gives bonuses and a sign to place | done |
+| Daily harvest upgrade | Upgraded orchards/homes harvested more often | missing |
+| Farmhands/arborists | Unlocked by spending, harvest all in one tap | done |
+| Collections trade-in | Items found while farming trade for gifts and items | done (more families needed) |
+| Mystery eggs/seedlings | Found in farming, hatch into rare young | done (feeding raises odds: new) |
+| Strays | Appear on the farm and are adopted | partial |
+| Fertilize/pollinate | Neighbours and bees boost crops | partial (bees done) |
+| Land and neighbours | Land grows with level and neighbours | land done; neighbours deferred |
+| Goals | Quests send you across all systems | missing |
+
 ## Build order
 1. `FindsSystem` + data/finds.json + harvest hook; gophers as the first family (found, rarities, pop-up).
 1b. `Inputs`: feed types from harvests (data/feeds.json), tastes (data/animal_tastes.json), feeding a home and its effects (produce, speed, rare chance).
 2. `Requirements` checker + market checklist; Gopher Garden (needs 1 gopher; auto-upgrades).
 3. Move Queen Bees, birds, collectibles onto the same framework; beehive requires a queen found from flowers.
+3b. `Adjacency` (layout synergies) with the visible link glow and placement preview.
 4. Quests from data; boosts per home; then Feed Mill (bushels), Nursery, dogs as finds/homes.
