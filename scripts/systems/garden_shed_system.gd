@@ -38,6 +38,7 @@ func add_bunch(flower: String) -> bool:
 		return false
 	bunches.append(flower)
 	game.inventory_changed.emit()
+	game.objects_changed.emit()  # the shed shows its pots
 	return true
 
 
@@ -62,6 +63,7 @@ func unpack_bunch(k: int) -> int:
 	)
 	game.next_uid += 1
 	game.inventory_changed.emit()
+	game.objects_changed.emit()
 	return game.storage.stored.size() - 1
 
 

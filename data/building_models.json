@@ -820,7 +820,11 @@
         {
           "type": "hay_bales"
         }
-      ]
+      ],
+      "fill": {
+        "stock": "goods",
+        "at": [0.2, 0.92]
+      }
     },
     "garage": {
       "body": {
@@ -849,7 +853,11 @@
         {
           "type": "sign"
         }
-      ]
+      ],
+      "fill": {
+        "stock": "vehicles",
+        "at": [0.9, 0.97]
+      }
     },
     "garden_shed": {
       "body": {
@@ -877,7 +885,11 @@
         {
           "type": "flowers"
         }
-      ]
+      ],
+      "fill": {
+        "stock": "bunches",
+        "at": [0.8, 0.95]
+      }
     },
     "bakery": {
       "body": {

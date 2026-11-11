@@ -35,6 +35,8 @@ var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 var _flag: Node3D             # flown while the building is full
+var _stock: Node3D               # a Garage's parked vehicles, a shed's pots, a barn's goods
+var _stock_sig := ""
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
 
@@ -61,8 +63,11 @@ static func shows(o: Dictionary) -> bool:
 		return false
 	var def := Game.catalog.get_def(str(o["id"]))
 	# Homes for named animals, or gardens for a kind (trees in an Orchard, blooms in a Bloom Garden).
-	return def is BuildingDef and (not (def as BuildingDef).holds().is_empty()
-		or str((def as BuildingDef).data.get("holds_kind", "")) in PLANT_KINDS)
+	if not def is BuildingDef:
+		return false
+	return (not (def as BuildingDef).holds().is_empty()
+		or str((def as BuildingDef).data.get("holds_kind", "")) in PLANT_KINDS
+		or BuildingModel.spec(str(o["id"]), Game.level_of(o)).get("fill", {}).has("stock"))
 
 
 ## Places in the yard where an animal (or a tree) can stand: a grid over the footprint, inside the fence,
@@ -102,6 +107,9 @@ func refresh(o: Dictionary) -> void:
 	var who := JSON.stringify(inside) + "|" + str(Game.capacity(o))
 	var stage := "%d|%s" % [step, Game.is_ready(o)]
 	var fill: Dictionary = _spec.get("fill", {})
+	if fill.has("stock"):
+		_show_stock(str(fill["stock"]), fill.get("at", [0.5, 0.95]), o)
+		return
 	if fill.has("plants"):
 		if who != _who or stage != _stage:
 			_show_plants(o, int(fill["plants"]))  # trees fruit, blooms open, when ready
@@ -252,6 +260,18 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			TreeModel.build_at(holder, Vector3(x, 0, z), it, size, ready, uid + k)
 	_plants = ModelKit.bake(holder)
 	add_child(_plants)
+
+
+## Whatever a Garage, shed or barn keeps (BuildingStock), rebuilt only when it changes.
+func _show_stock(kind: String, at: Array, o: Dictionary) -> void:
+	var sig := BuildingStock.signature(kind, o)
+	if sig == _stock_sig and _stock != null:
+		return
+	_stock_sig = sig
+	if _stock != null:
+		_stock.queue_free()
+	_stock = BuildingStock.build(kind, o, _fp, at)
+	add_child(_stock)
 
 
 # ---------------------------------------------------------------- produce

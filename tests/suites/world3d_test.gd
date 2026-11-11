@@ -633,3 +633,15 @@ func test_129_a_home_shows_each_different_kind_inside_it_up_to_five() -> void:
 	_eq(BuildingFill.pick_kinds({}, 5).size(), 0, "nothing inside, nothing shown")
 	_eq(BuildingFill.shown_count(5, 100, 20, 5), 5, "a nearly empty home still shows each of its five kinds")
 	_eq(BuildingFill.shown_count(3, 100, 20, 3), 3, "or its three")
+
+
+func test_130_garage_shed_and_barn_show_what_they_keep() -> void:
+	for id in ["garage", "garden_shed", "barn"]:
+		var fill: Dictionary = BuildingModel.spec(id, 1).get("fill", {})
+		_check(BuildingStock.KINDS.has(str(fill.get("stock", ""))), "%s names a stock to show" % id)
+	Game.shed.bunches = ["rose", "tulip"]
+	var pots := BuildingStock.build("bunches", {}, Vector2i(2, 1), [0.8, 0.95])
+	_check(pots.get_child_count() > 0, "bunches in the shed are shown as pots")
+	_check(BuildingStock.signature("bunches", {}) != "0", "and the signature follows how many")
+	pots.free()
+	Game.shed.bunches = []
