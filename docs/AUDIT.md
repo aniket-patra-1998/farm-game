@@ -10,18 +10,23 @@ Base is FarmVille (2009-2012, "FV1"). Where the owner asked for a FarmVille 2 sy
 it's marked FV2 and adapted to FV1's look and pace. Status: done / partial / missing / broken.
 Each system lands with rule tests, its UI reachable from the HUD, its 3D look, and save support.
 
-## 1. Player (missing: new module)
-FarmVille's farmer was the player's face and hands:
-- **Avatar** on the farm: walks to each queued action and performs it (hoe, seed bag, scythe, watering can,
-  hands for animals), idles, waves; visible at all times. We have none.
-- **Action queue**: tapping many plots queues them; the farmer works through them in order, each with a
-  progress pie; coins/XP pop as each completes; the queue can be cancelled. We act instantly.
-- **Customisation** (FarmVille's "Character Customization"): male/female; face shape, skin, hair (style and
-  colour), eyebrows, eyes, ears, nose, mouth, facial hair, makeup; clothing slots shirt, bottoms, outfit,
-  shoes, accessory (hat, glasses), costume; owned items in a wardrobe, new ones in the market (try on, buy
-  with coins or gems); ribbon "Looking Fresh".
-- **Profile**: farmer name, farm name (shown on the sign), level, XP, coins, gems, title by level, stats
-  page (lifetime harvests, ribbons, mastery). We have level/XP/coins/gems and ribbons, not name or profile.
+## 1. Player (partial)
+FarmVille's farmer was the player's face and hands.
+- done: **PlayerSystem** (Game.player) — the action queue: every plow, plant, harvest, fertilize, collect
+  and vehicle pass is queued; the farmer walks to each (A* round whatever stands on the farm), works for
+  ACTION_SECONDS, and the job happens and is paid for then. Boxed in, they work from where they stand
+  (FarmVille's fenced-in farmer). Queue limit, one job per plot/object, coins committed so a queued job
+  never fails for money; tapping a queued plot cancels it (ours: FarmVille had no cancel). Queued plots
+  are highlighted. Farmer name, farm name, look and position are saved; the queue is not (tests 117-119).
+- done: **Farmer3D** — the avatar in overalls and straw hat, built from `look`, walking and working.
+  (The 2D fallback world shows the queue's highlights but no farmer.)
+- tunable: WALK_SPEED 4.5 tiles/s, ACTION_SECONDS 0.75 (PlayerSystem).
+- **missing: customisation** (FarmVille's "Character Customization"): male/female; skin, hair (style and
+  colour), eyes, facial hair; clothing slots shirt, bottoms, shoes, hat, costume; owned items in a wardrobe,
+  new ones in the market (coins or gems); ribbon "Looking Fresh". `look` and Farmer3D.rebuild are ready
+  for it.
+- **missing: profile**: naming the farmer and the farm (shown on the sign), a stats page.
+- missing: a progress bar over the job in hand; tools in the farmer's hands (hoe, seed bag, scythe).
 
 ## 2. Plots and crops (partial)
 - done: plow, plant, grow, ripen, wither, unwither, fertilize, harvest, mastery stars, collectibles,

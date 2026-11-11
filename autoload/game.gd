@@ -128,6 +128,7 @@ var daily: DailySystem
 var storage: BarnStorage
 var bees: BeehiveSystem
 var mastery: MasterySystem
+var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
 var strays: StraySystem
@@ -158,12 +159,13 @@ func _init() -> void:
 	mastery = MasterySystem.new(self)
 	pigpen = PigPenSystem.new(self)
 	vehicles = VehicleSystem.new(self)
+	player = PlayerSystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	systems = [drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
-		strays, crafting, homes, buildings, mastery]
+		strays, crafting, homes, buildings, mastery, player]
 
 
 func _ready() -> void:
@@ -201,6 +203,11 @@ func _notification(what: int) -> void:
 
 
 # ---------------------------------------------------------------- time
+
+
+## The farmer works through their queue as time passes (PlayerSystem).
+func _process(delta: float) -> void:
+	player.advance(delta)
 
 
 func now() -> int:

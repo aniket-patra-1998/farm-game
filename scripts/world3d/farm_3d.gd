@@ -28,6 +28,7 @@ var ground: Ground3D
 var plots: Plots3D
 var crops: Crops3D
 var objects: Objects3D
+var farmer: Farmer3D
 
 
 static func enabled() -> bool:
@@ -75,6 +76,8 @@ func _ready() -> void:
 	objects.life = grid.life if grid != null else null
 	objects.grid = grid
 	add_child(objects)
+	farmer = Farmer3D.new()
+	add_child(farmer)
 	Game.plot_changed.connect(func(_i: int) -> void: _plots_changed())
 	Game.farm_expanded.connect(func(_n: int) -> void:
 		ground.rebuild()

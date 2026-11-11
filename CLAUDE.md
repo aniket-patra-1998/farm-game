@@ -10,7 +10,9 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   (synthesised once, ahead of time) or a recording; code plays them by name (`Sound.play("harvest")`), and a
   test checks every name it asks for exists. Volume, mute and vibration live in `user://settings.cfg`.
 - `scripts/systems/*.gd`: the subsystems, each a `GameSystem` with its own state and rules, reached as
-  `Game.crafting`, `Game.vehicles`, `Game.bees`, `Game.strays`... Each saves its own fields
+  `Game.crafting`, `Game.vehicles`, `Game.bees`, `Game.strays`... `Game.player` is the farmer: farm work is
+  queued there and happens when the farmer has walked to it (the farm grid shows results from its
+  `action_done` signal; tests drive it with `player.advance(seconds)`). Each saves its own fields
   (`reset`/`save_to`/`load_from`); a new feature with its own state gets its own system, not more `game.gd`.
 - `data/catalog/*.json` + `data/catalog/schema.json`: every item, by category -> family -> variant.
   Loaded into the classes in `scripts/catalog/` (ItemDef -> CropDef, PlaceableDef -> ProducerDef ->

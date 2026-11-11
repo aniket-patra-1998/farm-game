@@ -29,6 +29,8 @@ const COLOR_PART := Color("#f4c27a")
 
 # Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
 const BUZZ_TAP := 8
+const COINS_NEEDED := {"plow": "NOT_ENOUGH_COINS_TO_PLOW", "plant": "NOT_ENOUGH_COINS_FOR_SEEDS",
+	"fertilize": "NOT_ENOUGH_COINS_FOR_FERTILIZER"}  # what to say when a job can't be afforded
 const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale or a clear
 const BUZZ_HARVEST := 16
 const BUZZ_PLACE := 24
@@ -82,6 +84,8 @@ var _press_on_farm := false
 
 
 func _ready() -> void:
+	Game.player.action_done.connect(_on_action_done)
+	Game.player.queue_changed.connect(queue_redraw)
 	life = FarmLife.new()
 	add_child(life)
 	ground = GroundLayer.new()
@@ -253,6 +257,9 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
 		PlaceholderArt.draw_footprint(ci, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
 			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
+	# Plots waiting for the farmer.
+	for i: int in Game.player.queued_plots():
+		PlaceholderArt.draw_footprint(ci, corners_of(i / MAX, i % MAX, 1, 1), true)
 	var lifted := int(placing.get("uid", -1))
 	var t := Time.get_ticks_msec() / 1000.0
 	for o in Game.objects:
@@ -748,11 +755,64 @@ func _drive(i: int) -> void:
 	var col := i % MAX - int((area.x - 1) / 2.0)
 	var job: String = Game.item_data(id).get("job", "")
 	var crop := last_crop if (job == "plant" or job == "all") else ""
-	var r := Game.vehicles.use_vehicle(id, row, col, crop)
 	_vehicle_flash = {"row": row, "col": col, "w": area.x, "h": area.y, "until": Time.get_ticks_msec() + 500}
 	queue_redraw()
-	if r.is_empty():
+	_queue({"kind": "vehicle", "item": id, "row": row, "col": col, "crop": crop})
+
+
+## Queues a job for the farmer (they walk there and do it: PlayerSystem); tapping something already queued
+## takes it back out.
+func _queue(job: Dictionary) -> void:
+	if Game.player.cancel(job):
+		_feel("tap", BUZZ_TAP)
 		return
+	match Game.player.enqueue(job):
+		PlayerSystem.Refused.NONE:
+			_feel("tap", BUZZ_TAP)
+		PlayerSystem.Refused.COINS:
+			_feel("error", BUZZ_ERROR)
+			info.emit(tr(COINS_NEEDED.get(job["kind"], "NOT_ENOUGH_COINS_TO_PLOW")).replace("%s",
+				str(Game.crops.get(str(job.get("crop", "")), {}).get("name", ""))))
+		PlayerSystem.Refused.FULL:
+			_feel("error", BUZZ_ERROR)
+			info.emit(tr("THE_FARMER_HAS_ENOUGH_TO_DO"))
+		_:
+			_feel("error", BUZZ_ERROR)
+
+
+## The farmer got to a job and did it (or found nothing left to do: an empty result).
+func _on_action_done(job: Dictionary, result: Dictionary) -> void:
+	if result.is_empty():
+		if job["kind"] != "vehicle":
+			_feel("error", BUZZ_ERROR)
+		return
+	var i := int(job.get("plot", -1))
+	match str(job["kind"]):
+		"harvest":
+			_show_harvest(i, job, result)
+		"plow":
+			_feel("plow", BUZZ_TAP)
+			world_fx.burst("dirt", center_of(i))
+			_float(center_of(i), "-%d" % GameState.PLOW_COST, COLOR_COST)
+		"plant":
+			_feel("plant", BUZZ_TAP)
+			world_fx.burst("dirt", center_of(i) + Vector2(0, -PlaceholderArt.SLAB))
+			_float(center_of(i), "-%d" % int(Game.crops[job["crop"]]["seed_cost"]), COLOR_COST)
+		"fertilize":
+			_feel("fertilize", BUZZ_TAP)
+			_float(center_of(i), "-%d" % GameState.FERTILIZER_COST, COLOR_COST)
+			_sparkle(center_of(i), COLOR_FERT)
+		"collect":
+			_show_collect(int(job["uid"]), result)
+		"vehicle":
+			_show_vehicle(job, result)
+
+
+func _show_vehicle(job: Dictionary, r: Dictionary) -> void:
+	var id := str(job["item"])
+	var row := int(job["row"])
+	var col := int(job["col"])
+	var area := Game.vehicles.vehicle_area(id)
 	var at := center_of(
 		Game.index_of(clampi(row + int(area.y / 2.0), 0, MAX - 1), clampi(col + int(area.x / 2.0), 0, MAX - 1))
 	)
@@ -773,6 +833,70 @@ func _drive(i: int) -> void:
 
 
 
+func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
+	var at := center_of(i)
+	_feel("harvest", BUZZ_HARVEST)
+	_pop_plants(i, job["crop"], job["art"])
+	world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
+	_reward(at, int(result["coins"]), int(result["xp"]))
+	_float(at, "+%d" % result["coins"], COLOR_COINS)
+	_float(at + Vector2(0, -30), tr("XP") % result["xp"], COLOR_XP)
+	if result.get("part", "") != "":
+		_float(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
+	if result.get("bushel", "") != "":
+		var nb := int(result.get("bushels", 1))
+		_float(
+			at + Vector2(0, -160),
+			(tr("ONE_BUSHEL") if nb == 1 else tr("N_BUSHELS")) % [nb, Game.crops[result["bushel"]]["name"]],
+			COLOR_PART,
+			1.6
+		)
+	if result.get("bee", "") != "":
+		_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
+	if int(result.get("pollinated", 0)) > 0:
+		_float(at + Vector2(0, -160), tr("POLLINATED_SEEDS") % int(result["pollinated"]), COLOR_FIND, 1.8)
+		_sparkle(at, COLOR_FIND)
+	if result["drop"] != "":
+		var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
+		_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)
+		_sparkle(at, c)
+
+
+func _show_collect(uid: int, result: Dictionary) -> void:
+	var obj := Game.object_by_uid(uid)
+	if obj.is_empty():
+		return
+	var fp := Game.footprint(obj["id"])
+	var at := (
+		corners_of(
+			int(obj["row"]),
+			int(obj["col"]),
+			fp.x,
+			fp.y
+		)[0] + corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]
+	) / 2.0
+	_poke(uid)
+	collected.emit(uid)
+	_feel("collect", BUZZ_HARVEST)
+	world_fx.burst("sparkle", at + Vector2(0, -40))
+	_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
+	_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
+	if int(result["xp"]) > 0:
+		_float(at + Vector2(0, -50), tr("XP") % result["xp"], COLOR_XP)
+	if result.get("part", "") != "":
+		_float(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
+	var lift := -150
+	for extra in result.get("extras", []):
+		_float(at + Vector2(0, lift), extra, COLOR_GOLDEN, 1.8)
+		lift -= 32
+	if not result.get("extras", []).is_empty():
+		_sparkle(at, COLOR_GOLDEN)
+	if result["drop"] != "":
+		var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
+		_float(at + Vector2(0, -84), result["drop_text"], c, 1.6)
+		_sparkle(at, c)
+
+
 ## first_touch is always true now that each tap acts on one plot; it stays so
 ## multi-plot tools (vehicles, later) can reuse _act without info popups.
 func _act(i: int, first_touch: bool) -> void:
@@ -781,7 +905,6 @@ func _act(i: int, first_touch: bool) -> void:
 		_act_on_object(obj, first_touch)
 		return
 	var ph := Game.phase(i)
-	var at := center_of(i)
 
 	# The sell tool deletes plots (FarmVille's delete): even a ripe crop, after asking.
 	if tool == "sell":
@@ -790,66 +913,23 @@ func _act(i: int, first_touch: bool) -> void:
 		return
 	# A ripe crop is harvested by any tool: tapping ripe crops should always just work.
 	if ph == GameState.Phase.RIPE:
-		var crop_before := Game.crop_at(i)
-		var art_before := Game.crop_art_for(i)
-		var result := Game.harvest(i)
-		if not result.is_empty():
-			_feel("harvest", BUZZ_HARVEST)
-			_pop_plants(i, crop_before, art_before)
-			world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
-			_reward(at, int(result["coins"]), int(result["xp"]))
-			_float(at, "+%d" % result["coins"], COLOR_COINS)
-			_float(at + Vector2(0, -30), tr("XP") % result["xp"], COLOR_XP)
-			if result.get("part", "") != "":
-				_float(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
-			if result.get("bushel", "") != "":
-				var nb := int(result.get("bushels", 1))
-				_float(
-					at + Vector2(0, -160),
-					(tr("ONE_BUSHEL") if nb == 1 else tr("N_BUSHELS")) % [nb, Game.crops[result["bushel"]]["name"]],
-					COLOR_PART,
-					1.6
-				)
-			if result.get("bee", "") != "":
-				_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
-			if int(result.get("pollinated", 0)) > 0:
-				_float(at + Vector2(0, -160), tr("POLLINATED_SEEDS") % int(result["pollinated"]), COLOR_FIND, 1.8)
-				_sparkle(at, COLOR_FIND)
-			if result["drop"] != "":
-				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
-				_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)
-				_sparkle(at, c)
+		_queue({"kind": "harvest", "plot": i})
 		return
 
 	match tool:
 		"plow":
 			if ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED:
-				if Game.plow(i):
-					_feel("plow", BUZZ_TAP)
-					world_fx.burst("dirt", at)
-					_float(at, "-%d" % GameState.PLOW_COST, COLOR_COST)
-				else:
-					_feel("error", BUZZ_ERROR)
+				_queue({"kind": "plow", "plot": i})
 			elif first_touch:
 				_explain(i, ph)
 		"plant":
 			if ph == GameState.Phase.PLOWED and selected_crop != "":
-				if Game.plant(i, selected_crop):
-					_feel("plant", BUZZ_TAP)
-					world_fx.burst("dirt", at + Vector2(0, -PlaceholderArt.SLAB))
-					_float(at, "-%d" % int(Game.crops[selected_crop]["seed_cost"]), COLOR_COST)
-				else:
-					_feel("error", BUZZ_ERROR)
+				_queue({"kind": "plant", "plot": i, "crop": selected_crop})
 			elif first_touch:
 				_explain(i, ph)
 		"fertilize":
 			if ph == GameState.Phase.GROWING and not Game.is_fertilized(i):
-				if Game.fertilize(i):
-					_feel("fertilize", BUZZ_TAP)
-					_float(at, "-%d" % GameState.FERTILIZER_COST, COLOR_COST)
-					_sparkle(at, COLOR_FERT)
-				else:
-					_feel("error", BUZZ_ERROR)
+				_queue({"kind": "fertilize", "plot": i})
 			elif first_touch:
 				if Game.is_fertilized(i):
 					info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
@@ -908,38 +988,8 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		if first_touch:
 			start_placing(obj["id"], uid)
 		return
-	var fp := Game.footprint(obj["id"])
-	var at := (
-		corners_of(
-			int(obj["row"]),
-			int(obj["col"]),
-			fp.x,
-			fp.y
-		)[0] + corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]
-	) / 2.0
 	if Game.is_ready(obj):
-		var result := Game.collect(uid)
-		if not result.is_empty():
-			_poke(uid)
-			collected.emit(uid)
-			_feel("collect", BUZZ_HARVEST)
-			world_fx.burst("sparkle", at + Vector2(0, -40))
-			_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
-			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
-			if int(result["xp"]) > 0:
-				_float(at + Vector2(0, -50), tr("XP") % result["xp"], COLOR_XP)
-			if result.get("part", "") != "":
-				_float(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
-			var lift := -150
-			for extra in result.get("extras", []):
-				_float(at + Vector2(0, lift), extra, COLOR_GOLDEN, 1.8)
-				lift -= 32
-			if not result.get("extras", []).is_empty():
-				_sparkle(at, COLOR_GOLDEN)
-			if result["drop"] != "":
-				var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
-				_float(at + Vector2(0, -84), result["drop_text"], c, 1.6)
-				_sparkle(at, c)
+		_queue({"kind": "collect", "uid": uid})
 		return
 	if not first_touch:
 		return

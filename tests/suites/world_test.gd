@@ -136,6 +136,7 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	_check(grid._on_farm_area(tap_at), "the tile is on screen (view %s, tile at %s)" % [str(view), str(tap_at)])
 	await _touch(tap_at, true)
 	await _touch(tap_at, false)
+	Game.player.advance(60.0)  # the farmer walks over and does it
 	_eq(Game.phase(i), GameState.Phase.PLOWED, "a tap plows")
 
 	# A drag moves the view and leaves the plot under the finger alone.
@@ -166,6 +167,7 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	await _touch(wobble_at, true)
 	await _drag(wobble_at + Vector2(4, 3), Vector2(4, 3))
 	await _touch(wobble_at + Vector2(4, 3), false)
+	Game.player.advance(60.0)  # the farmer walks over and does it
 	_eq(Game.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
 	main.free()
 
