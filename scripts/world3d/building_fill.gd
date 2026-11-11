@@ -9,7 +9,7 @@ extends Node3D
 ## Lives under a building's model (the footprint's back corner is its origin), so it turns with it. What
 ## to show comes from the building's description (data/building_models.json "fill").
 
-const RESIDENTS := 10         # the most animals out in a yard at once (a full building)
+const RESIDENTS := 14         # the most animals out in a yard at once (a full building)
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
 const EDGE := 0.28            # and how far those keep from the footprint's edge (inside the fence)
@@ -21,7 +21,6 @@ const PRODUCE_STEPS := 6      # piles grow in this many steps as collection near
 const PRODUCE_SCALE := 1.5    # and are drawn this much bigger than life: they must read from across the farm
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
-const BLOOMS_PER_ROW := 5
 const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
@@ -144,10 +143,10 @@ static func distinct_kinds(inside: Dictionary) -> int:
 
 ## `n` things to show out of what's inside, so that each different kind (the MAX_KINDS commonest) is there at
 ## least once and the rest are in proportion to how many of each there are. Mixed, not in blocks of a kind.
-static func pick_kinds(inside: Dictionary, n: int) -> Array[String]:
+static func pick_kinds(inside: Dictionary, n: int, max_kinds := MAX_KINDS) -> Array[String]:
 	var kinds: Array = inside.keys().filter(func(id: String) -> bool: return int(inside[id]) > 0)
 	kinds.sort_custom(func(a: String, b: String) -> bool: return int(inside[a]) > int(inside[b]))
-	kinds = kinds.slice(0, MAX_KINDS)
+	kinds = kinds.slice(0, max_kinds)
 	var out: Array[String] = []
 	if kinds.is_empty() or n <= 0:
 		return out
@@ -221,7 +220,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			break
 	var trees := first == "" or Game.kind_of({"id": first}) == "tree"
 	# A grid in the field's own proportions; trees are packed tight, crowns just touching (FarmVille's orchards).
-	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1) if trees else BLOOMS_PER_ROW
+	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1)
 	var rows := ceili(float(slots) / per_row)
 	var gap := minf(_fp.x * 0.8 / maxf(per_row - 1.0, 1.0), _fp.y * 0.8 / maxf(rows - 1.0, 1.0))
 	var size := clampf(gap * TREE_FILL, 0.4, 1.0)
@@ -232,11 +231,9 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			ModelKit.box(holder, Vector3(_fp.x * 0.12, 0, bz - 0.22), Vector3(_fp.x * 0.88, 0.05, bz + 0.22),
 				ModelKit.paint(Color("#6b4a2b")))
 	var total := Game.inside_total(o)
-	var share := float(total) / maxf(Game.capacity(o), 1.0)
-	var shown := 0
-	if total > 0:
-		shown = mini(slots, mini(total, maxi(ceili(share * slots), mini(distinct_kinds(inside), MAX_KINDS))))
-	var ids := pick_kinds(inside, shown)
+	# Every tree and bloom inside is there to see (FarmVille's orchards and gardens).
+	var shown := mini(slots, total)
+	var ids := pick_kinds(inside, shown, 99)  # a garden shows every different kind in it
 	# Which grid places, middle first: a young orchard is a clump in the middle, not a corner.
 	var places: Array[Vector2i] = []
 	for k in per_row * rows:

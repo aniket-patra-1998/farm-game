@@ -579,6 +579,36 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 		# A sill with a shadow under it.
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - 0.05, z - size / 2 - 0.04),
 			Vector3(hi.x + 0.06, y - size / 2 - 0.025, z + size / 2 + 0.04), ModelKit.paint(trim))
+		_dress_window(ctx, Vector3(hi.x, y, z), size, k)
+
+
+## What a window wears (the building's "dress" in data/building_models.json): shutters at its sides, a box of
+## flowers under it, or both; nothing on a plain shed.
+static func _dress_window(ctx: Dictionary, at: Vector3, size: float, index: int) -> void:
+	var root: Node3D = ctx["root"]
+	var spec: Dictionary = ctx["spec"]
+	var dress := str(spec.get("dress", "shutters"))
+	if dress == "none":
+		return
+	if dress in ["shutters", "both"]:
+		var roof_col := Color.html(str((spec["roof"] as Dictionary).get("color", "#8e3b2c")))
+		var shutter := ModelKit.surface(Color.html(str(spec.get("shutter", "#" + roof_col.darkened(0.05).to_html(false)))),
+			"boards", 0.0)
+		for side: float in [-1.0, 1.0]:
+			var z0 := at.z + side * (size / 2.0 + 0.03)
+			var z1 := z0 + side * size * 0.38
+			ModelKit.box(root, Vector3(at.x, at.y - size / 2.0, minf(z0, z1)),
+				Vector3(at.x + 0.03, at.y + size / 2.0, maxf(z0, z1)), shutter)
+	if dress in ["flower_boxes", "both"]:
+		var wood := ModelKit.surface(WOOD, "boards")
+		var y := at.y - size / 2.0 - 0.1
+		ModelKit.box(root, Vector3(at.x, y, at.z - size / 2.0 - 0.03), Vector3(at.x + 0.08, y + 0.05, at.z + size / 2.0 + 0.03),
+			wood)
+		var blooms: Array[Color] = [Color("#e8506e"), Color("#f5c518"), Color("#f7f2e8"), Color("#9b7be0")]
+		for b in 4:
+			var bz := lerpf(at.z - size / 2.0, at.z + size / 2.0, (b + 0.5) / 4.0)
+			ModelKit.ball(root, Vector3(at.x + 0.04, y + 0.07, bz), 0.024, ModelKit.paint(blooms[(index + b) % blooms.size()]))
+			ModelKit.ball(root, Vector3(at.x + 0.04, y + 0.05, bz), 0.02, ModelKit.paint(Color("#4a8f36")))
 
 
 # ---------------------------------------------------------------- features

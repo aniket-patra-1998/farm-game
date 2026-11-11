@@ -687,7 +687,7 @@
       "levels": {
         "2": {
           "fill": {
-            "plants": 12
+            "plants": 30
           },
           "features": [
             {
@@ -697,7 +697,7 @@
         },
         "3": {
           "fill": {
-            "plants": 16
+            "plants": 40
           },
           "features": [
             {
@@ -707,7 +707,7 @@
         }
       },
       "fill": {
-        "plants": 9,
+        "plants": 20,
         "produce": "crates",
         "at": [
           0.85,
@@ -1250,7 +1250,7 @@
       "levels": {
         "2": {
           "fill": {
-            "plants": 15
+            "plants": 30
           },
           "features": [
             {
@@ -1260,7 +1260,7 @@
         },
         "3": {
           "fill": {
-            "plants": 20
+            "plants": 40
           },
           "features": [
             {
@@ -1270,7 +1270,7 @@
         }
       },
       "fill": {
-        "plants": 10,
+        "plants": 20,
         "produce": "baskets",
         "at": [
           0.85,
