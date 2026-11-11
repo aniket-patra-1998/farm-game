@@ -15,7 +15,10 @@ const BARK := Color("#7a4f2c")
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
-const FRUIT_READY := 8      # fruit on a ready tree (fewer, small and green, while it grows)
+const FRUIT_READY := 12     # fruit on a ready tree (fewer, small and green, while it grows)
+const FRUIT_R := 0.052      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
+const FRUIT_SMALL_R := 0.02
+const FRUIT_OUT := 0.92     # how far out through a leafy clump fruit hangs (1: on its surface)
 const FRUIT_GROWING := 3
 
 static var _data := {}
@@ -296,12 +299,18 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				ModelKit.ball(root, p, 0.06 * k * size, mat, Vector3(0.85, 1.25, 0.85))
 		_:
 			var n := count * (3 if shape == "small" else 1)
-			var r := (0.018 if shape == "small" else 0.045) * k * size
+			var r := (FRUIT_SMALL_R if shape == "small" else FRUIT_R) * k * size
+			# The leafy clumps (_crown) sit 0.62 crown radii out and are ~0.75 wide, so the canopy's skin is
+			# ~1.37 radii out: fruit goes just inside it, over the upper half the camera sees, so a ready tree
+			# reads as ready at a glance, as in FarmVille (on a ring at 1 radius it was buried in the leaves).
+			var ch := maxf(float(sh.get("crown_h", 0.2)) * k, cr * 0.5)
+			var clump := cr * (0.62 if str(sh["form"]) == "dense" else 0.75)
+			var across := cr * 0.62 + clump * FRUIT_OUT
+			var high := ch * 0.8 * 0.55 + clump * FRUIT_OUT
 			for i in n:
 				var a := TAU * i / n + rng.randf() * 0.5
-				var y := rng.randf_range(-0.25, 0.45)
-				var out := cr * (0.95 if shape != "small" else 0.9)
-				var p := centre + Vector3(cos(a) * out, y * float(sh.get("crown_h", 0.2)) * k * 0.8, sin(a) * out)
+				var up := rng.randf_range(-0.15, 0.8)
+				var p := centre + Vector3(cos(a) * cos(up) * across, sin(up) * high, sin(a) * cos(up) * across)
 				if str(sh["form"]) == "palm":
 					# Coconuts cluster under the fronds, against the trunk.
 					p = centre + Vector3(cos(a) * 0.06 * k, -0.06 * k, sin(a) * 0.06 * k)

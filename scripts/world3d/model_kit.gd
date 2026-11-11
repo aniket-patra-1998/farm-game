@@ -123,6 +123,21 @@ static func box(parent: Node3D, lo: Vector3, hi: Vector3, mat: Material, shadow 
 
 
 
+## An open tub (a trough, a planter) from `lo` to `hi`: a floor and four walls `wall` thick, filled with
+## `fill` (water) to `fill_to` of its height. Hollow, so what's in it shows: a solid box with water inside it
+## hides the water.
+static func tub(parent: Node3D, lo: Vector3, hi: Vector3, wall: float, mat: Material, fill: Material = null,
+		fill_to := 0.8) -> void:
+	box(parent, lo, Vector3(hi.x, lo.y + wall, hi.z), mat)
+	box(parent, Vector3(lo.x, lo.y, lo.z), Vector3(lo.x + wall, hi.y, hi.z), mat)
+	box(parent, Vector3(hi.x - wall, lo.y, lo.z), Vector3(hi.x, hi.y, hi.z), mat)
+	box(parent, Vector3(lo.x + wall, lo.y, lo.z), Vector3(hi.x - wall, hi.y, lo.z + wall), mat)
+	box(parent, Vector3(lo.x + wall, lo.y, hi.z - wall), Vector3(hi.x - wall, hi.y, hi.z), mat)
+	if fill != null:
+		var top := lerpf(lo.y + wall, hi.y, fill_to)
+		box(parent, Vector3(lo.x + wall, lo.y + wall, lo.z + wall), Vector3(hi.x - wall, top, hi.z - wall), fill, false)
+
+
 ## An upright cylinder (or a cone, with `top_r` 0) standing on `base`.
 static func cylinder(parent: Node3D, base: Vector3, r: float, h: float, mat: Material, top_r := -1.0,
 		sides := CYLINDER_SIDES) -> MeshInstance3D:

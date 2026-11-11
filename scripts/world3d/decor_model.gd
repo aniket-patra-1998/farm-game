@@ -76,8 +76,10 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 				band.rotation.x = PI / 2.0
 				band.position = c + Vector3(0, 0.2, z)
 		"haystack":
-			ModelKit.ball(root, c, 0.36, ModelKit.paint(HAY), Vector3(1, 1.35, 1))
-			ModelKit.cylinder(root, c + Vector3(0, 0.42, 0), 0.015, 0.14, ModelKit.paint(DARK_WOOD))
+			# A rounded stack on the ground: a wide skirt, a domed top, and the pole it's built round.
+			ModelKit.cylinder(root, c, 0.38, 0.24, ModelKit.paint(HAY.darkened(0.06)), 0.33, 14)
+			ModelKit.ball(root, c + Vector3(0, 0.24, 0), 0.33, ModelKit.paint(HAY), Vector3(1, 0.95, 1))
+			ModelKit.cylinder(root, c + Vector3(0, 0.5, 0), 0.015, 0.16, ModelKit.paint(DARK_WOOD))
 		"scarecrow":
 			ModelKit.box(root, c + Vector3(-0.02, 0, -0.02), c + Vector3(0.02, 0.7, 0.02), ModelKit.paint(DARK_WOOD))
 			ModelKit.box(
@@ -98,13 +100,8 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			for side: float in [-1.0, 1.0]:
 				ModelKit.ball(root, c + Vector3(0, 0.47, side * 0.27), 0.04, ModelKit.paint(HAY), Vector3(1, 0.6, 1.6))
 		"water_trough":
-			ModelKit.box(
-				root,
-				c + Vector3(-0.32, 0, -0.14),
-				c + Vector3(0.32, 0.18, 0.14),
-				ModelKit.surface(col, "boards", 0.2)
-			)
-			ModelKit.box(root, c + Vector3(-0.29, 0.14, -0.11), c + Vector3(0.29, 0.16, 0.11), ModelKit.water(), false)
+			ModelKit.tub(root, c + Vector3(-0.32, 0, -0.14), c + Vector3(0.32, 0.18, 0.14), 0.03,
+				ModelKit.surface(col, "boards", 0.2), ModelKit.water())
 		"bonfire":
 			for k in 8:
 				var a := TAU * k / 8.0
@@ -214,7 +211,8 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			ModelKit.cylinder(root, c, 0.1, 0.05, ModelKit.paint(col), -1.0, 12)
 			ModelKit.cylinder(root, c + Vector3(0, 0.05, 0), 0.04, 0.25, ModelKit.paint(col), 0.05, 10)
 			ModelKit.cylinder(root, c + Vector3(0, 0.3, 0), 0.08, 0.06, ModelKit.paint(col), 0.2, 16)
-			ModelKit.cylinder(root, c + Vector3(0, 0.34, 0), 0.17, 0.01, ModelKit.water(), -1.0, 16)
+			# Water filling the bowl to its brim (the bowl is solid: the water sits on it, never inside it).
+			ModelKit.cylinder(root, c + Vector3(0, 0.36, 0), 0.185, WATER_LIFT, ModelKit.water(), -1.0, 16)
 		"picnic_table":
 			ModelKit.box(
 				root,

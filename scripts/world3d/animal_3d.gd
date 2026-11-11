@@ -11,6 +11,11 @@ extends Node3D
 
 const PX := 1.6 / IsoProjection.PX_PER_UNIT    # rig pixels to world units (larger than 2D: a cow fills most of a tile)
 const TURN_RATE := 6.0                          # how fast it turns to face where it's going (radians/s)
+## The two ways an animal stands when still: side-on to the camera, turned a little toward it (FarmVille's
+## three-quarter view), facing screen right or screen left. 0 faces +x; screen right is +x -z (pi/4).
+const REST_RIGHT := PI / 12.0
+const REST_LEFT := PI * 17.0 / 12.0
+const SETTLE_RATE := 1.2                        # how fast it eases round to stand side-on (radians/s)
 const EYE := Color("#1b140f")
 const HOOF := Color("#3a2c22")
 const PINK := Color("#eba9a3")
@@ -80,7 +85,7 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3) -> Animal
 	a.home = at
 	a.position = at
 	a._last = at
-	a.heading = PI * 0.75 if mind == null or mind.facing < 0.0 else -PI * 0.25
+	a.heading = REST_LEFT if mind != null and mind.facing < 0.0 else REST_RIGHT
 	a.motion = AnimalMotion.new(hash(str(it.get("id", ""))) + int(at.x * 97.0 + at.z * 31.0))
 	a._walk_speed = maxf(IsoProjection.ground_of(Vector2(a.rig.num("speed", 10.0) * a.rig.scale, 0)).length(), 0.001)
 	a._build()
@@ -453,8 +458,9 @@ func _markings(kind: String, accent: Color) -> void:
 				ModelKit.ball(_body, p, 1.0, ModelKit.paint(col), Vector3(_r.x * big, _r.y * big * 1.1, _r.z * 0.12))
 		"belt", "saddle":
 			var x0 := -0.22 if kind == "belt" else 0.22
+			# A broad band round the barrel (Belted Galloway), or a saddle over the back: wide enough to read.
 			ModelKit.ball(_body, Vector3((x0 + 0.18) * _r.x, 0, 0), 1.0, ModelKit.paint(white),
-				Vector3(_r.x * 0.2, _r.y * 1.02, _r.z * 1.02))
+				Vector3(_r.x * 0.42, _r.y * 1.03, _r.z * 1.03))
 		"pale_belly", "white_face":
 			ModelKit.ball(_body, Vector3(0, -_r.y * 0.35, 0), 1.0, ModelKit.paint(rig.body_color.lightened(0.45)),
 				Vector3(_r.x * 0.85, _r.y * 0.7, _r.z * 1.01))
@@ -653,6 +659,12 @@ func update(delta: float) -> void:
 	if Vector2(moved.x, moved.z).length() > 0.0005:
 		var want := atan2(-moved.z, moved.x)
 		heading = rotate_toward(heading, want, TURN_RATE * delta)
+	else:
+		# Standing (grazing, idling): it settles side-on to the view, as FarmVille always showed its animals,
+		# never tail-on or head-on (which, from above, reads as a pole).
+		var rest := REST_RIGHT if absf(angle_difference(heading, REST_RIGHT)) < absf(angle_difference(heading, REST_LEFT)) \
+			else REST_LEFT
+		heading = rotate_toward(heading, rest, SETTLE_RATE * delta)
 	rotation.y = heading
 	# The body's weight: how fast it's going (in walks), turning, hopping, and whether it's been tapped and
 	# should look round at you.

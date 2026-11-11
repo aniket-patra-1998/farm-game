@@ -641,19 +641,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 		"water_trough":
 			var x := minf(hi.x + 0.45, fw - 0.3)
 			var z := minf(hi.z + 0.35, fd - 0.2)
-			ModelKit.box(
-				root,
-				Vector3(x - 0.2, 0, z - 0.07),
-				Vector3(x + 0.2, 0.12, z + 0.07),
-				ModelKit.surface(WOOD, "boards", 0.2)
-			)
-			ModelKit.box(
-				root,
-				Vector3(x - 0.18, 0.09, z - 0.05),
-				Vector3(x + 0.18, 0.105, z + 0.05),
-				ModelKit.water(),
-				false
-			)
+			ModelKit.tub(root, Vector3(x - 0.2, 0, z - 0.07), Vector3(x + 0.2, 0.12, z + 0.07), 0.02,
+				ModelKit.surface(WOOD, "boards", 0.2), ModelKit.water())
 		"hay_bales":
 			var x := minf(hi.x + 0.3, fw - 0.25)
 			var z := clampf(lo.z + 0.2, 0.2, fd - 0.2)

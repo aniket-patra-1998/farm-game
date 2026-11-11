@@ -91,7 +91,11 @@ upgrades (capacity and refill rate); friends can send water; a few crops/trees n
 - fixed: llamas/alpacas read as poles (thin vertical neck: rig proportions); the arch door was a grey disc
   over the door; fountain water flickered against its stone (z-fighting). Checked: every decoration and every
   building size stays inside its footprint (the long brown strip is the farm slab's edge, by design).
-- still to do: a contact sheet of every model (tools) and a pass fixing each that looks wrong.
+- contact sheet (tools/contact_sheet.tscn) reviewed: animals stood head- or tail-on (read as poles from
+  above) — they now settle side-on in FarmVille's three-quarter view; troughs (decor and building yards)
+  were solid boxes hiding their water — now hollow (ModelKit.tub); the birdbath's water sat inside its
+  bowl; the haystack was an egg sunk in the ground — now a stack; ripe trees hid their fruit inside the
+  leaves — now on the canopy's skin; the belted cow's belt was a hairline.
 
 ## 8. Market, gifts and inventory (partial)
 - done: market by item, barn storage, garden shed bunches, mystery eggs/box, building materials.
