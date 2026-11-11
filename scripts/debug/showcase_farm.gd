@@ -225,3 +225,20 @@ static func announce(g: GameState) -> void:
 	g.farm_expanded.emit(g.farm_size)
 	g.objects_changed.emit()
 	g.plot_changed.emit(-1)
+
+
+## Stress: the barn packed to the brim and the gift box to its limit, with a mix of trees, animals and scenery
+## (the heaviest a player's storage can get). Returns how many things were put away.
+static func fill_storage(g: GameState) -> int:
+	var ids: Array[String] = []
+	for zone in ["tree", "animal", "decor"]:
+		ids.append_array(_zone_items(g, zone))
+	if ids.is_empty():
+		return 0
+	var now := g.now()
+	g.storage.stored.clear()
+	while g.storage.stored.size() < g.storage.total_limit():
+		var id := ids[g.storage.stored.size() % ids.size()]
+		g.storage.stored.append({"uid": g.next_uid, "id": id, "t": now})
+		g.next_uid += 1
+	return g.storage.stored.size()

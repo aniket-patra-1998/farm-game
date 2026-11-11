@@ -5,6 +5,7 @@ extends Node
 ## 2D ones, where the 2D world is used) only read from here, so there's one place where an animal decides
 ## what to do, and drawing it never changes that.
 
+const THINK_EVERY := 2   # each mind thinks every this many frames (staggered), with the time that passed
 const WANDER := 0.22   # how far an animal strays from its tile centre, in tiles
 
 var _minds := {}       # uid -> {"mind": AnimalBehaviour, "key": String}
@@ -54,5 +55,12 @@ func mind(uid: int) -> AnimalBehaviour:
 
 
 func _process(delta: float) -> void:
+	var frame := Engine.get_process_frames()
+	var n := 0
 	for m in _minds.values():
-		(m["mind"] as AnimalBehaviour).update(delta)
+		var due: float = float(m.get("owed", 0.0)) + delta
+		if (frame + n) % THINK_EVERY == 0:
+			(m["mind"] as AnimalBehaviour).update(due)
+			due = 0.0
+		m["owed"] = due
+		n += 1

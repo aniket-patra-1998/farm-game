@@ -13,6 +13,7 @@ const GLASS_GLOW := 3.4      # how bright lit windows are at night (emission ene
 const GLOW_LIFT := 0.02      # a pool of light lies this far above the ground
 const FACET_SEGMENTS := 8     # a faceted ball: around
 const FACET_RINGS := 4        # and up
+const MIN_DETAIL := 0.35
 const BALL_SEGMENTS := 12
 const BALL_RINGS := 7
 
@@ -27,6 +28,10 @@ const WHITE_TWIN := &"white_twin"  # meta on a white twin
 
 
 static var _facet_mesh: ArrayMesh
+static var _facet_low: ArrayMesh   # the same ball with fewer facets, for crowds
+## How much detail the parts built now get, 1 full .. MIN_DETAIL: orchards and gardens build dozens of the
+## same model, so BuildingFill lowers it while it builds them (fewer sides, rings, clumps and petals).
+static var detail := 1.0
 static var _materials := {}  # key -> Material
 
 static var _meshes := {}     # key -> Mesh (shared unit shapes)
@@ -177,7 +182,7 @@ static func cylinder(parent: Node3D, base: Vector3, r: float, h: float, mat: Mat
 	mesh.bottom_radius = r
 	mesh.top_radius = r if top_r < 0.0 else top_r
 	mesh.height = h
-	mesh.radial_segments = sides
+	mesh.radial_segments = scaled(sides, 5)
 	mesh.rings = 1
 	mi.mesh = mesh
 	mi.position = base + Vector3(0, h / 2.0, 0)
@@ -186,14 +191,19 @@ static func cylinder(parent: Node3D, base: Vector3, r: float, h: float, mat: Mat
 	return mi
 
 
+## A count cut down by the current detail, never below `least`.
+static func scaled(count: int, least: int) -> int:
+	return maxi(roundi(count * detail), mini(least, count))
+
+
 ## A sphere (or a squashed one, with `scale`).
 static func ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale := Vector3.ONE) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
 	mesh.radius = r
 	mesh.height = r * 2.0
-	mesh.radial_segments = BALL_SEGMENTS
-	mesh.rings = BALL_RINGS
+	mesh.radial_segments = scaled(BALL_SEGMENTS, 6)
+	mesh.rings = scaled(BALL_RINGS, 3)
 	mi.mesh = mesh
 	mi.position = centre
 	mi.scale = scale
@@ -206,19 +216,23 @@ static func ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale
 ## clumps, rocks, bushes read as many planes, not one smooth blob). The mesh is made once and shared.
 static func facet_ball(parent: Node3D, centre: Vector3, r: float, mat: Material,
 		scale := Vector3.ONE) -> MeshInstance3D:
-	if _facet_mesh == null:
+	var low := detail < 0.7
+	if _facet_mesh == null or (low and _facet_low == null):
 		var sphere := SphereMesh.new()
 		sphere.radius = 1.0
 		sphere.height = 2.0
-		sphere.radial_segments = FACET_SEGMENTS
-		sphere.rings = FACET_RINGS
+		sphere.radial_segments = FACET_SEGMENTS - (2 if low else 0)
+		sphere.rings = FACET_RINGS - (1 if low else 0)
 		var st := SurfaceTool.new()
 		st.create_from(sphere, 0)
 		st.deindex()
 		st.generate_normals()
-		_facet_mesh = st.commit()
+		if low:
+			_facet_low = st.commit()
+		else:
+			_facet_mesh = st.commit()
 	var mi := MeshInstance3D.new()
-	mi.mesh = _facet_mesh
+	mi.mesh = _facet_low if low else _facet_mesh
 	mi.position = centre
 	mi.scale = scale * r
 	mi.material_override = mat

@@ -25,7 +25,7 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, r
 	var root := Node3D.new()
 	root.position = at
 	parent.add_child(root)
-	var stems := 5 if full else 1
+	var stems := ModelKit.scaled(5, 2) if full else 1
 	for k in stems:
 		var a := TAU * k / stems + rng.randf() * 0.5
 		var off := Vector3(cos(a), 0, sin(a)) * (0.09 if full and k > 0 else 0.0) * size
@@ -44,8 +44,9 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, r
 			ModelKit.ball(flower, top, 0.035 * size, ModelKit.paint(col.lerp(STEM, 0.4)), Vector3(0.8, 1.3, 0.8))
 			continue
 		var open := 0.6 if withered else 1.0
-		for pk in PETALS:
-			var pa := TAU * pk / PETALS
+		var petals := ModelKit.scaled(PETALS, 4)
+		for pk in petals:
+			var pa := TAU * pk / petals
 			ModelKit.ball(flower, top + Vector3(cos(pa), 0.1, sin(pa)) * 0.045 * size * open, 0.035 * size,
 				ModelKit.paint(col), Vector3(1.3, 0.45, 1.3))
 		ModelKit.ball(flower, top + Vector3(0, 0.012 * size, 0), 0.024 * size, ModelKit.paint(centre))

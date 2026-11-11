@@ -680,3 +680,31 @@ func test_134_new_farms_start_in_fair_weather_and_rain_keeps_the_butterflies_in(
 	life.free()
 	Game.weather_override = was
 	_done(g)
+
+
+func test_136_crowds_of_one_model_get_less_detail_each() -> void:
+	var tris := func(detail: float) -> int:
+		ModelKit.detail = detail
+		var holder := Node3D.new()
+		TreeModel.build_at(holder, Vector3.ZERO, {"id": "apple", "family": "apple"}, 1.0, false, 1)
+		var n := 0
+		var stack: Array[Node] = [holder]
+		while not stack.is_empty():
+			var m: Node = stack.pop_back()
+			if m is MeshInstance3D and (m as MeshInstance3D).mesh != null:
+				var mesh: Mesh = (m as MeshInstance3D).mesh
+				for s in mesh.get_surface_count():
+					var arr := mesh.surface_get_arrays(s)
+					var idx = arr[Mesh.ARRAY_INDEX]
+					n += (idx.size() if idx != null else (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()) / 3
+			stack.append_array(m.get_children())
+		holder.free()
+		return n
+	var full: int = tris.call(1.0)
+	var crowd: int = tris.call(ModelKit.MIN_DETAIL)
+	ModelKit.detail = 1.0
+	_check(crowd < full * 0.6, "a tree in a crowd has well under 60%% of the triangles (%d vs %d)" % [crowd, full])
+	_eq(ModelKit.scaled(12, 5), 12, "full detail changes no count")
+	ModelKit.detail = ModelKit.MIN_DETAIL
+	_check(ModelKit.scaled(12, 5) >= 5, "and a cut count never drops below its least")
+	ModelKit.detail = 1.0

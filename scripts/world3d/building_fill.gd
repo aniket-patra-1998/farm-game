@@ -13,6 +13,7 @@ const OFFSCREEN_STRIDE := 6      # a yard out of sight thinks one frame in this 
 const RESIDENTS := 14         # the most animals out in a yard at once (a full building)
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
+const CROWD_FULL_DETAIL := 6.0   # members in one orchard or garden built at full detail; more share that budget
 const EDGE := 0.28            # and how far those keep from the footprint's edge (inside the fence)
 const KEEP_CLEAR := 0.16      # and from walls and the like
 const WANDER := 0.1           # tiles a resident strays from its place
@@ -251,6 +252,8 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	var mid := Vector2((per_row - 1) / 2.0, (rows - 1) / 2.0)
 	places.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return Vector2(a).distance_to(mid) < Vector2(b).distance_to(mid))
+	# Dozens of the same model: each gets less detail, so a full orchard costs about what a few trees do.
+	ModelKit.detail = clampf(sqrt(CROWD_FULL_DETAIL / maxf(ids.size(), 1.0)), ModelKit.MIN_DETAIL, 1.0)
 	for k in ids.size():
 		var z := _fp.y * (0.15 + 0.7 * places[k].y / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
 		var x := _fp.x * (0.1 + 0.8 * places[k].x / maxf(per_row - 1.0, 1.0))
@@ -261,6 +264,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 				d.is_full(), uid + k)
 		else:
 			TreeModel.build_at(holder, Vector3(x, 0, z), it, size * ScaleGuide.factor(ids[k]), ready, uid + k)
+	ModelKit.detail = 1.0
 	_plants = ModelKit.bake(holder)
 	add_child(_plants)
 

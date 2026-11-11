@@ -7,6 +7,7 @@ extends Node
 const WARM_FRAMES := 30
 
 const SAMPLE_FRAMES := 120
+const HEAVY_TRIS := 25000     # an object this heavy is listed by name
 
 
 
@@ -18,6 +19,10 @@ func _ready() -> void:
 	var t0 := Time.get_ticks_usec()
 	Game.open_showcase()
 	var t_build := Time.get_ticks_usec() - t0
+	var stress := "--stress" in OS.get_cmdline_user_args()
+	if stress:
+		print("PERF stress: %d things in storage" % ShowcaseFarm.fill_storage(Game))
+		_storage_costs()
 	await get_tree().process_frame
 	var t_first := Time.get_ticks_usec() - t0
 	for i in WARM_FRAMES:
@@ -56,6 +61,25 @@ func _ready() -> void:
 
 
 
+## What a full barn and gift box cost to save, load and list.
+func _storage_costs() -> void:
+	var t := Time.get_ticks_usec()
+	Game.save_game()
+	print("PERF   save_game: %.1fms (%d bytes)" % [(Time.get_ticks_usec() - t) / 1000.0,
+		FileAccess.get_file_as_bytes(Game.save_path).size()])
+	t = Time.get_ticks_usec()
+	Game.load_game()
+	print("PERF   load_game: %.1fms" % [(Time.get_ticks_usec() - t) / 1000.0])
+	var hud := _find(get_tree().root, "FarmHud")
+	if hud != null:
+		var box := VBoxContainer.new()
+		add_child(box)
+		t = Time.get_ticks_usec()
+		hud._build_barn_storage(box)
+		print("PERF   barn panel build: %.1fms, %d nodes" % [(Time.get_ticks_usec() - t) / 1000.0, _count(box).z])
+		box.queue_free()
+
+
 ## Mesh nodes and triangles under each part of the 3D farm, and under each kind of object.
 func _breakdown() -> void:
 	var farm := _find(get_tree().root, "Farm3D")
@@ -72,6 +96,8 @@ func _breakdown() -> void:
 				var cc := _count(part._views[uid]["node"])
 				var cur: Vector4i = kinds.get(k, Vector4i.ZERO)
 				kinds[k] = cur + Vector4i(cc.x, cc.y, cc.z, 1)
+				if cc.y >= HEAVY_TRIS:
+					print("PERF    heavy %s: surfaces=%d tris=%d nodes=%d" % [o["id"], cc.x, cc.y, cc.z])
 			for k in kinds:
 				print("PERF    kind %s (surfaces, tris, nodes, count) = %s" % [k, kinds[k]])
 

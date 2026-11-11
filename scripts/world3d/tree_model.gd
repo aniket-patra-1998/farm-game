@@ -182,7 +182,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var shine: float = t["shine"]
 	var cr := float(sh["crown_r"]) * k
 	var ch := maxf(float(sh["crown_h"]) * k, cr * 0.5)
-	var n := int(sh["clumps"]) * CLUMP_MULT
+	var n := ModelKit.scaled(int(sh["clumps"]) * CLUMP_MULT, 4)
 	var clump_r := cr * (0.42 if str(sh["form"]) == "dense" else 0.5)
 	ModelKit.ball(root, centre, 1.0, ModelKit.paint(_shade(leaf, 0.0), shine), Vector3(cr * 0.85, ch * 0.75, cr * 0.85))
 	for i in n:

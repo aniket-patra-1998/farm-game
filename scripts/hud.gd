@@ -14,6 +14,7 @@ const TOP_H := 84.0
 const BOTTOM_H := 150.0
 
 const BUTTON_SIZE := Vector2(150, 112)
+const GROUP_PAGE := 30     # rows of a long grouped list (the barn) built at a time
 const LEVEL_UP_BUZZ := 60     # ms of vibration for a level up
 const COIN_LAND_DB := -8.0  # each landing coin chinks softly; a shower of them adds up
 
@@ -1658,19 +1659,7 @@ func _build_barn_storage(content: VBoxContainer) -> void:
 	if Game.storage.stored.is_empty():
 		content.add_child(BookPanel.card_frame(BookPanel.text(tr("NOTHING_STORED_YET"), 20)))
 		return
-	for k in mini(Game.storage.stored.size(), cap):
-		var o: Dictionary = Game.storage.stored[k]
-		var row := HBoxContainer.new()
-		var label := BookPanel.text(Game.item_data(o["id"])["name"], 22)
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(label)
-		var place := _panel_button(tr("PLACE_2"))
-		var index := k
-		place.pressed.connect(func() -> void:
-			_book.close_panel()
-			place_stored_requested.emit(index))
-		row.add_child(place)
-		content.add_child(BookPanel.card_frame(row))
+	_add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
 	_add_gift_box(content, cap)
 
 
@@ -1680,16 +1669,30 @@ func _add_gift_box(content: VBoxContainer, cap: int) -> void:
 	if extra <= 0:
 		return
 	content.add_child(BookPanel.text(tr("GIFT_BOX_HOLDS") % [extra, BarnStorage.GIFT_BOX_LIMIT], 18, BookPanel.CREAM))
+	_add_grouped(content, cap, Game.storage.stored.size())
+
+
+## One row per kind among the stored things from index `from` up to `to` (a full barn is hundreds, the gift box
+## thousands: a row each would be a wall of nodes), with how many there are; Place takes the first of that kind.
+func _add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 	var first := {}
 	var count := {}
-	for k in range(cap, Game.storage.stored.size()):
+	for k in range(from, to):
 		var id := str(Game.storage.stored[k]["id"])
 		if not first.has(id):
 			first[id] = k
 		count[id] = int(count.get(id, 0)) + 1
-	for id: String in first:
+	_add_group_rows(content, first.keys(), first, count, 0)
+
+
+## Group rows a page at a time: a store with hundreds of different kinds would otherwise build hundreds of
+## rows at once. The button at the end adds the next page.
+func _add_group_rows(content: VBoxContainer, ids: Array, first: Dictionary, count: Dictionary, from: int) -> void:
+	var to := mini(from + GROUP_PAGE, ids.size())
+	for i in range(from, to):
+		var id: String = ids[i]
 		var row := HBoxContainer.new()
-		var label := BookPanel.text(tr("X_COUNT") % [Game.item_data(id)["name"], count[id]], 20)
+		var label := BookPanel.text(tr("X_COUNT") % [Game.item_data(id)["name"], count[id]], 22)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(label)
 		var place := _panel_button(tr("PLACE_2"))
@@ -1699,8 +1702,12 @@ func _add_gift_box(content: VBoxContainer, cap: int) -> void:
 			place_stored_requested.emit(index))
 		row.add_child(place)
 		content.add_child(BookPanel.card_frame(row))
-
-
+	if to < ids.size():
+		var more := _panel_button(tr("SHOW_MORE_KINDS") % (ids.size() - to))
+		more.pressed.connect(func() -> void:
+			more.queue_free()
+			_add_group_rows(content, ids, first, count, to))
+		content.add_child(more)
 
 
 func _panel_button(words: String) -> Button:
