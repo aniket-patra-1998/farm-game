@@ -859,14 +859,14 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 3x3 | 20 / 40 / 60 | animal | 1 |  | mystery_eggs |
+| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 3x2 | 20 / 40 / 60 | animal | 1 |  | mystery_eggs |
 | ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  |  |
 | ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 4x3 | 20 / 30 / 40 | animal | 5 |  | calves |
 | ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  | lambs |
 | ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  |  |
 | ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 30 / 40 | animal | 1 |  |  |
-| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x3 | 30 | animal | 1 | frame | truffles |
-| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 4x4 | 20 / 25 / 30 / 35 / 40 | animal | 1 | frame | foals |
+| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x4 | 30 | animal | 1 | frame | truffles |
+| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 3x4 | 20 / 25 / 30 / 35 / 40 | animal | 1 | frame | foals |
 
 ### Nursery
 
@@ -908,9 +908,9 @@ Shared: `tab` = "crafting", `limit_group` = "crafting", `group_limit` = 3
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Bakery | `bakery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
-| ✅ | Winery | `winery` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
-| ✅ | Spa | `spa` | 25 | 100,000 | 4x4 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Bakery | `bakery` | 25 | 100,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Winery | `winery` | 25 | 100,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Spa | `spa` | 25 | 100,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 | 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |  |  |
 
@@ -924,7 +924,7 @@ Shared: `tab` = "storage"
 |---|---|---|---|---|---|---|---|---|---|---|
 | ✅ | Barn | `barn` | never sold | free | 3x3 | 30 | storage | 1 |  |  |
 | ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 1 | frame | garage |
-| ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x2 | 100 | storage | 1 |  | garden_shed |
+| ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x1 | 100 | storage | 1 |  | garden_shed |
 | 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Silo | `silo` | 1 |  |  |  |  |  |  |  |
 

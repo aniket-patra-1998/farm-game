@@ -42,7 +42,8 @@ const FERTILIZER_COST := 10
 const FERTILIZER_BONUS := 0.2      # +20% coins on a fertilized plot
 const BONUS_XP := 2
 const SAVE_PATH := "user://save.json"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2         # 2: FarmVille footprints (older saves are settled on load)
+const OLDEST_SAVE_VERSION := 1
 const SHOWCASE_ARG := "--showcase"  # debug builds: start on the showcase farm (godot ... -- --showcase)
 const MAX_SIZE := 30   # plots are stored for the largest farm; farm_size says how much is usable
 const START_SIZE := 12
@@ -484,10 +485,7 @@ func is_occupied(i: int) -> bool:
 func rebuild_occupancy() -> void:
 	_occupied.clear()
 	for o in objects:
-		var fp := footprint(o["id"])
-		for r in range(int(o["row"]), int(o["row"]) + fp.y):
-			for c in range(int(o["col"]), int(o["col"]) + fp.x):
-				_occupied[index_of(r, c)] = int(o["uid"])
+		_occupy(o)
 
 
 ## Objects go on grass or empty plowed plots, never on planted crops or other objects.
@@ -1311,7 +1309,10 @@ func load_game() -> bool:
 	if f == null:
 		return false
 	var data = JSON.parse_string(f.get_as_text())
-	if typeof(data) != TYPE_DICTIONARY or int(data.get("version", 0)) != SAVE_VERSION:
+	if typeof(data) != TYPE_DICTIONARY:
+		return false
+	var version := int(data.get("version", 0))
+	if version < OLDEST_SAVE_VERSION or version > SAVE_VERSION:
 		return false
 	var saved_plots: Array = data.get("plots", [])
 	if saved_plots.size() == OLD_GRID_SIZE * OLD_GRID_SIZE:
@@ -1360,8 +1361,52 @@ func load_game() -> bool:
 		if plot.get("state") == "planted" and not crops.has(plot.get("crop", "")):
 			plot = {"state": "plowed"}
 		plots.append(plot)
-	rebuild_occupancy()
+	var moved := settle_objects()
+	if moved > 0:
+		var note := tr("SOME_BUILDINGS_CHANGED_SHAPE_AND") % moved
+		absence_note = note if absence_note == "" else absence_note + "\n" + note
 	return true
+
+
+## Lays every object back on the farm; one that no longer fits where it stood (its footprint changed, or the
+## farm's rules did) moves to the nearest free spot. Returns how many moved. Leaves the occupancy rebuilt.
+func settle_objects() -> int:
+	_occupied.clear()
+	var misfits: Array = []
+	for o in objects:
+		if can_place(o["id"], int(o["row"]), int(o["col"])):
+			_occupy(o)
+		else:
+			misfits.append(o)
+	var moved := 0
+	for o in misfits:
+		var spot := _nearest_free_spot(o["id"], int(o["row"]), int(o["col"]))
+		if spot.x >= 0:
+			o["row"] = spot.x
+			o["col"] = spot.y
+			moved += 1
+		_occupy(o) # nowhere free at all: it stays put, overlapping, until the player moves something
+	return moved
+
+
+## The free spot for an item closest to (row, col), or (-1, -1) if there's none.
+func _nearest_free_spot(item_id: String, row: int, col: int) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_d := -1
+	for r in farm_size:
+		for c in farm_size:
+			var dist := (r - row) * (r - row) + (c - col) * (c - col)
+			if (best_d < 0 or dist < best_d) and can_place(item_id, r, c):
+				best = Vector2i(r, c)
+				best_d = dist
+	return best
+
+
+func _occupy(o: Dictionary) -> void:
+	var fp := footprint(o["id"])
+	for r in range(int(o["row"]), int(o["row"]) + fp.y):
+		for c in range(int(o["col"]), int(o["col"]) + fp.x):
+			_occupied[index_of(r, c)] = int(o["uid"])
 
 
 func reset_game() -> void:
