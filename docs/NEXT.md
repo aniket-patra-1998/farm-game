@@ -23,8 +23,8 @@ FarmVille footprints (with a save migration), FarmVille limits, the 5 planned bu
 
 ## Next, in order
 1. Market tabs by category (BuildingDef.tab()).
-3. Phase 3 of the doc: each building its own silhouette; ready sparkle; broken Barn.
-4. The 5 planned buildings, each with a job.
+2. Phase 3 of the doc: each building its own silhouette; ready sparkle; broken Barn.
+3. The 5 planned buildings, each with a job.
 
 ## How to work cheaply
 - CI is the compiler: batch changes, push once, wait once (`until gh run list ... grep completed <sha>`).
