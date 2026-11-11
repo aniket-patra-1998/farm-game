@@ -78,6 +78,7 @@ func _ready() -> void:
 	add_child(objects)
 	farmer = Farmer3D.new()
 	add_child(farmer)
+	add_child(AmbientLife.new())
 	Game.plot_changed.connect(func(_i: int) -> void: _plots_changed())
 	Game.farm_expanded.connect(func(_n: int) -> void:
 		ground.rebuild()

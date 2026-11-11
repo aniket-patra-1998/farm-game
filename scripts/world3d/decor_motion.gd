@@ -22,6 +22,8 @@ const CIRCLING := {"speed": 1.6, "radius": 0.3, "bob": 0.035, "bob_rate": 1.4}
 const PADDLING := {"speed": 0.35, "radius": 0.22, "bob": 0.006, "bob_rate": 0.6}
 const BOBBING := {"speed": 0.0, "bob": 0.025, "bob_rate": 0.25}
 const VANE := {"speed": 0.45, "swing": 0.7}
+## A pennant streaming from its pole: swings quickly and a little, harder in wind.
+const FLUTTER := {"speed": 2.4, "swing": 0.28}
 
 ## A fountain's jet: arcs of water up from the spout and falling back round it (streams of drops one
 ## behind another along the same arc read as running water, not specks).

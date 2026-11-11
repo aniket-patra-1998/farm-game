@@ -724,8 +724,10 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var h := float(f.get("h", 0.34))
 			ModelKit.box(root, Vector3(x - 0.006, top, z - 0.006), Vector3(x + 0.006, top + h, z + 0.006),
 				ModelKit.paint(Color("#3a3a3a")))
-			ModelKit.box(root, Vector3(x + 0.006, top + h - 0.1, z - 0.004), Vector3(x + 0.19, top + h, z + 0.004),
+			var pennant := Node3D.new()
+			ModelKit.box(pennant, Vector3(-0.005, -0.1, -0.2), Vector3(0.005, 0.0, 0.0),
 				ModelKit.paint(Color.html(str(f.get("color", "#c0392b")))))
+			DecorMotion.orbit(root, Vector3(x, top + h, z), pennant, DecorMotion.FLUTTER)
 		"cupola":
 			var top: float = ctx.get("top", hi.y)
 			var x := (lo.x + hi.x) / 2.0

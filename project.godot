@@ -49,3 +49,7 @@ wind={
 "type": "float",
 "value": 0.6
 }
+dark={
+"type": "float",
+"value": 0.0
+}

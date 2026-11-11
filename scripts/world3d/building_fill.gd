@@ -288,7 +288,10 @@ func _show_flag(full: bool) -> void:
 	var root := Node3D.new()
 	var at := Vector3(_fp.x - 0.14, 0, _fp.y - 0.14)
 	ModelKit.box(root, at - Vector3(0.012, 0, 0.012), at + Vector3(0.012, 0.62, 0.012), ModelKit.paint(Color("#4a4a4a")))
-	ModelKit.box(root, at + Vector3(0.012, 0.44, -0.008), at + Vector3(0.3, 0.62, 0.008), ModelKit.paint(FULL_FLAG))
+	# The pennant streams out from the pole and flutters in the wind (swung by the GPU, like a weathervane).
+	var pennant := Node3D.new()
+	ModelKit.box(pennant, Vector3(-0.006, -0.17, -0.3), Vector3(0.006, 0.0, 0.0), ModelKit.paint(FULL_FLAG))
+	DecorMotion.orbit(root, at + Vector3(0, 0.62, 0), pennant, DecorMotion.FLUTTER)
 	_flag = ModelKit.bake(root)
 	add_child(_flag)
 

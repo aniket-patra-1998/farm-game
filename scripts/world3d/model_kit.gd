@@ -100,6 +100,7 @@ static func glass() -> StandardMaterial3D:
 static func set_window_glow(glow: float) -> void:
 	glass().emission_energy_multiplier = glow * GLASS_GLOW
 	glow_material().set_shader_parameter("strength", glow)
+	RenderingServer.global_shader_parameter_set(&"dark", glow)  # butterflies and fireflies read it too
 
 
 ## The shared material of every pool of light a lit window or door throws on the ground (shaders/glow3d).

@@ -605,3 +605,15 @@ func test_127_things_stand_among_grass_flowers_and_stones() -> void:
 		"it stays at the footprint's edge (%s)" % box)
 	for n: Node in [a, b, c]:
 		n.free()
+
+
+func test_128_the_farm_has_butterflies_fireflies_and_birds_that_cost_three_draws() -> void:
+	var life := AmbientLife.new()
+	add_child(life)
+	_eq(life.get_child_count(), 3, "butterflies, fireflies and a flock of birds, a mesh each")
+	for c in life.get_children():
+		_check((c as MeshInstance3D).mesh.get_surface_count() == 1, "one draw for all of one kind")
+		_check((c as MeshInstance3D).custom_aabb.size.x > 10.0, "they are not culled while wandering")
+	var before := _count_vertices(life)
+	life.free()
+	_check(before > 0, "and there are creatures in them")

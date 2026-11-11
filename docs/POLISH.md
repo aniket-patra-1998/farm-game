@@ -18,10 +18,10 @@ practice in mobile builders as I know it, not something I could confirm from a s
 | 3 | Size hierarchy | each kind its own scale (chicken, goat, cow, horse) | all about one size | **done**: `scale` per animal family, 0.7 to 1.12 |
 | 4 | Colour and light | saturated palette, warm light, lifted shadows, night that stays readable | desaturated, murky dusk and night | **tuned** (saturation, ambient, moonlight); needs a look at every hour |
 | 5 | Silhouette variety | each building recognisable by shape alone | similar block and gable | **partly**: two-storey top sizes; mid sizes still alike |
-| 6 | Idle motion everywhere | flags, smoke, windmills, birds, butterflies, hanging things swinging | smoke, water, wind in plants | **open**: flags and awnings static, no ambient creatures |
+| 6 | Idle motion everywhere | flags, smoke, windmills, birds, butterflies, hanging things swinging | smoke, water, wind in plants | **partly**: butterflies by day, fireflies at night, a flock of birds crossing (`AmbientLife`, GPU only); pennants flutter; windmill blades, awnings, falling leaves open |
 | 7 | State read at a glance | ready glow, bubbles with icons, full flags, produce piling | bubbles, count signs | **partly**: full pennant, bigger piles; ready glow open |
 | 8 | Action feedback | squash and stretch, particles, floating numbers, layered sound | squash on collect, some sound | **open**: coin and XP pop-ups, harvest particles, dust on plow and place |
-| 9 | Night | lit windows, lamps, fireflies, glow pools | windows glow, light pools on the ground | **partly**: lamps, fireflies open |
+| 9 | Night | lit windows, lamps, fireflies, glow pools | windows glow, light pools, fireflies | **partly**: lamps' own glow open |
 | 10 | Crops | dense, full beds, size by growth, rows | five plants per plot, bigger | **tuned**; no per-crop detail yet |
 | 11 | Terrain variety | paths, worn ground near doors, patches, water edges | wear map, tufts | **open**: paths, doorstep wear, borders |
 | 12 | Tests for looks | contact sheets and state sheets compared as pictures | sheets exist | **open**: no automatic check; only a person looks |
