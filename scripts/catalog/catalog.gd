@@ -39,6 +39,7 @@ static func new_def(cls: String) -> ItemDef:
 		"Recipe": return RecipeDef.new()
 		"Vehicle": return VehicleDef.new()
 		"Decoration": return DecorationDef.new()
+		"Young": return YoungDef.new()
 	push_error("Catalog: no class for %s" % cls)
 	return ItemDef.new()
 

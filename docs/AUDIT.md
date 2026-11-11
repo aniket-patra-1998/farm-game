@@ -139,7 +139,7 @@ Status against our game (done / partial / missing). "Social" items wait for the 
 | Levels, XP, coins, Farm Cash | Unlocks by level; cash for premium | done (gems) |
 | Mastery | 3 stars per crop, tree, animal; signs | done |
 | Ribbons, collections | Achievements in 4 colours; collectibles found while farming, traded in | done |
-| Mystery young | Seedlings (8 watering cans), babies (animal feed), bulbs (flower food), eggs | eggs only: see 13 |
+| Mystery young | Seedlings (8 watering cans), babies (animal feed), bulbs (flower food), eggs | seedlings, babies, eggs; bulbs next (13) |
 | Animal homes with breeding | Coop eggs, Dairy calves, Stable foals, Pig Pen truffles, Sheep breeding by colour/pattern | partial (no sheep/pig breeding by traits) |
 | Later animal pens | Cow Pasture, Horse Paddock, Aviary, Pet Run, Wildlife Habitat, Zoo, Livestock Pen, Baby Nursery | missing |
 | Feed Mill, troughs | Bushels into Animal Feed; feed raises babies | missing (3) |
@@ -159,7 +159,16 @@ Status against our game (done / partial / missing). "Social" items wait for the 
 | Co-op jobs | Group crop orders against a clock for medals | social; a solo "farm orders" version could come first |
 | Neighbours and gifts | 5 helps a visit, free gifts, requests, feed rewards | social (9) |
 
-## 13. Mystery young (FarmVille's seedlings, babies, bulbs and eggs): spec
+## 13. Mystery young (FarmVille's seedlings, babies, bulbs and eggs)
+- done: **NurtureSystem** (Game.nurture), catalog class Young (data/catalog/young.json). Mystery Seedlings
+  (every Orchard harvest: a seedling or a Watering Can; replaces the instant rare sapling) and Mystery
+  Babies (animal homes, now and then; homes also give Animal Feed, the Nursery Barn 2 a harvest). Each
+  is placed on the farm (or kept in the Barn with no room), given its supply by the farmer as a queued job
+  (supplies promised to queued jobs, like coins), and on the 8th grows into the tree or animal decided when
+  found (rare varieties; a baby's adult via BuildingSpecials.adult_of). Supplies for gems. Tests 53, 120-121.
+- next: Mystery Bulbs with Blooms and Flower Food; the Baby Nursery holding babies; the Feed Mill making feed.
+
+Spec:
 One system (NurtureSystem) for all of them: a young thing is found, put on the farm, given its supply one
 at a time, and only on the last one shows what it is.
 - **Mystery Seedling**: every Orchard harvest gives coins and either a seedling or a Watering Can. Planted

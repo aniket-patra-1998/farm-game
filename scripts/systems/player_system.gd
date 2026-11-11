@@ -15,12 +15,13 @@ signal action_done(job: Dictionary, result: Dictionary)  # a job's turn came; re
 signal queue_changed
 signal look_changed
 
-enum Refused { NONE, FULL, QUEUED, NOTHING_TO_DO, COINS }
+enum Refused { NONE, FULL, QUEUED, NOTHING_TO_DO, COINS, SUPPLY }
 
 const WALK_SPEED := 4.5          # tiles a second
 const ACTION_SECONDS := 0.75     # the farmer works this long at each job
 const QUEUE_MAX := 60
 const STAND_OFF := 0.45          # how far short of a plot's centre the farmer stops (they work at its edge)
+const OBJECT_JOBS := ["collect", "nurture"]   # jobs done beside an object, not on a plot
 const DEFAULT_LOOK := {"body": "a", "skin": "#f1c9a5", "hair": "#5a3a1e", "hair_style": "short",
 	"shirt": "#d9483b", "overalls": "#3f6fb5", "hat": "straw", "shoes": "#5b3b22"}
 
@@ -78,16 +79,20 @@ func load_from(data: Dictionary) -> void:
 # ---------------------------------------------------------------- the queue
 
 ## Queues a job: {"kind": "plow"|"plant"|"harvest"|"fertilize", "plot": index, ("crop": id)},
-## {"kind": "collect", "uid": uid} or {"kind": "vehicle", "item", "row", "col", "crop"}.
+## {"kind": "collect"|"nurture", "uid": uid} or {"kind": "vehicle", "item", "row", "col", "crop"}.
 ## Returns why not, or Refused.NONE.
 func enqueue(job: Dictionary) -> Refused:
 	if queue.size() >= QUEUE_MAX:
 		return Refused.FULL
 	if is_queued(job):
 		return Refused.QUEUED
+	if job["kind"] == "nurture":
+		var young := game.object_by_uid(int(job["uid"]))
+		if game.nurture.is_young(young) and game.nurture.free_supply(game.nurture.supply_of(young)) <= 0:
+			return Refused.SUPPLY
 	if not can_do(job):
 		return Refused.NOTHING_TO_DO
-	# Everything queued can be paid for: a job never fails for coins when its turn comes.
+	# Everything queued can be paid for: a job never fails for coins or supplies when its turn comes.
 	if cost(job) > 0 and game.coins < committed() + cost(job):
 		return Refused.COINS
 	queue.append(job)
@@ -176,6 +181,8 @@ func can_do(job: Dictionary) -> bool:
 		"collect":
 			var obj := game.object_by_uid(int(job.get("uid", -1)))
 			return not obj.is_empty() and game.is_ready(obj)
+		"nurture":
+			return game.nurture.can_feed(game.object_by_uid(int(job.get("uid", -1))))
 		"vehicle":
 			return game.items.has(str(job.get("item", "")))
 	return false
@@ -224,6 +231,8 @@ func _perform(job: Dictionary) -> Dictionary:
 			return game.harvest(i)
 		"collect":
 			return game.collect(int(job["uid"]))
+		"nurture":
+			return game.nurture.feed(int(job["uid"]))
 		"vehicle":
 			return game.vehicles.use_vehicle(str(job["item"]), int(job["row"]), int(job["col"]),
 				str(job.get("crop", "")))
@@ -247,7 +256,7 @@ func _find(job: Dictionary) -> int:
 
 ## What a job is aimed at: one job at a time per plot, object, or vehicle pass.
 func _target_key(job: Dictionary) -> String:
-	if job["kind"] == "collect":
+	if job["kind"] in OBJECT_JOBS:
 		return "o%d" % int(job["uid"])
 	if job["kind"] == "vehicle":
 		return "v%d,%d" % [int(job["row"]), int(job["col"])]
@@ -259,7 +268,7 @@ func _target_key(job: Dictionary) -> String:
 ## Where a job is, in tiles: its plot's centre, its object's centre, or the middle of a vehicle's pass.
 func _centre_of(job: Dictionary) -> Vector2:
 	match str(job["kind"]):
-		"collect":
+		"collect", "nurture":
 			var obj := game.object_by_uid(int(job["uid"]))
 			if obj.is_empty():
 				return pos
@@ -298,7 +307,7 @@ func _plan(job: Dictionary) -> void:
 	for k in range(1, best.size()):
 		_path.append(best[k] + Vector2(0.5, 0.5))
 	# At a plot the farmer stops at its edge, not on its middle.
-	if job["kind"] != "collect" and not _path.is_empty():
+	if not job["kind"] in OBJECT_JOBS and not _path.is_empty():
 		var before := pos if _path.size() == 1 else _path[-2]
 		_path[-1] = _path[-1].lerp(before, STAND_OFF / maxf(_path[-1].distance_to(before), STAND_OFF))
 
@@ -306,7 +315,7 @@ func _plan(job: Dictionary) -> void:
 ## The tiles the farmer could stand on to do a job: the plot itself, or the ring round an object.
 func _goals(job: Dictionary) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
-	if job["kind"] != "collect":
+	if not job["kind"] in OBJECT_JOBS:
 		var c := _centre_of(job)
 		out.append(Vector2i(int(c.x), int(c.y)))
 		return out

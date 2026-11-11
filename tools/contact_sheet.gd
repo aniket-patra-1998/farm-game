@@ -8,7 +8,7 @@ const ROWS := 4
 const CELL := 4.0          # world units between cells
 const PAGE_SIZE := Vector2i(1500, 1000)
 const ANIMAL_ZOOM := 3.0   # animals are small: shown bigger
-const KINDS: Array[String] = ["building", "decor", "tree", "animal", "vehicle"]
+const KINDS: Array[String] = ["building", "decor", "tree", "animal", "vehicle", "young"]
 
 var _cam: Camera3D
 
@@ -99,5 +99,7 @@ func _model(id: String) -> Node3D:
 			return VehicleModel.build(it, false)
 		"decor":
 			return DecorModel.build(it, fp, {"id": id, "uid": 7})
+		"young":
+			return DecorModel.build_young(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
 		_:
 			return ModelKit.bake(BuildingModel.build(it, fp, Game.max_level(id)))

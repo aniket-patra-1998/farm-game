@@ -75,10 +75,21 @@ static func build(g: GameState) -> Array[String]:
 			cursor.y += fp.x
 			shelf = maxi(shelf, fp.y)
 	_fill_homes(g, now)
+	_raise_young(g)
 	_plant_field(g, now)
 	g.rebuild_occupancy()
 	announce(g)
 	return left_out
+
+
+## Every mystery young half grown, set to grow into its kind's first item, with supplies to finish it.
+static func _raise_young(g: GameState) -> void:
+	for s in NurtureSystem.SUPPLIES:
+		g.nurture.supplies[s] = STOCK
+	for o in g.objects:
+		if g.nurture.is_young(o):
+			o["fed"] = g.nurture.needs(o) / 2
+			o["becomes"] = g.nurture.first_of(g.nurture.def_of(o).grows())
 
 
 ## A level past every unlock, so nothing in the Market is locked.
@@ -97,7 +108,8 @@ static func _zone_items(g: GameState, zone: String) -> Array[String]:
 	var out: Array[String] = []
 	for id in g.item_order:
 		var kind := str(g.items[id].get("kind", ""))
-		if kind == zone or zone == "building" and BUILDING_KINDS.has(kind):
+		# Mystery young are small: they stand with the decorations.
+		if kind == zone or zone == "building" and BUILDING_KINDS.has(kind) or zone == "decor" and kind == "young":
 			out.append(id)
 	if zone == "building" or zone == "decor":
 		out.sort_custom(func(a: String, b: String) -> bool:

@@ -402,6 +402,8 @@ static func draw_object(
 			_building(ci, corners, it, level, inside, capacity, s, not broken, broken)
 		"crafting":
 			_crafting(ci, corners, it, level, s)
+		"young":
+			_mystery_young(ci, center, it)
 		"decor":
 			match it.get("id", ""):
 				"farmhouse":
@@ -1958,3 +1960,17 @@ static func _crafting(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 		var p := left_wall + Vector2(-20 + k * 11 - level * 5.5 + 26, -hgt * 0.95 / u) * u
 		ci.draw_circle(p, 5 * u, Color("#ffd34d"))
 		ci.draw_arc(p, 5 * u, 0, TAU, 10, roof.darkened(0.3), 1.0)
+
+
+## A mystery young (2D fallback): a sprout in a mound, or a covered basket.
+static func _mystery_young(ci: CanvasItem, ground: Vector2, it: Dictionary) -> void:
+	if str(it.get("grows", "")) == "tree":
+		ci.draw_circle(ground + Vector2(0, -4), 12.0, Color("#6b4a2b"))
+		ci.draw_line(ground + Vector2(0, -6), ground + Vector2(0, -30), Color("#5d7a2c"), 3.0)
+		var leaf := Color.html(str(it.get("color", "#6aa84f")))
+		ci.draw_circle(ground + Vector2(-7, -24), 6.0, leaf)
+		ci.draw_circle(ground + Vector2(7, -28), 6.0, leaf)
+		ci.draw_circle(ground + Vector2(0, -34), 6.0, leaf)
+	else:
+		ci.draw_rect(Rect2(ground + Vector2(-16, -16), Vector2(32, 14)), Color("#b8894f"))
+		ci.draw_circle(ground + Vector2(0, -16), 13.0, Color("#9fc5e8"))

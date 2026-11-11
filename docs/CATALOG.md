@@ -15,8 +15,9 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 38 | 0 |
 | recipes | 3 | 45 | 0 |
+| young | 2 | 2 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **101** | **408** | **6** |
+| **All** | **103** | **410** | **6** |
 
 ## Adding an item
 
@@ -44,6 +45,7 @@ Item - Anything in the catalog.
       Crafting - FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels (capacity = crafting slots); each star up costs its size's coins and recipe stars, or its gems.
     Vehicle - Works an area of plots per tap and burns fuel.
     Decoration - Scenery. 1 XP per 100 coins (at least 5).
+    Young - FarmVille's mystery young: found while harvesting, put on the farm, given its supply one at a time; on the last it grows into what it was all along (NurtureSystem).
   Recipe - Something a crafting building makes from bushels.
 ```
 
@@ -207,6 +209,16 @@ Something a crafting building makes from bushels.
 | `star` | int | 1 |  | The building's star level that unlocks it. |
 | `inputs` | map<int> |  | yes | Bushels used: crop id -> how many. |
 | `product` | string |  |  | What kind of good (bread, wine, perfume). |
+
+### Young (extends Placeable)
+
+FarmVille's mystery young: found while harvesting, put on the farm, given its supply one at a time; on the last it grows into what it was all along (NurtureSystem).
+
+| Field | Type | Default | Required | Meaning |
+|---|---|---|---|---|
+| `supply` | string |  |  | What it's given: watering_can, animal_feed or flower_food (NurtureSystem.SUPPLIES). |
+| `needs` | int | 8 |  | How many of its supply it takes to grow. |
+| `grows` | string |  |  | What kind of thing it grows into: tree or animal. |
 
 ## Crops
 
@@ -1130,6 +1142,26 @@ Shared: `building` = "winery", `product` = "Drinks"
 | ✅ | Cucumber Wine | `cucumber_wine` |  |
 | ✅ | Melon Juice | `melon_juice` |  |
 | ✅ | Rose Petal Water | `rose_petal_water` |  |
+
+## young
+
+FarmVille's mystery young (NurtureSystem). Not sold in the Market: found while harvesting.
+
+### Seedlings
+
+From Orchard harvests; 8 Watering Cans grow one into a tree of the Orchard's kinds.
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Mystery Seedling | `mystery_seedling` |  |
+
+### Babies
+
+From animal home harvests; 8 Animal Feed raise one into an animal of the home's kinds.
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Mystery Baby | `mystery_baby` |  |
 
 ## Collectibles
 

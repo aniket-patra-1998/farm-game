@@ -128,6 +128,7 @@ var daily: DailySystem
 var storage: BarnStorage
 var bees: BeehiveSystem
 var mastery: MasterySystem
+var nurture: NurtureSystem
 var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
@@ -160,12 +161,13 @@ func _init() -> void:
 	pigpen = PigPenSystem.new(self)
 	vehicles = VehicleSystem.new(self)
 	player = PlayerSystem.new(self)
+	nurture = NurtureSystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	systems = [drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
-		strays, crafting, homes, buildings, mastery, player]
+		strays, crafting, homes, buildings, mastery, player, nurture]
 
 
 func _ready() -> void:
@@ -821,6 +823,16 @@ func inside_total(building: Dictionary) -> int:
 
 
 ## Puts a new animal on an open grass tile. False if the farm is full.
+## A random free spot on grass where `item_id` fits, or (-1, -1).
+func free_spot_for(item_id: String) -> Vector2i:
+	var spots: Array[Vector2i] = []
+	for r in farm_size:
+		for c in farm_size:
+			if plots[index_of(r, c)].get("state", "grass") == "grass" and can_place(item_id, r, c):
+				spots.append(Vector2i(r, c))
+	return spots[rng.randi_range(0, spots.size() - 1)] if not spots.is_empty() else Vector2i(-1, -1)
+
+
 func place_somewhere(item_id: String) -> bool:
 	var spots: Array[Vector2i] = []
 	for r in farm_size:
@@ -1388,7 +1400,7 @@ func settle_objects() -> int:
 			misfits.append(o)
 	var moved := 0
 	for o in misfits:
-		var spot := _nearest_free_spot(o["id"], int(o["row"]), int(o["col"]))
+		var spot := nearest_free_spot(o["id"], int(o["row"]), int(o["col"]))
 		if spot.x >= 0:
 			o["row"] = spot.x
 			o["col"] = spot.y
@@ -1398,7 +1410,7 @@ func settle_objects() -> int:
 
 
 ## The free spot for an item closest to (row, col), or (-1, -1) if there's none.
-func _nearest_free_spot(item_id: String, row: int, col: int) -> Vector2i:
+func nearest_free_spot(item_id: String, row: int, col: int) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_d := -1
 	for r in farm_size:

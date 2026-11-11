@@ -7,7 +7,7 @@ extends Node3D
 signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust there
 
 
-const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor"]
+const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young"]
 const SCENERY_Y := -Ground3D.SLAB
 
 const PINE := Color("#2f6b3a")
@@ -128,7 +128,7 @@ func _key(o: Dictionary) -> String:
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) == "tree" and Game.is_ready(o),
-		o.get("crop", o.get("flower", ""))]
+		str(o.get("crop", o.get("flower", ""))) + "|%d" % int(o.get("fed", 0))]
 
 
 
@@ -152,6 +152,8 @@ func _build(o: Dictionary) -> Node3D:
 			node = VehicleModel.build(it, Game.under_construction(o))
 		"decor":
 			node = DecorModel.build(it, fp, o)
+		"young":
+			node = DecorModel.build_young(it, o, Game.nurture.growth(o))
 		_:
 			if Game.under_construction(o):
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))

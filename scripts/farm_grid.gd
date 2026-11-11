@@ -773,6 +773,9 @@ func _queue(job: Dictionary) -> void:
 			_feel("error", BUZZ_ERROR)
 			info.emit(tr(COINS_NEEDED.get(job["kind"], "NOT_ENOUGH_COINS_TO_PLOW")).replace("%s",
 				str(Game.crops.get(str(job.get("crop", "")), {}).get("name", ""))))
+		PlayerSystem.Refused.SUPPLY:
+			_feel("error", BUZZ_ERROR)
+			object_tapped.emit(int(job["uid"]))
 		PlayerSystem.Refused.FULL:
 			_feel("error", BUZZ_ERROR)
 			info.emit(tr("THE_FARMER_HAS_ENOUGH_TO_DO"))
@@ -804,6 +807,8 @@ func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 			_sparkle(center_of(i), COLOR_FERT)
 		"collect":
 			_show_collect(int(job["uid"]), result)
+		"nurture":
+			_show_nurture(job, result)
 		"vehicle":
 			_show_vehicle(job, result)
 
@@ -831,6 +836,26 @@ func _show_vehicle(job: Dictionary, r: Dictionary) -> void:
 		lift -= 32
 
 
+
+
+## A young one was given its supply: how far along it is, or what it grew into.
+func _show_nurture(job: Dictionary, result: Dictionary) -> void:
+	var grown := str(result["grown"])
+	var o := Game.object_by_uid(int(job["uid"]))
+	if grown == "":
+		if o.is_empty():
+			return
+		var at := center_of(Game.index_of(int(o["row"]), int(o["col"])))
+		_feel("fertilize", BUZZ_TAP)
+		_float(at + Vector2(0, -40), "%d/%d" % [int(result["fed"]), int(result["needs"])], COLOR_FERT)
+		return
+	for g in Game.objects:
+		if g["id"] == grown and int(g["uid"]) == Game.next_uid - 1:
+			var at := center_of(Game.index_of(int(g["row"]), int(g["col"])))
+			_feel("collect", BUZZ_HARVEST)
+			_float(at + Vector2(0, -60), Game.item_data(grown)["name"] + "!", COLOR_GOLDEN, 1.8)
+			_sparkle(at, COLOR_GOLDEN)
+			_poke(int(g["uid"]))
 
 
 func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
@@ -987,6 +1012,16 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if tool == "move":
 		if first_touch:
 			start_placing(obj["id"], uid)
+		return
+	if Game.nurture.is_young(obj):
+		# Given its supply by the farmer; with none to give, its card shows what it needs and sells more.
+		if first_touch:
+			_poke(uid)
+			if Game.player.is_queued({"kind": "nurture", "uid": uid}) \
+					or Game.nurture.free_supply(Game.nurture.supply_of(obj)) > 0:
+				_queue({"kind": "nurture", "uid": uid})
+			else:
+				object_tapped.emit(uid)
 		return
 	if Game.is_ready(obj):
 		_queue({"kind": "collect", "uid": uid})

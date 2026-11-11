@@ -7508,6 +7508,30 @@
    "subject": "Rose Petal Water, a homemade drink from a country farm, made from lavender, morning glory, pink roses, sunflowers; appetising and charming"
   },
   {
+   "id": "mystery_seedling",
+   "item": "mystery_seedling",
+   "class": "Young",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [
+    "refs/mystery_seedling.png"
+   ],
+   "subject": "mystery seedling"
+  },
+  {
+   "id": "mystery_baby",
+   "item": "mystery_baby",
+   "class": "Young",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [
+    "refs/mystery_baby.png"
+   ],
+   "subject": "mystery baby"
+  },
+  {
    "id": "avatar_farmer_m_idle_front",
    "item": "farmer_m",
    "class": "Avatar",

@@ -694,7 +694,9 @@ func show_building(uid: int) -> void:
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
 		return
-	if o["id"] == "barn":
+	if Game.nurture.is_young(o):
+		_book.open_panel(Game.item_data(o["id"])["name"], _build_young)
+	elif o["id"] == "barn":
 		_book.open_panel(tr("BARN"), _build_barn)
 	elif Game.crafting.is_crafting(o):
 		Game.crafting.finish_crafts(uid)
@@ -1229,7 +1231,7 @@ func _add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 		"saplings":
 			content.add_child(
 				BookPanel.text(
-					tr("HARVESTS_CAN_SPROUT_A_RARE_SAPLING"),
+					tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR"),
 					17,
 					BookPanel.CREAM
 				)
@@ -1497,6 +1499,41 @@ func _build_barn(content: VBoxContainer) -> void:
 		_build_barn_storage(content)
 
 
+
+
+## A mystery young's card: how far it has grown, the supply it needs and how many you have, and more for gems.
+func _build_young(content: VBoxContainer) -> void:
+	var o := Game.object_by_uid(_building_uid)
+	if not Game.nurture.is_young(o):
+		return
+	var supply := Game.nurture.supply_of(o)
+	var name := Game.nurture.supply_name(supply)
+	content.add_child(BookPanel.text(tr("GIVE_IT_TO_SEE_WHAT_IT_GROWS_INTO") % [Game.nurture.needs(o), name], 20,
+		BookPanel.CREAM))
+	var card := BookPanel.card()
+	card.add_child(BookPanel.text(tr("OF_2") % [name, Game.nurture.fed(o), Game.nurture.needs(o)], 20))
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = 16
+	bar.max_value = Game.nurture.needs(o)
+	bar.value = Game.nurture.fed(o)
+	card.add_child(bar)
+	card.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply(supply), name], 18))
+	content.add_child(BookPanel.card_frame(card))
+	var uid := _building_uid
+	var give := _panel_button(tr("GIVE_ONE"))
+	give.disabled = Game.nurture.free_supply(supply) <= 0
+	give.pressed.connect(func() -> void:
+		Game.player.enqueue({"kind": "nurture", "uid": uid})
+		_book.close_panel())
+	content.add_child(give)
+	var gems := int(NurtureSystem.SUPPLIES[supply]["gem_cost"])
+	var buy := _panel_button(tr("BUY_ONE_FOR_GEMS") % [name, gems])
+	buy.disabled = Game.gems < gems
+	buy.pressed.connect(func() -> void:
+		if Game.nurture.buy_supply(supply, 1):
+			show_building(uid))
+	content.add_child(buy)
 
 
 func _build_barn_repair(content: VBoxContainer) -> void:

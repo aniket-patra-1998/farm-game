@@ -27,8 +27,8 @@
             "decor",
             "material",
             "crafting",
-            "recipe"
-          ],
+            "recipe",
+            "young"],
           "doc": "Set by the class; only override for special cases (bee, barn)."
         },
         "unlock_level": {
@@ -542,6 +542,34 @@
         "fill": 0.5,
         "doc": "One icon per good, shown in the crafting panel."
       }
+    },
+    "Young": {
+      "extends": "Placeable",
+      "kind": "young",
+      "doc": "FarmVille's mystery young: found while harvesting, put on the farm, given its supply one at a time; on the last it grows into what it was all along (NurtureSystem).",
+      "fields": {
+        "supply": {
+          "type": "string",
+          "doc": "What it's given: watering_can, animal_feed or flower_food (NurtureSystem.SUPPLIES)."
+        },
+        "needs": {
+          "type": "int",
+          "default": 8,
+          "doc": "How many of its supply it takes to grow."
+        },
+        "grows": {
+          "type": "string",
+          "doc": "What kind of thing it grows into: tree or animal."
+        }
+      },
+      "lifecycle": {
+        "stages": [
+          "placed"
+        ],
+        "pattern": "{id}",
+        "fill": 0.5,
+        "doc": "One look; the farm draws how far it has grown."
+      }
     }
   },
   "files": {
@@ -552,7 +580,8 @@
     "buildings": "Building",
     "vehicles": "Vehicle",
     "decorations": "Decoration",
-    "recipes": "Recipe"
+    "recipes": "Recipe",
+    "young": "Young"
   },
   "kind_classes": {
     "barn": "Barn",

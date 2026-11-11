@@ -16,8 +16,6 @@ const STABLE_XP := 100
 const NURSERY_SPARE_XP := 25       # stands in for FarmVille's spare baby to gift a friend
 const FERTILIZE_ALL_CHANCE := 0.10 # per hive collection
 
-# Orchard: rare sapling varieties of the trees inside.
-const SAPLING_CHANCE := 0.10
 
 
 func _init(owner: GameState) -> void:
@@ -28,6 +26,19 @@ func _init(owner: GameState) -> void:
 func grows_into(item_id: String) -> String:
 	var d := game.catalog.get_def(item_id)
 	return (d as AnimalDef).grows_into() if d is AnimalDef else ""
+
+
+## What a young animal grows up into: its own (Baby Turkey, Ugly Duckling) or the Nursery Barn's map
+## (calves, foals, lambs, piglets); "" for an adult.
+func adult_of(item_id: String) -> String:
+	var own := grows_into(item_id)
+	if own != "":
+		return own
+	for id in game.item_order:
+		var it: Dictionary = game.items[id]
+		if str(it.get("special", "")) == "nursery":
+			return str(it.get("grows_into", {}).get(item_id, ""))
+	return ""
 
 
 func grow_up_inside(b: Dictionary) -> Array[String]:
@@ -122,10 +133,10 @@ func building_specials(b: Dictionary) -> Array[String]:
 				game.message.emit(tr("THE_BEES_LEFT_A_FERTILIZE_ALL"))
 				out.append(tr("FERTILIZE_ALL_2"))
 		"saplings":
-			var sapling := _roll_sapling(b)
-			if sapling != "" and game.place_somewhere(sapling):
-				game.message.emit(tr("A_RARE_SAPLING_SPROUTED") % game.item_data(sapling)["name"])
-				out.append(tr("RARE_SAPLING"))
+			out.append_array(game.nurture.from_orchard(b))
+	# Any home with animals in it: a Mystery Baby now and then, and Animal Feed (NurtureSystem).
+	if str(game.item_data(b["id"]).get("special", "")) != "saplings":
+		out.append_array(game.nurture.from_home(b))
 	if not out.is_empty():
 		game.inventory_changed.emit()
 	return out
@@ -158,24 +169,3 @@ func _grow_babies(nursery: Dictionary) -> Array[String]:
 	return out
 
 
-## A rare sapling of one of the trees inside, likelier for the trees you have more of.
-func _roll_sapling(orchard: Dictionary) -> String:
-	if not game.drops_enabled or game.rng.randf() >= SAPLING_CHANCE:
-		return ""
-	var inside: Dictionary = orchard["inside"]
-	var pool: Array[String] = []
-	var weights: Array[int] = []
-	var total := 0
-	for id in inside:
-		if game.item_data(id).has("rare_sapling") and int(inside[id]) > 0:
-			pool.append(id)
-			weights.append(int(inside[id]))
-			total += int(inside[id])
-	if total == 0:
-		return ""
-	var pick := game.rng.randi_range(1, total)
-	for k in pool.size():
-		pick -= weights[k]
-		if pick <= 0:
-			return game.item_data(pool[k])["rare_sapling"]
-	return ""

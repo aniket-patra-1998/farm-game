@@ -1,0 +1,42 @@
+{
+  "class": "Young",
+  "_note": "FarmVille's mystery young (NurtureSystem). Not sold in the Market: found while harvesting.",
+  "defaults": {
+    "cost": 0,
+    "unlock_level": 99
+  },
+  "families": [
+    {
+      "id": "seedlings",
+      "name": "Seedlings",
+      "doc": "From Orchard harvests; 8 Watering Cans grow one into a tree of the Orchard's kinds.",
+      "defaults": {},
+      "variants": [
+        {
+          "id": "mystery_seedling",
+          "name": "Mystery Seedling",
+          "supply": "watering_can",
+          "needs": 8,
+          "grows": "tree",
+          "color": "#6aa84f"
+        }
+      ]
+    },
+    {
+      "id": "babies",
+      "name": "Babies",
+      "doc": "From animal home harvests; 8 Animal Feed raise one into an animal of the home's kinds.",
+      "defaults": {},
+      "variants": [
+        {
+          "id": "mystery_baby",
+          "name": "Mystery Baby",
+          "supply": "animal_feed",
+          "needs": 8,
+          "grows": "animal",
+          "color": "#c9a46a"
+        }
+      ]
+    }
+  ]
+}

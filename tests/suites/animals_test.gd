@@ -299,20 +299,31 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 
 
 
-func test_53_orchard_sprouts_rare_saplings() -> void:
+func test_53_orchard_harvests_give_mystery_seedlings_or_watering_cans() -> void:
+	# FarmVille: every Orchard harvest gives a Mystery Seedling or a Watering Can. A seedling grows into one of
+	# the Orchard's trees, now and then its rare variety.
 	var g := _farm(true)
 	g.coins = 1000000
+	g.farm_size = GameState.MAX_SIZE
 	g.xp = g.xp_for_level(8)
 	_check(g.buy_and_place("orchard", 8, 8), "orchard bought")
 	var orch := g.object_at(g.index_of(8, 8))
 	orch["inside"] = {"cherry_tree": 10}
 	orch["t"] = g.now()
-	for k in 60:
+	for k in 200:
 		_skip(g, g.cycle_of(orch))
 		g.collect(int(orch["uid"]))
-	var rare := _count(g, "rainier_cherry_tree")
-	_check(rare >= 2 and rare <= 14, "about 1 in 10 harvests sprouts a Rainier Cherry (%d in 60)" % rare)
-	_eq(_count(g, "honeycrisp_apple_tree"), 0, "only rare kinds of the trees inside")
+	var seedlings: Array = g.objects.filter(func(o: Dictionary) -> bool: return o["id"] == "mystery_seedling")
+	var cans := g.nurture.has_supply("watering_can")
+	_eq(seedlings.size() + cans, 200, "every harvest gave one or the other")
+	_check(seedlings.size() > 70 and seedlings.size() < 130, "about half of them seedlings (%d)" % seedlings.size())
+	var rare := 0
+	for o: Dictionary in seedlings:
+		_check(o["becomes"] in ["cherry_tree", "rainier_cherry_tree"], "a seedling grows into the trees inside")
+		_eq(int(o["fed"]), 0, "and starts unwatered")
+		if o["becomes"] == "rainier_cherry_tree":
+			rare += 1
+	_check(rare >= 1 and rare <= seedlings.size() / 4, "about 1 in 10 is the rare Rainier Cherry (%d)" % rare)
 	_check(g.building_accepts(orch, "rainier_cherry_tree"), "rare trees can live in the orchard")
 	for id in g.item_order:
 		var it: Dictionary = g.items[id]
@@ -323,10 +334,6 @@ func test_53_orchard_sprouts_rare_saplings() -> void:
 			_check(int(r["payout"]) > int(it["payout"]), "%s pays more" % r.get("id", "?"))
 			_eq(int(r["unlock_level"]), 99, "%s can't be bought" % r.get("id", "?"))
 	_done(g)
-
-
-
-
 
 
 func test_54_new_building_state_survives_a_save() -> void:
