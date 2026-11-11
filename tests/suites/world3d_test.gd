@@ -617,3 +617,19 @@ func test_128_the_farm_has_butterflies_fireflies_and_birds_that_cost_three_draws
 	var before := _count_vertices(life)
 	life.free()
 	_check(before > 0, "and there are creatures in them")
+
+
+func test_129_a_home_shows_each_different_kind_inside_it_up_to_five() -> void:
+	var inside := {"a": 8, "b": 1, "c": 1, "d": 1, "e": 1, "f": 1, "g": 1}
+	var five := BuildingFill.pick_kinds(inside, 6)
+	_eq(five.size(), 6, "as many as asked for")
+	var seen := {}
+	for id in five:
+		seen[id] = true
+	_eq(seen.size(), BuildingFill.MAX_KINDS, "the five commonest kinds are each there at least once")
+	_check(not seen.has("g") or seen.size() <= BuildingFill.MAX_KINDS, "and never more than five kinds")
+	var mixed := BuildingFill.pick_kinds({"x": 4, "y": 4}, 8)
+	_check(mixed[0] != mixed[1], "kinds are mixed, not in blocks (%s)" % [mixed])
+	_eq(BuildingFill.pick_kinds({}, 5).size(), 0, "nothing inside, nothing shown")
+	_eq(BuildingFill.shown_count(5, 100, 20, 5), 5, "a nearly empty home still shows each of its five kinds")
+	_eq(BuildingFill.shown_count(3, 100, 20, 3), 3, "or its three")

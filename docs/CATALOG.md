@@ -914,8 +914,8 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Orchard | `orchard` | 8 | 6,000 | 4x4 | 20 / 30 / 40 | animal | 1 |  | saplings |
-| ✅ | Bloom Garden | `bloom_garden` | 10 | 5 | 4x4 | 20 / 30 / 40 | animal | 1 | frame | blooms |
+| ✅ | Orchard | `orchard` | 8 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  | saplings |
+| ✅ | Bloom Garden | `bloom_garden` | 10 | 5 | 3x3 | 20 / 30 / 40 | animal | 1 | frame | blooms |
 
 ### Production
 

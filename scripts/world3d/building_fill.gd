@@ -10,6 +10,7 @@ extends Node3D
 ## to show comes from the building's description (data/building_models.json "fill").
 
 const RESIDENTS := 10         # the most animals out in a yard at once (a full building)
+const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
 const EDGE := 0.28            # and how far those keep from the footprint's edge (inside the fence)
 const KEEP_CLEAR := 0.16      # and from walls and the like
@@ -20,6 +21,7 @@ const PRODUCE_STEPS := 6      # piles grow in this many steps as collection near
 const PRODUCE_SCALE := 1.5    # and are drawn this much bigger than life: they must read from across the farm
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
+const BLOOMS_PER_ROW := 5
 const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
@@ -122,27 +124,76 @@ static func ready_share(o: Dictionary) -> float:
 
 ## How many animals to show out in the yard: none when empty, one for the first, then in proportion to
 ## how full it is, up to RESIDENTS (and never more than there are places, or animals).
-static func shown_count(inside_total: int, capacity: int, spots: int) -> int:
+static func shown_count(inside_total: int, capacity: int, spots: int, kinds := 1) -> int:
 	if inside_total <= 0:
 		return 0
 	var share := float(inside_total) / maxf(capacity, 1.0)
-	return mini(mini(maxi(1, int(ceil(share * RESIDENTS))), spots), inside_total)
+	# At least one of each kind inside (up to MAX_KINDS), so every different one can be seen.
+	var want := maxi(maxi(1, int(ceil(share * RESIDENTS))), mini(kinds, MAX_KINDS))
+	return mini(mini(want, spots), inside_total)
+
+
+## How many different kinds are inside (the ones that count).
+static func distinct_kinds(inside: Dictionary) -> int:
+	var n := 0
+	for id: String in inside:
+		if int(inside[id]) > 0:
+			n += 1
+	return n
+
+
+## `n` things to show out of what's inside, so that each different kind (the MAX_KINDS commonest) is there at
+## least once and the rest are in proportion to how many of each there are. Mixed, not in blocks of a kind.
+static func pick_kinds(inside: Dictionary, n: int) -> Array[String]:
+	var kinds: Array = inside.keys().filter(func(id: String) -> bool: return int(inside[id]) > 0)
+	kinds.sort_custom(func(a: String, b: String) -> bool: return int(inside[a]) > int(inside[b]))
+	kinds = kinds.slice(0, MAX_KINDS)
+	var out: Array[String] = []
+	if kinds.is_empty() or n <= 0:
+		return out
+	var total := 0
+	for id: String in kinds:
+		total += int(inside[id])
+	var want := {}
+	var given := 0
+	for id: String in kinds:
+		want[id] = maxi(1, int(round(float(inside[id]) / maxf(total, 1.0) * n)))
+		given += int(want[id])
+	while given > n:  # rounding gave too many: take from whichever has most
+		var most: String = kinds[0]
+		for id: String in kinds:
+			if int(want[id]) > int(want[most]):
+				most = id
+		if int(want[most]) <= 1:
+			break
+		want[most] = int(want[most]) - 1
+		given -= 1
+	while given < n:  # too few: give to whichever is furthest below its share
+		var needy: String = kinds[0]
+		for id: String in kinds:
+			if float(inside[id]) / maxf(float(want[id]), 1.0) > float(inside[needy]) / maxf(float(want[needy]), 1.0):
+				needy = id
+		want[needy] = int(want[needy]) + 1
+		given += 1
+	# Dealt out one of each in turn, so kinds are mixed through the list.
+	while out.size() < n:
+		var dealt := false
+		for id: String in kinds:
+			if int(want[id]) > 0 and out.size() < n:
+				out.append(id)
+				want[id] = int(want[id]) - 1
+				dealt = true
+		if not dealt:
+			break
+	return out
 
 
 func _show_residents(inside: Dictionary, total: int, capacity: int) -> void:
 	for a in residents:
 		a.queue_free()
 	residents.clear()
-	var n := shown_count(total, capacity, _spots.size())
-	# Which kinds: in proportion to how many of each are inside, the commonest first.
-	var kinds := inside.keys().filter(func(id: String) -> bool: return int(inside[id]) > 0)
-	kinds.sort_custom(func(a: String, b: String) -> bool: return int(inside[a]) > int(inside[b]))
-	var picks: Array[String] = []
-	for id: String in kinds:
-		var share := int(round(float(inside[id]) / maxf(total, 1.0) * n))
-		for k in maxi(share, 1 if picks.size() < n else 0):
-			if picks.size() < n:
-				picks.append(id)
+	var n := shown_count(total, capacity, _spots.size(), distinct_kinds(inside))
+	var picks := pick_kinds(inside, n)
 	for k in picks.size():
 		var it := Game.item_data(picks[k])
 		if it.is_empty():
@@ -155,20 +206,22 @@ func _show_residents(inside: Dictionary, total: int, capacity: int) -> void:
 		residents.append(a)
 
 
-## The trees or blooms living in an Orchard or Bloom Garden, in rows of three, fruiting or open when ready.
+## The trees or blooms living in an Orchard or Bloom Garden, packed in a grid from the middle out: more as it
+## fills, each different kind inside shown (up to MAX_KINDS), fruiting or open when ready.
 func _show_plants(o: Dictionary, slots: int) -> void:
 	if _plants != null:
 		_plants.queue_free()
 	var holder := Node3D.new()
 	var inside: Dictionary = o.get("inside", {})
-	var ids: Array[String] = []
-	for id: String in inside:
-		for k in int(inside[id]):
-			ids.append(id)
 	var ready := Game.is_ready(o)
-	var trees := ids.is_empty() or Game.kind_of({"id": ids[0]}) == "tree"
+	var first := ""
+	for id: String in inside:
+		if int(inside[id]) > 0:
+			first = id
+			break
+	var trees := first == "" or Game.kind_of({"id": first}) == "tree"
 	# A grid in the field's own proportions; trees are packed tight, crowns just touching (FarmVille's orchards).
-	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1) if trees else 5
+	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1) if trees else BLOOMS_PER_ROW
 	var rows := ceili(float(slots) / per_row)
 	var gap := minf(_fp.x * 0.8 / maxf(per_row - 1.0, 1.0), _fp.y * 0.8 / maxf(rows - 1.0, 1.0))
 	var size := clampf(gap * TREE_FILL, 0.4, 1.0)
@@ -178,10 +231,22 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			var bz := _fp.y * (0.15 + 0.7 * r / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
 			ModelKit.box(holder, Vector3(_fp.x * 0.12, 0, bz - 0.22), Vector3(_fp.x * 0.88, 0.05, bz + 0.22),
 				ModelKit.paint(Color("#6b4a2b")))
-	for k in mini(ids.size(), slots):
-		var row := int(k / float(per_row))
-		var z := _fp.y * (0.15 + 0.7 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
-		var x := _fp.x * (0.1 + 0.8 * (k % per_row) / maxf(per_row - 1.0, 1.0))
+	var total := Game.inside_total(o)
+	var share := float(total) / maxf(Game.capacity(o), 1.0)
+	var shown := 0
+	if total > 0:
+		shown = mini(slots, mini(total, maxi(ceili(share * slots), mini(distinct_kinds(inside), MAX_KINDS))))
+	var ids := pick_kinds(inside, shown)
+	# Which grid places, middle first: a young orchard is a clump in the middle, not a corner.
+	var places: Array[Vector2i] = []
+	for k in per_row * rows:
+		places.append(Vector2i(k % per_row, int(k / float(per_row))))
+	var mid := Vector2((per_row - 1) / 2.0, (rows - 1) / 2.0)
+	places.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return Vector2(a).distance_to(mid) < Vector2(b).distance_to(mid))
+	for k in ids.size():
+		var z := _fp.y * (0.15 + 0.7 * places[k].y / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
+		var x := _fp.x * (0.1 + 0.8 * places[k].x / maxf(per_row - 1.0, 1.0))
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
 			var d := Game.catalog.get_def(ids[k]) as BloomDef
