@@ -73,7 +73,7 @@ func test_88_every_system_saves_and_loads_its_own_fields() -> void:
 		system.save_to(again)
 	_eq(JSON.stringify(again), JSON.stringify(data), "every system's state survives a save and load")
 	_eq(h.crafting.bushels, {"wheat": 3}, "numbers come back as whole numbers")
-	_eq(h.systems.size(), 20, "all subsystems are registered")
+	_eq(h.systems.size(), 21, "all subsystems are registered")
 	h.queue_free()
 	_done(g)
 

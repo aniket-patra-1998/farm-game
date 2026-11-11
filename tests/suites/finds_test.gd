@@ -354,3 +354,31 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o["id"] == "perfect_bunch").size(), 0, "then wilts away")
 	_done(g)
+
+
+func test_132_finds_come_from_harvesting_by_weight_with_pity_and_a_collection_reward() -> void:
+	var g := _farm(true)
+	var fam: Dictionary = g.finds.families["gopher"]
+	var pity := int(fam["trigger"]["pity"])
+	for k in pity:
+		g.finds.roll("harvest", 0)
+	_check(g.finds.total("gopher") >= 1, "a gopher turns up within the pity count (%d rolls)" % pity)
+	_eq(g.finds.tier("gopher"), 1, "owning one raises the family's home to level 1")
+	var coins := g.coins
+	for kind: Dictionary in fam["kinds"]:
+		g.finds.add("gopher", kind)
+	_check(g.finds.is_complete("gopher"), "every kind found completes the collection")
+	_check(g.coins >= coins + int(fam["reward"]["coins"]), "and pays the reward (more if the XP levels you up)")
+	var after := g.coins
+	g.finds.add("gopher", fam["kinds"][0])
+	_eq(g.coins, after, "never twice")
+	var saved := {}
+	g.finds.save_to(saved)
+	var g2 := _farm(true)
+	g2.finds.load_from(saved)
+	_eq(g2.finds.total("gopher"), g.finds.total("gopher"), "finds survive a save")
+	_eq(g2.finds.tier("gopher"), g.finds.tier("gopher"), "and so does the home's level")
+	g.drops_enabled = false
+	_eq(g.finds.roll("harvest", 0).size(), 0, "nothing is found when drops are off")
+	_done(g)
+	_done(g2)

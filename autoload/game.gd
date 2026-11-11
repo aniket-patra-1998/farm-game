@@ -141,6 +141,7 @@ var storage: BarnStorage
 var bees: BeehiveSystem
 var mastery: MasterySystem
 var nurture: NurtureSystem
+var finds: FindsSystem
 var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
@@ -179,12 +180,13 @@ func _init() -> void:
 	field = FieldSystem.new(self)
 	player = PlayerSystem.new(self)
 	nurture = NurtureSystem.new(self)
+	finds = FindsSystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
-		strays, crafting, homes, buildings, mastery, player, nurture]
+		strays, crafting, homes, buildings, mastery, player, nurture, finds]
 
 
 func _ready() -> void:
