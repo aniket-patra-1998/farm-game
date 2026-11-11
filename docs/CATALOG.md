@@ -953,7 +953,7 @@ Shared: `tab` = "storage"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Barn | `barn` | never sold | free | 3x3 | 30 | storage | 1 |  |  |
+| ✅ | Barn | `barn` | never sold | free | 3x3 | 30 / 60 / 100 / 160 / 250 | storage | 1 |  |  |
 | ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 1 | frame | garage |
 | ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x1 | 100 | storage | 1 |  | garden_shed |
 | ✅ | Gopher Garden | `gopher_garden` | 6 | 8,000 | 2x2 | 1 / 4 / 10 / 20 | storage | 1 |  | finds_home |

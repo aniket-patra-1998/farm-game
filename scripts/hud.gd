@@ -1652,10 +1652,13 @@ func _build_barn_storage(content: VBoxContainer) -> void:
 	for p in GameState.part_ids:
 		parts_line.append("%s %d" % [GameState.part_names[p], int(Game.parts.get(p, 0))])
 	content.add_child(BookPanel.text(tr("PARTS").join(PackedStringArray(parts_line)), 17, BookPanel.CREAM))
+	var barn := Game.storage.barn()
+	if not barn.is_empty():
+		_add_expansion_card(content, barn, int(barn["uid"]))
 	if Game.storage.stored.is_empty():
 		content.add_child(BookPanel.card_frame(BookPanel.text(tr("NOTHING_STORED_YET"), 20)))
 		return
-	for k in Game.storage.stored.size():
+	for k in mini(Game.storage.stored.size(), cap):
 		var o: Dictionary = Game.storage.stored[k]
 		var row := HBoxContainer.new()
 		var label := BookPanel.text(Game.item_data(o["id"])["name"], 22)
@@ -1663,6 +1666,34 @@ func _build_barn_storage(content: VBoxContainer) -> void:
 		row.add_child(label)
 		var place := _panel_button(tr("PLACE_2"))
 		var index := k
+		place.pressed.connect(func() -> void:
+			_book.close_panel()
+			place_stored_requested.emit(index))
+		row.add_child(place)
+		content.add_child(BookPanel.card_frame(row))
+	_add_gift_box(content, cap)
+
+
+## What has spilled past the barn, grouped by kind (there can be thousands: one row each would be a wall).
+func _add_gift_box(content: VBoxContainer, cap: int) -> void:
+	var extra := Game.storage.in_gift_box()
+	if extra <= 0:
+		return
+	content.add_child(BookPanel.text(tr("GIFT_BOX_HOLDS") % [extra, BarnStorage.GIFT_BOX_LIMIT], 18, BookPanel.CREAM))
+	var first := {}
+	var count := {}
+	for k in range(cap, Game.storage.stored.size()):
+		var id := str(Game.storage.stored[k]["id"])
+		if not first.has(id):
+			first[id] = k
+		count[id] = int(count.get(id, 0)) + 1
+	for id: String in first:
+		var row := HBoxContainer.new()
+		var label := BookPanel.text(tr("X_COUNT") % [Game.item_data(id)["name"], count[id]], 20)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(label)
+		var place := _panel_button(tr("PLACE_2"))
+		var index: int = first[id]
 		place.pressed.connect(func() -> void:
 			_book.close_panel()
 			place_stored_requested.emit(index))

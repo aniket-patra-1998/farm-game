@@ -3,6 +3,7 @@ extends GameSystem
 ## The barn: repairing it, and storing objects away.
 ## Part of the game state: reached as `Game.storage`; shared state is on `game`.
 
+const GIFT_BOX_LIMIT := 9999        # what spills past the barn waits in the gift box, up to this many
 const BUNCH_DAYS := 14              # a placed Perfect Bunch lasts 14 days
 
 var stored: Array = []             # objects put away in the barn (no row or col)
@@ -79,6 +80,16 @@ func barn_capacity() -> int:
 	return game.capacity(b) if not b.is_empty() else game.building_def("barn").capacity(1)
 
 
+## Everything that can be kept: the barn's own space and the gift box beyond it.
+func total_limit() -> int:
+	return barn_capacity() + GIFT_BOX_LIMIT
+
+
+## How many things have spilled past the barn into the gift box.
+func in_gift_box() -> int:
+	return maxi(stored.size() - barn_capacity(), 0)
+
+
 ## Trees, animals and scenery can be stored; shelters, the barn and strays can't.
 func can_store(obj: Dictionary) -> bool:
 	if obj.is_empty() or obj.get("stray", false):
@@ -95,14 +106,15 @@ func store_object(uid: int) -> bool:
 	if not can_store(o):
 		game.message.emit(tr("THAT_CAN_T_GO_IN_THE"))
 		return false
-	if stored.size() >= barn_capacity():
+	if stored.size() >= total_limit():
 		game.message.emit(tr("THE_BARN_IS_FULL"))
 		return false
 	game.remove_object(o)
 	o.erase("row")
 	o.erase("col")
 	stored.append(o)
-	game.message.emit(tr("STORED_IN_THE_BARN") % game.item_data(o["id"])["name"])
+	game.message.emit(tr("STORED_IN_THE_BARN" if stored.size() <= barn_capacity() else "SENT_TO_THE_GIFT_BOX")
+		% game.item_data(o["id"])["name"])
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true

@@ -798,7 +798,44 @@
           "look": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors",
           "sizes": [
             {
-              "capacity": 30
+              "capacity": 30,
+              "name": "Barn"
+            },
+            {
+              "capacity": 60,
+              "name": "Big Barn",
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
+            },
+            {
+              "capacity": 100,
+              "name": "Huge Barn",
+              "materials": {
+                "bricks": 20,
+                "nails": 20,
+                "boards": 20
+              }
+            },
+            {
+              "capacity": 160,
+              "name": "Grand Barn",
+              "materials": {
+                "bricks": 30,
+                "nails": 30,
+                "boards": 30
+              }
+            },
+            {
+              "capacity": 250,
+              "name": "Colossal Barn",
+              "materials": {
+                "bricks": 50,
+                "nails": 50,
+                "boards": 50
+              }
             }
           ]
         },

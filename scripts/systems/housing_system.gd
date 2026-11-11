@@ -42,7 +42,7 @@ func _storage_fit(source: Dictionary) -> Fit:
 		return Fit.WRONG_KIND
 	if not game.storage.barn_repaired():
 		return Fit.BARN_BROKEN
-	return Fit.FULL if game.storage.stored.size() >= game.storage.barn_capacity() else Fit.FITS
+	return Fit.FULL if game.storage.stored.size() >= game.storage.total_limit() else Fit.FITS
 
 
 ## Every building on the farm that takes this, full or not, with how it fits: [[building, Fit], ...].

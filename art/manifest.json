@@ -6583,7 +6583,55 @@
    "refs": [
     "refs/barn_size1.png"
    ],
-   "subject": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors"
+   "subject": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors. Size 1 of 5: the small starter size"
+  },
+  {
+   "id": "barn_size2",
+   "item": "barn",
+   "class": "Barn",
+   "stage": "2",
+   "tiles": 3,
+   "fill": 0.96,
+   "refs": [
+    "refs/barn_size2.png"
+   ],
+   "subject": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors. Size 2 of 5: a bigger, grander version with more detail"
+  },
+  {
+   "id": "barn_size3",
+   "item": "barn",
+   "class": "Barn",
+   "stage": "3",
+   "tiles": 3,
+   "fill": 0.96,
+   "refs": [
+    "refs/barn_size3.png"
+   ],
+   "subject": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors. Size 3 of 5: the biggest, grandest version, with extra decoration and flourishes"
+  },
+  {
+   "id": "barn_size4",
+   "item": "barn",
+   "class": "Barn",
+   "stage": "4",
+   "tiles": 3,
+   "fill": 0.96,
+   "refs": [
+    "refs/barn_size4.png"
+   ],
+   "subject": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors. Size 4 of 5: an even larger deluxe version"
+  },
+  {
+   "id": "barn_size5",
+   "item": "barn",
+   "class": "Barn",
+   "stage": "5",
+   "tiles": 3,
+   "fill": 0.96,
+   "refs": [
+    "refs/barn_size5.png"
+   ],
+   "subject": "a classic big red farm barn with white trim, a hayloft door and wide sliding doors. Size 5 of 5: the largest, most luxurious version"
   },
   {
    "id": "garage_size1",

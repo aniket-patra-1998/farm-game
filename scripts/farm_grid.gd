@@ -277,7 +277,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			continue
 		var counts := Vector2i(-1, -1)
 		if o["id"] == "barn" and not o.get("broken", false):
-			counts = Vector2i(Game.storage.stored.size(), Game.storage.barn_capacity())
+			counts = Vector2i(mini(Game.storage.stored.size(), Game.storage.barn_capacity()), Game.storage.barn_capacity())
 		elif Game.is_building(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
 		if counts.x >= 0 and counts_shown:

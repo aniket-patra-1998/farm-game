@@ -224,7 +224,15 @@ func test_31_storage_limits() -> void:
 	_eq(strays, 1, "a stray arrived to test with")
 	for k in g.storage.barn_capacity():
 		g.storage.stored.append({"uid": 9000 + k, "id": "chicken", "t": 0})
-	_check(not g.storage.store_object(int(g.object_at(g.index_of(9, 3))["uid"])), "a full barn refuses more")
+	var kept_id := str(g.object_at(g.index_of(9, 3))["id"])
+	_check(g.storage.store_object(int(g.object_at(g.index_of(9, 3))["uid"])),
+		"past the barn's space it goes to the gift box")
+	_eq(g.storage.in_gift_box(), 1, "one thing in the gift box")
+	while g.storage.stored.size() < g.storage.total_limit():
+		g.storage.stored.append({"uid": 90000 + g.storage.stored.size(), "id": "chicken", "t": 0})
+	_check(g.buy_and_place(kept_id, 9, 6), "another one to try")
+	_check(not g.storage.store_object(int(g.object_at(g.index_of(9, 6))["uid"])),
+		"barn and gift box both full refuses more")
 	_done(g)
 
 
