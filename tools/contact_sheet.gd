@@ -105,7 +105,7 @@ func _model(id: String) -> Node3D:
 			return wrap
 		"tree":
 			var t := Node3D.new()
-			TreeModel.build_at(t, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, 1.0, true, 7)
+			TreeModel.build_at(t, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, ScaleGuide.factor(id), true, 7 + hash(id) % 50)
 			return ModelKit.bake(t)
 		"vehicle":
 			return VehicleModel.build(it, false)

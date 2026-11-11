@@ -1,14 +1,14 @@
 {
-  "_doc": "How each kind of tree grows in 3D (scripts/world3d/tree_model.gd). A tree's shape comes from its catalog family (apple, lemon...), or for scenery trees from its id; anything unlisted grows as 'round'. form picks how the crown is built: round (a dome of leafy clumps), oval (taller than wide), spreading (low and wide on angled limbs), dense (a tight glossy ball on a short trunk, the citrus look), weeping (strands hanging to the ground), palm (a tall ringed trunk and a crown of fronds), banana (a soft stem and huge paddle leaves), bushy (several stems from the ground). Sizes are shares of a full tree on one tile: trunk_h and trunk_r its trunk, crown_r and crown_h its crown, clumps the leafy clumps in it (palms and bananas), masses the big leaf masses of other crowns (reach: how far out they sit as a share of crown_r, flat: how squashed, mass: their size). leaf is the leaf colour; shine makes it glossy. blossom adds flowers through the crown in that colour. fruit_shape: round, oval, long (a hanging bunch), big (a few huge ones on the trunk), small (nuts, olives: many tiny ones), cluster (dates: hanging bunches). Every tree is also varied a little by its own seed: height, lean, the clumps' places and shades.",
+  "_doc": "How each kind of tree grows in 3D (scripts/world3d/tree_model.gd). A tree's shape comes from its catalog family (apple, lemon...), or for scenery trees from its id; anything unlisted grows as 'round'. form picks how the crown is built: round (a dome of leafy clumps), oval (taller than wide), spreading (low and wide on angled limbs), dense (a tight glossy ball on a short trunk, the citrus look), weeping (strands hanging to the ground), palm (a tall ringed trunk and a crown of fronds), banana (a soft stem and huge paddle leaves), bushy (several stems from the ground). Sizes are shares of a full tree on one tile: trunk_h and trunk_r its trunk, crown_r and crown_h its crown, clumps the leafy clumps in it (palms and bananas), tall scales a form's height (each tree varies 0.8 to 1.3 of it too), masses the big leaf masses of other crowns (reach: how far out they sit as a share of crown_r, flat: how squashed, mass: their size). leaf is the leaf colour; shine makes it glossy. blossom adds flowers through the crown in that colour. fruit_shape: round, oval, long (a hanging bunch), big (a few huge ones on the trunk), small (nuts, olives: many tiny ones), cluster (dates: hanging bunches). Every tree is also varied a little by its own seed: height, lean, the clumps' places and shades.",
   "forms": {
-    "round": {"masses": 4, "reach": 0.55, "flat": 0.8, "trunk_h": 0.42, "trunk_r": 0.06, "crown_r": 0.24, "crown_h": 0.22, "clumps": 7, "leaf": "#4f9a3a"},
-    "oval": {"masses": 6, "mass": 0.56, "reach": 0.4, "flat": 1.0, "trunk_h": 0.36, "trunk_r": 0.055, "crown_r": 0.19, "crown_h": 0.42, "clumps": 8, "leaf": "#4a8f36"},
-    "spreading": {"masses": 5, "reach": 0.72, "flat": 0.6, "trunk_h": 0.3, "trunk_r": 0.075, "crown_r": 0.36, "crown_h": 0.16, "clumps": 10, "leaf": "#5a9a3c"},
-    "dense": {"masses": 8, "reach": 0.4, "mass": 0.64, "flat": 0.9, "trunk_h": 0.22, "trunk_r": 0.05, "crown_r": 0.26, "crown_h": 0.3, "clumps": 12, "leaf": "#2f7a2e", "shine": 0.45},
-    "weeping": {"masses": 4, "reach": 0.55, "flat": 0.75, "trunk_h": 0.4, "trunk_r": 0.07, "crown_r": 0.32, "crown_h": 0.2, "clumps": 7, "leaf": "#8ab84a"},
+    "round": {"tall": 1.0, "masses": 4, "reach": 0.55, "flat": 0.8, "trunk_h": 0.42, "trunk_r": 0.06, "crown_r": 0.24, "crown_h": 0.22, "clumps": 7, "leaf": "#4f9a3a"},
+    "oval": {"tall": 1.15, "masses": 6, "mass": 0.56, "reach": 0.4, "flat": 1.0, "trunk_h": 0.36, "trunk_r": 0.055, "crown_r": 0.25, "crown_h": 0.42, "clumps": 8, "leaf": "#4a8f36"},
+    "spreading": {"tall": 0.85, "masses": 5, "reach": 0.72, "flat": 0.6, "trunk_h": 0.3, "trunk_r": 0.075, "crown_r": 0.36, "crown_h": 0.16, "clumps": 10, "leaf": "#5a9a3c"},
+    "dense": {"tall": 0.9, "masses": 8, "reach": 0.4, "mass": 0.64, "flat": 0.9, "trunk_h": 0.22, "trunk_r": 0.05, "crown_r": 0.26, "crown_h": 0.3, "clumps": 12, "leaf": "#2f7a2e", "shine": 0.45},
+    "weeping": {"tall": 1.15, "masses": 4, "reach": 0.55, "flat": 0.75, "trunk_h": 0.4, "trunk_r": 0.07, "crown_r": 0.32, "crown_h": 0.2, "clumps": 7, "leaf": "#8ab84a"},
     "palm": {"trunk_h": 1.05, "trunk_r": 0.05, "crown_r": 0.42, "crown_h": 0.0, "clumps": 9, "leaf": "#4c9a34"},
     "banana": {"trunk_h": 0.45, "trunk_r": 0.06, "crown_r": 0.38, "crown_h": 0.0, "clumps": 7, "leaf": "#62b04a"},
-    "bushy": {"masses": 7, "reach": 0.42, "mass": 0.56, "flat": 0.9, "trunk_h": 0.16, "trunk_r": 0.03, "crown_r": 0.28, "crown_h": 0.26, "clumps": 11, "leaf": "#4e8c3a"}
+    "bushy": {"tall": 0.85, "masses": 7, "reach": 0.42, "mass": 0.56, "flat": 0.9, "trunk_h": 0.16, "trunk_r": 0.03, "crown_r": 0.24, "crown_h": 0.26, "clumps": 11, "leaf": "#4e8c3a"}
   },
   "families": {
     "apple": {"form": "round", "masses": 4},
@@ -17,7 +17,7 @@
     "orange": {"form": "dense"},
     "mandarin": {"form": "dense", "crown_r": 0.22},
     "grapefruit": {"form": "dense", "crown_r": 0.28, "fruit_size": 1.25},
-    "cherry": {"form": "oval", "blossom": "#f7c6d9", "fruit_size": 0.7, "leaf": "#4d8a3c"},
+    "cherry": {"form": "oval", "tall": 1.3, "blossom": "#f7c6d9", "fruit_size": 0.7, "leaf": "#4d8a3c"},
     "peach": {"form": "round", "leaf": "#5f9e3e", "blossom": "#f6b3c4"},
     "apricot": {"form": "round", "leaf": "#589a3a", "blossom": "#fbe1e8"},
     "plum": {"form": "oval", "leaf": "#5b7a3a"},
@@ -28,12 +28,12 @@
     "avocado": {"form": "oval", "leaf": "#2f5f2a", "fruit_shape": "oval", "shine": 0.3},
     "mango": {"form": "dense", "masses": 9, "reach": 0.5, "flat": 0.7, "leaf": "#2e6a2c", "crown_r": 0.32, "crown_h": 0.36, "trunk_h": 0.3, "fruit_shape": "oval"},
     "pomegranate": {"form": "bushy", "leaf": "#3f7f2e", "blossom": "#e2452f"},
-    "olive": {"form": "spreading", "leaf": "#8a9c6a", "fruit_shape": "small", "trunk_r": 0.09},
+    "olive": {"form": "spreading", "tall": 0.7, "leaf": "#8a9c6a", "fruit_shape": "small", "trunk_r": 0.09},
     "guava": {"form": "round", "leaf": "#6a9a40"},
     "persimmon": {"form": "oval", "leaf": "#5a8a30"},
     "starfruit": {"form": "spreading", "leaf": "#4a8a38", "fruit_shape": "oval"},
     "passion_fruit": {"form": "bushy", "leaf": "#3a7a30", "blossom": "#b48ae0"},
-    "jackfruit": {"form": "oval", "leaf": "#2f6a2a", "fruit_shape": "big", "trunk_r": 0.08},
+    "jackfruit": {"form": "oval", "tall": 1.25, "leaf": "#2f6a2a", "fruit_shape": "big", "trunk_r": 0.08},
     "asian_pear": {"form": "oval", "blossom": "#ffffff", "leaf": "#5a9a40"},
     "tamarind": {"form": "spreading", "leaf": "#6a9a3a", "fruit_shape": "long"},
     "almond": {"form": "round", "blossom": "#fbe9ef", "fruit_shape": "small", "leaf": "#6aa04a"},
@@ -41,10 +41,10 @@
     "cashew": {"form": "spreading", "leaf": "#4a8a3a"},
     "chestnut": {"form": "round", "leaf": "#3f7a2e", "fruit_shape": "small", "crown_r": 0.3},
     "hazelnut": {"form": "bushy", "leaf": "#5a8f3a", "fruit_shape": "small"},
-    "pecan": {"form": "oval", "leaf": "#4a8a34", "fruit_shape": "small", "trunk_h": 0.48},
+    "pecan": {"form": "oval", "tall": 1.3, "leaf": "#4a8a34", "fruit_shape": "small", "trunk_h": 0.48},
     "pistachio": {"form": "bushy", "leaf": "#7a9a54", "fruit_shape": "small"},
     "oak_tree": {"form": "spreading", "masses": 6, "reach": 0.78, "flat": 0.55, "leaf": "#4a8a34", "crown_r": 0.4, "crown_h": 0.24, "trunk_r": 0.09},
-    "maple_tree": {"form": "round", "leaf": "#d8622a", "crown_r": 0.28},
+    "maple_tree": {"form": "round", "tall": 1.3, "leaf": "#d8622a", "crown_r": 0.28},
     "willow_tree": {"form": "weeping"},
     "willow": {"form": "weeping"}
   }

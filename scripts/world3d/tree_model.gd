@@ -21,7 +21,10 @@ const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 0.92     # how far out through a leafy clump fruit hangs (1: on its surface)
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
-const TRUNK_BULK := 1.4     # trunks are drawn chunkier than the data says: a tree should look rooted
+const TRUNK_BULK := 0.85    # trunks are drawn a little slimmer than the data says
+const TRUNK_TALL := 1.15    # and longer: a trunk shows under the crown, the tree stands on it
+const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
+const TALL_MAX := 1.2       # ..to this much
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
 
@@ -60,6 +63,11 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var sh := shape_of(it)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value * 7919 + hash(str(it.get("id", "")))
+	# Its height: its kind's (oaks low and broad, cherries tall), and this tree's own within that.
+	var tall := float(sh.get("tall", 1.0)) * rng.randf_range(TALL_MIN, TALL_MAX)
+	var upright := str(sh["form"]) not in ["palm", "banana"]
+	sh["trunk_h"] = float(sh["trunk_h"]) * tall * (TRUNK_TALL if upright else 1.0)
+	sh["crown_h"] = float(sh["crown_h"]) * tall
 	# This tree's own variation: a little taller or shorter, leaning a little, turned its own way.
 	var k := size * TILE_FILL * rng.randf_range(0.9, 1.1)
 	root.rotation.y = rng.randf() * TAU
@@ -139,14 +147,6 @@ static func _trunk(t: Dictionary) -> Vector3:
 			ModelKit.paint(BARK.darkened(0.1)), Vector3(1.5, 0.5, 1.0))
 		rt.rotation.y = -ra
 	var top := Vector3(lean.x * h, h, lean.z * h)
-	# Limbs into the crown: one for a small tree, three spreading ones for a wide one.
-	var limbs := 3 if str(sh["form"]) == "spreading" else 2
-	var rng: RandomNumberGenerator = t["rng"]
-	for i in limbs:
-		var a := TAU * i / limbs + rng.randf() * 0.8
-		var limb := ModelKit.cylinder(root, Vector3.ZERO, r * 0.5, h * 0.55, ModelKit.paint(BARK), r * 0.25, 6)
-		limb.position = top * 0.7 + Vector3(cos(a), 0, sin(a)) * r * 0.5 + Vector3(0, h * 0.2, 0)
-		limb.rotation = Vector3(sin(a) * 0.7, 0, -cos(a) * 0.7)
 	return top + Vector3(0, float(sh["crown_h"]) * k * 0.6, 0)
 
 
