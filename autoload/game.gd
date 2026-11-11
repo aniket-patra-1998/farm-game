@@ -149,6 +149,9 @@ var _occupied := {}                # tile index -> uid of the object covering it
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
 var _save_due_msec := -1          # when a queued save is written (-1: nothing waiting)
+var _weather := {}                # the last answer of weather(), and when and for what it was made
+var _weather_at := -1
+var _weather_for := "?"
 
 
 func _init() -> void:
@@ -829,14 +832,20 @@ func objects_updated() -> void:
 # ---------------------------------------------------------------- weather
 
 
-## The weather right now (see Weather.current): looks only, FarmVille had none.
+## The weather right now (see Weather.current): looks only, FarmVille had none. It changes by the second at
+## most, so a frame asking again gets the same answer without the work.
 func weather() -> Dictionary:
-	return Weather.current(
-		now(),
-		DayCycle.SEASON,
-		DayCycle.local_hour(now(), DayCycle.device_bias_minutes()),
-		weather_override
-	)
+	var t := now()
+	if t != _weather_at or weather_override != _weather_for:
+		_weather_at = t
+		_weather_for = weather_override
+		_weather = Weather.current(
+			t,
+			DayCycle.SEASON,
+			DayCycle.local_hour(t, DayCycle.device_bias_minutes()),
+			weather_override
+		)
+	return _weather
 
 
 # ---------------------------------------------------------------- unwither
