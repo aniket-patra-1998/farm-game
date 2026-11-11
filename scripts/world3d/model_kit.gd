@@ -11,6 +11,8 @@ const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leav
 ## each cylinder ~48, before the shadow pass draws them again).
 const GLASS_GLOW := 3.4      # how bright lit windows are at night (emission energy at full dark)
 const GLOW_LIFT := 0.02      # a pool of light lies this far above the ground
+const FACET_SEGMENTS := 8     # a faceted ball: around
+const FACET_RINGS := 4        # and up
 const BALL_SEGMENTS := 12
 const BALL_RINGS := 7
 
@@ -24,6 +26,7 @@ const WHITE_TWIN := &"white_twin"  # meta on a white twin
 
 
 
+static var _facet_mesh: ArrayMesh
 static var _materials := {}  # key -> Material
 
 static var _meshes := {}     # key -> Mesh (shared unit shapes)
@@ -193,6 +196,30 @@ static func ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale
 	mi.mesh = mesh
 	mi.position = centre
 	mi.scale = scale
+	mi.material_override = mat
+	parent.add_child(mi)
+	return mi
+
+
+## A faceted ball: a low-poly sphere with each face lit flat, so its facets catch the light separately (leafy
+## clumps, rocks, bushes read as many planes, not one smooth blob). The mesh is made once and shared.
+static func facet_ball(parent: Node3D, centre: Vector3, r: float, mat: Material,
+		scale := Vector3.ONE) -> MeshInstance3D:
+	if _facet_mesh == null:
+		var sphere := SphereMesh.new()
+		sphere.radius = 1.0
+		sphere.height = 2.0
+		sphere.radial_segments = FACET_SEGMENTS
+		sphere.rings = FACET_RINGS
+		var st := SurfaceTool.new()
+		st.create_from(sphere, 0)
+		st.deindex()
+		st.generate_normals()
+		_facet_mesh = st.commit()
+	var mi := MeshInstance3D.new()
+	mi.mesh = _facet_mesh
+	mi.position = centre
+	mi.scale = scale * r
 	mi.material_override = mat
 	parent.add_child(mi)
 	return mi

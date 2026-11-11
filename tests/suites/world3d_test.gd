@@ -589,3 +589,19 @@ func test_126_the_biggest_size_of_a_building_is_a_real_second_storey() -> void:
 		model.free()
 	_check(tall >= 8, "the bigger buildings have a second storey (%d)" % tall)
 	_done(g)
+
+
+func test_127_things_stand_among_grass_flowers_and_stones() -> void:
+	var a := Dressing.make("building", Vector2i(4, 4), 7)
+	var b := Dressing.make("building", Vector2i(4, 4), 7)
+	var c := Dressing.make("building", Vector2i(4, 4), 8)
+	_check(a != null and _count_vertices(a) > 100, "a building has dressing round its foot")
+	_eq(_count_vertices(a), _count_vertices(b), "the same object always gets the same scatter")
+	_check(_count_vertices(a) != _count_vertices(c) or a.get_child(0).get_aabb() != c.get_child(0).get_aabb(),
+		"another object gets its own")
+	_check(Dressing.make("tree", Vector2i.ONE, 1) == null, "kinds with no rule get none")
+	var box := _bounds(a)
+	_check(box.position.x > -0.3 and box.position.z > -0.3 and box.end.x < 4.3 and box.end.z < 4.3,
+		"it stays at the footprint's edge (%s)" % box)
+	for n: Node in [a, b, c]:
+		n.free()

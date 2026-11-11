@@ -20,6 +20,8 @@ const FRUIT_R := 0.052      # a round fruit's radius (a small one's: FRUIT_SMALL
 const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 0.92     # how far out through a leafy clump fruit hangs (1: on its surface)
 const FRUIT_GROWING := 3
+const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
+const CLUMP_MULT := 2       # leafy clumps per the form's count (smaller, so the outline is rough)
 const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
 
 static var _data := {}
@@ -81,12 +83,38 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		_:
 			crown = _trunk(t)
 			_crown(t, crown)
+	_base(t)
 	if sh.has("blossom"):
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
 		_fruit(t, crown, Color.html(str(it.get("color", "#d93b30"))), ready)
 	ModelKit.sway_all(root, SWAY)
 	return root
+
+
+# ---------------------------------------------------------------- the ground under it
+
+
+## What a tree stands among: a patch of bare earth round the trunk, a few stones, and wildflowers, so it
+## is planted there and not set down on the grass. Different round each tree (its own seed).
+static func _base(t: Dictionary) -> void:
+	var root: Node3D = t["root"]
+	var k: float = t["k"]
+	var rng: RandomNumberGenerator = t["rng"]
+	var r := float(t["sh"]["trunk_r"]) * k
+	ModelKit.cylinder(root, Vector3(0, 0.002, 0), r * 2.6, 0.006, ModelKit.paint(Color("#7d5c3b")), -1.0, 10)
+	for i in 3:
+		var a := rng.randf() * TAU
+		var d := r * rng.randf_range(3.0, 4.6)
+		ModelKit.facet_ball(root, Vector3(cos(a) * d, 0.0, sin(a) * d), r * rng.randf_range(0.5, 0.9),
+			ModelKit.paint(Color("#9a9a94").darkened(rng.randf_range(0.0, 0.15))), Vector3(1, 0.6, 1))
+	for i in 4:
+		var a := rng.randf() * TAU
+		var d := r * rng.randf_range(3.6, 6.0)
+		var col: Color = FLOWERS[rng.randi() % FLOWERS.size()]
+		var at := Vector3(cos(a) * d, 0.0, sin(a) * d)
+		ModelKit.cylinder(root, at, 0.004, 0.05 * k, ModelKit.paint(Color("#4f8a3a")), -1.0, 4)
+		ModelKit.ball(root, at + Vector3(0, 0.055 * k, 0), 0.014 * k, ModelKit.paint(col))
 
 
 # ---------------------------------------------------------------- trunks
@@ -102,9 +130,16 @@ static func _trunk(t: Dictionary) -> Vector3:
 	var lean: Vector3 = t["lean"]
 	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h, ModelKit.surface(BARK, "logs", 0.3), r * 0.65, 8)
 	trunk.rotation = Vector3(lean.z, 0, -lean.x)
+	# The trunk flares at the foot into roots that grip the ground.
+	ModelKit.cylinder(root, Vector3.ZERO, r * 1.9, r * 1.4, ModelKit.surface(BARK, "logs", 0.3), r * 1.0, 8)
+	for i in 3:
+		var ra := TAU * i / 3.0 + float(t["lean"].x) * 20.0
+		var rt := ModelKit.ball(root, Vector3(cos(ra) * r * 1.5, r * 0.25, sin(ra) * r * 1.5), r * 0.6,
+			ModelKit.paint(BARK.darkened(0.1)), Vector3(1.5, 0.5, 1.0))
+		rt.rotation.y = -ra
 	var top := Vector3(lean.x * h, h, lean.z * h)
 	# Limbs into the crown: one for a small tree, three spreading ones for a wide one.
-	var limbs := 3 if str(sh["form"]) == "spreading" else 1
+	var limbs := 3 if str(sh["form"]) == "spreading" else 2
 	var rng: RandomNumberGenerator = t["rng"]
 	for i in limbs:
 		var a := TAU * i / limbs + rng.randf() * 0.8
@@ -133,8 +168,9 @@ static func _stems(t: Dictionary) -> Vector3:
 # ---------------------------------------------------------------- crowns
 
 
-## The leafy crown: clumps over an ellipsoid of the form's width and height, lighter where the sun
-## catches the top, darker underneath, with a filler clump in the middle so it never looks hollow.
+## The leafy crown: many faceted clumps over an ellipsoid of the form's width and height, so the outline is
+## rough and every plane takes the light on its own. Sunlit tops lean yellow-green and bright, the shaded
+## underside leans blue-green and dark, each clump a little different, with a dark core so it never looks hollow.
 static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
@@ -144,20 +180,35 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var shine: float = t["shine"]
 	var cr := float(sh["crown_r"]) * k
 	var ch := maxf(float(sh["crown_h"]) * k, cr * 0.5)
-	var n := int(sh["clumps"])
-	var clump_r := cr * (0.62 if str(sh["form"]) == "dense" else 0.75)
-	ModelKit.ball(root, centre, 1.0, ModelKit.paint(leaf.darkened(0.12), shine), Vector3(cr * 0.85, ch * 0.75, cr * 0.85))
+	var n := int(sh["clumps"]) * CLUMP_MULT
+	var clump_r := cr * (0.42 if str(sh["form"]) == "dense" else 0.5)
+	ModelKit.ball(root, centre, 1.0, ModelKit.paint(_shade(leaf, 0.0), shine), Vector3(cr * 0.85, ch * 0.75, cr * 0.85))
 	for i in n:
 		# Spread round the crown in a spiral, from low to high.
 		var u := (i + 0.5) / n
 		var a := i * 2.399963 + rng.randf() * 0.3
-		var y := lerpf(-0.45, 0.55, u)
-		var ring := sqrt(maxf(1.0 - y * y, 0.15))
-		var p := centre + Vector3(cos(a) * cr * 0.62 * ring, y * ch * 0.8, sin(a) * cr * 0.62 * ring)
-		var light := clampf(0.5 + y * 0.6, 0.0, 1.0)
-		var col := leaf.darkened(0.14).lerp(leaf.lightened(0.2), light).darkened(rng.randf_range(0.0, 0.07))
-		var s := rng.randf_range(0.78, 1.0) * clump_r
-		ModelKit.ball(root, p, s, ModelKit.paint(col, shine), Vector3(1, rng.randf_range(0.78, 0.92), 1))
+		var y := lerpf(-0.5, 0.75, u)
+		var ring := sqrt(maxf(1.0 - y * y, 0.12))
+		var reach := cr * rng.randf_range(0.62, 0.8) * ring
+		var p := centre + Vector3(cos(a) * reach, y * ch * 0.8, sin(a) * reach)
+		var light := clampf(0.5 + y * 0.6 + rng.randf_range(-0.12, 0.12), 0.0, 1.0)
+		var s := rng.randf_range(0.7, 1.05) * clump_r
+		var squash := Vector3(1, rng.randf_range(0.75, 0.95), 1)
+		ModelKit.facet_ball(root, p, s, ModelKit.paint(_shade(leaf, light), shine), squash)
+	# Sun-struck tufts on top.
+	for i in 3:
+		var a := TAU * i / 3.0 + rng.randf()
+		var p := centre + Vector3(cos(a) * cr * 0.3, ch * 0.62, sin(a) * cr * 0.3)
+		ModelKit.facet_ball(root, p, clump_r * 0.6, ModelKit.paint(_shade(leaf, 1.0), shine), Vector3(1, 0.8, 1))
+
+
+## The leaf colour for how lit a clump is (0 deep shade .. 1 full sun): shade drifts blue-green and dark,
+## sun drifts yellow-green and bright, and the colour is richer than a flat darker/lighter of one green.
+static func _shade(leaf: Color, light: float) -> Color:
+	var h := leaf.h + lerpf(0.025, -0.03, light)
+	var s := clampf(leaf.s * lerpf(1.12, 0.88, light), 0.0, 1.0)
+	var v := clampf(leaf.v * lerpf(0.58, 1.18, light), 0.0, 1.0)
+	return Color.from_hsv(h, s, v)
 
 
 ## A willow's curtain: strands of leaves hanging from the crown's rim nearly to the ground.

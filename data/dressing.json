@@ -1,0 +1,12 @@
+{
+  "_doc": "What lies round the foot of things on the farm, so each stands planted in a place and not set down on bare grass (scripts/world3d/dressing.gd). By the kind of object: tufts of taller grass, wildflowers and stones are scattered in a band `band` tiles wide just outside the object's footprint edge (different round each object: its own seed). Counts scale with the footprint's perimeter (per tile of edge). Kinds not listed get nothing.",
+  "kinds": {
+    "building": {"tufts": 3.0, "flowers": 1.2, "stones": 0.8, "band": 0.22},
+    "crafting": {"tufts": 3.0, "flowers": 1.5, "stones": 0.8, "band": 0.22},
+    "barn": {"tufts": 3.0, "flowers": 1.0, "stones": 1.0, "band": 0.22},
+    "decor": {"tufts": 2.0, "flowers": 1.0, "stones": 0.6, "band": 0.16},
+    "vehicle": {"tufts": 2.0, "flowers": 0.0, "stones": 0.5, "band": 0.16}
+  },
+  "flower_colours": ["#f6e04a", "#f7f2e8", "#e98bb0", "#9b7be0", "#f08a3c"],
+  "grass_colours": ["#5aa33c", "#6fb847", "#4a8f36", "#86c24f"]
+}

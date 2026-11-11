@@ -145,7 +145,7 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 		var m := maxf(DayCycle.moon_progress(hour), 0.0)
 		_aim_light(m * PI, MOON_ELEVATION)
 		sun.light_color = Color(0.62, 0.72, 1.0)
-		sun.light_energy = 0.28 * (1.0 - cover * 0.7)
+		sun.light_energy = 0.4 * (1.0 - cover * 0.7)
 		sun.shadow_opacity = 0.5
 	var top: Color = look["top"]
 	var horizon: Color = look["horizon"]
@@ -158,8 +158,8 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.background_color = horizon
 	# Shade is lit by the sky, but mostly warm-neutral bounce light off the grass and earth.
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
-	environment.ambient_light_energy = lerpf(0.36, 0.28, dark) * (1.0 - dim * 0.4)
-	environment.adjustment_saturation = lerpf(1.08, 0.75, dark) * (1.0 - float(weather.get("desat", 0.0)))
+	environment.ambient_light_energy = lerpf(0.4, 0.34, dark) * (1.0 - dim * 0.4)
+	environment.adjustment_saturation = lerpf(1.22, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0)))
 	var fog := float(weather.get("fog", 0.0))
 	environment.fog_enabled = fog > 0.01
 	environment.fog_light_color = horizon.lerp(Color(0.85, 0.88, 0.9), 0.6)

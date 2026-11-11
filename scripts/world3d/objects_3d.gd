@@ -171,6 +171,9 @@ func _build(o: Dictionary) -> Node3D:
 				node = ModelKit.bake(BuildingModel.build(it, fp, Game.level_of(o), _at_work(o)))
 				if BuildingFill.shows(o):
 					node.add_child(BuildingFill.create(o, node))
+	var dressing := Dressing.make(Game.kind_of(o), fp, int(o["uid"]))
+	if dressing != null:
+		node.add_child(dressing)
 	# The view stands at the footprint's centre on the ground, so it squashes, bounces and lands about
 	# its base; the model hangs under it, shifted back to the footprint's corner.
 	var holder := Node3D.new()

@@ -149,8 +149,8 @@ func _process(_delta: float) -> void:
 	shadows.strength = 0.0 if sun < 0.0 else (1.0 - dark) * clampf(1.0 - absf(cover - 0.45) / 0.4, 0.0, 1.0)
 	# Colour grade: richer by day, cool and soft at night, warm low sun, fog haze.
 	var m := grade.material as ShaderMaterial
-	m.set_shader_parameter("saturation", lerpf(1.1, 0.8, dark) * (1.0 - float(w["desat"])))
-	m.set_shader_parameter("contrast", lerpf(1.05, 0.95, dark))
+	m.set_shader_parameter("saturation", lerpf(1.12, 0.92, dark) * (1.0 - float(w["desat"])))
+	m.set_shader_parameter("contrast", lerpf(1.08, 0.98, dark))
 	m.set_shader_parameter("lift", Vector3(0.02, 0.035, 0.08) * dark)
 	var low := 0.0 if sun < 0.0 else pow(1.0 - sin(sun * PI), 3.0)  # 1 right at sunrise and sunset
 	m.set_shader_parameter("warm", Color(1.0, 0.7, 0.45, 0.22 * low * (1.0 - cover)))

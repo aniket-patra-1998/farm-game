@@ -57,10 +57,13 @@ static func _build(it: Dictionary) -> AnimalRig:
 	r.id = str(it.get("id", ""))
 	r.family = str(it.get("family", r.id))
 	var families_data: Dictionary = _data.get("families", {})
-	var v: Dictionary = (families_data.get(r.family, families_data.get(DEFAULT_FAMILY, {})) as Dictionary).duplicate(true)
-	v.merge((_data.get("variants", {}) as Dictionary).get(r.id, {}), true)
+	var family: Dictionary = families_data.get(r.family, families_data.get(DEFAULT_FAMILY, {}))
+	var v: Dictionary = family.duplicate(true)
+	var own: Dictionary = (_data.get("variants", {}) as Dictionary).get(r.id, {})
+	v.merge(own, true)
 	r.young = bool(it.get("young", false))
-	r.scale = float(v.get("scale", 1.0))
+	# How big the kind is (a chicken against a cow) times how big this breed is among its kind (a pony).
+	r.scale = float(family.get("scale", 1.0)) * float(own.get("scale", 1.0))
 	if r.young:
 		_make_young(r, v)
 	r.type = str(v.get("type", "quad"))
