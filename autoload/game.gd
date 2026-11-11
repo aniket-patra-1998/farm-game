@@ -41,6 +41,14 @@ const GOLDEN_XP := 10
 const FERTILIZER_COST := 10
 const FERTILIZER_BONUS := 0.2      # +20% coins on a fertilized plot
 const BONUS_XP := 2
+## Farmhand: collects every ready animal on the farm. Arborist: every ready tree.
+## FarmVille's helpers: each collects everything of its kind that's ready, at once. kind -> the field
+## counting them, what they're called, and what's said after.
+const HELPERS := {
+	"animal": {"field": "farmhands", "name": "FARMHANDS", "done": "COLLECTED_ANIMALS_FOR_COINS"},
+	"tree": {"field": "arborists", "name": "ARBORISTS", "done": "COLLECTED_TREES_FOR_COINS"},
+	"bloom": {"field": "gardeners", "name": "GARDENERS", "done": "COLLECTED_BLOOMS_FOR_COINS"},
+}
 const SAVE_PATH := "user://save.json"
 const SAVE_DELAY_MSEC := 1500    # changes are written together, at most this often (a save is the whole farm)
 const BACKUP_SUFFIX := ".bak"     # the save before the last one: used if the newest is unreadable
@@ -712,14 +720,6 @@ func place_somewhere(item_id: String) -> bool:
 # ---------------------------------------------------------------- farmhands and arborists
 
 
-## Farmhand: collects every ready animal on the farm. Arborist: every ready tree.
-## FarmVille's helpers: each collects everything of its kind that's ready, at once. kind -> the field
-## counting them, what they're called, and what's said after.
-const HELPERS := {
-	"animal": {"field": "farmhands", "name": "FARMHANDS", "done": "COLLECTED_ANIMALS_FOR_COINS"},
-	"tree": {"field": "arborists", "name": "ARBORISTS", "done": "COLLECTED_TREES_FOR_COINS"},
-	"bloom": {"field": "gardeners", "name": "GARDENERS", "done": "COLLECTED_BLOOMS_FOR_COINS"},
-}
 
 
 func helpers_held(kind: String) -> int:

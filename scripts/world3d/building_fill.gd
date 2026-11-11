@@ -19,6 +19,9 @@ const DOOR_HOLD := 1.2        # seconds it stays open
 const PRODUCE_STEPS := 6      # piles grow in this many steps as collection nears
 const PRODUCE_SCALE := 1.5    # and are drawn this much bigger than life: they must read from across the farm
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
+const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
+const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
+const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
 var uid := -1
 var residents: Array[Animal3D] = []
@@ -31,9 +34,6 @@ var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 var _flag: Node3D             # flown while the building is full
-const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
-const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
-const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
 
