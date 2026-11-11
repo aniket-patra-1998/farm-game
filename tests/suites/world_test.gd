@@ -71,6 +71,7 @@ func test_36_the_whole_game_scene_loads() -> void:
 	_check(main.get("grid") != null, "farm grid created")
 	_check(main.get("hud") != null, "HUD created")
 	_check(main.get("sky") != null, "sky created")
+	await get_tree().process_frame  # let the layout's queued (deferred) work run before the scene goes
 	main.free() # free now, so the next test doesn't share the screen with this one
 
 
