@@ -129,11 +129,59 @@ FarmVille: quest chains from characters ("Goals"), each with 3 tasks and rewards
 - every system: rules in the system, numbers as constants or data, player text in strings.csv, tests per
   rule; review each against REVIEW.md as it's touched.
 
+## 12. What made FarmVille FarmVille: the full checklist
+Status against our game (done / partial / missing). "Social" items wait for the social feature.
+
+| Component | What it was | Ours |
+|---|---|---|
+| Plant-wait-harvest with withering | Timers of 4 h to 4 days; crops wither after 2.5x their growing time; unwither | done (check the 2.5x) |
+| The farmer and click queue | Avatar walks to every job; fenced-in farmer trick | done (customisation missing) |
+| Levels, XP, coins, Farm Cash | Unlocks by level; cash for premium | done (gems) |
+| Mastery | 3 stars per crop, tree, animal; signs | done |
+| Ribbons, collections | Achievements in 4 colours; collectibles found while farming, traded in | done |
+| Mystery young | Seedlings (8 watering cans), babies (animal feed), bulbs (flower food), eggs | eggs only: see 13 |
+| Animal homes with breeding | Coop eggs, Dairy calves, Stable foals, Pig Pen truffles, Sheep breeding by colour/pattern | partial (no sheep/pig breeding by traits) |
+| Later animal pens | Cow Pasture, Horse Paddock, Aviary, Pet Run, Wildlife Habitat, Zoo, Livestock Pen, Baby Nursery | missing |
+| Feed Mill, troughs | Bushels into Animal Feed; feed raises babies | missing (3) |
+| Orchards, giant trees | 20 trees a field; seedlings; level-2 "giant" trees | partial |
+| Flowers | Perfect bunches and Garden Shed; Blooms from bulbs; Bloom Garden | partial (bunches only) |
+| Bees | Beehive, queen, pollinated seeds | done |
+| Bushels and the Market Stall | Bushels found on harvest give bonuses and feed crafting; stall holds them | partial (check stall) |
+| Crafting | Bakery, Winery, Spa: recipes that level up, goods give fuel | done (plus ours) |
+| Vehicles | Tractor, Seeder, Harvester, Combine on fuel; Garage upgrades; Biplane instant-grow | partial (no Biplane) |
+| Farmhands, arborists | One-tap harvest of all animals / trees | done |
+| Storage | Barn, Tool Shed, Storage Cellar dug with shovels, Garage | partial (no cellar) |
+| Dogs | Puppy fed kibble daily grows up; tricks; herds/finds things | missing |
+| Expansion and other farms | Land grants; English Countryside, Lighthouse Cove... | expansion done; other farms later |
+| Goals/quests | Character quest chains, 3 tasks each, rewards | missing (10) |
+| Daily habits | Daily bonus, raffle, lost animals, wandering stallion, mystery game (darts) | partial (daily, strays) |
+| Limited editions and themes | Weekly themed items, seasonal events, snow | missing (later) |
+| Co-op jobs | Group crop orders against a clock for medals | social; a solo "farm orders" version could come first |
+| Neighbours and gifts | 5 helps a visit, free gifts, requests, feed rewards | social (9) |
+
+## 13. Mystery young (FarmVille's seedlings, babies, bulbs and eggs): spec
+One system (NurtureSystem) for all of them: a young thing is found, put on the farm, given its supply one
+at a time, and only on the last one shows what it is.
+- **Mystery Seedling**: every Orchard harvest gives coins and either a seedling or a Watering Can. Planted
+  on the farm; 8 Watering Cans; then it becomes a tree, chosen from the Orchard's trees (rare varieties
+  possible, likelier the more of their parent it holds). Replaces today's instant rare sapling.
+- **Mystery Baby**: found on harvesting an animal home; needs Animal Feed; grows into an adult of a breed
+  from that home. A Baby Nursery holds babies and gives feed daily. Today's calves/foals/lambs/piglets
+  (born with a bull/stallion/ram/boar inside) stay as FarmVille had them.
+- **Mystery Bulb**: found on harvesting flowers; needs Flower Food; becomes a Bloom (harvested for coins,
+  mastered like a crop).
+- **Mystery Egg**: from the Coop; opened for a prize (done).
+- Supplies (Watering Cans, Animal Feed, Flower Food) came mostly from friends: until the social feature
+  they are found on harvests (Orchard, homes, flowers), made by the Feed Mill, or bought with gems.
+- Assumed where sources don't say: Animal Feed and Flower Food needed per young = 8 (as for cans);
+  mystery babies come from our existing homes until FarmVille's later pens are built.
+
 ## Order of work
 1. Basics and broken: delete plot/crop (2), broken pieces (7), decoration motion (7), loose-vs-housed
    harvest audit (3).
 2. Player module (1): avatar model and walk, action queue, customisation and wardrobe, profile.
-3. Animal husbandry (3): home classes, Feed Mill and feeds, feeding, by-products; strays' adoption task (4).
+3. Mystery young (13), then animal husbandry (3): home classes, Feed Mill and feeds, feeding,
+   by-products; strays' adoption task (4).
 4. Water (6): Well building, watering, upgrades.
 5. Buildings plan (5) continues alongside: tabs, silhouettes, the 5 planned buildings.
 6. Engineering (11) and performance for low-end phones, throughout: every system measured on the showcase
