@@ -69,6 +69,7 @@ const VEHICLE_SIZES := VehicleDef.SIZES
 const COLLECTIBLE_ACTION_CHANCE := 0.02
 const ANIMAL_COLLECTIBLE_CHANCE := 0.05  # collecting animals, trees and buildings (barnyard and orchard sets)
 const UNWITHER_GEM_COST := 3
+const FRESH_FARM_CLEAR_SECONDS := 1800   # a new farm starts in fair weather for this long
 const START_COINS := 200
 const START_GEMS := 5
 const GEMS_PER_LEVEL := 1
@@ -111,7 +112,6 @@ var farmhands := 0                 # collect every animal at once
 var arborists := 0                 # collect every tree at once
 var gardeners := 0                 # collect every bloom at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
-const FRESH_FARM_CLEAR_SECONDS := 1800   # a new farm starts in fair weather for this long
 var clear_until := 0               # unix time until which the weather is clear (a new farm)
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
@@ -585,12 +585,13 @@ func seconds_until_ready(obj: Dictionary) -> int:
 func object_payout(obj: Dictionary) -> Vector2i:
 	if not is_building(obj):
 		var it := item_data(obj["id"])
-		return Vector2i(int(it["payout"]), int(it["xp"]))
+		return Vector2i(int(it.get("payout", 0)), int(it.get("xp", 0)))
 	var total := Vector2i.ZERO
 	var inside: Dictionary = obj["inside"]
 	for id in inside:
 		var it2 := item_data(id)
-		total += Vector2i(int(it2["payout"]), int(it2["xp"])) * int(inside[id])
+		# Vehicles and other things parked in a building pay nothing.
+		total += Vector2i(int(it2.get("payout", 0)), int(it2.get("xp", 0))) * int(inside[id])
 	return total
 
 

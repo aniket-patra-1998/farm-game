@@ -1106,7 +1106,7 @@ func _build_building(content: VBoxContainer) -> void:
 		for id in inside:
 			names.append("%d %s" % [int(inside[id]), Game.item_data(id)["name"]])
 		status.add_child(BookPanel.text(tr("INSIDE").join(PackedStringArray(names)), 18))
-		if total > 0:
+		if total > 0 and pay != Vector2i.ZERO:
 			var when := tr("READY_TO_COLLECT") if Game.is_ready(o) \
 				else tr("READY_IN_4") + FarmGrid.format_duration(Game.seconds_until_ready(o))
 			status.add_child(BookPanel.text(tr("PAYS_COINS_XP") % [when, pay.x, pay.y], 18))

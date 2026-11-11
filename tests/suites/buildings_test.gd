@@ -438,6 +438,7 @@ func test_93_vehicles_and_babies_through_the_drop() -> void:
 	# The first vehicle bought straight into the Garage still fills the fuel tank.
 	_check(not g.vehicles.fuel_unlocked, "no fuel before any vehicle")
 	_check(g.homes.put_in_home(int(garage["uid"]), "tractor", {"buy": true}), "a tractor bought into the Garage")
+	_eq(g.object_payout(garage), Vector2i.ZERO, "vehicles in a Garage pay nothing (and opening it is no error)")
 	_check(g.vehicles.fuel_unlocked and g.vehicles.fuel > 0, "buying it filled the fuel tank")
 	# A Combine is built from its chassis on the farm: it can't skip that by going straight in.
 	_eq(g.homes.fit(garage, "combine", {"buy": true}), FIT.BUILD_FIRST, "a Combine is built where it stands")
