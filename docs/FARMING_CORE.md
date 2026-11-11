@@ -40,8 +40,38 @@ Bees pollinate plots (done); gophers' rare finds give fertilizer or seeds; Gophe
 bonus to find chance; birds scare pests; dogs find things; vehicles and fuel speed fieldwork; crafted goods
 feed fuel and bushels. Each home states its boost in data.
 
+## 6. Inputs: the field feeds every home (the general rule behind bees and gophers)
+Bees needing flowers is one case of a single rule: **every home has inputs, and the field makes them.**
+- **Crop by-products.** Each crop family yields a *feed type* when harvested (a chance, more with mastery
+  stars): grain (wheat, corn, oats) = Grain; hay/greens (alfalfa, clover, lettuce) = Greens; roots and
+  gourds (carrot, beet, pumpkin, potato) = Roots; fruit (berries, apples from trees) = Fruit; flowers = Nectar
+  (and the Queen Bee chance from a short list of 4-5 flowers); honey and eggs/milk from homes feed crafting.
+  Stored as bushels/feed in the Barn; data/feeds.json maps crop family -> feed type.
+- **Each animal family has tastes** (data/animal_tastes.json): hens like Grain, cows Greens, pigs Roots and
+  Fruit, sheep Greens, horses Grain and Fruit, goats anything, bees Nectar. A *favourite* gives the biggest
+  effect, an *accepted* one a smaller effect, others nothing.
+- **Feeding is the action** (feed trough on the home, FarmVille's feed idea): tap the home, pick a feed, it
+  is used up. Effects last a set time and stack up to a cap:
+  - produce boost: more eggs/milk/wool/truffles per collect;
+  - speed boost: the cycle finishes sooner;
+  - rare chance: raises the odds of a rare baby, egg or find from that home (rare coat colours, golden
+    eggs, twins, rare mystery young);
+  - happiness: fed animals show it (they perk up, hop, and a heart rises), unfed ones look hungry.
+- **Quality ladder.** Better crops (higher mastery stars, golden or super harvests, pollinated plots) make
+  better feed, so the better you farm, the better your animals do. Pollinated crops give Rich feed.
+- **Odds are data.** Every number (chance per harvest, boost size, duration, caps) is in data and tuned in
+  one place; pity counters keep luck fair.
+- **Trees and orchards join in:** fruit from trees is Fruit feed and also the input for crafting; flowers feed
+  bees and the Bloom Garden; animals' produce (eggs, milk, wool) feeds crafting buildings and fuel, closing
+  the loop: crop -> feed -> animal -> produce -> goods -> fuel/coins -> more land and crops.
+
+One mechanism serves all of it: `Inputs` (feed types, stocks, tastes, effects, durations) as a system; a home
+just names which feed it takes and what each does. Gophers, bees and the rest are special cases of "finds"
+(section 1) that land in the same stocks.
+
 ## Build order
 1. `FindsSystem` + data/finds.json + harvest hook; gophers as the first family (found, rarities, pop-up).
+1b. `Inputs`: feed types from harvests (data/feeds.json), tastes (data/animal_tastes.json), feeding a home and its effects (produce, speed, rare chance).
 2. `Requirements` checker + market checklist; Gopher Garden (needs 1 gopher; auto-upgrades).
 3. Move Queen Bees, birds, collectibles onto the same framework; beehive requires a queen found from flowers.
 4. Quests from data; boosts per home; then Feed Mill (bushels), Nursery, dogs as finds/homes.
