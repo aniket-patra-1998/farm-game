@@ -645,3 +645,18 @@ func test_130_garage_shed_and_barn_show_what_they_keep() -> void:
 	_check(BuildingStock.signature("bunches", {}) != "0", "and the signature follows how many")
 	pots.free()
 	Game.shed.bunches = []
+
+
+func test_131_every_kind_stands_within_its_size_range_and_flowers_are_smaller_than_trees() -> void:
+	var top := {"tree": 0.0, "bloom": 0.0}
+	var low := {"tree": INF, "bloom": INF}
+	for id in Game.item_order:
+		var kind := str(Game.item_data(id).get("kind", ""))
+		if not top.has(kind):
+			continue
+		var h := ScaleGuide.height_of(id) * ScaleGuide.factor(id)
+		top[kind] = maxf(top[kind], h)
+		low[kind] = minf(low[kind], h)
+	_check(low["tree"] >= 1.29 and top["tree"] <= 2.21, "trees stand 1.3-2.2 tiles (%.2f-%.2f)" % [low["tree"], top["tree"]])
+	_check(low["bloom"] >= 0.29 and top["bloom"] <= 0.51, "blooms stand 0.3-0.5 (%.2f-%.2f)" % [low["bloom"], top["bloom"]])
+	_check(top["bloom"] < low["tree"], "the tallest flower is shorter than the shortest tree")

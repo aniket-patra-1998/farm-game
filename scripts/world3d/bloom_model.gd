@@ -54,9 +54,9 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, r
 
 
 ## A bloom on the farm, as its own baked model.
-static func build(it: Dictionary, o: Dictionary) -> Node3D:
+static func build(it: Dictionary, o: Dictionary, scale := 1.0) -> Node3D:
 	var holder := Node3D.new()
 	var d := Game.catalog.get_def(str(it.get("id", ""))) as BloomDef
-	build_at(holder, Vector3(0.5, 0, 0.5), it, 1.6, Game.is_ready(o), Game.is_withered(o),
+	build_at(holder, Vector3(0.5, 0, 0.5), it, 1.6 * scale, Game.is_ready(o), Game.is_withered(o),
 		d != null and d.is_full(), int(o.get("uid", 0)))
 	return ModelKit.bake(holder)

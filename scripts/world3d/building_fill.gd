@@ -257,9 +257,10 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
 			var d := Game.catalog.get_def(ids[k]) as BloomDef
-			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE, ready, false, d.is_full(), uid + k)
+			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE * ScaleGuide.factor(ids[k]), ready, false,
+				d.is_full(), uid + k)
 		else:
-			TreeModel.build_at(holder, Vector3(x, 0, z), it, size, ready, uid + k)
+			TreeModel.build_at(holder, Vector3(x, 0, z), it, size * ScaleGuide.factor(ids[k]), ready, uid + k)
 	_plants = ModelKit.bake(holder)
 	add_child(_plants)
 

@@ -167,7 +167,8 @@ func _build(o: Dictionary) -> Node3D:
 	match Game.kind_of(o):
 		"tree":
 			node = Node3D.new()
-			TreeModel.build_at(node, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, 1.0, Game.is_ready(o), int(o["uid"]))
+			TreeModel.build_at(node, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, ScaleGuide.factor(str(o["id"])),
+				Game.is_ready(o), int(o["uid"]))
 			node = ModelKit.bake(node)
 		"vehicle":
 			node = VehicleModel.build(it, Game.under_construction(o))
@@ -176,7 +177,7 @@ func _build(o: Dictionary) -> Node3D:
 		"young":
 			node = DecorModel.build_young(it, o, Game.nurture.growth(o))
 		"bloom":
-			node = BloomModel.build(it, o)
+			node = BloomModel.build(it, o, ScaleGuide.factor(str(o["id"])))
 		_:
 			if Game.under_construction(o):
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))

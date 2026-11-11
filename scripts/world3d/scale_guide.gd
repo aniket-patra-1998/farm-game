@@ -5,6 +5,34 @@ extends RefCounted
 ## and compares it with the range its class should have (data/scale_guide.json), the same way for everything.
 
 
+const DATA := "res://data/scale_guide.json"
+
+static var _ranges := {}
+static var _factors := {}
+
+
+## What to multiply an item's size by so it stands within its kind's range (1.0 when it already does, or its
+## kind has no range). Measured once per item and kept.
+static func factor(id: String) -> float:
+	if _factors.has(id):
+		return _factors[id]
+	var f := 1.0
+	var range_of: Array = _heights().get(str(Game.item_data(id).get("kind", "")), [])
+	if range_of.size() == 2:
+		var h := height_of(id)
+		if h > 0.0:
+			f = clampf(h, float(range_of[0]), float(range_of[1])) / h
+	_factors[id] = f
+	return f
+
+
+static func _heights() -> Dictionary:
+	if _ranges.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
+		_ranges = (parsed as Dictionary).get("heights", {}) if parsed is Dictionary else {"": []}
+	return _ranges
+
+
 ## An item's real height in tiles: its model built as the farm builds it and measured (0 if it has no model).
 static func height_of(id: String) -> float:
 	var node := model_of(id)
