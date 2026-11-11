@@ -22,13 +22,18 @@ const SHADE_BY_KIND := {
 	"animal": [0.0, 0.55]}
 const SHADE_BLUR := 0.4            # shade fades out over this much past what casts it (tiles)
 const WEAR_REACH := 0.9            # and wear over this much
+
 ## Kinds that nothing grows through (trees and animals stand among the grass).
 const COVERS_GRASS := ["building", "vehicle", "decor"]
+const TUFT_FLOATS := 16           # a tuft in the MultiMesh buffer: transform (12) and colour (4)
 const CLUMP_MAX := 9               # tufts in the thickest clump on a tile
 const FLOWER_CHANCE := 0.22        # of a meadow tile having a patch of wild flowers
+
 const FLOWERS := [Color("#f5f1e6"), Color("#ffd84a"), Color("#c99be8"), Color("#ff8fa3"), Color("#8fc6ff")]
 
+
 var wind := 0.6: set = _set_wind
+
 
 var _slab: MeshInstance3D
 var _meadow: MeshInstance3D
@@ -38,8 +43,10 @@ var _tuft_material: ShaderMaterial
 var _flower_material: ShaderMaterial
 var _grass: Array[ShaderMaterial] = []
 var _shade: Image                  # R: shade, G: wear (see the class notes)
+var _meadow_tufts := PackedFloat32Array()   # the meadow's tufts (MultiMesh buffer), kept: they never change
 var _shade_texture: ImageTexture
 var _shade_signature := 0
+
 var _size := -1
 
 
@@ -89,9 +96,12 @@ func rebuild() -> void:
 		var plane := _meadow.mesh as PlaneMesh
 		plane.size = Vector2(n + MEADOW * 2.0, n + MEADOW * 2.0)
 		_meadow.position = Vector3(n / 2.0, -SLAB, n / 2.0)
+		_meadow_tufts = PackedFloat32Array()
+		_scatter_flowers(n)  # flowers grow only off the farm, so only its size moves them
 	_paint_shade(n)
 	_scatter_tufts(n)
-	_scatter_flowers(n)
+
+
 
 
 ## Things on the farm moved, came or went: the shade and wear under them, and where grass grows, follow
@@ -246,20 +256,36 @@ static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector
 ## lush patches and thin ones), thinning where the grass is worn, and none through anything that covers
 ## the ground. Seeded by position, so they don't move when rebuilt.
 func _scatter_tufts(n: int) -> void:
+	# The meadow's tufts never change (only the farm's size moves them): worked out once and kept.
+	if _meadow_tufts.is_empty():
+		_meadow_tufts = _tuft_buffer(n, false)
+	var buffer := _tuft_buffer(n, true)
+	buffer.append_array(_meadow_tufts)
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true  # each clump's shade, multiplied into its blades' colours
 	mm.mesh = _tuft_mesh()
-	var spots: Array[Transform3D] = []
-	var tints: Array[Color] = []
+	mm.instance_count = buffer.size() / TUFT_FLOATS
+	mm.buffer = buffer  # one copy into the engine, not two calls per tuft
+	_tufts.multimesh = mm
+
+
+
+
+## The tufts on the farm's tiles (`on_farm`) or on the meadow round it, as MultiMesh buffer data: for each,
+## its transform as 3 rows of 4 floats, then its colour.
+func _tuft_buffer(n: int, on_farm_only: bool) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
 	var rng := RandomNumberGenerator.new()
 	var lush := FastNoiseLite.new()
 	lush.seed = 7
 	lush.frequency = 0.21
-	var reach := int(TUFT_REACH)
+	var reach := 0 if on_farm_only else int(TUFT_REACH)
 	for r in range(-reach, n + reach):
 		for c in range(-reach, n + reach):
 			var on_farm := r >= 0 and c >= 0 and r < n and c < n
+			if on_farm != on_farm_only:
+				continue
 			if on_farm and (Game.plots[Game.index_of(r, c)].get("state", "grass") != "grass"
 					or COVERS_GRASS.has(_kind_at(r, c))):
 				continue
@@ -276,18 +302,19 @@ func _scatter_tufts(n: int) -> void:
 				var spread := 0.16 if k < count * 0.7 else 0.45
 				var p := centre + Vector2(rng.randfn(0.0, spread), rng.randfn(0.0, spread))
 				p = p.clamp(Vector2(c, r), Vector2(c + 0.999, r + 0.999))
-				var s := rng.randf_range(0.7, 1.25) * lerpf(0.85, 1.15, thick)
-				spots.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)),
-					Vector3(p.x, y, p.y)))
+				var sc := rng.randf_range(0.7, 1.25) * lerpf(0.85, 1.15, thick)
+				var turn := rng.randf() * TAU
+				var cs := cos(turn) * sc
+				var sn := sin(turn) * sc
 				# Lusher clumps are a deeper green; thin or worn ones paler and yellower.
 				var b := rng.randf_range(0.9, 1.08)
-				tints.append(Color(b * (1.0 + 0.06 * hue + worn * 0.15), b * (1.0 - worn * 0.05),
-					b * (0.92 + 0.08 * thick - worn * 0.2), 1.0))
-	mm.instance_count = spots.size()
-	for i in spots.size():
-		mm.set_instance_transform(i, spots[i])
-		mm.set_instance_color(i, tints[i])
-	_tufts.multimesh = mm
+				# A turn about up, scaled: rows (cs, 0, sn, x), (0, sc, 0, y), (-sn, 0, cs, z).
+				out.append_array([cs, 0.0, sn, p.x, 0.0, sc, 0.0, y, -sn, 0.0, cs, p.y,
+					b * (1.0 + 0.06 * hue + worn * 0.15), b * (1.0 - worn * 0.05),
+					b * (0.92 + 0.08 * thick - worn * 0.2), 1.0])
+	return out
+
+
 
 
 ## Patches of wild flowers in the meadow and along the farm's edge, a few colours to a patch.

@@ -1,6 +1,13 @@
 extends TestSuite
 ## The 3D world: the projection that lines it up with the 2D grid, and the models it's built from.
 
+const ANIMAL_DRAWS := 5
+const ANIMAL_SHADOW_DRAWS := 2
+
+const TREE_DRAWS := 6
+
+
+
 
 func test_94_the_3d_world_lines_up_with_the_2d_grid() -> void:
 	# Every tile corner and centre maps to the same place both ways.
@@ -468,3 +475,44 @@ func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 			_check(h >= last_h, "%s size %d is no lower than the size before" % [id, level])
 			last_h = h
 	_done(g)
+
+
+
+
+func test_112_models_keep_to_a_phone_s_draw_budget() -> void:
+	# Each colour used to be its own draw and each animal ~24 meshes: the showcase drew 11,000 calls a frame.
+	# Now a model's parts share a draw per shader (their colours in their vertices) and an animal is one
+	# skinned mesh. These budgets keep it that way.
+	var g := _farm()
+	for id in g.items:
+		var it: Dictionary = g.items[id]
+		match str(it.get("kind", "")):
+			"animal":
+				var a := Animal3D.create(it, null, Vector3.ZERO)
+				var draws := _surfaces(a, false)
+				_check(draws <= ANIMAL_DRAWS, "%s is %d draws (at most %d)" % [id, draws, ANIMAL_DRAWS])
+				_check(_surfaces(a, true) <= ANIMAL_SHADOW_DRAWS, "%s casts its shadow in at most %d draws"
+					% [id, ANIMAL_SHADOW_DRAWS])
+				a.free()
+			"tree":
+				var holder := Node3D.new()
+				TreeModel.build_at(holder, Vector3.ZERO, it, 1.0, true, 1)
+				var baked := ModelKit.bake(holder)
+				var draws := _surfaces(baked, false)
+				_check(draws <= TREE_DRAWS, "a fruiting %s is %d draws (at most %d)" % [id, draws, TREE_DRAWS])
+				baked.free()
+	_done(g)
+
+
+
+
+## Draws a model makes: the surfaces of its meshes (only those casting shadows, if `shadow_only`).
+func _surfaces(node: Node, shadow_only: bool) -> int:
+	var n := 0
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+		var mi := node as MeshInstance3D
+		if not shadow_only or mi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			n += mi.mesh.get_surface_count()
+	for c in node.get_children():
+		n += _surfaces(c, shadow_only)
+	return n

@@ -215,3 +215,27 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 	g.weather_override = "fog"
 	_eq(tr(g.weather()["name"]), "Fog", "the game reports its weather, by a key in the strings file")
 	_done(g)
+
+
+func test_113_finding_an_object_by_uid_stays_right_however_the_list_changes() -> void:
+	# object_by_uid is an index now (it was a scan of every object, many times a frame); systems add, remove
+	# and replace objects directly, so it must notice every kind of change by itself.
+	var g := _farm()
+	g.farm_size = GameState.MAX_SIZE
+	var uids: Array[int] = []
+	for o in g.objects:
+		uids.append(int(o["uid"]))
+	for uid in uids:
+		_eq(int(g.object_by_uid(uid).get("uid", -1)), uid, "uid %d found" % uid)
+	var gone: Dictionary = g.objects[0]
+	g.objects.erase(gone)
+	_check(g.object_by_uid(int(gone["uid"])).is_empty(), "a removed object is no longer found")
+	for o in g.objects:
+		_eq(int(g.object_by_uid(int(o["uid"])).get("uid", -1)), int(o["uid"]), "the rest still are, shifted along")
+	g.objects = g.objects.slice(1)
+	_eq(int(g.object_by_uid(int(g.objects[0]["uid"])).get("uid", -1)), int(g.objects[0]["uid"]),
+		"after the list is replaced too")
+	g.objects.append({"uid": 99999, "id": "hay_bale", "row": 25, "col": 25, "t": 0})
+	_eq(str(g.object_by_uid(99999).get("id", "")), "hay_bale", "and an object added directly is found")
+	_check(g.object_by_uid(-1).is_empty(), "nothing has uid -1")
+	_done(g)

@@ -6,8 +6,27 @@ extends RefCounted
 
 const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leaves it whole
 
+## Tessellation: enough to read round at farm zoom on a phone, no more (each ball is ~170 triangles,
+## each cylinder ~48, before the shadow pass draws them again).
+const BALL_SEGMENTS := 12
+const BALL_RINGS := 7
+
+const CYLINDER_SIDES := 12
+
+
+## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
+const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color"}
+
+const WHITE_TWIN := &"white_twin"  # meta on a white twin
+
+
+
 static var _materials := {}  # key -> Material
+
 static var _meshes := {}     # key -> Mesh (shared unit shapes)
+
+
+static var _white := {}   # material id -> [white twin, colour]
 
 
 # ---------------------------------------------------------------- materials
@@ -89,9 +108,11 @@ static func box(parent: Node3D, lo: Vector3, hi: Vector3, mat: Material, shadow 
 	return mi
 
 
+
+
 ## An upright cylinder (or a cone, with `top_r` 0) standing on `base`.
 static func cylinder(parent: Node3D, base: Vector3, r: float, h: float, mat: Material, top_r := -1.0,
-		sides := 16) -> MeshInstance3D:
+		sides := CYLINDER_SIDES) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var mesh := CylinderMesh.new()
 	mesh.bottom_radius = r
@@ -112,8 +133,8 @@ static func ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale
 	var mesh := SphereMesh.new()
 	mesh.radius = r
 	mesh.height = r * 2.0
-	mesh.radial_segments = 14
-	mesh.rings = 8
+	mesh.radial_segments = BALL_SEGMENTS
+	mesh.rings = BALL_RINGS
 	mi.mesh = mesh
 	mi.position = centre
 	mi.scale = scale
@@ -326,8 +347,15 @@ static func _collect(node: Node, xf: Transform3D, groups: Dictionary, kept: Arra
 			var shadow := mi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			for s in mi.mesh.get_surface_count():
 				var mat := mi.material_override if mi.material_override != null else mi.get_active_material(s)
-				# Surfaces only merge with the same vertex layout (a box has UVs, a hand-made face doesn't).
 				var arrays := mi.mesh.surface_get_arrays(s)
+				# A painted or patterned part's colour moves into its vertices and the part takes its shader's
+				# one white material, so every part painted with that shader merges into one draw, whatever
+				# its colour (the shaders tint by vertex colour).
+				var tint := tinted(mat)
+				if not tint.is_empty():
+					mat = tint[0]
+					arrays = tint_arrays(arrays, tint[1])
+				# Surfaces only merge with the same vertex layout (a box has UVs, a hand-made face doesn't).
 				var fmt := 0
 				for k: int in [Mesh.ARRAY_TEX_UV, Mesh.ARRAY_COLOR, Mesh.ARRAY_TANGENT]:
 					if arrays[k] != null:
@@ -337,5 +365,85 @@ static func _collect(node: Node, xf: Transform3D, groups: Dictionary, kept: Arra
 					var st := SurfaceTool.new()
 					st.begin(Mesh.PRIMITIVE_TRIANGLES)
 					groups[key] = {"st": st, "mat": mat, "shadow": shadow}
-				(groups[key]["st"] as SurfaceTool).append_from(mi.mesh, s, cxf)
+				if tint.is_empty():
+					(groups[key]["st"] as SurfaceTool).append_from(mi.mesh, s, cxf)
+				else:
+					var one := ArrayMesh.new()
+					one.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+					(groups[key]["st"] as SurfaceTool).append_from(one, 0, cxf)
 		_collect(c, cxf, groups, kept)
+
+
+
+
+## Merges a node's own plain parts (MeshInstance3D children with nothing under them, not in `skip`) into
+## one mesh, a draw per shader instead of one per part: for models whose other parts move (animals).
+static func merge_leaves(parent: Node3D, skip: Array) -> void:
+	var tmp := Node3D.new()
+	for c in parent.get_children():
+		if c is MeshInstance3D and c.get_child_count() == 0 and not skip.has(c) and not c.has_meta(KEEP):
+			parent.remove_child(c)
+			tmp.add_child(c)
+	if tmp.get_child_count() < 2:
+		for c in tmp.get_children():
+			tmp.remove_child(c)
+			parent.add_child(c)
+		tmp.free()
+		return
+	parent.add_child(bake(tmp))
+
+
+
+
+## For a material whose shader tints by vertex colour: [its white twin, its colour]; otherwise [].
+static func tinted(mat: Material) -> Array:
+	if not mat is ShaderMaterial or (mat as ShaderMaterial).shader == null:
+		return []
+	var id := mat.get_instance_id()
+	if _white.has(id):
+		return _white[id]
+	var sm := mat as ShaderMaterial
+	var param: String = TINT_PARAMS.get(sm.shader.resource_path, "")
+	# A white twin's surfaces already carry their colours in their vertices (merged once, then skinned).
+	if param == "" or sm.has_meta(WHITE_TWIN):
+		_white[id] = []
+		return []
+	var col = sm.get_shader_parameter(param)
+	var colour: Color = col if col is Color else Color(col.x, col.y, col.z) if col is Vector3 else Color.WHITE
+	# Twins are shared by everything with the same shader and other settings.
+	var sig := sm.shader.resource_path
+	for u in sm.shader.get_shader_uniform_list():
+		if u["name"] != param:
+			sig += "|%s=%s" % [u["name"], sm.get_shader_parameter(u["name"])]
+	var key := "white:" + sig
+	if not _materials.has(key):
+		var w := sm.duplicate() as ShaderMaterial
+		w.set_shader_parameter(param, Color.WHITE)
+		w.set_meta(WHITE_TWIN, true)
+		_materials[key] = w
+	_white[id] = [_materials[key], colour]
+	return _white[id]
+
+
+
+
+## A surface's arrays with every vertex coloured `col` and indexed (no UVs or tangents: the tinting shaders
+## use neither, and dropping them lets every shape share one vertex layout).
+static func tint_arrays(arrays: Array, col: Color) -> Array:
+	var out := arrays.duplicate()
+	var n := (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	var colours := PackedColorArray()
+	colours.resize(n)
+	colours.fill(col)
+	out[Mesh.ARRAY_COLOR] = colours
+	# Everything merged into one surface must be indexed alike: a SurfaceTool mixing indexed shapes with
+	# unindexed hand-made faces drops the faces.
+	if arrays[Mesh.ARRAY_INDEX] == null:
+		var idx := PackedInt32Array()
+		idx.resize(n)
+		for k in n:
+			idx[k] = k
+		out[Mesh.ARRAY_INDEX] = idx
+	out[Mesh.ARRAY_TEX_UV] = null
+	out[Mesh.ARRAY_TANGENT] = null
+	return out

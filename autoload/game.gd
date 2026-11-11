@@ -139,9 +139,13 @@ var strays: StraySystem
 var crafting: CraftingSystem
 var homes: HousingSystem
 var buildings: BuildingSystem
+
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
 
+
 var _occupied := {}                # tile index -> uid of the object covering it
+var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
+
 var _save_queued := false
 
 
@@ -471,11 +475,24 @@ func object_at(i: int) -> Dictionary:
 	return object_by_uid(int(_occupied.get(i, -1)))
 
 
+
+
+## O(1): a uid -> position index that checks itself on every use. Code anywhere may add, remove or replace
+## objects without telling it: a stale position no longer holds that uid, and the index is rebuilt then.
 func object_by_uid(uid: int) -> Dictionary:
-	for o in objects:
-		if int(o["uid"]) == uid:
-			return o
-	return {}
+	if uid < 0:
+		return {}
+	var i: int = _uid_index.get(uid, -1)
+	if i < 0 or i >= objects.size() or int(objects[i]["uid"]) != uid:
+		_uid_index.clear()
+		for k in objects.size():
+			_uid_index[int(objects[k]["uid"])] = k
+		i = _uid_index.get(uid, -1)
+		if i < 0:
+			return {}
+	return objects[i]
+
+
 
 
 func is_occupied(i: int) -> bool:

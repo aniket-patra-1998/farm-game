@@ -20,9 +20,23 @@ const LEG_NAMES := ["hind_far", "fore_far", "hind_near", "fore_near"]
 
 const LEG_PHASES := [0.5, 0.75, 0.0, 0.25]      # the four-beat walk, as in QuadrupedArt
 const CONTACT_SPREAD := 1.25                    # the contact shade reaches this far past the body
+
 const CONTACT_LIFT := 0.012                     # just above the grass, so it never flickers into it
 
+
+## The animation budget: this many animals on screen are posed every frame; past it, each is posed every
+## 2nd, 3rd or 4th frame in turn (round-robin, so the work is spread evenly), holding its pose between.
+## The usual mobile budget is 10-20 fully animated characters; the minds still think every frame.
+const FULL_RATE := 16
+const MAX_STRIDE := 4
+
 static var _contact_material: ShaderMaterial    # one for every animal
+
+static var _frame := -1          # the frame _seen counts
+static var _seen := 0            # animals on screen so far this frame
+
+static var _seen_last := 0       # and last frame, which sets this frame's stride
+
 
 
 var rig: AnimalRig
@@ -48,6 +62,13 @@ var _leg := 0.2
 var _contact: MeshInstance3D     # the soft shade on the grass right under it
 var _eyes: Array[Node3D] = []    # (they blink)
 var _walk_speed := 1.0           # its walking speed, in units a second
+var _skeleton: Skeleton3D        # the whole animal is one skinned mesh on this (see _skin)
+var _bones: Array[Node3D] = []   # the part nodes the pose code moves, by bone index; copied to the bones
+var _slot := 0                   # its turn in the round-robin when posed less than every frame
+
+var _pending := 0.0              # time not yet posed (while waiting its turn)
+
+
 
 
 
@@ -84,7 +105,170 @@ func _build() -> void:
 		_:
 			_build_quad()
 	_build_contact()
+	_merge_parts()
+	_skin()
+	_slot = get_instance_id() % MAX_STRIDE
 	rotation.y = heading
+
+
+
+
+## Draws: the parts that never move against each other (body and its coat, head and its face) become one
+## mesh each, and only the body and head cast shadows; the thin moving parts (legs, ears, eyes, tail,
+## wings) cast none, which at this size the sun's shadow wouldn't show anyway, and the contact shade under
+## the animal grounds it. A cow goes from ~24 draws and ~24 shadow draws to ~12 and 2.
+func _merge_parts() -> void:
+	var moving: Array = [_neck, _head, _tail, _contact]
+	moving.append_array(_wings)
+	moving.append_array(_ears)
+	moving.append_array(_eyes)
+	for leg in _legs:
+		for k in leg:
+			if leg[k] is Node3D:
+				moving.append(leg[k])
+	ModelKit.merge_leaves(_body, moving)
+	if _head != null:
+		ModelKit.merge_leaves(_head, moving)
+	for n: Node3D in moving:
+		if n != null and n != _head:
+			_no_shadow(n)
+
+
+
+
+## One draw for the whole animal (two with its shadow-casting body and head): every part's mesh is baked,
+## at rest, into one skinned mesh, each part bound wholly to its own bone. The part nodes stay, emptied, as
+## the pose: the pose code moves them as before, and _pose_bones copies their transforms to the bones.
+func _skin() -> void:
+	var parts: Array[MeshInstance3D] = []
+	_gather(self, parts)
+	if parts.is_empty():
+		return
+	_skeleton = Skeleton3D.new()
+	var bone_of := {}   # node -> bone index
+	var groups := {}    # "shadow|material|format" -> {"st", "mat", "shadow"}
+	for mi in parts:
+		var chain: Array[Node3D] = []
+		var n: Node = mi
+		while n != self:
+			chain.push_front(n as Node3D)
+			n = n.get_parent()
+		var rest := Transform3D.IDENTITY
+		for link in chain:
+			rest = rest * link.transform
+			if not bone_of.has(link):
+				var b := _skeleton.get_bone_count()
+				_skeleton.add_bone(str(b))
+				_skeleton.set_bone_parent(b, bone_of.get(link.get_parent(), -1))
+				_skeleton.set_bone_rest(b, link.transform)
+				bone_of[link] = b
+				_bones.append(link)
+		var bone: int = bone_of[mi]
+		var shadow := mi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for s in mi.mesh.get_surface_count():
+			var mat := mi.material_override if mi.material_override != null else mi.get_active_material(s)
+			var arrays := mi.mesh.surface_get_arrays(s)
+			var tint := ModelKit.tinted(mat)
+			if not tint.is_empty():
+				mat = tint[0]
+				arrays = ModelKit.tint_arrays(arrays, tint[1])
+			var count := (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			var bones := PackedInt32Array()
+			bones.resize(count * 4)
+			var weights := PackedFloat32Array()
+			weights.resize(count * 4)
+			for v in count:
+				bones[v * 4] = bone
+				weights[v * 4] = 1.0
+			arrays[Mesh.ARRAY_BONES] = bones
+			arrays[Mesh.ARRAY_WEIGHTS] = weights
+			var fmt := 0
+			for k: int in [Mesh.ARRAY_TEX_UV, Mesh.ARRAY_COLOR, Mesh.ARRAY_TANGENT]:
+				if arrays[k] != null:
+					fmt |= 1 << k
+			var key := "%s|%d|%d" % [shadow, mat.get_instance_id() if mat != null else 0, fmt]
+			if not groups.has(key):
+				var st := SurfaceTool.new()
+				st.begin(Mesh.PRIMITIVE_TRIANGLES)
+				groups[key] = {"st": st, "mat": mat, "shadow": shadow}
+			var one := ArrayMesh.new()
+			one.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+			(groups[key]["st"] as SurfaceTool).append_from(one, 0, rest)
+		mi.mesh = null  # it's drawn by the skinned mesh now; the node stays as its bone's pose
+	add_child(_skeleton)
+	var skin := _skeleton.create_skin_from_rest_transforms()
+	for shadow: bool in [true, false]:
+		var mesh := ArrayMesh.new()
+		var mats: Array[Material] = []
+		for key in groups:
+			if groups[key]["shadow"] == shadow:
+				(groups[key]["st"] as SurfaceTool).commit(mesh)
+				mats.append(groups[key]["mat"])
+		if mesh.get_surface_count() == 0:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.skin = skin
+		for k in mats.size():
+			mi.set_surface_override_material(k, mats[k])
+		if not shadow:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_skeleton.add_child(mi)
+		mi.skeleton = NodePath("..")
+	_pose_bones()
+
+
+
+
+func _gather(n: Node, out: Array[MeshInstance3D]) -> void:
+	for c in n.get_children():
+		if c == _contact or c == _skeleton:
+			continue
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh != null:
+			out.append(c)
+		_gather(c, out)
+
+
+
+
+func _pose_bones() -> void:
+	if _skeleton == null:
+		return
+	for b in _bones.size():
+		_skeleton.set_bone_pose(b, _bones[b].transform)
+
+
+
+
+## Poses it this frame if it's on screen and its turn has come (the animation budget, FULL_RATE): owners
+## call this every frame instead of update().
+func animate(delta: float, cam: Camera3D) -> void:
+	if cam != null and not cam.is_position_in_frustum(global_position):
+		_pending = 0.0
+		return
+	var f := Engine.get_process_frames()
+	if f != _frame:
+		_frame = f
+		_seen_last = _seen
+		_seen = 0
+	_seen += 1
+	_pending += delta
+	var stride := clampi(ceili(float(_seen_last) / FULL_RATE), 1, MAX_STRIDE)
+	if (f + _slot) % stride != 0:
+		return
+	update(_pending)
+	_pending = 0.0
+
+
+
+
+static func _no_shadow(n: Node) -> void:
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for c in n.get_children():
+		_no_shadow(c)
+
+
 
 
 ## A soft dark patch on the grass under the body, a little longer than it, so the animal stands on the
@@ -487,6 +671,9 @@ func update(delta: float) -> void:
 		_:
 			_pose_quad(p)
 	_settle_contact(p)
+	_pose_bones()
+
+
 
 
 ## Which way to turn the head to look at the camera, from straight ahead (radians, + to its left).

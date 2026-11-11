@@ -11,13 +11,16 @@ uniform float ao_reach = 0.22;    // and how far up the shade fades out (world u
 
 varying float height;
 
+varying vec3 tint;  // the part's colour when baked into a merged mesh (white if none)
+
 void vertex() {
+	tint = COLOR.rgb;
 	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
 }
 
 void fragment() {
 	float ao = mix(1.0 - ground_ao, 1.0, smoothstep(0.0, ao_reach, height));
-	ALBEDO = albedo * ao;
+	ALBEDO = albedo * tint * ao;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
 }

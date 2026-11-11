@@ -111,8 +111,7 @@ func _process(delta: float) -> void:
 			continue
 		if a.behaviour == null:
 			a.behaviour = _mind_of(a)
-		if cam == null or cam.is_position_in_frustum(a.global_position):
-			a.update(delta)
+		a.animate(delta, cam)
 
 
 

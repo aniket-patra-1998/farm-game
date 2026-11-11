@@ -17,14 +17,17 @@ float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+varying vec3 tint;  // the part's colour when baked into a merged mesh (white if none)
+
 void vertex() {
+	tint = COLOR.rgb;
 	local_pos = VERTEX;
 	local_normal = NORMAL;
 	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
 }
 
 void fragment() {
-	vec3 col = base_color;
+	vec3 col = base_color * tint;
 	float along = abs(local_normal.x) > 0.5 ? local_pos.z : local_pos.x;
 	float y = local_pos.y / scale;
 	if (style == 0) {

@@ -146,7 +146,9 @@ func refresh_all() -> void:
 		"snow": 0.9
 	}.get(Game.weather()["state"], 0.6)
 	for p in pieces.values():
-		(p as FarmPiece).refresh()
+		# In 3D the hidden pieces draw nothing (their 3D twins show it); they only report what's ready.
+		if not three_d or (p as FarmPiece).visible:
+			(p as FarmPiece).refresh()
 	_ready_list = pieces.values().filter(func(p): return p.is_ready())
 
 

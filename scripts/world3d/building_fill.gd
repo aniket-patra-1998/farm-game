@@ -243,8 +243,7 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	for a in residents:
 		a.behaviour.update(delta)
-		if cam == null or cam.is_position_in_frustum(a.global_position):
-			a.update(delta)
+		a.animate(delta, cam)
 
 
 ## Collected: the doors swing open (or the shutter rolls up) and close again, the produce springs off,
