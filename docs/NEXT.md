@@ -12,12 +12,17 @@ FarmVille footprints (with a save migration), FarmVille limits, the 5 planned bu
 - `Game.buildings` (scripts/systems/building_system.gd): can_buy / can_expand / can_sell -> Verdict;
   limits (5 Dairy, 3 crafting, 1 of most); buy missing materials with gems. Tests 108-110.
 
+## Done in phase 2 (step 1)
+- FarmVille footprints: Coop 3x2, Stable 3x4, Pig Pen 3x4, Bakery/Winery/Spa 4x3, Garden Shed 2x1;
+  building_models.json bodies rescaled to keep about the same block in tiles (test 107 passes).
+- Save v2 (`SAVE_VERSION 2`, `OLDEST_SAVE_VERSION 1`). `Game.settle_objects()` runs on every load: an
+  object that no longer fits moves to the nearest free spot, with message SOME_BUILDINGS_CHANGED_SHAPE_AND
+  (appended to absence_note). Test 111 (saving_test.gd) loads a v1 save.
+- Known: the 2D placeholder refs (art/refs, drawn by PlaceholderArt into a square diamond) now show the
+  3x4 Stable as a long low shed. The 3D model is fine; fix with the phase 3 silhouettes.
+
 ## Next, in order
-1. Footprints: Coop 3x2, Stable 3x4, Pig Pen 3x4, Bakery/Winery/Spa 4x3, Garden Shed 2x1 (buildings.json
-   w/h) + adjust building_models.json bodies so test 107 still passes (long/short <= 1.4).
-   Save v2: SAVE_VERSION 2, load accepts 1, and after loading, any object that no longer fits is moved to
-   the nearest free spot (generic "settle" pass in load_game), with a message; test with a v1 save.
-2. Market tabs by category (BuildingDef.tab()).
+1. Market tabs by category (BuildingDef.tab()).
 3. Phase 3 of the doc: each building its own silhouette; ready sparkle; broken Barn.
 4. The 5 planned buildings, each with a job.
 
