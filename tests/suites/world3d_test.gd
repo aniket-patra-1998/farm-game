@@ -163,6 +163,23 @@ func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
 	grid.object_poked.emit(9001)
 	_eq(mind.state, AnimalBehaviour.State.LOOK, "a tapped cow looks round")
 	_check(mind.pose.hop > 0.0, "with a little start")
+	# Pressed and held, the Dairy Farm lifts off; dragged to bare grass and let go, it is set down there.
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = on_dairy
+	grid._unhandled_input(press)
+	grid._process(FarmGrid.HOLD_TO_LIFT + 0.05)
+	_eq(int(grid.placing.get("uid", -1)), 9002, "holding the Dairy Farm picks it up")
+	var spot := Vector2i(1, 1)
+	var fpd := Game.footprint("cow_shed")
+	var tile_pos := cam.unproject_position(Vector3(spot.y + fpd.x / 2.0, 0.0, spot.x + fpd.y / 2.0))
+	var drop := InputEventScreenTouch.new()
+	drop.pressed = false
+	drop.position = tile_pos
+	_check(Game.can_place("cow_shed", spot.x, spot.y, 9002), "the spot is free")
+	grid._unhandled_input(drop)
+	_check(grid.placing.is_empty(), "and letting go puts it down")
+	_check(int(Game.object_by_uid(9002)["row"]) != 5 or int(Game.object_by_uid(9002)["col"]) != 8, "somewhere new")
 	main.free()
 
 

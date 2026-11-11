@@ -39,6 +39,7 @@ const BUZZ_ERROR := 40
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
+const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is picked up
 
 ## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id] (see scenery()).
 static var _scenery: Array = []
@@ -76,6 +77,7 @@ var _sell_pending_until := 0
 var _vehicle_flash := {} # the area a vehicle just worked: {"row", "col", "w", "h", "until"}
 
 var _press_pos := Vector2.ZERO
+var _held := 0.0             # how long the finger has rested where it went down
 var _pressing := false
 var _dragged := false
 
@@ -513,6 +515,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if touch.pressed:
 			_pressing = true
 			_dragged = false
+			_held = 0.0
 			_press_pos = touch.position
 			_press_on_farm = _on_farm_area(touch.position)
 		else:
@@ -526,6 +529,31 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dragged = true
 
 
+
+
+## Press and hold on anything on the farm to pick it up (the Move tool's drag, without choosing the tool):
+## it lifts off, follows the finger, and lets go where you release: onto the grass, into a home that takes it
+## (a vehicle into the Garage, an animal into its pen), or the Barn. Release it where it was to put it back.
+func _process(delta: float) -> void:
+	if not _pressing or _dragged or not _press_on_farm or not placing.is_empty():
+		return
+	_held += delta
+	if _held < HOLD_TO_LIFT:
+		return
+	_pressing = false  # whatever happens, this press is not a tap
+	var uid := -1
+	if picker.is_valid():
+		uid = picker.call(_press_pos)
+	else:
+		var world := get_canvas_transform().affine_inverse() * _press_pos
+		var i := index_at(to_local(world))
+		uid = int(Game.object_at(i).get("uid", -1)) if i >= 0 else -1
+	var obj := Game.object_by_uid(uid)
+	if obj.is_empty():
+		return
+	_feel("place", BUZZ_PLACE)
+	_poke(uid)
+	start_placing(str(obj["id"]), uid)
 
 
 func _on_farm_area(screen_pos: Vector2) -> bool:
