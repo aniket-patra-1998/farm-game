@@ -439,9 +439,10 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 			ModelKit.box(root, Vector3(x - w / 2 - 0.02, y0 + h, z), Vector3(x + w / 2 + 0.02, y0 + h + 0.03, z + 0.04),
 				ModelKit.paint(trim))
 		_:
-			# A painted door in a frame (and, for an arch, a rounded top).
-			ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0 + h, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.03, z + 0.02),
-				ModelKit.paint(trim))
+			# A painted door in a frame (and, for an arch, a rounded top instead of a lintel).
+			if style != "arch":
+				ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0 + h, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.03, z + 0.02),
+					ModelKit.paint(trim))
 			for side: float in [-1.0, 1.0]:
 				ModelKit.box(root, Vector3(x + side * (w / 2 + 0.015) - 0.015, y0, z),
 					Vector3(x + side * (w / 2 + 0.015) + 0.015, y0 + h, z + 0.02), ModelKit.paint(trim))
@@ -450,9 +451,12 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 				ModelKit.paint(Color("#6b3f26")))
 			ModelKit.ball(door, Vector3(x + w / 2 - 0.04, y0 + h * 0.5, z + 0.03), 0.012, ModelKit.paint(Color("#d4b04a"), 0.7))
 			if style == "arch":
-				var arch := ModelKit.cylinder(root, Vector3(x, y0 + h, z + 0.02), w / 2.0, 0.02, ModelKit.paint(trim))
-				arch.rotation.x = PI / 2.0
-				arch.position = Vector3(x, y0 + h, z + 0.02)
+				# Discs centred on the door's top, set back so their lower halves hide behind the door and its
+				# posts: what shows is a rounded top in the door's colour inside a ring of trim.
+				for disc: Array in [[w / 2.0 + 0.03, z + 0.001, trim], [w / 2.0, z + 0.003, Color("#6b3f26")]]:
+					var arch := ModelKit.cylinder(root, Vector3.ZERO, disc[0], 0.008, ModelKit.paint(disc[2]))
+					arch.rotation.x = PI / 2.0
+					arch.position = Vector3(x, y0 + h, disc[1] + 0.004)
 	# A step up to the door.
 	if lo.y <= 0.0:
 		ModelKit.box(root, Vector3(x - w / 2 - 0.05, 0, z), Vector3(x + w / 2 + 0.05, PLINTH * 0.7, z + 0.1),

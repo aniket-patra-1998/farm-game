@@ -516,3 +516,28 @@ func _surfaces(node: Node, shadow_only: bool) -> int:
 	for c in node.get_children():
 		n += _surfaces(c, shadow_only)
 	return n
+
+
+func test_115_moving_decorations_move_on_the_gpu() -> void:
+	# The fountain sprays and spills, the bonfire flickers and throws embers: each effect one mesh moved by its
+	# shader (no script, no nodes per drop), kept out of the bake, casting no shadow, culled by its reach.
+	var g := _farm()
+	var expect := {"fountain": ["spray3d", "spray3d"], "bonfire": ["flame3d", "spray3d"]}
+	for id: String in expect:
+		var node := DecorModel.build(g.item_data(id), g.footprint(id), {"id": id, "uid": 1})
+		var found: Array[String] = []
+		for mi in _meshes_in(node):
+			var m := mi.material_override as ShaderMaterial
+			if m == null or not m.shader.resource_path.contains("3d.gdshader"):
+				continue
+			var kind := m.shader.resource_path.get_file().get_basename()
+			if kind in ["spray3d", "flame3d"]:
+				found.append(kind)
+				_check(mi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "%s's %s casts no shadow"
+					% [id, kind])
+				_check(kind != "spray3d" or mi.custom_aabb.size.y > 0.1, "%s's spray is culled by how far it flies"
+					% id)
+		for kind: String in expect[id]:
+			_check(found.has(kind), "the %s has its %s" % [id, kind])
+		node.free()
+	_done(g)

@@ -90,7 +90,7 @@ in the barn"
 buildings & more"
 "ROTATE_TURN_DECORATIONS","Rotate
 turn decorations"
-"SELL_BACK","Sell
+"SELL_BACK","Sell / clear
 5% back"
 "FUEL","Fuel"
 "DEBUG_COINS","Debug
@@ -390,3 +390,5 @@ Level %d"
 "NOT_ENOUGH_GEMS_FOR_MATERIALS","Not enough gems to buy the materials."
 "BUY_MISSING_FOR_GEMS","Buy the rest for %d gems"
 "SOME_BUILDINGS_CHANGED_SHAPE_AND","Buildings changed shape: %d moved to make room."
+"NOTHING_TO_CLEAR_HERE","Nothing to clear here."
+"TAP_AGAIN_TO_CLEAR_THIS_PLOT","Tap again to clear this plot. The %s growing here will be lost."

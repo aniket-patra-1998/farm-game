@@ -123,3 +123,24 @@ func test_07_ribbons_award_tiers() -> void:
 	_eq(g.ribbons.stat("plowed"), 20, "plowed counter")
 	_eq(int(g.ribbons.ribbon_tiers.get("plow_pro", 0)), 1, "Plow Pro yellow ribbon at 20 plots")
 	_done(g)
+
+
+func test_114_the_sell_tool_clears_plots_back_to_grass() -> void:
+	# FarmVille's delete: a plot put down by mistake goes back to grass, free; a crop on it is lost.
+	var g := _farm()
+	var i := g.index_of(10, 10)
+	_check(not g.can_clear_plot(i), "grass is already grass")
+	_check(g.plow(i), "plowed")
+	var coins := g.coins
+	_check(g.clear_plot(i), "a plowed plot clears")
+	_eq(g.phase(i), GameState.Phase.GRASS, "back to grass")
+	_eq(g.coins, coins, "for free")
+	g.plow(i)
+	g.plant(i, g.crops.keys()[0])
+	_check(g.clear_plot(i), "a growing crop clears too (the tool asks first)")
+	_eq(g.crop_at(i), "", "and the crop is gone")
+	var j := g.index_of(6, 6)
+	g.buy_and_place("hay_bale", 6, 6)
+	_check(g.is_occupied(j) and not g.can_clear_plot(j), "nothing is cleared from under an object")
+	_check(not g.clear_plot(j), "and clearing there does nothing")
+	_done(g)

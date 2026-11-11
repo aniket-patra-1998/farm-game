@@ -355,6 +355,21 @@ func plow(i: int) -> bool:
 	return true
 
 
+## FarmVille's delete tool: any plot back to grass, free; a crop on it (growing, ripe or withered) is lost,
+## so the caller asks first. Nothing standing on it, and grass is already grass.
+func can_clear_plot(i: int) -> bool:
+	return in_farm(i / MAX_SIZE, i % MAX_SIZE) and phase(i) != Phase.GRASS and not is_occupied(i)
+
+
+func clear_plot(i: int) -> bool:
+	if not can_clear_plot(i):
+		return false
+	plots[i] = {"state": "grass"}
+	ribbons.bump("plots_cleared", 1)
+	_plot_updated(i)
+	return true
+
+
 func plant(i: int, crop_id: String) -> bool:
 	if phase(i) != Phase.PLOWED or not crops.has(crop_id):
 		return false

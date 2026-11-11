@@ -26,8 +26,8 @@ FarmVille's farmer was the player's face and hands:
 ## 2. Plots and crops (partial)
 - done: plow, plant, grow, ripen, wither, unwither, fertilize, harvest, mastery stars, collectibles,
   farmhands, golden/super harvests, vehicles over areas, seasons and weather.
-- **missing: delete a plot** (sell tool on a plowed or planted plot returns it to grass; FarmVille charged
-  nothing, a planted crop is lost after a confirm). The owner hit this.
+- done: **delete a plot** — the sell tool returns any plot to grass, free; a crop on it is lost after a
+  second tap (Game.clear_plot, test 114).
 - **missing: delete a crop** without plowing again (confirm), and **re-plow withered** in one step exists.
 - missing: crop **watering** (FV2, see 6).
 - missing: **seed packages / crop events** (limited-time crops); low priority.
@@ -76,14 +76,17 @@ upgrades (capacity and refill rate); friends can send water; a few crops/trees n
   water areas (a water tank vehicle).
 
 ## 7. Decorations (broken/bland)
+- started: DecorMotion (GPU-animated effects, no script per frame): the fountain's jet and cascade, the
+  bonfire's flames and embers, rippling water everywhere (test 115). Still to animate: the rest below.
 - **missing: animation** on every decoration. FarmVille's decorations moved: fountains spray and ripple,
   windmills turn, bonfires flicker and smoke, lamp posts glow at night, flags and scarecrows sway in wind,
   birdhouses have birds coming and going, ponds ripple with ducks, wishing well bucket bobs, gnomes blink.
   Plan: a DecorMotion component (like BuildingFill) driven by data (data/decor_motion.json): jets
   (particles), spin, sway with wind, flicker, glow at night, ripple shader on water.
-- **broken pieces to fix** (seen in screenshots): a horse in the Stable yard drawn standing upright; a long
-  plank across the farm edge (bridge or fence stretched); check every decoration and building at every size
-  in a contact sheet (tools) and fix each that looks wrong.
+- fixed: llamas/alpacas read as poles (thin vertical neck: rig proportions); the arch door was a grey disc
+  over the door; fountain water flickered against its stone (z-fighting). Checked: every decoration and every
+  building size stays inside its footprint (the long brown strip is the farm slab's edge, by design).
+- still to do: a contact sheet of every model (tools) and a pass fixing each that looks wrong.
 
 ## 8. Market, gifts and inventory (partial)
 - done: market by item, barn storage, garden shed bunches, mystery eggs/box, building materials.

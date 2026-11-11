@@ -29,6 +29,7 @@ const COLOR_PART := Color("#f4c27a")
 
 # Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
 const BUZZ_TAP := 8
+const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale or a clear
 const BUZZ_HARVEST := 16
 const BUZZ_PLACE := 24
 const BUZZ_ERROR := 40
@@ -780,6 +781,11 @@ func _act(i: int, first_touch: bool) -> void:
 	var ph := Game.phase(i)
 	var at := center_of(i)
 
+	# The sell tool deletes plots (FarmVille's delete): even a ripe crop, after asking.
+	if tool == "sell":
+		if first_touch:
+			_try_clear(i)
+		return
 	# A ripe crop is harvested by any tool: tapping ripe crops should always just work.
 	if ph == GameState.Phase.RIPE:
 		var crop_before := Game.crop_at(i)
@@ -962,13 +968,32 @@ func _try_sell(obj: Dictionary) -> void:
 			_float(at, "+%d" % value, COLOR_COINS)
 		return
 	_sell_pending = uid
-	_sell_pending_until = now_ms + 3000
+	_sell_pending_until = now_ms + SELL_CONFIRM_MS
 	var extra := tr("WHAT_S_INSIDE_MOVES_OUT") if Game.inside_total(obj) > 0 else ""
 	info.emit(
 		tr("TAP_AGAIN_TO_SELL_THE_FOR") % [Game.item_data(obj["id"])["name"], Game.sell_value(obj), extra]
 	)
 
 
+
+
+## Clears a plot back to grass: at once if it's bare soil, after a second tap if a crop would be lost.
+func _try_clear(i: int) -> void:
+	if not Game.can_clear_plot(i):
+		info.emit(tr("NOTHING_TO_CLEAR_HERE"))
+		return
+	var crop_id := Game.crop_at(i)
+	var now_ms := Time.get_ticks_msec()
+	var key := -2 - i  # plots take negative keys, so they never match an object's uid
+	if crop_id != "" and not (_sell_pending == key and now_ms < _sell_pending_until):
+		_sell_pending = key
+		_sell_pending_until = now_ms + SELL_CONFIRM_MS
+		info.emit(tr("TAP_AGAIN_TO_CLEAR_THIS_PLOT") % Game.crops[crop_id]["name"])
+		return
+	_sell_pending = -1
+	if Game.clear_plot(i):
+		_feel("plow", BUZZ_TAP)
+		world_fx.burst("dirt", center_of(i))
 
 
 func _explain(i: int, ph: GameState.Phase) -> void:

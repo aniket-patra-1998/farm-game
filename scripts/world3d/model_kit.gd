@@ -77,15 +77,9 @@ static func set_window_glow(glow: float) -> void:
 	glass().emission_energy_multiplier = glow * 2.2
 
 
-static func water() -> StandardMaterial3D:
-	if not _materials.has("water"):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = Color(0.32, 0.6, 0.78, 0.92)
-		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		m.roughness = 0.08
-		m.metallic_specular = 1.0
-		_materials["water"] = m
-	return _materials["water"]
+## Still water: shared and rippling (DecorMotion.water: shaders/water3d), one material for all of it.
+static func water() -> ShaderMaterial:
+	return DecorMotion.water()
 
 
 # ---------------------------------------------------------------- shapes

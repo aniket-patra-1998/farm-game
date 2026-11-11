@@ -19,6 +19,13 @@ const IDS := ["farmhouse", "log_cabin", "dirt_path", "brick_path", "stone_path",
 	"maple_tree", "willow_tree", "mastery_sign", "mailbox", "farm_stand", "perfect_bunch"]
 
 
+
+const WATER_LIFT := 0.012   # water stands this far above the rim it fills, never level with it (flicker)
+static var _glows := {}   # colour -> glowing material
+
+
+
+
 static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 	var id := str(it.get("id", ""))
 	if id in ["farmhouse", "log_cabin"]:
@@ -103,8 +110,14 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 				var log_piece := ModelKit.cylinder(root, Vector3.ZERO, 0.03, 0.34, ModelKit.paint(DARK_WOOD), -1.0, 6)
 				log_piece.position = c + Vector3(0, 0.08, 0)
 				log_piece.rotation = Vector3(0, TAU * k / 4.0, PI / 2.0 - 0.5)
-			ModelKit.ball(root, c + Vector3(0, 0.16, 0), 0.09, _glow(Color("#ffb03a")), Vector3(1, 1.6, 1))
-			ModelKit.ball(root, c + Vector3(0, 0.13, 0), 0.11, _glow(Color("#ff6a1f")), Vector3(1, 1.1, 1))
+			# Tongues of flame licking up from the logs, embers floating off them.
+			ModelKit.ball(root, c + Vector3(0, 0.08, 0), 0.08, _glow(Color("#ff6a1f")), Vector3(1, 0.5, 1))
+			DecorMotion.flame(root, c + Vector3(0, 0.06, 0), 0.08, 0.26, Color("#ff6a1f"), Color("#ffd35a"))
+			for k in 3:
+				var a := TAU * k / 3.0 + 0.4
+				DecorMotion.flame(root, c + Vector3(cos(a) * 0.06, 0.05, sin(a) * 0.06), 0.045, 0.15,
+					Color("#ff7a26"), Color("#ffe07a"))
+			DecorMotion.spray(root, c + Vector3(0, 0.18, 0), DecorMotion.EMBERS)
 		"wheelbarrow":
 			ModelKit.box(root, c + Vector3(-0.15, 0.12, -0.12), c + Vector3(0.15, 0.26, 0.12), ModelKit.paint(col, 0.5))
 			ModelKit.ball(root, c + Vector3(0, 0.27, 0), 0.11, ModelKit.paint(Color("#5e3d24")), Vector3(1.2, 0.3, 1))
@@ -318,13 +331,21 @@ static func _rng(id: String) -> RandomNumberGenerator:
 	return rng
 
 
+
+
 static func _glow(col: Color) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.albedo_color = col
-	m.emission_enabled = true
-	m.emission = col
-	m.emission_energy_multiplier = 2.0
-	return m
+	# Shared per colour, so the bake merges every glowing part of that colour into one draw.
+	var key := col.to_html()
+	if not _glows.has(key):
+		var m := StandardMaterial3D.new()
+		m.albedo_color = col
+		m.emission_enabled = true
+		m.emission = col
+		m.emission_energy_multiplier = 2.0
+		_glows[key] = m
+	return _glows[key]
+
+
 
 
 ## Path tiles: packed dirt, laid bricks, or flagstones, flush with the grass.
@@ -379,11 +400,16 @@ static func _pond(root: Node3D, fp: Vector2i, fountain: bool, col: Color) -> voi
 	var r := minf(fp.x, fp.y) * 0.42
 	if fountain:
 		ModelKit.cylinder(root, c, r, 0.18, ModelKit.surface(col, "stone", 0.2), -1.0, 24)
-		ModelKit.cylinder(root, c + Vector3(0, 0.16, 0), r * 0.9, 0.02, ModelKit.water(), -1.0, 24)
+		ModelKit.cylinder(root, c + Vector3(0, 0.17, 0), r * 0.9, WATER_LIFT + 0.01, ModelKit.water(), -1.0, 24)
 		ModelKit.cylinder(root, c, 0.08, 0.6, ModelKit.paint(col), 0.06, 10)
 		ModelKit.cylinder(root, c + Vector3(0, 0.6, 0), 0.3, 0.06, ModelKit.paint(col), 0.25, 16)
-		ModelKit.cylinder(root, c + Vector3(0, 0.64, 0), 0.26, 0.02, ModelKit.water(), -1.0, 16)
-		ModelKit.ball(root, c + Vector3(0, 0.78, 0), 0.06, ModelKit.water(), Vector3(1, 2.2, 1))
+		ModelKit.cylinder(root, c + Vector3(0, 0.65, 0), 0.26, WATER_LIFT + 0.01, ModelKit.water(), -1.0, 16)
+		# The spout, its jet falling back into the upper bowl, and the bowl spilling over into the basin.
+		ModelKit.cylinder(root, c + Vector3(0, 0.64, 0), 0.025, 0.07, ModelKit.paint(col), 0.018, 8)
+		DecorMotion.spray(root, c + Vector3(0, 0.71, 0), DecorMotion.JET)
+		var cascade: Dictionary = DecorMotion.CASCADE.duplicate()
+		cascade["start_radius"] = 0.31  # just outside the upper bowl (0.3 at its widest), not inside its stone
+		DecorMotion.spray(root, c + Vector3(0, 0.66, 0), cascade)
 	else:
 		ModelKit.ball(
 			root,
