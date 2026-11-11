@@ -147,7 +147,8 @@ func test_139_a_vehicle_is_on_the_farm_or_in_the_garage_never_both() -> void:
 		g.land.add_materials(int(garage["uid"]))
 	_check(g.buy_and_place("tractor", 2, 2), "a tractor standing on the farm")
 	_eq(g.buildings.owned("tractor"), 1, "is the one tractor")
-	_check(not g.homes.put_in_home(int(garage["uid"]), "tractor", {"buy": true}), "a second can't be bought into the Garage")
+	_check(not g.homes.put_in_home(int(garage["uid"]), "tractor", {"buy": true}),
+		"a second can't be bought into the Garage")
 	_eq(g.buildings.can_buy("tractor").why, BuildingSystem.Why.LIMIT, "and the Market says it is at its limit")
 	# Parking the one on the farm moves it: still one.
 	var loose := g.object_at(g.index_of(2, 2))

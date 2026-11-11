@@ -21,6 +21,8 @@ const PART_HEIGHT := 1.0      # what stands beside a building (a silo, an annex)
 const ROOF_EXTRAS := 0.35     # chimneys, cupolas and vanes above the roof, for taps
 
 
+static var _ghost_materials := {}   # tint name -> the shared see-through material
+
 var life: FarmLife  # the animals' minds (shared with the 2D world)
 
 var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
@@ -31,7 +33,6 @@ var _animals: Array[Animal3D] = []
 var _synced_once := false   # the farm's first sync places everything quietly; later ones drop new things in
 var _ghost: Node3D
 var _ghost_tint := ""
-static var _ghost_materials := {}
 var _ghost_key := ""
 var _lifted := -1
 var _queued := false
