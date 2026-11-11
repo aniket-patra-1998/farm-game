@@ -15,10 +15,10 @@ const BARK := Color("#7a4f2c")
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
-const FRUIT_READY := 12     # fruit on a ready tree (fewer, small and green, while it grows)
-const FRUIT_R := 0.052      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
+const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
+const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
 const FRUIT_SMALL_R := 0.02
-const FRUIT_OUT := 0.92     # how far out through a leafy clump fruit hangs (1: on its surface)
+const FRUIT_OUT := 0.98     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
 const TRUNK_BULK := 0.85    # trunks are drawn a little slimmer than the data says
@@ -352,6 +352,8 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 	var size := float(sh.get("fruit_size", 1.0)) * (1.0 if ready else 0.65)
 	var c := col if ready else col.lerp(LEAF, 0.6)
 	var mat := ModelKit.paint(c, 0.4)
+	# Three shades, so a tree's fruit isn't a row of identical balls: sunny side, middle, shaded underside.
+	var shades := [ModelKit.paint(c.lightened(0.12), 0.5), mat, ModelKit.paint(c.darkened(0.2), 0.3)]
 	var cr := float(sh["crown_r"]) * k
 	var count := FRUIT_READY if ready else FRUIT_GROWING
 	match shape:
@@ -389,14 +391,19 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				var a := TAU * i / n + rng.randf() * 0.5
 				var up := rng.randf_range(-0.15, 0.8)
 				var p := centre + Vector3(cos(a) * cos(up) * across, sin(up) * high, sin(a) * cos(up) * across)
+				var fruit_mat: Material = mat
+				var fruit_r := r
 				var blobs: Array = t["blobs"]
 				if not blobs.is_empty() and str(sh["form"]) != "palm":
 					# Fruit sits on the leaf masses, on the side that faces out and up: attached, not floating.
 					var blob: Array = blobs[i % blobs.size()]
-					var face := float(blob[2]) + rng.randf_range(-0.9, 0.9)
-					var dir := Vector3(cos(face), rng.randf_range(0.1, 0.85), sin(face))
-					p = (blob[0] as Vector3) + dir.normalized() * float(blob[1]) * FRUIT_OUT
+					# Fruit grows in twos and threes on one mass, half sunk in the leaves, each its own size.
+					var face := float(blob[2]) + (i / 3) * 0.7 + rng.randf_range(-0.35, 0.35)
+					var dir := Vector3(cos(face), rng.randf_range(0.15, 0.9), sin(face)).normalized()
+					p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
+					fruit_mat = shades[0 if dir.y > 0.55 else (1 if dir.y > 0.25 else 2)]
+					fruit_r = r * rng.randf_range(0.8, 1.15)
 				if str(sh["form"]) == "palm":
 					# Coconuts cluster under the fronds, against the trunk.
 					p = centre + Vector3(cos(a) * 0.06 * k, -0.06 * k, sin(a) * 0.06 * k)
-				ModelKit.ball(root, p, r, mat, Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE)
+				ModelKit.ball(root, p, fruit_r, fruit_mat, Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE)
