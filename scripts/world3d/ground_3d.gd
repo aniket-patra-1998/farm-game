@@ -20,6 +20,9 @@ const SHADE_PAD := 2               # tiles of margin round the farm in the shade
 const SHADE_BY_KIND := {
 	"building": [0.75, 0.9], "vehicle": [0.55, 0.4], "tree": [0.5, 0.15], "decor": [0.2, 0.0],
 	"animal": [0.0, 0.55]}
+const FOREST_RECT := Rect2(-16.0, -16.0, 66.0, 66.0)  # tiles the forest floor map covers
+const FOREST_RES := 3              # its texels per tile
+const FOREST_REACH := 2.6          # how far the woods' floor spreads from a tree (tiles)
 const SHADE_BLUR := 0.4            # shade fades out over this much past what casts it (tiles)
 const WEAR_REACH := 0.9            # and wear over this much
 
@@ -46,6 +49,7 @@ var _shade: Image                  # R: shade, G: wear (see the class notes)
 var _meadow_tufts := PackedFloat32Array()   # the meadow's tufts (MultiMesh buffer), kept: they never change
 var _shade_texture: ImageTexture
 var _shade_signature := 0
+var _forest_map: ImageTexture      # where the woods are: R, 1 under the trees fading out
 
 var _size := -1
 
@@ -60,6 +64,10 @@ func _ready() -> void:
 	meadow_grass.set_shader_parameter("bare_amount", 0.6)
 	meadow_grass.set_shader_parameter("grass_light", Color(0.38, 0.56, 0.25))
 	meadow_grass.set_shader_parameter("grass_dark", Color(0.19, 0.35, 0.15))
+	meadow_grass.set_shader_parameter("forest_amount", 0.9)
+	meadow_grass.set_shader_parameter("forest_map", forest_map())
+	meadow_grass.set_shader_parameter("forest_rect", Vector4(FOREST_RECT.position.x, FOREST_RECT.position.y,
+		FOREST_RECT.size.x, FOREST_RECT.size.y))
 	_meadow = MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	_meadow.mesh = plane
@@ -84,6 +92,30 @@ func _ready() -> void:
 	rebuild()
 
 
+## Where the woods are, painted once from the scenery trees (FarmGrid.scenery(): they never move): 1 under
+## each tree, fading out over FOREST_REACH tiles. The meadow's shader makes the forest floor of it.
+func forest_map() -> ImageTexture:
+	if _forest_map == null:
+		_forest_map = ImageTexture.create_from_image(paint_forest(FarmGrid.scenery()))
+	return _forest_map
+
+
+static func paint_forest(trees: Array) -> Image:
+	var side := int(FOREST_RECT.size.x * FOREST_RES)
+	var img := Image.create_empty(side, side, false, Image.FORMAT_L8)
+	var reach := FOREST_REACH * FOREST_RES
+	for t in trees:
+		# A scenery tree is [row, col, id]; the map is x = col, y = row.
+		var cx := (float(t[1]) + 0.5 - FOREST_RECT.position.x) * FOREST_RES
+		var cy := (float(t[0]) + 0.5 - FOREST_RECT.position.y) * FOREST_RES
+		for y in range(maxi(int(cy - reach), 0), mini(int(cy + reach) + 1, side)):
+			for x in range(maxi(int(cx - reach), 0), mini(int(cx + reach) + 1, side)):
+				var v := 1.0 - Vector2(x - cx, y - cy).length() / reach
+				if v > img.get_pixel(x, y).r:
+					img.set_pixel(x, y, Color(v, v, v))
+	return img
+
+
 func _set_wind(v: float) -> void:
 	wind = v
 	# Every swaying shader (grass, flowers, crops, trees, scarecrows) reads the one global wind.
@@ -101,6 +133,7 @@ func rebuild() -> void:
 		_meadow_tufts = PackedFloat32Array()
 		_scatter_flowers(n)  # flowers grow only off the farm, so only its size moves them
 	_grass[0].set_shader_parameter("farm_n", float(n))
+	_grass[1].set_shader_parameter("edge_n", float(n))
 	_paint_shade(n)
 	_scatter_tufts(n)
 

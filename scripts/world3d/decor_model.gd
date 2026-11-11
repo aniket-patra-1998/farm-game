@@ -370,7 +370,7 @@ static func _path(root: Node3D, id: String, col: Color, seed_value: int) -> void
 				ModelKit.surface(col.darkened(0.12), "plaster", 0.0), false)
 			for i in 2:
 				var worn := ModelKit.cylinder(root, Vector3(rng.randf_range(0.3, 0.7), 0.012, rng.randf_range(0.3, 0.7)),
-					rng.randf_range(0.22, 0.34), 0.006, ModelKit.paint(col.lightened(rng.randf_range(0.04, 0.12))), -1.0, 9)
+					rng.randf_range(0.22, 0.34), 0.006, ModelKit.paint(col.lerp(Color("#e2bd86"), rng.randf_range(0.2, 0.4))), -1.0, 9)
 				worn.scale = Vector3(rng.randf_range(1.1, 1.5), 1.0, 1.0)
 				worn.rotation.y = rng.randf() * PI
 			for i in rng.randi_range(3, 6):
@@ -429,6 +429,7 @@ static func _pond(root: Node3D, fp: Vector2i, fountain: bool, col: Color) -> voi
 		var cascade: Dictionary = DecorMotion.CASCADE.duplicate()
 		cascade["start_radius"] = 0.31  # just outside the upper bowl (0.3 at its widest), not inside its stone
 		DecorMotion.spray(root, c + Vector3(0, 0.66, 0), cascade)
+		_pond_bank(root, c, r + 0.12, r + 0.12, 3)
 	else:
 		ModelKit.ball(
 			root,
@@ -447,6 +448,34 @@ static func _pond(root: Node3D, fp: Vector2i, fountain: bool, col: Color) -> voi
 			), 0.09, ModelKit.paint(Color("#4f9a3a")),
 				Vector3(1, 0.12, 1))
 		_ducks(root, c + Vector3(0, 0.02, 0), r * 0.55)
+		_pond_bank(root, c, r + 0.1, r * 0.85 + 0.1, 5)
+
+
+## What grows and lies at a water's edge: a ring of stones (with a gap or two), and reeds in clumps, so the
+## water sits in the ground. `rx` and `rz` are the bank's half sizes; `seed_value` makes each water its own.
+static func _pond_bank(root: Node3D, c: Vector3, rx: float, rz: float, seed_value: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value * 131
+	var stones := 16
+	for i in stones:
+		if i % 7 == 3:
+			continue  # a gap in the stones: a place to drink
+		var a := TAU * i / stones + rng.randf_range(-0.1, 0.1)
+		var size := rng.randf_range(0.04, 0.085)
+		var stone := ModelKit.facet_ball(root, c + Vector3(cos(a) * rx, 0.015, sin(a) * rz), size,
+			ModelKit.paint(Color("#9a9588").darkened(rng.randf() * 0.25)), Vector3(1.2, 0.7, 1.0))
+		stone.rotation.y = rng.randf() * TAU
+	for k in 3:
+		var a := rng.randf() * TAU
+		var at := c + Vector3(cos(a) * (rx + 0.05), 0.0, sin(a) * (rz + 0.05))
+		for j in 4:
+			var reed_h := rng.randf_range(0.14, 0.26)
+			var reed := ModelKit.cylinder(root,
+				at + Vector3(rng.randf_range(-0.04, 0.04), 0.0, rng.randf_range(-0.04, 0.04)),
+				0.006, reed_h, ModelKit.paint(Color("#6f9a3c")), 0.002, 4)
+			reed.rotation = Vector3(rng.randf_range(-0.2, 0.2), 0.0, rng.randf_range(-0.2, 0.2))
+			ModelKit.cylinder(root, at + Vector3(0.0, reed_h * 0.85, 0.0), 0.012, 0.04,
+				ModelKit.paint(Color("#7a5a30")), 0.01, 5)
 
 
 ## Two ducks paddling round a pond, apart from each other.

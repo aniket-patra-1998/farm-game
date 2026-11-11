@@ -708,3 +708,37 @@ func test_136_crowds_of_one_model_get_less_detail_each() -> void:
 	ModelKit.detail = ModelKit.MIN_DETAIL
 	_check(ModelKit.scaled(12, 5) >= 5, "and a cut count never drops below its least")
 	ModelKit.detail = 1.0
+
+
+func test_137_marks_on_the_ground_wrap_around_and_fade_away() -> void:
+	var t := Trails.new()
+	_eq(t.live(), 0, "no marks to start with")
+	for i in Trails.CAPACITY + 10:
+		t.stamp(Vector3(i * 0.1, Trails.LIFT, 0), 0.0, Trails.FOOT_SIZE, Trails.FOOT)
+	_eq(t.live(), Trails.CAPACITY, "a full ring replaces its oldest marks, it never grows")
+	t.age(Trails.LIFE * 0.5)
+	_eq(t.live(), Trails.CAPACITY, "half way through their life they are all still there")
+	_check(t.fade_of(0) > 0.4 and t.fade_of(0) < 0.6, "and they have faded about half")
+	t.age(Trails.LIFE)
+	_eq(t.live(), 0, "past their life they are gone")
+	t.lay_tracks(2, 3, Vector2i(4, 3))
+	_eq(t.live(), 2 * 2, "a four wide area is two lanes of two wheel tracks")
+	t.free()
+
+
+func test_138_the_forest_floor_lies_under_the_woods_and_nowhere_else() -> void:
+	var img := Ground3D.paint_forest([[-5.0, -5.0, "oak_tree"]])
+	var res := Ground3D.FOREST_RES
+	var rect := Ground3D.FOREST_RECT
+	var at := Vector2i(int((-4.5 - rect.position.x) * res), int((-4.5 - rect.position.y) * res))
+	_check(img.get_pixelv(at).r > 0.9, "full forest floor under a tree")
+	_check(img.get_pixelv(at + Vector2i(res * 2, 0)).r > 0.0, "fading out beside it")
+	_eq(img.get_pixelv(at + Vector2i(res * 5, 0)).r, 0.0, "and none a few tiles off")
+	_eq(img.get_pixelv(Vector2i(img.get_width() - 1, img.get_height() - 1)).r, 0.0, "nor far across the meadow")
+	var woods := Ground3D.paint_forest(FarmGrid.scenery())
+	var lit := 0
+	for y in woods.get_height():
+		for x in woods.get_width():
+			if woods.get_pixel(x, y).r > 0.5:
+				lit += 1
+	_check(lit > 400, "the real woods cover a good stretch of ground")

@@ -25,6 +25,16 @@ uniform vec4 shade_rect = vec4(0.0, 0.0, 1.0, 1.0);
 uniform vec3 worn : source_color = vec3(0.62, 0.58, 0.36);
 uniform float shade_strength = 0.42;
 
+// The meadow's own: the woods (Ground3D paints where the trees are into forest_map, in tiles from forest_rect's
+// corner) get a forest floor, and the ground just outside the farm's raised edge is shaded where it meets it.
+uniform float forest_amount = 0.0;
+uniform sampler2D forest_map : filter_linear, repeat_disable;
+uniform vec4 forest_rect = vec4(0.0, 0.0, 1.0, 1.0);
+uniform vec3 forest_dark : source_color = vec3(0.13, 0.23, 0.10);
+uniform vec3 forest_moss : source_color = vec3(0.22, 0.36, 0.14);
+uniform vec3 litter : source_color = vec3(0.42, 0.28, 0.13);
+uniform float edge_n = 0.0;     // the meadow: the farm's size in tiles (0: none), for the contact shade at its edge
+
 varying vec3 world_pos;
 
 float hash(vec2 p) {
@@ -71,8 +81,35 @@ void fragment() {
 	if (farm_n > 0.0) {
 		col *= 1.0 + mow * (step(0.5, fract((p.x + p.y) * 0.25)) - 0.5);
 		float d = min(min(p.x, p.y), min(farm_n - p.x, farm_n - p.y));
-		float lip = smoothstep(0.55, 0.2, d + (fine - 0.5) * 0.14);
-		col = mix(col, verge * (0.88 + 0.24 * fine), lip * 0.9);
+		float ragged = (fine - 0.5) * 0.2 + (noise(p * 1.7) - 0.5) * 0.12;
+		// A mown border a tile wide just in from the edge (lighter, cut short), a lip of bare earth along the
+		// very edge with a ragged inner side, and a dark line where the two meet.
+		float border = smoothstep(0.25, 0.4, d + ragged) * smoothstep(1.15, 0.9, d + ragged);
+		col = mix(col, col * vec3(1.1, 1.1, 0.95) + vec3(0.02, 0.03, 0.0), border * 0.8);
+		float lip = smoothstep(0.38, 0.22, d + ragged);
+		col = mix(col, verge * (0.88 + 0.24 * fine), lip * 0.95);
+		col *= 1.0 - 0.22 * smoothstep(0.1, 0.0, abs(d + ragged - 0.3));
+	}
+	if (edge_n > 0.0) {
+		// Outside the raised farm: the foot of its wall, in shadow and bare where the grass can't grow.
+		float out_d = max(max(-p.x, p.x - edge_n), max(-p.y, p.y - edge_n));
+		if (out_d > 0.0) {
+			float foot = smoothstep(1.6, 0.0, out_d + (fine - 0.5) * 0.5);
+			col = mix(col, bare * 0.8, foot * 0.35 * smoothstep(0.9, 0.1, out_d));
+			col *= 1.0 - 0.3 * foot;
+		}
+	}
+	if (forest_amount > 0.0) {
+		vec2 fuv = (p - forest_rect.xy) / forest_rect.zw;
+		if (fuv.x > 0.0 && fuv.y > 0.0 && fuv.x < 1.0 && fuv.y < 1.0) {
+			// The woods' edge is ragged, not a circle round each tree.
+			float f = smoothstep(0.3, 0.6, texture(forest_map, fuv).r + (fbm(p * 1.3 + 90.0) - 0.5) * 0.4);
+			vec3 floor_col = mix(forest_dark, forest_moss, smoothstep(0.35, 0.7, fbm(p * 0.9 + 17.0)));
+			// Fallen leaves: big dim drifts, and the odd single leaf.
+			floor_col = mix(floor_col, litter, 0.55 * smoothstep(0.55, 0.75, fbm(p * 2.2 + 5.0)));
+			floor_col = mix(floor_col, litter * 1.25, step(0.9, noise(p * 11.0)) * 0.6);
+			col = mix(col, floor_col * (0.9 + 0.2 * fine), f * forest_amount);
+		}
 	}
 	float tile = mod(floor(p.x) + floor(p.y), 2.0);
 	col *= 1.0 + checker * (tile - 0.5);
