@@ -15,6 +15,9 @@ uniform float farm_n = 0.0;
 uniform vec3 verge : source_color = vec3(0.50, 0.37, 0.22);
 uniform float mow = 0.09;       // how much alternate bands differ
 uniform float patchy = 0.0;     // the meadow: how strongly patches of lush and thin grass differ
+uniform float bare_amount = 0.0; // the meadow: how much bare earth shows in worn patches (0 on the farm lawn)
+uniform vec3 bare : source_color = vec3(0.47, 0.37, 0.22);
+uniform vec3 cool : source_color = vec3(0.22, 0.45, 0.28); // damp hollows lean blue-green
 // What stands on the farm (Ground3D): R darkens the grass round things that block the sky, G wears it to
 // trodden straw and earth. shade_rect is the map's corner and size in tiles.
 uniform sampler2D shade_map : filter_linear, repeat_disable;
@@ -55,7 +58,14 @@ void fragment() {
 	float broad = fbm(p * 0.18);
 	float fine = noise(p * 3.1) * 0.5 + noise(p * 7.3) * 0.5;
 	vec3 col = mix(grass_dark, grass_light, smoothstep(0.25, 0.75, broad));
+	// Hollows: cooler, deeper green, so the lawn isn't one hue with lighter and darker patches.
+	col = mix(col, cool * (0.75 + 0.5 * broad), 0.4 * smoothstep(0.45, 0.8, fbm(p * 0.13 + 50.0)));
 	col = mix(col, dry, dryness * smoothstep(0.55, 0.85, fbm(p * 0.37 + 11.0)));
+	// A mottle in between the broad patches and the grain, so a stretch of lawn has a texture to it.
+	col *= 0.94 + 0.12 * fbm(p * 1.1 + 70.0);
+	// Bare earth where the meadow is trodden thin: ragged-edged patches, rare.
+	float earth = smoothstep(0.66, 0.74, fbm(p * 0.5 + 7.0) + (fine - 0.5) * 0.12);
+	col = mix(col, bare * (0.85 + 0.3 * fine), earth * bare_amount);
 	col *= 0.92 + 0.16 * fine;
 	col *= 1.0 + patchy * (fbm(p * 0.09 + 31.0) - 0.5);
 	if (farm_n > 0.0) {

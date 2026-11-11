@@ -57,8 +57,9 @@ func _ready() -> void:
 	meadow_grass.set_shader_parameter("checker", 0.0)
 	meadow_grass.set_shader_parameter("dryness", 0.32)
 	meadow_grass.set_shader_parameter("patchy", 0.5)
-	meadow_grass.set_shader_parameter("grass_light", Color(0.43, 0.60, 0.25))
-	meadow_grass.set_shader_parameter("grass_dark", Color(0.25, 0.41, 0.16))
+	meadow_grass.set_shader_parameter("bare_amount", 0.6)
+	meadow_grass.set_shader_parameter("grass_light", Color(0.38, 0.56, 0.25))
+	meadow_grass.set_shader_parameter("grass_dark", Color(0.19, 0.35, 0.15))
 	_meadow = MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	_meadow.mesh = plane

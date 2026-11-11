@@ -38,7 +38,7 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 	var col := Color.html(str(it.get("color", "#a8743f")))
 	match id:
 		"dirt_path", "brick_path", "stone_path":
-			_path(root, id, col)
+			_path(root, id, col, int(o.get("uid", 0)))
 		"wooden_fence", "white_picket_fence":
 			_fence_run(root, id == "white_picket_fence", col)
 		"hedge":
@@ -359,34 +359,43 @@ static func _glow(col: Color) -> StandardMaterial3D:
 
 
 ## Path tiles: packed dirt, laid bricks, or flagstones, flush with the grass.
-static func _path(root: Node3D, id: String, col: Color) -> void:
+static func _path(root: Node3D, id: String, col: Color, seed_value: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value * 7919 + hash(id)
 	match id:
 		"dirt_path":
-			ModelKit.box(
-				root,
-				Vector3(0.02, 0, 0.02),
-				Vector3(0.98, 0.012, 0.98),
-				ModelKit.surface(col, "plaster", 0.0),
-				false
-			)
+			# Trodden earth: a darker edge, a paler worn middle, a few pebbles and a bare patch or two, each tile
+			# its own (its uid seeds it). The edge stays on the tile line so tiles still join up.
+			ModelKit.box(root, Vector3(0.02, 0, 0.02), Vector3(0.98, 0.012, 0.98),
+				ModelKit.surface(col.darkened(0.12), "plaster", 0.0), false)
+			for i in 2:
+				var worn := ModelKit.cylinder(root, Vector3(rng.randf_range(0.3, 0.7), 0.012, rng.randf_range(0.3, 0.7)),
+					rng.randf_range(0.22, 0.34), 0.006, ModelKit.paint(col.lightened(rng.randf_range(0.04, 0.12))), -1.0, 9)
+				worn.scale = Vector3(rng.randf_range(1.1, 1.5), 1.0, 1.0)
+				worn.rotation.y = rng.randf() * PI
+			for i in rng.randi_range(3, 6):
+				ModelKit.facet_ball(root, Vector3(rng.randf_range(0.08, 0.92), 0.012, rng.randf_range(0.08, 0.92)),
+					rng.randf_range(0.015, 0.035), ModelKit.paint(Color("#9a948a").darkened(rng.randf() * 0.2)),
+					Vector3(1.2, 0.6, 1.0))
 		"brick_path":
-			ModelKit.box(
-				root,
-				Vector3(0.02, 0, 0.02),
-				Vector3(0.98, 0.016, 0.98),
-				ModelKit.surface(col, "stone", 0.0),
-				false
-			)
+			# Four by four bricks in two or three shades, a little darker in the joints.
+			ModelKit.box(root, Vector3(0.02, 0, 0.02), Vector3(0.98, 0.008, 0.98),
+				ModelKit.paint(col.darkened(0.35)), false)
+			for i in 4:
+				for j in 4:
+					var shade := ModelKit.paint(col.lightened(0.05).darkened(rng.randi_range(0, 2) * 0.1))
+					var lo := Vector3(0.03 + i * 0.235, 0.0, 0.03 + j * 0.235)
+					ModelKit.box(root, lo, lo + Vector3(0.21, 0.016, 0.21), shade, false)
 		_:
-			var rng := _rng(id)
 			for i in 3:
 				for j in 3:
-					var p := Vector3(
-						0.18 + 0.32 * i + rng.randf_range(-0.03, 0.03),
-						0.008,
-						0.18 + 0.32 * j + rng.randf_range(-0.03, 0.03)
-					)
-					ModelKit.ball(root, p, 0.14, ModelKit.paint(col.darkened(rng.randf() * 0.2)), Vector3(1, 0.1, 1))
+					var p := Vector3(0.18 + 0.32 * i + rng.randf_range(-0.05, 0.05), 0.008,
+						0.18 + 0.32 * j + rng.randf_range(-0.05, 0.05))
+					var r := rng.randf_range(0.11, 0.16)
+					var stone := ModelKit.cylinder(root, p - Vector3(0, 0.008, 0), r, 0.03,
+						ModelKit.paint(col.lightened(0.1).darkened(rng.randf() * 0.25)), r * 0.82, 7)
+					stone.scale = Vector3(1.0, 1.0, rng.randf_range(0.8, 1.2))
+					stone.rotation.y = rng.randf() * PI
 
 
 ## One tile of fence along its middle (it lines up with fences on the next tiles).
