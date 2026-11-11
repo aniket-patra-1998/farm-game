@@ -602,8 +602,8 @@ static func _dress_window(ctx: Dictionary, at: Vector3, size: float, index: int)
 	if dress in ["flower_boxes", "both"]:
 		var wood := ModelKit.surface(WOOD, "boards")
 		var y := at.y - size / 2.0 - 0.1
-		ModelKit.box(root, Vector3(at.x, y, at.z - size / 2.0 - 0.03), Vector3(at.x + 0.08, y + 0.05, at.z + size / 2.0 + 0.03),
-			wood)
+		ModelKit.box(root, Vector3(at.x, y, at.z - size / 2.0 - 0.03),
+			Vector3(at.x + 0.08, y + 0.05, at.z + size / 2.0 + 0.03), wood)
 		var blooms: Array[Color] = [Color("#e8506e"), Color("#f5c518"), Color("#f7f2e8"), Color("#9b7be0")]
 		for b in 4:
 			var bz := lerpf(at.z - size / 2.0, at.z + size / 2.0, (b + 0.5) / 4.0)
