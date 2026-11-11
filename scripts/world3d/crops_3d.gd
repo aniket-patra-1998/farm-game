@@ -11,6 +11,7 @@ const GROW_REFRESH := 3.0   # seconds between growth updates
 const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
 const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger
+const VARY_LEAN := 0.16    # radians a plant may lean
 const PLANT_SCALE := 2.5    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
 var wind := 0.6: set = _set_wind
@@ -65,7 +66,7 @@ func rebuild() -> void:
 			if st[0] == "":
 				continue
 			var crop: Dictionary = Game.crops[crop_id]
-			var key := "%s|%s" % [str(crop.get("shape", "berry")), st[0]]
+			var key := "%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0]]
 			var col := Color.html(str(crop.get("color", "#e2453c")))
 			var size := PLANT_SCALE * (lerpf(0.55, 1.0, float(st[1])) if st[0] in ["sprout", "young"] else 1.0)
 			# Fertilised plants stand taller and richer (the shader reads alpha 0 as "rich").
@@ -78,7 +79,7 @@ func rebuild() -> void:
 				var spot: Vector2 = SPOTS[k]
 				var turn := float((i * 7 + k * 13) % 17) / 17.0 * TAU
 				var at := Vector3(c + 0.5 + spot.x, Plots3D.HEIGHT, r + 0.5 + spot.y)
-				list.append([Transform3D(Basis(Vector3.UP, turn).scaled(Vector3.ONE * size), at), col])
+				list.append([Transform3D(_plant_basis(turn, size, i * 5 + k), at), col])
 	for key in _layers.keys():
 		if not groups.has(key):
 			(_layers[key] as MultiMeshInstance3D).queue_free()
@@ -103,6 +104,17 @@ func rebuild() -> void:
 		mmi.multimesh = mm
 
 
+## One plant's pose: turned, a little taller or shorter, fatter or slimmer and leaning, the same every time for
+## the same plot and spot, so a field looks grown and not stamped.
+static func _plant_basis(turn: float, size: float, seed_value: int) -> Basis:
+	var h := float((seed_value * 37) % 29) / 28.0
+	var w := float((seed_value * 53) % 31) / 30.0
+	var lean := float((seed_value * 71) % 23) / 22.0 - 0.5
+	var tilt := Basis(Vector3.RIGHT, lean * VARY_LEAN) * Basis(Vector3.FORWARD, (h - 0.5) * VARY_LEAN)
+	var stretch := Vector3(lerpf(0.9, 1.12, w), lerpf(0.82, 1.2, h), lerpf(0.9, 1.12, w))
+	return (Basis(Vector3.UP, turn) * tilt).scaled(stretch * size)
+
+
 ## A harvested plot's plants pop: they spring up out of the bed, spin a little and shrink away.
 func pop(i: int, crop_id: String) -> void:
 	if not Game.crops.has(crop_id):
@@ -111,7 +123,7 @@ func pop(i: int, crop_id: String) -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
-	mm.mesh = CropModels.mesh(str(crop.get("shape", "berry")), "ripe")
+	mm.mesh = CropModels.mesh(CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), "ripe")
 	mm.instance_count = SPOTS.size()
 	for k in SPOTS.size():
 		var spot: Vector2 = SPOTS[k]

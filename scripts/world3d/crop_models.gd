@@ -52,6 +52,8 @@ static func _build(shape: String, stage: String) -> ArrayMesh:
 		_:
 			var ripe := stage == "ripe"
 			var k := 1.0 if ripe else 0.7
+			if CropForms.build(mb, shape, rng, k, ripe):
+				return mb.commit()
 			match shape:
 				"grain":
 					_grain(mb, rng, k, ripe)

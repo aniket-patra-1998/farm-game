@@ -33,7 +33,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `scripts/world3d/`: the farm in real 3D (`Farm3D`; the 2D world stays as a fallback). Models are built in
   code from data and merged by `ModelKit.bake`: `BuildingModel` (data/building_models.json: each size's
   changes, staged construction sites), `TreeModel` (data/tree_shapes.json), `VehicleModel`, `DecorModel`,
-  `CropModels`; `Animal3D` with `AnimalMotion` (springs: lean, sway, lag, squash, trot); `BuildingFill`
+  `CropModels` + `CropForms` (data/crop_forms.json: a form per crop); `Animal3D` with `AnimalMotion` (springs: lean, sway, lag, squash, trot); `BuildingFill`
   (animals out in yards, produce piling up, doors opening on collect); `Ground3D` (shade and wear map, tufts).
 
 ## Rules

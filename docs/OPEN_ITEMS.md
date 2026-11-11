@@ -21,7 +21,7 @@ P2 prop silhouettes -> P2 lighting calibration -> P3 distance simplification.
 Rules we keep: no more balls to fix blobs; measure each step with the stress probe; no gameplay data, ids,
 footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 - Vehicle models (bland): same pilot treatment.
-- Crop shapes per crop; decoration detail kit (ridge caps, lanterns).
+- Decoration detail kit (ridge caps, lanterns).
 
 ## Systems
 - Save validation (SaveValidator, `add_object` invariants, migrations test).

@@ -7,8 +7,9 @@ const COLS := 6
 const ROWS := 4
 const CELL := 4.0          # world units between cells
 const PAGE_SIZE := Vector2i(1500, 1000)
+const CROP_ZOOM := 2.2     # crops are small too
 const ANIMAL_ZOOM := 3.0   # animals are small: shown bigger
-const KINDS: Array[String] = ["building", "decor", "tree", "animal", "vehicle", "young", "bloom"]
+const KINDS: Array[String] = ["building", "decor", "tree", "animal", "vehicle", "young", "bloom", "crop"]
 
 var _cam: Camera3D
 
@@ -53,6 +54,10 @@ func _wanted() -> Array[String]:
 
 func _ids(kind: String) -> Array[String]:
 	var out: Array[String] = []
+	if kind == "crop":
+		for id: String in Game.crops:
+			out.append(id)
+		return out
 	for id in Game.item_order:
 		var k := str(Game.items[id].get("kind", ""))
 		if k == kind or (kind == "building" and k in ["crafting", "barn"]):
@@ -65,8 +70,12 @@ func _page(kind: String, page: int, ids: Array[String]) -> void:
 	add_child(holder)
 	for k in ids.size():
 		var at := Vector3((k % COLS) * CELL, 0, (k / COLS) * CELL)
-		var node := _model(ids[k])
-		if node != null:
+		var node := _crop_row(ids[k]) if kind == "crop" else _model(ids[k])
+		if kind == "crop":
+			node.scale = Vector3.ONE * CROP_ZOOM
+			node.position = at - Vector3(1.0, 0, 0) * CROP_ZOOM
+			holder.add_child(node)
+		elif node != null:
 			var fp := Game.footprint(ids[k])
 			var fit := 3.0 / maxf(maxf(fp.x, fp.y), 1.0)  # big buildings are shrunk to fit their cell
 			node.scale = Vector3.ONE * (ANIMAL_ZOOM if kind == "animal" else minf(fit, 1.6))
@@ -117,3 +126,25 @@ func _model(id: String) -> Node3D:
 			return DecorModel.build_young(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
 		_:
 			return ModelKit.bake(BuildingModel.build(it, fp, Game.max_level(id)))
+
+
+## A crop at young, ripe and withered side by side, as the field draws it (crop material, produce coloured).
+func _crop_row(id: String) -> Node3D:
+	var crop: Dictionary = Game.crops[id]
+	var form := CropForms.form_of(id, str(crop.get("shape", "berry")))
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/crop3d.gdshader")
+	var row := Node3D.new()
+	for k in 3:
+		var mmi := MultiMeshInstance3D.new()
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_custom_data = true
+		mm.mesh = CropModels.mesh(form, ["young", "ripe", "withered"][k])
+		mm.instance_count = 1
+		mm.set_instance_transform(0, Transform3D(Basis().scaled(Vector3.ONE * Crops3D.PLANT_SCALE), Vector3(k * 1.0, 0, 0)))
+		mm.set_instance_custom_data(0, Color.html(str(crop.get("color", "#e2453c"))))
+		mmi.multimesh = mm
+		mmi.material_override = mat
+		row.add_child(mmi)
+	return row

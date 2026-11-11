@@ -54,6 +54,16 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 		for stage in CropModels.STAGES:
 			var m := CropModels.mesh(shape, stage)
 			_check(m.get_surface_count() == 1 and m.surface_get_array_len(0) > 3, "%s %s has a mesh" % [shape, stage])
+	# Every crop has a form, and every form builds every stage.
+	for crop_id: String in CropForms.crops():
+		_check(g.crops.has(crop_id), "%s in crop_forms.json is a real crop" % crop_id)
+		_check(not CropForms.spec(CropForms.form_of(crop_id, "")).is_empty(), "%s has a form" % crop_id)
+	for crop_id: String in g.crops:
+		_check(CropForms.crops().has(crop_id), "%s has a crop form" % crop_id)
+	for form: String in CropForms.forms():
+		for stage in CropModels.STAGES:
+			var m := CropModels.mesh(form, stage)
+			_check(m.get_surface_count() == 1 and m.surface_get_array_len(0) > 3, "%s %s form has a mesh" % [form, stage])
 	_done(g)
 
 
