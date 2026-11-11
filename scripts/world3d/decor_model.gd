@@ -447,6 +447,13 @@ static func _pond(root: Node3D, fp: Vector2i, fountain: bool, col: Color) -> voi
 				sin(a) * r * 0.4
 			), 0.09, ModelKit.paint(Color("#4f9a3a")),
 				Vector3(1, 0.12, 1))
+			if k != 1:  # a pink lotus bloom on two of the pads: a cup of petals round a yellow heart
+				var bloom := c + Vector3(cos(a) * r * 0.5, 0.045, sin(a) * r * 0.4)
+				for j in 5:
+					var b := TAU * j / 5.0
+					ModelKit.ball(root, bloom + Vector3(cos(b) * 0.022, 0.012, sin(b) * 0.022), 0.03,
+						ModelKit.paint(Color("#f4a6c8")), Vector3(0.7, 1.3, 0.7))
+				ModelKit.ball(root, bloom + Vector3(0, 0.012, 0), 0.014, ModelKit.paint(Color("#f2c230")))
 		_ducks(root, c + Vector3(0, 0.02, 0), r * 0.55)
 		_pond_bank(root, c, r + 0.1, r * 0.85 + 0.1, 5)
 
