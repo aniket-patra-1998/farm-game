@@ -92,12 +92,20 @@ func _ready() -> void:
 		grid.plants_popped.connect(crops.pop)
 		grid.collected.connect(objects.celebrate)
 		objects.landed.connect(_landed)
+		objects.transformed.connect(_transformed)
 
 
 ## Something dropped onto the farm: a puff of dust where it touched down, a thud, a jolt in the hand.
 func _landed(at: Vector3) -> void:
 	grid.world_fx.burst("dust", IsoProjection.grid_of(at))
 	Sound.play("place")
+	Sound.buzz(FarmGrid.BUZZ_PLACE)
+
+
+## A building was finished or upgraded: sparkles at its feet, a chime (a fanfare for a new building).
+func _transformed(at: Vector3, grand: bool) -> void:
+	grid.world_fx.burst("sparkle", IsoProjection.grid_of(at))
+	Sound.play("level_up" if grand else "collect")
 	Sound.buzz(FarmGrid.BUZZ_PLACE)
 
 

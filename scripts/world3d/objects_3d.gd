@@ -4,6 +4,7 @@ extends Node3D
 ## shows changes (its id, size, ready state, a frame becoming a building). Also the countryside trees
 ## around the farm. Kinds without a 3D model yet keep their 2D piece (ObjectLayer asks handles()).
 
+signal transformed(at: Vector3, grand: bool)  # a building grew or was finished: sparkles there (grand: the big sound)
 signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust there
 
 
@@ -13,6 +14,7 @@ const SCENERY_Y := -Ground3D.SLAB
 const PINE := Color("#2f6b3a")
 
 
+const STEP_LEVEL := 100       # see _step
 const DROP_HEIGHT := 1.4      # tiles above the ground a new thing falls from
 const YARD_HEIGHT := 0.3      # a building's yard and fence, for taps
 const PART_HEIGHT := 1.0      # what stands beside a building (a silo, an annex), for taps
@@ -86,7 +88,10 @@ func sync() -> void:
 		var node := _build(o)
 		add_child(node)
 		var fresh := not v.has("node")
-		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o)}
+		var step := _step(o)
+		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o), "step": step}
+		if not fresh and _synced_once and step > int(v.get("step", step)):
+			grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
 		if fresh and _synced_once:
 			drop_in(uid)  # newly bought or placed: it drops onto the farm
 	for uid in _views.keys():
@@ -123,6 +128,14 @@ func _mind_of(a: Animal3D) -> AnimalBehaviour:
 
 
 ## What a view shows: when this changes, it's rebuilt.
+## How far along a building is in its life: a site counts for nothing, a finished building 100, plus 10 a level.
+## (When it goes up, the building has been finished or upgraded: see grow_in.)
+func _step(o: Dictionary) -> int:
+	if not Game.kind_of(o) in ["building", "barn", "crafting"]:
+		return 0
+	return 0 if Game.under_construction(o) else STEP_LEVEL + 10 * int(o.get("level", 1))
+
+
 func _key(o: Dictionary) -> String:
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
@@ -411,6 +424,19 @@ func bounce(uid: int) -> void:
 	tw.tween_property(node, "scale", base, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
+
+
+## Finished or upgraded: it swells up past its size and settles back, with sparkles at its feet.
+func grow_in(uid: int, grand: bool) -> void:
+	var node := _node(uid)
+	if node == null:
+		return
+	node.scale = Vector3.ONE * 0.82
+	var tw := _tween(node)
+	tw.tween_property(node, "scale", Vector3.ONE * Vector3(1.1, 1.14, 1.1), 0.16).set_trans(Tween.TRANS_QUAD) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(node, "scale", Vector3.ONE, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	transformed.emit(node.position, grand)
 
 
 ## Newly on the farm: it falls in from above, lands with a squash and settles.
