@@ -8,6 +8,7 @@ uniform float roughness = 1.0;
 uniform float specular = 0.1;
 uniform float ground_ao = 0.32;   // how dark a part gets where it touches the ground
 uniform float ao_reach = 0.22;    // and how far up the shade fades out (world units)
+uniform float rim = 0.1;          // a soft light edge on every painted part: the shape reads against what is behind
 uniform float sway = 0.0;         // bends in the wind by height above its foot (trees, scarecrows); 0: still
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
 
@@ -33,4 +34,6 @@ void fragment() {
 	ALBEDO = albedo * tint * ao;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
+	RIM = rim;
+	RIM_TINT = 0.9;
 }

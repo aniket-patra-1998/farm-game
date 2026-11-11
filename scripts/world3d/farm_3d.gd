@@ -168,7 +168,7 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	# Shade is lit by the sky, but mostly warm-neutral bounce light off the grass and earth.
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
 	environment.ambient_light_energy = lerpf(0.4, 0.34, dark) * (1.0 - dim * 0.4)
-	environment.adjustment_saturation = lerpf(1.22, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0)))
+	environment.adjustment_saturation = lerpf(1.1, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0)))
 	var fog := float(weather.get("fog", 0.0))
 	environment.fog_enabled = fog > 0.01
 	environment.fog_light_color = horizon.lerp(Color(0.85, 0.88, 0.9), 0.6)

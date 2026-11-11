@@ -56,7 +56,9 @@ func _ready() -> void:
 	var meadow_grass := grass.duplicate() as ShaderMaterial
 	meadow_grass.set_shader_parameter("checker", 0.0)
 	meadow_grass.set_shader_parameter("dryness", 0.32)
-	meadow_grass.set_shader_parameter("grass_light", Color(0.52, 0.72, 0.30))
+	meadow_grass.set_shader_parameter("patchy", 0.5)
+	meadow_grass.set_shader_parameter("grass_light", Color(0.43, 0.60, 0.25))
+	meadow_grass.set_shader_parameter("grass_dark", Color(0.25, 0.41, 0.16))
 	_meadow = MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	_meadow.mesh = plane
@@ -97,6 +99,7 @@ func rebuild() -> void:
 		_meadow.position = Vector3(n / 2.0, -SLAB, n / 2.0)
 		_meadow_tufts = PackedFloat32Array()
 		_scatter_flowers(n)  # flowers grow only off the farm, so only its size moves them
+	_grass[0].set_shader_parameter("farm_n", float(n))
 	_paint_shade(n)
 	_scatter_tufts(n)
 

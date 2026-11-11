@@ -4,11 +4,17 @@ render_mode cull_disabled;
 // farm (FarmVille's grid you could read without lines), and a sunlit warmth. All procedural, in world
 // space, so it never stretches or repeats visibly.
 
-uniform vec3 grass_light : source_color = vec3(0.56, 0.78, 0.30);
-uniform vec3 grass_dark : source_color = vec3(0.33, 0.58, 0.20);
+uniform vec3 grass_light : source_color = vec3(0.50, 0.70, 0.27);
+uniform vec3 grass_dark : source_color = vec3(0.28, 0.49, 0.18);
 uniform vec3 dry : source_color = vec3(0.74, 0.74, 0.38);
 uniform float checker = 0.035;  // how much alternate tiles differ; 0 for the meadow
 uniform float dryness = 0.18;   // how much straw-coloured grass shows through
+// The farm lawn (farm_n > 0, in tiles): mown in bands, with a lip of bare earth along its edge, so the farm
+// reads as a place cut out of the countryside.
+uniform float farm_n = 0.0;
+uniform vec3 verge : source_color = vec3(0.50, 0.37, 0.22);
+uniform float mow = 0.09;       // how much alternate bands differ
+uniform float patchy = 0.0;     // the meadow: how strongly patches of lush and thin grass differ
 // What stands on the farm (Ground3D): R darkens the grass round things that block the sky, G wears it to
 // trodden straw and earth. shade_rect is the map's corner and size in tiles.
 uniform sampler2D shade_map : filter_linear, repeat_disable;
@@ -51,6 +57,13 @@ void fragment() {
 	vec3 col = mix(grass_dark, grass_light, smoothstep(0.25, 0.75, broad));
 	col = mix(col, dry, dryness * smoothstep(0.55, 0.85, fbm(p * 0.37 + 11.0)));
 	col *= 0.92 + 0.16 * fine;
+	col *= 1.0 + patchy * (fbm(p * 0.09 + 31.0) - 0.5);
+	if (farm_n > 0.0) {
+		col *= 1.0 + mow * (step(0.5, fract((p.x + p.y) * 0.25)) - 0.5);
+		float d = min(min(p.x, p.y), min(farm_n - p.x, farm_n - p.y));
+		float lip = smoothstep(0.55, 0.2, d + (fine - 0.5) * 0.14);
+		col = mix(col, verge * (0.88 + 0.24 * fine), lip * 0.9);
+	}
 	float tile = mod(floor(p.x) + floor(p.y), 2.0);
 	col *= 1.0 + checker * (tile - 0.5);
 	vec2 suv = (p - shade_rect.xy) / shade_rect.zw;
