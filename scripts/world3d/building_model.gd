@@ -650,9 +650,12 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				var at := Vector3(x + (k % 2) * 0.22, 0.0 if k < 2 else 0.14, z + (0.11 if k == 2 else 0.0))
 				ModelKit.box(root, at + Vector3(-0.1, 0, -0.08), at + Vector3(0.1, 0.14, 0.08), ModelKit.paint(HAY))
 		"barrels":
-			var x := minf(hi.x + 0.25, fw - 0.15)
+			# Beside the building; a yard with no building (an Orchard) has them by its back fence, out of
+			# the way of what grows there.
+			var bare := hi.x - lo.x < 0.01
+			var x := fw - 0.3 if bare else minf(hi.x + 0.25, fw - 0.15)
 			for k in 3:
-				var z := lerpf(lo.z + 0.15, hi.z - 0.15, k / 2.0)
+				var z := lerpf(0.3, 0.9, k / 2.0) if bare else lerpf(lo.z + 0.15, hi.z - 0.15, k / 2.0)
 				ModelKit.cylinder(root, Vector3(x, 0, z), 0.1, 0.24, ModelKit.surface(Color("#7c4a2a"), "boards", 0.25))
 				ModelKit.cylinder(root, Vector3(x, 0.05, z), 0.105, 0.025, ModelKit.paint(Color("#3a3a3a"), 0.5))
 				ModelKit.cylinder(root, Vector3(x, 0.18, z), 0.105, 0.025, ModelKit.paint(Color("#3a3a3a"), 0.5))
@@ -693,8 +696,9 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.paint(Color("#8a7a5a")),
 				Vector3(rx + 0.08, 0.05, rz + 0.08)
 			)
+			# No ducks of its own: a Duck Pond's ducks are the ones living in it (BuildingFill), so an empty
+			# pond looks empty.
 			ModelKit.ball(root, centre + Vector3(0, 0.005, 0), 1.0, ModelKit.water(), Vector3(rx, 0.03, rz))
-			DecorModel._ducks(root, centre + Vector3(0, 0.02, 0), minf(rx, rz) * 0.55)
 			var rng := RandomNumberGenerator.new()
 			rng.seed = 7
 			for k in 10:

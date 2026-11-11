@@ -28,6 +28,8 @@ var _spots: Array[Vector3] = []
 var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
+const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
+const TREE_FILL := 0.75           # an orchard tree's size, against the space between trees
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
@@ -54,8 +56,9 @@ static func shows(o: Dictionary) -> bool:
 	if Game.under_construction(o) or not Game.is_building(o):
 		return false
 	var def := Game.catalog.get_def(str(o["id"]))
+	# Homes for named animals, or gardens for a kind (trees in an Orchard, blooms in a Bloom Garden).
 	return def is BuildingDef and (not (def as BuildingDef).holds().is_empty()
-		or str((def as BuildingDef).data.get("holds_kind", "")) == "tree")
+		or str((def as BuildingDef).data.get("holds_kind", "")) in PLANT_KINDS)
 
 
 ## Places in the yard where an animal (or a tree) can stand: a grid over the footprint, inside the fence,
@@ -161,17 +164,19 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	var ready := Game.is_ready(o)
 	var per_row := 3 if ids.is_empty() or Game.kind_of({"id": ids[0]}) == "tree" else 5
 	var rows := ceili(float(slots) / per_row)
-	var size := 0.55 if rows <= 2 else 0.55 * 2.0 / rows + 0.1
+	# Trees fill the field (FarmVille's orchards were packed): sized to the space between them.
+	var gap := minf(_fp.x * 0.7 / maxf(per_row - 1.0, 1.0), _fp.y * 0.7 / maxf(rows - 1.0, 1.0))
+	var size := clampf(gap * TREE_FILL, 0.35, 0.8)
 	if per_row != 3:
 		# Blooms grow in soil beds, one a row.
 		for r in rows:
-			var bz := _fp.y * (0.25 + 0.5 * r / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
+			var bz := _fp.y * (0.15 + 0.7 * r / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
 			ModelKit.box(holder, Vector3(_fp.x * 0.12, 0, bz - 0.22), Vector3(_fp.x * 0.88, 0.05, bz + 0.22),
 				ModelKit.paint(Color("#6b4a2b")))
 	for k in mini(ids.size(), slots):
 		var row := int(k / float(per_row))
-		var z := _fp.y * (0.25 + 0.5 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
-		var x := _fp.x * (0.2 + 0.6 * (k % per_row) / maxf(per_row - 1.0, 1.0))
+		var z := _fp.y * (0.15 + 0.7 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
+		var x := _fp.x * (0.15 + 0.7 * (k % per_row) / maxf(per_row - 1.0, 1.0))
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
 			var d := Game.catalog.get_def(ids[k]) as BloomDef

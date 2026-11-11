@@ -25,8 +25,9 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `tests/suites/*_test.gd`: rule tests, one `TestSuite` per area (helpers in `tests/test_suite.gd`), run by
   `tests/test_runner.gd` headless in CI. `tests/shots.gd`: screenshots in CI.
 - Tools to look before and after a change: `tools/perf_probe.tscn` (frame cost, draw calls, what each system
-  costs, on the showcase farm) and `tools/contact_sheet.tscn` (every model in a labelled grid, to spot broken
-  pieces); both run with a renderer under xvfb (see their headers).
+  costs, on the showcase farm), `tools/contact_sheet.tscn` (every model in a labelled grid, to spot broken
+  pieces) and `tools/state_sheet.tscn` (every building as a frame, empty, half full and full and ready); all
+  run with a renderer under xvfb (see their headers).
 - `scripts/world/animals/`: code-drawn, procedurally animated animals: `AnimalRig` (data/animal_rigs.json),
   `AnimalBehaviour` (what each animal does), `AnimalPose` (one frame), `AnimalArt` and its shape classes.
 - `scripts/world3d/`: the farm in real 3D (`Farm3D`; the 2D world stays as a fallback). Models are built in
