@@ -5,11 +5,12 @@ extends Node3D
 ## they ripen; produce takes its crop's colour. Rebuilt when plots change, and every few seconds as crops
 ## grow.
 
-const SPOTS := [Vector2(-0.2, -0.2), Vector2(0.2, -0.2), Vector2(-0.2, 0.2), Vector2(0.2, 0.2)]
+const SPOTS := [Vector2(-0.24, -0.24), Vector2(0.24, -0.24), Vector2(-0.24, 0.24), Vector2(0.24, 0.24),
+	Vector2(0, 0)]
 const GROW_REFRESH := 3.0   # seconds between growth updates
 const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
-const PLANT_SCALE := 1.8    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
+const PLANT_SCALE := 2.5    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
 var wind := 0.6: set = _set_wind
 

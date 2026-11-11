@@ -29,7 +29,7 @@ var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
-const TREE_FILL := 0.75           # an orchard tree's size, against the space between trees
+const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
@@ -162,12 +162,13 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 		for k in int(inside[id]):
 			ids.append(id)
 	var ready := Game.is_ready(o)
-	var per_row := 3 if ids.is_empty() or Game.kind_of({"id": ids[0]}) == "tree" else 5
+	var trees := ids.is_empty() or Game.kind_of({"id": ids[0]}) == "tree"
+	# A grid in the field's own proportions; trees are packed tight, crowns just touching (FarmVille's orchards).
+	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1) if trees else 5
 	var rows := ceili(float(slots) / per_row)
-	# Trees fill the field (FarmVille's orchards were packed): sized to the space between them.
-	var gap := minf(_fp.x * 0.7 / maxf(per_row - 1.0, 1.0), _fp.y * 0.7 / maxf(rows - 1.0, 1.0))
-	var size := clampf(gap * TREE_FILL, 0.35, 0.8)
-	if per_row != 3:
+	var gap := minf(_fp.x * 0.8 / maxf(per_row - 1.0, 1.0), _fp.y * 0.8 / maxf(rows - 1.0, 1.0))
+	var size := clampf(gap * TREE_FILL, 0.4, 1.0)
+	if not trees:
 		# Blooms grow in soil beds, one a row.
 		for r in rows:
 			var bz := _fp.y * (0.15 + 0.7 * r / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
@@ -176,7 +177,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	for k in mini(ids.size(), slots):
 		var row := int(k / float(per_row))
 		var z := _fp.y * (0.15 + 0.7 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
-		var x := _fp.x * (0.15 + 0.7 * (k % per_row) / maxf(per_row - 1.0, 1.0))
+		var x := _fp.x * (0.1 + 0.8 * (k % per_row) / maxf(per_row - 1.0, 1.0))
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
 			var d := Game.catalog.get_def(ids[k]) as BloomDef
