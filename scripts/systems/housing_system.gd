@@ -119,6 +119,11 @@ func fill_building(uid: int) -> int:
 		else:
 			keep.append(o)
 	if moved == 0:
+		# Say why, instead of doing nothing: the first one that wanted in and was turned away.
+		for o in game.objects:
+			if can_move_in(b, o):
+				game.message.emit(refusal(b, str(o["id"]), fit(b, o["id"], {"uid": int(o["uid"])})))
+				break
 		return 0
 	game.set_objects(keep)
 	game.message.emit(tr("MOVED_INTO_THE") % [moved, game.item_data(b["id"])["name"]])
