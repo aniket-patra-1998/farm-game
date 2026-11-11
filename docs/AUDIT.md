@@ -1,6 +1,11 @@
 # System audit: what FarmVille had, what we have, what's missing
 
-Goal, in order: (1) every system a complete replica of FarmVille's, (2) then make each better, clearly marked.
+Goal, in order: (1) every system an exact replica of FarmVille's, built in depth, and the whole game
+hyper-optimised to run smoothly on low-end phones; (2) then make each better, clearly marked.
+The social side (neighbours, gifts, requests, quests: 8-10) waits for the social feature. Until then, what
+FarmVille got from friends (building materials, help raising barns and vehicles, adopting strays) comes from
+materials/parts found while farming or bought with gems; when friends arrive they replace those, since in
+FarmVille more active friends meant faster building.
 Base is FarmVille (2009-2012, "FV1"). Where the owner asked for a FarmVille 2 system (water, animal feed),
 it's marked FV2 and adapted to FV1's look and pace. Status: done / partial / missing / broken.
 Each system lands with rule tests, its UI reachable from the HUD, its 3D look, and save support.
@@ -53,7 +58,8 @@ keep it you had to care for it within a time limit (the owner remembers 24 hours
 friends to help); if the time runs out it wanders off.
 - done: strays appear and are adopted with one tap (stray_system).
 - **missing: the adoption task** — a 24-hour timer shown on the animal; it needs N feedings (feed from the
-  Feed Mill or bushels) and N helps; neighbours (see 9) help; turning it away; running off when time's up.
+  Feed Mill or bushels) and N helps; turning it away; running off when time's up. Until the social
+  feature, the helps are items found while farming (or gems), like building parts; then friends.
 
 ## 5. Buildings (partial; see docs/NEXT.md and the buildings design doc)
 - done: buying, construction with materials, sizes/upgrades, limits, FarmVille footprints, crafting.
@@ -111,6 +117,8 @@ FarmVille: quest chains from characters ("Goals"), each with 3 tasks and rewards
 2. Player module (1): avatar model and walk, action queue, customisation and wardrobe, profile.
 3. Animal husbandry (3): home classes, Feed Mill and feeds, feeding, by-products; strays' adoption task (4).
 4. Water (6): Well building, watering, upgrades.
-5. Neighbours (9), Gift Box (8), quests (10).
-6. Buildings plan (5) continues alongside: tabs, silhouettes, the 5 planned buildings.
-7. Engineering (11) as each area is touched; then step 2: make each system better.
+5. Buildings plan (5) continues alongside: tabs, silhouettes, the 5 planned buildings.
+6. Engineering (11) and performance for low-end phones, throughout: every system measured on the showcase
+   farm (tools/perf_probe.tscn) and kept inside draw and frame budgets (tests).
+Later, with the social feature: neighbours (9), Gift Box (8), quests (10), and friends replacing parts.
+Then step 2: make each system better.
