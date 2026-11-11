@@ -168,7 +168,8 @@ func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
 	press.pressed = true
 	press.position = on_dairy
 	grid._unhandled_input(press)
-	grid._process(FarmGrid.HOLD_TO_LIFT + 0.05)
+	await get_tree().create_timer(FarmGrid.HOLD_TO_LIFT + 0.1).timeout
+	grid._process(0.0)
 	_eq(int(grid.placing.get("uid", -1)), 9002, "holding the Dairy Farm picks it up")
 	var spot := Vector2i(1, 1)
 	var fpd := Game.footprint("cow_shed")

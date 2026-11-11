@@ -39,7 +39,8 @@ const BUZZ_ERROR := 40
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
-const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is picked up
+const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is picked up (by the clock, so a
+							# slow frame can never turn a quick tap into a hold)
 
 ## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id] (see scenery()).
 static var _scenery: Array = []
@@ -77,7 +78,8 @@ var _sell_pending_until := 0
 var _vehicle_flash := {} # the area a vehicle just worked: {"row", "col", "w", "h", "until"}
 
 var _press_pos := Vector2.ZERO
-var _held := 0.0             # how long the finger has rested where it went down
+var _press_msec := 0         # when the finger went down
+var _hold_spent := false     # this press has already tried to lift something
 var _pressing := false
 var _dragged := false
 
@@ -515,7 +517,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if touch.pressed:
 			_pressing = true
 			_dragged = false
-			_held = 0.0
+			_press_msec = Time.get_ticks_msec()
+			_hold_spent = false
 			_press_pos = touch.position
 			_press_on_farm = _on_farm_area(touch.position)
 		else:
@@ -534,13 +537,12 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Press and hold on anything on the farm to pick it up (the Move tool's drag, without choosing the tool):
 ## it lifts off, follows the finger, and lets go where you release: onto the grass, into a home that takes it
 ## (a vehicle into the Garage, an animal into its pen), or the Barn. Release it where it was to put it back.
-func _process(delta: float) -> void:
-	if not _pressing or _dragged or not _press_on_farm or not placing.is_empty():
+func _process(_delta: float) -> void:
+	if not _pressing or _dragged or _hold_spent or not _press_on_farm or not placing.is_empty():
 		return
-	_held += delta
-	if _held < HOLD_TO_LIFT:
+	if Time.get_ticks_msec() - _press_msec < int(HOLD_TO_LIFT * 1000.0):
 		return
-	_pressing = false  # whatever happens, this press is not a tap
+	_hold_spent = true
 	var uid := -1
 	if picker.is_valid():
 		uid = picker.call(_press_pos)
@@ -550,7 +552,8 @@ func _process(delta: float) -> void:
 		uid = int(Game.object_at(i).get("uid", -1)) if i >= 0 else -1
 	var obj := Game.object_by_uid(uid)
 	if obj.is_empty():
-		return
+		return  # nothing here to lift: the press carries on as a tap or a drag
+	_pressing = false  # it is picked up now, so this press is not a tap
 	_feel("place", BUZZ_PLACE)
 	_poke(uid)
 	start_placing(str(obj["id"]), uid)
