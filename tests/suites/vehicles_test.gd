@@ -14,6 +14,17 @@ func _all_plots(g: GameState, r0: int, c0: int, w: int, h: int, ph: GameState.Ph
 
 
 
+## Parks these vehicles in a finished Garage (vehicles are only driven from one).
+func _park(g: GameState, ids: Array) -> void:
+	var inside := {}
+	for id in ids:
+		inside[id] = 1
+		for o in g.objects.filter(func(x: Dictionary) -> bool: return x["id"] == id):
+			g.remove_object(o)
+	g.add_object({"uid": g.next_uid, "id": "garage", "row": 0, "col": 8, "level": 1, "inside": inside, "t": g.now()})
+	g.next_uid += 1
+
+
 func test_55_tractor_plows_two_by_two_with_fuel() -> void:
 	var g := _farm()
 	g.coins = 1000000
@@ -25,6 +36,8 @@ func test_55_tractor_plows_two_by_two_with_fuel() -> void:
 	_check(g.vehicles.fuel_unlocked, "the first vehicle unlocks the fuel tank")
 	_eq(g.vehicles.fuel_now(), VehicleSystem.FUEL_TANK, "it starts full: 150")
 	_eq(g.vehicles.vehicle_area("tractor"), Vector2i(2, 2), "a new tractor works 2x2")
+	_check(g.vehicles.use_vehicle("tractor", 8, 8).is_empty(), "a tractor standing outside can't be driven")
+	_park(g, ["tractor"])
 	_check(g.vehicles.use_vehicle("seeder", 8, 8, "wheat").is_empty(), "can't drive a vehicle you don't own")
 	var coins := g.coins
 	var r := g.vehicles.use_vehicle("tractor", 8, 8)
@@ -53,6 +66,7 @@ func test_56_seeder_plants_and_harvester_harvests() -> void:
 	g.xp = g.xp_for_level(14)
 	for v in ["tractor", "seeder", "harvester"]:
 		_check(g.buy_and_place(v, 11, ["tractor", "seeder", "harvester"].find(v)), "%s bought" % v)
+	_park(g, ["tractor", "seeder", "harvester"])
 	g.vehicles.use_vehicle("tractor", 8, 8)
 	_check(g.vehicles.use_vehicle("seeder", 8, 8, "").is_empty(), "the seeder needs a seed")
 	var coins := g.coins
@@ -79,6 +93,7 @@ func test_57_fuel_refills_slowly_and_spare_tanks() -> void:
 	g.coins = 1000000
 	g.xp = g.xp_for_level(12)
 	g.buy_and_place("tractor", 11, 0)
+	_park(g, ["tractor"])
 	g.vehicles.fuel = 0
 	g.vehicles.fuel_t = g.now()
 	_check(g.vehicles.use_vehicle("tractor", 8, 8).is_empty(), "nothing runs on an empty tank")
@@ -121,6 +136,11 @@ func test_58_garage_upgrades_vehicles_with_parts() -> void:
 		g.parts[m] = 10
 	g.land.add_materials(int(garage["uid"]))
 	_check(not g.under_construction(garage), "10 bricks, nails and boards finish it")
+	_check(not g.vehicles.upgrade_vehicle("tractor"), "a tractor standing outside can't be upgraded")
+	_check(g.vehicles.usable_vehicles().is_empty(), "nor driven: it has to be parked in the Garage")
+	var tractor: Dictionary = g.objects.filter(func(o: Dictionary) -> bool: return o["id"] == "tractor")[0]
+	_check(g.homes.put_in_home(int(garage["uid"]), "tractor", tractor), "parked in the Garage")
+	_eq(g.vehicles.usable_vehicles(), ["tractor"] as Array[String], "now it can be driven")
 	var sizes: Array = [g.vehicles.vehicle_area("tractor")]
 	_check(g.vehicles.upgrade_vehicle("tractor"), "upgrade 1")
 	sizes.append(g.vehicles.vehicle_area("tractor"))
@@ -167,6 +187,7 @@ func test_59_combine_chassis_and_all_in_one() -> void:
 	g.land.add_materials(int(combine["uid"]))
 	_check(not g.under_construction(combine), "40 Vehicle Parts finish it")
 	_check(g.xp - xp_before >= 5000, "finishing it gives 5,000 XP")
+	_park(g, ["combine"])
 	var r := g.vehicles.use_vehicle("combine", 8, 8, "wheat")
 	_eq(int(r["plots"]), 4, "plows and plants 4 plots in one tap")
 	_eq(int(r["fuel"]), 12, "3 fuel a plot")

@@ -46,7 +46,6 @@ var _arborist_button: Button
 var _gardener_button: Button
 var _fert_all_button: Button
 var _vehicle_row: HBoxContainer
-var _vehicle_buttons := {} # vehicle id -> Button
 var _fuel_button: Button
 var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
@@ -1316,12 +1315,16 @@ func _add_garage_info(content: VBoxContainer) -> void:
 			BookPanel.CREAM
 		)
 	)
-	var owned := Game.vehicles.owned_vehicles()
+	var owned := Game.vehicles.usable_vehicles()
+	var outside := Game.vehicles.loose_vehicles()
+	if outside > 0:
+		content.add_child(BookPanel.text(tr("X_VEHICLES_OUTSIDE") % outside, 17, BookPanel.CREAM))
 	if owned.is_empty():
 		content.add_child(
 			BookPanel.text(tr("NO_VEHICLES_YET_BUY_A_TRACTOR"), 18, BookPanel.CREAM)
 		)
 		return
+	content.add_child(BookPanel.text(tr("VEHICLES_ARE_PARKED_HERE"), 17, BookPanel.CREAM))
 	for id in owned:
 		var it := Game.item_data(id)
 		var area := Game.vehicles.vehicle_area(id)
@@ -1340,6 +1343,11 @@ func _add_garage_info(content: VBoxContainer) -> void:
 		)
 		var cost := Game.vehicles.vehicle_upgrade_cost(id)
 		var vid: String = id
+		var drive := _panel_button(tr("USE_VEHICLE"))
+		drive.pressed.connect(func() -> void:
+			_book.close_panel()
+			tool_selected.emit("vehicle", vid))
+		card.add_child(drive)
 		if cost < 0:
 			card.add_child(BookPanel.text(tr("FULLY_UPGRADED"), 18))
 		else:
@@ -1397,25 +1405,6 @@ func _build_fuel(content: VBoxContainer) -> void:
 func _refresh_vehicles() -> void:
 	if not _vehicle_row:
 		return
-	var owned := Game.vehicles.owned_vehicles()
-	for id in _vehicle_buttons.keys():
-		if not owned.has(id):
-			(_vehicle_buttons[id] as Button).queue_free()
-			_vehicle_buttons.erase(id)
-	for id in owned:
-		if not _vehicle_buttons.has(id):
-			var b := _tool_button("")
-			var vid: String = id
-			b.pressed.connect(func() -> void: tool_selected.emit("vehicle", vid))
-			_vehicle_row.add_child(b)
-			_vehicle_buttons[id] = b
-		var area := Game.vehicles.vehicle_area(id)
-		(_vehicle_buttons[id] as Button).text = tr("X_FUEL") % [
-			Game.item_data(id)["name"],
-			area.x,
-			area.y,
-			int(Game.item_data(id).get("fuel_per_plot", 1)) * area.x * area.y
-		]
 	_fuel_button.visible = Game.vehicles.fuel_unlocked
 	_fuel_button.text = tr("FUEL_TANKS") % [
 		Game.vehicles.fuel_now(),

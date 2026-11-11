@@ -95,6 +95,30 @@ func owned_vehicles() -> Array[String]:
 	return ordered
 
 
+## Vehicles you can drive: only those parked inside a finished Garage (FarmVille's tools live in the garage).
+func usable_vehicles() -> Array[String]:
+	var out: Array[String] = []
+	for o in game.objects:
+		if o["id"] == "garage" and not game.under_construction(o):
+			for id in o.get("inside", {}):
+				if int(o["inside"][id]) > 0 and not out.has(id):
+					out.append(id)
+	var ordered: Array[String] = []
+	for id in game.item_order:
+		if out.has(id):
+			ordered.append(id)
+	return ordered
+
+
+## Vehicles you own that are not in a garage yet (standing on the farm): they have to be parked to be used.
+func loose_vehicles() -> int:
+	var n := 0
+	for o in game.objects:
+		if game.kind_of(o) == "vehicle" and not game.under_construction(o):
+			n += 1
+	return n
+
+
 func vehicle_level(id: String) -> int:
 	return int(vehicle_levels.get(id, 0))
 
@@ -148,7 +172,9 @@ func buy_fuel_tank() -> bool:
 ## Tractor plows, Seeder plants crop_id, Harvester harvests, Combine does all three.
 ## Returns {"plots", "coins", "xp", "fuel", "drops":[texts]}, or {} if it couldn't run.
 func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
-	if not owned_vehicles().has(id):
+	if not usable_vehicles().has(id):
+		if owned_vehicles().has(id):
+			game.message.emit(tr("PARK_IT_IN_THE_GARAGE_TO_USE_IT"))
 		return {}
 	var it := game.item_data(id)
 	var job: String = it["job"]
@@ -247,7 +273,7 @@ func has_garage() -> bool:
 
 func can_upgrade_vehicle(id: String) -> bool:
 	var cost := vehicle_upgrade_cost(id)
-	return has_garage() and owned_vehicles().has(id) and cost > 0 \
+	return has_garage() and usable_vehicles().has(id) and cost > 0 \
 		and game.level() >= vehicle_upgrade_level_needed(id) and int(game.parts.get("vehicle_parts", 0)) >= cost
 
 
