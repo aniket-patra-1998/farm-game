@@ -134,8 +134,10 @@ func building_specials(b: Dictionary) -> Array[String]:
 				out.append(tr("FERTILIZE_ALL_2"))
 		"saplings":
 			out.append_array(game.nurture.from_orchard(b))
+		"blooms":
+			out.append_array(game.nurture.from_garden(b))
 	# Any home with animals in it: a Mystery Baby now and then, and Animal Feed (NurtureSystem).
-	if str(game.item_data(b["id"]).get("special", "")) != "saplings":
+	if not str(game.item_data(b["id"]).get("special", "")) in ["saplings", "blooms"]:
 		out.append_array(game.nurture.from_home(b))
 	if not out.is_empty():
 		game.inventory_changed.emit()

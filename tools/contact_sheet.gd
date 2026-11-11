@@ -8,7 +8,7 @@ const ROWS := 4
 const CELL := 4.0          # world units between cells
 const PAGE_SIZE := Vector2i(1500, 1000)
 const ANIMAL_ZOOM := 3.0   # animals are small: shown bigger
-const KINDS: Array[String] = ["building", "decor", "tree", "animal", "vehicle", "young"]
+const KINDS: Array[String] = ["building", "decor", "tree", "animal", "vehicle", "young", "bloom"]
 
 var _cam: Camera3D
 
@@ -99,6 +99,8 @@ func _model(id: String) -> Node3D:
 			return VehicleModel.build(it, false)
 		"decor":
 			return DecorModel.build(it, fp, {"id": id, "uid": 7})
+		"bloom":
+			return BloomModel.build(it, {"id": id, "uid": 7, "t": Game.now() - int(it.get("cycle_seconds", 86400)) - 1})
 		"young":
 			return DecorModel.build_young(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
 		_:

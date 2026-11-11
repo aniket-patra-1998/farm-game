@@ -41,7 +41,7 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 	# Building features are all ones BuildingModel knows how to build.
 	var known := ["yard", "silo", "stilts", "ramp", "chimney", "cupola", "loft_door", "stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
-		"duck_house", "wing", "lean_to", "weathervane"]
+		"duck_house", "wing", "lean_to", "weathervane", "arch"]
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))
 	for id in data["buildings"]:
 		for f: Dictionary in (data["buildings"][id] as Dictionary).get("features", []):

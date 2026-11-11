@@ -404,6 +404,8 @@ static func draw_object(
 			_crafting(ci, corners, it, level, s)
 		"young":
 			_mystery_young(ci, center, it)
+		"bloom":
+			_bloom(ci, center, it, ready)
 		"decor":
 			match it.get("id", ""):
 				"farmhouse":
@@ -1974,3 +1976,15 @@ static func _mystery_young(ci: CanvasItem, ground: Vector2, it: Dictionary) -> v
 	else:
 		ci.draw_rect(Rect2(ground + Vector2(-16, -16), Vector2(32, 14)), Color("#b8894f"))
 		ci.draw_circle(ground + Vector2(0, -16), 13.0, Color("#9fc5e8"))
+
+
+## A bloom (2D fallback): a stem with an open flower when ready, a bud while growing.
+static func _bloom(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool) -> void:
+	var col := Color.html(str(it.get("color", "#d6304a")))
+	ci.draw_line(ground, ground + Vector2(0, -30), Color("#4f8a34"), 3.0)
+	if not ready:
+		ci.draw_circle(ground + Vector2(0, -32), 5.0, col.lerp(Color("#4f8a34"), 0.4))
+		return
+	for k in 6:
+		ci.draw_circle(ground + Vector2(0, -32) + Vector2(7, 0).rotated(TAU * k / 6.0), 5.0, col)
+	ci.draw_circle(ground + Vector2(0, -32), 4.0, Color.html(str(it.get("accent", "#f2c94c"))))

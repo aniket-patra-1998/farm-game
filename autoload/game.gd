@@ -98,6 +98,7 @@ var absence_note := ""             # what happened while the player was away, sh
 var parts := {}                    # building material -> count (see part_ids)
 var farmhands := 0                 # collect every animal at once
 var arborists := 0                 # collect every tree at once
+var gardeners := 0                 # collect every bloom at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
@@ -703,7 +704,16 @@ func is_ready(obj: Dictionary) -> bool:
 		return false
 	if is_building(obj) and inside_total(obj) == 0:
 		return false
-	return now() - int(obj["t"]) >= cycle_of(obj)
+	return now() - int(obj["t"]) >= cycle_of(obj) and not is_withered(obj)
+
+
+## A Single Bloom on the farm left ready for 7 days has withered: no harvest until Flower Food regrows it.
+## (In a Bloom Garden blooms are counts, not objects, so they never wither there.)
+func is_withered(obj: Dictionary) -> bool:
+	var d := catalog.get_def(str(obj.get("id", "")))
+	if not d is BloomDef or not (d as BloomDef).withers():
+		return false
+	return now() - int(obj["t"]) >= cycle_of(obj) + BloomDef.WITHER_AFTER
 
 
 func seconds_until_ready(obj: Dictionary) -> int:
@@ -748,15 +758,17 @@ func collect(uid: int) -> Dictionary:
 	var part := daily.roll_part()
 	var extras: Array[String] = []
 	var name_before: String = item_data(obj["id"])["name"]
-	# Every animal or tree harvested earns its own mastery, loose or living in a home.
+	# Every animal, tree or bloom harvested earns its own mastery, loose or living in a home.
 	if is_building(obj):
 		var inside: Dictionary = obj.get("inside", {})
 		for id in inside:
-			mastery.add(id, int(inside[id]))
+			mastery.add_harvest(id, int(inside[id]))
 	else:
-		mastery.add(obj["id"], 1)
+		mastery.add_harvest(obj["id"], 1)
+	if kind_of(obj) == "bloom":
+		extras.append_array(nurture.from_bloom(obj))
 	if is_building(obj):
-		extras = specials.building_specials(obj)
+		extras.append_array(specials.building_specials(obj))
 		extras.append_array(specials.grow_up_inside(obj))
 	else:
 		var adult := specials.grows_into(obj["id"])
@@ -853,10 +865,23 @@ func place_somewhere(item_id: String) -> bool:
 
 
 ## Farmhand: collects every ready animal on the farm. Arborist: every ready tree.
+## FarmVille's helpers: each collects everything of its kind that's ready, at once. kind -> the field
+## counting them, what they're called, and what's said after.
+const HELPERS := {
+	"animal": {"field": "farmhands", "name": "FARMHANDS", "done": "COLLECTED_ANIMALS_FOR_COINS"},
+	"tree": {"field": "arborists", "name": "ARBORISTS", "done": "COLLECTED_TREES_FOR_COINS"},
+	"bloom": {"field": "gardeners", "name": "GARDENERS", "done": "COLLECTED_BLOOMS_FOR_COINS"},
+}
+
+
+func helpers_held(kind: String) -> int:
+	return int(get(HELPERS[kind]["field"]))
+
+
 func use_helper(kind: String) -> int:
-	var held := farmhands if kind == "animal" else arborists
-	if held <= 0:
-		message.emit(tr("NO_LEFT") % (tr("FARMHANDS") if kind == "animal" else tr("ARBORISTS")))
+	var helper: Dictionary = HELPERS[kind]
+	if helpers_held(kind) <= 0:
+		message.emit(tr("NO_LEFT") % tr(helper["name"]))
 		return 0
 	var ready: Array = []
 	for o in objects:
@@ -865,17 +890,11 @@ func use_helper(kind: String) -> int:
 	if ready.is_empty():
 		message.emit(tr("NOTHING_IS_READY_TO_COLLECT_YET"))
 		return 0
-	if kind == "animal":
-		farmhands -= 1
-	else:
-		arborists -= 1
+	set(helper["field"], helpers_held(kind) - 1)
 	var coins_total := 0
 	for uid in ready:
 		coins_total += int(collect(uid).get("coins", 0))
-	message.emit(
-		(tr("COLLECTED_ANIMALS_FOR_COINS") if kind == "animal" else tr("COLLECTED_TREES_FOR_COINS")) % [
-			ready.size(), coins_total]
-	)
+	message.emit(tr(helper["done"]) % [ready.size(), coins_total])
 	inventory_changed.emit()
 	return ready.size()
 
@@ -1235,6 +1254,7 @@ func _new_game() -> void:
 		parts[p] = 0
 	farmhands = 0
 	arborists = 0
+	gardeners = 0
 	fertilizer_bags = 0
 	rebuild_occupancy()
 	save_game()
@@ -1285,6 +1305,7 @@ func save_game() -> void:
 		"parts": parts,
 		"farmhands": farmhands,
 		"arborists": arborists,
+		"gardeners": gardeners,
 		"fertilizer_bags": fertilizer_bags,
 		"next_uid": next_uid,
 	}
@@ -1349,6 +1370,7 @@ func load_game() -> bool:
 		parts[p] = int(saved_parts.get(p, 0))
 	farmhands = int(data.get("farmhands", 0))
 	arborists = int(data.get("arborists", 0))
+	gardeners = int(data.get("gardeners", 0))
 	fertilizer_bags = int(data.get("fertilizer_bags", 0))
 	coins = int(data.get("coins", START_COINS))
 	gems = int(data.get("gems", START_GEMS))

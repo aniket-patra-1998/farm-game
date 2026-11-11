@@ -514,6 +514,46 @@
               }
             }
           ]
+        },
+        {
+          "id": "bloom_garden",
+          "name": "Bloom Garden",
+          "unlock_level": 10,
+          "cost": 5,
+          "w": 4,
+          "h": 4,
+          "holds_kind": "bloom",
+          "cycle_seconds": 86400,
+          "color": "#a8d08d",
+          "roof": "#7a5230",
+          "special": "blooms",
+          "build_materials": {
+            "flower_ties": 10,
+            "garden_edging": 10,
+            "trellises": 10
+          },
+          "look": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate",
+          "sizes": [
+            {
+              "capacity": 20
+            },
+            {
+              "capacity": 30,
+              "materials": {
+                "flower_ties": 10,
+                "garden_edging": 10,
+                "trellises": 10
+              }
+            },
+            {
+              "capacity": 40,
+              "materials": {
+                "flower_ties": 10,
+                "garden_edging": 10,
+                "trellises": 10
+              }
+            }
+          ]
         }
       ],
       "defaults": {

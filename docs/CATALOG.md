@@ -8,16 +8,17 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Category | Families | In game | Planned |
 |---|---|---|---|
 | Crops | 10 | 70 | 0 |
-| Materials | 2 | 10 | 0 |
+| Materials | 2 | 13 | 0 |
 | Trees | 32 | 46 | 0 |
 | Animals | 15 | 68 | 0 |
-| Buildings | 6 | 17 | 6 |
+| Buildings | 6 | 18 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 38 | 0 |
 | recipes | 3 | 45 | 0 |
-| young | 2 | 2 | 0 |
+| young | 3 | 3 | 0 |
+| blooms | 6 | 12 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **103** | **410** | **6** |
+| **All** | **110** | **427** | **6** |
 
 ## Adding an item
 
@@ -40,6 +41,7 @@ Item - Anything in the catalog.
     Producer (abstract) - Placeables that are collected every cycle.
       Tree - Fruit and nut trees.
       Animal - Animals, loose on the farm or inside their home.
+      Bloom - FarmVille's Blooms: flowers harvested every cycle. A Single Bloom withers if left ready for 7 days (Flower Food regrows it; never in a Bloom Garden); a Full Bloom, a Single upgraded with gems, never withers and counts double toward their shared mastery.
     Building - Holds animals, trees or vehicles; may be built from a frame and grown size by size.
       Barn - The starter barn: broken until repaired, then storage.
       Crafting - FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels (capacity = crafting slots); each star up costs its size's coins and recipe stars, or its gems.
@@ -57,7 +59,7 @@ Anything in the catalog.
 |---|---|---|---|---|
 | `id` | string |  | yes | Unique snake_case id. Saves refer to it, so never rename one that has shipped. |
 | `name` | string |  | yes | Shown to the player. |
-| `kind` | enum of crop, tree, animal, bee, building, barn, vehicle, decor, material, crafting, recipe, young |  |  | Set by the class; only override for special cases (bee, barn). |
+| `kind` | enum of crop, tree, animal, bee, building, barn, vehicle, decor, material, crafting, recipe, young, bloom |  |  | Set by the class; only override for special cases (bee, barn). |
 | `unlock_level` | int | 1 |  | Level that unlocks it. 99 = never in the Market (earned, traded or starter only). |
 | `color` | color | "#999999" |  | Main colour of the code-drawn placeholder. |
 | `accent` | color |  |  | Second colour of the placeholder. |
@@ -149,11 +151,11 @@ Holds animals, trees or vehicles; may be built from a frame and grown size by si
 | `limit_group` | string |  |  | Buildings sharing a limit (FarmVille: 3 crafting buildings in all). |
 | `group_limit` | int |  |  | How many of the group one farm may have. |
 | `holds` | list<string> → Animal|Tree |  |  | Item ids that can move in. |
-| `holds_kind` | enum of tree, vehicle |  |  | Any item of this kind can move in. |
+| `holds_kind` | enum of tree, vehicle, bloom |  |  | Any item of this kind can move in. |
 | `one_each` | list<string> → Animal |  |  | Specials kept one at a time, taking no space (a bull, a ram). |
 | `build_materials` | materials |  |  | If set, it arrives as a frame finished with these. |
 | `uses_materials` | list<string> → Material |  |  | Materials that start dropping once you own it. |
-| `special` | enum of mystery_eggs, calves, foals, lambs, truffles, nursery, beehive, saplings, garage, garden_shed |  |  | Its FarmVille extra on each collection. |
+| `special` | enum of mystery_eggs, calves, foals, lambs, truffles, nursery, beehive, saplings, garage, garden_shed, blooms |  |  | Its FarmVille extra on each collection. |
 | `produces` | bool | true |  | false = never ready to collect (the Garage). |
 | `grow_days` | int |  |  | Nursery: days for a baby to grow up. |
 | `grows_into` | map → Animal |  |  | Nursery: baby id -> adult id. |
@@ -218,7 +220,18 @@ FarmVille's mystery young: found while harvesting, put on the farm, given its su
 |---|---|---|---|---|
 | `supply` | string |  |  | What it's given: watering_can, animal_feed or flower_food (NurtureSystem.SUPPLIES). |
 | `needs` | int | 8 |  | How many of its supply it takes to grow. |
-| `grows` | string |  |  | What kind of thing it grows into: tree or animal. |
+| `grows` | string |  |  | What kind of thing it grows into: tree, animal or bloom. |
+
+### Bloom (extends Producer)
+
+FarmVille's Blooms: flowers harvested every cycle. A Single Bloom withers if left ready for 7 days (Flower Food regrows it; never in a Bloom Garden); a Full Bloom, a Single upgraded with gems, never withers and counts double toward their shared mastery.
+
+| Field | Type | Default | Required | Meaning |
+|---|---|---|---|---|
+| `full` | string → Bloom |  |  | For a Single Bloom: the Full Bloom it upgrades to. |
+| `single_of` | string → Bloom |  |  | For a Full Bloom: the Single Bloom it's upgraded from. |
+| `upgrade_gems` | int |  |  | For a Single Bloom: gems to upgrade it to its Full Bloom. |
+| `accent` | color |  |  | The flower's centre. |
 
 ## Crops
 
@@ -393,6 +406,9 @@ Drop once you own something that uses them.
 | ✅ | Smokers | `smokers` |  |
 | ✅ | Beeswax | `beeswax` |  |
 | ✅ | Vehicle Parts | `vehicle_parts` |  |
+| ✅ | Flower Ties | `flower_ties` |  |
+| ✅ | Garden Edging | `garden_edging` |  |
+| ✅ | Trellises | `trellises` |  |
 
 ## Trees
 
@@ -899,6 +915,7 @@ Shared: `tab` = "animal"
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
 | ✅ | Orchard | `orchard` | 8 | 6,000 | 4x4 | 20 / 30 / 40 | animal | 1 |  | saplings |
+| ✅ | Bloom Garden | `bloom_garden` | 10 | 5 | 4x4 | 20 / 30 / 40 | animal | 1 | frame | blooms |
 
 ### Production
 
@@ -1162,6 +1179,84 @@ From animal home harvests; 8 Animal Feed raise one into an animal of the home's 
 | | Item | id |  |
 |---|---|---|
 | ✅ | Mystery Baby | `mystery_baby` |  |
+
+### Bulbs
+
+From Bloom harvests; 5 Flower Food grow one into a Single Bloom.
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Mystery Bulb | `mystery_bulb` |  |
+
+## blooms
+
+FarmVille's Blooms (2012). Payouts, cycles, prices and the Full Bloom's double pay are ours: sources give none.
+
+### Roses
+
+Single Rose Bloom and its Full Bloom.
+
+Shared: `color` = "#d6304a", `accent` = "#f2c94c"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Single Rose Bloom | `rose_bloom` |  |
+| ✅ | Full Rose Bloom | `rose_full_bloom` |  |
+
+### Tulips
+
+Single Tulip Bloom and its Full Bloom.
+
+Shared: `color` = "#f27a1a", `accent` = "#f9d27a"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Single Tulip Bloom | `tulip_bloom` |  |
+| ✅ | Full Tulip Bloom | `tulip_full_bloom` |  |
+
+### Daisys
+
+Single Daisy Bloom and its Full Bloom.
+
+Shared: `color` = "#fbfbf5", `accent` = "#f2b705"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Single Daisy Bloom | `daisy_bloom` |  |
+| ✅ | Full Daisy Bloom | `daisy_full_bloom` |  |
+
+### Sunflowers
+
+Single Sunflower Bloom and its Full Bloom.
+
+Shared: `color` = "#f5c518", `accent` = "#6b3e1e"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Single Sunflower Bloom | `sunflower_bloom` |  |
+| ✅ | Full Sunflower Bloom | `sunflower_full_bloom` |  |
+
+### Lilys
+
+Single Lily Bloom and its Full Bloom.
+
+Shared: `color` = "#f7b5c8", `accent` = "#f4e04d"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Single Lily Bloom | `lily_bloom` |  |
+| ✅ | Full Lily Bloom | `lily_full_bloom` |  |
+
+### Iriss
+
+Single Iris Bloom and its Full Bloom.
+
+Shared: `color` = "#6b5bd2", `accent` = "#f6d743"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Single Iris Bloom | `iris_bloom` |  |
+| ✅ | Full Iris Bloom | `iris_full_bloom` |  |
 
 ## Collectibles
 

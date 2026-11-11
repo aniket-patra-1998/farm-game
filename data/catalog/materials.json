@@ -59,6 +59,18 @@
         {
           "id": "vehicle_parts",
           "name": "Vehicle Parts"
+        },
+        {
+          "id": "flower_ties",
+          "name": "Flower Ties"
+        },
+        {
+          "id": "garden_edging",
+          "name": "Garden Edging"
+        },
+        {
+          "id": "trellises",
+          "name": "Trellises"
         }
       ]
     }

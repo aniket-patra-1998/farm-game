@@ -28,7 +28,9 @@
             "material",
             "crafting",
             "recipe",
-            "young"],
+            "young",
+            "bloom"
+          ],
           "doc": "Set by the class; only override for special cases (bee, barn)."
         },
         "unlock_level": {
@@ -341,7 +343,8 @@
           "type": "enum",
           "values": [
             "tree",
-            "vehicle"
+            "vehicle",
+            "bloom"
           ],
           "doc": "Any item of this kind can move in."
         },
@@ -371,7 +374,8 @@
             "beehive",
             "saplings",
             "garage",
-            "garden_shed"
+            "garden_shed",
+            "blooms"
           ],
           "doc": "Its FarmVille extra on each collection."
         },
@@ -559,7 +563,7 @@
         },
         "grows": {
           "type": "string",
-          "doc": "What kind of thing it grows into: tree or animal."
+          "doc": "What kind of thing it grows into: tree, animal or bloom."
         }
       },
       "lifecycle": {
@@ -569,6 +573,41 @@
         "pattern": "{id}",
         "fill": 0.5,
         "doc": "One look; the farm draws how far it has grown."
+      }
+    },
+    "Bloom": {
+      "extends": "Producer",
+      "kind": "bloom",
+      "doc": "FarmVille's Blooms: flowers harvested every cycle. A Single Bloom withers if left ready for 7 days (Flower Food regrows it; never in a Bloom Garden); a Full Bloom, a Single upgraded with gems, never withers and counts double toward their shared mastery.",
+      "fields": {
+        "full": {
+          "type": "string",
+          "ref": "Bloom",
+          "doc": "For a Single Bloom: the Full Bloom it upgrades to."
+        },
+        "single_of": {
+          "type": "string",
+          "ref": "Bloom",
+          "doc": "For a Full Bloom: the Single Bloom it's upgraded from."
+        },
+        "upgrade_gems": {
+          "type": "int",
+          "doc": "For a Single Bloom: gems to upgrade it to its Full Bloom."
+        },
+        "accent": {
+          "type": "color",
+          "doc": "The flower's centre."
+        }
+      },
+      "lifecycle": {
+        "stages": [
+          "growing",
+          "ready",
+          "withered"
+        ],
+        "pattern": "{id}_{stage}",
+        "fill": 0.6,
+        "doc": "growing until ready; a Single Bloom left ready 7 days withers."
       }
     }
   },
@@ -581,7 +620,8 @@
     "vehicles": "Vehicle",
     "decorations": "Decoration",
     "recipes": "Recipe",
-    "young": "Young"
+    "young": "Young",
+    "blooms": "Bloom"
   },
   "kind_classes": {
     "barn": "Barn",

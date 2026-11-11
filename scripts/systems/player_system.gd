@@ -88,7 +88,8 @@ func enqueue(job: Dictionary) -> Refused:
 		return Refused.QUEUED
 	if job["kind"] == "nurture":
 		var young := game.object_by_uid(int(job["uid"]))
-		if game.nurture.is_young(young) and game.nurture.free_supply(game.nurture.supply_of(young)) <= 0:
+		var supply := game.nurture.supply_for(young)
+		if supply != "" and game.nurture.free_supply(supply) <= 0:
 			return Refused.SUPPLY
 	if not can_do(job):
 		return Refused.NOTHING_TO_DO

@@ -37,6 +37,22 @@
           "color": "#c9a46a"
         }
       ]
+    },
+    {
+      "id": "bulbs",
+      "name": "Bulbs",
+      "doc": "From Bloom harvests; 5 Flower Food grow one into a Single Bloom.",
+      "defaults": {},
+      "variants": [
+        {
+          "id": "mystery_bulb",
+          "name": "Mystery Bulb",
+          "supply": "flower_food",
+          "needs": 5,
+          "grows": "bloom",
+          "color": "#a4c26a"
+        }
+      ]
     }
   ]
 }

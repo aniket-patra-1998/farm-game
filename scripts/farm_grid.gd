@@ -842,6 +842,13 @@ func _show_vehicle(job: Dictionary, r: Dictionary) -> void:
 func _show_nurture(job: Dictionary, result: Dictionary) -> void:
 	var grown := str(result["grown"])
 	var o := Game.object_by_uid(int(job["uid"]))
+	if result.get("regrown", false):
+		if not o.is_empty():
+			var at0 := center_of(Game.index_of(int(o["row"]), int(o["col"])))
+			_feel("fertilize", BUZZ_TAP)
+			_float(at0 + Vector2(0, -40), tr("REGROWN"), COLOR_FERT)
+			_sparkle(at0, COLOR_FERT)
+		return
 	if grown == "":
 		if o.is_empty():
 			return
@@ -1013,12 +1020,13 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		if first_touch:
 			start_placing(obj["id"], uid)
 		return
-	if Game.nurture.is_young(obj):
-		# Given its supply by the farmer; with none to give, its card shows what it needs and sells more.
+	var supply := Game.nurture.supply_for(obj)
+	if supply != "":
+		# A young one, or a withered bloom: given its supply by the farmer; with none to give, its card
+		# shows what it needs and sells more.
 		if first_touch:
 			_poke(uid)
-			if Game.player.is_queued({"kind": "nurture", "uid": uid}) \
-					or Game.nurture.free_supply(Game.nurture.supply_of(obj)) > 0:
+			if Game.player.is_queued({"kind": "nurture", "uid": uid}) or Game.nurture.free_supply(supply) > 0:
 				_queue({"kind": "nurture", "uid": uid})
 			else:
 				object_tapped.emit(uid)
@@ -1029,7 +1037,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if not first_touch:
 		return
 	_poke(uid)
-	if Game.is_building(obj) or Game.crafting.is_crafting(obj):
+	if Game.is_building(obj) or Game.crafting.is_crafting(obj) or Game.kind_of(obj) == "bloom":
 		object_tapped.emit(uid)
 		return
 	var it := Game.item_data(obj["id"])

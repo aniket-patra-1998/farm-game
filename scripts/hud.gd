@@ -43,6 +43,7 @@ var _book: BookPanel
 var _unwither_button: Button
 var _farmhand_button: Button
 var _arborist_button: Button
+var _gardener_button: Button
 var _fert_all_button: Button
 var _vehicle_row: HBoxContainer
 var _vehicle_buttons := {} # vehicle id -> Button
@@ -232,6 +233,12 @@ func _build_toolbar(root: Control) -> void:
 	_arborist_button.focus_mode = Control.FOCUS_NONE
 	_arborist_button.pressed.connect(func() -> void: Game.use_helper("tree"))
 	row.add_child(_arborist_button)
+
+	_gardener_button = Button.new()
+	_gardener_button.custom_minimum_size = BUTTON_SIZE
+	_gardener_button.focus_mode = Control.FOCUS_NONE
+	_gardener_button.pressed.connect(func() -> void: Game.use_helper("bloom"))
+	row.add_child(_gardener_button)
 	_refresh_unwither()
 
 	var store := _tool_button(tr("STORE_IN_THE_BARN"))
@@ -696,6 +703,8 @@ func show_building(uid: int) -> void:
 		return
 	if Game.nurture.is_young(o):
 		_book.open_panel(Game.item_data(o["id"])["name"], _build_young)
+	elif Game.kind_of(o) == "bloom":
+		_book.open_panel(Game.item_data(o["id"])["name"], _build_bloom)
 	elif o["id"] == "barn":
 		_book.open_panel(tr("BARN"), _build_barn)
 	elif Game.crafting.is_crafting(o):
@@ -715,6 +724,8 @@ func _refresh_unwither() -> void:
 		_farmhand_button.disabled = Game.farmhands <= 0
 		_arborist_button.text = tr("ARBORIST_LEFT") % Game.arborists
 		_arborist_button.disabled = Game.arborists <= 0
+		_gardener_button.text = tr("GARDENER_LEFT") % Game.gardeners
+		_gardener_button.disabled = Game.gardeners <= 0
 	if _fert_all_button:
 		_fert_all_button.text = tr("FERTILIZE_ALL_LEFT") % Game.fertilize_alls
 		_fert_all_button.disabled = Game.fertilize_alls <= 0
@@ -734,6 +745,7 @@ func _build_market(content: VBoxContainer) -> void:
 		tr("BUY_THEN_DRAG_ONTO_AN_OPEN"), 20, BookPanel.CREAM))
 	for section in [
 		["tree", tr("TREES")],
+		["bloom", tr("BLOOMS")],
 		["animal", tr("ANIMALS")],
 		["building", tr("BUILDINGS")],
 		["crafting", tr("CRAFTING")],
@@ -1499,6 +1511,44 @@ func _build_barn(content: VBoxContainer) -> void:
 		_build_barn_storage(content)
 
 
+
+
+## A bloom's card: when it's ready, whether it has withered (and regrowing it with Flower Food), and for a
+## Single Bloom, upgrading it to a Full Bloom that never withers.
+func _build_bloom(content: VBoxContainer) -> void:
+	var o := Game.object_by_uid(_building_uid)
+	var d := Game.catalog.get_def(str(o.get("id", ""))) as BloomDef
+	if d == null:
+		return
+	var uid := _building_uid
+	if Game.is_withered(o):
+		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), 20, BookPanel.CREAM))
+		content.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply("flower_food"),
+			Game.nurture.supply_name("flower_food")], 18, BookPanel.CREAM))
+		var regrow := _panel_button(tr("REGROW_IT"))
+		regrow.disabled = Game.nurture.free_supply("flower_food") <= 0
+		regrow.pressed.connect(func() -> void:
+			Game.player.enqueue({"kind": "nurture", "uid": uid})
+			_book.close_panel())
+		content.add_child(regrow)
+		var buy := _panel_button(tr("BUY_ONE_FOR_GEMS") % [Game.nurture.supply_name("flower_food"),
+			int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])])
+		buy.disabled = Game.gems < int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])
+		buy.pressed.connect(func() -> void:
+			if Game.nurture.buy_supply("flower_food", 1):
+				show_building(uid))
+		content.add_child(buy)
+	else:
+		content.add_child(BookPanel.text(tr("READY_IN") % [d.data["name"], tr("FLOWERS"),
+			FarmGrid.format_duration(Game.seconds_until_ready(o))], 20, BookPanel.CREAM))
+	if d.withers():
+		content.add_child(BookPanel.text(tr("A_SINGLE_BLOOM_WITHERS"), 17, BookPanel.CREAM))
+		var up := _panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
+		up.disabled = Game.gems < d.upgrade_gems()
+		up.pressed.connect(func() -> void:
+			if Game.nurture.upgrade_bloom(uid):
+				show_building(uid))
+		content.add_child(up)
 
 
 ## A mystery young's card: how far it has grown, the supply it needs and how many you have, and more for gems.

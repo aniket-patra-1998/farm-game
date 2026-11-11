@@ -1,6 +1,6 @@
 class_name NurtureSystem
 extends GameSystem
-## FarmVille's mystery young: Mystery Seedlings and Mystery Babies.
+## FarmVille's mystery young (Mystery Seedlings, Babies and Bulbs) and the care of withered Blooms.
 ## Part of the game state: reached as `Game.nurture`; shared state is on `game`.
 ##
 ## A young one is found while harvesting (an Orchard gives a seedling or a Watering Can every time; an animal
@@ -15,6 +15,7 @@ extends GameSystem
 const SUPPLIES := {
 	"watering_can": {"name": "WATERING_CAN", "gem_cost": 2},
 	"animal_feed": {"name": "ANIMAL_FEED", "gem_cost": 2},
+	"flower_food": {"name": "FLOWER_FOOD", "gem_cost": 2},
 }
 ## FarmVille: every Orchard harvest gave a seedling or a can. The split is our guess (sources don't say).
 const SEEDLING_SHARE := 0.5
@@ -22,8 +23,16 @@ const RARE_CHANCE := 0.10          # a seedling from a tree with a rare variety 
 const MYSTERY_BABY_CHANCE := 0.08  # per animal home harvest (our guess: FarmVille's pens varied)
 const HOME_FEED_CHANCE := 0.25     # an animal home's harvest leaves a sack of Animal Feed
 const NURSERY_FEED := 2            # the Nursery Barn's harvest: FarmVille's nursery gave feed daily
+## Blooms (FarmVille 2012): harvests give Mystery Bulbs, a Full Bloom more often; Flower Food regrows a
+## withered Single Bloom. The chances and amounts are ours (sources give none).
+const BULB_CHANCE := 0.05          # per Single Bloom harvest (doubled for a Full Bloom)
+const GARDEN_BULB_CHANCE := 0.15   # per Bloom Garden harvest
+const BLOOM_FOOD_CHANCE := 0.2     # a bloom's harvest leaves Flower Food
+const GARDEN_FOOD := 1             # every Bloom Garden harvest
+const REGROW_FOOD := 1             # Flower Food to regrow a withered Single Bloom
 const SEEDLING := "mystery_seedling"
 const BABY := "mystery_baby"
+const BULB := "mystery_bulb"
 
 var supplies := {}                 # supply id -> how many
 
@@ -61,7 +70,7 @@ func free_supply(supply: String) -> int:
 	for job in game.player.queue:
 		if job["kind"] == "nurture":
 			var o := game.object_by_uid(int(job["uid"]))
-			if not o.is_empty() and supply_of(o) == supply:
+			if supply_for(o) == supply:
 				promised += 1
 	return has_supply(supply) - promised
 
@@ -105,25 +114,54 @@ func growth(o: Dictionary) -> float:
 	return clampf(float(fed(o)) / needs(o), 0.0, 1.0)
 
 
-## Can it be given its supply now (one not promised to another job)?
+## What can be given to it now: a young one its supply (until grown), a withered Single Bloom Flower Food;
+## "" for anything else.
+func supply_for(o: Dictionary) -> String:
+	if is_young(o):
+		return supply_of(o) if fed(o) < needs(o) else ""
+	return "flower_food" if not o.is_empty() and game.is_withered(o) else ""
+
+
+## Can it be given something now?
 func can_feed(o: Dictionary) -> bool:
-	return is_young(o) and fed(o) < needs(o) and has_supply(supply_of(o)) > 0
+	var supply := supply_for(o)
+	return supply != "" and has_supply(supply) > 0
 
 
-## Gives a young one its supply. Returns {"fed", "needs", "grown": the item it grew into, or ""}, or {}.
+## Gives a young one its supply, or regrows a withered bloom. Returns {"fed", "needs", "grown": the item it
+## grew into or "", "regrown": bool}, or {}.
 func feed(uid: int) -> Dictionary:
 	var o := game.object_by_uid(uid)
 	if not can_feed(o):
 		return {}
-	var supply := supply_of(o)
+	var supply := supply_for(o)
 	supplies[supply] = has_supply(supply) - 1
+	if not is_young(o):
+		# It starts its cycle again, as if just harvested.
+		o["t"] = game.now()
+		game.inventory_changed.emit()
+		game.objects_updated()
+		return {"fed": REGROW_FOOD, "needs": REGROW_FOOD, "grown": "", "regrown": true}
 	o["fed"] = fed(o) + 1
-	var out := {"fed": fed(o), "needs": needs(o), "grown": ""}
+	var out := {"fed": fed(o), "needs": needs(o), "grown": "", "regrown": false}
 	if fed(o) >= needs(o):
 		out["grown"] = _grow(o)
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return out
+
+
+## Upgrades a Single Bloom on the farm to its Full Bloom with gems (FarmVille's Farm Cash). Returns whether
+## it was upgraded.
+func upgrade_bloom(uid: int) -> bool:
+	var o := game.object_by_uid(uid)
+	var d := game.catalog.get_def(str(o.get("id", ""))) if not o.is_empty() else null
+	if not d is BloomDef or (d as BloomDef).is_full() or not game.spend_gems((d as BloomDef).upgrade_gems()):
+		return false
+	o["id"] = (d as BloomDef).full_id()
+	game.message.emit(tr("NOW_A_IT_WILL_NEVER_WITHER") % game.item_data(o["id"])["name"])
+	game.objects_updated()
+	return true
 
 
 ## It becomes what it was all along, where it stands (or the nearest free spot, if that's bigger).
@@ -160,7 +198,8 @@ func _grow(o: Dictionary) -> String:
 ## If what it was to become left the catalog: the first of its kind.
 func first_of(kind: String) -> String:
 	for id in game.item_order:
-		if str(game.items[id].get("kind", "")) == kind and not game.items[id].has("rare_of"):
+		var it: Dictionary = game.items[id]
+		if str(it.get("kind", "")) == kind and not it.has("rare_of") and not it.has("single_of"):
 			return id
 	return ""
 
@@ -202,6 +241,33 @@ func from_home(home: Dictionary) -> Array[String]:
 	return out
 
 
+## A bloom was harvested on the farm: now and then a Mystery Bulb (twice as often from a Full Bloom), and
+## sometimes Flower Food.
+func from_bloom(bloom: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	if not game.drops_enabled:
+		return out
+	if game.rng.randf() < BLOOM_FOOD_CHANCE:
+		add_supply("flower_food", 1)
+		out.append(tr("FLOWER_FOOD_N") % 1)
+	var d := game.catalog.get_def(bloom["id"]) as BloomDef
+	if game.rng.randf() < BULB_CHANCE * d.mastery_points() and _found(BULB, _pick_bloom({})):
+		out.append(game.item_data(BULB)["name"] + "!")
+	return out
+
+
+## A Bloom Garden was harvested: Flower Food, and now and then a Mystery Bulb of its flowers.
+func from_garden(garden: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	if not game.drops_enabled:
+		return out
+	add_supply("flower_food", GARDEN_FOOD)
+	out.append(tr("FLOWER_FOOD_N") % GARDEN_FOOD)
+	if game.rng.randf() < GARDEN_BULB_CHANCE and _found(BULB, _pick_bloom(garden.get("inside", {}))):
+		out.append(game.item_data(BULB)["name"] + "!")
+	return out
+
+
 ## Puts a found young on the farm (or in the Barn with no room), secretly set to become `becomes`.
 func _found(young_id: String, becomes: String) -> bool:
 	var o := {"uid": game.next_uid, "id": young_id, "t": game.now(), "fed": 0, "becomes": becomes}
@@ -234,6 +300,20 @@ func _pick_tree(inside: Dictionary) -> String:
 	if rare != "" and game.items.has(rare) and game.rng.randf() < RARE_CHANCE:
 		return rare
 	return id
+
+
+## A Single Bloom: one of the flowers in `inside` (likelier the more there are; a Full Bloom stands for its
+## Single), or with nothing given, any flower at all: the bulb's a mystery.
+func _pick_bloom(inside: Dictionary) -> String:
+	var id := _weighted(inside, func(k: String) -> bool: return game.catalog.get_def(k) is BloomDef)
+	if id != "":
+		return (game.catalog.get_def(id) as BloomDef).single_id()
+	var singles: Array[String] = []
+	for k in game.item_order:
+		var d := game.catalog.get_def(k)
+		if d is BloomDef and not (d as BloomDef).is_full():
+			singles.append(k)
+	return singles[game.rng.randi_range(0, singles.size() - 1)] if not singles.is_empty() else ""
 
 
 ## An animal from a home's: likelier the more of it there are; a baby there stands for what it grows into.

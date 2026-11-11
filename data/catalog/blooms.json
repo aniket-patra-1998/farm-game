@@ -1,0 +1,177 @@
+{
+  "class": "Bloom",
+  "_note": "FarmVille's Blooms (2012). Payouts, cycles, prices and the Full Bloom's double pay are ours: sources give none.",
+  "defaults": {
+    "cycle_seconds": 172800
+  },
+  "families": [
+    {
+      "id": "rose",
+      "name": "Roses",
+      "doc": "Single Rose Bloom and its Full Bloom.",
+      "defaults": {
+        "color": "#d6304a",
+        "accent": "#f2c94c"
+      },
+      "variants": [
+        {
+          "id": "rose_bloom",
+          "name": "Single Rose Bloom",
+          "unlock_level": 5,
+          "cost": 300,
+          "payout": 45,
+          "xp": 3,
+          "full": "rose_full_bloom",
+          "upgrade_gems": 10
+        },
+        {
+          "id": "rose_full_bloom",
+          "name": "Full Rose Bloom",
+          "unlock_level": 99,
+          "payout": 90,
+          "single_of": "rose_bloom"
+        }
+      ]
+    },
+    {
+      "id": "tulip",
+      "name": "Tulips",
+      "doc": "Single Tulip Bloom and its Full Bloom.",
+      "defaults": {
+        "color": "#f27a1a",
+        "accent": "#f9d27a"
+      },
+      "variants": [
+        {
+          "id": "tulip_bloom",
+          "name": "Single Tulip Bloom",
+          "unlock_level": 7,
+          "cost": 400,
+          "payout": 60,
+          "xp": 4,
+          "full": "tulip_full_bloom",
+          "upgrade_gems": 10
+        },
+        {
+          "id": "tulip_full_bloom",
+          "name": "Full Tulip Bloom",
+          "unlock_level": 99,
+          "payout": 120,
+          "single_of": "tulip_bloom"
+        }
+      ]
+    },
+    {
+      "id": "daisy",
+      "name": "Daisys",
+      "doc": "Single Daisy Bloom and its Full Bloom.",
+      "defaults": {
+        "color": "#fbfbf5",
+        "accent": "#f2b705"
+      },
+      "variants": [
+        {
+          "id": "daisy_bloom",
+          "name": "Single Daisy Bloom",
+          "unlock_level": 9,
+          "cost": 500,
+          "payout": 75,
+          "xp": 5,
+          "full": "daisy_full_bloom",
+          "upgrade_gems": 10
+        },
+        {
+          "id": "daisy_full_bloom",
+          "name": "Full Daisy Bloom",
+          "unlock_level": 99,
+          "payout": 150,
+          "single_of": "daisy_bloom"
+        }
+      ]
+    },
+    {
+      "id": "sunflower",
+      "name": "Sunflowers",
+      "doc": "Single Sunflower Bloom and its Full Bloom.",
+      "defaults": {
+        "color": "#f5c518",
+        "accent": "#6b3e1e"
+      },
+      "variants": [
+        {
+          "id": "sunflower_bloom",
+          "name": "Single Sunflower Bloom",
+          "unlock_level": 11,
+          "cost": 650,
+          "payout": 100,
+          "xp": 6,
+          "full": "sunflower_full_bloom",
+          "upgrade_gems": 10
+        },
+        {
+          "id": "sunflower_full_bloom",
+          "name": "Full Sunflower Bloom",
+          "unlock_level": 99,
+          "payout": 200,
+          "single_of": "sunflower_bloom"
+        }
+      ]
+    },
+    {
+      "id": "lily",
+      "name": "Lilys",
+      "doc": "Single Lily Bloom and its Full Bloom.",
+      "defaults": {
+        "color": "#f7b5c8",
+        "accent": "#f4e04d"
+      },
+      "variants": [
+        {
+          "id": "lily_bloom",
+          "name": "Single Lily Bloom",
+          "unlock_level": 13,
+          "cost": 800,
+          "payout": 120,
+          "xp": 8,
+          "full": "lily_full_bloom",
+          "upgrade_gems": 10
+        },
+        {
+          "id": "lily_full_bloom",
+          "name": "Full Lily Bloom",
+          "unlock_level": 99,
+          "payout": 240,
+          "single_of": "lily_bloom"
+        }
+      ]
+    },
+    {
+      "id": "iris",
+      "name": "Iriss",
+      "doc": "Single Iris Bloom and its Full Bloom.",
+      "defaults": {
+        "color": "#6b5bd2",
+        "accent": "#f6d743"
+      },
+      "variants": [
+        {
+          "id": "iris_bloom",
+          "name": "Single Iris Bloom",
+          "unlock_level": 15,
+          "cost": 1000,
+          "payout": 150,
+          "xp": 10,
+          "full": "iris_full_bloom",
+          "upgrade_gems": 10
+        },
+        {
+          "id": "iris_full_bloom",
+          "name": "Full Iris Bloom",
+          "unlock_level": 99,
+          "payout": 300,
+          "single_of": "iris_bloom"
+        }
+      ]
+    }
+  ]
+}

@@ -68,7 +68,16 @@ func stars(id: String) -> int:
 
 ## Can this item be mastered (a crop, or a tree or animal that's harvested)?
 func masterable(id: String) -> bool:
-	return game.crops.has(id) or ["tree", "animal"].has(str(game.item_data(id).get("kind", "")))
+	return game.crops.has(id) or ["tree", "animal", "bloom"].has(str(game.item_data(id).get("kind", "")))
+
+
+## `count` harvests of `id`: points for what it's mastered as (a Full Bloom counts double, for its flower's
+## shared mastery under the Single Bloom's id). Returns the stars gained.
+func add_harvest(id: String, count: int) -> int:
+	var d := game.catalog.get_def(id)
+	if d is BloomDef:
+		return add((d as BloomDef).single_id(), count * (d as BloomDef).mastery_points())
+	return add(id, count)
 
 
 ## Adds points for `count` harvests of `id`, awarding any stars reached. Returns the stars gained.

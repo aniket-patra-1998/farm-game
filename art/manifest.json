@@ -3479,6 +3479,36 @@
    "subject": "a game icon of vehicle parts, a building material, simple, bold and readable at small size"
   },
   {
+   "id": "material_flower_ties",
+   "item": "flower_ties",
+   "class": "Material",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of flower ties, a building material, simple, bold and readable at small size"
+  },
+  {
+   "id": "material_garden_edging",
+   "item": "garden_edging",
+   "class": "Material",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of garden edging, a building material, simple, bold and readable at small size"
+  },
+  {
+   "id": "material_trellises",
+   "item": "trellises",
+   "class": "Material",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of trellises, a building material, simple, bold and readable at small size"
+  },
+  {
    "id": "apple_tree_harvested",
    "item": "apple_tree",
    "class": "Tree",
@@ -6316,6 +6346,42 @@
    "subject": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
   },
   {
+   "id": "bloom_garden_size1",
+   "item": "bloom_garden",
+   "class": "Building",
+   "stage": "1",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/bloom_garden_size1.png"
+   ],
+   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 1 of 3: the small starter size"
+  },
+  {
+   "id": "bloom_garden_size2",
+   "item": "bloom_garden",
+   "class": "Building",
+   "stage": "2",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/bloom_garden_size2.png"
+   ],
+   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 2 of 3: a bigger, grander version with more detail"
+  },
+  {
+   "id": "bloom_garden_size3",
+   "item": "bloom_garden",
+   "class": "Building",
+   "stage": "3",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/bloom_garden_size3.png"
+   ],
+   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+  },
+  {
    "id": "beehive_size1",
    "item": "beehive",
    "class": "Building",
@@ -7530,6 +7596,450 @@
     "refs/mystery_baby.png"
    ],
    "subject": "mystery baby"
+  },
+  {
+   "id": "mystery_bulb",
+   "item": "mystery_bulb",
+   "class": "Young",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [
+    "refs/mystery_bulb.png"
+   ],
+   "subject": "mystery bulb"
+  },
+  {
+   "id": "rose_bloom_growing",
+   "item": "rose_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/rose_bloom_growing.png"
+   ],
+   "subject": "single rose bloom"
+  },
+  {
+   "id": "rose_bloom_ready",
+   "item": "rose_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/rose_bloom_ready.png"
+   ],
+   "subject": "single rose bloom"
+  },
+  {
+   "id": "rose_bloom_withered",
+   "item": "rose_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/rose_bloom_withered.png"
+   ],
+   "subject": "single rose bloom"
+  },
+  {
+   "id": "rose_full_bloom_growing",
+   "item": "rose_full_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/rose_full_bloom_growing.png"
+   ],
+   "subject": "full rose bloom"
+  },
+  {
+   "id": "rose_full_bloom_ready",
+   "item": "rose_full_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/rose_full_bloom_ready.png"
+   ],
+   "subject": "full rose bloom"
+  },
+  {
+   "id": "rose_full_bloom_withered",
+   "item": "rose_full_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/rose_full_bloom_withered.png"
+   ],
+   "subject": "full rose bloom"
+  },
+  {
+   "id": "tulip_bloom_growing",
+   "item": "tulip_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/tulip_bloom_growing.png"
+   ],
+   "subject": "single tulip bloom"
+  },
+  {
+   "id": "tulip_bloom_ready",
+   "item": "tulip_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/tulip_bloom_ready.png"
+   ],
+   "subject": "single tulip bloom"
+  },
+  {
+   "id": "tulip_bloom_withered",
+   "item": "tulip_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/tulip_bloom_withered.png"
+   ],
+   "subject": "single tulip bloom"
+  },
+  {
+   "id": "tulip_full_bloom_growing",
+   "item": "tulip_full_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/tulip_full_bloom_growing.png"
+   ],
+   "subject": "full tulip bloom"
+  },
+  {
+   "id": "tulip_full_bloom_ready",
+   "item": "tulip_full_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/tulip_full_bloom_ready.png"
+   ],
+   "subject": "full tulip bloom"
+  },
+  {
+   "id": "tulip_full_bloom_withered",
+   "item": "tulip_full_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/tulip_full_bloom_withered.png"
+   ],
+   "subject": "full tulip bloom"
+  },
+  {
+   "id": "daisy_bloom_growing",
+   "item": "daisy_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/daisy_bloom_growing.png"
+   ],
+   "subject": "single daisy bloom"
+  },
+  {
+   "id": "daisy_bloom_ready",
+   "item": "daisy_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/daisy_bloom_ready.png"
+   ],
+   "subject": "single daisy bloom"
+  },
+  {
+   "id": "daisy_bloom_withered",
+   "item": "daisy_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/daisy_bloom_withered.png"
+   ],
+   "subject": "single daisy bloom"
+  },
+  {
+   "id": "daisy_full_bloom_growing",
+   "item": "daisy_full_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/daisy_full_bloom_growing.png"
+   ],
+   "subject": "full daisy bloom"
+  },
+  {
+   "id": "daisy_full_bloom_ready",
+   "item": "daisy_full_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/daisy_full_bloom_ready.png"
+   ],
+   "subject": "full daisy bloom"
+  },
+  {
+   "id": "daisy_full_bloom_withered",
+   "item": "daisy_full_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/daisy_full_bloom_withered.png"
+   ],
+   "subject": "full daisy bloom"
+  },
+  {
+   "id": "sunflower_bloom_growing",
+   "item": "sunflower_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/sunflower_bloom_growing.png"
+   ],
+   "subject": "single sunflower bloom"
+  },
+  {
+   "id": "sunflower_bloom_ready",
+   "item": "sunflower_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/sunflower_bloom_ready.png"
+   ],
+   "subject": "single sunflower bloom"
+  },
+  {
+   "id": "sunflower_bloom_withered",
+   "item": "sunflower_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/sunflower_bloom_withered.png"
+   ],
+   "subject": "single sunflower bloom"
+  },
+  {
+   "id": "sunflower_full_bloom_growing",
+   "item": "sunflower_full_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/sunflower_full_bloom_growing.png"
+   ],
+   "subject": "full sunflower bloom"
+  },
+  {
+   "id": "sunflower_full_bloom_ready",
+   "item": "sunflower_full_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/sunflower_full_bloom_ready.png"
+   ],
+   "subject": "full sunflower bloom"
+  },
+  {
+   "id": "sunflower_full_bloom_withered",
+   "item": "sunflower_full_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/sunflower_full_bloom_withered.png"
+   ],
+   "subject": "full sunflower bloom"
+  },
+  {
+   "id": "lily_bloom_growing",
+   "item": "lily_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/lily_bloom_growing.png"
+   ],
+   "subject": "single lily bloom"
+  },
+  {
+   "id": "lily_bloom_ready",
+   "item": "lily_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/lily_bloom_ready.png"
+   ],
+   "subject": "single lily bloom"
+  },
+  {
+   "id": "lily_bloom_withered",
+   "item": "lily_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/lily_bloom_withered.png"
+   ],
+   "subject": "single lily bloom"
+  },
+  {
+   "id": "lily_full_bloom_growing",
+   "item": "lily_full_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/lily_full_bloom_growing.png"
+   ],
+   "subject": "full lily bloom"
+  },
+  {
+   "id": "lily_full_bloom_ready",
+   "item": "lily_full_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/lily_full_bloom_ready.png"
+   ],
+   "subject": "full lily bloom"
+  },
+  {
+   "id": "lily_full_bloom_withered",
+   "item": "lily_full_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/lily_full_bloom_withered.png"
+   ],
+   "subject": "full lily bloom"
+  },
+  {
+   "id": "iris_bloom_growing",
+   "item": "iris_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/iris_bloom_growing.png"
+   ],
+   "subject": "single iris bloom"
+  },
+  {
+   "id": "iris_bloom_ready",
+   "item": "iris_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/iris_bloom_ready.png"
+   ],
+   "subject": "single iris bloom"
+  },
+  {
+   "id": "iris_bloom_withered",
+   "item": "iris_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/iris_bloom_withered.png"
+   ],
+   "subject": "single iris bloom"
+  },
+  {
+   "id": "iris_full_bloom_growing",
+   "item": "iris_full_bloom",
+   "class": "Bloom",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/iris_full_bloom_growing.png"
+   ],
+   "subject": "full iris bloom"
+  },
+  {
+   "id": "iris_full_bloom_ready",
+   "item": "iris_full_bloom",
+   "class": "Bloom",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/iris_full_bloom_ready.png"
+   ],
+   "subject": "full iris bloom"
+  },
+  {
+   "id": "iris_full_bloom_withered",
+   "item": "iris_full_bloom",
+   "class": "Bloom",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.6,
+   "refs": [
+    "refs/iris_full_bloom_withered.png"
+   ],
+   "subject": "full iris bloom"
   },
   {
    "id": "avatar_farmer_m_idle_front",

@@ -592,7 +592,7 @@
       "levels": {
         "2": {
           "fill": {
-            "trees": 9
+            "plants": 9
           },
           "features": [
             {
@@ -602,7 +602,7 @@
         },
         "3": {
           "fill": {
-            "trees": 12
+            "plants": 12
           },
           "features": [
             {
@@ -612,7 +612,7 @@
         }
       },
       "fill": {
-        "trees": 6,
+        "plants": 6,
         "produce": "crates",
         "at": [
           0.85,
@@ -1062,6 +1062,57 @@
             }
           ]
         }
+      }
+    },
+    "bloom_garden": {
+      "body": {
+        "w": 0.0,
+        "d": 0.0,
+        "h": 0.0
+      },
+      "roof": {
+        "type": "none"
+      },
+      "features": [
+        {
+          "type": "yard",
+          "ground": "grass",
+          "fence": "rail",
+          "whole": true
+        },
+        {
+          "type": "sign"
+        }
+      ],
+      "levels": {
+        "2": {
+          "fill": {
+            "plants": 15
+          },
+          "features": [
+            {
+              "type": "arch"
+            }
+          ]
+        },
+        "3": {
+          "fill": {
+            "plants": 18
+          },
+          "features": [
+            {
+              "type": "flowers"
+            }
+          ]
+        }
+      },
+      "fill": {
+        "plants": 12,
+        "produce": "baskets",
+        "at": [
+          0.85,
+          0.92
+        ]
       }
     }
   }

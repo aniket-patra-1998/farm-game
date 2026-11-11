@@ -737,6 +737,21 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			_wing(ctx, f)
 		"lean_to":
 			_lean_to(ctx, f)
+		"arch":
+			# A white trellis arch over the front fence (the edge facing the camera), climbing roses on it.
+			var x := fw - 0.05
+			var z := fd / 2.0
+			var white := ModelKit.paint(Color("#f4f1ea"))
+			for side: float in [-1.0, 1.0]:
+				ModelKit.box(root, Vector3(x - 0.025, 0, z + side * 0.4 - 0.025), Vector3(x + 0.025, 0.7, z + side * 0.4 + 0.025),
+					white)
+			for k in 13:
+				var a := PI * k / 12.0
+				var p := Vector3(x, 0.7 + sin(a) * 0.22, z - cos(a) * 0.4)
+				ModelKit.ball(root, p, 0.04, white)
+				if k % 2 == 1:
+					ModelKit.ball(root, p + Vector3(0.035, 0.03, 0), 0.04,
+						ModelKit.paint(Color("#d6304a") if k % 4 == 1 else Color("#4f8a34")))
 		"weathervane":
 			var top: float = ctx.get("top", hi.y)
 			var x := (lo.x + hi.x) / 2.0 + float(f.get("shift", 0.0))

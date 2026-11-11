@@ -28,7 +28,8 @@ var _spots: Array[Vector3] = []
 var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
-var _trees: Node3D
+const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
+var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
 
 
@@ -94,9 +95,9 @@ func refresh(o: Dictionary) -> void:
 	var who := JSON.stringify(inside) + "|" + str(Game.capacity(o))
 	var stage := "%d|%s" % [step, Game.is_ready(o)]
 	var fill: Dictionary = _spec.get("fill", {})
-	if fill.has("trees"):
+	if fill.has("plants"):
 		if who != _who or stage != _stage:
-			_show_trees(o, int(fill["trees"]))  # the trees fruit when ready
+			_show_plants(o, int(fill["plants"]))  # trees fruit, blooms open, when ready
 	elif who != _who:
 		_show_residents(inside, Game.inside_total(o), Game.capacity(o))
 	if stage != _stage:
@@ -147,9 +148,10 @@ func _show_residents(inside: Dictionary, total: int, capacity: int) -> void:
 		residents.append(a)
 
 
-func _show_trees(o: Dictionary, slots: int) -> void:
-	if _trees != null:
-		_trees.queue_free()
+## The trees or blooms living in an Orchard or Bloom Garden, in rows of three, fruiting or open when ready.
+func _show_plants(o: Dictionary, slots: int) -> void:
+	if _plants != null:
+		_plants.queue_free()
 	var holder := Node3D.new()
 	var inside: Dictionary = o.get("inside", {})
 	var ids: Array[String] = []
@@ -157,15 +159,27 @@ func _show_trees(o: Dictionary, slots: int) -> void:
 		for k in int(inside[id]):
 			ids.append(id)
 	var ready := Game.is_ready(o)
-	var rows := ceili(slots / 3.0)
+	var per_row := 3 if ids.is_empty() or Game.kind_of({"id": ids[0]}) == "tree" else 5
+	var rows := ceili(float(slots) / per_row)
 	var size := 0.55 if rows <= 2 else 0.55 * 2.0 / rows + 0.1
+	if per_row != 3:
+		# Blooms grow in soil beds, one a row.
+		for r in rows:
+			var bz := _fp.y * (0.25 + 0.5 * r / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
+			ModelKit.box(holder, Vector3(_fp.x * 0.12, 0, bz - 0.22), Vector3(_fp.x * 0.88, 0.05, bz + 0.22),
+				ModelKit.paint(Color("#6b4a2b")))
 	for k in mini(ids.size(), slots):
-		var row := int(k / 3.0)
-		var z := _fp.y * (0.3 + 0.4 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
-		TreeModel.build_at(holder, Vector3(_fp.x * (0.25 + 0.25 * (k % 3)), 0, z), Game.item_data(ids[k]), size, ready,
-			uid + k)
-	_trees = ModelKit.bake(holder)
-	add_child(_trees)
+		var row := int(k / float(per_row))
+		var z := _fp.y * (0.25 + 0.5 * row / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
+		var x := _fp.x * (0.2 + 0.6 * (k % per_row) / maxf(per_row - 1.0, 1.0))
+		var it := Game.item_data(ids[k])
+		if str(it.get("kind", "")) == "bloom":
+			var d := Game.catalog.get_def(ids[k]) as BloomDef
+			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE, ready, false, d.is_full(), uid + k)
+		else:
+			TreeModel.build_at(holder, Vector3(x, 0, z), it, size, ready, uid + k)
+	_plants = ModelKit.bake(holder)
+	add_child(_plants)
 
 
 # ---------------------------------------------------------------- produce
@@ -183,6 +197,22 @@ func _show_produce(kind: String, step: int, at: Array, o: Dictionary) -> void:
 	match kind:
 		"eggs":
 			_basket(root, p, Color("#f6ecd2"), n * 2, 0.022, Vector3(1, 1.3, 1))
+		"crates":
+			# Crates of fruit stacking up by the gate.
+			for k in mini(n, 4):
+				var c := p + Vector3((k % 2) * 0.14 - 0.07, int(k / 2.0) * 0.09, 0)
+				ModelKit.box(root, c + Vector3(-0.06, 0, -0.05), c + Vector3(0.06, 0.08, 0.05),
+					ModelKit.surface(BuildingModel.WOOD, "boards", 0.2))
+				ModelKit.ball(root, c + Vector3(0, 0.08, 0), 0.05, ModelKit.paint(Color("#d93b30")), Vector3(1, 0.35, 0.8))
+		"baskets":
+			# Baskets of cut flowers.
+			for k in mini(n, 3):
+				var c := p + Vector3(k * 0.13 - 0.13, 0, (k % 2) * 0.04)
+				ModelKit.cylinder(root, c, 0.05, 0.06, ModelKit.paint(Color("#b8894f")), 0.06, 10)
+				for f in 4:
+					var fa := TAU * f / 4.0
+					ModelKit.ball(root, c + Vector3(cos(fa) * 0.025, 0.075, sin(fa) * 0.025), 0.022,
+						ModelKit.paint([Color("#d6304a"), Color("#f5c518"), Color("#f7b5c8")][(k + f) % 3]))
 		"truffles":
 			_basket(root, p, Color("#4a3426"), n * 2, 0.02, Vector3(1, 0.85, 1))
 		"milk":

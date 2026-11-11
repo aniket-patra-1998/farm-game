@@ -26,6 +26,6 @@ func validate(catalog) -> Array[String]:
 		out.append(_err("supply must be one of %s" % str(NurtureSystem.SUPPLIES.keys())))
 	if needs() <= 0:
 		out.append(_err("needs must be at least 1"))
-	if not grows() in ["tree", "animal"]:
-		out.append(_err("grows must be tree or animal"))
+	if not grows() in ["tree", "animal", "bloom"]:
+		out.append(_err("grows must be tree, animal or bloom"))
 	return out

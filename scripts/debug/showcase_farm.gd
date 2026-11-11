@@ -54,6 +54,7 @@ static func build(g: GameState) -> Array[String]:
 	g.fertilize_alls = STOCK
 	g.farmhands = STOCK
 	g.arborists = STOCK
+	g.gardeners = STOCK
 	g.fertilizer_bags = STOCK
 	var left_out: Array[String] = []
 	var cursor := Vector2i.ZERO   # (row, col) where the next thing goes
@@ -108,8 +109,9 @@ static func _zone_items(g: GameState, zone: String) -> Array[String]:
 	var out: Array[String] = []
 	for id in g.item_order:
 		var kind := str(g.items[id].get("kind", ""))
-		# Mystery young are small: they stand with the decorations.
-		if kind == zone or zone == "building" and BUILDING_KINDS.has(kind) or zone == "decor" and kind == "young":
+		# Mystery young are small: they stand with the decorations; blooms grow with the trees.
+		if kind == zone or zone == "building" and BUILDING_KINDS.has(kind) or zone == "decor" and kind == "young" \
+				or zone == "tree" and kind == "bloom":
 			out.append(id)
 	if zone == "building" or zone == "decor":
 		out.sort_custom(func(a: String, b: String) -> bool:
