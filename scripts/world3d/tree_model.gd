@@ -22,6 +22,8 @@ const FRUIT_OUT := 0.92     # how far out through a leafy clump fruit hangs (1: 
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
 const CLUMP_MULT := 2       # leafy clumps per the form's count (smaller, so the outline is rough)
+const TRUNK_BULK := 1.4     # trunks are drawn chunkier than the data says: a tree should look rooted
+const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
 
 static var _data := {}
@@ -126,7 +128,7 @@ static func _trunk(t: Dictionary) -> Vector3:
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var h := float(sh["trunk_h"]) * k
-	var r := float(sh["trunk_r"]) * k
+	var r := float(sh["trunk_r"]) * k * TRUNK_BULK
 	var lean: Vector3 = t["lean"]
 	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h, ModelKit.surface(BARK, "logs", 0.3), r * 0.65, 8)
 	trunk.rotation = Vector3(lean.z, 0, -lean.x)
@@ -206,7 +208,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 ## sun drifts yellow-green and bright, and the colour is richer than a flat darker/lighter of one green.
 static func _shade(leaf: Color, light: float) -> Color:
 	var h := leaf.h + lerpf(0.025, -0.03, light)
-	var s := clampf(leaf.s * lerpf(1.12, 0.88, light), 0.0, 1.0)
+	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
 	var v := clampf(leaf.v * lerpf(0.58, 1.18, light), 0.0, 1.0)
 	return Color.from_hsv(h, s, v)
 

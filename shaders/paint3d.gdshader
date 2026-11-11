@@ -8,6 +8,7 @@ uniform float roughness = 1.0;
 uniform float specular = 0.1;
 uniform float ground_ao = 0.32;   // how dark a part gets where it touches the ground
 uniform float ao_reach = 0.22;    // and how far up the shade fades out (world units)
+uniform float edge = 0.4;         // how dark the silhouette edge goes
 uniform float rim = 0.1;          // a soft light edge on every painted part: the shape reads against what is behind
 uniform float sway = 0.0;         // bends in the wind by height above its foot (trees, scarecrows); 0: still
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
@@ -34,6 +35,10 @@ void fragment() {
 	ALBEDO = albedo * tint * ao;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
+	// Edges darken toward the silhouette: an inked outline without extra geometry, so shapes pop against the
+	// ground the way FarmVille's did.
+	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
+	ALBEDO *= mix(1.0 - edge, 1.0, smoothstep(0.0, 0.5, facing));
 	RIM = rim;
 	RIM_TINT = 0.9;
 }

@@ -10,6 +10,7 @@ const SPOTS := [Vector2(-0.24, -0.24), Vector2(0.24, -0.24), Vector2(-0.24, 0.24
 const GROW_REFRESH := 3.0   # seconds between growth updates
 const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
+const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger
 const PLANT_SCALE := 2.5    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
 var wind := 0.6: set = _set_wind
@@ -67,6 +68,11 @@ func rebuild() -> void:
 			var key := "%s|%s" % [str(crop.get("shape", "berry")), st[0]]
 			var col := Color.html(str(crop.get("color", "#e2453c")))
 			var size := PLANT_SCALE * (lerpf(0.55, 1.0, float(st[1])) if st[0] in ["sprout", "young"] else 1.0)
+			# Fertilised plants stand taller and richer (the shader reads alpha 0 as "rich").
+			var rich := Game.field.is_fertilized(i)
+			if rich:
+				size *= FERTILIZED_SIZE
+				col.a = 0.0
 			var list: Array = groups.get_or_add(key, [])
 			for k in SPOTS.size():
 				var spot: Vector2 = SPOTS[k]
