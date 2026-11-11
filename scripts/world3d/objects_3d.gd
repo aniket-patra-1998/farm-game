@@ -10,6 +10,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const SCENERY_Y := -Ground3D.SLAB
+const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
 
 const PINE := Color("#2f6b3a")
 
@@ -213,19 +214,28 @@ func _build_scenery() -> void:
 	for c in _scenery.get_children():
 		c.queue_free()
 	var n := Game.farm_size
+	# The trees are built in groups by area and each group baked into a few draws, so the woods cost tens of draws
+	# and not thousands, while a group off screen is still culled whole.
+	var groups := {}
 	for t in FarmGrid.scenery():
 		var r: float = t[0]
 		var c: float = t[1]
 		if (r >= -1.0 and c >= -1.0) or r > n + 4 or c > n + 4:
 			continue
+		var cell := Vector2i(int(floor(c / SCENERY_CELL)), int(floor(r / SCENERY_CELL)))
+		if not groups.has(cell):
+			groups[cell] = Node3D.new()
+		var holder: Node3D = groups[cell]
 		var at := Vector3(c + 0.5, SCENERY_Y, r + 0.5)
 		match str(t[2]):
 			"pine_tree":
-				pine(_scenery, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
+				pine(holder, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
 			"willow_tree":
-				TreeModel.build_at(_scenery, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false)
+				TreeModel.build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false)
 			_:
-				TreeModel.build_at(_scenery, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false)
+				TreeModel.build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false)
+	for cell in groups:
+		_scenery.add_child(ModelKit.bake(groups[cell]))
 
 
 

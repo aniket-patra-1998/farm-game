@@ -10,6 +10,10 @@ extends Node3D
 ## to show comes from the building's description (data/building_models.json "fill").
 
 const OFFSCREEN_STRIDE := 6      # a yard out of sight thinks one frame in this many
+const LOD_MID_PPU := 64.0     # screen pixels per world unit below which only half the yard's animals are drawn
+const LOD_FAR_PPU := 40.0     # ...and below which only a few are (a cow is then a speck)
+const LOD_FAR_SHOWN := 3
+const LOD_MARGIN := 1.12      # hysteresis: zooming back in must pass the line by this much
 const RESIDENTS := 14         # the most animals out in a yard at once (a full building)
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
@@ -37,6 +41,7 @@ var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 var _flag: Node3D             # flown while the building is full
+var _lod := -1                # 0 all, 1 half, 2 a few: how much of the yard is drawn at this zoom (-1: not set yet)
 var _idle := 0.0               # time not yet given to the residents' minds
 var _stock: Node3D               # a Garage's parked vehicles, a shed's pots, a barn's goods
 var _stock_sig := ""
@@ -204,6 +209,7 @@ func _show_residents(inside: Dictionary, total: int, capacity: int) -> void:
 	residents.clear()
 	var n := shown_count(total, capacity, _spots.size(), distinct_kinds(inside))
 	var picks := pick_kinds(inside, n)
+	_lod = -1  # (the new animals are shown or hidden for the zoom next frame)
 	for k in picks.size():
 		var it := Game.item_data(picks[k])
 		if it.is_empty():
@@ -408,6 +414,8 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	# Out of sight, the yard's minds think a few times a second, not every frame (nobody sees it).
 	var seen := cam == null or _yard_in_view(cam)
+	if seen and cam != null:
+		_set_lod(cam)
 	_idle += delta
 	if not seen:
 		if (Engine.get_process_frames() + get_instance_id()) % OFFSCREEN_STRIDE != 0:
@@ -418,8 +426,36 @@ func _process(delta: float) -> void:
 		return
 	for a in residents:
 		a.behaviour.update(_idle)
-		a.animate(_idle, cam)
+		if a.visible:
+			a.animate(_idle, cam)
 	_idle = 0.0
+
+
+## Zoomed out, a yard's animals are specks and a full home would cost hundreds of draws: draw half of them,
+## then only a few (the rest are hidden, not removed, so zooming in brings them back where they were).
+func _set_lod(cam: Camera3D) -> void:
+	var ppu := get_viewport().get_visible_rect().size.y / maxf(cam.size, 0.001)
+	var tier := _lod
+	if tier == -1:
+		tier = 2 if ppu < LOD_FAR_PPU else (1 if ppu < LOD_MID_PPU else 0)
+	else:
+		# Going coarser at the line; going finer only once well past it.
+		if ppu < LOD_FAR_PPU:
+			tier = 2
+		elif ppu < LOD_MID_PPU:
+			tier = 1 if tier != 2 or ppu > LOD_FAR_PPU * LOD_MARGIN else 2
+		else:
+			tier = 0 if tier == 0 or ppu > LOD_MID_PPU * LOD_MARGIN else 1
+	if tier == _lod:
+		return
+	_lod = tier
+	var shown := residents.size()
+	if tier == 1:
+		shown = int(ceil(residents.size() / 2.0))
+	elif tier == 2:
+		shown = mini(residents.size(), LOD_FAR_SHOWN)
+	for k in residents.size():
+		residents[k].visible = k < shown
 
 
 ## Whether any part of the yard (its middle or a corner) is in the camera's view.

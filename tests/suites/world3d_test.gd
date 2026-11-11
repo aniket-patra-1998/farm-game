@@ -770,3 +770,21 @@ func test_138_the_forest_floor_lies_under_the_woods_and_nowhere_else() -> void:
 			if woods.get_pixel(x, y).r > 0.5:
 				lit += 1
 	_check(lit > 400, "the real woods cover a good stretch of ground")
+
+
+func test_141_the_woods_cost_tens_of_draws_not_thousands() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var objects := Objects3D.new()
+	add_child(objects)
+	var scenery: Node3D = objects.get("_scenery")
+	var meshes := 0
+	var stack: Array[Node] = [scenery]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+			meshes += (n as MeshInstance3D).mesh.get_surface_count()
+	_check(meshes > 0, "there are woods (%d surfaces)" % meshes)
+	_check(meshes < 150, "baked into a few draws per area, not one per branch (%d surfaces)" % meshes)
+	objects.queue_free()

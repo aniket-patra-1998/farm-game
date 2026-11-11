@@ -3,8 +3,8 @@
 Kept in the order we agreed: stress round done first, then visual detail, then the farming-core roadmap.
 
 ## Performance (stress round, part 2)
-- Draw calls on the max farm: about 7,300 (desktop software render). Each animal home is about 450 nodes (every
-  yard animal is its own ~30-node model). Needs batching of yard animals and a cheaper model for far homes.
+- Draw calls on the max farm: about 2,800 (was 8,000; the woods are baked per area and yard animals thin out
+  when zoomed out). Next biggest: buildings (~45 surfaces each); use `tools/perf_probe` census to find them.
 - `save_game` takes 24 ms with a full barn and gift box (516 KB): consider writing the file on a thread.
 - Off-screen free animals still think every second frame (cheap); building yards already throttle.
 - 2D world is still built in 3D mode (hidden, not processed).

@@ -54,6 +54,7 @@ func _ready() -> void:
 		% [(last - t_sample) / 1000.0 / SAMPLE_FRAMES, frame_worst / 1000.0])
 	print("PERF draw_calls=%d render_objects=%d primitives=%d mesh_nodes=%d nodes=%d" % [draws, objs, prims, meshes,
 		int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))])
+	_census()
 	_breakdown()
 	await _processing()
 	get_tree().quit()
@@ -170,3 +171,43 @@ func _processing() -> void:
 		for r in 5:
 			o.sync()
 		print("PERF   Objects3D.sync (every second): %.2fms" % ((Time.get_ticks_usec() - t) / 1000.0 / 5))
+
+
+## Where the mesh nodes live: each counted under its nearest ancestor with a script (its class), so the
+## biggest spenders of draw calls are obvious.
+func _census() -> void:
+	var by_owner := {}
+	var stack: Array[Node] = [get_tree().root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if not (n is MeshInstance3D or n is MultiMeshInstance3D):
+			continue
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh == null:
+			continue  # (a skinned animal keeps its parts as empty pose nodes)
+		var a: Node = n
+		var owner_name := "(none)"
+		while a != null:
+			var sc: Script = a.get_script()
+			if sc != null and sc.get_global_name() != &"":
+				owner_name = str(sc.get_global_name())
+				break
+			a = a.get_parent()
+		if owner_name == "Objects3D":
+			owner_name += ":" + _view_kind(a, n)
+		by_owner[owner_name] = int(by_owner.get(owner_name, 0)) + 1
+	var rows: Array = by_owner.keys()
+	rows.sort_custom(func(x, y): return by_owner[x] > by_owner[y])
+	for k in rows:
+		print("PERF census %s: %d drawn meshes" % [k, by_owner[k]])
+
+
+## Which kind of thing an Objects3D mesh belongs to: the view (a child of Objects3D) it hangs under.
+func _view_kind(objects3d: Node, mesh: Node) -> String:
+	var top: Node = mesh
+	while top != null and top.get_parent() != objects3d:
+		top = top.get_parent()
+	for uid in objects3d.get("_views"):
+		if objects3d.get("_views")[uid]["node"] == top:
+			return str(Game.object_by_uid(uid).get("id", "?"))
+	return "?" + (top.name if top != null else "none")
