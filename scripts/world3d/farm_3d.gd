@@ -15,6 +15,9 @@ const SUN_MAX_ELEVATION := deg_to_rad(58.0)
 const SUN_MIN_ELEVATION := deg_to_rad(9.0)
 const MOON_ELEVATION := deg_to_rad(40.0)
 const FILL_ELEVATION := deg_to_rad(35.0)
+const GRADE_STEP := 0.04         # the colour grade is rebuilt only when its warmth moves this much
+const GRADE_BASE_WARMTH := 0.3   # a gentle warm grade all day, stronger as the sun sinks
+const GRADE_CONTRAST := 1.05
 const FILL_ENERGY := 0.32        # of the sun's: the sky's light into the shade
 
 var grid: FarmGrid
@@ -29,6 +32,7 @@ var plots: Plots3D
 var crops: Crops3D
 var objects: Objects3D
 var farmer: Farmer3D
+var _grade_warmth := -1.0
 
 
 static func enabled() -> bool:
@@ -63,6 +67,7 @@ func _ready() -> void:
 	environment.glow_intensity = 0.25
 	environment.glow_bloom = 0.04
 	environment.adjustment_enabled = true
+	environment.adjustment_contrast = GRADE_CONTRAST
 	var world_env := WorldEnvironment.new()
 	world_env.environment = environment
 	add_child(world_env)
@@ -136,6 +141,24 @@ func _process(_delta: float) -> void:
 	IsoProjection.aim(camera, centre, camera_2d.zoom.x, get_viewport().get_visible_rect().size.y)
 
 
+## The colour grade: shadows a touch cool and highlights warm, the way a late-afternoon photograph looks.
+## `warmth` 0..1. It is a small lookup texture, rebuilt only when the warmth has moved enough to be seen.
+func _set_grade(warmth: float) -> void:
+	if absf(warmth - _grade_warmth) < GRADE_STEP:
+		return
+	_grade_warmth = warmth
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	g.colors = PackedColorArray([
+		Color(0.0, 0.0, 0.02),
+		Color(0.5 + 0.02 * warmth, 0.5, 0.5 - 0.03 * warmth),
+		Color(1.0, 1.0 - 0.02 * warmth, 1.0 - 0.07 * warmth)])
+	var tex := GradientTexture1D.new()
+	tex.gradient = g
+	tex.width = 32
+	environment.adjustment_color_correction = tex
+
+
 ## The light for this moment: called by main every frame with the hour and the weather.
 func set_daylight(hour: float, weather: Dictionary) -> void:
 	var look := DayCycle.sample(hour)
@@ -170,6 +193,8 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
 	environment.ambient_light_energy = lerpf(0.4, 0.34, dark) * (1.0 - dim * 0.4)
 	environment.adjustment_saturation = lerpf(1.1, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0)))
+	var low_sun := pow(1.0 - sin(maxf(s, 0.0) * PI), 3.0) if s >= 0.0 else 0.0
+	_set_grade(clampf(GRADE_BASE_WARMTH + low_sun * 0.9, 0.0, 1.0) * (1.0 - cover * 0.6) * (1.0 - dark))
 	var fog := float(weather.get("fog", 0.0))
 	environment.fog_enabled = fog > 0.01
 	environment.fog_light_color = horizon.lerp(Color(0.85, 0.88, 0.9), 0.6)
