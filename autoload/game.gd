@@ -1185,9 +1185,9 @@ func _read_save() -> Dictionary:
 		var f := FileAccess.open(path, FileAccess.READ)
 		if f == null:
 			continue
-		var parsed: Variant = JSON.parse_string(f.get_as_text())
-		if typeof(parsed) == TYPE_DICTIONARY:
-			return parsed
+		var json := JSON.new()  # (parse() reports a damaged file quietly; parse_string logs an engine error)
+		if json.parse(f.get_as_text()) == OK and typeof(json.data) == TYPE_DICTIONARY:
+			return json.data
 		push_warning("Save %s is unreadable" % path)
 	return {}
 
