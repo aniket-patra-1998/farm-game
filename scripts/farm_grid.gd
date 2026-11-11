@@ -675,10 +675,13 @@ func _placing_input(event: InputEvent) -> void:
 	var fp := Game.footprint(placing["item"])
 	var tile := _tile_at_screen(pos)
 	# Centre the footprint under the finger.
+	var was_row: int = placing.get("row", -1)
+	var was_col: int = placing.get("col", -1)
 	placing["row"] = tile.x - int(fp.y / 2.0)
 	placing["col"] = tile.y - int(fp.x / 2.0)
 	_hover_home(tile)
-	queue_redraw()
+	if placing["row"] != was_row or placing["col"] != was_col:
+		queue_redraw()  # only when it moved to another tile, not on every touch event
 	if not released:
 		return
 	if int(placing.get("home", -1)) != -1:

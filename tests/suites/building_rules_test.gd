@@ -162,3 +162,44 @@ func test_139_a_vehicle_is_on_the_farm_or_in_the_garage_never_both() -> void:
 	_eq(g.buildings.owned("tractor"), 1, "leaving one")
 	_check(int((garage["inside"] as Dictionary).get("tractor", 0)) == 1, "the one in the Garage is the one kept")
 	_check(g.coins > coins, "the price is given back")
+
+
+func test_140_every_kind_has_its_limit_and_it_counts_what_is_inside_and_put_away() -> void:
+	var g := _farm()
+	g.coins = 100000000
+	g.xp = g.xp_for_level(60)
+	g.farm_size = 24
+	_clear(g)
+	# Animals: 99. Some standing on the farm, some inside a home, some in the Barn all count.
+	_check(g.buy_and_place("chicken_coop", 0, 0), "a Coop")
+	var coop := g.object_at(g.index_of(0, 0))
+	g.objects.append({"uid": g.next_uid, "id": "chicken", "row": 10, "col": 10, "t": 0})
+	g.next_uid += 1
+	(coop.get_or_add("inside", {}) as Dictionary)["chicken"] = 40
+	for k in 58:
+		g.storage.stored.append({"uid": 8000 + k, "id": "chicken", "t": 0})
+	_eq(g.buildings.owned("chicken"), 99, "1 standing + 40 inside + 58 put away")
+	_eq(g.buildings.can_buy("chicken").why, BuildingSystem.Why.LIMIT, "the 100th chicken is refused")
+	_check(g.buildings.can_buy("chicken").short.contains("99"), "with the limit shown")
+	_check(not g.place_somewhere("chicken"), "and a gift or drop can't add one either")
+	g.storage.stored.pop_back()
+	_check(g.buildings.can_buy("chicken").ok(), "one fewer and it can be bought again")
+	# Trees and blooms are living things too.
+	_eq(g.buildings.limit_of("apple_tree"), 99, "trees")
+	# Decorations: 999.
+	_eq(g.buildings.limit_of("hedge"), 999, "decorations")
+	for k in 998:
+		g.objects.append({"uid": g.next_uid, "id": "hedge", "row": 0, "col": 0, "t": 0})
+		g.next_uid += 1
+	_check(g.buildings.can_buy("hedge").ok(), "the 999th hedge can be bought")
+	g.objects.append({"uid": g.next_uid, "id": "hedge", "row": 0, "col": 0, "t": 0})
+	g.next_uid += 1
+	_eq(g.buildings.can_buy("hedge").why, BuildingSystem.Why.LIMIT, "the 1000th is refused")
+	# A vehicle put away in the Barn is still the one vehicle.
+	g.storage.stored.append({"uid": 8500, "id": "tractor", "t": 0})
+	_eq(g.buildings.can_buy("tractor").why, BuildingSystem.Why.LIMIT, "a stored tractor means no second one")
+	# Buildings: two, and frames count.
+	_check(g.buy_and_place("cow_shed", 4, 0), "a first Dairy Farm")
+	_check(g.buy_and_place("cow_shed", 4, 6), "a second")
+	_eq(g.buildings.can_buy("cow_shed").why, BuildingSystem.Why.LIMIT, "a third is refused")
+	_check(not g.buy_and_place("cow_shed", 4, 12), "and not placed")

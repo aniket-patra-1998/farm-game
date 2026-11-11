@@ -30,6 +30,8 @@ var _views := {}   # uid -> {"node": Node3D, "key": String}
 var _animals: Array[Animal3D] = []
 var _synced_once := false   # the farm's first sync places everything quietly; later ones drop new things in
 var _ghost: Node3D
+var _ghost_tint := ""
+static var _ghost_materials := {}
 var _ghost_key := ""
 var _lifted := -1
 var _queued := false
@@ -262,7 +264,9 @@ func _update_placing() -> void:
 	var col := int(placing["col"])
 	var home := int(placing.get("home", -1)) != -1
 	var ok := home or Game.can_place(item, row, col, lifted)
-	var key := "%s|%s|%s" % [item, ok, home]
+	# The model is built once per thing being carried; whether it fits changes only its tint (rebuilding a
+	# building's model every time the finger crosses an edge made carrying it stutter).
+	var key := "%s|%d" % [item, lifted]
 	if key != _ghost_key:
 		_clear_ghost()
 		_ghost_key = key
@@ -274,8 +278,12 @@ func _update_placing() -> void:
 		_ghost = _build(fake)
 		if _ghost is Animal3D:
 			_ghost.set_meta("uid", -1)  # a ghost has no mind: it stands still
-		_tint(_ghost, Color(1, 1, 1, 0.5) if home else (Color(0.5, 1.0, 0.5, 0.6) if ok else Color(1.0, 0.4, 0.35, 0.6)))
+		_ghost_tint = ""
 		add_child(_ghost)
+	var tint := "home" if home else ("ok" if ok else "bad")
+	if tint != _ghost_tint:
+		_ghost_tint = tint
+		_tint_with(_ghost, _ghost_material(tint))
 	var fp := Game.footprint(item)
 	var lift := 0.25 if home else 0.0  # hovering over a home, it floats just above it
 	if _ghost is Animal3D:
@@ -292,6 +300,24 @@ func _clear_ghost() -> void:
 		_ghost.queue_free()
 		_ghost = null
 	_ghost_key = ""
+	_ghost_tint = ""
+
+
+## The see-through material a carried thing is drawn in: green where it fits, red where it doesn't, white over
+## a home that takes it. Made once and shared.
+static func _ghost_material(tint: String) -> Material:
+	if not _ghost_materials.has(tint):
+		var col := Color(1, 1, 1, 0.5)
+		if tint == "ok":
+			col = Color(0.5, 1.0, 0.5, 0.6)
+		elif tint == "bad":
+			col = Color(1.0, 0.4, 0.35, 0.6)
+		var m := StandardMaterial3D.new()
+		m.albedo_color = col
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_ghost_materials[tint] = m
+	return _ghost_materials[tint]
 
 
 

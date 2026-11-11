@@ -19,7 +19,10 @@ func test_106_the_showcase_farm_has_everything_laid_out() -> void:
 		placed[o["id"]] = int(placed.get(o["id"], 0)) + 1
 	for id in g.items:
 		if ZONE_KINDS.has(str(g.items[id].get("kind", ""))):
-			_check(placed.has(id), "%s is on the farm" % id)
+			# (A vehicle is on the farm or parked in the Garage, never both.)
+			_check(placed.has(id) or g.buildings.owned(id) > 0, "%s is on the farm" % id)
+			if id != ShowcaseFarm.SITE:  # (the showcase builds one building at three stages of construction)
+				_check(g.buildings.owned(id) <= g.buildings.limit_of(id), "%s is within its limit" % id)
 	# Nothing overlaps, and everything is on the farm.
 	var covered := {}
 	var overlaps := 0

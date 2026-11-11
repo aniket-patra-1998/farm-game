@@ -172,9 +172,15 @@ static func _fill_homes(g: GameState, now: int) -> void:
 				while added:
 					added = false
 					for id in takes:
+						# Up to each item's limit across the whole farm (one of each vehicle, and the ones
+						# standing on the farm are parked afterwards), as the real game allows.
+						if g.buildings.owned(id) >= g.buildings.limit_of(id):
+							continue
 						if g.homes.fit(b, id) == HousingSystem.Fit.FITS:
 							g.homes.house(b, id)
 							added = true
+		if str(b["id"]) == "garage" and not g.under_construction(b):
+			g.homes.fill_building(int(b["uid"]))  # park the vehicles standing on the farm
 		var cycle := g.cycle_of(b)
 		if cycle > 0 and not g.under_construction(b):
 			b["t"] = now - (cycle + 1 if k % READY_EVERY != READY_EVERY - 1 else int(cycle * PART_WAY))
