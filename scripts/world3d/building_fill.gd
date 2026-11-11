@@ -9,6 +9,7 @@ extends Node3D
 ## Lives under a building's model (the footprint's back corner is its origin), so it turns with it. What
 ## to show comes from the building's description (data/building_models.json "fill").
 
+const OFFSCREEN_STRIDE := 6      # a yard out of sight thinks one frame in this many
 const RESIDENTS := 14         # the most animals out in a yard at once (a full building)
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
@@ -35,6 +36,7 @@ var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 var _flag: Node3D             # flown while the building is full
+var _idle := 0.0               # time not yet given to the residents' minds
 var _stock: Node3D               # a Garage's parked vehicles, a shed's pots, a barn's goods
 var _stock_sig := ""
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
@@ -385,9 +387,28 @@ func _process(delta: float) -> void:
 	if residents.is_empty():
 		return
 	var cam := get_viewport().get_camera_3d()
+	# Out of sight, the yard's minds think a few times a second, not every frame (nobody sees it).
+	var seen := cam == null or _yard_in_view(cam)
+	_idle += delta
+	if not seen:
+		if (Engine.get_process_frames() + get_instance_id()) % OFFSCREEN_STRIDE != 0:
+			return
+		for a in residents:
+			a.behaviour.update(_idle)
+		_idle = 0.0
+		return
 	for a in residents:
-		a.behaviour.update(delta)
-		a.animate(delta, cam)
+		a.behaviour.update(_idle)
+		a.animate(_idle, cam)
+	_idle = 0.0
+
+
+## Whether any part of the yard (its middle or a corner) is in the camera's view.
+func _yard_in_view(cam: Camera3D) -> bool:
+	for u in [Vector2(0.5, 0.5), Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
+		if cam.is_position_in_frustum(global_position + Vector3(u.x * _fp.x, 0.4, u.y * _fp.y)):
+			return true
+	return false
 
 
 ## Collected: the doors swing open (or the shutter rolls up) and close again, the produce springs off,
