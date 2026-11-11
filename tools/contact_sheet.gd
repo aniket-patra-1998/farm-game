@@ -31,12 +31,24 @@ func _ready() -> void:
 	env.environment.ambient_light_energy = 0.55
 	env.environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	add_child(env)
-	for kind in KINDS:
+	for kind in _wanted():
 		var ids := _ids(kind)
 		var per := COLS * ROWS
 		for page in ceili(float(ids.size()) / per):
 			await _page(kind, page, ids.slice(page * per, (page + 1) * per))
 	get_tree().quit()
+
+
+## All the kinds, or only those named in `-- --kinds=tree,bloom` (a quick look at one kind after a change).
+func _wanted() -> Array[String]:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--kinds="):
+			var out: Array[String] = []
+			for k in arg.substr(8).split(","):
+				if k in KINDS:
+					out.append(k)
+			return out
+	return KINDS
 
 
 func _ids(kind: String) -> Array[String]:

@@ -21,7 +21,6 @@ const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 0.92     # how far out through a leafy clump fruit hangs (1: on its surface)
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
-const CLUMP_MULT := 2       # leafy clumps per the form's count (smaller, so the outline is rough)
 const TRUNK_BULK := 1.4     # trunks are drawn chunkier than the data says: a tree should look rooted
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
@@ -68,7 +67,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-0.015, 0.015), leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
 	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "leaf": leaf_col, "shine": float(sh.get("shine", 0.0)),
-		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06))}
+		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
 	var crown: Vector3
 	match str(sh["form"]):
 		"palm":
@@ -182,26 +181,51 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var shine: float = t["shine"]
 	var cr := float(sh["crown_r"]) * k
 	var ch := maxf(float(sh["crown_h"]) * k, cr * 0.5)
-	var n := ModelKit.scaled(int(sh["clumps"]) * CLUMP_MULT, 4)
-	var clump_r := cr * (0.42 if str(sh["form"]) == "dense" else 0.5)
-	ModelKit.ball(root, centre, 1.0, ModelKit.paint(_shade(leaf, 0.0), shine), Vector3(cr * 0.85, ch * 0.75, cr * 0.85))
-	for i in n:
-		# Spread round the crown in a spiral, from low to high.
-		var u := (i + 0.5) / n
-		var a := i * 2.399963 + rng.randf() * 0.3
-		var y := lerpf(-0.5, 0.75, u)
-		var ring := sqrt(maxf(1.0 - y * y, 0.12))
-		var reach := cr * rng.randf_range(0.62, 0.8) * ring
-		var p := centre + Vector3(cos(a) * reach, y * ch * 0.8, sin(a) * reach)
-		var light := clampf(0.5 + y * 0.6 + rng.randf_range(-0.12, 0.12), 0.0, 1.0)
-		var s := rng.randf_range(0.7, 1.05) * clump_r
-		var squash := Vector3(1, rng.randf_range(0.75, 0.95), 1)
-		ModelKit.facet_ball(root, p, s, ModelKit.paint(_shade(leaf, light), shine), squash)
+	var masses := int(sh.get("masses", 5))
+	var reach := float(sh.get("reach", 0.55))
+	var flat := float(sh.get("flat", 0.8))
+	var mass := float(sh.get("mass", 0.52))
+	# A crown is a few big leafy masses on limbs, each with small clumps along its outer edge: an uneven outline
+	# with gaps where the branches show, not a ball. Its centre is off the trunk a little, so no two sides match.
+	var mid := centre + Vector3(rng.randf_range(-0.1, 0.1) * cr, 0.0, rng.randf_range(-0.1, 0.1) * cr)
+	var foot := Vector3(centre.x, centre.y - ch * 0.55, centre.z)
+	ModelKit.ball(root, mid, 1.0, ModelKit.paint(_shade(leaf, 0.0), shine), Vector3(cr * 0.5, ch * 0.4, cr * 0.5))
+	for i in masses:
+		var a := i * 2.399963 + rng.randf() * 0.4
+		var y := lerpf(-0.3, 0.5, fposmod(i * 0.618 + rng.randf() * 0.15, 1.0))
+		var d := cr * reach * rng.randf_range(0.8, 1.15) * sqrt(maxf(1.0 - y * y * 0.6, 0.2))
+		var p := mid + Vector3(cos(a) * d, y * ch * 0.7, sin(a) * d)
+		var size := cr * mass * rng.randf_range(0.88, 1.15)
+		var light := clampf(0.45 + y * 0.7 + rng.randf_range(-0.1, 0.1), 0.0, 1.0)
+		var squash := Vector3(rng.randf_range(1.05, 1.3), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.9, 1.15))
+		var blob := ModelKit.facet_ball(root, p, size, ModelKit.paint(_shade(leaf, light), shine), squash)
+		(t["blobs"] as Array).append([p, size, a])
+		blob.rotation.y = rng.randf() * TAU
+		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * 0.5)
+		for j in ModelKit.scaled(3, 1):
+			var b := a + rng.randf_range(-1.0, 1.0)
+			var out := Vector3(cos(b), rng.randf_range(0.0, 0.7), sin(b)).normalized()
+			ModelKit.facet_ball(root, p + out * size * 0.9, size * rng.randf_range(0.3, 0.45),
+				ModelKit.paint(_shade(leaf, clampf(light + 0.15, 0.0, 1.0)), shine), Vector3(1, rng.randf_range(0.7, 0.95), 1))
 	# Sun-struck tufts on top.
 	for i in 3:
 		var a := TAU * i / 3.0 + rng.randf()
-		var p := centre + Vector3(cos(a) * cr * 0.3, ch * 0.62, sin(a) * cr * 0.3)
-		ModelKit.facet_ball(root, p, clump_r * 0.6, ModelKit.paint(_shade(leaf, 1.0), shine), Vector3(1, 0.8, 1))
+		var p := mid + Vector3(cos(a) * cr * 0.3, ch * 0.62, sin(a) * cr * 0.3)
+		ModelKit.facet_ball(root, p, cr * 0.2, ModelKit.paint(_shade(leaf, 1.0), shine), Vector3(1, 0.8, 1))
+
+
+## A branch from one point to another: a thin tapering cylinder tipped to lie along the line.
+static func _limb(root: Node3D, from: Vector3, to: Vector3, r: float) -> void:
+	var line := to - from
+	var length := line.length()
+	if length < 0.02:
+		return
+	var limb := ModelKit.cylinder(root, Vector3.ZERO, r, length, ModelKit.paint(BARK), r * 0.4, 5)
+	var dir := line / length
+	var axis := Vector3.UP.cross(dir)
+	if axis.length() > 0.001:
+		limb.basis = Basis(axis.normalized(), acos(clampf(Vector3.UP.dot(dir), -1.0, 1.0)))
+	limb.position = from + line * 0.5
 
 
 ## The leaf colour for how lit a clump is (0 deep shade .. 1 full sun): shade drifts blue-green and dark,
@@ -365,6 +389,13 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				var a := TAU * i / n + rng.randf() * 0.5
 				var up := rng.randf_range(-0.15, 0.8)
 				var p := centre + Vector3(cos(a) * cos(up) * across, sin(up) * high, sin(a) * cos(up) * across)
+				var blobs: Array = t["blobs"]
+				if not blobs.is_empty() and str(sh["form"]) != "palm":
+					# Fruit sits on the leaf masses, on the side that faces out and up: attached, not floating.
+					var blob: Array = blobs[i % blobs.size()]
+					var face := float(blob[2]) + rng.randf_range(-0.9, 0.9)
+					var dir := Vector3(cos(face), rng.randf_range(0.1, 0.85), sin(face))
+					p = (blob[0] as Vector3) + dir.normalized() * float(blob[1]) * FRUIT_OUT
 				if str(sh["form"]) == "palm":
 					# Coconuts cluster under the fronds, against the trunk.
 					p = centre + Vector3(cos(a) * 0.06 * k, -0.06 * k, sin(a) * 0.06 * k)
