@@ -34,6 +34,8 @@ FarmVille footprints (with a save migration), FarmVille limits, the 5 planned bu
   mesh LOD with a baked-mesh cache (generate_lods is ~12 ms per 15k triangles), first-open time ~0.8 s.
 
 ## Next, in order
+The full plan is docs/AUDIT.md (every system against FarmVille, and the order of work). Its step 1 comes
+first; the buildings items below continue alongside.
 1. Market tabs by category (BuildingDef.tab()).
 2. Phase 3 of the doc: each building its own silhouette; ready sparkle; broken Barn.
 3. The 5 planned buildings, each with a job.
