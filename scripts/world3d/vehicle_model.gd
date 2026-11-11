@@ -90,9 +90,30 @@ static func _tractor(b: Node3D, col: Color, shift: float) -> void:
 	_wheel(b, o + Vector3(-0.11, 0, 0.13), 0.13, 0.07)
 	_wheel(b, o + Vector3(0.17, 0, -0.1), 0.075, 0.05)
 	_wheel(b, o + Vector3(0.17, 0, 0.1), 0.075, 0.05)
-	# Headlights.
+	# Headlights, with a grille of slats between them and a bumper under.
 	for z: float in [-0.04, 0.04]:
 		ModelKit.ball(b, o + Vector3(0.245, 0.24, z), 0.014, ModelKit.paint(Color("#fff3c4"), 0.8))
+	for k in 3:
+		ModelKit.box(b, o + Vector3(0.246, 0.17 + 0.02 * k, -0.026), o + Vector3(0.256, 0.18 + 0.02 * k, 0.026),
+			ModelKit.paint(Color("#2e2e2e")))
+	ModelKit.box(b, o + Vector3(0.235, 0.09, -0.075), o + Vector3(0.265, 0.12, 0.075), ModelKit.paint(METAL))
+	# Hubcaps, a stripe along the bonnet and a wing mirror, so it reads as a made machine.
+	ModelKit.box(b, o + Vector3(0.0, 0.215, -0.0715), o + Vector3(0.24, 0.225, -0.0705), ModelKit.paint(Color("#f2f2f2")))
+	ModelKit.box(b, o + Vector3(0.0, 0.215, 0.0705), o + Vector3(0.24, 0.225, 0.0715), ModelKit.paint(Color("#f2f2f2")))
+	ModelKit.box(b, o + Vector3(0.01, 0.38, 0.1), o + Vector3(0.025, 0.43, 0.108), ModelKit.paint(METAL))
+	ModelKit.box(b, o + Vector3(0.008, 0.4, 0.108), o + Vector3(0.028, 0.43, 0.124), ModelKit.paint(Color("#2e2e2e")))
+	# The farmer at the wheel: body, head and a straw hat, under the canopy.
+	_driver(b, o + Vector3(-0.1, 0.3, 0))
+	# A windscreen between the front posts.
+	ModelKit.box(b, o + Vector3(0.0, 0.3, -0.088), o + Vector3(0.004, 0.46, 0.088), ModelKit.glass())
+
+
+## A little farmer sitting in a cab: shirt, a round head and a straw hat with a brim.
+static func _driver(b: Node3D, at: Vector3) -> void:
+	ModelKit.box(b, at + Vector3(-0.025, 0.0, -0.04), at + Vector3(0.025, 0.09, 0.04), ModelKit.paint(Color("#3f6fb5")))
+	ModelKit.ball(b, at + Vector3(0.0, 0.12, 0.0), 0.032, ModelKit.paint(Color("#e8b48a")))
+	ModelKit.cylinder(b, at + Vector3(0.0, 0.14, 0.0), 0.05, 0.006, ModelKit.paint(Color("#d8b85a")), -1.0, 10)
+	ModelKit.cylinder(b, at + Vector3(0.0, 0.145, 0.0), 0.03, 0.025, ModelKit.paint(Color("#d8b85a")), 0.026, 10)
 
 
 static func _harvester(b: Node3D, col: Color) -> void:
@@ -143,6 +164,17 @@ static func _combine(b: Node3D, col: Color) -> void:
 	var pipe := ModelKit.cylinder(b, Vector3.ZERO, 0.025, 0.42, ModelKit.paint(col.lightened(0.1)), -1.0, 8)
 	pipe.rotation.z = PI / 2.0 - 0.15
 	pipe.position = Vector3(-0.15, 0.48, -0.19)
+	_driver(b, Vector3(0.05, 0.43, 0.0))
+	# A ladder up the side to the cab, an exhaust, the grain tank's rim and a lamp on the cab roof.
+	for k in 5:
+		ModelKit.box(b, Vector3(0.0, 0.14 + 0.06 * k, 0.17), Vector3(0.05, 0.155 + 0.06 * k, 0.185), ModelKit.paint(METAL))
+	for x: float in [0.0, 0.05]:
+		ModelKit.box(b, Vector3(x - 0.004, 0.13, 0.17), Vector3(x + 0.004, 0.42, 0.185), ModelKit.paint(METAL))
+	ModelKit.cylinder(b, Vector3(-0.25, 0.5, 0.1), 0.014, 0.1, ModelKit.paint(Color("#555555"), 0.6))
+	ModelKit.box(b, Vector3(-0.33, 0.495, -0.125), Vector3(-0.04, 0.515, 0.125), ModelKit.paint(col.darkened(0.15)))
+	ModelKit.ball(b, Vector3(0.14, 0.6, 0.0), 0.02, ModelKit.paint(Color("#fff3c4"), 0.8))
+	for z: float in [-0.12, 0.12]:
+		ModelKit.ball(b, Vector3(0.145, 0.14, z), 0.02, ModelKit.paint(Color("#fff3c4"), 0.8))
 	_wheel(b, Vector3(0.0, 0, -0.18), 0.14, 0.08)
 	_wheel(b, Vector3(0.0, 0, 0.18), 0.14, 0.08)
 	_wheel(b, Vector3(-0.27, 0, -0.16), 0.08, 0.05)

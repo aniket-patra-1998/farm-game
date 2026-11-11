@@ -78,7 +78,7 @@ func _page(kind: String, page: int, ids: Array[String]) -> void:
 		elif node != null:
 			var fp := Game.footprint(ids[k])
 			var fit := 3.0 / maxf(maxf(fp.x, fp.y), 1.0)  # big buildings are shrunk to fit their cell
-			node.scale = Vector3.ONE * (ANIMAL_ZOOM if kind == "animal" else minf(fit, 1.6))
+			node.scale = Vector3.ONE * (ANIMAL_ZOOM if kind in ["animal", "vehicle"] else minf(fit, 1.6))
 			node.position = at - Vector3(fp.x, 0, fp.y) * node.scale.x / 2.0
 			holder.add_child(node)
 		var label := Label3D.new()
