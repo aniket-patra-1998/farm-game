@@ -75,12 +75,7 @@ const LEVEL_XP := [0, 15, 40, 75, 120, 175, 240, 320, 410, 510,
 const XP_PER_LEVEL_AFTER_TABLE := 250
 
 # Mastery: harvests needed for stars 1, 2, 3, by crop speed.
-const MASTERY_FAST := [150, 450, 900]   # grows in 6 h or less
-const MASTERY_MEDIUM := [80, 240, 480]  # 8 to 16 h
-const MASTERY_SLOW := [40, 120, 240]    # 1 day or more
-const MASTERY_PRICE_BONUS := 0.05       # per star
-const MASTERY_STAR_COINS := [100, 300, 1000]
-const MASTERY_STAR_XP := [10, 30, 100]
+const MASTERY_PRICE_BONUS := 0.05       # a crop's price, per mastery star (MasterySystem has the stars)
 
 # Building parts: found while harvesting and collecting, plus a daily gift.
 # Building materials, the FarmVille set: three basic ones every building uses,
@@ -105,7 +100,6 @@ var farmhands := 0                 # collect every animal at once
 var arborists := 0                 # collect every tree at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
-var mastery := {}                  # crop id -> lifetime harvest count
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
 var tutorial_step: int = Tutorial.HARVEST
 var catalog: Catalog               # every item, as typed definitions (scripts/catalog/)
@@ -133,6 +127,7 @@ var mystery: MysterySystem
 var daily: DailySystem
 var storage: BarnStorage
 var bees: BeehiveSystem
+var mastery: MasterySystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
 var strays: StraySystem
@@ -160,6 +155,7 @@ func _init() -> void:
 	daily = DailySystem.new(self)
 	storage = BarnStorage.new(self)
 	bees = BeehiveSystem.new(self)
+	mastery = MasterySystem.new(self)
 	pigpen = PigPenSystem.new(self)
 	vehicles = VehicleSystem.new(self)
 	strays = StraySystem.new(self)
@@ -167,7 +163,7 @@ func _init() -> void:
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	systems = [drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
-		strays, crafting, homes, buildings]
+		strays, crafting, homes, buildings, mastery]
 
 
 func _ready() -> void:
@@ -423,7 +419,7 @@ func harvest(i: int) -> Dictionary:
 		return {}
 	var crop_id: String = plots[i]["crop"]
 	var crop: Dictionary = crops[crop_id]
-	var stars_before := mastery_stars(crop_id)
+	var stars_before := mastery.stars(crop_id)
 	var fertilized: bool = plots[i].get("fert", false)
 	var bonus := MASTERY_PRICE_BONUS * stars_before + (FERTILIZER_BONUS if fertilized else 0.0)
 	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)))
@@ -441,8 +437,6 @@ func harvest(i: int) -> Dictionary:
 			gained += BONUS_XP
 
 	plots[i] = {"state": "plowed"}
-	# A fertilized harvest counts double toward mastery.
-	mastery[crop_id] = int(mastery.get(crop_id, 0)) + (2 if fertilized else 1)
 	add_coins(earned)
 	add_xp(gained)
 	ribbons.bump("harvests", 1)
@@ -460,15 +454,14 @@ func harvest(i: int) -> Dictionary:
 	if crop.get("flower", false):
 		bee_news = bees.flower_harvest_bees()
 	var seeds := bees.pollinate(crop_id) if fertilized else 0
-	var stars_after := mastery_stars(crop_id)
-	if stars_after > stars_before:
-		_award_mastery_star(crop_id, stars_after)
+	# A fertilized harvest counts double toward mastery (stars are awarded as they're reached).
+	mastery.add(crop_id, 2 if fertilized else 1)
 	if tutorial_step == Tutorial.HARVEST and not _any_plot_in(Phase.RIPE):
 		_advance_tutorial(Tutorial.HARVEST)
 	_plot_updated(i)
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
 		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel,
-		"bushels": (1 + mastery_stars(crop_id)) if bushel != "" else 0, "bunch": bunch}
+		"bushels": (1 + mastery.stars(crop_id)) if bushel != "" else 0, "bunch": bunch}
 
 
 # ---------------------------------------------------------------- placed objects
@@ -726,9 +719,10 @@ func collect(uid: int) -> Dictionary:
 	var obj := object_by_uid(uid)
 	if obj.is_empty() or not is_ready(obj):
 		return {}
-	var pay := object_payout(obj)
-	var earned := pay.x
-	var gained := pay.y
+	# FarmVille: collecting pays coins and mastery, never XP (an animal or tree gave its XP once, when bought);
+	# only a bonus drop adds XP.
+	var earned := object_payout(obj).x
+	var gained := 0
 	var drop := drops.roll_drop("", 0)
 	match drop.get("type", ""):
 		"golden":
@@ -745,6 +739,13 @@ func collect(uid: int) -> Dictionary:
 	var part := daily.roll_part()
 	var extras: Array[String] = []
 	var name_before: String = item_data(obj["id"])["name"]
+	# Every animal or tree harvested earns its own mastery, loose or living in a home.
+	if is_building(obj):
+		var inside: Dictionary = obj.get("inside", {})
+		for id in inside:
+			mastery.add(id, int(inside[id]))
+	else:
+		mastery.add(obj["id"], 1)
 	if is_building(obj):
 		extras = specials.building_specials(obj)
 		extras.append_array(specials.grow_up_inside(obj))
@@ -1050,35 +1051,6 @@ func _advance_tutorial(finished: Tutorial) -> void:
 # ---------------------------------------------------------------- mastery
 
 
-func mastery_thresholds(crop_id: String) -> Array:
-	var grow := int(crops[crop_id]["grow_seconds"])
-	if grow <= 6 * 3600:
-		return MASTERY_FAST
-	if grow < 86400:
-		return MASTERY_MEDIUM
-	return MASTERY_SLOW
-
-
-func mastery_stars(crop_id: String) -> int:
-	var count := int(mastery.get(crop_id, 0))
-	var stars := 0
-	for need in mastery_thresholds(crop_id):
-		if count >= int(need):
-			stars += 1
-	return stars
-
-
-func _award_mastery_star(crop_id: String, star: int) -> void:
-	add_coins(MASTERY_STAR_COINS[star - 1])
-	add_xp(MASTERY_STAR_XP[star - 1])
-	message.emit(tr("MASTERY_STAR") % [crops[crop_id]["name"], star])
-	ribbons.bump("mastery_stars", 1)
-	if star == 3 and place_somewhere("mastery_sign"):
-		objects[-1]["crop"] = crop_id # FarmVille's mastery sign, to show off on the farm
-		message.emit(tr("MASTERED_A_MASTERY_SIGN_WAS_PUT") % crops[crop_id]["name"])
-		objects_updated()
-
-
 # ---------------------------------------------------------------- economy
 
 
@@ -1206,7 +1178,6 @@ func _new_game() -> void:
 	coins = START_COINS
 	gems = START_GEMS
 	xp = 0
-	mastery = {}
 	debug_time_offset = 0
 	tutorial_step = Tutorial.HARVEST
 	objects = []
@@ -1285,7 +1256,6 @@ func save_game() -> void:
 		"coins": coins,
 		"gems": gems,
 		"xp": xp,
-		"mastery": mastery,
 		"plots": plots,
 		"debug_time_offset": debug_time_offset,
 		"tutorial_step": tutorial_step,
@@ -1364,7 +1334,6 @@ func load_game() -> bool:
 	coins = int(data.get("coins", START_COINS))
 	gems = int(data.get("gems", START_GEMS))
 	xp = int(data.get("xp", 0))
-	mastery = GameSystem.int_map(data.get("mastery", {}))
 	debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
 	# Saves from before the tutorial existed belong to players who already know the basics.
 	tutorial_step = int(data.get("tutorial_step", Tutorial.DONE))

@@ -132,8 +132,10 @@ func _reward(at: Vector2, coins: int, xp: int) -> void:
 	if fx == null:
 		return
 	var from := to_screen(at)
-	fx.coins(from, coins)
-	fx.xp(from, xp)
+	if coins > 0:
+		fx.coins(from, coins)
+	if xp > 0:  # collecting animals and trees gives none (FarmVille), so nothing flies
+		fx.xp(from, xp)
 
 
 
@@ -382,9 +384,9 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 	if o["id"] == "barn":
 		inside = Game.storage.stored.size()
 		cap = Game.storage.barn_capacity()
-	if o["id"] == "mastery_sign" and Game.crops.has(o.get("crop", "")):
+	if o["id"] == "mastery_sign" and Game.mastery.colour_of(str(o.get("crop", ""))) != "":
 		it = it.duplicate()
-		it["color"] = Game.crops[o["crop"]]["color"]
+		it["color"] = Game.mastery.colour_of(str(o["crop"]))
 	var flipped: bool = o.get("flip", false) and handle_flip  # pieces flip themselves
 	if flipped:
 		# Mirror around the object's own centre line.
@@ -924,7 +926,8 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			world_fx.burst("sparkle", at + Vector2(0, -40))
 			_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
 			_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
-			_float(at + Vector2(0, -50), tr("XP") % result["xp"], COLOR_XP)
+			if int(result["xp"]) > 0:
+				_float(at + Vector2(0, -50), tr("XP") % result["xp"], COLOR_XP)
 			if result.get("part", "") != "":
 				_float(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
 			var lift := -150

@@ -487,3 +487,40 @@ func test_91_babies_look_and_play_alike() -> void:
 		adult_frolics = adult_frolics or adult.state == AnimalBehaviour.State.FROLIC
 	_check(not adult_frolics, "grown cows don't frolic")
 	_done(g)
+
+
+func test_116_animals_and_trees_are_mastered_and_collecting_gives_no_xp() -> void:
+	# FarmVille: collecting an animal or tree pays coins and mastery, never XP; a home's harvest counts every
+	# animal in it toward that animal's mastery, so keeping more of a kind masters it sooner.
+	var g := _farm()
+	g.farm_size = GameState.MAX_SIZE
+	g.place_somewhere("cow")
+	var cow: Dictionary = g.objects[-1]
+	_skip(g, g.cycle_of(cow))
+	var xp := g.xp
+	var got := g.collect(int(cow["uid"]))
+	_check(int(got.get("coins", 0)) > 0, "a cow pays coins")
+	_eq(g.xp - xp, int(got.get("xp", 0)), "and only a bonus drop gives XP")
+	_eq(g.mastery.points_of("cow"), 1, "one harvest, one mastery point")
+	g.xp = g.xp_for_level(16)
+	g.coins = 1000000
+	_check(g.buy_and_place("pig_pen", 20, 20), "a pig pen goes up")
+	var pen := g.object_at(g.index_of(20, 20))
+	_all_materials(g, 8)
+	g.land.add_materials(int(pen["uid"]))
+	for k in 12:
+		g.place_somewhere("pig")
+	g.homes.fill_building(int(pen["uid"]))
+	_skip(g, g.cycle_of(pen))
+	g.collect(int(pen["uid"]))
+	_eq(g.mastery.points_of("pig"), 12, "a pen of 12 pigs harvested: 12 points toward pig mastery")
+	var need: int = g.mastery.thresholds("pig")[0]
+	g.mastery.points["pig"] = need - 1
+	var coins := g.coins
+	_eq(g.mastery.add("pig", 1), 1, "the next harvest reaches a star")
+	_eq(g.coins - coins, MasterySystem.STAR_COINS[0], "which pays its coins")
+	g.mastery.add("pig", 1000)
+	_check(g.objects.any(func(o: Dictionary) -> bool: return o["id"] == "mastery_sign" and o.get("crop") == "pig"),
+		"and full mastery puts up the pig's mastery sign")
+	_check(not g.mastery.masterable("hay_bale"), "decorations aren't mastered")
+	_done(g)

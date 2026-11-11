@@ -295,8 +295,8 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 func test_86_bushels_come_with_one_extra_per_mastery_star() -> void:
 	var g := _farm(true)
 	_crafting_building(g)
-	g.mastery["wheat"] = 100000
-	var stars := g.mastery_stars("wheat")
+	g.mastery.points["wheat"] = 100000
+	var stars := g.mastery.stars("wheat")
 	_check(stars >= 1, "wheat is mastered (%d stars)" % stars)
 	var got := {}
 	for k in 80:

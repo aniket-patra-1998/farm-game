@@ -438,7 +438,7 @@ func test_66_daily_bonus_streak() -> void:
 
 func test_67_mastery_sign_collections_and_ribbons() -> void:
 	var g := _farm()
-	g._award_mastery_star("wheat", 3)
+	g.mastery.award_star("wheat", 3)
 	var signs := g.objects.filter(func(o): return o["id"] == "mastery_sign")
 	_eq(signs.size(), 1, "mastering a crop puts a mastery sign on the farm")
 	_eq(signs[0].get("crop", ""), "wheat", "the sign is for wheat")

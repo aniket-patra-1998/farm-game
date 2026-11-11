@@ -461,8 +461,9 @@ static func _small_sign(root: Node3D, id: String, c: Vector3, col: Color, o: Dic
 				ModelKit.ball(root, c + Vector3(-0.25 + 0.1 * k, 0.33, 0.05), 0.045,
 					ModelKit.paint([Color("#e2453c"), Color("#f2a33a"), Color("#8fbf3a")][k % 3]))
 		"mastery_sign", "perfect_bunch":
-			var crop: Dictionary = Game.crops.get(str(o.get("crop", o.get("flower", ""))), {})
-			var accent := Color.html(str(crop.get("color", col.to_html())))
+			# The mastered item's colour (a crop, tree or animal), or a bunch's flower's.
+			var shown := Game.mastery.colour_of(str(o.get("crop", o.get("flower", ""))))
+			var accent := Color.html(shown) if shown != "" else col
 			if id == "perfect_bunch":
 				for k in 7:
 					var a := TAU * k / 7.0

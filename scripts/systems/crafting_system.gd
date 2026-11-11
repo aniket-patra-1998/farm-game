@@ -114,7 +114,7 @@ func roll_bushel(crop_id: String) -> String:
 	if not game.drops_enabled or not owns_crafting() or game.rng.randf() >= BUSHEL_CHANCE:
 		return ""
 	# FarmVille: each bushel found comes with one extra per mastery star on that crop.
-	return crop_id if add_bushels(crop_id, 1 + game.mastery_stars(crop_id)) > 0 else ""
+	return crop_id if add_bushels(crop_id, 1 + game.mastery.stars(crop_id)) > 0 else ""
 
 
 ## Bushels still needed for one craft: crop id -> how many more.

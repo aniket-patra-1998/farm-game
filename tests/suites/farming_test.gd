@@ -54,7 +54,7 @@ func test_03_harvest_pays_and_counts_mastery() -> void:
 	_eq(result["coins"], 35, "strawberry harvest coins")
 	_eq(g.coins, before - GameState.PLOW_COST - 10 + 35, "coin balance after the cycle")
 	_eq(g.phase(i), GameState.Phase.PLOWED, "plot is plowed again after harvest")
-	_eq(int(g.mastery.get("strawberries", 0)), 1, "mastery count")
+	_eq(g.mastery.points_of("strawberries"), 1, "mastery count")
 	_done(g)
 
 
@@ -73,7 +73,7 @@ func test_04_fertilizer_adds_twenty_percent_and_double_mastery() -> void:
 	_skip(g, 4 * 3600)
 	var result := g.harvest(i)
 	_eq(result["coins"], 42, "35 coins + 20%")
-	_eq(int(g.mastery.get("strawberries", 0)), 2, "fertilized harvest counts double")
+	_eq(g.mastery.points_of("strawberries"), 2, "fertilized harvest counts double")
 	_done(g)
 
 

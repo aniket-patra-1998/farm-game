@@ -40,8 +40,10 @@ produce at once, plus building bonuses: babies in the Horse Stable/Nursery, Myst
 shared items for neighbours); a building harvests only when "ready" (its own timer); animals in it are
 shown in its yard.
 - done: homes by kind (housing_system), building fill and collect, babies and grow-ups, yards showing them.
-- **audit needed: harvest differences** — check loose vs housed payouts follow FarmVille (housed: no
-  individual taps, combined payout, building timer, bonuses), and that the UI says which is which.
+- done: harvesting follows FarmVille — collecting an animal or tree (loose or in its home) pays coins and
+  mastery, never XP (XP came once, on buying); a home pays for everyone in it on its own timer, plus its
+  bonuses. **Mastery for every producer** (MasterySystem: crops, trees, animals; a home's harvest counts
+  each one inside; stars per cycle; mastery sign for any mastered item; test 116).
 - **missing (FV2, owner asked): feeding** — animals in pens and homes need feed to produce:
   - each home is a class with its own rules: what it holds, which feed it eats, how much per animal per
     cycle, what it produces, its by-products (manure -> fertilizer, feathers, wool), its upgrades (capacity,

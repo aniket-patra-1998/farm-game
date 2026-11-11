@@ -51,6 +51,7 @@ func test_88_every_system_saves_and_loads_its_own_fields() -> void:
 	g.mystery.mystery_eggs = {"white": 2}
 	g.collectibles.coll_levels = {"berries": 1}
 	g.ribbons.stats = {"harvests": 12}
+	g.mastery.points = {"wheat": 40, "cow": 9}
 	var owners := {}
 	var data := {}
 	for system in g.systems:
@@ -71,7 +72,7 @@ func test_88_every_system_saves_and_loads_its_own_fields() -> void:
 		system.save_to(again)
 	_eq(JSON.stringify(again), JSON.stringify(data), "every system's state survives a save and load")
 	_eq(h.crafting.bushels, {"wheat": 3}, "numbers come back as whole numbers")
-	_eq(h.systems.size(), 16, "all subsystems are registered")
+	_eq(h.systems.size(), 17, "all subsystems are registered")
 	h.queue_free()
 	_done(g)
 
