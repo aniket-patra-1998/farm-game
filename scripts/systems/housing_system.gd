@@ -91,7 +91,7 @@ func put_in_home(building_uid: int, item_id: String, source: Dictionary) -> bool
 		var o := game.object_by_uid(uid)
 		if o.is_empty() or o["id"] != item_id or not can_move_in(b, o):
 			return false
-		game.objects.erase(o)
+		game.remove_object(o)
 	elif source.has("stored"):
 		if not game.storage.take_out(int(source["stored"]), item_id):
 			return false
@@ -120,7 +120,7 @@ func fill_building(uid: int) -> int:
 			keep.append(o)
 	if moved == 0:
 		return 0
-	game.objects = keep
+	game.set_objects(keep)
 	game.message.emit(tr("MOVED_INTO_THE") % [moved, game.item_data(b["id"])["name"]])
 	game.objects_updated()
 	return moved

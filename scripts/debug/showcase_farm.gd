@@ -144,8 +144,7 @@ static func _place(g: GameState, id: String, row: int, col: int, now: int) -> vo
 		if id == SITE and sites > 0 and sites <= SITE_STAGES.size():
 			obj["level"] = 1
 			obj["construction"] = _materials_for(it, SITE_STAGES[sites - 1])
-	g.objects.append(obj)
-	g.rebuild_occupancy()
+	g.add_object(obj)
 
 
 ## The share `share` of a building's materials, as if they'd been put in.

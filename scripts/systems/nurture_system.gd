@@ -171,8 +171,7 @@ func _grow(o: Dictionary) -> String:
 		into = first_of(def_of(o).grows())
 	var row := int(o["row"])
 	var col := int(o["col"])
-	game.objects.erase(o)
-	game.rebuild_occupancy()
+	game.remove_object(o)
 	var grown := {"uid": game.next_uid, "id": into, "row": row, "col": col, "t": game.now()}
 	game.next_uid += 1
 	if not game.can_place(into, row, col):
@@ -188,8 +187,7 @@ func _grow(o: Dictionary) -> String:
 			return into
 		grown["row"] = spot.x
 		grown["col"] = spot.y
-	game.objects.append(grown)
-	game.rebuild_occupancy()
+	game.add_object(grown)
 	game.message.emit(tr("YOUR_GREW_INTO_A") % [game.item_data(o["id"])["name"], game.item_data(into)["name"]])
 	game.ribbons.bump("young_raised", 1)
 	return into
@@ -279,8 +277,7 @@ func _found(young_id: String, becomes: String) -> bool:
 	else:
 		o["row"] = spot.x
 		o["col"] = spot.y
-		game.objects.append(o)
-		game.rebuild_occupancy()
+		game.add_object(o)
 		game.message.emit(tr("YOU_FOUND_A_GIVE_IT") % [game.item_data(young_id)["name"], needs_of(young_id),
 			supply_name(str(game.item_data(young_id)["supply"]))])
 	game.objects_updated()

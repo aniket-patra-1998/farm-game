@@ -98,7 +98,7 @@ func store_object(uid: int) -> bool:
 	if stored.size() >= barn_capacity():
 		game.message.emit(tr("THE_BARN_IS_FULL"))
 		return false
-	game.objects.erase(o)
+	game.remove_object(o)
 	o.erase("row")
 	o.erase("col")
 	stored.append(o)
@@ -129,7 +129,7 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	if o.get("bunch", false) and not o.has("expires"):
 		o["expires"] = game.now() + BUNCH_DAYS * 86400
 	game.grass_over(o["id"], row, col)
-	game.objects.append(o)
+	game.add_object(o)
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true

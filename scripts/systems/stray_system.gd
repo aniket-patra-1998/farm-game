@@ -40,7 +40,7 @@ func check_strays() -> void:
 			changed = true
 		else:
 			keep.append(o)
-	game.objects = keep
+	game.set_objects(keep)
 	if t >= next_stray_at and not _has_stray():
 		if _spawn_stray():
 			changed = true
@@ -98,7 +98,7 @@ func _spawn_stray() -> bool:
 	if spots.is_empty():
 		return false
 	var spot := spots[game.rng.randi_range(0, spots.size() - 1)]
-	game.objects.append(
+	game.add_object(
 		{"uid": game.next_uid, "id": animal_id, "row": spot.x, "col": spot.y, "t": game.now(), "stray": true}
 	)
 	game.next_uid += 1

@@ -104,3 +104,26 @@ func _clear(g: GameState) -> void:
 	for i in g.plots.size():
 		g.plots[i] = {"state": "grass"}
 	g.rebuild_occupancy()
+
+
+func test_125_objects_join_and_leave_the_farm_only_through_game() -> void:
+	var offenders: Array[String] = []
+	for dir in ["res://scripts", "res://autoload"]:
+		for path in _gd_files(dir):
+			if path.ends_with("autoload/game.gd"):
+				continue
+			var text := FileAccess.get_file_as_string(path)
+			for needle in ["objects.append(", "objects.erase(", "objects = "]:
+				if text.contains("game." + needle) or text.contains("g." + needle):
+					offenders.append("%s (%s)" % [path, needle])
+	_eq(offenders, [] as Array[String], "add_object, remove_object or set_objects instead")
+
+
+func _gd_files(dir: String) -> Array[String]:
+	var out: Array[String] = []
+	for name in DirAccess.get_files_at(dir):
+		if name.ends_with(".gd"):
+			out.append(dir.path_join(name))
+	for sub in DirAccess.get_directories_at(dir):
+		out.append_array(_gd_files(dir.path_join(sub)))
+	return out

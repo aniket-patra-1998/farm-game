@@ -518,6 +518,24 @@ func object_by_uid(uid: int) -> Dictionary:
 
 
 
+## The only ways objects join or leave the farm: each keeps the tiles they stand on (and the uid index) true.
+func add_object(o: Dictionary) -> void:
+	objects.append(o)
+	if o.has("row") and o.has("col"):
+		_occupy(o)
+
+
+func remove_object(o: Dictionary) -> void:
+	objects.erase(o)
+	rebuild_occupancy()
+
+
+## Replaces the whole list (a sweep that drops several at once).
+func set_objects(list: Array) -> void:
+	objects = list
+	rebuild_occupancy()
+
+
 func is_occupied(i: int) -> bool:
 	return _occupied.has(i)
 
@@ -604,7 +622,7 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 			message.emit(tr("BOUGHT_PICK_IT_IN_THE_TOOLBAR") % it["name"])
 	next_uid += 1
 	grass_over(item_id, row, col)
-	objects.append(obj)
+	add_object(obj)
 	objects_updated()
 	return true
 
@@ -860,9 +878,8 @@ func place_somewhere(item_id: String) -> bool:
 	if spots.is_empty():
 		return false
 	var spot := spots[rng.randi_range(0, spots.size() - 1)]
-	objects.append({"uid": next_uid, "id": item_id, "row": spot.x, "col": spot.y, "t": now()})
+	add_object({"uid": next_uid, "id": item_id, "row": spot.x, "col": spot.y, "t": now()})
 	next_uid += 1
-	rebuild_occupancy()
 	return true
 
 
@@ -933,8 +950,7 @@ func sell_object(uid: int) -> bool:
 	for id in o.get("inside", {}):
 		for k in int(o["inside"][id]):
 			held.append(id)
-	objects.erase(o)
-	rebuild_occupancy()
+	remove_object(o)
 	if held.size() > 0:
 		# Room check: the building's own tiles are free now that it's gone.
 		var free := 0
@@ -944,8 +960,7 @@ func sell_object(uid: int) -> bool:
 				if plots[i].get("state", "grass") == "grass" and not is_occupied(i):
 					free += 1
 		if free < held.size():
-			objects.append(o)
-			rebuild_occupancy()
+			add_object(o)
 			message.emit(tr("NOT_ENOUGH_OPEN_GRASS_FOR_THE") % held.size())
 			return false
 		for id in held:
@@ -1268,7 +1283,7 @@ func _new_game() -> void:
 func _add_starter_object(item_id: String, row: int, col: int, extra := {}) -> void:
 	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
 	obj.merge(extra)
-	objects.append(obj)
+	add_object(obj)
 	next_uid += 1
 
 
@@ -1415,7 +1430,7 @@ func load_game() -> bool:
 			obj["level"] = int(obj["level"])
 		if obj.has("forage_until"):
 			obj["forage_until"] = int(obj["forage_until"])
-		objects.append(obj)
+		add_object(obj)
 	next_uid = int(data.get("next_uid", 1))
 	absence_note = bees.apply_absence(now() - int(data.get("saved_at", now())))
 	plots.clear()

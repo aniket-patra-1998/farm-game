@@ -68,11 +68,10 @@ func unpack_bunch(k: int) -> int:
 ## Placed bunches wilt away after BUNCH_DAYS days.
 func expire_bunches() -> void:
 	var before := game.objects.size()
-	game.objects = game.objects.filter(
+	game.set_objects(game.objects.filter(
 		func(o): return not (o["id"] == "perfect_bunch" and game.now() >= int(o.get("expires", game.now() + 1)))
-	)
+	))
 	if game.objects.size() != before:
-		game.rebuild_occupancy()
 		game.message.emit(tr("A_PERFECT_BUNCH_HAS_WILTED_AWAY"))
 		game.objects_updated()
 
