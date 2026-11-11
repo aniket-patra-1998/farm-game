@@ -9,6 +9,8 @@ const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leav
 
 ## Tessellation: enough to read round at farm zoom on a phone, no more (each ball is ~170 triangles,
 ## each cylinder ~48, before the shadow pass draws them again).
+const GLASS_GLOW := 3.4      # how bright lit windows are at night (emission energy at full dark)
+const GLOW_LIFT := 0.02      # a pool of light lies this far above the ground
 const BALL_SEGMENTS := 12
 const BALL_RINGS := 7
 
@@ -93,7 +95,32 @@ static func glass() -> StandardMaterial3D:
 
 
 static func set_window_glow(glow: float) -> void:
-	glass().emission_energy_multiplier = glow * 2.2
+	glass().emission_energy_multiplier = glow * GLASS_GLOW
+	glow_material().set_shader_parameter("strength", glow)
+
+
+## The shared material of every pool of light a lit window or door throws on the ground (shaders/glow3d).
+static func glow_material() -> ShaderMaterial:
+	if not _materials.has("glow"):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/glow3d.gdshader")
+		_materials["glow"] = m
+	return _materials["glow"]
+
+
+## A pool of warm light on the ground, `size` across, centred on `at` (x, z). Left out of the bake (it
+## is drawn blended and shares nothing), casts no shadow.
+static func glow_pool(parent: Node3D, at: Vector3, size: Vector2) -> MeshInstance3D:
+	var mesh := PlaneMesh.new()
+	mesh.size = size
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = glow_material()
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3(at.x, GLOW_LIFT, at.z)
+	mi.set_meta(KEEP, true)
+	parent.add_child(mi)
+	return mi
 
 
 ## Still water: shared and rippling (DecorMotion.water: shaders/water3d), one material for all of it.

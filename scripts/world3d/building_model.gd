@@ -9,6 +9,7 @@ extends RefCounted
 const PATH := "res://data/building_models.json"
 const SKIRT_PITCH := 0.3      # the pent roof round a ground floor under an upper storey: rise over half-span
 const SKIRT_OVER := 0.1        # and how far it overhangs
+const SPILL_REACH := 0.8      # how far a lit building's light reaches over the ground, in tiles
 const PLINTH := 0.09
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
@@ -130,7 +131,8 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 
 
 ## The whole building at its size, under a new node. `fp` is the footprint in tiles (columns, rows).
-static func build(it: Dictionary, fp: Vector2i, level := 1) -> Node3D:
+## `active` is whether it is at work (a bakery with something in the oven): only then does its chimney smoke.
+static func build(it: Dictionary, fp: Vector2i, level := 1, active := true) -> Node3D:
 	var root := Node3D.new()
 	var s := spec(str(it.get("id", "")), level)
 	var fw := float(fp.x)
@@ -147,7 +149,7 @@ static func build(it: Dictionary, fp: Vector2i, level := 1) -> Node3D:
 			lift = float(f.get("h", 0.2))
 	var wall_col := Color.html(str(it.get("color", "#c0392b")))
 	var ctx := {"root": root, "fw": fw, "fd": fd, "centre": centre, "bw": bw, "bd": bd, "bh": bh, "lift": lift,
-		"wall": wall_col, "spec": s, "it": it}
+		"wall": wall_col, "spec": s, "it": it, "active": active}
 	# Yards go down first (they're on the ground, under everything).
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "yard":
@@ -390,6 +392,7 @@ static func _body(ctx: Dictionary) -> void:
 	ctx["hi"] = hi
 	_door(ctx, trim)
 	_windows(ctx, int(s.get("windows", 2)), trim, int(s.get("window_rows", 1)))
+	_light_spill(ctx)
 
 
 ## A second storey (the top size of a big building): the ground floor under a low pent roof that runs all
@@ -443,6 +446,22 @@ static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: M
 	sub["hi"] = uhi
 	_windows(sub, int(upper.get("windows", 2)), trim, 1)
 	return top
+
+
+## At night a building's windows and door throw warm light on the ground in front of them and beside them.
+static func _light_spill(ctx: Dictionary) -> void:
+	var lo: Vector3 = ctx["lo"]
+	var hi: Vector3 = ctx["hi"]
+	var root: Node3D = ctx["root"]
+	var door: Dictionary = (ctx["spec"] as Dictionary).get("door", {})
+	var reach_z := minf(SPILL_REACH, float(ctx["fd"]) - hi.z + 0.05)   # never off the footprint
+	var reach_x := minf(SPILL_REACH, float(ctx["fw"]) - hi.x + 0.05)
+	if str(door.get("style", "barn")) != "none" and reach_z > 0.1:
+		ModelKit.glow_pool(root, Vector3((lo.x + hi.x) / 2.0, 0, hi.z - 0.05 + reach_z / 2.0),
+			Vector2((hi.x - lo.x) * 0.9, reach_z))
+	if int((ctx["spec"] as Dictionary).get("windows", 2)) > 0 and reach_x > 0.1:
+		ModelKit.glow_pool(root, Vector3(hi.x - 0.05 + reach_x / 2.0, 0, (lo.z + hi.z) / 2.0),
+			Vector2(reach_x, (hi.z - lo.z) * 0.9))
 
 
 ## The door, on the front (the +z face, toward the camera's left).
@@ -778,7 +797,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			ModelKit.box(root, Vector3(hi.x - 0.22, hi.y, lo.z + 0.12), Vector3(hi.x - 0.08, top + 0.15, lo.z + 0.26),
 				ModelKit.surface(Color("#a6533c"), "stone", 0.0))
 			# Smoke curling up from it (GPU-animated, one draw).
-			DecorMotion.spray(root, Vector3(hi.x - 0.15, top + 0.17, lo.z + 0.19), DecorMotion.SMOKE)
+			if ctx.get("active", true):
+				DecorMotion.spray(root, Vector3(hi.x - 0.15, top + 0.17, lo.z + 0.19), DecorMotion.SMOKE)
 		"water_trough":
 			var x := minf(hi.x + 0.45, fw - 0.3)
 			var z := minf(hi.z + 0.35, fd - 0.2)

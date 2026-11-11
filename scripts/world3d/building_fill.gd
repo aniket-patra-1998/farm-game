@@ -9,14 +9,16 @@ extends Node3D
 ## Lives under a building's model (the footprint's back corner is its origin), so it turns with it. What
 ## to show comes from the building's description (data/building_models.json "fill").
 
-const RESIDENTS := 6          # the most animals out in a yard at once (a full building)
-const SPOT_GAP := 0.4         # tiles between places an animal can stand
+const RESIDENTS := 10         # the most animals out in a yard at once (a full building)
+const SPOT_GAP := 0.34        # tiles between places an animal can stand
 const EDGE := 0.28            # and how far those keep from the footprint's edge (inside the fence)
 const KEEP_CLEAR := 0.16      # and from walls and the like
 const WANDER := 0.1           # tiles a resident strays from its place
 const DOOR_OPEN := 1.75       # radians a door swings open
 const DOOR_HOLD := 1.2        # seconds it stays open
 const PRODUCE_STEPS := 6      # piles grow in this many steps as collection nears
+const PRODUCE_SCALE := 1.5    # and are drawn this much bigger than life: they must read from across the farm
+const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 
 var uid := -1
 var residents: Array[Animal3D] = []
@@ -28,6 +30,7 @@ var _spots: Array[Vector3] = []
 var _who := ""                # who's inside, as last shown
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
+var _flag: Node3D             # flown while the building is full
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
 const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
@@ -107,6 +110,7 @@ func refresh(o: Dictionary) -> void:
 		_show_produce(str(fill.get("produce", "")), step, fill.get("at", [0.78, 0.9]), o)
 	_who = who
 	_stage = stage
+	_show_flag(Game.capacity(o) > 0 and Game.inside_total(o) >= Game.capacity(o) and not fill.has("plants"))
 
 
 ## How near the building is to ready, 0..1 (0 when empty: nothing is being made).
@@ -254,6 +258,8 @@ func _show_produce(kind: String, step: int, at: Array, o: Dictionary) -> void:
 					ModelKit.surface(Color("#b07a4c"), "boards", 0.2))
 				ModelKit.ball(root, c + Vector3(0, 0.1, 0), 0.05, ModelKit.paint(col, 0.3), Vector3(1.3, 0.5, 1))
 	_produce = ModelKit.bake(root)
+	_produce.scale = Vector3.ONE * PRODUCE_SCALE
+	_produce.position = p * (1.0 - PRODUCE_SCALE)
 	add_child(_produce)
 
 
@@ -268,6 +274,23 @@ static func _basket(root: Node3D, p: Vector3, col: Color, count: int, r: float, 
 		var c := p + Vector3(cos(a) * ring, 0.06 + r + int(k / 6.0) * r * 1.4, sin(a) * ring)
 		ModelKit.ball(root, c, r * rng.randf_range(0.9, 1.1), ModelKit.paint(col.darkened(rng.randf_range(0.0, 0.1)), 0.3),
 			shape)
+
+
+## A pennant on a pole at the yard's front corner while the building is full (FarmVille's "full" had to be
+## read from the numbers; here it's on the building).
+func _show_flag(full: bool) -> void:
+	if (_flag != null) == full:
+		return
+	if _flag != null:
+		_flag.queue_free()
+		_flag = null
+		return
+	var root := Node3D.new()
+	var at := Vector3(_fp.x - 0.14, 0, _fp.y - 0.14)
+	ModelKit.box(root, at - Vector3(0.012, 0, 0.012), at + Vector3(0.012, 0.62, 0.012), ModelKit.paint(Color("#4a4a4a")))
+	ModelKit.box(root, at + Vector3(0.012, 0.44, -0.008), at + Vector3(0.3, 0.62, 0.008), ModelKit.paint(FULL_FLAG))
+	_flag = ModelKit.bake(root)
+	add_child(_flag)
 
 
 # ---------------------------------------------------------------- moving

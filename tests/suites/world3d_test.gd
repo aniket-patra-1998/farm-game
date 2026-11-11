@@ -69,7 +69,10 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 	var door_meshes := 0
 	for d: Node in doors:
 		door_meshes += _count_meshes(d)
-	_check(_count_meshes(baked) - door_meshes <= 2, "and drawn as at most two meshes (%d)" % _count_meshes(baked))
+	var pools := baked.get_children().filter(func(n: Node) -> bool:
+		return n is MeshInstance3D and (n as MeshInstance3D).material_override == ModelKit.glow_material()).size()
+	_check(pools == 2, "with a pool of light at its door and one at its windows (%d)" % pools)
+	_check(_count_meshes(baked) - door_meshes - pools <= 2, "and drawn as at most two meshes (%d)" % _count_meshes(baked))
 	_check(doors.size() == 2 and door_meshes <= 4, "its barn doors kept whole on hinges, a draw or two each (%d)"
 		% door_meshes)
 	_eq(_count_vertices(baked), verts, "with every vertex kept")
@@ -581,7 +584,8 @@ func test_126_the_biggest_size_of_a_building_is_a_real_second_storey() -> void:
 				var part := (c as MeshInstance3D).get_aabb()
 				box = box.merge(part) if box.size != Vector3.ZERO else part
 		var walls := float(spec["body"].get("h", 0.0)) + float(upper.get("h", 0.0))
-		_check(box.end.y >= walls, "%s at size %d stands as high as both its floors (%.2f of %.2f)" % [id, level, box.end.y, walls])
+		_check(box.end.y >= walls, "%s at size %d stands as high as both its floors (%.2f of %.2f)"
+			% [id, level, box.end.y, walls])
 		model.free()
 	_check(tall >= 8, "the bigger buildings have a second storey (%d)" % tall)
 	_done(g)

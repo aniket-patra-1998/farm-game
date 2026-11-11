@@ -20,7 +20,7 @@ const FRUIT_R := 0.052      # a round fruit's radius (a small one's: FRUIT_SMALL
 const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 0.92     # how far out through a leafy clump fruit hangs (1: on its surface)
 const FRUIT_GROWING := 3
-const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's trees were full, not dainty)
+const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
 
 static var _data := {}
 
@@ -47,8 +47,8 @@ static func forms() -> Array:
 	return (_data.get("forms", {}) as Dictionary).keys()
 
 
-## A tree standing on `base` under `parent`; `size` 1 is a full tree on its own tile (crown nearly as wide as it). `leaf` overrides the
-## kind's leaf colour when given.
+## A tree standing on `base` under `parent`; `size` 1 is a full tree on its own tile (crown nearly as wide
+## as it). `leaf` overrides the kind's leaf colour when given.
 static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0, ready := false,
 		seed_value := 0, fruit := true, leaf := UNSET) -> Node3D:
 	var root := Node3D.new()

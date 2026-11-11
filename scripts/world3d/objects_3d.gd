@@ -128,9 +128,17 @@ func _key(o: Dictionary) -> String:
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
-		str(o.get("crop", o.get("flower", ""))) + "|%d|%s" % [int(o.get("fed", 0)), Game.is_withered(o)]]
+		str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)), Game.is_withered(o), _at_work(o)]]
 
 
+
+
+## Whether a building is at work right now: a crafting building with something in its ovens or vats. (Other
+## buildings are always "at work": their chimneys, if any, smoke.)
+func _at_work(o: Dictionary) -> bool:
+	if not Game.crafting.is_crafting(o):
+		return true
+	return Game.crafting.crafts_done(o) < (o.get("slots", []) as Array).size()
 
 
 func _build(o: Dictionary) -> Node3D:
@@ -160,7 +168,7 @@ func _build(o: Dictionary) -> Node3D:
 			if Game.under_construction(o):
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 			else:
-				node = ModelKit.bake(BuildingModel.build(it, fp, Game.level_of(o)))
+				node = ModelKit.bake(BuildingModel.build(it, fp, Game.level_of(o), _at_work(o)))
 				if BuildingFill.shows(o):
 					node.add_child(BuildingFill.create(o, node))
 	# The view stands at the footprint's centre on the ground, so it squashes, bounces and lands about
