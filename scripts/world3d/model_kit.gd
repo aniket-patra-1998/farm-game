@@ -334,9 +334,11 @@ static func bake(root: Node3D) -> Node3D:
 		n.get_parent().remove_child(n)
 		n.transform = k[1]
 		out.add_child(n)
-		# What hangs on it is baked too: a door is one or two draws, not a dozen boxes.
+		# What hangs on it is baked too: a door is one or two draws, not a dozen boxes. A child that's already
+		# a finished mesh (no parts under it: a moving effect, a part baked before) is left as it is;
+		# re-baking it would bake nothing and lose it.
 		for part in n.get_children():
-			if part is Node3D:
+			if part is Node3D and part.get_child_count() > 0:
 				n.remove_child(part)
 				n.add_child(bake(part))
 	for shadow: bool in [true, false]:

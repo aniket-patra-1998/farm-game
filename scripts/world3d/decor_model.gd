@@ -133,7 +133,12 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 				)
 		"water_well":
 			ModelKit.cylinder(root, c, 0.28, 0.3, ModelKit.surface(STONE, "stone", 0.3), -1.0, 16)
-			ModelKit.cylinder(root, c + Vector3(0, 0.29, 0), 0.22, 0.02, ModelKit.water(), -1.0, 16)
+			ModelKit.cylinder(root, c + Vector3(0, 0.3, 0), 0.22, WATER_LIFT, ModelKit.water(), -1.0, 16)
+			# A bucket hanging over the water, bobbing on its rope.
+			var bucket := Node3D.new()
+			ModelKit.cylinder(bucket, Vector3.ZERO, 0.06, 0.08, ModelKit.paint(WOOD), 0.07, 10)
+			ModelKit.box(bucket, Vector3(-0.003, 0.08, -0.003), Vector3(0.003, 0.3, 0.003), ModelKit.paint(Color("#c9b38a")))
+			DecorMotion.orbit(root, c + Vector3(0, 0.36, 0), bucket, DecorMotion.BOBBING)
 			for z: float in [-0.25, 0.25]:
 				ModelKit.box(
 					root,
@@ -207,6 +212,8 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			ModelKit.roof(root, "gable", c + Vector3(-0.08, 0.55, -0.08), c + Vector3(0.08, 0.72, 0.08), 0.07, 0.02,
 				ModelKit.paint(col), ModelKit.surface(WHITE, "boards"))
 			ModelKit.cylinder(root, c + Vector3(0.081, 0.63, 0), 0.025, 0.005, ModelKit.paint(Color("#222222")))
+			# Its bird, circling the house.
+			DecorMotion.orbit(root, c + Vector3(0, 0.82, 0), DecorMotion.bird(Color("#6f8fc9")), DecorMotion.CIRCLING)
 		"birdbath":
 			ModelKit.cylinder(root, c, 0.1, 0.05, ModelKit.paint(col), -1.0, 12)
 			ModelKit.cylinder(root, c + Vector3(0, 0.05, 0), 0.04, 0.25, ModelKit.paint(col), 0.05, 10)
@@ -430,6 +437,16 @@ static func _pond(root: Node3D, fp: Vector2i, fountain: bool, col: Color) -> voi
 				sin(a) * r * 0.4
 			), 0.09, ModelKit.paint(Color("#4f9a3a")),
 				Vector3(1, 0.12, 1))
+		_ducks(root, c + Vector3(0, 0.02, 0), r * 0.55)
+
+
+## Two ducks paddling round a pond, apart from each other.
+static func _ducks(root: Node3D, centre: Vector3, reach: float) -> void:
+	for k in 2:
+		var paddle: Dictionary = DecorMotion.PADDLING.duplicate()
+		paddle["radius"] = reach * (1.0 - 0.3 * k)
+		paddle["phase"] = PI * k * 3.1
+		DecorMotion.orbit(root, centre, DecorMotion.duck(Color("#f2efe6") if k == 0 else Color("#8a6a45")), paddle)
 
 
 static func _small_sign(root: Node3D, id: String, c: Vector3, col: Color, o: Dictionary) -> void:

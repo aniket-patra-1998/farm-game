@@ -81,8 +81,9 @@ upgrades (capacity and refill rate); friends can send water; a few crops/trees n
 - started: DecorMotion (GPU-animated effects, no script per frame): the fountain's jet and cascade, the
   bonfire's flames and embers, rippling water everywhere, smoke from every chimney; one global wind (set by
   the weather) bends crops, grass, every tree (fruit, decorative, the woods), scarecrows, flower beds,
-  hedges (paint3d sway: no extra draw) (test 115). Lamps already glow at night. Still to animate: birds at
-  birdhouses, ducks on ponds, the well's bucket, weathervanes, flags; the Windmill when it's built.
+  hedges (paint3d sway: no extra draw) (test 115). Lamps already glow at night. Orbit effects (orbit3d): a bird circling
+  each birdhouse, ducks paddling on every pond (decor and the duck pond yard), the well's bucket bobbing,
+  weathervanes swinging with the wind. Still to animate: the Windmill when it's built.
 - **missing: animation** on every decoration. FarmVille's decorations moved: fountains spray and ripple,
   windmills turn, bonfires flicker and smoke, lamp posts glow at night, flags and scarecrows sway in wind,
   birdhouses have birds coming and going, ponds ripple with ducks, wishing well bucket bobs, gnomes blink.

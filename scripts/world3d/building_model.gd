@@ -694,6 +694,7 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				Vector3(rx + 0.08, 0.05, rz + 0.08)
 			)
 			ModelKit.ball(root, centre + Vector3(0, 0.005, 0), 1.0, ModelKit.water(), Vector3(rx, 0.03, rz))
+			DecorModel._ducks(root, centre + Vector3(0, 0.02, 0), minf(rx, rz) * 0.55)
 			var rng := RandomNumberGenerator.new()
 			rng.seed = 7
 			for k in 10:
@@ -744,11 +745,13 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			ModelKit.box(root, Vector3(x - 0.008, top, z - 0.008), Vector3(x + 0.008, top + 0.34, z + 0.008), iron)
 			ModelKit.box(root, Vector3(x - 0.12, top + 0.22, z - 0.004), Vector3(x + 0.12, top + 0.235, z + 0.004), iron)
 			ModelKit.box(root, Vector3(x - 0.004, top + 0.22, z - 0.09), Vector3(x + 0.004, top + 0.235, z + 0.09), iron)
-			# The cockerel on top.
-			ModelKit.ball(root, Vector3(x, top + 0.33, z), 0.045, ModelKit.paint(Color("#c9a24a"), 0.6),
-				Vector3(1.6, 1.0, 0.35))
-			ModelKit.ball(root, Vector3(x + 0.06, top + 0.37, z), 0.025, ModelKit.paint(Color("#c9a24a"), 0.6),
-				Vector3(1, 1, 0.4))
+			# The cockerel and its arrow, swinging round with the wind.
+			var vane := Node3D.new()
+			var gold := ModelKit.paint(Color("#c9a24a"), 0.6)
+			ModelKit.box(vane, Vector3(-0.004, 0.025, -0.13), Vector3(0.004, 0.035, 0.13), iron)
+			ModelKit.ball(vane, Vector3(0, 0.07, 0), 0.045, gold, Vector3(0.35, 1.0, 1.6))
+			ModelKit.ball(vane, Vector3(0, 0.11, -0.06), 0.025, gold, Vector3(0.4, 1, 1))
+			DecorMotion.orbit(root, Vector3(x, top + 0.26, z), vane, DecorMotion.VANE)
 		"sign":
 			var p := Vector3(
 				minf(hi.x + 0.15, fw - 0.1),

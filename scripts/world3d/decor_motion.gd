@@ -14,6 +14,14 @@ const PUFF_RINGS := 4
 const SPRAY_SHADER := "res://shaders/spray3d.gdshader"
 const FLAME_SHADER := "res://shaders/flame3d.gdshader"
 const WATER_SHADER := "res://shaders/water3d.gdshader"
+const ORBIT_SHADER := "res://shaders/orbit3d.gdshader"
+
+## A bird circling its house, fluttering. A duck paddling round a pond. A bucket bobbing in a well. A
+## weathervane swinging with the wind.
+const CIRCLING := {"speed": 1.6, "radius": 0.3, "bob": 0.035, "bob_rate": 1.4}
+const PADDLING := {"speed": 0.35, "radius": 0.22, "bob": 0.006, "bob_rate": 0.6}
+const BOBBING := {"speed": 0.0, "bob": 0.025, "bob_rate": 0.25}
+const VANE := {"speed": 0.45, "swing": 0.7}
 
 ## A fountain's jet: arcs of water up from the spout and falling back round it (streams of drops one
 ## behind another along the same arc read as running water, not specks).
@@ -101,6 +109,45 @@ static func flame(parent: Node3D, at: Vector3, r: float, h: float, col: Color, t
 	mi.set_meta(ModelKit.KEEP, true)
 	parent.add_child(mi)
 	return mi
+
+
+## Moves `part` (built facing -z at its origin) as `settings` say: round a circle, bobbing, or swinging
+## (CIRCLING, PADDLING, BOBBING, VANE; "phase" sets it apart from another like it). Baked to a draw per
+## material and moved by orbit3d; returns the part's node, placed at `at` in the parent.
+static func orbit(parent: Node3D, at: Vector3, part: Node3D, settings: Dictionary) -> Node3D:
+	var baked := ModelKit.bake(part)
+	# (bake frees `part`)
+	var mat := _material(ORBIT_SHADER, settings)
+	var reach := float(settings.get("radius", 0.0)) + 0.25
+	for c in baked.get_children():
+		if c is MeshInstance3D:
+			var mi := c as MeshInstance3D
+			mi.material_override = mat  # its colours are in its vertices
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mi.custom_aabb = AABB(Vector3(-reach, -0.1, -reach), Vector3(reach * 2.0, 0.5, reach * 2.0))
+	baked.position = at
+	baked.set_meta(ModelKit.KEEP, true)
+	parent.add_child(baked)
+	return baked
+
+
+## A little bird facing -z: body, head, beak and tail.
+static func bird(col: Color) -> Node3D:
+	var b := Node3D.new()
+	ModelKit.ball(b, Vector3.ZERO, 0.035, ModelKit.paint(col), Vector3(0.8, 0.8, 1.2))
+	ModelKit.ball(b, Vector3(0, 0.03, -0.04), 0.022, ModelKit.paint(col.lightened(0.1)))
+	ModelKit.ball(b, Vector3(0, 0.028, -0.065), 0.008, ModelKit.paint(Color("#e8a23a")), Vector3(0.8, 0.6, 1.6))
+	ModelKit.ball(b, Vector3(0, 0.01, 0.045), 0.018, ModelKit.paint(col.darkened(0.2)), Vector3(0.6, 0.3, 1.2))
+	return b
+
+
+## A duck facing -z, sitting on the water: body, head and bill.
+static func duck(col: Color) -> Node3D:
+	var d := Node3D.new()
+	ModelKit.ball(d, Vector3(0, 0.025, 0), 0.05, ModelKit.paint(col), Vector3(0.75, 0.6, 1.1))
+	ModelKit.ball(d, Vector3(0, 0.075, -0.045), 0.026, ModelKit.paint(col.darkened(0.05)))
+	ModelKit.ball(d, Vector3(0, 0.07, -0.072), 0.011, ModelKit.paint(Color("#f0a030")), Vector3(1.1, 0.5, 1.4))
+	return d
 
 
 ## The shared rippling water (one material for every pond, trough, well and basin).
