@@ -7,6 +7,8 @@ extends RefCounted
 ## x runs along its columns and z along its rows, one unit a tile.
 
 const PATH := "res://data/building_models.json"
+const SKIRT_PITCH := 0.3      # the pent roof round a ground floor under an upper storey: rise over half-span
+const SKIRT_OVER := 0.1        # and how far it overhangs
 const PLINTH := 0.09
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
@@ -374,7 +376,10 @@ static func _body(ctx: Dictionary) -> void:
 	var r: Dictionary = s["roof"]
 	var kind := str(r.get("type", "gable"))
 	var top := hi.y
-	if kind != "none":
+	var upper: Dictionary = s.get("upper", {})
+	if not upper.is_empty():
+		top = _upper_storey(ctx, lo, hi, wall_mat, trim, upper)
+	elif kind != "none":
 		var span := minf(bw, bd)
 		var rise := float(r.get("pitch", 0.7)) * span / 2.0
 		var roof_mat := ModelKit.surface(Color.html(str(r.get("color", "#8e3b2c"))), str(r.get("style", "shingles")),
@@ -385,6 +390,59 @@ static func _body(ctx: Dictionary) -> void:
 	ctx["hi"] = hi
 	_door(ctx, trim)
 	_windows(ctx, int(s.get("windows", 2)), trim, int(s.get("window_rows", 1)))
+
+
+## A second storey (the top size of a big building): the ground floor under a low pent roof that runs all
+## round it, and a smaller upper floor set back on top of it, with its own walls, windows and roof. The
+## `upper` description (data/building_models.json) gives w and d as shares of the ground floor, h, windows,
+## and optionally its own roof, walls and colour. Returns the top of the whole building; the upper floor's
+## corners go in ctx as upper_lo and upper_hi (balconies and hoists hang on them).
+static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: Material, trim: Color,
+		upper: Dictionary) -> float:
+	var root: Node3D = ctx["root"]
+	var s: Dictionary = ctx["spec"]
+	var r: Dictionary = s["roof"]
+	var roof_col := Color.html(str(r.get("color", "#8e3b2c")))
+	var roof_mat := ModelKit.surface(roof_col, str(r.get("style", "shingles")), 0.0)
+	var bw: float = ctx["bw"]
+	var bd: float = ctx["bd"]
+	# The ground floor's own roof: low, all round, as a skirt under the upper floor.
+	ModelKit.roof(root, "hip", lo, hi, SKIRT_PITCH * minf(bw, bd) / 2.0, SKIRT_OVER, roof_mat, wall_mat)
+	var c: Vector3 = ctx["centre"]
+	var uw := bw * float(upper.get("w", 0.8))
+	var ud := bd * float(upper.get("d", 0.86))
+	var uh := float(upper.get("h", 0.7))
+	var shift := float(upper.get("back", 0.0))
+	var ulo := Vector3(c.x - uw / 2.0, hi.y, c.z - ud / 2.0 - shift)
+	var uhi := Vector3(c.x + uw / 2.0, hi.y + uh, c.z + ud / 2.0 - shift)
+	var own_wall := wall_mat
+	if upper.has("walls") or upper.has("color"):
+		own_wall = ModelKit.surface(Color.html(str(upper.get("color", "#" + (ctx["wall"] as Color).to_html(false)))),
+			str(upper.get("walls", (s["body"] as Dictionary).get("walls", "boards"))))
+	ModelKit.box(root, ulo, uhi, own_wall)
+	# A trim band where the storeys meet, and white corner boards up the upper floor.
+	ModelKit.box(root, ulo - Vector3(0.02, 0, 0.02), Vector3(uhi.x + 0.02, ulo.y + 0.04, uhi.z + 0.02),
+		ModelKit.paint(trim))
+	var t := 0.03
+	for corner: Vector2 in [Vector2(ulo.x, ulo.z), Vector2(uhi.x, ulo.z), Vector2(uhi.x, uhi.z), Vector2(ulo.x, uhi.z)]:
+		ModelKit.box(root, Vector3(corner.x - t, ulo.y, corner.y - t), Vector3(corner.x + t, uhi.y, corner.y + t),
+			ModelKit.paint(trim))
+	var up_roof: Dictionary = upper.get("roof", {})
+	var kind := str(up_roof.get("type", r.get("type", "gable")))
+	var top := uhi.y
+	if kind != "none":
+		var pitch := float(up_roof.get("pitch", r.get("pitch", 0.7)))
+		var mat := roof_mat
+		if up_roof.has("color"):
+			mat = ModelKit.surface(Color.html(str(up_roof["color"])), str(r.get("style", "shingles")), 0.0)
+		top = ModelKit.roof(root, kind, ulo, uhi, pitch * minf(uw, ud) / 2.0, float(r.get("overhang", 0.08)), mat, own_wall)
+	ctx["upper_lo"] = ulo
+	ctx["upper_hi"] = uhi
+	var sub := ctx.duplicate()
+	sub["lo"] = ulo
+	sub["hi"] = uhi
+	_windows(sub, int(upper.get("windows", 2)), trim, 1)
+	return top
 
 
 ## The door, on the front (the +z face, toward the camera's left).
@@ -566,6 +624,89 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				Vector3(x + 0.02, y + 0.18, hi.z + 0.08),
 				ModelKit.paint(HAY)
 			)
+		"balcony":
+			# A railed deck out from the upper floor's front, on brackets.
+			var ulo: Vector3 = ctx.get("upper_lo", lo)
+			var uhi: Vector3 = ctx.get("upper_hi", hi)
+			var span := (uhi.x - ulo.x) * float(f.get("span", 0.7))
+			var x := (ulo.x + uhi.x) / 2.0 + float(f.get("shift", 0.0))
+			var y := ulo.y + 0.1
+			var out := float(f.get("depth", 0.16))
+			var wood := ModelKit.surface(WOOD, "boards")
+			var rail := ModelKit.paint(Color("#f3eee2"))
+			ModelKit.box(root, Vector3(x - span / 2.0, y, uhi.z), Vector3(x + span / 2.0, y + 0.025, uhi.z + out), wood)
+			for k in 2:
+				var bx := x + (k - 0.5) * span * 0.8
+				ModelKit.box(root, Vector3(bx - 0.012, y - 0.09, uhi.z), Vector3(bx + 0.012, y, uhi.z + out * 0.8), wood)
+			ModelKit.box(root, Vector3(x - span / 2.0, y + 0.12, uhi.z + out - 0.015),
+				Vector3(x + span / 2.0, y + 0.135, uhi.z + out), rail)
+			ModelKit.box(root, Vector3(x - span / 2.0, y + 0.12, uhi.z), Vector3(x - span / 2.0 + 0.015, y + 0.135,
+				uhi.z + out), rail)
+			ModelKit.box(root, Vector3(x + span / 2.0 - 0.015, y + 0.12, uhi.z), Vector3(x + span / 2.0, y + 0.135,
+				uhi.z + out), rail)
+			var posts := 5
+			for k in posts:
+				var px := lerpf(x - span / 2.0, x + span / 2.0, k / (posts - 1.0))
+				ModelKit.box(root, Vector3(px - 0.007, y + 0.025, uhi.z + out - 0.014),
+					Vector3(px + 0.007, y + 0.12, uhi.z + out), rail)
+		"hoist":
+			# A barn's hay hoist: a beam out from under the gable peak, a pulley wheel and a hanging rope.
+			var ulo: Vector3 = ctx.get("upper_lo", lo)
+			var uhi: Vector3 = ctx.get("upper_hi", hi)
+			var x := (ulo.x + uhi.x) / 2.0
+			var y := uhi.y + float(f.get("up", 0.12))
+			var out := float(f.get("depth", 0.24))
+			var wood := ModelKit.paint(WOOD)
+			ModelKit.box(root, Vector3(x - 0.015, y, uhi.z - 0.02), Vector3(x + 0.015, y + 0.03, uhi.z + out), wood)
+			ModelKit.box(root, Vector3(x - 0.012, y - 0.1, uhi.z + out * 0.15), Vector3(x + 0.012, y, uhi.z + out * 0.15 + 0.02),
+				wood)
+			ModelKit.cylinder(root, Vector3(x - 0.02, y - 0.03, uhi.z + out), 0.03, 0.04, ModelKit.paint(Color("#3a3a3a")),
+				-1.0, 10).rotation.z = PI / 2.0
+			ModelKit.box(root, Vector3(x - 0.004, y - 0.2, uhi.z + out - 0.004), Vector3(x + 0.004, y, uhi.z + out + 0.004),
+				ModelKit.paint(Color("#c8a96a")))
+		"dormers":
+			# Small gabled windows poking out of the roof's front slope.
+			var ulo: Vector3 = ctx.get("upper_lo", lo)
+			var uhi: Vector3 = ctx.get("upper_hi", hi)
+			var n := int(f.get("count", 2))
+			var trim := Color.html(str((ctx["spec"] as Dictionary).get("trim", "#f3eee2")))
+			var rmat := ModelKit.surface(Color.html(str(((ctx["spec"] as Dictionary)["roof"] as Dictionary).get("color",
+				"#8e3b2c"))), "shingles", 0.0)
+			for k in n:
+				var x := lerpf(ulo.x, uhi.x, (k + 1.0) / (n + 1.0))
+				var y := uhi.y + float(f.get("up", 0.05))
+				var dlo := Vector3(x - 0.075, y, uhi.z - 0.1)
+				var dhi := Vector3(x + 0.075, y + 0.15, uhi.z + 0.05)
+				ModelKit.box(root, dlo, dhi, ModelKit.paint(trim))
+				ModelKit.box(root, Vector3(x - 0.05, y + 0.03, dhi.z), Vector3(x + 0.05, y + 0.12, dhi.z + 0.01),
+					ModelKit.glass())
+				ModelKit.roof(root, "gable", Vector3(dlo.x, dlo.y, dlo.z), Vector3(dhi.x, dhi.y, dhi.z), 0.07, 0.025, rmat,
+					ModelKit.paint(trim))
+		"awning":
+			# A striped canopy over the front door, sloping down and out.
+			var w := float(f.get("w", 0.36))
+			var x := (lo.x + hi.x) / 2.0 + float(f.get("shift", 0.0))
+			var y := float(f.get("h", 0.62))
+			var a := Color.html(str(f.get("a", "#c0392b")))
+			var b := Color.html(str(f.get("b", "#f3eee2")))
+			var stripes := 6
+			for k in stripes:
+				var sx := x - w / 2.0 + w * k / stripes
+				var half := Vector3(w / stripes / 2.0, 0.01, 0.1)
+				var strip := ModelKit.box(root, -half, half, ModelKit.paint(a if k % 2 == 0 else b))
+				if strip != null:
+					strip.position = Vector3(sx + half.x, y, hi.z + 0.1)
+					strip.rotation.x = 0.35
+		"flag":
+			# A pennant on a pole at the roof's peak.
+			var x := (lo.x + hi.x) / 2.0 + float(f.get("shift", 0.0))
+			var z := (lo.z + hi.z) / 2.0
+			var top: float = ctx.get("top", hi.y)
+			var h := float(f.get("h", 0.34))
+			ModelKit.box(root, Vector3(x - 0.006, top, z - 0.006), Vector3(x + 0.006, top + h, z + 0.006),
+				ModelKit.paint(Color("#3a3a3a")))
+			ModelKit.box(root, Vector3(x + 0.006, top + h - 0.1, z - 0.004), Vector3(x + 0.19, top + h, z + 0.004),
+				ModelKit.paint(Color.html(str(f.get("color", "#c0392b")))))
 		"cupola":
 			var top: float = ctx.get("top", hi.y)
 			var x := (lo.x + hi.x) / 2.0

@@ -41,7 +41,7 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 	# Building features are all ones BuildingModel knows how to build.
 	var known := ["yard", "silo", "stilts", "ramp", "chimney", "cupola", "loft_door", "stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
-		"duck_house", "wing", "lean_to", "weathervane", "arch"]
+		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag"]
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))
 	for id in data["buildings"]:
 		for f: Dictionary in (data["buildings"][id] as Dictionary).get("features", []):
@@ -466,7 +466,9 @@ func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 			var bd := float(body.get("d", 0.0)) * fp.y
 			if bw <= 0.0 or bd <= 0.0:
 				continue  # a yard with no building on it (a pond, an orchard, hives)
-			var h := float(body.get("h", 0.0))
+			# A second storey stands on the ground floor: the building is as tall as both.
+			var upper: Dictionary = BuildingModel.spec(id, level).get("upper", {})
+			var h := float(body.get("h", 0.0)) + float(upper.get("h", 0.0))
 			var long_side := maxf(bw, bd)
 			var short_side := minf(bw, bd)
 			_check(long_side / short_side <= 1.4, "%s size %d is not a long shed (%.2f x %.2f)" % [id, level, bw, bd])
@@ -555,4 +557,31 @@ func test_115_moving_decorations_move_on_the_gpu() -> void:
 				wrong += 1
 		_eq(wrong, 0, "every %s triangle faces out" % ("smoke" if settings.get("round", false) else "drop"))
 		holder.free()
+	_done(g)
+
+
+func test_126_the_biggest_size_of_a_building_is_a_real_second_storey() -> void:
+	var g := _farm()
+	var tall := 0
+	for id in g.items:
+		if not ["building", "crafting", "barn"].has(str(g.items[id].get("kind", ""))):
+			continue
+		var level := g.max_level(id)
+		var spec := BuildingModel.spec(id, level)
+		var upper: Dictionary = spec.get("upper", {})
+		if upper.is_empty():
+			continue
+		tall += 1
+		_check(float(upper.get("w", 0.8)) <= 1.0 and float(upper.get("d", 0.86)) <= 1.0,
+			"%s's upper floor sits inside its ground floor" % id)
+		var model := ModelKit.bake(BuildingModel.build(g.item_data(id), g.footprint(id), level))
+		var box := AABB()
+		for c in model.get_children():
+			if c is MeshInstance3D:
+				var part := (c as MeshInstance3D).get_aabb()
+				box = box.merge(part) if box.size != Vector3.ZERO else part
+		var walls := float(spec["body"].get("h", 0.0)) + float(upper.get("h", 0.0))
+		_check(box.end.y >= walls, "%s at size %d stands as high as both its floors (%.2f of %.2f)" % [id, level, box.end.y, walls])
+		model.free()
+	_check(tall >= 8, "the bigger buildings have a second storey (%d)" % tall)
 	_done(g)

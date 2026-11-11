@@ -85,10 +85,10 @@
         },
         "3": {
           "body": {
-            "h": 1.35
+            "h": 0.85
           },
-          "window_rows": 2,
-          "windows": 2,
+          "window_rows": 1,
+          "windows": 1,
           "features": [
             {
               "type": "cupola"
@@ -96,7 +96,15 @@
             {
               "type": "flowers"
             }
-          ]
+          ],
+          "upper": {
+            "w": 0.8,
+            "d": 0.85,
+            "h": 0.5,
+            "roof": {
+              "pitch": 1.1
+            }
+          }
         }
       },
       "fill": {
@@ -164,9 +172,9 @@
         },
         "3": {
           "body": {
-            "h": 1.7
+            "h": 1.05
           },
-          "window_rows": 2,
+          "window_rows": 1,
           "features": [
             {
               "type": "silo",
@@ -182,8 +190,24 @@
             },
             {
               "type": "hay_bales"
+            },
+            {
+              "type": "hoist"
             }
-          ]
+          ],
+          "drop": [
+            "loft_door"
+          ],
+          "upper": {
+            "w": 0.86,
+            "d": 0.9,
+            "h": 0.78,
+            "windows": 2,
+            "roof": {
+              "type": "gambrel",
+              "pitch": 1.15
+            }
+          }
         }
       },
       "fill": {
@@ -232,7 +256,7 @@
         },
         "3": {
           "body": {
-            "h": 1.15
+            "h": 0.85
           },
           "features": [
             {
@@ -241,7 +265,17 @@
             {
               "type": "cupola"
             }
-          ]
+          ],
+          "upper": {
+            "w": 0.76,
+            "d": 0.8,
+            "h": 0.4,
+            "roof": {
+              "type": "hip",
+              "pitch": 0.9
+            },
+            "windows": 1
+          }
         }
       },
       "fill": {
@@ -290,7 +324,7 @@
         },
         "3": {
           "body": {
-            "h": 1.1
+            "h": 0.85
           },
           "drop": [
             "terrace"
@@ -304,8 +338,22 @@
             },
             {
               "type": "cupola"
+            },
+            {
+              "type": "balcony",
+              "span": 0.6,
+              "depth": 0.12
             }
-          ]
+          ],
+          "upper": {
+            "w": 0.78,
+            "d": 0.82,
+            "h": 0.4,
+            "roof": {
+              "pitch": 1.0
+            },
+            "windows": 1
+          }
         }
       },
       "fill": {
@@ -360,7 +408,7 @@
         },
         "3": {
           "body": {
-            "h": 1.05
+            "h": 0.7
           },
           "features": [
             {
@@ -369,7 +417,16 @@
             {
               "type": "water_trough"
             }
-          ]
+          ],
+          "upper": {
+            "w": 0.85,
+            "d": 0.82,
+            "h": 0.38,
+            "roof": {
+              "pitch": 0.9
+            },
+            "windows": 1
+          }
         }
       },
       "fill": {
@@ -491,15 +548,36 @@
         },
         "5": {
           "body": {
-            "h": 1.95
+            "h": 1.05
           },
-          "window_rows": 2,
+          "window_rows": 1,
           "windows": 3,
           "features": [
             {
               "type": "flowers"
+            },
+            {
+              "type": "balcony",
+              "span": 0.55
+            },
+            {
+              "type": "flag",
+              "color": "#2f6db5",
+              "shift": 0.0
             }
-          ]
+          ],
+          "drop": [
+            "loft_door"
+          ],
+          "upper": {
+            "w": 0.82,
+            "d": 0.82,
+            "h": 0.8,
+            "windows": 3,
+            "roof": {
+              "pitch": 0.95
+            }
+          }
         }
       },
       "fill": {
@@ -554,17 +632,34 @@
         },
         "3": {
           "body": {
-            "h": 1.6
+            "h": 1.0
           },
-          "window_rows": 2,
+          "window_rows": 1,
           "features": [
             {
               "type": "cupola"
             },
             {
               "type": "flowers"
+            },
+            {
+              "type": "dormers",
+              "count": 2
+            },
+            {
+              "type": "flag",
+              "color": "#e58bb0"
             }
-          ]
+          ],
+          "upper": {
+            "w": 0.86,
+            "d": 0.9,
+            "h": 0.72,
+            "windows": 2,
+            "roof": {
+              "pitch": 1.0
+            }
+          }
         }
       },
       "fill": {}
@@ -836,10 +931,28 @@
         },
         "4": {
           "body": {
-            "h": 1.95
+            "h": 1.05
           },
-          "window_rows": 2,
-          "windows": 2
+          "window_rows": 1,
+          "windows": 2,
+          "upper": {
+            "w": 0.88,
+            "d": 0.9,
+            "h": 0.72,
+            "windows": 2,
+            "roof": {
+              "type": "hip",
+              "pitch": 0.8
+            }
+          },
+          "features": [
+            {
+              "type": "awning",
+              "a": "#c0392b",
+              "b": "#f3eee2",
+              "w": 0.4
+            }
+          ]
         },
         "5": {
           "features": [
@@ -849,6 +962,14 @@
             },
             {
               "type": "barrels"
+            },
+            {
+              "type": "balcony",
+              "span": 0.5
+            },
+            {
+              "type": "flag",
+              "color": "#d9a521"
             }
           ]
         }
@@ -909,10 +1030,26 @@
         },
         "4": {
           "body": {
-            "h": 1.95
+            "h": 1.05
           },
-          "window_rows": 2,
-          "windows": 2
+          "window_rows": 1,
+          "windows": 2,
+          "upper": {
+            "w": 0.9,
+            "d": 0.9,
+            "h": 0.74,
+            "walls": "boards",
+            "color": "#8a5a3b",
+            "windows": 3,
+            "roof": {
+              "pitch": 1.0
+            }
+          },
+          "features": [
+            {
+              "type": "hoist"
+            }
+          ]
         },
         "5": {
           "features": [
@@ -921,6 +1058,10 @@
             },
             {
               "type": "terrace"
+            },
+            {
+              "type": "balcony",
+              "span": 0.6
             }
           ]
         }
@@ -1047,10 +1188,28 @@
         },
         "4": {
           "body": {
-            "h": 1.95
+            "h": 1.05
           },
-          "window_rows": 2,
-          "windows": 2
+          "window_rows": 1,
+          "windows": 2,
+          "upper": {
+            "w": 0.78,
+            "d": 0.82,
+            "h": 0.68,
+            "windows": 2,
+            "roof": {
+              "type": "dome",
+              "pitch": 1.0
+            }
+          },
+          "features": [
+            {
+              "type": "awning",
+              "a": "#3b9bb8",
+              "b": "#f3eee2",
+              "w": 0.4
+            }
+          ]
         },
         "5": {
           "features": [
@@ -1059,6 +1218,10 @@
             },
             {
               "type": "weathervane"
+            },
+            {
+              "type": "balcony",
+              "span": 0.5
             }
           ]
         }

@@ -204,3 +204,6 @@ at a time, and only on the last one shows what it is.
    farm (tools/perf_probe.tscn) and kept inside draw and frame budgets (tests).
 Later, with the social feature: neighbours (9), Gift Box (8), quests (10), and friends replacing parts.
 Then step 2: make each system better.
+
+## Building sizes
+The biggest size of the larger buildings is a real second storey (`upper` in data/building_models.json: a pent-roofed ground floor, a set-back upper floor with its own roof and windows), with balconies, hoists, dormers, awnings and flags. Smaller upgrades still change one thing each. Still to do: more of each building's own character (not only the top size), and the Barn, Farmhouse, Garage and Shed have no sizes to grow into.
