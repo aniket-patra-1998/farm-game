@@ -6,11 +6,15 @@ extends RefCounted
 ## of data and, for a new kind of thing, one builder here. Every builder returns a signature (what's shown)
 ## so the owner rebuilds only when it changes.
 
-const KINDS := ["vehicles", "bunches", "goods"]
+const KINDS := ["vehicles", "bunches", "goods", "gophers"]
 const MAX_VEHICLES := 3
 const VEHICLE_SCALE := 0.55
 const MAX_POTS := 8
 const MAX_GOODS := 10
+const MAX_MOUNDS := 10
+const MOUND_EDGE := 0.42          # tiles between a burrow and the fence
+const GOPHER_COATS := {"plain_gopher": "#a58660", "brown_gopher": "#7b5233", "spotted_gopher": "#b8946a",
+	"striped_gopher": "#8a6540", "golden_gopher": "#e8b830"}
 const FLOWER_COLOURS := [Color("#d6304a"), Color("#f5c518"), Color("#f7b5c8"), Color("#9b7be0"), Color("#ff8c42")]
 
 
@@ -23,6 +27,8 @@ static func signature(kind: String, o: Dictionary) -> String:
 			return str(Game.shed.bunches.size())
 		"goods":
 			return "%d|%d" % [Game.storage.stored.size(), Game.storage.barn_capacity()]
+		"gophers":
+			return JSON.stringify(Game.finds.owned)
 	return ""
 
 
@@ -37,6 +43,8 @@ static func build(kind: String, o: Dictionary, fp: Vector2i, at: Array) -> Node3
 			_pots(root, p)
 		"goods":
 			_goods(root, p)
+		"gophers":
+			_gophers(root, fp, int(o.get("uid", 0)))
 	return ModelKit.bake(root)
 
 
@@ -81,3 +89,52 @@ static func _goods(root: Node3D, p: Vector3) -> void:
 			ModelKit.ball(root, c + Vector3(0.07, 0.05, 0), 0.075, ModelKit.paint(Color("#cdb88a")), Vector3(1, 0.75, 0.8))
 		else:
 			ModelKit.box(root, c, c + Vector3(0.14, 0.1, 0.12), ModelKit.surface(BuildingModel.WOOD, "boards", 0.2))
+
+
+## Burrows over the yard, more as the home grows (one tier more, two mounds more), a gopher bobbing up out of
+## each as many as are owned: each different kind among them (the commonest first), in its own coat.
+static func _gophers(root: Node3D, fp: Vector2i, seed_value: int) -> void:
+	var mounds := mini(MAX_MOUNDS, 2 + 2 * Game.finds.tier("gopher"))
+	var owned := {}
+	for k: Dictionary in Game.finds.families.get("gopher", {}).get("kinds", []):
+		owned[str(k["id"])] = Game.finds.count(str(k["id"]))
+	var who := BuildingFill.pick_kinds(owned, mini(Game.finds.total("gopher"), mounds), 99)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var cols := maxi(2, int(ceil(sqrt(float(mounds) * fp.x / maxf(fp.y, 1.0)))))
+	var rows := int(ceil(float(mounds) / cols))
+	for m in mounds:
+		var u := (m % cols) / maxf(cols - 1.0, 1.0)
+		var v := int(m / float(cols)) / maxf(rows - 1.0, 1.0)
+		var at := Vector3(lerpf(MOUND_EDGE, fp.x - MOUND_EDGE, u) + rng.randf_range(-0.05, 0.05), 0,
+			lerpf(MOUND_EDGE, fp.y - MOUND_EDGE, v) + rng.randf_range(-0.05, 0.05))
+		ModelKit.ball(root, at, 0.14, ModelKit.paint(Color("#6e4c33")), Vector3(1.0, 0.34, 1.0))
+		ModelKit.ball(root, at + Vector3(0, 0.02, 0), 0.07, ModelKit.paint(Color("#2e1f14")), Vector3(1.0, 0.25, 1.0))
+		if m < who.size():
+			DecorMotion.orbit(root, at + Vector3(0, 0.02, 0), _gopher(who[m]),
+				{"speed": 0.0, "bob": 0.03, "bob_rate": 0.9 + 0.17 * (m % 4), "phase": m * 1.3})
+
+
+## One gopher, head and shoulders up out of its burrow: coat by kind, ears, nose, eyes, buck teeth.
+static func _gopher(kind_id: String) -> Node3D:
+	var part := Node3D.new()
+	var coat := Color(GOPHER_COATS.get(kind_id, "#a58660"))
+	var mat := ModelKit.paint(coat, 0.15)
+	ModelKit.ball(part, Vector3(0, 0.07, 0), 0.07, mat, Vector3(1.0, 1.15, 0.95))
+	ModelKit.ball(part, Vector3(0, 0.14, 0.03), 0.052, mat)
+	for side in [-1.0, 1.0]:
+		ModelKit.ball(part, Vector3(side * 0.04, 0.185, 0.0), 0.018, mat)
+		ModelKit.ball(part, Vector3(side * 0.022, 0.15, 0.075), 0.01, ModelKit.paint(Color("#16100a")))
+	ModelKit.ball(part, Vector3(0, 0.133, 0.08), 0.012, ModelKit.paint(Color("#3a2418")))
+	ModelKit.box(part, Vector3(-0.008, 0.108, 0.075), Vector3(0.008, 0.125, 0.085), ModelKit.paint(Color("#f6f0e0")))
+	match kind_id:
+		"spotted_gopher":
+			ModelKit.ball(part, Vector3(0.03, 0.1, 0.04), 0.02, ModelKit.paint(Color("#f1e4c8")))
+			ModelKit.ball(part, Vector3(-0.035, 0.06, 0.04), 0.018, ModelKit.paint(Color("#f1e4c8")))
+		"striped_gopher":
+			for k in 3:
+				ModelKit.box(part, Vector3(-0.06 + k * 0.045, 0.02, 0.03), Vector3(-0.05 + k * 0.045, 0.125, 0.075),
+					ModelKit.paint(Color("#4d3320")))
+		"golden_gopher":
+			ModelKit.ball(part, Vector3(0, 0.205, 0.03), 0.02, ModelKit.paint(Color("#ffe27a"), 0.6), Vector3(1, 0.5, 1))
+	return part

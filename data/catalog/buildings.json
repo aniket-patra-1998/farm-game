@@ -848,6 +848,44 @@
           ]
         },
         {
+          "id": "gopher_garden",
+          "name": "Gopher Garden",
+          "unlock_level": 6,
+          "cost": 8000,
+          "w": 2,
+          "h": 2,
+          "holds": [],
+          "special": "finds_home",
+          "home_of": "gopher",
+          "requires": {
+            "finds": {
+              "gopher": 1
+            }
+          },
+          "produces": false,
+          "color": "#9bbf6a",
+          "roof": "#7a5230",
+          "look": "a small fenced meadow of grassy mounds with gophers popping up out of burrows, a carrot sign by the gate",
+          "sizes": [
+            {
+              "capacity": 1,
+              "name": "Gopher Garden"
+            },
+            {
+              "capacity": 4,
+              "name": "Big Gopher Garden"
+            },
+            {
+              "capacity": 10,
+              "name": "Large Gopher Garden"
+            },
+            {
+              "capacity": 20,
+              "name": "Grand Gopher Garden"
+            }
+          ]
+        },
+        {
           "id": "storage_shed",
           "name": "Storage Shed",
           "status": "planned"

@@ -375,9 +375,18 @@
             "saplings",
             "garage",
             "garden_shed",
-            "blooms"
+            "blooms",
+            "finds_home"
           ],
           "doc": "Its FarmVille extra on each collection."
+        },
+        "requires": {
+          "type": "map",
+          "doc": "What it needs before it can be bought, beyond its level (scripts/systems/requirements.gd): finds {family: n}, owned {building: n}, mastery {crop: stars}."
+        },
+        "home_of": {
+          "type": "string",
+          "doc": "A finds family (data/finds.json) this building is the home of: its level follows how many have been found."
         },
         "produces": {
           "type": "bool",

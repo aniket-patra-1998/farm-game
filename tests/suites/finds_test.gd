@@ -382,3 +382,26 @@ func test_132_finds_come_from_harvesting_by_weight_with_pity_and_a_collection_re
 	_eq(g.finds.roll("harvest", 0).size(), 0, "nothing is found when drops are off")
 	_done(g)
 	_done(g2)
+
+
+func test_133_the_gopher_garden_needs_a_gopher_and_grows_with_the_finds() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = 100000000
+	_check(not g.can_afford_item("gopher_garden"), "it can't be bought before a gopher is found")
+	var unmet := Requirements.first_unmet(g, "gopher_garden")
+	_check(not unmet.is_empty() and str(unmet["text"]).contains("gopher"), "and says what is missing (%s)" % [unmet])
+	var kinds: Array = g.finds.families["gopher"]["kinds"]
+	g.finds.add("gopher", kinds[0])
+	_check(Requirements.first_unmet(g, "gopher_garden").is_empty(), "one gopher meets the need")
+	_check(g.buy_and_place("gopher_garden", 6, 6), "so it can be bought")
+	var garden: Dictionary = g.objects.filter(func(o): return o["id"] == "gopher_garden")[0]
+	_eq(g.level_of(garden), 1, "it starts small")
+	for k in 3:
+		g.finds.add("gopher", kinds[1])
+	_eq(g.level_of(garden), 2, "four gophers grow it to the next size, by itself")
+	for k in 40:
+		g.finds.add("gopher", kinds[2])
+	_eq(g.level_of(garden), g.max_level("gopher_garden"), "and it stops at its biggest size")
+	_check(not g.can_afford_item("gopher_garden"), "only one is allowed per farm")
+	_done(g)

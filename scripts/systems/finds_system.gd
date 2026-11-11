@@ -84,6 +84,7 @@ func add(family: String, kind: Dictionary) -> Dictionary:
 	game.collections_changed.emit()
 	game.message.emit(tr("YOU_FOUND_A_FIND") % [kind["name"], families[family]["name"]])
 	_claim_if_complete(family)
+	grow_homes(family)
 	return {"family": family, "id": id, "name": kind["name"], "rarity": kind.get("rarity", "common")}
 
 
@@ -131,3 +132,16 @@ func _claim_if_complete(family: String) -> void:
 	game.add_coins(int(reward.get("coins", 0)))
 	game.add_xp(int(reward.get("xp", 0)))
 	game.message.emit(tr("FIND_COLLECTION_COMPLETE") % [families[family]["name"], int(reward.get("coins", 0))])
+
+
+## Every home of the family is at the level the finds have reached (never lower, never past its biggest size).
+func grow_homes(family: String) -> void:
+	var level := maxi(tier(family), 1)
+	for o in game.objects:
+		if str(game.item_data(o["id"]).get("home_of", "")) != family or game.under_construction(o):
+			continue
+		var to := mini(level, game.max_level(str(o["id"])))
+		if to > game.level_of(o):
+			o["level"] = to
+			game.message.emit(tr("HOME_GREW") % [game.item_data(o["id"])["name"], game.size_name(o)])
+	game.objects_changed.emit()

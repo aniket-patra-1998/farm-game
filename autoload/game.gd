@@ -443,7 +443,7 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	if it["kind"] == "crafting":
 		crafting.on_crafting_built(obj)
 	if it["kind"] == "building":
-		obj["level"] = 1
+		obj["level"] = maxi(1, finds.tier(str(it.get("home_of", ""))))
 		obj["inside"] = {}
 		if it.has("build_materials"):
 			obj["construction"] = {} # a frame: finished with materials, like FarmVille

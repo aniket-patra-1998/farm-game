@@ -73,6 +73,11 @@ func group_limit() -> int:
 	return int(data.get("group_limit", 0))
 
 
+## A home that grows by itself with what has been found (the Gopher Garden), not by materials.
+func grows_with_finds() -> bool:
+	return str(data.get("home_of", "")) != ""
+
+
 func holds() -> Array:
 	return data.get("holds", [])
 
@@ -114,7 +119,7 @@ func validate(catalog) -> Array[String]:
 	for k in range(2, max_level() + 1):
 		if capacity(k) <= capacity(k - 1):
 			out.append(_err("each size must hold more than the last"))
-		if size_materials(k).is_empty() and not grows_by_stars():
+		if size_materials(k).is_empty() and not grows_by_stars() and not grows_with_finds():
 			out.append(_err("size %d says nothing about the materials to reach it" % k))
 	if size(1).has("materials"):
 		out.append(_err("the first size can't cost materials (build_materials pays for a frame)"))

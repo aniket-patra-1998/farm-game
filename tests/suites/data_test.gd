@@ -15,7 +15,8 @@ func test_17_data_files_are_consistent() -> void:
 		if it["kind"] == "building":
 			var def := g.building_def(id)
 			for k in range(2, def.max_level() + 1):
-				_check(not def.size_materials(k).is_empty(), "%s says what growing to size %d costs" % [id, k])
+				_check(not def.size_materials(k).is_empty() or def.grows_by_stars() or def.grows_with_finds(),
+					"%s says what growing to size %d costs" % [id, k])
 				for m in def.size_materials(k):
 					_check(GameState.part_ids.has(m), "%s grows with a real material (%s)" % [id, m])
 			for m in it.get("build_materials", {}):

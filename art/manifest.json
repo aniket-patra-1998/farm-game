@@ -6610,6 +6610,54 @@
    "subject": "a small white-and-green wooden garden shed with a little window box of flowers, a watering can and flower pots by the door"
   },
   {
+   "id": "gopher_garden_size1",
+   "item": "gopher_garden",
+   "class": "Building",
+   "stage": "1",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/gopher_garden_size1.png"
+   ],
+   "subject": "a small fenced meadow of grassy mounds with gophers popping up out of burrows, a carrot sign by the gate. Size 1 of 4: the small starter size"
+  },
+  {
+   "id": "gopher_garden_size2",
+   "item": "gopher_garden",
+   "class": "Building",
+   "stage": "2",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/gopher_garden_size2.png"
+   ],
+   "subject": "a small fenced meadow of grassy mounds with gophers popping up out of burrows, a carrot sign by the gate. Size 2 of 4: a bigger, grander version with more detail"
+  },
+  {
+   "id": "gopher_garden_size3",
+   "item": "gopher_garden",
+   "class": "Building",
+   "stage": "3",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/gopher_garden_size3.png"
+   ],
+   "subject": "a small fenced meadow of grassy mounds with gophers popping up out of burrows, a carrot sign by the gate. Size 3 of 4: the biggest, grandest version, with extra decoration and flourishes"
+  },
+  {
+   "id": "gopher_garden_size4",
+   "item": "gopher_garden",
+   "class": "Building",
+   "stage": "4",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/gopher_garden_size4.png"
+   ],
+   "subject": "a small fenced meadow of grassy mounds with gophers popping up out of burrows, a carrot sign by the gate. Size 4 of 4: an even larger deluxe version"
+  },
+  {
    "id": "tractor",
    "item": "tractor",
    "class": "Vehicle",

@@ -11,14 +11,14 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Materials | 2 | 13 | 0 |
 | Trees | 32 | 46 | 0 |
 | Animals | 15 | 68 | 0 |
-| Buildings | 6 | 18 | 6 |
+| Buildings | 6 | 19 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 38 | 0 |
 | recipes | 3 | 45 | 0 |
 | young | 3 | 3 | 0 |
 | blooms | 6 | 12 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **110** | **427** | **6** |
+| **All** | **110** | **428** | **6** |
 
 ## Adding an item
 
@@ -155,7 +155,9 @@ Holds animals, trees or vehicles; may be built from a frame and grown size by si
 | `one_each` | list<string> → Animal |  |  | Specials kept one at a time, taking no space (a bull, a ram). |
 | `build_materials` | materials |  |  | If set, it arrives as a frame finished with these. |
 | `uses_materials` | list<string> → Material |  |  | Materials that start dropping once you own it. |
-| `special` | enum of mystery_eggs, calves, foals, lambs, truffles, nursery, beehive, saplings, garage, garden_shed, blooms |  |  | Its FarmVille extra on each collection. |
+| `special` | enum of mystery_eggs, calves, foals, lambs, truffles, nursery, beehive, saplings, garage, garden_shed, blooms, finds_home |  |  | Its FarmVille extra on each collection. |
+| `requires` | map |  |  | What it needs before it can be bought, beyond its level (scripts/systems/requirements.gd): finds {family: n}, owned {building: n}, mastery {crop: stars}. |
+| `home_of` | string |  |  | A finds family (data/finds.json) this building is the home of: its level follows how many have been found. |
 | `produces` | bool | true |  | false = never ready to collect (the Garage). |
 | `grow_days` | int |  |  | Nursery: days for a baby to grow up. |
 | `grows_into` | map → Animal |  |  | Nursery: baby id -> adult id. |
@@ -954,6 +956,7 @@ Shared: `tab` = "storage"
 | ✅ | Barn | `barn` | never sold | free | 3x3 | 30 | storage | 1 |  |  |
 | ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 1 | frame | garage |
 | ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x1 | 100 | storage | 1 |  | garden_shed |
+| ✅ | Gopher Garden | `gopher_garden` | 6 | 8,000 | 2x2 | 1 / 4 / 10 / 20 | storage | 1 |  | finds_home |
 | 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Silo | `silo` | 1 |  |  |  |  |  |  |  |
 

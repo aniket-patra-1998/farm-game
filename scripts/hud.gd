@@ -1039,12 +1039,18 @@ func _market_row(id: String, it: Dictionary) -> Control:
 			detail = tr("EVERY_COINS_XP") % [
 				what, FarmGrid.format_duration(int(it["cycle_seconds"])), int(it["payout"]), int(it["xp"])]
 	info.add_child(BookPanel.text(detail, 17))
+	for need in Requirements.list(Game, id):
+		# What it needs, and how far along: a tick when met, and where to get what's missing.
+		var line := ("✓ " if need["ok"] else "• ") + str(need["text"])
+		if not need["ok"]:
+			line += " — " + str(need["hint"])
+		info.add_child(BookPanel.text(line, 16, BookPanel.CREAM))
 	inner.add_child(info)
 	var buy := Button.new()
 	buy.custom_minimum_size = Vector2(150, 52)
 	buy.focus_mode = Control.FOCUS_NONE
 	var verdict := Game.buildings.can_buy(id)
-	if locked or verdict.why == BuildingSystem.Why.LIMIT or verdict.why == BuildingSystem.Why.GROUP_LIMIT:
+	if locked or verdict.why in [BuildingSystem.Why.LIMIT, BuildingSystem.Why.GROUP_LIMIT, BuildingSystem.Why.REQUIRES]:
 		# Not yet, or the farm has as many as it may: say which, on the button.
 		buy.text = verdict.short
 		buy.tooltip_text = verdict.text
@@ -1075,6 +1081,9 @@ func _build_building(content: VBoxContainer) -> void:
 	var uid := _building_uid
 	if Game.under_construction(o):
 		_build_construction(content, o, uid)
+		return
+	if str(Game.item_data(o["id"]).get("special", "")) == "finds_home":
+		_build_finds_home(content, o)
 		return
 	var total := Game.inside_total(o)
 	var cap := Game.capacity(o)
@@ -1125,6 +1134,31 @@ func _build_building(content: VBoxContainer) -> void:
 	_add_expansion_card(content, o, uid)
 
 
+
+
+## A home for what's found while farming (the Gopher Garden): each kind with how many you have (a question
+## mark for the ones not found yet) and what it takes to grow.
+func _build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
+	var family := str(Game.item_data(o["id"]).get("home_of", ""))
+	var fam: Dictionary = Game.finds.families.get(family, {})
+	var card := BookPanel.card()
+	card.add_theme_constant_override("separation", 8)
+	card.add_child(BookPanel.text(Game.size_name(o), 22))
+	card.add_child(BookPanel.text(tr("GOPHER_GARDEN_FOUND") % [Game.finds.total(family), Game.finds.distinct(family),
+		(fam.get("kinds", []) as Array).size()], 18))
+	for kind: Dictionary in fam.get("kinds", []):
+		var n := Game.finds.count(str(kind["id"]))
+		card.add_child(BookPanel.text("%s  ×%d  (%s)" % [kind["name"], n, kind["rarity"]] if n > 0
+			else "?  (%s)" % kind["rarity"], 17, BookPanel.CREAM))
+	var tiers: Array = fam.get("tiers", [])
+	var next_at := 0
+	for t in tiers:
+		if Game.finds.total(family) < int(t):
+			next_at = int(t)
+			break
+	if next_at > 0:
+		card.add_child(BookPanel.text(tr("GOPHER_NEXT_SIZE") % next_at, 17, BookPanel.CREAM))
+	content.add_child(BookPanel.card_frame(card))
 
 
 ## Frame being built: what's in, what's missing, and a button to add held materials.

@@ -10,7 +10,8 @@ extends GameSystem
 ## The UI asks here and shows the reason; it never repeats a rule. Reached as `Game.buildings`; it keeps
 ## no state of its own.
 
-enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, MATERIALS, SOMEONE_INSIDE, KEPT }
+enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, MATERIALS, SOMEONE_INSIDE, KEPT,
+	REQUIRES }
 
 const MATERIAL_GEMS := 1   # gems for one building material (FarmVille: 1 Farm Cash each)
 ## Buildings that stay where they are: the starter Barn and the Farmhouse.
@@ -63,6 +64,9 @@ func can_buy(id: String) -> Verdict:
 	var unlock := int(it.get("unlock_level", 1))
 	if game.level() < unlock:
 		return Verdict.new(Why.LEVEL, tr("UNLOCKS_AT_LEVEL") % [it["name"], unlock], tr("LEVEL") % unlock)
+	var unmet := Requirements.first_unmet(game, id)
+	if not unmet.is_empty():
+		return Verdict.new(Why.REQUIRES, tr("NEEDS_X") % unmet["text"], tr("NEEDS_SHORT"))
 	var def := game.building_def(id)
 	if def != null:
 		if owned(id) >= def.limit():
@@ -95,6 +99,8 @@ func can_expand(b: Dictionary) -> Verdict:
 		return Verdict.new(Why.UNKNOWN)
 	if game.under_construction(b):
 		return Verdict.new(Why.FRAME, tr("FINISH_IT_FIRST"))
+	if game.building_def(str(b["id"])).grows_with_finds():
+		return Verdict.new(Why.BIGGEST)  # it grows by itself, as more are found
 	var need := game.land.expansion_needs(b)
 	if need.is_empty():
 		return Verdict.new(Why.BIGGEST, tr("FULLY_EXPANDED"))

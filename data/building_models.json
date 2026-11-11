@@ -664,6 +664,46 @@
       },
       "fill": {}
     },
+    "gopher_garden": {
+      "body": {
+        "w": 0.0,
+        "d": 0.0,
+        "h": 0.0
+      },
+      "roof": {
+        "type": "none"
+      },
+      "features": [
+        {
+          "type": "yard",
+          "ground": "grass",
+          "fence": "rail",
+          "whole": true
+        },
+        {
+          "type": "sign"
+        }
+      ],
+      "levels": {
+        "3": {
+          "features": [
+            {
+              "type": "flowers"
+            }
+          ]
+        },
+        "4": {
+          "features": [
+            {
+              "type": "barrels"
+            }
+          ]
+        }
+      },
+      "fill": {
+        "stock": "gophers"
+      }
+    },
     "orchard": {
       "body": {
         "w": 0.0,
