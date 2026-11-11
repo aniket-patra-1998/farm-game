@@ -323,8 +323,8 @@
         },
         "limit": {
           "type": "int",
-          "default": 1,
-          "doc": "How many one farm may have (FarmVille: 5 Dairy Farms, 1 of most)."
+          "default": 2,
+          "doc": "How many one farm may have. Two of each for now (BuildingDef.DEFAULT_LIMIT); the other kinds have theirs in BuildingSystem."
         },
         "limit_group": {
           "type": "string",

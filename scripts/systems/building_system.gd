@@ -14,6 +14,10 @@ enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, 
 	REQUIRES }
 
 const MATERIAL_GEMS := 1   # gems for one building material (FarmVille: 1 Farm Cash each)
+## How many of one item a farm may hold, by kind (FarmVille capped these too). Buildings are BuildingDef.limit().
+const LIMIT_VEHICLE := 1      # one of each, wherever it is: standing on the farm or parked in a Garage
+const LIMIT_DECOR := 999
+const LIMIT_LIVING := 99      # animals, trees, blooms and the like
 ## Buildings that stay where they are: the starter Barn and the Farmhouse.
 const KEPT := ["barn", "farmhouse"]
 
@@ -37,13 +41,31 @@ static func yes() -> Verdict:
 	return Verdict.new(Why.OK)
 
 
-## How many of a building are on the farm (frames included: a frame is one of them, half-built).
+## How many of an item the farm holds in all: standing on the farm (frames included: a frame is one of them,
+## half-built), inside a home or Garage, or put away in the barn.
 func owned(id: String) -> int:
 	var n := 0
 	for o in game.objects:
 		if o["id"] == id:
 			n += 1
+		n += int((o.get("inside", {}) as Dictionary).get(id, 0))
+	for o in game.storage.stored:
+		if o["id"] == id:
+			n += 1
 	return n
+
+
+## How many of an item one farm may have.
+func limit_of(id: String) -> int:
+	match str(game.item_data(id).get("kind", "")):
+		"vehicle":
+			return LIMIT_VEHICLE
+		"decor":
+			return LIMIT_DECOR
+		"building", "crafting", "barn":
+			var def := game.building_def(id)
+			return def.limit() if def != null else BuildingDef.DEFAULT_LIMIT
+	return LIMIT_LIVING
 
 
 ## How many of a limit group's buildings are on the farm.
@@ -54,6 +76,38 @@ func group_owned(group: String) -> int:
 		if def != null and def.limit_group() == group:
 			n += 1
 	return n
+
+
+## Old saves could hold a vehicle both standing on the farm and in a Garage. Keeps one of each vehicle (the one
+## in the Garage first), and gives the coins for the others back. Returns how many were taken away.
+func trim_extra_vehicles() -> int:
+	var removed := 0
+	for id: String in game.item_order:
+		if game.item_data(id).get("kind", "") != "vehicle":
+			continue
+		while owned(id) > LIMIT_VEHICLE:
+			var loose: Dictionary = {}
+			for o in game.objects:
+				if o["id"] == id:
+					loose = o
+					break
+			if not loose.is_empty():
+				game.remove_object(loose)
+			else:
+				var found := false
+				for o in game.objects:
+					var inside: Dictionary = o.get("inside", {})
+					if int(inside.get(id, 0)) > 0:
+						inside[id] = int(inside[id]) - 1
+						if int(inside[id]) <= 0:
+							inside.erase(id)
+						found = true
+						break
+				if not found:
+					break
+			game.coins += int(game.item_data(id).get("cost", 0))
+			removed += 1
+	return removed
 
 
 ## Can one be bought now? Its level, then how many the farm may have, then its price.
@@ -67,11 +121,11 @@ func can_buy(id: String) -> Verdict:
 	var unmet := Requirements.first_unmet(game, id)
 	if not unmet.is_empty():
 		return Verdict.new(Why.REQUIRES, tr("NEEDS_X") % unmet["text"], tr("NEEDS_SHORT"))
+	var limit := limit_of(id)
+	if owned(id) >= limit:
+		return Verdict.new(Why.LIMIT, tr("LIMIT_REACHED") % [limit, it["name"]], tr("LIMIT_SHORT") % limit)
 	var def := game.building_def(id)
 	if def != null:
-		if owned(id) >= def.limit():
-			return Verdict.new(Why.LIMIT, tr("LIMIT_REACHED") % [def.limit(), it["name"]],
-				tr("LIMIT_SHORT") % def.limit())
 		if def.limit_group() != "" and group_owned(def.limit_group()) >= def.group_limit():
 			return Verdict.new(Why.GROUP_LIMIT, tr("GROUP_LIMIT_REACHED") % def.group_limit(),
 				tr("LIMIT_SHORT") % def.group_limit())

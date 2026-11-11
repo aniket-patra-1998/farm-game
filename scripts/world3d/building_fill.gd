@@ -279,6 +279,20 @@ func _show_stock(kind: String, at: Array, o: Dictionary) -> void:
 		_stock.queue_free()
 	_stock = BuildingStock.build(kind, o, _fp, at)
 	add_child(_stock)
+	if kind == "vehicles":
+		_open_shutter(not (o.get("inside", {}) as Dictionary).is_empty())
+
+
+## A Garage with vehicles in it keeps its shutter rolled up, so they show; an empty one is shut.
+func _open_shutter(open: bool) -> void:
+	for hinge in _doors:
+		if not hinge.has_meta("slide"):
+			continue
+		if not hinge.has_meta("rest_y"):
+			hinge.set_meta("rest_y", hinge.position.y)
+		var y := float(hinge.get_meta("rest_y")) + (float(hinge.get_meta("slide")) if open else 0.0)
+		hinge.create_tween().tween_property(hinge, "position:y", y, 0.5).set_trans(Tween.TRANS_QUAD) \
+			.set_ease(Tween.EASE_OUT)
 
 
 # ---------------------------------------------------------------- produce

@@ -708,6 +708,8 @@ func free_spot_for(item_id: String) -> Vector2i:
 
 
 func place_somewhere(item_id: String) -> bool:
+	if buildings.owned(item_id) >= buildings.limit_of(item_id):
+		return false
 	var spots: Array[Vector2i] = []
 	for r in farm_size:
 		for c in farm_size:
@@ -1281,6 +1283,10 @@ func load_game() -> bool:
 		if plot.get("state") == "planted" and not crops.has(plot.get("crop", "")):
 			plot = {"state": "plowed"}
 		plots.append(plot)
+	var extra_vehicles := buildings.trim_extra_vehicles()
+	if extra_vehicles > 0:
+		var vnote := tr("EXTRA_VEHICLES_SOLD_BACK") % extra_vehicles
+		absence_note = vnote if absence_note == "" else absence_note + "\n" + vnote
 	var moved := settle_objects()
 	if moved > 0:
 		var note := tr("SOME_BUILDINGS_CHANGED_SHAPE_AND") % moved

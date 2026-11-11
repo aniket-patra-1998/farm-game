@@ -59,9 +59,11 @@ func tab() -> String:
 	return str(data.get("tab", "animal"))
 
 
+const DEFAULT_LIMIT := 2   # buildings of one kind a farm may have, for now
+
 ## How many one farm may have.
 func limit() -> int:
-	return int(data.get("limit", 1))
+	return int(data.get("limit", DEFAULT_LIMIT))
 
 
 ## Buildings that share a limit (all crafting buildings), and how many of them one farm may have.

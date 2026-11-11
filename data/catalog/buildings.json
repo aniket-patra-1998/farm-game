@@ -151,8 +151,7 @@
                 "boards": 10
               }
             }
-          ],
-          "limit": 5
+          ]
         },
         {
           "id": "sheep_pen",
@@ -889,6 +888,7 @@
           "name": "Gopher Garden",
           "unlock_level": 6,
           "cost": 8000,
+          "limit": 1,
           "w": 2,
           "h": 2,
           "holds": [],

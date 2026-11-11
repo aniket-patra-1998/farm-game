@@ -7,8 +7,10 @@ extends RefCounted
 ## so the owner rebuilds only when it changes.
 
 const KINDS := ["vehicles", "bunches", "goods", "gophers"]
-const MAX_VEHICLES := 3
-const VEHICLE_SCALE := 0.55
+const MAX_VEHICLES := 2           # the most shown in the doorway (the garage can hold more)
+const VEHICLE_SCALE := 0.85
+const VEHICLE_SETBACK := 0.12     # how far behind the doorway a vehicle's middle stands: its nose sticks out
+const DOOR_SHARE := 0.55          # the Garage door's width, in tiles of footprint (data/building_models.json)
 const MAX_POTS := 8
 const MAX_GOODS := 10
 const MAX_MOUNDS := 10
@@ -48,20 +50,25 @@ static func build(kind: String, o: Dictionary, fp: Vector2i, at: Array) -> Node3
 	return ModelKit.bake(root)
 
 
-## Parked in a row on the apron, nose to the road.
+## Parked inside, nose to the doorway: the shutter is up and the front half of up to two vehicles shows in the
+## opening (the back halves are inside the walls). `p` is the middle of the door's threshold.
 static func _vehicles(root: Node3D, o: Dictionary, p: Vector3, fp: Vector2i) -> void:
 	var inside: Dictionary = o.get("inside", {})
-	var n := 0
+	var shown: Array[String] = []
 	for id: String in Game.item_order:
-		if n >= MAX_VEHICLES:
-			break
-		if int(inside.get(id, 0)) <= 0:
-			continue
-		var car := VehicleModel.build(Game.item_data(id))
-		car.scale = Vector3.ONE * VEHICLE_SCALE
-		car.position = Vector3(p.x - 0.5 * VEHICLE_SCALE - n * 0.62, 0, p.z - 0.5 * VEHICLE_SCALE)
-		root.add_child(car)
-		n += 1
+		if shown.size() < MAX_VEHICLES and int(inside.get(id, 0)) > 0:
+			shown.append(id)
+	var spread := DOOR_SHARE * fp.x * 0.25
+	for n in shown.size():
+		var car := VehicleModel.build(Game.item_data(shown[n]))
+		var pivot := Node3D.new()
+		pivot.rotation.y = -PI / 2.0                       # the model faces +x; the doorway faces +z
+		pivot.scale = Vector3.ONE * VEHICLE_SCALE
+		car.position = Vector3(-0.5, 0, -0.5)               # turn about the vehicle's middle
+		pivot.add_child(car)
+		var side := 0.0 if shown.size() == 1 else (-1.0 if n == 0 else 1.0)
+		pivot.position = Vector3(p.x + side * spread, 0, p.z - VEHICLE_SETBACK)
+		root.add_child(pivot)
 
 
 ## Terracotta pots of the bunches held, in a cluster by the door; the colours are the flowers kept.

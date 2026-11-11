@@ -18,20 +18,25 @@ func test_108_buying_a_building_says_yes_or_why_not() -> void:
 	poor.xp = poor.xp_for_level(50)
 	poor.coins = 10
 	_eq(poor.buildings.can_buy("chicken_coop").why, BuildingSystem.Why.COINS, "not enough coins says so")
-	# One Chicken Coop per farm, as in FarmVille: a second is refused, with the limit on the button.
+	# Two of a building per farm for now: a third is refused, with the limit on the button.
 	_check(g.buildings.can_buy("chicken_coop").ok(), "the first Coop can be bought")
 	_check(g.buy_and_place("chicken_coop", 0, 0), "and placed")
+	_check(g.buy_and_place("chicken_coop", 0, 6), "a second too")
 	var again := g.buildings.can_buy("chicken_coop")
-	_eq(again.why, BuildingSystem.Why.LIMIT, "a second Coop is over the limit")
-	_check(again.short.contains("1"), "the button says the limit (%s)" % again.short)
+	_eq(again.why, BuildingSystem.Why.LIMIT, "a third Coop is over the limit")
+	_check(again.short.contains("2"), "the button says the limit (%s)" % again.short)
 	var coins_before := g.coins
-	_check(not g.buy_and_place("chicken_coop", 0, 6), "buying one anyway is refused")
+	_check(not g.buy_and_place("chicken_coop", 0, 12), "buying one anyway is refused")
 	_eq(g.coins, coins_before, "and costs nothing")
-	# Up to five Dairy Farms.
-	for k in 5:
-		_check(g.buy_and_place("cow_shed", 4 + 4 * int(k / 3.0), 4 * (k % 3)), "Dairy Farm %d of 5" % (k + 1))
-	_eq(g.buildings.owned("cow_shed"), 5, "five Dairy Farms")
-	_eq(g.buildings.can_buy("cow_shed").why, BuildingSystem.Why.LIMIT, "a sixth is over the limit")
+	for k in 2:
+		_check(g.buy_and_place("cow_shed", 4 + 4 * int(k / 3.0), 4 * (k % 3)), "Dairy Farm %d of 2" % (k + 1))
+	_eq(g.buildings.owned("cow_shed"), 2, "two Dairy Farms")
+	_eq(g.buildings.can_buy("cow_shed").why, BuildingSystem.Why.LIMIT, "a third is over the limit")
+	# Other kinds have their own limits: one of each vehicle (on the farm or in a Garage), 99 living things.
+	_eq(g.buildings.limit_of("tractor"), 1, "one of each vehicle")
+	_eq(g.buildings.limit_of("hedge"), 999, "decorations")
+	_eq(g.buildings.limit_of("chicken"), 99, "animals")
+	_eq(g.buildings.limit_of("apple_tree"), 99, "trees")
 	# Crafting buildings share a limit of three.
 	for id in ["bakery", "winery", "spa"]:
 		g.objects.append({"uid": g.next_uid, "id": id, "row": 20, "col": 0, "t": 0, "level": 1, "slots": []})
@@ -127,3 +132,33 @@ func _gd_files(dir: String) -> Array[String]:
 	for sub in DirAccess.get_directories_at(dir):
 		out.append_array(_gd_files(dir.path_join(sub)))
 	return out
+
+
+func test_139_a_vehicle_is_on_the_farm_or_in_the_garage_never_both() -> void:
+	var g := _farm()
+	g.coins = 10000000
+	g.xp = g.xp_for_level(60)
+	g.farm_size = 24
+	_clear(g)
+	_check(g.buy_and_place("garage", 8, 8), "a Garage")
+	var garage := g.object_at(g.index_of(8, 8))
+	_all_materials(g, 100)
+	if g.under_construction(garage):
+		g.land.add_materials(int(garage["uid"]))
+	_check(g.buy_and_place("tractor", 2, 2), "a tractor standing on the farm")
+	_eq(g.buildings.owned("tractor"), 1, "is the one tractor")
+	_check(not g.homes.put_in_home(int(garage["uid"]), "tractor", {"buy": true}), "a second can't be bought into the Garage")
+	_eq(g.buildings.can_buy("tractor").why, BuildingSystem.Why.LIMIT, "and the Market says it is at its limit")
+	# Parking the one on the farm moves it: still one.
+	var loose := g.object_at(g.index_of(2, 2))
+	_check(g.homes.put_in_home(int(garage["uid"]), "tractor", {"uid": int(loose["uid"])}), "parked in the Garage")
+	_eq(g.buildings.owned("tractor"), 1, "still one tractor")
+	# An old save with both: one is kept, and its price comes back.
+	g.add_object({"uid": g.next_uid, "id": "tractor", "row": 2, "col": 2, "t": 0})
+	g.next_uid += 1
+	_eq(g.buildings.owned("tractor"), 2, "an old save held two")
+	var coins := g.coins
+	_eq(g.buildings.trim_extra_vehicles(), 1, "one is taken away")
+	_eq(g.buildings.owned("tractor"), 1, "leaving one")
+	_check(int((garage["inside"] as Dictionary).get("tractor", 0)) == 1, "the one in the Garage is the one kept")
+	_check(g.coins > coins, "the price is given back")

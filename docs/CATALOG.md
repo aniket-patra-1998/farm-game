@@ -147,7 +147,7 @@ Holds animals, trees or vehicles; may be built from a frame and grown size by si
 | `cycle_seconds` | int | 86400 |  | Time between collections. |
 | `sizes` | list<size> |  | yes | One record per size, smallest first: capacity (what it holds), name (shown; defaults to the building's), and what reaching it from the size before takes: materials, or for a crafting building's stars, coins and recipe_stars (or gems instead). |
 | `tab` | enum of animal, storage, crafting, decor | "animal" |  | Its Market tab, as FarmVille sorted buildings: Animal, Storage, Crafting, Decorative. |
-| `limit` | int | 1 |  | How many one farm may have (FarmVille: 5 Dairy Farms, 1 of most). |
+| `limit` | int | 2 |  | How many one farm may have. Two of each for now (BuildingDef.DEFAULT_LIMIT); the other kinds have theirs in BuildingSystem. |
 | `limit_group` | string |  |  | Buildings sharing a limit (FarmVille: 3 crafting buildings in all). |
 | `group_limit` | int |  |  | How many of the group one farm may have. |
 | `holds` | list<string> → Animal|Tree |  |  | Item ids that can move in. |
@@ -889,14 +889,14 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 3x2 | 20 / 40 / 60 | animal | 1 |  | mystery_eggs |
-| ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  |  |
-| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 4x3 | 20 / 30 / 40 | animal | 5 |  | calves |
-| ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  | lambs |
-| ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  |  |
-| ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 30 / 40 | animal | 1 |  |  |
-| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x4 | 30 | animal | 1 | frame | truffles |
-| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 3x4 | 20 / 25 / 30 / 35 / 40 | animal | 1 | frame | foals |
+| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 3x2 | 20 / 40 / 60 | animal | 2 |  | mystery_eggs |
+| ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  |  |
+| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 4x3 | 20 / 30 / 40 | animal | 2 |  | calves |
+| ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  | lambs |
+| ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  |  |
+| ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 30 / 40 | animal | 2 |  |  |
+| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x4 | 30 | animal | 2 | frame | truffles |
+| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 3x4 | 20 / 25 / 30 / 35 / 40 | animal | 2 | frame | foals |
 
 ### Nursery
 
@@ -906,7 +906,7 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 4x3 | 20 / 30 / 40 | animal | 1 | frame | nursery |
+| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 4x3 | 20 / 30 / 40 | animal | 2 | frame | nursery |
 
 ### Orchards
 
@@ -916,8 +916,8 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Orchard | `orchard` | 8 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 1 |  | saplings |
-| ✅ | Bloom Garden | `bloom_garden` | 10 | 5 | 3x3 | 20 / 30 / 40 | animal | 1 | frame | blooms |
+| ✅ | Orchard | `orchard` | 8 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  | saplings |
+| ✅ | Bloom Garden | `bloom_garden` | 10 | 5 | 3x3 | 20 / 30 / 40 | animal | 2 | frame | blooms |
 
 ### Production
 
@@ -927,7 +927,7 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Beehive | `beehive` | 3 | 5,000 | 2x2 | 200 | animal | 1 | frame | beehive |
+| ✅ | Beehive | `beehive` | 3 | 5,000 | 2x2 | 200 | animal | 2 | frame | beehive |
 | 🕓 | Greenhouse (breeds hybrid crop seeds) | `greenhouse` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Windmill (grinds grain into flour) | `windmill` | 1 |  |  |  |  |  |  |  |
 
@@ -953,9 +953,9 @@ Shared: `tab` = "storage"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Barn | `barn` | never sold | free | 3x3 | 30 / 60 / 100 / 160 / 250 | storage | 1 |  |  |
-| ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 1 | frame | garage |
-| ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x1 | 100 | storage | 1 |  | garden_shed |
+| ✅ | Barn | `barn` | never sold | free | 3x3 | 30 / 60 / 100 / 160 / 250 | storage | 2 |  |  |
+| ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 2 | frame | garage |
+| ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x1 | 100 | storage | 2 |  | garden_shed |
 | ✅ | Gopher Garden | `gopher_garden` | 6 | 8,000 | 2x2 | 1 / 4 / 10 / 20 | storage | 1 |  | finds_home |
 | 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Silo | `silo` | 1 |  |  |  |  |  |  |  |
