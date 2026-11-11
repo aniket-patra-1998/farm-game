@@ -55,9 +55,9 @@ func test_106_the_showcase_farm_has_everything_laid_out() -> void:
 	var phases := {}
 	var crops_planted := {}
 	for i in g.plots.size():
-		phases[g.phase(i)] = int(phases.get(g.phase(i), 0)) + 1
-		if g.crop_at(i) != "":
-			crops_planted[g.crop_at(i)] = true
+		phases[g.field.phase(i)] = int(phases.get(g.field.phase(i), 0)) + 1
+		if g.field.crop_at(i) != "":
+			crops_planted[g.field.crop_at(i)] = true
 	_eq(crops_planted.size(), g.crops.size(), "every crop is planted")
 	_check(int(phases.get(GameState.Phase.RIPE, 0)) > g.crops.size() / 2.0, "most are ripe to harvest")
 	_check(int(phases.get(GameState.Phase.GROWING, 0)) > 0, "some are growing")

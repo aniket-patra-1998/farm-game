@@ -36,7 +36,7 @@ func rebuild() -> void:
 	for k in cells.size():
 		var cell := cells[k]
 		mm.set_instance_transform(k, Transform3D(Basis(), IsoProjection.tile_centre(cell.x, cell.y)))
-		mm.set_instance_custom_data(k, Color(0, 0, 0, 1.0 if Game.is_fertilized(cell.z) else 0.0))
+		mm.set_instance_custom_data(k, Color(0, 0, 0, 1.0 if Game.field.is_fertilized(cell.z) else 0.0))
 	_beds.multimesh = mm
 
 

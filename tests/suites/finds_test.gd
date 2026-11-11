@@ -237,9 +237,9 @@ func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> vo
 			finds[0] += 1)
 	for k in 300:
 		var i := _free(g)
-		g.plow(i)
-		g.plant(i, "strawberries")
-		g.fertilize(i)
+		g.field.plow(i)
+		g.field.plant(i, "strawberries")
+		g.field.fertilize(i)
 		g.plots[i] = {"state": "grass"}
 	_check(finds[0] > 0, "plowing, planting and fertilizing found %d collectibles in 300 rounds" % finds[0])
 	_check(finds[0] < 60, "but not too many (%d)" % finds[0])
@@ -264,14 +264,14 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 			fuel_finds[0] += 1)
 	for k in 200:
 		var i := _free(g)
-		g.plow(i)
+		g.field.plow(i)
 		g.plots[i] = {"state": "grass"}
 	_eq(fuel_finds[0], 1, "fuel turns up while plowing, but only once a day")
 	_eq(g.vehicles.fuel_now(), int(VehicleSystem.FUEL_TANK * VehicleSystem.FUEL_FIND_SHARE), "a quarter of a tank")
 	_skip(g, 86400)
 	for k in 200:
 		var i := _free(g)
-		g.plow(i)
+		g.field.plow(i)
 		g.plots[i] = {"state": "grass"}
 	_eq(fuel_finds[0], 2, "and again the next day")
 	var low := _farm(true)
@@ -282,7 +282,7 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 			low_found[0] += 1)
 	for k in 100:
 		var i := _free(low)
-		low.plow(i)
+		low.field.plow(i)
 		low.plots[i] = {"state": "grass"}
 	_eq(low_found[0], 0, "not before level %d" % VehicleSystem.FUEL_LEVEL)
 	_done(g)

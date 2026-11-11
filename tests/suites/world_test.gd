@@ -131,13 +131,13 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 
 	# A tap on grass plows it.
 	var i := Game.index_of(11, 11)
-	_eq(Game.phase(i), GameState.Phase.GRASS, "tile starts as grass")
+	_eq(Game.field.phase(i), GameState.Phase.GRASS, "tile starts as grass")
 	var tap_at := _screen_pos(grid, i)
 	_check(grid._on_farm_area(tap_at), "the tile is on screen (view %s, tile at %s)" % [str(view), str(tap_at)])
 	await _touch(tap_at, true)
 	await _touch(tap_at, false)
 	Game.player.advance(60.0)  # the farmer walks over and does it
-	_eq(Game.phase(i), GameState.Phase.PLOWED, "a tap plows")
+	_eq(Game.field.phase(i), GameState.Phase.PLOWED, "a tap plows")
 
 	# A drag moves the view and leaves the plot under the finger alone.
 	main.call("_zoom_at", view / 2.0, 2.0)
@@ -168,7 +168,7 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	await _drag(wobble_at + Vector2(4, 3), Vector2(4, 3))
 	await _touch(wobble_at + Vector2(4, 3), false)
 	Game.player.advance(60.0)  # the farmer walks over and does it
-	_eq(Game.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
+	_eq(Game.field.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
 	main.free()
 
 

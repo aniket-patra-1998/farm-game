@@ -165,7 +165,7 @@ func use_fertilize_all() -> int:
 	for r in game.farm_size:
 		for c in game.farm_size:
 			var i := game.index_of(r, c)
-			if game.phase(i) == GameState.Phase.GROWING and not game.is_fertilized(i):
+			if game.field.phase(i) == GameState.Phase.GROWING and not game.field.is_fertilized(i):
 				game.plots[i]["fert"] = true
 				done += 1
 	if done == 0:

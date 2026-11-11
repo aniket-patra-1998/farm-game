@@ -174,7 +174,7 @@ func ready_pieces() -> Array:
 
 
 func _wants_plot(i: int) -> bool:
-	return Game.phase(i) != GameState.Phase.GRASS and not Game.is_occupied(i)
+	return Game.field.phase(i) != GameState.Phase.GRASS and not Game.is_occupied(i)
 
 
 

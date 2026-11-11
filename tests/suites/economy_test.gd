@@ -559,8 +559,8 @@ func test_72_art_follows_the_lifecycle() -> void:
 	SpriteBank.use_dir(_art_dir(["crop_strawberries_growing", "crop_strawberries_ripe", "chicken_coop"]))
 	# Strawberries: no art for planted, art for growing and ripe.
 	var i := _free(g)
-	g.plow(i)
-	g.plant(i, "strawberries")
+	g.field.plow(i)
+	g.field.plant(i, "strawberries")
 	_eq(g.crop_art_for(i), "", "no planted art: the code drawing is used")
 	_skip(g, int(int(g.crops["strawberries"]["grow_seconds"]) * 0.6))
 	_eq(g.crop_art_for(i), "crop_strawberries_growing", "half grown picks the growing art")

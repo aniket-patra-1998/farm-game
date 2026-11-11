@@ -14,7 +14,7 @@ func test_10_place_and_move_objects() -> void:
 	_check(g.move_object(uid, 11, 11), "move it")
 	_check(g.object_at(g.index_of(8, 8)).is_empty(), "old tile is free")
 	_eq(int(g.object_at(g.index_of(11, 11))["uid"]), uid, "new tile holds it")
-	_check(not g.plow(g.index_of(11, 11)), "can't plow under an object")
+	_check(not g.field.plow(g.index_of(11, 11)), "can't plow under an object")
 	_done(g)
 
 
@@ -175,12 +175,12 @@ func test_40_dairy_bull_brings_calves_and_fertilizer() -> void:
 	var i := _free(g)
 	if g.is_occupied(i):
 		i = g.index_of(7, 4)
-	if g.phase(i) != GameState.Phase.PLOWED:
-		g.plow(i)
-	g.plant(i, "strawberries")
+	if g.field.phase(i) != GameState.Phase.PLOWED:
+		g.field.plow(i)
+	g.field.plant(i, "strawberries")
 	var coins := g.coins
 	var bags := g.fertilizer_bags
-	_check(g.fertilize(i), "fertilize")
+	_check(g.field.fertilize(i), "fertilize")
 	_eq(g.coins, coins, "no coins spent while a bag is held")
 	_eq(g.fertilizer_bags, bags - 1, "a bag was used")
 	_done(g)

@@ -136,6 +136,7 @@ var nurture: NurtureSystem
 var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
+var field: FieldSystem
 var strays: StraySystem
 var crafting: CraftingSystem
 var homes: HousingSystem
@@ -164,13 +165,14 @@ func _init() -> void:
 	mastery = MasterySystem.new(self)
 	pigpen = PigPenSystem.new(self)
 	vehicles = VehicleSystem.new(self)
+	field = FieldSystem.new(self)
 	player = PlayerSystem.new(self)
 	nurture = NurtureSystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
-	systems = [drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
+	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
 		strays, crafting, homes, buildings, mastery, player, nurture]
 
 
@@ -298,185 +300,6 @@ func index_of(row: int, col: int) -> int:
 
 func in_farm(row: int, col: int) -> bool:
 	return row >= 0 and col >= 0 and row < farm_size and col < farm_size
-
-
-func phase(i: int) -> Phase:
-	var p: Dictionary = plots[i]
-	match p.get("state", "grass"):
-		"plowed":
-			return Phase.PLOWED
-		"planted":
-			var crop: Dictionary = crops[p["crop"]]
-			var age := now() - int(p["planted_at"])
-			var grow := int(crop["grow_seconds"])
-			if age < grow:
-				return Phase.GROWING
-			var window := ripe_window(crop) * (POLLINATED_RIPE_MULT if p.get("pol", false) else 1)
-			if age < grow + window:
-				return Phase.RIPE
-			return Phase.WITHERED
-	return Phase.GRASS
-
-
-func ripe_window(crop: Dictionary) -> int:
-	return (catalog.get_def(crop["id"]) as CropDef).ripe_window()
-
-
-## 0.0 just planted .. 1.0 ripe.
-func growth(i: int) -> float:
-	var p: Dictionary = plots[i]
-	if p.get("state") != "planted":
-		return 0.0
-	var grow := float(crops[p["crop"]]["grow_seconds"])
-	return clampf(float(now() - int(p["planted_at"])) / grow, 0.0, 1.0)
-
-
-func seconds_until_ripe(i: int) -> int:
-	var p: Dictionary = plots[i]
-	if p.get("state") != "planted":
-		return 0
-	var grow := int(crops[p["crop"]]["grow_seconds"])
-	return maxi(0, int(p["planted_at"]) + grow - now())
-
-
-func crop_at(i: int) -> String:
-	return plots[i].get("crop", "")
-
-
-func plow(i: int) -> bool:
-	var ph := phase(i)
-	if ph != Phase.GRASS and ph != Phase.WITHERED:
-		return false
-	if is_occupied(i):
-		return false
-	if not spend(PLOW_COST):
-		message.emit(tr("NOT_ENOUGH_COINS_TO_PLOW"))
-		return false
-	var old_crop := str(plots[i].get("crop", ""))
-	plots[i] = {"state": "plowed"}
-	add_xp(PLOW_XP)
-	ribbons.bump("plowed", 1)
-	vehicles.roll_fuel_find(i)
-	collectibles.roll_collectible(collectibles.plow_collection(old_crop), COLLECTIBLE_ACTION_CHANCE, i)
-	if coins < cheapest_seed_cost():
-		message.emit(tr("CAREFUL_KEEP_SOME_COINS_FOR_SEEDS"))
-	_advance_tutorial(Tutorial.PLOW)
-	_plot_updated(i)
-	check_rescue()
-	return true
-
-
-## FarmVille's delete tool: any plot back to grass, free; a crop on it (growing, ripe or withered) is lost,
-## so the caller asks first. Nothing standing on it, and grass is already grass.
-func can_clear_plot(i: int) -> bool:
-	return in_farm(i / MAX_SIZE, i % MAX_SIZE) and phase(i) != Phase.GRASS and not is_occupied(i)
-
-
-func clear_plot(i: int) -> bool:
-	if not can_clear_plot(i):
-		return false
-	plots[i] = {"state": "grass"}
-	ribbons.bump("plots_cleared", 1)
-	_plot_updated(i)
-	return true
-
-
-func plant(i: int, crop_id: String) -> bool:
-	if phase(i) != Phase.PLOWED or not crops.has(crop_id):
-		return false
-	var crop: Dictionary = crops[crop_id]
-	if level() < int(crop["unlock_level"]):
-		message.emit(tr("UNLOCKS_AT_LEVEL") % [crop["name"], int(crop["unlock_level"])])
-		return false
-	# Pollinated seeds are planted first, for free.
-	var use_pollinated := bees.take_pollinated_seed(crop_id)
-	if not use_pollinated and not spend(int(crop["seed_cost"])):
-		message.emit(tr("NOT_ENOUGH_COINS_FOR_SEEDS") % crop["name"])
-		return false
-	plots[i] = {"state": "planted", "crop": crop_id, "planted_at": now()}
-	if use_pollinated:
-		plots[i]["pol"] = true
-	collectibles.roll_collectible(collectibles.collection_of_crop.get(crop_id, {}), COLLECTIBLE_ACTION_CHANCE, i)
-	_advance_tutorial(Tutorial.PLANT)
-	_plot_updated(i)
-	return true
-
-
-func is_fertilized(i: int) -> bool:
-	return plots[i].get("fert", false)
-
-
-## Fertilizer goes on a planted crop that isn't ripe or withered yet.
-func fertilize(i: int) -> bool:
-	if phase(i) != Phase.GROWING or is_fertilized(i):
-		return false
-	if fertilizer_bags > 0:
-		fertilizer_bags -= 1
-		inventory_changed.emit()
-	elif not spend(FERTILIZER_COST):
-		message.emit(tr("NOT_ENOUGH_COINS_FOR_FERTILIZER"))
-		return false
-	plots[i]["fert"] = true
-	ribbons.bump("fertilized", 1)
-	collectibles.roll_collectible(
-		collectibles.collection_of_crop.get(str(plots[i]["crop"]), {}),
-		COLLECTIBLE_ACTION_CHANCE,
-		i
-	)
-	_plot_updated(i)
-	return true
-
-
-## Returns {"coins", "xp", "crop", "drop", "drop_text"} or {} if nothing was harvested.
-## "drop" is "", "golden", "bird", "collectible", "super_harvest" or "bonus_xp".
-func harvest(i: int) -> Dictionary:
-	if phase(i) != Phase.RIPE:
-		return {}
-	var crop_id: String = plots[i]["crop"]
-	var crop: Dictionary = crops[crop_id]
-	var stars_before := mastery.stars(crop_id)
-	var fertilized: bool = plots[i].get("fert", false)
-	var bonus := MASTERY_PRICE_BONUS * stars_before + (FERTILIZER_BONUS if fertilized else 0.0)
-	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)))
-	var gained := int(crop["xp"])
-
-	var was_pollinated: bool = plots[i].get("pol", false)
-	var drop := drops.roll_drop(crop_id, stars_before, POLLINATED_SUPER_MULT if was_pollinated else 1)
-	match drop.get("type", ""):
-		"golden":
-			earned *= GOLDEN_COIN_MULTIPLIER
-			gained += GOLDEN_XP
-		"super_harvest":
-			earned *= 2
-		"bonus_xp":
-			gained += BONUS_XP
-
-	plots[i] = {"state": "plowed"}
-	add_coins(earned)
-	add_xp(gained)
-	ribbons.bump("harvests", 1)
-	if drop.get("type", "") == "golden":
-		ribbons.bump("golden_finds", 1)
-		message.emit(tr("GOLDEN_HARVEST_PAID_X_COINS") % [crop["name"], GOLDEN_COIN_MULTIPLIER])
-	elif drop.get("type", "") == "collectible":
-		message.emit(tr("YOU_FOUND_A_COLLECTION") % [drop["name"], drop["collection"]])
-	elif drop.get("type", "") == "bird":
-		message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
-	var part := daily.roll_part()
-	var bushel := crafting.roll_bushel(crop_id)
-	var bunch := shed.roll_bunch(crop_id, i)
-	var bee_news := ""
-	if crop.get("flower", false):
-		bee_news = bees.flower_harvest_bees()
-	var seeds := bees.pollinate(crop_id) if fertilized else 0
-	# A fertilized harvest counts double toward mastery (stars are awarded as they're reached).
-	mastery.add(crop_id, 2 if fertilized else 1)
-	if tutorial_step == Tutorial.HARVEST and not _any_plot_in(Phase.RIPE):
-		_advance_tutorial(Tutorial.HARVEST)
-	_plot_updated(i)
-	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
-		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel,
-		"bushels": (1 + mastery.stars(crop_id)) if bushel != "" else 0, "bunch": bunch}
 
 
 # ---------------------------------------------------------------- placed objects
@@ -703,7 +526,7 @@ func art_for(obj: Dictionary) -> String:
 
 ## Art id for a planted plot's stage: planted until half grown, growing, ripe, withered.
 func crop_art_for(i: int) -> String:
-	var ph := phase(i)
+	var ph := field.phase(i)
 	var stage := "growing"
 	match ph:
 		Phase.RIPE:
@@ -711,8 +534,8 @@ func crop_art_for(i: int) -> String:
 		Phase.WITHERED:
 			stage = "withered"
 		Phase.GROWING:
-			stage = "planted" if growth(i) < 0.5 else "growing"
-	var art := "crop_%s_%s" % [crop_at(i), stage]
+			stage = "planted" if field.growth(i) < 0.5 else "growing"
+	var art := "crop_%s_%s" % [field.crop_at(i), stage]
 	return art if SpriteBank.has(art) else ""
 
 
@@ -1023,7 +846,7 @@ func withered_count() -> int:
 	var n := 0
 	for r in farm_size:
 		for c in farm_size:
-			if phase(index_of(r, c)) == Phase.WITHERED:
+			if field.phase(index_of(r, c)) == Phase.WITHERED:
 				n += 1
 	return n
 
@@ -1043,7 +866,7 @@ func use_unwither() -> bool:
 	for r in farm_size:
 		for c in farm_size:
 			var i := index_of(r, c)
-			if phase(i) == Phase.WITHERED:
+			if field.phase(i) == Phase.WITHERED:
 				plots[i]["planted_at"] = t - int(crops[plots[i]["crop"]]["grow_seconds"])
 	message.emit(tr("UNWITHERED_PLOTS_THEY_RE_READY_TO") % count)
 	inventory_changed.emit()
@@ -1074,16 +897,16 @@ func cheapest_seed_cost() -> int:
 func check_rescue() -> void:
 	if coins >= cheapest_seed_cost():
 		return
-	if _any_plot_in(Phase.GROWING) or _any_plot_in(Phase.RIPE):
+	if any_plot_in(Phase.GROWING) or any_plot_in(Phase.RIPE):
 		return
 	var gift := RESCUE_COINS - coins
 	add_coins(gift, false)
 	message.emit(tr("YOU_FOUND_COINS_IN_THE_BARN") % gift)
 
 
-func _any_plot_in(wanted: Phase) -> bool:
+func any_plot_in(wanted: Phase) -> bool:
 	for i in plots.size():
-		if phase(i) == wanted:
+		if field.phase(i) == wanted:
 			return true
 	return false
 
@@ -1096,7 +919,7 @@ func tutorial_text() -> String:
 
 
 ## Moves to the next step only when the finished step is the current one.
-func _advance_tutorial(finished: Tutorial) -> void:
+func advance_tutorial(finished: Tutorial) -> void:
 	if tutorial_step != finished:
 		return
 	tutorial_step += 1
@@ -1502,7 +1325,7 @@ func reset_game() -> void:
 	plot_changed.emit(-1)
 
 
-func _plot_updated(i: int) -> void:
+func plot_updated(i: int) -> void:
 	plot_changed.emit(i)
 	queue_save()
 

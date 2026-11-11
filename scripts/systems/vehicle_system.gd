@@ -191,7 +191,7 @@ func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
 
 
 func _vehicle_has_work(job: String, i: int, crop_id: String) -> bool:
-	var ph := game.phase(i)
+	var ph := game.field.phase(i)
 	match job:
 		"plow":
 			return ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED
@@ -208,21 +208,21 @@ func _vehicle_has_work(job: String, i: int, crop_id: String) -> bool:
 
 func _vehicle_work(job: String, i: int, crop_id: String, out: Dictionary) -> bool:
 	var did := false
-	if (job == "harvest" or job == "all") and game.phase(i) == GameState.Phase.RIPE:
-		var r := game.harvest(i)
+	if (job == "harvest" or job == "all") and game.field.phase(i) == GameState.Phase.RIPE:
+		var r := game.field.harvest(i)
 		if not r.is_empty():
 			did = true
 			if r.get("drop_text", "") != "":
 				(out["drops"] as Array).append(r["drop_text"])
 	if (job == "plow" or job == "all") and (
-		game.phase(i) == GameState.Phase.GRASS or game.phase(i) == GameState.Phase.WITHERED
+		game.field.phase(i) == GameState.Phase.GRASS or game.field.phase(i) == GameState.Phase.WITHERED
 	):
-		if game.plow(i):
+		if game.field.plow(i):
 			did = true
 			if game.drops_enabled and game.rng.randf() < TRACTOR_COIN_CHANCE:
 				game.add_coins(TRACTOR_COINS)
-	if (job == "plant" or job == "all") and crop_id != "" and game.phase(i) == GameState.Phase.PLOWED:
-		if game.plant(i, crop_id):
+	if (job == "plant" or job == "all") and crop_id != "" and game.field.phase(i) == GameState.Phase.PLOWED:
+		if game.field.plant(i, crop_id):
 			did = true
 	return did
 

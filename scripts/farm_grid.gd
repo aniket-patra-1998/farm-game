@@ -454,11 +454,11 @@ func _draw_placing(ci: CanvasItem) -> void:
 ## A plot's raised bed (FarmPiece): always drawn by the game, so every plot lines up into one tidy field.
 func draw_bed_on(ci: CanvasItem, i: int) -> void:
 	var top := top_of(_row(i), _col(i))
-	var ph := Game.phase(i)
+	var ph := Game.field.phase(i)
 	if ph == GameState.Phase.GRASS:
 		return
 	PlaceholderArt.draw_soil(ci, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
-	if Game.is_fertilized(i):
+	if Game.field.is_fertilized(i):
 		PlaceholderArt.draw_fertilizer(ci, top + Vector2(0, -PlaceholderArt.SLAB), TILE_W, TILE_H)
 
 
@@ -466,7 +466,7 @@ func draw_bed_on(ci: CanvasItem, i: int) -> void:
 
 ## The plants on a plot (CropPlants): painted art if there is some, otherwise the code drawing.
 func draw_plants_on(ci: CanvasItem, i: int) -> void:
-	var ph := Game.phase(i)
+	var ph := Game.field.phase(i)
 	if ph == GameState.Phase.GRASS or ph == GameState.Phase.PLOWED:
 		return
 	var at := center_of(i) + Vector2(0, -PlaceholderArt.SLAB)
@@ -479,7 +479,7 @@ func draw_plants_on(ci: CanvasItem, i: int) -> void:
 		stage = "ripe"
 	elif ph == GameState.Phase.WITHERED:
 		stage = "withered"
-	PlaceholderArt.draw_crop(ci, at, TILE_W, TILE_H, Game.crops[Game.crop_at(i)], stage, Game.growth(i))
+	PlaceholderArt.draw_crop(ci, at, TILE_W, TILE_H, Game.crops[Game.field.crop_at(i)], stage, Game.field.growth(i))
 
 
 
@@ -937,7 +937,7 @@ func _act(i: int, first_touch: bool) -> void:
 	if not obj.is_empty():
 		_act_on_object(obj, first_touch)
 		return
-	var ph := Game.phase(i)
+	var ph := Game.field.phase(i)
 
 	# The sell tool deletes plots (FarmVille's delete): even a ripe crop, after asking.
 	if tool == "sell":
@@ -961,10 +961,10 @@ func _act(i: int, first_touch: bool) -> void:
 			elif first_touch:
 				_explain(i, ph)
 		"fertilize":
-			if ph == GameState.Phase.GROWING and not Game.is_fertilized(i):
+			if ph == GameState.Phase.GROWING and not Game.field.is_fertilized(i):
 				_queue({"kind": "fertilize", "plot": i})
 			elif first_touch:
-				if Game.is_fertilized(i):
+				if Game.field.is_fertilized(i):
 					info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
 				else:
 					info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS"))
@@ -1076,10 +1076,10 @@ func _try_sell(obj: Dictionary) -> void:
 
 ## Clears a plot back to grass: at once if it's bare soil, after a second tap if a crop would be lost.
 func _try_clear(i: int) -> void:
-	if not Game.can_clear_plot(i):
+	if not Game.field.can_clear_plot(i):
 		info.emit(tr("NOTHING_TO_CLEAR_HERE"))
 		return
-	var crop_id := Game.crop_at(i)
+	var crop_id := Game.field.crop_at(i)
 	var now_ms := Time.get_ticks_msec()
 	var key := -2 - i  # plots take negative keys, so they never match an object's uid
 	if crop_id != "" and not (_sell_pending == key and now_ms < _sell_pending_until):
@@ -1088,7 +1088,7 @@ func _try_clear(i: int) -> void:
 		info.emit(tr("TAP_AGAIN_TO_CLEAR_THIS_PLOT") % Game.crops[crop_id]["name"])
 		return
 	_sell_pending = -1
-	if Game.clear_plot(i):
+	if Game.field.clear_plot(i):
 		_feel("plow", BUZZ_TAP)
 		world_fx.burst("dirt", center_of(i))
 
@@ -1100,8 +1100,8 @@ func _explain(i: int, ph: GameState.Phase) -> void:
 		GameState.Phase.PLOWED:
 			info.emit(tr("PICK_A_SEED_TO_PLANT_HERE"))
 		GameState.Phase.GROWING:
-			var crop: Dictionary = Game.crops[Game.crop_at(i)]
-			info.emit(tr("READY_IN_2") % [crop["name"], format_duration(Game.seconds_until_ripe(i))])
+			var crop: Dictionary = Game.crops[Game.field.crop_at(i)]
+			info.emit(tr("READY_IN_2") % [crop["name"], format_duration(Game.field.seconds_until_ripe(i))])
 		GameState.Phase.WITHERED:
 			info.emit(tr("THESE_CROPS_WITHERED_PLOW_TO_CLEAR"))
 

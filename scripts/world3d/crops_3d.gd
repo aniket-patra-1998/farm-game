@@ -36,13 +36,13 @@ func _set_wind(v: float) -> void:
 
 ## The stage a plot's plants are drawn at, and how grown they look within it (0..1).
 static func stage_of(i: int) -> Array:
-	match Game.phase(i):
+	match Game.field.phase(i):
 		GameState.Phase.RIPE:
 			return ["ripe", 1.0]
 		GameState.Phase.WITHERED:
 			return ["withered", 1.0]
 		GameState.Phase.GROWING:
-			var g := Game.growth(i)
+			var g := Game.field.growth(i)
 			if g < 0.2:
 				return ["seeds", 1.0]
 			if g < 0.45:
@@ -57,7 +57,7 @@ func rebuild() -> void:
 	for r in n:
 		for c in n:
 			var i := Game.index_of(r, c)
-			var crop_id := Game.crop_at(i)
+			var crop_id := Game.field.crop_at(i)
 			if crop_id == "" or not Game.crops.has(crop_id):
 				continue
 			var st := stage_of(i)

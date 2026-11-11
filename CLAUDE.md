@@ -44,3 +44,4 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   (`TranslationServer.translate` in static functions; constants hold keys). `tools/strings_lint.py` checks it in CI.
 - Regenerate `docs/CATALOG.md`, `art/manifest.json` and `tools/generate_art.ipynb` with their tools after
   catalog or art changes (CI checks them).
+- Objects join and leave the farm only through `Game.add_object` / `remove_object` / `set_objects` (a test enforces it).

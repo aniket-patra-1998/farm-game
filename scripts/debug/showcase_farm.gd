@@ -203,7 +203,7 @@ static func _plant_field(g: GameState, now: int) -> void:
 			break
 		var crop_id := g.crop_order[w]
 		var crop: Dictionary = g.crops[crop_id]
-		var long_ago := int(crop["grow_seconds"]) + g.ripe_window(crop) + 60
+		var long_ago := int(crop["grow_seconds"]) + g.field.ripe_window(crop) + 60
 		g.plots[spots[k]] = {"state": "planted", "crop": crop_id, "planted_at": now - long_ago}
 		k += 1
 	for p in PLOWED_PLOTS:

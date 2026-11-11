@@ -172,13 +172,13 @@ func can_do(job: Dictionary) -> bool:
 	match str(job["kind"]):
 		"plow":
 			return i >= 0 and not game.is_occupied(i) \
-				and game.phase(i) in [GameState.Phase.GRASS, GameState.Phase.WITHERED]
+				and game.field.phase(i) in [GameState.Phase.GRASS, GameState.Phase.WITHERED]
 		"plant":
-			return i >= 0 and game.phase(i) == GameState.Phase.PLOWED and game.crops.has(str(job.get("crop", "")))
+			return i >= 0 and game.field.phase(i) == GameState.Phase.PLOWED and game.crops.has(str(job.get("crop", "")))
 		"harvest":
-			return i >= 0 and game.phase(i) == GameState.Phase.RIPE
+			return i >= 0 and game.field.phase(i) == GameState.Phase.RIPE
 		"fertilize":
-			return i >= 0 and game.phase(i) == GameState.Phase.GROWING and not game.is_fertilized(i)
+			return i >= 0 and game.field.phase(i) == GameState.Phase.GROWING and not game.field.is_fertilized(i)
 		"collect":
 			var obj := game.object_by_uid(int(job.get("uid", -1)))
 			return not obj.is_empty() and game.is_ready(obj)
@@ -220,16 +220,16 @@ func _perform(job: Dictionary) -> Dictionary:
 	var i := int(job.get("plot", -1))
 	match str(job["kind"]):
 		"plow":
-			return {"ok": true} if game.plow(i) else {}
+			return {"ok": true} if game.field.plow(i) else {}
 		"plant":
-			return {"ok": true} if game.plant(i, str(job["crop"])) else {}
+			return {"ok": true} if game.field.plant(i, str(job["crop"])) else {}
 		"fertilize":
-			return {"ok": true} if game.fertilize(i) else {}
+			return {"ok": true} if game.field.fertilize(i) else {}
 		"harvest":
 			# What stood there, for whoever shows the harvest (it's gone once harvested).
-			job["crop"] = game.crop_at(i)
+			job["crop"] = game.field.crop_at(i)
 			job["art"] = game.crop_art_for(i)
-			return game.harvest(i)
+			return game.field.harvest(i)
 		"collect":
 			return game.collect(int(job["uid"]))
 		"nurture":

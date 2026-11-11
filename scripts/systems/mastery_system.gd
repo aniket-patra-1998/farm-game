@@ -6,7 +6,7 @@ extends GameSystem
 ## Every harvest of an item earns it points: a crop per plot (double when fertilized), a tree or an animal
 ## each time it's collected, standing on the farm or living in a home (a home's harvest counts each one in
 ## it, so the more of a kind you keep, the sooner it's mastered). Three stars, each paying coins and XP; the
-## third puts that item's mastery sign on the farm. A crop's stars also raise its price (game.harvest).
+## third puts that item's mastery sign on the farm. A crop's stars also raise its price (game.field.harvest).
 ## How many points a star needs follows how often it can be harvested: a crop by its growing time, a tree or
 ## animal by its cycle (FarmVille: an animal's first star took about 3 to 9 harvests).
 

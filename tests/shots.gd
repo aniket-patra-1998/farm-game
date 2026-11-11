@@ -199,7 +199,7 @@ func _ready() -> void:
 			var grow := int(crop["grow_seconds"])
 			var stage: float = [0.2, 0.6, 1.05, 3.0][k % 4] # planted, growing, ripe, withered
 			Game.plots[plots[k]]["planted_at"] = Game.now() - int(grow * stage) - (
-				Game.ripe_window(crop) if stage > 2.0 else 0
+				Game.field.ripe_window(crop) if stage > 2.0 else 0
 			)
 		Game.objects_changed.emit()
 		Game.plot_changed.emit(-1)
@@ -349,7 +349,7 @@ func _shots_3d(dir: String) -> void:
 				continue
 			var grow := int(Game.crops[shapes[k]]["grow_seconds"])
 			Game.plots[i] = {"state": "planted", "crop": shapes[k], "planted_at": Game.now() - int(grow * stages[s])
-				- (Game.ripe_window(Game.crops[shapes[k]]) if stages[s] > 2.0 else 0)}
+				- (Game.field.ripe_window(Game.crops[shapes[k]]) if stages[s] > 2.0 else 0)}
 	# Homes most of the way to ready, so what they make has piled up by their doors.
 	for o in Game.objects:
 		if Game.is_building(o) and not Game.under_construction(o):

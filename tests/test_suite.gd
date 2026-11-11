@@ -69,11 +69,11 @@ func _skip(g: GameState, seconds: int) -> void:
 
 ## Plows (if needed), plants and fast-forwards one crop to ripe, then harvests it.
 func _grow_and_harvest(g: GameState, i: int, crop_id: String) -> Dictionary:
-	if g.phase(i) != GameState.Phase.PLOWED:
-		g.plow(i)
-	g.plant(i, crop_id)
+	if g.field.phase(i) != GameState.Phase.PLOWED:
+		g.field.plow(i)
+	g.field.plant(i, crop_id)
 	_skip(g, int(g.crops[crop_id]["grow_seconds"]))
-	return g.harvest(i)
+	return g.field.harvest(i)
 
 
 

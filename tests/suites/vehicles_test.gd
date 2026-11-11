@@ -5,7 +5,7 @@ extends TestSuite
 func _all_plots(g: GameState, r0: int, c0: int, w: int, h: int, ph: GameState.Phase) -> bool:
 	for r in range(r0, r0 + h):
 		for c in range(c0, c0 + w):
-			if g.phase(g.index_of(r, c)) != ph:
+			if g.field.phase(g.index_of(r, c)) != ph:
 				return false
 	return true
 

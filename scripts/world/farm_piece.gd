@@ -129,7 +129,7 @@ func refresh() -> void:
 		if plants != null:
 			plants.queue_redraw()
 			# Just planted (it was bare soil a moment ago): the seedlings grow in.
-			var ph := Game.phase(plot)
+			var ph := Game.field.phase(plot)
 			if _phase_drawn == GameState.Phase.PLOWED and ph == GameState.Phase.GROWING:
 				grow_in()
 			_phase_drawn = ph
@@ -142,11 +142,11 @@ func force_redraw() -> void:
 
 func state_key() -> String:
 	if plot >= 0:
-		var ph := Game.phase(plot)
+		var ph := Game.field.phase(plot)
 		var art := Game.crop_art_for(plot) if ph != GameState.Phase.PLOWED else ""
 		# Code-drawn crops grow smoothly: redraw them in tenths of their growth.
-		var growth := int(Game.growth(plot) * 10.0) if ph == GameState.Phase.GROWING and art == "" else 0
-		return "%d|%s|%s|%s|%d" % [ph, Game.crop_at(plot), art, Game.is_fertilized(plot), growth]
+		var growth := int(Game.field.growth(plot) * 10.0) if ph == GameState.Phase.GROWING and art == "" else 0
+		return "%d|%s|%s|%s|%d" % [ph, Game.field.crop_at(plot), art, Game.field.is_fertilized(plot), growth]
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
 		return ""
@@ -158,7 +158,7 @@ func state_key() -> String:
 
 func is_ready() -> bool:
 	if plot >= 0:
-		return Game.phase(plot) == GameState.Phase.RIPE
+		return Game.field.phase(plot) == GameState.Phase.RIPE
 	var o := Game.object_by_uid(uid)
 	return not o.is_empty() and (
 		Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)

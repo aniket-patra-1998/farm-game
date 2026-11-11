@@ -137,33 +137,33 @@ func test_48_bees_pollinate_fertilized_crops() -> void:
 	_eq(from_plain, 0, "unfertilized crops aren't pollinated")
 	var got := 0
 	for k in 20:
-		g.plow(i)
+		g.field.plow(i)
 		g.bees.pollinated.clear()
-		g.plant(i, "strawberries")
-		g.fertilize(i)
+		g.field.plant(i, "strawberries")
+		g.field.fertilize(i)
 		_skip(g, int(g.crops["strawberries"]["grow_seconds"]))
-		got += int(g.harvest(i).get("pollinated", 0))
+		got += int(g.field.harvest(i).get("pollinated", 0))
 	_check(got >= 25, "about half of fertilized harvests were pollinated (%d seeds)" % got)
 	# Planting pollinated seeds: free, and the crop stays ripe twice as long.
 	g.bees.pollinated = {"strawberries": [2, g.now() + BeehiveSystem.POLLINATED_LIFETIME]}
 	var j := g.index_of(10, 10)
-	g.plow(i)
-	g.plow(j)
+	g.field.plow(i)
+	g.field.plow(j)
 	var coins := g.coins
-	_check(g.plant(i, "strawberries"), "plant a pollinated seed")
+	_check(g.field.plant(i, "strawberries"), "plant a pollinated seed")
 	_eq(g.coins, coins, "pollinated seeds are free")
 	_eq(g.bees.pollinated_seeds("strawberries"), 1, "one pollinated seed left")
 	_check(g.plots[i].get("pol", false), "the plot is pollinated")
 	g.bees.pollinated.clear()
-	g.plant(j, "strawberries")
+	g.field.plant(j, "strawberries")
 	_check(not g.plots[j].get("pol", false), "an ordinary seed")
 	var grow := int(g.crops["strawberries"]["grow_seconds"])
-	var window := g.ripe_window(g.crops["strawberries"])
+	var window := g.field.ripe_window(g.crops["strawberries"])
 	_skip(g, grow + window + 3600)
-	_eq(g.phase(j), GameState.Phase.WITHERED, "the ordinary crop withered")
-	_eq(g.phase(i), GameState.Phase.RIPE, "the pollinated crop is still ripe")
+	_eq(g.field.phase(j), GameState.Phase.WITHERED, "the ordinary crop withered")
+	_eq(g.field.phase(i), GameState.Phase.RIPE, "the pollinated crop is still ripe")
 	_skip(g, window)
-	_eq(g.phase(i), GameState.Phase.WITHERED, "but not forever")
+	_eq(g.field.phase(i), GameState.Phase.WITHERED, "but not forever")
 	# Pollinated seeds expire after 2 days.
 	g.bees.pollinated = {"wheat": [5, g.now() + BeehiveSystem.POLLINATED_LIFETIME]}
 	_eq(g.bees.pollinated_seeds("wheat"), 5, "5 pollinated wheat seeds")
@@ -209,15 +209,15 @@ func test_50_fertilize_all_from_the_hive() -> void:
 	g.drops_enabled = false
 	var spots := [g.index_of(9, 0), g.index_of(9, 1), g.index_of(10, 0)]
 	for i in spots:
-		if g.phase(i) != GameState.Phase.PLOWED:
-			g.plow(i)
-		g.plant(i, "wheat")
+		if g.field.phase(i) != GameState.Phase.PLOWED:
+			g.field.plow(i)
+		g.field.plant(i, "wheat")
 	g.fertilize_alls = 1
 	g.fertilizer_bags = 0
 	var coins := g.coins
 	_check(g.bees.use_fertilize_all() >= 3, "every growing crop fertilized")
 	for i in spots:
-		_check(g.is_fertilized(i), "plot %d fertilized" % i)
+		_check(g.field.is_fertilized(i), "plot %d fertilized" % i)
 	_eq(g.coins, coins, "no coins spent")
 	_eq(g.fertilize_alls, 0, "used up")
 	_eq(g.bees.use_fertilize_all(), 0, "none left")

@@ -16,7 +16,7 @@ func test_117_work_is_queued_and_the_farmer_walks_to_it() -> void:
 	var near := g.index_of(20, 10)
 	_eq(p.enqueue({"kind": "plow", "plot": far}), PlayerSystem.Refused.NONE, "a plow job is queued")
 	_eq(p.enqueue({"kind": "plow", "plot": near}), PlayerSystem.Refused.NONE, "and another behind it")
-	_eq(g.phase(far), GameState.Phase.GRASS, "nothing happens at the tap")
+	_eq(g.field.phase(far), GameState.Phase.GRASS, "nothing happens at the tap")
 	_eq(g.coins, 1000, "and nothing is paid yet")
 	_eq(p.queued_plots().size(), 2, "both plots show as waiting")
 	p.advance(0.5)
@@ -24,13 +24,13 @@ func test_117_work_is_queued_and_the_farmer_walks_to_it() -> void:
 	_check(p.pos.x > 2.5 and p.pos.x < 9.0, "part of the way there after half a second")
 	p.advance(6.5 / PlayerSystem.WALK_SPEED)
 	_check(p.is_working(), "then at the plot, working")
-	_eq(g.phase(far), GameState.Phase.GRASS, "not done until the work is")
+	_eq(g.field.phase(far), GameState.Phase.GRASS, "not done until the work is")
 	p.advance(PlayerSystem.ACTION_SECONDS)
-	_eq(g.phase(far), GameState.Phase.PLOWED, "the first plot is plowed")
+	_eq(g.field.phase(far), GameState.Phase.PLOWED, "the first plot is plowed")
 	_eq(g.coins, 1000 - GameState.PLOW_COST, "and paid for then")
 	_eq(done.size(), 1, "its completion is announced")
 	p.advance(10.0)
-	_eq(g.phase(near), GameState.Phase.PLOWED, "the second follows")
+	_eq(g.field.phase(near), GameState.Phase.PLOWED, "the second follows")
 	_check(p.queue.is_empty() and not p.is_working() and not p.is_walking(), "and the farmer rests")
 	_check(p.pos.distance_to(Vector2(10.5, 20.5)) < 0.6, "standing at the last plot's edge")
 	_done(g)
@@ -53,7 +53,7 @@ func test_118_the_farmer_walks_round_things_and_works_from_where_they_stand_if_b
 		walked += 0.05
 		if int(p.pos.x) == 22 and int(p.pos.y) >= 17 and int(p.pos.y) < 24:
 			crossed_wall = true
-	_eq(g.phase(g.index_of(20, 24)), GameState.Phase.PLOWED, "the plot beyond the wall is plowed")
+	_eq(g.field.phase(g.index_of(20, 24)), GameState.Phase.PLOWED, "the plot beyond the wall is plowed")
 	_check(not crossed_wall, "without walking through the bales")
 	_check(walked > 4.0 / PlayerSystem.WALK_SPEED + PlayerSystem.ACTION_SECONDS, "by the long way round")
 	# Boxed in on every side (FarmVille's fenced-in farmer): the work is done from where they stand.
@@ -63,7 +63,7 @@ func test_118_the_farmer_walks_round_things_and_works_from_where_they_stand_if_b
 		_check(g.buy_and_place("hay_bale", cell.x, cell.y), "boxed in at %s" % cell)
 	p.enqueue({"kind": "plow", "plot": g.index_of(27, 14)})
 	p.advance(PlayerSystem.ACTION_SECONDS + 0.01)
-	_eq(g.phase(g.index_of(27, 14)), GameState.Phase.PLOWED, "a boxed-in farmer plows at once")
+	_eq(g.field.phase(g.index_of(27, 14)), GameState.Phase.PLOWED, "a boxed-in farmer plows at once")
 	_eq(p.pos, Vector2(26.5, 26.5), "without moving")
 	# Something put down on the farmer: they step out to the nearest free tile.
 	p.pos = Vector2(15.5, 15.5)
@@ -88,13 +88,13 @@ func test_119_the_queue_refuses_what_cannot_be_done_or_paid_for_and_jobs_can_be_
 	_check(p.cancel({"kind": "plow", "plot": a}), "a waiting job can be cancelled")
 	_check(p.queue.is_empty() and not p.cancel({"kind": "plow", "plot": a}), "and then it's gone")
 	p.advance(5.0)
-	_eq(g.phase(a), GameState.Phase.GRASS, "a cancelled job never happens")
+	_eq(g.field.phase(a), GameState.Phase.GRASS, "a cancelled job never happens")
 	_eq(g.coins, GameState.PLOW_COST, "or costs anything")
 	# A job whose work has gone by the time the farmer arrives reports nothing done.
 	var results: Array = []
 	p.action_done.connect(func(_job: Dictionary, result: Dictionary) -> void: results.append(result))
 	p.enqueue({"kind": "plow", "plot": a})
-	g.plow(a)
+	g.field.plow(a)
 	g.coins = 0
 	p.advance(20.0)
 	_check(results.size() == 1 and results[0].is_empty(), "an overtaken job reports an empty result")
