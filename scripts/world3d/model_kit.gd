@@ -4,6 +4,7 @@ extends RefCounted
 ## mesh with its normals facing out, placed under a parent node; and the shared materials they're made of
 ## (made once and reused, so a farm of buildings needs a handful of materials, not hundreds).
 
+const PAINT_SHADER := "res://shaders/paint3d.gdshader"
 const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leaves it whole
 
 ## Tessellation: enough to read round at farm zoom on a phone, no more (each ball is ~170 triangles,
@@ -33,16 +34,34 @@ static var _white := {}   # material id -> [white twin, colour]
 
 
 ## A plain coloured material (matte unless `shine`), darkening where it meets the ground (paint3d).
-static func paint(col: Color, shine := 0.0) -> ShaderMaterial:
-	var key := "paint:%s:%.2f" % [col.to_html(), shine]
+static func paint(col: Color, shine := 0.0, sway := 0.0) -> ShaderMaterial:
+	var key := "paint:%s:%.2f:%.3f" % [col.to_html(), shine, sway]
 	if not _materials.has(key):
 		var m := ShaderMaterial.new()
 		m.shader = load("res://shaders/paint3d.gdshader")
 		m.set_shader_parameter("albedo", col)
 		m.set_shader_parameter("roughness", 1.0 - shine * 0.6)
 		m.set_shader_parameter("specular", 0.1 + shine * 0.4)
+		if sway > 0.0:
+			m.set_shader_parameter("sway", sway)
 		_materials[key] = m
 	return _materials[key]
+
+
+## Makes every painted part under `root` bend in the wind by `amount` (paint3d's sway, by height above
+## the model's foot), keeping each part's colour and shine. Applied before baking, the parts still merge
+## into one draw (they share the swaying white twin).
+static func sway_all(root: Node, amount: float) -> void:
+	if root is MeshInstance3D:
+		var mi := root as MeshInstance3D
+		var m := mi.material_override as ShaderMaterial
+		if m != null and m.shader != null and m.shader.resource_path == PAINT_SHADER:
+			var rough := float(m.get_shader_parameter("roughness"))
+			var col = m.get_shader_parameter("albedo")
+			mi.material_override = paint(col if col is Color else Color(col.x, col.y, col.z),
+				(1.0 - rough) / 0.6, amount)
+	for c in root.get_children():
+		sway_all(c, amount)
 
 
 ## A wall or roof surface with a pattern (see shaders/wall3d.gdshader): boards, logs, stone, plaster,

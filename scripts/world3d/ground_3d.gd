@@ -83,9 +83,8 @@ func _ready() -> void:
 
 func _set_wind(v: float) -> void:
 	wind = v
-	if _tuft_material != null:
-		_tuft_material.set_shader_parameter("wind", v)
-		_flower_material.set_shader_parameter("wind", v)
+	# Every swaying shader (grass, flowers, crops, trees, scarecrows) reads the one global wind.
+	RenderingServer.global_shader_parameter_set(&"wind", v)
 
 
 func rebuild() -> void:

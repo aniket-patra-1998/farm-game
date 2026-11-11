@@ -9,6 +9,8 @@ extends RefCounted
 ## them: a jet, a cascade off a rim, embers rising, a flame.
 
 const DROP_RADIUS := 0.02           # a drop at full size (the shader scales it)
+const PUFF_SIDES := 8               # a smoke puff's roundness
+const PUFF_RINGS := 4
 const SPRAY_SHADER := "res://shaders/spray3d.gdshader"
 const FLAME_SHADER := "res://shaders/flame3d.gdshader"
 const WATER_SHADER := "res://shaders/water3d.gdshader"
@@ -23,6 +25,10 @@ const CASCADE := {"streams": 18, "per_stream": 4, "life": 0.62, "rise": 0.05, "g
 ## Embers floating up from a fire, glowing (one each: they drift alone).
 const EMBERS := {"streams": 10, "per_stream": 1, "life": 1.8, "rise": 0.25, "gravity": -0.05,
 	"reach": 0.08, "size": 0.45, "colour": Color("#ffb347"), "glow": 3.0}
+
+## Smoke curling up from a chimney: soft grey puffs drifting up and spreading as they rise.
+const SMOKE := {"streams": 7, "per_stream": 1, "life": 3.2, "rise": 0.22, "gravity": -0.02, "reach": 0.18,
+	"size": 2.2, "end_size": 2.6, "colour": Color("#d9d6d0"), "sheen": 0.15, "round": true}
 
 static var _materials := {}         # settings -> ShaderMaterial (shared by every effect alike)
 
@@ -47,7 +53,10 @@ static func spray(parent: Node3D, at: Vector3, settings: Dictionary) -> MeshInst
 		var reach := rng.randf_range(0.7, 1.0)
 		for j in per:
 			var data := Vector2(fposmod(offset + float(j) / per, 1.0), angle)
-			_drop(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
+			if settings.get("round", false):
+				_puff(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
+			else:
+				_drop(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
@@ -108,13 +117,39 @@ static func _drop(verts: PackedVector3Array, normals: PackedVector3Array, uv: Pa
 		var a: Vector3 = tips[k]
 		var b: Vector3 = tips[(k + 1) % 4]
 		for pole: Vector3 in [Vector3(0, r * 1.3, 0), Vector3(0, -r * 1.3, 0)]:
-			# Clockwise seen from outside (Godot's front faces).
-			var tri := [pole, b, a] if pole.y > 0.0 else [pole, a, b]
+			# Clockwise seen from outside (Godot's front faces: the cross product points inward).
+			var tri := [pole, a, b] if pole.y > 0.0 else [pole, b, a]
 			for v: Vector3 in tri:
 				verts.append(v)
 				normals.append(v.normalized())
 				uv.append(data)
 				uv2.append(data2)
+
+
+## A round puff (a low sphere: PUFF_SIDES around, PUFF_RINGS up) at the origin, for smoke.
+static func _puff(verts: PackedVector3Array, normals: PackedVector3Array, uv: PackedVector2Array,
+		uv2: PackedVector2Array, data: Vector2, data2: Vector2) -> void:
+	var r := DROP_RADIUS
+	for i in PUFF_RINGS:
+		var t0 := PI * i / PUFF_RINGS
+		var t1 := PI * (i + 1) / PUFF_RINGS
+		for j in PUFF_SIDES:
+			var p0 := TAU * j / PUFF_SIDES
+			var p1 := TAU * (j + 1) / PUFF_SIDES
+			var a := _on_sphere(t0, p0)
+			var b := _on_sphere(t0, p1)
+			var c := _on_sphere(t1, p0)
+			var d := _on_sphere(t1, p1)
+			# Two triangles per patch, clockwise seen from outside.
+			for v: Vector3 in [a, c, b, b, c, d]:
+				verts.append(v * r)
+				normals.append(v)
+				uv.append(data)
+				uv2.append(data2)
+
+
+static func _on_sphere(theta: float, phi: float) -> Vector3:
+	return Vector3(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi))
 
 
 static func _material(shader_path: String, settings: Dictionary) -> ShaderMaterial:
@@ -123,7 +158,7 @@ static func _material(shader_path: String, settings: Dictionary) -> ShaderMateri
 		var m := ShaderMaterial.new()
 		m.shader = load(shader_path)
 		for k in settings:
-			if not k in ["streams", "per_stream"]:
+			if not k in ["streams", "per_stream", "round"]:
 				m.set_shader_parameter(k, settings[k])
 		_materials[key] = m
 	return _materials[key]

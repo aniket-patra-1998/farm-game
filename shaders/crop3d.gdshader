@@ -4,7 +4,7 @@ render_mode cull_disabled;
 // vertex colour; produce (vertex alpha 0) takes its crop's colour from the instance (INSTANCE_CUSTOM),
 // shaded by the vertex colour. Plants sway from the root, tips most, harder in wind, each on its own beat.
 
-uniform float wind = 0.6;
+global uniform float wind;  // the weather's wind, set once for everything (Farm3D)
 
 varying vec4 produce;
 

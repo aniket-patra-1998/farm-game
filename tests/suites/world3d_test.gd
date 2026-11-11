@@ -522,7 +522,7 @@ func test_115_moving_decorations_move_on_the_gpu() -> void:
 	# The fountain sprays and spills, the bonfire flickers and throws embers: each effect one mesh moved by its
 	# shader (no script, no nodes per drop), kept out of the bake, casting no shadow, culled by its reach.
 	var g := _farm()
-	var expect := {"fountain": ["spray3d", "spray3d"], "bonfire": ["flame3d", "spray3d"]}
+	var expect := {"fountain": ["spray3d", "spray3d"], "bonfire": ["flame3d", "spray3d"], "farmhouse": ["spray3d"]}
 	for id: String in expect:
 		var node := DecorModel.build(g.item_data(id), g.footprint(id), {"id": id, "uid": 1})
 		var found: Array[String] = []
@@ -540,4 +540,18 @@ func test_115_moving_decorations_move_on_the_gpu() -> void:
 		for kind: String in expect[id]:
 			_check(found.has(kind), "the %s has its %s" % [id, kind])
 		node.free()
+	# Drops and smoke puffs face outward (Godot culls the rest: they'd show as hollow outlines).
+	for settings: Dictionary in [DecorMotion.JET, DecorMotion.SMOKE]:
+		var holder := Node3D.new()
+		var mi := DecorMotion.spray(holder, Vector3.ZERO, settings)
+		var arrays := mi.mesh.surface_get_arrays(0)
+		var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var n: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		var wrong := 0
+		for k in range(0, v.size(), 3):
+			var face := (v[k + 1] - v[k]).cross(v[k + 2] - v[k])
+			if face.length() > 0.0000001 and face.dot(n[k] + n[k + 1] + n[k + 2]) > 0.0:
+				wrong += 1
+		_eq(wrong, 0, "every %s triangle faces out" % ("smoke" if settings.get("round", false) else "drop"))
+		holder.free()
 	_done(g)

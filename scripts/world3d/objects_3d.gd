@@ -208,6 +208,7 @@ static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 		var y := (0.15 + 0.28 * k) * size
 		var r := (0.42 - 0.1 * k) * size
 		ModelKit.cylinder(root, Vector3(0, y, 0), r, 0.5 * size, ModelKit.paint(PINE.lightened(0.07 * k)), 0.0, 9)
+	ModelKit.sway_all(root, TreeModel.SWAY)  # bends in the wind like every tree
 
 
 

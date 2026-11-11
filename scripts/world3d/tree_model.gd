@@ -9,6 +9,7 @@ extends RefCounted
 ## No two trees are the same: each is varied by its own seed (height, lean, where its clumps sit, their
 ## shade), so an orchard of one kind still reads as trees and not copies.
 
+const SWAY := 0.035                # how far a tree bends in the wind (paint3d sway, by height)
 const PATH := "res://data/tree_shapes.json"
 const BARK := Color("#7a4f2c")
 const LEAF := Color("#4f9a3a")
@@ -80,6 +81,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
 		_fruit(t, crown, Color.html(str(it.get("color", "#d93b30"))), ready)
+	ModelKit.sway_all(root, SWAY)
 	return root
 
 

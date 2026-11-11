@@ -5,7 +5,7 @@ render_mode cull_disabled;
 // swaying in the wind with the tips moving most, each on its own beat. With flower_heads, vertices of
 // alpha 0 are petals and take the flower's colour (the instance's custom data) instead.
 
-uniform float wind = 0.6;
+global uniform float wind;  // the weather's wind, set once for everything (Farm3D)
 uniform bool flower_heads = false;
 
 varying vec4 petal;

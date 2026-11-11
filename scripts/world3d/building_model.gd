@@ -636,6 +636,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var top: float = ctx.get("top", hi.y)
 			ModelKit.box(root, Vector3(hi.x - 0.22, hi.y, lo.z + 0.12), Vector3(hi.x - 0.08, top + 0.15, lo.z + 0.26),
 				ModelKit.surface(Color("#a6533c"), "stone", 0.0))
+			# Smoke curling up from it (GPU-animated, one draw).
+			DecorMotion.spray(root, Vector3(hi.x - 0.15, top + 0.17, lo.z + 0.19), DecorMotion.SMOKE)
 		"water_trough":
 			var x := minf(hi.x + 0.45, fw - 0.3)
 			var z := minf(hi.z + 0.35, fd - 0.2)

@@ -30,8 +30,7 @@ func _ready() -> void:
 
 func _set_wind(v: float) -> void:
 	wind = v
-	if _material != null:
-		_material.set_shader_parameter("wind", v)
+	RenderingServer.global_shader_parameter_set(&"wind", v)  # crops read the one global wind
 
 
 ## The stage a plot's plants are drawn at, and how grown they look within it (0..1).

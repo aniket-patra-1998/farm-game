@@ -14,6 +14,7 @@ uniform float gravity = 3.2;       // (negative: it floats up, like an ember)
 uniform float reach = 0.3;         // how far out it travels in its life
 uniform float start_radius = 0.0;  // drops leave from a ring this wide (a basin's rim) instead of a point
 uniform float size = 1.0;
+uniform float end_size = 0.5;      // a drop's size at the end of its flight, relative (smoke grows: > 1)
 uniform float sheen = 0.35;       // self-lit share, so water reads white even in shade
 
 void vertex() {
@@ -23,7 +24,7 @@ void vertex() {
 	vec3 out_dir = vec3(cos(a), 0.0, sin(a));
 	vec3 centre = out_dir * (start_radius + reach * (0.55 + 0.45 * UV2.x) * u)
 		+ vec3(0.0, rise * t - 0.5 * gravity * t * t, 0.0);
-	float s = size * (0.6 + 0.4 * UV2.y) * (1.0 - 0.5 * u) * (1.0 - smoothstep(0.8, 1.0, u));
+	float s = size * (0.6 + 0.4 * UV2.y) * mix(1.0, end_size, u) * (1.0 - smoothstep(0.8, 1.0, u));
 	VERTEX = VERTEX * s + centre;
 }
 
