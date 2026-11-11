@@ -297,8 +297,11 @@ func _open_shutter(open: bool) -> void:
 		if not hinge.has_meta("rest_y"):
 			hinge.set_meta("rest_y", hinge.position.y)
 		var y := float(hinge.get_meta("rest_y")) + (float(hinge.get_meta("slide")) if open else 0.0)
-		hinge.create_tween().tween_property(hinge, "position:y", y, 0.5).set_trans(Tween.TRANS_QUAD) \
-			.set_ease(Tween.EASE_OUT)
+		if not is_inside_tree() or not is_visible_in_tree():
+			hinge.position.y = y                         # not on screen yet: just be there
+			continue
+		var tw := create_tween()                          # owned by this node, so it ends with it
+		tw.tween_property(hinge, "position:y", y, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 # ---------------------------------------------------------------- produce
