@@ -6,6 +6,7 @@ extends Node3D
 ## (shaders/flutter3d, firefly3d), so a hundred of them cost two draws and no script. They fade with the time
 ## of day (the shared `dark`). How many follows how much land there is.
 
+const WEATHER_CHECK_SECONDS := 2.0
 const BUTTERFLIES_PER_ROW := 1.6      # butterflies per row of land (farm_size)
 const FIREFLIES_PER_ROW := 2.4
 const FLOCKS := 2
@@ -21,11 +22,33 @@ const BIRD_COLOUR := Color("#4b4a52")
 const SKY_HEIGHT := 6.0
 
 var _built_for := -1
+var _since_check := 0.0
+var _butterflies: MeshInstance3D
+var _birds: MeshInstance3D
 
 
 func _ready() -> void:
 	rebuild()
+	_follow_weather()
+
+
+func _process(delta: float) -> void:
+	_since_check += delta
+	if _since_check >= WEATHER_CHECK_SECONDS:
+		_since_check = 0.0
+		_follow_weather()
 	Game.farm_expanded.connect(func(_n: int) -> void: rebuild())
+
+
+## Butterflies and birds keep out of rain, snow, storms and thick fog (fireflies are for the dark and need no
+## such rule: the night shader shows them).
+func _follow_weather() -> void:
+	var w := Game.weather()
+	var foul := float(w.get("rain", 0.0)) > 0.05 or float(w.get("snow", 0.0)) > 0.05 or float(w.get("fog", 0.0)) > 0.5
+	if _butterflies != null:
+		_butterflies.visible = not foul
+	if _birds != null:
+		_birds.visible = not foul
 
 
 ## (Re)makes the creatures for the farm's present size.
@@ -39,12 +62,12 @@ func rebuild() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 424242
 	var butterflies := maxi(MIN_COUNT, int(n * BUTTERFLIES_PER_ROW))
-	_add(_wings(rng, butterflies, n, WING, true), _material(FLY_SHADER, 0.0), n)
+	_butterflies = _add(_wings(rng, butterflies, n, WING, true), _material(FLY_SHADER, 0.0), n)
 	_add(_dots(rng, maxi(MIN_COUNT, int(n * FIREFLIES_PER_ROW)), n), _material(FIREFLY_SHADER, 0.0), n)
-	_add(_flocks(rng, n), _material(FLY_SHADER, 1.0), n)
+	_birds = _add(_flocks(rng, n), _material(FLY_SHADER, 1.0), n)
 
 
-func _add(mesh: ArrayMesh, mat: ShaderMaterial, n: int) -> void:
+func _add(mesh: ArrayMesh, mat: ShaderMaterial, n: int) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.material_override = mat
@@ -52,6 +75,7 @@ func _add(mesh: ArrayMesh, mat: ShaderMaterial, n: int) -> void:
 	# They wander far from where the mesh is built: tell culling the whole farm and the sky above it.
 	mi.custom_aabb = AABB(Vector3(-8, -1, -8), Vector3(n + 16, SKY_HEIGHT + 2, n + 16))
 	add_child(mi)
+	return mi
 
 
 static func _material(path: String, kind: float) -> ShaderMaterial:

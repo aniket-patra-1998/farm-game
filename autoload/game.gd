@@ -111,6 +111,8 @@ var farmhands := 0                 # collect every animal at once
 var arborists := 0                 # collect every tree at once
 var gardeners := 0                 # collect every bloom at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
+const FRESH_FARM_CLEAR_SECONDS := 1800   # a new farm starts in fair weather for this long
+var clear_until := 0               # unix time until which the weather is clear (a new farm)
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
 var tutorial_step: int = Tutorial.HARVEST
@@ -838,14 +840,15 @@ func objects_updated() -> void:
 ## most, so a frame asking again gets the same answer without the work.
 func weather() -> Dictionary:
 	var t := now()
-	if t != _weather_at or weather_override != _weather_for:
+	var forced := weather_override if weather_override != "" else ("clear" if t < clear_until else "")
+	if t != _weather_at or forced != _weather_for:
 		_weather_at = t
-		_weather_for = weather_override
+		_weather_for = forced
 		_weather = Weather.current(
 			t,
 			DayCycle.SEASON,
 			DayCycle.local_hour(t, DayCycle.device_bias_minutes()),
-			weather_override
+			forced
 		)
 	return _weather
 
@@ -1071,6 +1074,7 @@ func _new_game() -> void:
 	gems = START_GEMS
 	xp = 0
 	debug_time_offset = 0
+	clear_until = now() + FRESH_FARM_CLEAR_SECONDS
 	tutorial_step = Tutorial.HARVEST
 	objects = []
 	next_uid = 1
@@ -1150,6 +1154,7 @@ func save_game() -> void:
 		"tutorial_step": tutorial_step,
 		"objects": objects,
 		"farm_size": farm_size,
+		"clear_until": clear_until,
 		"unwithers": unwithers,
 		"fertilize_alls": fertilize_alls,
 		"parts": parts,
@@ -1233,6 +1238,7 @@ func load_game() -> bool:
 	if saved_plots.size() != MAX_SIZE * MAX_SIZE:
 		return false
 	farm_size = clampi(int(data.get("farm_size", START_SIZE)), START_SIZE, MAX_SIZE)
+	clear_until = int(data.get("clear_until", 0))
 	unwithers = int(data.get("unwithers", START_UNWITHERS))
 	fertilize_alls = int(data.get("fertilize_alls", 0))
 	var saved_parts: Dictionary = data.get("parts", {})

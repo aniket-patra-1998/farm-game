@@ -662,3 +662,21 @@ func test_131_every_kind_stands_within_its_size_range_and_flowers_are_smaller_th
 	_check(low["bloom"] >= 0.29 and top["bloom"] <= 0.51,
 		"blooms stand 0.3-0.5 (%.2f-%.2f)" % [low["bloom"], top["bloom"]])
 	_check(top["bloom"] < low["tree"], "the tallest flower is shorter than the shortest tree")
+
+
+func test_134_new_farms_start_in_fair_weather_and_rain_keeps_the_butterflies_in() -> void:
+	var g := _farm(true)
+	_check(g.clear_until > g.now(), "a new farm is clear for its first half hour")
+	_eq(str(g.weather()["state"]), "clear", "so it is sunny when you open it")
+	var was: String = Game.weather_override
+	Game.weather_override = "rain"
+	var life := AmbientLife.new()
+	life.rebuild()
+	life._follow_weather()
+	_check(not life._butterflies.visible and not life._birds.visible, "no butterflies or birds in the rain")
+	Game.weather_override = "clear"
+	life._follow_weather()
+	_check(life._butterflies.visible and life._birds.visible, "they come back in fair weather")
+	life.free()
+	Game.weather_override = was
+	_done(g)
