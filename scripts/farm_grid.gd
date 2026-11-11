@@ -262,8 +262,11 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 		PlaceholderArt.draw_footprint(ci, corners_of(i / MAX, i % MAX, 1, 1), true)
 	var lifted := int(placing.get("uid", -1))
 	var t := Time.get_ticks_msec() / 1000.0
+	# In 3D a building shows how full it is on itself; the numbers come up only while you're placing
+	# something (deciding which home it goes in). So most frames only strays need a look at each object.
+	var counts_shown := not pieces.three_d or not placing.is_empty()
 	for o in Game.objects:
-		if int(o["uid"]) == lifted:
+		if int(o["uid"]) == lifted or not (counts_shown or o.get("stray", false)):
 			continue
 		var fp := Game.footprint(o["id"])
 		var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
@@ -277,9 +280,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			counts = Vector2i(Game.storage.stored.size(), Game.storage.barn_capacity())
 		elif Game.is_building(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
-		# In 3D a building shows how full it is on itself; the numbers come up only while you're placing
-		# something (deciding which home it goes in).
-		if counts.x >= 0 and (not pieces.three_d or not placing.is_empty()):
+		if counts.x >= 0 and counts_shown:
 			PlaceholderArt.draw_count_sign(ci, g, counts.x, counts.y)
 	# Twinkles: each on its own beat, so a ripe field shimmers instead of blinking.
 	for p in ready:

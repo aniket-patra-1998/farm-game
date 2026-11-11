@@ -164,7 +164,11 @@ func redraw_all() -> void:
 
 ## Pieces showing something ready to collect (the overlay twinkles over them).
 func ready_pieces() -> Array:
-	return _ready_list.filter(func(p): return is_instance_valid(p) and p.is_ready())
+	var out: Array = []
+	for p: FarmPiece in _ready_list:
+		if is_instance_valid(p) and p.is_ready():
+			out.append(p)
+	return out
 
 
 

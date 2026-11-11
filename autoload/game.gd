@@ -42,6 +42,9 @@ const FERTILIZER_COST := 10
 const FERTILIZER_BONUS := 0.2      # +20% coins on a fertilized plot
 const BONUS_XP := 2
 const SAVE_PATH := "user://save.json"
+const SAVE_DELAY_MSEC := 1500    # changes are written together, at most this often (a save is the whole farm)
+const BACKUP_SUFFIX := ".bak"     # the save before the last one: used if the newest is unreadable
+const TEMP_SUFFIX := ".tmp"
 const SAVE_VERSION := 2         # 2: FarmVille footprints (older saves are settled on load)
 const OLDEST_SAVE_VERSION := 1
 const SHOWCASE_ARG := "--showcase"  # debug builds: start on the showcase farm (godot ... -- --showcase)
@@ -144,7 +147,7 @@ var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/sa
 var _occupied := {}                # tile index -> uid of the object covering it
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
-var _save_queued := false
+var _save_due_msec := -1          # when a queued save is written (-1: nothing waiting)
 
 
 func _init() -> void:
@@ -211,6 +214,8 @@ func _notification(what: int) -> void:
 ## The farmer works through their queue as time passes (PlayerSystem).
 func _process(delta: float) -> void:
 	player.advance(delta)
+	if _save_due_msec >= 0 and Time.get_ticks_msec() >= _save_due_msec:
+		save_game()
 
 
 func now() -> int:
@@ -1274,19 +1279,15 @@ func _set_starter(row: int, col: int, crop_id: String, planted_at: int) -> void:
 # ---------------------------------------------------------------- save/load
 
 
+## A change to save soon: changes within SAVE_DELAY_MSEC of each other are written once (the whole farm is
+## serialised each time, and a phone feels that). Pausing or closing the app saves at once.
 func queue_save() -> void:
-	if _save_queued:
-		return
-	_save_queued = true
-	_flush_save.call_deferred()
-
-
-func _flush_save() -> void:
-	_save_queued = false
-	save_game()
+	if _save_due_msec < 0:
+		_save_due_msec = Time.get_ticks_msec() + SAVE_DELAY_MSEC
 
 
 func save_game() -> void:
+	_save_due_msec = -1
 	if not saving_enabled:
 		return
 	var data := {
@@ -1311,11 +1312,37 @@ func save_game() -> void:
 	}
 	for system in systems:
 		system.save_to(data)
-	var f := FileAccess.open(save_path, FileAccess.WRITE)
+	_write_safely(JSON.stringify(data))
+
+
+## Written so a crash or a full disk can't lose the farm: the new save goes to a temporary file first, the
+## last good save is kept as a backup, and only then does the new one take its place.
+func _write_safely(text: String) -> void:
+	var tmp := save_path + TEMP_SUFFIX
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
 		push_warning("Could not write save file")
 		return
-	f.store_string(JSON.stringify(data))
+	f.store_string(text)
+	f.close()
+	if FileAccess.file_exists(save_path):
+		DirAccess.rename_absolute(save_path, save_path + BACKUP_SUFFIX)
+	DirAccess.rename_absolute(tmp, save_path)
+
+
+## The saved farm as a dictionary: the save, or its backup if the save is missing or unreadable.
+func _read_save() -> Dictionary:
+	for path in [save_path, save_path + BACKUP_SUFFIX]:
+		if not FileAccess.file_exists(path):
+			continue
+		var f := FileAccess.open(path, FileAccess.READ)
+		if f == null:
+			continue
+		var parsed: Variant = JSON.parse_string(f.get_as_text())
+		if typeof(parsed) == TYPE_DICTIONARY:
+			return parsed
+		push_warning("Save %s is unreadable" % path)
+	return {}
 
 
 ## Debug builds: the farm with everything on it, for testing (ShowcaseFarm), built fresh in its own save.
@@ -1345,13 +1372,8 @@ func in_showcase() -> bool:
 
 
 func load_game() -> bool:
-	if not FileAccess.file_exists(save_path):
-		return false
-	var f := FileAccess.open(save_path, FileAccess.READ)
-	if f == null:
-		return false
-	var data = JSON.parse_string(f.get_as_text())
-	if typeof(data) != TYPE_DICTIONARY:
+	var data := _read_save()
+	if data.is_empty():
 		return false
 	var version := int(data.get("version", 0))
 	if version < OLDEST_SAVE_VERSION or version > SAVE_VERSION:

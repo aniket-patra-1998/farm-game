@@ -113,3 +113,38 @@ func test_111_an_old_save_settles_into_the_new_footprints() -> void:
 	_eq(h.settle_objects(), 0, "after that, everything fits")
 	h.queue_free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func test_124_a_damaged_save_falls_back_to_the_backup_and_saves_are_batched() -> void:
+	var path := "user://test_save_backup.json"
+	var g := _farm()
+	g.save_path = path
+	g.saving_enabled = true
+	g.coins = 1111
+	g.save_game()
+	g.coins = 2222
+	g.save_game()  # the first save is now the backup
+	g.saving_enabled = false
+	_check(FileAccess.file_exists(path + GameState.BACKUP_SUFFIX), "the last good save is kept")
+	_check(not FileAccess.file_exists(path + GameState.TEMP_SUFFIX), "no half-written file is left")
+	_done(g)
+
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string("{\"version\": 2, \"coins\": 33")  # a write cut short
+	f.close()
+	var h := GameState.new()
+	h.save_path = path
+	add_child(h)
+	h.saving_enabled = false
+	_eq(h.coins, 1111, "the farm comes back from the backup, not as a new game")
+
+	h.saving_enabled = true
+	h.queue_save()
+	h.queue_save()
+	_check(h._save_due_msec >= 0, "a change waits to be saved")
+	h.save_game()
+	_eq(h._save_due_msec, -1, "and one save covers all of them")
+	h.saving_enabled = false
+	h.queue_free()
+	for suffix in ["", GameState.BACKUP_SUFFIX, GameState.TEMP_SUFFIX]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
