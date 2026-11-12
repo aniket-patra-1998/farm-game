@@ -18,13 +18,13 @@ const GLOW_LIFT := 0.02      # a pool of light lies this far above the ground
 const FACET_SEGMENTS := 8     # a faceted ball: around
 const FACET_RINGS := 4        # and up
 const MIN_DETAIL := 0.35
-const BALL_SEGMENTS := 12
-const BALL_RINGS := 7
-const CANOPY_SEGMENTS := 24   # a canopy's grid: around
+const BALL_SEGMENTS := 8
+const BALL_RINGS := 5
+const CANOPY_SEGMENTS := 16   # a canopy's grid: around
 const CANOPY_BANDS := 4.0     # steps of light on a canopy,
 const CANOPY_BANDING := 0.55  # how firmly it keeps to them (0: smooth)
 const CANOPY_MOTTLE := 0.1    # and how much leaf-sized patches vary it
-const CANOPY_RINGS := 12      # and up
+const CANOPY_RINGS := 8       # and up
 
 const CYLINDER_SIDES := 12
 

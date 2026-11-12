@@ -46,7 +46,11 @@ static func _heights() -> Dictionary:
 
 ## An item's real height in tiles: its model built as the farm builds it and measured (0 if it has no model).
 static func height_of(id: String) -> float:
+	# Always measured at full detail, so a crowd being built (which lowers it) never changes what an item measures.
+	var detail := ModelKit.detail
+	ModelKit.detail = 1.0
 	var node := model_of(id)
+	ModelKit.detail = detail
 	if node == null:
 		return 0.0
 	var h := _top(node, Transform3D.IDENTITY)
