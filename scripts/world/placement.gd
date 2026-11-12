@@ -6,13 +6,12 @@ extends RefCounted
 ## Fences, hedges, walls and paths are laid as a line: press where it starts, drag along the ground, let go.
 ## The FarmGrid owns one (`grid.placement`) and draws the ghost from `state`.
 
+const LINE_MAX := 40   # the longest line laid in one drag, in tiles
+
 var grid: FarmGrid
 ## What is in hand: {"item": id, "uid": -1 (a purchase) or the uid being moved, "stored": barn index, "row", "col",
 ## "homes": {home uid: fit}, "home": the home under the finger or -1}.
 var state := {}
-
-const LINE_MAX := 40   # the longest line laid in one drag, in tiles
-
 
 func _init(owner: FarmGrid) -> void:
 	grid = owner
