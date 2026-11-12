@@ -6,8 +6,8 @@ extends RefCounted
 const DIR := "res://art/models/quaternius/%s.fbx"
 const DATA := "res://data/animal_models.json"
 const UNIT := 100.0       # the files are modelled at 1/100 and their armature scales them up
-const IDLE := "Armature|Idle"
-const WALK := "Armature|Walk"
+const IDLE := "Armature|Idle"  # not-ui
+const WALK := "Armature|Walk"  # not-ui
 const BLEND := 0.25       # seconds to ease from one animation to the next
 
 static var _data: Dictionary = {}
@@ -33,7 +33,7 @@ static func families() -> Array:
 ## Returns {"player", "height", "length", "width"}.
 static func build(parent: Node3D, spec: Dictionary, rig: AnimalRig, length: float) -> Dictionary:
 	var inst := (load(DIR % spec["file"]) as PackedScene).instantiate() as Node3D
-	var mesh := inst.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	var mesh := inst.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D  # not-ui
 	var skeleton := mesh.get_parent() as Node3D
 	var armature := skeleton.get_parent() as Node3D
 	var box := _bounds(str(spec["file"]), mesh, armature)
@@ -53,11 +53,11 @@ static func build(parent: Node3D, spec: Dictionary, rig: AnimalRig, length: floa
 		var role := str(roles[i]) if i < roles.size() else "keep"
 		var col := rig.body_color if role == "coat" else rig.accent_color if role == "accent" else base
 		mesh.set_surface_override_material(i, ModelKit.paint(col))
-	var player := inst.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
+	var player := inst.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer  # not-ui
 	var lib := player.get_animation_library(&"")
 	if spec.has("walk_from"):
 		var other := (load(DIR % spec["walk_from"]) as PackedScene).instantiate()
-		var from := other.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer
+		var from := other.find_children("*", "AnimationPlayer", true, false)[0] as AnimationPlayer  # not-ui
 		if not lib.has_animation(WALK):
 			lib.add_animation(WALK, from.get_animation(WALK).duplicate())
 		other.free()
@@ -88,6 +88,6 @@ static func _floor(skeleton: Skeleton3D, armature: Node3D, fallback: float) -> f
 	var low := INF
 	for b in skeleton.get_bone_count():
 		var n := skeleton.get_bone_name(b)
-		if n.contains("Foot") and n.ends_with("_end"):
+		if n.contains("Foot") and n.ends_with("_end"):  # not-ui
 			low = minf(low, (armature.transform * skeleton.get_bone_global_rest(b).origin).y)
 	return fallback if low == INF else low
