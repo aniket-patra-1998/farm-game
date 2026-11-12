@@ -220,7 +220,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 ## in the crown catch more light than the ones low down).
 static func _canopy(root: Node3D, at: Vector3, radii: Vector3, rng: RandomNumberGenerator, leaf: Color, sun: Vector3,
 		lift: float, lobes: int, bump: float, shine: float) -> void:
-	var shade := func(light: float) -> Color: return _shade(leaf, clampf(0.3 + light * 0.85 + lift * 0.5, 0.0, 1.0))
+	var shade := func(light: float) -> Color: return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0))
 	ModelKit.canopy(root, at, radii, rng, shade, sun, lobes, bump, shine)
 
 
@@ -243,7 +243,7 @@ static func _limb(root: Node3D, from: Vector3, to: Vector3, r: float) -> void:
 static func _shade(leaf: Color, light: float) -> Color:
 	var h := leaf.h + lerpf(0.025, -0.03, light)
 	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
-	var v := clampf(leaf.v * lerpf(0.62, 1.5, light), 0.0, 1.0)
+	var v := clampf(leaf.v * lerpf(0.42, 1.5, light), 0.0, 1.0)
 	return Color.from_hsv(h, s, v)
 
 

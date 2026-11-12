@@ -17,6 +17,9 @@ const MIN_DETAIL := 0.35
 const BALL_SEGMENTS := 12
 const BALL_RINGS := 7
 const CANOPY_SEGMENTS := 24   # a canopy's grid: around
+const CANOPY_BANDS := 4.0     # steps of light on a canopy,
+const CANOPY_BANDING := 0.55  # how firmly it keeps to them (0: smooth)
+const CANOPY_MOTTLE := 0.1    # and how much leaf-sized patches vary it
 const CANOPY_RINGS := 12      # and up
 
 const CYLINDER_SIDES := 12
@@ -277,6 +280,10 @@ static func canopy(parent: Node3D, centre: Vector3, radii: Vector3, rng: RandomN
 			tone += w * tones[k]
 		verts[i] = d * radii * (1.0 + bump * (push - 0.35))
 		var light := clampf(0.45 + 0.4 * d.y + 0.42 * d.dot(sun) + tone + 0.08 * push, 0.0, 1.0)
+		# Painted, not smooth: light falls in a few soft bands, with a mottle of leaf-sized lighter and darker patches.
+		light = lerpf(light, roundf(light * CANOPY_BANDS) / CANOPY_BANDS, CANOPY_BANDING)
+		light = clampf(light + CANOPY_MOTTLE * sin(d.x * 11.0 + d.z * 5.0) * sin(d.y * 13.0 + d.x * 4.0)
+			* sin(d.z * 12.0 - d.y * 6.0), 0.0, 1.0)
 		colours[i] = shade.call(light)
 	# Smooth normals: the same point is one vertex (the seam of the sphere's grid is a pair) so no crease shows.
 	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
