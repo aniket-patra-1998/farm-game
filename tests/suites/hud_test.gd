@@ -14,7 +14,8 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 	var hud: FarmHud = main.get("hud")
 	_check(hud != null, "the HUD exists")
 	if hud == null:
-		main.free()
+		main.queue_free()
+		await get_tree().process_frame
 		return
 	var book: BookPanel = hud.get("_book")
 	var opened := 0
@@ -43,4 +44,5 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 	await get_tree().process_frame
 	Game.open_own_farm()
 	await get_tree().process_frame
-	main.free()
+	main.queue_free()
+	await get_tree().process_frame

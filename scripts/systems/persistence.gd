@@ -56,11 +56,12 @@ func save(in_background := false) -> void:
 		return
 	var copy: Dictionary = data.duplicate(true)  # the game goes on changing `data`'s parts; the thread keeps this
 	_thread = Thread.new()
-	_thread.start(_write_snapshot.bind(copy, game.save_path))
+	_thread.start(Persistence._write_snapshot.bind(copy, game.save_path))
 
 
-## (On the save thread.) The copy as text, then safely onto disk.
-func _write_snapshot(copy: Dictionary, path: String) -> void:
+## (On the save thread.) The copy as text, then safely onto disk. Static, so the running thread holds nothing that the
+## game could free from under it (a reset builds new systems while an old save may still be writing).
+static func _write_snapshot(copy: Dictionary, path: String) -> void:
 	_write_safely(JSON.stringify(copy), path)
 
 
@@ -78,7 +79,7 @@ func is_writing() -> bool:
 
 ## Written so a crash or a full disk can't lose the farm: the new save goes to a temporary file first, the
 ## last good save is kept as a backup, and only then does the new one take its place.
-func _write_safely(text: String, path: String) -> void:
+static func _write_safely(text: String, path: String) -> void:
 	var tmp := path + GameState.TEMP_SUFFIX
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:

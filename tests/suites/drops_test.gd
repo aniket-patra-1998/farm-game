@@ -98,7 +98,8 @@ func test_203_a_drop_on_a_home_that_cannot_take_it_sends_the_thing_back() -> voi
 	_check(grid.placing.is_empty(), "the hand is empty")
 	_check(Game.object_by_uid(uid).is_empty(), "the cow has left the farm")
 	_eq(Game.storage.stored.size(), 1, "and is in the barn")
-	main.free()
+	main.queue_free()
+	await get_tree().process_frame
 
 
 func _screen_of(world: Farm3D, building: Dictionary) -> Vector2:
