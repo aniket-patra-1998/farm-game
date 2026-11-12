@@ -40,3 +40,15 @@ static func vec(build: Dictionary, block: String, key: String, fallback: Vector3
 	if a.size() < 2:
 		return fallback
 	return Vector3(float(a[0]), float(a[1]), float(a[2]) if a.size() > 2 else fallback.z)
+
+
+## A fleece: `count` tufts spread over the body's surface (a spiral, more on top than underneath), each a ball
+## `size` of the body's height across, so the animal reads as a cloud of wool.
+static func fleece(parent: Node3D, count: int, r: Vector3, size: float, mat: Material) -> void:
+	for i in count:
+		var t := (i + 0.5) / count
+		var y := lerpf(-0.45, 1.0, t)               # from low on the flanks to the top of the back
+		var ring := sqrt(maxf(1.0 - y * y, 0.0))
+		var a := i * 2.399963                       # the golden angle: no two tufts line up
+		var dir := Vector3(cos(a) * ring, y, sin(a) * ring)
+		ModelKit.ball(parent, dir * r * 0.82, r.y * size, mat)

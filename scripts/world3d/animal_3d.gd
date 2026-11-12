@@ -322,11 +322,9 @@ func _build_quad() -> void:
 	_bend = AnimalBuild.num(build, "leg", "bend", 0.56)
 	# The body: the family's own masses (AnimalBuild), or a plain barrel; with wool, spots or patches on it.
 	if rig.flag("wool"):
-		for k in 9:
-			var a := TAU * k / 9.0
-			ModelKit.ball(_body, Vector3(cos(a) * _r.x * 0.62, sin(a) * _r.y * 0.4, 0), _r.y * 0.62,
-				ModelKit.paint(coat.lightened(0.06)))
-		ModelKit.ball(_body, Vector3.ZERO, 1.0, ModelKit.paint(coat.lightened(0.06)), _r * Vector3(0.95, 0.95, 1.05))
+		var wool := ModelKit.paint(coat.lightened(0.06))
+		AnimalBuild.torso(_body, build.get("torso", [[0, 0, 0, 0.95, 0.95, 1.05]]), _r, wool)
+		AnimalBuild.fleece(_body, int(build.get("fleece", 16)), _r, float(build.get("tuft", 0.42)), wool)
 	elif build.has("torso"):
 		AnimalBuild.torso(_body, build["torso"], _r, mat)
 	else:
@@ -363,7 +361,9 @@ func _build_quad() -> void:
 		_legs.append({"hip": hip, "upper": upper, "lower": lower, "hoof": hoof, "phase": LEG_PHASES[k], "fore": fore,
 			"k": k})
 	# Neck and head.
-	_neck = _segment(mat, _px(rig.pair("neck", Vector2(14, 9)).y) * 1.6)
+	var neck_w := AnimalBuild.num(build, "neck", "w", 1.0)
+	_neck = _segment(mat, _px(rig.pair("neck", Vector2(14, 9)).y) * 1.6 * neck_w,
+		AnimalBuild.num(build, "neck", "taper", 1.0))
 	_head = Node3D.new()
 	_body.add_child(_head)
 	var h := rig.pair("head", Vector2(14, 10)) * rig.head_scale * AnimalBuild.num(build, "head", "scale", 1.0)
@@ -377,6 +377,7 @@ func _build_quad() -> void:
 	var skull := AnimalBuild.vec(build, "head", "skull_r", Vector3(0.48, 0.5, 0.45))
 	ModelKit.ball(_head, Vector3(-hl * 0.1, 0, 0), 1.0, ModelKit.paint(head_col),
 		Vector3(hl * skull.x, hh * skull.y, hh * skull.z), true)
+	var at := AnimalBuild.vec(build, "head", "muzzle_at", Vector3(0.32, -0.08, 0.0))
 	var muzzle := _muzzle_colour(rig.text("muzzle", "light"), head_col)
 	if rig.text("muzzle") == "snout":
 		var snout := ModelKit.cylinder(
@@ -391,10 +392,12 @@ func _build_quad() -> void:
 		snout.rotation.z = -PI / 2.0
 		snout.position = Vector3(hl * 0.42, 0, 0)
 	else:
-		var at := AnimalBuild.vec(build, "head", "muzzle_at", Vector3(0.32, -0.08, 0.0))
 		var mr := AnimalBuild.vec(build, "head", "muzzle_r", Vector3(0.28, 0.36, 0.38))
 		ModelKit.ball(_head, Vector3(hl * at.x, hh * at.y, 0), 1.0, ModelKit.paint(muzzle),
 			Vector3(hl * mr.x, hh * mr.y, hh * mr.z), true)
+	if rig.flag("beard"):
+		ModelKit.ball(_head, Vector3(hl * at.x, -hh * 0.55, 0), hh * 0.2,
+			ModelKit.paint(accent.lerp(head_col, 0.3)), Vector3(0.7, 1.9, 0.7))
 	var eye_r := hh * 0.09 * rig.num("eye_scale", 1.0) * AnimalBuild.num(build, "head", "eye", 1.0)
 	for side: float in [-1.0, 1.0]:
 		_eyes.append(ModelKit.ball(_head, Vector3(hl * 0.05, hh * 0.15, side * hh * 0.4), eye_r, ModelKit.paint(EYE, 0.8)))
@@ -491,6 +494,8 @@ static func _muzzle_colour(kind: String, head_col: Color) -> Color:
 			return head_col.lerp(PINK, 0.65)
 		"dark":
 			return head_col.darkened(0.35)
+		"coat":
+			return head_col.darkened(0.12)
 		"snout":
 			return head_col.lerp(PINK, 0.35).darkened(0.08)
 	return head_col.lightened(0.25)

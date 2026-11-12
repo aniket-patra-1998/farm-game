@@ -10,7 +10,7 @@
       "muzzle": "light", "ears": "side", "horns": "short", "tail": "tuft", "tail_len": 22, "markings": "none",
       "speed": 10, "behaviour": {"graze": 0.45, "walk": 0.2, "idle": 0.25, "look": 0.1}},
     "horse": {"scale": 1.12, "type": "quad", "body": [26, 12], "leg": 22, "neck": [20, 9], "neck_up": -1.0, "head": [18, 8],
-      "muzzle": "dark", "ears": "up", "mane": "long", "tail": "hair", "tail_len": 26, "markings": "none",
+      "muzzle": "coat", "ears": "up", "mane": "long", "tail": "hair", "tail_len": 26, "markings": "none",
       "speed": 15, "behaviour": {"graze": 0.35, "walk": 0.3, "idle": 0.2, "look": 0.15}},
     "donkey": {"scale": 0.95, "type": "quad", "body": [22, 12], "leg": 17, "neck": [15, 9], "neck_up": -0.8, "head": [16, 9],
       "muzzle": "light", "ears": "long", "mane": "short", "tail": "tuft", "tail_len": 20, "markings": "pale_belly",
