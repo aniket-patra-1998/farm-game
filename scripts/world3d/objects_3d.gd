@@ -22,6 +22,10 @@ const DROP_HEIGHT := 1.4      # tiles above the ground a new thing falls from
 const YARD_HEIGHT := 0.3      # a building's yard and fence, for taps
 const PART_HEIGHT := 1.0      # what stands beside a building (a silo, an annex), for taps
 const ROOF_EXTRAS := 0.35     # chimneys, cupolas and vanes above the roof, for taps
+const TREE_CROWN_AT := 0.6     # where a tree's crown is centred, of its height
+const TREE_CROWN_FILL := 0.92  # how much of its box the pickable crown takes: the leafy outline is ragged
+const TREE_TRUNK_HALF := 0.12  # half the width of the pickable trunk, in tiles
+const TREE_CENTRE_BIAS := 0.6  # tiles of depth a tap at the crown's very edge is worth less than at its middle
 
 
 static var _ghost_materials := {}   # tint name -> the shared see-through material
@@ -31,10 +35,6 @@ var life: FarmLife  # the animals' minds (shared with the 2D world)
 var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
 
 
-const TREE_CROWN_AT := 0.6     # where a tree's crown is centred, of its height
-const TREE_CROWN_FILL := 0.92  # how much of its box the pickable crown takes: the leafy outline is ragged
-const TREE_TRUNK_HALF := 0.12  # half the width of the pickable trunk, in tiles
-const TREE_CENTRE_BIAS := 0.6  # tiles of depth a tap at the crown's very edge is worth less than at its middle
 
 var _views := {}   # uid -> {"node": Node3D, "key": String}
 var _animals: Array[Animal3D] = []
