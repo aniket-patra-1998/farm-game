@@ -11,21 +11,23 @@ extends RefCounted
 
 const SWAY := 0.035                # how far a tree bends in the wind (paint3d sway, by height)
 const PATH := "res://data/tree_shapes.json"
-const BARK := Color("#7a4f2c")
+const BARK := Color("#684528")
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
 const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
 const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
 const FRUIT_SMALL_R := 0.02
-const FRUIT_OUT := 0.98     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
+const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
-const TRUNK_BULK := 0.85    # trunks are drawn a little slimmer than the data says
+const TRUNK_BULK := 0.7     # trunks are drawn slimmer than the data says (FarmVille's were slender)
 const TRUNK_TALL := 1.15    # and longer: a trunk shows under the crown, the tree stands on it
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
 const TALL_MAX := 1.2       # ..to this much
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
+const CROWN_LOBES := 7       # rounded bulges on each leafy mass (data can set "lobes")
+const CROWN_BUMP := 0.2      # how far they push out ("bump")
 const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
 
 static var _data := {}
@@ -137,10 +139,10 @@ static func _trunk(t: Dictionary) -> Vector3:
 	var h := float(sh["trunk_h"]) * k
 	var r := float(sh["trunk_r"]) * k * TRUNK_BULK
 	var lean: Vector3 = t["lean"]
-	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h, ModelKit.surface(BARK, "logs", 0.3), r * 0.65, 8)
+	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h, ModelKit.paint(BARK), r * 0.6, 8)
 	trunk.rotation = Vector3(lean.z, 0, -lean.x)
 	# The trunk flares at the foot into roots that grip the ground.
-	ModelKit.cylinder(root, Vector3.ZERO, r * 1.9, r * 1.4, ModelKit.surface(BARK, "logs", 0.3), r * 1.0, 8)
+	ModelKit.cylinder(root, Vector3.ZERO, r * 1.9, r * 1.4, ModelKit.paint(BARK), r * 1.0, 8)
 	for i in 3:
 		var ra := TAU * i / 3.0 + float(t["lean"].x) * 20.0
 		var rt := ModelKit.ball(root, Vector3(cos(ra) * r * 1.5, r * 0.25, sin(ra) * r * 1.5), r * 0.6,
@@ -189,29 +191,31 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	# with gaps where the branches show, not a ball. Its centre is off the trunk a little, so no two sides match.
 	var mid := centre + Vector3(rng.randf_range(-0.1, 0.1) * cr, 0.0, rng.randf_range(-0.1, 0.1) * cr)
 	var foot := Vector3(centre.x, centre.y - ch * 0.55, centre.z)
-	ModelKit.ball(root, mid, 1.0, ModelKit.paint(_shade(leaf, 0.0), shine), Vector3(cr * 0.5, ch * 0.4, cr * 0.5))
+	# The light in the tree's own space (the tree is turned at random, the sun is not).
+	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -float(t["root"].rotation.y))
+	var lobes := int(sh.get("lobes", CROWN_LOBES))
+	var bump := float(sh.get("bump", CROWN_BUMP))
+	# The core, a soft mass of the whole crown's width, then the masses around it: each one smooth and lumpy,
+	# overlapping, so the crown reads as one canopy with a scalloped outline and a few deep folds.
+	_canopy(root, mid, Vector3(cr * 0.72, maxf(ch * 0.5, cr * 0.4), cr * 0.72), rng, leaf, sun, 0.0, lobes, bump, shine)
 	for i in masses:
 		var a := i * 2.399963 + rng.randf() * 0.4
 		var y := lerpf(-0.3, 0.5, fposmod(i * 0.618 + rng.randf() * 0.15, 1.0))
 		var d := cr * reach * rng.randf_range(0.8, 1.15) * sqrt(maxf(1.0 - y * y * 0.6, 0.2))
 		var p := mid + Vector3(cos(a) * d, y * ch * 0.7, sin(a) * d)
-		var size := cr * mass * rng.randf_range(0.88, 1.15)
-		var light := clampf(0.45 + y * 0.7 + rng.randf_range(-0.1, 0.1), 0.0, 1.0)
-		var squash := Vector3(rng.randf_range(1.05, 1.3), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.9, 1.15))
-		var blob := ModelKit.facet_ball(root, p, size, ModelKit.paint(_shade(leaf, light), shine), squash)
+		var size := cr * mass * rng.randf_range(0.85, 1.1)
+		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
+		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3), lobes, bump, shine)
 		(t["blobs"] as Array).append([p, size, a])
-		blob.rotation.y = rng.randf() * TAU
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * 0.5)
-		for j in ModelKit.scaled(3, 1):
-			var b := a + rng.randf_range(-1.0, 1.0)
-			var out := Vector3(cos(b), rng.randf_range(0.0, 0.7), sin(b)).normalized()
-			ModelKit.facet_ball(root, p + out * size * 0.9, size * rng.randf_range(0.3, 0.45),
-				ModelKit.paint(_shade(leaf, clampf(light + 0.15, 0.0, 1.0)), shine), Vector3(1, rng.randf_range(0.7, 0.95), 1))
-	# Sun-struck tufts on top.
-	for i in 3:
-		var a := TAU * i / 3.0 + rng.randf()
-		var p := mid + Vector3(cos(a) * cr * 0.3, ch * 0.62, sin(a) * cr * 0.3)
-		ModelKit.facet_ball(root, p, cr * 0.2, ModelKit.paint(_shade(leaf, 1.0), shine), Vector3(1, 0.8, 1))
+
+
+## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up
+## in the crown catch more light than the ones low down).
+static func _canopy(root: Node3D, at: Vector3, radii: Vector3, rng: RandomNumberGenerator, leaf: Color, sun: Vector3,
+		lift: float, lobes: int, bump: float, shine: float) -> void:
+	var shade := func(light: float) -> Color: return _shade(leaf, clampf(0.3 + light * 0.85 + lift * 0.5, 0.0, 1.0))
+	ModelKit.canopy(root, at, radii, rng, shade, sun, lobes, bump, shine)
 
 
 ## A branch from one point to another: a thin tapering cylinder tipped to lie along the line.
@@ -233,7 +237,7 @@ static func _limb(root: Node3D, from: Vector3, to: Vector3, r: float) -> void:
 static func _shade(leaf: Color, light: float) -> Color:
 	var h := leaf.h + lerpf(0.025, -0.03, light)
 	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
-	var v := clampf(leaf.v * lerpf(0.58, 1.18, light), 0.0, 1.0)
+	var v := clampf(leaf.v * lerpf(0.62, 1.5, light), 0.0, 1.0)
 	return Color.from_hsv(h, s, v)
 
 
@@ -282,7 +286,7 @@ static func _palm(t: Dictionary) -> Vector3:
 ## A frond: a spine arching out and down, with a leaf blade along it in a few bent segments.
 static func _frond(root: Node3D, from: Vector3, dir: Vector3, reach: float, leaf: Color,
 		rng: RandomNumberGenerator) -> void:
-	var mat := ModelKit.paint(leaf.darkened(rng.randf_range(0.0, 0.12)))
+	var mat := ModelKit.paint(leaf.darkened(rng.randf_range(0.2, 0.32)))  # (flat fronds catch the sun full on)
 	var side := Vector3(-dir.z, 0, dir.x)
 	var prev := from
 	var segments := 4

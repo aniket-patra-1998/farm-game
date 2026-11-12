@@ -16,6 +16,8 @@ const FACET_RINGS := 4        # and up
 const MIN_DETAIL := 0.35
 const BALL_SEGMENTS := 12
 const BALL_RINGS := 7
+const CANOPY_SEGMENTS := 20   # a canopy's grid: around
+const CANOPY_RINGS := 10      # and up
 
 const CYLINDER_SIDES := 12
 
@@ -236,6 +238,69 @@ static func facet_ball(parent: Node3D, centre: Vector3, r: float, mat: Material,
 	mi.position = centre
 	mi.scale = scale * r
 	mi.material_override = mat
+	parent.add_child(mi)
+	return mi
+
+
+## A leafy canopy: one smooth, lumpy mass (an ellipsoid of `radii`, pushed out in `lobes` rounded bulges, like
+## the scalloped crown of a painted tree), shaded by vertex colour from `shade` (a Callable from how lit a point
+## is, 0 deep shade .. 1 full sun, to a colour). `sun` is the direction of the light in the mesh's own space.
+## One mesh and one draw, soft inside and rough only along its outline; the paint material is white because
+## the colour is in the vertices.
+static func canopy(parent: Node3D, centre: Vector3, radii: Vector3, rng: RandomNumberGenerator, shade: Callable,
+		sun: Vector3, lobes := 7, bump := 0.2, shine := 0.0) -> MeshInstance3D:
+	var sphere := SphereMesh.new()
+	sphere.radius = 1.0
+	sphere.height = 2.0
+	sphere.radial_segments = scaled(CANOPY_SEGMENTS, 8)
+	sphere.rings = scaled(CANOPY_RINGS, 4)
+	var arrays := sphere.get_mesh_arrays()
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var dirs: Array[Vector3] = []
+	var tones: Array[float] = []
+	for i in lobes:
+		# Bulges spread over the upper and side of the mass, a little more of them up where the light is.
+		var y := rng.randf_range(-0.35, 1.0)
+		var a := rng.randf() * TAU
+		var r := sqrt(maxf(1.0 - y * y, 0.0))
+		dirs.append(Vector3(cos(a) * r, y, sin(a) * r))
+		tones.append(rng.randf_range(-0.09, 0.09))   # each bulge a touch lighter or darker: leaves in clusters
+	var colours := PackedColorArray()
+	colours.resize(verts.size())
+	for i in verts.size():
+		var d := verts[i].normalized()
+		var push := 0.0
+		var tone := 0.0
+		for k in lobes:
+			var w := smoothstep(0.45, 1.0, d.dot(dirs[k]))
+			push += w
+			tone += w * tones[k]
+		verts[i] = d * radii * (1.0 + bump * (push - 0.35))
+		var light := clampf(0.45 + 0.4 * d.y + 0.42 * d.dot(sun) + tone + 0.08 * push, 0.0, 1.0)
+		colours[i] = shade.call(light)
+	# Smooth normals: the same point is one vertex (the seam of the sphere's grid is a pair) so no crease shows.
+	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var acc := {}
+	for t in range(0, idx.size(), 3):
+		var fn := (verts[idx[t + 1]] - verts[idx[t]]).cross(verts[idx[t + 2]] - verts[idx[t]])
+		for j in 3:
+			var key := Vector3i((verts[idx[t + j]] * 1000.0).round())
+			acc[key] = (acc.get(key, Vector3.ZERO) as Vector3) + fn
+	var normals := PackedVector3Array()
+	normals.resize(verts.size())
+	for i in verts.size():
+		normals[i] = (acc.get(Vector3i((verts[i] * 1000.0).round()), Vector3.UP) as Vector3).normalized()
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_COLOR] = colours
+	arrays[Mesh.ARRAY_TEX_UV] = null
+	arrays[Mesh.ARRAY_TANGENT] = null
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.position = centre
+	mi.material_override = paint(Color.WHITE, shine)
 	parent.add_child(mi)
 	return mi
 
@@ -534,6 +599,10 @@ static func tint_arrays(arrays: Array, col: Color) -> Array:
 	var colours := PackedColorArray()
 	colours.resize(n)
 	colours.fill(col)
+	if arrays[Mesh.ARRAY_COLOR] != null:  # a mesh with its own vertex colours (a canopy): the paint tints them
+		var own: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+		for i in n:
+			colours[i] = own[i] * col
 	out[Mesh.ARRAY_COLOR] = colours
 	# Everything merged into one surface must be indexed alike: a SurfaceTool mixing indexed shapes with
 	# unindexed hand-made faces drops the faces.
