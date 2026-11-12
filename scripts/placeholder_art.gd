@@ -385,7 +385,8 @@ static func draw_object(
 	level: int,
 	inside: int,
 	capacity: int,
-	broken := false
+	broken := false,
+	links := -1
 ) -> void:
 	var center := (corners[0] + corners[2]) / 2.0
 	var s := (corners[1].x - corners[3].x) / 128.0 # 1.0 for a one-tile object
@@ -415,7 +416,7 @@ static func draw_object(
 				"farm_stand":
 					_farm_stand(ci, center, it)
 				_:
-					_decor(ci, corners, center, it)
+					_decor(ci, corners, center, it, links)
 
 
 
@@ -1457,8 +1458,51 @@ static func _garage(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, insid
 # ---------------------------------------------------------------- decorations
 
 
+## Where a joining piece's arms end: the middle of the tile's sides that its mask joins on (bit order north, east,
+## south, west; the corners go top, right, bottom, left). Nothing joined: a short stub both ways, so a lone
+## piece is still a post. -1 (not known): the one run across the tile.
+static func _arm_ends(g: PackedVector2Array, ground: Vector2, links: int) -> Array[Vector2]:
+	var sides: Array[Vector2] = [
+		g[0].lerp(g[1], 0.5), g[1].lerp(g[2], 0.5), g[2].lerp(g[3], 0.5), g[3].lerp(g[0], 0.5)]
+	var out: Array[Vector2] = []
+	if links < 0:
+		return [sides[3], sides[1]]
+	for d in 4:
+		if links & (1 << d):
+			out.append(sides[d])
+	if out.is_empty():
+		return [ground.lerp(sides[3], 0.3), ground.lerp(sides[1], 0.3)]
+	if out.size() == 1:
+		out.append(ground.lerp(ground * 2.0 - out[0], 0.3))   # a free end
+	return out
+
+
+## One arm of a fence, hedge or wall from `from` to `to`.
+static func _run(ci: CanvasItem, shape: String, col: Color, from: Vector2, to: Vector2) -> void:
+	var a := from
+	var b := to
+	if shape == "hedge":
+		for k in 3:
+			var p := a.lerp(b, 0.1 + 0.4 * k)
+			ci.draw_circle(p + Vector2(0, -12), 13, col)
+			ci.draw_circle(p + Vector2(-3, -17), 6, col.lightened(0.15))
+	elif shape == "wall":
+		for row in 3:
+			for k in 2:
+				var p := a.lerp(b, 0.12 + 0.45 * k + (0.12 if row % 2 == 1 else 0.0) * 0.5) + Vector2(0, -6 - row * 9)
+				_ellipse(ci, p, 11, 5, col.darkened(0.05 * ((k + row) % 3)))
+	else:
+		for k in 3:
+			var p := a.lerp(b, 0.05 + 0.45 * k)
+			ci.draw_line(p, p + Vector2(0, -24), col.darkened(0.15), 4.0)
+			ci.draw_colored_polygon(
+				PackedVector2Array([p + Vector2(-2, -24), p + Vector2(2, -24), p + Vector2(0, -28)]), col.darkened(0.15))
+		for h in [-9.0, -18.0]:
+			ci.draw_line(a + Vector2(0, h), b + Vector2(0, h), col, 3.0)
+
+
 ## Decorations by shape. corners = the footprint on the ground, ground = its centre.
-static func _decor(ci: CanvasItem, g: PackedVector2Array, ground: Vector2, it: Dictionary) -> void:
+static func _decor(ci: CanvasItem, g: PackedVector2Array, ground: Vector2, it: Dictionary, links := -1) -> void:
 	var col := Color.html(str(it.get("color", "#a8743f")))
 	var acc := Color.html(str(it.get("accent", "#5c3a1e")))
 	match it.get("shape", ""):
@@ -1471,32 +1515,10 @@ static func _decor(ci: CanvasItem, g: PackedVector2Array, ground: Vector2, it: D
 				var p := ground + Vector2(rng.randf_range(-34, 34), rng.randf_range(-12, 12))
 				_ellipse(ci, p, 9, 4, col.darkened(0.15))
 		"fence", "hedge", "wall":
-			# Runs along the tile's back-left to front-right diagonal; Rotate turns it.
-			var a := g[3].lerp(g[0], 0.5)
-			var b := g[1].lerp(g[2], 0.5)
-			if it["shape"] == "hedge":
-				for k in 5:
-					var p := a.lerp(b, 0.1 + 0.2 * k)
-					ci.draw_circle(p + Vector2(0, -12), 13, col)
-					ci.draw_circle(p + Vector2(-3, -17), 6, col.lightened(0.15))
-			elif it["shape"] == "wall":
-				for row in 3:
-					for k in 4:
-						var p := a.lerp(
-							b,
-							0.12 + 0.25 * k + (0.12 if row % 2 == 1 else 0.0) * 0.5
-						) + Vector2(0, -6 - row * 9)
-						_ellipse(ci, p, 11, 5, col.darkened(0.05 * ((k + row) % 3)))
-			else:
-				for k in 5:
-					var p := a.lerp(b, 0.1 + 0.2 * k)
-					ci.draw_line(p, p + Vector2(0, -24), col.darkened(0.15), 4.0)
-					ci.draw_colored_polygon(
-						PackedVector2Array([p + Vector2(-2, -24), p + Vector2(2, -24), p + Vector2(0, -28)]),
-						col.darkened(0.15)
-					)
-				for h in [-9.0, -18.0]:
-					ci.draw_line(a + Vector2(0, h), b + Vector2(0, h), col, 3.0)
+			# Arms run from the tile's centre to the middle of each side that joins a neighbour (LinksSystem's
+			# mask: north, east, south, west). Unknown (-1): the one diagonal run. Alone: a post.
+			for end in _arm_ends(g, ground, links):
+				_run(ci, str(it["shape"]), col, ground, end)
 		"haybale":
 			_shadow(ci, ground + Vector2(0, 2), 26, 9)
 			ci.draw_rect(Rect2(ground + Vector2(-22, -22), Vector2(44, 22)), col)

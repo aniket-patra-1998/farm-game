@@ -11,7 +11,6 @@ const WHEEL_STEP := 1.1
 const DAYLIGHT_EVERY := 0.1   # seconds between updates of the 3D sun, sky light and window glow
 
 var grid: FarmGrid
-var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 var camera: FarmCamera
 var hud: FarmHud
 var sky: SkyLayer
@@ -26,6 +25,7 @@ var _base_zoom := 1.0       # zoom that shows the whole farm; also the furthest 
 var _touches := {}          # finger index -> screen position
 var _pinch_dist := 0.0
 var _mouse_panning := false
+var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 
 
 func _ready() -> void:

@@ -426,7 +426,7 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 		SpriteBank.draw(ci, art, (corners[0] + corners[2]) / 2.0)
 	else:
 		PlaceholderArt.draw_object(ci, it, corners, is_ready_now, int(o.get("level", 1)),
-			inside, cap, o.get("broken", false))
+			inside, cap, o.get("broken", false), Game.links.mask(o))
 	if flipped:
 		ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 

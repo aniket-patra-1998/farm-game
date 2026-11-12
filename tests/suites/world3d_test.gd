@@ -1094,3 +1094,15 @@ func test_208_a_tap_on_a_tree_in_a_grove_picks_that_tree() -> void:
 			trunk_box.get_center().z))   # low down, where no crown in front of it covers it
 		_eq(grid.picker.call(foot), uid, "and a tap on its trunk picks it too")
 	main.free()
+
+
+func test_209_the_2d_fallback_joins_fences_on_the_sides_the_farm_says() -> void:
+	var g := PackedVector2Array([Vector2(0, -32), Vector2(64, 0), Vector2(0, 32), Vector2(-64, 0)])
+	_eq(PlaceholderArt._arm_ends(g, Vector2.ZERO, -1).size(), 2, "unknown joins: the one run across the tile")
+	var alone := PlaceholderArt._arm_ends(g, Vector2.ZERO, 0)
+	_check(alone.size() == 2 and alone[0].length() < 40.0, "alone: a short post, not a run to the edge")
+	_eq(PlaceholderArt._arm_ends(g, Vector2.ZERO, LinkShape.N | LinkShape.E).size(), 2, "a corner has two arms")
+	_eq(PlaceholderArt._arm_ends(g, Vector2.ZERO, 15).size(), 4, "a cross has four")
+	var north := PlaceholderArt._arm_ends(g, Vector2.ZERO, LinkShape.N)
+	_check(north[0].is_equal_approx(Vector2(32, -16)), "north is the tile's upper-right edge")
+	_check(north.size() == 2 and north[1].length() < north[0].length(), "and a free end stubs out the other way")
