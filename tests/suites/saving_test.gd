@@ -148,3 +148,27 @@ func test_124_a_damaged_save_falls_back_to_the_backup_and_saves_are_batched() ->
 	h.queue_free()
 	for suffix in ["", GameState.BACKUP_SUFFIX, GameState.TEMP_SUFFIX]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
+
+
+func test_142_a_queued_save_is_written_off_the_main_thread_and_is_the_whole_farm() -> void:
+	var path := "user://test_save_thread.json"
+	var g := _farm()
+	g.save_path = path
+	g.saving_enabled = true
+	g.coins = 4321
+	g.save_game(true)
+	g.coins = 99                # changed while the thread may still be writing: the copy must not see it
+	g.finish_saving()
+	var h := _farm()
+	h.save_path = path
+	h.saving_enabled = false
+	_check(h.load_game(), "the background save loads")
+	_eq(h.coins, 4321, "it holds the farm as it was when the save began")
+	g.save_game(true)           # a second one waits for the first, and a plain save waits too
+	g.save_game()
+	_check(g._save_thread == null, "nothing is left running")
+	g.saving_enabled = false
+	_done(h)
+	_done(g)
+	for suffix in ["", GameState.BACKUP_SUFFIX, GameState.TEMP_SUFFIX]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))

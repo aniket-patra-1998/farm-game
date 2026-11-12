@@ -83,6 +83,9 @@ func _storage_costs() -> void:
 
 ## Mesh nodes and triangles under each part of the 3D farm, and under each kind of object.
 func _breakdown() -> void:
+	var layer := _find(get_tree().root, "ObjectLayer")
+	if layer != null:
+		print("PERF part 2D ObjectLayer (hidden in 3D): nodes=%d" % _count(layer).z)
 	var farm := _find(get_tree().root, "Farm3D")
 	if farm == null:
 		return

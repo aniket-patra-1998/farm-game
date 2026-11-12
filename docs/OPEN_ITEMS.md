@@ -5,9 +5,9 @@ Kept in the order we agreed: stress round done first, then visual detail, then t
 ## Performance (stress round, part 2)
 - Draw calls on the max farm: about 2,800 (was 8,000; the woods are baked per area and yard animals thin out
   when zoomed out). Next biggest: buildings (~45 surfaces each); use `tools/perf_probe` census to find them.
-- `save_game` takes 24 ms with a full barn and gift box (516 KB): consider writing the file on a thread.
+- Saving: a queued save now copies the farm (about 11 ms on the full-barn stress farm, was 25) and writes on a thread; pausing/closing still saves before returning.
 - Off-screen free animals still think every second frame (cheap); building yards already throttle.
-- 2D world is still built in 3D mode (hidden, not processed).
+- 2D world in 3D mode: measured at 350 of 7,400 nodes, nothing per frame (the overlay and taps use it), so it stays; revisit only if memory matters.
 
 ## Ground: done
 Meadow variety and bare earth, stronger lawn edge (mown border, earth lip, contact shade at the wall), forest floor under

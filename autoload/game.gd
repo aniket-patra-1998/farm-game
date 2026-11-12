@@ -160,6 +160,7 @@ var _occupied := {}                # tile index -> uid of the object covering it
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
 var _save_due_msec := -1          # when a queued save is written (-1: nothing waiting)
+var _save_thread: Thread          # a queued save being turned into text and written off the main thread
 var _weather := {}                # the last answer of weather(), and when and for what it was made
 var _weather_at := -1
 var _weather_for := "?"
@@ -232,7 +233,7 @@ func _notification(what: int) -> void:
 func _process(delta: float) -> void:
 	player.advance(delta)
 	if _save_due_msec >= 0 and Time.get_ticks_msec() >= _save_due_msec:
-		save_game()
+		save_game(true)
 
 
 func now() -> int:
@@ -1142,10 +1143,13 @@ func queue_save() -> void:
 		_save_due_msec = Time.get_ticks_msec() + SAVE_DELAY_MSEC
 
 
-func save_game() -> void:
+## `in_background`: the farm is copied (a few ms) and the copy is turned into text and written on a thread,
+## so a queued save doesn't stall a frame. Anything else (pausing, closing, tests) writes before it returns.
+func save_game(in_background := false) -> void:
 	_save_due_msec = -1
 	if not saving_enabled:
 		return
+	finish_saving()
 	var data := {
 		"version": SAVE_VERSION,
 		"saved_at": now(),
@@ -1169,26 +1173,40 @@ func save_game() -> void:
 	}
 	for system in systems:
 		system.save_to(data)
-	_write_safely(JSON.stringify(data))
+	if not in_background:
+		_write_safely(JSON.stringify(data), save_path)
+		return
+	var copy: Dictionary = data.duplicate(true)  # the game goes on changing `data`'s parts; the thread keeps this
+	var path := save_path
+	_save_thread = Thread.new()
+	_save_thread.start(func() -> void: _write_safely(JSON.stringify(copy), path))
+
+
+## Waits for a save still being written on its thread (before anything reads or replaces the file).
+func finish_saving() -> void:
+	if _save_thread != null:
+		_save_thread.wait_to_finish()
+		_save_thread = null
 
 
 ## Written so a crash or a full disk can't lose the farm: the new save goes to a temporary file first, the
 ## last good save is kept as a backup, and only then does the new one take its place.
-func _write_safely(text: String) -> void:
-	var tmp := save_path + TEMP_SUFFIX
+func _write_safely(text: String, path: String) -> void:
+	var tmp := path + TEMP_SUFFIX
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
 		push_warning("Could not write save file")
 		return
 	f.store_string(text)
 	f.close()
-	if FileAccess.file_exists(save_path):
-		DirAccess.rename_absolute(save_path, save_path + BACKUP_SUFFIX)
-	DirAccess.rename_absolute(tmp, save_path)
+	if FileAccess.file_exists(path):
+		DirAccess.rename_absolute(path, path + BACKUP_SUFFIX)
+	DirAccess.rename_absolute(tmp, path)
 
 
 ## The saved farm as a dictionary: the save, or its backup if the save is missing or unreadable.
 func _read_save() -> Dictionary:
+	finish_saving()
 	for path in [save_path, save_path + BACKUP_SUFFIX]:
 		if not FileAccess.file_exists(path):
 			continue
