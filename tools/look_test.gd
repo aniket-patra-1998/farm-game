@@ -62,8 +62,8 @@ func _ready() -> void:
 	Game.set_process(false)
 	if FileAccess.file_exists(REFS):
 		_refs = JSON.parse_string(FileAccess.get_file_as_string(REFS))
-	var cases := LookModels.cases().filter(
-		func(c: Dictionary) -> bool: return str(_options.get("--only", "")) in str(c["id"]))
+	var only := str(_options.get("--only", ""))
+	var cases := LookModels.cases().filter(func(c: Dictionary) -> bool: return only == "" or only in str(c["id"]))
 	for night in [false, true]:
 		_light(night)
 		var per := COLS * ROWS
