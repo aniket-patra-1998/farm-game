@@ -11,7 +11,7 @@
    "crown_r": 0.22,
    "crown_h": 0.22,
    "clumps": 7,
-   "leaf": "#4f9a3a"
+   "leaf": "#5faa3c"
   },
   "oval": {
    "tall": 1.15,
@@ -24,7 +24,7 @@
    "crown_r": 0.21,
    "crown_h": 0.4,
    "clumps": 8,
-   "leaf": "#4a8f36"
+   "leaf": "#4f9f48"
   },
   "spreading": {
    "tall": 0.85,
@@ -50,7 +50,7 @@
    "crown_r": 0.23,
    "crown_h": 0.3,
    "clumps": 12,
-   "leaf": "#2f7a2e",
+   "leaf": "#2f8a42",
    "shine": 0.45
   },
   "weeping": {
@@ -63,7 +63,7 @@
    "crown_r": 0.3,
    "crown_h": 0.2,
    "clumps": 7,
-   "leaf": "#8ab84a"
+   "leaf": "#8cc050"
   },
   "palm": {
    "trunk_h": 1.05,
@@ -98,53 +98,58 @@
  "families": {
   "apple": {
    "form": "round",
-   "masses": 4
+   "masses": 4,
+   "leaf": "#62b038"
   },
   "lemon": {
    "form": "dense",
-   "fruit_shape": "oval"
+   "fruit_shape": "oval",
+   "leaf": "#a4c93a"
   },
   "lime": {
    "form": "dense",
    "fruit_shape": "oval",
-   "leaf": "#2a6e2a"
+   "leaf": "#4fae48"
   },
   "orange": {
-   "form": "dense"
+   "form": "dense",
+   "leaf": "#2f8f45"
   },
   "mandarin": {
    "form": "dense",
-   "crown_r": 0.22
+   "crown_r": 0.22,
+   "leaf": "#55b043"
   },
   "grapefruit": {
    "form": "dense",
    "crown_r": 0.28,
-   "fruit_size": 1.25
+   "fruit_size": 1.25,
+   "leaf": "#7ab843"
   },
   "cherry": {
    "form": "oval",
    "tall": 1.3,
    "blossom": "#f7c6d9",
    "fruit_size": 0.7,
-   "leaf": "#4d8a3c"
+   "leaf": "#52a868"
   },
   "peach": {
    "form": "round",
-   "leaf": "#5f9e3e",
+   "leaf": "#8cc24e",
    "blossom": "#f6b3c4"
   },
   "apricot": {
    "form": "round",
-   "leaf": "#589a3a",
+   "leaf": "#b0cc58",
    "blossom": "#fbe1e8"
   },
   "plum": {
    "form": "oval",
-   "leaf": "#5b7a3a"
+   "leaf": "#4a8a5a"
   },
   "fig": {
    "form": "spreading",
-   "leaf": "#3f7f32",
+   "leaf": "#4f8f3a",
    "crown_h": 0.22
   },
   "banana": {
@@ -164,7 +169,7 @@
   },
   "avocado": {
    "form": "oval",
-   "leaf": "#2f5f2a",
+   "leaf": "#2f7050",
    "fruit_shape": "oval",
    "shine": 0.3
   },
@@ -173,7 +178,7 @@
    "masses": 9,
    "reach": 0.5,
    "flat": 0.7,
-   "leaf": "#2e6a2c",
+   "leaf": "#3f8a3c",
    "crown_r": 0.32,
    "crown_h": 0.36,
    "trunk_h": 0.3,
@@ -181,88 +186,88 @@
   },
   "pomegranate": {
    "form": "bushy",
-   "leaf": "#3f7f2e",
+   "leaf": "#74b04a",
    "blossom": "#e2452f"
   },
   "olive": {
    "form": "spreading",
    "tall": 0.7,
-   "leaf": "#8a9c6a",
+   "leaf": "#94ad78",
    "fruit_shape": "small",
    "trunk_r": 0.09
   },
   "guava": {
    "form": "round",
-   "leaf": "#6a9a40"
+   "leaf": "#78b84e"
   },
   "persimmon": {
    "form": "oval",
-   "leaf": "#5a8a30"
+   "leaf": "#62a63e"
   },
   "starfruit": {
    "form": "spreading",
-   "leaf": "#4a8a38",
+   "leaf": "#5cbf5c",
    "fruit_shape": "oval"
   },
   "passion_fruit": {
    "form": "bushy",
-   "leaf": "#3a7a30",
+   "leaf": "#3f9a4a",
    "blossom": "#b48ae0"
   },
   "jackfruit": {
    "form": "oval",
    "tall": 1.25,
-   "leaf": "#2f6a2a",
+   "leaf": "#3a7a3a",
    "fruit_shape": "big",
    "trunk_r": 0.08
   },
   "asian_pear": {
    "form": "oval",
    "blossom": "#ffffff",
-   "leaf": "#5a9a40"
+   "leaf": "#9ccb4e"
   },
   "tamarind": {
    "form": "spreading",
-   "leaf": "#6a9a3a",
+   "leaf": "#7fae3e",
    "fruit_shape": "long"
   },
   "almond": {
    "form": "round",
    "blossom": "#fbe9ef",
    "fruit_shape": "small",
-   "leaf": "#6aa04a"
+   "leaf": "#82bf5e"
   },
   "walnut": {
    "form": "spreading",
-   "leaf": "#4f8a36",
+   "leaf": "#5a9a3a",
    "fruit_shape": "small",
    "crown_r": 0.38
   },
   "cashew": {
    "form": "spreading",
-   "leaf": "#4a8a3a"
+   "leaf": "#6aa84a"
   },
   "chestnut": {
    "form": "round",
-   "leaf": "#3f7a2e",
+   "leaf": "#4a8a3a",
    "fruit_shape": "small",
    "crown_r": 0.3
   },
   "hazelnut": {
    "form": "bushy",
-   "leaf": "#5a8f3a",
+   "leaf": "#70a844",
    "fruit_shape": "small"
   },
   "pecan": {
    "form": "oval",
    "tall": 1.3,
-   "leaf": "#4a8a34",
+   "leaf": "#4f9a42",
    "fruit_shape": "small",
    "trunk_h": 0.48
   },
   "pistachio": {
    "form": "bushy",
-   "leaf": "#7a9a54",
+   "leaf": "#9ab864",
    "fruit_shape": "small"
   },
   "oak_tree": {
@@ -270,7 +275,7 @@
    "masses": 6,
    "reach": 0.78,
    "flat": 0.55,
-   "leaf": "#4a8a34",
+   "leaf": "#4a9a35",
    "crown_r": 0.4,
    "crown_h": 0.24,
    "trunk_r": 0.09
@@ -282,10 +287,12 @@
    "crown_r": 0.28
   },
   "willow_tree": {
-   "form": "weeping"
+   "form": "weeping",
+   "leaf": "#8cc050"
   },
   "willow": {
-   "form": "weeping"
+   "form": "weeping",
+   "leaf": "#8cc050"
   }
  }
 }

@@ -21,7 +21,7 @@ const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
-const TRUNK_BULK := 0.7     # trunks are drawn slimmer than the data says (FarmVille's were slender)
+const TRUNK_BULK := 0.55    # trunks are drawn slimmer than the data says (FarmVille's were slender)
 const TRUNK_TALL := 1.2     # and longer: a trunk shows under the crown, the tree stands on it
 const TRUNK_VARY_MIN := 0.85   # each tree's trunk is its own length, apart from its crown's size
 const TRUNK_VARY_MAX := 1.25
@@ -77,7 +77,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var k := size * TILE_FILL * rng.randf_range(0.9, 1.1)
 	root.rotation.y = rng.randf() * TAU
 	var leaf_col := leaf if leaf.a > 0.0 else Color.html(str(sh.get("leaf", LEAF.to_html())))
-	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-0.015, 0.015), leaf_col.s * rng.randf_range(0.92, 1.05),
+	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-0.025, 0.025), leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
 	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "leaf": leaf_col, "shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
