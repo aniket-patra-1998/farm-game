@@ -48,8 +48,8 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 
 ## Joined structures (fences, hedges, walls, paths)
 - The 2D fallback world still draws them as separate straight tiles (no joins); 3D is the real game.
-- Hedges lost their wind sway when they moved to shared MultiMesh pieces (the sway shader isn't instance-aware yet).
-- Not yet: drag to draw a whole line, gates, joining to building yards and pens, corner posts shared with neighbouring paths' edges, taller fence variants. Old saves keep their `flip` field; it's ignored for these.
+- Hedges sway again (paint3d/canopy3d read each instance's own foot, so MultiMesh pieces sway on their own beats). Gates (a swing gate in a straight run) and tall close-board fences exist as fence styles (`style` in the catalog).
+- Not yet: drag to draw a whole line (done for fences, see links tests), the 2D fallback joins, joining to building yards and pens, corner posts shared with neighbouring paths' edges. Old saves keep their `flip` field; it's ignored for these.
 
 ## Animal rendering rework (perf probe, 2026-11-12)
 On the showcase farm (188 objects) a frame is about 2,744 draw calls; 576 drawn meshes are animals (`Animal3D`), the largest group by far (next: pig pen, 16). Every animal draws its parts as separate meshes. Batch them (one merged mesh per animal with per-part transforms, or a shared batch per species) and check `tools/perf_probe.tscn` before and after. Touches `Animal3D` and `AnimalMotion`. Postponed by the user; to do after the decided items.

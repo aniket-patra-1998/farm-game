@@ -947,3 +947,19 @@ func test_186_ambient_life_listens_for_land_once_not_every_frame() -> void:
 	_eq(after_ready, before + 1, "it listens once, from _ready")
 	life.free()
 	_eq(Game.farm_expanded.get_connections().size(), before, "and lets go when it is freed")
+
+
+func test_191_a_hedge_sways_and_each_piece_sways_on_its_own_beat() -> void:
+	var it := Game.item_data("hedge")
+	_check(not it.is_empty(), "there is a hedge")
+	var swaying := false
+	for p: Dictionary in LinkModels.parts(it, LinkShape.Kind.END, 0):
+		var mesh := p["mesh"] as ArrayMesh
+		for s in mesh.get_surface_count():
+			var m := mesh.surface_get_material(s) as ShaderMaterial
+			swaying = swaying or (m != null and float(m.get_shader_parameter("sway")) > 0.0)
+	_check(swaying, "the hedge's leaves bend in the wind")
+	for path in ["res://shaders/paint3d.gdshader", "res://shaders/canopy3d.gdshader"]:
+		var code := FileAccess.get_file_as_string(path)
+		_check(code.contains("MODEL_MATRIX[3]") and not code.contains("NODE_POSITION_WORLD"),
+			"%s takes each instance's own foot, so pieces of a MultiMesh do not sway as one" % path)

@@ -13,12 +13,12 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Animals | 15 | 68 | 0 |
 | Buildings | 6 | 21 | 6 |
 | Vehicles | 4 | 4 | 0 |
-| Decorations | 7 | 38 | 0 |
+| Decorations | 7 | 40 | 0 |
 | recipes | 4 | 54 | 0 |
 | young | 3 | 3 | 0 |
 | blooms | 6 | 12 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **111** | **439** | **6** |
+| **All** | **111** | **441** | **6** |
 
 ## Adding an item
 
@@ -194,6 +194,7 @@ Scenery. 1 XP per 100 coins (at least 5).
 | Field | Type | Default | Required | Meaning |
 |---|---|---|---|---|
 | `shape` | string |  |  | Placeholder drawing (fence, hedge, haybale, ...). Starter scenery is drawn by id instead. |
+| `style` | string |  |  | How a joining piece is built (fences: rail, picket, tall, gate); see LinkModels. |
 | `variant` | string |  |  | Shape variant (pine, oak, willow for shade trees). |
 
 ### Crafting (extends Building)
@@ -1037,6 +1038,8 @@ Shared: `art_fill` = 1.0
 |---|---|---|---|---|---|---|
 | ✅ | Wooden Fence | `wooden_fence` | 1 | 50 | 1x1 | fence |
 | ✅ | White Picket Fence | `white_picket_fence` | 3 | 300 | 1x1 | fence |
+| ✅ | Tall Wooden Fence | `tall_wooden_fence` | 5 | 450 | 1x1 | fence |
+| ✅ | Wooden Gate | `wooden_gate` | 4 | 200 | 1x1 | fence |
 | ✅ | Hedge | `hedge` | 4 | 250 | 1x1 | hedge |
 | ✅ | Stone Wall | `stone_wall` | 6 | 400 | 1x1 | wall |
 

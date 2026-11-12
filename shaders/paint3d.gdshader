@@ -21,7 +21,7 @@ void vertex() {
 	tint = COLOR.rgb;
 	if (sway > 0.0) {
 		// Bends from the foot: the higher, the more; each thing on its own beat (from where it stands).
-		vec3 root = NODE_POSITION_WORLD;
+		vec3 root = MODEL_MATRIX[3].xyz;   // this instance's own foot: a MultiMesh's pieces each sway on their own beat
 		float beat = TIME * 1.4 + root.x * 1.7 + root.z * 1.1;
 		float bend = max(VERTEX.y, 0.0) * max(VERTEX.y, 0.0) * sway * (0.4 + wind);
 		VERTEX.x += sin(beat) * bend;

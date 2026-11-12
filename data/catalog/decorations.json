@@ -100,7 +100,30 @@
           "shape": "fence",
           "color": "#f4efe4",
           "accent": "#5c3a1e",
-          "look": "a short straight section of white picket fence"
+          "look": "a short straight section of white picket fence",
+          "style": "picket"
+        },
+        {
+          "id": "tall_wooden_fence",
+          "name": "Tall Wooden Fence",
+          "unlock_level": 5,
+          "cost": 450,
+          "shape": "fence",
+          "style": "tall",
+          "color": "#b9854a",
+          "accent": "#5c3a1e",
+          "look": "a short straight section of tall close-boarded wooden privacy fence"
+        },
+        {
+          "id": "wooden_gate",
+          "name": "Wooden Gate",
+          "unlock_level": 4,
+          "cost": 200,
+          "shape": "fence",
+          "style": "gate",
+          "color": "#a8743f",
+          "accent": "#5c3a1e",
+          "look": "a wooden farm gate between two posts, its leaf standing a little open, set in a fence"
         },
         {
           "id": "hedge",

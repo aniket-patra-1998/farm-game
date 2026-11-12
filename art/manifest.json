@@ -6961,6 +6961,30 @@
    "subject": "a short straight section of white picket fence"
   },
   {
+   "id": "tall_wooden_fence",
+   "item": "tall_wooden_fence",
+   "class": "Decoration",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 1.0,
+   "refs": [
+    "refs/tall_wooden_fence.png"
+   ],
+   "subject": "a short straight section of tall close-boarded wooden privacy fence"
+  },
+  {
+   "id": "wooden_gate",
+   "item": "wooden_gate",
+   "class": "Decoration",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 1.0,
+   "refs": [
+    "refs/wooden_gate.png"
+   ],
+   "subject": "a wooden farm gate between two posts, its leaf standing a little open, set in a fence"
+  },
+  {
    "id": "hedge",
    "item": "hedge",
    "class": "Decoration",

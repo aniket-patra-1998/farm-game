@@ -13,7 +13,8 @@ const HAY := Color("#e3c46a")
 const LEAF := Color("#3c8a2e")
 ## Every decoration with a model here (tests check the catalog's decorations against it).
 const IDS := ["farmhouse", "log_cabin", "dirt_path", "brick_path", "stone_path", "wooden_fence", "white_picket_fence",
-	"hedge", "stone_wall", "hay_bale", "haystack", "scarecrow", "water_trough", "bonfire", "wheelbarrow",
+	"tall_wooden_fence", "wooden_gate", "hedge", "stone_wall", "hay_bale", "haystack", "scarecrow", "water_trough",
+	"bonfire", "wheelbarrow",
 	"water_well", "flower_bed", "pink_flamingo", "bench", "birdhouse", "birdbath", "picnic_table", "garden_gnome",
 	"lamp_post", "sundial", "small_pond", "fountain", "arbor", "wooden_bridge", "gazebo", "pine_tree", "oak_tree",
 	"maple_tree", "willow_tree", "mastery_sign", "mailbox", "farm_stand", "perfect_bunch"]

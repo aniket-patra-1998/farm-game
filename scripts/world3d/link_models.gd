@@ -12,6 +12,10 @@ const VARIANTS := 3          # different hand-built looks of every shape, picked
 const HEIGHT := 0.32         # a fence's posts
 const POST := 0.035          # half the width of a post
 const WALL_TOP := 0.33
+const TALL_HEIGHT := 0.48    # a privacy fence's posts
+const GATE_POST := 0.4
+const GATE_AJAR := 0.35      # radians a gate's leaf stands open
+const HEDGE_SWAY := 0.4      # how far a hedge bends in the wind (paint3d sway, by height); each piece on its own beat
 
 static var _cache := {}      # "item|kind|variant" -> Array of {"mesh": ArrayMesh, "shadow": bool}
 
@@ -79,7 +83,7 @@ static func build(root: Node3D, it: Dictionary, group: String, mask: int, kind: 
 		reach[2] = stub   # the free side, opposite the arm (an end is built pointing north)
 	match group:
 		"fence":
-			_fence(root, col, str(it.get("id", "")) == "white_picket_fence", kind, reach, rng)
+			_fence(root, col, str(it.get("style", "rail")), kind, reach, rng)
 		"hedge":
 			_hedge(root, kind, reach, rng)
 		"wall":
@@ -94,14 +98,22 @@ static func _arm(root: Node3D, d: int) -> Node3D:
 	return a
 
 
-static func _fence(root: Node3D, col: Color, picket: bool, kind: int, reach: Array[float],
+## `style`: "rail" (two rails), "picket" (white pickets), "tall" (close boards, shoulder high) or "gate" (a swing
+## gate between two posts where the fence runs straight; anywhere else it is a plain rail fence).
+static func _fence(root: Node3D, col: Color, style: String, kind: int, reach: Array[float],
 		rng: RandomNumberGenerator) -> void:
+	if style == "gate" and (kind == LinkShape.Kind.STRAIGHT or (reach[0] > 0.0 and reach[2] > 0.0)):
+		_gate(root, col, reach, rng)
+		return
+	var picket := style == "picket"
+	var tall := style == "tall"
 	var mat := ModelKit.paint(col)
 	var worn := ModelKit.paint(col.darkened(0.12))
 	var boards := ModelKit.surface(col, "boards", 0.0)
 	# The post: stouter where arms meet, with a cap that sheds the rain.
 	var half := POST * (1.25 if kind >= LinkShape.Kind.TEE else 1.0)
-	var h := HEIGHT + rng.randf_range(-0.01, 0.02) + (0.025 if kind >= LinkShape.Kind.TEE else 0.0)
+	var h := (TALL_HEIGHT if tall else HEIGHT) + rng.randf_range(-0.01, 0.02) \
+		+ (0.025 if kind >= LinkShape.Kind.TEE else 0.0)
 	ModelKit.box(root, Vector3(-half, 0, -half), Vector3(half, h, half), worn if not picket else mat)
 	ModelKit.cylinder(root, Vector3(0, h, 0), half * 1.45, 0.035, mat, 0.012, 4)
 	for d in 4:
@@ -109,7 +121,16 @@ static func _fence(root: Node3D, col: Color, picket: bool, kind: int, reach: Arr
 		if len <= 0.0:
 			continue
 		var a := _arm(root, d)
-		if picket:
+		if tall:
+			# Close-set boards of slightly different heights between two rails: a privacy fence.
+			for y: float in [0.1, 0.3]:
+				ModelKit.box(a, Vector3(-0.03, y, -len), Vector3(0.03, y + 0.035, -half), worn)
+			var zb := 0.05
+			while zb < len - 0.01:
+				var bh := TALL_HEIGHT - 0.04 + rng.randf_range(-0.015, 0.015)
+				ModelKit.box(a, Vector3(-0.012, 0, -zb - 0.03), Vector3(0.012, bh, -zb + 0.03), mat)
+				zb += 0.065
+		elif picket:
 			for y: float in [0.09, 0.2]:
 				ModelKit.box(a, Vector3(-0.025, y, -len), Vector3(0.025, y + 0.03, -half), mat)
 			var z := 0.07
@@ -127,9 +148,10 @@ static func _fence(root: Node3D, col: Color, picket: bool, kind: int, reach: Arr
 static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumberGenerator) -> void:
 	var leaf := DecorModel.LEAF
 	var bump := 1.25 if kind >= LinkShape.Kind.TEE else 1.0
-	ModelKit.ball(root, Vector3(0, 0.17, 0), 0.2 * bump, ModelKit.paint(leaf.darkened(rng.randf() * 0.15)),
-		Vector3(1.15, 0.95, 1.15))
-	ModelKit.ball(root, Vector3(0, 0.3, 0), 0.15 * bump, ModelKit.paint(leaf.lightened(0.08)), Vector3(1.15, 0.55, 1.15))
+	var low := ModelKit.paint(leaf.darkened(rng.randf() * 0.15), 0.0, HEDGE_SWAY)
+	ModelKit.ball(root, Vector3(0, 0.17, 0), 0.2 * bump, low, Vector3(1.15, 0.95, 1.15))
+	var top := ModelKit.paint(leaf.lightened(0.08), 0.0, HEDGE_SWAY)
+	ModelKit.ball(root, Vector3(0, 0.3, 0), 0.15 * bump, top, Vector3(1.15, 0.55, 1.15))
 	for d in 4:
 		if reach[d] <= 0.0:
 			continue
@@ -137,15 +159,47 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 		var z := 0.2
 		while z < reach[d] + 0.01:
 			var shade := leaf.darkened(rng.randf() * 0.15)
-			ModelKit.ball(a, Vector3(rng.randf_range(-0.02, 0.02), 0.17, -z), 0.2, ModelKit.paint(shade),
+			ModelKit.ball(a, Vector3(rng.randf_range(-0.02, 0.02), 0.17, -z), 0.2, ModelKit.paint(shade, 0.0, HEDGE_SWAY),
 				Vector3(1.15, 0.95, 1.05))
 			ModelKit.ball(a, Vector3(0, 0.3 + rng.randf_range(-0.01, 0.02), -z), 0.15,
-				ModelKit.paint(shade.lightened(0.08)), Vector3(1.15, 0.55, 1.1))
+				ModelKit.paint(shade.lightened(0.08), 0.0, HEDGE_SWAY), Vector3(1.15, 0.55, 1.1))
 			z += 0.2
 		for k in 2:
 			ModelKit.ball(a, Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0.18, 0.34),
 				-0.08 - k * 0.16 - rng.randf_range(0.0, 0.06)), 0.03,
 				ModelKit.paint(Color("#e8d86a") if k % 2 else Color("#d8506a")))
+
+
+## A gate where a fence runs straight: a post each side, the leaf hinged on one and standing a little open, a
+## rail of the fence reaching out of each post to meet the neighbours.
+static func _gate(root: Node3D, col: Color, reach: Array[float], rng: RandomNumberGenerator) -> void:
+	var mat := ModelKit.paint(col)
+	var worn := ModelKit.paint(col.darkened(0.12))
+	var edge := 0.38   # the posts stand this far from the middle, along the run (which is built along z)
+	for side in [-1.0, 1.0]:
+		ModelKit.box(root, Vector3(-0.05, 0, side * edge - 0.05), Vector3(0.05, GATE_POST, side * edge + 0.05), worn)
+		ModelKit.cylinder(root, Vector3(0, GATE_POST, side * edge), 0.07, 0.035, mat, 0.012, 4)
+		var outer: float = reach[0] if side < 0.0 else reach[2]
+		if outer > edge:
+			for y: float in [0.1, 0.24]:
+				var z0: float = side * (edge + 0.05)
+				var z1: float = side * outer
+				ModelKit.box(root, Vector3(-0.02, y, minf(z0, z1)), Vector3(0.02, y + 0.045, maxf(z0, z1)), mat)
+	# The leaf: hinged at the north post and swung ajar, so it reads as a gate you can walk through.
+	var hinge := Node3D.new()
+	hinge.position = Vector3(0, 0, -edge + 0.05)
+	hinge.rotation.y = GATE_AJAR + rng.randf_range(-0.05, 0.05)
+	root.add_child(hinge)
+	var length := 2.0 * edge - 0.1
+	for y: float in [0.07, 0.17, 0.27]:
+		ModelKit.box(hinge, Vector3(-0.02, y, 0.0), Vector3(0.02, y + 0.04, length), mat)
+	for z: float in [0.015, length - 0.015]:
+		ModelKit.box(hinge, Vector3(-0.025, 0.04, z - 0.025), Vector3(0.025, 0.31, z + 0.025), mat)
+	var brace := ModelKit.box(hinge, Vector3(-0.012, -0.12, -0.012), Vector3(0.012, 0.12, 0.012), worn)
+	brace.position = Vector3(0, 0.17, length / 2.0)
+	brace.rotation.x = -atan2(0.2, length)
+	brace.scale = Vector3(1, 1, 1)
+	ModelKit.box(hinge, Vector3(-0.012, 0.15, length - 0.09), Vector3(0.012, 0.22, length - 0.03), worn)   # the latch
 
 
 static func _wall(root: Node3D, col: Color, kind: int, reach: Array[float], rng: RandomNumberGenerator) -> void:

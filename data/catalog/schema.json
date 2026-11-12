@@ -501,6 +501,10 @@
           "type": "string",
           "doc": "Placeholder drawing (fence, hedge, haybale, ...). Starter scenery is drawn by id instead."
         },
+        "style": {
+          "type": "string",
+          "doc": "How a joining piece is built (fences: rail, picket, tall, gate); see LinkModels."
+        },
         "variant": {
           "type": "string",
           "doc": "Shape variant (pine, oak, willow for shade trees)."

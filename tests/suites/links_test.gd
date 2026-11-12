@@ -2,7 +2,7 @@ extends TestSuite
 ## Fences, hedges, walls and paths that join up: the shape table, what joins what, the pieces' reach (the joint
 ## is where two arms meet), the layer that draws them in a few draws, and the click when something joins.
 
-const LINKED := ["wooden_fence", "white_picket_fence", "hedge", "stone_wall", "dirt_path", "brick_path", "stone_path"]
+const LINKED := ["wooden_fence", "white_picket_fence", "tall_wooden_fence", "wooden_gate", "hedge", "stone_wall", "dirt_path", "brick_path", "stone_path"]
 
 
 func _fresh_farm() -> void:
@@ -153,3 +153,29 @@ func test_152_a_dragged_line_runs_along_the_longer_way_and_stops_where_the_coins
 	var ok := p._line_ok(p._line_to(Vector2i(18, 10)))
 	_eq(ok, [true, true, false, true, false, false], "a taken tile is skipped and the coins reach only so far")
 	_eq(p._line_to(Vector2i(18, 900)).size() <= Placement.LINE_MAX, true, "no line is longer than the limit")
+
+
+func test_192_a_gate_and_a_tall_fence_join_the_fences_and_are_built_differently() -> void:
+	_fresh_farm()
+	var a := _put("wooden_fence", 5, 5)
+	var gate := _put("wooden_gate", 5, 6)
+	var b := _put("tall_wooden_fence", 5, 7)
+	_eq(Game.links.mask(gate), LinkShape.E | LinkShape.W, "a gate between two fences joins both ways")
+	_check(Game.links.mask(a) & LinkShape.E != 0 and Game.links.mask(b) & LinkShape.W != 0, "and they join it")
+	var rail := _extent("wooden_fence", LinkShape.Kind.STRAIGHT)
+	var tall := _extent("tall_wooden_fence", LinkShape.Kind.STRAIGHT)
+	var open := _extent("wooden_gate", LinkShape.Kind.STRAIGHT)
+	_check(tall.y > rail.y + 0.05, "a tall fence stands higher (%.2f against %.2f)" % [tall.y, rail.y])
+	_check(open.x > rail.x, "a gate's open leaf reaches out sideways (%.2f against %.2f)" % [open.x, rail.x])
+	var lone := _extent("wooden_gate", LinkShape.Kind.CORNER)
+	_check(lone.y < tall.y, "a gate that is not in a straight run is a plain fence")
+
+
+## The widest sideways reach and the height of a piece's meshes.
+func _extent(id: String, kind: int) -> Vector2:
+	var out := Vector2.ZERO
+	for p: Dictionary in LinkModels.parts(Game.item_data(id), kind, 0):
+		var box := (p["mesh"] as ArrayMesh).get_aabb()
+		out.x = maxf(out.x, maxf(absf(box.position.x), absf(box.end.x)))
+		out.y = maxf(out.y, box.end.y)
+	return out
