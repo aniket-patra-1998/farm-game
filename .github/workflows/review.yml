@@ -1,26 +1,26 @@
 name: Code review
-# An independent reviewer reads the changes against REVIEW.md and posts its findings on the commit and in the
-# "Code review log" issue, so the next change can fix them. A review costs a lot, so it is not run for every
-# push: it runs once a day over everything since the last review, when a commit message contains [review] (after
-# its Tests run finishes, passed or not), or by hand from the Actions tab.
+# An independent reviewer reads every push to main against REVIEW.md and posts its findings on the commit
+# and in the "Code review log" issue, so the next change can fix them.
 # Needs the Claude GitHub App installed on the repo and one secret: CLAUDE_CODE_OAUTH_TOKEN (a Claude
 # subscription, from `claude setup-token`) or ANTHROPIC_API_KEY (Claude Console). Without either, it skips.
+# The review action can't start from a push, so it runs once the Tests workflow finishes for a push to main
+# (whether tests passed or not: the review says so; a Tests run cancelled by a newer push is not reviewed, the
+# newer push is), or by hand from the Actions tab.
 on:
   workflow_run:
     workflows: [Tests]
     types: [completed]
     branches: [main]
   workflow_dispatch:
-  schedule:
-    - cron: "17 3 * * *"   # once a day (about 9am in India): reviews everything since the last review
 concurrency:
   group: code-review
   cancel-in-progress: false
 jobs:
   review:
     if: >-
-      ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' ||
-      (github.event.workflow_run.event == 'push' && contains(github.event.workflow_run.head_commit.message, '[review]')) }}
+      ${{ github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion != 'cancelled' &&
+      !contains(github.event.workflow_run.head_commit.message, '[skip review]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
