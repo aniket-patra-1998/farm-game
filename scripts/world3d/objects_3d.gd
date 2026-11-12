@@ -144,9 +144,9 @@ func _step(o: Dictionary) -> int:
 func _key(o: Dictionary) -> String:
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
-	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
+	return "%s|%d|%d|%d|%s|%d|%s|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
-		Crowding.mask(o),
+		"%d.%d" % [Crowding.mask(o), Crowding.runs(o)],
 		str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)), Game.is_withered(o), _at_work(o)]]
 
 

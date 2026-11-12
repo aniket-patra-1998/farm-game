@@ -85,6 +85,20 @@ static func covered(m: int, angle: float) -> bool:
 	return (m >> DIRS.find(step)) & 1 == 1
 
 
-## Whether the next tile along a row (`dir` +1 south, -1 north) holds a thing of the group: where a run goes on.
-static func joined(m: int, dir: int) -> bool:
-	return (m >> DIRS.find(Vector2i(dir, 0))) & 1 == 1
+## Whether the run `o` belongs to (a fence, a hedge) goes on to the next tile (`dir` +1 forward, -1 back): a
+## neighbour of its group stands there, turned the same way. A turned run goes along the columns, not the rows.
+static func continues(o: Dictionary, dir: int) -> bool:
+	if not o.has("row"):
+		return false
+	var turned := bool(o.get("flip", false))
+	var r := int(o["row"]) + (0 if turned else dir)
+	var c := int(o["col"]) + (dir if turned else 0)
+	if r < 0 or c < 0 or r >= Game.farm_size or c >= Game.farm_size:
+		return false
+	var n := Game.object_at(Game.index_of(r, c))
+	return not n.is_empty() and group_of(n) == group_of(o) and bool(n.get("flip", false)) == turned
+
+
+## `continues` both ways as bits, for a view's key (so a run's pieces are rebuilt when it is joined or cut).
+static func runs(o: Dictionary) -> int:
+	return (1 if continues(o, 1) else 0) | (2 if continues(o, -1) else 0)

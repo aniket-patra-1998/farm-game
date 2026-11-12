@@ -40,9 +40,9 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 		"dirt_path", "brick_path", "stone_path":
 			_path(root, id, col, int(o.get("uid", 0)))
 		"wooden_fence", "white_picket_fence":
-			_fence_run(root, id == "white_picket_fence", col, int(o.get("uid", 0)), Crowding.mask(o))
+			_fence_run(root, id == "white_picket_fence", col, int(o.get("uid", 0)), Crowding.continues(o, 1))
 		"hedge":
-			_hedge(root, int(o.get("uid", 0)), Crowding.mask(o))
+			_hedge(root, int(o.get("uid", 0)), Crowding.runs(o) == 3)
 		"stone_wall":
 			_stone_wall(root, int(o.get("uid", 0)))
 		"hay_bale":
@@ -365,14 +365,14 @@ static func _path(root: Node3D, id: String, col: Color, seed_value: int) -> void
 
 ## One tile of fence along its middle (it lines up with fences on the next tiles). Each tile is a little
 ## different: posts a touch taller or shorter, pickets uneven, boards weathered, so a long run looks built by hand.
-static func _fence_run(root: Node3D, picket: bool, col: Color, seed_value: int, mask := 0) -> void:
+static func _fence_run(root: Node3D, picket: bool, col: Color, seed_value: int, onward := false) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value * 7919 + 11
 	var mat := ModelKit.paint(col)
 	var worn := ModelKit.paint(col.darkened(0.12))
 	for z: float in [0.0, 0.5, 1.0]:
 		var h := 0.32 + rng.randf_range(-0.02, 0.03)
-		if z == 1.0 and Crowding.joined(mask, 1):
+		if z == 1.0 and onward:
 			continue   # the next tile's first post stands here
 		ModelKit.box(root, Vector3(0.465, 0, z - 0.035), Vector3(0.535, h, z + 0.035), worn if not picket else mat)
 		# A cap on every post: a little pyramid of wood, so the top sheds rain.
@@ -396,7 +396,7 @@ static func _fence_run(root: Node3D, picket: bool, col: Color, seed_value: int, 
 
 
 ## A clipped hedge: a long body of leaf masses, a flat trimmed top and a few flowers and berries in it.
-static func _hedge(root: Node3D, seed_value: int, mask := 0) -> void:
+static func _hedge(root: Node3D, seed_value: int, inside := false) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value * 104729 + 5
 	for k in 5:
@@ -408,7 +408,7 @@ static func _hedge(root: Node3D, seed_value: int, mask := 0) -> void:
 			Vector3(1.15, 0.55, 1.1))
 	for k in 6:
 		var at := Vector3(0.5 + rng.randf_range(-0.12, 0.12), rng.randf_range(0.18, 0.34), 0.08 + k * 0.16)
-		if k % 2 == 1 and Crowding.joined(mask, 1) and Crowding.joined(mask, -1):
+		if k % 2 == 1 and inside:
 			continue   # inside a long hedge the flowers are fewer
 		ModelKit.ball(root, at + Vector3(0, 0, 0), 0.03, ModelKit.paint(Color("#e8d86a") if k % 2 else Color("#d8506a")))
 

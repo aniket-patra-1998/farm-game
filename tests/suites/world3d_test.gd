@@ -849,6 +849,13 @@ func test_146_things_standing_together_grow_together_and_cost_less() -> void:
 	Game.add_object(f2)
 	var joined := DecorModel.build(Game.item_data("wooden_fence"), Vector2i(1, 1), f1)
 	_check(tris.call(joined) < tris.call(single), "a fence tile joined to the next shares its end post")
+	# A turned fence runs along the columns, so only a neighbour in its own line (and turned too) joins it.
+	var turned := {"uid": 9403, "id": "wooden_fence", "row": 5, "col": 5, "flip": true, "t": Game.now()}
+	Game.remove_object(Game.object_by_uid(9401))
+	Game.add_object(turned)
+	_check(not Crowding.continues(turned, 1), "the fence below doesn't continue a turned one")
+	Game.add_object({"uid": 9404, "id": "wooden_fence", "row": 5, "col": 6, "flip": true, "t": Game.now()})
+	_check(Crowding.continues(turned, 1), "a turned fence beside it does")
 	single.free()
 	joined.free()
 	a.queue_free()
