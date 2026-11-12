@@ -15,6 +15,8 @@ const TURN_RATE := 6.0                          # how fast it turns to face wher
 ## three-quarter view), facing screen right or screen left. 0 faces +x; screen right is +x -z (pi/4).
 const REST_RIGHT := PI / 12.0
 const REST_LEFT := PI * 17.0 / 12.0
+const TAIL_UP := 2.4                            # a goat's tail points up and back (radians from straight down)
+const TAIL_REST := 0.35                         # how far back from straight down the tail hangs at rest (radians)
 const SETTLE_RATE := 1.2                        # how fast it eases round to stand side-on (radians/s)
 const EYE := Color("#1b140f")
 const HOOF := Color("#3a2c22")
@@ -57,6 +59,7 @@ var _body: Node3D
 var _head: Node3D
 var _neck: MeshInstance3D
 var _tail: Node3D
+var _tail_rest := TAIL_REST      # (its angle back from hanging, at rest)
 var _legs: Array[Dictionary] = []   # {"hip": Vector3, "upper": MeshInstance3D, "lower": MeshInstance3D, ...}
 var _wings: Array[Node3D] = []
 var _ears: Array[Node3D] = []
@@ -522,10 +525,11 @@ func _build_quad() -> void:
 		)
 	# Tail.
 	_tail = Node3D.new()
-	_tail.position = Vector3(-_r.x * 0.95, _r.y * 0.35, 0)
+	_tail.position = Vector3(-_r.x * 0.95, _r.y * _rump_top(), 0)
 	_body.add_child(_tail)
 	var tail_len := _px(rig.size("tail_len", 14.0))
 	var tail_kind := rig.text("tail", "tuft")
+	_tail_rest = TAIL_UP if tail_kind == "short_up" else TAIL_REST
 	if tail_kind == "curl":
 		ModelKit.ball(_tail, Vector3(-_px(2.0), 0, 0), _px(2.2), ModelKit.paint(coat.darkened(0.12)))
 	else:
@@ -542,6 +546,19 @@ func _build_quad() -> void:
 		if tail_kind in ["tuft", "hair"]:
 			ModelKit.ball(_tail, Vector3(0, -tail_len, 0), _px(2.6 if tail_kind == "tuft" else 3.4), ModelKit.paint(accent),
 				Vector3(1, 1.6, 1))
+
+
+
+
+## How high, as a share of the body's half height, the rump is at the tail: from a sculpted body's outline at its
+## rear (the tail hangs from its top there), else a plain barrel's.
+func _rump_top() -> float:
+	if _stations.size() < 2:
+		return 0.35
+	var a: Array = _stations[0]
+	var b: Array = _stations[1]
+	var t := clampf((-0.95 - float(a[0])) / maxf(float(b[0]) - float(a[0]), 0.001), 0.0, 1.0)
+	return lerpf(float(a[1]), float(b[1]), t) * 0.92
 
 
 
@@ -878,7 +895,7 @@ func _pose_quad(p: AnimalPose) -> void:
 	for k in _ears.size():
 		_ears[k].rotation = Vector3((1.0 if k % 2 else -1.0) * p.ear * 0.6, 0, m.ears)
 	# The tail swings on after the body, and lifts when it trots.
-	_tail.rotation = Vector3(p.tail * 0.8 + m.tail, 0, 0.35 - m.pitch * 0.8 + m.trot * 0.35)
+	_tail.rotation = Vector3(p.tail * 0.8 + m.tail, 0, -(_tail_rest - m.pitch * 0.8 + m.trot * 0.35))
 
 
 
