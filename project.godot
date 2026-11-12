@@ -50,6 +50,10 @@ wind={
 "type": "float",
 "value": 0.6
 }
+crop_clock={
+"type": "float",
+"value": 0.0
+}
 dark={
 "type": "float",
 "value": 0.0

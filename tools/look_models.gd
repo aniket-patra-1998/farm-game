@@ -116,7 +116,7 @@ static func crop_row(id: String) -> Node3D:
 		mm.mesh = CropModels.mesh(form, ["young", "ripe", "withered"][k])
 		mm.instance_count = 1
 		mm.set_instance_transform(0, Transform3D(Basis().scaled(Vector3.ONE * Crops3D.PLANT_SCALE), Vector3(k * 1.0, 0, 0)))
-		mm.set_instance_custom_data(0, Color.html(str(crop.get("color", "#e2453c"))))
+		mm.set_instance_custom_data(0, Crops3D.pack(Color.html(str(crop.get("color", "#e2453c"))), 0.0, 0.0, false))
 		mmi.multimesh = mm
 		mmi.material_override = mat
 		row.add_child(mmi)

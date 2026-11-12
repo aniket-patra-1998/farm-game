@@ -1005,3 +1005,44 @@ func test_193_anything_can_be_lifted_and_carried() -> void:
 		grid.cancel_placing()
 	_check(kinds.size() >= 4, "several kinds were lifted (%d)" % kinds.size())
 	main.free()
+
+
+## What a growing plant carries for the shader, and when the farm redraws it: colour survives the packing, a stage
+## spans the right stretch of the growing time, and growing within a stage changes nothing to rebuild.
+func test_207_a_growing_plant_carries_its_stage_and_the_shader_does_the_growing() -> void:
+	for hex in ["#e2453c", "#ffffff", "#000000", "#12ab9f"]:
+		var col := Color.html(hex)
+		var data := Crops3D.pack(col, 12.5, 40.0, true)
+		var rgb := int(data.r)
+		_eq(Color8((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255), Color8(col.r8, col.g8, col.b8),
+			"%s survives being packed into one float" % hex)
+		_eq([data.g, data.b, data.a], [12.5, 40.0, 1.0], "%s: start, length and richness are carried as they are" % hex)
+	var saved_plots: Array = Game.plots.duplicate(true)
+	var saved_offset := Game.debug_time_offset
+	var crop_id := str(Game.crops.keys()[0])
+	var grow := float(Game.crops[crop_id]["grow_seconds"])
+	for k in Game.plots.size():
+		Game.plots[k] = {"state": "grass"}   # only this plot grows, so only it can change the picture
+	var i := Game.index_of(1, 1)
+	Game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
+	var seeds := Crops3D.stage_of(i)
+	_eq(seeds, ["seeds", 0.0, 0.0], "just planted: seeds, nothing growing yet")
+	var planted := float(Game.plots[i]["planted_at"])
+	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.SPROUT_FROM + 0.01))
+	var sprout := Crops3D.stage_of(i)
+	_eq(str(sprout[0]), "sprout", "then a sprout")
+	_check(is_equal_approx(float(sprout[1]), planted + Crops3D.SPROUT_FROM * grow), "that began at the sprouting point")
+	var sprouting := (Crops3D.YOUNG_FROM - Crops3D.SPROUT_FROM) * grow
+	_check(is_equal_approx(float(sprout[2]), sprouting), "and lasts until it is young")
+	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.YOUNG_FROM + 0.01))
+	var young := Crops3D.stage_of(i)
+	var finishes := float(young[1]) + float(young[2])
+	_check(is_equal_approx(finishes, planted + grow), "a young plant finishes growing exactly when ripe")
+	# Within a stage the picture does not change, so nothing is rebuilt as time passes.
+	var crops := Crops3D.new()
+	var before := crops._fingerprint()
+	Game.debug_time_offset += int(grow * 0.05)
+	_eq(crops._fingerprint(), before, "growing within a stage leaves the fingerprint as it was")
+	crops.free()
+	Game.debug_time_offset = saved_offset
+	Game.plots = saved_plots

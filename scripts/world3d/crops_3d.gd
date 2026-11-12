@@ -3,15 +3,18 @@ extends Node3D
 ## Every crop on the farm in 3D: four plants to a plot, on top of its bed, drawn as one MultiMesh per
 ## plant shape and growth stage (so a whole field costs a handful of draws). Young plants grow in size as
 ## they ripen; produce takes its crop's colour. Rebuilt when plots change, and every few seconds as crops
-## grow.
+## grow. Growth is the shader's: a growing plant carries when its stage starts and how long it lasts, and the
+## shader sizes it from the farm's clock every frame, so a plant swells smoothly instead of in steps.
 
 const SPOTS := [Vector2(-0.24, -0.24), Vector2(0.24, -0.24), Vector2(-0.24, 0.24), Vector2(0.24, 0.24),
 	Vector2(0, 0)]
 const GROW_REFRESH := 3.0   # seconds between looks at whether growth has moved a plant on
-const GROW_STEPS := 12.0    # growing plants are drawn at one of this many sizes, so most looks change nothing
+const SPROUT_FROM := 0.2    # of the growing time: the seeds have sprouted
+const YOUNG_FROM := 0.45    # and the sprouts are young plants
+const SIZE_FROM := 0.55     # the size a plant starts a growing stage at, of its full size
 const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
-const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger
+const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger (the shader applies it)
 const VARY_LEAN := 0.16    # radians a plant may lean
 const PLANT_SCALE := 2.5    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
@@ -19,12 +22,16 @@ var wind := 0.6: set = _set_wind
 
 var _layers := {}   # "shape|stage" -> MultiMeshInstance3D
 var _material: ShaderMaterial
+var _base := 0.0    # the farm clock's zero: seconds count from here, so a shader's floats stay precise
 var _drawn := -1    # a fingerprint of what was last built: the same again means there is nothing to rebuild
 
 
 func _ready() -> void:
 	_material = ShaderMaterial.new()
 	_material.shader = load("res://shaders/crop3d.gdshader")
+	_material.set_shader_parameter("size_from", SIZE_FROM)
+	_material.set_shader_parameter("rich_size", FERTILIZED_SIZE)
+	_base = floorf(_now())
 	var timer := Timer.new()
 	timer.wait_time = GROW_REFRESH
 	timer.autostart = true
@@ -33,33 +40,50 @@ func _ready() -> void:
 	rebuild()
 
 
+func _process(_delta: float) -> void:
+	RenderingServer.global_shader_parameter_set(&"crop_clock", _now() - _base)
+
+
+## The game's time as a float (whole seconds are too coarse for a plant to swell by).
+static func _now() -> float:
+	return Time.get_unix_time_from_system() + Game.debug_time_offset
+
+
+## What an instance carries for the shader: its colour (three bytes in one float, which a float holds exactly),
+## when its growing stage began (seconds on the farm clock), how long that stage lasts (0: fully grown) and
+## whether it is fertilised.
+static func pack(col: Color, started: float, length: float, rich: bool) -> Color:
+	var bytes := (int(col.r8) << 16) | (int(col.g8) << 8) | int(col.b8)
+	return Color(float(bytes), started, length, 1.0 if rich else 0.0)
+
+
 func _set_wind(v: float) -> void:
 	wind = v
 	RenderingServer.global_shader_parameter_set(&"wind", v)  # crops read the one global wind
 
 
-## The stage a plot's plants are drawn at, and how grown they look within it (0..1).
+## The stage a plot's plants are drawn at, and the stretch of time (unix seconds) the stage's growing spans:
+## [stage, from, length], with a length of 0 for a stage that is done growing.
 static func stage_of(i: int) -> Array:
 	match Game.field.phase(i):
 		GameState.Phase.RIPE:
-			return ["ripe", 1.0]
+			return ["ripe", 0.0, 0.0]
 		GameState.Phase.WITHERED:
-			return ["withered", 1.0]
+			return ["withered", 0.0, 0.0]
 		GameState.Phase.GROWING:
+			var plot: Dictionary = Game.plots[i]
+			var planted := float(plot["planted_at"])
+			var grow := float(Game.crops[plot["crop"]]["grow_seconds"])
 			var g := Game.field.growth(i)
-			if g < 0.2:
-				return ["seeds", 1.0]
-			if g < 0.45:
-				return ["sprout", _stepped((g - 0.2) / 0.25)]
-			return ["young", _stepped((g - 0.45) / 0.55)]
-	return ["", 0.0]
+			if g < SPROUT_FROM:
+				return ["seeds", 0.0, 0.0]
+			if g < YOUNG_FROM:
+				return ["sprout", planted + SPROUT_FROM * grow, (YOUNG_FROM - SPROUT_FROM) * grow]
+			return ["young", planted + YOUNG_FROM * grow, (1.0 - YOUNG_FROM) * grow]
+	return ["", 0.0, 0.0]
 
 
-static func _stepped(v: float) -> float:
-	return floorf(clampf(v, 0.0, 1.0) * GROW_STEPS) / GROW_STEPS
-
-
-## What the farm's crops look like right now, as one number: crop, stage, size step and richness of every plot.
+## What the farm's crops look like right now, as one number: crop, stage and richness of every plot.
 func _fingerprint() -> int:
 	var h := Game.farm_size
 	for i in Game.farm_size * Game.farm_size:
@@ -68,7 +92,7 @@ func _fingerprint() -> int:
 			continue
 		var idx := Game.index_of(i / Game.farm_size, i % Game.farm_size)
 		var st := stage_of(idx)
-		h = hash([h, idx, crop_id, st[0], st[1], Game.field.is_fertilized(idx)])
+		h = hash([h, idx, crop_id, st[0], Game.field.is_fertilized(idx)])
 	return h
 
 
@@ -79,7 +103,7 @@ func rebuild() -> void:
 	if print_now == _drawn:
 		return
 	_drawn = print_now
-	var groups := {}  # key -> Array of [Transform3D, Color]
+	var groups := {}  # key -> Array of [Transform3D, packed instance data]
 	var n := Game.farm_size
 	for r in n:
 		for c in n:
@@ -93,18 +117,14 @@ func rebuild() -> void:
 			var crop: Dictionary = Game.crops[crop_id]
 			var key := "%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0]]
 			var col := Color.html(str(crop.get("color", "#e2453c")))
-			var size := PLANT_SCALE * (lerpf(0.55, 1.0, float(st[1])) if st[0] in ["sprout", "young"] else 1.0)
-			# Fertilised plants stand taller and richer (the shader reads alpha 0 as "rich").
 			var rich := Game.field.is_fertilized(i)
-			if rich:
-				size *= FERTILIZED_SIZE
-				col.a = 0.0
+			var data := pack(col, float(st[1]) - _base, float(st[2]), rich)
 			var list: Array = groups.get_or_add(key, [])
 			for k in SPOTS.size():
 				var spot: Vector2 = SPOTS[k]
 				var turn := float((i * 7 + k * 13) % 17) / 17.0 * TAU
 				var at := Vector3(c + 0.5 + spot.x, Plots3D.HEIGHT, r + 0.5 + spot.y)
-				list.append([Transform3D(_plant_basis(turn, size, i * 5 + k), at), col])
+				list.append([Transform3D(_plant_basis(turn, PLANT_SCALE, i * 5 + k), at), data])
 	for key in _layers.keys():
 		if not groups.has(key):
 			(_layers[key] as MultiMeshInstance3D).queue_free()
@@ -153,7 +173,7 @@ func pop(i: int, crop_id: String) -> void:
 	for k in SPOTS.size():
 		var spot: Vector2 = SPOTS[k]
 		mm.set_instance_transform(k, Transform3D(Basis().scaled(Vector3.ONE * PLANT_SCALE), Vector3(spot.x, 0, spot.y)))
-		mm.set_instance_custom_data(k, Color.html(str(crop.get("color", "#e2453c"))))
+		mm.set_instance_custom_data(k, pack(Color.html(str(crop.get("color", "#e2453c"))), 0.0, 0.0, false))
 	var ghost := MultiMeshInstance3D.new()
 	ghost.multimesh = mm
 	ghost.material_override = _material
