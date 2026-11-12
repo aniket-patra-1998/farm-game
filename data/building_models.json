@@ -863,7 +863,10 @@
       ],
       "fill": {
         "stock": "goods",
-        "at": [0.2, 0.92]
+        "at": [
+          0.2,
+          0.92
+        ]
       }
     },
     "garage": {
@@ -896,7 +899,10 @@
       ],
       "fill": {
         "stock": "vehicles",
-        "at": [0.5, 0.71]
+        "at": [
+          0.5,
+          0.71
+        ]
       }
     },
     "garden_shed": {
@@ -928,7 +934,10 @@
       ],
       "fill": {
         "stock": "bunches",
-        "at": [0.8, 0.95]
+        "at": [
+          0.8,
+          0.95
+        ]
       }
     },
     "bakery": {
@@ -1328,6 +1337,151 @@
           0.85,
           0.92
         ]
+      }
+    },
+    "feed_mill": {
+      "body": {
+        "w": 0.6,
+        "d": 0.68,
+        "h": 1.5,
+        "at": [
+          0.48,
+          0.4
+        ],
+        "walls": "boards"
+      },
+      "roof": {
+        "type": "hip",
+        "pitch": 0.9,
+        "color": "#5b6b3a"
+      },
+      "door": {
+        "w": 0.28,
+        "h": 0.58,
+        "style": "arch"
+      },
+      "features": [
+        {
+          "type": "silo"
+        },
+        {
+          "type": "hay_bales"
+        },
+        {
+          "type": "sign"
+        }
+      ],
+      "levels": {
+        "2": {
+          "features": [
+            {
+              "type": "flowers"
+            }
+          ]
+        },
+        "3": {
+          "drop": [
+            "terrace"
+          ],
+          "features": [
+            {
+              "type": "wing",
+              "depth": 0.3,
+              "span": 0.6,
+              "h": 0.65
+            }
+          ]
+        },
+        "4": {
+          "body": {
+            "h": 1.05
+          },
+          "window_rows": 1,
+          "windows": 2,
+          "upper": {
+            "w": 0.9,
+            "d": 0.9,
+            "h": 0.74,
+            "walls": "boards",
+            "color": "#8a5a3b",
+            "windows": 3,
+            "roof": {
+              "pitch": 1.0
+            }
+          },
+          "features": [
+            {
+              "type": "hoist"
+            }
+          ]
+        },
+        "5": {
+          "features": [
+            {
+              "type": "cupola"
+            },
+            {
+              "type": "terrace"
+            },
+            {
+              "type": "balcony",
+              "span": 0.6
+            }
+          ]
+        }
+      }
+    },
+    "dog_house": {
+      "body": {
+        "w": 0.3,
+        "d": 0.3,
+        "h": 0.5,
+        "at": [
+          0.5,
+          0.22
+        ],
+        "walls": "boards",
+        "color": "#c8a06a"
+      },
+      "roof": {
+        "type": "gable",
+        "pitch": 0.7,
+        "color": "#8a3b2a"
+      },
+      "door": {
+        "w": 0.14,
+        "h": 0.26,
+        "style": "arch"
+      },
+      "features": [
+        {
+          "type": "yard",
+          "ground": "grass",
+          "fence": "rail",
+          "whole": true
+        },
+        {
+          "type": "sign"
+        }
+      ],
+      "levels": {
+        "3": {
+          "features": [
+            {
+              "type": "flowers"
+            }
+          ]
+        },
+        "4": {
+          "features": [
+            {
+              "type": "water_trough"
+            }
+          ]
+        }
+      },
+      "fill": {
+        "stock": "dogs"
       }
     }
   }

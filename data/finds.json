@@ -1,18 +1,111 @@
 {
-  "_doc": "Things found while farming (scripts/systems/finds_system.gd). A family is a set of collectable kinds found by one kind of farm work. trigger.on is the work that rolls it (harvest); chance is per roll, raised by the crop's mastery stars (mastery_luck per star); pity guarantees one after that many dry rolls. Each kind has a weight (how often among its family) and a rarity. tiers are the counts owned at which the family's home grows a level; reward is paid once when every kind has been found.",
+  "_doc": "Things found while farming (scripts/systems/finds_system.gd). A family is a set of collectable kinds found by one kind of farm work. trigger.on is the work that rolls it (harvest); chance is per roll, raised by the crop's mastery stars (mastery_luck per star); pity guarantees one after that many dry rolls. Each kind has a weight (how often among its family) and a rarity. tiers are the counts owned at which the family's home grows a level; reward is paid once when every kind has been found. helps (our own touch): each find of this family adds that share to the find chance of the listed families (cap `help_cap`), so dogs sniff out gophers.",
   "families": {
     "gopher": {
       "name": "Gophers",
-      "trigger": {"on": "harvest", "chance": 0.035, "pity": 50, "mastery_luck": 0.15},
+      "trigger": {
+        "on": "harvest",
+        "chance": 0.035,
+        "pity": 50,
+        "mastery_luck": 0.15
+      },
       "kinds": [
-        {"id": "plain_gopher", "name": "Plain Gopher", "rarity": "common", "weight": 55},
-        {"id": "brown_gopher", "name": "Brown Gopher", "rarity": "common", "weight": 25},
-        {"id": "spotted_gopher", "name": "Spotted Gopher", "rarity": "uncommon", "weight": 12},
-        {"id": "striped_gopher", "name": "Striped Gopher", "rarity": "rare", "weight": 6},
-        {"id": "golden_gopher", "name": "Golden Gopher", "rarity": "legendary", "weight": 2}
+        {
+          "id": "plain_gopher",
+          "name": "Plain Gopher",
+          "rarity": "common",
+          "weight": 55
+        },
+        {
+          "id": "brown_gopher",
+          "name": "Brown Gopher",
+          "rarity": "common",
+          "weight": 25
+        },
+        {
+          "id": "spotted_gopher",
+          "name": "Spotted Gopher",
+          "rarity": "uncommon",
+          "weight": 12
+        },
+        {
+          "id": "striped_gopher",
+          "name": "Striped Gopher",
+          "rarity": "rare",
+          "weight": 6
+        },
+        {
+          "id": "golden_gopher",
+          "name": "Golden Gopher",
+          "rarity": "legendary",
+          "weight": 2
+        }
       ],
-      "tiers": [1, 4, 10, 20],
-      "reward": {"coins": 5000, "xp": 150}
+      "tiers": [
+        1,
+        4,
+        10,
+        20
+      ],
+      "reward": {
+        "coins": 5000,
+        "xp": 150
+      }
+    },
+    "dog": {
+      "name": "Dogs",
+      "trigger": {
+        "on": "harvest",
+        "chance": 0.025,
+        "pity": 70,
+        "mastery_luck": 0.15
+      },
+      "kinds": [
+        {
+          "id": "indie_dog",
+          "name": "Indie Dog",
+          "rarity": "common",
+          "weight": 55
+        },
+        {
+          "id": "brown_dog",
+          "name": "Brown Dog",
+          "rarity": "common",
+          "weight": 25
+        },
+        {
+          "id": "spotted_dog",
+          "name": "Spotted Dog",
+          "rarity": "uncommon",
+          "weight": 12
+        },
+        {
+          "id": "black_lab",
+          "name": "Black Lab",
+          "rarity": "rare",
+          "weight": 6
+        },
+        {
+          "id": "golden_retriever",
+          "name": "Golden Retriever",
+          "rarity": "legendary",
+          "weight": 2
+        }
+      ],
+      "tiers": [
+        1,
+        4,
+        10,
+        20
+      ],
+      "helps": {
+        "gopher": 0.03
+      },
+      "help_cap": 0.5,
+      "reward": {
+        "coins": 5000,
+        "xp": 150
+      }
     }
   }
 }

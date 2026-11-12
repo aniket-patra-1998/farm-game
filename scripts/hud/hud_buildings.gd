@@ -86,7 +86,7 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 8)
 	card.add_child(BookPanel.text(Game.size_name(o), 22))
-	card.add_child(BookPanel.text(tr("GOPHER_GARDEN_FOUND") % [Game.finds.total(family), Game.finds.distinct(family),
+	card.add_child(BookPanel.text(tr("FINDS_HOME_FOUND") % [fam.get("name", family), Game.finds.total(family), Game.finds.distinct(family),
 		(fam.get("kinds", []) as Array).size()], 18))
 	for kind: Dictionary in fam.get("kinds", []):
 		var n := Game.finds.count(str(kind["id"]))
@@ -99,7 +99,10 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 			next_at = int(t)
 			break
 	if next_at > 0:
-		card.add_child(BookPanel.text(tr("GOPHER_NEXT_SIZE") % next_at, 17, BookPanel.CREAM))
+		card.add_child(BookPanel.text(tr("FINDS_HOME_NEXT") % next_at, 17, BookPanel.CREAM))
+	for target: String in fam.get("helps", {}):
+		card.add_child(BookPanel.text(tr("FINDS_HELPS") % [roundi(float(fam["helps"][target]) * 100.0),
+			str(Game.finds.families.get(target, {}).get("name", target)).to_lower()], 17, BookPanel.SUN))
 	content.add_child(BookPanel.card_frame(card))
 
 

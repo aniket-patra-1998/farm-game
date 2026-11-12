@@ -555,6 +555,10 @@
         "product": {
           "type": "string",
           "doc": "What kind of good (bread, wine, perfume)."
+        },
+        "feed": {
+          "type": "map",
+          "doc": "Our own touch (Feed Mill): makes rich feed for the Barn instead of a good. {type: feed id from data/feeds.json, units: how many}."
         }
       },
       "lifecycle": {

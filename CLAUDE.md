@@ -12,6 +12,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - Vehicles at work are a simulation in `scripts/systems/`, not a picture: `VehicleWork` drives the lanes of `VehicleRoute` with `VehicleMotion`'s weight (data/vehicle_motion.json; size and weight per vehicle in the catalog) and works each plot as it passes, run by `Game.vehicles.advance` (`settle()` for tests); the view only follows it.
 - Layout synergies (`AdjacencySystem`, `Game.adjacency`, data/synergies.json; our own touch, Balance `synergy.enabled`): homes of one kind that share an edge pay +10% coins each, up to 4; derived like `LinksSystem`, nothing saved; shown as a line in the building panel and a glow and "+N%" tag while placing.
 - Boosts per home (`HomeBoostSystem`, `Game.boosts`, data/home_boosts.json; our own touch, Balance `synergy.home_boosts`): a stocked home adds to a farm-wide boost (feed chance, golden luck), capped; derived, nothing saved.
+- Feed Mill (our own touch): a crafting building whose `feed_mill_recipes` (data/catalog/recipes.json, field `feed`) make rich feed for the Barn instead of goods. Dogs: a find family in data/finds.json with a Dog House; a family's `helps` adds to another family's find chance.
 - `scripts/systems/*.gd`: the subsystems, each a `GameSystem` with its own state and rules, reached as
   `Game.crafting`, `Game.vehicles`, `Game.bees`, `Game.strays`... `Game.player` is the farmer: farm work is
   queued there and happens when the farmer has walked to it (the farm grid shows results from its

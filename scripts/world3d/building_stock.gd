@@ -6,7 +6,7 @@ extends RefCounted
 ## of data and, for a new kind of thing, one builder here. Every builder returns a signature (what's shown)
 ## so the owner rebuilds only when it changes.
 
-const KINDS := ["vehicles", "bunches", "goods", "gophers"]
+const KINDS := ["vehicles", "bunches", "goods", "gophers", "dogs"]
 const MAX_VEHICLES := 2           # the most shown in the doorway (the garage can hold more)
 const VEHICLE_SCALE := 0.85
 const DOOR_FILL := 0.92           # how much of the doorway's width the parked vehicles may fill
@@ -18,6 +18,9 @@ const MAX_MOUNDS := 10
 const MOUND_EDGE := 0.42          # tiles between a burrow and the fence
 const GOPHER_COATS := {"plain_gopher": "#a58660", "brown_gopher": "#7b5233", "spotted_gopher": "#b8946a",
 	"striped_gopher": "#8a6540", "golden_gopher": "#e8b830"}
+const MAX_DOGS := 6
+const DOG_COATS := {"indie_dog": "#b98a55", "brown_dog": "#6e4a2c", "spotted_dog": "#e8dcc4", "black_lab": "#24211f",
+	"golden_retriever": "#e0a83a"}
 const FLOWER_COLOURS := [Color("#d6304a"), Color("#f5c518"), Color("#f7b5c8"), Color("#9b7be0"), Color("#ff8c42")]
 
 
@@ -30,7 +33,7 @@ static func signature(kind: String, o: Dictionary) -> String:
 			return str(Game.shed.bunches.size())
 		"goods":
 			return "%d|%d" % [Game.storage.stored.size(), Game.storage.barn_capacity()]
-		"gophers":
+		"gophers", "dogs":
 			return JSON.stringify(Game.finds.owned)
 	return ""
 
@@ -48,6 +51,8 @@ static func build(kind: String, o: Dictionary, fp: Vector2i, at: Array) -> Node3
 			_goods(root, p)
 		"gophers":
 			_gophers(root, fp, int(o.get("uid", 0)))
+		"dogs":
+			_dogs(root, fp, int(o.get("uid", 0)))
 	return ModelKit.bake(root)
 
 
@@ -130,6 +135,42 @@ static func _gophers(root: Node3D, fp: Vector2i, seed_value: int) -> void:
 		if m < who.size():
 			DecorMotion.orbit(root, at + Vector3(0, 0.02, 0), _gopher(who[m]),
 				{"speed": 0.0, "bob": 0.03, "bob_rate": 0.9 + 0.17 * (m % 4), "phase": m * 1.3})
+
+
+## Dogs resting in the yard, as many as are owned (the commonest kinds first, up to six), each in its own coat.
+static func _dogs(root: Node3D, fp: Vector2i, seed_value: int) -> void:
+	var owned := {}
+	for k: Dictionary in Game.finds.families.get("dog", {}).get("kinds", []):
+		owned[str(k["id"])] = Game.finds.count(str(k["id"]))
+	var who := BuildingFill.pick_kinds(owned, mini(Game.finds.total("dog"), MAX_DOGS), 99)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for m in who.size():
+		var u := (m % 3 + 0.5) / 3.0
+		var v := 0.55 + 0.3 * float(m / 3)
+		var at := Vector3(fp.x * u + rng.randf_range(-0.05, 0.05), 0, fp.y * v + rng.randf_range(-0.04, 0.04))
+		DecorMotion.orbit(root, at, _dog(who[m]), {"speed": 0.0, "bob": 0.012, "bob_rate": 0.7 + 0.13 * (m % 4),
+			"phase": m * 1.7})
+
+
+## One dog lying down: body, head, snout, floppy ears, a wagging tail; a lab and a golden are larger, a spotted one has patches.
+static func _dog(kind_id: String) -> Node3D:
+	var part := Node3D.new()
+	var coat := Color(DOG_COATS.get(kind_id, "#b98a55"))
+	var mat := ModelKit.paint(coat, 0.2)
+	var big := 1.15 if kind_id in ["black_lab", "golden_retriever"] else 1.0
+	ModelKit.ball(part, Vector3(0, 0.07 * big, 0), 0.07 * big, mat, Vector3(1.5, 0.85, 0.9))
+	ModelKit.ball(part, Vector3(0.09 * big, 0.115 * big, 0), 0.05 * big, mat)
+	ModelKit.ball(part, Vector3(0.14 * big, 0.105 * big, 0), 0.026 * big, ModelKit.paint(coat.lightened(0.15), 0.2))
+	ModelKit.ball(part, Vector3(0.162 * big, 0.11 * big, 0), 0.009, ModelKit.paint(Color("#16100a")))
+	for side in [-1.0, 1.0]:
+		ModelKit.ball(part, Vector3(0.085 * big, 0.125 * big, side * 0.04 * big), 0.022, ModelKit.paint(coat.darkened(0.25), 0.2),
+			Vector3(0.7, 1.2, 0.5))
+	ModelKit.ball(part, Vector3(-0.11 * big, 0.085 * big, 0), 0.02, mat, Vector3(1.8, 0.6, 0.6))
+	if kind_id == "spotted_dog":
+		ModelKit.ball(part, Vector3(0.0, 0.1, 0.03), 0.028, ModelKit.paint(Color("#3b2f28")), Vector3(1.2, 0.5, 1))
+		ModelKit.ball(part, Vector3(0.09, 0.13, -0.03), 0.02, ModelKit.paint(Color("#3b2f28")))
+	return part
 
 
 ## One gopher, head and shoulders up out of its burrow: coat by kind, ears, nose, eyes, buck teeth.

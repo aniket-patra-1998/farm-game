@@ -1944,6 +1944,13 @@ static func _crafting(ci: CanvasItem, g: PackedVector2Array, it: Dictionary, lev
 					6 * u,
 					Color("#6a2a5a") if k % 3 else Color("#4a8a3a")
 				)
+		"feed_mill":
+			var hopper := c.lerp(g[1], 0.35) + Vector2(0, -hgt - 20.0 * s)
+			ci.draw_rect(Rect2(hopper + Vector2(-12, -34) * u, Vector2(24, 44) * u), Color("#b9ad8e"))
+			ci.draw_colored_polygon(PackedVector2Array([hopper + Vector2(-16, -34) * u,
+				hopper + Vector2(16, -34) * u, hopper + Vector2(0, -56) * u]), Color("#5b6b3a"))
+			for k in 3: # sacks of grain by the door
+				_ellipse(ci, front + Vector2(-64 + k * 20, -6 - (k % 2) * 6) * u, 11 * u, 8 * u, Color("#e0cf9c"))
 		"spa":
 			var tub := front + Vector2(50, -6) * u
 			_ellipse(ci, tub, 30 * u, 14 * u, Color("#f4f1ea"))

@@ -51,13 +51,24 @@ func roll(work: String, stars := 0) -> Array[Dictionary]:
 		if str(trig.get("on", "")) != work:
 			continue
 		pity[fid] = int(pity.get(fid, 0)) + 1
-		var chance := float(trig.get("chance", 0.0)) * (1.0 + float(trig.get("mastery_luck", 0.0)) * stars)
+		var chance := float(trig.get("chance", 0.0)) * (1.0 + float(trig.get("mastery_luck", 0.0)) * stars + help_for(fid))
 		if int(pity[fid]) >= int(trig.get("pity", 1000000)) or game.rng.randf() < chance:
 			pity[fid] = 0
 			var kind := pick(fid)
 			if not kind.is_empty():
 				out.append(add(fid, kind))
 	return out
+
+
+## What the other families help this one with (our own touch): each find of a helping family adds its share to the
+## find chance, up to that family's `help_cap`. Dogs sniff out gophers.
+func help_for(target: String) -> float:
+	var sum := 0.0
+	for fid: String in families:
+		var share := float(families[fid].get("helps", {}).get(target, 0.0))
+		if share > 0.0:
+			sum += minf(share * total(fid), float(families[fid].get("help_cap", 1.0)))
+	return sum
 
 
 ## A kind of the family by weight (common ones turn up more).

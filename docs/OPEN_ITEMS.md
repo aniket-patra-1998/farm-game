@@ -42,7 +42,8 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 - Postponed by the owner (look at later): quests (data/quests.json: missions across all systems, rewards, the counts ribbons use).
 - Layout synergies (AdjacencySystem, data/synergies.json): done for orchards and animal homes (coins). Open: bloom gardens, same-crop plots, crafting beside crops, paths and decor, XP boosts, a tag on the farm outside placing.
 - Boosts per home (HomeBoostSystem, data/home_boosts.json): done (feed chance, golden luck). Open: more boost kinds.
-- Not yet: Feed Mill/Nursery/dogs, queen bee and
+- Feed Mill (crafting building, bushels to rich feed, data/catalog recipes `feed_mill_recipes`) and dogs (find family + Dog House; dogs add +3% each to gopher finds, cap 50%) are done; the Nursery already existed. Dogs do not dig up finds of their own; the Feed Mill and Dog House have only code-drawn looks so far.
+- Not yet: queen bee and
   flowers on the finds framework, look-test tool, central Feedback service. Feeding needs a look/feel pass (hungry
   bubble, hop when fed) and a balance pass in the simulator (animals and hunger are not in the bot yet).
 

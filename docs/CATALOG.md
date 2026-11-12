@@ -11,14 +11,14 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Materials | 2 | 13 | 0 |
 | Trees | 32 | 46 | 0 |
 | Animals | 15 | 68 | 0 |
-| Buildings | 6 | 19 | 6 |
+| Buildings | 6 | 21 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 38 | 0 |
-| recipes | 3 | 45 | 0 |
+| recipes | 4 | 54 | 0 |
 | young | 3 | 3 | 0 |
 | blooms | 6 | 12 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **110** | **428** | **6** |
+| **All** | **111** | **439** | **6** |
 
 ## Adding an item
 
@@ -215,6 +215,7 @@ Something a crafting building makes from bushels.
 | `star` | int | 1 |  | The building's star level that unlocks it. |
 | `inputs` | map<int> |  | yes | Bushels used: crop id -> how many. |
 | `product` | string |  |  | What kind of good (bread, wine, perfume). |
+| `feed` | map |  |  | Our own touch (Feed Mill): makes rich feed for the Barn instead of a good. {type: feed id from data/feeds.json, units: how many}. |
 
 ### Young (extends Placeable)
 
@@ -946,6 +947,7 @@ Shared: `tab` = "crafting", `limit_group` = "crafting", `group_limit` = 3
 | ✅ | Spa | `spa` | 25 | 100,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 | 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |  |  |
+| ✅ | Feed Mill | `feed_mill` | 28 | 120,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 
 ### Storage
 
@@ -959,6 +961,7 @@ Shared: `tab` = "storage"
 | ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 2 | frame | garage |
 | ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x1 | 100 | storage | 2 |  | garden_shed |
 | ✅ | Gopher Garden | `gopher_garden` | 6 | 8,000 | 2x2 | 1 / 4 / 10 / 20 | storage | 1 |  | finds_home |
+| ✅ | Dog House | `dog_house` | 10 | 12,000 | 2x2 | 1 / 4 / 10 / 20 | storage | 1 |  | finds_home |
 | 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Silo | `silo` | 1 |  |  |  |  |  |  |  |
 
@@ -1164,6 +1167,24 @@ Shared: `building` = "winery", `product` = "Drinks"
 | ✅ | Cucumber Wine | `cucumber_wine` |  |
 | ✅ | Melon Juice | `melon_juice` |  |
 | ✅ | Rose Petal Water | `rose_petal_water` |  |
+
+### Feed Mill recipes
+
+Made in the Feed Mill (our own touch): bushels in, rich feed out for the Barn.
+
+Shared: `building` = "feed_mill", `product` = "Rich feed"
+
+| | Item | id |  |
+|---|---|---|
+| ✅ | Rich Grain Mix | `rich_grain_mix` |  |
+| ✅ | Rich Green Mash | `rich_green_mash` |  |
+| ✅ | Rich Root Meal | `rich_root_meal` |  |
+| ✅ | Rich Fruit Blend | `rich_fruit_blend` |  |
+| ✅ | Rich Nectar Cake | `rich_nectar_cake` |  |
+| ✅ | Grain Feast | `grain_feast` |  |
+| ✅ | Garden Feast | `garden_feast` |  |
+| ✅ | Harvest Feast | `harvest_feast` |  |
+| ✅ | Orchard Feast | `orchard_feast` |  |
 
 ## young
 

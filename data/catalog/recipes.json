@@ -489,6 +489,138 @@
           }
         }
       ]
+    },
+    {
+      "id": "feed_mill_recipes",
+      "name": "Feed Mill recipes",
+      "doc": "Made in the Feed Mill (our own touch): bushels in, rich feed out for the Barn.",
+      "defaults": {
+        "building": "feed_mill",
+        "product": "Rich feed"
+      },
+      "variants": [
+        {
+          "id": "rich_grain_mix",
+          "name": "Rich Grain Mix",
+          "star": 1,
+          "inputs": {
+            "wheat": 3,
+            "corn": 3
+          },
+          "feed": {
+            "type": "grain",
+            "units": 3
+          }
+        },
+        {
+          "id": "rich_green_mash",
+          "name": "Rich Green Mash",
+          "star": 1,
+          "inputs": {
+            "spinach": 3,
+            "cabbage": 3
+          },
+          "feed": {
+            "type": "greens",
+            "units": 3
+          }
+        },
+        {
+          "id": "rich_root_meal",
+          "name": "Rich Root Meal",
+          "star": 1,
+          "inputs": {
+            "carrots": 3,
+            "potatoes": 3
+          },
+          "feed": {
+            "type": "roots",
+            "units": 3
+          }
+        },
+        {
+          "id": "rich_fruit_blend",
+          "name": "Rich Fruit Blend",
+          "star": 2,
+          "inputs": {
+            "strawberries": 3,
+            "blueberries": 3
+          },
+          "feed": {
+            "type": "fruit",
+            "units": 3
+          }
+        },
+        {
+          "id": "rich_nectar_cake",
+          "name": "Rich Nectar Cake",
+          "star": 2,
+          "inputs": {
+            "sunflowers": 3,
+            "lilac": 3
+          },
+          "feed": {
+            "type": "nectar",
+            "units": 3
+          }
+        },
+        {
+          "id": "grain_feast",
+          "name": "Grain Feast",
+          "star": 3,
+          "inputs": {
+            "rice": 4,
+            "oats": 4,
+            "rye": 4
+          },
+          "feed": {
+            "type": "grain",
+            "units": 8
+          }
+        },
+        {
+          "id": "garden_feast",
+          "name": "Garden Feast",
+          "star": 3,
+          "inputs": {
+            "broccoli": 4,
+            "asparagus": 4,
+            "cucumber": 4
+          },
+          "feed": {
+            "type": "greens",
+            "units": 8
+          }
+        },
+        {
+          "id": "harvest_feast",
+          "name": "Harvest Feast",
+          "star": 4,
+          "inputs": {
+            "pumpkins": 4,
+            "squash": 4,
+            "onions": 4
+          },
+          "feed": {
+            "type": "roots",
+            "units": 8
+          }
+        },
+        {
+          "id": "orchard_feast",
+          "name": "Orchard Feast",
+          "star": 5,
+          "inputs": {
+            "raspberries": 5,
+            "blackberries": 5,
+            "cranberries": 5
+          },
+          "feed": {
+            "type": "fruit",
+            "units": 8
+          }
+        }
+      ]
     }
   ]
 }

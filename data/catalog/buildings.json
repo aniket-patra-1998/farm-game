@@ -766,6 +766,54 @@
           "id": "spinning_mill",
           "name": "Spinning Mill",
           "status": "planned"
+        },
+        {
+          "id": "feed_mill",
+          "name": "Feed Mill",
+          "kind": "crafting",
+          "unlock_level": 28,
+          "cost": 120000,
+          "extra_gem_cost": 80,
+          "w": 4,
+          "h": 3,
+          "produces": false,
+          "color": "#cdb98f",
+          "roof": "#5b6b3a",
+          "look": "a sturdy country feed mill with weathered plank walls, a mossy green roof, a tall grain hopper and a chute over a stack of grain sacks, and a hanging wheat-sheaf sign",
+          "sizes": [
+            {
+              "capacity": 1,
+              "name": "Feed Mill"
+            },
+            {
+              "capacity": 2,
+              "name": "2-Star Feed Mill",
+              "coins": 50000,
+              "recipe_stars": 6,
+              "gems": 15
+            },
+            {
+              "capacity": 3,
+              "name": "3-Star Feed Mill",
+              "coins": 100000,
+              "recipe_stars": 18,
+              "gems": 25
+            },
+            {
+              "capacity": 4,
+              "name": "4-Star Feed Mill",
+              "coins": 400000,
+              "recipe_stars": 27,
+              "gems": 40
+            },
+            {
+              "capacity": 5,
+              "name": "5-Star Feed Mill",
+              "coins": 1000000,
+              "recipe_stars": 36,
+              "gems": 60
+            }
+          ]
         }
       ],
       "defaults": {
@@ -919,6 +967,45 @@
             {
               "capacity": 20,
               "name": "Grand Gopher Garden"
+            }
+          ]
+        },
+        {
+          "id": "dog_house",
+          "name": "Dog House",
+          "unlock_level": 10,
+          "cost": 12000,
+          "limit": 1,
+          "w": 2,
+          "h": 2,
+          "holds": [],
+          "special": "finds_home",
+          "home_of": "dog",
+          "requires": {
+            "finds": {
+              "dog": 1
+            }
+          },
+          "produces": false,
+          "color": "#c8a06a",
+          "roof": "#8a3b2a",
+          "look": "a cosy fenced yard with a red-roofed wooden dog house, a water bowl and a chew bone, dogs resting in the sun",
+          "sizes": [
+            {
+              "capacity": 1,
+              "name": "Dog House"
+            },
+            {
+              "capacity": 4,
+              "name": "Big Dog House"
+            },
+            {
+              "capacity": 10,
+              "name": "Large Dog House"
+            },
+            {
+              "capacity": 20,
+              "name": "Grand Dog House"
             }
           ]
         },

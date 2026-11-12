@@ -48,37 +48,41 @@ func build_crafting(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.SUN))
 	for r in Game.crafting.recipes_of(o["id"]):
 		content.add_child(recipe_row(uid, o, r))
-	# Goods
-	content.add_child(BookPanel.text(tr("YOUR_GOODS"), 26, BookPanel.SUN))
-	var any_goods := false
+	# Goods (a feed building makes none: its rich feed goes to the Barn)
+	var makes_goods := false
 	for r in Game.crafting.recipes_of(o["id"]):
-		var n := int(Game.crafting.goods.get(r.id, 0))
-		if n <= 0:
-			continue
-		any_goods = true
-		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", 10)
-		row.add_child(BookPanel.text("%d %s" % [n, r.name], 20))
-		var rid := r.id
-		var sell := hud._panel_button(tr("SELL_COINS") % FarmHud._thousands(Game.crafting.good_price(rid)))
-		sell.pressed.connect(func() -> void:
-			Game.crafting.sell_good(rid)
-			hud._book.refresh())
-		row.add_child(sell)
-		var use := hud._panel_button(tr("USE_FUEL") % Game.crafting.good_fuel(rid))
-		use.pressed.connect(func() -> void:
-			hud.show_message(tr("FUEL_2") % Game.crafting.use_good(rid))
-			hud._book.refresh())
-		row.add_child(use)
-		content.add_child(BookPanel.card_frame(row))
-	if not any_goods:
-		content.add_child(
-			BookPanel.text(
-				tr("NOTHING_YET_FINISHED_CRAFTS_LAND_HERE"),
-				17,
-				BookPanel.CREAM
+		makes_goods = makes_goods or not r.makes_feed()
+	if makes_goods:
+		content.add_child(BookPanel.text(tr("YOUR_GOODS"), 26, BookPanel.SUN))
+		var any_goods := false
+		for r in Game.crafting.recipes_of(o["id"]):
+			var n := int(Game.crafting.goods.get(r.id, 0))
+			if n <= 0:
+				continue
+			any_goods = true
+			var row := HFlowContainer.new()
+			row.add_theme_constant_override("h_separation", 10)
+			row.add_child(BookPanel.text("%d %s" % [n, r.name], 20))
+			var rid := r.id
+			var sell := hud._panel_button(tr("SELL_COINS") % FarmHud._thousands(Game.crafting.good_price(rid)))
+			sell.pressed.connect(func() -> void:
+				Game.crafting.sell_good(rid)
+				hud._book.refresh())
+			row.add_child(sell)
+			var use := hud._panel_button(tr("USE_FUEL") % Game.crafting.good_fuel(rid))
+			use.pressed.connect(func() -> void:
+				hud.show_message(tr("FUEL_2") % Game.crafting.use_good(rid))
+				hud._book.refresh())
+			row.add_child(use)
+			content.add_child(BookPanel.card_frame(row))
+		if not any_goods:
+			content.add_child(
+				BookPanel.text(
+					tr("NOTHING_YET_FINISHED_CRAFTS_LAND_HERE"),
+					17,
+					BookPanel.CREAM
+				)
 			)
-		)
 	# Stars
 	var cost := Game.crafting.star_cost(o)
 	if not cost.is_empty():
@@ -148,6 +152,10 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	for c in r.inputs():
 		need.append("%d/%d %s" % [int(Game.crafting.bushels.get(c, 0)), int(r.inputs()[c]), Game.crops[c]["name"]])
 	inner.add_child(BookPanel.text(", ".join(PackedStringArray(need)), 17))
+	if r.makes_feed():
+		inner.add_child(BookPanel.text(
+			tr("RECIPE_MAKES_FEED") % [int(r.feed()["units"]), Game.feeds.feed_name(str(r.feed()["type"]), true)], 17,
+			BookPanel.SUN))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 10)
 	if not unlocked:

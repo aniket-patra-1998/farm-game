@@ -6574,6 +6574,66 @@
    "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 5 of 5: the grandest, most charming version, with golden details and a little tower"
   },
   {
+   "id": "feed_mill_size1",
+   "item": "feed_mill",
+   "class": "Crafting",
+   "stage": "1",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/feed_mill_size1.png"
+   ],
+   "subject": "a sturdy country feed mill with weathered plank walls, a mossy green roof, a tall grain hopper and a chute over a stack of grain sacks, and a hanging wheat-sheaf sign. Star level 1 of 5: a modest cottage"
+  },
+  {
+   "id": "feed_mill_size2",
+   "item": "feed_mill",
+   "class": "Crafting",
+   "stage": "2",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/feed_mill_size2.png"
+   ],
+   "subject": "a sturdy country feed mill with weathered plank walls, a mossy green roof, a tall grain hopper and a chute over a stack of grain sacks, and a hanging wheat-sheaf sign. Star level 2 of 5: a little bigger, with more trim and a second window"
+  },
+  {
+   "id": "feed_mill_size3",
+   "item": "feed_mill",
+   "class": "Crafting",
+   "stage": "3",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/feed_mill_size3.png"
+   ],
+   "subject": "a sturdy country feed mill with weathered plank walls, a mossy green roof, a tall grain hopper and a chute over a stack of grain sacks, and a hanging wheat-sheaf sign. Star level 3 of 5: bigger again, with a porch and more decoration"
+  },
+  {
+   "id": "feed_mill_size4",
+   "item": "feed_mill",
+   "class": "Crafting",
+   "stage": "4",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/feed_mill_size4.png"
+   ],
+   "subject": "a sturdy country feed mill with weathered plank walls, a mossy green roof, a tall grain hopper and a chute over a stack of grain sacks, and a hanging wheat-sheaf sign. Star level 4 of 5: a grand version with an extra wing and flower boxes"
+  },
+  {
+   "id": "feed_mill_size5",
+   "item": "feed_mill",
+   "class": "Crafting",
+   "stage": "5",
+   "tiles": 4,
+   "fill": 0.96,
+   "refs": [
+    "refs/feed_mill_size5.png"
+   ],
+   "subject": "a sturdy country feed mill with weathered plank walls, a mossy green roof, a tall grain hopper and a chute over a stack of grain sacks, and a hanging wheat-sheaf sign. Star level 5 of 5: the grandest, most charming version, with golden details and a little tower"
+  },
+  {
    "id": "barn_size1",
    "item": "barn",
    "class": "Barn",
@@ -6704,6 +6764,54 @@
     "refs/gopher_garden_size4.png"
    ],
    "subject": "a small fenced meadow of grassy mounds with gophers popping up out of burrows, a carrot sign by the gate. Size 4 of 4: an even larger deluxe version"
+  },
+  {
+   "id": "dog_house_size1",
+   "item": "dog_house",
+   "class": "Building",
+   "stage": "1",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/dog_house_size1.png"
+   ],
+   "subject": "a cosy fenced yard with a red-roofed wooden dog house, a water bowl and a chew bone, dogs resting in the sun. Size 1 of 4: the small starter size"
+  },
+  {
+   "id": "dog_house_size2",
+   "item": "dog_house",
+   "class": "Building",
+   "stage": "2",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/dog_house_size2.png"
+   ],
+   "subject": "a cosy fenced yard with a red-roofed wooden dog house, a water bowl and a chew bone, dogs resting in the sun. Size 2 of 4: a bigger, grander version with more detail"
+  },
+  {
+   "id": "dog_house_size3",
+   "item": "dog_house",
+   "class": "Building",
+   "stage": "3",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/dog_house_size3.png"
+   ],
+   "subject": "a cosy fenced yard with a red-roofed wooden dog house, a water bowl and a chew bone, dogs resting in the sun. Size 3 of 4: the biggest, grandest version, with extra decoration and flourishes"
+  },
+  {
+   "id": "dog_house_size4",
+   "item": "dog_house",
+   "class": "Building",
+   "stage": "4",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/dog_house_size4.png"
+   ],
+   "subject": "a cosy fenced yard with a red-roofed wooden dog house, a water bowl and a chew bone, dogs resting in the sun. Size 4 of 4: an even larger deluxe version"
   },
   {
    "id": "tractor",
@@ -7668,6 +7776,96 @@
    "fill": 0.5,
    "refs": [],
    "subject": "Rose Petal Water, a homemade drink from a country farm, made from lavender, morning glory, pink roses, sunflowers; appetising and charming"
+  },
+  {
+   "id": "good_rich_grain_mix",
+   "item": "rich_grain_mix",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Rich Grain Mix, a homemade rich feed from a country farm, made from wheat, corn; appetising and charming"
+  },
+  {
+   "id": "good_rich_green_mash",
+   "item": "rich_green_mash",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Rich Green Mash, a homemade rich feed from a country farm, made from spinach, cabbage; appetising and charming"
+  },
+  {
+   "id": "good_rich_root_meal",
+   "item": "rich_root_meal",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Rich Root Meal, a homemade rich feed from a country farm, made from carrots, potatoes; appetising and charming"
+  },
+  {
+   "id": "good_rich_fruit_blend",
+   "item": "rich_fruit_blend",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Rich Fruit Blend, a homemade rich feed from a country farm, made from strawberries, blueberries; appetising and charming"
+  },
+  {
+   "id": "good_rich_nectar_cake",
+   "item": "rich_nectar_cake",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Rich Nectar Cake, a homemade rich feed from a country farm, made from sunflowers, lilac; appetising and charming"
+  },
+  {
+   "id": "good_grain_feast",
+   "item": "grain_feast",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Grain Feast, a homemade rich feed from a country farm, made from rice, oats, rye; appetising and charming"
+  },
+  {
+   "id": "good_garden_feast",
+   "item": "garden_feast",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Garden Feast, a homemade rich feed from a country farm, made from broccoli, asparagus, cucumber; appetising and charming"
+  },
+  {
+   "id": "good_harvest_feast",
+   "item": "harvest_feast",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Harvest Feast, a homemade rich feed from a country farm, made from pumpkins, squash, onions; appetising and charming"
+  },
+  {
+   "id": "good_orchard_feast",
+   "item": "orchard_feast",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Orchard Feast, a homemade rich feed from a country farm, made from raspberries, blackberries, cranberries; appetising and charming"
   },
   {
    "id": "mystery_seedling",

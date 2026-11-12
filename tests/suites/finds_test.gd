@@ -409,3 +409,53 @@ func test_133_the_gopher_garden_needs_a_gopher_and_grows_with_the_finds() -> voi
 	_eq(g.level_of(garden), g.max_level("gopher_garden"), "and it stops at its biggest size")
 	_check(not g.can_afford_item("gopher_garden"), "only one is allowed per farm")
 	_done(g)
+
+
+func test_182_dogs_are_a_find_family_with_a_home_and_a_helping_share() -> void:
+	var g := _farm()
+	_check(g.finds.families.has("dog"), "dogs are a family")
+	var fam: Dictionary = g.finds.families["dog"]
+	for target: String in fam["helps"]:
+		_check(g.finds.families.has(target), "dogs help a real family (%s)" % target)
+	_eq(g.finds.help_for("gopher"), 0.0, "no dogs, no help")
+	_check(not g.can_afford_item("dog_house"), "the Dog House needs a dog")
+	g.finds.add("dog", fam["kinds"][0])
+	_check(Requirements.first_unmet(g, "dog_house").is_empty(), "one dog meets the need")
+	_check(absf(g.finds.help_for("gopher") - 0.03) < 0.0001, "one dog adds its share to gopher finds")
+	for k in 40:
+		g.finds.add("dog", fam["kinds"][0])
+	_check(absf(g.finds.help_for("gopher") - float(fam["help_cap"])) < 0.0001, "and stops at the cap")
+	_eq(g.finds.help_for("dog"), 0.0, "dogs don't help themselves")
+
+
+func test_183_a_dog_house_grows_with_the_dogs_and_dogs_raise_the_gopher_chance() -> void:
+	var g := _farm()
+	g.coins = 10000000
+	g.xp = g.xp_for_level(30)
+	g.set_objects([])
+	var kinds: Array = g.finds.families["dog"]["kinds"]
+	g.finds.add("dog", kinds[0])
+	_check(g.buy_and_place("dog_house", 6, 6), "the Dog House is bought")
+	var house: Dictionary = g.objects.filter(func(o): return o["id"] == "dog_house")[0]
+	for k in 3:
+		g.finds.add("dog", kinds[1])
+	_eq(g.level_of(house), 2, "four dogs grow it to the next size")
+	# More dogs, more gophers: the same dice find more.
+	g.finds.pity["gopher"] = 0
+	var base := 0
+	var helped := 0
+	g.drops_enabled = true
+	for run in 2:
+		g.rng.seed = 7
+		var found := 0
+		for i in 4000:
+			g.finds.owned = {} if run == 0 else {"indie_dog": 20}   # the dice find dogs too: keep the count fixed
+			g.finds.pity["gopher"] = 0
+			g.finds.pity["dog"] = 0
+			for f in g.finds.roll("harvest"):
+				found += 1 if f["family"] == "gopher" else 0
+		if run == 0:
+			base = found
+		else:
+			helped = found
+	_check(helped > base, "20 dogs find more gophers than none (%d vs %d)" % [helped, base])

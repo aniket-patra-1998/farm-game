@@ -14,6 +14,15 @@ func star() -> int:
 	return int(data.get("star", 1))
 
 
+## A feed recipe (Feed Mill, our own touch) makes rich feed for the Barn instead of a good: {"type", "units"}.
+func feed() -> Dictionary:
+	return data.get("feed", {})
+
+
+func makes_feed() -> bool:
+	return not feed().is_empty()
+
+
 ## Crop id -> bushels needed.
 func inputs() -> Dictionary:
 	return data.get("inputs", {})

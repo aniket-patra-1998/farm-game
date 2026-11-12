@@ -175,6 +175,7 @@ func buy_missing_and_craft(uid: int, rid: String) -> bool:
 
 func crafts_done(obj: Dictionary) -> int:
 	var n := 0
+	var goods_made := 0
 	for slot in obj.get("slots", []):
 		if game.now() >= int(slot["done"]):
 			n += 1
@@ -188,11 +189,16 @@ func finish_crafts(uid: int) -> int:
 		return 0
 	var still: Array = []
 	var n := 0
+	var goods_made := 0
 	for slot in obj.get("slots", []):
 		if game.now() >= int(slot["done"]):
 			var rid: String = slot["r"]
 			var before := recipe_stars(rid)
-			goods[rid] = int(goods.get(rid, 0)) + 1
+			if _recipe(rid).makes_feed():
+				_deliver_feed(_recipe(rid))
+			else:
+				goods[rid] = int(goods.get(rid, 0)) + 1
+				goods_made += 1
 			crafted[rid] = int(crafted.get(rid, 0)) + 1
 			game.add_xp(Balance.i("crafting.craft_xp_per_star") * _recipe(rid).star())
 			game.ribbons.bump("crafted", 1)
@@ -202,11 +208,21 @@ func finish_crafts(uid: int) -> int:
 		else:
 			still.append(slot)
 	obj["slots"] = still
+	if goods_made > 0:
+		game.message.emit((tr("FINISHED_ONE_GOOD") if goods_made == 1 else tr("FINISHED_GOODS")) % goods_made)
+	if n > goods_made:
+		game.message.emit(tr("FINISHED_FEED"))
 	if n > 0:
-		game.message.emit((tr("FINISHED_ONE_GOOD") if n == 1 else tr("FINISHED_GOODS")) % n)
 		game.inventory_changed.emit()
 		game.objects_updated()
 	return n
+
+
+## A feed recipe's units go to the Barn as rich feed (what doesn't fit is sold, as feed drops are).
+func _deliver_feed(r: RecipeDef) -> void:
+	var f := r.feed()
+	for i in int(f["units"]):
+		game.feeds.add(str(f["type"]), true)
 
 
 func good_price(rid: String) -> int:
