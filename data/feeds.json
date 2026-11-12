@@ -1,0 +1,35 @@
+{
+  "_comment": "Feeding is our own touch, not FarmVille 2009 (Balance `feeds.enabled` switches the whole thing off). Five feeds the field makes (a crop family gives one; trees give fruit), and which each animal family takes: `favourite` gives the full effect, `accepted` half of it (Balance feeds.accepted_share), anything else is refused. A family not listed here is not fed (bees have their own flowers). Numbers are in data/balance.json under `feeds`.",
+  "feeds": {
+    "grain": {"name": "FEED_GRAIN", "color": "#d9b45a"},
+    "greens": {"name": "FEED_GREENS", "color": "#6aa84f"},
+    "roots": {"name": "FEED_ROOTS", "color": "#c97b3e"},
+    "fruit": {"name": "FEED_FRUIT", "color": "#d9483b"},
+    "nectar": {"name": "FEED_NECTAR", "color": "#f2c230"}
+  },
+  "crop_families": {
+    "grains": "grain", "beans": "grain",
+    "vegetables": "greens", "herbs": "greens",
+    "roots": "roots", "gourds": "roots",
+    "berries": "fruit", "sweets": "fruit",
+    "flowers": "nectar"
+  },
+  "tree_feed": "fruit",
+  "tastes": {
+    "chicken": {"favourite": ["grain"], "accepted": ["greens"]},
+    "turkey": {"favourite": ["grain"], "accepted": ["greens"]},
+    "duck": {"favourite": ["grain"], "accepted": ["greens"]},
+    "goose": {"favourite": ["grain"], "accepted": ["greens"]},
+    "cow": {"favourite": ["greens"], "accepted": ["grain"]},
+    "ox": {"favourite": ["greens"], "accepted": ["grain"]},
+    "sheep": {"favourite": ["greens"], "accepted": ["roots"]},
+    "camelid": {"favourite": ["greens"], "accepted": ["roots"]},
+    "pig": {"favourite": ["roots"], "accepted": ["fruit", "grain"]},
+    "goat": {"favourite": ["roots", "greens", "fruit"], "accepted": ["grain"]},
+    "horse": {"favourite": ["grain"], "accepted": ["fruit", "roots"]},
+    "donkey": {"favourite": ["grain"], "accepted": ["fruit", "roots"]},
+    "rabbit": {"favourite": ["greens"], "accepted": ["roots"]},
+    "turtle": {"favourite": ["greens"], "accepted": ["fruit"]}
+  },
+  "effects": ["produce", "speed", "rare"]
+}

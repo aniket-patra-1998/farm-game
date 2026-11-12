@@ -21,7 +21,9 @@ const WALK_SPEED := 4.5          # tiles a second
 const ACTION_SECONDS := 0.75     # the farmer works this long at each job
 const QUEUE_MAX := 60
 const STAND_OFF := 0.45          # how far short of a plot's centre the farmer stops (they work at its edge)
-const OBJECT_JOBS := ["collect", "nurture"]   # jobs done beside an object, not on a plot
+## Every kind of job. data/actions.json says, for each, who else can do it (a test keeps the two in step).
+const JOB_KINDS := ["plow", "plant", "harvest", "fertilize", "collect", "nurture", "vehicle", "feed"]
+const OBJECT_JOBS := ["collect", "nurture", "feed"]   # jobs done beside an object, not on a plot
 const DEFAULT_LOOK := {"body": "a", "skin": "#f1c9a5", "hair": "#5a3a1e", "hair_style": "short",
 	"shirt": "#d9483b", "overalls": "#3f6fb5", "hat": "straw", "shoes": "#5b3b22"}
 
@@ -185,7 +187,7 @@ func can_do(job: Dictionary) -> bool:
 		"nurture":
 			return game.nurture.can_feed(game.object_by_uid(int(job.get("uid", -1))))
 		"vehicle":
-			return game.items.has(str(job.get("item", "")))
+			return game.items.has(str(job.get("item", ""))) and not game.vehicles.is_running(str(job["item"]))
 	return false
 
 
@@ -235,8 +237,10 @@ func _perform(job: Dictionary) -> Dictionary:
 		"nurture":
 			return game.nurture.feed(int(job["uid"]))
 		"vehicle":
-			return game.vehicles.use_vehicle(str(job["item"]), int(job["row"]), int(job["col"]),
+			# The vehicle sets off: it works each plot as it drives over it (VehicleWork), and the farmer goes on.
+			var run := game.vehicles.dispatch(str(job["item"]), int(job["row"]), int(job["col"]),
 				str(job.get("crop", "")))
+			return {"started": true} if run != null else {}
 	return {}
 
 

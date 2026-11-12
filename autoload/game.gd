@@ -203,6 +203,7 @@ func _notification(what: int) -> void:
 ## The farmer works through their queue as time passes (PlayerSystem).
 func _process(delta: float) -> void:
 	player.advance(delta)
+	vehicles.advance(delta)
 	persistence.tick()
 
 

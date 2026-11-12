@@ -532,5 +532,63 @@
    },
    "note": "Share of time each kind of weather is out, by season (weights). Fog only in the early morning; snow only in winter. Looks only: FarmVille had no weather."
   }
+ },
+ "feeds": {
+  "enabled": {
+   "v": 1,
+   "note": "1 feeding on (our own touch, not FarmVille 2009), 0 off: no feed drops, no hunger, no effects"
+  },
+  "chance_base": {
+   "v": 0.35,
+   "note": "chance a harvest of a feedable crop family drops one feed (estimate)"
+  },
+  "chance_per_star": {
+   "v": 0.05,
+   "note": "more chance per mastery star on the crop"
+  },
+  "tree_chance": {
+   "v": 0.5,
+   "note": "chance collecting a tree gives one Fruit"
+  },
+  "stock_cap": {
+   "v": 30,
+   "note": "most of one feed the Barn holds"
+  },
+  "cap_per_barn_level": {
+   "v": 10,
+   "note": "more of each feed per Barn upgrade level"
+  },
+  "overflow_coins": {
+   "v": 2,
+   "note": "coins for a feed that finds the Barn full"
+  },
+  "animals_per_feed": {
+   "v": 3,
+   "note": "animals one unit of feed feeds in a home"
+  },
+  "accepted_share": {
+   "v": 0.5,
+   "note": "an accepted (not favourite) feed gives this share of the effect"
+  },
+  "rich_bonus": {
+   "v": 0.5,
+   "note": "a Rich feed (from a golden, super or pollinated harvest) adds this share to the effect"
+  },
+  "hunger_penalty": {
+   "v": 0.3,
+   "note": "share of the coins an unfed animal's collect loses (never all)"
+  },
+  "produce_bonus": {
+   "v": 0.2,
+   "note": "extra coins on the next collect, from a favourite feed chosen for produce"
+  },
+  "speed_bonus": {
+   "v": 0.1,
+   "note": "share of the cycle cut off, from a favourite feed chosen for speed"
+  },
+  "rare_multiplier": {
+   "v": 1.5,
+   "note": "times the chance of a rare find, from a favourite feed chosen for rare"
+  }
  }
 }

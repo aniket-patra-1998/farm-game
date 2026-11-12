@@ -1,0 +1,13 @@
+{
+  "_comment": "Every job the farmer can be given, and who else can do it (PlayerSystem.JOB_KINDS). `helpers` are the helper kinds in Game.HELPERS (animal = farmhand, tree = arborist, bloom = gardener) that do it in one tap for everything of their kind; `vehicles` are the vehicle jobs (data/catalog/vehicles.json `job`) that do it over an area. An action nobody else does says why in `reason`. A test fails for a job kind with no entry here, or an entry with neither helper nor reason, so a new farm action is never player-only by accident.",
+  "actions": {
+    "plow": {"helpers": [], "vehicles": ["plow", "all"]},
+    "plant": {"helpers": [], "vehicles": ["plant", "all"]},
+    "harvest": {"helpers": [], "vehicles": ["harvest", "all"]},
+    "fertilize": {"helpers": [], "vehicles": [], "reason": "FarmVille had no helper for fertilizing; a plot is fertilized as a choice, one bag at a time"},
+    "collect": {"helpers": ["animal", "tree", "bloom"], "vehicles": []},
+    "nurture": {"helpers": [], "vehicles": [], "reason": "a young one needs its own supply given by hand, and which one it gets is the point"},
+    "vehicle": {"helpers": [], "vehicles": [], "reason": "it is the helper: a vehicle's pass over an area"},
+    "feed": {"helpers": ["animal"], "vehicles": []}
+  }
+}

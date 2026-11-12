@@ -134,35 +134,105 @@ func test_159_dust_puffs_rise_fade_and_the_ring_never_grows() -> void:
 	d.free()
 
 
-func test_160_a_vehicle_drives_the_field_throwing_dust_and_leaving_tracks() -> void:
-	Game.saving_enabled = false
-	Game.reset_game()
+## A farm with a Garage, a Tractor in it, fuel, and the farm's own clock stopped (Game._process isn't running
+## in a test, so runs are driven by hand).
+func _tractor_farm() -> GameState:
+	var g := _farm()
+	g.coins = 1000000
+	g.xp = g.xp_for_level(12)
+	g.buy_and_place("tractor", 11, 0)
+	for o in g.objects.filter(func(x: Dictionary) -> bool: return x["id"] == "tractor"):
+		g.remove_object(o)
+	g.add_object({"uid": g.next_uid, "id": "garage", "row": 0, "col": 8, "level": 1, "inside": {"tractor": 1},
+		"t": g.now()})
+	g.next_uid += 1
+	return g
+
+
+func _plowed(g: GameState, r0: int, c0: int, w: int, h: int) -> int:
+	var n := 0
+	for r in range(r0, r0 + h):
+		for c in range(c0, c0 + w):
+			if g.field.phase(g.index_of(r, c)) == GameState.Phase.PLOWED:
+				n += 1
+	return n
+
+
+func test_160_the_field_changes_under_the_wheels_as_the_vehicle_passes() -> void:
+	var g := _tractor_farm()
+	var fuel := g.vehicles.fuel_now()
+	var coins := g.coins
+	var finished := []
+	g.vehicles.run_finished.connect(func(run: VehicleWork) -> void: finished.append(int(run.result["plots"])))
+	var run := g.vehicles.dispatch("tractor", 8, 8)
+	_check(run != null and g.vehicles.is_running("tractor"), "the tractor sets off")
+	_eq(_plowed(g, 8, 8, 2, 2), 0, "nothing is plowed the moment it sets off")
+	_eq(g.coins, coins, "and nothing is paid yet")
+	_check(g.vehicles.dispatch("tractor", 10, 10) == null, "it can't be sent twice at once")
+	var seen := []
+	var t := 0.0
+	while not run.done and t < 60.0:
+		g.vehicles.advance(0.05)
+		t += 0.05
+		var n := _plowed(g, 8, 8, 2, 2)
+		if seen.is_empty() or seen[-1] != n:
+			seen.append(n)
+	_eq(seen, [0, 2, 4], "the plots are plowed a row at a time as it passes them (%s)" % str(seen))
+	_eq(finished.size(), 1, "it reports when it is done")
+	_eq(int(run.result["plots"]), 4, "four plots worked")
+	_eq(g.vehicles.fuel_now(), fuel - 4, "fuel is burned plot by plot")
+	_eq(g.coins, coins - 4 * Balance.i("economy.plow_cost"), "and plowing is paid for as it goes")
+	_check(not g.vehicles.is_running("tractor"), "and it is free to go again")
+	_done(g)
+
+
+func test_161_a_dry_tank_stops_the_run_where_it_is_and_leaves_the_rest_untouched() -> void:
+	var g := _tractor_farm()
+	g.vehicles.fuel = 2
+	g.vehicles.fuel_tanks = 0
+	var run := g.vehicles.dispatch("tractor", 8, 8)
+	var t := 0.0
+	while not run.done and t < 60.0:
+		g.vehicles.advance(0.05)
+		t += 0.05
+	_eq(int(run.result["plots"]), 2, "two plots plowed with two fuel")
+	_eq(_plowed(g, 8, 8, 2, 2), 2, "and the other two are as they were")
+	_check(run.out_of_fuel, "it says it ran dry")
+	_eq(g.vehicles.fuel_now(), 0, "and no fuel is owed")
+	_done(g)
+
+
+func test_162_the_drawn_vehicle_follows_the_real_run_and_leaves_when_it_is_done() -> void:
+	var g := _tractor_farm()
 	var puffs := DustPuffs.new()
 	var trails := Trails.new()
+	var run := g.vehicles.dispatch("tractor", 4, 6)
+	var view := VehicleRun.create(run, puffs, trails)
+	add_child(view)
 	var done := [false]
-	var run := VehicleRun.create(Game.item_data("combine"), 4, 6, Vector2i(4, 4), puffs, trails)
-	add_child(run)
-	run.finished.connect(func() -> void: done[0] = true)
-	_eq(run.wheels(), 4, "four wheels turn")
-	_eq(run.reels(), 1, "and the header's reel")
+	view.finished.connect(func() -> void: done[0] = true)
+	_eq(view.wheels(), 4, "four wheels turn")
 	var peak_dust := 0
 	var t := 0.0
-	var start := run.position
-	while not done[0] and t < 90.0:
-		run.advance(0.05)
+	var start := view.position
+	while not done[0] and t < 60.0:
+		g.vehicles.advance(0.05)
+		view.advance(0.05)
 		t += 0.05
 		peak_dust = maxi(peak_dust, puffs.live())
-	_check(done[0], "it finishes and leaves (took %.1f s)" % t)
-	_check(t > 4.0 and t < 40.0, "in a believable time for something that heavy (%.1f s)" % t)
+		if not done[0]:
+			_check(view.position.is_equal_approx(Vector3(run.position.x, 0, run.position.y)), "it is where the run is")
+	_check(done[0] and run.done, "it leaves once the work is done (took %.1f s)" % t)
 	_check(peak_dust > 5, "it threw up dust (%d puffs at most)" % peak_dust)
-	_check(trails.live() >= 4, "and laid wheel tracks (%d marks)" % trails.live())
-	_check(run.motion.distance > VehicleRoute.length_of(run.route) * 0.95, "the wheels covered the whole road")
-	_check(start.y < 4.0, "it came in from outside the field")
+	_check(trails.live() >= 2, "and laid wheel tracks (%d marks)" % trails.live())
+	_check(start.z < 4.0, "it came in from outside the field")
+	view.free()   # it queued itself for freeing; a test does not wait a frame
 	puffs.free()
 	trails.free()
+	_done(g)
 
 
-func test_161_a_garage_doorway_holds_two_vehicles_side_by_side_at_their_own_sizes() -> void:
+func test_163_a_garage_doorway_holds_two_vehicles_side_by_side_at_their_own_sizes() -> void:
 	var widths := 0.0
 	for id in ["combine", "tractor"]:
 		widths += VehicleModel.width_of(Game.item_data(id))

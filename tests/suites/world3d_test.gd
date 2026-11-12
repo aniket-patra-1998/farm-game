@@ -786,8 +786,8 @@ func test_137_marks_on_the_ground_wrap_around_and_fade_away() -> void:
 	_check(t.fade_of(0) > 0.4 and t.fade_of(0) < 0.6, "and they have faded about half")
 	t.age(Trails.LIFE)
 	_eq(t.live(), 0, "past their life they are gone")
-	t.lay_tracks(2, 3, Vector2i(4, 3))
-	_eq(t.live(), 2 * 2, "a four wide area is two lanes of two wheel tracks")
+	t.lay_pass(Vector2(3.0, 2.0), 0.0)
+	_eq(t.live(), 2, "a vehicle's pass leaves two wheel tracks, one for each side")
 	t.free()
 
 

@@ -12,7 +12,6 @@ const FOOT_SIZE := Vector2(0.075, 0.14)
 const FOOT_APART := 0.055          # left and right sit this far either side of the line walked
 const TREAD_WIDTH := 0.18
 const TREAD_APART := 0.34          # the two wheels of a lane, this far either side of its middle
-const LANE := 2.0                  # tiles between the lanes a vehicle drives
 const LIFT := 0.012                # marks lie this far above the grass
 const BED_LIFT := 0.095            # wheel tracks lie on the beds a vehicle works (Plots3D.HEIGHT is 0.09)
 const AGE_EVERY := 0.25            # how often marks age (a few times a second is plenty)
@@ -121,13 +120,3 @@ func lay_pass(p: Vector2, heading: float, length := 1.0) -> void:
 	for s: float in [-1.0, 1.0]:
 		var at := p + side * s * TREAD_APART
 		stamp(Vector3(at.x, BED_LIFT, at.y), PI / 2.0 - heading, Vector2(TREAD_WIDTH, length * 1.05), TREAD)
-
-
-## Wheel tracks over an area (row, col: its corner; area: tiles across and down): lanes of two treads each,
-## running down the area.
-func lay_tracks(row: int, col: int, area: Vector2i) -> void:
-	var lanes := maxi(ceili(area.x / LANE), 1)
-	for k in lanes:
-		var x := col + minf(LANE * (k + 0.5), area.x - 0.5)
-		for side: float in [-1.0, 1.0]:
-			stamp(Vector3(x + side * TREAD_APART, BED_LIFT, row + area.y / 2.0), 0.0, Vector2(TREAD_WIDTH, area.y), TREAD)

@@ -3,7 +3,10 @@ extends GameSystem
 ## Vehicles and the shared fuel tank: plowing, planting and harvesting areas, upgrades, fuel finds.
 ## Part of the game state: reached as `Game.vehicles`; shared state is on `game`.
 
+signal run_started(run: VehicleWork)    # a vehicle set off over an area (the farm draws it)
+signal run_finished(run: VehicleWork)   # it finished: run.result says what it did
 
+var runs: Array[VehicleWork] = []  # vehicles at work now (not saved: a run cut short leaves the rest untouched)
 var fuel := 0                      # in the shared tank
 var fuel_t := 0                    # when fuel last refilled itself
 var fuel_tanks := 0                # spare full tanks, opened when the tank runs dry
@@ -17,6 +20,7 @@ func _init(owner: GameState) -> void:
 
 
 func reset() -> void:
+	runs.clear()
 	fuel = 0
 	fuel_t = 0
 	fuel_tanks = 0
@@ -160,52 +164,86 @@ func buy_fuel_tank() -> bool:
 	return true
 
 
-## Drives a vehicle over the area whose back corner is row, col.
-## Tractor plows, Seeder plants crop_id, Harvester harvests, Combine does all three.
-## Returns {"plots", "coins", "xp", "fuel", "drops":[texts]}, or {} if it couldn't run.
-func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
+## A vehicle's run is made, but not started: why not (not owned, no seed, no fuel) comes back as a message and null.
+func make_run(id: String, row: int, col: int, crop_id := "") -> VehicleWork:
 	if not usable_vehicles().has(id):
 		if owned_vehicles().has(id):
 			game.message.emit(tr("PARK_IT_IN_THE_GARAGE_TO_USE_IT"))
-		return {}
-	var it := game.item_data(id)
-	var job: String = it["job"]
+		return null
+	var job: String = game.item_data(id)["job"]
 	if job == "plant" and crop_id == "":
 		game.message.emit(tr("PICK_A_SEED_FIRST_THEN_THE"))
-		return {}
+		return null
 	if fuel_now() + fuel_tanks * Balance.i("vehicles.fuel_tank") <= 0:
 		game.message.emit(tr("OUT_OF_FUEL_IT_REFILLS_SLOWLY"))
+		return null
+	return VehicleWork.create(self, id, row, col, crop_id)
+
+
+## Sends the vehicle over the area whose top-left plot is row, col, and it works as it drives (advance). Tractor
+## plows, Seeder plants crop_id, Harvester harvests, Combine does all three. Returns the run, or null when it
+## couldn't start (a message says why) or there is nothing for it to do there.
+func dispatch(id: String, row: int, col: int, crop_id := "") -> VehicleWork:
+	for r in runs:
+		if r.id == id:
+			game.message.emit(tr("IT_IS_ALREADY_WORKING") % game.item_data(id)["name"])
+			return null
+	var run := make_run(id, row, col, crop_id)
+	if run == null:
+		return null
+	if not run.has_work():
+		game.message.emit(tr("NOTHING_FOR_THE_TO_DO_THERE") % game.item_data(id)["name"])
+		return null
+	runs.append(run)
+	run_started.emit(run)
+	return run
+
+
+func is_running(id: String) -> bool:
+	for r in runs:
+		if r.id == id:
+			return true
+	return false
+
+
+## Time passes: every vehicle at work drives on and works what it passes.
+func advance(delta: float) -> void:
+	for r in runs.duplicate():
+		r.advance(delta)
+
+
+## Drives a vehicle over an area and returns once it has finished (no drive to watch: for tests and anything
+## that needs the result at once). {"plots", "coins", "xp", "fuel", "drops":[texts]}, or {} if it couldn't run.
+func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
+	var run := make_run(id, row, col, crop_id)
+	if run == null:
 		return {}
-	var per := int(it.get("fuel_per_plot", 1))
-	var area := vehicle_area(id)
-	var out := {"plots": 0, "coins": 0, "xp": 0, "fuel": 0, "drops": []}
-	var coins_before := game.coins
-	var xp_before := game.xp
-	var out_of_fuel := false
-	for r in range(row, row + area.y):
-		for c in range(col, col + area.x):
-			if not game.in_farm(r, c):
-				continue
-			var i := game.index_of(r, c)
-			if game.is_occupied(i) or not _vehicle_has_work(job, i, crop_id):
-				continue
-			if not _burn_fuel(per):
-				out_of_fuel = true
-				break
-			out["fuel"] = int(out["fuel"]) + per
-			if _vehicle_work(job, i, crop_id, out):
-				out["plots"] = int(out["plots"]) + 1
-		if out_of_fuel:
-			break
-	out["coins"] = game.coins - coins_before
-	out["xp"] = game.xp - xp_before
-	if int(out["plots"]) > 0:
-		game.ribbons.bump("vehicle_plots", int(out["plots"]))
-	if out_of_fuel:
+	return run.settle()
+
+
+## A run ended (called by VehicleWork): what it did is added up and told.
+func finish(run: VehicleWork) -> void:
+	if int(run.result["plots"]) > 0:
+		game.ribbons.bump("vehicle_plots", int(run.result["plots"]))
+	if run.out_of_fuel:
 		game.message.emit(tr("OUT_OF_FUEL_IT_REFILLS_SLOWLY"))
+	if runs.has(run):
+		runs.erase(run)
+		run_finished.emit(run)
 	game.inventory_changed.emit()
 	game.queue_save()
-	return out
+
+
+func has_work(job: String, plot: int, crop_id: String) -> bool:
+	return _vehicle_has_work(job, plot, crop_id)
+
+
+func burn_fuel(n: int) -> bool:
+	return _burn_fuel(n)
+
+
+func work_plot(job: String, plot: int, crop_id: String, out: Dictionary) -> bool:
+	return _vehicle_work(job, plot, crop_id, out)
 
 
 func _vehicle_has_work(job: String, i: int, crop_id: String) -> bool:

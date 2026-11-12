@@ -95,6 +95,7 @@ var _press_on_farm := false
 func _ready() -> void:
 	placement = Placement.new(self)
 	Game.player.action_done.connect(_on_action_done)
+	Game.vehicles.run_finished.connect(_show_vehicle)
 	Game.player.queue_changed.connect(queue_redraw)
 	life = FarmLife.new()
 	add_child(life)
@@ -714,20 +715,18 @@ func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 		"nurture":
 			_show_nurture(job, result)
 		"vehicle":
-			_show_vehicle(job, result)
+			_feel("tap", BUZZ_TAP)   # it sets off; what it did is shown when it finishes (_show_vehicle)
 
 
-func _show_vehicle(job: Dictionary, r: Dictionary) -> void:
-	var id := str(job["item"])
-	var row := int(job["row"])
-	var col := int(job["col"])
-	var area := Game.vehicles.vehicle_area(id)
+## A vehicle finished its run: what it did, floating up where it worked.
+func _show_vehicle(run: VehicleWork) -> void:
+	var r := run.result
+	var row := run.row
+	var col := run.col
+	var area := run.area
 	var at := center_of(
 		Game.index_of(clampi(row + int(area.y / 2.0), 0, MAX - 1), clampi(col + int(area.x / 2.0), 0, MAX - 1))
 	)
-	if int(r["plots"]) == 0:
-		info.emit(tr("NOTHING_FOR_THE_TO_DO_THERE") % Game.item_data(id)["name"])
-		return
 	var coins_moved := int(r["coins"])
 	if coins_moved != 0:
 		_float(at, ("+%d" if coins_moved > 0 else "%d") % coins_moved, COLOR_COINS if coins_moved > 0 else COLOR_COST)
