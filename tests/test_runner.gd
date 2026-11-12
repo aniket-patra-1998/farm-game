@@ -15,7 +15,15 @@ func _ready() -> void:
 	var checks := 0
 	var failed := 0
 	var failures: Array[String] = []
+	var watch := ErrorWatch.new()
+	OS.add_logger(watch)
+	var only := ""   # `-- --only=saving` runs just the suites whose file name contains it
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			only = arg.trim_prefix("--only=")
 	for path in suite_paths():
+		if only != "" and not path.contains(only):
+			continue
 		var suite := (load(path) as GDScript).new() as TestSuite
 		suite.name = path.get_file().get_basename()
 		add_child(suite)
@@ -23,6 +31,8 @@ func _ready() -> void:
 			suite.current = n
 			var before := suite.failures.size()
 			await suite.call(n)
+			for error in watch.take():
+				suite.failures.append("%s: script error: %s" % [n, error])
 			var ok := suite.failures.size() == before
 			tests += 1
 			if not ok:
