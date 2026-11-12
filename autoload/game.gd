@@ -116,6 +116,7 @@ var nurture: NurtureSystem
 var finds: FindsSystem
 var feeds: FeedSystem
 var adjacency: AdjacencySystem
+var boosts: HomeBoostSystem
 var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
@@ -158,13 +159,14 @@ func _init() -> void:
 	finds = FindsSystem.new(self)
 	feeds = FeedSystem.new(self)
 	adjacency = AdjacencySystem.new(self)
+	boosts = HomeBoostSystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
-		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds, feeds, adjacency]
+		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds, feeds, adjacency, boosts]
 
 
 func _ready() -> void:

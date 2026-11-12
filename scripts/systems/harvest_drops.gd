@@ -32,7 +32,7 @@ func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 		return {}
 	pity["golden"] = int(pity["golden"]) + 1
 	pity["collectible"] = int(pity["collectible"]) + 1
-	var luck := 1.0 + Balance.f("harvest.mastery_luck_bonus") * stars
+	var luck := 1.0 + Balance.f("harvest.mastery_luck_bonus") * stars + game.boosts.total("golden_luck")
 
 	var golden := Balance.f("harvest.golden_chance") * luck
 	if int(pity["golden"]) >= Balance.i("harvest.golden_pity") or game.rng.randf() < golden:

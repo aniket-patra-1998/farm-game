@@ -50,6 +50,9 @@ func build_building(content: VBoxContainer) -> void:
 	var layout := hud.feed.layout_line(o)
 	if layout != "":
 		status.add_child(BookPanel.text(layout, 18))
+	var boost := hud.feed.boost_line(o)
+	if boost != "":
+		status.add_child(BookPanel.text(boost, 18))
 	content.add_child(BookPanel.card_frame(status))
 
 	var actions := HFlowContainer.new()

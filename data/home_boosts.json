@@ -1,0 +1,7 @@
+{
+  "_comment": "What a stocked home gives back to the farm (our own touch, not FarmVille 2009). A home counts once it holds something; each home adds `amount` to its boost, and the boost stops at `cap`. `feed_chance` adds to the chance a harvest drops feed (feeds.chance_base); `golden_luck` adds to the golden-harvest luck multiplier (1 + total). Add a home here and it works, no code.",
+  "boosts": {
+    "feed_chance": {"cap": 0.15, "homes": {"chicken_coop": 0.03, "cow_shed": 0.03, "sheep_pen": 0.03, "goat_pen": 0.03, "pig_pen": 0.03, "horse_stable": 0.03, "rabbit_hutch": 0.03}},
+    "golden_luck": {"cap": 0.30, "homes": {"beehive": 0.10, "orchard": 0.10, "bloom_garden": 0.10}}
+  }
+}

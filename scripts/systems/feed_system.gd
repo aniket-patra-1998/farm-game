@@ -152,7 +152,8 @@ func roll_harvest(crop_id: String, stars: int, rich: bool) -> String:
 	var feed := crop_feed(crop_id)
 	if feed == "" or not enabled() or not game.drops_enabled or not has_taker(feed):
 		return ""
-	var chance := Balance.f("feeds.chance_base") + Balance.f("feeds.chance_per_star") * stars
+	var chance := Balance.f("feeds.chance_base") + Balance.f("feeds.chance_per_star") * stars \
+		+ game.boosts.total("feed_chance")
 	if game.rng.randf() >= chance:
 		return ""
 	add(feed, rich)

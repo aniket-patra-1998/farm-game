@@ -537,6 +537,10 @@
   "enabled": {
    "v": 1,
    "note": "1 layout synergies on (our own touch, not FarmVille 2009), 0 off: touching homes of one kind pay no extra"
+  },
+  "home_boosts": {
+   "v": 1,
+   "note": "1 stocked homes boost the farm (data/home_boosts.json; our own touch), 0 off"
   }
  },
  "feeds": {

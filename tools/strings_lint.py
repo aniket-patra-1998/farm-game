@@ -154,7 +154,7 @@ def main():
 
 
 # Keys the code builds from a prefix, so they can't be found literally.
-DYNAMIC_PREFIXES = ["SEASON_", "FEED_GRAIN", "FEED_GREENS", "FEED_ROOTS", "FEED_FRUIT", "FEED_NECTAR"]  # names in data/feeds.json
+DYNAMIC_PREFIXES = ["SEASON_", "BOOST_", "FEED_GRAIN", "FEED_GREENS", "FEED_ROOTS", "FEED_FRUIT", "FEED_NECTAR"]  # names in data/feeds.json
 
 if __name__ == "__main__":
     sys.exit(main())

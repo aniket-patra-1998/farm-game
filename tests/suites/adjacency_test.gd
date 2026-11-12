@@ -77,3 +77,38 @@ func test_175_a_collect_pays_the_bonus_and_it_can_be_switched_off() -> void:
 	Balance.override("synergy.enabled", 0)
 	_check(absf(g.adjacency.coin_multiplier(a) - 1.0) < 0.0001, "off: no bonus")
 	Balance.reload()
+
+
+func _stocked(g: GameState, id: String, row: int, col: int, inside := {"chicken": 1}) -> Dictionary:
+	var o := {"uid": g.next_uid, "id": id, "row": row, "col": col, "t": g.now(), "level": 1, "inside": inside}
+	g.next_uid += 1
+	g.add_object(o)
+	return o
+
+
+func test_176_a_stocked_home_boosts_the_farm_up_to_a_cap() -> void:
+	var g := _synergy_farm()
+	_check(g.boosts.boost_ids().size() >= 2, "boosts are listed")
+	var coop := _stocked(g, "chicken_coop", 1, 1)
+	_check(absf(g.boosts.total("feed_chance") - 0.03) < 0.0001, "one stocked home adds its share")
+	_check(g.boosts.given_by(coop).has("feed_chance"), "the panel can say what it gives")
+	_stocked(g, "chicken_coop", 1, 5)
+	_stocked(g, "chicken_coop", 1, 9)
+	_stocked(g, "chicken_coop", 4, 1)
+	_stocked(g, "chicken_coop", 4, 5)
+	_stocked(g, "chicken_coop", 4, 9)
+	_stocked(g, "chicken_coop", 7, 1)
+	_check(absf(g.boosts.total("feed_chance") - 0.15) < 0.0001, "seven homes stop at the cap")
+	_eq(g.boosts.total("nothing"), 0.0, "an unknown boost is zero")
+
+
+func test_177_an_empty_home_gives_nothing_and_the_switch_turns_it_off() -> void:
+	var g := _synergy_farm()
+	var empty := _stocked(g, "chicken_coop", 1, 1, {})
+	_eq(g.boosts.total("feed_chance"), 0.0, "an empty home gives nothing")
+	_check(g.boosts.given_by(empty).is_empty(), "and says nothing")
+	_stocked(g, "beehive", 5, 5, {"bee": 1})
+	_check(g.boosts.total("golden_luck") > 0.0, "a stocked hive adds golden luck")
+	Balance.override("synergy.home_boosts", 0)
+	_eq(g.boosts.total("golden_luck"), 0.0, "off: no boost")
+	Balance.reload()

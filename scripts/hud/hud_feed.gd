@@ -102,3 +102,16 @@ func layout_line(o: Dictionary) -> String:
 		return ""
 	var n := Game.adjacency.count(o)
 	return tr("SYNERGY_LINE") % [n, roundi(Game.adjacency.bonus_for(str(o["id"]), n) * 100.0)]
+
+
+## The boost lines of a building panel (our own touch): what this home gives back to the farm once stocked.
+func boost_line(o: Dictionary) -> String:
+	if not Game.boosts.is_on():
+		return ""
+	var given := Game.boosts.given_by(o)
+	if given.is_empty():
+		return ""
+	var parts: Array[String] = []
+	for b: String in given:
+		parts.append(tr("BOOST_" + b.to_upper()) % roundi(float(given[b]) * 100.0))
+	return tr("BOOST_LINE") % ", ".join(parts)

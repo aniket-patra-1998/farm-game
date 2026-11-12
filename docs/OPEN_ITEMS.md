@@ -41,7 +41,8 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
   (data/actions.json) so every action is offered to its helper.
 - Postponed by the owner (look at later): quests (data/quests.json: missions across all systems, rewards, the counts ribbons use).
 - Layout synergies (AdjacencySystem, data/synergies.json): done for orchards and animal homes (coins). Open: bloom gardens, same-crop plots, crafting beside crops, paths and decor, XP boosts, a tag on the farm outside placing.
-- Not yet: boosts per home, Feed Mill/Nursery/dogs, queen bee and
+- Boosts per home (HomeBoostSystem, data/home_boosts.json): done (feed chance, golden luck). Open: more boost kinds.
+- Not yet: Feed Mill/Nursery/dogs, queen bee and
   flowers on the finds framework, look-test tool, central Feedback service. Feeding needs a look/feel pass (hungry
   bubble, hop when fed) and a balance pass in the simulator (animals and hunger are not in the bot yet).
 
