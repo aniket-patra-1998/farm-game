@@ -80,7 +80,7 @@ func _ready() -> void:
 	grid.start_placing("cow")
 	grid.placing["row"] = 18
 	grid.placing["col"] = 5
-	grid.call("_hover_home", Vector2i(13, 5))
+	grid.placement.call("_hover_home", Vector2i(13, 5))
 	await _frames(6)
 	_shot(dir + "/homes_highlight.png")
 	grid.cancel_placing()

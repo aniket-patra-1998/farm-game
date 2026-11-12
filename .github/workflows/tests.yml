@@ -10,7 +10,7 @@ permissions:
 jobs:
   game-rules:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       GODOT_VERSION: 4.7.2
     steps:
@@ -79,8 +79,10 @@ jobs:
       - name: Render building screenshots
         run: |
           sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
-          xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
-            --rendering-driver opengl3 --resolution 1280x720 --path . res://tests/shots.tscn 2>&1 | tee shots.log
+          # (A software renderer draws the full farm at about a second a frame: 960x540 keeps this under ~10 minutes,
+          # and the timeout makes a stuck run fail by itself instead of using up the whole job.)
+          timeout 1000 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+            --rendering-driver opengl3 --resolution 960x540 --path . res://tests/shots.tscn 2>&1 | tee shots.log
           if grep -E "SCRIPT ERROR|triangulat|Invalid polygon" shots.log; then
             echo "Drawing errors found"; exit 1
           fi
