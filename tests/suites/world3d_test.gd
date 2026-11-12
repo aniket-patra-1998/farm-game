@@ -904,3 +904,33 @@ func _tree_bounds(root: Node3D) -> AABB:
 			out = box if first else out.merge(box)
 			first = false
 	return out
+
+
+## Feeding shows (our own touch): a hungry animal wears a bubble, and a fed one hops and says what it got.
+func test_185_a_hungry_animal_shows_a_bubble_and_a_fed_one_hops() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.objects.clear()
+	Game.feeds.active = true
+	Game.objects.append({"uid": 9101, "id": "cow", "row": 5, "col": 5, "t": Game.now()})
+	Game.rebuild_occupancy()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	var cow := Game.object_by_uid(9101)
+	_check(Game.feeds.is_hungry(cow), "an unfed cow is hungry")
+	var hungry: Array = grid.pieces.hungry_pieces()
+	_check(hungry.any(func(p: FarmPiece) -> bool: return p.uid == 9101), "and its piece is listed for the bubble")
+	cow[FeedSystem.FED] = {"effect": "produce", "power": 0.2, "t": int(cow["t"])}
+	grid.pieces._hungry_at = -100.0   # let the list refresh now
+	_check(not grid.pieces.hungry_pieces().any(func(p: FarmPiece) -> bool: return p.uid == 9101), "fed, the bubble goes")
+	var mind := grid.life.mind(9101)
+	if mind != null:
+		mind.pose.hop = 0.0
+	grid._show_fed(9101, {"feed": "greens", "effect": "produce"})
+	if mind != null:
+		_check(mind.pose.hop > 0.0, "a fed animal hops")
+	Game.feeds.active = false
+	main.free()

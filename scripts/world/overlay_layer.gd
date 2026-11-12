@@ -18,4 +18,4 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	grid.draw_overlay_on(self, objects.ready_pieces())
+	grid.draw_overlay_on(self, objects.ready_pieces(), objects.hungry_pieces())

@@ -26,6 +26,7 @@ const COLOR_GOLDEN := Color("#ffe066")
 const COLOR_FERT := Color("#8fe36b")
 
 const COLOR_PART := Color("#f4c27a")
+const HUNGRY_CRUMB := Color("#b99a5e")
 
 # Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
 const BUZZ_TAP := 8
@@ -264,7 +265,7 @@ func draw_ground_on(ci: CanvasItem) -> void:
 
 
 ## Overlay: vehicle area, count signs, twinkles and hearts, and the ghost of what's being placed.
-func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
+func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
 	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
 		PlaceholderArt.draw_footprint(ci, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
 			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
@@ -322,9 +323,27 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(piece.uid % 7))
 			var high := -110.0 if Game.is_building(o) or Game.crafting.is_crafting(o) else -70.0
 			PlaceholderArt.draw_twinkle(ci, (g[0] + g[2]) / 2.0 + Vector2(22, high), 11.0 + 6.0 * glow, glow)
+	for p: FarmPiece in hungry:
+		_draw_hungry(ci, p, t)
 	_draw_placing(ci)
 
 
+## A hungry animal or home (our own touch): a small cream bubble with a crumb of its feed over it, until it is fed.
+func _draw_hungry(ci: CanvasItem, piece: FarmPiece, t: float) -> void:
+	var o := Game.object_by_uid(piece.uid)
+	if o.is_empty():
+		return
+	var at: Vector2
+	if pieces.three_d and piece.is_animal():
+		var rig := AnimalRig.of(Game.item_data(o["id"]))
+		var tall := (rig.size("leg", 12.0) + rig.pair("body").y * 1.7) * Animal3D.PX * IsoProjection.HEIGHT_PX
+		var mind := life.mind(piece.uid)
+		at = piece.base + (mind.offset if mind != null else Vector2.ZERO) + Vector2(0, -tall - 26.0)
+	else:
+		var fp := Game.footprint(o["id"])
+		var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+		at = (g[0] + g[2]) / 2.0 + Vector2(-22, -110.0 if Game.is_building(o) else -70.0)
+	AnimalArt.bubble(ci, at, HUNGRY_CRUMB, t + float(piece.uid))
 
 
 ## The land the next expansion would add, drawn as dim wild grass around the farm.
@@ -732,6 +751,8 @@ func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 			_show_collect(int(job["uid"]), result)
 		"nurture":
 			_show_nurture(job, result)
+		"feed":
+			_show_fed(int(job["uid"]), result)
 		"vehicle":
 			_feel("tap", BUZZ_TAP)   # it sets off; what it did is shown when it finishes (_show_vehicle)
 
@@ -816,6 +837,21 @@ func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 		var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
 		_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)
 		_sparkle(at, c)
+
+
+## Fed (our own touch): the home hops, a heart and what the feed will do float up.
+func _show_fed(uid: int, result: Dictionary) -> void:
+	var o := Game.object_by_uid(uid)
+	if o.is_empty():
+		return
+	var fp := Game.footprint(o["id"])
+	var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+	var at := (g[0] + g[2]) / 2.0
+	_feel("collect", BUZZ_PLACE)
+	_poke(uid)
+	var line := tr("FED_FX_" + str(result["effect"]).to_upper())
+	_float(at + Vector2(0, -96), line, Game.feeds.feed_color(str(result["feed"])), 1.6)
+	_sparkle(at, COLOR_FIND)
 
 
 func _show_collect(uid: int, result: Dictionary) -> void:
