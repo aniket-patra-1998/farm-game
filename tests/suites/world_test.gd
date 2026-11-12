@@ -170,6 +170,7 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	await _touch(wobble_at + Vector2(4, 3), false)
 	Game.player.advance(60.0)  # the farmer walks over and does it
 	_eq(Game.field.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
+	await get_tree().process_frame  # queued effects of the taps run while their scene still stands
 	main.free()
 
 
