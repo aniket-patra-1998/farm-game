@@ -299,6 +299,10 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			ModelKit.box(root, c + Vector3(-0.2, 0, -0.2), c + Vector3(0.2, 0.4, 0.2), ModelKit.surface(col, "boards"))
 	if SWAY_BY_ID.has(id):
 		ModelKit.sway_all(root, SWAY_BY_ID[id])
+	# Chunkier than modelled, about the middle of its footprint (the ground stays where it is).
+	var chunk := ScaleGuide.decor_scale(id)
+	root.scale = Vector3.ONE * chunk
+	root.position = c * (1.0 - chunk)
 	return ModelKit.bake(root)
 
 

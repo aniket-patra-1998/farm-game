@@ -9,6 +9,7 @@ const DATA := "res://data/scale_guide.json"
 
 static var _ranges := {}
 static var _factors := {}
+static var _decor := {}
 
 
 ## What to multiply an item's size by so it stands within its kind's range (1.0 when it already does, or its
@@ -24,6 +25,16 @@ static func factor(id: String) -> float:
 			f = clampf(h, float(range_of[0]), float(range_of[1])) / h
 	_factors[id] = f
 	return f
+
+
+## How much bigger a decoration is drawn than it is modelled (1.0 for anything with no entry and no default).
+static func decor_scale(id: String) -> float:
+	if _decor.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
+		_decor = (parsed as Dictionary).get("decor", {}) if parsed is Dictionary else {}
+		if _decor.is_empty():
+			_decor = {"default": 1.0}
+	return float((_decor.get("ids", {}) as Dictionary).get(id, _decor.get("default", 1.0)))
 
 
 static func _heights() -> Dictionary:

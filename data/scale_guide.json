@@ -1,7 +1,27 @@
 {
   "_doc": "How tall each kind of thing should stand, in tiles (scripts/world3d/scale_guide.gd): [lowest, highest]. A model measured outside its range is scaled to the nearest edge (ScaleGuide.factor), so sizes agree with each other (a flower never stands as tall as a tree) without editing every model. Ranges apply to a thing standing alone; packed fields (orchards, gardens) scale each member from there.",
   "heights": {
-    "tree": [1.2, 2.0],
-    "bloom": [0.3, 0.5]
+    "tree": [
+      1.5,
+      2.4
+    ],
+    "bloom": [
+      0.3,
+      0.5
+    ]
+  },
+  "decor": {
+    "_doc": "Decorations are drawn this much bigger than they are modelled: FarmVille's were chunky and filled their tile. `default` for every decoration, `ids` for the ones that already fill their footprint.",
+    "default": 1.5,
+    "ids": {
+      "flower_bed": 1.0,
+      "small_pond": 1.0,
+      "large_pond": 1.0,
+      "bridge": 1.0,
+      "arbor": 1.15,
+      "farm_stand": 1.15,
+      "water_well": 1.2,
+      "mailbox": 1.3
+    }
   }
 }

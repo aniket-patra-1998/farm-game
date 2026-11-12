@@ -9,7 +9,7 @@ extends Node3D
 ## Local space: the animal faces +x, up is +y, its left side is -z. Sizes are the rig's pixels (made for a
 ## 128-pixel tile) times PX, so a cow is a little over half a tile long.
 
-const PX := 1.4 / IsoProjection.PX_PER_UNIT    # rig pixels to world units (a cow fills most of a tile)
+const PX := 1.9 / IsoProjection.PX_PER_UNIT    # rig pixels to world units (a cow is about a tile long, as in FarmVille)
 const TURN_RATE := 6.0                          # how fast it turns to face where it's going (radians/s)
 ## The two ways an animal stands when still: side-on to the camera, turned a little toward it (FarmVille's
 ## three-quarter view), facing screen right or screen left. 0 faces +x; screen right is +x -z (pi/4).

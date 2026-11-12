@@ -722,8 +722,8 @@ func test_131_every_kind_stands_within_its_size_range_and_flowers_are_smaller_th
 		var h := ScaleGuide.height_of(id) * ScaleGuide.factor(id)
 		top[kind] = maxf(top[kind], h)
 		low[kind] = minf(low[kind], h)
-	_check(low["tree"] >= 1.19 and top["tree"] <= 2.01,
-		"trees stand 1.2-2.0 tiles (%.2f-%.2f)" % [low["tree"], top["tree"]])
+	_check(low["tree"] >= 1.49 and top["tree"] <= 2.41,
+		"trees stand 1.5-2.4 tiles (%.2f-%.2f)" % [low["tree"], top["tree"]])
 	_check(low["bloom"] >= 0.29 and top["bloom"] <= 0.51,
 		"blooms stand 0.3-0.5 (%.2f-%.2f)" % [low["bloom"], top["bloom"]])
 	_check(top["bloom"] < low["tree"], "the tallest flower is shorter than the shortest tree")
@@ -1080,6 +1080,7 @@ func test_208_a_tap_on_a_tree_in_a_grove_picks_that_tree() -> void:
 		var middle := world.camera.unproject_position(crown["centre"])
 		_eq(grid.picker.call(middle), uid, "a tap in the middle of tree %d's crown picks it" % k)
 		var trunk_box: AABB = crown["trunk"]
-		var foot := world.camera.unproject_position(trunk_box.get_center())
+		var foot := world.camera.unproject_position(Vector3(trunk_box.get_center().x, trunk_box.position.y + 0.06,
+			trunk_box.get_center().z))   # low down, where no crown in front of it covers it
 		_eq(grid.picker.call(foot), uid, "and a tap on its trunk picks it too")
 	main.free()

@@ -5,6 +5,7 @@ extends Node2D
 ## Touch: pinch to zoom, two-finger drag to move, or one-finger drag with the Hand tool.
 ## Mouse: wheel to zoom, right- or middle-drag to move. Trackpad gestures also work.
 
+const INK := 0.6   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
 const MAX_ZOOM_FACTOR := 3.5 # how far you can zoom in, relative to the whole-farm view
 const WHEEL_STEP := 1.1
 
@@ -149,6 +150,7 @@ func _process(_delta: float) -> void:
 	shadows.strength = 0.0 if sun < 0.0 else (1.0 - dark) * clampf(1.0 - absf(cover - 0.45) / 0.4, 0.0, 1.0)
 	# Colour grade: richer by day, cool and soft at night, warm low sun, fog haze.
 	var m := grade.material as ShaderMaterial
+	m.set_shader_parameter("ink", INK)
 	m.set_shader_parameter("saturation", lerpf(1.12, 0.92, dark) * (1.0 - float(w["desat"])))
 	m.set_shader_parameter("contrast", lerpf(1.08, 0.98, dark))
 	m.set_shader_parameter("lift", Vector3(0.02, 0.035, 0.08) * dark)
