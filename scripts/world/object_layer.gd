@@ -175,13 +175,14 @@ func hungry_pieces() -> Array:
 		_hungry_at = now
 		_hungry_list = []
 		if Game.feeds.enabled():
-			for p: FarmPiece in pieces.values():
-				if p.plot >= 0 or not is_instance_valid(p):
+			for p: Variant in pieces.values():
+				if not is_instance_valid(p) or (p as FarmPiece).plot >= 0:
 					continue
-				var o := Game.object_by_uid(p.uid)
+				var o := Game.object_by_uid((p as FarmPiece).uid)
 				if not o.is_empty() and Game.feeds.is_hungry(o) and not Game.is_ready(o):
 					_hungry_list.append(p)
-	return _hungry_list
+	# A piece can be freed between rebuilds (an object lifted, sold or moved): only live ones are handed on.
+	return _hungry_list.filter(func(p: Variant) -> bool: return is_instance_valid(p))
 
 
 func ready_pieces() -> Array:

@@ -963,3 +963,45 @@ func test_191_a_hedge_sways_and_each_piece_sways_on_its_own_beat() -> void:
 		var code := FileAccess.get_file_as_string(path)
 		_check(code.contains("MODEL_MATRIX[3]") and not code.contains("NODE_POSITION_WORLD"),
 			"%s takes each instance's own foot, so pieces of a MultiMesh do not sway as one" % path)
+
+
+## Lifting something into the hand and carrying it for drawn frames: one of every kind of catalog item, and
+## homes standing edge to edge (the layout bonus is drawn while one is carried).
+## Needs real frames, so the runner awaits it.
+func test_193_anything_can_be_lifted_and_carried() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.set_objects([])
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	Game.set_objects([])
+	Game.add_object({"uid": 9101, "id": "chicken_coop", "row": 4, "col": 4, "t": Game.now(), "level": 1, "inside": {}})
+	Game.add_object({"uid": 9102, "id": "chicken_coop", "row": 4, "col": 6, "t": Game.now(), "level": 1, "inside": {}})
+	await get_tree().process_frame
+	for uid in [9101, 9102]:
+		grid.start_placing("chicken_coop", uid)
+		_check(not grid.placing.is_empty(), "a coop beside another is lifted (%d)" % uid)
+		for i in 3:
+			await get_tree().process_frame
+		grid.cancel_placing()
+		await get_tree().process_frame
+	var kinds := {}
+	for id: String in Game.items:
+		var def: Object = Game.catalog.get_def(id)
+		if def == null or def is CropDef or kinds.has(def.get_script()):
+			continue
+		Game.set_objects([])
+		var at := Game.free_spot_for(id)
+		if at.x < 0:
+			continue
+		kinds[def.get_script()] = true
+		Game.add_object({"uid": 9200, "id": id, "row": at.x, "col": at.y, "t": Game.now(), "level": 1, "inside": {}})
+		await get_tree().process_frame
+		grid.start_placing(id, 9200)
+		_check(not grid.placing.is_empty(), "%s can be lifted" % id)
+		await get_tree().process_frame
+		grid.cancel_placing()
+	_check(kinds.size() >= 4, "several kinds were lifted (%d)" % kinds.size())
+	main.free()

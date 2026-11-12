@@ -323,8 +323,9 @@ func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
 			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(piece.uid % 7))
 			var high := -110.0 if Game.is_building(o) or Game.crafting.is_crafting(o) else -70.0
 			PlaceholderArt.draw_twinkle(ci, (g[0] + g[2]) / 2.0 + Vector2(22, high), 11.0 + 6.0 * glow, glow)
-	for p: FarmPiece in hungry:
-		_draw_hungry(ci, p, t)
+	for p: Variant in hungry:
+		if is_instance_valid(p):
+			_draw_hungry(ci, p as FarmPiece, t)
 	_draw_placing(ci)
 
 
