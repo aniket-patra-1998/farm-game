@@ -72,6 +72,8 @@ var _eyes: Array[Node3D] = []    # (they blink)
 var _walk_speed := 1.0           # its walking speed, in units a second
 var _skeleton: Skeleton3D        # the whole animal is one skinned mesh on this (see _skin)
 var _bones: Array[Node3D] = []   # the part nodes the pose code moves, by bone index; copied to the bones
+var _model := {}               # a ready-made model's {player, height, length, width} (AnimalModel), else empty
+var _playing := ""            # which of its animations is playing
 var _slot := 0                   # its turn in the round-robin when posed less than every frame
 
 var _pending := 0.0              # time not yet posed (while waiting its turn)
@@ -103,6 +105,12 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3) -> Animal
 func _build() -> void:
 	_body = Node3D.new()
 	add_child(_body)
+	if rig.type == "quad" and not AnimalModel.of(rig.family).is_empty():
+		_build_model()
+		_build_contact()
+		_slot = get_instance_id() % MAX_STRIDE
+		rotation.y = heading
+		return
 	match rig.type:
 		"bird":
 			_build_bird()
@@ -303,6 +311,36 @@ func _build_contact() -> void:
 	_contact.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_contact.position.y = CONTACT_LIFT
 	add_child(_contact)
+
+
+
+
+## A ready-made model (AnimalModel): the whole animal is the model, its own idle and walk animations, with the
+## body's weight (lean, sway, squash) on top.
+func _build_model() -> void:
+	var b := rig.pair("body", Vector2(26, 14))
+	var spec := AnimalModel.of(rig.family)
+	_model = AnimalModel.build(_body, spec, rig, _px(b.x) * 2.0 * float(spec.get("fit", 1.2)))
+	_leg = float(_model["height"]) * 0.4
+	_r = Vector3(float(_model["length"]) * 0.4, float(_model["height"]) * 0.2, float(_model["width"]) * 0.5)
+	(_model["player"] as AnimationPlayer).play(AnimalModel.IDLE)
+	(_model["player"] as AnimationPlayer).advance(randf() * 6.0)   # (so a herd isn't in step)
+	_playing = AnimalModel.IDLE
+
+
+
+
+func _pose_model(p: AnimalPose, speed: float, delta: float) -> void:
+	var m := motion
+	_body.position = Vector3(0, p.hop * _leg * 0.55, 0)
+	_body.rotation = Vector3(m.roll + m.rest * 0.05, 0, m.pitch - m.rest * 0.03)
+	_body.scale = Vector3(1.0 + m.squash * 0.6, 1.0 - m.squash, 1.0 + m.squash * 0.6)
+	var player := _model["player"] as AnimationPlayer
+	var want := AnimalModel.WALK if p.stride > 0.15 and player.has_animation(AnimalModel.WALK) else AnimalModel.IDLE
+	if want != _playing:
+		player.play(want, AnimalModel.BLEND)
+		_playing = want
+	player.advance(delta * (maxf(speed, 0.6) if want == AnimalModel.WALK else 1.0))
 
 
 
@@ -752,6 +790,10 @@ func update(delta: float) -> void:
 	motion.step(delta, speed, heading, p.hop, p.stride, _yaw_to_camera() if keen > 0.0 else 0.0, keen)
 	for e in _eyes:
 		e.scale = Vector3(1.0, maxf(1.0 - p.blink, 0.1), 1.0)
+	if not _model.is_empty():
+		_pose_model(p, speed, delta)
+		_settle_contact(p)
+		return
 	match rig.type:
 		"bird":
 			_pose_bird(p)

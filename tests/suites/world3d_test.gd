@@ -2,7 +2,7 @@ extends TestSuite
 ## The 3D world: the projection that lines it up with the 2D grid, and the models it's built from.
 
 const ANIMAL_DRAWS := 5
-const ANIMAL_SHADOW_DRAWS := 2
+const ANIMAL_SHADOW_DRAWS := 3   # (a ready-made model has three colour surfaces)
 
 const TREE_DRAWS := 7 # one of them the leaf cards
 
@@ -1180,3 +1180,22 @@ func test_213_sculpted_animal_shapes_are_closed_meshes_that_follow_their_outline
 		if build.has("body"):
 			_check((build["body"] as Dictionary)["stations"].size() >= 6, "%s: its outline has stations enough" % family)
 			_check(build.has("limbs") and build.has("neck"), "%s: sculpted body, limbs and neck go together" % family)
+
+
+func test_214_ready_made_models_load_and_stand_on_the_ground() -> void:
+	# Each family with a model (data/animal_models.json) loads, has its idle, and stands on the ground with
+	# a sensible size; a walk is there or borrowed.
+	for family: String in AnimalModel.families():
+		var spec := AnimalModel.of(family)
+		_check(not spec.is_empty(), "%s has a model file" % family)
+		if spec.is_empty():
+			continue
+		var holder := Node3D.new()
+		var rig := AnimalRig.of({"id": family, "family": family, "color": "#cccccc", "accent": "#444444"})
+		var m := AnimalModel.build(holder, spec, rig, 1.0)
+		var player: AnimationPlayer = m["player"]
+		_check(player.has_animation(AnimalModel.IDLE), "%s has an idle" % family)
+		_check(player.has_animation(AnimalModel.WALK), "%s has a walk" % family)
+		_check(absf(float(m["length"]) - 1.0) < 0.01, "%s is fitted to its length" % family)
+		_check(float(m["height"]) > 0.3 and float(m["height"]) < 1.2, "%s is a sensible height: %f" % [family, m["height"]])
+		holder.free()
