@@ -2,7 +2,8 @@ extends TestSuite
 ## Fences, hedges, walls and paths that join up: the shape table, what joins what, the pieces' reach (the joint
 ## is where two arms meet), the layer that draws them in a few draws, and the click when something joins.
 
-const LINKED := ["wooden_fence", "white_picket_fence", "tall_wooden_fence", "wooden_gate", "hedge", "stone_wall", "dirt_path", "brick_path", "stone_path"]
+const LINKED := ["wooden_fence", "white_picket_fence", "tall_wooden_fence", "wooden_gate", "hedge", "stone_wall",
+	"dirt_path", "brick_path", "stone_path"]
 
 
 func _fresh_farm() -> void:
