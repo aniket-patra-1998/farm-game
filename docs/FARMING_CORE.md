@@ -106,5 +106,5 @@ A farm is a base builder, so position should pay. One data-driven `Adjacency` ru
 1b. `Inputs`: feed types from harvests (data/feeds.json), tastes (data/animal_tastes.json), feeding a home and its effects (produce, speed, rare chance).
 2. `Requirements` checker + market checklist; Gopher Garden (needs 1 gopher; auto-upgrades).
 3. Move Queen Bees, birds, collectibles onto the same framework; beehive requires a queen found from flowers.
-3b. `Adjacency` (layout synergies) with the visible link glow and placement preview.
+3b. `Adjacency` (layout synergies) with the visible link glow and placement preview. DONE for orchards and animal homes (coins; `AdjacencySystem`, data/synergies.json). Still open: bloom gardens, same-crop plots, crafting beside crops, paths and decor, XP boosts, a tag shown on the farm outside placing.
 4. Quests from data; boosts per home; then Feed Mill (bushels), Nursery, dogs as finds/homes.

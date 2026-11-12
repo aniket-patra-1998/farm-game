@@ -533,6 +533,12 @@
    "note": "Share of time each kind of weather is out, by season (weights). Fog only in the early morning; snow only in winter. Looks only: FarmVille had no weather."
   }
  },
+ "synergy": {
+  "enabled": {
+   "v": 1,
+   "note": "1 layout synergies on (our own touch, not FarmVille 2009), 0 off: touching homes of one kind pay no extra"
+  }
+ },
  "feeds": {
   "enabled": {
    "v": 1,

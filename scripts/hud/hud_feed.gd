@@ -93,3 +93,12 @@ func add_barn_stock(content: VBoxContainer) -> void:
 			line += "  (+%d %s)" % [Game.feeds.count(f, true), tr("RICH")]
 		card.add_child(BookPanel.text(line, 17))
 	content.add_child(BookPanel.card_frame(card))
+
+
+## The layout line of a building panel (our own touch): how many of its own kind touch it and what that pays.
+## "" when its kind has no synergy or the feature is off.
+func layout_line(o: Dictionary) -> String:
+	if not Game.adjacency.is_on() or Game.adjacency.group_of(str(o["id"])).is_empty():
+		return ""
+	var n := Game.adjacency.count(o)
+	return tr("SYNERGY_LINE") % [n, roundi(Game.adjacency.bonus_for(str(o["id"]), n) * 100.0)]

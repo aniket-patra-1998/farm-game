@@ -445,6 +445,8 @@ func _draw_placing(ci: CanvasItem) -> void:
 	if hovered == -1:
 		var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
 		PlaceholderArt.draw_footprint(ci, corners, ok)
+		if ok:
+			_draw_layout_bonus(ci, corners, row, col, t)
 	var level := 1
 	var inside := 0
 	var cap := 0
@@ -460,6 +462,22 @@ func _draw_placing(ci: CanvasItem) -> void:
 		PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
 
 
+
+
+## What dropping the piece here would earn from the layout (our own touch): the pieces it would touch glow
+## and the ghost carries the bonus, so you can see the set before you build it.
+func _draw_layout_bonus(ci: CanvasItem, corners: PackedVector2Array, row: int, col: int, t: float) -> void:
+	var item: String = placing["item"]
+	var lifted := int(placing["uid"])
+	var touching := Game.adjacency.neighbours_at(item, row, col, lifted)
+	if touching.is_empty():
+		return
+	for uid in touching:
+		var n := Game.object_by_uid(uid)
+		var nfp := Game.footprint(n["id"])
+		PlaceholderArt.draw_home_highlight(ci, corners_of(int(n["row"]), int(n["col"]), nfp.x, nfp.y), true, false, t)
+	var pct := roundi(Game.adjacency.bonus_for(item, Game.adjacency.count_at(item, row, col, lifted)) * 100.0)
+	PlaceholderArt.draw_bonus_tag(ci, (corners[0] + corners[2]) / 2.0 + Vector2(0, -60), tr("SYNERGY_TAG") % pct)
 
 
 ## A plot's raised bed (FarmPiece): always drawn by the game, so every plot lines up into one tidy field.

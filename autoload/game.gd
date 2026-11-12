@@ -115,6 +115,7 @@ var mastery: MasterySystem
 var nurture: NurtureSystem
 var finds: FindsSystem
 var feeds: FeedSystem
+var adjacency: AdjacencySystem
 var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
@@ -156,13 +157,14 @@ func _init() -> void:
 	nurture = NurtureSystem.new(self)
 	finds = FindsSystem.new(self)
 	feeds = FeedSystem.new(self)
+	adjacency = AdjacencySystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
-		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds, feeds]
+		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds, feeds, adjacency]
 
 
 func _ready() -> void:
@@ -581,7 +583,8 @@ func collect(uid: int) -> Dictionary:
 		return {}
 	# FarmVille: collecting pays coins and mastery, never XP (an animal or tree gave its XP once, when bought);
 	# only a bonus drop adds XP.
-	var earned := roundi(object_payout(obj).x * feeds.coin_multiplier(obj))   # fed, or hungry
+	# Fed or hungry, and touching its own kind.
+	var earned := roundi(object_payout(obj).x * feeds.coin_multiplier(obj) * adjacency.coin_multiplier(obj))
 	feeds.rare_boost = feeds.rare_multiplier(obj)
 	var gained := 0
 	var drop := drops.roll_drop("", 0)

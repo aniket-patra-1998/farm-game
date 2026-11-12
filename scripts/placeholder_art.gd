@@ -630,6 +630,15 @@ static func draw_count_sign(ci: CanvasItem, g: PackedVector2Array, inside: int, 
 
 
 
+## A small green tag over a spot, for a bonus (the layout's "+10%").
+static func draw_bonus_tag(ci: CanvasItem, at: Vector2, text: String) -> void:
+	var box := Rect2(at + Vector2(-32, -12), Vector2(64, 24))
+	ci.draw_rect(box, Color("#e4f4c8"))
+	ci.draw_rect(box, Color("#3f7a2a"), false, 2)
+	ci.draw_string(ThemeDB.fallback_font, box.position + Vector2(0, 18), text, HORIZONTAL_ALIGNMENT_CENTER, 64, 16,
+		Color("#24501a"))
+
+
 # ---------------------------------------------------------------- building shapes
 
 

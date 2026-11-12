@@ -39,7 +39,9 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 - Done: feeding (docs/FEEDS_DRAFT.md, approved): `FeedSystem`, five feeds from harvests and trees, tastes, one effect per
   feeding, hunger (-30% coins, never none), the Barn's stock, the farmhand feeds; the action registry
   (data/actions.json) so every action is offered to its helper.
-- Not yet: adjacency synergies (super orchards), quests, boosts per home, Feed Mill/Nursery/dogs, queen bee and
+- Postponed by the owner (look at later): quests (data/quests.json: missions across all systems, rewards, the counts ribbons use).
+- Layout synergies (AdjacencySystem, data/synergies.json): done for orchards and animal homes (coins). Open: bloom gardens, same-crop plots, crafting beside crops, paths and decor, XP boosts, a tag on the farm outside placing.
+- Not yet: boosts per home, Feed Mill/Nursery/dogs, queen bee and
   flowers on the finds framework, look-test tool, central Feedback service. Feeding needs a look/feel pass (hungry
   bubble, hop when fed) and a balance pass in the simulator (animals and hunger are not in the bot yet).
 

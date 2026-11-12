@@ -1,0 +1,7 @@
+{
+  "_comment": "Layout synergies (our own touch, not FarmVille 2009): placed homes of one kind that touch pay more. A group lists the catalog families it covers; a member's neighbours are the other pieces of the SAME item whose footprints share an edge with it. Each neighbour adds `per_neighbour` to the coins of every collect, up to `max_neighbours`. Add a group here and it works, no code.",
+  "groups": {
+    "orchard": {"families": ["orchard"], "per_neighbour": 0.10, "max_neighbours": 4, "boost": "coins"},
+    "animal_homes": {"families": ["animal_homes"], "per_neighbour": 0.10, "max_neighbours": 4, "boost": "coins"}
+  }
+}

@@ -47,6 +47,9 @@ func build_building(content: VBoxContainer) -> void:
 			var when := tr("READY_TO_COLLECT") if Game.is_ready(o) \
 				else tr("READY_IN_4") + FarmGrid.format_duration(Game.seconds_until_ready(o))
 			status.add_child(BookPanel.text(tr("PAYS_COINS_XP") % [when, pay.x, pay.y], 18))
+	var layout := hud.feed.layout_line(o)
+	if layout != "":
+		status.add_child(BookPanel.text(layout, 18))
 	content.add_child(BookPanel.card_frame(status))
 
 	var actions := HFlowContainer.new()
