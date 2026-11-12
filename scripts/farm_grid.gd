@@ -1090,7 +1090,8 @@ func _on_building_upgraded(uid: int, level: int) -> void:
 
 
 ## A short burst of dots for surprise drops, so a find feels like an event.
-func _sparkle(pos: Vector2, color: Color) -> void:
+func _sparkle(pos: Vector2, look: Variant) -> void:
+	var color: Color = look if look is Color else Feedback.color(str(look))
 	for k in 10:
 		var dot := Polygon2D.new()
 		var pts := PackedVector2Array()
