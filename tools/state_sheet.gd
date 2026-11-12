@@ -32,8 +32,12 @@ func _ready() -> void:
 	add_child(env)
 	Game.set_process(false)
 	var ids: Array[String] = []
+	var only := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--ids="):
+			only = a.trim_prefix("--ids=")
 	for id in Game.item_order:
-		if str(Game.items[id].get("kind", "")) in ["building", "barn", "crafting"]:
+		if str(Game.items[id].get("kind", "")) in ["building", "barn", "crafting"] and (only == "" or id in only.split(",")):
 			ids.append(id)
 	for page in ceili(float(ids.size()) / ROWS):
 		await _page(page, ids.slice(page * ROWS, (page + 1) * ROWS))

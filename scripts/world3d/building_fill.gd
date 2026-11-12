@@ -32,7 +32,8 @@ const PEEK_POP := 0.45        # seconds a head takes to pop up
 const PEEK_NOD := 2.6         # seconds a head takes to nod once and back
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
-const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
+const TREE_FILL := 0.95           # an orchard tree's size against the space between trees (crowns touch, trunks show)
+const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
 var uid := -1
@@ -217,6 +218,20 @@ static func pick_kinds(inside: Dictionary, n: int, max_kinds := MAX_KINDS) -> Ar
 	return out
 
 
+## The same list with each kind together (in the order each first appears), so a grid reads as rows of one tree.
+static func grouped(ids: Array[String]) -> Array[String]:
+	var order: Array[String] = []
+	for id in ids:
+		if not order.has(id):
+			order.append(id)
+	var out: Array[String] = []
+	for id in order:
+		for other in ids:
+			if other == id:
+				out.append(id)
+	return out
+
+
 func _show_residents(inside: Dictionary, total: int, capacity: int) -> void:
 	for a in residents:
 		a.queue_free()
@@ -308,7 +323,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1)
 	var rows := ceili(float(slots) / per_row)
 	var gap := minf(_fp.x * 0.8 / maxf(per_row - 1.0, 1.0), _fp.y * 0.8 / maxf(rows - 1.0, 1.0))
-	var size := clampf(gap * TREE_FILL, 0.4, 1.0)
+	var size := clampf(gap * TREE_FILL, 0.55, 1.0)
 	if not trees:
 		# Blooms grow in soil beds, one a row.
 		for r in rows:
@@ -318,14 +333,11 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	var total := Game.inside_total(o)
 	# Every tree and bloom inside is there to see (FarmVille's orchards and gardens).
 	var shown := mini(slots, total)
-	var ids := pick_kinds(inside, shown, 99)  # a garden shows every different kind in it
-	# Which grid places, middle first: a young orchard is a clump in the middle, not a corner.
+	var ids := grouped(pick_kinds(inside, shown, 99))  # a garden shows every different kind in it
+	# Row by row, each kind together in straight lines, as FarmVille's orchards had them.
 	var places: Array[Vector2i] = []
 	for k in per_row * rows:
 		places.append(Vector2i(k % per_row, int(k / float(per_row))))
-	var mid := Vector2((per_row - 1) / 2.0, (rows - 1) / 2.0)
-	places.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return Vector2(a).distance_to(mid) < Vector2(b).distance_to(mid))
 	# Dozens of the same model: each gets less detail, so a full orchard costs about what a few trees do.
 	ModelKit.detail = clampf(sqrt(CROWD_FULL_DETAIL / maxf(ids.size(), 1.0)), ModelKit.MIN_DETAIL, 1.0)
 	for k in ids.size():
@@ -337,7 +349,8 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE * ScaleGuide.factor(ids[k]), ready, false,
 				d.is_full(), uid + k)
 		else:
-			TreeModel.build_at(holder, Vector3(x, 0, z), it, size * ScaleGuide.factor(ids[k]), ready, uid + k)
+			var fit := clampf(TREE_CROWN / float(TreeModel.shape_of(it).get("crown_r", TREE_CROWN)), 0.7, 1.1)
+			TreeModel.build_at(holder, Vector3(x, 0, z), it, size * fit * minf(ScaleGuide.factor(ids[k]), 1.0), ready, uid + k)
 	ModelKit.detail = 1.0
 	_plants = ModelKit.bake(holder)
 	add_child(_plants)
