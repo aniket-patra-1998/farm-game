@@ -50,9 +50,13 @@ var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move", "store"
 var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
 var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
 
-## While placing: {"item": id, "uid": -1 for a new purchase or the uid being moved,
-## "row", "col"} for the footprint's back corner; row is -1 until the first touch.
-var placing := {}
+## Putting things on the farm (see Placement).
+var placement: Placement
+var placing: Dictionary:     # what is in hand while placing (see Placement.state)
+	get:
+		return placement.state
+	set(value):
+		placement.state = value
 
 
 
@@ -88,6 +92,7 @@ var _press_on_farm := false
 
 
 func _ready() -> void:
+	placement = Placement.new(self)
 	Game.player.action_done.connect(_on_action_done)
 	Game.player.queue_changed.connect(queue_redraw)
 	life = FarmLife.new()
@@ -149,7 +154,7 @@ func _reward(at: Vector2, coins: int, xp: int) -> void:
 
 
 func _on_objects_changed() -> void:
-	_refresh_homes()  # a home may have filled up, or gone
+	placement.refresh_homes()  # a home may have filled up, or gone
 	pieces.queue_sync()
 	shadows.queue_redraw()
 
@@ -507,7 +512,7 @@ func is_dragging() -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not placing.is_empty():
-		_placing_input(event)
+		placement.input(event)
 		return
 	# Mouse is emulated as touch (project setting), so this one path covers both.
 	if event is InputEventScreenTouch:
@@ -580,153 +585,16 @@ func _tile_at_screen(screen_pos: Vector2) -> Vector2i:
 
 
 func start_placing(item_id: String, uid := -1) -> void:
-	placing = {"item": item_id, "uid": uid, "row": -1, "col": -1}
-	if uid != -1:
-		var o := Game.object_by_uid(uid)
-		placing["row"] = int(o["row"])
-		placing["col"] = int(o["col"])
-	var hint := tr("DRAG_TO_MOVE_THE_THEN_LET") if uid != -1 else tr("DRAG_TO_PLACE_THE_THEN_LET")
-	_refresh_homes()
-	placing_changed.emit(hint % Game.item_data(item_id)["name"])
-	queue_redraw()
-
-
-
-
-## Where the thing being placed comes from, as HousingSystem expects it.
-func _placing_source() -> Dictionary:
-	if int(placing.get("uid", -1)) != -1:
-		return {"uid": int(placing["uid"])}
-	if int(placing.get("stored", -1)) >= 0:
-		return {"stored": int(placing["stored"])}
-	return {"buy": true}
-
-
-## The homes that take what's being placed, with how each fits: worked out when placing starts and when
-## the farm changes, so drawing them every frame costs nothing.
-func _refresh_homes() -> void:
-	if placing.is_empty():
-		return
-	var fits := {}
-	for pair in Game.homes.homes_for(placing["item"], _placing_source()):
-		fits[int(pair[0]["uid"])] = pair[1]
-	placing["homes"] = fits
-	if not fits.has(int(placing.get("home", -1))):
-		placing["home"] = -1
-
-
-## Under the finger, a home that takes what's being placed? Remembers it and says what a drop would do.
-func _hover_home(tile: Vector2i) -> void:
-	var home := -1
-	var homes: Dictionary = placing.get("homes", {})
-	if tile.x >= 0 and tile.x < Game.farm_size and tile.y >= 0 and tile.y < Game.farm_size:
-		var b := Game.object_at(Game.index_of(tile.x, tile.y))
-		if not b.is_empty() and homes.has(int(b["uid"])):
-			home = int(b["uid"])
-	if home == int(placing.get("home", -1)):
-		return
-	placing["home"] = home
-	var thing := str(Game.item_data(placing["item"])["name"])
-	if home == -1:
-		placing_changed.emit((tr("DRAG_TO_MOVE_THE_THEN_LET") if int(placing["uid"]) != -1
-			else tr("DRAG_TO_PLACE_THE_THEN_LET")) % thing)
-		return
-	var b := Game.object_by_uid(home)
-	var why: HousingSystem.Fit = homes[home]
-	placing_changed.emit(tr("DROP_TO_MOVE_INTO") % [thing, Game.item_data(b["id"])["name"]]
-		if why == HousingSystem.Fit.FITS else Game.homes.refusal(b, placing["item"], why))
+	placement.start(item_id, uid)
 
 
 ## Placing something taken back out of the barn (free; it keeps its timers reset).
 func start_placing_stored(index: int) -> void:
-	var o: Dictionary = Game.storage.stored[index]
-	placing = {"item": o["id"], "uid": -1, "stored": index, "row": -1, "col": -1}
-	_refresh_homes()
-	placing_changed.emit(tr("DRAG_TO_PLACE_THE_THEN_LET") % Game.item_data(o["id"])["name"])
-	queue_redraw()
-
-
+	placement.start_stored(index)
 
 
 func cancel_placing() -> void:
-	placing = {}
-	placing_changed.emit("")
-	queue_redraw()
-
-
-
-
-## Press or drag shows where the object will go; letting go places it if it fits.
-func _placing_input(event: InputEvent) -> void:
-	var pos := Vector2.ZERO
-	var released := false
-	if event is InputEventScreenTouch:
-		var t := event as InputEventScreenTouch
-		if t.index != 0:
-			return
-		pos = t.position
-		released = not t.pressed
-	elif event is InputEventScreenDrag:
-		var d := event as InputEventScreenDrag
-		if d.index != 0:
-			return
-		pos = d.position
-	else:
-		return
-	if not _on_farm_area(pos):
-		return
-	var fp := Game.footprint(placing["item"])
-	var tile := _tile_at_screen(pos)
-	# Centre the footprint under the finger.
-	var was_row: int = placing.get("row", -1)
-	var was_col: int = placing.get("col", -1)
-	placing["row"] = tile.x - int(fp.y / 2.0)
-	placing["col"] = tile.y - int(fp.x / 2.0)
-	_hover_home(tile)
-	if placing["row"] != was_row or placing["col"] != was_col:
-		queue_redraw()  # only when it moved to another tile, not on every touch event
-	if not released:
-		return
-	if int(placing.get("home", -1)) != -1:
-		# Dropped on a home: in it goes (or a message says why not, and it stays in hand).
-		var home := Game.object_by_uid(int(placing["home"]))
-		var source := _placing_source()
-		if Game.homes.put_in_home(int(placing["home"]), placing["item"], source):
-			_feel("place", BUZZ_PLACE)
-			if source.has("buy"):
-				var hfp := Game.footprint(home["id"])
-				_float(corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
-					"-%d" % int(Game.item_data(placing["item"])["cost"]), COLOR_COST)
-			cancel_placing()
-		return
-	var row := int(placing["row"])
-	var col := int(placing["col"])
-	var uid := int(placing["uid"])
-	if not Game.can_place(placing["item"], row, col, uid):
-		_feel("error", BUZZ_ERROR)
-		info.emit(tr("IT_DOESN_T_FIT_THERE_TRY"))
-		return
-	var from_storage := int(placing.get("stored", -1))
-	var ok: bool
-	if from_storage >= 0:
-		ok = Game.storage.place_from_storage(from_storage, row, col)
-	elif uid != -1:
-		ok = Game.move_object(uid, row, col)
-	else:
-		ok = Game.buy_and_place(placing["item"], row, col)
-	if ok:
-		# Something new drops onto the 3D farm, and thuds when it lands (Farm3D); a move settles at once.
-		if uid != -1 or not pieces.three_d:
-			_feel("place", BUZZ_PLACE)
-		if uid == -1 and from_storage < 0:
-			_float(
-				corners_of(row, col, fp.x, fp.y)[2],
-				"-%d" % int(Game.item_data(placing["item"])["cost"]),
-				COLOR_COST
-			)
-		cancel_placing()
-
-
+	placement.cancel()
 
 
 func _apply_at(screen_pos: Vector2) -> void:

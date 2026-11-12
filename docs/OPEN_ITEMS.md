@@ -28,6 +28,12 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 - CI: fail on import errors, read-only permissions, SHA-pinned actions; README sync; Android export preset.
 - HUD split, PlacementSystem, game.gd persistence module.
 
+## Balance (the numbers)
+- Review and tune every probability, chance and frequency in the game: how often the weather changes and how long
+  each kind lasts, drop rates (parts, collectibles, finds, mystery boxes, strays), timers and payouts. Put them
+  as named data (not buried in code), check each against FarmVille's, and add a tool that simulates a few days
+  of play to show the effect of a change.
+
 ## Farming core
 - Feeds and animal tastes (draft for review first), queen bee and flowers, adjacency synergies (super
   orchards), quests, boosts per home, Feed Mill/Nursery/dogs, look-test tool, central Feedback service.

@@ -17,7 +17,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `data/catalog/*.json` + `data/catalog/schema.json`: every item, by category -> family -> variant.
   Loaded into the classes in `scripts/catalog/` (ItemDef -> CropDef, PlaceableDef -> ProducerDef ->
   TreeDef/AnimalDef, BuildingDef -> BarnDef/CraftingDef, VehicleDef, DecorationDef, RecipeDef...).
-- `scripts/farm_grid.gd`: farm geometry and input; owns the world layers in `scripts/world/`
+- `scripts/farm_grid.gd`: farm geometry and input (`Placement` in `scripts/world/placement.gd` holds what is in hand and the drop rules); owns the world layers in `scripts/world/`
   (GroundLayer, ShadowLayer, ObjectLayer of FarmPiece nodes, OverlayLayer) and `scripts/fx/`.
 - `scripts/world/farm_camera.gd`: eased zoom, momentum, elastic edges.
 - `scripts/hud.gd`: top bar, toolbar, menus. `scripts/placeholder_art.gd`: code-drawn art until painted art
