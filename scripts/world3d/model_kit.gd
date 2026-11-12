@@ -44,6 +44,8 @@ static var _facet_low: ArrayMesh   # the same ball with fewer facets, for crowds
 ## How much detail the parts built now get, 1 full .. MIN_DETAIL: orchards and gardens build dozens of the
 ## same model, so BuildingFill lowers it while it builds them (fewer sides, rings, clumps and petals).
 static var detail := 1.0
+## Set while an animal is built: its balls are round (SMOOTH_*), not the coarse ones trees and rocks use.
+static var round_balls := false
 static var _materials := {}  # key -> Material
 
 static var _sprig: ImageTexture
@@ -392,6 +394,7 @@ static func scaled(count: int, least: int) -> int:
 ## A sphere (or a squashed one, with `scale`).
 static func ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale := Vector3.ONE,
 		smooth := false) -> MeshInstance3D:
+	smooth = smooth or round_balls
 	var mi := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
 	mesh.radius = r
