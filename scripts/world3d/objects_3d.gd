@@ -31,6 +31,11 @@ var life: FarmLife  # the animals' minds (shared with the 2D world)
 var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
 
 
+const TREE_CROWN_AT := 0.6     # where a tree's crown is centred, of its height
+const TREE_CROWN_FILL := 0.92  # how much of its box the pickable crown takes: the leafy outline is ragged
+const TREE_TRUNK_HALF := 0.12  # half the width of the pickable trunk, in tiles
+const TREE_CENTRE_BIAS := 0.6  # tiles of depth a tap at the crown's very edge is worth less than at its middle
+
 var _views := {}   # uid -> {"node": Node3D, "key": String}
 var _animals: Array[Animal3D] = []
 var _synced_once := false   # the farm's first sync places everything quietly; later ones drop new things in
@@ -103,6 +108,8 @@ func sync() -> void:
 		var fresh := not v.has("node")
 		var step := _step(o)
 		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o), "step": step}
+		if Game.catalog.get_def(str(o["id"])) is TreeDef:
+			_views[uid]["crown"] = _crown_of(_views[uid]["box"])
 		if not fresh and _synced_once and step > int(v.get("step", step)):
 			grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
 		if fresh and _synced_once:
@@ -450,7 +457,9 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 		if not node.visible:
 			continue
 		var d := INF
-		if node is Animal3D:
+		if v.has("crown"):
+			d = _tree_hit(v["crown"], from, dir)
+		elif node is Animal3D:
 			var box: AABB = v["box"]
 			d = _ray_to(AABB(node.position + box.position, box.size), from, dir)
 		else:
@@ -482,6 +491,38 @@ func outline_of(uid: int) -> PackedVector2Array:
 				points.append(IsoProjection.grid_of(part.get_endpoint(corner)))
 		v["outline"] = Geometry2D.convex_hull(points)
 	return v["outline"]
+
+
+## What a tap on a tree lands on: its crown as an ellipsoid and its trunk, not the box round them all (whose empty
+## corners would catch taps meant for the neighbour behind or beside it).
+func _crown_of(box: AABB) -> Dictionary:
+	var top := box.end.y
+	var centre := Vector3(box.get_center().x, lerpf(box.position.y, top, TREE_CROWN_AT), box.get_center().z)
+	var radii := Vector3(box.size.x * 0.5 * TREE_CROWN_FILL, (top - centre.y) * TREE_CROWN_FILL,
+		box.size.z * 0.5 * TREE_CROWN_FILL)
+	var trunk := AABB(Vector3(centre.x - TREE_TRUNK_HALF, box.position.y, centre.z - TREE_TRUNK_HALF),
+		Vector3(TREE_TRUNK_HALF * 2.0, centre.y - box.position.y, TREE_TRUNK_HALF * 2.0))
+	return {"centre": centre, "radii": radii, "trunk": trunk}
+
+
+## How far along the ray a tree is met, or INF. Among crowns that overlap on screen the one tapped nearer its
+## middle wins (the depth is nudged by how far off-centre the ray is), so a grove is easy to pick tree by tree.
+static func _tree_hit(crown: Dictionary, from: Vector3, dir: Vector3) -> float:
+	var radii: Vector3 = crown["radii"]
+	var centre: Vector3 = crown["centre"]
+	var o := (from - centre) / radii      # the ray in the space where the crown is a unit ball
+	var dv := dir / radii
+	var a := dv.dot(dv)
+	var b := o.dot(dv)
+	var closest := b / a
+	var miss := (o - dv * closest).length()
+	var best := INF
+	if miss < 1.0:
+		var half := sqrt(maxf(1.0 - miss * miss, 0.0) / a)
+		best = maxf(-closest - half, 0.0) * dir.length()
+		best += miss * TREE_CENTRE_BIAS
+	var trunk := _ray_to(crown["trunk"], from, dir)
+	return minf(best, trunk + TREE_CENTRE_BIAS) if trunk != INF else best
 
 
 ## How far along the ray it meets the box (INF if it misses).

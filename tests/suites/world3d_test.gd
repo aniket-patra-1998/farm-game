@@ -4,7 +4,7 @@ extends TestSuite
 const ANIMAL_DRAWS := 5
 const ANIMAL_SHADOW_DRAWS := 2
 
-const TREE_DRAWS := 6
+const TREE_DRAWS := 7 # one of them the leaf cards
 
 
 
@@ -1046,3 +1046,40 @@ func test_207_a_growing_plant_carries_its_stage_and_the_shader_does_the_growing(
 	crops.free()
 	Game.debug_time_offset = saved_offset
 	Game.plots = saved_plots
+
+
+## Trees in a row crowd each other's crowns on screen; a tap in the middle of a crown still picks that tree, and so
+## does a tap on its trunk.
+func test_208_a_tap_on_a_tree_in_a_grove_picks_that_tree() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.objects.clear()
+	var tree_id := ""
+	for id: String in Game.items:
+		if Game.catalog.get_def(id) is TreeDef:
+			tree_id = id
+			break
+	_check(tree_id != "", "there is a kind of tree")
+	for k in 3:
+		Game.objects.append({"uid": 9100 + k, "id": tree_id, "row": 6, "col": 4 + k, "t": Game.now()})
+	Game.rebuild_occupancy()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var world: Farm3D = main.get("world_3d")
+	if world == null:
+		main.free()
+		_check(false, "the farm is drawn in 3D")
+		return
+	var grid: FarmGrid = main.get("grid")
+	var views: Dictionary = world.objects.get("_views")
+	for k in 3:
+		var uid := 9100 + k
+		var crown: Dictionary = views[uid]["crown"]
+		var middle := world.camera.unproject_position(crown["centre"])
+		_eq(grid.picker.call(middle), uid, "a tap in the middle of tree %d's crown picks it" % k)
+		var trunk_box: AABB = crown["trunk"]
+		var foot := world.camera.unproject_position(trunk_box.get_center())
+		_eq(grid.picker.call(foot), uid, "and a tap on its trunk picks it too")
+	main.free()

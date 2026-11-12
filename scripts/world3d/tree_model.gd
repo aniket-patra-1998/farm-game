@@ -23,8 +23,9 @@ const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1
 const STEM := Color("#5a4a2a")
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
-const TRUNK_BULK := 0.55    # trunks are drawn slimmer than the data says (FarmVille's were slender)
-const TRUNK_TALL := 1.2     # and longer: a trunk shows under the crown, the tree stands on it
+const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
+const TRUNK_TALL := 0.8     # and shorter: FarmVille's crowns sit low on a short trunk, the crown is the tree
+const CROWN_GROW := 1.3     # and the crown is big, well over a tile across, the way FarmVille's were
 const TRUNK_VARY_MIN := 0.85   # each tree's trunk is its own length, apart from its crown's size
 const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
@@ -32,6 +33,10 @@ const TALL_MAX := 1.2       # ..to this much
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
 const CROWN_BUMP := 0.13     # how far they push out ("bump")
+const FOLIAGE_CARDS := 90       # leaf cards on a crown mass (the cards' size follows the mass, so the cover does not)
+const FOLIAGE_CARD := 0.85      # a card's size, of its mass's radius
+const FOLIAGE_CORE := 0.66      # the solid mass inside the cards, of the full size: the cards make the outline
+const FOLIAGE_MIN := 8          # at least this many cards on any mass
 const TILE_FILL := 1.15     # a tree is one tile on the farm and its crown a little wider, so neighbours overlap
 
 static var _data := {}
@@ -85,7 +90,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var leaf_col := leaf if leaf.a > 0.0 else Color.html(str(sh.get("leaf", LEAF.to_html())))
 	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-0.025, 0.025), leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
-	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd)
+	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd) \
+		* (CROWN_GROW if upright else 1.0)
 	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col,
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
@@ -255,7 +261,10 @@ static func _layout(shape: String, i: int, n: int, rng: RandomNumberGenerator) -
 static func _canopy(root: Node3D, at: Vector3, radii: Vector3, rng: RandomNumberGenerator, leaf: Color, sun: Vector3,
 		lift: float, lobes: int, bump: float, shine: float) -> void:
 	var shade := func(light: float) -> Color: return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0))
-	ModelKit.canopy(root, at, radii, rng, shade, sun, lobes, bump, shine)
+	ModelKit.canopy(root, at, radii * FOLIAGE_CORE, rng, shade, sun, lobes, bump, shine)
+	var mean := (radii.x + radii.y + radii.z) / 3.0
+	var cards := ModelKit.scaled(FOLIAGE_CARDS, FOLIAGE_MIN)
+	ModelKit.foliage_cards(root, at, radii, rng, shade, sun, cards, mean * FOLIAGE_CARD, shine)
 
 
 ## A branch from one point to another: a thin tapering cylinder tipped to lie along the line.
