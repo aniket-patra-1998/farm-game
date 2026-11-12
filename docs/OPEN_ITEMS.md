@@ -29,10 +29,10 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 - HUD split, PlacementSystem, game.gd persistence module.
 
 ## Balance (the numbers)
-- Review and tune every probability, chance and frequency in the game: how often the weather changes and how long
-  each kind lasts, drop rates (parts, collectibles, finds, mystery boxes, strays), timers and payouts. Put them
-  as named data (not buried in code), check each against FarmVille's, and add a tool that simulates a few days
-  of play to show the effect of a change.
+- Done: every number in `data/balance.json` read through `Balance`; weather as steady seasonal spells; `tools/balance_sim.tscn`
+  and docs/BALANCE.md (baseline, findings).
+- To decide: the target pace (levels per day for a once-a-day, a few-times-a-day and a heavy player), then tune XP, prices,
+  growth times and the sinks (land, buildings) against the simulator; extend the bot to buy land, buildings and animals.
 
 ## Farming core
 - Feeds and animal tastes (draft for review first), queen bee and flowers, adjacency synergies (super
