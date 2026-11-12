@@ -13,7 +13,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   `Game.crafting`, `Game.vehicles`, `Game.bees`, `Game.strays`... `Game.player` is the farmer: farm work is
   queued there and happens when the farmer has walked to it (the farm grid shows results from its
   `action_done` signal; tests drive it with `player.advance(seconds)`). Each saves its own fields
-  (`reset`/`save_to`/`load_from`); a new feature with its own state gets its own system, not more `game.gd`.
+  (`reset`/`save_to`/`load_from`); saving and loading the farm itself is `Persistence` (`Game.persistence`, with `SaveCheck` mending damaged saves); a new feature with its own state gets its own system, not more `game.gd`.
 - `data/catalog/*.json` + `data/catalog/schema.json`: every item, by category -> family -> variant.
   Loaded into the classes in `scripts/catalog/` (ItemDef -> CropDef, PlaceableDef -> ProducerDef ->
   TreeDef/AnimalDef, BuildingDef -> BarnDef/CraftingDef, VehicleDef, DecorationDef, RecipeDef...).

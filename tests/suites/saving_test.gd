@@ -141,9 +141,9 @@ func test_124_a_damaged_save_falls_back_to_the_backup_and_saves_are_batched() ->
 	h.saving_enabled = true
 	h.queue_save()
 	h.queue_save()
-	_check(h._save_due_msec >= 0, "a change waits to be saved")
+	_check(h.persistence.due_msec >= 0, "a change waits to be saved")
 	h.save_game()
-	_eq(h._save_due_msec, -1, "and one save covers all of them")
+	_eq(h.persistence.due_msec, -1, "and one save covers all of them")
 	h.saving_enabled = false
 	h.queue_free()
 	for suffix in ["", GameState.BACKUP_SUFFIX, GameState.TEMP_SUFFIX]:
@@ -166,7 +166,7 @@ func test_142_a_queued_save_is_written_off_the_main_thread_and_is_the_whole_farm
 	_eq(h.coins, 4321, "it holds the farm as it was when the save began")
 	g.save_game(true)           # a second one waits for the first, and a plain save waits too
 	g.save_game()
-	_check(g._save_thread == null, "nothing is left running")
+	_check(not g.persistence.is_writing(), "nothing is left running")
 	g.saving_enabled = false
 	_done(h)
 	_done(g)

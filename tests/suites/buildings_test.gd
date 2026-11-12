@@ -74,7 +74,7 @@ func test_13_old_12x12_saves_migrate() -> void:
 	for k in 144:
 		old.append({"state": "grass"})
 	old[5 * 12 + 7] = {"state": "plowed"}
-	var wide := g._widen_old_grid(old)
+	var wide: Array = Persistence._widen_old_grid(old)
 	_eq(wide.size(), GameState.MAX_SIZE * GameState.MAX_SIZE, "widened size")
 	_eq(wide[g.index_of(5, 7)]["state"], "plowed", "plot keeps its row and column")
 	_done(g)

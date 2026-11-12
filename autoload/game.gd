@@ -152,6 +152,7 @@ var strays: StraySystem
 var crafting: CraftingSystem
 var homes: HousingSystem
 var buildings: BuildingSystem
+var persistence: Persistence          # saving and loading (not in `systems`: it has no state of its own)
 
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
 
@@ -159,8 +160,6 @@ var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/sa
 var _occupied := {}                # tile index -> uid of the object covering it
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
-var _save_due_msec := -1          # when a queued save is written (-1: nothing waiting)
-var _save_thread: Thread          # a queued save being turned into text and written off the main thread
 var _weather := {}                # the last answer of weather(), and when and for what it was made
 var _weather_at := -1
 var _weather_for := "?"
@@ -188,6 +187,7 @@ func _init() -> void:
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
+	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
 		strays, crafting, homes, buildings, mastery, player, nurture, finds]
 
@@ -232,8 +232,7 @@ func _notification(what: int) -> void:
 ## The farmer works through their queue as time passes (PlayerSystem).
 func _process(delta: float) -> void:
 	player.advance(delta)
-	if _save_due_msec >= 0 and Time.get_ticks_msec() >= _save_due_msec:
-		save_game(true)
+	persistence.tick()
 
 
 func now() -> int:
@@ -1139,93 +1138,24 @@ func _set_starter(row: int, col: int, crop_id: String, planted_at: int) -> void:
 # ---------------------------------------------------------------- save/load
 
 
-## A change to save soon: changes within SAVE_DELAY_MSEC of each other are written once (the whole farm is
-## serialised each time, and a phone feels that). Pausing or closing the app saves at once.
+## A change to save soon (see Persistence).
 func queue_save() -> void:
-	if _save_due_msec < 0:
-		_save_due_msec = Time.get_ticks_msec() + SAVE_DELAY_MSEC
+	persistence.queue()
 
 
-## `in_background`: the farm is copied (a few ms) and the copy is turned into text and written on a thread,
-## so a queued save doesn't stall a frame. Anything else (pausing, closing, tests) writes before it returns.
+## Writes the farm; `in_background` copies it and writes on a thread (see Persistence).
 func save_game(in_background := false) -> void:
-	_save_due_msec = -1
-	if not saving_enabled:
-		return
-	finish_saving()
-	var data := {
-		"version": SAVE_VERSION,
-		"saved_at": now(),
-		"coins": coins,
-		"gems": gems,
-		"xp": xp,
-		"plots": plots,
-		"debug_time_offset": debug_time_offset,
-		"tutorial_step": tutorial_step,
-		"objects": objects,
-		"farm_size": farm_size,
-		"clear_until": clear_until,
-		"unwithers": unwithers,
-		"fertilize_alls": fertilize_alls,
-		"parts": parts,
-		"farmhands": farmhands,
-		"arborists": arborists,
-		"gardeners": gardeners,
-		"fertilizer_bags": fertilizer_bags,
-		"next_uid": next_uid,
-	}
-	for system in systems:
-		system.save_to(data)
-	if not in_background:
-		_write_safely(JSON.stringify(data), save_path)
-		return
-	var copy: Dictionary = data.duplicate(true)  # the game goes on changing `data`'s parts; the thread keeps this
-	var path := save_path
-	_save_thread = Thread.new()
-	_save_thread.start(_write_snapshot.bind(copy, path))
+	persistence.save(in_background)
 
 
-## (On the save thread.) The copy as text, then safely onto disk.
-func _write_snapshot(copy: Dictionary, path: String) -> void:
-	_write_safely(JSON.stringify(copy), path)
-
-
-## Waits for a save still being written on its thread (before anything reads or replaces the file).
+## Waits for a background save still being written.
 func finish_saving() -> void:
-	if _save_thread != null:
-		_save_thread.wait_to_finish()
-		_save_thread = null
+	persistence.finish()
 
 
-## Written so a crash or a full disk can't lose the farm: the new save goes to a temporary file first, the
-## last good save is kept as a backup, and only then does the new one take its place.
-func _write_safely(text: String, path: String) -> void:
-	var tmp := path + TEMP_SUFFIX
-	var f := FileAccess.open(tmp, FileAccess.WRITE)
-	if f == null:
-		push_warning("Could not write save file")
-		return
-	f.store_string(text)
-	f.close()
-	if FileAccess.file_exists(path):
-		DirAccess.rename_absolute(path, path + BACKUP_SUFFIX)
-	DirAccess.rename_absolute(tmp, path)
-
-
-## The saved farm as a dictionary: the save, or its backup if the save is missing or unreadable.
-func _read_save() -> Dictionary:
-	finish_saving()
-	for path in [save_path, save_path + BACKUP_SUFFIX]:
-		if not FileAccess.file_exists(path):
-			continue
-		var f := FileAccess.open(path, FileAccess.READ)
-		if f == null:
-			continue
-		var json := JSON.new()  # (parse() reports a damaged file quietly; parse_string logs an engine error)
-		if json.parse(f.get_as_text()) == OK and typeof(json.data) == TYPE_DICTIONARY:
-			return json.data
-		push_warning("Save %s is unreadable" % path)
-	return {}
+## Puts the last save back; false if there is none to use.
+func load_game() -> bool:
+	return persistence.load_save()
 
 
 ## Debug builds: the farm with everything on it, for testing (ShowcaseFarm), built fresh in its own save.
@@ -1252,79 +1182,6 @@ func open_own_farm() -> void:
 
 func in_showcase() -> bool:
 	return save_path == ShowcaseFarm.SAVE_PATH
-
-
-func load_game() -> bool:
-	var data := _read_save()
-	if data.is_empty():
-		return false
-	var version := int(data.get("version", 0))
-	if version > SAVE_VERSION:
-		# From a newer game (the app was rolled back): the new farm that follows must not overwrite it.
-		DirAccess.copy_absolute(save_path, "%s.v%d" % [save_path, version])
-		return false
-	if version < OLDEST_SAVE_VERSION:
-		return false
-	var mended := SaveCheck.clean(data, items, MAX_SIZE, {"state": "grass"})
-	if mended > 0:
-		push_warning("Save: %d damaged entries were dropped or mended" % mended)
-	var saved_plots: Array = data.get("plots", [])
-	if saved_plots.size() == OLD_GRID_SIZE * OLD_GRID_SIZE:
-		saved_plots = _widen_old_grid(saved_plots)
-	if saved_plots.size() != MAX_SIZE * MAX_SIZE:
-		return false
-	farm_size = clampi(int(data.get("farm_size", START_SIZE)), START_SIZE, MAX_SIZE)
-	clear_until = int(data.get("clear_until", 0))
-	unwithers = int(data.get("unwithers", START_UNWITHERS))
-	fertilize_alls = int(data.get("fertilize_alls", 0))
-	var saved_parts: Dictionary = data.get("parts", {})
-	parts = {}
-	for p in part_ids:
-		parts[p] = int(saved_parts.get(p, 0))
-	farmhands = int(data.get("farmhands", 0))
-	arborists = int(data.get("arborists", 0))
-	gardeners = int(data.get("gardeners", 0))
-	fertilizer_bags = int(data.get("fertilizer_bags", 0))
-	coins = int(data.get("coins", START_COINS))
-	gems = int(data.get("gems", START_GEMS))
-	xp = int(data.get("xp", 0))
-	debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
-	# Saves from before the tutorial existed belong to players who already know the basics.
-	tutorial_step = int(data.get("tutorial_step", Tutorial.DONE))
-	for system in systems:
-		system.load_from(data)
-	objects = []
-	for o in data.get("objects", []):
-		var obj: Dictionary = o
-		if not items.has(obj.get("id", "")):
-			continue # item removed from the data file
-		obj["uid"] = int(obj["uid"])
-		obj["row"] = int(obj["row"])
-		obj["col"] = int(obj["col"])
-		obj["t"] = int(obj["t"])
-		if obj.has("level"):
-			obj["level"] = int(obj["level"])
-		if obj.has("forage_until"):
-			obj["forage_until"] = int(obj["forage_until"])
-		add_object(obj)
-	next_uid = int(data.get("next_uid", 1))
-	absence_note = bees.apply_absence(now() - int(data.get("saved_at", now())))
-	plots.clear()
-	for p in saved_plots:
-		var plot: Dictionary = p
-		# Drop plots whose crop no longer exists in the data file.
-		if plot.get("state") == "planted" and not crops.has(plot.get("crop", "")):
-			plot = {"state": "plowed"}
-		plots.append(plot)
-	var extra_vehicles := buildings.trim_extra_vehicles()
-	if extra_vehicles > 0:
-		var vnote := tr("EXTRA_VEHICLES_SOLD_BACK") % extra_vehicles
-		absence_note = vnote if absence_note == "" else absence_note + "\n" + vnote
-	var moved := settle_objects()
-	if moved > 0:
-		var note := tr("SOME_BUILDINGS_CHANGED_SHAPE_AND") % moved
-		absence_note = note if absence_note == "" else absence_note + "\n" + note
-	return true
 
 
 ## Lays every object back on the farm; one that no longer fits where it stood (its footprint changed, or the
@@ -1385,14 +1242,3 @@ func reset_game() -> void:
 func plot_updated(i: int) -> void:
 	plot_changed.emit(i)
 	queue_save()
-
-
-## Old saves: copy the 12x12 grid into the top-left of the full-size grid.
-func _widen_old_grid(old: Array) -> Array:
-	var wide: Array = []
-	for i in MAX_SIZE * MAX_SIZE:
-		wide.append({"state": "grass"})
-	for r in OLD_GRID_SIZE:
-		for c in OLD_GRID_SIZE:
-			wide[r * MAX_SIZE + c] = old[r * OLD_GRID_SIZE + c]
-	return wide
