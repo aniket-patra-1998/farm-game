@@ -11,7 +11,7 @@ extends RefCounted
 
 const SWAY := 0.035                # how far a tree bends in the wind (paint3d sway, by height)
 const PATH := "res://data/tree_shapes.json"
-const BARK := Color("#684528")
+const BARK := Color("#5a4630")
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
@@ -19,6 +19,8 @@ const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, whi
 const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
 const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
+const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
+const STEM := Color("#5a4a2a")
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
 const TRUNK_BULK := 0.55    # trunks are drawn slimmer than the data says (FarmVille's were slender)
@@ -28,8 +30,8 @@ const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
 const TALL_MAX := 1.2       # ..to this much
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
-const CROWN_LOBES := 7       # rounded bulges on each leafy mass (data can set "lobes")
-const CROWN_BUMP := 0.2      # how far they push out ("bump")
+const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
+const CROWN_BUMP := 0.13     # how far they push out ("bump")
 const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
 
 static var _data := {}
@@ -193,7 +195,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	# A crown is a few big leafy masses on limbs, each with small clumps along its outer edge: an uneven outline
 	# with gaps where the branches show, not a ball. Its centre is off the trunk a little, so no two sides match.
 	var mid := centre + Vector3(rng.randf_range(-0.1, 0.1) * cr, 0.0, rng.randf_range(-0.1, 0.1) * cr)
-	var foot := Vector3(centre.x, centre.y - ch * 0.55, centre.z)
+	var foot := Vector3(centre.x, centre.y - float(sh["crown_h"]) * k * 0.6, centre.z)  # the trunk's top: limbs fork from it
 	# The light in the tree's own space (the tree is turned at random, the sun is not).
 	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -float(t["root"].rotation.y))
 	var lobes := int(sh.get("lobes", CROWN_LOBES))
@@ -210,7 +212,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
 		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3), lobes, bump, shine)
 		(t["blobs"] as Array).append([p, size, a])
-		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.5)))
+		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
 
 
 ## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up
@@ -402,14 +404,24 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				var fruit_r := r
 				var blobs: Array = t["blobs"]
 				if not blobs.is_empty() and str(sh["form"]) != "palm":
-					# Fruit sits on the leaf masses, on the side that faces out and up: attached, not floating.
+					# Fruit grows in twos and threes on one mass, each its own size. Most hang from the canopy's rim and
+					# underside on a short stem (as FarmVille's did); a few sit on its sunlit top.
 					var blob: Array = blobs[i % blobs.size()]
-					# Fruit grows in twos and threes on one mass, half sunk in the leaves, each its own size.
 					var face := float(blob[2]) + (i / 3) * 0.7 + rng.randf_range(-0.35, 0.35)
-					var dir := Vector3(cos(face), rng.randf_range(0.15, 0.9), sin(face)).normalized()
-					p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
-					fruit_mat = shades[0 if dir.y > 0.55 else (1 if dir.y > 0.25 else 2)]
 					fruit_r = r * rng.randf_range(0.8, 1.15)
+					var low := (blob[0] as Vector3).y - float(blob[1]) < 0.16 * k  # a low crown: nothing hangs to the grass
+					if i % 3 != 2 and not low:
+						var rim := Vector3(cos(face), rng.randf_range(-0.55, 0.05), sin(face)).normalized()
+						var anchor := (blob[0] as Vector3) + rim * float(blob[1]) * HANG_OUT
+						var drop := fruit_r * rng.randf_range(1.2, 1.9)
+						ModelKit.box(root, anchor + Vector3(-0.004, -drop, -0.004) * k,
+							anchor + Vector3(0.004, 0.0, 0.004) * k, ModelKit.paint(STEM), false)
+						p = anchor - Vector3(0, drop + fruit_r * 0.85, 0)
+						fruit_mat = shades[1 if rim.y > -0.3 else 2]
+					else:
+						var dir := Vector3(cos(face), rng.randf_range(0.25, 0.9), sin(face)).normalized()
+						p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
+						fruit_mat = shades[0 if dir.y > 0.55 else 1]
 				if str(sh["form"]) == "palm":
 					# Coconuts cluster under the fronds, against the trunk.
 					p = centre + Vector3(cos(a) * 0.06 * k, -0.06 * k, sin(a) * 0.06 * k)

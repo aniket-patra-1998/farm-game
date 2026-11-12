@@ -16,8 +16,8 @@ const FACET_RINGS := 4        # and up
 const MIN_DETAIL := 0.35
 const BALL_SEGMENTS := 12
 const BALL_RINGS := 7
-const CANOPY_SEGMENTS := 20   # a canopy's grid: around
-const CANOPY_RINGS := 10      # and up
+const CANOPY_SEGMENTS := 24   # a canopy's grid: around
+const CANOPY_RINGS := 12      # and up
 
 const CYLINDER_SIDES := 12
 
