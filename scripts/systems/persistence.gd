@@ -149,19 +149,25 @@ func load_save() -> bool:
 	for system in game.systems:
 		system.load_from(data)
 	game.set_objects([])
+	# A device clock set back since the save would leave every timer in the future: all of them wait the
+	# difference on top of their cycle. Shifting them back by it keeps each one's progress.
+	var skew := maxi(0, int(data.get("saved_at", game.now())) - game.now())
 	for o in data.get("objects", []):
 		var obj: Dictionary = o
 		if not game.items.has(obj.get("id", "")):
 			continue # item removed from the data file
+		obj["t"] = int(obj["t"]) - skew
 		# (SaveCheck has already made uid, row, col, t and level whole numbers.)
 		if obj.has("forage_until"):
 			obj["forage_until"] = int(obj["forage_until"])
 		game.add_object(obj)
 	game.next_uid = int(data.get("next_uid", 1))
-	game.absence_note = game.bees.apply_absence(game.now() - int(data.get("saved_at", game.now())))
+	game.absence_note = game.bees.apply_absence(maxi(0, game.now() - int(data.get("saved_at", game.now()))))
 	game.plots.clear()
 	for p in saved_plots:
 		var plot: Dictionary = p
+		if plot.get("state") == "planted":
+			plot["planted_at"] = int(plot.get("planted_at", 0)) - skew
 		# Drop plots whose crop no longer exists in the data file.
 		if plot.get("state") == "planted" and not game.crops.has(plot.get("crop", "")):
 			plot = {"state": "plowed"}

@@ -277,3 +277,35 @@ func _write_json(path: String, data: Dictionary) -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(data))
 	f.close()
+
+
+func test_178_a_clock_set_back_does_not_leave_timers_in_the_future() -> void:
+	var path := "user://test_save_clock.json"
+	var g := _farm()
+	g.save_path = path
+	g.saving_enabled = true
+	g.set_objects([])
+	g.coins = 10000000
+	g.xp = g.xp_for_level(60)
+	_check(g.buy_and_place("chicken_coop", 1, 1), "coop bought")
+	var coop := g.object_at(g.index_of(1, 1))
+	g.plots[g.index_of(8, 8)] = {"state": "planted", "crop": "wheat", "planted_at": g.now()}
+	var stamped := int(coop["t"])
+	g.save_game()
+	g.finish_saving()
+	# The save says it was made an hour from now: the device clock has since been set back an hour.
+	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	saved["saved_at"] = int(saved["saved_at"]) + 3600
+	var out := FileAccess.open(path, FileAccess.WRITE)
+	out.store_string(JSON.stringify(saved))
+	out.close()
+	var h := _farm()
+	h.save_path = path
+	h.saving_enabled = false
+	_check(h.load_game(), "loads")
+	var loaded := h.object_at(h.index_of(1, 1))
+	_check(int(loaded["t"]) <= h.now(), "no timer is in the future")
+	_eq(int(loaded["t"]), stamped - 3600, "each timer keeps its progress (shifted by the skew)")
+	_check(int(h.plots[h.index_of(8, 8)]["planted_at"]) <= h.now(), "a planted plot too")
+	for suffix in ["", ".bak", ".tmp"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))

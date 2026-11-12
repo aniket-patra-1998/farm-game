@@ -540,13 +540,15 @@ func crop_art_for(i: int) -> String:
 func is_ready(obj: Dictionary) -> bool:
 	if obj.get("stray", false):
 		return false
-	if kind_of(obj) == "decor" or kind_of(obj) == "barn" or kind_of(obj) == "vehicle":
+	var it := item_data(obj["id"])   # one lookup: this runs for every object, every frame
+	var kind: String = it.get("kind", "")
+	if kind == "decor" or kind == "barn" or kind == "vehicle":
 		return false # scenery, the barn and vehicles never produce
-	if not item_data(obj["id"]).get("produces", true):
+	if not it.get("produces", true):
 		return false # the garage only stores
 	if under_construction(obj):
 		return false
-	if is_building(obj) and inside_total(obj) == 0:
+	if kind == "building" and inside_total(obj) == 0:
 		return false
 	return now() - int(obj["t"]) >= cycle_of(obj) and not is_withered(obj)
 
