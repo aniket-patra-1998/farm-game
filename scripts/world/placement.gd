@@ -107,12 +107,12 @@ func _lay(line: Array, ok: Array) -> void:
 	state.erase("line")
 	state.erase("line_ok")
 	if laid == 0:
-		grid._feel("error", FarmGrid.BUZZ_ERROR)
+		Feedback.moment("error")
 		grid.info.emit(tr("IT_DOESN_T_FIT_THERE_TRY"))
 		return
 	if not grid.pieces.three_d:
-		grid._feel("place", FarmGrid.BUZZ_PLACE)
-	grid._float(grid.corners_of(last.x, last.y, 1, 1)[2], "-%d" % (laid * cost), FarmGrid.COLOR_COST)
+		Feedback.moment("place")
+	grid._float(grid.corners_of(last.x, last.y, 1, 1)[2], "-%d" % (laid * cost), "cost")
 	if laid < line.size():
 		grid.info.emit(tr("LAID_OF_THE_REST_WERE_BLOCKED") % [laid, line.size()])
 	cancel()
@@ -231,11 +231,11 @@ func input(event: InputEvent) -> void:
 		var home := Game.object_by_uid(int(state["home"]))
 		var source := _source()
 		if Game.homes.put_in_home(int(state["home"]), state["item"], source):
-			grid._feel("place", FarmGrid.BUZZ_PLACE)
+			Feedback.moment("place")
 			if source.has("buy"):
 				var hfp := Game.footprint(home["id"])
 				grid._float(grid.corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
-					"-%d" % int(Game.item_data(state["item"])["cost"]), FarmGrid.COLOR_COST)
+					"-%d" % int(Game.item_data(state["item"])["cost"]), "cost")
 			cancel()
 		else:
 			_refuse("")
@@ -257,12 +257,12 @@ func input(event: InputEvent) -> void:
 	if ok:
 		# Something new drops onto the 3D farm, and thuds when it lands (Farm3D); a move settles at once.
 		if uid != -1 or not grid.pieces.three_d:
-			grid._feel("place", FarmGrid.BUZZ_PLACE)
+			Feedback.moment("place")
 		if uid == -1 and from_storage < 0:
 			grid._float(
 				grid.corners_of(row, col, fp.x, fp.y)[2],
 				"-%d" % int(Game.item_data(state["item"])["cost"]),
-				FarmGrid.COLOR_COST
+				"cost"
 			)
 		cancel()
 	else:
@@ -278,7 +278,7 @@ func _has_origin() -> bool:
 ## A drop that can't happen. What was lifted goes back where it came from (it never left: the hand is just
 ## emptied); a purchase stays in hand. `message` says why (a refusal may already have said it).
 func _refuse(message: String) -> void:
-	grid._feel("error", FarmGrid.BUZZ_ERROR)
+	Feedback.moment("error")
 	if message != "":
 		grid.info.emit(message)
 	if _has_origin():

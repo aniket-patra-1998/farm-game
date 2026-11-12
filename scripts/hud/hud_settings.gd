@@ -23,7 +23,7 @@ func build_settings(content: VBoxContainer) -> void:
 	volume.custom_minimum_size = Vector2(320, 40)
 	volume.focus_mode = Control.FOCUS_NONE
 	volume.value_changed.connect(func(v: float) -> void: Sound.volume = v)
-	volume.drag_ended.connect(func(_changed: bool) -> void: Sound.play("coin"))  # hear the new level
+	volume.drag_ended.connect(func(_changed: bool) -> void: Feedback.moment("volume_check"))  # hear the new level
 	inner.add_child(volume)
 	var mute := CheckButton.new()
 	mute.text = tr("MUTE_SOUND")
@@ -37,7 +37,7 @@ func build_settings(content: VBoxContainer) -> void:
 	buzz.focus_mode = Control.FOCUS_NONE
 	buzz.toggled.connect(func(on: bool) -> void:
 		Sound.vibration = on
-		Sound.buzz(FarmHud.LEVEL_UP_BUZZ))  # feel it come on
+		Feedback.moment("vibration_check"))  # feel it come on
 	inner.add_child(buzz)
 	content.add_child(BookPanel.card_frame(inner))
 	if OS.is_debug_build():

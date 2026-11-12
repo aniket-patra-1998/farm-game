@@ -38,14 +38,15 @@ func test_98_every_sound_builds_clean_and_every_animal_has_a_voice() -> void:
 		_check(sounds.has(str(voices.get(family, ""))), "the %s's voice is a real sound" % family)
 
 
-func test_99_every_sound_the_game_plays_exists() -> void:
+func test_99_every_sound_asked_for_directly_exists() -> void:
 	var asked := {}
-	var re := RegEx.create_from_string("(?:Sound\\.play|_feel)\\(\"([a-z_]+)\"")
+	var re := RegEx.create_from_string("Sound\\.play\\(\"([a-z_]+)\"")
 	for dir in SCAN_DIRS:
 		for path in _scripts_in(dir):
 			for m in re.search_all(FileAccess.get_file_as_string(path)):
 				asked[m.get_string(1)] = path
-	_check(asked.size() >= 8, "the game asks for its sounds by name (%d found)" % asked.size())
+	# (The game's moments ask for their sounds through Feedback, checked in feedback_test; what asks directly is
+	# checked here, whatever is left of it.)
 	for event: String in asked:
 		_check(Sound.has_sound(event), "%s (asked for in %s) is in sounds.json" % [event, asked[event]])
 	# Sounds are built ahead of time and cached: asking twice gives the same audio.

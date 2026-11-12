@@ -1,0 +1,31 @@
+{
+  "_about": "Every moment the game answers with a sound and a buzz, and every colour a floating number or word takes, in one place (autoload/feedback.gd). `sound` is a name in sounds.json, `buzz` a vibration in ms (phones), `gain_db` makes the sound softer or louder. Code asks by name: Feedback.moment(\"place\").",
+  "moments": {
+    "tap": {"sound": "tap", "buzz": 8},
+    "touch": {"buzz": 8},
+    "place": {"sound": "place", "buzz": 24},
+    "snap": {"sound": "snap", "buzz": 10},
+    "error": {"sound": "error", "buzz": 40},
+    "plow": {"sound": "plow", "buzz": 8},
+    "plant": {"sound": "plant", "buzz": 8},
+    "fertilize": {"sound": "fertilize", "buzz": 8},
+    "collect": {"sound": "collect", "buzz": 16},
+    "collect_soft": {"sound": "collect", "buzz": 24},
+    "harvest": {"sound": "harvest", "buzz": 16},
+    "level_up": {"sound": "level_up", "buzz": 60},
+    "level_up_soft": {"sound": "level_up", "buzz": 24},
+    "sell": {"sound": "coin", "buzz": 8},
+    "coin_land": {"sound": "coin", "gain_db": -8.0},
+    "volume_check": {"sound": "coin"},
+    "vibration_check": {"buzz": 60}
+  },
+  "floats": {
+    "coins": "#ffd23f",
+    "xp": "#9be7ff",
+    "cost": "#ffb4a8",
+    "find": "#ff9ad5",
+    "golden": "#ffe066",
+    "fert": "#8fe36b",
+    "part": "#f4c27a"
+  }
+}

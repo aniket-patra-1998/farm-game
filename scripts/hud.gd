@@ -15,8 +15,6 @@ const BOTTOM_H := 150.0
 
 const BUTTON_SIZE := Vector2(150, 112)
 const GROUP_PAGE := 30     # rows of a long grouped list (the barn) built at a time
-const LEVEL_UP_BUZZ := 60     # ms of vibration for a level up
-const COIN_LAND_DB := -8.0  # each landing coin chinks softly; a shower of them adds up
 
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
@@ -87,8 +85,7 @@ func _ready() -> void:
 	root.add_child(_level_popup)
 	Game.leveled_up.connect(_level_popup.celebrate)
 	Game.leveled_up.connect(func(_l: int) -> void:
-		Sound.play("level_up")
-		Sound.buzz(LEVEL_UP_BUZZ))
+		Feedback.moment("level_up"))
 	Game.collections_changed.connect(_refresh_book)
 	Game.ribbons_changed.connect(_refresh_book)
 	Game.objects_changed.connect(_refresh_book)
@@ -478,7 +475,7 @@ func xp_target() -> Vector2:
 ## A quick swell as a reward lands on a counter.
 func pulse(which: String) -> void:
 	if which == "coins":
-		Sound.play("coin", COIN_LAND_DB)  # each coin chinks as it lands
+		Feedback.moment("coin_land")  # each coin chinks as it lands
 	var c: Control = _coins_label if which == "coins" else _xp_bar
 	c.pivot_offset = c.size / 2.0
 	var tw := c.create_tween()

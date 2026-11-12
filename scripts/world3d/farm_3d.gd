@@ -110,21 +110,18 @@ func _ready() -> void:
 ## Something dropped onto the farm: a puff of dust where it touched down, a thud, a jolt in the hand.
 func _landed(at: Vector3) -> void:
 	grid.world_fx.burst("dust", IsoProjection.grid_of(at))
-	Sound.play("place")
-	Sound.buzz(FarmGrid.BUZZ_PLACE)
+	Feedback.moment("place")
 
 
 ## Fence, hedge, wall or path pieces joined up: a click, and a tick in the hand.
 func _snapped(_at: Vector3, _fresh: bool) -> void:
-	Sound.play("snap")
-	Sound.buzz(FarmGrid.BUZZ_SNAP)
+	Feedback.moment("snap")
 
 
 ## A building was finished or upgraded: sparkles at its feet, a chime (a fanfare for a new building).
 func _transformed(at: Vector3, grand: bool) -> void:
 	grid.world_fx.burst("sparkle", IsoProjection.grid_of(at))
-	Sound.play("level_up" if grand else "collect")
-	Sound.buzz(FarmGrid.BUZZ_PLACE)
+	Feedback.moment("level_up_soft" if grand else "collect_soft")
 
 
 ## Something was tapped: it bounces, and an animal looks round at you.

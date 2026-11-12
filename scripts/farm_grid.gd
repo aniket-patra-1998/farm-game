@@ -18,25 +18,13 @@ const TILE_H := 64.0
 const EDGE_DEPTH := 28.0
 const HEADROOM := 230.0 # room above the back corner for tall things (the farmhouse sits there)
 const MEADOW_MARGIN := 40  # tiles of countryside drawn around the farm
-const COLOR_COINS := Color("#ffd23f")
-const COLOR_XP := Color("#9be7ff")
-const COLOR_COST := Color("#ffb4a8")
-const COLOR_FIND := Color("#ff9ad5")
-const COLOR_GOLDEN := Color("#ffe066")
-const COLOR_FERT := Color("#8fe36b")
 
-const COLOR_PART := Color("#f4c27a")
 const HUNGRY_CRUMB := Color("#b99a5e")
 
 # Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
-const BUZZ_TAP := 8
 const COINS_NEEDED := {"plow": "NOT_ENOUGH_COINS_TO_PLOW", "plant": "NOT_ENOUGH_COINS_FOR_SEEDS",
 	"fertilize": "NOT_ENOUGH_COINS_FOR_FERTILIZER"}  # what to say when a job can't be afforded
 const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale or a clear
-const BUZZ_HARVEST := 16
-const BUZZ_PLACE := 24
-const BUZZ_SNAP := 10
-const BUZZ_ERROR := 40
 
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
@@ -132,7 +120,7 @@ func _ready() -> void:
 	Game.building_upgraded.connect(_on_building_upgraded)
 	# Finds while farming (fuel, collectibles, Perfect Bunches) float up from their plot.
 	Game.found.connect(
-		func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, COLOR_PART, 1.8)
+		func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, "part", 1.8)
 	)
 
 
@@ -607,7 +595,7 @@ func _process(_delta: float) -> void:
 	if obj.is_empty():
 		return  # nothing here to lift: the press carries on as a tap or a drag
 	_pressing = false  # it is picked up now, so this press is not a tap
-	_feel("place", BUZZ_PLACE)
+	Feedback.moment("place")
 	_poke(uid)
 	start_placing(str(obj["id"]), uid)
 
@@ -675,19 +663,12 @@ func _poke(uid: int) -> void:
 	var kind := Game.kind_of(obj) if not obj.is_empty() else ""
 	if kind == "animal":
 		Sound.voice(AnimalRig.of(Game.item_data(obj["id"])).family)
-	_feel("", BUZZ_TAP)
+	Feedback.moment("touch")
 
 
 
 
 ## A sound and a short vibration for something the player did (either may be left out).
-func _feel(event: String, buzz_ms := 0) -> void:
-	if event != "":
-		Sound.play(event)
-	if buzz_ms > 0:
-		Sound.buzz(buzz_ms)
-
-
 
 
 ## A harvested plot's plants pop off: in 3D the 3D world shows it, in 2D the 2D effects layer.
@@ -715,47 +696,47 @@ func _drive(i: int) -> void:
 ## takes it back out.
 func _queue(job: Dictionary) -> void:
 	if Game.player.cancel(job):
-		_feel("tap", BUZZ_TAP)
+		Feedback.moment("tap")
 		return
 	match Game.player.enqueue(job):
 		PlayerSystem.Refused.NONE:
-			_feel("tap", BUZZ_TAP)
+			Feedback.moment("tap")
 		PlayerSystem.Refused.COINS:
-			_feel("error", BUZZ_ERROR)
+			Feedback.moment("error")
 			info.emit(tr(COINS_NEEDED.get(job["kind"], "NOT_ENOUGH_COINS_TO_PLOW")).replace("%s",
 				str(Game.crops.get(str(job.get("crop", "")), {}).get("name", ""))))
 		PlayerSystem.Refused.SUPPLY:
-			_feel("error", BUZZ_ERROR)
+			Feedback.moment("error")
 			object_tapped.emit(int(job["uid"]))
 		PlayerSystem.Refused.FULL:
-			_feel("error", BUZZ_ERROR)
+			Feedback.moment("error")
 			info.emit(tr("THE_FARMER_HAS_ENOUGH_TO_DO"))
 		_:
-			_feel("error", BUZZ_ERROR)
+			Feedback.moment("error")
 
 
 ## The farmer got to a job and did it (or found nothing left to do: an empty result).
 func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 	if result.is_empty():
 		if job["kind"] != "vehicle":
-			_feel("error", BUZZ_ERROR)
+			Feedback.moment("error")
 		return
 	var i := int(job.get("plot", -1))
 	match str(job["kind"]):
 		"harvest":
 			_show_harvest(i, job, result)
 		"plow":
-			_feel("plow", BUZZ_TAP)
+			Feedback.moment("plow")
 			world_fx.burst("dirt", center_of(i))
-			_float(center_of(i), "-%d" % Balance.i("economy.plow_cost"), COLOR_COST)
+			_float(center_of(i), "-%d" % Balance.i("economy.plow_cost"), "cost")
 		"plant":
-			_feel("plant", BUZZ_TAP)
+			Feedback.moment("plant")
 			world_fx.burst("dirt", center_of(i) + Vector2(0, -PlaceholderArt.SLAB))
-			_float(center_of(i), "-%d" % int(Game.crops[job["crop"]]["seed_cost"]), COLOR_COST)
+			_float(center_of(i), "-%d" % int(Game.crops[job["crop"]]["seed_cost"]), "cost")
 		"fertilize":
-			_feel("fertilize", BUZZ_TAP)
-			_float(center_of(i), "-%d" % Balance.i("economy.fertilizer_cost"), COLOR_COST)
-			_sparkle(center_of(i), COLOR_FERT)
+			Feedback.moment("fertilize")
+			_float(center_of(i), "-%d" % Balance.i("economy.fertilizer_cost"), "cost")
+			_sparkle(center_of(i), "fert")
 		"collect":
 			_show_collect(int(job["uid"]), result)
 		"nurture":
@@ -763,7 +744,7 @@ func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 		"feed":
 			_show_fed(int(job["uid"]), result)
 		"vehicle":
-			_feel("tap", BUZZ_TAP)   # it sets off; what it did is shown when it finishes (_show_vehicle)
+			Feedback.moment("tap")   # it sets off; what it did is shown when it finishes (_show_vehicle)
 
 
 ## A vehicle finished its run: what it did, floating up where it worked.
@@ -777,13 +758,13 @@ func _show_vehicle(run: VehicleWork) -> void:
 	)
 	var coins_moved := int(r["coins"])
 	if coins_moved != 0:
-		_float(at, ("+%d" if coins_moved > 0 else "%d") % coins_moved, COLOR_COINS if coins_moved > 0 else COLOR_COST)
+		_float(at, ("+%d" if coins_moved > 0 else "%d") % coins_moved, "coins" if coins_moved > 0 else "cost")
 	if int(r["xp"]) > 0:
-		_float(at + Vector2(0, -30), tr("XP") % int(r["xp"]), COLOR_XP)
-	_float(at + Vector2(0, -60), tr("PLOTS_FUEL") % [int(r["plots"]), int(r["fuel"])], COLOR_PART, 1.4)
+		_float(at + Vector2(0, -30), tr("XP") % int(r["xp"]), "xp")
+	_float(at + Vector2(0, -60), tr("PLOTS_FUEL") % [int(r["plots"]), int(r["fuel"])], "part", 1.4)
 	var lift := -96
 	for d in r["drops"]:
-		_float(at + Vector2(0, lift), d, COLOR_GOLDEN, 1.6)
+		_float(at + Vector2(0, lift), d, "golden", 1.6)
 		lift -= 32
 
 
@@ -796,54 +777,54 @@ func _show_nurture(job: Dictionary, result: Dictionary) -> void:
 	if result.get("regrown", false):
 		if not o.is_empty():
 			var at0 := center_of(Game.index_of(int(o["row"]), int(o["col"])))
-			_feel("fertilize", BUZZ_TAP)
-			_float(at0 + Vector2(0, -40), tr("REGROWN"), COLOR_FERT)
-			_sparkle(at0, COLOR_FERT)
+			Feedback.moment("fertilize")
+			_float(at0 + Vector2(0, -40), tr("REGROWN"), "fert")
+			_sparkle(at0, "fert")
 		return
 	if grown == "":
 		if o.is_empty():
 			return
 		var at := center_of(Game.index_of(int(o["row"]), int(o["col"])))
-		_feel("fertilize", BUZZ_TAP)
-		_float(at + Vector2(0, -40), "%d/%d" % [int(result["fed"]), int(result["needs"])], COLOR_FERT)
+		Feedback.moment("fertilize")
+		_float(at + Vector2(0, -40), "%d/%d" % [int(result["fed"]), int(result["needs"])], "fert")
 		return
 	for g in Game.objects:
 		if g["id"] == grown and int(g["uid"]) == Game.next_uid - 1:
 			var at := center_of(Game.index_of(int(g["row"]), int(g["col"])))
-			_feel("collect", BUZZ_HARVEST)
-			_float(at + Vector2(0, -60), Game.item_data(grown)["name"] + "!", COLOR_GOLDEN, 1.8)
-			_sparkle(at, COLOR_GOLDEN)
+			Feedback.moment("collect")
+			_float(at + Vector2(0, -60), Game.item_data(grown)["name"] + "!", "golden", 1.8)
+			_sparkle(at, "golden")
 			_poke(int(g["uid"]))
 
 
 func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 	var at := center_of(i)
-	_feel("harvest", BUZZ_HARVEST)
+	Feedback.moment("harvest")
 	_pop_plants(i, job["crop"], job["art"])
 	world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
 	_reward(at, int(result["coins"]), int(result["xp"]))
-	_float(at, "+%d" % result["coins"], COLOR_COINS)
-	_float(at + Vector2(0, -30), tr("XP") % result["xp"], COLOR_XP)
+	_float(at, "+%d" % result["coins"], "coins")
+	_float(at + Vector2(0, -30), tr("XP") % result["xp"], "xp")
 	if result.get("part", "") != "":
-		_float(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
+		_float(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], "part", 1.6)
 	if result.get("bushel", "") != "":
 		var nb := int(result.get("bushels", 1))
 		_float(
 			at + Vector2(0, -160),
 			(tr("ONE_BUSHEL") if nb == 1 else tr("N_BUSHELS")) % [nb, Game.crops[result["bushel"]]["name"]],
-			COLOR_PART,
+			"part",
 			1.6
 		)
 	if result.get("feed", "") != "":
 		_float(at + Vector2(0, -192), tr("FOUND_FEED") % Game.feeds.feed_name(result["feed"], bool(result["feed_rich"])),
 			Game.feeds.feed_color(result["feed"]), 1.6)
 	if result.get("bee", "") != "":
-		_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
+		_float(at + Vector2(0, -96), result["bee"], "golden", 1.6)
 	if int(result.get("pollinated", 0)) > 0:
-		_float(at + Vector2(0, -160), tr("POLLINATED_SEEDS") % int(result["pollinated"]), COLOR_FIND, 1.8)
-		_sparkle(at, COLOR_FIND)
+		_float(at + Vector2(0, -160), tr("POLLINATED_SEEDS") % int(result["pollinated"]), "find", 1.8)
+		_sparkle(at, "find")
 	if result["drop"] != "":
-		var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
+		var c := "golden" if result["drop"] == "golden" else "find"
 		_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)
 		_sparkle(at, c)
 
@@ -856,11 +837,11 @@ func _show_fed(uid: int, result: Dictionary) -> void:
 	var fp := Game.footprint(o["id"])
 	var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	var at := (g[0] + g[2]) / 2.0
-	_feel("collect", BUZZ_PLACE)
+	Feedback.moment("collect_soft")
 	_poke(uid)
 	var line := tr("FED_FX_" + str(result["effect"]).to_upper())
 	_float(at + Vector2(0, -96), line, Game.feeds.feed_color(str(result["feed"])), 1.6)
-	_sparkle(at, COLOR_FIND)
+	_sparkle(at, "find")
 
 
 func _show_collect(uid: int, result: Dictionary) -> void:
@@ -878,22 +859,22 @@ func _show_collect(uid: int, result: Dictionary) -> void:
 	) / 2.0
 	_poke(uid)
 	collected.emit(uid)
-	_feel("collect", BUZZ_HARVEST)
+	Feedback.moment("collect")
 	world_fx.burst("sparkle", at + Vector2(0, -40))
 	_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
-	_float(at + Vector2(0, -20), "+%d" % result["coins"], COLOR_COINS)
+	_float(at + Vector2(0, -20), "+%d" % result["coins"], "coins")
 	if int(result["xp"]) > 0:
-		_float(at + Vector2(0, -50), tr("XP") % result["xp"], COLOR_XP)
+		_float(at + Vector2(0, -50), tr("XP") % result["xp"], "xp")
 	if result.get("part", "") != "":
-		_float(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], COLOR_PART, 1.6)
+		_float(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], "part", 1.6)
 	var lift := -150
 	for extra in result.get("extras", []):
-		_float(at + Vector2(0, lift), extra, COLOR_GOLDEN, 1.8)
+		_float(at + Vector2(0, lift), extra, "golden", 1.8)
 		lift -= 32
 	if not result.get("extras", []).is_empty():
-		_sparkle(at, COLOR_GOLDEN)
+		_sparkle(at, "golden")
 	if result["drop"] != "":
-		var c := COLOR_GOLDEN if result["drop"] == "golden" else COLOR_FIND
+		var c := "golden" if result["drop"] == "golden" else "find"
 		_float(at + Vector2(0, -84), result["drop_text"], c, 1.6)
 		_sparkle(at, c)
 
@@ -955,7 +936,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if tool == "store" and first_touch:
 		if Game.storage.store_object(uid):
 			var fps := Game.footprint(obj["id"])
-			_float(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], tr("STORED"), COLOR_XP)
+			_float(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], tr("STORED"), "xp")
 		return
 	if kind == "barn" and tool != "move":
 		if first_touch:
@@ -982,8 +963,8 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			var fp0 := Game.footprint(obj["id"])
 			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
 			var at0 := (c0[0] + c0[2]) / 2.0
-			_float(at0 + Vector2(0, -40), tr("ADOPTED_XP") % Balance.i("strays.stray_adopt_xp"), COLOR_FIND, 1.4)
-			_sparkle(at0, COLOR_FIND)
+			_float(at0 + Vector2(0, -40), tr("ADOPTED_XP") % Balance.i("strays.stray_adopt_xp"), "find", 1.4)
+			_sparkle(at0, "find")
 		return
 	if tool == "move":
 		if first_touch:
@@ -1030,8 +1011,8 @@ func _try_sell(obj: Dictionary) -> void:
 		var at := corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)[2]
 		var value := Game.sell_value(obj)
 		if Game.sell_object(uid):
-			_feel("coin", BUZZ_TAP)
-			_float(at, "+%d" % value, COLOR_COINS)
+			Feedback.moment("sell")
+			_float(at, "+%d" % value, "coins")
 		return
 	_sell_pending = uid
 	_sell_pending_until = now_ms + SELL_CONFIRM_MS
@@ -1058,7 +1039,7 @@ func _try_clear(i: int) -> void:
 		return
 	_sell_pending = -1
 	if Game.field.clear_plot(i):
-		_feel("plow", BUZZ_TAP)
+		Feedback.moment("plow")
 		world_fx.burst("dirt", center_of(i))
 
 
@@ -1100,10 +1081,10 @@ func _on_building_upgraded(uid: int, level: int) -> void:
 	var fp := Game.footprint(o["id"])
 	var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	var at := (g[0] + g[2]) / 2.0 + Vector2(0, -60)
-	_float(at, (tr("BUILT") if level == 1 else "%s!" % Game.size_name(o)), COLOR_GOLDEN, 2.0)
-	_float(at + Vector2(0, 34), tr("HOLDS") % Game.capacity(o), COLOR_XP, 2.0)
+	_float(at, (tr("BUILT") if level == 1 else "%s!" % Game.size_name(o)), "golden", 2.0)
+	_float(at + Vector2(0, 34), tr("HOLDS") % Game.capacity(o), "xp", 2.0)
 	for k in 3:
-		_sparkle(at + Vector2(-50 + 50 * k, 20), COLOR_GOLDEN)
+		_sparkle(at + Vector2(-50 + 50 * k, 20), "golden")
 
 
 
@@ -1131,7 +1112,8 @@ func _sparkle(pos: Vector2, color: Color) -> void:
 
 
 
-func _float(pos: Vector2, text: String, color: Color, duration := 1.0) -> void:
+func _float(pos: Vector2, text: String, look: Variant, duration := 1.0) -> void:
+	var color: Color = look if look is Color else Feedback.color(str(look))  # a Color, or a Feedback float style
 	var label := Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

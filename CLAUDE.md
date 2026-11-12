@@ -6,6 +6,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 ## Layout
 - `autoload/game.gd` (`Game`, class `GameState`): the shared core (coins, gems, XP, time, plots and crops,
   placed objects, mastery, tutorial), saving, and every signal. It owns one of each subsystem.
+- `autoload/feedback.gd` (`Feedback`, data/feedback.json): the game's polish in one place: each moment's sound and buzz (`Feedback.moment("place")`) and the colour of each floating text (`Feedback.color("coins")`). Never call `Sound.play`/`Sound.buzz` for a game moment or hard-code a buzz length or float colour; add it to the data, and a test checks every name exists.
 - `autoload/sound.gd` (`Sound`): sound effects and vibration. Every sound is a recipe in `data/sounds.json`
   (synthesised once, ahead of time) or a recording; code plays them by name (`Sound.play("harvest")`), and a
   test checks every name it asks for exists. Volume, mute and vibration live in `user://settings.cfg`.
