@@ -15,7 +15,7 @@ const LOD_FAR_PPU := 40.0     # ...and below which only a few are (a cow is then
 const LOD_FAR_SHOWN := 3
 const LOD_MARGIN := 1.12      # hysteresis: zooming back in must pass the line by this much
 const RESIDENTS := 14         # the most animals out in a yard at once (a full building)
-const MIN_GROUP := 3           # a stocked yard shows at least this many (when that many are inside): never a lone animal
+const MIN_GROUP := 3           # a stocked yard shows at least this many (if that many are in): never a lone one
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
 const CROWD_FULL_DETAIL := 6.0   # members in one orchard or garden built at full detail; more share that budget
@@ -85,7 +85,7 @@ static func shows(o: Dictionary) -> bool:
 		return false
 	return (not (def as BuildingDef).holds().is_empty()
 		or str((def as BuildingDef).data.get("holds_kind", "")) in PLANT_KINDS
-		or BuildingModel.spec(str(o["id"]), Game.level_of(o)).get("fill", {}).has("stock"))
+		or BuildingModel.fill_of(str(o["id"]), Game.level_of(o)).has("stock"))
 
 
 ## Places in the yard where an animal (or a tree) can stand: a grid over the footprint, inside the fence,

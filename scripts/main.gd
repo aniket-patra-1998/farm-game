@@ -8,8 +8,10 @@ extends Node2D
 const INK := 0.6   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
 const MAX_ZOOM_FACTOR := 3.5 # how far you can zoom in, relative to the whole-farm view
 const WHEEL_STEP := 1.1
+const DAYLIGHT_EVERY := 0.1   # seconds between updates of the 3D sun, sky light and window glow
 
 var grid: FarmGrid
+var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 var camera: FarmCamera
 var hud: FarmHud
 var sky: SkyLayer
@@ -136,8 +138,11 @@ func _process(_delta: float) -> void:
 	var l: Color = look["light"]
 	l = l.lerp(Color(l.v, l.v, l.v), float(w["desat"]) * 0.5).darkened(float(w["dim"]))
 	if world_3d != null:
-		world_3d.set_daylight(hour, w)
-		ModelKit.set_window_glow(dark)
+		_since_daylight += _delta
+		if _since_daylight >= DAYLIGHT_EVERY:   # the sun moves slowly: ten times a second is smooth
+			_since_daylight = 0.0
+			world_3d.set_daylight(hour, w)
+			ModelKit.set_window_glow(dark)
 	else:
 		light.color = l
 	sky.weather = w

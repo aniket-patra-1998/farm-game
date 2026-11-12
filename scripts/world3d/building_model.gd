@@ -31,6 +31,7 @@ const GROUNDS := {"dirt": Color("#9a7a52"), "straw": Color("#d9bf6a"), "grass": 
 	"mud": Color("#6e5236")}
 
 static var _data := {}
+static var _fills := {}   # fill_of, by "id|level"
 
 
 ## How a building is built at a size (`level`, 1 the smallest): its own description over the defaults,
@@ -55,6 +56,15 @@ static func spec(id: String, level := 1) -> Dictionary:
 		rest.erase("features")
 		_lay_on(out, rest)
 	return out
+
+
+## What a building's model says about its fill (see BuildingFill): cached, since it is asked for every sync.
+## Read-only: callers must not change it.
+static func fill_of(id: String, level := 1) -> Dictionary:
+	var key := "%s|%d" % [id, level]
+	if not _fills.has(key):
+		_fills[key] = spec(id, level).get("fill", {})
+	return _fills[key]
 
 
 ## The sizes a building has changes for (2, 3...), from its description (tests check them).
