@@ -7,10 +7,10 @@ extends RefCounted
 
 const PATH := "res://data/balance.json"
 
+static var revision := 0                  # counts every change of the numbers, so what is cached from them can tell
 static var _values: Dictionary = {}     # "section.name" -> value
 static var _notes: Dictionary = {}      # "section.name" -> what it is
 static var _loaded := false
-static var revision := 0                  # counts every change of the numbers, so what is cached from them can tell
 static var _missing: Dictionary = {}
 
 

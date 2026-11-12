@@ -198,7 +198,7 @@ func _buy_building(reserve: int) -> void:
 		return
 	for r in range(Game.farm_size - 1, -1, -1):
 		for c in range(Game.farm_size - 1, -1, -1):
-			if Game.can_place(best, r, c) and _act() and Game.buy_and_place(best, r, c):
+			if Game.can_place(best, r, c) and Game.buy_and_place(best, r, c):   # a tap at the end of the visit
 				_bought[best] = int(_bought.get(best, 0)) + 1
 				return
 
