@@ -22,7 +22,9 @@ const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its 
 const FRUIT_GROWING := 3
 const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
 const TRUNK_BULK := 0.7     # trunks are drawn slimmer than the data says (FarmVille's were slender)
-const TRUNK_TALL := 1.15    # and longer: a trunk shows under the crown, the tree stands on it
+const TRUNK_TALL := 1.2     # and longer: a trunk shows under the crown, the tree stands on it
+const TRUNK_VARY_MIN := 0.85   # each tree's trunk is its own length, apart from its crown's size
+const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
 const TALL_MAX := 1.2       # ..to this much
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
@@ -68,7 +70,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	# Its height: its kind's (oaks low and broad, cherries tall), and this tree's own within that.
 	var tall := float(sh.get("tall", 1.0)) * rng.randf_range(TALL_MIN, TALL_MAX)
 	var upright := str(sh["form"]) not in ["palm", "banana"]
-	sh["trunk_h"] = float(sh["trunk_h"]) * tall * (TRUNK_TALL if upright else 1.0)
+	sh["trunk_h"] = float(sh["trunk_h"]) * tall * (TRUNK_TALL if upright else 1.0) \
+		* (rng.randf_range(TRUNK_VARY_MIN, TRUNK_VARY_MAX) if upright else 1.0)
 	sh["crown_h"] = float(sh["crown_h"]) * tall
 	# This tree's own variation: a little taller or shorter, leaning a little, turned its own way.
 	var k := size * TILE_FILL * rng.randf_range(0.9, 1.1)
@@ -207,7 +210,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
 		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3), lobes, bump, shine)
 		(t["blobs"] as Array).append([p, size, a])
-		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * 0.5)
+		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.5)))
 
 
 ## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up

@@ -20,7 +20,7 @@ one fruit tree) -> P1 flower-bed and shrub compositions -> P1 ground tuft/flower
 P2 prop silhouettes -> P2 lighting calibration -> P3 distance simplification.
 Rules we keep: no more balls to fix blobs; measure each step with the stress probe; no gameplay data, ids,
 footprints or save changes; deterministic seeds; keep MultiMesh/bake.
-- Vehicle models (bland): same pilot treatment.
+- Vehicle models (bland): same pilot treatment. Also: sizes by kind (the Combine clearly bigger and heavier-looking than the Tractor, today all drawn alike in the Garage doorway), weight in the animation (slower, deeper bounce, dust), engine/wheel/work animations.
 - Decoration detail kit (ridge caps, lanterns).
 
 ## Systems
