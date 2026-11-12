@@ -114,7 +114,8 @@ static func _stretch(skeleton: Skeleton3D, list: Array) -> void:
 
 ## Extras on the head: [{"shape": "horn", "at": [forward, up, side], "dir": [forward, up, side], "len": 0.5,
 ## "r": 0.07, "colour": "accent" (or "coat", or a "#hex")}], a cone from `at` (shares of the head's length,
-## height and half width, from its back, bottom and middle) toward `dir`, `len` and `r` in head heights. A pair is made if `at` has a side.
+## height and half width, from its back, bottom and middle) toward `dir`, `len` and `r` in head
+## heights. A pair is made if `at` has a side.
 ## The head is found from the vertices the skin gives its bone; all the parts are baked into one mesh.
 static func _parts(mesh: MeshInstance3D, skeleton: Skeleton3D, list: Array, rig: AnimalRig) -> void:
 	if list.is_empty():
