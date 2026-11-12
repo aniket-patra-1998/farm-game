@@ -98,6 +98,7 @@ func _ready() -> void:
 		grid.plants_popped.connect(crops.pop)
 		grid.collected.connect(objects.celebrate)
 		objects.landed.connect(_landed)
+		objects.snapped.connect(_snapped)
 		objects.transformed.connect(_transformed)
 
 
@@ -106,6 +107,12 @@ func _landed(at: Vector3) -> void:
 	grid.world_fx.burst("dust", IsoProjection.grid_of(at))
 	Sound.play("place")
 	Sound.buzz(FarmGrid.BUZZ_PLACE)
+
+
+## Fence, hedge, wall or path pieces joined up: a click, and a tick in the hand.
+func _snapped(_at: Vector3, _fresh: bool) -> void:
+	Sound.play("snap")
+	Sound.buzz(FarmGrid.BUZZ_SNAP)
 
 
 ## A building was finished or upgraded: sparkles at its feet, a chime (a fanfare for a new building).

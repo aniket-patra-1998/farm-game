@@ -141,6 +141,7 @@ var mystery: MysterySystem
 var daily: DailySystem
 var storage: BarnStorage
 var bees: BeehiveSystem
+var links: LinksSystem
 var mastery: MasterySystem
 var nurture: NurtureSystem
 var finds: FindsSystem
@@ -176,6 +177,7 @@ func _init() -> void:
 	daily = DailySystem.new(self)
 	storage = BarnStorage.new(self)
 	bees = BeehiveSystem.new(self)
+	links = LinksSystem.new(self)
 	mastery = MasterySystem.new(self)
 	pigpen = PigPenSystem.new(self)
 	vehicles = VehicleSystem.new(self)
@@ -188,8 +190,8 @@ func _init() -> void:
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	persistence = Persistence.new(self)
-	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, pigpen, vehicles,
-		strays, crafting, homes, buildings, mastery, player, nurture, finds]
+	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
+		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds]
 
 
 func _ready() -> void:

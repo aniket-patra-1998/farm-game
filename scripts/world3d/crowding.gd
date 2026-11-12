@@ -4,7 +4,7 @@ extends RefCounted
 ## Looks: a crowded thing grows as one with its neighbours (a tree stands taller, its crown swells to meet theirs
 ## and its underside sits in shade, so crowns read as one leafy mass over a floor of trunks). Cost: the parts of a
 ## thing that face a neighbour of its group are covered anyway, so they are left out (a packed orchard draws
-## about three quarters of its trees' parts, a fence run shares its posts). Two trees side by side cost
+## about three quarters of its trees' parts). Two trees side by side cost
 ## about one and a half.
 ## A group lives in data/crowding.json (matched by item id, then by kind). A model asks `mask(o)` of its placed
 ## object, reads the group's numbers with `setting`, uses `share_of` for how packed in it is and `covered` to
@@ -83,22 +83,3 @@ static func covered(m: int, angle: float) -> bool:
 	var s := posmod(roundi(angle / (PI / 4.0)), 8)
 	var step := Vector2i(roundi(sin(s * PI / 4.0)), roundi(cos(s * PI / 4.0)))
 	return (m >> DIRS.find(step)) & 1 == 1
-
-
-## Whether the run `o` belongs to (a fence, a hedge) goes on to the next tile (`dir` +1 forward, -1 back): a
-## neighbour of its group stands there, turned the same way. A turned run goes along the columns, not the rows.
-static func continues(o: Dictionary, dir: int) -> bool:
-	if not o.has("row"):
-		return false
-	var turned := bool(o.get("flip", false))
-	var r := int(o["row"]) + (0 if turned else dir)
-	var c := int(o["col"]) + (dir if turned else 0)
-	if r < 0 or c < 0 or r >= Game.farm_size or c >= Game.farm_size:
-		return false
-	var n := Game.object_at(Game.index_of(r, c))
-	return not n.is_empty() and group_of(n) == group_of(o) and bool(n.get("flip", false)) == turned
-
-
-## `continues` both ways as bits, for a view's key (so a run's pieces are rebuilt when it is joined or cut).
-static func runs(o: Dictionary) -> int:
-	return (1 if continues(o, 1) else 0) | (2 if continues(o, -1) else 0)

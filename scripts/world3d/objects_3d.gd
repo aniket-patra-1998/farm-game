@@ -5,6 +5,7 @@ extends Node3D
 ## around the farm. Kinds without a 3D model yet keep their 2D piece (ObjectLayer asks handles()).
 
 signal transformed(at: Vector3, grand: bool)  # a building grew or was finished: sparkles there (grand: the big sound)
+signal snapped(at: Vector3, fresh: bool)  # fence pieces joined up: a click there
 signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust there
 
 
@@ -40,6 +41,8 @@ var _lifted := -1
 var _queued := false
 
 var _scenery: Node3D
+var _links: LinkLayer   # draws the fences, hedges, walls and paths, joined up
+var _ghost_mask := -1
 
 
 
@@ -53,6 +56,9 @@ static func handles(o: Dictionary) -> bool:
 func _ready() -> void:
 	_scenery = Node3D.new()
 	add_child(_scenery)
+	_links = LinkLayer.new()
+	add_child(_links)
+	_links.snapped.connect(func(at: Vector3, fresh: bool) -> void: snapped.emit(at, fresh))
 	sync()
 	Game.farm_expanded.connect(func(_n: int) -> void: _build_scenery())
 	_build_scenery()
@@ -75,6 +81,7 @@ func queue_sync() -> void:
 
 func sync() -> void:
 	_queued = false
+	_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
 	var seen := {}
 	for o in Game.objects:
 		if not handles(o):
@@ -142,11 +149,13 @@ func _step(o: Dictionary) -> int:
 
 
 func _key(o: Dictionary) -> String:
+	if Game.links.group_of(str(o["id"])) != "":
+		return "link|%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]   # how it joins is the LinkLayer's business
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
-	return "%s|%d|%d|%d|%s|%d|%s|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
+	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
-		"%d.%d" % [Crowding.mask(o), Crowding.runs(o)],
+		Crowding.mask(o),
 		str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)), Game.is_withered(o), _at_work(o)]]
 
 
@@ -179,7 +188,10 @@ func _build(o: Dictionary) -> Node3D:
 		"vehicle":
 			node = VehicleModel.build(it, Game.under_construction(o))
 		"decor":
-			node = DecorModel.build(it, fp, o)
+			if Game.links.group_of(str(o["id"])) != "":
+				node = Node3D.new()   # drawn by the LinkLayer, which joins it to its neighbours; this stands in for taps
+			else:
+				node = DecorModel.build(it, fp, o)
 		"young":
 			node = DecorModel.build_young(it, o, Game.nurture.growth(o))
 		"bloom":
@@ -281,16 +293,32 @@ func _update_placing() -> void:
 	var ok := home or Game.can_place(item, row, col, lifted)
 	# The model is built once per thing being carried; whether it fits changes only its tint (rebuilding a
 	# building's model every time the finger crosses an edge made carrying it stutter).
-	var key := "%s|%d" % [item, lifted]
+	var group := Game.links.group_of(item)
+	var mask := Game.links.mask_at(group, row, col, lifted) if group != "" else 0
+	var shape := LinkShape.of(mask)
+	var variant := (row * 7 + col * 13 + row * col) % LinkModels.VARIANTS
+	var key := "%s|%d|%d|%d" % [item, lifted, mask, variant] if group != "" else "%s|%d" % [item, lifted]
 	if key != _ghost_key:
+		var snapping := group != "" and _ghost != null and _ghost_mask != mask
 		_clear_ghost()
 		_ghost_key = key
+		_ghost_mask = mask
 		var fake := {"uid": -1, "id": item, "row": 0, "col": 0, "level": 1}
 		if lifted != -1:
 			fake = Game.object_by_uid(lifted).duplicate()
 			fake["row"] = 0
 			fake["col"] = 0
-		_ghost = _build(fake)
+		if group != "":
+			# A piece in hand shows the shape it will take where it's held, and settles into it as the shape changes.
+			_ghost = Node3D.new()
+			_ghost.add_child(LinkModels.node(Game.item_data(item), shape.x, variant))
+			_ghost.rotation.y = LinkShape.yaw(shape.y)
+			if snapping:
+				_ghost.scale = Vector3(1.1, 0.88, 1.1)
+				var tw := create_tween()
+				tw.tween_property(_ghost, "scale", Vector3.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		else:
+			_ghost = _build(fake)
 		if _ghost is Animal3D:
 			_ghost.set_meta("uid", -1)  # a ghost has no mind: it stands still
 		_ghost_tint = ""
@@ -338,6 +366,7 @@ static func _ghost_material(tint: String) -> Material:
 
 
 func _show(uid: int, on: bool) -> void:
+	_links.set_hidden(uid, not on)
 	var v: Dictionary = _views.get(uid, {})
 	if v.has("node"):
 		(v["node"] as Node3D).visible = on
@@ -433,6 +462,10 @@ func _parts(node: Node3D, o: Dictionary) -> Array[AABB]:
 
 ## The box around a model, in the farm's space (for an animal, around its feet, to move with it).
 func _bounds(node: Node3D, o: Dictionary) -> AABB:
+	var group := Game.links.group_of(str(o["id"]))
+	if group != "":
+		# A joined piece's stand-in: its tile, as tall as the piece (a path is flat, so taps pass through to what's behind).
+		return node.transform * AABB(Vector3(-0.5, 0, -0.5), Vector3(1, Linking.setting(group, "tall", 0.3), 1))
 	if node is Animal3D:
 		var r := (node as Animal3D).reach()
 		return AABB(Vector3(-r.x, 0, -r.x), Vector3(r.x * 2.0, r.y, r.x * 2.0))
@@ -454,6 +487,9 @@ func _bounds(node: Node3D, o: Dictionary) -> AABB:
 
 ## Tapped: it squashes down and springs back (from its base, so it stays on the ground).
 func bounce(uid: int) -> void:
+	if _links.has_piece(uid):
+		_links.pulse(uid)
+		return
 	var node := _node(uid)
 	if node == null:
 		return
@@ -483,6 +519,9 @@ func grow_in(uid: int, grand: bool) -> void:
 
 ## Newly on the farm: it falls in from above, lands with a squash and settles.
 func drop_in(uid: int) -> void:
+	if _links.has_piece(uid):
+		landed.emit(_node(uid).position)   # the layer drops the piece itself
+		return
 	var node := _node(uid)
 	if node == null or node is Animal3D:
 		if node is Animal3D:

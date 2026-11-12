@@ -37,3 +37,8 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 ## Farming core
 - Feeds and animal tastes (draft for review first), queen bee and flowers, adjacency synergies (super
   orchards), quests, boosts per home, Feed Mill/Nursery/dogs, look-test tool, central Feedback service.
+
+## Joined structures (fences, hedges, walls, paths)
+- The 2D fallback world still draws them as separate straight tiles (no joins); 3D is the real game.
+- Hedges lost their wind sway when they moved to shared MultiMesh pieces (the sway shader isn't instance-aware yet).
+- Not yet: drag to draw a whole line, gates, joining to building yards and pens, corner posts shared with neighbouring paths' edges, taller fence variants. Old saves keep their `flip` field; it's ignored for these.

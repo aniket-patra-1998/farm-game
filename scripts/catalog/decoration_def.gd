@@ -12,6 +12,15 @@ func buy_xp() -> int:
 	return maxi(MIN_XP, super.buy_xp())
 
 
+## Whether its pieces join their neighbours (see Linking): they turn themselves, so the player doesn't.
+func joins() -> bool:
+	return not Linking.group_of_shape(str(data.get("shape", ""))).is_empty()
+
+
+func can_rotate() -> bool:
+	return super.can_rotate() and not joins()
+
+
 func can_sell() -> bool:
 	return id != "farmhouse"
 

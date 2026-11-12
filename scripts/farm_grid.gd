@@ -34,6 +34,7 @@ const COINS_NEEDED := {"plow": "NOT_ENOUGH_COINS_TO_PLOW", "plant": "NOT_ENOUGH_
 const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale or a clear
 const BUZZ_HARVEST := 16
 const BUZZ_PLACE := 24
+const BUZZ_SNAP := 10
 const BUZZ_ERROR := 40
 
 # Tap versus drag: a press only acts if the finger lifts without moving far.

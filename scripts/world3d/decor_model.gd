@@ -22,7 +22,7 @@ const IDS := ["farmhouse", "log_cabin", "dirt_path", "brick_path", "stone_path",
 
 const WATER_LIFT := 0.012   # water stands this far above the rim it fills, never level with it (flicker)
 ## Decorations that bend in the wind, and how much (paint3d sway, by height above their foot).
-const SWAY_BY_ID := {"scarecrow": 0.08, "flower_bed": 0.6, "arbor": 0.02, "hedge": 0.05,
+const SWAY_BY_ID := {"scarecrow": 0.08, "flower_bed": 0.6, "arbor": 0.02,
 	"perfect_bunch": 0.5, "haystack": 0.015}
 static var _glows := {}   # colour -> glowing material
 
@@ -33,18 +33,19 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 	var id := str(it.get("id", ""))
 	if id in ["farmhouse", "log_cabin"]:
 		return ModelKit.bake(BuildingModel.build(it, fp))
+	if Game.links.group_of(id) != "":
+		# Fences, hedges, walls and paths are drawn joined up by the LinkLayer; alone (a sheet, a size guide)
+		# one is a straight piece.
+		var piece := Node3D.new()
+		piece.position = Vector3(0.5, 0, 0.5)
+		piece.add_child(LinkModels.node(it, LinkShape.Kind.STRAIGHT, 0))
+		var alone := Node3D.new()
+		alone.add_child(piece)
+		return ModelKit.bake(alone)
 	var root := Node3D.new()
 	var c := Vector3(fp.x / 2.0, 0, fp.y / 2.0)
 	var col := Color.html(str(it.get("color", "#a8743f")))
 	match id:
-		"dirt_path", "brick_path", "stone_path":
-			_path(root, id, col, int(o.get("uid", 0)))
-		"wooden_fence", "white_picket_fence":
-			_fence_run(root, id == "white_picket_fence", col, int(o.get("uid", 0)), Crowding.continues(o, 1))
-		"hedge":
-			_hedge(root, int(o.get("uid", 0)), Crowding.runs(o) == 3)
-		"stone_wall":
-			_stone_wall(root, int(o.get("uid", 0)))
 		"hay_bale":
 			var bale := ModelKit.cylinder(root, Vector3.ZERO, 0.2, 0.36, ModelKit.paint(HAY), -1.0, 14)
 			bale.rotation.x = PI / 2.0
@@ -324,114 +325,6 @@ static func _glow(col: Color) -> StandardMaterial3D:
 
 
 ## Path tiles: packed dirt, laid bricks, or flagstones, flush with the grass.
-static func _path(root: Node3D, id: String, col: Color, seed_value: int) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value * 7919 + hash(id)
-	match id:
-		"dirt_path":
-			# Trodden earth: a darker edge, a paler worn middle, a few pebbles and a bare patch or two, each tile
-			# its own (its uid seeds it). The edge stays on the tile line so tiles still join up.
-			ModelKit.box(root, Vector3(0.02, 0, 0.02), Vector3(0.98, 0.012, 0.98),
-				ModelKit.surface(col.darkened(0.12), "plaster", 0.0), false)
-			for i in 2:
-				var worn := ModelKit.cylinder(root, Vector3(rng.randf_range(0.3, 0.7), 0.012, rng.randf_range(0.3, 0.7)),
-					rng.randf_range(0.22, 0.34), 0.006, ModelKit.paint(col.lerp(Color("#e2bd86"), rng.randf_range(0.2, 0.4))), -1.0, 9)
-				worn.scale = Vector3(rng.randf_range(1.1, 1.5), 1.0, 1.0)
-				worn.rotation.y = rng.randf() * PI
-			for i in rng.randi_range(3, 6):
-				ModelKit.facet_ball(root, Vector3(rng.randf_range(0.08, 0.92), 0.012, rng.randf_range(0.08, 0.92)),
-					rng.randf_range(0.015, 0.035), ModelKit.paint(Color("#9a948a").darkened(rng.randf() * 0.2)),
-					Vector3(1.2, 0.6, 1.0))
-		"brick_path":
-			# Four by four bricks in two or three shades, a little darker in the joints.
-			ModelKit.box(root, Vector3(0.02, 0, 0.02), Vector3(0.98, 0.008, 0.98),
-				ModelKit.paint(col.darkened(0.35)), false)
-			for i in 4:
-				for j in 4:
-					var shade := ModelKit.paint(col.lightened(0.05).darkened(rng.randi_range(0, 2) * 0.1))
-					var lo := Vector3(0.03 + i * 0.235, 0.0, 0.03 + j * 0.235)
-					ModelKit.box(root, lo, lo + Vector3(0.21, 0.016, 0.21), shade, false)
-		_:
-			for i in 3:
-				for j in 3:
-					var p := Vector3(0.18 + 0.32 * i + rng.randf_range(-0.05, 0.05), 0.008,
-						0.18 + 0.32 * j + rng.randf_range(-0.05, 0.05))
-					var r := rng.randf_range(0.11, 0.16)
-					var stone := ModelKit.cylinder(root, p - Vector3(0, 0.008, 0), r, 0.03,
-						ModelKit.paint(col.lightened(0.1).darkened(rng.randf() * 0.25)), r * 0.82, 7)
-					stone.scale = Vector3(1.0, 1.0, rng.randf_range(0.8, 1.2))
-					stone.rotation.y = rng.randf() * PI
-
-
-## One tile of fence along its middle (it lines up with fences on the next tiles). Each tile is a little
-## different: posts a touch taller or shorter, pickets uneven, boards weathered, so a long run looks built by hand.
-static func _fence_run(root: Node3D, picket: bool, col: Color, seed_value: int, onward := false) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value * 7919 + 11
-	var mat := ModelKit.paint(col)
-	var worn := ModelKit.paint(col.darkened(0.12))
-	for z: float in [0.0, 0.5, 1.0]:
-		var h := 0.32 + rng.randf_range(-0.02, 0.03)
-		if z == 1.0 and onward:
-			continue   # the next tile's first post stands here
-		ModelKit.box(root, Vector3(0.465, 0, z - 0.035), Vector3(0.535, h, z + 0.035), worn if not picket else mat)
-		# A cap on every post: a little pyramid of wood, so the top sheds rain.
-		ModelKit.cylinder(root, Vector3(0.5, h, z), 0.05, 0.035, mat, 0.012, 4)
-	if picket:
-		for k in 8:
-			var z := 0.06 + k * 0.125 + rng.randf_range(-0.008, 0.008)
-			var h := 0.28 + rng.randf_range(-0.025, 0.02)
-			ModelKit.box(root, Vector3(0.485, 0, z - 0.02), Vector3(0.515, h, z + 0.02), mat)
-			ModelKit.cylinder(root, Vector3(0.5, h, z), 0.02, 0.04, mat, 0.0, 4)
-		for y: float in [0.09, 0.2]:
-			ModelKit.box(root, Vector3(0.475, y, 0), Vector3(0.525, y + 0.03, 1.0), mat)
-	else:
-		var boards := ModelKit.surface(col, "boards", 0.0)
-		for y: float in [0.1, 0.24]:
-			# Two boards end to end, meeting off-centre where one of them was cut short.
-			var cut := rng.randf_range(0.35, 0.65)
-			ModelKit.box(root, Vector3(0.48, y, 0), Vector3(0.52, y + 0.045, cut - 0.01), boards)
-			ModelKit.box(root, Vector3(0.485, y + rng.randf_range(-0.004, 0.004), cut + 0.01),
-				Vector3(0.525, y + 0.045, 1.0), boards)
-
-
-## A clipped hedge: a long body of leaf masses, a flat trimmed top and a few flowers and berries in it.
-static func _hedge(root: Node3D, seed_value: int, inside := false) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value * 104729 + 5
-	for k in 5:
-		var z := 0.1 + 0.2 * k
-		var shade := LEAF.darkened(rng.randf() * 0.15)
-		ModelKit.ball(root, Vector3(0.5 + rng.randf_range(-0.02, 0.02), 0.17, z), 0.2, ModelKit.paint(shade),
-			Vector3(1.15, 0.95, 1.05))
-		ModelKit.ball(root, Vector3(0.5, 0.3 + rng.randf_range(-0.01, 0.02), z), 0.15, ModelKit.paint(shade.lightened(0.08)),
-			Vector3(1.15, 0.55, 1.1))
-	for k in 6:
-		var at := Vector3(0.5 + rng.randf_range(-0.12, 0.12), rng.randf_range(0.18, 0.34), 0.08 + k * 0.16)
-		if k % 2 == 1 and inside:
-			continue   # inside a long hedge the flowers are fewer
-		ModelKit.ball(root, at + Vector3(0, 0, 0), 0.03, ModelKit.paint(Color("#e8d86a") if k % 2 else Color("#d8506a")))
-
-
-## A dry-stone wall: rough courses of stones that break joint, tapered up, with flat capstones along the top.
-static func _stone_wall(root: Node3D, seed_value: int) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value * 15485863 + 3
-	ModelKit.box(root, Vector3(0.4, 0, 0), Vector3(0.6, 0.04, 1.0), ModelKit.paint(STONE.darkened(0.4)), false)
-	for row in 3:
-		var n := 4 if row % 2 == 0 else 5
-		for k in n:
-			var z := (k + 0.5) / n + (rng.randf_range(-0.03, 0.03))
-			var size := rng.randf_range(0.085, 0.115) * (1.0 - row * 0.06)
-			var st := ModelKit.facet_ball(root, Vector3(0.5 + rng.randf_range(-0.015, 0.015), 0.07 + row * 0.095, z),
-				size, ModelKit.paint(STONE.darkened(rng.randf() * 0.28)), Vector3(1.05, 0.72, 1.35 if n == 4 else 1.1))
-			st.rotation.y = rng.randf_range(-0.2, 0.2)
-	for k in 3:
-		var z := (k + 0.5) / 3.0
-		ModelKit.box(root, Vector3(0.43, 0.3, z - 0.15), Vector3(0.57, 0.335, z + 0.15),
-			ModelKit.paint(STONE.lightened(0.08).darkened(rng.randf() * 0.12)))
-
-
 ## A plank footbridge: separate planks with gaps, beams underneath, posts with caps and two rails.
 static func _bridge(root: Node3D, c: Vector3, col: Color, seed_value: int) -> void:
 	var rng := RandomNumberGenerator.new()

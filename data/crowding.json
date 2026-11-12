@@ -1,9 +1,7 @@
 {
-  "_comment": "Groups of things that look grown together when they stand packed: matched by item id first, then by kind. swell/lift/shade are how much a fully surrounded thing widens, stands taller and darkens underneath; hide is how much of its detail that faces a neighbour is left out (it is covered anyway).",
+  "_comment": "Groups of things that look grown together when they stand packed: matched by item id first, then by kind. swell/lift/shade are how much a fully surrounded thing widens, stands taller and darkens underneath; hide is how much of its detail that faces a neighbour is left out (it is covered anyway). Things that join into a line (fences, hedges, walls, paths) are in linking.json instead.",
   "groups": {
-    "tree":   {"kinds": ["tree"],  "swell": 0.1, "lift": 0.2, "shade": 0.3, "hide": 0.5},
-    "bloom":  {"kinds": ["bloom"], "swell": 0.0, "lift": 0.1, "shade": 0.2, "hide": 0.5},
-    "fence":  {"ids": ["wooden_fence", "white_picket_fence"], "swell": 0.0, "lift": 0.0, "shade": 0.0, "hide": 1.0},
-    "hedge":  {"ids": ["hedge"],   "swell": 0.0, "lift": 0.0, "shade": 0.1, "hide": 0.5}
+    "tree":  {"kinds": ["tree"],  "swell": 0.1, "lift": 0.2, "shade": 0.3, "hide": 0.5},
+    "bloom": {"kinds": ["bloom"], "swell": 0.0, "lift": 0.1, "shade": 0.2, "hide": 0.5}
   }
 }
