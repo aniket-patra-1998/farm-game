@@ -86,8 +86,8 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 8)
 	card.add_child(BookPanel.text(Game.size_name(o), 22))
-	card.add_child(BookPanel.text(tr("FINDS_HOME_FOUND") % [fam.get("name", family), Game.finds.total(family), Game.finds.distinct(family),
-		(fam.get("kinds", []) as Array).size()], 18))
+	card.add_child(BookPanel.text(tr("FINDS_HOME_FOUND") % [fam.get("name", family), Game.finds.total(family),
+		Game.finds.distinct(family), (fam.get("kinds", []) as Array).size()], 18))
 	for kind: Dictionary in fam.get("kinds", []):
 		var n := Game.finds.count(str(kind["id"]))
 		card.add_child(BookPanel.text("%s  ×%d  (%s)" % [kind["name"], n, kind["rarity"]] if n > 0

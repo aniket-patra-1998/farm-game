@@ -153,7 +153,7 @@ static func _dogs(root: Node3D, fp: Vector2i, seed_value: int) -> void:
 			"phase": m * 1.7})
 
 
-## One dog lying down: body, head, snout, floppy ears, a wagging tail; a lab and a golden are larger, a spotted one has patches.
+## One dog lying down: body, head, snout, floppy ears, a tail; a lab and a golden are larger, a spotted one has patches.
 static func _dog(kind_id: String) -> Node3D:
 	var part := Node3D.new()
 	var coat := Color(DOG_COATS.get(kind_id, "#b98a55"))
@@ -164,8 +164,8 @@ static func _dog(kind_id: String) -> Node3D:
 	ModelKit.ball(part, Vector3(0.14 * big, 0.105 * big, 0), 0.026 * big, ModelKit.paint(coat.lightened(0.15), 0.2))
 	ModelKit.ball(part, Vector3(0.162 * big, 0.11 * big, 0), 0.009, ModelKit.paint(Color("#16100a")))
 	for side in [-1.0, 1.0]:
-		ModelKit.ball(part, Vector3(0.085 * big, 0.125 * big, side * 0.04 * big), 0.022, ModelKit.paint(coat.darkened(0.25), 0.2),
-			Vector3(0.7, 1.2, 0.5))
+		var ear := ModelKit.paint(coat.darkened(0.25), 0.2)
+		ModelKit.ball(part, Vector3(0.085 * big, 0.125 * big, side * 0.04 * big), 0.022, ear, Vector3(0.7, 1.2, 0.5))
 	ModelKit.ball(part, Vector3(-0.11 * big, 0.085 * big, 0), 0.02, mat, Vector3(1.8, 0.6, 0.6))
 	if kind_id == "spotted_dog":
 		ModelKit.ball(part, Vector3(0.0, 0.1, 0.03), 0.028, ModelKit.paint(Color("#3b2f28")), Vector3(1.2, 0.5, 1))
