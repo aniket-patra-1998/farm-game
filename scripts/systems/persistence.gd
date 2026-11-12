@@ -117,14 +117,12 @@ func load_save() -> bool:
 		# From a newer game (the app was rolled back): the new farm that follows must not overwrite it.
 		DirAccess.copy_absolute(game.save_path, "%s.v%d" % [game.save_path, version])
 		return false
-	if version < GameState.OLDEST_SAVE_VERSION:
+	if not SaveMigrations.upgrade(data):
 		return false
 	var mended := SaveCheck.clean(data, game.items, GameState.MAX_SIZE, {"state": "grass"})
 	if mended > 0:
 		push_warning("Save: %d damaged entries were dropped or mended" % mended)
 	var saved_plots: Array = data.get("plots", [])
-	if saved_plots.size() == GameState.OLD_GRID_SIZE * GameState.OLD_GRID_SIZE:
-		saved_plots = _widen_old_grid(saved_plots)
 	if saved_plots.size() != GameState.MAX_SIZE * GameState.MAX_SIZE:
 		return false
 	game.farm_size = clampi(int(data.get("farm_size", GameState.START_SIZE)), GameState.START_SIZE,
@@ -172,6 +170,9 @@ func load_save() -> bool:
 		if plot.get("state") == "planted" and not game.crops.has(plot.get("crop", "")):
 			plot = {"state": "plowed"}
 		game.plots.append(plot)
+	var away := AbsenceReport.build(game, int(data.get("saved_at", game.now())) - skew, game.now())
+	if away != "":
+		game.absence_note = away if game.absence_note == "" else away + "\n" + game.absence_note
 	var extra_vehicles := game.buildings.trim_extra_vehicles()
 	if extra_vehicles > 0:
 		var vnote := game.tr("EXTRA_VEHICLES_SOLD_BACK") % extra_vehicles
@@ -181,14 +182,3 @@ func load_save() -> bool:
 		var note := game.tr("SOME_BUILDINGS_CHANGED_SHAPE_AND") % moved
 		game.absence_note = note if game.absence_note == "" else game.absence_note + "\n" + note
 	return true
-
-
-## Old saves: copy the 12x12 grid into the top-left of the full-size grid.
-static func _widen_old_grid(old: Array) -> Array:
-	var wide: Array = []
-	for i in GameState.MAX_SIZE * GameState.MAX_SIZE:
-		wide.append({"state": "grass"})
-	for r in GameState.OLD_GRID_SIZE:
-		for c in GameState.OLD_GRID_SIZE:
-			wide[r * GameState.MAX_SIZE + c] = old[r * GameState.OLD_GRID_SIZE + c]
-	return wide

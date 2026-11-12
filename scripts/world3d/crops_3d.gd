@@ -7,7 +7,8 @@ extends Node3D
 
 const SPOTS := [Vector2(-0.24, -0.24), Vector2(0.24, -0.24), Vector2(-0.24, 0.24), Vector2(0.24, 0.24),
 	Vector2(0, 0)]
-const GROW_REFRESH := 3.0   # seconds between growth updates
+const GROW_REFRESH := 3.0   # seconds between looks at whether growth has moved a plant on
+const GROW_STEPS := 12.0    # growing plants are drawn at one of this many sizes, so most looks change nothing
 const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
 const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger
@@ -18,6 +19,7 @@ var wind := 0.6: set = _set_wind
 
 var _layers := {}   # "shape|stage" -> MultiMeshInstance3D
 var _material: ShaderMaterial
+var _drawn := -1    # a fingerprint of what was last built: the same again means there is nothing to rebuild
 
 
 func _ready() -> void:
@@ -48,12 +50,35 @@ static func stage_of(i: int) -> Array:
 			if g < 0.2:
 				return ["seeds", 1.0]
 			if g < 0.45:
-				return ["sprout", (g - 0.2) / 0.25]
-			return ["young", (g - 0.45) / 0.55]
+				return ["sprout", _stepped((g - 0.2) / 0.25)]
+			return ["young", _stepped((g - 0.45) / 0.55)]
 	return ["", 0.0]
 
 
+static func _stepped(v: float) -> float:
+	return floorf(clampf(v, 0.0, 1.0) * GROW_STEPS) / GROW_STEPS
+
+
+## What the farm's crops look like right now, as one number: crop, stage, size step and richness of every plot.
+func _fingerprint() -> int:
+	var h := Game.farm_size
+	for i in Game.farm_size * Game.farm_size:
+		var crop_id := Game.field.crop_at(Game.index_of(i / Game.farm_size, i % Game.farm_size))
+		if crop_id == "":
+			continue
+		var idx := Game.index_of(i / Game.farm_size, i % Game.farm_size)
+		var st := stage_of(idx)
+		h = hash([h, idx, crop_id, st[0], st[1], Game.field.is_fertilized(idx)])
+	return h
+
+
+## Builds the plants again, unless nothing about them has changed since the last build (the timer finds that out
+## for a few cheap lookups instead of a new MultiMesh per group).
 func rebuild() -> void:
+	var print_now := _fingerprint()
+	if print_now == _drawn:
+		return
+	_drawn = print_now
 	var groups := {}  # key -> Array of [Transform3D, Color]
 	var n := Game.farm_size
 	for r in n:

@@ -20,6 +20,7 @@ var _harvests := 0
 var _by_crop := {}        # crop id -> harvests
 var _level_day := {}      # level -> day first reached
 var _collected := 0
+var _fed := 0
 var _actions := 0         # what is left to do in this visit
 var _minutes := 5.0       # how long a visit lasts
 var _expansions := 0
@@ -99,8 +100,8 @@ func _play() -> void:
 	var bought := []
 	for id: String in _bought:
 		bought.append("%s x%d" % [id, _bought[id]])
-	print("bought: %s; land expanded %d times (farm %d x %d); collected %d" % [", ".join(PackedStringArray(bought)),
-		_expansions, Game.farm_size, Game.farm_size, _collected])
+	print("bought: %s; land expanded %d times (farm %d x %d); collected %d; fed %d" % [
+		", ".join(PackedStringArray(bought)), _expansions, Game.farm_size, Game.farm_size, _collected, _fed])
 
 
 func _gap_after(hours: Array, v: int) -> float:
@@ -113,6 +114,7 @@ func _gap_after(hours: Array, v: int) -> float:
 func _visit(gap_hours: float) -> void:
 	_actions = int(_minutes * 60.0 / SECONDS_PER_ACTION)
 	_collect_ready()
+	_feed_hungry()
 	for r in Game.farm_size:
 		for c in Game.farm_size:
 			var i := Game.index_of(r, c)
@@ -161,6 +163,46 @@ func _collect_ready() -> void:
 				_collected += 1
 
 
+## Feeds what is hungry with the best feed in stock (an action each, like a player's tap): without it every animal
+## pays the hunger penalty and the simulated farm earns less than a played one.
+func _feed_hungry() -> void:
+	for o in Game.objects.duplicate():
+		if not Game.feeds.is_hungry(o) or Game.is_ready(o):
+			continue
+		var pick := Game.feeds.best_feed_for(o)
+		if pick.is_empty() or not _act():
+			continue
+		if not Game.feeds.feed(int(o["uid"]), str(pick["feed"]), "produce", bool(pick["rich"])).is_empty():
+			_fed += 1
+
+
+## One building per visit at most: the dearest the farm can buy now (homes, cottages, the barn's neighbours), so
+## the coin sinks of the real game show in the curve instead of coins piling up.
+func _buy_building(reserve: int) -> void:
+	var best := ""
+	var best_cost := 0
+	for id: String in Game.items:
+		var it: Dictionary = Game.items[id]
+		# Buildings only, and not those built from collected materials (the bot never finishes a frame).
+		if Game.building_def(id) == null or it.has("status") or it.has("build_materials") or id == "barn":
+			continue
+		var price := Game.buildings.price_of(id)
+		var cost := int(price.get("coins", 0))
+		if price.has("gems"):
+			continue
+		if cost <= 0 or cost + reserve > Game.coins or cost <= best_cost or not Game.buildings.can_buy(id).ok():
+			continue
+		best = id
+		best_cost = cost
+	if best == "":
+		return
+	for r in range(Game.farm_size - 1, -1, -1):
+		for c in range(Game.farm_size - 1, -1, -1):
+			if Game.can_place(best, r, c) and _act() and Game.buy_and_place(best, r, c):
+				_bought[best] = int(_bought.get(best, 0)) + 1
+				return
+
+
 ## Spends what's above a reserve for replanting: land first when it can be bought, then whichever tree or
 ## animal pays back soonest, on free ground at the back of the farm (never more than a quarter of the farm).
 func _spend() -> void:
@@ -169,6 +211,7 @@ func _spend() -> void:
 		if not Game.land.expand(false):
 			break
 		_expansions += 1
+	_buy_building(reserve)
 	var held := 0
 	for o in Game.objects:
 		if Game.kind_of(o) in ["tree", "animal"]:
@@ -194,7 +237,7 @@ func _spend() -> void:
 		return
 	for r in range(Game.farm_size - 1, -1, -1):
 		for c in range(Game.farm_size - 1, -1, -1):
-			if _act() and Game.can_place(best, r, c) and Game.buy_and_place(best, r, c):
+			if Game.can_place(best, r, c) and _act() and Game.buy_and_place(best, r, c):
 				_bought[best] = int(_bought.get(best, 0)) + 1
 				return
 

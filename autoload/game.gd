@@ -83,6 +83,9 @@ var gardeners := 0                 # collect every bloom at once
 var fertilizer_bags := 0           # free fertilizer, used before coins
 var clear_until := 0               # unix time until which the weather is clear (a new farm)
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
+var _level := 1                 # level() remembered for this XP (and this version of the Balance numbers)
+var _level_xp := -1
+var _level_rev := -1
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
 var tutorial_step: int = Tutorial.HARVEST
 var catalog: Catalog               # every item, as typed definitions (scripts/catalog/)
@@ -280,8 +283,9 @@ func debug_skip(seconds: int) -> void:
 	queue_save()
 
 
+## The player's calendar day (their local midnight, not UTC's): the daily gift, fuel find and crafting daily reset there.
 func day_number() -> int:
-	return int(now() / 86400.0)
+	return floori((now() + DayCycle.device_bias_minutes() * 60) / 86400.0)
 
 
 # ---------------------------------------------------------------- plots
@@ -996,9 +1000,15 @@ func xp_for_level(lvl: int) -> int:
 
 
 func level() -> int:
+	# Asked many times a frame (what is unlocked, what shows): worked out again only when the XP or the numbers change.
+	if xp == _level_xp and Balance.revision == _level_rev:
+		return _level
 	var lvl := 1
 	while xp >= xp_for_level(lvl + 1):
 		lvl += 1
+	_level = lvl
+	_level_xp = xp
+	_level_rev = Balance.revision
 	return lvl
 
 

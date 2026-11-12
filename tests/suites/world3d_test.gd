@@ -934,3 +934,16 @@ func test_185_a_hungry_animal_shows_a_bubble_and_a_fed_one_hops() -> void:
 		_check(mind.pose.hop > 0.0, "a fed animal hops")
 	Game.feeds.active = false
 	main.free()
+
+
+func test_186_ambient_life_listens_for_land_once_not_every_frame() -> void:
+	var before := Game.farm_expanded.get_connections().size()
+	var life := AmbientLife.new()
+	add_child(life)
+	var after_ready := Game.farm_expanded.get_connections().size()
+	for i in 20:
+		life._process(0.1)
+	_eq(Game.farm_expanded.get_connections().size(), after_ready, "twenty frames connect nothing more")
+	_eq(after_ready, before + 1, "it listens once, from _ready")
+	life.free()
+	_eq(Game.farm_expanded.get_connections().size(), before, "and lets go when it is freed")

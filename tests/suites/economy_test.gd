@@ -595,3 +595,23 @@ func test_72_art_follows_the_lifecycle() -> void:
 	SpriteBank.use_default()
 	_check(not SpriteBank.has("cow"), "painted art is off by default: everything is drawn (and animated) in code")
 	_done(g)
+
+
+func test_187_the_day_turns_over_at_the_players_midnight_and_animals_do_not_feed_the_collectible_pity() -> void:
+	var g := _farm()
+	var bias := DayCycle.device_bias_minutes() * 60
+	g.debug_time_offset = 0
+	var now := g.now()
+	# Move the clock to a second before the player's own midnight, then across it.
+	var to_midnight := 86400 - posmod(now + bias, 86400)
+	g.debug_time_offset = to_midnight - 1
+	var before := g.day_number()
+	g.debug_time_offset = to_midnight + 1
+	_eq(g.day_number(), before + 1, "the day changes at local midnight")
+	g.drops_enabled = true
+	g.drops.pity["collectible"] = 0
+	for i in 30:
+		g.drops.roll_drop("", 0)
+	_eq(int(g.drops.pity["collectible"]), 0, "a roll with no crop never raises the collectible pity")
+	g.drops.roll_drop("wheat", 0)
+	_eq(int(g.drops.pity["collectible"]), 1, "a crop harvest does")

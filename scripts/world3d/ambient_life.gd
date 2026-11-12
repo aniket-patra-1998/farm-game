@@ -30,6 +30,7 @@ var _birds: MeshInstance3D
 func _ready() -> void:
 	rebuild()
 	_follow_weather()
+	Game.farm_expanded.connect(_on_farm_expanded)
 
 
 func _process(delta: float) -> void:
@@ -37,7 +38,10 @@ func _process(delta: float) -> void:
 	if _since_check >= WEATHER_CHECK_SECONDS:
 		_since_check = 0.0
 		_follow_weather()
-	Game.farm_expanded.connect(func(_n: int) -> void: rebuild())
+
+
+func _on_farm_expanded(_n: int) -> void:
+	rebuild()
 
 
 ## Butterflies and birds keep out of rain, snow, storms and thick fog (fireflies are for the dark and need no

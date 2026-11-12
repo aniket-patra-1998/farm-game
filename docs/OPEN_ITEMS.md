@@ -44,8 +44,7 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 - Boosts per home (HomeBoostSystem, data/home_boosts.json): done (feed chance, golden luck). Open: more boost kinds.
 - Feed Mill (crafting building, bushels to rich feed, data/catalog recipes `feed_mill_recipes`) and dogs (find family + Dog House; dogs add +3% each to gopher finds, cap 50%) are done; the Nursery already existed. Dogs do not dig up finds of their own; the Feed Mill and Dog House have only code-drawn looks so far.
 - Queen Bee is now a find (family `queen_bee` in data/finds.json: conditional trigger, pity, grants a queen to the Barn). Birds and collectibles are still on their own system (own pity, collection book, ribbons); moving them is open.
-- Feeding look and feel done: hungry animals wear a bubble, a fed one hops and says what the feed did (tests 185). Not yet: look-test tool, central Feedback service. Feeding still needs (
-  ) a balance pass in the simulator (animals and hunger are not in the bot yet).
+- Feeding look and feel done: hungry animals wear a bubble, a fed one hops and says what the feed did (tests 185). Not yet: look-test tool, central Feedback service. Feeding still needs a balance pass in the simulator (animals and hunger are not in the bot yet).
 
 ## Joined structures (fences, hedges, walls, paths)
 - The 2D fallback world still draws them as separate straight tiles (no joins); 3D is the real game.
@@ -54,3 +53,8 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 
 ## Animal rendering rework (perf probe, 2026-11-12)
 On the showcase farm (188 objects) a frame is about 2,744 draw calls; 576 drawn meshes are animals (`Animal3D`), the largest group by far (next: pig pen, 16). Every animal draws its parts as separate meshes. Batch them (one merged mesh per animal with per-part transforms, or a shared batch per species) and check `tools/perf_probe.tscn` before and after. Touches `Animal3D` and `AnimalMotion`. Postponed by the user; to do after the decided items.
+
+## From the code review (2026-11-12)
+Fixed: a signal connected every frame in `AmbientLife`; `day_number()` now turns over at the player's local midnight; animal and tree collects no longer feed the crop collectible pity; clock set back is mended on load (timers shift by the skew); `level()` is cached; saves go through a version chain (`SaveMigrations`); crops rebuild only when something changed (growth drawn in 12 steps); a "while you were away" line (ripened, withered, ready; `AbsenceReport`).
+Checked and already fine: loose animals are not animated off screen (`Animal3D.animate` returns early outside the view).
+Open: Android local notifications when crops ripen (needs an Android plugin and a permission flow; the away line is the in-game half); crops grown continuously by the shader instead of in steps (custom data is full: colour and richness; needs a second data channel); O(size²) free-tile scans in mass sell (not in the perf probe yet).

@@ -309,3 +309,56 @@ func test_178_a_clock_set_back_does_not_leave_timers_in_the_future() -> void:
 	_check(int(h.plots[h.index_of(8, 8)]["planted_at"]) <= h.now(), "a planted plot too")
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
+
+
+func test_188_saves_are_brought_up_one_version_at_a_time() -> void:
+	var data := {"version": GameState.OLDEST_SAVE_VERSION, "plots": []}
+	_check(SaveMigrations.upgrade(data), "the oldest version we read upgrades")
+	_eq(int(data["version"]), GameState.SAVE_VERSION, "to the current one")
+	for v in range(GameState.OLDEST_SAVE_VERSION, GameState.SAVE_VERSION):
+		_check(SaveMigrations.STEPS.has(v), "there is a step recorded for version %d" % v)
+	_check(not SaveMigrations.upgrade({"version": GameState.SAVE_VERSION + 1}), "a save from a newer game is left alone")
+	_check(not SaveMigrations.upgrade({"version": 0}), "and one from before we read any")
+	var old: Array = []
+	for k in GameState.OLD_GRID_SIZE * GameState.OLD_GRID_SIZE:
+		old.append({"state": "grass"})
+	var wide := {"version": GameState.SAVE_VERSION, "plots": old}
+	SaveMigrations.upgrade(wide)
+	_eq((wide["plots"] as Array).size(), GameState.MAX_SIZE * GameState.MAX_SIZE, "a 12x12 grid is widened")
+
+
+func test_189_the_level_is_remembered_until_the_xp_or_the_numbers_change() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(7)
+	_eq(g.level(), 7, "level 7 at its XP")
+	g.xp = g.xp_for_level(7) - 1
+	_eq(g.level(), 6, "one XP short")
+	g.xp = g.xp_for_level(9)
+	_eq(g.level(), 9, "and up again")
+	var table: Array = Balance.a("economy.level_xp")
+	Balance.override("economy.level_xp", table.map(func(v): return int(v) * 2))
+	_check(g.level() < 9, "a change to the XP table is seen at once")
+	Balance.reload()
+	_eq(g.level(), 9, "and so is putting it back")
+
+
+func test_190_the_farm_opens_with_what_happened_while_away() -> void:
+	var g := _farm()
+	g.set_objects([])
+	for i in g.plots.size():
+		g.plots[i] = {"state": "grass"}   # the start farm has fields of its own
+	var wheat: String = "wheat"
+	var grow := int(g.crops[wheat]["grow_seconds"])
+	var window := g.field.ripe_window(g.crops[wheat])
+	var now := g.now()
+	# One ripened an hour ago (an hour after the save), and one withered ten minutes ago.
+	g.plots[g.index_of(2, 2)] = {"state": "planted", "crop": wheat, "planted_at": now - grow - 3600}
+	g.plots[g.index_of(2, 3)] = {"state": "planted", "crop": wheat, "planted_at": now - grow - window - 600}
+	var from_t := now - 2 * 3600       # saved two hours ago
+	var line := AbsenceReport.build(g, from_t, now)
+	_check(line.contains("1 crops ripened"), "one crop ripened meanwhile (%s)" % line)
+	_check(line.contains("1 crops withered"), "and one withered (%s)" % line)
+	_eq(AbsenceReport.build(g, now - 60, now), "", "a minute away says nothing")
+	g.plots[g.index_of(2, 2)] = {"state": "grass"}
+	g.plots[g.index_of(2, 3)] = {"state": "grass"}
+	_eq(AbsenceReport.build(g, from_t, now), "", "nothing to tell, nothing said")

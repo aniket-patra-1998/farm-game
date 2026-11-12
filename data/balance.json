@@ -320,6 +320,12 @@
    "note": "per mastery star, multiplies golden and collectible chances"
   }
  },
+ "absence": {
+  "min_seconds": {
+   "v": 600,
+   "note": "Away at least this long and the farm opens with a line on what ripened, withered or became ready meanwhile."
+  }
+ },
  "economy": {
   "rescue_coins": {
    "v": 50,

@@ -31,7 +31,8 @@ func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 	if not game.drops_enabled:
 		return {}
 	pity["golden"] = int(pity["golden"]) + 1
-	pity["collectible"] = int(pity["collectible"]) + 1
+	if crop_id != "":
+		pity["collectible"] = int(pity["collectible"]) + 1   # animals and trees (no crop) can never discharge it
 	var luck := 1.0 + Balance.f("harvest.mastery_luck_bonus") * stars + game.boosts.total("golden_luck")
 
 	var golden := Balance.f("harvest.golden_chance") * luck
