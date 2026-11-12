@@ -1159,3 +1159,24 @@ func test_212_every_four_legged_family_has_its_own_build() -> void:
 		if build.has("torso"):
 			seen[JSON.stringify(build["torso"])] = family
 	_check(seen.size() >= 4, "the torsos differ from family to family (%d kinds)" % seen.size())
+
+
+func test_213_sculpted_animal_shapes_are_closed_meshes_that_follow_their_outline() -> void:
+	var outline := [[-1.0, 0.5, 0.0, 0.4], [0.0, 1.0, -1.0, 1.0], [1.0, 0.5, 0.0, 0.4]]
+	var mesh := AnimalLoft.body(outline, Vector3(2, 1, 1))
+	_check(mesh.get_surface_count() == 1 and mesh.get_aabb().size.x > 3.9, "a body spans its length")
+	_check(mesh.get_aabb().size.y > 1.9 and mesh.get_aabb().size.z > 1.9, "and stands as high and wide as its outline")
+	var mid := AnimalLoft.at(outline, 0.0)
+	_eq([mid.x, mid.y, mid.z], [1.0, -1.0, 1.0], "the outline's own station is read back exactly")
+	var between := AnimalLoft.at(outline, 0.5)
+	_check(absf(between.x - 0.75) < 0.001 and absf(between.z - 0.7) < 0.001, "and blended between stations")
+	_check(AnimalLoft.surface_z(outline, 0.0, 0.0) > 0.99 and AnimalLoft.surface_z(outline, 0.0, 1.0) < 0.01,
+		"the skin is out at the middle and closes at the top")
+	var tube := AnimalLoft.tube([[0, 1.0], [1, 0.5]], 2.0)
+	_check(absf(tube.get_aabb().size.y - 1.0) < 0.001 and tube.get_aabb().size.x > 1.9,
+		"a tube is a unit long, as wide as asked")
+	for family in AnimalBuild.families():
+		var build := AnimalBuild.of(str(family))
+		if build.has("body"):
+			_check((build["body"] as Dictionary)["stations"].size() >= 6, "%s: its outline has stations enough" % family)
+			_check(build.has("limbs") and build.has("neck"), "%s: sculpted body, limbs and neck go together" % family)

@@ -64,6 +64,8 @@ var _last := Vector3.ZERO
 var _r := Vector3.ONE            # body half-sizes (length, height, width)
 
 var _leg := 0.2
+var _stations: Array = []   # the sculpted body's outline (AnimalLoft), empty for a plain one
+var _box := 2.4
 var _bend := 0.56      # how far its legs bend at the knee (0.5: straight; AnimalBuild)
 var _contact: MeshInstance3D     # the soft shade on the grass right under it
 var _eyes: Array[Node3D] = []    # (they blink)
@@ -325,6 +327,11 @@ func _build_quad() -> void:
 		var wool := ModelKit.paint(coat.lightened(0.06))
 		AnimalBuild.torso(_body, build.get("torso", [[0, 0, 0, 0.95, 0.95, 1.05]]), _r, wool)
 		AnimalBuild.fleece(_body, int(build.get("fleece", 16)), _r, float(build.get("tuft", 0.42)), wool)
+	elif build.has("body"):
+		var bd: Dictionary = build["body"]
+		_stations = bd["stations"]
+		_box = float(bd.get("box", 2.4))
+		_add_mesh(_body, AnimalLoft.body(_stations, _r, _box), mat)
 	elif build.has("torso"):
 		AnimalBuild.torso(_body, build["torso"], _r, mat)
 	else:
@@ -337,6 +344,7 @@ func _build_quad() -> void:
 	var thick := _px(rig.num("leg_width", 1.0) * width * 3.4)
 	var taper := AnimalBuild.num(build, "leg", "taper", 1.0)
 	var stance := AnimalBuild.num(build, "leg", "stance", 0.55)
+	var limbs: Dictionary = build.get("limbs", {})
 	var round_hoof: bool = (build.get("leg", {}) as Dictionary).get("hoof", "") == "round"
 	var leg_col := coat.darkened(0.08)
 	var lower_col := leg_col
@@ -348,8 +356,16 @@ func _build_quad() -> void:
 		var near: bool = k >= 2
 		var fore: bool = k % 2 == 1
 		var hip := Vector3((0.58 if fore else -0.58) * _r.x, -_r.y * 0.35, (stance if near else -stance) * _r.z)
-		var upper := _segment(ModelKit.paint(leg_col), thick, 0.9)
-		var lower := _segment(ModelKit.paint(lower_col), thick * 0.9, taper)
+		var upper: MeshInstance3D
+		var lower: MeshInstance3D
+		if limbs.is_empty():
+			upper = _segment(ModelKit.paint(leg_col), thick, 0.9)
+			lower = _segment(ModelKit.paint(lower_col), thick * 0.9, taper)
+		else:
+			upper = _add_mesh(_body, AnimalLoft.tube(limbs["upper"], thick * 1.1, float(limbs.get("depth", 1.0))),
+				ModelKit.paint(leg_col))
+			lower = _add_mesh(_body, AnimalLoft.tube(limbs["lower"], thick * 1.1, float(limbs.get("depth", 1.0))),
+				ModelKit.paint(lower_col))
 		var hoof_col := HOOF if rig.family != "pig" else coat.darkened(0.45)
 		var hoof: MeshInstance3D
 		if round_hoof:
@@ -362,8 +378,12 @@ func _build_quad() -> void:
 			"k": k})
 	# Neck and head.
 	var neck_w := AnimalBuild.num(build, "neck", "w", 1.0)
-	_neck = _segment(mat, _px(rig.pair("neck", Vector2(14, 9)).y) * 1.6 * neck_w,
-		AnimalBuild.num(build, "neck", "taper", 1.0))
+	var neck_width := _px(rig.pair("neck", Vector2(14, 9)).y) * 1.6 * neck_w
+	var neck_profile: Array = (build.get("neck", {}) as Dictionary).get("profile", [])
+	if neck_profile.is_empty():
+		_neck = _segment(mat, neck_width, AnimalBuild.num(build, "neck", "taper", 1.0))
+	else:
+		_neck = _add_mesh(_body, AnimalLoft.tube(neck_profile, neck_width), mat)
 	_head = Node3D.new()
 	_body.add_child(_head)
 	var h := rig.pair("head", Vector2(14, 10)) * rig.head_scale * AnimalBuild.num(build, "head", "scale", 1.0)
@@ -374,9 +394,17 @@ func _build_quad() -> void:
 		head_col = Color("#f4f1ea")
 	elif rig.text("head_color") == "accent":
 		head_col = accent
-	var skull := AnimalBuild.vec(build, "head", "skull_r", Vector3(0.48, 0.5, 0.45))
-	ModelKit.ball(_head, Vector3(-hl * 0.1, 0, 0), 1.0, ModelKit.paint(head_col),
-		Vector3(hl * skull.x, hh * skull.y, hh * skull.z), true)
+	# A sculpted head (its stations are shares of these half extents), or the old skull ball.
+	var shape: Array = (build.get("head", {}) as Dictionary).get("shape", [])
+	var hx := hl * 0.6
+	var hy := hh * 0.5
+	var hz := hh * 0.45
+	if shape.is_empty():
+		var skull := AnimalBuild.vec(build, "head", "skull_r", Vector3(0.48, 0.5, 0.45))
+		ModelKit.ball(_head, Vector3(-hl * 0.1, 0, 0), 1.0, ModelKit.paint(head_col),
+			Vector3(hl * skull.x, hh * skull.y, hh * skull.z), true)
+	else:
+		_add_mesh(_head, AnimalLoft.body(shape, Vector3(hx, hy, hz), 2.2), ModelKit.paint(head_col))
 	var at := AnimalBuild.vec(build, "head", "muzzle_at", Vector3(0.32, -0.08, 0.0))
 	var muzzle := _muzzle_colour(rig.text("muzzle", "light"), head_col)
 	if rig.text("muzzle") == "snout":
@@ -391,18 +419,33 @@ func _build_quad() -> void:
 		)
 		snout.rotation.z = -PI / 2.0
 		snout.position = Vector3(hl * 0.42, 0, 0)
+	elif not shape.is_empty():
+		# A nose pad in the muzzle colour on the end of the sculpted head.
+		var nose := AnimalLoft.at(shape, 0.97)
+		ModelKit.ball(_head, Vector3(hx * 0.95, (nose.x + nose.y) * 0.5 * hy, 0), 1.0, ModelKit.paint(muzzle),
+			Vector3(hx * 0.1, (nose.x - nose.y) * 0.5 * hy * 0.9, nose.z * hz * 0.9), true)
 	else:
 		var mr := AnimalBuild.vec(build, "head", "muzzle_r", Vector3(0.28, 0.36, 0.38))
 		ModelKit.ball(_head, Vector3(hl * at.x, hh * at.y, 0), 1.0, ModelKit.paint(muzzle),
 			Vector3(hl * mr.x, hh * mr.y, hh * mr.z), true)
 	if rig.flag("beard"):
-		ModelKit.ball(_head, Vector3(hl * at.x, -hh * 0.55, 0), hh * 0.2,
+		var chin := (AnimalLoft.at(shape, 0.6).y * hy) if not shape.is_empty() else -hh * 0.55
+		ModelKit.ball(_head, Vector3(hl * at.x, chin, 0), hh * 0.2,
 			ModelKit.paint(accent.lerp(head_col, 0.3)), Vector3(0.7, 1.9, 0.7))
+	var eye_at := Vector3(hl * 0.05, hh * 0.15, hh * 0.4)
+	var shift := Vector3.ZERO   # where a sculpted head's crown differs from the ball head's (ears and horns follow)
+	if not shape.is_empty():
+		var xs := -0.05
+		var top := AnimalLoft.at(shape, xs)
+		var ys := lerpf((top.x + top.y) * 0.5, top.x, 0.5)
+		eye_at = Vector3(xs * hx, ys * hy, AnimalLoft.surface_z(shape, xs, ys, 2.2) * hz * 0.95)
+		var crown := AnimalLoft.at(shape, -0.45)
+		shift = Vector3(-0.45 * hx, crown.x * hy * 0.9, crown.z * hz * 0.55) - Vector3(-hl * 0.25, hh * 0.35, hh * 0.3)
 	var eye_r := hh * 0.09 * rig.num("eye_scale", 1.0) * AnimalBuild.num(build, "head", "eye", 1.0)
 	for side: float in [-1.0, 1.0]:
-		_eyes.append(ModelKit.ball(_head, Vector3(hl * 0.05, hh * 0.15, side * hh * 0.4), eye_r, ModelKit.paint(EYE, 0.8)))
+		_eyes.append(ModelKit.ball(_head, Vector3(eye_at.x, eye_at.y, side * eye_at.z), eye_r, ModelKit.paint(EYE, 0.8)))
 		var ear := Node3D.new()
-		ear.position = Vector3(-hl * 0.3, hh * 0.3, side * hh * 0.35)
+		ear.position = Vector3(-hl * 0.3 + shift.x, hh * 0.3 + shift.y, side * (hh * 0.35 + shift.z))
 		_head.add_child(ear)
 		var long_ears := rig.text("ears") == "long"
 		var up := rig.text("ears") in ["up", "long"]
@@ -417,8 +460,8 @@ func _build_quad() -> void:
 		match rig.text("horns", "none"):
 			"nubs", "short":
 				var horn_h := hh * (0.25 if rig.text("horns") == "nubs" else 0.45)
-				ModelKit.cylinder(_head, Vector3(-hl * 0.15, hh * 0.4, side * hh * 0.22), hh * 0.08, horn_h,
-					ModelKit.paint(Color("#ece3cf")), 0.0, 8)
+				var root := Vector3(-hl * 0.15 + shift.x, hh * 0.4 + shift.y, side * (hh * 0.22 + shift.z))
+				ModelKit.cylinder(_head, root, hh * 0.08, horn_h, ModelKit.paint(Color("#ece3cf")), 0.0, 8)
 			"long", "curl", "back", "long_back":
 				var horn := ModelKit.cylinder(
 					_head,
@@ -429,7 +472,7 @@ func _build_quad() -> void:
 					0.0,
 					8
 				)
-				horn.position = Vector3(-hl * 0.2, hh * 0.45, side * hh * 0.35)
+				horn.position = Vector3(-hl * 0.2 + shift.x, hh * 0.45 + shift.y, side * (hh * 0.35 + shift.z))
 				horn.rotation = Vector3(side * 1.1, 0, -0.6)
 	if rig.text("mane", "") != "":
 		ModelKit.box(
@@ -475,6 +518,8 @@ func _markings(kind: String, accent: Color) -> void:
 			for s: Vector3 in spots:
 				# A flattened blob pressed onto the body's surface.
 				var p := Vector3(s.x * _r.x, s.y * _r.y, s.z * _r.z * sqrt(maxf(0.0, 1.0 - s.x * s.x - s.y * s.y)))
+				if not _stations.is_empty():
+					p.z = s.z * AnimalLoft.surface_z(_stations, s.x, s.y, _box) * _r.z * 0.97
 				ModelKit.ball(_body, p, 1.0, ModelKit.paint(col), Vector3(_r.x * big, _r.y * big * 1.1, _r.z * 0.12))
 		"belt", "saddle":
 			var x0 := -0.22 if kind == "belt" else 0.22
@@ -628,6 +673,17 @@ func _segment(mat: Material, width: float, taper := 1.0) -> MeshInstance3D:
 	mi.mesh = mesh
 	mi.material_override = mat
 	_body.add_child(mi)
+	return mi
+
+
+
+
+## A mesh made in code (AnimalLoft), as a part of `parent` in `mat`.
+func _add_mesh(parent: Node3D, mesh: Mesh, mat: Material) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = mat
+	parent.add_child(mi)
 	return mi
 
 
