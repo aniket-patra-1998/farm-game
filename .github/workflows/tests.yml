@@ -4,10 +4,6 @@ on:
   push:
   pull_request:
 
-concurrency:                       # a newer push to the same branch makes the older, unfinished run pointless
-  group: tests-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read   # tests only read the repository
 

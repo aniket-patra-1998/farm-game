@@ -4,8 +4,7 @@ name: Code review
 # Needs the Claude GitHub App installed on the repo and one secret: CLAUDE_CODE_OAUTH_TOKEN (a Claude
 # subscription, from `claude setup-token`) or ANTHROPIC_API_KEY (Claude Console). Without either, it skips.
 # The review action can't start from a push, so it runs once the Tests workflow finishes for a push to main
-# (whether tests passed or not: the review says so; a Tests run cancelled by a newer push is not reviewed, the
-# newer push is), or by hand from the Actions tab.
+# (whether tests passed or not: the review says so), or by hand from the Actions tab.
 on:
   workflow_run:
     workflows: [Tests]
@@ -19,8 +18,7 @@ jobs:
   review:
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion != 'cancelled' &&
-      !contains(github.event.workflow_run.head_commit.message, '[skip review]')) }}
+      (github.event.workflow_run.event == 'push' && !contains(github.event.workflow_run.head_commit.message, '[skip review]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
