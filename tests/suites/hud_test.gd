@@ -23,9 +23,12 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 		opened += 1
 		_check(book.visible, "%s opens the book" % panel)
 	var seen := {}
+	for f in Game.feeds.feed_ids():
+		Game.feeds.add(f)   # so the feed cards have buttons to build
 	for o in Game.objects.duplicate():
 		var key := str(o["id"])
-		if seen.has(key) or Game.kind_of(o) not in ["building", "bloom"]:  # (the farm taps only these open a panel)
+		var opens := Game.kind_of(o) in ["building", "bloom"] or Game.feeds.is_feedable(o)  # (what the farm opens)
+		if seen.has(key) or not opens:
 			continue
 		seen[key] = true
 		hud.show_building(int(o["uid"]))

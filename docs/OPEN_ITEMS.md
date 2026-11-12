@@ -36,8 +36,12 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 - To tune next: the coin sinks (land costs, building prices, crafting) once the bot buys buildings too; coins still pile up.
 
 ## Farming core
-- Feeds and animal tastes (draft for review first), queen bee and flowers, adjacency synergies (super
-  orchards), quests, boosts per home, Feed Mill/Nursery/dogs, look-test tool, central Feedback service.
+- Done: feeding (docs/FEEDS_DRAFT.md, approved): `FeedSystem`, five feeds from harvests and trees, tastes, one effect per
+  feeding, hunger (-30% coins, never none), the Barn's stock, the farmhand feeds; the action registry
+  (data/actions.json) so every action is offered to its helper.
+- Not yet: adjacency synergies (super orchards), quests, boosts per home, Feed Mill/Nursery/dogs, queen bee and
+  flowers on the finds framework, look-test tool, central Feedback service. Feeding needs a look/feel pass (hungry
+  bubble, hop when fed) and a balance pass in the simulator (animals and hunger are not in the bot yet).
 
 ## Joined structures (fences, hedges, walls, paths)
 - The 2D fallback world still draws them as separate straight tiles (no joins); 3D is the real game.

@@ -786,6 +786,9 @@ func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 			COLOR_PART,
 			1.6
 		)
+	if result.get("feed", "") != "":
+		_float(at + Vector2(0, -192), tr("FOUND_FEED") % Game.feeds.feed_name(result["feed"], bool(result["feed_rich"])),
+			Game.feeds.feed_color(result["feed"]), 1.6)
 	if result.get("bee", "") != "":
 		_float(at + Vector2(0, -96), result["bee"], COLOR_GOLDEN, 1.6)
 	if int(result.get("pollinated", 0)) > 0:
@@ -940,7 +943,8 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if not first_touch:
 		return
 	_poke(uid)
-	if Game.is_building(obj) or Game.crafting.is_crafting(obj) or Game.kind_of(obj) == "bloom":
+	if Game.is_building(obj) or Game.crafting.is_crafting(obj) or Game.kind_of(obj) == "bloom" \
+			or Game.feeds.is_feedable(obj):
 		object_tapped.emit(uid)
 		return
 	var it := Game.item_data(obj["id"])

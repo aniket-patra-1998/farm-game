@@ -114,6 +114,7 @@ var links: LinksSystem
 var mastery: MasterySystem
 var nurture: NurtureSystem
 var finds: FindsSystem
+var feeds: FeedSystem
 var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
@@ -154,13 +155,14 @@ func _init() -> void:
 	player = PlayerSystem.new(self)
 	nurture = NurtureSystem.new(self)
 	finds = FindsSystem.new(self)
+	feeds = FeedSystem.new(self)
 	strays = StraySystem.new(self)
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
-		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds]
+		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds, feeds]
 
 
 func _ready() -> void:
@@ -453,7 +455,9 @@ func move_object(uid: int, row: int, col: int) -> bool:
 
 ## A building's own cycle (the Stable's 1 day beats a loose horse's 3) or the item's.
 func cycle_of(obj: Dictionary) -> int:
-	return int(item_data(obj["id"]).get("cycle_seconds", 86400))
+	var cycle := int(item_data(obj["id"]).get("cycle_seconds", 86400))
+	var cut := feeds.speed_cut(obj)   # a speed feed shortens the cycle it was given for
+	return maxi(1, roundi(cycle * (1.0 - cut))) if cut > 0.0 else cycle
 
 
 func level_of(obj: Dictionary) -> int:
@@ -577,7 +581,8 @@ func collect(uid: int) -> Dictionary:
 		return {}
 	# FarmVille: collecting pays coins and mastery, never XP (an animal or tree gave its XP once, when bought);
 	# only a bonus drop adds XP.
-	var earned := object_payout(obj).x
+	var earned := roundi(object_payout(obj).x * feeds.coin_multiplier(obj))   # fed, or hungry
+	feeds.rare_boost = feeds.rare_multiplier(obj)
 	var gained := 0
 	var drop := drops.roll_drop("", 0)
 	match drop.get("type", ""):
@@ -613,8 +618,13 @@ func collect(uid: int) -> Dictionary:
 			obj["id"] = adult
 			message.emit(tr("YOUR_GREW_UP_INTO_A") % [name_before.to_lower(), item_data(adult)["name"].to_lower()])
 			extras.append(tr("GREW_UP"))
+	obj.erase(FeedSystem.FED)   # what it was fed was for this cycle
+	feeds.rare_boost = 1.0
 	var coll_find := ""
 	if kind_of(obj) == "tree":
+		var fruit := feeds.roll_tree()
+		if fruit != "":
+			extras.append(tr("FOUND_FEED") % feeds.feed_name(fruit))
 		coll_find = collectibles.roll_collectible(
 			collectibles.tree_collection,
 			Balance.f("economy.animal_collectible_chance")
@@ -714,25 +724,33 @@ func helpers_held(kind: String) -> int:
 	return int(get(HELPERS[kind]["field"]))
 
 
+## A helper does everything the action registry (data/actions.json) gives its kind: collects what is ready, then
+## feeds what is hungry for the cycle ahead. One helper is used up whatever it did.
 func use_helper(kind: String) -> int:
 	var helper: Dictionary = HELPERS[kind]
 	if helpers_held(kind) <= 0:
 		message.emit(tr("NO_LEFT") % tr(helper["name"]))
 		return 0
+	var actions := Actions.for_helper(kind)
 	var ready: Array = []
-	for o in objects:
-		if kind_of(o) == kind and is_ready(o):
-			ready.append(int(o["uid"]))
-	if ready.is_empty():
-		message.emit(tr("NOTHING_IS_READY_TO_COLLECT_YET"))
-		return 0
-	set(helper["field"], helpers_held(kind) - 1)
+	if "collect" in actions:
+		for o in objects:
+			if kind_of(o) == kind and is_ready(o):
+				ready.append(int(o["uid"]))
 	var coins_total := 0
 	for uid in ready:
 		coins_total += int(collect(uid).get("coins", 0))
-	message.emit(tr(helper["done"]) % [ready.size(), coins_total])
+	var fed := feeds.feed_all(kind) if "feed" in actions else 0
+	if ready.is_empty() and fed == 0:
+		message.emit(tr("NOTHING_IS_READY_TO_COLLECT_YET"))
+		return 0
+	set(helper["field"], helpers_held(kind) - 1)
+	if not ready.is_empty():
+		message.emit(tr(helper["done"]) % [ready.size(), coins_total])
+	if fed > 0:
+		message.emit(tr("FED_ANIMALS") % fed)
 	inventory_changed.emit()
-	return ready.size()
+	return ready.size() + fed
 
 
 # ---------------------------------------------------------------- buying XP, selling and turning

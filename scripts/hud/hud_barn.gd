@@ -65,6 +65,7 @@ func build_barn_storage(content: VBoxContainer) -> void:
 	var barn := Game.storage.barn()
 	if not barn.is_empty():
 		hud.buildings.add_expansion_card(content, barn, int(barn["uid"]))
+	hud.feed.add_barn_stock(content)
 	if Game.storage.stored.is_empty():
 		content.add_child(BookPanel.card_frame(BookPanel.text(tr("NOTHING_STORED_YET"), 20)))
 		return

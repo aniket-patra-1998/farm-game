@@ -186,6 +186,9 @@ func can_do(job: Dictionary) -> bool:
 			return not obj.is_empty() and game.is_ready(obj)
 		"nurture":
 			return game.nurture.can_feed(game.object_by_uid(int(job.get("uid", -1))))
+		"feed":
+			return game.feeds.can_feed(game.object_by_uid(int(job.get("uid", -1))), str(job.get("feed", "")),
+				str(job.get("effect", "")), bool(job.get("rich", false)))
 		"vehicle":
 			return game.items.has(str(job.get("item", ""))) and not game.vehicles.is_running(str(job["item"]))
 	return false
@@ -236,6 +239,8 @@ func _perform(job: Dictionary) -> Dictionary:
 			return game.collect(int(job["uid"]))
 		"nurture":
 			return game.nurture.feed(int(job["uid"]))
+		"feed":
+			return game.feeds.feed(int(job["uid"]), str(job["feed"]), str(job["effect"]), bool(job.get("rich", false)))
 		"vehicle":
 			# The vehicle sets off: it works each plot as it drives over it (VehicleWork), and the farmer goes on.
 			var run := game.vehicles.dispatch(str(job["item"]), int(job["row"]), int(job["col"]),
@@ -261,6 +266,8 @@ func _find(job: Dictionary) -> int:
 
 ## What a job is aimed at: one job at a time per plot, object, or vehicle pass.
 func _target_key(job: Dictionary) -> String:
+	if job["kind"] == "feed":
+		return "f%d" % int(job["uid"])   # feeding and collecting the same animal are two jobs
 	if job["kind"] in OBJECT_JOBS:
 		return "o%d" % int(job["uid"])
 	if job["kind"] == "vehicle":
@@ -273,7 +280,7 @@ func _target_key(job: Dictionary) -> String:
 ## Where a job is, in tiles: its plot's centre, its object's centre, or the middle of a vehicle's pass.
 func _centre_of(job: Dictionary) -> Vector2:
 	match str(job["kind"]):
-		"collect", "nurture":
+		"collect", "nurture", "feed":
 			var obj := game.object_by_uid(int(job["uid"]))
 			if obj.is_empty():
 				return pos

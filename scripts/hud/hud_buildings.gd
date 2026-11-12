@@ -67,6 +67,7 @@ func build_building(content: VBoxContainer) -> void:
 		actions.add_child(fill)
 	content.add_child(actions)
 
+	hud.feed.add_feed_card(content, o)
 	add_building_special_info(content, o)
 	add_expansion_card(content, o, uid)
 

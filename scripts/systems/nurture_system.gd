@@ -229,7 +229,7 @@ func from_home(home: Dictionary) -> Array[String]:
 	if game.rng.randf() < Balance.f("nurture.home_feed_chance"):
 		add_supply("animal_feed", 1)
 		out.append(tr("ANIMAL_FEED_N") % 1)
-	if game.rng.randf() < Balance.f("nurture.mystery_baby_chance") and _found(BABY, becomes):
+	if game.rng.randf() < Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost and _found(BABY, becomes):
 		out.append(game.item_data(BABY)["name"] + "!")
 	return out
 

@@ -64,6 +64,7 @@ var _coin_roll: Tween
 @onready var crafting := HudCrafting.new(self)
 @onready var buildings := HudBuildings.new(self)
 @onready var barn := HudBarn.new(self)
+@onready var feed := HudFeed.new(self)
 @onready var books := HudBooks.new(self)
 @onready var settings := HudSettings.new(self)
 
@@ -599,6 +600,8 @@ func show_building(uid: int) -> void:
 		_book.open_panel(Game.item_data(o["id"])["name"], barn.build_bloom)
 	elif o["id"] == "barn":
 		_book.open_panel(tr("BARN"), barn.build_barn)
+	elif Game.kind_of(o) == "animal" and Game.feeds.is_feedable(o):
+		_book.open_panel(Game.item_data(o["id"])["name"], feed.build_animal)
 	elif Game.crafting.is_crafting(o):
 		Game.crafting.finish_crafts(uid)
 		_book.open_panel(Game.size_name(o), crafting.build_crafting)

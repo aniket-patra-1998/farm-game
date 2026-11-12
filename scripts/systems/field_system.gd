@@ -190,6 +190,8 @@ func harvest(i: int) -> Dictionary:
 	var bushel := game.crafting.roll_bushel(crop_id)
 	var bunch := game.shed.roll_bunch(crop_id, i)
 	var found := game.finds.roll("harvest", stars_before)
+	var rich: bool = drop.get("type", "") in ["golden", "super_harvest"] or was_pollinated
+	var feed_found := game.feeds.roll_harvest(crop_id, stars_before, rich)
 	var bee_news := ""
 	if crop.get("flower", false):
 		bee_news = game.bees.flower_harvest_bees()
@@ -201,4 +203,5 @@ func harvest(i: int) -> Dictionary:
 	game.plot_updated(i)
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
 		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel,
-		"bushels": (1 + game.mastery.stars(crop_id)) if bushel != "" else 0, "bunch": bunch, "found": found}
+		"bushels": (1 + game.mastery.stars(crop_id)) if bushel != "" else 0, "bunch": bunch, "found": found,
+		"feed": feed_found, "feed_rich": rich}

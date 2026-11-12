@@ -35,6 +35,7 @@ func _farm(drops := false) -> GameState:
 	add_child(g)
 	g.drops_enabled = drops
 	g.rng.seed = 12345
+	g.feeds.active = false   # exact payouts: feeding tests turn it on
 	return g
 
 
