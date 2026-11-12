@@ -181,6 +181,7 @@ func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
 	grid._unhandled_input(drop)
 	_check(grid.placing.is_empty(), "and letting go puts it down")
 	_check(int(Game.object_by_uid(9002)["row"]) != 5 or int(Game.object_by_uid(9002)["col"]) != 8, "somewhere new")
+	await get_tree().process_frame  # the drop's queued effects run while their scene still stands
 	main.free()
 
 
