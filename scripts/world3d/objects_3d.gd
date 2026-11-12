@@ -10,6 +10,8 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
+const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const FULL_EVERY := 10        # a full look at everything every this many seconds (the rest only look at those)
 const SCENERY_Y := -Ground3D.SLAB
 const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
 const GROVE_MASK := 0xff       # woods stand shoulder to shoulder: their trees are drawn crowded on every side
@@ -44,6 +46,8 @@ var _ghost_tint := ""
 var _ghost_key := ""
 var _lifted := -1
 var _queued := false
+var _full := true        # the queued sync looks at everything (a change), not only what time changes
+var _ticks := 0
 
 var _scenery: Node3D
 var _links: LinkLayer   # draws the fences, hedges, walls and paths, joined up
@@ -71,13 +75,30 @@ func _ready() -> void:
 	var timer := Timer.new()
 	timer.wait_time = 1.0  # trees ripen and buildings become ready over time
 	timer.autostart = true
-	timer.timeout.connect(queue_sync)
+	timer.timeout.connect(_on_tick)
 	add_child(timer)
 
 
 
 
+## Each second: only what time changes (trees ripening, buildings filling, sites rising) is looked at again; every
+## FULL_EVERY ticks everything is, in case a change was not announced.
+func _on_tick() -> void:
+	_ticks += 1
+	if _ticks % FULL_EVERY == 0:
+		queue_sync()
+	elif not _queued:
+		_queued = true
+		sync.call_deferred()
+
+
+## Whether the picture of `o` can change with time alone (not only when the player or a system changes it).
+static func timed(o: Dictionary) -> bool:
+	return TIMED_KINDS.has(Game.kind_of(o)) or Game.under_construction(o)
+
+
 func queue_sync() -> void:
+	_full = true
 	if not _queued:
 		_queued = true
 		sync.call_deferred()
@@ -87,13 +108,18 @@ func queue_sync() -> void:
 
 func sync() -> void:
 	_queued = false
-	_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
+	var light := not _full   # a timer tick: only what time changes
+	_full = false
+	if not light:
+		_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
 	var seen := {}
 	for o in Game.objects:
 		if not handles(o):
 			continue
 		var uid := int(o["uid"])
 		seen[uid] = true
+		if light and _views.has(uid) and not timed(o):
+			continue
 		var key := _key(o)
 		var v: Dictionary = _views.get(uid, {})
 		if v.get("key", "") == key:
@@ -119,6 +145,8 @@ func sync() -> void:
 			(_views[uid]["node"] as Node3D).queue_free()
 			_views.erase(uid)
 	_synced_once = true
+	if light:
+		return
 	_animals.clear()
 	for v in _views.values():
 		if v["node"] is Animal3D:

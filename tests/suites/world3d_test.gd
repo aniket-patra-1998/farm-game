@@ -1127,3 +1127,18 @@ func test_210_rain_wets_and_snow_settles_gradually_and_both_fade() -> void:
 		var code := FileAccess.get_file_as_string("res://shaders/%s.gdshader" % shader)
 		_check(code.contains("global uniform float snow_cover") and code.contains("global uniform float wetness"),
 			"%s shows the weather" % shader)
+
+
+func test_211_a_timer_tick_looks_only_at_what_time_changes() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	for o in Game.objects:
+		var kind := Game.kind_of(o)
+		_eq(Objects3D.timed(o), Objects3D.TIMED_KINDS.has(kind) or Game.under_construction(o),
+			"%s: timed only if time can change it" % o["id"])
+	var kinds := {}
+	for o in Game.objects:
+		kinds[Game.kind_of(o)] = true
+	_check(kinds.has("tree") and kinds.has("decor"), "the showcase has both kinds of thing")
+	Game.reset_game()
