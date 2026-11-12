@@ -12,7 +12,8 @@ const PETALS := 6
 
 ## Builds the bloom standing on `at` in `parent`.
 static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, ready: bool, withered: bool,
-		full: bool, seed_value: int) -> void:
+		full: bool, seed_value: int, mask := 0) -> void:
+	var crowd := Crowding.share_of(mask)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var col := Color.html(str(it.get("color", "#d6304a")))
@@ -25,11 +26,12 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, r
 	var root := Node3D.new()
 	root.position = at
 	parent.add_child(root)
-	var stems := ModelKit.scaled(5, 2) if full else 1
+	var stems := maxi(2, roundi(ModelKit.scaled(5, 2) * (1.0 - 0.4 * crowd))) if full else 1
 	for k in stems:
 		var a := TAU * k / stems + rng.randf() * 0.5
 		var off := Vector3(cos(a), 0, sin(a)) * (0.09 if full and k > 0 else 0.0) * size
-		var h := (0.42 + rng.randf_range(-0.06, 0.06)) * size * (1.0 if k == 0 else 0.85)
+		var h := (0.42 + rng.randf_range(-0.06, 0.06)) * (1.0 + Crowding.setting("bloom", "lift") * crowd) \
+			* size * (1.0 if k == 0 else 0.85)
 		var lean := 0.9 if withered else 0.12
 		var flower := Node3D.new()
 		flower.position = off
@@ -44,7 +46,7 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, r
 			ModelKit.ball(flower, top, 0.035 * size, ModelKit.paint(col.lerp(STEM, 0.4)), Vector3(0.8, 1.3, 0.8))
 			continue
 		var open := 0.6 if withered else 1.0
-		var petals := ModelKit.scaled(PETALS, 4)
+		var petals := maxi(3, roundi(ModelKit.scaled(PETALS, 4) * (1.0 - 0.5 * crowd)))
 		for pk in petals:
 			var pa := TAU * pk / petals
 			ModelKit.ball(flower, top + Vector3(cos(pa), 0.1, sin(pa)) * 0.045 * size * open, 0.035 * size,
@@ -59,5 +61,5 @@ static func build(it: Dictionary, o: Dictionary, scale := 1.0) -> Node3D:
 	var holder := Node3D.new()
 	var d := Game.catalog.get_def(str(it.get("id", ""))) as BloomDef
 	build_at(holder, Vector3(0.5, 0, 0.5), it, 1.6 * scale, Game.is_ready(o), Game.is_withered(o),
-		d != null and d.is_full(), int(o.get("uid", 0)))
+		d != null and d.is_full(), int(o.get("uid", 0)), Crowding.mask(o))
 	return ModelKit.bake(holder)

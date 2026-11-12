@@ -791,24 +791,26 @@ func test_141_the_woods_cost_tens_of_draws_not_thousands() -> void:
 	objects.queue_free()
 
 
-func test_146_trees_standing_together_grow_together() -> void:
+func test_146_things_standing_together_grow_together_and_cost_less() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.farm_size = 24
 	Game.set_objects([])
 	var lone := {"uid": 9301, "id": "apple_tree", "row": 10, "col": 10, "t": Game.now()}
 	Game.add_object(lone)
-	_eq(Crowding.level(lone), 0, "a tree on its own is not crowded")
+	_eq(Crowding.mask(lone), 0, "a tree on its own is not crowded")
 	var around: Array[Vector2i] = [Vector2i(9, 9), Vector2i(9, 10), Vector2i(9, 11), Vector2i(10, 9), Vector2i(10, 11)]
 	var uid := 9302
 	for rc in around:
 		Game.add_object({"uid": uid, "id": "apple_tree", "row": rc.x, "col": rc.y, "t": Game.now()})
 		uid += 1
-	var share := Crowding.of(lone)
+	var share := Crowding.share_of(Crowding.mask(lone))
 	_check(share > 0.5 and share < 0.7, "five of its eight neighbours are trees (%.2f)" % share)
+	_check(Crowding.covered(Crowding.mask(lone), -PI / 2.0), "the side towards the row above is covered")
+	_check(not Crowding.covered(Crowding.mask(lone), PI / 2.0), "the open side is not")
 	var cow := {"uid": 9310, "id": "cow", "row": 11, "col": 10, "t": Game.now()}
 	Game.add_object(cow)
-	_eq(Crowding.of(cow), 0.0, "animals don't crowd")
+	_eq(Crowding.mask(cow), 0, "animals don't crowd")
 	var objects := Objects3D.new()
 	add_child(objects)
 	var key_with: String = objects.call("_key", lone)
@@ -822,14 +824,47 @@ func test_146_trees_standing_together_grow_together() -> void:
 	add_child(b)
 	TreeModel.build_at(a, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, false, 5, false)
 	TreeModel.build_at(b, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, false, 5, false,
-		TreeModel.UNSET, 1.0)
+		TreeModel.UNSET, 0xff)
 	var box_a := _tree_bounds(a)
 	var box_b := _tree_bounds(b)
 	_check(box_b.size.y > box_a.size.y, "a crowded tree stands taller (%.2f over %.2f)" % [box_b.size.y, box_a.size.y])
-	_check(box_b.size.x > box_a.size.x, "with a wider crown (%.2f over %.2f)" % [box_b.size.x, box_a.size.x])
+	# ...and costs less: the parts that face a neighbour are left out (two side by side cost about 1.5 trees).
+	var tris := func(root: Node3D) -> int:
+		var n := 0
+		for m in _meshes(root):
+			var mesh := (m as MeshInstance3D).mesh
+			for s in mesh.get_surface_count():
+				n += (mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
+		return n
+	var alone: int = tris.call(a)
+	var packed: int = tris.call(b)
+	_check(packed <= alone * 0.8, "a packed tree draws at most 80%% of a lone one's triangles (%d vs %d)" % [packed,
+		alone])
+	# Fences share the post where one tile ends and the next begins.
+	Game.set_objects([])
+	var f1 := {"uid": 9401, "id": "wooden_fence", "row": 5, "col": 5, "t": Game.now()}
+	var f2 := {"uid": 9402, "id": "wooden_fence", "row": 6, "col": 5, "t": Game.now()}
+	Game.add_object(f1)
+	var single := DecorModel.build(Game.item_data("wooden_fence"), Vector2i(1, 1), f1)
+	Game.add_object(f2)
+	var joined := DecorModel.build(Game.item_data("wooden_fence"), Vector2i(1, 1), f1)
+	_check(tris.call(joined) < tris.call(single), "a fence tile joined to the next shares its end post")
+	single.free()
+	joined.free()
 	a.queue_free()
 	b.queue_free()
 	objects.queue_free()
+
+
+func _meshes(root: Node) -> Array:
+	var out := []
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+			out.append(n)
+	return out
 
 
 func _tree_bounds(root: Node3D) -> AABB:

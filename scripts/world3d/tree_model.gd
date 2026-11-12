@@ -60,10 +60,12 @@ static func forms() -> Array:
 
 
 ## A tree standing on `base` under `parent`; `size` 1 is a full tree on its own tile (crown nearly as wide
-## as it). `leaf` overrides the kind's leaf colour when given. `crowd` (see Crowding) is how packed in it stands:
-## more shade underneath, a taller trunk and a crown that swells to meet its neighbours'.
+## as it). `leaf` overrides the kind's leaf colour when given. `mask` (see Crowding) is which tiles round it hold
+## trees: more shade underneath, a taller trunk, a crown that swells to meet its neighbours', and no parts on the
+## sides they cover.
 static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0, ready := false,
-		seed_value := 0, fruit := true, leaf := UNSET, crowd := 0.0) -> Node3D:
+		seed_value := 0, fruit := true, leaf := UNSET, mask := 0) -> Node3D:
+	var crowd := Crowding.share_of(mask)
 	var root := Node3D.new()
 	root.position = base
 	parent.add_child(root)
@@ -73,7 +75,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	# Its height: its kind's (oaks low and broad, cherries tall), and this tree's own within that.
 	var tall := float(sh.get("tall", 1.0)) * rng.randf_range(TALL_MIN, TALL_MAX)
 	var upright := str(sh["form"]) not in ["palm", "banana"]
-	sh["trunk_h"] = float(sh["trunk_h"]) * tall * (TRUNK_TALL if upright else 1.0) * (1.0 + Crowding.LIFT * crowd) \
+	var lift := 1.0 + Crowding.setting("tree", "lift") * crowd
+	sh["trunk_h"] = float(sh["trunk_h"]) * tall * (TRUNK_TALL if upright else 1.0) * lift \
 		* (rng.randf_range(TRUNK_VARY_MIN, TRUNK_VARY_MAX) if upright else 1.0)
 	sh["crown_h"] = float(sh["crown_h"]) * tall
 	# This tree's own variation: a little taller or shorter, leaning a little, turned its own way.
@@ -82,8 +85,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var leaf_col := leaf if leaf.a > 0.0 else Color.html(str(sh.get("leaf", LEAF.to_html())))
 	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-0.025, 0.025), leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
-	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.SWELL * crowd)
-	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "leaf": leaf_col,
+	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd)
+	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col,
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
 	var crown: Vector3
@@ -148,7 +151,7 @@ static func _trunk(t: Dictionary) -> Vector3:
 	var r := float(sh["trunk_r"]) * k * TRUNK_BULK
 	var lean: Vector3 = t["lean"]
 	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h,
-		ModelKit.paint(BARK.darkened(Crowding.SHADE * float(t["crowd"]))), r * 0.6, 8)
+		ModelKit.paint(BARK.darkened(Crowding.setting("tree", "shade") * float(t["crowd"]))), r * 0.6, 8)
 	trunk.rotation = Vector3(lean.z, 0, -lean.x)
 	# The trunk flares at the foot into roots that grip the ground.
 	ModelKit.cylinder(root, Vector3.ZERO, r * 1.9, r * 1.4, ModelKit.paint(BARK), r * 1.0, 8)
@@ -203,7 +206,8 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var foot := Vector3(centre.x, centre.y - float(sh["crown_h"]) * k * 0.6, centre.z)
 	# The light in the tree's own space (the tree is turned at random, the sun is not).
 	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -float(t["root"].rotation.y))
-	var shaded := float(t["crowd"]) * Crowding.SHADE   # in a grove the lower crown is in its neighbours' shade
+	# In a grove the lower crown is in its neighbours' shade.
+	var shaded := float(t["crowd"]) * Crowding.setting("tree", "shade")
 	var lobes := int(sh.get("lobes", CROWN_LOBES))
 	var bump := float(sh.get("bump", CROWN_BUMP))
 	# The core, a soft mass of the whole crown's width, then the masses around it: each one smooth and lumpy,
@@ -219,6 +223,9 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		var p := mid + Vector3(cos(a) * d, y * ch * 0.7, sin(a) * d)
 		var size := cr * mass * lay.z * rng.randf_range(0.85, 1.1)
 		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
+		# A mass on a side a neighbour covers is hidden anyway: every other one is left out, with its limb.
+		if i % 2 == 1 and Crowding.covered(int(t["mask"]), a - root.rotation.y):
+			continue
 		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine)
 		(t["blobs"] as Array).append([p, size, a])
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
