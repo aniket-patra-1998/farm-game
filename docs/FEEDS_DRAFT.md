@@ -66,7 +66,10 @@ hungry thought bubble, with no gameplay penalty.
 - Tests: each family has a taste; the chances/caps are in data; effects change payout/cycle/rare as stated;
   nothing is lost at the cap; save and load; "pure FarmVille" flag turns it all off.
 
-## Questions for you
-1. OK that feeding is **optional and bonus-only** (no hunger penalty)? Or do you want hungry animals to produce less?
-2. Five feed types as above, or fewer (e.g. only Grain, Greens, Fruit) for simplicity?
-3. Keep the "one switch for pure FarmVille" idea?
+## Decided by you
+- Hungry animals **produce less** (not bonus-only). Proposed numbers: unfed -30% coins per collect (never zero), fed
+  normal, favourite/rich feed as the effects table. Needs the helpers below so it is not a chore.
+- Five feed types.
+- Helpers: feeding is also done by the farmhand (and any future helper that fits: arborist feeds nothing, trees
+  have no feed). Rule for all future systems: each action is declared once with which helpers can do it, and a test
+  fails if a new action has no declaration.
