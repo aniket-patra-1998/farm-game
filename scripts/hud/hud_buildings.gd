@@ -220,7 +220,7 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 ## The Garden Shed: Perfect Bunches found while harvesting flowers, ready to place for 14 days.
 func add_shed_info(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(tr("PERFECT_BUNCHES_OF_HARVESTING_FLOWERS_SOMETIMES") % [
-		Game.shed.bunches.size(), Game.shed.bunch_cap(), BarnStorage.BUNCH_DAYS], 17, BookPanel.CREAM))
+		Game.shed.bunches.size(), Game.shed.bunch_cap(), Balance.i("barn.bunch_days")], 17, BookPanel.CREAM))
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", 10)
 	flow.add_theme_constant_override("v_separation", 10)
@@ -299,8 +299,8 @@ func build_fuel(content: VBoxContainer) -> void:
 	content.add_child(
 		BookPanel.text(
 			tr("ALL_VEHICLES_SHARE_ONE_TANK_OF") % [
-				VehicleSystem.FUEL_TANK,
-				int(VehicleSystem.FUEL_REGEN_SECONDS / 60.0)
+				Balance.i("vehicles.fuel_tank"),
+				int(Balance.i("vehicles.fuel_regen_seconds") / 60.0)
 			],
 			18,
 			BookPanel.CREAM
@@ -310,18 +310,18 @@ func build_fuel(content: VBoxContainer) -> void:
 	card.add_theme_constant_override("separation", 8)
 	card.add_child(
 		BookPanel.text(
-			tr("TANK_OF_SPARE_TANKS") % [fuel, VehicleSystem.FUEL_TANK, Game.vehicles.fuel_tanks],
+			tr("TANK_OF_SPARE_TANKS") % [fuel, Balance.i("vehicles.fuel_tank"), Game.vehicles.fuel_tanks],
 			21
 		)
 	)
 	var bar := ProgressBar.new()
 	bar.show_percentage = false
 	bar.custom_minimum_size.y = 18
-	bar.max_value = VehicleSystem.FUEL_TANK
+	bar.max_value = Balance.i("vehicles.fuel_tank")
 	bar.value = fuel
 	card.add_child(bar)
-	var buy := hud._panel_button(tr("BUY_A_FULL_TANK_GEMS") % VehicleSystem.FUEL_TANK_GEM_COST)
-	buy.disabled = Game.gems < VehicleSystem.FUEL_TANK_GEM_COST
+	var buy := hud._panel_button(tr("BUY_A_FULL_TANK_GEMS") % Balance.i("vehicles.fuel_tank_gem_cost"))
+	buy.disabled = Game.gems < Balance.i("vehicles.fuel_tank_gem_cost")
 	buy.pressed.connect(func() -> void: Game.vehicles.buy_fuel_tank())
 	card.add_child(buy)
 	content.add_child(BookPanel.card_frame(card))
@@ -345,8 +345,8 @@ func add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
 		put.disabled = Game.bees.queen_bees <= 0
 		put.pressed.connect(func() -> void: Game.bees.add_queen(uid))
 		row.add_child(put)
-		var buy := hud._panel_button(tr("BUY_QUEEN_BEE_GEMS") % BeehiveSystem.QUEEN_GEM_COST)
-		buy.disabled = Game.gems < BeehiveSystem.QUEEN_GEM_COST
+		var buy := hud._panel_button(tr("BUY_QUEEN_BEE_GEMS") % Balance.i("bees.queen_gem_cost"))
+		buy.disabled = Game.gems < Balance.i("bees.queen_gem_cost")
 		buy.pressed.connect(func() -> void: Game.bees.add_queen(uid, true))
 		row.add_child(buy)
 		content.add_child(row)
@@ -354,7 +354,7 @@ func add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
 		BookPanel.text(
 			tr("POLLINATION_HARVESTING_A_FERTILIZED_CROP_HAS") % [
 				int(round(Game.bees.pollination_chance() * 100)),
-				BeehiveSystem.BEES_STAY_DAYS
+				Balance.i("bees.bees_stay_days")
 			],
 			17,
 			BookPanel.CREAM
@@ -369,9 +369,9 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 	card.add_theme_constant_override("separation", 8)
 	card.add_child(BookPanel.text(tr("TRUFFLES_HELD") % Game.pigpen.truffles, 21))
 	if not Game.pigpen.is_foraging(o):
-		card.add_child(BookPanel.text(tr("FEED_THE_PIGS_SLOP_AND_THEY") % PigPenSystem.PIGS_PER_TRUFFLE, 17))
-		var feed := hud._panel_button(tr("FEED_SLOP_COINS") % PigPenSystem.SLOP_COST)
-		feed.disabled = pigs == 0 or Game.coins < PigPenSystem.SLOP_COST
+		card.add_child(BookPanel.text(tr("FEED_THE_PIGS_SLOP_AND_THEY") % Balance.i("pigpen.pigs_per_truffle"), 17))
+		var feed := hud._panel_button(tr("FEED_SLOP_COINS") % Balance.i("pigpen.slop_cost"))
+		feed.disabled = pigs == 0 or Game.coins < Balance.i("pigpen.slop_cost")
 		feed.pressed.connect(func() -> void: Game.pigpen.feed_slop(uid))
 		card.add_child(feed)
 	elif Game.pigpen.forage_seconds_left(o) > 0:
@@ -385,13 +385,13 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 			if n > 0:
 				hud.show_message(tr("TRUFFLES") % n))
 		card.add_child(dig)
-	card.add_child(BookPanel.text(tr("TRADE_TRUFFLES_FOR_A_RARE_PIG") % PigPenSystem.TRUFFLES_PER_PIG, 18))
+	card.add_child(BookPanel.text(tr("TRADE_TRUFFLES_FOR_A_RARE_PIG") % Balance.i("pigpen.truffles_per_pig"), 18))
 	var breeds := HFlowContainer.new()
 	breeds.add_theme_constant_override("h_separation", 10)
 	breeds.add_theme_constant_override("v_separation", 10)
 	for id in Game.pigpen.rare_pigs():
 		var b := hud._panel_button(Game.item_data(id)["name"])
-		b.disabled = Game.pigpen.truffles < PigPenSystem.TRUFFLES_PER_PIG
+		b.disabled = Game.pigpen.truffles < Balance.i("pigpen.truffles_per_pig")
 		var breed: String = id
 		b.pressed.connect(func() -> void: Game.pigpen.trade_truffles(breed))
 		breeds.add_child(b)

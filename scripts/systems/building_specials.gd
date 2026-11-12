@@ -3,18 +3,8 @@ extends GameSystem
 ## What buildings do when collected: babies, helpers, fertilizer, rare saplings, grow-ups.
 ## Part of the game state: reached as `Game.specials`; shared state is on `game`.
 
-const LAMB_CHANCE := 0.25          # Sheep Pen harvest with a ram inside
-const PIGLET_CHANCE := 0.25        # Pig Pen harvest with a boar inside
 
 # Building specials, the FarmVille way.
-const CALF_CHANCE := 0.25          # Dairy Farm harvest with a bull inside
-const FERTILIZER_CHANCE := 0.10    # Dairy Farm harvest drops a bag of fertilizer
-const FOAL_CHANCE := 0.25          # Horse Stable harvest with a stallion inside
-const STABLE_HELPER_CHANCE := 0.15 # Stable harvest: a farmhand, and separately an arborist
-const STABLE_XP_CHANCE := 0.10     # Stable harvest with a stallion: 100 XP
-const STABLE_XP := 100
-const NURSERY_SPARE_XP := 25       # stands in for FarmVille's spare baby to gift a friend
-const FERTILIZE_ALL_CHANCE := 0.10 # per hive collection
 
 
 
@@ -87,10 +77,10 @@ func building_specials(b: Dictionary) -> Array[String]:
 				game.message.emit(tr("YOU_FOUND_A_OPEN_IT_FROM") % egg_name)
 				out.append(egg_name + "!")
 		"calves":
-			if game.drops_enabled and game.rng.randf() < FERTILIZER_CHANCE:
+			if game.drops_enabled and game.rng.randf() < Balance.f("specials.fertilizer_chance"):
 				game.fertilizer_bags += 1
 				out.append(tr("FERTILIZER"))
-			if game.has_inside(b, "bull") and game.drops_enabled and game.rng.randf() < CALF_CHANCE:
+			if game.has_inside(b, "bull") and game.drops_enabled and game.rng.randf() < Balance.f("specials.calf_chance"):
 				var calf := _pick_baby(b, "calf")
 				if game.place_somewhere(calf):
 					game.message.emit(
@@ -99,36 +89,36 @@ func building_specials(b: Dictionary) -> Array[String]:
 					out.append("A %s!" % game.item_data(calf)["name"].to_lower())
 		"foals":
 			var with_stallion := game.has_inside(b, "stallion")
-			if game.drops_enabled and with_stallion and game.rng.randf() < FOAL_CHANCE:
+			if game.drops_enabled and with_stallion and game.rng.randf() < Balance.f("specials.foal_chance"):
 				var foal := _pick_baby(b, "foal")
 				if game.place_somewhere(foal):
 					game.message.emit(
 						tr("A_WAS_BORN_RAISE_IT_IN") % game.item_data(foal)["name"].to_lower()
 					)
 					out.append("A %s!" % game.item_data(foal)["name"].to_lower())
-			if game.drops_enabled and game.rng.randf() < STABLE_HELPER_CHANCE:
+			if game.drops_enabled and game.rng.randf() < Balance.f("specials.stable_helper_chance"):
 				game.farmhands += 1
 				out.append(tr("FARMHAND"))
-			if game.drops_enabled and game.rng.randf() < STABLE_HELPER_CHANCE:
+			if game.drops_enabled and game.rng.randf() < Balance.f("specials.stable_helper_chance"):
 				game.arborists += 1
 				out.append(tr("ARBORIST"))
-			if game.drops_enabled and with_stallion and game.rng.randf() < STABLE_XP_CHANCE:
-				game.add_xp(STABLE_XP)
-				out.append(tr("XP") % STABLE_XP)
+			if game.drops_enabled and with_stallion and game.rng.randf() < Balance.f("specials.stable_xp_chance"):
+				game.add_xp(Balance.i("specials.stable_xp"))
+				out.append(tr("XP") % Balance.i("specials.stable_xp"))
 		"nursery":
 			out.append_array(_grow_babies(b))
 		"lambs":
-			if game.has_inside(b, "ram") and game.drops_enabled and game.rng.randf() < LAMB_CHANCE:
+			if game.has_inside(b, "ram") and game.drops_enabled and game.rng.randf() < Balance.f("specials.lamb_chance"):
 				if game.place_somewhere("lamb"):
 					game.message.emit(tr("A_LAMB_WAS_BORN_RAISE_IT"))
 					out.append(tr("A_LAMB"))
 		"truffles":
-			if game.has_inside(b, "boar") and game.drops_enabled and game.rng.randf() < PIGLET_CHANCE:
+			if game.has_inside(b, "boar") and game.drops_enabled and game.rng.randf() < Balance.f("specials.piglet_chance"):
 				if game.place_somewhere("piglet"):
 					game.message.emit(tr("A_PIGLET_WAS_BORN_RAISE_IT"))
 					out.append(tr("A_PIGLET"))
 		"beehive":
-			if game.drops_enabled and game.rng.randf() < FERTILIZE_ALL_CHANCE:
+			if game.drops_enabled and game.rng.randf() < Balance.f("specials.fertilize_all_chance"):
 				game.fertilize_alls += 1
 				game.message.emit(tr("THE_BEES_LEFT_A_FERTILIZE_ALL"))
 				out.append(tr("FERTILIZE_ALL_2"))
@@ -158,7 +148,7 @@ func _grow_babies(nursery: Dictionary) -> Array[String]:
 			inside[baby[0]] = int(inside.get(baby[0], 0)) - 1
 			if int(inside[baby[0]]) <= 0:
 				inside.erase(baby[0])
-			game.add_xp(NURSERY_SPARE_XP)
+			game.add_xp(Balance.i("specials.nursery_spare_xp"))
 			game.ribbons.bump("babies_raised", 1)
 			var adult_name: String = game.item_data(into.get(baby[0], baby[0]))["name"]
 			game.message.emit(

@@ -3,7 +3,6 @@ extends GameSystem
 ## Mystery Eggs and the Mystery Box: weighted prize draws.
 ## Part of the game state: reached as `Game.mystery`; shared state is on `game`.
 
-const MYSTERY_BOX_GEM_COST := 12
 
 var mystery_eggs := {}             # egg colour -> count
 var egg_data := {}                 # data/mystery_eggs.json
@@ -122,7 +121,9 @@ func _weighted_prize(prizes: Array) -> Array:
 ## FarmVille's Mystery Box: bought with premium currency, opens into one random prize.
 ## Some things (the Donkey) come only from here.
 func buy_mystery_box() -> String:
-	if box_data.is_empty() or not game.spend_gems(int(box_data.get("gem_cost", MYSTERY_BOX_GEM_COST))):
+	if box_data.is_empty() or not game.spend_gems(
+		int(box_data.get("gem_cost", Balance.i("mystery.mystery_box_gem_cost")))
+	):
 		return ""
 	return _open_box()
 

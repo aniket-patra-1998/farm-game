@@ -5,16 +5,6 @@ extends GameSystem
 
 # Beehive, as in FarmVille: a Queen Bee makes the hive work, worker bees join it,
 # and the bees pollinate fertilized crops nearby.
-const QUEEN_CHANCE := 0.008        # a Queen Bee found on a flower harvest
-const QUEEN_GEM_COST := 10
-const BEE_CHANCE := 0.25           # per flower harvest, only into a hive with a queen
-const POLLINATION_PER_BEE := 1.0 / 400.0
-const MAX_POLLINATION := 0.5
-const POLLINATED_SEEDS := 5        # given per pollination
-const POLLINATED_LIFETIME := 2 * 86400
-const BEES_STAY_DAYS := 3          # away longer than this, bees start to leave
-const BEES_LEAVE_PER_DAY := 0.15
-const QUEEN_STAYS_DAYS := 14
 
 var queen_bees := 0                # Queen Bees held, waiting for a hive
 var pollinated := {}               # crop id -> [seed count, expires at]
@@ -65,7 +55,7 @@ func has_queen(hive: Dictionary) -> bool:
 
 ## Chance that harvesting a fertilized crop gives pollinated seeds.
 func pollination_chance() -> float:
-	return minf(MAX_POLLINATION, bee_count() * POLLINATION_PER_BEE)
+	return minf(Balance.f("bees.max_pollination"), bee_count() * Balance.f("bees.pollination_per_bee"))
 
 
 ## Puts a Queen Bee in a finished hive: one you hold, or one bought for gems.
@@ -76,7 +66,7 @@ func add_queen(uid: int, buy := false) -> bool:
 	if not buy and queen_bees > 0:
 		queen_bees -= 1
 	elif buy:
-		if not game.spend_gems(QUEEN_GEM_COST):
+		if not game.spend_gems(Balance.i("bees.queen_gem_cost")):
 			game.message.emit(tr("NOT_ENOUGH_GEMS_FOR_A_QUEEN"))
 			return false
 	else:
@@ -95,7 +85,9 @@ func flower_harvest_bees() -> String:
 		return ""
 	var all := hives()
 	var queenless := all.filter(func(h: Dictionary) -> bool: return not has_queen(h))
-	if (all.is_empty() or not queenless.is_empty()) and queen_bees == 0 and game.rng.randf() < QUEEN_CHANCE:
+	if (
+		all.is_empty() or not queenless.is_empty()
+	) and queen_bees == 0 and game.rng.randf() < Balance.f("bees.queen_chance"):
 		queen_bees += 1
 		game.ribbons.bump("queens_found", 1)
 		game.message.emit(tr("YOU_FOUND_A_QUEEN_BEE_PUT"))
@@ -103,7 +95,7 @@ func flower_harvest_bees() -> String:
 		return tr("A_QUEEN_BEE")
 	for h in all:
 		if has_queen(h) and game.inside_total(h) < game.capacity(h):
-			if game.rng.randf() >= BEE_CHANCE:
+			if game.rng.randf() >= Balance.f("bees.bee_chance"):
 				return ""
 			put_bee_in(h)
 			game.ribbons.bump("bees_found", 1)
@@ -135,14 +127,14 @@ func take_pollinated_seed(crop_id: String) -> bool:
 func pollinate(crop_id: String) -> int:
 	if not game.drops_enabled or game.rng.randf() >= pollination_chance():
 		return 0
-	var n := pollinated_seeds(crop_id) + POLLINATED_SEEDS
-	pollinated[crop_id] = [n, game.now() + POLLINATED_LIFETIME]
+	var n := pollinated_seeds(crop_id) + Balance.i("bees.pollinated_seeds")
+	pollinated[crop_id] = [n, game.now() + Balance.i("bees.pollinated_lifetime")]
 	game.ribbons.bump("pollinated", 1)
 	game.message.emit(
 		tr("YOUR_BEES_POLLINATED_THE_POLLINATED_SEEDS") % [game.crops[crop_id]["name"].to_lower(), n]
 	)
 	game.inventory_changed.emit()
-	return POLLINATED_SEEDS
+	return Balance.i("bees.pollinated_seeds")
 
 
 ## Pollinated seeds held for a crop, dropping any that expired.
@@ -184,10 +176,10 @@ func use_fertilize_all() -> int:
 ## Returns a note for the player, or "".
 func apply_absence(seconds_away: int) -> String:
 	var days := seconds_away / 86400.0
-	if days <= BEES_STAY_DAYS:
+	if days <= Balance.i("bees.bees_stay_days"):
 		return ""
 	var notes: Array[String] = []
-	var share := minf(1.0, (days - BEES_STAY_DAYS) * BEES_LEAVE_PER_DAY)
+	var share := minf(1.0, (days - Balance.i("bees.bees_stay_days")) * Balance.f("bees.bees_leave_per_day"))
 	for h in hives():
 		var count := game.inside_total(h)
 		var gone := mini(count, int(ceil(count * share)))
@@ -197,7 +189,7 @@ func apply_absence(seconds_away: int) -> String:
 			if int(inside["bee"]) <= 0:
 				inside.erase("bee")
 			notes.append(tr("BEES_LEFT_WHILE_AWAY") % gone)
-		if days > QUEEN_STAYS_DAYS and has_queen(h):
+		if days > Balance.i("bees.queen_stays_days") and has_queen(h):
 			h.erase("queen")
 			notes.append(tr("THE_QUEEN_BEE_FLEW_OFF"))
 	return "; ".join(PackedStringArray(notes))

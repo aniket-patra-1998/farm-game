@@ -107,7 +107,7 @@ func market_row(id: String, it: Dictionary) -> Control:
 				Game.buy_xp(id),
 				fpd.x,
 				fpd.y,
-				int(round(int(it["cost"]) * GameState.SELL_SHARE))
+				int(round(int(it["cost"]) * Balance.f("market.sell_share")))
 			]
 		_:
 			var what: String = it.get("product", tr("FRUIT"))
@@ -158,7 +158,7 @@ func mystery_box_card() -> Control:
 			17
 		)
 	)
-	var cost := int(Game.mystery.box_data.get("gem_cost", MysterySystem.MYSTERY_BOX_GEM_COST))
+	var cost := int(Game.mystery.box_data.get("gem_cost", Balance.i("mystery.mystery_box_gem_cost")))
 	var buy := hud._panel_button(tr("OPEN_ONE_GEMS") % cost)
 	buy.disabled = Game.gems < cost
 	buy.pressed.connect(func() -> void:

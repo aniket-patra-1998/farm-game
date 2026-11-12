@@ -93,7 +93,7 @@ func test_122_blooms_wither_regrow_upgrade_and_share_mastery() -> void:
 	var got := g.collect(uid)
 	_check(int(got.get("coins", 0)) > 0, "harvested for coins")
 	_eq(g.mastery.points_of("rose_bloom"), 1, "one mastery point")
-	_skip(g, g.cycle_of(rose) + BloomDef.WITHER_AFTER)
+	_skip(g, g.cycle_of(rose) + Balance.i("blooms.wither_after"))
 	_check(g.is_withered(rose) and not g.is_ready(rose), "left ready 7 days: withered")
 	_check(g.collect(uid).is_empty(), "a withered bloom can't be harvested")
 	_eq(p.enqueue({"kind": "nurture", "uid": uid}), PlayerSystem.Refused.SUPPLY, "no Flower Food to regrow it")
@@ -108,7 +108,7 @@ func test_122_blooms_wither_regrow_upgrade_and_share_mastery() -> void:
 	_eq(g.object_by_uid(uid)["id"], "rose_full_bloom", "to its Full Bloom")
 	_eq(g.gems, 100 - int(g.item_data("rose_bloom")["upgrade_gems"]), "for its gems")
 	_check(not g.nurture.upgrade_bloom(uid), "a Full Bloom can't be upgraded again")
-	_skip(g, g.cycle_of(rose) + BloomDef.WITHER_AFTER * 3)
+	_skip(g, g.cycle_of(rose) + Balance.i("blooms.wither_after") * 3)
 	_check(g.is_ready(rose) and not g.is_withered(rose), "a Full Bloom never withers")
 	g.collect(uid)
 	_eq(g.mastery.points_of("rose_bloom"), 3, "and counts double toward the rose's shared mastery")
@@ -148,10 +148,10 @@ func test_123_mystery_bulbs_and_the_bloom_garden() -> void:
 	_check(g.building_accepts(garden, "rose_full_bloom") and not g.building_accepts(garden, "apple_tree"),
 		"blooms only")
 	garden["inside"] = {"rose_bloom": 10, "iris_full_bloom": 2}
-	_skip(g, g.cycle_of(garden) + BloomDef.WITHER_AFTER * 2)
+	_skip(g, g.cycle_of(garden) + Balance.i("blooms.wither_after") * 2)
 	var food := g.nurture.has_supply("flower_food")
 	_check(not g.collect(int(garden["uid"])).is_empty(), "blooms in the garden never wither")
-	_eq(g.nurture.has_supply("flower_food"), food + NurtureSystem.GARDEN_FOOD, "and its harvest gives Flower Food")
+	_eq(g.nurture.has_supply("flower_food"), food + Balance.i("nurture.garden_food"), "and its harvest gives Flower Food")
 	_eq(g.mastery.points_of("iris_bloom"), 4, "Full Blooms inside count double toward mastery")
 	# Blooms on the farm give bulbs now and then, Full Blooms twice as often.
 	for k in 400:

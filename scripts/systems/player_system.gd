@@ -158,11 +158,11 @@ func committed() -> int:
 func cost(job: Dictionary) -> int:
 	match str(job["kind"]):
 		"plow":
-			return GameState.PLOW_COST
+			return Balance.i("economy.plow_cost")
 		"plant":
 			return int(game.crops.get(str(job.get("crop", "")), {}).get("seed_cost", 0))
 		"fertilize":
-			return GameState.FERTILIZER_COST
+			return Balance.i("economy.fertilizer_cost")
 	return 0
 
 

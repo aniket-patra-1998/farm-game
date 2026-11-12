@@ -7,11 +7,11 @@ func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
 	g.coins = 100000
 	var found := 0
 	var i := _free(g)
-	for k in HarvestDrops.COLLECTIBLE_PITY:
+	for k in Balance.i("harvest.collectible_pity"):
 		var r := _grow_and_harvest(g, i, "strawberries")
 		if r.get("drop", "") == "collectible":
 			found += 1
-	_check(found >= 1, "at least one collectible in %d harvests" % HarvestDrops.COLLECTIBLE_PITY)
+	_check(found >= 1, "at least one collectible in %d harvests" % Balance.i("harvest.collectible_pity"))
 	_done(g)
 
 
@@ -162,13 +162,13 @@ func test_77_mystery_box_and_cornish_eggs() -> void:
 	_eq(g.mystery.buy_mystery_box(), "", "no box without gems")
 	var got := {}
 	for k in 30:
-		g.gems = MysterySystem.MYSTERY_BOX_GEM_COST
+		g.gems = Balance.i("mystery.mystery_box_gem_cost")
 		var prize := g.mystery.buy_mystery_box()
 		_check(prize != "", "a box opens into a prize")
 		# Coins can finish a ribbon that pays gems, so only check boxes that gave neither.
 		_check(
 			g.gems == 0 or prize.ends_with("gems") or prize.ends_with("coins"),
-			"a box costs %d gems (%s left %d)" % [MysterySystem.MYSTERY_BOX_GEM_COST, prize, g.gems]
+			"a box costs %d gems (%s left %d)" % [Balance.i("mystery.mystery_box_gem_cost"), prize, g.gems]
 		)
 		got[prize] = true
 	_check(got.size() >= 4, "boxes give different things (%d kinds)" % got.size())
@@ -267,7 +267,11 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 		g.field.plow(i)
 		g.plots[i] = {"state": "grass"}
 	_eq(fuel_finds[0], 1, "fuel turns up while plowing, but only once a day")
-	_eq(g.vehicles.fuel_now(), int(VehicleSystem.FUEL_TANK * VehicleSystem.FUEL_FIND_SHARE), "a quarter of a tank")
+	_eq(
+		g.vehicles.fuel_now(),
+		int(Balance.i("vehicles.fuel_tank") * Balance.f("vehicles.fuel_find_share")),
+		"a quarter of a tank"
+	)
 	_skip(g, 86400)
 	for k in 200:
 		var i := _free(g)
@@ -284,7 +288,7 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 		var i := _free(low)
 		low.field.plow(i)
 		low.plots[i] = {"state": "grass"}
-	_eq(low_found[0], 0, "not before level %d" % VehicleSystem.FUEL_LEVEL)
+	_eq(low_found[0], 0, "not before level %d" % Balance.i("vehicles.fuel_level"))
 	_done(g)
 
 
@@ -333,7 +337,7 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	_check(not wheat_bunch, "only flowers give bunches")
 	for k in 20:
 		g.shed.add_bunch("lilac")
-	_eq(g.shed.bunches.size(), GardenShedSystem.BUNCH_CAP_NO_SHED, "10 at most without a Garden Shed")
+	_eq(g.shed.bunches.size(), Balance.i("shed.bunch_cap_no_shed"), "10 at most without a Garden Shed")
 	g.coins = 29999
 	_check(not g.can_afford_item("garden_shed"), "the shed costs 30,000 coins, as in FarmVille")
 	g.coins = 1000000
@@ -341,7 +345,7 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	_eq(g.shed.bunch_cap(), 100, "the shed holds 100")
 	_eq(
 		g.shed.bunches.size(),
-		GardenShedSystem.BUNCH_CAP_NO_SHED + GardenShedSystem.SHED_FREE_BUNCHES,
+		Balance.i("shed.bunch_cap_no_shed") + Balance.i("shed.shed_free_bunches"),
 		"and comes with 10 free bunches"
 	)
 	var at := g.shed.unpack_bunch(0)
@@ -349,7 +353,7 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	_check(g.storage.place_from_storage(at, 2, 8) or g.storage.place_from_storage(at, 3, 9), "placed on the farm")
 	var placed: Array = g.objects.filter(func(o): return o["id"] == "perfect_bunch")
 	_eq(placed.size(), 1, "one bunch on the farm")
-	_eq(int(placed[0]["expires"]) - g.now(), BarnStorage.BUNCH_DAYS * 86400, "it lasts 14 days")
+	_eq(int(placed[0]["expires"]) - g.now(), Balance.i("barn.bunch_days") * 86400, "it lasts 14 days")
 	_skip(g, 15 * 86400)
 	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o["id"] == "perfect_bunch").size(), 0, "then wilts away")

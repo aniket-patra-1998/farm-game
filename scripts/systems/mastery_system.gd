@@ -18,7 +18,6 @@ const PRODUCER_TWO_DAYS := [6, 18, 36]
 const PRODUCER_SLOW := [3, 9, 18]      # longer
 const STAR_COINS := [100, 300, 1000]
 const STAR_XP := [10, 30, 100]
-const FAST_CROP_SECONDS := 6 * 3600
 const DAY := 86400
 
 var points := {}                       # item or crop id -> mastery points
@@ -48,7 +47,7 @@ func points_of(id: String) -> int:
 func thresholds(id: String) -> Array:
 	if game.crops.has(id):
 		var grow := int(game.crops[id]["grow_seconds"])
-		if grow <= FAST_CROP_SECONDS:
+		if grow <= Balance.i("mastery.fast_crop_seconds"):
 			return CROP_FAST
 		return CROP_MEDIUM if grow < DAY else CROP_SLOW
 	var cycle := int(game.item_data(id).get("cycle_seconds", DAY))

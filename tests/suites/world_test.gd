@@ -181,7 +181,7 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 
 
 func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
-	var t0 := 1_800_000_000 - 1_800_000_000 % Weather.BLOCK
+	var t0 := 1_800_000_000 - 1_800_000_000 % Weather.block()
 	_eq(
 		Weather.state_at(t0 + 100, "Summer", 12.0),
 		Weather.state_at(t0 + 9000, "Summer", 14.5),
@@ -194,7 +194,7 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 	)
 	var count := {}
 	for b in 2000:
-		var t := t0 + b * Weather.BLOCK
+		var t := t0 + b * Weather.block()
 		var hour := fposmod(12.0 + b * 3.0, 24.0)
 		var s := Weather.state_at(t, "Summer", hour)
 		count[s] = int(count.get(s, 0)) + 1
@@ -206,11 +206,11 @@ func test_83_weather_is_steady_seasonal_and_eases_in() -> void:
 	_check(count.has("rain") and count.has("storm"), "but it rains sometimes")
 	var winter_snow := 0
 	for b in 500:
-		if Weather.state_at(t0 + b * Weather.BLOCK, "Winter", 12.0) == "snow":
+		if Weather.state_at(t0 + b * Weather.block(), "Winter", 12.0) == "snow":
 			winter_snow += 1
 	_check(winter_snow > 50, "winter brings snow (%d of 500)" % winter_snow)
 	_eq(Weather.strength_at(t0), 0.0, "weather starts faded out at a block's edge")
-	_eq(Weather.strength_at(t0 + Weather.BLOCK / 2), 1.0, "and is full strength mid-block")
+	_eq(Weather.strength_at(t0 + Weather.block() / 2), 1.0, "and is full strength mid-block")
 	var storm := Weather.current(t0, "Summer", 12.0, "storm")
 	_eq(storm["state"], "storm", "an override forces the weather")
 	_eq(float(storm["rain"]), 1.0, "a storm rains hard")

@@ -103,7 +103,7 @@ func _show(lvl: int) -> void:
 	visible = true
 	Game.modal_open = true
 	_level_label.text = str(lvl)
-	_reward_label.text = tr("COINS_GEM") % [Game.level_reward(lvl), GameState.GEMS_PER_LEVEL]
+	_reward_label.text = tr("COINS_GEM") % [Game.level_reward(lvl), Balance.i("economy.gems_per_level")]
 	for child in _unlocks.get_children():
 		child.queue_free()
 	var names := Game.unlocks_at(lvl)

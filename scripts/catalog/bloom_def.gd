@@ -3,7 +3,6 @@ extends ProducerDef
 ## A FarmVille Bloom. A Single Bloom links to the Full Bloom it upgrades to (`full`), and the Full Bloom back
 ## (`single_of`). Single and Full of a flower share one mastery, the Full counting double.
 
-const WITHER_AFTER := 7 * 86400   # a Single Bloom left ready this long withers (FarmVille: 7 days)
 
 
 func is_full() -> bool:

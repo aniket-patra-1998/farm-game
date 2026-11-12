@@ -13,11 +13,7 @@ extends GameSystem
 enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, MATERIALS, SOMEONE_INSIDE, KEPT,
 	REQUIRES }
 
-const MATERIAL_GEMS := 1   # gems for one building material (FarmVille: 1 Farm Cash each)
 ## How many of one item a farm may hold, by kind (FarmVille capped these too). Buildings are BuildingDef.limit().
-const LIMIT_VEHICLE := 1      # one of each, wherever it is: standing on the farm or parked in a Garage
-const LIMIT_DECOR := 999
-const LIMIT_LIVING := 99      # animals, trees, blooms and the like
 ## Buildings that stay where they are: the starter Barn and the Farmhouse.
 const KEPT := ["barn", "farmhouse"]
 
@@ -59,13 +55,13 @@ func owned(id: String) -> int:
 func limit_of(id: String) -> int:
 	match str(game.item_data(id).get("kind", "")):
 		"vehicle":
-			return LIMIT_VEHICLE
+			return Balance.i("buildings.limit_vehicle")
 		"decor":
-			return LIMIT_DECOR
+			return Balance.i("buildings.limit_decor")
 		"building", "crafting", "barn":
 			var def := game.building_def(id)
-			return def.limit() if def != null else BuildingDef.DEFAULT_LIMIT
-	return LIMIT_LIVING
+			return def.limit() if def != null else Balance.i("buildings.default_limit")
+	return Balance.i("buildings.limit_living")
 
 
 ## How many of a limit group's buildings are on the farm.
@@ -85,7 +81,7 @@ func trim_extra_vehicles() -> int:
 	for id: String in game.item_order:
 		if game.item_data(id).get("kind", "") != "vehicle":
 			continue
-		while owned(id) > LIMIT_VEHICLE:
+		while owned(id) > Balance.i("buildings.limit_vehicle"):
 			var loose: Dictionary = {}
 			for o in game.objects:
 				if o["id"] == id:
@@ -188,7 +184,7 @@ func gems_for(need: Dictionary) -> int:
 	var n := 0
 	for m in missing(need):
 		n += int(missing(need)[m])
-	return n * MATERIAL_GEMS
+	return n * Balance.i("buildings.material_gems")
 
 
 ## Buys what's missing of `need` with gems (FarmVille sold materials for Farm Cash). False, with a

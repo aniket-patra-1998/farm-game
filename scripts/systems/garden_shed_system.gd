@@ -3,9 +3,6 @@ extends GameSystem
 ## Perfect Bunches from flower harvests, kept in the Garden Shed and placed as decorations.
 ## Part of the game state: reached as `Game.shed`; shared state is on `game`.
 
-const PERFECT_BUNCH_CHANCE := 0.04  # FarmVille: a flower harvest can give a Perfect Bunch
-const BUNCH_CAP_NO_SHED := 10       # bunches kept without a Garden Shed
-const SHED_FREE_BUNCHES := 10       # FarmVille gave 10 bunches with the shed
 
 var bunches: Array = []            # Perfect Bunches held: flower crop ids
 
@@ -30,7 +27,7 @@ func bunch_cap() -> int:
 	for o in game.objects:
 		if o["id"] == "garden_shed":
 			return game.capacity(o)
-	return BUNCH_CAP_NO_SHED
+	return Balance.i("shed.bunch_cap_no_shed")
 
 
 func add_bunch(flower: String) -> bool:
@@ -43,7 +40,8 @@ func add_bunch(flower: String) -> bool:
 
 
 func roll_bunch(crop_id: String, i: int) -> String:
-	if not game.drops_enabled or not game.crops[crop_id].get("flower", false) or game.rng.randf() >= PERFECT_BUNCH_CHANCE:
+	var chance := Balance.f("shed.perfect_bunch_chance")
+	if not game.drops_enabled or not game.crops[crop_id].get("flower", false) or game.rng.randf() >= chance:
 		return ""
 	if not add_bunch(crop_id):
 		return ""
@@ -84,7 +82,7 @@ func on_shed_built() -> void:
 	for c in game.crop_order:
 		if game.crops[c].get("flower", false) and int(game.crops[c]["unlock_level"]) <= game.level():
 			flowers.append(c)
-	for k in SHED_FREE_BUNCHES:
+	for k in Balance.i("shed.shed_free_bunches"):
 		if not flowers.is_empty():
 			bunches.append(flowers[game.rng.randi_range(0, flowers.size() - 1)])
-	game.message.emit(tr("GARDEN_SHED_BUILT_IT_HOLDS_PERFECT") % SHED_FREE_BUNCHES)
+	game.message.emit(tr("GARDEN_SHED_BUILT_IT_HOLDS_PERFECT") % Balance.i("shed.shed_free_bunches"))

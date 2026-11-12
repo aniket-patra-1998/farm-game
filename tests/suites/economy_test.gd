@@ -6,7 +6,7 @@ func test_19_every_crop_makes_a_profit() -> void:
 	var g := _farm()
 	for id in g.crop_order:
 		var c: Dictionary = g.crops[id]
-		var profit := int(c["sell_price"]) - int(c["seed_cost"]) - GameState.PLOW_COST
+		var profit := int(c["sell_price"]) - int(c["seed_cost"]) - Balance.i("economy.plow_cost")
 		_check(profit > 0, "%s profits after the plow (got %d)" % [id, profit])
 		_check(int(c["xp"]) >= 1, "%s gives XP" % id)
 		_check(int(c["grow_seconds"]) > 0, "%s has a grow time" % id)
@@ -147,12 +147,12 @@ func test_28_daily_gift_once_per_day() -> void:
 	_eq(g.ribbons.stat("parts_found"), 0, "no gift on the first day")
 	_skip(g, 86400)
 	g.daily.check_daily_gift()
-	_eq(g.ribbons.stat("parts_found"), DailySystem.DAILY_PARTS, "gift the next day")
+	_eq(g.ribbons.stat("parts_found"), Balance.i("daily.daily_parts"), "gift the next day")
 	g.daily.check_daily_gift()
-	_eq(g.ribbons.stat("parts_found"), DailySystem.DAILY_PARTS, "only once that day")
+	_eq(g.ribbons.stat("parts_found"), Balance.i("daily.daily_parts"), "only once that day")
 	_skip(g, 3 * 86400)
 	g.daily.check_daily_gift()
-	_eq(g.ribbons.stat("parts_found"), 2 * DailySystem.DAILY_PARTS, "one gift after a long break, not a pile")
+	_eq(g.ribbons.stat("parts_found"), 2 * Balance.i("daily.daily_parts"), "one gift after a long break, not a pile")
 	_done(g)
 
 
@@ -302,7 +302,11 @@ func test_62_sell_anything_for_five_percent() -> void:
 	_check(not g.can_sell(g.object_at(g.index_of(0, 0))), "nor the farmhouse")
 	g.gems = 10
 	g.buy_and_place("brown_chicken", 8, 9)
-	_eq(g.sell_value(g.object_at(g.index_of(8, 9))), 5 * GameState.SELL_COINS_PER_GEM, "gem items sell for coins")
+	_eq(
+		g.sell_value(g.object_at(g.index_of(8, 9))),
+		5 * Balance.i("market.sell_coins_per_gem"),
+		"gem items sell for coins"
+	)
 	# A building's animals move back out when it's sold.
 	g.buy_and_place("chicken_coop", 0, 4)
 	var coop := g.object_at(g.index_of(0, 4))
@@ -333,7 +337,10 @@ func test_63_rotate_decorations() -> void:
 	g.rotate_object(int(bale["uid"]))
 	_check(not bale.get("flip", false), "and back")
 	g.buy_and_place("wooden_fence", 8, 10)
-	_check(not g.rotate_object(int(g.object_at(g.index_of(8, 10))["uid"])), "a fence turns itself to join its neighbours")
+	_check(
+		not g.rotate_object(int(g.object_at(g.index_of(8, 10))["uid"])),
+		"a fence turns itself to join its neighbours"
+	)
 	g.buy_and_place("chicken_coop", 0, 4)
 	_check(not g.rotate_object(int(g.object_at(g.index_of(0, 4))["uid"])), "buildings don't turn")
 	_done(g)

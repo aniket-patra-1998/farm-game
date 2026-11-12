@@ -4,7 +4,6 @@ extends GameSystem
 ## Part of the game state: reached as `Game.storage`; shared state is on `game`.
 
 const GIFT_BOX_LIMIT := 9999        # what spills past the barn waits in the gift box, up to this many
-const BUNCH_DAYS := 14              # a placed Perfect Bunch lasts 14 days
 
 var stored: Array = []             # objects put away in the barn (no row or col)
 
@@ -139,7 +138,7 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	o["col"] = col
 	o["t"] = game.now() # production restarts when it comes back out
 	if o.get("bunch", false) and not o.has("expires"):
-		o["expires"] = game.now() + BUNCH_DAYS * 86400
+		o["expires"] = game.now() + Balance.i("barn.bunch_days") * 86400
 	game.grass_over(o["id"], row, col)
 	game.add_object(o)
 	game.inventory_changed.emit()

@@ -3,10 +3,7 @@ extends ItemDef
 ## A good a crafting building makes from bushels (FarmVille's Pumpkin Bread, Red Table Wine...).
 
 ## What a good sells for, over the value of its bushels, plus 10% per recipe mastery star.
-const SELL_MARKUP := 1.5
 ## Fuel a good gives when used, plus FUEL_PER_STAR per recipe mastery star.
-const FUEL_BASE := 20
-const FUEL_PER_STAR := 10
 
 
 func building() -> String:
@@ -34,11 +31,11 @@ func sell_price(crops: Dictionary, mastery_stars: int) -> int:
 	var v := 0.0
 	for c in inputs():
 		v += float(crops[c]["sell_price"]) * int(inputs()[c])
-	return int(round(v * SELL_MARKUP * (1.0 + 0.1 * mastery_stars)))
+	return int(round(v * Balance.f("recipes.sell_markup") * (1.0 + 0.1 * mastery_stars)))
 
 
 func fuel(mastery_stars: int) -> int:
-	return FUEL_BASE + FUEL_PER_STAR * mastery_stars
+	return Balance.i("recipes.fuel_base") + Balance.i("recipes.fuel_per_star") * mastery_stars
 
 
 func validate(catalog) -> Array[String]:

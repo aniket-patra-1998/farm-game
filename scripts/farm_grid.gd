@@ -700,14 +700,14 @@ func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 		"plow":
 			_feel("plow", BUZZ_TAP)
 			world_fx.burst("dirt", center_of(i))
-			_float(center_of(i), "-%d" % GameState.PLOW_COST, COLOR_COST)
+			_float(center_of(i), "-%d" % Balance.i("economy.plow_cost"), COLOR_COST)
 		"plant":
 			_feel("plant", BUZZ_TAP)
 			world_fx.burst("dirt", center_of(i) + Vector2(0, -PlaceholderArt.SLAB))
 			_float(center_of(i), "-%d" % int(Game.crops[job["crop"]]["seed_cost"]), COLOR_COST)
 		"fertilize":
 			_feel("fertilize", BUZZ_TAP)
-			_float(center_of(i), "-%d" % GameState.FERTILIZER_COST, COLOR_COST)
+			_float(center_of(i), "-%d" % Balance.i("economy.fertilizer_cost"), COLOR_COST)
 			_sparkle(center_of(i), COLOR_FERT)
 		"collect":
 			_show_collect(int(job["uid"]), result)
@@ -917,7 +917,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			var fp0 := Game.footprint(obj["id"])
 			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
 			var at0 := (c0[0] + c0[2]) / 2.0
-			_float(at0 + Vector2(0, -40), tr("ADOPTED_XP") % StraySystem.STRAY_ADOPT_XP, COLOR_FIND, 1.4)
+			_float(at0 + Vector2(0, -40), tr("ADOPTED_XP") % Balance.i("strays.stray_adopt_xp"), COLOR_FIND, 1.4)
 			_sparkle(at0, COLOR_FIND)
 		return
 	if tool == "move":

@@ -3,8 +3,6 @@ extends GameSystem
 ## Building materials found while farming, and the daily gift with its 5-day streak.
 ## Part of the game state: reached as `Game.daily`; shared state is on `game`.
 
-const PART_CHANCE := 0.08          # per harvest or collection
-const DAILY_PARTS := 2
 
 # FarmVille's daily bonus: come back on consecutive days for a bigger reward, up to day 5.
 const DAILY_STREAK := [
@@ -36,7 +34,7 @@ func load_from(data: Dictionary) -> void:
 
 ## A part for this harvest or collection, or "" for none. Fewer-held parts are likelier.
 func roll_part() -> String:
-	if not game.drops_enabled or game.rng.randf() >= PART_CHANCE:
+	if not game.drops_enabled or game.rng.randf() >= Balance.f("daily.part_chance"):
 		return ""
 	var p := pick_part()
 	add_part(p, 1)
@@ -91,7 +89,7 @@ func check_daily_gift() -> void:
 	daily_streak = daily_streak + 1 if today == last_daily_day + 1 else 1
 	last_daily_day = today
 	var got: Array[String] = _give_daily_bonus(daily_streak)
-	for k in DAILY_PARTS:
+	for k in Balance.i("daily.daily_parts"):
 		var p := pick_part()
 		add_part(p, 1)
 		got.append(GameState.part_names[p])

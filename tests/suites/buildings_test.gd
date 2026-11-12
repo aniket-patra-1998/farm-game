@@ -5,7 +5,7 @@ extends TestSuite
 func test_10_place_and_move_objects() -> void:
 	var g := _farm()
 	_check(g.buy_and_place("chicken", 8, 8), "buy a chicken")
-	_eq(g.coins, GameState.START_COINS - 120, "chicken price")
+	_eq(g.coins, Balance.i("economy.start_coins") - 120, "chicken price")
 	_check(not g.can_place("chicken", 8, 8), "can't stack on another object")
 	_check(not g.can_place("chicken", 1, 1), "can't place on the farmhouse")
 	_check(not g.can_place("chicken", 5, 4), "can't place on planted crops")

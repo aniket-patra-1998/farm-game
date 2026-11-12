@@ -105,7 +105,7 @@ func build_crafting(content: VBoxContainer) -> void:
 	# Bushels and the Farmers Market
 	content.add_child(
 		BookPanel.text(
-			tr("BUSHELS_OF") % [Game.crafting.total_bushels(), CraftingSystem.BUSHEL_CAP],
+			tr("BUSHELS_OF") % [Game.crafting.total_bushels(), Balance.i("crafting.bushel_cap")],
 			26,
 			BookPanel.SUN
 		)
@@ -130,7 +130,7 @@ func build_crafting(content: VBoxContainer) -> void:
 		var b := hud._panel_button(
 			tr("LEFT_COINS") % [Game.crops[crop_id]["name"], int(stall[c]), Game.crafting.bushel_price(crop_id)]
 		)
-		var full := Game.crafting.total_bushels() >= CraftingSystem.BUSHEL_CAP
+		var full := Game.crafting.total_bushels() >= Balance.i("crafting.bushel_cap")
 		b.disabled = int(stall[c]) <= 0 or Game.coins < Game.crafting.bushel_price(crop_id) or full
 		b.pressed.connect(func() -> void:
 			Game.crafting.buy_bushel(crop_id)
@@ -165,8 +165,8 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 			var n := 0
 			for c in missing:
 				n += int(missing[c])
-			var buy := hud._panel_button(tr("BUY_MISSING_GEMS") % (n * CraftingSystem.BUSHEL_GEM_COST))
-			buy.disabled = Game.gems < n * CraftingSystem.BUSHEL_GEM_COST
+			var buy := hud._panel_button(tr("BUY_MISSING_GEMS") % (n * Balance.i("crafting.bushel_gem_cost")))
+			buy.disabled = Game.gems < n * Balance.i("crafting.bushel_gem_cost")
 			buy.pressed.connect(func() -> void:
 				Game.crafting.buy_missing_and_craft(uid, rid)
 				hud._book.refresh())

@@ -21,7 +21,7 @@ func phase(i: int) -> GameState.Phase:
 			var grow := int(crop["grow_seconds"])
 			if age < grow:
 				return GameState.Phase.GROWING
-			var window := ripe_window(crop) * (GameState.POLLINATED_RIPE_MULT if p.get("pol", false) else 1)
+			var window := ripe_window(crop) * (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
 			if age < grow + window:
 				return GameState.Phase.RIPE
 			return GameState.Phase.WITHERED
@@ -59,15 +59,19 @@ func plow(i: int) -> bool:
 		return false
 	if game.is_occupied(i):
 		return false
-	if not game.spend(GameState.PLOW_COST):
+	if not game.spend(Balance.i("economy.plow_cost")):
 		game.message.emit(tr("NOT_ENOUGH_COINS_TO_PLOW"))
 		return false
 	var old_crop := str(game.plots[i].get("crop", ""))
 	game.plots[i] = {"state": "plowed"}
-	game.add_xp(GameState.PLOW_XP)
+	game.add_xp(Balance.i("economy.plow_xp"))
 	game.ribbons.bump("plowed", 1)
 	game.vehicles.roll_fuel_find(i)
-	game.collectibles.roll_collectible(game.collectibles.plow_collection(old_crop), GameState.COLLECTIBLE_ACTION_CHANCE, i)
+	game.collectibles.roll_collectible(
+		game.collectibles.plow_collection(old_crop),
+		Balance.f("economy.collectible_action_chance"),
+		i
+	)
 	if game.coins < game.cheapest_seed_cost():
 		game.message.emit(tr("CAREFUL_KEEP_SOME_COINS_FOR_SEEDS"))
 	game.advance_tutorial(GameState.Tutorial.PLOW)
@@ -108,7 +112,7 @@ func plant(i: int, crop_id: String) -> bool:
 	if use_pollinated:
 		game.plots[i]["pol"] = true
 	game.collectibles.roll_collectible(game.collectibles.collection_of_crop.get(crop_id, {}),
-		GameState.COLLECTIBLE_ACTION_CHANCE, i)
+		Balance.f("economy.collectible_action_chance"), i)
 	game.advance_tutorial(GameState.Tutorial.PLANT)
 	game.plot_updated(i)
 	return true
@@ -125,14 +129,14 @@ func fertilize(i: int) -> bool:
 	if game.fertilizer_bags > 0:
 		game.fertilizer_bags -= 1
 		game.inventory_changed.emit()
-	elif not game.spend(GameState.FERTILIZER_COST):
+	elif not game.spend(Balance.i("economy.fertilizer_cost")):
 		game.message.emit(tr("NOT_ENOUGH_COINS_FOR_FERTILIZER"))
 		return false
 	game.plots[i]["fert"] = true
 	game.ribbons.bump("fertilized", 1)
 	game.collectibles.roll_collectible(
 		game.collectibles.collection_of_crop.get(str(game.plots[i]["crop"]), {}),
-		GameState.COLLECTIBLE_ACTION_CHANCE,
+		Balance.f("economy.collectible_action_chance"),
 		i
 	)
 	game.plot_updated(i)
@@ -148,20 +152,26 @@ func harvest(i: int) -> Dictionary:
 	var crop: Dictionary = game.crops[crop_id]
 	var stars_before := game.mastery.stars(crop_id)
 	var fertilized: bool = game.plots[i].get("fert", false)
-	var bonus := GameState.MASTERY_PRICE_BONUS * stars_before + (GameState.FERTILIZER_BONUS if fertilized else 0.0)
+	var bonus := Balance.f("economy.mastery_price_bonus") * stars_before + (
+		Balance.f("economy.fertilizer_bonus") if fertilized else 0.0
+	)
 	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)))
 	var gained := int(crop["xp"])
 
 	var was_pollinated: bool = game.plots[i].get("pol", false)
-	var drop := game.drops.roll_drop(crop_id, stars_before, GameState.POLLINATED_SUPER_MULT if was_pollinated else 1)
+	var drop := game.drops.roll_drop(
+		crop_id,
+		stars_before,
+		Balance.i("economy.pollinated_super_mult") if was_pollinated else 1
+	)
 	match drop.get("type", ""):
 		"golden":
-			earned *= GameState.GOLDEN_COIN_MULTIPLIER
-			gained += GameState.GOLDEN_XP
+			earned *= Balance.i("economy.golden_coin_multiplier")
+			gained += Balance.i("economy.golden_xp")
 		"super_harvest":
 			earned *= 2
 		"bonus_xp":
-			gained += GameState.BONUS_XP
+			gained += Balance.i("economy.bonus_xp")
 
 	game.plots[i] = {"state": "plowed"}
 	game.add_coins(earned)
@@ -169,7 +179,9 @@ func harvest(i: int) -> Dictionary:
 	game.ribbons.bump("harvests", 1)
 	if drop.get("type", "") == "golden":
 		game.ribbons.bump("golden_finds", 1)
-		game.message.emit(tr("GOLDEN_HARVEST_PAID_X_COINS") % [crop["name"], GameState.GOLDEN_COIN_MULTIPLIER])
+		game.message.emit(
+			tr("GOLDEN_HARVEST_PAID_X_COINS") % [crop["name"], Balance.i("economy.golden_coin_multiplier")]
+		)
 	elif drop.get("type", "") == "collectible":
 		game.message.emit(tr("YOU_FOUND_A_COLLECTION") % [drop["name"], drop["collection"]])
 	elif drop.get("type", "") == "bird":

@@ -4,7 +4,6 @@ extends PlaceableDef
 ## records (data "sizes"), smallest first: size N (1-based) holds capacity(N), is called size_name(N), and
 ## reaching it from size N-1 takes size_cost(N) (materials, or a crafting building's coins and stars).
 
-const DEFAULT_LIMIT := 2   # buildings of one kind a farm may have, for now
 
 const SPECIALS := [
 	"mystery_eggs",
@@ -63,7 +62,7 @@ func tab() -> String:
 
 ## How many one farm may have.
 func limit() -> int:
-	return int(data.get("limit", DEFAULT_LIMIT))
+	return int(data.get("limit", Balance.i("buildings.default_limit")))
 
 
 ## Buildings that share a limit (all crafting buildings), and how many of them one farm may have.

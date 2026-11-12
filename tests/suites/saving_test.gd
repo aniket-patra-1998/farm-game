@@ -247,7 +247,7 @@ func test_144_saves_from_other_versions_migrate_or_are_refused() -> void:
 	_eq(old.coins, 555, "an old save keeps its coins")
 	_eq(old.tutorial_step, GameState.Tutorial.DONE, "an old player has already done the tutorial")
 	_eq(old.farm_size, GameState.START_SIZE, "missing fields take their defaults")
-	_eq(old.unwithers, GameState.START_UNWITHERS, "including starting gifts")
+	_eq(old.unwithers, Balance.i("economy.start_unwithers"), "including starting gifts")
 	_check(old.next_uid >= 1, "and new things can be numbered")
 	old.queue_free()
 	# A save from a newer game is not read (and not overwritten by a half-understood copy).
@@ -257,7 +257,7 @@ func test_144_saves_from_other_versions_migrate_or_are_refused() -> void:
 	future.save_path = path
 	add_child(future)
 	future.saving_enabled = false
-	_eq(future.coins, GameState.START_COINS, "a save from a newer game is not read: a new farm starts")
+	_eq(future.coins, Balance.i("economy.start_coins"), "a save from a newer game is not read: a new farm starts")
 	var kept := "%s.v%d" % [path, GameState.SAVE_VERSION + 1]
 	_check(FileAccess.file_exists(kept), "and kept aside, so the new farm doesn't overwrite it")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(kept))

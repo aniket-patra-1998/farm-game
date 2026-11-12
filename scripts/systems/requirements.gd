@@ -24,7 +24,12 @@ static func list(game: GameState, id: String) -> Array[Dictionary]:
 			var have := _progress(game, kind, what)
 			out.append({
 				"ok": have >= need,
-				"text": TranslationServer.translate(SENTENCES[kind]) % _words(kind, need, _name_of(game, kind, what), have),
+				"text": TranslationServer.translate(SENTENCES[kind]) % _words(
+					kind,
+					need,
+					_name_of(game, kind, what),
+					have
+				),
 				"hint": TranslationServer.translate(HINTS[kind]),
 			})
 	return out

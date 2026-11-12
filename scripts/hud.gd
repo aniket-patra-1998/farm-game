@@ -198,7 +198,7 @@ func _build_toolbar(root: Control) -> void:
 	row.add_theme_constant_override("separation", 12)
 	scroll.add_child(row)
 
-	var plow := _tool_button(tr("PLOW_COINS") % GameState.PLOW_COST)
+	var plow := _tool_button(tr("PLOW_COINS") % Balance.i("economy.plow_cost"))
 	plow.button_pressed = true
 	plow.pressed.connect(func() -> void: tool_selected.emit("plow", ""))
 	row.add_child(plow)
@@ -207,7 +207,7 @@ func _build_toolbar(root: Control) -> void:
 	hand.pressed.connect(func() -> void: tool_selected.emit("hand", ""))
 	row.add_child(hand)
 
-	var fert := _tool_button(tr("FERTILIZE_COINS") % GameState.FERTILIZER_COST)
+	var fert := _tool_button(tr("FERTILIZE_COINS") % Balance.i("economy.fertilizer_cost"))
 	fert.pressed.connect(func() -> void: tool_selected.emit("fertilize", ""))
 	row.add_child(fert)
 
@@ -622,7 +622,7 @@ func _refresh_unwither() -> void:
 	if Game.unwithers > 0:
 		_unwither_button.text = tr("UNWITHER_LEFT") % Game.unwithers
 	else:
-		_unwither_button.text = tr("UNWITHER_GEMS") % GameState.UNWITHER_GEM_COST
+		_unwither_button.text = tr("UNWITHER_GEMS") % Balance.i("economy.unwither_gem_cost")
 
 
 ## One toolbar button per vehicle type you own, with its area and the fuel left.
@@ -632,7 +632,7 @@ func _refresh_vehicles() -> void:
 	_fuel_button.visible = Game.vehicles.fuel_unlocked
 	_fuel_button.text = tr("FUEL_TANKS") % [
 		Game.vehicles.fuel_now(),
-		VehicleSystem.FUEL_TANK,
+		Balance.i("vehicles.fuel_tank"),
 		Game.vehicles.fuel_tanks
 	]
 

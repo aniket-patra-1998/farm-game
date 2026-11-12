@@ -4,8 +4,8 @@ extends TestSuite
 
 func test_01_new_farm_starts_like_the_classic_opening() -> void:
 	var g := _farm()
-	_eq(g.coins, GameState.START_COINS, "starting coins")
-	_eq(g.gems, GameState.START_GEMS, "starting gems")
+	_eq(g.coins, Balance.i("economy.start_coins"), "starting coins")
+	_eq(g.gems, Balance.i("economy.start_gems"), "starting gems")
 	_eq(g.farm_size, GameState.START_SIZE, "starting size")
 	_eq(g.field.phase(g.index_of(5, 4)), GameState.Phase.RIPE, "starter strawberries ripe")
 	_eq(g.field.phase(g.index_of(5, 5)), GameState.Phase.RIPE, "starter wheat ripe")
@@ -29,7 +29,7 @@ func test_02_plow_plant_grow_wither() -> void:
 	var g := _farm()
 	var i := _free(g)
 	_check(g.field.plow(i), "plow grass")
-	_eq(g.coins, GameState.START_COINS - GameState.PLOW_COST, "plow cost")
+	_eq(g.coins, Balance.i("economy.start_coins") - Balance.i("economy.plow_cost"), "plow cost")
 	_check(not g.field.plow(i), "can't plow twice")
 	_check(not g.field.plant(i, "cotton"), "locked crop refused at level 1")
 	_check(g.field.plant(i, "strawberries"), "plant strawberries")
@@ -52,7 +52,7 @@ func test_03_harvest_pays_and_counts_mastery() -> void:
 	var before := g.coins
 	var result := _grow_and_harvest(g, i, "strawberries")
 	_eq(result["coins"], 35, "strawberry harvest coins")
-	_eq(g.coins, before - GameState.PLOW_COST - 10 + 35, "coin balance after the cycle")
+	_eq(g.coins, before - Balance.i("economy.plow_cost") - 10 + 35, "coin balance after the cycle")
 	_eq(g.field.phase(i), GameState.Phase.PLOWED, "plot is plowed again after harvest")
 	_eq(g.mastery.points_of("strawberries"), 1, "mastery count")
 	_done(g)
@@ -106,7 +106,7 @@ func test_06_level_up_pays_coins_and_a_gem() -> void:
 	g.add_xp(g.xp_for_level(2))
 	_eq(g.level(), 2, "reached level 2")
 	_eq(g.coins, coins + g.level_reward(2), "level reward coins")
-	_eq(g.gems, gems + GameState.GEMS_PER_LEVEL, "level reward gem")
+	_eq(g.gems, gems + Balance.i("economy.gems_per_level"), "level reward gem")
 	_done(g)
 
 

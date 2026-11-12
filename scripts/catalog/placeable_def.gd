@@ -2,8 +2,6 @@ class_name PlaceableDef
 extends ItemDef
 ## Anything placed on the farm: it has a footprint, can be sold, and maybe turned.
 
-const SELL_SHARE := 0.05          # FarmVille sold anything back for 5% of its price
-const SELL_COINS_PER_GEM := 50    # our guess for items bought with gems
 
 
 func footprint() -> Vector2i:
@@ -12,8 +10,8 @@ func footprint() -> Vector2i:
 
 func sell_value() -> int:
 	if gem_cost() > 0:
-		return gem_cost() * SELL_COINS_PER_GEM
-	return int(round(coin_cost() * SELL_SHARE))
+		return gem_cost() * Balance.i("market.sell_coins_per_gem")
+	return int(round(coin_cost() * Balance.f("market.sell_share")))
 
 
 ## Arrives as a frame or a chassis and is finished with materials on the farm (FarmVille's way), so it

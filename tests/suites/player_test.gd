@@ -27,7 +27,7 @@ func test_117_work_is_queued_and_the_farmer_walks_to_it() -> void:
 	_eq(g.field.phase(far), GameState.Phase.GRASS, "not done until the work is")
 	p.advance(PlayerSystem.ACTION_SECONDS)
 	_eq(g.field.phase(far), GameState.Phase.PLOWED, "the first plot is plowed")
-	_eq(g.coins, 1000 - GameState.PLOW_COST, "and paid for then")
+	_eq(g.coins, 1000 - Balance.i("economy.plow_cost"), "and paid for then")
 	_eq(done.size(), 1, "its completion is announced")
 	p.advance(10.0)
 	_eq(g.field.phase(near), GameState.Phase.PLOWED, "the second follows")
@@ -79,7 +79,7 @@ func test_119_the_queue_refuses_what_cannot_be_done_or_paid_for_and_jobs_can_be_
 	g.farm_size = GameState.MAX_SIZE
 	var a := g.index_of(20, 3)
 	var b := g.index_of(20, 4)
-	g.coins = GameState.PLOW_COST
+	g.coins = Balance.i("economy.plow_cost")
 	_eq(p.enqueue({"kind": "harvest", "plot": a}), PlayerSystem.Refused.NOTHING_TO_DO, "grass can't be harvested")
 	_eq(p.enqueue({"kind": "plow", "plot": a}), PlayerSystem.Refused.NONE, "one plow is affordable")
 	_eq(p.enqueue({"kind": "plow", "plot": a}), PlayerSystem.Refused.QUEUED, "a plot takes one job at a time")
@@ -89,7 +89,7 @@ func test_119_the_queue_refuses_what_cannot_be_done_or_paid_for_and_jobs_can_be_
 	_check(p.queue.is_empty() and not p.cancel({"kind": "plow", "plot": a}), "and then it's gone")
 	p.advance(5.0)
 	_eq(g.field.phase(a), GameState.Phase.GRASS, "a cancelled job never happens")
-	_eq(g.coins, GameState.PLOW_COST, "or costs anything")
+	_eq(g.coins, Balance.i("economy.plow_cost"), "or costs anything")
 	# A job whose work has gone by the time the farmer arrives reports nothing done.
 	var results: Array = []
 	p.action_done.connect(func(_job: Dictionary, result: Dictionary) -> void: results.append(result))

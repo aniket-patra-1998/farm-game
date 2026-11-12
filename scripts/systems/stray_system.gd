@@ -3,11 +3,6 @@ extends GameSystem
 ## Strays and lost animals that wander onto the farm to be adopted.
 ## Part of the game state: reached as `Game.strays`; shared state is on `game`.
 
-const STRAY_MIN_GAP := 3 * 3600    # a new stray turns up 3 to 6 hours after the last
-const STRAY_MAX_GAP := 6 * 3600
-const STRAY_STAYS := 86400         # a stray nobody adopts wanders off after a day
-const STRAY_ADOPT_XP := 5
-const LOST_WEIGHT := 0.25           # each lost animal's share of the stray pool (a 100-coin animal is 1.0)
 
 var next_stray_at := 0             # when the next stray may turn up
 
@@ -17,7 +12,7 @@ func _init(owner: GameState) -> void:
 
 
 func reset() -> void:
-	next_stray_at = game.now() + STRAY_MIN_GAP
+	next_stray_at = game.now() + Balance.i("strays.stray_min_gap")
 
 
 func save_to(data: Dictionary) -> void:
@@ -35,7 +30,7 @@ func check_strays() -> void:
 	var changed := false
 	var keep: Array = []
 	for o in game.objects:
-		if o.get("stray", false) and t - int(o["t"]) > STRAY_STAYS:
+		if o.get("stray", false) and t - int(o["t"]) > Balance.i("strays.stray_stays"):
 			game.message.emit(tr("THE_LONELY_WANDERED_OFF") % game.item_data(o["id"])["name"].to_lower())
 			changed = true
 		else:
@@ -44,7 +39,7 @@ func check_strays() -> void:
 	if t >= next_stray_at and not _has_stray():
 		if _spawn_stray():
 			changed = true
-		next_stray_at = t + game.rng.randi_range(STRAY_MIN_GAP, STRAY_MAX_GAP)
+		next_stray_at = t + game.rng.randi_range(Balance.i("strays.stray_min_gap"), Balance.i("strays.stray_max_gap"))
 		game.queue_save()
 	if changed:
 		game.objects_updated()
@@ -73,7 +68,7 @@ func _spawn_stray() -> bool:
 				w = 0.6
 		elif it.get("lost", false):
 			# FarmVille's lost animals (Pink Cow, Black Sheep, Ugly Duckling...): never sold, only adopted.
-			w = LOST_WEIGHT
+			w = Balance.f("strays.lost_weight")
 		elif int(it["unlock_level"]) <= game.level() + 2 and not it.has("gem_cost"):
 			w = 1.0 / maxf(1.0, float(it["cost"]) / 100.0)
 		if w > 0.0:
@@ -121,7 +116,7 @@ func adopt_stray(uid: int) -> bool:
 		return false
 	o.erase("stray")
 	o["t"] = game.now() # starts producing from today
-	game.add_xp(STRAY_ADOPT_XP)
+	game.add_xp(Balance.i("strays.stray_adopt_xp"))
 	game.ribbons.bump("strays_adopted", 1)
 	game.message.emit(tr("YOU_ADOPTED_THE_IT_S_PART") % game.item_data(o["id"])["name"].to_lower())
 	game.objects_updated()

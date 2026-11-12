@@ -2,8 +2,6 @@ class_name CropDef
 extends ItemDef
 ## A crop. FarmVille's ripe window: as long as it takes to grow, at least 4 hours, at most 2 days.
 
-const MIN_RIPE_WINDOW := 4 * 3600
-const MAX_RIPE_WINDOW := 2 * 86400
 
 
 func grow_seconds() -> int:
@@ -11,7 +9,7 @@ func grow_seconds() -> int:
 
 
 func ripe_window() -> int:
-	return clampi(grow_seconds(), MIN_RIPE_WINDOW, MAX_RIPE_WINDOW)
+	return clampi(grow_seconds(), Balance.i("crops.min_ripe_window"), Balance.i("crops.max_ripe_window"))
 
 
 ## Coins earned per hour of growing, after the seed cost.

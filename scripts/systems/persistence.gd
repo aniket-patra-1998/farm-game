@@ -130,7 +130,7 @@ func load_save() -> bool:
 	game.farm_size = clampi(int(data.get("farm_size", GameState.START_SIZE)), GameState.START_SIZE,
 		GameState.MAX_SIZE)
 	game.clear_until = int(data.get("clear_until", 0))
-	game.unwithers = int(data.get("unwithers", GameState.START_UNWITHERS))
+	game.unwithers = int(data.get("unwithers", Balance.i("economy.start_unwithers")))
 	game.fertilize_alls = int(data.get("fertilize_alls", 0))
 	var saved_parts: Dictionary = data.get("parts", {})
 	game.parts = {}
@@ -140,8 +140,8 @@ func load_save() -> bool:
 	game.arborists = int(data.get("arborists", 0))
 	game.gardeners = int(data.get("gardeners", 0))
 	game.fertilizer_bags = int(data.get("fertilizer_bags", 0))
-	game.coins = int(data.get("coins", GameState.START_COINS))
-	game.gems = int(data.get("gems", GameState.START_GEMS))
+	game.coins = int(data.get("coins", Balance.i("economy.start_coins")))
+	game.gems = int(data.get("gems", Balance.i("economy.start_gems")))
 	game.xp = int(data.get("xp", 0))
 	game.debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
 	# Saves from before the tutorial existed belong to players who already know the basics.

@@ -1,0 +1,511 @@
+{
+ "_comment": "Every number that tunes the game: chances, timers, payouts, caps, costs. Read through Balance (Balance.f/i/a with a 'section.name' key). `v` is the value; `note` says what it is and where it came from. Change numbers here, never in code; tools/balance_lint.py checks every key is used and every use has a key, and tools/balance_sim.tscn shows what a change does.",
+ "vehicles": {
+  "fuel_tank": {
+   "v": 150,
+   "note": "Fuel the tank holds when full."
+  },
+  "fuel_regen_seconds": {
+   "v": 600,
+   "note": "the tank slowly refills: 1 fuel every 10 minutes"
+  },
+  "fuel_tank_gem_cost": {
+   "v": 3,
+   "note": "Gems to refill the tank at once."
+  },
+  "tractor_coin_chance": {
+   "v": 0.05,
+   "note": "coins pop out of the ground while a vehicle plows"
+  },
+  "tractor_coins": {
+   "v": 10,
+   "note": "Coins in one pop-out while a vehicle plows (see tractor_coin_chance)."
+  },
+  "fuel_level": {
+   "v": 12,
+   "note": "FarmVille: fuel finds from level 12"
+  },
+  "fuel_find_chance": {
+   "v": 0.08,
+   "note": "FarmVille: plowing your own farm can turn up fuel, once a day"
+  },
+  "fuel_find_share": {
+   "v": 0.25,
+   "note": "of a full tank"
+  }
+ },
+ "mystery": {
+  "mystery_box_gem_cost": {
+   "v": 12,
+   "note": "Gems to buy a Mystery Box."
+  }
+ },
+ "buildings": {
+  "material_gems": {
+   "v": 1,
+   "note": "gems for one building material (FarmVille: 1 Farm Cash each)"
+  },
+  "limit_vehicle": {
+   "v": 1,
+   "note": "one of each, wherever it is: standing on the farm or parked in a Garage"
+  },
+  "limit_decor": {
+   "v": 999,
+   "note": "How many of one decoration a farm may hold (effectively unlimited)."
+  },
+  "limit_living": {
+   "v": 99,
+   "note": "animals, trees, blooms and the like"
+  },
+  "default_limit": {
+   "v": 2,
+   "note": "buildings of one kind a farm may have, for now"
+  }
+ },
+ "barn": {
+  "bunch_days": {
+   "v": 14,
+   "note": "a placed Perfect Bunch lasts 14 days"
+  }
+ },
+ "mastery": {
+  "fast_crop_seconds": {
+   "v": 21600,
+   "note": "A crop that grows in less than this counts as fast for mastery targets (6 hours)."
+  }
+ },
+ "strays": {
+  "stray_min_gap": {
+   "v": 10800,
+   "note": "a new stray turns up 3 to 6 hours after the last"
+  },
+  "stray_max_gap": {
+   "v": 21600,
+   "note": "The longest wait, in seconds, before a new stray turns up after the last (6 hours)."
+  },
+  "stray_stays": {
+   "v": 86400,
+   "note": "a stray nobody adopts wanders off after a day"
+  },
+  "stray_adopt_xp": {
+   "v": 5,
+   "note": "XP for adopting a stray."
+  },
+  "lost_weight": {
+   "v": 0.25,
+   "note": "each lost animal's share of the stray pool (a 100-coin animal is 1.0)"
+  }
+ },
+ "crafting": {
+  "bushel_chance": {
+   "v": 0.2,
+   "note": "a harvest drops a bushel of its crop, once you own a crafting building"
+  },
+  "bushel_cap": {
+   "v": 100,
+   "note": "bushels held at once (FarmVille's stall held 100)"
+  },
+  "stall_crops": {
+   "v": 6,
+   "note": "the Farmers Market offers this many crops a day"
+  },
+  "stall_each": {
+   "v": 3,
+   "note": "3 bushels of each, like 3 a day from each neighbour in FarmVille"
+  },
+  "bushel_gem_cost": {
+   "v": 1,
+   "note": "\"Buy all ingredients\" with premium currency"
+  },
+  "craft_xp_per_star": {
+   "v": 5,
+   "note": "XP for a craft, per star of the recipe."
+  }
+ },
+ "specials": {
+  "lamb_chance": {
+   "v": 0.25,
+   "note": "Sheep Pen harvest with a ram inside"
+  },
+  "piglet_chance": {
+   "v": 0.25,
+   "note": "Pig Pen harvest with a boar inside"
+  },
+  "calf_chance": {
+   "v": 0.25,
+   "note": "Dairy Farm harvest with a bull inside"
+  },
+  "fertilizer_chance": {
+   "v": 0.1,
+   "note": "Dairy Farm harvest drops a bag of fertilizer"
+  },
+  "foal_chance": {
+   "v": 0.25,
+   "note": "Horse Stable harvest with a stallion inside"
+  },
+  "stable_helper_chance": {
+   "v": 0.15,
+   "note": "Stable harvest: a farmhand, and separately an arborist"
+  },
+  "stable_xp_chance": {
+   "v": 0.1,
+   "note": "Stable harvest with a stallion: 100 XP"
+  },
+  "stable_xp": {
+   "v": 100,
+   "note": "XP prize from a Horse Stable harvest with a stallion (see stable_xp_chance)."
+  },
+  "nursery_spare_xp": {
+   "v": 25,
+   "note": "stands in for FarmVille's spare baby to gift a friend"
+  },
+  "fertilize_all_chance": {
+   "v": 0.1,
+   "note": "per hive collection"
+  }
+ },
+ "shed": {
+  "perfect_bunch_chance": {
+   "v": 0.04,
+   "note": "FarmVille: a flower harvest can give a Perfect Bunch"
+  },
+  "bunch_cap_no_shed": {
+   "v": 10,
+   "note": "bunches kept without a Garden Shed"
+  },
+  "shed_free_bunches": {
+   "v": 10,
+   "note": "FarmVille gave 10 bunches with the shed"
+  }
+ },
+ "daily": {
+  "part_chance": {
+   "v": 0.08,
+   "note": "per harvest or collection"
+  },
+  "daily_parts": {
+   "v": 2,
+   "note": "Building parts in the daily gift."
+  }
+ },
+ "pigpen": {
+  "slop_cost": {
+   "v": 150,
+   "note": "Coins for a bucket of slop at the Pig Pen."
+  },
+  "forage_seconds": {
+   "v": 28800,
+   "note": "How long pigs forage for truffles (8 hours)."
+  },
+  "pigs_per_truffle": {
+   "v": 5,
+   "note": "Pigs needed in the pen for it to find truffles."
+  },
+  "truffles_per_pig": {
+   "v": 10,
+   "note": "Truffles a pig can find in one forage."
+  }
+ },
+ "bees": {
+  "queen_chance": {
+   "v": 0.008,
+   "note": "a Queen Bee found on a flower harvest"
+  },
+  "queen_gem_cost": {
+   "v": 10,
+   "note": "Gems to buy a Queen Bee."
+  },
+  "bee_chance": {
+   "v": 0.25,
+   "note": "per flower harvest, only into a hive with a queen"
+  },
+  "pollination_per_bee": {
+   "v": 0.0025,
+   "note": "Pollination chance each bee adds (1 in 400)."
+  },
+  "max_pollination": {
+   "v": 0.5,
+   "note": "The most the pollination chance can reach."
+  },
+  "pollinated_seeds": {
+   "v": 5,
+   "note": "given per pollination"
+  },
+  "pollinated_lifetime": {
+   "v": 172800,
+   "note": "How long a pollinated plot stays pollinated (2 days)."
+  },
+  "bees_stay_days": {
+   "v": 3,
+   "note": "away longer than this, bees start to leave"
+  },
+  "bees_leave_per_day": {
+   "v": 0.15,
+   "note": "Share of a hive's bees that leave for each day away beyond bees_stay_days."
+  },
+  "queen_stays_days": {
+   "v": 14,
+   "note": "Away longer than this many days, a hive loses its queen."
+  }
+ },
+ "nurture": {
+  "seedling_share": {
+   "v": 0.5,
+   "note": "An Orchard harvest gives a Mystery Seedling this often (otherwise a Watering Can)."
+  },
+  "rare_chance": {
+   "v": 0.1,
+   "note": "a seedling from a tree with a rare variety grows into the rare one"
+  },
+  "mystery_baby_chance": {
+   "v": 0.08,
+   "note": "per animal home harvest (our guess: FarmVille's pens varied)"
+  },
+  "home_feed_chance": {
+   "v": 0.25,
+   "note": "an animal home's harvest leaves a sack of Animal Feed"
+  },
+  "nursery_feed": {
+   "v": 2,
+   "note": "the Nursery Barn's harvest: FarmVille's nursery gave feed daily"
+  },
+  "bulb_chance": {
+   "v": 0.05,
+   "note": "per Single Bloom harvest (doubled for a Full Bloom)"
+  },
+  "garden_bulb_chance": {
+   "v": 0.15,
+   "note": "per Bloom Garden harvest"
+  },
+  "bloom_food_chance": {
+   "v": 0.2,
+   "note": "a bloom's harvest leaves Flower Food"
+  },
+  "garden_food": {
+   "v": 1,
+   "note": "every Bloom Garden harvest"
+  },
+  "regrow_food": {
+   "v": 1,
+   "note": "Flower Food to regrow a withered Single Bloom"
+  }
+ },
+ "harvest": {
+  "golden_chance": {
+   "v": 0.004,
+   "note": "golden harvest: 5x coins, +10 XP"
+  },
+  "golden_pity": {
+   "v": 250,
+   "note": "guaranteed after this many harvests without one"
+  },
+  "collectible_chance": {
+   "v": 0.05,
+   "note": "one item from the crop's collection"
+  },
+  "collectible_pity": {
+   "v": 30,
+   "note": "Harvests without a collectible after which one is guaranteed."
+  },
+  "super_harvest_chance": {
+   "v": 0.06,
+   "note": "super harvest: double coins"
+  },
+  "bird_chance": {
+   "v": 0.03,
+   "note": "a bird visits: one item from the bird collection"
+  },
+  "bonus_xp_chance": {
+   "v": 0.05,
+   "note": "+2 XP"
+  },
+  "mastery_luck_bonus": {
+   "v": 0.15,
+   "note": "per mastery star, multiplies golden and collectible chances"
+  }
+ },
+ "economy": {
+  "rescue_coins": {
+   "v": 50,
+   "note": "Coins given to a player with nothing left to plant."
+  },
+  "golden_coin_multiplier": {
+   "v": 5,
+   "note": "A golden harvest pays this many times the coins."
+  },
+  "golden_xp": {
+   "v": 10,
+   "note": "Extra XP on a golden harvest."
+  },
+  "fertilizer_cost": {
+   "v": 10,
+   "note": "Coins for a bag of fertilizer."
+  },
+  "fertilizer_bonus": {
+   "v": 0.2,
+   "note": "+20% coins on a fertilized plot"
+  },
+  "bonus_xp": {
+   "v": 2,
+   "note": "Extra XP on a bonus-XP harvest."
+  },
+  "start_unwithers": {
+   "v": 2,
+   "note": "Unwithers a new farm starts with."
+  },
+  "pollinated_ripe_mult": {
+   "v": 2,
+   "note": "pollinated crops stay ripe twice as long"
+  },
+  "pollinated_super_mult": {
+   "v": 3,
+   "note": "and triple the super-harvest chance"
+  },
+  "collectible_action_chance": {
+   "v": 0.02,
+   "note": "Chance per plow, plant or fertilize of finding a collectible."
+  },
+  "animal_collectible_chance": {
+   "v": 0.05,
+   "note": "collecting animals, trees and buildings (barnyard and orchard sets)"
+  },
+  "unwither_gem_cost": {
+   "v": 3,
+   "note": "Gems for an Unwither when none are left."
+  },
+  "fresh_farm_clear_seconds": {
+   "v": 1800,
+   "note": "a new farm starts in fair weather for this long"
+  },
+  "start_coins": {
+   "v": 200,
+   "note": "Coins a new farm starts with."
+  },
+  "start_gems": {
+   "v": 5,
+   "note": "Gems a new farm starts with."
+  },
+  "gems_per_level": {
+   "v": 1,
+   "note": "Gems for each level gained."
+  },
+  "plow_cost": {
+   "v": 15,
+   "note": "Coins to plow one plot."
+  },
+  "plow_xp": {
+   "v": 1,
+   "note": "XP for plowing one plot."
+  },
+  "xp_per_level_after_table": {
+   "v": 250,
+   "note": "XP per level beyond the level table."
+  },
+  "mastery_price_bonus": {
+   "v": 0.05,
+   "note": "a crop's price, per mastery star (MasterySystem has the stars)"
+  }
+ },
+ "recipes": {
+  "sell_markup": {
+   "v": 1.5,
+   "note": "A crafted good sells for its ingredients times this."
+  },
+  "fuel_base": {
+   "v": 20,
+   "note": "Fuel a craft is worth, before stars."
+  },
+  "fuel_per_star": {
+   "v": 10,
+   "note": "Fuel added per star of the recipe."
+  }
+ },
+ "market": {
+  "sell_share": {
+   "v": 0.05,
+   "note": "FarmVille sold anything back for 5% of its price"
+  },
+  "sell_coins_per_gem": {
+   "v": 50,
+   "note": "our guess for items bought with gems"
+  },
+  "min_xp": {
+   "v": 5,
+   "note": "The least XP buying a priced decoration gives."
+  }
+ },
+ "crops": {
+  "min_ripe_window": {
+   "v": 14400,
+   "note": "A ripe crop stays ripe at least this long (4 hours)."
+  },
+  "max_ripe_window": {
+   "v": 172800,
+   "note": "A ripe crop stays ripe at most this long (2 days)."
+  }
+ },
+ "blooms": {
+  "wither_after": {
+   "v": 604800,
+   "note": "a Single Bloom left ready this long withers (FarmVille: 7 days)"
+  }
+ },
+ "weather": {
+  "block_seconds": {
+   "v": 10800,
+   "note": "One weather per block of this many seconds (3 hours)."
+  },
+  "ease_seconds": {
+   "v": 1200,
+   "note": "A block's weather fades in and out over this long at its edges."
+  },
+  "correlation_blocks": {
+   "v": 4.0,
+   "note": "How long weather persists: neighbouring blocks are alike within about this many blocks (4 = 12 hours). 1 is the old coin-flip-per-block; higher is steadier."
+  },
+  "fog_hours": {
+   "v": [
+    3,
+    9
+   ],
+   "note": "Fog only forms when a block begins in these local hours (early morning)."
+  },
+  "odds": {
+   "v": {
+    "Summer": {
+     "clear": 46,
+     "partly_cloudy": 26,
+     "cloudy": 11,
+     "rain": 9,
+     "storm": 3,
+     "fog": 5
+    },
+    "Spring": {
+     "clear": 34,
+     "partly_cloudy": 26,
+     "cloudy": 14,
+     "rain": 16,
+     "storm": 4,
+     "fog": 6
+    },
+    "Autumn": {
+     "clear": 30,
+     "partly_cloudy": 24,
+     "cloudy": 18,
+     "rain": 16,
+     "storm": 3,
+     "fog": 9
+    },
+    "Winter": {
+     "clear": 28,
+     "partly_cloudy": 20,
+     "cloudy": 20,
+     "rain": 4,
+     "fog": 8,
+     "snow": 20
+    }
+   },
+   "note": "Share of time each kind of weather is out, by season (weights). Fog only in the early morning; snow only in winter. Looks only: FarmVille had no weather."
+  }
+ }
+}

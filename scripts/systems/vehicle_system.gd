@@ -3,14 +3,6 @@ extends GameSystem
 ## Vehicles and the shared fuel tank: plowing, planting and harvesting areas, upgrades, fuel finds.
 ## Part of the game state: reached as `Game.vehicles`; shared state is on `game`.
 
-const FUEL_TANK := 150
-const FUEL_REGEN_SECONDS := 600    # the tank slowly refills: 1 fuel every 10 minutes
-const FUEL_TANK_GEM_COST := 3
-const TRACTOR_COIN_CHANCE := 0.05  # coins pop out of the ground while a vehicle plows
-const TRACTOR_COINS := 10
-const FUEL_LEVEL := 12               # FarmVille: fuel finds from level 12
-const FUEL_FIND_CHANCE := 0.08      # FarmVille: plowing your own farm can turn up fuel, once a day
-const FUEL_FIND_SHARE := 0.25       # of a full tank
 
 var fuel := 0                      # in the shared tank
 var fuel_t := 0                    # when fuel last refilled itself
@@ -57,22 +49,22 @@ func add_fuel(n: int) -> void:
 		fuel_unlocked = true
 		fuel_t = game.now()
 	fuel = fuel_now() + n
-	while fuel > FUEL_TANK:
-		fuel -= FUEL_TANK
+	while fuel > Balance.i("vehicles.fuel_tank"):
+		fuel -= Balance.i("vehicles.fuel_tank")
 		fuel_tanks += 1
-	if fuel >= FUEL_TANK:
+	if fuel >= Balance.i("vehicles.fuel_tank"):
 		fuel_t = game.now()
 	game.inventory_changed.emit()
 
 
 ## FarmVille: plowing your own farm can turn up fuel, at most once a day.
 func roll_fuel_find(i: int) -> int:
-	if not game.drops_enabled or game.level() < FUEL_LEVEL or fuel_found_day == game.day_number():
+	if not game.drops_enabled or game.level() < Balance.i("vehicles.fuel_level") or fuel_found_day == game.day_number():
 		return 0
-	if game.rng.randf() >= FUEL_FIND_CHANCE:
+	if game.rng.randf() >= Balance.f("vehicles.fuel_find_chance"):
 		return 0
 	fuel_found_day = game.day_number()
-	var n := int(FUEL_TANK * FUEL_FIND_SHARE)
+	var n := int(Balance.i("vehicles.fuel_tank") * Balance.f("vehicles.fuel_find_share"))
 	add_fuel(n)
 	game.found.emit(i, tr("FOUND_FUEL") % n)
 	return n
@@ -133,13 +125,13 @@ func fuel_now() -> int:
 	if not fuel_unlocked:
 		return 0
 	var t := game.now()
-	if fuel >= FUEL_TANK:
+	if fuel >= Balance.i("vehicles.fuel_tank"):
 		fuel_t = t
 		return fuel
-	var gained := int((t - fuel_t) / float(FUEL_REGEN_SECONDS))
+	var gained := int((t - fuel_t) / float(Balance.i("vehicles.fuel_regen_seconds")))
 	if gained > 0:
-		fuel = mini(FUEL_TANK, fuel + gained)
-		fuel_t = t if fuel >= FUEL_TANK else fuel_t + gained * FUEL_REGEN_SECONDS
+		fuel = mini(Balance.i("vehicles.fuel_tank"), fuel + gained)
+		fuel_t = t if fuel >= Balance.i("vehicles.fuel_tank") else fuel_t + gained * Balance.i("vehicles.fuel_regen_seconds")
 	return fuel
 
 
@@ -148,18 +140,18 @@ func _burn_fuel(n: int) -> bool:
 	fuel_now()
 	if fuel < n and fuel_tanks > 0:
 		fuel_tanks -= 1
-		fuel = mini(FUEL_TANK, fuel + FUEL_TANK)
+		fuel = mini(Balance.i("vehicles.fuel_tank"), fuel + Balance.i("vehicles.fuel_tank"))
 		game.message.emit(tr("OPENED_A_SPARE_FUEL_TANK"))
 	if fuel < n:
 		return false
-	if fuel >= FUEL_TANK:
+	if fuel >= Balance.i("vehicles.fuel_tank"):
 		fuel_t = game.now() # the refill clock starts once the tank is below full
 	fuel -= n
 	return true
 
 
 func buy_fuel_tank() -> bool:
-	if not game.spend_gems(FUEL_TANK_GEM_COST):
+	if not game.spend_gems(Balance.i("vehicles.fuel_tank_gem_cost")):
 		game.message.emit(tr("NOT_ENOUGH_GEMS_FOR_A_FUEL"))
 		return false
 	fuel_tanks += 1
@@ -181,7 +173,7 @@ func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
 	if job == "plant" and crop_id == "":
 		game.message.emit(tr("PICK_A_SEED_FIRST_THEN_THE"))
 		return {}
-	if fuel_now() + fuel_tanks * FUEL_TANK <= 0:
+	if fuel_now() + fuel_tanks * Balance.i("vehicles.fuel_tank") <= 0:
 		game.message.emit(tr("OUT_OF_FUEL_IT_REFILLS_SLOWLY"))
 		return {}
 	var per := int(it.get("fuel_per_plot", 1))
@@ -245,8 +237,8 @@ func _vehicle_work(job: String, i: int, crop_id: String, out: Dictionary) -> boo
 	):
 		if game.field.plow(i):
 			did = true
-			if game.drops_enabled and game.rng.randf() < TRACTOR_COIN_CHANCE:
-				game.add_coins(TRACTOR_COINS)
+			if game.drops_enabled and game.rng.randf() < Balance.f("vehicles.tractor_coin_chance"):
+				game.add_coins(Balance.i("vehicles.tractor_coins"))
 	if (job == "plant" or job == "all") and crop_id != "" and game.field.phase(i) == GameState.Phase.PLOWED:
 		if game.field.plant(i, crop_id):
 			did = true
@@ -302,5 +294,5 @@ func upgrade_vehicle(id: String) -> bool:
 func on_vehicle_bought() -> void:
 	if not fuel_unlocked:
 		fuel_unlocked = true
-		fuel = FUEL_TANK
+		fuel = Balance.i("vehicles.fuel_tank")
 		fuel_t = game.now()

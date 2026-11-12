@@ -64,7 +64,7 @@ func test_109_growing_a_building_and_buying_materials_with_gems() -> void:
 	g.gems = missing - 1
 	_check(not g.buildings.buy_missing(need), "one gem short buys nothing")
 	g.gems = missing
-	_eq(g.buildings.gems_for(need), missing * BuildingSystem.MATERIAL_GEMS, "a gem a material")
+	_eq(g.buildings.gems_for(need), missing * Balance.i("buildings.material_gems"), "a gem a material")
 	_check(g.buildings.buy_missing(need), "the missing materials are bought")
 	_eq(g.gems, 0, "for exactly their price")
 	_check(g.buildings.missing(need).is_empty(), "now nothing is missing")

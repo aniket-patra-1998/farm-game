@@ -52,13 +52,13 @@ func test_15_strays_arrive_get_adopted_or_leave() -> void:
 	var xp := g.xp
 	_check(g.strays.adopt_stray(int(s["uid"])), "adopt")
 	_check(not s.get("stray", false), "no longer a stray")
-	_eq(g.xp, xp + StraySystem.STRAY_ADOPT_XP, "adoption XP")
+	_eq(g.xp, xp + Balance.i("strays.stray_adopt_xp"), "adoption XP")
 
 	g.strays.next_stray_at = 0
 	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o.get("stray", false)).size(), 1, "another stray")
 	g.strays.next_stray_at = g.now() + 999999 # stop new arrivals
-	_skip(g, StraySystem.STRAY_STAYS + 1)
+	_skip(g, Balance.i("strays.stray_stays") + 1)
 	g.strays.check_strays()
 	_eq(g.objects.filter(func(o): return o.get("stray", false)).size(), 0, "unadopted stray left")
 	_done(g)
@@ -101,9 +101,9 @@ func test_47_beehive_frame_and_queen_bee() -> void:
 	_check(g.land.expansion_needs(hive).is_empty(), "a hive isn't expanded: it grows as bees join")
 	g.bees.queen_bees = 0
 	_check(not g.bees.add_queen(uid), "no queen held")
-	g.gems = BeehiveSystem.QUEEN_GEM_COST
+	g.gems = Balance.i("bees.queen_gem_cost")
 	_check(g.bees.add_queen(uid, true), "queen bought with gems")
-	_eq(g.gems, 0, "%d gems spent" % BeehiveSystem.QUEEN_GEM_COST)
+	_eq(g.gems, 0, "%d gems spent" % Balance.i("bees.queen_gem_cost"))
 	_check(g.bees.has_queen(hive), "the hive has its queen")
 	g.bees.queen_bees = 1
 	_check(not g.bees.add_queen(uid), "only one queen per hive")
@@ -145,7 +145,7 @@ func test_48_bees_pollinate_fertilized_crops() -> void:
 		got += int(g.field.harvest(i).get("pollinated", 0))
 	_check(got >= 25, "about half of fertilized harvests were pollinated (%d seeds)" % got)
 	# Planting pollinated seeds: free, and the crop stays ripe twice as long.
-	g.bees.pollinated = {"strawberries": [2, g.now() + BeehiveSystem.POLLINATED_LIFETIME]}
+	g.bees.pollinated = {"strawberries": [2, g.now() + Balance.i("bees.pollinated_lifetime")]}
 	var j := g.index_of(10, 10)
 	g.field.plow(i)
 	g.field.plow(j)
@@ -165,9 +165,9 @@ func test_48_bees_pollinate_fertilized_crops() -> void:
 	_skip(g, window)
 	_eq(g.field.phase(i), GameState.Phase.WITHERED, "but not forever")
 	# Pollinated seeds expire after 2 days.
-	g.bees.pollinated = {"wheat": [5, g.now() + BeehiveSystem.POLLINATED_LIFETIME]}
+	g.bees.pollinated = {"wheat": [5, g.now() + Balance.i("bees.pollinated_lifetime")]}
 	_eq(g.bees.pollinated_seeds("wheat"), 5, "5 pollinated wheat seeds")
-	_skip(g, BeehiveSystem.POLLINATED_LIFETIME)
+	_skip(g, Balance.i("bees.pollinated_lifetime"))
 	_eq(g.bees.pollinated_seeds("wheat"), 0, "expired after 2 days")
 	_done(g)
 
@@ -184,7 +184,7 @@ func test_49_pollinated_crops_super_harvest_three_times_as_often() -> void:
 	for k in 6000:
 		if str(g.drops.roll_drop("", 0).get("type", "")) == "super_harvest":
 			plain += 1
-		if str(g.drops.roll_drop("", 0, GameState.POLLINATED_SUPER_MULT).get("type", "")) == "super_harvest":
+		if str(g.drops.roll_drop("", 0, Balance.i("economy.pollinated_super_mult")).get("type", "")) == "super_harvest":
 			boosted += 1
 	var ratio := float(boosted) / maxf(1.0, plain)
 	_check(ratio > 2.3 and ratio < 3.7, "about 3x the super harvests (%d vs %d)" % [boosted, plain])
@@ -268,10 +268,10 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 	_eq(g.homes.fill_building(uid), 12, "12 pigs move in")
 	var coins := g.coins
 	_check(g.pigpen.feed_slop(uid), "feed slop")
-	_eq(g.coins, coins - PigPenSystem.SLOP_COST, "slop costs %d coins" % PigPenSystem.SLOP_COST)
+	_eq(g.coins, coins - Balance.i("pigpen.slop_cost"), "slop costs %d coins" % Balance.i("pigpen.slop_cost"))
 	_check(not g.pigpen.feed_slop(uid), "already foraging")
 	_eq(g.pigpen.collect_truffles(uid), 0, "nothing until foraging is over")
-	_skip(g, PigPenSystem.FORAGE_SECONDS)
+	_skip(g, Balance.i("pigpen.forage_seconds"))
 	_eq(g.pigpen.collect_truffles(uid), 2, "12 pigs find 2 truffles")
 	_eq(g.pigpen.truffles, 2, "truffles held")
 	_eq(g.pigpen.collect_truffles(uid), 0, "collected once")
@@ -290,7 +290,7 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 	# A pen with a single pig still finds one truffle.
 	pen["inside"] = {"pig": 1}
 	g.pigpen.feed_slop(uid)
-	_skip(g, PigPenSystem.FORAGE_SECONDS)
+	_skip(g, Balance.i("pigpen.forage_seconds"))
 	_eq(g.pigpen.collect_truffles(uid), 1, "one pig finds one truffle")
 	_done(g)
 

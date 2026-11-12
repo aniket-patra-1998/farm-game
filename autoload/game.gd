@@ -30,17 +30,8 @@ const TUTORIAL_TEXT := {
 	Tutorial.PLANT: "CHOOSE_STRAWBERRIES_THEN_TAP_A_PLOWED",
 }
 
-const SELL_SHARE := PlaceableDef.SELL_SHARE
-const SELL_COINS_PER_GEM := PlaceableDef.SELL_COINS_PER_GEM
-const DECOR_MIN_XP := DecorationDef.MIN_XP
 
 # Rescue: if a player can't afford seeds and has nothing growing, top them up to this.
-const RESCUE_COINS := 50
-const GOLDEN_COIN_MULTIPLIER := 5
-const GOLDEN_XP := 10
-const FERTILIZER_COST := 10
-const FERTILIZER_BONUS := 0.2      # +20% coins on a fertilized plot
-const BONUS_XP := 2
 ## Farmhand: collects every ready animal on the farm. Arborist: every ready tree.
 ## FarmVille's helpers: each collects everything of its kind that's ready, at once. kind -> the field
 ## counting them, what they're called, and what's said after.
@@ -59,35 +50,18 @@ const SHOWCASE_ARG := "--showcase"  # debug builds: start on the showcase farm (
 const MAX_SIZE := 30   # plots are stored for the largest farm; farm_size says how much is usable
 const START_SIZE := 12
 const OLD_GRID_SIZE := 12 # saves from before land expansion stored a 12x12 grid
-const START_UNWITHERS := 2
-const POLLINATED_RIPE_MULT := 2    # pollinated crops stay ripe twice as long
-const POLLINATED_SUPER_MULT := 3   # and triple the super-harvest chance
 
 # A vehicle's working area at each upgrade: 2x2, growing with Vehicle Parts in the Garage up to 4x4.
 const VEHICLE_SIZES := VehicleDef.SIZES
 # FarmVille: any action can drop a collectible (plow, plant, fertilize); harvests are likelier.
-const COLLECTIBLE_ACTION_CHANCE := 0.02
-const ANIMAL_COLLECTIBLE_CHANCE := 0.05  # collecting animals, trees and buildings (barnyard and orchard sets)
-const UNWITHER_GEM_COST := 3
-const FRESH_FARM_CLEAR_SECONDS := 1800   # a new farm starts in fair weather for this long
-const START_COINS := 200
-const START_GEMS := 5
-const GEMS_PER_LEVEL := 1
-const PLOW_COST := 15
-const PLOW_XP := 1
 
-# A ripe crop stays ripe as long as it took to grow, clamped to this window.
-const MIN_RIPE_WINDOW := CropDef.MIN_RIPE_WINDOW
-const MAX_RIPE_WINDOW := CropDef.MAX_RIPE_WINDOW
 
 # Total XP needed to reach level n is LEVEL_XP[n - 1]. Past the table, +250 per level.
 # Tuned so level 20 takes about two weeks of regular play (the beta test window).
 const LEVEL_XP := [0, 15, 40, 75, 120, 175, 240, 320, 410, 510,
 	620, 740, 870, 1010, 1160, 1320, 1490, 1670, 1860, 2060]
-const XP_PER_LEVEL_AFTER_TABLE := 250
 
 # Mastery: harvests needed for stars 1, 2, 3, by crop speed.
-const MASTERY_PRICE_BONUS := 0.05       # a crop's price, per mastery star (MasterySystem has the stars)
 
 # Building parts: found while harvesting and collecting, plus a daily gift.
 # Building materials, the FarmVille set: three basic ones every building uses,
@@ -99,12 +73,12 @@ static var part_names := {}
 
 var crops := {}                    # id -> crop dictionary from data/catalog/crops.json
 var crop_order: Array[String] = [] # display order
-var coins := START_COINS
-var gems := START_GEMS           # premium currency
+var coins := Balance.i("economy.start_coins")
+var gems := Balance.i("economy.start_gems")           # premium currency
 var xp := 0
 var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
 var farm_size := START_SIZE        # usable width and depth in tiles
-var unwithers := START_UNWITHERS   # Unwither items held
+var unwithers := Balance.i("economy.start_unwithers")   # Unwither items held
 var fertilize_alls := 0            # fertilize every growing crop at once
 var absence_note := ""             # what happened while the player was away, shown on start
 var parts := {}                    # building material -> count (see part_ids)
@@ -579,7 +553,7 @@ func is_withered(obj: Dictionary) -> bool:
 	var d := catalog.get_def(str(obj.get("id", "")))
 	if not d is BloomDef or not (d as BloomDef).withers():
 		return false
-	return now() - int(obj["t"]) >= cycle_of(obj) + BloomDef.WITHER_AFTER
+	return now() - int(obj["t"]) >= cycle_of(obj) + Balance.i("blooms.wither_after")
 
 
 func seconds_until_ready(obj: Dictionary) -> int:
@@ -612,12 +586,12 @@ func collect(uid: int) -> Dictionary:
 	var drop := drops.roll_drop("", 0)
 	match drop.get("type", ""):
 		"golden":
-			earned *= GOLDEN_COIN_MULTIPLIER
-			gained += GOLDEN_XP
+			earned *= Balance.i("economy.golden_coin_multiplier")
+			gained += Balance.i("economy.golden_xp")
 		"super_harvest":
 			earned *= 2
 		"bonus_xp":
-			gained += BONUS_XP
+			gained += Balance.i("economy.bonus_xp")
 	obj["t"] = now()
 	add_coins(earned)
 	add_xp(gained)
@@ -645,14 +619,20 @@ func collect(uid: int) -> Dictionary:
 			extras.append(tr("GREW_UP"))
 	var coll_find := ""
 	if kind_of(obj) == "tree":
-		coll_find = collectibles.roll_collectible(collectibles.tree_collection, ANIMAL_COLLECTIBLE_CHANCE)
+		coll_find = collectibles.roll_collectible(
+			collectibles.tree_collection,
+			Balance.f("economy.animal_collectible_chance")
+		)
 	elif kind_of(obj) == "animal" or is_building(obj):
-		coll_find = collectibles.roll_collectible(collectibles.animal_collection, ANIMAL_COLLECTIBLE_CHANCE)
+		coll_find = collectibles.roll_collectible(
+			collectibles.animal_collection,
+			Balance.f("economy.animal_collectible_chance")
+		)
 	if coll_find != "":
 		extras.append(tr("FOUND") + coll_find)
 	if drop.get("type", "") == "golden":
 		ribbons.bump("golden_finds", 1)
-		message.emit(tr("GOLDEN_COLLECTION_X_COINS") % GOLDEN_COIN_MULTIPLIER)
+		message.emit(tr("GOLDEN_COLLECTION_X_COINS") % Balance.i("economy.golden_coin_multiplier"))
 	elif drop.get("type", "") == "bird":
 		message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
 	objects_updated()
@@ -881,7 +861,7 @@ func use_unwither() -> bool:
 		return false
 	if unwithers > 0:
 		unwithers -= 1
-	elif not spend_gems(UNWITHER_GEM_COST):
+	elif not spend_gems(Balance.i("economy.unwither_gem_cost")):
 		message.emit(tr("NO_UNWITHER_LEFT_AND_NOT_ENOUGH"))
 		return false
 	var t := now()
@@ -921,7 +901,7 @@ func check_rescue() -> void:
 		return
 	if any_plot_in(Phase.GROWING) or any_plot_in(Phase.RIPE):
 		return
-	var gift := RESCUE_COINS - coins
+	var gift := Balance.i("economy.rescue_coins") - coins
 	add_coins(gift, false)
 	message.emit(tr("YOU_FOUND_COINS_IN_THE_BARN") % gift)
 
@@ -990,7 +970,7 @@ func xp_for_level(lvl: int) -> int:
 		return 0
 	if lvl - 1 < LEVEL_XP.size():
 		return LEVEL_XP[lvl - 1]
-	return LEVEL_XP[-1] + (lvl - LEVEL_XP.size()) * XP_PER_LEVEL_AFTER_TABLE
+	return LEVEL_XP[-1] + (lvl - LEVEL_XP.size()) * Balance.i("economy.xp_per_level_after_table")
 
 
 func level() -> int:
@@ -1024,7 +1004,7 @@ func unlocks_at(lvl: int) -> Array[String]:
 func _on_level_reached(lvl: int) -> void:
 	# The reward is a gift, so it doesn't count toward the coins-earned ribbon.
 	add_coins(level_reward(lvl), false)
-	add_gems(GEMS_PER_LEVEL)
+	add_gems(Balance.i("economy.gems_per_level"))
 	if lvl % 5 == 0:
 		add_unwithers(1)
 	leveled_up.emit(lvl) # the HUD shows the celebration popup
@@ -1078,18 +1058,18 @@ func _load_items() -> void:
 
 
 func _new_game() -> void:
-	coins = START_COINS
-	gems = START_GEMS
+	coins = Balance.i("economy.start_coins")
+	gems = Balance.i("economy.start_gems")
 	xp = 0
 	debug_time_offset = 0
-	clear_until = now() + FRESH_FARM_CLEAR_SECONDS
+	clear_until = now() + Balance.i("economy.fresh_farm_clear_seconds")
 	tutorial_step = Tutorial.HARVEST
 	objects = []
 	next_uid = 1
 	_occupied.clear()
 	plots.clear()
 	farm_size = START_SIZE
-	unwithers = START_UNWITHERS
+	unwithers = Balance.i("economy.start_unwithers")
 	fertilize_alls = 0
 	absence_note = ""
 	for system in systems:

@@ -3,12 +3,6 @@ extends GameSystem
 ## Crafting (Bakery, Winery, Spa): bushels, recipes, recipe mastery, goods and the Farmers Market.
 ## Part of the game state: reached as `Game.crafting`; shared state is on `game`.
 
-const BUSHEL_CHANCE := 0.2          # a harvest drops a bushel of its crop, once you own a crafting building
-const BUSHEL_CAP := 100             # bushels held at once (FarmVille's stall held 100)
-const STALL_CROPS := 6              # the Farmers Market offers this many crops a day
-const STALL_EACH := 3               # 3 bushels of each, like 3 a day from each neighbour in FarmVille
-const BUSHEL_GEM_COST := 1          # "Buy all ingredients" with premium currency
-const CRAFT_XP_PER_STAR := 5
 
 var bushels := {}                  # crop id -> bushels held, for crafting
 var goods := {}                    # recipe id -> crafted goods held
@@ -102,7 +96,7 @@ func total_bushels() -> int:
 
 
 func add_bushels(crop_id: String, n: int) -> int:
-	var room := maxi(0, BUSHEL_CAP - total_bushels())
+	var room := maxi(0, Balance.i("crafting.bushel_cap") - total_bushels())
 	var got := mini(n, room)
 	if got > 0:
 		bushels[crop_id] = int(bushels.get(crop_id, 0)) + got
@@ -111,7 +105,7 @@ func add_bushels(crop_id: String, n: int) -> int:
 
 
 func roll_bushel(crop_id: String) -> String:
-	if not game.drops_enabled or not owns_crafting() or game.rng.randf() >= BUSHEL_CHANCE:
+	if not game.drops_enabled or not owns_crafting() or game.rng.randf() >= Balance.f("crafting.bushel_chance"):
 		return ""
 	# FarmVille: each bushel found comes with one extra per mastery star on that crop.
 	return crop_id if add_bushels(crop_id, 1 + game.mastery.stars(crop_id)) > 0 else ""
@@ -171,7 +165,7 @@ func buy_missing_and_craft(uid: int, rid: String) -> bool:
 	var obj := game.object_by_uid(uid)
 	if obj.is_empty() or not recipe_unlocked(obj, rid) or free_slots(obj) <= 0:
 		return false
-	if n > 0 and not game.spend_gems(n * BUSHEL_GEM_COST):
+	if n > 0 and not game.spend_gems(n * Balance.i("crafting.bushel_gem_cost")):
 		game.message.emit(tr("NOT_ENOUGH_GEMS"))
 		return false
 	for c in missing:
@@ -200,7 +194,7 @@ func finish_crafts(uid: int) -> int:
 			var before := recipe_stars(rid)
 			goods[rid] = int(goods.get(rid, 0)) + 1
 			crafted[rid] = int(crafted.get(rid, 0)) + 1
-			game.add_xp(CRAFT_XP_PER_STAR * _recipe(rid).star())
+			game.add_xp(Balance.i("crafting.craft_xp_per_star") * _recipe(rid).star())
 			game.ribbons.bump("crafted", 1)
 			if recipe_stars(rid) > before:
 				game.message.emit(tr("MASTERY_STARS") % [_recipe(rid).name, recipe_stars(rid)])
@@ -301,10 +295,10 @@ func _refresh_stall() -> void:
 				for c in r.inputs():
 					if not pool.has(str(c)):
 						pool.append(str(c))
-	for k in mini(STALL_CROPS, pool.size()):
+	for k in mini(Balance.i("crafting.stall_crops"), pool.size()):
 		var c := pool[game.rng.randi_range(0, pool.size() - 1)]
 		pool.erase(c)
-		stall[c] = STALL_EACH
+		stall[c] = Balance.i("crafting.stall_each")
 
 
 func market_stall() -> Dictionary:
@@ -318,7 +312,7 @@ func bushel_price(crop_id: String) -> int:
 
 func buy_bushel(crop_id: String) -> bool:
 	_refresh_stall()
-	if int(stall.get(crop_id, 0)) <= 0 or total_bushels() >= BUSHEL_CAP:
+	if int(stall.get(crop_id, 0)) <= 0 or total_bushels() >= Balance.i("crafting.bushel_cap"):
 		return false
 	if not game.spend(bushel_price(crop_id)):
 		return false

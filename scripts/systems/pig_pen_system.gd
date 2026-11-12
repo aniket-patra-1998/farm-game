@@ -4,10 +4,6 @@ extends GameSystem
 ## Part of the game state: reached as `Game.pigpen`; shared state is on `game`.
 
 # Pig Pen: feed slop, the pigs forage, and truffles trade for rare breeds.
-const SLOP_COST := 150
-const FORAGE_SECONDS := 8 * 3600
-const PIGS_PER_TRUFFLE := 5
-const TRUFFLES_PER_PIG := 10
 
 var truffles := 0
 
@@ -44,10 +40,10 @@ func feed_slop(uid: int) -> bool:
 	if game.inside_total(pen) == 0:
 		game.message.emit(tr("MOVE_SOME_PIGS_IN_FIRST"))
 		return false
-	if not game.spend(SLOP_COST):
+	if not game.spend(Balance.i("pigpen.slop_cost")):
 		game.message.emit(tr("NOT_ENOUGH_COINS_FOR_SLOP"))
 		return false
-	pen["forage_until"] = game.now() + FORAGE_SECONDS
+	pen["forage_until"] = game.now() + Balance.i("pigpen.forage_seconds")
 	game.message.emit(tr("THE_PIGS_ARE_OUT_LOOKING_FOR"))
 	game.objects_updated()
 	return true
@@ -58,7 +54,7 @@ func collect_truffles(uid: int) -> int:
 	var pen := game.object_by_uid(uid)
 	if pen.is_empty() or not is_foraging(pen) or forage_seconds_left(pen) > 0:
 		return 0
-	var dug := maxi(1, int(game.inside_total(pen) / float(PIGS_PER_TRUFFLE)))
+	var dug := maxi(1, int(game.inside_total(pen) / float(Balance.i("pigpen.pigs_per_truffle"))))
 	pen.erase("forage_until")
 	truffles += dug
 	game.ribbons.bump("truffles", dug)
@@ -78,12 +74,12 @@ func rare_pigs() -> Array[String]:
 
 ## Trades 10 truffles for a rare pig breed, placed on the farm.
 func trade_truffles(breed: String) -> bool:
-	if not game.item_data(breed).get("rare_pig", false) or truffles < TRUFFLES_PER_PIG:
+	if not game.item_data(breed).get("rare_pig", false) or truffles < Balance.i("pigpen.truffles_per_pig"):
 		return false
 	if not game.place_somewhere(breed):
 		game.message.emit(tr("NO_ROOM_ON_THE_FARM_FOR"))
 		return false
-	truffles -= TRUFFLES_PER_PIG
+	truffles -= Balance.i("pigpen.truffles_per_pig")
 	game.message.emit(tr("A_JOINED_YOUR_FARM") % game.item_data(breed)["name"])
 	game.inventory_changed.emit()
 	game.objects_updated()

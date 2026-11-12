@@ -118,15 +118,15 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	# Use a good for fuel.
 	g.crafting.goods["pumpkin_bread"] = 1
 	g.vehicles.fuel_unlocked = true
-	g.vehicles.fuel = VehicleSystem.FUEL_TANK - 5
+	g.vehicles.fuel = Balance.i("vehicles.fuel_tank") - 5
 	g.vehicles.fuel_tanks = 0
-	_eq(g.crafting.use_good("pumpkin_bread"), RecipeDef.FUEL_BASE, "a good gives fuel")
+	_eq(g.crafting.use_good("pumpkin_bread"), Balance.i("recipes.fuel_base"), "a good gives fuel")
 	_eq(g.vehicles.fuel_tanks, 1, "fuel past a full tank fills a spare tank")
 	# Buy the missing bushels with gems.
 	g.crafting.bushels = {}
 	g.gems = 100
 	_check(g.crafting.buy_missing_and_craft(uid, "strawberry_shortcake"), "bought 8 bushels and started")
-	_eq(g.gems, 100 - 8 * CraftingSystem.BUSHEL_GEM_COST, "1 gem a bushel")
+	_eq(g.gems, 100 - 8 * Balance.i("crafting.bushel_gem_cost"), "1 gem a bushel")
 	_done(g)
 
 
@@ -155,14 +155,14 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	_eq(g.gems, 0, "25 gems")
 	# The Farmers Market sells this building's crops, 3 bushels each, new every day.
 	var stall := g.crafting.market_stall()
-	_eq(stall.size(), CraftingSystem.STALL_CROPS, "%d crops on offer" % CraftingSystem.STALL_CROPS)
+	_eq(stall.size(), Balance.i("crafting.stall_crops"), "%d crops on offer" % Balance.i("crafting.stall_crops"))
 	var winery_crops := {}
 	for r in g.crafting.recipes_of("winery"):
 		for c in r.inputs():
 			winery_crops[c] = true
 	for c in stall:
 		_check(winery_crops.has(c), "%s is used by the Winery" % c)
-		_eq(int(stall[c]), CraftingSystem.STALL_EACH, "3 of each")
+		_eq(int(stall[c]), Balance.i("crafting.stall_each"), "3 of each")
 	var crop: String = stall.keys()[0]
 	for k in 3:
 		_check(g.crafting.buy_bushel(crop), "bought a %s bushel" % crop)
@@ -171,10 +171,10 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	_skip(g, 86400)
 	_eq(
 		int(g.crafting.market_stall().values().reduce(func(a, b): return a + b, 0)),
-		CraftingSystem.STALL_CROPS * CraftingSystem.STALL_EACH,
+		Balance.i("crafting.stall_crops") * Balance.i("crafting.stall_each"),
 		"restocked the next day"
 	)
 	# Bushels are capped.
-	g.crafting.bushels = {"rice": CraftingSystem.BUSHEL_CAP}
-	_eq(g.crafting.add_bushels("wheat", 1), 0, "no room past %d bushels" % CraftingSystem.BUSHEL_CAP)
+	g.crafting.bushels = {"rice": Balance.i("crafting.bushel_cap")}
+	_eq(g.crafting.add_bushels("wheat", 1), 0, "no room past %d bushels" % Balance.i("crafting.bushel_cap"))
 	_done(g)
