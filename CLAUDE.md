@@ -20,7 +20,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `scripts/farm_grid.gd`: farm geometry and input (`Placement` in `scripts/world/placement.gd` holds what is in hand and the drop rules); owns the world layers in `scripts/world/`
   (GroundLayer, ShadowLayer, ObjectLayer of FarmPiece nodes, OverlayLayer) and `scripts/fx/`.
 - `scripts/world/farm_camera.gd`: eased zoom, momentum, elastic edges.
-- `scripts/hud.gd`: top bar, toolbar, menus. `scripts/placeholder_art.gd`: code-drawn art until painted art
+- `scripts/hud.gd`: top bar, toolbar, messages; its panels live in `scripts/hud/` (`HudMarket`, `HudCrafting`, `HudBuildings`, `HudBarn`, `HudBooks`, `HudSettings`, each reached as `hud.market` etc.). `scripts/placeholder_art.gd`: code-drawn art until painted art
   (`art/final`, via `SpriteBank`) replaces it.
 - `tests/suites/*_test.gd`: rule tests, one `TestSuite` per area (helpers in `tests/test_suite.gd`), run by
   `tests/test_runner.gd` headless in CI. `tests/shots.gd`: screenshots in CI.

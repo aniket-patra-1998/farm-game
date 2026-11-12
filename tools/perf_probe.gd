@@ -76,7 +76,7 @@ func _storage_costs() -> void:
 		var box := VBoxContainer.new()
 		add_child(box)
 		t = Time.get_ticks_usec()
-		hud._build_barn_storage(box)
+		hud.barn.build_barn_storage(box)
 		print("PERF   barn panel build: %.1fms, %d nodes" % [(Time.get_ticks_usec() - t) / 1000.0, _count(box).z])
 		box.queue_free()
 

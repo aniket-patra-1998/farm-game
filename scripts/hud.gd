@@ -59,7 +59,13 @@ var _shown_coins := -1.0   # the number the coin counter shows while it rolls to
 
 var _coin_roll: Tween
 
-
+# The panels moved out of this class (scripts/hud/): each builds its content into the book.
+@onready var market := HudMarket.new(self)
+@onready var crafting := HudCrafting.new(self)
+@onready var buildings := HudBuildings.new(self)
+@onready var barn := HudBarn.new(self)
+@onready var books := HudBooks.new(self)
+@onready var settings := HudSettings.new(self)
 
 
 func _ready() -> void:
@@ -100,8 +106,6 @@ func _ready() -> void:
 	_refresh()
 	_refresh_clock()
 	_refresh_tutorial()
-
-
 
 
 # ---------------------------------------------------------------- layout
@@ -176,8 +180,6 @@ func _build_top_bar(root: Control) -> void:
 	_xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_xp_label.add_theme_font_size_override("font_size", 16)
 	xp_box.add_child(_xp_label)
-
-
 
 
 func _build_toolbar(root: Control) -> void:
@@ -264,7 +266,7 @@ func _build_toolbar(root: Control) -> void:
 	_fuel_button = Button.new()
 	_fuel_button.custom_minimum_size = BUTTON_SIZE
 	_fuel_button.focus_mode = Control.FOCUS_NONE
-	_fuel_button.pressed.connect(func() -> void: _book.open_panel(tr("FUEL"), _build_fuel))
+	_fuel_button.pressed.connect(func() -> void: _book.open_panel(tr("FUEL"), buildings.build_fuel))
 	row.add_child(_fuel_button)
 	var fuel_tick := Timer.new()
 	fuel_tick.wait_time = 5.0
@@ -325,8 +327,6 @@ func _build_toolbar(root: Control) -> void:
 		row.add_child(_reset_button)
 
 
-
-
 ## Two taps to reset, so a stray tap can't wipe the farm.
 func _on_reset_pressed() -> void:
 	if _reset_button.text.begins_with(tr("TAP_AGAIN")):
@@ -338,13 +338,9 @@ func _on_reset_pressed() -> void:
 	get_tree().create_timer(3.0).timeout.connect(_restore_reset_label)
 
 
-
-
 func _restore_reset_label() -> void:
 	if is_instance_valid(_reset_button):
 		_reset_button.text = tr("DEBUG_NEW_FARM")
-
-
 
 
 func _build_placing_bar(root: Control) -> void:
@@ -376,15 +372,11 @@ func _build_placing_bar(root: Control) -> void:
 	_top_holder(root, TOP_H + 10).add_child(_placing_bar)
 
 
-
-
 ## Shows the placement banner; empty text hides it.
 func show_placing(text: String) -> void:
 	_placing_label.text = text
 	_placing_bar.visible = text != ""
 	_refresh_tutorial()
-
-
 
 
 func _build_tutorial(root: Control) -> void:
@@ -406,8 +398,6 @@ func _build_tutorial(root: Control) -> void:
 	_top_holder(root, TOP_H + 12).add_child(_tutorial)
 
 
-
-
 func _refresh_tutorial() -> void:
 	var text := Game.tutorial_text()
 	_tutorial.text = text
@@ -416,8 +406,6 @@ func _refresh_tutorial() -> void:
 	var y := TOP_H + (80.0 if _tutorial.visible else 16.0)
 	_toast_holder.offset_top = y
 	_toast_holder.offset_bottom = y + 60.0
-
-
 
 
 ## A full-width strip under the top bar that keeps its child centred whatever its text.
@@ -429,8 +417,6 @@ func _top_holder(root: Control, y: float) -> CenterContainer:
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(holder)
 	return holder
-
-
 
 
 func _build_toast(root: Control) -> void:
@@ -453,8 +439,6 @@ func _build_toast(root: Control) -> void:
 	_toast_holder.add_child(_toast)
 
 
-
-
 func _tool_button(text: String) -> Button:
 	var b := Button.new()
 	b.text = text
@@ -463,8 +447,6 @@ func _tool_button(text: String) -> Button:
 	b.custom_minimum_size = BUTTON_SIZE
 	b.focus_mode = Control.FOCUS_NONE
 	return b
-
-
 
 
 # ---------------------------------------------------------------- updates
@@ -480,8 +462,6 @@ func show_message(text: String) -> void:
 	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
 
 
-
-
 # ---------------------------------------------------------------- rolling counters and reward targets
 
 
@@ -490,14 +470,8 @@ func coins_target() -> Vector2:
 	return _coins_label.get_global_rect().get_center()
 
 
-
-
 func xp_target() -> Vector2:
 	return _xp_bar.get_global_rect().get_center()
-
-
-
-
 
 
 ## A quick swell as a reward lands on a counter.
@@ -511,13 +485,9 @@ func pulse(which: String) -> void:
 	tw.tween_property(c, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
-
-
 func _set_shown_coins(v: float) -> void:
 	_shown_coins = v
 	_coins_label.text = "%s coins" % _thousands(int(round(v)))
-
-
 
 
 ## The coin counter rolls to the new amount instead of jumping (spends snap down at once).
@@ -540,8 +510,6 @@ func _roll_coins() -> void:
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
-
-
 func _refresh() -> void:
 	var lvl := Game.level()
 	var lo := Game.xp_for_level(lvl)
@@ -560,8 +528,6 @@ func _refresh() -> void:
 	_xp_label.text = tr("XP_2") % [Game.xp, hi]
 
 
-
-
 static func _thousands(n: int) -> String:
 	var digits := str(absi(n))
 	var out := ""
@@ -571,8 +537,6 @@ static func _thousands(n: int) -> String:
 	return ("-" if n < 0 else "") + digits + out
 
 
-
-
 func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
 	_clock_label.text = "%s · %s · %s" % [
@@ -580,8 +544,6 @@ func _refresh_clock() -> void:
 		tr(Game.weather()["name"]),
 		DayCycle.clock_text(hour)
 	]
-
-
 
 
 func _refresh_seed_buttons() -> void:
@@ -601,8 +563,6 @@ func _refresh_seed_buttons() -> void:
 			b.text = tr("LEVEL_2") % [crop["name"], int(crop["unlock_level"])]
 
 
-
-
 # ---------------------------------------------------------------- menus
 
 
@@ -611,88 +571,20 @@ func _refresh_book() -> void:
 		_book.refresh()
 
 
-
-
 func _show_collections() -> void:
-	_book.open_panel(tr("COLLECTIONS"), _build_collections)
-
-
+	_book.open_panel(tr("COLLECTIONS"), books.build_collections)
 
 
 func _show_ribbons() -> void:
-	_book.open_panel(tr("RIBBONS"), _build_ribbons)
-
-
-
-
+	_book.open_panel(tr("RIBBONS"), books.build_ribbons)
 
 
 func _show_settings() -> void:
-	_book.open_panel(tr("SETTINGS"), _build_settings)
-
-
-
-
-## Sound volume and mute, and vibration: the player's own, kept on the phone (not in the farm's save).
-func _build_settings(content: VBoxContainer) -> void:
-	var inner := BookPanel.card()
-	inner.add_theme_constant_override("separation", 12)
-	inner.add_child(BookPanel.text(tr("SOUND_EFFECTS"), 26))
-	var volume := HSlider.new()
-	volume.min_value = 0.0
-	volume.max_value = 1.0
-	volume.step = 0.05
-	volume.value = Sound.volume
-	volume.custom_minimum_size = Vector2(320, 40)
-	volume.focus_mode = Control.FOCUS_NONE
-	volume.value_changed.connect(func(v: float) -> void: Sound.volume = v)
-	volume.drag_ended.connect(func(_changed: bool) -> void: Sound.play("coin"))  # hear the new level
-	inner.add_child(volume)
-	var mute := CheckButton.new()
-	mute.text = tr("MUTE_SOUND")
-	mute.button_pressed = Sound.muted
-	mute.focus_mode = Control.FOCUS_NONE
-	mute.toggled.connect(func(on: bool) -> void: Sound.muted = on)
-	inner.add_child(mute)
-	var buzz := CheckButton.new()
-	buzz.text = tr("VIBRATION")
-	buzz.button_pressed = Sound.vibration
-	buzz.focus_mode = Control.FOCUS_NONE
-	buzz.toggled.connect(func(on: bool) -> void:
-		Sound.vibration = on
-		Sound.buzz(LEVEL_UP_BUZZ))  # feel it come on
-	inner.add_child(buzz)
-	content.add_child(BookPanel.card_frame(inner))
-	if OS.is_debug_build():
-		content.add_child(_showcase_card())
-
-
-## Debug builds only: switch to the farm with everything on it for testing, and back to your own.
-func _showcase_card() -> PanelContainer:
-	var inner := BookPanel.card()
-	inner.add_theme_constant_override("separation", 10)
-	inner.add_child(BookPanel.text(tr("TESTING"), 26))
-	inner.add_child(BookPanel.text(tr("SHOWCASE_HELP"), 18))
-	var go := Button.new()
-	go.text = tr("BACK_TO_MY_FARM") if Game.in_showcase() else tr("OPEN_SHOWCASE_FARM")
-	go.custom_minimum_size = Vector2(320, 56)
-	go.focus_mode = Control.FOCUS_NONE
-	go.pressed.connect(func() -> void:
-		_book.close_panel()
-		if Game.in_showcase():
-			Game.open_own_farm()
-		else:
-			Game.open_showcase())
-	inner.add_child(go)
-	return BookPanel.card_frame(inner)
-
-
+	_book.open_panel(tr("SETTINGS"), settings.build_settings)
 
 
 func _show_market() -> void:
-	_book.open_panel(tr("MARKET"), _build_market)
-
-
+	_book.open_panel(tr("MARKET"), market.build_market)
 
 
 ## Opened when a building that isn't ready is tapped.
@@ -702,18 +594,16 @@ func show_building(uid: int) -> void:
 	if o.is_empty():
 		return
 	if Game.nurture.is_young(o):
-		_book.open_panel(Game.item_data(o["id"])["name"], _build_young)
+		_book.open_panel(Game.item_data(o["id"])["name"], barn.build_young)
 	elif Game.kind_of(o) == "bloom":
-		_book.open_panel(Game.item_data(o["id"])["name"], _build_bloom)
+		_book.open_panel(Game.item_data(o["id"])["name"], barn.build_bloom)
 	elif o["id"] == "barn":
-		_book.open_panel(tr("BARN"), _build_barn)
+		_book.open_panel(tr("BARN"), barn.build_barn)
 	elif Game.crafting.is_crafting(o):
 		Game.crafting.finish_crafts(uid)
-		_book.open_panel(Game.size_name(o), _build_crafting)
+		_book.open_panel(Game.size_name(o), crafting.build_crafting)
 	else:
-		_book.open_panel(Game.item_data(o["id"])["name"], _build_building)
-
-
+		_book.open_panel(Game.item_data(o["id"])["name"], buildings.build_building)
 
 
 func _refresh_unwither() -> void:
@@ -735,673 +625,6 @@ func _refresh_unwither() -> void:
 		_unwither_button.text = tr("UNWITHER_GEMS") % GameState.UNWITHER_GEM_COST
 
 
-
-
-func _build_market(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("LAND"), 26, BookPanel.SUN))
-	content.add_child(_land_card())
-	content.add_child(_mystery_box_card())
-	content.add_child(BookPanel.text(
-		tr("BUY_THEN_DRAG_ONTO_AN_OPEN"), 20, BookPanel.CREAM))
-	for section in [
-		["tree", tr("TREES")],
-		["bloom", tr("BLOOMS")],
-		["animal", tr("ANIMALS")],
-		["building", tr("BUILDINGS")],
-		["crafting", tr("CRAFTING")],
-		["vehicle", tr("VEHICLES")],
-		["decor", tr("DECORATIONS")]
-	]:
-		content.add_child(BookPanel.text(section[1], 26, BookPanel.SUN))
-		for id in Game.item_order:
-			var it := Game.item_data(id)
-			if it["kind"] != section[0] or int(it["unlock_level"]) >= 99:
-				continue
-			content.add_child(_market_row(id, it))
-
-
-
-
-## FarmVille's Mystery Box: one random prize, and the only way to get a Donkey.
-func _mystery_box_card() -> Control:
-	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 10)
-	inner.add_child(BookPanel.text(tr("MYSTERY_BOX"), 22))
-	inner.add_child(
-		BookPanel.text(
-			tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION"),
-			17
-		)
-	)
-	var cost := int(Game.mystery.box_data.get("gem_cost", MysterySystem.MYSTERY_BOX_GEM_COST))
-	var buy := _panel_button(tr("OPEN_ONE_GEMS") % cost)
-	buy.disabled = Game.gems < cost
-	buy.pressed.connect(func() -> void:
-		var prize := Game.mystery.buy_mystery_box()
-		if prize != "":
-			show_message(tr("YOU_GOT") + prize)
-			_book.refresh())
-	inner.add_child(buy)
-	return BookPanel.card_frame(inner)
-
-
-
-
-## A crafting building: slots in use, recipes by star, goods made, bushels and the Farmers Market.
-func _build_crafting(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(_building_uid)
-	if o.is_empty():
-		_book.close_panel()
-		return
-	var uid := _building_uid
-	var lvl := Game.level_of(o)
-	# Slots
-	var top := BookPanel.card()
-	top.add_child(
-		BookPanel.text(
-			tr("OF_STARS_CRAFTING_SLOTS_RECIPE_MASTERY") % [
-				lvl,
-				lvl,
-				Game.crafting.building_recipe_stars(o["id"])
-			],
-			20
-		)
-	)
-	for slot in o.get("slots", []):
-		var left := int(slot["done"]) - Game.now()
-		var what := tr("SLOT_READY") if left <= 0 else tr("READY_IN_3") + FarmGrid.format_duration(left)
-		top.add_child(BookPanel.text("%s: %s" % [Game.catalog.get_def(slot["r"]).name, what], 18))
-	if Game.crafting.free_slots(o) > 0:
-		top.add_child(
-			BookPanel.text(
-				(tr("ONE_FREE_SLOT_PICK_A_RECIPE") if Game.crafting.free_slots(o) == 1
-					else tr("FREE_SLOTS_PICK_A_RECIPE_BELOW")) % Game.crafting.free_slots(o),
-				18,
-				BookPanel.CREAM
-			)
-		)
-	content.add_child(BookPanel.card_frame(top))
-	# Recipes
-	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.SUN))
-	for r in Game.crafting.recipes_of(o["id"]):
-		content.add_child(_recipe_row(uid, o, r))
-	# Goods
-	content.add_child(BookPanel.text(tr("YOUR_GOODS"), 26, BookPanel.SUN))
-	var any_goods := false
-	for r in Game.crafting.recipes_of(o["id"]):
-		var n := int(Game.crafting.goods.get(r.id, 0))
-		if n <= 0:
-			continue
-		any_goods = true
-		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", 10)
-		row.add_child(BookPanel.text("%d %s" % [n, r.name], 20))
-		var rid := r.id
-		var sell := _panel_button(tr("SELL_COINS") % _thousands(Game.crafting.good_price(rid)))
-		sell.pressed.connect(func() -> void:
-			Game.crafting.sell_good(rid)
-			_book.refresh())
-		row.add_child(sell)
-		var use := _panel_button(tr("USE_FUEL") % Game.crafting.good_fuel(rid))
-		use.pressed.connect(func() -> void:
-			show_message(tr("FUEL_2") % Game.crafting.use_good(rid))
-			_book.refresh())
-		row.add_child(use)
-		content.add_child(BookPanel.card_frame(row))
-	if not any_goods:
-		content.add_child(
-			BookPanel.text(
-				tr("NOTHING_YET_FINISHED_CRAFTS_LAND_HERE"),
-				17,
-				BookPanel.CREAM
-			)
-		)
-	# Stars
-	var cost := Game.crafting.star_cost(o)
-	if not cost.is_empty():
-		var up := BookPanel.card()
-		var have := Game.crafting.building_recipe_stars(o["id"])
-		up.add_child(BookPanel.text(tr("NEXT_STAR_COINS_AND_RECIPE_MASTERY") % [
-			_thousands(int(cost["coins"])), int(cost["recipe_stars"]), have, int(cost["gems"])], 18))
-		var row2 := HFlowContainer.new()
-		row2.add_theme_constant_override("h_separation", 10)
-		var with_coins := _panel_button(tr("UPGRADE_WITH_COINS"))
-		with_coins.disabled = not Game.crafting.can_add_star(uid, false)
-		with_coins.pressed.connect(func() -> void:
-			Game.crafting.add_star(uid, false)
-			_book.refresh())
-		row2.add_child(with_coins)
-		var with_gems := _panel_button(tr("UPGRADE_GEMS") % int(cost["gems"]))
-		with_gems.disabled = not Game.crafting.can_add_star(uid, true)
-		with_gems.pressed.connect(func() -> void:
-			Game.crafting.add_star(uid, true)
-			_book.refresh())
-		row2.add_child(with_gems)
-		up.add_child(row2)
-		content.add_child(BookPanel.card_frame(up))
-	# Bushels and the Farmers Market
-	content.add_child(
-		BookPanel.text(
-			tr("BUSHELS_OF") % [Game.crafting.total_bushels(), CraftingSystem.BUSHEL_CAP],
-			26,
-			BookPanel.SUN
-		)
-	)
-	var held: Array[String] = []
-	for c in Game.crafting.bushels:
-		held.append("%d %s" % [int(Game.crafting.bushels[c]), Game.crops[c]["name"]])
-	content.add_child(
-		BookPanel.text(
-			", ".join(PackedStringArray(held)) if not held.is_empty() else tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"),
-			17,
-			BookPanel.CREAM
-		)
-	)
-	content.add_child(BookPanel.text(tr("FARMERS_MARKET_TODAY"), 22, BookPanel.SUN))
-	var stall := Game.crafting.market_stall()
-	var flow := HFlowContainer.new()
-	flow.add_theme_constant_override("h_separation", 10)
-	flow.add_theme_constant_override("v_separation", 10)
-	for c in stall:
-		var crop_id: String = c
-		var b := _panel_button(
-			tr("LEFT_COINS") % [Game.crops[crop_id]["name"], int(stall[c]), Game.crafting.bushel_price(crop_id)]
-		)
-		var full := Game.crafting.total_bushels() >= CraftingSystem.BUSHEL_CAP
-		b.disabled = int(stall[c]) <= 0 or Game.coins < Game.crafting.bushel_price(crop_id) or full
-		b.pressed.connect(func() -> void:
-			Game.crafting.buy_bushel(crop_id)
-			_book.refresh())
-		flow.add_child(b)
-	content.add_child(flow)
-
-
-
-
-func _recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
-	var inner := VBoxContainer.new()
-	var unlocked := Game.crafting.recipe_unlocked(o, r.id)
-	var stars := Game.crafting.recipe_stars(r.id)
-	inner.add_child(BookPanel.text(r.name + (tr("MASTERY_OF") % stars if stars > 0 else ""), 20))
-	var need: Array[String] = []
-	for c in r.inputs():
-		need.append("%d/%d %s" % [int(Game.crafting.bushels.get(c, 0)), int(r.inputs()[c]), Game.crops[c]["name"]])
-	inner.add_child(BookPanel.text(", ".join(PackedStringArray(need)), 17))
-	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 10)
-	if not unlocked:
-		row.add_child(BookPanel.text(tr("UNLOCKS_AT_STARS") % r.star(), 17, BookPanel.CREAM))
-	else:
-		var make := _panel_button(tr("MAKE_IT"))
-		make.disabled = Game.crafting.craft_problem(uid, r.id) != ""
-		var rid := r.id
-		make.pressed.connect(func() -> void:
-			Game.crafting.start_craft(uid, rid)
-			_book.refresh())
-		row.add_child(make)
-		var missing := Game.crafting.missing_bushels(r.id)
-		if not missing.is_empty() and Game.crafting.free_slots(o) > 0:
-			var n := 0
-			for c in missing:
-				n += int(missing[c])
-			var buy := _panel_button(tr("BUY_MISSING_GEMS") % (n * CraftingSystem.BUSHEL_GEM_COST))
-			buy.disabled = Game.gems < n * CraftingSystem.BUSHEL_GEM_COST
-			buy.pressed.connect(func() -> void:
-				Game.crafting.buy_missing_and_craft(uid, rid)
-				_book.refresh())
-			row.add_child(buy)
-	inner.add_child(row)
-	return BookPanel.card_frame(inner)
-
-
-
-
-func _land_card() -> Control:
-	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 10)
-	var step := Game.land.next_expansion()
-	var size := Game.farm_size
-	if step.is_empty():
-		inner.add_child(BookPanel.text(tr("YOUR_FARM_IS_FULL_SIZE_X") % [size, size], 22))
-		return BookPanel.card_frame(inner)
-	var next := int(step["size"])
-	inner.add_child(BookPanel.text(tr("EXPAND_FROM_X_TO_X") % [size, size, next, next], 22))
-	inner.add_child(BookPanel.text(
-		tr("ADDS_PLOTS_THE_DASHED_AREA_ON") % (next * next - size * size), 17))
-	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 12)
-	row.add_theme_constant_override("v_separation", 12)
-	var with_coins := _panel_button("")
-	if Game.level() < int(step["level"]):
-		with_coins.text = tr("COINS_REACH_LEVEL") % int(step["level"])
-		with_coins.disabled = true
-	else:
-		with_coins.text = tr("EXPAND_COINS") % _thousands(int(step["coins"]))
-		with_coins.disabled = Game.coins < int(step["coins"])
-	with_coins.pressed.connect(func() -> void: Game.land.expand(false))
-	row.add_child(with_coins)
-	var with_gems := _panel_button(tr("EXPAND_NOW_GEMS") % int(step["gems"]))
-	with_gems.disabled = Game.gems < int(step["gems"])
-	with_gems.pressed.connect(func() -> void: Game.land.expand(true))
-	row.add_child(with_gems)
-	inner.add_child(row)
-	return BookPanel.card_frame(inner)
-
-
-
-
-func _market_row(id: String, it: Dictionary) -> Control:
-	var locked := Game.level() < int(it["unlock_level"])
-	var inner := HBoxContainer.new()
-	inner.add_theme_constant_override("separation", 12)
-	var info := VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_child(BookPanel.text(it["name"], 22))
-	var detail: String
-	match it["kind"]:
-		"building":
-			var holds: String
-			if it.has("holds_kind"):
-				holds = tr("HOLDS_VEHICLES") if it["holds_kind"] == "vehicle" else tr("FRUIT_TREES")
-			else:
-				var names: Array[String] = []
-				for a in it["holds"]:
-					names.append(Game.item_data(a)["name"].to_lower() + "s")
-				holds = ", ".join(PackedStringArray(names))
-			var fp := Game.footprint(id)
-			var def := Game.building_def(id)
-			detail = tr("HOLDS_X_TILES_UPGRADES_TO") % [def.capacity(1), holds, fp.x, fp.y, def.capacity(def.max_level())]
-		"crafting":
-			detail = tr("CRAFTING_RECIPES_OVER_STARS_PER_CRAFT") % FarmGrid.format_duration(int(it.get("craft_seconds", 21600)))
-		"vehicle":
-			var verbs := {
-				"plow": tr("PLOWS"),
-				"plant": tr("PLANTS"),
-				"harvest": tr("HARVESTS"),
-				"all": tr("HARVESTS_PLOWS_AND_PLANTS")
-			}
-			detail = tr("X_PLOTS_A_TAP_FUEL_A") % [
-				verbs.get(it["job"], ""),
-				int(it.get("fuel_per_plot", 1))
-			]
-			if it.has("build_materials"):
-				detail += tr("CHASSIS_FINISHED_WITH_VEHICLE_PARTS") % int(it["build_materials"]["vehicle_parts"])
-		"decor":
-			var fpd := Game.footprint(id)
-			detail = tr("DECORATION_XP_X_SELLS_FOR") % [
-				Game.buy_xp(id),
-				fpd.x,
-				fpd.y,
-				int(round(int(it["cost"]) * GameState.SELL_SHARE))
-			]
-		_:
-			var what: String = it.get("product", tr("FRUIT"))
-			detail = tr("EVERY_COINS_XP") % [
-				what, FarmGrid.format_duration(int(it["cycle_seconds"])), int(it["payout"]), int(it["xp"])]
-	info.add_child(BookPanel.text(detail, 17))
-	for need in Requirements.list(Game, id):
-		# What it needs, and how far along: a tick when met, and where to get what's missing.
-		var line := ("✓ " if need["ok"] else "• ") + str(need["text"])
-		if not need["ok"]:
-			line += " — " + str(need["hint"])
-		info.add_child(BookPanel.text(line, 16, BookPanel.CREAM))
-	inner.add_child(info)
-	var buy := Button.new()
-	buy.custom_minimum_size = Vector2(150, 52)
-	buy.focus_mode = Control.FOCUS_NONE
-	var verdict := Game.buildings.can_buy(id)
-	if locked or verdict.why in [BuildingSystem.Why.LIMIT, BuildingSystem.Why.GROUP_LIMIT, BuildingSystem.Why.REQUIRES]:
-		# Not yet, or the farm has as many as it may: say which, on the button.
-		buy.text = verdict.short
-		buy.tooltip_text = verdict.text
-		buy.disabled = true
-	else:
-		if it["kind"] == "crafting":
-			var price := Game.crafting.crafting_price(id)
-			buy.text = ("%d gems" % int(price["gems"])) if price.has("gems") else "%s coins" % _thousands(int(price["coins"]))
-		else:
-			buy.text = ("%d gems" % int(it["gem_cost"])) if it.has("gem_cost") else (
-				"%s coins" % _thousands(int(it["cost"])) if int(it["cost"]) > 0 else tr("FREE_FRAME")
-			)
-		buy.disabled = not Game.can_afford_item(id)
-		buy.pressed.connect(func() -> void:
-			_book.close_panel()
-			place_requested.emit(id))
-	inner.add_child(buy)
-	return BookPanel.card_frame(inner)
-
-
-
-
-func _build_building(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(_building_uid)
-	if o.is_empty():
-		_book.close_panel()
-		return
-	var uid := _building_uid
-	if Game.under_construction(o):
-		_build_construction(content, o, uid)
-		return
-	if str(Game.item_data(o["id"]).get("special", "")) == "finds_home":
-		_build_finds_home(content, o)
-		return
-	var total := Game.inside_total(o)
-	var cap := Game.capacity(o)
-	var pay := Game.object_payout(o)
-
-	var status := BookPanel.card()
-	status.add_theme_constant_override("separation", 8)
-	status.add_child(BookPanel.text(tr("OF_SPACES_USED") % [Game.size_name(o), total, cap], 22))
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 18
-	bar.max_value = cap
-	bar.value = total
-	status.add_child(bar)
-	var inside: Dictionary = o["inside"]
-	if inside.is_empty():
-		status.add_child(BookPanel.text(tr("EMPTY_MOVE_ANIMALS_IN_TO_START"), 18))
-	else:
-		var names: Array[String] = []
-		for id in inside:
-			names.append("%d %s" % [int(inside[id]), Game.item_data(id)["name"]])
-		status.add_child(BookPanel.text(tr("INSIDE").join(PackedStringArray(names)), 18))
-		if total > 0 and pay != Vector2i.ZERO:
-			var when := tr("READY_TO_COLLECT") if Game.is_ready(o) \
-				else tr("READY_IN_4") + FarmGrid.format_duration(Game.seconds_until_ready(o))
-			status.add_child(BookPanel.text(tr("PAYS_COINS_XP") % [when, pay.x, pay.y], 18))
-	content.add_child(BookPanel.card_frame(status))
-
-	var actions := HFlowContainer.new()
-	actions.add_theme_constant_override("h_separation", 12)
-	actions.add_theme_constant_override("v_separation", 12)
-	if Game.is_ready(o):
-		var collect := _panel_button(tr("COLLECT"))
-		collect.pressed.connect(func() -> void:
-			var r := Game.collect(uid)
-			if not r.is_empty():
-				show_message(tr("COINS_XP") % [r["coins"], r["xp"]]))
-		actions.add_child(collect)
-	if o["id"] != "beehive":
-		var loose := Game.homes.loose_matching(o)
-		var fill := _panel_button(tr("MOVE_IN") % loose if loose > 0 else tr("NONE_ON_FARM"))
-		fill.disabled = loose == 0
-		fill.pressed.connect(func() -> void: Game.homes.fill_building(uid))
-		actions.add_child(fill)
-	content.add_child(actions)
-
-	_add_building_special_info(content, o)
-	_add_expansion_card(content, o, uid)
-
-
-
-
-## A home for what's found while farming (the Gopher Garden): each kind with how many you have (a question
-## mark for the ones not found yet) and what it takes to grow.
-func _build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
-	var family := str(Game.item_data(o["id"]).get("home_of", ""))
-	var fam: Dictionary = Game.finds.families.get(family, {})
-	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
-	card.add_child(BookPanel.text(Game.size_name(o), 22))
-	card.add_child(BookPanel.text(tr("GOPHER_GARDEN_FOUND") % [Game.finds.total(family), Game.finds.distinct(family),
-		(fam.get("kinds", []) as Array).size()], 18))
-	for kind: Dictionary in fam.get("kinds", []):
-		var n := Game.finds.count(str(kind["id"]))
-		card.add_child(BookPanel.text("%s  ×%d  (%s)" % [kind["name"], n, kind["rarity"]] if n > 0
-			else "?  (%s)" % kind["rarity"], 17, BookPanel.CREAM))
-	var tiers: Array = fam.get("tiers", [])
-	var next_at := 0
-	for t in tiers:
-		if Game.finds.total(family) < int(t):
-			next_at = int(t)
-			break
-	if next_at > 0:
-		card.add_child(BookPanel.text(tr("GOPHER_NEXT_SIZE") % next_at, 17, BookPanel.CREAM))
-	content.add_child(BookPanel.card_frame(card))
-
-
-## Frame being built: what's in, what's missing, and a button to add held materials.
-func _build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> void:
-	var it := Game.item_data(o["id"])
-	content.add_child(
-		BookPanel.text(
-			tr("THIS_IS_A_BUILDING_FRAME_FINISH"),
-			19,
-			BookPanel.CREAM
-		)
-	)
-	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
-	var need: Dictionary = it.get("build_materials", {})
-	var have: Dictionary = o["construction"]
-	for m in need:
-		var got := int(have.get(m, 0))
-		var want := int(need[m])
-		card.add_child(
-			BookPanel.text(
-				tr("OF_YOU_HOLD") % [GameState.part_names[m], got, want, int(Game.parts.get(m, 0))],
-				19
-			)
-		)
-		var bar := ProgressBar.new()
-		bar.show_percentage = false
-		bar.custom_minimum_size.y = 14
-		bar.max_value = want
-		bar.value = got
-		card.add_child(bar)
-	content.add_child(BookPanel.card_frame(card))
-	var add := _panel_button(tr("ADD_MY_MATERIALS"))
-	add.pressed.connect(func() -> void: Game.land.add_materials(uid))
-	content.add_child(add)
-	_add_buy_missing(content, Game.land.construction_needs(o), func() -> void: Game.land.add_materials(uid))
-
-
-## FarmVille sold building materials for Farm Cash: a button to buy what's still missing with gems, then
-## use them (`then`). Nothing when nothing is missing.
-func _add_buy_missing(content: Control, need: Dictionary, then: Callable) -> void:
-	var gems := Game.buildings.gems_for(need)
-	if gems <= 0:
-		return
-	var buy := _panel_button(tr("BUY_MISSING_FOR_GEMS") % gems)
-	buy.disabled = Game.gems < gems
-	buy.pressed.connect(func() -> void:
-		if Game.buildings.buy_missing(need):
-			then.call()
-		_book.refresh())
-	content.add_child(buy)
-
-
-
-
-## What makes this building special, the FarmVille way.
-func _add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
-	var it := Game.item_data(o["id"])
-	match it.get("special", ""):
-		"mystery_eggs":
-			content.add_child(
-				BookPanel.text(
-					tr("HARVESTING_CAN_TURN_UP_MYSTERY_EGGS"),
-					17,
-					BookPanel.CREAM
-				)
-			)
-			var eggs := HFlowContainer.new()
-			eggs.add_theme_constant_override("h_separation", 10)
-			eggs.add_theme_constant_override("v_separation", 10)
-			for colour in Game.mystery.egg_data.get("colours", {}):
-				var n := int(Game.mystery.mystery_eggs.get(colour, 0))
-				if n <= 0:
-					continue
-				var b := _panel_button(tr("OPEN") % [Game.mystery.egg_data["colours"][colour]["name"], n])
-				var c: String = colour
-				b.pressed.connect(func() -> void:
-					var prize := Game.mystery.open_mystery_egg(c)
-					if prize != "":
-						show_message(tr("YOU_GOT") + prize))
-				eggs.add_child(b)
-			if eggs.get_child_count() > 0:
-				content.add_child(eggs)
-		"calves":
-			var bull := tr("A_BULL_LIVES_HERE_HARVESTS_CAN") if Game.has_inside(o, "bull") else tr("NO_BULL_YET_A_LONELY_BULL")
-			content.add_child(
-				BookPanel.text(bull + tr("HARVESTS_SOMETIMES_LEAVE_A_BAG_OF"), 17, BookPanel.CREAM)
-			)
-		"foals":
-			var st := tr("A_STALLION_LIVES_HERE_HARVESTS_CAN") if Game.has_inside(o, "stallion") \
-				else tr("NO_STALLION_YET_A_WANDERING_STALLION")
-			content.add_child(
-				BookPanel.text(
-					tr("HORSES_HERE_ARE_READY_EVERY_DAY") + st + tr("HARVESTS_CAN_ALSO_GIVE_FARMHANDS_AND"),
-					17,
-					BookPanel.CREAM
-				)
-			)
-		"nursery":
-			var grow := int(it.get("grow_days", 4))
-			var lines: Array[String] = []
-			for baby in o.get("growing", []):
-				lines.append(tr("OF_DAYS") % [Game.item_data(baby[0])["name"], int(baby[1]), grow])
-			var txt := tr("CALVES_AND_FOALS_GROW_UP_HERE") % grow
-			if not lines.is_empty():
-				txt += "\n\n".join(PackedStringArray(lines))
-			content.add_child(BookPanel.text(txt, 17, BookPanel.CREAM))
-		"beehive":
-			_add_hive_info(content, o)
-		"truffles":
-			_add_pig_pen_info(content, o)
-		"garage":
-			_add_garage_info(content)
-		"garden_shed":
-			_add_shed_info(content)
-		"saplings":
-			content.add_child(
-				BookPanel.text(
-					tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR"),
-					17,
-					BookPanel.CREAM
-				)
-			)
-
-
-
-
-## The Garden Shed: Perfect Bunches found while harvesting flowers, ready to place for 14 days.
-func _add_shed_info(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("PERFECT_BUNCHES_OF_HARVESTING_FLOWERS_SOMETIMES") % [
-		Game.shed.bunches.size(), Game.shed.bunch_cap(), BarnStorage.BUNCH_DAYS], 17, BookPanel.CREAM))
-	var flow := HFlowContainer.new()
-	flow.add_theme_constant_override("h_separation", 10)
-	flow.add_theme_constant_override("v_separation", 10)
-	for k in Game.shed.bunches.size():
-		var flower: String = Game.shed.bunches[k]
-		var b := _panel_button(tr("PLACE") % Game.crops[flower]["name"])
-		var idx := k
-		b.pressed.connect(func() -> void:
-			var at := Game.shed.unpack_bunch(idx)
-			if at >= 0:
-				_book.close_panel()
-				place_stored_requested.emit(at))
-		flow.add_child(b)
-	content.add_child(flow)
-
-
-
-
-func _add_garage_info(content: VBoxContainer) -> void:
-	content.add_child(
-		BookPanel.text(
-			tr("VEHICLE_PARTS_HELD_THEY_TURN_UP") % int(Game.parts.get("vehicle_parts", 0)),
-			17,
-			BookPanel.CREAM
-		)
-	)
-	var owned := Game.vehicles.usable_vehicles()
-	var outside := Game.vehicles.loose_vehicles()
-	if outside > 0:
-		content.add_child(BookPanel.text(tr("X_VEHICLES_OUTSIDE") % outside, 17, BookPanel.CREAM))
-	if owned.is_empty():
-		content.add_child(
-			BookPanel.text(tr("NO_VEHICLES_YET_BUY_A_TRACTOR"), 18, BookPanel.CREAM)
-		)
-		return
-	content.add_child(BookPanel.text(tr("VEHICLES_ARE_PARKED_HERE"), 17, BookPanel.CREAM))
-	for id in owned:
-		var it := Game.item_data(id)
-		var area := Game.vehicles.vehicle_area(id)
-		var card := BookPanel.card()
-		card.add_theme_constant_override("separation", 6)
-		card.add_child(
-			BookPanel.text(
-				tr("WORKS_X_PLOTS_UPGRADE_OF") % [
-					it["name"],
-					area.x,
-					area.y,
-					Game.vehicles.vehicle_level(id)
-				],
-				21
-			)
-		)
-		var cost := Game.vehicles.vehicle_upgrade_cost(id)
-		var vid: String = id
-		var drive := _panel_button(tr("USE_VEHICLE"))
-		drive.pressed.connect(func() -> void:
-			_book.close_panel()
-			tool_selected.emit("vehicle", vid))
-		card.add_child(drive)
-		if cost < 0:
-			card.add_child(BookPanel.text(tr("FULLY_UPGRADED"), 18))
-		else:
-			var next: Vector2i = GameState.VEHICLE_SIZES[Game.vehicles.vehicle_level(id) + 1]
-			var need_lvl := Game.vehicles.vehicle_upgrade_level_needed(id)
-			var line := tr("NEXT_X_FOR_VEHICLE_PARTS") % [next.x, next.y, cost]
-			if need_lvl > Game.level():
-				line += tr("LEVEL_3") % need_lvl
-			card.add_child(BookPanel.text(line, 18))
-			var up := _panel_button(tr("UPGRADE"))
-			up.disabled = not Game.vehicles.can_upgrade_vehicle(id)
-			up.pressed.connect(func() -> void: Game.vehicles.upgrade_vehicle(vid))
-			card.add_child(up)
-		content.add_child(BookPanel.card_frame(card))
-
-
-
-
-func _build_fuel(content: VBoxContainer) -> void:
-	var fuel := Game.vehicles.fuel_now()
-	content.add_child(
-		BookPanel.text(
-			tr("ALL_VEHICLES_SHARE_ONE_TANK_OF") % [
-				VehicleSystem.FUEL_TANK,
-				int(VehicleSystem.FUEL_REGEN_SECONDS / 60.0)
-			],
-			18,
-			BookPanel.CREAM
-		)
-	)
-	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
-	card.add_child(
-		BookPanel.text(
-			tr("TANK_OF_SPARE_TANKS") % [fuel, VehicleSystem.FUEL_TANK, Game.vehicles.fuel_tanks],
-			21
-		)
-	)
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 18
-	bar.max_value = VehicleSystem.FUEL_TANK
-	bar.value = fuel
-	card.add_child(bar)
-	var buy := _panel_button(tr("BUY_A_FULL_TANK_GEMS") % VehicleSystem.FUEL_TANK_GEM_COST)
-	buy.disabled = Game.gems < VehicleSystem.FUEL_TANK_GEM_COST
-	buy.pressed.connect(func() -> void: Game.vehicles.buy_fuel_tank())
-	card.add_child(buy)
-	content.add_child(BookPanel.card_frame(card))
-
-
-
-
 ## One toolbar button per vehicle type you own, with its area and the fuel left.
 func _refresh_vehicles() -> void:
 	if not _vehicle_row:
@@ -1414,436 +637,12 @@ func _refresh_vehicles() -> void:
 	]
 
 
-
-
-func _add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
-	var uid := int(o["uid"])
-	if Game.bees.has_queen(o):
-		content.add_child(BookPanel.text(tr("THE_QUEEN_BEE_LIVES_HERE_WORKER") % Game.capacity(o), 17, BookPanel.CREAM))
-	else:
-		content.add_child(
-			BookPanel.text(
-				tr("THIS_HIVE_NEEDS_A_QUEEN_BEE"),
-				17,
-				BookPanel.CREAM
-			)
-		)
-		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", 12)
-		var put := _panel_button(tr("ADD_QUEEN_BEE_HELD") % Game.bees.queen_bees)
-		put.disabled = Game.bees.queen_bees <= 0
-		put.pressed.connect(func() -> void: Game.bees.add_queen(uid))
-		row.add_child(put)
-		var buy := _panel_button(tr("BUY_QUEEN_BEE_GEMS") % BeehiveSystem.QUEEN_GEM_COST)
-		buy.disabled = Game.gems < BeehiveSystem.QUEEN_GEM_COST
-		buy.pressed.connect(func() -> void: Game.bees.add_queen(uid, true))
-		row.add_child(buy)
-		content.add_child(row)
-	content.add_child(
-		BookPanel.text(
-			tr("POLLINATION_HARVESTING_A_FERTILIZED_CROP_HAS") % [
-				int(round(Game.bees.pollination_chance() * 100)),
-				BeehiveSystem.BEES_STAY_DAYS
-			],
-			17,
-			BookPanel.CREAM
-		)
-	)
-
-
-
-
-func _add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
-	var uid := int(o["uid"])
-	var pigs := Game.inside_total(o)
-	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
-	card.add_child(BookPanel.text(tr("TRUFFLES_HELD") % Game.pigpen.truffles, 21))
-	if not Game.pigpen.is_foraging(o):
-		card.add_child(BookPanel.text(tr("FEED_THE_PIGS_SLOP_AND_THEY") % PigPenSystem.PIGS_PER_TRUFFLE, 17))
-		var feed := _panel_button(tr("FEED_SLOP_COINS") % PigPenSystem.SLOP_COST)
-		feed.disabled = pigs == 0 or Game.coins < PigPenSystem.SLOP_COST
-		feed.pressed.connect(func() -> void: Game.pigpen.feed_slop(uid))
-		card.add_child(feed)
-	elif Game.pigpen.forage_seconds_left(o) > 0:
-		card.add_child(
-			BookPanel.text(tr("FORAGING_BACK_IN") + FarmGrid.format_duration(Game.pigpen.forage_seconds_left(o)), 18)
-		)
-	else:
-		var dig := _panel_button(tr("COLLECT_TRUFFLES"))
-		dig.pressed.connect(func() -> void:
-			var n := Game.pigpen.collect_truffles(uid)
-			if n > 0:
-				show_message(tr("TRUFFLES") % n))
-		card.add_child(dig)
-	card.add_child(BookPanel.text(tr("TRADE_TRUFFLES_FOR_A_RARE_PIG") % PigPenSystem.TRUFFLES_PER_PIG, 18))
-	var breeds := HFlowContainer.new()
-	breeds.add_theme_constant_override("h_separation", 10)
-	breeds.add_theme_constant_override("v_separation", 10)
-	for id in Game.pigpen.rare_pigs():
-		var b := _panel_button(Game.item_data(id)["name"])
-		b.disabled = Game.pigpen.truffles < PigPenSystem.TRUFFLES_PER_PIG
-		var breed: String = id
-		b.pressed.connect(func() -> void: Game.pigpen.trade_truffles(breed))
-		breeds.add_child(b)
-	card.add_child(breeds)
-	content.add_child(BookPanel.card_frame(card))
-
-
-
-
-## Next size and its material cost.
-func _add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void:
-	var need := Game.land.expansion_needs(o)
-	if need.is_empty():
-		content.add_child(BookPanel.text(tr("FULLY_EXPANDED"), 18, BookPanel.CREAM))
-		return
-	var next := Game.building_def(o["id"]).size(Game.level_of(o) + 1)
-	var next_name := str(next.get("name", tr("NEXT_SIZE")))
-	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 6)
-	card.add_child(BookPanel.text(tr("EXPAND_TO_HOLDS") % [next_name, int(next["capacity"])], 21))
-	for m in need:
-		card.add_child(
-			BookPanel.text(
-				tr("OF") % [
-					GameState.part_names[m],
-					mini(int(Game.parts.get(m, 0)), int(need[m])),
-					int(need[m])
-				],
-				18
-			)
-		)
-	var up := _panel_button(tr("EXPAND"))
-	up.disabled = not Game.land.can_expand(o)
-	up.pressed.connect(func() -> void: Game.land.upgrade_building(uid))
-	card.add_child(up)
-	_add_buy_missing(card, need, func() -> void: Game.land.upgrade_building(uid))
-	content.add_child(BookPanel.card_frame(card))
-
-
-
-
-func _build_barn(content: VBoxContainer) -> void:
-	var b := Game.storage.barn()
-	if b.is_empty():
-		_book.close_panel()
-		return
-	if b.get("broken", false):
-		_build_barn_repair(content)
-	else:
-		_build_barn_storage(content)
-
-
-
-
-## A bloom's card: when it's ready, whether it has withered (and regrowing it with Flower Food), and for a
-## Single Bloom, upgrading it to a Full Bloom that never withers.
-func _build_bloom(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(_building_uid)
-	var d := Game.catalog.get_def(str(o.get("id", ""))) as BloomDef
-	if d == null:
-		return
-	var uid := _building_uid
-	if Game.is_withered(o):
-		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), 20, BookPanel.CREAM))
-		content.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply("flower_food"),
-			Game.nurture.supply_name("flower_food")], 18, BookPanel.CREAM))
-		var regrow := _panel_button(tr("REGROW_IT"))
-		regrow.disabled = Game.nurture.free_supply("flower_food") <= 0
-		regrow.pressed.connect(func() -> void:
-			Game.player.enqueue({"kind": "nurture", "uid": uid})
-			_book.close_panel())
-		content.add_child(regrow)
-		var buy := _panel_button(tr("BUY_ONE_FOR_GEMS") % [Game.nurture.supply_name("flower_food"),
-			int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])])
-		buy.disabled = Game.gems < int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])
-		buy.pressed.connect(func() -> void:
-			if Game.nurture.buy_supply("flower_food", 1):
-				show_building(uid))
-		content.add_child(buy)
-	else:
-		content.add_child(BookPanel.text(tr("READY_IN") % [d.data["name"], tr("FLOWERS"),
-			FarmGrid.format_duration(Game.seconds_until_ready(o))], 20, BookPanel.CREAM))
-	if d.withers():
-		content.add_child(BookPanel.text(tr("A_SINGLE_BLOOM_WITHERS"), 17, BookPanel.CREAM))
-		var up := _panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
-		up.disabled = Game.gems < d.upgrade_gems()
-		up.pressed.connect(func() -> void:
-			if Game.nurture.upgrade_bloom(uid):
-				show_building(uid))
-		content.add_child(up)
-
-
-## A mystery young's card: how far it has grown, the supply it needs and how many you have, and more for gems.
-func _build_young(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(_building_uid)
-	if not Game.nurture.is_young(o):
-		return
-	var supply := Game.nurture.supply_of(o)
-	var name := Game.nurture.supply_name(supply)
-	content.add_child(BookPanel.text(tr("GIVE_IT_TO_SEE_WHAT_IT_GROWS_INTO") % [Game.nurture.needs(o), name], 20,
-		BookPanel.CREAM))
-	var card := BookPanel.card()
-	card.add_child(BookPanel.text(tr("OF_2") % [name, Game.nurture.fed(o), Game.nurture.needs(o)], 20))
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 16
-	bar.max_value = Game.nurture.needs(o)
-	bar.value = Game.nurture.fed(o)
-	card.add_child(bar)
-	card.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply(supply), name], 18))
-	content.add_child(BookPanel.card_frame(card))
-	var uid := _building_uid
-	var give := _panel_button(tr("GIVE_ONE"))
-	give.disabled = Game.nurture.free_supply(supply) <= 0
-	give.pressed.connect(func() -> void:
-		Game.player.enqueue({"kind": "nurture", "uid": uid})
-		_book.close_panel())
-	content.add_child(give)
-	var gems := int(NurtureSystem.SUPPLIES[supply]["gem_cost"])
-	var buy := _panel_button(tr("BUY_ONE_FOR_GEMS") % [name, gems])
-	buy.disabled = Game.gems < gems
-	buy.pressed.connect(func() -> void:
-		if Game.nurture.buy_supply(supply, 1):
-			show_building(uid))
-	content.add_child(buy)
-
-
-func _build_barn_repair(content: VBoxContainer) -> void:
-	var it := Game.item_data("barn")
-	content.add_child(BookPanel.text(
-		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), 20, BookPanel.CREAM))
-	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 10)
-	var need := Game.storage.repair_needs()
-	for p in GameState.part_ids:
-		var want := int(need.get(p, 0))
-		var have := int(Game.parts.get(p, 0))
-		card.add_child(BookPanel.text(tr("OF_2") % [GameState.part_names[p], mini(have, want), want], 20))
-		var bar := ProgressBar.new()
-		bar.show_percentage = false
-		bar.custom_minimum_size.y = 16
-		bar.max_value = want
-		bar.value = mini(have, want)
-		card.add_child(bar)
-	card.add_child(
-		BookPanel.text(
-			tr("REWARD_COINS_XP_AND_A_BARN") % [
-				int(it.get("repair_coins", 0)),
-				int(it.get("repair_xp", 0))
-			],
-			17
-		)
-	)
-	content.add_child(BookPanel.card_frame(card))
-	var fix := _panel_button(tr("REPAIR_THE_BARN") if Game.storage.can_repair_barn() else tr("NOT_ENOUGH_PARTS_YET"))
-	fix.disabled = not Game.storage.can_repair_barn()
-	fix.pressed.connect(func() -> void: Game.storage.repair_barn())
-	content.add_child(fix)
-
-
-
-
-func _build_barn_storage(content: VBoxContainer) -> void:
-	var cap := Game.storage.barn_capacity()
-	content.add_child(BookPanel.text(
-		tr("HOLDS_OF_USE_THE_STORE_TOOL") % [Game.storage.stored.size(), cap], 20, BookPanel.CREAM))
-	var parts_line: Array[String] = []
-	for p in GameState.part_ids:
-		parts_line.append("%s %d" % [GameState.part_names[p], int(Game.parts.get(p, 0))])
-	content.add_child(BookPanel.text(tr("PARTS").join(PackedStringArray(parts_line)), 17, BookPanel.CREAM))
-	var barn := Game.storage.barn()
-	if not barn.is_empty():
-		_add_expansion_card(content, barn, int(barn["uid"]))
-	if Game.storage.stored.is_empty():
-		content.add_child(BookPanel.card_frame(BookPanel.text(tr("NOTHING_STORED_YET"), 20)))
-		return
-	_add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
-	_add_gift_box(content, cap)
-
-
-## What has spilled past the barn, grouped by kind (there can be thousands: one row each would be a wall).
-func _add_gift_box(content: VBoxContainer, cap: int) -> void:
-	var extra := Game.storage.in_gift_box()
-	if extra <= 0:
-		return
-	content.add_child(BookPanel.text(tr("GIFT_BOX_HOLDS") % [extra, BarnStorage.GIFT_BOX_LIMIT], 18, BookPanel.CREAM))
-	_add_grouped(content, cap, Game.storage.stored.size())
-
-
-## One row per kind among the stored things from index `from` up to `to` (a full barn is hundreds, the gift box
-## thousands: a row each would be a wall of nodes), with how many there are; Place takes the first of that kind.
-func _add_grouped(content: VBoxContainer, from: int, to: int) -> void:
-	var first := {}
-	var count := {}
-	for k in range(from, to):
-		var id := str(Game.storage.stored[k]["id"])
-		if not first.has(id):
-			first[id] = k
-		count[id] = int(count.get(id, 0)) + 1
-	_add_group_rows(content, first.keys(), first, count, 0)
-
-
-## Group rows a page at a time: a store with hundreds of different kinds would otherwise build hundreds of
-## rows at once. The button at the end adds the next page.
-func _add_group_rows(content: VBoxContainer, ids: Array, first: Dictionary, count: Dictionary, from: int) -> void:
-	var to := mini(from + GROUP_PAGE, ids.size())
-	for i in range(from, to):
-		var id: String = ids[i]
-		var row := HBoxContainer.new()
-		var label := BookPanel.text(tr("X_COUNT") % [Game.item_data(id)["name"], count[id]], 22)
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(label)
-		var place := _panel_button(tr("PLACE_2"))
-		var index: int = first[id]
-		place.pressed.connect(func() -> void:
-			_book.close_panel()
-			place_stored_requested.emit(index))
-		row.add_child(place)
-		content.add_child(BookPanel.card_frame(row))
-	if to < ids.size():
-		var more := _panel_button(tr("SHOW_MORE_KINDS") % (ids.size() - to))
-		more.pressed.connect(func() -> void:
-			more.queue_free()
-			_add_group_rows(content, ids, first, count, to))
-		content.add_child(more)
-
-
 func _panel_button(words: String) -> Button:
 	var b := Button.new()
 	b.text = words
 	b.custom_minimum_size = Vector2(180, 56)
 	b.focus_mode = Control.FOCUS_NONE
 	return b
-
-
-
-
-func _build_collections(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(
-		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), 20, BookPanel.CREAM))
-	for coll in Game.collectibles.collections:
-		var inner := BookPanel.card()
-		inner.add_theme_constant_override("separation", 10)
-
-		var crop_names: Array[String] = []
-		for crop_id in coll.get("crops", []):
-			crop_names.append(Game.crops[crop_id]["name"])
-		var head := HBoxContainer.new()
-		var title := BookPanel.text(coll["name"], 26)
-		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		head.add_child(title)
-		var trade := Button.new()
-		trade.text = tr("TRADE_IN")
-		trade.custom_minimum_size = Vector2(140, 48)
-		trade.focus_mode = Control.FOCUS_NONE
-		trade.disabled = not Game.collectibles.can_trade_in(coll)
-		var coll_id: String = coll["id"]
-		trade.pressed.connect(func() -> void: Game.collectibles.trade_in(coll_id))
-		head.add_child(trade)
-		inner.add_child(head)
-
-		if coll.get("birds", false):
-			inner.add_child(BookPanel.text(tr("BIRDS_CAN_LAND_DURING_ANY_HARVEST"), 18))
-		elif coll.get("source", "") == "trees":
-			inner.add_child(BookPanel.text(tr("FOUND_WHILE_HARVESTING_TREES"), 18))
-		elif coll.get("source", "") == "animals":
-			inner.add_child(BookPanel.text(tr("FOUND_WHILE_COLLECTING_FROM_ANIMALS_AND"), 18))
-		else:
-			inner.add_child(BookPanel.text(tr("FOUND_WHILE_HARVESTING").join(PackedStringArray(crop_names)), 18))
-
-		var items := HFlowContainer.new()
-		items.add_theme_constant_override("h_separation", 8)
-		items.add_theme_constant_override("v_separation", 8)
-		var need := Game.collectibles.coll_need(coll)
-		for item in coll["items"]:
-			var count := int(Game.collectibles.owned.get(item["id"], 0))
-			var rarity: String = item.get("rarity", "common")
-			var label: String = "%s  %d/%d%s" % [
-				item["name"],
-				count,
-				int(need[item["id"]]),
-				"" if rarity == "common" else "  (" + rarity + ")"
-			]
-			items.add_child(BookPanel.chip(label, count >= int(need[item["id"]])))
-		inner.add_child(items)
-
-		var reward := Game.collectibles.coll_reward(coll)
-		inner.add_child(
-			BookPanel.text(
-				tr("LEVEL_REWARD_COINS_XP_AND") % [
-					Game.collectibles.coll_level(coll) + 1,
-					int(reward["coins"]),
-					int(reward["xp"]),
-					_prize_text(reward["prize"])
-				],
-				18
-			)
-		)
-		content.add_child(BookPanel.card_frame(inner))
-
-
-
-
-## A prize ([kind, amount or item]) in words, for reward lines.
-func _prize_text(prize: Array) -> String:
-	match str(prize[0]):
-		"item":
-			return "a " + str(Game.item_data(str(prize[1])).get("name", prize[1]))
-		"fertilize_all":
-			return tr("FERTILIZE_ALL") % int(prize[1])
-		"unwither":
-			return tr("UNWITHER") % int(prize[1])
-		"fuel":
-			return "%d fuel" % int(prize[1])
-	return "%d %s" % [int(prize[1]), str(prize[0]).capitalize()]
-
-
-
-
-func _build_ribbons(content: VBoxContainer) -> void:
-	var data: Dictionary = Game.ribbons.ribbon_data
-	var tier_names: Array = data.get("tiers", [])
-	content.add_child(BookPanel.text(
-		tr("EACH_RIBBON_HAS_FOUR_TIERS_YELLOW"), 20, BookPanel.CREAM))
-	for r in data.get("ribbons", []):
-		var earned := int(Game.ribbons.ribbon_tiers.get(r["id"], 0))
-		var thresholds: Array = r["thresholds"]
-		var value := Game.ribbons.stat(r["stat"])
-
-		var inner := BookPanel.card()
-		inner.add_theme_constant_override("separation", 8)
-		var head := HBoxContainer.new()
-		var title := BookPanel.text(r["name"], 26)
-		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		head.add_child(title)
-		var tiers := HBoxContainer.new()
-		tiers.add_theme_constant_override("separation", 6)
-		for k in tier_names.size():
-			tiers.add_child(BookPanel.chip(tier_names[k], k < earned))
-		head.add_child(tiers)
-		inner.add_child(head)
-
-		var line: String
-		if earned >= thresholds.size():
-			line = tr("COMPLETE") % [value, r["what"]]
-		else:
-			var goal := int(thresholds[earned])
-			line = tr("FOR") % [mini(value, goal), goal, r["what"], tier_names[earned]]
-			var bar := ProgressBar.new()
-			bar.show_percentage = false
-			bar.custom_minimum_size.y = 18
-			bar.max_value = goal
-			bar.value = mini(value, goal)
-			inner.add_child(BookPanel.text(line, 18))
-			inner.add_child(bar)
-			content.add_child(BookPanel.card_frame(inner))
-			continue
-		inner.add_child(BookPanel.text(line, 18))
-		content.add_child(BookPanel.card_frame(inner))
-
-
 
 
 # ---------------------------------------------------------------- theme
@@ -1885,8 +684,6 @@ func _make_theme() -> Theme:
 	t.set_stylebox("background", "ProgressBar", bar_bg)
 	t.set_stylebox("fill", "ProgressBar", bar_fill)
 	return t
-
-
 
 
 func _button_box(fill: Color, border: Color) -> StyleBoxFlat:
