@@ -9,11 +9,13 @@ const DATA := "res://data/feedback.json"
 
 var _moments := {}
 var _floats := {}
+var _hums := {}
 
 
 func _ready() -> void:
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(DATA))
 	_moments = data.get("moments", {})
+	_hums = data.get("hums", {})
 	for style: String in data.get("floats", {}):
 		_floats[style] = Color(str(data["floats"][style]))
 
@@ -30,6 +32,24 @@ func moment(name: String) -> void:
 	var ms := int(m.get("buzz", 0))
 	if ms > 0:
 		Sound.buzz(ms)
+
+
+## A sound that hums for as long as something goes on (an engine): start it, drive its pitch_scale and volume_db,
+## and hand it to `Sound.stop_loop`. Null when it can't start (too many humming, or an unknown name).
+func hum(name: String) -> AudioStreamPlayer:
+	var h: Dictionary = _hums.get(name, {})
+	if h.is_empty():
+		push_warning("Feedback: no hum called %s" % name)
+		return null
+	return Sound.start_loop(str(h.get("sound", "")), float(h.get("gain_db", 0.0)))
+
+
+func has_hum(name: String) -> bool:
+	return _hums.has(name)
+
+
+func hums() -> Dictionary:
+	return _hums
 
 
 func has_moment(name: String) -> bool:

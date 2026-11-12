@@ -19,6 +19,9 @@
     "volume_check": {"sound": "coin"},
     "vibration_check": {"buzz": 60}
   },
+  "hums": {
+    "engine": {"sound": "engine", "gain_db": -16}
+  },
   "floats": {
     "coins": "#ffd23f",
     "xp": "#9be7ff",

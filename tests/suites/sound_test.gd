@@ -13,6 +13,9 @@ func test_98_every_sound_builds_clean_and_every_animal_has_a_voice() -> void:
 		if r.has("file"):
 			_check(ResourceLoader.exists(str(r["file"])), "%s: its recording exists" % event)
 			continue
+		if r.get("loop", false):
+			_loop_checks(event, r)
+			continue
 		var wav := Sound.synthesize(r)
 		var samples := wav.data.size() / 2
 		var peak := 0
@@ -36,6 +39,24 @@ func test_98_every_sound_builds_clean_and_every_animal_has_a_voice() -> void:
 	for family in AnimalRig.families():
 		_check(voices.has(family), "the %s has a voice" % family)
 		_check(sounds.has(str(voices.get(family, ""))), "the %s's voice is a real sound" % family)
+
+
+## A loop plays round without a click: it is whole samples, set to loop over all of them, and the step from its
+## last sample to its first is no bigger than a step inside it.
+func _loop_checks(event: String, r: Dictionary) -> void:
+	var wav := Sound.synthesize(r)
+	var samples := wav.data.size() / 2
+	_check(wav.loop_mode == AudioStreamWAV.LOOP_FORWARD, "%s loops" % event)
+	_check(wav.loop_end == samples, "%s loops over all of itself" % event)
+	var biggest := 0
+	var peak := 0
+	for i in range(1, samples):
+		biggest = maxi(biggest, absi(wav.data.decode_s16(i * 2) - wav.data.decode_s16((i - 1) * 2)))
+		peak = maxi(peak, absi(wav.data.decode_s16(i * 2)))
+	var seam := absi(wav.data.decode_s16(0) - wav.data.decode_s16((samples - 1) * 2))
+	_check(seam <= biggest, "%s: its seam is as smooth as the rest of it (%d vs %d)" % [event, seam, biggest])
+	_check(peak < 32767 and peak > 2000, "%s is audible and never clips (peak %d)" % [event, peak])
+	_check(samples >= Sound.MIX_RATE / 2 and samples <= Sound.MIX_RATE * 4, "%s is a short bed that repeats" % event)
 
 
 func test_99_every_sound_asked_for_directly_exists() -> void:

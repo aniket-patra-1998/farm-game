@@ -13,6 +13,9 @@ const SEAT := Color("#3a3a3a")
 const SCALE := 1.45  # modelled at a little over half a tile; on the farm a vehicle nearly fills its tile
 # Meta on the pivot of a wheel (its radius in model units) or of a reel (its radius, negative).
 const SPIN := &"vehicle_spin"
+# Meta on the pivot of an implement: the angle (radians about the across axis) it is lifted by when not working.
+const LIFT := &"vehicle_lift"
+const LIFTED := 0.5
 const EXHAUST := {"tractor": Vector3(0.17, 0.42, -0.04), "seeder": Vector3(0.29, 0.42, -0.04),
 	"harvester": Vector3(0.11, 0.42, -0.04), "combine": Vector3(-0.25, 0.6, 0.1)}   # where the smoke leaves
 
@@ -51,10 +54,12 @@ static func build(it: Dictionary, chassis := false, rig := false) -> Node3D:
 		"seeder":
 			_tractor(body, Color("#c0392b"), 0.12)
 			_hoppers(body, col)
+			_drill(body, col)
 		"combine":
 			_combine(body, col)
 		_:
 			_tractor(body, col, 0.0)
+			_plough(body, col)
 	return ModelKit.bake(root)
 
 
@@ -174,6 +179,44 @@ static func _harvester(b: Node3D, col: Color) -> void:
 		ModelKit.box(b, Vector3(0.18, 0.1, z - 0.008), Vector3(0.32, 0.14, z + 0.008), ModelKit.paint(col))
 	# The grain tank behind the cab.
 	ModelKit.box(b, Vector3(-0.3, 0.27, -0.09), Vector3(-0.18, 0.42, 0.09), ModelKit.paint(col.lightened(0.1), 0.4))
+
+
+## In a rig, an implement hangs on a pivot that VehicleRun lifts when the vehicle isn't working.
+static func _hang_implement(parent: Node3D, at: Vector3) -> Node3D:
+	var hitch := Node3D.new()
+	hitch.position = at
+	parent.add_child(hitch)
+	if _rig:
+		hitch.set_meta(ModelKit.KEEP, true)
+		hitch.set_meta(LIFT, LIFTED)
+	return hitch
+
+
+## A three-furrow plough behind the tractor: a beam on the hitch and three angled blades that bite the ground.
+static func _plough(b: Node3D, col: Color) -> void:
+	var hitch := _hang_implement(b, Vector3(-0.22, 0.15, 0))
+	ModelKit.box(hitch, Vector3(-0.2, -0.015, -0.015), Vector3(0.0, 0.015, 0.015), ModelKit.paint(METAL))
+	ModelKit.box(hitch, Vector3(-0.22, -0.02, -0.17), Vector3(-0.19, 0.01, 0.17), ModelKit.paint(col.darkened(0.3)))
+	for k in 3:
+		var z := -0.12 + 0.12 * k
+		ModelKit.box(hitch, Vector3(-0.215, -0.1, z - 0.004), Vector3(-0.205, -0.02, z + 0.004), ModelKit.paint(METAL))
+		var share := ModelKit.box(hitch, Vector3(-0.07, -0.014, -0.045), Vector3(0.07, 0.0, 0.045),
+			ModelKit.paint(Color("#6c7479"), 0.7))
+		share.position = Vector3(-0.28, -0.13, z)
+		share.rotation = Vector3(0.0, 0.0, -0.35)
+
+
+## A seed drill behind the seeder's hoppers: a bar with a row of discs that cut the furrows.
+static func _drill(b: Node3D, col: Color) -> void:
+	var hitch := _hang_implement(b, Vector3(-0.42, 0.12, 0))
+	ModelKit.box(hitch, Vector3(-0.02, -0.012, -0.19), Vector3(0.0, 0.012, 0.19), ModelKit.paint(METAL))
+	for k in 5:
+		var z := -0.16 + 0.08 * k
+		var disc := ModelKit.cylinder(hitch, Vector3.ZERO, 0.045, 0.006, ModelKit.paint(Color("#6c7479"), 0.7), -1.0, 12)
+		disc.position = Vector3(-0.03, -0.065, z)
+		disc.rotation.x = PI / 2.0 - 0.12
+		var arm := ModelKit.paint(col.darkened(0.2))
+		ModelKit.box(hitch, Vector3(-0.03, -0.06, z - 0.002), Vector3(-0.02, 0.0, z + 0.002), arm)
 
 
 static func _hoppers(b: Node3D, col: Color) -> void:

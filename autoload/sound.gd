@@ -10,6 +10,7 @@ const DATA := "res://data/sounds.json"
 const SETTINGS := "user://settings.cfg"
 const MIX_RATE := 22050
 const VOICES := 8
+const MAX_LOOPS := 3   # engines (or other beds) humming at once; a fourth stays silent
 const BUS := "SFX"  # not-ui
 
 
@@ -24,6 +25,7 @@ var _base_db := 0.0
 var _cache := {}                          # event -> AudioStream
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
+var _loops: Array[AudioStreamPlayer] = []
 var _loading := false
 var _warm: Array = []                     # sounds still to synthesise ahead of time
 
@@ -79,6 +81,35 @@ func play(event: String, gain_db := 0.0) -> void:
 	p.play()
 
 
+## Starts a looping sound (a recipe with `"loop": true`) on a player of its own and returns it, so the caller can
+## change its pitch and volume as things change and hand it back to `stop_loop`. Null for an unknown name or when
+## MAX_LOOPS are already humming. Mute and volume are the bus's, so they still apply.
+func start_loop(event: String, gain_db := 0.0) -> AudioStreamPlayer:
+	var stream := stream_of(event)
+	if stream == null or _loops.size() >= MAX_LOOPS:
+		return null
+	var p := AudioStreamPlayer.new()
+	p.bus = BUS
+	p.stream = stream
+	p.volume_db = _base_db + gain_db
+	add_child(p)
+	p.play()
+	_loops.append(p)
+	return p
+
+
+func stop_loop(p: AudioStreamPlayer) -> void:
+	if p == null:
+		return
+	_loops.erase(p)
+	if is_instance_valid(p):
+		p.queue_free()
+
+
+func loops_running() -> int:
+	return _loops.size()
+
+
 ## An animal's voice, by its family (a cow moos, a hen clucks).
 func voice(family: String) -> void:
 	var event := str(_voices_by_family.get(family, ""))
@@ -128,13 +159,14 @@ static func synthesize(r: Dictionary) -> AudioStreamWAV:
 	var count := maxi(1, int(rep[0]))
 	var gap := float(rep[1])
 	var total := length * count + gap * (count - 1)
-	var n := int(total * MIX_RATE) + 1
+	var looping := bool(r.get("loop", false))
+	var n := int(total * MIX_RATE) + (0 if looping else 1)   # a loop is whole samples: its end meets its start
 	var mix := PackedFloat32Array()
 	mix.resize(n)
 	for k in count:
 		var start := int((length + gap) * k * MIX_RATE)
 		for l: Dictionary in layers:
-			_render_layer(l, mix, start)
+			_render_layer(l, mix, start, looping)
 	var data := PackedByteArray()
 	data.resize(n * 2)
 	for i in n:
@@ -145,10 +177,14 @@ static func synthesize(r: Dictionary) -> AudioStreamWAV:
 	wav.mix_rate = MIX_RATE
 	wav.stereo = false
 	wav.data = data
+	if looping:
+		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		wav.loop_begin = 0
+		wav.loop_end = n
 	return wav
 
 
-static func _render_layer(l: Dictionary, mix: PackedFloat32Array, start: int) -> void:
+static func _render_layer(l: Dictionary, mix: PackedFloat32Array, start: int, looping := false) -> void:
 	var wave := str(l.get("wave", "sine"))
 	var f0 := float(l.get("freq", 440.0))
 	var f1 := float(l.get("freq_end", f0))
@@ -187,7 +223,7 @@ static func _render_layer(l: Dictionary, mix: PackedFloat32Array, start: int) ->
 			_:
 				s = sin(TAU * phase)
 		low += alpha * (s - low)
-		var env := minf(t / attack, 1.0) * minf((dur - t) / release, 1.0)
+		var env := 1.0 if looping else minf(t / attack, 1.0) * minf((dur - t) / release, 1.0)
 		var am := 1.0 - float(trem[1]) * (0.5 + 0.5 * sin(TAU * float(trem[0]) * t))
 		mix[at] += low * env * am * gain
 

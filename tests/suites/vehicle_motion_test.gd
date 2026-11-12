@@ -232,6 +232,42 @@ func test_162_the_drawn_vehicle_follows_the_real_run_and_leaves_when_it_is_done(
 	_done(g)
 
 
+func test_206_implements_go_down_to_work_and_the_engine_hums_only_while_it_is_there() -> void:
+	var g := _tractor_farm()
+	var puffs := DustPuffs.new()
+	var run := g.vehicles.dispatch("tractor", 4, 6)
+	var humming_before := Sound.loops_running()
+	var view := VehicleRun.create(run, puffs, null)
+	add_child(view)
+	_eq(view.tools(), 1, "the Tractor carries a plough")
+	_check(view.lowered() < 0.01, "it is lifted at first")
+	_eq(Sound.loops_running(), humming_before + 1, "the engine starts humming")
+	var done := [false]
+	view.finished.connect(func() -> void: done[0] = true)
+	var down := 0.0
+	var t := 0.0
+	while not done[0] and t < 60.0:
+		g.vehicles.advance(0.05)
+		view.advance(0.05)
+		t += 0.05
+		down = maxf(down, view.lowered())
+	_check(down > 0.9, "the plough goes down to work (%.2f)" % down)
+	_eq(Sound.loops_running(), humming_before, "the engine stops when it leaves")
+	view.free()
+	puffs.free()
+	# No more than MAX_LOOPS engines hum at once; the extra ones stay quiet instead of piling up.
+	var hums: Array[AudioStreamPlayer] = []
+	for k in Sound.MAX_LOOPS + 2:
+		var p := Feedback.hum("engine")
+		if p != null:
+			hums.append(p)
+	_eq(Sound.loops_running(), Sound.MAX_LOOPS, "the number of engines humming is capped")
+	for p in hums:
+		Sound.stop_loop(p)
+	_eq(Sound.loops_running(), 0, "and they all stop")
+	_done(g)
+
+
 func test_163_a_garage_doorway_holds_two_vehicles_side_by_side_at_their_own_sizes() -> void:
 	var widths := 0.0
 	for id in ["combine", "tractor"]:

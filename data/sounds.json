@@ -4,6 +4,11 @@
   "sounds": {
     "tap": {"pitch_jitter": 0.06, "layers": [
       {"wave": "sine", "freq": 880, "freq_end": 660, "dur": 0.05, "attack": 0.002, "release": 0.04, "gain": 0.35}]},
+    "engine": {"loop": true, "pitch_jitter": 0.0, "layers": [
+      {"wave": "sine", "freq": 44, "dur": 1.0, "gain": 0.55, "tremolo": [11, 0.5]},
+      {"wave": "sine", "freq": 88, "dur": 1.0, "gain": 0.4, "tremolo": [11, 0.4]},
+      {"wave": "triangle", "freq": 132, "dur": 1.0, "gain": 0.18, "tremolo": [22, 0.5]},
+      {"wave": "sine", "freq": 176, "dur": 1.0, "gain": 0.1}]},
     "plow": {"pitch_jitter": 0.1, "layers": [
       {"wave": "noise", "lowpass": 900, "dur": 0.18, "attack": 0.005, "release": 0.14, "gain": 0.7},
       {"wave": "sine", "freq": 120, "freq_end": 70, "dur": 0.16, "attack": 0.003, "release": 0.12, "gain": 0.6}]},

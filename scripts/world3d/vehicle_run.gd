@@ -13,6 +13,11 @@ const LEAVE_SECONDS := 0.3
 const REEL_WORK := 7.0         # radians per second a reel turns while working
 const REEL_IDLE := 2.0
 const DUST_SPREAD := 0.35      # how far out from the line the dust flies, tiles per second
+const LIFT_RATE := 5.0          # how quickly an implement is raised or lowered (per second, eased)
+const HUM_IDLE_PITCH := 0.8     # the engine's pitch standing and while working slowly, to its pitch at full speed
+const HUM_TOP_PITCH := 1.25
+const HUM_WORK_DB := 3.0        # louder when the machine is under load
+const HUM_IDLE_DB := -3.0
 const TRACK_EVERY := 1.0       # tiles between wheel track marks while driving a lane
 
 var work: VehicleWork
@@ -28,6 +33,12 @@ var _wheel_rest: Array[Transform3D] = []
 var _wheel_radius: Array[float] = []   # in tiles
 var _reels: Array[Node3D] = []
 var _reel_rest: Array[Transform3D] = []
+var _tools: Array[Node3D] = []         # implements: lowered while working, lifted while driving
+var _tool_rest: Array[Transform3D] = []
+var _tool_lift: Array[float] = []
+var _hum: AudioStreamPlayer
+var _hum_db := 0.0                     # the engine's volume as it started: loud and soft are around it
+var _lowered := 0.0                    # 0 lifted .. 1 working depth
 var _reel_angle := 0.0
 var _reel_rate := 0.0
 var _rear: Array[Vector3] = []         # where the dust leaves (rear wheels), in this node's space
@@ -62,6 +73,8 @@ func _start() -> void:
 	add_child(_model)
 	_rig()
 	_place()
+	_hum = Feedback.hum("engine")
+	_hum_db = _hum.volume_db if _hum != null else 0.0
 	scale = Vector3.ZERO     # pops in
 
 
@@ -86,6 +99,11 @@ func _rig() -> void:
 				_hang(n)
 				_reels.append(n)
 				_reel_rest.append(n.transform)
+		elif n.has_meta(VehicleModel.LIFT):
+			_hang(n)
+			_tools.append(n)
+			_tool_rest.append(n.transform)
+			_tool_lift.append(float(n.get_meta(VehicleModel.LIFT)))
 		else:
 			_hang(n)
 	# Dust leaves behind the rear wheels (the pair furthest back); smoke from the stack.
@@ -97,6 +115,15 @@ func _rig() -> void:
 			_rear.append(w.position + _model.position + Vector3(0, -w.position.y + 0.02, 0))
 	var ex: Vector3 = VehicleModel.EXHAUST.get(str(item.get("id", "")), Vector3(0.0, 0.4, 0.0))
 	_smoke_at = Vector3(0.5, 0, 0.5) + ex * _scale + _model.position
+
+
+func tools() -> int:
+	return _tools.size()
+
+
+## How far down the implements are: 0 lifted, 1 working.
+func lowered() -> float:
+	return _lowered
 
 
 func wheels() -> int:
@@ -134,12 +161,16 @@ func advance(delta: float) -> void:
 		var t := clampf(_leave_t / LEAVE_SECONDS, 0.0, 1.0)
 		scale = Vector3.ONE * (1.0 - t * t)
 		if t >= 1.0:
+			Sound.stop_loop(_hum)
+			_hum = null
 			finished.emit()
 			queue_free()
 			return
 	_place()
 	_wheels_turn()
 	_reel_step(delta, work.working)
+	_tools_step(delta, work.working)
+	_hum_step(work.working)
 	_pose()
 	_throw_dust(delta, work.working)
 	if work.working and trails != null and m.distance - _track_from >= TRACK_EVERY:
@@ -170,6 +201,31 @@ func _reel_step(delta: float, working: bool) -> void:
 	_reel_angle -= _reel_rate * delta
 	for k in _reels.size():
 		_reels[k].transform = Transform3D(_reel_rest[k].basis * Basis(Vector3.BACK, _reel_angle), _reel_rest[k].origin)
+
+
+## The engine note rises with the machine's speed and swells when it works.
+func _hum_step(working: bool) -> void:
+	if _hum == null or not is_instance_valid(_hum):
+		return
+	var speed := clampf(work.motion.speed / maxf(float(work.motion.feel["speed"]), 0.01), 0.0, 1.0)
+	_hum.pitch_scale = lerpf(HUM_IDLE_PITCH, HUM_TOP_PITCH, speed)
+	_hum.volume_db = _hum_db + (HUM_WORK_DB if working else HUM_IDLE_DB)
+
+
+func _exit_tree() -> void:
+	Sound.stop_loop(_hum)
+	_hum = null
+
+
+## Implements go down to work and are lifted to drive; a heavy machine is slower about it.
+func _tools_step(delta: float, working: bool) -> void:
+	if _tools.is_empty():
+		return
+	var rate := LIFT_RATE * lerpf(1.0, 0.6, work.motion.weight)
+	_lowered = lerpf(_lowered, 1.0 if working else 0.0, 1.0 - exp(-delta * rate))
+	for k in _tools.size():
+		var up := -_tool_lift[k] * (1.0 - _lowered)
+		_tools[k].transform = Transform3D(_tool_rest[k].basis * Basis(Vector3.BACK, up), _tool_rest[k].origin)
 
 
 func _pose() -> void:
