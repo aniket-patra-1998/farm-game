@@ -391,6 +391,7 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	# How many animals are out in the yard follows how full it is.
 	_eq(BuildingFill.shown_count(0, cap, 20), 0, "an empty building has nobody out")
 	_eq(BuildingFill.shown_count(1, cap, 20), 1, "one animal in: one out")
+	_eq(BuildingFill.shown_count(4, cap, 20), BuildingFill.MIN_GROUP, "a few in: a small group is out, not a lone one")
 	_check(BuildingFill.shown_count(int(cap / 2.0), cap, 20) > 1 and BuildingFill.shown_count(int(cap / 2.0), cap, 20)
 		< BuildingFill.shown_count(cap, cap, 20), "half full shows more than one, and fewer than full")
 	_eq(BuildingFill.shown_count(cap, cap, 20), BuildingFill.RESIDENTS, "full: the yard is busy")

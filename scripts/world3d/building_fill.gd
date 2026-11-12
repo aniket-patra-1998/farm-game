@@ -15,6 +15,7 @@ const LOD_FAR_PPU := 40.0     # ...and below which only a few are (a cow is then
 const LOD_FAR_SHOWN := 3
 const LOD_MARGIN := 1.12      # hysteresis: zooming back in must pass the line by this much
 const RESIDENTS := 14         # the most animals out in a yard at once (a full building)
+const MIN_GROUP := 3           # a stocked yard shows at least this many (when that many are inside): never a lone animal
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
 const CROWD_FULL_DETAIL := 6.0   # members in one orchard or garden built at full detail; more share that budget
@@ -157,7 +158,7 @@ static func shown_count(inside_total: int, capacity: int, spots: int, kinds := 1
 		return 0
 	var share := float(inside_total) / maxf(capacity, 1.0)
 	# At least one of each kind inside (up to MAX_KINDS), so every different one can be seen.
-	var want := maxi(maxi(1, int(ceil(share * RESIDENTS))), mini(kinds, MAX_KINDS))
+	var want := maxi(maxi(MIN_GROUP, int(ceil(share * RESIDENTS))), mini(kinds, MAX_KINDS))
 	return mini(mini(want, spots), inside_total)
 
 
