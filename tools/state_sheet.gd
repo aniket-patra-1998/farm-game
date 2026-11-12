@@ -46,7 +46,7 @@ func _page(page: int, ids: Array[String]) -> void:
 	for r in ids.size():
 		for c in STATES.size():
 			var at := Vector3(c * CELL, 0, r * CELL)
-			var node := _model(ids[r], STATES[c], r * 10 + c)
+			var node := LookModels.building(ids[r], STATES[c], r * 10 + c)
 			if node != null:
 				var fp := Game.footprint(ids[r])
 				var fit := 4.2 / maxf(maxf(fp.x, fp.y), 1.0)
@@ -70,36 +70,5 @@ func _page(page: int, ids: Array[String]) -> void:
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://ci_shots/state_%d.png" % page)
 	holder.queue_free()
-	Game.objects.clear()
+	Game.set_objects([])
 	await get_tree().process_frame
-
-
-## The building in a state, as the farm draws it (model and what fills it).
-func _model(id: String, state: String, uid: int) -> Node3D:
-	var it := Game.item_data(id)
-	var fp := Game.footprint(id)
-	var level := Game.max_level(id)
-	if state == "frame":
-		if not it.has("build_materials"):
-			return null
-		return ModelKit.bake(BuildingModel.build_site(it, fp, 0.5))
-	var cycle := Game.cycle_of({"id": id})
-	var o := {"id": id, "uid": 9000 + uid, "row": 0, "col": 0, "level": level, "inside": {}}
-	o["t"] = Game.now() - (cycle + 1 if state == "full" else cycle / 2 if state == "half" else 0)
-	if state != "empty":
-		var cap := Game.capacity(o) if Game.is_building(o) else 0
-		var want := cap if state == "full" else cap / 2
-		var takes: Array[String] = []
-		for k in Game.item_order:
-			if Game.building_accepts(o, k) and not Game.items[k].has("rare_of") and not Game.items[k].has("single_of"):
-				takes.append(k)
-		var n := 0
-		while n < want and not takes.is_empty():
-			var k: String = takes[n % mini(takes.size(), 3)]
-			o["inside"][k] = int(o["inside"].get(k, 0)) + 1
-			n += 1
-	Game.objects.append(o)
-	var node := ModelKit.bake(BuildingModel.build(it, fp, level))
-	if BuildingFill.shows(o):
-		node.add_child(BuildingFill.create(o, node))
-	return node
