@@ -9,6 +9,11 @@ const UNIT := 100.0       # the files are modelled at 1/100 and their armature s
 const IDLE := "Armature|Idle"  # not-ui
 const WALK := "Armature|Walk"  # not-ui
 const BLEND := 0.25       # seconds to ease from one animation to the next
+const EYE_BACK := 0.62      # how far along the head, from the back to the nose, the eyes sit
+const EYE_UP := 0.62        # and how far up it
+const EYE_SIZE := 0.07      # the white of an eye against the head's height
+const EYE_WHITE := Color("#fbf8f0")
+const EYE_DARK := Color("#1b140f")
 
 static var _data: Dictionary = {}
 static var _boxes: Dictionary = {}   # file -> its true bounds (the mesh's own box is padded for skinning)
@@ -93,12 +98,6 @@ static func _floor(skeleton: Skeleton3D, armature: Node3D, fallback: float) -> f
 			low = minf(low, (armature.transform * skeleton.get_bone_global_rest(b).origin).y)
 	return fallback if low == INF else low
 
-
-const EYE_BACK := 0.62      # how far along the head, from the back to the nose, the eyes sit
-const EYE_UP := 0.62        # and how far up it
-const EYE_SIZE := 0.07      # the white of an eye against the head's height
-const EYE_WHITE := Color("#fbf8f0")
-const EYE_DARK := Color("#1b140f")
 
 
 ## Eyes (a white and a dark pupil each side) fixed to the head bone, found from the head's own vertices: the
