@@ -195,7 +195,8 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	# A crown is a few big leafy masses on limbs, each with small clumps along its outer edge: an uneven outline
 	# with gaps where the branches show, not a ball. Its centre is off the trunk a little, so no two sides match.
 	var mid := centre + Vector3(rng.randf_range(-0.1, 0.1) * cr, 0.0, rng.randf_range(-0.1, 0.1) * cr)
-	var foot := Vector3(centre.x, centre.y - float(sh["crown_h"]) * k * 0.6, centre.z)  # the trunk's top: limbs fork from it
+	# The trunk's top, where the limbs fork.
+	var foot := Vector3(centre.x, centre.y - float(sh["crown_h"]) * k * 0.6, centre.z)
 	# The light in the tree's own space (the tree is turned at random, the sun is not).
 	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -float(t["root"].rotation.y))
 	var lobes := int(sh.get("lobes", CROWN_LOBES))
