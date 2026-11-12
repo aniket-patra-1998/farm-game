@@ -20,6 +20,8 @@ const FACET_RINGS := 4        # and up
 const MIN_DETAIL := 0.35
 const BALL_SEGMENTS := 8
 const BALL_RINGS := 5
+const SMOOTH_SEGMENTS := 12   # the balls that make up an animal's body and head: round, not faceted
+const SMOOTH_RINGS := 7
 const CANOPY_SEGMENTS := 16   # a canopy's grid: around
 const CANOPY_BANDS := 4.0     # steps of light on a canopy,
 const CANOPY_BANDING := 0.55  # how firmly it keeps to them (0: smooth)
@@ -388,13 +390,14 @@ static func scaled(count: int, least: int) -> int:
 
 
 ## A sphere (or a squashed one, with `scale`).
-static func ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale := Vector3.ONE) -> MeshInstance3D:
+static func ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale := Vector3.ONE,
+		smooth := false) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
 	mesh.radius = r
 	mesh.height = r * 2.0
-	mesh.radial_segments = scaled(BALL_SEGMENTS, 6)
-	mesh.rings = scaled(BALL_RINGS, 3)
+	mesh.radial_segments = scaled(SMOOTH_SEGMENTS if smooth else BALL_SEGMENTS, 6)
+	mesh.rings = scaled(SMOOTH_RINGS if smooth else BALL_RINGS, 3)
 	mi.mesh = mesh
 	mi.position = centre
 	mi.scale = scale

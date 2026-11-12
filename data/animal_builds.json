@@ -1,0 +1,356 @@
+{
+  "_doc": "The build of each four-legged family (scripts/world3d/animal_build.gd), so every species has its own silhouette and each of its skins (variants in animal_rigs.json) share it. torso: overlapping rounded masses [x, y, z, rx, ry, rz] as shares of the body's half length, half height and half width (x forward): a cow is a barrel with a withers hump and hip bones, a horse has a deep chest, a narrow waist and a round croup. leg: thick (x the family's width), taper (the lower leg's width against the upper), bend (0.5 is dead straight; a little above shows a knee), hoof (cloven, round), stance (how far apart the legs stand, share of the half width). head: skull_at/skull_r and muzzle_at/muzzle_r in the head's own length and height, eye (size against the rig's). Anything left out keeps the old default.",
+  "families": {
+    "cow": {
+      "torso": [
+        [
+          0.42,
+          0.05,
+          0,
+          0.58,
+          1.0,
+          1.0
+        ],
+        [
+          -0.42,
+          0.08,
+          0,
+          0.6,
+          1.02,
+          1.02
+        ],
+        [
+          0.0,
+          -0.1,
+          0,
+          0.7,
+          0.92,
+          0.98
+        ],
+        [
+          0.4,
+          0.62,
+          0,
+          0.3,
+          0.38,
+          0.55
+        ],
+        [
+          -0.55,
+          0.62,
+          0,
+          0.28,
+          0.3,
+          0.6
+        ]
+      ],
+      "leg": {
+        "thick": 1.55,
+        "taper": 0.82,
+        "bend": 0.515,
+        "hoof": "cloven",
+        "stance": 0.5
+      },
+      "head": {
+        "skull_r": [
+          0.5,
+          0.56,
+          0.5
+        ],
+        "muzzle_at": [
+          0.4,
+          -0.2
+        ],
+        "muzzle_r": [
+          0.3,
+          0.42,
+          0.46
+        ],
+        "eye": 1.6,
+        "scale": 1.3
+      }
+    },
+    "horse": {
+      "torso": [
+        [
+          0.42,
+          0.1,
+          0,
+          0.62,
+          1.08,
+          0.84
+        ],
+        [
+          0.0,
+          0.0,
+          0,
+          0.72,
+          0.98,
+          0.8
+        ],
+        [
+          -0.45,
+          0.18,
+          0,
+          0.6,
+          1.1,
+          0.92
+        ],
+        [
+          0.6,
+          0.55,
+          0,
+          0.34,
+          0.5,
+          0.56
+        ]
+      ],
+      "leg": {
+        "thick": 1.25,
+        "taper": 0.7,
+        "bend": 0.525,
+        "hoof": "round",
+        "stance": 0.42
+      },
+      "head": {
+        "skull_r": [
+          0.5,
+          0.55,
+          0.42
+        ],
+        "muzzle_at": [
+          0.48,
+          -0.1
+        ],
+        "muzzle_r": [
+          0.34,
+          0.3,
+          0.27
+        ],
+        "eye": 1.5,
+        "scale": 1.2
+      }
+    },
+    "donkey": {
+      "torso": [
+        [
+          0.4,
+          0.1,
+          0,
+          0.62,
+          1.05,
+          0.9
+        ],
+        [
+          -0.4,
+          0.12,
+          0,
+          0.64,
+          1.05,
+          0.95
+        ],
+        [
+          0.0,
+          -0.05,
+          0,
+          0.72,
+          0.98,
+          0.88
+        ],
+        [
+          0.52,
+          0.55,
+          0,
+          0.34,
+          0.44,
+          0.54
+        ]
+      ],
+      "leg": {
+        "thick": 1.35,
+        "taper": 0.75,
+        "bend": 0.52,
+        "hoof": "round",
+        "stance": 0.46
+      },
+      "head": {
+        "skull_r": [
+          0.46,
+          0.52,
+          0.42
+        ],
+        "muzzle_at": [
+          0.45,
+          -0.15
+        ],
+        "muzzle_r": [
+          0.36,
+          0.4,
+          0.36
+        ],
+        "eye": 1.5,
+        "scale": 1.25
+      }
+    },
+    "pig": {
+      "torso": [
+        [
+          0,
+          0,
+          0,
+          0.92,
+          1.08,
+          1.0
+        ],
+        [
+          -0.5,
+          -0.05,
+          0,
+          0.5,
+          1.0,
+          1.02
+        ],
+        [
+          0.52,
+          -0.05,
+          0,
+          0.5,
+          0.98,
+          0.96
+        ]
+      ],
+      "leg": {
+        "thick": 1.7,
+        "taper": 0.85,
+        "bend": 0.5,
+        "hoof": "cloven",
+        "stance": 0.52
+      },
+      "head": {
+        "skull_r": [
+          0.52,
+          0.56,
+          0.5
+        ],
+        "muzzle_at": [
+          0.42,
+          -0.14
+        ],
+        "muzzle_r": [
+          0.3,
+          0.3,
+          0.32
+        ],
+        "eye": 1.7,
+        "scale": 1.25
+      }
+    },
+    "goat": {
+      "torso": [
+        [
+          0.4,
+          0.05,
+          0,
+          0.58,
+          0.9,
+          0.7
+        ],
+        [
+          -0.4,
+          0.08,
+          0,
+          0.58,
+          0.92,
+          0.72
+        ],
+        [
+          0.0,
+          -0.05,
+          0,
+          0.7,
+          0.85,
+          0.68
+        ]
+      ],
+      "leg": {
+        "thick": 1.2,
+        "taper": 0.72,
+        "bend": 0.525,
+        "hoof": "cloven",
+        "stance": 0.42
+      },
+      "head": {
+        "skull_r": [
+          0.4,
+          0.5,
+          0.4
+        ],
+        "muzzle_at": [
+          0.42,
+          -0.18
+        ],
+        "muzzle_r": [
+          0.3,
+          0.34,
+          0.3
+        ],
+        "eye": 1.6,
+        "scale": 1.25
+      }
+    },
+    "sheep": {
+      "leg": {
+        "thick": 1.1,
+        "taper": 0.75,
+        "bend": 0.52,
+        "hoof": "cloven",
+        "stance": 0.42
+      },
+      "head": {
+        "skull_r": [
+          0.42,
+          0.5,
+          0.42
+        ],
+        "muzzle_at": [
+          0.32,
+          -0.12
+        ],
+        "muzzle_r": [
+          0.26,
+          0.32,
+          0.34
+        ],
+        "eye": 1.7,
+        "scale": 1.25
+      }
+    },
+    "camelid": {
+      "leg": {
+        "thick": 1.05,
+        "taper": 0.7,
+        "bend": 0.525,
+        "hoof": "round",
+        "stance": 0.4
+      },
+      "head": {
+        "skull_r": [
+          0.42,
+          0.5,
+          0.4
+        ],
+        "muzzle_at": [
+          0.3,
+          -0.12
+        ],
+        "muzzle_r": [
+          0.28,
+          0.32,
+          0.32
+        ],
+        "eye": 1.6,
+        "scale": 1.2
+      }
+    }
+  }
+}

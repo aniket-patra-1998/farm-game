@@ -52,8 +52,24 @@ func _wanted() -> Array[String]:
 	return KINDS
 
 
+## Only the items named in `-- --ids=cow,horse` (with --kinds=animal), for a quick look at a few.
+func _only_ids() -> Array[String]:
+	var out: Array[String] = []
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--ids="):
+			for id in arg.substr(6).split(","):
+				out.append(id)
+	return out
+
+
 func _ids(kind: String) -> Array[String]:
 	var out: Array[String] = []
+	var only := _only_ids()
+	if not only.is_empty():
+		for id in only:
+			if kind == "crop" and Game.crops.has(id) or str(Game.items.get(id, {}).get("kind", "")) == kind:
+				out.append(id)
+		return out
 	if kind == "crop":
 		for id: String in Game.crops:
 			out.append(id)
@@ -68,8 +84,11 @@ func _ids(kind: String) -> Array[String]:
 func _page(kind: String, page: int, ids: Array[String]) -> void:
 	var holder := Node3D.new()
 	add_child(holder)
+	var tight := not _only_ids().is_empty()   # a few named items: shown big in one row
 	for k in ids.size():
 		var at := Vector3((k % COLS) * CELL, 0, (k / COLS) * CELL)
+		if tight:
+			at = Vector3(k * CELL * 0.5, 0, -k * CELL * 0.5)   # a diagonal row: left to right across the screen
 		var node := LookModels.model(ids[k], "row" if kind == "crop" else "empty", k)
 		if kind == "crop":
 			node.scale = Vector3.ONE * CROP_ZOOM
@@ -92,10 +111,14 @@ func _page(kind: String, page: int, ids: Array[String]) -> void:
 		holder.add_child(label)
 	var centre := Vector3((COLS - 1) * CELL / 2.0, 0, (ROWS - 1) * CELL / 2.0)
 	_cam.size = (COLS + ROWS) * CELL * 0.62  # the grid seen corner-on, with a margin
+	if tight:
+		centre = Vector3((ids.size() - 1) * CELL * 0.25, 0, -(ids.size() - 1) * CELL * 0.25)
+		_cam.size = maxf(ids.size() * CELL * 0.8, 8.0)
 	_cam.look_at_from_position(centre + Vector3(14, 14, 14), centre)
 	for f in 6:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://ci_shots"))
 	get_viewport().get_texture().get_image().save_png("res://ci_shots/contact_%s_%d.png" % [kind, page])
 	holder.queue_free()
 	Game.set_objects([])

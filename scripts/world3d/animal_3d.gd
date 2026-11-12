@@ -64,6 +64,7 @@ var _last := Vector3.ZERO
 var _r := Vector3.ONE            # body half-sizes (length, height, width)
 
 var _leg := 0.2
+var _bend := 0.56      # how far its legs bend at the knee (0.5: straight; AnimalBuild)
 var _contact: MeshInstance3D     # the soft shade on the grass right under it
 var _eyes: Array[Node3D] = []    # (they blink)
 var _walk_speed := 1.0           # its walking speed, in units a second
@@ -317,20 +318,28 @@ func _build_quad() -> void:
 	var coat := rig.body_color
 	var accent := rig.accent_color
 	var mat := ModelKit.paint(coat)
-	# The body: a rounded barrel, with wool, spots or patches on it.
+	var build := AnimalBuild.of(rig.family)
+	_bend = AnimalBuild.num(build, "leg", "bend", 0.56)
+	# The body: the family's own masses (AnimalBuild), or a plain barrel; with wool, spots or patches on it.
 	if rig.flag("wool"):
 		for k in 9:
 			var a := TAU * k / 9.0
 			ModelKit.ball(_body, Vector3(cos(a) * _r.x * 0.62, sin(a) * _r.y * 0.4, 0), _r.y * 0.62,
 				ModelKit.paint(coat.lightened(0.06)))
 		ModelKit.ball(_body, Vector3.ZERO, 1.0, ModelKit.paint(coat.lightened(0.06)), _r * Vector3(0.95, 0.95, 1.05))
+	elif build.has("torso"):
+		AnimalBuild.torso(_body, build["torso"], _r, mat)
 	else:
 		ModelKit.ball(_body, Vector3.ZERO, 1.0, mat, _r)
 	_markings(rig.text("markings", "none"), accent)
 	if rig.flag("udder"):
 		ModelKit.ball(_body, Vector3(-_r.x * 0.3, -_r.y * 0.85, 0), _r.y * 0.3, ModelKit.paint(PINK))
 	# Legs: upper and lower segments, re-posed every frame.
-	var thick := _px(rig.num("leg_width", 1.0) * (1.35 if rig.family == "pig" else 1.0) * 3.4)
+	var width := AnimalBuild.num(build, "leg", "thick", 1.35 if rig.family == "pig" else 1.0)
+	var thick := _px(rig.num("leg_width", 1.0) * width * 3.4)
+	var taper := AnimalBuild.num(build, "leg", "taper", 1.0)
+	var stance := AnimalBuild.num(build, "leg", "stance", 0.55)
+	var round_hoof: bool = (build.get("leg", {}) as Dictionary).get("hoof", "") == "round"
 	var leg_col := coat.darkened(0.08)
 	var lower_col := leg_col
 	if rig.family == "horse":
@@ -340,19 +349,24 @@ func _build_quad() -> void:
 	for k in 4:
 		var near: bool = k >= 2
 		var fore: bool = k % 2 == 1
-		var hip := Vector3((0.58 if fore else -0.58) * _r.x, -_r.y * 0.35, (0.55 if near else -0.55) * _r.z)
-		var upper := _segment(ModelKit.paint(leg_col), thick)
-		var lower := _segment(ModelKit.paint(lower_col), thick * 0.75)
+		var hip := Vector3((0.58 if fore else -0.58) * _r.x, -_r.y * 0.35, (stance if near else -stance) * _r.z)
+		var upper := _segment(ModelKit.paint(leg_col), thick, 0.9)
+		var lower := _segment(ModelKit.paint(lower_col), thick * 0.9, taper)
 		var hoof_col := HOOF if rig.family != "pig" else coat.darkened(0.45)
-		var hoof := ModelKit.box(_body, Vector3(-thick * 0.6, 0, -thick * 0.5),
-			Vector3(thick * 0.6, thick * 0.6, thick * 0.5), ModelKit.paint(hoof_col))
+		var hoof: MeshInstance3D
+		if round_hoof:
+			hoof = ModelKit.ball(_body, Vector3(0, thick * 0.25, 0), thick * 0.5, ModelKit.paint(hoof_col),
+				Vector3(1.1, 0.8, 1.0))
+		else:
+			var hw := minf(thick, _px(4.0)) * 0.5   # (a thick leg's hoof is not wider than a cow's)
+			hoof = ModelKit.box(_body, Vector3(-hw * 1.15, 0, -hw), Vector3(hw * 1.15, hw * 1.1, hw), ModelKit.paint(hoof_col))
 		_legs.append({"hip": hip, "upper": upper, "lower": lower, "hoof": hoof, "phase": LEG_PHASES[k], "fore": fore,
 			"k": k})
 	# Neck and head.
 	_neck = _segment(mat, _px(rig.pair("neck", Vector2(14, 9)).y) * 1.6)
 	_head = Node3D.new()
 	_body.add_child(_head)
-	var h := rig.pair("head", Vector2(14, 10)) * rig.head_scale
+	var h := rig.pair("head", Vector2(14, 10)) * rig.head_scale * AnimalBuild.num(build, "head", "scale", 1.0)
 	var hl := _px(h.x)
 	var hh := _px(h.y)
 	var head_col := coat
@@ -360,13 +374,9 @@ func _build_quad() -> void:
 		head_col = Color("#f4f1ea")
 	elif rig.text("head_color") == "accent":
 		head_col = accent
-	ModelKit.ball(
-		_head,
-		Vector3(-hl * 0.1, 0, 0),
-		1.0,
-		ModelKit.paint(head_col),
-		Vector3(hl * 0.48, hh * 0.5, hh * 0.45)
-	)
+	var skull := AnimalBuild.vec(build, "head", "skull_r", Vector3(0.48, 0.5, 0.45))
+	ModelKit.ball(_head, Vector3(-hl * 0.1, 0, 0), 1.0, ModelKit.paint(head_col),
+		Vector3(hl * skull.x, hh * skull.y, hh * skull.z), true)
 	var muzzle := _muzzle_colour(rig.text("muzzle", "light"), head_col)
 	if rig.text("muzzle") == "snout":
 		var snout := ModelKit.cylinder(
@@ -381,14 +391,11 @@ func _build_quad() -> void:
 		snout.rotation.z = -PI / 2.0
 		snout.position = Vector3(hl * 0.42, 0, 0)
 	else:
-		ModelKit.ball(
-			_head,
-			Vector3(hl * 0.32, -hh * 0.08, 0),
-			1.0,
-			ModelKit.paint(muzzle),
-			Vector3(hl * 0.28, hh * 0.36, hh * 0.38)
-		)
-	var eye_r := hh * 0.09 * rig.num("eye_scale", 1.0)
+		var at := AnimalBuild.vec(build, "head", "muzzle_at", Vector3(0.32, -0.08, 0.0))
+		var mr := AnimalBuild.vec(build, "head", "muzzle_r", Vector3(0.28, 0.36, 0.38))
+		ModelKit.ball(_head, Vector3(hl * at.x, hh * at.y, 0), 1.0, ModelKit.paint(muzzle),
+			Vector3(hl * mr.x, hh * mr.y, hh * mr.z), true)
+	var eye_r := hh * 0.09 * rig.num("eye_scale", 1.0) * AnimalBuild.num(build, "head", "eye", 1.0)
 	for side: float in [-1.0, 1.0]:
 		_eyes.append(ModelKit.ball(_head, Vector3(hl * 0.05, hh * 0.15, side * hh * 0.4), eye_r, ModelKit.paint(EYE, 0.8)))
 		var ear := Node3D.new()
@@ -605,11 +612,11 @@ func _build_bee() -> void:
 
 
 ## A limb segment: a unit cylinder, stretched between two points each frame by _place().
-func _segment(mat: Material, width: float) -> MeshInstance3D:
+func _segment(mat: Material, width: float, taper := 1.0) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var mesh := CylinderMesh.new()
 	mesh.top_radius = width / 2.0
-	mesh.bottom_radius = width / 2.0
+	mesh.bottom_radius = width / 2.0 * taper
 	mesh.height = 1.0
 	mesh.radial_segments = 8
 	mesh.rings = 1
@@ -774,7 +781,7 @@ func _pose_quad(p: AnimalPose) -> void:
 
 ## The knee (or hock) of a two-bone leg from hip to foot, bending forward for forelegs, back for hind.
 func _knee(hip: Vector3, foot: Vector3, fore: bool) -> Vector3:
-	var bone := absf(foot.y - hip.y) * 0.56
+	var bone := absf(foot.y - hip.y) * _bend
 	var j := AnimalArt.joint(Vector2(hip.x, -hip.y), Vector2(foot.x, -foot.y), bone, bone, -1.0 if fore else 1.0)
 	return Vector3(j.x, -j.y, hip.z)
 

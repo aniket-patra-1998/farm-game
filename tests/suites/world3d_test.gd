@@ -1142,3 +1142,20 @@ func test_211_a_timer_tick_looks_only_at_what_time_changes() -> void:
 		kinds[Game.kind_of(o)] = true
 	_check(kinds.has("tree") and kinds.has("decor"), "the showcase has both kinds of thing")
 	Game.reset_game()
+
+
+func test_212_every_four_legged_family_has_its_own_build() -> void:
+	var rigs: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/animal_rigs.json"))
+	var seen := {}
+	for family: String in rigs["families"]:
+		if str(rigs["families"][family].get("type", "")) != "quad":
+			continue
+		var build := AnimalBuild.of(family)
+		_check(not build.is_empty(), "%s has a build (data/animal_builds.json)" % family)
+		for m: Array in build.get("torso", []):
+			_eq(m.size(), 6, "%s: a torso mass is [x, y, z, rx, ry, rz]" % family)
+		var bend := AnimalBuild.num(build, "leg", "bend", 0.56)
+		_check(bend >= 0.5 and bend < 0.6, "%s: its legs bend a little (%.3f), never past reach" % [family, bend])
+		if build.has("torso"):
+			seen[JSON.stringify(build["torso"])] = family
+	_check(seen.size() >= 4, "the torsos differ from family to family (%d kinds)" % seen.size())
