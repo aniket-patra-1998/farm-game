@@ -686,8 +686,8 @@ func test_131_every_kind_stands_within_its_size_range_and_flowers_are_smaller_th
 		var h := ScaleGuide.height_of(id) * ScaleGuide.factor(id)
 		top[kind] = maxf(top[kind], h)
 		low[kind] = minf(low[kind], h)
-	_check(low["tree"] >= 1.69 and top["tree"] <= 2.81,
-		"trees stand 1.7-2.8 tiles (%.2f-%.2f)" % [low["tree"], top["tree"]])
+	_check(low["tree"] >= 1.19 and top["tree"] <= 2.01,
+		"trees stand 1.2-2.0 tiles (%.2f-%.2f)" % [low["tree"], top["tree"]])
 	_check(low["bloom"] >= 0.29 and top["bloom"] <= 0.51,
 		"blooms stand 0.3-0.5 (%.2f-%.2f)" % [low["bloom"], top["bloom"]])
 	_check(top["bloom"] < low["tree"], "the tallest flower is shorter than the shortest tree")
@@ -789,3 +789,57 @@ func test_141_the_woods_cost_tens_of_draws_not_thousands() -> void:
 	_check(meshes > 0, "there are woods (%d surfaces)" % meshes)
 	_check(meshes < 150, "baked into a few draws per area, not one per branch (%d surfaces)" % meshes)
 	objects.queue_free()
+
+
+func test_146_trees_standing_together_grow_together() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.farm_size = 24
+	Game.set_objects([])
+	var lone := {"uid": 9301, "id": "apple_tree", "row": 10, "col": 10, "t": Game.now()}
+	Game.add_object(lone)
+	_eq(Crowding.level(lone), 0, "a tree on its own is not crowded")
+	var around: Array[Vector2i] = [Vector2i(9, 9), Vector2i(9, 10), Vector2i(9, 11), Vector2i(10, 9), Vector2i(10, 11)]
+	var uid := 9302
+	for rc in around:
+		Game.add_object({"uid": uid, "id": "apple_tree", "row": rc.x, "col": rc.y, "t": Game.now()})
+		uid += 1
+	var share := Crowding.of(lone)
+	_check(share > 0.5 and share < 0.7, "five of its eight neighbours are trees (%.2f)" % share)
+	var cow := {"uid": 9310, "id": "cow", "row": 11, "col": 10, "t": Game.now()}
+	Game.add_object(cow)
+	_eq(Crowding.of(cow), 0.0, "animals don't crowd")
+	var objects := Objects3D.new()
+	add_child(objects)
+	var key_with: String = objects.call("_key", lone)
+	Game.remove_object(Game.object_by_uid(9302))
+	Game.remove_object(Game.object_by_uid(9303))
+	_check(objects.call("_key", lone) != key_with, "when neighbours leave, the tree's view is rebuilt")
+	# A crowded tree stands on a longer trunk with a wider crown than the same tree alone.
+	var a := Node3D.new()
+	var b := Node3D.new()
+	add_child(a)
+	add_child(b)
+	TreeModel.build_at(a, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, false, 5, false)
+	TreeModel.build_at(b, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, false, 5, false, TreeModel.UNSET, 1.0)
+	var box_a := _tree_bounds(a)
+	var box_b := _tree_bounds(b)
+	_check(box_b.size.y > box_a.size.y, "a crowded tree stands taller (%.2f over %.2f)" % [box_b.size.y, box_a.size.y])
+	_check(box_b.size.x > box_a.size.x, "with a wider crown (%.2f over %.2f)" % [box_b.size.x, box_a.size.x])
+	a.queue_free()
+	b.queue_free()
+	objects.queue_free()
+
+
+func _tree_bounds(root: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+			var box := (n as MeshInstance3D).global_transform * (n as MeshInstance3D).mesh.get_aabb()
+			out = box if first else out.merge(box)
+			first = false
+	return out

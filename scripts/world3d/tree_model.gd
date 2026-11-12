@@ -32,7 +32,7 @@ const TALL_MAX := 1.2       # ..to this much
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
 const CROWN_BUMP := 0.13     # how far they push out ("bump")
-const TILE_FILL := 1.65     # a tree at `size` 1 fills about four fifths of a tile (FarmVille's were full)
+const TILE_FILL := 1.15     # a tree is one tile on the farm and its crown a little wider, so neighbours overlap
 
 static var _data := {}
 
@@ -60,9 +60,10 @@ static func forms() -> Array:
 
 
 ## A tree standing on `base` under `parent`; `size` 1 is a full tree on its own tile (crown nearly as wide
-## as it). `leaf` overrides the kind's leaf colour when given.
+## as it). `leaf` overrides the kind's leaf colour when given. `crowd` (see Crowding) is how packed in it stands:
+## more shade underneath, a taller trunk and a crown that swells to meet its neighbours'.
 static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0, ready := false,
-		seed_value := 0, fruit := true, leaf := UNSET) -> Node3D:
+		seed_value := 0, fruit := true, leaf := UNSET, crowd := 0.0) -> Node3D:
 	var root := Node3D.new()
 	root.position = base
 	parent.add_child(root)
@@ -72,7 +73,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	# Its height: its kind's (oaks low and broad, cherries tall), and this tree's own within that.
 	var tall := float(sh.get("tall", 1.0)) * rng.randf_range(TALL_MIN, TALL_MAX)
 	var upright := str(sh["form"]) not in ["palm", "banana"]
-	sh["trunk_h"] = float(sh["trunk_h"]) * tall * (TRUNK_TALL if upright else 1.0) \
+	sh["trunk_h"] = float(sh["trunk_h"]) * tall * (TRUNK_TALL if upright else 1.0) * (1.0 + Crowding.LIFT * crowd) \
 		* (rng.randf_range(TRUNK_VARY_MIN, TRUNK_VARY_MAX) if upright else 1.0)
 	sh["crown_h"] = float(sh["crown_h"]) * tall
 	# This tree's own variation: a little taller or shorter, leaning a little, turned its own way.
@@ -81,7 +82,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var leaf_col := leaf if leaf.a > 0.0 else Color.html(str(sh.get("leaf", LEAF.to_html())))
 	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-0.025, 0.025), leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
-	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "leaf": leaf_col, "shine": float(sh.get("shine", 0.0)),
+	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.SWELL * crowd)
+	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "leaf": leaf_col, "shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
 	var crown: Vector3
 	match str(sh["form"]):
@@ -144,7 +146,8 @@ static func _trunk(t: Dictionary) -> Vector3:
 	var h := float(sh["trunk_h"]) * k
 	var r := float(sh["trunk_r"]) * k * TRUNK_BULK
 	var lean: Vector3 = t["lean"]
-	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h, ModelKit.paint(BARK), r * 0.6, 8)
+	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h,
+		ModelKit.paint(BARK.darkened(Crowding.SHADE * float(t["crowd"]))), r * 0.6, 8)
 	trunk.rotation = Vector3(lean.z, 0, -lean.x)
 	# The trunk flares at the foot into roots that grip the ground.
 	ModelKit.cylinder(root, Vector3.ZERO, r * 1.9, r * 1.4, ModelKit.paint(BARK), r * 1.0, 8)
@@ -199,21 +202,44 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var foot := Vector3(centre.x, centre.y - float(sh["crown_h"]) * k * 0.6, centre.z)
 	# The light in the tree's own space (the tree is turned at random, the sun is not).
 	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -float(t["root"].rotation.y))
+	var shaded := float(t["crowd"]) * Crowding.SHADE   # in a grove the lower crown is in its neighbours' shade
 	var lobes := int(sh.get("lobes", CROWN_LOBES))
 	var bump := float(sh.get("bump", CROWN_BUMP))
 	# The core, a soft mass of the whole crown's width, then the masses around it: each one smooth and lumpy,
 	# overlapping, so the crown reads as one canopy with a scalloped outline and a few deep folds.
-	_canopy(root, mid, Vector3(cr * 0.72, maxf(ch * 0.5, cr * 0.4), cr * 0.72), rng, leaf, sun, 0.0, lobes, bump, shine)
+	_canopy(root, mid, Vector3(cr * 0.72, maxf(ch * 0.5, cr * 0.4), cr * 0.72), rng, leaf, sun, -shaded, lobes, bump,
+		shine)
+	var shape := str(sh.get("shape", "round"))
 	for i in masses:
 		var a := i * 2.399963 + rng.randf() * 0.4
-		var y := lerpf(-0.3, 0.5, fposmod(i * 0.618 + rng.randf() * 0.15, 1.0))
-		var d := cr * reach * rng.randf_range(0.8, 1.15) * sqrt(maxf(1.0 - y * y * 0.6, 0.2))
+		var lay := _layout(shape, i, masses, rng)   # (height, reach, size), each a share of the plain round tree's
+		var y := lay.x
+		var d := cr * reach * lay.y * rng.randf_range(0.85, 1.15) * sqrt(maxf(1.0 - y * y * 0.6, 0.2))
 		var p := mid + Vector3(cos(a) * d, y * ch * 0.7, sin(a) * d)
-		var size := cr * mass * rng.randf_range(0.85, 1.1)
+		var size := cr * mass * lay.z * rng.randf_range(0.85, 1.1)
 		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
-		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3), lobes, bump, shine)
+		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine)
 		(t["blobs"] as Array).append([p, size, a])
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
+
+
+## Where mass `i` of `n` sits for a kind of crown: (height, how far out, how big), as shares of the plain round
+## tree's. Round is the ordinary dome; teardrop is wide at the bottom and narrows to a top (pear); umbrella is
+## one wide flat layer (cherry, fig, olive); columnar is a tall narrow stack (pecan, avocado); layers are tiers
+## that narrow as they climb (oak, walnut).
+static func _layout(shape: String, i: int, n: int, rng: RandomNumberGenerator) -> Vector3:
+	var u := float(i) / maxf(n - 1.0, 1.0)
+	match shape:
+		"teardrop":
+			return Vector3(lerpf(-0.35, 0.65, u), lerpf(1.25, 0.4, u), lerpf(1.15, 0.65, u))
+		"umbrella":
+			return Vector3(rng.randf_range(-0.12, 0.12), 1.4, 1.1)
+		"columnar":
+			return Vector3(lerpf(-0.45, 1.1, u), 0.35, lerpf(1.0, 0.7, u))
+		"layers":
+			var tier := float(i % 3) / 2.0
+			return Vector3(lerpf(-0.4, 0.8, tier), lerpf(1.3, 0.5, tier), lerpf(1.1, 0.75, tier))
+	return Vector3(lerpf(-0.3, 0.5, fposmod(i * 0.618 + rng.randf() * 0.15, 1.0)), 1.0, 1.0)
 
 
 ## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up
@@ -245,6 +271,12 @@ static func _shade(leaf: Color, light: float) -> Color:
 	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
 	var v := clampf(leaf.v * lerpf(0.42, 1.5, light), 0.0, 1.0)
 	return Color.from_hsv(h, s, v)
+
+
+## A fruit's colour in the sun: brighter and a little warmer, never washed toward pink or white
+## (lightening a red fruit made it salmon).
+static func _sunlit(c: Color) -> Color:
+	return Color.from_hsv(c.h, clampf(c.s * 0.95, 0.0, 1.0), clampf(c.v * 1.12 + 0.04, 0.0, 1.0))
 
 
 ## A willow's curtain: strands of leaves hanging from the crown's rim nearly to the ground.
@@ -363,7 +395,7 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 	var c := col if ready else col.lerp(LEAF, 0.6)
 	var mat := ModelKit.paint(c, 0.4)
 	# Three shades, so a tree's fruit isn't a row of identical balls: sunny side, middle, shaded underside.
-	var shades := [ModelKit.paint(c.lightened(0.12), 0.5), mat, ModelKit.paint(c.darkened(0.2), 0.3)]
+	var shades := [ModelKit.paint(_sunlit(c), 0.5), mat, ModelKit.paint(c.darkened(0.2), 0.3)]
 	var cr := float(sh["crown_r"]) * k
 	var count := FRUIT_READY if ready else FRUIT_GROWING
 	match shape:

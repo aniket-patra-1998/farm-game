@@ -5,6 +5,7 @@ extends RefCounted
 ## (made once and reused, so a farm of buildings needs a handful of materials, not hundreds).
 
 const PAINT_SHADER := "res://shaders/paint3d.gdshader"
+const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
 const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leaves it whole
 
 ## Tessellation: enough to read round at farm zoom on a phone, no more (each ball is ~170 triangles,
@@ -26,7 +27,8 @@ const CYLINDER_SIDES := 12
 
 
 ## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
-const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color"}
+const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color",
+	"res://shaders/canopy3d.gdshader": "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
 
@@ -63,6 +65,21 @@ static func paint(col: Color, shine := 0.0, sway := 0.0) -> ShaderMaterial:
 	return _materials[key]
 
 
+## The leaf-pattern material of a canopy (white: the colour is in the vertices); `sway` bends it in the wind.
+static func leaves(shine := 0.0, sway := 0.0) -> ShaderMaterial:
+	var key := "leaves:%.2f:%.3f" % [shine, sway]
+	if not _materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load(CANOPY_SHADER)
+		m.set_shader_parameter("albedo", Color.WHITE)
+		m.set_shader_parameter("roughness", 1.0 - shine * 0.6)
+		m.set_shader_parameter("specular", 0.1 + shine * 0.4)
+		if sway > 0.0:
+			m.set_shader_parameter("sway", sway)
+		_materials[key] = m
+	return _materials[key]
+
+
 ## Makes every painted part under `root` bend in the wind by `amount` (paint3d's sway, by height above
 ## the model's foot), keeping each part's colour and shine. Applied before baking, the parts still merge
 ## into one draw (they share the swaying white twin).
@@ -70,7 +87,10 @@ static func sway_all(root: Node, amount: float) -> void:
 	if root is MeshInstance3D:
 		var mi := root as MeshInstance3D
 		var m := mi.material_override as ShaderMaterial
-		if m != null and m.shader != null and m.shader.resource_path == PAINT_SHADER:
+		if m != null and m.shader != null and m.shader.resource_path == CANOPY_SHADER:
+			var lr := float(m.get_shader_parameter("roughness"))
+			mi.material_override = leaves((1.0 - lr) / 0.6, amount)
+		elif m != null and m.shader != null and m.shader.resource_path == PAINT_SHADER:
 			var rough := float(m.get_shader_parameter("roughness"))
 			var col = m.get_shader_parameter("albedo")
 			mi.material_override = paint(col if col is Color else Color(col.x, col.y, col.z),
@@ -307,7 +327,7 @@ static func canopy(parent: Node3D, centre: Vector3, radii: Vector3, rng: RandomN
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.position = centre
-	mi.material_override = paint(Color.WHITE, shine)
+	mi.material_override = leaves(shine)
 	parent.add_child(mi)
 	return mi
 

@@ -34,7 +34,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   code from data and merged by `ModelKit.bake`: `BuildingModel` (data/building_models.json: each size's
   changes, staged construction sites), `TreeModel` (data/tree_shapes.json), `VehicleModel`, `DecorModel`,
   `CropModels` + `CropForms` (data/crop_forms.json: a form per crop); `Animal3D` with `AnimalMotion` (springs: lean, sway, lag, squash, trot); `BuildingFill`
-  (animals out in yards, produce piling up, doors opening on collect); `Ground3D` (shade and wear map, tufts).
+  (animals out in yards, produce piling up, doors opening on collect); `Ground3D` (shade and wear map, tufts); `Crowding` (a universal look: kinds listed in `Crowding.GROUPS` that stand packed together grow taller, wider and darker underneath, so a grove or orchard reads as one leafy mass over visible trunks; add a kind there and honour `crowd` in its model).
 
 ## Rules
 - docs/AUDIT.md is the plan: every system a full FarmVille replica first, smooth on low-end phones. A request

@@ -11,6 +11,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const SCENERY_Y := -Ground3D.SLAB
 const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
+const GROVE_CROWD := 0.6      # woods stand shoulder to shoulder, so their trees are drawn crowded
 
 const PINE := Color("#2f6b3a")
 
@@ -143,9 +144,9 @@ func _step(o: Dictionary) -> int:
 func _key(o: Dictionary) -> String:
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
-	return "%s|%d|%d|%d|%s|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
+	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
-		str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)), Game.is_withered(o), _at_work(o)]]
+		Crowding.level(o), str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)), Game.is_withered(o), _at_work(o)]]
 
 
 
@@ -172,7 +173,7 @@ func _build(o: Dictionary) -> Node3D:
 		"tree":
 			node = Node3D.new()
 			TreeModel.build_at(node, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, ScaleGuide.factor(str(o["id"])),
-				Game.is_ready(o), int(o["uid"]))
+				Game.is_ready(o), int(o["uid"]), true, TreeModel.UNSET, Crowding.share(Crowding.level(o)))
 			node = ModelKit.bake(node)
 		"vehicle":
 			node = VehicleModel.build(it, Game.under_construction(o))
@@ -231,9 +232,11 @@ func _build_scenery() -> void:
 			"pine_tree":
 				pine(holder, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
 			"willow_tree":
-				TreeModel.build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false)
+				TreeModel.build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false, TreeModel.UNSET,
+					GROVE_CROWD)
 			_:
-				TreeModel.build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false)
+				TreeModel.build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false, TreeModel.UNSET,
+					GROVE_CROWD)
 	for cell in groups:
 		_scenery.add_child(ModelKit.bake(groups[cell]))
 
