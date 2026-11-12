@@ -4,7 +4,8 @@ extends Node
 ## economy moves, what drops and how often, and what the weather does. Time is skipped, not waited for, so
 ## weeks take seconds. Change a number in data/balance.json (or pass `--set=section.name=value`) and run it again
 ## to see the effect before shipping it. Headless:
-##   godot --headless --path . res://tools/balance_sim.tscn -- --days=14 --visits=3 --seed=1 [--set=harvest.golden_chance=0.01]
+##   godot --headless --path . res://tools/balance_sim.tscn -- --days=14 --visits=3 --seed=1 \
+##     [--set=harvest.golden_chance=0.01]
 ## Reads the real systems, so a rule change shows up here too. The bot is deliberately plain: it measures the
 ## farm-field loop (plant, harvest, drops, levels), not every building.
 
@@ -94,7 +95,8 @@ func _gap_after(hours: Array, v: int) -> float:
 	return next - float(hours[v])
 
 
-## One visit: harvest what's ripe, plow what the coins reach, plant the best-paying crop for the time until the next visit.
+## One visit: harvest what's ripe, plow what the coins reach, plant the best-paying crop for the time until
+## the next visit.
 func _visit(gap_hours: float) -> void:
 	for r in Game.farm_size:
 		for c in Game.farm_size:
@@ -192,8 +194,9 @@ func _drop_table() -> void:
 			var d := Game.drops.roll_drop(crop, stars, 1)
 			var t := str(d.get("type", ""))
 			counts[t] = int(counts.get(t, 0)) + 1
-		print("%5d  %6.1f  %7.1f  %4.1f  %5.1f  %5.1f" % [stars, counts.get("golden", 0) / 100.0, counts.get("collectible", 0) / 100.0,
-			counts.get("bird", 0) / 100.0, counts.get("super_harvest", 0) / 100.0, counts.get("bonus_xp", 0) / 100.0])
+		var per := func(kind: String) -> float: return counts.get(kind, 0) / 100.0
+		print("%5d  %6.1f  %7.1f  %4.1f  %5.1f  %5.1f" % [stars, per.call("golden"), per.call("collectible"),
+			per.call("bird"), per.call("super_harvest"), per.call("bonus_xp")])
 
 
 func _weather_table() -> void:
