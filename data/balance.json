@@ -207,11 +207,7 @@
   }
  },
  "bees": {
-  "queen_chance": {
-   "v": 0.008,
-   "note": "a Queen Bee found on a flower harvest"
-  },
-  "queen_gem_cost": {
+   "queen_gem_cost": {
    "v": 10,
    "note": "Gems to buy a Queen Bee."
   },

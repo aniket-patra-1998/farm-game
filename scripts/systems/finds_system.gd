@@ -48,7 +48,7 @@ func roll(work: String, stars := 0) -> Array[Dictionary]:
 		return out
 	for fid: String in families:
 		var trig: Dictionary = families[fid].get("trigger", {})
-		if str(trig.get("on", "")) != work:
+		if str(trig.get("on", "")) != work or not _holds(str(trig.get("when", ""))):
 			continue
 		pity[fid] = int(pity.get(fid, 0)) + 1
 		var chance := float(trig.get("chance", 0.0)) * (1.0 + float(trig.get("mastery_luck", 0.0)) * stars + help_for(fid))
@@ -58,6 +58,14 @@ func roll(work: String, stars := 0) -> Array[Dictionary]:
 			if not kind.is_empty():
 				out.append(add(fid, kind))
 	return out
+
+
+## A condition a trigger names in data (`when`): "" always holds.
+func _holds(condition: String) -> bool:
+	match condition:
+		"queen_wanted":
+			return game.bees.queen_wanted()
+	return true
 
 
 ## What the other families help this one with (our own touch): each find of a helping family adds its share to the
@@ -93,7 +101,10 @@ func add(family: String, kind: Dictionary) -> Dictionary:
 	owned[id] = int(owned.get(id, 0)) + 1
 	game.ribbons.bump("finds", 1)
 	game.collections_changed.emit()
-	game.message.emit(tr("YOU_FOUND_A_FIND") % [kind["name"], families[family]["name"]])
+	var custom := str(families[family].get("message", ""))
+	game.message.emit(tr(custom) if custom != "" else tr("YOU_FOUND_A_FIND") % [kind["name"], families[family]["name"]])
+	if str(families[family].get("grant", "")) == "queen_bee":
+		game.bees.receive_queen()
 	_claim_if_complete(family)
 	grow_homes(family)
 	return {"family": family, "id": id, "name": kind["name"], "rarity": kind.get("rarity", "common")}
@@ -138,8 +149,10 @@ func is_complete(family: String) -> bool:
 func _claim_if_complete(family: String) -> void:
 	if claimed.get(family, false) or not is_complete(family):
 		return
-	claimed[family] = true
 	var reward: Dictionary = families[family].get("reward", {})
+	if reward.is_empty():
+		return   # a family with no collection prize (the Queen Bee)
+	claimed[family] = true
 	game.add_coins(int(reward.get("coins", 0)))
 	game.add_xp(int(reward.get("xp", 0)))
 	game.message.emit(tr("FIND_COLLECTION_COMPLETE") % [families[family]["name"], int(reward.get("coins", 0))])

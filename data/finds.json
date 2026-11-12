@@ -1,5 +1,5 @@
 {
-  "_doc": "Things found while farming (scripts/systems/finds_system.gd). A family is a set of collectable kinds found by one kind of farm work. trigger.on is the work that rolls it (harvest); chance is per roll, raised by the crop's mastery stars (mastery_luck per star); pity guarantees one after that many dry rolls. Each kind has a weight (how often among its family) and a rarity. tiers are the counts owned at which the family's home grows a level; reward is paid once when every kind has been found. helps (our own touch): each find of this family adds that share to the find chance of the listed families (cap `help_cap`), so dogs sniff out gophers.",
+  "_doc": "Things found while farming (scripts/systems/finds_system.gd). A family is a set of collectable kinds found by one kind of farm work. trigger.on is the work that rolls it (harvest); chance is per roll, raised by the crop's mastery stars (mastery_luck per star); pity guarantees one after that many dry rolls. Each kind has a weight (how often among its family) and a rarity. tiers are the counts owned at which the family's home grows a level; reward is paid once when every kind has been found. helps (our own touch): each find of this family adds that share to the find chance of the listed families (cap `help_cap`), so dogs sniff out gophers. trigger.when names a condition that must hold for the family to roll (queen_wanted: a Queen Bee would be of use). grant is what a find does beyond being counted (queen_bee: a Queen Bee goes to the Barn for a hive); message is a strings key that replaces the usual 'You found a ...' line.",
   "families": {
     "gopher": {
       "name": "Gophers",
@@ -106,6 +106,28 @@
         "coins": 5000,
         "xp": 150
       }
+    },
+    "queen_bee": {
+      "name": "Queen Bees",
+      "trigger": {
+        "on": "flower_harvest",
+        "when": "queen_wanted",
+        "chance": 0.008,
+        "pity": 250,
+        "mastery_luck": 0.0
+      },
+      "kinds": [
+        {
+          "id": "queen_bee",
+          "name": "Queen Bee",
+          "rarity": "rare",
+          "weight": 1
+        }
+      ],
+      "tiers": [],
+      "grant": "queen_bee",
+      "message": "YOU_FOUND_A_QUEEN_BEE_PUT",
+      "reward": {}
     }
   }
 }

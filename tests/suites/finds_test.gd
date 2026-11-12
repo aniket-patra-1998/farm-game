@@ -459,3 +459,26 @@ func test_183_a_dog_house_grows_with_the_dogs_and_dogs_raise_the_gopher_chance()
 		else:
 			helped = found
 	_check(helped > base, "20 dogs find more gophers than none (%d vs %d)" % [helped, base])
+
+
+func test_184_a_queen_bee_is_a_find_that_only_rolls_when_one_would_be_of_use() -> void:
+	var g := _farm()
+	g.drops_enabled = true
+	g.set_objects([])
+	g.bees.queen_bees = 0
+	_check(g.bees.queen_wanted(), "no hive yet: a queen would be of use")
+	g.rng.seed = 3
+	var got := 0
+	for i in 3000:
+		g.bees.queen_bees = 0
+		got += g.finds.roll("flower_harvest").size()
+	_check(got > 5 and got < 60, "queens are rare finds (%d in 3000 flower harvests)" % got)
+	g.bees.queen_bees = 1
+	_check(not g.bees.queen_wanted(), "holding one, another is of no use")
+	_eq(g.finds.roll("flower_harvest").size(), 0, "so none is rolled")
+	g.bees.queen_bees = 0
+	g.finds.pity["queen_bee"] = int(g.finds.families["queen_bee"]["trigger"]["pity"]) - 1
+	_eq(g.finds.roll("flower_harvest").size(), 1, "the pity count guarantees one")
+	_eq(g.bees.queen_bees, 1, "she goes to the Barn for a hive")
+	_eq(g.finds.count("queen_bee") > 0, true, "and is counted as a find")
+	_check(not g.finds.claimed.get("queen_bee", false), "with no collection prize to claim")

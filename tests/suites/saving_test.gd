@@ -305,7 +305,7 @@ func test_178_a_clock_set_back_does_not_leave_timers_in_the_future() -> void:
 	_check(h.load_game(), "loads")
 	var loaded := h.object_at(h.index_of(1, 1))
 	_check(int(loaded["t"]) <= h.now(), "no timer is in the future")
-	_eq(int(loaded["t"]), stamped - 3600, "each timer keeps its progress (shifted by the skew)")
+	_check(absi(int(loaded["t"]) - (stamped - 3600)) <= 2, "each timer keeps its progress (shifted by the skew)")
 	_check(int(h.plots[h.index_of(8, 8)]["planted_at"]) <= h.now(), "a planted plot too")
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))

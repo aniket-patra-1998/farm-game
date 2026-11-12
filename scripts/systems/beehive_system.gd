@@ -79,20 +79,28 @@ func add_queen(uid: int, buy := false) -> bool:
 	return true
 
 
-## Flower harvests: a rare Queen Bee, or a worker bee joining a hive that has a queen.
+## Is a Queen Bee of any use? None is held and either there is no hive yet or one is queenless.
+func queen_wanted() -> bool:
+	if queen_bees > 0:
+		return false
+	var all := hives()
+	return all.is_empty() or not all.filter(func(h: Dictionary) -> bool: return not has_queen(h)).is_empty()
+
+
+## A Queen Bee found (by the finds framework) goes to the Barn until a hive takes her.
+func receive_queen() -> void:
+	queen_bees += 1
+	game.ribbons.bump("queens_found", 1)
+	game.inventory_changed.emit()
+
+
+## Flower harvests: a rare Queen Bee (a find, see data/finds.json), or a worker bee joining a hive that has a queen.
 func flower_harvest_bees() -> String:
 	if not game.drops_enabled:
 		return ""
-	var all := hives()
-	var queenless := all.filter(func(h: Dictionary) -> bool: return not has_queen(h))
-	if (
-		all.is_empty() or not queenless.is_empty()
-	) and queen_bees == 0 and game.rng.randf() < Balance.f("bees.queen_chance"):
-		queen_bees += 1
-		game.ribbons.bump("queens_found", 1)
-		game.message.emit(tr("YOU_FOUND_A_QUEEN_BEE_PUT"))
-		game.inventory_changed.emit()
+	if not game.finds.roll("flower_harvest").is_empty():
 		return tr("A_QUEEN_BEE")
+	var all := hives()
 	for h in all:
 		if has_queen(h) and game.inside_total(h) < game.capacity(h):
 			if game.rng.randf() >= Balance.f("bees.bee_chance"):
