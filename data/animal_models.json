@@ -1,12 +1,12 @@
 {
-  "_doc": "Ready-made animal models (Quaternius 'Farm Animals Animated', CC0, art/models/quaternius) for the families that have one; the others stay code-built (AnimalBuild). file: the FBX; yaw: degrees to turn it so it faces +x; fit: how long the whole animal is against the rig's body length; roles: what each surface of the mesh is, 'coat' (the item's colour), 'accent' (its accent colour) or 'keep' (as modelled); walk_from: borrow the Walk of another model (they share a skeleton) when the model has none; walk_rate: how fast its walk plays against its speed.",
+  "_doc": "Ready-made animal models (Quaternius 'Farm Animals Animated', CC0, art/models/quaternius) for the families that have one; the others stay code-built (AnimalBuild). file: the FBX; yaw: degrees to turn it so it faces +x; fit: how long the whole animal is against the rig's body length; roles: what each surface of the mesh is, 'coat' (the item's colour), 'accent' (its accent colour) or 'keep' (as modelled); walk_from: borrow the Walk of another model (they share a skeleton) when the model has none; eye: how big its eyes are against the usual (a small head wants bigger ones); walk_rate: how fast its walk plays against its speed.",
   "families": {
     "cow": {"file": "Cow", "yaw": 90, "fit": 1.25, "roles": ["coat", "accent", "keep"]},
     "ox": {"file": "Cow", "yaw": 90, "fit": 1.25, "roles": ["coat", "coat", "keep"]},
     "horse": {"file": "Horse", "yaw": 90, "fit": 1.25, "roles": ["coat", "accent"]},
     "donkey": {"file": "Horse", "yaw": 90, "fit": 1.25, "roles": ["coat", "accent"]},
     "pig": {"file": "Pig", "yaw": 90, "fit": 1.25, "roles": ["coat", "keep"], "walk_from": "Cow"},
-    "sheep": {"file": "Sheep", "yaw": 90, "fit": 1.25, "roles": ["coat", "accent"], "walk_from": "Cow"},
-    "camelid": {"file": "Llama", "yaw": 90, "fit": 1.25, "roles": ["coat", "keep", "keep"], "walk_from": "Cow"}
+    "sheep": {"file": "Sheep", "yaw": 90, "fit": 1.25, "roles": ["coat", "accent"], "walk_from": "Cow", "eye": 1.5},
+    "camelid": {"file": "Llama", "yaw": 90, "fit": 1.25, "roles": ["coat", "keep", "keep"], "walk_from": "Cow", "eye": 1.9}
   }
 }

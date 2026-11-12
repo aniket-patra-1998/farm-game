@@ -65,6 +65,7 @@ static func build(parent: Node3D, spec: Dictionary, rig: AnimalRig, length: floa
 		if lib.has_animation(a):
 			lib.get_animation(a).loop_mode = Animation.LOOP_LINEAR
 	player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+	_eyes(mesh, skeleton as Skeleton3D, float(spec.get("eye", 1.0)))
 	return {"player": player, "height": (box.end.y - floor_y) * s, "length": longest * s,
 		"width": minf(box.size.x, box.size.z) * s}
 
@@ -91,3 +92,83 @@ static func _floor(skeleton: Skeleton3D, armature: Node3D, fallback: float) -> f
 		if n.contains("Foot") and n.ends_with("_end"):  # not-ui
 			low = minf(low, (armature.transform * skeleton.get_bone_global_rest(b).origin).y)
 	return fallback if low == INF else low
+
+
+const EYE_BACK := 0.62      # how far along the head, from the back to the nose, the eyes sit
+const EYE_UP := 0.62        # and how far up it
+const EYE_SIZE := 0.07      # the white of an eye against the head's height
+const EYE_WHITE := Color("#fbf8f0")
+const EYE_DARK := Color("#1b140f")
+
+
+## Eyes (a white and a dark pupil each side) fixed to the head bone, found from the head's own vertices: the
+## models have none, baked into one mesh.
+static func _eyes(mesh: MeshInstance3D, skeleton: Skeleton3D, size: float) -> Node3D:
+	var head := skeleton.find_bone("Head")  # not-ui
+	var skin := mesh.skin
+	if head < 0 or skin == null:
+		return null
+	var mine := PackedInt32Array()
+	for j in skin.get_bind_count():
+		if skin.get_bind_bone(j) == head or skin.get_bind_name(j) == "Head":  # not-ui
+			mine.append(j)
+	var pts := PackedVector3Array()
+	var body := Vector3.ZERO
+	var count := 0
+	for i in mesh.mesh.get_surface_count():
+		var arrays := mesh.mesh.surface_get_arrays(i)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+		var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+		if bones.is_empty() or verts.is_empty():
+			continue
+		var per := bones.size() / verts.size()
+		for v in verts.size():
+			body += verts[v]
+			count += 1
+			for k in per:
+				if mine.has(bones[v * per + k]) and weights[v * per + k] > 0.5:
+					pts.append(verts[v])
+					break
+	if pts.size() < 8 or mine.is_empty():
+		return null
+	var lo := Vector3.INF
+	var hi := -Vector3.INF
+	var mid := Vector3.ZERO
+	for p in pts:
+		lo = lo.min(p)
+		hi = hi.max(p)
+		mid += p
+	mid /= pts.size()
+	body /= count
+	# The mesh is Z up with its length along Y: the nose is the way from the body to the head.
+	var nose := signf(mid.y - body.y)
+	var y := lerpf(hi.y if nose < 0.0 else lo.y, lo.y if nose < 0.0 else hi.y, EYE_BACK)
+	var z := lerpf(lo.z, hi.z, EYE_UP)
+	var height := hi.z - lo.z
+	var side := 0.0
+	for p in pts:
+		if absf(p.y - y) < height * 0.2 and absf(p.z - z) < height * 0.25:
+			side = maxf(side, absf(p.x - mid.x))
+	if side <= 0.0:
+		return null
+	var holder := Node3D.new()
+	var to_bone := skin.get_bind_pose(mine[0])   # (not the rest pose: some meshes sit off their skeleton)
+	var white := ModelKit.paint(EYE_WHITE)
+	var dark := ModelKit.paint(EYE_DARK)
+	var r := height * EYE_SIZE * size
+	for sgn: float in [-1.0, 1.0]:
+		var at := to_bone * Vector3(mid.x + sgn * (side - r * 0.7), y, z)
+		ModelKit.ball(holder, at, 1.0, white, Vector3.ONE * r, true)
+		# (the pupil sits out toward the side the eye looks)
+		var out_dir := (to_bone.basis * Vector3(sgn, 0.0, 0.0)).normalized()
+		ModelKit.ball(holder, at + out_dir * r * 0.45, 1.0, dark, Vector3.ONE * r * 0.62, true)
+	# One mesh for both eyes (a draw call each would break the phone budget), so they don't blink.
+	var attach := BoneAttachment3D.new()
+	attach.bone_name = "Head"  # not-ui
+	skeleton.add_child(attach)
+	var baked := ModelKit.bake(holder)
+	for g in baked.find_children("*", "GeometryInstance3D", true, false):  # not-ui
+		(g as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	attach.add_child(baked)
+	return baked
