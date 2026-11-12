@@ -1179,7 +1179,12 @@ func save_game(in_background := false) -> void:
 	var copy: Dictionary = data.duplicate(true)  # the game goes on changing `data`'s parts; the thread keeps this
 	var path := save_path
 	_save_thread = Thread.new()
-	_save_thread.start(func() -> void: _write_safely(JSON.stringify(copy), path))
+	_save_thread.start(_write_snapshot.bind(copy, path))
+
+
+## (On the save thread.) The copy as text, then safely onto disk.
+func _write_snapshot(copy: Dictionary, path: String) -> void:
+	_write_safely(JSON.stringify(copy), path)
 
 
 ## Waits for a save still being written on its thread (before anything reads or replaces the file).
@@ -1253,6 +1258,9 @@ func load_game() -> bool:
 	var version := int(data.get("version", 0))
 	if version < OLDEST_SAVE_VERSION or version > SAVE_VERSION:
 		return false
+	var mended := SaveCheck.clean(data, items, MAX_SIZE, {"state": "grass"})
+	if mended > 0:
+		push_warning("Save: %d damaged entries were dropped or mended" % mended)
 	var saved_plots: Array = data.get("plots", [])
 	if saved_plots.size() == OLD_GRID_SIZE * OLD_GRID_SIZE:
 		saved_plots = _widen_old_grid(saved_plots)

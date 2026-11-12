@@ -172,3 +172,54 @@ func test_142_a_queued_save_is_written_off_the_main_thread_and_is_the_whole_farm
 	_done(g)
 	for suffix in ["", GameState.BACKUP_SUFFIX, GameState.TEMP_SUFFIX]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
+
+
+func test_143_a_damaged_save_is_mended_on_load_never_a_crash() -> void:
+	var items := {"hay_bale": true, "cow_shed": true}
+	var good := {"id": "hay_bale", "uid": 5, "row": 3, "col": 4, "t": 10}
+	var data := {
+		"coins": -50, "gems": "lots", "xp": NAN, "farmhands": 2.0,
+		"next_uid": 1,
+		"objects": [
+			good.duplicate(),
+			"not an object",
+			{"id": "hay_bale", "uid": 6, "col": 1},                       # no row
+			{"id": "gone_item", "uid": 7, "row": 1, "col": 1, "t": 0},    # item no longer exists
+			{"id": "hay_bale", "uid": 5, "row": 9, "col": 9, "t": 0},     # same uid as the first
+			{"id": "hay_bale", "uid": 8, "row": 99, "col": 1, "t": 0},    # off the grid
+			{"id": "cow_shed", "uid": 9.0, "row": 2.0, "col": 2.0, "level": "high", "t": 1.0},
+		],
+		"plots": [{"state": "plowed"}, 7, {}],
+	}
+	var fixed := SaveCheck.clean(data, items, 30, {"state": "grass"})
+	_check(fixed >= 8, "everything wrong was counted (%d)" % fixed)
+	_eq((data["objects"] as Array).size(), 2, "only the two sound objects stay")
+	_eq((data["objects"][0] as Dictionary)["uid"], 5, "the first of two sharing a uid stays")
+	var cow: Dictionary = data["objects"][1]
+	_eq(cow["uid"], 9, "float numbers become whole numbers")
+	_check(not cow.has("level"), "an unreadable level is dropped")
+	_eq(data["next_uid"], 10, "new things are numbered above every kept uid")
+	_check(not data.has("coins") and not data.has("gems") and not data.has("xp"), "bad counts fall back to defaults")
+	_eq(data["farmhands"], 2, "a good count is kept as a whole number")
+	_eq(data["plots"][1], {"state": "grass"}, "a damaged plot becomes grass")
+	_eq(data["plots"][2], {"state": "grass"}, "so does an empty one")
+	_eq(SaveCheck.clean({"objects": [good.duplicate()], "plots": []}, items, 30, {"state": "grass"}), 0,
+		"a sound save is left alone")
+
+	var path := "user://test_save_damaged.json"
+	var g := _farm()
+	g.save_path = path
+	g.saving_enabled = false
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	var plots: Array = []
+	for i in 900:
+		plots.append({"state": "grass"})
+	f.store_string(JSON.stringify({"version": 2, "coins": 77, "plots": plots, "next_uid": 0,
+		"objects": [{"id": "hay_bale", "uid": 1}, 5, null, {"id": "hay_bale", "uid": 2, "row": 1, "col": 1, "t": 0}]}))
+	f.close()
+	_check(g.load_game(), "a save with broken objects still loads")
+	_eq(g.coins, 77, "and keeps what was sound")
+	_eq(g.objects.size(), 1, "only the whole object is on the farm")
+	_check(g.next_uid > 2, "new things get fresh uids")
+	_done(g)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
