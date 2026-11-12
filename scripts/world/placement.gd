@@ -10,7 +10,8 @@ const LINE_MAX := 40   # the longest line laid in one drag, in tiles
 
 var grid: FarmGrid
 ## What is in hand: {"item": id, "uid": -1 (a purchase) or the uid being moved, "stored": barn index, "row", "col",
-## "homes": {home uid: fit}, "home": the home under the finger or -1}.
+## "homes": {home uid: fit} (every home of the right kind, ready or not), "home": the home under the finger that
+## would take it now or -1, "refused": the home of the right kind under the finger that can't take it yet or -1}.
 var state := {}
 
 func _init(owner: FarmGrid) -> void:
@@ -137,28 +138,35 @@ func refresh_homes() -> void:
 	state["homes"] = fits
 	if not fits.has(int(state.get("home", -1))):
 		state["home"] = -1
+	if not fits.has(int(state.get("refused", -1))):
+		state["refused"] = -1
 
 
 ## Under the finger, a home that takes what's being placed? Remembers it and says what a drop would do.
 func _hover_home(tile: Vector2i) -> void:
-	var home := -1
+	var home := -1     # a home that takes it now: lit, and a drop goes in
+	var refused := -1  # a home of the right kind that can't yet (unbuilt, broken, full): not lit, a drop goes back
 	var homes: Dictionary = state.get("homes", {})
 	if tile.x >= 0 and tile.x < Game.farm_size and tile.y >= 0 and tile.y < Game.farm_size:
 		var b := Game.object_at(Game.index_of(tile.x, tile.y))
 		if not b.is_empty() and homes.has(int(b["uid"])):
-			home = int(b["uid"])
-	if home == int(state.get("home", -1)):
+			if homes[int(b["uid"])] == HousingSystem.Fit.FITS:
+				home = int(b["uid"])
+			else:
+				refused = int(b["uid"])
+	if home == int(state.get("home", -1)) and refused == int(state.get("refused", -1)):
 		return
 	state["home"] = home
+	state["refused"] = refused
 	var thing := str(Game.item_data(state["item"])["name"])
-	if home == -1:
+	if refused != -1:
+		var rb := Game.object_by_uid(refused)
+		grid.placing_changed.emit(Game.homes.refusal(rb, state["item"], homes[refused]))
+	elif home == -1:
 		grid.placing_changed.emit((tr("DRAG_TO_MOVE_THE_THEN_LET") if int(state["uid"]) != -1
 			else tr("DRAG_TO_PLACE_THE_THEN_LET")) % thing)
-		return
-	var b := Game.object_by_uid(home)
-	var why: HousingSystem.Fit = homes[home]
-	grid.placing_changed.emit(tr("DROP_TO_MOVE_INTO") % [thing, Game.item_data(b["id"])["name"]]
-		if why == HousingSystem.Fit.FITS else Game.homes.refusal(b, state["item"], why))
+	else:
+		grid.placing_changed.emit(tr("DROP_TO_MOVE_INTO") % [thing, Game.item_data(Game.object_by_uid(home)["id"])["name"]])
 
 
 ## Placing something taken back out of the barn (free; it keeps its timers reset).
@@ -214,8 +222,12 @@ func input(event: InputEvent) -> void:
 		grid.queue_redraw()  # only when it moved to another tile, not on every touch event
 	if not released:
 		return
+	if int(state.get("refused", -1)) != -1:
+		_refuse(Game.homes.refusal(Game.object_by_uid(int(state["refused"])), state["item"],
+			state["homes"][int(state["refused"])]))
+		return
 	if int(state.get("home", -1)) != -1:
-		# Dropped on a home: in it goes (or a message says why not, and it stays in hand).
+		# Dropped on a home that takes it: in it goes.
 		var home := Game.object_by_uid(int(state["home"]))
 		var source := _source()
 		if Game.homes.put_in_home(int(state["home"]), state["item"], source):
@@ -225,13 +237,14 @@ func input(event: InputEvent) -> void:
 				grid._float(grid.corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
 					"-%d" % int(Game.item_data(state["item"])["cost"]), FarmGrid.COLOR_COST)
 			cancel()
+		else:
+			_refuse("")
 		return
 	var row := int(state["row"])
 	var col := int(state["col"])
 	var uid := int(state["uid"])
 	if not Game.can_place(state["item"], row, col, uid):
-		grid._feel("error", FarmGrid.BUZZ_ERROR)
-		grid.info.emit(tr("IT_DOESN_T_FIT_THERE_TRY"))
+		_refuse(tr("IT_DOESN_T_FIT_THERE_TRY") if not _has_origin() else tr("IT_DOESN_T_FIT_THERE_SO_IT"))
 		return
 	var from_storage := int(state.get("stored", -1))
 	var ok: bool
@@ -251,4 +264,22 @@ func input(event: InputEvent) -> void:
 				"-%d" % int(Game.item_data(state["item"])["cost"]),
 				FarmGrid.COLOR_COST
 			)
+		cancel()
+	else:
+		_refuse("")
+
+
+## Something lifted off the farm, or taken out of the Barn, has somewhere to go back to; a purchase doesn't (it
+## stays in hand to try again, or is cancelled).
+func _has_origin() -> bool:
+	return int(state.get("uid", -1)) != -1 or int(state.get("stored", -1)) >= 0
+
+
+## A drop that can't happen. What was lifted goes back where it came from (it never left: the hand is just
+## emptied); a purchase stays in hand. `message` says why (a refusal may already have said it).
+func _refuse(message: String) -> void:
+	grid._feel("error", FarmGrid.BUZZ_ERROR)
+	if message != "":
+		grid.info.emit(message)
+	if _has_origin():
 		cancel()

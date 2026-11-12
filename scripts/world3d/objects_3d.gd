@@ -469,6 +469,21 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 
 
 
+## The outline of a thing on screen, in the farm grid's space: the hull of its parts' boxes as the camera sees
+## them (built once per view, since the parts don't change until it is rebuilt). Empty if it has no view.
+func outline_of(uid: int) -> PackedVector2Array:
+	var v: Dictionary = _views.get(uid, {})
+	if v.is_empty():
+		return PackedVector2Array()
+	if not v.has("outline"):
+		var points := PackedVector2Array()
+		for part: AABB in v["parts"]:
+			for corner in 8:
+				points.append(IsoProjection.grid_of(part.get_endpoint(corner)))
+		v["outline"] = Geometry2D.convex_hull(points)
+	return v["outline"]
+
+
 ## How far along the ray it meets the box (INF if it misses).
 static func _ray_to(box: AABB, from: Vector3, dir: Vector3) -> float:
 	var hit: Variant = box.intersects_ray(from, dir)

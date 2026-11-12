@@ -1090,6 +1090,17 @@ static func draw_footprint(ci: CanvasItem, corners: PackedVector2Array, ok: bool
 
 
 
+## A home that will take what is carried, picked out the way the original does: a glowing line round the building
+## itself (`hull` is its outline on screen), pulsing faster under the finger.
+static func draw_home_outline(ci: CanvasItem, hull: PackedVector2Array, hovered: bool, t: float) -> void:
+	var col := Color(0.45, 1.0, 0.45)
+	var pulse := 0.5 + 0.5 * sin(t * (6.0 if hovered else 3.0))
+	if hovered:
+		ci.draw_colored_polygon(hull, Color(col, 0.10 + 0.08 * pulse))
+	ci.draw_polyline(hull, Color(col, 0.30 + 0.15 * pulse), 10.0 if hovered else 7.0, true)
+	ci.draw_polyline(hull, Color(col.lightened(0.45), 0.95), 3.5 if hovered else 2.5, true)
+
+
 ## A home lit up while an animal (or tree, or vehicle) is dragged: a glowing ring on its ground, green
 ## if it has room, amber if not; brighter, with a pulse that grows, under the finger.
 static func draw_home_highlight(ci: CanvasItem, corners: PackedVector2Array, fits: bool, hovered: bool,

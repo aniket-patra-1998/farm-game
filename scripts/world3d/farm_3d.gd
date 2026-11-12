@@ -98,6 +98,7 @@ func _ready() -> void:
 	if grid != null:
 		# Taps go to what's drawn under the finger; tapped things react; harvests pop; landings puff.
 		grid.picker = func(screen_pos: Vector2) -> int: return objects.pick(camera, screen_pos)
+		grid.outliner = func(uid: int) -> PackedVector2Array: return objects.outline_of(uid)
 		grid.object_poked.connect(_poked)
 		grid.plants_popped.connect(crops.pop)
 		grid.collected.connect(objects.celebrate)

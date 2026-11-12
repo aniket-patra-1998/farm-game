@@ -73,6 +73,8 @@ var life: FarmLife       # the animals' minds, read by the 2D and 3D worlds
 ## In 3D, finds what's drawn under a screen point (Farm3D.pick): the uid of the object, or -1. Taps go to
 ## what the player sees, even an animal that has wandered off its tile.
 var picker := Callable()
+## uid -> the outline of that building on screen (grid space), set by the 3D world; unset in the 2D fallback.
+var outliner := Callable()
 
 var fx: FxLayer          # rewards flying to the top bar (set by main)
 
@@ -456,13 +458,19 @@ func _draw_placing(ci: CanvasItem) -> void:
 	var hovered := int(placing.get("home", -1))
 	var homes: Dictionary = placing.get("homes", {})
 	for uid in homes:
+		if homes[uid] != HousingSystem.Fit.FITS:
+			continue  # a home that can't take it yet (unbuilt, broken, full) is not marked at all
 		var b := Game.object_by_uid(int(uid))
 		if b.is_empty():
 			continue
-		var bfp := Game.footprint(b["id"])
-		PlaceholderArt.draw_home_highlight(ci, corners_of(int(b["row"]), int(b["col"]), bfp.x, bfp.y),
-			homes[uid] == HousingSystem.Fit.FITS, int(uid) == hovered, t)
-	if hovered == -1:
+		var hull: PackedVector2Array = outliner.call(int(uid)) if outliner.is_valid() else PackedVector2Array()
+		if hull.size() >= 4:
+			PlaceholderArt.draw_home_outline(ci, hull, int(uid) == hovered, t)
+		else:
+			var bfp := Game.footprint(b["id"])
+			PlaceholderArt.draw_home_highlight(ci, corners_of(int(b["row"]), int(b["col"]), bfp.x, bfp.y), true,
+				int(uid) == hovered, t)
+	if hovered == -1 and int(placing.get("refused", -1)) == -1:
 		var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
 		PlaceholderArt.draw_footprint(ci, corners, ok)
 		if ok:

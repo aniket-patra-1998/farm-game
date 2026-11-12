@@ -24,7 +24,13 @@ func _ready() -> void:
 	for path in suite_paths():
 		if only != "" and not path.contains(only):
 			continue
-		var suite := (load(path) as GDScript).new() as TestSuite
+		var script := load(path) as GDScript
+		if script == null or not script.can_instantiate():
+			failed += 1   # a suite that does not even parse is a failure, not a silent hang
+			failures.append("%s: the suite could not be loaded" % path.get_file())
+			print("FAIL  %s could not be loaded" % path.get_file())
+			continue
+		var suite := script.new() as TestSuite
 		suite.name = path.get_file().get_basename()
 		add_child(suite)
 		for n in test_names(suite):
