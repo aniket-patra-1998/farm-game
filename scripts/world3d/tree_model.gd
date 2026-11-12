@@ -83,7 +83,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-0.025, 0.025), leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
 	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.SWELL * crowd)
-	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "leaf": leaf_col, "shine": float(sh.get("shine", 0.0)),
+	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "leaf": leaf_col,
+		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
 	var crown: Vector3
 	match str(sh["form"]):

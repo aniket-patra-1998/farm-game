@@ -821,7 +821,8 @@ func test_146_trees_standing_together_grow_together() -> void:
 	add_child(a)
 	add_child(b)
 	TreeModel.build_at(a, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, false, 5, false)
-	TreeModel.build_at(b, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, false, 5, false, TreeModel.UNSET, 1.0)
+	TreeModel.build_at(b, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, false, 5, false,
+		TreeModel.UNSET, 1.0)
 	var box_a := _tree_bounds(a)
 	var box_b := _tree_bounds(b)
 	_check(box_b.size.y > box_a.size.y, "a crowded tree stands taller (%.2f over %.2f)" % [box_b.size.y, box_a.size.y])
