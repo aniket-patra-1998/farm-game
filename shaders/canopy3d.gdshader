@@ -14,6 +14,8 @@ uniform float sway = 0.0;
 uniform float leaf_scale = 10.0;   // clusters per world unit
 uniform float leaf_dark = 0.3;     // how dark the crescent under each cluster goes
 uniform float leaf_light = 0.14;   // and how much lighter its top
+global uniform float wetness;     // 0..1: how wet everything is (SurfaceWeather): darker, glossier
+global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (SurfaceWeather)
 global uniform float wind;
 
 varying float height;
@@ -57,6 +59,11 @@ void fragment() {
 	SPECULAR = specular;
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
 	ALBEDO *= mix(1.0 - edge, 1.0, smoothstep(0.0, 0.5, facing));
+	// Weather on the surface: wet things are darker and glossier; snow lies on what faces up.
+	float up = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y;
+	float snow_amt = snow_cover * smoothstep(0.5, 0.85, up);
+	ALBEDO = mix(ALBEDO * (1.0 - 0.22 * wetness), vec3(0.93, 0.95, 1.0), snow_amt);
+	ROUGHNESS = mix(ROUGHNESS * (1.0 - 0.45 * wetness), 0.9, snow_amt);
 	RIM = rim;
 	RIM_TINT = 0.9;
 }

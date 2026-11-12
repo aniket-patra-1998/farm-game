@@ -35,6 +35,9 @@ uniform vec3 forest_moss : source_color = vec3(0.22, 0.36, 0.14);
 uniform vec3 litter : source_color = vec3(0.42, 0.28, 0.13);
 uniform float edge_n = 0.0;     // the meadow: the farm's size in tiles (0: none), for the contact shade at its edge
 
+global uniform float wetness;     // 0..1: how wet everything is (SurfaceWeather): darker, glossier
+global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (SurfaceWeather)
+
 varying vec3 world_pos;
 
 float hash(vec2 p) {
@@ -121,7 +124,12 @@ void fragment() {
 		col = mix(col, worn * (0.9 + 0.2 * fine), ragged * 0.75);
 		col *= 1.0 - shade_strength * sw.r;
 	}
+	// Rain darkens the ground and leaves puddles in the hollows; snow settles in patches first, then everywhere.
+	float puddle = smoothstep(0.55, 0.7, fbm(p * 0.8 + 41.0)) * wetness;
+	col *= 1.0 - 0.25 * wetness - 0.2 * puddle;
+	float snowy = smoothstep(0.0, 0.2, snow_cover * 1.25 - (1.0 - fbm(p * 0.5 + 23.0)) * 0.4);
+	col = mix(col, vec3(0.92, 0.94, 1.0) * (0.95 + 0.05 * fine), snowy);
 	ALBEDO = col;
-	ROUGHNESS = 0.95;
-	SPECULAR = 0.15;
+	ROUGHNESS = mix(0.95 - 0.35 * wetness - 0.5 * puddle, 0.85, snowy);
+	SPECULAR = 0.15 + 0.3 * puddle;
 }

@@ -12,6 +12,8 @@ uniform float edge = 0.4;         // how dark the silhouette edge goes
 uniform float rim = 0.1;          // a soft light edge on every painted part: the shape reads against what is behind
 uniform bool shine_in_alpha = false;  // each part's shine rides in its vertex alpha (a skinned animal: one surface, mixed finishes)
 uniform float sway = 0.0;         // bends in the wind by height above its foot (trees, scarecrows); 0: still
+global uniform float wetness;     // 0..1: how wet everything is (SurfaceWeather): darker, glossier
+global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (SurfaceWeather)
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
 
 varying float height;
@@ -42,6 +44,11 @@ void fragment() {
 	// ground the way FarmVille's did.
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
 	ALBEDO *= mix(1.0 - edge, 1.0, smoothstep(0.0, 0.5, facing));
+	// Weather on the surface: wet things are darker and glossier; snow lies on what faces up.
+	float up = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y;
+	float snow_amt = snow_cover * smoothstep(0.5, 0.85, up);
+	ALBEDO = mix(ALBEDO * (1.0 - 0.22 * wetness), vec3(0.93, 0.95, 1.0), snow_amt);
+	ROUGHNESS = mix(ROUGHNESS * (1.0 - 0.45 * wetness), 0.9, snow_amt);
 	RIM = rim;
 	RIM_TINT = 0.9;
 }

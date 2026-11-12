@@ -1106,3 +1106,24 @@ func test_209_the_2d_fallback_joins_fences_on_the_sides_the_farm_says() -> void:
 	var north := PlaceholderArt._arm_ends(g, Vector2.ZERO, LinkShape.N)
 	_check(north[0].is_equal_approx(Vector2(32, -16)), "north is the tile's upper-right edge")
 	_check(north.size() == 2 and north[1].length() < north[0].length(), "and a free end stubs out the other way")
+
+
+func test_210_rain_wets_and_snow_settles_gradually_and_both_fade() -> void:
+	var rain := {"rain": 0.7, "snow": 0.0}
+	var w := SurfaceWeather.new()
+	w.advance(rain, 1.0)
+	_check(w.wet > 0.0 and w.wet < 0.1, "a second of rain wets a little, not all at once (%.3f)" % w.wet)
+	w.advance(rain, 60.0)
+	_eq(w.wet, 1.0, "a long shower soaks everything")
+	w.advance({"rain": 0.0, "snow": 0.0}, 10.0)
+	_check(w.wet < 1.0 and w.wet > 0.8, "it dries out slowly (%.3f)" % w.wet)
+	w.advance({"rain": 0.0, "snow": 0.7}, 90.0)
+	_eq(w.snow, 1.0, "snow builds up")
+	w.advance({"rain": 0.0, "snow": 0.0}, 200.0)
+	_eq(w.snow, 0.0, "and melts away")
+	_eq(w.wet, 0.0, "the ground is dry again")
+	w.free()
+	for shader in ["ground3d", "wall3d", "paint3d", "canopy3d", "foliage3d"]:
+		var code := FileAccess.get_file_as_string("res://shaders/%s.gdshader" % shader)
+		_check(code.contains("global uniform float snow_cover") and code.contains("global uniform float wetness"),
+			"%s shows the weather" % shader)

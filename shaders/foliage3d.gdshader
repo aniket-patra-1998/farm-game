@@ -14,6 +14,8 @@ uniform float ao_reach = 0.22;
 uniform float rim = 0.1;
 uniform float sway = 0.0;
 uniform float flutter = 0.012;     // how far a sprig's tip trembles, in tiles
+global uniform float wetness;     // 0..1: how wet everything is (SurfaceWeather): darker, glossier
+global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (SurfaceWeather)
 global uniform float wind;
 
 varying float height;
@@ -46,6 +48,11 @@ void fragment() {
 	}
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
+	// Weather on the surface: wet things are darker and glossier; snow lies on what faces up.
+	float up = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y;
+	float snow_amt = snow_cover * smoothstep(0.5, 0.85, up);
+	ALBEDO = mix(ALBEDO * (1.0 - 0.22 * wetness), vec3(0.93, 0.95, 1.0), snow_amt);
+	ROUGHNESS = mix(ROUGHNESS * (1.0 - 0.45 * wetness), 0.9, snow_amt);
 	RIM = rim;
 	RIM_TINT = 0.9;
 }

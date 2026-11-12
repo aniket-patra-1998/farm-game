@@ -84,6 +84,7 @@ func _ready() -> void:
 	farmer = Farmer3D.new()
 	add_child(farmer)
 	add_child(AmbientLife.new())
+	add_child(SurfaceWeather.new())
 	var trails := Trails.new()
 	add_child(trails)
 	var runs := VehicleRuns.new()

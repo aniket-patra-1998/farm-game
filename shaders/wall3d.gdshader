@@ -9,6 +9,9 @@ uniform int style = 0;
 uniform float scale = 1.0;      // pattern size: 1 is a board about a twelfth of a tile high
 uniform float ground_ao = 0.45; // how dark the foot of the wall gets
 
+global uniform float wetness;     // 0..1: how wet everything is (SurfaceWeather): darker, glossier
+global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (SurfaceWeather)
+
 varying vec3 local_pos;
 varying vec3 local_normal;
 varying float height;
@@ -56,6 +59,12 @@ void fragment() {
 	col *= mix(1.0 - ground_ao, 1.0, smoothstep(0.0, 0.35, height));
 	ALBEDO = col;
 	ROUGHNESS = style == 5 ? 0.45 : 0.9;
+	// Weather on the surface: wet things are darker and glossier; snow lies on what faces up.
+	float up = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y;
+	float snow_amt = snow_cover * smoothstep(0.5, 0.85, up);
+	ALBEDO = mix(ALBEDO * (1.0 - 0.22 * wetness), vec3(0.93, 0.95, 1.0), snow_amt);
+	ROUGHNESS = mix(ROUGHNESS * (1.0 - 0.45 * wetness), 0.9, snow_amt);
+
 	METALLIC = style == 5 ? 0.3 : 0.0;
 	SPECULAR = style == 5 ? 0.35 : 0.08;
 }
