@@ -16,6 +16,11 @@ const WALL_TOP := 0.33
 static var _cache := {}      # "item|kind|variant" -> Array of {"mesh": ArrayMesh, "shadow": bool}
 
 
+## Which of the hand-built looks a piece on tile (row, col) has, so a piece and its preview agree.
+static func variant_at(row: int, col: int) -> int:
+	return (row * 7 + col * 13 + row * col) % VARIANTS
+
+
 ## The parts (one mesh and whether it casts a shadow each) of a piece, built on first use.
 static func parts(it: Dictionary, kind: int, variant: int) -> Array:
 	var id := str(it.get("id", ""))

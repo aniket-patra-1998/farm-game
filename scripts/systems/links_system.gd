@@ -15,15 +15,21 @@ func group_of(item_id: String) -> String:
 
 
 ## Which sides of tile (row, col) hold a piece that a piece of `group` joins. `ignore_uid` is a piece in
-## hand: it's not standing there.
-func mask_at(group: String, row: int, col: int, ignore_uid := -1) -> int:
+## hand: it's not standing there. `planned` is tiles (index -> group) that pieces are about to stand on, as a
+## line being laid shows them: they count as neighbours.
+func mask_at(group: String, row: int, col: int, ignore_uid := -1, planned := {}) -> int:
 	var out := 0
 	for d in SIDES.size():
 		var r := row + SIDES[d].x
 		var c := col + SIDES[d].y
 		if not game.in_farm(r, c):
 			continue
-		var n := game.object_at(game.index_of(r, c))
+		var at := game.index_of(r, c)
+		if planned.has(at):
+			if Linking.joins(group, str(planned[at])):
+				out |= 1 << d
+			continue
+		var n := game.object_at(at)
 		if n.is_empty() or int(n.get("uid", -2)) == ignore_uid:
 			continue
 		if Linking.joins(group, group_of(str(n["id"]))):

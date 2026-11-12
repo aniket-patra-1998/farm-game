@@ -43,6 +43,7 @@ var _queued := false
 var _scenery: Node3D
 var _links: LinkLayer   # draws the fences, hedges, walls and paths, joined up
 var _ghost_mask := -1
+var _link_landed := -1   # the frame a joined piece last landed
 
 
 
@@ -287,6 +288,9 @@ func _update_placing() -> void:
 		_clear_ghost()
 		return
 	var item := str(placing["item"])
+	if placing.has("line"):
+		_update_line_ghost(placing)
+		return
 	var row := int(placing["row"])
 	var col := int(placing["col"])
 	var home := int(placing.get("home", -1)) != -1
@@ -296,7 +300,7 @@ func _update_placing() -> void:
 	var group := Game.links.group_of(item)
 	var mask := Game.links.mask_at(group, row, col, lifted) if group != "" else 0
 	var shape := LinkShape.of(mask)
-	var variant := (row * 7 + col * 13 + row * col) % LinkModels.VARIANTS
+	var variant := LinkModels.variant_at(row, col)
 	var key := "%s|%d|%d|%d" % [item, lifted, mask, variant] if group != "" else "%s|%d" % [item, lifted]
 	if key != _ghost_key:
 		var snapping := group != "" and _ghost != null and _ghost_mask != mask
@@ -336,6 +340,42 @@ func _update_placing() -> void:
 		_ghost.position = Vector3(col + fp.x / 2.0, lift, row + fp.y / 2.0)
 
 
+
+
+## A line of fence (or hedge, wall, path) being laid: each piece shows the shape it will take once the whole
+## line stands, joined to itself and to what's beside it, green where it will be laid and red where it won't
+## (taken, or more than the coins reach). Rebuilt only when something in it changes; the meshes are shared.
+func _update_line_ghost(placing: Dictionary) -> void:
+	var item := str(placing["item"])
+	var group := Game.links.group_of(item)
+	var line: Array = placing["line"]
+	var oks: Array = placing.get("line_ok", [])
+	var planned := {}
+	for t: Vector2i in line:
+		planned[Game.index_of(t.x, t.y)] = group
+	var key := item
+	var cells: Array = []
+	for i in line.size():
+		var t: Vector2i = line[i]
+		var mask := Game.links.mask_at(group, t.x, t.y, -1, planned)
+		var good: bool = i < oks.size() and oks[i]
+		cells.append([t, mask, good])
+		key += "|%d,%d,%d,%d" % [t.x, t.y, mask, 1 if good else 0]
+	if key == _ghost_key:
+		return
+	_clear_ghost()
+	_ghost_key = key
+	_ghost = Node3D.new()
+	add_child(_ghost)
+	for cell: Array in cells:
+		var t: Vector2i = cell[0]
+		var shape := LinkShape.of(int(cell[1]))
+		var piece := Node3D.new()
+		piece.position = Vector3(t.y + 0.5, 0, t.x + 0.5)
+		piece.rotation.y = LinkShape.yaw(shape.y)
+		piece.add_child(LinkModels.node(Game.item_data(item), shape.x, LinkModels.variant_at(t.x, t.y)))
+		_tint_with(piece, _ghost_material("ok" if cell[2] else "bad"))
+		_ghost.add_child(piece)
 
 
 func _clear_ghost() -> void:
@@ -520,8 +560,10 @@ func grow_in(uid: int, grand: bool) -> void:
 ## Newly on the farm: it falls in from above, lands with a squash and settles.
 func drop_in(uid: int) -> void:
 	if _links.has_piece(uid):
-		landed.emit(_node(uid).position)   # the layer drops the piece itself
-		return
+		if Engine.get_process_frames() != _link_landed:   # a line is one thud, not forty
+			_link_landed = Engine.get_process_frames()
+			landed.emit(_node(uid).position)
+		return   # the layer drops the piece itself
 	var node := _node(uid)
 	if node == null or node is Animal3D:
 		if node is Animal3D:

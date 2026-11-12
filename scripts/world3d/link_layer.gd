@@ -13,6 +13,8 @@ const DROP_HEIGHT := 1.1
 const DROP_TIME := 0.22
 const SNAP_TIME := 0.34
 const SNAP_SQUASH := 0.22      # how far a snapping piece squashes
+const DOMINO := 0.035         # a line drops in with this long between pieces...
+const DOMINO_MAX := 0.6        # ...at most this long in all
 const HEIGHT_VARY := 0.05      # no two fence posts quite the same height
 
 var _buckets := {}   # "item|kind|variant" -> {"uids": Array[int], "views": Array[MultiMeshInstance3D], "dirty": bool}
@@ -41,7 +43,7 @@ func sync(objects: Array) -> void:
 		var col := int(o["col"])
 		var mask := Game.links.mask_at(group, row, col, uid)
 		var shape := LinkShape.of(mask)
-		var variant := (row * 7 + col * 13 + row * col) % LinkModels.VARIANTS
+		var variant := LinkModels.variant_at(row, col)
 		var key := "%s|%d|%d" % [o["id"], shape.x, variant]
 		var xf := _transform(group, uid, row, col, shape.y)
 		var old: Dictionary = _slot.get(uid, {})
@@ -66,20 +68,23 @@ func sync(objects: Array) -> void:
 		_rebuild(key)
 	if _synced_once:
 		for uid in joined:
-			pulse(uid, fresh.has(uid))
-		for uid in fresh:
-			if not joined.has(uid):
-				pulse(uid, true)   # a lone piece drops in as well
+			if not fresh.has(uid):
+				pulse(uid)
+		var order: Array = fresh.keys()
+		order.sort()
+		for k in order.size():
+			# A line laid in one go drops in piece by piece, like falling dominoes.
+			pulse(order[k], true, minf(k * DOMINO, DOMINO_MAX))
 		if not joined.is_empty():   # one click for the whole change, however many pieces it joined
 			snapped.emit((_slot[joined[0]]["xf"] as Transform3D).origin, not fresh.is_empty())
 	_synced_once = true
 
 
 ## A piece squashes and springs back (tapped, or joined); a new one drops in first.
-func pulse(uid: int, drop := false) -> void:
+func pulse(uid: int, drop := false, delay := 0.0) -> void:
 	if _slot.has(uid):
-		_pulses[uid] = {"age": 0.0, "drop": drop}
-		_write(uid, _shown(uid, 0.0, drop))   # from this frame on, not a frame late
+		_pulses[uid] = {"age": -delay, "drop": drop}
+		_write(uid, _shown(uid, -delay, drop))   # from this frame on, not a frame late
 
 
 ## A piece in hand isn't standing on the farm (it's drawn as the ghost): its slot collapses to nothing.
@@ -117,6 +122,8 @@ func _shown(uid: int, age: float, drop := false) -> Transform3D:
 		return Transform3D(Basis.from_scale(Vector3.ZERO), xf.origin)
 	if not _pulses.has(uid):
 		return xf
+	if drop and age < 0.0:
+		return Transform3D(Basis.from_scale(Vector3.ZERO), xf.origin)   # not its turn to fall yet
 	var lift := 0.0
 	var t := age
 	if drop:

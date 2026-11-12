@@ -137,3 +137,19 @@ func test_151_a_piece_in_hand_isnt_drawn_where_it_was() -> void:
 	layer.set_hidden(uid, false)
 	_check(layer.transform_of(uid).is_equal_approx(rest), "put down: it's back")
 	layer.queue_free()
+
+
+func test_152_a_dragged_line_runs_along_the_longer_way_and_stops_where_the_coins_do() -> void:
+	_fresh_farm()
+	var p := Placement.new(null)
+	p.state = {"item": "wooden_fence", "uid": -1, "row": -1, "col": -1, "anchor": Vector2i(18, 5)}
+	_eq(p._line_to(Vector2i(18, 9)).size(), 5, "four tiles along the columns: five pieces")
+	_eq(p._line_to(Vector2i(21, 6)).size(), 4, "more rows than columns: it runs down the rows")
+	_eq((p._line_to(Vector2i(21, 6)) as Array)[3], Vector2i(21, 5), "straight down from where the press began")
+	_eq(p._line_to(Vector2i(18, 5)).size(), 1, "pressed and let go on one tile: one piece")
+	_eq(p._line_to(Vector2i(18, 23)).size(), 19, "a line stops at the farm's edge")
+	_put("hay_bale", 18, 7)
+	Game.coins = 3 * int(Game.item_data("wooden_fence")["cost"])
+	var ok := p._line_ok(p._line_to(Vector2i(18, 10)))
+	_eq(ok, [true, true, false, true, false, false], "a taken tile is skipped and the coins reach only so far")
+	_eq(p._line_to(Vector2i(18, 900)).size() <= Placement.LINE_MAX, true, "no line is longer than the limit")

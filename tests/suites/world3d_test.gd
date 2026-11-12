@@ -182,6 +182,42 @@ func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
 	_check(grid.placing.is_empty(), "and letting go puts it down")
 	_check(int(Game.object_by_uid(9002)["row"]) != 5 or int(Game.object_by_uid(9002)["col"]) != 8, "somewhere new")
 	await get_tree().process_frame  # the drop's queued effects run while their scene still stands
+	# A fence is laid as a line: press at one tile, drag along the ground, let go, and each tile gets a piece.
+	Game.coins = 100000
+	Game.xp = Game.xp_for_level(10)
+	grid.placement.start("wooden_fence")
+	_check(grid.placement.state.has("item") and not grid.placing.is_empty(), "a bought fence is in hand")
+	var free_row := -1
+	for r in Game.farm_size:
+		var clear := true
+		for c in range(3, 9):
+			clear = clear and Game.can_place("wooden_fence", r, c)
+		if clear:
+			free_row = r
+	var from := Vector2i(free_row, 3)
+	var to := Vector2i(free_row, 8)
+	var press_at := InputEventScreenTouch.new()
+	press_at.pressed = true
+	press_at.position = cam.unproject_position(Vector3(from.y + 0.5, 0.0, from.x + 0.5))
+	grid._unhandled_input(press_at)
+	var drag := InputEventScreenDrag.new()
+	drag.position = cam.unproject_position(Vector3(to.y + 0.5, 0.0, to.x + 0.5))
+	grid._unhandled_input(drag)
+	_eq((grid.placing.get("line", []) as Array).size(), 6, "dragging along the ground plans a line of six")
+	var before := Game.coins
+	var release := InputEventScreenTouch.new()
+	release.pressed = false
+	release.position = drag.position
+	grid._unhandled_input(release)
+	var laid := 0
+	for c in range(3, 9):
+		if Game.object_at(Game.index_of(free_row, c)).get("id", "") == "wooden_fence":
+			laid += 1
+	_eq(laid, 6, "letting go lays all six")
+	_check(Game.coins < before, "and charges for them (level-up gifts may soften it)")
+	_check(grid.placing.is_empty(), "and the hand is empty")
+	await get_tree().process_frame
+	await get_tree().process_frame
 	main.free()
 
 
