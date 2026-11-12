@@ -84,7 +84,11 @@ func _ready() -> void:
 	farmer = Farmer3D.new()
 	add_child(farmer)
 	add_child(AmbientLife.new())
-	add_child(Trails.new())
+	var trails := Trails.new()
+	add_child(trails)
+	var runs := VehicleRuns.new()
+	runs.trails = trails
+	add_child(runs)
 	Game.plot_changed.connect(func(_i: int) -> void: _plots_changed())
 	Game.farm_expanded.connect(func(_n: int) -> void:
 		ground.rebuild()

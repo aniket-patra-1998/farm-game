@@ -20,7 +20,7 @@ one fruit tree) -> P1 flower-bed and shrub compositions -> P1 ground tuft/flower
 P2 prop silhouettes -> P2 lighting calibration -> P3 distance simplification.
 Rules we keep: no more balls to fix blobs; measure each step with the stress probe; no gameplay data, ids,
 footprints or save changes; deterministic seeds; keep MultiMesh/bake.
-- Vehicle models (bland): same pilot treatment. Also: sizes by kind (the Combine clearly bigger and heavier-looking than the Tractor, today all drawn alike in the Garage doorway), weight in the animation (slower, deeper bounce, dust), engine/wheel/work animations.
+- Vehicles: done: sizes and weights per kind (Combine ~1.9x the Tractor's width, garage doorway fits two at their own sizes), VehicleRun drives the field (wheels and reels turn, springs, dust, smoke, tracks laid lane by lane). Not yet: engine sound loop, the work itself shown as it happens (the plots still change the moment the farmer arrives), implements (plow blades, seed drills) and a look pass on the models.
 - Decoration detail kit (ridge caps, lanterns).
 
 ## Systems

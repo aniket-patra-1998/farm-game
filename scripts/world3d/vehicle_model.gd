@@ -11,13 +11,35 @@ const RIM := Color("#e8d27a")
 const METAL := Color("#b9c0c4")
 const SEAT := Color("#3a3a3a")
 const SCALE := 1.45  # modelled at a little over half a tile; on the farm a vehicle nearly fills its tile
+# Meta on the pivot of a wheel (its radius in model units) or of a reel (its radius, negative).
+const SPIN := &"vehicle_spin"
+const EXHAUST := {"tractor": Vector3(0.17, 0.42, -0.04), "seeder": Vector3(0.29, 0.42, -0.04),
+	"harvester": Vector3(0.11, 0.42, -0.04), "combine": Vector3(-0.25, 0.6, 0.1)}   # where the smoke leaves
+
+const WIDTH := {"tractor": 0.34, "seeder": 0.46, "harvester": 0.4, "combine": 0.74}  # across, in model units
+
+static var _rig := false  # while a rig is being built, wheels and reels are pivots that can turn
 
 
-static func build(it: Dictionary, chassis := false) -> Node3D:
+## How big the whole model stands on the farm: the common SCALE times the vehicle's own size (a Combine is
+## clearly larger than a Tractor).
+static func scale_of(it: Dictionary) -> float:
+	return SCALE * float(it.get("size", 1.0))
+
+
+## How wide the vehicle stands across its direction of travel, in tiles.
+static func width_of(it: Dictionary) -> float:
+	return float(WIDTH.get(str(it.get("id", "")), 0.34)) * scale_of(it)
+
+
+## The model of vehicle `it`. A `rig` keeps each wheel and reel as a pivot of its own (VehicleRun turns them);
+## otherwise everything is merged into a few draws.
+static func build(it: Dictionary, chassis := false, rig := false) -> Node3D:
+	_rig = rig and not chassis
 	var root := Node3D.new()
 	var body := Node3D.new()
 	body.position = Vector3(0.5, 0, 0.5)
-	body.scale = Vector3.ONE * SCALE
+	body.scale = Vector3.ONE * scale_of(it)
 	root.add_child(body)
 	var col := Color.html(str(it.get("color", "#c0392b")))
 	if chassis:
@@ -36,25 +58,37 @@ static func build(it: Dictionary, chassis := false) -> Node3D:
 	return ModelKit.bake(root)
 
 
-## A wheel standing on the ground at `at` (its centre's x and z), facing sideways (along z).
+## A wheel standing on the ground at `at` (its centre's x and z), facing sideways (along z). Its parts hang on a
+## pivot at its centre, which a rig keeps whole so it can turn.
 static func _wheel(parent: Node3D, at: Vector3, r: float, w: float) -> void:
-	var tyre := ModelKit.cylinder(parent, Vector3.ZERO, r, w, ModelKit.paint(TYRE), -1.0, 16)
+	var hub := Node3D.new()
+	hub.position = Vector3(at.x, r, at.z)
+	parent.add_child(hub)
+	var tyre := ModelKit.cylinder(hub, Vector3.ZERO, r, w, ModelKit.paint(TYRE), -1.0, 16)
 	tyre.rotation.x = PI / 2.0
-	tyre.position = Vector3(at.x, r, at.z)
-	var rim := ModelKit.cylinder(parent, Vector3.ZERO, r * 0.55, w + 0.01, ModelKit.paint(RIM, 0.4), -1.0, 12)
+	tyre.position = Vector3.ZERO
+	var rim := ModelKit.cylinder(hub, Vector3.ZERO, r * 0.55, w + 0.01, ModelKit.paint(RIM, 0.4), -1.0, 12)
 	rim.rotation.x = PI / 2.0
-	rim.position = Vector3(at.x, r, at.z)
+	rim.position = Vector3.ZERO
 	# Tread blocks around the tyre, so it reads as a tractor tyre and not a disc.
 	for k in 10:
 		var a := TAU * k / 10.0
 		var lug := ModelKit.box(
-			parent,
+			hub,
 			Vector3(-0.012, -0.01, -w / 2.0),
 			Vector3(0.012, 0.012, w / 2.0),
 			ModelKit.paint(TYRE)
 		)
-		lug.position = Vector3(at.x + cos(a) * r, r + sin(a) * r, at.z)
+		lug.position = Vector3(cos(a) * r, sin(a) * r, 0)
 		lug.rotation.z = a
+	_pivot(hub, r)
+
+
+## In a rig, a pivot is left whole (not merged) and marked with its radius, so it can turn.
+static func _pivot(node: Node3D, radius: float) -> void:
+	if _rig:
+		node.set_meta(ModelKit.KEEP, true)
+		node.set_meta(SPIN, radius)
 
 
 static func _tractor(b: Node3D, col: Color, shift: float) -> void:
@@ -98,7 +132,12 @@ static func _tractor(b: Node3D, col: Color, shift: float) -> void:
 			ModelKit.paint(Color("#2e2e2e")))
 	ModelKit.box(b, o + Vector3(0.235, 0.09, -0.075), o + Vector3(0.265, 0.12, 0.075), ModelKit.paint(METAL))
 	# Hubcaps, a stripe along the bonnet and a wing mirror, so it reads as a made machine.
-	ModelKit.box(b, o + Vector3(0.0, 0.215, -0.0715), o + Vector3(0.24, 0.225, -0.0705), ModelKit.paint(Color("#f2f2f2")))
+	ModelKit.box(
+		b,
+		o + Vector3(0.0, 0.215, -0.0715),
+		o + Vector3(0.24, 0.225, -0.0705),
+		ModelKit.paint(Color("#f2f2f2"))
+	)
 	ModelKit.box(b, o + Vector3(0.0, 0.215, 0.0705), o + Vector3(0.24, 0.225, 0.0715), ModelKit.paint(Color("#f2f2f2")))
 	ModelKit.box(b, o + Vector3(0.01, 0.38, 0.1), o + Vector3(0.025, 0.43, 0.108), ModelKit.paint(METAL))
 	ModelKit.box(b, o + Vector3(0.008, 0.4, 0.108), o + Vector3(0.028, 0.43, 0.124), ModelKit.paint(Color("#2e2e2e")))
@@ -119,14 +158,18 @@ static func _driver(b: Node3D, at: Vector3) -> void:
 static func _harvester(b: Node3D, col: Color) -> void:
 	_tractor(b, col, -0.06)
 	# The reel at the front: a drum with bats, on side arms.
-	var reel := ModelKit.cylinder(b, Vector3.ZERO, 0.06, 0.36, ModelKit.paint(col.darkened(0.15)), -1.0, 8)
-	reel.rotation.x = PI / 2.0
+	var reel := Node3D.new()
 	reel.position = Vector3(0.3, 0.12, 0)
+	b.add_child(reel)
+	var drum := ModelKit.cylinder(reel, Vector3.ZERO, 0.06, 0.36, ModelKit.paint(col.darkened(0.15)), -1.0, 8)
+	drum.rotation.x = PI / 2.0
+	drum.position = Vector3.ZERO
 	for k in 6:
 		var a := TAU * k / 6.0
-		var bat := ModelKit.box(b, Vector3(-0.006, -0.03, -0.18), Vector3(0.006, 0.03, 0.18), ModelKit.paint(METAL))
-		bat.position = Vector3(0.3 + cos(a) * 0.07, 0.12 + sin(a) * 0.07, 0)
+		var bat := ModelKit.box(reel, Vector3(-0.006, -0.03, -0.18), Vector3(0.006, 0.03, 0.18), ModelKit.paint(METAL))
+		bat.position = Vector3(cos(a) * 0.07, sin(a) * 0.07, 0)
 		bat.rotation.z = a
+	_pivot(reel, -0.07)
 	for z: float in [-0.19, 0.19]:
 		ModelKit.box(b, Vector3(0.18, 0.1, z - 0.008), Vector3(0.32, 0.14, z + 0.008), ModelKit.paint(col))
 	# The grain tank behind the cab.
@@ -154,9 +197,23 @@ static func _combine(b: Node3D, col: Color) -> void:
 	ModelKit.box(b, Vector3(-0.01, 0.58, -0.09), Vector3(0.15, 0.6, 0.09), ModelKit.paint(col))
 	# The header: a wide trough with a reel, on the front.
 	ModelKit.box(b, Vector3(0.14, 0.05, -0.36), Vector3(0.36, 0.12, 0.36), ModelKit.paint(dark))
-	var reel := ModelKit.cylinder(b, Vector3.ZERO, 0.055, 0.7, ModelKit.paint(METAL), -1.0, 8)
-	reel.rotation.x = PI / 2.0
+	var reel := Node3D.new()
 	reel.position = Vector3(0.3, 0.17, 0)
+	b.add_child(reel)
+	var drum := ModelKit.cylinder(reel, Vector3.ZERO, 0.055, 0.7, ModelKit.paint(METAL), -1.0, 8)
+	drum.rotation.x = PI / 2.0
+	drum.position = Vector3.ZERO
+	for k in 4:
+		var a := TAU * k / 4.0 + PI / 4.0
+		var bat := ModelKit.box(
+			reel,
+			Vector3(-0.007, -0.035, -0.35),
+			Vector3(0.007, 0.035, 0.35),
+			ModelKit.paint(METAL)
+		)
+		bat.position = Vector3(cos(a) * 0.075, sin(a) * 0.075, 0)
+		bat.rotation.z = a
+	_pivot(reel, -0.075)
 	for k in 5:
 		ModelKit.box(b, Vector3(0.36, 0.05, -0.34 + 0.17 * k - 0.01), Vector3(0.42, 0.07, -0.34 + 0.17 * k + 0.01),
 			ModelKit.paint(METAL))
@@ -167,7 +224,12 @@ static func _combine(b: Node3D, col: Color) -> void:
 	_driver(b, Vector3(0.05, 0.43, 0.0))
 	# A ladder up the side to the cab, an exhaust, the grain tank's rim and a lamp on the cab roof.
 	for k in 5:
-		ModelKit.box(b, Vector3(0.0, 0.14 + 0.06 * k, 0.17), Vector3(0.05, 0.155 + 0.06 * k, 0.185), ModelKit.paint(METAL))
+		ModelKit.box(
+			b,
+			Vector3(0.0, 0.14 + 0.06 * k, 0.17),
+			Vector3(0.05, 0.155 + 0.06 * k, 0.185),
+			ModelKit.paint(METAL)
+		)
 	for x: float in [0.0, 0.05]:
 		ModelKit.box(b, Vector3(x - 0.004, 0.13, 0.17), Vector3(x + 0.004, 0.42, 0.185), ModelKit.paint(METAL))
 	ModelKit.cylinder(b, Vector3(-0.25, 0.5, 0.1), 0.014, 0.1, ModelKit.paint(Color("#555555"), 0.6))

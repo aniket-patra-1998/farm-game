@@ -180,6 +180,8 @@ Works an area of plots per tap and burns fuel.
 |---|---|---|---|---|
 | `job` | enum of plow, plant, harvest, all |  | yes | What it does to each plot. |
 | `fuel_per_plot` | int | 1 |  | Fuel per plot worked. |
+| `size` | number | 1.0 |  | How big its model is against the Tractor's 1.0 (the Combine stands clearly larger). |
+| `weight` | number | 0.5 |  | 0 light to 1 heavy: a heavy machine drives slower, settles slower on its springs and raises more dust. |
 | `upgrade_parts` | list<int> |  | yes | Vehicle Parts for each Garage upgrade (2x2 to 3x2, 3x3, 4x3, 4x4). |
 | `upgrade_levels` | list<int> |  | yes | Player level each upgrade needs; same length as upgrade_parts. |
 | `build_materials` | materials |  |  | If set, it arrives as a chassis finished with these. |

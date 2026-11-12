@@ -53,7 +53,6 @@ func _init() -> void:
 
 func _ready() -> void:
 	_last_foot = Game.player.pos
-	Game.player.action_done.connect(_on_action_done)
 
 
 func _process(delta: float) -> void:
@@ -114,12 +113,14 @@ func _hide(i: int) -> void:
 	multimesh.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ZERO), Vector3.ZERO))
 
 
-## A vehicle worked an area (a job's result is empty if it failed): two wheel tracks along each lane of it.
-func _on_action_done(job: Dictionary, result: Dictionary) -> void:
-	if str(job.get("kind", "")) != "vehicle" or result.is_empty():
-		return
-	var area := Game.vehicles.vehicle_area(str(job["item"]))
-	lay_tracks(int(job["row"]), int(job["col"]), area)
+## The two wheel marks of a vehicle at `p` (x = column, z = row) heading `heading` (radians in that plane), lying
+## along its way for `length` tiles.
+func lay_pass(p: Vector2, heading: float, length := 1.0) -> void:
+	var dir := Vector2(cos(heading), sin(heading))
+	var side := Vector2(-dir.y, dir.x)
+	for s: float in [-1.0, 1.0]:
+		var at := p + side * s * TREAD_APART
+		stamp(Vector3(at.x, BED_LIFT, at.y), PI / 2.0 - heading, Vector2(TREAD_WIDTH, length * 1.05), TREAD)
 
 
 ## Wheel tracks over an area (row, col: its corner; area: tiles across and down): lanes of two treads each,

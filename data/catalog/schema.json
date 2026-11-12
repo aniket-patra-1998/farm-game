@@ -453,6 +453,16 @@
           "default": 1,
           "doc": "Fuel per plot worked."
         },
+        "size": {
+          "type": "number",
+          "default": 1.0,
+          "doc": "How big its model is against the Tractor's 1.0 (the Combine stands clearly larger)."
+        },
+        "weight": {
+          "type": "number",
+          "default": 0.5,
+          "doc": "0 light to 1 heavy: a heavy machine drives slower, settles slower on its springs and raises more dust."
+        },
         "upgrade_parts": {
           "type": "list<int>",
           "required": true,

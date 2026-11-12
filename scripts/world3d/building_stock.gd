@@ -9,6 +9,7 @@ extends RefCounted
 const KINDS := ["vehicles", "bunches", "goods", "gophers"]
 const MAX_VEHICLES := 2           # the most shown in the doorway (the garage can hold more)
 const VEHICLE_SCALE := 0.85
+const DOOR_FILL := 0.92           # how much of the doorway's width the parked vehicles may fill
 const VEHICLE_SETBACK := 0.12     # how far behind the doorway a vehicle's middle stands: its nose sticks out
 const DOOR_SHARE := 0.55          # the Garage door's width, in tiles of footprint (data/building_models.json)
 const MAX_POTS := 8
@@ -58,16 +59,25 @@ static func _vehicles(root: Node3D, o: Dictionary, p: Vector3, fp: Vector2i) -> 
 	for id: String in Game.item_order:
 		if shown.size() < MAX_VEHICLES and int(inside.get(id, 0)) > 0:
 			shown.append(id)
-	var spread := DOOR_SHARE * fp.x * 0.25
+	# Each keeps its own size (a Combine stands clearly larger than a Tractor); both shrink together only as far as
+	# it takes to fit side by side in the doorway.
+	var widths := 0.0
+	for id in shown:
+		widths += VehicleModel.width_of(Game.item_data(id))
+	var door := DOOR_SHARE * fp.x
+	var fit := minf(VEHICLE_SCALE, door * DOOR_FILL / maxf(widths, 0.01))
+	var left := -widths * fit / 2.0
 	for n in shown.size():
-		var car := VehicleModel.build(Game.item_data(shown[n]))
+		var it := Game.item_data(shown[n])
+		var car := VehicleModel.build(it)
 		var pivot := Node3D.new()
 		pivot.rotation.y = -PI / 2.0                       # the model faces +x; the doorway faces +z
-		pivot.scale = Vector3.ONE * VEHICLE_SCALE
+		pivot.scale = Vector3.ONE * fit
 		car.position = Vector3(-0.5, 0, -0.5)               # turn about the vehicle's middle
 		pivot.add_child(car)
-		var side := 0.0 if shown.size() == 1 else (-1.0 if n == 0 else 1.0)
-		pivot.position = Vector3(p.x + side * spread, 0, p.z - VEHICLE_SETBACK)
+		var w := VehicleModel.width_of(it) * fit
+		pivot.position = Vector3(p.x + left + w / 2.0, 0, p.z - VEHICLE_SETBACK)
+		left += w
 		root.add_child(pivot)
 
 

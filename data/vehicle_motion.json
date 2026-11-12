@@ -1,0 +1,27 @@
+{
+  "_comment": "How a vehicle drives (VehicleMotion): every number has a light end (weight 0, a small tractor) and a heavy end (weight 1, the Combine); a vehicle's own weight in the catalog picks the point between. Speeds are in tiles per second, springs in radians per second. A heavy machine is slower to start and stop, rides on softer springs that sink deeper and settle later, turns later and throws up more dust.",
+  "light": {
+    "speed": 3.2, "accel": 6.0, "brake": 8.0,
+    "turn_speed": 7.0, "turn_slow": 0.7,
+    "spring": 15.0, "damping": 0.38,
+    "bump": 0.022, "bump_pitch": 0.05,
+    "pitch_per_accel": 0.012, "roll_per_turn": 0.035,
+    "rumble": 0.0035, "rumble_hz": 26.0,
+    "dust_per_second": 9.0, "dust_size": 0.16, "dust_life": 0.8, "dust_rise": 0.25,
+    "smoke_per_second": 3.0, "smoke_size": 0.09
+  },
+  "heavy": {
+    "speed": 1.9, "accel": 1.7, "brake": 2.6,
+    "turn_speed": 3.2, "turn_slow": 0.55,
+    "spring": 7.5, "damping": 0.26,
+    "bump": 0.05, "bump_pitch": 0.09,
+    "pitch_per_accel": 0.035, "roll_per_turn": 0.07,
+    "rumble": 0.007, "rumble_hz": 17.0,
+    "dust_per_second": 16.0, "dust_size": 0.28, "dust_life": 1.3, "dust_rise": 0.18,
+    "smoke_per_second": 5.0, "smoke_size": 0.15
+  },
+  "dust_colour": {
+    "plow": "#8a6a46", "plant": "#8a6a46", "harvest": "#d9c27a", "all": "#a88a56"
+  },
+  "smoke_colour": "#555555"
+}
