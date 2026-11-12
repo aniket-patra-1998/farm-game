@@ -174,7 +174,15 @@ func _skin() -> void:
 			var mat := mi.material_override if mi.material_override != null else mi.get_active_material(s)
 			var arrays := mi.mesh.surface_get_arrays(s)
 			var tint := ModelKit.tinted(mat)
-			if not tint.is_empty():
+			var one_coat := false
+			if ModelKit.is_coatable(mat) and (not tint.is_empty() or mat.has_meta(ModelKit.WHITE_TWIN)):
+				# Every painted part shares one surface: its colour and its shine are in its vertices (a part
+				# merged earlier already carries its colours: white tints it by nothing).
+				var base: Color = tint[1] if not tint.is_empty() else Color.WHITE
+				arrays = ModelKit.shine_arrays(ModelKit.tint_arrays(arrays, base), ModelKit.shine_of(mat))
+				mat = ModelKit.coat()
+				one_coat = true
+			elif not tint.is_empty():
 				mat = tint[0]
 				arrays = ModelKit.tint_arrays(arrays, tint[1])
 			var count := (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
@@ -191,6 +199,8 @@ func _skin() -> void:
 			for k: int in [Mesh.ARRAY_TEX_UV, Mesh.ARRAY_COLOR, Mesh.ARRAY_TANGENT]:
 				if arrays[k] != null:
 					fmt |= 1 << k
+			if one_coat:
+				shadow = true  # thin parts cast a shadow too (a little more in the shadow pass) so all share one draw
 			var key := "%s|%d|%d" % [shadow, mat.get_instance_id() if mat != null else 0, fmt]
 			if not groups.has(key):
 				var st := SurfaceTool.new()

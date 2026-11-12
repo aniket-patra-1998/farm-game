@@ -10,15 +10,18 @@ uniform float ground_ao = 0.32;   // how dark a part gets where it touches the g
 uniform float ao_reach = 0.22;    // and how far up the shade fades out (world units)
 uniform float edge = 0.4;         // how dark the silhouette edge goes
 uniform float rim = 0.1;          // a soft light edge on every painted part: the shape reads against what is behind
+uniform bool shine_in_alpha = false;  // each part's shine rides in its vertex alpha (a skinned animal: one surface, mixed finishes)
 uniform float sway = 0.0;         // bends in the wind by height above its foot (trees, scarecrows); 0: still
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
 
 varying float height;
 
 varying vec3 tint;  // the part's colour when baked into a merged mesh (white if none)
+varying float shine_v;
 
 void vertex() {
 	tint = COLOR.rgb;
+	shine_v = COLOR.a;
 	if (sway > 0.0) {
 		// Bends from the foot: the higher, the more; each thing on its own beat (from where it stands).
 		vec3 root = MODEL_MATRIX[3].xyz;   // this instance's own foot: a MultiMesh's pieces each sway on their own beat
@@ -33,8 +36,8 @@ void vertex() {
 void fragment() {
 	float ao = mix(1.0 - ground_ao, 1.0, smoothstep(0.0, ao_reach, height));
 	ALBEDO = albedo * tint * ao;
-	ROUGHNESS = roughness;
-	SPECULAR = specular;
+	ROUGHNESS = shine_in_alpha ? 1.0 - shine_v * 0.6 : roughness;   // (the same curve as ModelKit.paint's `shine`)
+	SPECULAR = shine_in_alpha ? 0.1 + shine_v * 0.4 : specular;
 	// Edges darken toward the silhouette: an inked outline without extra geometry, so shapes pop against the
 	// ground the way FarmVille's did.
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);

@@ -65,6 +65,41 @@ static func paint(col: Color, shine := 0.0, sway := 0.0) -> ShaderMaterial:
 	return _materials[key]
 
 
+## One white painted material that reads each part's shine from its vertex alpha (see `shine_arrays`), so parts of
+## every finish can share a surface: a skinned animal is one draw instead of one per finish.
+static func coat() -> ShaderMaterial:
+	if not _materials.has("coat"):
+		var m := ShaderMaterial.new()
+		m.shader = load(PAINT_SHADER)
+		m.set_shader_parameter("albedo", Color.WHITE)
+		m.set_shader_parameter("shine_in_alpha", true)
+		m.set_meta(WHITE_TWIN, true)
+		_materials["coat"] = m
+	return _materials["coat"]
+
+
+## The shine (0..1) a painted material was made with (the inverse of `paint`'s roughness curve).
+static func shine_of(mat: Material) -> float:
+	return clampf((1.0 - float((mat as ShaderMaterial).get_shader_parameter("roughness"))) / 0.6, 0.0, 1.0)
+
+
+## Whether a material is a plain painted one that can join the shared `coat` (not swaying in the wind).
+static func is_coatable(mat: Material) -> bool:
+	var sm := mat as ShaderMaterial
+	return sm != null and sm.shader != null and sm.shader.resource_path == PAINT_SHADER \
+		and float(sm.get_shader_parameter("sway") if sm.get_shader_parameter("sway") != null else 0.0) <= 0.0
+
+
+## Arrays whose vertex colours (made by `tint_arrays`) carry `shine` in their alpha, for the `coat` material.
+static func shine_arrays(arrays: Array, shine: float) -> Array:
+	var out := arrays.duplicate()
+	var colours: PackedColorArray = (arrays[Mesh.ARRAY_COLOR] as PackedColorArray).duplicate()
+	for i in colours.size():
+		colours[i].a = shine
+	out[Mesh.ARRAY_COLOR] = colours
+	return out
+
+
 ## The leaf-pattern material of a canopy (white: the colour is in the vertices); `sway` bends it in the wind.
 static func leaves(shine := 0.0, sway := 0.0) -> ShaderMaterial:
 	var key := "leaves:%.2f:%.3f" % [shine, sway]
