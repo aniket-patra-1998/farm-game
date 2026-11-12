@@ -11,17 +11,19 @@ plays the real game with a tidy bot (visits a few times a day, harvests everythi
 ripe and not yet withered at the next visit, plows as coins allow) and prints per-day level, coins and drops, the
 drop rates the real rolls give over 100,000 harvests, and the weather's shares and spells per season.
 
-## Baseline (seed 1, 14 days, field loop only: no buildings, animals or purchases)
-| visits a day | level 10 | level 20 | level 30 | level on day 14 | coins on day 14 |
-|---|---|---|---|---|---|
-| 1 | day 7 | day 10 | - | 27 | 217k |
-| 2 | day 3 | day 6 | day 10 | 38 | 365k |
-| 3 | day 2 | day 5 | day 8 | 43 | 407k |
-| 6 | day 2 | day 4 | day 8 | 44 | 394k |
+## Pace (seed 1, 35 days; the bot also buys land, trees and animals, and has about 5 minutes of work per visit)
+Target: the FarmVille pace, level 20 in about two weeks for someone who visits three times a day, and four to five
+weeks for someone who visits once a day. The level table (`economy.level_xp`, 8290 XP for level 20, then 1000 a
+level) was tuned to it.
+| visits a day | level 10 | level 20 | level 30 |
+|---|---|---|---|
+| 1 | day 11 | day 28 | - |
+| 3 | day 5 | day 14 | day 27 |
 Findings:
-- The XP table says "level 20 takes about two weeks of regular play"; a once-a-day visitor gets there in 10 days, a
-  three-times-a-day visitor in 5. Past level 20 the climb is 250 XP a level and levels arrive faster, not slower.
-- Coins pile up (200-400k) because the bot buys nothing: the sinks (land, buildings, animals) set the real pace.
+- Before the retune (table of 2060 XP for level 20) the same bot reached level 20 on day 4 (three visits) and day 10
+  (one visit): land expansion multiplies plots, and XP grows with plots, so the table had to grow a lot.
+- Coins still pile up (100-300k) because the bot only buys land and a few animals: the real sinks (buildings,
+  decorations, crafting) are not in the bot yet. Land costs and the buildings' prices are the next thing to tune.
 - A crop withers as long after ripening as it took to grow, so a once-a-day player can only use crops that grow
   12-24 hours: the choice of crop is the whole game for them (they sit at level 1-2 for the first days).
 - Drops per 1000 harvests at 0 stars: golden 6, collectible 62-80 (pity at 30 lifts it), bird 29, super 54, bonus 44.

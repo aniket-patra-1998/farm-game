@@ -4,11 +4,12 @@ extends Node
 ## economy moves, what drops and how often, and what the weather does. Time is skipped, not waited for, so
 ## weeks take seconds. Change a number in data/balance.json (or pass `--set=section.name=value`) and run it again
 ## to see the effect before shipping it. Headless:
-##   godot --headless --path . res://tools/balance_sim.tscn -- --days=14 --visits=3 --seed=1 \
+##   godot --headless --path . res://tools/balance_sim.tscn -- --days=14 --visits=3 --minutes=5 --seed=1 \
 ##     [--set=harvest.golden_chance=0.01]
 ## Reads the real systems, so a rule change shows up here too. The bot is deliberately plain: it measures the
 ## farm-field loop (plant, harvest, drops, levels), not every building.
 
+const SECONDS_PER_ACTION := 1.15   # the farmer works 0.75 s at each job and walks a little between them
 const HOURS_DEFAULT := [8.0, 13.0, 20.0]     # local hours of the day the bot visits (with --visits=3)
 
 var _days := 14
@@ -18,6 +19,11 @@ var _drops := {}          # drop type -> count
 var _harvests := 0
 var _by_crop := {}        # crop id -> harvests
 var _level_day := {}      # level -> day first reached
+var _collected := 0
+var _actions := 0         # what is left to do in this visit
+var _minutes := 5.0       # how long a visit lasts
+var _expansions := 0
+var _bought := {}         # item id -> bought
 
 
 func _ready() -> void:
@@ -26,6 +32,8 @@ func _ready() -> void:
 			_days = int(arg.get_slice("=", 1))
 		elif arg.begins_with("--visits="):
 			_visits = clampi(int(arg.get_slice("=", 1)), 1, 12)
+		elif arg.begins_with("--minutes="):
+			_minutes = float(arg.get_slice("=", 1))
 		elif arg.begins_with("--seed="):
 			_seed = int(arg.get_slice("=", 1))
 		elif arg.begins_with("--set="):
@@ -37,7 +45,7 @@ func _ready() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.rng.seed = _seed
-	print("BALANCE SIM  days=%d visits/day=%d seed=%d" % [_days, _visits, _seed])
+	print("BALANCE SIM  days=%d visits/day=%d minutes/visit=%.0f seed=%d" % [_days, _visits, _minutes, _seed])
 	_play()
 	_drop_table()
 	_weather_table()
@@ -88,6 +96,11 @@ func _play() -> void:
 	for id: String in _by_crop:
 		crops.append("%s x%d" % [id, _by_crop[id]])
 	print("crops grown: %s" % ", ".join(PackedStringArray(crops)))
+	var bought := []
+	for id: String in _bought:
+		bought.append("%s x%d" % [id, _bought[id]])
+	print("bought: %s; land expanded %d times (farm %d x %d); collected %d" % [", ".join(PackedStringArray(bought)),
+		_expansions, Game.farm_size, Game.farm_size, _collected])
 
 
 func _gap_after(hours: Array, v: int) -> float:
@@ -98,6 +111,8 @@ func _gap_after(hours: Array, v: int) -> float:
 ## One visit: harvest what's ripe, plow what the coins reach, plant the best-paying crop for the time until
 ## the next visit.
 func _visit(gap_hours: float) -> void:
+	_actions = int(_minutes * 60.0 / SECONDS_PER_ACTION)
+	_collect_ready()
 	for r in Game.farm_size:
 		for c in Game.farm_size:
 			var i := Game.index_of(r, c)
@@ -105,9 +120,11 @@ func _visit(gap_hours: float) -> void:
 				continue
 			match Game.field.phase(i):
 				GameState.Phase.RIPE:
-					_record(Game.field.harvest(i))
+					if _act():
+						_record(Game.field.harvest(i))
 				GameState.Phase.WITHERED:
-					Game.field.plow(i)
+					if _act():
+						Game.field.plow(i)
 	for r in Game.farm_size:
 		for c in Game.farm_size:
 			var i := Game.index_of(r, c)
@@ -115,16 +132,71 @@ func _visit(gap_hours: float) -> void:
 				continue
 			var ph := Game.field.phase(i)
 			if ph == GameState.Phase.GRASS:
-				if Game.coins < Balance.i("economy.plow_cost") + _cheapest_seed():
+				if Game.coins < Balance.i("economy.plow_cost") + _cheapest_seed() or not _act():
 					continue
 				Game.field.plow(i)
 				ph = Game.field.phase(i)
 			if ph == GameState.Phase.PLOWED:
 				var crop := _best_crop(gap_hours * 3600.0)
-				if OS.get_cmdline_user_args().has("--trace"):
-					print("  plant %s (coins %d, gap %.0fh)" % [crop, Game.coins, gap_hours])
-				if crop != "" and not Game.field.plant(i, crop):
-					return   # out of coins: the rest wait for the next visit
+				if crop != "" and _act() and not Game.field.plant(i, crop):
+					break   # out of coins: the rest wait for the next visit
+	_spend()
+
+
+## One thing the farmer does (a harvest, a plow, a planting, a collection, a purchase); the visit has only so many.
+func _act() -> bool:
+	if _actions <= 0:
+		return false
+	_actions -= 1
+	return true
+
+
+func _collect_ready() -> void:
+	for o in Game.objects.duplicate():
+		if Game.kind_of(o) in ["tree", "animal"] and Game.is_ready(o):
+			if not _act():
+				return
+			var got := Game.collect(int(o["uid"]))
+			if not got.is_empty():
+				_collected += 1
+
+
+## Spends what's above a reserve for replanting: land first when it can be bought, then whichever tree or
+## animal pays back soonest, on free ground at the back of the farm (never more than a quarter of the farm).
+func _spend() -> void:
+	var reserve := 300
+	while Game.land.can_expand_with_coins() and Game.coins >= int(Game.land.next_expansion()["coins"]) + reserve:
+		if not Game.land.expand(false):
+			break
+		_expansions += 1
+	var held := 0
+	for o in Game.objects:
+		if Game.kind_of(o) in ["tree", "animal"]:
+			held += 1
+	if held >= Game.farm_size * Game.farm_size / 4:
+		return
+	var best := ""
+	var best_payback := INF
+	for id: String in Game.items:
+		var it: Dictionary = Game.items[id]
+		if not str(it.get("kind", "")) in ["tree", "animal"] or int(it.get("cost", 0)) <= 0:
+			continue
+		if it.get("stray_only", false):
+			continue
+		if Game.level() < int(it.get("unlock_level", 1)) or int(it["cost"]) + reserve > Game.coins:
+			continue
+		var days := float(it.get("cycle_seconds", 86400)) / 86400.0
+		var payback := float(it["cost"]) / maxf(float(it.get("payout", 1)) / days, 0.01)
+		if payback < best_payback:
+			best_payback = payback
+			best = id
+	if best == "":
+		return
+	for r in range(Game.farm_size - 1, -1, -1):
+		for c in range(Game.farm_size - 1, -1, -1):
+			if _act() and Game.can_place(best, r, c) and Game.buy_and_place(best, r, c):
+				_bought[best] = int(_bought.get(best, 0)) + 1
+				return
 
 
 func _record(h: Dictionary) -> void:

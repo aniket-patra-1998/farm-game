@@ -56,11 +56,6 @@ const VEHICLE_SIZES := VehicleDef.SIZES
 # FarmVille: any action can drop a collectible (plow, plant, fertilize); harvests are likelier.
 
 
-# Total XP needed to reach level n is LEVEL_XP[n - 1]. Past the table, +250 per level.
-# Tuned so level 20 takes about two weeks of regular play (the beta test window).
-const LEVEL_XP := [0, 15, 40, 75, 120, 175, 240, 320, 410, 510,
-	620, 740, 870, 1010, 1160, 1320, 1490, 1670, 1860, 2060]
-
 # Mastery: harvests needed for stars 1, 2, 3, by crop speed.
 
 # Building parts: found while harvesting and collecting, plus a daily gift.
@@ -968,9 +963,10 @@ func add_xp(amount: int) -> void:
 func xp_for_level(lvl: int) -> int:
 	if lvl <= 1:
 		return 0
-	if lvl - 1 < LEVEL_XP.size():
-		return LEVEL_XP[lvl - 1]
-	return LEVEL_XP[-1] + (lvl - LEVEL_XP.size()) * Balance.i("economy.xp_per_level_after_table")
+	var table := Balance.a("economy.level_xp")
+	if lvl - 1 < table.size():
+		return int(table[lvl - 1])
+	return int(table[-1]) + (lvl - table.size()) * Balance.i("economy.xp_per_level_after_table")
 
 
 func level() -> int:

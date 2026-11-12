@@ -398,12 +398,37 @@
    "note": "XP for plowing one plot."
   },
   "xp_per_level_after_table": {
-   "v": 250,
+   "v": 1000,
    "note": "XP per level beyond the level table."
   },
   "mastery_price_bonus": {
    "v": 0.05,
    "note": "a crop's price, per mastery star (MasterySystem has the stars)"
+  },
+  "level_xp": {
+   "v": [
+    0,
+    55,
+    160,
+    300,
+    485,
+    700,
+    965,
+    1290,
+    1650,
+    2055,
+    2495,
+    2980,
+    3500,
+    4065,
+    4670,
+    5315,
+    5995,
+    6720,
+    7485,
+    8290
+   ],
+   "note": "Total XP needed to reach level n is entry n-1. Tuned with tools/balance_sim: level 20 in about two weeks at three visits a day."
   }
  },
  "recipes": {

@@ -31,8 +31,9 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 ## Balance (the numbers)
 - Done: every number in `data/balance.json` read through `Balance`; weather as steady seasonal spells; `tools/balance_sim.tscn`
   and docs/BALANCE.md (baseline, findings).
-- To decide: the target pace (levels per day for a once-a-day, a few-times-a-day and a heavy player), then tune XP, prices,
-  growth times and the sinks (land, buildings) against the simulator; extend the bot to buy land, buildings and animals.
+- Done: pace retuned to "slower, FarmVille-like" (level 20 in ~14 days at three visits a day, ~28 at one) via
+  `economy.level_xp`; the bot buys land, trees and animals and has a per-visit action budget.
+- To tune next: the coin sinks (land costs, building prices, crafting) once the bot buys buildings too; coins still pile up.
 
 ## Farming core
 - Feeds and animal tastes (draft for review first), queen bee and flowers, adjacency synergies (super

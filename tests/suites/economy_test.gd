@@ -56,9 +56,9 @@ func test_22_level_curve_rises_and_paces_the_beta() -> void:
 	var g := _farm()
 	for lvl in range(2, 60):
 		_check(g.xp_for_level(lvl + 1) > g.xp_for_level(lvl), "level %d needs more XP than %d" % [lvl + 1, lvl])
-	# Rough pace check: 60 plots of a 1-day crop, 3 XP per plot per day (plow + harvest).
-	var days := float(g.xp_for_level(20)) / (60.0 * 3.0)
-	_check(days >= 8.0 and days <= 16.0, "level 20 takes about two weeks (estimated %.1f days)" % days)
+	# The pace itself is tuned with tools/balance_sim (level 20 in about two weeks at three visits a day, four
+	# weeks at one); here only that the curve stays in that neighbourhood, so a stray edit shows up.
+	_check(g.xp_for_level(20) >= 6000 and g.xp_for_level(20) <= 11000, "level 20 needs %d XP" % g.xp_for_level(20))
 	_done(g)
 
 
