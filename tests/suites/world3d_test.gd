@@ -424,6 +424,15 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	fill.refresh(dairy)
 	await get_tree().process_frame
 	_check(_count_vertices(fill) - _residents_vertices(fill) > piled, "more of them, nearer ready")
+	# Half full: nobody at the windows. Full: heads look out of them.
+	_check(fill._peekers == null, "a half-full home has nobody at its windows")
+	dairy["inside"] = {"cow": cap}
+	fill.refresh(dairy)
+	_check(fill._peekers != null and fill._peekers.get_child_count() > 0, "a full home looks out of its windows")
+	_check(fill._peekers.get_child_count() <= BuildingFill.PEEKERS, "but only a few at a time")
+	dairy["inside"] = {"cow": int(cap / 2.0)}
+	fill.refresh(dairy)
+	_check(fill._peekers == null, "and they go back in when it is not full")
 	# Collected: the doors swing open, then close again.
 	_check(not fill.doors_open(), "the doors are shut")
 	fill.celebrate()

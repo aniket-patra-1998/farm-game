@@ -11,6 +11,7 @@ const SKIRT_PITCH := 0.3      # the pent roof round a ground floor under an uppe
 const SKIRT_OVER := 0.1        # and how far it overhangs
 const SPILL_REACH := 0.8      # how far a lit building's light reaches over the ground, in tiles
 const PLINTH := 0.09
+const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals can look out of ([{at, size}])
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 # A building site's stages, as shares of the materials put in (see build_site).
@@ -392,6 +393,10 @@ static func _body(ctx: Dictionary) -> void:
 	ctx["hi"] = hi
 	_door(ctx, trim)
 	_windows(ctx, int(s.get("windows", 2)), trim, int(s.get("window_rows", 1)))
+	var marker := Node3D.new()   # (read by BuildingFill, which puts animals' heads in them when the home is full)
+	marker.set_meta(ModelKit.KEEP, true)
+	marker.set_meta(WINDOWS, ctx.get("window_at", []))
+	root.add_child(marker)
 	_light_spill(ctx)
 
 
@@ -570,8 +575,11 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 	var lo: Vector3 = ctx["lo"]
 	var hi: Vector3 = ctx["hi"]
 	var y := lo.y + (hi.y - lo.y) * share
+	var spots: Array = ctx.get("window_at", [])
+	ctx["window_at"] = spots
 	for k in count:
 		var z := lerpf(lo.z, hi.z, (k + 1.0) / (count + 1.0))
+		spots.append({"at": Vector3(hi.x, y, z), "size": size})
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - 0.025, z - size / 2 - 0.025),
 			Vector3(hi.x + 0.02, y + size / 2 + 0.025, z + size / 2 + 0.025), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(hi.x + 0.02, y - size / 2, z - size / 2), Vector3(hi.x + 0.03, y + size / 2, z + size / 2),

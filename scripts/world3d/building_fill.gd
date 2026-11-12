@@ -25,6 +25,10 @@ const DOOR_OPEN := 1.75       # radians a door swings open
 const DOOR_HOLD := 1.2        # seconds it stays open
 const PRODUCE_STEPS := 6      # piles grow in this many steps as collection nears
 const PRODUCE_SCALE := 1.5    # and are drawn this much bigger than life: they must read from across the farm
+const PEEKERS := 3            # the most animals looking out of windows at once (when the home is full)
+const PEEK_OUT := 0.1         # tiles a head sticks out past the wall
+const PEEK_POP := 0.45        # seconds a head takes to pop up
+const PEEK_NOD := 2.6         # seconds a head takes to nod once and back
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
 const TREE_FILL := 1.3            # an orchard tree's size, against the space between trees (crowns touch)
@@ -38,8 +42,11 @@ var _fp := Vector2i.ONE
 var _spec := {}
 var _spots: Array[Vector3] = []
 var _who := ""                # who's inside, as last shown
+var _who_peeking := ""
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
+var _peekers: Node3D           # heads looking out of the windows while the home is full
+var _windows: Array = []
 var _flag: Node3D             # flown while the building is full
 var _lod := -1                # 0 all, 1 half, 2 a few: how much of the yard is drawn at this zoom (-1: not set yet)
 var _idle := 0.0               # time not yet given to the residents' minds
@@ -58,6 +65,8 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 	f._spec = BuildingModel.spec(f._id, Game.level_of(o))
 	f._spots = open_spots(f._spec, f._fp, int(o["uid"]))
 	for c in model.get_children():
+		if c.has_meta(BuildingModel.WINDOWS):
+			f._windows = c.get_meta(BuildingModel.WINDOWS)
 		if c.has_meta(BuildingModel.DOOR):
 			f._doors.append(c)
 			c.set_meta("rest_y", (c as Node3D).position.y)
@@ -127,7 +136,11 @@ func refresh(o: Dictionary) -> void:
 		_show_produce(str(fill.get("produce", "")), step, fill.get("at", [0.78, 0.9]), o)
 	_who = who
 	_stage = stage
-	_show_flag(Game.capacity(o) > 0 and Game.inside_total(o) >= Game.capacity(o) and not fill.has("plants"))
+	var full := Game.capacity(o) > 0 and Game.inside_total(o) >= Game.capacity(o) and not fill.has("plants")
+	_show_flag(full)
+	if who != _who_peeking:
+		_who_peeking = who
+		_show_peekers(inside if full else {})
 
 
 ## How near the building is to ready, 0..1 (0 when empty: nothing is being made).
@@ -220,6 +233,60 @@ func _show_residents(inside: Dictionary, total: int, capacity: int) -> void:
 		add_child(a)
 		a.update(0.0)
 		residents.append(a)
+
+
+## A full home has animals looking out of its windows (FarmVille's did): a head in up to PEEKERS windows,
+## of the commonest kinds inside, popping up and nodding now and then. Nothing when it is not full.
+func _show_peekers(inside: Dictionary) -> void:
+	if _peekers != null:
+		_peekers.queue_free()
+		_peekers = null
+	if inside.is_empty() or _windows.is_empty():
+		return
+	var picks := pick_kinds(inside, mini(PEEKERS, _windows.size()), PEEKERS)
+	var holder := Node3D.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = uid
+	var order := range(_windows.size())
+	for k in range(order.size() - 1, 0, -1):
+		var j := rng.randi_range(0, k)
+		var t: int = order[k]
+		order[k] = order[j]
+		order[j] = t
+	for k in picks.size():
+		var it := Game.item_data(picks[k])
+		if it.is_empty():
+			continue
+		var w: Dictionary = _windows[order[k]]
+		var head := _head(Color.html(str(it.get("color", "#ffffff"))), float(w["size"]))
+		head.position = w["at"] as Vector3
+		head.scale = Vector3.ZERO
+		holder.add_child(head)
+		var tween := head.create_tween()
+		tween.tween_interval(rng.randf_range(0.0, 1.5))
+		tween.tween_property(head, "scale", Vector3.ONE, PEEK_POP).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		var nod := head.create_tween().set_loops()
+		nod.tween_interval(rng.randf_range(0.5, 2.0))
+		nod.tween_property(head, "rotation:x", 0.12, PEEK_NOD / 2.0).set_trans(Tween.TRANS_SINE)
+		nod.tween_property(head, "rotation:x", -0.12, PEEK_NOD / 2.0).set_trans(Tween.TRANS_SINE)
+	_peekers = holder
+	add_child(_peekers)
+
+
+## A head filling a window of size `size`, in `col`: a square head, a snout, ears and two eyes, facing +x.
+static func _head(col: Color, size: float) -> Node3D:
+	var root := Node3D.new()
+	var s := size * 0.46
+	var coat := ModelKit.paint(col)
+	ModelKit.box(root, Vector3(0, -s, -s), Vector3(PEEK_OUT + s * 0.5, s, s), coat)
+	ModelKit.box(root, Vector3(PEEK_OUT, -s * 0.55, -s * 0.5), Vector3(PEEK_OUT + s * 0.9, s * 0.15, s * 0.5),
+		ModelKit.paint(col.lightened(0.3)))
+	for side: float in [-1.0, 1.0]:
+		ModelKit.box(root, Vector3(0.0, s * 0.9, side * s * 0.95 - s * 0.2),
+			Vector3(s * 0.4, s * 1.7, side * s * 0.95 + s * 0.2), ModelKit.paint(col.darkened(0.15)))
+		ModelKit.box(root, Vector3(PEEK_OUT + s * 0.5, s * 0.3, side * s * 0.5 - s * 0.12),
+			Vector3(PEEK_OUT + s * 0.6, s * 0.55, side * s * 0.5 + s * 0.12), ModelKit.paint(Color("#1c1c1c")))
+	return ModelKit.bake(root)
 
 
 ## The trees or blooms living in an Orchard or Bloom Garden, packed in a grid from the middle out: more as it
