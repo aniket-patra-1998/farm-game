@@ -72,7 +72,7 @@ This is milestone 1 of the V1 plan: the core farm.
   Each works a 2x2 area per tap. Pick it in the toolbar, then tap the field
 - Combine (level 31): a 500,000-coin chassis finished with 40 Vehicle Parts (+5,000 XP); harvests, plows and plants in one tap, 3 fuel a plot
 - One shared fuel tank of 150, 1 fuel a plot. It refills by itself (1 every 10 minutes); spare tanks cost 3 gems and open when it runs dry
-- Garage (level 22, 50,000 coins, frame of bricks, nails and boards): parks up to 20 vehicles and upgrades them with Vehicle Parts:
+- Garage (level 22, 50,000 coins, frame of bricks, nails and boards): a farm owns one vehicle in all (in the Garage or out on the farm, never both) and upgrades it with Vehicle Parts:
   2, 5, 10, 15 parts for 3x2, 3x3, 4x3, 4x4 (the last two at level 26). Gearhead ribbon for upgrades
 - Vehicle Parts came from neighbours in FarmVille; here they drop while farming once you own a Garage or a Combine chassis
 
@@ -120,10 +120,11 @@ land expansion, bees, strays, saving and the data files.
 
 Tests use a throwaway farm with saving off, so they never touch your real save.
 
-## Build for Android (later)
+## Build for Android
 
-Install the Android export templates and an Android SDK, then Project > Export > Add Android.
-Use AAB format for the Play Store.
+`export_presets.cfg` has an Android preset (AAB for the Play Store). Install the Android export templates, an
+Android SDK and a JDK, point Editor Settings > Export > Android at them, then Project > Export. Signing keys are
+never committed: give the keystore through the export dialog or environment variables.
 
 ## Project layout
 
@@ -132,25 +133,31 @@ Use AAB format for the Play Store.
 | `autoload/game.gd` | The shared core of the rules: plots, crops, coins, XP, levels, mastery, placed objects, save/load |
 | `locale/strings.csv` | Every sentence the player sees, by key (code shows them with `tr("KEY")`); add a column to translate the game |
 | `scripts/systems/` | One class per feature (crafting, vehicles and fuel, beehive, barn, strays, collections, ribbons, daily gift...), each with its own state and saving |
-| `data/crops.json` | Crop list and numbers; edit to rebalance without touching code |
-| `data/collections.json` | Collection sets, which crops drop them, rewards |
-| `data/ribbons.json` | Ribbons, tier thresholds and rewards |
-| `data/items.json` | Trees, animals and buildings: prices, timers, sizes, capacities, upgrade costs |
-| `data/expansions.json` | Land expansion steps: size, level, coin and gem prices |
+| `data/catalog/*.json` | Every item (crops, trees, animals, buildings, vehicles, decorations, recipes) by category and family; `schema.json` says what each field means |
+| `data/*.json` | Other data: collections, ribbons, expansions, sounds, finds, and the shapes of animals, trees, crops and buildings in 3D |
+| `scripts/catalog/` | A class per kind of item, with its rules |
+| `scripts/world3d/` | The farm in 3D: models built in code from data, merged for few draw calls |
+| `scripts/world/` | The 2D world (taps, signs, effects; the whole farm if 3D is off) |
+| `tests/` | The rule tests (`tests/suites/`) and the screenshot run |
+| `tools/` | Generators, CI checks, and looking tools (perf probe, contact sheet, state sheet) |
+| `docs/` | The plan (`AUDIT.md`), open items, and the generated catalog |
 | `scripts/book_panel.gd` | The pop-up menu used for Collections and Ribbons |
 | `scripts/farm_grid.gd` | Draws the farm and turns taps into actions |
-| `scripts/placeholder_art.gd` | Every visual, drawn with simple shapes; swap for sprites here |
+| `scripts/placeholder_art.gd` | The 2D visuals, drawn with simple shapes until painted art replaces them |
 | `scripts/hud.gd` | Top bar, toolbar, messages |
 | `scripts/main.gd` | Wires everything together and frames the farm on any screen |
 
 ## Art
 
-All art is original placeholder art drawn in code. Replacing it means editing only
-`placeholder_art.gd` (for example, `draw_texture` with your sprite sheets).
+Placeholder art is drawn in code (2D) and built from data (3D models). Painted art goes in `art/final/` and is
+picked up by `SpriteBank`.
 
-## Next milestones
+## What comes next
 
-4. Vehicles, parts, upgrades, fuel
-5. Crafting, decor, storage, land expansion
-6. Breeding, greenhouse, rare animal home
-7. Shop, tutorial, sound, Play Store release
+See `docs/OPEN_ITEMS.md`: performance, systems clean-up, then the farming core (feeds, quests, synergies).
+
+### Before the first Play Store upload
+- `package/unique_name` in `export_presets.cfg` is a placeholder (`com.example.farmgame`): the package name can never be
+  changed once the game is on the Play Store, so set the real one first.
+- Gradle builds need the Android build template: Project > Install Android Build Template, once.
+- Keystore passwords are kept by Godot in `.godot/export_credentials.cfg`, which is not committed.

@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read   # tests only read the repository
+
 jobs:
   game-rules:
     runs-on: ubuntu-latest
@@ -55,7 +58,12 @@ jobs:
 
       - name: Import project
         # Builds Godot's class list so class_name scripts resolve when run headless.
-        run: ./godot-bin/godot --headless --path . --import || true
+        # (The import itself may grumble about generated files; a script that doesn't compile is a failure.)
+        run: |
+          ./godot-bin/godot --headless --path . --import 2>&1 | tee import.log || true
+          if grep -E "Parse Error|Compile Error|Failed to load script" import.log; then
+            echo "A script didn't import"; exit 1
+          fi
 
       - name: Run tests
         run: |
