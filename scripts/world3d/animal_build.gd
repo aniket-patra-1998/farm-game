@@ -52,3 +52,12 @@ static func fleece(parent: Node3D, count: int, r: Vector3, size: float, mat: Mat
 		var a := i * 2.399963                       # the golden angle: no two tufts line up
 		var dir := Vector3(cos(a) * ring, y, sin(a) * ring)
 		ModelKit.ball(parent, dir * r * 0.82, r.y * size, mat)
+
+
+## Muscle: rounded masses [x, y, z, rx, ry, rz] (shares of the body size) on both sides of it (z mirrored), the
+## shoulder and the haunch, so a body has form and not one smooth tube.
+static func muscles(parent: Node3D, masses: Array, r: Vector3, mat: Material) -> void:
+	for m: Array in masses:
+		for side: float in [-1.0, 1.0]:
+			ModelKit.ball(parent, Vector3(float(m[0]) * r.x, float(m[1]) * r.y, side * float(m[2]) * r.z), 1.0, mat,
+				Vector3(float(m[3]) * r.x, float(m[4]) * r.y, float(m[5]) * r.z), true)

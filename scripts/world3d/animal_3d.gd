@@ -332,6 +332,7 @@ func _build_quad() -> void:
 		_stations = bd["stations"]
 		_box = float(bd.get("box", 2.4))
 		_add_mesh(_body, AnimalLoft.body(_stations, _r, _box), mat)
+		AnimalBuild.muscles(_body, build.get("muscles", []), _r, mat)
 	elif build.has("torso"):
 		AnimalBuild.torso(_body, build["torso"], _r, mat)
 	else:
@@ -396,7 +397,7 @@ func _build_quad() -> void:
 		head_col = accent
 	# A sculpted head (its stations are shares of these half extents), or the old skull ball.
 	var shape: Array = (build.get("head", {}) as Dictionary).get("shape", [])
-	var hx := hl * 0.6
+	var hx := hl * AnimalBuild.num(build, "head", "len", 0.6)
 	var hy := hh * 0.5
 	var hz := hh * 0.45
 	if shape.is_empty():
