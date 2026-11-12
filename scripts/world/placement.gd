@@ -6,8 +6,9 @@ extends RefCounted
 ## The FarmGrid owns one (`grid.placement`) and draws the ghost from `state`.
 
 var grid: FarmGrid
-var state := {}   # {"item": id, "uid": -1 (a purchase) or the uid being moved, "stored": barn index, "row", "col",
-				  #  "homes": {home uid: fit}, "home": the home under the finger or -1}
+## What is in hand: {"item": id, "uid": -1 (a purchase) or the uid being moved, "stored": barn index, "row", "col",
+## "homes": {home uid: fit}, "home": the home under the finger or -1}.
+var state := {}
 
 
 func _init(owner: FarmGrid) -> void:
