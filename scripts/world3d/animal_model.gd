@@ -11,13 +11,21 @@ const WALK := "Armature|Walk"  # not-ui
 const BLEND := 0.25       # seconds to ease from one animation to the next
 
 static var _data: Dictionary = {}
+static var _meta: Dictionary = {}
 static var _boxes: Dictionary = {}   # file -> its true bounds (the mesh's own box is padded for skinning)
+
+
+## Whether ready-made models are used at all (data/animal_models.json `enabled`).
+static func enabled() -> bool:
+	of("")
+	return bool(_meta.get("enabled", true))
 
 
 ## The model's spec for a family, or {} when it has none (or the file isn't there).
 static func of(family: String) -> Dictionary:
 	if _data.is_empty():
-		_data = (JSON.parse_string(FileAccess.get_file_as_string(DATA)) as Dictionary).get("families", {})
+		_meta = JSON.parse_string(FileAccess.get_file_as_string(DATA)) as Dictionary
+		_data = _meta.get("families", {})
 	var spec: Dictionary = _data.get(family, {})
 	if spec.is_empty() or not ResourceLoader.exists(DIR % spec["file"]):
 		return {}

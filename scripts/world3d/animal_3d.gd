@@ -105,7 +105,7 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3) -> Animal
 func _build() -> void:
 	_body = Node3D.new()
 	add_child(_body)
-	if rig.type == "quad" and not AnimalModel.of(rig.family).is_empty():
+	if rig.type == "quad" and AnimalModel.enabled() and not AnimalModel.of(rig.family).is_empty():
 		_build_model()
 		_build_contact()
 		_slot = get_instance_id() % MAX_STRIDE
