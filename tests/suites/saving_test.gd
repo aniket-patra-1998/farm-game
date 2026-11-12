@@ -223,3 +223,57 @@ func test_143_a_damaged_save_is_mended_on_load_never_a_crash() -> void:
 	_check(g.next_uid > 2, "new things get fresh uids")
 	_done(g)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func test_144_saves_from_other_versions_migrate_or_are_refused() -> void:
+	var path := "user://test_save_versions.json"
+	var g := _farm()
+	g.save_path = path
+	g.saving_enabled = true
+	g.coins = 555
+	g.save_game()
+	_done(g)
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	_eq(int(data["version"]), GameState.SAVE_VERSION, "a save is written in the current version")
+	# The oldest version we still read: fields added since are missing, and each gets its default.
+	for key in ["tutorial_step", "farm_size", "clear_until", "unwithers", "parts", "farmhands", "next_uid"]:
+		data.erase(key)
+	data["version"] = GameState.OLDEST_SAVE_VERSION
+	_write_json(path, data)
+	var old := GameState.new()
+	old.save_path = path
+	add_child(old)
+	old.saving_enabled = false
+	_eq(old.coins, 555, "an old save keeps its coins")
+	_eq(old.tutorial_step, GameState.Tutorial.DONE, "an old player has already done the tutorial")
+	_eq(old.farm_size, GameState.START_SIZE, "missing fields take their defaults")
+	_eq(old.unwithers, GameState.START_UNWITHERS, "including starting gifts")
+	_check(old.next_uid >= 1, "and new things can be numbered")
+	old.queue_free()
+	# A save from a newer game is not read (and not overwritten by a half-understood copy).
+	data["version"] = GameState.SAVE_VERSION + 1
+	_write_json(path, data)
+	var future := GameState.new()
+	future.save_path = path
+	add_child(future)
+	future.saving_enabled = false
+	_eq(future.coins, GameState.START_COINS, "a save from a newer game is not read: a new farm starts")
+	var kept := "%s.v%d" % [path, GameState.SAVE_VERSION + 1]
+	_check(FileAccess.file_exists(kept), "and kept aside, so the new farm doesn't overwrite it")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(kept))
+	future.queue_free()
+	# Two things never share a uid.
+	var h := _farm()
+	var before := h.objects.size()
+	h.add_object({"uid": 7777, "id": "hay_bale", "row": 1, "col": 1, "t": 0})
+	h.add_object({"uid": 7777, "id": "hay_bale", "row": 3, "col": 3, "t": 0})
+	_eq(h.objects.size(), before + 1, "an object with a taken uid is not added")
+	_done(h)
+	for suffix in ["", GameState.BACKUP_SUFFIX, GameState.TEMP_SUFFIX]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
+
+
+func _write_json(path: String, data: Dictionary) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(data))
+	f.close()

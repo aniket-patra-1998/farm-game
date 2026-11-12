@@ -359,6 +359,9 @@ func object_by_uid(uid: int) -> Dictionary:
 
 ## The only ways objects join or leave the farm: each keeps the tiles they stand on (and the uid index) true.
 func add_object(o: Dictionary) -> void:
+	if o.has("uid") and not object_by_uid(int(o["uid"])).is_empty():
+		push_warning("add_object: uid %d is already on the farm" % int(o["uid"]))
+		return  # two things never share a uid: taps, saves and the uid index all depend on it
 	objects.append(o)
 	if o.has("row") and o.has("col"):
 		_occupy(o)
@@ -1256,7 +1259,11 @@ func load_game() -> bool:
 	if data.is_empty():
 		return false
 	var version := int(data.get("version", 0))
-	if version < OLDEST_SAVE_VERSION or version > SAVE_VERSION:
+	if version > SAVE_VERSION:
+		# From a newer game (the app was rolled back): the new farm that follows must not overwrite it.
+		DirAccess.copy_absolute(save_path, "%s.v%d" % [save_path, version])
+		return false
+	if version < OLDEST_SAVE_VERSION:
 		return false
 	var mended := SaveCheck.clean(data, items, MAX_SIZE, {"state": "grass"})
 	if mended > 0:
