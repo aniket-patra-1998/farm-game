@@ -206,6 +206,10 @@ func _notification(what: int) -> void:
 		save_game()
 
 
+func _exit_tree() -> void:
+	Instancer.clear()   # the shared looks live in statics: let them go before the engine reports leaks
+
+
 # ---------------------------------------------------------------- time
 
 
