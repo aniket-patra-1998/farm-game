@@ -1241,7 +1241,7 @@ func test_310_buildings_and_decorations_as_placed_stay_inside_their_tile_border(
 		var holder: Node3D = view._build({"uid": 7, "id": id, "row": 0, "col": 0, "t": Game.now()})
 		var model := holder.get_child(0) as Node3D
 		if model.has_node(Objects3D.DRESSING):
-			model.remove_child(model.get_node(Objects3D.DRESSING))
+			model.get_node(Objects3D.DRESSING).free()
 		var reach := SpaceFit.reach(model, model.transform)
 		var room := SpaceFit.tile_room(fp).grow(0.02)
 		room.position -= Vector2(fp) / 2.0   # (the model is measured about the footprint's centre)
