@@ -7,10 +7,12 @@ extends RefCounted
 ## Combine still being built is a bare chassis on blocks. The node's origin is its tile's back corner.
 
 const TYRE := Color("#2a2a2a")
-const RIM := Color("#e8d27a")
+const RIM := Color("#f1e6b8")
+const MUD := Color("#5b4731")   # the caked dirt on a tyre
+const ROOF := Color("#f4f1ea")   # a cab roof, white like FarmVille's
 const METAL := Color("#b9c0c4")
 const SEAT := Color("#3a3a3a")
-const SCALE := 1.45  # modelled at a little over half a tile; on the farm a vehicle nearly fills its tile
+const SCALE := 1.8  # modelled at a little over half a tile; on the farm a vehicle is chunky, bigger than its tile
 # Meta on the pivot of a wheel (its radius in model units) or of a reel (its radius, negative).
 const SPIN := &"vehicle_spin"
 # Meta on the pivot of an implement: the angle (radians about the across axis) it is lifted by when not working.
@@ -76,13 +78,13 @@ static func _wheel(parent: Node3D, at: Vector3, r: float, w: float) -> void:
 	rim.rotation.x = PI / 2.0
 	rim.position = Vector3.ZERO
 	# Tread blocks around the tyre, so it reads as a tractor tyre and not a disc.
-	for k in 10:
-		var a := TAU * k / 10.0
+	for k in 12:
+		var a := TAU * k / 12.0
 		var lug := ModelKit.box(
 			hub,
-			Vector3(-0.012, -0.01, -w / 2.0),
-			Vector3(0.012, 0.012, w / 2.0),
-			ModelKit.paint(TYRE)
+			Vector3(-0.018, -0.012, -w / 2.0 - 0.006),
+			Vector3(0.018, 0.016, w / 2.0 + 0.006),
+			ModelKit.paint(TYRE.lerp(MUD, 0.55 if k % 2 == 0 else 0.25))
 		)
 		lug.position = Vector3(cos(a) * r, sin(a) * r, 0)
 		lug.rotation.z = a
@@ -118,7 +120,7 @@ static func _tractor(b: Node3D, col: Color, shift: float) -> void:
 				o + Vector3(x + 0.008, 0.48, z + 0.008),
 				ModelKit.paint(METAL)
 			)
-	ModelKit.box(b, o + Vector3(-0.2, 0.48, -0.12), o + Vector3(0.03, 0.5, 0.12), ModelKit.paint(col.lightened(0.15)))
+	ModelKit.box(b, o + Vector3(-0.2, 0.48, -0.12), o + Vector3(0.03, 0.51, 0.12), ModelKit.paint(ROOF))
 	# Exhaust stack with a cap.
 	ModelKit.cylinder(b, o + Vector3(0.17, 0.27, -0.04), 0.012, 0.13, ModelKit.paint(Color("#555555"), 0.6))
 	ModelKit.cylinder(b, o + Vector3(0.17, 0.4, -0.04), 0.017, 0.012, ModelKit.paint(Color("#333333")))
