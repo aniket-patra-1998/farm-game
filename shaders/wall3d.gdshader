@@ -48,11 +48,14 @@ void fragment() {
 	} else if (style == 3) {
 		col *= 0.95 + 0.06 * hash(floor(local_pos.xz * 20.0) + floor(y * 20.0));
 	} else if (style == 4) {
+		// Rows of rounded tabs, each row shifted half a tab: the tab's rounded bottom edge shades the row below it,
+		// and every tab has its own tone, so a roof reads as laid shingles and not as stripes.
 		vec2 tile = vec2(along * 7.0 / scale + floor(y * 9.0) * 0.5, y * 9.0);
 		vec2 f = fract(tile);
-		col *= 0.78 + 0.22 * smoothstep(0.0, 0.35, f.y);
-		col *= 0.9 + 0.2 * hash(floor(tile));
-		col *= mix(0.85, 1.0, step(0.06, f.x));
+		float round_edge = 0.3 * pow(abs(2.0 * f.x - 1.0), 2.0);
+		col *= 0.7 + 0.3 * smoothstep(round_edge, round_edge + 0.3, f.y);
+		col *= 0.88 + 0.24 * hash(floor(tile));
+		col *= mix(0.8, 1.0, smoothstep(0.0, 0.08, min(f.x, 1.0 - f.x)));
 	} else if (style == 5) {
 		col *= 0.85 + 0.15 * sin(along * 60.0 / scale);
 	}
