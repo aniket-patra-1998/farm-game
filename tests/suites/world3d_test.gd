@@ -1087,16 +1087,18 @@ func test_193_anything_can_be_lifted_and_carried() -> void:
 	main.free()
 
 
-## What a growing plant carries for the shader, and when the farm redraws it: colour survives the packing, a stage
+## What a growing plant carries for the shader, and when the farm redraws it: the numbers stay small, a stage
 ## spans the right stretch of the growing time, and growing within a stage changes nothing to rebuild.
 func test_207_a_growing_plant_carries_its_stage_and_the_shader_does_the_growing() -> void:
-	for hex in ["#e2453c", "#ffffff", "#000000", "#12ab9f"]:
-		var col := Color.html(hex)
-		var data := Crops3D.pack(col, 12.5, 40.0, true)
-		var rgb := int(data.r)
-		_eq(Color8((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255), Color8(col.r8, col.g8, col.b8),
-			"%s survives being packed into one float" % hex)
-		_eq([data.g, data.b, data.a], [12.5, 40.0, 1.0], "%s: start, length and richness are carried as they are" % hex)
+	# (Instance data stays small: the compatibility renderer keeps it as 16-bit floats, which overflow past 65,504
+	# and went black when a colour was packed into one big number.)
+	for started in [-200000.0, 0.0, 12.5, 90000.0]:
+		for length in [0.0, 7200.0, 172800.0, 345600.0]:
+			var data := Crops3D.pack(started, length, true)
+			_check(is_equal_approx(data.r, started / 60.0) and is_equal_approx(data.g, length / 60.0) and data.b == 1.0,
+				"start, length, richness are carried (%s)" % data)
+			for v: float in [data.r, data.g, data.b]:
+				_check(absf(v) < 20000.0, "%s is small enough for a 16-bit float" % v)
 	var saved_plots: Array = Game.plots.duplicate(true)
 	var saved_offset := Game.debug_time_offset
 	var crop_id := str(Game.crops.keys()[0])

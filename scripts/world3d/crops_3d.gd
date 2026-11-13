@@ -22,8 +22,9 @@ const PLANT_SCALE := 3.1    # plants are modelled at about a fifth of a tile; on
 
 var wind := 0.6: set = _set_wind
 
-var _layers := {}   # "shape|stage" -> MultiMeshInstance3D
+var _layers := {}   # "shape|stage|colour" -> MultiMeshInstance3D
 var _material: ShaderMaterial
+var _materials := {}   # colour -> that colour's material (material_for)
 var _base := 0.0    # the farm clock's zero: seconds count from here, so a shader's floats stay precise
 var _drawn := -1    # a fingerprint of what was last built: the same again means there is nothing to rebuild
 
@@ -51,12 +52,21 @@ static func _now() -> float:
 	return Time.get_unix_time_from_system() + Game.debug_time_offset
 
 
-## What an instance carries for the shader: its colour (three bytes in one float, which a float holds exactly),
-## when its growing stage began (seconds on the farm clock), how long that stage lasts (0: fully grown) and
-## whether it is fertilised.
-static func pack(col: Color, started: float, length: float, rich: bool) -> Color:
-	var bytes := (int(col.r8) << 16) | (int(col.g8) << 8) | int(col.b8)
-	return Color(float(bytes), started, length, 1.0 if rich else 0.0)
+## What an instance carries for the shader: when its growing stage began and how long that stage lasts (0: fully
+## grown), in minutes on the farm clock (small numbers: the compatibility renderer keeps instance data as 16-bit
+## floats), and whether it is fertilised. Its crop's colour is in the material (`material_for`).
+static func pack(started: float, length: float, rich: bool) -> Color:
+	return Color(started / 60.0, length / 60.0, 1.0 if rich else 0.0, 0.0)
+
+
+## The material for a crop colour: the shared one with that colour set, made once.
+func material_for(col: Color) -> ShaderMaterial:
+	var key := col.to_html(false)
+	if not _materials.has(key):
+		var m := _material.duplicate() as ShaderMaterial
+		m.set_shader_parameter("produce_colour", col)
+		_materials[key] = m
+	return _materials[key]
 
 
 func _set_wind(v: float) -> void:
@@ -117,10 +127,10 @@ func rebuild() -> void:
 			if st[0] == "":
 				continue
 			var crop: Dictionary = Game.crops[crop_id]
-			var key := "%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0]]
 			var col := Color.html(str(crop.get("color", "#e2453c")))
+			var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
 			var rich := Game.field.is_fertilized(i)
-			var data := pack(col, float(st[1]) - _base, float(st[2]), rich)
+			var data := pack(float(st[1]) - _base, float(st[2]), rich)
 			var list: Array = groups.get_or_add(key, [])
 			for k in SPOTS.size():
 				var spot: Vector2 = SPOTS[k]
@@ -132,13 +142,13 @@ func rebuild() -> void:
 			(_layers[key] as MultiMeshInstance3D).queue_free()
 			_layers.erase(key)
 	for key in groups:
+		var parts := str(key).split("|")
 		var mmi: MultiMeshInstance3D = _layers.get(key)
 		if mmi == null:
 			mmi = MultiMeshInstance3D.new()
-			mmi.material_override = _material
+			mmi.material_override = material_for(Color.html(str(parts[2])))
 			add_child(mmi)
 			_layers[key] = mmi
-		var parts := str(key).split("|")
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_custom_data = true
@@ -172,15 +182,17 @@ func pop(i: int, crop_id: String) -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
+	mm.use_colors = true   # (as above: an unset instance colour is black in the compatibility renderer)
 	mm.mesh = CropModels.mesh(CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), "ripe")
 	mm.instance_count = SPOTS.size()
 	for k in SPOTS.size():
 		var spot: Vector2 = SPOTS[k]
 		mm.set_instance_transform(k, Transform3D(Basis().scaled(Vector3.ONE * PLANT_SCALE), Vector3(spot.x, 0, spot.y)))
-		mm.set_instance_custom_data(k, pack(Color.html(str(crop.get("color", "#e2453c"))), 0.0, 0.0, false))
+		mm.set_instance_custom_data(k, pack(0.0, 0.0, false))
+		mm.set_instance_color(k, Color.WHITE)
 	var ghost := MultiMeshInstance3D.new()
 	ghost.multimesh = mm
-	ghost.material_override = _material
+	ghost.material_override = material_for(Color.html(str(crop.get("color", "#e2453c"))))
 	var r := int(i / float(GameState.MAX_SIZE))
 	var c := i % GameState.MAX_SIZE
 	ghost.position = Vector3(c + 0.5, Plots3D.HEIGHT, r + 0.5)

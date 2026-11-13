@@ -107,6 +107,7 @@ static func crop_row(id: String) -> Node3D:
 	var form := CropForms.form_of(id, str(crop.get("shape", "berry")))
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/crop3d.gdshader")
+	mat.set_shader_parameter("produce_colour", Color.html(str(crop.get("color", "#e2453c"))))
 	var row := Node3D.new()
 	for k in 3:
 		var mmi := MultiMeshInstance3D.new()
@@ -116,7 +117,7 @@ static func crop_row(id: String) -> Node3D:
 		mm.mesh = CropModels.mesh(form, ["young", "ripe", "withered"][k])
 		mm.instance_count = 1
 		mm.set_instance_transform(0, Transform3D(Basis().scaled(Vector3.ONE * Crops3D.PLANT_SCALE), Vector3(k * 1.0, 0, 0)))
-		mm.set_instance_custom_data(0, Crops3D.pack(Color.html(str(crop.get("color", "#e2453c"))), 0.0, 0.0, false))
+		mm.set_instance_custom_data(0, Crops3D.pack(0.0, 0.0, false))
 		mmi.multimesh = mm
 		mmi.material_override = mat
 		row.add_child(mmi)

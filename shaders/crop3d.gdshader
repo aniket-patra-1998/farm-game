@@ -1,30 +1,28 @@
 shader_type spatial;
 render_mode cull_disabled;
 // Crop plants, drawn for a whole field at once through MultiMeshes. Leaves carry their own green in the
-// vertex colour; produce (vertex alpha 0) takes its crop's colour from the instance (INSTANCE_CUSTOM),
+// vertex colour; produce (vertex alpha 0) takes its crop's colour from the material (one per crop colour),
 // shaded by the vertex colour. Plants sway from the root, tips most, harder in wind, each on its own beat.
-// Growth is done here, continuously: INSTANCE_CUSTOM is (colour as three bytes in one float, when the growing
-// stage began and how long it lasts in seconds on the farm clock, fertilised 0 or 1), and the plant's size is
-// worked out each frame from the clock, so it swells smoothly instead of stepping.
+// Growth is done here, continuously: INSTANCE_CUSTOM is (when the growing stage began and how long it lasts, in
+// minutes on the farm clock, fertilised 0 or 1), and the plant's size is worked out each frame from the clock,
+// so it swells smoothly instead of stepping. (Kept small on purpose: the compatibility renderer stores per-
+// instance data as 16-bit floats, which overflow to infinity past 65,504 and are coarse past 2,048.)
 
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
 global uniform float crop_clock;  // seconds on the farm's clock (Crops3D), the same for every plant
 uniform float size_from = 0.55;   // the size a growing stage starts at, of full size
 uniform float rich_size = 1.18;   // a fertilised plant's size, of an ordinary one's
+uniform vec3 produce_colour : source_color = vec3(0.89, 0.27, 0.24);   // this crop's fruit, grain or flower
 
 varying vec4 produce;
 varying float up;   // how far up the plant this point is, 0 at the soil
 
 void vertex() {
-	float packed_rgb = INSTANCE_CUSTOM.x;
-	float red = floor(packed_rgb / 65536.0);
-	float green = floor((packed_rgb - red * 65536.0) / 256.0);
-	float blue = packed_rgb - red * 65536.0 - green * 256.0;
-	float rich_flag = INSTANCE_CUSTOM.w;
-	produce = vec4(vec3(red, green, blue) / 255.0, 1.0 - rich_flag);
+	float rich_flag = INSTANCE_CUSTOM.z;
+	produce = vec4(produce_colour, 1.0 - rich_flag);
 	up = clamp(VERTEX.y / 0.35, 0.0, 1.0);
-	float stage_length = INSTANCE_CUSTOM.z;
-	float grown = stage_length > 0.0 ? clamp((crop_clock - INSTANCE_CUSTOM.y) / stage_length, 0.0, 1.0) : 1.0;
+	float stage_length = INSTANCE_CUSTOM.y;
+	float grown = stage_length > 0.0 ? clamp((crop_clock / 60.0 - INSTANCE_CUSTOM.x) / stage_length, 0.0, 1.0) : 1.0;
 	float grow_scale = stage_length > 0.0 ? mix(size_from, 1.0, grown) : 1.0;
 	VERTEX *= grow_scale * mix(1.0, rich_size, rich_flag);
 	vec3 root = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
