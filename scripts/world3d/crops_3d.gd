@@ -18,7 +18,7 @@ const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
 const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger (the shader applies it)
 const VARY_LEAN := 0.16    # radians a plant may lean
-const PLANT_SCALE := 2.7    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
+const PLANT_SCALE := 3.1    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
 var wind := 0.6: set = _set_wind
 

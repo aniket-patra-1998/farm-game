@@ -3,9 +3,9 @@ render_mode cull_disabled;
 // Plowed soil: dark furrows and lighter ridges running along each bed, crumbs and clods, damp where
 // fertilized (the instance colour's alpha). The bed's sides (facing sideways) are a darker earth.
 
-uniform vec3 earth : source_color = vec3(0.45, 0.30, 0.18);
+uniform vec3 earth : source_color = vec3(0.40, 0.26, 0.15);
 uniform vec3 ridge : source_color = vec3(0.60, 0.43, 0.27);
-uniform float furrows = 3.0;   // ridges per bed
+uniform float row_gap = 0.31;  // between ridges: a plant stands on each ridge (crops_3d.gd ROW_GAP)
 
 varying vec3 world_pos;
 varying vec3 world_normal;
@@ -30,10 +30,10 @@ void vertex() {
 
 void fragment() {
 	vec2 p = world_pos.xz;
-	float across = fract(p.x) * furrows;
+	float across = (fract(p.x) - 0.5) / row_gap;
 	float ridge_shape = 0.5 + 0.5 * cos(across * 6.2831853);
 	float crumbs = noise(p * 26.0) * 0.6 + noise(p * 61.0) * 0.4;
-	vec3 col = mix(earth * 0.72, ridge, ridge_shape * 0.85);
+	vec3 col = mix(earth * 0.55, ridge, smoothstep(0.1, 0.9, ridge_shape));
 	col *= 0.85 + 0.3 * crumbs;
 	float side = 1.0 - smoothstep(0.55, 0.85, world_normal.y);
 	col = mix(col, earth * 0.62, side);
