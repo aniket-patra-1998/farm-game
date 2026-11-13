@@ -380,6 +380,11 @@ func _family_with(shapes: Dictionary, form: String) -> String:
 	return ""
 
 
+func _pack(id: String, level: int, radii: Array[float]) -> Dictionary:
+	var fp := Game.footprint(id)
+	return SpaceFit.pack(SpaceFit.yard_room(fp), BuildingModel.taken(BuildingModel.spec(id, level), fp), radii, 3)
+
+
 func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
@@ -388,14 +393,21 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	Game.objects.append(dairy)
 	Game.rebuild_occupancy()
 	var cap := Game.capacity(dairy)
-	# How many animals are out in the yard: what is inside, up to what the size allows (2 at the first, 5 at the biggest).
+	# How many animals are out in the yard follows the room there is: all of them when few, as many as fit (and
+	# smaller) when many; and never more than the size of the building allows.
+	var cow_size := AnimalRig.of(Game.item_data("cow")).scale
+	AnimalRig.scaled(Game.item_data("cow"), 0.5)
+	_eq(AnimalRig.of(Game.item_data("cow")).scale, cow_size, "drawing an animal smaller never changes the shared rig")
+	var cow_r := BuildingFill.radius_of(Game.item_data("cow"))
+	var pair := _pack("cow_shed", 1, [cow_r, cow_r])
+	var herd := _pack("cow_shed", 1, [cow_r, cow_r, cow_r, cow_r, cow_r, cow_r, cow_r, cow_r])
+	_eq((pair["spots"] as Array).size(), 2, "two cows in a roomy yard: both are out")
+	_check(float(pair["size"]) > float(herd["size"]) or (herd["spots"] as Array).size() < 8,
+		"a crowd is drawn smaller, or fewer are out, than a pair")
 	var top := Game.max_level("cow_shed")
-	_eq(BuildingFill.shown_count(0, 1, top), 0, "an empty building has nobody out")
-	_eq(BuildingFill.shown_count(1, 1, top), 1, "one animal in: one out")
-	_eq(BuildingFill.shown_count(40, 1, top), BuildingFill.SHOWN_FIRST, "the first size shows two at most")
-	_eq(BuildingFill.shown_count(40, top, top), BuildingFill.SHOWN_BIGGEST, "the biggest size shows five at most")
-	_check(BuildingFill.shown_count(40, 2, top) >= BuildingFill.SHOWN_FIRST
-		and BuildingFill.shown_count(40, 2, top) <= BuildingFill.SHOWN_BIGGEST, "a size in between shows in between")
+	_eq(BuildingFill.shown_cap(1, top), BuildingFill.SHOWN_FIRST, "the first size shows the fewest at most")
+	_eq(BuildingFill.shown_cap(top, top), BuildingFill.SHOWN_BIGGEST, "the biggest size shows the most at most")
+	_check(BuildingFill.shown_cap(2, top) > BuildingFill.SHOWN_FIRST - 1, "a size in between shows at least the fewest")
 	var rare := BuildingFill.rarest({"cow": 3, "red_cow": 1, "ox": 2}, 3)
 	_eq(rare[0], "red_cow", "the rarest animal is shown first")
 	_eq(rare.size(), 3, "and as many as asked for")
@@ -423,20 +435,38 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 		var fp := Game.footprint(id)
 		var inside := {}
 		for a in (Game.catalog.get_def(id) as BuildingDef).holds():
-			inside[str(a)] = 2
+			inside[str(a)] = 6
 		var picks := BuildingFill.rarest(inside, BuildingFill.SHOWN_BIGGEST)
 		var radii: Array[float] = []
 		for a in picks:
 			radii.append(BuildingFill.radius_of(Game.item_data(a)))
-		var fit := BuildingFill.pack(spec, fp, radii, 7)
-		_check(float(fit["size"]) >= BuildingFill.FIT_MIN, "%s: its crowd is drawn no smaller than the least allowed" % id)
-		for k in picks.size():
-			var at: Vector3 = (fit["spots"] as Array)[k]
+		var fit := _pack(id, top_level, radii)
+		var spots: Array = fit["spots"]
+		_check(float(fit["size"]) >= SpaceFit.MIN_SIZE, "%s: its crowd is drawn no smaller than the least allowed" % id)
+		_check(spots.size() >= 1, "%s: an animal fits its yard (%d)" % [id, spots.size()])
+		var yard := SpaceFit.yard_room(fp)
+		for k in spots.size():
+			var at: Vector2 = spots[k]
 			var r := radii[k] * float(fit["size"])
-			_check(at.x >= r * 0.6 and at.z >= r * 0.6 and at.x <= fp.x - r * 0.6 and at.z <= fp.y - r * 0.6,
-				"%s: %s stands inside the fence" % [id, picks[k]])
+			_check(yard.grow(0.001).encloses(Rect2(at - Vector2.ONE * r, Vector2.ONE * r * 2.0)),
+				"%s: %s stands clear inside the fence" % [id, picks[k]])
 			for q: Rect2 in BuildingModel.taken(spec, fp):
-				_check(not q.has_point(Vector2(at.x, at.z)), "%s: %s stands clear of the building" % [id, picks[k]])
+				_check(not q.grow(r * SpaceFit.WALL_CLEAR - 0.001).has_point(at),
+					"%s: %s stands clear of the building" % [id, picks[k]])
+	# Every building keeps a clear border inside its tile, so neighbours never touch.
+	for id in Game.item_order:
+		var kind := str(Game.item_data(id).get("kind", ""))
+		if not (kind in ["building", "crafting", "barn"]):
+			continue
+		var fp := Game.footprint(id)
+		var edge := Vector2.ONE * SpaceFit.TILE_MARGIN
+		var room := Rect2(edge, Vector2(fp) - edge * 2.0)
+		for level in range(1, Game.max_level(id) + 1):
+			var node := BuildingModel.build(Game.item_data(id), fp, level)
+			var box := SpaceFit.reach(node, node.transform)
+			_check(room.grow(0.002).encloses(box), "%s size %d stays inside its tile's border (%s in %s)"
+				% [id, level, box, room])
+			node.free()
 	# Half full and half way to ready: some cows out, milk churns by the door.
 	dairy["inside"] = {"cow": int(cap / 2.0)}
 	dairy["t"] = Game.now() - int(Game.cycle_of(dairy) / 2.0)
@@ -444,8 +474,8 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	var fill := BuildingFill.create(dairy, model)
 	model.add_child(fill)
 	add_child(model)
-	_eq(fill.residents.size(), BuildingFill.shown_count(int(cap / 2.0), 1, Game.max_level("cow_shed")),
-		"the yard's worth of cows are out")
+	_check(fill.residents.size() >= 2 and fill.residents.size() <= BuildingFill.SHOWN_BIGGEST,
+		"some of the yard's cows are out (%d)" % fill.residents.size())
 	var piled := _count_vertices(fill) - _residents_vertices(fill)
 	_check(piled > 0, "milk churns stand by the door as it nears ready")
 	dairy["t"] = Game.now() - Game.cycle_of(dairy) + 10

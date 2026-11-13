@@ -51,6 +51,13 @@ static func _load() -> void:
 	_data = parsed
 
 
+## This animal drawn at `size` times its size (a rig of its own: the shared one, from `of`, is never changed).
+static func scaled(it: Dictionary, size: float) -> AnimalRig:
+	var r := _build(it)
+	r.scale *= size
+	return r
+
+
 static func _build(it: Dictionary) -> AnimalRig:
 	_load()
 	var r := AnimalRig.new()

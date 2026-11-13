@@ -171,7 +171,7 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true) -> N
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") != "yard":
 			_feature(ctx, f)
-	return root
+	return SpaceFit.fit_model(root, fp)
 
 
 ## A building going up (FarmVille's frame), at `progress` 0..1, the share of its materials put in. It
@@ -245,6 +245,7 @@ static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1
 		ModelKit.roof(root, "gable", lo, hi, rise, 0.06, ModelKit.surface(Color("#d8b483"), "boards", 0.0), timber)
 	_materials_pile(root, Vector3(minf(hi.x + 0.3, fw - 0.2), 0, minf(c.z + 0.1, fd - 0.3)), 1.0 - p, timber)
 	return root
+
 
 
 ## How far into a stage the site is, 0..1, for a stage running from `start` to `end` of the progress.

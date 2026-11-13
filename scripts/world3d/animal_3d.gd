@@ -80,8 +80,7 @@ var _pending := 0.0              # time not yet posed (while waiting its turn)
 
 static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1.0) -> Animal3D:
 	var a := Animal3D.new()
-	a.rig = AnimalRig.of(it)
-	a.rig.scale *= size   # a little smaller to fit a small yard
+	a.rig = AnimalRig.of(it) if is_equal_approx(size, 1.0) else AnimalRig.scaled(it, size)  # smaller in a small yard
 	a.behaviour = mind
 	a.home = at
 	a.position = at
