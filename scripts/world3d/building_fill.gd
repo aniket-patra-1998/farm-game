@@ -132,6 +132,27 @@ static func shown_cap(level: int, max_level: int) -> int:
 	return int(round(lerpf(SHOWN_FIRST, SHOWN_BIGGEST, clampf(along, 0.0, 1.0))))
 
 
+## How many of `radii` (animals in the order they are shown) a home shows at `level`: as many as fit (at no less than
+## SpaceFit.MIN_SIZE) up to the level's cap, and never fewer than the level below shows, so an upgrade never
+## looks like a downgrade (that can mean smaller animals).
+static func shown_count(id: String, level: int, max_level: int, radii: Array[float], seed_value: int) -> int:
+	var yard := SpaceFit.yard_room(Game.footprint(id))
+	var most := 0
+	for lv in range(1, level + 1):
+		var taken := BuildingModel.taken(BuildingModel.spec(id, lv), Game.footprint(id))
+		var lo := 0
+		var hi := mini(shown_cap(lv, max_level), radii.size())
+		while lo < hi:   # the most that fit readably: fitting only gets harder with more
+			var mid := (lo + hi + 1) / 2
+			var fit := SpaceFit.pack(yard, taken, radii.slice(0, mid), seed_value)
+			if (fit["spots"] as Array).size() == mid and float(fit["size"]) >= SpaceFit.MIN_SIZE - 0.001:
+				lo = mid
+			else:
+				hi = mid - 1
+		most = maxi(most, lo)
+	return clampi(most, mini(1, radii.size()), radii.size())
+
+
 ## `n` of what's inside, the rarest first (a higher unlock level, then a dearer price, is a rarer animal). Kinds
 ## as rare as each other take turns, so a yard shows a mix and not all of one.
 static func rarest(inside: Dictionary, n: int) -> Array[String]:
@@ -244,6 +265,7 @@ func _show_residents(o: Dictionary) -> void:
 	var radii: Array[float] = []
 	for id in picks:
 		radii.append(radius_of(Game.item_data(id)))
+	radii = radii.slice(0, shown_count(_id, Game.level_of(o), Game.max_level(_id), radii, uid))
 	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), BuildingModel.taken(_spec, _fp), radii, uid)
 	var spots: Array = fit["spots"]
 	for k in spots.size():

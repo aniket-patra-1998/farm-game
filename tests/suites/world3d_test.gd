@@ -1249,3 +1249,24 @@ func test_310_everything_but_trees_as_placed_stay_inside_their_tile_border() -> 
 		_check(room.encloses(reach), "%s as placed stays inside its tile border (reaches %s)" % [id, reach])
 		holder.free()
 	view.free()
+
+
+func test_311_a_higher_level_never_shows_fewer_animals() -> void:
+	for id: String in Game.items:
+		var def := Game.catalog.get_def(id)
+		if not (def is BuildingDef) or (def as BuildingDef).holds().is_empty():
+			continue
+		var inside := {}
+		for aid: String in (def as BuildingDef).holds():
+			inside[aid] = 40
+		var top := Game.max_level(id)
+		var last := 0
+		for lv in range(1, top + 1):
+			var radii: Array[float] = []
+			for pick in BuildingFill.rarest(inside, BuildingFill.shown_cap(lv, top)):
+				radii.append(BuildingFill.radius_of(Game.item_data(pick)))
+			var n := BuildingFill.shown_count(id, lv, top, radii, 7)
+			_check(n >= last, "%s shows %d at level %d, fewer than the %d below" % [id, n, lv, last])
+			_check(n >= mini(radii.size(), 3), "%s shows at least 3 at level %d (shows %d)" % [id, lv, n])
+			last = n
+
