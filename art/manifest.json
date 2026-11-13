@@ -10426,6 +10426,16 @@
    "fill": 0.5,
    "refs": [],
    "subject": "a white prize rosette ribbon with a small emblem in the middle that shows goods crafted"
+  },
+  {
+   "id": "icon_ribbon_good_neighbour",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a white prize rosette ribbon with a small emblem in the middle that shows neighbours helped"
   }
  ]
 }
