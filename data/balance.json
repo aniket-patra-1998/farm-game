@@ -207,7 +207,7 @@
   }
  },
  "bees": {
-   "queen_gem_cost": {
+  "queen_gem_cost": {
    "v": 10,
    "note": "Gems to buy a Queen Bee."
   },
@@ -601,6 +601,92 @@
   "rare_multiplier": {
    "v": 1.5,
    "note": "times the chance of a rare find, from a favourite feed chosen for rare"
+  }
+ },
+ "social": {
+  "enabled": {
+   "v": 1,
+   "note": "1 neighbours, gifts, requests and shares on (our own touch: an inbox where FarmVille had the feed), 0 off"
+  },
+  "gifts_per_neighbour_per_day": {
+   "v": 1,
+   "note": "FarmVille: one free gift to each neighbour a day"
+  },
+  "helps_per_day": {
+   "v": 25,
+   "note": "requests and shared seedlings you can help in a day (estimate)"
+  },
+  "inbox_limit": {
+   "v": 60,
+   "note": "most things waiting in the inbox; newer ones are not delivered while full"
+  },
+  "outbox_limit": {
+   "v": 12,
+   "note": "most of your own requests and shares open at once"
+  },
+  "post_hours": {
+   "v": 48,
+   "note": "hours your request or share stays open before it lapses"
+  },
+  "slot_seconds": {
+   "v": 3600,
+   "note": "neighbours decide once per slot whether to send you something"
+  },
+  "slot_chance": {
+   "v": 0.2,
+   "note": "chance a neighbour sends something in a slot, times their kindness (estimate)"
+  },
+  "catchup_hours": {
+   "v": 72,
+   "note": "most time neighbours are simulated for after you were away"
+  },
+  "kind_gift": {
+   "v": 5,
+   "note": "weight: a neighbour's mail is a gift"
+  },
+  "kind_request": {
+   "v": 3,
+   "note": "weight: a neighbour's mail is a request for help"
+  },
+  "kind_share": {
+   "v": 2,
+   "note": "weight: a neighbour's mail is a share"
+  },
+  "answer_min_seconds": {
+   "v": 900,
+   "note": "quickest a neighbour answers your request, before their speed"
+  },
+  "answer_max_seconds": {
+   "v": 14400,
+   "note": "slowest a neighbour answers your request, before their speed"
+  },
+  "fuel_per_answer": {
+   "v": 5,
+   "note": "fuel each neighbour sends when you ask for fuel"
+  },
+  "frame_ask_most": {
+   "v": 4,
+   "note": "most of one material a frame asks neighbours for at once"
+  },
+  "seedling_waters": {
+   "v": 3,
+   "note": "neighbours who water a shared seedling (each feeds it once)"
+  },
+  "thanks_coins": {
+   "v": 25,
+   "note": "coins a neighbour sends back when they take something you shared or gave"
+  },
+  "thanks_chance": {
+   "v": 0.6,
+   "note": "chance a neighbour thanks you for a gift (estimate)"
+  },
+  "help_coins": {
+   "v": 25,
+   "note": "coins for helping a neighbour"
+  },
+  "help_xp": {
+   "v": 2,
+   "note": "XP for helping a neighbour"
   }
  }
 }

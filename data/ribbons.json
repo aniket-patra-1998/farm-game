@@ -270,6 +270,18 @@
         100,
         500
       ]
+    },
+    {
+      "id": "good_neighbour",
+      "name": "Good Neighbour",
+      "stat": "neighbours_helped",
+      "what": "neighbours helped",
+      "thresholds": [
+        5,
+        25,
+        100,
+        400
+      ]
     }
   ]
 }

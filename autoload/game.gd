@@ -19,6 +19,7 @@ signal found(index: int, text: String) # a find on a plot (fuel, a collectible..
 signal building_upgraded(uid: int, level: int)
 signal farm_expanded(size: int)
 signal inventory_changed
+signal inbox_changed             # the neighbours' mail changed (arrived, claimed, answered)
 
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
@@ -113,6 +114,7 @@ var bees: BeehiveSystem
 var links: LinksSystem
 var mastery: MasterySystem
 var nurture: NurtureSystem
+var social: SocialSystem
 var finds: FindsSystem
 var feeds: FeedSystem
 var adjacency: AdjacencySystem
@@ -159,6 +161,7 @@ func _init() -> void:
 	field = FieldSystem.new(self)
 	player = PlayerSystem.new(self)
 	nurture = NurtureSystem.new(self)
+	social = SocialSystem.new(self)
 	finds = FindsSystem.new(self)
 	feeds = FeedSystem.new(self)
 	adjacency = AdjacencySystem.new(self)
@@ -169,7 +172,7 @@ func _init() -> void:
 	buildings = BuildingSystem.new(self)
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
-		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds, feeds, adjacency, boosts]
+		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, finds, feeds, adjacency, boosts, social]
 
 
 func _ready() -> void:
@@ -192,6 +195,7 @@ func _ready() -> void:
 	stray_timer.autostart = true
 	stray_timer.timeout.connect(strays.check_strays)
 	stray_timer.timeout.connect(daily.check_daily_gift)
+	stray_timer.timeout.connect(social.settle)
 	add_child(stray_timer)
 
 

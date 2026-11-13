@@ -1,0 +1,32 @@
+{
+ "_comment": "The neighbours and what passes between you (our own touch: an inbox where FarmVille had the feed). Every number lives in data/balance.json under social.*; this file holds the cast and the pools things are drawn from. `give` is {what: part|supply|coins|fuel|young|water, id, n}. Add a gift, request or share here, no code.",
+ "neighbours": [
+  {"name": "Maple", "speed": 0.8, "kind": 0.9},
+  {"name": "Barley", "speed": 1.0, "kind": 0.7},
+  {"name": "Clover", "speed": 1.4, "kind": 0.8},
+  {"name": "Hazel", "speed": 0.6, "kind": 0.6},
+  {"name": "Rusty", "speed": 1.2, "kind": 0.9},
+  {"name": "Poppy", "speed": 0.9, "kind": 0.5}
+ ],
+ "gifts": [
+  {"w": 4, "give": {"what": "part", "id": "bricks", "n": 1}},
+  {"w": 4, "give": {"what": "part", "id": "nails", "n": 1}},
+  {"w": 4, "give": {"what": "part", "id": "boards", "n": 1}},
+  {"w": 3, "give": {"what": "supply", "id": "watering_can", "n": 1}},
+  {"w": 2, "give": {"what": "supply", "id": "animal_feed", "n": 1}},
+  {"w": 2, "give": {"what": "supply", "id": "flower_food", "n": 1}},
+  {"w": 3, "give": {"what": "coins", "n": 50}},
+  {"w": 2, "give": {"what": "fuel", "n": 5}}
+ ],
+ "requests": [
+  {"w": 4, "give": {"what": "part", "id": "bricks", "n": 1}},
+  {"w": 4, "give": {"what": "part", "id": "nails", "n": 1}},
+  {"w": 4, "give": {"what": "part", "id": "boards", "n": 1}},
+  {"w": 2, "give": {"what": "fuel", "n": 5}}
+ ],
+ "shares": [
+  {"w": 3, "collab": false, "give": {"what": "young", "id": "mystery_baby", "n": 1}},
+  {"w": 2, "collab": false, "give": {"what": "coins", "n": 100}},
+  {"w": 3, "collab": true, "give": {"what": "young", "id": "mystery_seedling", "n": 1}}
+ ]
+}

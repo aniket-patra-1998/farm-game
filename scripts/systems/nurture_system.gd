@@ -137,6 +137,21 @@ func feed(uid: int) -> Dictionary:
 			"grown": "",
 			"regrown": true
 		}
+	return _advance(o)
+
+
+## A neighbour waters a young one that is still growing (FarmVille's shared seedlings): one feeding, no supply
+## used. Returns whether it was watered.
+func help_young(uid: int) -> bool:
+	var o := game.object_by_uid(uid)
+	if not is_young(o) or fed(o) >= needs(o):
+		return false
+	_advance(o)
+	return true
+
+
+## One more feeding of a young one; it grows up on the last. Returns what `feed` returns.
+func _advance(o: Dictionary) -> Dictionary:
 	o["fed"] = fed(o) + 1
 	var out := {"fed": fed(o), "needs": needs(o), "grown": "", "regrown": false}
 	if fed(o) >= needs(o):
@@ -144,6 +159,22 @@ func feed(uid: int) -> Dictionary:
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return out
+
+
+## A neighbour gives you a young one (a Mystery Baby, Seedling or Bulb), secretly set to become something from
+## the usual kinds. Returns whether one arrived.
+func give_young(young_id: String) -> bool:
+	var becomes := ""
+	match young_id:
+		SEEDLING:
+			becomes = _pick_tree({})
+		BABY:
+			becomes = _pick_animal({})
+		BULB:
+			becomes = _pick_bloom({})
+	if becomes == "" and game.catalog.defs.has(young_id):
+		becomes = first_of((game.catalog.defs[young_id] as YoungDef).grows())   # nothing to go by: the first kind
+	return becomes != "" and _found(young_id, becomes)
 
 
 ## Upgrades a Single Bloom on the farm to its Full Bloom with gems (FarmVille's Farm Cash). Returns whether
