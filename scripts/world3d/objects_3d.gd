@@ -11,6 +11,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
 const FULL_EVERY := 10        # a full look at everything every this many seconds (the rest only look at those)
 const SCENERY_Y := -Ground3D.SLAB
 const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
@@ -211,6 +212,7 @@ func _build(o: Dictionary) -> Node3D:
 	var it := Game.item_data(o["id"])
 	var fp := Game.footprint(o["id"])
 	var node: Node3D
+	var turn := Basis.IDENTITY   # what a tree is turned and sized by, about its own base
 	if Game.kind_of(o) == "animal" or o.get("stray", false):
 		var a := Animal3D.create(it, null, Vector3(int(o["col"]) + fp.x / 2.0, 0, int(o["row"]) + fp.y / 2.0))
 		a.set_meta("uid", int(o["uid"]))
@@ -219,10 +221,23 @@ func _build(o: Dictionary) -> Node3D:
 		return a
 	match Game.kind_of(o):
 		"tree":
-			node = Node3D.new()
-			TreeModel.build_at(node, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, ScaleGuide.factor(str(o["id"])),
-				Game.is_ready(o), int(o["uid"]), true, TreeModel.UNSET, Crowding.mask(o))
-			node = ModelKit.bake(node)
+			# One of a few built looks of this kind (Instancer), turned and sized a little for this one.
+			var look := Instancer.variant(int(o["row"]), int(o["col"]))
+			var grown := ScaleGuide.factor(str(o["id"]))
+			var ready := Game.is_ready(o)
+			var mask := Crowding.mask(o)
+			node = Instancer.copy_of(Instancer.key_of(["tree", o["id"], grown, ready, mask, look]), func() -> Node3D:
+				var tree := Node3D.new()
+				TreeModel.build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, ready, look, true,
+					TreeModel.UNSET, mask)
+				return ModelKit.bake(tree))
+			var rng := RandomNumberGenerator.new()
+			rng.seed = int(o["uid"])
+			# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of its
+			# look, and its crown must not reach into theirs.)
+			if mask == 0:
+				turn = Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * (1.0 + rng.randf_range(
+					-TREE_SIZE_JITTER, TREE_SIZE_JITTER)))
 		"vehicle":
 			node = VehicleModel.build(it, Game.under_construction(o))
 		"decor":
@@ -238,7 +253,10 @@ func _build(o: Dictionary) -> Node3D:
 			if Game.under_construction(o):
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 			else:
-				node = ModelKit.bake(BuildingModel.build(it, fp, Game.level_of(o), _at_work(o)))
+				var level := Game.level_of(o)
+				var working := _at_work(o)
+				node = Instancer.copy_of(Instancer.key_of(["building", o["id"], level, working]), func() -> Node3D:
+					return ModelKit.bake(BuildingModel.build(it, fp, level, working)))
 				if BuildingFill.shows(o):
 					node.add_child(BuildingFill.create(o, node))
 	var dressing := Dressing.make(Game.kind_of(o), fp, int(o["uid"]))
@@ -249,11 +267,11 @@ func _build(o: Dictionary) -> Node3D:
 	var holder := Node3D.new()
 	holder.position = Vector3(int(o["col"]) + fp.x / 2.0, 0, int(o["row"]) + fp.y / 2.0)
 	var centre := Vector3(fp.x / 2.0, 0, fp.y / 2.0)
-	var basis := Basis.IDENTITY
+	var basis := turn
 	if o.get("flip", false):
 		# Turned: mirrored across the footprint's diagonal (square things only turn), as the 2D art flips
 		# left to right on screen.
-		basis = Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0))
+		basis = Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)) * turn
 	node.transform = Transform3D(basis, -(basis * centre))
 	holder.add_child(node)
 	return holder
@@ -554,7 +572,8 @@ static func _tree_hit(crown: Dictionary, from: Vector3, dir: Vector3) -> float:
 		best = maxf(-closest - half, 0.0) * dir.length()
 		best += miss * TREE_CENTRE_BIAS
 	var trunk := _ray_to(crown["trunk"], from, dir)
-	return minf(best, trunk + TREE_CENTRE_BIAS) if trunk != INF else best
+	# (A tap that lands on the thin trunk is plainly meant for it, so it beats any crown beside or in front.)
+	return minf(best, trunk - TREE_CENTRE_BIAS * 2.0) if trunk != INF else best
 
 
 ## How far along the ray it meets the box (INF if it misses).

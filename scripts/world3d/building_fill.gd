@@ -30,15 +30,13 @@ const PEEK_POP := 0.45        # seconds a head takes to pop up
 const PEEK_NOD := 2.6         # seconds a head takes to nod once and back
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
-const TREE_VARIANTS := 3          # different trees built of each kind in an orchard; the rest are shared copies of them
-const TREE_TURN := TAU            # each copy is turned at random...
-const TREE_SIZE_JITTER := 0.08    # ...and made this much bigger or smaller, so copies do not look alike
+const TREE_SIZE_JITTER := 0.08    # each tree of an orchard is made this much bigger or smaller, and turned at random
+const PLANT_LOD_EVERY := 10       # frames between looks at the zoom for an orchard's far blobs
 const TREE_FILL := 0.95           # an orchard tree's size against the space between trees (crowns touch, trunks show)
 const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
 var uid := -1
-static var _tree_cache := {}   # built orchard trees, by kind, size and detail (see _tree_variants)
 var residents: Array[Animal3D] = []
 
 var _id := ""
@@ -55,6 +53,9 @@ var _lod := -1                # 0 all, 1 half, 2 a few: how much of the yard is 
 var _idle := 0.0               # time not yet given to the residents' minds
 var _stock: Node3D               # a Garage's parked vehicles, a shed's pots, a barn's goods
 var _stock_sig := ""
+var _near_trees: Array[MultiMeshInstance3D] = []   # an orchard's trees, and the blobs drawn far out instead
+var _far_trees: Array[MultiMeshInstance3D] = []
+var _plants_far := false
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
 
@@ -315,6 +316,8 @@ static func _head(col: Color, size: float) -> Node3D:
 func _show_plants(o: Dictionary, slots: int) -> void:
 	if _plants != null:
 		_plants.queue_free()
+	_near_trees.clear()
+	_far_trees.clear()
 	var holder := Node3D.new()
 	var inside: Dictionary = o.get("inside", {})
 	var ready := Game.is_ready(o)
@@ -369,64 +372,68 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	ModelKit.detail = 1.0
 	_plants = ModelKit.bake(holder) if holder.get_child_count() > 0 and stand.is_empty() else holder
 	add_child(_plants)
+	_apply_plant_lod()
 
 
-## Stands the trees of an orchard: a few different trees of each kind (TREE_VARIANTS) are built, once, and kept;
+## Stands the trees of an orchard: a few different trees of each kind (Instancer.VARIANTS) are built once and kept;
 ## every tree standing is a copy of one of them, turned and sized a little differently, drawn as one batch per
-## variant. A full orchard is built in a few milliseconds, not a hundred, and rebuilding it costs nothing.
+## variant (Instancer). Zoomed far out each is drawn as a plain leafy blob instead (`_plant_lod`).
 func _plant_trees(holder: Node3D, stand: Dictionary, ready: bool) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = uid
 	for id: String in stand:
 		var size: float = stand[id]["size"]
 		var spots: Array = stand[id]["at"]
-		var variants := _tree_variants(id, size, ready)
-		for v in variants.size():
-			var here: Array = []
-			for k in range(v, spots.size(), variants.size()):
-				here.append(spots[k])
-			if here.is_empty():
-				continue
-			for part: Dictionary in variants[v]:
-				var multi := MultiMesh.new()
-				multi.transform_format = MultiMesh.TRANSFORM_3D
-				multi.mesh = part["mesh"]
-				multi.instance_count = here.size()
-				for k in here.size():
-					var scale := 1.0 + rng.randf_range(-TREE_SIZE_JITTER, TREE_SIZE_JITTER)
-					var basis := Basis(Vector3.UP, rng.randf() * TREE_TURN).scaled(Vector3.ONE * scale)
-					multi.set_instance_transform(k, Transform3D(basis, here[k]))
-				var node := MultiMeshInstance3D.new()
-				node.multimesh = multi
-				node.cast_shadow = (GeometryInstance3D.SHADOW_CASTING_SETTING_ON if part["shadow"]
-					else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
-				holder.add_child(node)
+		var it := Game.item_data(id)
+		for v in Instancer.VARIANTS:
+			var here: Array[Transform3D] = []
+			for k in range(v, spots.size(), Instancer.VARIANTS):
+				var scale := 1.0 + rng.randf_range(-TREE_SIZE_JITTER, TREE_SIZE_JITTER)
+				here.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * scale), spots[k]))
+			var key := Instancer.key_of(["orchard_tree", id, ready, size, ModelKit.detail, v])
+			_near_trees.append_array(Instancer.place(holder, Instancer.parts_of(key, func() -> Node3D:
+				var tree := Node3D.new()
+				TreeModel.build_at(tree, Vector3.ZERO, it, size, ready, v * 977 + 1)
+				return ModelKit.bake(tree)), here))
+			var blob := Instancer.parts_of(Instancer.key_of([key, LOD_FAR_PPU]),
+				func() -> Node3D: return _blob(it, size))
+			var far := Instancer.place(holder, blob, here)
+			for node in far:
+				node.visible = false
+			_far_trees.append_array(far)
 
 
-## The trees built for a kind at a size, as lists of parts ({mesh, shadow}); built once, then reused.
-static func _tree_variants(id: String, size: float, ready: bool) -> Array:
-	var key := "%s|%s|%.2f|%.2f" % [id, ready, size, ModelKit.detail]
-	if _tree_cache.has(key):
-		return _tree_cache[key]
-	var out: Array = []
-	for v in TREE_VARIANTS:
-		var holder := Node3D.new()
-		TreeModel.build_at(holder, Vector3.ZERO, Game.item_data(id), size, ready, v * 977 + 1)
-		var baked := ModelKit.bake(holder)
-		var parts: Array = []
-		for mi in baked.get_children():
-			if mi is MeshInstance3D and (mi as MeshInstance3D).mesh != null:
-				var mesh := (mi as MeshInstance3D).mesh
-				for k in mesh.get_surface_count():
-					mesh.surface_set_material(k, (mi as MeshInstance3D).get_surface_override_material(k))
-				parts.append({"mesh": mesh, "shadow": (mi as MeshInstance3D).cast_shadow
-					!= GeometryInstance3D.SHADOW_CASTING_SETTING_OFF})
-		baked.free()
-		out.append(parts)
-	if _tree_cache.size() > 64:
-		_tree_cache.clear()
-	_tree_cache[key] = out
-	return out
+## A tree seen from far away: a trunk and one faceted leafy clump (a few dozen triangles, not a thousand).
+static func _blob(it: Dictionary, size: float) -> Node3D:
+	var holder := Node3D.new()
+	var shape := TreeModel.shape_of(it)
+	var cr := float(shape.get("crown_r", TREE_CROWN)) * size
+	var ch := maxf(float(shape.get("crown_h", cr)) * size, cr * 0.6)
+	var trunk := maxf(float(shape.get("trunk_h", ch * 0.5)) * size, ch * 0.3)
+	ModelKit.cylinder(holder, Vector3.ZERO, float(shape.get("trunk_r", 0.05)) * size, trunk,
+		ModelKit.paint(Color("#6b4a2b")), -1.0, 5)
+	var leaf := Color.html(str(shape.get("leaf", "#4f8a3a")))
+	ModelKit.facet_ball(holder, Vector3(0, trunk + ch * 0.35, 0), cr, ModelKit.paint(leaf), Vector3(1, ch / cr, 1))
+	return ModelKit.bake(holder)
+
+
+## Zoomed far out the orchard's trees are blobs; in close, trees.
+func _plant_lod(cam: Camera3D) -> void:
+	var ppu := get_viewport().get_visible_rect().size.y / maxf(cam.size, 0.001)
+	var far := ppu < LOD_FAR_PPU if not _plants_far else ppu < LOD_FAR_PPU * LOD_MARGIN
+	if far == _plants_far:
+		return
+	_plants_far = far
+	_apply_plant_lod()
+
+
+func _apply_plant_lod() -> void:
+	for n in _near_trees:
+		if is_instance_valid(n):
+			n.visible = not _plants_far
+	for n in _far_trees:
+		if is_instance_valid(n):
+			n.visible = _plants_far
 
 
 ## Whatever a Garage, shed or barn keeps (BuildingStock), rebuilt only when it changes.
@@ -566,6 +573,10 @@ func _show_flag(full: bool) -> void:
 
 
 func _process(delta: float) -> void:
+	if not _far_trees.is_empty() and Engine.get_process_frames() % PLANT_LOD_EVERY == 0:
+		var eye := get_viewport().get_camera_3d()
+		if eye != null:
+			_plant_lod(eye)
 	if residents.is_empty():
 		return
 	var cam := get_viewport().get_camera_3d()
