@@ -11,6 +11,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const DRESSING := "Dressing"   # the name of the grass and stones round an object (they lie outside its footprint)
 const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
 const FULL_EVERY := 10        # a full look at everything every this many seconds (the rest only look at those)
 const SCENERY_Y := -Ground3D.SLAB
@@ -245,6 +246,8 @@ func _build(o: Dictionary) -> Node3D:
 				node = Node3D.new()   # drawn by the LinkLayer, which joins it to its neighbours; this stands in for taps
 			else:
 				node = DecorModel.build(it, fp, o)
+				if not str(o["id"]).ends_with("_tree"):   # (a tree's crown overhangs by design)
+					node = SpaceFit.fit_model(node, fp)
 		"young":
 			node = DecorModel.build_young(it, o, Game.nurture.growth(o))
 		"bloom":
@@ -261,6 +264,7 @@ func _build(o: Dictionary) -> Node3D:
 					node.add_child(BuildingFill.create(o, node))
 	var dressing := Dressing.make(Game.kind_of(o), fp, int(o["uid"]))
 	if dressing != null:
+		dressing.name = DRESSING
 		node.add_child(dressing)
 	# The view stands at the footprint's centre on the ground, so it squashes, bounces and lands about
 	# its base; the model hangs under it, shifted back to the footprint's corner.
@@ -272,7 +276,8 @@ func _build(o: Dictionary) -> Node3D:
 		# Turned: mirrored across the footprint's diagonal (square things only turn), as the 2D art flips
 		# left to right on screen.
 		basis = Basis(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0)) * turn
-	node.transform = Transform3D(basis, -(basis * centre))
+	# (What the model was already moved and shrunk by to sit inside its tile border, SpaceFit.fit_model, stays.)
+	node.transform = Transform3D(basis, -(basis * centre)) * node.transform
 	holder.add_child(node)
 	return holder
 

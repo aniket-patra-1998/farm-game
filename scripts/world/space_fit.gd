@@ -134,7 +134,7 @@ static func _place(cells: PackedVector2Array, room: Rect2, blocked: Array[Rect2]
 ## Brings a model (built in tiles from its footprint's corner) inside its tile's border: whatever reaches past
 ## is moved in, the whole thing, and shrunk a little only if it is wider than the room. Returns `root`.
 static func fit_model(root: Node3D, fp: Vector2i) -> Node3D:
-	var box := reach(root)
+	var box := reach(root, root.transform)   # as it stands now, scaled and moved already if it is
 	var room := tile_room(fp)
 	if box.size.x <= 0.0 or room.grow(_EPS).encloses(box):
 		return root
@@ -147,8 +147,8 @@ static func fit_model(root: Node3D, fp: Vector2i) -> Node3D:
 			shift[axis] = room.end[axis] - hi[axis]
 		if lo[axis] + shift[axis] < room.position[axis]:
 			shift[axis] = room.position[axis] - lo[axis]
-	root.scale = Vector3.ONE * shrink
-	root.position = Vector3(shift.x, 0.0, shift.y)
+	root.transform = Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * shrink), Vector3(shift.x, 0.0, shift.y)) \
+		* root.transform
 	return root
 
 
