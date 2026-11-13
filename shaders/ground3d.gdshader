@@ -4,8 +4,8 @@ render_mode cull_disabled;
 // farm (FarmVille's grid you could read without lines), and a sunlit warmth. All procedural, in world
 // space, so it never stretches or repeats visibly.
 
-uniform vec3 grass_light : source_color = vec3(0.50, 0.70, 0.27);
-uniform vec3 grass_dark : source_color = vec3(0.28, 0.49, 0.18);
+uniform vec3 grass_light : source_color = vec3(0.33, 0.44, 0.22);
+uniform vec3 grass_dark : source_color = vec3(0.22, 0.33, 0.14);
 uniform vec3 dry : source_color = vec3(0.74, 0.74, 0.38);
 uniform float checker = 0.035;  // how much alternate tiles differ; 0 for the meadow
 uniform float dryness = 0.18;   // how much straw-coloured grass shows through
