@@ -11,7 +11,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
-const DRESSING := "Dressing"   # the name of the grass and stones round an object (they lie outside its footprint)
+const DRESSING := &"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
 const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
 const FULL_EVERY := 10        # a full look at everything every this many seconds (the rest only look at those)
 const SCENERY_Y := -Ground3D.SLAB
