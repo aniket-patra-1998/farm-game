@@ -480,3 +480,30 @@ func test_135_the_barn_grows_and_what_spills_past_it_waits_in_the_gift_box() -> 
 		g.storage.stored.append(full.duplicate())
 	_eq(g.storage.in_gift_box(), BarnStorage.GIFT_BOX_LIMIT, "the gift box stops at 9,999")
 	_done(g)
+
+
+func test_309_trees_and_buildings_keep_off_each_others_edges() -> void:
+	var g := _farm()
+	var tree_id := ""
+	for id: String in g.items:
+		if g.catalog.get_def(id) is TreeDef:
+			tree_id = id
+			break
+	for i in g.plots.size():
+		g.plots[i] = {"state": "grass"}
+	var fp := g.footprint("chicken_coop")
+	g.objects.clear()
+	g.add_object({"uid": 8801, "id": "chicken_coop", "row": 4, "col": 2, "t": g.now()})
+	g.rebuild_occupancy()
+	_check(not g.can_place(tree_id, 4, 2 + fp.x), "a tree is not planted against a building")
+	_check(not g.can_place(tree_id, 4 + fp.y, 2 + fp.x), "nor on its corner")
+	_check(g.can_place(tree_id, 4, 2 + fp.x + 1), "but one tile clear of it is fine")
+	g.objects.clear()
+	g.add_object({"uid": 8802, "id": tree_id, "row": 4, "col": 2, "t": g.now()})
+	g.rebuild_occupancy()
+	_check(not g.can_place("chicken_coop", 4, 3), "a building is not set against a tree")
+	_check(g.can_place(tree_id, 4, 3), "a tree beside a tree is fine")
+	g.add_object({"uid": 8803, "id": "chicken_coop", "row": 5, "col": 3, "t": g.now()})
+	_eq(g.settle_objects(), 0, "a farm already laid out that way is not rearranged when loaded")
+	_done(g)
+

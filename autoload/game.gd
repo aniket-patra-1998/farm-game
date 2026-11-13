@@ -374,7 +374,9 @@ func rebuild_occupancy() -> void:
 
 
 ## Objects go on grass or empty plowed plots, never on planted crops or other objects.
-func can_place(item_id: String, row: int, col: int, ignore_uid := -1) -> bool:
+## `strict` also keeps a tree and a building off each other's edges (a tree's crown overhangs its tile, so it is
+## never planted hard against a wall); laying the farm back down after loading is not strict, so no save moves.
+func can_place(item_id: String, row: int, col: int, ignore_uid := -1, strict := true) -> bool:
 	var fp := footprint(item_id)
 	if row < 0 or col < 0 or row + fp.y > farm_size or col + fp.x > farm_size:
 		return false
@@ -386,7 +388,28 @@ func can_place(item_id: String, row: int, col: int, ignore_uid := -1) -> bool:
 				return false
 			if plots[i].get("state", "grass") == "planted":
 				return false
-	return true
+	return not (strict and _crowds_neighbour(item_id, row, col, fp, ignore_uid))
+
+
+## Whether a tree here would touch a building, or a building here a tree: something of the other kind on the ring
+## of tiles around the footprint (diagonals too).
+func _crowds_neighbour(item_id: String, row: int, col: int, fp: Vector2i, ignore_uid: int) -> bool:
+	var kind: String = item_data(item_id).get("kind", "")
+	if kind != "tree" and kind != "building":
+		return false
+	var other := "building" if kind == "tree" else "tree"
+	for r in range(row - 1, row + fp.y + 1):
+		for c in range(col - 1, col + fp.x + 1):
+			if r < 0 or c < 0 or r >= farm_size or c >= farm_size:
+				continue
+			if r >= row and r < row + fp.y and c >= col and c < col + fp.x:
+				continue
+			var uid := int(_occupied.get(index_of(r, c), -1))
+			if uid == -1 or uid == ignore_uid:
+				continue
+			if str(item_data(object_by_uid(uid).get("id", "")).get("kind", "")) == other:
+				return true
+	return false
 
 
 func grass_over(item_id: String, row: int, col: int) -> void:
@@ -1208,7 +1231,7 @@ func settle_objects() -> int:
 	_occupied.clear()
 	var misfits: Array = []
 	for o in objects:
-		if can_place(o["id"], int(o["row"]), int(o["col"])):
+		if can_place(o["id"], int(o["row"]), int(o["col"]), -1, false):
 			_occupy(o)
 		else:
 			misfits.append(o)
