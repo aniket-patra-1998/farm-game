@@ -15,6 +15,7 @@ const BARK := Color("#5a4630")
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
+const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
 const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
 const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
@@ -87,6 +88,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var sh := shape_of(it)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value * 7919 + hash(str(it.get("id", "")))
+	var colours := RandomNumberGenerator.new()   # its own stream: choosing colours must not move the tree's shape
+	colours.seed = rng.seed + COLOUR_SEED
 	# Its height: its kind's (oaks low and broad, cherries tall), and this tree's own within that.
 	var tall := float(sh.get("tall", 1.0)) * rng.randf_range(TALL_MIN, TALL_MAX)
 	var upright := str(sh["form"]) not in ["palm", "banana"]
@@ -97,8 +100,9 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	# This tree's own variation: a little taller or shorter, leaning a little, turned its own way.
 	var k := size * TILE_FILL * rng.randf_range(0.9, 1.1)
 	root.rotation.y = rng.randf() * TAU
-	var leaf_col := leaf if leaf.a > 0.0 else _pick(sh, "leaf", "leaf_alts", LEAF.to_html(), rng)
-	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-LEAF_HUE_VARY, LEAF_HUE_VARY), leaf_col.s * rng.randf_range(0.92, 1.05),
+	var leaf_col := leaf if leaf.a > 0.0 else _pick(sh, "leaf", "leaf_alts", LEAF.to_html(), colours)
+	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-LEAF_HUE_VARY, LEAF_HUE_VARY),
+		leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
 	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd) \
 		* (CROWN_GROW if upright else 1.0)
@@ -125,7 +129,8 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	if sh.has("blossom"):
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
-		_fruit(t, crown, _pick(sh, "", "fruit_alts", str(it.get("color", "#d93b30")), rng, str(it.get("color", ""))), ready)
+		var fruit_col := _pick(sh, "", "fruit_alts", "#d93b30", colours, str(it.get("color", "")))
+		_fruit(t, crown, fruit_col, ready)
 	ModelKit.sway_all(root, SWAY)
 	return root
 
