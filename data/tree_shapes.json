@@ -1,5 +1,5 @@
 {
- "_doc": "How each kind of tree grows in 3D (scripts/world3d/tree_model.gd). A tree's shape comes from its catalog family (apple, lemon...), or for scenery trees from its id; anything unlisted grows as 'round'. form picks how the crown is built: round (a dome of leafy clumps), oval (taller than wide), spreading (low and wide on angled limbs), dense (a tight glossy ball on a short trunk, the citrus look), weeping (strands hanging to the ground), palm (a tall ringed trunk and a crown of fronds), banana (a soft stem and huge paddle leaves), bushy (several stems from the ground). Sizes are shares of a full tree on one tile: trunk_h and trunk_r its trunk, crown_r and crown_h its crown, clumps the leafy clumps in it (palms and bananas), tall scales a form's height (each tree varies 0.8 to 1.3 of it too), masses the big leaf masses of other crowns (reach: how far out they sit as a share of crown_r, flat: how squashed, mass: their size). leaf is the leaf colour; shine makes it glossy. blossom adds flowers through the crown in that colour. fruit_shape: round, oval, long (a hanging bunch), big (a few huge ones on the trunk), small (nuts, olives: many tiny ones), cluster (dates: hanging bunches). Every tree is also varied a little by its own seed: height, lean, the clumps' places and shades.",
+ "_doc": "How each kind of tree grows in 3D (scripts/world3d/tree_model.gd). A tree's shape comes from its catalog family (apple, lemon...), or for scenery trees from its id; anything unlisted grows as 'round'. form picks how the crown is built: round (a dome of leafy clumps), oval (taller than wide), spreading (low and wide on angled limbs), dense (a tight glossy ball on a short trunk, the citrus look), weeping (strands hanging to the ground), palm (a tall ringed trunk and a crown of fronds), banana (a soft stem and huge paddle leaves), bushy (several stems from the ground). Sizes are shares of a full tree on one tile: trunk_h and trunk_r its trunk, crown_r and crown_h its crown, clumps the leafy clumps in it (palms and bananas), tall scales a form's height (each tree varies 0.8 to 1.3 of it too), masses the big leaf masses of other crowns (reach: how far out they sit as a share of crown_r, flat: how squashed, mass: their size). leaf is the leaf colour; shine makes it glossy. leaf_alts and fruit_alts list other leaf and fruit colours a tree of that family may have instead (each tree picks one, so a row of one kind is not one colour). blossom adds flowers through the crown in that colour. fruit_shape: round, oval, long (a hanging bunch), big (a few huge ones on the trunk), small (nuts, olives: many tiny ones), cluster (dates: hanging bunches). Every tree is also varied a little by its own seed: height, lean, the clumps' places and shades.",
  "forms": {
   "round": {
    "tall": 1.0,
@@ -99,62 +99,138 @@
   "apple": {
    "form": "round",
    "masses": 4,
-   "leaf": "#62b038"
+   "leaf": "#62b038",
+   "leaf_alts": [
+    "#4f9a3c",
+    "#7bbf4a",
+    "#3f8a48"
+   ],
+   "fruit_alts": [
+    "#8cc63e",
+    "#f2c240",
+    "#c9302c"
+   ]
   },
   "lemon": {
    "form": "dense",
    "fruit_shape": "oval",
-   "leaf": "#a4c93a"
+   "leaf": "#a4c93a",
+   "leaf_alts": [
+    "#8fb83a",
+    "#6fb04a"
+   ]
   },
   "lime": {
    "form": "dense",
    "fruit_shape": "oval",
-   "leaf": "#4fae48"
+   "leaf": "#4fae48",
+   "leaf_alts": [
+    "#3f9a4a",
+    "#68b84e"
+   ]
   },
   "orange": {
    "form": "dense",
-   "leaf": "#2f8f45"
+   "leaf": "#2f8f45",
+   "leaf_alts": [
+    "#2f7f45",
+    "#4aa04a"
+   ]
   },
   "mandarin": {
    "form": "dense",
    "crown_r": 0.22,
-   "leaf": "#55b043"
+   "leaf": "#55b043",
+   "leaf_alts": [
+    "#46a048",
+    "#6ab84a"
+   ]
   },
   "grapefruit": {
    "form": "dense",
    "crown_r": 0.28,
    "fruit_size": 1.25,
-   "leaf": "#7ab843"
+   "leaf": "#7ab843",
+   "leaf_alts": [
+    "#8fc24a",
+    "#5fa84a"
+   ],
+   "fruit_alts": [
+    "#f08a8a",
+    "#f2c84a"
+   ]
   },
   "cherry": {
    "form": "oval",
    "tall": 1.3,
    "blossom": "#f7c6d9",
    "fruit_size": 0.7,
-   "leaf": "#52a868",
-   "shape": "umbrella"
+   "leaf": "#5ca850",
+   "shape": "umbrella",
+   "leaf_alts": [
+    "#6a8a3a",
+    "#8a4a5a",
+    "#7ab05a"
+   ],
+   "fruit_alts": [
+    "#d4283e",
+    "#f2c24a",
+    "#5a1020"
+   ]
   },
   "peach": {
    "form": "round",
    "leaf": "#8cc24e",
-   "blossom": "#f6b3c4"
+   "blossom": "#f6b3c4",
+   "leaf_alts": [
+    "#a0c85a",
+    "#6fae48"
+   ],
+   "fruit_alts": [
+    "#f7a05a",
+    "#f2c27a"
+   ]
   },
   "apricot": {
    "form": "round",
    "leaf": "#b0cc58",
    "blossom": "#fbe1e8",
-   "shape": "teardrop"
+   "shape": "teardrop",
+   "leaf_alts": [
+    "#c6d060",
+    "#8cb84a"
+   ],
+   "fruit_alts": [
+    "#f5b04a"
+   ]
   },
   "plum": {
    "form": "oval",
-   "leaf": "#4a8a5a",
-   "shape": "teardrop"
+   "leaf": "#568a48",
+   "shape": "teardrop",
+   "leaf_alts": [
+    "#6b4a7a",
+    "#5a8a52"
+   ],
+   "fruit_alts": [
+    "#7b3f8c",
+    "#c0405a",
+    "#e8c23a"
+   ]
   },
   "fig": {
    "form": "spreading",
    "leaf": "#4f8f3a",
    "crown_h": 0.22,
-   "shape": "umbrella"
+   "shape": "umbrella",
+   "leaf_alts": [
+    "#6a9a3a",
+    "#3f7a3a"
+   ],
+   "fruit_alts": [
+    "#6d4c6f",
+    "#8a9a3a"
+   ]
   },
   "banana": {
    "form": "banana",
@@ -169,14 +245,22 @@
    "form": "palm",
    "fruit_shape": "cluster",
    "leaf": "#7a9a46",
-   "trunk_h": 1.15
+   "trunk_h": 1.15,
+   "leaf_alts": [
+    "#8aaa56",
+    "#6a8a3a"
+   ]
   },
   "avocado": {
    "form": "oval",
    "leaf": "#2f7050",
    "fruit_shape": "oval",
    "shine": 0.3,
-   "shape": "columnar"
+   "shape": "columnar",
+   "leaf_alts": [
+    "#3f8a52",
+    "#2a5a40"
+   ]
   },
   "mango": {
    "form": "dense",
@@ -188,12 +272,30 @@
    "crown_h": 0.36,
    "trunk_h": 0.3,
    "fruit_shape": "oval",
-   "shape": "teardrop"
+   "shape": "teardrop",
+   "leaf_alts": [
+    "#4fa04a",
+    "#7a9a3a",
+    "#a84a2a"
+   ],
+   "fruit_alts": [
+    "#e8a030",
+    "#c8402a",
+    "#8abf3a"
+   ]
   },
   "pomegranate": {
    "form": "bushy",
    "leaf": "#74b04a",
-   "blossom": "#e2452f"
+   "blossom": "#e2452f",
+   "leaf_alts": [
+    "#8abf4a",
+    "#b8a040"
+   ],
+   "fruit_alts": [
+    "#b8322a",
+    "#e8802a"
+   ]
   },
   "olive": {
    "form": "spreading",
@@ -201,28 +303,61 @@
    "leaf": "#94ad78",
    "fruit_shape": "small",
    "trunk_r": 0.09,
-   "shape": "umbrella"
+   "shape": "umbrella",
+   "leaf_alts": [
+    "#a8bf90",
+    "#7a9a6a"
+   ],
+   "fruit_alts": [
+    "#3a3a2a",
+    "#8a9a3a"
+   ]
   },
   "guava": {
    "form": "round",
    "leaf": "#78b84e",
-   "shape": "teardrop"
+   "shape": "teardrop",
+   "leaf_alts": [
+    "#8abf5a",
+    "#5aa04a"
+   ],
+   "fruit_alts": [
+    "#e87a8a",
+    "#c8d070"
+   ]
   },
   "persimmon": {
    "form": "oval",
    "leaf": "#62a63e",
-   "shape": "teardrop"
+   "shape": "teardrop",
+   "leaf_alts": [
+    "#d89a3a",
+    "#c8622a",
+    "#8abf4a"
+   ]
   },
   "starfruit": {
    "form": "spreading",
    "leaf": "#5cbf5c",
    "fruit_shape": "oval",
-   "shape": "umbrella"
+   "shape": "umbrella",
+   "leaf_alts": [
+    "#7ac86a",
+    "#4aaa4a"
+   ]
   },
   "passion_fruit": {
    "form": "bushy",
    "leaf": "#3f9a4a",
-   "blossom": "#b48ae0"
+   "blossom": "#b48ae0",
+   "leaf_alts": [
+    "#5aaa5a",
+    "#2f8a4a"
+   ],
+   "fruit_alts": [
+    "#7b3f8c",
+    "#e8c23a"
+   ]
   },
   "jackfruit": {
    "form": "oval",
@@ -230,50 +365,91 @@
    "leaf": "#3a7a3a",
    "fruit_shape": "big",
    "trunk_r": 0.08,
-   "shape": "columnar"
+   "shape": "columnar",
+   "leaf_alts": [
+    "#4a8a4a",
+    "#2f6a3a"
+   ]
   },
   "asian_pear": {
    "form": "oval",
    "blossom": "#ffffff",
    "leaf": "#9ccb4e",
-   "shape": "teardrop"
+   "shape": "teardrop",
+   "leaf_alts": [
+    "#c8c850",
+    "#e8a040",
+    "#7ab04a"
+   ],
+   "fruit_alts": [
+    "#d8c060",
+    "#b88a4a"
+   ]
   },
   "tamarind": {
    "form": "spreading",
    "leaf": "#7fae3e",
    "fruit_shape": "long",
-   "shape": "umbrella"
+   "shape": "umbrella",
+   "leaf_alts": [
+    "#9abe4e",
+    "#6a9a3a"
+   ]
   },
   "almond": {
    "form": "round",
    "blossom": "#fbe9ef",
    "fruit_shape": "small",
    "leaf": "#82bf5e",
-   "shape": "columnar"
+   "shape": "columnar",
+   "leaf_alts": [
+    "#a8c870",
+    "#6aa850"
+   ]
   },
   "walnut": {
    "form": "spreading",
    "leaf": "#5a9a3a",
    "fruit_shape": "small",
    "crown_r": 0.38,
-   "shape": "layers"
+   "shape": "layers",
+   "leaf_alts": [
+    "#7aaa4a",
+    "#9aa83a"
+   ]
   },
   "cashew": {
    "form": "spreading",
    "leaf": "#6aa84a",
-   "shape": "umbrella"
+   "shape": "umbrella",
+   "leaf_alts": [
+    "#8ab85a",
+    "#c89a3a"
+   ],
+   "fruit_alts": [
+    "#e8a040",
+    "#d8402a"
+   ]
   },
   "chestnut": {
    "form": "round",
    "leaf": "#4a8a3a",
    "fruit_shape": "small",
    "crown_r": 0.3,
-   "shape": "layers"
+   "shape": "layers",
+   "leaf_alts": [
+    "#a8a030",
+    "#5a9a3a"
+   ]
   },
   "hazelnut": {
    "form": "bushy",
    "leaf": "#70a844",
-   "fruit_shape": "small"
+   "fruit_shape": "small",
+   "leaf_alts": [
+    "#8aba54",
+    "#b8a040"
+   ]
   },
   "pecan": {
    "form": "oval",
@@ -281,12 +457,20 @@
    "leaf": "#4f9a42",
    "fruit_shape": "small",
    "trunk_h": 0.48,
-   "shape": "columnar"
+   "shape": "columnar",
+   "leaf_alts": [
+    "#6aaa52",
+    "#8a9a3a"
+   ]
   },
   "pistachio": {
    "form": "bushy",
    "leaf": "#9ab864",
-   "fruit_shape": "small"
+   "fruit_shape": "small",
+   "leaf_alts": [
+    "#b8cc78",
+    "#8aa854"
+   ]
   },
   "oak_tree": {
    "form": "spreading",
@@ -297,22 +481,41 @@
    "crown_r": 0.4,
    "crown_h": 0.24,
    "trunk_r": 0.09,
-   "shape": "layers"
+   "shape": "layers",
+   "leaf_alts": [
+    "#5aa03a",
+    "#8a9a2a",
+    "#c87a2a"
+   ]
   },
   "maple_tree": {
    "form": "round",
    "tall": 1.3,
    "leaf": "#d8622a",
    "crown_r": 0.28,
-   "shape": "layers"
+   "shape": "layers",
+   "leaf_alts": [
+    "#c8302a",
+    "#e8a030",
+    "#8aa83a",
+    "#d8622a"
+   ]
   },
   "willow_tree": {
    "form": "weeping",
-   "leaf": "#8cc050"
+   "leaf": "#8cc050",
+   "leaf_alts": [
+    "#a0c860",
+    "#7ab050"
+   ]
   },
   "willow": {
    "form": "weeping",
-   "leaf": "#8cc050"
+   "leaf": "#8cc050",
+   "leaf_alts": [
+    "#a0c860",
+    "#7ab050"
+   ]
   }
  }
 }
