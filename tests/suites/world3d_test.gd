@@ -119,6 +119,12 @@ func _count_vertices(node: Node) -> int:
 			var arrays := mesh.surface_get_arrays(s)
 			var idx: Variant = arrays[Mesh.ARRAY_INDEX]
 			n += (idx as PackedInt32Array).size() if idx != null else (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	if node is MultiMeshInstance3D and (node as MultiMeshInstance3D).multimesh != null:
+		var multi := (node as MultiMeshInstance3D).multimesh
+		var per := 0
+		for s in multi.mesh.get_surface_count():
+			per += (multi.mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+		n += per * multi.instance_count
 	for c in node.get_children():
 		n += _count_vertices(c)
 	return n

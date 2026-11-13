@@ -30,11 +30,15 @@ const PEEK_POP := 0.45        # seconds a head takes to pop up
 const PEEK_NOD := 2.6         # seconds a head takes to nod once and back
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
+const TREE_VARIANTS := 3          # different trees built of each kind in an orchard; the rest are shared copies of them
+const TREE_TURN := TAU            # each copy is turned at random...
+const TREE_SIZE_JITTER := 0.08    # ...and made this much bigger or smaller, so copies do not look alike
 const TREE_FILL := 0.95           # an orchard tree's size against the space between trees (crowns touch, trunks show)
 const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
 var uid := -1
+static var _tree_cache := {}   # built orchard trees, by kind, size and detail (see _tree_variants)
 var residents: Array[Animal3D] = []
 
 var _id := ""
@@ -344,6 +348,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 		places.append(Vector2i(k % per_row, int(k / float(per_row))))
 	# Dozens of the same model: each gets less detail, so a full orchard costs about what a few trees do.
 	ModelKit.detail = clampf(sqrt(CROWD_FULL_DETAIL / maxf(ids.size(), 1.0)), ModelKit.MIN_DETAIL, 1.0)
+	var stand := {}   # trees to stand: id -> {size, at: [where]}
 	for k in ids.size():
 		var z := span.position.y + span.size.y * places[k].y / maxf(rows - 1.0, 1.0) if rows > 1 \
 			else room.get_center().y
@@ -356,10 +361,72 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 				d.is_full(), uid + k)
 		else:
 			var fit := clampf(TREE_CROWN / float(TreeModel.shape_of(it).get("crown_r", TREE_CROWN)), 0.7, 1.1)
-			TreeModel.build_at(holder, Vector3(x, 0, z), it, size * fit * minf(ScaleGuide.factor(ids[k]), 1.0), ready, uid + k)
+			var grown := size * fit * minf(ScaleGuide.factor(ids[k]), 1.0)
+			if not stand.has(ids[k]):
+				stand[ids[k]] = {"size": grown, "at": []}
+			(stand[ids[k]]["at"] as Array).append(Vector3(x, 0, z))
+	_plant_trees(holder, stand, ready)
 	ModelKit.detail = 1.0
-	_plants = ModelKit.bake(holder)
+	_plants = ModelKit.bake(holder) if holder.get_child_count() > 0 and stand.is_empty() else holder
 	add_child(_plants)
+
+
+## Stands the trees of an orchard: a few different trees of each kind (TREE_VARIANTS) are built, once, and kept;
+## every tree standing is a copy of one of them, turned and sized a little differently, drawn as one batch per
+## variant. A full orchard is built in a few milliseconds, not a hundred, and rebuilding it costs nothing.
+func _plant_trees(holder: Node3D, stand: Dictionary, ready: bool) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = uid
+	for id: String in stand:
+		var size: float = stand[id]["size"]
+		var spots: Array = stand[id]["at"]
+		var variants := _tree_variants(id, size, ready)
+		for v in variants.size():
+			var here: Array = []
+			for k in range(v, spots.size(), variants.size()):
+				here.append(spots[k])
+			if here.is_empty():
+				continue
+			for part: Dictionary in variants[v]:
+				var multi := MultiMesh.new()
+				multi.transform_format = MultiMesh.TRANSFORM_3D
+				multi.mesh = part["mesh"]
+				multi.instance_count = here.size()
+				for k in here.size():
+					var scale := 1.0 + rng.randf_range(-TREE_SIZE_JITTER, TREE_SIZE_JITTER)
+					var basis := Basis(Vector3.UP, rng.randf() * TREE_TURN).scaled(Vector3.ONE * scale)
+					multi.set_instance_transform(k, Transform3D(basis, here[k]))
+				var node := MultiMeshInstance3D.new()
+				node.multimesh = multi
+				node.cast_shadow = (GeometryInstance3D.SHADOW_CASTING_SETTING_ON if part["shadow"]
+					else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+				holder.add_child(node)
+
+
+## The trees built for a kind at a size, as lists of parts ({mesh, shadow}); built once, then reused.
+static func _tree_variants(id: String, size: float, ready: bool) -> Array:
+	var key := "%s|%s|%.2f|%.2f" % [id, ready, size, ModelKit.detail]
+	if _tree_cache.has(key):
+		return _tree_cache[key]
+	var out: Array = []
+	for v in TREE_VARIANTS:
+		var holder := Node3D.new()
+		TreeModel.build_at(holder, Vector3.ZERO, Game.item_data(id), size, ready, v * 977 + 1)
+		var baked := ModelKit.bake(holder)
+		var parts: Array = []
+		for mi in baked.get_children():
+			if mi is MeshInstance3D and (mi as MeshInstance3D).mesh != null:
+				var mesh := (mi as MeshInstance3D).mesh
+				for k in mesh.get_surface_count():
+					mesh.surface_set_material(k, (mi as MeshInstance3D).get_surface_override_material(k))
+				parts.append({"mesh": mesh, "shadow": (mi as MeshInstance3D).cast_shadow
+					!= GeometryInstance3D.SHADOW_CASTING_SETTING_OFF})
+		baked.free()
+		out.append(parts)
+	if _tree_cache.size() > 64:
+		_tree_cache.clear()
+	_tree_cache[key] = out
+	return out
 
 
 ## Whatever a Garage, shed or barn keeps (BuildingStock), rebuilt only when it changes.
