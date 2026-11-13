@@ -931,6 +931,54 @@
    "subject": "wilted, dried-out brown coffee plants drooping over"
   },
   {
+   "id": "crop_chickpea_planted",
+   "item": "chickpea",
+   "class": "Crop",
+   "stage": "planted",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_chickpea_planted.png"
+   ],
+   "subject": "tiny chickpea seedlings just sprouting, a few small leaves each; no fruit, no flowers, nothing ripe yet"
+  },
+  {
+   "id": "crop_chickpea_growing",
+   "item": "chickpea",
+   "class": "Crop",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_chickpea_growing.png"
+   ],
+   "subject": "half-grown leafy chickpea plants, healthy and green but not ripe yet"
+  },
+  {
+   "id": "crop_chickpea_ripe",
+   "item": "chickpea",
+   "class": "Crop",
+   "stage": "ripe",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_chickpea_ripe.png"
+   ],
+   "subject": "lush chickpea plants full of ripe chickpea, ready to harvest"
+  },
+  {
+   "id": "crop_chickpea_withered",
+   "item": "chickpea",
+   "class": "Crop",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_chickpea_withered.png"
+   ],
+   "subject": "wilted, dried-out brown chickpea plants drooping over"
+  },
+  {
    "id": "crop_sunflowers_planted",
    "item": "sunflowers",
    "class": "Crop",
@@ -2801,6 +2849,102 @@
     "refs/crop_asparagus_withered.png"
    ],
    "subject": "wilted, dried-out brown asparagus plants drooping over"
+  },
+  {
+   "id": "crop_peppers_planted",
+   "item": "peppers",
+   "class": "Crop",
+   "stage": "planted",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_peppers_planted.png"
+   ],
+   "subject": "tiny peppers seedlings just sprouting, a few small leaves each; no fruit, no flowers, nothing ripe yet"
+  },
+  {
+   "id": "crop_peppers_growing",
+   "item": "peppers",
+   "class": "Crop",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_peppers_growing.png"
+   ],
+   "subject": "half-grown leafy peppers plants, healthy and green but not ripe yet"
+  },
+  {
+   "id": "crop_peppers_ripe",
+   "item": "peppers",
+   "class": "Crop",
+   "stage": "ripe",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_peppers_ripe.png"
+   ],
+   "subject": "lush peppers plants full of ripe peppers, ready to harvest"
+  },
+  {
+   "id": "crop_peppers_withered",
+   "item": "peppers",
+   "class": "Crop",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_peppers_withered.png"
+   ],
+   "subject": "wilted, dried-out brown peppers plants drooping over"
+  },
+  {
+   "id": "crop_rhubarb_planted",
+   "item": "rhubarb",
+   "class": "Crop",
+   "stage": "planted",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_rhubarb_planted.png"
+   ],
+   "subject": "tiny rhubarb seedlings just sprouting, a few small leaves each; no fruit, no flowers, nothing ripe yet"
+  },
+  {
+   "id": "crop_rhubarb_growing",
+   "item": "rhubarb",
+   "class": "Crop",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_rhubarb_growing.png"
+   ],
+   "subject": "half-grown leafy rhubarb plants, healthy and green but not ripe yet"
+  },
+  {
+   "id": "crop_rhubarb_ripe",
+   "item": "rhubarb",
+   "class": "Crop",
+   "stage": "ripe",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_rhubarb_ripe.png"
+   ],
+   "subject": "lush rhubarb plants full of ripe rhubarb, ready to harvest"
+  },
+  {
+   "id": "crop_rhubarb_withered",
+   "item": "rhubarb",
+   "class": "Crop",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_rhubarb_withered.png"
+   ],
+   "subject": "wilted, dried-out brown rhubarb plants drooping over"
   },
   {
    "id": "crop_sugarcane_planted",

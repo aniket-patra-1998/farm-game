@@ -7,7 +7,7 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 
 | Category | Families | In game | Planned |
 |---|---|---|---|
-| Crops | 10 | 70 | 0 |
+| Crops | 10 | 73 | 0 |
 | Materials | 2 | 13 | 0 |
 | Trees | 32 | 46 | 0 |
 | Animals | 15 | 68 | 0 |
@@ -18,7 +18,7 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | young | 3 | 3 | 0 |
 | blooms | 6 | 12 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **111** | **441** | **6** |
+| **All** | **111** | **444** | **6** |
 
 ## Adding an item
 
@@ -241,7 +241,7 @@ FarmVille's Blooms: flowers harvested every cycle. A Single Bloom withers if lef
 
 ## Crops
 
-Crops planted in plowed plots. Ripe window = grow time, clamped to 4 hours to 2 days.
+Crops planted in plowed plots. Seed cost, sell price, XP and growing time are FarmVille's own (2011); unlock levels are ours.
 
 ### Berries
 
@@ -250,11 +250,11 @@ Berries.
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
 | ✅ | Strawberries | `strawberries` | 1 | 10 | 4 h | 35 | 1 |
-| ✅ | Raspberries | `raspberries` | 8 | 20 | 2 h | 40 | 1 |
-| ✅ | Blueberries | `blueberries` | 16 | 40 | 4 h | 75 | 1 |
-| ✅ | Cranberries | `cranberries` | 10 | 45 | 10 h | 110 | 2 |
-| ✅ | Blackberries (values estimated in FarmVille's style) | `blackberries` | 29 | 15 | 4 h | 40 | 1 |
-| ✅ | Elderberries (values estimated in FarmVille's style) | `elderberries` | 39 | 25 | 12 h | 100 | 1 |
+| ✅ | Raspberries | `raspberries` | 8 | 20 | 2 h | 46 | 0 |
+| ✅ | Blueberries | `blueberries` | 16 | 50 | 4 h | 91 | 1 |
+| ✅ | Cranberries | `cranberries` | 10 | 55 | 10 h | 98 | 1 |
+| ✅ | Blackberries | `blackberries` | 29 | 75 | 4 h | 117 | 1 |
+| ✅ | Elderberries | `elderberries` | 39 | 195 | 12 h | 270 | 2 |
 
 ### Grains
 
@@ -262,14 +262,14 @@ Grains.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Wheat | `wheat` | 1 | 15 | 12 h | 60 | 1 |
-| ✅ | Corn | `corn` | 20 | 110 | 3 days | 400 | 4 |
-| ✅ | Rice | `rice` | 7 | 40 | 12 h | 105 | 2 |
-| ✅ | Rye (values estimated in FarmVille's style) | `rye` | 21 | 35 | 20 h | 125 | 2 |
-| ✅ | Red Wheat (values estimated in FarmVille's style) | `red_wheat` | 30 | 135 | 3 days | 495 | 4 |
-| ✅ | Oats (values estimated in FarmVille's style) | `oats` | 53 | 25 | 8 h | 90 | 1 |
-| ✅ | Posole Corn (values estimated in FarmVille's style) | `posole_corn` | 54 | 30 | 12 h | 105 | 1 |
-| ✅ | Amaranth (values estimated in FarmVille's style) | `amaranth` | 76 | 45 | 16 h | 160 | 2 |
+| ✅ | Wheat | `wheat` | 1 | 13 | 12 h | 63 | 1 |
+| ✅ | Corn | `corn` | 20 | 150 | 3 days | 380 | 2 |
+| ✅ | Rice | `rice` | 7 | 45 | 12 h | 96 | 1 |
+| ✅ | Rye | `rye` | 21 | 140 | 20 h | 290 | 2 |
+| ✅ | Red Wheat | `red_wheat` | 30 | 180 | 3 days | 449 | 2 |
+| ✅ | Oats | `oats` | 53 | 225 | 8 h | 310 | 1 |
+| ✅ | Posole Corn | `posole_corn` | 54 | 280 | 12 h | 370 | 1 |
+| ✅ | Amaranth | `amaranth` | 76 | 220 | 16 h | 350 | 2 |
 
 ### Beans and Nuts
 
@@ -277,11 +277,12 @@ Beans and Nuts.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Soybeans | `soybeans` | 2 | 20 | 1 day | 80 | 2 |
-| ✅ | Peanuts | `peanuts` | 3 | 25 | 16 h | 80 | 2 |
-| ✅ | Peas (values estimated in FarmVille's style) | `peas` | 32 | 45 | 1 day | 165 | 2 |
-| ✅ | Purple Pod Peas (values estimated in FarmVille's style) | `purple_pod_peas` | 40 | 50 | 1 day | 180 | 2 |
-| ✅ | Coffee (values estimated in FarmVille's style) | `coffee` | 23 | 30 | 16 h | 110 | 2 |
+| ✅ | Soybeans | `soybeans` | 2 | 15 | 1 day | 63 | 2 |
+| ✅ | Peanuts | `peanuts` | 3 | 20 | 16 h | 78 | 1 |
+| ✅ | Peas | `peas` | 32 | 190 | 1 day | 381 | 3 |
+| ✅ | Purple Pod Peas | `purple_pod_peas` | 40 | 210 | 1 day | 300 | 3 |
+| ✅ | Coffee | `coffee` | 23 | 120 | 16 h | 243 | 1 |
+| ✅ | Chickpea | `chickpea` | 10 | 80 | 20 h | 210 | 2 |
 
 ### Flowers
 
@@ -289,21 +290,21 @@ Flowers.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Sunflowers | `sunflowers` | 12 | 50 | 1 day | 160 | 2 |
-| ✅ | Lilac | `lilac` | 4 | 30 | 10 h | 75 | 1 |
-| ✅ | Daffodils | `daffodils` | 8 | 50 | 2 days | 180 | 3 |
-| ✅ | Morning Glory | `morning_glory` | 13 | 50 | 12 h | 125 | 2 |
-| ✅ | Red Tulips | `red_tulips` | 15 | 60 | 1 day | 190 | 2 |
-| ✅ | Lavender | `lavender` | 17 | 80 | 2 days | 300 | 3 |
-| ✅ | Gladiolus (values estimated in FarmVille's style) | `gladiolus` | 28 | 15 | 6 h | 55 | 1 |
-| ✅ | Lilies (values estimated in FarmVille's style) | `lilies` | 35 | 45 | 1 day | 170 | 2 |
-| ✅ | Purple Poppies (values estimated in FarmVille's style) | `purple_poppies` | 38 | 20 | 8 h | 75 | 1 |
-| ✅ | Columbine (values estimated in FarmVille's style) | `columbine` | 44 | 15 | 4 h | 45 | 1 |
-| ✅ | Iris (values estimated in FarmVille's style) | `iris` | 45 | 50 | 1 day | 190 | 2 |
-| ✅ | Orange Daisies (values estimated in FarmVille's style) | `orange_daisies` | 59 | 55 | 1 day | 210 | 2 |
-| ✅ | White Roses (values estimated in FarmVille's style) | `white_roses` | 80 | 65 | 1 day | 245 | 2 |
-| ✅ | Forget-me-nots (values estimated in FarmVille's style) | `forget_me_nots` | 90 | 55 | 18 h | 200 | 2 |
-| ✅ | Pink Roses (values estimated in FarmVille's style) | `pink_roses` | 26 | 85 | 2 days | 315 | 3 |
+| ✅ | Sunflowers | `sunflowers` | 12 | 135 | 1 day | 315 | 2 |
+| ✅ | Lilac | `lilac` | 4 | 35 | 10 h | 75 | 1 |
+| ✅ | Daffodils | `daffodils` | 8 | 60 | 2 days | 135 | 2 |
+| ✅ | Morning Glory | `morning_glory` | 13 | 60 | 12 h | 123 | 1 |
+| ✅ | Red Tulips | `red_tulips` | 15 | 75 | 1 day | 159 | 2 |
+| ✅ | Lavender | `lavender` | 17 | 160 | 2 days | 384 | 2 |
+| ✅ | Gladiolus | `gladiolus` | 28 | 200 | 6 h | 260 | 1 |
+| ✅ | Lilies | `lilies` | 35 | 195 | 1 day | 369 | 2 |
+| ✅ | Purple Poppies | `purple_poppies` | 38 | 200 | 8 h | 238 | 1 |
+| ✅ | Columbine | `columbine` | 44 | 340 | 4 h | 380 | 1 |
+| ✅ | Iris | `iris` | 45 | 400 | 1 day | 520 | 2 |
+| ✅ | Orange Daisies | `orange_daisies` | 59 | 410 | 1 day | 590 | 2 |
+| ✅ | White Roses | `white_roses` | 80 | 620 | 1 day | 777 | 3 |
+| ✅ | Forget-me-nots | `forget_me_nots` | 90 | 725 | 18 h | 900 | 2 |
+| ✅ | Pink Roses | `pink_roses` | 26 | 120 | 2 days | 254 | 2 |
 
 ### Roots
 
@@ -311,11 +312,11 @@ Roots.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Potatoes | `potatoes` | 20 | 100 | 3 days | 380 | 4 |
-| ✅ | Carrots | `carrots` | 9 | 40 | 12 h | 110 | 2 |
-| ✅ | Onions (values estimated in FarmVille's style) | `onions` | 34 | 25 | 12 h | 100 | 1 |
-| ✅ | Ginger (values estimated in FarmVille's style) | `ginger` | 42 | 35 | 18 h | 135 | 2 |
-| ✅ | Heirloom Carrots (values estimated in FarmVille's style) | `heirloom_carrots` | 57 | 30 | 12 h | 105 | 1 |
+| ✅ | Potatoes | `potatoes` | 20 | 135 | 3 days | 345 | 2 |
+| ✅ | Carrots | `carrots` | 9 | 110 | 12 h | 200 | 1 |
+| ✅ | Onions | `onions` | 34 | 170 | 12 h | 275 | 1 |
+| ✅ | Ginger | `ginger` | 42 | 170 | 18 h | 320 | 2 |
+| ✅ | Heirloom Carrots | `heirloom_carrots` | 57 | 110 | 12 h | 210 | 1 |
 
 ### Gourds and Melons
 
@@ -323,16 +324,16 @@ Gourds and Melons.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Pumpkins | `pumpkins` | 5 | 30 | 8 h | 70 | 1 |
-| ✅ | Squash | `squash` | 4 | 35 | 2 days | 150 | 3 |
-| ✅ | Watermelon | `watermelon` | 18 | 110 | 4 days | 460 | 5 |
-| ✅ | Zucchini (values estimated in FarmVille's style) | `zucchini` | 27 | 30 | 16 h | 110 | 2 |
-| ✅ | Yellow Melon (values estimated in FarmVille's style) | `yellow_melon` | 33 | 185 | 4 days | 680 | 5 |
-| ✅ | Acorn Squash (values estimated in FarmVille's style) | `acorn_squash` | 36 | 20 | 10 h | 90 | 1 |
-| ✅ | Square Melon (values estimated in FarmVille's style) | `square_melon` | 52 | 55 | 1 day | 200 | 2 |
-| ✅ | Carnival Squash (values estimated in FarmVille's style) | `carnival_squash` | 63 | 25 | 8 h | 95 | 1 |
-| ✅ | Cucumber (values estimated in FarmVille's style) | `cucumber` | 43 | 50 | 1 day | 185 | 2 |
-| ✅ | Pattypan Squash (values estimated in FarmVille's style) | `pattypan_squash` | 24 | 30 | 16 h | 110 | 2 |
+| ✅ | Pumpkins | `pumpkins` | 5 | 30 | 8 h | 68 | 1 |
+| ✅ | Squash | `squash` | 4 | 40 | 2 days | 121 | 2 |
+| ✅ | Watermelon | `watermelon` | 18 | 130 | 4 days | 348 | 2 |
+| ✅ | Zucchini | `zucchini` | 27 | 120 | 16 h | 220 | 2 |
+| ✅ | Yellow Melon | `yellow_melon` | 33 | 205 | 4 days | 528 | 2 |
+| ✅ | Acorn Squash | `acorn_squash` | 36 | 175 | 10 h | 258 | 1 |
+| ✅ | Square Melon | `square_melon` | 52 | 410 | 1 day | 590 | 2 |
+| ✅ | Carnival Squash | `carnival_squash` | 63 | 355 | 8 h | 435 | 1 |
+| ✅ | Cucumber | `cucumber` | 43 | 290 | 1 day | 450 | 2 |
+| ✅ | Pattypan Squash | `pattypan_squash` | 24 | 65 | 16 h | 160 | 1 |
 
 ### Vegetables
 
@@ -340,15 +341,17 @@ Vegetables.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Tomatoes | `tomatoes` | 14 | 50 | 8 h | 110 | 2 |
-| ✅ | Eggplant | `eggplant` | 1 | 25 | 2 days | 110 | 2 |
-| ✅ | Bell Peppers | `bell_peppers` | 11 | 60 | 2 days | 220 | 3 |
-| ✅ | Spinach | `spinach` | 6 | 35 | 14 h | 100 | 2 |
-| ✅ | Artichokes | `artichokes` | 6 | 60 | 4 days | 260 | 4 |
-| ✅ | Ghost Chili (values estimated in FarmVille's style) | `ghost_chili` | 26 | 15 | 6 h | 55 | 1 |
-| ✅ | Cabbage (values estimated in FarmVille's style) | `cabbage` | 27 | 85 | 2 days | 320 | 3 |
-| ✅ | Broccoli (values estimated in FarmVille's style) | `broccoli` | 35 | 95 | 2 days | 345 | 3 |
-| ✅ | Asparagus (values estimated in FarmVille's style) | `asparagus` | 37 | 30 | 16 h | 115 | 2 |
+| ✅ | Tomatoes | `tomatoes` | 14 | 100 | 8 h | 173 | 1 |
+| ✅ | Eggplant | `eggplant` | 1 | 25 | 2 days | 88 | 2 |
+| ✅ | Bell Peppers | `bell_peppers` | 11 | 75 | 2 days | 198 | 2 |
+| ✅ | Spinach | `spinach` | 6 | 35 | 14 h | 95 | 2 |
+| ✅ | Artichokes | `artichokes` | 6 | 70 | 4 days | 204 | 2 |
+| ✅ | Ghost Chili | `ghost_chili` | 26 | 80 | 6 h | 136 | 1 |
+| ✅ | Cabbage | `cabbage` | 27 | 140 | 2 days | 388 | 2 |
+| ✅ | Broccoli | `broccoli` | 35 | 200 | 2 days | 473 | 2 |
+| ✅ | Asparagus | `asparagus` | 37 | 220 | 16 h | 357 | 2 |
+| ✅ | Peppers | `peppers` | 12 | 70 | 1 day | 162 | 2 |
+| ✅ | Rhubarb | `rhubarb` | 11 | 65 | 16 h | 150 | 1 |
 
 ### Sweet Crops
 
@@ -356,10 +359,10 @@ Sweet Crops.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Sugarcane | `sugarcane` | 19 | 60 | 8 h | 125 | 2 |
-| ✅ | Pineapples | `pineapples` | 15 | 75 | 2 days | 280 | 3 |
-| ✅ | Grapes | `grapes` | 19 | 80 | 1 day | 230 | 3 |
-| ✅ | White Grapes (values estimated in FarmVille's style) | `white_grapes` | 29 | 20 | 12 h | 95 | 1 |
+| ✅ | Sugarcane | `sugarcane` | 19 | 165 | 8 h | 239 | 1 |
+| ✅ | Pineapples | `pineapples` | 15 | 95 | 2 days | 242 | 2 |
+| ✅ | Grapes | `grapes` | 19 | 85 | 1 day | 270 | 2 |
+| ✅ | White Grapes | `white_grapes` | 29 | 245 | 12 h | 360 | 2 |
 
 ### Fibre
 
@@ -367,8 +370,8 @@ Fibre.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Cotton | `cotton` | 9 | 60 | 3 days | 240 | 3 |
-| ✅ | Bamboo (values estimated in FarmVille's style) | `bamboo` | 60 | 40 | 16 h | 145 | 2 |
+| ✅ | Cotton | `cotton` | 9 | 75 | 3 days | 207 | 2 |
+| ✅ | Bamboo | `bamboo` | 60 | 420 | 16 h | 550 | 2 |
 
 ### Herbs and Teas
 
@@ -376,12 +379,12 @@ Herbs and Teas.
 
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
-| ✅ | Green Tea (values estimated in FarmVille's style) | `green_tea` | 28 | 20 | 10 h | 90 | 1 |
-| ✅ | Basil (values estimated in FarmVille's style) | `basil` | 48 | 20 | 10 h | 90 | 1 |
-| ✅ | Lemon Balm (values estimated in FarmVille's style) | `lemon_balm` | 50 | 15 | 6 h | 60 | 1 |
-| ✅ | Saffron (values estimated in FarmVille's style) | `saffron` | 64 | 25 | 10 h | 100 | 1 |
-| ✅ | Clover (values estimated in FarmVille's style) | `clover` | 70 | 15 | 4 h | 50 | 1 |
-| ✅ | Aloe Vera (values estimated in FarmVille's style) | `aloe_vera` | 22 | 20 | 8 h | 70 | 1 |
+| ✅ | Green Tea | `green_tea` | 28 | 105 | 10 h | 191 | 1 |
+| ✅ | Basil | `basil` | 48 | 300 | 10 h | 400 | 1 |
+| ✅ | Lemon Balm | `lemon_balm` | 50 | 230 | 6 h | 290 | 1 |
+| ✅ | Saffron | `saffron` | 64 | 365 | 10 h | 450 | 1 |
+| ✅ | Clover | `clover` | 70 | 325 | 4 h | 368 | 1 |
+| ✅ | Aloe Vera | `aloe_vera` | 22 | 50 | 6 h | 85 | 1 |
 
 ## Materials
 
@@ -1305,7 +1308,7 @@ Scarecrow Button, Grain Sack, Old Sickle, Corn Doll, Harvest Charm
 
 ### Bean Counter
 
-Found from soybeans, peanuts.
+Found from soybeans, peanuts, chickpea.
 
 Seed Pouch, Pod Peeler, Peanut Jar, Bean Scoop, Shelling Bowl
 
@@ -1335,7 +1338,7 @@ Carving Knife, Vine Clip, Melon Baller, Gourd Rattle, Prize Ribbon
 
 ### Market Garden
 
-Found from tomatoes, eggplant, bell peppers, spinach, artichokes.
+Found from tomatoes, eggplant, bell peppers, peppers, rhubarb, spinach, artichokes.
 
 Trowel, Garden Twine, Pepper Pot, Salad Spinner, Seed Packet
 

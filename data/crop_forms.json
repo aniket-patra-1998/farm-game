@@ -73,6 +73,7 @@
     "carnival_squash": "pumpkin", "pattypan_squash": "pattypan", "pineapples": "pineapple",
     "spinach": "leafy_small", "artichokes": "artichoke", "cabbage": "cabbage", "broccoli": "broccoli",
     "green_tea": "tea", "basil": "leafy_small", "lemon_balm": "leafy_small", "clover": "clover",
-    "cotton": "cotton"
+    "cotton": "cotton",
+    "chickpea": "bean", "peppers": "pepper", "rhubarb": "leafy_small"
   }
 }

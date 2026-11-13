@@ -107,7 +107,8 @@
       "name": "Bean Counter",
       "crops": [
         "soybeans",
-        "peanuts"
+        "peanuts",
+        "chickpea"
       ],
       "items": [
         {
@@ -357,6 +358,8 @@
         "tomatoes",
         "eggplant",
         "bell_peppers",
+        "peppers",
+        "rhubarb",
         "spinach",
         "artichokes"
       ],

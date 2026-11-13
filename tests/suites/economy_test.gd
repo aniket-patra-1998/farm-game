@@ -8,7 +8,7 @@ func test_19_every_crop_makes_a_profit() -> void:
 		var c: Dictionary = g.crops[id]
 		var profit := int(c["sell_price"]) - int(c["seed_cost"]) - Balance.i("economy.plow_cost")
 		_check(profit > 0, "%s profits after the plow (got %d)" % [id, profit])
-		_check(int(c["xp"]) >= 1, "%s gives XP" % id)
+		_check(int(c["xp"]) >= 0, "%s has its XP" % id)   # (Raspberries gave none in 2011; plowing gives 1)
 		_check(int(c["grow_seconds"]) > 0, "%s has a grow time" % id)
 	_done(g)
 
@@ -17,23 +17,20 @@ func test_19_every_crop_makes_a_profit() -> void:
 
 
 
-func test_20_slower_crops_pay_more_per_harvest() -> void:
-	# A crop that takes longer must earn more than a quicker crop at its level or below,
-	# or nobody would plant it.
+# (No 'slower pays more' rule: the prices are FarmVille's own (2011), where fast crops win per hour and slow ones
+# per harvest, and a slower crop at its level is not always worth more.)
+
+
+func test_20b_a_new_farm_can_afford_a_field_of_every_first_crop() -> void:
 	var g := _farm()
-	for a_id in g.crop_order:
-		for b_id in g.crop_order:
-			var a: Dictionary = g.crops[a_id]
-			var b: Dictionary = g.crops[b_id]
-			if int(a["grow_seconds"]) > int(b["grow_seconds"]) and int(a["unlock_level"]) >= int(b["unlock_level"]):
-				var pa := int(a["sell_price"]) - int(a["seed_cost"])
-				var pb := int(b["sell_price"]) - int(b["seed_cost"])
-				_check(pa > pb, "%s (slower) pays more than %s" % [a_id, b_id])
+	var plots := 5
+	for id in g.crop_order:
+		var c: Dictionary = g.crops[id]
+		if int(c["unlock_level"]) == 1:
+			var cost := int(c["seed_cost"]) + Balance.i("economy.plow_cost")
+			_check(plots * cost <= Balance.i("economy.start_coins"),
+				"%s: %d plots cost %d, the start has %d" % [id, plots, plots * cost, Balance.i("economy.start_coins")])
 	_done(g)
-
-
-
-
 
 
 func test_21_every_level_to_20_unlocks_something() -> void:
