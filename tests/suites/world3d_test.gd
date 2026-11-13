@@ -436,22 +436,6 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	var rare := BuildingFill.rarest({"cow": 3, "red_cow": 1, "ox": 2}, 3)
 	_eq(rare[0], "red_cow", "the rarest animal is shown first")
 	_eq(rare.size(), 3, "and as many as asked for")
-	# Every animal home has room in its yard, clear of the building and inside the fence.
-	for id in ["chicken_coop", "cow_shed", "sheep_pen", "goat_pen", "rabbit_hutch", "pig_pen", "horse_stable",
-			"nursery_barn", "duck_pond", "beehive"]:
-		for level in range(1, Game.max_level(id) + 1):
-			var spec := BuildingModel.spec(id, level)
-			var fp := Game.footprint(id)
-			var spots := BuildingFill.open_spots(spec, fp, 1)
-			_check(spots.size() >= 3, "%s size %d has room for animals in its yard (%d)"
-				% [id, level, spots.size()])
-			var clash := 0
-			for p in spots:
-				for r: Rect2 in BuildingModel.taken(spec, fp):
-					if r.has_point(Vector2(p.x, p.z)):
-						clash += 1
-				_check(p.x > 0.0 and p.z > 0.0 and p.x < fp.x and p.z < fp.y, "%s: its yard spots are on its footprint" % id)
-			_eq(clash, 0, "%s size %d: nobody stands inside the building" % [id, level])
 	# Every home's biggest crowd (its five rarest animals) fits its yard, inside the fence and clear of the walls.
 	for id in ["chicken_coop", "cow_shed", "sheep_pen", "goat_pen", "rabbit_hutch", "pig_pen", "horse_stable",
 			"nursery_barn", "duck_pond"]:

@@ -216,7 +216,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var shine: float = t["shine"]
 	var cr := float(sh["crown_r"]) * k
 	var ch := maxf(float(sh["crown_h"]) * k, cr * 0.5)
-	var masses := int(sh.get("masses", 5))
+	var masses := ModelKit.scaled(int(sh.get("masses", 5)), 3)   # fewer in a crowd (ModelKit.detail)
 	var reach := float(sh.get("reach", 0.55))
 	var flat := float(sh.get("flat", 0.8))
 	var mass := float(sh.get("mass", 0.52))
@@ -229,7 +229,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -float(t["root"].rotation.y))
 	# In a grove the lower crown is in its neighbours' shade.
 	var shaded := float(t["crowd"]) * Crowding.setting("tree", "shade")
-	var lobes := int(sh.get("lobes", CROWN_LOBES))
+	var lobes := ModelKit.scaled(int(sh.get("lobes", CROWN_LOBES)), 5)
 	var bump := float(sh.get("bump", CROWN_BUMP))
 	# The core, a soft mass of the whole crown's width, then the masses around it: each one smooth and lumpy,
 	# overlapping, so the crown reads as one canopy with a scalloped outline and a few deep folds.

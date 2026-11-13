@@ -18,10 +18,7 @@ const SHOWN_FIRST := 3        # the most animals out in the yard of a building's
 const SHOWN_BIGGEST := 8      # ...and of its biggest, in between by size (fewer if they do not fit the yard)
 const BODY_REACH := 0.65      # an animal's ground space: radius against its body length (heads and tails overhang)
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
-const SPOT_GAP := 0.34        # tiles between places an animal can stand
 const CROWD_FULL_DETAIL := 6.0   # members in one orchard or garden built at full detail; more share that budget
-const EDGE := 0.28            # and how far those keep from the footprint's edge (inside the fence)
-const KEEP_CLEAR := 0.16      # and from walls and the like
 const WANDER := 0.1           # tiles a resident strays from its place
 const DOOR_OPEN := 1.75       # radians a door swings open
 const DOOR_HOLD := 1.2        # seconds it stays open
@@ -43,7 +40,6 @@ var residents: Array[Animal3D] = []
 var _id := ""
 var _fp := Vector2i.ONE
 var _spec := {}
-var _spots: Array[Vector3] = []
 var _who := ""                # who's inside, as last shown
 var _who_peeking := ""
 var _stage := ""              # how near ready, as last shown
@@ -66,7 +62,6 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 	f._id = str(o["id"])
 	f._fp = Game.footprint(f._id)
 	f._spec = BuildingModel.spec(f._id, Game.level_of(o))
-	f._spots = open_spots(f._spec, f._fp, int(o["uid"]))
 	for c in model.get_children():
 		if c.has_meta(BuildingModel.WINDOWS):
 			f._windows = c.get_meta(BuildingModel.WINDOWS)
@@ -88,35 +83,6 @@ static func shows(o: Dictionary) -> bool:
 	return (not (def as BuildingDef).holds().is_empty()
 		or str((def as BuildingDef).data.get("holds_kind", "")) in PLANT_KINDS
 		or BuildingModel.fill_of(str(o["id"]), Game.level_of(o)).has("stock"))
-
-
-## Places in the yard where an animal (or a tree) can stand: a grid over the footprint, inside the fence,
-## clear of the building, its annexes and what stands beside it. Shuffled by the building's own seed, so
-## the first few are spread about, not in a row.
-static func open_spots(spec: Dictionary, fp: Vector2i, seed_value: int) -> Array[Vector3]:
-	var blocked := BuildingModel.taken(spec, fp)
-	var out: Array[Vector3] = []
-	var nx := maxi(1, int((fp.x - EDGE * 2.0) / SPOT_GAP) + 1)
-	var nz := maxi(1, int((fp.y - EDGE * 2.0) / SPOT_GAP) + 1)
-	for i in nx:
-		for j in nz:
-			var p := Vector2(lerpf(EDGE, fp.x - EDGE, i / maxf(nx - 1.0, 1.0)),
-				lerpf(EDGE, fp.y - EDGE, j / maxf(nz - 1.0, 1.0)))
-			var clear := true
-			for r: Rect2 in blocked:
-				if r.grow(KEEP_CLEAR).has_point(p):
-					clear = false
-					break
-			if clear:
-				out.append(Vector3(p.x, 0, p.y))
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
-	for k in range(out.size() - 1, 0, -1):
-		var swap := rng.randi_range(0, k)
-		var t := out[k]
-		out[k] = out[swap]
-		out[swap] = t
-	return out
 
 
 ## Brings what's shown up to date: who's in, how near ready. Rebuilds only what changed.
