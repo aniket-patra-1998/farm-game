@@ -5,7 +5,11 @@ extends Node2D
 ## Touch: pinch to zoom, two-finger drag to move, or one-finger drag with the Hand tool.
 ## Mouse: wheel to zoom, right- or middle-drag to move. Trackpad gestures also work.
 
-const INK := 0.6   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
+const INK := 0.9   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
+const INK_FROM := 0.22    # how small a jump in light or colour is an edge (lower: more lines)
+const INK_REACH := 1.0    # how many pixels out it looks, so how thick the line is
+const DAY_SATURATION := 1.32   # FarmVille's colour is rich: the daytime grade
+const DAY_CONTRAST := 1.14
 const MAX_ZOOM_FACTOR := 3.5 # how far you can zoom in, relative to the whole-farm view
 const WHEEL_STEP := 1.1
 const DAYLIGHT_EVERY := 0.1   # seconds between updates of the 3D sun, sky light and window glow
@@ -156,8 +160,10 @@ func _process(_delta: float) -> void:
 	# Colour grade: richer by day, cool and soft at night, warm low sun, fog haze.
 	var m := grade.material as ShaderMaterial
 	m.set_shader_parameter("ink", INK)
-	m.set_shader_parameter("saturation", lerpf(1.12, 0.92, dark) * (1.0 - float(w["desat"])))
-	m.set_shader_parameter("contrast", lerpf(1.08, 0.98, dark))
+	m.set_shader_parameter("ink_from", INK_FROM)
+	m.set_shader_parameter("ink_reach", INK_REACH)
+	m.set_shader_parameter("saturation", lerpf(DAY_SATURATION, 0.92, dark) * (1.0 - float(w["desat"])))
+	m.set_shader_parameter("contrast", lerpf(DAY_CONTRAST, 0.98, dark))
 	m.set_shader_parameter("lift", Vector3(0.02, 0.035, 0.08) * dark)
 	var low := 0.0 if sun < 0.0 else pow(1.0 - sin(sun * PI), 3.0)  # 1 right at sunrise and sunset
 	m.set_shader_parameter("warm", Color(1.0, 0.7, 0.45, 0.22 * low * (1.0 - cover)))
