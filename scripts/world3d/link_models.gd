@@ -9,10 +9,10 @@ extends RefCounted
 ## Built in the tile's own frame, origin at its centre, an arm pointing north (-z) before it's turned.
 
 const VARIANTS := 3          # different hand-built looks of every shape, picked by where the piece stands
-const HEIGHT := 0.32         # a fence's posts
-const POST := 0.035          # half the width of a post
-const WALL_TOP := 0.33
-const TALL_HEIGHT := 0.48    # a privacy fence's posts
+const HEIGHT := 0.36         # a fence's posts
+const POST := 0.045          # half the width of a post
+const WALL_TOP := 0.38
+const TALL_HEIGHT := 0.54    # a privacy fence's posts
 const GATE_POST := 0.4
 const GATE_AJAR := 0.35      # radians a gate's leaf stands open
 const HEDGE_SWAY := 0.4      # how far a hedge bends in the wind (paint3d sway, by height); each piece on its own beat
@@ -123,35 +123,35 @@ static func _fence(root: Node3D, col: Color, style: String, kind: int, reach: Ar
 		var a := _arm(root, d)
 		if tall:
 			# Close-set boards of slightly different heights between two rails: a privacy fence.
-			for y: float in [0.1, 0.3]:
-				ModelKit.box(a, Vector3(-0.03, y, -len), Vector3(0.03, y + 0.035, -half), worn)
+			for y: float in [0.1, 0.34]:
+				ModelKit.box(a, Vector3(-0.04, y, -len), Vector3(0.04, y + 0.05, -half), worn)
 			var zb := 0.05
 			while zb < len - 0.01:
 				var bh := TALL_HEIGHT - 0.04 + rng.randf_range(-0.015, 0.015)
-				ModelKit.box(a, Vector3(-0.012, 0, -zb - 0.03), Vector3(0.012, bh, -zb + 0.03), mat)
-				zb += 0.065
+				ModelKit.box(a, Vector3(-0.016, 0, -zb - 0.035), Vector3(0.016, bh, -zb + 0.035), mat)
+				zb += 0.07
 		elif picket:
-			for y: float in [0.09, 0.2]:
-				ModelKit.box(a, Vector3(-0.025, y, -len), Vector3(0.025, y + 0.03, -half), mat)
+			for y: float in [0.09, 0.22]:
+				ModelKit.box(a, Vector3(-0.03, y, -len), Vector3(0.03, y + 0.04, -half), mat)
 			var z := 0.07
 			while z < len - 0.02:
-				var ph := 0.28 + rng.randf_range(-0.025, 0.02)
-				ModelKit.box(a, Vector3(-0.015, 0, -z - 0.02), Vector3(0.015, ph, -z + 0.02), mat)
-				ModelKit.cylinder(a, Vector3(0, ph, -z), 0.02, 0.04, mat, 0.0, 4)
-				z += 0.125
+				var ph := 0.33 + rng.randf_range(-0.025, 0.02)
+				ModelKit.box(a, Vector3(-0.02, 0, -z - 0.03), Vector3(0.02, ph, -z + 0.03), mat)
+				ModelKit.cylinder(a, Vector3(0, ph, -z), 0.03, 0.05, mat, 0.0, 4)
+				z += 0.1
 		else:
-			for y: float in [0.1, 0.24]:
+			for y: float in [0.08, 0.19, 0.3]:
 				var yy := y + rng.randf_range(-0.004, 0.004)
-				ModelKit.box(a, Vector3(-0.02, yy, -len), Vector3(0.02, yy + 0.045, -half), boards)
+				ModelKit.box(a, Vector3(-0.03, yy, -len), Vector3(0.03, yy + 0.06, -half), boards)
 
 
 static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumberGenerator) -> void:
 	var leaf := DecorModel.LEAF
 	var bump := 1.25 if kind >= LinkShape.Kind.TEE else 1.0
 	var low := ModelKit.paint(leaf.darkened(rng.randf() * 0.15), 0.0, HEDGE_SWAY)
-	ModelKit.ball(root, Vector3(0, 0.17, 0), 0.2 * bump, low, Vector3(1.15, 0.95, 1.15))
+	ModelKit.ball(root, Vector3(0, 0.2, 0), 0.24 * bump, low, Vector3(0.98, 0.95, 0.98))
 	var top := ModelKit.paint(leaf.lightened(0.08), 0.0, HEDGE_SWAY)
-	ModelKit.ball(root, Vector3(0, 0.3, 0), 0.15 * bump, top, Vector3(1.15, 0.55, 1.15))
+	ModelKit.ball(root, Vector3(0, 0.37, 0), 0.19 * bump, top, Vector3(0.98, 0.55, 0.98))
 	for d in 4:
 		if reach[d] <= 0.0:
 			continue
@@ -159,13 +159,13 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 		var z := 0.2
 		while z < reach[d] + 0.01:
 			var shade := leaf.darkened(rng.randf() * 0.15)
-			ModelKit.ball(a, Vector3(rng.randf_range(-0.02, 0.02), 0.17, -z), 0.2, ModelKit.paint(shade, 0.0, HEDGE_SWAY),
-				Vector3(1.15, 0.95, 1.05))
-			ModelKit.ball(a, Vector3(0, 0.3 + rng.randf_range(-0.01, 0.02), -z), 0.15,
-				ModelKit.paint(shade.lightened(0.08), 0.0, HEDGE_SWAY), Vector3(1.15, 0.55, 1.1))
+			ModelKit.ball(a, Vector3(rng.randf_range(-0.02, 0.02), 0.2, -z), 0.24, ModelKit.paint(shade, 0.0, HEDGE_SWAY),
+				Vector3(0.98, 0.95, 1.05))
+			ModelKit.ball(a, Vector3(0, 0.37 + rng.randf_range(-0.01, 0.02), -z), 0.19,
+				ModelKit.paint(shade.lightened(0.08), 0.0, HEDGE_SWAY), Vector3(0.98, 0.55, 1.1))
 			z += 0.2
 		for k in 2:
-			ModelKit.ball(a, Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0.18, 0.34),
+			ModelKit.ball(a, Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0.2, 0.42),
 				-0.08 - k * 0.16 - rng.randf_range(0.0, 0.06)), 0.03,
 				ModelKit.paint(Color("#e8d86a") if k % 2 else Color("#d8506a")))
 
@@ -213,16 +213,16 @@ static func _wall(root: Node3D, col: Color, kind: int, reach: Array[float], rng:
 		if len <= 0.0:
 			continue
 		var a := _arm(root, d)
-		ModelKit.box(a, Vector3(-0.1, 0, -len), Vector3(0.1, 0.04, -0.1), ModelKit.paint(stone.darkened(0.4)), false)
+		ModelKit.box(a, Vector3(-0.12, 0, -len), Vector3(0.12, 0.04, -0.1), ModelKit.paint(stone.darkened(0.4)), false)
 		for row in 3:
 			var n := maxi(1, roundi((len - 0.1) / 0.1 * (0.9 if row % 2 else 1.0)))
 			for k in n:
 				var z := 0.1 + (len - 0.1) * (k + 0.5) / n
 				var size := rng.randf_range(0.085, 0.115) * (1.0 - row * 0.06)
-				var st := ModelKit.facet_ball(a, Vector3(rng.randf_range(-0.012, 0.012), 0.07 + row * 0.095, -z), size,
+				var st := ModelKit.facet_ball(a, Vector3(rng.randf_range(-0.012, 0.012), 0.07 + row * 0.11, -z), size * 1.12,
 					ModelKit.paint(stone.darkened(rng.randf() * 0.28)), Vector3(1.05, 0.72, 1.35))
 				st.rotation.y = rng.randf_range(-0.2, 0.2)
-		ModelKit.box(a, Vector3(-0.07, 0.3, -len), Vector3(0.07, 0.335, -0.12),
+		ModelKit.box(a, Vector3(-0.09, 0.35, -len), Vector3(0.09, 0.385, -0.12),
 			ModelKit.paint(stone.lightened(0.08).darkened(rng.randf() * 0.12)))
 
 

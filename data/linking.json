@@ -1,9 +1,9 @@
 {
   "_comment": "Pieces that join their neighbours into one structure, by the catalog's `shape`. `joins` lists the groups a piece connects to (a fence meets fences, a path meets paths). `stub` is how far a free end reaches from the centre of its tile, in tiles; `arm` how far a joined side reaches (half a tile: it meets the neighbour's arm exactly). Add a group here, give it a model in LinkModels, and it joins up.",
   "groups": {
-    "fence": {"joins": ["fence"], "arm": 0.5, "stub": 0.3, "tall": 0.32},
-    "hedge": {"joins": ["hedge"], "arm": 0.5, "stub": 0.3, "tall": 0.4},
-    "wall":  {"joins": ["wall"],  "arm": 0.5, "stub": 0.3, "tall": 0.36},
+    "fence": {"joins": ["fence"], "arm": 0.5, "stub": 0.3, "tall": 0.36},
+    "hedge": {"joins": ["hedge"], "arm": 0.5, "stub": 0.3, "tall": 0.46},
+    "wall":  {"joins": ["wall"],  "arm": 0.5, "stub": 0.3, "tall": 0.4},
     "path":  {"joins": ["path"],  "arm": 0.5, "stub": 0.0, "tall": 0.03}
   }
 }
