@@ -1,6 +1,6 @@
 extends Node
-## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes five pictures
-## (all, buildings, trees_animals, crops, fences) into the folder given by --out=<dir> (default ci_shots/look).
+## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes six pictures
+## (all, buildings, trees_animals, crops, fences, garage) into the folder given by --out=<dir> (default ci_shots/look).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
 ## tools/look_compare.py joins two such folders side by side.
@@ -29,9 +29,12 @@ func _ready() -> void:
 	var cam: FarmCamera = main.get("camera")
 	var grid: FarmGrid = main.get("grid")
 	var views: Array = VIEWS.duplicate()
-	var run := _link_run_centre()
+	var run := _centre_of(func(o: Dictionary) -> bool: return ShowcaseFarm.RUN_IDS.has(str(o["id"])))
 	if run.x >= 0:
 		views.append(["fences", run.x, run.y, 1.4])
+	var garage := _centre_of(func(o: Dictionary) -> bool: return str(o["id"]) == "garage")
+	if garage.x >= 0:
+		views.append(["garage", garage.x, garage.y, 1.8])
 	for v: Array in views:
 		cam.snap(grid.to_global(grid.center_of(Game.index_of(int(v[1]), int(v[2])))), float(v[3]))
 		for k in 16:
@@ -40,13 +43,13 @@ func _ready() -> void:
 	get_tree().quit()
 
 
-## (row, col) in the middle of the showcase's straight runs of fence, hedge and wall, or (-1, -1) if it has none.
-func _link_run_centre() -> Vector2i:
+## (row, col) in the middle of the showcase's objects that `wanted` picks, or (-1, -1) if there are none.
+func _centre_of(wanted: Callable) -> Vector2i:
 	var rows := 0
 	var cols := 0
 	var n := 0
 	for o in Game.objects:
-		if ShowcaseFarm.RUN_IDS.has(str(o["id"])):
+		if wanted.call(o):
 			rows += int(o["row"])
 			cols += int(o["col"])
 			n += 1

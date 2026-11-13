@@ -12,6 +12,8 @@ const MUD := Color("#5b4731")   # the caked dirt on a tyre
 const ROOF := Color("#f4f1ea")   # a cab roof, white like FarmVille's
 const METAL := Color("#b9c0c4")
 const SEAT := Color("#3a3a3a")
+const GRAIN := Color("#d9a93a")   # grain in a tank or hopper
+const STRIPE := Color("#f4f1ea")  # the pale band on a livery
 const SCALE := 1.8  # modelled at a little over half a tile; on the farm a vehicle is chunky, bigger than its tile
 # Meta on the pivot of a wheel (its radius in model units) or of a reel (its radius, negative).
 const SPIN := &"vehicle_spin"
@@ -184,7 +186,9 @@ static func _harvester(b: Node3D, col: Color) -> void:
 	for z: float in [-0.19, 0.19]:
 		ModelKit.box(b, Vector3(0.18, 0.1, z - 0.008), Vector3(0.32, 0.14, z + 0.008), ModelKit.paint(col))
 	# The grain tank behind the cab.
-	ModelKit.box(b, Vector3(-0.3, 0.27, -0.09), Vector3(-0.18, 0.42, 0.09), ModelKit.paint(col.lightened(0.1), 0.4))
+	ModelKit.box(b, Vector3(-0.32, 0.27, -0.11), Vector3(-0.16, 0.44, 0.11), ModelKit.paint(col.lightened(0.1), 0.4))
+	ModelKit.box(b, Vector3(-0.3, 0.44, -0.09), Vector3(-0.18, 0.465, 0.09), ModelKit.paint(GRAIN, 0.9))
+	ModelKit.box(b, Vector3(-0.325, 0.43, -0.115), Vector3(-0.155, 0.45, 0.115), ModelKit.paint(col.darkened(0.15)))
 
 
 ## In a rig, an implement hangs on a pivot that VehicleRun lifts when the vehicle isn't working.
@@ -231,8 +235,10 @@ static func _hoppers(b: Node3D, col: Color) -> void:
 	ModelKit.box(b, Vector3(-0.42, 0.1, -0.2), Vector3(-0.22, 0.13, 0.2), ModelKit.paint(col.darkened(0.2)))
 	for k in 3:
 		var z := -0.13 + 0.13 * k
-		ModelKit.cylinder(b, Vector3(-0.32, 0.13, z), 0.05, 0.12, ModelKit.paint(col, 0.4), 0.035, 10)
-		ModelKit.cylinder(b, Vector3(-0.32, 0.25, z), 0.052, 0.012, ModelKit.paint(col.lightened(0.2)), -1.0, 10)
+		ModelKit.cylinder(b, Vector3(-0.32, 0.13, z), 0.062, 0.17, ModelKit.paint(col, 0.4), 0.04, 10)
+		ModelKit.cylinder(b, Vector3(-0.32, 0.3, z), 0.066, 0.016, ModelKit.paint(col.lightened(0.2)), -1.0, 10)
+		ModelKit.cylinder(b, Vector3(-0.32, 0.316, z), 0.05, 0.012, ModelKit.paint(GRAIN, 0.9), -1.0, 10)
+		ModelKit.cylinder(b, Vector3(-0.32, 0.2, z), 0.064, 0.02, ModelKit.paint(STRIPE), -1.0, 10)
 	_wheel(b, Vector3(-0.32, 0, -0.22), 0.06, 0.03)
 	_wheel(b, Vector3(-0.32, 0, 0.22), 0.06, 0.03)
 
@@ -283,6 +289,10 @@ static func _combine(b: Node3D, col: Color) -> void:
 		ModelKit.box(b, Vector3(x - 0.004, 0.13, 0.17), Vector3(x + 0.004, 0.42, 0.185), ModelKit.paint(METAL))
 	ModelKit.cylinder(b, Vector3(-0.25, 0.5, 0.1), 0.014, 0.1, ModelKit.paint(Color("#555555"), 0.6))
 	ModelKit.box(b, Vector3(-0.33, 0.495, -0.125), Vector3(-0.04, 0.515, 0.125), ModelKit.paint(col.darkened(0.15)))
+	# Full of grain to the rim, and a pale stripe along the body.
+	ModelKit.box(b, Vector3(-0.3, 0.5, -0.1), Vector3(-0.07, 0.53, 0.1), ModelKit.paint(GRAIN, 0.9))
+	for z: float in [-0.171, 0.171]:
+		ModelKit.box(b, Vector3(-0.32, 0.25, z - 0.003), Vector3(0.14, 0.29, z + 0.003), ModelKit.paint(STRIPE))
 	ModelKit.ball(b, Vector3(0.14, 0.6, 0.0), 0.02, ModelKit.paint(Color("#fff3c4"), 0.8))
 	for z: float in [-0.12, 0.12]:
 		ModelKit.ball(b, Vector3(0.145, 0.14, z), 0.02, ModelKit.paint(Color("#fff3c4"), 0.8))
