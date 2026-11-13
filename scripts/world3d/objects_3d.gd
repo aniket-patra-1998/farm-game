@@ -17,6 +17,8 @@ const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles acros
 const GROVE_MASK := 0xff       # woods stand shoulder to shoulder: their trees are drawn crowded on every side
 
 const PINE := Color("#2f6b3a")
+const PINE_TIERS := 5        # skirts of needles on a pine
+const PINE_TRUNK_R := 0.055
 
 
 const STEP_LEVEL := 100       # see _step
@@ -292,19 +294,21 @@ func _build_scenery() -> void:
 
 
 
-## A pine: a short trunk and three stacked cones of dark needles.
+## A pine: a short trunk and five stacked, overlapping skirts of needles, widest and darkest at the bottom,
+## each turned a little from the one below, so the outline is ragged like a real conifer's.
 static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 	var root := Node3D.new()
 	root.position = base
 	parent.add_child(root)
-	ModelKit.cylinder(root, Vector3.ZERO, 0.05 * size, 0.2 * size, ModelKit.paint(TreeModel.BARK), -1.0, 6)
-	for k in 3:
-		var y := (0.15 + 0.28 * k) * size
-		var r := (0.42 - 0.1 * k) * size
-		ModelKit.cylinder(root, Vector3(0, y, 0), r, 0.5 * size, ModelKit.paint(PINE.lightened(0.07 * k)), 0.0, 9)
+	ModelKit.cylinder(root, Vector3.ZERO, PINE_TRUNK_R * size, 0.22 * size, ModelKit.paint(TreeModel.BARK), -1.0, 6)
+	for k in PINE_TIERS:
+		var up := float(k) / (PINE_TIERS - 1)
+		var y := (0.14 + 0.2 * k) * size
+		var r := lerpf(0.5, 0.14, up) * size
+		var skirt := ModelKit.cylinder(root, Vector3(0, y, 0), r, lerpf(0.46, 0.34, up) * size,
+			ModelKit.paint(PINE.darkened(0.16 * (1.0 - up)).lightened(0.06 * up)), 0.0, 8 + (k % 2))
+		skirt.rotation.y = k * 0.7
 	ModelKit.sway_all(root, TreeModel.SWAY)  # bends in the wind like every tree
-
-
 
 
 # ---------------------------------------------------------------- placing
