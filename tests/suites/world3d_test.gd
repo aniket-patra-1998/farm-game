@@ -388,13 +388,17 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	Game.objects.append(dairy)
 	Game.rebuild_occupancy()
 	var cap := Game.capacity(dairy)
-	# How many animals are out in the yard follows how full it is.
-	_eq(BuildingFill.shown_count(0, cap, 20), 0, "an empty building has nobody out")
-	_eq(BuildingFill.shown_count(1, cap, 20), 1, "one animal in: one out")
-	_eq(BuildingFill.shown_count(4, cap, 20), BuildingFill.MIN_GROUP, "a few in: a small group is out, not a lone one")
-	_check(BuildingFill.shown_count(int(cap / 2.0), cap, 20) > 1 and BuildingFill.shown_count(int(cap / 2.0), cap, 20)
-		< BuildingFill.shown_count(cap, cap, 20), "half full shows more than one, and fewer than full")
-	_eq(BuildingFill.shown_count(cap, cap, 20), BuildingFill.RESIDENTS, "full: the yard is busy")
+	# How many animals are out in the yard: what is inside, up to what the size allows (2 at the first, 5 at the biggest).
+	var top := Game.max_level("cow_shed")
+	_eq(BuildingFill.shown_count(0, 1, top), 0, "an empty building has nobody out")
+	_eq(BuildingFill.shown_count(1, 1, top), 1, "one animal in: one out")
+	_eq(BuildingFill.shown_count(40, 1, top), BuildingFill.SHOWN_FIRST, "the first size shows two at most")
+	_eq(BuildingFill.shown_count(40, top, top), BuildingFill.SHOWN_BIGGEST, "the biggest size shows five at most")
+	_check(BuildingFill.shown_count(40, 2, top) >= BuildingFill.SHOWN_FIRST
+		and BuildingFill.shown_count(40, 2, top) <= BuildingFill.SHOWN_BIGGEST, "a size in between shows in between")
+	var rare := BuildingFill.rarest({"cow": 3, "red_cow": 1, "ox": 2}, 3)
+	_eq(rare[0], "red_cow", "the rarest animal is shown first")
+	_eq(rare.size(), 3, "and as many as asked for")
 	# Every animal home has room in its yard, clear of the building and inside the fence.
 	for id in ["chicken_coop", "cow_shed", "sheep_pen", "goat_pen", "rabbit_hutch", "pig_pen", "horse_stable",
 			"nursery_barn", "duck_pond", "beehive"]:
@@ -402,7 +406,7 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 			var spec := BuildingModel.spec(id, level)
 			var fp := Game.footprint(id)
 			var spots := BuildingFill.open_spots(spec, fp, 1)
-			_check(spots.size() >= mini(BuildingFill.RESIDENTS, 3), "%s size %d has room for animals in its yard (%d)"
+			_check(spots.size() >= 3, "%s size %d has room for animals in its yard (%d)"
 				% [id, level, spots.size()])
 			var clash := 0
 			for p in spots:
@@ -411,6 +415,28 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 						clash += 1
 				_check(p.x > 0.0 and p.z > 0.0 and p.x < fp.x and p.z < fp.y, "%s: its yard spots are on its footprint" % id)
 			_eq(clash, 0, "%s size %d: nobody stands inside the building" % [id, level])
+	# Every home's biggest crowd (its five rarest animals) fits its yard, inside the fence and clear of the walls.
+	for id in ["chicken_coop", "cow_shed", "sheep_pen", "goat_pen", "rabbit_hutch", "pig_pen", "horse_stable",
+			"nursery_barn", "duck_pond"]:
+		var top_level := Game.max_level(id)
+		var spec := BuildingModel.spec(id, top_level)
+		var fp := Game.footprint(id)
+		var inside := {}
+		for a in (Game.catalog.get_def(id) as BuildingDef).holds():
+			inside[str(a)] = 2
+		var picks := BuildingFill.rarest(inside, BuildingFill.SHOWN_BIGGEST)
+		var radii: Array[float] = []
+		for a in picks:
+			radii.append(BuildingFill.radius_of(Game.item_data(a)))
+		var fit := BuildingFill.pack(spec, fp, radii, 7)
+		_check(float(fit["size"]) >= BuildingFill.FIT_MIN, "%s: its crowd is drawn no smaller than the least allowed" % id)
+		for k in picks.size():
+			var at: Vector3 = (fit["spots"] as Array)[k]
+			var r := radii[k] * float(fit["size"])
+			_check(at.x >= r * 0.6 and at.z >= r * 0.6 and at.x <= fp.x - r * 0.6 and at.z <= fp.y - r * 0.6,
+				"%s: %s stands inside the fence" % [id, picks[k]])
+			for q: Rect2 in BuildingModel.taken(spec, fp):
+				_check(not q.has_point(Vector2(at.x, at.z)), "%s: %s stands clear of the building" % [id, picks[k]])
 	# Half full and half way to ready: some cows out, milk churns by the door.
 	dairy["inside"] = {"cow": int(cap / 2.0)}
 	dairy["t"] = Game.now() - int(Game.cycle_of(dairy) / 2.0)
@@ -418,7 +444,8 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	var fill := BuildingFill.create(dairy, model)
 	model.add_child(fill)
 	add_child(model)
-	_eq(fill.residents.size(), BuildingFill.shown_count(int(cap / 2.0), cap, 99), "half the yard's worth of cows are out")
+	_eq(fill.residents.size(), BuildingFill.shown_count(int(cap / 2.0), 1, Game.max_level("cow_shed")),
+		"the yard's worth of cows are out")
 	var piled := _count_vertices(fill) - _residents_vertices(fill)
 	_check(piled > 0, "milk churns stand by the door as it nears ready")
 	dairy["t"] = Game.now() - Game.cycle_of(dairy) + 10
@@ -706,8 +733,6 @@ func test_129_a_home_shows_each_different_kind_inside_it_up_to_five() -> void:
 	var mixed := BuildingFill.pick_kinds({"x": 4, "y": 4}, 8)
 	_check(mixed[0] != mixed[1], "kinds are mixed, not in blocks (%s)" % [mixed])
 	_eq(BuildingFill.pick_kinds({}, 5).size(), 0, "nothing inside, nothing shown")
-	_eq(BuildingFill.shown_count(5, 100, 20, 5), 5, "a nearly empty home still shows each of its five kinds")
-	_eq(BuildingFill.shown_count(3, 100, 20, 3), 3, "or its three")
 
 
 func test_130_garage_shed_and_barn_show_what_they_keep() -> void:

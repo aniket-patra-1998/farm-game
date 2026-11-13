@@ -14,8 +14,14 @@ const LOD_MID_PPU := 64.0     # screen pixels per world unit below which only ha
 const LOD_FAR_PPU := 40.0     # ...and below which only a few are (a cow is then a speck)
 const LOD_FAR_SHOWN := 3
 const LOD_MARGIN := 1.12      # hysteresis: zooming back in must pass the line by this much
-const RESIDENTS := 14         # the most animals out in a yard at once (a full building)
-const MIN_GROUP := 3           # a stocked yard shows at least this many (if that many are in): never a lone one
+const SHOWN_FIRST := 2        # animals out in the yard of a building's first size (if that many are in)...
+const SHOWN_BIGGEST := 5      # ...and of its biggest, in between by size: the fewest of the two, or what is in, shows
+const REACH := 2.65           # an animal's longest reach (head to tail) against its body length in its rig
+const BODY_RATIO := 0.7       # the share of that reach kept clear of the fence and walls (heads and tails may overhang)
+const FIT_MIN := 0.55         # the smallest an animal is drawn in a yard that is too small, against full size
+const FIT_STEP := 0.05
+const FIT_GRID := 0.17        # tiles between the places a packed animal may be tried
+const FIT_APART := 0.9        # how near two animals stand, as a share of their two radii added
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const SPOT_GAP := 0.34        # tiles between places an animal can stand
 const CROWD_FULL_DETAIL := 6.0   # members in one orchard or garden built at full detail; more share that budget
@@ -133,7 +139,7 @@ func refresh(o: Dictionary) -> void:
 		if who != _who or stage != _stage:
 			_show_plants(o, int(fill["plants"]))  # trees fruit, blooms open, when ready
 	elif who != _who:
-		_show_residents(inside, Game.inside_total(o), Game.capacity(o))
+		_show_residents(o)
 	if stage != _stage:
 		_show_produce(str(fill.get("produce", "")), step, fill.get("at", [0.78, 0.9]), o)
 	_who = who
@@ -152,24 +158,103 @@ static func ready_share(o: Dictionary) -> float:
 	return clampf(1.0 - float(Game.seconds_until_ready(o)) / maxf(Game.cycle_of(o), 1.0), 0.0, 1.0)
 
 
-## How many animals to show out in the yard: none when empty, one for the first, then in proportion to
-## how full it is, up to RESIDENTS (and never more than there are places, or animals).
-static func shown_count(inside_total: int, capacity: int, spots: int, kinds := 1) -> int:
-	if inside_total <= 0:
-		return 0
-	var share := float(inside_total) / maxf(capacity, 1.0)
-	# At least one of each kind inside (up to MAX_KINDS), so every different one can be seen.
-	var want := maxi(maxi(MIN_GROUP, int(ceil(share * RESIDENTS))), mini(kinds, MAX_KINDS))
-	return mini(mini(want, spots), inside_total)
+## How many animals to show out in the yard: as many as are inside, up to what the building's size allows
+## (SHOWN_FIRST at the first size, SHOWN_BIGGEST at the biggest, in between by size).
+static func shown_count(inside_total: int, level: int, max_level: int) -> int:
+	var along := float(level - 1) / maxf(max_level - 1, 1.0)
+	var cap := int(round(lerpf(SHOWN_FIRST, SHOWN_BIGGEST, clampf(along, 0.0, 1.0))))
+	return mini(maxi(inside_total, 0), cap)
 
 
-## How many different kinds are inside (the ones that count).
-static func distinct_kinds(inside: Dictionary) -> int:
-	var n := 0
-	for id: String in inside:
-		if int(inside[id]) > 0:
-			n += 1
-	return n
+## `n` of what's inside, the rarest first (a higher unlock level, then a dearer price, is a rarer animal).
+static func rarest(inside: Dictionary, n: int) -> Array[String]:
+	var kinds: Array = inside.keys().filter(func(id: String) -> bool: return int(inside[id]) > 0)
+	kinds.sort_custom(func(a: String, b: String) -> bool:
+		var ia := Game.item_data(a)
+		var ib := Game.item_data(b)
+		var la := int(ia.get("unlock_level", 1))
+		var lb := int(ib.get("unlock_level", 1))
+		if la != lb:
+			return la > lb
+		var ca := int(ia.get("cost", 0))
+		var cb := int(ib.get("cost", 0))
+		return ca > cb or ca == cb and a < b)
+	var out: Array[String] = []
+	for id: String in kinds:
+		for k in int(inside[id]):
+			if out.size() < n:
+				out.append(id)
+	return out
+
+
+## How far an animal of this kind reaches from where it stands, in tiles, at full size, as far as the fence
+## and walls are concerned.
+static func radius_of(it: Dictionary) -> float:
+	var rig := AnimalRig.of(it)
+	var body: Array = rig.values.get("body", [20, 10])
+	return float(body[0]) * REACH * rig.scale * Animal3D.PX * 0.5 * BODY_RATIO + WANDER
+
+
+## Where animals of these radii (at full size) stand in a yard, and the size to draw them: the biggest that fits
+## them all clear of the fence, the walls and each other, down to FIT_MIN (then as well as it can be done, and
+## they crowd). Returns {size, spots}, a spot for each radius in the order given.
+static func pack(spec: Dictionary, fp: Vector2i, radii: Array[float], seed_value: int) -> Dictionary:
+	var blocked := BuildingModel.taken(spec, fp)
+	var size := 1.0
+	while size > FIT_MIN - 0.001:
+		var spots := _place(blocked, fp, radii, size, seed_value, false)
+		if spots.size() == radii.size():
+			return {"size": size, "spots": spots}
+		size -= FIT_STEP
+	return {"size": FIT_MIN, "spots": _place(blocked, fp, radii, FIT_MIN, seed_value, true)}
+
+
+static func _place(blocked: Array[Rect2], fp: Vector2i, radii: Array[float], size: float, seed_value: int,
+		crowd: bool) -> Array[Vector3]:
+	var cells: Array[Vector2] = []
+	var nx := int(fp.x / FIT_GRID)
+	var nz := int(fp.y / FIT_GRID)
+	for i in nx + 1:
+		for j in nz + 1:
+			cells.append(Vector2(i * fp.x / float(nx), j * fp.y / float(nz)))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for k in range(cells.size() - 1, 0, -1):
+		var swap := rng.randi_range(0, k)
+		var t := cells[k]
+		cells[k] = cells[swap]
+		cells[swap] = t
+	var order: Array[int] = []
+	for i in radii.size():
+		order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool: return radii[a] > radii[b])
+	var spots: Array[Vector3] = []
+	spots.resize(radii.size())
+	var placed: Array[int] = []
+	for i in order:
+		var r := radii[i] * size
+		var give := 0.6 if crowd else 1.0   # packed too tight to fit: stand nearer the fence and each other
+		var found := false
+		for c in cells:
+			var clear := minf(minf(c.x, fp.x - c.x), minf(c.y, fp.y - c.y))
+			if clear < r * give:
+				continue
+			var ok := true
+			for q: Rect2 in blocked:
+				if q.grow(r * give).has_point(c):
+					ok = false
+					break
+			for j in placed:
+				if ok and c.distance_to(Vector2(spots[j].x, spots[j].z)) < (r + radii[j] * size) * FIT_APART * give:
+					ok = false
+			if ok:
+				spots[i] = Vector3(c.x, 0, c.y)
+				found = true
+				break
+		if not found:
+			return []
+		placed.append(i)
+	return spots
 
 
 ## `n` things to show out of what's inside, so that each different kind (the MAX_KINDS commonest) is there at
@@ -232,20 +317,24 @@ static func grouped(ids: Array[String]) -> Array[String]:
 	return out
 
 
-func _show_residents(inside: Dictionary, total: int, capacity: int) -> void:
+func _show_residents(o: Dictionary) -> void:
 	for a in residents:
 		a.queue_free()
 	residents.clear()
-	var n := shown_count(total, capacity, _spots.size(), distinct_kinds(inside))
-	var picks := pick_kinds(inside, n)
+	var inside: Dictionary = o.get("inside", {})
+	var picks := rarest(inside, shown_count(Game.inside_total(o), Game.level_of(o), Game.max_level(_id)))
 	_lod = -1  # (the new animals are shown or hidden for the zoom next frame)
+	var radii: Array[float] = []
+	for id in picks:
+		radii.append(radius_of(Game.item_data(id)))
+	var fit := pack(_spec, _fp, radii, uid)
 	for k in picks.size():
 		var it := Game.item_data(picks[k])
 		if it.is_empty():
 			continue
 		var mind := AnimalBehaviour.new(AnimalRig.of(it), uid * 131 + k * 17,
 			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
-		var a := Animal3D.create(it, mind, _spots[k])
+		var a := Animal3D.create(it, mind, (fit["spots"] as Array)[k], float(fit["size"]))
 		add_child(a)
 		a.update(0.0)
 		residents.append(a)
