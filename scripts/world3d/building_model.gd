@@ -594,6 +594,11 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 			Vector3(hi.x + 0.02, y + size / 2 + 0.025, z + size / 2 + 0.025), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(hi.x + 0.02, y - size / 2, z - size / 2), Vector3(hi.x + 0.03, y + size / 2, z + size / 2),
 			ModelKit.glass())
+		# Panes: a cross of bars over the glass.
+		ModelKit.box(root, Vector3(hi.x + 0.03, y - 0.008, z - size / 2), Vector3(hi.x + 0.04, y + 0.008, z + size / 2),
+			ModelKit.paint(trim))
+		ModelKit.box(root, Vector3(hi.x + 0.03, y - size / 2, z - 0.008), Vector3(hi.x + 0.04, y + size / 2, z + 0.008),
+			ModelKit.paint(trim))
 		# A sill with a shadow under it.
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - 0.05, z - size / 2 - 0.04),
 			Vector3(hi.x + 0.06, y - size / 2 - 0.025, z + size / 2 + 0.04), ModelKit.paint(trim))

@@ -8,6 +8,8 @@ const PAINT_SHADER := "res://shaders/paint3d.gdshader"
 const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
 const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
+const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
+const RAKE_WIDTH := 0.035
 const SPRIG_LEAVES := 9        # leaves on a sprig
 const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leaves it whole
 
@@ -595,6 +597,7 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 			faces(parent, slopes, inside, mat)
 			faces(parent, ends, inside, gable_mat)
 			_roof_edges(parent, slopes, mat)
+			_rake_boards(parent, slopes)
 		"hip":
 			var cx := (x0 + x1) / 2.0
 			var cz := (z0 + z1) / 2.0
@@ -632,6 +635,23 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 
 
 ## A darker strip along a roof's lower edge (the eave), so the roof reads as having thickness.
+## The white boards that run up the sloped ends of a gable or gambrel roof (a farm building's barge boards):
+## one along each slope's two end edges, a little proud of the roof.
+static func _rake_boards(parent: Node3D, slopes: Array) -> void:
+	var white := paint(RAKE_COLOUR)
+	for s: Array in slopes:
+		for pair: Array in [[s[0], s[3]], [s[1], s[2]]]:
+			var a: Vector3 = pair[0]
+			var b: Vector3 = pair[1]
+			var length := a.distance_to(b)
+			if length < 0.01:
+				continue
+			var mi := box(parent, Vector3(-RAKE_WIDTH / 2.0, -RAKE_WIDTH / 2.0, -length / 2.0),
+				Vector3(RAKE_WIDTH / 2.0, RAKE_WIDTH / 2.0, length / 2.0), white)
+			var dir := (b - a) / length
+			mi.transform = Transform3D(Basis.looking_at(dir, Vector3.UP), (a + b) / 2.0 + Vector3(0, RAKE_WIDTH * 0.4, 0))
+
+
 static func _roof_edges(parent: Node3D, slopes: Array, mat: Material) -> void:
 	var edge := mat
 	if mat is ShaderMaterial:
