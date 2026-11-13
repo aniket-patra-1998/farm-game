@@ -121,7 +121,7 @@
             "red_cow",
             "belted_cow"
           ],
-          "color": "#c0392b",
+          "color": "#9e2b25",
           "roof": "#6b4a3a",
           "one_each": [
             "bull"
@@ -292,7 +292,7 @@
             "nails": 8
           },
           "special": "truffles",
-          "color": "#c98a5a",
+          "color": "#b9714a",
           "roof": "#7a5230",
           "one_each": [
             "boar"
@@ -321,7 +321,7 @@
             "black_pony",
             "mustang"
           ],
-          "color": "#a8743f",
+          "color": "#7a5233",
           "roof": "#3f5f7a",
           "one_each": [
             "stallion"
