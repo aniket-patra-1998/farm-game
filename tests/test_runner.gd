@@ -47,6 +47,7 @@ func _ready() -> void:
 	for f in failures:
 		print("  - " + f)
 	print("%d tests, %d checks, %d failed" % [tests, checks, failed])
+	Instancer.clear()   # the shared looks are held in statics: let them go before the engine reports leaks
 	if DisplayServer.get_name() == "headless":
 		get_tree().quit(1 if failed > 0 else 0)
 
