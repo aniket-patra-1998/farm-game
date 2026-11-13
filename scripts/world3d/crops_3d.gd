@@ -1,13 +1,15 @@
 class_name Crops3D
 extends Node3D
-## Every crop on the farm in 3D: four plants to a plot, on top of its bed, drawn as one MultiMesh per
+## Every crop on the farm in 3D: nine plants to a plot, in three rows, on top of its bed, drawn as one MultiMesh per
 ## plant shape and growth stage (so a whole field costs a handful of draws). Young plants grow in size as
 ## they ripen; produce takes its crop's colour. Rebuilt when plots change, and every few seconds as crops
 ## grow. Growth is the shader's: a growing plant carries when its stage starts and how long it lasts, and the
 ## shader sizes it from the farm's clock every frame, so a plant swells smoothly instead of in steps.
 
-const SPOTS := [Vector2(-0.24, -0.24), Vector2(0.24, -0.24), Vector2(-0.24, 0.24), Vector2(0.24, 0.24),
-	Vector2(0, 0)]
+const ROW_GAP := 0.31   # between plants in a plot's rows and columns: three rows of three, like a planted field
+const SPOTS := [Vector2(-ROW_GAP, -ROW_GAP), Vector2(0, -ROW_GAP), Vector2(ROW_GAP, -ROW_GAP),
+	Vector2(-ROW_GAP, 0), Vector2(0, 0), Vector2(ROW_GAP, 0),
+	Vector2(-ROW_GAP, ROW_GAP), Vector2(0, ROW_GAP), Vector2(ROW_GAP, ROW_GAP)]
 const GROW_REFRESH := 3.0   # seconds between looks at whether growth has moved a plant on
 const SPROUT_FROM := 0.2    # of the growing time: the seeds have sprouted
 const YOUNG_FROM := 0.45    # and the sprouts are young plants
@@ -16,7 +18,7 @@ const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
 const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger (the shader applies it)
 const VARY_LEAN := 0.16    # radians a plant may lean
-const PLANT_SCALE := 2.5    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
+const PLANT_SCALE := 2.7    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 
 var wind := 0.6: set = _set_wind
 
@@ -140,12 +142,14 @@ func rebuild() -> void:
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_custom_data = true
+		mm.use_colors = true   # the compatibility renderer reads an unset instance colour as black
 		mm.mesh = CropModels.mesh(parts[0], parts[1])
 		var list: Array = groups[key]
 		mm.instance_count = list.size()
 		for k in list.size():
 			mm.set_instance_transform(k, list[k][0])
 			mm.set_instance_custom_data(k, list[k][1])
+			mm.set_instance_color(k, Color.WHITE)
 		mmi.multimesh = mm
 
 
