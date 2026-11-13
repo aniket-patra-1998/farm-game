@@ -354,16 +354,19 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			first = id
 			break
 	var trees := first == "" or Game.kind_of({"id": first}) == "tree"
-	# A grid in the field's own proportions; trees are packed tight, crowns just touching (FarmVille's orchards).
+	# A grid in the field's own proportions, inside its tile's border with each crown kept in; trees are packed
+	# tight, crowns just touching (FarmVille's orchards).
+	var room := SpaceFit.tile_room(_fp)
 	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1)
 	var rows := ceili(float(slots) / per_row)
-	var gap := minf(_fp.x * 0.8 / maxf(per_row - 1.0, 1.0), _fp.y * 0.8 / maxf(rows - 1.0, 1.0))
+	var span := room.grow(-TREE_CROWN * 1.1).abs()
+	var gap := minf(span.size.x / maxf(per_row - 1.0, 1.0), span.size.y / maxf(rows - 1.0, 1.0))
 	var size := clampf(gap * TREE_FILL, 0.55, 1.0)
 	if not trees:
 		# Blooms grow in soil beds, one a row.
 		for r in rows:
-			var bz := _fp.y * (0.15 + 0.7 * r / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
-			ModelKit.box(holder, Vector3(_fp.x * 0.12, 0, bz - 0.22), Vector3(_fp.x * 0.88, 0.05, bz + 0.22),
+			var bz := span.position.y + span.size.y * r / maxf(rows - 1.0, 1.0) if rows > 1 else room.get_center().y
+			ModelKit.box(holder, Vector3(room.position.x, 0, bz - 0.22), Vector3(room.end.x, 0.05, bz + 0.22),
 				ModelKit.paint(Color("#6b4a2b")))
 	var total := Game.inside_total(o)
 	# Every tree and bloom inside is there to see (FarmVille's orchards and gardens).
@@ -376,8 +379,10 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	# Dozens of the same model: each gets less detail, so a full orchard costs about what a few trees do.
 	ModelKit.detail = clampf(sqrt(CROWD_FULL_DETAIL / maxf(ids.size(), 1.0)), ModelKit.MIN_DETAIL, 1.0)
 	for k in ids.size():
-		var z := _fp.y * (0.15 + 0.7 * places[k].y / maxf(rows - 1.0, 1.0)) if rows > 1 else _fp.y * 0.5
-		var x := _fp.x * (0.1 + 0.8 * places[k].x / maxf(per_row - 1.0, 1.0))
+		var z := span.position.y + span.size.y * places[k].y / maxf(rows - 1.0, 1.0) if rows > 1 \
+			else room.get_center().y
+		var x := span.position.x + span.size.x * places[k].x / maxf(per_row - 1.0, 1.0) if per_row > 1 \
+			else room.get_center().x
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
 			var d := Game.catalog.get_def(ids[k]) as BloomDef

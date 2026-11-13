@@ -385,6 +385,31 @@ func _pack(id: String, level: int, radii: Array[float]) -> Dictionary:
 	return SpaceFit.pack(SpaceFit.yard_room(fp), BuildingModel.taken(BuildingModel.spec(id, level), fp), radii, 3)
 
 
+func test_105_orchards_and_gardens_keep_their_plants_inside_the_tile() -> void:
+	Game.reset_game()
+	Game.objects.clear()
+	for id in ["orchard", "bloom_garden"]:
+		var plant := ""
+		for item in Game.item_order:
+			if str(Game.item_data(item).get("kind", "")) == ("tree" if id == "orchard" else "bloom"):
+				plant = item
+				break
+		var level := Game.max_level(id)
+		var field := {"uid": 9301, "id": id, "row": 2, "col": 2, "t": Game.now(), "level": level, "inside": {}}
+		field["inside"] = {plant: Game.capacity(field)}
+		Game.objects.append(field)
+		Game.rebuild_occupancy()
+		var model := ModelKit.bake(BuildingModel.build(Game.item_data(id), Game.footprint(id), level))
+		var fill := BuildingFill.create(field, model)
+		model.add_child(fill)
+		add_child(model)
+		var fp := Game.footprint(id)
+		var box := SpaceFit.reach(fill)
+		_check(Rect2(0, 0, fp.x, fp.y).grow(0.001).encloses(box), "%s: its plants stay on its footprint (%s)" % [id, box])
+		Game.objects.clear()
+		model.free()
+
+
 func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
