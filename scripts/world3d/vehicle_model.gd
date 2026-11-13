@@ -150,8 +150,12 @@ static func _tractor(b: Node3D, col: Color, shift: float) -> void:
 	ModelKit.box(b, o + Vector3(0.008, 0.4, 0.108), o + Vector3(0.028, 0.43, 0.124), ModelKit.paint(Color("#2e2e2e")))
 	# The farmer at the wheel: body, head and a straw hat, under the canopy.
 	_driver(b, o + Vector3(-0.1, 0.3, 0))
-	# A windscreen between the front posts.
+	# A windscreen between the front posts, and glass down both sides of the cab, like FarmVille's.
 	ModelKit.box(b, o + Vector3(0.0, 0.3, -0.088), o + Vector3(0.004, 0.46, 0.088), ModelKit.glass())
+	for z: float in [-0.09, 0.09]:
+		ModelKit.box(b, o + Vector3(-0.17, 0.31, z - 0.003), o + Vector3(0.0, 0.46, z + 0.003), ModelKit.glass())
+	# A rounded top to the bonnet.
+	ModelKit.ball(b, o + Vector3(0.12, 0.265, 0.0), 0.075, ModelKit.paint(col, 0.5), Vector3(1.6, 0.4, 0.9))
 
 
 ## A little farmer sitting in a cab: shirt, a round head and a straw hat with a brim.
