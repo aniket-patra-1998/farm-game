@@ -58,3 +58,7 @@ Done: animals were already one skinned mesh each; they are now one painted surfa
 Fixed: a signal connected every frame in `AmbientLife`; `day_number()` now turns over at the player's local midnight; animal and tree collects no longer feed the crop collectible pity; clock set back is mended on load (timers shift by the skew); `level()` is cached; saves go through a version chain (`SaveMigrations`); crops rebuild only when something changed (growth drawn in 12 steps); a "while you were away" line (ripened, withered, ready; `AbsenceReport`).
 Checked and already fine: loose animals are not animated off screen (`Animal3D.animate` returns early outside the view).
 Open: Android local notifications when crops ripen (needs an Android plugin and a permission flow; the away line is the in-game half); crops grown continuously by the shader instead of in steps (custom data is full: colour and richness; needs a second data channel); O(size²) free-tile scans in mass sell (not in the perf probe yet).
+
+## Interface
+- Portrait phones: the interface is landscape only for now (docs/UI.md); a portrait layout is a later pass.
+- Neighbour bar: a placeholder quick bar until there are neighbours (with the social feature).
