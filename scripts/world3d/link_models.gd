@@ -9,6 +9,9 @@ extends RefCounted
 ## Built in the tile's own frame, origin at its centre, an arm pointing north (-z) before it's turned.
 
 const VARIANTS := 3          # different hand-built looks of every shape, picked by where the piece stands
+const HEDGE_LOW_Y := 0.3        # a hedge is a wall of leaf, twice a fence's height, like FarmVille's
+const HEDGE_TOP_Y := 0.6
+const HEDGE_STRETCH := 1.35
 const HEIGHT := 0.36         # a fence's posts
 const POST := 0.045          # half the width of a post
 const WALL_TOP := 0.38
@@ -149,9 +152,9 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 	var leaf := DecorModel.LEAF
 	var bump := 1.25 if kind >= LinkShape.Kind.TEE else 1.0
 	var low := ModelKit.paint(leaf.darkened(rng.randf() * 0.15), 0.0, HEDGE_SWAY)
-	ModelKit.ball(root, Vector3(0, 0.2, 0), 0.24 * bump, low, Vector3(0.98, 0.95, 0.98))
+	ModelKit.ball(root, Vector3(0, HEDGE_LOW_Y, 0), 0.24 * bump, low, Vector3(0.98, HEDGE_STRETCH, 0.98))
 	var top := ModelKit.paint(leaf.lightened(0.08), 0.0, HEDGE_SWAY)
-	ModelKit.ball(root, Vector3(0, 0.37, 0), 0.19 * bump, top, Vector3(0.98, 0.55, 0.98))
+	ModelKit.ball(root, Vector3(0, HEDGE_TOP_Y, 0), 0.21 * bump, top, Vector3(0.98, 0.8, 0.98))
 	for d in 4:
 		if reach[d] <= 0.0:
 			continue
@@ -159,13 +162,13 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 		var z := 0.2
 		while z < reach[d] + 0.01:
 			var shade := leaf.darkened(rng.randf() * 0.15)
-			ModelKit.ball(a, Vector3(rng.randf_range(-0.02, 0.02), 0.2, -z), 0.24, ModelKit.paint(shade, 0.0, HEDGE_SWAY),
-				Vector3(0.98, 0.95, 1.05))
-			ModelKit.ball(a, Vector3(0, 0.37 + rng.randf_range(-0.01, 0.02), -z), 0.19,
-				ModelKit.paint(shade.lightened(0.08), 0.0, HEDGE_SWAY), Vector3(0.98, 0.55, 1.1))
+			ModelKit.ball(a, Vector3(rng.randf_range(-0.02, 0.02), HEDGE_LOW_Y, -z), 0.24,
+				ModelKit.paint(shade, 0.0, HEDGE_SWAY), Vector3(0.98, HEDGE_STRETCH, 1.05))
+			ModelKit.ball(a, Vector3(0, HEDGE_TOP_Y + rng.randf_range(-0.01, 0.02), -z), 0.21,
+				ModelKit.paint(shade.lightened(0.08), 0.0, HEDGE_SWAY), Vector3(0.98, 0.8, 1.1))
 			z += 0.2
 		for k in 2:
-			ModelKit.ball(a, Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0.2, 0.42),
+			ModelKit.ball(a, Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0.25, 0.68),
 				-0.08 - k * 0.16 - rng.randf_range(0.0, 0.06)), 0.03,
 				ModelKit.paint(Color("#e8d86a") if k % 2 else Color("#d8506a")))
 

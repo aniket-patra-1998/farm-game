@@ -32,6 +32,8 @@ const PLOWED_PLOTS := 6
 ## Kinds that stand on the farm, in the order their zones are laid out (buildings first, decorations last).
 const ZONES: Array[String] = ["building", "vehicle", "tree", "animal", "decor"]
 const BUILDING_KINDS: Array[String] = ["building", "crafting", "barn"]
+const RUN_IDS := ["hedge", "white_picket_fence", "wooden_fence", "tall_wooden_fence", "stone_wall"]
+const RUN_LENGTH := 6   # tiles in a straight run of one fence kind in the showcase
 
 
 ## Builds the showcase into `g` (which is reset first). Returns what was left out for want of room (ids;
@@ -75,12 +77,34 @@ static func build(g: GameState) -> Array[String]:
 			_place(g, id, cursor.x, cursor.y, now)
 			cursor.y += fp.x
 			shelf = maxi(shelf, fp.y)
+	_link_runs(g, now, last_row)
 	_fill_homes(g, now)
 	_raise_young(g)
 	_plant_field(g, now)
 	g.rebuild_occupancy()
 	announce(g)
 	return left_out
+
+
+## A straight run of each fence, hedge and wall (they join their neighbours, so one piece shows nothing): the first
+## free stretch of RUN_LENGTH tiles, along a row.
+static func _link_runs(g: GameState, now: int, last_row: int) -> void:
+	for id in RUN_IDS:
+		if not g.items.has(id):
+			continue
+		var done := false
+		for row in range(0, last_row):
+			for col in range(0, g.farm_size - RUN_LENGTH):
+				var free := true
+				for k in RUN_LENGTH:
+					free = free and g.can_place(id, row, col + k)
+				if free:
+					for k in RUN_LENGTH:
+						_place(g, id, row, col + k, now)
+					done = true
+					break
+			if done:
+				break
 
 
 ## Every mystery young half grown, set to grow into its kind's first item, with supplies to finish it.
