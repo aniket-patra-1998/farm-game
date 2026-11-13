@@ -15,7 +15,8 @@ const DOOR_SHARE := 0.55          # the Garage door's width, in tiles of footpri
 const MAX_POTS := 8
 const MAX_GOODS := 10
 const MAX_MOUNDS := 10
-const MOUND_EDGE := 0.42          # tiles between a burrow and the fence
+const MOUND_RADIUS := 0.2         # the room a burrow with its gopher takes, in tiles
+const DOG_RADIUS := 0.24          # the room a resting dog takes
 const GOPHER_COATS := {"plain_gopher": "#a58660", "brown_gopher": "#7b5233", "spotted_gopher": "#b8946a",
 	"striped_gopher": "#8a6540", "golden_gopher": "#e8b830"}
 const MAX_DOGS := 6
@@ -50,9 +51,9 @@ static func build(kind: String, o: Dictionary, fp: Vector2i, at: Array) -> Node3
 		"goods":
 			_goods(root, p)
 		"gophers":
-			_gophers(root, fp, int(o.get("uid", 0)))
+			_gophers(root, o, fp)
 		"dogs":
-			_dogs(root, fp, int(o.get("uid", 0)))
+			_dogs(root, o, fp)
 	return ModelKit.bake(root)
 
 
@@ -113,44 +114,53 @@ static func _goods(root: Node3D, p: Vector3) -> void:
 			ModelKit.box(root, c, c + Vector3(0.14, 0.1, 0.12), ModelKit.surface(BuildingModel.WOOD, "boards", 0.2))
 
 
+## Where `n` things of this radius stand in the building's yard (SpaceFit: inside its edge, clear of the building
+## and of each other, smaller when crowded): {"size", "spots"}.
+static func _in_yard(o: Dictionary, fp: Vector2i, n: int, radius: float) -> Dictionary:
+	var radii: Array[float] = []
+	radii.resize(n)
+	radii.fill(radius)
+	var taken := BuildingModel.taken(BuildingModel.spec(str(o.get("id", "")), Game.level_of(o)), fp)
+	return SpaceFit.pack(SpaceFit.yard_room(fp), taken, radii, int(o.get("uid", 0)))
+
+
 ## Burrows over the yard, more as the home grows (one tier more, two mounds more), a gopher bobbing up out of
 ## each as many as are owned: each different kind among them (the commonest first), in its own coat.
-static func _gophers(root: Node3D, fp: Vector2i, seed_value: int) -> void:
+static func _gophers(root: Node3D, o: Dictionary, fp: Vector2i) -> void:
 	var mounds := mini(MAX_MOUNDS, 2 + 2 * Game.finds.tier("gopher"))
 	var owned := {}
 	for k: Dictionary in Game.finds.families.get("gopher", {}).get("kinds", []):
 		owned[str(k["id"])] = Game.finds.count(str(k["id"]))
 	var who := BuildingFill.pick_kinds(owned, mini(Game.finds.total("gopher"), mounds), 99)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
-	var cols := maxi(2, int(ceil(sqrt(float(mounds) * fp.x / maxf(fp.y, 1.0)))))
-	var rows := int(ceil(float(mounds) / cols))
-	for m in mounds:
-		var u := (m % cols) / maxf(cols - 1.0, 1.0)
-		var v := int(m / float(cols)) / maxf(rows - 1.0, 1.0)
-		var at := Vector3(lerpf(MOUND_EDGE, fp.x - MOUND_EDGE, u) + rng.randf_range(-0.05, 0.05), 0,
-			lerpf(MOUND_EDGE, fp.y - MOUND_EDGE, v) + rng.randf_range(-0.05, 0.05))
-		ModelKit.ball(root, at, 0.14, ModelKit.paint(Color("#6e4c33")), Vector3(1.0, 0.34, 1.0))
-		ModelKit.ball(root, at + Vector3(0, 0.02, 0), 0.07, ModelKit.paint(Color("#2e1f14")), Vector3(1.0, 0.25, 1.0))
+	var fit := _in_yard(o, fp, mounds, MOUND_RADIUS)
+	var size := float(fit["size"])
+	var spots: Array = fit["spots"]
+	for m in spots.size():
+		var here: Vector2 = spots[m]
+		var at := Vector3(here.x, 0, here.y)
+		ModelKit.ball(root, at, 0.14 * size, ModelKit.paint(Color("#6e4c33")), Vector3(1.0, 0.34, 1.0))
+		ModelKit.ball(root, at + Vector3(0, 0.02, 0), 0.07 * size, ModelKit.paint(Color("#2e1f14")), Vector3(1.0, 0.25, 1.0))
 		if m < who.size():
-			DecorMotion.orbit(root, at + Vector3(0, 0.02, 0), _gopher(who[m]),
+			var gopher := _gopher(who[m])
+			gopher.scale = Vector3.ONE * size
+			DecorMotion.orbit(root, at + Vector3(0, 0.02, 0), gopher,
 				{"speed": 0.0, "bob": 0.03, "bob_rate": 0.9 + 0.17 * (m % 4), "phase": m * 1.3})
 
 
 ## Dogs resting in the yard, as many as are owned (the commonest kinds first, up to six), each in its own coat.
-static func _dogs(root: Node3D, fp: Vector2i, seed_value: int) -> void:
+static func _dogs(root: Node3D, o: Dictionary, fp: Vector2i) -> void:
 	var owned := {}
 	for k: Dictionary in Game.finds.families.get("dog", {}).get("kinds", []):
 		owned[str(k["id"])] = Game.finds.count(str(k["id"]))
 	var who := BuildingFill.pick_kinds(owned, mini(Game.finds.total("dog"), MAX_DOGS), 99)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
-	for m in who.size():
-		var u := (m % 3 + 0.5) / 3.0
-		var v := 0.55 + 0.3 * float(m / 3)
-		var at := Vector3(fp.x * u + rng.randf_range(-0.05, 0.05), 0, fp.y * v + rng.randf_range(-0.04, 0.04))
-		DecorMotion.orbit(root, at, _dog(who[m]), {"speed": 0.0, "bob": 0.012, "bob_rate": 0.7 + 0.13 * (m % 4),
-			"phase": m * 1.7})
+	var fit := _in_yard(o, fp, who.size(), DOG_RADIUS)
+	var spots: Array = fit["spots"]
+	for m in spots.size():
+		var here: Vector2 = spots[m]
+		var dog := _dog(who[m])
+		dog.scale = Vector3.ONE * float(fit["size"])
+		DecorMotion.orbit(root, Vector3(here.x, 0, here.y), dog, {"speed": 0.0, "bob": 0.012,
+			"bob_rate": 0.7 + 0.13 * (m % 4), "phase": m * 1.7})
 
 
 ## One dog lying down: body, head, snout, floppy ears, a tail; a lab and a golden are larger, a spotted one has patches.

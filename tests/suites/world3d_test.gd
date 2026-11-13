@@ -1272,3 +1272,27 @@ func test_311_a_higher_level_never_shows_fewer_animals() -> void:
 			_check(n >= mini(radii.size(), 3), "%s shows at least 3 at level %d (shows %d)" % [id, lv, n])
 			last = n
 
+
+func test_312_gophers_and_dogs_stand_in_their_yard_clear_of_the_building() -> void:
+	var homes := 0
+	for id: String in Game.items:
+		var def := Game.catalog.get_def(id)
+		if not def is BuildingDef:
+			continue
+		var kind := str(BuildingModel.fill_of(id, 1).get("stock", ""))
+		if kind != "gophers" and kind != "dogs":
+			continue
+		homes += 1
+		var fp := Game.footprint(id)
+		var o := {"uid": 5, "id": id, "row": 0, "col": 0, "t": Game.now()}
+		var count := BuildingStock.MAX_MOUNDS if kind == "gophers" else BuildingStock.MAX_DOGS
+		var radius := BuildingStock.MOUND_RADIUS if kind == "gophers" else BuildingStock.DOG_RADIUS
+		var fit := BuildingStock._in_yard(o, fp, count, radius)
+		var yard := SpaceFit.yard_room(fp)
+		var taken := BuildingModel.taken(BuildingModel.spec(id, 1), fp)
+		_check((fit["spots"] as Array).size() >= 1, "%s: at least one %s fits" % [id, kind])
+		for at: Vector2 in fit["spots"]:
+			_check(yard.has_point(at), "%s: a spot %s is inside the yard" % [id, at])
+			for r: Rect2 in taken:
+				_check(not r.has_point(at), "%s: a spot %s is not inside the building (%s)" % [id, at, r])
+	_check(homes >= 2, "a gopher yard and a dog house were checked (%d)" % homes)
