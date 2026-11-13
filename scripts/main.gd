@@ -5,7 +5,7 @@ extends Node2D
 ## Touch: pinch to zoom, two-finger drag to move, or one-finger drag with the Hand tool.
 ## Mouse: wheel to zoom, right- or middle-drag to move. Trackpad gestures also work.
 
-const INK := 0.9   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
+const INK := 0.0   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
 const INK_FROM := 0.22    # how small a jump in light or colour is an edge (lower: more lines)
 const INK_REACH := 1.0    # how many pixels out it looks, so how thick the line is
 const DAY_SATURATION := 1.32   # FarmVille's colour is rich: the daytime grade
