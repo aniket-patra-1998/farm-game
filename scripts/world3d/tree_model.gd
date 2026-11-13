@@ -16,6 +16,11 @@ const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
 const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
+const CROWN_TRIM := 0.88      # every crown is drawn this share of its data's width (0.92 of that in height): lighter
+const CROWN_R_MAX := 0.4      # no leafy crown is wider than this (a share of a tile): never a huge green blob
+const TRUNK_SHARE := 0.4      # the trunk shows at least this share of a leafy tree's height, under the crown
+const LEAFY_FORMS := ["round", "oval", "spreading", "dense"]
+const CROWN_LOBE_REACH := 1.15   # the crown's lobes and masses reach this much past its core's half-height
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
 const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
 const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
@@ -105,7 +110,10 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
 	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd) \
-		* (CROWN_GROW if upright else 1.0)
+		* (CROWN_GROW if upright else 1.0) * CROWN_TRIM
+	sh["crown_h"] = float(sh["crown_h"]) * (CROWN_TRIM + 0.04)
+	if str(sh["form"]) in LEAFY_FORMS:
+		_proportion(sh)
 	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col,
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
@@ -183,6 +191,18 @@ static func _trunk(t: Dictionary) -> Vector3:
 		rt.rotation.y = -ra
 	var top := Vector3(lean.x * h, h, lean.z * h)
 	return top + Vector3(0, float(sh["crown_h"]) * k * 0.6, 0)
+
+
+## The rule every leafy tree keeps: the crown is no wider than CROWN_R_MAX, and it starts high enough that the
+## trunk is at least TRUNK_SHARE of the tree's height with the crown above it (the trunk keeps its thinness).
+## The crown's bottom is its centre less its half-height `v`, its top the centre plus `v`; the centre sits
+## 0.6 crown heights above the trunk's top.
+static func _proportion(sh: Dictionary) -> void:
+	sh["crown_r"] = minf(float(sh["crown_r"]), CROWN_R_MAX)
+	var ch := float(sh["crown_h"])
+	var v := maxf(ch * 0.5, float(sh["crown_r"]) * 0.4) * CROWN_LOBE_REACH
+	var centre_needed := v * (1.0 + TRUNK_SHARE) / (1.0 - TRUNK_SHARE)
+	sh["trunk_h"] = maxf(float(sh["trunk_h"]), centre_needed - ch * 0.6)
 
 
 ## Several thin stems from the ground (a shrubby tree); returns the crown's centre.

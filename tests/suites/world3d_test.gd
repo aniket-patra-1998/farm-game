@@ -1296,3 +1296,19 @@ func test_312_gophers_and_dogs_stand_in_their_yard_clear_of_the_building() -> vo
 			for r: Rect2 in taken:
 				_check(not r.has_point(at), "%s: a spot %s is not inside the building (%s)" % [id, at, r])
 	_check(homes >= 2, "a gopher yard and a dog house were checked (%d)" % homes)
+
+
+func test_313_every_leafy_tree_shows_a_trunk_and_has_a_capped_crown() -> void:
+	# The rule: a crown is never wider than CROWN_R_MAX, and the trunk is at least TRUNK_SHARE of the height.
+	for crown_r in [0.2, 0.45, 0.6, 0.9]:
+		for crown_h in [0.1, 0.25, 0.5]:
+			for trunk_h in [0.05, 0.3, 0.6]:
+				var sh := {"crown_r": crown_r, "crown_h": crown_h, "trunk_h": trunk_h}
+				TreeModel._proportion(sh)
+				_check(float(sh["crown_r"]) <= TreeModel.CROWN_R_MAX + 0.0001, "crown %s capped" % crown_r)
+				var v: float = maxf(float(crown_h) * 0.5, float(sh["crown_r"]) * 0.4) * TreeModel.CROWN_LOBE_REACH
+				var centre: float = float(sh["trunk_h"]) + float(crown_h) * 0.6
+				var share: float = (centre - v) / (centre + v)
+				_check(share >= TreeModel.TRUNK_SHARE - 0.0001, "trunk share %.2f (crown %s/%s, trunk %s)" % [
+					share, crown_r, crown_h, trunk_h])
+				_check(float(sh["trunk_h"]) >= trunk_h, "a trunk is only ever lifted, never cut")
