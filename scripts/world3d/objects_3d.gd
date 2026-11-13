@@ -240,7 +240,7 @@ func _build(o: Dictionary) -> Node3D:
 				turn = Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * (1.0 + rng.randf_range(
 					-TREE_SIZE_JITTER, TREE_SIZE_JITTER)))
 		"vehicle":
-			node = VehicleModel.build(it, Game.under_construction(o))
+			node = SpaceFit.fit_model(VehicleModel.build(it, Game.under_construction(o)), fp)
 		"decor":
 			if Game.links.group_of(str(o["id"])) != "":
 				node = Node3D.new()   # drawn by the LinkLayer, which joins it to its neighbours; this stands in for taps
@@ -249,9 +249,9 @@ func _build(o: Dictionary) -> Node3D:
 				if not str(o["id"]).ends_with("_tree"):   # (a tree's crown overhangs by design)
 					node = SpaceFit.fit_model(node, fp)
 		"young":
-			node = DecorModel.build_young(it, o, Game.nurture.growth(o))
+			node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
 		"bloom":
-			node = BloomModel.build(it, o, ScaleGuide.factor(str(o["id"])))
+			node = SpaceFit.fit_model(BloomModel.build(it, o, ScaleGuide.factor(str(o["id"]))), fp)
 		_:
 			if Game.under_construction(o):
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))

@@ -1228,14 +1228,15 @@ func test_307_every_building_site_stays_inside_its_tile_border() -> void:
 			model.free()
 
 
-func test_310_buildings_and_decorations_as_placed_stay_inside_their_tile_border() -> void:
+func test_310_everything_but_trees_as_placed_stay_inside_their_tile_border() -> void:
 	# (Built the way the farm builds them, so the clamp is checked where it matters: a model that fits on its own can
 	# still lose its fit when it is put in place. Trees overhang their tiles by design and are left out, as is the
 	# grass drawn round everything.)
 	var view := Objects3D.new()
 	for id: String in Game.items:
 		var def := Game.catalog.get_def(id)
-		if not (def is BuildingDef or def is DecorationDef) or id.ends_with("_tree") or Game.links.group_of(id) != "":
+		if not (def is BuildingDef or def is DecorationDef or def is BloomDef or def is VehicleDef or def is YoungDef) \
+				or id.ends_with("_tree") or Game.links.group_of(id) != "":
 			continue
 		var fp := Game.footprint(id)
 		var holder: Node3D = view._build({"uid": 7, "id": id, "row": 0, "col": 0, "t": Game.now()})
