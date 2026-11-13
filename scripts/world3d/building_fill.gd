@@ -33,6 +33,8 @@ const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building 
 const TREE_SIZE_JITTER := 0.08    # each tree of an orchard is made this much bigger or smaller, and turned at random
 const PLANT_LOD_EVERY := 10       # frames between looks at the zoom for an orchard's far blobs
 const TREE_FILL := 0.95           # an orchard tree's size against the space between trees (crowns touch, trunks show)
+const ORCHARD_SMALLEST := 0.55   # an orchard tree is drawn between these sizes (against a lone tree at 1.0)
+const ORCHARD_BIGGEST := 1.1     # (no bigger, or the crown reaches out of the field's border)
 const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
@@ -334,7 +336,8 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	var rows := ceili(float(slots) / per_row)
 	var span := room.grow(-TREE_CROWN * 1.1).abs()
 	var gap := minf(span.size.x / maxf(per_row - 1.0, 1.0), span.size.y / maxf(rows - 1.0, 1.0))
-	var size := clampf(gap * TREE_FILL, 0.55, 1.0)
+	# (A crown is TREE_CROWN wide each way at size 1: the size that makes crowns just meet across the gap.)
+	var size := clampf(gap * TREE_FILL / (2.0 * TREE_CROWN), ORCHARD_SMALLEST, ORCHARD_BIGGEST)
 	if not trees:
 		# Blooms grow in soil beds, one a row.
 		for r in rows:

@@ -244,7 +244,7 @@ static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1
 	if p >= SITE_BOARDS and str(r.get("type", "gable")) != "none":
 		ModelKit.roof(root, "gable", lo, hi, rise, 0.06, ModelKit.surface(Color("#d8b483"), "boards", 0.0), timber)
 	_materials_pile(root, Vector3(minf(hi.x + 0.3, fw - 0.2), 0, minf(c.z + 0.1, fd - 0.3)), 1.0 - p, timber)
-	return root
+	return SpaceFit.fit_model(root, fp)   # (a site keeps the tile border too: neighbours never touch)
 
 
 

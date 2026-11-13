@@ -1212,3 +1212,17 @@ func test_211_a_timer_tick_looks_only_at_what_time_changes() -> void:
 		kinds[Game.kind_of(o)] = true
 	_check(kinds.has("tree") and kinds.has("decor"), "the showcase has both kinds of thing")
 	Game.reset_game()
+
+
+func test_307_every_building_site_stays_inside_its_tile_border() -> void:
+	for id: String in Game.items:
+		if not Game.catalog.get_def(id) is BuildingDef:
+			continue
+		var fp := Game.footprint(id)
+		var room := SpaceFit.tile_room(fp).grow(0.02)
+		for progress: float in [0.1, 0.4, 0.7, 0.95]:
+			var model := ModelKit.bake(BuildingModel.build_site(Game.item_data(id), fp, progress))
+			var reach := SpaceFit.reach(model, model.transform)
+			_check(room.encloses(reach), "%s's site at %.0f%% stays inside its tile border (reaches %s)" % [
+				id, progress * 100.0, reach])
+			model.free()
