@@ -843,7 +843,7 @@
       "roof": {
         "type": "gambrel",
         "pitch": 1.2,
-        "color": "#5a3a2c"
+        "color": "#3b2a27"
       },
       "door": {
         "w": 0.4,

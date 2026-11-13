@@ -10,6 +10,7 @@ const PATH := "res://data/building_models.json"
 const SKIRT_PITCH := 0.3      # the pent roof round a ground floor under an upper storey: rise over half-span
 const SKIRT_OVER := 0.1        # and how far it overhangs
 const SPILL_REACH := 0.8      # how far a lit building's light reaches over the ground, in tiles
+const SILO_CHECKS := 14   # dark panels in the chequered band of a silo
 const PLINTH := 0.09
 const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals can look out of ([{at, size}])
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
@@ -678,6 +679,17 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			for k in 3:
 				ModelKit.cylinder(root, base + Vector3(0, h * (0.3 + 0.25 * k), 0), r + 0.008, 0.025,
 					ModelKit.paint(Color("#9aa2a8"), 0.5), -1.0, 20)
+			# The chequered band near the top: two rows of dark panels round the silo, offset like a chessboard.
+			for row in 2:
+				for k in SILO_CHECKS:
+					if (k + row) % 2 == 1:
+						continue
+					var a := TAU * (k + 0.5 * row) / SILO_CHECKS
+					var check := ModelKit.box(root, Vector3(-0.05, -0.035, 0.0), Vector3(0.05, 0.035, 0.014),
+						ModelKit.paint(Color("#4f565d")))
+					check.position = base + Vector3(sin(a) * (r - 0.002), h * 0.78 + row * 0.07 + 0.035,
+						cos(a) * (r - 0.002))
+					check.rotation.y = a
 			ModelKit.ball(root, base + Vector3(0, h, 0), r, ModelKit.paint(Color("#b9c0c4"), 0.6), Vector3(1, 0.6, 1))
 		"loft_door":
 			var y := float(ctx.get("hi", c).y) + 0.12
@@ -696,6 +708,10 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				Vector3(x + 0.02, y + 0.18, hi.z + 0.08),
 				ModelKit.paint(HAY)
 			)
+			# Straw spilling over the sill.
+			ModelKit.ball(root, Vector3(x - 0.04, y - 0.01, hi.z + 0.06), 0.045, ModelKit.paint(HAY), Vector3(1.6, 0.7, 1))
+			ModelKit.ball(root, Vector3(x + 0.05, y - 0.03, hi.z + 0.07), 0.035, ModelKit.paint(HAY.darkened(0.1)),
+				Vector3(1.4, 0.8, 1))
 		"balcony":
 			# A railed deck out from the upper floor's front, on brackets.
 			var ulo: Vector3 = ctx.get("upper_lo", lo)
