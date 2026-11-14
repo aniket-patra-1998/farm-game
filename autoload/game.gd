@@ -45,6 +45,8 @@ const SAVE_PATH := "user://save.json"
 const SAVE_DELAY_MSEC := 1500    # changes are written together, at most this often (a save is the whole farm)
 const BACKUP_SUFFIX := ".bak"     # the save before the last one: used if the newest is unreadable
 const TEMP_SUFFIX := ".tmp"
+## Kinds that never have anything to collect (is_ready; the 3D ready sign skips them without asking).
+const NEVER_READY: Array[String] = ["decor", "barn", "vehicle"]
 const SAVE_VERSION := 2         # 2: FarmVille footprints (older saves are settled on load)
 const OLDEST_SAVE_VERSION := 1
 const SHOWCASE_ARG := "--showcase"  # debug builds: start on the showcase farm (godot ... -- --showcase)
@@ -558,7 +560,7 @@ func is_ready(obj: Dictionary) -> bool:
 		return false
 	var it := item_data(obj["id"])   # one lookup: this runs for every object, every frame
 	var kind: String = it.get("kind", "")
-	if kind == "decor" or kind == "barn" or kind == "vehicle":
+	if NEVER_READY.has(kind):
 		return false # scenery, the barn and vehicles never produce
 	if not it.get("produces", true):
 		return false # the garage only stores

@@ -292,13 +292,15 @@ func can_rotate(o: Dictionary) -> Verdict:
 	return yes()
 
 
-## Can `o` be picked up and moved? Anything can, as in FarmVille (the Barn too), except a vehicle out at work
-## (a farm has one of each vehicle, so its id names it: see limit_of).
+## Can `o` be picked up and moved? Anything can, as in FarmVille (the Barn too), except a Garage while one of
+## its vehicles is out at work: it drives from there and comes back there (a farm has one of each vehicle, so
+## an id names it: see limit_of).
 func can_move(o: Dictionary) -> Verdict:
 	if o.is_empty():
 		return Verdict.new(Why.UNKNOWN)
-	if game.kind_of(o) == "vehicle" and game.vehicles.is_running(str(o["id"])):
-		return Verdict.new(Why.AT_WORK, tr("WAIT_TILL_IT_FINISHES") % str(game.item_data(str(o["id"])).get("name", "")))
+	for id: String in (o.get("inside", {}) as Dictionary):
+		if game.vehicles.is_running(id):
+			return Verdict.new(Why.AT_WORK, tr("WAIT_TILL_IT_FINISHES") % str(game.item_data(id).get("name", "")))
 	return yes()
 
 

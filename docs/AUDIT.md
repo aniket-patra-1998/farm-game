@@ -39,7 +39,8 @@ FarmVille's farmer was the player's face and hands.
 
 ## 3. Animals on the farm vs in homes (partial)
 FarmVille: a loose animal is harvested on its own timer (cows milk, chickens eggs, sheep wool) for coins and a
-chance of items; once ready it shows a sparkle; tapping it plays a harvest animation. Housed, animals no
+chance of items; once ready it shows FarmVille's ready sign (a soft light-pink triangle pointing down, bobbing
+over it: the same sign over every ready building, tree and animal; ReadyMarks); tapping it plays a harvest animation. Housed, animals no
 longer harvest one by one: the building fills toward its capacity and is harvested as one (all the animals'
 produce at once, plus building bonuses: babies in the Horse Stable/Nursery, Mystery Eggs from the Coop,
 shared items for neighbours); a building harvests only when "ready" (its own timer); animals in it are
@@ -69,8 +70,10 @@ friends to help); if the time runs out it wanders off.
   feature, the helps are items found while farming (or gems), like building parts; then friends.
 
 ## 5. Buildings (partial; see docs/NEXT.md and the buildings design doc)
-- done: buying, construction with materials, sizes/upgrades, limits, FarmVille footprints, crafting.
-- next: market tabs, own silhouettes, ready sparkle, broken Barn look; the 5 planned buildings with jobs
+- done: buying, construction with materials, sizes/upgrades, limits, FarmVille footprints, crafting; market
+  sections; one rules API (Verdicts); own silhouettes (tested); the ready sign; the broken Barn look; the
+  building bar (Move/Turn/Sell).
+- next: the 5 planned buildings with jobs
   (Greenhouse, Windmill, Juice Press, Spinning Mill, Silo); **Feed Mill** (3) and **Water Well** (6) join them.
 
 ## 6. Water (FV2, owner asked: missing)

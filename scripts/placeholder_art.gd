@@ -9,6 +9,8 @@ const READY_SIZE := 16.0          # the ready sign's half-width, in pixels (draw
 const READY_ROUND := 5.0          # how round its corners are
 const READY_FACE := Color("#ffc4dc")
 const READY_RIM := Color("#e57aa8")
+const READY_RATE := 2.4           # how fast it bobs (radians a second)
+const READY_BOB := 4.5            # and how far, in pixels
 const GRASS_B := Color("#86c757")
 const GRASS_TUFT := Color("#6fb146")
 const SOIL := Color("#a86f3d")
@@ -363,9 +365,10 @@ static func _ellipse(ci: CanvasItem, center: Vector2, rx: float, ry: float, colo
 
 
 
-## A four-point sparkle; alpha 0..1. Used to make ripe crops shimmer.
 ## FarmVille's ready sign: a soft, light pink triangle pointing down, its corners rounded, with a gloss.
-static func draw_ready_marker(ci: CanvasItem, at: Vector2) -> void:
+## `phase` (seconds) gives each its own beat, so they don't bob in step.
+static func draw_ready_marker(ci: CanvasItem, rest: Vector2, phase: float) -> void:
+	var at := rest + Vector2(0, sin(phase * READY_RATE) * READY_BOB)
 	var r := READY_SIZE - READY_ROUND
 	var sharp := PackedVector2Array([at + Vector2(-r, -r * 0.6), at + Vector2(r, -r * 0.6), at + Vector2(0, r)])
 	var soft := Geometry2D.offset_polygon(sharp, READY_ROUND, Geometry2D.JOIN_ROUND)

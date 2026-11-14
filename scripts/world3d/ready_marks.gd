@@ -15,7 +15,7 @@ var _material: ShaderMaterial
 var _tops: Array[Vector3] = []          # signs over what stands still
 var _animals: Array[Animal3D] = []      # and over these, wherever they walk
 var _zoom := -1.0
-var _animal_at: Array[Vector3] = []     # where each animal was when its sign was last put
+var _animal_at: Array[Vector3] = []     # where each animal's sign was last put
 var _where: Array[Vector3] = []         # where each sign is (a CPU copy: the GPU's can't be read back everywhere)
 
 
@@ -60,11 +60,19 @@ func follow_animals() -> void:
 	var first := _tops.size()
 	for k in _animals.size():
 		var a := _animals[k]
-		if not is_instance_valid(a) or a.position.is_equal_approx(_animal_at[k]):
+		if not is_instance_valid(a):
+			if _animal_at[k] != Vector3.ZERO:   # gone (sold, lifted): its sign shrinks to nothing till the next sync
+				_animal_at[k] = Vector3.ZERO
+				multimesh.set_instance_transform(first + k, Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
 			continue
-		_animal_at[k] = a.position
-		_where[first + k] = a.position + Vector3(0, a.reach().y + ABOVE, 0)
-		multimesh.set_instance_transform(first + k, Transform3D(Basis.IDENTITY, _where[first + k]))
+		if not a.visible or not a.is_visible_in_tree():
+			continue
+		var target := a.position + Vector3(0, a.reach().y + ABOVE, 0)
+		if target.is_equal_approx(_animal_at[k]):
+			continue
+		_animal_at[k] = target
+		_where[first + k] = target
+		multimesh.set_instance_transform(first + k, Transform3D(Basis.IDENTITY, target))
 
 
 ## Sign `k` over `top`, bobbing at `phase` (0..1: a thing keeps its own beat, so they don't bob in step).

@@ -166,13 +166,10 @@ func test_160_the_field_changes_under_the_wheels_as_the_vehicle_passes() -> void
 	g.vehicles.run_finished.connect(func(run: VehicleWork) -> void: finished.append(int(run.result["plots"])))
 	var run := g.vehicles.dispatch("tractor", 8, 8)
 	_check(run != null and g.vehicles.is_running("tractor"), "the tractor sets off")
-	var tractor := {}
-	for o in g.objects:
-		if str(o["id"]) == "tractor":
-			tractor = o
-	if not tractor.is_empty():
-		_eq(g.buildings.can_move(tractor).why, BuildingSystem.Why.AT_WORK, "a tractor at work can't be picked up")
-		_check(g.buildings.can_move(tractor).text != "", "and says why")
+	var garage: Dictionary = g.objects.filter(func(x: Dictionary) -> bool: return x["id"] == "garage")[0]
+	_eq(g.buildings.can_move(garage).why, BuildingSystem.Why.AT_WORK,
+		"the Garage stays put while its tractor is out at work")
+	_check(g.buildings.can_move(garage).text != "", "and says why")
 	_eq(_plowed(g, 8, 8, 2, 2), 0, "nothing is plowed the moment it sets off")
 	_eq(g.coins, coins, "and nothing is paid yet")
 	_check(g.vehicles.dispatch("tractor", 10, 10) == null, "it can't be sent twice at once")
@@ -190,6 +187,7 @@ func test_160_the_field_changes_under_the_wheels_as_the_vehicle_passes() -> void
 	_eq(g.vehicles.fuel_now(), fuel - 4, "fuel is burned plot by plot")
 	_eq(g.coins, coins - 4 * Balance.i("economy.plow_cost"), "and plowing is paid for as it goes")
 	_check(not g.vehicles.is_running("tractor"), "and it is free to go again")
+	_check(g.buildings.can_move(garage).ok(), "and its Garage can be moved again")
 	_done(g)
 
 

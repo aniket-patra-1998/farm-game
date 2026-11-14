@@ -299,8 +299,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
 			var fp := Game.footprint(o["id"])
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 			var high := -110.0 if Game.is_home(o) or Game.crafting.is_crafting(o) else -70.0
-			var bob := sin(t * 2.4 + float(piece.uid % 7)) * 5.0
-			PlaceholderArt.draw_ready_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, high + bob))
+			PlaceholderArt.draw_ready_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, high), t + float(piece.uid % 7))
 	for p: Variant in hungry:
 		if is_instance_valid(p):
 			_draw_hungry(ci, p as FarmPiece, t)
@@ -582,10 +581,12 @@ func _process(_delta: float) -> void:
 	var obj := Game.object_by_uid(uid)
 	if obj.is_empty():
 		return  # nothing here to lift: the press carries on as a tap or a drag
-	_pressing = false  # it is picked up now, so this press is not a tap
-	Feedback.moment("place")
-	_poke(uid)
-	start_placing(str(obj["id"]), uid)
+	_pressing = false  # it is picked up now (or refused, with its reason), so this press is not a tap
+	if start_placing(str(obj["id"]), uid):
+		Feedback.moment("place")
+		_poke(uid)
+	else:
+		Feedback.moment("error")
 
 
 ## Whether a touch at `screen_pos` is the farm's: the HUD floats over the farm and its buttons take their own taps
@@ -612,13 +613,14 @@ func _tile_at_screen(screen_pos: Vector2) -> Vector2i:
 ## Picks up something to place: a new item (`uid` -1), or one on the farm, which goes only if the rules let it
 ## move (Game.buildings.can_move); otherwise the reason is shown. Every way of moving (the Move tool, holding
 ## to lift, a building's panel) comes through here.
-func start_placing(item_id: String, uid := -1) -> void:
+func start_placing(item_id: String, uid := -1) -> bool:
 	if uid != -1:
 		var verdict := Game.buildings.can_move(Game.object_by_uid(uid))
 		if not verdict.ok():
 			info.emit(verdict.text)
-			return
+			return false
 	placement.start(item_id, uid)
+	return true
 
 
 ## Placing something taken back out of the barn (free; it keeps its timers reset).

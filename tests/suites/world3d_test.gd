@@ -1549,7 +1549,7 @@ static func _fill(cells: PackedFloat32Array, t: Array[Vector3]) -> void:
 ## The one ready sign (ReadyMarks) is over exactly what has something to collect: a home whose cycle is done, a
 ## tree, an animal; not over a building still working, a frame or a decoration.
 ## The starter Barn looks broken until repaired: another look (its own Instancer key) and a different model.
-func test_321_ready_buildings_sparkle_and_the_broken_barn_looks_broken() -> void:
+func test_321_ready_things_wear_the_one_sign_and_the_broken_barn_looks_broken() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.farm_size = 24
@@ -1578,8 +1578,8 @@ func test_321_ready_buildings_sparkle_and_the_broken_barn_looks_broken() -> void
 	objects.sync()
 	_eq(objects.ready_marks(), 1, "collected: their signs go, the cow's stays")
 	# The cow's sign walks with it.
-	var marks: ReadyMarks = objects.get("_ready_marks")
-	var beast: Animal3D = (objects.get("_views") as Dictionary)[9407]["node"]
+	var marks := objects.ready_marks_node()
+	var beast := objects.view_of(int(cow["uid"])) as Animal3D
 	beast.position += Vector3(1.5, 0, 0.5)
 	marks.follow_animals()
 	var sign_at := marks.where(0)

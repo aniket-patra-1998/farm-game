@@ -18,7 +18,7 @@ const CREAM := Color("#fbf6ec")
 const PINK := Color("#eba9a3")
 const BUBBLE := Color("#fffaf0")
 const BUBBLE_EDGE := Color("#5c3a1e")
-const EGG := Color("#f6e7c1")
+const READY_LIFT := 22.0   # how far over an animal's top the ready sign hovers, in pixels
 
 static var _circles := {}  # n -> unit circle points
 static var _barrels := {}  # n -> unit barrel points
@@ -44,7 +44,7 @@ static func draw(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool, p
 		_:
 			top = QuadrupedArt.draw(ci, ground, rig, p, body, accent)
 	if ready:   # the one ready sign everything wears, bobbing over the animal
-		PlaceholderArt.draw_ready_marker(ci, Vector2(ground.x, top - 22.0 + sin(p.time * 2.4) * 4.0))
+		PlaceholderArt.draw_ready_marker(ci, Vector2(ground.x, top - READY_LIFT), p.time)
 
 
 ## A product bubble over an animal that's ready to collect; it bobs gently.
