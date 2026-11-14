@@ -1315,10 +1315,15 @@ func test_313_every_tree_stands_on_a_bare_trunk_under_a_crown_that_is_not_a_blob
 	var holder := Node3D.new()
 	add_child(holder)
 	var checked := 0
+	var trees: Array = []
 	for id: String in Game.items:
-		var it: Dictionary = Game.items[id]
-		if str(it.get("kind", "")) != "tree":
-			continue
+		if str(Game.items[id].get("kind", "")) == "tree":
+			trees.append(Game.items[id])
+	# The decoration and scenery trees too (the willow's hanging curtain, the oak, the maple).
+	for id: String in ["willow_tree", "oak_tree", "maple_tree"]:
+		trees.append({"id": id})
+	for it: Dictionary in trees:
+		var id := str(it["id"])
 		for seed_value in 4:
 			for mask: int in [0, 0xff]:
 				var tree := TreeModel.build_at(holder, Vector3.ZERO, it, 1.0, true, seed_value, true, TreeModel.UNSET,
@@ -1694,3 +1699,55 @@ func test_326_beds_tufts_and_plants_follow_each_plot_and_a_smaller_farm() -> voi
 		n.queue_free()
 	Game.reset_game()
 
+
+
+## Decorations and blooms are built once per look and shared (Instancer): two of a kind in the same look share
+## their meshes, and what changes a look (a sign's mastered crop, a bloom going ready) gives a new one.
+func test_329_decor_and_blooms_share_built_looks_by_what_they_show() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Instancer.clear()
+	var objects := Objects3D.new()
+	add_child(objects)
+	var deco := ""
+	for id: String in Game.items:
+		var it: Dictionary = Game.items[id]
+		if str(it.get("kind", "")) == "decor" and Game.links.group_of(id) == "" and Game.footprint(id) == Vector2i.ONE \
+				and id not in ["mastery_sign", "perfect_bunch"]:
+			deco = id
+			break
+	var look := Instancer.VARIANTS   # (two tiles VARIANTS apart along a row are the same variant)
+	var a: Node3D = objects._build({"uid": 1, "id": deco, "row": 2, "col": 2})
+	var b: Node3D = objects._build({"uid": 2, "id": deco, "row": 2, "col": 2 + look})
+	_check(_mesh_ids(a) == _mesh_ids(b) and not _mesh_ids(a).is_empty(), "two %s in one look share their meshes" % deco)
+	var crops: Array = Game.crop_order.slice(0, 2)
+	var s1: Node3D = objects._build({"uid": 3, "id": "mastery_sign", "row": 4, "col": 4, "crop": crops[0]})
+	var s2: Node3D = objects._build({"uid": 4, "id": "mastery_sign", "row": 4, "col": 4 + look, "crop": crops[1]})
+	_check(_mesh_ids(s1) != _mesh_ids(s2), "mastery signs for two crops are built apart")
+	var bloom := ""
+	for id: String in Game.items:
+		if str(Game.items[id].get("kind", "")) == "bloom":
+			bloom = id
+			break
+	var cycle := int(Game.item_data(bloom).get("cycle_seconds", 86400))
+	var young: Node3D = objects._build({"uid": 5, "id": bloom, "row": 6, "col": 6, "t": Game.now()})
+	var ready: Node3D = objects._build({"uid": 6, "id": bloom, "row": 6, "col": 6 + look, "t": Game.now() - cycle - 1})
+	_check(_mesh_ids(young) != _mesh_ids(ready), "a ready bloom has its own look")
+	for n: Node in [a, b, s1, s2, young, ready, objects]:
+		n.free()
+	Game.reset_game()
+
+
+## The meshes of the model drawn under `node`, by identity (its own dressing, grass and stones at its foot, left
+## out: that is per piece by design).
+func _mesh_ids(node: Node) -> Array:
+	var out: Array = []
+	for mi in node.find_children("*", "MeshInstance3D", true, false):
+		var dressing := false
+		var up: Node = mi
+		while up != node:
+			dressing = dressing or up.name == StringName(String(Objects3D.DRESSING))
+			up = up.get_parent()
+		if not dressing:
+			out.append((mi as MeshInstance3D).mesh.get_instance_id())
+	return out

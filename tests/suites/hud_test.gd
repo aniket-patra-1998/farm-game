@@ -320,3 +320,23 @@ func test_328_seed_tree_and_animal_cards_wear_their_mastery_stars() -> void:
 	content.free()
 	main.free()
 	Game.reset_game()
+
+
+## Every "what's inside" row shows each thing's picture, count and name: animals in a home, bushels (crops) and a
+## recipe's inputs, and the building parts; so every crop and part has a picture model and a name.
+func test_330_contents_rows_show_a_picture_a_count_and_a_name_for_everything() -> void:
+	for id: String in Game.crops.keys() + GameState.part_ids:
+		var model := ItemIcons._model(id)
+		_check(model != null, "%s has a picture" % id)
+		_check(Game.name_of(id) != "", "and a name")
+		if model != null:
+			model.free()
+	var crop: String = Game.crop_order[0]
+	var row := UiKit.count_row([[crop, "3/5", true], [GameState.part_ids[0], "×2"]])
+	_eq(row.get_child_count(), 2, "one tile each")
+	var names := row.find_children("*", "Label", true, false).filter(
+		func(l: Label) -> bool: return l.has_meta(&"count_name"))
+	_eq((names[0] as Label).text, Game.name_of(crop), "its name under it")
+	var counts := (row.get_child(0) as Node).find_children("*", "Label", true, false)
+	_check(counts.any(func(l: Label) -> bool: return l.text == "3/5"), "its count on it")
+	row.free()

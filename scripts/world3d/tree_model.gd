@@ -20,8 +20,21 @@ const CROWN_TRIM := 0.88      # every crown is drawn this share of its data's wi
 const CROWN_REACH_MAX := 0.5   # no crown reaches further from its trunk than this (of the tree's size): never a blob
 const TRUNK_SHARE := 0.4      # bare trunk shows for at least this share of a tree's height, under the lowest leaves
 const TRUNK_LENGTH := 0.9     # every trunk is drawn this much of the length the rules above give it
-const WILLOW_DROP := 0.45    # how far a willow's crown hangs below its middle, of the crown's height above ground
-const WILLOW_FALLS := 9       # the hanging masses round a willow's rim
+const WILLOW_FALLS := 8       # the hanging masses round a willow's rim
+const WILLOW_FALL := 1.0      # how far one hangs below the crown's middle, of the crown's radius
+const WILLOW_FALL_VARY_MIN := 0.8   # and each its own length within this..
+const WILLOW_FALL_VARY_MAX := 1.1   # ..to this
+const WILLOW_RIM := 0.7       # where they hang from, of the crown's radius out from the trunk
+const WILLOW_FALL_W := 0.26   # how wide each is, of the crown's radius
+const WILLOW_TURN_VARY := 0.2 # radians each is turned off its even spacing
+const WILLOW_LIFT := -0.05    # a little darker than the crown above (they hang in its shade)
+const WILLOW_CARDS := 24      # leaf cards on a hanging mass (narrow: far fewer than a crown mass needs)
+const FORK_STEMS := 2         # a shrubby tree's trunk forks into this many more stems..
+const FORK_LOW := 0.3         # ..between this share of its height..
+const FORK_HIGH := 0.45       # ..and this
+const FORK_SPREAD := 0.45     # each reaching out this far under the crown, of its radius
+const FORK_THIN := 0.75       # and this much thinner than the trunk
+const FORK_TURN_VARY := 0.6   # radians each is turned off its even spacing
 const TRUNK_TAPER := 0.85     # a trunk is a thin straight pole: its top is this much of its foot
 const TRUNK_LEAN := 0.03      # and it leans no more than this (radians)
 const META_SHARE := &"trunk_share"   # on a built tree: the share of its height that is bare trunk
@@ -138,8 +151,6 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 			crown = _banana(t)
 		_:
 			crown = _crown_on_trunk(t)
-			if str(sh["form"]) == "weeping":
-				_droop(t, crown)
 	if sh.has("blossom"):
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
@@ -206,6 +217,8 @@ static func _crown_on_trunk(t: Dictionary) -> Vector3:
 	var first := root.get_child_count()
 	var centre := Vector3(0, float(sh["crown_h"]) * k * 0.6, 0)
 	_crown(t, centre)
+	if str(sh["form"]) == "weeping":
+		_droop(t, centre)   # (measured with the crown, so the reach cap and the trunk rules take it in)
 	# The crown is drawn bigger or smaller about the trunk's top, never reaching past the cap: smaller when too
 	# wide; bigger when the tree would stand too short, up to the cap, the trunk making up whatever is left.
 	var cap := CROWN_REACH_MAX * k / maxf(float(t["reach"]), 0.001)
@@ -279,10 +292,10 @@ static func _stems(t: Dictionary) -> void:
 	var h := float(sh["trunk_h"]) * k
 	var r := float(sh["trunk_r"]) * k * TRUNK_BULK
 	var cr := float(sh["crown_r"]) * k
-	for i in 2:
-		var a := PI * i + rng.randf_range(-0.6, 0.6)
-		var fork := Vector3(0, h * rng.randf_range(0.3, 0.45), 0)
-		_limb(root, fork, Vector3(cos(a) * cr * 0.45, h * 1.02, sin(a) * cr * 0.45), r * 0.75)
+	for i in FORK_STEMS:
+		var a := TAU * i / FORK_STEMS + rng.randf_range(-FORK_TURN_VARY, FORK_TURN_VARY)
+		var fork := Vector3(0, h * rng.randf_range(FORK_LOW, FORK_HIGH), 0)
+		_limb(root, fork, Vector3(cos(a) * cr * FORK_SPREAD, h, sin(a) * cr * FORK_SPREAD), r * FORK_THIN)
 
 
 # ---------------------------------------------------------------- crowns
@@ -368,11 +381,11 @@ static func _layout(shape: String, i: int, n: int, rng: RandomNumberGenerator) -
 ## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up
 ## in the crown catch more light than the ones low down).
 static func _canopy(root: Node3D, at: Vector3, radii: Vector3, rng: RandomNumberGenerator, leaf: Color, sun: Vector3,
-		lift: float, lobes: int, bump: float, shine: float) -> void:
+		lift: float, lobes: int, bump: float, shine: float, cards_most := FOLIAGE_CARDS) -> void:
 	var shade := func(light: float) -> Color: return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0))
 	ModelKit.canopy(root, at, radii * FOLIAGE_CORE, rng, shade, sun, lobes, bump, shine)
 	var mean := (radii.x + radii.y + radii.z) / 3.0
-	var cards := ModelKit.scaled(FOLIAGE_CARDS, FOLIAGE_MIN)
+	var cards := ModelKit.scaled(cards_most, FOLIAGE_MIN)
 	ModelKit.foliage_cards(root, at, radii, rng, shade, sun, cards, mean * FOLIAGE_CARD, shine)
 
 
@@ -406,23 +419,27 @@ static func _sunlit(c: Color) -> Color:
 
 
 ## A willow's droop: soft leafy masses hanging round the crown's rim, longer than wide, so the crown falls in a
-## curtain over the trunk without any stick-like strands.
+## curtain over the trunk without any stick-like strands. Built in the crown's own space, before it is fitted onto
+## its trunk; in a grove the sides a neighbour covers get none, and their shade is the crown's.
 static func _droop(t: Dictionary, centre: Vector3) -> void:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var rng: RandomNumberGenerator = t["rng"]
 	var cr := float(sh["crown_r"]) * k
-	var drop := centre.y * WILLOW_DROP
 	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -root.rotation.y)
+	var shaded := float(t["crowd"]) * Crowding.setting("tree", "shade")
 	var lobes := ModelKit.scaled(CROWN_LOBES, 5)
 	var n := ModelKit.scaled(WILLOW_FALLS, 5)
 	for i in n:
-		var a := TAU * i / n + rng.randf_range(-0.2, 0.2)
-		var long := drop * rng.randf_range(0.8, 1.1)
-		var at := centre + Vector3(cos(a) * cr * 0.82, -long * 0.45, sin(a) * cr * 0.82)
-		var radii := Vector3(cr * 0.3, long * 0.55, cr * 0.3)
-		_canopy(root, at, radii, rng, t["leaf"], sun, -0.05, lobes, CROWN_BUMP, float(t["shine"]))
+		var a := TAU * i / n + rng.randf_range(-WILLOW_TURN_VARY, WILLOW_TURN_VARY)
+		if Crowding.covered(int(t["mask"]), a - root.rotation.y):
+			continue
+		var long := cr * WILLOW_FALL * rng.randf_range(WILLOW_FALL_VARY_MIN, WILLOW_FALL_VARY_MAX)
+		var at := centre + Vector3(cos(a) * cr * WILLOW_RIM, -long * 0.5, sin(a) * cr * WILLOW_RIM)
+		var radii := Vector3(cr * WILLOW_FALL_W, long * 0.5, cr * WILLOW_FALL_W)
+		_canopy(root, at, radii, rng, t["leaf"], sun, WILLOW_LIFT - shaded, lobes, CROWN_BUMP, float(t["shine"]),
+			WILLOW_CARDS)
 		_measure(t, at, radii)
 
 

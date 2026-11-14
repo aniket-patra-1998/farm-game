@@ -178,12 +178,13 @@ func _set_up(k: int, id: String) -> bool:
 	return true
 
 
-## The item as the shop sells it: a building at its first size, a crop as a ripe bed, anything else as the farm
-## draws it.
+## The item as the shop sells it: a building at its first size, a crop as a ripe bed, a building part as itself,
+## anything else as the farm draws it.
 static func _model(id: String) -> Node3D:
 	var it := Game.item_data(id)
 	if it.is_empty():
-		return Crops3D.picture_model(id)   # (a crop: one ripe bed of it; null for anything unknown)
+		# A crop: one ripe bed of it; a building part: the thing itself (null for anything unknown).
+		return Crops3D.picture_model(id) if Game.crops.has(id) else MaterialModel.build(id)
 	if str(it.get("kind", "")) in ["building", "barn", "crafting"]:
 		return ModelKit.bake(BuildingModel.build(it, Game.footprint(id), 1))
 	return ScaleGuide.model_of(id)

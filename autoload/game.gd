@@ -335,6 +335,12 @@ func item_data(item_id: String) -> Dictionary:
 	return items.get(item_id, {})
 
 
+## The name of anything in the catalog (an item, a crop, a building part...), or "" for an unknown id.
+func name_of(id: String) -> String:
+	var d := catalog.get_def(id)
+	return d.name if d != null else ""
+
+
 func footprint(item_id: String) -> Vector2i:
 	var d := catalog.get_def(item_id)
 	return (d as PlaceableDef).footprint() if d is PlaceableDef else Vector2i.ONE

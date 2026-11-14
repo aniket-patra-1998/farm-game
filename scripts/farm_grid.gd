@@ -609,21 +609,11 @@ func swipe_start(screen_pos: Vector2, with_tool: String) -> int:
 	return i
 
 
-## Whether the tool in hand would do something on plot `i` (the rules `_act` follows, without acting).
+## Whether the tool in hand would do something on plot `i` (`job_for`, the same rules a tap follows).
 func would_act(i: int) -> bool:
 	if i < 0 or not Game.object_at(i).is_empty() or tool == "sell":
 		return false
-	var ph := Game.field.phase(i)
-	if ph == GameState.Phase.RIPE:
-		return true
-	match tool:
-		"plow":
-			return ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED
-		"plant":
-			return ph == GameState.Phase.PLOWED and selected_crop != ""
-		"fertilize":
-			return ph == GameState.Phase.GROWING and not Game.field.is_fertilized(i)
-	return false
+	return not job_for(i).is_empty()
 
 
 ## The plot lit under a finger that has just landed (-1 none).
@@ -970,42 +960,41 @@ func _act(i: int, loud: bool) -> void:
 	if not obj.is_empty():
 		_act_on_object(obj, loud)
 		return
-	var ph := Game.field.phase(i)
-
 	# The sell tool deletes plots (FarmVille's delete): even a ripe crop, after asking.
 	if tool == "sell":
 		if loud:
 			_try_clear(i)
 		return
-	# A ripe crop is harvested by any tool: tapping ripe crops should always just work.
-	if ph == GameState.Phase.RIPE:
-		_queue({"kind": "harvest", "plot": i}, loud)
-		return
+	var job := job_for(i)
+	if not job.is_empty():
+		_queue(job, loud)
+	elif loud:
+		if tool == "fertilize" and Game.field.phase(i) == GameState.Phase.GROWING:
+			info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
+		elif tool == "fertilize":
+			info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS"))
+		else:
+			_explain(i, Game.field.phase(i))
 
+
+## The job the tool in hand would give the farmer on open plot `i`, or {} for none: the one table of what each
+## tool does to each kind of plot, which a tap (`_act`) and a swipe (`would_act`) both follow. A ripe crop is
+## harvested by any tool (tapping ripe crops should always just work).
+func job_for(i: int) -> Dictionary:
+	var ph := Game.field.phase(i)
+	if ph == GameState.Phase.RIPE:
+		return {"kind": "harvest", "plot": i}
 	match tool:
 		"plow":
 			if ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED:
-				_queue({"kind": "plow", "plot": i}, loud)
-			elif loud:
-				_explain(i, ph)
+				return {"kind": "plow", "plot": i}
 		"plant":
 			if ph == GameState.Phase.PLOWED and selected_crop != "":
-				_queue({"kind": "plant", "plot": i, "crop": selected_crop}, loud)
-			elif loud:
-				_explain(i, ph)
+				return {"kind": "plant", "plot": i, "crop": selected_crop}
 		"fertilize":
 			if ph == GameState.Phase.GROWING and not Game.field.is_fertilized(i):
-				_queue({"kind": "fertilize", "plot": i}, loud)
-			elif loud:
-				if Game.field.is_fertilized(i):
-					info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
-				else:
-					info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS"))
-		"hand", "harvest":
-			if loud:
-				_explain(i, ph)
-
-
+				return {"kind": "fertilize", "plot": i}
+	return {}
 
 
 func _act_on_object(obj: Dictionary, loud: bool) -> void:
