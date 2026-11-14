@@ -299,6 +299,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 			var high := -110.0 if Game.is_home(o) or Game.crafting.is_crafting(o) else -70.0
 			PlaceholderArt.draw_ready_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, high), t + float(piece.uid % 7))
+	_draw_placing(ci)
 
 
 

@@ -243,3 +243,13 @@ func test_113_finding_an_object_by_uid_stays_right_however_the_list_changes() ->
 	_eq(str(g.object_by_uid(99999).get("id", "")), "hay_bale", "and an object added directly is found")
 	_check(g.object_by_uid(-1).is_empty(), "nothing has uid -1")
 	_done(g)
+
+
+## The overlay draws what is being placed (its ghost footprint, the homes that take it): a guard against the call
+## being lost when the overlay's other layers change, as it once was.
+func test_322_the_overlay_draws_what_is_being_placed() -> void:
+	var src := FileAccess.get_file_as_string("res://scripts/farm_grid.gd")
+	var start := src.find("func draw_overlay_on(")
+	var end := src.find("\nfunc ", start + 10)
+	_check(start >= 0 and src.substr(start, end - start).contains("_draw_placing(ci)"),
+		"draw_overlay_on draws the placing ghost")
