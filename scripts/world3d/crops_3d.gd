@@ -6,6 +6,7 @@ extends Node3D
 ## seconds as crops grow. Growth is the shader's: a growing plant carries when its stage starts and how long it
 ## lasts, and the shader sizes it from the farm's clock every frame, so a plant swells smoothly, not in steps.
 
+const CROP_SHADER := preload("res://shaders/crop3d.gdshader")
 const ROW_GAP := 0.31   # between plants in a plot's rows and columns: three rows of three, like a planted field
 const SPOTS := [Vector2(-ROW_GAP, -ROW_GAP), Vector2(0, -ROW_GAP), Vector2(ROW_GAP, -ROW_GAP),
 	Vector2(-ROW_GAP, 0), Vector2(0, 0), Vector2(ROW_GAP, 0),
@@ -35,7 +36,7 @@ var _size := -1        # the farm size last drawn (a smaller one drops the plant
 
 func _ready() -> void:
 	_material = ShaderMaterial.new()
-	_material.shader = load("res://shaders/crop3d.gdshader")
+	_material.shader = CROP_SHADER
 	_material.set_shader_parameter("size_from", SIZE_FROM)
 	_material.set_shader_parameter("rich_size", FERTILIZED_SIZE)
 	_base = floorf(_now())
@@ -85,13 +86,11 @@ static func picture_model(id: String) -> Node3D:
 	var root := Node3D.new()
 	var bed := MeshInstance3D.new()
 	bed.mesh = Plots3D.bed_mesh()
-	var soil := ShaderMaterial.new()
-	soil.shader = load("res://shaders/soil3d.gdshader")
-	bed.material_override = soil
+	bed.material_override = Plots3D.soil_material()
 	bed.position = Vector3(0.5, 0, 0.5)
 	root.add_child(bed)
 	var mat := ShaderMaterial.new()
-	mat.shader = load("res://shaders/crop3d.gdshader")
+	mat.shader = CROP_SHADER
 	mat.set_shader_parameter("produce_colour", Color.html(str(crop.get("color", "#e2453c"))))
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D

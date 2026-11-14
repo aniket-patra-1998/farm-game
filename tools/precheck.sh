@@ -12,11 +12,25 @@ else
 import pathlib, re, sys
 limits = dict(re.findall(r"^(max-line-length|max-file-lines):\s*(\d+)", open(".gdlintrc").read(), re.M))
 bad = []
+# What gdlint checks that a script can get wrong without noticing: the line and file limits, the order of
+# definitions at the top of a file, and the same resource loaded twice in one file.
+RANK = [("signal", 1), ("enum", 2), ("const", 3), ("@export", 5), ("static var", 6), ("var", 6), ("@onready", 7),
+        ("static func", 8), ("func", 8), ("class ", 8)]
 for f in sorted(p for d in ("autoload", "scripts", "tests", "tools") for p in pathlib.Path(d).rglob("*.gd")):
     lines = f.read_text().split("\n")
     if len(lines) > int(limits["max-file-lines"]):
         bad.append(f"{f}: {len(lines)} lines")
     bad += [f"{f}:{n}: {len(l)} characters" for n, l in enumerate(lines, 1) if len(l) > int(limits["max-line-length"])]
+    seen = 0
+    for n, l in enumerate(lines, 1):
+        for word, rank in RANK:
+            if l.startswith(word):
+                if rank < seen and not (rank == 6 and seen == 6):
+                    bad.append(f"{f}:{n}: definition out of order (class-definitions-order)")
+                seen = max(seen, rank)
+                break
+    loads = re.findall(r'(?<!pre)load\("([^"]+)"\)', "\n".join(lines))
+    bad += [f"{f}: {x} loaded twice (duplicated-load)" for x in sorted(set(loads)) if loads.count(x) > 1]
 print("\n".join(bad) or "gdlint limits: ok (gdlint itself isn't installed)")
 sys.exit(1 if bad else 0)
 PY

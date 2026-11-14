@@ -354,3 +354,12 @@ func test_331_every_collection_item_has_a_picture() -> void:
 				"%s has its two colours" % item["name"])
 			n += 1
 	_check(n >= 100, "(every item looked at: %d)" % n)
+
+
+## Every ribbon tier the data names has its colour in the theme, so a fifth tier can't come out magenta.
+func test_332_every_ribbon_tier_has_its_colour() -> void:
+	var tiers: Array = Game.ribbons.ribbon_data.get("tiers", [])
+	_check(tiers.size() >= 4, "(the four tiers)")
+	var colours: Array = UiTheme.colors()
+	for k in tiers.size():
+		_check(colours.has("ribbon_tier_%d" % k), "tier %d (%s) has a colour" % [k, tiers[k]])

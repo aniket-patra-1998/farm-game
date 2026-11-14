@@ -4,6 +4,7 @@ extends Node3D
 ## field): bevelled edges so beds read as mounds of earth, furrows along them, darker and damp where
 ## fertilized. Crops on top come from CropModels. One slot per tile, updated plot by plot (`update`).
 
+const SOIL_SHADER := preload("res://shaders/soil3d.gdshader")
 const BED := 0.9           # a bed's width, in tiles (the gaps between beds are grass)
 const HEIGHT := 0.09
 const BEVEL := 0.07
@@ -18,12 +19,17 @@ var _buffer := PackedFloat32Array()
 
 func _ready() -> void:
 	_beds = MultiMeshInstance3D.new()
-	var soil := ShaderMaterial.new()
-	soil.shader = load("res://shaders/soil3d.gdshader")
-	_beds.material_override = soil
+	_beds.material_override = soil_material()
 	_beds.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # flat: it only takes shadows
 	add_child(_beds)
 	rebuild()
+
+
+## The soil's material (a fresh one: each holder sets its own wetness and such).
+static func soil_material() -> ShaderMaterial:
+	var soil := ShaderMaterial.new()
+	soil.shader = SOIL_SHADER
+	return soil
 
 
 ## Lays out every bed again (a new farm or a bigger one): one instance slot per tile, so a single plot can be

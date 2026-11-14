@@ -25,6 +25,8 @@ const PAD := Color("#4f9a3a")
 const BLOOM := Color("#f4a6c8")
 const BLOOM_HEART := Color("#f2c230")
 
+static var _earth_material: StandardMaterial3D
+
 
 ## Builds a pond under `root`, centred at `c`, `rx` by `rz` at its shore.
 static func build(root: Node3D, c: Vector3, rx: float, rz: float, seed_value: int, lilies := 4) -> void:
@@ -179,9 +181,6 @@ static func _lilies(root: Node3D, c: Vector3, rx: float, rz: float, rng: RandomN
 				ModelKit.ball(root, p + Vector3(cos(b) * 0.02, 0.012, sin(b) * 0.02), 0.024, ModelKit.paint(BLOOM),
 					Vector3(0.7, 1.3, 0.7))
 			ModelKit.ball(root, p + Vector3(0, 0.014, 0), 0.012, ModelKit.paint(BLOOM_HEART))
-
-
-static var _earth_material: StandardMaterial3D
 
 
 ## The bank's material: its colours from the mesh, matte.

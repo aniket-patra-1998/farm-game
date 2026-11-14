@@ -3,10 +3,9 @@ extends RefCounted
 ## The Collections and Ribbons books.
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
-var hud: FarmHud
-
-
 const RARITY_KEYS := {"common": "RARITY_COMMON", "uncommon": "RARITY_UNCOMMON", "rare": "RARITY_RARE"}
+
+var hud: FarmHud
 
 
 func _init(owner: FarmHud) -> void:
@@ -112,13 +111,20 @@ func build_ribbons(content: VBoxContainer) -> void:
 		var tiers := HBoxContainer.new()
 		tiers.add_theme_constant_override("separation", 6)
 		for k in tier_names.size():
-			# Each tier as its own coloured ribbon (FarmVille's yellow, white, red and blue); a faded one is to come.
-			var icon := UiIcon.make("ribbon", UiTheme.size("ribbon_icon"), UiTheme.color("ribbon_tier_%d" % k))
-			icon.tooltip_text = str(tier_names[k])
-			icon.mouse_filter = Control.MOUSE_FILTER_PASS
+			# Each tier as its own coloured ribbon (FarmVille's yellow, white, red and blue) with its name under
+			# it; a faded one is still to come.
+			var tier := VBoxContainer.new()
+			tier.add_theme_constant_override("separation", 0)
+			tier.add_child(UiIcon.make("ribbon", UiTheme.size("ribbon_icon"), UiTheme.color("ribbon_tier_%d" % k)))
+			var name := Label.new()
+			name.text = str(tier_names[k])
+			name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			name.add_theme_font_size_override("font_size", int(UiTheme.size("font_count_name")))
+			name.add_theme_color_override("font_color", UiTheme.color("tool_label"))
+			tier.add_child(name)
 			if k >= earned:
-				icon.modulate = Color(1, 1, 1, 0.3)
-			tiers.add_child(icon)
+				tier.modulate = Color(1, 1, 1, 0.35)
+			tiers.add_child(tier)
 		head.add_child(tiers)
 		inner.add_child(head)
 
