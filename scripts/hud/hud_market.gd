@@ -25,31 +25,61 @@ func tabs() -> Array:
 	return out
 
 
-## Everything of one kind for sale, as a grid of cards (its picture, name, a line about it, its price).
+## Everything of one kind for sale, as a grid of cards (its picture, name, a line about it, its price), under a
+## strip that tells all about a card that can't be bought yet when it is tapped (a phone has no tooltips).
 func build_shelf(content: VBoxContainer, kind: String) -> void:
 	content.add_child(BookPanel.text(tr("BUY_THEN_DRAG_ONTO_AN_OPEN"), 18, BookPanel.CREAM))
+	var about := VBoxContainer.new()
+	var strip := BookPanel.card_frame(about)
+	strip.visible = false
+	strip.set_meta(&"about", true)
+	content.add_child(strip)
 	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
 	content.add_child(grid)
 	for id in Game.item_order:
 		var it := Game.item_data(id)
 		if it["kind"] != kind or int(it["unlock_level"]) >= 99:
 			continue
-		grid.add_child(item_card(id, it))
+		grid.add_child(item_card(id, it, func(why: String) -> void: show_about(strip, about, id, it, why)))
 
 
-## Land and the Mystery Box.
-func build_specials(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("LAND"), 26, BookPanel.SUN))
-	content.add_child(land_card())
-	content.add_child(mystery_box_card())
+## Fills the strip at the top of a shelf with all about one item: its picture and name, why it can't be bought
+## now, what it gives, and each thing it needs with where to get it.
+func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dictionary, why: String) -> void:
+	for c in about.get_children():
+		c.queue_free()
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
+	about.add_child(row)
+	var pic := TextureRect.new()
+	pic.texture = ItemIcons.of(id)
+	pic.custom_minimum_size = Vector2.ONE * UiTheme.size("card_icon")
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(pic)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(words)
+	words.add_child(BookPanel.text(str(it["name"]), 22))
+	if why != "":
+		words.add_child(BookPanel.text(why, 18, UiTheme.color("price_short")))
+	words.add_child(BookPanel.text(detail_of(id, it), 17))
+	strip.visible = true
+	hud._book.scroll_to_top()
 
 
-## One item's card: tapping it buys it (and puts it in hand to place) or says why it can't be bought yet.
-func item_card(id: String, it: Dictionary) -> Button:
+## One item's card: tapping it buys it (and puts it in hand to place), or, when it can't be bought now, shows
+## all about it in the shelf's strip (`tell`, given why).
+func item_card(id: String, it: Dictionary, tell: Callable) -> Button:
 	var locked := Game.level() < int(it["unlock_level"])
 	var verdict := Game.buildings.can_buy(id)
 	var blocked := locked or verdict.why in [BuildingSystem.Why.LIMIT, BuildingSystem.Why.GROUP_LIMIT,
 		BuildingSystem.Why.REQUIRES]
+	var affordable := Game.can_afford_item(id)
+	var unmet := 0
+	for need in Requirements.list(Game, id):
+		if not need["ok"]:
+			unmet += 1
 	var badge: Control
 	if locked:
 		badge = UiKit.price_badge("lock", tr("UNLOCKS_LEVEL") % int(it["unlock_level"]))
@@ -57,20 +87,31 @@ func item_card(id: String, it: Dictionary) -> Button:
 		badge = UiKit.price_badge("", verdict.short)
 	else:
 		var price := price_of(id, it)
-		badge = UiKit.price_badge(price[0], price[1])
-	var card := UiKit.item_card(ItemIcons.of(id), str(it["name"]), short_detail(id, it), badge, blocked)
-	card.tooltip_text = detail_of(id, it)
-	var affordable := Game.can_afford_item(id)
+		badge = UiKit.price_badge(price[0], price[1], not affordable)
+	var line := tr("NEEDS_N_FIRST") % unmet if unmet > 0 and not locked else short_detail(id, it)
+	var card := UiKit.item_card(ItemIcons.of(id), str(it["name"]), line, badge, blocked)
+	var buyable := not blocked and affordable and unmet == 0
+	card.set_meta(&"buyable", buyable)
 	card.pressed.connect(func() -> void:
-		if blocked:
-			hud.show_message(verdict.text if not locked else tr("UNLOCKS_AT_LEVEL") % [it["name"],
-				int(it["unlock_level"])])
-		elif not affordable:
-			hud.show_message(tr("NOT_ENOUGH_TO_BUY") % it["name"])
-		else:
+		if buyable:
 			hud._book.close_panel()
-			hud.place_requested.emit(id))
+			hud.place_requested.emit(id)
+		elif locked:
+			tell.call(tr("UNLOCKS_AT_LEVEL") % [it["name"], int(it["unlock_level"])])
+		elif blocked:
+			tell.call(verdict.text)
+		elif not affordable:
+			tell.call(tr("NOT_ENOUGH_TO_BUY") % it["name"])
+		else:
+			tell.call(""))
 	return card
+
+
+## Land and the Mystery Box.
+func build_specials(content: VBoxContainer) -> void:
+	content.add_child(BookPanel.text(tr("LAND"), 26, BookPanel.SUN))
+	content.add_child(land_card())
+	content.add_child(mystery_box_card())
 
 
 ## What an item costs, as [badge icon, words]: coins, gems, or free.
@@ -133,7 +174,8 @@ func land_card() -> Control:
 	return BookPanel.card_frame(inner)
 
 
-## The full line about an item (the card's tooltip): what it holds or gives, and what it needs.
+## All about an item (the strip at the top of its shelf): what it holds or gives, and what it needs, with where
+## to get what's missing.
 func detail_of(id: String, it: Dictionary) -> String:
 	var detail: String
 	match it["kind"]:
@@ -178,6 +220,8 @@ func detail_of(id: String, it: Dictionary) -> String:
 				what, FarmGrid.format_duration(int(it["cycle_seconds"])), int(it["payout"]), int(it["xp"])]
 	for need in Requirements.list(Game, id):
 		detail += "\n" + ("✓ " if need["ok"] else "• ") + str(need["text"])
+		if not need["ok"] and str(need.get("hint", "")) != "":
+			detail += " — " + str(need["hint"])
 	return detail
 
 

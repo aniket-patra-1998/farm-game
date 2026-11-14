@@ -161,7 +161,16 @@ func _ready() -> void:
 	(_main.get("hud") as FarmHud).show_building(bakery_uid)
 	await _frames(6)
 	_shot(dir + "/crafting_panel.png")
-	(_main.get("hud") as FarmHud)._book.close_panel()
+	var hud: FarmHud = _main.get("hud")
+	# The Market's animal shelf (cards with pictures made from the models) and Settings (the graphics level).
+	hud._show_market()
+	hud._book.show_tab(HudMarket.SHELVES.find(["animal", "ANIMALS"]) + 1)
+	await _frames(30)
+	_shot(dir + "/market_animals.png")
+	hud._show_settings()
+	await _frames(4)
+	_shot(dir + "/settings_panel.png")
+	hud._book.close_panel()
 	# Times of day and weather, on a farm of crops (using whatever finished art is in art/final).
 	Game.objects.clear()
 	var art_crops := [

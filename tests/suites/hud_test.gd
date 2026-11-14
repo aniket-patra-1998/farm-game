@@ -162,11 +162,26 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 	hud.place_requested.connect(func(id: String) -> void: placed.append(id))
 	book.show_tab(HudMarket.SHELVES.find(["decor", "DECORATIONS"]) + 1)
 	var bought := false
+	var told := false
 	for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
 		if grid.is_queued_for_deletion():
 			continue
 		for card: Button in grid.get_children():
-			if not bought and card.get_theme_stylebox("normal").bg_color == UiTheme.color("card_face"):
+			if not told and not card.get_meta(&"buyable", true):
+				card.pressed.emit()
+				told = true
+	_check(told, "the decorations shelf has a card that can't be bought yet")
+	var strips := 0
+	for strip: PanelContainer in book.find_children("*", "PanelContainer", true, false):
+		if strip.visible and not strip.is_queued_for_deletion() and strip.has_meta(&"about"):
+			strips += 1
+	_check(strips == 1 and placed.is_empty() and book.visible,
+		"tapping it shows all about it at the top of the shelf, and buys nothing")
+	for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
+		if grid.is_queued_for_deletion():
+			continue
+		for card: Button in grid.get_children():
+			if not bought and card.get_meta(&"buyable", false):
 				card.pressed.emit()
 				bought = true
 	_check(bought and placed.size() == 1, "tapping an open card puts that item in hand")

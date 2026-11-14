@@ -51,7 +51,8 @@
     "card_edge": "#5c3a1e",
     "card_locked": "#d8cbb0",
     "badge_face": "#fff6dc",
-    "lock_text": "#7a2e1e"
+    "lock_text": "#7a2e1e",
+    "price_short": "#c0392b"
   },
   "sizes": {
     "bar_height": 52,
@@ -85,6 +86,12 @@
     "font_side": 13,
     "toggle_size": 48,
     "slider_groove": 12,
+    "tab_pad": 14,
+    "badge_border": 2,
+    "badge_pad": 9,
+    "book_inset": 80,
+    "scroll_bar": 16,
+    "card_pad": 6,
     "slider_knob": 34,
     "zoom_size": 44,
     "top_height": 72,

@@ -170,36 +170,37 @@ static func tab_button(words: String, on: bool) -> Button:
 		sb.border_color = UiTheme.color("wood_dark")
 		sb.set_border_width_all(int(UiTheme.size("button_border")))
 		sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
-		sb.content_margin_left = 14
-		sb.content_margin_right = 14
+		sb.content_margin_left = UiTheme.size("tab_pad")
+		sb.content_margin_right = UiTheme.size("tab_pad")
 		b.add_theme_stylebox_override(state, sb)
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
 		b.add_theme_color_override(state, UiTheme.color("tab_text_on" if on else "tab_text"))
 	return b
 
 
-## A price on a card: a coin or a gem and the amount, on a light badge ("" kind: just the words).
-static func price_badge(kind: String, words: String) -> PanelContainer:
+## A price on a card: a coin or a gem and the amount, on a light badge ("" kind: just the words), the words red
+## when the player is `short` of it (FarmVille's red price).
+static func price_badge(kind: String, words: String, short := false) -> PanelContainer:
 	var box := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = UiTheme.color("badge_face")
 	sb.border_color = UiTheme.color("card_edge")
-	sb.set_border_width_all(2)
+	sb.set_border_width_all(int(UiTheme.size("badge_border")))
 	sb.set_corner_radius_all(int(UiTheme.size("badge_height") / 2.0))
-	sb.content_margin_left = 8
-	sb.content_margin_right = 10
+	sb.content_margin_left = UiTheme.size("badge_pad")
+	sb.content_margin_right = UiTheme.size("badge_pad")
 	box.add_theme_stylebox_override("panel", sb)
 	box.custom_minimum_size.y = UiTheme.size("badge_height")
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 4)
+	row.add_theme_constant_override("separation", int(UiTheme.size("badge_border")) * 2)
 	box.add_child(row)
 	if kind != "":
 		row.add_child(UiIcon.make(kind, UiTheme.size("badge_height") - 8.0))
 	var label := Label.new()
 	label.text = words
 	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
-	label.add_theme_color_override("font_color", UiTheme.color("ink"))
+	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
 	row.add_child(label)
 	return box
 
@@ -208,7 +209,8 @@ static func price_badge(kind: String, words: String) -> PanelContainer:
 ## shelves, the Barn's store).
 static func card_grid(view_width: float) -> GridContainer:
 	var grid := GridContainer.new()
-	var room := minf(UiTheme.size("book_width"), view_width - 80.0) - 2.0 * UiTheme.size("book_margin") - 16.0
+	var room := minf(UiTheme.size("book_width"), view_width - UiTheme.size("book_inset")) \
+		- 2.0 * UiTheme.size("book_margin") - UiTheme.size("scroll_bar")
 	grid.columns = maxi(1, floori(room / (UiTheme.size("card_width") + UiTheme.size("hud_gap"))))
 	grid.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
 	grid.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
@@ -235,10 +237,11 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_theme_constant_override("separation", 2)
 	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.offset_left = 6
-	col.offset_right = -6
-	col.offset_top = 6
-	col.offset_bottom = -6
+	var pad := UiTheme.size("card_pad")
+	col.offset_left = pad
+	col.offset_right = -pad
+	col.offset_top = pad
+	col.offset_bottom = -pad
 	b.add_child(col)
 	var pic := TextureRect.new()
 	pic.texture = picture
@@ -257,7 +260,7 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 		l.text = str(words[0])
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size.x = UiTheme.size("card_width") - 16.0
+		l.custom_minimum_size.x = UiTheme.size("card_width") - 2.0 * UiTheme.size("card_pad")
 		l.add_theme_font_size_override("font_size", int(UiTheme.size(str(words[1]))))
 		l.add_theme_color_override("font_color", UiTheme.color(str(words[2])))
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE

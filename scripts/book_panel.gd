@@ -92,6 +92,15 @@ func _ready() -> void:
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.add_theme_constant_override("separation", 14)
 	scroll.add_child(_content)
+	get_viewport().size_changed.connect(_on_screen_changed)
+
+
+## The screen turned or changed size: the panel takes the new width and its grids lay out again.
+func _on_screen_changed() -> void:
+	if visible:
+		_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"),
+			get_viewport_rect().size.x - UiTheme.size("book_inset"))
+		refresh()
 
 
 ## builder(content: VBoxContainer) fills the panel; it runs again on refresh().
@@ -122,7 +131,8 @@ func _show(title: String, builder: Callable) -> void:
 	_title.text = title
 	_builder = builder
 	# As wide as the theme says, narrower on small screens.
-	_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"), get_viewport_rect().size.x - 80.0)
+	_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"),
+		get_viewport_rect().size.x - UiTheme.size("book_inset"))
 	_build_tab_bar()
 	refresh()
 	visible = true
@@ -138,6 +148,10 @@ func _build_tab_bar() -> void:
 		var index := k
 		b.pressed.connect(func() -> void: show_tab(index))
 		_tab_bar.add_child(b)
+
+
+func scroll_to_top() -> void:
+	_scroll.scroll_vertical = 0
 
 
 func close_panel() -> void:

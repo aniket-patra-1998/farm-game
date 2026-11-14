@@ -3,8 +3,8 @@ extends RefCounted
 ## How good the farm looks against what it costs the phone: low, mid or high (data/quality.json), the player's
 ## choice kept in user://settings.cfg beside the sound settings. A phone starts on mid, a computer on high.
 ## `apply` sets the 3D world to a level: shadows (and how many splits and how far), glow, the 3D resolution
-## (the interface stays sharp), how soon models switch to their simpler levels, and how often animals out of
-## the main view are posed. Changing the level applies it at once (`notifier`).
+## (the interface stays sharp), how soon models switch to their simpler levels, and how often animals are
+## posed (every frame, or every other on low). Changing the level applies it at once (`notifier`).
 
 const DATA := "res://data/quality.json"
 const SETTINGS := "user://settings.cfg"
@@ -13,18 +13,23 @@ const KEY := "quality"
 const LEVELS: Array[String] = ["low", "mid", "high"]
 
 static var _data := {}
+static var _level := ""   # the level in use, read from the settings file once
 static var notifier := Signals.new()
 
 
 ## The level in use: the player's choice, or the default for this kind of device.
 static func level() -> String:
+	if _level != "":
+		return _level
 	var cfg := ConfigFile.new()
 	if cfg.load(SETTINGS) == OK:
 		var chosen := str(cfg.get_value(SECTION, KEY, ""))
 		if LEVELS.has(chosen):
-			return chosen
+			_level = chosen
+			return _level
 	var data := _load()
-	return str(data.get("default_phone" if OS.has_feature("mobile") else "default_computer", "mid"))
+	_level = str(data.get("default_phone" if OS.has_feature("mobile") else "default_computer", "mid"))
+	return _level
 
 
 ## Picks a level, keeps it and applies it everywhere.
@@ -35,6 +40,7 @@ static func choose(name: String) -> void:
 	cfg.load(SETTINGS)
 	cfg.set_value(SECTION, KEY, name)
 	cfg.save(SETTINGS)
+	_level = name
 	notifier.emitted.emit()
 
 

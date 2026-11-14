@@ -260,10 +260,7 @@ func _shadow_casters() -> void:
 			if mesh == null:
 				continue
 			var count: int = (n as MultiMeshInstance3D).multimesh.instance_count if n is MultiMeshInstance3D else 1
-			var tris := 0
-			for k in mesh.get_surface_count():
-				var i: int = mesh.surface_get_array_index_len(k)
-				tris += (i if i > 0 else mesh.surface_get_array_len(k)) / 3
+			var tris := mesh.get_faces().size() / 3
 			var owner_name := _owner_kind(n)
 			by[owner_name] = int(by.get(owner_name, 0)) + tris * count
 	var names := by.keys()

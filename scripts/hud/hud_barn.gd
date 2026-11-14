@@ -153,6 +153,7 @@ func add_group_cards(grid: GridContainer, content: VBoxContainer, ids: Array, fi
 			more.queue_free()
 			add_group_cards(grid, content, ids, first, count, to))
 		content.add_child(more)
+		content.move_child(more, grid.get_index() + 1)   # (right under the grid it extends)
 
 
 ## A bloom's card: when it's ready, whether it has withered (and regrowing it with Flower Food), and for a

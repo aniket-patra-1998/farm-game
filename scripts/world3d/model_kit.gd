@@ -62,6 +62,8 @@ static var _meshes := {}     # key -> Mesh (shared unit shapes)
 
 
 static var _white := {}   # material id -> [white twin, colour]
+## Whether `bake` gives big meshes simpler levels of detail (off for one-off close-ups such as item pictures).
+static var lods := true
 
 
 # ---------------------------------------------------------------- materials
@@ -731,7 +733,8 @@ static func bake(root: Node3D) -> Node3D:
 			mats.append(g["mat"])
 		if mesh.get_surface_count() == 0:
 			continue
-		mesh = with_lods(mesh)
+		if lods:
+			mesh = with_lods(mesh)
 		var mi := MeshInstance3D.new()
 		mi.mesh = mesh
 		for k in mats.size():
