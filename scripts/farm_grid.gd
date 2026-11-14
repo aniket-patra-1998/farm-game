@@ -7,6 +7,7 @@ signal info(text: String)
 signal object_tapped(uid: int)        # a building was tapped while not ready
 
 signal placing_changed(text: String)  # "" when placement ends
+signal tool_changed(tool: String)     # the tool in hand changed here, not from the tool panel (a vehicle tapped)
 signal object_poked(uid: int)         # something on the farm was tapped: it reacts (bounce, an animal looks round)
 signal plants_popped(index: int, crop_id: String)  # a plot was harvested: its plants pop off
 signal collected(uid: int)                         # a building or animal was collected from
@@ -36,7 +37,7 @@ const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is 
 static var _scenery: Array = []
 
 
-var tool := "plow"       # "plow", "plant", "fertilize", "hand", "move", "store", "sell", "rotate" or "vehicle"
+var tool := "plow"   # plow, plant, fertilize, hand, harvest, move, store, sell, rotate or vehicle
 var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
 var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
 
@@ -600,9 +601,10 @@ func _process(_delta: float) -> void:
 	start_placing(str(obj["id"]), uid)
 
 
-func _on_farm_area(screen_pos: Vector2) -> bool:
-	var view_h := get_viewport().get_visible_rect().size.y
-	return not Game.modal_open and screen_pos.y >= FarmHud.TOP_H and screen_pos.y <= view_h - FarmHud.BOTTOM_H
+## Whether a touch at `screen_pos` is the farm's: the HUD floats over the farm and its buttons take their own taps
+## first (this is unhandled input), so everywhere else is the farm unless a panel is open.
+func _on_farm_area(_screen_pos: Vector2) -> bool:
+	return not Game.modal_open
 
 
 
@@ -917,7 +919,7 @@ func _act(i: int, first_touch: bool) -> void:
 					info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
 				else:
 					info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS"))
-		"hand":
+		"hand", "harvest":
 			if first_touch:
 				_explain(i, ph)
 
@@ -944,12 +946,14 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			object_tapped.emit(uid)
 		return
 	if kind == "vehicle" and tool != "move":
+		# Tapping a vehicle takes it in hand to work the fields (FarmVille's way); with no fuel, the fuel panel.
 		if first_touch:
 			_poke(uid)
-			if Game.under_construction(obj):
+			if Game.under_construction(obj) or Game.vehicles.fuel_now() <= 0:
 				object_tapped.emit(uid)
 			else:
-				info.emit(tr("PICK_THE_IN_THE_TOOLBAR_THEN") % Game.item_data(obj["id"])["name"])
+				set_tool("vehicle", str(obj["id"]))
+				tool_changed.emit("vehicle")
 		return
 	if kind == "decor" and tool != "move":
 		if first_touch:
@@ -987,6 +991,10 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if not first_touch:
 		return
 	_poke(uid)
+	if tool == "harvest":   # the Harvest tool gathers what is ready and opens nothing: say when it will be
+		info.emit(tr("NOT_READY_YET_READY_IN") % [Game.item_data(obj["id"])["name"],
+			format_duration(Game.seconds_until_ready(obj))])
+		return
 	if Game.is_building(obj) or Game.crafting.is_crafting(obj) or Game.kind_of(obj) == "bloom" \
 			or Game.feeds.is_feedable(obj):
 		object_tapped.emit(uid)

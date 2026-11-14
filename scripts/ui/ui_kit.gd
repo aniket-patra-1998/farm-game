@@ -114,3 +114,42 @@ static func plaque(text: String) -> PanelContainer:
 ## The level meter with its star.
 static func xp_bar() -> UiXpBar:
 	return UiXpBar.make()
+
+
+## A tool or menu button: an icon over a short label, on a cream face; lit (the tool in hand) when pressed.
+## `w` and `h` default to the theme's tool size.
+static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px := 0.0) -> Button:
+	var bw := w if w > 0.0 else UiTheme.size("tool_size")
+	var bh := h if h > 0.0 else UiTheme.size("tool_size")
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(bw, bh)
+	b.focus_mode = Control.FOCUS_NONE
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		var face := UiTheme.color("tool_face_on" if state.contains("pressed") else "button_face")
+		if state == "hover":
+			face = face.lightened(0.25)
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = face
+		sb.border_color = UiTheme.color("cream") if state.contains("pressed") else UiTheme.color("button_edge")
+		sb.set_border_width_all(int(UiTheme.size("button_border")))
+		sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
+		b.add_theme_stylebox_override(state, sb)
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 0)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(box)
+	var icon := UiIcon.make(kind, icon_px if icon_px > 0.0 else UiTheme.size("tool_icon"))
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(icon)
+	var label := Label.new()
+	label.text = words
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_tool")))
+	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(label)
+	b.set_meta("icon", icon)
+	b.set_meta("label", label)
+	return b

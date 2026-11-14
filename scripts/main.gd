@@ -85,11 +85,15 @@ func _ready() -> void:
 	add_child(fx)
 	grid.fx = fx
 
+	hud.camera = camera
+	hud.grid = grid
+	hud.fit_view = _fit_camera
 	hud.tool_selected.connect(grid.set_tool)
 	hud.place_requested.connect(grid.start_placing)
 	hud.cancel_place_requested.connect(grid.cancel_placing)
 	hud.place_stored_requested.connect(grid.start_placing_stored)
 	grid.placing_changed.connect(hud.show_placing)
+	grid.tool_changed.connect(func(t: String) -> void: hud.tools.show_tool(t))
 	grid.object_tapped.connect(hud.show_building)
 	grid.info.connect(hud.show_message)
 	Game.message.connect(hud.show_message)

@@ -1,10 +1,12 @@
 class_name UiIcon
 extends Control
 ## A small icon drawn in code, sharp at any size: a coin, a gem, a star, an eye, a speaker, a note, a magnifier
-## (plus or minus), a frame-all, a camera, an arrow, a ribbon, a plus. Square; it fills the smaller side.
+## (plus or minus), a frame-all, a camera, an arrow, a ribbon, a plus; the tools (hoe, seeds, basket, fertilizer,
+## move, barn, tag) and the menu (market, album, neighbours, gear). Square; it fills the smaller side.
 
 const KINDS: Array[String] = ["coin", "gem", "star", "eye", "speaker", "note", "zoom_in", "zoom_out", "fit", "camera",
-	"arrow", "ribbon", "plus"]
+	"arrow", "ribbon", "plus", "hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag", "market", "album",
+	"neighbours", "gear"]
 const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
 
@@ -132,7 +134,99 @@ func _draw() -> void:
 		"plus":
 			draw_line(c + Vector2(-r * 0.6, 0), c + Vector2(r * 0.6, 0), UiTheme.color("plus"), maxf(2.5, s * 0.2))
 			draw_line(c + Vector2(0, -r * 0.6), c + Vector2(0, r * 0.6), UiTheme.color("plus"), maxf(2.5, s * 0.2))
+		"hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag":
+			_draw_tool(c, r, s, ink, light)
+		"market", "album", "neighbours", "gear":
+			_draw_menu(c, r, s, ink, light)
 		_:
 			draw_rect(Rect2(Vector2.ZERO, Vector2(s, s)), Color.MAGENTA, false, 2.0)
 	if struck:
 		draw_line(c + Vector2(-r * 0.85, -r * 0.85), c + Vector2(r * 0.85, r * 0.85), Color("#d23b2e"), maxf(2.5, s * 0.12))
+
+
+
+## The farm tools: a hoe, a seed bag, a basket of produce, a fertilizer sack, four-way arrows, a red barn, a price tag.
+func _draw_tool(c: Vector2, r: float, s: float, ink: Color, light: Color) -> void:
+	var w := maxf(1.5, s * 0.07)
+	match kind:
+		"hoe":
+			draw_line(c + Vector2(-r * 0.7, r * 0.8), c + Vector2(r * 0.35, -r * 0.45), UiTheme.color("wood_light"),
+				maxf(2.5, s * 0.12))
+			var blade := PackedVector2Array([c + Vector2(r * 0.15, -r * 0.75), c + Vector2(r * 0.85, -r * 0.5),
+				c + Vector2(r * 0.6, -r * 0.15), c + Vector2(r * 0.3, -r * 0.4)])
+			draw_colored_polygon(blade, UiTheme.color("metal"))
+			draw_polyline(PackedVector2Array(Array(blade) + [blade[0]]), ink, w)
+		"seeds":
+			var bag := PackedVector2Array([c + Vector2(-r * 0.6, -r * 0.35), c + Vector2(-r * 0.3, -r * 0.75),
+				c + Vector2(r * 0.3, -r * 0.75), c + Vector2(r * 0.6, -r * 0.35), c + Vector2(r * 0.7, r * 0.85),
+				c + Vector2(-r * 0.7, r * 0.85)])
+			draw_colored_polygon(bag, UiTheme.color("sack"))
+			draw_polyline(PackedVector2Array(Array(bag) + [bag[0]]), ink, w)
+			draw_circle(c + Vector2(0, r * 0.2), r * 0.28, UiTheme.color("leaf"))
+		"basket":
+			draw_circle(c + Vector2(-r * 0.35, -r * 0.15), r * 0.28, UiTheme.color("berry"))
+			draw_circle(c + Vector2(r * 0.05, -r * 0.3), r * 0.28, UiTheme.color("coin"))
+			draw_circle(c + Vector2(r * 0.4, -r * 0.12), r * 0.28, UiTheme.color("leaf"))
+			var b := PackedVector2Array([c + Vector2(-r * 0.85, 0), c + Vector2(r * 0.85, 0),
+				c + Vector2(r * 0.6, r * 0.85), c + Vector2(-r * 0.6, r * 0.85)])
+			draw_colored_polygon(b, UiTheme.color("wood_light"))
+			draw_polyline(PackedVector2Array(Array(b) + [b[0]]), ink, w)
+		"fertilizer":
+			draw_rect(Rect2(c + Vector2(-r * 0.55, -r * 0.7), Vector2(r * 1.1, r * 1.5)), UiTheme.color("sack"))
+			draw_rect(Rect2(c + Vector2(-r * 0.55, -r * 0.7), Vector2(r * 1.1, r * 1.5)), ink, false, w)
+			draw_circle(c + Vector2(0, r * 0.05), r * 0.3, UiTheme.color("leaf"))
+		"move":
+			var col := UiTheme.color("sky_ink")
+			draw_line(c + Vector2(-r * 0.75, 0), c + Vector2(r * 0.75, 0), col, maxf(2.0, s * 0.1))
+			draw_line(c + Vector2(0, -r * 0.75), c + Vector2(0, r * 0.75), col, maxf(2.0, s * 0.1))
+			for d: Vector2 in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
+				var tip := c + d * r * 0.9
+				var side := Vector2(-d.y, d.x) * r * 0.25
+				draw_colored_polygon(PackedVector2Array([tip, tip - d * r * 0.35 + side, tip - d * r * 0.35 - side]), col)
+		"barn":
+			var house := PackedVector2Array([c + Vector2(-r * 0.8, -r * 0.15), c + Vector2(0, -r * 0.8),
+				c + Vector2(r * 0.8, -r * 0.15), c + Vector2(r * 0.8, r * 0.8), c + Vector2(-r * 0.8, r * 0.8)])
+			draw_colored_polygon(house, UiTheme.color("barn_red"))
+			draw_polyline(PackedVector2Array(Array(house) + [house[0]]), ink, w)
+			draw_rect(Rect2(c + Vector2(-r * 0.3, r * 0.15), Vector2(r * 0.6, r * 0.65)), light)
+		"tag":
+			var tag := PackedVector2Array([c + Vector2(-r * 0.85, r * 0.05), c + Vector2(-r * 0.05, -r * 0.8),
+				c + Vector2(r * 0.8, -r * 0.8), c + Vector2(r * 0.8, -r * 0.0), c + Vector2(0, r * 0.85)])
+			draw_colored_polygon(tag, UiTheme.color("coin"))
+			draw_polyline(PackedVector2Array(Array(tag) + [tag[0]]), UiTheme.color("coin_edge"), w)
+			draw_circle(c + Vector2(r * 0.45, -r * 0.45), r * 0.12, UiTheme.color("coin_edge"))
+
+
+## The menu: a market stall, a collection album, two neighbours, a gear.
+func _draw_menu(c: Vector2, r: float, s: float, ink: Color, light: Color) -> void:
+	var w := maxf(1.5, s * 0.07)
+	match kind:
+		"market":
+			draw_rect(Rect2(c + Vector2(-r * 0.7, -r * 0.1), Vector2(r * 1.4, r * 0.9)), light)
+			draw_rect(Rect2(c + Vector2(-r * 0.7, -r * 0.1), Vector2(r * 1.4, r * 0.9)), ink, false, w)
+			for k in 4:
+				var x := -r * 0.85 + r * 0.425 * k
+				draw_colored_polygon(PackedVector2Array([c + Vector2(x, -r * 0.75), c + Vector2(x + r * 0.425, -r * 0.75),
+					c + Vector2(x + r * 0.425, -r * 0.1), c + Vector2(x, -r * 0.1)]),
+					UiTheme.color("barn_red") if k % 2 == 0 else light)
+			draw_rect(Rect2(c + Vector2(-r * 0.85, -r * 0.75), Vector2(r * 1.7, r * 0.65)), ink, false, w)
+		"album":
+			draw_rect(Rect2(c + Vector2(-r * 0.75, -r * 0.75), Vector2(r * 1.5, r * 1.5)), UiTheme.color("sky_ink"))
+			for k in 4:
+				var at := c + Vector2(-r * 0.55 + (k % 2) * r * 0.6, -r * 0.55 + int(k / 2.0) * r * 0.6)
+				draw_rect(Rect2(at, Vector2(r * 0.5, r * 0.5)), light)
+		"neighbours":
+			for k in 2:
+				var x := -r * 0.35 + r * 0.7 * k
+				var col := UiTheme.color("skin") if k == 0 else UiTheme.color("skin").darkened(0.2)
+				draw_circle(c + Vector2(x, -r * 0.35), r * 0.3, col)
+				draw_colored_polygon(PackedVector2Array([c + Vector2(x - r * 0.45, r * 0.85),
+					c + Vector2(x - r * 0.3, r * 0.1), c + Vector2(x + r * 0.3, r * 0.1), c + Vector2(x + r * 0.45, r * 0.85)]),
+					UiTheme.color("cash_bar"))
+		"gear":
+			for k in 8:
+				var a := TAU * k / 8.0
+				draw_line(c + Vector2(cos(a), sin(a)) * r * 0.45, c + Vector2(cos(a), sin(a)) * r * 0.88, ink,
+					maxf(3.0, s * 0.16))
+			draw_circle(c, r * 0.55, ink)
+			draw_circle(c, r * 0.24, light)

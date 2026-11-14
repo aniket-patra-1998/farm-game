@@ -1,7 +1,8 @@
 class_name FarmHud
 extends CanvasLayer
-## Top bar (coins, level, XP), bottom toolbar (tools and seeds) and short messages.
-## Built in code so it scales cleanly between phone and tablet.
+## The heads-up display, FarmVille's way, built from the kit (UiKit, data/ui_theme.json): the top (coins, cash,
+## farm name, XP and level: HudTop), the tool panel (HudTools), the sides (view toggles, menu, zoom, neighbours'
+## strip: HudSide), and short messages, the tutorial banner and the placing bar. The panels live in scripts/hud/.
 
 signal tool_selected(tool: String, crop_id: String)
 signal place_requested(item_id: String)
@@ -10,10 +11,8 @@ signal cancel_place_requested
 signal place_stored_requested(index: int)
 
 
-const TOP_H := 84.0
-const BOTTOM_H := 150.0
-
-const BUTTON_SIZE := Vector2(150, 112)
+const TOP_H := 72.0        # the top strip the counters stand in (the camera keeps the farm's middle clear of it)
+const BOTTOM_H := 102.0    # and the bottom one the tool panel stands in
 const GROUP_PAGE := 30     # rows of a long grouped list (the barn) built at a time
 
 const WOOD := Color("#7a4f2c")
@@ -25,30 +24,23 @@ const SUN := Color("#ffd34d")
 const LOCKED := Color("#d8cbb0")
 
 
-var _coins_label: Label
-var _gems_label: Label
-var _clock_label: Label
-var _level_label: Label
-var _xp_bar: ProgressBar
-var _xp_label: Label
+var top: HudTop
+var tools: HudTools
+var side: HudSide
+var interface_hidden := false
+var camera: FarmCamera              # set by Main, for the zoom buttons
+var grid: FarmGrid                  # set by Main: what is being moved (the placing bar's Turn button)
+var fit_view: Callable              # set by Main: shows the whole farm
+
 var _toast: Label
 var _toast_tween: Tween
 var _toast_holder: CenterContainer
 var _tutorial: Label
-var _reset_button: Button
-var _tool_group := ButtonGroup.new()
-var _seed_buttons := {} # crop id -> Button
 var _book: BookPanel
-var _unwither_button: Button
-var _farmhand_button: Button
-var _arborist_button: Button
-var _gardener_button: Button
-var _fert_all_button: Button
-var _vehicle_row: HBoxContainer
-var _fuel_button: Button
 var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
 var _placing_label: Label
+var _turn_button: Button
 
 var _building_uid := -1
 
@@ -65,6 +57,7 @@ var _coin_roll: Tween
 @onready var feed := HudFeed.new(self)
 @onready var books := HudBooks.new(self)
 @onready var settings := HudSettings.new(self)
+@onready var seeds := HudSeeds.new(self)
 
 
 func _ready() -> void:
@@ -74,8 +67,12 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = _make_theme()
 	add_child(root)
-	_build_top_bar(root)
-	_build_toolbar(root)
+	top = HudTop.new(self)
+	top.build(root)
+	side = HudSide.new(self)
+	side.build(root)
+	tools = HudTools.new(self)
+	tools.build(root)
 	_build_tutorial(root)
 	_build_toast(root)
 	_build_placing_bar(root)
@@ -92,253 +89,21 @@ func _ready() -> void:
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.gems_changed.connect(func(_g: int) -> void: _refresh())
-	Game.inventory_changed.connect(_refresh_unwither)
-	Game.inventory_changed.connect(_refresh_seed_buttons)
-	Game.inventory_changed.connect(_refresh_vehicles)
-	Game.objects_changed.connect(_refresh_vehicles)
 	Game.inventory_changed.connect(_refresh_book)
 	Game.farm_expanded.connect(func(_s: int) -> void: _refresh_book())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
-	Game.leveled_up.connect(func(_l: int) -> void: _refresh_seed_buttons())
 	Game.tutorial_changed.connect(func(_s: int) -> void: _refresh_tutorial())
+	var tick := Timer.new()
+	tick.wait_time = 1.0
+	tick.autostart = true
+	tick.timeout.connect(_refresh_clock)
+	add_child(tick)
 	_refresh()
 	_refresh_clock()
 	_refresh_tutorial()
 
 
 # ---------------------------------------------------------------- layout
-
-
-func _build_top_bar(root: Control) -> void:
-	var bar := PanelContainer.new()
-	bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	bar.custom_minimum_size.y = TOP_H
-	root.add_child(bar)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
-	bar.add_child(row)
-
-	# Coins on top, gems underneath, so both fit beside the menu buttons.
-	var money := VBoxContainer.new()
-	money.alignment = BoxContainer.ALIGNMENT_CENTER
-	money.add_theme_constant_override("separation", 0)
-	row.add_child(money)
-	_coins_label = Label.new()
-	_coins_label.add_theme_color_override("font_color", SUN)
-	_coins_label.add_theme_font_size_override("font_size", 26)
-	money.add_child(_coins_label)
-	_gems_label = Label.new()
-	_gems_label.add_theme_color_override("font_color", Color("#9be7ff"))
-	_gems_label.add_theme_font_size_override("font_size", 20)
-	money.add_child(_gems_label)
-
-	_clock_label = Label.new()
-	_clock_label.add_theme_font_size_override("font_size", 16)
-	money.add_child(_clock_label)
-	var tick := Timer.new()
-	tick.wait_time = 1.0
-	tick.autostart = true
-	tick.timeout.connect(_refresh_clock)
-	add_child(tick)
-
-	for entry in [[tr("MARKET"), _show_market], [tr("COLLECTIONS"), _show_collections], [tr("RIBBONS"), _show_ribbons],
-			[tr("SETTINGS"), _show_settings]]:
-		var b := Button.new()
-		b.text = entry[0]
-		b.custom_minimum_size = Vector2(104, 56)
-		b.add_theme_font_size_override("font_size", 18)
-		b.toggle_mode = false
-		b.focus_mode = Control.FOCUS_NONE
-		b.pressed.connect(entry[1])
-		row.add_child(b)
-
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
-
-	# Level, XP bar and XP numbers stack in one column so the bar fits portrait screens.
-	var xp_box := VBoxContainer.new()
-	xp_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	xp_box.custom_minimum_size.x = 180
-	xp_box.add_theme_constant_override("separation", 2)
-	row.add_child(xp_box)
-
-	_level_label = Label.new()
-	_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_level_label.add_theme_font_size_override("font_size", 22)
-	xp_box.add_child(_level_label)
-
-	_xp_bar = ProgressBar.new()
-	_xp_bar.show_percentage = false
-	_xp_bar.custom_minimum_size.y = 16
-	xp_box.add_child(_xp_bar)
-
-	_xp_label = Label.new()
-	_xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_xp_label.add_theme_font_size_override("font_size", 16)
-	xp_box.add_child(_xp_label)
-
-
-func _build_toolbar(root: Control) -> void:
-	var bar := PanelContainer.new()
-	bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	bar.offset_top = -BOTTOM_H
-	bar.offset_bottom = 0
-	bar.custom_minimum_size.y = BOTTOM_H
-	root.add_child(bar)
-
-	var scroll := ScrollContainer.new()
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	bar.add_child(scroll)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	scroll.add_child(row)
-
-	var plow := _tool_button(tr("PLOW_COINS") % Balance.i("economy.plow_cost"))
-	plow.button_pressed = true
-	plow.pressed.connect(func() -> void: tool_selected.emit("plow", ""))
-	row.add_child(plow)
-
-	var hand := _tool_button(tr("INSPECT_TAP_TO_CHECK"))
-	hand.pressed.connect(func() -> void: tool_selected.emit("hand", ""))
-	row.add_child(hand)
-
-	var fert := _tool_button(tr("FERTILIZE_COINS") % Balance.i("economy.fertilizer_cost"))
-	fert.pressed.connect(func() -> void: tool_selected.emit("fertilize", ""))
-	row.add_child(fert)
-
-	_fert_all_button = Button.new()
-	_fert_all_button.custom_minimum_size = BUTTON_SIZE
-	_fert_all_button.focus_mode = Control.FOCUS_NONE
-	_fert_all_button.pressed.connect(func() -> void: Game.bees.use_fertilize_all())
-	row.add_child(_fert_all_button)
-
-	# Unwither is an action, not a tool, so it isn't part of the tool group.
-	_unwither_button = Button.new()
-	_unwither_button.custom_minimum_size = BUTTON_SIZE
-	_unwither_button.focus_mode = Control.FOCUS_NONE
-	_unwither_button.pressed.connect(Game.use_unwither)
-	row.add_child(_unwither_button)
-
-	_farmhand_button = Button.new()
-	_farmhand_button.custom_minimum_size = BUTTON_SIZE
-	_farmhand_button.focus_mode = Control.FOCUS_NONE
-	_farmhand_button.pressed.connect(func() -> void: Game.use_helper("animal"))
-	row.add_child(_farmhand_button)
-
-	_arborist_button = Button.new()
-	_arborist_button.custom_minimum_size = BUTTON_SIZE
-	_arborist_button.focus_mode = Control.FOCUS_NONE
-	_arborist_button.pressed.connect(func() -> void: Game.use_helper("tree"))
-	row.add_child(_arborist_button)
-
-	_gardener_button = Button.new()
-	_gardener_button.custom_minimum_size = BUTTON_SIZE
-	_gardener_button.focus_mode = Control.FOCUS_NONE
-	_gardener_button.pressed.connect(func() -> void: Game.use_helper("bloom"))
-	row.add_child(_gardener_button)
-	_refresh_unwither()
-
-	var store := _tool_button(tr("STORE_IN_THE_BARN"))
-	store.pressed.connect(func() -> void: tool_selected.emit("store", ""))
-	row.add_child(store)
-
-	var move := _tool_button(tr("MOVE_BUILDINGS_MORE"))
-	move.pressed.connect(func() -> void: tool_selected.emit("move", ""))
-	row.add_child(move)
-
-	var turn := _tool_button(tr("ROTATE_TURN_DECORATIONS"))
-	turn.pressed.connect(func() -> void: tool_selected.emit("rotate", ""))
-	row.add_child(turn)
-
-	var sell := _tool_button(tr("SELL_BACK"))
-	sell.pressed.connect(func() -> void: tool_selected.emit("sell", ""))
-	row.add_child(sell)
-
-	# Vehicles you own, and the shared fuel tank. Hidden until the first vehicle.
-	_vehicle_row = HBoxContainer.new()
-	_vehicle_row.add_theme_constant_override("separation", 12)
-	row.add_child(_vehicle_row)
-	_fuel_button = Button.new()
-	_fuel_button.custom_minimum_size = BUTTON_SIZE
-	_fuel_button.focus_mode = Control.FOCUS_NONE
-	_fuel_button.pressed.connect(func() -> void: _book.open_panel(tr("FUEL"), buildings.build_fuel))
-	row.add_child(_fuel_button)
-	var fuel_tick := Timer.new()
-	fuel_tick.wait_time = 5.0
-	fuel_tick.autostart = true
-	fuel_tick.timeout.connect(_refresh_vehicles)
-	add_child(fuel_tick)
-	_refresh_vehicles()
-
-	for id in Game.crop_order:
-		var b := _tool_button("")
-		var crop_id: String = id
-		b.pressed.connect(func() -> void: tool_selected.emit("plant", crop_id))
-		_seed_buttons[crop_id] = b
-		row.add_child(b)
-	_refresh_seed_buttons()
-
-	if OS.is_debug_build():
-		var rich := Button.new()
-		rich.text = tr("DEBUG_COINS")
-		rich.custom_minimum_size = BUTTON_SIZE
-		rich.focus_mode = Control.FOCUS_NONE
-		rich.pressed.connect(func() -> void: Game.debug_add_coins(10000))
-		row.add_child(rich)
-
-		var bees := Button.new()
-		bees.text = tr("DEBUG_BEES")
-		bees.custom_minimum_size = BUTTON_SIZE
-		bees.focus_mode = Control.FOCUS_NONE
-		bees.pressed.connect(func() -> void: Game.debug_add_bees(20))
-		row.add_child(bees)
-
-		var mats := Button.new()
-		mats.text = tr("DEBUG_MATERIALS")
-		mats.custom_minimum_size = BUTTON_SIZE
-		mats.focus_mode = Control.FOCUS_NONE
-		mats.pressed.connect(func() -> void: Game.debug_add_materials(10))
-		row.add_child(mats)
-
-		var lvl_up := Button.new()
-		lvl_up.text = tr("DEBUG_LEVEL_UP")
-		lvl_up.custom_minimum_size = BUTTON_SIZE
-		lvl_up.focus_mode = Control.FOCUS_NONE
-		lvl_up.pressed.connect(Game.debug_level_up)
-		row.add_child(lvl_up)
-
-		var skip := Button.new()
-		skip.text = tr("DEBUG_SKIP_H")
-		skip.custom_minimum_size = BUTTON_SIZE
-		skip.focus_mode = Control.FOCUS_NONE
-		skip.pressed.connect(func() -> void: Game.debug_skip(3600))
-		row.add_child(skip)
-
-		_reset_button = Button.new()
-		_reset_button.text = tr("DEBUG_NEW_FARM")
-		_reset_button.custom_minimum_size = BUTTON_SIZE
-		_reset_button.focus_mode = Control.FOCUS_NONE
-		_reset_button.pressed.connect(_on_reset_pressed)
-		row.add_child(_reset_button)
-
-
-## Two taps to reset, so a stray tap can't wipe the farm.
-func _on_reset_pressed() -> void:
-	if _reset_button.text.begins_with(tr("TAP_AGAIN")):
-		Game.reset_game()
-		_reset_button.text = tr("DEBUG_NEW_FARM")
-		show_message(tr("STARTED_A_NEW_FARM"))
-		return
-	_reset_button.text = tr("TAP_AGAIN_TO_RESET")
-	get_tree().create_timer(3.0).timeout.connect(_restore_reset_label)
-
-
-func _restore_reset_label() -> void:
-	if is_instance_valid(_reset_button):
-		_reset_button.text = tr("DEBUG_NEW_FARM")
 
 
 func _build_placing_bar(root: Control) -> void:
@@ -360,6 +125,13 @@ func _build_placing_bar(root: Control) -> void:
 	_placing_label.add_theme_color_override("font_color", INK)
 	_placing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_placing_label)
+	# A decoration being moved can be turned here (FarmVille's rotate, folded into Move).
+	_turn_button = Button.new()
+	_turn_button.text = tr("TURN")
+	_turn_button.custom_minimum_size = Vector2(110, 48)
+	_turn_button.focus_mode = Control.FOCUS_NONE
+	_turn_button.pressed.connect(func() -> void: Game.rotate_object(_moving_uid()))
+	row.add_child(_turn_button)
 	var cancel := Button.new()
 	cancel.text = tr("CANCEL")
 	cancel.custom_minimum_size = Vector2(110, 48)
@@ -374,7 +146,48 @@ func _build_placing_bar(root: Control) -> void:
 func show_placing(text: String) -> void:
 	_placing_label.text = text
 	_placing_bar.visible = text != ""
+	_turn_button.visible = text != "" and Game.can_rotate(Game.object_by_uid(_moving_uid()))
 	_refresh_tutorial()
+
+
+## The uid of what is being moved (-1 for a purchase, or when nothing is).
+func _moving_uid() -> int:
+	if grid == null or grid.placement == null:
+		return -1
+	return int(grid.placement.state.get("uid", -1))
+
+
+## Opens the seed list (the Plant tool).
+func show_seeds() -> void:
+	_book.open_panel(tr("SEED_LIST"), seeds.build_seeds)
+
+
+## A seed picked: it goes in hand, and the Plant tool lights.
+func choose_seed(crop_id: String) -> void:
+	_book.close_panel()
+	tool_selected.emit("plant", crop_id)
+	tools.show_tool("plant")
+	show_message(tr("TAP_PLOWED_PLOTS_TO_PLANT") % Game.crops[crop_id]["name"])
+
+
+## Hides everything but the eye (FarmVille's view toggle, for looking at the farm), or shows it again.
+func set_interface_hidden(on: bool) -> void:
+	interface_hidden = on
+	var all: Array[Control] = top.hideable()
+	all.append(tools.panel)
+	all.append_array(side.hideable())
+	for c in all:
+		c.visible = not on
+	side.show_eye(on)
+
+
+## The zoom buttons: in or out about the middle of the screen, or 0 for the whole farm.
+func zoom_view(factor: float) -> void:
+	if factor <= 0.0:
+		if fit_view.is_valid():
+			fit_view.call()
+	elif camera != null:
+		camera.zoom_by(factor, get_viewport().get_visible_rect().size / 2.0)
 
 
 func _build_tutorial(root: Control) -> void:
@@ -437,16 +250,6 @@ func _build_toast(root: Control) -> void:
 	_toast_holder.add_child(_toast)
 
 
-func _tool_button(text: String) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.toggle_mode = true
-	b.button_group = _tool_group
-	b.custom_minimum_size = BUTTON_SIZE
-	b.focus_mode = Control.FOCUS_NONE
-	return b
-
-
 # ---------------------------------------------------------------- updates
 
 
@@ -465,18 +268,18 @@ func show_message(text: String) -> void:
 
 ## Where flying coins and XP stars land (screen positions).
 func coins_target() -> Vector2:
-	return _coins_label.get_global_rect().get_center()
+	return top.coins.get_global_rect().get_center()
 
 
 func xp_target() -> Vector2:
-	return _xp_bar.get_global_rect().get_center()
+	return top.xp.get_global_rect().position + top.xp.star_centre()
 
 
 ## A quick swell as a reward lands on a counter.
 func pulse(which: String) -> void:
 	if which == "coins":
 		Feedback.moment("coin_land")  # each coin chinks as it lands
-	var c: Control = _coins_label if which == "coins" else _xp_bar
+	var c: Control = top.coins if which == "coins" else top.xp
 	c.pivot_offset = c.size / 2.0
 	var tw := c.create_tween()
 	tw.tween_property(c, "scale", Vector2(1.18, 1.18), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -485,7 +288,7 @@ func pulse(which: String) -> void:
 
 func _set_shown_coins(v: float) -> void:
 	_shown_coins = v
-	_coins_label.text = "%s coins" % _thousands(int(round(v)))
+	top.coins_label.text = _thousands(int(round(v)))
 
 
 ## The coin counter rolls to the new amount instead of jumping (spends snap down at once).
@@ -513,17 +316,16 @@ func _refresh() -> void:
 	var lo := Game.xp_for_level(lvl)
 	var hi := Game.xp_for_level(lvl + 1)
 	_roll_coins()
-	_gems_label.text = "%d gems" % Game.gems
-	_level_label.text = tr("LEVEL") % lvl
-	_xp_bar.min_value = lo
-	_xp_bar.max_value = hi
+	top.gems_label.text = _thousands(Game.gems)
+	var ratio := clampf(float(Game.xp - lo) / maxf(hi - lo, 1.0), 0.0, 1.0)
 	# The bar fills smoothly; on a level-up it starts again from the new level.
-	if Game.xp < _xp_bar.value or Game.xp > hi:
-		_xp_bar.value = Game.xp
+	if top.xp.level != lvl or ratio < top.xp.ratio:
+		top.xp.ratio = ratio
 	else:
-		var tw := _xp_bar.create_tween()
-		tw.tween_property(_xp_bar, "value", float(Game.xp), 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_xp_label.text = tr("XP_2") % [Game.xp, hi]
+		var tw := top.xp.create_tween()
+		tw.tween_property(top.xp, "ratio", ratio, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	top.xp.level = lvl
+	top.xp.text = tr("XP_2") % [_thousands(Game.xp), _thousands(hi)]
 
 
 static func _thousands(n: int) -> String:
@@ -537,28 +339,11 @@ static func _thousands(n: int) -> String:
 
 func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
-	_clock_label.text = "%s · %s · %s" % [
+	top.clock.text = "%s · %s · %s" % [
 		tr("SEASON_" + DayCycle.SEASON.to_upper()),
 		tr(Game.weather()["name"]),
 		DayCycle.clock_text(hour)
 	]
-
-
-func _refresh_seed_buttons() -> void:
-	for id in _seed_buttons:
-		var crop: Dictionary = Game.crops[id]
-		var b: Button = _seed_buttons[id]
-		var pol := Game.bees.pollinated_seeds(id)
-		if Game.is_unlocked(id) and pol > 0:
-			b.disabled = false
-			b.text = tr("POLLINATED_FREE") % [crop["name"], pol]
-		elif Game.is_unlocked(id):
-			b.disabled = false
-			b.text = tr("COINS") % [crop["name"], int(crop["seed_cost"]),
-				FarmGrid.format_duration(int(crop["grow_seconds"]))]
-		else:
-			b.disabled = true
-			b.text = tr("LEVEL_2") % [crop["name"], int(crop["unlock_level"])]
 
 
 # ---------------------------------------------------------------- menus
@@ -599,42 +384,13 @@ func show_building(uid: int) -> void:
 		_book.open_panel(tr("BARN"), barn.build_barn)
 	elif Game.kind_of(o) == "animal" and Game.feeds.is_feedable(o):
 		_book.open_panel(Game.item_data(o["id"])["name"], feed.build_animal)
+	elif Game.kind_of(o) == "vehicle" and not Game.under_construction(o):
+		_book.open_panel(tr("FUEL"), buildings.build_fuel)   # a vehicle tapped with an empty tank
 	elif Game.crafting.is_crafting(o):
 		Game.crafting.finish_crafts(uid)
 		_book.open_panel(Game.size_name(o), crafting.build_crafting)
 	else:
 		_book.open_panel(Game.item_data(o["id"])["name"], buildings.build_building)
-
-
-func _refresh_unwither() -> void:
-	if not _unwither_button:
-		return
-	if _farmhand_button:
-		_farmhand_button.text = tr("FARMHAND_LEFT") % Game.farmhands
-		_farmhand_button.disabled = Game.farmhands <= 0
-		_arborist_button.text = tr("ARBORIST_LEFT") % Game.arborists
-		_arborist_button.disabled = Game.arborists <= 0
-		_gardener_button.text = tr("GARDENER_LEFT") % Game.gardeners
-		_gardener_button.disabled = Game.gardeners <= 0
-	if _fert_all_button:
-		_fert_all_button.text = tr("FERTILIZE_ALL_LEFT") % Game.fertilize_alls
-		_fert_all_button.disabled = Game.fertilize_alls <= 0
-	if Game.unwithers > 0:
-		_unwither_button.text = tr("UNWITHER_LEFT") % Game.unwithers
-	else:
-		_unwither_button.text = tr("UNWITHER_GEMS") % Balance.i("economy.unwither_gem_cost")
-
-
-## One toolbar button per vehicle type you own, with its area and the fuel left.
-func _refresh_vehicles() -> void:
-	if not _vehicle_row:
-		return
-	_fuel_button.visible = Game.vehicles.fuel_unlocked
-	_fuel_button.text = tr("FUEL_TANKS") % [
-		Game.vehicles.fuel_now(),
-		Balance.i("vehicles.fuel_tank"),
-		Game.vehicles.fuel_tanks
-	]
 
 
 func _panel_button(words: String) -> Button:

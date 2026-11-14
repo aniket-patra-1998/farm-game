@@ -25,11 +25,19 @@ Principle as everywhere: first pure FarmVille, then our own touch, clearly marke
 | Panels | Wooden frame, tabs, item cards with price badges | Plain cream panels | Same kit: tabs, cards, price badges |
 | Toasts and floaters | Floating +coins and +XP from the item | Exists (Feedback colours) | Keep; align to the new bars' positions |
 
+## Heads-up display as built (phase 3)
+- Top: coin and cash bars (their "+" opens the Market), the farm's name on a plaque (set in Settings) with the season, weather and time under it, the XP bar with the level star (`HudTop`).
+- Left: hide the interface (eye), sound on/off. There is no music yet, so no music toggle.
+- Right: Market, Collections, Ribbons, Neighbours (a placeholder message for now), Settings; zoom in, out and whole farm (`HudSide`).
+- Bottom right: eight tools, FarmVille's set: Select, Plow, Plant (opens the seed list, `HudSeeds`), Harvest (gathers what is ready, opens no panels), Fertilise, Move (a decoration being moved has a Turn button on the placing bar), Store, Sell (`HudTools`).
+- Bottom left: the neighbours' strip, a placeholder showing the simulated neighbours (our own touch until neighbours land).
+- Boosts (Fertilize All, Unwither, Farmhand, Arborist, Gardener) and fuel are used from the Barn, as FarmVille's were from the gift box; a vehicle is taken in hand by tapping it. Debug buttons moved to Settings > Testing.
+
 ## Phases
 1. Spec: this document. Done.
 2. Kit (`scripts/ui/ui_kit.gd`, `data/ui_theme.json`): wood panel, glossy bar, star badge, bevelled button, plaque,
    icon drawing (`UiIcons`), all from data (colours, sizes, radii). A test checks every colour/size name exists.
-3. Heads-up display: top bars, left toggles, tool panel, zoom buttons, bottom strip; `hud.gd` keeps logic,
+3. Heads-up display (done): top bars, left toggles, tool panel, zoom buttons, bottom strip; `hud.gd` keeps logic,
    layout moves to `scripts/hud/hud_top.gd` and `hud_tools.gd`. All text through `tr("KEY")`; sounds and buzzes via
    `Feedback.moment`. `coins_target()` / `xp_target()` follow the new bars.
 4. Panels: Market, Barn, Collections, Ribbons, Settings, crafting and building panels on the kit.

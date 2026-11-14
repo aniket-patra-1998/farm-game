@@ -32,10 +32,20 @@
     "gem": "#7fe3ff",
     "gem_edge": "#2e8fb0",
     "icon_ink": "#4a2f19",
-    "icon_light": "#fff6dc"
+    "icon_light": "#fff6dc",
+    "metal": "#b7c0c7",
+    "sack": "#e3cf9b",
+    "leaf": "#5c9e3a",
+    "berry": "#d9442f",
+    "sky_ink": "#3d78c9",
+    "barn_red": "#c0392b",
+    "skin": "#e9b28a",
+    "tool_face_on": "#ffd34d",
+    "tool_label": "#4a2f19",
+    "hud_hint": "#fff6dc"
   },
   "sizes": {
-    "bar_height": 40,
+    "bar_height": 52,
     "bar_radius": 12,
     "bar_border": 3,
     "bar_padding": 8,
@@ -54,6 +64,23 @@
     "font_bar": 22,
     "font_plaque": 22,
     "font_star": 26,
-    "font_xp": 18
+    "font_xp": 18,
+    "hud_margin": 14,
+    "hud_gap": 10,
+    "tool_size": 74,
+    "tool_icon": 40,
+    "font_tool": 13,
+    "side_width": 92,
+    "side_height": 78,
+    "side_icon": 40,
+    "font_side": 13,
+    "toggle_size": 48,
+    "zoom_size": 44,
+    "top_height": 72,
+    "bottom_height": 102,
+    "neighbour_width": 64,
+    "font_clock": 14,
+    "coin_bar_width": 230,
+    "gem_bar_width": 170
   }
 }

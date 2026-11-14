@@ -15,10 +15,38 @@ func build_barn(content: VBoxContainer) -> void:
 	if b.is_empty():
 		hud._book.close_panel()
 		return
+	add_boosts(content)
 	if b.get("broken", false):
 		build_barn_repair(content)
 	else:
 		build_barn_storage(content)
+
+
+## The boosts you have, used from here as FarmVille's were from the gift box: Fertilize All, Unwither and the
+## helpers (each works the whole farm at once), and the fuel for the vehicles once you have one.
+func add_boosts(content: VBoxContainer) -> void:
+	content.add_child(BookPanel.text(tr("BOOSTS"), 26, BookPanel.SUN))
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 10)
+	row.add_theme_constant_override("v_separation", 10)
+	content.add_child(row)
+	var boosts := [
+		[tr("FERTILIZE_ALL_LEFT") % Game.fertilize_alls, Game.fertilize_alls > 0,
+			func() -> void: Game.bees.use_fertilize_all()],
+		[tr("UNWITHER_LEFT") % Game.unwithers if Game.unwithers > 0
+			else tr("UNWITHER_GEMS") % Balance.i("economy.unwither_gem_cost"), true, Game.use_unwither],
+		[tr("FARMHAND_LEFT") % Game.farmhands, Game.farmhands > 0, func() -> void: Game.use_helper("animal")],
+		[tr("ARBORIST_LEFT") % Game.arborists, Game.arborists > 0, func() -> void: Game.use_helper("tree")],
+		[tr("GARDENER_LEFT") % Game.gardeners, Game.gardeners > 0, func() -> void: Game.use_helper("bloom")],
+	]
+	if Game.vehicles.fuel_unlocked:
+		boosts.append([tr("FUEL_TANKS") % [Game.vehicles.fuel_now(), Balance.i("vehicles.fuel_tank"),
+			Game.vehicles.fuel_tanks], true, func() -> void: hud._book.open_panel(tr("FUEL"), hud.buildings.build_fuel)])
+	for entry: Array in boosts:
+		var use := hud._panel_button(str(entry[0]))
+		use.disabled = not bool(entry[1])
+		use.pressed.connect(entry[2])
+		row.add_child(use)
 
 
 func build_barn_repair(content: VBoxContainer) -> void:

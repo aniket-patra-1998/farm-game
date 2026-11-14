@@ -53,7 +53,6 @@
 "ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE","Already fertilized: this harvest pays 20% more"
 "FERTILIZE_GROWING_CROPS_FOR_MORE_COINS","Fertilize growing crops for 20% more coins at harvest"
 "STORED","Stored"
-"PICK_THE_IN_THE_TOOLBAR_THEN","Pick the %s in the toolbar, then tap the field"
 "YOUR","Your %s"
 "ADOPTED_XP","Adopted! +%d XP"
 "FRUIT","Fruit"
@@ -79,20 +78,6 @@
 "OPEN_SHOWCASE_FARM","Open the showcase farm"
 "BACK_TO_MY_FARM","Back to my farm"
 "SHOWCASE_OPENED","Showcase farm: everything unlocked and laid out. Your own farm is saved and waiting."
-"PLOW_COINS","Plow
-%d coins"
-"INSPECT_TAP_TO_CHECK","Inspect
-tap to check"
-"FERTILIZE_COINS","Fertilize
-%d coins · +20%%"
-"STORE_IN_THE_BARN","Store
-in the barn"
-"MOVE_BUILDINGS_MORE","Move
-buildings & more"
-"ROTATE_TURN_DECORATIONS","Rotate
-turn decorations"
-"SELL_BACK","Sell / clear
-5% back"
 "FUEL","Fuel"
 "DEBUG_COINS","Debug
 +10,000 coins"
@@ -106,19 +91,12 @@ level up"
 skip 1 h"
 "DEBUG_NEW_FARM","Debug
 new farm"
-"TAP_AGAIN","Tap again"
 "STARTED_A_NEW_FARM","Started a new farm"
 "TAP_AGAIN_TO_RESET","Tap again
 to reset"
 "CANCEL","Cancel"
 "LEVEL","Level %d"
-"XP_2","%d / %d XP"
-"POLLINATED_FREE","%s
-%d pollinated · free"
-"COINS","%s
-%d coins · %s"
-"LEVEL_2","%s
-Level %d"
+"XP_2","%s / %s XP"
 "BARN","Barn"
 "FARMHAND_LEFT","Farmhand
 %d left"
@@ -500,3 +478,26 @@ Level %d"
 "PERF_READOUT_TOGGLE","Show performance numbers"
 "PERF_READOUT_HELP","Frames a second, draw calls and memory in the corner of the screen, for measuring on a phone."
 "LOAD_TRACE_HELP","The last time a farm opened before this one, step by step (milliseconds since it began):"
+"TOOL_SELECT","Select"
+"TOOL_PLOW","Plow"
+"TOOL_PLANT","Plant"
+"TOOL_HARVEST","Harvest"
+"TOOL_FERTILISE","Fertilise"
+"TOOL_MOVE","Move"
+"TOOL_STORE","Store"
+"TOOL_SELL","Sell"
+"NEIGHBOURS","Neighbours"
+"NEIGHBOURS_SOON","Neighbours are coming soon!"
+"MY_FARM","My Farm"
+"FARM_NAME","Farm name"
+"BOOSTS","Boosts"
+"TURN","Turn"
+"SEED_LIST","Seeds"
+"PICK_A_SEED_THEN_TAP_PLOWED_PLOTS","Pick a seed, then tap plowed plots to plant it."
+"SEED_DETAIL","Ready in %s · sells for %d coins · %d XP"
+"POLLINATED_SEEDS_FREE","%d pollinated seeds: free"
+"UNLOCKS_LEVEL","Level %d"
+"FREE_SEED","Free"
+"SEED_COINS","%d coins"
+"TAP_PLOWED_PLOTS_TO_PLANT","Tap plowed plots to plant %s"
+"NOT_READY_YET_READY_IN","The %s isn't ready yet: ready in %s"
