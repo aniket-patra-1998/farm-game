@@ -90,7 +90,7 @@ func in_gift_box() -> int:
 
 
 ## Trees, animals and scenery can be stored; shelters, the barn and strays can't.
-func can_store(obj: Dictionary) -> bool:
+func storable_kind(obj: Dictionary) -> bool:
 	if obj.is_empty() or obj.get("stray", false):
 		return false
 	var k := game.kind_of(obj)

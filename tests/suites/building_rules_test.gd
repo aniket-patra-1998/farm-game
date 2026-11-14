@@ -214,18 +214,18 @@ func test_319_place_move_in_store_and_finish_say_yes_or_why_not() -> void:
 	g.gems = 1000
 	g.xp = g.xp_for_level(60)
 	_clear(g)
-	var B := BuildingSystem.Why
 	# Placing.
 	_check(g.buildings.can_place("chicken_coop", 2, 2).ok(), "an empty grassy spot takes a Coop")
-	_eq(g.buildings.can_place("chicken_coop", -1, 0).why, B.OFF_FARM, "off the edge")
-	_eq(g.buildings.can_place("chicken_coop", g.farm_size - 1, 0).why, B.OFF_FARM, "hanging past the edge")
+	_eq(g.buildings.can_place("chicken_coop", -1, 0).why, BuildingSystem.Why.OFF_FARM, "off the edge")
+	_eq(g.buildings.can_place("chicken_coop", g.farm_size - 1, 0).why, BuildingSystem.Why.OFF_FARM,
+		"hanging past the edge")
 	_check(g.buy_and_place("chicken_coop", 2, 2), "a Coop goes down")
 	var taken := g.buildings.can_place("cow_shed", 2, 2)
-	_eq(taken.why, B.TAKEN, "a spot with something on it")
+	_eq(taken.why, BuildingSystem.Why.TAKEN, "a spot with something on it")
 	_check(taken.text.contains(str(g.item_data("chicken_coop")["name"])), "names what is there: %s" % taken.text)
 	g.plots[g.index_of(16, 2)] = {"state": "planted", "crop": "strawberries", "t": g.now()}
-	_eq(g.buildings.can_place("hay_bale", 16, 2).why, B.PLANTED, "on crops")
-	_eq(g.buildings.can_place("apple_tree", 2, 2 + g.footprint("chicken_coop").x).why, B.CROWDED,
+	_eq(g.buildings.can_place("hay_bale", 16, 2).why, BuildingSystem.Why.PLANTED, "on crops")
+	_eq(g.buildings.can_place("apple_tree", 2, 2 + g.footprint("chicken_coop").x).why, BuildingSystem.Why.CROWDED,
 		"a tree hard against a building")
 	_check(g.buildings.can_place("apple_tree", 2, 2 + g.footprint("chicken_coop").x, -1, false).ok(),
 		"not strict (laying a saved farm back down) lets it be")
@@ -235,17 +235,17 @@ func test_319_place_move_in_store_and_finish_say_yes_or_why_not() -> void:
 	var coop := g.object_at(g.index_of(2, 2))
 	_check(g.buildings.can_move_in(coop, "chicken").ok(), "a chicken can move into the Coop")
 	var wrong := g.buildings.can_move_in(coop, "cow")
-	_eq(wrong.why, B.WRONG_KIND, "a cow can't")
+	_eq(wrong.why, BuildingSystem.Why.WRONG_KIND, "a cow can't")
 	_check(wrong.text != "", "and is told why")
 	coop["inside"] = {"chicken": g.capacity(coop)}
-	_eq(g.buildings.can_move_in(coop, "chicken").why, B.FULL, "a full Coop")
+	_eq(g.buildings.can_move_in(coop, "chicken").why, BuildingSystem.Why.FULL, "a full Coop")
 	_check(g.buy_and_place("pig_pen", 10, 10), "a Pig Pen frame goes down")
 	var pen := g.object_at(g.index_of(10, 10))
-	_eq(g.buildings.can_move_in(pen, "pig").why, B.NOT_BUILT, "a frame takes no one")
+	_eq(g.buildings.can_move_in(pen, "pig").why, BuildingSystem.Why.NOT_BUILT, "a frame takes no one")
 	# Finishing.
-	_eq(g.buildings.can_finish(coop).why, B.NOT_A_FRAME, "a finished building is no frame")
+	_eq(g.buildings.can_finish(coop).why, BuildingSystem.Why.NOT_A_FRAME, "a finished building is no frame")
 	var short := g.buildings.can_finish(pen)
-	_eq(short.why, B.MATERIALS, "a frame without its materials")
+	_eq(short.why, BuildingSystem.Why.MATERIALS, "a frame without its materials")
 	_check(short.text != "", "says what is still needed: %s" % short.text)
 	for m in g.land.construction_needs(pen):
 		g.parts[m] = int(g.land.construction_needs(pen)[m])
@@ -253,17 +253,17 @@ func test_319_place_move_in_store_and_finish_say_yes_or_why_not() -> void:
 	# Storing.
 	_check(g.buy_and_place("hay_bale", 18, 18), "a hay bale")
 	var bale := g.object_at(g.index_of(18, 18))
-	_eq(g.buildings.can_store(coop).why, B.CANT_STORE, "a building can't go in the Barn")
+	_eq(g.buildings.can_store(coop).why, BuildingSystem.Why.CANT_STORE, "a building can't go in the Barn")
 	g.add_object({"uid": g.next_uid, "id": "barn", "row": 14, "col": 14, "t": g.now(), "broken": true,
 		"level": 1, "inside": {}})
 	g.next_uid += 1
 	var barn := g.storage.barn()
 	_check(not barn.is_empty(), "the starter Barn, broken")
-	_eq(g.buildings.can_store(bale).why, B.BARN_BROKEN, "a broken Barn stores nothing")
+	_eq(g.buildings.can_store(bale).why, BuildingSystem.Why.BARN_BROKEN, "a broken Barn stores nothing")
 	barn.erase("broken")
 	_check(g.buildings.can_store(bale).ok(), "a repaired Barn takes the bale")
 	for k in g.storage.total_limit():
 		g.storage.stored.append({"id": "hay_bale", "uid": 90000 + k})
-	_eq(g.buildings.can_store(bale).why, B.FULL, "a full Barn")
+	_eq(g.buildings.can_store(bale).why, BuildingSystem.Why.FULL, "a full Barn")
 	_check(not g.storage.store_object(int(bale["uid"])), "and storing anyway is refused")
 	g.queue_free()

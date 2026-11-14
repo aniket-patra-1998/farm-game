@@ -1,33 +1,48 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, depth_test_disabled, fog_disabled;
-// FarmVille's "ready" sign: a golden sparkle over a building that has something to collect, bobbing gently and
-// twinkling, always facing the camera and drawn over whatever stands in front, so it is seen across the farm.
-// One quad per ready building in one MultiMesh (ReadyMarks); the instance's custom red channel is its phase.
-// `zoom` grows it as the camera pulls back, so it stays the same size on screen until the far zoom.
+// The one "ready" sign for everything with something to collect (buildings, animals, trees, blooms), as
+// FarmVille drew it: a soft, light pink triangle pointing down, its corners rounded, hovering over the thing
+// and bobbing gently up and down. Always facing the camera and drawn over what stands in front. One quad per
+// ready thing in one MultiMesh (ReadyMarks); the instance's custom red channel is its phase, so they don't
+// bob in step. `zoom` grows it as the camera pulls back, so it stays the same size on screen.
 
 uniform float zoom = 1.0;
-uniform vec3 gold : source_color = vec3(1.0, 0.82, 0.25);
+uniform vec3 face : source_color = vec3(1.0, 0.72, 0.84);
+uniform vec3 light : source_color = vec3(1.0, 0.88, 0.94);
+uniform vec3 rim : source_color = vec3(0.89, 0.47, 0.66);
+uniform float bob = 0.07;      // tiles it rises and falls
+uniform float rate = 2.4;      // how fast
 
-varying float glint;
+// Signed distance to an equilateral triangle of circumradius-ish size r pointing up (Inigo Quilez's).
+float tri(vec2 p, float r) {
+	const float k = 1.7320508;
+	p.x = abs(p.x) - r;
+	p.y = p.y + r / k;
+	if (p.x + k * p.y > 0.0) {
+		p = vec2(p.x - k * p.y, -k * p.x - p.y) / 2.0;
+	}
+	p.x -= clamp(p.x, -2.0 * r, 0.0);
+	return -length(p) * sign(p.y);
+}
 
 void vertex() {
 	float phase = INSTANCE_CUSTOM.r * 6.2831;
 	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
-	glint = 0.5 + 0.5 * sin(TIME * 4.5 + phase);
-	VERTEX *= zoom * (0.9 + 0.2 * glint);
-	VERTEX.y += sin(TIME * 2.2 + phase) * 0.09 * zoom;
+	VERTEX *= zoom;
+	VERTEX.y += sin(TIME * rate + phase) * bob * zoom;
 }
 
 void fragment() {
-	vec2 p = UV * 2.0 - 1.0;
-	float core = 1.0 - smoothstep(0.08, 0.32, length(p));
-	float rays = (1.0 - smoothstep(0.02, 0.1, abs(p.y))) * (1.0 - abs(p.x));
-	rays += (1.0 - smoothstep(0.02, 0.1, abs(p.x))) * (1.0 - abs(p.y));
-	vec2 q = vec2(p.x + p.y, p.x - p.y) * 0.7071;
-	rays += 0.6 * (1.0 - smoothstep(0.01, 0.06, abs(q.y))) * max(1.0 - abs(q.x) * 1.6, 0.0);
-	rays += 0.6 * (1.0 - smoothstep(0.01, 0.06, abs(q.x))) * max(1.0 - abs(q.y) * 1.6, 0.0);
-	float halo = 0.45 * (1.0 - smoothstep(0.0, 0.85, length(p)));
-	float a = clamp(core + rays + halo, 0.0, 1.0);
-	ALBEDO = mix(gold, vec3(1.0, 0.98, 0.85), core * (0.4 + 0.3 * glint));
+	vec2 p = vec2(UV.x * 2.0 - 1.0, UV.y * 2.0 - 1.0);   // y down: the triangle points down
+	p.y -= 0.12;                                          // (its weight sits a little high in the quad)
+	float d = tri(p, 0.62) - 0.16;                        // rounded corners
+	float edge = fwidth(d) * 1.5;
+	float a = 1.0 - smoothstep(-edge, edge, d);
+	float inner = smoothstep(-0.16, -0.05, d);            // a deeper pink round the rim
+	vec3 col = mix(light, face, clamp(UV.y * 1.3, 0.0, 1.0));
+	col = mix(col, rim, inner);
+	float gloss = 1.0 - smoothstep(0.0, 0.22, length((p - vec2(-0.22, -0.32)) * vec2(1.0, 1.8)));
+	col = mix(col, vec3(1.0), gloss * 0.55);
+	ALBEDO = col;
 	ALPHA = a;
 }

@@ -174,6 +174,14 @@ func _ready() -> void:
 	await _frames(4)
 	_shot(dir + "/settings_panel.png")
 	hud._book.close_panel()
+	# A building's own panel: picture, state, Move/Turn/Sell.
+	for o in Game.objects:
+		if Game.is_home(o) and not Game.under_construction(o):
+			hud.show_building(int(o["uid"]))
+			break
+	await _frames(20)
+	_shot(dir + "/building_panel.png")
+	hud._book.close_panel()
 	# Times of day and weather, on a farm of crops (using whatever finished art is in art/final).
 	Game.objects.clear()
 	var art_crops := [
@@ -455,7 +463,16 @@ func _shots_progress(dir: String, cam: FarmCamera, grid: FarmGrid) -> void:
 	_shot(dir + "/showcase_all.png")
 	cam.snap(grid.to_global(grid.center_of(Game.index_of(4, 8))), 1.0)
 	await _frames(12)
-	_shot(dir + "/showcase_buildings.png")
+	_shot(dir + "/showcase_buildings.png")   # (ready buildings wear their golden sparkle)
+	var barn := Game.storage.barn()
+	if not barn.is_empty():
+		barn["broken"] = true   # the starter Barn as it is before it is repaired
+		Game.objects_updated()
+		cam.snap(grid.to_global(grid.center_of(Game.index_of(int(barn["row"]) + 1, int(barn["col"]) + 1))), 1.8)
+		await _frames(12)
+		_shot(dir + "/showcase_barn_broken.png")
+		barn.erase("broken")
+		Game.objects_updated()
 	cam.snap(grid.to_global(grid.center_of(Game.index_of(20, 12))), 1.0)
 	await _frames(12)
 	_shot(dir + "/showcase_trees_animals.png")

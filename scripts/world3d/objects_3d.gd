@@ -64,7 +64,7 @@ var _link_landed := -1   # the frame a joined piece last landed
 var _woods: Array = []   # groups of the woods still going up: [holder, trees left]
 var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
-var _ready_marks: ReadyMarks   # the sparkle over each building with something to collect
+var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
 
 
 
@@ -183,19 +183,26 @@ func sync() -> void:
 			_animals.append(v["node"])
 
 
-## A sparkle over every building that has something to collect (FarmVille's ready sign), at the top of its model.
+## FarmVille's one ready sign over everything that has something to collect: a building or its finished
+## crafts, a tree, a bloom, an animal (whose sign walks with it). Over the top of what is drawn.
 func _mark_ready() -> void:
 	var tops: Array[Vector3] = []
+	var animals: Array[Animal3D] = []
 	for o in Game.objects:
-		if not Game.kind_of(o) in ["building", "crafting"] or not _views.has(int(o["uid"])):
+		var uid := int(o["uid"])
+		if not _views.has(uid):
 			continue
-		if Game.is_ready(o) or Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0:
-			var box: AABB = _views[int(o["uid"])]["box"]
-			tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
-	_ready_marks.show_at(tops)
+		if Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0):
+			var node: Node3D = _views[uid]["node"]
+			if node is Animal3D:
+				animals.append(node as Animal3D)
+			else:
+				var box: AABB = _views[uid]["box"]
+				tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
+	_ready_marks.show_at(tops, animals)
 
 
-## How many buildings show the ready sparkle.
+## How many things show the ready sign.
 func ready_marks() -> int:
 	return _ready_marks.count()
 
@@ -234,6 +241,7 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if cam != null and cam.projection == Camera3D.PROJECTION_ORTHOGONAL:
 		_ready_marks.follow(cam.size)
+	_ready_marks.follow_animals()
 	for a in _animals:
 		if not is_instance_valid(a):
 			continue

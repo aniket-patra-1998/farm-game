@@ -248,17 +248,32 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 	for b: Button in book.find_children("*", "Button", true, false):
 		if not b.is_queued_for_deletion():
 			buttons[b.text] = b
-	for word: String in [tr("TOOL_MOVE"), tr("TURN"), tr("TOOL_SELL")]:
+	for word: String in [tr("TOOL_MOVE"), tr("TOOL_SELL")]:
 		_check(buttons.has(word), "the panel offers %s" % word)
-	var turned := bool(coop.get("flip", false))
-	(buttons[tr("TURN")] as Button).pressed.emit()
-	var verdict := Game.buildings.can_rotate(coop)
-	_eq(bool(coop.get("flip", false)) != turned, verdict.ok(), "Turn turns it exactly when the rules allow")
-	if not verdict.ok():
+	var turn := Game.buildings.can_rotate(coop)
+	_eq(buttons.has(tr("TURN")), turn.why != BuildingSystem.Why.NOT_SQUARE,
+		"Turn is offered only to what can ever turn")
+	if buttons.has(tr("TURN")):
+		var was := bool(coop.get("flip", false))
+		(buttons[tr("TURN")] as Button).pressed.emit()
+		_eq(bool(coop.get("flip", false)) != was, turn.ok(), "Turn turns it exactly when the rules allow")
+	# Something that can't be sold (the starter Barn) has Sell greyed, with the reason already showing.
+	var barn := Game.storage.barn()
+	if not barn.is_empty():
+		hud.show_building(int(barn["uid"]))
+		var refusal := Game.buildings.can_sell(barn)
+		var greyed := false
 		var told := false
+		for b: Button in book.find_children("*", "Button", true, false):
+			greyed = greyed or (not b.is_queued_for_deletion() and b.text == tr("TOOL_SELL") and b.disabled)
 		for l: Label in book.find_children("*", "Label", true, false):
-			told = told or (l.visible and l.text == verdict.text)
-		_check(told, "and says why not under the buttons")
+			told = told or (not l.is_queued_for_deletion() and l.text.contains(refusal.text))
+		_check(not refusal.ok() and greyed and told, "the Barn's Sell is greyed and says why before any tap")
+		hud.show_building(int(coop["uid"]))
+		buttons.clear()
+		for b: Button in book.find_children("*", "Button", true, false):
+			if not b.is_queued_for_deletion():
+				buttons[b.text] = b
 	var sell: Button = buttons[tr("TOOL_SELL")]
 	sell.pressed.emit()
 	_check(book.visible and not Game.object_by_uid(int(coop["uid"])).is_empty(), "the first tap on Sell only asks")

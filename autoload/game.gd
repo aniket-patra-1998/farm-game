@@ -385,7 +385,7 @@ func rebuild_occupancy() -> void:
 
 ## Whether `item_id` can stand at row, col (the rule and its reasons: BuildingSystem.can_place).
 func can_place(item_id: String, row: int, col: int, ignore_uid := -1, strict := true) -> bool:
-	return buildings.can_place(item_id, row, col, ignore_uid, strict).ok()
+	return buildings.place_why(item_id, row, col, ignore_uid, strict) == BuildingSystem.Why.OK
 
 
 func grass_over(item_id: String, row: int, col: int) -> void:
@@ -798,8 +798,9 @@ func can_sell(obj: Dictionary) -> bool:
 ## Sells an object. Animals, trees or vehicles inside a building move back onto the farm first.
 func sell_object(uid: int) -> bool:
 	var o := object_by_uid(uid)
-	if not can_sell(o):
-		message.emit(tr("THAT_CAN_T_BE_SOLD"))
+	var verdict := buildings.can_sell(o)
+	if not verdict.ok():
+		message.emit(verdict.text)
 		return false
 	var held: Array[String] = []
 	for id in o.get("inside", {}):
@@ -840,8 +841,9 @@ func can_rotate(obj: Dictionary) -> bool:
 
 func rotate_object(uid: int) -> bool:
 	var o := object_by_uid(uid)
-	if not can_rotate(o):
-		message.emit(tr("BUILDINGS_AND_BIG_PIECES_CAN_T"))
+	var verdict := buildings.can_rotate(o)
+	if not verdict.ok():
+		message.emit(verdict.text)
 		return false
 	o["flip"] = not o.get("flip", false)
 	objects_updated()

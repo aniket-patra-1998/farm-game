@@ -43,9 +43,8 @@ static func draw(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool, p
 			top = SmallAnimalArt.bee(ci, ground, rig, p, body)
 		_:
 			top = QuadrupedArt.draw(ci, ground, rig, p, body, accent)
-	if ready:
-		var product := EGG if rig.family == "chicken" else accent
-		bubble(ci, Vector2(ground.x - 2.0, top - 18.0), product, p.time)
+	if ready:   # the one ready sign everything wears, bobbing over the animal
+		PlaceholderArt.draw_ready_marker(ci, Vector2(ground.x, top - 22.0 + sin(p.time * 2.4) * 4.0))
 
 
 ## A product bubble over an animal that's ready to collect; it bobs gently.

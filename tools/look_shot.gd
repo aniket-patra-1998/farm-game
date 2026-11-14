@@ -52,6 +52,8 @@ func _ready() -> void:
 		for k in 16:
 			await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(v[0]) + ".png"))
+	if not barn.is_empty():
+		barn.erase("broken")   # (the showcase's Barn is repaired; the shot only borrowed the broken look)
 	get_tree().quit()
 
 

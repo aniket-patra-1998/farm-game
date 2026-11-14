@@ -52,7 +52,8 @@
     "card_locked": "#d8cbb0",
     "badge_face": "#fff6dc",
     "lock_text": "#7a2e1e",
-    "price_short": "#c0392b"
+    "price_short": "#c0392b",
+    "done": "#3c7a2a"
   },
   "sizes": {
     "bar_height": 52,

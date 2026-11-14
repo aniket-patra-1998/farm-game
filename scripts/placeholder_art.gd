@@ -5,6 +5,10 @@ extends RefCounted
 ## (e.g. ci.draw_texture(...)) — nothing else in the game needs to change.
 
 const GRASS_A := Color("#8fcf5f")
+const READY_SIZE := 16.0          # the ready sign's half-width, in pixels (draw_ready_marker)
+const READY_ROUND := 5.0          # how round its corners are
+const READY_FACE := Color("#ffc4dc")
+const READY_RIM := Color("#e57aa8")
 const GRASS_B := Color("#86c757")
 const GRASS_TUFT := Color("#6fb146")
 const SOIL := Color("#a86f3d")
@@ -360,16 +364,18 @@ static func _ellipse(ci: CanvasItem, center: Vector2, rx: float, ry: float, colo
 
 
 ## A four-point sparkle; alpha 0..1. Used to make ripe crops shimmer.
-static func draw_twinkle(ci: CanvasItem, center: Vector2, size: float, alpha: float) -> void:
-	var c := Color(1.0, 0.98, 0.8, 0.35 + 0.65 * alpha)
-	var thin := size * 0.22
-	ci.draw_colored_polygon(PackedVector2Array([
-		center + Vector2(0, -size), center + Vector2(thin, -thin),
-		center + Vector2(size, 0), center + Vector2(thin, thin),
-		center + Vector2(0, size), center + Vector2(-thin, thin),
-		center + Vector2(-size, 0), center + Vector2(-thin, -thin),
-	]), c)
-	ci.draw_circle(center, thin * 1.1, Color(1, 1, 1, c.a))
+## FarmVille's ready sign: a soft, light pink triangle pointing down, its corners rounded, with a gloss.
+static func draw_ready_marker(ci: CanvasItem, at: Vector2) -> void:
+	var r := READY_SIZE - READY_ROUND
+	var sharp := PackedVector2Array([at + Vector2(-r, -r * 0.6), at + Vector2(r, -r * 0.6), at + Vector2(0, r)])
+	var soft := Geometry2D.offset_polygon(sharp, READY_ROUND, Geometry2D.JOIN_ROUND)
+	if soft.is_empty():
+		return
+	ci.draw_colored_polygon(soft[0], READY_RIM)
+	var face := Geometry2D.offset_polygon(sharp, READY_ROUND * 0.35, Geometry2D.JOIN_ROUND)
+	if not face.is_empty():
+		ci.draw_colored_polygon(face[0], READY_FACE)
+	ci.draw_circle(at + Vector2(-r * 0.3, -r * 0.25), r * 0.15, Color(1, 1, 1, 0.55))
 
 
 

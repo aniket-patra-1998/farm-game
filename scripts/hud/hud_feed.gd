@@ -25,7 +25,7 @@ func build_animal(content: VBoxContainer) -> void:
 	var it := Game.item_data(o["id"])
 	var card := BookPanel.card()
 	card.add_child(BookPanel.text(it["name"], 22))
-	card.add_child(BookPanel.text(tr("READY_IN_4") + FarmGrid.format_duration(Game.seconds_until_ready(o)), 18))
+	card.add_child(BookPanel.text(tr("STATE_READY_IN") % FarmGrid.format_duration(Game.seconds_until_ready(o)), 18))
 	content.add_child(BookPanel.card_frame(card))
 	add_feed_card(content, o)
 

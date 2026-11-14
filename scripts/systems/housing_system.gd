@@ -38,7 +38,7 @@ func fit(building: Dictionary, item_id: String, source := {}) -> Fit:
 ## The Barn stores only what's already on the farm: nothing can be bought into it, nor moved from it to it.
 func _storage_fit(source: Dictionary) -> Fit:
 	var o := game.object_by_uid(int(source.get("uid", -1)))
-	if o.is_empty() or not game.storage.can_store(o):
+	if o.is_empty() or not game.storage.storable_kind(o):
 		return Fit.WRONG_KIND
 	if not game.storage.barn_repaired():
 		return Fit.BARN_BROKEN

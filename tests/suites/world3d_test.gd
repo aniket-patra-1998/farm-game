@@ -5,6 +5,12 @@ const ANIMAL_DRAWS := 5
 const ANIMAL_SHADOW_DRAWS := 2
 
 const TREE_DRAWS := 7 # one of them the leaf cards
+## Telling buildings apart by shape (test_320).
+const SILHOUETTE_GRID := 40
+const SILHOUETTE_SPAN := 8.0
+const SILHOUETTE_STEP := 0.12
+const SILHOUETTE_APART := 0.06
+const LOOK_IS_CONTENTS := ["orchard", "bloom_garden"]
 
 
 
@@ -1461,11 +1467,6 @@ static func _gd_files(dir: String) -> Array[String]:
 ## or a tall roof and a low one, differ; two buildings are apart by the share of their cells that differ by more
 ## than a SILHOUETTE_STEP. Buildings whose look is what they hold (an orchard's trees, a garden's blooms) are
 ## told apart by that, not by their fences.
-const SILHOUETTE_GRID := 40
-const SILHOUETTE_SPAN := 8.0
-const SILHOUETTE_STEP := 0.12
-const SILHOUETTE_APART := 0.06
-const LOOK_IS_CONTENTS := ["orchard", "bloom_garden"]
 
 
 func test_320_every_building_has_its_own_silhouette() -> void:
@@ -1543,3 +1544,56 @@ static func _fill(cells: PackedFloat32Array, t: Array[Vector3]) -> void:
 			if w0 >= 0.0 and w1 >= 0.0 and w2 >= 0.0:
 				var i := y * SILHOUETTE_GRID + x
 				cells[i] = maxf(cells[i], w0 * t[0].z + w1 * t[1].z + w2 * t[2].z)
+
+
+## The one ready sign (ReadyMarks) is over exactly what has something to collect: a home whose cycle is done, a
+## tree, an animal; not over a building still working, a frame or a decoration.
+## The starter Barn looks broken until repaired: another look (its own Instancer key) and a different model.
+func test_321_ready_buildings_sparkle_and_the_broken_barn_looks_broken() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.farm_size = 24
+	Game.set_objects([])
+	var long_ago := Game.now() - 10 * 86400
+	var ready := {"uid": 9401, "id": "chicken_coop", "row": 1, "col": 1, "t": long_ago, "level": 1,
+		"inside": {"chicken": 4}}
+	var waiting := {"uid": 9402, "id": "cow_shed", "row": 1, "col": 8, "t": Game.now(), "level": 1,
+		"inside": {"cow": 2}}
+	var frame := {"uid": 9403, "id": "pig_pen", "row": 8, "col": 1, "t": long_ago, "level": 1, "inside": {},
+		"construction": {}}
+	var bale := {"uid": 9404, "id": "hay_bale", "row": 8, "col": 8, "t": long_ago}
+	var tree := {"uid": 9406, "id": "apple_tree", "row": 16, "col": 2, "t": long_ago}
+	var cow := {"uid": 9407, "id": "cow", "row": 16, "col": 10, "t": long_ago}
+	for o in [ready, waiting, frame, bale, tree, cow]:
+		Game.add_object(o)
+	var objects := Objects3D.new()
+	add_child(objects)
+	await Objects3D.until_settled(get_tree(), 600)
+	objects.sync()
+	_check(Game.is_ready(tree) and Game.is_ready(cow), "(the tree and the cow are ready too)")
+	_eq(objects.ready_marks(), 3, "one sign each over the ready Coop, tree and cow: not the Dairy at work, the "
+		+ "frame or the bale")
+	ready["t"] = Game.now()
+	tree["t"] = Game.now()
+	objects.sync()
+	_eq(objects.ready_marks(), 1, "collected: their signs go, the cow's stays")
+	objects.queue_free()
+	# The broken Barn.
+	var it := Game.item_data("barn")
+	var fp := Game.footprint("barn")
+	var whole := ModelKit.bake(BuildingModel.build(it, fp, 1, true, false))
+	var broken := ModelKit.bake(BuildingModel.build(it, fp, 1, true, true))
+	var faces := [0, 0]
+	for k in 2:
+		for n in ([whole, broken][k] as Node3D).find_children("*", "MeshInstance3D", true, false):
+			if (n as MeshInstance3D).mesh != null:
+				faces[k] += (n as MeshInstance3D).mesh.get_faces().size()
+	_check(faces[1] > faces[0], "the broken Barn has its tarp, gaps and loose boards (%d > %d)" % [faces[1], faces[0]])
+	var barn := {"uid": 9405, "id": "barn", "row": 14, "col": 14, "t": Game.now(), "level": 1, "broken": true}
+	var view := Objects3D.new()
+	var key_broken: String = view.call("_key", barn)
+	barn.erase("broken")
+	_check(key_broken != view.call("_key", barn), "repairing it rebuilds its look")
+	view.free()
+	whole.free()
+	broken.free()

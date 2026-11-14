@@ -1,17 +1,20 @@
 class_name ReadyMarks
 extends MultiMeshInstance3D
-## FarmVille's "ready" sign over every building with something to collect: a golden sparkle above its roof,
-## bobbing and twinkling (shaders/ready3d.gdshader), seen across the whole farm. One MultiMesh for all of them,
-## so a farm of ready buildings is one draw; Objects3D says where (`show_at`) when it looks at the farm, and the
-## camera's zoom keeps them a steady size on screen (`follow`).
+## The one "ready" sign over everything with something to collect, FarmVille's way: a soft, light pink
+## triangle pointing down, hovering and bobbing gently (shaders/ready3d.gdshader). Buildings, trees, blooms and
+## animals all wear the same one, so the farm reads at a glance and it costs one draw for all of them.
+## Objects3D says where: `show_at` for what stands still (over its top) and `follow_animals` for animals, whose
+## signs move with them each frame. The camera's zoom keeps them a steady size on screen (`follow`).
 
-const SIZE := 0.75            # the sparkle's width in tiles, at the nearest zoom
-const ABOVE := 0.32           # how far above a building's top it floats, in tiles
-const ZOOM_REF := 9.0         # the camera size (tiles on screen) the sparkle is drawn at SIZE for
+const SIZE := 0.42            # the sign's width in tiles, at the nearest zoom
+const ABOVE := 0.3            # how far above a thing's top it hovers, in tiles
+const ZOOM_REF := 9.0         # the camera size (tiles on screen) the sign is drawn at SIZE for
 const ZOOM_MOST := 3.0        # and the most it grows by when the camera pulls back
 
 var _material: ShaderMaterial
-var _tops: Array[Vector3] = []
+var _tops: Array[Vector3] = []          # signs over what stands still
+var _animals: Array[Animal3D] = []      # and over these, wherever they walk
+var _zoom := -1.0
 
 
 func _ready() -> void:
@@ -29,24 +32,44 @@ func _ready() -> void:
 	multimesh.mesh = quad
 
 
-## Shows a sparkle over each of `tops` (the top centre of each ready building), and none elsewhere.
-func show_at(tops: Array[Vector3]) -> void:
-	if tops == _tops:
+## Shows a sign over each of `tops` (the top centre of each ready thing that stands still) and over each of
+## `animals`, and none elsewhere.
+func show_at(tops: Array[Vector3], animals: Array[Animal3D] = []) -> void:
+	if tops == _tops and animals == _animals:
 		return
 	_tops = tops.duplicate()
-	multimesh.instance_count = tops.size()
+	_animals = animals.duplicate()
+	multimesh.instance_count = tops.size() + animals.size()
 	for k in tops.size():
-		multimesh.set_instance_transform(k, Transform3D(Basis.IDENTITY, tops[k] + Vector3(0, ABOVE, 0)))
-		multimesh.set_instance_custom_data(k, Color(fposmod(tops[k].x * 0.37 + tops[k].z * 0.61, 1.0), 0, 0, 0))
-		multimesh.set_instance_color(k, Color.WHITE)
-	visible = not tops.is_empty()
+		_put(k, tops[k], fposmod(tops[k].x * 0.37 + tops[k].z * 0.61, 1.0))
+	follow_animals()
+	visible = multimesh.instance_count > 0
 
 
-## How many sparkles are showing.
+## Moves the animals' signs to where the animals are now (each frame; only the ready ones have a sign).
+func follow_animals() -> void:
+	var first := _tops.size()
+	for k in _animals.size():
+		var a := _animals[k]
+		if is_instance_valid(a):
+			_put(first + k, a.position + Vector3(0, a.reach().y, 0), fposmod(a.get_instance_id() * 0.618, 1.0))
+
+
+## Sign `k` over `top`, bobbing at `phase` (0..1: a thing keeps its own beat, so they don't bob in step).
+func _put(k: int, top: Vector3, phase: float) -> void:
+	multimesh.set_instance_transform(k, Transform3D(Basis.IDENTITY, top + Vector3(0, ABOVE, 0)))
+	multimesh.set_instance_custom_data(k, Color(phase, 0, 0, 0))
+	multimesh.set_instance_color(k, Color.WHITE)
+
+
+## How many signs are showing.
 func count() -> int:
-	return _tops.size()
+	return _tops.size() + _animals.size()
 
 
-## Keeps the sparkles a steady size on screen as an orthographic camera of `camera_size` zooms.
+## Keeps the signs a steady size on screen as an orthographic camera of `camera_size` zooms.
 func follow(camera_size: float) -> void:
-	_material.set_shader_parameter("zoom", clampf(camera_size / ZOOM_REF, 1.0, ZOOM_MOST))
+	var zoom := clampf(camera_size / ZOOM_REF, 1.0, ZOOM_MOST)
+	if not is_equal_approx(zoom, _zoom):
+		_zoom = zoom
+		_material.set_shader_parameter("zoom", zoom)

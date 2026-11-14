@@ -12,7 +12,7 @@ extends GameSystem
 
 enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, MATERIALS, SOMEONE_INSIDE, KEPT,
 	REQUIRES, OFF_FARM, TAKEN, PLANTED, CROWDED, WRONG_KIND, FULL, NOT_BUILT, HAS_ONE, BARN_BROKEN, BUILD_FIRST,
-	CANT_STORE, NOT_A_FRAME }
+	CANT_STORE, NOT_A_FRAME, NOT_SQUARE, AT_WORK }
 
 ## How a home's fit (HousingSystem.Fit, what lights homes up while dragging) reads as a rule's answer.
 const FIT_WHY := {
@@ -185,21 +185,50 @@ func can_sell(o: Dictionary) -> Verdict:
 ## each other's edges (a tree's crown overhangs its tile, so it is never planted hard against a wall); laying
 ## the farm back down after loading is not strict, so no save moves.
 func can_place(item_id: String, row: int, col: int, ignore_uid := -1, strict := true) -> Verdict:
+	var why := place_why(item_id, row, col, ignore_uid, strict)
+	match why:
+		Why.OK:
+			return yes()
+		Why.OFF_FARM:
+			return Verdict.new(why, tr("PLACE_OFF_FARM"))
+		Why.TAKEN:
+			var there := game.object_at(_first_taken(item_id, row, col, ignore_uid))
+			return Verdict.new(why, tr("PLACE_TAKEN") % str(game.item_data(str(there.get("id", ""))).get("name",
+				tr("SOMETHING"))))
+		Why.PLANTED:
+			return Verdict.new(why, tr("PLACE_PLANTED"))
+	return Verdict.new(why, tr("PLACE_CROWDED"))
+
+
+## The reason alone (no message): what whole-farm scans and per-frame checks ask (Game.can_place), so they
+## build no strings.
+func place_why(item_id: String, row: int, col: int, ignore_uid := -1, strict := true) -> Why:
 	var fp := game.footprint(item_id)
 	var n := game.farm_size
 	if row < 0 or col < 0 or row + fp.y > n or col + fp.x > n:
-		return Verdict.new(Why.OFF_FARM, tr("PLACE_OFF_FARM"))
+		return Why.OFF_FARM
 	for r in range(row, row + fp.y):
 		for c in range(col, col + fp.x):
 			var i := game.index_of(r, c)
 			var holder := game.holder_at(i)
 			if holder != -1 and holder != ignore_uid:
-				return Verdict.new(Why.TAKEN, tr("PLACE_TAKEN") % game.item_data(game.object_by_uid(holder)["id"])["name"])
+				return Why.TAKEN
 			if game.plots[i].get("state", "grass") == "planted":
-				return Verdict.new(Why.PLANTED, tr("PLACE_PLANTED"))
+				return Why.PLANTED
 	if strict and _crowds_neighbour(item_id, row, col, fp, ignore_uid):
-		return Verdict.new(Why.CROWDED, tr("PLACE_CROWDED"))
-	return yes()
+		return Why.CROWDED
+	return Why.OK
+
+
+## The first tile under the footprint that something else stands on (-1 if none).
+func _first_taken(item_id: String, row: int, col: int, ignore_uid: int) -> int:
+	var fp := game.footprint(item_id)
+	for r in range(row, row + fp.y):
+		for c in range(col, col + fp.x):
+			var holder := game.holder_at(game.index_of(r, c))
+			if holder != -1 and holder != ignore_uid:
+				return game.index_of(r, c)
+	return -1
 
 
 ## Whether a tree here would touch a building, or a building here a tree: something of the other kind on the ring
@@ -234,7 +263,7 @@ func can_move_in(b: Dictionary, item_id: String, source := {}) -> Verdict:
 
 ## Can `o` be put away in the Barn? Trees, animals and scenery can; the Barn must be repaired and have room.
 func can_store(o: Dictionary) -> Verdict:
-	if not game.storage.can_store(o):
+	if not game.storage.storable_kind(o):
 		return Verdict.new(Why.CANT_STORE, tr("THAT_CAN_T_GO_IN_THE"))
 	if not game.storage.barn_repaired():
 		return Verdict.new(Why.BARN_BROKEN, tr("FIX_THE_BARN_FIRST_TO_STORE"))
@@ -246,7 +275,7 @@ func can_store(o: Dictionary) -> Verdict:
 ## Can frame `b` be finished now: is it a frame, and are all the materials it still needs in hand?
 func can_finish(b: Dictionary) -> Verdict:
 	if b.is_empty() or not game.under_construction(b):
-		return Verdict.new(Why.NOT_A_FRAME)
+		return Verdict.new(Why.NOT_A_FRAME, tr("ALREADY_BUILT"))
 	var short := missing(game.land.construction_needs(b))
 	if not short.is_empty():
 		return Verdict.new(Why.MATERIALS, tr("MATERIALS_SHORT") % describe(short))
@@ -256,7 +285,16 @@ func can_finish(b: Dictionary) -> Verdict:
 ## Can `o` be turned? Only square things turn (so nothing changes size), and a building only if its data says so.
 func can_rotate(o: Dictionary) -> Verdict:
 	if not game.can_rotate(o):
-		return Verdict.new(Why.UNKNOWN, tr("BUILDINGS_AND_BIG_PIECES_CAN_T"))
+		return Verdict.new(Why.NOT_SQUARE, tr("BUILDINGS_AND_BIG_PIECES_CAN_T"))
+	return yes()
+
+
+## Can `o` be picked up and moved? Anything can, as in FarmVille (the Barn too), except a vehicle out at work.
+func can_move(o: Dictionary) -> Verdict:
+	if o.is_empty():
+		return Verdict.new(Why.UNKNOWN)
+	if game.kind_of(o) == "vehicle" and game.vehicles.is_running(str(o["id"])):
+		return Verdict.new(Why.AT_WORK, tr("WAIT_TILL_IT_FINISHES") % str(game.item_data(str(o["id"])).get("name", "")))
 	return yes()
 
 

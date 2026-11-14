@@ -46,7 +46,7 @@ func build_building(content: VBoxContainer) -> void:
 		status.add_child(BookPanel.text(tr("INSIDE") % ", ".join(PackedStringArray(names)), 18))
 		if total > 0 and pay != Vector2i.ZERO:
 			var when := tr("READY_TO_COLLECT") if Game.is_ready(o) \
-				else tr("READY_IN_4") + FarmGrid.format_duration(Game.seconds_until_ready(o))
+				else tr("STATE_READY_IN") % FarmGrid.format_duration(Game.seconds_until_ready(o))
 			status.add_child(BookPanel.text(tr("PAYS_COINS_XP") % [when, pay.x, pay.y], 18))
 	var layout := hud.feed.layout_line(o)
 	if layout != "":
@@ -80,8 +80,8 @@ func build_building(content: VBoxContainer) -> void:
 
 
 ## The top of every building's panel: its picture, its state in a line, and what can be done to it
-## wherever it stands (Move, Turn, Sell). A button that can't be used now says why underneath, from the
-## building rules (Game.buildings), so the panel never repeats a rule. Selling asks twice.
+## wherever it stands (Move, Turn, Sell), each asking the building rules (Game.buildings) as it is built, so
+## the panel never repeats a rule and a refusal is explained before the tap. Selling asks twice.
 func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 	var uid := int(o["uid"])
 	var row := HBoxContainer.new()
@@ -100,27 +100,27 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.6))
 	row.add_child(buttons)
-	var why := BookPanel.text("", 16, UiTheme.color("price_short"))
-	why.visible = false
-	var refuse := func(verdict: BuildingSystem.Verdict) -> bool:
-		why.text = verdict.text
-		why.visible = not verdict.ok() and verdict.text != ""
-		return verdict.ok()
+	# Each button asks its rule now: one that can never work here (Turn, on a building that doesn't turn) is
+	# left out; one that can't work yet is greyed with its reason shown underneath.
+	var reasons: Array[String] = []
+	var move_ok := Game.buildings.can_move(o)
 	var move := hud._panel_button(tr("TOOL_MOVE"))
+	move.disabled = not move_ok.ok()
 	move.pressed.connect(func() -> void:
 		hud._book.close_panel()
 		if hud.grid != null:
 			hud.grid.start_placing(str(o["id"]), uid))
 	buttons.add_child(move)
-	var turn := hud._panel_button(tr("TURN"))
-	turn.pressed.connect(func() -> void:
-		if refuse.call(Game.buildings.can_rotate(o)):
-			Game.rotate_object(uid))
-	buttons.add_child(turn)
+	var turn_ok := Game.buildings.can_rotate(o)
+	if turn_ok.why != BuildingSystem.Why.NOT_SQUARE:
+		var turn := hud._panel_button(tr("TURN"))
+		turn.disabled = not turn_ok.ok()
+		turn.pressed.connect(func() -> void: Game.rotate_object(uid))
+		buttons.add_child(turn)
+	var sell_ok := Game.buildings.can_sell(o)
 	var sell := hud._panel_button(tr("TOOL_SELL"))
+	sell.disabled = not sell_ok.ok()
 	sell.pressed.connect(func() -> void:
-		if not refuse.call(Game.buildings.can_sell(o)):
-			return
 		if not sell.has_meta(&"sure"):
 			sell.set_meta(&"sure", true)
 			sell.text = tr("SELL_FOR_COINS") % FarmHud._thousands(Game.sell_value(o))
@@ -128,8 +128,12 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 		hud._book.close_panel()
 		Game.sell_object(uid))
 	buttons.add_child(sell)
+	for verdict: BuildingSystem.Verdict in [move_ok, sell_ok]:
+		if not verdict.ok() and verdict.text != "" and not reasons.has(verdict.text):
+			reasons.append(verdict.text)
 	content.add_child(row)
-	content.add_child(why)
+	if not reasons.is_empty():
+		content.add_child(BookPanel.text("\n".join(PackedStringArray(reasons)), 16, UiTheme.color("price_short")))
 
 
 ## A building's state in a few words: a frame and how far along, broken, ready, or how long until it is.
@@ -140,9 +144,11 @@ func state_line(o: Dictionary) -> String:
 		return tr("STATE_BROKEN")
 	if Game.is_ready(o):
 		return tr("READY_TO_COLLECT")
-	if Game.is_home(o) and Game.inside_total(o) > 0 and Game.object_payout(o) != Vector2i.ZERO:
-		return tr("READY_IN_4") + FarmGrid.format_duration(Game.seconds_until_ready(o))
-	return tr("STATE_STANDING") % [Game.inside_total(o), Game.capacity(o)] if Game.is_home(o) else ""
+	if not Game.is_home(o):
+		return ""
+	if Game.inside_total(o) > 0 and Game.object_payout(o) != Vector2i.ZERO:
+		return tr("STATE_READY_IN") % FarmGrid.format_duration(Game.seconds_until_ready(o))
+	return tr("STATE_STANDING") % [Game.inside_total(o), Game.capacity(o)]
 
 
 ## A home for what's found while farming (the Gopher Garden): each kind with how many you have (a question
@@ -203,6 +209,9 @@ func build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> void
 		bar.value = got
 		card.add_child(bar)
 	content.add_child(BookPanel.card_frame(card))
+	var finish := Game.buildings.can_finish(o)
+	if not finish.ok():
+		content.add_child(BookPanel.text(finish.text, 17, BookPanel.CREAM))
 	var add := hud._panel_button(tr("ADD_MY_MATERIALS"))
 	add.pressed.connect(func() -> void: Game.land.add_materials(uid))
 	content.add_child(add)
@@ -490,8 +499,9 @@ func add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void
 	for m in need:
 		var have := int(Game.parts.get(m, 0))
 		var done := have >= int(need[m])
-		card.add_child(BookPanel.text(("✓ " if done else "• ") + tr("OF") % [GameState.part_names[m],
-			mini(have, int(need[m])), int(need[m])], 18, Color("#3c7a2a") if done else BookPanel.INK))
+		card.add_child(BookPanel.text(tr("CHECK_DONE" if done else "CHECK_TODO") % (tr("OF") % [
+			GameState.part_names[m], mini(have, int(need[m])), int(need[m])]), 18,
+			UiTheme.color("done") if done else BookPanel.INK))
 	var verdict := Game.buildings.can_expand(o)
 	if not verdict.ok() and verdict.text != "":
 		card.add_child(BookPanel.text(verdict.text, 16, UiTheme.color("price_short")))

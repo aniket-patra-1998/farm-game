@@ -285,35 +285,22 @@ func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
 		if counts.x >= 0 and counts_shown:
 			PlaceholderArt.draw_count_sign(ci, g, counts.x, counts.y)
-	# Twinkles: each on its own beat, so a ripe field shimmers instead of blinking.
-	for p in ready:
-		var piece := p as FarmPiece
-		if piece.plot >= 0:
-			var i := piece.plot
-			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(i % 7) * 0.9)
-			var spot := top_of(_row(i), _col(i)) + Vector2(
-				TILE_W * 0.12 * (1 if i % 2 == 0 else -1),
-				TILE_H * 0.05 - PlaceholderArt.SLAB
-			)
-			PlaceholderArt.draw_twinkle(ci, spot, 9.0 + 5.0 * glow, glow)
-		else:
+	# FarmVille's one ready sign: a soft pink triangle bobbing over each thing with something to collect (the
+	# same for buildings, trees and animals; crops show it by how they look). In 3D it is ReadyMarks'; here it is
+	# only for the 2D world.
+	if not pieces.three_d:
+		for p in ready:
+			var piece := p as FarmPiece
+			if piece.plot >= 0 or piece.is_animal():
+				continue   # (crops show it by how they look; an animal's sign is drawn with it, as it walks)
 			var o := Game.object_by_uid(piece.uid)
 			if o.is_empty():
 				continue
-			if pieces.three_d and piece.is_animal():
-				# The 3D animal has no bubble of its own: draw it over where the animal stands now.
-				var rig := AnimalRig.of(Game.item_data(o["id"]))
-				var tall := (rig.size("leg", 12.0) + rig.pair("body").y * 1.7) * Animal3D.PX * IsoProjection.HEIGHT_PX
-				var mind := life.mind(piece.uid)
-				var at := piece.base + (mind.offset if mind != null else Vector2.ZERO)
-				AnimalArt.bubble(ci, at + Vector2(0, -tall - 26.0),
-					AnimalArt.EGG if rig.family == "chicken" else rig.accent_color, t)
-				continue
 			var fp := Game.footprint(o["id"])
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
-			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(piece.uid % 7))
 			var high := -110.0 if Game.is_home(o) or Game.crafting.is_crafting(o) else -70.0
-			PlaceholderArt.draw_twinkle(ci, (g[0] + g[2]) / 2.0 + Vector2(22, high), 11.0 + 6.0 * glow, glow)
+			var bob := sin(t * 2.4 + float(piece.uid % 7)) * 5.0
+			PlaceholderArt.draw_ready_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, high + bob))
 	for p: Variant in hungry:
 		if is_instance_valid(p):
 			_draw_hungry(ci, p as FarmPiece, t)
@@ -972,7 +959,11 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if tool == "move":
 		if first_touch:
-			start_placing(obj["id"], uid)
+			var verdict := Game.buildings.can_move(obj)
+			if verdict.ok():
+				start_placing(obj["id"], uid)
+			else:
+				info.emit(verdict.text)
 		return
 	var supply := Game.nurture.supply_for(obj)
 	if supply != "":
