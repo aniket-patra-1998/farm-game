@@ -114,6 +114,17 @@ func store_object(uid: int) -> bool:
 	return true
 
 
+## Takes in a new `item_id` straight to storage (a grown baby, a gift): into the Barn while it has room, then the
+## Gift Box. Returns false when even the Gift Box is full.
+func receive(item_id: String) -> bool:
+	if stored.size() >= total_limit():
+		return false
+	stored.append({"uid": game.next_uid, "id": item_id, "t": game.now()})
+	game.next_uid += 1
+	game.inventory_changed.emit()
+	return true
+
+
 ## Takes one stored thing out of the Barn to go straight into a home (it must be the item expected).
 func take_out(index: int, item_id: String) -> bool:
 	if index < 0 or index >= stored.size() or stored[index]["id"] != item_id:

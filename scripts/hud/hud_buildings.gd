@@ -275,14 +275,7 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 				)
 			)
 		"nursery":
-			var grow := int(it.get("grow_days", 4))
-			var lines: Array[String] = []
-			for baby in o.get("growing", []):
-				lines.append(tr("OF_DAYS") % [Game.item_data(baby[0])["name"], int(baby[1]), grow])
-			var txt := tr("CALVES_AND_FOALS_GROW_UP_HERE") % grow
-			if not lines.is_empty():
-				txt += "\n\n".join(PackedStringArray(lines))
-			content.add_child(BookPanel.text(txt, 17, BookPanel.CREAM))
+			add_nursery_info(content, o)
 		"beehive":
 			add_hive_info(content, o)
 		"truffles":
@@ -408,6 +401,48 @@ func build_fuel(content: VBoxContainer) -> void:
 	buy.disabled = Game.gems < Balance.i("vehicles.fuel_tank_gem_cost")
 	buy.pressed.connect(func() -> void: Game.vehicles.buy_fuel_tank())
 	card.add_child(buy)
+	content.add_child(BookPanel.card_frame(card))
+
+
+## A nursery (RaisingSystem): its babies in line, oldest first, and its trough: how full, how far the first baby
+## is from growing up, and a button that pours in the Animal Feed it can take (or says why not).
+func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
+	var uid := int(o["uid"])
+	var card := BookPanel.card()
+	card.add_theme_constant_override("separation", 8)
+	var line := Game.raising.babies(o)
+	var need := Game.raising.need_each()
+	card.add_child(BookPanel.text(tr("TROUGH_OF") % [Game.raising.trough(o), line.size() * need], 20))
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = 14
+	bar.max_value = maxf(line.size() * need, 1.0)
+	bar.value = Game.raising.trough(o)
+	card.add_child(bar)
+	if line.is_empty():
+		card.add_child(BookPanel.text(tr("NURSERY_EMPTY"), 17))
+	else:
+		var queue: Array = []
+		for k in line.size():   # each baby with the feed it has towards growing up
+			var has := clampi(Game.raising.trough(o) - k * need, 0, need)
+			queue.append([line[k], "%d/%d" % [has, need]])
+		card.add_child(UiKit.count_row(queue))
+		card.add_child(BookPanel.text(tr("NURSERY_HOW") % need, 17))
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 12)
+	var have := Game.nurture.has_supply("animal_feed")
+	var pours := Game.raising.can_pour(o)
+	var pour := hud._panel_button(tr("POUR_FEED") % pours if pours > 0 else (tr("TROUGH_FULL")
+		if Game.raising.room(o) == 0 and not line.is_empty() else tr("NO_ANIMAL_FEED")))
+	pour.disabled = pours <= 0
+	pour.pressed.connect(func() -> void:
+		var grown := Game.raising.pour(uid)
+		if not grown.is_empty():
+			Feedback.moment("level_up_soft")
+		hud._book.refresh())
+	row.add_child(pour)
+	card.add_child(row)
+	card.add_child(BookPanel.text(tr("ANIMAL_FEED_HAVE") % have, 16, BookPanel.CREAM))
 	content.add_child(BookPanel.card_frame(card))
 
 

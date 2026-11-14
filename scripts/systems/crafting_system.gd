@@ -218,9 +218,13 @@ func finish_crafts(uid: int) -> int:
 	return n
 
 
-## A feed recipe's units go to the Barn as rich feed (what doesn't fit is sold, as feed drops are).
+## A feed recipe's units go to the Barn as rich feed (what doesn't fit is sold, as feed drops are), or, for
+## Animal Feed, to the supplies that raise young ones.
 func _deliver_feed(r: RecipeDef) -> void:
 	var f := r.feed()
+	if str(f["type"]) == "animal_feed":   # the young ones' feed (RaisingSystem, NurtureSystem), not the Barn's
+		game.nurture.add_supply("animal_feed", int(f["units"]))
+		return
 	for i in int(f["units"]):
 		game.feeds.add(str(f["type"]), true)
 

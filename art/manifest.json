@@ -7946,6 +7946,16 @@
    "subject": "Rose Petal Water, a homemade drink from a country farm, made from lavender, morning glory, pink roses, sunflowers; appetising and charming"
   },
   {
+   "id": "good_animal_feed_sacks",
+   "item": "animal_feed_sacks",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Animal Feed Sacks, a homemade rich feed from a country farm, made from wheat, corn; appetising and charming"
+  },
+  {
    "id": "good_rich_grain_mix",
    "item": "rich_grain_mix",
    "class": "Recipe",

@@ -500,6 +500,19 @@
       },
       "variants": [
         {
+          "id": "animal_feed_sacks",
+          "name": "Animal Feed Sacks",
+          "star": 1,
+          "inputs": {
+            "wheat": 2,
+            "corn": 2
+          },
+          "feed": {
+            "type": "animal_feed",
+            "units": 5
+          }
+        },
+        {
           "id": "rich_grain_mix",
           "name": "Rich Grain Mix",
           "star": 1,

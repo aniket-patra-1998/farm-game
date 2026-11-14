@@ -422,7 +422,6 @@
             "blankets": 10
           },
           "special": "nursery",
-          "grow_days": 4,
           "grows_into": {
             "calf": "cow",
             "foal": "horse",

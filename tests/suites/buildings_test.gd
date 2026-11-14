@@ -203,17 +203,25 @@ func test_41_nursery_raises_babies_into_adults() -> void:
 	g.place_somewhere("calf")
 	g.place_somewhere("foal")
 	_eq(g.homes.fill_building(uid), 2, "a calf and a foal move in")
-	var cows := _count(g, "cow")
-	var horses := _count(g, "horse")
-	for d in 3:
+	# Harvesting raises nobody: babies grow on Animal Feed poured into the trough (RaisingSystem).
+	for d in 5:
 		_skip(g, 86400)
 		g.collect(uid)
-	_eq(_count(g, "cow"), cows, "not grown after 3 days")
-	_skip(g, 86400)
-	g.collect(uid)
-	_eq(_count(g, "cow"), cows + 1, "the calf grew into a cow")
-	_eq(_count(g, "horse"), horses + 1, "the foal grew into a horse")
+	_eq(g.raising.babies(n), ["calf", "foal"], "harvests alone raise nobody; oldest first")
+	var need := g.raising.need_each()
+	_eq(g.raising.room(n), 2 * need, "the trough takes what two babies need")
+	g.nurture.supplies["animal_feed"] = need + 3
+	_eq(g.raising.pour(uid), ["Cow"], "enough for one: the oldest, the calf, grows up")
+	_eq(g.raising.trough(n), 3, "the rest stays in the trough")
+	_check(g.storage.stored.any(func(o: Dictionary) -> bool: return o["id"] == "cow"), "the cow waits in the Gift Box")
+	_eq(g.raising.babies(n), ["foal"], "the foal is next")
+	_eq(g.raising.room(n), need - 3, "the trough takes only what the foal still needs")
+	g.nurture.supplies["animal_feed"] = 100
+	_eq(g.raising.pour(uid), ["Horse"], "the foal grows into a horse")
+	_eq(g.nurture.has_supply("animal_feed"), 100 - (need - 3), "no feed poured past what was needed")
 	_eq(g.inside_total(n), 0, "the babies left the nursery")
+	_eq(g.raising.room(n), 0, "an empty nursery's trough takes nothing")
+	_eq(g.raising.pour(uid), [], "and pouring does nothing")
 	# Outside the nursery, babies never grow.
 	g.place_somewhere("calf")
 	for d in 10:

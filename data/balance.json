@@ -155,10 +155,6 @@
    "v": 100,
    "note": "XP prize from a Horse Stable harvest with a stallion (see stable_xp_chance)."
   },
-  "nursery_spare_xp": {
-   "v": 25,
-   "note": "stands in for FarmVille's spare baby to gift a friend"
-  },
   "fertilize_all_chance": {
    "v": 0.1,
    "note": "per hive collection"
@@ -692,5 +688,9 @@
  "input": {
   "swipe_farm": {"v": 1, "note": "1 swipe to farm on (our own touch, not FarmVille 2009, which farmed one click a plot and left many plots at once to the vehicles): a one-finger drag with a swipe tool works every plot it crosses; 0 off: every drag pans"},
   "swipe_tools": {"v": ["plow", "plant", "harvest", "fertilize"], "note": "the tools a swipe works plots with (scripts/farm_grid.gd); any other tool's drag pans"}
+ },
+ "raising": {
+  "feed_per_baby": {"v": 10, "note": "Animal Feed one baby in a nursery eats to grow up (FarmVille: a Mystery Baby took 10 Animal Feed); its trough takes this much per baby, no more"},
+  "grown_xp": {"v": 25, "note": "XP for each baby raised (ours; in place of the old nursery's spare-baby XP)"}
  }
 }

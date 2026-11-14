@@ -14,11 +14,11 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Buildings | 6 | 21 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 40 | 0 |
-| recipes | 4 | 54 | 0 |
+| recipes | 4 | 55 | 0 |
 | young | 3 | 3 | 0 |
 | blooms | 6 | 12 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **111** | **444** | **6** |
+| **All** | **111** | **445** | **6** |
 
 ## Adding an item
 
@@ -159,7 +159,6 @@ Holds animals, trees or vehicles; may be built from a frame and grown size by si
 | `requires` | map |  |  | What it needs before it can be bought, beyond its level (scripts/systems/requirements.gd): finds {family: n}, owned {building: n}, mastery {crop: stars}. |
 | `home_of` | string |  |  | A finds family (data/finds.json) this building is the home of: its level follows how many have been found. |
 | `produces` | bool | true |  | false = never ready to collect (the Garage). |
-| `grow_days` | int |  |  | Nursery: days for a baby to grow up. |
 | `grows_into` | map → Animal |  |  | Nursery: baby id -> adult id. |
 
 ### Barn (extends Building)
@@ -1182,6 +1181,7 @@ Shared: `building` = "feed_mill", `product` = "Rich feed"
 
 | | Item | id |  |
 |---|---|---|
+| ✅ | Animal Feed Sacks | `animal_feed_sacks` |  |
 | ✅ | Rich Grain Mix | `rich_grain_mix` |  |
 | ✅ | Rich Green Mash | `rich_green_mash` |  |
 | ✅ | Rich Root Meal | `rich_root_meal` |  |

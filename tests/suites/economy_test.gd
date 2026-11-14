@@ -378,12 +378,10 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	_check(_count(g, "piglet") > 0, "piglets were born (%d)" % _count(g, "piglet"))
 	# The nursery raises them.
 	nursery.erase("construction")
-	var sheep := _count(g, "sheep")
 	g.homes.fill_building(int(nursery["uid"]))
-	for d in 4:
-		_skip(g, 86400)
-		g.collect(int(nursery["uid"]))
-	_check(_count(g, "sheep") > sheep, "lambs grew into sheep")
+	g.nurture.add_supply("animal_feed", 1000)
+	g.raising.pour(int(nursery["uid"]))   # (raised on Animal Feed: RaisingSystem)
+	_check(g.storage.stored.any(func(o: Dictionary) -> bool: return o["id"] == "sheep"), "lambs grew into sheep")
 	_check(g.ribbons.stat("babies_raised") > 0, "babies counted for the Nanny ribbon")
 	# The other homes.
 	for pair in [["duck_pond", "duck"], ["duck_pond", "goose"], ["goat_pen", "goat"], ["rabbit_hutch", "rabbit"],

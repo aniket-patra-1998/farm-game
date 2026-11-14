@@ -393,10 +393,6 @@
           "default": true,
           "doc": "false = never ready to collect (the Garage)."
         },
-        "grow_days": {
-          "type": "int",
-          "doc": "Nursery: days for a baby to grow up."
-        },
         "grows_into": {
           "type": "map",
           "ref": "Animal",

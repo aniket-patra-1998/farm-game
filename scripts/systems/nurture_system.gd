@@ -54,6 +54,15 @@ func add_supply(supply: String, n: int) -> void:
 	game.inventory_changed.emit()
 
 
+## Takes `n` of a supply (as many as there are). Returns how many were taken.
+func take_supply(supply: String, n: int) -> int:
+	var took := mini(n, has_supply(supply))
+	if took > 0:
+		supplies[supply] = has_supply(supply) - took
+		game.inventory_changed.emit()
+	return took
+
+
 ## Supplies not already promised to queued feeding jobs.
 func free_supply(supply: String) -> int:
 	var promised := 0

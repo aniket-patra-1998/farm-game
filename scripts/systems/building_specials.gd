@@ -106,7 +106,7 @@ func building_specials(b: Dictionary) -> Array[String]:
 				game.add_xp(Balance.i("specials.stable_xp"))
 				out.append(tr("XP") % Balance.i("specials.stable_xp"))
 		"nursery":
-			out.append_array(_grow_babies(b))
+			pass   # (babies grow on Animal Feed in the trough, RaisingSystem; the harvest gives feed: from_home)
 		"lambs":
 			if game.has_inside(b, "ram") and game.drops_enabled and game.rng.randf() < Balance.f("specials.lamb_chance"):
 				if game.place_somewhere("lamb"):
@@ -131,33 +131,6 @@ func building_specials(b: Dictionary) -> Array[String]:
 		out.append_array(game.nurture.from_home(b))
 	if not out.is_empty():
 		game.inventory_changed.emit()
-	return out
-
-
-## Nursery Barn: each baby grows a day per collection; grown ones move out as adults.
-func _grow_babies(nursery: Dictionary) -> Array[String]:
-	var out: Array[String] = []
-	var it := game.item_data(nursery["id"])
-	var grow_days := int(it.get("grow_days", 4))
-	var into: Dictionary = it.get("grows_into", {})
-	var still: Array = []
-	var inside: Dictionary = nursery["inside"]
-	for baby in nursery.get("growing", []):
-		baby[1] = int(baby[1]) + 1
-		if int(baby[1]) >= grow_days and game.place_somewhere(into.get(baby[0], baby[0])):
-			inside[baby[0]] = int(inside.get(baby[0], 0)) - 1
-			if int(inside[baby[0]]) <= 0:
-				inside.erase(baby[0])
-			game.add_xp(Balance.i("specials.nursery_spare_xp"))
-			game.ribbons.bump("babies_raised", 1)
-			var adult_name: String = game.item_data(into.get(baby[0], baby[0]))["name"]
-			game.message.emit(
-				tr("YOUR_GREW_UP_INTO_A") % [game.item_data(baby[0])["name"].to_lower(), adult_name.to_lower()]
-			)
-			out.append(tr("A_GREW_UP") % adult_name.to_lower())
-		else:
-			still.append(baby)
-	nursery["growing"] = still
 	return out
 
 

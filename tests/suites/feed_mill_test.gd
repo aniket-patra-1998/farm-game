@@ -19,7 +19,8 @@ func test_179_every_feed_recipe_is_made_of_real_crops_and_feeds() -> void:
 	for r in g.crafting.recipes_of("feed_mill"):
 		seen += 1
 		_check(r.makes_feed(), "%s makes feed" % r.id)
-		_check(g.feeds.feed_ids().has(str(r.feed()["type"])), "%s: a real feed" % r.id)
+		_check(g.feeds.feed_ids().has(str(r.feed()["type"])) or str(r.feed()["type"]) == "animal_feed",
+			"%s: a real feed (or the young ones' Animal Feed)" % r.id)
 		_check(int(r.feed()["units"]) > 0, "%s: at least a unit" % r.id)
 		for c in r.inputs():
 			_check(g.crops.has(c), "%s: %s is a crop" % [r.id, c])
