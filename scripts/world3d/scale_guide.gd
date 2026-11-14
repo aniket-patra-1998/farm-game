@@ -19,7 +19,11 @@ static func factor(id: String) -> float:
 	if _factors.has(id):
 		return _factors[id]
 	var f := 1.0
-	var range_of: Array = _heights().get(str(Game.item_data(id).get("kind", "")), [])
+	var it := Game.item_data(id)
+	if str(it.get("kind", "")) == "tree" and TreeModel.stands_by_itself(it):
+		_factors[id] = f   # built to stand within its range (TreeModel), so not built here just to be measured
+		return f
+	var range_of: Array = _heights().get(str(it.get("kind", "")), [])
 	if range_of.size() == 2:
 		var h := height_of(id)
 		if h > 0.0:

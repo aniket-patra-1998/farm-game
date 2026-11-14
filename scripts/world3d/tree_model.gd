@@ -54,6 +54,12 @@ const TILE_FILL := 1.15     # a tree is one tile on the farm and its crown a lit
 static var _data := {}
 
 
+## Whether a tree of this kind is built to stand within the tree height range by itself (a leafy crown on a trunk
+## made long enough: `_crown_on_trunk`); palms and bananas are measured and scaled instead (ScaleGuide).
+static func stands_by_itself(it: Dictionary) -> bool:
+	return str(shape_of(it)["form"]) not in ["palm", "banana"]
+
+
 ## The shape for a tree: its form's sizes with its family's own laid over them.
 static func shape_of(it: Dictionary) -> Dictionary:
 	if _data.is_empty():
@@ -121,7 +127,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN), 0, rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN)),
 		"blobs": [], "low": INF, "high": -INF, "reach": 0.0,
-		"stand": ScaleGuide.lowest("tree") * size * clampf(tall, TALL_MIN, STAND_TALL_MAX)}
+		"stand": ScaleGuide.lowest("tree") * size * clampf(tall, 1.0, STAND_TALL_MAX)}
 	var crown: Vector3
 	match str(sh["form"]):
 		"palm":
@@ -150,16 +156,21 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 static func far_model(it: Dictionary, size: float, seed_value: int) -> Node3D:
 	var whole := Node3D.new()
 	var tree := build_at(whole, Vector3.ZERO, it, size, false, seed_value, false)
+	var far: Array = tree.get_meta(META_FAR, [])
+	whole.free()
+	return far_from(far, it, size, seed_value)
+
+
+## The far look from a built tree's own measurements (its META_FAR), without building the tree again; with none
+## (a palm or a banana, which have no leafy crown) the tree itself at low detail.
+static func far_from(far: Array, it: Dictionary, size: float, seed_value: int) -> Node3D:
 	var out := Node3D.new()
-	if not tree.has_meta(META_FAR):
-		whole.free()
+	if far.size() < 6:
 		var detail := ModelKit.detail
 		ModelKit.detail = 0.4
 		build_at(out, Vector3.ZERO, it, size, false, seed_value, false)
 		ModelKit.detail = detail
 		return ModelKit.bake(out)
-	var far: Array = tree.get_meta(META_FAR)
-	whole.free()
 	var trunk_h := float(far[0])
 	var low := float(far[1])
 	var high := float(far[2])

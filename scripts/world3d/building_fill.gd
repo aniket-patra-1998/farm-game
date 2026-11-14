@@ -35,8 +35,12 @@ const PLANT_LOD_EVERY := 10       # frames between looks at the zoom for an orch
 const TREE_FILL := 0.95           # an orchard tree's size against the space between trees (crowns touch, trunks show)
 const ORCHARD_SMALLEST := 0.8    # an orchard tree is drawn between these sizes (against a lone tree at 1.0)
 const ORCHARD_BIGGEST := 1.1     # (no bigger, or the crown reaches out of the field's border)
+const ORCHARD_VARIANTS := 3      # looks of each kind in an orchard (turned and sized: no clones)
+const PLANT_BUDGET_MS := 12      # an orchard builds new kinds of tree for at most this long a frame
 const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
+
+static var planting := 0          # orchards still standing their trees, over frames
 
 var uid := -1
 var residents: Array[Animal3D] = []
@@ -58,6 +62,13 @@ var _stock_sig := ""
 var _near_trees: Array[MultiMeshInstance3D] = []   # an orchard's trees, and the blobs drawn far out instead
 var _far_trees: Array[MultiMeshInstance3D] = []
 var _plants_far := false
+var _planting := false
+var _to_plant: Array = []        # kinds of tree an orchard still has to stand (a few each frame)
+var _plant_stand := {}
+var _plant_ready := false
+var _plant_detail := 1.0
+var _plant_into: Node3D
+var _plant_rng: RandomNumberGenerator
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
 
@@ -400,32 +411,80 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	_apply_plant_lod()
 
 
-## Stands the trees of an orchard: a few different trees of each kind (Instancer.VARIANTS) are built once and kept;
-## every tree standing is a copy of one of them, turned and sized a little differently, drawn as one batch per
-## variant (Instancer). Zoomed far out each is drawn as its far look instead (`TreeModel.far_model`, `_plant_lod`).
+## Stands the trees of an orchard: a few different trees of each kind (ORCHARD_VARIANTS, never more than there are
+## trees of it) are built once and kept; every tree standing is a copy of one of them, turned and sized a little
+## differently, drawn as one batch per variant (Instancer). Zoomed far out each is drawn as its far look instead
+## (`TreeModel.far_from`, made from the near tree's own measurements, `_plant_lod`). Building new kinds takes
+## at most PLANT_BUDGET_MS a frame: a big orchard stands over a few frames instead of freezing the game.
 func _plant_trees(holder: Node3D, stand: Dictionary, ready: bool) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = uid
-	for id: String in stand:
-		var size: float = stand[id]["size"]
-		var spots: Array = stand[id]["at"]
-		var it := Game.item_data(id)
-		for v in Instancer.VARIANTS:
-			var here: Array[Transform3D] = []
-			for k in range(v, spots.size(), Instancer.VARIANTS):
-				var scale := 1.0 + rng.randf_range(-TREE_SIZE_JITTER, TREE_SIZE_JITTER)
-				here.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * scale), spots[k]))
-			var key := Instancer.key_of(["orchard_tree", id, ready, size, ModelKit.detail, v])
-			_near_trees.append_array(Instancer.place(holder, Instancer.parts_of(key, func() -> Node3D:
-				var tree := Node3D.new()
-				TreeModel.build_at(tree, Vector3.ZERO, it, size, ready, v * 977 + 1)
-				return ModelKit.bake(tree)), here))
-			var blob := Instancer.parts_of(Instancer.key_of([key, LOD_FAR_PPU]),
-				func() -> Node3D: return TreeModel.far_model(it, size, v * 977 + 1))
-			var far := Instancer.place(holder, blob, here)
-			for node in far:
-				node.visible = false
-			_far_trees.append_array(far)
+	_plant_rng = RandomNumberGenerator.new()
+	_plant_rng.seed = uid
+	_plant_stand = stand
+	_plant_ready = ready
+	_plant_detail = ModelKit.detail
+	_plant_into = holder
+	_to_plant = stand.keys()
+	_set_planting(not _to_plant.is_empty())
+	_plant_some()
+
+
+## Plants the next kinds of the orchard for at most PLANT_BUDGET_MS (at least one kind); the rest wait for the next
+## frame (`_process`).
+func _plant_some() -> void:
+	var began := Time.get_ticks_msec()
+	while not _to_plant.is_empty():
+		if Time.get_ticks_msec() - began > PLANT_BUDGET_MS:
+			return
+		if not is_instance_valid(_plant_into):
+			_to_plant.clear()
+			break
+		_plant_kind(str(_to_plant.pop_front()))
+		_apply_plant_lod()
+	_set_planting(false)
+
+
+## Every tree of one kind in the orchard: its variants built (or reused), each a batch of copies, near and far.
+func _plant_kind(id: String) -> void:
+	var holder := _plant_into
+	var detail := _plant_detail
+	var ready := _plant_ready
+	var size: float = _plant_stand[id]["size"]
+	var spots: Array = _plant_stand[id]["at"]
+	var it := Game.item_data(id)
+	var variants := mini(ORCHARD_VARIANTS, spots.size())
+	for v in variants:
+		var here: Array[Transform3D] = []
+		for k in range(v, spots.size(), variants):
+			var scale := 1.0 + _plant_rng.randf_range(-TREE_SIZE_JITTER, TREE_SIZE_JITTER)
+			here.append(Transform3D(Basis(Vector3.UP, _plant_rng.randf() * TAU).scaled(Vector3.ONE * scale), spots[k]))
+		var key := Instancer.key_of(["orchard_tree", id, ready, size, detail, v])
+		var measured := {}   # what the near tree measured, for its far look
+		_near_trees.append_array(Instancer.place(holder, Instancer.parts_of(key, func() -> Node3D:
+			var tree := Node3D.new()
+			var was := ModelKit.detail
+			ModelKit.detail = detail
+			var built := TreeModel.build_at(tree, Vector3.ZERO, it, size, ready, v * 977 + 1)
+			ModelKit.detail = was
+			measured["far"] = built.get_meta(TreeModel.META_FAR, [])
+			return ModelKit.bake(tree)), here))
+		var blob := Instancer.parts_of(Instancer.key_of([key, LOD_FAR_PPU]), func() -> Node3D:
+			return TreeModel.far_from(measured.get("far", []), it, size, v * 977 + 1))
+		var far := Instancer.place(holder, blob, here)
+		for node in far:
+			node.visible = false
+		_far_trees.append_array(far)
+
+
+## Counts this orchard in or out of those still planting (once each way, also if it is freed part-way).
+func _set_planting(on: bool) -> void:
+	if on != _planting:
+		_planting = on
+		planting += 1 if on else -1
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		_set_planting(false)
 
 
 ## Zoomed far out the orchard's trees are blobs; in close, trees.
@@ -584,6 +643,8 @@ func _show_flag(full: bool) -> void:
 
 
 func _process(delta: float) -> void:
+	if not _to_plant.is_empty():
+		_plant_some()
 	if not _far_trees.is_empty() and Engine.get_process_frames() % PLANT_LOD_EVERY == 0:
 		var eye := get_viewport().get_camera_3d()
 		if eye != null:

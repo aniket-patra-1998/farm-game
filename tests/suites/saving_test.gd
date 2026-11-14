@@ -377,3 +377,12 @@ func test_191_save_writes_are_checked_and_keep_the_last_good_save() -> void:
 	for f in [path, path + GameState.BACKUP_SUFFIX]:
 		DirAccess.remove_absolute(f)
 	DirAccess.remove_absolute(dir)
+
+
+func test_192_a_load_trace_is_kept_line_by_line_and_the_last_one_survives() -> void:
+	LoadTrace.begin("first")
+	LoadTrace.mark("one step")
+	LoadTrace.begin("second")
+	_check(LoadTrace.previous().contains("begin first") and LoadTrace.previous().contains("one step"),
+		"the trace before is kept, every line of it")
+	_check(FileAccess.get_file_as_string(LoadTrace.PATH).contains("begin second"), "the new one is written at once")

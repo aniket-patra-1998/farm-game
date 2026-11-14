@@ -61,6 +61,7 @@ func _ready() -> void:
 	add_child(_main)
 	Game.objects_changed.emit()
 	Game.farm_expanded.emit(Game.farm_size)
+	await Objects3D.until_settled(get_tree())
 	await _frames(10)
 	var dir := ProjectSettings.globalize_path("res://ci_shots")
 	DirAccess.make_dir_recursive_absolute(dir)
@@ -360,6 +361,7 @@ func _shots_3d(dir: String) -> void:
 	Game.objects_changed.emit()
 	Game.plot_changed.emit(-1)
 	Game.farm_expanded.emit(Game.farm_size)
+	await Objects3D.until_settled(get_tree())
 	for scene in [["noon", 12.5, "clear"], ["golden_hour", 17.9, "clear"], ["night", 22.5, "clear"]]:
 		var wall := int(Time.get_unix_time_from_system())
 		Game.debug_time_offset = (int(float(scene[1]) * 3600) - wall % 86400 + 86400) % 86400
@@ -434,6 +436,7 @@ func _shots_progress(dir: String, cam: FarmCamera, grid: FarmGrid) -> void:
 	_shot(dir + "/world3d_sizes_big.png")
 	# The showcase farm (debug builds): everything, laid out.
 	Game.open_showcase()
+	await Objects3D.until_settled(get_tree())
 	await _frames(12)
 	cam.snap(grid.to_global(grid.center_of(Game.index_of(15, 15))), 0.55)
 	await _frames(12)

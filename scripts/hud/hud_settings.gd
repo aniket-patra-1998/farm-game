@@ -71,4 +71,8 @@ func showcase_card() -> PanelContainer:
 		PerfReadout.set_wanted(on)
 		PerfReadout.show_in(hud.get_tree(), on))
 	inner.add_child(perf)
+	var trace := LoadTrace.previous()
+	if trace != "":
+		inner.add_child(BookPanel.text(tr("LOAD_TRACE_HELP"), 18))
+		inner.add_child(BookPanel.text(trace, 14))
 	return BookPanel.card_frame(inner)

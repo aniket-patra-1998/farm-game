@@ -895,6 +895,12 @@ func test_141_the_woods_cost_tens_of_draws_not_thousands() -> void:
 	var objects := Objects3D.new()
 	add_child(objects)
 	var scenery: Node3D = objects.get("_scenery")
+	var waited := 0
+	while waited < 600 and scenery.get_child_count() < 4:   # the woods go up over a few frames
+		await get_tree().process_frame
+		waited += 1
+	for k in 60:
+		await get_tree().process_frame
 	var meshes := 0
 	var stack: Array[Node] = [scenery]
 	while not stack.is_empty():
@@ -1345,3 +1351,29 @@ func test_314_animal_shades_are_one_batch_that_follows_them_and_frees_their_slot
 	animals[1].free()
 	_check(batch.take() == slot, "a cow that leaves gives its slot to the next")
 	farm.free()
+
+
+func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var objects := Objects3D.new()
+	var began := Time.get_ticks_msec()
+	add_child(objects)                       # its first sync runs here, on a budget
+	var first := Time.get_ticks_msec() - began
+	var views: Dictionary = objects.get("_views")
+	var wanted := 0
+	for o in Game.objects:
+		if objects.handles(o):
+			wanted += 1
+	_check(views.size() < wanted, "the showcase isn't built all at once (%d of %d)" % [views.size(), wanted])
+	_check(first < Objects3D.BUILD_BUDGET_MS * 20, "the first frame's share stays short (%d ms)" % first)
+	var frames := 0
+	while views.size() < wanted and frames < 400:
+		await get_tree().process_frame
+		frames += 1
+	_eq(views.size(), wanted, "every object stands in the end (%d frames)" % frames)
+	_check(not objects.get("_synced_once") or views.size() == wanted, "nothing drops in while it is laid out")
+	objects.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()

@@ -25,6 +25,7 @@ func _ready() -> void:
 	add_child(main)
 	await get_tree().process_frame
 	Game.open_showcase()
+	await Objects3D.until_settled(get_tree())
 	for k in 12:
 		await RenderingServer.frame_post_draw
 	var cam: FarmCamera = main.get("camera")

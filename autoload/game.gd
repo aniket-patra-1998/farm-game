@@ -1209,16 +1209,21 @@ func load_game() -> bool:
 ## The player's own farm is saved first and never touched; open_own_farm brings it back. Returns what
 ## didn't fit (nothing, normally).
 func open_showcase() -> Array[String]:
+	LoadTrace.begin("showcase", get_tree())
 	save_game()
+	LoadTrace.mark("own farm saved")  # not-ui
 	save_path = ShowcaseFarm.SAVE_PATH
 	var left_out := ShowcaseFarm.build(self)
+	LoadTrace.mark("showcase laid out: %d objects" % objects.size())  # not-ui
 	save_game()
+	LoadTrace.mark("showcase saved")  # not-ui
 	message.emit(tr("SHOWCASE_OPENED"))
 	return left_out
 
 
 ## Back from the showcase to the player's own farm, as it was left.
 func open_own_farm() -> void:
+	LoadTrace.begin("own farm", get_tree())  # not-ui
 	save_game()
 	save_path = SAVE_PATH
 	if not saving_enabled or not load_game():

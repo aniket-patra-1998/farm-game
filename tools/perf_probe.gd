@@ -25,6 +25,24 @@ func _ready() -> void:
 		_storage_costs()
 	await get_tree().process_frame
 	var t_first := Time.get_ticks_usec() - t0
+	# The farm goes up over frames: how long until it all stands, and the slowest frame meanwhile (on a phone a
+	# frame over 5 s is "not responding").
+	var settle_worst := 0
+	var settle_last := Time.get_ticks_usec()
+	var settle_frames := 0
+	while settle_frames < 5000:
+		var all := true
+		for o: Objects3D in get_tree().get_nodes_in_group(Objects3D.GROUP):
+			all = all and o.settled()
+		if all:
+			break
+		await get_tree().process_frame
+		var now_s := Time.get_ticks_usec()
+		settle_worst = maxi(settle_worst, now_s - settle_last)
+		settle_last = now_s
+		settle_frames += 1
+	print("PERF settle_ms=%.0f settle_frames=%d settle_worst_frame_ms=%.0f"
+		% [(settle_last - t0) / 1000.0, settle_frames, settle_worst / 1000.0])
 	for i in WARM_FRAMES:
 		await get_tree().process_frame
 	var draws := 0

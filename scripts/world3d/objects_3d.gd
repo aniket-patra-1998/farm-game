@@ -13,7 +13,11 @@ const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", 
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
 const DRESSING := ^"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
 const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
+const GROUP := &"objects_3d"   # every Objects3D, for until_settled
 const FULL_EVERY := 10        # a full look at everything every this many seconds (the rest only look at those)
+# A sync builds models for at most this long a frame, then carries on the next frame: a farm with hundreds of
+# things appears over a few frames instead of freezing (a phone says "not responding" after 5 s of that).
+const BUILD_BUDGET_MS := 12
 const SCENERY_Y := -Ground3D.SLAB
 const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
 const GROVE_MASK := 0xff       # woods stand shoulder to shoulder: their trees are drawn crowded on every side
@@ -57,6 +61,9 @@ var _scenery: Node3D
 var _links: LinkLayer   # draws the fences, hedges, walls and paths, joined up
 var _ghost_mask := -1
 var _link_landed := -1   # the frame a joined piece last landed
+var _woods: Array = []   # groups of the woods still going up: [holder, trees left]
+var _carry_on := false  # a sync ran out of time: the rest comes next frame
+var _left := 0           # objects a sync ran out of time for, still to build
 
 
 
@@ -68,6 +75,7 @@ static func handles(o: Dictionary) -> bool:
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	_scenery = Node3D.new()
 	add_child(_scenery)
 	_links = LinkLayer.new()
@@ -117,6 +125,9 @@ func sync() -> void:
 	if not light:
 		_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
 	var seen := {}
+	var began := Time.get_ticks_msec()
+	var built := 0
+	var left := 0
 	for o in Game.objects:
 		if not handles(o):
 			continue
@@ -131,6 +142,10 @@ func sync() -> void:
 			if fill != null:
 				fill.refresh(o)  # who's in, how near ready: shown without rebuilding the building
 			continue
+		if Time.get_ticks_msec() - began > BUILD_BUDGET_MS:
+			left += 1          # out of time this frame: built on the next
+			continue
+		built += 1
 		if v.has("node"):
 			(v["node"] as Node3D).queue_free()
 		var node := _build(o)
@@ -148,8 +163,15 @@ func sync() -> void:
 		if not seen.has(uid):
 			(_views[uid]["node"] as Node3D).queue_free()
 			_views.erase(uid)
-	_synced_once = true
-	if light:
+	if built > 0:
+		LoadTrace.mark("objects: built %d in %d ms, %d to go" % [built, Time.get_ticks_msec() - began, left])  # not-ui
+	_left = left
+	if left > 0:
+		_full = _full or not light
+		_carry_on = true
+	else:
+		_synced_once = true   # (until the whole farm stands, nothing drops in: it is being laid out, not bought)
+	if light and built == 0:
 		return
 	_animals.clear()
 	for v in _views.values():
@@ -157,10 +179,36 @@ func sync() -> void:
 			_animals.append(v["node"])
 
 
+## Whether everything is built: every object, the woods, and every orchard's trees (the farm goes up over a few
+## frames after it opens; screenshots and measurements wait for this).
+func settled() -> bool:
+	return _left == 0 and _woods.is_empty() and BuildingFill.planting == 0
+
+
+## Waits until every farm on the screen is fully built (or `most` frames have passed): for screenshots and
+## measurements, which must not catch a farm half up.
+static func until_settled(tree: SceneTree, most := 3000) -> void:
+	for n in most:
+		var all := true
+		for o: Objects3D in tree.get_nodes_in_group(GROUP):
+			all = all and o.settled()
+		if all:
+			return
+		await tree.process_frame
+
+
+
+
+
 
 
 ## Animals move every frame, with their 2D twin's mind; those off screen keep their place but aren't posed.
 func _process(delta: float) -> void:
+	if _carry_on and not _queued:   # the rest of a sync that ran out of time
+		_carry_on = false
+		sync()
+	if not _woods.is_empty():
+		_grow_woods()
 	_update_placing()
 	var cam := get_viewport().get_camera_3d()
 	for a in _animals:
@@ -288,31 +336,65 @@ func _build(o: Dictionary) -> Node3D:
 func _build_scenery() -> void:
 	for c in _scenery.get_children():
 		c.queue_free()
+	_drop_woods()
 	var n := Game.farm_size
 	# The trees are built in groups by area and each group baked into a few draws, so the woods cost tens of draws
-	# and not thousands, while a group off screen is still culled whole.
-	var groups := {}
+	# and not thousands, while a group off screen is still culled whole. They go up over a few frames (at most
+	# BUILD_BUDGET_MS of building a frame, `_grow_woods`), so opening a farm never waits for its woods.
+	var cells := {}   # cell -> [[r, c, kind]]
 	for t in FarmGrid.scenery():
 		var r: float = t[0]
 		var c: float = t[1]
 		if (r >= -1.0 and c >= -1.0) or r > n + 4 or c > n + 4:
 			continue
 		var cell := Vector2i(int(floor(c / SCENERY_CELL)), int(floor(r / SCENERY_CELL)))
-		if not groups.has(cell):
-			groups[cell] = Node3D.new()
-		var holder: Node3D = groups[cell]
-		var at := Vector3(c + 0.5, SCENERY_Y, r + 0.5)
-		match str(t[2]):
-			"pine_tree":
-				pine(holder, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
-			"willow_tree":
-				TreeModel.build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false, TreeModel.UNSET,
-					GROVE_MASK)
-			_:
-				TreeModel.build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false, TreeModel.UNSET,
-					GROVE_MASK)
-	for cell in groups:
-		_scenery.add_child(ModelKit.bake(groups[cell]))
+		if not cells.has(cell):
+			cells[cell] = []
+		(cells[cell] as Array).append(t)
+	for cell in cells:
+		_woods.append([Node3D.new(), cells[cell]])
+	_grow_woods()
+
+
+## Builds trees of the woods for at most BUILD_BUDGET_MS; a group finished is baked and stands.
+func _grow_woods() -> void:
+	var began := Time.get_ticks_msec()
+	while not _woods.is_empty() and Time.get_ticks_msec() - began <= BUILD_BUDGET_MS:
+		var group: Array = _woods[0]
+		var trees: Array = group[1]
+		if trees.is_empty():
+			_scenery.add_child(ModelKit.bake(group[0]))
+			_woods.pop_front()
+			continue
+		_scenery_tree(group[0], trees.pop_back())
+
+
+## Woods not yet up are dropped (and their half-built groups freed): the farm grew, or the layer is going.
+func _drop_woods() -> void:
+	for group: Array in _woods:
+		(group[0] as Node3D).free()
+	_woods.clear()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		_drop_woods()
+
+
+## One tree of the woods round the farm, under `holder`.
+func _scenery_tree(holder: Node3D, t: Array) -> void:
+	var r: float = t[0]
+	var c: float = t[1]
+	var at := Vector3(c + 0.5, SCENERY_Y, r + 0.5)
+	match str(t[2]):
+		"pine_tree":
+			pine(holder, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
+		"willow_tree":
+			TreeModel.build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false, TreeModel.UNSET,
+				GROVE_MASK)
+		_:
+			TreeModel.build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false, TreeModel.UNSET,
+				GROVE_MASK)
 
 
 
