@@ -61,6 +61,7 @@ static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport)
 	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 	viewport.scaling_3d_scale = float(value("scale"))
 	viewport.mesh_lod_threshold = float(value("lod_pixels"))
+	Engine.max_fps = int(value("max_fps"))   # 0: no cap (the screen's refresh still limits it)
 
 
 static func _load() -> Dictionary:

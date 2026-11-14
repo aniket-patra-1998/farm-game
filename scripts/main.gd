@@ -1,3 +1,4 @@
+class_name FarmMain
 extends Node2D
 ## Wires the farm, camera and HUD together, frames the farm on any screen,
 ## and handles zooming and moving around the farm.
@@ -10,7 +11,9 @@ const INK_FROM := 0.22    # how small a jump in light or colour is an edge (lowe
 const INK_REACH := 1.0    # how many pixels out it looks, so how thick the line is
 const DAY_SATURATION := 1.32   # FarmVille's colour is rich: the daytime grade
 const DAY_CONTRAST := 1.14
-const MAX_ZOOM_FACTOR := 3.5 # how far you can zoom in, relative to the whole-farm view
+const CLOSEST_TILES := 3.5   # the closest zoom shows about this many tiles across, whatever the farm's size
+const MIN_CLOSE_FACTOR := 1.5 # (and is always at least this much closer than the whole-farm view)
+const FURTHEST_OUT := 1.25    # how far past the whole-farm view you can pull back
 const WHEEL_STEP := 1.1
 const DAYLIGHT_EVERY := 0.1   # seconds between updates of the 3D sun, sky light and window glow
 
@@ -25,7 +28,7 @@ var grade: ColorRect       # colour grade over the farm and sky
 var weather_fx: WeatherLayer
 var world_3d: Farm3D        # the farm in real 3D (project setting farm/world/use_3d), behind the 2D layers
 
-var _base_zoom := 1.0       # zoom that shows the whole farm; also the furthest out
+var _base_zoom := 1.0       # zoom that shows the whole farm (you can pull back a little past it)
 var _touches := {}          # finger index -> screen position
 var _pinch_dist := 0.0
 var _mouse_panning := false
@@ -34,6 +37,7 @@ var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 
 func _ready() -> void:
 	PerfReadout.show_in(get_tree(), PerfReadout.wanted())   # debug builds, when switched on in Settings
+	Display.apply()   # a computer opens maximised (or full screen), not in a small window
 	sky = SkyLayer.new()
 	add_child(sky)
 
@@ -129,11 +133,19 @@ func _fit_camera() -> void:
 	var bounds := grid.get_bounds()
 	var usable := view - Vector2(0, FarmHud.TOP_H + FarmHud.BOTTOM_H)
 	_base_zoom = minf(usable.x / (bounds.size.x * 1.04), usable.y / (bounds.size.y * 1.04))
-	camera.min_zoom = _base_zoom
-	camera.max_zoom = _base_zoom * MAX_ZOOM_FACTOR
+	var limits := zoom_limits(view.x, _base_zoom)
+	camera.min_zoom = limits.x
+	camera.max_zoom = limits.y
 	# The free area is shifted down by half the difference between the bars.
 	var shift := (FarmHud.TOP_H - FarmHud.BOTTOM_H) / 2.0
 	camera.snap(bounds.get_center() - Vector2(0, shift / _base_zoom), _base_zoom)
+
+
+## [furthest out, closest in] for a screen `width` wide whose whole-farm zoom is `base`: the closest shows about
+## CLOSEST_TILES tiles across at any farm size (FarmVille's close-up didn't shrink as the farm grew).
+static func zoom_limits(width: float, base: float) -> Vector2:
+	var closest := maxf(width / (CLOSEST_TILES * FarmGrid.TILE_W), base * MIN_CLOSE_FACTOR)
+	return Vector2(base / FURTHEST_OUT, closest)
 
 
 # ---------------------------------------------------------------- time of day

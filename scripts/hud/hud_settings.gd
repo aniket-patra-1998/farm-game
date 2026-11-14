@@ -18,6 +18,8 @@ func _init(owner: FarmHud) -> void:
 func build_settings(content: VBoxContainer) -> void:
 	content.add_child(name_card())
 	content.add_child(quality_card())
+	if Display.has_window():
+		content.add_child(display_card())
 	var inner := BookPanel.card()
 	inner.add_theme_constant_override("separation", 12)
 	inner.add_child(BookPanel.text(tr("SOUND_EFFECTS"), 26))
@@ -70,6 +72,18 @@ func quality_card() -> PanelContainer:
 		b.button_pressed = Quality.level() == name
 		b.pressed.connect(func() -> void: Quality.choose(name))
 		row.add_child(b)
+	return BookPanel.card_frame(inner)
+
+
+## On a computer: full screen, or a maximised window.
+func display_card() -> PanelContainer:
+	var inner := BookPanel.card()
+	inner.add_theme_constant_override("separation", 10)
+	var full := CheckButton.new()
+	full.text = tr("FULL_SCREEN")
+	full.button_pressed = Display.fullscreen()
+	full.toggled.connect(func(on: bool) -> void: Display.set_fullscreen(on))
+	inner.add_child(full)
 	return BookPanel.card_frame(inner)
 
 

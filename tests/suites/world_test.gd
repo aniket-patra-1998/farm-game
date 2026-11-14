@@ -253,3 +253,16 @@ func test_322_the_overlay_draws_what_is_being_placed() -> void:
 	var end := src.find("\nfunc ", start + 10)
 	_check(start >= 0 and src.substr(start, end - start).contains("_draw_placing(ci)"),
 		"draw_overlay_on draws the placing ghost")
+
+
+## The closest zoom shows about the same few tiles across on any farm (it used to be a multiple of the whole-farm
+## view, so it got weaker as the farm grew), and you can pull back a little past the whole farm.
+func test_323_the_closest_zoom_is_the_same_on_any_farm_and_you_can_pull_back() -> void:
+	var width := 1280.0
+	for tiles: int in [12, 20, 30]:
+		var base := width / (tiles * FarmGrid.TILE_W * 1.04)   # the whole farm fits across
+		var limits := FarmMain.zoom_limits(width, base)
+		var across := width / (limits.y * FarmGrid.TILE_W)
+		_check(across <= FarmMain.CLOSEST_TILES + 0.01, "a %d-tile farm: the closest zoom shows %.1f tiles" % [tiles, across])
+		_check(limits.x < base, "a %d-tile farm: you can pull back past the whole farm" % tiles)
+		_check(limits.y >= base * FarmMain.MIN_CLOSE_FACTOR, "and the closest is always closer than the whole farm")
