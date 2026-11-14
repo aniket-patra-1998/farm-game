@@ -11,8 +11,9 @@ const BED_FLOATS := 16     # a bed in the MultiMesh buffer: transform (12) and d
 
 var _beds: MultiMeshInstance3D
 var _size := -1       # the farm size the slots were laid out for
-# Each slot's size and fertilized mark, as last written (the GPU buffer can't be read back).
-var _shown := PackedFloat32Array()
+# Every slot as written (BED_FLOATS each): the one source of what the beds show, pushed to the MultiMesh (whose
+# buffer can't be read back on every renderer).
+var _buffer := PackedFloat32Array()
 
 
 func _ready() -> void:
@@ -34,17 +35,12 @@ func rebuild() -> void:
 	mm.use_custom_data = true
 	mm.mesh = bed_mesh()
 	mm.instance_count = n * n
-	var buffer := PackedFloat32Array()
-	buffer.resize(n * n * BED_FLOATS)
+	_buffer = PackedFloat32Array()
+	_buffer.resize(n * n * BED_FLOATS)
 	for r in n:
 		for c in n:
-			_write(buffer, (r * n + c) * BED_FLOATS, r, c)
-	mm.buffer = buffer
-	_shown = PackedFloat32Array()
-	_shown.resize(n * n * 2)
-	for slot in n * n:
-		_shown[slot * 2] = buffer[slot * BED_FLOATS]
-		_shown[slot * 2 + 1] = buffer[slot * BED_FLOATS + 15]
+			_write(_buffer, (r * n + c) * BED_FLOATS, r, c)
+	mm.buffer = _buffer
 	_beds.multimesh = mm
 	_size = n
 
@@ -54,25 +50,23 @@ func update(indices: Array) -> void:
 	if _size != Game.farm_size or indices.is_empty():
 		rebuild()
 		return
-	var one := PackedFloat32Array()
-	one.resize(BED_FLOATS)
 	for i: int in indices:
-		var r := int(i / float(GameState.MAX_SIZE))
-		var c := i % GameState.MAX_SIZE
+		var r := GameState.row_of(i)
+		var c := GameState.col_of(i)
 		if r >= _size or c >= _size:
 			continue
-		_write(one, 0, r, c)
-		var slot := r * _size + c
-		_beds.multimesh.set_instance_transform(slot, Transform3D(Basis(Vector3(one[0], one[4], one[8]),
-			Vector3(one[1], one[5], one[9]), Vector3(one[2], one[6], one[10])), Vector3(one[3], one[7], one[11])))
-		_beds.multimesh.set_instance_custom_data(slot, Color(one[12], one[13], one[14], one[15]))
-		_shown[slot * 2] = one[0]
-		_shown[slot * 2 + 1] = one[15]
+		var at := (r * _size + c) * BED_FLOATS
+		_write(_buffer, at, r, c)
+		var b := _buffer
+		_beds.multimesh.set_instance_transform(at / BED_FLOATS, Transform3D(Basis(Vector3(b[at], b[at + 4], b[at + 8]),
+			Vector3(b[at + 1], b[at + 5], b[at + 9]), Vector3(b[at + 2], b[at + 6], b[at + 10])),
+			Vector3(b[at + 3], b[at + 7], b[at + 11])))
+		_beds.multimesh.set_instance_custom_data(at / BED_FLOATS, Color(b[at + 12], b[at + 13], b[at + 14], b[at + 15]))
 
 
-## What the beds show, slot by slot: [size, fertilized] pairs (to compare an updated field with a fresh one).
-func shown() -> PackedFloat32Array:
-	return _shown
+## Every bed slot as written (transform and data, BED_FLOATS each), to hold an updated field to a fresh one.
+func buffer() -> PackedFloat32Array:
+	return _buffer
 
 
 ## Tile (r, c)'s bed into `buffer` at `at`: its transform (shrunk to nothing on grass) and whether it's fertilized.

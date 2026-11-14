@@ -105,9 +105,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_on_resized)
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
-	Quality.apply_frame_cap()
-	if not Quality.notifier.emitted.is_connected(Quality.apply_frame_cap):
-		Quality.notifier.emitted.connect(Quality.apply_frame_cap)
+	Quality.apply_frame_cap()    # (and again whenever the level is chosen: Quality.choose)
 	AutoQuality.start_in(self)   # the first launch on a device measures it and picks its level
 
 

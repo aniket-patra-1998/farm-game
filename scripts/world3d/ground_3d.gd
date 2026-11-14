@@ -396,7 +396,7 @@ func update_tiles(indices: Array) -> void:
 	for i: int in indices:
 		if not _farm_tufts.has(i):
 			continue   # (off the farm as it is now)
-		_farm_tufts[i] = _tile_tufts(int(i / float(GameState.MAX_SIZE)), i % GameState.MAX_SIZE, true)
+		_farm_tufts[i] = _tile_tufts(GameState.row_of(i), GameState.col_of(i), true)
 	_lay_tufts()
 
 

@@ -183,28 +183,72 @@ func test_37_tap_farms_swipe_farms_and_hand_drag_moves_the_view() -> void:
 			var run: Array[int] = []
 			for k in 4:
 				var p := Game.index_of(r, c + k)
-				if Game.field.phase(p) == GameState.Phase.GRASS and Game.object_at(p).is_empty() \
-						and grid._on_farm_area(_screen_pos(grid, p)):
+				if Game.field.phase(p) == GameState.Phase.GRASS and grid._on_farm_area(_screen_pos(grid, p)) \
+						and grid.swipe_start(_screen_pos(grid, p), "plow") == p:   # (open, nothing drawn over it)
 					run.append(p)
 			if run.size() == 4:
 				row = run
 	_eq(row.size(), 4, "(a row of four grass plots to swipe across)")
 	var cam_still := cam.position
 	var from := _screen_pos(grid, row[0])
+	var to := _screen_pos(grid, row[3])
 	await _touch(from, true)
-	_eq(grid.get("_touch_tile"), row[0], "the plot under the finger lights as it lands")
-	for p in row.slice(1):
-		var to := _screen_pos(grid, p)
-		var mid := (from + to) / 2.0
-		await _drag(mid, mid - from)
-		await _drag(to, to - mid)
-		from = to
+	_eq(grid.touched_plot(), row[0], "the plot under the finger lights as it lands")
+	await _drag(to, to - from)   # one fast flick, straight across all four: none of them is skipped
 	_check(grid.is_swiping() and not grid.is_dragging(), "a swipe farms, it doesn't move the view")
-	await _touch(from, false)
+	await _touch(to, false)
 	_check(cam.position.is_equal_approx(cam_still), "the view stayed put")
+	for p in row:
+		_check(Game.player.queued_plots().has(p), "plot %d queued by one flick across it" % p)
+	# Swiping the same row again before the farmer gets there takes nothing back: a swipe only adds.
+	await _touch(from, true)
+	await _drag(to, to - from)
+	await _touch(to, false)
+	for p in row:
+		_check(Game.player.queued_plots().has(p), "plot %d still queued after a second swipe" % p)
 	Game.player.advance(240.0)
 	for p in row:
 		_eq(Game.field.phase(p), GameState.Phase.PLOWED, "plot %d plowed by the swipe" % p)
+	# A drag from a plot the tool can't work (the plow on plowed ground) pans, as any drag would.
+	await _touch(from, true)
+	_check(grid.touched_plot() == row[0] and not grid.is_swiping(), "(lit, but nothing to plow there)")
+	await _drag(to, to - from)
+	_check(grid.is_dragging(), "so the drag moves the view")
+	await _touch(to, false)
+	cam.snap(cam_still, cam.zoom.x)   # (back where it was, and no glide)
+	await get_tree().process_frame
+	cam.force_update_scroll()
+	from = _screen_pos(grid, row[0])
+	to = _screen_pos(grid, row[3])
+	# Out of coins half way: said once, not once a plot, and the swipe works no more plots.
+	grid.tool = "plant"
+	grid.selected_crop = Game.crops.keys()[0]
+	var seed_cost := int(Game.crops[grid.selected_crop]["seed_cost"])
+	Game.coins = seed_cost * 2
+	var said := [0]
+	var count_it := func(_t: String) -> void: said[0] += 1
+	grid.info.connect(count_it)
+	await _touch(from, true)
+	await _drag(to, to - from)
+	await _touch(to, false)
+	grid.info.disconnect(count_it)
+	_eq(Game.player.queued_plots().size(), 2, "two plots' seeds paid for, two planted")
+	_eq(said[0], 1, "and running out is said once")
+	Game.player.advance(240.0)
+	# A second finger ends a swipe (a pinch), and with swiping switched off every drag pans.
+	Game.coins = 100000
+	grid.tool = "fertilize"
+	await _touch(from, true)
+	_check(grid.is_swiping(), "a fertilizer swipe starts on growing crops")
+	grid.cancel_paint()
+	_check(not grid.is_swiping(), "a second finger ends it")
+	await _touch(from, false)
+	Balance.override("input.swipe_farm", 0)
+	await _touch(from, true)
+	_check(not grid.is_swiping(), "swipe to farm switched off: no swipe")
+	await _touch(from, false)
+	Balance.reload()
+	grid.tool = "plow"
 	await get_tree().process_frame  # queued effects of the taps run while their scene still stands
 	main.free()
 
@@ -326,24 +370,52 @@ func test_325_player_settings_keep_each_owners_keys_and_the_window_choice() -> v
 func test_327_the_first_launch_measures_the_level_and_the_players_choice_wins() -> void:
 	var was_chosen: Variant = PlayerSettings.value(Quality.SECTION, Quality.KEY, null)
 	var was_auto: Variant = PlayerSettings.value(Quality.SECTION, Quality.AUTO_KEY, null)
-	var slow := Quality.auto_rule("down_ms") + 5.0
-	var fast := Quality.auto_rule("up_ms") - 2.0
-	var easy := (Quality.auto_rule("down_ms") + Quality.auto_rule("up_ms")) / 2.0
-	_eq(AutoQuality.verdict("mid", slow), "low", "a phone that can't keep up steps down")
-	_eq(AutoQuality.verdict("mid", fast), "high", "one with plenty to spare steps up")
-	_eq(AutoQuality.verdict("mid", easy), "mid", "and one in between stays")
-	_eq(AutoQuality.verdict("low", slow), "low", "never past the ends")
+	var rules := Quality.auto_rules()
+	_check(not rules.is_empty(), "the rules are all in data/quality.json")
+	var slow := float(rules["down_ms"]) + 5.0
+	var fast := float(rules["up_ms"]) - 2.0
+	var easy := (float(rules["down_ms"]) + float(rules["up_ms"])) / 2.0
+	var auto := AutoQuality.new()
+	_eq(auto.verdict("mid", slow, true), "low", "a device that can't keep up steps down")
+	_eq(auto.verdict("mid", fast, true), "high", "one with plenty to spare steps up")
+	_eq(auto.verdict("mid", fast, false), "mid", "but not where stepping up isn't allowed")
+	_eq(auto.verdict("mid", easy, true), "mid", "and one in between stays")
+	_eq(auto.verdict("low", slow, true), "low", "never past the ends")
 	_eq(AutoQuality.median(PackedFloat32Array([30.0, 5.0, 80.0, 10.0, 12.0])), 12.0, "the median frame, not one hitch")
-	_check(AutoQuality.start_in(self) == null, "(nothing to measure without a screen)")
 	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: null, Quality.AUTO_KEY: null})
 	Quality._level = ""
+	_check(AutoQuality.should_measure(), "a new device is measured")
+	# The flow: nothing in the warmup, a resume's huge frame isn't counted, then `frames` frames decide.
+	var frame := 1.0 / 60.0
+	var verdict := ""
+	var n := 0
+	auto.restart()
+	_eq(auto.add_sample(float(rules["warmup"]) + 1.0, slow, true), "", "a long frame (a resume) decides nothing")
+	while verdict == "" and n < 100000:
+		verdict = auto.add_sample(frame, slow, true)
+		n += 1
+	_eq(n, int(float(rules["warmup"]) / frame) + int(rules["frames"]), "the warmup, then exactly the frames counted")
+	_eq(verdict, Quality.step(Quality.level(), -1), "a slow device steps down")
+	auto.mobile = true
+	auto.restart()
+	verdict = ""
+	while verdict == "":
+		verdict = auto.add_sample(frame, fast, true)
+	_eq(verdict, Quality.level(), "a phone never steps up from its first, lightest farm")
+	auto.free()
+	var before := Quality.level()
 	Quality.keep_measured("low")
-	_check(Quality.measured(), "the measured level is kept")
-	_eq(Quality.level(), "low", "and used while the player hasn't chosen")
+	_check(Quality.measured() and not AutoQuality.should_measure(), "measured once, kept")
+	_eq(Quality.level(), before, "and nothing changes until the next launch")
+	Quality._level = ""
+	_eq(Quality.level(), "low", "which uses it")
 	Quality.choose("high")
+	_eq(Engine.max_fps, int(Quality.value("max_fps")), "choosing a level sets the frame cap itself")
 	Quality.keep_measured("low")
-	_eq(Quality.level(), "high", "a level the player chose stays")
+	Quality._level = ""
+	_eq(Quality.level(), "high", "a level the player chose wins")
+	_check(not AutoQuality.should_measure(), "and then nothing is measured")
 	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: was_chosen, Quality.AUTO_KEY: was_auto})
 	Quality._level = ""
+	Quality.apply_frame_cap()
 	Quality.notifier.emitted.emit()
-

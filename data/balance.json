@@ -688,5 +688,9 @@
    "v": 2,
    "note": "XP for helping a neighbour"
   }
+ },
+ "input": {
+  "swipe_farm": {"v": 1, "note": "1 swipe to farm on (our own touch, not FarmVille 2009, which farmed one click a plot and left many plots at once to the vehicles): a one-finger drag with a swipe tool works every plot it crosses; 0 off: every drag pans"},
+  "swipe_tools": {"v": ["plow", "plant", "harvest", "fertilize"], "note": "the tools a swipe works plots with (scripts/farm_grid.gd); any other tool's drag pans"}
  }
 }

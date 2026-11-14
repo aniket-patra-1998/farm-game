@@ -30,6 +30,7 @@ var _base := 0.0    # the farm clock's zero: seconds count from here, so a shade
 var _plot_look := {}   # plot index -> [group key, packed data]: what its plants look like now
 var _plot_chunk := {}  # plot index -> its plants as MultiMesh buffer data (_chunk), kept ready
 var _members := {}     # group key -> {plot index: true}: the plots each group draws
+var _size := -1        # the farm size last drawn (a smaller one drops the plants past its edge)
 
 
 func _ready() -> void:
@@ -117,17 +118,17 @@ static func stage_of(i: int) -> Array:
 ## groups, not the whole field, and the timer's look at growth rebuilds only plants that moved on a stage.
 func update(indices: Array = []) -> void:
 	if indices.is_empty():
-		# The whole field, and any plot still drawn from a bigger farm (a load or reset can shrink it).
 		indices = _all_plots()
-		var on_farm := {}
-		for i: int in indices:
-			on_farm[i] = true
+	if _size != Game.farm_size:
+		# A smaller farm (after a reset or load): what was drawn past its new edge goes too.
+		_size = Game.farm_size
+		indices = indices.duplicate()
 		for i: int in _plot_look:
-			if not on_farm.has(i):
+			if not Game.on_farm(i):
 				indices.append(i)
 	var dirty := {}
 	for i: int in indices:
-		var now := _look_of(i) if _on_farm(i) else []
+		var now := _look_of(i) if Game.on_farm(i) else []
 		var was: Array = _plot_look.get(i, [])
 		if was == now:
 			continue
@@ -143,11 +144,6 @@ func update(indices: Array = []) -> void:
 			dirty[now[0]] = true
 	for key: String in dirty:
 		_lay_out(key)
-
-
-## Whether plot `i` lies on the farm as it is now.
-static func _on_farm(i: int) -> bool:
-	return int(i / float(GameState.MAX_SIZE)) < Game.farm_size and i % GameState.MAX_SIZE < Game.farm_size
 
 
 ## Every plot of the farm, by index.
@@ -177,8 +173,8 @@ func _look_of(i: int) -> Array:
 ## Plot `i`'s plants as MultiMesh buffer data: for each, its transform (3 rows of 4), its colour, its data.
 static func _chunk(i: int, data: Color) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
-	var r := int(i / float(GameState.MAX_SIZE))
-	var c := i % GameState.MAX_SIZE
+	var r := GameState.row_of(i)
+	var c := GameState.col_of(i)
 	for k in SPOTS.size():
 		var spot: Vector2 = SPOTS[k]
 		var turn := float((i * 7 + k * 13) % 17) / 17.0 * TAU
@@ -262,8 +258,8 @@ func pop(i: int, crop_id: String) -> void:
 	var ghost := MultiMeshInstance3D.new()
 	ghost.multimesh = mm
 	ghost.material_override = material_for(Color.html(str(crop.get("color", "#e2453c"))))
-	var r := int(i / float(GameState.MAX_SIZE))
-	var c := i % GameState.MAX_SIZE
+	var r := GameState.row_of(i)
+	var c := GameState.col_of(i)
 	ghost.position = Vector3(c + 0.5, Plots3D.HEIGHT, r + 0.5)
 	add_child(ghost)
 	var tw := ghost.create_tween()

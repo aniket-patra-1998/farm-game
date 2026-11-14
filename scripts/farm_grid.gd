@@ -29,8 +29,8 @@ const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
+const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is walked in
 ## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
-const SWIPE_TOOLS := ["plow", "plant", "harvest", "fertilize"]
 const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is picked up (by the clock, so a
 							# slow frame can never turn a quick tap into a hold)
 
@@ -79,8 +79,10 @@ var _press_pos := Vector2.ZERO
 var _press_msec := 0         # when the finger went down
 var _hold_spent := false     # this press has already tried to lift something
 var _pressing := false
-var _swiping := false        # this press farms every plot the finger crosses (a SWIPE_TOOLS tool)
+var _swiping := false        # this press farms every plot the finger crosses (a swipe tool, Balance `input.*`)
 var _swiped := {}            # plots this swipe has already worked (index -> true)
+var _swipe_at := Vector2.ZERO   # where the swipe's finger was last seen (the path since is walked, no plot skipped)
+var _swipe_spent := false    # a swipe stopped working plots: something was refused, and said once
 var _touch_tile := -1        # the plot under a finger that has just landed, lit at once (-1 none)
 var _dragged := false
 
@@ -230,13 +232,13 @@ func index_at(local_pos: Vector2) -> int:
 
 
 func _row(i: int) -> int:
-	return int(float(i) / MAX)
+	return GameState.row_of(i)
 
 
 
 
 func _col(i: int) -> int:
-	return i % MAX
+	return GameState.col_of(i)
 
 
 
@@ -266,9 +268,9 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
 	# Plots waiting for the farmer, and the one a finger has just landed on.
 	for i: int in Game.player.queued_plots():
-		PlaceholderArt.draw_footprint(ci, corners_of(i / MAX, i % MAX, 1, 1), true)
-	if _touch_tile >= 0 and _pressing:
-		PlaceholderArt.draw_footprint(ci, corners_of(_touch_tile / MAX, _touch_tile % MAX, 1, 1), true)
+		PlaceholderArt.draw_footprint(ci, corners_of(_row(i), _col(i), 1, 1), true)
+	if touched_plot() >= 0:
+		PlaceholderArt.draw_footprint(ci, corners_of(_row(_touch_tile), _col(_touch_tile), 1, 1), true)
 	var lifted := int(placing.get("uid", -1))
 	var t := Time.get_ticks_msec() / 1000.0
 	# In 3D a building shows how full it is on itself; the numbers come up only while you're placing
@@ -542,11 +544,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			_hold_spent = false
 			_press_pos = touch.position
 			_press_on_farm = _on_farm_area(touch.position)
-			# The plot under the finger lights the moment it lands, so a tap feels instant.
-			_touch_tile = plot_under(touch.position) if _press_on_farm else -1
-			_swiping = _press_on_farm and SWIPE_TOOLS.has(tool) and _touch_tile >= 0 \
-				and Game.object_at(_touch_tile).is_empty()
+			# The plot under the finger lights the moment it lands, so a tap feels instant (a farming tool on an
+			# open plot: a press on a building or tree picks that, so nothing under it lights).
+			_touch_tile = swipe_start(touch.position, tool) if _press_on_farm else -1
+			# Swipe to farm (our own touch, Balance `input.swipe_farm`): only from a plot the tool would work, so a
+			# drag anywhere else still pans.
+			_swiping = _touch_tile >= 0 and Balance.i("input.swipe_farm") == 1 and would_act(_touch_tile)
 			_swiped.clear()
+			_swipe_spent = false
+			_swipe_at = touch.position
 		else:
 			# A tap: act on the plot under the finger. A drag already moved the camera (or farmed as it went).
 			if _pressing and not _dragged and _press_on_farm:
@@ -562,17 +568,67 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dragged = true
 			_touch_tile = -1
 		if _pressing and _swiping and _dragged and drag.index == 0:
-			_swipe_over(drag.position)
+			_swipe_along(_swipe_at, drag.position)
+			_swipe_at = drag.position
+
+
+## Swipe to farm (our own touch): every plot on the path from `from` to `to` on screen, walked in steps of
+## under half a tile, so a fast flick between two touch events skips none.
+func _swipe_along(from: Vector2, to: Vector2) -> void:
+	var step := maxf(SWIPE_STEP_MIN, TILE_H * get_canvas_transform().get_scale().y * 0.4)
+	var n := ceili(from.distance_to(to) / step)
+	for k in range(1, n + 1):
+		_swipe_over(from.lerp(to, k / float(n)))
+	if n == 0:
+		_swipe_over(to)
 
 
 ## Swipe to farm: the plot under `screen_pos` is worked with the tool in hand, once per swipe, quietly (no
-## "can't plow that" for each plot crossed); things standing on the farm are passed over.
+## "can't plow that" for each plot crossed; things standing on the farm are passed over). Work already queued
+## stays queued (a swipe only adds), and the first refusal (coins, a full queue) is said once and ends the work.
 func _swipe_over(screen_pos: Vector2) -> void:
+	if _swipe_spent:
+		return
 	var i := plot_under(screen_pos)
 	if i < 0 or _swiped.has(i) or not Game.object_at(i).is_empty():
 		return
 	_swiped[i] = true
 	_act(i, false)
+
+
+## The plot a press at `screen_pos` with `with_tool` lights and may swipe from: an open plot (nothing picked
+## there, in 3D a roof or crown standing over it counts) when the tool is a swipe tool, or -1.
+func swipe_start(screen_pos: Vector2, with_tool: String) -> int:
+	if not Balance.a("input.swipe_tools").has(with_tool):
+		return -1
+	if picker.is_valid() and int(picker.call(screen_pos)) >= 0:
+		return -1
+	var i := plot_under(screen_pos)
+	if i < 0 or not Game.object_at(i).is_empty():
+		return -1
+	return i
+
+
+## Whether the tool in hand would do something on plot `i` (the rules `_act` follows, without acting).
+func would_act(i: int) -> bool:
+	if i < 0 or not Game.object_at(i).is_empty() or tool == "sell":
+		return false
+	var ph := Game.field.phase(i)
+	if ph == GameState.Phase.RIPE:
+		return true
+	match tool:
+		"plow":
+			return ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED
+		"plant":
+			return ph == GameState.Phase.PLOWED and selected_crop != ""
+		"fertilize":
+			return ph == GameState.Phase.GROWING and not Game.field.is_fertilized(i)
+	return false
+
+
+## The plot lit under a finger that has just landed (-1 none).
+func touched_plot() -> int:
+	return _touch_tile if _pressing else -1
 
 
 ## The plot under a point on the screen, or -1 off the farm.
@@ -703,8 +759,8 @@ func _pop_plants(i: int, crop_id: String, art: String) -> void:
 func _drive(i: int) -> void:
 	var id := selected_crop
 	var area := Game.vehicles.vehicle_area(id)
-	var row := int(i / float(MAX)) - int((area.y - 1) / 2.0)
-	var col := i % MAX - int((area.x - 1) / 2.0)
+	var row := _row(i) - int((area.y - 1) / 2.0)
+	var col := _col(i) - int((area.x - 1) / 2.0)
 	var job: String = Game.item_data(id).get("job", "")
 	var crop := last_crop if (job == "plant" or job == "all") else ""
 	_vehicle_flash = {"row": row, "col": col, "w": area.x, "h": area.y, "until": Time.get_ticks_msec() + 500}
@@ -713,12 +769,19 @@ func _drive(i: int) -> void:
 
 
 ## Queues a job for the farmer (they walk there and do it: PlayerSystem); tapping something already queued
-## takes it back out.
-func _queue(job: Dictionary) -> void:
-	if Game.player.cancel(job):
+## takes it back out. A swipe (`loud` false) only adds: what is queued stays, and the first refusal is said
+## once and ends the swipe's work.
+func _queue(job: Dictionary, loud := true) -> void:
+	if loud and Game.player.cancel(job):
 		Feedback.moment("tap")
 		return
-	match Game.player.enqueue(job):
+	var refused := Game.player.enqueue(job)
+	if not loud:
+		if refused == PlayerSystem.Refused.QUEUED or refused == PlayerSystem.Refused.NOTHING_TO_DO:
+			return
+		if refused != PlayerSystem.Refused.NONE:
+			_swipe_spent = true
+	match refused:
 		PlayerSystem.Refused.NONE:
 			Feedback.moment("tap")
 		PlayerSystem.Refused.COINS:
@@ -899,73 +962,74 @@ func _show_collect(uid: int, result: Dictionary) -> void:
 		_sparkle(at, c)
 
 
-## first_touch is always true now that each tap acts on one plot; it stays so
-## multi-plot tools (vehicles, later) can reuse _act without info popups.
-func _act(i: int, first_touch: bool) -> void:
+## Works plot `i` (or what stands on it) with the tool in hand. `loud`: a tap, which says why when nothing can be
+## done and takes back what is already queued; a swipe passes `false`, so it only adds work and says nothing
+## for each plot it crosses.
+func _act(i: int, loud: bool) -> void:
 	var obj := Game.object_at(i)
 	if not obj.is_empty():
-		_act_on_object(obj, first_touch)
+		_act_on_object(obj, loud)
 		return
 	var ph := Game.field.phase(i)
 
 	# The sell tool deletes plots (FarmVille's delete): even a ripe crop, after asking.
 	if tool == "sell":
-		if first_touch:
+		if loud:
 			_try_clear(i)
 		return
 	# A ripe crop is harvested by any tool: tapping ripe crops should always just work.
 	if ph == GameState.Phase.RIPE:
-		_queue({"kind": "harvest", "plot": i})
+		_queue({"kind": "harvest", "plot": i}, loud)
 		return
 
 	match tool:
 		"plow":
 			if ph == GameState.Phase.GRASS or ph == GameState.Phase.WITHERED:
-				_queue({"kind": "plow", "plot": i})
-			elif first_touch:
+				_queue({"kind": "plow", "plot": i}, loud)
+			elif loud:
 				_explain(i, ph)
 		"plant":
 			if ph == GameState.Phase.PLOWED and selected_crop != "":
-				_queue({"kind": "plant", "plot": i, "crop": selected_crop})
-			elif first_touch:
+				_queue({"kind": "plant", "plot": i, "crop": selected_crop}, loud)
+			elif loud:
 				_explain(i, ph)
 		"fertilize":
 			if ph == GameState.Phase.GROWING and not Game.field.is_fertilized(i):
-				_queue({"kind": "fertilize", "plot": i})
-			elif first_touch:
+				_queue({"kind": "fertilize", "plot": i}, loud)
+			elif loud:
 				if Game.field.is_fertilized(i):
 					info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
 				else:
 					info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS"))
 		"hand", "harvest":
-			if first_touch:
+			if loud:
 				_explain(i, ph)
 
 
 
 
-func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
+func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	var uid := int(obj["uid"])
 	var kind := Game.kind_of(obj)
-	if tool == "sell" and first_touch:
+	if tool == "sell" and loud:
 		_try_sell(obj)
 		return
-	if tool == "rotate" and first_touch:
+	if tool == "rotate" and loud:
 		Game.rotate_object(uid)
 		return
-	if tool == "store" and first_touch:
+	if tool == "store" and loud:
 		if Game.storage.store_object(uid):
 			var fps := Game.footprint(obj["id"])
 			_float(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], tr("STORED"), "xp")
 		return
 	if kind == "barn" and tool != "move":
-		if first_touch:
+		if loud:
 			_poke(uid)
 			object_tapped.emit(uid)
 		return
 	if kind == "vehicle" and tool != "move":
 		# Tapping a vehicle takes it in hand to work the fields (FarmVille's way); with no fuel, the fuel panel.
-		if first_touch:
+		if loud:
 			_poke(uid)
 			if Game.under_construction(obj) or Game.vehicles.fuel_now() <= 0:
 				object_tapped.emit(uid)
@@ -974,14 +1038,14 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 				tool_changed.emit("vehicle")
 		return
 	if kind == "decor" and tool != "move":
-		if first_touch:
+		if loud:
 			_poke(uid)
 			info.emit(tr("YOUR") % Game.item_data(obj["id"])["name"].to_lower())
 		return
 	if obj.get("stray", false) and tool != "move":
-		if first_touch:
+		if loud:
 			_poke(uid)
-		if first_touch and Game.strays.adopt_stray(uid):
+		if loud and Game.strays.adopt_stray(uid):
 			var fp0 := Game.footprint(obj["id"])
 			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
 			var at0 := (c0[0] + c0[2]) / 2.0
@@ -989,14 +1053,14 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 			_sparkle(at0, "find")
 		return
 	if tool == "move":
-		if first_touch:
+		if loud:
 			start_placing(obj["id"], uid)
 		return
 	var supply := Game.nurture.supply_for(obj)
 	if supply != "":
 		# A young one, or a withered bloom: given its supply by the farmer; with none to give, its card
 		# shows what it needs and sells more.
-		if first_touch:
+		if loud:
 			_poke(uid)
 			if Game.player.is_queued({"kind": "nurture", "uid": uid}) or Game.nurture.free_supply(supply) > 0:
 				_queue({"kind": "nurture", "uid": uid})
@@ -1006,7 +1070,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 	if Game.is_ready(obj):
 		_queue({"kind": "collect", "uid": uid})
 		return
-	if not first_touch:
+	if not loud:
 		return
 	_poke(uid)
 	if tool == "harvest":   # the Harvest tool gathers what is ready and opens nothing: say when it will be

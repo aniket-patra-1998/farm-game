@@ -11,56 +11,49 @@ const SECTION := "graphics"
 const KEY := "quality"
 const AUTO_KEY := "auto"   # the level the first launch measured (AutoQuality), when the player hasn't chosen
 const LEVELS: Array[String] = ["low", "mid", "high"]
+const AUTO_RULES: Array[String] = ["warmup", "frames", "max_frame_ms", "down_ms", "up_ms", "up_on_mobile"]
 
 static var _data := {}
 static var _level := ""   # the level in use, read from the settings file once
 static var notifier := Signals.new()
 
 
-## The level in use: the player's choice, or the default for this kind of device.
+## The level in use: the player's choice, else what this device measured on its first launch (AutoQuality),
+## else the default for this kind of device. Read once.
 static func level() -> String:
-	if _level != "":
-		return _level
-	var chosen := str(PlayerSettings.value(SECTION, KEY, ""))
-	if LEVELS.has(chosen):
-		_level = chosen
-		return _level
-	var measured := str(PlayerSettings.value(SECTION, AUTO_KEY, ""))
-	if LEVELS.has(measured):
-		_level = measured
-		return _level
-	var data := _load()
-	_level = str(data.get("default_phone" if OS.has_feature("mobile") else "default_computer", "mid"))
+	if _level == "":
+		var chosen := _kept(KEY)
+		var measured_level := _kept(AUTO_KEY)
+		_level = chosen if chosen != "" else measured_level if measured_level != "" else str(_load().get(
+			"default_phone" if OS.has_feature("mobile") else "default_computer", "mid"))
 	return _level
 
 
-## Picks a level, keeps it and applies it everywhere.
+## Picks a level, keeps it and applies it everywhere (the 3D world through `notifier`, the frame cap here).
 static func choose(name: String) -> void:
 	if not LEVELS.has(name):
 		return
 	PlayerSettings.keep(SECTION, {KEY: name})
 	_level = name
+	apply_frame_cap()
 	notifier.emitted.emit()
 
 
-## Whether the player has picked a level themselves (then nothing measures and moves it).
+## Whether the player has picked a level themselves (then nothing measures or moves it).
 static func chosen_by_player() -> bool:
-	return LEVELS.has(str(PlayerSettings.value(SECTION, KEY, "")))
+	return _kept(KEY) != ""
 
 
-## Whether the first launch's measurement has been made on this device.
+## Whether this device's first launch has been measured.
 static func measured() -> bool:
-	return LEVELS.has(str(PlayerSettings.value(SECTION, AUTO_KEY, "")))
+	return _kept(AUTO_KEY) != ""
 
 
-## Keeps `name` as what this device measured (not the player's choice) and applies it.
+## Keeps `name` as what this device measured. It takes effect from the next launch, so the picture never
+## changes under the player's thumb (and never over a level the player chose).
 static func keep_measured(name: String) -> void:
-	if not LEVELS.has(name):
-		return
-	PlayerSettings.keep(SECTION, {AUTO_KEY: name})
-	if not chosen_by_player():
-		_level = name
-		notifier.emitted.emit()
+	if LEVELS.has(name):
+		PlayerSettings.keep(SECTION, {AUTO_KEY: name})
 
 
 ## The level one step `by` from `name` (held at the ends).
@@ -68,9 +61,19 @@ static func step(name: String, by: int) -> String:
 	return LEVELS[clampi(LEVELS.find(name) + by, 0, LEVELS.size() - 1)]
 
 
-## The first-launch measurement's numbers (data/quality.json `auto`).
-static func auto_rule(key: String) -> float:
-	return float((_load().get("auto", {}) as Dictionary).get(key, 0.0))
+## The first-launch measurement's rules (data/quality.json `auto`), or {} when they are missing or incomplete.
+static func auto_rules() -> Dictionary:
+	var rules: Dictionary = _load().get("auto", {})
+	for key: String in AUTO_RULES:
+		if not rules.has(key):
+			return {}
+	return rules
+
+
+## A level kept under `key` in the settings, or "".
+static func _kept(key: String) -> String:
+	var v := str(PlayerSettings.value(SECTION, key, ""))
+	return v if LEVELS.has(v) else ""
 
 
 ## One setting of the level in use (or of `name`).

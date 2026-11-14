@@ -335,13 +335,28 @@ func _build(o: Dictionary) -> Node3D:
 			if Game.links.group_of(str(o["id"])) != "":
 				node = Node3D.new()   # drawn by the LinkLayer, which joins it to its neighbours; this stands in for taps
 			else:
-				node = DecorModel.build(it, fp, o)
-				if not str(o["id"]).ends_with("_tree"):   # (a tree's crown overhangs by design)
-					node = SpaceFit.fit_model(node, fp)
+				# Built once per look and shared (Instancer): what a piece's look depends on is its kind, one of a
+				# few variants by where it stands (for the ones drawn a little differently each time), and the
+				# mastered crop or flower a sign or bunch shows.
+				var look := Instancer.variant(int(o["row"]), int(o["col"]))
+				var shows := str(o.get("crop", o.get("flower", "")))
+				var seen := {"uid": look, "crop": shows}
+				node = Instancer.copy_of(Instancer.key_of(["decor", o["id"], look, shows,
+					Game.mastery.colour_of(shows)]), func() -> Node3D:
+						var built := DecorModel.build(it, fp, seen)
+						if not str(o["id"]).ends_with("_tree"):   # (a tree's crown overhangs by design)
+							built = SpaceFit.fit_model(built, fp)
+						return built)
 		"young":
 			node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
 		"bloom":
-			node = SpaceFit.fit_model(BloomModel.build(it, o, ScaleGuide.factor(str(o["id"]))), fp)
+			# One of a few built looks per state (Instancer), as for trees.
+			var look := Instancer.variant(int(o["row"]), int(o["col"]))
+			var grown := ScaleGuide.factor(str(o["id"]))
+			var d := Game.catalog.get_def(str(o["id"])) as BloomDef
+			node = Instancer.copy_of(Instancer.key_of(["bloom", o["id"], grown, Game.is_ready(o), Game.is_withered(o),
+				d != null and d.is_full(), Crowding.mask(o), look]), func() -> Node3D:
+					return SpaceFit.fit_model(BloomModel.build(it, o, grown, look), fp))
 		_:
 			if Game.under_construction(o):
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))

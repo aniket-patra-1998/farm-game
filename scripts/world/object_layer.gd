@@ -196,7 +196,7 @@ func _sync_plot(i: int) -> void:
 
 func _place(p: FarmPiece) -> void:
 	if p.plot >= 0:
-		p.z_index = plot_z(int(p.plot / float(GameState.MAX_SIZE)), p.plot % GameState.MAX_SIZE)
+		p.z_index = plot_z(GameState.row_of(p.plot), GameState.col_of(p.plot))
 		p.base = grid.center_of(p.plot)
 		# In 3D the bed is Plots3D's; the plants sit on its top.
 		p.plants.position = Vector2(0, -PlaceholderArt.SLAB)

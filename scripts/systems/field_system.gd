@@ -83,7 +83,7 @@ func plow(i: int) -> bool:
 ## FarmVille's delete tool: any plot back to grass, free; a crop on it (growing, ripe or withered) is lost,
 ## so the caller asks first. Nothing standing on it, and grass is already grass.
 func can_clear_plot(i: int) -> bool:
-	var in_bounds := game.in_farm(i / GameState.MAX_SIZE, i % GameState.MAX_SIZE)
+	var in_bounds := game.on_farm(i)
 	return in_bounds and phase(i) != GameState.Phase.GRASS and not game.is_occupied(i)
 
 

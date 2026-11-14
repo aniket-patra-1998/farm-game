@@ -56,10 +56,10 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, r
 		ModelKit.sway_all(root, SWAY / maxf(size, 0.3))
 
 
-## A bloom on the farm, as its own baked model.
-static func build(it: Dictionary, o: Dictionary, scale := 1.0) -> Node3D:
+## A bloom on the farm, as its own baked model (`look`: the variant its small differences come from, or its uid).
+static func build(it: Dictionary, o: Dictionary, scale := 1.0, look := -1) -> Node3D:
 	var holder := Node3D.new()
 	var d := Game.catalog.get_def(str(it.get("id", ""))) as BloomDef
 	build_at(holder, Vector3(0.5, 0, 0.5), it, 1.6 * scale, Game.is_ready(o), Game.is_withered(o),
-		d != null and d.is_full(), int(o.get("uid", 0)), Crowding.mask(o))
+		d != null and d.is_full(), look if look >= 0 else int(o.get("uid", 0)), Crowding.mask(o))
 	return ModelKit.bake(holder)

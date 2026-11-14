@@ -305,6 +305,22 @@ func index_of(row: int, col: int) -> int:
 	return row * MAX_SIZE + col
 
 
+## The row of plot index `i` (the other half of `index_of`).
+static func row_of(i: int) -> int:
+	return int(i / float(MAX_SIZE))
+
+
+## The column of plot index `i`.
+static func col_of(i: int) -> int:
+	return i % MAX_SIZE
+
+
+## Whether plot index `i` lies on the farm as it is now (a plot past the edge keeps its data in `plots`, so a
+## smaller farm, after a reset or load, must not draw or work it).
+func on_farm(i: int) -> bool:
+	return i >= 0 and in_farm(row_of(i), col_of(i))
+
+
 func in_farm(row: int, col: int) -> bool:
 	return row >= 0 and col >= 0 and row < farm_size and col < farm_size
 

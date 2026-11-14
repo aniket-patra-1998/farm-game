@@ -294,7 +294,7 @@ func _centre_of(job: Dictionary) -> Vector2:
 			return Vector2(clampf(int(job["col"]) + area.x / 2.0, 0.5, game.farm_size - 0.5),
 				clampf(int(job["row"]) + area.y / 2.0, 0.5, game.farm_size - 0.5))
 	var i := int(job["plot"])
-	return Vector2(i % GameState.MAX_SIZE + 0.5, i / GameState.MAX_SIZE + 0.5)
+	return Vector2(GameState.col_of(i) + 0.5, GameState.row_of(i) + 0.5)
 
 
 ## Works out the way to a job: to a plot's edge, or to the nearest free tile beside an object. No way
