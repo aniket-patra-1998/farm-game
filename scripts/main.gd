@@ -108,6 +108,7 @@ func _ready() -> void:
 	Quality.apply_frame_cap()
 	if not Quality.notifier.emitted.is_connected(Quality.apply_frame_cap):
 		Quality.notifier.emitted.connect(Quality.apply_frame_cap)
+	AutoQuality.start_in(self)   # the first launch on a device measures it and picks its level
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that

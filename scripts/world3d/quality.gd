@@ -9,6 +9,7 @@ extends RefCounted
 const DATA := "res://data/quality.json"
 const SECTION := "graphics"
 const KEY := "quality"
+const AUTO_KEY := "auto"   # the level the first launch measured (AutoQuality), when the player hasn't chosen
 const LEVELS: Array[String] = ["low", "mid", "high"]
 
 static var _data := {}
@@ -24,6 +25,10 @@ static func level() -> String:
 	if LEVELS.has(chosen):
 		_level = chosen
 		return _level
+	var measured := str(PlayerSettings.value(SECTION, AUTO_KEY, ""))
+	if LEVELS.has(measured):
+		_level = measured
+		return _level
 	var data := _load()
 	_level = str(data.get("default_phone" if OS.has_feature("mobile") else "default_computer", "mid"))
 	return _level
@@ -36,6 +41,36 @@ static func choose(name: String) -> void:
 	PlayerSettings.keep(SECTION, {KEY: name})
 	_level = name
 	notifier.emitted.emit()
+
+
+## Whether the player has picked a level themselves (then nothing measures and moves it).
+static func chosen_by_player() -> bool:
+	return LEVELS.has(str(PlayerSettings.value(SECTION, KEY, "")))
+
+
+## Whether the first launch's measurement has been made on this device.
+static func measured() -> bool:
+	return LEVELS.has(str(PlayerSettings.value(SECTION, AUTO_KEY, "")))
+
+
+## Keeps `name` as what this device measured (not the player's choice) and applies it.
+static func keep_measured(name: String) -> void:
+	if not LEVELS.has(name):
+		return
+	PlayerSettings.keep(SECTION, {AUTO_KEY: name})
+	if not chosen_by_player():
+		_level = name
+		notifier.emitted.emit()
+
+
+## The level one step `by` from `name` (held at the ends).
+static func step(name: String, by: int) -> String:
+	return LEVELS[clampi(LEVELS.find(name) + by, 0, LEVELS.size() - 1)]
+
+
+## The first-launch measurement's numbers (data/quality.json `auto`).
+static func auto_rule(key: String) -> float:
+	return float((_load().get("auto", {}) as Dictionary).get(key, 0.0))
 
 
 ## One setting of the level in use (or of `name`).

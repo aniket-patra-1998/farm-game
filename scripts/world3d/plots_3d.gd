@@ -11,7 +11,8 @@ const BED_FLOATS := 16     # a bed in the MultiMesh buffer: transform (12) and d
 
 var _beds: MultiMeshInstance3D
 var _size := -1       # the farm size the slots were laid out for
-var _shown := PackedFloat32Array()   # each slot's size and fertilized mark, as last written (the GPU buffer can't be read back)
+# Each slot's size and fertilized mark, as last written (the GPU buffer can't be read back).
+var _shown := PackedFloat32Array()
 
 
 func _ready() -> void:

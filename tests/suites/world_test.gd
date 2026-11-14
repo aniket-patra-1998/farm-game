@@ -320,3 +320,30 @@ func test_325_player_settings_keep_each_owners_keys_and_the_window_choice() -> v
 	_check(not Display.has_window(), "(no window to size in a headless run)")
 	Display.set_fullscreen(was_full)
 	PlayerSettings.keep("test_section", {"a": null})
+
+
+## The first launch picks a level from what a frame costs; the player's own choice always wins over it.
+func test_327_the_first_launch_measures_the_level_and_the_players_choice_wins() -> void:
+	var was_chosen: Variant = PlayerSettings.value(Quality.SECTION, Quality.KEY, null)
+	var was_auto: Variant = PlayerSettings.value(Quality.SECTION, Quality.AUTO_KEY, null)
+	var slow := Quality.auto_rule("down_ms") + 5.0
+	var fast := Quality.auto_rule("up_ms") - 2.0
+	var easy := (Quality.auto_rule("down_ms") + Quality.auto_rule("up_ms")) / 2.0
+	_eq(AutoQuality.verdict("mid", slow), "low", "a phone that can't keep up steps down")
+	_eq(AutoQuality.verdict("mid", fast), "high", "one with plenty to spare steps up")
+	_eq(AutoQuality.verdict("mid", easy), "mid", "and one in between stays")
+	_eq(AutoQuality.verdict("low", slow), "low", "never past the ends")
+	_eq(AutoQuality.median(PackedFloat32Array([30.0, 5.0, 80.0, 10.0, 12.0])), 12.0, "the median frame, not one hitch")
+	_check(AutoQuality.start_in(self) == null, "(nothing to measure without a screen)")
+	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: null, Quality.AUTO_KEY: null})
+	Quality._level = ""
+	Quality.keep_measured("low")
+	_check(Quality.measured(), "the measured level is kept")
+	_eq(Quality.level(), "low", "and used while the player hasn't chosen")
+	Quality.choose("high")
+	Quality.keep_measured("low")
+	_eq(Quality.level(), "high", "a level the player chose stays")
+	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: was_chosen, Quality.AUTO_KEY: was_auto})
+	Quality._level = ""
+	Quality.notifier.emitted.emit()
+
