@@ -29,6 +29,8 @@ const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
+## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
+const SWIPE_TOOLS := ["plow", "plant", "harvest", "fertilize"]
 const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is picked up (by the clock, so a
 							# slow frame can never turn a quick tap into a hold)
 
@@ -77,6 +79,9 @@ var _press_pos := Vector2.ZERO
 var _press_msec := 0         # when the finger went down
 var _hold_spent := false     # this press has already tried to lift something
 var _pressing := false
+var _swiping := false        # this press farms every plot the finger crosses (a SWIPE_TOOLS tool)
+var _swiped := {}            # plots this swipe has already worked (index -> true)
+var _touch_tile := -1        # the plot under a finger that has just landed, lit at once (-1 none)
 var _dragged := false
 
 var _press_on_farm := false
@@ -259,9 +264,11 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
 		PlaceholderArt.draw_footprint(ci, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
 			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
-	# Plots waiting for the farmer.
+	# Plots waiting for the farmer, and the one a finger has just landed on.
 	for i: int in Game.player.queued_plots():
 		PlaceholderArt.draw_footprint(ci, corners_of(i / MAX, i % MAX, 1, 1), true)
+	if _touch_tile >= 0 and _pressing:
+		PlaceholderArt.draw_footprint(ci, corners_of(_touch_tile / MAX, _touch_tile % MAX, 1, 1), true)
 	var lifted := int(placing.get("uid", -1))
 	var t := Time.get_ticks_msec() / 1000.0
 	# In 3D a building shows how full it is on itself; the numbers come up only while you're placing
@@ -498,13 +505,20 @@ func draw_plants_on(ci: CanvasItem, i: int) -> void:
 ## Called when a second finger lands: that's a pinch, so the first finger's tap is off.
 func cancel_paint() -> void:
 	_dragged = true
+	_swiping = false
+	_touch_tile = -1
 
 
 
 
 ## True once the current press has moved far enough to count as a drag on the farm.
 func is_dragging() -> bool:
-	return _pressing and _dragged and _press_on_farm
+	return _pressing and _dragged and _press_on_farm and not _swiping
+
+
+## Whether the current press is farming plot after plot (the view stays put).
+func is_swiping() -> bool:
+	return _pressing and _swiping
 
 
 
@@ -528,15 +542,43 @@ func _unhandled_input(event: InputEvent) -> void:
 			_hold_spent = false
 			_press_pos = touch.position
 			_press_on_farm = _on_farm_area(touch.position)
+			# The plot under the finger lights the moment it lands, so a tap feels instant.
+			_touch_tile = plot_under(touch.position) if _press_on_farm else -1
+			_swiping = _press_on_farm and SWIPE_TOOLS.has(tool) and _touch_tile >= 0 \
+				and Game.object_at(_touch_tile).is_empty()
+			_swiped.clear()
 		else:
-			# A tap: act on the plot under the finger. A drag already moved the camera.
+			# A tap: act on the plot under the finger. A drag already moved the camera (or farmed as it went).
 			if _pressing and not _dragged and _press_on_farm:
 				_apply_at(touch.position)
 			_pressing = false
+			_swiping = false
+			_touch_tile = -1
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
 		if _pressing and drag.index == 0 and drag.position.distance_to(_press_pos) > DRAG_THRESHOLD:
+			if not _dragged and _swiping:
+				_swipe_over(_press_pos)   # (the plot it started on counts too)
 			_dragged = true
+			_touch_tile = -1
+		if _pressing and _swiping and _dragged and drag.index == 0:
+			_swipe_over(drag.position)
+
+
+## Swipe to farm: the plot under `screen_pos` is worked with the tool in hand, once per swipe, quietly (no
+## "can't plow that" for each plot crossed); things standing on the farm are passed over.
+func _swipe_over(screen_pos: Vector2) -> void:
+	var i := plot_under(screen_pos)
+	if i < 0 or _swiped.has(i) or not Game.object_at(i).is_empty():
+		return
+	_swiped[i] = true
+	_act(i, false)
+
+
+## The plot under a point on the screen, or -1 off the farm.
+func plot_under(screen_pos: Vector2) -> int:
+	var world := get_canvas_transform().affine_inverse() * screen_pos
+	return index_at(to_local(world))
 
 
 

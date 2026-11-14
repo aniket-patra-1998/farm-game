@@ -119,7 +119,7 @@ func _screen_pos(grid: FarmGrid, i: int) -> Vector2:
 
 
 ## Needs real frames for input to arrive: the runner awaits it.
-func test_37_tap_farms_and_drag_moves_the_view() -> void:
+func test_37_tap_farms_swipe_farms_and_hand_drag_moves_the_view() -> void:
 	var main = MAIN_SCENE.instantiate()
 	add_child(main)
 	await get_tree().process_frame
@@ -140,7 +140,8 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	Game.player.advance(60.0)  # the farmer walks over and does it
 	_eq(Game.field.phase(i), GameState.Phase.PLOWED, "a tap plows")
 
-	# A drag moves the view and leaves the plot under the finger alone.
+	# With the Hand tool, a drag moves the view and leaves the plot under the finger alone.
+	grid.tool = "hand"
 	main.call("_zoom_at", view / 2.0, 2.0)
 	await get_tree().process_frame
 	cam.force_update_scroll()
@@ -159,6 +160,7 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	_check(not cam.position.is_equal_approx(cam_before), "the drag moved the view")
 
 	# A tiny wobble while tapping still counts as a tap.
+	grid.tool = "plow"
 	var k2 := Game.index_of(11, 10)
 	cam.position = cam_before
 	main.call("_fit_camera")
@@ -170,6 +172,39 @@ func test_37_tap_farms_and_drag_moves_the_view() -> void:
 	await _touch(wobble_at + Vector2(4, 3), false)
 	Game.player.advance(60.0)  # the farmer walks over and does it
 	_eq(Game.field.phase(k2), GameState.Phase.PLOWED, "a slightly shaky tap still plows")
+
+	# Swipe to farm: with the plow, a drag across a row of grass plows every plot it crosses, once each, and
+	# the view stays put; the finger's first plot lit the moment it landed.
+	var row: Array[int] = []
+	for r in Game.farm_size:
+		for c in Game.farm_size - 4:
+			if not row.is_empty():
+				break
+			var run: Array[int] = []
+			for k in 4:
+				var p := Game.index_of(r, c + k)
+				if Game.field.phase(p) == GameState.Phase.GRASS and Game.object_at(p).is_empty() \
+						and grid._on_farm_area(_screen_pos(grid, p)):
+					run.append(p)
+			if run.size() == 4:
+				row = run
+	_eq(row.size(), 4, "(a row of four grass plots to swipe across)")
+	var cam_still := cam.position
+	var from := _screen_pos(grid, row[0])
+	await _touch(from, true)
+	_eq(grid.get("_touch_tile"), row[0], "the plot under the finger lights as it lands")
+	for p in row.slice(1):
+		var to := _screen_pos(grid, p)
+		var mid := (from + to) / 2.0
+		await _drag(mid, mid - from)
+		await _drag(to, to - mid)
+		from = to
+	_check(grid.is_swiping() and not grid.is_dragging(), "a swipe farms, it doesn't move the view")
+	await _touch(from, false)
+	_check(cam.position.is_equal_approx(cam_still), "the view stayed put")
+	Game.player.advance(240.0)
+	for p in row:
+		_eq(Game.field.phase(p), GameState.Phase.PLOWED, "plot %d plowed by the swipe" % p)
 	await get_tree().process_frame  # queued effects of the taps run while their scene still stands
 	main.free()
 
