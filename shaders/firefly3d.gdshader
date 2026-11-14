@@ -16,6 +16,6 @@ void vertex() {
 void fragment() {
 	float blink = pow(0.5 + 0.5 * sin(TIME * 1.7 + UV.x * 60.0), 3.0);
 	float a = blink * smoothstep(0.35, 0.8, dark);
-	ALBEDO = vec3(0.85, 1.0, 0.35) * a * 2.2;
+	ALBEDO = vec3(0.85, 1.0, 0.35) * a * 0.9;   // (kept under 1: brighter, the glow pass blooms it into a big halo)
 	ALPHA = a;
 }

@@ -88,7 +88,7 @@
    "mass": 0.56,
    "flat": 0.9,
    "trunk_h": 0.2,
-   "trunk_r": 0.03,
+   "trunk_r": 0.045,
    "crown_r": 0.24,
    "crown_h": 0.26,
    "clumps": 11,

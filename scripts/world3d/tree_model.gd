@@ -2,7 +2,7 @@ class_name TreeModel
 extends RefCounted
 ## A tree in 3D, grown to its kind's shape (data/tree_shapes.json): an apple's round dome, a lemon's tight
 ## glossy ball on a short trunk, a cherry's tall oval in blossom, an olive's wide silvery crown on a thick
-## trunk, a willow's hanging strands, a palm's ringed trunk and fronds, a banana's paddle leaves, a
+## trunk, a willow's drooping curtain, a palm's ringed trunk and fronds, a banana's paddle leaves, a
 ## pomegranate's many stems. Fruit hangs in its own way too: round, oval, in long bunches, huge on the
 ## trunk, or as many small nuts. While a tree grows its fruit is small and green; ready, it's full-coloured.
 ##
@@ -19,7 +19,9 @@ const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
 const CROWN_TRIM := 0.88      # every crown is drawn this share of its data's width (0.92 of that in height): lighter
 const CROWN_REACH_MAX := 0.5   # no crown reaches further from its trunk than this (of the tree's size): never a blob
 const TRUNK_SHARE := 0.4      # bare trunk shows for at least this share of a tree's height, under the lowest leaves
-const TRUNK_LENGTH := 0.95    # every trunk is drawn this much of the length the rules above give it
+const TRUNK_LENGTH := 0.9     # every trunk is drawn this much of the length the rules above give it
+const WILLOW_DROP := 0.45    # how far a willow's crown hangs below its middle, of the crown's height above ground
+const WILLOW_FALLS := 9       # the hanging masses round a willow's rim
 const TRUNK_TAPER := 0.85     # a trunk is a thin straight pole: its top is this much of its foot
 const TRUNK_LEAN := 0.03      # and it leans no more than this (radians)
 const META_SHARE := &"trunk_share"   # on a built tree: the share of its height that is bare trunk
@@ -137,7 +139,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		_:
 			crown = _crown_on_trunk(t)
 			if str(sh["form"]) == "weeping":
-				_strands(t, crown)
+				_droop(t, crown)
 	if sh.has("blossom"):
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
@@ -266,19 +268,21 @@ static func _trunk(t: Dictionary) -> void:
 		rt.rotation.y = -ra
 
 
-## Several thin stems from the ground (a shrubby tree).
+## A shrubby tree: a short main trunk that forks low into two more stems, each leaning out under the crown (one
+## clear trunk to read, not a tangle of sticks from the ground).
 static func _stems(t: Dictionary) -> void:
+	_trunk(t)
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var rng: RandomNumberGenerator = t["rng"]
 	var h := float(sh["trunk_h"]) * k
-	for i in 4:
-		var a := TAU * i / 4.0 + rng.randf() * 0.5
-		var stem := ModelKit.cylinder(root, Vector3.ZERO, float(sh["trunk_r"]) * k, h * 1.05, ModelKit.paint(BARK),
-			float(sh["trunk_r"]) * k * 0.6, 5)
-		stem.position = Vector3(cos(a) * 0.04 * k, 0.0, sin(a) * 0.04 * k)
-		stem.rotation = Vector3(sin(a) * 0.2, 0, -cos(a) * 0.2)
+	var r := float(sh["trunk_r"]) * k * TRUNK_BULK
+	var cr := float(sh["crown_r"]) * k
+	for i in 2:
+		var a := PI * i + rng.randf_range(-0.6, 0.6)
+		var fork := Vector3(0, h * rng.randf_range(0.3, 0.45), 0)
+		_limb(root, fork, Vector3(cos(a) * cr * 0.45, h * 1.02, sin(a) * cr * 0.45), r * 0.75)
 
 
 # ---------------------------------------------------------------- crowns
@@ -401,20 +405,25 @@ static func _sunlit(c: Color) -> Color:
 	return Color.from_hsv(c.h, clampf(c.s * 0.95, 0.0, 1.0), clampf(c.v * 1.12 + 0.04, 0.0, 1.0))
 
 
-## A willow's curtain: strands of leaves hanging from the crown's rim nearly to the ground.
-static func _strands(t: Dictionary, centre: Vector3) -> void:
+## A willow's droop: soft leafy masses hanging round the crown's rim, longer than wide, so the crown falls in a
+## curtain over the trunk without any stick-like strands.
+static func _droop(t: Dictionary, centre: Vector3) -> void:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var rng: RandomNumberGenerator = t["rng"]
-	var leaf: Color = t["leaf"]
 	var cr := float(sh["crown_r"]) * k
-	for i in 16:
-		var a := TAU * i / 16.0 + rng.randf() * 0.2
-		var top := centre + Vector3(cos(a) * cr * 0.85, 0.02 * k, sin(a) * cr * 0.85)
-		var length := top.y * rng.randf_range(0.55, 0.8)
-		ModelKit.box(root, top + Vector3(-0.025, -length, -0.012) * Vector3(k, 1, k),
-			top + Vector3(0.025, 0, 0.012) * Vector3(k, 1, k), ModelKit.paint(leaf.lerp(LEAF_TOP, rng.randf() * 0.3)), false)
+	var drop := centre.y * WILLOW_DROP
+	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -root.rotation.y)
+	var lobes := ModelKit.scaled(CROWN_LOBES, 5)
+	var n := ModelKit.scaled(WILLOW_FALLS, 5)
+	for i in n:
+		var a := TAU * i / n + rng.randf_range(-0.2, 0.2)
+		var long := drop * rng.randf_range(0.8, 1.1)
+		var at := centre + Vector3(cos(a) * cr * 0.82, -long * 0.45, sin(a) * cr * 0.82)
+		var radii := Vector3(cr * 0.3, long * 0.55, cr * 0.3)
+		_canopy(root, at, radii, rng, t["leaf"], sun, -0.05, lobes, CROWN_BUMP, float(t["shine"]))
+		_measure(t, at, radii)
 
 
 ## A palm: a tall trunk curving up in rings, and fronds drooping from the top in a star.
