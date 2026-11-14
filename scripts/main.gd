@@ -37,7 +37,7 @@ var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 
 func _ready() -> void:
 	PerfReadout.show_in(get_tree(), PerfReadout.wanted())   # debug builds, when switched on in Settings
-	Display.apply()   # a computer opens maximised (or full screen), not in a small window
+	Display.apply()   # full screen if chosen (a computer opens maximised: project.godot's window mode)
 	sky = SkyLayer.new()
 	add_child(sky)
 
@@ -102,9 +102,11 @@ func _ready() -> void:
 	grid.info.connect(hud.show_message)
 	Game.message.connect(hud.show_message)
 
-	get_viewport().size_changed.connect(_fit_camera)
+	get_viewport().size_changed.connect(_on_resized)
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
+	Quality.apply_frame_cap()
+	Quality.notifier.emitted.connect(Quality.apply_frame_cap)
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that
@@ -133,18 +135,34 @@ func _fit_camera() -> void:
 	var bounds := grid.get_bounds()
 	var usable := view - Vector2(0, FarmHud.TOP_H + FarmHud.BOTTOM_H)
 	_base_zoom = minf(usable.x / (bounds.size.x * 1.04), usable.y / (bounds.size.y * 1.04))
-	var limits := zoom_limits(view.x, _base_zoom)
-	camera.min_zoom = limits.x
-	camera.max_zoom = limits.y
+	_set_zoom_limits(view)
 	# The free area is shifted down by half the difference between the bars.
 	var shift := (FarmHud.TOP_H - FarmHud.BOTTOM_H) / 2.0
 	camera.snap(bounds.get_center() - Vector2(0, shift / _base_zoom), _base_zoom)
 
 
-## [furthest out, closest in] for a screen `width` wide whose whole-farm zoom is `base`: the closest shows about
-## CLOSEST_TILES tiles across at any farm size (FarmVille's close-up didn't shrink as the farm grew).
-static func zoom_limits(width: float, base: float) -> Vector2:
-	var closest := maxf(width / (CLOSEST_TILES * FarmGrid.TILE_W), base * MIN_CLOSE_FACTOR)
+func _set_zoom_limits(view: Vector2) -> void:
+	var limits := zoom_limits(minf(view.x, view.y), _base_zoom)
+	camera.min_zoom = limits.x
+	camera.max_zoom = limits.y
+
+
+## The window or screen changed size (full screen switched, the window maximised, a tablet turned): the zoom
+## limits follow the new shape, and the view stays where the player had it, only kept within the new limits.
+func _on_resized() -> void:
+	var view := get_viewport_rect().size
+	var bounds := grid.get_bounds()
+	var usable := view - Vector2(0, FarmHud.TOP_H + FarmHud.BOTTOM_H)
+	_base_zoom = minf(usable.x / (bounds.size.x * 1.04), usable.y / (bounds.size.y * 1.04))
+	_set_zoom_limits(view)
+	camera.snap(camera.position, clampf(camera.target_zoom, camera.min_zoom, camera.max_zoom))
+
+
+## [furthest out, closest in] for a screen whose shorter side is `side` long and whose whole-farm zoom is `base`:
+## the closest shows about CLOSEST_TILES tiles across that side at any farm size (FarmVille's close-up didn't
+## shrink as the farm grew), in landscape or portrait.
+static func zoom_limits(side: float, base: float) -> Vector2:
+	var closest := maxf(side / (CLOSEST_TILES * FarmGrid.TILE_W), base * MIN_CLOSE_FACTOR)
 	return Vector2(base / FURTHEST_OUT, closest)
 
 

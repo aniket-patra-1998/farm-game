@@ -7,7 +7,6 @@ extends Node
 ## and vibration are the player's settings, kept in user://settings.cfg.
 
 const DATA := "res://data/sounds.json"
-const SETTINGS := "user://settings.cfg"
 const MIX_RATE := 22050
 const VOICES := 8
 const MAX_LOOPS := 3   # engines (or other beds) humming at once; a fourth stays silent
@@ -258,21 +257,14 @@ func load_settings() -> void:
 
 
 func _load_settings() -> void:
-	var cfg := ConfigFile.new()
-	cfg.load(SETTINGS)
 	_loading = true
-	volume = float(cfg.get_value("sound", "volume", 1.0))
-	muted = bool(cfg.get_value("sound", "muted", false))
-	vibration = bool(cfg.get_value("sound", "vibration", true))
+	volume = float(PlayerSettings.value("sound", "volume", 1.0))
+	muted = bool(PlayerSettings.value("sound", "muted", false))
+	vibration = bool(PlayerSettings.value("sound", "vibration", true))
 	_loading = false
 
 
 func _save_settings() -> void:
 	if _loading or not is_inside_tree():
 		return
-	var cfg := ConfigFile.new()
-	cfg.load(SETTINGS)
-	cfg.set_value("sound", "volume", volume)
-	cfg.set_value("sound", "muted", muted)
-	cfg.set_value("sound", "vibration", vibration)
-	cfg.save(SETTINGS)
+	PlayerSettings.keep("sound", {"volume": volume, "muted": muted, "vibration": vibration})

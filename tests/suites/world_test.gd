@@ -266,3 +266,22 @@ func test_323_the_closest_zoom_is_the_same_on_any_farm_and_you_can_pull_back() -
 		_check(across <= FarmMain.CLOSEST_TILES + 0.01, "a %d-tile farm: the closest zoom shows %.1f tiles" % [tiles, across])
 		_check(limits.x < base, "a %d-tile farm: you can pull back past the whole farm" % tiles)
 		_check(limits.y >= base * FarmMain.MIN_CLOSE_FACTOR, "and the closest is always closer than the whole farm")
+
+
+## The player's settings live in one file, read and written only through PlayerSettings: a section's keys are
+## kept without touching another's, and the full-screen choice (Display) is kept there too.
+func test_325_player_settings_keep_each_owners_keys_and_the_window_choice() -> void:
+	var was_full := Display.fullscreen()
+	var was_volume: Variant = PlayerSettings.value("sound", "volume", 1.0)
+	PlayerSettings.keep("test_section", {"a": 3})
+	_eq(int(PlayerSettings.value("test_section", "a", 0)), 3, "a value is kept")
+	_eq(PlayerSettings.value("sound", "volume", 1.0), was_volume, "and another section's is untouched")
+	_eq(PlayerSettings.value("test_section", "missing", "none"), "none", "a missing key gives the default")
+	Display.set_fullscreen(true)
+	_check(Display.fullscreen(), "full screen is kept")
+	_eq(Display.mode(), DisplayServer.WINDOW_MODE_FULLSCREEN, "and asks for a full-screen window")
+	Display.set_fullscreen(false)
+	_eq(Display.mode(), DisplayServer.WINDOW_MODE_MAXIMIZED, "otherwise a maximised one")
+	_check(not Display.has_window(), "(no window to size in a headless run)")
+	Display.set_fullscreen(was_full)
+	PlayerSettings.keep("test_section", {"a": null})

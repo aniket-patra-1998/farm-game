@@ -5,7 +5,6 @@ extends CanvasLayer
 ## triangles, objects drawn, memory, and the graphics chip. Switched on and off in Settings (Testing); the
 ## choice is kept in user://settings.cfg. Costs nothing while off; while on, a few numbers twice a second.
 
-const SETTINGS := "user://settings.cfg"
 const SECTION := "debug"
 const KEY := "perf_readout"
 const WINDOW := 120          # frames the average and the worst are taken over (about two seconds)
@@ -25,16 +24,12 @@ var _since := 0.0
 static func wanted() -> bool:
 	if not OS.is_debug_build():
 		return false
-	var cfg := ConfigFile.new()
-	return cfg.load(SETTINGS) == OK and bool(cfg.get_value(SECTION, KEY, false))
+	return bool(PlayerSettings.value(SECTION, KEY, false))
 
 
 ## Switches it on or off, and keeps the choice.
 static func set_wanted(on: bool) -> void:
-	var cfg := ConfigFile.new()
-	cfg.load(SETTINGS)
-	cfg.set_value(SECTION, KEY, on)
-	cfg.save(SETTINGS)
+	PlayerSettings.keep(SECTION, {KEY: on})
 
 
 ## Shows the readout over the whole game, or takes it away (one at a most).

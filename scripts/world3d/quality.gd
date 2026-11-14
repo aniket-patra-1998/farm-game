@@ -7,7 +7,6 @@ extends RefCounted
 ## posed (every frame, or every other on low). Changing the level applies it at once (`notifier`).
 
 const DATA := "res://data/quality.json"
-const SETTINGS := "user://settings.cfg"
 const SECTION := "graphics"
 const KEY := "quality"
 const LEVELS: Array[String] = ["low", "mid", "high"]
@@ -21,12 +20,10 @@ static var notifier := Signals.new()
 static func level() -> String:
 	if _level != "":
 		return _level
-	var cfg := ConfigFile.new()
-	if cfg.load(SETTINGS) == OK:
-		var chosen := str(cfg.get_value(SECTION, KEY, ""))
-		if LEVELS.has(chosen):
-			_level = chosen
-			return _level
+	var chosen := str(PlayerSettings.value(SECTION, KEY, ""))
+	if LEVELS.has(chosen):
+		_level = chosen
+		return _level
 	var data := _load()
 	_level = str(data.get("default_phone" if OS.has_feature("mobile") else "default_computer", "mid"))
 	return _level
@@ -36,10 +33,7 @@ static func level() -> String:
 static func choose(name: String) -> void:
 	if not LEVELS.has(name):
 		return
-	var cfg := ConfigFile.new()
-	cfg.load(SETTINGS)
-	cfg.set_value(SECTION, KEY, name)
-	cfg.save(SETTINGS)
+	PlayerSettings.keep(SECTION, {KEY: name})
 	_level = name
 	notifier.emitted.emit()
 
@@ -61,7 +55,12 @@ static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport)
 	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 	viewport.scaling_3d_scale = float(value("scale"))
 	viewport.mesh_lod_threshold = float(value("lod_pixels"))
-	Engine.max_fps = int(value("max_fps"))   # 0: no cap (the screen's refresh still limits it)
+
+
+## The engine-wide frame cap of the level in use (0: none; the screen's refresh still limits it). Set by the game
+## when it starts and when the level changes, apart from any one 3D world.
+static func apply_frame_cap() -> void:
+	Engine.max_fps = int(value("max_fps"))
 
 
 static func _load() -> Dictionary:

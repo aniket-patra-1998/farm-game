@@ -1400,6 +1400,7 @@ func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 		Quality.choose(name)
 		_eq(Quality.level(), name, "%s is kept" % name)
 		Quality.apply(sun, env, vp)
+		Quality.apply_frame_cap()
 		_eq(sun.shadow_enabled, bool(Quality.value("shadows")), "%s: shadows" % name)
 		_eq(env.glow_enabled, bool(Quality.value("glow")), "%s: glow" % name)
 		_check(is_equal_approx(vp.scaling_3d_scale, float(Quality.value("scale"))), "%s: resolution" % name)
