@@ -15,6 +15,26 @@ const PLINTH := 0.09
 const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals can look out of ([{at, size}])
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
+## The features that are one building's own (`_signature`).
+const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pump", "mobile"]
+## Yard features' size (their radius in tiles, unless the data gives `r`).
+const FEATURE_R := {"rock": 0.3, "pool": 0.32, "wallow": 0.34, "carrots": 0.26, "fuel_pump": 0.18}
+## A goat's climbing rock: (x, z offset as shares of its radius, radius share, height share).
+const ROCK_BOULDERS: Array[Vector4] = [Vector4(0, 0, 0.75, 1.3), Vector4(0.55, 0.3, 0.5, 0.9),
+	Vector4(-0.5, 0.35, 0.45, 0.8), Vector4(0.1, -0.5, 0.5, 0.95), Vector4(0.15, 0.1, 0.45, 2.1)]
+const PASTELS: Array[Color] = [Color("#f4b6c9"), Color("#a9d4ef"), Color("#f6e3a1")]
+# A broken building (the starter Barn, before it is repaired): see _broken.
+const TARP := Color("#3f78b5")
+const TARP_LIFT := 0.02       # how far the tarp lies proud of the roof
+const TARP_FROM := 0.3        # and the share of the roof's length it covers, from here
+const TARP_TO := 0.72
+const BOARD_GAP := 0.055      # a missing board's height
+## Missing boards: (along the wall, up the wall, length), as shares; even ones on the front, odd on the side.
+const BROKEN_GAPS: Array[Vector3] = [Vector3(0.2, 0.62, 0.16), Vector3(0.7, 0.55, 0.2), Vector3(0.8, 0.3, 0.12),
+	Vector3(0.4, 0.78, 0.18), Vector3(0.66, 0.72, 0.1)]
+const LOOSE_TILT := 0.5       # radians a loose board hangs askew
+const DOOR_AJAR := 0.35       # radians a broken door hangs open
+const DOOR_SAG := 0.06        # and leans
 # A building site's stages, as shares of the materials put in (see build_site).
 const SITE_FOOTING := 0.08
 const SITE_FLOOR := 0.25
@@ -139,12 +159,22 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 				out.append(Rect2((lo.x + hi.x) / 2.0 - 0.1, hi.y, 0.2, 0.45))
 			"nest_boxes":
 				out.append(Rect2(hi.x, lo.y, 0.14, bd))
+			"rock", "pool", "wallow", "carrots", "fuel_pump":
+				var spot := yard_spot(f, fw, fd)
+				var r := float(f.get("r", FEATURE_R.get(str(f["type"]), 0.3)))
+				out.append(Rect2(spot.x - r, spot.y - r, r * 2.0, r * 2.0))
 	return out
+
+
+## Where a feature that stands in the yard goes: its `at` (shares of the footprint), or the front right corner.
+static func yard_spot(f: Dictionary, fw: float, fd: float) -> Vector2:
+	var at: Array = f.get("at", [0.74, 0.74])
+	return Vector2(float(at[0]) * fw, float(at[1]) * fd)
 
 
 ## The whole building at its size, under a new node. `fp` is the footprint in tiles (columns, rows).
 ## `active` is whether it is at work (a bakery with something in the oven): only then does its chimney smoke.
-static func build(it: Dictionary, fp: Vector2i, level := 1, active := true) -> Node3D:
+static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, broken := false) -> Node3D:
 	var root := Node3D.new()
 	var s := spec(str(it.get("id", "")), level)
 	var fw := float(fp.x)
@@ -171,7 +201,71 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true) -> N
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") != "yard":
 			_feature(ctx, f)
+	if broken and ctx.has("lo"):
+		_broken(ctx)
 	return SpaceFit.fit_model(root, fp)
+
+
+## FarmVille's starter Barn before it is repaired: a blue tarp over part of the roof on the side you see, boards
+## missing from the walls (dark gaps), a loose board hanging askew, its doors sagging ajar, and planks lying by
+## the wall. It reads as broken at a glance and as the same barn once fixed.
+static func _broken(ctx: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
+	var lo: Vector3 = ctx["lo"]
+	var hi: Vector3 = ctx["hi"]
+	var r: Dictionary = (ctx["spec"] as Dictionary)["roof"]
+	var kind := str(r.get("type", "gable"))
+	var tarp := ModelKit.paint(TARP)
+	var mid := (lo + hi) / 2.0
+	if kind in ["gable", "gambrel"] and (ctx["spec"] as Dictionary).get("upper", {}).is_empty():
+		var rise := float(r.get("pitch", 0.7)) * minf(hi.x - lo.x, hi.z - lo.z) / 2.0
+		for q: Array in ModelKit.roof_slopes(kind, lo, hi, rise, float(r.get("overhang", 0.08))):
+			var centre: Vector3 = (q[0] + q[1] + q[2] + q[3]) / 4.0
+			if centre.x + centre.z <= mid.x + mid.z:
+				continue   # (the far slopes: unseen)
+			var out: Vector3 = (q[1] - q[0]).cross(q[3] - q[0]).normalized()
+			if out.dot(centre - Vector3(mid.x, hi.y, mid.z)) < 0.0:
+				out = -out
+			var lift := out * TARP_LIFT
+			var a: Vector3 = q[0].lerp(q[1], TARP_FROM) + lift
+			var b: Vector3 = q[0].lerp(q[1], TARP_TO) + lift
+			var c: Vector3 = q[3].lerp(q[2], TARP_TO) + lift
+			var d: Vector3 = q[3].lerp(q[2], TARP_FROM) + lift
+			ModelKit.faces(root, [[a, b, c, d]], centre - out, tarp)
+	else:
+		var top := float(ctx.get("top", hi.y))
+		ModelKit.box(root, Vector3(mid.x - 0.2, top, mid.z - 0.15), Vector3(mid.x + 0.15, top + 0.02, mid.z + 0.2),
+			tarp)
+	# Gaps where boards are missing, on the two walls the camera sees (+z front, +x side).
+	var gap := ModelKit.paint(DARK)
+	var h := hi.y - lo.y
+	for k in BROKEN_GAPS.size():
+		var g: Vector3 = BROKEN_GAPS[k]   # (along the wall, up the wall, length) as shares
+		if k % 2 == 0:
+			var x := lerpf(lo.x, hi.x, g.x)
+			var y := lo.y + h * g.y
+			ModelKit.box(root, Vector3(x - g.z * 0.5, y, hi.z), Vector3(x + g.z * 0.5, y + BOARD_GAP, hi.z + 0.006), gap)
+		else:
+			var z := lerpf(lo.z, hi.z, g.x)
+			var y2 := lo.y + h * g.y
+			ModelKit.box(root, Vector3(hi.x, y2, z - g.z * 0.5), Vector3(hi.x + 0.006, y2 + BOARD_GAP, z + g.z * 0.5), gap)
+	# A loose board hanging askew on the side wall, and two lying by the front.
+	var board := ModelKit.surface(WOOD, "boards")
+	var loose := ModelKit.box(root, Vector3(-0.17, -0.02, -0.004), Vector3(0.17, 0.02, 0.004), board)
+	if loose != null:
+		loose.position = Vector3(hi.x + 0.012, lo.y + h * 0.42, lerpf(lo.z, hi.z, 0.3))
+		loose.rotation = Vector3(0.0, PI / 2.0, 0.0)
+		loose.rotate_object_local(Vector3(0, 0, 1), LOOSE_TILT)
+	for k in 2:
+		var plank := ModelKit.box(root, Vector3(-0.18, 0, -0.025), Vector3(0.18, 0.018, 0.025), board)
+		if plank != null:
+			plank.position = Vector3(lerpf(lo.x, hi.x, 0.18 + 0.12 * k), 0.0, hi.z + 0.16 + 0.05 * k)
+			plank.rotation.y = 0.25 - 0.5 * k
+	# The doors sag ajar on their hinges.
+	for hinge in root.get_children():
+		if hinge is Node3D and hinge.has_meta(DOOR):
+			var swing := float(hinge.get_meta(DOOR))
+			(hinge as Node3D).rotation = Vector3(0.0, swing * DOOR_AJAR, -swing * DOOR_SAG)
 
 
 ## A building going up (FarmVille's frame), at `progress` 0..1, the share of its materials put in. It
@@ -989,6 +1083,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				if k % 2 == 1:
 					ModelKit.ball(root, p + Vector3(0.035, 0.03, 0), 0.04,
 						ModelKit.paint(Color("#d6304a") if k % 4 == 1 else Color("#4f8a34")))
+		"rock", "pool", "wallow", "carrots", "fuel_pump", "mobile":
+			_signature(ctx, f)
 		"weathervane":
 			var top: float = ctx.get("top", hi.y)
 			var x := (lo.x + hi.x) / 2.0 + float(f.get("shift", 0.0))
@@ -1017,6 +1113,66 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				p + Vector3(0.14, 0.42, 0.025),
 				ModelKit.surface(Color("#c8a26a"), "boards", 0.0)
 			)
+
+
+## The one thing a building has that no other does (data/building_models.json `features`): a Goat Pen's
+## climbing rock, a Spa's steaming pool, a Pig Pen's mud wallow, a Rabbit Hutch's carrot patch, a Garage's fuel
+## pump, a Nursery's mobile in the loft. Each stands at `yard_spot` (the loft mobile hangs in the loft door).
+static func _signature(ctx: Dictionary, f: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
+	var kind := str(f["type"])
+	var spot := yard_spot(f, ctx["fw"], ctx["fd"])
+	var at := Vector3(spot.x, 0, spot.y)
+	var r := float(f.get("r", FEATURE_R.get(kind, 0.3)))
+	match kind:
+		"rock":
+			# Boulders piled into a little mountain, a ledge on top for the goats to stand on.
+			var stone := ModelKit.surface(STONE, "stone", 0.15)
+			for b: Vector4 in ROCK_BOULDERS:   # (x, z offset as shares of r, radius share, height share)
+				ModelKit.ball(root, at + Vector3(b.x * r, 0, b.y * r), b.z * r, stone, Vector3(1, b.w, 1))
+			ModelKit.box(root, at + Vector3(-r * 0.3, r * 0.95, -r * 0.25), at + Vector3(r * 0.3, r * 1.02, r * 0.25),
+				ModelKit.surface(WOOD, "boards"))
+		"pool":
+			ModelKit.cylinder(root, at, r + 0.05, 0.1, ModelKit.surface(STONE, "stone", 0.2), -1.0, 24)
+			var water := ModelKit.cylinder(root, at + Vector3(0, 0.101, 0), r, 0.004, ModelKit.water(), -1.0, 24)
+			if water != null:
+				water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			DecorMotion.spray(root, at + Vector3(0, 0.12, 0), DecorMotion.STEAM)
+		"wallow":
+			ModelKit.ball(root, at + Vector3(0, -0.01, 0), 1.0, ModelKit.paint(GROUNDS["mud"].darkened(0.25), 0.4),
+				Vector3(r, 0.04, r * 0.8))
+			for k in 3:
+				var a := TAU * k / 3.0 + 0.4
+				ModelKit.ball(root, at + Vector3(cos(a) * r * 0.55, 0.02, sin(a) * r * 0.45), 0.035,
+					ModelKit.paint(GROUNDS["mud"].lightened(0.15)), Vector3(1, 0.5, 1))
+		"carrots":
+			var soil := ModelKit.paint(GROUNDS["dirt"].darkened(0.2))
+			ModelKit.box(root, at - Vector3(r, 0, r * 0.7), at + Vector3(r, 0.03, r * 0.7), soil)
+			for row in 3:
+				for k in 4:
+					var p := at + Vector3(lerpf(-r * 0.75, r * 0.75, k / 3.0), 0.03, lerpf(-r * 0.45, r * 0.45, row / 2.0))
+					ModelKit.ball(root, p, 0.022, ModelKit.paint(Color("#e8822a")), Vector3(1, 0.8, 1))
+					ModelKit.cylinder(root, p, 0.02, 0.09, ModelKit.paint(Color("#4f9a34")), 0.0, 5)
+		"fuel_pump":
+			var cream := ModelKit.paint(Color("#f1ece0"))
+			ModelKit.box(root, at + Vector3(-0.09, 0, -0.07), at + Vector3(0.09, 0.42, 0.07),
+				ModelKit.paint(Color("#c8352b"), 0.4))
+			ModelKit.box(root, at + Vector3(-0.07, 0.28, 0.07), at + Vector3(0.07, 0.37, 0.075), cream)
+			ModelKit.box(root, at + Vector3(-0.1, 0.42, -0.08), at + Vector3(0.1, 0.47, 0.08), cream)
+			ModelKit.box(root, at + Vector3(0.09, 0.12, -0.012), at + Vector3(0.15, 0.3, 0.012), ModelKit.paint(DARK))
+			ModelKit.box(root, at + Vector3(-0.16, 0, -0.12), at + Vector3(0.16, 0.03, 0.12),
+				ModelKit.surface(STONE, "stone", 0.2))
+		"mobile":
+			# A baby's mobile hanging in the loft: pastel stars and moons on a little cross.
+			var lo: Vector3 = ctx["lo"]
+			var hi: Vector3 = ctx["hi"]
+			var top := Vector3((lo.x + hi.x) / 2.0, hi.y + 0.3, hi.z + 0.06)
+			var string := ModelKit.paint(Color("#f6f1e6"))
+			ModelKit.box(root, top - Vector3(0.004, 0.12, 0.004), top + Vector3(0.004, 0.0, 0.004), string)
+			ModelKit.box(root, top + Vector3(-0.1, -0.125, -0.004), top + Vector3(0.1, -0.115, 0.004), string)
+			for k in 3:
+				var p := top + Vector3(-0.09 + 0.09 * k, -0.17 - 0.02 * (k % 2), 0)
+				ModelKit.ball(root, p, 0.03, ModelKit.paint(PASTELS[k % PASTELS.size()]))
 
 
 ## An annex built onto the main block (a milking parlour, a tack room, a bigger kitchen): lower walls of

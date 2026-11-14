@@ -222,3 +222,48 @@ func test_150_item_pictures_come_on_screen_first_and_are_kept_by_key() -> void:
 	ItemIcons._asked = was_asked
 	_check(ItemIcons._file("cow") != ItemIcons._file("chicken"), "each item has its own picture file")
 	_check(ItemIcons._file("cow").begins_with(ItemIcons.CACHE + "/cow-"), "kept under the item's name and key")
+
+
+## Every building's panel opens with its picture, name and state, and Move, Turn and Sell; a refusal is
+## explained under the buttons (from Game.buildings), and selling asks twice.
+func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(20)
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var book: BookPanel = hud.get("_book")
+	var spot := Vector2i(-1, -1)
+	for r in Game.farm_size:
+		for c in Game.farm_size:
+			if spot.x < 0 and Game.can_place("chicken_coop", r, c):
+				spot = Vector2i(r, c)
+	_check(Game.buy_and_place("chicken_coop", spot.x, spot.y), "a Coop")
+	var coop := Game.object_at(Game.index_of(spot.x, spot.y))
+	hud.show_building(int(coop["uid"]))
+	var buttons := {}
+	for b: Button in book.find_children("*", "Button", true, false):
+		if not b.is_queued_for_deletion():
+			buttons[b.text] = b
+	for word: String in [tr("TOOL_MOVE"), tr("TURN"), tr("TOOL_SELL")]:
+		_check(buttons.has(word), "the panel offers %s" % word)
+	var turned := bool(coop.get("flip", false))
+	(buttons[tr("TURN")] as Button).pressed.emit()
+	var verdict := Game.buildings.can_rotate(coop)
+	_eq(bool(coop.get("flip", false)) != turned, verdict.ok(), "Turn turns it exactly when the rules allow")
+	if not verdict.ok():
+		var told := false
+		for l: Label in book.find_children("*", "Label", true, false):
+			told = told or (l.visible and l.text == verdict.text)
+		_check(told, "and says why not under the buttons")
+	var sell: Button = buttons[tr("TOOL_SELL")]
+	sell.pressed.emit()
+	_check(book.visible and not Game.object_by_uid(int(coop["uid"])).is_empty(), "the first tap on Sell only asks")
+	_check(sell.text != tr("TOOL_SELL"), "with the price on the button (%s)" % sell.text)
+	sell.pressed.emit()
+	_check(Game.object_by_uid(int(coop["uid"])).is_empty() and not book.visible, "the second sells it")
+	main.queue_free()
+	await get_tree().process_frame

@@ -241,6 +241,9 @@
         },
         {
           "type": "hay_bales"
+        },
+        {
+          "type": "water_trough"
         }
       ],
       "levels": {
@@ -250,7 +253,7 @@
           },
           "features": [
             {
-              "type": "water_trough"
+              "type": "flowers"
             }
           ]
         },
@@ -309,6 +312,13 @@
         },
         {
           "type": "terrace"
+        },
+        {
+          "type": "rock",
+          "at": [
+            0.72,
+            0.68
+          ]
         }
       ],
       "levels": {
@@ -393,6 +403,13 @@
         {
           "type": "yard",
           "ground": "grass"
+        },
+        {
+          "type": "carrots",
+          "at": [
+            0.24,
+            0.82
+          ]
         }
       ],
       "levels": {
@@ -461,6 +478,13 @@
         },
         {
           "type": "water_trough"
+        },
+        {
+          "type": "wallow",
+          "at": [
+            0.68,
+            0.74
+          ]
         }
       ],
       "fill": {
@@ -600,7 +624,7 @@
         "walls": "boards"
       },
       "roof": {
-        "type": "gable",
+        "type": "gambrel",
         "pitch": 0.95,
         "color": "#5f9a7a"
       },
@@ -616,7 +640,13 @@
           "fence": "picket"
         },
         {
+          "type": "loft_door"
+        },
+        {
           "type": "porch"
+        },
+        {
+          "type": "mobile"
         }
       ],
       "levels": {
@@ -662,7 +692,8 @@
           }
         }
       },
-      "fill": {}
+      "fill": {},
+      "trim": "#f7d6e4"
     },
     "gopher_garden": {
       "body": {
@@ -914,6 +945,13 @@
       "features": [
         {
           "type": "sign"
+        },
+        {
+          "type": "fuel_pump",
+          "at": [
+            0.9,
+            0.86
+          ]
         }
       ],
       "fill": {
@@ -938,7 +976,8 @@
       "roof": {
         "type": "gable",
         "pitch": 1.0,
-        "color": "#4f7f4a"
+        "color": "#cfe6e8",
+        "style": "metal"
       },
       "door": {
         "w": 0.28,
@@ -1225,7 +1264,7 @@
         "walls": "plaster"
       },
       "roof": {
-        "type": "hip",
+        "type": "dome",
         "pitch": 0.9,
         "color": "#4f8a8f"
       },
@@ -1243,6 +1282,14 @@
         },
         {
           "type": "sign"
+        },
+        {
+          "type": "pool",
+          "at": [
+            0.74,
+            0.82
+          ],
+          "r": 0.4
         }
       ],
       "levels": {

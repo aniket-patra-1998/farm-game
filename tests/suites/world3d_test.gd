@@ -42,6 +42,7 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 	var known := ["yard", "silo", "stilts", "ramp", "chimney", "cupola", "loft_door", "stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
 		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag"]
+	known.append_array(BuildingModel.SIGNATURES)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))
 	for id in data["buildings"]:
 		for f: Dictionary in (data["buildings"][id] as Dictionary).get("features", []):
@@ -1452,3 +1453,93 @@ static func _gd_files(dir: String) -> Array[String]:
 	for d in DirAccess.get_directories_at(dir):
 		out.append_array(_gd_files(dir.path_join(d)))
 	return out
+
+
+## Each building is recognisable from its shape alone (docs/buildings plan): drawn from the camera at its first
+## size, no two buildings look near the same. Each is rasterised on a grid (SILHOUETTE_GRID cells over
+## SILHOUETTE_SPAN tiles of the view) as the height of what is seen in each cell, so a flat yard and a rock in it,
+## or a tall roof and a low one, differ; two buildings are apart by the share of their cells that differ by more
+## than a SILHOUETTE_STEP. Buildings whose look is what they hold (an orchard's trees, a garden's blooms) are
+## told apart by that, not by their fences.
+const SILHOUETTE_GRID := 40
+const SILHOUETTE_SPAN := 8.0
+const SILHOUETTE_STEP := 0.12
+const SILHOUETTE_APART := 0.06
+const LOOK_IS_CONTENTS := ["orchard", "bloom_garden"]
+
+
+func test_320_every_building_has_its_own_silhouette() -> void:
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))
+	var shapes := {}
+	for id: String in data["buildings"]:
+		var it := Game.item_data(id)
+		if it.is_empty() or LOOK_IS_CONTENTS.has(id) or int(it.get("unlock_level", 1)) >= 99 and id != "barn":
+			continue
+		var model := ModelKit.bake(BuildingModel.build(it, Game.footprint(id), 1))
+		shapes[id] = _silhouette(model)
+		model.free()
+	var ids := shapes.keys()
+	for a in ids.size():
+		for b in range(a + 1, ids.size()):
+			var x: PackedFloat32Array = shapes[ids[a]]
+			var y: PackedFloat32Array = shapes[ids[b]]
+			var seen := 0
+			var differ := 0
+			for k in x.size():
+				if x[k] < 0.0 and y[k] < 0.0:
+					continue
+				seen += 1
+				differ += 1 if x[k] < 0.0 or y[k] < 0.0 or absf(x[k] - y[k]) > SILHOUETTE_STEP else 0
+			var apart := float(differ) / maxf(seen, 1.0)
+			_check(apart >= SILHOUETTE_APART, "%s and %s look different (%.2f of their shape apart)" % [ids[a],
+				ids[b], apart])
+
+
+## The height of the highest surface the camera sees in each cell of its view (-1 where there is none).
+static func _silhouette(root: Node3D) -> PackedFloat32Array:
+	var cells := PackedFloat32Array()
+	cells.resize(SILHOUETTE_GRID * SILHOUETTE_GRID)
+	cells.fill(-1.0)
+	var view := Basis.from_euler(Vector3(ItemIcons.PITCH, ItemIcons.YAW, 0.0))
+	var stack: Array = [[root, Transform3D.IDENTITY]]
+	while not stack.is_empty():
+		var top: Array = stack.pop_back()
+		var node: Node3D = top[0]
+		var xf: Transform3D = top[1]
+		for c in node.get_children():
+			if not c is Node3D:
+				continue
+			var cxf := xf * (c as Node3D).transform
+			stack.append([c, cxf])
+			if c is MeshInstance3D and (c as MeshInstance3D).mesh != null:
+				var faces := (c as MeshInstance3D).mesh.get_faces()
+				for k in range(0, faces.size(), 3):
+					var tri: Array[Vector3] = []
+					for j in 3:
+						var p: Vector3 = cxf * faces[k + j]
+						var flat := (Vector2(p.dot(view.x), p.dot(view.y)) / SILHOUETTE_SPAN + Vector2(0.5, 0.5)) \
+							* SILHOUETTE_GRID
+						tri.append(Vector3(flat.x, flat.y, p.y))
+					_fill(cells, tri)
+	return cells
+
+
+## Fills a triangle (x, y on the grid, z its height) into `cells`, keeping the highest height in each.
+static func _fill(cells: PackedFloat32Array, t: Array[Vector3]) -> void:
+	var a := Vector2(t[0].x, t[0].y)
+	var b := Vector2(t[1].x, t[1].y)
+	var c := Vector2(t[2].x, t[2].y)
+	var area := (b - a).cross(c - a)
+	if absf(area) < 1e-6:
+		return
+	var lo := a.min(b).min(c).floor()
+	var hi := a.max(b).max(c).ceil()
+	for y in range(maxi(int(lo.y), 0), mini(int(hi.y), SILHOUETTE_GRID)):
+		for x in range(maxi(int(lo.x), 0), mini(int(hi.x), SILHOUETTE_GRID)):
+			var p := Vector2(x + 0.5, y + 0.5)
+			var w0 := (b - p).cross(c - p) / area
+			var w1 := (c - p).cross(a - p) / area
+			var w2 := 1.0 - w0 - w1
+			if w0 >= 0.0 and w1 >= 0.0 and w2 >= 0.0:
+				var i := y * SILHOUETTE_GRID + x
+				cells[i] = maxf(cells[i], w0 * t[0].z + w1 * t[1].z + w2 * t[2].z)

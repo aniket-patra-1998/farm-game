@@ -15,6 +15,7 @@ func build_barn(content: VBoxContainer) -> void:
 	if b.is_empty():
 		hud._book.close_panel()
 		return
+	hud.buildings.add_building_bar(content, b)
 	add_boosts(content)
 	if b.get("broken", false):
 		build_barn_repair(content)

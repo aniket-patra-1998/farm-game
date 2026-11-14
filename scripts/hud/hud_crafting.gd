@@ -17,6 +17,7 @@ func build_crafting(content: VBoxContainer) -> void:
 		hud._book.close_panel()
 		return
 	var uid := hud._building_uid
+	hud.buildings.add_building_bar(content, o)
 	var lvl := Game.level_of(o)
 	# Slots
 	var top := BookPanel.card()

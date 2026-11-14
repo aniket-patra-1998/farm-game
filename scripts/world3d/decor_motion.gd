@@ -40,6 +40,10 @@ const EMBERS := {"streams": 10, "per_stream": 1, "life": 1.8, "rise": 0.25, "gra
 const SMOKE := {"streams": 7, "per_stream": 1, "life": 3.2, "rise": 0.22, "gravity": -0.02, "reach": 0.18,
 	"size": 2.2, "end_size": 2.6, "colour": Color("#d9d6d0"), "sheen": 0.15, "round": true}
 
+## Steam rising off a warm pool (the Spa): thin, white, slow, spreading wide.
+const STEAM := {"streams": 9, "per_stream": 1, "life": 2.6, "rise": 0.16, "gravity": -0.015, "reach": 0.22,
+	"size": 1.8, "end_size": 3.0, "colour": Color("#f4f6f7"), "sheen": 0.1, "round": true, "start_radius": 0.12}
+
 static var _materials := {}         # settings -> ShaderMaterial (shared by every effect alike)
 
 

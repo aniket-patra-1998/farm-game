@@ -161,7 +161,7 @@ func _hover_home(tile: Vector2i) -> void:
 	var thing := str(Game.item_data(state["item"])["name"])
 	if refused != -1:
 		var rb := Game.object_by_uid(refused)
-		grid.placing_changed.emit(Game.homes.refusal(rb, state["item"], homes[refused]))
+		grid.placing_changed.emit(Game.buildings.can_move_in(rb, state["item"], _source()).text)
 	elif home == -1:
 		grid.placing_changed.emit((tr("DRAG_TO_MOVE_THE_THEN_LET") if int(state["uid"]) != -1
 			else tr("DRAG_TO_PLACE_THE_THEN_LET")) % thing)
@@ -223,8 +223,7 @@ func input(event: InputEvent) -> void:
 	if not released:
 		return
 	if int(state.get("refused", -1)) != -1:
-		_refuse(Game.homes.refusal(Game.object_by_uid(int(state["refused"])), state["item"],
-			state["homes"][int(state["refused"])]))
+		_refuse(Game.buildings.can_move_in(Game.object_by_uid(int(state["refused"])), state["item"], _source()).text)
 		return
 	if int(state.get("home", -1)) != -1:
 		# Dropped on a home that takes it: in it goes.
@@ -243,8 +242,10 @@ func input(event: InputEvent) -> void:
 	var row := int(state["row"])
 	var col := int(state["col"])
 	var uid := int(state["uid"])
-	if not Game.can_place(state["item"], row, col, uid):
-		_refuse(tr("IT_DOESN_T_FIT_THERE_TRY") if not _has_origin() else tr("IT_DOESN_T_FIT_THERE_SO_IT"))
+	var spot := Game.buildings.can_place(state["item"], row, col, uid)
+	if not spot.ok():
+		# Why it doesn't fit, and (for something lifted or stored) that it went back.
+		_refuse(spot.text + ("" if not _has_origin() else " " + tr("SO_IT_WENT_BACK")))
 		return
 	var from_storage := int(state.get("stored", -1))
 	var ok: bool

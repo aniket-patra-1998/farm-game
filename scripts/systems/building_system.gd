@@ -11,7 +11,19 @@ extends GameSystem
 ## no state of its own.
 
 enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, MATERIALS, SOMEONE_INSIDE, KEPT,
-	REQUIRES }
+	REQUIRES, OFF_FARM, TAKEN, PLANTED, CROWDED, WRONG_KIND, FULL, NOT_BUILT, HAS_ONE, BARN_BROKEN, BUILD_FIRST,
+	CANT_STORE, NOT_A_FRAME }
+
+## How a home's fit (HousingSystem.Fit, what lights homes up while dragging) reads as a rule's answer.
+const FIT_WHY := {
+	HousingSystem.Fit.FITS: Why.OK,
+	HousingSystem.Fit.WRONG_KIND: Why.WRONG_KIND,
+	HousingSystem.Fit.FULL: Why.FULL,
+	HousingSystem.Fit.NOT_BUILT: Why.NOT_BUILT,
+	HousingSystem.Fit.HAS_ONE: Why.HAS_ONE,
+	HousingSystem.Fit.BARN_BROKEN: Why.BARN_BROKEN,
+	HousingSystem.Fit.BUILD_FIRST: Why.BUILD_FIRST,
+}
 
 ## How many of one item a farm may hold, by kind (FarmVille capped these too). Buildings are BuildingDef.limit().
 ## Buildings that stay where they are: the starter Barn and the Farmhouse.
@@ -165,6 +177,86 @@ func can_sell(o: Dictionary) -> Verdict:
 		return Verdict.new(Why.UNKNOWN, tr("THAT_CAN_T_BE_SOLD"))
 	if KEPT.has(str(o["id"])):
 		return Verdict.new(Why.KEPT, tr("THAT_CAN_T_BE_SOLD"))
+	return yes()
+
+
+## Can `item_id` stand at row, col (its top-left tile)? On the farm, on grass or empty plowed plots, never on
+## crops or other things (`ignore_uid`: the thing being moved). `strict` also keeps a tree and a building off
+## each other's edges (a tree's crown overhangs its tile, so it is never planted hard against a wall); laying
+## the farm back down after loading is not strict, so no save moves.
+func can_place(item_id: String, row: int, col: int, ignore_uid := -1, strict := true) -> Verdict:
+	var fp := game.footprint(item_id)
+	var n := game.farm_size
+	if row < 0 or col < 0 or row + fp.y > n or col + fp.x > n:
+		return Verdict.new(Why.OFF_FARM, tr("PLACE_OFF_FARM"))
+	for r in range(row, row + fp.y):
+		for c in range(col, col + fp.x):
+			var i := game.index_of(r, c)
+			var holder := game.holder_at(i)
+			if holder != -1 and holder != ignore_uid:
+				return Verdict.new(Why.TAKEN, tr("PLACE_TAKEN") % game.item_data(game.object_by_uid(holder)["id"])["name"])
+			if game.plots[i].get("state", "grass") == "planted":
+				return Verdict.new(Why.PLANTED, tr("PLACE_PLANTED"))
+	if strict and _crowds_neighbour(item_id, row, col, fp, ignore_uid):
+		return Verdict.new(Why.CROWDED, tr("PLACE_CROWDED"))
+	return yes()
+
+
+## Whether a tree here would touch a building, or a building here a tree: something of the other kind on the ring
+## of tiles around the footprint (diagonals too).
+func _crowds_neighbour(item_id: String, row: int, col: int, fp: Vector2i, ignore_uid: int) -> bool:
+	var kind: String = game.item_data(item_id).get("kind", "")
+	if kind != "tree" and kind != "building":
+		return false
+	var other := "building" if kind == "tree" else "tree"
+	var n := game.farm_size
+	for r in range(row - 1, row + fp.y + 1):
+		for c in range(col - 1, col + fp.x + 1):
+			if r < 0 or c < 0 or r >= n or c >= n:
+				continue
+			if r >= row and r < row + fp.y and c >= col and c < col + fp.x:
+				continue
+			var uid := game.holder_at(game.index_of(r, c))
+			if uid == -1 or uid == ignore_uid:
+				continue
+			if str(game.item_data(game.object_by_uid(uid).get("id", "")).get("kind", "")) == other:
+				return true
+	return false
+
+
+## Can building `b` take one more `item_id` from `source` ({"uid"}, {"stored"}, {"buy"}: HousingSystem)?
+func can_move_in(b: Dictionary, item_id: String, source := {}) -> Verdict:
+	var fit := game.homes.fit(b, item_id, source)
+	if fit == HousingSystem.Fit.FITS:
+		return yes()
+	return Verdict.new(FIT_WHY[fit], game.homes.refusal(b, item_id, fit))
+
+
+## Can `o` be put away in the Barn? Trees, animals and scenery can; the Barn must be repaired and have room.
+func can_store(o: Dictionary) -> Verdict:
+	if not game.storage.can_store(o):
+		return Verdict.new(Why.CANT_STORE, tr("THAT_CAN_T_GO_IN_THE"))
+	if not game.storage.barn_repaired():
+		return Verdict.new(Why.BARN_BROKEN, tr("FIX_THE_BARN_FIRST_TO_STORE"))
+	if game.storage.stored.size() >= game.storage.total_limit():
+		return Verdict.new(Why.FULL, tr("THE_BARN_IS_FULL"))
+	return yes()
+
+
+## Can frame `b` be finished now: is it a frame, and are all the materials it still needs in hand?
+func can_finish(b: Dictionary) -> Verdict:
+	if b.is_empty() or not game.under_construction(b):
+		return Verdict.new(Why.NOT_A_FRAME)
+	var short := missing(game.land.construction_needs(b))
+	if not short.is_empty():
+		return Verdict.new(Why.MATERIALS, tr("MATERIALS_SHORT") % describe(short))
+	return yes()
+
+
+## Can `o` be turned? Only square things turn (so nothing changes size), and a building only if its data says so.
+func can_rotate(o: Dictionary) -> Verdict:
+	if not game.can_rotate(o):
+		return Verdict.new(Why.UNKNOWN, tr("BUILDINGS_AND_BIG_PIECES_CAN_T"))
 	return yes()
 
 

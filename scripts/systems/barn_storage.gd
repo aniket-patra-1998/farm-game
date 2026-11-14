@@ -99,14 +99,9 @@ func can_store(obj: Dictionary) -> bool:
 
 func store_object(uid: int) -> bool:
 	var o := game.object_by_uid(uid)
-	if not barn_repaired():
-		game.message.emit(tr("FIX_THE_BARN_FIRST_TO_STORE"))
-		return false
-	if not can_store(o):
-		game.message.emit(tr("THAT_CAN_T_GO_IN_THE"))
-		return false
-	if stored.size() >= total_limit():
-		game.message.emit(tr("THE_BARN_IS_FULL"))
+	var verdict := game.buildings.can_store(o)
+	if not verdict.ok():
+		game.message.emit(verdict.text)
 		return false
 	game.remove_object(o)
 	o.erase("row")

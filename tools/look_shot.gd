@@ -1,7 +1,7 @@
 extends Node
-## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes eight pictures
-## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage) into the folder given by --out=<dir>
-## (default ci_shots/look).
+## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes nine pictures
+## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage, barn_broken) into the folder given
+## by --out=<dir> (default ci_shots/look).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
 ## tools/look_compare.py joins two such folders side by side.
@@ -41,7 +41,13 @@ func _ready() -> void:
 	var garage := _centre_of(func(o: Dictionary) -> bool: return str(o["id"]) == "garage")
 	if garage.x >= 0:
 		views.append(["garage", garage.x, garage.y, 1.8])
+	var barn := Game.storage.barn()
+	if not barn.is_empty():
+		views.append(["barn_broken", int(barn["row"]) + 1, int(barn["col"]) + 1, 1.8])
 	for v: Array in views:
+		if str(v[0]) == "barn_broken":   # the starter Barn as it is before it is repaired
+			barn["broken"] = true
+			Game.objects_updated()
 		cam.snap(grid.to_global(grid.center_of(Game.index_of(int(v[1]), int(v[2])))), float(v[3]))
 		for k in 16:
 			await RenderingServer.frame_post_draw

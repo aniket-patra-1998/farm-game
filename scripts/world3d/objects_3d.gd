@@ -64,6 +64,7 @@ var _link_landed := -1   # the frame a joined piece last landed
 var _woods: Array = []   # groups of the woods still going up: [holder, trees left]
 var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
+var _ready_marks: ReadyMarks   # the sparkle over each building with something to collect
 
 
 
@@ -81,6 +82,8 @@ func _ready() -> void:
 	_links = LinkLayer.new()
 	add_child(_links)
 	_links.snapped.connect(func(at: Vector3, fresh: bool) -> void: snapped.emit(at, fresh))
+	_ready_marks = ReadyMarks.new()
+	add_child(_ready_marks)
 	sync()
 	Game.farm_expanded.connect(func(_n: int) -> void: _build_scenery())
 	_build_scenery()
@@ -163,6 +166,7 @@ func sync() -> void:
 		if not seen.has(uid):
 			(_views[uid]["node"] as Node3D).queue_free()
 			_views.erase(uid)
+	_mark_ready()
 	if built > 0:
 		LoadTrace.mark("objects: built %d in %d ms, %d to go" % [built, Time.get_ticks_msec() - began, left])  # not-ui
 	_left = left
@@ -177,6 +181,23 @@ func sync() -> void:
 	for v in _views.values():
 		if v["node"] is Animal3D:
 			_animals.append(v["node"])
+
+
+## A sparkle over every building that has something to collect (FarmVille's ready sign), at the top of its model.
+func _mark_ready() -> void:
+	var tops: Array[Vector3] = []
+	for o in Game.objects:
+		if not Game.kind_of(o) in ["building", "crafting"] or not _views.has(int(o["uid"])):
+			continue
+		if Game.is_ready(o) or Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0:
+			var box: AABB = _views[int(o["uid"])]["box"]
+			tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
+	_ready_marks.show_at(tops)
+
+
+## How many buildings show the ready sparkle.
+func ready_marks() -> int:
+	return _ready_marks.count()
 
 
 ## Whether everything is built: every object, the woods, and every orchard's trees (the farm goes up over a few
@@ -211,6 +232,8 @@ func _process(delta: float) -> void:
 		_grow_woods()
 	_update_placing()
 	var cam := get_viewport().get_camera_3d()
+	if cam != null and cam.projection == Camera3D.PROJECTION_ORTHOGONAL:
+		_ready_marks.follow(cam.size)
 	for a in _animals:
 		if not is_instance_valid(a):
 			continue
@@ -244,7 +267,8 @@ func _key(o: Dictionary) -> String:
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
 		Crowding.mask(o),
-		str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)), Game.is_withered(o), _at_work(o)]]
+		str(o.get("broken", false)) + str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)),
+			Game.is_withered(o), _at_work(o)]]
 
 
 
@@ -306,8 +330,9 @@ func _build(o: Dictionary) -> Node3D:
 			else:
 				var level := Game.level_of(o)
 				var working := _at_work(o)
-				node = Instancer.copy_of(Instancer.key_of(["building", o["id"], level, working]), func() -> Node3D:
-					return ModelKit.bake(BuildingModel.build(it, fp, level, working)))
+				var broken := bool(o.get("broken", false))
+				node = Instancer.copy_of(Instancer.key_of(["building", o["id"], level, working, broken]),
+					func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, working, broken)))
 				if BuildingFill.shows(o):
 					node.add_child(BuildingFill.create(o, node))
 	var dressing := Dressing.make(Game.kind_of(o), fp, int(o["uid"]))

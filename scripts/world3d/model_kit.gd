@@ -580,48 +580,9 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 	var along_x := (hi.x - lo.x) >= (hi.z - lo.z)
 	match kind:
 		"gable", "gambrel":
-			# Work in "ridge" coordinates: u along the ridge, v across it; then map back.
-			var map := func(u: float, v: float, h: float) -> Vector3:
-				return Vector3(u, h, v) if along_x else Vector3(v, h, u)
-			var u0 := x0 if along_x else z0
-			var u1 := x1 if along_x else z1
-			var v0 := z0 if along_x else x0
-			var v1 := z1 if along_x else x1
-			var vm := (v0 + v1) / 2.0
-			var wall_v0 := (lo.z if along_x else lo.x)
-			var wall_v1 := (hi.z if along_x else hi.x)
-			var eave := y - over * rise / maxf(vm - v0, 0.01)
-			var slopes: Array = []
-			var ends: Array = []
-			if kind == "gable":
-				slopes = [[
-					map.call(u0, v0, eave),
-					map.call(u1, v0, eave),
-					map.call(u1, vm, top),
-					map.call(u0, vm, top)
-				],
-					[map.call(u0, v1, eave), map.call(u1, v1, eave), map.call(u1, vm, top), map.call(u0, vm, top)]]
-				for u: float in [lo.x if along_x else lo.z, hi.x if along_x else hi.z]:
-					ends.append([map.call(u, wall_v0, y), map.call(u, wall_v1, y), map.call(u, vm, top)])
-			else:
-				var knee := y + rise * 0.62
-				var kv0 := v0 + (vm - v0) * 0.32
-				var kv1 := v1 - (v1 - vm) * 0.32
-				slopes = [[
-					map.call(u0, v0, eave),
-					map.call(u1, v0, eave),
-					map.call(u1, kv0, knee),
-					map.call(u0, kv0, knee)
-				],
-					[map.call(u0, kv0, knee), map.call(u1, kv0, knee), map.call(u1, vm, top), map.call(u0, vm, top)],
-					[map.call(u0, v1, eave), map.call(u1, v1, eave), map.call(u1, kv1, knee), map.call(u0, kv1, knee)],
-					[map.call(u0, kv1, knee), map.call(u1, kv1, knee), map.call(u1, vm, top), map.call(u0, vm, top)]]
-				var wk0 := wall_v0 + (vm - wall_v0) * 0.3
-				var wk1 := wall_v1 - (wall_v1 - vm) * 0.3
-				for u: float in [lo.x if along_x else lo.z, hi.x if along_x else hi.z]:
-					ends.append([map.call(u, wall_v0, y), map.call(u, wall_v1, y), map.call(u, wk1, knee),
-						map.call(u, wk0, knee)])
-					ends.append([map.call(u, wk0, knee), map.call(u, wk1, knee), map.call(u, vm, top)])
+			var both := _ridge_roof(kind, lo, hi, rise, over)
+			var slopes: Array = both[0]
+			var ends: Array = both[1]
 			faces(parent, slopes, inside, mat)
 			faces(parent, ends, inside, gable_mat)
 			_roof_edges(parent, slopes, mat)
@@ -660,6 +621,67 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 			var r := minf(hi.x - lo.x, hi.z - lo.z) / 2.0
 			ball(parent, Vector3(inside.x, y, inside.z), r, mat, Vector3(1, rise / maxf(r, 0.01), 1))
 	return top
+
+
+## A gable or gambrel roof's faces: [slopes, ends], each a list of polygons (slopes as quads, ridge across the
+## longer side; on the gambrel the lower and upper slope of each side). `roof` draws them; a tarp over a broken
+## roof follows them.
+static func _ridge_roof(kind: String, lo: Vector3, hi: Vector3, rise: float, over: float) -> Array:
+	var y := hi.y
+	var x0 := lo.x - over
+	var x1 := hi.x + over
+	var z0 := lo.z - over
+	var z1 := hi.z + over
+	var top := y + rise
+	var along_x := (hi.x - lo.x) >= (hi.z - lo.z)
+	# Work in "ridge" coordinates: u along the ridge, v across it; then map back.
+	var map := func(u: float, v: float, h: float) -> Vector3:
+		return Vector3(u, h, v) if along_x else Vector3(v, h, u)
+	var u0 := x0 if along_x else z0
+	var u1 := x1 if along_x else z1
+	var v0 := z0 if along_x else x0
+	var v1 := z1 if along_x else x1
+	var vm := (v0 + v1) / 2.0
+	var wall_v0 := (lo.z if along_x else lo.x)
+	var wall_v1 := (hi.z if along_x else hi.x)
+	var eave := y - over * rise / maxf(vm - v0, 0.01)
+	var slopes: Array = []
+	var ends: Array = []
+	if kind == "gable":
+		slopes = [[
+			map.call(u0, v0, eave),
+			map.call(u1, v0, eave),
+			map.call(u1, vm, top),
+			map.call(u0, vm, top)
+		],
+			[map.call(u0, v1, eave), map.call(u1, v1, eave), map.call(u1, vm, top), map.call(u0, vm, top)]]
+		for u: float in [lo.x if along_x else lo.z, hi.x if along_x else hi.z]:
+			ends.append([map.call(u, wall_v0, y), map.call(u, wall_v1, y), map.call(u, vm, top)])
+	else:
+		var knee := y + rise * 0.62
+		var kv0 := v0 + (vm - v0) * 0.32
+		var kv1 := v1 - (v1 - vm) * 0.32
+		slopes = [[
+			map.call(u0, v0, eave),
+			map.call(u1, v0, eave),
+			map.call(u1, kv0, knee),
+			map.call(u0, kv0, knee)
+		],
+			[map.call(u0, kv0, knee), map.call(u1, kv0, knee), map.call(u1, vm, top), map.call(u0, vm, top)],
+			[map.call(u0, v1, eave), map.call(u1, v1, eave), map.call(u1, kv1, knee), map.call(u0, kv1, knee)],
+			[map.call(u0, kv1, knee), map.call(u1, kv1, knee), map.call(u1, vm, top), map.call(u0, vm, top)]]
+		var wk0 := wall_v0 + (vm - wall_v0) * 0.3
+		var wk1 := wall_v1 - (wall_v1 - vm) * 0.3
+		for u: float in [lo.x if along_x else lo.z, hi.x if along_x else hi.z]:
+			ends.append([map.call(u, wall_v0, y), map.call(u, wall_v1, y), map.call(u, wk1, knee),
+				map.call(u, wk0, knee)])
+			ends.append([map.call(u, wk0, knee), map.call(u, wk1, knee), map.call(u, vm, top)])
+	return [slopes, ends]
+
+
+## The slopes of a gable or gambrel roof (as `roof` draws it), each a quad [eave a, eave b, top b, top a].
+static func roof_slopes(kind: String, lo: Vector3, hi: Vector3, rise: float, over: float) -> Array:
+	return _ridge_roof(kind, lo, hi, rise, over)[0]
 
 
 ## A darker strip along a roof's lower edge (the eave), so the roof reads as having thickness.

@@ -16,6 +16,7 @@ func build_building(content: VBoxContainer) -> void:
 		hud._book.close_panel()
 		return
 	var uid := hud._building_uid
+	add_building_bar(content, o)
 	if Game.under_construction(o):
 		build_construction(content, o, uid)
 		return
@@ -76,6 +77,72 @@ func build_building(content: VBoxContainer) -> void:
 	hud.feed.add_feed_card(content, o)
 	add_building_special_info(content, o)
 	add_expansion_card(content, o, uid)
+
+
+## The top of every building's panel: its picture, its state in a line, and what can be done to it
+## wherever it stands (Move, Turn, Sell). A button that can't be used now says why underneath, from the
+## building rules (Game.buildings), so the panel never repeats a rule. Selling asks twice.
+func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
+	var uid := int(o["uid"])
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
+	var pic := TextureRect.new()
+	pic.texture = ItemIcons.of(str(o["id"]))
+	pic.custom_minimum_size = Vector2.ONE * UiTheme.size("panel_icon")
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(pic)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	words.add_child(BookPanel.text(state_line(o), 19, BookPanel.SUN))   # (its name is the panel's title)
+	row.add_child(words)
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.6))
+	row.add_child(buttons)
+	var why := BookPanel.text("", 16, UiTheme.color("price_short"))
+	why.visible = false
+	var refuse := func(verdict: BuildingSystem.Verdict) -> bool:
+		why.text = verdict.text
+		why.visible = not verdict.ok() and verdict.text != ""
+		return verdict.ok()
+	var move := hud._panel_button(tr("TOOL_MOVE"))
+	move.pressed.connect(func() -> void:
+		hud._book.close_panel()
+		if hud.grid != null:
+			hud.grid.start_placing(str(o["id"]), uid))
+	buttons.add_child(move)
+	var turn := hud._panel_button(tr("TURN"))
+	turn.pressed.connect(func() -> void:
+		if refuse.call(Game.buildings.can_rotate(o)):
+			Game.rotate_object(uid))
+	buttons.add_child(turn)
+	var sell := hud._panel_button(tr("TOOL_SELL"))
+	sell.pressed.connect(func() -> void:
+		if not refuse.call(Game.buildings.can_sell(o)):
+			return
+		if not sell.has_meta(&"sure"):
+			sell.set_meta(&"sure", true)
+			sell.text = tr("SELL_FOR_COINS") % FarmHud._thousands(Game.sell_value(o))
+			return
+		hud._book.close_panel()
+		Game.sell_object(uid))
+	buttons.add_child(sell)
+	content.add_child(row)
+	content.add_child(why)
+
+
+## A building's state in a few words: a frame and how far along, broken, ready, or how long until it is.
+func state_line(o: Dictionary) -> String:
+	if Game.under_construction(o):
+		return tr("STATE_FRAME") % roundi(Game.land.construction_progress(o) * 100.0)
+	if o.get("broken", false):
+		return tr("STATE_BROKEN")
+	if Game.is_ready(o):
+		return tr("READY_TO_COLLECT")
+	if Game.is_home(o) and Game.inside_total(o) > 0 and Game.object_payout(o) != Vector2i.ZERO:
+		return tr("READY_IN_4") + FarmGrid.format_duration(Game.seconds_until_ready(o))
+	return tr("STATE_STANDING") % [Game.inside_total(o), Game.capacity(o)] if Game.is_home(o) else ""
 
 
 ## A home for what's found while farming (the Gopher Garden): each kind with how many you have (a question
@@ -421,18 +488,15 @@ func add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void
 	card.add_theme_constant_override("separation", 6)
 	card.add_child(BookPanel.text(tr("EXPAND_TO_HOLDS") % [next_name, int(next["capacity"])], 21))
 	for m in need:
-		card.add_child(
-			BookPanel.text(
-				tr("OF") % [
-					GameState.part_names[m],
-					mini(int(Game.parts.get(m, 0)), int(need[m])),
-					int(need[m])
-				],
-				18
-			)
-		)
+		var have := int(Game.parts.get(m, 0))
+		var done := have >= int(need[m])
+		card.add_child(BookPanel.text(("✓ " if done else "• ") + tr("OF") % [GameState.part_names[m],
+			mini(have, int(need[m])), int(need[m])], 18, Color("#3c7a2a") if done else BookPanel.INK))
+	var verdict := Game.buildings.can_expand(o)
+	if not verdict.ok() and verdict.text != "":
+		card.add_child(BookPanel.text(verdict.text, 16, UiTheme.color("price_short")))
 	var up := hud._panel_button(tr("EXPAND"))
-	up.disabled = not Game.land.can_expand(o)
+	up.disabled = not verdict.ok()
 	up.pressed.connect(func() -> void: Game.land.upgrade_building(uid))
 	card.add_child(up)
 	add_buy_missing(card, need, func() -> void: Game.land.upgrade_building(uid))

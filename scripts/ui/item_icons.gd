@@ -17,7 +17,7 @@ const BUDGET_MS := 8          # building models for pictures stops after this mu
 const CACHE := "user://icons"
 ## Bump when the models' look changes, so pictures kept on disk are made again (the item's data and the game's
 ## version are in the key too).
-const LOOK := 1
+const LOOK := 2
 ## The global shader values that change how the farm looks (weather, night). A picture made while any is set
 ## is shown this session but not kept, so a snowy or dark picture is never saved for good.
 const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark"]
