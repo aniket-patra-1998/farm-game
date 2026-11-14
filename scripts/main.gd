@@ -176,19 +176,32 @@ func _process(_delta: float) -> void:
 	shadows.strength = 0.0 if sun < 0.0 else (1.0 - dark) * clampf(1.0 - absf(cover - 0.45) / 0.4, 0.0, 1.0)
 	# Colour grade: richer by day, cool and soft at night, warm low sun, fog haze.
 	var m := grade.material as ShaderMaterial
+	var sat := lerpf(DAY_SATURATION, 0.92, dark) * (1.0 - float(w["desat"]))
+	var contrast := lerpf(DAY_CONTRAST, 0.98, dark)
+	var lift := Vector3(0.02, 0.035, 0.08) * dark
+	if world_3d != null:
+		# In 3D the frame's own adjustments take the grade and the 3D fog the haze; the full-screen pass is left
+		# with the low sun's warmth and the vignette, and runs only where the quality level asks for it.
+		world_3d.set_screen_grade(sat, contrast, lift)
+		grade.visible = bool(Quality.value("screen_grade"))
+		if not grade.visible:
+			return
+		sat = 1.0
+		contrast = 1.0
+		lift = Vector3.ZERO
 	m.set_shader_parameter("ink", INK)
 	m.set_shader_parameter("ink_from", INK_FROM)
 	m.set_shader_parameter("ink_reach", INK_REACH)
-	m.set_shader_parameter("saturation", lerpf(DAY_SATURATION, 0.92, dark) * (1.0 - float(w["desat"])))
-	m.set_shader_parameter("contrast", lerpf(DAY_CONTRAST, 0.98, dark))
-	m.set_shader_parameter("lift", Vector3(0.02, 0.035, 0.08) * dark)
+	m.set_shader_parameter("saturation", sat)
+	m.set_shader_parameter("contrast", contrast)
+	m.set_shader_parameter("lift", lift)
 	var low := 0.0 if sun < 0.0 else pow(1.0 - sin(sun * PI), 3.0)  # 1 right at sunrise and sunset
 	m.set_shader_parameter("warm", Color(1.0, 0.7, 0.45, 0.22 * low * (1.0 - cover)))
 	m.set_shader_parameter("warm_from", Vector2(0.0 if sun < 0.5 else 1.0, 0.3))
-	m.set_shader_parameter(
-		"haze",
-		Color(0.84, 0.87, 0.9, float(w["fog"]) * 0.75).lerp(Color(0.25, 0.3, 0.42, float(w["fog"]) * 0.6), dark)
-	)
+	var haze := Color(0.84, 0.87, 0.9, float(w["fog"]) * 0.75).lerp(Color(0.25, 0.3, 0.42, float(w["fog"]) * 0.6), dark)
+	if world_3d != null:
+		haze.a = 0.0   # (the 3D fog is the haze)
+	m.set_shader_parameter("haze", haze)
 	m.set_shader_parameter("vignette", lerpf(0.18, 0.4, dark))
 
 

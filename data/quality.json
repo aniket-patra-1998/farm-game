@@ -1,10 +1,10 @@
 {
- "_doc": "Graphics quality levels (scripts/world3d/quality.gd): what each costs the phone. The player picks one in Settings; a phone starts on `mid`, a computer on `high`. `scale` is the 3D resolution (the interface stays sharp); `lod_pixels` is how coarse a model may get before a simpler level of it shows (bigger: simpler sooner); `shadow_splits` 1 or 2 (2 is sharper near the camera); `pose_every` is how many frames apart every animal is posed at least (2 on low halves the animals' cost; the farm's own budget, `Animal3D.FULL_RATE`, may space them further when there are many); `crop_shadows` whether crops cast shadows (most of a big farm's shadow triangles); `max_fps` caps the frame rate (0: none), so a cheap phone on low runs cooler and longer.",
+ "_doc": "Graphics quality levels (scripts/world3d/quality.gd): what each costs the phone. The player picks one in Settings; a phone starts on `mid`, a computer on `high`. `scale` is the 3D resolution (the interface stays sharp); `lod_pixels` is how coarse a model may get before a simpler level of it shows (bigger: simpler sooner); `shadow_splits` 1 or 2 (2 is sharper near the camera); `pose_every` is how many frames apart every animal is posed at least (2 on low halves the animals' cost; the farm's own budget, `Animal3D.FULL_RATE`, may space them further when there are many); `crop_shadows` whether crops cast shadows (most of a big farm's shadow triangles); `max_fps` caps the frame rate (0: none), so a cheap phone on low runs cooler and longer; `screen_grade` keeps the full-screen pass for the low sun's warmth and the vignette (it copies the screen every frame; the rest of the grade is in the 3D frame's own adjustments).",
  "default_phone": "mid",
  "default_computer": "high",
  "levels": {
-  "low": {"shadows": false, "shadow_splits": 1, "shadow_distance": 50, "glow": false, "scale": 0.7, "lod_pixels": 4.0, "pose_every": 2, "crop_shadows": false, "max_fps": 30},
-  "mid": {"shadows": true, "shadow_splits": 1, "shadow_distance": 70, "glow": false, "scale": 0.85, "lod_pixels": 2.0, "pose_every": 1, "crop_shadows": false, "max_fps": 60},
-  "high": {"shadows": true, "shadow_splits": 2, "shadow_distance": 90, "glow": true, "scale": 1.0, "lod_pixels": 1.0, "pose_every": 1, "crop_shadows": true, "max_fps": 0}
+  "low": {"shadows": false, "shadow_splits": 1, "shadow_distance": 50, "glow": false, "scale": 0.7, "lod_pixels": 4.0, "pose_every": 2, "crop_shadows": false, "max_fps": 30, "screen_grade": false},
+  "mid": {"shadows": true, "shadow_splits": 1, "shadow_distance": 70, "glow": false, "scale": 0.85, "lod_pixels": 2.0, "pose_every": 1, "crop_shadows": false, "max_fps": 60, "screen_grade": false},
+  "high": {"shadows": true, "shadow_splits": 2, "shadow_distance": 90, "glow": true, "scale": 1.0, "lod_pixels": 1.0, "pose_every": 1, "crop_shadows": true, "max_fps": 0, "screen_grade": true}
  }
 }

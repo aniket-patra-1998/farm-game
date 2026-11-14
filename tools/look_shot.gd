@@ -13,9 +13,15 @@ const NOON := 12.5
 
 func _ready() -> void:
 	var out := "res://ci_shots/look"
+	var level := ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.substr(6)
+		elif a.begins_with("--quality="):   # low, mid or high (default: this computer's choice)
+			level = a.substr(10)
+	var was_level := Quality.level()
+	if level != "":
+		Quality.choose(level)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out))
 	Game.saving_enabled = false
 	Game.reset_game()
@@ -54,6 +60,8 @@ func _ready() -> void:
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(v[0]) + ".png"))
 	if not barn.is_empty():
 		barn.erase("broken")   # (the showcase's Barn is repaired; the shot only borrowed the broken look)
+	if level != "":
+		Quality.choose(was_level)
 	get_tree().quit()
 
 

@@ -1386,7 +1386,7 @@ func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
 
 func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 	var keys := ["shadows", "shadow_splits", "shadow_distance", "glow", "scale", "lod_pixels", "pose_every",
-		"crop_shadows", "max_fps"]
+		"crop_shadows", "max_fps", "screen_grade"]
 	for name: String in Quality.LEVELS:
 		for k: String in keys:
 			_check(Quality.value(k, name) != null, "%s sets %s" % [name, k])
@@ -1408,6 +1408,7 @@ func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 		_eq(Crops3D._shadow_setting() != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
 			bool(Quality.value("crop_shadows")), "%s: crop shadows" % name)
 	_check(int(Quality.value("max_fps", "low")) > 0, "low caps the frame rate (a cheap phone runs cooler)")
+	_check(not bool(Quality.value("screen_grade", "low")), "low skips the full-screen grade pass")
 	Quality.choose(was)
 	Engine.max_fps = 0
 	sun.free()

@@ -33,6 +33,9 @@ var crops: Crops3D
 var objects: Objects3D
 var farmer: Farmer3D
 var _grade_warmth := -1.0
+var _grade_lift := Vector3.ZERO   # main's night lift for the shadows (folded into the colour grade's dark end)
+var _grade_sat := 1.0             # and its saturation and contrast, folded into the environment's
+var _grade_contrast := 1.0
 var _changed := {}            # plots changed since the last update (index -> true)
 var _changed_all := false     # or the whole field
 var _plots_queued := false
@@ -172,6 +175,16 @@ func _process(_delta: float) -> void:
 	IsoProjection.aim(camera, centre, camera_2d.zoom.x, get_viewport().get_visible_rect().size.y)
 
 
+## Main's screen grade (saturation, contrast, a cool lift in the shadows at night) done here, in the 3D frame's own
+## adjustments, instead of in a second full-screen pass that copies the screen (one pass, not two).
+func set_screen_grade(saturation: float, contrast: float, lift: Vector3) -> void:
+	_grade_sat = saturation
+	_grade_contrast = contrast
+	if not lift.is_equal_approx(_grade_lift):
+		_grade_lift = lift
+		_grade_warmth = -1.0   # (the grade's lookup is rebuilt with the new lift)
+
+
 ## The colour grade: shadows a touch cool and highlights warm, the way a late-afternoon photograph looks.
 ## `warmth` 0..1. It is a small lookup texture, rebuilt only when the warmth has moved enough to be seen.
 func _set_grade(warmth: float) -> void:
@@ -181,7 +194,7 @@ func _set_grade(warmth: float) -> void:
 	var g := Gradient.new()
 	g.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
 	g.colors = PackedColorArray([
-		Color(0.0, 0.0, 0.02),
+		Color(_grade_lift.x, _grade_lift.y, 0.02 + _grade_lift.z),
 		Color(0.5 + 0.02 * warmth, 0.5, 0.5 - 0.03 * warmth),
 		Color(1.0, 1.0 - 0.02 * warmth, 1.0 - 0.07 * warmth)])
 	var tex := GradientTexture1D.new()
@@ -223,7 +236,8 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	# Shade is lit by the sky, but mostly warm-neutral bounce light off the grass and earth.
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
 	environment.ambient_light_energy = lerpf(0.4, 0.34, dark) * (1.0 - dim * 0.4)
-	environment.adjustment_saturation = lerpf(1.1, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0)))
+	environment.adjustment_saturation = lerpf(1.1, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0))) * _grade_sat
+	environment.adjustment_contrast = GRADE_CONTRAST * _grade_contrast
 	var low_sun := pow(1.0 - sin(maxf(s, 0.0) * PI), 3.0) if s >= 0.0 else 0.0
 	_set_grade(clampf(GRADE_BASE_WARMTH + low_sun * 0.9, 0.0, 1.0) * (1.0 - cover * 0.6) * (1.0 - dark))
 	var fog := float(weather.get("fog", 0.0))
