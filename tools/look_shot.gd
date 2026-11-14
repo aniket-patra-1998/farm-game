@@ -1,6 +1,7 @@
 extends Node
 ## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes nine pictures
-## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage, barn_broken) into the folder given
+## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage, barn_broken, home_panel,
+## crafting_panel) into the folder given
 ## by --out=<dir> (default ci_shots/look).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
@@ -60,6 +61,19 @@ func _ready() -> void:
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(v[0]) + ".png"))
 	if not barn.is_empty():
 		barn.erase("broken")   # (the showcase's Barn is repaired; the shot only borrowed the broken look)
+	# Panels: the fullest home, and a crafting building.
+	var hud := main.get("hud") as FarmHud
+	var homes := Game.objects.filter(func(o: Dictionary) -> bool: return Game.is_home(o))
+	homes.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["inside"].size() > b["inside"].size())
+	var crafting := Game.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "bakery")
+	for p: Array in [["home_panel", homes], ["crafting_panel", crafting]]:
+		if (p[1] as Array).is_empty():
+			continue
+		hud.show_building(int(p[1][0]["uid"]))
+		for k in 60:   # (the item pictures are drawn a few a frame)
+			await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(p[0]) + ".png"))
+		hud._book.close_panel()
 	if level != "":
 		Quality.choose(was_level)
 	get_tree().quit()

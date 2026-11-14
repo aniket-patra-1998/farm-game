@@ -95,10 +95,11 @@ func build_barn_storage(content: VBoxContainer) -> void:
 	else:
 		add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
 		add_gift_box(content, cap)
-	var parts_line: Array[String] = []
-	for p in GameState.part_ids:
-		parts_line.append("%s %d" % [GameState.part_names[p], int(Game.parts.get(p, 0))])
-	content.add_child(BookPanel.text(tr("PARTS") % ", ".join(PackedStringArray(parts_line)), 17, BookPanel.CREAM))
+	var parts: Array = []
+	for p: String in GameState.part_ids:
+		parts.append([p, "×%d" % int(Game.parts.get(p, 0))])
+	content.add_child(BookPanel.text(tr("PARTS_HEADING"), 17, BookPanel.CREAM))
+	content.add_child(UiKit.count_row(parts))
 	var barn := Game.storage.barn()
 	if not barn.is_empty():
 		hud.buildings.add_expansion_card(content, barn, int(barn["uid"]))

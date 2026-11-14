@@ -29,7 +29,7 @@ func build_building(content: VBoxContainer) -> void:
 
 	var status := BookPanel.card()
 	status.add_theme_constant_override("separation", 8)
-	status.add_child(BookPanel.text(tr("OF_SPACES_USED") % [Game.size_name(o), total, cap], 22))
+	status.add_child(BookPanel.text(tr("OF_SPACES_USED") % [total, cap], 22))
 	var bar := ProgressBar.new()
 	bar.show_percentage = false
 	bar.custom_minimum_size.y = 18
@@ -40,14 +40,13 @@ func build_building(content: VBoxContainer) -> void:
 	if inside.is_empty():
 		status.add_child(BookPanel.text(tr("EMPTY_MOVE_ANIMALS_IN_TO_START"), 18))
 	else:
-		var names: Array[String] = []
-		for id in inside:
-			names.append("%d %s" % [int(inside[id]), Game.item_data(id)["name"]])
-		status.add_child(BookPanel.text(tr("INSIDE") % ", ".join(PackedStringArray(names)), 18))
+		var held: Array = []
+		for id: String in inside:
+			held.append([id, "×%d" % int(inside[id])])
+		status.add_child(UiKit.count_row(held))   # what's inside, as pictures with counts (FarmVille's way)
 		if total > 0 and pay != Vector2i.ZERO:
-			var when := tr("READY_TO_COLLECT") if Game.is_ready(o) \
-				else tr("STATE_READY_IN") % FarmGrid.format_duration(Game.seconds_until_ready(o))
-			status.add_child(BookPanel.text(tr("PAYS_COINS_XP") % [when, pay.x, pay.y], 18))
+			var pays := tr("PAYS_COINS_XP") % [pay.x, pay.y] if pay.y > 0 else tr("PAYS_COINS") % pay.x
+			status.add_child(BookPanel.text(pays, 18))   # (when: the line at the top)
 	var layout := hud.feed.layout_line(o)
 	if layout != "":
 		status.add_child(BookPanel.text(layout, 18))

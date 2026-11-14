@@ -50,6 +50,7 @@
     "card_face": "#fbefd2",
     "card_edge": "#5c3a1e",
     "card_locked": "#d8cbb0",
+  "count_tile": "#f3e3bd",
     "badge_face": "#fff6dc",
     "lock_text": "#7a2e1e",
     "price_short": "#c0392b",
@@ -117,6 +118,8 @@
     "font_card_small": 13,
     "badge_height": 30,
     "font_badge": 16,
+  "count_tile": 76,
+  "count_outline": 6,
     "card_words": 112
   }
 }

@@ -205,6 +205,48 @@ static func price_badge(kind: String, words: String, short := false) -> PanelCon
 	return box
 
 
+## What a home, a store or a recipe holds, FarmVille's way: each thing as its picture with its count on it
+## (`entries`: [[item id, count text, short]], `short` paints the count in the price-short red: not enough yet),
+## its name shown on a long press or hover. One row that wraps, for every "what's inside" in the game.
+static func count_row(entries: Array) -> HFlowContainer:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap") * 0.5))
+	flow.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap") * 0.5))
+	for e: Array in entries:
+		var id := str(e[0])
+		var name := str(Game.item_data(id).get("name", Game.crops.get(id, {}).get("name", "")))
+		flow.add_child(count_tile(ItemIcons.of(id), str(e[1]), name, e.size() > 2 and bool(e[2])))
+	return flow
+
+
+## One thing and how many: its picture on a soft tile, the count in a corner.
+static func count_tile(picture: Texture2D, count: String, name: String, short := false) -> Control:
+	var tile := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiTheme.color("count_tile")
+	sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
+	tile.add_theme_stylebox_override("panel", sb)
+	tile.tooltip_text = name
+	tile.custom_minimum_size = Vector2.ONE * UiTheme.size("count_tile")
+	var pic := TextureRect.new()
+	pic.texture = picture
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tile.add_child(pic)
+	var label := Label.new()
+	label.text = count
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
+	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
+	label.add_theme_color_override("font_outline_color", UiTheme.color("count_tile"))
+	label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
+	tile.add_child(label)
+	return tile
+
+
 ## A grid for item cards, as many columns as fit a book panel on a screen `view_width` wide (the Market's
 ## shelves, the Barn's store).
 static func card_grid(view_width: float) -> GridContainer:

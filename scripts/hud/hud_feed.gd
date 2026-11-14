@@ -101,6 +101,8 @@ func layout_line(o: Dictionary) -> String:
 	if not Game.adjacency.is_on() or Game.adjacency.group_of(str(o["id"])).is_empty():
 		return ""
 	var n := Game.adjacency.count(o)
+	if n == 0:
+		return ""   # (nothing to say until one of its kind stands beside it)
 	return tr("SYNERGY_LINE") % [n, roundi(Game.adjacency.bonus_for(str(o["id"]), n) * 100.0)]
 
 

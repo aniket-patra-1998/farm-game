@@ -115,16 +115,13 @@ func build_crafting(content: VBoxContainer) -> void:
 			BookPanel.SUN
 		)
 	)
-	var held: Array[String] = []
-	for c in Game.crafting.bushels:
-		held.append("%d %s" % [int(Game.crafting.bushels[c]), Game.crops[c]["name"]])
-	content.add_child(
-		BookPanel.text(
-			", ".join(PackedStringArray(held)) if not held.is_empty() else tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"),
-			17,
-			BookPanel.CREAM
-		)
-	)
+	var held: Array = []
+	for c: String in Game.crafting.bushels:
+		held.append([c, "×%d" % int(Game.crafting.bushels[c])])
+	if held.is_empty():
+		content.add_child(BookPanel.text(tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"), 17, BookPanel.CREAM))
+	else:
+		content.add_child(UiKit.count_row(held))
 	content.add_child(BookPanel.text(tr("FARMERS_MARKET_TODAY"), 22, BookPanel.SUN))
 	var stall := Game.crafting.market_stall()
 	var flow := HFlowContainer.new()
@@ -149,10 +146,11 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	var unlocked := Game.crafting.recipe_unlocked(o, r.id)
 	var stars := Game.crafting.recipe_stars(r.id)
 	inner.add_child(BookPanel.text(r.name + (tr("MASTERY_OF") % stars if stars > 0 else ""), 20))
-	var need: Array[String] = []
-	for c in r.inputs():
-		need.append("%d/%d %s" % [int(Game.crafting.bushels.get(c, 0)), int(r.inputs()[c]), Game.crops[c]["name"]])
-	inner.add_child(BookPanel.text(", ".join(PackedStringArray(need)), 17))
+	var need: Array = []
+	for c: String in r.inputs():
+		var have := int(Game.crafting.bushels.get(c, 0))
+		need.append([c, "%d/%d" % [have, int(r.inputs()[c])], have < int(r.inputs()[c])])
+	inner.add_child(UiKit.count_row(need))   # each bushel: have of need, red while short
 	if r.makes_feed():
 		inner.add_child(BookPanel.text(
 			tr("RECIPE_MAKES_FEED") % [int(r.feed()["units"]), Game.feeds.feed_name(str(r.feed()["type"]), true)], 17,
