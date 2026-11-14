@@ -151,7 +151,7 @@ func state_key() -> String:
 	if o.is_empty():
 		return ""
 	var ready := Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
-	var inside := Game.inside_total(o) if Game.is_building(o) else 0
+	var inside := Game.inside_total(o) if Game.is_home(o) else 0
 	return "%s|%d|%d|%s|%s|%s|%s|%d|%s|%s|%d" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)), ready,
 		o.get("flip", false), o.get("broken", false), inside, Game.under_construction(o), Game.art_for(o),
 		Game.links.mask(o)]   # (a fence redraws when a neighbour joins or leaves)

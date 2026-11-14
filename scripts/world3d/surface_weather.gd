@@ -29,10 +29,10 @@ func advance(weather: Dictionary, delta: float) -> void:
 	snow = ease_toward(snow, minf(float(weather.get("snow", 0.0)) / SNOW_FOR_FULL, 1.0), delta, SNOW_RISE, SNOW_MELT)
 	if absf(wet - _sent_wet) > MIN_CHANGE:
 		_sent_wet = wet
-		ModelKit.set_global(&"wetness", wet)
+		ShaderGlobals.set_value(&"wetness", wet)
 	if absf(snow - _sent_snow) > MIN_CHANGE:
 		_sent_snow = snow
-		ModelKit.set_global(&"snow_cover", snow)
+		ShaderGlobals.set_value(&"snow_cover", snow)
 
 
 ## `current` moved toward `target` at `rise` per second going up, `fall` going down.

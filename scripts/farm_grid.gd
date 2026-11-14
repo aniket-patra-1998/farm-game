@@ -281,7 +281,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
 		var counts := Vector2i(-1, -1)
 		if o["id"] == "barn" and not o.get("broken", false):
 			counts = Vector2i(mini(Game.storage.stored.size(), Game.storage.barn_capacity()), Game.storage.barn_capacity())
-		elif Game.is_building(o):
+		elif Game.is_home(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
 		if counts.x >= 0 and counts_shown:
 			PlaceholderArt.draw_count_sign(ci, g, counts.x, counts.y)
@@ -312,7 +312,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
 			var fp := Game.footprint(o["id"])
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 			var glow := 0.5 + 0.5 * sin(t * 2.6 + float(piece.uid % 7))
-			var high := -110.0 if Game.is_building(o) or Game.crafting.is_crafting(o) else -70.0
+			var high := -110.0 if Game.is_home(o) or Game.crafting.is_crafting(o) else -70.0
 			PlaceholderArt.draw_twinkle(ci, (g[0] + g[2]) / 2.0 + Vector2(22, high), 11.0 + 6.0 * glow, glow)
 	for p: Variant in hungry:
 		if is_instance_valid(p):
@@ -334,7 +334,7 @@ func _draw_hungry(ci: CanvasItem, piece: FarmPiece, t: float) -> void:
 	else:
 		var fp := Game.footprint(o["id"])
 		var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
-		at = (g[0] + g[2]) / 2.0 + Vector2(-22, -110.0 if Game.is_building(o) else -70.0)
+		at = (g[0] + g[2]) / 2.0 + Vector2(-22, -110.0 if Game.is_home(o) else -70.0)
 	AnimalArt.bubble(ci, at, HUNGRY_CRUMB, t + float(piece.uid))
 
 
@@ -408,7 +408,7 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 			PlaceholderArt.draw_frame(ci, corners, it)
 		return
 	var is_ready_now := Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
-	var building := Game.is_building(o)
+	var building := Game.is_home(o)
 	var inside := Game.inside_total(o) if building else 0
 	var cap := Game.capacity(o) if building else 0
 	if o["id"] == "barn":
@@ -470,7 +470,7 @@ func _draw_placing(ci: CanvasItem) -> void:
 	if int(placing["uid"]) != -1:
 		var o := Game.object_by_uid(int(placing["uid"]))
 		level = int(o.get("level", 1))
-		if Game.is_building(o):
+		if Game.is_home(o):
 			inside = Game.inside_total(o)
 			cap = Game.capacity(o)
 	elif it.get("kind", "") == "building":
@@ -995,7 +995,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		info.emit(tr("NOT_READY_YET_READY_IN") % [Game.item_data(obj["id"])["name"],
 			format_duration(Game.seconds_until_ready(obj))])
 		return
-	if Game.is_building(obj) or Game.crafting.is_crafting(obj) or Game.kind_of(obj) == "bloom" \
+	if Game.is_home(obj) or Game.crafting.is_crafting(obj) or Game.kind_of(obj) == "bloom" \
 			or Game.feeds.is_feedable(obj):
 		object_tapped.emit(uid)
 		return

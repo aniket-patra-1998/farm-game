@@ -184,7 +184,7 @@ static func _materials_for(it: Dictionary, share: float) -> Dictionary:
 static func _fill_homes(g: GameState, now: int) -> void:
 	var k := 0
 	for b in g.objects:
-		if g.is_building(b) and not g.under_construction(b):
+		if g.is_home(b) and not g.under_construction(b):
 			var def := g.catalog.get_def(str(b["id"])) as BuildingDef
 			if def != null and not def.stores_anything():
 				var takes: Array[String] = []

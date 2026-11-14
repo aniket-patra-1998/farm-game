@@ -83,7 +83,7 @@ static func building(id: String, state: String, uid: int) -> Node3D:
 	var o := {"id": id, "uid": 9000 + uid, "row": 0, "col": 0, "level": level, "inside": {}}
 	o["t"] = Game.now() - (cycle + 1 if state == "full" else cycle / 2 if state == "half" else 0)
 	if state != "empty" and state != "default":
-		var cap := Game.capacity(o) if Game.is_building(o) else 0
+		var cap := Game.capacity(o) if Game.is_home(o) else 0
 		var want := cap if state == "full" else cap / 2
 		var takes: Array[String] = []
 		for k in Game.item_order:

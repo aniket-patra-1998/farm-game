@@ -57,7 +57,7 @@ static func _shadow_setting() -> GeometryInstance3D.ShadowCastingSetting:
 
 
 func _process(_delta: float) -> void:
-	RenderingServer.global_shader_parameter_set(&"crop_clock", _now() - _base)
+	RenderingServer.global_shader_parameter_set(&"crop_clock", _now() - _base)  # every frame: see ShaderGlobals
 
 
 ## The game's time as a float (whole seconds are too coarse for a plant to swell by).
@@ -84,7 +84,7 @@ func material_for(col: Color) -> ShaderMaterial:
 
 func _set_wind(v: float) -> void:
 	wind = v
-	RenderingServer.global_shader_parameter_set(&"wind", v)  # crops read the one global wind
+	ShaderGlobals.set_value(&"wind", v)  # crops read the one global wind
 
 
 ## The stage a plot's plants are drawn at, and the stretch of time (unix seconds) the stage's growing spans:

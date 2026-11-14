@@ -25,7 +25,7 @@ func boost_ids() -> Array:
 
 ## What one home adds to a boost (0 when it isn't listed there, or holds nothing yet).
 func share_of(o: Dictionary, boost: String) -> float:
-	if not game.is_building(o) or game.under_construction(o) or game.inside_total(o) <= 0:
+	if not game.is_home(o) or game.under_construction(o) or game.inside_total(o) <= 0:
 		return 0.0
 	return float(_boosts.get(boost, {}).get("homes", {}).get(str(o["id"]), 0.0))
 

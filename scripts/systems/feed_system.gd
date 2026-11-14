@@ -178,7 +178,7 @@ func family_counts(obj: Dictionary) -> Dictionary:
 	var out := {}
 	if obj.is_empty():
 		return out
-	if game.is_building(obj):
+	if game.is_home(obj):
 		var inside: Dictionary = obj.get("inside", {})
 		for id: String in inside:
 			var fam := str(game.item_data(id).get("family", ""))

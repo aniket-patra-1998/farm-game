@@ -1420,3 +1420,35 @@ func test_317_big_baked_models_carry_simpler_levels_of_detail() -> void:
 	_check(meshes > 0 and with_lods > 0,
 		"the cow shed's big meshes have levels of detail (%d of %d)" % [with_lods, meshes])
 	node.free()
+
+
+## Global shader values are set only through ShaderGlobals (which remembers them; the engine can't be asked),
+## except the crop clock, set every frame and never read back. Item pictures are kept on disk only on a calm
+## day: never wet, snowy or dark.
+func test_318_shader_globals_go_through_one_place_and_pictures_wait_for_calm() -> void:
+	var direct := RegEx.create_from_string("global_shader_parameter_set\\((&?\"[a-z_]+\")")
+	for dir in ["res://scripts", "res://autoload"]:
+		for path in _gd_files(dir):
+			if path.ends_with("shader_globals.gd"):
+				continue
+			for m in direct.search_all(FileAccess.get_file_as_string(path)):
+				_check(m.get_string(1).contains("crop_clock"), "%s sets %s through ShaderGlobals" % [path, m.get_string(1)])
+	ShaderGlobals.reset()
+	_check(ItemIcons._calm(), "a fresh farm is calm")
+	for mood in ItemIcons.MOODS:
+		ShaderGlobals.set_value(mood, 0.5)
+		_check(not ItemIcons._calm(), "%s: no picture is kept" % mood)
+		ShaderGlobals.set_value(mood, 0.0)
+	_check(ItemIcons._calm(), "calm again when it clears")
+	_eq(float(ShaderGlobals.value(&"wetness")), 0.0, "the value is remembered")
+	ShaderGlobals.reset()
+
+
+static func _gd_files(dir: String) -> Array[String]:
+	var out: Array[String] = []
+	for f in DirAccess.get_files_at(dir):
+		if f.ends_with(".gd"):
+			out.append(dir.path_join(f))
+	for d in DirAccess.get_directories_at(dir):
+		out.append_array(_gd_files(dir.path_join(d)))
+	return out

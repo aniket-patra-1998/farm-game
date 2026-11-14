@@ -144,7 +144,7 @@ func price_of(id: String) -> Dictionary:
 
 ## Can building `b` grow to its next size now?
 func can_expand(b: Dictionary) -> Verdict:
-	if b.is_empty() or not game.is_building(b):
+	if b.is_empty() or not game.is_home(b):
 		return Verdict.new(Why.UNKNOWN)
 	if game.under_construction(b):
 		return Verdict.new(Why.FRAME, tr("FINISH_IT_FIRST"))

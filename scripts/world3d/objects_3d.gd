@@ -673,7 +673,7 @@ static func _ray_to(box: AABB, from: Vector3, dir: Vector3) -> float:
 ## low yard and fence, and each thing standing beside it (a silo, an annex): not one box round it all,
 ## whose empty corners would catch taps meant for the animal standing behind its yard.
 func _parts(node: Node3D, o: Dictionary) -> Array[AABB]:
-	if node is Animal3D or not Game.is_building(o) or Game.under_construction(o) or node.get_child_count() == 0:
+	if node is Animal3D or not Game.is_home(o) or Game.under_construction(o) or node.get_child_count() == 0:
 		return [_bounds(node, o)]
 	var model := node.get_child(0) as Node3D
 	var fp := Game.footprint(o["id"])

@@ -525,8 +525,8 @@ func building_def(id: String) -> BuildingDef:
 
 
 ## Whether an item is a building (its catalog class is BuildingDef or one of its kinds: BarnDef, CraftingDef...).
-## The one test of it: the Market, the limits and the showcase all ask here (`is_building` asks something
-## else: whether a placed object is an animal home).
+## The one test of it: the Market, the limits and the showcase all ask here (`is_home` asks something
+## narrower, of a placed object).
 func is_building_item(id: String) -> bool:
 	return building_def(id) != null
 
@@ -539,7 +539,9 @@ func kind_of(obj: Dictionary) -> String:
 	return item_data(obj["id"]).get("kind", "")
 
 
-func is_building(obj: Dictionary) -> bool:
+## Whether a placed object is a home: a building of kind "building", holding animals, trees, bees or vehicles
+## (not the Barn or a crafting building; for "any building" ask `is_building_item`).
+func is_home(obj: Dictionary) -> bool:
 	return item_data(obj["id"]).get("kind", "") == "building"
 
 
@@ -611,7 +613,7 @@ func seconds_until_ready(obj: Dictionary) -> int:
 
 ## Coins and XP one collection pays.
 func object_payout(obj: Dictionary) -> Vector2i:
-	if not is_building(obj):
+	if not is_home(obj):
 		var it := item_data(obj["id"])
 		return Vector2i(int(it.get("payout", 0)), int(it.get("xp", 0)))
 	var total := Vector2i.ZERO
@@ -651,7 +653,7 @@ func collect(uid: int) -> Dictionary:
 	var extras: Array[String] = []
 	var name_before: String = item_data(obj["id"])["name"]
 	# Every animal, tree or bloom harvested earns its own mastery, loose or living in a home.
-	if is_building(obj):
+	if is_home(obj):
 		var inside: Dictionary = obj.get("inside", {})
 		for id in inside:
 			mastery.add_harvest(id, int(inside[id]))
@@ -659,7 +661,7 @@ func collect(uid: int) -> Dictionary:
 		mastery.add_harvest(obj["id"], 1)
 	if kind_of(obj) == "bloom":
 		extras.append_array(nurture.from_bloom(obj))
-	if is_building(obj):
+	if is_home(obj):
 		extras.append_array(specials.building_specials(obj))
 		extras.append_array(specials.grow_up_inside(obj))
 	else:
@@ -679,7 +681,7 @@ func collect(uid: int) -> Dictionary:
 			collectibles.tree_collection,
 			Balance.f("economy.animal_collectible_chance")
 		)
-	elif kind_of(obj) == "animal" or is_building(obj):
+	elif kind_of(obj) == "animal" or is_home(obj):
 		coll_find = collectibles.roll_collectible(
 			collectibles.animal_collection,
 			Balance.f("economy.animal_collectible_chance")

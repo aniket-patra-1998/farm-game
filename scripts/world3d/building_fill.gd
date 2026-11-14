@@ -92,7 +92,7 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 
 ## Whether a building shows anything of what's inside it.
 static func shows(o: Dictionary) -> bool:
-	if Game.under_construction(o) or not Game.is_building(o):
+	if Game.under_construction(o) or not Game.is_home(o):
 		return false
 	var def := Game.catalog.get_def(str(o["id"]))
 	# Homes for named animals, or gardens for a kind (trees in an Orchard, blooms in a Bloom Garden).

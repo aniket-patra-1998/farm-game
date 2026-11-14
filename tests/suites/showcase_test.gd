@@ -39,7 +39,7 @@ func test_106_the_showcase_farm_has_everything_laid_out() -> void:
 	var sites: Array[float] = []
 	var ready := 0
 	for o in g.objects:
-		if not g.is_building(o):
+		if not g.is_home(o):
 			continue
 		if g.under_construction(o):
 			sites.append(g.land.construction_progress(o))

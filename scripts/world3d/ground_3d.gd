@@ -119,7 +119,7 @@ static func paint_forest(trees: Array) -> Image:
 func _set_wind(v: float) -> void:
 	wind = v
 	# Every swaying shader (grass, flowers, crops, trees, scarecrows) reads the one global wind.
-	RenderingServer.global_shader_parameter_set(&"wind", v)
+	ShaderGlobals.set_value(&"wind", v)
 
 
 func rebuild() -> void:

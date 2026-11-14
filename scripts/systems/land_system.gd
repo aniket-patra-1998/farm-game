@@ -94,7 +94,7 @@ func can_expand(b: Dictionary) -> bool:
 ## Expands a building one size, paying its materials (FarmVille's Big and Huge sizes).
 func upgrade_building(uid: int) -> bool:
 	var b := game.object_by_uid(uid)
-	if b.is_empty() or not game.is_building(b) or not can_expand(b):
+	if b.is_empty() or not game.is_home(b) or not can_expand(b):
 		return false
 	var need := expansion_needs(b)
 	for m in need:

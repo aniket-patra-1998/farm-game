@@ -20,7 +20,7 @@ func test_201_every_home_takes_what_it_holds_only_when_finished_with_room() -> v
 			continue
 		for item: String in g.items:
 			var loose := {"uid": 7001, "id": item, "row": 0, "col": 0, "t": 0}
-			if not def.accepts(item, str(g.item_data(item).get("kind", ""))) or g.is_building(loose):
+			if not def.accepts(item, str(g.item_data(item).get("kind", ""))) or g.is_home(loose):
 				continue
 			pairs += 1
 			var home := _finished(id, 7000)

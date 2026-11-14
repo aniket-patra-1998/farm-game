@@ -365,7 +365,7 @@ func _shots_3d(dir: String) -> void:
 				- (Game.field.ripe_window(Game.crops[shapes[k]]) if stages[s] > 2.0 else 0)}
 	# Homes most of the way to ready, so what they make has piled up by their doors.
 	for o in Game.objects:
-		if Game.is_building(o) and not Game.under_construction(o):
+		if Game.is_home(o) and not Game.under_construction(o):
 			o["t"] = Game.now() - int(Game.cycle_of(o) * 0.8)
 	Game.rebuild_occupancy()
 	_main = MAIN_SCENE.instantiate()

@@ -55,9 +55,11 @@ func size_materials(level: int) -> Dictionary:
 	return size(level).get("materials", {})
 
 
-## Its Market tab: animal, storage, crafting or decor.
+## Its Market section: animal, storage, crafting or decor (required in the catalog; an error when missing).
 func tab() -> String:
-	return str(data.get("tab", "animal"))
+	if not data.has("tab"):
+		push_error("%s has no Market section (tab)" % data.get("id", "?"))   # not-ui
+	return str(data.get("tab", ""))
 
 
 ## How many one farm may have.

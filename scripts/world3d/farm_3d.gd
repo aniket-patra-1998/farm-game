@@ -40,6 +40,7 @@ static func enabled() -> bool:
 
 
 func _ready() -> void:
+	ShaderGlobals.reset()   # a new farm starts from a calm day; its weather and clock set their own
 	camera = Camera3D.new()
 	camera.near = 1.0
 	camera.far = 400.0

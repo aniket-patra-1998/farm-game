@@ -108,7 +108,7 @@ func put_in_home(building_uid: int, item_id: String, source: Dictionary) -> bool
 ## Moves every loose animal or tree of the right type into the building, up to its capacity.
 func fill_building(uid: int) -> int:
 	var b := game.object_by_uid(uid)
-	if b.is_empty() or not game.is_building(b) or game.under_construction(b):
+	if b.is_empty() or not game.is_home(b) or game.under_construction(b):
 		return 0
 	var moved := 0
 	var keep: Array = []
@@ -143,7 +143,7 @@ func loose_matching(building: Dictionary) -> int:
 ## A loose animal, tree or vehicle on the farm that this building houses (not a building, a stray, or a
 ## frame or chassis still being built).
 func can_move_in(building: Dictionary, o: Dictionary) -> bool:
-	return not game.is_building(o) and not o.get("stray", false) and not game.under_construction(o) \
+	return not game.is_home(o) and not o.get("stray", false) and not game.under_construction(o) \
 		and game.building_accepts(building, o["id"])
 
 
