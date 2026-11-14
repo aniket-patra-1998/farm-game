@@ -33,6 +33,12 @@
     "gem_edge": "#2e8fb0",
     "icon_ink": "#4a2f19",
     "icon_light": "#fff6dc",
+    "icon_outline": "#3b2412",
+    "ribbon_tier_0": "#f2c23a",
+    "ribbon_tier_1": "#f1ece0",
+    "ribbon_tier_2": "#d9442f",
+    "ribbon_tier_3": "#3d78c9",
+    "icon_shadow": "#00000040",
     "metal": "#b7c0c7",
     "sack": "#e3cf9b",
     "leaf": "#5c9e3a",
@@ -125,6 +131,7 @@
   "mastery_star": 18,
   "mastery_bar": 4,
   "font_count_name": 12,
+  "ribbon_icon": 44,
     "card_words": 112
   }
 }

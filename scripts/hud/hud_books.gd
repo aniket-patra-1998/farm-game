@@ -107,7 +107,13 @@ func build_ribbons(content: VBoxContainer) -> void:
 		var tiers := HBoxContainer.new()
 		tiers.add_theme_constant_override("separation", 6)
 		for k in tier_names.size():
-			tiers.add_child(BookPanel.chip(tier_names[k], k < earned))
+			# Each tier as its own coloured ribbon (FarmVille's yellow, white, red and blue); a faded one is to come.
+			var icon := UiIcon.make("ribbon", UiTheme.size("ribbon_icon"), UiTheme.color("ribbon_tier_%d" % k))
+			icon.tooltip_text = str(tier_names[k])
+			icon.mouse_filter = Control.MOUSE_FILTER_PASS
+			if k >= earned:
+				icon.modulate = Color(1, 1, 1, 0.3)
+			tiers.add_child(icon)
 		head.add_child(tiers)
 		inner.add_child(head)
 
