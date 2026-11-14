@@ -132,11 +132,11 @@ var persistence: Persistence          # saving and loading (not in `systems`: it
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
 
 
+var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
 var _level := 1                    # level() remembered for this XP (and this version of the Balance numbers)
 var _level_xp := -1
 var _level_rev := -1
 var _occupied := {}                # tile index -> uid of the object covering it
-var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
 var _weather := {}                # the last answer of weather(), and when and for what it was made
