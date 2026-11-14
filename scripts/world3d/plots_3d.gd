@@ -2,13 +2,15 @@ class_name Plots3D
 extends Node3D
 ## Every plowed or planted plot as a raised bed of soil, drawn as one MultiMesh (one draw for the whole
 ## field): bevelled edges so beds read as mounds of earth, furrows along them, darker and damp where
-## fertilized. Crops on top come from CropModels. Rebuilt when plots change.
+## fertilized. Crops on top come from CropModels. One slot per tile, updated plot by plot (`update`).
 
 const BED := 0.9           # a bed's width, in tiles (the gaps between beds are grass)
 const HEIGHT := 0.09
 const BEVEL := 0.07
+const BED_FLOATS := 16     # a bed in the MultiMesh buffer: transform (12) and data (4)
 
 var _beds: MultiMeshInstance3D
+var _size := -1       # the farm size the slots were laid out for
 
 
 func _ready() -> void:
@@ -21,24 +23,54 @@ func _ready() -> void:
 	rebuild()
 
 
+## Lays out every bed again (a new farm or a bigger one): one instance slot per tile, so a single plot can be
+## changed later on its own (`update`). A grass tile's slot is shrunk to nothing.
 func rebuild() -> void:
+	var n := Game.farm_size
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
 	mm.mesh = bed_mesh()
-	var cells: Array[Vector3i] = []
-	var n := Game.farm_size
+	mm.instance_count = n * n
+	var buffer := PackedFloat32Array()
+	buffer.resize(n * n * BED_FLOATS)
 	for r in n:
 		for c in n:
-			var i := Game.index_of(r, c)
-			if Game.plots[i].get("state", "grass") != "grass":
-				cells.append(Vector3i(r, c, i))
-	mm.instance_count = cells.size()
-	for k in cells.size():
-		var cell := cells[k]
-		mm.set_instance_transform(k, Transform3D(Basis(), IsoProjection.tile_centre(cell.x, cell.y)))
-		mm.set_instance_custom_data(k, Color(0, 0, 0, 1.0 if Game.field.is_fertilized(cell.z) else 0.0))
+			_write(buffer, (r * n + c) * BED_FLOATS, r, c)
+	mm.buffer = buffer
 	_beds.multimesh = mm
+	_size = n
+
+
+## Brings the beds of plots `indices` up to date, one slot each (the whole field when the farm's size changed).
+func update(indices: Array) -> void:
+	if _size != Game.farm_size or indices.is_empty():
+		rebuild()
+		return
+	var one := PackedFloat32Array()
+	one.resize(BED_FLOATS)
+	for i: int in indices:
+		var r := int(i / float(GameState.MAX_SIZE))
+		var c := i % GameState.MAX_SIZE
+		if r >= _size or c >= _size:
+			continue
+		_write(one, 0, r, c)
+		var slot := r * _size + c
+		_beds.multimesh.set_instance_transform(slot, Transform3D(Basis(Vector3(one[0], one[4], one[8]),
+			Vector3(one[1], one[5], one[9]), Vector3(one[2], one[6], one[10])), Vector3(one[3], one[7], one[11])))
+		_beds.multimesh.set_instance_custom_data(slot, Color(one[12], one[13], one[14], one[15]))
+
+
+## Tile (r, c)'s bed into `buffer` at `at`: its transform (shrunk to nothing on grass) and whether it's fertilized.
+static func _write(buffer: PackedFloat32Array, at: int, r: int, c: int) -> void:
+	var i := Game.index_of(r, c)
+	var bed: bool = Game.plots[i].get("state", "grass") != "grass"
+	var s := 1.0 if bed else 0.0
+	var p := IsoProjection.tile_centre(r, c)
+	var row := [s, 0.0, 0.0, p.x, 0.0, s, 0.0, p.y, 0.0, 0.0, s, p.z,
+		0.0, 0.0, 0.0, 1.0 if bed and Game.field.is_fertilized(i) else 0.0]
+	for k in BED_FLOATS:
+		buffer[at + k] = row[k]
 
 
 ## A bed of earth: a low box with bevelled top edges, centred on its tile, sitting on the ground.

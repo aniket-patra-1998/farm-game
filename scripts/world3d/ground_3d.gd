@@ -28,6 +28,13 @@ const WEAR_REACH := 0.9            # and wear over this much
 
 ## Kinds that nothing grows through (trees and animals stand among the grass).
 const COVERS_GRASS := ["building", "vehicle", "decor"]
+const BAKE_SHADER := "res://shaders/ground_bake.gdshader"   # (unshaded, seen straight down)
+const BAKE_FARM_RES := 24          # baked ground texels per tile on the farm (it's seen close up)
+const BAKE_MEADOW_RES := 8         # and on the meadow round it (always further away)
+## The ground shader's uniforms the bake paints from (the still look: ground_common.gdshaderinc).
+const BAKE_PARAMS: Array[String] = ["grass_light", "grass_dark", "dry", "checker", "dryness", "farm_n", "verge",
+	"mow", "patchy", "bare_amount", "bare", "cool", "forest_amount", "forest_map", "forest_rect", "forest_dark",
+	"forest_moss", "litter", "edge_n"]
 const TUFT_FLOATS := 16           # a tuft in the MultiMesh buffer: transform (12) and colour (4)
 const CLUMP_MAX := 9               # tufts in the thickest clump on a tile
 const FLOWER_CHANCE := 0.22        # of a meadow tile having a patch of wild flowers
@@ -48,6 +55,10 @@ var _grass: Array[ShaderMaterial] = []
 var _shade: Image                  # R: shade, G: wear (see the class notes)
 var _meadow_tufts := PackedFloat32Array()   # the meadow's tufts (MultiMesh buffer), kept: they never change
 var _shade_texture: ImageTexture
+var _baked_size := -1              # the farm size the ground's still look was painted for
+var _bakes_waiting: Array = []     # [material, its viewport (weak), rect]: painted this frame, read from the next
+var _farm_tufts := {}              # farm tile index -> its tufts (MultiMesh buffer data), kept per tile
+var _lush := _make_lush()          # how thick the grass grows, a slow noise over the land
 var _shade_signature := 0
 var _forest_map: ImageTexture      # where the woods are: R, 1 under the trees fading out
 
@@ -92,6 +103,72 @@ func _ready() -> void:
 	rebuild()
 
 
+## Paints `grass`'s still look over `rect` (in tiles) into a texture once, at `res` texels a tile, and has the
+## ground read it from then on (a phone does one lookup a pixel instead of some forty noise samples). Painted in an
+## off-screen viewport the frame after; until then (and with no screen at all) the ground works its look out live.
+func bake(grass: ShaderMaterial, rect: Rect2, res: int) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	if grass.has_meta(&"bake"):
+		var old: Object = (grass.get_meta(&"bake") as WeakRef).get_ref()
+		if old != null:
+			(old as Node).queue_free()
+	var vp := SubViewport.new()
+	vp.size = Vector2i(ceili(rect.size.x * res), ceili(rect.size.y * res))
+	vp.own_world_3d = true
+	vp.render_target_update_mode = SubViewport.UPDATE_ONCE
+	var m := ShaderMaterial.new()
+	m.shader = load(BAKE_SHADER)
+	for name in BAKE_PARAMS:
+		var v: Variant = grass.get_shader_parameter(name)
+		if v != null:
+			m.set_shader_parameter(name, v)   # (the same values: both shaders treat them alike)
+	var plane := MeshInstance3D.new()
+	var mesh := PlaneMesh.new()
+	mesh.size = rect.size
+	plane.mesh = mesh
+	plane.material_override = m
+	plane.position = Vector3(rect.get_center().x, 0.0, rect.get_center().y)
+	vp.add_child(plane)
+	# Straight down, north (-z) at the top of the picture, so its rows run along z and its columns along x.
+	var cam := Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	cam.keep_aspect = Camera3D.KEEP_HEIGHT
+	cam.size = rect.size.y
+	cam.near = 0.1
+	cam.far = 10.0
+	vp.add_child(cam)
+	cam.look_at_from_position(plane.position + Vector3.UP * 5.0, plane.position, Vector3.FORWARD)
+	var r4 := Vector4(rect.position.x, rect.position.y, rect.size.x, rect.size.y)
+	add_child(vp)
+	var ref: WeakRef = weakref(vp)
+	grass.set_meta(&"bake", ref)
+	grass.set_shader_parameter("use_bake", false)
+	_bakes_waiting.append([grass, ref, r4])
+	if not RenderingServer.frame_post_draw.is_connected(_baked):
+		RenderingServer.frame_post_draw.connect(_baked, CONNECT_ONE_SHOT)
+
+
+## The bakes have been painted: the ground reads them from now on (each unless a newer one has taken its place).
+func _baked() -> void:
+	for w: Array in _bakes_waiting:
+		var grass: ShaderMaterial = w[0]
+		var vp := (w[1] as WeakRef).get_ref() as SubViewport
+		if vp == null or grass.get_meta(&"bake") != w[1]:
+			continue
+		grass.set_shader_parameter("baked", vp.get_texture())
+		grass.set_shader_parameter("bake_rect", w[2])
+		grass.set_shader_parameter("use_bake", true)
+	_bakes_waiting.clear()
+
+
+static func _make_lush() -> FastNoiseLite:
+	var lush := FastNoiseLite.new()
+	lush.seed = 7
+	lush.frequency = 0.21
+	return lush
+
+
 ## Where the woods are, painted once from the scenery trees (FarmGrid.scenery(): they never move): 1 under
 ## each tree, fading out over FOREST_REACH tiles. The meadow's shader makes the forest floor of it.
 func forest_map() -> ImageTexture:
@@ -134,6 +211,10 @@ func rebuild() -> void:
 		_scatter_flowers(n)  # flowers grow only off the farm, so only its size moves them
 	_grass[0].set_shader_parameter("farm_n", float(n))
 	_grass[1].set_shader_parameter("edge_n", float(n))
+	if n != _baked_size:
+		_baked_size = n
+		bake(_grass[0], Rect2(0, 0, n, n), BAKE_FARM_RES)
+		bake(_grass[1], Rect2(-MEADOW, -MEADOW, n + MEADOW * 2.0, n + MEADOW * 2.0), BAKE_MEADOW_RES)
 	_paint_shade(n)
 	_scatter_tufts(n)
 
@@ -290,12 +371,37 @@ static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector
 
 ## Tufts in clumps over the grass: how thick they grow follows a slow noise over the land (so there are
 ## lush patches and thin ones), thinning where the grass is worn, and none through anything that covers
-## the ground. Seeded by position, so they don't move when rebuilt.
+## the ground. Seeded by position, so they don't move when rebuilt. Each farm tile's tufts are kept, so a
+## plot plowed or cleared changes only its own (`update_tiles`).
 func _scatter_tufts(n: int) -> void:
 	# The meadow's tufts never change (only the farm's size moves them): worked out once and kept.
 	if _meadow_tufts.is_empty():
-		_meadow_tufts = _tuft_buffer(n, false)
-	var buffer := _tuft_buffer(n, true)
+		_meadow_tufts = PackedFloat32Array()
+		for r in range(-int(TUFT_REACH), n + int(TUFT_REACH)):
+			for c in range(-int(TUFT_REACH), n + int(TUFT_REACH)):
+				if r < 0 or c < 0 or r >= n or c >= n:
+					_meadow_tufts.append_array(_tile_tufts(r, c, false))
+	_farm_tufts.clear()
+	for r in n:
+		for c in n:
+			_farm_tufts[Game.index_of(r, c)] = _tile_tufts(r, c, true)
+	_lay_tufts()
+
+
+## The tufts of farm plots `indices` follow their ground (grass, or a bed with none), and only theirs.
+func update_tiles(indices: Array) -> void:
+	if indices.is_empty() or _farm_tufts.is_empty():
+		_scatter_tufts(Game.farm_size)
+		return
+	for i: int in indices:
+		_farm_tufts[i] = _tile_tufts(int(i / float(GameState.MAX_SIZE)), i % GameState.MAX_SIZE, true)
+	_lay_tufts()
+
+
+func _lay_tufts() -> void:
+	var buffer := PackedFloat32Array()
+	for i: int in _farm_tufts:
+		buffer.append_array(_farm_tufts[i])
 	buffer.append_array(_meadow_tufts)
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -306,48 +412,37 @@ func _scatter_tufts(n: int) -> void:
 	_tufts.multimesh = mm
 
 
-
-
-## The tufts on the farm's tiles (`on_farm`) or on the meadow round it, as MultiMesh buffer data: for each,
-## its transform as 3 rows of 4 floats, then its colour.
-func _tuft_buffer(n: int, on_farm_only: bool) -> PackedFloat32Array:
+## The tufts on tile (r, c), on the farm (`on_farm`) or in the meadow round it, as MultiMesh buffer data: for
+## each, its transform as 3 rows of 4 floats, then its colour.
+func _tile_tufts(r: int, c: int, on_farm: bool) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
+	if on_farm and (Game.plots[Game.index_of(r, c)].get("state", "grass") != "grass"
+			or COVERS_GRASS.has(_kind_at(r, c))):
+		return out
 	var rng := RandomNumberGenerator.new()
-	var lush := FastNoiseLite.new()
-	lush.seed = 7
-	lush.frequency = 0.21
-	var reach := 0 if on_farm_only else int(TUFT_REACH)
-	for r in range(-reach, n + reach):
-		for c in range(-reach, n + reach):
-			var on_farm := r >= 0 and c >= 0 and r < n and c < n
-			if on_farm != on_farm_only:
-				continue
-			if on_farm and (Game.plots[Game.index_of(r, c)].get("state", "grass") != "grass"
-					or COVERS_GRASS.has(_kind_at(r, c))):
-				continue
-			rng.seed = hash(Vector2i(r, c))
-			var thick := clampf(lush.get_noise_2d(c, r) * 0.5 + 0.5, 0.0, 1.0)
-			var worn := shade_at(Vector2(c + 0.5, r + 0.5)).y
-			var most := CLUMP_MAX if on_farm else MEADOW_TUFTS_PER_TILE * 2
-			var count := int(round(lerpf(1.0, most, pow(thick, 1.6)) * (1.0 - worn * 0.85)))
-			var y := 0.0 if on_farm else -SLAB
-			var centre := Vector2(c + rng.randf_range(0.2, 0.8), r + rng.randf_range(0.2, 0.8))
-			var hue := rng.randf_range(-1.0, 1.0)
-			for k in count:
-				# Most of a tile's tufts gather round one spot; a few stray.
-				var spread := 0.16 if k < count * 0.7 else 0.45
-				var p := centre + Vector2(rng.randfn(0.0, spread), rng.randfn(0.0, spread))
-				p = p.clamp(Vector2(c, r), Vector2(c + 0.999, r + 0.999))
-				var sc := rng.randf_range(0.7, 1.25) * lerpf(0.85, 1.15, thick)
-				var turn := rng.randf() * TAU
-				var cs := cos(turn) * sc
-				var sn := sin(turn) * sc
-				# Lusher clumps are a deeper green; thin or worn ones paler and yellower.
-				var b := rng.randf_range(0.9, 1.08)
-				# A turn about up, scaled: rows (cs, 0, sn, x), (0, sc, 0, y), (-sn, 0, cs, z).
-				out.append_array([cs, 0.0, sn, p.x, 0.0, sc, 0.0, y, -sn, 0.0, cs, p.y,
-					b * (1.0 + 0.06 * hue + worn * 0.15), b * (1.0 - worn * 0.05),
-					b * (0.92 + 0.08 * thick - worn * 0.2), 1.0])
+	rng.seed = hash(Vector2i(r, c))
+	var thick := clampf(_lush.get_noise_2d(c, r) * 0.5 + 0.5, 0.0, 1.0)
+	var worn := shade_at(Vector2(c + 0.5, r + 0.5)).y
+	var most := CLUMP_MAX if on_farm else MEADOW_TUFTS_PER_TILE * 2
+	var count := int(round(lerpf(1.0, most, pow(thick, 1.6)) * (1.0 - worn * 0.85)))
+	var y := 0.0 if on_farm else -SLAB
+	var centre := Vector2(c + rng.randf_range(0.2, 0.8), r + rng.randf_range(0.2, 0.8))
+	var hue := rng.randf_range(-1.0, 1.0)
+	for k in count:
+		# Most of a tile's tufts gather round one spot; a few stray.
+		var spread := 0.16 if k < count * 0.7 else 0.45
+		var p := centre + Vector2(rng.randfn(0.0, spread), rng.randfn(0.0, spread))
+		p = p.clamp(Vector2(c, r), Vector2(c + 0.999, r + 0.999))
+		var sc := rng.randf_range(0.7, 1.25) * lerpf(0.85, 1.15, thick)
+		var turn := rng.randf() * TAU
+		var cs := cos(turn) * sc
+		var sn := sin(turn) * sc
+		# Lusher clumps are a deeper green; thin or worn ones paler and yellower.
+		var b := rng.randf_range(0.9, 1.08)
+		# A turn about up, scaled: rows (cs, 0, sn, x), (0, sc, 0, y), (-sn, 0, cs, z).
+		out.append_array([cs, 0.0, sn, p.x, 0.0, sc, 0.0, y, -sn, 0.0, cs, p.y,
+			b * (1.0 + 0.06 * hue + worn * 0.15), b * (1.0 - worn * 0.05),
+			b * (0.92 + 0.08 * thick - worn * 0.2), 1.0])
 	return out
 
 

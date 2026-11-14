@@ -1131,11 +1131,11 @@ func test_207_a_growing_plant_carries_its_stage_and_the_shader_does_the_growing(
 	var young := Crops3D.stage_of(i)
 	var finishes := float(young[1]) + float(young[2])
 	_check(is_equal_approx(finishes, planted + grow), "a young plant finishes growing exactly when ripe")
-	# Within a stage the picture does not change, so nothing is rebuilt as time passes.
+	# Within a stage the picture does not change, so nothing is laid out again as time passes.
 	var crops := Crops3D.new()
-	var before := crops._fingerprint()
+	var before: Array = crops.call("_look_of", i)
 	Game.debug_time_offset += int(grow * 0.05)
-	_eq(crops._fingerprint(), before, "growing within a stage leaves the fingerprint as it was")
+	_eq(crops.call("_look_of", i), before, "growing within a stage leaves the plot's look as it was")
 	crops.free()
 	Game.debug_time_offset = saved_offset
 	Game.plots = saved_plots
@@ -1606,3 +1606,39 @@ func test_321_ready_things_wear_the_one_sign_and_the_broken_barn_looks_broken() 
 	view.free()
 	whole.free()
 	broken.free()
+
+
+## Plot by plot: planting or clearing one plot changes only that plot's plants (the rest of the field is kept as it
+## was), and what is drawn is exactly what a full rebuild would draw.
+func test_324_one_plot_changes_only_its_own_plants() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.farm_size = 20
+	var crop_id: String = Game.crops.keys()[0]
+	for r in 20:
+		for c in 20:
+			Game.plots[Game.index_of(r, c)] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
+	var crops := Crops3D.new()
+	add_child(crops)
+	var full := crops.plant_count()
+	_eq(full, 400 * Crops3D.SPOTS.size(), "a planted 20x20 field: nine plants a plot")
+	var i := Game.index_of(7, 7)
+	Game.plots[i] = {"state": "plowed"}
+	var began := Time.get_ticks_usec()
+	crops.update([i])
+	var one := Time.get_ticks_usec() - began
+	_eq(crops.plant_count(), full - Crops3D.SPOTS.size(), "clearing one plot takes away its nine plants")
+	Game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
+	crops.update([i])
+	_eq(crops.plant_count(), full, "and planting it again brings them back")
+	began = Time.get_ticks_usec()
+	crops.update()
+	var all := Time.get_ticks_usec() - began
+	_eq(crops.plant_count(), full, "a full look changes nothing more")
+	var fresh := Crops3D.new()
+	add_child(fresh)
+	_eq(fresh.plant_count(), crops.plant_count(), "the same as a farm built from scratch")
+	print("PERF one plot %d us, whole field (nothing changed) %d us" % [one, all])  # not-ui
+	crops.queue_free()
+	fresh.queue_free()
+	Game.reset_game()

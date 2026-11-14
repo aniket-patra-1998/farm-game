@@ -33,6 +33,9 @@ var crops: Crops3D
 var objects: Objects3D
 var farmer: Farmer3D
 var _grade_warmth := -1.0
+var _changed := {}            # plots changed since the last update (index -> true)
+var _changed_all := false     # or the whole field
+var _plots_queued := false
 
 
 static func enabled() -> bool:
@@ -93,7 +96,7 @@ func _ready() -> void:
 	var runs := VehicleRuns.new()
 	runs.trails = trails
 	add_child(runs)
-	Game.plot_changed.connect(func(_i: int) -> void: _plots_changed())
+	Game.plot_changed.connect(_plots_changed)
 	Game.farm_expanded.connect(func(_n: int) -> void:
 		ground.rebuild()
 		plots.rebuild())
@@ -136,15 +139,24 @@ func _poked(uid: int) -> void:
 		mind.poke()
 
 
-func _plots_changed() -> void:
-	# Plowing or clearing a plot changes both the beds and where grass tufts grow; coalesced per frame.
-	if not is_queued_for_deletion() and not has_meta("rebuild_queued"):
-		set_meta("rebuild_queued", true)
-		(func() -> void:
-			remove_meta("rebuild_queued")
-			plots.rebuild()
-			crops.rebuild()
-			ground.rebuild()).call_deferred()
+## Plots changed: only those plots' beds, plants and grass are brought up to date (a farmer's queue or a vehicle
+## run changes them one at a time), coalesced to once a frame; `i` -1 means the whole field.
+func _plots_changed(i: int) -> void:
+	if i < 0:
+		_changed_all = true
+	elif not _changed_all:
+		_changed[i] = true
+	if _plots_queued or is_queued_for_deletion():
+		return
+	_plots_queued = true
+	(func() -> void:
+		_plots_queued = false
+		var indices: Array = [] if _changed_all else _changed.keys()
+		_changed.clear()
+		_changed_all = false
+		plots.update(indices)
+		crops.update(indices)
+		ground.update_tiles(indices)).call_deferred()
 
 
 ## The graphics quality in use, on this farm's sun, glow, resolution, detail and animals (Quality).

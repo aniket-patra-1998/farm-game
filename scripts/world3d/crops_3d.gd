@@ -2,9 +2,9 @@ class_name Crops3D
 extends Node3D
 ## Every crop on the farm in 3D: nine plants to a plot, in three rows, on top of its bed, drawn as one MultiMesh per
 ## plant shape and growth stage (so a whole field costs a handful of draws). Young plants grow in size as
-## they ripen; produce takes its crop's colour. Rebuilt when plots change, and every few seconds as crops
-## grow. Growth is the shader's: a growing plant carries when its stage starts and how long it lasts, and the
-## shader sizes it from the farm's clock every frame, so a plant swells smoothly instead of in steps.
+## they ripen; produce takes its crop's colour. Updated plot by plot when plots change (`update`), and every few
+## seconds as crops grow. Growth is the shader's: a growing plant carries when its stage starts and how long it
+## lasts, and the shader sizes it from the farm's clock every frame, so a plant swells smoothly, not in steps.
 
 const ROW_GAP := 0.31   # between plants in a plot's rows and columns: three rows of three, like a planted field
 const SPOTS := [Vector2(-ROW_GAP, -ROW_GAP), Vector2(0, -ROW_GAP), Vector2(ROW_GAP, -ROW_GAP),
@@ -19,6 +19,7 @@ const POP_TIME := 0.42
 const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger (the shader applies it)
 const VARY_LEAN := 0.16    # radians a plant may lean
 const PLANT_SCALE := 3.1    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
+const PLANT_FLOATS := 20    # a plant in the MultiMesh buffer: transform (12), colour (4), data (4)
 
 var wind := 0.6: set = _set_wind
 
@@ -26,7 +27,9 @@ var _layers := {}   # "shape|stage|colour" -> MultiMeshInstance3D
 var _material: ShaderMaterial
 var _materials := {}   # colour -> that colour's material (material_for)
 var _base := 0.0    # the farm clock's zero: seconds count from here, so a shader's floats stay precise
-var _drawn := -1    # a fingerprint of what was last built: the same again means there is nothing to rebuild
+var _plot_look := {}   # plot index -> [group key, packed data]: what its plants look like now
+var _plot_chunk := {}  # plot index -> its plants as MultiMesh buffer data (_chunk), kept ready
+var _members := {}     # group key -> {plot index: true}: the plots each group draws
 
 
 func _ready() -> void:
@@ -108,73 +111,113 @@ static func stage_of(i: int) -> Array:
 	return ["", 0.0, 0.0]
 
 
-## What the farm's crops look like right now, as one number: crop, stage and richness of every plot.
-func _fingerprint() -> int:
-	var h := Game.farm_size
-	for i in Game.farm_size * Game.farm_size:
-		var crop_id := Game.field.crop_at(Game.index_of(i / Game.farm_size, i % Game.farm_size))
-		if crop_id == "":
+## Brings the plants of plots `indices` up to date (all of them when empty): a plot whose look (form, stage,
+## colour, growth timing, richness) is unchanged is skipped, and only the groups a plot left or joined are laid
+## out again, from per-plot pieces kept ready. So plowing, planting or harvesting one plot touches one or two
+## groups, not the whole field, and the timer's look at growth rebuilds only plants that moved on a stage.
+func update(indices: Array = []) -> void:
+	if indices.is_empty():
+		indices = _all_plots()
+	var dirty := {}
+	for i: int in indices:
+		var now := _look_of(i)
+		var was: Array = _plot_look.get(i, [])
+		if was == now:
 			continue
-		var idx := Game.index_of(i / Game.farm_size, i % Game.farm_size)
-		var st := stage_of(idx)
-		h = hash([h, idx, crop_id, st[0], Game.field.is_fertilized(idx)])
-	return h
+		if not was.is_empty():
+			(_members[was[0]] as Dictionary).erase(i)
+			dirty[was[0]] = true
+			_plot_look.erase(i)
+			_plot_chunk.erase(i)
+		if not now.is_empty():
+			_plot_look[i] = now
+			_plot_chunk[i] = _chunk(i, now[1])
+			(_members.get_or_add(now[0], {}) as Dictionary)[i] = true
+			dirty[now[0]] = true
+	for key: String in dirty:
+		_lay_out(key)
 
 
-## Builds the plants again, unless nothing about them has changed since the last build (the timer finds that out
-## for a few cheap lookups instead of a new MultiMesh per group).
-func rebuild() -> void:
-	var print_now := _fingerprint()
-	if print_now == _drawn:
-		return
-	_drawn = print_now
-	var groups := {}  # key -> Array of [Transform3D, packed instance data]
+## Every plot of the farm, by index.
+static func _all_plots() -> Array:
+	var out := []
 	var n := Game.farm_size
 	for r in n:
 		for c in n:
-			var i := Game.index_of(r, c)
-			var crop_id := Game.field.crop_at(i)
-			if crop_id == "" or not Game.crops.has(crop_id):
-				continue
-			var st := stage_of(i)
-			if st[0] == "":
-				continue
-			var crop: Dictionary = Game.crops[crop_id]
-			var col := Color.html(str(crop.get("color", "#e2453c")))
-			var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
-			var rich := Game.field.is_fertilized(i)
-			var data := pack(float(st[1]) - _base, float(st[2]), rich)
-			var list: Array = groups.get_or_add(key, [])
-			for k in SPOTS.size():
-				var spot: Vector2 = SPOTS[k]
-				var turn := float((i * 7 + k * 13) % 17) / 17.0 * TAU
-				var at := Vector3(c + 0.5 + spot.x, Plots3D.HEIGHT, r + 0.5 + spot.y)
-				list.append([Transform3D(_plant_basis(turn, PLANT_SCALE, i * 5 + k), at), data])
-	for key in _layers.keys():
-		if not groups.has(key):
+			out.append(Game.index_of(r, c))
+	return out
+
+
+## What plot `i`'s plants look like: [group key, packed instance data], or [] for none.
+func _look_of(i: int) -> Array:
+	var crop_id := Game.field.crop_at(i)
+	if crop_id == "" or not Game.crops.has(crop_id):
+		return []
+	var st := stage_of(i)
+	if st[0] == "":
+		return []
+	var crop: Dictionary = Game.crops[crop_id]
+	var col := Color.html(str(crop.get("color", "#e2453c")))
+	var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
+	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i))]
+
+
+## Plot `i`'s plants as MultiMesh buffer data: for each, its transform (3 rows of 4), its colour, its data.
+static func _chunk(i: int, data: Color) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	var r := int(i / float(GameState.MAX_SIZE))
+	var c := i % GameState.MAX_SIZE
+	for k in SPOTS.size():
+		var spot: Vector2 = SPOTS[k]
+		var turn := float((i * 7 + k * 13) % 17) / 17.0 * TAU
+		var b := _plant_basis(turn, PLANT_SCALE, i * 5 + k)
+		var at := Vector3(c + 0.5 + spot.x, Plots3D.HEIGHT, r + 0.5 + spot.y)
+		out.append_array([b.x.x, b.y.x, b.z.x, at.x, b.x.y, b.y.y, b.z.y, at.y, b.x.z, b.y.z, b.z.z, at.z,
+			1.0, 1.0, 1.0, 1.0, data.r, data.g, data.b, data.a])
+	return out
+
+
+## Lays out one group's plants again from its plots' pieces (or removes the group when it has none).
+func _lay_out(key: String) -> void:
+	var members: Dictionary = _members.get(key, {})
+	if members.is_empty():
+		_members.erase(key)
+		if _layers.has(key):
 			(_layers[key] as MultiMeshInstance3D).queue_free()
 			_layers.erase(key)
-	for key in groups:
-		var parts := str(key).split("|")
-		var mmi: MultiMeshInstance3D = _layers.get(key)
-		if mmi == null:
-			mmi = MultiMeshInstance3D.new()
-			mmi.material_override = material_for(Color.html(str(parts[2])))
-			mmi.cast_shadow = _shadow_setting()
-			add_child(mmi)
-			_layers[key] = mmi
+		return
+	var mmi: MultiMeshInstance3D = _layers.get(key)
+	var parts := key.split("|")
+	if mmi == null:
+		mmi = MultiMeshInstance3D.new()
+		mmi.material_override = material_for(Color.html(str(parts[2])))
+		mmi.cast_shadow = _shadow_setting()
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_custom_data = true
 		mm.use_colors = true   # the compatibility renderer reads an unset instance colour as black
 		mm.mesh = CropModels.mesh(parts[0], parts[1])
-		var list: Array = groups[key]
-		mm.instance_count = list.size()
-		for k in list.size():
-			mm.set_instance_transform(k, list[k][0])
-			mm.set_instance_custom_data(k, list[k][1])
-			mm.set_instance_color(k, Color.WHITE)
 		mmi.multimesh = mm
+		add_child(mmi)
+		_layers[key] = mmi
+	var buffer := PackedFloat32Array()
+	for i: int in members:
+		buffer.append_array(_plot_chunk[i])
+	mmi.multimesh.instance_count = buffer.size() / PLANT_FLOATS
+	mmi.multimesh.buffer = buffer   # one copy into the engine, not three calls a plant
+
+
+## Brings every plot's plants up to date (the timer's look at growth; a change to the whole farm).
+func rebuild() -> void:
+	update()
+
+
+## How many plants are drawn (for tests and the perf probe).
+func plant_count() -> int:
+	var n := 0
+	for mmi: MultiMeshInstance3D in _layers.values():
+		n += mmi.multimesh.instance_count
+	return n
 
 
 ## One plant's pose: turned, a little taller or shorter, fatter or slimmer and leaning, the same every time for
