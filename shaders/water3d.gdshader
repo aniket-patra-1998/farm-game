@@ -8,6 +8,10 @@ uniform float clarity = 0.92;      // alpha
 uniform float ripple = 1.0;        // how strongly it ripples (0: glassy)
 uniform vec3 sky : source_color = vec3(0.72, 0.86, 0.98);   // what grazing angles reflect
 uniform vec3 deep : source_color = vec3(0.1, 0.32, 0.46);   // where it reads deeper
+// A pond (PondModel): UV.x runs from its middle (0) to its shore (1); over the shallows the water turns clear and
+// pale so the sloping bed shows through, and deep in the middle. 0 for water with no shore (troughs, basins).
+uniform float shore_fade = 0.0;
+uniform vec3 shallow : source_color = vec3(0.36, 0.5, 0.38);
 
 varying vec3 world;
 
@@ -31,8 +35,10 @@ void fragment() {
 	vec3 body = mix(deep, colour, 0.55 + 0.45 * band);
 	// Fresnel: seen from a low angle the surface mirrors the sky, from above it shows the water below.
 	float fres = pow(1.0 - clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0), 3.0);
+	float edge = smoothstep(0.55, 1.0, UV.x) * shore_fade;
+	body = mix(mix(body, deep * 0.8, (1.0 - UV.x) * shore_fade * 0.5), shallow, edge * 0.7);
 	ALBEDO = mix(body * (0.92 + 0.08 * slope.x), sky, fres * 0.55) + vec3(glint * 0.3);
-	ALPHA = mix(clarity, 1.0, fres);
+	ALPHA = mix(clarity, 1.0, fres) * (1.0 - edge * 0.45);
 	ROUGHNESS = 0.08;
 	SPECULAR = 0.9;
 }

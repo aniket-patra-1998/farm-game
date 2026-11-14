@@ -1016,26 +1016,9 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var rx := fw * 0.4
 			var rz := fd * 0.36
 			var centre := Vector3(fw / 2.0, 0, fd / 2.0)
-			ModelKit.ball(
-				root,
-				centre + Vector3(0, -0.02, 0),
-				1.0,
-				ModelKit.paint(Color("#8a7a5a")),
-				Vector3(rx + 0.08, 0.05, rz + 0.08)
-			)
 			# No ducks of its own: a Duck Pond's ducks are the ones living in it (BuildingFill), so an empty
 			# pond looks empty.
-			ModelKit.ball(root, centre + Vector3(0, 0.005, 0), 1.0, ModelKit.water(), Vector3(rx, 0.03, rz))
-			var rng := RandomNumberGenerator.new()
-			rng.seed = 7
-			for k in 10:
-				var a := TAU * k / 10.0 + rng.randf() * 0.3
-				var p := centre + Vector3(cos(a) * (rx + 0.05), 0, sin(a) * (rz + 0.05))
-				ModelKit.ball(root, p, rng.randf_range(0.04, 0.07), ModelKit.paint(STONE), Vector3(1, 0.6, 1))
-			for k in 4:
-				var a := TAU * (k + 0.5) / 4.0
-				ModelKit.cylinder(root, centre + Vector3(cos(a) * rx * 0.8, 0, sin(a) * rz * 0.8), 0.006, 0.22,
-					ModelKit.paint(Color("#5d7a2c")))
+			PondModel.build(root, centre, rx, rz, 7, 5)
 		"duck_house":
 			var spot: Array = f.get("at", [0.82, 0.2])
 			var p := Vector3(fw * float(spot[0]), 0, fd * float(spot[1]))

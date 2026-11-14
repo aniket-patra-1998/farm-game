@@ -161,6 +161,11 @@ static func water() -> ShaderMaterial:
 	return _material(WATER_SHADER, {})
 
 
+## A pond's water: the same ripples, clear over its shallows (PondModel; shaders/water3d `shore_fade`).
+static func pond_water() -> ShaderMaterial:
+	return _material(WATER_SHADER, {"shore_fade": 1.0})
+
+
 ## One small drop (an octahedron: 8 triangles) at the origin, carrying its data in both UV channels.
 static func _drop(verts: PackedVector3Array, normals: PackedVector3Array, uv: PackedVector2Array,
 		uv2: PackedVector2Array, data: Vector2, data2: Vector2) -> void:

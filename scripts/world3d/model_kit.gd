@@ -362,6 +362,11 @@ static func water() -> ShaderMaterial:
 	return DecorMotion.water()
 
 
+## A pond's water, clear over the shallows (PondModel).
+static func pond_water() -> ShaderMaterial:
+	return DecorMotion.pond_water()
+
+
 # ---------------------------------------------------------------- shapes
 
 
