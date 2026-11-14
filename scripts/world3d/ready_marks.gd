@@ -6,10 +6,10 @@ extends MultiMeshInstance3D
 ## Objects3D says where: `show_at` for what stands still (over its top) and `follow_animals` for animals, whose
 ## signs move with them each frame. The camera's zoom keeps them a steady size on screen (`follow`).
 
-const SIZE := 0.42            # the sign's width in tiles, at the nearest zoom
-const ABOVE := 0.3            # how far above a thing's top it hovers, in tiles
+const SIZE := 0.27            # the sign's width in tiles, at the nearest zoom
+const ABOVE := 0.22           # how far above a thing's top it hovers, in tiles
 const ZOOM_REF := 9.0         # the camera size (tiles on screen) the sign is drawn at SIZE for
-const ZOOM_MOST := 3.0        # and the most it grows by when the camera pulls back
+const ZOOM_MOST := 2.0        # and the most it grows by when the camera pulls back
 
 var _material: ShaderMaterial
 var _tops: Array[Vector3] = []          # signs over what stands still

@@ -20,7 +20,6 @@ const EDGE_DEPTH := 28.0
 const HEADROOM := 230.0 # room above the back corner for tall things (the farmhouse sits there)
 const MEADOW_MARGIN := 40  # tiles of countryside drawn around the farm
 
-const HUNGRY_CRUMB := Color("#b99a5e")
 
 # Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
 const COINS_NEEDED := {"plow": "NOT_ENOUGH_COINS_TO_PLOW", "plant": "NOT_ENOUGH_COINS_FOR_SEEDS",
@@ -256,7 +255,7 @@ func draw_ground_on(ci: CanvasItem) -> void:
 
 
 ## Overlay: vehicle area, count signs, twinkles and hearts, and the ghost of what's being placed.
-func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
+func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
 		PlaceholderArt.draw_footprint(ci, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
 			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
@@ -300,28 +299,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array, hungry := []) -> void:
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 			var high := -110.0 if Game.is_home(o) or Game.crafting.is_crafting(o) else -70.0
 			PlaceholderArt.draw_ready_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, high), t + float(piece.uid % 7))
-	for p: Variant in hungry:
-		if is_instance_valid(p):
-			_draw_hungry(ci, p as FarmPiece, t)
-	_draw_placing(ci)
 
-
-## A hungry animal or home (our own touch): a small cream bubble with a crumb of its feed over it, until it is fed.
-func _draw_hungry(ci: CanvasItem, piece: FarmPiece, t: float) -> void:
-	var o := Game.object_by_uid(piece.uid)
-	if o.is_empty():
-		return
-	var at: Vector2
-	if pieces.three_d and piece.is_animal():
-		var rig := AnimalRig.of(Game.item_data(o["id"]))
-		var tall := (rig.size("leg", 12.0) + rig.pair("body").y * 1.7) * Animal3D.PX * IsoProjection.HEIGHT_PX
-		var mind := life.mind(piece.uid)
-		at = piece.base + (mind.offset if mind != null else Vector2.ZERO) + Vector2(0, -tall - 26.0)
-	else:
-		var fp := Game.footprint(o["id"])
-		var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
-		at = (g[0] + g[2]) / 2.0 + Vector2(-22, -110.0 if Game.is_home(o) else -70.0)
-	AnimalArt.bubble(ci, at, HUNGRY_CRUMB, t + float(piece.uid))
 
 
 ## The land the next expansion would add, drawn as dim wild grass around the farm.

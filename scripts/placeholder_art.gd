@@ -5,12 +5,12 @@ extends RefCounted
 ## (e.g. ci.draw_texture(...)) — nothing else in the game needs to change.
 
 const GRASS_A := Color("#8fcf5f")
-const READY_SIZE := 16.0          # the ready sign's half-width, in pixels (draw_ready_marker)
-const READY_ROUND := 5.0          # how round its corners are
+const READY_SIZE := 10.0          # the ready sign's half-width, in pixels (draw_ready_marker)
+const READY_ROUND := 4.0          # how round its corners are
 const READY_FACE := Color("#ffc4dc")
-const READY_RIM := Color("#e57aa8")
+const READY_RIM := Color("#f094bb")
 const READY_RATE := 2.4           # how fast it bobs (radians a second)
-const READY_BOB := 4.5            # and how far, in pixels
+const READY_BOB := 3.0            # and how far, in pixels
 const GRASS_B := Color("#86c757")
 const GRASS_TUFT := Color("#6fb146")
 const SOIL := Color("#a86f3d")

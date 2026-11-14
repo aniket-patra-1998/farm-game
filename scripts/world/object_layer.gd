@@ -15,7 +15,6 @@ const FULL_RATE_ZOOM := 0.55  # zoomed out further than this, animals redraw eve
 const IDLE_REDRAW := 1.0 / 20.0  # seconds between redraws of an animal standing still
 const MIN_TURN_WIDTH := 0.06  # an animal mid-turn is never drawn at zero width
 
-const HUNGRY_EVERY := 1.5
 
 var grid: FarmGrid
 var pieces := {}        # "p<index>" or "o<uid>" -> FarmPiece
@@ -30,8 +29,6 @@ var _ready_list: Array = []  # pieces showing something ready, kept fresh by ref
 
 
 var _clock := 0.0
-var _hungry_list: Array = []   # pieces of hungry animals (our own touch: feeding), rebuilt every HUNGRY_EVERY
-var _hungry_at := -100.0
 var _frame := 0
 
 
@@ -167,24 +164,6 @@ func redraw_all() -> void:
 
 
 ## Pieces showing something ready to collect (the overlay twinkles over them).
-## Hungry animals' pieces (ones with nothing to collect yet), rebuilt every HUNGRY_EVERY seconds: feeding state
-## changes slowly, and deciding it for every animal on every drawn frame would cost more than it shows.
-func hungry_pieces() -> Array:
-	var now := Time.get_ticks_msec() / 1000.0
-	if now - _hungry_at >= HUNGRY_EVERY:
-		_hungry_at = now
-		_hungry_list = []
-		if Game.feeds.enabled():
-			for p: Variant in pieces.values():
-				if not is_instance_valid(p) or (p as FarmPiece).plot >= 0:
-					continue
-				var o := Game.object_by_uid((p as FarmPiece).uid)
-				if not o.is_empty() and Game.feeds.is_hungry(o) and not Game.is_ready(o):
-					_hungry_list.append(p)
-	# A piece can be freed between rebuilds (an object lifted, sold or moved): only live ones are handed on.
-	return _hungry_list.filter(func(p: Variant) -> bool: return is_instance_valid(p))
-
-
 func ready_pieces() -> Array:
 	var out: Array = []
 	for p: FarmPiece in _ready_list:

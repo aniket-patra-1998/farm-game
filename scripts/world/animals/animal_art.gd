@@ -47,16 +47,6 @@ static func draw(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool, p
 		PlaceholderArt.draw_ready_marker(ci, Vector2(ground.x, top - READY_LIFT), p.time)
 
 
-## A product bubble over an animal that's ready to collect; it bobs gently.
-static func bubble(ci: CanvasItem, at: Vector2, product: Color, time: float) -> void:
-	var c := at + Vector2(0, sin(time * 2.4) * 2.0)
-	ci.draw_circle(c, 13.0, BUBBLE)
-	ci.draw_arc(c, 13.0, 0.0, TAU, 28, BUBBLE_EDGE, 2.0, true)
-	ci.draw_circle(c, 6.0, product)
-	ci.draw_arc(c, 6.0, 0.0, TAU, 16, OUTLINE, 1.0, true)
-	ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-4, 11), c + Vector2(4, 11), c + Vector2(-1, 18)]), BUBBLE)
-
-
 # ---------------------------------------------------------------- walking
 
 
