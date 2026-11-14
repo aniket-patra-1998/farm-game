@@ -1,8 +1,12 @@
 {
   "_doc": "How tall each kind of thing should stand, in tiles (scripts/world3d/scale_guide.gd): [lowest, highest]. A model measured outside its range is scaled to the nearest edge (ScaleGuide.factor), so sizes agree with each other (a flower never stands as tall as a tree) without editing every model. Ranges apply to a thing standing alone; packed fields (orchards, gardens) scale each member from there.",
+  "stand": {
+    "_doc": "How tall a tree is built to stand (TreeModel lengthens a short kind's trunk to reach it, times its own tallness); its trunk is then drawn a little shorter (TreeModel.TRUNK_LENGTH), so the tree range below starts under it.",
+    "tree": 1.5
+  },
   "heights": {
     "tree": [
-      1.5,
+      1.4,
       2.4
     ],
     "bloom": [

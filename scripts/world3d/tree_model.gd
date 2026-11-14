@@ -18,7 +18,8 @@ const UNSET := Color(0, 0, 0, 0)
 const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
 const CROWN_TRIM := 0.88      # every crown is drawn this share of its data's width (0.92 of that in height): lighter
 const CROWN_REACH_MAX := 0.5   # no crown reaches further from its trunk than this (of the tree's size): never a blob
-const TRUNK_SHARE := 0.42     # bare trunk shows for at least this share of a tree's height, under the lowest leaves
+const TRUNK_SHARE := 0.4      # bare trunk shows for at least this share of a tree's height, under the lowest leaves
+const TRUNK_LENGTH := 0.95    # every trunk is drawn this much of the length the rules above give it
 const TRUNK_TAPER := 0.85     # a trunk is a thin straight pole: its top is this much of its foot
 const TRUNK_LEAN := 0.03      # and it leans no more than this (radians)
 const META_SHARE := &"trunk_share"   # on a built tree: the share of its height that is bare trunk
@@ -202,6 +203,7 @@ static func _crown_on_trunk(t: Dictionary) -> Vector3:
 	var low: float = float(t["low"]) * shrink
 	var high: float = float(t["high"]) * shrink
 	var h := maxf(_trunk_for(sh, k, t, shrink), float(t["stand"]) - high)
+	h = maxf(h * TRUNK_LENGTH, (TRUNK_SHARE * high - low) / (1.0 - TRUNK_SHARE))   # a little shorter, never under the share
 	var lean: Vector3 = t["lean"]
 	var top := Vector3(lean.x * h, h, lean.z * h)
 	for i in range(first, root.get_child_count()):

@@ -10,6 +10,7 @@ const DATA := "res://data/scale_guide.json"
 static var _ranges := {}
 static var _factors := {}
 static var _decor := {}
+static var _stands := {}
 
 
 ## What to multiply an item's size by so it stands within its kind's range (1.0 when it already does, or its
@@ -27,8 +28,15 @@ static func factor(id: String) -> float:
 	return f
 
 
-## The lowest a kind should stand, in tiles (0 when it has no range): trees reach it with their trunks.
+## How tall a kind is built to stand, in tiles (the data's `stand`, else the lowest of its range, else 0): trees
+## reach it with their trunks.
 static func lowest(kind: String) -> float:
+	if _stands.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
+		_stands = (parsed as Dictionary).get("stand", {}) if parsed is Dictionary else {}
+		_stands[""] = 0.0      # read once, even when the data has none
+	if _stands.has(kind):
+		return float(_stands[kind])
 	var range_of: Array = _heights().get(kind, [])
 	return float(range_of[0]) if range_of.size() == 2 else 0.0
 
