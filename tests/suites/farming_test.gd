@@ -144,3 +144,104 @@ func test_114_the_sell_tool_clears_plots_back_to_grass() -> void:
 	_check(g.is_occupied(j) and not g.field.can_clear_plot(j), "nothing is cleared from under an object")
 	_check(not g.field.clear_plot(j), "and clearing there does nothing")
 	_done(g)
+
+
+## Every crop, at its exact edges: one second before ripe it grows and can't be picked; at ripe it can; one
+## second before its ripe window closes it still can; at the close it has withered.
+func test_40_every_crop_ripens_and_withers_exactly_on_its_edges() -> void:
+	var g := _farm()
+	g.coins = 100000000
+	g.xp = g.xp_for_level(120)
+	var i := _free(g)
+	for id: String in g.crops:
+		var crop: Dictionary = g.crops[id]
+		var grow := int(crop["grow_seconds"])
+		var window := g.field.ripe_window(crop)
+		g.field.clear_plot(i)
+		g.field.plow(i)
+		_check(g.field.plant(i, id), "%s is planted" % id)
+		_skip(g, grow - 1)
+		_eq(g.field.phase(i), GameState.Phase.GROWING, "%s: a second before ripe it grows" % id)
+		_check(g.field.harvest(i).is_empty(), "%s: and can't be picked" % id)
+		_skip(g, 1)
+		_eq(g.field.phase(i), GameState.Phase.RIPE, "%s: ripe on the second" % id)
+		_skip(g, window - 1)
+		_eq(g.field.phase(i), GameState.Phase.RIPE, "%s: still ripe a second before the window closes" % id)
+		_skip(g, 1)
+		_eq(g.field.phase(i), GameState.Phase.WITHERED, "%s: withered as it closes" % id)
+	_done(g)
+
+
+func test_41_nothing_changes_when_a_step_is_refused() -> void:
+	var g := _farm()
+	var i := _free(g)
+	g.field.plow(i)
+	g.coins = 0
+	_check(not g.field.plant(i, "strawberries"), "no seeds without coins")
+	_eq(g.plots[i], {"state": "plowed"}, "the plot is untouched")
+	_eq(g.coins, 0, "and no coins went")
+	g.coins = 1000
+	g.field.plant(i, "strawberries")
+	_check(g.field.fertilize(i), "fertilized")
+	var coins := g.coins
+	_check(not g.field.fertilize(i), "a second fertilizer is refused")
+	_eq(g.coins, coins, "without charging for it")
+	g.coins = 0
+	var j := g.index_of(11, 12)
+	_check(not g.field.plow(j), "no plowing without coins")
+	_eq(g.field.phase(j), GameState.Phase.GRASS, "the grass is untouched")
+	_done(g)
+
+
+func test_42_the_clock_going_back_and_a_long_absence_are_both_handled() -> void:
+	var g := _farm()
+	var i := _free(g)
+	g.field.plow(i)
+	g.field.plant(i, "strawberries")
+	_skip(g, -86400)
+	_eq(g.field.phase(i), GameState.Phase.GROWING, "planted 'in the future' it is still growing, not ripe")
+	_check(g.field.harvest(i).is_empty(), "and can't be picked")
+	_skip(g, 86400 + 4 * 3600)
+	_eq(g.field.phase(i), GameState.Phase.RIPE, "with the clock right again it ripens on time")
+	_skip(g, 30 * 86400)
+	_eq(g.field.phase(i), GameState.Phase.WITHERED, "a month away, it has withered")
+	_done(g)
+
+
+func test_43_a_pollinated_crop_stays_ripe_longer_and_pays_once() -> void:
+	var g := _farm()
+	var i := _free(g)
+	g.field.plow(i)
+	g.field.plant(i, "strawberries")
+	g.plots[i]["pol"] = true
+	var window := g.field.ripe_window(g.crops["strawberries"])
+	_skip(g, 4 * 3600 + window)
+	_eq(g.field.phase(i), GameState.Phase.RIPE, "still ripe past the plain window")
+	_skip(g, window * (Balance.i("economy.pollinated_ripe_mult") - 1))
+	_eq(g.field.phase(i), GameState.Phase.WITHERED, "withered at the end of the longer one")
+	var j := g.index_of(11, 12)
+	g.field.plow(j)
+	g.field.plant(j, "strawberries")
+	_skip(g, 4 * 3600)
+	var coins := g.coins
+	_check(not g.field.harvest(j).is_empty(), "picked")
+	var paid := g.coins - coins
+	_check(g.field.harvest(j).is_empty(), "a second pick of the same crop (a job queued twice) gets nothing")
+	_eq(g.coins - coins, paid, "so it is paid once")
+	_done(g)
+
+
+func test_44_fertilizer_doubles_mastery_for_every_crop() -> void:
+	var g := _farm()
+	g.coins = 100000000
+	g.xp = g.xp_for_level(120)
+	var i := _free(g)
+	for id: String in g.crops:
+		var before := g.mastery.points_of(id)
+		g.field.plow(i)
+		g.field.plant(i, id)
+		g.field.fertilize(i)
+		_skip(g, int(g.crops[id]["grow_seconds"]))
+		_check(not g.field.harvest(i).is_empty(), "%s picked" % id)
+		_eq(g.mastery.points_of(id) - before, 2, "%s: a fertilized crop counts twice" % id)
+	_done(g)

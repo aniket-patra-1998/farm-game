@@ -24,6 +24,8 @@ const STAND_OFF := 0.45          # how far short of a plot's centre the farmer s
 ## Every kind of job. data/actions.json says, for each, who else can do it (a test keeps the two in step).
 const JOB_KINDS := ["plow", "plant", "harvest", "fertilize", "collect", "nurture", "vehicle", "feed"]
 const OBJECT_JOBS := ["collect", "nurture", "feed"]   # jobs done beside an object, not on a plot
+const STEPS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+	Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]   # a step to each of the eight tiles round
 const DEFAULT_LOOK := {"body": "a", "skin": "#f1c9a5", "hair": "#5a3a1e", "hair_style": "short",
 	"shirt": "#d9483b", "overalls": "#3f6fb5", "hat": "straw", "shoes": "#5b3b22"}
 
@@ -39,7 +41,8 @@ var _path: Array[Vector2] = []   # the way to the job in hand (points still to w
 var _planned := false            # the job in hand has its path
 var _grid: AStarGrid2D
 var _grid_stale := true
-var _grid_objects := -1           # how many objects the grid was made for
+var _grid_layout := -1            # the farm's layout revision the grid was made for
+var _grid_size := -1              # and its size
 
 
 func _init(owner: GameState) -> void:
@@ -303,25 +306,46 @@ func _plan(job: Dictionary) -> void:
 	var from := _tile()
 	if grid.is_point_solid(from):
 		return
-	var best := PackedVector2Array()
-	var found := false
-	for goal in _goals(job):
-		if grid.is_point_solid(goal):
-			continue
-		var way := grid.get_point_path(from, goal)
-		if goal != from and way.is_empty():
-			continue
-		if not found or way.size() < best.size():
-			best = way
-			found = true
-	if not found:
+	var best := _nearest_way(grid, from, _goals(job))
+	if best.is_empty():
 		return
 	for k in range(1, best.size()):
-		_path.append(best[k] + Vector2(0.5, 0.5))
+		_path.append(Vector2(best[k]) + Vector2(0.5, 0.5))
 	# At a plot the farmer stops at its edge, not on its middle.
 	if not job["kind"] in OBJECT_JOBS and not _path.is_empty():
 		var before := pos if _path.size() == 1 else _path[-2]
 		_path[-1] = _path[-1].lerp(before, STAND_OFF / maxf(_path[-1].distance_to(before), STAND_OFF))
+
+
+## The shortest way (fewest steps) from `from` to whichever of `goals` is nearest, in one search: a breadth-first
+## walk outwards that stops at the first goal it reaches, stepping the way the walking grid allows (diagonals
+## only past two free sides). Returns the tiles from `from` to that goal, or nothing when none can be reached.
+static func _nearest_way(grid: AStarGrid2D, from: Vector2i, goals: Array[Vector2i]) -> Array[Vector2i]:
+	var wanted := {}
+	for g in goals:
+		if not grid.is_point_solid(g):
+			wanted[g] = true
+	var came := {from: from}
+	var frontier: Array[Vector2i] = [from]
+	var head := 0
+	while head < frontier.size():
+		var at := frontier[head]
+		head += 1
+		if wanted.has(at):
+			var way: Array[Vector2i] = [at]
+			while way[0] != from:
+				way.push_front(came[way[0]])
+			return way
+		for step: Vector2i in STEPS:
+			var to := at + step
+			if came.has(to) or not grid.is_in_boundsv(to) or grid.is_point_solid(to):
+				continue
+			if step.x != 0 and step.y != 0 and (grid.is_point_solid(Vector2i(at.x + step.x, at.y))
+					or grid.is_point_solid(Vector2i(at.x, at.y + step.y))):
+				continue
+			came[to] = at
+			frontier.append(to)
+	return []
 
 
 ## The tiles the farmer could stand on to do a job: the plot itself, or the ring round an object.
@@ -375,14 +399,15 @@ func _walkable() -> AStarGrid2D:
 			if not game.in_farm(r, c) or game.is_occupied(game.index_of(r, c)):
 				_grid.set_point_solid(Vector2i(c, r), true)
 	_grid_stale = false
-	_grid_objects = game.objects.size()
+	_grid_layout = game.layout_revision
+	_grid_size = game.farm_size
 	return _grid
 
 
-## Has the farm changed since the walking grid was made? (Objects are also added and removed without the
-## signal, so their number is checked too.)
+## Has the farm changed since the walking grid was made? Its layout revision moves on whenever any tile's cover
+## may have changed (an object added, removed or moved, the farm laid back down), and the farm can grow.
 func _stale() -> bool:
-	return _grid == null or _grid_stale or _grid_objects != game.objects.size()
+	return _grid == null or _grid_stale or _grid_layout != game.layout_revision or _grid_size != game.farm_size
 
 
 func _tile() -> Vector2i:

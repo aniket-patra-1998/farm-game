@@ -120,3 +120,34 @@ func test_119_the_queue_refuses_what_cannot_be_done_or_paid_for_and_jobs_can_be_
 	_eq(p.pos, Vector2(4.5, 7.5), "and where they stand")
 	_check(p.queue.is_empty(), "but not the queue")
 	_done(g)
+
+
+func test_120_one_search_finds_the_nearest_side_and_the_grid_follows_every_move() -> void:
+	var grid := AStarGrid2D.new()
+	grid.region = Rect2i(0, 0, 10, 10)
+	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	grid.update()
+	for y in range(0, 9):
+		grid.set_point_solid(Vector2i(5, y), true)          # a wall with a gap at the bottom
+	var goals: Array[Vector2i] = [Vector2i(9, 0), Vector2i(4, 0), Vector2i(6, 9)]
+	var way := PlayerSystem._nearest_way(grid, Vector2i(0, 0), goals)
+	_eq(way[-1], Vector2i(4, 0), "the nearest reachable goal is chosen")
+	_eq(way.size(), 5, "by the fewest steps")
+	var round := PlayerSystem._nearest_way(grid, Vector2i(0, 0), [Vector2i(9, 0)] as Array[Vector2i])
+	_check(round.has(Vector2i(5, 9)), "a goal behind the wall is reached through the gap")
+	for k in range(1, round.size()):
+		_check(not grid.is_point_solid(round[k]), "never through the wall")
+	grid.set_point_solid(Vector2i(5, 9), true)
+	_check(PlayerSystem._nearest_way(grid, Vector2i(0, 0), [Vector2i(9, 0)] as Array[Vector2i]).is_empty(),
+		"no way at all gives nothing")
+	# The walking grid follows a move that leaves the number of objects the same.
+	var g := _farm()
+	g.coins = 100000
+	g.buy_and_place("hay_bale", 2, 2)
+	var p := g.player
+	_check(p._walkable().is_point_solid(Vector2i(2, 2)), "the hay bale's tile is solid")
+	var to := g.nearest_free_spot("hay_bale", 6, 6)
+	_check(g.move_object(int(g.object_at(g.index_of(2, 2))["uid"]), to.x, to.y), "moved")
+	_check(not p._walkable().is_point_solid(Vector2i(2, 2)), "its old tile is free again")
+	_check(p._walkable().is_point_solid(Vector2i(to.y, to.x)), "its new tile is solid")
+	_done(g)

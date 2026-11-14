@@ -1321,3 +1321,27 @@ func test_313_every_tree_stands_on_a_bare_trunk_under_a_crown_that_is_not_a_blob
 				tree.free()
 	_check(checked > 100, "trees were measured (%d)" % checked)
 	holder.queue_free()
+
+
+func test_314_animal_shades_are_one_batch_that_follows_them_and_frees_their_slots() -> void:
+	var farm := Node3D.new()
+	add_child(farm)
+	var animals: Array[Animal3D] = []
+	for k in 3:
+		var a := Animal3D.create(Game.items["cow"], null, Vector3(2 + k * 2, 0, 3))
+		farm.add_child(a)
+		a.update(0.016)
+		animals.append(a)
+	var batch := ContactShades.of(animals[0])
+	await get_tree().process_frame
+	_eq(batch.get_parent(), farm, "one batch, under the farm")
+	_eq(farm.find_children("*", "ContactShades", false, false).size(), 1, "and only one")
+	var slot := animals[1]._shade_slot
+	var at := batch.where_of(slot)
+	_check(Vector2(at.x - 4.0, at.z - 3.0).length() < 0.6, "a cow's shade lies under it (%s)" % str(at))
+	_check(batch.strength_of(slot) > 0.3, "and shows")
+	animals[1].visible = false
+	_eq(batch.strength_of(slot), 0.0, "a hidden cow's shade hides")
+	animals[1].free()
+	_check(batch.take() == slot, "a cow that leaves gives its slot to the next")
+	farm.free()

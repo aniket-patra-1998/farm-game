@@ -8,6 +8,7 @@ uniform vec3 base_color : source_color = vec3(0.8, 0.3, 0.2);
 uniform int style = 0;
 uniform float scale = 1.0;      // pattern size: 1 is a board about a twelfth of a tile high
 uniform float ground_ao = 0.45; // how dark the foot of the wall gets
+uniform bool packed_in_alpha = false;  // each part's style and ground shade ride in its vertex alpha (ModelKit.wall_pack)
 
 global uniform float wetness;     // 0..1: how wet everything is (SurfaceWeather): darker, glossier
 global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (SurfaceWeather)
@@ -21,9 +22,11 @@ float hash(vec2 p) {
 }
 
 varying vec3 tint;  // the part's colour when baked into a merged mesh (white if none)
+varying float pack; // and its style and ground shade, when they ride in the vertex alpha
 
 void vertex() {
 	tint = COLOR.rgb;
+	pack = COLOR.a;
 	local_pos = VERTEX;
 	local_normal = NORMAL;
 	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
@@ -31,23 +34,30 @@ void vertex() {
 
 void fragment() {
 	vec3 col = base_color * tint;
+	int style_k = style;
+	float ao_k = ground_ao;
+	if (packed_in_alpha) {
+		int k = int(round(pack * 255.0));
+		style_k = k / 32;
+		ao_k = float(k % 32) * 0.02;
+	}
 	float along = abs(local_normal.x) > 0.5 ? local_pos.z : local_pos.x;
 	float y = local_pos.y / scale;
-	if (style == 0) {
+	if (style_k == 0) {
 		float lap = fract(y * 12.0);
 		col *= 0.82 + 0.18 * smoothstep(0.0, 0.25, lap);
 		col *= 0.95 + 0.1 * hash(vec2(floor(y * 12.0), floor(along * 3.0 / scale)));
-	} else if (style == 1) {
+	} else if (style_k == 1) {
 		float log_y = fract(y * 7.0);
 		col *= 0.7 + 0.3 * sin(log_y * 3.14159);
-	} else if (style == 2) {
+	} else if (style_k == 2) {
 		vec2 cell = vec2(along * 6.0 / scale + floor(y * 8.0) * 0.5, y * 8.0);
 		vec2 f = fract(cell);
 		float mortar = step(0.1, f.x) * step(0.12, f.y);
 		col *= mix(0.65, 0.9 + 0.2 * hash(floor(cell)), mortar);
-	} else if (style == 3) {
+	} else if (style_k == 3) {
 		col *= 0.95 + 0.06 * hash(floor(local_pos.xz * 20.0) + floor(y * 20.0));
-	} else if (style == 4) {
+	} else if (style_k == 4) {
 		// Rows of rounded tabs, each row shifted half a tab: the tab's rounded bottom edge shades the row below it,
 		// and every tab has its own tone, so a roof reads as laid shingles and not as stripes.
 		vec2 tile = vec2(along * 7.0 / scale + floor(y * 9.0) * 0.5, y * 9.0);
@@ -56,18 +66,18 @@ void fragment() {
 		col *= 0.7 + 0.3 * smoothstep(round_edge, round_edge + 0.3, f.y);
 		col *= 0.88 + 0.24 * hash(floor(tile));
 		col *= mix(0.8, 1.0, smoothstep(0.0, 0.08, min(f.x, 1.0 - f.x)));
-	} else if (style == 5) {
+	} else if (style_k == 5) {
 		col *= 0.85 + 0.15 * sin(along * 60.0 / scale);
 	}
-	col *= mix(1.0 - ground_ao, 1.0, smoothstep(0.0, 0.35, height));
+	col *= mix(1.0 - ao_k, 1.0, smoothstep(0.0, 0.35, height));
 	ALBEDO = col;
-	ROUGHNESS = style == 5 ? 0.45 : 0.9;
+	ROUGHNESS = style_k == 5 ? 0.45 : 0.9;
 	// Weather on the surface: wet things are darker and glossier; snow lies on what faces up.
 	float up = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y;
 	float snow_amt = snow_cover * smoothstep(0.5, 0.85, up);
 	ALBEDO = mix(ALBEDO * (1.0 - 0.22 * wetness), vec3(0.93, 0.95, 1.0), snow_amt);
 	ROUGHNESS = mix(ROUGHNESS * (1.0 - 0.45 * wetness), 0.9, snow_amt);
 
-	METALLIC = style == 5 ? 0.3 : 0.0;
-	SPECULAR = style == 5 ? 0.35 : 0.08;
+	METALLIC = style_k == 5 ? 0.3 : 0.0;
+	SPECULAR = style_k == 5 ? 0.35 : 0.08;
 }

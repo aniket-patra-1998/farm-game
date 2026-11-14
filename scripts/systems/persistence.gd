@@ -77,19 +77,38 @@ func is_writing() -> bool:
 	return _thread != null
 
 
-## Written so a crash or a full disk can't lose the farm: the new save goes to a temporary file first, the
-## last good save is kept as a backup, and only then does the new one take its place.
-static func _write_safely(text: String, path: String) -> void:
+## Written so a crash or a full disk can't lose the farm: the new save goes to a temporary file first and is
+## checked whole, the last good save is kept as a backup, and only then does the new one take its place. Every
+## step's result is checked: whatever fails, the last good save stays where `read` finds it (the save, or
+## else its backup), and the failure is reported. Returns OK or the first error.
+static func _write_safely(text: String, path: String) -> Error:
 	var tmp := path + GameState.TEMP_SUFFIX
+	var backup := path + GameState.BACKUP_SUFFIX
 	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
 		push_warning("Could not write save file")
-		return
+		return FileAccess.get_open_error()
 	f.store_string(text)
+	var written := f.get_length()
+	var err := f.get_error()
 	f.close()
+	if err != OK or written != text.to_utf8_buffer().size():   # a full disk writes part of it
+		push_warning("Save file was not written whole; the last save is kept")
+		DirAccess.remove_absolute(tmp)
+		return err if err != OK else ERR_FILE_CANT_WRITE
 	if FileAccess.file_exists(path):
-		DirAccess.rename_absolute(path, path + GameState.BACKUP_SUFFIX)
-	DirAccess.rename_absolute(tmp, path)
+		if FileAccess.file_exists(backup):
+			DirAccess.remove_absolute(backup)   # (some systems will not rename onto a file)
+		err = DirAccess.rename_absolute(path, backup)
+		if err != OK:
+			push_warning("Could not keep the last save as a backup; it stays as the save")
+			DirAccess.remove_absolute(tmp)
+			return err
+	err = DirAccess.rename_absolute(tmp, path)
+	if err != OK:
+		push_warning("Could not put the new save in place; the last save is kept as the backup")
+		return err
+	return OK
 
 
 ## The saved farm as a dictionary: the save, or its backup if the save is missing or unreadable.

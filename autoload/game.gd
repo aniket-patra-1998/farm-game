@@ -136,6 +136,7 @@ var _level := 1                    # level() remembered for this XP (and this ve
 var _level_xp := -1
 var _level_rev := -1
 var _occupied := {}                # tile index -> uid of the object covering it
+var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
 var _weather := {}                # the last answer of weather(), and when and for what it was made
@@ -372,6 +373,7 @@ func is_occupied(i: int) -> bool:
 
 func rebuild_occupancy() -> void:
 	_occupied.clear()
+	layout_revision += 1
 	for o in objects:
 		_occupy(o)
 
@@ -1129,6 +1131,7 @@ func _new_game() -> void:
 	objects = []
 	next_uid = 1
 	_occupied.clear()
+	layout_revision += 1
 	plots.clear()
 	farm_size = START_SIZE
 	unwithers = Balance.i("economy.start_unwithers")
@@ -1232,6 +1235,7 @@ func in_showcase() -> bool:
 ## farm's rules did) moves to the nearest free spot. Returns how many moved. Leaves the occupancy rebuilt.
 func settle_objects() -> int:
 	_occupied.clear()
+	layout_revision += 1
 	var misfits: Array = []
 	for o in objects:
 		if can_place(o["id"], int(o["row"]), int(o["col"]), -1, false):
@@ -1263,6 +1267,7 @@ func nearest_free_spot(item_id: String, row: int, col: int) -> Vector2i:
 
 
 func _occupy(o: Dictionary) -> void:
+	layout_revision += 1
 	var fp := footprint(o["id"])
 	for r in range(int(o["row"]), int(o["row"]) + fp.y):
 		for c in range(int(o["col"]), int(o["col"]) + fp.x):

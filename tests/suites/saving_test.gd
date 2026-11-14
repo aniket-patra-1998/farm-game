@@ -362,3 +362,18 @@ func test_190_the_farm_opens_with_what_happened_while_away() -> void:
 	g.plots[g.index_of(2, 2)] = {"state": "grass"}
 	g.plots[g.index_of(2, 3)] = {"state": "grass"}
 	_eq(AbsenceReport.build(g, from_t, now), "", "nothing to tell, nothing said")
+
+
+func test_191_save_writes_are_checked_and_keep_the_last_good_save() -> void:
+	var dir := "user://write_test"
+	DirAccess.make_dir_recursive_absolute(dir)
+	var path := dir + "/farm.json"
+	_eq(Persistence._write_safely("{\"a\":1}", path), OK, "a first save is written")
+	_eq(Persistence._write_safely("{\"a\":2}", path), OK, "a second save is written")
+	_eq(FileAccess.get_file_as_string(path), "{\"a\":2}", "the save is the new one")
+	_eq(FileAccess.get_file_as_string(path + GameState.BACKUP_SUFFIX), "{\"a\":1}", "the last one is the backup")
+	_check(not FileAccess.file_exists(path + GameState.TEMP_SUFFIX), "no temporary file is left")
+	_check(Persistence._write_safely("{}", "user://no_such_dir/farm.json") != OK, "a save that can't be written says so")
+	for f in [path, path + GameState.BACKUP_SUFFIX]:
+		DirAccess.remove_absolute(f)
+	DirAccess.remove_absolute(dir)

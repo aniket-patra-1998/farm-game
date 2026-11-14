@@ -35,7 +35,6 @@ const CONTACT_LIFT := 0.012                     # just above the grass, so it ne
 const FULL_RATE := 16
 const MAX_STRIDE := 4
 
-static var _contact_material: ShaderMaterial    # one for every animal
 
 static var _frame := -1          # the frame _seen counts
 static var _seen := 0            # animals on screen so far this frame
@@ -64,7 +63,11 @@ var _last := Vector3.ZERO
 var _r := Vector3.ONE            # body half-sizes (length, height, width)
 
 var _leg := 0.2
-var _contact: MeshInstance3D     # the soft shade on the grass right under it
+var _contact: Node3D             # where the soft shade on the grass right under it lies (drawn by ContactShades)
+var _contact_size := Vector2.ONE  # its size on the ground
+var _contact_strength := 1.0
+var _shades: ContactShades        # the farm's batch of shades, and this animal's slot in it
+var _shade_slot := -1
 var _eyes: Array[Node3D] = []    # (they blink)
 var _walk_speed := 1.0           # its walking speed, in units a second
 var _skeleton: Skeleton3D        # the whole animal is one skinned mesh on this (see _skin)
@@ -183,7 +186,9 @@ func _skin() -> void:
 			var arrays := mi.mesh.surface_get_arrays(s)
 			var tint := ModelKit.tinted(mat)
 			var one_coat := false
-			if ModelKit.is_coatable(mat) and (not tint.is_empty() or mat.has_meta(ModelKit.WHITE_TWIN)):
+			if mat == ModelKit.coat():
+				one_coat = true   # merged already: its colours and shines are in its vertices
+			elif ModelKit.is_coatable(mat) and (not tint.is_empty() or mat.has_meta(ModelKit.WHITE_TWIN)):
 				# Every painted part shares one surface: its colour and its shine are in its vertices (a part
 				# merged earlier already carries its colours: white tints it by nothing).
 				var base: Color = tint[1] if not tint.is_empty() else Color.WHITE
@@ -296,18 +301,36 @@ static func _no_shadow(n: Node) -> void:
 
 ## A soft dark patch on the grass under the body, a little longer than it, so the animal stands on the
 ## farm (ambient occlusion; the sun's shadow falls separately, and moves with the time of day).
+## The contact shade: a marker that moves with the animal; the shade itself is a slot in the farm's batch
+## (ContactShades), so all the animals' shades are one draw.
 func _build_contact() -> void:
-	if _contact_material == null:
-		_contact_material = ShaderMaterial.new()
-		_contact_material.shader = load("res://shaders/contact3d.gdshader")
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(_r.x * 2.0 * CONTACT_SPREAD, maxf(_r.z, _r.x * 0.45) * 2.0 * CONTACT_SPREAD)
-	_contact = MeshInstance3D.new()
-	_contact.mesh = plane
-	_contact.material_override = _contact_material
-	_contact.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_contact_size = Vector2(_r.x * 2.0 * CONTACT_SPREAD, maxf(_r.z, _r.x * 0.45) * 2.0 * CONTACT_SPREAD)
+	_contact = Node3D.new()
 	_contact.position.y = CONTACT_LIFT
 	add_child(_contact)
+
+
+## Puts this animal's shade where its marker is (hidden while the animal is), taking a slot on first use.
+func _push_shade() -> void:
+	if _contact == null or not _contact.is_inside_tree():
+		return
+	if _shades == null:
+		_shades = ContactShades.of(self)
+		_shade_slot = _shades.take()
+	var size := _contact.global_transform.basis.scaled(Vector3(_contact_size.x, 1.0, _contact_size.y))
+	_shades.put(_shade_slot, Transform3D(size, _contact.global_position),
+		_contact_strength if is_visible_in_tree() else 0.0)
+
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_READY, NOTIFICATION_VISIBILITY_CHANGED:
+			_push_shade()   # on the farm (or shown, or hidden) before its first pose
+		NOTIFICATION_EXIT_TREE:
+			if _shades != null and is_instance_valid(_shades):
+				_shades.give_back(_shade_slot)
+			_shades = null
+			_shade_slot = -1
 
 
 
@@ -721,8 +744,9 @@ func _settle_contact(p: AnimalPose) -> void:
 		air += _body.position.y  # a bee hovers: only a faint patch under it
 	_contact.position.y = CONTACT_LIFT - drop
 	var fade := clampf(air / maxf(_r.y * 3.0, 0.05), 0.0, 0.85)
-	_contact.transparency = fade
+	_contact_strength = 1.0 - fade
 	_contact.scale = Vector3.ONE * (1.0 - fade * 0.3)
+	_push_shade()
 
 
 

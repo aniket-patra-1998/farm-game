@@ -38,6 +38,9 @@ const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders
 	"res://shaders/canopy3d.gdshader": "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
+const WALL_SHADER := "res://shaders/wall3d.gdshader"
+const WALL_STYLES := 6             # boards, logs, stone, plaster, shingles, metal
+const WALL_AO_STEP := 0.02         # the ground shade packed for a wall is a whole number of these
 
 
 
@@ -86,6 +89,25 @@ static func coat() -> ShaderMaterial:
 		m.set_meta(WHITE_TWIN, true)
 		_materials["coat"] = m
 	return _materials["coat"]
+
+
+## The one white wall material that reads each part's pattern and ground shade from its vertex alpha (`wall_pack`).
+static func wall_coat() -> ShaderMaterial:
+	if not _materials.has("wall_coat"):
+		var m := ShaderMaterial.new()
+		m.shader = load(WALL_SHADER)
+		m.set_shader_parameter("base_color", Color.WHITE)
+		m.set_shader_parameter("packed_in_alpha", true)
+		m.set_meta(WHITE_TWIN, true)
+		_materials["wall_coat"] = m
+	return _materials["wall_coat"]
+
+
+## A wall's pattern (0..WALL_STYLES-1) and ground shade packed into one vertex alpha: 32 steps of each
+## WALL_AO_STEP of shade per pattern (shaders/wall3d.gdshader unpacks it the same way).
+static func wall_pack(style: int, ao: float) -> float:
+	var shade := clampi(roundi(ao / WALL_AO_STEP), 0, 31)
+	return float(clampi(style, 0, WALL_STYLES - 1) * 32 + shade) / 255.0
 
 
 ## The shine (0..1) a painted material was made with (the inverse of `paint`'s roughness curve).
@@ -793,6 +815,15 @@ static func tinted(mat: Material) -> Array:
 		return []
 	var col = sm.get_shader_parameter(param)
 	var colour: Color = col if col is Color else Color(col.x, col.y, col.z) if col is Vector3 else Color.WHITE
+	# Painted parts of every finish, and walls of every pattern, share one material each: what set them apart
+	# rides in the vertex alpha (shine; pattern and ground shade), so a building is a few draws, not one a finish.
+	if is_coatable(sm):
+		_white[id] = [coat(), Color(colour.r, colour.g, colour.b, shine_of(sm))]
+		return _white[id]
+	if sm.shader.resource_path == WALL_SHADER:
+		_white[id] = [wall_coat(), Color(colour.r, colour.g, colour.b,
+			wall_pack(int(sm.get_shader_parameter("style")), float(sm.get_shader_parameter("ground_ao"))))]
+		return _white[id]
 	# Twins are shared by everything with the same shader and other settings.
 	var sig := sm.shader.resource_path
 	for u in sm.shader.get_shader_uniform_list():
