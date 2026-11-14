@@ -26,6 +26,11 @@ func _ready() -> void:
 		for k in 4:
 			row.add_child(UiIcon.make("ribbon", px, UiTheme.color("ribbon_tier_%d" % k)))
 		rows.add_child(row)
+	var things := HFlowContainer.new()   # every collection item's shape, in a sample colour
+	things.custom_minimum_size.x = get_viewport_rect().size.x - 32.0
+	for shape: String in ThingIcon.SHAPES:
+		things.add_child(ThingIcon.of([shape, "#c89a5a", "#c0392b"], 60.0))
+	rows.add_child(things)
 	for k in 4:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw

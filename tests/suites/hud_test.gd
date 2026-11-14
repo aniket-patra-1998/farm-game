@@ -340,3 +340,17 @@ func test_330_contents_rows_show_a_picture_a_count_and_a_name_for_everything() -
 	var counts := (row.get_child(0) as Node).find_children("*", "Label", true, false)
 	_check(counts.any(func(l: Label) -> bool: return l.text == "3/5"), "its count on it")
 	row.free()
+
+
+## Every collection item has a picture: a look whose shape ThingIcon draws, and two colours.
+func test_331_every_collection_item_has_a_picture() -> void:
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/collections.json"))
+	var n := 0
+	for coll: Dictionary in (data as Dictionary)["collections"]:
+		for item: Dictionary in coll["items"]:
+			var look: Array = item.get("look", [])
+			_check(look.size() == 3 and ThingIcon.SHAPES.has(str(look[0])), "%s has a known shape" % item["name"])
+			_check(look.size() == 3 and Color.html_is_valid(str(look[1])) and Color.html_is_valid(str(look[2])),
+				"%s has its two colours" % item["name"])
+			n += 1
+	_check(n >= 100, "(every item looked at: %d)" % n)

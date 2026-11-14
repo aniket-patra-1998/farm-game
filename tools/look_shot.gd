@@ -1,7 +1,7 @@
 extends Node
 ## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes nine pictures
 ## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage, barn_broken, home_panel,
-## crafting_panel, seeds_panel) into the folder given
+## crafting_panel, seeds_panel, collections_panel, ribbons_panel) into the folder given
 ## by --out=<dir> (default ci_shots/look).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
@@ -74,11 +74,13 @@ func _ready() -> void:
 			await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(p[0]) + ".png"))
 		hud._book.close_panel()
-	hud.show_seeds()
-	for k in 90:
-		await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/seeds_panel.png"))
-	hud._book.close_panel()
+	for p: Array in [["seeds_panel", hud.show_seeds], ["collections_panel", hud._show_collections],
+			["ribbons_panel", hud._show_ribbons]]:
+		(p[1] as Callable).call()
+		for k in 90:
+			await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(p[0]) + ".png"))
+		hud._book.close_panel()
 	if level != "":
 		Quality.choose(was_level)
 	get_tree().quit()

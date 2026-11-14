@@ -6,6 +6,9 @@ extends RefCounted
 var hud: FarmHud
 
 
+const RARITY_KEYS := {"common": "RARITY_COMMON", "uncommon": "RARITY_UNCOMMON", "rare": "RARITY_RARE"}
+
+
 func _init(owner: FarmHud) -> void:
 	hud = owner
 
@@ -43,20 +46,22 @@ func build_collections(content: VBoxContainer) -> void:
 		else:
 			inner.add_child(BookPanel.text(tr("FOUND_WHILE_HARVESTING") % ", ".join(PackedStringArray(crop_names)), 18))
 
+		# Each item as its picture with how many you have of how many the next trade needs (red while short), its
+		# name under it; uncommon and rare ones on their own tile colours.
 		var items := HFlowContainer.new()
-		items.add_theme_constant_override("h_separation", 8)
-		items.add_theme_constant_override("v_separation", 8)
+		items.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap") * 0.5))
+		items.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap") * 0.5))
 		var need := Game.collectibles.coll_need(coll)
-		for item in coll["items"]:
+		for item: Dictionary in coll["items"]:
 			var count := int(Game.collectibles.owned.get(item["id"], 0))
-			var rarity: String = item.get("rarity", "common")
-			var label: String = "%s  %d/%d%s" % [
-				item["name"],
-				count,
-				int(need[item["id"]]),
-				"" if rarity == "common" else "  (" + rarity + ")"
-			]
-			items.add_child(BookPanel.chip(label, count >= int(need[item["id"]])))
+			var wanted := int(need[item["id"]])
+			var rarity := str(item.get("rarity", "common"))
+			var pic := ThingIcon.of(item.get("look", []), UiTheme.size("count_tile"))
+			pic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			var tile := UiKit.count_tile(pic, "%d/%d" % [count, wanted], str(item["name"]), count < wanted,
+				"count_tile" if rarity == "common" else "count_tile_" + rarity)
+			tile.tooltip_text = "%s (%s)" % [item["name"], tr(RARITY_KEYS.get(rarity, "RARITY_COMMON"))]
+			items.add_child(tile)
 		inner.add_child(items)
 
 		var reward := Game.collectibles.coll_reward(coll)

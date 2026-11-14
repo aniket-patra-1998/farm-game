@@ -218,8 +218,9 @@ static func count_row(entries: Array) -> HFlowContainer:
 	return flow
 
 
-## One thing and how many: its picture on a soft tile, the count in a corner, its name underneath (one line).
-static func count_tile(picture: Texture2D, count: String, name: String, short := false) -> Control:
+## One thing and how many: its picture (a texture, or a drawn Control such as a ThingIcon) on a soft tile of the
+## theme's colour `face`, the count in a corner, its name underneath (one line).
+static func count_tile(picture: Variant, count: String, name: String, short := false, face := "count_tile") -> Control:
 	var side := UiTheme.size("count_tile")
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 0)
@@ -227,18 +228,21 @@ static func count_tile(picture: Texture2D, count: String, name: String, short :=
 	col.tooltip_text = name
 	var tile := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = UiTheme.color("count_tile")
+	sb.bg_color = UiTheme.color(face)
 	sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
 	tile.add_theme_stylebox_override("panel", sb)
 	tile.custom_minimum_size = Vector2.ONE * side
 	tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(tile)
-	var pic := TextureRect.new()
-	pic.texture = picture
-	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tile.add_child(pic)
+	if picture is Control:
+		tile.add_child(picture)
+	else:
+		var pic := TextureRect.new()
+		pic.texture = picture
+		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.add_child(pic)
 	var label := Label.new()
 	label.text = count
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -246,7 +250,7 @@ static func count_tile(picture: Texture2D, count: String, name: String, short :=
 	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
 	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
-	label.add_theme_color_override("font_outline_color", UiTheme.color("count_tile"))
+	label.add_theme_color_override("font_outline_color", UiTheme.color(face))
 	label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
 	tile.add_child(label)
 	var caption := Label.new()

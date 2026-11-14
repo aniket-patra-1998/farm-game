@@ -57,6 +57,8 @@
     "card_edge": "#5c3a1e",
     "card_locked": "#d8cbb0",
   "count_tile": "#f3e3bd",
+  "count_tile_uncommon": "#d7e6f2",
+  "count_tile_rare": "#f6dc8a",
   "mastery_gold": "#f2b632",
   "mastery_empty": "#d9c9a5",
     "badge_face": "#fff6dc",
