@@ -63,10 +63,11 @@ var _coin_roll: Tween
 func _ready() -> void:
 	layer = 10 # above the sky, the farm and the night lights
 	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = _make_theme()
 	add_child(root)
+	ItemIcons.start(self)   # the shop's pictures, made from the models when first shown
 	top = HudTop.new(self)
 	top.build(root)
 	side = HudSide.new(self)
@@ -367,7 +368,7 @@ func _show_settings() -> void:
 
 
 func _show_market() -> void:
-	_book.open_panel(tr("MARKET"), market.build_market)
+	_book.open_tabs(tr("MARKET"), market.tabs(), 1)   # (the first shelf after Seeds: trees, as FarmVille opened)
 
 
 ## Opened when a building that isn't ready is tapped.
@@ -439,7 +440,36 @@ func _make_theme() -> Theme:
 	bar_fill.set_corner_radius_all(11)
 	t.set_stylebox("background", "ProgressBar", bar_bg)
 	t.set_stylebox("fill", "ProgressBar", bar_fill)
+	_theme_fields(t, bar_fill)
 	return t
+
+
+## Text boxes and sliders on the kit: a cream field with a wooden edge, a wooden groove with a green fill and
+## a sun-yellow knob (the stock grey ones looked borrowed).
+func _theme_fields(t: Theme, fill: StyleBoxFlat) -> void:
+	for state in ["normal", "focus", "read_only"]:
+		var field := _button_box(Color.WHITE.lerp(CREAM, 0.6) if state != "focus" else Color.WHITE, WOOD_DARK)
+		field.content_margin_left = 12
+		field.content_margin_right = 12
+		t.set_stylebox(state, "LineEdit", field)
+	t.set_color("font_color", "LineEdit", INK)
+	t.set_color("font_placeholder_color", "LineEdit", INK.lightened(0.5))
+	t.set_color("caret_color", "LineEdit", INK)
+	var groove := StyleBoxFlat.new()
+	groove.bg_color = WOOD_DARK
+	groove.set_corner_radius_all(int(UiTheme.size("slider_groove") / 2.0))
+	groove.content_margin_top = UiTheme.size("slider_groove") / 2.0
+	groove.content_margin_bottom = UiTheme.size("slider_groove") / 2.0
+	var filled := fill.duplicate() as StyleBoxFlat
+	filled.content_margin_top = groove.content_margin_top
+	filled.content_margin_bottom = groove.content_margin_bottom
+	var slider := "HSlider"   # not-ui
+	t.set_stylebox("slider", slider, groove)
+	t.set_stylebox("grabber_area", slider, filled)
+	t.set_stylebox("grabber_area_highlight", slider, filled)
+	var knob := UiIcon.knob(int(UiTheme.size("slider_knob")), SUN, WOOD_DARK)
+	t.set_icon("grabber", slider, knob)
+	t.set_icon("grabber_highlight", slider, knob)
 
 
 func _button_box(fill: Color, border: Color) -> StyleBoxFlat:

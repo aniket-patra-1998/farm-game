@@ -72,6 +72,13 @@ func _ready() -> void:
 		% [(last - t_sample) / 1000.0 / SAMPLE_FRAMES, frame_worst / 1000.0])
 	print("PERF draw_calls=%d render_objects=%d primitives=%d mesh_nodes=%d nodes=%d" % [draws, objs, prims, meshes,
 		int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))])
+	# Where the triangles go: what the camera sees, and the sun's shadow pass.
+	var vp := get_viewport()
+	print("PERF split visible_draws=%d visible_prims=%d shadow_prims=%d" % [
+		vp.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME),
+		vp.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME),
+		vp.get_render_info(Viewport.RENDER_INFO_TYPE_SHADOW, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME)])
+	_shadow_casters()
 	_census()
 	_breakdown()
 	await _processing()
@@ -232,3 +239,44 @@ func _view_kind(objects3d: Node, mesh: Node) -> String:
 		if objects3d.get("_views")[uid]["node"] == top:
 			return str(Game.object_by_uid(uid).get("id", "?"))
 	return "?" + (top.name if top != null else "none")
+
+
+
+## Which kinds of things cast the most shadow triangles (a mesh casts unless told not to).
+func _shadow_casters() -> void:
+	var by := {}
+	var stack: Array[Node] = [get_tree().root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if not n is GeometryInstance3D or not (n as Node3D).is_visible_in_tree():
+			continue
+		if (n as GeometryInstance3D).cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			var mesh: Mesh = null
+			if n is MeshInstance3D:
+				mesh = (n as MeshInstance3D).mesh
+			elif n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh != null:
+				mesh = (n as MultiMeshInstance3D).multimesh.mesh
+			if mesh == null:
+				continue
+			var count: int = (n as MultiMeshInstance3D).multimesh.instance_count if n is MultiMeshInstance3D else 1
+			var tris := 0
+			for k in mesh.get_surface_count():
+				var i: int = mesh.surface_get_array_index_len(k)
+				tris += (i if i > 0 else mesh.surface_get_array_len(k)) / 3
+			var owner_name := _owner_kind(n)
+			by[owner_name] = int(by.get(owner_name, 0)) + tris * count
+	var names := by.keys()
+	names.sort_custom(func(a, b) -> bool: return by[a] > by[b])
+	for k in names.slice(0, 10):
+		print("PERF   casts %s: %dk triangles (full detail)" % [k, by[k] / 1000])
+
+
+func _owner_kind(n: Node) -> String:
+	var p := n
+	while p != null:
+		var sc: Script = p.get_script()
+		if sc != null and sc.get_global_name() != "" and not (sc.get_global_name() in ["ModelKit"]):
+			return sc.get_global_name()
+		p = p.get_parent()
+	return "?"

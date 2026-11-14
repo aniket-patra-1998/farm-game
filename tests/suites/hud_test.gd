@@ -130,3 +130,62 @@ func test_148_plant_asks_for_a_seed_and_the_eye_hides_the_interface() -> void:
 	_check(hud.tools.panel.visible, "and brings it back")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## The Market opens on its shelves as tabs; every shelf is a grid with a card for every item of its kind, and
+## tapping a card of something affordable puts it in hand to place.
+func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 1000000
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var book: BookPanel = hud.get("_book")
+	hud._show_market()
+	var tabs: Array = book.get("_tabs")
+	_eq(tabs.size(), HudMarket.SHELVES.size() + 2, "Seeds, a shelf per kind and Specials")
+	for k in range(1, HudMarket.SHELVES.size() + 1):
+		book.show_tab(k)
+		var kind := str(HudMarket.SHELVES[k - 1][0])
+		var want := 0
+		for id in Game.item_order:
+			if Game.item_data(id)["kind"] == kind and int(Game.item_data(id)["unlock_level"]) < 99:
+				want += 1
+		var cards := 0
+		for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
+			if not grid.is_queued_for_deletion():
+				cards += grid.get_child_count()
+		_eq(cards, want, "the %s shelf has a card for each" % kind)
+	var placed := []
+	hud.place_requested.connect(func(id: String) -> void: placed.append(id))
+	book.show_tab(HudMarket.SHELVES.find(["decor", "DECORATIONS"]) + 1)
+	var bought := false
+	for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
+		if grid.is_queued_for_deletion():
+			continue
+		for card: Button in grid.get_children():
+			if not bought and card.get_theme_stylebox("normal").bg_color == UiTheme.color("card_face"):
+				card.pressed.emit()
+				bought = true
+	_check(bought and placed.size() == 1, "tapping an open card puts that item in hand")
+	_check(not book.visible, "and closes the Market")
+	main.queue_free()
+	await get_tree().process_frame
+
+
+## Item pictures are made for the cards on screen first (the ones asked for last), and kept under a key that
+## changes with the item's data, so an item that changes gets a new picture.
+func test_150_item_pictures_come_on_screen_first_and_are_kept_by_key() -> void:
+	var was_waiting := ItemIcons._waiting.duplicate()
+	var was_asked := ItemIcons._asked.duplicate()
+	ItemIcons._waiting.assign(["a_item", "b_item", "c_item"])
+	ItemIcons._asked = {"a_item": 5, "b_item": 9, "c_item": 9}
+	_eq(ItemIcons._next(), "b_item", "the first of the cards asked for last comes first")
+	ItemIcons._asked["a_item"] = 12
+	_eq(ItemIcons._next(), "a_item", "a card asked for again moves ahead")
+	ItemIcons._waiting.assign(was_waiting)
+	ItemIcons._asked = was_asked
+	_check(ItemIcons._file("cow") != ItemIcons._file("chicken"), "each item has its own picture file")
+	_check(ItemIcons._file("cow").begins_with(ItemIcons.CACHE + "/cow-"), "kept under the item's name and key")

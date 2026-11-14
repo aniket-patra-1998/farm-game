@@ -16,6 +16,7 @@ func _ready() -> void:
 	var soil := ShaderMaterial.new()
 	soil.shader = load("res://shaders/soil3d.gdshader")
 	_beds.material_override = soil
+	_beds.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # flat: it only takes shadows
 	add_child(_beds)
 	rebuild()
 

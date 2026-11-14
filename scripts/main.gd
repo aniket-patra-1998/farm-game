@@ -51,7 +51,7 @@ func _ready() -> void:
 	grade_layer.layer = 1
 	add_child(grade_layer)
 	grade = ColorRect.new()
-	grade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	grade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	grade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/grade.gdshader")

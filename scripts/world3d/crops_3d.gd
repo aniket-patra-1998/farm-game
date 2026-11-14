@@ -40,7 +40,20 @@ func _ready() -> void:
 	timer.autostart = true
 	timer.timeout.connect(rebuild)
 	add_child(timer)
+	Quality.notifier.emitted.connect(_apply_shadows)
 	rebuild()
+
+
+## Crops cast shadows only on the high level (data/quality.json `crop_shadows`): hundreds of small plants
+## are most of a big farm's shadow triangles and, seen from above, their shadows hardly show.
+func _apply_shadows() -> void:
+	for mmi in _layers.values():
+		(mmi as MultiMeshInstance3D).cast_shadow = _shadow_setting()
+
+
+static func _shadow_setting() -> GeometryInstance3D.ShadowCastingSetting:
+	return (GeometryInstance3D.SHADOW_CASTING_SETTING_ON if bool(Quality.value("crop_shadows"))
+		else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
 
 
 func _process(_delta: float) -> void:
@@ -147,6 +160,7 @@ func rebuild() -> void:
 		if mmi == null:
 			mmi = MultiMeshInstance3D.new()
 			mmi.material_override = material_for(Color.html(str(parts[2])))
+			mmi.cast_shadow = _shadow_setting()
 			add_child(mmi)
 			_layers[key] = mmi
 		var mm := MultiMesh.new()

@@ -36,6 +36,8 @@ const FULL_RATE := 16
 const MAX_STRIDE := 4
 
 
+## Animals are posed at least this many frames apart (the graphics quality's `pose_every`, Quality).
+static var min_stride := 1
 static var _frame := -1          # the frame _seen counts
 static var _seen := 0            # animals on screen so far this frame
 
@@ -281,7 +283,7 @@ func animate(delta: float, cam: Camera3D) -> void:
 		_seen = 0
 	_seen += 1
 	_pending += delta
-	var stride := clampi(ceili(float(_seen_last) / FULL_RATE), 1, MAX_STRIDE)
+	var stride := clampi(maxi(ceili(float(_seen_last) / FULL_RATE), min_stride), 1, MAX_STRIDE)
 	if (f + _slot) % stride != 0:
 		return
 	update(_pending)

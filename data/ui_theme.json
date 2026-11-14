@@ -42,7 +42,16 @@
     "skin": "#e9b28a",
     "tool_face_on": "#ffd34d",
     "tool_label": "#4a2f19",
-    "hud_hint": "#fff6dc"
+    "hud_hint": "#fff6dc",
+    "tab_face": "#a06a3a",
+    "tab_face_on": "#fbefd2",
+    "tab_text": "#fbefd2",
+    "tab_text_on": "#3a2614",
+    "card_face": "#fbefd2",
+    "card_edge": "#5c3a1e",
+    "card_locked": "#d8cbb0",
+    "badge_face": "#fff6dc",
+    "lock_text": "#7a2e1e"
   },
   "sizes": {
     "bar_height": 52,
@@ -75,12 +84,29 @@
     "side_icon": 40,
     "font_side": 13,
     "toggle_size": 48,
+    "slider_groove": 12,
+    "slider_knob": 34,
     "zoom_size": 44,
     "top_height": 72,
     "bottom_height": 102,
     "neighbour_width": 64,
     "font_clock": 14,
     "coin_bar_width": 230,
-    "gem_bar_width": 170
+    "gem_bar_width": 170,
+    "book_radius": 22,
+    "book_border": 6,
+    "book_margin": 20,
+    "font_book_title": 26,
+    "book_height": 470,
+    "book_width": 1000,
+    "tab_height": 46,
+    "font_tab": 17,
+    "card_width": 176,
+    "card_icon": 112,
+    "font_card": 16,
+    "font_card_small": 13,
+    "badge_height": 30,
+    "font_badge": 16,
+    "card_words": 112
   }
 }

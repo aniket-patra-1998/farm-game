@@ -2,13 +2,15 @@ class_name UiIcon
 extends Control
 ## A small icon drawn in code, sharp at any size: a coin, a gem, a star, an eye, a speaker, a note, a magnifier
 ## (plus or minus), a frame-all, a camera, an arrow, a ribbon, a plus; the tools (hoe, seeds, basket, fertilizer,
-## move, barn, tag) and the menu (market, album, neighbours, gear). Square; it fills the smaller side.
+## move, barn, tag), the menu (market, album, neighbours, gear), a close cross and a lock. Square; it fills the
+## smaller side. `knob` makes a round knob texture (a slider's grabber).
 
 const KINDS: Array[String] = ["coin", "gem", "star", "eye", "speaker", "note", "zoom_in", "zoom_out", "fit", "camera",
 	"arrow", "ribbon", "plus", "hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag", "market", "album",
-	"neighbours", "gear"]
+	"neighbours", "gear", "cross", "lock"]
 const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
+const KNOB_RING := 0.12    # a knob's ring, of its width
 
 @export var kind := "coin": set = _set_kind
 ## A muted icon (sound off, UI hidden) is drawn with a slash through it.
@@ -22,6 +24,20 @@ static func make(icon_kind: String, px := 0.0) -> UiIcon:
 	icon.custom_minimum_size = Vector2(s, s)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return icon
+
+
+## A round knob as a texture (a slider's grabber): `fill` inside a ring of `edge`, softened at its rim.
+static func knob(px: int, fill: Color, edge: Color) -> ImageTexture:
+	var img := Image.create(px, px, false, Image.FORMAT_RGBA8)
+	var r := px / 2.0
+	var ring := maxf(2.0, px * KNOB_RING)
+	for y in px:
+		for x in px:
+			var d := Vector2(x + 0.5 - r, y + 0.5 - r).length()
+			var col := fill if d < r - ring else edge
+			col.a = clampf(r - d, 0.0, 1.0)   # (one pixel of soft edge)
+			img.set_pixel(x, y, col)
+	return ImageTexture.create_from_image(img)
 
 
 ## The points of a star of `points` tips about `c`.
@@ -138,6 +154,13 @@ func _draw() -> void:
 			_draw_tool(c, r, s, ink, light)
 		"market", "album", "neighbours", "gear":
 			_draw_menu(c, r, s, ink, light)
+		"cross":
+			draw_line(c + Vector2(-r * 0.5, -r * 0.5), c + Vector2(r * 0.5, r * 0.5), ink, maxf(2.5, s * 0.14))
+			draw_line(c + Vector2(r * 0.5, -r * 0.5), c + Vector2(-r * 0.5, r * 0.5), ink, maxf(2.5, s * 0.14))
+		"lock":
+			draw_arc(c + Vector2(0, -r * 0.15), r * 0.38, PI, TAU, 16, ink, maxf(2.0, s * 0.1))
+			draw_rect(Rect2(c + Vector2(-r * 0.6, -r * 0.15), Vector2(r * 1.2, r * 0.95)), UiTheme.color("coin_edge"))
+			draw_circle(c + Vector2(0, r * 0.25), r * 0.12, ink)
 		_:
 			draw_rect(Rect2(Vector2.ZERO, Vector2(s, s)), Color.MAGENTA, false, 2.0)
 	if struck:

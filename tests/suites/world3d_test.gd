@@ -1377,3 +1377,46 @@ func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
 	objects.queue_free()
 	await get_tree().process_frame
 	Game.reset_game()
+
+
+func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
+	var keys := ["shadows", "shadow_splits", "shadow_distance", "glow", "scale", "lod_pixels", "pose_every",
+		"crop_shadows"]
+	for name: String in Quality.LEVELS:
+		for k: String in keys:
+			_check(Quality.value(k, name) != null, "%s sets %s" % [name, k])
+	_check(float(Quality.value("scale", "low")) < float(Quality.value("scale", "high")), "low draws fewer pixels")
+	_check(not bool(Quality.value("shadows", "low")), "low has no shadows")
+	var was := Quality.level()
+	var sun := DirectionalLight3D.new()
+	var env := Environment.new()
+	var vp := SubViewport.new()
+	for name: String in Quality.LEVELS:
+		Quality.choose(name)
+		_eq(Quality.level(), name, "%s is kept" % name)
+		Quality.apply(sun, env, vp)
+		_eq(sun.shadow_enabled, bool(Quality.value("shadows")), "%s: shadows" % name)
+		_eq(env.glow_enabled, bool(Quality.value("glow")), "%s: glow" % name)
+		_check(is_equal_approx(vp.scaling_3d_scale, float(Quality.value("scale"))), "%s: resolution" % name)
+		_check(is_equal_approx(vp.mesh_lod_threshold, float(Quality.value("lod_pixels"))), "%s: detail" % name)
+		_eq(Crops3D._shadow_setting() != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
+			bool(Quality.value("crop_shadows")), "%s: crop shadows" % name)
+	Quality.choose(was)
+	sun.free()
+	vp.free()
+
+
+func test_317_big_baked_models_carry_simpler_levels_of_detail() -> void:
+	var it := Game.item_data("cow_shed")
+	var node := ModelKit.bake(BuildingModel.build(it, Game.footprint("cow_shed")))
+	var with_lods := 0
+	var meshes := 0
+	for c in node.get_children():
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh is ArrayMesh:
+			var m := (c as MeshInstance3D).mesh as ArrayMesh
+			meshes += 1
+			if int(m.get_meta(ModelKit.LOD_LEVELS, 0)) > 0:
+				with_lods += 1
+	_check(meshes > 0 and with_lods > 0,
+		"the cow shed's big meshes have levels of detail (%d of %d)" % [with_lods, meshes])
+	node.free()

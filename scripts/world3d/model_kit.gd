@@ -38,6 +38,10 @@ const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders
 	"res://shaders/canopy3d.gdshader": "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
+const LOD_LEVELS := &"lod_levels"   # meta on a baked mesh: how many simpler levels it carries
+const LOD_MIN_TRIANGLES := 600     # a baked mesh this big or bigger gets simpler versions for when it is drawn small
+const LOD_NORMAL_MERGE := 25.0     # degrees: faces this close in angle may merge when a level is made simpler
+const LOD_NORMAL_SPLIT := 60.0     # and faces this far apart keep a hard edge
 const WALL_SHADER := "res://shaders/wall3d.gdshader"
 const WALL_STYLES := 6             # boards, logs, stone, plaster, shingles, metal
 const WALL_AO_STEP := 0.02         # the ground shade packed for a wall is a whole number of these
@@ -727,6 +731,7 @@ static func bake(root: Node3D) -> Node3D:
 			mats.append(g["mat"])
 		if mesh.get_surface_count() == 0:
 			continue
+		mesh = with_lods(mesh)
 		var mi := MeshInstance3D.new()
 		mi.mesh = mesh
 		for k in mats.size():
@@ -864,4 +869,28 @@ static func tint_arrays(arrays: Array, col: Color) -> Array:
 		out[Mesh.ARRAY_INDEX] = idx
 	out[Mesh.ARRAY_TEX_UV] = null
 	out[Mesh.ARRAY_TANGENT] = null
+	return out
+
+
+
+## The mesh with simpler versions of itself (levels of detail) that the renderer switches to on its own when the
+## mesh is drawn small on screen (zoomed out): each about half the triangles of the one before (meshoptimizer,
+## through ImporterMesh). Small meshes are returned as they are: they would gain nothing.
+static func with_lods(mesh: ArrayMesh) -> ArrayMesh:
+	var triangles := 0
+	for k in mesh.get_surface_count():
+		var indices := mesh.surface_get_array_index_len(k)
+		triangles += (indices if indices > 0 else mesh.surface_get_array_len(k)) / 3
+	if triangles < LOD_MIN_TRIANGLES:
+		return mesh
+	var im := ImporterMesh.new()
+	for k in mesh.get_surface_count():
+		im.add_surface(mesh.surface_get_primitive_type(k), mesh.surface_get_arrays(k), [], {},
+			mesh.surface_get_material(k))
+	im.generate_lods(LOD_NORMAL_MERGE, LOD_NORMAL_SPLIT, [])
+	var levels := 0
+	for k in im.get_surface_count():
+		levels = maxi(levels, im.get_surface_lod_count(k))
+	var out := im.get_mesh()
+	out.set_meta(LOD_LEVELS, levels)
 	return out

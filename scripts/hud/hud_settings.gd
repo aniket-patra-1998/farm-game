@@ -3,6 +3,7 @@ extends RefCounted
 ## Settings (sound, vibration) and the showcase farm card.
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
+const QUALITY_WORDS := {"low": "GRAPHICS_LOW", "mid": "GRAPHICS_MID", "high": "GRAPHICS_HIGH"}
 const NAME_MAX := 24     # letters in a farm's name (the plaque fits them)
 
 var hud: FarmHud
@@ -16,6 +17,7 @@ func _init(owner: FarmHud) -> void:
 ## phone (not in the farm's save).
 func build_settings(content: VBoxContainer) -> void:
 	content.add_child(name_card())
+	content.add_child(quality_card())
 	var inner := BookPanel.card()
 	inner.add_theme_constant_override("separation", 12)
 	inner.add_child(BookPanel.text(tr("SOUND_EFFECTS"), 26))
@@ -49,6 +51,26 @@ func build_settings(content: VBoxContainer) -> void:
 	if OS.is_debug_build():
 		content.add_child(showcase_card())
 		content.add_child(debug_card())
+
+
+## Graphics quality: low, mid or high (Quality): how good the farm looks against how hard the phone works.
+func quality_card() -> PanelContainer:
+	var inner := BookPanel.card()
+	inner.add_theme_constant_override("separation", 10)
+	inner.add_child(BookPanel.text(tr("GRAPHICS"), 26))
+	inner.add_child(BookPanel.text(tr("GRAPHICS_HELP"), 18))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	inner.add_child(row)
+	var group := ButtonGroup.new()
+	for name: String in Quality.LEVELS:
+		var b := hud._panel_button(tr(QUALITY_WORDS[name]))
+		b.toggle_mode = true
+		b.button_group = group
+		b.button_pressed = Quality.level() == name
+		b.pressed.connect(func() -> void: Quality.choose(name))
+		row.add_child(b)
+	return BookPanel.card_frame(inner)
 
 
 ## The farm's name, shown on the plaque (FarmVille's farm sign); empty brings back "My Farm".

@@ -41,7 +41,7 @@ func build_collections(content: VBoxContainer) -> void:
 		elif coll.get("source", "") == "animals":
 			inner.add_child(BookPanel.text(tr("FOUND_WHILE_COLLECTING_FROM_ANIMALS_AND"), 18))
 		else:
-			inner.add_child(BookPanel.text(tr("FOUND_WHILE_HARVESTING").join(PackedStringArray(crop_names)), 18))
+			inner.add_child(BookPanel.text(tr("FOUND_WHILE_HARVESTING") % ", ".join(PackedStringArray(crop_names)), 18))
 
 		var items := HFlowContainer.new()
 		items.add_theme_constant_override("h_separation", 8)

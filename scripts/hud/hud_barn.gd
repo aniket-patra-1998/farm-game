@@ -58,6 +58,8 @@ func build_barn_repair(content: VBoxContainer) -> void:
 	var need := Game.storage.repair_needs()
 	for p in GameState.part_ids:
 		var want := int(need.get(p, 0))
+		if want <= 0:
+			continue          # (not needed for this repair)
 		var have := int(Game.parts.get(p, 0))
 		card.add_child(BookPanel.text(tr("OF_2") % [GameState.part_names[p], mini(have, want), want], 20))
 		var bar := ProgressBar.new()
@@ -86,19 +88,20 @@ func build_barn_storage(content: VBoxContainer) -> void:
 	var cap := Game.storage.barn_capacity()
 	content.add_child(BookPanel.text(
 		tr("HOLDS_OF_USE_THE_STORE_TOOL") % [Game.storage.stored.size(), cap], 20, BookPanel.CREAM))
+	# What is stored first (it is what the Barn is opened for), then its parts, its next size and the feed.
+	if Game.storage.stored.is_empty():
+		content.add_child(BookPanel.card_frame(BookPanel.text(tr("NOTHING_STORED_YET"), 20)))
+	else:
+		add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
+		add_gift_box(content, cap)
 	var parts_line: Array[String] = []
 	for p in GameState.part_ids:
 		parts_line.append("%s %d" % [GameState.part_names[p], int(Game.parts.get(p, 0))])
-	content.add_child(BookPanel.text(tr("PARTS").join(PackedStringArray(parts_line)), 17, BookPanel.CREAM))
+	content.add_child(BookPanel.text(tr("PARTS") % ", ".join(PackedStringArray(parts_line)), 17, BookPanel.CREAM))
 	var barn := Game.storage.barn()
 	if not barn.is_empty():
 		hud.buildings.add_expansion_card(content, barn, int(barn["uid"]))
 	hud.feed.add_barn_stock(content)
-	if Game.storage.stored.is_empty():
-		content.add_child(BookPanel.card_frame(BookPanel.text(tr("NOTHING_STORED_YET"), 20)))
-		return
-	add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
-	add_gift_box(content, cap)
 
 
 ## What has spilled past the barn, grouped by kind (there can be thousands: one row each would be a wall).
@@ -126,25 +129,29 @@ func add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 ## Group rows a page at a time: a store with hundreds of different kinds would otherwise build hundreds of
 ## rows at once. The button at the end adds the next page.
 func add_group_rows(content: VBoxContainer, ids: Array, first: Dictionary, count: Dictionary, from: int) -> void:
+	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
+	content.add_child(grid)
+	add_group_cards(grid, content, ids, first, count, from)
+
+
+## One card per kind, a page at a time (as FarmVille's storage: the picture, how many, tap to place one).
+func add_group_cards(grid: GridContainer, content: VBoxContainer, ids: Array, first: Dictionary, count: Dictionary,
+		from: int) -> void:
 	var to := mini(from + FarmHud.GROUP_PAGE, ids.size())
 	for i in range(from, to):
 		var id: String = ids[i]
-		var row := HBoxContainer.new()
-		var label := BookPanel.text(tr("X_COUNT") % [Game.item_data(id)["name"], count[id]], 22)
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(label)
-		var place := hud._panel_button(tr("PLACE_2"))
+		var card := UiKit.item_card(ItemIcons.of(id), str(Game.item_data(id)["name"]), tr("TIMES_N") % count[id],
+			UiKit.price_badge("", tr("PLACE_2")), false)
 		var index: int = first[id]
-		place.pressed.connect(func() -> void:
+		card.pressed.connect(func() -> void:
 			hud._book.close_panel()
 			hud.place_stored_requested.emit(index))
-		row.add_child(place)
-		content.add_child(BookPanel.card_frame(row))
+		grid.add_child(card)
 	if to < ids.size():
 		var more := hud._panel_button(tr("SHOW_MORE_KINDS") % (ids.size() - to))
 		more.pressed.connect(func() -> void:
 			more.queue_free()
-			add_group_rows(content, ids, first, count, to))
+			add_group_cards(grid, content, ids, first, count, to))
 		content.add_child(more)
 
 

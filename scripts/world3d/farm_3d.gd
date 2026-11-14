@@ -71,6 +71,8 @@ func _ready() -> void:
 	var world_env := WorldEnvironment.new()
 	world_env.environment = environment
 	add_child(world_env)
+	_apply_quality()
+	Quality.notifier.emitted.connect(_apply_quality)
 	ground = Ground3D.new()
 	add_child(ground)
 	plots = Plots3D.new()
@@ -142,6 +144,12 @@ func _plots_changed() -> void:
 			plots.rebuild()
 			crops.rebuild()
 			ground.rebuild()).call_deferred()
+
+
+## The graphics quality in use, on this farm's sun, glow, resolution, detail and animals (Quality).
+func _apply_quality() -> void:
+	Quality.apply(sun, environment, get_viewport())
+	Animal3D.min_stride = int(Quality.value("pose_every"))
 
 
 func _process(_delta: float) -> void:
