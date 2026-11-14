@@ -53,14 +53,13 @@ func owned(id: String) -> int:
 
 ## How many of an item one farm may have.
 func limit_of(id: String) -> int:
+	if game.is_building_item(id):
+		return game.building_def(id).limit()
 	match str(game.item_data(id).get("kind", "")):
 		"vehicle":
 			return Balance.i("buildings.limit_vehicle")
 		"decor":
 			return Balance.i("buildings.limit_decor")
-		"building", "crafting", "barn":
-			var def := game.building_def(id)
-			return def.limit() if def != null else Balance.i("buildings.default_limit")
 	return Balance.i("buildings.limit_living")
 
 

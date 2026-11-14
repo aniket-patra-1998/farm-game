@@ -31,7 +31,6 @@ const WITHERED_PLOTS := 4
 const PLOWED_PLOTS := 6
 ## Kinds that stand on the farm, in the order their zones are laid out (buildings first, decorations last).
 const ZONES: Array[String] = ["building", "vehicle", "tree", "animal", "decor"]
-const BUILDING_KINDS: Array[String] = ["building", "crafting", "barn"]
 const RUN_IDS := ["hedge", "white_picket_fence", "wooden_fence", "tall_wooden_fence", "stone_wall"]
 const RUN_LENGTH := 6   # tiles in a straight run of one fence kind in the showcase
 
@@ -134,7 +133,7 @@ static func _zone_items(g: GameState, zone: String) -> Array[String]:
 	for id in g.item_order:
 		var kind := str(g.items[id].get("kind", ""))
 		# Mystery young are small: they stand with the decorations; blooms grow with the trees.
-		if kind == zone or zone == "building" and BUILDING_KINDS.has(kind) or zone == "decor" and kind == "young" \
+		if kind == zone or zone == "building" and g.is_building_item(id) or zone == "decor" and kind == "young" \
 				or zone == "tree" and kind == "bloom":
 			out.append(id)
 	if zone == "building" or zone == "decor":
@@ -161,7 +160,7 @@ static func _place(g: GameState, id: String, row: int, col: int, now: int) -> vo
 	g.next_uid += 1
 	if kind == "crafting":
 		obj["slots"] = []
-	if BUILDING_KINDS.has(kind):
+	if g.is_building_item(id):
 		obj["level"] = g.max_level(id)
 		obj["inside"] = {}
 		var sites := g.objects.filter(func(o: Dictionary) -> bool: return o["id"] == SITE).size()

@@ -146,28 +146,36 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 	hud._show_market()
 	var tabs: Array = book.get("_tabs")
 	_eq(tabs.size(), HudMarket.SHELVES.size() + 2, "Seeds, a shelf per kind and Specials")
+	# Every building for sale is in exactly one section, every other item on its kind's shelf: counted from
+	# the catalog's classes, not from the Market's own lists.
+	var sections := {}
+	for tab: Array in HudMarket.BUILDING_TABS:
+		for id in hud.market.building_section(str(tab[0])):
+			sections[id] = int(sections.get(id, 0)) + 1
+	var want := {}
+	var filled := 0
+	for tab: Array in HudMarket.BUILDING_TABS:
+		filled += 1 if not hud.market.building_section(str(tab[0])).is_empty() else 0
 	for id in Game.item_order:
 		var it := Game.item_data(id)
-		if str(it["kind"]) in HudMarket.BUILDING_KINDS and int(it["unlock_level"]) < 99:
-			var shown := false
-			for tab: Array in HudMarket.BUILDING_TABS:
-				shown = shown or hud.market.shelf_items("building", str(tab[0])).has(id)
-			_check(shown, "%s is in a section of the Buildings shelf" % id)
+		if int(it["unlock_level"]) >= 99:
+			continue
+		var shelf := "building" if Game.catalog.get_def(id) is BuildingDef else str(it["kind"])
+		want[shelf] = int(want.get(shelf, 0)) + 1
+		if shelf == "building":
+			_eq(int(sections.get(id, 0)), 1, "%s is in exactly one section of the Buildings shelf" % id)
 	for k in range(1, HudMarket.SHELVES.size() + 1):
 		book.show_tab(k)
 		var kind := str(HudMarket.SHELVES[k - 1][0])
-		var want := 0
-		for tab: Array in HudMarket.BUILDING_TABS if kind == "building" else [[""]]:
-			want += hud.market.shelf_items(kind, str(tab[0])).size()
-		if kind != "building":
-			for id in Game.item_order:
-				_check(Game.item_data(id)["kind"] != kind or int(Game.item_data(id)["unlock_level"]) >= 99
-					or hud.market.shelf_items(kind, "").has(id), "%s is on the %s shelf" % [id, kind])
 		var cards := 0
+		var grids := 0
 		for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
 			if not grid.is_queued_for_deletion():
 				cards += grid.get_child_count()
-		_eq(cards, want, "the %s shelf has a card for each" % kind)
+				grids += 1
+		_eq(cards, int(want.get(kind, 0)), "the %s shelf has a card for each" % kind)
+		if kind == "building":
+			_eq(grids, filled, "a grid under a heading for each section that has buildings")
 	var placed := []
 	hud.place_requested.connect(func(id: String) -> void: placed.append(id))
 	book.show_tab(HudMarket.SHELVES.find(["decor", "DECORATIONS"]) + 1)

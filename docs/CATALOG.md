@@ -146,7 +146,7 @@ Holds animals, trees or vehicles; may be built from a frame and grown size by si
 |---|---|---|---|---|
 | `cycle_seconds` | int | 86400 |  | Time between collections. |
 | `sizes` | list<size> |  | yes | One record per size, smallest first: capacity (what it holds), name (shown; defaults to the building's), and what reaching it from the size before takes: materials, or for a crafting building's stars, coins and recipe_stars (or gems instead). |
-| `tab` | enum of animal, storage, crafting, decor | "animal" |  | Its Market tab, as FarmVille sorted buildings: Animal, Storage, Crafting, Decorative. |
+| `tab` | enum of animal, storage, crafting, decor |  | yes | Its Market section, as FarmVille sorted buildings: Animal, Storage, Crafting, Decorative. Required (a family's defaults may set it), so every new building chooses its section. |
 | `limit` | int | 2 |  | How many one farm may have. Two of each for now (BuildingDef.DEFAULT_LIMIT); the other kinds have theirs in BuildingSystem. |
 | `limit_group` | string |  |  | Buildings sharing a limit (FarmVille: 3 crafting buildings in all). |
 | `group_limit` | int |  |  | How many of the group one farm may have. |
@@ -965,7 +965,7 @@ Shared: `tab` = "storage"
 | ✅ | Garage | `garage` | 22 | 50,000 | 3x3 | 20 | storage | 2 | frame | garage |
 | ✅ | Garden Shed (FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built) | `garden_shed` | 4 | 30,000 | 2x1 | 100 | storage | 2 |  | garden_shed |
 | ✅ | Gopher Garden | `gopher_garden` | 6 | 8,000 | 2x2 | 1 / 4 / 10 / 20 | storage | 1 |  | finds_home |
-| ✅ | Dog House | `dog_house` | 10 | 12,000 | 2x2 | 1 / 4 / 10 / 20 | storage | 1 |  | finds_home |
+| ✅ | Dog House | `dog_house` | 10 | 12,000 | 2x2 | 1 / 4 / 10 / 20 | animal | 1 |  | finds_home |
 | 🕓 | Storage Shed | `storage_shed` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Silo | `silo` | 1 |  |  |  |  |  |  |  |
 

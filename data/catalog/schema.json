@@ -318,8 +318,8 @@
             "crafting",
             "decor"
           ],
-          "default": "animal",
-          "doc": "Its Market tab, as FarmVille sorted buildings: Animal, Storage, Crafting, Decorative."
+          "required": true,
+          "doc": "Its Market section, as FarmVille sorted buildings: Animal, Storage, Crafting, Decorative. Required (a family's defaults may set it), so every new building chooses its section."
         },
         "limit": {
           "type": "int",

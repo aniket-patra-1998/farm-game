@@ -64,6 +64,8 @@ static var _meshes := {}     # key -> Mesh (shared unit shapes)
 static var _white := {}   # material id -> [white twin, colour]
 ## Whether `bake` gives big meshes simpler levels of detail (off for one-off close-ups such as item pictures).
 static var lods := true
+## The last value each global shader value was set to through `set_global` (the engine can't be asked cheaply).
+static var globals := {}
 
 
 # ---------------------------------------------------------------- materials
@@ -330,7 +332,13 @@ static func glass() -> StandardMaterial3D:
 static func set_window_glow(glow: float) -> void:
 	glass().emission_energy_multiplier = glow * GLASS_GLOW
 	glow_material().set_shader_parameter("strength", glow)
-	RenderingServer.global_shader_parameter_set(&"dark", glow)  # butterflies and fireflies read it too
+	set_global(&"dark", glow)  # butterflies and fireflies read it too
+
+
+## Sets a global shader value and remembers it in `globals` (for code that must know it, as item pictures do).
+static func set_global(name: StringName, value: Variant) -> void:
+	globals[name] = value
+	RenderingServer.global_shader_parameter_set(name, value)
 
 
 ## The shared material of every pool of light a lit window or door throws on the ground (shaders/glow3d).

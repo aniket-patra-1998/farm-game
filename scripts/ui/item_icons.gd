@@ -77,8 +77,7 @@ static func _next() -> String:
 ## Whether the farm looks as it does on a dry, clear day (a picture made now may be kept).
 static func _calm() -> bool:
 	for mood in MOODS:
-		var v: Variant = RenderingServer.global_shader_parameter_get(mood)
-		if v is float and float(v) > CALM:
+		if float(ModelKit.globals.get(mood, 0.0)) > CALM:
 			return false
 	return true
 

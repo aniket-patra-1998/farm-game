@@ -10,7 +10,6 @@ const SHELVES := [["tree", "TREES"], ["bloom", "BLOOMS"], ["animal", "ANIMALS"],
 ## among them.
 const BUILDING_TABS := [["animal", "ANIMAL_BUILDINGS"], ["storage", "STORAGE_BUILDINGS"],
 	["crafting", "CRAFTING"], ["decor", "DECORATIVE_BUILDINGS"]]
-const BUILDING_KINDS := ["building", "barn", "crafting"]
 
 var hud: FarmHud
 
@@ -41,29 +40,36 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	content.add_child(strip)
 	var tell := func(id: String, it: Dictionary, why: String) -> void: show_about(strip, about, id, it, why)
 	if kind != "building":
-		_add_grid(content, shelf_items(kind, ""), tell)
+		_add_grid(content, shelf_items(kind), tell)
 		return
 	for section: Array in BUILDING_TABS:
-		var ids := shelf_items(kind, str(section[0]))
+		var ids := building_section(str(section[0]))
 		if ids.is_empty():
 			continue
-		content.add_child(BookPanel.text(tr(str(section[1])), 22, BookPanel.SUN))
+		content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.size("font_section")), BookPanel.SUN))
 		_add_grid(content, ids, tell)
 
 
-## The items on a shelf, in catalog order (`tab`: only buildings of that section; "" for any).
-func shelf_items(kind: String, tab: String) -> Array[String]:
+## The items of one kind for sale, in catalog order (buildings have their own sections: building_section).
+func shelf_items(kind: String) -> Array[String]:
 	var out: Array[String] = []
 	for id in Game.item_order:
-		var it := Game.item_data(id)
-		if int(it["unlock_level"]) >= 99:
-			continue
-		if kind == "building":
-			if str(it["kind"]) in BUILDING_KINDS and Game.building_def(id).tab() == tab:
-				out.append(id)
-		elif it["kind"] == kind:
+		if Game.item_data(id)["kind"] == kind and not Game.is_building_item(id) and _for_sale(id):
 			out.append(id)
 	return out
+
+
+## The buildings for sale in one section of the Buildings shelf (their catalog `tab`), in catalog order.
+func building_section(tab: String) -> Array[String]:
+	var out: Array[String] = []
+	for id in Game.item_order:
+		if Game.is_building_item(id) and _for_sale(id) and Game.building_def(id).tab() == tab:
+			out.append(id)
+	return out
+
+
+static func _for_sale(id: String) -> bool:
+	return int(Game.item_data(id)["unlock_level"]) < 99
 
 
 func _add_grid(content: VBoxContainer, ids: Array[String], tell: Callable) -> void:

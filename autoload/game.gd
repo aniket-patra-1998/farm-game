@@ -524,6 +524,13 @@ func building_def(id: String) -> BuildingDef:
 	return catalog.get_def(id) as BuildingDef
 
 
+## Whether an item is a building (its catalog class is BuildingDef or one of its kinds: BarnDef, CraftingDef...).
+## The one test of it: the Market, the limits and the showcase all ask here (`is_building` asks something
+## else: whether a placed object is an animal home).
+func is_building_item(id: String) -> bool:
+	return building_def(id) != null
+
+
 func under_construction(obj: Dictionary) -> bool:
 	return obj.has("construction")
 

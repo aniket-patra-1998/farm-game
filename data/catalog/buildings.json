@@ -600,6 +600,7 @@
         {
           "id": "windmill",
           "name": "Windmill",
+          "tab": "decor",
           "note": "grinds grain into flour",
           "status": "planned"
         }
@@ -973,6 +974,7 @@
         {
           "id": "dog_house",
           "name": "Dog House",
+          "tab": "animal",
           "unlock_level": 10,
           "cost": 12000,
           "limit": 1,
