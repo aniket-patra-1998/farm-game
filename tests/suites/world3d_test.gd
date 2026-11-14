@@ -1577,6 +1577,14 @@ func test_321_ready_buildings_sparkle_and_the_broken_barn_looks_broken() -> void
 	tree["t"] = Game.now()
 	objects.sync()
 	_eq(objects.ready_marks(), 1, "collected: their signs go, the cow's stays")
+	# The cow's sign walks with it.
+	var marks: ReadyMarks = objects.get("_ready_marks")
+	var beast: Animal3D = (objects.get("_views") as Dictionary)[9407]["node"]
+	beast.position += Vector3(1.5, 0, 0.5)
+	marks.follow_animals()
+	var sign_at := marks.where(0)
+	var want := beast.position + Vector3(0, beast.reach().y + ReadyMarks.ABOVE, 0)
+	_check(sign_at.is_equal_approx(want), "the cow's sign is over the cow after it walks (%s, %s)" % [sign_at, want])
 	objects.queue_free()
 	# The broken Barn.
 	var it := Game.item_data("barn")

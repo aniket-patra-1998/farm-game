@@ -166,6 +166,13 @@ func test_160_the_field_changes_under_the_wheels_as_the_vehicle_passes() -> void
 	g.vehicles.run_finished.connect(func(run: VehicleWork) -> void: finished.append(int(run.result["plots"])))
 	var run := g.vehicles.dispatch("tractor", 8, 8)
 	_check(run != null and g.vehicles.is_running("tractor"), "the tractor sets off")
+	var tractor := {}
+	for o in g.objects:
+		if str(o["id"]) == "tractor":
+			tractor = o
+	if not tractor.is_empty():
+		_eq(g.buildings.can_move(tractor).why, BuildingSystem.Why.AT_WORK, "a tractor at work can't be picked up")
+		_check(g.buildings.can_move(tractor).text != "", "and says why")
 	_eq(_plowed(g, 8, 8, 2, 2), 0, "nothing is plowed the moment it sets off")
 	_eq(g.coins, coins, "and nothing is paid yet")
 	_check(g.vehicles.dispatch("tractor", 10, 10) == null, "it can't be sent twice at once")

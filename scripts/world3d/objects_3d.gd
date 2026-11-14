@@ -11,6 +11,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const NEVER_READY := ["decor", "vehicle", "barn"]   # what never has anything to collect (no ready sign)
 const DRESSING := ^"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
 const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
 const GROUP := &"objects_3d"   # every Objects3D, for until_settled
@@ -190,7 +191,7 @@ func _mark_ready() -> void:
 	var animals: Array[Animal3D] = []
 	for o in Game.objects:
 		var uid := int(o["uid"])
-		if not _views.has(uid):
+		if NEVER_READY.has(Game.kind_of(o)) or not _views.has(uid):
 			continue
 		if Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0):
 			var node: Node3D = _views[uid]["node"]

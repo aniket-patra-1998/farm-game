@@ -81,7 +81,8 @@ func build_building(content: VBoxContainer) -> void:
 
 ## The top of every building's panel: its picture, its state in a line, and what can be done to it
 ## wherever it stands (Move, Turn, Sell), each asking the building rules (Game.buildings) as it is built, so
-## the panel never repeats a rule and a refusal is explained before the tap. Selling asks twice.
+## the panel never repeats a rule and a refusal is explained before the tap. Selling asks twice. (The verdicts are
+## taken when the panel is built; selling and turning ask again when tapped.)
 func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 	var uid := int(o["uid"])
 	var row := HBoxContainer.new()
@@ -111,10 +112,8 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 		if hud.grid != null:
 			hud.grid.start_placing(str(o["id"]), uid))
 	buttons.add_child(move)
-	var turn_ok := Game.buildings.can_rotate(o)
-	if turn_ok.why != BuildingSystem.Why.NOT_SQUARE:
+	if Game.buildings.can_rotate(o).ok():   # (one that can never turn has no Turn button)
 		var turn := hud._panel_button(tr("TURN"))
-		turn.disabled = not turn_ok.ok()
 		turn.pressed.connect(func() -> void: Game.rotate_object(uid))
 		buttons.add_child(turn)
 	var sell_ok := Game.buildings.can_sell(o)

@@ -251,7 +251,7 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 	for word: String in [tr("TOOL_MOVE"), tr("TOOL_SELL")]:
 		_check(buttons.has(word), "the panel offers %s" % word)
 	var turn := Game.buildings.can_rotate(coop)
-	_eq(buttons.has(tr("TURN")), turn.why != BuildingSystem.Why.NOT_SQUARE,
+	_eq(buttons.has(tr("TURN")), turn.ok(),
 		"Turn is offered only to what can ever turn")
 	if buttons.has(tr("TURN")):
 		var was := bool(coop.get("flip", false))

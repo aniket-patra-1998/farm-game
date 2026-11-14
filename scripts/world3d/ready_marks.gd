@@ -15,6 +15,8 @@ var _material: ShaderMaterial
 var _tops: Array[Vector3] = []          # signs over what stands still
 var _animals: Array[Animal3D] = []      # and over these, wherever they walk
 var _zoom := -1.0
+var _animal_at: Array[Vector3] = []     # where each animal was when its sign was last put
+var _where: Array[Vector3] = []         # where each sign is (a CPU copy: the GPU's can't be read back everywhere)
 
 
 func _ready() -> void:
@@ -40,26 +42,42 @@ func show_at(tops: Array[Vector3], animals: Array[Animal3D] = []) -> void:
 	_tops = tops.duplicate()
 	_animals = animals.duplicate()
 	multimesh.instance_count = tops.size() + animals.size()
+	_where.resize(multimesh.instance_count)
 	for k in tops.size():
 		_put(k, tops[k], fposmod(tops[k].x * 0.37 + tops[k].z * 0.61, 1.0))
+	_animal_at.resize(animals.size())
+	for k in animals.size():
+		_animal_at[k] = Vector3.INF
+		multimesh.set_instance_custom_data(tops.size() + k, Color(fposmod(k * 0.618, 1.0), 0, 0, 0))
+		multimesh.set_instance_color(tops.size() + k, Color.WHITE)
 	follow_animals()
 	visible = multimesh.instance_count > 0
 
 
-## Moves the animals' signs to where the animals are now (each frame; only the ready ones have a sign).
+## Moves the animals' signs to where the animals are now (each frame; only ready animals have one, and only one
+## that has moved is touched).
 func follow_animals() -> void:
 	var first := _tops.size()
 	for k in _animals.size():
 		var a := _animals[k]
-		if is_instance_valid(a):
-			_put(first + k, a.position + Vector3(0, a.reach().y, 0), fposmod(a.get_instance_id() * 0.618, 1.0))
+		if not is_instance_valid(a) or a.position.is_equal_approx(_animal_at[k]):
+			continue
+		_animal_at[k] = a.position
+		_where[first + k] = a.position + Vector3(0, a.reach().y + ABOVE, 0)
+		multimesh.set_instance_transform(first + k, Transform3D(Basis.IDENTITY, _where[first + k]))
 
 
 ## Sign `k` over `top`, bobbing at `phase` (0..1: a thing keeps its own beat, so they don't bob in step).
 func _put(k: int, top: Vector3, phase: float) -> void:
-	multimesh.set_instance_transform(k, Transform3D(Basis.IDENTITY, top + Vector3(0, ABOVE, 0)))
+	_where[k] = top + Vector3(0, ABOVE, 0)
+	multimesh.set_instance_transform(k, Transform3D(Basis.IDENTITY, _where[k]))
 	multimesh.set_instance_custom_data(k, Color(phase, 0, 0, 0))
 	multimesh.set_instance_color(k, Color.WHITE)
+
+
+## Where sign `k` hovers (the still ones first, then the animals').
+func where(k: int) -> Vector3:
+	return _where[k]
 
 
 ## How many signs are showing.

@@ -609,7 +609,15 @@ func _tile_at_screen(screen_pos: Vector2) -> Vector2i:
 # ---------------------------------------------------------------- placing and moving
 
 
+## Picks up something to place: a new item (`uid` -1), or one on the farm, which goes only if the rules let it
+## move (Game.buildings.can_move); otherwise the reason is shown. Every way of moving (the Move tool, holding
+## to lift, a building's panel) comes through here.
 func start_placing(item_id: String, uid := -1) -> void:
+	if uid != -1:
+		var verdict := Game.buildings.can_move(Game.object_by_uid(uid))
+		if not verdict.ok():
+			info.emit(verdict.text)
+			return
 	placement.start(item_id, uid)
 
 
@@ -959,11 +967,7 @@ func _act_on_object(obj: Dictionary, first_touch: bool) -> void:
 		return
 	if tool == "move":
 		if first_touch:
-			var verdict := Game.buildings.can_move(obj)
-			if verdict.ok():
-				start_placing(obj["id"], uid)
-			else:
-				info.emit(verdict.text)
+			start_placing(obj["id"], uid)
 		return
 	var supply := Game.nurture.supply_for(obj)
 	if supply != "":

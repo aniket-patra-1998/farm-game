@@ -12,7 +12,7 @@ extends GameSystem
 
 enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, MATERIALS, SOMEONE_INSIDE, KEPT,
 	REQUIRES, OFF_FARM, TAKEN, PLANTED, CROWDED, WRONG_KIND, FULL, NOT_BUILT, HAS_ONE, BARN_BROKEN, BUILD_FIRST,
-	CANT_STORE, NOT_A_FRAME, NOT_SQUARE, AT_WORK }
+	CANT_STORE, NOT_A_FRAME, NOT_TURNABLE, AT_WORK }
 
 ## How a home's fit (HousingSystem.Fit, what lights homes up while dragging) reads as a rule's answer.
 const FIT_WHY := {
@@ -197,7 +197,10 @@ func can_place(item_id: String, row: int, col: int, ignore_uid := -1, strict := 
 				tr("SOMETHING"))))
 		Why.PLANTED:
 			return Verdict.new(why, tr("PLACE_PLANTED"))
-	return Verdict.new(why, tr("PLACE_CROWDED"))
+		Why.CROWDED:
+			return Verdict.new(why, tr("PLACE_CROWDED"))
+	assert(false, "can_place: no message for reason %d" % why)   # not-ui
+	return Verdict.new(why)
 
 
 ## The reason alone (no message): what whole-farm scans and per-frame checks ask (Game.can_place), so they
@@ -285,11 +288,12 @@ func can_finish(b: Dictionary) -> Verdict:
 ## Can `o` be turned? Only square things turn (so nothing changes size), and a building only if its data says so.
 func can_rotate(o: Dictionary) -> Verdict:
 	if not game.can_rotate(o):
-		return Verdict.new(Why.NOT_SQUARE, tr("BUILDINGS_AND_BIG_PIECES_CAN_T"))
+		return Verdict.new(Why.NOT_TURNABLE, tr("BUILDINGS_AND_BIG_PIECES_CAN_T"))
 	return yes()
 
 
-## Can `o` be picked up and moved? Anything can, as in FarmVille (the Barn too), except a vehicle out at work.
+## Can `o` be picked up and moved? Anything can, as in FarmVille (the Barn too), except a vehicle out at work
+## (a farm has one of each vehicle, so its id names it: see limit_of).
 func can_move(o: Dictionary) -> Verdict:
 	if o.is_empty():
 		return Verdict.new(Why.UNKNOWN)
