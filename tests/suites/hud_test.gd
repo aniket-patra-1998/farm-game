@@ -46,3 +46,20 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 	await get_tree().process_frame
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_146_the_perf_readout_counts_frames_and_is_kept_switched() -> void:
+	var r := PerfReadout.new()
+	add_child(r)
+	for k in 10:
+		r._process(0.02)
+	var text := r.text_now()
+	_check(text.contains("20.0"), "ten 20 ms frames read as 20.0 ms (%s)" % text.replace("\n", " | "))
+	r._process(0.1)
+	_check(r.text_now().contains("100.0"), "the worst frame shows")
+	r.free()
+	var was := PerfReadout.wanted()
+	PerfReadout.set_wanted(true)
+	_check(PerfReadout.wanted(), "switched on, it stays on (in a debug build)")
+	PerfReadout.set_wanted(was)
+	_eq(PerfReadout.wanted(), was, "and back")

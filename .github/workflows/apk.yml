@@ -1,0 +1,109 @@
+name: Debug APK
+
+# A debug build to install on a phone, for measuring on real hardware (Settings > Testing > Show performance
+# numbers). Built on every push to main and on demand; download it from the run's "farm-game-debug-apk" artifact.
+# It is its own app (com.example.farmgame.debug), signed with a debug key kept in the Actions cache, so a new
+# build installs over the last one; if the cache has expired, uninstall the old one first.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true   # only the newest push's build matters
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GODOT_VERSION: 4.7.2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot and its export templates
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            godot-bin
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-linux-templates
+
+      - name: Download Godot and its export templates
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          fetch() {  # url file: retried, and a broken zip counts as a failure
+            for attempt in 1 2 3 4 5; do
+              if curl -fsSL --retry 3 --retry-delay 5 -o "$2" "$1" && unzip -tq "$2" > /dev/null; then return 0; fi
+              echo "Download attempt $attempt of $1 failed; retrying in 15 s"; rm -f "$2"; sleep 15
+            done
+            return 1
+          }
+          mkdir -p godot-bin
+          fetch "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" godot.zip
+          unzip -q godot.zip && mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot && chmod +x godot-bin/godot
+          fetch "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" templates.tpz
+          dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$dest"
+          unzip -q templates.tpz -d tpl && mv tpl/templates/* "$dest"/
+          ls "$dest" | grep -i android
+
+      - name: Debug signing key (kept between runs)
+        id: key
+        uses: actions/cache@v4
+        with:
+          path: debug.keystore
+          key: android-debug-keystore-v1
+
+      - name: Make the debug signing key
+        if: steps.key.outputs.cache-hit != 'true'
+        run: |
+          keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey \
+            -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Point Godot at the Android SDK and Java
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.tres <<EOT
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
+          export/android/java_sdk_path = "$JAVA_HOME_17_X64"
+          EOT
+          cp ~/.config/godot/editor_settings-4.tres ~/.config/godot/editor_settings-4.7.tres
+
+      - name: Import project
+        run: |
+          set +e
+          ./godot-bin/godot --headless --path . --import > import.log 2>&1
+          code=$?
+          set -e
+          tail -20 import.log
+          if [ "$code" -ge 128 ]; then echo "The import crashed (exit code $code)"; exit 1; fi
+
+      - name: Export the debug APK
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ github.workspace }}/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          mkdir -p build
+          ./godot-bin/godot --headless --path . --export-debug "Android (debug APK)" build/farm-game-debug.apk 2>&1 \
+            | tee export.log
+          test -s build/farm-game-debug.apk || { echo "No APK was made"; exit 1; }
+          ls -l build/farm-game-debug.apk
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: farm-game-debug-apk
+          path: build/farm-game-debug.apk
+          retention-days: 14

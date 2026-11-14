@@ -44,7 +44,8 @@ func build_settings(content: VBoxContainer) -> void:
 		content.add_child(showcase_card())
 
 
-## Debug builds only: switch to the farm with everything on it for testing, and back to your own.
+## Debug builds only: switch to the farm with everything on it for testing, and back to your own; and show the
+## performance numbers (PerfReadout).
 func showcase_card() -> PanelContainer:
 	var inner := BookPanel.card()
 	inner.add_theme_constant_override("separation", 10)
@@ -61,4 +62,13 @@ func showcase_card() -> PanelContainer:
 		else:
 			Game.open_showcase())
 	inner.add_child(go)
+	inner.add_child(BookPanel.text(tr("PERF_READOUT_HELP"), 18))
+	var perf := CheckButton.new()
+	perf.text = tr("PERF_READOUT_TOGGLE")
+	perf.button_pressed = PerfReadout.wanted()
+	perf.focus_mode = Control.FOCUS_NONE
+	perf.toggled.connect(func(on: bool) -> void:
+		PerfReadout.set_wanted(on)
+		PerfReadout.show_in(hud.get_tree(), on))
+	inner.add_child(perf)
 	return BookPanel.card_frame(inner)

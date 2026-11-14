@@ -33,6 +33,7 @@ var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 
 
 func _ready() -> void:
+	PerfReadout.show_in(get_tree(), PerfReadout.wanted())   # debug builds, when switched on in Settings
 	sky = SkyLayer.new()
 	add_child(sky)
 

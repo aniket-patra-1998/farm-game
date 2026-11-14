@@ -493,3 +493,9 @@ Level %d"
 "SOCIAL_COINS","%d coins"
 "SOCIAL_FUEL","%d fuel"
 "SOCIAL_WATERED","A watering for your seedling"
+"PERF_READOUT","%d fps · %.1f ms a frame (worst %.1f)
+%d draw calls · %dk triangles · %d objects
+%d MB video · %d MB memory
+%s · %d×%d"
+"PERF_READOUT_TOGGLE","Show performance numbers"
+"PERF_READOUT_HELP","Frames a second, draw calls and memory in the corner of the screen, for measuring on a phone."
