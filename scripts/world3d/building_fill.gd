@@ -402,7 +402,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 
 ## Stands the trees of an orchard: a few different trees of each kind (Instancer.VARIANTS) are built once and kept;
 ## every tree standing is a copy of one of them, turned and sized a little differently, drawn as one batch per
-## variant (Instancer). Zoomed far out each is drawn as a plain leafy blob instead (`_plant_lod`).
+## variant (Instancer). Zoomed far out each is drawn as its far look instead (`TreeModel.far_model`, `_plant_lod`).
 func _plant_trees(holder: Node3D, stand: Dictionary, ready: bool) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = uid
@@ -421,25 +421,11 @@ func _plant_trees(holder: Node3D, stand: Dictionary, ready: bool) -> void:
 				TreeModel.build_at(tree, Vector3.ZERO, it, size, ready, v * 977 + 1)
 				return ModelKit.bake(tree)), here))
 			var blob := Instancer.parts_of(Instancer.key_of([key, LOD_FAR_PPU]),
-				func() -> Node3D: return _blob(it, size))
+				func() -> Node3D: return TreeModel.far_model(it, size, v * 977 + 1))
 			var far := Instancer.place(holder, blob, here)
 			for node in far:
 				node.visible = false
 			_far_trees.append_array(far)
-
-
-## A tree seen from far away: a trunk and one faceted leafy clump (a few dozen triangles, not a thousand).
-static func _blob(it: Dictionary, size: float) -> Node3D:
-	var holder := Node3D.new()
-	var shape := TreeModel.shape_of(it)
-	var cr := float(shape.get("crown_r", TREE_CROWN)) * size
-	var ch := maxf(float(shape.get("crown_h", cr)) * size, cr * 0.6)
-	var trunk := maxf(float(shape.get("trunk_h", ch * 0.5)) * size, ch * 0.3)
-	ModelKit.cylinder(holder, Vector3.ZERO, float(shape.get("trunk_r", 0.05)) * size, trunk,
-		ModelKit.paint(Color("#6b4a2b")), -1.0, 5)
-	var leaf := Color.html(str(shape.get("leaf", "#4f8a3a")))
-	ModelKit.facet_ball(holder, Vector3(0, trunk + ch * 0.35, 0), cr, ModelKit.paint(leaf), Vector3(1, ch / cr, 1))
-	return ModelKit.bake(holder)
 
 
 ## Zoomed far out the orchard's trees are blobs; in close, trees.

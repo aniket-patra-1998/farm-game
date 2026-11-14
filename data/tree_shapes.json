@@ -99,11 +99,10 @@
   "apple": {
    "form": "round",
    "masses": 4,
-   "leaf": "#62b038",
+   "leaf": "#5cbf3a",
    "leaf_alts": [
-    "#4f9a3c",
-    "#7bbf4a",
-    "#3f8a48"
+    "#71cb52",
+    "#4fa432"
    ],
    "fruit_alts": [
     "#8cc63e",
@@ -114,46 +113,46 @@
   "lemon": {
    "form": "dense",
    "fruit_shape": "oval",
-   "leaf": "#a4c93a",
+   "leaf": "#3a9a9a",
    "leaf_alts": [
-    "#8fb83a",
-    "#6fb04a"
+    "#44b4b4",
+    "#308080"
    ]
   },
   "lime": {
    "form": "dense",
    "fruit_shape": "oval",
-   "leaf": "#4fae48",
+   "leaf": "#d8b840",
    "leaf_alts": [
-    "#3f9a4a",
-    "#68b84e"
+    "#dec35e",
+    "#cba929"
    ]
   },
   "orange": {
    "form": "dense",
-   "leaf": "#2f8f45",
+   "leaf": "#2f7a6a",
    "leaf_alts": [
-    "#2f7f45",
-    "#4aa04a"
+    "#399480",
+    "#256054"
    ]
   },
   "mandarin": {
    "form": "dense",
    "crown_r": 0.22,
-   "leaf": "#55b043",
+   "leaf": "#8a6ab8",
    "leaf_alts": [
-    "#46a048",
-    "#6ab84a"
+    "#9d82c4",
+    "#7752ac"
    ]
   },
   "grapefruit": {
    "form": "dense",
    "crown_r": 0.28,
    "fruit_size": 1.25,
-   "leaf": "#7ab843",
+   "leaf": "#b890c8",
    "leaf_alts": [
-    "#8fc24a",
-    "#5fa84a"
+    "#c7a8d4",
+    "#a978bc"
    ],
    "fruit_alts": [
     "#f08a8a",
@@ -165,12 +164,11 @@
    "tall": 1.3,
    "blossom": "#f7c6d9",
    "fruit_size": 0.7,
-   "leaf": "#5ca850",
+   "leaf": "#e08aa8",
    "shape": "umbrella",
    "leaf_alts": [
-    "#6a8a3a",
-    "#8a4a5a",
-    "#7ab05a"
+    "#e7a6bd",
+    "#d96e93"
    ],
    "fruit_alts": [
     "#d4283e",
@@ -180,11 +178,11 @@
   },
   "peach": {
    "form": "round",
-   "leaf": "#8cc24e",
+   "leaf": "#6ac0a0",
    "blossom": "#f6b3c4",
    "leaf_alts": [
-    "#a0c85a",
-    "#6fae48"
+    "#83cbb0",
+    "#51b590"
    ],
    "fruit_alts": [
     "#f7a05a",
@@ -193,12 +191,12 @@
   },
   "apricot": {
    "form": "round",
-   "leaf": "#b0cc58",
+   "leaf": "#c0d860",
    "blossom": "#fbe1e8",
    "shape": "teardrop",
    "leaf_alts": [
-    "#c6d060",
-    "#8cb84a"
+    "#cbdf7d",
+    "#b5d143"
    ],
    "fruit_alts": [
     "#f5b04a"
@@ -206,11 +204,11 @@
   },
   "plum": {
    "form": "oval",
-   "leaf": "#568a48",
+   "leaf": "#d8b040",
    "shape": "teardrop",
    "leaf_alts": [
-    "#6b4a7a",
-    "#5a8a52"
+    "#debc5e",
+    "#cba029"
    ],
    "fruit_alts": [
     "#7b3f8c",
@@ -220,12 +218,12 @@
   },
   "fig": {
    "form": "spreading",
-   "leaf": "#4f8f3a",
+   "leaf": "#6a9a6a",
    "crown_h": 0.22,
    "shape": "umbrella",
    "leaf_alts": [
-    "#6a9a3a",
-    "#3f7a3a"
+    "#7fa87f",
+    "#5b865b"
    ],
    "fruit_alts": [
     "#6d4c6f",
@@ -253,13 +251,13 @@
   },
   "avocado": {
    "form": "oval",
-   "leaf": "#2f7050",
+   "leaf": "#2a6a6a",
    "fruit_shape": "oval",
    "shine": 0.3,
    "shape": "columnar",
    "leaf_alts": [
-    "#3f8a52",
-    "#2a5a40"
+    "#348484",
+    "#205050"
    ]
   },
   "mango": {
@@ -267,16 +265,15 @@
    "masses": 9,
    "reach": 0.5,
    "flat": 0.7,
-   "leaf": "#3f8a3c",
+   "leaf": "#2f7a3a",
    "crown_r": 0.32,
    "crown_h": 0.36,
    "trunk_h": 0.3,
    "fruit_shape": "oval",
    "shape": "teardrop",
    "leaf_alts": [
-    "#4fa04a",
-    "#7a9a3a",
-    "#a84a2a"
+    "#399446",
+    "#25602e"
    ],
    "fruit_alts": [
     "#e8a030",
@@ -286,11 +283,11 @@
   },
   "pomegranate": {
    "form": "bushy",
-   "leaf": "#74b04a",
+   "leaf": "#b8c040",
    "blossom": "#e2452f",
    "leaf_alts": [
-    "#8abf4a",
-    "#b8a040"
+    "#c2c95b",
+    "#9fa637"
    ],
    "fruit_alts": [
     "#b8322a",
@@ -300,13 +297,13 @@
   "olive": {
    "form": "spreading",
    "tall": 0.7,
-   "leaf": "#94ad78",
+   "leaf": "#a8b898",
    "fruit_shape": "small",
    "trunk_r": 0.09,
    "shape": "umbrella",
    "leaf_alts": [
-    "#a8bf90",
-    "#7a9a6a"
+    "#bac7ad",
+    "#96a983"
    ],
    "fruit_alts": [
     "#3a3a2a",
@@ -315,11 +312,11 @@
   },
   "guava": {
    "form": "round",
-   "leaf": "#78b84e",
+   "leaf": "#c87890",
    "shape": "teardrop",
    "leaf_alts": [
-    "#8abf5a",
-    "#5aa04a"
+    "#d291a5",
+    "#be5f7b"
    ],
    "fruit_alts": [
     "#e87a8a",
@@ -328,31 +325,30 @@
   },
   "persimmon": {
    "form": "oval",
-   "leaf": "#62a63e",
+   "leaf": "#b8343a",
    "shape": "teardrop",
    "leaf_alts": [
-    "#d89a3a",
-    "#c8622a",
-    "#8abf4a"
+    "#ca454b",
+    "#9c2c31"
    ]
   },
   "starfruit": {
    "form": "spreading",
-   "leaf": "#5cbf5c",
+   "leaf": "#3a8aa8",
    "fruit_shape": "oval",
    "shape": "umbrella",
    "leaf_alts": [
-    "#7ac86a",
-    "#4aaa4a"
+    "#469ebf",
+    "#31748d"
    ]
   },
   "passion_fruit": {
    "form": "bushy",
-   "leaf": "#3f9a4a",
+   "leaf": "#98d040",
    "blossom": "#b48ae0",
    "leaf_alts": [
-    "#5aaa5a",
-    "#2f8a4a"
+    "#a7d75d",
+    "#86be2f"
    ],
    "fruit_alts": [
     "#7b3f8c",
@@ -362,24 +358,23 @@
   "jackfruit": {
    "form": "oval",
    "tall": 1.25,
-   "leaf": "#3a7a3a",
+   "leaf": "#c89030",
    "fruit_shape": "big",
    "trunk_r": 0.08,
    "shape": "columnar",
    "leaf_alts": [
-    "#4a8a4a",
-    "#2f6a3a"
+    "#d3a048",
+    "#ab7b29"
    ]
   },
   "asian_pear": {
    "form": "oval",
    "blossom": "#ffffff",
-   "leaf": "#9ccb4e",
+   "leaf": "#e07a5a",
    "shape": "teardrop",
    "leaf_alts": [
-    "#c8c850",
-    "#e8a040",
-    "#7ab04a"
+    "#e69278",
+    "#da623c"
    ],
    "fruit_alts": [
     "#d8c060",
@@ -388,43 +383,43 @@
   },
   "tamarind": {
    "form": "spreading",
-   "leaf": "#7fae3e",
+   "leaf": "#8ac040",
    "fruit_shape": "long",
    "shape": "umbrella",
    "leaf_alts": [
-    "#9abe4e",
-    "#6a9a3a"
+    "#9ac95b",
+    "#77a637"
    ]
   },
   "almond": {
    "form": "round",
    "blossom": "#fbe9ef",
    "fruit_shape": "small",
-   "leaf": "#82bf5e",
+   "leaf": "#f0c0d0",
    "shape": "columnar",
    "leaf_alts": [
-    "#a8c870",
-    "#6aa850"
+    "#f7dde6",
+    "#e9a3ba"
    ]
   },
   "walnut": {
    "form": "spreading",
-   "leaf": "#5a9a3a",
+   "leaf": "#7a8a3a",
    "fruit_shape": "small",
    "crown_r": 0.38,
    "shape": "layers",
    "leaf_alts": [
-    "#7aaa4a",
-    "#9aa83a"
+    "#90a345",
+    "#64712f"
    ]
   },
   "cashew": {
    "form": "spreading",
-   "leaf": "#6aa84a",
+   "leaf": "#4a9a8a",
    "shape": "umbrella",
    "leaf_alts": [
-    "#8ab85a",
-    "#c89a3a"
+    "#59af9e",
+    "#3e8274"
    ],
    "fruit_alts": [
     "#e8a040",
@@ -433,43 +428,43 @@
   },
   "chestnut": {
    "form": "round",
-   "leaf": "#4a8a3a",
+   "leaf": "#c8862e",
    "fruit_shape": "small",
    "crown_r": 0.3,
    "shape": "layers",
    "leaf_alts": [
-    "#a8a030",
-    "#5a9a3a"
+    "#d49745",
+    "#ab7327"
    ]
   },
   "hazelnut": {
    "form": "bushy",
-   "leaf": "#70a844",
+   "leaf": "#b85a2e",
    "fruit_shape": "small",
    "leaf_alts": [
-    "#8aba54",
-    "#b8a040"
+    "#ce6a3c",
+    "#9b4c27"
    ]
   },
   "pecan": {
    "form": "oval",
    "tall": 1.3,
-   "leaf": "#4f9a42",
+   "leaf": "#8a7aa8",
    "fruit_shape": "small",
    "trunk_h": 0.48,
    "shape": "columnar",
    "leaf_alts": [
-    "#6aaa52",
-    "#8a9a3a"
+    "#9d90b6",
+    "#77659a"
    ]
   },
   "pistachio": {
    "form": "bushy",
-   "leaf": "#9ab864",
+   "leaf": "#a8c870",
    "fruit_shape": "small",
    "leaf_alts": [
-    "#b8cc78",
-    "#8aa854"
+    "#b8d28a",
+    "#98be56"
    ]
   },
   "oak_tree": {
@@ -517,5 +512,6 @@
     "#7ab050"
    ]
   }
- }
+ },
+ "_leaf_doc": "Each kind has its own leaf colour (FarmVille's crowns were all sorts of colours, few of them plain green), chosen to stand apart from its fruit; leaf_alts are a lighter and a darker of it, so trees of one kind are not clones."
 }

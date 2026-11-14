@@ -55,6 +55,7 @@ static func clean(raw: Variant) -> Dictionary:
 	out["collab"] = bool(d.get("collab", false))
 	out["ref"] = int(d.get("ref", 0))
 	out["need"] = int(d.get("need", 0))
+	out["to"] = int(d.get("to", ME))
 	var answers: Array = []
 	var saved: Variant = d.get("answers", [])
 	if saved is Array:

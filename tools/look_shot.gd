@@ -1,6 +1,7 @@
 extends Node
-## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes six pictures
-## (all, buildings, trees_animals, crops, fences, garage) into the folder given by --out=<dir> (default ci_shots/look).
+## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes eight pictures
+## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage) into the folder given by --out=<dir>
+## (default ci_shots/look).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
 ## tools/look_compare.py joins two such folders side by side.
@@ -32,6 +33,10 @@ func _ready() -> void:
 	var run := _centre_of(func(o: Dictionary) -> bool: return ShowcaseFarm.RUN_IDS.has(str(o["id"])))
 	if run.x >= 0:
 		views.append(["fences", run.x, run.y, 1.4])
+	var orchard := _centre_of(func(o: Dictionary) -> bool: return str(o["id"]) == "orchard")
+	if orchard.x >= 0:
+		views.append(["orchard", orchard.x, orchard.y, 1.5])
+		views.append(["orchard_far", orchard.x, orchard.y, 0.3])   # far enough for its trees' far look
 	var garage := _centre_of(func(o: Dictionary) -> bool: return str(o["id"]) == "garage")
 	if garage.x >= 0:
 		views.append(["garage", garage.x, garage.y, 1.8])

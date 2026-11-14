@@ -164,17 +164,34 @@ func _advance(o: Dictionary) -> Dictionary:
 ## A neighbour gives you a young one (a Mystery Baby, Seedling or Bulb), secretly set to become something from
 ## the usual kinds. Returns whether one arrived.
 func give_young(young_id: String) -> bool:
+	if not game.catalog.defs.has(young_id):
+		return false
+	var kind := (game.catalog.defs[young_id] as YoungDef).grows()
 	var becomes := ""
-	match young_id:
-		SEEDLING:
-			becomes = _pick_tree({})
-		BABY:
-			becomes = _pick_animal({})
-		BULB:
-			becomes = _pick_bloom({})
-	if becomes == "" and game.catalog.defs.has(young_id):
-		becomes = first_of((game.catalog.defs[young_id] as YoungDef).grows())   # nothing to go by: the first kind
+	if kind == "bloom":
+		becomes = _pick_bloom({})
+	else:
+		var pool := _rare_free(kind)
+		if not pool.is_empty():
+			var id: String = pool[game.rng.randi_range(0, pool.size() - 1)]
+			becomes = _pick_tree({id: 1}) if kind == "tree" else _pick_animal({id: 1})
 	return becomes != "" and _found(young_id, becomes)
+
+
+## Every grown kind of `kind` (tree, animal) that is not itself a rare find or a young one: what a mystery from a
+## neighbour may turn out to be (a tree's rare sapling still comes by its own chance, in `_pick_tree`).
+func _rare_free(kind: String) -> Array[String]:
+	var rares := {}
+	for k in game.item_order:
+		var rare := str(game.item_data(k).get("rare_sapling", ""))
+		if rare != "":
+			rares[rare] = true
+	var out: Array[String] = []
+	for k in game.item_order:
+		var it := game.item_data(k)
+		if str(it.get("kind", "")) == kind and not bool(it.get("young", false)) and not rares.has(k):
+			out.append(k)
+	return out
 
 
 ## Upgrades a Single Bloom on the farm to its Full Bloom with gems (FarmVille's Farm Cash). Returns whether

@@ -48,6 +48,9 @@ func answers_for(post: Dictionary, now: int) -> Array[Dictionary]:
 	var rng := _rng([int(post.get("id", 0)), int(post.get("t", 0))])
 	var order := range(cast.size())
 	_shuffle(order, rng)
+	var to := int(post.get("to", InboxItem.ME))
+	if to >= 0 and to < cast.size():
+		order = [to]           # a gift is thanked by the neighbour it went to
 	var kind := str(post.get("kind", ""))
 	var give: Dictionary = post.get("give", {})
 	if kind == InboxItem.GIFT and rng.randf() >= Balance.f("social.thanks_chance"):

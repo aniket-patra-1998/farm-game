@@ -1298,17 +1298,26 @@ func test_312_gophers_and_dogs_stand_in_their_yard_clear_of_the_building() -> vo
 	_check(homes >= 2, "a gopher yard and a dog house were checked (%d)" % homes)
 
 
-func test_313_every_leafy_tree_shows_a_trunk_and_has_a_capped_crown() -> void:
-	# The rule: a crown is never wider than CROWN_R_MAX, and the trunk is at least TRUNK_SHARE of the height.
-	for crown_r in [0.2, 0.45, 0.6, 0.9]:
-		for crown_h in [0.1, 0.25, 0.5]:
-			for trunk_h in [0.05, 0.3, 0.6]:
-				var sh := {"crown_r": crown_r, "crown_h": crown_h, "trunk_h": trunk_h}
-				TreeModel._proportion(sh)
-				_check(float(sh["crown_r"]) <= TreeModel.CROWN_R_MAX + 0.0001, "crown %s capped" % crown_r)
-				var v: float = maxf(float(crown_h) * 0.5, float(sh["crown_r"]) * 0.4) * TreeModel.CROWN_LOBE_REACH
-				var centre: float = float(sh["trunk_h"]) + float(crown_h) * 0.6
-				var share: float = (centre - v) / (centre + v)
-				_check(share >= TreeModel.TRUNK_SHARE - 0.0001, "trunk share %.2f (crown %s/%s, trunk %s)" % [
-					share, crown_r, crown_h, trunk_h])
-				_check(float(sh["trunk_h"]) >= trunk_h, "a trunk is only ever lifted, never cut")
+func test_313_every_tree_stands_on_a_bare_trunk_under_a_crown_that_is_not_a_blob() -> void:
+	# The rule, measured on the tree as built: bare trunk for at least TRUNK_SHARE of the height, and a crown
+	# that reaches no further than CROWN_REACH_MAX from the trunk. Palms and bananas are all trunk already.
+	var holder := Node3D.new()
+	add_child(holder)
+	var checked := 0
+	for id: String in Game.items:
+		var it: Dictionary = Game.items[id]
+		if str(it.get("kind", "")) != "tree":
+			continue
+		for seed_value in 4:
+			for mask: int in [0, 0xff]:
+				var tree := TreeModel.build_at(holder, Vector3.ZERO, it, 1.0, true, seed_value, true, TreeModel.UNSET,
+					mask)
+				if tree.has_meta(TreeModel.META_SHARE):
+					var share := float(tree.get_meta(TreeModel.META_SHARE))
+					var reach := float(tree.get_meta(TreeModel.META_REACH))
+					_check(share >= TreeModel.TRUNK_SHARE - 0.001, "%s: trunk is %.2f of the height" % [id, share])
+					_check(reach <= TreeModel.CROWN_REACH_MAX + 0.001, "%s: crown reaches %.2f" % [id, reach])
+					checked += 1
+				tree.free()
+	_check(checked > 100, "trees were measured (%d)" % checked)
+	holder.queue_free()

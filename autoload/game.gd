@@ -195,7 +195,6 @@ func _ready() -> void:
 	stray_timer.autostart = true
 	stray_timer.timeout.connect(strays.check_strays)
 	stray_timer.timeout.connect(daily.check_daily_gift)
-	stray_timer.timeout.connect(social.settle)
 	add_child(stray_timer)
 
 

@@ -110,11 +110,18 @@ jobs:
             commit id ${{ env.SHA }}, the score, and the Blockers and Majors, one line each
             (`gh api repos/${{ github.repository }}/issues/${{ steps.range.outputs.issue }}/comments -f body="<entry>"`).
             Don't change any code.
-      # The log must record this commit even if the reviewer ran out of turns, so the next review starts after it.
+      # The log records this commit once the review was posted (even if the reviewer then stopped before writing its
+      # log entry), so the next review starts after it. A review that never posted (the reviewer's account out of
+      # usage, an API error) is not recorded, so the next push reviews these changes too instead of skipping them.
       - name: Make sure the log records this review
         if: always() && steps.range.outputs.go == 'true'
         run: |
           n=${{ steps.range.outputs.issue }}
+          posted=$(gh api "repos/$REPO/commits/$SHA/comments" --jq 'length' || echo 0)
+          if [ "${posted:-0}" = "0" ]; then
+            echo "::warning::The review of $SHA was not posted; the next review will cover these changes."
+            exit 0
+          fi
           if ! gh api "repos/$REPO/issues/$n/comments?per_page=100" --paginate --jq '.[].body' | grep -q "$SHA"; then
             gh api "repos/$REPO/issues/$n/comments" -f body="$(date -u +%F) $SHA: reviewed (the reviewer didn't write a log entry; see the commit comment or the run)." > /dev/null
           fi

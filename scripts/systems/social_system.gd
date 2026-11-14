@@ -10,8 +10,9 @@ extends GameSystem
 ## for neighbours to water, a gift goes out free once a day per neighbour. Neighbours answer after a while.
 ##
 ## Who the neighbours are and how they behave is a `NeighbourTransport` (single-player: SimulatedNeighbours),
-## so real friends can replace them without touching the rules here. Time is caught up in `settle` (on load and
-## on a slow timer), never per frame. Saves the inbox, the outbox and the day's limits; nothing else.
+## so real friends can replace them without touching the rules here. Time is caught up in `settle`, never per
+## frame; nothing in the game calls it until the inbox panel lands (the mail would announce itself unopenable). Saves
+## the inbox, the outbox and the day's limits; nothing else.
 
 const SAVED_INBOX := "social_inbox"
 const SAVED_OUTBOX := "social_outbox"
@@ -62,7 +63,7 @@ func load_from(data: Dictionary) -> void:
 	gifts_today = GameSystem.int_map(data.get("social_gifts_today", {}))
 	help_day = int(data.get("social_help_day", 0))
 	helps_today = int(data.get("social_helps_today", 0))
-	last_settled = mini(int(data.get("social_last_settled", game.now())), game.now())
+	last_settled = int(data.get("social_last_settled", game.now()))   # never moved back: see `settle`
 
 
 func enabled() -> bool:
@@ -103,7 +104,9 @@ func claim(item_id: int) -> bool:
 		game.ribbons.bump("neighbours_helped", 1)
 		game.message.emit(tr("SOCIAL_HELPED") % Balance.i("social.help_coins"))
 	else:
-		game.message.emit(tr("SOCIAL_CLAIMED") % grant(item["give"]))
+		var got := grant(item["give"])
+		if got != "":
+			game.message.emit(tr("SOCIAL_CLAIMED") % got)
 	inbox.remove_at(at)
 	_changed()
 	return true
@@ -151,7 +154,7 @@ func send_gift(neighbour: int, give: Dictionary) -> bool:
 		gift_day = game.day_number()
 		gifts_today = {}
 	gifts_today[str(neighbour)] = int(gifts_today.get(str(neighbour), 0)) + 1
-	_post(InboxItem.GIFT, g, {"need": 1})
+	_post(InboxItem.GIFT, g, {"need": 1, "to": neighbour})
 	game.ribbons.bump("gifts_sent", 1)
 	return true
 
@@ -177,11 +180,11 @@ func post_frame_request(uid: int) -> int:
 	return sent
 
 
-## An empty tank asks for fuel. (Only once a vehicle has been bought.)
+## An empty tank asks one neighbour for fuel; they send `fuel_per_answer`. (Only once a vehicle has been bought.)
 func post_fuel_request() -> bool:
 	if not game.vehicles.fuel_unlocked:
 		return false
-	return post_request({"what": InboxItem.FUEL, "id": "", "n": Balance.i("social.fuel_per_answer")})
+	return post_request({"what": InboxItem.FUEL, "id": "", "n": 1})
 
 
 ## Shares a young one on the farm: neighbours water it (each feeding it once) and it is still yours alone.
@@ -225,6 +228,8 @@ func settle() -> String:
 		return ""
 	var now := game.now()
 	var answered := _deliver_answers(now)
+	# Mail is seeded by time, so the clock going back and forward again must not deliver a stretch twice:
+	# `last_settled` only ever moves forward.
 	var from := maxi(last_settled, now - Balance.i("social.catchup_hours") * 3600)
 	var arrived := 0
 	if now > from:
@@ -234,7 +239,7 @@ func settle() -> String:
 			if _usable(item):
 				_add_to_inbox(item)
 				arrived += 1
-	last_settled = now
+	last_settled = maxi(last_settled, now)
 	if answered + arrived > 0:
 		_changed()
 		return tr("SOCIAL_AWAY") % [arrived, answered]
@@ -253,8 +258,9 @@ func _deliver_answers(now: int) -> int:
 			if _usable({"give": a["give"]}):
 				_add_to_inbox(InboxItem.make(0, InboxItem.ANSWER, int(a["by"]), int(a["due"]), a["give"]))
 				arrived += 1
-		if (post["answers"] as Array).is_empty() or now - int(post["t"]) > lapse:
-			outbox.erase(post)
+		var waiting := (post["answers"] as Array).any(func(a: Dictionary) -> bool: return int(a["due"]) <= now)
+		if (post["answers"] as Array).is_empty() or (now - int(post["t"]) > lapse and not waiting):
+			outbox.erase(post)   # (answers that came due but found the inbox full are kept until there is room)
 	return arrived
 
 
@@ -294,8 +300,7 @@ func grant(give: Dictionary) -> String:
 				game.nurture.give_young(id)
 			return "%d %s" % [n, game.item_data(id)["name"]]
 		InboxItem.WATER:
-			game.nurture.help_young(int(give.get("uid", 0)))
-			return tr("SOCIAL_WATERED")
+			return tr("SOCIAL_WATERED") if game.nurture.help_young(int(give.get("uid", 0))) else ""
 	return ""
 
 

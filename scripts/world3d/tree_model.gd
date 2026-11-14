@@ -17,10 +17,14 @@ const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
 const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
 const CROWN_TRIM := 0.88      # every crown is drawn this share of its data's width (0.92 of that in height): lighter
-const CROWN_R_MAX := 0.4      # no leafy crown is wider than this (a share of a tile): never a huge green blob
-const TRUNK_SHARE := 0.4      # the trunk shows at least this share of a leafy tree's height, under the crown
-const LEAFY_FORMS := ["round", "oval", "spreading", "dense"]
-const CROWN_LOBE_REACH := 1.15   # the crown's lobes and masses reach this much past its core's half-height
+const CROWN_REACH_MAX := 0.5   # no crown reaches further from its trunk than this (of the tree's size): never a blob
+const TRUNK_SHARE := 0.42     # bare trunk shows for at least this share of a tree's height, under the lowest leaves
+const TRUNK_TAPER := 0.85     # a trunk is a thin straight pole: its top is this much of its foot
+const TRUNK_LEAN := 0.03      # and it leans no more than this (radians)
+const META_SHARE := &"trunk_share"   # on a built tree: the share of its height that is bare trunk
+const META_REACH := &"crown_reach"   # and how far its crown reaches from the trunk, of the tree's size
+const META_FAR := &"far_look"   # and what its far look needs: trunk height, crown bottom and top, reach, trunk r, leaf
+const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
 const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
 const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
@@ -29,14 +33,14 @@ const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its 
 const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
 const STEM := Color("#5a4a2a")
 const FRUIT_GROWING := 3
-const FLOWERS: Array[Color] = [Color("#f6e04a"), Color("#f7f2e8"), Color("#e98bb0"), Color("#9b7be0")]
 const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
-const TRUNK_TALL := 1.0     # a trunk shows under the crown, the crown is the tree
-const CROWN_GROW := 1.55    # and the crown is big, well over a tile across, the way FarmVille's were
+const TRUNK_TALL := 1.25    # trunks are long: the tree stands on a pole, FarmVille's way
+const CROWN_GROW := 1.3     # the crown is about a tile across
 const TRUNK_VARY_MIN := 0.85   # each tree's trunk is its own length, apart from its crown's size
 const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
 const TALL_MAX := 1.2       # ..to this much
+const STAND_TALL_MAX := 1.35   # a tree stands at least its kind's lowest height times its own tallness, up to this
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
 const CROWN_BUMP := 0.13     # how far they push out ("bump")
@@ -112,28 +116,21 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd) \
 		* (CROWN_GROW if upright else 1.0) * CROWN_TRIM
 	sh["crown_h"] = float(sh["crown_h"]) * (CROWN_TRIM + 0.04)
-	if str(sh["form"]) in LEAFY_FORMS:
-		_proportion(sh)
 	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col,
 		"shine": float(sh.get("shine", 0.0)),
-		"lean": Vector3(rng.randf_range(-0.06, 0.06), 0, rng.randf_range(-0.06, 0.06)), "blobs": []}
+		"lean": Vector3(rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN), 0, rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN)),
+		"blobs": [], "low": INF, "high": -INF, "reach": 0.0,
+		"stand": ScaleGuide.lowest("tree") * size * clampf(tall, TALL_MIN, STAND_TALL_MAX)}
 	var crown: Vector3
 	match str(sh["form"]):
 		"palm":
 			crown = _palm(t)
 		"banana":
 			crown = _banana(t)
-		"bushy":
-			crown = _stems(t)
-			_crown(t, crown)
-		"weeping":
-			crown = _trunk(t)
-			_crown(t, crown)
-			_strands(t, crown)
 		_:
-			crown = _trunk(t)
-			_crown(t, crown)
-	_base(t)
+			crown = _crown_on_trunk(t)
+			if str(sh["form"]) == "weeping":
+				_strands(t, crown)
 	if sh.has("blossom"):
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
@@ -143,36 +140,101 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	return root
 
 
-# ---------------------------------------------------------------- the ground under it
+# ---------------------------------------------------------------- far away
 
 
-## What a tree stands among: a patch of bare earth round the trunk, a few stones, and wildflowers, so it
-## is planted there and not set down on the grass. Different round each tree (its own seed).
-static func _base(t: Dictionary) -> void:
-	var root: Node3D = t["root"]
-	var k: float = t["k"]
-	var rng: RandomNumberGenerator = t["rng"]
-	var r := float(t["sh"]["trunk_r"]) * k
-	ModelKit.cylinder(root, Vector3(0, 0.002, 0), r * 2.6, 0.006, ModelKit.paint(Color("#7d5c3b")), -1.0, 10)
-	for i in 3:
-		var a := rng.randf() * TAU
-		var d := r * rng.randf_range(3.0, 4.6)
-		ModelKit.facet_ball(root, Vector3(cos(a) * d, 0.0, sin(a) * d), r * rng.randf_range(0.5, 0.9),
-			ModelKit.paint(Color("#9a9a94").darkened(rng.randf_range(0.0, 0.15))), Vector3(1, 0.6, 1))
-	for i in 4:
-		var a := rng.randf() * TAU
-		var d := r * rng.randf_range(3.6, 6.0)
-		var col: Color = FLOWERS[rng.randi() % FLOWERS.size()]
-		var at := Vector3(cos(a) * d, 0.0, sin(a) * d)
-		ModelKit.cylinder(root, at, 0.004, 0.05 * k, ModelKit.paint(Color("#4f8a3a")), -1.0, 4)
-		ModelKit.ball(root, at + Vector3(0, 0.055 * k, 0), 0.014 * k, ModelKit.paint(col))
+## The same tree seen from far away (an orchard zoomed out): its own trunk, as long and as thin, and its crown
+## as a few smooth lumps of its own size and colours, lit and shaded like the real one, in a few hundred
+## triangles instead of thousands. Palms and bananas, which have no leafy crown, are their own tree at low detail.
+static func far_model(it: Dictionary, size: float, seed_value: int) -> Node3D:
+	var whole := Node3D.new()
+	var tree := build_at(whole, Vector3.ZERO, it, size, false, seed_value, false)
+	var out := Node3D.new()
+	if not tree.has_meta(META_FAR):
+		whole.free()
+		var detail := ModelKit.detail
+		ModelKit.detail = 0.4
+		build_at(out, Vector3.ZERO, it, size, false, seed_value, false)
+		ModelKit.detail = detail
+		return ModelKit.bake(out)
+	var far: Array = tree.get_meta(META_FAR)
+	whole.free()
+	var trunk_h := float(far[0])
+	var low := float(far[1])
+	var high := float(far[2])
+	var reach := float(far[3])
+	var leaf: Color = far[5]
+	ModelKit.cylinder(out, Vector3.ZERO, float(far[4]), trunk_h, ModelKit.paint(BARK), float(far[4]) * TRUNK_TAPER, 5)
+	var mid := Vector3(0, (low + high) * 0.5, 0)
+	var half := (high - low) * 0.5
+	ModelKit.ball(out, mid, 1.0, ModelKit.paint(_shade(leaf, 0.55)), Vector3(reach * 0.8, half, reach * 0.8), true)
+	for i in FAR_LUMPS:
+		var a := TAU * i / FAR_LUMPS
+		var at := mid + Vector3(cos(a) * reach * 0.38, half * (0.25 if i == 0 else -0.1), sin(a) * reach * 0.38)
+		ModelKit.ball(out, at, 1.0, ModelKit.paint(_shade(leaf, 0.85 if i == 0 else 0.4)),
+			Vector3(reach * 0.55, half * 0.7, reach * 0.55), true)
+	return ModelKit.bake(out)
 
 
 # ---------------------------------------------------------------- trunks
 
 
-## A tapering trunk, leaning a little, with a limb forking off; returns where the crown sits.
-static func _trunk(t: Dictionary) -> Vector3:
+## The crown, then the trunk that carries it. The crown is built first, over a trunk top at the origin, and
+## measured as it really is (every mass, not a formula): it is brought in if it reaches past CROWN_REACH_MAX (and
+## grown towards it when the tree would stand too short), and the trunk is then made long enough that TRUNK_SHARE of
+## the whole height is bare trunk under the lowest leaves,
+## and that the tree stands at least the lowest height of a tree (ScaleGuide), so nothing scales a crown up.
+## Everything of the crown is then lifted onto the trunk's top. Returns the crown's centre.
+static func _crown_on_trunk(t: Dictionary) -> Vector3:
+	var root: Node3D = t["root"]
+	var k: float = t["k"]
+	var sh: Dictionary = t["sh"]
+	var first := root.get_child_count()
+	var centre := Vector3(0, float(sh["crown_h"]) * k * 0.6, 0)
+	_crown(t, centre)
+	# The crown is drawn bigger or smaller about the trunk's top, never reaching past the cap: smaller when too
+	# wide; bigger when the tree would stand too short, up to the cap, the trunk making up whatever is left.
+	var cap := CROWN_REACH_MAX * k / maxf(float(t["reach"]), 0.001)
+	var shrink := minf(1.0, cap)
+	var total := _trunk_for(sh, k, t, shrink) + float(t["high"]) * shrink
+	if total < float(t["stand"]):
+		shrink = minf(cap, shrink * float(t["stand"]) / maxf(total, 0.001))
+	var low: float = float(t["low"]) * shrink
+	var high: float = float(t["high"]) * shrink
+	var h := maxf(_trunk_for(sh, k, t, shrink), float(t["stand"]) - high)
+	var lean: Vector3 = t["lean"]
+	var top := Vector3(lean.x * h, h, lean.z * h)
+	for i in range(first, root.get_child_count()):
+		var part := root.get_child(i) as Node3D
+		part.position = part.position * shrink + top
+		part.scale *= shrink
+	for blob: Array in t["blobs"]:
+		blob[0] = (blob[0] as Vector3) * shrink + top
+		blob[1] = float(blob[1]) * shrink
+	sh["crown_r"] = float(sh["crown_r"]) * shrink
+	sh["crown_h"] = float(sh["crown_h"]) * shrink
+	sh["trunk_h"] = h / k
+	if str(sh["form"]) == "bushy":
+		_stems(t)
+	else:
+		_trunk(t)
+	root.set_meta(META_SHARE, (h + low) / (h + high))
+	root.set_meta(META_REACH, float(t["reach"]) * shrink / k)
+	root.set_meta(META_FAR, [h, h + low, h + high, float(t["reach"]) * shrink, float(sh["trunk_r"]) * k * TRUNK_BULK,
+		t["leaf"]])
+	return centre * shrink + top
+
+
+## The trunk a crown drawn `shrink` times its size needs: its kind's own length, or longer so that TRUNK_SHARE of
+## the height is bare trunk under the lowest leaves.
+static func _trunk_for(sh: Dictionary, k: float, t: Dictionary, shrink: float) -> float:
+	var low := float(t["low"]) * shrink
+	var high := float(t["high"]) * shrink
+	return maxf(float(sh["trunk_h"]) * k, (TRUNK_SHARE * high - low) / (1.0 - TRUNK_SHARE))
+
+
+## A thin straight trunk, leaning very little, with small roots where it goes into the ground.
+static func _trunk(t: Dictionary) -> void:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
@@ -180,33 +242,18 @@ static func _trunk(t: Dictionary) -> Vector3:
 	var r := float(sh["trunk_r"]) * k * TRUNK_BULK
 	var lean: Vector3 = t["lean"]
 	var trunk := ModelKit.cylinder(root, Vector3.ZERO, r, h,
-		ModelKit.paint(BARK.darkened(Crowding.setting("tree", "shade") * float(t["crowd"]))), r * 0.6, 8)
+		ModelKit.paint(BARK.darkened(Crowding.setting("tree", "shade") * float(t["crowd"]))), r * TRUNK_TAPER, 8)
 	trunk.rotation = Vector3(lean.z, 0, -lean.x)
-	# The trunk flares at the foot into roots that grip the ground.
-	ModelKit.cylinder(root, Vector3.ZERO, r * 1.9, r * 1.4, ModelKit.paint(BARK), r * 1.0, 8)
+	# Three small roots where it enters the ground, so it grows out of it and is not set down on it.
 	for i in 3:
 		var ra := TAU * i / 3.0 + float(t["lean"].x) * 20.0
-		var rt := ModelKit.ball(root, Vector3(cos(ra) * r * 1.5, r * 0.25, sin(ra) * r * 1.5), r * 0.6,
+		var rt := ModelKit.ball(root, Vector3(cos(ra) * r * 1.1, r * 0.15, sin(ra) * r * 1.1), r * 0.45,
 			ModelKit.paint(BARK.darkened(0.1)), Vector3(1.5, 0.5, 1.0))
 		rt.rotation.y = -ra
-	var top := Vector3(lean.x * h, h, lean.z * h)
-	return top + Vector3(0, float(sh["crown_h"]) * k * 0.6, 0)
 
 
-## The rule every leafy tree keeps: the crown is no wider than CROWN_R_MAX, and it starts high enough that the
-## trunk is at least TRUNK_SHARE of the tree's height with the crown above it (the trunk keeps its thinness).
-## The crown's bottom is its centre less its half-height `v`, its top the centre plus `v`; the centre sits
-## 0.6 crown heights above the trunk's top.
-static func _proportion(sh: Dictionary) -> void:
-	sh["crown_r"] = minf(float(sh["crown_r"]), CROWN_R_MAX)
-	var ch := float(sh["crown_h"])
-	var v := maxf(ch * 0.5, float(sh["crown_r"]) * 0.4) * CROWN_LOBE_REACH
-	var centre_needed := v * (1.0 + TRUNK_SHARE) / (1.0 - TRUNK_SHARE)
-	sh["trunk_h"] = maxf(float(sh["trunk_h"]), centre_needed - ch * 0.6)
-
-
-## Several thin stems from the ground (a shrubby tree); returns the crown's centre.
-static func _stems(t: Dictionary) -> Vector3:
+## Several thin stems from the ground (a shrubby tree).
+static func _stems(t: Dictionary) -> void:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
@@ -214,11 +261,10 @@ static func _stems(t: Dictionary) -> Vector3:
 	var h := float(sh["trunk_h"]) * k
 	for i in 4:
 		var a := TAU * i / 4.0 + rng.randf() * 0.5
-		var stem := ModelKit.cylinder(root, Vector3.ZERO, float(sh["trunk_r"]) * k, h * 1.6, ModelKit.paint(BARK),
+		var stem := ModelKit.cylinder(root, Vector3.ZERO, float(sh["trunk_r"]) * k, h * 1.05, ModelKit.paint(BARK),
 			float(sh["trunk_r"]) * k * 0.6, 5)
-		stem.position = Vector3(cos(a) * 0.04 * k, h * 0.8, sin(a) * 0.04 * k)
-		stem.rotation = Vector3(sin(a) * 0.35, 0, -cos(a) * 0.35)
-	return Vector3(0, h + float(sh["crown_h"]) * k * 0.5, 0)
+		stem.position = Vector3(cos(a) * 0.04 * k, 0.0, sin(a) * 0.04 * k)
+		stem.rotation = Vector3(sin(a) * 0.2, 0, -cos(a) * 0.2)
 
 
 # ---------------------------------------------------------------- crowns
@@ -253,8 +299,9 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var bump := float(sh.get("bump", CROWN_BUMP))
 	# The core, a soft mass of the whole crown's width, then the masses around it: each one smooth and lumpy,
 	# overlapping, so the crown reads as one canopy with a scalloped outline and a few deep folds.
-	_canopy(root, mid, Vector3(cr * 0.72, maxf(ch * 0.5, cr * 0.4), cr * 0.72), rng, leaf, sun, -shaded, lobes, bump,
-		shine)
+	var core := Vector3(cr * 0.72, maxf(ch * 0.5, cr * 0.4), cr * 0.72)
+	_canopy(root, mid, core, rng, leaf, sun, -shaded, lobes, bump, shine)
+	_measure(t, mid, core)
 	var shape := str(sh.get("shape", "round"))
 	for i in masses:
 		var a := i * 2.399963 + rng.randf() * 0.4
@@ -268,8 +315,17 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		if i % 2 == 1 and Crowding.covered(int(t["mask"]), a - root.rotation.y):
 			continue
 		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine)
+		_measure(t, p, squash * size)
 		(t["blobs"] as Array).append([p, size, a])
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
+
+
+## Counts one leafy mass (centre and half-sizes) into the crown's real extent: its lowest and highest leaves and
+## how far it reaches from the trunk's line.
+static func _measure(t: Dictionary, at: Vector3, radii: Vector3) -> void:
+	t["low"] = minf(float(t["low"]), at.y - radii.y)
+	t["high"] = maxf(float(t["high"]), at.y + radii.y)
+	t["reach"] = maxf(float(t["reach"]), Vector2(at.x, at.z).length() + maxf(radii.x, radii.z))
 
 
 ## Where mass `i` of `n` sits for a kind of crown: (height, how far out, how big), as shares of the plain round

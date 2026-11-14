@@ -239,3 +239,51 @@ func test_14_every_pool_entry_is_a_real_thing() -> void:
 				InboxItem.YOUNG:
 					_check(g.items.has(give["id"]), "%s is an item" % give["id"])
 	_done(g)
+
+
+func test_15_a_mystery_from_a_neighbour_is_a_real_mystery() -> void:
+	var g := _farm()
+	var kinds := {}
+	for i in 40:
+		g.nurture.give_young("mystery_seedling")
+	for o in g.objects + g.storage.stored:
+		if o["id"] == "mystery_seedling":
+			kinds[str(o.get("becomes", ""))] = true
+	_check(kinds.size() > 3, "forty seedlings turn into many kinds of tree (%d)" % kinds.size())
+	_done(g)
+
+
+func test_16_setting_the_clock_back_never_delivers_mail_twice() -> void:
+	var g := _farm()
+	g.social.last_settled = g.now()
+	_later(g, 2 * 86400)
+	g.social.settle()
+	var had := g.social.inbox.size()
+	_later(g, -86400)
+	g.social.settle()
+	_later(g, 86400)
+	g.social.settle()
+	_eq(g.social.inbox.size(), had, "going back a day and forward again brings nothing new")
+	_done(g)
+
+
+func test_17_asking_for_fuel_brings_one_neighbour_s_fuel() -> void:
+	var g := _farm()
+	g.vehicles.add_fuel(1)
+	_check(g.social.post_fuel_request(), "asked")
+	var post: Dictionary = g.social.outbox[0]
+	var total := 0
+	for a: Dictionary in post["answers"]:
+		total += int(a["give"]["n"])
+	_eq(total, Balance.i("social.fuel_per_answer"), "one neighbour's worth of fuel")
+	_done(g)
+
+
+func test_18_a_gift_is_thanked_by_the_neighbour_it_went_to() -> void:
+	var g := _farm()
+	Balance.override("social.thanks_chance", 1.0)
+	_check(g.social.send_gift(3, {"what": InboxItem.COINS, "n": 1}), "sent")
+	for a: Dictionary in g.social.outbox[0]["answers"]:
+		_eq(int(a["by"]), 3, "the thanks comes from neighbour 3")
+	Balance.reload()
+	_done(g)

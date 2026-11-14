@@ -174,9 +174,6 @@ func load_save() -> bool:
 	var away := AbsenceReport.build(game, int(data.get("saved_at", game.now())) - skew, game.now())
 	if away != "":
 		game.absence_note = away if game.absence_note == "" else away + "\n" + game.absence_note
-	var mail := game.social.settle()
-	if mail != "":
-		game.absence_note = mail if game.absence_note == "" else game.absence_note + "\n" + mail
 	var extra_vehicles := game.buildings.trim_extra_vehicles()
 	if extra_vehicles > 0:
 		var vnote := game.tr("EXTRA_VEHICLES_SOLD_BACK") % extra_vehicles
