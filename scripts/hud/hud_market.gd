@@ -5,7 +5,12 @@ extends RefCounted
 
 ## [kind, title key] of the Market's shelves, in order.
 const SHELVES := [["tree", "TREES"], ["bloom", "BLOOMS"], ["animal", "ANIMALS"], ["building", "BUILDINGS"],
-	["crafting", "CRAFTING"], ["vehicle", "VEHICLES"], ["decor", "DECORATIONS"]]
+	["vehicle", "VEHICLES"], ["decor", "DECORATIONS"]]
+## The Buildings shelf in FarmVille's sections, by each building's `tab` (BuildingDef.tab), crafting buildings
+## among them.
+const BUILDING_TABS := [["animal", "ANIMAL_BUILDINGS"], ["storage", "STORAGE_BUILDINGS"],
+	["crafting", "CRAFTING"], ["decor", "DECORATIVE_BUILDINGS"]]
+const BUILDING_KINDS := ["building", "barn", "crafting"]
 
 var hud: FarmHud
 
@@ -34,13 +39,39 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	strip.visible = false
 	strip.set_meta(&"about", true)
 	content.add_child(strip)
-	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
-	content.add_child(grid)
+	var tell := func(id: String, it: Dictionary, why: String) -> void: show_about(strip, about, id, it, why)
+	if kind != "building":
+		_add_grid(content, shelf_items(kind, ""), tell)
+		return
+	for section: Array in BUILDING_TABS:
+		var ids := shelf_items(kind, str(section[0]))
+		if ids.is_empty():
+			continue
+		content.add_child(BookPanel.text(tr(str(section[1])), 22, BookPanel.SUN))
+		_add_grid(content, ids, tell)
+
+
+## The items on a shelf, in catalog order (`tab`: only buildings of that section; "" for any).
+func shelf_items(kind: String, tab: String) -> Array[String]:
+	var out: Array[String] = []
 	for id in Game.item_order:
 		var it := Game.item_data(id)
-		if it["kind"] != kind or int(it["unlock_level"]) >= 99:
+		if int(it["unlock_level"]) >= 99:
 			continue
-		grid.add_child(item_card(id, it, func(why: String) -> void: show_about(strip, about, id, it, why)))
+		if kind == "building":
+			if str(it["kind"]) in BUILDING_KINDS and Game.building_def(id).tab() == tab:
+				out.append(id)
+		elif it["kind"] == kind:
+			out.append(id)
+	return out
+
+
+func _add_grid(content: VBoxContainer, ids: Array[String], tell: Callable) -> void:
+	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
+	content.add_child(grid)
+	for id in ids:
+		var it := Game.item_data(id)
+		grid.add_child(item_card(id, it, func(why: String) -> void: tell.call(id, it, why)))
 
 
 ## Fills the strip at the top of a shelf with all about one item: its picture and name, why it can't be bought
