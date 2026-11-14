@@ -203,7 +203,8 @@ static func _crown_on_trunk(t: Dictionary) -> Vector3:
 	var low: float = float(t["low"]) * shrink
 	var high: float = float(t["high"]) * shrink
 	var h := maxf(_trunk_for(sh, k, t, shrink), float(t["stand"]) - high)
-	h = maxf(h * TRUNK_LENGTH, (TRUNK_SHARE * high - low) / (1.0 - TRUNK_SHARE))   # a little shorter, never under the share
+	# A little shorter, never under the share.
+	h = maxf(h * TRUNK_LENGTH, (TRUNK_SHARE * high - low) / (1.0 - TRUNK_SHARE))
 	var lean: Vector3 = t["lean"]
 	var top := Vector3(lean.x * h, h, lean.z * h)
 	for i in range(first, root.get_child_count()):
