@@ -260,8 +260,10 @@ static func card_grid(view_width: float) -> GridContainer:
 
 
 ## An item's card in a shop grid: its picture, its name, a line about it and its price badge; the whole card is
-## the button. A locked one is greyed with a lock and the level it opens at instead of a price.
-static func item_card(picture: Texture2D, name: String, about: String, badge: Control, locked: bool) -> Button:
+## the button. A locked one is greyed with a lock and the level it opens at instead of a price. `extra` (its
+## mastery stars, say) goes under the picture.
+static func item_card(picture: Texture2D, name: String, about: String, badge: Control, locked: bool,
+		extra: Control = null) -> Button:
 	var b := Button.new()
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(UiTheme.size("card_width"), 0)
@@ -295,6 +297,8 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 	if locked:
 		pic.modulate = Color(1, 1, 1, 0.45)
 	col.add_child(pic)
+	if extra != null:
+		col.add_child(extra)
 	for words: Array in [[name, "font_card", "ink"], [about, "font_card_small", "tool_label"]]:
 		if str(words[0]) == "":
 			continue

@@ -65,6 +65,22 @@ func stars(id: String) -> int:
 	return out
 
 
+## The points the next star needs (the last star's once all are earned).
+func next_need(id: String) -> int:
+	var need := thresholds(id)
+	return int(need[mini(stars(id), need.size() - 1)])
+
+
+## How far along the way to the next star `id` is, 0..1 (1 once mastered).
+func progress(id: String) -> float:
+	var need := thresholds(id)
+	var s := stars(id)
+	if s >= need.size():
+		return 1.0
+	var from := 0 if s == 0 else int(need[s - 1])
+	return clampf(float(points_of(id) - from) / maxf(int(need[s]) - from, 1.0), 0.0, 1.0)
+
+
 ## Can this item be mastered (a crop, or a tree or animal that's harvested)?
 func masterable(id: String) -> bool:
 	return game.crops.has(id) or ["tree", "animal", "bloom"].has(str(game.item_data(id).get("kind", "")))

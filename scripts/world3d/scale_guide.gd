@@ -106,8 +106,10 @@ static func model_of(id: String) -> Node3D:
 static func _top(node: Node3D, to_parent: Transform3D) -> float:
 	var t := to_parent * node.transform
 	var top := -INF
-	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
-		var b := t * (node as MeshInstance3D).get_aabb()
+	var drawn := (node is MeshInstance3D and (node as MeshInstance3D).mesh != null) \
+		or (node is MultiMeshInstance3D and (node as MultiMeshInstance3D).multimesh != null)
+	if drawn:
+		var b := t * (node as VisualInstance3D).get_aabb()
 		top = b.position.y + b.size.y
 	for c in node.get_children():
 		if c is Node3D:

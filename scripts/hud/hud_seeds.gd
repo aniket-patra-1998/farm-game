@@ -12,32 +12,27 @@ func _init(owner: FarmHud) -> void:
 
 func build_seeds(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(tr("PICK_A_SEED_THEN_TAP_PLOWED_PLOTS"), 20, BookPanel.CREAM))
+	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
 	for id: String in Game.crop_order:
-		content.add_child(seed_row(id))
+		grid.add_child(seed_card(id))
+	content.add_child(grid)
 
 
-## One crop's card: name, what it costs and pays, how long it grows; its button picks it.
-func seed_row(id: String) -> Control:
+## One crop's card, as FarmVille's seed shelf showed it: its picture, its mastery stars, its name, how long it
+## grows and what it sells for, and its seed price (free while pollinated seeds last); tapping picks it.
+func seed_card(id: String) -> Button:
 	var crop: Dictionary = Game.crops[id]
-	var inner := HBoxContainer.new()
-	inner.add_theme_constant_override("separation", 12)
-	var info := VBoxContainer.new()
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	info.add_child(BookPanel.text(str(crop["name"]), 22))
-	info.add_child(BookPanel.text(tr("SEED_DETAIL") % [FarmGrid.format_duration(int(crop["grow_seconds"])),
-		int(crop["sell_price"]), int(crop["xp"])], 17))
+	var locked := not Game.is_unlocked(id)
 	var pol := Game.bees.pollinated_seeds(id)
-	if pol > 0:
-		info.add_child(BookPanel.text(tr("POLLINATED_SEEDS_FREE") % pol, 16, BookPanel.CREAM))
-	inner.add_child(info)
-	var pick := Button.new()
-	pick.custom_minimum_size = Vector2(150, 52)
-	pick.focus_mode = Control.FOCUS_NONE
-	if not Game.is_unlocked(id):
-		pick.text = tr("UNLOCKS_LEVEL") % int(crop["unlock_level"])
-		pick.disabled = true
+	var badge: Control
+	if locked:
+		badge = UiKit.price_badge("lock", tr("UNLOCKS_LEVEL") % int(crop["unlock_level"]))
+	elif pol > 0:
+		badge = UiKit.price_badge("", tr("FREE_SEEDS_LEFT") % pol)
 	else:
-		pick.text = tr("FREE_SEED") if pol > 0 else tr("SEED_COINS") % int(crop["seed_cost"])
-		pick.pressed.connect(func() -> void: hud.choose_seed(id))
-	inner.add_child(pick)
-	return BookPanel.card_frame(inner)
+		badge = UiKit.price_badge("coin", str(int(crop["seed_cost"])), Game.coins < int(crop["seed_cost"]))
+	var about := tr("SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), int(crop["sell_price"])]
+	var card := UiKit.item_card(ItemIcons.of(id), str(crop["name"]), about, badge, locked, MasteryStars.of(id))
+	if not locked:
+		card.pressed.connect(func() -> void: hud.choose_seed(id))
+	return card

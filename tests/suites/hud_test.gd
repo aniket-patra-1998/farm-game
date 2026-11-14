@@ -282,3 +282,41 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 	_check(Game.object_by_uid(int(coop["uid"])).is_empty() and not book.visible, "the second sells it")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## Mastery shows where FarmVille showed it: three stars and the way to the next on every seed, tree and animal
+## card; a seed card picks its crop.
+func test_328_seed_tree_and_animal_cards_wear_their_mastery_stars() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var crop: String = Game.crop_order[0]
+	var need: Array = Game.mastery.thresholds(crop)
+	Game.mastery.points[crop] = int(need[0]) + (int(need[1]) - int(need[0])) / 2
+	_eq(Game.mastery.stars(crop), 1, "(one star earned)")
+	_check(is_equal_approx(Game.mastery.progress(crop), 0.5), "half way to the second")
+	_eq(Game.mastery.next_need(crop), int(need[1]), "the second star's points are next")
+	Game.mastery.points[crop] = int(need[2])
+	_eq(Game.mastery.progress(crop), 1.0, "a mastered crop's bar is full")
+	var stars := MasteryStars.of(crop)
+	_eq(stars.earned, 3, "and its card shows three stars")
+	stars.free()
+	var deco := ""
+	for id: String in Game.items:
+		if str(Game.items[id].get("kind", "")) == "decor":
+			deco = id
+			break
+	_check(MasteryStars.of(deco) == null, "a decoration has no mastery, so no stars")
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var content := VBoxContainer.new()
+	hud.seeds.build_seeds(content)
+	var cards := content.find_children("*", "Button", true, false)
+	_eq(cards.size(), Game.crop_order.size(), "a card for every crop")
+	_eq((cards[0] as Node).find_children("*", "MasteryStars", true, false).size(), 1, "each wearing its stars")
+	(cards[0] as Button).pressed.emit()
+	_eq(main.get("grid").get("selected_crop"), crop, "tapping a card picks its seed")
+	content.free()
+	main.free()
+	Game.reset_game()

@@ -51,6 +51,8 @@
     "card_edge": "#5c3a1e",
     "card_locked": "#d8cbb0",
   "count_tile": "#f3e3bd",
+  "mastery_gold": "#f2b632",
+  "mastery_empty": "#d9c9a5",
     "badge_face": "#fff6dc",
     "lock_text": "#7a2e1e",
     "price_short": "#c0392b",
@@ -120,6 +122,8 @@
     "font_badge": 16,
   "count_tile": 76,
   "count_outline": 6,
+  "mastery_star": 18,
+  "mastery_bar": 4,
     "card_words": 112
   }
 }
