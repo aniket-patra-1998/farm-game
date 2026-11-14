@@ -394,8 +394,18 @@ func update_tiles(indices: Array) -> void:
 		_scatter_tufts(Game.farm_size)
 		return
 	for i: int in indices:
+		if not _farm_tufts.has(i):
+			continue   # (off the farm as it is now)
 		_farm_tufts[i] = _tile_tufts(int(i / float(GameState.MAX_SIZE)), i % GameState.MAX_SIZE, true)
 	_lay_tufts()
+
+
+## How many tufts the farm's own tiles carry (the meadow's left out).
+func farm_tuft_count() -> int:
+	var n := 0
+	for i: int in _farm_tufts:
+		n += (_farm_tufts[i] as PackedFloat32Array).size() / TUFT_FLOATS
+	return n
 
 
 func _lay_tufts() -> void:

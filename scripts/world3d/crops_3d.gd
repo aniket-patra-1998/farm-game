@@ -117,10 +117,17 @@ static func stage_of(i: int) -> Array:
 ## groups, not the whole field, and the timer's look at growth rebuilds only plants that moved on a stage.
 func update(indices: Array = []) -> void:
 	if indices.is_empty():
+		# The whole field, and any plot still drawn from a bigger farm (a load or reset can shrink it).
 		indices = _all_plots()
+		var on_farm := {}
+		for i: int in indices:
+			on_farm[i] = true
+		for i: int in _plot_look:
+			if not on_farm.has(i):
+				indices.append(i)
 	var dirty := {}
 	for i: int in indices:
-		var now := _look_of(i)
+		var now := _look_of(i) if _on_farm(i) else []
 		var was: Array = _plot_look.get(i, [])
 		if was == now:
 			continue
@@ -136,6 +143,11 @@ func update(indices: Array = []) -> void:
 			dirty[now[0]] = true
 	for key: String in dirty:
 		_lay_out(key)
+
+
+## Whether plot `i` lies on the farm as it is now.
+static func _on_farm(i: int) -> bool:
+	return int(i / float(GameState.MAX_SIZE)) < Game.farm_size and i % GameState.MAX_SIZE < Game.farm_size
 
 
 ## Every plot of the farm, by index.

@@ -106,7 +106,8 @@ func _ready() -> void:
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
 	Quality.apply_frame_cap()
-	Quality.notifier.emitted.connect(Quality.apply_frame_cap)
+	if not Quality.notifier.emitted.is_connected(Quality.apply_frame_cap):
+		Quality.notifier.emitted.connect(Quality.apply_frame_cap)
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that

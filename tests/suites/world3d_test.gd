@@ -1644,3 +1644,42 @@ func test_324_one_plot_changes_only_its_own_plants() -> void:
 	crops.queue_free()
 	fresh.queue_free()
 	Game.reset_game()
+
+
+func test_326_beds_tufts_and_plants_follow_each_plot_and_a_smaller_farm() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.farm_size = 12
+	var crop_id: String = Game.crops.keys()[0]
+	for r in 12:
+		for c in 12:
+			Game.plots[Game.index_of(r, c)] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
+	var plots := Plots3D.new()
+	var ground := Ground3D.new()
+	var crops := Crops3D.new()
+	for n: Node in [plots, ground, crops]:
+		add_child(n)
+	var tufts := ground.farm_tuft_count()
+	var i := Game.index_of(3, 4)
+	Game.plots[i] = {"state": "grass"}
+	plots.update([i])
+	ground.update_tiles([i])
+	var fresh_plots := Plots3D.new()
+	var fresh_ground := Ground3D.new()
+	add_child(fresh_plots)
+	add_child(fresh_ground)
+	_eq(plots.shown(), fresh_plots.shown(), "one plot back to grass: the beds match a field built from scratch")
+	_check(ground.farm_tuft_count() > tufts, "and grass grows tufts on it again")
+	_eq(ground.farm_tuft_count(), fresh_ground.farm_tuft_count(), "the same tufts as a fresh ground")
+	# A load or a reset can make the farm smaller: nothing it drew past the new edge stays behind.
+	Game.farm_size = 6
+	crops.update()
+	var small := Crops3D.new()
+	add_child(small)
+	_eq(crops.plant_count(), small.plant_count(), "plants on the smaller farm only")
+	_eq(crops.plant_count(), 35 * Crops3D.SPOTS.size(), "six by six plots of plants, less the one back to grass")
+	ground.update_tiles([Game.index_of(10, 10)])  # off the farm now: ignored
+	for n: Node in [plots, ground, crops, fresh_plots, fresh_ground, small]:
+		n.queue_free()
+	Game.reset_game()
+
