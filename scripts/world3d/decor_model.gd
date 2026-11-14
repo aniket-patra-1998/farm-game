@@ -48,26 +48,51 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 	var col := Color.html(str(it.get("color", "#a8743f")))
 	match id:
 		"hay_bale":
-			var bale := ModelKit.cylinder(root, Vector3.ZERO, 0.2, 0.36, ModelKit.paint(HAY), -1.0, 14)
+			# A round bale lying on its side: its rolled-up layers showing as rings on the ends, two twine
+			# bands, and loose straw sticking out and lying round its foot.
+			var bale := ModelKit.cylinder(root, Vector3.ZERO, 0.2, 0.36, ModelKit.paint(HAY), -1.0, 16)
 			bale.rotation.x = PI / 2.0
 			bale.position = c + Vector3(0, 0.2, 0)
+			for z: float in [-0.181, 0.181]:
+				for k in 3:
+					var ring := ModelKit.cylinder(root, Vector3.ZERO, 0.17 - 0.05 * k, 0.004,
+						ModelKit.paint(HAY.darkened(0.08 + 0.05 * k)), -1.0, 14)
+					ring.rotation.x = PI / 2.0
+					ring.position = c + Vector3(0, 0.2, z + signf(z) * 0.002 * (k + 1))
 			for z: float in [-0.08, 0.08]:
-				var band := ModelKit.cylinder(
-					root,
-					Vector3.ZERO,
-					0.205,
-					0.02,
-					ModelKit.paint(Color("#a8743f")),
-					-1.0,
-					14
-				)
+				var band := ModelKit.cylinder(root, Vector3.ZERO, 0.205, 0.02, ModelKit.paint(Color("#a8743f")), -1.0, 16)
 				band.rotation.x = PI / 2.0
 				band.position = c + Vector3(0, 0.2, z)
+			_straw(root, c, 0.24, 0.32, 18, id)
 		"haystack":
-			# A rounded stack on the ground: a wide skirt, a domed top, and the pole it's built round.
-			ModelKit.cylinder(root, c, 0.38, 0.24, ModelKit.paint(HAY.darkened(0.06)), 0.33, 14)
-			ModelKit.ball(root, c + Vector3(0, 0.24, 0), 0.33, ModelKit.paint(HAY), Vector3(1, 0.95, 1))
-			ModelKit.cylinder(root, c + Vector3(0, 0.5, 0), 0.015, 0.16, ModelKit.paint(DARK_WOOD))
+			# A stack built up round a pole in rounded layers, each a little narrower, thatched with strands that
+			# hang down its sides, straw scattered at its foot and a pitchfork leaning on it.
+			for k in 4:
+				var r := 0.38 - 0.06 * k
+				ModelKit.ball(root, c + Vector3(0, 0.1 + 0.13 * k, 0), r, ModelKit.paint(HAY.darkened(0.08 - 0.025 * k)),
+					Vector3(1, 0.55, 1))
+			ModelKit.ball(root, c + Vector3(0, 0.5, 0), 0.17, ModelKit.paint(HAY.lightened(0.05)), Vector3(1, 0.9, 1))
+			var rng := _rng(id)
+			for k in 40:   # strands hanging down the sides
+				var ang := TAU * k / 40.0 + rng.randf_range(-0.05, 0.05)
+				var lay := rng.randi_range(0, 3)
+				var r := (0.38 - 0.06 * lay) * 0.97
+				var strand := ModelKit.box(root, Vector3(-0.006, -0.09, -0.002), Vector3(0.006, 0.0, 0.002),
+					ModelKit.paint(HAY.darkened(rng.randf_range(0.0, 0.2))), false)
+				strand.position = c + Vector3(cos(ang) * r, 0.1 + 0.13 * lay, sin(ang) * r)
+				strand.rotation = Vector3(sin(ang) * 0.5, -ang, -cos(ang) * 0.5)
+			ModelKit.cylinder(root, c + Vector3(0, 0.56, 0), 0.015, 0.14, ModelKit.paint(DARK_WOOD))
+			_straw(root, c, 0.42, 0.5, 22, id)
+			# The pitchfork: a handle leaning on the stack, three tines at its top.
+			var fork := Node3D.new()
+			fork.position = c + Vector3(0.36, 0, 0.2)
+			fork.rotation = Vector3(0, 0.6, 0.38)
+			root.add_child(fork)
+			ModelKit.cylinder(fork, Vector3.ZERO, 0.012, 0.62, ModelKit.paint(WOOD), -1.0, 6)
+			for t in 3:
+				ModelKit.cylinder(fork, Vector3(-0.035 + 0.035 * t, 0.62, 0), 0.005, 0.12, ModelKit.paint(Color("#9aa3aa"), 0.5),
+					-1.0, 4)
+			ModelKit.box(fork, Vector3(-0.045, 0.6, -0.006), Vector3(0.045, 0.63, 0.006), ModelKit.paint(Color("#9aa3aa"), 0.5))
 		"scarecrow":
 			ModelKit.box(root, c + Vector3(-0.02, 0, -0.02), c + Vector3(0.02, 0.7, 0.02), ModelKit.paint(DARK_WOOD))
 			ModelKit.box(
@@ -88,8 +113,16 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			for side: float in [-1.0, 1.0]:
 				ModelKit.ball(root, c + Vector3(0, 0.47, side * 0.27), 0.04, ModelKit.paint(HAY), Vector3(1, 0.6, 1.6))
 		"water_trough":
-			ModelKit.tub(root, c + Vector3(-0.32, 0, -0.14), c + Vector3(0.32, 0.18, 0.14), 0.03,
+			# A plank trough on two short trestles, bound with iron straps, brimming.
+			for x: float in [-0.24, 0.24]:
+				ModelKit.box(root, c + Vector3(x - 0.03, 0, -0.17), c + Vector3(x + 0.03, 0.06, 0.17),
+					ModelKit.paint(DARK_WOOD))
+			ModelKit.tub(root, c + Vector3(-0.32, 0.06, -0.14), c + Vector3(0.32, 0.24, 0.14), 0.03,
 				ModelKit.surface(col, "boards", 0.2), ModelKit.water())
+			for x: float in [-0.29, 0.29]:
+				ModelKit.box(root, c + Vector3(x - 0.012, 0.06, -0.145), c + Vector3(x + 0.012, 0.245, 0.145),
+					ModelKit.paint(Color("#5a6066"), 0.4))
+			_straw(root, c, 0.3, 0.36, 8, id)
 		"bonfire":
 			for k in 8:
 				var a := TAU * k / 8.0
@@ -141,18 +174,32 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			axle.position = c + Vector3(0, 0.6, 0)
 			ModelKit.cylinder(root, c + Vector3(0, 0.38, 0), 0.05, 0.08, ModelKit.paint(Color("#7c4a2a")), -1.0, 8)
 		"flower_bed":
-			ModelKit.box(
-				root,
-				c + Vector3(-0.38, 0, -0.38),
-				c + Vector3(0.38, 0.06, 0.38),
-				ModelKit.paint(Color("#6b4a2e"))
-			)
+			# A raised bed edged with boards, its soil mounded, leafy plants with flowers of several heights and
+			# kinds standing in rows (taller at the back), and a few fallen petals.
+			ModelKit.box(root, c + Vector3(-0.4, 0, -0.4), c + Vector3(0.4, 0.07, 0.4),
+				ModelKit.surface(DARK_WOOD, "boards", 0.2))
+			ModelKit.ball(root, c + Vector3(0, 0.065, 0), 1.0, ModelKit.paint(Color("#5e4128")), Vector3(0.37, 0.035, 0.37))
 			var rng := _rng(id)
-			var petals := [col, Color("#ffd23f"), Color("#ffffff"), Color("#b388ff")]
-			for k in 18:
-				var p := c + Vector3(rng.randf_range(-0.32, 0.32), 0.06, rng.randf_range(-0.32, 0.32))
-				ModelKit.cylinder(root, p, 0.007, 0.1, ModelKit.paint(Color("#4f8a2f")), -1.0, 4)
-				ModelKit.ball(root, p + Vector3(0, 0.11, 0), 0.035, ModelKit.paint(petals[k % 4]))
+			var petals := [col, Color("#ffd23f"), Color("#ffffff"), Color("#b388ff"), Color("#ff7a59")]
+			for k in 16:
+				var row := k / 4
+				var p := c + Vector3(-0.27 + 0.18 * (k % 4) + rng.randf_range(-0.04, 0.04), 0.08,
+					-0.27 + 0.18 * row + rng.randf_range(-0.04, 0.04))
+				var h := 0.2 - 0.03 * row + rng.randf_range(-0.02, 0.02)   # the back rows (low z) taller
+				for leaf in 3:
+					var ang := TAU * leaf / 3.0 + rng.randf()
+					ModelKit.ball(root, p + Vector3(cos(ang) * 0.03, 0.02, sin(ang) * 0.03), 0.03,
+						ModelKit.paint(Color("#4f8a2f").lightened(rng.randf() * 0.15)), Vector3(1.2, 0.45, 0.7))
+				ModelKit.cylinder(root, p, 0.006, h, ModelKit.paint(Color("#4f8a2f")), -1.0, 4)
+				var bloom: Color = petals[(k * 3 + row) % petals.size()]
+				for j in 5:
+					var b := TAU * j / 5.0
+					ModelKit.ball(root, p + Vector3(cos(b) * 0.03, h, sin(b) * 0.03), 0.033, ModelKit.paint(bloom),
+						Vector3(1.0, 0.5, 1.0))
+				ModelKit.ball(root, p + Vector3(0, h + 0.008, 0), 0.016, ModelKit.paint(Color("#f2c230")))
+			for k in 5:
+				ModelKit.ball(root, c + Vector3(rng.randf_range(-0.3, 0.3), 0.09, rng.randf_range(-0.3, 0.3)), 0.012,
+					ModelKit.paint(petals[k % petals.size()]), Vector3(1.2, 0.3, 1.0))
 		"pink_flamingo":
 			for z: float in [-0.02, 0.02]:
 				ModelKit.box(
@@ -203,11 +250,28 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			# Its bird, circling the house.
 			DecorMotion.orbit(root, c + Vector3(0, 0.82, 0), DecorMotion.bird(Color("#6f8fc9")), DecorMotion.CIRCLING)
 		"birdbath":
-			ModelKit.cylinder(root, c, 0.1, 0.05, ModelKit.paint(col), -1.0, 12)
-			ModelKit.cylinder(root, c + Vector3(0, 0.05, 0), 0.04, 0.25, ModelKit.paint(col), 0.05, 10)
+			# A stone birdbath: a stepped foot, a turned pedestal with collars, a shallow bowl with a rolled rim,
+			# moss creeping up the base and a little bird on the rim.
+			var stone := ModelKit.surface(col, "stone", 0.3)
+			ModelKit.cylinder(root, c, 0.13, 0.03, stone, 0.12, 12)
+			ModelKit.cylinder(root, c + Vector3(0, 0.03, 0), 0.1, 0.03, stone, 0.08, 12)
+			ModelKit.cylinder(root, c + Vector3(0, 0.06, 0), 0.045, 0.24, ModelKit.paint(col), 0.035, 10)
+			for y: float in [0.1, 0.27]:
+				ModelKit.cylinder(root, c + Vector3(0, y, 0), 0.058, 0.025, ModelKit.paint(col.darkened(0.06)), -1.0, 10)
 			ModelKit.cylinder(root, c + Vector3(0, 0.3, 0), 0.08, 0.06, ModelKit.paint(col), 0.2, 16)
+			ModelKit.cylinder(root, c + Vector3(0, 0.355, 0), 0.205, 0.02, ModelKit.paint(col.lightened(0.05)), 0.2, 18)
 			# Water filling the bowl to its brim (the bowl is solid: the water sits on it, never inside it).
-			ModelKit.cylinder(root, c + Vector3(0, 0.36, 0), 0.185, WATER_LIFT, ModelKit.water(), -1.0, 16)
+			ModelKit.cylinder(root, c + Vector3(0, 0.36, 0), 0.185, WATER_LIFT + 0.015, ModelKit.water(), -1.0, 16)
+			var rng := _rng(id)
+			for k in 6:   # moss at the foot
+				var ang := rng.randf() * TAU
+				ModelKit.ball(root, c + Vector3(cos(ang) * 0.1, 0.03, sin(ang) * 0.1), rng.randf_range(0.02, 0.035),
+					ModelKit.paint(Color("#5f8a3a").darkened(rng.randf() * 0.2)), Vector3(1.4, 0.6, 1.0))
+			var bird := DecorMotion.duck(Color("#7a5a3a"))   # (a small brown bird: the duck's shape, smaller)
+			bird.scale = Vector3.ONE * 0.6
+			bird.position = c + Vector3(0.17, 0.38, 0.03)
+			bird.rotation.y = 2.4
+			root.add_child(bird)
 		"picnic_table":
 			ModelKit.box(
 				root,
@@ -409,6 +473,19 @@ static func _ducks(root: Node3D, centre: Vector3, reach: float) -> void:
 		paddle["radius"] = reach * (1.0 - 0.3 * k)
 		paddle["phase"] = PI * k * 3.1
 		DecorMotion.orbit(root, centre, DecorMotion.duck(Color("#f2efe6") if k == 0 else Color("#8a6a45")), paddle)
+
+
+## Loose straw round a thing's foot: `n` short strands lying on the ground in a ring between `inner` and `outer`
+## from its centre.
+static func _straw(root: Node3D, c: Vector3, inner: float, outer: float, n: int, id: String) -> void:
+	var rng := _rng(id + ":straw")
+	for k in n:
+		var ang := rng.randf() * TAU
+		var d := rng.randf_range(inner, outer)
+		var strand := ModelKit.box(root, Vector3(-0.04, 0, -0.003), Vector3(0.04, 0.004, 0.003),
+			ModelKit.paint(HAY.darkened(rng.randf_range(0.0, 0.25))), false)
+		strand.position = c + Vector3(cos(ang) * d, 0.002, sin(ang) * d)
+		strand.rotation.y = rng.randf() * TAU
 
 
 static func _small_sign(root: Node3D, id: String, c: Vector3, col: Color, o: Dictionary) -> void:
