@@ -38,6 +38,8 @@ const ORCHARD_BIGGEST := 1.1     # (no bigger, or the crown reaches out of the f
 const ORCHARD_VARIANTS := 3      # looks of each kind in an orchard (turned and sized: no clones)
 const PLANT_BUDGET_MS := 12      # an orchard builds new kinds of tree for at most this long a frame
 const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
+const EMPTY_DRESS := 0.12        # an empty yard's things (a trough, hay, a feed pan) are this big, in tiles
+const EMPTY_TUFTS := 6            # and this many tufts of grass grow in it
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
 static var planting := 0          # orchards still standing their trees, over frames
@@ -53,6 +55,7 @@ var _who_peeking := ""
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 var _peekers: Node3D           # heads looking out of the windows while the home is full
+var _empty_dress: Node3D       # what an empty yard holds instead of animals (a trough, hay, a feed pan, tufts)
 var _windows: Array = []
 var _flag: Node3D             # flown while the building is full
 var _lod := -1                # 0 all, 1 half, 2 a few: how much of the yard is drawn at this zoom (-1: not set yet)
@@ -119,6 +122,7 @@ func refresh(o: Dictionary) -> void:
 			_show_plants(o, int(fill["plants"]))  # trees fruit, blooms open, when ready
 	elif who != _who:
 		_show_residents(o)
+		_dress_empty_yard(Game.inside_total(o) == 0)
 	if stage != _stage:
 		_show_produce(str(fill.get("produce", "")), step, fill.get("at", [0.78, 0.9]), o)
 	_who = who
@@ -290,6 +294,47 @@ func _show_residents(o: Dictionary) -> void:
 		add_child(a)
 		a.update(0.0)
 		residents.append(a)
+
+
+## An empty home's yard isn't bare dirt: a water trough, a pile of hay, a feed pan and a few tufts of grass stand
+## in it, placed by SpaceFit like the animals would be, until the first animal moves in.
+func _dress_empty_yard(empty: bool) -> void:
+	if _empty_dress != null:
+		_empty_dress.queue_free()
+		_empty_dress = null
+	if not empty:
+		return
+	_empty_dress = Node3D.new()
+	var r := EMPTY_DRESS
+	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), BuildingModel.taken(_spec, _fp), [r * 1.6, r, r] as Array[float],
+		uid)
+	var spots: Array = fit["spots"]
+	var wood := Color("#8a5a32")
+	if spots.size() > 0:   # the trough, brimming
+		var at := Vector3((spots[0] as Vector2).x, 0.0, (spots[0] as Vector2).y)
+		ModelKit.tub(_empty_dress, at + Vector3(-r * 1.4, 0, -r * 0.5), at + Vector3(r * 1.4, r * 0.7, r * 0.5), 0.02,
+			ModelKit.surface(wood, "boards", 0.2), ModelKit.water())
+	if spots.size() > 1:   # a pile of hay
+		var at := Vector3((spots[1] as Vector2).x, 0.0, (spots[1] as Vector2).y)
+		ModelKit.ball(_empty_dress, at, r, ModelKit.paint(Color("#e2c35a")), Vector3(1.2, 0.6, 1.0))
+		ModelKit.ball(_empty_dress, at + Vector3(r * 0.6, 0, r * 0.3), r * 0.6, ModelKit.paint(Color("#d4b24a")),
+			Vector3(1.2, 0.5, 1.0))
+	if spots.size() > 2:   # a feed pan with grain in it
+		var at := Vector3((spots[2] as Vector2).x, 0.0, (spots[2] as Vector2).y)
+		ModelKit.cylinder(_empty_dress, at, r * 0.8, r * 0.3, ModelKit.paint(Color("#8a9096"), 0.4), r * 0.9, 12)
+		ModelKit.cylinder(_empty_dress, at + Vector3(0, r * 0.3, 0), r * 0.75, 0.005, ModelKit.paint(Color("#d9b24a")),
+			-1.0, 12)
+	var room := SpaceFit.yard_room(_fp)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = uid * 31 + 7
+	for k in EMPTY_TUFTS:
+		var at := Vector3(rng.randf_range(room.position.x, room.end.x), 0.0, rng.randf_range(room.position.y, room.end.y))
+		for blade in 3:
+			var b := ModelKit.cylinder(_empty_dress, at + Vector3(rng.randf_range(-0.02, 0.02), 0, 0), 0.008,
+				rng.randf_range(0.05, 0.09), ModelKit.paint(Color("#5f8a3a").darkened(rng.randf() * 0.2)), 0.001, 4)
+			b.rotation = Vector3(rng.randf_range(-0.4, 0.4), 0, rng.randf_range(-0.4, 0.4))
+	_empty_dress = ModelKit.bake(_empty_dress)   # (a few draws for the lot; bake frees the parts)
+	add_child(_empty_dress)
 
 
 ## A full home has animals looking out of its windows (FarmVille's did): a head in up to PEEKERS windows,

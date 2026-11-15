@@ -1,12 +1,12 @@
 {
- "_comment": "The neighbours and what passes between you (our own touch: an inbox where FarmVille had the feed). Every number lives in data/balance.json under social.*; this file holds the cast and the pools things are drawn from. `give` is {what: part|supply|coins|fuel|young|water, id, n}. Add a gift, request or share here, no code.",
+ "_comment": "The neighbours (each with a `look` for their portrait, PortraitIcon: skin, hair, a style of short, long, bun, cap or straw_hat, and a shirt) and what passes between you (our own touch: an inbox where FarmVille had the feed). Every number lives in data/balance.json under social.*; this file holds the cast and the pools things are drawn from. `give` is {what: part|supply|coins|fuel|young|water, id, n}. Add a gift, request or share here, no code.",
  "neighbours": [
-  {"name": "Maple", "speed": 0.8, "kind": 0.9},
-  {"name": "Barley", "speed": 1.0, "kind": 0.7},
-  {"name": "Clover", "speed": 1.4, "kind": 0.8},
-  {"name": "Hazel", "speed": 0.6, "kind": 0.6},
-  {"name": "Rusty", "speed": 1.2, "kind": 0.9},
-  {"name": "Poppy", "speed": 0.9, "kind": 0.5}
+  {"name": "Maple", "look": {"skin": "#f1c7a1", "hair": "#b5532e", "style": "long", "shirt": "#5c9a3e"}, "speed": 0.8, "kind": 0.9},
+  {"name": "Barley", "look": {"skin": "#d9a27a", "hair": "#e2c35a", "style": "straw_hat", "shirt": "#3d78c9"}, "speed": 1.0, "kind": 0.7},
+  {"name": "Clover", "look": {"skin": "#f6d3b5", "hair": "#3b2412", "style": "bun", "shirt": "#e86aa0"}, "speed": 1.4, "kind": 0.8},
+  {"name": "Hazel", "look": {"skin": "#a8714a", "hair": "#2b1a10", "style": "short", "shirt": "#d9442f"}, "speed": 0.6, "kind": 0.6},
+  {"name": "Rusty", "look": {"skin": "#e8b48c", "hair": "#c0502a", "style": "cap", "shirt": "#7a5a3a"}, "speed": 1.2, "kind": 0.9},
+  {"name": "Poppy", "look": {"skin": "#8a5a3a", "hair": "#1e1410", "style": "long", "shirt": "#f2b632"}, "speed": 0.9, "kind": 0.5}
  ],
  "gifts": [
   {"w": 4, "give": {"what": "part", "id": "bricks", "n": 1}},

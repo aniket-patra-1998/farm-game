@@ -7,6 +7,10 @@ render_mode unshaded, cull_disabled, depth_draw_never, depth_test_disabled, fog_
 // bob in step. `zoom` grows it as the camera pulls back, so it stays the same size on screen.
 
 uniform float zoom = 1.0;
+// Pulled back over a big farm, the signs over small things (animals, trees, blooms: the instance's custom green
+// is 1) fade by this much, so the buildings' signs stay and the farm doesn't read as a field of triangles.
+uniform float minor_fade = 0.0;
+varying float fade;
 uniform vec3 face : source_color = vec3(1.0, 0.75, 0.86);
 uniform vec3 light : source_color = vec3(1.0, 0.91, 0.95);
 uniform vec3 rim : source_color = vec3(0.95, 0.58, 0.74);
@@ -27,6 +31,7 @@ float tri(vec2 p, float r) {
 
 void vertex() {
 	float phase = INSTANCE_CUSTOM.r * 6.2831;
+	fade = 1.0 - minor_fade * INSTANCE_CUSTOM.g;
 	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
 	VERTEX *= zoom;
 	VERTEX.y += sin(TIME * rate + phase) * bob * zoom;
@@ -45,5 +50,5 @@ void fragment() {
 	float gloss = 1.0 - smoothstep(0.0, 0.16, length((p - vec2(-0.18, -0.28)) * vec2(1.0, 1.9)));
 	col = mix(col, vec3(1.0), gloss * 0.6);
 	ALBEDO = mix(vec3(1.0), col, body);
-	ALPHA = max(body * 0.95, halo);
+	ALPHA = max(body * 0.95, halo) * fade;
 }

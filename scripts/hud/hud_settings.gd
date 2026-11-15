@@ -73,6 +73,12 @@ func quality_card() -> PanelContainer:
 		b.button_pressed = Quality.level() == name
 		b.pressed.connect(func() -> void: Quality.choose(name))
 		row.add_child(b)
+	var day := CheckButton.new()   # (our own touch: FarmVille followed the clock)
+	day.text = tr("ALWAYS_DAYTIME")
+	day.button_pressed = DayCycle.always_day()
+	day.focus_mode = Control.FOCUS_NONE
+	day.toggled.connect(DayCycle.set_always_day)
+	inner.add_child(day)
 	return BookPanel.card_frame(inner)
 
 

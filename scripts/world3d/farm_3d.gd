@@ -9,6 +9,10 @@ extends Node3D
 ## ground, the plots, and the things standing on the farm. Turned on by the project setting
 ## farm/world/use_3d.
 
+# Night is a bright moonlit evening, not dark: the farm stays playable (on a phone outdoors too) while the windows,
+# lamps and stars still say it is night.
+const MOON_ENERGY := 0.62
+const NIGHT_AMBIENT := 0.46
 const SETTING := "farm/world/use_3d"
 const SHADOW_DISTANCE := 90.0
 const SUN_MAX_ELEVATION := deg_to_rad(58.0)
@@ -222,7 +226,7 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 		var m := maxf(DayCycle.moon_progress(hour), 0.0)
 		_aim_light(m * PI, MOON_ELEVATION)
 		sun.light_color = Color(0.62, 0.72, 1.0)
-		sun.light_energy = 0.4 * (1.0 - cover * 0.7)
+		sun.light_energy = MOON_ENERGY * (1.0 - cover * 0.7)
 		sun.shadow_opacity = 0.5
 	var top: Color = look["top"]
 	var horizon: Color = look["horizon"]
@@ -235,7 +239,7 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.background_color = horizon
 	# Shade is lit by the sky, but mostly warm-neutral bounce light off the grass and earth.
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
-	environment.ambient_light_energy = lerpf(0.4, 0.34, dark) * (1.0 - dim * 0.4)
+	environment.ambient_light_energy = lerpf(0.4, NIGHT_AMBIENT, dark) * (1.0 - dim * 0.4)
 	environment.adjustment_saturation = lerpf(1.1, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0))) * _grade_sat
 	environment.adjustment_contrast = GRADE_CONTRAST * _grade_contrast
 	var low_sun := pow(1.0 - sin(maxf(s, 0.0) * PI), 3.0) if s >= 0.0 else 0.0

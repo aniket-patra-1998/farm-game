@@ -31,6 +31,10 @@ func _ready() -> void:
 	for shape: String in ThingIcon.SHAPES:
 		things.add_child(ThingIcon.of([shape, "#c89a5a", "#c0392b"], 60.0))
 	rows.add_child(things)
+	var faces := HFlowContainer.new()   # the neighbours' portraits
+	for name: String in Game.social.roster():
+		faces.add_child(PortraitIcon.of(Game.social.look_of(name), 96.0))
+	rows.add_child(faces)
 	for k in 4:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw

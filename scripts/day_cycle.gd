@@ -6,6 +6,8 @@ extends RefCounted
 const SEASON := "Summer"  # not-ui: a season id (ODDS key); shown as tr("SEASON_SUMMER")
 const SUNRISE := 5.5   # hours, local time (summer)
 const SUNSET := 18.75
+const SETTINGS := "graphics"
+const ALWAYS_DAY_KEY := "always_day"
 
 ## Colour keyframes through the day: hour -> sky top, sky horizon, light on the farm.
 ## The last entry repeats the first so midnight wraps smoothly.
@@ -21,6 +23,34 @@ const KEYS := [
 	[21.0,  "#0b1430", "#1d2b55", "#6b78b4"],
 	[24.0,  "#0b1430", "#1d2b55", "#6b78b4"],
 ]
+
+static var _always := -1   # "always daytime": -1 not read yet, 0 off, 1 on
+
+
+## "Always daytime" (Settings; our own touch): the farm keeps the day's light through the night. Kept in the
+## player's settings, read once.
+static func always_day() -> bool:
+	if _always < 0:
+		_always = 1 if bool(PlayerSettings.value(SETTINGS, ALWAYS_DAY_KEY, false)) else 0
+	return _always == 1
+
+
+static func set_always_day(on: bool) -> void:
+	_always = 1 if on else 0
+	PlayerSettings.keep(SETTINGS, {ALWAYS_DAY_KEY: on})
+
+
+## The hour the farm is lit for: the real one, or with "always daytime" held inside the day's light (the evening
+## stays at its golden end until midnight, and the morning starts at its bright one).
+static func lit_hour(real_hour: float) -> float:
+	if not always_day():
+		return real_hour
+	var h := fposmod(real_hour, 24.0)
+	if h > SUNSET - 0.25:
+		return SUNSET - 0.25
+	if h < SUNRISE + 0.75:
+		return SUNRISE + 0.75
+	return h
 
 
 ## Local hour of the day (0 to 24) for a unix time, using the device's time zone.

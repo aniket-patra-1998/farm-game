@@ -4,17 +4,24 @@ extends MultiMeshInstance3D
 ## triangle pointing down, hovering and bobbing gently (shaders/ready3d.gdshader). Buildings, trees, blooms and
 ## animals all wear the same one, so the farm reads at a glance and it costs one draw for all of them.
 ## Objects3D says where: `show_at` for what stands still (over its top) and `follow_animals` for animals, whose
-## signs move with them each frame. The camera's zoom keeps them a steady size on screen (`follow`).
+## signs move with them each frame. The camera's zoom keeps them a steady size on screen (`follow`), and pulled
+## far back over a big farm the signs over small things (animals, trees, blooms) fade out (`MINOR_FADE_FROM` to
+## `MINOR_FADE_TO`), so the buildings' signs stay and the farm doesn't read as a field of triangles; zoom in to
+## see every one (our own touch: FarmVille's farms were smaller on screen).
 
 const SIZE := 0.27            # the sign's width in tiles, at the nearest zoom
 const ABOVE := 0.22           # how far above a thing's top it hovers, in tiles
 const ZOOM_REF := 9.0         # the camera size (tiles on screen) the sign is drawn at SIZE for
 const ZOOM_MOST := 2.0        # and the most it grows by when the camera pulls back
+const MINOR_FADE_FROM := 22.0 # camera size where small things' signs begin to fade..
+const MINOR_FADE_TO := 34.0   # ..and where they are gone
 
 var _material: ShaderMaterial
 var _tops: Array[Vector3] = []          # signs over what stands still
+var _minor: Array[bool] = []            # which of those are small things (trees, blooms)
 var _animals: Array[Animal3D] = []      # and over these, wherever they walk
 var _zoom := -1.0
+var _fade := -1.0
 var _animal_at: Array[Vector3] = []     # where each animal's sign was last put
 var _where: Array[Vector3] = []         # where each sign is (a CPU copy: the GPU's can't be read back everywhere)
 
@@ -34,21 +41,22 @@ func _ready() -> void:
 	multimesh.mesh = quad
 
 
-## Shows a sign over each of `tops` (the top centre of each ready thing that stands still) and over each of
-## `animals`, and none elsewhere.
-func show_at(tops: Array[Vector3], animals: Array[Animal3D] = []) -> void:
-	if tops == _tops and animals == _animals:
+## Shows a sign over each of `tops` (the top centre of each ready thing that stands still; `minor` marks the small
+## ones, trees and blooms, whose signs fade far out) and over each of `animals`, and none elsewhere.
+func show_at(tops: Array[Vector3], animals: Array[Animal3D] = [], minor: Array[bool] = []) -> void:
+	if tops == _tops and animals == _animals and minor == _minor:
 		return
 	_tops = tops.duplicate()
+	_minor = minor.duplicate()
 	_animals = animals.duplicate()
 	multimesh.instance_count = tops.size() + animals.size()
 	_where.resize(multimesh.instance_count)
 	for k in tops.size():
-		_put(k, tops[k], fposmod(tops[k].x * 0.37 + tops[k].z * 0.61, 1.0))
+		_put(k, tops[k], fposmod(tops[k].x * 0.37 + tops[k].z * 0.61, 1.0), k < minor.size() and minor[k])
 	_animal_at.resize(animals.size())
 	for k in animals.size():
 		_animal_at[k] = Vector3.INF
-		multimesh.set_instance_custom_data(tops.size() + k, Color(fposmod(k * 0.618, 1.0), 0, 0, 0))
+		multimesh.set_instance_custom_data(tops.size() + k, Color(fposmod(k * 0.618, 1.0), 1.0, 0, 0))
 		multimesh.set_instance_color(tops.size() + k, Color.WHITE)
 	follow_animals()
 	visible = multimesh.instance_count > 0
@@ -76,10 +84,10 @@ func follow_animals() -> void:
 
 
 ## Sign `k` over `top`, bobbing at `phase` (0..1: a thing keeps its own beat, so they don't bob in step).
-func _put(k: int, top: Vector3, phase: float) -> void:
+func _put(k: int, top: Vector3, phase: float, small: bool) -> void:
 	_where[k] = top + Vector3(0, ABOVE, 0)
 	multimesh.set_instance_transform(k, Transform3D(Basis.IDENTITY, _where[k]))
-	multimesh.set_instance_custom_data(k, Color(phase, 0, 0, 0))
+	multimesh.set_instance_custom_data(k, Color(phase, 1.0 if small else 0.0, 0, 0))
 	multimesh.set_instance_color(k, Color.WHITE)
 
 
@@ -99,3 +107,12 @@ func follow(camera_size: float) -> void:
 	if not is_equal_approx(zoom, _zoom):
 		_zoom = zoom
 		_material.set_shader_parameter("zoom", zoom)
+	var fade := minor_fade(camera_size)
+	if not is_equal_approx(fade, _fade):
+		_fade = fade
+		_material.set_shader_parameter("minor_fade", fade)
+
+
+## How much small things' signs are faded at `camera_size` (0 none .. 1 gone).
+static func minor_fade(camera_size: float) -> float:
+	return smoothstep(MINOR_FADE_FROM, MINOR_FADE_TO, camera_size)

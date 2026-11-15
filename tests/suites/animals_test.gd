@@ -438,8 +438,10 @@ func test_90_animals_walk_on_their_legs() -> void:
 	_check(not gait_moved_while_still, "legs only cycle while the body actually moves")
 	# A long frame (the app resuming) doesn't fling it.
 	var c := AnimalBehaviour.new(cow, 7, Vector2(14, 7))
+	var start := c.offset   # (each starts somewhere of its own in its range: never a straight row)
+	_check(not AnimalBehaviour.new(cow, 8, Vector2(14, 7)).offset.is_equal_approx(start), "animals start spread out")
 	c.update(5.0)
-	_check(c.offset.length() < 2.0, "a hitch doesn't teleport an animal")
+	_check((c.offset - start).length() < 2.0, "a hitch doesn't teleport an animal")
 	# Birds peck, and a turkey displays.
 	var turkey := AnimalBehaviour.new(AnimalRig.of(g.item_data("turkey")), 3, Vector2(14, 7))
 	var pecked := false

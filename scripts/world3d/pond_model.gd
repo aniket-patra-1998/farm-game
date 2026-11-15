@@ -9,12 +9,16 @@ extends RefCounted
 const SHORE_POINTS := 36
 const WOBBLE := [[3.0, 0.07], [5.0, 0.045], [8.0, 0.02]]   # the shoreline's bumps: [how many round, how big]
 const LIP := 1.1             # the grassy lip, out from the shore (of the shore's radius)
-const LIP_HEIGHT := 0.012
-const BED_IN := 0.9          # where the bank meets the water's edge underwater (of the shore's radius)
-const BED_DEPTH := 0.035     # how far down the bank is there
+# Every height stands above the farm's ground (y 0): the ground is one solid sheet that would hide anything
+# below it, so the pond is a low raised bank round a shallow bowl, and the water shows its depth by colour.
+const LIP_EDGE := 0.003      # the lip's outer edge, just above the lawn (no flicker against it)
+const LIP_HEIGHT := 0.045    # the bank's top
+const SHORE_HEIGHT := 0.035  # where it meets the water
+const BED_IN := 0.88         # where the bank reaches the bed underwater (of the shore's radius)
+const BED_HEIGHT := 0.012    # the bed there
 const DEEP := 0.55           # where the bowl's floor begins (of the shore's radius)
-const DEEP_DEPTH := 0.1      # and how deep it is
-const WATER_LEVEL := -0.012  # the water stands just under the ground
+const DEEP_HEIGHT := 0.005   # and its height: the lowest point, still above the ground
+const WATER_LEVEL := 0.03    # the water stands a little under the bank's top
 const GRASS := Color("#4f7a30")   # (close to the lawn, so the lip blends into it)
 const MUD := Color("#6e5634")
 const BED := Color("#3e3424")
@@ -63,8 +67,8 @@ static func _at(c: Vector3, rx: float, rz: float, shore: PackedFloat32Array, k: 
 ## the dark bed, in one mesh (its own colours, so it is one draw).
 static func _ground(c: Vector3, rx: float, rz: float, shore: PackedFloat32Array) -> MeshInstance3D:
 	# Each ring: [out, height, colour].
-	var rings := [[LIP, 0.0, GRASS], [1.04, LIP_HEIGHT, GRASS.lerp(MUD, 0.5)], [1.0, 0.002, MUD],
-		[BED_IN, -BED_DEPTH, MUD.lerp(BED, 0.5)], [DEEP, -DEEP_DEPTH, BED]]
+	var rings := [[LIP, LIP_EDGE, GRASS], [1.04, LIP_HEIGHT, GRASS.lerp(MUD, 0.5)], [1.0, SHORE_HEIGHT, MUD],
+		[BED_IN, BED_HEIGHT, MUD.lerp(BED, 0.5)], [DEEP, DEEP_HEIGHT, BED]]
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for ring in rings.size() - 1:
@@ -79,9 +83,9 @@ static func _ground(c: Vector3, rx: float, rz: float, shore: PackedFloat32Array)
 				st.set_color(v[1])
 				st.add_vertex(v[0])
 	# The bowl's floor.
-	var floor_y := -DEEP_DEPTH
+	var floor_y := DEEP_HEIGHT
 	for k in SHORE_POINTS:
-		for v: Vector3 in [c + Vector3(0, floor_y - 0.01, 0), _at(c, rx, rz, shore, k, DEEP, floor_y),
+		for v: Vector3 in [c + Vector3(0, floor_y, 0), _at(c, rx, rz, shore, k, DEEP, floor_y),
 				_at(c, rx, rz, shore, k + 1, DEEP, floor_y)]:
 			st.set_color(BED.darkened(0.15))
 			st.add_vertex(v)
@@ -113,7 +117,7 @@ static func _shallows(root: Node3D, c: Vector3, rx: float, rz: float, shore: Pac
 	for k in 10:
 		var i := rng.randi_range(0, SHORE_POINTS - 1)
 		var out := rng.randf_range(0.82, 0.95)
-		var p := _at(c, rx, rz, shore, i, out, -BED_DEPTH * (1.0 - out) / (1.0 - BED_IN) - 0.005)
+		var p := _at(c, rx, rz, shore, i, out, lerpf(BED_HEIGHT, SHORE_HEIGHT, (out - BED_IN) / (1.0 - BED_IN)))
 		ModelKit.facet_ball(root, p, rng.randf_range(0.015, 0.03), ModelKit.paint(STONE.darkened(rng.randf() * 0.3)),
 			Vector3(1.3, 0.6, 1.0))
 
@@ -124,7 +128,7 @@ static func _stones(root: Node3D, c: Vector3, rx: float, rz: float, shore: Packe
 	for cluster in 4:
 		var i := int(SHORE_POINTS * (cluster + rng.randf() * 0.5) / 4.0)
 		for k in rng.randi_range(3, 5):
-			var p := _at(c, rx, rz, shore, i + k - 1, rng.randf_range(1.0, 1.12), 0.0)
+			var p := _at(c, rx, rz, shore, i + k - 1, rng.randf_range(1.0, 1.12), LIP_HEIGHT * 0.6)
 			var size := rng.randf_range(0.05, 0.1) if k == 0 else rng.randf_range(0.025, 0.055)
 			var stone := ModelKit.facet_ball(root, p + Vector3(0, size * 0.25, 0), size,
 				ModelKit.paint(STONE.darkened(rng.randf() * 0.25).lerp(Color("#8a8a6a"), rng.randf() * 0.3)),
@@ -137,7 +141,7 @@ static func _cattails(root: Node3D, c: Vector3, rx: float, rz: float, shore: Pac
 		rng: RandomNumberGenerator) -> void:
 	for clump in 3:
 		var i := int(SHORE_POINTS * (clump + 0.6 + rng.randf() * 0.3) / 3.0)
-		var at := _at(c, rx, rz, shore, i, rng.randf_range(0.93, 1.02), -0.01)
+		var at := _at(c, rx, rz, shore, i, rng.randf_range(0.93, 1.02), WATER_LEVEL - 0.01)
 		for k in 7:
 			var h := rng.randf_range(0.16, 0.32)
 			var foot := at + Vector3(rng.randf_range(-0.05, 0.05), 0.0, rng.randf_range(-0.05, 0.05))

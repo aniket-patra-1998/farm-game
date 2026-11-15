@@ -187,6 +187,7 @@ func sync() -> void:
 ## crafts, a tree, a bloom, an animal (whose sign walks with it). Over the top of what is drawn.
 func _mark_ready() -> void:
 	var tops: Array[Vector3] = []
+	var minor: Array[bool] = []
 	var animals: Array[Animal3D] = []
 	for o in Game.objects:
 		var uid := int(o["uid"])
@@ -199,7 +200,8 @@ func _mark_ready() -> void:
 			else:
 				var box: AABB = _views[uid]["box"]
 				tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
-	_ready_marks.show_at(tops, animals)
+				minor.append(not Game.is_building_item(str(o["id"])))   # (trees and blooms: small, fade far out)
+	_ready_marks.show_at(tops, animals, minor)
 
 
 ## The ready signs' layer (for tests and tools).

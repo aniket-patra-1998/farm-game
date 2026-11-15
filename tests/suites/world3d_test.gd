@@ -1782,3 +1782,33 @@ func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
 	crops.free()
 	Game.debug_time_offset = 0
 	Game.reset_game()
+
+
+## Far out over a big farm, the signs over small things fade and the buildings' stay; the night stays playable.
+func test_335_far_out_small_signs_fade_and_night_stays_playable() -> void:
+	_eq(ReadyMarks.minor_fade(ReadyMarks.MINOR_FADE_FROM - 1.0), 0.0, "close in, every sign shows")
+	_eq(ReadyMarks.minor_fade(ReadyMarks.MINOR_FADE_TO + 1.0), 1.0, "far out, small things' signs are gone")
+	_check(Farm3D.NIGHT_AMBIENT >= 0.4 and Farm3D.MOON_ENERGY >= 0.5, "a bright moonlit night")
+	DayCycle.set_always_day(true)
+	_eq(DayCycle.lit_hour(23.0), DayCycle.SUNSET - 0.25, "always daytime: the night keeps the evening's light")
+	_eq(DayCycle.lit_hour(3.0), DayCycle.SUNRISE + 0.75, "and the small hours the morning's")
+	_eq(DayCycle.darkness(DayCycle.lit_hour(23.0)), 0.0, "never dark")
+	DayCycle.set_always_day(false)
+	_eq(DayCycle.lit_hour(23.0), 23.0, "off: the clock's own hour")
+
+
+## A pond stands on the farm's ground, never in it: the ground is one solid sheet that hides anything below it
+## (a pond dug under it showed only its stones on a phone). Its bank, bed and water are at or above y 0 (stones and
+## pebbles may sit a little into the ground, as stones do).
+func test_336_a_pond_stands_on_the_ground_never_under_it() -> void:
+	var root := Node3D.new()
+	PondModel.build(root, Vector3(0.5, 0, 0.5), 0.4, 0.34, 3)
+	var lowest := INF
+	for n in root.find_children("*", "GeometryInstance3D", true, false):
+		var g := n as GeometryInstance3D
+		var box: AABB = g.transform * (g as VisualInstance3D).get_aabb()
+		if box.size.x > 0.3:   # (the bank and bed, and the water: the pond itself)
+			lowest = minf(lowest, box.position.y)
+	_check(lowest >= 0.0, "nothing below the ground (lowest %.3f)" % lowest)
+	_check(PondModel.WATER_LEVEL > PondModel.DEEP_HEIGHT, "the water stands over its bed")
+	root.free()

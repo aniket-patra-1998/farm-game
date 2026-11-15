@@ -80,7 +80,9 @@ func build(root: Control) -> void:
 	strip.add_child(row)
 	var names := Game.social.roster()
 	for k in mini(STRIP_NEIGHBOURS, names.size()):
-		var b := UiKit.tool_button("neighbours", names[k], UiTheme.size("neighbour_width"), UiTheme.size("tool_size"))
+		var face := PortraitIcon.of(Game.social.look_of(names[k]), UiTheme.size("tool_icon"))
+		var b := UiKit.tool_button("neighbours", names[k], UiTheme.size("neighbour_width"), UiTheme.size("tool_size"), 0.0,
+			face)
 		b.pressed.connect(_show_neighbours)
 		row.add_child(b)
 

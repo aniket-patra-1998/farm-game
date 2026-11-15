@@ -19,6 +19,13 @@ func _init() -> void:
 		pools[pool] = data.get(pool, [])
 
 
+func look_of(name: String) -> Dictionary:
+	for n: Dictionary in cast:
+		if str(n.get("name", "")) == name:
+			return n.get("look", {})
+	return {}
+
+
 func roster() -> Array[String]:
 	var names: Array[String] = []
 	for n: Dictionary in cast:

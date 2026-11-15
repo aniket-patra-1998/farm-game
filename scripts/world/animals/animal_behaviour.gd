@@ -23,6 +23,7 @@ const EAR_EVERY := Vector2(2.5, 8.0)
 const EAR_TIME := 0.35
 const SWISH_EVERY := Vector2(3.0, 9.0)
 const SWISH_TIME := 1.2
+const START_SPREAD := 0.85      # how far into its wander range an animal starts (of the range)
 const MIN_WALK := 0.35           # a walk covers at least this share of the wander range
 const ARRIVED := 0.6             # px
 const FROLIC_SPEED := 2.4        # a frolic is a dash: this many times walking speed
@@ -70,6 +71,9 @@ func _init(animal_rig: AnimalRig, seed_value: int, wander: Vector2) -> void:
 	_phase = _rng.randf() * TAU
 	facing = 1.0 if _rng.randf() < 0.5 else -1.0
 	shown_facing = facing
+	# Each starts somewhere of its own inside its range, so a row of animals never stands in a straight line.
+	var a := _rng.randf() * TAU
+	offset = Vector2(cos(a) * range_px.x, sin(a) * range_px.y) * sqrt(_rng.randf()) * START_SPREAD
 	_blink_in = _rng.randf_range(BLINK_EVERY.x, BLINK_EVERY.y)
 	_ear_in = _rng.randf_range(EAR_EVERY.x, EAR_EVERY.y)
 	_swish_in = _rng.randf_range(SWISH_EVERY.x, SWISH_EVERY.y)

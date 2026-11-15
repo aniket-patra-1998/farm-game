@@ -33,7 +33,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	hour = DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
+	hour = DayCycle.lit_hour(DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes()))
 	var w := get_viewport().get_visible_rect().size.x
 	for c in _clouds:
 		var cloud_scale: float = c["scale"]

@@ -11,6 +11,11 @@ func roster() -> Array[String]:
 	return []
 
 
+## How neighbour `name` looks, for their portrait (PortraitIcon): {skin, hair, style, shirt}, or {}.
+func look_of(_name: String) -> Dictionary:
+	return {}
+
+
 ## What neighbours send you between `from_t` and `to_t` (unix seconds): new items without ids, each with its
 ## own time `t`, oldest first.
 func incoming(_from_t: int, _to_t: int) -> Array[Dictionary]:

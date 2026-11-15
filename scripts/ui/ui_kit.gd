@@ -118,7 +118,8 @@ static func xp_bar() -> UiXpBar:
 
 ## A tool or menu button: an icon over a short label, on a cream face; lit (the tool in hand) when pressed.
 ## `w` and `h` default to the theme's tool size.
-static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px := 0.0) -> Button:
+static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px := 0.0,
+		picture: UiIcon = null) -> Button:
 	var bw := w if w > 0.0 else UiTheme.size("tool_size")
 	var bh := h if h > 0.0 else UiTheme.size("tool_size")
 	var b := Button.new()
@@ -140,7 +141,7 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	box.add_theme_constant_override("separation", 0)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(box)
-	var icon := UiIcon.make(kind, icon_px if icon_px > 0.0 else UiTheme.size("tool_icon"))
+	var icon := picture if picture != null else UiIcon.make(kind, icon_px if icon_px > 0.0 else UiTheme.size("tool_icon"))
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(icon)
 	var label := Label.new()

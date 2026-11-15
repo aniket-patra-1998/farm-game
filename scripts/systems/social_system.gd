@@ -75,6 +75,11 @@ func roster() -> Array[String]:
 	return transport.roster()
 
 
+## How neighbour `name` looks (their portrait).
+func look_of(name: String) -> Dictionary:
+	return transport.look_of(name)
+
+
 ## How many of today's helps are left (the count restarts each day).
 func helps_left() -> int:
 	return Balance.i("social.helps_per_day") - (helps_today if help_day == game.day_number() else 0)
