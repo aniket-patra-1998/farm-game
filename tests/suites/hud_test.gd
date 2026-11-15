@@ -363,3 +363,13 @@ func test_332_every_ribbon_tier_has_its_colour() -> void:
 	var colours: Array = UiTheme.colors()
 	for k in tiers.size():
 		_check(colours.has("ribbon_tier_%d" % k), "tier %d (%s) has a colour" % [k, tiers[k]])
+
+
+## The interface keeps clear of a phone's notch and gesture bar: a safe area's insets in the view's own units.
+func test_334_the_interface_keeps_inside_the_safe_area() -> void:
+	var inset := Display.insets_for(Vector2(1080, 2400), Rect2(0, 120, 1080, 2400 - 120 - 60), Vector2(540, 1200))
+	_eq(inset, Vector4(0, 60, 0, 30), "a notch at the top and a gesture bar below, at the view's half scale")
+	_eq(Display.insets_for(Vector2(1920, 1080), Rect2(0, 0, 1920, 1080), Vector2(1920, 1080)), Vector4.ZERO,
+		"no cut-outs: nothing moves")
+	_check(ItemIcons.side() >= ItemIcons.SIDE and ItemIcons.side() <= ItemIcons.SIDE_MOST,
+		"pictures are made at this screen's density, within bounds")

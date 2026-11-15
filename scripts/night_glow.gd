@@ -23,6 +23,7 @@ var grid: FarmGrid
 var dark := 0.0
 var _canvas: Node2D
 var _flies: Array = [] # {pos, phase, speed}
+var _was_dark := false
 
 
 func _ready() -> void:
@@ -39,11 +40,12 @@ func _ready() -> void:
 		)
 
 
+## Redrawn every frame only while dark (the glows flicker); once more as it gets light, to clear them.
 func _process(_delta: float) -> void:
-	if dark > 0.01:
+	var is_dark := dark > 0.01
+	if is_dark or _was_dark:
 		_canvas.queue_redraw()
-	elif _canvas.visible:
-		_canvas.queue_redraw()
+	_was_dark = is_dark
 
 
 func _draw_glow() -> void:

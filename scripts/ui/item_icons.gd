@@ -8,7 +8,8 @@ extends Node
 ## tab on screen) first, so opening the Market never waits. One renderer for the whole game, added by the HUD;
 ## `of` works before it exists.
 
-const SIDE := 160             # the picture's size in pixels
+const SIDE := 160             # the picture's size in pixels on a screen drawn at the game's own scale..
+const SIDE_MOST := 384        # ..and the most on a dense one (`side`: sharp, not wasteful)
 const PITCH := deg_to_rad(-35.0)
 const YAW := deg_to_rad(45.0)
 const MARGIN := 1.12          # room round the model inside the picture
@@ -25,6 +26,7 @@ const CALM := 0.01
 const STAGE := &"Stage"   # not-ui (the node holding the model in a slot)
 
 static var _shown: ItemIcons
+static var _side := 0          # this screen's picture size, worked out once
 static var _textures := {}    # item id -> ImageTexture (blank until made)
 static var _waiting: Array[String] = []
 static var _asked := {}       # item id -> the frame it was last asked for
@@ -38,14 +40,27 @@ var _making: Array[String] = []   # the item drawn in each slot this frame ("" w
 static func of(item_id: String) -> Texture2D:
 	if not _textures.has(item_id):
 		var kept := Image.load_from_file(_file(item_id)) if FileAccess.file_exists(_file(item_id)) else null
-		if kept != null and kept.get_width() == SIDE:
+		if kept != null and kept.get_width() == side():
 			_textures[item_id] = ImageTexture.create_from_image(kept)
 			return _textures[item_id]
-		_textures[item_id] = ImageTexture.create_from_image(Image.create(SIDE, SIDE, false, Image.FORMAT_RGBA8))
+		_textures[item_id] = ImageTexture.create_from_image(Image.create(side(), side(), false, Image.FORMAT_RGBA8))
 		_waiting.append(item_id)
 	if _waiting.has(item_id):
 		_asked[item_id] = Engine.get_process_frames()
 	return _textures[item_id]
+
+
+## The pictures' size in pixels on this screen: SIDE at the game's own scale, more where the screen draws the
+## interface larger (a dense phone), up to SIDE_MOST, so cards stay sharp. Worked out once.
+static func side() -> int:
+	if _side == 0:
+		var tree := Engine.get_main_loop() as SceneTree
+		var dense := 1.0
+		if tree != null and DisplayServer.get_name() != "headless":
+			var view := tree.root.get_visible_rect().size
+			dense = Vector2(DisplayServer.window_get_size()).x / maxf(view.x, 1.0)
+		_side = clampi(int(SIDE * maxf(dense, 1.0) / 16.0) * 16, SIDE, SIDE_MOST)
+	return _side
 
 
 ## Puts the renderer under `parent` (once).
@@ -91,7 +106,7 @@ func _ready() -> void:
 ## One small viewport with its own world, camera, sun and plain light.
 func _slot() -> SubViewport:
 	var vp := SubViewport.new()
-	vp.size = Vector2i(SIDE, SIDE)
+	vp.size = Vector2i(side(), side())
 	vp.transparent_bg = true
 	vp.own_world_3d = true
 	vp.render_target_update_mode = SubViewport.UPDATE_DISABLED

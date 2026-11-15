@@ -50,6 +50,7 @@ var _shown_coins := -1.0   # the number the coin counter shows while it rolls to
 var _coin_roll: Tween
 
 # The panels moved out of this class (scripts/hud/): each builds its content into the book.
+var _root: Control   # the interface's root, kept inside the safe area
 @onready var market := HudMarket.new(self)
 @onready var crafting := HudCrafting.new(self)
 @onready var buildings := HudBuildings.new(self)
@@ -67,6 +68,9 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = _make_theme()
 	add_child(root)
+	_root = root
+	_fit_safe_area()
+	get_viewport().size_changed.connect(_fit_safe_area)
 	ItemIcons.start(self)   # the shop's pictures, made from the models when first shown
 	top = HudTop.new(self)
 	top.build(root)
@@ -105,6 +109,16 @@ func _ready() -> void:
 
 
 # ---------------------------------------------------------------- layout
+
+
+## Keeps the whole interface inside the screen's safe area (clear of a notch, a camera hole, rounded corners
+## and the gesture bar): the root's edges move in by the insets, and everything is laid out inside it.
+func _fit_safe_area() -> void:
+	var inset := Display.safe_insets(get_viewport())
+	_root.offset_left = inset.x
+	_root.offset_top = inset.y
+	_root.offset_right = -inset.z
+	_root.offset_bottom = -inset.w
 
 
 func _build_placing_bar(root: Control) -> void:

@@ -126,6 +126,9 @@ func _use_3d() -> void:
 	# The 2D pieces now only keep the list of ready things for the overlay: nothing to draw or animate.
 	grid.pieces.visible = false
 	grid.pieces.set_process(false)
+	# The 2D night glow too: in 3D the windows, lamps and fireflies light themselves.
+	night.visible = false
+	night.set_process(false)
 
 
 ## Zoom so the whole farm fits between the top bar and the toolbar,
