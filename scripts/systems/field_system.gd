@@ -25,8 +25,7 @@ func ripe_census() -> Dictionary:
 			continue
 		var crop: Dictionary = game.crops[p["crop"]]
 		var ripe_at := int(p["planted_at"]) + int(crop["grow_seconds"])
-		var wither_at := ripe_at + ripe_window(crop) \
-			* (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
+		var wither_at := ripe_at + window_of(p, crop)
 		if now < ripe_at:
 			next = mini(next, ripe_at)
 		elif now < wither_at and not game.is_occupied(i):
@@ -46,7 +45,7 @@ func phase(i: int) -> GameState.Phase:
 			var grow := int(crop["grow_seconds"])
 			if age < grow:
 				return GameState.Phase.GROWING
-			var window := ripe_window(crop) * (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
+			var window := window_of(p, crop)
 			if age < grow + window:
 				return GameState.Phase.RIPE
 			return GameState.Phase.WITHERED
@@ -62,8 +61,17 @@ func next_phase_at(i: int) -> int:
 	var ripe := int(p["planted_at"]) + int(crop["grow_seconds"])
 	if game.now() < ripe:
 		return ripe
-	var window := ripe_window(crop) * (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
+	var window := window_of(p, crop)
 	return ripe + window if game.now() < ripe + window else -1
+
+
+## How long plot `p`'s crop stays ripe before it withers: the crop's own time, longer for pollinated seeds,
+## shorter for a crop planted off-season (`off`, set when it was planted: Season, Balance `seasons.*`).
+func window_of(p: Dictionary, crop: Dictionary) -> int:
+	var window := ripe_window(crop) * (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
+	if p.get("off", false):
+		window = maxi(int(window * Balance.f("seasons.off_window_mult")), 1)
+	return window
 
 
 func ripe_window(crop: Dictionary) -> int:
@@ -147,6 +155,8 @@ func plant(i: int, crop_id: String) -> bool:
 		game.message.emit(tr("NOT_ENOUGH_COINS_FOR_SEEDS") % crop["name"])
 		return false
 	game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": game.now()}
+	if game.off_season(crop_id):
+		game.plots[i]["off"] = true   # planted out of its seasons: sells for more, withers sooner (kept with the plot)
 	if use_pollinated:
 		game.plots[i]["pol"] = true
 	game.collectibles.roll_collectible(game.collectibles.collection_of_crop.get(crop_id, {}),
@@ -193,7 +203,14 @@ func harvest(i: int) -> Dictionary:
 	var bonus := Balance.f("economy.mastery_price_bonus") * stars_before + (
 		Balance.f("economy.fertilizer_bonus") if fertilized else 0.0
 	)
-	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)))
+	# The seasons (our own touch): rain while it grew watered it, and an off-season crop sells for more.
+	var planted_at := int(game.plots[i]["planted_at"])
+	var rained := game.rained_between(planted_at, planted_at + int(crop["grow_seconds"]))
+	if rained:
+		bonus += Balance.f("seasons.rain_bonus")
+	var off: bool = game.plots[i].get("off", false)
+	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)
+		* (Balance.f("seasons.off_price_mult") if off else 1.0)))
 	var gained := int(crop["xp"])
 
 	var was_pollinated: bool = game.plots[i].get("pol", false)
@@ -242,4 +259,4 @@ func harvest(i: int) -> Dictionary:
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
 		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel,
 		"bushels": (1 + game.mastery.stars(crop_id)) if bushel != "" else 0, "bunch": bunch, "found": found,
-		"feed": feed_found, "feed_rich": rich}
+		"feed": feed_found, "feed_rich": rich, "rain": rained, "off": off}

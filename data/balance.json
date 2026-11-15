@@ -526,6 +526,36 @@
      "rain": 4,
      "fog": 8,
      "snow": 20
+    },
+    "Monsoon": {
+     "clear": 10,
+     "partly_cloudy": 16,
+     "cloudy": 24,
+     "rain": 36,
+     "storm": 10,
+     "fog": 4
+    },
+    "Summer_monsoon": {
+     "clear": 60,
+     "partly_cloudy": 24,
+     "cloudy": 8,
+     "rain": 3,
+     "storm": 5
+    },
+    "Autumn_monsoon": {
+     "clear": 44,
+     "partly_cloudy": 26,
+     "cloudy": 14,
+     "rain": 10,
+     "storm": 2,
+     "fog": 4
+    },
+    "Winter_monsoon": {
+     "clear": 48,
+     "partly_cloudy": 22,
+     "cloudy": 12,
+     "rain": 3,
+     "fog": 15
     }
    },
    "note": "Share of time each kind of weather is out, by season (weights). Fog only in the early morning; snow only in winter. Looks only: FarmVille had no weather."
@@ -684,6 +714,14 @@
    "v": 2,
    "note": "XP for helping a neighbour"
   }
+ },
+ "seasons": {
+  "enabled": {"v": 1, "note": "1 the seasons are on (scripts/season.gd, data/seasons.json; our own touch): the season follows the real calendar where the player lives, crops have home seasons, and rain waters the fields. 0: always summer, as before"},
+  "from_level": {"v": 6, "note": "crops planted below this level are never off-season: a new farm learns plain farming first"},
+  "off_price_mult": {"v": 1.5, "note": "an off-season crop sells for this many times its price (the seed shelf says so)"},
+  "off_window_mult": {"v": 0.5, "note": "and stays ripe this share of its usual time before it withers: more coins, less slack"},
+  "rain_bonus": {"v": 0.1, "note": "a crop it rained on while it grew sells for this much more (added with the fertilizer and mastery bonuses); the forecast under the clock says when rain is due"},
+  "forecast_blocks": {"v": 8, "note": "how many weather blocks ahead the forecast looks (8 x 3 h: a day)"}
  },
  "feel": {
   "run_scale": {"v": [0, 2, 4, 5, 7, 9, 11, 12], "note": "the notes a run of the same sound climbs (a swipe's plots, a streak of harvests), in semitones above the first; past the end the top note holds (autoload/feedback.gd). Our own touch."},

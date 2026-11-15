@@ -30,8 +30,7 @@ static func items(game: GameState, from_t: int, to_t: int) -> Array[Dictionary]:
 			continue
 		var crop: Dictionary = game.crops[p["crop"]]
 		var ripe_at := int(p["planted_at"]) + int(crop["grow_seconds"])
-		var wither_at := ripe_at + game.field.ripe_window(crop) \
-			* (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
+		var wither_at := ripe_at + game.field.window_of(p, crop)
 		if ripe_at > from_t and ripe_at <= to_t and wither_at > to_t:
 			ripened += 1
 		if wither_at > from_t and wither_at <= to_t:

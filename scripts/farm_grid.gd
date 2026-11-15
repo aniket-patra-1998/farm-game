@@ -32,6 +32,7 @@ const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
+const RAIN_BLUE := Color("#8fd0ff")   # the words of a rain-watered harvest
 const COUNT_TAG := "x%d"     # not-ui: a count (a swipe's plots, a streak), the same in every language
 const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is walked in
 ## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
@@ -1039,6 +1040,8 @@ func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 	_reward(at, int(result["coins"]), int(result["xp"]))
 	_float(at, "+%d" % result["coins"], "coins")
 	_float(at + Vector2(0, -30), tr("XP") % result["xp"], "xp")
+	if result.get("rain", false):   # (the rain that watered it, said where the coins are)
+		_float(at + Vector2(0, 26), tr("RAINED_ON") % roundi(Balance.f("seasons.rain_bonus") * 100.0), RAIN_BLUE, 1.4)
 	if result.get("part", "") != "":
 		_float(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], "part", 1.6)
 	if result.get("bushel", "") != "":

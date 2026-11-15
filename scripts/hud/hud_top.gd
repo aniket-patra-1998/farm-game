@@ -11,6 +11,7 @@ var coins_label: Label
 var gems_label: Label
 var plaque: PanelContainer
 var clock: Label
+var forecast: Label   # under the clock: "Rain at 4:00 pm: watered crops pay +10%" (hidden when nothing is due)
 var xp: UiXpBar
 
 
@@ -54,6 +55,15 @@ func build(root: Control) -> void:
 	clock.add_theme_color_override("font_shadow_color", UiTheme.color("bar_text_shadow"))
 	clock.add_theme_constant_override("shadow_offset_y", 1)
 	middle.add_child(clock)
+	# The forecast (our own touch): when rain is due or will stop, so a visit can be planned round it.
+	forecast = Label.new()
+	forecast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	forecast.add_theme_font_size_override("font_size", int(UiTheme.size("font_clock")))
+	forecast.add_theme_color_override("font_color", UiTheme.color("hud_hint"))
+	forecast.add_theme_color_override("font_shadow_color", UiTheme.color("bar_text_shadow"))
+	forecast.add_theme_constant_override("shadow_offset_y", 1)
+	forecast.visible = false
+	middle.add_child(forecast)
 
 	xp = UiKit.xp_bar()
 	xp.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -63,6 +73,20 @@ func build(root: Control) -> void:
 	xp.offset_top = margin * 0.5
 	xp.offset_bottom = margin * 0.5 + xp.custom_minimum_size.y
 	root.add_child(xp)
+
+
+## The forecast line for what the sky does next (Game.forecast: {name, at, starts}; {} hides it): rain to come
+## says what it is worth, rain falling says when it stops.
+func show_forecast(next: Dictionary) -> void:
+	forecast.visible = not next.is_empty()
+	if next.is_empty():
+		return
+	var at := DayCycle.clock_text(DayCycle.local_hour(int(next["at"]), DayCycle.device_bias_minutes()))
+	if next["starts"]:
+		forecast.text = tr("FORECAST_STARTS") % [tr(str(next["name"])), at,
+			roundi(Balance.f("seasons.rain_bonus") * 100.0)]
+	else:
+		forecast.text = tr("FORECAST_ENDS") % [tr(str(next["name"])), at]
 
 
 ## The farm's name as the player set it (Settings), or "My Farm".

@@ -9,6 +9,7 @@ var _main: Node
 
 
 func _ready() -> void:
+	Season.active = false   # (the same in any month)
 	Game.saving_enabled = false
 	Game.reset_game()
 	# A clean field, so every piece can be seen.

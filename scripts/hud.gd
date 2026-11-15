@@ -407,10 +407,11 @@ static func _thousands(n: int) -> String:
 func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
 	top.clock.text = "%s · %s · %s" % [
-		tr("SEASON_" + DayCycle.SEASON.to_upper()),
+		tr("SEASON_" + Game.season().to_upper()),
 		tr(Game.weather()["name"]),
 		DayCycle.clock_text(hour)
 	]
+	top.show_forecast(Game.forecast() if Season.enabled() else {})
 
 
 # ---------------------------------------------------------------- menus

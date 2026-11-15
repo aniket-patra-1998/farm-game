@@ -12,6 +12,9 @@ func _init(owner: FarmHud) -> void:
 
 func build_seeds(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(tr("PICK_A_SEED_THEN_TAP_PLOWED_PLOTS"), 20, BookPanel.CREAM))
+	if Season.enabled() and Game.level() >= Balance.i("seasons.from_level"):
+		content.add_child(BookPanel.text(tr("SEASON_SHELF") % [tr("SEASON_" + Game.season().to_upper()),
+			roundi((Balance.f("seasons.off_price_mult") - 1.0) * 100.0)], 18, BookPanel.CREAM))
 	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
 	for id: String in Game.crop_order:
 		if not Release.has(id):
@@ -33,7 +36,10 @@ func seed_card(id: String) -> Button:
 		badge = UiKit.price_badge("", tr("FREE_SEEDS_LEFT") % pol)
 	else:
 		badge = UiKit.price_badge("coin", str(int(crop["seed_cost"])), Game.coins < int(crop["seed_cost"]))
-	var about := tr("SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), int(crop["sell_price"])]
+	# The season's price board (our own touch): an off-season crop shows what it sells for now, and says why.
+	var off := Game.off_season(id)
+	var sells := roundi(int(crop["sell_price"]) * (Balance.f("seasons.off_price_mult") if off else 1.0))
+	var about := tr("SEED_CARD_OFF" if off else "SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), sells]
 	var card := UiKit.item_card(ItemIcons.of(id), str(crop["name"]), about, badge, locked, MasteryStars.of(id))
 	if not locked:
 		card.pressed.connect(func() -> void: hud.choose_seed(id))

@@ -25,6 +25,9 @@ signal inbox_changed             # the neighbours' mail changed (arrived, claime
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
 
+const WET: Array[String] = ["rain", "storm"]               # the weather that waters the fields
+const FALLING: Array[String] = ["rain", "storm", "snow"]   # the weather the forecast speaks of
+const RAIN_LOOK_MOST := 64   # weather blocks one look for rain covers at most (8 days of growing)
 # More tiles changed at once than this, and the whole field is laid again instead of each plot.
 const WHOLE_FIELD_TILES := 96
 # Each step's hint, as keys in locale/strings.csv (tutorial_text() translates it).
@@ -150,6 +153,8 @@ var _occupied := {}                # tile index -> uid of the object covering it
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
 var _weather := {}                # the last answer of weather(), and when and for what it was made
+var _forecast := {}               # the last answer of forecast(), and the weather block it was made in
+var _forecast_block := -1
 var _weather_at := -1
 var _weather_for := "?"
 var _holding := 0          # hold_updates depth
@@ -953,7 +958,66 @@ func objects_updated() -> void:
 	queue_save()
 
 
-# ---------------------------------------------------------------- weather
+# ---------------------------------------------------------------- seasons and weather
+
+
+## The season now, where the player lives (Season: the real calendar by region; summer when seasons are off).
+func season() -> String:
+	return Season.at(now(), DayCycle.device_bias_minutes())
+
+
+## Whether a crop planted now would be off-season (it sells for more and withers sooner). Never on a young farm
+## (Balance `seasons.from_level`): plain farming is learnt first.
+func off_season(crop_id: String) -> bool:
+	return level() >= Balance.i("seasons.from_level") and Season.is_off(crop_id, season())
+
+
+## The weather's state ("rain", "clear"...) in the block holding a time, by the season of that day.
+func weather_state_at(unix_time: int) -> String:
+	var bias := DayCycle.device_bias_minutes()
+	return Weather.state_at(unix_time, Season.odds_key(Season.at(unix_time, bias)), DayCycle.local_hour(unix_time, bias))
+
+
+## Whether it rained at any time between two moments (a crop's growing): the weather is a pure function of the
+## date, so this is known for any stretch, past or to come. Not during a fresh farm's clear spell, and never when
+## seasons are off.
+func rained_between(from_t: int, to_t: int) -> bool:
+	if not Season.enabled():
+		return false
+	var length := Weather.block()
+	var t := maxi(from_t, clear_until)
+	t -= posmod(t, length)
+	var looked := 0
+	while t < to_t and looked < RAIN_LOOK_MOST:
+		if WET.has(weather_state_at(t)):
+			return true
+		t += length
+		looked += 1
+	return false
+
+
+## What the sky will do next, for the forecast under the clock: {name, at, starts}: rain (or snow) `starts` at `at`
+## (unix seconds), or the rain falling now ends then. {} when nothing changes within a day (Balance
+## `seasons.forecast_blocks`). Worked out once per weather block.
+func forecast() -> Dictionary:
+	var length := Weather.block()
+	var t := now()
+	var index := int(floor(t / float(length)))
+	if index == _forecast_block:
+		return _forecast
+	_forecast_block = index
+	_forecast = {}
+	var wet_now := FALLING.has(weather_state_at(t))
+	var falling := weather_state_at(t)
+	for k in range(1, Balance.i("seasons.forecast_blocks") + 1):
+		var at := (index + k) * length
+		var state := weather_state_at(at)
+		if FALLING.has(state) != wet_now:
+			_forecast = {"name": Weather.NAMES[state if not wet_now else falling], "at": at, "starts": not wet_now}
+			break
+	return _forecast
+
+
 
 
 ## The weather right now (see Weather.current): looks only, FarmVille had none. It changes by the second at
@@ -966,7 +1030,7 @@ func weather() -> Dictionary:
 		_weather_for = forced
 		_weather = Weather.current(
 			t,
-			DayCycle.SEASON,
+			Season.odds_key(season()),
 			DayCycle.local_hour(t, DayCycle.device_bias_minutes()),
 			forced
 		)

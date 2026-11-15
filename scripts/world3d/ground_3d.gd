@@ -80,8 +80,13 @@ func _ready() -> void:
 	# patchiness (the meadow keeps the shader's own, wilder numbers).
 	for key: String in LAWN:
 		grass.set_shader_parameter(key, LAWN[key])
+	# The season colours the lawn (Season: lush in the monsoon, strawy in summer, pale in winter).
+	var seasonal := Season.lawn(Game.season())
+	for key: String in seasonal:
+		grass.set_shader_parameter(key, seasonal[key])
 	meadow_grass.set_shader_parameter("checker", 0.0)
-	meadow_grass.set_shader_parameter("dryness", 0.32)
+	meadow_grass.set_shader_parameter("dryness", clampf(0.32 + float(seasonal.get("dryness", LAWN["dryness"]))
+		- float(LAWN["dryness"]), 0.0, 1.0))   # (the countryside dries and greens with the farm)
 	meadow_grass.set_shader_parameter("patchy", 0.5)
 	meadow_grass.set_shader_parameter("bare_amount", 0.6)
 	meadow_grass.set_shader_parameter("grass_light", Color(0.38, 0.56, 0.25))

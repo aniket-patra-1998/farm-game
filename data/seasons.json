@@ -1,0 +1,132 @@
+{
+ "_about": "The seasons (scripts/season.gd; our own touch: FarmVille had none). The season follows the real calendar where the player lives: `regions` gives each region the season of each month, January first. The region is guessed from the phone (its country, then its clock's offset from UTC in minutes) and can be chosen in Settings. `odds` names the weather odds (Balance weather.odds) a region uses for a season in place of the season's own (no snow in an Indian winter). `crops` lists the seasons each crop is in season; a crop planted in any other is off-season: it sells for more and withers sooner (Balance seasons.*). A crop with no seasons is at home all year (flowers). `lawn` is the farm's grass in each season.",
+ "seasons": ["Spring", "Summer", "Monsoon", "Autumn", "Winter"],
+ "default_region": "north",
+ "regions": {
+  "monsoon": {
+   "name": "REGION_MONSOON",
+   "months": ["Winter", "Winter", "Summer", "Summer", "Summer", "Monsoon", "Monsoon", "Monsoon", "Monsoon", "Autumn", "Autumn", "Winter"],
+   "countries": ["IN", "BD", "LK", "NP", "PK", "MM", "TH", "VN", "KH", "LA", "BT"],
+   "bias": [330, 345, 360, 390],
+   "odds": {
+    "Winter": "Winter_monsoon",
+    "Summer": "Summer_monsoon",
+    "Autumn": "Autumn_monsoon"
+   }
+  },
+  "north": {
+   "name": "REGION_NORTH",
+   "months": ["Winter", "Winter", "Spring", "Spring", "Spring", "Summer", "Summer", "Summer", "Autumn", "Autumn", "Autumn", "Winter"],
+   "countries": [],
+   "bias": []
+  },
+  "south": {
+   "name": "REGION_SOUTH",
+   "months": ["Summer", "Summer", "Autumn", "Autumn", "Autumn", "Winter", "Winter", "Winter", "Spring", "Spring", "Spring", "Summer"],
+   "countries": ["AU", "NZ", "ZA", "AR", "CL", "UY", "PY", "BO", "BR", "PE", "NA", "BW", "ZW", "MZ", "MG", "LS", "SZ"],
+   "bias": []
+  }
+ },
+ "lawn": {
+  "Spring": {
+   "grass_light": [0.32, 0.48, 0.21],
+   "grass_dark": [0.27, 0.42, 0.18],
+   "dryness": 0.05
+  },
+  "Summer": {
+   "grass_light": [0.39, 0.49, 0.2],
+   "grass_dark": [0.31, 0.42, 0.17],
+   "dryness": 0.2
+  },
+  "Monsoon": {
+   "grass_light": [0.25, 0.5, 0.2],
+   "grass_dark": [0.19, 0.42, 0.16],
+   "dryness": 0.0
+  },
+  "Autumn": {
+   "grass_light": [0.38, 0.46, 0.2],
+   "grass_dark": [0.3, 0.39, 0.17],
+   "dryness": 0.14
+  },
+  "Winter": {
+   "grass_light": [0.35, 0.47, 0.26],
+   "grass_dark": [0.29, 0.4, 0.22],
+   "dryness": 0.1
+  }
+ },
+ "crops": {
+  "strawberries": ["Winter", "Spring"],
+  "raspberries": ["Spring", "Summer"],
+  "blueberries": ["Spring", "Summer"],
+  "cranberries": ["Autumn", "Winter"],
+  "blackberries": ["Spring", "Summer"],
+  "elderberries": ["Spring", "Summer"],
+  "wheat": ["Winter", "Spring"],
+  "corn": ["Summer", "Monsoon"],
+  "rice": ["Monsoon", "Summer"],
+  "rye": ["Winter", "Spring"],
+  "red_wheat": ["Winter", "Spring"],
+  "oats": ["Winter", "Spring"],
+  "posole_corn": ["Summer", "Monsoon"],
+  "amaranth": ["Summer", "Monsoon"],
+  "soybeans": ["Monsoon", "Summer"],
+  "peanuts": ["Monsoon", "Summer"],
+  "peas": ["Winter", "Spring"],
+  "purple_pod_peas": ["Winter", "Spring"],
+  "coffee": ["Monsoon", "Autumn"],
+  "chickpea": ["Winter", "Spring"],
+  "sunflowers": [],
+  "lilac": [],
+  "daffodils": [],
+  "morning_glory": [],
+  "red_tulips": [],
+  "lavender": [],
+  "gladiolus": [],
+  "lilies": [],
+  "purple_poppies": [],
+  "columbine": [],
+  "iris": [],
+  "orange_daisies": [],
+  "white_roses": [],
+  "forget_me_nots": [],
+  "pink_roses": [],
+  "potatoes": ["Winter", "Autumn"],
+  "carrots": ["Winter", "Autumn"],
+  "onions": ["Winter", "Autumn"],
+  "ginger": ["Monsoon", "Summer"],
+  "heirloom_carrots": ["Winter", "Autumn"],
+  "pumpkins": ["Monsoon", "Autumn"],
+  "squash": ["Summer", "Monsoon"],
+  "watermelon": ["Summer", "Monsoon"],
+  "zucchini": ["Summer", "Monsoon"],
+  "yellow_melon": ["Summer", "Monsoon"],
+  "acorn_squash": ["Autumn", "Monsoon"],
+  "square_melon": ["Summer", "Monsoon"],
+  "carnival_squash": ["Autumn", "Monsoon"],
+  "cucumber": ["Summer", "Monsoon"],
+  "pattypan_squash": ["Summer", "Monsoon"],
+  "tomatoes": ["Summer", "Autumn"],
+  "eggplant": ["Summer", "Monsoon"],
+  "bell_peppers": ["Summer", "Monsoon"],
+  "spinach": ["Winter", "Autumn"],
+  "artichokes": ["Spring", "Winter"],
+  "ghost_chili": ["Summer", "Monsoon"],
+  "cabbage": ["Winter", "Autumn"],
+  "broccoli": ["Winter", "Autumn"],
+  "asparagus": ["Spring", "Winter"],
+  "peppers": ["Summer", "Monsoon"],
+  "rhubarb": ["Spring", "Winter"],
+  "sugarcane": ["Summer", "Monsoon"],
+  "pineapples": ["Summer", "Monsoon"],
+  "grapes": ["Autumn", "Summer"],
+  "white_grapes": ["Autumn", "Summer"],
+  "cotton": ["Monsoon", "Summer"],
+  "bamboo": ["Monsoon", "Summer"],
+  "green_tea": ["Monsoon", "Spring"],
+  "basil": ["Spring", "Summer"],
+  "lemon_balm": ["Spring", "Summer"],
+  "saffron": ["Autumn", "Winter"],
+  "clover": ["Spring", "Winter"],
+  "aloe_vera": ["Summer", "Monsoon"]
+ }
+}

@@ -12,6 +12,7 @@ const SUITES_DIR := "res://tests/suites"
 
 func _ready() -> void:
 	Release.whole = true   # every system tested, whatever the release switches off (docs/V1.md)
+	Season.active = false   # (the same in any month: season tests turn it on)
 	var tests := 0
 	var checks := 0
 	var failed := 0

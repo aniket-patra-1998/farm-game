@@ -28,6 +28,7 @@ var _bought := {}         # item id -> bought
 
 
 func _ready() -> void:
+	Season.active = false   # (the same in any month)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--days="):
 			_days = int(arg.get_slice("=", 1))

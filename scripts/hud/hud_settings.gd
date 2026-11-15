@@ -124,6 +124,20 @@ func name_card() -> PanelContainer:
 			hud._book.refresh())
 		row.add_child(b)
 	inner.add_child(row)
+	# Where the farm is, for its seasons (guessed from the phone; the one in use is marked).
+	if Season.enabled():
+		inner.add_child(BookPanel.text(tr("YOUR_SEASONS") % tr("SEASON_" + Game.season().to_upper()), 22))
+		var places := HBoxContainer.new()
+		places.add_theme_constant_override("separation", 12)
+		for region: String in Season.regions():
+			var b := hud._panel_button(tr(str(Season.data()["regions"][region]["name"])))
+			b.toggle_mode = true
+			b.button_pressed = Season.region() == region
+			b.pressed.connect(func() -> void:
+				Season.set_region(region)   # (the clock's line follows at its next tick; the lawn at the next start)
+				hud._book.refresh())
+			places.add_child(b)
+		inner.add_child(places)
 	return BookPanel.card_frame(inner)
 
 

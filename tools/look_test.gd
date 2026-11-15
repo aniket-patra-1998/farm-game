@@ -39,6 +39,7 @@ var _options := {}
 
 
 func _ready() -> void:
+	Season.active = false   # (the same in any month)
 	for arg in OS.get_cmdline_user_args():
 		_options[arg.get_slice("=", 0)] = arg.get_slice("=", 1) if "=" in arg else "1"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://ci_shots"))
