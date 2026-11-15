@@ -47,30 +47,5 @@ class BuildAndMove(unittest.TestCase):
         self.assertTrue(np.allclose(V[still], model["V"][still]), "the shell does not move when the legs do")
 
 
-
-class Plants(unittest.TestCase):
-    def test_crops_and_trees_export_their_stages_within_the_games_weight(self):
-        import tempfile
-
-        from animal_art import plants
-        with tempfile.TemporaryDirectory() as folder:
-            for name in plants.CROPS:
-                parts = plants.export(name, folder)
-                self.assertEqual(sorted(parts), sorted("when_stage_" + s for s in plants.STAGES))
-                self.assertLessEqual(max(parts.values()), 800, "%s: a plant stays light (nine stand on every plot)" % name)
-            tree = plants.export("apple_tree", folder)
-            self.assertEqual(sorted(tree), ["body", "when_ready_false", "when_ready_true"])
-            self.assertLessEqual(sum(tree.values()), 4000, "a tree's budget (data/assets.json)")
-            first = open(os.path.join(folder, "wheat.glb"), "rb").read()
-            plants.export("wheat", folder)
-            self.assertEqual(first, open(os.path.join(folder, "wheat.glb"), "rb").read(), "the same file every time")
-
-    def test_produce_is_marked_for_the_crop_shader(self):
-        from animal_art import plants
-        V, N, C, T = plants.mesh_of(plants.strawberry("ripe"), 0.1)
-        self.assertTrue(np.any(C[:, 3] == 0) and np.any(C[:, 3] == 1), "berries are marked (alpha 0), leaves are not")
-        self.assertTrue(np.allclose(np.linalg.norm(N, axis=1), 1.0, atol=1e-6))
-
-
 if __name__ == "__main__":
     unittest.main()

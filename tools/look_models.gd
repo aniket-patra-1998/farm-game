@@ -104,7 +104,7 @@ static func building(id: String, state: String, uid: int) -> Node3D:
 ## A crop at young, ripe and withered side by side, as the field draws it (crop material, produce coloured).
 static func crop_row(id: String) -> Node3D:
 	var crop: Dictionary = Game.crops[id]
-	var form := CropForms.look_of(id, str(crop.get("shape", "berry")))
+	var form := CropForms.form_of(id, str(crop.get("shape", "berry")))
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/crop3d.gdshader")
 	mat.set_shader_parameter("produce_colour", Color.html(str(crop.get("color", "#e2453c"))))

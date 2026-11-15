@@ -7,11 +7,5 @@
     "decoration": {"triangles": 2500, "draws": 3},
     "building": {"triangles": 15000, "draws": 8}
   },
-  "assets": {
-    "strawberries": {"model": "res://art/models/strawberries.glb", "budget": "crop"},
-    "wheat": {"model": "res://art/models/wheat.glb", "budget": "crop"},
-    "pumpkins": {"model": "res://art/models/pumpkins.glb", "budget": "crop"},
-    "sunflowers": {"model": "res://art/models/sunflowers.glb", "budget": "crop"},
-    "apple_tree": {"model": "res://art/models/apple_tree.glb", "budget": "tree", "sway": 0.035}
-  }
+  "assets": {}
 }

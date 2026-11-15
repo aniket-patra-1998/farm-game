@@ -118,7 +118,7 @@ static func picture_model(id: String) -> Node3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
-	mm.mesh = CropModels.mesh(CropForms.look_of(id, str(crop.get("shape", "berry"))), "ripe")
+	mm.mesh = CropModels.mesh(CropForms.form_of(id, str(crop.get("shape", "berry"))), "ripe")
 	mm.instance_count = SPOTS.size()
 	for k in SPOTS.size():
 		var spot: Vector2 = SPOTS[k]
@@ -232,7 +232,7 @@ func _look_of(i: int) -> Array:
 		return []
 	var crop: Dictionary = Game.crops[crop_id]
 	var col := Color.html(str(crop.get("color", "#e2453c")))
-	var key := "%s|%s|%s" % [CropForms.look_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
+	var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
 	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i))]
 
 
@@ -314,7 +314,7 @@ func pop(i: int, crop_id: String) -> void:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
 	mm.use_colors = true   # (as above: an unset instance colour is black in the compatibility renderer)
-	mm.mesh = CropModels.mesh(CropForms.look_of(crop_id, str(crop.get("shape", "berry"))), "ripe")
+	mm.mesh = CropModels.mesh(CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), "ripe")
 	mm.instance_count = SPOTS.size()
 	for k in SPOTS.size():
 		var spot: Vector2 = SPOTS[k]

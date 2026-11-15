@@ -38,30 +38,10 @@ wired to it yet (see "Not done"). Godot ignores this folder (`.gdignore`).
   head's shapes are marked `head=True`. Mark a part only when the animation must know it (`part="stub"`: a leg that
   slides under a shell). Then register it in `registry.py`.
 
-## Crops and trees
-
-`plants.py` makes crops and trees in the same style at the game's weight: thin creased leaf cards, each its own
-green, low-poly fruit, no soft skin. `python3 -m animal_art export ../../art/models` writes them as the game's model
-files (`gltf.py`, glTF `.glb`), and `data/assets.json` lists them, so the game draws them in place of its own:
-
-- **A crop** is one file with a part per growth stage (`when_stage_sprout`, `_young`, `_ripe`, `_withered`). The game's
-  crop code draws those parts exactly as it draws its own plants (nine to a plot, growing, swaying, tinted by the
-  crop's colour), so produce is marked the way its shader expects: vertex alpha 0, the red channel its shade. Sizes
-  come from the plants they replace (`SIZE`).
-- **A tree** is one file with its `body` and its fruit as `when_ready_true` and `when_ready_false`. Its crown is a few
-  round masses clothed in leaves that lie on them (as feathers lie on the birds), so there are no gaps; the leaves
-  are lit as the crown, not each by its own tilt. Its entry's `sway` bends it in the wind.
-- **Made for the game's light**: every leaf is painted dark at its base and light at its tip, crowns and stems dark
-  below and light above, and a crop's open leaves take the sky's light more than their own tilt's. Judge a plant in
-  the game (sun, shadows, colour grade), not in this package's previews.
-- **Adding one**: write a function like `strawberry(stage)` or `apple_tree()` from `card`, `gem`, `ball`, `bar`, add it
-  to `CROPS` or `TREES` and to `SIZE`, export, and list it in `data/assets.json`.
-
 ## Not done
 
-- **Animals in the game**: no animal file is written yet, and `animal_3d.gd` is not changed. Planned: one file per
+- **Export to the game**: no model file is written yet, and `animal_3d.gd` is not changed. Planned: one file per
   animal (mesh, baked colours, bones and weights) plus its measured joints, loaded behind a switch.
-- **Plants**: four crops and one tree so far; the game's other crop forms and trees are still built by its own code.
 - **Ear flick, wing flap, turkey tail display**: the models have no separate ears or wings.
 - **Weight**: phone-weight meshes average about 4,900 triangles. There is no mesh simplifier here; thinning is by
   grid size only.
