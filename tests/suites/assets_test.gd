@@ -10,9 +10,14 @@ const FIXTURE := "res://tests/fixtures/asset_fixture.glb"   # made by tools/make
 func test_346_every_listed_asset_loads_fits_its_budget_and_its_footprint() -> void:
 	var listed := (JSON.parse_string(FileAccess.get_file_as_string(AssetRegistry.DATA)) as Dictionary)
 	var budgets: Dictionary = listed["budgets"]
+	var found := {}   # animals that are found, not sold (the dogs): data/finds.json
+	for family: Dictionary in (JSON.parse_string(FileAccess.get_file_as_string("res://data/finds.json")) as Dictionary) \
+			.get("families", {}).values():
+		for kind: Dictionary in family.get("kinds", []):
+			found[str(kind.get("id", ""))] = true
 	for id: String in listed["assets"]:
 		var e: Dictionary = listed["assets"][id]
-		_check(not Game.item_data(id).is_empty() or Game.crops.has(id), "%s is a catalog item" % id)
+		_check(not Game.item_data(id).is_empty() or Game.crops.has(id) or found.has(id), "%s is a catalog item" % id)
 		_check(budgets.has(str(e.get("budget", ""))), "%s has a budget kind" % id)
 		var node := AssetRegistry.instance(id)
 		_check(node != null, "%s loads (%s)" % [id, e.get("model", "")])
@@ -26,7 +31,8 @@ func test_346_every_listed_asset_loads_fits_its_budget_and_its_footprint() -> vo
 			AssetRegistry.budget_of(id, "draws")])
 		var fp := Game.footprint(id)
 		var box := SpaceFit.reach(node, node.transform)
-		if str(Game.item_data(id).get("kind", "")) != "tree":   # (a tree's crown overhangs by design)
+		# (a tree's crown overhangs by design; an animal walks about its spot, and a horse is longer than a tile)
+		if not str(e.get("budget", "")) in ["tree", "animal"]:
 			_check(box.size.x <= fp.x + 0.01 and box.size.y <= fp.y + 0.01, "%s fits its %s footprint" % [id, str(fp)])
 		node.free()
 

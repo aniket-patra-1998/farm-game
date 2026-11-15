@@ -1,14 +1,319 @@
 {
   "about": "Assets made as files (docs/ASSETS.md): item id -> its model and budget. An item not listed is drawn by its code-built stand-in.",
   "budgets": {
-    "animal": {"triangles": 6500, "draws": 3},
-    "tree": {"triangles": 4000, "draws": 4},
-    "crop": {"triangles": 4000, "draws": 3},
-    "decoration": {"triangles": 2500, "draws": 3},
-    "building": {"triangles": 15000, "draws": 8}
+    "animal": {
+      "triangles": 11000,
+      "draws": 3
+    },
+    "tree": {
+      "triangles": 4000,
+      "draws": 4
+    },
+    "crop": {
+      "triangles": 4000,
+      "draws": 3
+    },
+    "decoration": {
+      "triangles": 2500,
+      "draws": 3
+    },
+    "building": {
+      "triangles": 15000,
+      "draws": 8
+    }
   },
   "assets": {
-    "chicken": {"model": "res://art/models/animals/chicken.glb", "budget": "animal"},
-    "cow": {"model": "res://art/models/animals/cow.glb", "budget": "animal"}
+    "chicken": {
+      "model": "res://art/models/animals/chicken.glb",
+      "budget": "animal"
+    },
+    "cow": {
+      "model": "res://art/models/animals/cow.glb",
+      "budget": "animal"
+    },
+    "alpaca": {
+      "model": "res://art/models/animals/alpaca.glb",
+      "budget": "animal"
+    },
+    "arapawa_goat": {
+      "model": "res://art/models/animals/arapawa_goat.glb",
+      "budget": "animal"
+    },
+    "baby_turkey": {
+      "model": "res://art/models/animals/baby_turkey.glb",
+      "budget": "animal"
+    },
+    "bee": {
+      "model": "res://art/models/animals/bee.glb",
+      "budget": "animal"
+    },
+    "belted_calf": {
+      "model": "res://art/models/animals/belted_calf.glb",
+      "budget": "animal"
+    },
+    "belted_cow": {
+      "model": "res://art/models/animals/belted_cow.glb",
+      "budget": "animal"
+    },
+    "belted_duck": {
+      "model": "res://art/models/animals/belted_duck.glb",
+      "budget": "animal"
+    },
+    "berkshire_pig": {
+      "model": "res://art/models/animals/berkshire_pig.glb",
+      "budget": "animal"
+    },
+    "black_chicken": {
+      "model": "res://art/models/animals/black_chicken.glb",
+      "budget": "animal"
+    },
+    "black_lab": {
+      "model": "res://art/models/animals/black_lab.glb",
+      "budget": "animal"
+    },
+    "black_pony": {
+      "model": "res://art/models/animals/black_pony.glb",
+      "budget": "animal"
+    },
+    "black_sheep": {
+      "model": "res://art/models/animals/black_sheep.glb",
+      "budget": "animal"
+    },
+    "boar": {
+      "model": "res://art/models/animals/boar.glb",
+      "budget": "animal"
+    },
+    "boer_goat": {
+      "model": "res://art/models/animals/boer_goat.glb",
+      "budget": "animal"
+    },
+    "brown_calf": {
+      "model": "res://art/models/animals/brown_calf.glb",
+      "budget": "animal"
+    },
+    "brown_chicken": {
+      "model": "res://art/models/animals/brown_chicken.glb",
+      "budget": "animal"
+    },
+    "brown_cow": {
+      "model": "res://art/models/animals/brown_cow.glb",
+      "budget": "animal"
+    },
+    "brown_dog": {
+      "model": "res://art/models/animals/brown_dog.glb",
+      "budget": "animal"
+    },
+    "bull": {
+      "model": "res://art/models/animals/bull.glb",
+      "budget": "animal"
+    },
+    "calf": {
+      "model": "res://art/models/animals/calf.glb",
+      "budget": "animal"
+    },
+    "cornish_chicken": {
+      "model": "res://art/models/animals/cornish_chicken.glb",
+      "budget": "animal"
+    },
+    "donkey": {
+      "model": "res://art/models/animals/donkey.glb",
+      "budget": "animal"
+    },
+    "duck": {
+      "model": "res://art/models/animals/duck.glb",
+      "budget": "animal"
+    },
+    "foal": {
+      "model": "res://art/models/animals/foal.glb",
+      "budget": "animal"
+    },
+    "galician_blond_calf": {
+      "model": "res://art/models/animals/galician_blond_calf.glb",
+      "budget": "animal"
+    },
+    "galician_blond_cow": {
+      "model": "res://art/models/animals/galician_blond_cow.glb",
+      "budget": "animal"
+    },
+    "gelbvieh_calf": {
+      "model": "res://art/models/animals/gelbvieh_calf.glb",
+      "budget": "animal"
+    },
+    "gelbvieh_cow": {
+      "model": "res://art/models/animals/gelbvieh_cow.glb",
+      "budget": "animal"
+    },
+    "goat": {
+      "model": "res://art/models/animals/goat.glb",
+      "budget": "animal"
+    },
+    "golden_chicken": {
+      "model": "res://art/models/animals/golden_chicken.glb",
+      "budget": "animal"
+    },
+    "golden_retriever": {
+      "model": "res://art/models/animals/golden_retriever.glb",
+      "budget": "animal"
+    },
+    "goose": {
+      "model": "res://art/models/animals/goose.glb",
+      "budget": "animal"
+    },
+    "gray_foal": {
+      "model": "res://art/models/animals/gray_foal.glb",
+      "budget": "animal"
+    },
+    "gray_horse": {
+      "model": "res://art/models/animals/gray_horse.glb",
+      "budget": "animal"
+    },
+    "grey_chicken": {
+      "model": "res://art/models/animals/grey_chicken.glb",
+      "budget": "animal"
+    },
+    "hereford_calf": {
+      "model": "res://art/models/animals/hereford_calf.glb",
+      "budget": "animal"
+    },
+    "hereford_cow": {
+      "model": "res://art/models/animals/hereford_cow.glb",
+      "budget": "animal"
+    },
+    "horse": {
+      "model": "res://art/models/animals/horse.glb",
+      "budget": "animal"
+    },
+    "indie_dog": {
+      "model": "res://art/models/animals/indie_dog.glb",
+      "budget": "animal"
+    },
+    "jersey_calf": {
+      "model": "res://art/models/animals/jersey_calf.glb",
+      "budget": "animal"
+    },
+    "jersey_cow": {
+      "model": "res://art/models/animals/jersey_cow.glb",
+      "budget": "animal"
+    },
+    "kunekune_pig": {
+      "model": "res://art/models/animals/kunekune_pig.glb",
+      "budget": "animal"
+    },
+    "lamb": {
+      "model": "res://art/models/animals/lamb.glb",
+      "budget": "animal"
+    },
+    "llama": {
+      "model": "res://art/models/animals/llama.glb",
+      "budget": "animal"
+    },
+    "longhorn": {
+      "model": "res://art/models/animals/longhorn.glb",
+      "budget": "animal"
+    },
+    "longhorn_calf": {
+      "model": "res://art/models/animals/longhorn_calf.glb",
+      "budget": "animal"
+    },
+    "mouflon_sheep": {
+      "model": "res://art/models/animals/mouflon_sheep.glb",
+      "budget": "animal"
+    },
+    "mustang": {
+      "model": "res://art/models/animals/mustang.glb",
+      "budget": "animal"
+    },
+    "mustang_foal": {
+      "model": "res://art/models/animals/mustang_foal.glb",
+      "budget": "animal"
+    },
+    "ox": {
+      "model": "res://art/models/animals/ox.glb",
+      "budget": "animal"
+    },
+    "pig": {
+      "model": "res://art/models/animals/pig.glb",
+      "budget": "animal"
+    },
+    "piglet": {
+      "model": "res://art/models/animals/piglet.glb",
+      "budget": "animal"
+    },
+    "pink_calf": {
+      "model": "res://art/models/animals/pink_calf.glb",
+      "budget": "animal"
+    },
+    "pink_cow": {
+      "model": "res://art/models/animals/pink_cow.glb",
+      "budget": "animal"
+    },
+    "pony": {
+      "model": "res://art/models/animals/pony.glb",
+      "budget": "animal"
+    },
+    "rabbit": {
+      "model": "res://art/models/animals/rabbit.glb",
+      "budget": "animal"
+    },
+    "ram": {
+      "model": "res://art/models/animals/ram.glb",
+      "budget": "animal"
+    },
+    "red_calf": {
+      "model": "res://art/models/animals/red_calf.glb",
+      "budget": "animal"
+    },
+    "red_chicken": {
+      "model": "res://art/models/animals/red_chicken.glb",
+      "budget": "animal"
+    },
+    "red_cow": {
+      "model": "res://art/models/animals/red_cow.glb",
+      "budget": "animal"
+    },
+    "saddleback_pig": {
+      "model": "res://art/models/animals/saddleback_pig.glb",
+      "budget": "animal"
+    },
+    "sheep": {
+      "model": "res://art/models/animals/sheep.glb",
+      "budget": "animal"
+    },
+    "spotted_dog": {
+      "model": "res://art/models/animals/spotted_dog.glb",
+      "budget": "animal"
+    },
+    "spotted_pig": {
+      "model": "res://art/models/animals/spotted_pig.glb",
+      "budget": "animal"
+    },
+    "stallion": {
+      "model": "res://art/models/animals/stallion.glb",
+      "budget": "animal"
+    },
+    "swan": {
+      "model": "res://art/models/animals/swan.glb",
+      "budget": "animal"
+    },
+    "tamworth_pig": {
+      "model": "res://art/models/animals/tamworth_pig.glb",
+      "budget": "animal"
+    },
+    "turkey": {
+      "model": "res://art/models/animals/turkey.glb",
+      "budget": "animal"
+    },
+    "turtle": {
+      "model": "res://art/models/animals/turtle.glb",
+      "budget": "animal"
+    },
+    "ugly_duckling": {
+      "model": "res://art/models/animals/ugly_duckling.glb",
+      "budget": "animal"
+    },
+    "wild_turkey": {
+      "model": "res://art/models/animals/wild_turkey.glb",
+      "budget": "animal"
+    }
   }
 }

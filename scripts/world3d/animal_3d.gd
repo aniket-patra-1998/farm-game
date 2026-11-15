@@ -34,7 +34,6 @@ const CONTACT_LIFT := 0.012                     # just above the grass, so it ne
 ## The usual mobile budget is 10-20 fully animated characters; the minds still think every frame.
 const FULL_RATE := 16
 const MAX_STRIDE := 4
-const FILE_WALK_FRAMES := 12     # walk frames in a file-made animal (tools/animal_art export.WALK_FRAMES)
 
 
 ## Animals are posed at least this many frames apart (the graphics quality's `pose_every`, Quality).
@@ -84,6 +83,7 @@ var _id := ""                    # its catalog id (for its file, AssetRegistry)
 var _size := 1.0                 # how big it is drawn (smaller in a small yard)
 var _file_mesh: MeshInstance3D   # made as a file: the mesh whose blend shapes pose it (null when built)
 var _file_shapes := {}           # blend shape name -> index on _file_mesh
+var _walk_frames := 0            # how many walk_NN moves the file has (the cycle is cut into that many)
 
 
 
@@ -163,6 +163,7 @@ func _take_parts_of(t: Animal3D) -> void:
 	_casting = _mine(t, t._casting)
 	_file_mesh = _mine(t, t._file_mesh)
 	_file_shapes = t._file_shapes
+	_walk_frames = t._walk_frames
 	_id = t._id
 	_size = t._size
 	for list: Array in [[t._wings, _wings], [t._ears, _ears], [t._eyes, _eyes], [t._bones, _bones]]:
@@ -222,7 +223,10 @@ func _build_file() -> bool:
 	_body.add_child(model)
 	_file_mesh = mi
 	for k in mi.mesh.get_blend_shape_count():
-		_file_shapes[String(mi.mesh.get_blend_shape_name(k))] = k
+		var move := String(mi.mesh.get_blend_shape_name(k))
+		_file_shapes[move] = k
+		if move.begins_with("walk_"):
+			_walk_frames += 1
 	var box := mi.get_aabb()
 	_r = box.size * 0.5 * _size
 	_leg = box.size.y * _size * 0.3
@@ -247,11 +251,12 @@ static func _first_mesh(n: Node) -> MeshInstance3D:
 ## and breath, each a blend shape weighted by the pose value; the body's springs (lean, squash, hop) move the
 ## whole model, as they move a built one.
 func _pose_file(p: AnimalPose) -> void:
-	var at := fposmod(p.gait, 1.0) * FILE_WALK_FRAMES
-	var k0 := int(at) % FILE_WALK_FRAMES
-	var k1 := (k0 + 1) % FILE_WALK_FRAMES
+	var frames := maxi(_walk_frames, 1)
+	var at := fposmod(p.gait, 1.0) * frames
+	var k0 := int(at) % frames
+	var k1 := (k0 + 1) % frames
 	var f := at - floorf(at)
-	for k in FILE_WALK_FRAMES:
+	for k in _walk_frames:
 		var w := 0.0
 		if k == k0:
 			w += (1.0 - f) * p.stride

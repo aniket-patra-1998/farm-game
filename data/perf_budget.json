@@ -1,6 +1,6 @@
 {
- "_doc": "What the showcase farm (every item, homes full: the heaviest farm there is) may cost, counted headless by tests/suites/world3d_test.gd test_338 as draws (each mesh or batch drawn, once per pass it is in: shown, and the sun's shadow when it casts one, on the level named) and triangles. A change that pushes past these fails CI: make it cheaper, or raise the budget here on purpose with a reason in the commit.",
+ "_doc": "What the showcase farm (every item, homes full: the heaviest farm there is) may cost, counted headless by tests/suites/world3d_test.gd test_338 as draws (each mesh or batch drawn, once per pass it is in: shown, and the sun's shadow when it casts one, on the level named) and triangles. A change that pushes past these fails CI: make it cheaper, or raise the budget here on purpose with a reason in the commit. Raised to 2.3M triangles for the new animals made as files (about 5,000 to 10,000 each, against 1,700 built): the importer gives each its levels of detail, so far ones cost less than counted here.",
  "level": "mid",
  "draws": 2250,
- "triangles": 1800000
+ "triangles": 2300000
 }

@@ -1,7 +1,7 @@
 """An animal for the game: one glTF file (.glb) with its finished mesh (colours and painted light in its vertex
 colours) at rest, and its moves as blend shapes, each the difference the builder's own motion makes:
 
-    walk_00 .. walk_NN   the walk cycle at full stride (the game blends between the two nearest, by its gait)
+    walk_00 .. walk_07   the walk cycle at full stride (the game blends between the two nearest, by its gait)
     head                 head down: grazing, pecking
     jaw                  chewing (four-legged grazers)
     look_left, look_right
@@ -23,7 +23,7 @@ from .motion import deform, pose
 from .registry import MADE
 from .rig import rig_of
 
-WALK_FRAMES = 12
+WALK_FRAMES = 8          # (the game blends between neighbours; more frames add size, not smoothness)
 
 
 def _rest():
@@ -114,8 +114,8 @@ def _write(path, name, pos, nor, col, ind, targets):
                  COLOR_0=add(col, "VEC4", FLOAT, 34962),
                  TEXCOORD_0=add(np.zeros((len(pos), 2), np.float32), "VEC2", FLOAT, 34962))   # (importers want UVs)
     indices = add(ind.astype(np.uint32), "SCALAR", UINT, 34963)
-    tgts = [dict(POSITION=add(dp, "VEC3", FLOAT, 34962, True), NORMAL=add(dn, "VEC3", FLOAT, 34962))
-            for _n, dp, dn in targets]
+    # (positions only: a move's change of shading is too small to see, and normals would double the file)
+    tgts = [dict(POSITION=add(dp, "VEC3", FLOAT, 34962, True)) for _n, dp, _dn in targets]
     gltf = dict(
         asset=dict(version="2.0", generator="farm-game animal_art"),
         scene=0, scenes=[dict(nodes=[0])], nodes=[dict(name=name.replace(" ", "_"), mesh=0)],
