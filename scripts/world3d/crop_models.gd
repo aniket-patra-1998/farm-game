@@ -28,7 +28,7 @@ static func mesh(shape: String, stage: String) -> ArrayMesh:
 		var cap := CropForms.look("height", 0.0) * (1.0 if ripe else CropForms.look("young", 1.0))
 		_cache[key] = _fit(_build(shape, stage), cap, CropForms.look("leaf_ripe", 1.0) if ripe else 1.0,
 			bool(CropForms.spec(shape).get("squash", false)),
-			float(CropForms.spec(shape).get("reach", CropForms.look("reach", 0.0))))
+			0.0 if CropForms.is_plot(shape) else CropForms.look("reach", 0.0))
 		if CropForms.is_plot(shape) and stage in ["seeds", "sprout", "withered"]:
 			_cache[key] = _rows(_cache[key])
 	return _cache[key]

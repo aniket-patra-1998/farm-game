@@ -1888,9 +1888,9 @@ func test_353_crops_stand_level_and_show_their_harvest() -> void:
 	var cols: PackedColorArray = CropModels._fit(tall.commit(), 0.2, 0.5).surface_get_arrays(0)[Mesh.ARRAY_COLOR]
 	_check(cols[0].g < 0.6, "a ripe plant's green leaves are darkened, so its harvest stands out")
 	# A crop drawn a plot at a time stands once on its plot, covers it from edge to edge and shows its produce.
-	_check(CropForms.is_plot("watermelon") and not CropForms.is_plot("wheat"), "some crops are drawn a plot at a time")
+	_check(CropForms.is_plot("watermelon") and not CropForms.is_plot("no_such_form"), "crops are drawn a plot at a time")
 	_eq(Crops3D.spots_of("watermelon").size(), 1, "such a crop stands once on its plot")
-	_eq(Crops3D.spots_of("wheat").size(), 9, "the others three rows of three")
+	_eq(Crops3D.spots_of("no_such_crop").size(), 9, "a crop whose form is not, in three rows of three")
 	for form: String in CropForms.forms():
 		if CropForms.is_plot(form):
 			var box := CropModels.mesh(form, "ripe").get_aabb()
