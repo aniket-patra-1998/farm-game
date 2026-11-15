@@ -57,7 +57,11 @@ const TRUNK_VARY_MIN := 0.85   # each tree's trunk is its own length, apart from
 const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
 const TALL_MAX := 1.2       # ..to this much
-const STAND_TALL_MAX := 1.35   # a tree stands at least its kind's lowest height times its own tallness, up to this
+const STAND_TALL_MAX := 1.1    # a tree stands at least its kind's lowest height times its own tallness, up to this
+const MIN_LEAF_VALUE := 0.56   # and none is so dark its crown reads as a black mass (an orange's deep teal)
+const CROWN_CORE := 0.56       # the soft mass in a crown's middle, of the crown's radius: the clumps stand clear of it
+const CLUMP_OUT := 1.22        # a crown's clumps sit this much further out than its kind's numbers say..
+const CLUMP_SIZE := 0.9        # ..and are this much of their size: clumps of their own, not one ball
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
 const CROWN_BUMP := 0.13     # how far they push out ("bump")
@@ -143,7 +147,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN), 0, rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN)),
 		"blobs": [], "low": INF, "high": -INF, "reach": 0.0,
-		"stand": ScaleGuide.lowest("tree") * size * clampf(tall, 1.0, STAND_TALL_MAX)}
+		"stand": ScaleGuide.lowest("tree") * size * clampf(tall, 1.0, STAND_TALL_MAX) * lift}
 	var crown: Vector3
 	match str(sh["form"]):
 		"palm":
@@ -329,9 +333,9 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var shaded := float(t["crowd"]) * Crowding.setting("tree", "shade")
 	var lobes := ModelKit.scaled(int(sh.get("lobes", CROWN_LOBES)), 5)
 	var bump := float(sh.get("bump", CROWN_BUMP))
-	# The core, a soft mass of the whole crown's width, then the masses around it: each one smooth and lumpy,
-	# overlapping, so the crown reads as one canopy with a scalloped outline and a few deep folds.
-	var core := Vector3(cr * 0.72, maxf(ch * 0.5, cr * 0.4), cr * 0.72)
+	# The core, a soft mass in the crown's middle, then the masses around it standing clear of it: each one a
+	# clump of its own, lit on top and dark underneath, so the crown is a cluster of clumps with a scalloped outline.
+	var core := Vector3(cr * CROWN_CORE, maxf(ch * 0.5, cr * 0.4), cr * CROWN_CORE)
 	_canopy(root, mid, core, rng, leaf, sun, -shaded, lobes, bump, shine)
 	_measure(t, mid, core)
 	var shape := str(sh.get("shape", "round"))
@@ -339,16 +343,17 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		var a := i * 2.399963 + rng.randf() * 0.4
 		var lay := _layout(shape, i, masses, rng)   # (height, reach, size), each a share of the plain round tree's
 		var y := lay.x
-		var d := cr * reach * lay.y * rng.randf_range(0.85, 1.15) * sqrt(maxf(1.0 - y * y * 0.6, 0.2))
+		var d := cr * reach * CLUMP_OUT * lay.y * rng.randf_range(0.85, 1.15)
+		d *= sqrt(maxf(1.0 - y * y * 0.6, 0.2))
 		var p := mid + Vector3(cos(a) * d, y * ch * 0.7, sin(a) * d)
-		var size := cr * mass * lay.z * rng.randf_range(0.85, 1.1)
+		var size := cr * mass * CLUMP_SIZE * lay.z * rng.randf_range(0.85, 1.1)
 		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
 		# A mass on a side a neighbour covers is hidden anyway: every other one is left out, with its limb.
 		if i % 2 == 1 and Crowding.covered(int(t["mask"]), a - root.rotation.y):
 			continue
 		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine)
 		_measure(t, p, squash * size)
-		(t["blobs"] as Array).append([p, size, a])
+		(t["blobs"] as Array).append([p, size, a, squash.y])
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
 
 
@@ -409,7 +414,8 @@ static func _limb(root: Node3D, from: Vector3, to: Vector3, r: float) -> void:
 static func _shade(leaf: Color, light: float) -> Color:
 	var h := leaf.h + lerpf(0.025, -0.03, light)
 	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
-	var v := clampf(leaf.v * lerpf(0.62, 1.4, light), 0.0, 1.0)   # (shade is the leaf's colour deeper, never near black)
+	# (shade is the leaf's colour deeper, never near black)
+	var v := clampf(maxf(leaf.v, MIN_LEAF_VALUE) * lerpf(0.62, 1.4, light), 0.0, 1.0)
 	return Color.from_hsv(h, s, v)
 
 
@@ -602,6 +608,7 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 						fruit_mat = shades[1 if rim.y > -0.3 else 2]
 					else:
 						var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
+						dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits on its skin)
 						p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
 						fruit_mat = shades[0 if dir.y > 0.55 else 1]
 				if str(sh["form"]) == "palm":
