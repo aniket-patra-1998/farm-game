@@ -204,21 +204,7 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 				ModelKit.ball(root, c + Vector3(rng.randf_range(-0.3, 0.3), 0.09, rng.randf_range(-0.3, 0.3)), 0.012,
 					ModelKit.paint(petals[k % petals.size()]), Vector3(1.2, 0.3, 1.0))
 		"pink_flamingo":
-			for z: float in [-0.02, 0.02]:
-				ModelKit.box(
-					root,
-					c + Vector3(-0.005, 0, z - 0.005),
-					c + Vector3(0.005, 0.28, z + 0.005),
-					ModelKit.paint(Color("#333333"))
-				)
-			ModelKit.ball(root, c + Vector3(-0.03, 0.34, 0), 0.08, ModelKit.paint(col), Vector3(1.4, 0.9, 0.8))
-			var neck := ModelKit.cylinder(root, Vector3.ZERO, 0.015, 0.2, ModelKit.paint(col), -1.0, 6)
-			neck.position = c + Vector3(0.05, 0.46, 0)
-			neck.rotation.z = -0.3
-			ModelKit.ball(root, c + Vector3(0.08, 0.56, 0), 0.035, ModelKit.paint(col))
-			var beak := ModelKit.cylinder(root, Vector3.ZERO, 0.012, 0.06, ModelKit.paint(Color("#222222")), 0.0, 6)
-			beak.position = c + Vector3(0.12, 0.54, 0)
-			beak.rotation.z = -2.2
+			_flamingo(root, c, col)
 		"bench":
 			ModelKit.box(
 				root,
@@ -244,46 +230,13 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 		"birdbath":
 			_birdbath(root, c, col, id)
 		"picnic_table":
-			ModelKit.box(
-				root,
-				c + Vector3(-0.3, 0.3, -0.18),
-				c + Vector3(0.3, 0.33, 0.18),
-				ModelKit.surface(col, "boards", 0.0)
-			)
-			for z: float in [-0.3, 0.3]:
-				ModelKit.box(
-					root,
-					c + Vector3(-0.3, 0.17, z - 0.06),
-					c + Vector3(0.3, 0.2, z + 0.06),
-					ModelKit.surface(col, "boards", 0.0)
-				)
-			for x: float in [-0.25, 0.25]:
-				ModelKit.box(
-					root,
-					c + Vector3(x - 0.02, 0, -0.32),
-					c + Vector3(x + 0.02, 0.3, 0.32),
-					ModelKit.paint(col.darkened(0.2))
-				)
+			_picnic_table(root, c, col, Color.html(str(it.get("accent", "#e2453c"))), id)
 		"garden_gnome":
-			ModelKit.ball(root, c + Vector3(0, 0.1, 0), 0.08, ModelKit.paint(Color("#3f6fb5")), Vector3(1, 1.2, 1))
-			ModelKit.ball(root, c + Vector3(0, 0.22, 0), 0.06, ModelKit.paint(Color("#f2c9a0")))
-			ModelKit.ball(root, c + Vector3(0.04, 0.18, 0), 0.05, ModelKit.paint(WHITE), Vector3(0.8, 1.2, 1))
-			ModelKit.cylinder(root, c + Vector3(0, 0.26, 0), 0.065, 0.16, ModelKit.paint(col), 0.0, 10)
+			_gnome(root, c, col, Color.html(str(it.get("accent", "#3f6fb5"))))
 		"lamp_post":
-			ModelKit.cylinder(root, c, 0.05, 0.05, ModelKit.paint(col, 0.5), -1.0, 8)
-			ModelKit.cylinder(root, c, 0.022, 0.75, ModelKit.paint(col, 0.5), 0.016, 8)
-			ModelKit.box(root, c + Vector3(-0.06, 0.75, -0.06), c + Vector3(0.06, 0.88, 0.06), ModelKit.glass())
-			ModelKit.cylinder(root, c + Vector3(0, 0.88, 0), 0.09, 0.06, ModelKit.paint(col, 0.5), 0.0, 4)
+			_lamp_post(root, c, col, Color.html(str(it.get("accent", "#ffe066"))))
 		"sundial":
-			ModelKit.cylinder(root, c, 0.12, 0.3, ModelKit.surface(STONE, "stone", 0.2), 0.09, 10)
-			ModelKit.cylinder(root, c + Vector3(0, 0.3, 0), 0.16, 0.03, ModelKit.paint(col, 0.4), -1.0, 16)
-			var gnomon := ModelKit.box(
-				root,
-				Vector3(-0.08, 0, -0.005),
-				Vector3(0.08, 0.08, 0.005),
-				ModelKit.paint(Color("#b8862f"), 0.7)
-			)
-			gnomon.position = c + Vector3(0, 0.36, 0)
+			_sundial(root, c, col)
 		"small_pond", "fountain":
 			_pond(root, fp, id == "fountain", col)
 		"arbor":
@@ -339,6 +292,196 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 	root.scale = Vector3.ONE * chunk
 	root.position = c * (1.0 - chunk)
 	return ModelKit.bake(root)
+
+
+## A straight round bar from `a` to `b` (a leg, a neck, a brace): `r` thick at `a`, `top_r` at `b`.
+static func rod(root: Node3D, a: Vector3, b: Vector3, r: float, mat: Material, top_r := -1.0,
+		sides := 6) -> MeshInstance3D:
+	var mi := ModelKit.cylinder(root, Vector3.ZERO, r, a.distance_to(b), mat, top_r, sides)
+	var up := (b - a).normalized()
+	var across := (up.cross(Vector3.RIGHT) if absf(up.dot(Vector3.RIGHT)) < 0.9 else up.cross(Vector3.BACK)).normalized()
+	mi.transform = Transform3D(Basis(across, up, across.cross(up)), (a + b) / 2.0)
+	return mi
+
+
+## A lawn flamingo: a round body with a darker wing and tail, a neck in an S, a head with an eye and a
+## two-tone bill bent down, on thin pink legs, one of them tucked up.
+static func _flamingo(root: Node3D, c: Vector3, col: Color) -> void:
+	var pink := ModelKit.paint(col)
+	var deep := ModelKit.paint(col.darkened(0.18))
+	var leg := ModelKit.paint(col.lerp(Color("#f0b0a0"), 0.5))
+	rod(root, c + Vector3(-0.02, 0, 0.02), c + Vector3(-0.02, 0.3, 0.02), 0.008, leg)
+	ModelKit.ball(root, c + Vector3(-0.02, 0.15, 0.02), 0.013, leg)
+	rod(root, c + Vector3(-0.02, 0.3, -0.02), c + Vector3(0.04, 0.2, -0.02), 0.008, leg)   # the other, tucked up
+	rod(root, c + Vector3(0.04, 0.2, -0.02), c + Vector3(-0.03, 0.17, -0.02), 0.007, leg)
+	for z: float in [0.02]:
+		ModelKit.ball(root, c + Vector3(0.0, 0.006, z), 0.022, leg, Vector3(1.6, 0.3, 1.2))
+	ModelKit.ball(root, c + Vector3(-0.03, 0.36, 0), 0.085, pink, Vector3(1.35, 0.95, 0.85), true)
+	for side: float in [-1.0, 1.0]:
+		ModelKit.ball(root, c + Vector3(-0.05, 0.37, side * 0.05), 0.06, deep, Vector3(1.4, 0.75, 0.4), true)
+	for k in 3:   # tail feathers
+		ModelKit.ball(root, c + Vector3(-0.15, 0.36 + (k - 1) * 0.022, (k - 1) * 0.018), 0.03, deep,
+			Vector3(1.6, 0.4, 0.5), true)
+	rod(root, c + Vector3(0.05, 0.4, 0), c + Vector3(0.12, 0.5, 0), 0.02, pink, 0.016, 8)
+	rod(root, c + Vector3(0.12, 0.5, 0), c + Vector3(0.09, 0.6, 0), 0.016, pink, 0.014, 8)
+	ModelKit.ball(root, c + Vector3(0.12, 0.5, 0), 0.018, pink, Vector3.ONE, true)
+	ModelKit.ball(root, c + Vector3(0.1, 0.625, 0), 0.036, pink, Vector3(1.1, 1.0, 0.9), true)
+	var pale := ModelKit.paint(Color("#f6efe6"))
+	var tip := ModelKit.paint(Color("#231c1a"))
+	rod(root, c + Vector3(0.125, 0.625, 0), c + Vector3(0.165, 0.6, 0), 0.016, pale, 0.013, 8)
+	rod(root, c + Vector3(0.165, 0.6, 0), c + Vector3(0.175, 0.565, 0), 0.013, tip, 0.004, 8)
+	for side: float in [-1.0, 1.0]:
+		ModelKit.ball(root, c + Vector3(0.115, 0.635, side * 0.028), 0.006, ModelKit.paint(Color("#16130f")))
+
+
+## A picnic table: a top and two benches of separate planks on A-frame legs with a brace, a checked cloth
+## across the middle, a pie and a jug.
+static func _picnic_table(root: Node3D, c: Vector3, col: Color, cloth: Color, id: String) -> void:
+	var rng := _rng(id)
+	var frame := ModelKit.paint(col.darkened(0.25))
+	for k in 5:   # the top's planks
+		var z := -0.17 + k * 0.085
+		ModelKit.box(root, c + Vector3(-0.32, 0.3, z - 0.039), c + Vector3(0.32, 0.325, z + 0.039),
+			ModelKit.surface(col.darkened(rng.randf() * 0.12), "boards", 0.0))
+	for side: float in [-1.0, 1.0]:
+		for k in 2:   # a bench's two planks
+			var z := side * (0.275 + k * 0.065)
+			ModelKit.box(root, c + Vector3(-0.32, 0.17, z - 0.03), c + Vector3(0.32, 0.19, z + 0.03),
+				ModelKit.surface(col.darkened(rng.randf() * 0.12), "boards", 0.0))
+	for x: float in [-0.24, 0.24]:
+		for side: float in [-1.0, 1.0]:   # the A-frame: a leg leaning out each way
+			rod(root, c + Vector3(x, 0.3, side * 0.09), c + Vector3(x, 0.0, side * 0.3), 0.022, frame, -1.0, 4)
+		ModelKit.box(root, c + Vector3(x - 0.02, 0.145, -0.34), c + Vector3(x + 0.02, 0.17, 0.34), frame)
+		ModelKit.box(root, c + Vector3(x - 0.02, 0.275, -0.19), c + Vector3(x + 0.02, 0.3, 0.19), frame)
+	rod(root, c + Vector3(-0.24, 0.16, 0), c + Vector3(0.0, 0.29, 0), 0.016, frame, -1.0, 4)
+	rod(root, c + Vector3(0.24, 0.16, 0), c + Vector3(0.0, 0.29, 0), 0.016, frame, -1.0, 4)
+	# The cloth: checks of the cloth's colour and white, hanging a little over each side.
+	for i in 4:
+		for j in 7:
+			var at := c + Vector3(-0.13 + i * 0.065, 0.326, -0.2275 + j * 0.065)
+			ModelKit.box(root, at, at + Vector3(0.065, 0.005, 0.065),
+				ModelKit.paint(cloth if (i + j) % 2 == 0 else WHITE), false)
+	ModelKit.cylinder(root, c + Vector3(-0.03, 0.331, -0.05), 0.07, 0.022, ModelKit.paint(Color("#d9a35a")), 0.085, 12)
+	ModelKit.cylinder(root, c + Vector3(-0.03, 0.353, -0.05), 0.07, 0.012, ModelKit.paint(Color("#b5442f")), 0.055, 12)
+	ModelKit.cylinder(root, c + Vector3(0.07, 0.331, 0.09), 0.03, 0.075, ModelKit.paint(Color("#6fa8d6"), 0.5), 0.022, 10)
+	ModelKit.cylinder(root, c + Vector3(0.07, 0.406, 0.09), 0.024, 0.008, ModelKit.paint(WHITE), -1.0, 10)
+
+
+## A garden gnome facing +x: boots, a belted coat, arms and hands, a face with a round nose, cheeks and eyes
+## over a long white beard, and a tall pointed hat that flops at its tip.
+static func _gnome(root: Node3D, c: Vector3, hat: Color, coat: Color) -> void:
+	var skin := Color("#f2c9a0")
+	var white := ModelKit.paint(WHITE)
+	for side: float in [-1.0, 1.0]:
+		ModelKit.ball(root, c + Vector3(0.03, 0.022, side * 0.04), 0.036, ModelKit.paint(Color("#4a3322")),
+			Vector3(1.5, 0.65, 1.0), true)
+		ModelKit.ball(root, c + Vector3(0.02, 0.16, side * 0.085), 0.034, ModelKit.paint(coat.darkened(0.1)),
+			Vector3(0.9, 1.5, 0.9), true)
+		ModelKit.ball(root, c + Vector3(0.035, 0.115, side * 0.09), 0.022, ModelKit.paint(skin), Vector3.ONE, true)
+		ModelKit.ball(root, c + Vector3(0.062, 0.262, side * 0.028), 0.0075, ModelKit.paint(Color("#16130f")))
+		ModelKit.ball(root, c + Vector3(0.05, 0.238, side * 0.045), 0.016,
+			ModelKit.paint(skin.lerp(Color("#f08a8a"), 0.5)), Vector3(0.5, 0.8, 1.0), true)
+	ModelKit.ball(root, c + Vector3(0, 0.12, 0), 0.085, ModelKit.paint(coat), Vector3(1.0, 1.15, 1.05), true)
+	ModelKit.cylinder(root, c + Vector3(0, 0.088, 0), 0.088, 0.022, ModelKit.paint(Color("#3a2a1c")), -1.0, 14)
+	ModelKit.box(root, c + Vector3(0.078, 0.086, -0.016), c + Vector3(0.094, 0.112, 0.016),
+		ModelKit.paint(Color("#e8c14a"), 0.5))
+	ModelKit.ball(root, c + Vector3(0, 0.245, 0), 0.066, ModelKit.paint(skin), Vector3.ONE, true)
+	ModelKit.ball(root, c + Vector3(0.045, 0.19, 0), 0.058, white, Vector3(0.75, 1.0, 1.05), true)   # the beard..
+	ModelKit.cylinder(root, c + Vector3(0.06, 0.07, 0), 0.006, 0.1, white, 0.045, 8)               # ..to a point
+	for side: float in [-1.0, 1.0]:
+		ModelKit.ball(root, c + Vector3(0.062, 0.225, side * 0.022), 0.02, white, Vector3(0.7, 0.6, 1.3), true)
+	ModelKit.ball(root, c + Vector3(0.07, 0.24, 0), 0.02, ModelKit.paint(skin.darkened(0.08)), Vector3.ONE, true)
+	ModelKit.cylinder(root, c + Vector3(0, 0.275, 0), 0.075, 0.15, ModelKit.paint(hat), 0.022, 12)
+	ModelKit.cylinder(root, c + Vector3(0, 0.27, 0), 0.079, 0.018, ModelKit.paint(hat.darkened(0.2)), -1.0, 12)
+	rod(root, c + Vector3(0, 0.42, 0), c + Vector3(-0.035, 0.465, 0), 0.022, ModelKit.paint(hat), 0.008, 8)
+	ModelKit.ball(root, c + Vector3(-0.04, 0.47, 0), 0.014, white)
+
+
+## A street lamp: a stone foot, an iron post with a turned base and rings, a ladder bar, and a four-sided
+## lantern with a warm light inside, under a pointed cap with a finial.
+static func _lamp_post(root: Node3D, c: Vector3, col: Color, light: Color) -> void:
+	var iron := ModelKit.paint(col, 0.5)
+	ModelKit.box(root, c + Vector3(-0.08, 0, -0.08), c + Vector3(0.08, 0.045, 0.08), ModelKit.surface(STONE, "stone", 0.3))
+	lathe(root, c, [Vector2(0.0, 0.045), Vector2(0.06, 0.045), Vector2(0.06, 0.07), Vector2(0.04, 0.1),
+		Vector2(0.045, 0.13), Vector2(0.026, 0.17), Vector2(0.02, 0.4), Vector2(0.018, 0.66), Vector2(0.0, 0.66)], 10, iron)
+	for y: float in [0.2, 0.42, 0.63]:
+		ModelKit.cylinder(root, c + Vector3(0, y, 0), 0.031, 0.018, iron, -1.0, 10)
+	ModelKit.box(root, c + Vector3(-0.085, 0.585, -0.006), c + Vector3(0.085, 0.597, 0.006), iron)
+	for x: float in [-0.085, 0.085]:
+		ModelKit.ball(root, c + Vector3(x, 0.591, 0), 0.011, iron)
+	ModelKit.cylinder(root, c + Vector3(0, 0.66, 0), 0.03, 0.03, iron, 0.062, 4).rotation.y = PI / 4.0
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			ModelKit.box(root, c + Vector3(sx * 0.043 - 0.005, 0.69, sz * 0.043 - 0.005),
+				c + Vector3(sx * 0.043 + 0.005, 0.83, sz * 0.043 + 0.005), iron)
+	ModelKit.box(root, c + Vector3(-0.04, 0.692, -0.04), c + Vector3(0.04, 0.828, 0.04), ModelKit.glass())
+	ModelKit.ball(root, c + Vector3(0, 0.75, 0), 0.028, _glow(light), Vector3(1.0, 1.3, 1.0))
+	ModelKit.cylinder(root, c + Vector3(0, 0.83, 0), 0.085, 0.065, iron, 0.012, 4).rotation.y = PI / 4.0
+	ModelKit.ball(root, c + Vector3(0, 0.905, 0), 0.014, iron)
+
+
+## A garden sundial: a square plinth, a turned stone pedestal, and a round dial with its hours marked and a
+## brass gnomon standing on it.
+static func _sundial(root: Node3D, c: Vector3, col: Color) -> void:
+	var tone := col.lerp(BATH_STONE, 0.6)
+	var stone := ModelKit.surface(tone, "stone", 0.3)
+	var brass := ModelKit.paint(Color("#b8862f"), 0.7)
+	ModelKit.box(root, c + Vector3(-0.14, 0, -0.14), c + Vector3(0.14, 0.04, 0.14), stone)
+	lathe(root, c, [Vector2(0.0, 0.04), Vector2(0.1, 0.04), Vector2(0.1, 0.06), Vector2(0.065, 0.09), Vector2(0.055, 0.14),
+		Vector2(0.075, 0.2), Vector2(0.06, 0.26), Vector2(0.07, 0.29), Vector2(0.15, 0.31), Vector2(0.16, 0.325),
+		Vector2(0.16, 0.345), Vector2(0.0, 0.345)], 16, ModelKit.paint(tone.lightened(0.04)))
+	ModelKit.cylinder(root, c + Vector3(0, 0.345, 0), 0.14, 0.006, ModelKit.paint(tone.lightened(0.14)), -1.0, 20)
+	ModelKit.cylinder(root, c + Vector3(0, 0.351, 0), 0.05, 0.004, brass, -1.0, 14)
+	for k in 12:   # the hours
+		var ang := TAU * k / 12.0
+		var mark := ModelKit.box(root, Vector3(-0.004, 0, -0.016), Vector3(0.004, 0.004, 0.016),
+			ModelKit.paint(Color("#4a4238")), false)
+		mark.position = c + Vector3(cos(ang) * 0.112, 0.353, sin(ang) * 0.112)
+		mark.rotation.y = -ang + PI / 2.0
+	# The gnomon: a thin brass wedge, low at one end and standing at the other.
+	var low := c + Vector3(0.09, 0.351, 0)
+	var foot := c + Vector3(-0.09, 0.351, 0)
+	var tip := c + Vector3(-0.09, 0.44, 0)
+	var thick := Vector3(0, 0, 0.004)
+	ModelKit.faces(root, [[foot + thick, low + thick, tip + thick], [foot - thick, low - thick, tip - thick],
+		[tip + thick, low + thick, low - thick, tip - thick], [foot + thick, tip + thick, tip - thick, foot - thick]],
+		c + Vector3(-0.03, 0.38, 0), brass)
+	for k in 5:   # moss at the foot
+		var ang := k * 1.3 + 0.4
+		ModelKit.ball(root, c + Vector3(cos(ang) * 0.13, 0.03, sin(ang) * 0.13), 0.03,
+			ModelKit.paint(Color("#5f8a3a").darkened(0.1 * (k % 3))), Vector3(1.4, 0.6, 1.0))
+
+
+## A country mailbox: a post with a bracket, an arched box with a door and its knob, the red flag up on its
+## arm, a letter in the door, and flowers at the foot.
+static func _mailbox(root: Node3D, c: Vector3, col: Color, id: String) -> void:
+	var wood := ModelKit.paint(WOOD)
+	var body := ModelKit.paint(col, 0.5)
+	ModelKit.box(root, c + Vector3(-0.022, 0, -0.022), c + Vector3(0.022, 0.4, 0.022), wood)
+	ModelKit.box(root, c + Vector3(-0.13, 0.385, -0.05), c + Vector3(0.13, 0.405, 0.05), ModelKit.paint(DARK_WOOD))
+	rod(root, c + Vector3(0, 0.27, 0), c + Vector3(0.09, 0.385, 0), 0.012, ModelKit.paint(DARK_WOOD), -1.0, 4)
+	ModelKit.box(root, c + Vector3(-0.125, 0.405, -0.065), c + Vector3(0.125, 0.47, 0.065), body)
+	var arch := ModelKit.cylinder(root, Vector3.ZERO, 0.065, 0.25, body, -1.0, 14)
+	arch.rotation.z = PI / 2.0
+	arch.position = c + Vector3(0, 0.47, 0)
+	_disc(root, c + Vector3(0.126, 0.47, 0), 0.058, 0.006, ModelKit.paint(col.darkened(0.22), 0.5))   # the door
+	ModelKit.box(root, c + Vector3(0.126, 0.41, -0.058), c + Vector3(0.132, 0.47, 0.058),
+		ModelKit.paint(col.darkened(0.22), 0.5))
+	ModelKit.ball(root, c + Vector3(0.136, 0.5, 0), 0.01, ModelKit.paint(Color("#e8c14a"), 0.6))
+	ModelKit.box(root, c + Vector3(0.1, 0.43, -0.035), c + Vector3(0.16, 0.436, 0.02), ModelKit.paint(WHITE))   # a letter
+	var red := ModelKit.paint(Color("#d8382f"))
+	ModelKit.box(root, c + Vector3(-0.03, 0.44, 0.066), c + Vector3(-0.018, 0.6, 0.072), red)   # the flag's arm, up
+	ModelKit.box(root, c + Vector3(-0.03, 0.54, 0.066), c + Vector3(0.04, 0.6, 0.072), red)
+	ModelKit.ball(root, c + Vector3(-0.024, 0.445, 0.07), 0.01, ModelKit.paint(Color("#3a3a3a")))
+	var rng := _rng(id)
+	for k in 5:   # grass and a few flowers at the foot
+		var ang := rng.randf() * TAU
+		var at := c + Vector3(cos(ang) * 0.06, 0, sin(ang) * 0.06)
+		ModelKit.cylinder(root, at, 0.012, rng.randf_range(0.06, 0.11), ModelKit.paint(LEAF.lightened(rng.randf() * 0.2), 0.0,
+			0.3), 0.0, 4)
+		if k < 3:
+			ModelKit.ball(root, at + Vector3(0.015, 0.07, 0.01), 0.016,
+				ModelKit.paint([Color("#f2d24a"), Color("#f0f0e8"), Color("#e86a8a")][k]))
 
 
 ## A birdhouse on its post: a stone footing, a braced landing board, a boarded house under an overhanging roof
@@ -611,16 +754,7 @@ static func _straw(root: Node3D, c: Vector3, inner: float, outer: float, n: int,
 static func _small_sign(root: Node3D, id: String, c: Vector3, col: Color, o: Dictionary) -> void:
 	match id:
 		"mailbox":
-			ModelKit.box(root, c + Vector3(-0.015, 0, -0.015), c + Vector3(0.015, 0.42, 0.015), ModelKit.paint(WOOD))
-			var box := ModelKit.cylinder(root, Vector3.ZERO, 0.07, 0.24, ModelKit.paint(col, 0.5), -1.0, 12)
-			box.rotation.z = PI / 2.0
-			box.position = c + Vector3(0, 0.48, 0)
-			ModelKit.box(
-				root,
-				c + Vector3(-0.06, 0.5, 0.07),
-				c + Vector3(-0.05, 0.62, 0.075),
-				ModelKit.paint(Color("#d8382f"))
-			)
+			_mailbox(root, c, col, id)
 		"farm_stand":
 			ModelKit.box(
 				root,
