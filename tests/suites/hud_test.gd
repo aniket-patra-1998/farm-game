@@ -406,3 +406,21 @@ func test_352_the_release_shows_only_its_items_and_features() -> void:
 		_check(not Game.unlocks_at(lvl).has(str(Game.item_data(off)["name"])), "and doesn't unlock")
 	Release.whole = true
 	_check(Release.has(off) and Release.balance("synergy.enabled") == null, "with everything on, all is in")
+
+
+func test_353_a_tapped_thing_tells_about_itself_in_a_bubble() -> void:
+	var hen := {"uid": 7001, "id": "chicken", "row": 0, "col": 0, "t": Game.now()}
+	_check(FarmGrid.status_of(hen).begins_with(tr("BUBBLE_READY_IN").split("%")[0]), "a hen not ready says when it will be")
+	_eq(FarmGrid.status_of({"uid": 7002, "id": "bench", "row": 0, "col": 0}), "", "a decoration just says its name")
+	_check(not HudBubble.has_panel({"uid": 7002, "id": "bench", "row": 0, "col": 0}), "a decoration has no panel")
+	_check(HudBubble.has_panel({"uid": 7003, "id": "chicken_coop", "row": 0, "col": 0}), "a home offers its panel")
+	var hud := FarmHud.new()
+	add_child(hud)
+	await get_tree().process_frame
+	hud.bubble.to_screen = func(p: Vector2) -> Vector2: return p
+	hud.bubble.show_at(Vector2(300, 300), "Chicken", "Ready in 14 h", -1)
+	_check(hud.bubble.visible, "the bubble shows")
+	_check(hud.bubble.global_position.y < 300.0, "above the thing")
+	hud.bubble.close()
+	_check(not hud.bubble.visible, "and goes")
+	hud.queue_free()

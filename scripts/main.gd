@@ -99,6 +99,8 @@ func _ready() -> void:
 	grid.placing_changed.connect(hud.show_placing)
 	grid.tool_changed.connect(func(t: String) -> void: hud.tools.show_tool(t))
 	grid.object_tapped.connect(hud.show_building)
+	grid.tapped_info.connect(hud.bubble.show_at)
+	hud.bubble.to_screen = func(p: Vector2) -> Vector2: return grid.get_global_transform_with_canvas() * p
 	grid.info.connect(hud.show_message)
 	Game.message.connect(hud.show_message)
 

@@ -23,6 +23,7 @@ const LOCKED := Color("#d8cbb0")
 
 
 var top: HudTop
+var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
 var side: HudSide
 var interface_hidden := false
@@ -89,6 +90,8 @@ func _ready() -> void:
 	tools.build(root)
 	_build_tutorial(root)
 	_build_toast(root)
+	bubble = HudBubble.new(self)
+	root.add_child(bubble)
 	_build_placing_bar(root)
 	_book = BookPanel.new()
 	root.add_child(_book)

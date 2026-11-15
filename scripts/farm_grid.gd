@@ -5,6 +5,9 @@ extends Node2D
 
 signal info(text: String)
 signal object_tapped(uid: int)        # a building was tapped while not ready
+## Something tapped tells about itself in a small bubble above it (FarmVille's way, not a panel): `at` is where
+## (this grid's space), `uid` the thing tapped (-1 for a plot), so its bubble can offer its panel.
+signal tapped_info(at: Vector2, title: String, line: String, uid: int)
 
 signal placing_changed(text: String)  # "" when placement ends
 signal tool_changed(tool: String)     # the tool in hand changed here, not from the tool panel (a vehicle tapped)
@@ -31,6 +34,8 @@ const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale
 const DRAG_THRESHOLD := 14.0 # screen pixels
 const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is walked in
 ## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
+const BUBBLE_LIFT := 46.0          # a tapped thing's bubble floats this far (px) above its footprint's middle..
+const BUBBLE_LIFT_PER_TILE := 34.0 # ..and this much more per tile of its size (a barn is taller than a hen)
 const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is picked up (by the clock, so a
 							# slow frame can never turn a quick tap into a hold)
 
@@ -1021,7 +1026,7 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 		if loud:
 			_poke(uid)
 			if Game.under_construction(obj) or Game.vehicles.fuel_now() <= 0:
-				object_tapped.emit(uid)
+				_tell(obj)
 			else:
 				set_tool("vehicle", str(obj["id"]))
 				tool_changed.emit("vehicle")
@@ -1029,7 +1034,7 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	if kind == "decor" and tool != "move":
 		if loud:
 			_poke(uid)
-			info.emit(tr("YOUR") % Game.item_data(obj["id"])["name"].to_lower())
+			_tell(obj)
 		return
 	if obj.get("stray", false) and tool != "move":
 		if loud:
@@ -1054,7 +1059,7 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 			if Game.player.is_queued({"kind": "nurture", "uid": uid}) or Game.nurture.free_supply(supply) > 0:
 				_queue({"kind": "nurture", "uid": uid})
 			else:
-				object_tapped.emit(uid)
+				_tell(obj)
 		return
 	if Game.is_ready(obj):
 		_queue({"kind": "collect", "uid": uid})
@@ -1062,17 +1067,7 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	if not loud:
 		return
 	_poke(uid)
-	if tool == "harvest":   # the Harvest tool gathers what is ready and opens nothing: say when it will be
-		info.emit(tr("NOT_READY_YET_READY_IN") % [Game.item_data(obj["id"])["name"],
-			format_duration(Game.seconds_until_ready(obj))])
-		return
-	if Game.is_home(obj) or Game.crafting.is_crafting(obj) or Game.kind_of(obj) == "bloom" \
-			or Game.feeds.is_feedable(obj):
-		object_tapped.emit(uid)
-		return
-	var it := Game.item_data(obj["id"])
-	var what: String = it.get("product", tr("FRUIT"))
-	info.emit(tr("READY_IN") % [it["name"], what, format_duration(Game.seconds_until_ready(obj))])
+	_tell(obj)   # (its name and when it will be ready, above it; its panel, if it has one, from the bubble)
 
 
 
@@ -1130,11 +1125,40 @@ func _explain(i: int, ph: GameState.Phase) -> void:
 			info.emit(tr("PICK_A_SEED_TO_PLANT_HERE"))
 		GameState.Phase.GROWING:
 			var crop: Dictionary = Game.crops[Game.field.crop_at(i)]
-			info.emit(tr("READY_IN_2") % [crop["name"], format_duration(Game.field.seconds_until_ripe(i))])
+			tapped_info.emit(center_of(i) + Vector2(0, -BUBBLE_LIFT), str(crop["name"]),
+				tr("BUBBLE_READY_IN") % format_duration(Game.field.seconds_until_ripe(i)), -1)
 		GameState.Phase.WITHERED:
-			info.emit(tr("THESE_CROPS_WITHERED_PLOW_TO_CLEAR"))
+			tapped_info.emit(center_of(i) + Vector2(0, -BUBBLE_LIFT), str(Game.crops[Game.field.crop_at(i)]["name"]),
+				tr("BUBBLE_WITHERED"), -1)
 
 
+
+
+## Shows what `obj` is and how it is doing in a bubble above it (FarmVille's way): its name, and a line: ready in
+## how long, withered, being built, or what it needs.
+func _tell(obj: Dictionary) -> void:
+	var fp := Game.footprint(obj["id"])
+	var c := corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)
+	var lift := BUBBLE_LIFT + BUBBLE_LIFT_PER_TILE * maxi(fp.x, fp.y)
+	tapped_info.emit((c[0] + c[2]) / 2.0 + Vector2(0, -lift), str(Game.item_data(obj["id"])["name"]), status_of(obj),
+		int(obj["uid"]))
+
+
+## One short line on how a placed thing is doing ("" when there is nothing to say: a decoration).
+static func status_of(obj: Dictionary) -> String:
+	if Game.under_construction(obj):
+		return TranslationServer.translate("BUBBLE_BUILDING")
+	if Game.is_withered(obj):
+		return TranslationServer.translate("BUBBLE_WITHERED_THING")
+	var supply := Game.nurture.supply_for(obj)
+	if supply != "":
+		return TranslationServer.translate("BUBBLE_NEEDS") % Game.nurture.supply_name(supply)
+	if Game.kind_of(obj) == "decor":
+		return ""
+	if Game.is_ready(obj):
+		return TranslationServer.translate("BUBBLE_READY")
+	var wait := Game.seconds_until_ready(obj)
+	return TranslationServer.translate("BUBBLE_READY_IN") % format_duration(wait) if wait > 0 else ""
 
 
 static func format_duration(seconds: int) -> String:
