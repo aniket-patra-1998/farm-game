@@ -5,7 +5,9 @@ extends RefCounted
 ## neighbours' strip (a placeholder until neighbours land: their names from the social system, our own touch).
 
 const STRIP_NEIGHBOURS := 4      # neighbours shown on the strip
+const INBOX_CHECK := 300.0       # seconds between catching the neighbours' mail up (the inbox's count)
 
+var _badge: Label   # the inbox's count on the Neighbours button
 var hud: FarmHud
 var toggles: VBoxContainer
 var menu: VBoxContainer
@@ -53,6 +55,16 @@ func build(root: Control) -> void:
 		var b := UiKit.tool_button(str(entry[0]), tr(str(entry[1])), w, h, UiTheme.size("side_icon"))
 		b.pressed.connect(entry[2])
 		menu.add_child(b)
+		if entry[1] == "NEIGHBOURS":
+			_badge = UiKit.count_badge(b)   # how many things wait in the inbox
+			Game.inbox_changed.connect(show_inbox_count)
+			show_inbox_count()
+			var mail := Timer.new()   # the neighbours' mail comes in through the day
+			mail.wait_time = INBOX_CHECK
+			mail.autostart = true
+			mail.timeout.connect(func() -> void: Game.social.settle())
+			b.add_child(mail)
+			Game.social.settle.call_deferred()
 
 	zoom = HBoxContainer.new()
 	zoom.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -87,14 +99,21 @@ func build(root: Control) -> void:
 		row.add_child(b)
 
 
+## The inbox's count on the Neighbours button (hidden when nothing waits).
+func show_inbox_count() -> void:
+	var n := Game.social.inbox.size()
+	_badge.text = str(n)
+	_badge.get_parent().visible = n > 0
+
+
 ## The speaker shows struck through while the sound is off.
 func show_sound() -> void:
 	(_sound.get_meta("icon") as UiIcon).struck = Sound.muted
 
 
-## Neighbours aren't in the game yet: say so.
+## The neighbours' button and faces open the one inbox (their mail and your farm's gifts).
 func _show_neighbours() -> void:
-	hud.show_message(tr("NEIGHBOURS_SOON"))
+	hud.show_inbox()
 
 
 ## Everything but the eye, to hide with it.

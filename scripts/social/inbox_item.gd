@@ -5,7 +5,8 @@ class_name InboxItem
 ##
 ## Kinds: GIFT is free to claim; ANSWER is a neighbour's reply to something of yours (free); SHARE is free to
 ## claim (a copy is minted for you, the sharer keeps theirs) unless `collab`, where claiming helps it grow;
-## REQUEST is a neighbour's ask: claiming it helps them, for a reward.
+## REQUEST is a neighbour's ask: claiming it helps them, for a reward. The same inbox is FarmVille's Gift Box: things
+## to place on the farm (ITEM), from neighbours or from the farm itself (FARM: a baby grown up in the nursery).
 
 const GIFT := "gift"
 const ANSWER := "answer"
@@ -13,6 +14,7 @@ const SHARE := "share"
 const REQUEST := "request"
 const KINDS := [GIFT, ANSWER, SHARE, REQUEST]
 const ME := -1                       # `from` of your own posts
+const FARM := -2                     # `from` of what your own farm sends (a grown baby): the one inbox holds it too
 
 # What a `give` can hand over.
 const PART := "part"
@@ -21,7 +23,8 @@ const COINS := "coins"
 const FUEL := "fuel"
 const YOUNG := "young"
 const WATER := "water"               # one watering of a shared young one (`uid` says which)
-const WHATS := [PART, SUPPLY, COINS, FUEL, YOUNG, WATER]
+const ITEM := "item"                 # a thing to place (an animal, a tree, a decoration): FarmVille's Gift Box
+const WHATS := [PART, SUPPLY, COINS, FUEL, YOUNG, WATER, ITEM]
 
 
 ## A new item. `give` is what it hands over (or asks for, in a request); `extra` adds fields (collab, ref...).

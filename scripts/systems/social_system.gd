@@ -11,7 +11,7 @@ extends GameSystem
 ##
 ## Who the neighbours are and how they behave is a `NeighbourTransport` (single-player: SimulatedNeighbours),
 ## so real friends can replace them without touching the rules here. Time is caught up in `settle`, never per
-## frame; nothing in the game calls it until the inbox panel lands (the mail would announce itself unopenable). Saves
+## frame: when the inbox opens (HudInbox) and every few minutes for the count on the Neighbours button. Saves
 ## the inbox, the outbox and the day's limits; nothing else.
 
 const SAVED_INBOX := "social_inbox"
@@ -96,9 +96,12 @@ func free_count() -> int:
 ## Returns whether it was claimed (a help is refused when none are left today).
 func claim(item_id: int) -> bool:
 	var at := _index_of(inbox, item_id)
-	if not enabled() or at < 0:
+	if at < 0 or (not enabled() and int(inbox[at].get("from", 0)) != InboxItem.FARM):
 		return false
 	var item := inbox[at]
+	if str(item["give"].get("what", "")) == InboxItem.ITEM and not game.storage.has_room():
+		game.message.emit(tr("INBOX_NO_ROOM"))   # (a thing to place waits until the Barn has room)
+		return false
 	if InboxItem.is_help(item):
 		if helps_left() <= 0:
 			game.message.emit(tr("SOCIAL_NO_HELPS_LEFT"))
@@ -115,6 +118,44 @@ func claim(item_id: int) -> bool:
 	inbox.remove_at(at)
 	_changed()
 	return true
+
+
+## Puts something the farm itself sends into the inbox (the one place gifts wait: FarmVille's Gift Box), free to
+## claim, never lost to the inbox's limit. Returns its id.
+func deliver(give: Dictionary) -> int:
+	var item := InboxItem.make(0, InboxItem.GIFT, InboxItem.FARM, game.now(), give)
+	_add_to_inbox(item)
+	_changed()
+	return int(item["id"])
+
+
+## The words for a `give` before it is claimed ("2 Bricks", "a Cow").
+func words(give: Dictionary) -> String:
+	var n := int(give.get("n", 1))
+	var id := str(give.get("id", ""))
+	match str(give.get("what", "")):
+		InboxItem.PART:
+			return "%d %s" % [n, GameState.part_names.get(id, id)]
+		InboxItem.SUPPLY:
+			return "%d %s" % [n, game.nurture.supply_name(id)]
+		InboxItem.COINS:
+			return tr("SOCIAL_COINS") % n
+		InboxItem.FUEL:
+			return tr("SOCIAL_FUEL") % n
+		InboxItem.YOUNG, InboxItem.ITEM:
+			return "%d %s" % [n, game.name_of(id)] if n > 1 else game.name_of(id)
+		InboxItem.WATER:
+			return tr("SOCIAL_WATERED")
+	return ""
+
+
+## Who sent `item`, in words: a neighbour's name, or your farm.
+func sender(item: Dictionary) -> String:
+	var from := int(item.get("from", 0))
+	if from == InboxItem.FARM:
+		return tr("INBOX_FROM_FARM")
+	var names := roster()
+	return names[from] if from >= 0 and from < names.size() else ""
 
 
 ## One tap: claims every free item, then helps every request and seedling the day allows, oldest first.
@@ -306,6 +347,10 @@ func grant(give: Dictionary) -> String:
 			return "%d %s" % [n, game.item_data(id)["name"]]
 		InboxItem.WATER:
 			return tr("SOCIAL_WATERED") if game.nurture.help_young(int(give.get("uid", 0))) else ""
+		InboxItem.ITEM:
+			for i in n:
+				game.storage.receive(id)   # (to the Barn: placed from there, Placement)
+			return words(give)
 	return ""
 
 

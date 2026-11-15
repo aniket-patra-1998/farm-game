@@ -57,6 +57,7 @@
     "card_edge": "#5c3a1e",
     "card_locked": "#d8cbb0",
   "count_tile": "#f3e3bd",
+  "badge": "#d9442f",
   "loading_back": "#3f6b2a",
   "count_tile_uncommon": "#d7e6f2",
   "count_tile_rare": "#f6dc8a",
@@ -135,6 +136,8 @@
   "mastery_bar": 4,
   "font_count_name": 12,
   "ribbon_icon": 44,
+  "inbox_face": 64,
+  "badge_size": 26,
   "loading_icon": 120,
   "loading_title": 40,
     "card_words": 112

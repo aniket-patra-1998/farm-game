@@ -7,9 +7,10 @@ extends GameSystem
 ## they came (`growing`) and a trough (`trough`, units of Animal Feed). The trough takes as much as the babies
 ## still need, `feed_per_baby` each, and no more (eight babies: eighty). Feed is poured from the farm's Animal
 ## Feed (NurtureSystem's supply); every time the trough holds what the oldest baby needs, that much is eaten and
-## the baby grows up into its adult (the nursery's `grows_into`), which goes to the Gift Box (FarmVille sent the
-## grown Mystery Baby there), with XP and the ribbon count. Animal Feed comes from harvesting the nursery and any
-## animal home now and then (NurtureSystem.from_home), the Feed Mill's sacks (recipes), and gems.
+## the baby grows up into its adult (the nursery's `grows_into`), which waits in the inbox to be placed (the one
+## inbox is also FarmVille's Gift Box, where the grown Mystery Baby went), with XP and the ribbon count. Animal
+## Feed comes from harvesting the nursery and any animal home now and then (NurtureSystem.from_home), the Feed
+## Mill's sacks (recipes), and gems.
 ##
 ## Nothing of its own is saved: the trough and the order are fields of the nursery object, saved with it.
 
@@ -79,9 +80,7 @@ func eat(o: Dictionary) -> Array[String]:
 	while not line.is_empty() and trough(o) >= need_each():
 		var baby := str(line[0][0])
 		var adult := adult_of(o, baby)
-		if not game.storage.receive(adult):
-			game.message.emit(tr("NO_ROOM_IN_THE_GIFT_BOX_FOR") % game.item_data(adult).get("name", adult))
-			break
+		game.social.deliver({"what": InboxItem.ITEM, "id": adult, "n": 1})   # (the one inbox: FarmVille's Gift Box)
 		o[TROUGH] = trough(o) - need_each()
 		line.pop_front()
 		var inside: Dictionary = o.get("inside", {})
@@ -91,7 +90,7 @@ func eat(o: Dictionary) -> Array[String]:
 		game.add_xp(Balance.i("raising.grown_xp"))
 		game.ribbons.bump("babies_raised", 1)
 		var name := str(game.item_data(adult).get("name", adult))
-		game.message.emit(tr("GREW_UP_SENT_TO_GIFT_BOX") % [game.item_data(baby).get("name", baby), name])
+		game.message.emit(tr("GREW_UP_SENT_TO_INBOX") % [game.item_data(baby).get("name", baby), name])
 		out.append(name)
 	return out
 

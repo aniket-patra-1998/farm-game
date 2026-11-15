@@ -78,6 +78,7 @@ static func build(g: GameState) -> Array[String]:
 			shelf = maxi(shelf, fp.y)
 	_link_runs(g, now, last_row)
 	_fill_homes(g, now)
+	g.social.deliver({"what": InboxItem.ITEM, "id": "cow", "n": 1})   # a grown baby waiting in the inbox
 	_raise_young(g)
 	_plant_field(g, now)
 	g.rebuild_occupancy()

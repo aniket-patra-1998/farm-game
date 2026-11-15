@@ -268,6 +268,34 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	return col
 
 
+## A small round count in the top right corner of `button` (things waiting). Returns its label; its parent
+## (the round) is what to hide when the count is zero.
+static func count_badge(button: Control) -> Label:
+	var dot := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiTheme.color("badge")
+	sb.border_color = UiTheme.color("cream")
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(int(UiTheme.size("badge_size")))
+	sb.content_margin_left = 6
+	sb.content_margin_right = 6
+	dot.add_theme_stylebox_override("panel", sb)
+	dot.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	dot.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	dot.offset_top = -UiTheme.size("badge_size") * 0.3
+	dot.offset_right = UiTheme.size("badge_size") * 0.3
+	dot.custom_minimum_size = Vector2.ONE * UiTheme.size("badge_size")
+	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var label := Label.new()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
+	label.add_theme_color_override("font_color", UiTheme.color("cream"))
+	dot.add_child(label)
+	button.add_child(dot)
+	return label
+
+
 ## A grid for item cards, as many columns as fit a book panel on a screen `view_width` wide (the Market's
 ## shelves, the Barn's store).
 static func card_grid(view_width: float) -> GridContainer:

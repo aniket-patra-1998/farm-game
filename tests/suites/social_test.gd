@@ -287,3 +287,24 @@ func test_18_a_gift_is_thanked_by_the_neighbour_it_went_to() -> void:
 		_eq(int(a["by"]), 3, "the thanks comes from neighbour 3")
 	Balance.reload()
 	_done(g)
+
+
+## The one inbox is also FarmVille's Gift Box: a baby grown up in the nursery waits there, the farm as its sender,
+## and placing it claims it into the Barn (then the hand); with the Barn full it waits, never lost.
+func test_19_grown_babies_wait_in_the_one_inbox_to_be_placed() -> void:
+	var g := _farm()
+	var id := g.social.deliver({"what": InboxItem.ITEM, "id": "cow", "n": 1})
+	var item: Dictionary = g.social.inbox.back()
+	_eq(int(item["from"]), InboxItem.FARM, "sent by the farm itself")
+	_check(InboxItem.is_free(item), "free to claim")
+	_eq(HudInbox.button_key(item), "INBOX_PLACE", "its button places it")
+	_eq(g.social.words(item["give"]), "Cow", "and it says what it is")
+	var limit := g.storage.total_limit()
+	while g.storage.stored.size() < limit:
+		g.storage.stored.append({"uid": g.next_uid, "id": "hay_bale", "t": g.now()})
+		g.next_uid += 1
+	_check(not g.social.claim(id), "the Barn full: it waits in the inbox")
+	_check(g.social.inbox.any(func(m: Dictionary) -> bool: return int(m["id"]) == id), "(still there)")
+	g.storage.stored.clear()
+	_check(g.social.claim(id), "with room, it is claimed")
+	_eq(str(g.storage.stored.back()["id"]), "cow", "into the Barn, ready for the hand")

@@ -114,10 +114,15 @@ func store_object(uid: int) -> bool:
 	return true
 
 
+## Whether one more thing fits (in the Barn or its overflow).
+func has_room() -> bool:
+	return stored.size() < total_limit()
+
+
 ## Takes in a new `item_id` straight to storage (a grown baby, a gift): into the Barn while it has room, then the
 ## Gift Box. Returns false when even the Gift Box is full.
 func receive(item_id: String) -> bool:
-	if stored.size() >= total_limit():
+	if not has_room():
 		return false
 	stored.append({"uid": game.next_uid, "id": item_id, "t": game.now()})
 	game.next_uid += 1

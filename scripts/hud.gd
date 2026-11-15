@@ -57,6 +57,7 @@ var _root: Control   # the interface's root, kept inside the safe area
 @onready var barn := HudBarn.new(self)
 @onready var feed := HudFeed.new(self)
 @onready var books := HudBooks.new(self)
+@onready var inbox := HudInbox.new(self)
 @onready var settings := HudSettings.new(self)
 @onready var seeds := HudSeeds.new(self)
 
@@ -371,6 +372,10 @@ func _refresh_book() -> void:
 
 func _show_collections() -> void:
 	_book.open_panel(tr("COLLECTIONS"), books.build_collections)
+
+
+func show_inbox() -> void:
+	_book.open_panel(tr("INBOX"), inbox.build_inbox)
 
 
 func _show_ribbons() -> void:

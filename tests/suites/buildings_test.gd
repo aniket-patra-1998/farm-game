@@ -213,7 +213,7 @@ func test_41_nursery_raises_babies_into_adults() -> void:
 	g.nurture.supplies["animal_feed"] = need + 3
 	_eq(g.raising.pour(uid), ["Cow"], "enough for one: the oldest, the calf, grows up")
 	_eq(g.raising.trough(n), 3, "the rest stays in the trough")
-	_check(g.storage.stored.any(func(o: Dictionary) -> bool: return o["id"] == "cow"), "the cow waits in the Gift Box")
+	_check(g.social.inbox.any(func(m: Dictionary) -> bool: return m["give"]["id"] == "cow"), "the cow waits in the inbox")
 	_eq(g.raising.babies(n), ["foal"], "the foal is next")
 	_eq(g.raising.room(n), need - 3, "the trough takes only what the foal still needs")
 	g.nurture.supplies["animal_feed"] = 100
