@@ -73,13 +73,13 @@ def dog(b):
     # ears
     e = b["ears"]; ec = tuple(c2) if pat == "spots" else tuple(coat * (0.72 if pat == "bib" else 0.82))
     if e == "fold":
-        s += both(E, (skw + 0.04, hy + 0.2, hz - 0.08), (0.13, 0.36, 0.28), ec, rz=-0.25, k=0.1)
+        s += both(E, (skw + 0.04, hy + 0.2, hz - 0.08), (0.13, 0.36, 0.28), ec, rz=-0.25, k=0.1, part="ear")
     elif e == "flop":
-        s += both(E, (skw + 0.08, hy - 0.02, hz - 0.1), (0.14, 0.55, 0.34), ec, rz=-0.15, k=0.1)
+        s += both(E, (skw + 0.08, hy - 0.02, hz - 0.1), (0.14, 0.55, 0.34), ec, rz=-0.15, k=0.1, part="ear")
     elif e == "long":
-        s += both(E, (skw + 0.12, hy - 0.26, hz - 0.1), (0.2, 0.84, 0.46), tuple(coat * 0.9), rz=-0.12, k=0.1)
+        s += both(E, (skw + 0.12, hy - 0.26, hz - 0.1), (0.2, 0.84, 0.46), tuple(coat * 0.9), rz=-0.12, k=0.1, part="ear")
     else:
-        s += both(C, (skw * 0.62, hy + skh * 0.7, hz - 0.2), (skw * 0.95, hy + skh * 0.7 + 0.78, hz - 0.32), 0.27, 0.05, ec, k=0.1)
+        s += both(C, (skw * 0.62, hy + skh * 0.7, hz - 0.2), (skw * 0.95, hy + skh * 0.7 + 0.78, hz - 0.32), 0.27, 0.05, ec, k=0.1, part="ear")
     # tail
     t = b["tail"]; ty, tz = yb + ry * 0.55, -rz * 0.95; tl = b.get("tail_len", 1.0)
     if t == "short":

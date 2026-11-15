@@ -34,6 +34,9 @@ const CONTACT_LIFT := 0.012                     # just above the grass, so it ne
 ## The usual mobile budget is 10-20 fully animated characters; the minds still think every frame.
 const FULL_RATE := 16
 const MAX_STRIDE := 4
+const BEE_BEAT_RATE := 60.0      # a file-made bee's wing beats (radians of the beat a second)..
+const BEE_HOVER_RATE := 3.3      # ..and its slow bob in the air (as tools/animal_art's motion)
+const BEE_HOVER := 0.4           # how high the bob goes, as a share of its body's height
 
 
 ## Animals are posed at least this many frames apart (the graphics quality's `pose_every`, Quality).
@@ -271,7 +274,19 @@ func _pose_file(p: AnimalPose) -> void:
 	_shape("jaw", maxf(p.jaw, 0.0) * smoothstep(0.0, 1.0, p.head))   # (chewing while grazing)
 	_shape("tail", clampf(p.tail + motion.tail, -1.0, 1.0))
 	_shape("breath", p.breath * 0.5)
-	_body.position = Vector3(0, p.hop * _leg * 0.8, 0)
+	_shape("ear_flick", p.ear)
+	_shape("display", p.display)
+	var bug := rig.type == "bug"
+	# A bee's wings beat all the time; a bird's open as it flaps.
+	_shape("wing_flap", 0.5 + 0.5 * sin(p.time * BEE_BEAT_RATE) if bug else p.wing)
+	var lift := 0.0
+	if _file_shapes.has("hop"):
+		_shape("hop", p.hop)   # (the hop's own shape lifts it and tucks its legs)
+	else:
+		lift = p.hop * _leg * 0.8
+	if bug:
+		lift += sin(p.time * BEE_HOVER_RATE) * _r.y * BEE_HOVER
+	_body.position = Vector3(0, lift, 0)
 	_body.rotation = Vector3(motion.roll, 0, motion.pitch)
 	_body.scale = Vector3(1.0 + motion.squash * 0.6, 1.0 - motion.squash, 1.0 + motion.squash * 0.6)
 

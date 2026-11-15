@@ -89,7 +89,7 @@ def cow(b):
     for z in (lz, -lz - 0.03):
         s += both(E, (lx, 0.18, z + 0.03), (lr * 1.2, 0.19, lr * 1.35), hoof, k=0.07)
     s += both(E, (lx * 1.02, yb - ry * 0.2, -lz + 0.1), (lr * 1.8, ry * 0.72, 0.52), bodyc)
-    s += both(E, (skw + 0.34, hy + skh * (0.3 + b.get("ear_up", 0.0)), hz - skl * 0.4), (0.44, 0.15, 0.25), earc, rz=-0.25 + b.get("ear_tilt", 0.0), k=0.08)
+    s += both(E, (skw + 0.34, hy + skh * (0.3 + b.get("ear_up", 0.0)), hz - skl * 0.4), (0.44, 0.15, 0.25), earc, rz=-0.25 + b.get("ear_tilt", 0.0), k=0.08, part="ear")
     if b["udder"]:
         s.append(E((0, yb - ry * 0.98, -rz * 0.42), (0.42, 0.3, 0.45), pink, k=0.1))
     # tail: thick enough to see, carried out behind the rump before it hangs, with a big tuft in a colour that shows

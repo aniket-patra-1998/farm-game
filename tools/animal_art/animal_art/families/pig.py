@@ -62,9 +62,9 @@ def pig(b):
         s += both(E, (lx, 0.16, z + 0.04), (lr * 1.05, 0.17, lr * 1.2), hoof, k=0.07)
     s += both(E, (lx * 1.05, yb - ry * 0.2, -lz + 0.1), (lr * 1.8, ry * 0.7, 0.5), bodyc)
     if b["ears"] == "flop":
-        s += both(E, (skw * 0.8, hy + skh * 0.72, hz - skl * 0.1), (0.34, 0.12, 0.4), earc, rx=0.55, rz=-0.3, k=0.08)
+        s += both(E, (skw * 0.8, hy + skh * 0.72, hz - skl * 0.1), (0.34, 0.12, 0.4), earc, rx=0.55, rz=-0.3, k=0.08, part="ear")
     else:
-        s += both(C, (skw * 0.62, hy + skh * 0.62, hz - skl * 0.25), (skw * 1.0, hy + skh * 0.62 + 0.62, hz - skl * 0.2), 0.27, 0.07, earc, k=0.08)
+        s += both(C, (skw * 0.62, hy + skh * 0.62, hz - skl * 0.25), (skw * 1.0, hy + skh * 0.62 + 0.62, hz - skl * 0.2), 0.27, 0.07, earc, k=0.08, part="ear")
     p = np.array([0.0, yb + ry * 0.55, -rz * 0.98]); tc = tuple(coat * 0.92)
     if b.get("tail") == "straight":
         # a boar's tail: straight, held out, with a dark tuft

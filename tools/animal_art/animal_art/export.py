@@ -4,6 +4,10 @@ colours) at rest, and its moves as blend shapes, each the difference the builder
     walk_00 .. walk_07   the walk cycle at full stride (the game blends between the two nearest, by its gait)
     head                 head down: grazing, pecking
     jaw                  chewing (four-legged grazers)
+    hop                  the top of a hop (hoppers: the rabbit)
+    ear_flick            ears turned out (each about its root)
+    wing_flap            wings lifted open (birds), or a bee's wings at the top of a beat
+    display              a turkey's tail fan tipped up and spread
     look_left, look_right
     blink
     tail
@@ -30,13 +34,21 @@ def _rest():
     return dict(time=0.0, breath=0.0, tail=0.0, look=0.0, jaw=0.0, head=0.0, gait=0.0, stride=0.0, blink=0.0, hop=0.0)
 
 
+EAR_FLICK = 0.55         # radians an ear turns at the top of a flick
+WING_OPEN = 1.0          # radians a wing lifts open, about its root along the body
+FAN_LIFT = 0.45          # radians a turkey's tail fan tips up on display, and it spreads by FAN_SPREAD
+FAN_SPREAD = 1.2
+BEE_BEAT = (math.pi / 2) / 60.0   # the bee's wing beat's top (motion.deform's wing angle peaks at this time)
+
+
 def moves():
-    """[(name, pose values)] for every blend shape, in file order."""
+    """[(name, pose values)] for every blend shape made by the builder's own motion, in file order."""
     out = []
     for k in range(WALK_FRAMES):
         p = _rest(); p.update(gait=k / WALK_FRAMES, stride=1.0); out.append(("walk_%02d" % k, p))
     for name, change in (("head", dict(head=1.0)), ("jaw", dict(head=0.0, jaw=1.0)), ("look_left", dict(look=1.0)), ("look_right", dict(look=-1.0)),
-                         ("blink", dict(blink=1.0)), ("tail", dict(tail=1.0)), ("breath", dict(breath=1.0))):
+                         ("blink", dict(blink=1.0)), ("tail", dict(tail=1.0)), ("breath", dict(breath=1.0)),
+                         ("hop", dict(hop=1.0))):
         p = _rest(); p.update(change); out.append((name, p))
     return out
 
@@ -83,12 +95,65 @@ def export(name, path):
     pos = place(V0[src]); nor = turn(N0[src]).astype(np.float32)
     targets = []
     for mname, p in moves():
+        if mname == "hop" and not rig.get("hop"):
+            continue   # (only a hopper hops)
         V, N = deform(a, W, pose(rig, p), p, rig)
         N = fix(N)
         targets.append((mname, place(V[src]) - pos, turn(N[src]).astype(np.float32) - nor))
+    if rig.get("wings"):          # a bee: its wings at the top of a beat (the builder's motion beats them by time)
+        p = _rest(); p["time"] = BEE_BEAT
+        V, N = deform(a, W, pose(rig, p), p, rig)
+        targets.append(("wing_flap", place(V[src]) - pos, np.zeros_like(nor)))
+    # moves of parts the builder's motion doesn't turn: ears flick, wings open, a turkey's fan
+    for mname, V in _part_moves(a, rig, V0).items():
+        targets.append((mname, place(V[src]) - pos, np.zeros_like(nor)))
     colours = np.c_[np.clip(np.array(vcol, np.float32), 0, 1), np.ones(len(vcol), np.float32)]
     _write(path, name, pos, nor, colours, idx.reshape(-1), targets)
     return dict(name=name, vertices=len(pos), triangles=len(T), targets=[t[0] for t in targets], scale=scale)
+
+
+def _owner(a):
+    """Each skin point's own shape (the nearest), so a part's points (an ear, a wing) can be moved on their own."""
+    from .shapes import sdf
+    P = a["V"][:a["nsoft"]]
+    D = np.stack([sdf(P, s) for s in a["shapes"]], 1)
+    return np.argmin(D, 1)
+
+
+def _turned(V, idx, pivot, axis, ang, grow=1.0):
+    from .motion import rot
+    out = V.copy()
+    out[idx] = (V[idx] - pivot) @ rot(axis, ang).T * grow + pivot
+    return out
+
+
+def _part_moves(a, rig, V0):
+    """{move: points} for the parts that move on their own: each ear turns out about its root, each wing lifts
+    open about its root along the body, a turkey's fan tips up and spreads, a bee's wings beat."""
+    out = {}
+    own = _owner(a); parts = np.array([s.get("part") or "" for s in a["shapes"]])[own]
+    n0 = a["nsoft"]; head = np.array(rig["head"], float); body = np.array(rig["body"], float)
+    for part, name in (("ear", "ear_flick"), ("wing", "wing_flap")):
+        idx = np.where(parts == part)[0]
+        if len(idx) < 10:
+            continue
+        V = V0.copy()
+        for side in (-1.0, 1.0):
+            one = idx[np.sign(V0[idx, 0]) == side]
+            if len(one) < 5:
+                continue
+            if part == "ear":       # its root: its point nearest the head's middle; it turns out and back about the body's length
+                root = V0[one][np.argmin(np.linalg.norm(V0[one] - head, axis=1))]
+                V = _turned(V, one, root, (0, 0, 1), side * EAR_FLICK)
+            else:                   # its root: along its top edge nearest the body's middle line
+                q = V0[one]; root = np.array([q[np.argmin(np.abs(q[:, 0])), 0], q[:, 1].max(), q[:, 2].mean()])
+                V = _turned(V, one, root, (0, 0, 1), side * WING_OPEN)
+        out[name] = V
+    fan = np.where(parts == "fan")[0]
+    if len(fan) >= 10:
+        q = V0[fan]; base = q[np.argmin(np.linalg.norm(q - body, axis=1))]
+        out["display"] = _turned(V0, fan, base, (1, 0, 0), FAN_LIFT, FAN_SPREAD)
+    return out
 
 
 def _write(path, name, pos, nor, col, ind, targets):

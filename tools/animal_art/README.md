@@ -50,7 +50,6 @@ instead of the code-built animal and sets the blend shapes from the pose it alre
 
 ## Not done
 
-- **Ear flick, wing flap, turkey tail display**: the models have no separate ears or wings.
 - **Weight**: phone-weight meshes average about 4,900 triangles. There is no mesh simplifier here; thinning is by
   grid size only.
 - **Flags by name**: waddle (ducks, goose, swan) and hop (rabbit) are told by the animal's name in `rig.py`; they

@@ -22,7 +22,7 @@ def rabbit():
             return np.where(inner[:, None], pink[None, :], (c * 0.86)[None, :])
         return f
     for sx in (-1, 1):
-        s.append(C((sx * 0.3, 2.8, 0.9), (sx * 0.45, 4.3, 0.5), 0.26, 0.22, earc(sx), k=0.14))
+        s.append(C((sx * 0.3, 2.8, 0.9), (sx * 0.45, 4.3, 0.5), 0.26, 0.22, earc(sx), k=0.14, part="ear"))
     nose = (sphere((0, 2.2, 2.28), (0.11, 0.08, 0.07), None, 6), tuple(pink * 0.85))
     return s, [nose], dict(eye_k=1.2, nostril=False, cleft=True, lid=0.56, wrap=True)
 

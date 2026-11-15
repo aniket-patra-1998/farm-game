@@ -97,7 +97,7 @@ def horse(b):
     s += both(E, (lx * 1.02, yb - ry * 0.2, -lz + 0.1), (lr * 1.9, ry * 0.75, 0.55), bodyc)
     # ears: upright, set out to the sides so the forelock sits between them, not over them
     el = b.get("ear_len", 1.0)
-    s += both(C, (skw * 0.62, hy + skh * 0.5, hz - skl * 0.5), (skw * (0.98 + 0.1 * (el - 1)), hy + skh * 0.5 + 0.72 * el, hz - skl * 0.62), 0.2 + 0.04 * (el - 1), 0.06, tuple(coat * 0.85), k=0.07)
+    s += both(C, (skw * 0.62, hy + skh * 0.5, hz - skl * 0.5), (skw * (0.98 + 0.1 * (el - 1)), hy + skh * 0.5 + 0.72 * el, hz - skl * 0.62), 0.2 + 0.04 * (el - 1), 0.06, tuple(coat * 0.85), k=0.07, part="ear")
     # mane: a crest along the neck that stands clear of it, locks hanging down both sides when it is long, a forelock
     # between the ears, and a tail: how much hair is the breed's
     mc = tuple(pts)

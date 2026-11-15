@@ -53,9 +53,9 @@ def goat_t(b):
     s += both(E, (lx * 1.02, yb - ry * 0.2, -lz + 0.1), (lr * 1.8, ry * 0.7, 0.5), bodyc)
     earc = dark if pat != "head" else tuple(c2 * 0.9)
     if b["ears"] == "droop":
-        s += both(E, (skw + 0.1, hy - skh * 0.15, hz - skl * 0.4), (0.14, 0.6, 0.28), earc, rz=-0.12, k=0.08)
+        s += both(E, (skw + 0.1, hy - skh * 0.15, hz - skl * 0.4), (0.14, 0.6, 0.28), earc, rz=-0.12, k=0.08, part="ear")
     else:
-        s += both(E, (skw + 0.34, hy + skh * 0.2, hz - skl * 0.42), (0.42, 0.13, 0.22), earc, rz=-0.3, k=0.08)
+        s += both(E, (skw + 0.34, hy + skh * 0.2, hz - skl * 0.42), (0.42, 0.13, 0.22), earc, rz=-0.3, k=0.08, part="ear")
     if b["beard"] > 0:
         s.append(E((0, hy - skh * 0.58 - mh * 0.9 - 0.18 * b["beard"], hz + skl * 0.92 + ml * 0.1), (0.19, 0.38 * b["beard"], 0.19), dark, k=0.1))
     t0 = np.array([0.0, yb + ry * 0.7, -rz * 0.96])

@@ -48,7 +48,7 @@ def camelid(b):
         s += both(E, (lx, 0.16, z + 0.05), (lr * 1.15, 0.17, lr * 1.4), (0.24, 0.2, 0.17), k=0.07)
     s += both(E, (lx * 1.02, yb - ry * 0.2, -lz + 0.1), (lr * 1.8, ry * 0.7, 0.5), bodyc)
     earc = tuple(np.array(headc if not callable(headc) else coat) * 0.8)
-    s += both(C, (skw * 0.5, hy + skh * 0.6, hz - skl * 0.4), (skw * 0.78, hy + skh * 0.6 + 0.72, hz - skl * 0.28), 0.18, 0.06, earc, k=0.07)
+    s += both(C, (skw * 0.5, hy + skh * 0.6, hz - skl * 0.4), (skw * 0.78, hy + skh * 0.6 + 0.72, hz - skl * 0.28), 0.18, 0.06, earc, k=0.07, part="ear")
     s.append(E((0, yb + ry * 0.35, -rz * 1.0), (0.2, 0.34 * tl, 0.2), bodyc if not callable(bodyc) else tuple(coat), k=0.1))
     if fl > 0:
         # fleece like the sheep's: curls of one size in even rings, on the body, up the neck, down the thighs and

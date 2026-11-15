@@ -61,7 +61,7 @@ def sheep(b):
     if b["woolly_head"]:
         s += both(E, (skw * 0.75, hy - skh * 0.1, hz - skl * 0.45), (0.3, 0.42, 0.34), wool, k=0.08)
         s.append(E((0, hy + skh * 0.55, hz + skl * 0.25), (skw * 0.7, 0.24, 0.3), wool, k=0.08))
-    s += both(E, (skw + 0.3, hy + skh * 0.12, hz - skl * 0.45), (0.38, 0.12, 0.21), tuple(np.array(facec) * 0.95), rz=-0.35, k=0.08)
+    s += both(E, (skw + 0.3, hy + skh * 0.12, hz - skl * 0.45), (0.38, 0.12, 0.21), tuple(np.array(facec) * 0.95), rz=-0.35, k=0.08, part="ear")
     lx, lz = rx * 0.58, rz * 0.62
     for z in (lz, -lz):
         s += both(C, (lx, yb - ry * 0.45, z), (lx, 0.24, z), lr * 1.35, lr, legc)

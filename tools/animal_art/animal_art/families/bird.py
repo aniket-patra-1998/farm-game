@@ -110,7 +110,7 @@ def bird_t(b):
     s.append(E(hc, (hw, hh, hl), headf, head=True))
     # wings: a folded wing on each side with three long feathers stepping back behind it
     wk = b.get("wing_k", 1.0); wy = yb + ry * (0.12 + b.get("wing_lift", 0.0))
-    s += both(E, (rx * 0.9, wy, -rz * 0.05), (0.22, ry * 0.6 * wk, rz * 0.66 * wk), wingf, k=0.08)
+    s += both(E, (rx * 0.9, wy, -rz * 0.05), (0.22, ry * 0.6 * wk, rz * 0.66 * wk), wingf, k=0.08, part="wing")
     dkw = (lambda i: tuple(wingc * (0.93 - 0.06 * i))) if (pat not in ("barred", "laced", "belt") and not b.get("wing_plain")) else (lambda i: wingf)
     fs = b.get("feathers", 0.0)
     if fs > 0:
@@ -140,13 +140,13 @@ def bird_t(b):
             for dz, rows_ in ((0.42, (0.3, -0.3)), (-0.02, (0.42, -0.05, -0.5)), (-0.44, (0.36, -0.2))):
                 for dy in rows_:
                     P, nrm = on_wing(dy, dz)
-                    s.append(shingle(P, nrm, (0, -0.25, -1), (0.095, wyr * 0.32, wzr * 0.34), wingf, 0.32))
+                    s.append(dict(shingle(P, nrm, (0, -0.25, -1), (0.095, wyr * 0.32, wzr * 0.34), wingf, 0.32), part="wing"))
             for i, dy in enumerate((0.42, 0.05, -0.32)):
                 P, nrm = on_wing(dy, -0.7)
                 s.append(shingle(P, nrm, (0, -0.1 + 0.18 * (1 - i), -1), (0.1, wyr * 0.2, wzr * 0.52), dkw(2), 0.16))
     for i in range(3 if (wk >= 1 and fs == 0) else 0):
         s += both(E, (rx * (0.9 - 0.07 * i), wy - ry * 0.1 + 0.1 * i + ry * b.get("wing_lift", 0.0) * 0.6 * i, -rz * (0.46 + 0.17 * i)),
-                  (0.15, ry * (0.36 - 0.05 * i), rz * 0.36), dkw(i + 1), k=0.05)
+                  (0.15, ry * (0.36 - 0.05 * i), rz * 0.36), dkw(i + 1), k=0.05, part="wing")
     # tail
     tk = b.get("tail_k", 1.0); tail = b["tail"]
     if tail == "hen":
@@ -166,7 +166,7 @@ def bird_t(b):
             d = np.linalg.norm(P - base, axis=1) / R
             return np.where((d > 0.9)[:, None], tip[None, :], np.where((d > 0.74)[:, None], (dk * 0.7)[None, :], np.where((d > 0.5)[:, None], coat[None, :], dk[None, :])))
         for a in np.linspace(-1.35, 1.35, 11):
-            s.append(C(base + np.array([0, 0, -0.12]), base + R * np.array([math.sin(a), math.cos(a), -0.2]), 0.2, 0.27, fanc, k=0.05))
+            s.append(C(base + np.array([0, 0, -0.12]), base + R * np.array([math.sin(a), math.cos(a), -0.2]), 0.2, 0.27, fanc, k=0.05, part="fan"))
     # down on a chick: a tuft on the crown; a scruffy one has tufts sticking out all over
     if b.get("fluff"):
         for dx, dz in ((0, 0), (-0.1, -0.12), (0.1, -0.12)):
