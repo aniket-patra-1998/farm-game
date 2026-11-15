@@ -11,14 +11,14 @@ extends RefCounted
 
 const SWAY := 0.035                # how far a tree bends in the wind (paint3d sway, by height)
 const PATH := "res://data/tree_shapes.json"
-const BARK := Color("#5a4630")
+const BARK := Color("#8a6238")
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
 const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
-const CROWN_TRIM := 0.88      # every crown is drawn this share of its data's width (0.92 of that in height): lighter
-const CROWN_REACH_MAX := 0.5   # no crown reaches further from its trunk than this (of the tree's size): never a blob
-const TRUNK_SHARE := 0.4      # bare trunk shows for at least this share of a tree's height, under the lowest leaves
+const CROWN_TRIM := 1.0       # every crown is drawn this share of its data's width (0.92 of that in height): lighter
+const CROWN_REACH_MAX := 0.68  # no crown reaches further from its trunk than this (of the tree's size): never a blob
+const TRUNK_SHARE := 0.27     # bare trunk shows for at least this share of a tree's height, under the lowest leaves
 const TRUNK_LENGTH := 0.9     # every trunk is drawn this much of the length the rules above give it
 const WILLOW_FALLS := 8       # the hanging masses round a willow's rim
 const WILLOW_FALL := 1.0      # how far one hangs below the crown's middle, of the crown's radius
@@ -43,15 +43,16 @@ const META_FAR := &"far_look"   # and what its far look needs: trunk height, cro
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
 const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
-const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
+const FRUIT_R := 0.058      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
 const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
 const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
 const STEM := Color("#5a4a2a")
 const FRUIT_GROWING := 3
+const FRUIT_HANG_EVERY := 6   # one fruit in this many hangs under the crown on a stem; the rest sit on its face
 const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
-const TRUNK_TALL := 1.25    # trunks are long: the tree stands on a pole, FarmVille's way
-const CROWN_GROW := 1.3     # the crown is about a tile across
+const TRUNK_TALL := 0.85    # trunks are short: a big full crown on a slim trunk, FarmVille's way
+const CROWN_GROW := 1.55    # the crown is well over a tile across: most of the tree
 const TRUNK_VARY_MIN := 0.85   # each tree's trunk is its own length, apart from its crown's size
 const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
@@ -585,13 +586,13 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				var fruit_r := r
 				var blobs: Array = t["blobs"]
 				if not blobs.is_empty() and str(sh["form"]) != "palm":
-					# Fruit grows in twos and threes on one mass, each its own size. Most hang from the canopy's rim and
-					# underside on a short stem (as FarmVille's did); a few sit on its sunlit top.
+					# Fruit is dotted all over the crown's face, each its own size, where it shows (as FarmVille's was);
+					# one in a few hangs from the rim on a short stem.
 					var blob: Array = blobs[i % blobs.size()]
 					var face := float(blob[2]) + (i / 3) * 0.7 + rng.randf_range(-0.35, 0.35)
 					fruit_r = r * rng.randf_range(0.8, 1.15)
 					var low := (blob[0] as Vector3).y - float(blob[1]) < 0.16 * k  # a low crown: nothing hangs to the grass
-					if i % 3 != 2 and not low:
+					if i % FRUIT_HANG_EVERY == 0 and not low:
 						var rim := Vector3(cos(face), rng.randf_range(-0.55, 0.05), sin(face)).normalized()
 						var anchor := (blob[0] as Vector3) + rim * float(blob[1]) * HANG_OUT
 						var drop := fruit_r * rng.randf_range(1.2, 1.9)
@@ -600,7 +601,7 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 						p = anchor - Vector3(0, drop + fruit_r * 0.85, 0)
 						fruit_mat = shades[1 if rim.y > -0.3 else 2]
 					else:
-						var dir := Vector3(cos(face), rng.randf_range(0.25, 0.9), sin(face)).normalized()
+						var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
 						p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
 						fruit_mat = shades[0 if dir.y > 0.55 else 1]
 				if str(sh["form"]) == "palm":
