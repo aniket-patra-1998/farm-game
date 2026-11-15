@@ -11,14 +11,14 @@ extends RefCounted
 
 const SWAY := 0.035                # how far a tree bends in the wind (paint3d sway, by height)
 const PATH := "res://data/tree_shapes.json"
-const BARK := Color("#5a4630")
+const BARK := Color("#8a6238")
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
 const UNSET := Color(0, 0, 0, 0)
 const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
-const CROWN_TRIM := 0.88      # every crown is drawn this share of its data's width (0.92 of that in height): lighter
-const CROWN_REACH_MAX := 0.5   # no crown reaches further from its trunk than this (of the tree's size): never a blob
-const TRUNK_SHARE := 0.4      # bare trunk shows for at least this share of a tree's height, under the lowest leaves
+const CROWN_TRIM := 1.0       # every crown is drawn this share of its data's width (0.92 of that in height): lighter
+const CROWN_REACH_MAX := 0.68  # no crown reaches further from its trunk than this (of the tree's size): never a blob
+const TRUNK_SHARE := 0.27     # bare trunk shows for at least this share of a tree's height, under the lowest leaves
 const TRUNK_LENGTH := 0.9     # every trunk is drawn this much of the length the rules above give it
 const WILLOW_FALLS := 8       # the hanging masses round a willow's rim
 const WILLOW_FALL := 1.0      # how far one hangs below the crown's middle, of the crown's radius
@@ -42,26 +42,31 @@ const META_REACH := &"crown_reach"   # and how far its crown reaches from the tr
 const META_FAR := &"far_look"   # and what its far look needs: trunk height, crown bottom and top, reach, trunk r, leaf
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
-const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
-const FRUIT_R := 0.045      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
+const FRUIT_READY := 30     # fruit on a ready tree (fewer, small and green, while it grows)
+const FRUIT_R := 0.064      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
 const FRUIT_SMALL_R := 0.02
-const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
+const FRUIT_OUT := 1.2      # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
 const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
 const STEM := Color("#5a4a2a")
 const FRUIT_GROWING := 3
+const FRUIT_HANG_EVERY := 6   # one fruit in this many hangs under the crown on a stem; the rest sit on its face
 const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
-const TRUNK_TALL := 1.25    # trunks are long: the tree stands on a pole, FarmVille's way
-const CROWN_GROW := 1.3     # the crown is about a tile across
+const TRUNK_TALL := 0.85    # trunks are short: a big full crown on a slim trunk, FarmVille's way
+const CROWN_GROW := 1.55    # the crown is well over a tile across: most of the tree
 const TRUNK_VARY_MIN := 0.85   # each tree's trunk is its own length, apart from its crown's size
 const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
 const TALL_MAX := 1.2       # ..to this much
-const STAND_TALL_MAX := 1.35   # a tree stands at least its kind's lowest height times its own tallness, up to this
+const STAND_TALL_MAX := 1.1    # a tree stands at least its kind's lowest height times its own tallness, up to this
+const MIN_LEAF_VALUE := 0.56   # and none is so dark its crown reads as a black mass (an orange's deep teal)
+const CROWN_CORE := 0.56       # the soft mass in a crown's middle, of the crown's radius: the clumps stand clear of it
+const CLUMP_OUT := 1.22        # a crown's clumps sit this much further out than its kind's numbers say..
+const CLUMP_SIZE := 0.9        # ..and are this much of their size: clumps of their own, not one ball
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
 const CROWN_BUMP := 0.13     # how far they push out ("bump")
-const FOLIAGE_CARDS := 72       # leaf cards on a crown mass (the cards' size follows the mass, so the cover does not)
-const FOLIAGE_CARD := 0.85      # a card's size, of its mass's radius
+const FOLIAGE_CARDS := 90       # leaf cards on a crown mass (the cards' size follows the mass, so the cover does not)
+const FOLIAGE_CARD := 0.7       # a card's size, of its mass's radius
 const FOLIAGE_CORE := 0.66      # the solid mass inside the cards, of the full size: the cards make the outline
 const FOLIAGE_MIN := 8          # at least this many cards on any mass
 const TILE_FILL := 1.15     # a tree is one tile on the farm and its crown a little wider, so neighbours overlap
@@ -142,7 +147,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN), 0, rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN)),
 		"blobs": [], "low": INF, "high": -INF, "reach": 0.0,
-		"stand": ScaleGuide.lowest("tree") * size * clampf(tall, 1.0, STAND_TALL_MAX)}
+		"stand": ScaleGuide.lowest("tree") * size * clampf(tall, 1.0, STAND_TALL_MAX) * lift}
 	var crown: Vector3
 	match str(sh["form"]):
 		"palm":
@@ -328,9 +333,9 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	var shaded := float(t["crowd"]) * Crowding.setting("tree", "shade")
 	var lobes := ModelKit.scaled(int(sh.get("lobes", CROWN_LOBES)), 5)
 	var bump := float(sh.get("bump", CROWN_BUMP))
-	# The core, a soft mass of the whole crown's width, then the masses around it: each one smooth and lumpy,
-	# overlapping, so the crown reads as one canopy with a scalloped outline and a few deep folds.
-	var core := Vector3(cr * 0.72, maxf(ch * 0.5, cr * 0.4), cr * 0.72)
+	# The core, a soft mass in the crown's middle, then the masses around it standing clear of it: each one a
+	# clump of its own, lit on top and dark underneath, so the crown is a cluster of clumps with a scalloped outline.
+	var core := Vector3(cr * CROWN_CORE, maxf(ch * 0.5, cr * 0.4), cr * CROWN_CORE)
 	_canopy(root, mid, core, rng, leaf, sun, -shaded, lobes, bump, shine)
 	_measure(t, mid, core)
 	var shape := str(sh.get("shape", "round"))
@@ -338,16 +343,17 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		var a := i * 2.399963 + rng.randf() * 0.4
 		var lay := _layout(shape, i, masses, rng)   # (height, reach, size), each a share of the plain round tree's
 		var y := lay.x
-		var d := cr * reach * lay.y * rng.randf_range(0.85, 1.15) * sqrt(maxf(1.0 - y * y * 0.6, 0.2))
+		var d := cr * reach * CLUMP_OUT * lay.y * rng.randf_range(0.85, 1.15)
+		d *= sqrt(maxf(1.0 - y * y * 0.6, 0.2))
 		var p := mid + Vector3(cos(a) * d, y * ch * 0.7, sin(a) * d)
-		var size := cr * mass * lay.z * rng.randf_range(0.85, 1.1)
+		var size := cr * mass * CLUMP_SIZE * lay.z * rng.randf_range(0.85, 1.1)
 		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
 		# A mass on a side a neighbour covers is hidden anyway: every other one is left out, with its limb.
 		if i % 2 == 1 and Crowding.covered(int(t["mask"]), a - root.rotation.y):
 			continue
 		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine)
 		_measure(t, p, squash * size)
-		(t["blobs"] as Array).append([p, size, a])
+		(t["blobs"] as Array).append([p, size, a, squash.y])
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
 
 
@@ -408,7 +414,8 @@ static func _limb(root: Node3D, from: Vector3, to: Vector3, r: float) -> void:
 static func _shade(leaf: Color, light: float) -> Color:
 	var h := leaf.h + lerpf(0.025, -0.03, light)
 	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
-	var v := clampf(leaf.v * lerpf(0.42, 1.5, light), 0.0, 1.0)
+	# (shade is the leaf's colour deeper, never near black)
+	var v := clampf(maxf(leaf.v, MIN_LEAF_VALUE) * lerpf(0.62, 1.4, light), 0.0, 1.0)
 	return Color.from_hsv(h, s, v)
 
 
@@ -585,13 +592,13 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				var fruit_r := r
 				var blobs: Array = t["blobs"]
 				if not blobs.is_empty() and str(sh["form"]) != "palm":
-					# Fruit grows in twos and threes on one mass, each its own size. Most hang from the canopy's rim and
-					# underside on a short stem (as FarmVille's did); a few sit on its sunlit top.
+					# Fruit is dotted all over the crown's face, each its own size, where it shows (as FarmVille's was);
+					# one in a few hangs from the rim on a short stem.
 					var blob: Array = blobs[i % blobs.size()]
 					var face := float(blob[2]) + (i / 3) * 0.7 + rng.randf_range(-0.35, 0.35)
 					fruit_r = r * rng.randf_range(0.8, 1.15)
 					var low := (blob[0] as Vector3).y - float(blob[1]) < 0.16 * k  # a low crown: nothing hangs to the grass
-					if i % 3 != 2 and not low:
+					if i % FRUIT_HANG_EVERY == 0 and not low:
 						var rim := Vector3(cos(face), rng.randf_range(-0.55, 0.05), sin(face)).normalized()
 						var anchor := (blob[0] as Vector3) + rim * float(blob[1]) * HANG_OUT
 						var drop := fruit_r * rng.randf_range(1.2, 1.9)
@@ -600,7 +607,8 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 						p = anchor - Vector3(0, drop + fruit_r * 0.85, 0)
 						fruit_mat = shades[1 if rim.y > -0.3 else 2]
 					else:
-						var dir := Vector3(cos(face), rng.randf_range(0.25, 0.9), sin(face)).normalized()
+						var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
+						dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits on its skin)
 						p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
 						fruit_mat = shades[0 if dir.y > 0.55 else 1]
 				if str(sh["form"]) == "palm":
