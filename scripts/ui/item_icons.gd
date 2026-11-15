@@ -273,6 +273,9 @@ func _set_up(k: int, id: String) -> bool:
 static func _model(id: String) -> Node3D:
 	if id.begins_with(UI):
 		return UiModels.build(id.trim_prefix(UI))   # an interface icon (UiIcon draws it)
+	var art := AssetRegistry.instance(id)   # (made as a file: its picture is of the file)
+	if art != null:
+		return art
 	var it := Game.item_data(id)
 	if it.is_empty():
 		# A crop: one ripe bed of it; a building part: the thing itself (null for anything unknown).
