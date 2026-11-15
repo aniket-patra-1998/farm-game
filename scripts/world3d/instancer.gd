@@ -91,6 +91,7 @@ static func clear() -> void:
 		t.free()
 	_templates.clear()
 	_parts.clear()
+	Animal3D.clear_templates()
 
 
 static func _forget(store: Dictionary) -> void:

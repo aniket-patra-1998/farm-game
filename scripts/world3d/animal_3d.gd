@@ -45,6 +45,7 @@ static var _seen_last := 0       # and last frame, which sets this frame's strid
 
 
 
+static var _templates := {}       # "id|size" -> the first animal built of it, never on screen (copied)
 var rig: AnimalRig
 var behaviour: AnimalBehaviour   # its mind, owned and updated by FarmLife
 var motion: AnimalMotion         # its body's weight: leaning, swaying, lagging, settling (3D only)
@@ -103,8 +104,7 @@ func _exit_tree() -> void:
 
 
 static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1.0) -> Animal3D:
-	var a := Animal3D.new()
-	a.rig = AnimalRig.of(it) if is_equal_approx(size, 1.0) else AnimalRig.scaled(it, size)  # smaller in a small yard
+	var a := _from_template(it, size)
 	a.behaviour = mind
 	a.home = at
 	a.position = at
@@ -112,8 +112,74 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1
 	a.heading = REST_LEFT if mind != null and mind.facing < 0.0 else REST_RIGHT
 	a.motion = AnimalMotion.new(hash(str(it.get("id", ""))) + int(at.x * 97.0 + at.z * 31.0))
 	a._walk_speed = maxf(IsoProjection.ground_of(Vector2(a.rig.num("speed", 10.0) * a.rig.scale, 0)).length(), 0.001)
-	a._build()
+	a._slot = a.get_instance_id() % MAX_STRIDE
+	a.rotation.y = a.heading
 	return a
+
+
+## A new animal of this kind and size: a copy of the one built first (TEMPLATES), sharing its skinned mesh, so a
+## farm of 140 animals builds a few dozen, not 140 (each build merges and skins its parts: ~3 ms on a desktop,
+## many times that on a phone). The build depends only on the rig, so every copy is the same as a fresh one.
+static func _from_template(it: Dictionary, size: float) -> Animal3D:
+	var key := "%s|%.3f" % [str(it.get("id", "")), size]
+	if not _templates.has(key):
+		var t := Animal3D.new()
+		t.rig = AnimalRig.of(it) if is_equal_approx(size, 1.0) else AnimalRig.scaled(it, size)  # smaller in a small yard
+		t._build()
+		_templates[key] = t
+	var template: Animal3D = _templates[key]
+	var a := template.duplicate() as Animal3D
+	a._take_parts_of(template)
+	return a
+
+
+## Lets the animals built to copy from go (at exit, with the other shared looks: Instancer.clear).
+static func clear_templates() -> void:
+	for t: Node in _templates.values():
+		t.free()
+	_templates.clear()
+
+
+## Points this copy's part references at its own nodes (the same paths as in `t`) and copies `t`'s sizes.
+func _take_parts_of(t: Animal3D) -> void:
+	rig = t.rig
+	_r = t._r
+	_leg = t._leg
+	_contact_size = t._contact_size
+	_contact_strength = t._contact_strength
+	_body = _mine(t, t._body)
+	_head = _mine(t, t._head)
+	_neck = _mine(t, t._neck)
+	_tail = _mine(t, t._tail)
+	_contact = _mine(t, t._contact)
+	_skeleton = _mine(t, t._skeleton)
+	_casting = _mine(t, t._casting)
+	for list: Array in [[t._wings, _wings], [t._ears, _ears], [t._eyes, _eyes], [t._bones, _bones]]:
+		(list[1] as Array).clear()
+		for n: Node in list[0]:
+			(list[1] as Array).append(_mine(t, n))
+	_legs.clear()
+	for leg: Dictionary in t._legs:
+		var own := {}
+		for k: String in leg:
+			own[k] = _mine(t, leg[k]) if leg[k] is Node else leg[k]
+		_legs.append(own)
+	_apply_shadow()
+
+
+## This copy's node at the place `n` has in `t` (by child order: a copy's nodes get new names).
+func _mine(t: Animal3D, n: Node) -> Node:
+	if n == null:
+		return null
+	var steps: Array[int] = []
+	var at := n
+	while at != t:
+		steps.push_front(at.get_index())
+		at = at.get_parent()
+	var out: Node = self
+	for k in steps:
+		out = out.get_child(k)
+	return out
 
 
 
@@ -144,8 +210,6 @@ func _build_parts() -> void:
 	_build_contact()
 	_merge_parts()
 	_skin()
-	_slot = get_instance_id() % MAX_STRIDE
-	rotation.y = heading
 
 
 
