@@ -12,6 +12,7 @@ const SKIRT_OVER := 0.1        # and how far it overhangs
 const SPILL_REACH := 0.8      # how far a lit building's light reaches over the ground, in tiles
 const SILO_CHECKS := 14   # dark panels in the chequered band of a silo
 const PLINTH := 0.09
+const PICKET_GAP := 0.12      # between a picket fence's pickets, in tiles
 const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals can look out of ([{at, size}])
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
@@ -630,7 +631,7 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 				var leaf := _hinge(root, Vector3(x + side * w / 2.0, y0, z), side)
 				var cx := x + side * w / 4.0
 				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.004), Vector3(cx + w / 4.0, y0 + h, z + 0.029),
-					ModelKit.surface((ctx["wall"] as Color).darkened(0.25), "boards"))
+					ModelKit.paint((ctx["wall"] as Color).darkened(0.25)))   # (painted like its braces: a leaf is one draw)
 				# The white X-braces of a barn door.
 				var brace := ModelKit.paint(trim)
 				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.029), Vector3(cx + w / 4.0, y0 + 0.04, z + 0.044),
@@ -1324,10 +1325,10 @@ static func _fence(root: Node3D, a: Vector3, b: Vector3, kind: String, mat: Mate
 		var p := a + dir * (length * k / posts)
 		ModelKit.box(root, p - Vector3(0.022, 0, 0.022), p + Vector3(0.022, 0.24, 0.022), mat)
 	if kind == "picket":
-		var n := int(length / 0.08)
+		var n := int(length / PICKET_GAP)   # (fewer, broader pickets: a white fence at a third less to draw)
 		for k in n:
 			var p := a + dir * (length * (k + 0.5) / n)
-			ModelKit.box(root, p - Vector3(0.012, 0, 0.012), p + Vector3(0.012, 0.2, 0.012), mat)
+			ModelKit.box(root, p - Vector3(0.018, 0, 0.018), p + Vector3(0.018, 0.2, 0.018), mat)
 		_rail(root, a, b, 0.14, mat)
 	else:
 		_rail(root, a, b, 0.09, mat)
