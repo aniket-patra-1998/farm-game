@@ -5,8 +5,13 @@ from the art (item pictures: ItemIcons, through ArtVersion) is made again by its
     built   fingerprint of everything a code-built look is made from (the builders, their data, the shaders)
     studio  fingerprint of how a picture is taken (the icon studio and its developing)
 
+It also keeps the art files tied to the builders they are exported from (data/art_sources.json): each exporter
+records a fingerprint of its builders when it writes the files, and --check fails when a builder has changed
+since, so a builder change never silently leaves the game drawing the old files.
+
     python3 tools/make_art_versions.py          # write it (after changing any art)
-    python3 tools/make_art_versions.py --check  # exit 1 if it's out of date (CI runs this)
+    python3 tools/make_art_versions.py --check  # exit 1 if anything is out of date (CI runs this)
+    python3 tools/make_art_versions.py --exported plants|animals   # (the exporters run this when they finish)
 """
 import glob
 import hashlib
@@ -21,6 +26,18 @@ BUILT = ["scripts/world3d/*.gd", "scripts/world/animals/*.gd", "scripts/world/sp
          "data/building_models.json", "data/tree_shapes.json", "data/crop_forms.json", "data/animal_rigs.json",
          "data/linking.json", "data/quality.json"]
 STUDIO = ["scripts/ui/item_icons.gd", "scripts/ui/icon_develop.gd", "scripts/ui/ui_models.gd"]
+SOURCES_OUT = "data/art_sources.json"
+# What each kind of exported art file is made from, and the exporter to run when any of it changes.
+SOURCES = {
+    "plants": (["scripts/world3d/tree_model.gd", "scripts/world3d/crop_models.gd", "scripts/world3d/crop_forms.gd",
+                "scripts/world3d/mesh_builder.gd", "scripts/world3d/model_kit.gd", "scripts/world3d/crowding.gd",
+                "scripts/world3d/scale_guide.gd", "data/tree_shapes.json", "data/crop_forms.json",
+                "shaders/foliage3d.gdshader", "shaders/canopy3d.gdshader", "shaders/crop3d.gdshader",
+                "tools/export_plants.gd"],
+               "godot --headless --path . res://tools/export_plants.tscn"),
+    "animals": (["tools/animal_art/animal_art/**/*.py"],
+                "cd tools/animal_art && python3 -m animal_art export ../../art/models/animals \"<every animal>\""),
+}
 
 
 def _digest(paths):
@@ -35,7 +52,7 @@ def _digest(paths):
 def _expand(patterns):
     out = []
     for pat in patterns:
-        out += sorted(os.path.relpath(p, ROOT) for p in glob.glob(os.path.join(ROOT, pat)))
+        out += sorted(os.path.relpath(p, ROOT) for p in glob.glob(os.path.join(ROOT, pat), recursive=True))
     return sorted(set(p for p in out if not p.endswith(".uid")))
 
 
@@ -52,10 +69,33 @@ def make():
     return json.dumps(out, indent=2) + "\n"
 
 
+def _sources():
+    return {kind: _digest(_expand(files)) for kind, (files, _run) in SOURCES.items()}
+
+
+def _stamps():
+    path = os.path.join(ROOT, SOURCES_OUT)
+    return json.load(open(path)) if os.path.exists(path) else {}
+
+
 def main():
+    if "--exported" in sys.argv:
+        kind = sys.argv[sys.argv.index("--exported") + 1]
+        stamps = _stamps()
+        stamps[kind] = _sources()[kind]
+        with open(os.path.join(ROOT, SOURCES_OUT), "w") as f:
+            f.write(json.dumps(dict(sorted(stamps.items())), indent=2) + "\n")
     text = make()
     path = os.path.join(ROOT, OUT)
     if "--check" in sys.argv:
+        stamps = _stamps()
+        stale = False
+        for kind, now in _sources().items():
+            if stamps.get(kind) != now:
+                print("the %s builders changed since their files were exported: run %s" % (kind, SOURCES[kind][1]))
+                stale = True
+        if stale:
+            sys.exit(1)
         old = open(path).read() if os.path.exists(path) else ""
         if old != text:
             print("%s is out of date: run python3 tools/make_art_versions.py" % OUT)

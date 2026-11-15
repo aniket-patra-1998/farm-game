@@ -73,5 +73,6 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   (`TranslationServer.translate` in static functions; constants hold keys). `tools/strings_lint.py` checks it in CI.
 - Regenerate `docs/CATALOG.md`, `art/manifest.json`, `tools/generate_art.ipynb` and `data/art_versions.json` with their tools after
   catalog or art changes (CI checks them).
+- Exported art stays tied to its builders: after changing a builder (tools/animal_art; the tree and crop builders and their data), re-export (tools/export_plants.tscn, `animal_art export` of every animal); each exporter records what it was made from in data/art_sources.json and CI fails when a builder changed since. Anything made from something else is keyed on what it is made from, never on a number bumped by hand.
 - Every new farm action (feed, and any future one) is also offered to the helper that fits it (farmhands, arborists, vehicles), declared once in `data/actions.json` (`Actions`) and enforced by a test; never player-only by accident. Feeding (`FeedSystem`, data/feeds.json) is our own touch and switchable (`feeds.enabled`).
 - Objects join and leave the farm only through `Game.add_object` / `remove_object` / `set_objects` (a test enforces it).
