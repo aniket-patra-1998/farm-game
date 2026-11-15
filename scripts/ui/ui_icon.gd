@@ -10,7 +10,8 @@ extends Control
 
 const KINDS: Array[String] = ["coin", "gem", "star", "eye", "speaker", "note", "zoom_in", "zoom_out", "fit", "camera",
 	"arrow", "ribbon", "plus", "hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag", "market", "album",
-	"neighbours", "gear", "cross", "lock"]
+	"neighbours", "gear", "cross", "lock", "ready"]
+const READY_PINK := Color(1.0, 0.66, 0.8)   # the ready sign's pink (shaders/ready3d.gdshader)
 const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
 const KNOB_RING := 0.12    # a knob's ring, of its width
@@ -218,6 +219,9 @@ func _draw() -> void:
 			if kind == "fit":
 				draw_rect(Rect2(lens - Vector2(_r * 0.28, _r * 0.28), Vector2(_r * 0.56, _r * 0.56)),
 					UiTheme.color("icon_outline"), false, maxf(1.5, _s * 0.07))
+		"ready":   # the farm's ready sign: a soft pink triangle pointing down (ReadyMarks)
+			_shape(_pts([-0.82, -0.62, 0.82, -0.62, 0.0, 0.8]), READY_PINK)
+			_shape(_pts([-0.5, -0.44, 0.5, -0.44, 0.0, 0.42]), READY_PINK.lightened(0.45), false, false)
 		"camera":
 			_shape(_pts([-0.9, -0.45, -0.35, -0.45, -0.25, -0.7, 0.3, -0.7, 0.4, -0.45, 0.9, -0.45, 0.9, 0.7,
 				-0.9, 0.7]), UiTheme.color("metal").darkened(0.25))

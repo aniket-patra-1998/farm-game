@@ -32,6 +32,7 @@ const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
+const COUNT_TAG := "x%d"     # not-ui: a count (a swipe's plots, a streak), the same in every language
 const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is walked in
 ## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
 const BUBBLE_LIFT := 46.0          # a tapped thing's bubble floats this far (px) above its footprint's middle..
@@ -70,6 +71,7 @@ var life: FarmLife       # the animals' minds, read by the 2D and 3D worlds
 var picker := Callable()
 ## uid -> the outline of that building on screen (grid space), set by the 3D world; unset in the 2D fallback.
 var outliner := Callable()
+var ready_things := Callable()   # () -> int: how many things wear a ready sign now (the 3D world's; else counted)
 
 var fx: FxLayer          # rewards flying to the top bar (set by main)
 
@@ -89,6 +91,15 @@ var _pressing := false
 var _swiping := false        # this press farms every plot the finger crosses (a swipe tool, Balance `input.*`)
 var _swiped := {}            # plots this swipe has already worked (index -> true)
 var _swipe_at := Vector2.ZERO   # where the swipe's finger was last seen (the path since is walked, no plot skipped)
+var _ripe := -1              # how many plots are ripe, kept: counted again only when it can have changed..
+var _ripe_until := 0         # ..a plot changed (-1 above), or the clock reached this (a crop ripens or withers)
+var _ready_seen := {}        # ready things the Next ready button has already shown this round (spot key -> true)
+var _swipe_count := 0        # plots this swipe has given the farmer (each plays a note higher; shown as "x7")
+var _combo: Label            # that count, over the plot last added (made when first needed, then kept)
+var _combo_tween: Tween
+var _streak_kind := ""       # the kind of job the farmer last finished, how many of it in a row, and when
+var _streak := 0
+var _streak_msec := 0
 var _swipe_spent := false    # a swipe stopped working plots: something was refused, and said once
 var _touch_tile := -1        # the plot under a finger that has just landed, lit at once (-1 none)
 var _dragged := false
@@ -125,6 +136,7 @@ func _ready() -> void:
 	world_fx.z_index = 4
 	add_child(world_fx)
 	Game.plot_changed.connect(pieces.on_plot)
+	Game.plot_changed.connect(func(_i: int) -> void: _ripe = -1)   # (the kept ripe count is made again when asked)
 	Game.objects_changed.connect(_on_objects_changed)
 	Game.farm_expanded.connect(func(_n: int) -> void:
 		ground.queue_redraw()
@@ -560,6 +572,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			# drag anywhere else still pans.
 			_swiping = _touch_tile >= 0 and Balance.i("input.swipe_farm") == 1 and would_act(_touch_tile)
 			_swiped.clear()
+			_swipe_count = 0
 			_swipe_spent = false
 			_swipe_at = touch.position
 		else:
@@ -604,6 +617,94 @@ func _swipe_over(screen_pos: Vector2) -> void:
 		return
 	_swiped[i] = true
 	_act(i, false)
+
+
+## Where things of one `kind` are right now, as {key, at, uid}: "ripe" and "withered" plots, "ready" things (the ones
+## that wear a ready sign), "hungry" ones and a "stray". `at` is its middle on the ground (this node's
+## coordinates), `uid` -1 for a plot. For the Next ready button and the away card's rows.
+func spots_of(kind: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if kind == "ripe" or kind == "withered":
+		var phase := GameState.Phase.RIPE if kind == "ripe" else GameState.Phase.WITHERED
+		var n := Game.farm_size
+		for r in n:
+			for c in n:
+				var i := Game.index_of(r, c)
+				if not Game.is_occupied(i) and Game.field.phase(i) == phase:
+					out.append({"key": "p%d" % i, "at": center_of(i), "uid": -1})   # not-ui
+		return out
+	for o in Game.objects:
+		var is_it := false
+		match kind:
+			"ready":
+				is_it = not GameState.NEVER_READY.has(Game.kind_of(o)) and (Game.is_ready(o)
+					or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0))
+			"hungry":
+				is_it = Game.feeds.enabled() and Game.feeds.is_hungry(o)
+			"stray":
+				is_it = o.get("stray", false)
+		if is_it:
+			var fp := Game.footprint(o["id"])
+			var box := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+			out.append({"key": "o%d" % int(o["uid"]), "at": (box[0] + box[2]) / 2.0, "uid": int(o["uid"])})   # not-ui
+	return out
+
+
+## Everything with something to take right now: each ripe plot and each ready thing.
+func ready_spots() -> Array[Dictionary]:
+	var out := spots_of("ripe")
+	out.append_array(spots_of("ready"))
+	return out
+
+
+## The one of `spots` nearest `from` (this node's coordinates), or {} when there are none.
+static func nearest_spot(spots: Array[Dictionary], from: Vector2) -> Dictionary:
+	var best := {}
+	for s: Dictionary in spots:
+		if best.is_empty() or from.distance_squared_to(s["at"]) < from.distance_squared_to(best["at"]):
+			best = s
+	return best
+
+
+## Points a spot out when the view goes to it: a thing hops, a plot sparkles.
+func point_out(spot: Dictionary) -> void:
+	if int(spot["uid"]) >= 0:
+		_poke(int(spot["uid"]))
+	else:
+		_sparkle(spot["at"], "golden")
+		Feedback.moment("touch")
+
+
+## How many things are ready (`ready_spots`, without listing them: this is asked every couple of seconds, and on a
+## big farm asking every tile and every thing each time was 2.5 ms). The ripe plots are a kept count, made again
+## only when a plot changed or a crop was due to ripen or wither; the ready things are the ready signs the 3D
+## world is already showing (`ready_things`), counted the long way only where nothing says.
+func ready_count() -> int:
+	if _ripe < 0 or Game.now() >= _ripe_until:
+		var census := Game.field.ripe_census()
+		_ripe = int(census["count"])
+		_ripe_until = int(census["next"])
+	if ready_things.is_valid():
+		return _ripe + int(ready_things.call())
+	return _ripe + spots_of("ready").size()
+
+
+## The ready thing the Next ready button goes to from `from` (the middle of the view, this node's coordinates):
+## the nearest one it has not shown yet this round; when every one has been shown the round starts again. It is
+## pointed out (a ready thing hops, a ripe plot sparkles). {} when nothing is ready.
+func next_ready(from: Vector2) -> Dictionary:
+	var spots := ready_spots()
+	if spots.is_empty():
+		_ready_seen.clear()
+		return {}
+	var fresh: Array[Dictionary] = spots.filter(func(s: Dictionary) -> bool: return not _ready_seen.has(s["key"]))
+	if fresh.is_empty():
+		_ready_seen.clear()
+		fresh = spots
+	var best := nearest_spot(fresh, from)
+	_ready_seen[best["key"]] = true
+	point_out(best)
+	return best
 
 
 ## The plot a press at `screen_pos` with `with_tool` lights and may swipe from: an open plot (nothing picked
@@ -783,7 +884,13 @@ func _queue(job: Dictionary, loud := true) -> void:
 			_swipe_spent = true
 	match refused:
 		PlayerSystem.Refused.NONE:
-			Feedback.moment("tap")
+			if loud:
+				Feedback.moment("tap")
+			else:
+				# A swipe's plots climb a scale and count up over the finger: forty plots in one sweep feel like one.
+				_swipe_count += 1
+				Feedback.moment("tap", _swipe_count - 1)
+				_show_combo(int(job.get("plot", -1)))
 		PlayerSystem.Refused.COINS:
 			Feedback.moment("error")
 			info.emit(tr(COINS_NEEDED.get(job["kind"], "NOT_ENOUGH_COINS_TO_PLOW")).replace("%s",
@@ -798,6 +905,50 @@ func _queue(job: Dictionary, loud := true) -> void:
 			Feedback.moment("error")
 
 
+## The count of a swipe's plots so far ("x7"), popping over plot `i` (the one just added) and fading when the
+## swipe stops adding. One label, kept: a long swipe moves it, it makes none.
+func _show_combo(i: int) -> void:
+	if _swipe_count < 2 or i < 0:
+		return
+	if _combo == null:
+		_combo = Label.new()
+		_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_combo.size = Vector2(160, 44)
+		_combo.pivot_offset = _combo.size / 2.0
+		_combo.z_index = 11
+		_combo.add_theme_font_size_override("font_size", 34)
+		_combo.add_theme_color_override("font_color", Feedback.color("golden"))
+		_combo.add_theme_color_override("font_outline_color", Color(0.2, 0.12, 0.05))
+		_combo.add_theme_constant_override("outline_size", 9)
+		add_child(_combo)
+	_combo.text = COUNT_TAG % _swipe_count
+	_combo.position = center_of(i) - Vector2(80, 96)
+	_combo.modulate.a = 1.0
+	_combo.scale = Vector2(1.35, 1.35)
+	if _combo_tween != null:
+		_combo_tween.kill()
+	_combo_tween = _combo.create_tween()
+	_combo_tween.tween_property(_combo, "scale", Vector2.ONE, 0.16).set_ease(Tween.EASE_OUT)
+	_combo_tween.tween_property(_combo, "modulate:a", 0.0, 0.5).set_delay(0.6)
+
+
+## How far into a streak the farmer's job on plot `i` is (0 for the first): the same kind of job as the last,
+## done soon after it (Balance `feel.streak_gap_seconds`), is one step further, and plays a note higher
+## (Feedback.moment). Every few in a row the streak says its count over the plot. Feel only: it pays nothing.
+func _run(kind: String, i: int) -> int:
+	var now := Time.get_ticks_msec()
+	if kind == _streak_kind and now - _streak_msec <= int(Balance.f("feel.streak_gap_seconds") * 1000.0):
+		_streak += 1
+	else:
+		_streak = 1
+	_streak_kind = kind
+	_streak_msec = now
+	var every := Balance.i("feel.streak_shout_every")
+	if every > 0 and _streak % every == 0:
+		_float(center_of(i) + Vector2(0, -64), COUNT_TAG % _streak, "golden", 1.3)
+	return _streak - 1
+
+
 ## The farmer got to a job and did it (or found nothing left to do: an empty result).
 func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 	if result.is_empty():
@@ -809,15 +960,15 @@ func _on_action_done(job: Dictionary, result: Dictionary) -> void:
 		"harvest":
 			_show_harvest(i, job, result)
 		"plow":
-			Feedback.moment("plow")
+			Feedback.moment("plow", _run("plow", i))
 			world_fx.burst("dirt", center_of(i))
 			_float(center_of(i), "-%d" % Balance.i("economy.plow_cost"), "cost")
 		"plant":
-			Feedback.moment("plant")
+			Feedback.moment("plant", _run("plant", i))
 			world_fx.burst("dirt", center_of(i) + Vector2(0, -PlaceholderArt.SLAB))
 			_float(center_of(i), "-%d" % int(Game.crops[job["crop"]]["seed_cost"]), "cost")
 		"fertilize":
-			Feedback.moment("fertilize")
+			Feedback.moment("fertilize", _run("fertilize", i))
 			_float(center_of(i), "-%d" % Balance.i("economy.fertilizer_cost"), "cost")
 			_sparkle(center_of(i), "fert")
 		"collect":
@@ -882,7 +1033,7 @@ func _show_nurture(job: Dictionary, result: Dictionary) -> void:
 
 func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 	var at := center_of(i)
-	Feedback.moment("harvest")
+	Feedback.moment("harvest", _run("harvest", i))
 	_pop_plants(i, job["crop"], job["art"])
 	world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
 	_reward(at, int(result["coins"]), int(result["xp"]))

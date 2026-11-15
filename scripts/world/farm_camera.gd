@@ -10,6 +10,8 @@ const ZOOM_EASE := 14.0      # how quickly zoom catches up with its target (per 
 const FRICTION := 5.5        # how quickly a glide slows down (per second)
 const SPRING := 10.0         # how quickly it springs back inside the edges (per second)
 const STRETCH := 0.35        # how much a drag past the edge still moves (rubber band)
+const GO_EASE := 6.0         # how quickly it travels to a place it was sent (go_to), per second
+const GO_LONGEST := 1.5      # seconds a journey may take before it is over wherever it got to (an edge held it)
 const MIN_GLIDE := 8.0       # glides slower than this (px/s on screen) stop
 
 var min_zoom := 0.2
@@ -21,6 +23,9 @@ var area_provider: Callable  # () -> Rect2: the world area the view may show
 
 var _focus := Vector2.ZERO   # screen point a zoom is anchored to
 var _velocity := Vector2.ZERO  # world units per second, while gliding
+var _going := false          # on its way to `_goal` (go_to); any touch of the view ends the journey
+var _goal := Vector2.ZERO
+var _going_left := 0.0
 var _dragging := false
 var _last_pan_msec := 0
 
@@ -31,9 +36,27 @@ func snap(world_pos: Vector2, z: float) -> void:
 	zoom = Vector2(target_zoom, target_zoom)
 	position = world_pos
 	_velocity = Vector2.ZERO
+	_going = false
+
+
+## Travels to a place on its own, easing in (the Next ready button), zooming in to at least `least_zoom` on the
+## way so what it went to can be seen. A drag, a pinch or a snap ends the journey where it is.
+func go_to(world_pos: Vector2, least_zoom := 0.0) -> void:
+	_goal = world_pos
+	_going = true
+	_going_left = GO_LONGEST
+	_velocity = Vector2.ZERO
+	if least_zoom > target_zoom:
+		target_zoom = clampf(least_zoom, min_zoom, max_zoom)
+		_focus = get_viewport_rect().size / 2.0   # (about the middle: zooming doesn't pull the journey aside)
+
+
+func is_going() -> bool:
+	return _going
 
 
 func begin_drag() -> void:
+	_going = false
 	_dragging = true
 	_velocity = Vector2.ZERO
 
@@ -78,6 +101,8 @@ func pan_by(screen_delta: Vector2) -> void:
 func zoom_by(factor: float, screen_pos: Vector2, instant := false) -> void:
 	target_zoom = clampf(target_zoom * factor, min_zoom, max_zoom)
 	_focus = screen_pos
+	if _going:
+		_focus = get_viewport_rect().size / 2.0   # (on a journey the view zooms about its middle)
 	if instant:
 		_apply_zoom(target_zoom)
 
@@ -91,7 +116,12 @@ func to_world(screen_pos: Vector2) -> Vector2:
 func _process(delta: float) -> void:
 	if absf(zoom.x - target_zoom) > 0.0001:
 		_apply_zoom(lerpf(zoom.x, target_zoom, 1.0 - exp(-ZOOM_EASE * delta)))
-	if not _dragging:
+	if _going and not _dragging:
+		_going_left -= delta
+		position = position.lerp(_goal, 1.0 - exp(-GO_EASE * delta))
+		if _going_left <= 0.0 or position.distance_to(_goal) * zoom.x < 1.0:
+			_going = false
+	elif not _dragging:
 		if _velocity.length() * zoom.x > MIN_GLIDE:
 			position += _velocity * delta
 			_velocity *= exp(-FRICTION * delta)

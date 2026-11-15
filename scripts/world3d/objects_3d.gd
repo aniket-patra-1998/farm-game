@@ -50,6 +50,7 @@ const TREE_CENTRE_BIAS := 0.6  # tiles of depth a tap at the crown's very edge i
 static var _ghost_materials := {}   # tint name -> the shared see-through material
 
 var decor: DecorLayer   # draws the standalone decorations in batches
+var ready_shown := 0    # how many things wear a ready sign now (the Next ready button's count asks nothing twice)
 var life: FarmLife  # the animals' minds (shared with the 2D world)
 
 var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
@@ -242,6 +243,7 @@ func _mark_ready(known := {}) -> void:
 				var box: AABB = _views[uid]["box"]
 				tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
 				minor.append(not Game.is_building_item(str(o["id"])))   # (trees and blooms: small, fade far out)
+	ready_shown = tops.size() + animals.size()
 	_ready_marks.show_at(tops, animals, minor)
 
 

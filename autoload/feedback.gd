@@ -20,18 +20,30 @@ func _ready() -> void:
 		_floats[style] = Color(str(data["floats"][style]))
 
 
-## The sound and the buzz of a moment (either may be missing from it).
-func moment(name: String) -> void:
+## The sound and the buzz of a moment (either may be missing from it). `step` is how far into a run of the same
+## moment this one is (a swipe's plots, a streak of harvests): each step plays a note higher up the scale
+## (Balance `feel.run_scale`, in semitones), and past its end the top note holds.
+func moment(name: String, step := 0) -> void:
 	var m: Dictionary = _moments.get(name, {})
 	if m.is_empty():
 		push_warning("Feedback: no moment called %s" % name)
 		return
 	var sound := str(m.get("sound", ""))
 	if sound != "":
-		Sound.play(sound, float(m.get("gain_db", 0.0)))
+		Sound.play(sound, float(m.get("gain_db", 0.0)), pitch_of(step))
 	var ms := int(m.get("buzz", 0))
 	if ms > 0:
 		Sound.buzz(ms)
+
+
+## How much higher the note `step` steps into a run plays (1.0 for the first).
+static func pitch_of(step: int) -> float:
+	if step <= 0:
+		return 1.0
+	var scale := Balance.a("feel.run_scale")
+	if scale.is_empty():
+		return 1.0
+	return pow(2.0, float(scale[mini(step, scale.size() - 1)]) / 12.0)
 
 
 ## A sound that hums for as long as something goes on (an engine): start it, drive its pitch_scale and volume_db,

@@ -5,6 +5,7 @@ extends RefCounted
 ## neighbours' strip (a placeholder until neighbours land: their names from the social system, our own touch).
 
 const STRIP_NEIGHBOURS := 4      # neighbours shown on the strip
+const READY_MOST := 99           # the Next ready count stops here ("99+")
 const INBOX_CHECK := 300.0       # seconds between catching the neighbours' mail up (the inbox's count)
 
 var hud: FarmHud
@@ -12,6 +13,8 @@ var toggles: VBoxContainer
 var menu: VBoxContainer
 var zoom: HBoxContainer
 var strip: PanelContainer
+var _ready: Button   # Next ready: goes to the nearest thing with something to take (hidden when nothing has)
+var _ready_badge: Label   # how many there are
 var _badge: Label   # the inbox's count on the Neighbours button
 var _eye: Button
 var _sound: Button
@@ -78,6 +81,21 @@ func build(root: Control) -> void:
 	zoom.offset_bottom = -(UiTheme.size("bottom_height") + margin + gap)
 	zoom.add_theme_constant_override("separation", int(gap))
 	root.add_child(zoom)
+	# Next ready (our own touch): one press goes to the nearest thing to collect or harvest, the next press to the
+	# one after. It counts what is ready every couple of seconds, and is away when nothing is.
+	_ready = UiKit.icon_button("ready", UiTheme.size("zoom_size"))
+	_ready.pressed.connect(func() -> void:
+		if hud.next_ready.is_valid():
+			hud.next_ready.call()
+		show_ready_count())
+	zoom.add_child(_ready)
+	_ready_badge = UiKit.count_badge(_ready)
+	var count := Timer.new()
+	count.wait_time = Balance.f("feel.ready_check_seconds")
+	count.autostart = true
+	count.timeout.connect(show_ready_count)
+	_ready.add_child(count)
+	show_ready_count.call_deferred()
 	for entry: Array in [["zoom_in", 1.25], ["zoom_out", 0.8], ["fit", 0.0]]:
 		var b := UiKit.icon_button(str(entry[0]), UiTheme.size("zoom_size"))
 		var factor: float = entry[1]
@@ -101,6 +119,16 @@ func build(root: Control) -> void:
 			face)
 		b.pressed.connect(_show_neighbours)
 		row.add_child(b)
+
+
+## How many things are ready, on the Next ready button (the button is away when nothing is). Not counted while
+## the interface is hidden: nobody is looking at the number.
+func show_ready_count() -> void:
+	if hud.grid == null or not zoom.is_visible_in_tree():
+		return
+	var n := hud.grid.ready_count()
+	_ready.visible = n > 0
+	_ready_badge.text = str(mini(n, READY_MOST)) + ("+" if n > READY_MOST else "")   # not-ui
 
 
 ## The inbox's count on the Neighbours button (hidden when nothing waits).

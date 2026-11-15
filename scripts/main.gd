@@ -16,6 +16,7 @@ const CLOSEST_TILES := 3.5   # the closest zoom shows about this many tiles acro
 const MIN_CLOSE_FACTOR := 1.5 # (and is always at least this much closer than the whole-farm view)
 const FURTHEST_OUT := 1.25    # how far past the whole-farm view you can pull back
 const WHEEL_STEP := 1.1
+const READY_ZOOM := 2.2       # going to a ready thing zooms in to at least this many times the whole-farm view
 const DAYLIGHT_EVERY := 0.1   # seconds between updates of the 3D sun, sky light and window glow
 
 var grid: FarmGrid
@@ -30,6 +31,9 @@ var weather_fx: WeatherLayer
 var world_3d: Farm3D        # the farm in real 3D (project setting farm/world/use_3d), behind the 2D layers
 
 var _base_zoom := 1.0       # zoom that shows the whole farm (you can pull back a little past it)
+var _last_input_msec := 0   # when the player last touched anything (0: not yet), for the idle view
+var _idle_after_msec := 0   # how long with no touch before the interface fades away (0 never)
+var _waking := false        # the press that brought the interface back is being swallowed, to its release
 var _touches := {}          # finger index -> screen position
 var _pinch_dist := 0.0
 var _mouse_panning := false
@@ -93,6 +97,9 @@ func _ready() -> void:
 	hud.camera = camera
 	hud.grid = grid
 	hud.fit_view = _fit_camera
+	hud.next_ready = go_to_next_ready
+	hud.go_to = go_to_kind
+	_idle_after_msec = int(Balance.f("feel.idle_view_seconds") * 1000.0)
 	hud.tool_selected.connect(grid.set_tool)
 	hud.place_requested.connect(grid.start_placing)
 	hud.cancel_place_requested.connect(grid.cancel_placing)
@@ -160,6 +167,67 @@ func _fit_camera() -> void:
 	camera.snap(bounds.get_center() - Vector2(0, shift / _base_zoom), _base_zoom)
 
 
+## The Next ready button: the view travels to the nearest thing with something to take that it has not shown yet
+## (FarmGrid.next_ready).
+func go_to_next_ready() -> void:
+	_travel_to(grid.next_ready(grid.to_local(camera.global_position)))
+
+
+## The away card's rows: the view travels to the nearest thing of `kind` ("ripe", "withered", "ready", "hungry",
+## "stray": FarmGrid.spots_of) and it is pointed out.
+func go_to_kind(kind: String) -> void:
+	var spot := FarmGrid.nearest_spot(grid.spots_of(kind), grid.to_local(camera.global_position))
+	if not spot.is_empty():
+		grid.point_out(spot)
+	_travel_to(spot)
+
+
+## The view travels to a spot on the farm ({at}: FarmGrid.spots_of), close enough to see it, and sits it in the
+## middle of the free area between the bars. Nothing for {}.
+func _travel_to(spot: Dictionary) -> void:
+	if spot.is_empty():
+		return
+	var z := clampf(maxf(camera.target_zoom, _base_zoom * READY_ZOOM), camera.min_zoom, camera.max_zoom)
+	var shift := (FarmHud.top_h() - FarmHud.bottom_h()) / 2.0
+	camera.go_to(grid.to_global(spot["at"]) - Vector2(0, shift / z), z)
+
+
+# ---------------------------------------------------------------- the idle farm
+
+
+## Any touch, click or key is the player being here: it puts off the idle view, and when the interface had faded
+## away it brings it back and does nothing else (that press, to its release, is swallowed: it was aimed at a
+## farm with no buttons on it).
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton
+			or event is InputEventKey or event is InputEventGesture):
+		return
+	_last_input_msec = Time.get_ticks_msec()
+	if hud.resting:
+		hud.set_resting(false)
+		_waking = true
+	if _waking:
+		get_viewport().set_input_as_handled()
+		if not event.is_pressed() and not event is InputEventScreenDrag and not event is InputEventGesture:
+			_waking = false
+
+
+## The idle view (our own touch): after a while with no touch (Balance `feel.idle_view_seconds`) the interface
+## fades away and the farm plays on. Never before the first touch (a tool or a test left running is not a player),
+## nor from under a panel, a sheet, a thing being placed or the tutorial's hint.
+func _rest_when_idle() -> void:
+	if hud.resting:
+		if Game.modal_open:
+			hud.set_resting(false)   # something came up by itself (a level, a gift): it is shown
+		return
+	if _idle_after_msec <= 0 or _last_input_msec == 0 or Time.get_ticks_msec() - _last_input_msec < _idle_after_msec:
+		return
+	if Game.modal_open or hud.interface_hidden or hud.reading() or not grid.placing.is_empty() \
+			or Game.tutorial_step != GameState.Tutorial.DONE:
+		return
+	hud.set_resting(true)
+
+
 func _set_zoom_limits(view: Vector2) -> void:
 	var limits := zoom_limits(minf(view.x, view.y), _base_zoom)
 	camera.min_zoom = limits.x
@@ -188,6 +256,7 @@ static func zoom_limits(side: float, base: float) -> Vector2:
 # ---------------------------------------------------------------- time of day
 
 func _process(_delta: float) -> void:
+	_rest_when_idle()
 	var hour := sky.hour
 	var look := DayCycle.sample(hour)
 	var w := Game.weather()

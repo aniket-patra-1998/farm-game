@@ -5,9 +5,34 @@ extends GameSystem
 ## themselves, the farm's size and the placed objects stay on `game`; the farmer queues this work
 ## (PlayerSystem) and does it by calling in here.
 
+const CENSUS_FAR := 30 * 86400   # seconds: "nothing will ripen or wither" is this far off (ripe_census)
+
 
 func _init(owner: GameState) -> void:
 	super(owner)
+
+
+## How many open plots are ripe now ("count"), and when that number next changes by itself ("next", unix seconds:
+## a crop ripens or withers; far off when none will). For a count that is kept and only made again when it can
+## have changed (the Next ready button), instead of asking every tile every time.
+func ripe_census() -> Dictionary:
+	var now := game.now()
+	var count := 0
+	var next := now + CENSUS_FAR
+	for i in game.plots.size():
+		var p: Dictionary = game.plots[i]
+		if p.get("state") != "planted":
+			continue
+		var crop: Dictionary = game.crops[p["crop"]]
+		var ripe_at := int(p["planted_at"]) + int(crop["grow_seconds"])
+		var wither_at := ripe_at + ripe_window(crop) \
+			* (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
+		if now < ripe_at:
+			next = mini(next, ripe_at)
+		elif now < wither_at and not game.is_occupied(i):
+			count += 1
+			next = mini(next, wither_at)
+	return {"count": count, "next": next}
 
 
 func phase(i: int) -> GameState.Phase:

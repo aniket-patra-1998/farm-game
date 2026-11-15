@@ -64,8 +64,9 @@ func _on_node_added(node: Node) -> void:
 		(node as BaseButton).pressed.connect(play.bind("tap", 0.0))
 
 
-## Plays a sound by its name in data/sounds.json (nothing happens for an unknown name, with a warning).
-func play(event: String, gain_db := 0.0) -> void:
+## Plays a sound by its name in data/sounds.json (nothing happens for an unknown name, with a warning). `pitch`
+## raises or lowers it (2.0: an octave up), for a run of the same sound that climbs (Feedback.moment's `step`).
+func play(event: String, gain_db := 0.0, pitch := 1.0) -> void:
 	if not audible():
 		return
 	var stream := stream_of(event)
@@ -75,7 +76,7 @@ func play(event: String, gain_db := 0.0) -> void:
 	_next = (_next + 1) % _players.size()
 	var jitter := float((_recipes.get(event, {}) as Dictionary).get("pitch_jitter", 0.05))
 	p.stream = stream
-	p.pitch_scale = 1.0 + randf_range(-jitter, jitter)
+	p.pitch_scale = pitch * (1.0 + randf_range(-jitter, jitter))
 	p.volume_db = _base_db + gain_db
 	p.play()
 

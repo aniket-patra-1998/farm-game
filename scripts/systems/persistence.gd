@@ -190,7 +190,9 @@ func load_save() -> bool:
 		if plot.get("state") == "planted" and not game.crops.has(plot.get("crop", "")):
 			plot = {"state": "plowed"}
 		game.plots.append(plot)
-	var away := AbsenceReport.build(game, int(data.get("saved_at", game.now())) - skew, game.now())
+	game.absence_items = AbsenceReport.items(game, int(data.get("saved_at", game.now())) - skew, game.now())
+	var away := AbsenceReport.line(game.absence_items)
+	game.absence_head = away
 	if away != "":
 		game.absence_note = away if game.absence_note == "" else away + "\n" + game.absence_note
 	var extra_vehicles := game.buildings.trim_extra_vehicles()

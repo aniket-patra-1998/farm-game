@@ -462,3 +462,159 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	_check(after.size() > 0 and after[0] == before[0] and after[-1] == before[-1], "the very same ones")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## A run of the same work climbs a scale and counts: a swipe's plots as they are given to the farmer, and the
+## farmer's jobs of one kind done one after another (feel only: it pays nothing).
+func test_358_a_swipe_and_a_streak_climb_a_scale_and_count() -> void:
+	_eq(Feedback.pitch_of(0), 1.0, "the first of a run plays as written")
+	_check(Feedback.pitch_of(3) > Feedback.pitch_of(2) and Feedback.pitch_of(2) > 1.0, "each step is a note higher")
+	_eq(Feedback.pitch_of(500), Feedback.pitch_of(Balance.a("feel.run_scale").size() - 1), "and the top note holds")
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 100000
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	_eq(int(grid.call("_run", "harvest", 0)), 0, "a first harvest starts a streak")
+	_eq(int(grid.call("_run", "harvest", 1)), 1, "the next one soon after is a step on")
+	_eq(int(grid.call("_run", "plow", 1)), 0, "another kind of work starts again")
+	grid.set("_streak_msec", Time.get_ticks_msec() - 60000)
+	_eq(int(grid.call("_run", "plow", 2)), 0, "and so does the same work after a pause")
+	grid.tool = "plow"
+	var given := 0
+	for i in Game.plots.size():
+		if given < 3 and not Game.is_occupied(i) and Game.field.phase(i) == GameState.Phase.GRASS:
+			grid.call("_queue", grid.job_for(i), false)
+			given += 1
+	_eq(int(grid.get("_swipe_count")), 3, "a swipe counts the plots it gives the farmer")
+	var combo: Label = grid.get("_combo")
+	_check(combo != null and combo.text == FarmGrid.COUNT_TAG % 3, "and says the count over the last one")
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()
+
+
+## The Next ready button goes to the nearest ready thing it has not shown yet, round and round, and the view
+## travels there by itself until a finger takes it.
+func test_359_next_ready_goes_round_everything_ready() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 100000
+	var planted := 0
+	for i in Game.plots.size():
+		if planted < 3 and not Game.is_occupied(i) and Game.field.phase(i) == GameState.Phase.GRASS:
+			Game.field.plow(i)
+			Game.field.plant(i, "strawberries")
+			planted += 1
+	Game.debug_time_offset += int(Game.crops["strawberries"]["grow_seconds"]) + 60
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	var hud: FarmHud = main.get("hud")
+	var camera: FarmCamera = main.get("camera")
+	var spots := grid.ready_spots()
+	_check(spots.size() >= 3, "the ripe plots are ready spots (%d)" % spots.size())
+	_eq(grid.ready_count(), spots.size(), "counted as they are listed")
+	var from: Vector2 = spots[0]["at"]
+	var first := grid.next_ready(from)
+	_eq(first["key"], spots[0]["key"], "the nearest first")
+	var seen := {first["key"]: true}
+	for k in spots.size() - 1:
+		var next := grid.next_ready(from)
+		_check(not seen.has(next["key"]), "then one not shown yet (%s)" % next["key"])
+		seen[next["key"]] = true
+	_eq(grid.next_ready(from)["key"], first["key"], "and when all were shown, round again")
+	hud.side.show_ready_count()
+	var button: Button = hud.side.get("_ready")
+	_check(button.visible, "the button is there while something is ready")
+	_eq((hud.side.get("_ready_badge") as Label).text, str(spots.size()), "with the count on it")
+	var far: Dictionary = spots[spots.size() - 1]
+	camera.go_to(grid.to_global(far["at"]))
+	_check(camera.is_going(), "the view sets off")
+	var before := camera.position.distance_to(grid.to_global(far["at"]))
+	for k in 40:
+		camera._process(0.1)
+	_check(not camera.is_going(), "and arrives")
+	_check(camera.position.distance_to(grid.to_global(far["at"])) <= before, "nearer than it was")
+	camera.go_to(camera.position + Vector2(4000, 0))
+	camera.begin_drag()
+	_check(not camera.is_going(), "a finger on the view ends the journey")
+	camera.end_drag()
+	var withered := grid.spots_of("withered").size()
+	Game.debug_time_offset += 60 * 86400
+	_check(grid.spots_of("withered").size() >= withered + 3, "two months on, the plots are withered spots")
+	_eq(grid.spots_of("ripe").size(), 0, "and no longer ripe ones")
+	Game.debug_time_offset = 0
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()
+
+
+## While you were away is a card of rows that each go to their thing; and an idle farm sheds its interface until
+## the next touch, which brings it back and does nothing else.
+func test_360_the_away_card_and_the_idle_view() -> void:
+	var g := _farm()
+	var i := _free(g)
+	g.field.plow(i)
+	g.field.plant(i, "strawberries")
+	var from_t := g.now()
+	_skip(g, int(g.crops["strawberries"]["grow_seconds"]) + 600)
+	var rows := AbsenceReport.items(g, from_t, g.now())
+	_check(not rows.is_empty() and str(rows[0]["kind"]) == "ripe", "crops ripened: the first row")
+	_check(int(rows[0]["count"]) >= 1, "the one planted among them")
+	_eq(AbsenceReport.words(rows[0]), tr("ABSENT_RIPE") % int(rows[0]["count"]), "said in the row's words")
+	_eq(AbsenceReport.line(rows), AbsenceReport.build(g, from_t, g.now()), "the one line says the same rows")
+	var said: Array = []
+	g.message.connect(func(text: String) -> void: said.append(text))
+	g.absence_note = "a line"   # not-ui
+	g.call("_show_absence")
+	_eq(said, ["a line"], "with nothing to show a card, it is said as a line")
+	_done(g)
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.tutorial_step = GameState.Tutorial.DONE
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	Game.absence_items = [{"kind": "ripe", "count": 3}]
+	Game.absence_head = "head"   # not-ui
+	Game.absence_note = "head\nthe bees left"   # not-ui
+	Game.call("_show_absence")
+	var card: AwayCard = hud.get("_away")
+	_check(card != null and card.visible, "the card shows")
+	_eq(Game.absence_note, "", "and it is said once")
+	if card != null:
+		var list: VBoxContainer = card.get("_rows")
+		_eq(list.get_child_count(), 2, "a row for the crops and the bees' line under it")
+		_check(list.get_child(0) is Button and list.get_child(1) is Label, "the row is pressed, the line is read")
+		_check(hud.reading(), "the interface doesn't fade from under it")
+		main.set("_last_input_msec", Time.get_ticks_msec() - 600000)
+		main.call("_rest_when_idle")
+		_check(not hud.resting, "so an idle farm keeps its interface while the card is up")
+		card.visible = false
+	main.set("_last_input_msec", 0)
+	main.call("_rest_when_idle")
+	_check(not hud.resting, "never touched (a tool, a test): the interface stays")
+	main.set("_last_input_msec", Time.get_ticks_msec() - 600000)
+	main.call("_rest_when_idle")
+	_check(hud.resting, "ten minutes with no touch: the interface fades away")
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	main.call("_input", press)
+	_check(not hud.resting, "a touch brings it back")
+	_check(main.get("_waking"), "and that press does nothing else")
+	press.pressed = false
+	main.call("_input", press)
+	_check(not main.get("_waking"), "to its release")
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()
+

@@ -11,6 +11,7 @@ signal xp_changed(xp: int, level: int)
 signal leveled_up(level: int)
 signal plot_changed(index: int) # -1 means "everything changed"
 signal message(text: String)
+signal away_recap(rows: Array, notes: Array)   # what happened while away, as rows that go to their things
 signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
@@ -80,6 +81,8 @@ var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
 var farm_size := START_SIZE        # usable width and depth in tiles
 var unwithers := Balance.i("economy.start_unwithers")   # Unwither items held
 var fertilize_alls := 0            # fertilize every growing crop at once
+var absence_items: Array[Dictionary] = []   # the same as rows, [{kind, count}] (AbsenceReport.items): the away card's
+var absence_head := ""             # the line of absence_note those rows already say
 var absence_note := ""             # what happened while the player was away, shown on start
 var parts := {}                    # building material -> count (see part_ids)
 var farmhands := 0                 # collect every animal at once
@@ -210,10 +213,23 @@ func _ready() -> void:
 	add_child(stray_timer)
 
 
+## What happened while the player was away, said once as the farm opens: as a card of rows that each go to their
+## thing when something shows cards (the HUD: `away_recap`), and as one line otherwise.
 func _show_absence() -> void:
-	if absence_note != "":
+	var rows := absence_items.duplicate()
+	if not rows.is_empty() and objects.any(func(o: Dictionary) -> bool: return o.get("stray", false)):
+		rows.append({"kind": "stray", "count": 1})
+	if not rows.is_empty() and not away_recap.get_connections().is_empty():
+		var notes: Array[String] = []
+		for text: String in absence_note.split("\n", false):
+			if text != absence_head:
+				notes.append(text)
+		away_recap.emit(rows, notes)
+	elif absence_note != "":
 		message.emit(absence_note)
-		absence_note = ""
+	absence_note = ""
+	absence_head = ""
+	absence_items = []
 
 
 func _notification(what: int) -> void:
@@ -1210,6 +1226,7 @@ func _new_game() -> void:
 	farm_size = START_SIZE
 	unwithers = Balance.i("economy.start_unwithers")
 	fertilize_alls = 0
+	absence_items = []
 	absence_note = ""
 	for system in systems:
 		system.reset()

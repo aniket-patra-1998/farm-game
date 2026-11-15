@@ -102,3 +102,16 @@ Open:
   above it. Its Move, Turn and Sell are words, not icons yet.
 - Crafting buildings (bakery, winery, spa, feed mill) have the smaller footprint but not yet their own identity
   and countable upgrades.
+
+## Feel (branch `feel-upgrades`)
+
+- Done: a swipe's plots climb a scale and count up over the finger ("x7"); the farmer's jobs of one kind done in a
+  row climb the same scale and say their count every fifth (Balance `feel.*`, `Feedback.moment(name, step)`). The
+  Next ready button (beside the zoom buttons, with a count) travels to the nearest ready thing not yet shown. While
+  you were away is a card of rows that each go to their thing (`AwayCard`, `AbsenceReport.items`). After 20 s with
+  no touch the interface fades away until the next touch (`feel.idle_view_seconds`, 0 turns it off).
+- Already there before this branch, so not redone: coins and stars fly to the top bar and the coin counter rolls.
+- Open: numbered markers on the farmer's queued plots (they are outlined, and a tap takes one back out, but
+  carry no number); the streak and the swipe notes have been tested but not heard on a phone; the idle view and
+  the camera's journey have not been watched in motion; the away card's "hungry" and "stray" rows use a barn and
+  a star for their pictures.

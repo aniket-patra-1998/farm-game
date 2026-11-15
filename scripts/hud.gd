@@ -11,6 +11,9 @@ signal cancel_place_requested
 signal place_stored_requested(index: int)
 
 
+const REST_FADE := 1.4     # seconds the interface takes to fade away over an idle farm..
+const WAKE_FADE := 0.2     # ..and to come back at a touch
+const AWAY_WAIT := 0.5     # seconds between looks for a panel to close before the away card shows
 const GROUP_PAGE := 30     # rows of a long grouped list (the barn) built at a time
 
 const WOOD := Color("#7a4f2c")
@@ -30,8 +33,13 @@ var side: HudSide
 var interface_hidden := false
 var camera: FarmCamera              # set by Main, for the zoom buttons
 var grid: FarmGrid                  # set by Main: what is being moved (the placing bar's Turn button)
+var go_to: Callable                 # set by Main: goes to the nearest thing of a kind ("ripe", "hungry"...)
+var resting := false                # the interface has faded away over an idle farm (set_resting)
+var next_ready: Callable            # set by Main: goes to the next thing ready to take
 var fit_view: Callable              # set by Main: shows the whole farm
 
+var _away: AwayCard   # the While you were away card (made when first needed, then kept)
+var _rest_tween: Tween
 var _toast: Label
 var _toast_tween: Tween
 var _toast_holder: CenterContainer
@@ -111,6 +119,7 @@ func _ready() -> void:
 	Game.farm_expanded.connect(func(_s: int) -> void: _refresh_book())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
 	Game.tutorial_changed.connect(func(_s: int) -> void: _refresh_tutorial())
+	Game.away_recap.connect(_show_away)
 	var tick := Timer.new()
 	tick.wait_time = 1.0
 	tick.autostart = true
@@ -207,6 +216,36 @@ func set_interface_hidden(on: bool) -> void:
 	for c in all:
 		c.visible = not on
 	side.show_eye(on)
+
+
+## Fades the whole interface away over an idle farm (Main, after Balance `feel.idle_view_seconds` with no touch),
+## or brings it back at the next touch. Unlike the eye, nothing is hidden for good: it is a rest, not a mode.
+func set_resting(on: bool) -> void:
+	if resting == on:
+		return
+	resting = on
+	if _rest_tween != null:
+		_rest_tween.kill()
+	_rest_tween = create_tween()
+	_rest_tween.tween_property(_root, "modulate:a", 0.0 if on else 1.0, REST_FADE if on else WAKE_FADE)
+
+
+## Whether something is up that a player may be reading (a home's sheet, the away card): the interface doesn't
+## fade from under it.
+func reading() -> bool:
+	return (sheet != null and sheet.visible) or (_away != null and _away.visible)
+
+
+## While you were away, as a card of rows (Game.away_recap). It waits for a panel that opened first (the daily
+## gift) to close.
+func _show_away(rows: Array, notes: Array) -> void:
+	if Game.modal_open:
+		get_tree().create_timer(AWAY_WAIT).timeout.connect(_show_away.bind(rows, notes))
+		return
+	if _away == null:
+		_away = AwayCard.new(self)
+		_root.add_child(_away)
+	_away.open(rows, notes)
 
 
 ## The zoom buttons: in or out about the middle of the screen, or 0 for the whole farm.
