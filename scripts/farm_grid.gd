@@ -38,7 +38,7 @@ const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is 
 static var _scenery: Array = []
 
 
-var tool := "plow"   # plow, plant, fertilize, hand, harvest, move, store, sell, rotate or vehicle
+var tool := "hand"   # plow, plant, fertilize, hand, harvest, move, store, sell, rotate or vehicle
 var selected_crop := ""  # crop id when tool == "plant", vehicle id when tool == "vehicle"
 var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
 

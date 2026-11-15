@@ -1,16 +1,17 @@
 class_name HudTools
 extends RefCounted
-## The tool panel at the bottom right, FarmVille's way: eight icon tools on a wooden panel, the one in use lit.
-## Select taps things to look at them, collect them and open their panels; Plow; Plant asks which seed (HudSeeds);
-## Harvest gathers what is ready and never opens a panel; Fertilise; Move (a decoration being moved can be
-## turned from the placing bar); Store puts things in the Barn; Sell sells them (or clears a plot). The boosts
+## The tool panel at the bottom right, FarmVille's way: seven icon tools on a wooden panel, the one in use lit.
+## Select is in hand by default (our own touch: FarmVille opened on its arrow too, but kept a Move tool): a tap
+## looks at a thing, collects it or opens its panel; a press and hold lifts anything to move it (FarmGrid), so
+## there is no Move tool. Plow; Plant asks which seed (HudSeeds); Harvest gathers what is ready and never opens a
+## panel; Fertilise; Store puts things in the Barn; Sell sells them (or clears a plot). The boosts
 ## (Fertilize All, Unwither, helpers) are used from the Barn, and a vehicle by tapping it, as in FarmVille.
 
 ## [tool id sent to the farm, icon, label key]
 const TOOLS := [["hand", "arrow", "TOOL_SELECT"], ["plow", "hoe", "TOOL_PLOW"], ["plant", "seeds", "TOOL_PLANT"],
-	["harvest", "basket", "TOOL_HARVEST"], ["fertilize", "fertilizer", "TOOL_FERTILISE"], ["move", "move", "TOOL_MOVE"],
-	["store", "barn", "TOOL_STORE"], ["sell", "tag", "TOOL_SELL"]]
-const FIRST := "plow"            # in hand when the game opens (the tutorial starts by plowing)
+	["harvest", "basket", "TOOL_HARVEST"], ["fertilize", "fertilizer", "TOOL_FERTILISE"], ["store", "barn", "TOOL_STORE"],
+	["sell", "tag", "TOOL_SELL"]]
+const FIRST := "hand"            # in hand when the game opens: Select (tap to look and collect, hold to move)
 const LEARN_USES := 5            # a tool's name shows under it until it has been picked this many times
 const LEARNED := "learned"       # the player's settings section counting those picks (kept on the phone)
 

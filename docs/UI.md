@@ -29,7 +29,7 @@ Principle as everywhere: first pure FarmVille, then our own touch, clearly marke
 - Top: coin and cash bars (their "+" opens the Market), the farm's name on a plaque (set in Settings) with the season, weather and time under it, the XP bar with the level star (`HudTop`).
 - Left: hide the interface (eye), sound on/off. There is no music yet, so no music toggle.
 - Right: Market, Collections, Ribbons, Neighbours (a placeholder message for now), Settings; zoom in, out and whole farm (`HudSide`).
-- Bottom right: eight tools, FarmVille's set: Select, Plow, Plant (opens the seed list, `HudSeeds`), Harvest (gathers what is ready, opens no panels), Fertilise, Move (a decoration being moved has a Turn button on the placing bar), Store, Sell (`HudTools`).
+- Bottom right: seven tools: Select (in hand by default: tap to look, collect or open; press and hold anything to lift and move it), Plow, Plant (opens the seed list, `HudSeeds`), Harvest (gathers what is ready, opens no panels), Fertilise, Store, Sell (`HudTools`).
 - Bottom left: the neighbours' strip, a placeholder showing the simulated neighbours (our own touch until neighbours land).
 - Boosts (Fertilize All, Unwither, Farmhand, Arborist, Gardener) and fuel are used from the Barn, as FarmVille's were from the gift box; a vehicle is taken in hand by tapping it. Debug buttons moved to Settings > Testing.
 

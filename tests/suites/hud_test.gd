@@ -66,7 +66,7 @@ func test_146_the_perf_readout_counts_frames_and_is_kept_switched() -> void:
 
 
 ## The HUD at the shapes phones and tablets come in: every part on screen, none on another, every button big
-## enough for a thumb, and the eight tools in FarmVille's order.
+## enough for a thumb, and the seven tools in FarmVille's order (no Move: hold lifts).
 func test_147_the_hud_fits_every_screen_shape_without_overlaps() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
@@ -77,7 +77,7 @@ func test_147_the_hud_fits_every_screen_shape_without_overlaps() -> void:
 	var ids: Array[String] = []
 	for t: Array in HudTools.TOOLS:
 		ids.append(str(t[0]))
-	_eq(ids, ["hand", "plow", "plant", "harvest", "fertilize", "move", "store", "sell"], "the eight tools")
+	_eq(ids, ["hand", "plow", "plant", "harvest", "fertilize", "store", "sell"], "the seven tools (hold lifts: no Move)")
 	var window := get_tree().root
 	var was := window.size
 	for shape: Vector2i in [Vector2i(1280, 720), Vector2i(2340, 1080), Vector2i(1024, 768), Vector2i(2560, 1600)]:

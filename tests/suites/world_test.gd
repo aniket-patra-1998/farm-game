@@ -130,7 +130,9 @@ func test_37_tap_farms_swipe_farms_and_hand_drag_moves_the_view() -> void:
 	cam.force_update_scroll()
 	var view := get_viewport().get_visible_rect().size
 
-	# A tap on grass plows it.
+	# Select is in hand at first; with Plow chosen, a tap on grass plows it.
+	_eq(grid.tool, "hand", "the game opens on Select")
+	grid.set_tool("plow", "")
 	var i := Game.index_of(11, 11)
 	_eq(Game.field.phase(i), GameState.Phase.GRASS, "tile starts as grass")
 	var tap_at := _screen_pos(grid, i)
