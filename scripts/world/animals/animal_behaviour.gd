@@ -10,7 +10,7 @@ extends RefCounted
 ## walked (so feet stay planted), and each animal has its own random stream, seeded by its uid, so a farm
 ## looks the same every time it loads but no two animals move in step.
 
-enum State { IDLE, WALK, GRAZE, LOOK, FLAP, DISPLAY, FROLIC }
+enum State { IDLE, WALK, GRAZE, LOOK, FLAP, DISPLAY, FROLIC, SLEEP }
 
 const TURN_SPEED := 7.0          # facing changes through 0: the body narrows, then widens the other way
 const STRIDE_EASE := 7.0         # how fast the legs blend between standing and walking
@@ -30,6 +30,10 @@ const FROLIC_SPEED := 2.4        # a frolic is a dash: this many times walking s
 const BOUNCE_RATE := 3.0         # bounces a second while frolicking
 const FROLIC_AGAIN := 0.45       # chance a frolic runs straight into another
 const POKE_LOOK := 1.6           # seconds a tapped animal looks round at you
+const HUNGRY_SHARE := 0.7        # of a hungry animal's choices that are to look up and about for feed
+const SLEEP_SHARE := 0.85        # of an animal's choices at night that are to sleep
+const SLEEP_HEAD := 0.75         # how low a sleeping animal's head hangs (1: grazing)
+const SLEEP_BREATH := 1.1        # a sleeper's breathing, slower than awake (2.1)
 const POKE_HOP := 0.45           # how high it starts when tapped (of a frolic's bounce)
 
 const DURATIONS := {
@@ -40,7 +44,12 @@ const DURATIONS := {
 	State.FLAP: Vector2(0.6, 0.9),
 	State.DISPLAY: Vector2(2.5, 4.0),
 	State.FROLIC: Vector2(1.0, 2.2),
+	State.SLEEP: Vector2(9.0, 20.0),   # a doze: then it may stir, look about, and doze again
 }
+
+## Night on the farm (Main sets it from the day's light; never with "always daytime"): the animals sleep.
+static var night := false
+
 
 var rig: AnimalRig
 var pose := AnimalPose.new()
@@ -49,6 +58,7 @@ var offset := Vector2.ZERO       ## from the animal's home spot (its tile centre
 var facing := 1.0                ## the way it's heading: 1 right, -1 left
 var shown_facing := 1.0          ## eases toward facing (the turn)
 var range_px := Vector2(14, 7)   ## how far it may wander: an ellipse, flattened like the ground
+var hungry := false              ## its home is waiting to be fed (BuildingFill): it looks about instead of grazing
 var noticed := 0.0               ## seconds left looking at whoever tapped it
 
 var _rng := RandomNumberGenerator.new()
@@ -116,6 +126,16 @@ func time_left() -> float:
 
 
 func _choose_next() -> void:
+	# At night most of what an animal does is sleep where it stands: head low, eyes shut, breathing slow. Now and
+	# then one stirs (the rest of the time's choices), so a sleeping farm is still alive.
+	if night and _rng.randf() < SLEEP_SHARE:
+		_enter(State.SLEEP)
+		return
+	# Hungry (its home's trough is empty): it leaves off grazing and playing and looks up and about for its feed.
+	if hungry and _rng.randf() < HUNGRY_SHARE:
+		_look_to = _rng.randf_range(0.2, 1.0)
+		_enter(State.LOOK)
+		return
 	var weights := rig.behaviour()
 	var total := 0.0
 	for k in weights:
@@ -202,6 +222,10 @@ func _ease_body(delta: float) -> void:
 			look_to = _look_to
 		State.WALK:
 			look_to = 0.0
+		State.SLEEP:
+			head_to = SLEEP_HEAD
+			if not night:
+				_left = minf(_left, 0.5)   # (dawn: it wakes)
 	var rate := HEAD_DOWN_EASE if head_to > pose.head else HEAD_UP_EASE
 	if is_bird():
 		rate *= 4.0  # birds peck fast
@@ -227,6 +251,9 @@ func _idle_motions(delta: float) -> void:
 		_blink_in = _rng.randf_range(BLINK_EVERY.x, BLINK_EVERY.y)
 	_blink_left = maxf(0.0, _blink_left - delta)
 	pose.blink = sin(PI * _blink_left / BLINK_TIME) if _blink_left > 0.0 else 0.0
+	if state == State.SLEEP:
+		pose.blink = 1.0   # eyes shut
+		pose.breath = sin(pose.time * SLEEP_BREATH + _phase)
 	# Ear flick.
 	_ear_in -= delta
 	if _ear_in <= 0.0:

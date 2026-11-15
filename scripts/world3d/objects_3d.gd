@@ -11,6 +11,8 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const FARMHOUSE := "farmhouse"   # not-ui
+const STAGE := "stage"           # not-ui: how the farmhouse's stage is written in its look ("stage3")
 const BOX := &"box"               # on a batched thing's stand-in: the box round its model, in the model's space
 const DRESSINGS := 6              # looks of the grass and stones round a batched decoration (shared, by its uid)
 const DRESSING := ^"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
@@ -364,7 +366,7 @@ func _key(o: Dictionary) -> String:
 		_plain[id] = Game.kind_of(o) == "decor" and Game.links.group_of(id) == "" and not AssetRegistry.has_model(id)
 	if _plain[id] and not o.get("stray", false):
 		return "decor|%s|%d|%d|%s|%s" % [id, int(o["row"]), int(o["col"]), o.get("flip", false),
-			o.get("crop", o.get("flower", ""))]
+			shows_of(o)]
 	if Game.links.group_of(str(o["id"])) != "":
 		return "link|%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]   # how it joins is the LinkLayer's business
 	if uses_file(o):
@@ -378,7 +380,7 @@ func _key(o: Dictionary) -> String:
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
 		_mask(o),
-		str(o.get("broken", false)) + str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)),
+		str(o.get("broken", false)) + shows_of(o) + "|%d|%s|%s" % [int(o.get("fed", 0)),
 			Game.is_withered(o), _at_work(o)]]
 
 
@@ -531,6 +533,14 @@ static func decor_look(id: String, look: int, shows: String) -> Node3D:
 	return Instancer.copy_of(decor_key(id, look, shows), func() -> Node3D: return _decor_built(id, look, shows))
 
 
+## What a thing shows of the farm's own story, as part of its look: the mastered crop on a sign, a bunch's flower,
+## and the farmhouse's stage (it grows as the farmer's level does: Game.farmhouse_stage).
+static func shows_of(o: Dictionary) -> String:
+	if str(o["id"]) == FARMHOUSE:
+		return STAGE + str(Game.farmhouse_stage())
+	return str(o.get("crop", o.get("flower", "")))
+
+
 ## What a decoration's look is kept under (its kind, which of its looks, and what a sign or bunch shows).
 static func decor_key(id: String, look: int, shows: String) -> String:
 	return Instancer.key_of(["decor", id, look, shows, Game.mastery.colour_of(shows)])
@@ -631,7 +641,7 @@ func _build(o: Dictionary) -> Node3D:
 					# (Only the kinds built a little differently each time have looks: the rest were being built
 					# eight times over, the same each time, and so many looks overflowed what the Instancer keeps.)
 					var look := Instancer.variant(int(o["row"]), int(o["col"])) if VARIED_DECOR.has(str(o["id"])) else 0
-					var shows := str(o.get("crop", o.get("flower", "")))
+					var shows := shows_of(o)
 					if VARIED_DECOR.has(str(o["id"])):
 						node = decor_look(str(o["id"]), look, shows)
 					else:

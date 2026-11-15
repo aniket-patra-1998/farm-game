@@ -48,6 +48,9 @@ const ORCHARD_GAP_MOST := 0.8    # an orchard's trees stand no further apart tha
 const ORCHARD_VARIANTS := 3      # looks of each kind in an orchard (turned and sized: no clones)
 const PLANT_BUDGET_MS := 12      # an orchard builds new kinds of tree for at most this long a frame
 const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
+const FEED_CHECK_MSEC := 5000    # between looks at whether a home is hungry
+const TROUGH := Vector3(0.15, 0.085, 0.055)   # a feed trough's half length, its height and half width, in tiles
+const FEED_GOLD := Color("#dcb548")           # the feed in it
 const EMPTY_DRESS := 0.12        # an empty yard's things (a trough, hay, a feed pan) are this big, in tiles
 const EMPTY_TUFTS := 6            # and this many tufts of grass grow in it
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
@@ -67,6 +70,9 @@ var _who_peeking := ""
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 var _peekers: Node3D           # heads looking out of the windows while the home is full
+var _trough: Node3D            # the feed trough of a home that eats: full when fed, bare when hungry
+var _feed := -2                # what the trough shows: -2 not asked yet, -1 eats nothing, 0 hungry, 1 fed
+var _feed_msec := 0            # when that was last asked
 var _empty_dress: Node3D       # what an empty yard holds instead of animals (a trough, hay, a feed pan, tufts)
 var _windows: Array = []
 var _flag: Node3D             # flown while the building is full
@@ -124,7 +130,13 @@ func refresh(o: Dictionary) -> void:
 	var share := ready_share(o)
 	var step := int(floor(share * PRODUCE_STEPS))
 	var who := "%d|%d" % [inside.hash(), Game.capacity(o)]   # (who's in, as a number: asked every second)
-	var stage := "%d|%s" % [step, Game.is_ready(o)]
+	# Hunger shown in the yard (our own touch): a feed trough, full while the animals are fed and empty when they
+	# are hungry. Asked every few seconds (it turns on feed bought and on time passing), not at every look.
+	var now := Time.get_ticks_msec()
+	if _feed < -1 or now - _feed_msec >= FEED_CHECK_MSEC:
+		_feed_msec = now
+		_feed = -1 if not Game.feeds.is_feedable(o) else (0 if Game.feeds.is_hungry(o) else 1)
+	var stage := "%d|%s|%d" % [step, Game.is_ready(o), _feed]
 	var fill: Dictionary = _spec.get("fill", {})
 	if fill.has("stock"):
 		_show_stock(str(fill["stock"]), fill.get("at", [0.5, 0.95]), o)
@@ -139,6 +151,8 @@ func refresh(o: Dictionary) -> void:
 		_dress_empty_yard(Game.inside_total(o) == 0)
 	if stage != _stage:
 		_show_produce(str(fill.get("produce", "")), step, fill.get("at", [0.78, 0.9]), o)
+		if not fill.has("plants"):
+			_show_trough(fill.get("at", [0.78, 0.9]))
 	_who = who
 	_stage = stage
 	var full := Game.capacity(o) > 0 and Game.inside_total(o) >= Game.capacity(o) and not fill.has("plants")
@@ -675,6 +689,26 @@ func _open_shutter(open: bool) -> void:
 
 
 # ---------------------------------------------------------------- produce
+
+
+## The home's feed trough, across the gate from where its produce piles up (`at`): brimming with feed while the
+## animals are fed, bare boards when they are hungry, and none for a home that eats nothing. Hungry animals look
+## up from the grass and about (AnimalBehaviour.hungry), so hunger is seen in the yard, not only in a bubble.
+func _show_trough(at: Array) -> void:
+	if _trough != null:
+		_trough.queue_free()
+		_trough = null
+	for a in residents:
+		if a.behaviour != null:
+			a.behaviour.hungry = _feed == 0
+	if _feed < 0 or Game.inside_total(Game.object_by_uid(uid)) == 0:
+		return
+	var root := Node3D.new()
+	var p := Vector3((1.0 - float(at[0])) * _fp.x, 0, float(at[1]) * _fp.y)
+	ModelKit.tub(root, p + Vector3(-TROUGH.x, 0, -TROUGH.z), p + Vector3(TROUGH.x, TROUGH.y, TROUGH.z), 0.018,
+		ModelKit.surface(BuildingModel.WOOD, "boards", 0.2), ModelKit.paint(FEED_GOLD) if _feed == 1 else null, 0.85)
+	_trough = ModelKit.bake(root)
+	add_child(_trough)
 
 
 func _show_produce(kind: String, step: int, at: Array, o: Dictionary) -> void:

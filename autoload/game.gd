@@ -958,6 +958,16 @@ func objects_updated() -> void:
 	queue_save()
 
 
+## The farmhouse's stage, 1 up: it gains a part at each of Balance `feel.farmhouse_levels` the farmer reaches
+## (dormers, a wing, a balcony and flag), so the farm's years show on the house and not only in a number.
+func farmhouse_stage() -> int:
+	var stage := 1
+	for need: float in Balance.a("feel.farmhouse_levels"):
+		if level() >= int(need):
+			stage += 1
+	return stage
+
+
 # ---------------------------------------------------------------- seasons and weather
 
 

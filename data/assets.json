@@ -2,28 +2,28 @@
   "about": "Assets made as files (docs/ASSETS.md): item id -> its model and budget. An item not listed is drawn by its code-built stand-in.",
   "budgets": {
     "animal": {
-      "triangles": 11000,
-      "draws": 3
+      "triangles": 11000.0,
+      "draws": 3.0
     },
     "tree": {
-      "triangles": 14000,
-      "draws": 8
+      "triangles": 14000.0,
+      "draws": 8.0
     },
     "crop": {
-      "triangles": 10000,
-      "draws": 5
+      "triangles": 10000.0,
+      "draws": 5.0
     },
     "decoration": {
-      "triangles": 2500,
-      "draws": 3
+      "triangles": 2500.0,
+      "draws": 3.0
     },
     "building": {
-      "triangles": 15000,
-      "draws": 8
+      "triangles": 15000.0,
+      "draws": 8.0
     },
     "farmer": {
-      "triangles": 21000,
-      "draws": 2
+      "triangles": 21000.0,
+      "draws": 2.0
     }
   },
   "assets": {

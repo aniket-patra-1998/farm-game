@@ -11,10 +11,12 @@ render_mode cull_disabled;
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
 global uniform float crop_clock;  // seconds on the farm's clock (Crops3D), the same for every plant
 uniform float size_from = 0.55;   // the size a growing stage starts at, of full size
+uniform float master_size = 0.1;  // how much bigger a fully mastered crop's plants are
 uniform float rich_size = 1.18;   // a fertilised plant's size, of an ordinary one's
 uniform vec3 produce_colour : source_color = vec3(0.89, 0.27, 0.24);   // this crop's fruit, grain or flower
 
 varying vec4 produce;
+varying float gold;   // 0..1: how far this crop is mastered (its stars): fuller, with a golden cast
 varying float up;   // how far up the plant this point is, 0 at the soil
 
 void vertex() {
@@ -24,7 +26,8 @@ void vertex() {
 	float stage_length = INSTANCE_CUSTOM.y;
 	float grown = stage_length > 0.0 ? clamp((crop_clock / 60.0 - INSTANCE_CUSTOM.x) / stage_length, 0.0, 1.0) : 1.0;
 	float grow_scale = stage_length > 0.0 ? mix(size_from, 1.0, grown) : 1.0;
-	VERTEX *= grow_scale * mix(1.0, rich_size, rich_flag);
+	gold = INSTANCE_CUSTOM.w;
+	VERTEX *= grow_scale * mix(1.0, rich_size, rich_flag) * (1.0 + master_size * gold);
 	vec3 root = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	float beat = TIME * 1.9 + root.x * 1.3 + root.z * 0.9;
 	float bend = VERTEX.y * VERTEX.y * 3.0 * (0.4 + wind);
@@ -40,6 +43,9 @@ void fragment() {
 	float lit = mix(0.72, 1.12, up);
 	float rich = 1.0 - produce.a;     // fertilised: lusher, deeper colour, a gloss on the leaves
 	leaf = mix(leaf, leaf * vec3(0.88, 1.18, 0.82) + vec3(0.0, 0.04, 0.0), rich);
+	// Mastered (our own touch: progress shown in the field, not only in a book): a warm golden cast, brighter fruit.
+	leaf = mix(leaf, leaf * vec3(1.12, 1.06, 0.72) + vec3(0.035, 0.025, 0.0), gold * 0.8);
+	fruit = mix(fruit, fruit * 1.12 + vec3(0.05, 0.035, 0.0), gold);
 	ALBEDO = mix(leaf, fruit, is_produce) * lit * (1.0 + 0.1 * rich);
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
 	ALBEDO *= mix(0.7, 1.0, smoothstep(0.0, 0.5, facing));

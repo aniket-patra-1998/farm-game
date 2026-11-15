@@ -727,6 +727,7 @@
   "run_scale": {"v": [0, 2, 4, 5, 7, 9, 11, 12], "note": "the notes a run of the same sound climbs (a swipe's plots, a streak of harvests), in semitones above the first; past the end the top note holds (autoload/feedback.gd). Our own touch."},
   "streak_gap_seconds": {"v": 4.0, "note": "the farmer's next job of the same kind within this long carries the streak on (scripts/farm_grid.gd); longer and the notes start again"},
   "streak_shout_every": {"v": 5, "note": "a streak says its count over the plot at every multiple of this (x5, x10...); 0 never"},
+  "farmhouse_levels": {"v": [10, 20, 35], "note": "the farmer's levels at which the farmhouse gains its next part (data/building_models.json farmhouse.levels 2, 3, 4)"},
   "idle_view_seconds": {"v": 20.0, "note": "with no touch for this long the interface fades away and the farm plays on; the next touch brings it back and does nothing else (scripts/main.gd). 0 never"},
   "away_card_seconds": {"v": 12.0, "note": "how long the While you were away card stays before it leaves by itself (scripts/hud/away_card.gd)"},
   "ready_check_seconds": {"v": 2.0, "note": "how often the Next ready button counts what is ready (scripts/hud/hud_side.gd)"}

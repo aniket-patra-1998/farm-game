@@ -115,3 +115,20 @@ Open:
   carry no number); the streak and the swipe notes have been tested but not heard on a phone; the idle view and
   the camera's journey have not been watched in motion; the away card's "hungry" and "stray" rows use a barn and
   a star for their pictures.
+
+## Seasons, progress and life on the farm (branch `feel-upgrades`)
+
+- Done: seasons on the real calendar by region (`Season`, `data/seasons.json`, Balance `seasons.*`): the monsoon,
+  home seasons for every crop, off-season crops sell for more and wither sooner (seed shelf says so), rain waters
+  growing crops (+10%), a forecast under the clock, a lawn coloured by the season, the region in Settings.
+- Done: a mastered crop's plants stand fuller with a golden cast (the plant's fourth instance value); the farmhouse
+  gains a wing, a second storey, then a balcony and flag at the farmer's levels 10, 20 and 35.
+- Done: animals sleep at night and a rooster crows at first light on a farm with chickens; a home that eats has
+  a feed trough in its yard, full when fed and bare when hungry, and hungry animals look about instead of grazing.
+- Open: fruit appearing one piece at a time and falling when picked (trees are drawn from files with a ready and a
+  bare look: it needs new tree art); a hungry animal walking to its trough (yard animals stray only a little from
+  their place); heads at the windows drooping at night; collections and ribbons shown on the farm (a trophy, a
+  plaque); crops looking tired in summer heat; the season's lawn follows a changed region only at the next
+  start; the seasons' numbers (1.5x, half the ripe time, +10% for rain, from level 6) are first guesses, not
+  yet run through the balance simulation; the weather is the game's own, made from the date, not the real sky.
+

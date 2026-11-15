@@ -98,8 +98,15 @@ static func _now() -> float:
 ## What an instance carries for the shader: when its growing stage began and how long that stage lasts (0: fully
 ## grown), in minutes on the farm clock (small numbers: the compatibility renderer keeps instance data as 16-bit
 ## floats), and whether it is fertilised. Its crop's colour is in the material (`material_for`).
-static func pack(started: float, length: float, rich: bool) -> Color:
-	return Color(started / 60.0, length / 60.0, 1.0 if rich else 0.0, 0.0)
+static func pack(started: float, length: float, rich: bool, mastered := 0.0) -> Color:
+	return Color(started / 60.0, length / 60.0, 1.0 if rich else 0.0, mastered)
+
+
+## How far a crop is mastered, 0..1 (its stars of all it can earn): its plants stand fuller and take a golden
+## cast in the field (the shader's), so mastery shows on the farm.
+static func mastered(crop_id: String) -> float:
+	var most := Game.mastery.thresholds(crop_id).size()
+	return float(Game.mastery.stars(crop_id)) / most if most > 0 else 0.0
 
 
 ## The material for a crop colour: the shared one with that colour set, made once.
@@ -250,7 +257,7 @@ func _look_of(i: int) -> Array:
 	var crop: Dictionary = Game.crops[crop_id]
 	var col := Color.html(str(crop.get("color", "#e2453c")))
 	var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
-	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i))]
+	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i), mastered(crop_id))]
 
 
 ## Plot `i`'s plants as MultiMesh buffer data: for each, its transform (3 rows of 4), its colour, its data.

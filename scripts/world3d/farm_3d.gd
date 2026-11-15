@@ -108,6 +108,7 @@ func _ready() -> void:
 		ground.rebuild()
 		plots.rebuild())
 	Game.objects_changed.connect(objects.queue_sync)
+	Game.leveled_up.connect(func(_level: int) -> void: objects.queue_sync())   # (the farmhouse may have grown)
 	Game.objects_changed.connect(ground.queue_rebuild)  # shade, wear and grass follow what's on the farm
 	if grid != null:
 		# Taps go to what's drawn under the finger; tapped things react; harvests pop; landings puff.

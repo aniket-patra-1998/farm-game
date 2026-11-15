@@ -36,7 +36,11 @@ static var _glows := {}   # colour -> glowing material
 static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 	var id := str(it.get("id", ""))
 	if id in ["farmhouse", "log_cabin"]:
-		return ModelKit.bake(BuildingModel.build(it, fp))
+		# The farmhouse grows with the farmer (its stage is in its look: Objects3D.shows_of); a picture of it, and
+		# the cabin, are the first.
+		var shows := str(o.get("crop", ""))
+		var stage := int(shows.trim_prefix(Objects3D.STAGE)) if shows.begins_with(Objects3D.STAGE) else 1
+		return ModelKit.bake(BuildingModel.build(it, fp, maxi(stage, 1)))
 	if Game.links.group_of(id) != "":
 		# Fences, hedges, walls and paths are drawn joined up by the LinkLayer; alone (a sheet, a size guide)
 		# one is a straight piece.

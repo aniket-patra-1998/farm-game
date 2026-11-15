@@ -15,6 +15,7 @@
     "level_up": {"sound": "level_up", "buzz": 60},
     "level_up_soft": {"sound": "level_up", "buzz": 24},
     "sell": {"sound": "coin", "buzz": 8},
+    "dawn": {"sound": "crow", "gain_db": -6.0},
     "coin_land": {"sound": "coin", "gain_db": -8.0},
     "volume_check": {"sound": "coin"},
     "vibration_check": {"buzz": 60}

@@ -54,6 +54,10 @@
       {"wave": "saw", "lowpass": 2200, "freq": 720, "freq_end": 340, "dur": 0.85, "attack": 0.03, "release": 0.3, "gain": 0.3, "vibrato": [11, 0.05]}]},
     "cluck": {"pitch_jitter": 0.1, "repeat": [3, 0.12], "layers": [
       {"wave": "square", "lowpass": 2600, "freq": 780, "freq_end": 620, "dur": 0.06, "attack": 0.003, "release": 0.04, "gain": 0.3}]},
+    "crow": {"pitch_jitter": 0.04, "layers": [
+      {"wave": "saw", "lowpass": 2400, "freq": 520, "freq_end": 760, "dur": 0.22, "attack": 0.01, "release": 0.04, "gain": 0.26},
+      {"wave": "saw", "lowpass": 2600, "freq": 760, "freq_end": 900, "dur": 0.2, "attack": 0.01, "release": 0.04, "gain": 0.28, "delay": 0.26, "vibrato": [12, 0.03]},
+      {"wave": "saw", "lowpass": 2400, "freq": 900, "freq_end": 540, "dur": 0.75, "attack": 0.02, "release": 0.3, "gain": 0.28, "delay": 0.5, "vibrato": [9, 0.04]}]},
     "gobble": {"pitch_jitter": 0.08, "layers": [
       {"wave": "square", "lowpass": 2000, "freq": 420, "freq_end": 360, "dur": 0.55, "attack": 0.01, "release": 0.12, "gain": 0.3, "tremolo": [28, 0.9]}]},
     "quack": {"pitch_jitter": 0.08, "repeat": [2, 0.2], "layers": [

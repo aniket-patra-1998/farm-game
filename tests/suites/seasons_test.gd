@@ -105,3 +105,54 @@ func test_362_an_off_season_crop_pays_more_and_withers_sooner_and_rain_waters() 
 	_done(g)
 	Season.set_region("", false)
 	Season.active = false
+
+
+## Progress and life shown on the farm itself: a mastered crop's plants carry its stars, the farmhouse grows with
+## the farmer, animals sleep at night, and a hungry one looks about.
+func test_363_progress_and_life_show_on_the_farm() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	_eq(Crops3D.mastered("strawberries"), 0.0, "an unmastered crop is plain")
+	_eq(Crops3D.pack(0.0, 0.0, false, 0.5).a, 0.5, "a plant carries how far its crop is mastered")
+	_eq(Crops3D.pack(0.0, 0.0, false).a, 0.0, "and nothing when it is not")
+	_eq(Game.farmhouse_stage(), 1, "a new farm's house is the first")
+	var house := {"uid": 1, "id": "farmhouse", "row": 0, "col": 0}
+	var first := Objects3D.shows_of(house)
+	Game.xp = Game.xp_for_level(int(Balance.a("feel.farmhouse_levels")[0]))
+	_eq(Game.farmhouse_stage(), 2, "at the first of its levels it gains a part")
+	_check(Objects3D.shows_of(house) != first, "and its look is another (it is built again)")
+	Game.xp = Game.xp_for_level(60)
+	var stages := Balance.a("feel.farmhouse_levels").size() + 1
+	_eq(Game.farmhouse_stage(), stages, "a long-lived farm has every part")
+	for stage in range(1, stages + 1):
+		var spec := BuildingModel.spec("farmhouse", stage)
+		_check((spec["features"] as Array).size() >= stage, "stage %d has its parts" % stage)
+		var built := BuildingModel.build(Game.item_data("farmhouse"), Game.footprint("farmhouse"), stage)
+		_check(built.get_child_count() > 0, "and builds")
+		built.free()
+	_eq(Objects3D.shows_of({"uid": 2, "id": "mastery_sign", "crop": "wheat"}), "wheat", "a sign still shows its crop")
+	var mind := AnimalBehaviour.new(AnimalRig.of(Game.item_data("cow")), 7, Vector2(14, 7))
+	AnimalBehaviour.night = true
+	var slept := 0
+	for k in 40:
+		mind.call("_choose_next")
+		if mind.state == AnimalBehaviour.State.SLEEP:
+			slept += 1
+	_check(slept > 20, "at night an animal mostly sleeps (%d of 40)" % slept)
+	mind.call("_enter", AnimalBehaviour.State.SLEEP)
+	mind.call("_ease_body", 0.1)
+	mind.call("_idle_motions", 0.1)
+	_eq(mind.pose.blink, 1.0, "with its eyes shut")
+	AnimalBehaviour.night = false
+	mind.call("_ease_body", 0.1)
+	_check(mind.time_left() <= 0.5, "and wakes with the light")
+	mind.hungry = true
+	var looked := 0
+	for k in 40:
+		mind.call("_choose_next")
+		if mind.state == AnimalBehaviour.State.LOOK:
+			looked += 1
+	_check(looked > 16, "a hungry one mostly looks about for its feed (%d of 40)" % looked)
+	_check(Feedback.has_moment("dawn") and Sound.has_sound("crow"), "and the dawn has its rooster")
+	Game.reset_game()
+
