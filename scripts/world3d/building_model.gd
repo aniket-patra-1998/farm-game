@@ -816,13 +816,15 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var base := Vector3(float(at[0]) * fw, 0, float(at[1]) * fd)
 			var r := float(f.get("r", 0.22))
 			var h := float(f.get("h", 1.6))
-			ModelKit.cylinder(root, base, r + 0.03, 0.08, ModelKit.surface(STONE, "stone", 0.2), -1.0, 20)
-			ModelKit.cylinder(root, base, r, h, ModelKit.surface(Color("#d9dcde"), "metal", 0.35), -1.0, 20)
+			var plain := bool(f.get("plain", false))   # a second or third silo: fewer sides and no chequered band (cheaper)
+			var sides := 12 if plain else 20
+			ModelKit.cylinder(root, base, r + 0.03, 0.08, ModelKit.surface(STONE, "stone", 0.2), -1.0, sides)
+			ModelKit.cylinder(root, base, r, h, ModelKit.surface(Color("#d9dcde"), "metal", 0.35), -1.0, sides)
 			for k in 3:
 				ModelKit.cylinder(root, base + Vector3(0, h * (0.3 + 0.25 * k), 0), r + 0.008, 0.025,
-					ModelKit.paint(Color("#9aa2a8"), 0.5), -1.0, 20)
+					ModelKit.paint(Color("#9aa2a8"), 0.5), -1.0, sides)
 			# The chequered band near the top: two rows of dark panels round the silo, offset like a chessboard.
-			for row in 2:
+			for row in (0 if plain else 2):
 				for k in SILO_CHECKS:
 					if (k + row) % 2 == 1:
 						continue
