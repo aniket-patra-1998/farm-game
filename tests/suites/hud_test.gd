@@ -384,3 +384,19 @@ func test_337_the_interface_scales_with_the_screen() -> void:
 	_check(64.0 * phone * 2.0 / 440.0 * 25.4 >= 6.99, "a dense phone: never under 7 mm to touch")
 	_eq(UiTheme.scale_for(4000.0, 64.0, 1.0, 96.0, false, rules), 1.2, "never past the most")
 	_eq(UiTheme.size("round_share"), 0.5, "shares aren't scaled")
+
+
+func test_352_the_release_shows_only_its_items_and_features() -> void:
+	Release.whole = false
+	var data := JSON.parse_string(FileAccess.get_file_as_string(Release.DATA)) as Dictionary
+	for id: String in data["items"]:
+		_check(Game.items.has(id) or Game.crops.has(id), "%s in data/v1.json is a catalog item or crop" % id)
+	_check(Release.has("cow") and not Release.has("tractor"), "a listed animal is in; a vehicle is not")
+	_check(not Release.on("strays") and Release.on("no_such_feature"), "a switched-off feature is off; others on")
+	_eq(Release.balance("synergy.enabled"), false, "the release's own balance values apply")
+	for id in Game.item_order:
+		if Game.item_data(id)["kind"] == "vehicle":
+			_check(not HudMarket._for_sale(id), "%s is not for sale in this release" % id)
+	_check(not Game.unlocks_at(12).has(str(Game.item_data("tractor")["name"])), "a switched-off item doesn't unlock")
+	Release.whole = true
+	_check(Release.has("tractor") and Release.balance("synergy.enabled") == null, "with everything on, all is in")

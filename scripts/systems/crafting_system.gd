@@ -66,9 +66,11 @@ func _recipe(rid: String) -> RecipeDef:
 	return game.catalog.get_def(rid) as RecipeDef
 
 
-## Every recipe the building knows, unlocked or not, by star.
+## Every recipe the building knows, unlocked or not, by star (only those whose crops are all in this release:
+## docs/V1.md).
 func recipes_of(building_id: String) -> Array[RecipeDef]:
-	return game.catalog.recipes_of(building_id)
+	return game.catalog.recipes_of(building_id).filter(func(r: RecipeDef) -> bool:
+		return r.inputs().keys().all(func(c: String) -> bool: return Release.has(c)))
 
 
 func recipe_unlocked(obj: Dictionary, rid: String) -> bool:

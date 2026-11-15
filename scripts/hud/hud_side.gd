@@ -52,6 +52,9 @@ func build(root: Control) -> void:
 	for entry: Array in [["market", "MARKET", hud._show_market], ["album", "COLLECTIONS", hud._show_collections],
 			["ribbon", "RIBBONS", hud._show_ribbons], ["neighbours", "NEIGHBOURS", _show_neighbours],
 			["gear", "SETTINGS", hud._show_settings]]:
+		if (entry[1] == "COLLECTIONS" and not Release.on("collections")) or (entry[1] == "RIBBONS"
+				and not Release.on("ribbons")):
+			continue   # (not in this release: docs/V1.md)
 		# Icon only (the name shows on a long press): the menu's pictures say what they are.
 		var b := UiKit.tool_button(str(entry[0]), tr(str(entry[1])), w, h, 0.0, null, false)
 		b.pressed.connect(entry[2])

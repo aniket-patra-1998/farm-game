@@ -44,7 +44,7 @@ func load_from(data: Dictionary) -> void:
 ## Rolls every family triggered by `work` ("harvest"); returns what was found: [{family, id, name, rarity}].
 func roll(work: String, stars := 0) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	if not game.drops_enabled:
+	if not game.drops_enabled or not Release.on("finds"):
 		return out
 	for fid: String in families:
 		var trig: Dictionary = families[fid].get("trigger", {})

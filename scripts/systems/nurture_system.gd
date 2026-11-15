@@ -323,6 +323,8 @@ func from_garden(garden: Dictionary) -> Array[String]:
 
 ## Puts a found young on the farm (or in the Barn with no room), secretly set to become `becomes`.
 func _found(young_id: String, becomes: String) -> bool:
+	if not Release.on("mystery_young"):
+		return false
 	var o := {"uid": game.next_uid, "id": young_id, "t": game.now(), "fed": 0, "becomes": becomes}
 	game.next_uid += 1
 	var spot := game.free_spot_for(young_id)

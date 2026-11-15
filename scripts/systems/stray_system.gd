@@ -54,6 +54,8 @@ func _has_stray() -> bool:
 
 ## Picks an animal near the player's level (cheaper ones more often) and an open grass tile.
 func _spawn_stray() -> bool:
+	if not Release.on("strays"):
+		return false
 	var choices: Array[String] = []
 	var weights: Array[float] = []
 	var total := 0.0

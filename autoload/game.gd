@@ -1084,10 +1084,10 @@ func level_reward(lvl: int) -> int:
 func unlocks_at(lvl: int) -> Array[String]:
 	var names: Array[String] = []
 	for id in crop_order:
-		if int(crops[id]["unlock_level"]) == lvl:
+		if int(crops[id]["unlock_level"]) == lvl and Release.has(id):
 			names.append(crops[id]["name"] + tr("SEEDS"))
 	for id in item_order:
-		if int(items[id]["unlock_level"]) == lvl:
+		if int(items[id]["unlock_level"]) == lvl and Release.has(id):
 			names.append(items[id]["name"])
 	return names
 

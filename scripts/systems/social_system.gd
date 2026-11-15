@@ -315,9 +315,13 @@ func _deliver_answers(now: int) -> int:
 ## Fuel is only useful once there is a tank, and a watering only while the young one is still growing.
 func _usable(item: Dictionary) -> bool:
 	var give: Dictionary = item.get("give", {})
+	if give.has("id") and not Release.has(str(give["id"])):
+		return false   # (not in this release: docs/V1.md)
 	match str(give.get("what", "")):
 		InboxItem.FUEL:
-			return game.vehicles.fuel_unlocked
+			return game.vehicles.fuel_unlocked and Release.on("vehicles")
+		InboxItem.YOUNG:
+			return Release.on("mystery_young")
 		InboxItem.WATER:
 			var o := game.object_by_uid(int(give.get("uid", 0)))
 			return game.nurture.is_young(o) and game.nurture.fed(o) < game.nurture.needs(o)

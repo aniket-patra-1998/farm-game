@@ -87,6 +87,9 @@ static func reload() -> void:
 
 static func _value(key: String) -> Variant:
 	_load()
+	var released: Variant = Release.balance(key)   # (this release's own value: docs/V1.md)
+	if released != null:
+		return released
 	if not _values.has(key):
 		if not _missing.has(key):
 			_missing[key] = true

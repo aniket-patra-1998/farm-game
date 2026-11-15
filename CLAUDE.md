@@ -62,7 +62,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - Art follows docs/ASSETS.md: looks and smoothness first (size is no constraint up to 250 MB installed); art is made offline as files (glTF), imported under rules, asked for by name through one registry, with a fallback and a budget; code never builds art at runtime in new work.
 - Run `tools/precheck.sh <godot>` before every push: what CI checks (gdlint's limits, generated docs, strings, all tests and the log gate).
 - A plot index's row and column are `GameState.row_of`/`col_of`, and `Game.on_farm(i)` says whether it lies on the farm now; never the maths by hand.
-- docs/V1.md is the line for the first release (what is in, what is switched off, the dates and the launch bar); work outside it waits unless asked.
+- docs/V1.md is the line for the first release (what is in, what is switched off, the dates and the launch bar); work outside it waits unless asked. `Release` (data/v1.json) applies it: `Release.has(id)` for anything sold, unlocked, given or found, `Release.on(feature)` for switched-off systems, and the release's own balance values; nothing is deleted, and tests run with everything on (`Release.whole`).
 - docs/AUDIT.md is the plan: every system a full FarmVille replica first, smooth on low-end phones. A request
   is a starting point: apply each fix to every similar module, not just the one named.
 - Follow `REVIEW.md`. Item behaviour on catalog classes; numbers as named constants or data.

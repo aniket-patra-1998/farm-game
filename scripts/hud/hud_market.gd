@@ -69,7 +69,7 @@ func building_section(tab: String) -> Array[String]:
 
 
 static func _for_sale(id: String) -> bool:
-	return int(Game.item_data(id)["unlock_level"]) < 99
+	return int(Game.item_data(id)["unlock_level"]) < 99 and Release.has(id)
 
 
 func _add_grid(content: VBoxContainer, ids: Array[String], tell: Callable) -> void:

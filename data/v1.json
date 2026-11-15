@@ -1,0 +1,33 @@
+{
+  "about": "Version 1 (docs/V1.md): what the first release shows. Everything else stays in the game, switched off. Tests run with everything on (Release.whole).",
+  "features": {
+    "vehicles": false,
+    "raising": false,
+    "feed_mill": false,
+    "finds": false,
+    "strays": false,
+    "mystery_young": false,
+    "bees": false,
+    "collections": false,
+    "ribbons": false
+  },
+  "balance": {
+    "synergy.enabled": false,
+    "synergy.home_boosts": false,
+    "feeds.enabled": false
+  },
+  "items": [
+    "strawberries", "wheat", "eggplant", "soybeans", "peanuts", "squash", "pumpkins", "spinach", "rice", "carrots",
+    "cotton", "raspberries", "cranberries", "bell_peppers", "sunflowers", "tomatoes", "pineapples", "watermelon",
+    "grapes", "corn", "sugarcane",
+    "chicken", "brown_chicken", "duck", "cow", "sheep", "pig", "goat", "horse", "pony", "rabbit", "turkey",
+    "baby_turkey",
+    "apple_tree", "plum_tree", "lemon_tree", "fig_tree", "almond_tree", "cherry_tree", "banana_tree", "orange_tree",
+    "chestnut_tree", "peach_tree",
+    "barn", "garden_shed", "chicken_coop", "duck_pond", "cow_shed", "sheep_pen", "rabbit_hutch", "goat_pen",
+    "horse_stable", "pig_pen", "orchard", "bakery",
+    "farmhouse", "mailbox", "farm_stand", "mastery_sign", "dirt_path", "brick_path", "wooden_fence",
+    "white_picket_fence", "wooden_gate", "hedge", "hay_bale", "haystack", "scarecrow", "flower_bed", "bench",
+    "birdhouse", "pink_flamingo", "water_well", "lamp_post", "small_pond", "fountain", "oak_tree", "pine_tree"
+  ]
+}

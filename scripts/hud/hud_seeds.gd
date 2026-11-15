@@ -14,6 +14,8 @@ func build_seeds(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(tr("PICK_A_SEED_THEN_TAP_PLOWED_PLOTS"), 20, BookPanel.CREAM))
 	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
 	for id: String in Game.crop_order:
+		if not Release.has(id):
+			continue
 		grid.add_child(seed_card(id))
 	content.add_child(grid)
 
