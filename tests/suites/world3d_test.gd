@@ -45,7 +45,8 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 			missing.append(id)
 	_eq(missing.size(), 0, "every decoration has a 3D model %s" % [missing])
 	# Building features are all ones BuildingModel knows how to build.
-	var known := ["yard", "silo", "stilts", "ramp", "chimney", "cupola", "loft_door", "stall_doors", "porch", "terrace",
+	var known := ["yard", "silo", "stilts", "ramp", "egg_chutes", "chimney", "cupola", "loft_door",
+		"stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
 		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag"]
 	known.append_array(BuildingModel.SIGNATURES)

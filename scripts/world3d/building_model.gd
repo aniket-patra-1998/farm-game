@@ -794,6 +794,23 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 					ModelKit.surface(WOOD, "boards"))
 				ModelKit.ball(root, Vector3(hi.x + 0.07, lo.y + 0.19, z), 0.035, ModelKit.paint(Color("#f6ecd2")),
 					Vector3(1, 1.25, 1))
+		"egg_chutes":
+			# Chutes down the side wall to a basket of eggs, one more with every size: the coop's own sign of how
+			# big it is (FarmVille's Big Coop had two, its Huge Coop three).
+			var chutes := int(f.get("count", 1))
+			var from := lo.y + 0.08
+			for k in chutes:
+				var z := lerpf(lo.z + 0.08, hi.z - 0.08, (k + 0.5) / chutes)
+				var chute := ModelKit.box(root, Vector3(-0.04, -0.012, 0.0), Vector3(0.04, 0.012, Vector2(0.26, from).length()),
+					ModelKit.surface(WOOD, "boards"))
+				if chute != null:
+					chute.position = Vector3(hi.x, from, z)
+					chute.rotation = Vector3(atan2(from, 0.26), PI / 2.0, 0.0)
+				ModelKit.box(root, Vector3(hi.x + 0.22, 0.0, z - 0.06), Vector3(hi.x + 0.34, 0.06, z + 0.06),
+					ModelKit.paint(HAY))
+				for egg in 2:
+					ModelKit.ball(root, Vector3(hi.x + 0.26 + 0.05 * egg, 0.08, z - 0.02 + 0.04 * egg), 0.03,
+						ModelKit.paint(Color("#f6ecd2")), Vector3(1, 1.25, 1))
 		"silo":
 			var at: Array = f.get("at", [0.85, 0.2])
 			var base := Vector3(float(at[0]) * fw, 0, float(at[1]) * fd)
