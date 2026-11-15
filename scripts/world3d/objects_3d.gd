@@ -18,6 +18,7 @@ const FULL_EVERY := 10        # a full look at everything every this many second
 # A sync builds models for at most this long a frame, then carries on the next frame: a farm with hundreds of
 # things appears over a few frames instead of freezing (a phone says "not responding" after 5 s of that).
 const BUILD_BUDGET_MS := 12
+const BUILD_STAGES := 3        # a construction site made as a file shows `when_stage_0`..`_2` as it goes up
 const SCENERY_Y := -Ground3D.SLAB
 const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
 const GROVE_MASK := 0xff       # woods stand shoulder to shoulder: their trees are drawn crowded on every side
@@ -336,6 +337,18 @@ func _at_work(o: Dictionary) -> bool:
 	return Game.crafting.crafts_done(o) < (o.get("slots", []) as Array).size()
 
 
+## What an asset made as a file is shown in (AssetRegistry.apply_state): its level, ready or not, withered,
+## at work, broken, its building stage (0..BUILD_STAGES-1).
+func state_of(o: Dictionary) -> Dictionary:
+	var state := {"ready": Game.is_ready(o), "withered": Game.is_withered(o), "broken": bool(o.get("broken", false))}
+	if Game.is_building_item(str(o["id"])):
+		state["level"] = Game.level_of(o)
+		state["working"] = _at_work(o)
+		if Game.under_construction(o):
+			state["stage"] = mini(int(Game.land.construction_progress(o) * BUILD_STAGES), BUILD_STAGES - 1)
+	return state
+
+
 ## A tree's look (one of Instancer.VARIANTS, `look`), shared: built once, or loaded when kept (ModelStore).
 static func tree_look(id: String, ready: bool, mask: int, look: int) -> Node3D:
 	var it := Game.item_data(id)
@@ -377,6 +390,8 @@ static func building_look(id: String, level: int, working: bool, broken: bool) -
 static func make_every_look() -> int:
 	var made := 0
 	for id: String in Game.item_order:
+		if AssetRegistry.has_model(id):
+			continue   # (made as a file: nothing to build)
 		var kind := Game.kind_of({"id": id})
 		var looks: Array[Node3D] = []
 		match kind:
@@ -411,49 +426,55 @@ func _build(o: Dictionary) -> Node3D:
 		a.behaviour = _mind_of(a)
 		a.update(0.0)
 		return a
-	match Game.kind_of(o):
-		"tree":
-			# One of a few built looks of this kind (Instancer), turned and sized a little for this one.
-			var look := Instancer.variant(int(o["row"]), int(o["col"]))
-			var grown := ScaleGuide.factor(str(o["id"]))
-			var ready := Game.is_ready(o)
-			var mask := Crowding.mask(o)
-			node = tree_look(str(o["id"]), ready, mask, look)
-			var rng := RandomNumberGenerator.new()
-			rng.seed = int(o["uid"])
-			# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of its
-			# look, and its crown must not reach into theirs.)
-			if mask == 0:
-				turn = Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * (1.0 + rng.randf_range(
-					-TREE_SIZE_JITTER, TREE_SIZE_JITTER)))
-		"vehicle":
-			node = SpaceFit.fit_model(VehicleModel.build(it, Game.under_construction(o)), fp)
-		"decor":
-			if Game.links.group_of(str(o["id"])) != "":
-				node = Node3D.new()   # drawn by the LinkLayer, which joins it to its neighbours; this stands in for taps
-			else:
-				# Built once per look and shared (Instancer): what a piece's look depends on is its kind, one of a
-				# few variants by where it stands (for the ones drawn a little differently each time), and the
-				# mastered crop or flower a sign or bunch shows.
+	# Made as a file (AssetRegistry), in this thing's state; else its code-built stand-in.
+	node = AssetRegistry.instance(str(o["id"]), state_of(o))
+	if node != null:
+		if BuildingFill.shows(o):
+			node.add_child(BuildingFill.create(o, node))
+	else:
+		match Game.kind_of(o):
+			"tree":
+				# One of a few built looks of this kind (Instancer), turned and sized a little for this one.
 				var look := Instancer.variant(int(o["row"]), int(o["col"]))
-				node = decor_look(str(o["id"]), look, str(o.get("crop", o.get("flower", ""))))
-		"young":
-			node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
-		"bloom":
-			# One of a few built looks per state (Instancer), as for trees.
-			var look := Instancer.variant(int(o["row"]), int(o["col"]))
-			var grown := ScaleGuide.factor(str(o["id"]))
-			var d := Game.catalog.get_def(str(o["id"])) as BloomDef
-			node = Instancer.copy_of(Instancer.key_of(["bloom", o["id"], grown, Game.is_ready(o), Game.is_withered(o),
-				d != null and d.is_full(), Crowding.mask(o), look]), func() -> Node3D:
-					return SpaceFit.fit_model(BloomModel.build(it, o, grown, look), fp))
-		_:
-			if Game.under_construction(o):
-				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
-			else:
-				node = building_look(str(o["id"]), Game.level_of(o), _at_work(o), bool(o.get("broken", false)))
-				if BuildingFill.shows(o):
-					node.add_child(BuildingFill.create(o, node))
+				var grown := ScaleGuide.factor(str(o["id"]))
+				var ready := Game.is_ready(o)
+				var mask := Crowding.mask(o)
+				node = tree_look(str(o["id"]), ready, mask, look)
+				var rng := RandomNumberGenerator.new()
+				rng.seed = int(o["uid"])
+				# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of its
+				# look, and its crown must not reach into theirs.)
+				if mask == 0:
+					turn = Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * (1.0 + rng.randf_range(
+						-TREE_SIZE_JITTER, TREE_SIZE_JITTER)))
+			"vehicle":
+				node = SpaceFit.fit_model(VehicleModel.build(it, Game.under_construction(o)), fp)
+			"decor":
+				if Game.links.group_of(str(o["id"])) != "":
+					node = Node3D.new()   # drawn by the LinkLayer, which joins it to its neighbours; this stands in for taps
+				else:
+					# Built once per look and shared (Instancer): what a piece's look depends on is its kind, one of a
+					# few variants by where it stands (for the ones drawn a little differently each time), and the
+					# mastered crop or flower a sign or bunch shows.
+					var look := Instancer.variant(int(o["row"]), int(o["col"]))
+					node = decor_look(str(o["id"]), look, str(o.get("crop", o.get("flower", ""))))
+			"young":
+				node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
+			"bloom":
+				# One of a few built looks per state (Instancer), as for trees.
+				var look := Instancer.variant(int(o["row"]), int(o["col"]))
+				var grown := ScaleGuide.factor(str(o["id"]))
+				var d := Game.catalog.get_def(str(o["id"])) as BloomDef
+				node = Instancer.copy_of(Instancer.key_of(["bloom", o["id"], grown, Game.is_ready(o), Game.is_withered(o),
+					d != null and d.is_full(), Crowding.mask(o), look]), func() -> Node3D:
+						return SpaceFit.fit_model(BloomModel.build(it, o, grown, look), fp))
+			_:
+				if Game.under_construction(o):
+					node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
+				else:
+					node = building_look(str(o["id"]), Game.level_of(o), _at_work(o), bool(o.get("broken", false)))
+					if BuildingFill.shows(o):
+						node.add_child(BuildingFill.create(o, node))
 	var dressing := Dressing.make(Game.kind_of(o), fp, int(o["uid"]))
 	if dressing != null:
 		dressing.name = String(DRESSING)

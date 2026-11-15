@@ -45,8 +45,9 @@ Godot's importer turns each `.glb` into a game resource. Per asset type, an impo
 - **Far stand-in (impostor)**: for things seen from the farm's zoomed-out view (trees, buildings, animals), a
   pre-rendered picture from the game's fixed camera angle, drawn as a camera-facing card at far zoom. This is
   how Hay Day/Township-style games keep huge farms cheap: detail costs nothing when it is too small to see.
-- **Materials** are replaced by instances of our master materials (§3) by name; textures are compressed for
-  phones (ETC2/ASTC) and given mipmaps.
+- **Materials**: every plain material becomes an instance of the master material (§3) with its colour and
+  texture (`AssetRegistry.master_for`, as the asset is drawn); a ShaderMaterial the artist chose is kept.
+  Textures are compressed for phones (ETC2/ASTC) and given mipmaps.
 - **Collision/picking** shape from the footprint, not the mesh.
 - **Validation**: triangles, bones, textures and size against the type's budget; a failing asset fails the build.
 
@@ -74,13 +75,13 @@ atlas or texture array, so a building is one or two draws whatever its detail.
 
 ## 5. The registry: one way to ask for an asset
 
-`AssetRegistry` (autoload) maps an asset id to its files and options, from `data/assets.json`, generated from the
-catalog plus overrides:
+`AssetRegistry` (scripts/world3d/asset_registry.gd) maps an asset id to its file and budget, from
+`data/assets.json` (budgets per kind live there too):
 
     "cow": {"model": "res://art/animals/cow.glb", "family": "cow", "impostor": true, "budget": "animal"}
 
-`AssetRegistry.instance(id, variant)` returns a ready node (from a shared, already-loaded resource);
-`AssetRegistry.batch(id)` returns what a `MultiMesh` needs. Callers never load paths. If the file is missing, the
+`AssetRegistry.instance(id, state)` returns a ready node in that state (from a shared, already-loaded
+resource); `Objects3D` and `ItemIcons` ask it first. (Batches for `MultiMesh` crowds come with the animals.) Callers never load paths. If the file is missing, the
 registry returns today's code-built model (`ModelKit`) as the stand-in, so moving to files can go one asset at a
 time and nothing ever breaks.
 
@@ -110,7 +111,8 @@ fails a change that breaks a budget.
 
 ## 9. Checks in CI
 
-- `asset_lint`: conventions, bone and clip names, budgets, every catalog item has an asset or a stand-in.
+- `tests/suites/assets_test.gd`: every listed asset loads, fits its budget and footprint; states and the
+  stand-in fallback work. (Bone and clip names come with the animals.)
 - Contact sheet and turntables of every asset; screenshot comparison against the last build.
 - The performance probe on the showcase per quality level, against the budgets.
 
@@ -118,14 +120,16 @@ fails a change that breaks a budget.
 
 These decide whether the system holds up for years. Each is fixed once and checked in CI.
 
-1. **Art direction bible** (`docs/ART_BIBLE.md`, with reference sheets): shape language, proportions per family,
+1. **Art direction bible** (`docs/ART_BIBLE.md`: the new animals' style, with reference sheets): shape language, proportions per family,
    palette, how light and colour are painted, line and outline, how cute vs real, how readable at the farthest
    zoom (silhouette test). Every asset, from any source, is reviewed against it. Without it, assets from our
    builders, Blender and bought packs never look like one game.
-2. **The camera contract**: one fixed pitch and facing (FarmVille's three-quarter view), zoom between two fixed
-   limits, never rotated. Impostors, item pictures and the bible's readability rules are made for exactly this
+2. **The camera contract**: orthographic, turned 45° and tilted 30° down (`IsoProjection.PITCH`: tiles are
+   twice as wide as tall, the 2:1 view of FarmVille), looking toward the farm's back corner; zoom from about
+   `CLOSEST_TILES` (3.5) tiles across to `FURTHEST_OUT` past the whole farm; never rotated. Impostors, item pictures and the bible's readability rules are made for exactly this
    view; if the camera ever rotates, impostors need several angles, so the contract is written down.
-3. **The lighting model**: a real-time sun and sky light (day, night, weather move them), soft ambient occlusion
+3. **The lighting model**: a real-time sun (elevation 9°–58° over the day, `Farm3D.SUN_*`, the moon at night), a
+   soft fill from the other side and a coloured ambient (day, night, weather move them, `Farm3D`), soft ambient occlusion
    baked into each asset's colours (never lightmaps: things on a farm move), contact shades under everything,
    real shadows from the sun on mid and up. The master shaders implement it; assets never bring their own lights.
 4. **Asset states**: every way a thing changes on the farm is one mechanism, named in the file: building levels
