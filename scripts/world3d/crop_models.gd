@@ -27,7 +27,10 @@ static func mesh(shape: String, stage: String) -> ArrayMesh:
 		var ripe := stage == "ripe"
 		var cap := CropForms.look("height", 0.0) * (1.0 if ripe else CropForms.look("young", 1.0))
 		_cache[key] = _fit(_build(shape, stage), cap, CropForms.look("leaf_ripe", 1.0) if ripe else 1.0,
-			bool(CropForms.spec(shape).get("squash", false)), CropForms.look("reach", 0.0))
+			bool(CropForms.spec(shape).get("squash", false)),
+			float(CropForms.spec(shape).get("reach", CropForms.look("reach", 0.0))))
+		if CropForms.is_plot(shape) and stage in ["seeds", "sprout", "withered"]:
+			_cache[key] = _rows(_cache[key])
 	return _cache[key]
 
 
@@ -83,6 +86,28 @@ static func _fit(mesh: ArrayMesh, cap: float, dim := 1.0, squash := false, reach
 	arrays[Mesh.ARRAY_COLOR] = cols
 	var out := ArrayMesh.new()
 	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return out
+
+
+## Three rows of three of a plant as one mesh: the stages every crop shares (seeds, a sprout, withered), for a
+## crop drawn a plot at a time.
+static func _rows(mesh: ArrayMesh) -> ArrayMesh:
+	var arrays := mesh.surface_get_arrays(0)
+	var pts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var cols := PackedColorArray()
+	for spot: Vector2 in Crops3D.SPOTS:
+		for p: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
+			pts.append(p + Vector3(spot.x, 0.0, spot.y) / Crops3D.PLANT_SCALE)
+		normals.append_array(arrays[Mesh.ARRAY_NORMAL])
+		cols.append_array(arrays[Mesh.ARRAY_COLOR])
+	var all := []
+	all.resize(Mesh.ARRAY_MAX)
+	all[Mesh.ARRAY_VERTEX] = pts
+	all[Mesh.ARRAY_NORMAL] = normals
+	all[Mesh.ARRAY_COLOR] = cols
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, all)
 	return out
 
 

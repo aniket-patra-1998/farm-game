@@ -1631,13 +1631,13 @@ func test_324_one_plot_changes_only_its_own_plants() -> void:
 	var crops := Crops3D.new()
 	add_child(crops)
 	var full := crops.plant_count()
-	_eq(full, 400 * Crops3D.SPOTS.size(), "a planted 20x20 field: nine plants a plot")
+	_eq(full, 400 * Crops3D.spots_of(crop_id).size(), "a planted 20x20 field: its plants on every plot")
 	var i := Game.index_of(7, 7)
 	Game.plots[i] = {"state": "plowed"}
 	var began := Time.get_ticks_usec()
 	crops.update([i])
 	var one := Time.get_ticks_usec() - began
-	_eq(crops.plant_count(), full - Crops3D.SPOTS.size(), "clearing one plot takes away its nine plants")
+	_eq(crops.plant_count(), full - Crops3D.spots_of(crop_id).size(), "clearing one plot takes away its plants")
 	Game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
 	crops.update([i])
 	_eq(crops.plant_count(), full, "and planting it again brings them back")
@@ -1685,7 +1685,8 @@ func test_326_beds_tufts_and_plants_follow_each_plot_and_a_smaller_farm() -> voi
 	var small := Crops3D.new()
 	add_child(small)
 	_eq(crops.plant_count(), small.plant_count(), "plants on the smaller farm only")
-	_eq(crops.plant_count(), 35 * Crops3D.SPOTS.size(), "six by six plots of plants, less the one back to grass")
+	_eq(crops.plant_count(), 35 * Crops3D.spots_of(crop_id).size(),
+		"six by six plots of plants, less the one back to grass")
 	plots.update([])
 	ground.update_tiles([])
 	var small_plots := Plots3D.new()
@@ -1886,6 +1887,17 @@ func test_353_crops_stand_level_and_show_their_harvest() -> void:
 	_check(absf(fitted.get_aabb().size.x - 0.1) < 0.005, "and its produce keeps its size")
 	var cols: PackedColorArray = CropModels._fit(tall.commit(), 0.2, 0.5).surface_get_arrays(0)[Mesh.ARRAY_COLOR]
 	_check(cols[0].g < 0.6, "a ripe plant's green leaves are darkened, so its harvest stands out")
+	# A crop drawn a plot at a time stands once on its plot, covers it from edge to edge and shows its produce.
+	_check(CropForms.is_plot("watermelon") and not CropForms.is_plot("wheat"), "some crops are drawn a plot at a time")
+	_eq(Crops3D.spots_of("watermelon").size(), 1, "such a crop stands once on its plot")
+	_eq(Crops3D.spots_of("wheat").size(), 9, "the others three rows of three")
+	for form: String in CropForms.forms():
+		if CropForms.is_plot(form):
+			var box := CropModels.mesh(form, "ripe").get_aabb()
+			_check(box.size.x * Crops3D.PLANT_SCALE >= 1.0 and box.size.z * Crops3D.PLANT_SCALE >= 1.0,
+				"ripe %s covers its plot, so plots of it join" % form)
+			_check(CropModels.mesh(form, "sprout").get_aabb().size.x * Crops3D.PLANT_SCALE > 0.5,
+				"%s sprouts all over its plot" % form)
 	# Small produce is drawn bigger than asked, big produce and leaves as asked.
 	for part: Array in [[0.01, 0.0, 2.0, "small produce is drawn bigger"], [0.06, 0.0, 1.0, "big produce as asked"],
 			[0.01, 1.0, 1.0, "a leaf as asked"]]:

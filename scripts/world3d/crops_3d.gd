@@ -12,6 +12,7 @@ const ROW_GAP := 0.26   # between plants in a plot's rows and columns: three row
 const SPOTS := [Vector2(-ROW_GAP, -ROW_GAP), Vector2(0, -ROW_GAP), Vector2(ROW_GAP, -ROW_GAP),
 	Vector2(-ROW_GAP, 0), Vector2(0, 0), Vector2(ROW_GAP, 0),
 	Vector2(-ROW_GAP, ROW_GAP), Vector2(0, ROW_GAP), Vector2(ROW_GAP, ROW_GAP)]
+const ONE_SPOT := [Vector2.ZERO]
 const GROW_CHECK := 1.0     # seconds between checks of the clock against the next plot due to change look
 const SPROUT_FROM := 0.2    # of the growing time: the seeds have sprouted
 const YOUNG_FROM := 0.45    # and the sprouts are young plants
@@ -120,10 +121,11 @@ static func picture_model(id: String) -> Node3D:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
 	mm.mesh = CropModels.mesh(CropForms.form_of(id, str(crop.get("shape", "berry"))), "ripe")
-	mm.instance_count = SPOTS.size()
-	for k in SPOTS.size():
-		var spot: Vector2 = SPOTS[k]
-		mm.set_instance_transform(k, Transform3D(_plant_basis(float(k * 13 % 17) / 17.0 * TAU, PLANT_SCALE, k),
+	var spots := spots_of(id)
+	mm.instance_count = spots.size()
+	for k in spots.size():
+		var spot: Vector2 = spots[k]
+		mm.set_instance_transform(k, Transform3D(_basis_for(spots.size(), float(k * 13 % 17) / 17.0 * TAU, k),
 			Vector3(0.5 + spot.x, Plots3D.HEIGHT, 0.5 + spot.y)))
 		mm.set_instance_custom_data(k, pack(0.0, 0.0, false))
 	var plants := MultiMeshInstance3D.new()
@@ -145,6 +147,20 @@ func material_for(col: Color) -> ShaderMaterial:
 func _set_wind(v: float) -> void:
 	wind = v
 	ShaderGlobals.set_value(&"wind", v)  # crops read the one global wind
+
+
+## Where a plot's plants stand, from its middle: three rows of three, or once in the middle for a crop drawn a
+## plot at a time (CropForms.is_plot: its form lays out the whole plot).
+static func spots_of(crop_id: String) -> Array:
+	return ONE_SPOT if CropForms.is_plot(CropForms.form_of(crop_id, "")) else SPOTS
+
+
+## A plant's turn, size and lean, each its own; a crop drawn a plot at a time (`count` 1) stands square and true,
+## turned by quarters, so its plots join edge to edge.
+static func _basis_for(count: int, turn: float, seed_value: int) -> Basis:
+	if count > 1:
+		return _plant_basis(turn, PLANT_SCALE, seed_value)
+	return Basis(Vector3.UP, floorf(turn / (PI / 2.0)) * PI / 2.0).scaled(Vector3.ONE * PLANT_SCALE)
 
 
 ## The stage a plot's plants are drawn at, and the stretch of time (unix seconds) the stage's growing spans:
@@ -242,10 +258,11 @@ static func _chunk(i: int, data: Color) -> PackedFloat32Array:
 	var out := PackedFloat32Array()
 	var r := GameState.row_of(i)
 	var c := GameState.col_of(i)
-	for k in SPOTS.size():
-		var spot: Vector2 = SPOTS[k]
+	var spots := spots_of(str((Game.plots[i] as Dictionary).get("crop", "")))
+	for k in spots.size():
+		var spot: Vector2 = spots[k]
 		var turn := float((i * 7 + k * 13) % 17) / 17.0 * TAU
-		var b := _plant_basis(turn, PLANT_SCALE, i * 5 + k)
+		var b := _basis_for(spots.size(), turn, i * 5 + k)
 		var at := Vector3(c + 0.5 + spot.x, Plots3D.HEIGHT, r + 0.5 + spot.y)
 		out.append_array([b.x.x, b.y.x, b.z.x, at.x, b.x.y, b.y.y, b.z.y, at.y, b.x.z, b.y.z, b.z.z, at.z,
 			1.0, 1.0, 1.0, 1.0, data.r, data.g, data.b, data.a])
@@ -316,9 +333,10 @@ func pop(i: int, crop_id: String) -> void:
 	mm.use_custom_data = true
 	mm.use_colors = true   # (as above: an unset instance colour is black in the compatibility renderer)
 	mm.mesh = CropModels.mesh(CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), "ripe")
-	mm.instance_count = SPOTS.size()
-	for k in SPOTS.size():
-		var spot: Vector2 = SPOTS[k]
+	var spots := spots_of(crop_id)
+	mm.instance_count = spots.size()
+	for k in spots.size():
+		var spot: Vector2 = spots[k]
 		mm.set_instance_transform(k, Transform3D(Basis().scaled(Vector3.ONE * PLANT_SCALE), Vector3(spot.x, 0, spot.y)))
 		mm.set_instance_custom_data(k, pack(0.0, 0.0, false))
 		mm.set_instance_color(k, Color.WHITE)
