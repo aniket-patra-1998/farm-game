@@ -16,6 +16,7 @@ const VARIANTS := 8      # different looks built of a kind that should not look 
 const KEPT := 128        # templates kept; past that the oldest are let go (they are rebuilt if needed again)
 
 static var _templates := {}   # key -> a baked Node3D, never in the tree
+static var _pieces := {}      # key -> what pieces_of made
 static var _parts := {}       # key -> [{mesh, shadow}]
 
 
@@ -63,6 +64,42 @@ static func parts_of(key: String, build: Callable) -> Array:
 	return parts
 
 
+## What `build` makes (a baked Node3D, freed after), taken apart to be drawn in batches (DecorLayer), built once
+## per key: {"pieces": [{mesh, shadow, material (an override, or null), xf (its place in the model)}],
+## "root" (the model's own transform, e.g. how it was fitted to its tile), "box" (around it, in its own space)}.
+## Unlike `parts_of` it goes all the way down the model (a part that moves on its own keeps its place).
+static func pieces_of(key: String, build: Callable) -> Dictionary:
+	if _pieces.has(key):
+		return _pieces[key]
+	if _pieces.size() >= KEPT:
+		_pieces.erase(_pieces.keys()[0])
+	var baked: Node3D = ModelStore.cached(key, build)
+	var out := {"pieces": [], "root": Transform3D.IDENTITY, "box": AABB()}
+	if baked != null:
+		out["root"] = baked.transform
+		_take_apart(baked, Transform3D.IDENTITY, out)
+		baked.free()
+	_pieces[key] = out
+	return out
+
+
+static func _take_apart(node: Node, xf: Transform3D, out: Dictionary) -> void:
+	for child in node.get_children():
+		if not child is Node3D:
+			continue
+		var at := xf * (child as Node3D).transform
+		if child is MeshInstance3D and (child as MeshInstance3D).mesh != null:
+			var mi := child as MeshInstance3D
+			for k in mi.mesh.get_surface_count():
+				if mi.get_surface_override_material(k) != null:
+					mi.mesh.surface_set_material(k, mi.get_surface_override_material(k))
+			(out["pieces"] as Array).append({"mesh": mi.mesh, "xf": at, "material": mi.material_override,
+				"shadow": mi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF})
+			var box := at * mi.mesh.get_aabb()
+			out["box"] = box if (out["pieces"] as Array).size() == 1 else (out["box"] as AABB).merge(box)
+		_take_apart(child, at, out)
+
+
 ## Draws `parts` (from `parts_of`) once for every transform, as one batch per part, under `parent`. Returns
 ## the batches.
 static func place(parent: Node3D, parts: Array, at: Array[Transform3D]) -> Array[MultiMeshInstance3D]:
@@ -92,6 +129,7 @@ static func clear() -> void:
 	_templates.clear()
 	_parts.clear()
 	Animal3D.clear_templates()
+	_pieces.clear()
 
 
 static func _forget(store: Dictionary) -> void:

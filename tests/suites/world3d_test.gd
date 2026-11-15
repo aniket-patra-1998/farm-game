@@ -1736,11 +1736,15 @@ func test_329_decor_and_blooms_share_built_looks_by_what_they_show() -> void:
 	var look := Instancer.VARIANTS   # (two tiles VARIANTS apart along a row are the same variant)
 	var a: Node3D = objects._build({"uid": 1, "id": deco, "row": 2, "col": 2})
 	var b: Node3D = objects._build({"uid": 2, "id": deco, "row": 2, "col": 2 + look})
-	_check(_mesh_ids(a) == _mesh_ids(b) and not _mesh_ids(a).is_empty(), "two %s in one look share their meshes" % deco)
+	# (A decoration is drawn in a batch with the others of its look: its node is only a stand-in.)
+	_check(_mesh_ids(a).is_empty() and objects.decor.has_piece(1) and objects.decor.has_piece(2),
+		"a %s is drawn by the decoration layer, not as meshes of its own" % deco)
+	_check(objects.decor.meshes_of(1) == objects.decor.meshes_of(2) and not objects.decor.meshes_of(1).is_empty(),
+		"two %s in one look share their meshes" % deco)
 	var crops: Array = Game.crop_order.slice(0, 2)
 	var s1: Node3D = objects._build({"uid": 3, "id": "mastery_sign", "row": 4, "col": 4, "crop": crops[0]})
 	var s2: Node3D = objects._build({"uid": 4, "id": "mastery_sign", "row": 4, "col": 4 + look, "crop": crops[1]})
-	_check(_mesh_ids(s1) != _mesh_ids(s2), "mastery signs for two crops are built apart")
+	_check(objects.decor.meshes_of(3) != objects.decor.meshes_of(4), "mastery signs for two crops are built apart")
 	var bloom := ""
 	for id: String in Game.items:
 		if str(Game.items[id].get("kind", "")) == "bloom":
@@ -1918,3 +1922,61 @@ func test_353_crops_stand_level_and_show_their_harvest() -> void:
 		mb.ellipsoid(Vector3.ZERO, Vector3.ONE * float(part[0]), Color(1, 1, 1, float(part[1])))
 		_check(absf(mb.commit().get_aabb().size.y - 2.0 * float(part[0]) * float(part[2])) < 0.001, str(part[3]))
 
+
+## Standalone decorations are drawn in batches (DecorLayer): what they cost to draw follows how many kinds
+## there are, not how many things; one moved, lifted or sold is followed by its batch.
+func test_356_decorations_are_drawn_in_batches_that_follow_each_one() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Instancer.clear()
+	for i in Game.plots.size():
+		Game.plots[i] = {"state": "grass"}
+	var objects := Objects3D.new()
+	add_child(objects)
+	var uids: Array[int] = []
+	for k in 12:
+		var o := {"uid": Game.next_uid, "id": "bench" if k % 2 == 0 else "garden_gnome", "row": 2, "col": 1 + k,
+			"t": Game.now()}
+		Game.next_uid += 1
+		Game.add_object(o)
+		uids.append(int(o["uid"]))
+	for k in 40:   # (a farm is built over frames: until everything stands)
+		objects.sync()
+	objects.decor.flush()
+	var twelve := objects.decor.counts()
+	_check(objects.decor.has_piece(uids[0]) and objects.decor.has_piece(uids[11]) and twelve.y >= 12,
+		"each decoration stands in the layer (%s)" % twelve)
+	var meshes := 0
+	for uid: int in uids:
+		meshes += (objects.call("_node", uid) as Node3D).find_children("*", "MeshInstance3D", true, false).size()  # not-ui
+	_eq(meshes, 0, "none of them is drawn as meshes of its own")
+	for k in 12:   # twice as many of the same two kinds, in the same region: no more batches
+		var o := {"uid": Game.next_uid, "id": "bench" if k % 2 == 0 else "garden_gnome", "row": 4, "col": 1 + k,
+			"t": Game.now()}
+		Game.next_uid += 1
+		Game.add_object(o)
+	for k in 40:
+		objects.sync()
+	objects.decor.flush()
+	_eq(objects.decor.counts().x, twelve.x, "twice the decorations of the same kinds are the same batches")
+	# Moved: it stands at its new place, once. In hand: it shows nothing. Sold: it has gone.
+	var first := Game.object_by_uid(uids[0])
+	_check(Game.move_object(uids[0], 8, 8), "a bench moves")
+	objects.queue_sync()             # (as the farm does when something on it changes)
+	await get_tree().process_frame   # (the stand-in it had goes at the end of the frame: its thing must stay)
+	await get_tree().process_frame
+	objects.decor.flush()
+	_check(objects.decor.has_piece(uids[0]), "the moved bench still stands in the layer")
+	_check(absf(objects.decor.transform_of(uids[0]).origin.z - 8.5) < 0.8, "at its new place (%s)"
+		% objects.decor.transform_of(uids[0]).origin)
+	objects.call("_show", uids[0], false)
+	_check(objects.decor.transform_of(uids[0]).basis.get_scale().length() < 0.001, "in hand it is drawn as nothing")
+	objects.call("_show", uids[0], true)
+	_check(objects.decor.transform_of(uids[0]).basis.get_scale().length() > 0.5, "and put down it stands again")
+	Game.remove_object(first)
+	objects.sync()
+	await get_tree().process_frame
+	_check(not objects.decor.has_piece(uids[0]), "sold, it has left the layer")
+	objects.queue_free()
+	Game.reset_game()
+	await get_tree().process_frame

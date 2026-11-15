@@ -11,6 +11,8 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const BOX := &"box"               # on a batched thing's stand-in: the box round its model, in the model's space
+const DRESSINGS := 6              # looks of the grass and stones round a batched decoration (shared, by its uid)
 const DRESSING := ^"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
 const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
 const GROUP := &"objects_3d"   # every Objects3D, for until_settled
@@ -46,6 +48,7 @@ const TREE_CENTRE_BIAS := 0.6  # tiles of depth a tap at the crown's very edge i
 
 static var _ghost_materials := {}   # tint name -> the shared see-through material
 
+var decor: DecorLayer   # draws the standalone decorations in batches
 var life: FarmLife  # the animals' minds (shared with the 2D world)
 
 var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and the thing being moved hides
@@ -64,6 +67,7 @@ var _full := true        # the queued sync looks at everything (a change), not o
 var _ticks := 0
 
 var _scenery: Node3D
+var _plain := {}   # item id -> whether it is a plain decoration (code-built, standing alone): see _key
 var _links: LinkLayer   # draws the fences, hedges, walls and paths, joined up
 var _ghost_mask := -1
 var _link_landed := -1   # the frame a joined piece last landed
@@ -89,6 +93,8 @@ func _ready() -> void:
 	_links = LinkLayer.new()
 	add_child(_links)
 	_links.snapped.connect(func(at: Vector3, fresh: bool) -> void: snapped.emit(at, fresh))
+	decor = DecorLayer.new()
+	add_child(decor)
 	_ready_marks = ReadyMarks.new()
 	add_child(_ready_marks)
 	sync()
@@ -329,6 +335,14 @@ func _step(o: Dictionary) -> int:
 
 
 func _key(o: Dictionary) -> String:
+	# A plain decoration (most of a decorated farm) shows nothing but what it is and where it stands: its key is
+	# made without asking about ripeness, neighbours, withering or work, which it has none of.
+	var id := str(o["id"])
+	if not _plain.has(id):
+		_plain[id] = Game.kind_of(o) == "decor" and Game.links.group_of(id) == "" and not AssetRegistry.has_model(id)
+	if _plain[id] and not o.get("stray", false):
+		return "decor|%s|%d|%d|%s|%s" % [id, int(o["row"]), int(o["col"]), o.get("flip", false),
+			o.get("crop", o.get("flower", ""))]
 	if Game.links.group_of(str(o["id"])) != "":
 		return "link|%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]   # how it joins is the LinkLayer's business
 	if uses_file(o):
@@ -439,15 +453,20 @@ static func tree_look(id: String, ready: bool, mask: int, look: int, from_file :
 ## A decoration's look: its kind, one of a few variants by where it stands (`look`), and the mastered crop or
 ## flower a sign or bunch shows (`shows`).
 static func decor_look(id: String, look: int, shows: String) -> Node3D:
-	var it := Game.item_data(id)
+	return Instancer.copy_of(decor_key(id, look, shows), func() -> Node3D: return _decor_built(id, look, shows))
+
+
+## What a decoration's look is kept under (its kind, which of its looks, and what a sign or bunch shows).
+static func decor_key(id: String, look: int, shows: String) -> String:
+	return Instancer.key_of(["decor", id, look, shows, Game.mastery.colour_of(shows)])
+
+
+static func _decor_built(id: String, look: int, shows: String) -> Node3D:
 	var fp := Game.footprint(id)
-	var seen := {"uid": look, "crop": shows}
-	return Instancer.copy_of(Instancer.key_of(["decor", id, look, shows, Game.mastery.colour_of(shows)]),
-		func() -> Node3D:
-			var built := DecorModel.build(it, fp, seen)
-			if not id.ends_with("_tree"):   # (a tree's crown overhangs by design)
-				built = SpaceFit.fit_model(built, fp)
-			return built)
+	var built := DecorModel.build(Game.item_data(id), fp, {"uid": look, "crop": shows})
+	if not id.ends_with("_tree"):   # (a tree's crown overhangs by design)
+		built = SpaceFit.fit_model(built, fp)
+	return built
 
 
 ## A building's look at `level`, at work or not, broken or not.
@@ -476,7 +495,7 @@ static func make_every_look() -> int:
 						looks.append(tree_look(id, ready, 0, look))
 			"decor":
 				if Game.links.group_of(id) == "":
-					for look in Instancer.VARIANTS:
+					for look in (Instancer.VARIANTS if VARIED_DECOR.has(id) else 1):
 						looks.append(decor_look(id, look, ""))
 			"building", "barn", "crafting":
 				for level in range(1, maxi(Game.max_level(id), 1) + 1):
@@ -494,6 +513,8 @@ func _build(o: Dictionary) -> Node3D:
 	var it := Game.item_data(o["id"])
 	var fp := Game.footprint(o["id"])
 	var node: Node3D
+	var batch := {}        # a thing drawn in a batch: what Instancer.pieces_of made of its model..
+	var batch_look := ""   # ..and the look it shares its batches by
 	var turn := Basis.IDENTITY   # what a tree is turned and sized by, about its own base
 	if Game.kind_of(o) == "animal" or o.get("stray", false):
 		var a := Animal3D.create(it, null, Vector3(int(o["col"]) + fp.x / 2.0, 0, int(o["row"]) + fp.y / 2.0))
@@ -535,7 +556,18 @@ func _build(o: Dictionary) -> Node3D:
 					# (Only the kinds built a little differently each time have looks: the rest were being built
 					# eight times over, the same each time, and so many looks overflowed what the Instancer keeps.)
 					var look := Instancer.variant(int(o["row"]), int(o["col"])) if VARIED_DECOR.has(str(o["id"])) else 0
-					node = decor_look(str(o["id"]), look, str(o.get("crop", o.get("flower", ""))))
+					var shows := str(o.get("crop", o.get("flower", "")))
+					if VARIED_DECOR.has(str(o["id"])):
+						node = decor_look(str(o["id"]), look, shows)
+					else:
+						# Drawn in a batch with every other of its look (DecorLayer): here it is only a stand-in,
+						# standing where its model would, with the box round it for taps.
+						batch = Instancer.pieces_of(decor_key(str(o["id"]), look, shows),
+							func() -> Node3D: return _decor_built(str(o["id"]), look, shows))
+						batch_look = decor_key(str(o["id"]), look, shows)
+						node = Node3D.new()
+						node.transform = batch["root"]
+						node.set_meta(BOX, batch["box"])
 			"young":
 				node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
 			"bloom":
@@ -553,7 +585,7 @@ func _build(o: Dictionary) -> Node3D:
 					node = building_look(str(o["id"]), Game.level_of(o), _at_work(o), bool(o.get("broken", false)))
 					if BuildingFill.shows(o):
 						node.add_child(BuildingFill.create(o, node))
-	var dressing := Dressing.make(Game.kind_of(o), fp, int(o["uid"]))
+	var dressing: Node3D = null if not batch.is_empty() else Dressing.make(Game.kind_of(o), fp, int(o["uid"]))
 	if dressing != null:
 		dressing.name = String(DRESSING)
 		node.add_child(dressing)
@@ -570,7 +602,38 @@ func _build(o: Dictionary) -> Node3D:
 	# (What the model was already moved and shrunk by to sit inside its tile border, SpaceFit.fit_model, stays.)
 	node.transform = Transform3D(basis, -(basis * centre)) * node.transform
 	holder.add_child(node)
+	if not batch.is_empty():
+		_batch(holder, node, o, batch, batch_look, fp)
 	return holder
+
+
+## Hands a batched decoration to the DecorLayer: its model, and the grass and stones round it (one of a few
+## shared looks, by its uid), both where the stand-in `node` under `holder` stands; and takes them back out when
+## the stand-in goes.
+func _batch(holder: Node3D, node: Node3D, o: Dictionary, batch: Dictionary, look: String, fp: Vector2i) -> void:
+	if decor == null:   # (asked to build before it was in the tree: tests)
+		decor = DecorLayer.new()
+		add_child(decor)
+	var uid := int(o["uid"])
+	var kind := Game.kind_of(o)
+	var at := holder.transform * node.transform
+	var serials := [decor.put(uid, look, batch["pieces"], at, holder.position), -1]
+	var round_it := posmod(uid, DRESSINGS)
+	var dress_key := Instancer.key_of(["dressing", kind, fp.x, fp.y, round_it])
+	var dress := Instancer.pieces_of(dress_key, func() -> Node3D: return Dressing.make(kind, fp, round_it))
+	if not (dress["pieces"] as Array).is_empty():
+		# (it hangs on the model, as it did when it was a node under it)
+		serials[1] = decor.put(dressing_id(uid), dress_key, dress["pieces"], at, holder.position)
+	var layer := decor
+	holder.tree_exiting.connect(func() -> void:
+		if is_instance_valid(layer):
+			layer.remove(uid, serials[0])
+			layer.remove(dressing_id(uid), serials[1]))
+
+
+## The DecorLayer's number for the grass and stones round decoration `uid` (its model's is the uid itself).
+static func dressing_id(uid: int) -> int:
+	return -(uid + 1)
 
 
 
@@ -802,6 +865,8 @@ static func _ghost_material(tint: String) -> Material:
 
 func _show(uid: int, on: bool) -> void:
 	_links.set_hidden(uid, not on)
+	decor.set_hidden(uid, not on)
+	decor.set_hidden(dressing_id(uid), not on)
 	var v: Dictionary = _views.get(uid, {})
 	if v.has("node"):
 		(v["node"] as Node3D).visible = on
@@ -956,6 +1021,8 @@ func _bounds(node: Node3D, o: Dictionary) -> AABB:
 	var box := AABB()
 	var first := true
 	for model in node.get_children():
+		if model.has_meta(BOX):   # a batched thing's stand-in: the box round its model, kept when it was taken apart
+			return node.transform * ((model as Node3D).transform * (model.get_meta(BOX) as AABB))
 		for c in model.get_children():
 			if c is MeshInstance3D:
 				var b := (model as Node3D).transform * ((c as MeshInstance3D).transform * (c as MeshInstance3D).get_aabb())
@@ -973,6 +1040,9 @@ func _bounds(node: Node3D, o: Dictionary) -> AABB:
 func bounce(uid: int) -> void:
 	if _links.has_piece(uid):
 		_links.pulse(uid)
+		return
+	if decor.has_piece(uid):
+		decor.pulse(uid)
 		return
 	var node := _node(uid)
 	if node == null:
@@ -1008,6 +1078,10 @@ func drop_in(uid: int) -> void:
 			_link_landed = Engine.get_process_frames()
 			landed.emit(_node(uid).position)
 		return   # the layer drops the piece itself
+	if decor.has_piece(uid):
+		decor.pulse(uid, true)   # (the layer drops it: its batch's instance falls and settles)
+		landed.emit(_node(uid).position)
+		return
 	var node := _node(uid)
 	if node == null or node is Animal3D:
 		if node is Animal3D:
