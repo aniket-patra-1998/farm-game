@@ -97,24 +97,7 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 					-1.0, 4)
 			ModelKit.box(fork, Vector3(-0.045, 0.6, -0.006), Vector3(0.045, 0.63, 0.006), ModelKit.paint(Color("#9aa3aa"), 0.5))
 		"scarecrow":
-			ModelKit.box(root, c + Vector3(-0.02, 0, -0.02), c + Vector3(0.02, 0.7, 0.02), ModelKit.paint(DARK_WOOD))
-			ModelKit.box(
-				root,
-				c + Vector3(-0.02, 0.45, -0.25),
-				c + Vector3(0.02, 0.49, 0.25),
-				ModelKit.paint(DARK_WOOD)
-			)
-			ModelKit.box(
-				root,
-				c + Vector3(-0.07, 0.3, -0.12),
-				c + Vector3(0.07, 0.52, 0.12),
-				ModelKit.paint(Color("#4a6fa5"))
-			)
-			ModelKit.ball(root, c + Vector3(0, 0.6, 0), 0.08, ModelKit.paint(Color("#e8cf9a")))
-			ModelKit.cylinder(root, c + Vector3(0, 0.66, 0), 0.14, 0.02, ModelKit.paint(col))
-			ModelKit.cylinder(root, c + Vector3(0, 0.68, 0), 0.07, 0.08, ModelKit.paint(col), 0.05)
-			for side: float in [-1.0, 1.0]:
-				ModelKit.ball(root, c + Vector3(0, 0.47, side * 0.27), 0.04, ModelKit.paint(HAY), Vector3(1, 0.6, 1.6))
+			_scarecrow(root, c, col, id)
 		"water_trough":
 			# A plank trough on two short trestles, bound with iron straps, brimming.
 			for x: float in [-0.24, 0.24]:
@@ -127,9 +110,14 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 					ModelKit.paint(Color("#5a6066"), 0.4))
 			_straw(root, c, 0.3, 0.36, 8, id)
 		"bonfire":
-			for k in 8:
-				var a := TAU * k / 8.0
-				ModelKit.ball(root, c + Vector3(cos(a) * 0.22, 0.04, sin(a) * 0.22), 0.06, ModelKit.paint(STONE))
+			# A ring of stones of different sizes and greys round a bed of ash.
+			ModelKit.cylinder(root, c, 0.2, 0.012, ModelKit.paint(Color("#3a3532")), -1.0, 12)
+			var ring := _rng(id)
+			for k in 10:
+				var a := TAU * k / 10.0 + ring.randf_range(-0.08, 0.08)
+				ModelKit.facet_ball(root, c + Vector3(cos(a) * 0.23, 0.035, sin(a) * 0.23), ring.randf_range(0.05, 0.075),
+					ModelKit.paint(STONE.lerp(Color("#a59a8a"), ring.randf() * 0.7).darkened(ring.randf() * 0.2)),
+					Vector3(1.1, 0.75, 1.0))
 			for k in 4:
 				var log_piece := ModelKit.cylinder(root, Vector3.ZERO, 0.03, 0.34, ModelKit.paint(DARK_WOOD), -1.0, 6)
 				log_piece.position = c + Vector3(0, 0.08, 0)
@@ -143,39 +131,9 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 					Color("#ff7a26"), Color("#ffe07a"))
 			DecorMotion.spray(root, c + Vector3(0, 0.18, 0), DecorMotion.EMBERS)
 		"wheelbarrow":
-			ModelKit.box(root, c + Vector3(-0.15, 0.12, -0.12), c + Vector3(0.15, 0.26, 0.12), ModelKit.paint(col, 0.5))
-			ModelKit.ball(root, c + Vector3(0, 0.27, 0), 0.11, ModelKit.paint(Color("#5e3d24")), Vector3(1.2, 0.3, 1))
-			var wheel := ModelKit.cylinder(root, Vector3.ZERO, 0.07, 0.03, ModelKit.paint(Color("#2a2a2a")), -1.0, 12)
-			wheel.rotation.x = PI / 2.0
-			wheel.position = c + Vector3(0.2, 0.07, 0)
-			for z: float in [-0.08, 0.08]:
-				ModelKit.box(
-					root,
-					c + Vector3(-0.38, 0.17, z - 0.012),
-					c + Vector3(0.2, 0.19, z + 0.012),
-					ModelKit.paint(WOOD)
-				)
+			_wheelbarrow(root, c, col)
 		"water_well":
-			ModelKit.cylinder(root, c, 0.28, 0.3, ModelKit.surface(STONE, "stone", 0.3), -1.0, 16)
-			ModelKit.cylinder(root, c + Vector3(0, 0.3, 0), 0.22, WATER_LIFT, ModelKit.water(), -1.0, 16)
-			# A bucket hanging over the water, bobbing on its rope.
-			var bucket := Node3D.new()
-			ModelKit.cylinder(bucket, Vector3.ZERO, 0.06, 0.08, ModelKit.paint(WOOD), 0.07, 10)
-			ModelKit.box(bucket, Vector3(-0.003, 0.08, -0.003), Vector3(0.003, 0.3, 0.003), ModelKit.paint(Color("#c9b38a")))
-			DecorMotion.orbit(root, c + Vector3(0, 0.36, 0), bucket, DecorMotion.BOBBING)
-			for z: float in [-0.25, 0.25]:
-				ModelKit.box(
-					root,
-					c + Vector3(-0.02, 0.3, z - 0.02),
-					c + Vector3(0.02, 0.75, z + 0.02),
-					ModelKit.paint(WOOD)
-				)
-			ModelKit.roof(root, "gable", c + Vector3(-0.2, 0.75, -0.32), c + Vector3(0.2, 0.75, 0.32), 0.16, 0.03,
-				ModelKit.surface(Color("#8e3b2c"), "shingles", 0.0), ModelKit.paint(WOOD))
-			var axle := ModelKit.cylinder(root, Vector3.ZERO, 0.02, 0.5, ModelKit.paint(DARK_WOOD), -1.0, 6)
-			axle.rotation.x = PI / 2.0
-			axle.position = c + Vector3(0, 0.6, 0)
-			ModelKit.cylinder(root, c + Vector3(0, 0.38, 0), 0.05, 0.08, ModelKit.paint(Color("#7c4a2a")), -1.0, 8)
+			_well(root, c, col, id)
 		"flower_bed":
 			# A raised bed edged with boards, its soil mounded, leafy plants with flowers of several heights and
 			# kinds standing in rows (taller at the back), and a few fallen petals.
@@ -206,25 +164,7 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 		"pink_flamingo":
 			_flamingo(root, c, col)
 		"bench":
-			ModelKit.box(
-				root,
-				c + Vector3(-0.1, 0.16, -0.32),
-				c + Vector3(0.1, 0.19, 0.32),
-				ModelKit.surface(col, "boards", 0.0)
-			)
-			ModelKit.box(
-				root,
-				c + Vector3(-0.12, 0.19, -0.32),
-				c + Vector3(-0.09, 0.38, 0.32),
-				ModelKit.surface(col, "boards", 0.0)
-			)
-			for z: float in [-0.28, 0.28]:
-				ModelKit.box(
-					root,
-					c + Vector3(-0.09, 0, z - 0.015),
-					c + Vector3(0.09, 0.16, z + 0.015),
-					ModelKit.paint(Color("#333333"), 0.4)
-				)
+			_bench(root, c, col, id)
 		"birdhouse":
 			_birdhouse(root, c, col, Color.html(str(it.get("accent", "#f4e3c3"))), id)
 		"birdbath":
@@ -240,41 +180,11 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 		"small_pond", "fountain":
 			_pond(root, fp, id == "fountain", col)
 		"arbor":
-			for x: float in [0.2, 0.8]:
-				for z: float in [0.3, 0.7]:
-					ModelKit.box(
-						root,
-						Vector3(x - 0.025, 0, z - 0.025),
-						Vector3(x + 0.025, 0.75, z + 0.025),
-						ModelKit.paint(col)
-					)
-			for k in 5:
-				var z := 0.25 + 0.125 * k
-				ModelKit.box(root, Vector3(0.12, 0.75, z - 0.015), Vector3(0.88, 0.79, z + 0.015), ModelKit.paint(col))
-			var rng := _rng(id)
-			for k in 14:
-				var p := Vector3(rng.randf_range(0.15, 0.85), rng.randf_range(0.45, 0.82), rng.randf_range(0.25, 0.75))
-				ModelKit.ball(root, p, 0.06, ModelKit.paint(LEAF.lightened(rng.randf() * 0.15)))
-				if k % 3 == 0:
-					ModelKit.ball(root, p + Vector3(0.03, 0.03, 0.03), 0.03, ModelKit.paint(Color("#ff7aa8")))
+			_arbor(root, col, Color.html(str(it.get("accent", "#ff6b8a"))), id)
 		"wooden_bridge":
 			_bridge(root, c, col, int(o.get("uid", 0)))
 		"gazebo":
-			ModelKit.cylinder(root, c, 0.82, 0.1, ModelKit.surface(Color("#c8a26a"), "boards", 0.2), -1.0, 8)
-			for k in 8:
-				var a := TAU * (k + 0.5) / 8.0
-				ModelKit.box(root, c + Vector3(cos(a) * 0.72 - 0.025, 0.1, sin(a) * 0.72 - 0.025),
-					c + Vector3(cos(a) * 0.72 + 0.025, 0.9, sin(a) * 0.72 + 0.025), ModelKit.paint(col))
-			ModelKit.cylinder(
-				root,
-				c + Vector3(0, 0.9, 0),
-				0.92,
-				0.5,
-				ModelKit.surface(Color("#4f7f8a"), "shingles", 0.0),
-				0.05,
-				8
-			)
-			ModelKit.ball(root, c + Vector3(0, 1.42, 0), 0.05, ModelKit.paint(Color("#d4b04a"), 0.7))
+			_gazebo(root, c, col, Color("#4f7f8a"))
 		"pine_tree":
 			Objects3D.pine(root, c, 1.1)
 		"oak_tree", "maple_tree", "willow_tree":
@@ -482,6 +392,322 @@ static func _mailbox(root: Node3D, c: Vector3, col: Color, id: String) -> void:
 		if k < 3:
 			ModelKit.ball(root, at + Vector3(0.015, 0.07, 0.01), 0.016,
 				ModelKit.paint([Color("#f2d24a"), Color("#f0f0e8"), Color("#e86a8a")][k]))
+
+
+## A scarecrow facing +x on its post and crossbar: a stuffed burlap head with button eyes, a patch nose and a
+## stitched smile under a straw hat, a patched shirt with straw at the cuffs, neck and waist, and a crow on
+## its arm that it is not scaring.
+static func _scarecrow(root: Node3D, c: Vector3, hat_col: Color, id: String) -> void:
+	var rng := _rng(id)
+	var wood := ModelKit.paint(DARK_WOOD)
+	var shirt := Color("#4a6fa5")
+	ModelKit.box(root, c + Vector3(-0.02, 0, -0.02), c + Vector3(0.02, 0.7, 0.02), wood)
+	ModelKit.box(root, c + Vector3(-0.018, 0.455, -0.3), c + Vector3(0.018, 0.49, 0.3), wood)
+	ModelKit.ball(root, c + Vector3(0, 0.4, 0), 0.1, ModelKit.paint(shirt), Vector3(0.72, 1.25, 1.1), true)
+	for side: float in [-1.0, 1.0]:
+		rod(root, c + Vector3(0, 0.475, side * 0.07), c + Vector3(0, 0.468, side * 0.25), 0.046, ModelKit.paint(shirt), 0.038,
+			8)
+		for k in 6:   # straw at the cuff
+			var out := Vector3(rng.randf_range(-0.04, 0.04), rng.randf_range(-0.05, 0.03), side * rng.randf_range(0.05, 0.09))
+			rod(root, c + Vector3(0, 0.468, side * 0.245), c + Vector3(0, 0.468, side * 0.245) + out, 0.006,
+				ModelKit.paint(HAY.darkened(rng.randf() * 0.15)), 0.002, 4)
+	for patch: Array in [[Vector3(0.068, 0.42, 0.03), Color("#c9483b")], [Vector3(0.066, 0.36, -0.04), Color("#e3c46a")]]:
+		var at: Vector3 = c + (patch[0] as Vector3)
+		ModelKit.box(root, at - Vector3(0.004, 0.022, 0.022), at + Vector3(0.004, 0.022, 0.022), ModelKit.paint(patch[1]))
+	ModelKit.cylinder(root, c + Vector3(0, 0.3, 0), 0.078, 0.016, ModelKit.paint(Color("#b89a6a")), -1.0, 12)
+	for k in 12:   # a skirt of straw below the rope belt, and a ruff of it at the neck
+		var ang := TAU * k / 12.0
+		var foot := c + Vector3(cos(ang) * 0.085, 0.2 + rng.randf_range(-0.02, 0.02), sin(ang) * 0.1)
+		rod(root, c + Vector3(cos(ang) * 0.06, 0.3, sin(ang) * 0.07), foot, 0.008,
+			ModelKit.paint(HAY.darkened(rng.randf() * 0.15)), 0.003, 4)
+		rod(root, c + Vector3(0, 0.52, 0), c + Vector3(cos(ang) * 0.07, 0.5, sin(ang) * 0.07), 0.007, ModelKit.paint(HAY),
+			0.002, 4)
+	ModelKit.ball(root, c + Vector3(0, 0.6, 0), 0.085, ModelKit.paint(Color("#dcc08a")), Vector3(1.0, 1.02, 1.0), true)
+	for side: float in [-1.0, 1.0]:
+		ModelKit.ball(root, c + Vector3(0.074, 0.618, side * 0.032), 0.013, ModelKit.paint(Color("#1c1815")))
+	ModelKit.ball(root, c + Vector3(0.084, 0.598, 0), 0.013, ModelKit.paint(Color("#c9483b")))
+	for k in 5:   # the stitched smile
+		var z := lerpf(-0.036, 0.036, k / 4.0)
+		ModelKit.ball(root, c + Vector3(0.076, 0.566 + 0.014 * pow(z / 0.036, 2.0), z), 0.006,
+			ModelKit.paint(Color("#3a2a1c")))
+	var hat := Node3D.new()
+	hat.position = c + Vector3(-0.01, 0.665, 0)
+	hat.rotation.z = 0.12
+	root.add_child(hat)
+	ModelKit.cylinder(hat, Vector3.ZERO, 0.16, 0.012, ModelKit.paint(hat_col), 0.15, 16)
+	ModelKit.cylinder(hat, Vector3.ZERO, 0.085, 0.085, ModelKit.paint(hat_col), 0.07, 12)
+	ModelKit.cylinder(hat, Vector3(0, 0.012, 0), 0.087, 0.02, ModelKit.paint(Color("#a8402f")), -1.0, 12)
+	var crow := songbird(Color("#2b2b33"), Color("#3c3c46"))
+	crow.position = c + Vector3(0, 0.49, -0.2)
+	crow.rotation.y = -PI / 2.0 - 0.4
+	crow.scale = Vector3.ONE * 1.15
+	root.add_child(crow)
+
+
+## A wheelbarrow, its wheel toward +x: a tray with a sloped nose full of soil and seedlings, a wheel with a
+## tyre, rim and hub in a fork, two legs, and long handles with grips.
+static func _wheelbarrow(root: Node3D, c: Vector3, col: Color) -> void:
+	var paint := ModelKit.paint(col, 0.5)
+	var metal := ModelKit.paint(Color("#5a6066"), 0.5)
+	var wood := ModelKit.paint(WOOD)
+	ModelKit.tub(root, c + Vector3(-0.17, 0.13, -0.12), c + Vector3(0.13, 0.25, 0.12), 0.014, paint,
+		ModelKit.paint(Color("#5e3d24")), 0.85)
+	var nose := [c + Vector3(0.13, 0.13, -0.12), c + Vector3(0.13, 0.13, 0.12), c + Vector3(0.13, 0.25, 0.12),
+		c + Vector3(0.13, 0.25, -0.12), c + Vector3(0.22, 0.25, -0.1), c + Vector3(0.22, 0.25, 0.1)]
+	ModelKit.faces(root, [[nose[0], nose[1], nose[5], nose[4]], [nose[0], nose[4], nose[3]], [nose[1], nose[2], nose[5]],
+		[nose[3], nose[4], nose[5], nose[2]]], c + Vector3(0.16, 0.2, 0), paint)
+	ModelKit.ball(root, c + Vector3(-0.02, 0.235, 0), 0.11, ModelKit.paint(Color("#6b4a2b")), Vector3(1.25, 0.32, 0.95))
+	for k in 3:   # seedlings in the soil
+		var at := c + Vector3(-0.1 + k * 0.08, 0.26, (k % 2) * 0.06 - 0.03)
+		ModelKit.cylinder(root, at, 0.005, 0.05, ModelKit.paint(LEAF), -1.0, 4)
+		for side: float in [-1.0, 1.0]:
+			ModelKit.ball(root, at + Vector3(side * 0.018, 0.05, 0), 0.02, ModelKit.paint(LEAF.lightened(0.15)),
+				Vector3(1.3, 0.35, 0.8))
+	for part: Array in [[0.075, 0.036, Color("#26262a")], [0.05, 0.04, Color("#b9bec4")], [0.016, 0.06, col]]:
+		var wheel := ModelKit.cylinder(root, Vector3.ZERO, float(part[0]), float(part[1]), ModelKit.paint(part[2], 0.3),
+			-1.0, 14)
+		wheel.rotation.x = PI / 2.0
+		wheel.position = c + Vector3(0.23, 0.075, 0)
+	for side: float in [-1.0, 1.0]:
+		rod(root, c + Vector3(0.1, 0.14, side * 0.06), c + Vector3(0.23, 0.075, side * 0.035), 0.008, metal, -1.0, 4)
+		rod(root, c + Vector3(-0.12, 0.14, side * 0.1), c + Vector3(-0.15, 0.0, side * 0.11), 0.009, metal, -1.0, 4)
+		rod(root, c + Vector3(0.1, 0.15, side * 0.09), c + Vector3(-0.4, 0.27, side * 0.11), 0.011, wood, -1.0, 6)
+		rod(root, c + Vector3(-0.34, 0.255, side * 0.107), c + Vector3(-0.42, 0.275, side * 0.111), 0.016,
+			ModelKit.paint(Color("#2a2a2a")), -1.0, 6)
+	ModelKit.box(root, c + Vector3(-0.157, 0.02, -0.11), c + Vector3(-0.143, 0.034, 0.11), metal)
+
+
+## A park bench with its back toward -x: slats for the seat and the back, each its own shade, on iron sides
+## with curved legs and armrests.
+static func _bench(root: Node3D, c: Vector3, col: Color, id: String) -> void:
+	var rng := _rng(id)
+	var iron := ModelKit.paint(Color("#2f2f33"), 0.4)
+	for k in 4:
+		var x := -0.085 + k * 0.05
+		ModelKit.box(root, c + Vector3(x, 0.17, -0.31), c + Vector3(x + 0.042, 0.187, 0.31),
+			ModelKit.surface(col.darkened(rng.randf() * 0.12), "boards", 0.0))
+	for k in 3:
+		var y := 0.235 + k * 0.058
+		var x := -0.105 - k * 0.012
+		ModelKit.box(root, c + Vector3(x - 0.012, y, -0.31), c + Vector3(x, y + 0.046, 0.31),
+			ModelKit.surface(col.darkened(rng.randf() * 0.12), "boards", 0.0))
+	for z: float in [-0.27, 0.27]:
+		rod(root, c + Vector3(0.11, 0, z), c + Vector3(0.09, 0.17, z), 0.012, iron, -1.0, 6)
+		rod(root, c + Vector3(-0.07, 0, z), c + Vector3(-0.1, 0.17, z), 0.012, iron, -1.0, 6)
+		rod(root, c + Vector3(-0.1, 0.17, z), c + Vector3(-0.145, 0.41, z), 0.011, iron, -1.0, 6)
+		rod(root, c + Vector3(-0.1, 0.17, z), c + Vector3(0.09, 0.17, z), 0.011, iron, -1.0, 6)
+		rod(root, c + Vector3(0.09, 0.17, z), c + Vector3(0.105, 0.275, z), 0.009, iron, -1.0, 6)
+		rod(root, c + Vector3(0.115, 0.28, z), c + Vector3(-0.125, 0.3, z), 0.012, iron, -1.0, 6)
+		ModelKit.ball(root, c + Vector3(0.118, 0.28, z), 0.016, iron)
+		for x: float in [0.11, -0.07]:
+			ModelKit.ball(root, c + Vector3(x, 0.008, z), 0.018, iron, Vector3(1.2, 0.5, 1.0))
+
+
+## A stone well: a ring of stones round the water with capstones on its rim, on a step; two posts carrying a
+## shingled roof; a windlass with its rope and a crank; the bucket hanging over the water; ivy at the foot.
+static func _well(root: Node3D, c: Vector3, col: Color, id: String) -> void:
+	var rng := _rng(id)
+	var tone := col.lerp(BATH_STONE, 0.6)
+	ModelKit.cylinder(root, c, 0.34, 0.03, ModelKit.surface(tone.darkened(0.12), "stone", 0.3), -1.0, 16)
+	lathe(root, c, [Vector2(0.0, 0.03), Vector2(0.29, 0.03), Vector2(0.3, 0.06), Vector2(0.285, 0.28), Vector2(0.3, 0.3),
+		Vector2(0.3, 0.32), Vector2(0.215, 0.32), Vector2(0.21, 0.2), Vector2(0.0, 0.2)], 18,
+		ModelKit.surface(tone, "stone", 0.3))
+	for k in 12:   # the rim's capstones, each its own shade
+		var ang := TAU * k / 12.0
+		var cap := ModelKit.box(root, Vector3(-0.045, 0, -0.062), Vector3(0.045, 0.028, 0.062),
+			ModelKit.paint(tone.lightened(0.06).darkened(rng.randf() * 0.16)))
+		cap.position = c + Vector3(cos(ang) * 0.258, 0.334, sin(ang) * 0.258)
+		cap.rotation.y = -ang
+	ModelKit.cylinder(root, c + Vector3(0, 0.2, 0), 0.21, 0.02 + WATER_LIFT, ModelKit.water(), -1.0, 16)
+	var bucket := Node3D.new()
+	ModelKit.cylinder(bucket, Vector3.ZERO, 0.06, 0.08, ModelKit.paint(WOOD), 0.07, 10)
+	ModelKit.cylinder(bucket, Vector3(0, 0.06, 0), 0.072, 0.012, ModelKit.paint(Color("#5a6066"), 0.4), -1.0, 10)
+	ModelKit.box(bucket, Vector3(-0.003, 0.08, -0.003), Vector3(0.003, 0.26, 0.003), ModelKit.paint(Color("#c9b38a")))
+	DecorMotion.orbit(root, c + Vector3(0, 0.34, 0), bucket, DecorMotion.BOBBING)
+	for z: float in [-0.265, 0.265]:
+		ModelKit.box(root, c + Vector3(-0.025, 0.3, z - 0.025), c + Vector3(0.025, 0.78, z + 0.025), ModelKit.paint(WOOD))
+		rod(root, c + Vector3(0, 0.66, z), c + Vector3(0.1, 0.78, z), 0.012, ModelKit.paint(DARK_WOOD), -1.0, 4)
+		rod(root, c + Vector3(0, 0.66, z), c + Vector3(-0.1, 0.78, z), 0.012, ModelKit.paint(DARK_WOOD), -1.0, 4)
+	var top := ModelKit.roof(root, "gable", c + Vector3(-0.2, 0.78, -0.33), c + Vector3(0.2, 0.78, 0.33), 0.17, 0.04,
+		ModelKit.surface(Color("#8e3b2c"), "shingles", 0.0), ModelKit.paint(WOOD))
+	ModelKit.box(root, Vector3(c.x - 0.014, top - 0.01, c.z - 0.38), Vector3(c.x + 0.014, top + 0.014, c.z + 0.38),
+		ModelKit.paint(Color("#6e2c20")))
+	rod(root, c + Vector3(0, 0.6, -0.29), c + Vector3(0, 0.6, 0.36), 0.018, ModelKit.paint(DARK_WOOD), -1.0, 6)
+	rod(root, c + Vector3(0, 0.6, -0.07), c + Vector3(0, 0.6, 0.07), 0.04, ModelKit.paint(Color("#c9b38a")), -1.0, 10)
+	rod(root, c + Vector3(0, 0.6, 0.36), c + Vector3(0, 0.52, 0.36), 0.01, ModelKit.paint(Color("#5a6066"), 0.4), -1.0, 4)
+	rod(root, c + Vector3(0, 0.52, 0.36), c + Vector3(0, 0.52, 0.43), 0.012, ModelKit.paint(DARK_WOOD), -1.0, 6)
+	for k in 9:   # ivy creeping up the stones
+		var ang := rng.randf() * TAU
+		var y := rng.randf_range(0.04, 0.22)
+		ModelKit.ball(root, c + Vector3(cos(ang) * 0.3, y, sin(ang) * 0.3), rng.randf_range(0.025, 0.04),
+			ModelKit.paint(LEAF.darkened(rng.randf() * 0.2)), Vector3(1.2, 0.8, 1.2))
+
+
+## A garden arbor: four posts on blocks with caps, beams and rafters overhanging above, a ladder of slats up
+## each side, and a climbing rose winding up the posts and over the top.
+static func _arbor(root: Node3D, col: Color, bloom: Color, id: String) -> void:
+	var rng := _rng(id)
+	var paint := ModelKit.paint(col)
+	var shade := ModelKit.paint(col.darkened(0.12))
+	for x: float in [0.2, 0.8]:
+		for z: float in [0.3, 0.7]:
+			ModelKit.box(root, Vector3(x - 0.04, 0, z - 0.04), Vector3(x + 0.04, 0.05, z + 0.04), shade)
+			ModelKit.box(root, Vector3(x - 0.026, 0.05, z - 0.026), Vector3(x + 0.026, 0.76, z + 0.026), paint)
+		for k in 5:   # the side's slats
+			var y := 0.14 + k * 0.125
+			ModelKit.box(root, Vector3(x - 0.008, y, 0.3), Vector3(x + 0.008, y + 0.024, 0.7), shade)
+	for z: float in [0.3, 0.7]:
+		ModelKit.box(root, Vector3(0.08, 0.76, z - 0.02), Vector3(0.92, 0.81, z + 0.02), paint)
+	for k in 7:
+		var x := 0.14 + 0.12 * k
+		ModelKit.box(root, Vector3(x - 0.012, 0.81, 0.2), Vector3(x + 0.012, 0.845, 0.8), shade)
+	var leaf_at: Array[Vector3] = []
+	for x: float in [0.2, 0.8]:
+		for z: float in [0.3, 0.7]:
+			for k in 7:   # up a post, winding round it
+				var ang := k * 1.7 + x * 3.0 + z
+				leaf_at.append(Vector3(x + cos(ang) * 0.04, 0.1 + k * 0.1, z + sin(ang) * 0.04))
+	for k in 22:   # over the top
+		leaf_at.append(Vector3(rng.randf_range(0.12, 0.88), rng.randf_range(0.83, 0.9), rng.randf_range(0.22, 0.78)))
+	for k in leaf_at.size():
+		ModelKit.facet_ball(root, leaf_at[k], rng.randf_range(0.04, 0.06),
+			ModelKit.paint(LEAF.darkened(rng.randf() * 0.18).lightened(rng.randf() * 0.1)), Vector3(1.2, 0.7, 1.2))
+		if k % 3 == 0:
+			ModelKit.ball(root, leaf_at[k] + Vector3(0.025, 0.03, 0.02), 0.03,
+				ModelKit.paint(bloom.lightened(rng.randf() * 0.2)), Vector3(1.0, 0.8, 1.0))
+
+
+## A garden gazebo: a boarded deck on a base with a step, eight posts with a rail and balusters between them
+## (one side open), a beam round the top, and a shingled roof in two tiers with a trimmed eave and a finial.
+static func _gazebo(root: Node3D, c: Vector3, col: Color, roof_col: Color) -> void:
+	var paint := ModelKit.paint(col)
+	var shingles := ModelKit.surface(roof_col, "shingles", 0.0)
+	var turn := PI / 8.0   # (an eight-sided piece turned so its corners meet the posts)
+	ModelKit.cylinder(root, c, 0.88, 0.05, ModelKit.surface(STONE, "stone", 0.3), -1.0, 8).rotation.y = turn
+	ModelKit.cylinder(root, c + Vector3(0, 0.05, 0), 0.82, 0.05, ModelKit.surface(Color("#c8a26a"), "boards", 0.2), -1.0,
+		8).rotation.y = turn
+	var posts: Array[Vector3] = []
+	for k in 8:
+		var a := TAU * (k + 0.5) / 8.0
+		posts.append(c + Vector3(cos(a) * 0.74, 0.1, sin(a) * 0.74))
+		ModelKit.box(root, posts[k] - Vector3(0.028, 0, 0.028), posts[k] + Vector3(0.028, 0.8, 0.028), paint)
+		ModelKit.box(root, posts[k] - Vector3(0.04, 0, 0.04), posts[k] + Vector3(0.04, 0.05, 0.04), paint)
+	for k in 8:
+		var a := posts[k]
+		var b := posts[(k + 1) % 8]
+		rod(root, a + Vector3(0, 0.74, 0), b + Vector3(0, 0.74, 0), 0.02, paint, -1.0, 4)   # the beam round the top
+		if k == 0:
+			continue   # the way in
+		rod(root, a + Vector3(0, 0.3, 0), b + Vector3(0, 0.3, 0), 0.014, paint, -1.0, 4)
+		rod(root, a + Vector3(0, 0.08, 0), b + Vector3(0, 0.08, 0), 0.012, paint, -1.0, 4)
+		for j in range(1, 5):
+			var at := a.lerp(b, j / 5.0)
+			ModelKit.box(root, at + Vector3(-0.008, 0.08, -0.008), at + Vector3(0.008, 0.3, 0.008), paint)
+	var way := (posts[0] + posts[1]) / 2.0
+	var out := (way - c).normalized()
+	out.y = 0.0
+	var step := ModelKit.box(root, Vector3(-0.2, 0, -0.07), Vector3(0.2, 0.05, 0.07),
+		ModelKit.surface(STONE, "stone", 0.3))
+	step.position = Vector3(way.x, 0.025, way.z) + out * 0.2
+	step.rotation.y = atan2(out.x, out.z)
+	ModelKit.cylinder(root, c + Vector3(0, 0.88, 0), 0.97, 0.03, paint, -1.0, 8).rotation.y = turn
+	ModelKit.cylinder(root, c + Vector3(0, 0.91, 0), 0.94, 0.34, shingles, 0.3, 8).rotation.y = turn
+	ModelKit.cylinder(root, c + Vector3(0, 1.25, 0), 0.26, 0.09, paint, -1.0, 8).rotation.y = turn
+	ModelKit.cylinder(root, c + Vector3(0, 1.34, 0), 0.36, 0.2, shingles, 0.03, 8).rotation.y = turn
+	ModelKit.cylinder(root, c + Vector3(0, 1.54, 0), 0.012, 0.08, ModelKit.paint(Color("#d4b04a"), 0.7), -1.0, 6)
+	ModelKit.ball(root, c + Vector3(0, 1.63, 0), 0.04, ModelKit.paint(Color("#d4b04a"), 0.7))
+
+
+## A farm stand: a boarded counter with crates of produce tilted to the front, pumpkins beside it, a sign on
+## its face, and a striped awning on four posts with a scalloped edge.
+static func _farm_stand(root: Node3D, c: Vector3, col: Color, id: String) -> void:
+	var rng := _rng(id)
+	var wood := ModelKit.paint(WOOD)
+	ModelKit.box(root, c + Vector3(-0.34, 0, -0.08), c + Vector3(0.34, 0.26, 0.2), ModelKit.surface(WOOD, "boards", 0.2))
+	ModelKit.box(root, c + Vector3(-0.36, 0.26, -0.1), c + Vector3(0.36, 0.285, 0.22),
+		ModelKit.paint(WOOD.lightened(0.12)))
+	var produce := [[Color("#d83a2f"), Color("#e8563a")], [Color("#f2a33a"), Color("#f6c14a")],
+		[Color("#6fae3a"), Color("#8fc24a")]]
+	for k in 3:
+		var crate := Node3D.new()
+		crate.position = c + Vector3(-0.22 + k * 0.22, 0.285, 0.06)
+		crate.rotation.x = 0.3
+		root.add_child(crate)
+		ModelKit.tub(crate, Vector3(-0.09, 0, -0.075), Vector3(0.09, 0.07, 0.075), 0.012,
+			ModelKit.surface(WOOD.lightened(0.2), "boards", 0.0))
+		for j in 6:
+			ModelKit.ball(crate, Vector3(-0.05 + (j % 3) * 0.05 + rng.randf_range(-0.008, 0.008), 0.06 + (j / 3) * 0.012,
+				-0.03 + (j / 3) * 0.06), 0.032, ModelKit.paint(produce[k][j % 2]), Vector3.ONE, true)
+	for k in 2:   # pumpkins on the ground beside the counter
+		var at := c + Vector3(0.4, 0.045 + k * 0.01, 0.1 - k * 0.14)
+		ModelKit.ball(root, at, 0.06 - k * 0.01, ModelKit.paint(Color("#ee8a2a").darkened(k * 0.1)), Vector3(1.0, 0.78, 1.0),
+			true)
+		ModelKit.cylinder(root, at + Vector3(0, 0.04, 0), 0.008, 0.025, ModelKit.paint(Color("#5d7a2c")), -1.0, 5)
+	ModelKit.box(root, c + Vector3(-0.14, 0.07, 0.2), c + Vector3(0.14, 0.2, 0.212), ModelKit.paint(Color("#f6ecd2")))
+	ModelKit.box(root, c + Vector3(-0.15, 0.06, 0.198), c + Vector3(0.15, 0.21, 0.204), ModelKit.paint(DARK_WOOD))
+	for k in 3:
+		ModelKit.ball(root, c + Vector3(-0.07 + k * 0.07, 0.135, 0.214), 0.028, ModelKit.paint(produce[k][0]),
+			Vector3(1.0, 1.0, 0.2))
+	for x: float in [-0.37, 0.37]:
+		ModelKit.box(root, c + Vector3(x - 0.02, 0, -0.26), c + Vector3(x + 0.02, 0.78, -0.22), wood)
+		ModelKit.box(root, c + Vector3(x - 0.02, 0, 0.26), c + Vector3(x + 0.02, 0.66, 0.3), wood)
+	var stripes := 8
+	var slope := atan2(0.14, 0.66)
+	for k in stripes:   # the awning, sloping down to the front, and its scalloped edge
+		var x := -0.42 + 0.84 * (k + 0.5) / stripes
+		var cloth := ModelKit.paint(col if k % 2 == 0 else WHITE)
+		var stripe := ModelKit.box(root, Vector3(-0.42 / stripes, -0.006, -0.34), Vector3(0.42 / stripes, 0.006, 0.34), cloth)
+		stripe.position = c + Vector3(x, 0.735, 0.01)
+		stripe.rotation.x = slope
+		ModelKit.cylinder(root, c + Vector3(x, 0.605, 0.343), 0.42 / stripes, 0.012, cloth, -1.0, 8).rotation.x = PI / 2.0
+
+
+## A mastery sign facing +x: a framed board on a post, with the mastered thing's rosette on it (a gold ring
+## round its colour, a gold middle, two ribbon tails) and a gold cap on top.
+static func _mastery_sign(root: Node3D, c: Vector3, accent: Color) -> void:
+	var gold := ModelKit.paint(Color("#e8c14a"), 0.6)
+	ModelKit.box(root, c + Vector3(-0.018, 0, -0.018), c + Vector3(0.018, 0.34, 0.018), ModelKit.paint(WOOD))
+	ModelKit.box(root, c + Vector3(-0.022, 0.3, -0.24), c + Vector3(0.022, 0.64, 0.24), ModelKit.paint(DARK_WOOD))
+	ModelKit.box(root, c + Vector3(-0.026, 0.325, -0.215), c + Vector3(0.026, 0.615, 0.215),
+		ModelKit.paint(Color("#f6ecd2")))
+	for side: float in [-1.0, 1.0]:
+		var tail := ModelKit.box(root, Vector3(-0.003, -0.11, -0.022), Vector3(0.003, 0.0, 0.022),
+			ModelKit.paint(accent.darkened(0.2)))
+		tail.position = c + Vector3(0.03, 0.45, side * 0.03)
+		tail.rotation.x = side * 0.35
+		for k in 3:   # laurel leaves each side
+			ModelKit.ball(root, c + Vector3(0.03, 0.4 + k * 0.05, side * (0.15 - k * 0.012)), 0.022,
+				ModelKit.paint(Color("#5f9a3a").darkened(0.08 * k)), Vector3(0.25, 1.3, 0.7))
+	_disc(root, c + Vector3(0.03, 0.49, 0), 0.085, 0.008, gold)
+	_disc(root, c + Vector3(0.034, 0.49, 0), 0.068, 0.008, ModelKit.paint(accent))
+	_disc(root, c + Vector3(0.038, 0.49, 0), 0.03, 0.008, gold)
+	ModelKit.cylinder(root, c + Vector3(0, 0.64, 0), 0.03, 0.03, gold, 0.006, 4).rotation.y = PI / 4.0
+
+
+## A perfect bunch: a glazed pot with a ribbon, leafy stems of different heights leaning out of it, each with
+## a flower of five petals round a golden middle.
+static func _bunch(root: Node3D, c: Vector3, accent: Color, id: String) -> void:
+	var rng := _rng(id)
+	var pot := Color("#f29ab8")
+	lathe(root, c, [Vector2(0.0, 0.0), Vector2(0.055, 0.0), Vector2(0.085, 0.07), Vector2(0.07, 0.12),
+		Vector2(0.078, 0.135), Vector2(0.06, 0.135), Vector2(0.0, 0.12)], 12, ModelKit.paint(pot, 0.5))
+	ModelKit.cylinder(root, c + Vector3(0, 0.085, 0), 0.08, 0.016, ModelKit.paint(accent.darkened(0.25)), 0.076, 12)
+	for side: float in [-1.0, 1.0]:
+		ModelKit.ball(root, c + Vector3(0.082, 0.093, side * 0.022), 0.02, ModelKit.paint(accent.darkened(0.25)),
+			Vector3(0.5, 0.8, 1.2))
+	for k in 8:
+		var ang := TAU * k / 8.0 + rng.randf_range(-0.2, 0.2)
+		var lean := 0.03 if k == 0 else rng.randf_range(0.07, 0.13)
+		var top := c + Vector3(cos(ang) * lean, rng.randf_range(0.3, 0.42), sin(ang) * lean)
+		rod(root, c + Vector3(cos(ang) * 0.02, 0.12, sin(ang) * 0.02), top, 0.007, ModelKit.paint(Color("#4f8a2f")), 0.005, 4)
+		var mid := (c + Vector3(0, 0.12, 0)).lerp(top, 0.55)
+		ModelKit.ball(root, mid + Vector3(cos(ang) * 0.02, 0, sin(ang) * 0.02), 0.028,
+			ModelKit.paint(LEAF.lightened(rng.randf() * 0.15)), Vector3(1.3, 0.35, 0.8))
+		var petal := ModelKit.paint(accent.lightened(rng.randf() * 0.18))
+		for j in 5:
+			var b := TAU * j / 5.0 + ang
+			ModelKit.ball(root, top + Vector3(cos(b) * 0.03, 0.0, sin(b) * 0.03), 0.032, petal, Vector3(1.0, 0.5, 1.0), true)
+		ModelKit.ball(root, top + Vector3(0, 0.01, 0), 0.017, ModelKit.paint(Color("#f2c230")))
 
 
 ## A birdhouse on its post: a stone footing, a braced landing board, a boarded house under an overhanging roof
@@ -756,43 +982,15 @@ static func _small_sign(root: Node3D, id: String, c: Vector3, col: Color, o: Dic
 		"mailbox":
 			_mailbox(root, c, col, id)
 		"farm_stand":
-			ModelKit.box(
-				root,
-				c + Vector3(-0.35, 0, -0.25),
-				c + Vector3(0.35, 0.3, 0.25),
-				ModelKit.surface(WOOD, "boards", 0.2)
-			)
-			for x: float in [-0.33, 0.33]:
-				ModelKit.box(
-					root,
-					c + Vector3(x - 0.02, 0.3, -0.23),
-					c + Vector3(x + 0.02, 0.7, -0.19),
-					ModelKit.paint(WOOD)
-				)
-			ModelKit.box(root, c + Vector3(-0.4, 0.7, -0.35), c + Vector3(0.4, 0.73, 0.1), ModelKit.paint(col))
-			for k in 6:
-				ModelKit.ball(root, c + Vector3(-0.25 + 0.1 * k, 0.33, 0.05), 0.045,
-					ModelKit.paint([Color("#e2453c"), Color("#f2a33a"), Color("#8fbf3a")][k % 3]))
+			_farm_stand(root, c, col, id)
 		"mastery_sign", "perfect_bunch":
 			# The mastered item's colour (a crop, tree or animal), or a bunch's flower's.
 			var shown := Game.mastery.colour_of(str(o.get("crop", o.get("flower", ""))))
 			var accent := Color.html(shown) if shown != "" else col
 			if id == "perfect_bunch":
-				for k in 7:
-					var a := TAU * k / 7.0
-					var p := c + Vector3(cos(a) * 0.08, 0, sin(a) * 0.08)
-					ModelKit.cylinder(root, p, 0.008, 0.25, ModelKit.paint(Color("#4f8a2f")), -1.0, 4)
-					ModelKit.ball(root, p + Vector3(cos(a) * 0.05, 0.27, sin(a) * 0.05), 0.05, ModelKit.paint(accent))
-				ModelKit.cylinder(root, c + Vector3(0, 0.06, 0), 0.07, 0.06, ModelKit.paint(Color("#f29ab8")), -1.0, 10)
+				_bunch(root, c, accent, id)
 			else:
-				ModelKit.box(root, c + Vector3(-0.015, 0, -0.015), c + Vector3(0.015, 0.4, 0.015), ModelKit.paint(WOOD))
-				ModelKit.box(
-					root,
-					c + Vector3(-0.02, 0.32, -0.22),
-					c + Vector3(0.02, 0.6, 0.22),
-					ModelKit.paint(Color("#ffd34d"), 0.5)
-				)
-				ModelKit.ball(root, c + Vector3(0.03, 0.46, 0), 0.07, ModelKit.paint(accent), Vector3(0.3, 1, 1))
+				_mastery_sign(root, c, accent)
 
 
 ## A mystery young on the farm: a seedling in a mound of soil (taller and leafier with each can), or a

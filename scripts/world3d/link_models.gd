@@ -119,7 +119,6 @@ static func _fence(root: Node3D, col: Color, style: String, kind: int, reach: Ar
 	var tall := style == "tall"
 	var mat := ModelKit.paint(col)
 	var worn := ModelKit.paint(col.darkened(0.12))
-	var boards := ModelKit.surface(col, "boards", 0.0)
 	# The post: stouter where arms meet, with a cap that sheds the rain.
 	var half := POST * (1.25 if kind >= LinkShape.Kind.TEE else 1.0)
 	var h := (TALL_HEIGHT if tall else HEIGHT) + rng.randf_range(-0.01, 0.02) \
@@ -161,7 +160,8 @@ static func _fence(root: Node3D, col: Color, style: String, kind: int, reach: Ar
 		else:
 			for y: float in [0.08, 0.19, 0.3]:
 				var yy := y + rng.randf_range(-0.004, 0.004)
-				ModelKit.box(a, Vector3(-0.03, yy, -len), Vector3(0.03, yy + 0.06, -half), boards)
+				ModelKit.box(a, Vector3(-0.03, yy, -len), Vector3(0.03, yy + 0.06, -half),
+					ModelKit.surface(col.darkened(rng.randf() * 0.14), "boards", 0.0))   # (each rail its own shade)
 
 
 static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumberGenerator) -> void:
@@ -303,6 +303,6 @@ static func _path(root: Node3D, id: String, col: Color, mask: int, rng: RandomNu
 						0.18 + 0.32 * j + rng.randf_range(-0.05, 0.05))
 					var r := rng.randf_range(0.11, 0.16)
 					var stone := ModelKit.cylinder(tile, p - Vector3(0, 0.008, 0), r, 0.03,
-						ModelKit.paint(col.lightened(0.1).darkened(rng.randf() * 0.25)), r * 0.82, 7)
+						ModelKit.paint(col.lerp(WALL_STONE, 0.6).lightened(0.1).darkened(rng.randf() * 0.25)), r * 0.82, 7)
 					stone.scale = Vector3(1.0, 1.0, rng.randf_range(0.8, 1.2))
 					stone.rotation.y = rng.randf() * PI
