@@ -133,3 +133,31 @@ func _find(n: Node, part: String) -> Node:
 		if f != null:
 			return f
 	return null
+
+
+func test_351_a_file_building_keeps_its_view_shows_states_in_place_and_opens_its_yard() -> void:
+	AssetRegistry.forget()
+	AssetRegistry.add("chicken_coop", {"model": FIXTURE, "budget": "building"})
+	var objects := Objects3D.new()
+	var coop := {"uid": 9001, "id": "chicken_coop", "row": 0, "col": 0, "level": 1}
+	_check(objects.uses_file(coop), "a listed building is drawn from its file")
+	_check(not objects.uses_file({"uid": 9002, "id": "white_picket_fence", "row": 0, "col": 0}),
+		"a fence that joins its neighbours stays with the LinkLayer")
+	_check(not objects.uses_file({"uid": 9003, "id": "cow", "row": 0, "col": 0}), "an animal waits for its own step")
+	var key := objects._key(coop)
+	var ready := coop.duplicate()
+	ready["t"] = 0   # (a long time ago: ready)
+	_eq(objects._key(ready), key, "coming ready doesn't rebuild it (no lost door swing or yard)")
+	var higher := coop.duplicate()
+	higher["level"] = 2
+	_check(objects._key(higher) != key, "a new level is a new model")
+	var node := AssetRegistry.instance("chicken_coop", objects.state_of(coop))
+	Objects3D.mark_parts(node)
+	var fill := BuildingFill.create(coop, node)
+	_eq(fill._doors.size(), 1, "its door swings when collected")
+	_eq(fill._windows.size(), 1, "its window is where animals look out")
+	fill.free()
+	node.free()
+	objects.free()
+	AssetRegistry.add("chicken_coop", {})
+	AssetRegistry.forget()

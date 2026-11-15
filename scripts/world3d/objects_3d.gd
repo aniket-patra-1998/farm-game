@@ -147,6 +147,8 @@ func sync() -> void:
 		var key := _key(o)
 		var v: Dictionary = _views.get(uid, {})
 		if v.get("key", "") == key:
+			if v.get("file", false):
+				AssetRegistry.apply_state(v["node"], state_of(o))   # (ready, at work... shown in place)
 			var fill := fill_of(uid)
 			if fill != null:
 				fill.refresh(o)  # who's in, how near ready: shown without rebuilding the building
@@ -161,7 +163,8 @@ func sync() -> void:
 		add_child(node)
 		var fresh := not v.has("node")
 		var step := _step(o)
-		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o), "step": step}
+		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
+			"file": uses_file(o)}
 		if Game.catalog.get_def(str(o["id"])) is TreeDef:
 			_views[uid]["crown"] = _crown_of(_views[uid]["box"])
 		if not fresh and _synced_once and step > int(v.get("step", step)):
@@ -321,8 +324,11 @@ func _key(o: Dictionary) -> String:
 	if Game.links.group_of(str(o["id"])) != "":
 		return "link|%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]   # how it joins is the LinkLayer's business
 	if uses_file(o):
-		# Made as a file: rebuilt whenever its state changes (ready, level, at work...), so its parts follow.
-		return "file|%s|%d|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false), str(state_of(o))]
+		# Made as a file: rebuilt only when it becomes another model (its level, broken or mended, withered); the
+		# states that come and go (ready, at work) are shown in place (`sync`), so a collect's door swing and the
+		# yard's animals carry on.
+		return "file|%s|%d|%d|%s|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false),
+			int(o.get("level", 1)), o.get("broken", false), Game.is_withered(o)]
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
