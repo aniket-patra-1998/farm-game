@@ -1048,7 +1048,7 @@ func test_186_ambient_life_listens_for_land_once_not_every_frame() -> void:
 	_eq(Game.farm_expanded.get_connections().size(), before, "and lets go when it is freed")
 
 
-func test_191_a_hedge_sways_and_each_piece_sways_on_its_own_beat() -> void:
+func test_191_a_clipped_hedge_stands_still_and_swaying_pieces_sway_on_their_own_beat() -> void:
 	var it := Game.item_data("hedge")
 	_check(not it.is_empty(), "there is a hedge")
 	var swaying := false
@@ -1056,8 +1056,11 @@ func test_191_a_hedge_sways_and_each_piece_sways_on_its_own_beat() -> void:
 		var mesh := p["mesh"] as ArrayMesh
 		for s in mesh.get_surface_count():
 			var m := mesh.surface_get_material(s) as ShaderMaterial
-			swaying = swaying or (m != null and float(m.get_shader_parameter("sway")) > 0.0)
-	_check(swaying, "the hedge's leaves bend in the wind")
+			var sway: Variant = m.get_shader_parameter("sway") if m != null else null
+			swaying = swaying or (sway != null and float(sway) > 0.0)
+	_check(not swaying, "a clipped hedge is a solid wall of leaves: it doesn't wobble in the wind")
+	for id in ["arbor", "haystack"]:
+		_check(not DecorModel.SWAY_BY_ID.has(id), "%s is solid: it stands still" % id)
 	for path in ["res://shaders/paint3d.gdshader", "res://shaders/canopy3d.gdshader"]:
 		var code := FileAccess.get_file_as_string(path)
 		_check(code.contains("MODEL_MATRIX[3]") and not code.contains("NODE_POSITION_WORLD"),

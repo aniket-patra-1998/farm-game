@@ -18,7 +18,6 @@ const WALL_TOP := 0.38
 const TALL_HEIGHT := 0.54    # a privacy fence's posts
 const GATE_POST := 0.4
 const GATE_AJAR := 0.35      # radians a gate's leaf stands open
-const HEDGE_SWAY := 0.4      # how far a hedge bends in the wind (paint3d sway, by height); each piece on its own beat
 
 static var _cache := {}      # "item|kind|variant" -> Array of {"mesh": ArrayMesh, "shadow": bool}
 
@@ -151,9 +150,9 @@ static func _fence(root: Node3D, col: Color, style: String, kind: int, reach: Ar
 static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumberGenerator) -> void:
 	var leaf := DecorModel.LEAF
 	var bump := 1.25 if kind >= LinkShape.Kind.TEE else 1.0
-	var low := ModelKit.paint(leaf.darkened(rng.randf() * 0.15), 0.0, HEDGE_SWAY)
+	var low := ModelKit.paint(leaf.darkened(rng.randf() * 0.15))
 	ModelKit.ball(root, Vector3(0, HEDGE_LOW_Y, 0), 0.24 * bump, low, Vector3(0.98, HEDGE_STRETCH, 0.98))
-	var top := ModelKit.paint(leaf.lightened(0.08), 0.0, HEDGE_SWAY)
+	var top := ModelKit.paint(leaf.lightened(0.08))
 	ModelKit.ball(root, Vector3(0, HEDGE_TOP_Y, 0), 0.21 * bump, top, Vector3(0.98, 0.8, 0.98))
 	for d in 4:
 		if reach[d] <= 0.0:
@@ -163,9 +162,9 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 		while z < reach[d] + 0.01:
 			var shade := leaf.darkened(rng.randf() * 0.15)
 			ModelKit.ball(a, Vector3(rng.randf_range(-0.02, 0.02), HEDGE_LOW_Y, -z), 0.24,
-				ModelKit.paint(shade, 0.0, HEDGE_SWAY), Vector3(0.98, HEDGE_STRETCH, 1.05))
+				ModelKit.paint(shade), Vector3(0.98, HEDGE_STRETCH, 1.05))
 			ModelKit.ball(a, Vector3(0, HEDGE_TOP_Y + rng.randf_range(-0.01, 0.02), -z), 0.21,
-				ModelKit.paint(shade.lightened(0.08), 0.0, HEDGE_SWAY), Vector3(0.98, 0.8, 1.1))
+				ModelKit.paint(shade.lightened(0.08)), Vector3(0.98, 0.8, 1.1))
 			z += 0.2
 		for k in 2:
 			ModelKit.ball(a, Vector3(rng.randf_range(-0.12, 0.12), rng.randf_range(0.25, 0.68),

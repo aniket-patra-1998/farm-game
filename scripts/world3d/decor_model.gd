@@ -22,9 +22,9 @@ const IDS := ["farmhouse", "log_cabin", "dirt_path", "brick_path", "stone_path",
 
 
 const WATER_LIFT := 0.012   # water stands this far above the rim it fills, never level with it (flicker)
-## Decorations that bend in the wind, and how much (paint3d sway, by height above their foot).
-const SWAY_BY_ID := {"scarecrow": 0.08, "flower_bed": 0.6, "arbor": 0.02,
-	"perfect_bunch": 0.5, "haystack": 0.015}
+## Decorations that bend in the wind, and how much (paint3d sway, by height above their foot): only soft, loose
+## things (flowers, a scarecrow's rags); anything solid or clipped (an arbor, a haystack, a hedge) stands still.
+const SWAY_BY_ID := {"scarecrow": 0.08, "flower_bed": 0.6, "perfect_bunch": 0.5}
 static var _glows := {}   # colour -> glowing material
 
 
