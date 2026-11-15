@@ -41,7 +41,7 @@ void fragment() {
 	ALPHA = s.r;
 	ALPHA_SCISSOR_THRESHOLD = cutoff;
 	float ao = mix(1.0 - ground_ao, 1.0, smoothstep(0.0, ao_reach, height));
-	ALBEDO = tint * mix(0.5, 0.78, s.g) * ao;
+	ALBEDO = tint * mix(0.78, 1.0, s.g) * ao;
 	// The normal runs out from the crown on both faces of the card, so the two sides shade alike.
 	if (!FRONT_FACING) {
 		NORMAL = -NORMAL;

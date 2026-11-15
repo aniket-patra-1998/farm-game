@@ -42,10 +42,10 @@ const META_REACH := &"crown_reach"   # and how far its crown reaches from the tr
 const META_FAR := &"far_look"   # and what its far look needs: trunk height, crown bottom and top, reach, trunk r, leaf
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
-const FRUIT_READY := 22     # fruit on a ready tree (fewer, small and green, while it grows)
-const FRUIT_R := 0.058      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
+const FRUIT_READY := 30     # fruit on a ready tree (fewer, small and green, while it grows)
+const FRUIT_R := 0.064      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
 const FRUIT_SMALL_R := 0.02
-const FRUIT_OUT := 1.12     # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
+const FRUIT_OUT := 1.2      # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
 const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
 const STEM := Color("#5a4a2a")
 const FRUIT_GROWING := 3
@@ -61,8 +61,8 @@ const STAND_TALL_MAX := 1.35   # a tree stands at least its kind's lowest height
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
 const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
 const CROWN_BUMP := 0.13     # how far they push out ("bump")
-const FOLIAGE_CARDS := 72       # leaf cards on a crown mass (the cards' size follows the mass, so the cover does not)
-const FOLIAGE_CARD := 0.85      # a card's size, of its mass's radius
+const FOLIAGE_CARDS := 90       # leaf cards on a crown mass (the cards' size follows the mass, so the cover does not)
+const FOLIAGE_CARD := 0.7       # a card's size, of its mass's radius
 const FOLIAGE_CORE := 0.66      # the solid mass inside the cards, of the full size: the cards make the outline
 const FOLIAGE_MIN := 8          # at least this many cards on any mass
 const TILE_FILL := 1.15     # a tree is one tile on the farm and its crown a little wider, so neighbours overlap
@@ -409,7 +409,7 @@ static func _limb(root: Node3D, from: Vector3, to: Vector3, r: float) -> void:
 static func _shade(leaf: Color, light: float) -> Color:
 	var h := leaf.h + lerpf(0.025, -0.03, light)
 	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
-	var v := clampf(leaf.v * lerpf(0.42, 1.5, light), 0.0, 1.0)
+	var v := clampf(leaf.v * lerpf(0.62, 1.4, light), 0.0, 1.0)   # (shade is the leaf's colour deeper, never near black)
 	return Color.from_hsv(h, s, v)
 
 
