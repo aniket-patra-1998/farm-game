@@ -20,6 +20,7 @@ var _tab_bar: HBoxContainer
 var _tabs: Array = []          # [[name, builder]] of the panel open, or empty
 var _tab := 0
 var _scroll: ScrollContainer
+var _refresh_due := false   # a refresh is waiting for the end of the frame
 
 
 func _ready() -> void:
@@ -100,7 +101,7 @@ func _on_screen_changed() -> void:
 	if visible:
 		_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"),
 			get_viewport_rect().size.x - UiTheme.size("book_inset"))
-		refresh()
+		_build_now()
 
 
 ## builder(content: VBoxContainer) fills the panel; it runs again on refresh().
@@ -123,7 +124,7 @@ func show_tab(index: int) -> void:
 	_tab = index
 	_builder = _tabs[index][1]
 	_build_tab_bar()
-	refresh()
+	_build_now()
 	_scroll.scroll_vertical = 0
 
 
@@ -134,7 +135,7 @@ func _show(title: String, builder: Callable) -> void:
 	_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"),
 		get_viewport_rect().size.x - UiTheme.size("book_inset"))
 	_build_tab_bar()
-	refresh()
+	_build_now()
 	visible = true
 	Game.modal_open = true
 
@@ -160,6 +161,19 @@ func close_panel() -> void:
 
 
 func refresh() -> void:
+	# Once a frame at most, at its end: many changes in a row (Accept all) rebuild the panel once.
+	if not _refresh_due:
+		_refresh_due = true
+		_build_again.call_deferred()
+
+
+func _build_again() -> void:
+	_refresh_due = false
+	if visible:
+		_build_now()
+
+
+func _build_now() -> void:
 	if not _builder.is_valid():
 		return
 	for child in _content.get_children():

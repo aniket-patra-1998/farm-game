@@ -164,6 +164,7 @@ func help_all() -> Dictionary:
 	var tally := {"claimed": 0, "helped": 0, "left": 0}
 	if not enabled():
 		return tally
+	game.hold_updates()
 	for item in inbox.duplicate():
 		if InboxItem.is_free(item) and claim(int(item["id"])):
 			tally["claimed"] += 1
@@ -174,6 +175,7 @@ func help_all() -> Dictionary:
 			tally["left"] += 1
 		elif claim(int(item["id"])):
 			tally["helped"] += 1
+	game.release_updates()
 	game.message.emit(tr("SOCIAL_HELP_ALL") % [tally["claimed"], tally["helped"]])
 	return tally
 

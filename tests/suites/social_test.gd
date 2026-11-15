@@ -308,3 +308,19 @@ func test_19_grown_babies_wait_in_the_one_inbox_to_be_placed() -> void:
 	g.storage.stored.clear()
 	_check(g.social.claim(id), "with room, it is claimed")
 	_eq(str(g.storage.stored.back()["id"]), "cow", "into the Barn, ready for the hand")
+
+
+func test_343_accept_all_rebuilds_the_farm_once() -> void:
+	var g := _farm()
+	for i in 4:
+		g.social.inbox.append(InboxItem.make(40 + i, InboxItem.SHARE, 0, g.now(), {"what": InboxItem.YOUNG,
+			"id": str(g.catalog.defs.keys().filter(func(k: String) -> bool: return g.catalog.defs[k] is YoungDef)[0]),
+			"n": 1}))
+	var told := [0]
+	var count := func() -> void: told[0] += 1
+	g.objects_changed.connect(count)
+	g.social.help_all()
+	_check(g.social.inbox.is_empty(), "every young one taken")
+	_eq(told[0], 1, "the farm hears of them once, not once each")
+	g.objects_changed.disconnect(count)
+	_done(g)

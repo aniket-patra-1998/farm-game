@@ -145,6 +145,8 @@ var _uid_index := {}               # uid -> its position in objects (see object_
 var _weather := {}                # the last answer of weather(), and when and for what it was made
 var _weather_at := -1
 var _weather_for := "?"
+var _holding := 0          # hold_updates depth
+var _held_update := false  # an objects_updated came while held
 
 
 func _init() -> void:
@@ -880,8 +882,24 @@ func rotate_object(uid: int) -> bool:
 # ---------------------------------------------------------------- object changes
 
 
+## Holds the farm's "objects changed" news while many changes are made at once (Accept all bringing ten young
+## animals): the farm, the ground and an open panel rebuild once at `release_updates`, not once per change.
+func hold_updates() -> void:
+	_holding += 1
+
+
+func release_updates() -> void:
+	_holding = maxi(_holding - 1, 0)
+	if _holding == 0 and _held_update:
+		_held_update = false
+		objects_updated()
+
+
 func objects_updated() -> void:
 	rebuild_occupancy()
+	if _holding > 0:
+		_held_update = true   # (told once, when the batch ends: release_updates)
+		return
 	objects_changed.emit()
 	plot_changed.emit(-1)
 	queue_save()

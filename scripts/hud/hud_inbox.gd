@@ -5,7 +5,8 @@ extends RefCounted
 ## farm sends (a baby grown up in the nursery). Each line shows who sent it (their portrait, or the barn for your
 ## farm), what it is (with its picture when it is a thing), and one button: Accept, Place (a thing goes straight
 ## into your hand to put down), or Help (a neighbour's ask, paid, as many a day as the day allows). "Accept all"
-## does every free one and every help the day allows. Opening it catches the neighbours up to now (SocialSystem.settle).
+## does every free one and every help the day allows. Opening it (not each refresh: what Accept all took must not
+## be refilled at once from mail held back while the inbox was full) catches the neighbours up (SocialSystem.settle).
 
 var hud: FarmHud
 
@@ -15,9 +16,6 @@ func _init(owner: FarmHud) -> void:
 
 
 func build_inbox(content: VBoxContainer) -> void:
-	var note := Game.social.settle()
-	if note != "":
-		content.add_child(BookPanel.text(note, 18, BookPanel.CREAM))
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 14)
 	var all := hud._panel_button(tr("INBOX_ACCEPT_ALL"))

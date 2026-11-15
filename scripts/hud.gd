@@ -383,6 +383,9 @@ func _show_collections() -> void:
 
 
 func show_inbox() -> void:
+	var note := Game.social.settle()
+	if note != "":
+		show_message(note)
 	_book.open_panel(tr("INBOX"), inbox.build_inbox)
 
 
