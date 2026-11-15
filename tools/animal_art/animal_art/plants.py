@@ -14,10 +14,11 @@ from .shapes import E, field
 UP = np.array([0.0, 1.0, 0.0])
 GREEN, GREEN2 = np.array(hx("4fa536")), np.array(hx("3c8a2e"))
 DRY, DRY2 = np.array(hx("9a7a42")), np.array(hx("6e5530"))
-LEAF_GAIN = 0.8        # crop leaves lie open to the sun in the game's light: written this much darker, they are seen as chosen
+SUN = np.array([0.72, 0.84, 0.25])                     # what a leaf's tip goes toward in the light
+LEAF_GAIN = 0.72       # crop leaves lie open to the sun in the game's light: written this much darker, they are seen as chosen
 STAGES = ("sprout", "young", "ripe", "withered")       # the game's "seeds" stage keeps its own look (bare seeds)
 # what each plant measures in the game's own units, taken from the models they replace
-SIZE = {"strawberries": ("width", 0.21), "wheat": ("height", 0.47), "pumpkins": ("width", 0.30), "sunflowers": ("height", 0.61),
+SIZE = {"strawberries": ("width", 0.25), "wheat": ("height", 0.46), "pumpkins": ("width", 0.34), "sunflowers": ("height", 0.6),
         "apple_tree": ("width", 1.36)}
 
 
@@ -37,29 +38,34 @@ def piece(V, T, col, produce=False, smooth=False, face=None):
     return dict(V=np.array(V, float), T=np.array(T, int), col=np.array(col, float), produce=produce, smooth=smooth, face=face)
 
 
-def card(base, d, L, W, col, n_hint=UP, fold=0.28, droop=0.22, simple=False, produce=False, lit=None):
+def card(base, d, L, W, col, n_hint=UP, fold=0.28, droop=0.22, simple=False, produce=False, lit=None, lo=0.6, hi=1.12, glow=0.25):
     """A leaf (or petal) as a thin folded card: pointed at both ends, creased along its midrib, its tip curling
-    down. Each half takes its own shade (the crease catches the light), lighter toward the tip. Eight triangles,
-    or four when `simple`."""
+    down. It is painted as a leaf is lit: dark where it leaves the plant, light and a little yellower at its tip,
+    one half a shade off the other (the crease). Eight triangles, or four when `simple`. For produce, `col` is a
+    shade 0..1."""
     base = np.array(base, float); d = unit(d); n = np.array(n_hint, float) - (np.array(n_hint, float) @ d) * d
-    n = unit(n) if np.linalg.norm(n) > 1e-6 else unit(np.cross(d, [1.0, 0, 0.2])); sd = np.cross(d, n); col = np.array(col, float)
+    n = unit(n) if np.linalg.norm(n) > 1e-6 else unit(np.cross(d, [1.0, 0, 0.2])); sd = np.cross(d, n)
     mid = lambda t: base + d * L * t - n * droop * L * t * t
-    shades = (0.86, 0.97, 1.0, 1.12) if not produce else (0.7, 0.85, 0.9, 1.0)
-    tone = lambda k: (np.minimum(1, col * shades[k]) if not produce else shades[k] * float(np.mean(col)))
+
+    def paint(ts, side):
+        k = (lo + (hi - lo) * np.array(ts)) * side
+        if produce:
+            return np.clip(k * float(np.mean(col)) / hi, 0, 1)
+        c = np.array(col, float)[None, :] * k[:, None]
+        return np.clip(c + (SUN - c) * (np.array(ts) * glow)[:, None], 0, 1)
+
+    out = []
     if simple:
-        b, c, tip = mid(0.0), mid(0.5), mid(1.0); w = W * 0.5
-        l, r = mid(0.45) - sd * w + n * fold * w, mid(0.45) + sd * w + n * fold * w
-        out = [piece([b, c, l, c, tip, l], [[0, 1, 2], [3, 4, 5]], tone(0), produce, face=n),
-               piece([b, r, c, c, r, tip], [[0, 1, 2], [3, 4, 5]], tone(3), produce, face=n)]
-        for p in out:
-            p["lit"] = lit
-        return out
-    b, c1, c2, tip = mid(0.0), mid(0.36), mid(0.7), mid(1.0); w1, w2 = W * 0.5, W * 0.36
-    l1, r1 = c1 - sd * w1 + n * fold * w1, c1 + sd * w1 + n * fold * w1
-    l2, r2 = c2 - sd * w2 + n * fold * w2, c2 + sd * w2 + n * fold * w2
-    two = [[0, 1, 2], [3, 4, 5]]
-    out = [piece([b, c1, l1, c1, l2, l1], two, tone(0), produce, face=n), piece([c1, c2, l2, c2, tip, l2], two, tone(1), produce, face=n),
-           piece([b, r1, c1, c1, r1, r2], two, tone(2), produce, face=n), piece([c1, r2, c2, c2, r2, tip], two, tone(3), produce, face=n)]
+        w = W * 0.5; ts = (0.0, 0.5, 1.0, 0.45)
+        for sgn, side in ((-1, 0.9), (1, 1.04)):
+            e = mid(0.45) + sgn * sd * w + n * fold * w
+            out.append(piece([mid(0.0), mid(0.5), mid(1.0), e], [[0, 1, 3], [1, 2, 3]], col, produce, face=n)); out[-1]["cols"] = paint(ts, side)
+    else:
+        w1, w2 = W * 0.5, W * 0.4; ts = (0.0, 0.36, 0.72, 1.0, 0.36, 0.72)
+        for sgn, side in ((-1, 0.9), (1, 1.04)):
+            e1, e2 = mid(0.36) + sgn * sd * w1 + n * fold * w1, mid(0.72) + sgn * sd * w2 + n * fold * w2
+            out.append(piece([mid(0.0), mid(0.36), mid(0.72), mid(1.0), e1, e2], [[0, 1, 4], [1, 5, 4], [1, 2, 5], [2, 3, 5]], col, produce, face=n))
+            out[-1]["cols"] = paint(ts, side)
     for p in out:
         p["lit"] = lit        # the way the light takes it (a crown's leaves are lit as the crown, not each by its own tilt)
     return out
@@ -72,144 +78,157 @@ def gem(c, r, up, down, col, n=6, produce=False):
     return piece(V, T, col, produce, smooth=True)
 
 
-def ball(c, radii, col, n=4, produce=False):
-    V, T = sphere(c, radii, None, n)
-    return piece(V, T, col, produce, smooth=True)
+def ball(c, radii, col, n=4, produce=False, under=None):
+    """A ball; with `under`, painted from that colour underneath to `col` on top (a crown's own shade)."""
+    V, T = sphere(c, radii, None, n); p = piece(V, T, col, produce, smooth=True)
+    if under is not None:
+        k = np.clip(0.5 + 0.75 * (V[:, 1] - np.array(c)[1]) / radii[1], 0, 1)[:, None]
+        p["cols"] = np.array(under, float)[None, :] * (1 - k) + np.array(col, float)[None, :] * k
+    return p
 
 
-def bar(a, b, ra, rb, col, n=4):
-    V, T = tube(a, b, ra, rb, n)
-    return piece(V, T, col)
+def bar(a, b, ra, rb, col, n=4, tip=None):
+    """A stem or trunk; with `tip`, painted from `col` at its foot to that colour at its top."""
+    V, T = tube(a, b, ra, rb, n); p = piece(V, T, col)
+    if tip is not None:
+        a, b = np.array(a, float), np.array(b, float); k = np.clip(((V - a) @ (b - a)) / ((b - a) @ (b - a)), 0, 1)[:, None]
+        p["cols"] = np.array(col, float)[None, :] * (1 - k) + np.array(tip, float)[None, :] * k
+    return p
 
 
 def ribbed(c, R, H, lit, dark, produce=True, n=8, rows=(-0.92, -0.45, 0.2, 0.75, 0.97)):
-    """A pumpkin: a squat ball whose ribs are real (a valley between each pair of lobes), darker in the valleys."""
+    """A pumpkin: a squat ball whose ribs are real (a valley between each pair of lobes), darker in the valleys
+    and underneath."""
     c = np.array(c, float); V, C_ = [], []; m = 2 * n
     for y in rows:
-        rad = math.sqrt(max(0.0, 1 - y * y))
+        rad = math.sqrt(max(0.0, 1 - y * y)); low = 0.72 + 0.28 * min(1.0, (y + 1.0) / 1.2)
         for i in range(m):
             a = math.tau * i / m; k = 1.0 if i % 2 == 0 else 0.86            # lobe, valley
-            V.append(c + np.array([R * rad * k * math.cos(a), H * y, R * rad * k * math.sin(a)])); C_.append(lit if i % 2 == 0 else dark)
+            V.append(c + np.array([R * rad * k * math.cos(a), H * y, R * rad * k * math.sin(a)])); C_.append((lit if i % 2 == 0 else dark) * low)
     T = []
     for j in range(len(rows) - 1):
         for i in range(m):
             a0, a1, b0, b1 = j * m + i, j * m + (i + 1) % m, (j + 1) * m + i, (j + 1) * m + (i + 1) % m
             T += [[a0, b0, a1], [a1, b0, b1]]
     top, bot = len(V), len(V) + 1
-    V += [c + UP * H, c - UP * H]; C_ += [dark, dark]
+    V += [c + UP * H, c - UP * H]; C_ += [dark, dark * 0.7]
     T += [[(len(rows) - 1) * m + i, top, (len(rows) - 1) * m + (i + 1) % m] for i in range(m)] + [[i, (i + 1) % m, bot] for i in range(m)]
     p = piece(V, T, lit, produce, smooth=True); p["cols"] = np.array(C_, float)
     return p
 
 
+def rosette(out, rs, n, up, reach, L, W, col, y=0.03, turn=0.0, simple=False, droop=0.25, fold=0.22, lo=0.6, hi=1.12):
+    """A ring of `n` leaves round the plant's middle, each lifted by `up` and set `reach` out from it."""
+    for i in range(n):
+        a = math.tau * i / n + turn + rs.uniform(-0.18, 0.18); flat = np.array([math.cos(a), 0.0, math.sin(a)])
+        out += card(flat * reach + UP * y, flat + UP * up, L * rs.uniform(0.9, 1.1), W, tint(col, rs), fold=fold, droop=droop, simple=simple, lo=lo, hi=hi)
+
+
 # ---------------------------------------------------------------- crops (stage: sprout, young, ripe, withered)
-def strawberry(stage, seed=1):
-    rs = np.random.RandomState(seed); dry = stage == "withered"; out = []
-    g1, g2 = (DRY, DRY2) if dry else (GREEN, GREEN2)
-    tiers = ((3, 0.9, 0.2, 0.05),) if stage == "sprout" else ((6, 0.1 if dry else 0.28, 0.42, 0.06), (5, 0.4 if dry else 0.75, 0.36, 0.12), (3, 1.0 if dry else 1.6, 0.26, 0.16))
-    for tier, (n, up, stalk, y) in enumerate(tiers):
-        for i in range(n):
-            a = math.tau * (i + 0.5 * tier) / n + rs.uniform(-0.15, 0.15); d = unit((math.cos(a), up, math.sin(a))); tip = np.array([0, y, 0]) + d * stalk
-            flat = unit((math.cos(a), up * 0.25, math.sin(a))); sdv = unit(np.cross(flat, UP)); base = (g2 * 0.95, g1, g1 * 1.12)[min(tier, 2)]
-            k = 0.7 if stage == "sprout" else 1.0
-            for turn, ln in ((0.0, 0.34), (0.85, 0.28), (-0.85, 0.28)):          # three leaflets to a leaf
-                out += card(tip - flat * 0.12, flat * math.cos(turn) + sdv * math.sin(turn), (ln + 0.12) * k, ln * 0.85 * k, tint(base, rs),
-                            fold=0.22, droop=0.45 if dry else 0.25, simple=True)
-    if stage in ("young", "ripe"):
+def strawberry(stage, seed=1, leaf="4f9a36"):
+    """A low mound of broad leaves, the berries out round its rim where they show."""
+    rs = np.random.RandomState(seed); dry = stage == "withered"; out = []; g = DRY if dry else np.array(hx(leaf))
+    if stage == "sprout":
+        rosette(out, rs, 4, 0.9, 0.0, 0.3, 0.24, g * 1.05, simple=True)
+        return out
+    k = 0.8 if stage == "young" else 1.0
+    rosette(out, rs, 7, 0.08 if dry else 0.32, 0.05, 0.62 * k, 0.5 * k, g * 0.85, droop=0.5 if dry else 0.3)
+    rosette(out, rs, 5, 0.3 if dry else 0.85, 0.02, 0.5 * k, 0.42 * k, g * 1.0, y=0.1, turn=0.6, droop=0.5 if dry else 0.3)
+    if not dry:
+        rosette(out, rs, 3, 1.8, 0.0, 0.36 * k, 0.3 * k, g * 1.12, y=0.18, turn=0.2, simple=True)
+    if stage == "ripe":
         for i in range(6):
-            a = math.tau * (i + 0.5) / 6 + 0.4; r = 0.5 + 0.08 * (i % 2); sz = 0.6 if stage == "young" else 1.0
-            p = np.array([r * math.cos(a), 0.2 * sz + 0.06 + 0.12 * (i % 2), r * math.sin(a)])
-            out.append(gem(p, 0.15 * sz, 0.12 * sz, 0.2 * sz, 0.75 + 0.25 * (i % 2), 6, True) if stage == "ripe" else gem(p, 0.15 * sz, 0.12 * sz, 0.2 * sz, hx("d6e6a6")))
+            a = math.tau * (i + 0.5) / 6 + 0.4; r = 0.56 + 0.06 * (i % 2); p = np.array([r * math.cos(a), 0.3 + 0.08 * (i % 2), r * math.sin(a)])
+            out.append(gem(p, 0.165, 0.11, 0.24, 0.8 + 0.2 * (i % 2), 6, True))
             for j in range(3):
                 b = math.tau * j / 3 + i
-                out += card(p + np.array([0, 0.11 * sz, 0]), (math.cos(b), -0.2, math.sin(b)), 0.13 * sz, 0.08 * sz, g2 * 0.9, fold=0.1, droop=0.3, simple=True)
+                out += card(p + np.array([0, 0.11, 0]), (math.cos(b), -0.15, math.sin(b)), 0.16, 0.1, g * 0.8, fold=0.1, droop=0.3, simple=True)
     if stage == "young":
-        for i in range(4):
-            a = math.tau * i / 4 + 1.0; c = np.array([0.3 * math.cos(a), 0.5, 0.3 * math.sin(a)])
+        for i in range(5):
+            a = math.tau * i / 5 + 1.0; c = np.array([0.42 * math.cos(a), 0.42, 0.42 * math.sin(a)])
             for j in range(5):
                 b = math.tau * j / 5
-                out += card(c, (math.cos(b), 0.25, math.sin(b)), 0.12, 0.1, (0.99, 0.98, 0.95), fold=0.1, droop=0.1, simple=True)
-            out.append(gem(c + np.array([0, 0.02, 0]), 0.035, 0.03, 0.02, hx("f2c230"), 4))
+                out += card(c, (math.cos(b), 0.3, math.sin(b)), 0.15, 0.13, (0.99, 0.98, 0.95), fold=0.1, droop=0.1, simple=True, lo=0.9, hi=1.0, glow=0.0)
+            out.append(gem(c + np.array([0, 0.03, 0]), 0.045, 0.04, 0.02, hx("f2c230"), 4))
     return out
 
 
-def wheat(stage, seed=2):
-    rs = np.random.RandomState(seed); green = np.array(hx("6fa83a")); straw = np.array(hx("f0cf62")); out = []
-    col = {"sprout": green, "young": green, "ripe": straw, "withered": DRY}[stage]; H = {"sprout": 0.42, "young": 1.2, "ripe": 1.3, "withered": 1.05}[stage]
-    for i in range(7):
-        a = math.tau * i / 7 + rs.uniform(-0.3, 0.3); L = H * (rs.uniform(0.6, 0.85) if stage != "sprout" else 1.0)
-        out += card((0.05 * math.cos(a), 0.02, 0.05 * math.sin(a)), (math.cos(a) * (0.9 if stage == "withered" else 0.42), 1.0, math.sin(a) * (0.9 if stage == "withered" else 0.42)),
-                    L, 0.11, tint(col, rs, 0.12, 0.08), n_hint=(math.cos(a), 0, math.sin(a)), fold=0.35, droop=-0.45, simple=True)
+def wheat(stage, seed=2, leaf="6f9a3a", straw="f0c040"):
+    """A thick tuft of stalks, each with a plump ear and its bristles."""
+    rs = np.random.RandomState(seed); green = np.array(hx(leaf)); gold = np.array(hx(straw)); out = []
+    col = {"sprout": green * 1.1, "young": green, "ripe": gold, "withered": DRY}[stage]; H = {"sprout": 0.4, "young": 1.0, "ripe": 1.15, "withered": 0.62}[stage]
+    lean = {"sprout": 0.3, "young": 0.2, "ripe": 0.24, "withered": 0.7}[stage]
+    for i in range(6 if stage == "sprout" else 8):       # blades
+        a = math.tau * i / 8 + rs.uniform(-0.3, 0.3)
+        out += card((0.06 * math.cos(a), 0.02, 0.06 * math.sin(a)), (math.cos(a) * (lean + 0.25), 1.0, math.sin(a) * (lean + 0.25)), H * rs.uniform(0.6, 0.85),
+                    0.13, tint(col, rs, 0.1, 0.06), n_hint=(math.cos(a), 0, math.sin(a)), fold=0.3, droop=-0.4, simple=True, lo=0.7, hi=1.1, glow=0.1)
     if stage == "sprout":
         return out
-    for i in range(6):
-        a = math.tau * i / 5 + 0.3; r = 0.0 if i == 0 else 0.17; lean = {"young": 0.08, "ripe": 0.22, "withered": 0.5}[stage]
-        base = np.array([r * math.cos(a), 0.03, r * math.sin(a)]); h = H * (1.0 if i == 0 else rs.uniform(0.85, 0.97))
-        d = unit((math.cos(a) * lean * (i > 0), 1.0, math.sin(a) * lean * (i > 0))); top = base + d * h
-        u = unit(np.cross(d, [0.3, 0.1, 1.0])); v = np.cross(d, u)
-        out.append(bar(base, top, 0.034, 0.026, col * 0.95, 3))
+    for i in range(6 if stage == "withered" else 10):
+        a = math.tau * i / 9 + 0.3; r = 0.0 if i == 0 else 0.2 * (0.6 + 0.4 * (i % 2)); out_ = np.array([math.cos(a), 0, math.sin(a)]) * (i > 0)
+        base = out_ * r + UP * 0.02; d = unit(out_ * lean + UP); h = H * (1.0 if i == 0 else rs.uniform(0.82, 0.98)); top = base + d * h
+        out.append(bar(base, top, 0.03, 0.022, col * 0.75, 3, tip=col))
         if stage == "withered":
             continue
-        ripe = stage == "ripe"
-        for j in range(4):                               # the ear: grains like little scales, by turns on four sides
-            for q in range(2):
-                b = math.pi * q + 1.57 * (j % 2); o_ = u * math.cos(b) + v * math.sin(b)
-                out += card(top + d * (0.0 + 0.11 * j) + o_ * 0.02, d * 1.0 + o_ * 0.7, 0.26, 0.16, (0.75 + 0.25 * ((j + q) % 2),) * 3 if ripe else green * 1.08,
-                            n_hint=o_, fold=0.3, droop=-0.1, simple=True, produce=ripe)
-        out += card(top + d * 0.45, d, 0.3, 0.035, straw * 1.08 if ripe else green * 1.1, n_hint=u, fold=0.0, droop=0.0, simple=True)    # the bristle
+        ripe = stage == "ripe"; u = unit(np.cross(d, [0.3, 0.1, 1.0]))
+        for j in range(2):                               # the ear: two plump beads, the upper the smaller
+            c = top + d * (0.07 + 0.17 * j); rr = 0.075 - 0.02 * j
+            out.append(gem(c, rr, 0.13, 0.1, (0.6 + 0.2 * j) if ripe else green * 1.15, 5, ripe))
+        for sgn in (-1, 1):                              # bristles
+            out += card(top + d * 0.3, d + u * 0.35 * sgn, 0.3, 0.03, gold * 1.1 if ripe else green * 1.2, n_hint=u, fold=0.0, droop=0.0, simple=True, lo=0.9, hi=1.1, glow=0.0)
     return out
 
 
-def pumpkin(stage, seed=3):
-    rs = np.random.RandomState(seed); dry = stage == "withered"; out = []; g1, g2 = (DRY, DRY2) if dry else (GREEN, GREEN2)
-    tiers = ((2, 0.5, 0.16, 0.34),) if stage == "sprout" else ((6, 0.05 if dry else 0.2, 0.55, 0.7), (4, 0.3 if dry else 0.75, 0.4, 0.56))
-    for tier, (n, up, stalk, L) in enumerate(tiers):
-        for i in range(n):
-            a = math.tau * (i + 0.5 * tier) / n + 0.5 + rs.uniform(-0.2, 0.2); d = unit((math.cos(a), up + 0.5, math.sin(a))); tip = np.array([0, 0.05, 0]) + d * stalk
-            flat = unit((math.cos(a), up * 0.35, math.sin(a))); sdv = unit(np.cross(flat, UP)); bc = g2 if tier == 0 else g1
-            for turn, k in ((0.0, 1.0), (0.7, 0.82), (-0.7, 0.82)):                 # a broad leaf of three lobes
-                out += card(tip - flat * 0.3, flat * math.cos(turn) + sdv * math.sin(turn), L * k + 0.25, L * 0.62 * k, tint(bc, rs), fold=0.2, droop=0.4 if dry else 0.2, simple=True)
+def pumpkin(stage, seed=3, leaf="3f7f32"):
+    """Broad leaves sprawling low, one fat ribbed pumpkin on them."""
+    rs = np.random.RandomState(seed); dry = stage == "withered"; out = []; g = DRY if dry else np.array(hx(leaf)) * 1.1
+    if stage == "sprout":
+        rosette(out, rs, 3, 0.7, 0.0, 0.36, 0.3, g * 1.1, simple=True)
+        return out
+    rosette(out, rs, 6, 0.05 if dry else 0.22, 0.25, 0.8, 0.66, g * 0.9, droop=0.4 if dry else 0.22)
+    rosette(out, rs, 4, 0.3 if dry else 0.7, 0.15, 0.6, 0.5, g * 1.08, y=0.12, turn=0.5, droop=0.4 if dry else 0.22)
     if stage in ("young", "ripe"):
-        R = 0.3 if stage == "young" else 0.66; cy = R * 0.86 + 0.08
+        R = 0.3 if stage == "young" else 0.7; cy = R * 0.86 + 0.08
         if stage == "ripe":
-            out.append(ribbed((0, cy, 0), R, R * 0.86, 1.0, 0.72))
+            out.append(ribbed((0, cy, 0), R, R * 0.86, 1.0, 0.74))
         else:
             out.append(ribbed((0, cy, 0), R, R * 0.86, np.array(hx("a8c84c")), np.array(hx("86a83c")), produce=False))
-        out.append(bar((0, cy + R * 0.8, 0), (0.07, cy + R * 1.15, 0.03), 0.08, 0.055, np.array(hx("6b7a2e")), 4))
+        out.append(bar((0, cy + R * 0.8, 0), (0.07, cy + R * 1.16, 0.03), 0.09, 0.06, np.array(hx("5f6f28")), 4, tip=np.array(hx("8a9a3a"))))
     if stage == "young":
         c = np.array([-0.5, 0.5, 0.45])
         for j in range(5):
             b = math.tau * j / 5
-            out += card(c, (math.cos(b), 0.5, math.sin(b)), 0.2, 0.15, hx("f7c832"), fold=0.15, droop=0.3, simple=True)
+            out += card(c, (math.cos(b), 0.5, math.sin(b)), 0.24, 0.18, hx("f7c832"), fold=0.15, droop=0.3, simple=True, lo=0.85, hi=1.05, glow=0.0)
     return out
 
 
-def sunflower(stage, seed=4):
-    rs = np.random.RandomState(seed); dry = stage == "withered"; out = []; g1, g2 = (DRY, DRY2) if dry else (GREEN, GREEN2)
-    H = {"sprout": 0.45, "young": 1.6, "ripe": 1.95, "withered": 1.7}[stage]; top = np.array([0.0, H, 0.0])
-    out.append(bar((0, 0.0, 0), top, 0.07 if stage != "sprout" else 0.035, 0.055 if stage != "sprout" else 0.03, g2 * 0.95, 5))
+def sunflower(stage, seed=4, leaf="4f9a36"):
+    """A tall stem with broad leaves and one big face of petals round a dark disc, lifted to the sky."""
+    rs = np.random.RandomState(seed); dry = stage == "withered"; out = []; g = DRY if dry else np.array(hx(leaf))
+    H = {"sprout": 0.45, "young": 1.5, "ripe": 1.9, "withered": 1.6}[stage]; top = np.array([0.0, H, 0.0]); thick = stage != "sprout"
+    out.append(bar((0, 0.0, 0), top, 0.075 if thick else 0.035, 0.055 if thick else 0.03, g * 0.6, 5, tip=g * 0.8))
     for i in range(1 if stage == "sprout" else 3):
-        y = H * (0.25 + 0.2 * i) if stage != "sprout" else H * 0.8
+        y = H * (0.22 + 0.2 * i) if thick else H * 0.8
         for sgn in (-1, 1):
-            a = 1.1 * i + (0 if sgn > 0 else math.pi); L = {"sprout": 0.3, "young": 0.38, "ripe": 0.42, "withered": 0.4}[stage] * (1 - 0.1 * i)
-            out += card((0, y, 0), (math.cos(a), -0.2 if dry else 0.45, math.sin(a)), L, L * 0.65, tint(g1 if i % 2 else g2, rs), fold=0.22, droop=0.4)
+            a = 1.1 * i + (0 if sgn > 0 else math.pi); L = (0.3 if not thick else 0.4 if not dry else 0.3) * (1 - 0.1 * i)
+            out += card((0, y, 0), (math.cos(a), -0.25 if dry else 0.4, math.sin(a)), L, L * 0.72, tint(g * 0.82, rs), fold=0.22, droop=0.4)
     if stage == "young":
-        out.append(gem(top + np.array([0, 0.08, 0]), 0.16, 0.14, 0.1, g1 * 1.05, 6))
+        out.append(gem(top + np.array([0, 0.08, 0]), 0.17, 0.15, 0.1, g * 1.1, 6))
         for j in range(6):
-            b = math.tau * j / 6
-            out += card(top + np.array([0.1 * math.cos(b), 0.0, 0.1 * math.sin(b)]), (math.cos(b) * 0.5, 1.0, math.sin(b) * 0.5), 0.3, 0.16, tint(g2, rs),
-                        n_hint=(math.cos(b), 0, math.sin(b)), fold=0.3, droop=-0.2, simple=True)
+            b = math.tau * j / 6; o_ = np.array([math.cos(b), 0, math.sin(b)])
+            out += card(top + o_ * 0.1, o_ * 0.5 + UP, 0.3, 0.17, tint(g * 0.9, rs), n_hint=o_, fold=0.3, droop=-0.2, simple=True)
     if stage in ("ripe", "withered"):
-        f = unit((0.0, 0.95, 0.3)) if not dry else unit((0.0, -0.3, 1.0)); c = top + f * 0.1; u = unit(np.cross(UP, f)); v = np.cross(f, u)
-        hs = 0.6                                         # the head's size: nine stand to a plot, and must not crowd it
+        f = unit((0.0, 0.9, 0.42)) if not dry else unit((0.0, -0.3, 1.0)); c = top + f * 0.08; u = unit(np.cross(UP, f)); v = np.cross(f, u); hs = 0.5
         if not dry:
-            for ring, (n, r0, ln, lift) in enumerate(((13, 0.26 * hs, 0.4 * hs, 0.12), (10, 0.22 * hs, 0.32 * hs, 0.42))):
+            for ring, (n, r0, ln, lift) in enumerate(((12, 0.24 * hs, 0.44 * hs, 0.1), (9, 0.2 * hs, 0.34 * hs, 0.42))):
                 for j in range(n):
                     b = math.tau * (j + 0.5 * ring) / n; dr = math.cos(b) * u + math.sin(b) * v
-                    out += card(c + dr * r0 + f * 0.03 * ring, dr * math.cos(lift) + f * math.sin(lift), ln, 0.17 * hs, (0.8 + 0.2 * ((j + ring) % 2),) * 3,
-                                n_hint=f, fold=0.25, droop=0.12, simple=True, produce=True)
-        disc = np.array(hx("5e3a1a")) * (0.8 if dry else 1.0); ring_ = [c + (math.cos(math.tau * i / 8) * u + math.sin(math.tau * i / 8) * v) * 0.33 * hs for i in range(8)]
-        out.append(piece(ring_ + [c + f * 0.1, c - f * 0.08], [[i, (i + 1) % 8, 8] for i in range(8)] + [[(i + 1) % 8, i, 9] for i in range(8)], disc, smooth=True))
+                    out += card(c + dr * r0 + f * 0.03 * ring, dr * math.cos(lift) + f * math.sin(lift), ln, 0.2 * hs, 0.82 + 0.18 * ring,
+                                n_hint=f, fold=0.22, droop=0.1, simple=True, produce=True, lo=0.62, hi=1.0)
+        disc = np.array(hx("5a3618")) * (0.75 if dry else 1.0); R = 0.36 * hs
+        ring_ = [c + (math.cos(math.tau * i / 8) * u + math.sin(math.tau * i / 8) * v) * R for i in range(8)]
+        p = piece(ring_ + [c + f * 0.09, c - f * 0.08], [[i, (i + 1) % 8, 8] for i in range(8)] + [[(i + 1) % 8, i, 9] for i in range(8)], disc, smooth=True)
+        p["cols"] = np.array([disc * 0.8] * 8 + [disc * 1.35, disc * 0.6]); out.append(p)
     return out
 
 
@@ -224,39 +243,36 @@ def on_surface(shapes, c0, d, far=5.5, step=0.05):
     return p, (unit(g) if np.linalg.norm(g) > 1e-9 else d)
 
 
-def apple_tree(seed=5, leaves=240, fruit="d93b30"):
-    """{part name: pieces}: `body` (trunk, boughs, the dark inner crown and its leaves), and the fruit as the two
-    states of `ready`."""
-    rs = np.random.RandomState(seed); bark = np.array(hx("9a6a3a")); tones = [np.array(hx(h)) for h in ("2f7a2a", "3f9231", "58ab3b", "7cc247")]
-    body = [bar((0, 0.0, 0), (0.07, 1.7, 0.0), 0.33, 0.25, bark, 7), bar((0.07, 1.7, 0.0), (0.0, 3.4, 0.04), 0.25, 0.2, bark * 0.92, 7)]
-    for i in range(5):
-        a = math.tau * i / 5 + 0.4
-        body.append(bar((0.08 * math.cos(a), 0.45, 0.08 * math.sin(a)), (0.62 * math.cos(a), 0.0, 0.62 * math.sin(a)), 0.2, 0.08, bark * 0.8, 3))
-    for i in range(3):
-        a = math.tau * i / 3 + 1.0
-        body.append(bar((0, 3.0, 0), (1.3 * math.cos(a), 4.4, 1.3 * math.sin(a)), 0.2, 0.12, bark * 0.86, 4))
-    c0 = np.array([0.0, 5.8, 0.0]); inner = tones[1] * 0.8
-    crown = [E(c0, (2.15, 1.65, 2.15), None, k=0.15), E(c0 + np.array([0, 1.1, 0]), (1.5, 1.1, 1.5), None, k=0.15)]
-    crown += [E(c0 + np.array([1.8 * math.cos(a), -0.25 + 0.3 * (i % 2), 1.8 * math.sin(a)]), (1.15, 1.0, 1.15), None, k=0.15)
-              for i, a in enumerate(np.arange(6) * math.tau / 6 + 0.2)]
-    body += [ball(c0 - UP * 0.1, (2.0, 1.5, 2.0), inner, 5), ball(c0 + np.array([0, 1.0, 0]), (1.4, 1.0, 1.4), inner * 1.05, 4)]
-    ylo, yhi = c0[1] - 1.9, c0[1] + 2.3
-    for i in range(leaves):                              # thin pointed leaves all over the crown, hanging out and down
-        y = 1.0 - 1.75 * (i + 0.5) / leaves; rad = math.sqrt(max(0.0, 1 - y * y)); ang = i * 2.39996
+def apple_tree(seed=5, leaves=230, fruit="d93b30", leaf="46a634", bark="c98f58"):
+    """{part name: pieces}: `body` (a slim trunk, and a crown of a few round masses clothed in leaves that lie on it
+    like feathers on a bird, dark below and sunlit on top), and the fruit as the two states of `ready`."""
+    rs = np.random.RandomState(seed); bark = np.array(hx(bark)); g = np.array(hx(leaf))
+    tones = [g * 0.62, g * 0.82, g * 1.0, np.clip(g * 1.18 + np.array([0.06, 0.06, 0.0]), 0, 1)]
+    body = [bar((0, 0.0, 0), (0.05, 3.7, 0.02), 0.24, 0.16, bark, 6, tip=bark * 0.85)]
+    for i in range(4):
+        a = math.tau * i / 4 + 0.4
+        body.append(bar((0.06 * math.cos(a), 0.4, 0.06 * math.sin(a)), (0.46 * math.cos(a), 0.0, 0.46 * math.sin(a)), 0.15, 0.06, bark * 0.85, 3))
+    c0 = np.array([0.0, 5.7, 0.0]); masses = [(c0, (2.1, 1.6, 2.1), 6), (c0 + np.array([0, 1.05, 0]), (1.45, 1.05, 1.45), 5)]
+    masses += [(c0 + np.array([1.55 * math.cos(a), -0.2 + 0.3 * (i % 2), 1.55 * math.sin(a)]), (1.15, 0.95, 1.15), 4) for i, a in enumerate(np.arange(5) * math.tau / 5 + 0.2)]
+    crown = [E(c, r, None, k=0.15) for c, r, _ in masses]
+    body += [ball(c, r, tones[1] * 0.95, n, under=tones[0] * 0.7) for c, r, n in masses]
+    ylo, yhi = c0[1] - 1.7, c0[1] + 2.2
+    for i in range(leaves):                              # leaves all over the crown, lying on it, pointing out and down
+        y = 1.0 - 1.72 * (i + 0.5) / leaves; rad = math.sqrt(max(0.0, 1 - y * y)); ang = i * 2.39996
         d = np.array([rad * math.cos(ang), y, rad * math.sin(ang)]); p, nrm = on_surface(crown, c0, d)
         down = -UP - (-UP @ nrm) * nrm
-        if np.linalg.norm(down) < 0.35:
+        if np.linalg.norm(down) < 0.3:
             down = np.array([d[0], 0.0, d[2]]) + np.array([1e-3, 0, 0])
-        tone = tones[int(np.clip((p[1] - ylo) / (yhi - ylo) * 4 + rs.uniform(-0.8, 0.8), 0, 3))]
-        body += card(p - nrm * 0.25, unit(down) * 0.7 + nrm * 0.7 + rs.normal(size=3) * 0.15, rs.uniform(0.95, 1.25), rs.uniform(0.55, 0.7), tint(tone, rs, 0.08, 0.1),
-                     n_hint=nrm, fold=0.25, droop=0.2, lit=unit((p - c0) / np.array([2.6, 2.1, 2.6]) + UP * 0.45))
+        h = float(np.clip((p[1] - ylo) / (yhi - ylo), 0, 1)); tone = tones[int(np.clip(h * 3.2 + rs.uniform(-0.5, 0.9), 0, 3))]
+        body += card(p - nrm * 0.12, unit(down) * 0.75 + nrm * 0.42 + rs.normal(size=3) * 0.12, rs.uniform(0.8, 1.05), rs.uniform(0.6, 0.74), tint(tone, rs, 0.07, 0.08),
+                     n_hint=nrm, fold=0.22, droop=0.18, lit=unit((p - c0) / np.array([2.6, 2.1, 2.6]) + UP * 0.7), lo=0.72, hi=1.1, glow=0.18)
     parts = {"body": body}
     for ready, name in ((True, "when_ready_true"), (False, "when_ready_false")):
-        n = 16 if ready else 7; fr = 0.36 if ready else 0.18; fc = np.array(hx(fruit)) if ready else np.array(hx("a8c84c")); bits = []
+        n = 15 if ready else 8; fr = 0.4 if ready else 0.2; fc = np.array(hx(fruit)) if ready else np.array(hx("b4d050")); bits = []
         for i in range(n):
-            y = 0.55 - 0.95 * (i + 0.5) / n; rad = math.sqrt(1 - y * y); ang = i * 2.39996 + 0.9
-            d = np.array([rad * math.cos(ang), y, rad * math.sin(ang)]); p = on_surface(crown, c0, d)[0] + d * (0.45 + fr * 0.5)
-            bits.append(ball(p, (fr, fr * 0.94, fr), fc, 4) if ready else gem(p, fr, fr, fr, fc, 5))
+            y = 0.62 - 1.0 * (i + 0.5) / n; rad = math.sqrt(1 - y * y); ang = i * 2.39996 + 0.9
+            d = np.array([rad * math.cos(ang), y, rad * math.sin(ang)]); p, nrm = on_surface(crown, c0, d); p = p + nrm * fr * 0.75
+            bits.append(ball(p, (fr, fr * 0.94, fr), np.clip(fc * 1.12, 0, 1), 4, under=fc * 0.62) if ready else gem(p, fr, fr, fr, fc, 5))
         parts[name] = bits
     return parts
 
@@ -273,20 +289,27 @@ def to_linear(c):
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
 
 
-def mesh_of(pieces, scale, linear=False):
+def mesh_of(pieces, scale, linear=False, soft=0.0):
     """Pieces joined into one mesh: points, normals, colours (RGBA; produce: its shade in every channel, alpha 0),
     triangles. Cards are flat-shaded and face their `face` side; solids are smooth and face outward. `linear`:
-    colours written as light (trees, drawn by the master material) and not as the game's crop shader reads them."""
+    colours written as light (trees, drawn by the master material) and not as the game's crop shader reads them.
+    `soft` (crops): a leaf that lies open to the sky faces up, and takes the sky's light this much more than its
+    own tilt's, so a plant is lit as a whole and its painted shades show."""
     Vs, Ns, Cs, Ts, n = [], [], [], [], 0
     for p in pieces:
-        V, T = p["V"] * scale, p["T"].copy()
+        V, T = p["V"] * scale, p["T"].copy(); face = p["face"]
+        if face is not None and soft > 0 and face[1] < 0:
+            face = -face
         fn = np.cross(V[T[:, 1]] - V[T[:, 0]], V[T[:, 2]] - V[T[:, 0]])
-        out = np.tile(p["face"], (len(T), 1)) if p["face"] is not None else V[T].mean(1) - V.mean(0)
+        out = np.tile(face, (len(T), 1)) if face is not None else V[T].mean(1) - V.mean(0)
         flip = (fn * out).sum(1) < 0
         T[flip] = T[flip][:, [0, 2, 1]]; fn[flip] *= -1
         ln = np.linalg.norm(fn, axis=1, keepdims=True); fn = fn / np.maximum(ln, 1e-12)
         if p.get("lit") is not None:
             fn = np.tile(p["lit"], (len(T), 1))
+        elif face is not None and soft > 0:
+            open_ = fn[:, 1] > 0.45; fn[open_] = fn[open_] * (1 - soft) + UP * soft
+            fn /= np.linalg.norm(fn, axis=1, keepdims=True)
         if p["smooth"]:
             N = np.zeros_like(V)
             for k in range(3):
@@ -315,7 +338,7 @@ def export(name, folder):
     """Writes `<folder>/<name>.glb` and returns {part: triangles}."""
     if name in CROPS:
         stages = {s: CROPS[name](s) for s in STAGES}; k = _scale(name, stages["ripe"])
-        parts = [("when_stage_" + s,) + mesh_of(stages[s], k) for s in STAGES]
+        parts = [("when_stage_" + s,) + mesh_of(stages[s], k, soft=0.6) for s in STAGES]
     else:
         tree = TREES[name](); k = _scale(name, tree["body"])
         parts = [(part,) + mesh_of(pieces, k, linear=True) for part, pieces in tree.items()]

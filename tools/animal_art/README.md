@@ -48,8 +48,12 @@ files (`gltf.py`, glTF `.glb`), and `data/assets.json` lists them, so the game d
   crop code draws those parts exactly as it draws its own plants (nine to a plot, growing, swaying, tinted by the
   crop's colour), so produce is marked the way its shader expects: vertex alpha 0, the red channel its shade. Sizes
   come from the plants they replace (`SIZE`).
-- **A tree** is one file with its `body` and its fruit as `when_ready_true` and `when_ready_false`. Its leaves are lit
-  as the crown, not each by its own tilt. Its entry's `sway` bends it in the wind.
+- **A tree** is one file with its `body` and its fruit as `when_ready_true` and `when_ready_false`. Its crown is a few
+  round masses clothed in leaves that lie on them (as feathers lie on the birds), so there are no gaps; the leaves
+  are lit as the crown, not each by its own tilt. Its entry's `sway` bends it in the wind.
+- **Made for the game's light**: every leaf is painted dark at its base and light at its tip, crowns and stems dark
+  below and light above, and a crop's open leaves take the sky's light more than their own tilt's. Judge a plant in
+  the game (sun, shadows, colour grade), not in this package's previews.
 - **Adding one**: write a function like `strawberry(stage)` or `apple_tree()` from `card`, `gem`, `ball`, `bar`, add it
   to `CROPS` or `TREES` and to `SIZE`, export, and list it in `data/assets.json`.
 
