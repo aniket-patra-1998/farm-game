@@ -37,6 +37,8 @@ const MAX_STRIDE := 4
 const BEE_BEAT_RATE := 60.0      # a file-made bee's wing beats (radians of the beat a second)..
 const BEE_HOVER_RATE := 3.3      # ..and its slow bob in the air (as tools/animal_art's motion)
 const BEE_HOVER := 0.4           # how high the bob goes, as a share of its body's height
+const PICK_PAD := 0.04           # tiles added round an animal's body for a tap
+const PICK_MIN := 0.14           # the least half-width of a tap box (a chick is still easy to tap)
 
 
 ## Animals are posed at least this many frames apart (the graphics quality's `pose_every`, Quality).
@@ -860,6 +862,31 @@ static func _place(seg: MeshInstance3D, a: Vector3, b: Vector3) -> void:
 
 
 ## How far it reaches from its feet (radius) and how tall it stands: its box for taps.
+## How far along the ray `from`+`dir` this animal is met, or INF: its own box, turned the way it faces, so a tap
+## lands on the animal under the finger, not on a big neighbour's square.
+func hit(from: Vector3, dir: Vector3) -> float:
+	var t := global_transform if is_inside_tree() else transform
+	var inv := t.affine_inverse()
+	var met: Variant = pick_box().intersects_ray(inv * from, inv.basis * dir)
+	return from.distance_to(t * (met as Vector3)) if met != null else INF
+
+
+## The box a tap is tested against, in the animal's own space (facing +X): its body, a little more, and never
+## smaller than a fingertip.
+func pick_box() -> AABB:
+	var half: Vector3
+	var mid := 0.0
+	if _file_mesh != null:
+		var b := _file_mesh.get_aabb()
+		half = b.size * 0.5 * _size
+		mid = b.get_center().x * _size
+	else:
+		var r := reach()
+		half = Vector3(r.x, r.y * 0.5, _r.z * 1.3)
+	half = Vector3(maxf(half.x + PICK_PAD, PICK_MIN), half.y + PICK_PAD, maxf(half.z + PICK_PAD, PICK_MIN))
+	return AABB(Vector3(mid - half.x, 0.0, -half.z), Vector3(half.x * 2.0, half.y * 2.0, half.z * 2.0))
+
+
 func reach() -> Vector2:
 	var r := maxf(_r.x, _r.z) * 1.6
 	return Vector2(maxf(r, 0.12), _leg + _r.y * 2.6 + 0.05)

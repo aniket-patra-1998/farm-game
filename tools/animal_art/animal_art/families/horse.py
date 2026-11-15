@@ -13,7 +13,7 @@ HORSES = {
     "draft horse": dict(body=(1.0, 1.02, 1.85), legs=1.85, leg_r=0.32, neck=0.56, skull=(0.5, 0.58, 0.66), muzzle=(0.37, 0.39, 0.66),
                         mane=0.8, tail=1.1, feather=1.0, fur=0.0, coat="6e4326", points="24170f", dark_legs=False, blaze=True,
                         socks=True, rel=1.32),
-    "pony": dict(body=(0.84, 0.86, 1.45), legs=1.35, leg_r=0.25, neck=0.48, skull=(0.46, 0.52, 0.58), muzzle=(0.31, 0.33, 0.5),
+    "pony": dict(body=(0.76, 0.78, 1.5), legs=1.62, leg_r=0.23, neck=0.5, skull=(0.46, 0.52, 0.58), muzzle=(0.31, 0.33, 0.5),
                  mane=1.0, tail=1.2, feather=0.35, fur=0.8, coat="c9a37a", points="6b4a2a", dark_legs=False, blaze=False,
                  socks=False, rel=0.85),
     "white stallion": dict(body=(0.8, 0.86, 1.78), legs=2.0, leg_r=0.23, neck=0.46, skull=(0.42, 0.5, 0.6), muzzle=(0.29, 0.31, 0.62),
@@ -25,7 +25,7 @@ HORSES = {
 HORSES["gray horse"] = dict(HORSES["horse"], coat="a0a0a8", points="5a5a62", rel=1.19)
 
 
-HORSES["black pony"] = dict(HORSES["pony"], coat="2f2d31", points="5a5a62", rel=0.85)
+HORSES["black pony"] = dict(HORSES["pony"], coat="3b3536", points="1c1a1b", rel=0.85)
 
 
 HORSES["mustang"] = dict(HORSES["horse"], coat="8a4a22", points="2b1a10", patches=True, mane=0.9, tail=1.2, rel=1.15)

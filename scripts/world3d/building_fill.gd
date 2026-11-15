@@ -28,6 +28,12 @@ const PEEKERS := 3            # the most animals looking out of windows at once 
 const PEEK_OUT := 0.1         # tiles a head sticks out past the wall
 const PEEK_POP := 0.45        # seconds a head takes to pop up
 const PEEK_NOD := 2.6         # seconds a head takes to nod once and back
+const PEEK_FILL := 0.95       # the share of a window a file-made animal's head fills..
+const PEEK_SNOUT := 0.25      # ..its nose this share of the window past PEEK_OUT
+const HEAD_SHARE := 0.3       # an animal's head: the front share of its length..
+const HEAD_ABOVE := 0.45      # ..above this share of its height
+const BIRD_HEAD_SHARE := 0.45  # a bird's head: the front share of its length..
+const BIRD_HEAD_ABOVE := 0.62  # ..above this share of its height
 const FULL_FLAG := Color("#d8402f")   # the pennant a full home flies
 const PLANT_KINDS := ["tree", "bloom"]   # what grows in a garden-like building (shown by _show_plants)
 const TREE_SIZE_JITTER := 0.08    # each tree of an orchard is made this much bigger or smaller, and turned at random
@@ -43,6 +49,7 @@ const EMPTY_TUFTS := 6            # and this many tufts of grass grow in it
 const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
 
 static var planting := 0          # orchards still standing their trees, over frames
+static var _head_meshes := {}  # animal id -> its head cut from its file (_head_mesh), or null
 
 var uid := -1
 var residents: Array[Animal3D] = []
@@ -360,7 +367,9 @@ func _show_peekers(inside: Dictionary) -> void:
 		if it.is_empty():
 			continue
 		var w: Dictionary = _windows[order[k]]
-		var head := _head(Color.html(str(it.get("color", "#ffffff"))), float(w["size"]))
+		var head := _file_head(picks[k], float(w["size"]))
+		if head == null:
+			head = _head(Color.html(str(it.get("color", "#ffffff"))), float(w["size"]))
 		head.position = w["at"] as Vector3
 		head.scale = Vector3.ZERO
 		holder.add_child(head)
@@ -373,6 +382,62 @@ func _show_peekers(inside: Dictionary) -> void:
 		nod.tween_property(head, "rotation:x", -0.12, PEEK_NOD / 2.0).set_trans(Tween.TRANS_SINE)
 	_peekers = holder
 	add_child(_peekers)
+
+
+## The animal's own head at a window, cut from its file (the same model as in the yard): sized to fill a window of
+## `size`, the cut side just inside the wall, the nose out past it. Null when it has no file.
+static func _file_head(id: String, size: float) -> Node3D:
+	var head := _head_mesh(id)
+	if head == null:
+		return null
+	var box := head.get_aabb()
+	var s := size * PEEK_FILL / maxf(box.size.y, 0.001)
+	var mi := MeshInstance3D.new()
+	mi.mesh = head
+	mi.scale = Vector3.ONE * s
+	mi.position = Vector3(PEEK_OUT + size * PEEK_SNOUT - box.end.x * s, -box.get_center().y * s, -box.get_center().z * s)
+	var root := Node3D.new()
+	root.add_child(mi)
+	return root
+
+
+## An animal's head as a mesh of its own: the triangles of its file's front, upper part (HEAD_SHARE, HEAD_ABOVE),
+## with their colours and materials; made once a kind and shared. Null when the animal has no file.
+static func _head_mesh(id: String) -> ArrayMesh:
+	if _head_meshes.has(id):
+		return _head_meshes[id]
+	var model := AssetRegistry.instance(id) if AssetRegistry.has_model(id) else null
+	var mi := Animal3D._first_mesh(model) if model != null else null
+	var out: ArrayMesh = null
+	if mi != null and mi.mesh != null:
+		var all := mi.get_aabb()
+		var bird := AnimalRig.of(Game.item_data(id)).type == "bird"   # (a bird's head sits high on a breast)
+		var front := all.end.x - all.size.x * (BIRD_HEAD_SHARE if bird else HEAD_SHARE)
+		var above := all.position.y + all.size.y * (BIRD_HEAD_ABOVE if bird else HEAD_ABOVE)
+		out = ArrayMesh.new()
+		for k in mi.mesh.get_surface_count():
+			var arrays := mi.mesh.surface_get_arrays(k)
+			var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+			var kept := PackedInt32Array()
+			for t in range(0, idx.size(), 3):
+				var inside := true
+				for j in 3:
+					var p := v[idx[t + j]]
+					inside = inside and p.x > front and p.y > above
+				if inside:
+					kept.append_array([idx[t], idx[t + 1], idx[t + 2]])
+			if kept.is_empty():
+				continue
+			arrays[Mesh.ARRAY_INDEX] = kept
+			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+			out.surface_set_material(out.get_surface_count() - 1, mi.get_active_material(k))
+		if out.get_surface_count() == 0:
+			out = null
+	if model != null:
+		model.free()
+	_head_meshes[id] = out
+	return out
 
 
 ## A head filling a window of size `size`, in `col`: a square head, a snout, ears and two eyes, facing +x.

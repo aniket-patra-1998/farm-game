@@ -167,3 +167,20 @@ func test_351_a_file_building_keeps_its_view_shows_states_in_place_and_opens_its
 	objects.free()
 	AssetRegistry.add("chicken_coop", {})
 	AssetRegistry.forget()
+
+
+func test_352_a_tap_lands_on_the_animal_under_it_and_a_window_shows_its_own_head() -> void:
+	var goat := Animal3D.create(Game.item_data("boer_goat"), null, Vector3.ZERO)
+	var box := goat.pick_box()
+	_check(box.size.x < 1.0 and box.size.z < 1.0, "a goat's tap box is about its body, not a big square")
+	var down := Vector3.DOWN
+	_check(goat.hit(Vector3(0, 5, 0), down) < INF, "a tap on its middle lands on it")
+	_eq(goat.hit(Vector3(0, 5, box.end.z + 0.2), down), INF, "a tap just beside it does not")
+	goat.rotation.y = PI / 2.0
+	_eq(goat.hit(Vector3(box.end.x - 0.02, 5, 0), down), INF, "its box turns as it faces")
+	goat.free()
+	var head := BuildingFill._head_mesh("cow")
+	var cow := Animal3D.create(Game.item_data("cow"), null, Vector3.ZERO)
+	_check(head != null and head.get_aabb().size.x < cow.pick_box().size.x / cow._size,
+		"a window shows the cow's head cut from its file, not the whole cow")
+	cow.free()

@@ -834,8 +834,7 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 		if v.has("crown"):
 			d = _tree_hit(v["crown"], from, dir)
 		elif node is Animal3D:
-			var box: AABB = v["box"]
-			d = _ray_to(AABB(node.position + box.position, box.size), from, dir)
+			d = (node as Animal3D).hit(from, dir)
 		else:
 			for part: AABB in v["parts"]:
 				d = minf(d, _ray_to(part, from, dir))
