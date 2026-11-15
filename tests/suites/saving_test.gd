@@ -79,8 +79,8 @@ func test_88_every_system_saves_and_loads_its_own_fields() -> void:
 
 
 func test_111_an_old_save_settles_into_the_new_footprints() -> void:
-	# Version 1 saves drew the Pig Pen 3x3; it's 3x4 now, so a chicken standing just below it is in the way.
-	# Loading moves the chicken to the nearest free spot, says so, and nothing overlaps.
+	# A building's footprint is not what an old save knew: here a chicken stands on the Pig Pen's last row (the pen
+	# is 3x3). Loading moves the chicken to the nearest free spot, says so, and nothing overlaps.
 	var path := "user://test_save_v1.json"
 	var g := _farm()
 	g.save_path = path
@@ -92,7 +92,7 @@ func test_111_an_old_save_settles_into_the_new_footprints() -> void:
 	data["version"] = 1
 	var uid := int(data.get("next_uid", 1))
 	data["objects"].append({"id": "pig_pen", "uid": uid, "row": 14, "col": 14, "t": 0})
-	data["objects"].append({"id": "chicken", "uid": uid + 1, "row": 17, "col": 14, "t": 0})
+	data["objects"].append({"id": "chicken", "uid": uid + 1, "row": 16, "col": 14, "t": 0})
 	data["next_uid"] = uid + 2
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(data))
@@ -103,10 +103,10 @@ func test_111_an_old_save_settles_into_the_new_footprints() -> void:
 	add_child(h)
 	h.saving_enabled = false
 	_eq(h.object_at(h.index_of(14, 14)).get("id", ""), "pig_pen", "the pig pen keeps its spot")
-	_eq(h.object_at(h.index_of(17, 14)).get("id", ""), "pig_pen", "and now covers a fourth row")
+	_eq(h.object_at(h.index_of(16, 14)).get("id", ""), "pig_pen", "and covers its last row")
 	var chicken := h.object_by_uid(uid + 1)
 	_eq(chicken.get("id", ""), "chicken", "the chicken is still on the farm")
-	var moved := absi(int(chicken["row"]) - 17) + absi(int(chicken["col"]) - 14)
+	var moved := absi(int(chicken["row"]) - 16) + absi(int(chicken["col"]) - 14)
 	_check(moved == 1, "it moved to the nearest free spot (%d tiles)" % moved)
 	_eq(h.object_at(h.index_of(int(chicken["row"]), int(chicken["col"]))).get("uid", -1), uid + 1,
 		"where nothing else stands")

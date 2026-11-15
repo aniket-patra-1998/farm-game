@@ -895,14 +895,14 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 3x2 | 20 / 40 / 60 | animal | 2 |  | mystery_eggs |
+| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 2x2 | 20 / 40 / 60 | animal | 2 |  | mystery_eggs |
 | ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  |  |
-| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 4x3 | 20 / 30 / 40 | animal | 2 |  | calves |
+| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  | calves |
 | ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  | lambs |
 | ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  |  |
 | ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 30 / 40 | animal | 2 |  |  |
-| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x4 | 30 | animal | 2 | frame | truffles |
-| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 3x4 | 20 / 25 / 30 / 35 / 40 | animal | 2 | frame | foals |
+| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x3 | 30 | animal | 2 | frame | truffles |
+| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 3x3 | 20 / 25 / 30 / 35 / 40 | animal | 2 | frame | foals |
 
 ### Nursery
 
@@ -912,7 +912,7 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 4x3 | 20 / 30 / 40 | animal | 2 | frame | nursery |
+| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 3x3 | 20 / 30 / 40 | animal | 2 | frame | nursery |
 
 ### Orchards
 
@@ -945,12 +945,12 @@ Shared: `tab` = "crafting", `limit_group` = "crafting", `group_limit` = 3
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Bakery | `bakery` | 25 | 100,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
-| ✅ | Winery | `winery` | 25 | 100,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
-| ✅ | Spa | `spa` | 25 | 100,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Bakery | `bakery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Winery | `winery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Spa | `spa` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 | 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |  |  |
-| ✅ | Feed Mill | `feed_mill` | 28 | 120,000 | 4x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Feed Mill | `feed_mill` | 28 | 120,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 
 ### Storage
 

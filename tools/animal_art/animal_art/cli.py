@@ -52,6 +52,15 @@ def main(argv=None):
         from .export import export
         for n in names:
             print(export(n, os.path.join(out, n.replace(" ", "_") + ".glb")))
+        # Every game animal exported: the files are what the builder makes now. Record it, and the pictures'
+        # fingerprints (tools/make_art_versions.py; CI fails when the builder changes without a new export).
+        game = {g for row in GAME.values() for g in row}
+        if game <= set(names):
+            import subprocess
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "..", "..", "make_art_versions.py"),
+                            "--exported", "animals"], check=False)
+        else:
+            print("(some animals only: run every animal before pushing, or CI will ask for it)")
     else:
         print(__doc__)
         return 2

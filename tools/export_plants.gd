@@ -31,6 +31,8 @@ func _ready() -> void:
 		n += 1
 	FileAccess.open(AssetRegistry.DATA, FileAccess.WRITE).store_string(JSON.stringify(listed, "  ", false) + "\n")
 	print("exported %d plant files" % n)   # not-ui (a tool's log)
+	# The files are now what the builders make: record it, and the pictures' fingerprints (tools/make_art_versions.py).
+	OS.execute("python3", [ProjectSettings.globalize_path("res://tools/make_art_versions.py"), "--exported", "plants"])
 	get_tree().quit()
 
 

@@ -7,6 +7,8 @@ const ANIMAL_ZOOM := 3.0   # animals and vehicles are small: shown bigger
 const CROP_ZOOM := 2.2     # crops are small too
 const BUILDING_STATES: Array[String] = ["frame", "empty", "half", "full"]
 
+static var size := 0   # the size buildings are shown at (0: their biggest; the look tools' --size=)
+
 
 ## Every case worth looking at: [{"id", "state"}]. Buildings in each of their states, crops as a young, ripe and
 ## withered row, everything else once.
@@ -74,7 +76,7 @@ static func model(id: String, state := "default", uid := 7) -> Node3D:
 static func building(id: String, state: String, uid: int) -> Node3D:
 	var it := Game.item_data(id)
 	var fp := Game.footprint(id)
-	var level := Game.max_level(id)
+	var level := Game.max_level(id) if size <= 0 else mini(size, Game.max_level(id))
 	if state == "frame":
 		if not it.has("build_materials"):
 			return null

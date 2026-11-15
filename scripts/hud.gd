@@ -23,6 +23,7 @@ const LOCKED := Color("#d8cbb0")
 
 
 var top: HudTop
+var sheet: BuildingSheet   # a tapped home's sheet (made when first needed, then kept)
 var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
 var side: HudSide
@@ -423,8 +424,23 @@ func show_building(uid: int) -> void:
 	elif Game.crafting.is_crafting(o):
 		Game.crafting.finish_crafts(uid)
 		_book.open_panel(Game.size_name(o), crafting.build_crafting)
+	elif BuildingSheet.suits(o):
+		# A finished home opens as a small sheet at the bottom, the farm still in view (its full panel is its More).
+		if sheet == null:
+			sheet = BuildingSheet.new(self)
+			_book.get_parent().add_child(sheet)
+		_book.close_panel()
+		sheet.open(uid)
 	else:
-		_book.open_panel(Game.item_data(o["id"])["name"], buildings.build_building)
+		open_building_panel(uid)
+
+
+## A building's full panel (its feed, its own extras, building its next size).
+func open_building_panel(uid: int) -> void:
+	_building_uid = uid
+	if sheet != null:
+		sheet.close()
+	_book.open_panel(Game.item_data(Game.object_by_uid(uid)["id"])["name"], buildings.build_building)
 
 
 func _panel_button(words: String) -> Button:

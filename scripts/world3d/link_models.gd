@@ -9,9 +9,6 @@ extends RefCounted
 ## Built in the tile's own frame, origin at its centre, an arm pointing north (-z) before it's turned.
 
 const VARIANTS := 3          # different hand-built looks of every shape, picked by where the piece stands
-const HEDGE_LOW_Y := 0.3        # a hedge is a wall of leaf, twice a fence's height, like FarmVille's
-const HEDGE_TOP_Y := 0.6
-const HEDGE_STRETCH := 1.35
 const HEIGHT := 0.36         # a fence's posts
 const POST := 0.045          # half the width of a post
 const WALL_TOP := 0.38
@@ -25,7 +22,6 @@ const HEDGE_TOP := 0.5       # and its height
 const WALL_STONE := Color("#aaa598")   # the warm grey a stone wall leans toward (its own colour is a cold blue-grey)
 const MORTAR := Color("#cdbfa8")       # between a brick path's bricks
 const BRICK_ROWS := 8        # rows of bricks across a path tile, four bricks long, each row half a brick along
-const HEDGE_SWAY := 0.4      # how far a hedge bends in the wind (paint3d sway, by height); each piece on its own beat
 
 static var _cache := {}      # "item|kind|variant" -> Array of {"mesh": ArrayMesh, "shadow": bool}
 
@@ -168,8 +164,8 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 	# A clipped hedge: a squared wall of leaf with a lighter, slightly domed top, small tufts breaking its faces
 	# and edges so it is never a plain box, darker at the foot, with the odd flower.
 	var leaf := DecorModel.LEAF
-	var body := ModelKit.paint(leaf.darkened(0.28), 0.0, HEDGE_SWAY)
-	var top := ModelKit.paint(leaf.darkened(0.08), 0.0, HEDGE_SWAY)
+	var body := ModelKit.paint(leaf.darkened(0.28))
+	var top := ModelKit.paint(leaf.darkened(0.08))
 	var half := HEDGE_HALF * (1.12 if kind >= LinkShape.Kind.TEE else 1.0)
 	ModelKit.box(root, Vector3(-half, 0, -half), Vector3(half, HEDGE_TOP, half), body)
 	ModelKit.box(root, Vector3(-half + 0.015, HEDGE_TOP, -half + 0.015), Vector3(half - 0.015, HEDGE_TOP + 0.03,
@@ -181,7 +177,7 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 		var a := _arm(root, d)
 		ModelKit.box(a, Vector3(-HEDGE_HALF, 0, -len), Vector3(HEDGE_HALF, HEDGE_TOP, -half + 0.01), body)
 		ModelKit.box(a, Vector3(-HEDGE_HALF - 0.01, 0, -len), Vector3(HEDGE_HALF + 0.01, 0.07, -half + 0.01),
-			ModelKit.paint(leaf.darkened(0.3), 0.0, HEDGE_SWAY), false)
+			ModelKit.paint(leaf.darkened(0.3)), false)
 		ModelKit.box(a, Vector3(-HEDGE_HALF + 0.015, HEDGE_TOP, -len), Vector3(HEDGE_HALF - 0.015, HEDGE_TOP + 0.03,
 			-half + 0.01), top)
 		var z := half + 0.04
@@ -189,7 +185,7 @@ static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumb
 			for side: float in [-1.0, 1.0]:
 				# tufts on each face and along the top's edges
 				ModelKit.facet_ball(a, Vector3(side * HEDGE_HALF, rng.randf_range(0.12, 0.4), -z - rng.randf_range(0.0, 0.05)),
-					rng.randf_range(0.035, 0.05), ModelKit.paint(leaf.darkened(0.12 + rng.randf() * 0.14), 0.0, HEDGE_SWAY),
+					rng.randf_range(0.035, 0.05), ModelKit.paint(leaf.darkened(0.12 + rng.randf() * 0.14)),
 					Vector3(0.45, 1.0, 1.2))
 				ModelKit.facet_ball(a, Vector3(side * (HEDGE_HALF - 0.03), HEDGE_TOP + 0.01, -z + rng.randf_range(-0.03, 0.03)),
 					rng.randf_range(0.035, 0.05), top, Vector3(1.0, 0.5, 1.2))

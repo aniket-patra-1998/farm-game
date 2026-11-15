@@ -36,6 +36,8 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--ids="):
 			only = a.trim_prefix("--ids=")
+		if a.begins_with("--size="):
+			LookModels.size = int(a.trim_prefix("--size="))
 	for id in Game.item_order:
 		if str(Game.items[id].get("kind", "")) in ["building", "barn", "crafting"] and (only == "" or id in only.split(",")):
 			ids.append(id)

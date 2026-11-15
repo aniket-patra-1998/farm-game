@@ -85,3 +85,20 @@ Open, in order of what it buys:
 - Trees that are decorations, the bridge, buildings and animals are still a node each; the same layer could draw
   whatever of those stands still.
 - Decorations made as files (docs/ASSETS.md), as animals, trees and the farmer are.
+## Buildings and their panels (measured on the showcase farm, 2026-11-15; branch `building-look`)
+Done: what a change on the farm costs in script time went from about 35 ms to about 8 ms (the hidden 2D layer no
+longer places and redraws its pieces in 3D; fences, neighbour masks and the ground's shade are redone only when
+something comes, goes or moves); the timer's look each second is spread over frames; a tapped building opens as a
+small sheet that is built once and refilled.
+Open:
+- The full building panel (the sheet's More), and the crafting and Barn panels, are still thrown away and built
+  again on every refresh (about 23 ms for a dairy). Make them update in place like the sheet, and restyle them to
+  match it.
+- The 3D look at everything after a change is still about 7 ms (every thing's key is made again). To cut it further
+  the game has to say which thing changed (`objects_changed` carries nothing).
+- The 2D layer still keeps a hidden piece per thing (224 on the showcase farm). Removing it altogether touches
+  placement and taps.
+- The sheet covers the building it is about and overlaps the bottom bars: move the camera so the building sits
+  above it. Its Move, Turn and Sell are words, not icons yet.
+- Crafting buildings (bakery, winery, spa, feed mill) have the smaller footprint but not yet their own identity
+  and countable upgrades.

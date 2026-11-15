@@ -6134,7 +6134,7 @@
    "item": "chicken_coop",
    "class": "Building",
    "stage": "1",
-   "tiles": 3,
+   "tiles": 2,
    "fill": 0.96,
    "refs": [
     "refs/chicken_coop_size1.png"
@@ -6146,7 +6146,7 @@
    "item": "chicken_coop",
    "class": "Building",
    "stage": "2",
-   "tiles": 3,
+   "tiles": 2,
    "fill": 0.96,
    "refs": [
     "refs/chicken_coop_size2.png"
@@ -6158,7 +6158,7 @@
    "item": "chicken_coop",
    "class": "Building",
    "stage": "3",
-   "tiles": 3,
+   "tiles": 2,
    "fill": 0.96,
    "refs": [
     "refs/chicken_coop_size3.png"
@@ -6206,7 +6206,7 @@
    "item": "cow_shed",
    "class": "Building",
    "stage": "1",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/cow_shed_size1.png"
@@ -6218,7 +6218,7 @@
    "item": "cow_shed",
    "class": "Building",
    "stage": "2",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/cow_shed_size2.png"
@@ -6230,7 +6230,7 @@
    "item": "cow_shed",
    "class": "Building",
    "stage": "3",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/cow_shed_size3.png"
@@ -6422,7 +6422,7 @@
    "item": "nursery_barn",
    "class": "Building",
    "stage": "1",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/nursery_barn_size1.png"
@@ -6434,7 +6434,7 @@
    "item": "nursery_barn",
    "class": "Building",
    "stage": "2",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/nursery_barn_size2.png"
@@ -6446,7 +6446,7 @@
    "item": "nursery_barn",
    "class": "Building",
    "stage": "3",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/nursery_barn_size3.png"
@@ -6542,7 +6542,7 @@
    "item": "bakery",
    "class": "Crafting",
    "stage": "1",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/bakery_size1.png"
@@ -6554,7 +6554,7 @@
    "item": "bakery",
    "class": "Crafting",
    "stage": "2",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/bakery_size2.png"
@@ -6566,7 +6566,7 @@
    "item": "bakery",
    "class": "Crafting",
    "stage": "3",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/bakery_size3.png"
@@ -6578,7 +6578,7 @@
    "item": "bakery",
    "class": "Crafting",
    "stage": "4",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/bakery_size4.png"
@@ -6590,7 +6590,7 @@
    "item": "bakery",
    "class": "Crafting",
    "stage": "5",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/bakery_size5.png"
@@ -6602,7 +6602,7 @@
    "item": "winery",
    "class": "Crafting",
    "stage": "1",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/winery_size1.png"
@@ -6614,7 +6614,7 @@
    "item": "winery",
    "class": "Crafting",
    "stage": "2",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/winery_size2.png"
@@ -6626,7 +6626,7 @@
    "item": "winery",
    "class": "Crafting",
    "stage": "3",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/winery_size3.png"
@@ -6638,7 +6638,7 @@
    "item": "winery",
    "class": "Crafting",
    "stage": "4",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/winery_size4.png"
@@ -6650,7 +6650,7 @@
    "item": "winery",
    "class": "Crafting",
    "stage": "5",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/winery_size5.png"
@@ -6662,7 +6662,7 @@
    "item": "spa",
    "class": "Crafting",
    "stage": "1",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/spa_size1.png"
@@ -6674,7 +6674,7 @@
    "item": "spa",
    "class": "Crafting",
    "stage": "2",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/spa_size2.png"
@@ -6686,7 +6686,7 @@
    "item": "spa",
    "class": "Crafting",
    "stage": "3",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/spa_size3.png"
@@ -6698,7 +6698,7 @@
    "item": "spa",
    "class": "Crafting",
    "stage": "4",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/spa_size4.png"
@@ -6710,7 +6710,7 @@
    "item": "spa",
    "class": "Crafting",
    "stage": "5",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/spa_size5.png"
@@ -6722,7 +6722,7 @@
    "item": "feed_mill",
    "class": "Crafting",
    "stage": "1",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/feed_mill_size1.png"
@@ -6734,7 +6734,7 @@
    "item": "feed_mill",
    "class": "Crafting",
    "stage": "2",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/feed_mill_size2.png"
@@ -6746,7 +6746,7 @@
    "item": "feed_mill",
    "class": "Crafting",
    "stage": "3",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/feed_mill_size3.png"
@@ -6758,7 +6758,7 @@
    "item": "feed_mill",
    "class": "Crafting",
    "stage": "4",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/feed_mill_size4.png"
@@ -6770,7 +6770,7 @@
    "item": "feed_mill",
    "class": "Crafting",
    "stage": "5",
-   "tiles": 4,
+   "tiles": 3,
    "fill": 0.96,
    "refs": [
     "refs/feed_mill_size5.png"
