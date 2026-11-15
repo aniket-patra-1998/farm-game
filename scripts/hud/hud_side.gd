@@ -7,12 +7,12 @@ extends RefCounted
 const STRIP_NEIGHBOURS := 4      # neighbours shown on the strip
 const INBOX_CHECK := 300.0       # seconds between catching the neighbours' mail up (the inbox's count)
 
-var _badge: Label   # the inbox's count on the Neighbours button
 var hud: FarmHud
 var toggles: VBoxContainer
 var menu: VBoxContainer
 var zoom: HBoxContainer
 var strip: PanelContainer
+var _badge: Label   # the inbox's count on the Neighbours button
 var _eye: Button
 var _sound: Button
 
