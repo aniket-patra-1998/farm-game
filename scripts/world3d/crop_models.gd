@@ -19,10 +19,24 @@ const ON_SOIL := 0.03      # produce beginning lower than this lies on the soil
 const GREEN_SHARP := 4.0   # how quickly a colour counts as leaf green (its green over its red and blue, times this)
 
 static var _cache := {}
+static var _files := {}   # form|stage -> its mesh from the form's file (null: it has none)
 
 
-static func mesh(shape: String, stage: String) -> ArrayMesh:
+## A crop form's mesh at `stage`: from its file (art/models/crops, AssetRegistry `crop:<form>`, made by
+## tools/export_plants), else built here (`from_file` false: the export itself).
+static func mesh(shape: String, stage: String, from_file := true) -> ArrayMesh:
 	var key := shape + "|" + stage
+	if from_file:
+		if not _files.has(key):
+			_files[key] = null
+			if AssetRegistry.has_model(AssetRegistry.CROP + shape):
+				var model := AssetRegistry.instance(AssetRegistry.CROP + shape)
+				var part := model.get_node_or_null(stage) as MeshInstance3D
+				if part != null and part.mesh is ArrayMesh:
+					_files[key] = part.mesh
+				model.free()
+		if _files[key] != null:
+			return _files[key]
 	if not _cache.has(key):
 		var ripe := stage == "ripe"
 		var cap := CropForms.look("height", 0.0) * (1.0 if ripe else CropForms.look("young", 1.0))

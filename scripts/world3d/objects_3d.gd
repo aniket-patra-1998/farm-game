@@ -18,7 +18,8 @@ const FULL_EVERY := 10        # a full look at everything every this many second
 # A sync builds models for at most this long a frame, then carries on the next frame: a farm with hundreds of
 # things appears over a few frames instead of freezing (a phone says "not responding" after 5 s of that).
 const BUILD_BUDGET_MS := 12
-const FILE_KINDS := ["building", "barn", "crafting", "decor", "bloom", "tree"]   # kinds `uses_file` draws from files
+const FILE_KINDS := ["building", "barn", "crafting", "decor", "bloom"]   # kinds `uses_file` draws from files
+const TREE_LOOKS := 4     # looks of each tree kept in its file (tree_look; tools/export_plants)
 const WINDOW_SIZE := 0.22       # a `window_*` part's size at scale 1 (how big a head looking out of it is)
 const BUILD_STAGES := 3        # a construction site made as a file shows `when_stage_0`..`_2` as it goes up
 const SCENERY_Y := -Ground3D.SLAB
@@ -412,8 +413,12 @@ func state_of(o: Dictionary) -> Dictionary:
 	return state
 
 
-## A tree's look (one of Instancer.VARIANTS, `look`), shared: built once, or loaded when kept (ModelStore).
-static func tree_look(id: String, ready: bool, mask: int, look: int) -> Node3D:
+## A tree's look (one of Instancer.VARIANTS, `look`), shared. A lone tree comes from its file (one of its
+## TREE_LOOKS, ready or not: art/models/trees, made by tools/export_plants); one standing among others
+## (`mask`: Crowding) and a tree with no file are built once, or loaded when kept (ModelStore).
+static func tree_look(id: String, ready: bool, mask: int, look: int, from_file := true) -> Node3D:
+	if from_file and mask == 0 and AssetRegistry.has_model(id):
+		return AssetRegistry.instance(id, {"look": look % TREE_LOOKS, "ready": ready})
 	var it := Game.item_data(id)
 	var fp := Game.footprint(id)
 	var grown := ScaleGuide.factor(id)

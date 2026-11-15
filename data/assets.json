@@ -6,12 +6,12 @@
       "draws": 3
     },
     "tree": {
-      "triangles": 4000,
-      "draws": 4
+      "triangles": 14000,
+      "draws": 8
     },
     "crop": {
-      "triangles": 4000,
-      "draws": 3
+      "triangles": 10000,
+      "draws": 5
     },
     "decoration": {
       "triangles": 2500,
@@ -314,6 +314,378 @@
     "wild_turkey": {
       "model": "res://art/models/animals/wild_turkey.glb",
       "budget": "animal"
+    },
+    "apple_tree": {
+      "model": "res://art/models/trees/apple_tree.scn",
+      "budget": "tree"
+    },
+    "honeycrisp_apple_tree": {
+      "model": "res://art/models/trees/honeycrisp_apple_tree.scn",
+      "budget": "tree"
+    },
+    "lemon_tree": {
+      "model": "res://art/models/trees/lemon_tree.scn",
+      "budget": "tree"
+    },
+    "meyer_lemon_tree": {
+      "model": "res://art/models/trees/meyer_lemon_tree.scn",
+      "budget": "tree"
+    },
+    "cherry_tree": {
+      "model": "res://art/models/trees/cherry_tree.scn",
+      "budget": "tree"
+    },
+    "rainier_cherry_tree": {
+      "model": "res://art/models/trees/rainier_cherry_tree.scn",
+      "budget": "tree"
+    },
+    "orange_tree": {
+      "model": "res://art/models/trees/orange_tree.scn",
+      "budget": "tree"
+    },
+    "blood_orange_tree": {
+      "model": "res://art/models/trees/blood_orange_tree.scn",
+      "budget": "tree"
+    },
+    "peach_tree": {
+      "model": "res://art/models/trees/peach_tree.scn",
+      "budget": "tree"
+    },
+    "elberta_peach_tree": {
+      "model": "res://art/models/trees/elberta_peach_tree.scn",
+      "budget": "tree"
+    },
+    "mango_tree": {
+      "model": "res://art/models/trees/mango_tree.scn",
+      "budget": "tree"
+    },
+    "alphonso_mango_tree": {
+      "model": "res://art/models/trees/alphonso_mango_tree.scn",
+      "budget": "tree"
+    },
+    "plum_tree": {
+      "model": "res://art/models/trees/plum_tree.scn",
+      "budget": "tree"
+    },
+    "golden_plum_tree": {
+      "model": "res://art/models/trees/golden_plum_tree.scn",
+      "budget": "tree"
+    },
+    "fig_tree": {
+      "model": "res://art/models/trees/fig_tree.scn",
+      "budget": "tree"
+    },
+    "black_mission_fig_tree": {
+      "model": "res://art/models/trees/black_mission_fig_tree.scn",
+      "budget": "tree"
+    },
+    "banana_tree": {
+      "model": "res://art/models/trees/banana_tree.scn",
+      "budget": "tree"
+    },
+    "red_banana_tree": {
+      "model": "res://art/models/trees/red_banana_tree.scn",
+      "budget": "tree"
+    },
+    "avocado_tree": {
+      "model": "res://art/models/trees/avocado_tree.scn",
+      "budget": "tree"
+    },
+    "hass_avocado_tree": {
+      "model": "res://art/models/trees/hass_avocado_tree.scn",
+      "budget": "tree"
+    },
+    "apricot_tree": {
+      "model": "res://art/models/trees/apricot_tree.scn",
+      "budget": "tree"
+    },
+    "golden_apricot_tree": {
+      "model": "res://art/models/trees/golden_apricot_tree.scn",
+      "budget": "tree"
+    },
+    "pomegranate_tree": {
+      "model": "res://art/models/trees/pomegranate_tree.scn",
+      "budget": "tree"
+    },
+    "wonderful_pomegranate_tree": {
+      "model": "res://art/models/trees/wonderful_pomegranate_tree.scn",
+      "budget": "tree"
+    },
+    "olive_tree": {
+      "model": "res://art/models/trees/olive_tree.scn",
+      "budget": "tree"
+    },
+    "mission_olive_tree": {
+      "model": "res://art/models/trees/mission_olive_tree.scn",
+      "budget": "tree"
+    },
+    "coconut_tree": {
+      "model": "res://art/models/trees/coconut_tree.scn",
+      "budget": "tree"
+    },
+    "king_coconut_tree": {
+      "model": "res://art/models/trees/king_coconut_tree.scn",
+      "budget": "tree"
+    },
+    "lime_tree": {
+      "model": "res://art/models/trees/lime_tree.scn",
+      "budget": "tree"
+    },
+    "grapefruit_tree": {
+      "model": "res://art/models/trees/grapefruit_tree.scn",
+      "budget": "tree"
+    },
+    "mandarin_tree": {
+      "model": "res://art/models/trees/mandarin_tree.scn",
+      "budget": "tree"
+    },
+    "date_tree": {
+      "model": "res://art/models/trees/date_tree.scn",
+      "budget": "tree"
+    },
+    "guava_tree": {
+      "model": "res://art/models/trees/guava_tree.scn",
+      "budget": "tree"
+    },
+    "persimmon_tree": {
+      "model": "res://art/models/trees/persimmon_tree.scn",
+      "budget": "tree"
+    },
+    "starfruit_tree": {
+      "model": "res://art/models/trees/starfruit_tree.scn",
+      "budget": "tree"
+    },
+    "passion_fruit_tree": {
+      "model": "res://art/models/trees/passion_fruit_tree.scn",
+      "budget": "tree"
+    },
+    "jackfruit_tree": {
+      "model": "res://art/models/trees/jackfruit_tree.scn",
+      "budget": "tree"
+    },
+    "asian_pear_tree": {
+      "model": "res://art/models/trees/asian_pear_tree.scn",
+      "budget": "tree"
+    },
+    "tamarind_tree": {
+      "model": "res://art/models/trees/tamarind_tree.scn",
+      "budget": "tree"
+    },
+    "almond_tree": {
+      "model": "res://art/models/trees/almond_tree.scn",
+      "budget": "tree"
+    },
+    "walnut_tree": {
+      "model": "res://art/models/trees/walnut_tree.scn",
+      "budget": "tree"
+    },
+    "cashew_tree": {
+      "model": "res://art/models/trees/cashew_tree.scn",
+      "budget": "tree"
+    },
+    "chestnut_tree": {
+      "model": "res://art/models/trees/chestnut_tree.scn",
+      "budget": "tree"
+    },
+    "hazelnut_tree": {
+      "model": "res://art/models/trees/hazelnut_tree.scn",
+      "budget": "tree"
+    },
+    "pecan_tree": {
+      "model": "res://art/models/trees/pecan_tree.scn",
+      "budget": "tree"
+    },
+    "pistachio_tree": {
+      "model": "res://art/models/trees/pistachio_tree.scn",
+      "budget": "tree"
+    },
+    "crop:aloe": {
+      "model": "res://art/models/crops/aloe.scn",
+      "budget": "crop"
+    },
+    "crop:amaranth": {
+      "model": "res://art/models/crops/amaranth.scn",
+      "budget": "crop"
+    },
+    "crop:artichoke": {
+      "model": "res://art/models/crops/artichoke.scn",
+      "budget": "crop"
+    },
+    "crop:asparagus": {
+      "model": "res://art/models/crops/asparagus.scn",
+      "budget": "crop"
+    },
+    "crop:bamboo": {
+      "model": "res://art/models/crops/bamboo.scn",
+      "budget": "crop"
+    },
+    "crop:bean": {
+      "model": "res://art/models/crops/bean.scn",
+      "budget": "crop"
+    },
+    "crop:broccoli": {
+      "model": "res://art/models/crops/broccoli.scn",
+      "budget": "crop"
+    },
+    "crop:cabbage": {
+      "model": "res://art/models/crops/cabbage.scn",
+      "budget": "crop"
+    },
+    "crop:cane_berry": {
+      "model": "res://art/models/crops/cane_berry.scn",
+      "budget": "crop"
+    },
+    "crop:carrot": {
+      "model": "res://art/models/crops/carrot.scn",
+      "budget": "crop"
+    },
+    "crop:clover": {
+      "model": "res://art/models/crops/clover.scn",
+      "budget": "crop"
+    },
+    "crop:coffee": {
+      "model": "res://art/models/crops/coffee.scn",
+      "budget": "crop"
+    },
+    "crop:corn": {
+      "model": "res://art/models/crops/corn.scn",
+      "budget": "crop"
+    },
+    "crop:cotton": {
+      "model": "res://art/models/crops/cotton.scn",
+      "budget": "crop"
+    },
+    "crop:cucumber": {
+      "model": "res://art/models/crops/cucumber.scn",
+      "budget": "crop"
+    },
+    "crop:daffodil": {
+      "model": "res://art/models/crops/daffodil.scn",
+      "budget": "crop"
+    },
+    "crop:daisy": {
+      "model": "res://art/models/crops/daisy.scn",
+      "budget": "crop"
+    },
+    "crop:eggplant": {
+      "model": "res://art/models/crops/eggplant.scn",
+      "budget": "crop"
+    },
+    "crop:ginger": {
+      "model": "res://art/models/crops/ginger.scn",
+      "budget": "crop"
+    },
+    "crop:gladiolus": {
+      "model": "res://art/models/crops/gladiolus.scn",
+      "budget": "crop"
+    },
+    "crop:grape": {
+      "model": "res://art/models/crops/grape.scn",
+      "budget": "crop"
+    },
+    "crop:lavender": {
+      "model": "res://art/models/crops/lavender.scn",
+      "budget": "crop"
+    },
+    "crop:leafy_small": {
+      "model": "res://art/models/crops/leafy_small.scn",
+      "budget": "crop"
+    },
+    "crop:lilac": {
+      "model": "res://art/models/crops/lilac.scn",
+      "budget": "crop"
+    },
+    "crop:lily": {
+      "model": "res://art/models/crops/lily.scn",
+      "budget": "crop"
+    },
+    "crop:oats": {
+      "model": "res://art/models/crops/oats.scn",
+      "budget": "crop"
+    },
+    "crop:onion": {
+      "model": "res://art/models/crops/onion.scn",
+      "budget": "crop"
+    },
+    "crop:pattypan": {
+      "model": "res://art/models/crops/pattypan.scn",
+      "budget": "crop"
+    },
+    "crop:pea": {
+      "model": "res://art/models/crops/pea.scn",
+      "budget": "crop"
+    },
+    "crop:pepper": {
+      "model": "res://art/models/crops/pepper.scn",
+      "budget": "crop"
+    },
+    "crop:pineapple": {
+      "model": "res://art/models/crops/pineapple.scn",
+      "budget": "crop"
+    },
+    "crop:potato": {
+      "model": "res://art/models/crops/potato.scn",
+      "budget": "crop"
+    },
+    "crop:pumpkin": {
+      "model": "res://art/models/crops/pumpkin.scn",
+      "budget": "crop"
+    },
+    "crop:rice": {
+      "model": "res://art/models/crops/rice.scn",
+      "budget": "crop"
+    },
+    "crop:rose": {
+      "model": "res://art/models/crops/rose.scn",
+      "budget": "crop"
+    },
+    "crop:rye": {
+      "model": "res://art/models/crops/rye.scn",
+      "budget": "crop"
+    },
+    "crop:shrub_berry": {
+      "model": "res://art/models/crops/shrub_berry.scn",
+      "budget": "crop"
+    },
+    "crop:squash": {
+      "model": "res://art/models/crops/squash.scn",
+      "budget": "crop"
+    },
+    "crop:strawberry": {
+      "model": "res://art/models/crops/strawberry.scn",
+      "budget": "crop"
+    },
+    "crop:sugarcane": {
+      "model": "res://art/models/crops/sugarcane.scn",
+      "budget": "crop"
+    },
+    "crop:sunflower": {
+      "model": "res://art/models/crops/sunflower.scn",
+      "budget": "crop"
+    },
+    "crop:tea": {
+      "model": "res://art/models/crops/tea.scn",
+      "budget": "crop"
+    },
+    "crop:tomato": {
+      "model": "res://art/models/crops/tomato.scn",
+      "budget": "crop"
+    },
+    "crop:tulip": {
+      "model": "res://art/models/crops/tulip.scn",
+      "budget": "crop"
+    },
+    "crop:watermelon": {
+      "model": "res://art/models/crops/watermelon.scn",
+      "budget": "crop"
+    },
+    "crop:wheat": {
+      "model": "res://art/models/crops/wheat.scn",
+      "budget": "crop"
+    },
+    "crop:zucchini": {
+      "model": "res://art/models/crops/zucchini.scn",
+      "budget": "crop"
     }
   }
 }

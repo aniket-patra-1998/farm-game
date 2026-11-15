@@ -16,6 +16,7 @@ extends RefCounted
 const DATA := "res://data/assets.json"
 const MASTER := preload("res://shaders/master_solid.gdshader")
 const STATE := "when_"
+const CROP := "crop:"   # a crop form's entry: crop:<form> (CropModels.mesh)
 
 static var _data := {}
 static var _read := false
@@ -78,6 +79,8 @@ static func budget_of(id: String, what := "triangles") -> int:
 
 ## Surfaces drawn under `node` (a draw each, before shadows).
 static func draws(node: Node) -> int:
+	if node is Node3D and not (node as Node3D).visible:
+		return 0   # (a part for another state)
 	var n := 0
 	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null and (node as MeshInstance3D).visible:
 		n += (node as MeshInstance3D).mesh.get_surface_count()
@@ -88,6 +91,8 @@ static func draws(node: Node) -> int:
 
 ## Triangles drawn at the nearest level of detail under `node`.
 static func triangles(node: Node) -> int:
+	if node is Node3D and not (node as Node3D).visible:
+		return 0   # (a part for another state)
 	var n := 0
 	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
 		var mesh := (node as MeshInstance3D).mesh
