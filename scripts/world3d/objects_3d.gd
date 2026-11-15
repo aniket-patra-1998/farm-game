@@ -65,6 +65,7 @@ var _woods: Array = []   # groups of the woods still going up: [holder, trees le
 var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
+var _links_due := true          # the farm changed since the fences and hedges were last joined up
 
 
 
@@ -114,6 +115,7 @@ static func timed(o: Dictionary) -> bool:
 
 func queue_sync() -> void:
 	_full = true
+	_links_due = true
 	if not _queued:
 		_queued = true
 		sync.call_deferred()
@@ -125,7 +127,8 @@ func sync() -> void:
 	_queued = false
 	var light := not _full   # a timer tick: only what time changes
 	_full = false
-	if not light:
+	if not light and _links_due:
+		_links_due = false   # (once per change: not again on each frame the building carries on over)
 		_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
 	var seen := {}
 	var began := Time.get_ticks_msec()
@@ -444,7 +447,13 @@ func _build_scenery() -> void:
 			cells[cell] = []
 		(cells[cell] as Array).append(t)
 	for cell in cells:
-		_woods.append([Node3D.new(), cells[cell]])
+		# A group kept on disk (ModelStore) stands at once; the others are built over the next frames.
+		var key := Instancer.key_of(["woods", n, cell, cells[cell]])
+		var kept := ModelStore.fetch(key)
+		if kept != null:
+			_scenery.add_child(kept)
+		else:
+			_woods.append([Node3D.new(), cells[cell], key])
 	_grow_woods()
 
 
@@ -455,7 +464,9 @@ func _grow_woods() -> void:
 		var group: Array = _woods[0]
 		var trees: Array = group[1]
 		if trees.is_empty():
-			_scenery.add_child(ModelKit.bake(group[0]))
+			var baked := ModelKit.bake(group[0])
+			ModelStore.keep(str(group[2]), baked)
+			_scenery.add_child(baked)
 			_woods.pop_front()
 			continue
 		_scenery_tree(group[0], trees.pop_back())

@@ -26,6 +26,7 @@ func _ready() -> void:
 			var f := FileAccess.open(ModelStore.STAMP_FILE, FileAccess.WRITE)
 			f.store_string(ModelStore.stamp)
 			f.close()
+			print("PERF sounds baked=%d" % Sound.bake_all())
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame

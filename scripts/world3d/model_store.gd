@@ -25,9 +25,21 @@ static var _shared := {}          # material signature -> the material in use
 
 ## The model for `key`: loaded when kept, else built by `build` (a Node3D, never in the tree) and kept.
 static func cached(key: String, build: Callable) -> Node3D:
+	var kept := fetch(key)
+	if kept != null:
+		return kept
+	var built: Node3D = build.call()
+	if built != null:
+		keep(key, built)
+	return built
+
+
+## The model kept for `key`, or null (none kept, or the store is off). For things built over several frames
+## (the woods): ask first, build when null, then `keep` what was built.
+static func fetch(key: String) -> Node3D:
 	_start()
 	if stamp == "":
-		return build.call()
+		return null
 	var file := key.md5_text() + ".scn"
 	for dir: String in [SHIPPED, _own_dir()]:
 		var path := dir + "/" + file
@@ -39,10 +51,14 @@ static func cached(key: String, build: Callable) -> Node3D:
 					_relink(node)
 					loaded += 1
 					return node
-	var built: Node3D = build.call()
-	if built != null:
-		_keep(built, (target if target != "" else _own_dir()) + "/" + file)
-	return built
+	return null
+
+
+## Keeps `node` (built, not in the tree yet) for `key`; does nothing while the store is off.
+static func keep(key: String, node: Node3D) -> void:
+	_start()
+	if stamp != "":
+		_keep(node, (target if target != "" else _own_dir()) + "/" + key.md5_text() + ".scn")
 
 
 ## Reads the build's stamp once and clears models kept under another one.

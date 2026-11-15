@@ -17,6 +17,7 @@ const SLOTS := 4              # pictures drawn in one frame at most
 const BUDGET_MS := 8          # building models for pictures stops after this much of a frame
 const DEVELOP_US := 4000      # developing pictures (IconDevelop) stops after this much of a frame
 const CACHE := "user://icons"
+const SHIPPED := "res://baked/icons"   # every picture made ahead of time by CI, in the game
 const UI := "ui:"             # an interface icon's picture is asked for as "ui:<kind>" (UiModels)
 const UI_CLOSE := 0.8   # interface icons are framed this much closer than items
 ## Bump when the models' look changes, so pictures kept on disk are made again (the item's data and the game's
@@ -32,6 +33,7 @@ const LIGHTS := [[-48.0, 28.0, Color(1.0, 0.96, 0.88), 0.85, true], [-20.0, -120
 const AMBIENT := Color(0.42, 0.42, 0.48)
 const STAGE := &"Stage"   # not-ui (the node holding the model in a slot)
 
+static var shipping := false   # making the pictures that go into the game (tools/bake_icons.tscn)
 static var _shown: ItemIcons
 static var _side := 0          # this screen's picture size, worked out once
 static var _textures := {}    # item id -> ImageTexture (blank until made)
@@ -50,6 +52,11 @@ var _developing: Array[IconDevelop] = []
 static func of(item_id: String) -> Texture2D:
 	if not _textures.has(item_id):
 		var kept := Image.load_from_file(_file(item_id)) if FileAccess.file_exists(_file(item_id)) else null
+		if kept == null and not shipping and ResourceLoader.exists(_shipped(item_id)):
+			kept = load(_shipped(item_id)) as Image   # made by CI, in the game (tools/bake_icons.tscn)
+			if kept != null and kept.get_width() != side():
+				kept = kept.duplicate() as Image
+				kept.resize(side(), side(), Image.INTERPOLATE_LANCZOS)
 		if kept != null and kept.get_width() == side():
 			_textures[item_id] = ImageTexture.create_from_image(kept)
 			return _textures[item_id]
@@ -94,8 +101,16 @@ static func start(parent: Node) -> void:
 
 ## Where an item's picture is kept: its key changes with the item's data, the look and the game's version.
 static func _file(item_id: String) -> String:
-	var key := hash([Game.item_data(item_id), LOOK, ProjectSettings.get_setting("application/config/version", "")])
-	return "%s/%s-%x.png" % [CACHE, item_id, key]
+	return "%s/%s-%x.png" % [CACHE, item_id, _key(item_id)]
+
+
+## Where CI keeps an item's picture in the game, made at SIDE_MOST (shrunk to the screen's size when loaded).
+static func _shipped(item_id: String) -> String:
+	return "%s/%s-%x.res" % [SHIPPED, item_id, _key(item_id)]
+
+
+static func _key(item_id: String) -> int:
+	return hash([Game.item_data(item_id), LOOK, ProjectSettings.get_setting("application/config/version", "")])
 
 
 ## The waiting item asked for most recently (the cards on screen), the first of those in order.
@@ -212,7 +227,10 @@ func _develop() -> void:
 			continue
 		_developing.pop_front()
 		(_textures[job.id] as ImageTexture).update(job.picture)
-		if job.keep:
+		if job.keep and shipping:
+			DirAccess.make_dir_recursive_absolute(SHIPPED)
+			ResourceSaver.save(job.picture, _shipped(job.id), ResourceSaver.FLAG_COMPRESS)
+		elif job.keep:
 			DirAccess.make_dir_recursive_absolute(CACHE)
 			_forget_old(job.id)
 			job.picture.save_png(_file(job.id))

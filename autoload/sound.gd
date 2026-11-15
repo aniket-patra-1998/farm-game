@@ -141,10 +141,29 @@ func stream_of(event: String) -> AudioStream:
 	var stream: AudioStream
 	if r.has("file"):
 		stream = load(str(r["file"])) as AudioStream
+	elif ResourceLoader.exists(baked_path(event, r)):
+		stream = load(baked_path(event, r)) as AudioStream   # made ahead of time, in the game (bake_all)
 	else:
 		stream = synthesize(r)
 	_cache[event] = stream
 	return stream
+
+
+## Where a recipe's sound is kept in the game, made ahead of time by CI (`bake_all`): its name and its recipe's
+## hash, so a changed recipe is never played from an old file.
+static func baked_path(event: String, r: Dictionary) -> String:
+	return "%s/sounds/%s-%x.res" % [ModelStore.SHIPPED, event, hash(r)]
+
+
+## Makes every recipe's sound and keeps it in the game (CI, before the phone build: no sound is made on a phone).
+func bake_all() -> int:
+	DirAccess.make_dir_recursive_absolute(ModelStore.SHIPPED + "/sounds")
+	var made := 0
+	for event: String in _recipes:
+		var r: Dictionary = _recipes[event]
+		if not r.has("file") and ResourceSaver.save(synthesize(r), baked_path(event, r)) == OK:
+			made += 1
+	return made
 
 
 ## Builds a sound from its recipe: each layer rendered and mixed, the whole repeated if asked, then

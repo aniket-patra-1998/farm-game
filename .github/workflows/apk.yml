@@ -100,6 +100,16 @@ jobs:
           ls baked | wc -l
           test -s baked/stamp.txt
 
+      - name: Make every item's picture ahead of time (ItemIcons, tools/bake_icons.tscn)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri mesa-vulkan-drivers > /dev/null
+          set +e
+          timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+            --path . res://tools/bake_icons.tscn > icons.log 2>&1
+          set -e
+          grep -E "^ICONS" icons.log || tail -20 icons.log
+          du -sh baked
+
       - name: Export the debug APK
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ github.workspace }}/debug.keystore
@@ -107,8 +117,19 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build
-          ./godot-bin/godot --headless --path . --export-debug "Android (debug APK)" build/farm-game-debug.apk 2>&1 \
-            | tee export.log
+          # With a screen (lavapipe's Vulkan under xvfb) the shader baker compiles every shader for the phone ahead
+          # of time, so the first minutes of play don't stutter compiling them; if that fails, export without it.
+          set +e
+          timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-driver vulkan --path . \
+            --export-debug "Android (debug APK)" build/farm-game-debug.apk > export.log 2>&1
+          set -e
+          grep -iE "shader.?bak|error" export.log | head -20
+          if [ ! -s build/farm-game-debug.apk ]; then
+            echo "Exporting with the shader baker failed; exporting without it"
+            sed -i 's/^shader_baker\/enabled=true/shader_baker\/enabled=false/' export_presets.cfg
+            ./godot-bin/godot --headless --path . --export-debug "Android (debug APK)" build/farm-game-debug.apk 2>&1 \
+              | tee export.log
+          fi
           test -s build/farm-game-debug.apk || { echo "No APK was made"; exit 1; }
           ls -l build/farm-game-debug.apk
 
