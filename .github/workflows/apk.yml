@@ -1,7 +1,8 @@
 name: Debug APK
 
 # A debug build to install on a phone, for measuring on real hardware (Settings > Testing > Show performance
-# numbers). Built on every push to main and on demand; download it from the run's "farm-game-debug-apk" artifact.
+# numbers). Built on every push to main and on demand, and kept as the one download on the repo's front page: the
+# "Latest phone build" release (tag apk-latest), replaced by each build (also the run's "farm-game-debug-apk").
 # It is its own app (com.example.farmgame.debug), signed with a debug key kept in the Actions cache, so a new
 # build installs over the last one; if the cache has expired, uninstall the old one first.
 
@@ -11,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # (to replace the "Latest phone build" release's APK)
 
 concurrency:
   group: apk-${{ github.ref }}
@@ -107,3 +108,16 @@ jobs:
           name: farm-game-debug-apk
           path: build/farm-game-debug.apk
           retention-days: 14
+
+      - name: Replace the APK on the "Latest phone build" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag -f apk-latest && git push -f origin refs/tags/apk-latest
+          notes="Debug build of ${GITHUB_SHA::7} ($(date -u +'%F %H:%M') UTC): $(git log -1 --format=%s)"
+          if gh release view apk-latest > /dev/null 2>&1; then
+            gh release edit apk-latest --title "Latest phone build" --notes "$notes" --prerelease
+          else
+            gh release create apk-latest --title "Latest phone build" --notes "$notes" --prerelease
+          fi
+          gh release upload apk-latest build/farm-game-debug.apk --clobber

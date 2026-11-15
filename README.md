@@ -1,6 +1,10 @@
 # Farm Game (working title)
 
 Single-player farming game for Android phones and tablets, built with Godot 4.
+
+**[Download the latest phone build (APK)](https://github.com/aniket-patra-1998/farm-game/releases/download/apk-latest/farm-game-debug.apk)**:
+rebuilt after every push to main and installs over the last one. For frame rates: Settings > Testing > Show
+performance numbers.
 This is milestone 1 of the V1 plan: the core farm.
 
 ## What works
