@@ -90,6 +90,16 @@ jobs:
           tail -20 import.log
           if [ "$code" -ge 128 ]; then echo "The import crashed (exit code $code)"; exit 1; fi
 
+      - name: Bake the showcase farm's models into the game (ModelStore)
+        run: |
+          set +e
+          timeout 900 ./godot-bin/godot --headless --path . res://tools/perf_probe.tscn -- --bake=${GITHUB_SHA::12} \
+            > bake.log 2>&1
+          set -e
+          grep -E "^PERF (models|settle)" bake.log || tail -20 bake.log
+          ls baked | wc -l
+          test -s baked/stamp.txt
+
       - name: Export the debug APK
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ github.workspace }}/debug.keystore

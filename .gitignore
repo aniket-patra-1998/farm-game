@@ -9,6 +9,7 @@ Thumbs.db
 # CI cache folder
 godot-bin/
 ci_shots/
+baked/
 vendor/
 art_src/
 tools/resolved.txt

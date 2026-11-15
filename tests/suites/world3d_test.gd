@@ -1837,3 +1837,33 @@ func test_338_the_heaviest_farm_stays_inside_its_draw_budget() -> void:
 	Game.reset_game()
 	Quality._level = was_level
 	Quality.notifier.emitted.emit()
+
+
+func test_345_a_kept_model_comes_back_the_same_and_shares_its_materials() -> void:
+	ModelStore.stamp = "test"
+	ModelStore.target = "user://test_models"
+	var build := func() -> Node3D:
+		var root := Node3D.new()
+		ModelKit.box(root, Vector3.ZERO, Vector3.ONE * 0.5, ModelKit.paint(Color.RED))
+		return ModelKit.bake(root)
+	var built := ModelStore.cached("test-box", build)
+	_eq(ModelStore.saved > 0, true, "a new model is kept")
+	ModelStore.target = ""
+	var path := "user://test_models/" + "test-box".md5_text() + ".scn"
+	_check(FileAccess.file_exists(path), "on disk")
+	var scene := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
+	var again := scene.instantiate() as Node3D
+	ModelStore._relink(again)
+	var a := built.get_child(0) as MeshInstance3D
+	var b := again.get_child(0) as MeshInstance3D
+	_eq(b.mesh.get_surface_count(), a.mesh.get_surface_count(), "the same mesh comes back")
+	_eq(ModelStore.signature(b.get_surface_override_material(0)), ModelStore.signature(a.get_surface_override_material(0)),
+		"with the same material settings")
+	var again2 := scene.instantiate() as Node3D
+	ModelStore._relink(again2)
+	_check((again2.get_child(0) as MeshInstance3D).get_surface_override_material(0) == b.get_surface_override_material(0),
+		"two loaded copies share one material")
+	for n: Node in [built, again, again2]:
+		n.free()
+	ModelStore._remove_tree("user://test_models")
+	ModelStore.stamp = ""

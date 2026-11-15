@@ -3,6 +3,9 @@ extends Node
 ## (script time, draw calls, objects, nodes) and how long opening took. Run with a renderer for draw calls:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/perf_probe.tscn
 ## Headless (godot --headless ...), wall time per frame is the CPU cost; draw calls need the renderer.
+## With `-- --bake=<stamp>` (CI, headless, before the phone build) the models it builds are saved into the game
+## (res://baked, ModelStore) under that stamp. With `-- --store`, models are kept on disk as a phone build keeps
+## them: run it twice to time a farm opening from them.
 
 const WARM_FRAMES := 30
 
@@ -13,6 +16,16 @@ const HEAVY_TRIS := 25000     # an object this heavy is listed by name
 
 
 func _ready() -> void:
+	if "--store" in OS.get_cmdline_user_args():
+		ModelStore.stamp = "probe"   # (as a phone build does: models kept on disk; run twice to see them loaded)
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--bake="):   # CI, before the phone build: the showcase's models go into the game
+			ModelStore.stamp = a.trim_prefix("--bake=")
+			ModelStore.target = ModelStore.SHIPPED
+			DirAccess.make_dir_recursive_absolute(ModelStore.SHIPPED)
+			var f := FileAccess.open(ModelStore.STAMP_FILE, FileAccess.WRITE)
+			f.store_string(ModelStore.stamp)
+			f.close()
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame
@@ -41,6 +54,7 @@ func _ready() -> void:
 		settle_worst = maxi(settle_worst, now_s - settle_last)
 		settle_last = now_s
 		settle_frames += 1
+	print("PERF models loaded=%d saved=%d" % [ModelStore.loaded, ModelStore.saved])
 	print("PERF settle_ms=%.0f settle_frames=%d settle_worst_frame_ms=%.0f"
 		% [(settle_last - t0) / 1000.0, settle_frames, settle_worst / 1000.0])
 	for i in WARM_FRAMES:

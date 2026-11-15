@@ -39,7 +39,7 @@ static func copy_of(key: String, build: Callable) -> Node3D:
 	if not _templates.has(key):
 		if _templates.size() >= KEPT:
 			_forget(_templates)
-		_templates[key] = build.call()
+		_templates[key] = ModelStore.cached(key, build)   # (from disk when kept: no build at all)
 	return (_templates[key] as Node3D).duplicate()
 
 
@@ -49,7 +49,7 @@ static func parts_of(key: String, build: Callable) -> Array:
 		return _parts[key]
 	if _parts.size() >= KEPT:
 		_forget(_parts)
-	var baked: Node3D = build.call()
+	var baked: Node3D = ModelStore.cached(key, build)
 	var parts: Array = []
 	for mi in baked.get_children():
 		if mi is MeshInstance3D and (mi as MeshInstance3D).mesh != null:
