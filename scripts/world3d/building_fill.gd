@@ -19,6 +19,7 @@ const SHOWN_BIGGEST := 8      # ...and of its biggest, in between by size (fewer
 const BODY_REACH := 0.65      # an animal's ground space: radius against its body length (heads and tails overhang)
 const MAX_KINDS := 5          # the most different kinds a home shows (FarmVille showed up to five)
 const CROWD_FULL_DETAIL := 6.0   # members in one orchard or garden built at full detail; more share that budget
+const FILE_REACH := 0.3      # an animal made as a file: radius against its whole length (nose to tail)
 const WANDER := 0.1           # tiles a resident strays from its place
 const DOOR_OPEN := 1.75       # radians a door swings open
 const DOOR_HOLD := 1.2        # seconds it stays open
@@ -28,8 +29,10 @@ const PEEKERS := 3            # the most animals looking out of windows at once 
 const PEEK_OUT := 0.1         # tiles a head sticks out past the wall
 const PEEK_POP := 0.45        # seconds a head takes to pop up
 const PEEK_NOD := 2.6         # seconds a head takes to nod once and back
-const PEEK_FILL := 0.95       # the share of a window a file-made animal's head fills..
-const PEEK_SNOUT := 0.25      # ..its nose this share of the window past PEEK_OUT
+const ANIMAL_SMALLEST := 0.85 # animals in a yard are drawn hardly smaller to fit more (SpaceFit.pack): fewer instead
+const PEEK_FILL := 1.1        # the most of a window a file-made animal's head may fill (bigger: none looks out)..
+const PEEK_LEAST := 0.6       # ..and the least of its own size it is drawn at to fit (smaller: none looks out)
+const PEEK_SNOUT := 0.1       # ..its nose this share of the window past PEEK_OUT
 const HEAD_SHARE := 0.3       # an animal's head: the front share of its length..
 const HEAD_ABOVE := 0.45      # ..above this share of its height
 const BIRD_HEAD_SHARE := 0.45  # a bird's head: the front share of its length..
@@ -154,9 +157,8 @@ static func shown_cap(level: int, max_level: int) -> int:
 	return int(round(lerpf(SHOWN_FIRST, SHOWN_BIGGEST, clampf(along, 0.0, 1.0))))
 
 
-## How many of `radii` (animals in the order they are shown) a home shows at `level`: as many as fit (at no less than
-## SpaceFit.MIN_SIZE) up to the level's cap, and never fewer than the level below shows, so an upgrade never
-## looks like a downgrade (that can mean smaller animals).
+## How many of `radii` (animals in the order they are shown) a home shows at `level`: as many as fit at full size
+## (FarmVille's way: fewer animals, never shrunk ones) up to the level's cap, and never fewer than the level below.
 static func shown_count(id: String, level: int, max_level: int, radii: Array[float], seed_value: int) -> int:
 	var yard := SpaceFit.yard_room(Game.footprint(id))
 	var most := 0
@@ -166,8 +168,8 @@ static func shown_count(id: String, level: int, max_level: int, radii: Array[flo
 		var hi := mini(shown_cap(lv, max_level), radii.size())
 		while lo < hi:   # the most that fit readably: fitting only gets harder with more
 			var mid := (lo + hi + 1) / 2
-			var fit := SpaceFit.pack(yard, taken, radii.slice(0, mid), seed_value)
-			if (fit["spots"] as Array).size() == mid and float(fit["size"]) >= SpaceFit.MIN_SIZE - 0.001:
+			var fit := SpaceFit.pack(yard, taken, radii.slice(0, mid), seed_value, ANIMAL_SMALLEST)
+			if (fit["spots"] as Array).size() == mid:
 				lo = mid
 			else:
 				hi = mid - 1
@@ -213,6 +215,9 @@ static func rarest(inside: Dictionary, n: int) -> Array[String]:
 ## How far an animal of this kind reaches from where it stands, in tiles, at full size, as far as the fence
 ## and walls are concerned.
 static func radius_of(it: Dictionary) -> float:
+	var length := Animal3D.file_length(str(it.get("id", "")))
+	if length > 0.0:
+		return length * FILE_REACH + WANDER
 	var rig := AnimalRig.of(it)
 	var body: Array = rig.values.get("body", [20, 10])
 	return float(body[0]) * BODY_REACH * rig.scale * Animal3D.PX + WANDER
@@ -288,7 +293,7 @@ func _show_residents(o: Dictionary) -> void:
 	for id in picks:
 		radii.append(radius_of(Game.item_data(id)))
 	radii = radii.slice(0, shown_count(_id, Game.level_of(o), Game.max_level(_id), radii, uid))
-	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), BuildingModel.taken(_spec, _fp), radii, uid)
+	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), BuildingModel.taken(_spec, _fp), radii, uid, ANIMAL_SMALLEST)
 	var spots: Array = fit["spots"]
 	for k in spots.size():
 		var it := Game.item_data(picks[k])
@@ -367,8 +372,12 @@ func _show_peekers(inside: Dictionary) -> void:
 		if it.is_empty():
 			continue
 		var w: Dictionary = _windows[order[k]]
-		var head := _file_head(picks[k], float(w["size"]))
-		if head == null:
+		var head: Node3D
+		if AssetRegistry.has_model(picks[k]):
+			head = _file_head(picks[k], float(w["size"]))
+			if head == null:
+				continue   # (its head is bigger than the window: nobody looks out of this one)
+		else:
 			head = _head(Color.html(str(it.get("color", "#ffffff"))), float(w["size"]))
 		head.position = w["at"] as Vector3
 		head.scale = Vector3.ZERO
@@ -384,14 +393,18 @@ func _show_peekers(inside: Dictionary) -> void:
 	add_child(_peekers)
 
 
-## The animal's own head at a window, cut from its file (the same model as in the yard): sized to fill a window of
-## `size`, the cut side just inside the wall, the nose out past it. Null when it has no file.
+## The animal's own head at a window, cut from its file, at the animal's own size (as it is in the yard), the nose
+## just out past the wall (a little smaller to fit). Null when it has no file or its head is far too big for a
+## window of `size`.
 static func _file_head(id: String, size: float) -> Node3D:
 	var head := _head_mesh(id)
 	if head == null:
 		return null
 	var box := head.get_aabb()
-	var s := size * PEEK_FILL / maxf(box.size.y, 0.001)
+	# Its own size, or a little smaller to fit the window; never so small it looks like a different animal.
+	var s := minf(1.0, size * PEEK_FILL / maxf(maxf(box.size.y, box.size.z), 0.001))
+	if s < PEEK_LEAST:
+		return null
 	var mi := MeshInstance3D.new()
 	mi.mesh = head
 	mi.scale = Vector3.ONE * s

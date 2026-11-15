@@ -3,6 +3,7 @@ extends TestSuite
 
 const ANIMAL_DRAWS := 5
 const ANIMAL_SHADOW_DRAWS := 2
+const HOME_TALLEST := 1.1   # tiles: the highest an animal home's walls stand (one low storey)
 
 const TREE_DRAWS := 7 # one of them the leaf cards
 ## Telling buildings apart by shape (test_320).
@@ -395,7 +396,8 @@ func _family_with(shapes: Dictionary, form: String) -> String:
 
 func _pack(id: String, level: int, radii: Array[float]) -> Dictionary:
 	var fp := Game.footprint(id)
-	return SpaceFit.pack(SpaceFit.yard_room(fp), BuildingModel.taken(BuildingModel.spec(id, level), fp), radii, 3)
+	return SpaceFit.pack(SpaceFit.yard_room(fp), BuildingModel.taken(BuildingModel.spec(id, level), fp), radii, 3,
+		BuildingFill.ANIMAL_SMALLEST)
 
 
 func test_105_orchards_and_gardens_keep_their_plants_inside_the_tile() -> void:
@@ -431,8 +433,8 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	Game.objects.append(dairy)
 	Game.rebuild_occupancy()
 	var cap := Game.capacity(dairy)
-	# How many animals are out in the yard follows the room there is: all of them when few, as many as fit (and
-	# smaller) when many; and never more than the size of the building allows.
+	# How many animals are out in the yard follows the room there is: all of them when few, as many as fit (at full
+	# size, FarmVille's way) when many; and never more than the size of the building allows.
 	var cow_size := AnimalRig.of(Game.item_data("cow")).scale
 	AnimalRig.scaled(Game.item_data("cow"), 0.5)
 	_eq(AnimalRig.of(Game.item_data("cow")).scale, cow_size, "drawing an animal smaller never changes the shared rig")
@@ -440,8 +442,8 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	var pair := _pack("cow_shed", 1, [cow_r, cow_r])
 	var herd := _pack("cow_shed", 1, [cow_r, cow_r, cow_r, cow_r, cow_r, cow_r, cow_r, cow_r])
 	_eq((pair["spots"] as Array).size(), 2, "two cows in a roomy yard: both are out")
-	_check(float(pair["size"]) > float(herd["size"]) or (herd["spots"] as Array).size() < 8,
-		"a crowd is drawn smaller, or fewer are out, than a pair")
+	_check((herd["spots"] as Array).size() < 8 and float(herd["size"]) >= BuildingFill.ANIMAL_SMALLEST - 0.001,
+		"a crowd is not drawn smaller: fewer of it are out")
 	var top := Game.max_level("cow_shed")
 	_eq(BuildingFill.shown_cap(1, top), BuildingFill.SHOWN_FIRST, "the first size shows the fewest at most")
 	_eq(BuildingFill.shown_cap(top, top), BuildingFill.SHOWN_BIGGEST, "the biggest size shows the most at most")
@@ -464,7 +466,7 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 			radii.append(BuildingFill.radius_of(Game.item_data(a)))
 		var fit := _pack(id, top_level, radii)
 		var spots: Array = fit["spots"]
-		_check(float(fit["size"]) >= SpaceFit.MIN_SIZE, "%s: its crowd is drawn no smaller than the least allowed" % id)
+		_check(float(fit["size"]) >= BuildingFill.ANIMAL_SMALLEST - 0.001, "%s: its animals are drawn about full size" % id)
 		_check(spots.size() >= 1, "%s: an animal fits its yard (%d)" % [id, spots.size()])
 		var yard := SpaceFit.yard_room(fp)
 		for k in spots.size():
@@ -508,7 +510,10 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	_check(fill._peekers == null, "a half-full home has nobody at its windows")
 	dairy["inside"] = {"cow": cap}
 	fill.refresh(dairy)
-	_check(fill._peekers != null and fill._peekers.get_child_count() > 0, "a full home looks out of its windows")
+	# (A head too big for the windows doesn't squeeze into them: then nobody looks out.)
+	var fits := fill._windows.is_empty() or BuildingFill._file_head("cow", float(fill._windows[0]["size"])) != null
+	_check(not fits or (fill._peekers != null and fill._peekers.get_child_count() > 0),
+		"a full home looks out of its windows when a head fits them")
 	_check(fill._peekers.get_child_count() <= BuildingFill.PEEKERS, "but only a few at a time")
 	dairy["inside"] = {"cow": int(cap / 2.0)}
 	fill.refresh(dairy)
@@ -609,8 +614,9 @@ func test_105_animals_move_with_weight() -> void:
 
 
 func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
-	# FarmVille drew its buildings as compact blocks about as tall as they're deep, under steep roofs, and
-	# grew them upward; never long low sheds. Every building, at every size, keeps to that.
+	# FarmVille drew its buildings as compact blocks, never long low sheds, and grew them upward. Its animal homes
+	# were one low storey, a couple of animals tall, so the animals in the yard read against them; the others
+	# (barns, workshops) stand about as tall as they're deep.
 	var g := _farm()
 	for id in g.items:
 		if not ["building", "crafting", "barn"].has(str(g.items[id].get("kind", ""))):
@@ -626,11 +632,16 @@ func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 			# A second storey stands on the ground floor: the building is as tall as both.
 			var upper: Dictionary = BuildingModel.spec(id, level).get("upper", {})
 			var h := float(body.get("h", 0.0)) + float(upper.get("h", 0.0))
+			var home := not (Game.catalog.get_def(id) as BuildingDef).holds().is_empty() if Game.catalog.get_def(id) \
+				is BuildingDef else false
 			var long_side := maxf(bw, bd)
 			var short_side := minf(bw, bd)
 			_check(long_side / short_side <= 1.4, "%s size %d is not a long shed (%.2f x %.2f)" % [id, level, bw, bd])
-			_check(h >= short_side * 0.5, "%s size %d stands tall for its size (%.2f high, %.2f deep)"
-				% [id, level, h, short_side])
+			if home:
+				_check(upper.is_empty() and h <= HOME_TALLEST, "%s size %d is one low storey (%.2f high)" % [id, level, h])
+			else:
+				_check(h >= short_side * 0.5, "%s size %d stands tall for its size (%.2f high, %.2f deep)"
+					% [id, level, h, short_side])
 			_check(h >= last_h, "%s size %d is no lower than the size before" % [id, level])
 			last_h = h
 	_done(g)
@@ -718,6 +729,7 @@ func test_115_moving_decorations_move_on_the_gpu() -> void:
 
 
 func test_126_the_biggest_size_of_a_building_is_a_real_second_storey() -> void:
+	# (Barns and workshops; an animal home stays one storey, test_107.)
 	var g := _farm()
 	var tall := 0
 	for id in g.items:
@@ -741,7 +753,7 @@ func test_126_the_biggest_size_of_a_building_is_a_real_second_storey() -> void:
 		_check(box.end.y >= walls, "%s at size %d stands as high as both its floors (%.2f of %.2f)"
 			% [id, level, box.end.y, walls])
 		model.free()
-	_check(tall >= 8, "the bigger buildings have a second storey (%d)" % tall)
+	_check(tall >= 4, "the bigger barns and workshops have a second storey (%d)" % tall)
 	_done(g)
 
 

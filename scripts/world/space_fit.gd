@@ -41,25 +41,26 @@ static func yard_room(fp: Vector2i) -> Rect2:
 ## the things in the order that matters (the first are kept when not all fit); `blocked` are rectangles of the
 ## room already taken. A spot is given for each thing shown, which is all of them unless they do not fit even
 ## at MIN_SIZE. The same question always gets the same answer (`seed_value` shuffles where things start).
-static func pack(room: Rect2, blocked: Array[Rect2], radii: Array[float], seed_value: int) -> Dictionary:
-	var key := "%s|%s|%s|%s" % [room, blocked, radii, seed_value]
+static func pack(room: Rect2, blocked: Array[Rect2], radii: Array[float], seed_value: int,
+		smallest := MIN_SIZE) -> Dictionary:
+	var key := "%s|%s|%s|%s|%s" % [room, blocked, radii, seed_value, smallest]
 	if _cache.has(key):
 		return _cache[key]
 	var cells := _cells(room, seed_value)
 	var size := 1.0
 	var spots: Array[Vector2] = []
 	var out := {}
-	while size > MIN_SIZE - _EPS:
+	while size > smallest - _EPS:
 		spots = _place(cells, room, blocked, radii, size)
 		if spots.size() == radii.size():
 			break
 		size -= STEP
 	if spots.size() < radii.size():
-		size = MIN_SIZE
+		size = smallest
 		spots = _place(cells, room, blocked, radii, size)
 	if spots.is_empty() and not radii.is_empty():  # a room too small for even one: it stands where there is most space
 		spots.append(_roomiest(cells, room, blocked))
-	out = {"size": maxf(size, MIN_SIZE), "spots": spots}
+	out = {"size": maxf(size, smallest), "spots": spots}
 	if _cache.size() > 256:
 		_cache.clear()
 	_cache[key] = out

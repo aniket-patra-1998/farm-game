@@ -66,8 +66,9 @@ func _page(page: int, ids: Array[String]) -> void:
 			label.outline_modulate = Color.WHITE
 			label.position = at + Vector3(0, 0, 2.6)
 			holder.add_child(label)
-	var centre := Vector3((STATES.size() - 1) * CELL / 2.0, 0, (ROWS - 1) * CELL / 2.0)
-	_cam.size = (STATES.size() + ROWS) * CELL * 0.6
+	var rows := ids.size()   # (a few named buildings are framed close)
+	var centre := Vector3((STATES.size() - 1) * CELL / 2.0, 0, (rows - 1) * CELL / 2.0)
+	_cam.size = (STATES.size() + rows) * CELL * 0.6
 	_cam.look_at_from_position(centre + Vector3(14, 14, 14), centre)
 	for f in 6:
 		await get_tree().process_frame

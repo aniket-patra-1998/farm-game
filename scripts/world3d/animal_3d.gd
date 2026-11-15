@@ -45,6 +45,7 @@ const PICK_MIN := 0.14           # the least half-width of a tap box (a chick is
 static var min_stride := 1
 static var _frame := -1          # the frame _seen counts
 static var _seen := 0            # animals on screen so far this frame
+static var _lengths := {}         # animal id -> its file's length (file_length)
 
 static var _seen_last := 0       # and last frame, which sets this frame's stride
 
@@ -240,6 +241,21 @@ func _build_file() -> bool:
 	_apply_shadow()
 	_build_contact()
 	return true
+
+
+## How long an animal made as a file is, nose to tail, in tiles (0 when it has none); worked out once a kind.
+static func file_length(id: String) -> float:
+	if not _lengths.has(id):
+		var length := 0.0
+		if AssetRegistry.has_model(id):
+			var model := AssetRegistry.instance(id)
+			var mi := _first_mesh(model) if model != null else null
+			if mi != null:
+				length = mi.get_aabb().size.x
+			if model != null:
+				model.free()
+		_lengths[id] = length
+	return _lengths[id]
 
 
 static func _first_mesh(n: Node) -> MeshInstance3D:

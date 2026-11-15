@@ -15,7 +15,8 @@ colours) at rest, and its moves as blend shapes, each the difference the builder
 
 The game sets their weights from the same pose values it already works out (scripts/world3d/animal_3d.gd), so
 the animal moves as the previews show. Game axes: 1 unit = 1 tile, up +Y, facing +X, standing on y = 0 over its
-middle; its length along +X is the animal's size (`rel` in registry.py, a cow ~1)."""
+middle; its length along +X is the animal's size (`rel` in registry.py, a cow ~1), drawn closer to a cow's than in
+life (`shown`): FarmVille's animals read at farm zoom next to their homes, a chicken half a cow."""
 import json
 import math
 import struct
@@ -51,6 +52,15 @@ def moves():
                          ("hop", dict(hop=1.0))):
         p = _rest(); p.update(change); out.append((name, p))
     return out
+
+
+SIZE_EVEN = 0.6         # sizes are drawn as rel ** SIZE_EVEN: a chicken (0.35) as 0.53, a pig (0.73) 0.83, a horse 1.11
+TRUE_SIZE = ("bee",)    # drawn at their own size (a bee by its hive stays a bee)
+
+
+def shown(name, rel):
+    """The length an animal is drawn at, in tiles: its size brought toward a cow's (FarmVille's proportions)."""
+    return rel if name in TRUE_SIZE else rel ** SIZE_EVEN
 
 
 def export(name, path):
@@ -89,7 +99,7 @@ def export(name, path):
     # into the game's frame: forward +z here is +X there; standing on y = 0 over the body's middle; sized
     lo, hi = V0.min(0), V0.max(0)
     centre = np.array([(lo[0] + hi[0]) / 2, lo[1], (lo[2] + hi[2]) / 2])
-    scale = rel / max(hi[2] - lo[2], 1e-6)
+    scale = shown(name, rel) / max(hi[2] - lo[2], 1e-6)
     turn = lambda P: np.stack([P[:, 2], P[:, 1], -P[:, 0]], 1)
     place = lambda P: turn((P - centre) * scale).astype(np.float32)
     pos = place(V0[src]); nor = turn(N0[src]).astype(np.float32)
