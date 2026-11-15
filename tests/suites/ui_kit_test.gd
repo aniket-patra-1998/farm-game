@@ -92,3 +92,31 @@ func test_342_panel_text_is_scaled_once_and_never_too_small() -> void:
 		_check(rx.search(FileAccess.get_file_as_string(file)) == null, "%s sizes no text by a bare number" % file)
 	var market := FileAccess.get_file_as_string("res://scripts/hud/hud_market.gd")
 	_check(not market.contains("BookPanel.text(tr(str(section[1])), int(UiTheme.size("), "no scaled size scaled again")
+
+
+func test_344_a_picture_is_cut_out_from_its_renders_on_black_and_white() -> void:
+	var side := 8
+	var black := Image.create(side, side, false, Image.FORMAT_RGBA8)
+	var white := Image.create(side, side, false, Image.FORMAT_RGBA8)
+	black.fill(Color.BLACK)
+	white.fill(Color.WHITE)
+	var red := Color8(200, 40, 40)
+	for y in side:   # the left half solid red, one column half see-through, the rest background
+		for x in 3:
+			black.set_pixel(x, y, red)
+			white.set_pixel(x, y, red)
+		black.set_pixel(3, y, Color8(100, 20, 20))
+		white.set_pixel(3, y, Color8(228, 148, 148))
+	var job := IconDevelop.new("t", black, white, side, false, false)
+	while not job.step():
+		pass
+	var pic := job.picture
+	_eq(pic.get_pixel(1, 4).a8, 255, "a solid pixel stays solid")
+	_eq(pic.get_pixel(1, 4).r8, 200, "with its own colour")
+	_eq(pic.get_pixel(6, 4).a8, 0, "the background is see-through: no grey square")
+	_check(absi(pic.get_pixel(3, 4).a8 - 127) <= 2, "an edge lets half through")
+	_check(absi(pic.get_pixel(3, 4).r8 - 200) <= 3, "and keeps the item's colour, not the background's")
+	var shaded := IconDevelop.new("t", black, white, side, false, true)
+	while not shaded.step():
+		pass
+	_check(shaded.picture.get_pixel(6, side - 1).a8 < 255, "the shadow is soft and see-through")

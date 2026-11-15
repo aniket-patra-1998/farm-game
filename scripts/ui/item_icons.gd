@@ -15,16 +15,21 @@ const YAW := deg_to_rad(45.0)
 const MARGIN := 1.12          # room round the model inside the picture
 const SLOTS := 4              # pictures drawn in one frame at most
 const BUDGET_MS := 8          # building models for pictures stops after this much of a frame
+const DEVELOP_US := 4000      # developing pictures (IconDevelop) stops after this much of a frame
 const CACHE := "user://icons"
 const UI := "ui:"             # an interface icon's picture is asked for as "ui:<kind>" (UiModels)
 const UI_CLOSE := 0.8   # interface icons are framed this much closer than items
 ## Bump when the models' look changes, so pictures kept on disk are made again (the item's data and the game's
 ## version are in the key too).
-const LOOK := 6
+const LOOK := 7
 ## The global shader values that change how the farm looks (weather, night). A picture made while any is set
 ## is shown this session but not kept, so a snowy or dark picture is never saved for good.
 const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark"]
 const CALM := 0.01
+## The studio's lights: [pitch°, yaw°, colour, energy, shadows]: key, fill, rim.
+const LIGHTS := [[-48.0, 28.0, Color(1.0, 0.96, 0.88), 0.85, true], [-20.0, -120.0, Color(0.75, 0.84, 1.0), 0.18,
+	false], [-25.0, 200.0, Color(1.0, 0.97, 0.9), 0.35, false]]
+const AMBIENT := Color(0.42, 0.42, 0.48)
 const STAGE := &"Stage"   # not-ui (the node holding the model in a slot)
 
 static var _shown: ItemIcons
@@ -34,7 +39,10 @@ static var _waiting: Array[String] = []
 static var _asked := {}       # item id -> the frame it was last asked for
 
 var _slots: Array[SubViewport] = []
-var _making: Array[String] = []   # the item drawn in each slot this frame ("" when the slot is idle)
+var _making: Array[String] = []   # the item drawn in each slot ("" when the slot is idle)
+var _pass: Array[int] = []        # each slot's render under way: 0 on black, 1 on white (IconDevelop)
+var _blacks: Array[Image] = []    # each slot's render on black, kept until the one on white comes
+var _developing: Array[IconDevelop] = []
 
 
 ## The picture for `item_id`: from disk when it was made before, else a texture that is blank until its turn
@@ -71,7 +79,9 @@ static func is_made(item_id: String) -> bool:
 
 
 static func _shown_making(item_id: String) -> bool:
-	return is_instance_valid(_shown) and _shown._making.has(item_id)
+	if not is_instance_valid(_shown):
+		return false
+	return _shown._making.has(item_id) or _shown._developing.any(func(j: IconDevelop) -> bool: return j.id == item_id)
 
 
 ## Puts the renderer under `parent` (once).
@@ -112,28 +122,38 @@ func _ready() -> void:
 	for k in SLOTS:
 		_slots.append(_slot())
 		_making.append("")
+		_pass.append(0)
+		_blacks.append(null)
 
 
-## One small viewport with its own world, camera, sun and plain light.
+## One small viewport with its own world, camera and a studio's lights: a warm key with soft shadows, a cool
+## fill from the other side and a rim from behind that lifts the item's edge off the card. It draws on a plain
+## colour (black, then white: IconDevelop cuts the item out from the two), SUPER times the picture's size.
 func _slot() -> SubViewport:
 	var vp := SubViewport.new()
-	vp.size = Vector2i(side(), side())
-	vp.transparent_bg = true
+	vp.size = Vector2i.ONE * side() * IconDevelop.SUPER
+	vp.transparent_bg = false
 	vp.own_world_3d = true
 	vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	var camera := Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	vp.add_child(camera)
 	vp.set_meta(&"camera", camera)
-	var sun := DirectionalLight3D.new()
-	sun.rotation = Vector3(deg_to_rad(-50.0), deg_to_rad(30.0), 0.0)
-	vp.add_child(sun)
+	for light: Array in LIGHTS:
+		var sun := DirectionalLight3D.new()
+		sun.rotation = Vector3(deg_to_rad(float(light[0])), deg_to_rad(float(light[1])), 0.0)
+		sun.light_color = light[2]
+		sun.light_energy = float(light[3])
+		sun.shadow_enabled = bool(light[4])
+		vp.add_child(sun)
 	var env := WorldEnvironment.new()
 	env.environment = Environment.new()
-	env.environment.background_mode = Environment.BG_CLEAR_COLOR
+	env.environment.background_mode = Environment.BG_COLOR
+	env.environment.background_color = Color.BLACK
 	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.environment.ambient_light_color = Color(0.75, 0.75, 0.8)
+	env.environment.ambient_light_color = AMBIENT
 	vp.add_child(env)
+	vp.set_meta(&"env", env.environment)
 	add_child(vp)
 	return vp
 
@@ -143,6 +163,7 @@ func _process(_delta: float) -> void:
 		_waiting.clear()         # (nothing draws without a screen: the cards keep their blank pictures)
 		return
 	var keep := _calm()
+	_develop()
 	for k in SLOTS:
 		if _making[k] != "":
 			_finish(k, keep)
@@ -150,28 +171,51 @@ func _process(_delta: float) -> void:
 	for k in SLOTS:
 		if _waiting.is_empty() or (k > 0 and Time.get_ticks_msec() - started > BUDGET_MS):
 			break
+		if _making[k] != "":
+			continue   # (still on its second render)
 		var id := _next()
 		_waiting.erase(id)
 		if _set_up(k, id):
 			_making[k] = id
+			_pass[k] = 0
+			(_slots[k].get_meta(&"env") as Environment).background_color = Color.BLACK
 			_slots[k].render_target_update_mode = SubViewport.UPDATE_ONCE   # (drawn at the end of this frame)
 
 
-## Copies the picture drawn last frame in slot `k` into its item's texture, and keeps it on disk when `keep`.
+## Takes the render drawn last frame in slot `k`: the one on black is kept and the item drawn again on white; with
+## both, the picture goes to be developed (IconDevelop) and the slot is free.
 func _finish(k: int, keep: bool) -> void:
+	var image := _slots[k].get_texture().get_image()
+	if _pass[k] == 0 and image != null:
+		_blacks[k] = image
+		_pass[k] = 1
+		(_slots[k].get_meta(&"env") as Environment).background_color = Color.WHITE
+		_slots[k].render_target_update_mode = SubViewport.UPDATE_ONCE
+		return
 	var id := _making[k]
 	_making[k] = ""
-	var image := _slots[k].get_texture().get_image()
-	if image != null and not image.is_empty():
-		(_textures[id] as ImageTexture).update(image)
-		if keep:
-			DirAccess.make_dir_recursive_absolute(CACHE)
-			_forget_old(id)
-			image.save_png(_file(id))
+	if image != null and not image.is_empty() and _blacks[k] != null:
+		_developing.append(IconDevelop.new(id, _blacks[k], image, side(), keep, not id.begins_with(UI)))
+	_blacks[k] = null
 	var stage: Node = _slots[k].get_node_or_null(NodePath(STAGE))
 	if stage != null:
 		stage.name = &"Done"   # not-ui (freed at the end of the frame; the next stage takes the name now)
 		stage.queue_free()
+
+
+## Develops the pictures under way a few rows a frame; a finished one shows on its cards and is kept on disk.
+func _develop() -> void:
+	var started := Time.get_ticks_usec()
+	while not _developing.is_empty() and Time.get_ticks_usec() - started < DEVELOP_US:
+		var job: IconDevelop = _developing[0]
+		if not job.step():
+			continue
+		_developing.pop_front()
+		(_textures[job.id] as ImageTexture).update(job.picture)
+		if job.keep:
+			DirAccess.make_dir_recursive_absolute(CACHE)
+			_forget_old(job.id)
+			job.picture.save_png(_file(job.id))
 
 
 ## Removes pictures of `id` kept under an older key.

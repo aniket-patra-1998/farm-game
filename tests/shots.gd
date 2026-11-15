@@ -165,10 +165,10 @@ func _ready() -> void:
 	# The Market's animal shelf (cards with pictures made from the models) and Settings (the graphics level).
 	hud._show_market()
 	hud._book.show_tab(HudMarket.SHELVES.find(["animal", "ANIMALS"]) + 1)
-	await _frames(30)
+	await _frames(90)   # (pictures are made a few a frame: two renders each, then developed)
 	_shot(dir + "/market_animals.png")
 	hud._book.show_tab(HudMarket.SHELVES.find(["building", "BUILDINGS"]) + 1)
-	await _frames(30)
+	await _frames(90)
 	_shot(dir + "/market_buildings.png")
 	hud._show_settings()
 	await _frames(4)

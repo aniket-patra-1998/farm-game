@@ -36,7 +36,12 @@ func _ready() -> void:
 	for name: String in Game.social.roster():
 		faces.add_child(PortraitIcon.of(Game.social.look_of(name), 96.0))
 	rows.add_child(faces)
-	for k in 120:   # (the rendered icons are made a few a frame)
+	var frames := 0
+	while frames < 3000 and not UiModels.KINDS.all(func(k: String) -> bool: return ItemIcons.is_made("ui:" + k)):
+		frames += 1   # (the rendered icons are made a few a frame)
+		await get_tree().process_frame
+	print("ICONS made in %d frames" % frames)
+	for k in 3:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var path := out if out.begins_with("/") else ProjectSettings.globalize_path(out)

@@ -135,7 +135,12 @@ func _show(title: String, builder: Callable) -> void:
 	_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"),
 		get_viewport_rect().size.x - UiTheme.size("book_inset"))
 	_build_tab_bar()
+	UiFx.pop_next = not visible   # (a panel opening pops its cards in; a tab or a refresh doesn't)
+	UiFx.popped = 0
 	_build_now()
+	UiFx.pop_next = false
+	if not visible:
+		UiFx.open.call_deferred(_panel)   # (once it has its size)
 	visible = true
 	Game.modal_open = true
 

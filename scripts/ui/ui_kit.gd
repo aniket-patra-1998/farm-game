@@ -88,6 +88,7 @@ static func icon_button(kind: String, side := 0.0) -> Button:
 	icon.position = (Vector2(px, px) - icon.size) / 2.0
 	b.add_child(icon)
 	b.set_meta("icon", icon)
+	UiFx.press_bounce(b)
 	return b
 
 
@@ -161,6 +162,7 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	b.set_meta("icon", icon)
 	b.set_meta("label", label)
 	long_press_name(b, words)
+	UiFx.press_bounce(b)
 	return b
 
 
@@ -222,6 +224,7 @@ static func tab_button(words: String, on: bool) -> Button:
 		b.add_theme_stylebox_override(state, sb)
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
 		b.add_theme_color_override(state, UiTheme.color("tab_text_on" if on else "tab_text"))
+	UiFx.press_bounce(b)
 	return b
 
 
@@ -286,6 +289,7 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	else:
 		var pic := TextureRect.new()
 		pic.texture = picture
+		pic.material = UiFx.glint()
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -391,6 +395,8 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if locked:
 		pic.modulate = Color(1, 1, 1, 0.45)
+	else:
+		pic.material = UiFx.glint()
 	col.add_child(pic)
 	if extra != null:
 		col.add_child(extra)
@@ -410,4 +416,6 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(badge)
 	b.custom_minimum_size.y = UiTheme.size("card_icon") + UiTheme.size("card_words")
+	UiFx.press_bounce(b)
+	UiFx.pop_in(b)
 	return b

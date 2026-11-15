@@ -427,8 +427,9 @@ func show_building(uid: int) -> void:
 func _panel_button(words: String) -> Button:
 	var b := Button.new()
 	b.text = words
-	b.custom_minimum_size = Vector2(180, 56)
+	b.custom_minimum_size = Vector2(UiTheme.size("panel_button_width"), UiTheme.size("panel_button_height"))
 	b.focus_mode = Control.FOCUS_NONE
+	UiFx.press_bounce(b)
 	return b
 
 
@@ -437,7 +438,7 @@ func _panel_button(words: String) -> Button:
 
 func _make_theme() -> Theme:
 	var t := Theme.new()
-	t.default_font_size = 22
+	t.default_font_size = UiTheme.font(22)
 
 	var panel := StyleBoxFlat.new()
 	panel.bg_color = WOOD
@@ -452,8 +453,8 @@ func _make_theme() -> Theme:
 
 	t.set_stylebox("normal", "Button", _button_box(CREAM, WOOD_DARK))
 	t.set_stylebox("hover", "Button", _button_box(CREAM.lightened(0.3), WOOD_DARK))
-	t.set_stylebox("pressed", "Button", _button_box(SUN, INK))
-	t.set_stylebox("hover_pressed", "Button", _button_box(SUN, INK))
+	t.set_stylebox("pressed", "Button", _button_box(SUN, INK, true))
+	t.set_stylebox("hover_pressed", "Button", _button_box(SUN, INK, true))
 	t.set_stylebox("disabled", "Button", _button_box(LOCKED, WOOD_DARK))
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
@@ -502,12 +503,21 @@ func _theme_fields(t: Theme, fill: StyleBoxFlat) -> void:
 	t.set_icon("grabber_highlight", slider, knob)
 
 
-func _button_box(fill: Color, border: Color) -> StyleBoxFlat:
+## A plush button: round, a darker lip underneath like a key that can be pressed (thinner when pressed: it has
+## gone down), and a soft shadow on what it sits on.
+func _button_box(fill: Color, border: Color, down := false) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = fill
 	sb.border_color = border
-	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(16)
-	sb.content_margin_left = 10
-	sb.content_margin_right = 10
+	sb.set_border_width_all(int(UiTheme.size("button_border")))
+	sb.border_width_bottom = int(UiTheme.size("button_border") * (1.5 if down else 3.0))
+	sb.set_corner_radius_all(int(UiTheme.size("button_radius") * 1.6))
+	sb.shadow_color = Color(0, 0, 0, 0.0 if down else 0.22)
+	sb.shadow_size = int(UiTheme.size("button_border") * 2.0)
+	sb.shadow_offset = Vector2(0, UiTheme.size("button_border"))
+	sb.anti_aliasing_size = 1.2
+	sb.content_margin_left = UiTheme.size("button_pad")
+	sb.content_margin_right = UiTheme.size("button_pad")
+	sb.content_margin_top = UiTheme.size("button_pad") * 0.4
+	sb.content_margin_bottom = UiTheme.size("button_pad") * 0.4 + (0.0 if down else UiTheme.size("button_border") * 1.5)
 	return sb
