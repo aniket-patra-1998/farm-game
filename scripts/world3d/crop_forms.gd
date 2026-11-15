@@ -6,6 +6,9 @@ extends RefCounted
 ## Produce (a head, a fruit, a bloom) is marked with vertex alpha 0 and takes the crop's colour at draw time.
 
 const PATH := "res://data/crop_forms.json"
+const PLOT := 0.163   # half a plot, in plant units (Crops3D.PLANT_SCALE to a tile), a hair over so plots join
+const TUFTS := 5       # tufts of leaves across a plot's carpet..
+const TUFTS_YOUNG := 3  # ..and across a growing plot, where soil still shows between them
 const STEM := Color("#5c8a2e")
 const BARK := Color("#6b4a26")
 const STAKE := Color("#7a5a30")
@@ -30,6 +33,19 @@ static func form_of(crop_id: String, shape: String) -> String:
 	return str((_data["crops"] as Dictionary).get(crop_id, shape))
 
 
+## A number of the look every crop shares (data/crop_forms.json "look"): how tall a crop may stand, how much
+## its produce is enlarged.
+static func look(key: String, fallback: float) -> float:
+	_load()
+	return float((_data.get("look", {}) as Dictionary).get(key, fallback))
+
+
+## Whether `form` is drawn a plot at a time (it has a "plot": a carpet of leaves and a few big pieces of produce
+## laid out over the whole plot) and not as a plant repeated in rows.
+static func is_plot(form: String) -> bool:
+	return spec(form).has("plot")
+
+
 static func spec(form: String) -> Dictionary:
 	_load()
 	return (_data["forms"] as Dictionary).get(form, {})
@@ -50,6 +66,13 @@ static func build(mb: MeshBuilder, form: String, rng: RandomNumberGenerator, k: 
 	var s := spec(form)
 	if s.is_empty():
 		return false
+	mb.produce_scale = float(s.get("produce", look("produce", 1.0)))   # (a form may set its own)
+	mb.produce_small = look("produce_small", mb.produce_small)
+	mb.produce_big = look("produce_big", mb.produce_big)
+	if s.has("plot"):
+		mb.produce_scale = 1.0   # (its pieces are sized by its own numbers)
+		_plot(mb, rng, s, k, ripe)
+		return true
 	match str(s["kind"]):
 		"cereal": _cereal(mb, rng, s, k, ripe)
 		"bean": _bean(mb, rng, s, k, ripe)
@@ -82,6 +105,284 @@ static func build(mb: MeshBuilder, form: String, rng: RandomNumberGenerator, k: 
 		_:
 			return false
 	return true
+
+
+# ---------------------------------------------------------------- whole plots
+
+
+## A crop drawn a plot at a time, as the fields that read best are: a low carpet of dark leaves from edge to edge,
+## so plots of one crop join into one field, and on it a few big pieces of produce, each plain to see ("plot"
+## names the kind of piece, "count" how many; the rest of the form's numbers shape them). The produce is small
+## and green until ripe, and a growing plot is tufts of leaves that have not yet closed over the soil.
+static func _plot(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, k: float, ripe: bool) -> void:
+	var leaf := _col(s, "leaf", "#3f8a32")
+	_carpet(mb, rng, s, leaf, ripe)
+	for at: Vector3 in _plot_spots(rng, int(s.get("count", 4)), 1.0 if ripe else 0.92):
+		match str(s["plot"]):
+			"melons": _melon(mb, rng, s, at, ripe, leaf)
+			"berries": _berry(mb, rng, at, ripe, leaf)
+			"peppers": _pepper(mb, rng, at, ripe, leaf)
+			"heads": _head(mb, rng, s, at, ripe, leaf)
+			"stakes": _staked(mb, rng, at, k, ripe, leaf)
+			"balls": _balls(mb, rng, s, at, ripe, leaf)
+			"roots": _rooted(mb, rng, s, at, ripe, leaf)
+			"ears": _ears(mb, rng, s, at, ripe, leaf)
+			"spikes": _spike_tuft(mb, rng, s, at, ripe, leaf)
+			"flowers": _flower(mb, rng, s, at, ripe, leaf)
+			_: _leafy(mb, rng, at, ripe, leaf)
+
+
+## The carpet: a dark floor (no soil shows through) and tufts of leaves all over it, a little past the plot's edge;
+## while growing, fewer tufts and no floor. Its leaves are the form's ("leaf_w" wide, "leaf_len" long, "leaf_h"
+## high: broad and flat for melons, thin and upright for grain, which turns to its "straw" when ripe).
+static func _carpet(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, leaf: Color, ripe: bool) -> void:
+	var col := _col(s, "straw", "#d8b85a") if ripe and s.has("straw") else leaf
+	var w := float(s.get("leaf_w", 0.045))
+	var reach := float(s.get("leaf_len", 0.05)) * (1.0 if ripe else 1.2)
+	var h := float(s.get("leaf_h", 0.045))
+	var n := TUFTS if ripe else TUFTS_YOUNG
+	if ripe:
+		mb.box(Transform3D(Basis().scaled(Vector3(PLOT * 2.0, 0.012, PLOT * 2.0)), _up(0.006)), col.darkened(0.5))
+	for i in n:
+		for j in n:
+			var c := Vector3((i + 0.5) / n * 2.0 - 1.0, 0.0, (j + 0.5) / n * 2.0 - 1.0) * PLOT
+			c += _ring(rng.randf() * TAU, 0.01)
+			for l in 5:
+				var a := TAU * l / 5.0 + rng.randf()
+				mb.blade(c + _up(0.008), c + _ring(a, reach) + _up(h * rng.randf_range(0.5, 1.0)), w,
+					col.darkened(0.3), col.lightened(0.06), _up(0.012))
+
+
+## Where `n` pieces of produce sit on a plot: three or fewer in a ring, more on a loose grid.
+static func _plot_spots(rng: RandomNumberGenerator, n: int, k: float) -> Array:
+	var out := []
+	if n <= 3:
+		var turn := rng.randf() * TAU
+		for i in n:
+			out.append(_ring(turn + TAU * i / n, PLOT * 0.5 * k))
+		return out
+	var side := ceili(sqrt(float(n)))
+	for i in n:
+		var cell := (i * 7 + 3) % (side * side)   # (spread over the grid, the same every time)
+		var c := Vector3((cell % side + 0.5) / side * 2.0 - 1.0, 0.0, (cell / side + 0.5) / side * 2.0 - 1.0)
+		out.append(c * PLOT * 0.84 * k + _ring(rng.randf() * TAU, 0.012))
+	return out
+
+
+static func _v3(s: Dictionary, key: String, fallback: Vector3) -> Vector3:
+	var a: Array = s.get(key, [])
+	return Vector3(float(a[0]), float(a[1]), float(a[2])) if a.size() == 3 else fallback
+
+
+## Something big lying on the leaves, along one way or the other ("size": long, high, wide): a striped melon
+## ("bands"), a ribbed pumpkin ("ribs": lobes round a stalk), a marrow, a lump of potato.
+static func _melon(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, ripe: bool,
+		leaf: Color) -> void:
+	var along := rng.randf() < 0.5
+	var size := _v3(s, "size", Vector3(0.074, 0.05, 0.052)) * (1.0 if ripe else 0.45)
+	var r := size if along else Vector3(size.z, size.y, size.x)
+	var c := at + _up(r.y * 0.85 + 0.012)
+	var ribs := int(s.get("ribs", 0))
+	for j in ribs:
+		mb.ellipsoid(c + _ring(TAU * j / ribs, r.x * 0.42), Vector3(r.x * 0.62, r.y, r.z * 0.62),
+			_p(0.92 - 0.06 * (j % 2)) if ripe else leaf.lightened(0.3), 7, 4)
+	if ribs > 0:
+		mb.cone(c + _up(r.y * 0.85), 0.011, 0.006, 0.03 if ripe else 0.012, BARK, 5)
+		return
+	mb.ellipsoid(c, r, _p(0.9) if ripe else leaf.lightened(0.3), 10, 6)
+	var bands := int(s.get("bands", 3))
+	for j in bands:
+		var off := (j - (bands - 1) / 2.0) * 0.42
+		var thin := 0.012 if ripe else 0.006
+		var band := Vector3(thin if along else r.x * 1.03, r.y * 1.03, r.z * 1.03 if along else thin)
+		mb.ellipsoid(c + Vector3(r.x * off if along else 0.0, 0.0, 0.0 if along else r.z * off), band,
+			_p(0.5) if ripe else leaf, 8, 4)
+
+
+## A fat berry sitting up on the leaves, point down, under its green cap.
+static func _berry(mb: MeshBuilder, rng: RandomNumberGenerator, at: Vector3, ripe: bool, leaf: Color) -> void:
+	var size := (1.0 if ripe else 0.5) * rng.randf_range(0.9, 1.1)
+	var foot := at + _up(0.022)
+	var pale := WHITE.lerp(leaf, 0.4)
+	mb.cone(foot, 0.006 * size, 0.027 * size, 0.05 * size, _p(rng.randf_range(0.8, 1.0)) if ripe else pale, 7)
+	mb.ellipsoid(foot + _up(0.05 * size), Vector3(0.027, 0.014, 0.027) * size, _p(0.85) if ripe else pale, 7, 3)
+	for j in 4:
+		var a := TAU * j / 4.0 + rng.randf()
+		mb.blade(foot + _up(0.058 * size), foot + _ring(a, 0.024 * size) + _up(0.054 * size), 0.016, leaf,
+			leaf.lightened(0.2))
+
+
+## A blocky pepper standing among a few taller leaves, its stem on top.
+static func _pepper(mb: MeshBuilder, rng: RandomNumberGenerator, at: Vector3, ripe: bool, leaf: Color) -> void:
+	var size := (1.0 if ripe else 0.5) * rng.randf_range(0.9, 1.1)
+	for j in 3:
+		var a := TAU * j / 3.0 + rng.randf()
+		mb.blade(at + _up(0.01), at + _ring(a, 0.05) + _up(0.085), 0.05, leaf.darkened(0.2), leaf.lightened(0.12), _up(0.01))
+	var c := at + _up(0.03 + 0.036 * size)
+	var col := _p(rng.randf_range(0.82, 1.0)) if ripe else leaf.lightened(0.3)
+	mb.ellipsoid(c, Vector3(0.027, 0.038, 0.027) * size, col, 8, 5)
+	for j in 3:
+		mb.ellipsoid(c + _ring(TAU * j / 3.0, 0.012 * size) + _up(0.012 * size), Vector3(0.019, 0.03, 0.019) * size,
+			col, 6, 4)
+	mb.cone(c + _up(0.034 * size), 0.007, 0.004, 0.02 * size, STEM, 5)
+
+
+## A big head in a cup of outer leaves ("size" across, "tall" for its height): round and wrapped (a cabbage),
+## lumpy ("lumps": broccoli), or with a tuft on top ("crown": a pineapple).
+static func _head(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, ripe: bool,
+		leaf: Color) -> void:
+	for j in int(s.get("cup", 7)):
+		var a := TAU * j / float(s.get("cup", 7)) + rng.randf() * 0.4
+		mb.blade(at + _up(0.01), at + _ring(a, 0.08) + _up(0.045), 0.085, leaf.darkened(0.25), leaf.lightened(0.05),
+			_up(0.03))
+	var r := float(s.get("size", 0.056)) * (1.0 if ripe else 0.45)
+	var tall := float(s.get("tall", 0.92))
+	var c := at + _up(r * tall * 0.95 + 0.012)
+	mb.ellipsoid(c, Vector3(r, r * tall, r), _p(0.95) if ripe else leaf.lightened(0.25), 10, 6)
+	var lumps := int(s.get("lumps", 0))
+	if ripe:
+		for j in lumps:
+			mb.ellipsoid(c + _ring(TAU * j / lumps, r * 0.6) + _up(r * 0.25), Vector3.ONE * r * 0.55,
+				_p(0.78 + 0.14 * (j % 2)), 6, 4)
+		for j in (2 if lumps == 0 else 0):   # the wrapped leaves of the head, a shade apart
+			mb.ellipsoid(c + _ring(j * PI + 0.6, r * 0.22), Vector3(r * 0.9, r * tall * 1.01, r * 0.9), _p(0.78), 8, 5)
+	for j in int(s.get("crown", 0)):
+		mb.blade(c + _up(r * tall * 0.8), c + _ring(TAU * j / float(s["crown"]), r * 0.6) + _up(r * tall + 0.05), 0.022,
+			leaf, leaf.lightened(0.2))
+
+
+## A staked plant hung with big round fruit.
+static func _staked(mb: MeshBuilder, rng: RandomNumberGenerator, at: Vector3, k: float, ripe: bool,
+	leaf: Color) -> void:
+	var h := 0.15 * k
+	mb.cone(at, 0.006, 0.004, h, STAKE, 4)
+	for j in 6:
+		var a := j * 2.4 + rng.randf()
+		var y := h * (0.25 + 0.12 * j)
+		mb.blade(at + _up(y), at + _ring(a, 0.06) + _up(y + 0.02), 0.05, leaf.darkened(0.25), leaf.lightened(0.1),
+			_up(-0.015))
+	for j in 3:
+		var c := at + _ring(TAU * j / 3.0 + rng.randf() * 0.5, 0.036) + _up(h * (0.3 + 0.25 * j))
+		var r := (0.031 if ripe else 0.014) * rng.randf_range(0.9, 1.1)
+		var col := _p(rng.randf_range(0.85, 1.0)) if ripe else leaf.lightened(0.3)
+		mb.ellipsoid(c, Vector3(r, r * 0.92, r), col, 8, 5)
+		mb.ellipsoid(c + _up(r * 0.9), Vector3(r * 0.5, r * 0.18, r * 0.5), leaf, 5, 3)
+
+
+## A little bush: a few taller leaves, a stake if it climbs ("stake"), and its fruit in a cluster ("cluster" of
+## them, each "size", "lift" up and "spread" out; a "bunch" hangs wide at the top and narrow below, as grapes do).
+static func _balls(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, ripe: bool,
+		leaf: Color) -> void:
+	var size := _v3(s, "size", Vector3.ONE * 0.02)
+	var cluster := int(s.get("cluster", 4))
+	var lift := float(s.get("lift", 0.06))
+	var spread := float(s.get("spread", 0.03))
+	var stake := float(s.get("stake", 0.0))
+	if stake > 0.0:
+		mb.cone(at, 0.006, 0.004, stake, STAKE, 4)
+	for j in 4:
+		var a := TAU * j / 4.0 + rng.randf()
+		mb.blade(at + _up(0.01), at + _ring(a, 0.055) + _up(lift + 0.025), 0.05, leaf.darkened(0.2), leaf.lightened(0.12),
+			_up(0.01))
+	for j in cluster:
+		var share := float(j) / cluster
+		var c := at + _ring(TAU * share + rng.randf() * 0.5, spread) + _up(lift * rng.randf_range(0.7, 1.1))
+		if bool(s.get("bunch", false)) or stake > 0.0:
+			c = at + _ring(j * 2.4, spread * (0.3 + 0.7 * share)) + _up(lift * (0.35 + 0.65 * share))
+		var col := _p(rng.randf_range(0.82, 1.0)) if ripe else leaf.lightened(0.3)
+		mb.ellipsoid(c, size * (1.0 if ripe else 0.5) * rng.randf_range(0.9, 1.1), col, 7, 4)
+
+
+## A root showing its shoulder in the soil under a tuft of tops (a carrot, an onion).
+static func _rooted(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, ripe: bool,
+		leaf: Color) -> void:
+	var r := float(s.get("size", 0.024)) * (1.0 if ripe else 0.5)
+	mb.ellipsoid(at + _up(0.022 + r * 0.5), Vector3(r, r * float(s.get("tall", 1.0)), r),
+		_p(rng.randf_range(0.85, 1.0)) if ripe else leaf.lightened(0.3), 8, 5)
+	for j in int(s.get("tops", 6)):
+		var a := TAU * j / float(s.get("tops", 6)) + rng.randf() * 0.4
+		mb.blade(at + _up(0.02 + r), at + _ring(a, 0.03) + _up(float(s.get("top_h", 0.1))), float(s.get("top_w", 0.014)),
+			leaf.darkened(0.15), leaf.lightened(0.2), _ring(a, 0.01))
+
+
+## A tuft of grain: stalks ("tall", leaning by "droop"), each with a plump ear.
+static func _ears(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, ripe: bool,
+		leaf: Color) -> void:
+	var col := _col(s, "straw", "#d8b85a") if ripe else leaf
+	var droop := float(s.get("droop", 0.0))
+	for j in 5:
+		var a := TAU * j / 5.0 + rng.randf()
+		var foot := at + _ring(a, 0.02)
+		var tip := foot + _ring(a, 0.02 + droop) + _up(float(s.get("tall", 0.12)) * rng.randf_range(0.85, 1.0))
+		mb.blade(foot, tip, 0.012, col.darkened(0.25), col, _ring(a, droop * 0.5))
+		var r := 0.014 if ripe else 0.008
+		mb.ellipsoid(tip + _up(0.02), Vector3(r, r * 2.3, r),
+			_p(0.85 + 0.1 * (j % 2)) if ripe else leaf.lightened(0.15), 6, 4)
+
+
+## A tuft of upright stems ("stems" of them, "tall"), each a spike of buds at its top ("buds", each "bud" across:
+## lavender, a corn stalk and its cobs), or a "cane" that is produce from foot to tip (sugarcane, asparagus).
+static func _spike_tuft(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, ripe: bool,
+		leaf: Color) -> void:
+	var stems := int(s.get("stems", 3))
+	var buds := int(s.get("buds", 4))
+	var bud := float(s.get("bud", 0.016))
+	var cane := bool(s.get("cane", false))
+	for j in stems:
+		var foot := at + _ring(TAU * j / stems + rng.randf(), 0.025 if stems > 1 else 0.0)
+		var h := float(s.get("tall", 0.13)) * rng.randf_range(0.85, 1.0)
+		if not cane:
+			mb.cone(foot, 0.007, 0.004, h, STEM, 4)
+		for b in buds:
+			var y := h * (b + 0.5) / buds if cane else h - b * bud * 1.5
+			var r := bud if cane else bud * (0.65 + 0.12 * b)
+			var col := _p(0.95 - 0.12 * (b % 2)) if ripe else leaf.lightened(0.15)
+			mb.ellipsoid(foot + _up(y), Vector3(r, h / buds * 0.52 if cane else r * 1.15, r), col, 6, 4)
+		for l in (3 if cane else 0):
+			var a := TAU * l / 3.0 + rng.randf()
+			mb.blade(foot + _up(h), foot + _ring(a, 0.05) + _up(h + 0.01), 0.02, leaf, leaf.lightened(0.2), _up(-0.02))
+
+
+## A big flower on a short stem, open to the sky: petals round a disc, a cup (a tulip) or a rose's layers, by the
+## form's "style" and petal numbers; "big" is how much larger than those numbers it is drawn.
+static func _flower(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, ripe: bool,
+		leaf: Color) -> void:
+	var h := float(s.get("tall", 0.08)) * rng.randf_range(0.85, 1.0)
+	var top := at + _up(h)
+	var big := float(s.get("big", 1.5))
+	mb.cone(at, 0.007, 0.005, h, STEM, 4)
+	if not ripe:
+		mb.ellipsoid(top, Vector3(0.015, 0.025, 0.015), leaf.lightened(0.1), 5, 3)
+		return
+	match str(s.get("style", "radial")):
+		"cup":
+			for j in 3:
+				mb.ellipsoid(top + _ring(TAU * j / 3.0, 0.012 * big) + _up(0.02 * big), Vector3(0.018, 0.035, 0.014) * big,
+					_p(0.95 - 0.05 * j), 6, 4)
+		"rose":
+			for l in 3:
+				mb.ellipsoid(top + _up(0.01 * l * big), Vector3(0.03 - 0.008 * l, 0.02, 0.03 - 0.008 * l) * big,
+					_p(0.7 + 0.12 * l), 7, 4)
+			for j in 5:
+				mb.ellipsoid(top + _ring(TAU * j / 5.0, 0.025 * big) + _up(0.004), Vector3.ONE * 0.013 * big, _p(0.8), 5, 3)
+		_:
+			var n := int(s.get("petals", 10))
+			var disc := float(s.get("disc", 0.018)) * big
+			for j in n:
+				var out := _ring(TAU * j / n + rng.randf() * 0.1, 1.0)
+				mb.blade(top + out * disc * 0.6, top + out * (disc + float(s.get("petal_len", 0.04)) * big) + _up(0.012),
+					float(s.get("petal_w", 0.014)) * big, _p(0.95), _p(0.82))
+			mb.ellipsoid(top + _up(0.006), Vector3(disc, disc * 0.45, disc), _col(s, "disc_col", "#f2c230"), 7, 4)
+
+
+## A crop that is its leaves (spinach, tea, clover): a full tuft of them, the crop's colour when grown.
+static func _leafy(mb: MeshBuilder, rng: RandomNumberGenerator, at: Vector3, ripe: bool, leaf: Color) -> void:
+	for j in 8:
+		var a := TAU * j / 8.0 + rng.randf() * 0.4
+		var shade := 0.7 + 0.3 * (j % 3) / 2.0
+		var col := _p(shade) if ripe else leaf.lerp(leaf.lightened(0.3), (j % 3) / 2.0)
+		mb.blade(at + _up(0.01), at + _ring(a, 0.03 + 0.02 * (j % 2)) + _up(0.06 + 0.02 * (j % 3)), 0.055, col, col,
+			_up(0.02))
 
 
 # ---------------------------------------------------------------- helpers

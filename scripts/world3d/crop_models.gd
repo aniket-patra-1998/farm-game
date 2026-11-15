@@ -13,6 +13,10 @@ const DRY := Color("#9a7a42")
 const DRY_DARK := Color("#6e5530")
 const SEED := Color("#4a3322")
 const STEM := Color("#5c8a2e")
+const SPAN_MOST := 0.85    # produce may take this share of the height crops are kept to; the rest is stem and top
+const PRODUCE_REACH := 1.2  # produce may spread this much further than leaves (it is what the field shows)
+const ON_SOIL := 0.03      # produce beginning lower than this lies on the soil
+const GREEN_SHARP := 4.0   # how quickly a colour counts as leaf green (its green over its red and blue, times this)
 
 static var _cache := {}
 
@@ -20,8 +24,118 @@ static var _cache := {}
 static func mesh(shape: String, stage: String) -> ArrayMesh:
 	var key := shape + "|" + stage
 	if not _cache.has(key):
-		_cache[key] = _build(shape, stage)
+		var ripe := stage == "ripe"
+		var cap := CropForms.look("height", 0.0) * (1.0 if ripe else CropForms.look("young", 1.0))
+		_cache[key] = _fit(_build(shape, stage), cap, CropForms.look("leaf_ripe", 1.0) if ripe else 1.0,
+			bool(CropForms.spec(shape).get("squash", false)),
+			0.0 if CropForms.is_plot(shape) else CropForms.look("reach", 0.0))
+		if CropForms.is_plot(shape) and stage in ["seeds", "sprout", "withered"]:
+			_cache[key] = _rows(_cache[key])
 	return _cache[key]
+
+
+## Every crop stands about as tall as the next and shows its harvest (data/crop_forms.json "look": a field reads
+## best level, its produce on top). A plant taller than `cap` keeps its produce as it is and has the rest
+## shortened: the stem under it and whatever stands above it (a tassel, a stake). Produce that alone is taller
+## than the cap makes the whole plant smaller; a plant with no produce, or one that is `squash`ed (canes, which
+## are produce from foot to tip), is drawn shorter instead. `dim` darkens the green of a ripe plant's leaves,
+## so the harvest stands out against them. `reach` is how far from its middle a plant may spread, so a plot's
+## plants stay inside it and each plot is its own patch: leaves beyond it are drawn in, and produce beyond it
+## (a little more is allowed) is made smaller, in proportion.
+static func _fit(mesh: ArrayMesh, cap: float, dim := 1.0, squash := false, reach := 0.0) -> ArrayMesh:
+	if (cap <= 0.0 and reach <= 0.0 and is_equal_approx(dim, 1.0)) or mesh.get_surface_count() == 0:
+		return mesh
+	var arrays := mesh.surface_get_arrays(0)
+	var pts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var cols: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var top := 0.0
+	var head := INF       # where the produce begins..
+	var head_top := -INF  # ..and ends
+	for i in pts.size():
+		top = maxf(top, pts[i].y)
+		if cols[i].a < 0.5:
+			head = minf(head, pts[i].y)
+			head_top = maxf(head_top, pts[i].y)
+		elif dim < 1.0:
+			var c := cols[i]
+			var green := clampf((c.g - maxf(c.r, c.b)) * GREEN_SHARP, 0.0, 1.0)   # (straw and petals are left as they are)
+			var k := lerpf(1.0, dim, green)
+			cols[i] = Color(c.r * k, c.g * k, c.b * k, c.a)
+	if cap > 0.0 and top > cap:
+		if head > top or squash:
+			for i in pts.size():
+				pts[i].y *= cap / top
+		else:
+			var whole := minf(1.0, cap * SPAN_MOST / maxf(head_top - maxf(head, 0.0), 0.0001))   # (produce taller than the cap)
+			var under := maxf(head, 0.0)   # (produce lying on the soil may dip a little below it)
+			var free := cap / whole - (head_top - under)
+			var above := top - head_top
+			var stem := free * under / maxf(under + above, 0.0001)
+			for i in pts.size():
+				var y := pts[i].y
+				if y <= under:
+					y *= stem / under if under > 0.0001 else 1.0
+				elif y <= head_top:
+					y += stem - under
+				else:
+					y = stem + head_top - under + (y - head_top) * (free - stem) / maxf(above, 0.0001)
+				pts[i] = Vector3(pts[i].x, y, pts[i].z) * whole
+	if reach > 0.0:
+		_draw_in(pts, cols, reach)
+	arrays[Mesh.ARRAY_VERTEX] = pts
+	arrays[Mesh.ARRAY_COLOR] = cols
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return out
+
+
+## Three rows of three of a plant as one mesh: the stages every crop shares (seeds, a sprout, withered), for a
+## crop drawn a plot at a time.
+static func _rows(mesh: ArrayMesh) -> ArrayMesh:
+	var arrays := mesh.surface_get_arrays(0)
+	var pts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var cols := PackedColorArray()
+	for spot: Vector2 in Crops3D.SPOTS:
+		for p: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
+			pts.append(p + Vector3(spot.x, 0.0, spot.y) / Crops3D.PLANT_SCALE)
+		normals.append_array(arrays[Mesh.ARRAY_NORMAL])
+		cols.append_array(arrays[Mesh.ARRAY_COLOR])
+	var all := []
+	all.resize(Mesh.ARRAY_MAX)
+	all[Mesh.ARRAY_VERTEX] = pts
+	all[Mesh.ARRAY_NORMAL] = normals
+	all[Mesh.ARRAY_COLOR] = cols
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, all)
+	return out
+
+
+## Keeps a plant within `reach` of its middle (see `_fit`).
+static func _draw_in(pts: PackedVector3Array, cols: PackedColorArray, reach: float) -> void:
+	var leaf_far := 0.0001
+	var produce_far := 0.0001
+	var low := INF      # the produce's lowest point..
+	var middle := 0.0   # ..and its middle height
+	var n := 0
+	for i in pts.size():
+		var far := Vector2(pts[i].x, pts[i].z).length()
+		if cols[i].a < 0.5:
+			produce_far = maxf(produce_far, far)
+			low = minf(low, pts[i].y)
+			middle += pts[i].y
+			n += 1
+		else:
+			leaf_far = maxf(leaf_far, far)
+	var leaf_k := minf(1.0, reach / leaf_far)
+	var produce_k := minf(1.0, reach * PRODUCE_REACH / produce_far)
+	# Produce shrinks about where it sits: its foot when it lies on the soil, else its own middle (a head on a stem).
+	var about := low if low < ON_SOIL else middle / maxi(n, 1)
+	for i in pts.size():
+		if cols[i].a < 0.5:
+			pts[i] = Vector3(pts[i].x * produce_k, about + (pts[i].y - about) * produce_k, pts[i].z * produce_k)
+		else:
+			pts[i] = Vector3(pts[i].x * leaf_k, pts[i].y, pts[i].z * leaf_k)
 
 
 ## Produce colour in the vertex: `shade` 0..1 (how lit), alpha 0 marks it as produce (every other
