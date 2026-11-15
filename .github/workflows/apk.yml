@@ -131,6 +131,7 @@ jobs:
               | tee export.log
           fi
           test -s build/farm-game-debug.apk || { echo "No APK was made"; exit 1; }
+          echo "Baked shaders in the build: $(unzip -l build/farm-game-debug.apk | grep -ci shader_baker)"
           ls -l build/farm-game-debug.apk
 
       - name: Upload the APK
