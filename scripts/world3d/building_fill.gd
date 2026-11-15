@@ -24,7 +24,7 @@ const DOOR_OPEN := 1.75       # radians a door swings open
 const DOOR_HOLD := 1.2        # seconds it stays open
 const PRODUCE_STEPS := 6      # piles grow in this many steps as collection nears
 const PRODUCE_SCALE := 1.5    # and are drawn this much bigger than life: they must read from across the farm
-const PEEKERS := 3            # the most animals looking out of windows at once (when the home is full)
+const PEEKERS := 3            # the most animals looking out of a home's windows at once
 const PEEK_OUT := 0.1         # tiles a head sticks out past the wall
 const PEEK_POP := 0.45        # seconds a head takes to pop up
 const PEEK_NOD := 2.6         # seconds a head takes to nod once and back
@@ -138,7 +138,7 @@ func refresh(o: Dictionary) -> void:
 	_show_flag(full)
 	if who != _who_peeking:
 		_who_peeking = who
-		_show_peekers(inside if full else {})
+		_show_peekers(inside)   # (whoever lives here looks out of its windows, full or not)
 
 
 ## How near the building is to ready, 0..1 (0 when empty: nothing is being made).

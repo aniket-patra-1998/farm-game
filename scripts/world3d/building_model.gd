@@ -59,6 +59,34 @@ static var _fills := {}   # fill_of, by "id|level"
 ## then each size's changes up to `level` laid on in turn (data "levels": {"2": {...}, "3": {...}}).
 ## A size's "drop" first removes features of those types; its "features" are added; anything else
 ## (body, roof, door: merged; windows, window_rows: replaced) changes the building itself.
+## A number of the look every building shares (data/building_models.json "look"); 1 when it is not set.
+static func _look(key: String) -> float:
+	_load()
+	return float((_data.get("look", {}) as Dictionary).get(key, 1.0))
+
+
+## The shared look laid over a building's own numbers: lower walls and a bigger door (chunky, as the farm art
+## these follow is), and for a home with a yard a smaller shed drawn back into its corner, so the yard and the
+## animals in it are most of what is seen.
+static func _styled(s: Dictionary) -> Dictionary:
+	var body: Dictionary = s["body"]
+	body["h"] = float(body.get("h", 0.85)) * _look("walls")
+	var yard := (s.get("features", []) as Array).any(func(f: Dictionary) -> bool: return f.get("type") == "yard")
+	if yard:
+		var k := _look("shed")
+		var at: Array = body.get("at", [0.5, 0.42])
+		var w := float(body.get("w", 0.7))
+		var d := float(body.get("d", 0.66))
+		body["at"] = [float(at[0]) - w * (1.0 - k) / 2.0, float(at[1]) - d * (1.0 - k) / 2.0]
+		body["w"] = w * k
+		body["d"] = d * k
+	var door: Dictionary = s.get("door", {})
+	door["w"] = float(door.get("w", 0.28)) * _look("door")
+	door["h"] = minf(float(door.get("h", 0.55)) * _look("door"), float(body["h"]) * 0.8)
+	s["door"] = door
+	return s
+
+
 static func spec(id: String, level := 1) -> Dictionary:
 	_load()
 	var out: Dictionary = (_data["default"] as Dictionary).duplicate(true)
@@ -76,7 +104,7 @@ static func spec(id: String, level := 1) -> Dictionary:
 		rest.erase("drop")
 		rest.erase("features")
 		_lay_on(out, rest)
-	return out
+	return _styled(out)
 
 
 ## What a building's model says about its fill (see BuildingFill): cached, since it is asked for every sync.
@@ -321,7 +349,7 @@ static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1
 	if rising > 0.0:
 		wall_top = lerpf(PLINTH + 0.1, bh, rising)
 		var wall := ModelKit.surface(Color.html(str(it.get("color", "#c0392b"))), str(body.get("walls", "boards")))
-		var t := 0.03
+		var t := 0.03 * _look("trim")
 		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(hi.x, wall_top, lo.z + t), wall)
 		ModelKit.box(root, Vector3(lo.x, PLINTH, hi.z - t), Vector3(hi.x, wall_top, hi.z), wall)
 		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(lo.x + t, wall_top, hi.z), wall)
@@ -477,7 +505,7 @@ static func _body(ctx: Dictionary) -> void:
 	var wall_mat := ModelKit.surface(ctx["wall"], walls)
 	ModelKit.box(root, Vector3(lo.x, maxf(lo.y, PLINTH * 0.5), lo.z), hi, wall_mat)
 	# White corner boards.
-	var t := 0.035
+	var t := 0.035 * _look("trim")
 	for corner: Vector2 in [Vector2(lo.x, lo.z), Vector2(hi.x, lo.z), Vector2(hi.x, hi.z), Vector2(lo.x, hi.z)]:
 		ModelKit.box(root, Vector3(corner.x - t, lo.y, corner.y - t), Vector3(corner.x + t, hi.y, corner.y + t),
 			ModelKit.paint(trim))
@@ -670,7 +698,8 @@ static func _windows(ctx: Dictionary, count: int, trim: Color, rows := 1) -> voi
 	if count <= 0:
 		return
 	var wall_h: float = (ctx["hi"] as Vector3).y - (ctx["lo"] as Vector3).y
-	var size := minf(0.2, wall_h * (0.3 if rows == 1 else 0.42 / rows))
+	var size := minf(0.2, wall_h * (0.3 if rows == 1 else 0.42 / rows)) * _look("window")
+	size = minf(size, wall_h * 0.5 / rows)   # (big, but inside its wall)
 	for row in rows:
 		var share := 0.58 if rows == 1 else lerpf(0.32, 0.74, row / (rows - 1.0))
 		_window_row(ctx, count, trim, share, size)
@@ -686,8 +715,9 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 	for k in count:
 		var z := lerpf(lo.z, hi.z, (k + 1.0) / (count + 1.0))
 		spots.append({"at": Vector3(hi.x, y, z), "size": size})
-		ModelKit.box(root, Vector3(hi.x, y - size / 2 - 0.025, z - size / 2 - 0.025),
-			Vector3(hi.x + 0.02, y + size / 2 + 0.025, z + size / 2 + 0.025), ModelKit.paint(trim))
+		var frame := 0.025 * _look("trim")
+		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame, z - size / 2 - frame),
+			Vector3(hi.x + 0.02, y + size / 2 + frame, z + size / 2 + frame), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(hi.x + 0.02, y - size / 2, z - size / 2), Vector3(hi.x + 0.03, y + size / 2, z + size / 2),
 			ModelKit.glass())
 		# Panes: a cross of bars over the glass.

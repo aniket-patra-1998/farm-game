@@ -1,5 +1,13 @@
 {
   "_doc": "How each building is built in 3D (scripts/world3d/building_model.gd). Sizes are in tiles. body is the main block: w and d as shares of the footprint, h its wall height, at [x, z] its centre as shares of the footprint (0.5, 0.5 is the middle); walls: boards, logs, stone, plaster or metal. roof: gable (ridge along the longer side), hip, shed, flat or dome; pitch is rise over half-span. wall colour defaults to the catalog item's colour. features add the details that tell buildings apart: yard (a fenced dirt or straw yard on the rest of the footprint), silo, stilts, ramp, chimney, cupola, loft_door, stall_doors, porch, terrace, nest_boxes, water_trough, hay_bales, beehives, trees, pond, sign. levels: what each bigger size changes, keyed by size (\"2\", \"3\"...), laid on in turn: body, roof and door values replace the smaller size's, windows and window_rows replace, features are added, and drop removes features of the named types first. Upgrade features: wing (an annex with its own roof: side right or front, depth, span, h), lean_to (an open shelter on posts), weathervane. Under construction, a building is built in stages as materials arrive (building_model.gd build_site). fill: what shows how full the building is (scripts/world3d/building_fill.gd): produce piles up at 'at' (eggs, milk, wool, truffles, honey, hay, crates) as collection nears; trees: how many of the trees it holds stand in it (an orchard). Animals inside wander out in the yard, more as it fills. Proportions follow FarmVille's: a compact block, about as tall as it is deep, under a steep roof (a test keeps every building that way); a bigger size grows up (taller walls, a second floor of windows) and gains annexes and features rather than stretching longer.",
+  "look": {
+    "_doc": "The look every building shares, laid over its own numbers: 'walls' is how tall walls are drawn (lower: squat, chunky), 'door' and 'window' how much bigger doors and windows, 'trim' how much wider the trim boards and window frames; 'shed' is how big the building of a home with a yard is drawn, drawn back into its corner, so the yard and its animals are most of what is seen.",
+    "walls": 0.86,
+    "shed": 0.85,
+    "door": 1.2,
+    "window": 1.45,
+    "trim": 1.7
+  },
   "default": {
     "body": {
       "w": 0.6,
@@ -301,7 +309,7 @@
         "walls": "boards"
       },
       "roof": {
-        "type": "gable",
+        "type": "shed",
         "pitch": 0.9,
         "color": "#55504a"
       },
