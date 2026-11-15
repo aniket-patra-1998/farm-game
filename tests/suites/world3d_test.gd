@@ -1391,7 +1391,7 @@ func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
 
 func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 	var keys := ["shadows", "shadow_splits", "shadow_distance", "glow", "scale", "lod_pixels", "pose_every",
-		"crop_shadows", "max_fps", "screen_grade"]
+		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size"]
 	for name: String in Quality.LEVELS:
 		for k: String in keys:
 			_check(Quality.value(k, name) != null, "%s sets %s" % [name, k])
@@ -1409,10 +1409,14 @@ func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 		_eq(env.glow_enabled, bool(Quality.value("glow")), "%s: glow" % name)
 		_check(is_equal_approx(vp.scaling_3d_scale, float(Quality.value("scale"))), "%s: resolution" % name)
 		_check(is_equal_approx(vp.mesh_lod_threshold, float(Quality.value("lod_pixels"))), "%s: detail" % name)
+		_eq(vp.msaa_3d, Quality.MSAA[int(Quality.value("msaa"))], "%s: anti-aliasing" % name)
 		_eq(Engine.max_fps, int(Quality.value("max_fps")), "%s: frame cap" % name)
 		_eq(Crops3D._shadow_setting() != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
 			bool(Quality.value("crop_shadows")), "%s: crop shadows" % name)
 	_check(int(Quality.value("max_fps", "low")) > 0, "low caps the frame rate (a cheap phone runs cooler)")
+	_eq(int(Quality.value("msaa", "low")), 0, "low draws without anti-aliasing")
+	_check(int(Quality.value("msaa", "ultra")) > int(Quality.value("msaa", "high")), "ultra smooths edges more")
+	_check(int(Quality.value("shadow_size", "ultra")) > int(Quality.value("shadow_size", "high")), "and sharper shadows")
 	_check(not bool(Quality.value("screen_grade", "low")), "low skips the full-screen grade pass")
 	Quality.choose(was)
 	Engine.max_fps = 0
@@ -1751,3 +1755,30 @@ func _mesh_ids(node: Node) -> Array:
 		if not dressing:
 			out.append((mi as MeshInstance3D).mesh.get_instance_id())
 	return out
+
+
+## The crops' clock wakes only when the soonest plot is due to change look: before then a tick changes nothing.
+func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var crop: String = Game.crop_order[0]
+	var grow := int(Game.crops[crop]["grow_seconds"])
+	var i := Game.index_of(1, 1)
+	Game.plots[i] = {"state": "planted", "crop": crop, "planted_at": Game.now()}
+	var crops := Crops3D.new()
+	add_child(crops)
+	_eq(crops.due(), Game.now() + ceili(Crops3D.SPROUT_FROM * grow), "due when the seeds sprout")
+	var seeds: Array = crops._plot_look[i]
+	crops._on_clock()
+	_eq(crops._plot_look[i], seeds, "a tick before then changes nothing")
+	Game.debug_time_offset += ceili(Crops3D.SPROUT_FROM * grow) + 1
+	crops._on_clock()
+	_check(crops._plot_look[i] != seeds, "at the due time the sprouts show")
+	_eq(crops.due(), int(Game.plots[i]["planted_at"]) + ceili(Crops3D.YOUNG_FROM * grow), "next: young plants")
+	Game.debug_time_offset += grow
+	crops._on_clock()
+	_eq(Crops3D.stage_of(i)[0], "ripe", "(ripe now)")
+	_check(crops.due() > Game.now(), "and next it withers")
+	crops.free()
+	Game.debug_time_offset = 0
+	Game.reset_game()

@@ -28,6 +28,19 @@ func phase(i: int) -> GameState.Phase:
 	return GameState.Phase.GRASS
 
 
+## When plot `i`'s phase next changes on its own (growing to ripe, ripe to withered), or -1 when it won't.
+func next_phase_at(i: int) -> int:
+	var p: Dictionary = game.plots[i]
+	if p.get("state") != "planted":
+		return -1
+	var crop: Dictionary = game.crops[p["crop"]]
+	var ripe := int(p["planted_at"]) + int(crop["grow_seconds"])
+	if game.now() < ripe:
+		return ripe
+	var window := ripe_window(crop) * (Balance.i("economy.pollinated_ripe_mult") if p.get("pol", false) else 1)
+	return ripe + window if game.now() < ripe + window else -1
+
+
 func ripe_window(crop: Dictionary) -> int:
 	return (game.catalog.get_def(crop["id"]) as CropDef).ripe_window()
 

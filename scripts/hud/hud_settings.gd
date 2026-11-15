@@ -3,7 +3,8 @@ extends RefCounted
 ## Settings (sound, vibration) and the showcase farm card.
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
-const QUALITY_WORDS := {"low": "GRAPHICS_LOW", "mid": "GRAPHICS_MID", "high": "GRAPHICS_HIGH"}
+const QUALITY_WORDS := {"low": "GRAPHICS_LOW", "mid": "GRAPHICS_MID", "high": "GRAPHICS_HIGH",
+	"ultra": "GRAPHICS_ULTRA"}
 const NAME_MAX := 24     # letters in a farm's name (the plaque fits them)
 
 var hud: FarmHud
@@ -65,7 +66,7 @@ func quality_card() -> PanelContainer:
 	row.add_theme_constant_override("separation", 10)
 	inner.add_child(row)
 	var group := ButtonGroup.new()
-	for name: String in Quality.LEVELS:
+	for name: String in Quality.offered():
 		var b := hud._panel_button(tr(QUALITY_WORDS[name]))
 		b.toggle_mode = true
 		b.button_group = group

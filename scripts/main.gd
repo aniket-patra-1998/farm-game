@@ -106,7 +106,7 @@ func _ready() -> void:
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
 	Quality.apply_frame_cap()    # (and again whenever the level is chosen: Quality.choose)
-	AutoQuality.start_in(self)   # the first launch on a device measures it and picks its level
+	AutoQuality.start_in(self)   # keeps the device smooth: steps down when frames stay slow (until the player chooses)
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that

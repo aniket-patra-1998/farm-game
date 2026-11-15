@@ -1,17 +1,23 @@
 class_name Quality
 extends RefCounted
-## How good the farm looks against what it costs the phone: low, mid or high (data/quality.json), the player's
-## choice kept in user://settings.cfg beside the sound settings. A phone starts on mid, a computer on high.
-## `apply` sets the 3D world to a level: shadows (and how many splits and how far), glow, the 3D resolution
-## (the interface stays sharp), how soon models switch to their simpler levels, and how often animals are
-## posed (every frame, or every other on low). Changing the level applies it at once (`notifier`).
+## How good the farm looks against what it costs the phone: low, mid, high or ultra (data/quality.json; ultra
+## offered on computers only), the player's choice kept in user://settings.cfg beside the sound settings. A
+## phone starts on mid, a computer on high; until the player chooses, AutoQuality may move the device down a
+## rung (`keep_measured`: a level and maybe a 30 fps cap) whenever frames stay slow. `apply` sets the 3D world
+## to a level: shadows (splits, reach, map size), glow, anti-aliasing, the 3D resolution (the interface stays
+## sharp), how soon models switch to their simpler levels, and how often animals are posed. Changing the level
+## applies it at once (`notifier`).
 
 const DATA := "res://data/quality.json"
 const SECTION := "graphics"
 const KEY := "quality"
-const AUTO_KEY := "auto"   # the level the first launch measured (AutoQuality), when the player hasn't chosen
-const LEVELS: Array[String] = ["low", "mid", "high"]
-const AUTO_RULES: Array[String] = ["warmup", "frames", "max_frame_ms", "down_ms", "up_ms", "up_on_mobile"]
+const AUTO_KEY := "auto"   # the level AutoQuality measured for this device, while the player hasn't chosen
+const AUTO_CAP_KEY := "auto_cap"   # and the frame cap it found the device needs (0: none beyond the level's)
+const LEVELS: Array[String] = ["low", "mid", "high", "ultra"]
+const AUTO_RULES: Array[String] = ["warmup", "frames", "max_frame_ms", "hold_ms", "down_ms", "up_ms",
+	"up_on_mobile", "ladder"]
+const COMPUTER_ONLY: Array[String] = ["ultra"]
+const MSAA := [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X]
 
 static var _data := {}
 static var _level := ""   # the level in use, read from the settings file once
@@ -49,11 +55,30 @@ static func measured() -> bool:
 	return _kept(AUTO_KEY) != ""
 
 
-## Keeps `name` as what this device measured. It takes effect from the next launch, so the picture never
-## changes under the player's thumb (and never over a level the player chose).
-static func keep_measured(name: String) -> void:
-	if LEVELS.has(name):
-		PlayerSettings.keep(SECTION, {AUTO_KEY: name})
+## Keeps `name` (and a frame cap, 0 for none) as what this device measured, and, while the player hasn't chosen,
+## uses it at once: AutoQuality only ever steps down mid-session, so the picture gets lighter, never jumps up.
+static func keep_measured(name: String, cap := 0) -> void:
+	if not LEVELS.has(name):
+		return
+	PlayerSettings.keep(SECTION, {AUTO_KEY: name, AUTO_CAP_KEY: cap})
+	if not chosen_by_player():
+		_level = name
+		apply_frame_cap()
+		notifier.emitted.emit()
+
+
+## The frame cap AutoQuality found this device needs (0: none), while the player hasn't chosen.
+static func measured_cap() -> int:
+	return 0 if chosen_by_player() else int(PlayerSettings.value(SECTION, AUTO_CAP_KEY, 0))
+
+
+## The levels the player may pick on this device (ultra only on a computer).
+static func offered() -> Array[String]:
+	var out: Array[String] = []
+	for name: String in LEVELS:
+		if not (OS.has_feature("mobile") and COMPUTER_ONLY.has(name)):
+			out.append(name)
+	return out
 
 
 ## The level one step `by` from `name` (held at the ends).
@@ -86,8 +111,11 @@ static func value(key: String, name := "") -> Variant:
 ## Sets a 3D world to the level in use: its sun's shadows, its glow, and its viewport's resolution and detail.
 static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport) -> void:
 	sun.shadow_enabled = bool(value("shadows"))
-	sun.directional_shadow_mode = (DirectionalLight3D.SHADOW_ORTHOGONAL if int(value("shadow_splits")) <= 1
-		else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
+	var splits := int(value("shadow_splits"))
+	sun.directional_shadow_mode = (DirectionalLight3D.SHADOW_ORTHOGONAL if splits <= 1
+		else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if splits == 2 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS)
+	RenderingServer.directional_shadow_atlas_set_size(int(value("shadow_size")), true)
+	viewport.msaa_3d = MSAA[clampi(int(value("msaa")), 0, MSAA.size() - 1)]
 	sun.directional_shadow_max_distance = float(value("shadow_distance"))
 	env.glow_enabled = bool(value("glow"))
 	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
@@ -95,10 +123,12 @@ static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport)
 	viewport.mesh_lod_threshold = float(value("lod_pixels"))
 
 
-## The engine-wide frame cap of the level in use (0: none; the screen's refresh still limits it). Set by the game
-## when it starts and when the level changes, apart from any one 3D world.
+## The engine-wide frame cap: the level's, or the one AutoQuality found the device needs when that is lower (0:
+## none; the screen's refresh still limits it). Set when the game starts and whenever the level or the cap
+## changes, apart from any one 3D world.
 static func apply_frame_cap() -> void:
-	Engine.max_fps = int(value("max_fps"))
+	var caps := [int(value("max_fps")), measured_cap()].filter(func(c: int) -> bool: return c > 0)
+	Engine.max_fps = caps.min() if not caps.is_empty() else 0
 
 
 static func _load() -> Dictionary:

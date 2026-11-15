@@ -783,7 +783,7 @@ func _queue(job: Dictionary, loud := true) -> void:
 			object_tapped.emit(int(job["uid"]))
 		PlayerSystem.Refused.FULL:
 			Feedback.moment("error")
-			info.emit(tr("THE_FARMER_HAS_ENOUGH_TO_DO"))
+			info.emit(tr("THE_FARMER_HAS_ENOUGH_TO_DO") % PlayerSystem.queue_max())
 		_:
 			Feedback.moment("error")
 

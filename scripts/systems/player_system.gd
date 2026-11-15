@@ -19,8 +19,13 @@ enum Refused { NONE, FULL, QUEUED, NOTHING_TO_DO, COINS, SUPPLY }
 
 const WALK_SPEED := 4.5          # tiles a second
 const ACTION_SECONDS := 0.75     # the farmer works this long at each job
-const QUEUE_MAX := 60
 const STAND_OFF := 0.45          # how far short of a plot's centre the farmer stops (they work at its edge)
+## How many jobs the farmer takes at once (Balance `player.queue_max`). On purpose: a big field is a vehicle's
+## work, as in FarmVille, so a swipe or a run of taps that reaches it is told so (FarmGrid).
+static func queue_max() -> int:
+	return Balance.i("player.queue_max")
+
+
 ## Every kind of job. data/actions.json says, for each, who else can do it (a test keeps the two in step).
 const JOB_KINDS := ["plow", "plant", "harvest", "fertilize", "collect", "nurture", "vehicle", "feed"]
 const OBJECT_JOBS := ["collect", "nurture", "feed"]   # jobs done beside an object, not on a plot
@@ -87,7 +92,7 @@ func load_from(data: Dictionary) -> void:
 ## {"kind": "collect"|"nurture", "uid": uid} or {"kind": "vehicle", "item", "row", "col", "crop"}.
 ## Returns why not, or Refused.NONE.
 func enqueue(job: Dictionary) -> Refused:
-	if queue.size() >= QUEUE_MAX:
+	if queue.size() >= queue_max():
 		return Refused.FULL
 	if is_queued(job):
 		return Refused.QUEUED

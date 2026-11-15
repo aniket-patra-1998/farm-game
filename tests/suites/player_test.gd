@@ -99,9 +99,9 @@ func test_119_the_queue_refuses_what_cannot_be_done_or_paid_for_and_jobs_can_be_
 	p.advance(20.0)
 	_check(results.size() == 1 and results[0].is_empty(), "an overtaken job reports an empty result")
 	g.coins = 1000000
-	for k in PlayerSystem.QUEUE_MAX + 5:
+	for k in PlayerSystem.queue_max() + 5:
 		p.enqueue({"kind": "plow", "plot": g.index_of(22 + k / 10, k % 10)})
-	_eq(p.queue.size(), PlayerSystem.QUEUE_MAX, "the queue fills to its limit and no further")
+	_eq(p.queue.size(), PlayerSystem.queue_max(), "the queue fills to its limit and no further")
 	# The farmer is saved (name, look, place); the queue is not.
 	p.clear_queue()
 	p.farmer_name = "Asha"

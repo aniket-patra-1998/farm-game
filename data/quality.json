@@ -1,11 +1,42 @@
 {
- "_doc": "Graphics quality levels (scripts/world3d/quality.gd): what each costs the phone. The player picks one in Settings; a phone starts on `mid`, a computer on `high`. `scale` is the 3D resolution (the interface stays sharp); `lod_pixels` is how coarse a model may get before a simpler level of it shows (bigger: simpler sooner); `shadow_splits` 1 or 2 (2 is sharper near the camera); `pose_every` is how many frames apart every animal is posed at least (2 on low halves the animals' cost; the farm's own budget, `Animal3D.FULL_RATE`, may space them further when there are many); `crop_shadows` whether crops cast shadows (most of a big farm's shadow triangles); `max_fps` caps the frame rate (0: none, the screen's own rate; a fixed 60 would judder on a 90 Hz screen), so a cheap phone on low runs cooler and longer at an even 30; `screen_grade` keeps the full-screen pass for the low sun's warmth and the vignette (it copies the screen every frame; the rest of the grade is in the 3D frame's own adjustments). `auto`: on a device whose player hasn't chosen yet, the first launch waits `warmup` seconds, then times `frames` frames (skipping any over `max_frame_ms`, a hitch or a resume; leaving the app starts the count again), and keeps one level down when the median frame's work takes more than `down_ms`, or one up when less than `up_ms` (on phones only if `up_on_mobile`: a first farm is the lightest it will ever be, so a phone only steps down; and never up where the renderer can't time itself). Kept once, used from the next launch; the player's choice in Settings always wins.",
+ "_doc": "Graphics quality levels (scripts/world3d/quality.gd): what each costs the phone. The player picks one in Settings (ultra only on a computer); a phone starts on `mid`, a computer on `high`. `scale` is the 3D resolution (the interface stays sharp); `lod_pixels` is how coarse a model may get before a simpler level of it shows (bigger: simpler sooner); `shadow_splits` 1 or 2 (2 is sharper near the camera); `pose_every` is how many frames apart every animal is posed at least (2 on low halves the animals' cost; the farm's own budget, `Animal3D.FULL_RATE`, may space them further when there are many); `crop_shadows` whether crops cast shadows (most of a big farm's shadow triangles); `max_fps` caps the frame rate (0: none, the screen's own rate; a fixed 60 would judder on a 90 Hz screen), so a cheap phone on low runs cooler and longer at an even 30; `screen_grade` keeps the full-screen pass for the low sun's warmth and the vignette (it copies the screen every frame; the rest of the grade is in the 3D frame's own adjustments). `msaa` is the 3D anti-aliasing (0 off, 1 2x, 2 4x); `shadow_size` the sun's shadow map in pixels (sharper edges, more memory). `auto` (AutoQuality): while the player hasn't chosen, the game keeps timing the frame's work all session in windows of `frames` frames (after `warmup` seconds, and again after each step; frames over `max_frame_ms`, a hitch or a resume, aren't counted; leaving the app starts the window again). When a window's median is slower than its rung holds (`hold_ms` uncapped: about 55 fps; `down_ms` capped at 30), it steps one rung down `ladder` at once and keeps it: high, mid, mid capped at 30 (so a phone that can't hold 60 runs an even 30 instead of wobbling between 30 and 40), low. Only the first window on a never-measured computer may step up one level, when its median is under `up_ms` (`up_on_mobile` lets a phone too; off, since a first farm is the lightest it will ever be). The player's choice in Settings always wins and is never moved.",
  "default_phone": "mid",
  "default_computer": "high",
  "levels": {
-  "low": {"shadows": false, "shadow_splits": 1, "shadow_distance": 50, "glow": false, "scale": 0.7, "lod_pixels": 4.0, "pose_every": 2, "crop_shadows": false, "max_fps": 30, "screen_grade": false},
-  "mid": {"shadows": true, "shadow_splits": 1, "shadow_distance": 70, "glow": false, "scale": 0.85, "lod_pixels": 2.0, "pose_every": 1, "crop_shadows": false, "max_fps": 0, "screen_grade": false},
-  "high": {"shadows": true, "shadow_splits": 2, "shadow_distance": 90, "glow": true, "scale": 1.0, "lod_pixels": 1.0, "pose_every": 1, "crop_shadows": true, "max_fps": 0, "screen_grade": true}
+  "low": {"shadows": false, "shadow_splits": 1, "shadow_distance": 50, "glow": false, "scale": 0.7, "lod_pixels": 4.0, "pose_every": 2, "crop_shadows": false, "max_fps": 30, "screen_grade": false, "msaa": 0, "shadow_size": 2048},
+  "mid": {"shadows": true, "shadow_splits": 1, "shadow_distance": 70, "glow": false, "scale": 0.85, "lod_pixels": 2.0, "pose_every": 1, "crop_shadows": false, "max_fps": 0, "screen_grade": false, "msaa": 1, "shadow_size": 2048},
+  "high": {"shadows": true, "shadow_splits": 2, "shadow_distance": 90, "glow": true, "scale": 1.0, "lod_pixels": 1.0, "pose_every": 1, "crop_shadows": true, "max_fps": 0, "screen_grade": true, "msaa": 1, "shadow_size": 4096},
+  "ultra": {"shadows": true, "shadow_splits": 4, "shadow_distance": 110, "glow": true, "scale": 1.0, "lod_pixels": 0.75, "pose_every": 1, "crop_shadows": true, "max_fps": 0, "screen_grade": true, "msaa": 2, "shadow_size": 8192}
  },
- "auto": {"warmup": 4.0, "frames": 240, "max_frame_ms": 250.0, "down_ms": 36.0, "up_ms": 10.0, "up_on_mobile": false}
+ "auto": {
+  "warmup": 4.0,
+  "frames": 180,
+  "max_frame_ms": 250.0,
+  "hold_ms": 18.0,
+  "down_ms": 36.0,
+  "up_ms": 10.0,
+  "up_on_mobile": false,
+  "ladder": [
+   [
+    "ultra",
+    0
+   ],
+   [
+    "high",
+    0
+   ],
+   [
+    "mid",
+    0
+   ],
+   [
+    "mid",
+    30
+   ],
+   [
+    "low",
+    30
+   ]
+  ]
+ }
 }

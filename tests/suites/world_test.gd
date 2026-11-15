@@ -366,56 +366,69 @@ func test_325_player_settings_keep_each_owners_keys_and_the_window_choice() -> v
 	PlayerSettings.keep("test_section", {"a": null})
 
 
-## The first launch picks a level from what a frame costs; the player's own choice always wins over it.
-func test_327_the_first_launch_measures_the_level_and_the_players_choice_wins() -> void:
+## AutoQuality keeps watching while the player hasn't chosen: a slow window steps one rung down at once (a 30 fps
+## cap first, then a level), only a never-measured computer may step up, and the player's own choice always wins.
+func test_327_auto_quality_steps_down_when_frames_stay_slow_and_the_players_choice_wins() -> void:
 	var was_chosen: Variant = PlayerSettings.value(Quality.SECTION, Quality.KEY, null)
 	var was_auto: Variant = PlayerSettings.value(Quality.SECTION, Quality.AUTO_KEY, null)
+	var was_cap: Variant = PlayerSettings.value(Quality.SECTION, Quality.AUTO_CAP_KEY, null)
 	var rules := Quality.auto_rules()
 	_check(not rules.is_empty(), "the rules are all in data/quality.json")
-	var slow := float(rules["down_ms"]) + 5.0
+	var hold := float(rules["hold_ms"])
+	var down := float(rules["down_ms"])
 	var fast := float(rules["up_ms"]) - 2.0
-	var easy := (float(rules["down_ms"]) + float(rules["up_ms"])) / 2.0
 	var auto := AutoQuality.new()
-	_eq(auto.verdict("mid", slow, true), "low", "a device that can't keep up steps down")
-	_eq(auto.verdict("mid", fast, true), "high", "one with plenty to spare steps up")
-	_eq(auto.verdict("mid", fast, false), "mid", "but not where stepping up isn't allowed")
-	_eq(auto.verdict("mid", easy, true), "mid", "and one in between stays")
-	_eq(auto.verdict("low", slow, true), "low", "never past the ends")
+	_eq(auto.verdict(["mid", 0], hold + 4.0, false), ["mid", 30], "mid that can't hold about 55 fps: capped at 30")
+	_eq(auto.verdict(["mid", 30], hold + 4.0, false), ["mid", 30], "capped, it holds 30 at that cost: stays")
+	_eq(auto.verdict(["mid", 30], down + 4.0, false), ["low", 30], "can't even hold 30: low")
+	_eq(auto.verdict(["high", 0], hold + 4.0, false), ["mid", 0], "high that can't keep up: mid")
+	_eq(auto.verdict(["low", 30], down + 50.0, false), ["low", 30], "never past the bottom")
+	_eq(auto.verdict(["high", 0], fast, true), ["ultra", 0], "a fast computer may step up")
+	_eq(auto.verdict(["high", 0], fast, false), ["high", 0], "but not where it may not")
 	_eq(AutoQuality.median(PackedFloat32Array([30.0, 5.0, 80.0, 10.0, 12.0])), 12.0, "the median frame, not one hitch")
-	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: null, Quality.AUTO_KEY: null})
-	Quality._level = ""
-	_check(AutoQuality.should_measure(), "a new device is measured")
-	# The flow: nothing in the warmup, a resume's huge frame isn't counted, then `frames` frames decide.
-	var frame := 1.0 / 60.0
-	var verdict := ""
-	var n := 0
-	auto.restart()
-	_eq(auto.add_sample(float(rules["warmup"]) + 1.0, slow, true), "", "a long frame (a resume) decides nothing")
-	while verdict == "" and n < 100000:
-		verdict = auto.add_sample(frame, slow, true)
-		n += 1
-	_eq(n, int(float(rules["warmup"]) / frame) + int(rules["frames"]), "the warmup, then exactly the frames counted")
-	_eq(verdict, Quality.step(Quality.level(), -1), "a slow device steps down")
-	auto.mobile = true
-	auto.restart()
-	verdict = ""
-	while verdict == "":
-		verdict = auto.add_sample(frame, fast, true)
-	_eq(verdict, Quality.level(), "a phone never steps up from its first, lightest farm")
 	auto.free()
-	var before := Quality.level()
-	Quality.keep_measured("low")
-	_check(Quality.measured() and not AutoQuality.should_measure(), "measured once, kept")
-	_eq(Quality.level(), before, "and nothing changes until the next launch")
+	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: null, Quality.AUTO_KEY: null, Quality.AUTO_CAP_KEY: null})
 	Quality._level = ""
-	_eq(Quality.level(), "low", "which uses it")
+	Quality.keep_measured("mid", 0)
+	_check(AutoQuality.should_watch(), "a device the player hasn't set is watched")
+	# The flow on a phone: the warmup, a resume's long frame not counted, then one slow window steps down at once;
+	# after a fresh warmup the next window goes further only if still too slow for the new rung.
+	auto = AutoQuality.new()
+	auto.mobile = true
+	var frame := 1.0 / 60.0
+	_eq(auto.add_sample(float(rules["warmup"]) + 1.0, hold + 4.0, true), [], "a long frame (a resume) decides nothing")
+	var window := ceili(float(rules["warmup"]) / frame) + int(rules["frames"])
+	var rung: Array = []
+	var n := 0
+	while rung.is_empty() and n < window * 2:
+		rung = auto.add_sample(frame, hold + 4.0, true)
+		n += 1
+	_check(n <= window, "the warmup, then one window (%d frames)" % n)
+	_eq(rung, ["mid", 30], "a phone that can't hold 55 on mid is capped at 30")
+	Quality.keep_measured(str(rung[0]), int(rung[1]))
+	_eq(Quality.level(), "mid", "used at once")
+	_eq(Engine.max_fps, 30, "with the cap")
+	rung = []
+	for k in window + 1:
+		rung = auto.add_sample(frame, hold + 4.0, true)
+		if not rung.is_empty():
+			break
+	_eq(rung, [], "holding 30 when capped: no further step")
+	rung = []
+	for k in window + 1:
+		rung = auto.add_sample(frame, fast, true)
+		if not rung.is_empty():
+			break
+	_eq(rung, [], "a fast phone never steps up (its first farm is its lightest)")
+	auto.free()
 	Quality.choose("high")
-	_eq(Engine.max_fps, int(Quality.value("max_fps")), "choosing a level sets the frame cap itself")
-	Quality.keep_measured("low")
-	Quality._level = ""
-	_eq(Quality.level(), "high", "a level the player chose wins")
-	_check(not AutoQuality.should_measure(), "and then nothing is measured")
-	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: was_chosen, Quality.AUTO_KEY: was_auto})
+	_eq(Engine.max_fps, int(Quality.value("max_fps")), "choosing a level sets its own frame cap")
+	_check(not AutoQuality.should_watch(), "and then nothing is watched")
+	Quality.keep_measured("low", 30)
+	_eq(Quality.level(), "high", "a level the player chose is never moved")
+	PlayerSettings.keep(Quality.SECTION, {Quality.KEY: was_chosen, Quality.AUTO_KEY: was_auto,
+		Quality.AUTO_CAP_KEY: was_cap})
 	Quality._level = ""
 	Quality.apply_frame_cap()
 	Quality.notifier.emitted.emit()
+

@@ -11,7 +11,7 @@ const ROW_GAP := 0.31   # between plants in a plot's rows and columns: three row
 const SPOTS := [Vector2(-ROW_GAP, -ROW_GAP), Vector2(0, -ROW_GAP), Vector2(ROW_GAP, -ROW_GAP),
 	Vector2(-ROW_GAP, 0), Vector2(0, 0), Vector2(ROW_GAP, 0),
 	Vector2(-ROW_GAP, ROW_GAP), Vector2(0, ROW_GAP), Vector2(ROW_GAP, ROW_GAP)]
-const GROW_REFRESH := 3.0   # seconds between looks at whether growth has moved a plant on
+const GROW_CHECK := 1.0     # seconds between checks of the clock against the next plot due to change look
 const SPROUT_FROM := 0.2    # of the growing time: the seeds have sprouted
 const YOUNG_FROM := 0.45    # and the sprouts are young plants
 const SIZE_FROM := 0.55     # the size a plant starts a growing stage at, of its full size
@@ -23,6 +23,7 @@ const PLANT_SCALE := 3.1    # plants are modelled at about a fifth of a tile; on
 const PLANT_FLOATS := 20    # a plant in the MultiMesh buffer: transform (12), colour (4), data (4)
 
 var wind := 0.6: set = _set_wind
+var _due := -1   # the soonest time (Game.now) any plot's plants change look on their own; -1: none will
 
 var _layers := {}   # "shape|stage|colour" -> MultiMeshInstance3D
 var _material: ShaderMaterial
@@ -41,12 +42,34 @@ func _ready() -> void:
 	_material.set_shader_parameter("rich_size", FERTILIZED_SIZE)
 	_base = floorf(_now())
 	var timer := Timer.new()
-	timer.wait_time = GROW_REFRESH
+	timer.wait_time = GROW_CHECK
 	timer.autostart = true
-	timer.timeout.connect(rebuild)
+	timer.timeout.connect(_on_clock)
 	add_child(timer)
 	Quality.notifier.emitted.connect(_apply_shadows)
 	rebuild()
+
+
+## Each GROW_CHECK: nothing but a comparison until the soonest plot is due to change look (a stage, ripeness,
+## withering); then the field is looked at again (only plots whose look moved are laid out) and the next due
+## time worked out. A plot that changes in between is updated by Farm3D and moves the due time itself.
+func _on_clock() -> void:
+	if _due >= 0 and Game.now() >= _due:
+		update()
+
+
+## When plot `i`'s plants next change look on their own, or -1: a growing crop's next stage (sprout, young,
+## ripe), a ripe one's withering.
+static func next_change(i: int) -> int:
+	var at := Game.field.next_phase_at(i)
+	if Game.field.phase(i) == GameState.Phase.GROWING:
+		var plot: Dictionary = Game.plots[i]
+		var grow := float(Game.crops[plot["crop"]]["grow_seconds"])
+		for share: float in [SPROUT_FROM, YOUNG_FROM]:
+			var t := int(plot["planted_at"]) + ceili(share * grow)
+			if t > Game.now():
+				return t
+	return at
 
 
 ## Crops cast shadows only on the high level (data/quality.json `crop_shadows`): hundreds of small plants
@@ -147,10 +170,12 @@ static func stage_of(i: int) -> Array:
 ## Brings the plants of plots `indices` up to date (all of them when empty): a plot whose look (form, stage,
 ## colour, growth timing, richness) is unchanged is skipped, and only the groups a plot left or joined are laid
 ## out again, from per-plot pieces kept ready. So plowing, planting or harvesting one plot touches one or two
-## groups, not the whole field, and the timer's look at growth rebuilds only plants that moved on a stage.
+## groups, not the whole field, and the clock looks again only when the soonest plot is due (`_on_clock`).
 func update(indices: Array = []) -> void:
-	if indices.is_empty():
+	var whole := indices.is_empty()
+	if whole:
 		indices = _all_plots()
+		_due = -1   # (worked out again below from every plot)
 	if _size != Game.farm_size:
 		# A smaller farm (after a reset or load): what was drawn past its new edge goes too.
 		_size = Game.farm_size
@@ -176,6 +201,15 @@ func update(indices: Array = []) -> void:
 			dirty[now[0]] = true
 	for key: String in dirty:
 		_lay_out(key)
+	for i: int in indices:
+		var t := next_change(i) if Game.on_farm(i) else -1
+		if t >= 0 and (_due < 0 or t < _due):
+			_due = t
+
+
+## The soonest time (Game.now) a plot's plants change look on their own, or -1 (for tests).
+func due() -> int:
+	return _due
 
 
 ## Every plot of the farm, by index.

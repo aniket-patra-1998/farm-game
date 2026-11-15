@@ -1,35 +1,39 @@
 class_name AutoQuality
 extends Node
-## The first launch picks the graphics level for this device (data/quality.json `auto`): once the farm has
-## settled (`warmup` seconds) it times `frames` frames and keeps one level down when the median frame's work is
-## more than `down_ms`, or one up when it is under `up_ms`. Phones only ever step down unless `up_on_mobile`
-## (a first farm is the lightest it will ever be), and so does a device whose renderer can't time itself (the
-## time between frames, held to the screen's refresh, can only tell a phone that is too slow). A frame over
-## `max_frame_ms` is a hitch or a resume and isn't counted; leaving the app starts the count again. Measured
-## once, used from the next launch (`Quality.keep_measured`), so nothing changes under the player's thumb; a
-## level the player picks always wins, and then nothing is measured at all. No screen (tests, CI): nothing.
+## Keeps the game smooth on the device it runs on (data/quality.json `auto`), all session, while the player hasn't
+## picked a level. It times each frame's work (what the game and the renderer did, not the time between frames,
+## which the screen's refresh and any cap hold to a floor) in windows of `frames` frames. When a window's median
+## is slower than the rung it is on holds (`hold_ms` uncapped, about 55 fps; `down_ms` when capped at 30), it
+## steps one rung down the `ladder` at once (high, mid, mid capped at 30, low) and keeps it (`Quality.keep_measured`),
+## then waits `warmup` again. So a farm that grows from 12 by 12 to 30 by 30 is followed, and a phone that can't
+## hold 60 runs an even 30 rather than wobbling between 30 and 40. Only the first window on a never-measured
+## computer may step up a level (under `up_ms`; `up_on_mobile` for phones). Frames over `max_frame_ms` (a hitch,
+## a resume) aren't counted, and leaving the app starts the window again. Where the renderer can't time itself, the
+## time between frames stands in (it can still tell a device that is too slow, never one with time to spare).
+## The player's choice always wins: nothing is watched then. No screen (tests, CI): nothing runs.
 
 var mobile := OS.has_feature("mobile")
 var _rules := {}
 var _waited := 0.0
 var _costs := PackedFloat32Array()
-var _timed := true        # every frame so far was timed by the renderer (not just the time between frames)
+var _timed := true          # every frame this window was timed by the renderer
+var _first := true          # the first window on a device never measured before (it alone may step up)
 var _viewport := RID()
 
 
-## Starts the measurement under `parent` when it should run (`should_measure`) and there is a screen.
+## Starts watching under `parent` when it should (`should_watch`) and there is a screen.
 static func start_in(parent: Node) -> AutoQuality:
-	if DisplayServer.get_name() == "headless" or not should_measure():
+	if DisplayServer.get_name() == "headless" or not should_watch():
 		return null
 	var auto := AutoQuality.new()
 	parent.add_child(auto)
 	return auto
 
 
-## Whether this device still needs measuring: the player hasn't chosen, it wasn't measured before, and the rules
-## are there (missing rules are a mistake, said once, and measure nothing rather than guess).
-static func should_measure() -> bool:
-	if Quality.chosen_by_player() or Quality.measured():
+## Whether this device is watched: the player hasn't chosen, and the rules are there (missing rules are a
+## mistake, said once, and watch nothing rather than guess).
+static func should_watch() -> bool:
+	if Quality.chosen_by_player():
 		return false
 	if Quality.auto_rules().is_empty():
 		push_error("data/quality.json: the `auto` rules are missing or incomplete")
@@ -39,11 +43,13 @@ static func should_measure() -> bool:
 
 func _init() -> void:
 	_rules = Quality.auto_rules()
+	_first = not Quality.measured()
 
 
 func _ready() -> void:
 	_viewport = get_viewport().get_viewport_rid()
 	RenderingServer.viewport_set_measure_render_time(_viewport, true)
+	Quality.notifier.emitted.connect(_on_level)
 
 
 func _notification(what: int) -> void:
@@ -56,41 +62,75 @@ func _process(delta: float) -> void:
 	# (The render and process times read here are the last frame's.)
 	var cpu := RenderingServer.viewport_get_measured_render_time_cpu(_viewport) \
 		+ Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
-	var verdict := add_sample(delta, maxf(cpu, gpu), gpu > 0.0)
-	if verdict != "":
-		Quality.keep_measured(verdict)
+	var rung := add_sample(delta, maxf(cpu, gpu), gpu > 0.0)
+	if not rung.is_empty():
+		Quality.keep_measured(str(rung[0]), int(rung[1]))
+
+
+## The player picked a level: nothing to watch any more.
+func _on_level() -> void:
+	if Quality.chosen_by_player():
 		RenderingServer.viewport_set_measure_render_time(_viewport, false)
 		queue_free()
 
 
-## Counts one frame: `delta` since the last (seconds), `cost_ms` its work, `timed` whether the renderer timed it
-## (if not, the time between frames stands in). Returns the level to keep once enough frames are in, else "".
-func add_sample(delta: float, cost_ms: float, timed: bool) -> String:
+## Counts one frame: `delta` since the last (seconds), `cost_ms` its work, `timed` whether the renderer timed it.
+## Returns the rung to move to ([level, cap]) when a window ends slow (or, the first time, fast), else [].
+func add_sample(delta: float, cost_ms: float, timed: bool) -> Array:
 	if delta * 1000.0 > float(_rules["max_frame_ms"]):
-		return ""   # a hitch or a resume: neither counted nor waited through
+		return []   # a hitch or a resume: neither counted nor waited through
 	_waited += delta
 	if _waited < float(_rules["warmup"]):
-		return ""
+		return []
 	_timed = _timed and timed
 	_costs.append(cost_ms if timed else delta * 1000.0)
 	if _costs.size() < int(_rules["frames"]):
-		return ""
-	return verdict(Quality.level(), median(_costs), _timed and (not mobile or bool(_rules["up_on_mobile"])))
+		return []
+	var now := rung_now()
+	var next := verdict(now, median(_costs), _first and _timed and (not mobile or bool(_rules["up_on_mobile"])))
+	_first = false
+	restart()
+	return next if next != now else []
 
 
-## Starts counting again from the warmup (the app went to the background: what comes back is not a fair frame).
+## Starts the window again from the warmup (after a step, or the app coming back: not a fair frame yet).
 func restart() -> void:
 	_waited = 0.0
 	_costs.clear()
+	_timed = true
 
 
-## The level to keep after a median frame of `cost_ms` on level `now`; a step up only when `may_rise`.
-func verdict(now: String, cost_ms: float, may_rise: bool) -> String:
-	if cost_ms > float(_rules["down_ms"]):
-		return Quality.step(now, -1)
+## The rung in use: [level, the cap AutoQuality set (0 none)].
+func rung_now() -> Array:
+	return [Quality.level(), Quality.measured_cap()]
+
+
+## The rung to be on after a window whose median frame took `cost_ms` on rung `now`: one down the ladder when
+## slower than `now` holds, one level up when `may_rise` and under `up_ms`, else `now`.
+func verdict(now: Array, cost_ms: float, may_rise: bool) -> Array:
+	var ladder: Array = _rules["ladder"]
+	var at := _index(ladder, now)
+	var slow := float(_rules["down_ms"]) if int(now[1]) > 0 else float(_rules["hold_ms"])
+	if cost_ms > slow:
+		var r: Array = ladder[mini(at + 1, ladder.size() - 1)]
+		return [str(r[0]), int(r[1])]   # (the data's numbers come as floats)
 	if may_rise and cost_ms < float(_rules["up_ms"]):
-		return Quality.step(now, 1)
-	return now
+		var up := Quality.step(str(now[0]), 1)
+		return [up, 0] if Quality.offered().has(up) else [str(now[0]), int(now[1])]
+	return [str(now[0]), int(now[1])]
+
+
+## Where rung `now` stands on the ladder (a level not on it: the first rung of that level, else the top).
+static func _index(ladder: Array, now: Array) -> int:
+	var first_of_level := -1
+	for k in ladder.size():
+		var r: Array = ladder[k]
+		if str(r[0]) == str(now[0]):
+			if int(r[1]) == int(now[1]):
+				return k
+			if first_of_level < 0:
+				first_of_level = k
+	return maxi(first_of_level, 0)
 
 
 ## The middle value of `values` (the upper of the two middle ones for an even count), so one slow frame
