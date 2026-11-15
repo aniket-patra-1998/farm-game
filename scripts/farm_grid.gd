@@ -3,7 +3,7 @@ extends Node2D
 ## Draws the isometric farm and turns taps and drags into farm actions.
 ## Rules live in the Game autoload; this script only decides what a tap means.
 
-signal info(text: String)
+signal info(text: String)   ## a word about what was just tapped: shown in a bubble where the finger was
 signal object_tapped(uid: int)        # a building was tapped while not ready
 ## Something tapped tells about itself in a small bubble above it (FarmVille's way, not a panel): `at` is where
 ## (this grid's space), `uid` the thing tapped (-1 for a plot), so its bubble can offer its panel.
@@ -75,6 +75,7 @@ var fx: FxLayer          # rewards flying to the top bar (set by main)
 
 
 
+var last_tap_at := Vector2.ZERO   # where the finger last came down (this grid's space): where `info` is shown
 var _sell_pending := -1  # uid tapped once with the Sell tool; a second tap sells it
 var _sell_pending_until := 0
 
@@ -188,7 +189,7 @@ func set_tool(tool_name: String, crop_id: String) -> void:
 			hint += (
 				tr("PLANTING") % Game.crops[last_crop]["name"].to_lower()
 			) if last_crop != "" else tr("PICK_A_SEED_FIRST_TO_PLANT")
-		info.emit(hint)
+		Game.message.emit(hint)   # (from choosing a vehicle, not a tap on the farm: said at the top)
 
 
 
@@ -548,6 +549,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_press_msec = Time.get_ticks_msec()
 			_hold_spent = false
 			_press_pos = touch.position
+			last_tap_at = to_local(get_canvas_transform().affine_inverse() * touch.position)
 			_press_on_farm = _on_farm_area(touch.position)
 			# The plot under the finger lights the moment it lands, so a tap feels instant (a farming tool on an
 			# open plot: a press on a building or tree picks that, so nothing under it lights).

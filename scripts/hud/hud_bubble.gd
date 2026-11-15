@@ -8,6 +8,7 @@ extends PanelContainer
 const SHOW_FOR := 3.0         # seconds a bubble stays..
 const SHOW_FOR_ACTION := 5.0  # ..and with a button to press
 const GAP := 6.0              # px between the bubble's point and the thing
+const WRAP_AFTER := 26        # characters past which a bubble's words wrap (at ui_theme's `bubble_width`)
 
 var hud: FarmHud
 var to_screen: Callable       # grid space -> screen, from the farm (FarmMain)
@@ -49,6 +50,10 @@ func show_at(at: Vector2, title: String, line: String, uid: int) -> void:
 	_uid = uid
 	_title.text = title
 	_line.text = line
+	# A long word (a reason something can't be done) wraps at a set width; a name stays on one line.
+	var long := title.length() > WRAP_AFTER
+	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if long else TextServer.AUTOWRAP_OFF
+	_title.custom_minimum_size.x = UiTheme.size("bubble_width") if long else 0.0
 	_line.visible = line != ""
 	_open.visible = uid >= 0 and has_panel(Game.object_by_uid(uid))
 	_left = SHOW_FOR_ACTION if _open.visible else SHOW_FOR

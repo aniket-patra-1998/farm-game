@@ -101,7 +101,10 @@ func _ready() -> void:
 	grid.object_tapped.connect(hud.show_building)
 	grid.tapped_info.connect(hud.bubble.show_at)
 	hud.bubble.to_screen = func(p: Vector2) -> Vector2: return grid.get_global_transform_with_canvas() * p
-	grid.info.connect(hud.show_message)
+	# Every word about a tap shows where the finger was, in the tapped thing's bubble (FarmVille's way), not a
+	# message at the top; the game's own news (a level, a find) stays a message.
+	grid.info.connect(func(text: String) -> void:
+		hud.bubble.show_at(grid.last_tap_at + Vector2(0, -FarmGrid.BUBBLE_LIFT * 0.6), text, "", -1))
 	Game.message.connect(hud.show_message)
 
 	get_viewport().size_changed.connect(_on_resized)
