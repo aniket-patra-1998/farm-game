@@ -34,6 +34,7 @@ const CONTACT_LIFT := 0.012                     # just above the grass, so it ne
 ## The usual mobile budget is 10-20 fully animated characters; the minds still think every frame.
 const FULL_RATE := 16
 const MAX_STRIDE := 4
+const FILE_WALK_FRAMES := 12     # walk frames in a file-made animal (tools/animal_art export.WALK_FRAMES)
 
 
 ## Animals are posed at least this many frames apart (the graphics quality's `pose_every`, Quality).
@@ -79,6 +80,10 @@ var _bones: Array[Node3D] = []   # the part nodes the pose code moves, by bone i
 var _slot := 0                   # its turn in the round-robin when posed less than every frame
 
 var _pending := 0.0              # time not yet posed (while waiting its turn)
+var _id := ""                    # its catalog id (for its file, AssetRegistry)
+var _size := 1.0                 # how big it is drawn (smaller in a small yard)
+var _file_mesh: MeshInstance3D   # made as a file: the mesh whose blend shapes pose it (null when built)
+var _file_shapes := {}           # blend shape name -> index on _file_mesh
 
 
 
@@ -125,6 +130,8 @@ static func _from_template(it: Dictionary, size: float) -> Animal3D:
 	if not _templates.has(key):
 		var t := Animal3D.new()
 		t.rig = AnimalRig.of(it) if is_equal_approx(size, 1.0) else AnimalRig.scaled(it, size)  # smaller in a small yard
+		t._id = str(it.get("id", ""))
+		t._size = size
 		t._build()
 		_templates[key] = t
 	var template: Animal3D = _templates[key]
@@ -154,6 +161,10 @@ func _take_parts_of(t: Animal3D) -> void:
 	_contact = _mine(t, t._contact)
 	_skeleton = _mine(t, t._skeleton)
 	_casting = _mine(t, t._casting)
+	_file_mesh = _mine(t, t._file_mesh)
+	_file_shapes = t._file_shapes
+	_id = t._id
+	_size = t._size
 	for list: Array in [[t._wings, _wings], [t._ears, _ears], [t._eyes, _eyes], [t._bones, _bones]]:
 		(list[1] as Array).clear()
 		for n: Node in list[0]:
@@ -188,9 +199,81 @@ func _mine(t: Animal3D, n: Node) -> Node:
 
 
 func _build() -> void:
+	if AssetRegistry.has_model(_id) and _build_file():
+		return   # (made as a file: docs/ASSETS.md; else the code-built animal below)
 	ModelKit.round_balls = true
 	_build_parts()
 	ModelKit.round_balls = false
+
+
+## An animal made as a file (tools/animal_art's export): its mesh at rest, its moves as blend shapes
+## (FILE_MOVES), posed each frame from the same pose values as a built one (`_pose_file`). False when the file
+## has no mesh to pose (the built animal is drawn instead).
+func _build_file() -> bool:
+	var model := AssetRegistry.instance(_id)
+	var mi := _first_mesh(model) if model != null else null
+	if mi == null or mi.mesh == null:
+		if model != null:
+			model.free()
+		return false
+	_body = Node3D.new()
+	add_child(_body)
+	model.scale = Vector3.ONE * _size
+	_body.add_child(model)
+	_file_mesh = mi
+	for k in mi.mesh.get_blend_shape_count():
+		_file_shapes[String(mi.mesh.get_blend_shape_name(k))] = k
+	var box := mi.get_aabb()
+	_r = box.size * 0.5 * _size
+	_leg = box.size.y * _size * 0.3
+	_r.y = box.size.y * _size * 0.35
+	_casting = mi
+	_apply_shadow()
+	_build_contact()
+	return true
+
+
+static func _first_mesh(n: Node) -> MeshInstance3D:
+	if n is MeshInstance3D:
+		return n
+	for c in n.get_children():
+		var m := _first_mesh(c)
+		if m != null:
+			return m
+	return null
+
+
+## Poses a file-made animal: its walk frames blended by gait and stride, head down, looking about, blinking, tail
+## and breath, each a blend shape weighted by the pose value; the body's springs (lean, squash, hop) move the
+## whole model, as they move a built one.
+func _pose_file(p: AnimalPose) -> void:
+	var at := fposmod(p.gait, 1.0) * FILE_WALK_FRAMES
+	var k0 := int(at) % FILE_WALK_FRAMES
+	var k1 := (k0 + 1) % FILE_WALK_FRAMES
+	var f := at - floorf(at)
+	for k in FILE_WALK_FRAMES:
+		var w := 0.0
+		if k == k0:
+			w += (1.0 - f) * p.stride
+		if k == k1:
+			w += f * p.stride
+		_shape("walk_%02d" % k, w)
+	_shape("head", smoothstep(0.0, 1.0, p.head))
+	var look := clampf(p.look + motion.head_yaw * 0.8, -1.0, 1.0)
+	_shape("look_left", maxf(look, 0.0))
+	_shape("look_right", maxf(-look, 0.0))
+	_shape("blink", p.blink)
+	_shape("tail", clampf(p.tail + motion.tail, -1.0, 1.0))
+	_shape("breath", p.breath * 0.5)
+	_body.position = Vector3(0, p.hop * _leg * 0.8, 0)
+	_body.rotation = Vector3(motion.roll, 0, motion.pitch)
+	_body.scale = Vector3(1.0 + motion.squash * 0.6, 1.0 - motion.squash, 1.0 + motion.squash * 0.6)
+
+
+func _shape(move: String, weight: float) -> void:
+	var k: int = _file_shapes.get(move, -1)
+	if k >= 0:
+		_file_mesh.set_blend_shape_value(k, weight)
 
 
 
@@ -800,6 +883,10 @@ func update(delta: float) -> void:
 	var speed := Vector2(moved.x, moved.z).length() / maxf(delta, 0.0001) / _walk_speed if delta > 0.0 else 0.0
 	var keen := clampf(behaviour.noticed / 0.4, 0.0, 1.0) if behaviour != null else 0.0
 	motion.step(delta, speed, heading, p.hop, p.stride, _yaw_to_camera() if keen > 0.0 else 0.0, keen)
+	if _file_mesh != null:
+		_pose_file(p)
+		_settle_contact(p)
+		return
 	for e in _eyes:
 		e.scale = Vector3(1.0, maxf(1.0 - p.blink, 0.1), 1.0)
 	match rig.type:

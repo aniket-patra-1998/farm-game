@@ -1,7 +1,7 @@
 # Animal art builder
 
-Builds the farm's animals from code, offline. Nothing here ships in the game or runs on the phone; the game is not
-wired to it yet (see "Not done"). Godot ignores this folder (`.gdignore`).
+Builds the farm's animals from code, offline. Nothing here ships in the game or runs on the phone; what it exports
+("Into the game") does. Godot ignores this folder (`.gdignore`).
 
     pip install -r requirements.txt
     python3 -m animal_art list
@@ -38,10 +38,18 @@ wired to it yet (see "Not done"). Godot ignores this folder (`.gdignore`).
   head's shapes are marked `head=True`. Mark a part only when the animation must know it (`part="stub"`: a leg that
   slides under a shell). Then register it in `registry.py`.
 
+## Into the game
+
+    python3 -m animal_art export ../../art/models/animals "chicken"
+
+writes `art/models/animals/chicken.glb`: the mesh at rest with its colours and painted light, and its moves as
+blend shapes (`export.py`: the walk cycle in 12 frames, head down, look left and right, blink, tail, breath),
+each made by this package's own motion. Listed in `data/assets.json` (`"budget": "animal"`), the game draws it
+instead of the code-built animal and sets the blend shapes from the pose it already works out
+(`Animal3D._pose_file`). Moves the file doesn't have are simply not shown.
+
 ## Not done
 
-- **Export to the game**: no model file is written yet, and `animal_3d.gd` is not changed. Planned: one file per
-  animal (mesh, baked colours, bones and weights) plus its measured joints, loaded behind a switch.
 - **Ear flick, wing flap, turkey tail display**: the models have no separate ears or wings.
 - **Weight**: phone-weight meshes average about 4,900 triangles. There is no mesh simplifier here; thinning is by
   grid size only.

@@ -2,7 +2,9 @@
   list                          every animal the game has, by family, and the parked extras
   sheet  OUT.png  "a,b|c,d"     the finished look, full detail: rows of animals, game angle on top, front quarter below
   poses  OUT.png  "a,b,c"       phone weight, two of the game's poses each: mid-stride and head down
-  clip   OUT.gif  "a,b,c,d"     phone weight, up to four animals moving"""
+  clip   OUT.gif  "a,b,c,d"     phone weight, up to four animals moving
+  export DIR      "a,b,c"       the game's files: DIR/<id>.glb each (mesh, colours, moves as blend shapes);
+                                list each in data/assets.json ("budget": "animal") to use it in the game"""
 import sys
 
 from .registry import GAME, MADE, PARKED
@@ -37,6 +39,11 @@ def main(argv=None):
     elif cmd == "clip":
         from .preview import clip
         clip(out, names)
+    elif cmd == "export":
+        import os
+        from .export import export
+        for n in names:
+            print(export(n, os.path.join(out, n.replace(" ", "_") + ".glb")))
     else:
         print(__doc__)
         return 2
