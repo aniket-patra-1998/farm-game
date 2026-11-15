@@ -107,6 +107,10 @@ func _ready() -> void:
 	_fit_camera()
 	Quality.apply_frame_cap()    # (and again whenever the level is chosen: Quality.choose)
 	AutoQuality.start_in(self)   # keeps the device smooth: steps down when frames stay slow (until the player chooses)
+	# The farm is built; its first frames, while the renderer prepares every material, stay under a cover (only
+	# when the game itself is running: the screenshot and probe tools load this scene inside their own).
+	if get_tree().current_scene == self:
+		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"))
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that
