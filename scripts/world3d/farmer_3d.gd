@@ -3,9 +3,10 @@ extends Node3D
 ## The player's farmer on the farm, standing where PlayerSystem has them, walking when they walk and working
 ## when they work. FarmVille's proportions: a head nearly half the height on a slim body, in a T-shirt and bib
 ## overalls. Drawn from a file made the way the animals are (tools/animal_art `farmer`: one smooth skin with a
-## drawn face, one file per hair style): the file carries no colours of its own, each point says whose colour
-## it wears (REGIONS) and the mesh is tinted once for the player's look; its limbs move by blend shapes. Without
-## the file the farmer is built in code from simple parts, swung from their joints (the stand-in).
+## drawn face, a file for a boy and a girl in each hair style): the file carries no colours of its own, each
+## point says whose colour it wears (REGIONS) and the mesh is tinted once for the player's look; its limbs move
+## by blend shapes. Without the file the farmer is built in code from simple parts, swung from their joints
+## (the stand-in).
 
 const HIP := 0.19                 # leg length (tiles); everything else stands on it
 const TORSO := 0.17
@@ -16,7 +17,7 @@ const TURN_RATE := 10.0           # radians a second
 const STRIDE_RATE := 11.0         # leg swings: radians of the cycle a second
 const STRIDE := 0.7               # how far a leg swings (radians)
 const WORK_RATE := 14.0
-const FILE := "farmer_"            # the farmer's files in data/assets.json: FILE + the look's hair style
+const FILE := "farmer_"            # the farmer's files in data/assets.json: FILE + the look's body + "_" + hair style
 const REGIONS := ["", "skin", "hair", "shirt", "overalls", "shoes"]   # whose colour a point wears (its first UV)
 const REGION_STEPS := 8.0          # a region's number is its UV x times this, rounded down
 const ARM_BACK := 0.5              # the angles the file's arm moves stand for (tools/animal_art farmer.py)
@@ -114,7 +115,7 @@ func rebuild() -> void:
 
 ## The farmer from its file, tinted for `look`; false when there is no file (the stand-in is built).
 func _build_file(look: Dictionary) -> bool:
-	var model := AssetRegistry.instance(FILE + str(look["hair_style"]))
+	var model := AssetRegistry.instance("%s%s_%s" % [FILE, look["body"], look["hair_style"]])
 	var mi: MeshInstance3D = null
 	if model != null:
 		mi = model as MeshInstance3D if model is MeshInstance3D else null
@@ -130,7 +131,6 @@ func _build_file(look: Dictionary) -> bool:
 	mi.mesh = tinted(mi.mesh as ArrayMesh, tints)
 	_body = Node3D.new()
 	add_child(_body)
-	model.scale.z = 0.88 if str(look["body"]) == "b" else 1.0
 	_body.add_child(model)
 	_file_mesh = mi
 	for k in mi.mesh.get_blend_shape_count():

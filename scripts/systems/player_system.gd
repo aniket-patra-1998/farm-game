@@ -25,6 +25,7 @@ const JOB_KINDS := ["plow", "plant", "harvest", "fertilize", "collect", "nurture
 const OBJECT_JOBS := ["collect", "nurture", "feed"]   # jobs done beside an object, not on a plot
 const STEPS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 	Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]   # a step to each of the eight tiles round
+const KIND_HAIR := {"a": "short", "b": "ponytail"}   # the hair a boy or a girl starts with (look `body`: a, b)
 const DEFAULT_LOOK := {"body": "a", "skin": "#f1c9a5", "hair": "#5a3a1e", "hair_style": "short",
 	"shirt": "#d9483b", "overalls": "#3f6fb5", "hat": "none", "shoes": "#5b3b22"}
 
@@ -64,6 +65,16 @@ func reset() -> void:
 	facing = Vector2(1, 1)
 	clear_queue()
 	_grid_stale = true
+
+
+## Makes the farmer a boy ("a") or a girl ("b"), with that kind's own hair to start with.
+func set_kind(kind: String) -> void:
+	if not KIND_HAIR.has(kind) or str(look["body"]) == kind:
+		return
+	look["body"] = kind
+	look["hair_style"] = KIND_HAIR[kind]
+	look_changed.emit()
+	game.queue_save()
 
 
 func save_to(data: Dictionary) -> void:

@@ -7,6 +7,7 @@ const QUALITY_WORDS := {"low": "GRAPHICS_LOW", "mid": "GRAPHICS_MID", "high": "G
 	"ultra": "GRAPHICS_ULTRA"}
 const NAME_MAX := 24     # letters in a farm's name (the plaque fits them)
 
+const KIND_WORDS := {"a": "FARMER_BOY", "b": "FARMER_GIRL"}   # the look's body -> its words
 var hud: FarmHud
 
 
@@ -110,6 +111,19 @@ func name_card() -> PanelContainer:
 		Game.queue_save()
 		hud.top.show_name())
 	inner.add_child(field)
+	# Who the farmer is: a boy or a girl (the one chosen is marked; the farmer on the farm changes at once).
+	inner.add_child(BookPanel.text(tr("YOUR_FARMER"), 22))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	for kind: String in KIND_WORDS:
+		var b := hud._panel_button(tr(KIND_WORDS[kind]))
+		b.toggle_mode = true
+		b.button_pressed = str(Game.player.look["body"]) == kind
+		b.pressed.connect(func() -> void:
+			Game.player.set_kind(kind)
+			hud._book.refresh())
+		row.add_child(b)
+	inner.add_child(row)
 	return BookPanel.card_frame(inner)
 
 

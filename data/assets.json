@@ -691,16 +691,28 @@
       "model": "res://art/models/crops/zucchini.scn",
       "budget": "crop"
     },
-    "farmer_short": {
-      "model": "res://art/models/farmer/farmer_short.glb",
+    "farmer_a_short": {
+      "model": "res://art/models/farmer/farmer_a_short.glb",
       "budget": "farmer"
     },
-    "farmer_long": {
-      "model": "res://art/models/farmer/farmer_long.glb",
+    "farmer_b_short": {
+      "model": "res://art/models/farmer/farmer_b_short.glb",
       "budget": "farmer"
     },
-    "farmer_ponytail": {
-      "model": "res://art/models/farmer/farmer_ponytail.glb",
+    "farmer_a_long": {
+      "model": "res://art/models/farmer/farmer_a_long.glb",
+      "budget": "farmer"
+    },
+    "farmer_b_long": {
+      "model": "res://art/models/farmer/farmer_b_long.glb",
+      "budget": "farmer"
+    },
+    "farmer_a_ponytail": {
+      "model": "res://art/models/farmer/farmer_a_ponytail.glb",
+      "budget": "farmer"
+    },
+    "farmer_b_ponytail": {
+      "model": "res://art/models/farmer/farmer_b_ponytail.glb",
       "budget": "farmer"
     }
   }

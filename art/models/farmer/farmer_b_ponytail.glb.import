@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://dqiaisuclhs6i"
-path="res://.godot/imported/farmer_long.glb-14ddd01daa177c25d4244772347f482b.scn"
+uid="uid://bww6t2lsh3vsy"
+path="res://.godot/imported/farmer_b_ponytail.glb-fdbf9784866f85eb38367422892cb32d.scn"
 
 [deps]
 
-source_file="res://art/models/farmer/farmer_long.glb"
-dest_files=["res://.godot/imported/farmer_long.glb-14ddd01daa177c25d4244772347f482b.scn"]
+source_file="res://art/models/farmer/farmer_b_ponytail.glb"
+dest_files=["res://.godot/imported/farmer_b_ponytail.glb-fdbf9784866f85eb38367422892cb32d.scn"]
 
 [params]
 
