@@ -56,6 +56,23 @@ def export(name, path):
                 key[k] = len(src); src.append(int(v)); vcol.append(c * bake[v])
             idx[ti, j] = key[k]
     src = np.array(src)
+    # every point needs a normal: a face drawing's points (eyes, blush) have none of their own, so they take the
+    # nearest skin point's; then each triangle is wound to face the way its points' normals do, so a drawing on
+    # the far side (the other eye) faces out too and is not culled away
+    from scipy.spatial import cKDTree
+    n0 = a["nsoft"]
+    bare = np.linalg.norm(N0, axis=1) < 1e-6
+    near = np.arange(len(V0))
+    if bare.any():
+        near[bare] = cKDTree(V0[:n0]).query(V0[bare])[1]
+    fix = lambda N: N[near] if bare.any() else N
+    N0 = fix(N0)
+    tri = idx.reshape(-1, 3)
+    P = V0[src]; Nn = N0[src]
+    face = np.cross(P[tri[:, 1]] - P[tri[:, 0]], P[tri[:, 2]] - P[tri[:, 0]])
+    flip = (face * (Nn[tri[:, 0]] + Nn[tri[:, 1]] + Nn[tri[:, 2]])).sum(1) < 0
+    tri[flip] = tri[flip][:, [0, 2, 1]]
+    idx = tri
     # into the game's frame: forward +z here is +X there; standing on y = 0 over the body's middle; sized
     lo, hi = V0.min(0), V0.max(0)
     centre = np.array([(lo[0] + hi[0]) / 2, lo[1], (lo[2] + hi[2]) / 2])
@@ -66,6 +83,7 @@ def export(name, path):
     targets = []
     for mname, p in moves():
         V, N = deform(a, W, pose(rig, p), p, rig)
+        N = fix(N)
         targets.append((mname, place(V[src]) - pos, turn(N[src]).astype(np.float32) - nor))
     colours = np.c_[np.clip(np.array(vcol, np.float32), 0, 1), np.ones(len(vcol), np.float32)]
     _write(path, name, pos, nor, colours, idx.reshape(-1), targets)
