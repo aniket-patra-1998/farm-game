@@ -27,6 +27,7 @@ func _ready() -> void:
 			f.store_string(ModelStore.stamp)
 			f.close()
 			print("PERF sounds baked=%d" % Sound.bake_all())
+			print("PERF every look made=%d" % Objects3D.make_every_look())
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame

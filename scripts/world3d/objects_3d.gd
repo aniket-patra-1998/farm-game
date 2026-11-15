@@ -336,6 +336,70 @@ func _at_work(o: Dictionary) -> bool:
 	return Game.crafting.crafts_done(o) < (o.get("slots", []) as Array).size()
 
 
+## A tree's look (one of Instancer.VARIANTS, `look`), shared: built once, or loaded when kept (ModelStore).
+static func tree_look(id: String, ready: bool, mask: int, look: int) -> Node3D:
+	var it := Game.item_data(id)
+	var fp := Game.footprint(id)
+	var grown := ScaleGuide.factor(id)
+	return Instancer.copy_of(Instancer.key_of(["tree", id, grown, ready, mask, look]), func() -> Node3D:
+		var tree := Node3D.new()
+		TreeModel.build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, ready, look, true, TreeModel.UNSET,
+			mask)
+		return ModelKit.bake(tree))
+
+
+## A decoration's look: its kind, one of a few variants by where it stands (`look`), and the mastered crop or
+## flower a sign or bunch shows (`shows`).
+static func decor_look(id: String, look: int, shows: String) -> Node3D:
+	var it := Game.item_data(id)
+	var fp := Game.footprint(id)
+	var seen := {"uid": look, "crop": shows}
+	return Instancer.copy_of(Instancer.key_of(["decor", id, look, shows, Game.mastery.colour_of(shows)]),
+		func() -> Node3D:
+			var built := DecorModel.build(it, fp, seen)
+			if not id.ends_with("_tree"):   # (a tree's crown overhangs by design)
+				built = SpaceFit.fit_model(built, fp)
+			return built)
+
+
+## A building's look at `level`, at work or not, broken or not.
+static func building_look(id: String, level: int, working: bool, broken: bool) -> Node3D:
+	var it := Game.item_data(id)
+	var fp := Game.footprint(id)
+	return Instancer.copy_of(Instancer.key_of(["building", id, level, working, broken]),
+		func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, working, broken)))
+
+
+## Every look a farm may show that is worth having ready before it is asked for (CI keeps them in the game,
+## ModelStore): every building at every level (at work and idle; the Barn broken too), every decoration's
+## variants, every tree's variants, ripe and not, standing alone. Returns how many. Each is built (or loaded)
+## once, through the same calls the farm makes, so the keys always match.
+static func make_every_look() -> int:
+	var made := 0
+	for id: String in Game.item_order:
+		var kind := Game.kind_of({"id": id})
+		var looks: Array[Node3D] = []
+		match kind:
+			"tree":
+				for look in Instancer.VARIANTS:
+					for ready: bool in [false, true]:
+						looks.append(tree_look(id, ready, 0, look))
+			"decor":
+				if Game.links.group_of(id) == "":
+					for look in Instancer.VARIANTS:
+						looks.append(decor_look(id, look, ""))
+			"building", "barn", "crafting":
+				for level in range(1, maxi(Game.max_level(id), 1) + 1):
+					for working: bool in [false, true]:
+						looks.append(building_look(id, level, working, false))
+				if kind == "barn":
+					looks.append(building_look(id, 1, false, true))
+		for n in looks:
+			n.free()
+		made += looks.size()
+	return made
+
+
 func _build(o: Dictionary) -> Node3D:
 	var it := Game.item_data(o["id"])
 	var fp := Game.footprint(o["id"])
@@ -354,11 +418,7 @@ func _build(o: Dictionary) -> Node3D:
 			var grown := ScaleGuide.factor(str(o["id"]))
 			var ready := Game.is_ready(o)
 			var mask := Crowding.mask(o)
-			node = Instancer.copy_of(Instancer.key_of(["tree", o["id"], grown, ready, mask, look]), func() -> Node3D:
-				var tree := Node3D.new()
-				TreeModel.build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, ready, look, true,
-					TreeModel.UNSET, mask)
-				return ModelKit.bake(tree))
+			node = tree_look(str(o["id"]), ready, mask, look)
 			var rng := RandomNumberGenerator.new()
 			rng.seed = int(o["uid"])
 			# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of its
@@ -376,14 +436,7 @@ func _build(o: Dictionary) -> Node3D:
 				# few variants by where it stands (for the ones drawn a little differently each time), and the
 				# mastered crop or flower a sign or bunch shows.
 				var look := Instancer.variant(int(o["row"]), int(o["col"]))
-				var shows := str(o.get("crop", o.get("flower", "")))
-				var seen := {"uid": look, "crop": shows}
-				node = Instancer.copy_of(Instancer.key_of(["decor", o["id"], look, shows,
-					Game.mastery.colour_of(shows)]), func() -> Node3D:
-						var built := DecorModel.build(it, fp, seen)
-						if not str(o["id"]).ends_with("_tree"):   # (a tree's crown overhangs by design)
-							built = SpaceFit.fit_model(built, fp)
-						return built)
+				node = decor_look(str(o["id"]), look, str(o.get("crop", o.get("flower", ""))))
 		"young":
 			node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
 		"bloom":
@@ -398,11 +451,7 @@ func _build(o: Dictionary) -> Node3D:
 			if Game.under_construction(o):
 				node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 			else:
-				var level := Game.level_of(o)
-				var working := _at_work(o)
-				var broken := bool(o.get("broken", false))
-				node = Instancer.copy_of(Instancer.key_of(["building", o["id"], level, working, broken]),
-					func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, working, broken)))
+				node = building_look(str(o["id"]), Game.level_of(o), _at_work(o), bool(o.get("broken", false)))
 				if BuildingFill.shows(o):
 					node.add_child(BuildingFill.create(o, node))
 	var dressing := Dressing.make(Game.kind_of(o), fp, int(o["uid"]))

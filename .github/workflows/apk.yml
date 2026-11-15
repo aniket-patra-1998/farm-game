@@ -102,7 +102,7 @@ jobs:
 
       - name: Make every item's picture ahead of time (ItemIcons, tools/bake_icons.tscn)
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri mesa-vulkan-drivers > /dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
           set +e
           timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
             --path . res://tools/bake_icons.tscn > icons.log 2>&1
@@ -117,23 +117,9 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build
-          # With a screen (lavapipe's Vulkan under xvfb) the shader baker compiles every shader for the phone ahead
-          # of time, so the first minutes of play don't stutter compiling them; if that fails, export without it.
-          set +e
-          timeout 1500 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --verbose --rendering-driver vulkan --path . \
-            --export-debug "Android (debug APK)" build/farm-game-debug.apk > export.log 2>&1
-          set -e
-          grep -iE "shader.?bak|error" export.log | head -20
-          if [ ! -s build/farm-game-debug.apk ]; then
-            echo "Exporting with the shader baker failed; exporting without it"
-            sed -i 's/^shader_baker\/enabled=true/shader_baker\/enabled=false/' export_presets.cfg
-            ./godot-bin/godot --headless --path . --export-debug "Android (debug APK)" build/farm-game-debug.apk 2>&1 \
-              | tee export.log
-          fi
+          ./godot-bin/godot --headless --path . --export-debug "Android (debug APK)" build/farm-game-debug.apk 2>&1 \
+            | tee export.log
           test -s build/farm-game-debug.apk || { echo "No APK was made"; exit 1; }
-          grep -iE "vulkan|opengl|llvmpipe|lavapipe|shader" export.log | head -10
-          echo "Shader files in the build: $(unzip -l build/farm-game-debug.apk | grep -ciE 'shader')"
-          unzip -l build/farm-game-debug.apk | grep -iE 'shader' | head -5
           ls -l build/farm-game-debug.apk
 
       - name: Upload the APK
