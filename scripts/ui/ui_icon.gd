@@ -20,12 +20,16 @@ const SHADE_TOP := 0.22    # a fill is lightened this much at its top..
 const SHADE_BOTTOM := 0.18 # ..and darkened this much at its bottom
 const GLOSS := 0.42        # the highlight's strength
 const ROUND := 20          # points on a circle
+const RENDER_INSET := 0.04 # a rendered picture sits this far in from the icon's edge (room for its outline)
+const RENDER_RECHECK := 0.3   # seconds before looking again for a rendered picture still being made
 
 @export var kind := "coin": set = _set_kind
 ## A muted icon (sound off, UI hidden) is drawn with a slash through it.
 @export var struck := false: set = _set_struck
 ## A ribbon's colour (Color(0, 0, 0, 0): the theme's gold).
 @export var tint := Color(0, 0, 0, 0): set = _set_tint
+## Drawn from its rendered 3D picture when it has one (UiModels); false keeps the drawn glyph (tools, tests).
+@export var rendered := true
 
 var _s := 1.0   # the icon's size this draw
 var _c := Vector2.ZERO
@@ -161,6 +165,8 @@ func _draw() -> void:
 		return
 	_c = size / 2.0
 	_r = _s / 2.0 * 0.86   # (room for the outline and the shadow)
+	if _draw_rendered():
+		return
 	var light := UiTheme.color("icon_light")
 	match kind:
 		"coin":
@@ -251,6 +257,32 @@ func _draw() -> void:
 	if struck:
 		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.16)
 		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.09, Color("#e0493a"))
+
+
+## Draws this icon's rendered picture (UiModels, made once by ItemIcons) when it has one and it is ready: its
+## shadow, a dark outline all round (the picture stamped in the outline's colour a little off each way), then
+## the picture. Until it is ready the drawn version shows and this looks again shortly. Returns whether it drew.
+func _draw_rendered() -> bool:
+	if not rendered or not UiModels.KINDS.has(kind) or (kind == "ribbon" and tint.a > 0.0):
+		return false
+	var id := ItemIcons.UI + kind
+	var tex := ItemIcons.of(id)
+	if not ItemIcons.is_made(id):
+		get_tree().create_timer(RENDER_RECHECK).timeout.connect(queue_redraw, CONNECT_ONE_SHOT)
+		return false
+	var rect := Rect2(_c - Vector2.ONE * _s / 2.0, Vector2.ONE * _s).grow(-_s * RENDER_INSET)
+	var w := maxf(1.0, _s * OUTLINE * 0.5)
+	draw_texture_rect(tex, Rect2(rect.position + Vector2(0, _s * SHADOW_DROP), rect.size), false,
+		UiTheme.color("icon_shadow"))
+	var ink := UiTheme.color("icon_outline")
+	for k in 8:
+		var a := TAU * k / 8.0
+		draw_texture_rect(tex, Rect2(rect.position + Vector2(cos(a), sin(a)) * w, rect.size), false, ink)
+	draw_texture_rect(tex, rect, false)
+	if struck:
+		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.16)
+		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.09, Color("#e0493a"))
+	return true
 
 
 ## The farm tools: a hoe, a seed bag, a basket of produce, a fertilizer sack, four-way arrows, a red barn, a price

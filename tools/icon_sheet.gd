@@ -11,6 +11,7 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.trim_prefix("--out=")
+	ItemIcons.start(self)   # (the rendered icons: UiModels)
 	var back := ColorRect.new()
 	back.color = UiTheme.color("card_face")
 	back.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -35,7 +36,7 @@ func _ready() -> void:
 	for name: String in Game.social.roster():
 		faces.add_child(PortraitIcon.of(Game.social.look_of(name), 96.0))
 	rows.add_child(faces)
-	for k in 4:
+	for k in 120:   # (the rendered icons are made a few a frame)
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var path := out if out.begins_with("/") else ProjectSettings.globalize_path(out)

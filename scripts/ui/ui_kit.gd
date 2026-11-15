@@ -6,6 +6,9 @@ extends RefCounted
 
 
 ## A wooden panel's style (the frame of the HUD's bars and of every panel).
+const LONG_PRESS := 0.45     # seconds held before a button's name shows (and the press is let go)
+const BUBBLE_SECONDS := 1.2   # how long a name bubble stays
+
 static func panel_box() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = UiTheme.color("wood")
@@ -119,7 +122,7 @@ static func xp_bar() -> UiXpBar:
 ## A tool or menu button: an icon over a short label, on a cream face; lit (the tool in hand) when pressed.
 ## `w` and `h` default to the theme's tool size.
 static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px := 0.0,
-		picture: UiIcon = null) -> Button:
+		picture: UiIcon = null, labelled := true) -> Button:
 	var bw := w if w > 0.0 else UiTheme.size("tool_size")
 	var bh := h if h > 0.0 else UiTheme.size("tool_size")
 	var b := Button.new()
@@ -141,7 +144,10 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	box.add_theme_constant_override("separation", 0)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(box)
-	var icon := picture if picture != null else UiIcon.make(kind, icon_px if icon_px > 0.0 else UiTheme.size("tool_icon"))
+	var px := icon_px if icon_px > 0.0 else UiTheme.size("tool_icon")
+	if not labelled:   # no words under it: the picture takes the room
+		px = minf(bw, bh) * UiTheme.size("icon_alone_share")
+	var icon := picture if picture != null else UiIcon.make(kind, px)
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(icon)
 	var label := Label.new()
@@ -150,10 +156,50 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_tool")))
 	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.visible = labelled
 	box.add_child(label)
 	b.set_meta("icon", icon)
 	b.set_meta("label", label)
+	long_press_name(b, words)
 	return b
+
+
+## Holding `button` a moment shows its name in a small bubble above it (an icon-only button's name, on a phone
+## where nothing hovers), and that hold doesn't press it.
+static func long_press_name(button: Button, words: String) -> void:
+	button.tooltip_text = words
+	var timer := Timer.new()
+	timer.one_shot = true
+	timer.wait_time = LONG_PRESS
+	button.add_child(timer)
+	button.button_down.connect(timer.start)
+	button.button_up.connect(timer.stop)
+	timer.timeout.connect(func() -> void:
+		# Off for a moment: that drops the press under way, so letting go doesn't press it; on again next frame.
+		button.disabled = true
+		button.set_deferred("disabled", false)
+		name_bubble(button, words))
+
+
+## A small name bubble over `control` that fades after a moment.
+static func name_bubble(control: Control, words: String) -> void:
+	var bubble := PanelContainer.new()
+	bubble.add_theme_stylebox_override("panel", panel_box())
+	var label := Label.new()
+	label.text = words
+	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_tool")))
+	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
+	bubble.add_child(label)
+	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bubble.top_level = true
+	control.add_child(bubble)
+	bubble.reset_size()
+	bubble.global_position = control.global_position + Vector2((control.size.x - bubble.size.x) / 2.0,
+		-bubble.size.y - UiTheme.size("hud_gap"))
+	var fade := bubble.create_tween()
+	fade.tween_interval(BUBBLE_SECONDS)
+	fade.tween_property(bubble, "modulate:a", 0.0, 0.25)
+	fade.finished.connect(bubble.queue_free)
 
 
 

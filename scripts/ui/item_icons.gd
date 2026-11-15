@@ -16,9 +16,11 @@ const MARGIN := 1.12          # room round the model inside the picture
 const SLOTS := 4              # pictures drawn in one frame at most
 const BUDGET_MS := 8          # building models for pictures stops after this much of a frame
 const CACHE := "user://icons"
+const UI := "ui:"             # an interface icon's picture is asked for as "ui:<kind>" (UiModels)
+const UI_CLOSE := 0.8   # interface icons are framed this much closer than items
 ## Bump when the models' look changes, so pictures kept on disk are made again (the item's data and the game's
 ## version are in the key too).
-const LOOK := 4
+const LOOK := 6
 ## The global shader values that change how the farm looks (weather, night). A picture made while any is set
 ## is shown this session but not kept, so a snowy or dark picture is never saved for good.
 const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark"]
@@ -61,6 +63,15 @@ static func side() -> int:
 			dense = Vector2(DisplayServer.window_get_size()).x / maxf(view.x, 1.0)
 		_side = clampi(int(SIDE * maxf(dense, 1.0) / 16.0) * 16, SIDE, SIDE_MOST)
 	return _side
+
+
+## Whether `item_id`'s picture is drawn (from disk, or made this session): until then it is blank.
+static func is_made(item_id: String) -> bool:
+	return _textures.has(item_id) and not _waiting.has(item_id) and not _shown_making(item_id)
+
+
+static func _shown_making(item_id: String) -> bool:
+	return is_instance_valid(_shown) and _shown._making.has(item_id)
 
 
 ## Puts the renderer under `parent` (once).
@@ -186,6 +197,8 @@ func _set_up(k: int, id: String) -> bool:
 	var top := ScaleGuide._top(model, model.transform)
 	var centre := Vector3(box.get_center().x, top * 0.45, box.get_center().y)
 	var span := maxf(maxf(box.size.x, box.size.y) * 1.2, top * 1.3)
+	if id.begins_with(UI):
+		span *= UI_CLOSE   # (an interface icon fills its button: no ground around it to show)
 	var camera: Camera3D = _slots[k].get_meta(&"camera")
 	camera.size = maxf(span, 0.3) * MARGIN
 	var back := Basis.from_euler(Vector3(PITCH, YAW, 0.0)) * Vector3(0, 0, 1)
@@ -196,6 +209,8 @@ func _set_up(k: int, id: String) -> bool:
 ## The item as the shop sells it: a building at its first size, a crop as a ripe bed, a building part as itself,
 ## anything else as the farm draws it.
 static func _model(id: String) -> Node3D:
+	if id.begins_with(UI):
+		return UiModels.build(id.trim_prefix(UI))   # an interface icon (UiIcon draws it)
 	var it := Game.item_data(id)
 	if it.is_empty():
 		# A crop: one ripe bed of it; a building part: the thing itself (null for anything unknown).

@@ -11,6 +11,8 @@ const TOOLS := [["hand", "arrow", "TOOL_SELECT"], ["plow", "hoe", "TOOL_PLOW"], 
 	["harvest", "basket", "TOOL_HARVEST"], ["fertilize", "fertilizer", "TOOL_FERTILISE"], ["move", "move", "TOOL_MOVE"],
 	["store", "barn", "TOOL_STORE"], ["sell", "tag", "TOOL_SELL"]]
 const FIRST := "plow"            # in hand when the game opens (the tutorial starts by plowing)
+const LEARN_USES := 5            # a tool's name shows under it until it has been picked this many times
+const LEARNED := "learned"       # the player's settings section counting those picks (kept on the phone)
 
 var hud: FarmHud
 var panel: PanelContainer
@@ -36,7 +38,7 @@ func build(root: Control) -> void:
 	row.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.6))
 	panel.add_child(row)
 	for t: Array in TOOLS:
-		var b := UiKit.tool_button(str(t[1]), tr(str(t[2])))
+		var b := UiKit.tool_button(str(t[1]), tr(str(t[2])), 0.0, 0.0, 0.0, null, not learned(str(t[0])))
 		b.toggle_mode = true
 		b.button_group = _group
 		var id := str(t[0])
@@ -46,8 +48,21 @@ func build(root: Control) -> void:
 	(buttons[FIRST] as Button).button_pressed = true
 
 
+## Whether the player knows tool `id` by now (picked LEARN_USES times): then it shows its picture only, and its
+## name for a moment when picked (and on a long press). A new player sees every tool's name.
+static func learned(id: String) -> bool:
+	return int(PlayerSettings.value(LEARNED, id, 0)) >= LEARN_USES
+
+
 func _pick(id: String) -> void:
 	Feedback.moment("tap")
+	var uses := int(PlayerSettings.value(LEARNED, id, 0))
+	if uses < LEARN_USES:
+		PlayerSettings.keep(LEARNED, {id: uses + 1})
+	var b: Button = buttons[id]
+	if learned(id):
+		(b.get_meta("label") as Label).visible = false
+		UiKit.name_bubble(b, (b.get_meta("label") as Label).text)
 	if id == "plant":
 		hud.show_seeds()     # which seed first; the tool goes in hand once one is chosen
 		return
