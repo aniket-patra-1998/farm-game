@@ -114,9 +114,56 @@ fails a change that breaks a budget.
 - Contact sheet and turntables of every asset; screenshot comparison against the last build.
 - The performance probe on the showcase per quality level, against the budgets.
 
+## 10. Contracts the rest depends on
+
+These decide whether the system holds up for years. Each is fixed once and checked in CI.
+
+1. **Art direction bible** (`docs/ART_BIBLE.md`, with reference sheets): shape language, proportions per family,
+   palette, how light and colour are painted, line and outline, how cute vs real, how readable at the farthest
+   zoom (silhouette test). Every asset, from any source, is reviewed against it. Without it, assets from our
+   builders, Blender and bought packs never look like one game.
+2. **The camera contract**: one fixed pitch and facing (FarmVille's three-quarter view), zoom between two fixed
+   limits, never rotated. Impostors, item pictures and the bible's readability rules are made for exactly this
+   view; if the camera ever rotates, impostors need several angles, so the contract is written down.
+3. **The lighting model**: a real-time sun and sky light (day, night, weather move them), soft ambient occlusion
+   baked into each asset's colours (never lightmaps: things on a farm move), contact shades under everything,
+   real shadows from the sun on mid and up. The master shaders implement it; assets never bring their own lights.
+4. **Asset states**: every way a thing changes on the farm is one mechanism, named in the file: building levels
+   and construction stages (named child nodes `level_2`, `stage_1`...), ready, withered, empty or full, door
+   open, seasons and snow (master material parameters), and animal clips. The game sets a state by name; an asset
+   without that state ignores it.
+5. **Gameplay is not art**: footprint, picking shape, slots and attach points come from the catalog; the art must
+   fit inside its footprint (checked), and saves never name an art file. Replacing all the art never touches a
+   save or a rule.
+6. **Variation without new files**: tint, pattern and wear per placed thing are per-instance shader values; a new
+   breed colour is a row of numbers, not a model.
+7. **One world**: the 2D world is retired when the registry lands; keeping it would double every asset.
+
+## 11. Production realities
+
+- **Store size**: an Android App Bundle's base module may be up to 500 MB compressed (4 GB a device in all), so
+  the 250 MB target ships as one module with no asset packs.
+- **Repository**: generated files are not committed; CI builds them from their sources (builder code, `.blend`
+  files) and caches them by the sources' hash. Hand-made binary sources (`.blend`, bought packs) live in Git LFS.
+  Every builder is deterministic: the same source gives the same file.
+- **Provenance**: the registry records each asset's source and licence (made here, bought, commissioned).
+- **Shader warm-up**: the loading screen draws every master material with every mesh format once, off screen,
+  so the first time a thing appears never hitches (Godot's ubershaders cover most of it; this removes the rest).
+- **Effects, interface, sound** follow the same rules: particles and effects are assets with budgets; the
+  interface's pictures, fonts and nine-slices are one atlas; music and ambience are recordings, loudness-matched.
+- **Real phones decide**: CI measures CPU and draw calls but not a phone's GPU, heat or battery. A low and a mid
+  reference phone run the showcase after each big change (the in-game readout, Settings > Testing); their numbers
+  set the budgets in §7, and the frame rate held after 10 minutes is the number that counts.
+- **Godot gaps we fill ourselves**: far impostors and vertex-animation crowds are not built into Godot; both are
+  well-known techniques we write once (a baker tool and two shaders). An `AnimationTree` per animal costs CPU on a
+  phone, so only near animals get one; mid animals play plain clips; far ones run on the GPU.
+- **Moving over safely**: one family at a time, behind a switch, each with a before-and-after screenshot and
+  performance comparison; the stand-in stays until the file version wins on both.
+
 ## Order of work
 
-1. Registry with stand-in fallback, master shaders, import scripts with LODs and validation (no visible change).
+1. The contracts (§10: art bible, camera, lighting, states), then the registry with stand-in fallback, master
+   shaders, import scripts with LODs and validation (no visible change).
 2. Animals on it: the animal builder writes `.glb` with family skeletons and clips; AnimationTree near, vertex
    animation crowds far; impostors.
 3. Background loading and the loading screen's asset list.
