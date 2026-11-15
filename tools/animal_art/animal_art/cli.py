@@ -4,7 +4,8 @@
   poses  OUT.png  "a,b,c"       phone weight, two of the game's poses each: mid-stride and head down
   clip   OUT.gif  "a,b,c,d"     phone weight, up to four animals moving
   export DIR      "a,b,c"       the game's files: DIR/<id>.glb each (mesh, colours, moves as blend shapes);
-                                list each in data/assets.json ("budget": "animal") to use it in the game"""
+                                list each in data/assets.json ("budget": "animal") to use it in the game
+  farmer DIR                    the player's farmer: DIR/farmer_<hair style>.glb (farmer.py)"""
 import sys
 
 from .registry import GAME, MADE, PARKED
@@ -20,6 +21,12 @@ def main(argv=None):
         for family, names in GAME.items():
             print("%-9s %s" % (family, ", ".join(names)))
         print("%-9s %s" % ("parked", ", ".join(PARKED)))
+        return 0
+    if cmd == "farmer" and len(argv) >= 2:
+        import os
+        from .farmer import HAIR_STYLES, export as export_farmer
+        for style in HAIR_STYLES:
+            print(export_farmer(os.path.join(argv[1], "farmer_%s.glb" % style), style))
         return 0
     if len(argv) < 3:
         print(__doc__)

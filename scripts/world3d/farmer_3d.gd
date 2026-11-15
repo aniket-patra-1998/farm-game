@@ -1,9 +1,11 @@
 class_name Farmer3D
 extends Node3D
-## The player's farmer on the farm: built in code from how they look (Game.player.look), standing where
-## PlayerSystem has them, walking when they walk and working when they work. FarmVille's proportions: a
-## big head on a small body, in overalls and a straw hat. One farmer, so a handful of draws: each limb, the
-## torso and the head are one merged mesh apiece, swung from their joints.
+## The player's farmer on the farm, standing where PlayerSystem has them, walking when they walk and working
+## when they work. FarmVille's proportions: a head nearly half the height on a slim body, in a T-shirt and bib
+## overalls. Drawn from a file made the way the animals are (tools/animal_art `farmer`: one smooth skin with a
+## drawn face, one file per hair style): the file carries no colours of its own, each point says whose colour
+## it wears (REGIONS) and the mesh is tinted once for the player's look; its limbs move by blend shapes. Without
+## the file the farmer is built in code from simple parts, swung from their joints (the stand-in).
 
 const HIP := 0.19                 # leg length (tiles); everything else stands on it
 const TORSO := 0.17
@@ -14,6 +16,16 @@ const TURN_RATE := 10.0           # radians a second
 const STRIDE_RATE := 11.0         # leg swings: radians of the cycle a second
 const STRIDE := 0.7               # how far a leg swings (radians)
 const WORK_RATE := 14.0
+const FILE := "farmer_"            # the farmer's files in data/assets.json: FILE + the look's hair style
+const REGIONS := ["", "skin", "hair", "shirt", "overalls", "shoes"]   # whose colour a point wears (its first UV)
+const REGION_STEPS := 8.0          # a region's number is its UV x times this, rounded down
+const ARM_BACK := 0.5              # the angles the file's arm moves stand for (tools/animal_art farmer.py)
+const ARM_F1 := 0.72
+const ARM_F2 := 1.45
+const BLINK_EVERY := 3.6           # seconds between blinks, and how long one lasts
+const BLINK_FOR := 0.13
+const FILE_HEAD := Vector3(-0.01, 0.6, 0.0)   # the file's head: its middle (tiles), and its radius, for a hat
+const FILE_HEAD_R := 0.15
 const ROUND := 12                 # sides of a limb or the body
 const DEEP := 0.72                # the body's depth, front to back, against its width
 const SMILE := 7                  # dots in the smile
@@ -25,6 +37,10 @@ var _body: Node3D                 # everything, facing +x
 var _legs: Array[Node3D] = []
 var _arms: Array[Node3D] = []
 var _cycle := 0.0
+var _file_mesh: MeshInstance3D   # the farmer drawn from its file (null: built in code)
+var _moves := {}                 # the file's blend shapes: name -> index
+var _clock := 0.0
+var _swing: Array[float] = [0.0, 0.0, 0.0, 0.0]   # the file's limbs now: both legs, then both arms (radians)
 
 
 func _ready() -> void:
@@ -38,7 +54,11 @@ func rebuild() -> void:
 		_body.free()
 	_legs.clear()
 	_arms.clear()
+	_file_mesh = null
+	_moves.clear()
 	var look: Dictionary = Game.player.look
+	if _build_file(look):
+		return
 	var skin := ModelKit.paint(Color.html(str(look["skin"])))
 	var shirt := ModelKit.paint(Color.html(str(look["shirt"])))
 	var overalls := ModelKit.paint(Color.html(str(look["overalls"])))
@@ -92,6 +112,66 @@ func rebuild() -> void:
 	_build_head(look, skin)
 
 
+## The farmer from its file, tinted for `look`; false when there is no file (the stand-in is built).
+func _build_file(look: Dictionary) -> bool:
+	var model := AssetRegistry.instance(FILE + str(look["hair_style"]))
+	var mi: MeshInstance3D = null
+	if model != null:
+		mi = model as MeshInstance3D if model is MeshInstance3D else null
+		for found in model.find_children("*", "MeshInstance3D", true, false):   # not-ui
+			mi = found if mi == null else mi
+	if mi == null or not mi.mesh is ArrayMesh:
+		if model != null:
+			model.free()
+		return false
+	var tints: Array[Color] = []
+	for region: String in REGIONS:
+		tints.append(Color.WHITE if region == "" else Color.html(str(look[region])))
+	mi.mesh = tinted(mi.mesh as ArrayMesh, tints)
+	_body = Node3D.new()
+	add_child(_body)
+	model.scale.z = 0.88 if str(look["body"]) == "b" else 1.0
+	_body.add_child(model)
+	_file_mesh = mi
+	for k in mi.mesh.get_blend_shape_count():
+		_moves[String(mi.mesh.get_blend_shape_name(k))] = k
+	if str(look["hat"]) in ["straw", "cap"]:
+		var holder := Node3D.new()
+		var head := Node3D.new()
+		head.position = FILE_HEAD
+		holder.add_child(head)
+		_hat_on(head, look, FILE_HEAD_R)
+		_body.add_child(ModelKit.bake(holder))
+	return true
+
+
+## A copy of the farmer's mesh with each point coloured for the look: its own painted light times the colour of
+## the region it wears (`tints`, by REGIONS), its moves kept.
+static func tinted(mesh: ArrayMesh, tints: Array[Color]) -> ArrayMesh:
+	var out := ArrayMesh.new()
+	for k in mesh.get_blend_shape_count():
+		out.add_blend_shape(mesh.get_blend_shape_name(k))
+	out.blend_shape_mode = mesh.blend_shape_mode
+	for s in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(s)
+		var colours: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+		var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+		for i in colours.size():
+			var region := clampi(int(uvs[i].x * REGION_STEPS), 0, tints.size() - 1)
+			var tint := tints[region]
+			colours[i] = Color(colours[i].r * tint.r, colours[i].g * tint.g, colours[i].b * tint.b, colours[i].a)
+		arrays[Mesh.ARRAY_COLOR] = colours
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, mesh.surface_get_blend_shape_arrays(s))
+		out.surface_set_material(s, mesh.surface_get_material(s))
+	return out
+
+
+## Sets one of the file's moves (nothing when the file has none by that name).
+func _move(move: String, weight: float) -> void:
+	if _moves.has(move):
+		_file_mesh.set_blend_shape_value(_moves[move], clampf(weight, 0.0, 1.0))
+
+
 func _process(delta: float) -> void:
 	var p := Game.player
 	position = Vector3(p.pos.x, 0.0, p.pos.y)
@@ -113,10 +193,28 @@ func _process(delta: float) -> void:
 		lean = -0.14
 		lift = -0.01
 	var k := minf(delta * EASE, 1.0)
-	_legs[0].rotation.z = lerpf(_legs[0].rotation.z, leg, k)
-	_legs[1].rotation.z = lerpf(_legs[1].rotation.z, -leg, k)
-	for a in 2:
-		_arms[a].rotation.z = lerpf(_arms[a].rotation.z, arms[a], k)
+	if _file_mesh != null:
+		# The file's limbs: each eased toward its angle, then shown by the moves that stand for it.
+		_swing[0] = lerpf(_swing[0], leg, k)
+		_swing[1] = lerpf(_swing[1], -leg, k)
+		_swing[2] = lerpf(_swing[2], arms[0], k)
+		_swing[3] = lerpf(_swing[3], arms[1], k)
+		for side in 2:
+			var name: String = ["l", "r"][side]
+			_move("leg_%s_f" % name, _swing[side] / STRIDE)
+			_move("leg_%s_b" % name, -_swing[side] / STRIDE)
+			var arm: float = _swing[2 + side]
+			var high := clampf((arm - ARM_F1) / (ARM_F2 - ARM_F1), 0.0, 1.0)   # past the first raise: toward the second
+			_move("arm_%s_b" % name, -arm / ARM_BACK)
+			_move("arm_%s_f1" % name, minf(arm / ARM_F1, 1.0) * (1.0 - high))
+			_move("arm_%s_f2" % name, high)
+		_clock += delta
+		_move("blink", 1.0 if fmod(_clock, BLINK_EVERY) < BLINK_FOR else 0.0)
+	else:
+		_legs[0].rotation.z = lerpf(_legs[0].rotation.z, leg, k)
+		_legs[1].rotation.z = lerpf(_legs[1].rotation.z, -leg, k)
+		for a in 2:
+			_arms[a].rotation.z = lerpf(_arms[a].rotation.z, arms[a], k)
 	_body.rotation.z = lerpf(_body.rotation.z, lean, k)
 	_body.position.y = lerpf(_body.position.y, lift, k)
 
@@ -167,6 +265,14 @@ func _build_head(look: Dictionary, skin: Material) -> void:
 			ModelKit.ball(head, Vector3(-0.55 * r, -0.5 * r, 0), r * 0.9, hair, Vector3(0.6, 1.3, 1.05), true)
 		"ponytail":
 			ModelKit.ball(head, Vector3(-r * 1.1, -0.1 * r, 0), 0.4 * r, hair, Vector3(0.8, 1.6, 0.8), true)
+	_hat_on(head, look, r)
+	# The hat's parts are under their own tilted node: merged with the head's by baking the lot.
+	var baked := ModelKit.bake(head)
+	_body.add_child(baked)
+
+
+## The look's hat (if any) on a head of radius `r`, as parts under `head`.
+func _hat_on(head: Node3D, look: Dictionary, r: float) -> void:
 	match str(look["hat"]):
 		"straw":
 			# Worn on the back of the head, so the face shows from the farm's high camera.
@@ -184,6 +290,3 @@ func _build_head(look: Dictionary, skin: Material) -> void:
 			var cloth := ModelKit.paint(Color.html(str(look["shirt"])).darkened(0.15))
 			ModelKit.ball(head, Vector3(0, r * 0.45, 0), r * 1.06, cloth, Vector3(1.0, 0.6, 1.0), true)
 			ModelKit.box(head, Vector3(r * 0.6, r * 0.42, -0.5 * r), Vector3(r * 1.6, r * 0.5, 0.5 * r), cloth)
-	# The hat's parts are under their own tilted node: merged with the head's by baking the lot.
-	var baked := ModelKit.bake(head)
-	_body.add_child(baked)

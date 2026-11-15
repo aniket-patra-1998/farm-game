@@ -19,7 +19,8 @@ func test_346_every_listed_asset_loads_fits_its_budget_and_its_footprint() -> vo
 		var e: Dictionary = listed["assets"][id]
 		var form := id.trim_prefix(AssetRegistry.CROP) if id.begins_with(AssetRegistry.CROP) else ""
 		_check(not Game.item_data(id).is_empty() or Game.crops.has(id) or found.has(id)
-			or form in ExportPlants.crop_forms(), "%s is a catalog item or a crop's form" % id)
+			or form in ExportPlants.crop_forms() or id.begins_with(Farmer3D.FILE),
+			"%s is a catalog item, a crop's form or the farmer" % id)
 		_check(budgets.has(str(e.get("budget", ""))), "%s has a budget kind" % id)
 		# (A tree's file holds each of its looks, ripe and not: one of them is drawn at a time.)
 		var node := AssetRegistry.instance(id, {"look": 0, "ready": true})
@@ -35,7 +36,7 @@ func test_346_every_listed_asset_loads_fits_its_budget_and_its_footprint() -> vo
 		var fp := Game.footprint(id)
 		var box := SpaceFit.reach(node, node.transform)
 		# (a tree's crown overhangs by design; an animal walks about its spot, and a horse is longer than a tile)
-		if not str(e.get("budget", "")) in ["tree", "animal", "crop"]:
+		if not str(e.get("budget", "")) in ["tree", "animal", "crop", "farmer"]:
 			_check(box.size.x <= fp.x + 0.01 and box.size.y <= fp.y + 0.01, "%s fits its %s footprint" % [id, str(fp)])
 		node.free()
 	for form in ExportPlants.crop_forms():

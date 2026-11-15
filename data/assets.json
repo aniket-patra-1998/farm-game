@@ -20,6 +20,10 @@
     "building": {
       "triangles": 15000,
       "draws": 8
+    },
+    "farmer": {
+      "triangles": 21000,
+      "draws": 2
     }
   },
   "assets": {
@@ -686,6 +690,18 @@
     "crop:zucchini": {
       "model": "res://art/models/crops/zucchini.scn",
       "budget": "crop"
+    },
+    "farmer_short": {
+      "model": "res://art/models/farmer/farmer_short.glb",
+      "budget": "farmer"
+    },
+    "farmer_long": {
+      "model": "res://art/models/farmer/farmer_long.glb",
+      "budget": "farmer"
+    },
+    "farmer_ponytail": {
+      "model": "res://art/models/farmer/farmer_ponytail.glb",
+      "budget": "farmer"
     }
   }
 }

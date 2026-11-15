@@ -10,6 +10,9 @@ Builds the farm's animals from code, offline. Nothing here ships in the game or 
     python3 -m animal_art clip   farm.gif  "cow,horse,pig,sheep"
     python3 -m unittest discover -s tests
 
+The player's farmer is made here too (`farmer.py`): `python3 -m animal_art farmer ../../art/models/farmer` writes one
+file per hair style. It uses the same skin, drawings and painted light, with its own shapes, face and moves.
+
 ## How an animal is made
 
 1. **Template** (`families/`): a family is one function that turns a row of settings (build, legs, ears, tail, coat,

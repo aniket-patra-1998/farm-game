@@ -166,7 +166,7 @@ def _part_moves(a, rig, V0):
     return out
 
 
-def _write(path, name, pos, nor, col, ind, targets):
+def _write(path, name, pos, nor, col, ind, targets, uv=None):
     blob = bytearray(); views = []; accs = []
 
     def add(arr, comps, ctype, target=None, minmax=False):
@@ -187,7 +187,8 @@ def _write(path, name, pos, nor, col, ind, targets):
     FLOAT, UINT = 5126, 5125
     attrs = dict(POSITION=add(pos, "VEC3", FLOAT, 34962, True), NORMAL=add(nor, "VEC3", FLOAT, 34962),
                  COLOR_0=add(col, "VEC4", FLOAT, 34962),
-                 TEXCOORD_0=add(np.zeros((len(pos), 2), np.float32), "VEC2", FLOAT, 34962))   # (importers want UVs)
+                 TEXCOORD_0=add(np.zeros((len(pos), 2), np.float32) if uv is None else uv, "VEC2", FLOAT,
+                                34962))   # (importers want UVs; the farmer's say whose colour a point wears)
     indices = add(ind.astype(np.uint32), "SCALAR", UINT, 34963)
     # (positions only: a move's change of shading is too small to see, and normals would double the file)
     tgts = [dict(POSITION=add(dp, "VEC3", FLOAT, 34962, True)) for _n, dp, _dn in targets]
