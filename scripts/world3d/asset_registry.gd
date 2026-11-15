@@ -68,11 +68,22 @@ static func apply_state(node: Node, state: Dictionary) -> void:
 		apply_state(c, state)
 
 
-## The triangle budget for item `id` (its entry's `budget` kind in data/assets.json), 0 when it has none.
-static func budget_of(id: String) -> int:
+## Item `id`'s budget for `what` ("triangles" at the nearest level, or "draws": surfaces drawn), from its
+## entry's `budget` kind in data/assets.json; 0 when it has none.
+static func budget_of(id: String, what := "triangles") -> int:
 	_load()
 	var kind := str(entry(id).get("budget", ""))
-	return int(((_data.get("budgets", {}) as Dictionary).get(kind, {}) as Dictionary).get("triangles", 0))
+	return int(((_data.get("budgets", {}) as Dictionary).get(kind, {}) as Dictionary).get(what, 0))
+
+
+## Surfaces drawn under `node` (a draw each, before shadows).
+static func draws(node: Node) -> int:
+	var n := 0
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null and (node as MeshInstance3D).visible:
+		n += (node as MeshInstance3D).mesh.get_surface_count()
+	for c in node.get_children():
+		n += draws(c)
+	return n
 
 
 ## Triangles drawn at the nearest level of detail under `node`.
@@ -135,25 +146,40 @@ static func _to_masters(node: Node) -> void:
 		var mi := node as MeshInstance3D
 		for s in mi.mesh.get_surface_count():
 			var m := mi.mesh.surface_get_material(s)
-			if m is BaseMaterial3D:
+			if is_plain(m):
 				mi.mesh.surface_set_material(s, master_for(m as BaseMaterial3D))
 			var o := mi.get_surface_override_material(s)
-			if o is BaseMaterial3D:
+			if is_plain(o):
 				mi.set_surface_override_material(s, master_for(o as BaseMaterial3D))
-		if mi.material_override is BaseMaterial3D:
+		if is_plain(mi.material_override):
 			mi.material_override = master_for(mi.material_override as BaseMaterial3D)
 	for c in node.get_children():
 		_to_masters(c)
 
 
-## The master material with `m`'s colour and texture (shared by everything with the same two).
+## Whether `m` is a plain painted material the master material draws the same (opaque, lit, culled, no glow, no
+## maps but its colour texture). Anything else the artist set on purpose (see-through, cut-out, two-sided,
+## glowing, normal-mapped) is kept as it is.
+static func is_plain(m: Material) -> bool:
+	if not m is BaseMaterial3D:
+		return false
+	var b := m as BaseMaterial3D
+	return (b.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED and b.cull_mode == BaseMaterial3D.CULL_BACK
+		and b.shading_mode == BaseMaterial3D.SHADING_MODE_PER_PIXEL and not b.emission_enabled
+		and not b.normal_enabled and b.albedo_color.a >= 1.0)
+
+
+## The master material with plain `m`'s colour, texture, roughness and metal (shared by everything with the same).
 static func master_for(m: BaseMaterial3D) -> ShaderMaterial:
 	var tex := m.albedo_texture
-	var key := "%s|%s" % [m.albedo_color.to_html(), tex.get_rid() if tex != null else ""]
+	var key := "%s|%s|%.2f|%.2f" % [m.albedo_color.to_html(), tex.get_rid() if tex != null else "", m.roughness,
+		m.metallic]
 	if not _masters.has(key):
 		var sm := ShaderMaterial.new()
 		sm.shader = MASTER
 		sm.set_shader_parameter("albedo", Color(m.albedo_color.r, m.albedo_color.g, m.albedo_color.b))
+		sm.set_shader_parameter("roughness", m.roughness)
+		sm.set_shader_parameter("specular", lerpf(0.15, 0.5, m.metallic))
 		if tex != null:
 			sm.set_shader_parameter("albedo_texture", tex)
 			sm.set_shader_parameter("use_texture", true)

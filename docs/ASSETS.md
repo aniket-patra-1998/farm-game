@@ -29,7 +29,13 @@ targets, and Godot imports it natively. Our builders' Python never runs on a pho
 
 **Conventions every file follows** (checked by CI, `tools/asset_lint`):
 - 1 unit = 1 tile; origin at the footprint's centre on the ground; facing +X.
-- Named parts the game needs: `door`, `window_*`, `smoke`, `yard`, `slot_*` (where produce or animals stand).
+- Named parts the game needs: `door` / `door_left` (direct children of the root: they swing open on collect),
+  `window_*` (where animals look out; the part's scale sizes the head), `smoke`, `yard`, `slot_*`.
+- States: a part named `when_<state>_<value>` shows only in that state (§10.4); a thing drawn from a file is
+  rebuilt whenever its state changes.
+- Which kinds may come from files today: buildings, trees, plain decorations and blooms
+  (`Objects3D.FILE_KINDS`). Animals, vehicles, young ones and joining fences and hedges get their file path
+  with their own step, as they need more than a model (clips, implements, joins).
 - Animals: one skeleton per family with standard bone names (`root, hips, spine, neck, head, jaw, tail_*,
   leg_{fl,fr,hl,hr}_{upper,lower,foot}, ear_{l,r}, wing_{l,r}, eye_{l,r}`), so clips are shared by every breed
   of a family (retargeting by name).
@@ -111,8 +117,10 @@ fails a change that breaks a budget.
 
 ## 9. Checks in CI
 
-- `tests/suites/assets_test.gd`: every listed asset loads, fits its budget and footprint; states and the
-  stand-in fallback work. (Bone and clip names come with the animals.)
+- `tests/suites/assets_test.gd`: every listed asset loads and fits its triangle and draw budgets and its
+  footprint; a real glTF fixture (tests/fixtures, made by tools/make_asset_fixture.gd) goes through Godot's
+  import (shadow meshes) and the registry's rules; states, named parts, kept materials and the stand-in
+  fallback work. (Bone and clip names come with the animals.)
 - Contact sheet and turntables of every asset; screenshot comparison against the last build.
 - The performance probe on the showcase per quality level, against the budgets.
 
@@ -145,7 +153,8 @@ These decide whether the system holds up for years. Each is fixed once and check
 
 ## 11. Production realities
 
-- **Store size**: an Android App Bundle's base module may be up to 500 MB compressed (4 GB a device in all), so
+- **Store size**: an Android App Bundle's base module may be up to 500 MB compressed (4 GB a device in all;
+  developer.android.com/guide/app-bundle/faq, checked November 2026), so
   the 250 MB target ships as one module with no asset packs.
 - **Repository**: generated files are not committed; CI builds them from their sources (builder code, `.blend`
   files) and caches them by the sources' hash. Hand-made binary sources (`.blend`, bought packs) live in Git LFS.

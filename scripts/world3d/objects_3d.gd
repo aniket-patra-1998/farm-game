@@ -18,6 +18,8 @@ const FULL_EVERY := 10        # a full look at everything every this many second
 # A sync builds models for at most this long a frame, then carries on the next frame: a farm with hundreds of
 # things appears over a few frames instead of freezing (a phone says "not responding" after 5 s of that).
 const BUILD_BUDGET_MS := 12
+const FILE_KINDS := ["building", "barn", "crafting", "decor", "bloom", "tree"]   # kinds `uses_file` draws from files
+const WINDOW_SIZE := 0.22       # a `window_*` part's size at scale 1 (how big a head looking out of it is)
 const BUILD_STAGES := 3        # a construction site made as a file shows `when_stage_0`..`_2` as it goes up
 const SCENERY_Y := -Ground3D.SLAB
 const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
@@ -318,6 +320,9 @@ func _step(o: Dictionary) -> int:
 func _key(o: Dictionary) -> String:
 	if Game.links.group_of(str(o["id"])) != "":
 		return "link|%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]   # how it joins is the LinkLayer's business
+	if uses_file(o):
+		# Made as a file: rebuilt whenever its state changes (ready, level, at work...), so its parts follow.
+		return "file|%s|%d|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false), str(state_of(o))]
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
@@ -335,6 +340,58 @@ func _at_work(o: Dictionary) -> bool:
 	if not Game.crafting.is_crafting(o):
 		return true
 	return Game.crafting.crafts_done(o) < (o.get("slots", []) as Array).size()
+
+
+## Whether `o` is drawn from its file (AssetRegistry): only the kinds whose whole pipeline the file path keeps
+## (buildings and their yards, trees with their turn, plain decorations, blooms). Animals, vehicles (their
+## implements and runs), young ones and joining fences and hedges (the LinkLayer draws those) stay code-built
+## until their own file path is made (docs/ASSETS.md "Order of work").
+func uses_file(o: Dictionary) -> bool:
+	if not str(Game.kind_of(o)) in FILE_KINDS or o.get("stray", false):
+		return false
+	if Game.links.group_of(str(o["id"])) != "" or Game.under_construction(o):
+		return false
+	return AssetRegistry.has_model(str(o["id"]))
+
+
+## A lone tree's own small turn and size (the same for the same tree every time).
+static func _tree_turn(o: Dictionary) -> Basis:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(o["uid"])
+	return Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * (1.0 + rng.randf_range(-TREE_SIZE_JITTER,
+		TREE_SIZE_JITTER)))
+
+
+## Gives a building made as a file what its yard and doors need, from its parts' names (docs/ASSETS.md §1):
+## `door*` parts swing open on collect (BuildingModel.DOOR; `door_left` the other way), and `window_*` parts are
+## where animals look out (BuildingModel.WINDOWS, sized by the part's own scale).
+static func mark_parts(model: Node3D) -> void:
+	var windows: Array = []
+	var stack: Array[Node] = [model]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if not n is Node3D or n == model:
+			continue
+		var part := String(n.name)
+		if part.begins_with("door"):
+			n.set_meta(BuildingModel.DOOR, -1.0 if part.ends_with("left") else 1.0)
+		elif part.begins_with("window"):
+			windows.append({"at": _local_to(model, n as Node3D).origin, "size": WINDOW_SIZE * (n as Node3D).scale.x})
+	if not windows.is_empty():
+		var marker := Node3D.new()
+		marker.set_meta(BuildingModel.WINDOWS, windows)
+		model.add_child(marker)
+
+
+## `n`'s transform in `root`'s own space.
+static func _local_to(root: Node3D, n: Node3D) -> Transform3D:
+	var xf := n.transform
+	var p := n.get_parent()
+	while p != root and p is Node3D:
+		xf = (p as Node3D).transform * xf
+		p = p.get_parent()
+	return xf
 
 
 ## What an asset made as a file is shown in (AssetRegistry.apply_state): its level, ready or not, withered,
@@ -427,10 +484,14 @@ func _build(o: Dictionary) -> Node3D:
 		a.update(0.0)
 		return a
 	# Made as a file (AssetRegistry), in this thing's state; else its code-built stand-in.
-	node = AssetRegistry.instance(str(o["id"]), state_of(o))
+	node = AssetRegistry.instance(str(o["id"]), state_of(o)) if uses_file(o) else null
 	if node != null:
-		if BuildingFill.shows(o):
-			node.add_child(BuildingFill.create(o, node))
+		if Game.kind_of(o) == "tree" and Crowding.mask(o) == 0:
+			turn = _tree_turn(o)   # (as a built tree: turned and sized a little, each its own)
+		if Game.is_building_item(str(o["id"])):
+			mark_parts(node)
+			if BuildingFill.shows(o):
+				node.add_child(BuildingFill.create(o, node))
 	else:
 		match Game.kind_of(o):
 			"tree":
@@ -440,13 +501,10 @@ func _build(o: Dictionary) -> Node3D:
 				var ready := Game.is_ready(o)
 				var mask := Crowding.mask(o)
 				node = tree_look(str(o["id"]), ready, mask, look)
-				var rng := RandomNumberGenerator.new()
-				rng.seed = int(o["uid"])
-				# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of its
-				# look, and its crown must not reach into theirs.)
+				# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of
+				# its look, and its crown must not reach into theirs.)
 				if mask == 0:
-					turn = Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * (1.0 + rng.randf_range(
-						-TREE_SIZE_JITTER, TREE_SIZE_JITTER)))
+					turn = _tree_turn(o)
 			"vehicle":
 				node = SpaceFit.fit_model(VehicleModel.build(it, Game.under_construction(o)), fp)
 			"decor":

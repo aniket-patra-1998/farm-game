@@ -4,6 +4,7 @@ extends TestSuite
 ## the right parts; plain materials become the master material.
 
 const TEST_FILE := "user://test_asset.scn"
+const FIXTURE := "res://tests/fixtures/asset_fixture.glb"   # made by tools/make_asset_fixture.gd
 
 
 func test_346_every_listed_asset_loads_fits_its_budget_and_its_footprint() -> void:
@@ -20,6 +21,9 @@ func test_346_every_listed_asset_loads_fits_its_budget_and_its_footprint() -> vo
 		var tris := AssetRegistry.triangles(node)
 		var most := AssetRegistry.budget_of(id)
 		_check(tris <= most, "%s: %d triangles within %d" % [id, tris, most])
+		var draws := AssetRegistry.draws(node)
+		_check(draws <= AssetRegistry.budget_of(id, "draws"), "%s: %d draws within %d" % [id, draws,
+			AssetRegistry.budget_of(id, "draws")])
 		var fp := Game.footprint(id)
 		var box := SpaceFit.reach(node, node.transform)
 		if str(Game.item_data(id).get("kind", "")) != "tree":   # (a tree's crown overhangs by design)
@@ -80,3 +84,52 @@ func _own(n: Node, owner: Node) -> void:
 	n.owner = owner
 	for c in n.get_children():
 		_own(c, owner)
+
+
+func test_349_a_real_gltf_file_goes_through_the_import_and_the_registry_rules() -> void:
+	AssetRegistry.forget()
+	AssetRegistry.add("asset_fixture", {"model": FIXTURE, "budget": "building"})
+	_check(AssetRegistry.has_model("asset_fixture"), "the imported .glb loads as a scene")
+	var node := AssetRegistry.instance("asset_fixture", {"ready": false})
+	var body := _find(node, "body") as MeshInstance3D
+	_check(body != null and body.mesh is ArrayMesh, "its parts keep their names through glTF")
+	if body != null and body.mesh is ArrayMesh:
+		_check((body.mesh as ArrayMesh).shadow_mesh != null, "the importer made a cheap shadow mesh")
+		_check(body.get_active_material(0) is ShaderMaterial, "its plain material draws as the master")
+	_check(not (_find(node, "when_ready_true") as Node3D).visible, "a state part follows the state")
+	_check(AssetRegistry.triangles(node) <= AssetRegistry.budget_of("asset_fixture"), "within its triangles")
+	_check(AssetRegistry.draws(node) <= AssetRegistry.budget_of("asset_fixture", "draws"), "within its draws")
+	Objects3D.mark_parts(node)
+	_check((_find(node, "door") as Node).has_meta(BuildingModel.DOOR), "a part named door swings")
+	var marked := node.get_children().filter(func(c: Node) -> bool: return c.has_meta(BuildingModel.WINDOWS))
+	_eq(marked.size(), 1, "its windows are where animals look out")
+	if marked.size() == 1:
+		_eq((marked[0].get_meta(BuildingModel.WINDOWS) as Array).size(), 1, "one window")
+	node.free()
+	AssetRegistry.add("asset_fixture", {})
+	AssetRegistry.forget()
+
+
+func test_350_see_through_glowing_or_two_sided_materials_are_kept_as_made() -> void:
+	var plain := StandardMaterial3D.new()
+	_check(AssetRegistry.is_plain(plain), "a plain opaque material becomes the master")
+	for set_up: Callable in [func(m: StandardMaterial3D) -> void: m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA,
+			func(m: StandardMaterial3D) -> void: m.emission_enabled = true,
+			func(m: StandardMaterial3D) -> void: m.cull_mode = BaseMaterial3D.CULL_DISABLED,
+			func(m: StandardMaterial3D) -> void: m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR]:
+		var m := StandardMaterial3D.new()
+		set_up.call(m)
+		_check(not AssetRegistry.is_plain(m), "a material set up on purpose is kept")
+	var rough := StandardMaterial3D.new()
+	rough.roughness = 0.3
+	_check(AssetRegistry.master_for(rough) != AssetRegistry.master_for(plain), "a different roughness is its own master")
+
+
+func _find(n: Node, part: String) -> Node:
+	if String(n.name) == part:
+		return n
+	for c in n.get_children():
+		var f := _find(c, part)
+		if f != null:
+			return f
+	return null

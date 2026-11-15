@@ -1,11 +1,11 @@
 {
   "about": "Assets made as files (docs/ASSETS.md): item id -> its model and budget. An item not listed is drawn by its code-built stand-in.",
   "budgets": {
-    "animal": {"triangles": 5000},
-    "tree": {"triangles": 4000},
-    "crop": {"triangles": 4000},
-    "decoration": {"triangles": 2500},
-    "building": {"triangles": 15000}
+    "animal": {"triangles": 5000, "draws": 3},
+    "tree": {"triangles": 4000, "draws": 4},
+    "crop": {"triangles": 4000, "draws": 3},
+    "decoration": {"triangles": 2500, "draws": 3},
+    "building": {"triangles": 15000, "draws": 8}
   },
   "assets": {}
 }
