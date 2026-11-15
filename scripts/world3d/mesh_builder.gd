@@ -79,7 +79,7 @@ func box(xf: Transform3D, col: Color) -> void:
 
 ## An ellipsoid centred on `c` with half-sizes `r`, smooth shaded.
 func ellipsoid(c: Vector3, r: Vector3, col: Color, seg := 8, rings := 5) -> void:
-	r *= _grown(col, maxf(r.x, maxf(r.y, r.z)))
+	r *= _grown(col, (r.x + r.y + r.z) / 3.0)
 	for i in rings:
 		var t0 := PI * i / rings
 		var t1 := PI * (i + 1) / rings
@@ -104,7 +104,7 @@ static func _sph(theta: float, phi: float) -> Vector3:
 
 ## A cone (or a tapered cylinder) standing on `base`, `h` tall, radius `r0` at the bottom and `r1` on top.
 func cone(base: Vector3, r0: float, r1: float, h: float, col: Color, seg := 7, top_col := Color(0, 0, 0, -1)) -> void:
-	var grown := _grown(col, maxf(maxf(r0, r1), h * 0.5))
+	var grown := _grown(col, (maxf(r0, r1) + h * 0.5) * 0.5)
 	r0 *= grown
 	r1 *= grown
 	h *= grown

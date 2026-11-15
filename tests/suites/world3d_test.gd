@@ -1884,6 +1884,8 @@ func test_353_crops_stand_level_and_show_their_harvest() -> void:
 	var fitted := CropModels._fit(tall.commit(), 0.2)
 	_check(absf(fitted.get_aabb().end.y - 0.2) < 0.001, "a tall plant is brought down to the shared height")
 	_check(absf(fitted.get_aabb().size.x - 0.1) < 0.005, "and its produce keeps its size")
+	var cols: PackedColorArray = CropModels._fit(tall.commit(), 0.2, 0.5).surface_get_arrays(0)[Mesh.ARRAY_COLOR]
+	_check(cols[0].g < 0.6, "a ripe plant's green leaves are darkened, so its harvest stands out")
 	# Small produce is drawn bigger than asked, big produce and leaves as asked.
 	for part: Array in [[0.01, 0.0, 2.0, "small produce is drawn bigger"], [0.06, 0.0, 1.0, "big produce as asked"],
 			[0.01, 1.0, 1.0, "a leaf as asked"]]:

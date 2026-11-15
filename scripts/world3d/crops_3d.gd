@@ -7,7 +7,8 @@ extends Node3D
 ## lasts, and the shader sizes it from the farm's clock every frame, so a plant swells smoothly, not in steps.
 
 const CROP_SHADER := preload("res://shaders/crop3d.gdshader")
-const ROW_GAP := 0.31   # between plants in a plot's rows and columns: three rows of three, like a planted field
+const ROW_GAP := 0.26   # between plants in a plot's rows and columns: three rows of three, like a planted field,
+# standing inside the plot's edge (with CropForms.look("reach")) so each plot is its own patch
 const SPOTS := [Vector2(-ROW_GAP, -ROW_GAP), Vector2(0, -ROW_GAP), Vector2(ROW_GAP, -ROW_GAP),
 	Vector2(-ROW_GAP, 0), Vector2(0, 0), Vector2(ROW_GAP, 0),
 	Vector2(-ROW_GAP, ROW_GAP), Vector2(0, ROW_GAP), Vector2(ROW_GAP, ROW_GAP)]

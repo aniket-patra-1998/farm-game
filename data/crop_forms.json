@@ -1,12 +1,14 @@
 {
   "_doc": "How each crop looks in 3D (scripts/world3d/crop_forms.gd). 'crops' gives each crop its form; one without falls back to its catalog shape. Each form has a 'kind' (which builder draws it) and that kind's numbers: heights are [low, high] in plant units (a plant is about a fifth of a tile), counts are stems or leaves, 'leaf' is the leaf colour. Produce takes the crop's own catalog colour.",
   "look": {
-    "_doc": "The look every crop shares, so a field is level and shows its harvest: 'height' is how tall a ripe crop may stand, in plant units (a taller one has its stem shortened; 0: no limit), 'young' the share of that a growing one may; 'produce' is how many times bigger small produce is drawn than its form asks ('produce_small': this size or less gets all of it, 'produce_big': this size or more gets none). A form may set its own 'produce'.",
+    "_doc": "The look every crop shares, so a field is level and shows its harvest: 'height' is how tall a ripe crop may stand, in plant units (a taller one has its stem shortened; 0: no limit), 'young' the share of that a growing one may; 'produce' is how many times bigger small produce is drawn than its form asks ('produce_small': this size or less gets all of it, 'produce_big': this size or more gets none); 'reach' is how far from its middle a plant may spread, so a plot's nine plants stay inside it and each plot is its own patch (0: no limit); 'leaf_ripe' darkens the green of a ripe crop's leaves (1: not at all), so its harvest stands out. A form may set its own 'produce', and 'squash': true for one that is produce from foot to tip (canes), which is drawn shorter instead of having its stem shortened.",
     "height": 0.19,
     "young": 0.8,
-    "produce": 1.7,
+    "produce": 2.0,
     "produce_small": 0.015,
-    "produce_big": 0.05
+    "produce_big": 0.06,
+    "leaf_ripe": 0.78,
+    "reach": 0.07
   },
   "forms": {
     "wheat": {"kind": "cereal", "count": 11, "height": [0.24, 0.32], "head": 0.05, "awn": 3, "leaf": "#6f9a3a", "straw": "#d8b85a"},
@@ -15,8 +17,8 @@
     "oats": {"kind": "cereal", "count": 8, "height": [0.26, 0.34], "droop": 0.03, "hang": 5, "leaf": "#7aa040", "straw": "#d8c070"},
     "bean": {"kind": "bean", "leaf": "#4f9a36"},
     "corn": {"kind": "corn", "leaf": "#4f9a36"},
-    "sugarcane": {"kind": "cane", "count": 4, "height": [0.46, 0.56], "width": 0.016, "nodes": 6, "leaf": "#6fa83a"},
-    "bamboo": {"kind": "cane", "count": 3, "height": [0.5, 0.62], "width": 0.012, "nodes": 7, "leaf": "#8fcf55", "leaves": 9},
+    "sugarcane": {"kind": "cane", "squash": true, "count": 4, "height": [0.46, 0.56], "width": 0.016, "nodes": 6, "leaf": "#6fa83a"},
+    "bamboo": {"kind": "cane", "squash": true, "count": 3, "height": [0.5, 0.62], "width": 0.012, "nodes": 7, "leaf": "#8fcf55", "leaves": 9},
     "lavender": {"kind": "spikes", "count": 8, "height": [0.2, 0.28], "bud_len": 0.06, "bud_r": 0.011, "leaf": "#7a9a6a"},
     "lilac": {"kind": "spikes", "count": 3, "height": [0.3, 0.38], "bud_len": 0.1, "bud_r": 0.02, "leaf": "#4f8a36"},
     "gladiolus": {"kind": "spikes", "count": 3, "height": [0.3, 0.42], "bud_len": 0.13, "bud_r": 0.022, "sword": true, "leaf": "#4f9a36"},
