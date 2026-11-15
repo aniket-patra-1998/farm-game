@@ -32,7 +32,7 @@ vec3 ground_static(vec2 p, out float fine) {
 	fine = noise(p * 3.1) * 0.5 + noise(p * 7.3) * 0.5;
 	vec3 col = mix(grass_dark, grass_light, smoothstep(0.25, 0.75, broad));
 	// Hollows: cooler, deeper green, so the lawn isn't one hue with lighter and darker patches.
-	col = mix(col, cool * (0.75 + 0.5 * broad), 0.4 * smoothstep(0.45, 0.8, fbm(p * 0.13 + 50.0)));
+	col = mix(col, cool * (0.75 + 0.5 * broad), hollows * smoothstep(0.45, 0.8, fbm(p * 0.13 + 50.0)));
 	col = mix(col, dry, dryness * smoothstep(0.55, 0.85, fbm(p * 0.37 + 11.0)));
 	// A mottle in between the broad patches and the grain, so a stretch of lawn has a texture to it.
 	col *= 0.94 + 0.12 * fbm(p * 1.1 + 70.0);

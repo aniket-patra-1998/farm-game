@@ -7,7 +7,7 @@ extends Node3D
 const SOIL_SHADER := preload("res://shaders/soil3d.gdshader")
 const BED := 0.9           # a bed's width, in tiles (the gaps between beds are grass)
 const HEIGHT := 0.09
-const BEVEL := 0.07
+const BEVEL := 0.05         # how far in from its foot a bed's flat top begins (soil3d `top_half`: BED / 2 less this)
 const BED_FLOATS := 16     # a bed in the MultiMesh buffer: transform (12) and data (4)
 
 var _beds: MultiMeshInstance3D
@@ -87,21 +87,18 @@ static func _write(buffer: PackedFloat32Array, at: int, r: int, c: int) -> void:
 		buffer[at + k] = row[k]
 
 
-## A bed of earth: a low box with bevelled top edges, centred on its tile, sitting on the ground.
+## A bed of earth: low and flat on top, with a short slope down to the ground all round (the soil shader rounds
+## its corners and draws its furrows), centred on its tile.
 static func bed_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var w := BED / 2.0
 	var t := w - BEVEL
 	var h := HEIGHT
-	var lo := h - BEVEL * 0.6
-	# Top face.
 	_face(st, [Vector3(-t, h, -t), Vector3(t, h, -t), Vector3(t, h, t), Vector3(-t, h, t)])
-	# Bevels and sides, all four ways round.
 	for k in 4:
 		var rot := Basis(Vector3.UP, k * PI / 2.0)
-		_face(st, [rot * Vector3(t, h, -t), rot * Vector3(w, lo, -w), rot * Vector3(w, lo, w), rot * Vector3(t, h, t)])
-		_face(st, [rot * Vector3(w, lo, -w), rot * Vector3(w, 0, -w), rot * Vector3(w, 0, w), rot * Vector3(w, lo, w)])
+		_face(st, [rot * Vector3(t, h, -t), rot * Vector3(w, 0, -w), rot * Vector3(w, 0, w), rot * Vector3(t, h, t)])
 	return st.commit()
 
 

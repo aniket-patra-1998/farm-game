@@ -34,7 +34,9 @@ const BAKE_MEADOW_RES := 8         # and on the meadow round it (always further 
 ## The ground shader's uniforms the bake paints from (the still look: ground_common.gdshaderinc).
 const BAKE_PARAMS: Array[String] = ["grass_light", "grass_dark", "dry", "checker", "dryness", "farm_n", "verge",
 	"mow", "patchy", "bare_amount", "bare", "cool", "forest_amount", "forest_map", "forest_rect", "forest_dark",
-	"forest_moss", "litter", "edge_n"]
+	"forest_moss", "litter", "edge_n", "hollows"]
+const LAWN := {"grass_light": Color(0.32, 0.48, 0.21), "grass_dark": Color(0.27, 0.42, 0.18), "hollows": 0.1,
+	"dryness": 0.05}
 const TUFT_FLOATS := 16           # a tuft in the MultiMesh buffer: transform (12) and colour (4)
 const CLUMP_MAX := 9               # tufts in the thickest clump on a tile
 const FLOWER_CHANCE := 0.22        # of a meadow tile having a patch of wild flowers
@@ -69,6 +71,10 @@ func _ready() -> void:
 	var grass := ShaderMaterial.new()
 	grass.shader = load("res://shaders/ground3d.gdshader")
 	var meadow_grass := grass.duplicate() as ShaderMaterial
+	# The farm's lawn is kept: an even, bright green (FarmVille's), with only a little of the countryside's
+	# patchiness (the meadow keeps the shader's own, wilder numbers).
+	for key: String in LAWN:
+		grass.set_shader_parameter(key, LAWN[key])
 	meadow_grass.set_shader_parameter("checker", 0.0)
 	meadow_grass.set_shader_parameter("dryness", 0.32)
 	meadow_grass.set_shader_parameter("patchy", 0.5)

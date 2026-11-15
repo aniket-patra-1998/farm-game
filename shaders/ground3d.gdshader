@@ -20,6 +20,7 @@ uniform float patchy = 0.0;     // the meadow: how strongly patches of lush and 
 uniform float bare_amount = 0.0; // the meadow: how much bare earth shows in worn patches (0 on the farm lawn)
 uniform vec3 bare : source_color = vec3(0.47, 0.37, 0.22);
 uniform vec3 cool : source_color = vec3(0.22, 0.45, 0.28); // damp hollows lean blue-green
+uniform float hollows = 0.4;    // how much the damp hollows darken the grass (less on the farm's kept lawn)
 // What stands on the farm (Ground3D): R darkens the grass round things that block the sky, G wears it to
 // trodden straw and earth. shade_rect is the map's corner and size in tiles.
 uniform sampler2D shade_map : filter_linear, repeat_disable;
