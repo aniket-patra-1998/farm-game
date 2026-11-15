@@ -64,7 +64,7 @@ static func meter(kind: String, plus := false) -> PanelContainer:
 	return box
 
 
-## A square button with an icon: a cream face, a dark edge, the icon centred.
+## A round button with an icon: a cream face, a dark edge, the icon centred.
 static func icon_button(kind: String, side := 0.0) -> Button:
 	var px := side if side > 0.0 else UiTheme.size("button_size")
 	var b := Button.new()
@@ -78,7 +78,7 @@ static func icon_button(kind: String, side := 0.0) -> Button:
 		sb.bg_color = face
 		sb.border_color = UiTheme.color("button_edge")
 		sb.set_border_width_all(int(UiTheme.size("button_border")))
-		sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
+		sb.set_corner_radius_all(int(px * UiTheme.size("round_share")))
 		b.add_theme_stylebox_override(state, sb)
 	var icon := UiIcon.make(kind, px * 0.62)
 	icon.size = icon.custom_minimum_size
@@ -133,7 +133,7 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 		sb.bg_color = face
 		sb.border_color = UiTheme.color("cream") if state.contains("pressed") else UiTheme.color("button_edge")
 		sb.set_border_width_all(int(UiTheme.size("button_border")))
-		sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
+		sb.set_corner_radius_all(int(minf(bw, bh) * UiTheme.size("tool_round_share")))
 		b.add_theme_stylebox_override(state, sb)
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

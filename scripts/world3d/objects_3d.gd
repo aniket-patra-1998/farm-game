@@ -204,6 +204,38 @@ func _mark_ready() -> void:
 	_ready_marks.show_at(tops, animals, minor)
 
 
+## What drawing everything under `root` costs, counted as the renderer would (for the budget test and tools):
+## x the draws (each visible mesh or batch with something in it, again for the sun's shadow when it casts one),
+## y the triangles (a batch's mesh times its instances).
+static func draw_cost(root: Node) -> Vector2i:
+	var draws := 0
+	var tris := 0
+	for n in root.find_children("*", "GeometryInstance3D", true, false):  # not-ui
+		var g := n as GeometryInstance3D
+		if not g.is_visible_in_tree():
+			continue
+		var mesh: Mesh = null
+		var copies := 1
+		if g is MeshInstance3D:
+			mesh = (g as MeshInstance3D).mesh
+		elif g is MultiMeshInstance3D and (g as MultiMeshInstance3D).multimesh != null:
+			var mm := (g as MultiMeshInstance3D).multimesh
+			mesh = mm.mesh
+			copies = mm.visible_instance_count if mm.visible_instance_count >= 0 else mm.instance_count
+		if mesh == null or copies <= 0:
+			continue
+		var passes := 2 if g.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF else 1
+		for k in mesh.get_surface_count():
+			draws += passes
+			var arrays := mesh.surface_get_arrays(k)
+			var idx: Variant = arrays[Mesh.ARRAY_INDEX]
+			var verts: Variant = arrays[Mesh.ARRAY_VERTEX]
+			var n_tris := (idx as PackedInt32Array).size() / 3 if idx != null else (verts as Array).size() / 3 \
+				if verts != null else 0
+			tris += n_tris * copies * passes
+	return Vector2i(draws, tris)
+
+
 ## The ready signs' layer (for tests and tools).
 func ready_marks_node() -> ReadyMarks:
 	return _ready_marks

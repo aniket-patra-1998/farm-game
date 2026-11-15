@@ -73,6 +73,7 @@ var _shade_slot := -1
 var _eyes: Array[Node3D] = []    # (they blink)
 var _walk_speed := 1.0           # its walking speed, in units a second
 var _skeleton: Skeleton3D        # the whole animal is one skinned mesh on this (see _skin)
+var _casting: MeshInstance3D     # its part that may cast a real shadow (the graphics level's `animal_shadows`)
 var _bones: Array[Node3D] = []   # the part nodes the pose code moves, by bone index; copied to the bones
 var _slot := 0                   # its turn in the round-robin when posed less than every frame
 
@@ -81,6 +82,24 @@ var _pending := 0.0              # time not yet posed (while waiting its turn)
 
 
 
+
+
+## Real shadows from animals only where the graphics level allows (`animal_shadows`, high and up): below that
+## the contact shade under each (ContactShades) grounds it, and the shadow pass skips a farm's worth of animals.
+func _apply_shadow() -> void:
+	if _casting != null:
+		_casting.cast_shadow = (GeometryInstance3D.SHADOW_CASTING_SETTING_ON if bool(Quality.value("animal_shadows"))
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+
+
+func _enter_tree() -> void:
+	if not Quality.notifier.emitted.is_connected(_apply_shadow):
+		Quality.notifier.emitted.connect(_apply_shadow)
+
+
+func _exit_tree() -> void:
+	if Quality.notifier.emitted.is_connected(_apply_shadow):
+		Quality.notifier.emitted.disconnect(_apply_shadow)
 
 
 static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1.0) -> Animal3D:
@@ -243,6 +262,9 @@ func _skin() -> void:
 			mi.set_surface_override_material(k, mats[k])
 		if not shadow:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		else:
+			_casting = mi
+			_apply_shadow()
 		_skeleton.add_child(mi)
 		mi.skeleton = NodePath("..")
 	_pose_bones()

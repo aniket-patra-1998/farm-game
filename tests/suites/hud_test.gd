@@ -373,3 +373,14 @@ func test_334_the_interface_keeps_inside_the_safe_area() -> void:
 		"no cut-outs: nothing moves")
 	_check(ItemIcons.side() >= ItemIcons.SIDE and ItemIcons.side() <= ItemIcons.SIDE_MOST,
 		"pictures are made at this screen's density, within bounds")
+
+
+## The interface takes a set share of the screen, and on a phone never less than a comfortable touch.
+func test_337_the_interface_scales_with_the_screen() -> void:
+	var rules := {"short_share": 0.075, "touch_mm": 7.0, "least": 0.7, "most": 1.2}
+	_check(is_equal_approx(UiTheme.scale_for(720.0, 64.0, 1.0, 96.0, false, rules), 0.075 * 720.0 / 64.0),
+		"a computer: its share of the screen")
+	var phone := UiTheme.scale_for(720.0, 64.0, 2.0, 440.0, true, rules)
+	_check(64.0 * phone * 2.0 / 440.0 * 25.4 >= 6.99, "a dense phone: never under 7 mm to touch")
+	_eq(UiTheme.scale_for(4000.0, 64.0, 1.0, 96.0, false, rules), 1.2, "never past the most")
+	_eq(UiTheme.size("round_share"), 0.5, "shares aren't scaled")

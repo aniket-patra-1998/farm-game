@@ -171,7 +171,7 @@ func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
 	var dairy_view: Node3D = world.objects.get("_views")[9002]["node"]
 	var on_dairy := cam.unproject_position(dairy_view.global_position + Vector3(0, 0.5, 0))
 	_eq(grid.picker.call(on_dairy), 9002, "a tap on the Dairy Farm's walls picks the Dairy Farm")
-	_eq(grid.picker.call(Vector2(5, FarmHud.TOP_H + 5)), -1, "a tap on open grass picks nothing")
+	_eq(grid.picker.call(Vector2(5, FarmHud.top_h() + 5)), -1, "a tap on open grass picks nothing")
 	# Tapped, the cow stops and looks round, and gives a little start.
 	grid.object_poked.emit(9001)
 	_eq(mind.state, AnimalBehaviour.State.LOOK, "a tapped cow looks round")
@@ -1391,7 +1391,7 @@ func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
 
 func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 	var keys := ["shadows", "shadow_splits", "shadow_distance", "glow", "scale", "lod_pixels", "pose_every",
-		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size"]
+		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size", "animal_shadows"]
 	for name: String in Quality.LEVELS:
 		for k: String in keys:
 			_check(Quality.value(k, name) != null, "%s sets %s" % [name, k])
@@ -1812,3 +1812,28 @@ func test_336_a_pond_stands_on_the_ground_never_under_it() -> void:
 	_check(lowest >= 0.0, "nothing below the ground (lowest %.3f)" % lowest)
 	_check(PondModel.WATER_LEVEL > PondModel.DEEP_HEIGHT, "the water stands over its bed")
 	root.free()
+
+
+## Performance is a rule, not a hope: the showcase farm (the heaviest there is) stays inside data/perf_budget.json
+## on the phone's level, counted as the renderer would: each mesh or batch drawn, plus again in the sun's shadow
+## when it casts one, and their triangles.
+func test_338_the_heaviest_farm_stays_inside_its_draw_budget() -> void:
+	var budget: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/perf_budget.json"))
+	var was_level := Quality.level()
+	Quality._level = str(budget["level"])
+	Quality.notifier.emitted.emit()
+	Game.saving_enabled = false
+	Game.reset_game()
+	ShowcaseFarm.build(Game)
+	var objects := Objects3D.new()
+	add_child(objects)
+	await Objects3D.until_settled(get_tree(), 3000)
+	objects.sync()
+	var cost := Objects3D.draw_cost(objects)
+	print("PERF budget: %d draws, %d triangles" % [cost.x, cost.y])  # not-ui
+	_check(cost.x <= int(budget["draws"]), "draws %d within %d" % [cost.x, int(budget["draws"])])
+	_check(cost.y <= int(budget["triangles"]), "triangles %d within %d" % [cost.y, int(budget["triangles"])])
+	objects.free()
+	Game.reset_game()
+	Quality._level = was_level
+	Quality.notifier.emitted.emit()

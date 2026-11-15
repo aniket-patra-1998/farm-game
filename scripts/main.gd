@@ -70,8 +70,8 @@ func _ready() -> void:
 	add_child(night)
 
 	camera = FarmCamera.new()
-	camera.top_margin = FarmHud.TOP_H
-	camera.bottom_margin = FarmHud.BOTTOM_H
+	camera.top_margin = FarmHud.top_h()
+	camera.bottom_margin = FarmHud.bottom_h()
 	# You can look out over the countryside a little, but not off into nothing.
 	camera.area_provider = func() -> Rect2:
 		var pad := FarmGrid.TILE_W * 4.0
@@ -140,11 +140,11 @@ func _use_3d() -> void:
 func _fit_camera() -> void:
 	var view := get_viewport_rect().size
 	var bounds := grid.get_bounds()
-	var usable := view - Vector2(0, FarmHud.TOP_H + FarmHud.BOTTOM_H)
+	var usable := view - Vector2(0, FarmHud.top_h() + FarmHud.bottom_h())
 	_base_zoom = minf(usable.x / (bounds.size.x * 1.04), usable.y / (bounds.size.y * 1.04))
 	_set_zoom_limits(view)
 	# The free area is shifted down by half the difference between the bars.
-	var shift := (FarmHud.TOP_H - FarmHud.BOTTOM_H) / 2.0
+	var shift := (FarmHud.top_h() - FarmHud.bottom_h()) / 2.0
 	camera.snap(bounds.get_center() - Vector2(0, shift / _base_zoom), _base_zoom)
 
 
@@ -159,7 +159,7 @@ func _set_zoom_limits(view: Vector2) -> void:
 func _on_resized() -> void:
 	var view := get_viewport_rect().size
 	var bounds := grid.get_bounds()
-	var usable := view - Vector2(0, FarmHud.TOP_H + FarmHud.BOTTOM_H)
+	var usable := view - Vector2(0, FarmHud.top_h() + FarmHud.bottom_h())
 	_base_zoom = minf(usable.x / (bounds.size.x * 1.04), usable.y / (bounds.size.y * 1.04))
 	_set_zoom_limits(view)
 	camera.snap(camera.position, clampf(camera.target_zoom, camera.min_zoom, camera.max_zoom))

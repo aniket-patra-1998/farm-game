@@ -11,8 +11,6 @@ signal cancel_place_requested
 signal place_stored_requested(index: int)
 
 
-const TOP_H := 72.0        # the top strip the counters stand in (the camera keeps the farm's middle clear of it)
-const BOTTOM_H := 102.0    # and the bottom one the tool panel stands in
 const GROUP_PAGE := 30     # rows of a long grouped list (the barn) built at a time
 
 const WOOD := Color("#7a4f2c")
@@ -61,6 +59,16 @@ var _root: Control   # the interface's root, kept inside the safe area
 @onready var settings := HudSettings.new(self)
 @onready var seeds := HudSeeds.new(self)
 
+
+
+## The top strip the counters stand in (the camera keeps the farm's middle clear of it), at the interface's scale.
+static func top_h() -> float:
+	return UiTheme.size("top_height")
+
+
+## And the bottom one the tool panel stands in.
+static func bottom_h() -> float:
+	return UiTheme.size("bottom_height")
 
 func _ready() -> void:
 	layer = 10 # above the sky, the farm and the night lights
@@ -155,7 +163,7 @@ func _build_placing_bar(root: Control) -> void:
 	cancel.pressed.connect(func() -> void: cancel_place_requested.emit())
 	row.add_child(cancel)
 	_placing_bar.visible = false
-	_top_holder(root, TOP_H + 10).add_child(_placing_bar)
+	_top_holder(root, top_h() + 10).add_child(_placing_bar)
 
 
 ## Shows the placement banner; empty text hides it.
@@ -222,7 +230,7 @@ func _build_tutorial(root: Control) -> void:
 	sb.content_margin_top = 10
 	sb.content_margin_bottom = 10
 	_tutorial.add_theme_stylebox_override("normal", sb)
-	_top_holder(root, TOP_H + 12).add_child(_tutorial)
+	_top_holder(root, top_h() + 12).add_child(_tutorial)
 
 
 func _refresh_tutorial() -> void:
@@ -230,7 +238,7 @@ func _refresh_tutorial() -> void:
 	_tutorial.text = text
 	_tutorial.visible = text != "" and not (_placing_bar and _placing_bar.visible)
 	# Keep messages clear of the tutorial banner while it shows.
-	var y := TOP_H + (80.0 if _tutorial.visible else 16.0)
+	var y := top_h() + (80.0 if _tutorial.visible else 16.0)
 	_toast_holder.offset_top = y
 	_toast_holder.offset_bottom = y + 60.0
 
@@ -262,7 +270,7 @@ func _build_toast(root: Control) -> void:
 	sb.shadow_size = 4
 	_toast.add_theme_stylebox_override("normal", sb)
 	_toast.modulate.a = 0.0
-	_toast_holder = _top_holder(root, TOP_H + 16)
+	_toast_holder = _top_holder(root, top_h() + 16)
 	_toast_holder.add_child(_toast)
 
 
