@@ -3,6 +3,7 @@ colours) at rest, and its moves as blend shapes, each the difference the builder
 
     walk_00 .. walk_NN   the walk cycle at full stride (the game blends between the two nearest, by its gait)
     head                 head down: grazing, pecking
+    jaw                  chewing (four-legged grazers)
     look_left, look_right
     blink
     tail
@@ -34,7 +35,7 @@ def moves():
     out = []
     for k in range(WALK_FRAMES):
         p = _rest(); p.update(gait=k / WALK_FRAMES, stride=1.0); out.append(("walk_%02d" % k, p))
-    for name, change in (("head", dict(head=1.0)), ("look_left", dict(look=1.0)), ("look_right", dict(look=-1.0)),
+    for name, change in (("head", dict(head=1.0)), ("jaw", dict(head=0.0, jaw=1.0)), ("look_left", dict(look=1.0)), ("look_right", dict(look=-1.0)),
                          ("blink", dict(blink=1.0)), ("tail", dict(tail=1.0)), ("breath", dict(breath=1.0))):
         p = _rest(); p.update(change); out.append((name, p))
     return out

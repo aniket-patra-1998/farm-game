@@ -8,6 +8,7 @@
     "building": {"triangles": 15000, "draws": 8}
   },
   "assets": {
-    "chicken": {"model": "res://art/models/animals/chicken.glb", "budget": "animal"}
+    "chicken": {"model": "res://art/models/animals/chicken.glb", "budget": "animal"},
+    "cow": {"model": "res://art/models/animals/cow.glb", "budget": "animal"}
   }
 }

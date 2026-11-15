@@ -263,6 +263,7 @@ func _pose_file(p: AnimalPose) -> void:
 	_shape("look_left", maxf(look, 0.0))
 	_shape("look_right", maxf(-look, 0.0))
 	_shape("blink", p.blink)
+	_shape("jaw", maxf(p.jaw, 0.0) * smoothstep(0.0, 1.0, p.head))   # (chewing while grazing)
 	_shape("tail", clampf(p.tail + motion.tail, -1.0, 1.0))
 	_shape("breath", p.breath * 0.5)
 	_body.position = Vector3(0, p.hop * _leg * 0.8, 0)
