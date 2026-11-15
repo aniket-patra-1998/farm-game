@@ -18,6 +18,7 @@ var _left := 0.0
 var _title: Label
 var _line: Label
 var _open: Button
+var _act: Button          # the one thing to do right here (Feed), done from the bubble itself
 
 
 func _init(owner: FarmHud) -> void:
@@ -40,7 +41,21 @@ func _init(owner: FarmHud) -> void:
 		var uid := _uid
 		close()
 		hud.show_building(uid))
-	col.add_child(_open)
+	_act = hud._panel_button("")
+	_act.custom_minimum_size = _open.custom_minimum_size
+	_act.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_act.pressed.connect(func() -> void:
+		var o := Game.object_by_uid(_uid)
+		var deed := action_of(o)
+		close()
+		if not deed.is_empty():
+			(deed["do"] as Callable).call())
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 6)
+	buttons.add_child(_act)
+	buttons.add_child(_open)
+	col.add_child(buttons)
 	visible = false
 
 
@@ -55,8 +70,13 @@ func show_at(at: Vector2, title: String, line: String, uid: int) -> void:
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if long else TextServer.AUTOWRAP_OFF
 	_title.custom_minimum_size.x = UiTheme.size("bubble_width") if long else 0.0
 	_line.visible = line != ""
-	_open.visible = uid >= 0 and has_panel(Game.object_by_uid(uid))
-	_left = SHOW_FOR_ACTION if _open.visible else SHOW_FOR
+	var o := Game.object_by_uid(uid) if uid >= 0 else {}
+	_open.visible = has_panel(o)
+	var deed := action_of(o)
+	_act.visible = not deed.is_empty()
+	if _act.visible:
+		_act.text = str(deed["words"])
+	_left = SHOW_FOR_ACTION if _open.visible or _act.visible else SHOW_FOR
 	visible = true
 	reset_size()
 	_follow()
@@ -73,12 +93,29 @@ func close() -> void:
 	_uid = -1
 
 
-## Whether a placed thing has a panel worth opening from its bubble (more than its name and its time).
+## Whether a placed thing has a panel worth opening from its bubble: a building (its yard, its recipes, its
+## level), a young one or a bloom (what it needs, buying more), a vehicle (its fuel). An animal or a tree has
+## nothing more than its bubble says; feeding is the bubble's own button (`action_of`).
 static func has_panel(o: Dictionary) -> bool:
-	if o.is_empty() or Game.kind_of(o) == "decor":
+	if o.is_empty() or Game.kind_of(o) in ["decor", "animal", "tree"]:
 		return false
-	return (Game.is_building_item(str(o["id"])) or Game.feeds.is_feedable(o) or Game.nurture.is_young(o)
-		or Game.kind_of(o) in ["bloom", "vehicle"] or Game.nurture.supply_for(o) != "")
+	return (Game.is_building_item(str(o["id"])) or Game.nurture.is_young(o) or Game.kind_of(o) in ["bloom", "vehicle"]
+		or Game.nurture.supply_for(o) != "")
+
+
+## The one thing to do for `o` right from its bubble, as {"words", "do"}, or {}: feed a hungry animal or home
+## with the best feed in the Barn, for more coins (the first effect), queued for the farmer as any farm work.
+static func action_of(o: Dictionary) -> Dictionary:
+	if o.is_empty() or not Game.feeds.is_feedable(o) or not Game.feeds.effect_of(o).is_empty():
+		return {}
+	var best := Game.feeds.best_feed_for(o)
+	if best.is_empty():
+		return {}
+	var uid := int(o["uid"])
+	var effect := str(Game.feeds.effects()[0])
+	return {"words": TranslationServer.translate("BUBBLE_FEED"), "do": func() -> void:
+		Game.player.enqueue({"kind": "feed", "uid": uid, "feed": best["feed"], "effect": effect,
+			"rich": best["rich"]})}
 
 
 func _process(delta: float) -> void:

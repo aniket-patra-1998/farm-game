@@ -415,6 +415,8 @@ func test_353_a_tapped_thing_tells_about_itself_in_a_bubble() -> void:
 	_eq(FarmGrid.status_of({"uid": 7002, "id": "bench", "row": 0, "col": 0}), "", "a decoration just says its name")
 	_check(not HudBubble.has_panel({"uid": 7002, "id": "bench", "row": 0, "col": 0}), "a decoration has no panel")
 	_check(HudBubble.has_panel({"uid": 7003, "id": "chicken_coop", "row": 0, "col": 0}), "a home offers its panel")
+	_check(not HudBubble.has_panel(hen), "an animal has no panel: its bubble says it all")
+	_check(HudBubble.action_of({"uid": 7002, "id": "bench", "row": 0, "col": 0}).is_empty(), "a bench has nothing to do")
 	var hud := FarmHud.new()
 	add_child(hud)
 	await get_tree().process_frame

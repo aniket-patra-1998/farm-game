@@ -32,7 +32,6 @@ func tabs() -> Array:
 ## Everything of one kind for sale, as a grid of cards (its picture, name, a line about it, its price), under a
 ## strip that tells all about a card that can't be bought yet when it is tapped (a phone has no tooltips).
 func build_shelf(content: VBoxContainer, kind: String) -> void:
-	content.add_child(BookPanel.text(tr("BUY_THEN_DRAG_ONTO_AN_OPEN"), 18, BookPanel.CREAM))
 	var about := VBoxContainer.new()
 	var strip := BookPanel.card_frame(about)
 	strip.visible = false

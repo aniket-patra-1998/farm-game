@@ -11,6 +11,7 @@ const INK_FROM := 0.22    # how small a jump in light or colour is an edge (lowe
 const INK_REACH := 1.0    # how many pixels out it looks, so how thick the line is
 const DAY_SATURATION := 1.32   # FarmVille's colour is rich: the daytime grade
 const DAY_CONTRAST := 1.14
+const TAP_WORDS_MS := 300   # the game's words this soon after a tap belong to it (shown in its bubble)
 const CLOSEST_TILES := 3.5   # the closest zoom shows about this many tiles across, whatever the farm's size
 const MIN_CLOSE_FACTOR := 1.5 # (and is always at least this much closer than the whole-farm view)
 const FURTHEST_OUT := 1.25    # how far past the whole-farm view you can pull back
@@ -105,7 +106,13 @@ func _ready() -> void:
 	# message at the top; the game's own news (a level, a find) stays a message.
 	grid.info.connect(func(text: String) -> void:
 		hud.bubble.show_at(grid.last_tap_at + Vector2(0, -FarmGrid.BUBBLE_LIFT * 0.6), text, "", -1))
-	Game.message.connect(hud.show_message)
+	# The game's words just after a tap on the farm (a refusal, a result) show at the tap, in its bubble; later
+	# news (the farmer's work done, a find while away) and anything said with a panel open stays at the top.
+	Game.message.connect(func(text: String) -> void:
+		if not Game.modal_open and Time.get_ticks_msec() - grid.last_tap_msec <= TAP_WORDS_MS:
+			hud.bubble.show_at(grid.last_tap_at + Vector2(0, -FarmGrid.BUBBLE_LIFT * 0.6), text, "", -1)
+		else:
+			hud.show_message(text))
 
 	get_viewport().size_changed.connect(_on_resized)
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())

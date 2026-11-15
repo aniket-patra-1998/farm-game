@@ -76,6 +76,7 @@ var fx: FxLayer          # rewards flying to the top bar (set by main)
 
 
 var last_tap_at := Vector2.ZERO   # where the finger last came down (this grid's space): where `info` is shown
+var last_tap_msec := -100000      # and when
 var _sell_pending := -1  # uid tapped once with the Sell tool; a second tap sells it
 var _sell_pending_until := 0
 
@@ -550,6 +551,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_hold_spent = false
 			_press_pos = touch.position
 			last_tap_at = to_local(get_canvas_transform().affine_inverse() * touch.position)
+			last_tap_msec = Time.get_ticks_msec()
 			_press_on_farm = _on_farm_area(touch.position)
 			# The plot under the finger lights the moment it lands, so a tap feels instant (a farming tool on an
 			# open plot: a press on a building or tree picks that, so nothing under it lights).
@@ -561,6 +563,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_swipe_spent = false
 			_swipe_at = touch.position
 		else:
+			last_tap_msec = Time.get_ticks_msec()   # (a tap acts as the finger lifts: its words follow then)
 			# A tap: act on the plot under the finger. A drag already moved the camera (or farmed as it went).
 			if _pressing and not _dragged and _press_on_farm:
 				_apply_at(touch.position)
