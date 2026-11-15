@@ -1,5 +1,13 @@
 {
   "_doc": "How each crop looks in 3D (scripts/world3d/crop_forms.gd). 'crops' gives each crop its form; one without falls back to its catalog shape. Each form has a 'kind' (which builder draws it) and that kind's numbers: heights are [low, high] in plant units (a plant is about a fifth of a tile), counts are stems or leaves, 'leaf' is the leaf colour. Produce takes the crop's own catalog colour.",
+  "look": {
+    "_doc": "The look every crop shares, so a field is level and shows its harvest: 'height' is how tall a ripe crop may stand, in plant units (a taller one has its stem shortened; 0: no limit), 'young' the share of that a growing one may; 'produce' is how many times bigger small produce is drawn than its form asks ('produce_small': this size or less gets all of it, 'produce_big': this size or more gets none). A form may set its own 'produce'.",
+    "height": 0.19,
+    "young": 0.8,
+    "produce": 1.7,
+    "produce_small": 0.015,
+    "produce_big": 0.05
+  },
   "forms": {
     "wheat": {"kind": "cereal", "count": 11, "height": [0.24, 0.32], "head": 0.05, "awn": 3, "leaf": "#6f9a3a", "straw": "#d8b85a"},
     "rye": {"kind": "cereal", "count": 9, "height": [0.32, 0.42], "head": 0.055, "awn": 4, "leaf": "#6f8f4a", "straw": "#c9a85a"},

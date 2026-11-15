@@ -13,6 +13,8 @@ const DRY := Color("#9a7a42")
 const DRY_DARK := Color("#6e5530")
 const SEED := Color("#4a3322")
 const STEM := Color("#5c8a2e")
+const HEAD_FROM := 0.35    # produce beginning lower than this share of a plant's height is not a head on a stem
+const STEM_LEAST := 0.3    # a shortened stem is never less than this share of the height crops are kept to
 
 static var _cache := {}
 
@@ -20,8 +22,41 @@ static var _cache := {}
 static func mesh(shape: String, stage: String) -> ArrayMesh:
 	var key := shape + "|" + stage
 	if not _cache.has(key):
-		_cache[key] = _build(shape, stage)
+		_cache[key] = _fit(_build(shape, stage), CropForms.look("height", 0.0) * (1.0 if stage == "ripe"
+			else CropForms.look("young", 1.0)))
 	return _cache[key]
+
+
+## Every crop stands about as tall as the next (data/crop_forms.json "look": a field reads best level, its harvest
+## on top): a plant taller than `cap` has its stem shortened under its produce, which keeps its size and stays
+## on top; one with no produce up there (still growing, or produce all the way up) is drawn shorter as a whole.
+static func _fit(mesh: ArrayMesh, cap: float) -> ArrayMesh:
+	if cap <= 0.0 or mesh.get_surface_count() == 0:
+		return mesh
+	var arrays := mesh.surface_get_arrays(0)
+	var pts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var cols: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+	var top := 0.0
+	var head := INF   # where the produce begins
+	for i in pts.size():
+		top = maxf(top, pts[i].y)
+		if cols[i].a < 0.5:
+			head = minf(head, pts[i].y)
+	if top <= cap:
+		return mesh
+	if head > top or head < top * HEAD_FROM:
+		for i in pts.size():
+			pts[i].y *= cap / top
+	else:
+		var stem := maxf(cap - (top - head), cap * STEM_LEAST)
+		var whole := minf(1.0, cap / (stem + top - head))   # (a head taller than the cap: the whole plant smaller)
+		for i in pts.size():
+			var y := pts[i].y
+			pts[i] = Vector3(pts[i].x, (y * stem / head if y <= head else stem + y - head), pts[i].z) * whole
+	arrays[Mesh.ARRAY_VERTEX] = pts
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return out
 
 
 ## Produce colour in the vertex: `shade` 0..1 (how lit), alpha 0 marks it as produce (every other

@@ -30,6 +30,13 @@ static func form_of(crop_id: String, shape: String) -> String:
 	return str((_data["crops"] as Dictionary).get(crop_id, shape))
 
 
+## A number of the look every crop shares (data/crop_forms.json "look"): how tall a crop may stand, how much
+## its produce is enlarged.
+static func look(key: String, fallback: float) -> float:
+	_load()
+	return float((_data.get("look", {}) as Dictionary).get(key, fallback))
+
+
 static func spec(form: String) -> Dictionary:
 	_load()
 	return (_data["forms"] as Dictionary).get(form, {})
@@ -50,6 +57,9 @@ static func build(mb: MeshBuilder, form: String, rng: RandomNumberGenerator, k: 
 	var s := spec(form)
 	if s.is_empty():
 		return false
+	mb.produce_scale = float(s.get("produce", look("produce", 1.0)))   # (a form may set its own)
+	mb.produce_small = look("produce_small", mb.produce_small)
+	mb.produce_big = look("produce_big", mb.produce_big)
 	match str(s["kind"]):
 		"cereal": _cereal(mb, rng, s, k, ripe)
 		"bean": _bean(mb, rng, s, k, ripe)

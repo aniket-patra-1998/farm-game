@@ -1867,3 +1867,28 @@ func test_345_a_kept_model_comes_back_the_same_and_shares_its_materials() -> voi
 		n.free()
 	ModelStore._remove_tree("user://test_models")
 	ModelStore.stamp = ""
+
+
+func test_353_crops_stand_level_and_show_their_harvest() -> void:
+	# Every crop stands about as tall as the next (data/crop_forms.json "look"), ripe or growing.
+	var cap := CropForms.look("height", 0.0)
+	_check(cap > 0.0, "the height crops are kept to is set")
+	for form: String in CropForms.forms():
+		_check(CropModels.mesh(form, "ripe").get_aabb().end.y <= cap + 0.001, "ripe %s stands no taller than the rest" % form)
+		_check(CropModels.mesh(form, "young").get_aabb().end.y <= cap * CropForms.look("young", 1.0) + 0.001,
+			"growing %s stands no taller than the rest" % form)
+	# A tall plant's stem is shortened under its produce, which keeps its size and stays on top.
+	var tall := MeshBuilder.new()
+	tall.cone(Vector3.ZERO, 0.01, 0.01, 0.6, Color.GREEN, 4)
+	tall.ellipsoid(Vector3(0, 0.65, 0), Vector3.ONE * 0.05, Color(1, 1, 1, 0.0))
+	var fitted := CropModels._fit(tall.commit(), 0.2)
+	_check(absf(fitted.get_aabb().end.y - 0.2) < 0.001, "a tall plant is brought down to the shared height")
+	_check(absf(fitted.get_aabb().size.x - 0.1) < 0.005, "and its produce keeps its size")
+	# Small produce is drawn bigger than asked, big produce and leaves as asked.
+	for part: Array in [[0.01, 0.0, 2.0, "small produce is drawn bigger"], [0.06, 0.0, 1.0, "big produce as asked"],
+			[0.01, 1.0, 1.0, "a leaf as asked"]]:
+		var mb := MeshBuilder.new()
+		mb.produce_scale = 2.0
+		mb.ellipsoid(Vector3.ZERO, Vector3.ONE * float(part[0]), Color(1, 1, 1, float(part[1])))
+		_check(absf(mb.commit().get_aabb().size.y - 2.0 * float(part[0]) * float(part[2])) < 0.001, str(part[3]))
+

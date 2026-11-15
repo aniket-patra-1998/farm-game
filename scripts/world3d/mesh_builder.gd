@@ -5,6 +5,12 @@ extends RefCounted
 ## MultiMesh). Every triangle is wound so its front faces out (Godot draws clockwise-from-outside
 ## fronts), with smooth or flat normals as each shape needs.
 
+## Produce (a colour with alpha 0: a fruit, a head, a petal) can be drawn bigger than it is asked for, so a ripe
+## field shows its harvest more than its leaves: small pieces most (`produce_scale` times, for a piece
+## `produce_small` or less from its middle to its edge), big ones not at all (from `produce_big` up).
+var produce_scale := 1.0
+var produce_small := 0.015
+var produce_big := 0.05
 var _st := SurfaceTool.new()
 var _empty := true
 
@@ -18,6 +24,13 @@ func commit() -> ArrayMesh:
 		# An empty mesh can't be drawn: give it one invisible, degenerate triangle.
 		tri(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO, Vector3.UP, Color(0, 0, 0, 0))
 	return _st.commit()
+
+
+## How much bigger a piece of colour `col`, `size` from its middle to its edge, is drawn (see `produce_scale`).
+func _grown(col: Color, size: float) -> float:
+	if col.a >= 0.5 or is_equal_approx(produce_scale, 1.0):
+		return 1.0
+	return lerpf(produce_scale, 1.0, smoothstep(produce_small, produce_big, size))
 
 
 ## One triangle with a flat normal `n`, wound to face along it. `col.a` is free for the shader's use.
@@ -66,6 +79,7 @@ func box(xf: Transform3D, col: Color) -> void:
 
 ## An ellipsoid centred on `c` with half-sizes `r`, smooth shaded.
 func ellipsoid(c: Vector3, r: Vector3, col: Color, seg := 8, rings := 5) -> void:
+	r *= _grown(col, maxf(r.x, maxf(r.y, r.z)))
 	for i in rings:
 		var t0 := PI * i / rings
 		var t1 := PI * (i + 1) / rings
@@ -90,6 +104,10 @@ static func _sph(theta: float, phi: float) -> Vector3:
 
 ## A cone (or a tapered cylinder) standing on `base`, `h` tall, radius `r0` at the bottom and `r1` on top.
 func cone(base: Vector3, r0: float, r1: float, h: float, col: Color, seg := 7, top_col := Color(0, 0, 0, -1)) -> void:
+	var grown := _grown(col, maxf(maxf(r0, r1), h * 0.5))
+	r0 *= grown
+	r1 *= grown
+	h *= grown
 	var tc := col if top_col.a < 0.0 else top_col
 	var slope := (r0 - r1) / maxf(h, 0.0001)
 	for j in seg:
@@ -122,6 +140,10 @@ func _st_quad_smooth(a: Vector3, b: Vector3, c: Vector3, d: Vector3, na: Vector3
 ## A leaf or blade: a flat, double-sided strip from `base` toward `tip`, `w` wide at its widest, curving
 ## by `bend` (sideways sag); its colour shades from `col` at the base to `tip_col`.
 func blade(base: Vector3, tip: Vector3, w: float, col: Color, tip_col: Color, bend := Vector3.ZERO) -> void:
+	var grown := _grown(col, (tip - base).length() * 0.5)
+	tip = base + (tip - base) * grown
+	w *= grown
+	bend *= grown
 	var axis := tip - base
 	var side := axis.cross(Vector3.UP)
 	if side.length() < 0.001:
