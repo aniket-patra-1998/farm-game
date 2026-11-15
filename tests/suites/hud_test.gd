@@ -410,7 +410,8 @@ func test_352_the_release_shows_only_its_items_and_features() -> void:
 
 func test_353_a_tapped_thing_tells_about_itself_in_a_bubble() -> void:
 	var hen := {"uid": 7001, "id": "chicken", "row": 0, "col": 0, "t": Game.now()}
-	_check(FarmGrid.status_of(hen).begins_with(tr("BUBBLE_READY_IN").split("%")[0]), "a hen not ready says when it will be")
+	_check(FarmGrid.status_of(hen).begins_with(tr("BUBBLE_READY_IN").split("%")[0]),
+		"a hen not ready says when it will be")
 	_eq(FarmGrid.status_of({"uid": 7002, "id": "bench", "row": 0, "col": 0}), "", "a decoration just says its name")
 	_check(not HudBubble.has_panel({"uid": 7002, "id": "bench", "row": 0, "col": 0}), "a decoration has no panel")
 	_check(HudBubble.has_panel({"uid": 7003, "id": "chicken_coop", "row": 0, "col": 0}), "a home offers its panel")
