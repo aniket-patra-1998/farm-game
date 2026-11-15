@@ -198,7 +198,8 @@ func _rare_free(kind: String) -> Array[String]:
 	var out: Array[String] = []
 	for k in game.item_order:
 		var it := game.item_data(k)
-		if str(it.get("kind", "")) == kind and not bool(it.get("young", false)) and not rares.has(k):
+		if str(it.get("kind", "")) == kind and not bool(it.get("young", false)) and not rares.has(k) \
+				and Release.has(k):
 			out.append(k)
 	return out
 
@@ -382,13 +383,13 @@ func _pick_animal(inside: Dictionary) -> String:
 func _weighted(inside: Dictionary, keep: Callable) -> String:
 	var total := 0
 	for k in inside:
-		if game.items.has(k) and keep.call(k):
+		if game.items.has(k) and keep.call(k) and Release.has(k):
 			total += int(inside[k])
 	if total <= 0:
 		return ""
 	var pick := game.rng.randi_range(1, total)
 	for k in inside:
-		if game.items.has(k) and keep.call(k):
+		if game.items.has(k) and keep.call(k) and Release.has(k):
 			pick -= int(inside[k])
 			if pick <= 0:
 				return k

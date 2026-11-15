@@ -61,7 +61,7 @@ func _spawn_stray() -> bool:
 	var total := 0.0
 	for id in game.item_order:
 		var it: Dictionary = game.items[id]
-		if it["kind"] != "animal":
+		if it["kind"] != "animal" or not Release.has(id):
 			continue
 		var w := 0.0
 		if it.get("stray_only", false):

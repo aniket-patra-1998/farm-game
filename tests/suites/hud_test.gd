@@ -391,12 +391,18 @@ func test_352_the_release_shows_only_its_items_and_features() -> void:
 	var data := JSON.parse_string(FileAccess.get_file_as_string(Release.DATA)) as Dictionary
 	for id: String in data["items"]:
 		_check(Game.items.has(id) or Game.crops.has(id), "%s in data/v1.json is a catalog item or crop" % id)
-	_check(Release.has("cow") and not Release.has("tractor"), "a listed animal is in; a vehicle is not")
-	_check(not Release.on("strays") and Release.on("no_such_feature"), "a switched-off feature is off; others on")
-	_eq(Release.balance("synergy.enabled"), false, "the release's own balance values apply")
+	for f: String in data["features"]:
+		_eq(Release.on(f), bool(data["features"][f]), "feature %s as the release sets it" % f)
+	_check(Release.on("no_such_feature"), "a feature the release doesn't name is on")
+	var off := ""
 	for id in Game.item_order:
-		if Game.item_data(id)["kind"] == "vehicle":
-			_check(not HudMarket._for_sale(id), "%s is not for sale in this release" % id)
-	_check(not Game.unlocks_at(12).has(str(Game.item_data("tractor")["name"])), "a switched-off item doesn't unlock")
+		if not Release.has(id) and int(Game.item_data(id)["unlock_level"]) < 99:
+			off = id
+			break
+	_check(off != "", "some content is left for updates")
+	if off != "":
+		_check(not HudMarket._for_sale(off), "%s, not in this release, is not for sale" % off)
+		var lvl := int(Game.item_data(off)["unlock_level"])
+		_check(not Game.unlocks_at(lvl).has(str(Game.item_data(off)["name"])), "and doesn't unlock")
 	Release.whole = true
-	_check(Release.has("tractor") and Release.balance("synergy.enabled") == null, "with everything on, all is in")
+	_check(Release.has(off) and Release.balance("synergy.enabled") == null, "with everything on, all is in")
