@@ -144,6 +144,9 @@ static func bird(col: Color) -> Node3D:
 	ModelKit.ball(b, Vector3(0, 0.03, -0.04), 0.022, ModelKit.paint(col.lightened(0.1)))
 	ModelKit.ball(b, Vector3(0, 0.028, -0.065), 0.008, ModelKit.paint(Color("#e8a23a")), Vector3(0.8, 0.6, 1.6))
 	ModelKit.ball(b, Vector3(0, 0.01, 0.045), 0.018, ModelKit.paint(col.darkened(0.2)), Vector3(0.6, 0.3, 1.2))
+	for side: float in [-1.0, 1.0]:   # its wings, spread: it is flying
+		ModelKit.ball(b, Vector3(side * 0.05, 0.006, 0.004), 0.034, ModelKit.paint(col.darkened(0.12)),
+			Vector3(1.5, 0.14, 0.75))
 	return b
 
 

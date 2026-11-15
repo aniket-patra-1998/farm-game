@@ -21,6 +21,9 @@ const IDS := ["farmhouse", "log_cabin", "dirt_path", "brick_path", "stone_path",
 
 
 
+const HOUSE_AT := 0.5       # how high a birdhouse's landing board stands on its post, in tiles
+const BATH_STONE := Color("#bdb6a6")   # the warm stone a birdbath is turned from (mixed with its own colour)
+const BATH_SIDES := 20      # sides of a birdbath's turned stone
 const WATER_LIFT := 0.012   # water stands this far above the rim it fills, never level with it (flicker)
 ## Decorations that bend in the wind, and how much (paint3d sway, by height above their foot).
 const SWAY_BY_ID := {"scarecrow": 0.08, "flower_bed": 0.6, "arbor": 0.02,
@@ -237,41 +240,9 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 					ModelKit.paint(Color("#333333"), 0.4)
 				)
 		"birdhouse":
-			ModelKit.box(root, c + Vector3(-0.015, 0, -0.015), c + Vector3(0.015, 0.55, 0.015), ModelKit.paint(WOOD))
-			ModelKit.box(
-				root,
-				c + Vector3(-0.08, 0.55, -0.08),
-				c + Vector3(0.08, 0.72, 0.08),
-				ModelKit.surface(WHITE, "boards")
-			)
-			ModelKit.roof(root, "gable", c + Vector3(-0.08, 0.55, -0.08), c + Vector3(0.08, 0.72, 0.08), 0.07, 0.02,
-				ModelKit.paint(col), ModelKit.surface(WHITE, "boards"))
-			ModelKit.cylinder(root, c + Vector3(0.081, 0.63, 0), 0.025, 0.005, ModelKit.paint(Color("#222222")))
-			# Its bird, circling the house.
-			DecorMotion.orbit(root, c + Vector3(0, 0.82, 0), DecorMotion.bird(Color("#6f8fc9")), DecorMotion.CIRCLING)
+			_birdhouse(root, c, col, Color.html(str(it.get("accent", "#f4e3c3"))), id)
 		"birdbath":
-			# A stone birdbath: a stepped foot, a turned pedestal with collars, a shallow bowl with a rolled rim,
-			# moss creeping up the base and a little bird on the rim.
-			var stone := ModelKit.surface(col, "stone", 0.3)
-			ModelKit.cylinder(root, c, 0.13, 0.03, stone, 0.12, 12)
-			ModelKit.cylinder(root, c + Vector3(0, 0.03, 0), 0.1, 0.03, stone, 0.08, 12)
-			ModelKit.cylinder(root, c + Vector3(0, 0.06, 0), 0.045, 0.24, ModelKit.paint(col), 0.035, 10)
-			for y: float in [0.1, 0.27]:
-				ModelKit.cylinder(root, c + Vector3(0, y, 0), 0.058, 0.025, ModelKit.paint(col.darkened(0.06)), -1.0, 10)
-			ModelKit.cylinder(root, c + Vector3(0, 0.3, 0), 0.08, 0.06, ModelKit.paint(col), 0.2, 16)
-			ModelKit.cylinder(root, c + Vector3(0, 0.355, 0), 0.205, 0.02, ModelKit.paint(col.lightened(0.05)), 0.2, 18)
-			# Water filling the bowl to its brim (the bowl is solid: the water sits on it, never inside it).
-			ModelKit.cylinder(root, c + Vector3(0, 0.36, 0), 0.185, WATER_LIFT + 0.015, ModelKit.water(), -1.0, 16)
-			var rng := _rng(id)
-			for k in 6:   # moss at the foot
-				var ang := rng.randf() * TAU
-				ModelKit.ball(root, c + Vector3(cos(ang) * 0.1, 0.03, sin(ang) * 0.1), rng.randf_range(0.02, 0.035),
-					ModelKit.paint(Color("#5f8a3a").darkened(rng.randf() * 0.2)), Vector3(1.4, 0.6, 1.0))
-			var bird := DecorMotion.duck(Color("#7a5a3a"))   # (a small brown bird: the duck's shape, smaller)
-			bird.scale = Vector3.ONE * 0.6
-			bird.position = c + Vector3(0.17, 0.38, 0.03)
-			bird.rotation.y = 2.4
-			root.add_child(bird)
+			_birdbath(root, c, col, id)
 		"picnic_table":
 			ModelKit.box(
 				root,
@@ -368,6 +339,155 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 	root.scale = Vector3.ONE * chunk
 	root.position = c * (1.0 - chunk)
 	return ModelKit.bake(root)
+
+
+## A birdhouse on its post: a stone footing, a braced landing board, a boarded house under an overhanging roof
+## with a ridge cap, a round door with its ring and a perch below it, a bird on the perch, a vine up the post
+## and another bird circling above.
+static func _birdhouse(root: Node3D, c: Vector3, col: Color, wall: Color, id: String) -> void:
+	var wood := ModelKit.paint(WOOD)
+	var dark := ModelKit.paint(DARK_WOOD)
+	var rng := _rng(id)
+	ModelKit.cylinder(root, c, 0.07, 0.03, ModelKit.surface(STONE, "stone", 0.3), 0.05, 8)
+	ModelKit.box(root, c + Vector3(-0.02, 0.02, -0.02), c + Vector3(0.02, HOUSE_AT, 0.02), wood)
+	ModelKit.box(root, c + Vector3(-0.028, HOUSE_AT - 0.05, -0.028), c + Vector3(0.028, HOUSE_AT - 0.03, 0.028), dark)
+	for side: float in [-1.0, 1.0]:   # a brace each way under the landing board
+		var brace := ModelKit.box(root, c + Vector3(side * 0.05 - 0.01, HOUSE_AT - 0.12, -0.01),
+			c + Vector3(side * 0.05 + 0.01, HOUSE_AT, 0.01), dark)
+		brace.rotation.z = side * 0.75
+	ModelKit.box(root, c + Vector3(-0.17, HOUSE_AT, -0.13), c + Vector3(0.17, HOUSE_AT + 0.02, 0.13), wood)
+	var lo := c + Vector3(-0.115, HOUSE_AT + 0.02, -0.095)
+	var hi := c + Vector3(0.115, HOUSE_AT + 0.2, 0.095)
+	ModelKit.box(root, lo, hi, ModelKit.surface(wall, "boards", 0.0))
+	for sx: float in [-1.0, 1.0]:   # corner boards
+		for sz: float in [-1.0, 1.0]:
+			var at := Vector3(sx * 0.115, 0, sz * 0.095)
+			ModelKit.box(root, c + at + Vector3(-0.012, HOUSE_AT + 0.02, -0.012),
+				c + at + Vector3(0.012, HOUSE_AT + 0.2, 0.012), ModelKit.paint(wall.darkened(0.18)))
+	var top := ModelKit.roof(root, "gable", lo, hi, 0.1, 0.04, ModelKit.paint(col),
+		ModelKit.surface(wall, "boards", 0.0))
+	ModelKit.box(root, Vector3(lo.x - 0.05, top - 0.012, c.z - 0.014), Vector3(hi.x + 0.05, top + 0.012, c.z + 0.014),
+		ModelKit.paint(col.darkened(0.25)))
+	# The door: a dark round hole in a ring, on the gable end, and the perch below it.
+	var door := c + Vector3(0.116, HOUSE_AT + 0.13, 0)
+	_disc(root, door, 0.05, 0.008, ModelKit.paint(col))
+	_disc(root, door + Vector3(0.004, 0, 0), 0.034, 0.008, ModelKit.paint(Color("#1d1712")))
+	_disc(root, door + Vector3(0.03, -0.075, 0), 0.008, 0.07, dark)
+	var sitter := songbird(Color("#d8553a"), Color("#f1dfc4"))
+	sitter.position = door + Vector3(0.05, -0.066, 0)
+	sitter.rotation.y = -PI / 2.0 + 0.5
+	root.add_child(sitter)
+	for k in 7:   # a vine winding up the post
+		var ang := k * 1.9 + rng.randf() * 0.4
+		var leaf_at := c + Vector3(cos(ang) * 0.03, 0.06 + k * 0.055, sin(ang) * 0.03)
+		ModelKit.ball(root, leaf_at, 0.022, ModelKit.paint(LEAF.lightened(rng.randf() * 0.25), 0.0, 0.15),
+			Vector3(1.3, 0.6, 1.0))
+	ModelKit.ball(root, c + Vector3(0.035, 0.2, 0.01), 0.014, ModelKit.paint(Color("#f2d24a")))
+	DecorMotion.orbit(root, c + Vector3(0, HOUSE_AT + 0.42, 0), DecorMotion.bird(Color("#6f8fc9")),
+		DecorMotion.CIRCLING)
+
+
+## A stone birdbath: a square plinth, a turned baluster, a wide basin with a rolled rim standing above the
+## water it holds, moss and pebbles at the foot, a bird drinking on the rim and another bathing.
+static func _birdbath(root: Node3D, c: Vector3, col: Color, id: String) -> void:
+	var tone := col.lerp(BATH_STONE, 0.55)   # (warm stone: a blue-grey bowl reads as more water)
+	var stone := ModelKit.surface(tone, "stone", 0.3)
+	var smooth := ModelKit.paint(tone.lightened(0.04))
+	ModelKit.box(root, c + Vector3(-0.15, 0, -0.15), c + Vector3(0.15, 0.04, 0.15), stone)
+	ModelKit.box(root, c + Vector3(-0.115, 0.04, -0.115), c + Vector3(0.115, 0.075, 0.115), stone)
+	lathe(root, c, [Vector2(0.0, 0.075), Vector2(0.09, 0.075), Vector2(0.095, 0.095), Vector2(0.06, 0.12),
+		Vector2(0.048, 0.16), Vector2(0.074, 0.215), Vector2(0.066, 0.26), Vector2(0.044, 0.3), Vector2(0.07, 0.325),
+		Vector2(0.07, 0.345), Vector2(0.05, 0.36), Vector2(0.14, 0.385), Vector2(0.225, 0.43), Vector2(0.245, 0.452),
+		Vector2(0.24, 0.47), Vector2(0.21, 0.47), Vector2(0.196, 0.44), Vector2(0.0, 0.425)], BATH_SIDES, smooth)
+	for y: float in [0.1, 0.33]:   # the baluster's collars, a shade darker
+		ModelKit.cylinder(root, c + Vector3(0, y, 0), 0.078, 0.014, ModelKit.paint(tone.darkened(0.1)), -1.0, 14)
+	ModelKit.cylinder(root, c + Vector3(0, 0.432, 0), 0.2, 0.014 + WATER_LIFT, ModelKit.water(), -1.0, BATH_SIDES)
+	var rng := _rng(id)
+	for k in 7:   # moss creeping over the plinth
+		var ang := rng.randf() * TAU
+		ModelKit.ball(root, c + Vector3(cos(ang) * 0.14, 0.035, sin(ang) * 0.14), rng.randf_range(0.022, 0.04),
+			ModelKit.paint(Color("#5f8a3a").darkened(rng.randf() * 0.2)), Vector3(1.4, 0.6, 1.0))
+	for k in 4:   # pebbles round the foot
+		var ang := rng.randf() * TAU
+		ModelKit.ball(root, c + Vector3(cos(ang) * 0.21, 0.012, sin(ang) * 0.21), rng.randf_range(0.015, 0.026),
+			ModelKit.paint(STONE.darkened(rng.randf() * 0.25)), Vector3(1.2, 0.6, 1.0))
+	ModelKit.ball(root, c + Vector3(-0.07, 0.447 + WATER_LIFT, 0.06), 0.03, ModelKit.paint(Color("#4f9a3c")),
+		Vector3(1.0, 0.12, 1.0))   # a leaf afloat
+	var drinker := songbird(Color("#7a5a3a"), Color("#e9d9bd"))
+	drinker.position = c + Vector3(0.2, 0.47, 0.06)
+	drinker.rotation.y = 1.9
+	drinker.rotation.x = 0.35   # (head down, drinking)
+	root.add_child(drinker)
+	var bather := songbird(Color("#3f7fc4"), Color("#f2ead8"))
+	bather.position = c + Vector3(-0.02, 0.447, -0.07)
+	bather.rotation.y = -0.6
+	root.add_child(bather)
+
+
+## A small bird at rest, facing -z, its feet at the origin: a round body with a pale belly, a head with a beak
+## and eyes, folded wings a shade darker and a tail cocked up.
+static func songbird(col: Color, belly: Color) -> Node3D:
+	var b := Node3D.new()
+	var paint := ModelKit.paint(col)
+	var wing := ModelKit.paint(col.darkened(0.22))
+	ModelKit.ball(b, Vector3(0, 0.04, 0), 0.036, paint, Vector3(0.85, 0.9, 1.25), true)
+	ModelKit.ball(b, Vector3(0, 0.03, -0.012), 0.03, ModelKit.paint(belly), Vector3(0.8, 0.8, 1.0), true)
+	ModelKit.ball(b, Vector3(0, 0.074, -0.03), 0.025, paint, Vector3.ONE, true)
+	ModelKit.cylinder(b, Vector3(0, 0.068, -0.062), 0.009, 0.026, ModelKit.paint(Color("#e8a23a")), 0.0, 6) \
+		.rotation.x = -PI / 2.0
+	for side: float in [-1.0, 1.0]:
+		ModelKit.ball(b, Vector3(side * 0.027, 0.045, 0.008), 0.026, wing, Vector3(0.35, 0.7, 1.3), true)
+		ModelKit.ball(b, Vector3(side * 0.018, 0.08, -0.044), 0.0045, ModelKit.paint(Color("#16130f")))
+		ModelKit.box(b, Vector3(side * 0.012 - 0.003, 0, -0.003), Vector3(side * 0.012 + 0.003, 0.014, 0.003),
+			ModelKit.paint(Color("#c98a3a")))
+	var tail := ModelKit.box(b, Vector3(-0.014, 0.036, 0.03), Vector3(0.014, 0.046, 0.085), wing)
+	tail.rotation.x = 0.45
+	return b
+
+
+## A flat round piece standing on edge, facing +x (a door hole, a ring, a dowel when `depth` is long).
+static func _disc(root: Node3D, at: Vector3, r: float, depth: float, mat: Material) -> MeshInstance3D:
+	var mi := ModelKit.cylinder(root, at, r, depth, mat, -1.0, 12)
+	mi.position = at
+	mi.rotation.z = -PI / 2.0
+	return mi
+
+
+## A shape turned on a lathe round the upright axis through `c`: `profile` is its outline from the axis at
+## the bottom, out and up, and back to the axis at the top, as (radius, height) points. A stretch that turns
+## back toward the axis and down is a hollow (a basin's inside). Lit flat along the outline, smooth round it.
+static func lathe(root: Node3D, c: Vector3, profile: Array, sides: int, mat: Material) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := ModelKit.scaled(sides, 8)
+	for k in profile.size() - 1:
+		var a: Vector2 = profile[k]
+		var b: Vector2 = profile[k + 1]
+		var out := Vector2(b.y - a.y, a.x - b.x).normalized()   # the outline's outward side, as (radial, up)
+		for i in n:
+			var corners: Array[Vector3] = []
+			var normals: Array[Vector3] = []
+			for pair: Array in [[a, i], [b, i], [b, i + 1], [a, i + 1]]:
+				var ang := TAU * float(pair[1]) / n
+				var point: Vector2 = pair[0]
+				corners.append(c + Vector3(cos(ang) * point.x, point.y, sin(ang) * point.x))
+				normals.append(Vector3(cos(ang) * out.x, out.y, sin(ang) * out.x))
+			var facing := (normals[0] + normals[2]).normalized()
+			for tri: Array in [[0, 1, 2], [0, 2, 3]]:
+				var order: Array = tri
+				var across := (corners[tri[1]] - corners[tri[0]]).cross(corners[tri[2]] - corners[tri[0]])
+				if across.length_squared() < 1e-12:
+					continue   # (at the axis a quad is a triangle: its empty half is left out)
+				if across.dot(facing) > 0.0:   # (front faces run clockwise seen from outside: ModelKit.faces)
+					order = [tri[0], tri[2], tri[1]]
+				for v: int in order:
+					st.set_normal(normals[v])
+					st.add_vertex(corners[v])
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	root.add_child(mi)
+	return mi
 
 
 static func _rng(id: String) -> RandomNumberGenerator:

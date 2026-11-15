@@ -2,7 +2,10 @@ shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_opaque;
 // Butterflies by day and birds crossing high over the farm: each a pair of wings that flap, moved along its own
 // wandering path from the time, so a whole flock is one mesh, one draw and no script. Per vertex: UV = (the
-// creature's phase, 0), UV2 = (where it lives, x and z), COLOR = its colour. They fade out at night (global dark).
+// creature's phase, how far out along a bird's wing: 0 at the body, 1 at the tip), UV2 = (where it lives, x and
+// z), COLOR = its colour (alpha: where in its wingbeat a bird is). They fade out at night (global dark).
+// A butterfly's wings beat as flat plates. A bird's bend: the tip follows the shoulder a moment late and swings
+// further, and between bursts of beating the bird glides on wings held a little raised.
 
 global uniform float dark;
 uniform float kind = 0.0;        // 0 butterflies (wander round their home), 1 birds (cross the farm now and then)
@@ -29,11 +32,20 @@ void vertex() {
 		float lane = phase * 3.0;                        // the flock's birds a little apart
 		centre = vec3(UV2.x - 4.0 + travel * span, 3.6 + sin(TIME * 0.8 + lane) * 0.12, UV2.y + lane * 0.5);
 		yaw = 1.5708;
-		flap_rate = 7.0;
+		flap_rate = 9.0;
 	}
-	float flap = sin(TIME * flap_rate + phase * 30.0) * 0.85;
+	float beat = TIME * flap_rate + phase * 30.0 + COLOR.a * 6.2832;
 	vec3 p = VERTEX;
-	p = vec3(p.x * cos(flap), abs(p.x) * sin(flap), p.z);
+	if (kind < 0.5) {
+		float flap = sin(beat) * 0.85;
+		p = vec3(p.x * cos(flap), abs(p.x) * sin(flap), p.z);
+	} else {
+		float along = UV.y;
+		float beating = smoothstep(-0.35, 0.45, sin(TIME * 0.7 + COLOR.a * 40.0));
+		float swing = sin(beat - along * 0.9) * mix(0.1, 0.75, beating) + 0.14;
+		float bend = swing * smoothstep(0.0, 0.2, along) * mix(0.7, 1.25, along);
+		p = vec3(p.x * cos(bend), p.y + abs(p.x) * sin(bend), p.z);
+	}
 	float c = cos(yaw);
 	float s = sin(yaw);
 	p = vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
