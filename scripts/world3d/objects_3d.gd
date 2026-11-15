@@ -17,6 +17,8 @@ const GROUP := &"objects_3d"   # every Objects3D, for until_settled
 const FULL_EVERY := 10        # a full look at everything every this many seconds (the rest only look at those)
 # A sync builds models for at most this long a frame, then carries on the next frame: a farm with hundreds of
 # things appears over a few frames instead of freezing (a phone says "not responding" after 5 s of that).
+# Decorations built a little differently by where they stand (the rest have one look).
+const VARIED_DECOR := ["wooden_bridge", "pine_tree", "oak_tree", "maple_tree", "willow_tree"]
 const BUILD_BUDGET_MS := 12
 const FILE_KINDS := ["building", "barn", "crafting", "decor", "bloom"]   # kinds `uses_file` draws from files
 const TREE_LOOKS := 4     # looks of each tree kept in its file (tree_look; tools/export_plants)
@@ -138,6 +140,9 @@ func sync() -> void:
 	var began := Time.get_ticks_msec()
 	var built := 0
 	var left := 0
+	# The budget is for building. Looking at every thing (its key) must not eat it: on a farm of many hundreds
+	# that alone took the whole budget, and the things at the end of the list were never built at all.
+	var spent := 0
 	for o in Game.objects:
 		if not handles(o):
 			continue
@@ -154,10 +159,11 @@ func sync() -> void:
 			if fill != null:
 				fill.refresh(o)  # who's in, how near ready: shown without rebuilding the building
 			continue
-		if Time.get_ticks_msec() - began > BUILD_BUDGET_MS:
+		if spent > BUILD_BUDGET_MS * 1000:
 			left += 1          # out of time this frame: built on the next
 			continue
 		built += 1
+		var build_began := Time.get_ticks_usec()
 		if v.has("node"):
 			(v["node"] as Node3D).queue_free()
 		var node := _build(o)
@@ -172,6 +178,7 @@ func sync() -> void:
 			grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
 		if fresh and _synced_once:
 			drop_in(uid)  # newly bought or placed: it drops onto the farm
+		spent += Time.get_ticks_usec() - build_began
 	for uid in _views.keys():
 		if not seen.has(uid):
 			(_views[uid]["node"] as Node3D).queue_free()
@@ -525,7 +532,9 @@ func _build(o: Dictionary) -> Node3D:
 					# Built once per look and shared (Instancer): what a piece's look depends on is its kind, one of a
 					# few variants by where it stands (for the ones drawn a little differently each time), and the
 					# mastered crop or flower a sign or bunch shows.
-					var look := Instancer.variant(int(o["row"]), int(o["col"]))
+					# (Only the kinds built a little differently each time have looks: the rest were being built
+					# eight times over, the same each time, and so many looks overflowed what the Instancer keeps.)
+					var look := Instancer.variant(int(o["row"]), int(o["col"])) if VARIED_DECOR.has(str(o["id"])) else 0
 					node = decor_look(str(o["id"]), look, str(o.get("crop", o.get("flower", ""))))
 			"young":
 				node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)

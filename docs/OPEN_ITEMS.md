@@ -62,3 +62,20 @@ Open: Android local notifications when crops ripen (needs an Android plugin and 
 ## Interface
 - Portrait phones: the interface is landscape only for now (docs/UI.md); a portrait layout is a later pass.
 - Neighbour bar: a placeholder quick bar until there are neighbours (with the social feature).
+
+## Decorations at scale (measured 2026-11-15 on a 30x30 farm of 16 kinds of decoration; branch `decor-look`)
+Measured, once the farm has finished building: 100 decorations 350 draws, 300 decorations 1,098 draws and 1,786
+nodes, 700 decorations 2,610 draws (the whole farm's budget is 2,250), 4,136 nodes, 634,000 triangles; a change on
+the farm costs 2.4 / 7.6 / 17.9 ms of script (every thing's key made again).
+Fixed: a big farm never finished building (the build budget was eaten by looking at every thing, so the last things
+were never built: 700 decorations stalled; now built in 65 frames); decorations that never vary were built eight
+times over, one per "look".
+Open, in order of what it buys:
+- Draw standalone decorations in batches, one per kind and part (MultiMesh, as fences, paths and orchards already
+  are: `Instancer.parts_of` + `place`, `LinkLayer`), cut into regions of the farm so what is off screen is not
+  drawn and an edit relays one region: draws then follow the number of kinds, not of decorations. A decoration
+  needs a node of its own only while it drops in, is lifted, or bounces.
+- A change should name the thing that changed (`objects_changed` carries nothing), so the farm stops making every
+  thing's key again after each collect or placement.
+- A simpler far version of each decoration (they average about 800 triangles and are small on screen zoomed out).
+- Decorations made as files (docs/ASSETS.md), as animals, trees and the farmer are.
