@@ -12,6 +12,7 @@ const SKIRT_OVER := 0.1        # and how far it overhangs
 const SPILL_REACH := 0.8      # how far a lit building's light reaches over the ground, in tiles
 const SILO_CHECKS := 14   # dark panels in the chequered band of a silo
 const PLINTH := 0.09
+const PICKET_GAP := 0.12      # between a picket fence's pickets, in tiles
 const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals can look out of ([{at, size}])
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
@@ -59,6 +60,34 @@ static var _fills := {}   # fill_of, by "id|level"
 ## then each size's changes up to `level` laid on in turn (data "levels": {"2": {...}, "3": {...}}).
 ## A size's "drop" first removes features of those types; its "features" are added; anything else
 ## (body, roof, door: merged; windows, window_rows: replaced) changes the building itself.
+## A number of the look every building shares (data/building_models.json "look"); 1 when it is not set.
+static func _look(key: String) -> float:
+	_load()
+	return float((_data.get("look", {}) as Dictionary).get(key, 1.0))
+
+
+## The shared look laid over a building's own numbers: lower walls and a bigger door (chunky, as the farm art
+## these follow is), and for a home with a yard a smaller shed drawn back into its corner, so the yard and the
+## animals in it are most of what is seen.
+static func _styled(s: Dictionary) -> Dictionary:
+	var body: Dictionary = s["body"]
+	body["h"] = float(body.get("h", 0.85)) * _look("walls")
+	var yard := (s.get("features", []) as Array).any(func(f: Dictionary) -> bool: return f.get("type") == "yard")
+	if yard:
+		var k := _look("shed")
+		var at: Array = body.get("at", [0.5, 0.42])
+		var w := float(body.get("w", 0.7))
+		var d := float(body.get("d", 0.66))
+		body["at"] = [float(at[0]) - w * (1.0 - k) / 2.0, float(at[1]) - d * (1.0 - k) / 2.0]
+		body["w"] = w * k
+		body["d"] = d * k
+	var door: Dictionary = s.get("door", {})
+	door["w"] = float(door.get("w", 0.28)) * _look("door")
+	door["h"] = minf(float(door.get("h", 0.55)) * _look("door"), float(body["h"]) * 0.8)
+	s["door"] = door
+	return s
+
+
 static func spec(id: String, level := 1) -> Dictionary:
 	_load()
 	var out: Dictionary = (_data["default"] as Dictionary).duplicate(true)
@@ -76,7 +105,7 @@ static func spec(id: String, level := 1) -> Dictionary:
 		rest.erase("drop")
 		rest.erase("features")
 		_lay_on(out, rest)
-	return out
+	return _styled(out)
 
 
 ## What a building's model says about its fill (see BuildingFill): cached, since it is asked for every sync.
@@ -321,7 +350,7 @@ static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1
 	if rising > 0.0:
 		wall_top = lerpf(PLINTH + 0.1, bh, rising)
 		var wall := ModelKit.surface(Color.html(str(it.get("color", "#c0392b"))), str(body.get("walls", "boards")))
-		var t := 0.03
+		var t := 0.03 * _look("trim")
 		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(hi.x, wall_top, lo.z + t), wall)
 		ModelKit.box(root, Vector3(lo.x, PLINTH, hi.z - t), Vector3(hi.x, wall_top, hi.z), wall)
 		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(lo.x + t, wall_top, hi.z), wall)
@@ -477,7 +506,7 @@ static func _body(ctx: Dictionary) -> void:
 	var wall_mat := ModelKit.surface(ctx["wall"], walls)
 	ModelKit.box(root, Vector3(lo.x, maxf(lo.y, PLINTH * 0.5), lo.z), hi, wall_mat)
 	# White corner boards.
-	var t := 0.035
+	var t := 0.035 * _look("trim")
 	for corner: Vector2 in [Vector2(lo.x, lo.z), Vector2(hi.x, lo.z), Vector2(hi.x, hi.z), Vector2(lo.x, hi.z)]:
 		ModelKit.box(root, Vector3(corner.x - t, lo.y, corner.y - t), Vector3(corner.x + t, hi.y, corner.y + t),
 			ModelKit.paint(trim))
@@ -602,7 +631,7 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 				var leaf := _hinge(root, Vector3(x + side * w / 2.0, y0, z), side)
 				var cx := x + side * w / 4.0
 				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.004), Vector3(cx + w / 4.0, y0 + h, z + 0.029),
-					ModelKit.surface((ctx["wall"] as Color).darkened(0.25), "boards"))
+					ModelKit.paint((ctx["wall"] as Color).darkened(0.25)))   # (painted like its braces: a leaf is one draw)
 				# The white X-braces of a barn door.
 				var brace := ModelKit.paint(trim)
 				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.029), Vector3(cx + w / 4.0, y0 + 0.04, z + 0.044),
@@ -670,7 +699,8 @@ static func _windows(ctx: Dictionary, count: int, trim: Color, rows := 1) -> voi
 	if count <= 0:
 		return
 	var wall_h: float = (ctx["hi"] as Vector3).y - (ctx["lo"] as Vector3).y
-	var size := minf(0.2, wall_h * (0.3 if rows == 1 else 0.42 / rows))
+	var size := minf(0.2, wall_h * (0.3 if rows == 1 else 0.42 / rows)) * _look("window")
+	size = minf(size, wall_h * 0.5 / rows)   # (big, but inside its wall)
 	for row in rows:
 		var share := 0.58 if rows == 1 else lerpf(0.32, 0.74, row / (rows - 1.0))
 		_window_row(ctx, count, trim, share, size)
@@ -686,8 +716,9 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 	for k in count:
 		var z := lerpf(lo.z, hi.z, (k + 1.0) / (count + 1.0))
 		spots.append({"at": Vector3(hi.x, y, z), "size": size})
-		ModelKit.box(root, Vector3(hi.x, y - size / 2 - 0.025, z - size / 2 - 0.025),
-			Vector3(hi.x + 0.02, y + size / 2 + 0.025, z + size / 2 + 0.025), ModelKit.paint(trim))
+		var frame := 0.025 * _look("trim")
+		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame, z - size / 2 - frame),
+			Vector3(hi.x + 0.02, y + size / 2 + frame, z + size / 2 + frame), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(hi.x + 0.02, y - size / 2, z - size / 2), Vector3(hi.x + 0.03, y + size / 2, z + size / 2),
 			ModelKit.glass())
 		# Panes: a cross of bars over the glass.
@@ -764,18 +795,37 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 					ModelKit.surface(WOOD, "boards"))
 				ModelKit.ball(root, Vector3(hi.x + 0.07, lo.y + 0.19, z), 0.035, ModelKit.paint(Color("#f6ecd2")),
 					Vector3(1, 1.25, 1))
+		"egg_chutes":
+			# Chutes down the side wall to a basket of eggs, one more with every size: the coop's own sign of how
+			# big it is (FarmVille's Big Coop had two, its Huge Coop three).
+			var chutes := int(f.get("count", 1))
+			var from := lo.y + 0.08
+			for k in chutes:
+				var z := lerpf(lo.z + 0.08, hi.z - 0.08, (k + 0.5) / chutes)
+				var chute := ModelKit.box(root, Vector3(-0.04, -0.012, 0.0), Vector3(0.04, 0.012, Vector2(0.26, from).length()),
+					ModelKit.surface(WOOD, "boards"))
+				if chute != null:
+					chute.position = Vector3(hi.x, from, z)
+					chute.rotation = Vector3(atan2(from, 0.26), PI / 2.0, 0.0)
+				ModelKit.box(root, Vector3(hi.x + 0.22, 0.0, z - 0.06), Vector3(hi.x + 0.34, 0.06, z + 0.06),
+					ModelKit.paint(HAY))
+				for egg in 2:
+					ModelKit.ball(root, Vector3(hi.x + 0.26 + 0.05 * egg, 0.08, z - 0.02 + 0.04 * egg), 0.03,
+						ModelKit.paint(Color("#f6ecd2")), Vector3(1, 1.25, 1))
 		"silo":
 			var at: Array = f.get("at", [0.85, 0.2])
 			var base := Vector3(float(at[0]) * fw, 0, float(at[1]) * fd)
 			var r := float(f.get("r", 0.22))
 			var h := float(f.get("h", 1.6))
-			ModelKit.cylinder(root, base, r + 0.03, 0.08, ModelKit.surface(STONE, "stone", 0.2), -1.0, 20)
-			ModelKit.cylinder(root, base, r, h, ModelKit.surface(Color("#d9dcde"), "metal", 0.35), -1.0, 20)
+			var plain := bool(f.get("plain", false))   # a second or third silo: fewer sides and no chequered band (cheaper)
+			var sides := 12 if plain else 20
+			ModelKit.cylinder(root, base, r + 0.03, 0.08, ModelKit.surface(STONE, "stone", 0.2), -1.0, sides)
+			ModelKit.cylinder(root, base, r, h, ModelKit.surface(Color("#d9dcde"), "metal", 0.35), -1.0, sides)
 			for k in 3:
 				ModelKit.cylinder(root, base + Vector3(0, h * (0.3 + 0.25 * k), 0), r + 0.008, 0.025,
-					ModelKit.paint(Color("#9aa2a8"), 0.5), -1.0, 20)
+					ModelKit.paint(Color("#9aa2a8"), 0.5), -1.0, sides)
 			# The chequered band near the top: two rows of dark panels round the silo, offset like a chessboard.
-			for row in 2:
+			for row in (0 if plain else 2):
 				for k in SILO_CHECKS:
 					if (k + row) % 2 == 1:
 						continue
@@ -1275,10 +1325,10 @@ static func _fence(root: Node3D, a: Vector3, b: Vector3, kind: String, mat: Mate
 		var p := a + dir * (length * k / posts)
 		ModelKit.box(root, p - Vector3(0.022, 0, 0.022), p + Vector3(0.022, 0.24, 0.022), mat)
 	if kind == "picket":
-		var n := int(length / 0.08)
+		var n := int(length / PICKET_GAP)   # (fewer, broader pickets: a white fence at a third less to draw)
 		for k in n:
 			var p := a + dir * (length * (k + 0.5) / n)
-			ModelKit.box(root, p - Vector3(0.012, 0, 0.012), p + Vector3(0.012, 0.2, 0.012), mat)
+			ModelKit.box(root, p - Vector3(0.018, 0, 0.018), p + Vector3(0.018, 0.2, 0.018), mat)
 		_rail(root, a, b, 0.14, mat)
 	else:
 		_rail(root, a, b, 0.09, mat)

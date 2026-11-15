@@ -14,6 +14,7 @@ const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"] 
 const DRESSING := ^"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
 const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
 const GROUP := &"objects_3d"   # every Objects3D, for until_settled
+const LIGHT_BUDGET_USEC := 800   # a timer's look works for this long a frame, then carries on the next (no hitch)
 const FULL_EVERY := 10        # a full look at everything every this many seconds (the rest only look at those)
 # A sync builds models for at most this long a frame, then carries on the next frame: a farm with hundreds of
 # things appears over a few frames instead of freezing (a phone says "not responding" after 5 s of that).
@@ -66,6 +67,11 @@ var _links: LinkLayer   # draws the fences, hedges, walls and paths, joined up
 var _ghost_mask := -1
 var _link_landed := -1   # the frame a joined piece last landed
 var _woods: Array = []   # groups of the woods still going up: [holder, trees left]
+var _sweep := -1         # how far the timer's look has got through Game.objects (-1: none under way)
+var _sweep_ready := {}   # uid -> ready, as that look found it (its ready signs are made from these)
+var _links_at := Vector2i(-1, -1)   # the layout the fences were last joined for
+var _masks_at := Vector2i(-1, -1)   # the farm's layout (its revision, how many things) the masks were made for
+var _masks := {}         # uid -> its Crowding.mask: neighbours only change with the farm, so kept between changes
 var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
@@ -106,10 +112,12 @@ func _ready() -> void:
 func _on_tick() -> void:
 	_ticks += 1
 	if _ticks % FULL_EVERY == 0:
+		_masks_at = Vector2i(-1, -1)   # (masks and fences are looked at again, in case a change was not announced)
+		_links_at = Vector2i(-1, -1)
 		queue_sync()
-	elif not _queued:
-		_queued = true
-		sync.call_deferred()
+	elif not _queued and _sweep < 0:
+		_sweep = 0   # (a few things a frame from here: see _light_some)
+		_sweep_ready.clear()
 
 
 ## Whether the picture of `o` can change with time alone (not only when the player or a system changes it).
@@ -131,9 +139,13 @@ func sync() -> void:
 	_queued = false
 	var light := not _full   # a timer tick: only what time changes
 	_full = false
+	_sweep = -1              # (this look is at least what a timer's look under way would have been)
+	var layout := Vector2i(Game.layout_revision, Game.objects.size())
 	if not light and _links_due:
 		_links_due = false   # (once per change: not again on each frame the building carries on over)
-		_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
+		if layout != _links_at:   # (fences join by where things stand: a collect or a feed changes none of it)
+			_links_at = layout
+			_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
 	var seen := {}
 	var began := Time.get_ticks_msec()
 	var built := 0
@@ -195,7 +207,7 @@ func sync() -> void:
 
 ## FarmVille's one ready sign over everything that has something to collect: a building or its finished
 ## crafts, a tree, a bloom, an animal (whose sign walks with it). Over the top of what is drawn.
-func _mark_ready() -> void:
+func _mark_ready(known := {}) -> void:
 	var tops: Array[Vector3] = []
 	var minor: Array[bool] = []
 	var animals: Array[Animal3D] = []
@@ -203,7 +215,10 @@ func _mark_ready() -> void:
 		var uid := int(o["uid"])
 		if GameState.NEVER_READY.has(Game.kind_of(o)) or not _views.has(uid):
 			continue
-		if Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0):
+		# (`known`: what a timer's look has just found, thing by thing, so nothing is asked twice)
+		var ready: bool = known[uid] if known.has(uid) else \
+			(Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0))
+		if ready:
 			var node: Node3D = _views[uid]["node"]
 			if node is Animal3D:
 				animals.append(node as Animal3D)
@@ -289,6 +304,8 @@ func _process(delta: float) -> void:
 	if _carry_on and not _queued:   # the rest of a sync that ran out of time
 		_carry_on = false
 		sync()
+	if _sweep >= 0:
+		_light_some()
 	if not _woods.is_empty():
 		_grow_woods()
 	_update_placing()
@@ -334,11 +351,64 @@ func _key(o: Dictionary) -> String:
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
 		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
-		Crowding.mask(o),
+		_mask(o),
 		str(o.get("broken", false)) + str(o.get("crop", o.get("flower", ""))) + "|%d|%s|%s" % [int(o.get("fed", 0)),
 			Game.is_withered(o), _at_work(o)]]
 
 
+
+
+## Who stands beside `o` (Crowding.mask), kept until things come, go or move: looking around it costs more than
+## the rest of its key together, and neither time nor a collect moves a neighbour.
+func _mask(o: Dictionary) -> int:
+	var layout := Vector2i(Game.layout_revision, Game.objects.size())
+	if layout != _masks_at:
+		_masks.clear()       # things have come, gone or moved: who stands beside whom is worked out again
+		_masks_at = layout   # (a collect or a feed moves nothing: the masks stand)
+	var uid := int(o.get("uid", -1))
+	if not _masks.has(uid):
+		_masks[uid] = Crowding.mask(o)
+	return _masks[uid]
+
+
+## The timer's look at what time alone changes, a few things a frame: what a thing shows in place (ready, at
+## work, how full its yard, how near its produce) is set here; one that has become another picture (a tree
+## ripened, a site risen) gets the full look, which builds it. Its ready signs go up when it has been round.
+func _light_some() -> void:
+	if _queued:   # a change is about to be looked at in full
+		_sweep = -1
+		return
+	var began := Time.get_ticks_usec()
+	var end := Game.objects.size()
+	for i in range(_sweep, end):
+		if Time.get_ticks_usec() - began > LIGHT_BUDGET_USEC:
+			end = i   # (out of time this frame: from here on the next)
+			break
+		var o: Dictionary = Game.objects[i]
+		if not handles(o):
+			continue
+		var uid := int(o["uid"])
+		var v: Dictionary = _views.get(uid, {})
+		if v.is_empty():
+			queue_sync()   # (something not announced: the full look finds it)
+			return
+		if not timed(o):
+			if not GameState.NEVER_READY.has(Game.kind_of(o)):
+				_sweep_ready[uid] = Game.is_ready(o)   # (an animal: only its sign changes with time)
+			continue
+		if v["key"] != _key(o):
+			queue_sync()
+			return
+		_sweep_ready[uid] = Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
+		if v.get("file", false):
+			AssetRegistry.apply_state(v["node"], state_of(o))
+		var fill := fill_of(uid)
+		if fill != null:
+			fill.refresh(o)
+	_sweep = end
+	if end >= Game.objects.size():
+		_sweep = -1
+		_mark_ready(_sweep_ready)
 
 
 ## Whether a building is at work right now: a crafting building with something in its ovens or vats. (Other

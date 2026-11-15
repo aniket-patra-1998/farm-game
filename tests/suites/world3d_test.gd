@@ -3,7 +3,6 @@ extends TestSuite
 
 const ANIMAL_DRAWS := 5
 const ANIMAL_SHADOW_DRAWS := 2
-const HOME_TALLEST := 1.1   # tiles: the highest an animal home's walls stand (one low storey)
 
 const TREE_DRAWS := 7 # one of them the leaf cards
 ## Telling buildings apart by shape (test_320).
@@ -46,7 +45,8 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 			missing.append(id)
 	_eq(missing.size(), 0, "every decoration has a 3D model %s" % [missing])
 	# Building features are all ones BuildingModel knows how to build.
-	var known := ["yard", "silo", "stilts", "ramp", "chimney", "cupola", "loft_door", "stall_doors", "porch", "terrace",
+	var known := ["yard", "silo", "stilts", "ramp", "egg_chutes", "chimney", "cupola", "loft_door",
+		"stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
 		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag"]
 	known.append_array(BuildingModel.SIGNATURES)
@@ -506,18 +506,19 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	fill.refresh(dairy)
 	await get_tree().process_frame
 	_check(_count_vertices(fill) - _residents_vertices(fill) > piled, "more of them, nearer ready")
-	# Half full: nobody at the windows. Full: heads look out of them.
-	_check(fill._peekers == null, "a half-full home has nobody at its windows")
-	dairy["inside"] = {"cow": cap}
-	fill.refresh(dairy)
-	# (A head too big for the windows doesn't squeeze into them: then nobody looks out.)
+	# Whoever lives in a home looks out of its windows, half full or full (when a head fits them: one too big for
+	# the windows doesn't squeeze in, and nobody looks out).
 	var fits := fill._windows.is_empty() or BuildingFill._file_head("cow", float(fill._windows[0]["size"])) != null
 	_check(not fits or (fill._peekers != null and fill._peekers.get_child_count() > 0),
+		"a half-full home has heads at its windows when a head fits them")
+	dairy["inside"] = {"cow": cap}
+	fill.refresh(dairy)
+	_check(not fits or (fill._peekers != null and fill._peekers.get_child_count() > 0),
 		"a full home looks out of its windows when a head fits them")
-	_check(fill._peekers.get_child_count() <= BuildingFill.PEEKERS, "but only a few at a time")
+	_check(fill._peekers == null or fill._peekers.get_child_count() <= BuildingFill.PEEKERS, "but only a few at a time")
 	dairy["inside"] = {"cow": int(cap / 2.0)}
 	fill.refresh(dairy)
-	_check(fill._peekers == null, "and they go back in when it is not full")
+	_check(fill._peekers != null, "and they stay when it is no longer full")
 	# Collected: the doors swing open, then close again.
 	_check(not fill.doors_open(), "the doors are shut")
 	fill.celebrate()
@@ -632,16 +633,11 @@ func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 			# A second storey stands on the ground floor: the building is as tall as both.
 			var upper: Dictionary = BuildingModel.spec(id, level).get("upper", {})
 			var h := float(body.get("h", 0.0)) + float(upper.get("h", 0.0))
-			var home := not (Game.catalog.get_def(id) as BuildingDef).holds().is_empty() if Game.catalog.get_def(id) \
-				is BuildingDef else false
 			var long_side := maxf(bw, bd)
 			var short_side := minf(bw, bd)
 			_check(long_side / short_side <= 1.4, "%s size %d is not a long shed (%.2f x %.2f)" % [id, level, bw, bd])
-			if home:
-				_check(upper.is_empty() and h <= HOME_TALLEST, "%s size %d is one low storey (%.2f high)" % [id, level, h])
-			else:
-				_check(h >= short_side * 0.5, "%s size %d stands tall for its size (%.2f high, %.2f deep)"
-					% [id, level, h, short_side])
+			_check(h >= short_side * 0.5, "%s size %d stands tall for its size (%.2f high, %.2f deep)"
+				% [id, level, h, short_side])
 			_check(h >= last_h, "%s size %d is no lower than the size before" % [id, level])
 			last_h = h
 	_done(g)
@@ -1292,7 +1288,8 @@ func test_311_a_higher_level_never_shows_fewer_animals() -> void:
 				radii.append(BuildingFill.radius_of(Game.item_data(pick)))
 			var n := BuildingFill.shown_count(id, lv, top, radii, 7)
 			_check(n >= last, "%s shows %d at level %d, fewer than the %d below" % [id, n, lv, last])
-			_check(n >= mini(radii.size(), 3), "%s shows at least 3 at level %d (shows %d)" % [id, lv, n])
+			# (At full size: a small yard shows fewer, never smaller animals.)
+			_check(n >= mini(radii.size(), 2), "%s shows at least 2 at level %d (shows %d)" % [id, lv, n])
 			last = n
 
 

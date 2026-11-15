@@ -59,6 +59,7 @@ var _baked_size := -1              # the farm size the ground's still look was p
 var _bakes_waiting: Array = []     # [material, its viewport (weak), rect]: painted this frame, read from the next
 var _farm_tufts := {}              # farm tile index -> its tufts (MultiMesh buffer data), kept per tile
 var _lush := _make_lush()          # how thick the grass grows, a slow noise over the land
+var _layout_seen := Vector3i(-1, -1, -1)   # the layout (revision, things, farm size) the shade was last checked for
 var _shade_signature := 0
 var _forest_map: ImageTexture      # where the woods are: R, 1 under the trees fading out
 
@@ -228,7 +229,12 @@ func queue_rebuild() -> void:
 		set_meta("queued", true)
 		(func() -> void:
 			remove_meta("queued")
-			# Collecting or upgrading changes nothing on the ground: only a change in what stands where does.
+			# Collecting or upgrading changes nothing on the ground: only a change in what stands where does. When
+			# nothing has come, gone or moved since the last look, even asking what stands where is skipped.
+			var layout := Vector3i(Game.layout_revision, Game.objects.size(), Game.farm_size)
+			if layout == _layout_seen:
+				return
+			_layout_seen = layout
 			if is_inside_tree() and hash([Game.farm_size, _kinds(Game.farm_size)]) != _shade_signature:
 				rebuild()).call_deferred()
 

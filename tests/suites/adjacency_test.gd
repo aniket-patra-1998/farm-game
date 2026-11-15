@@ -35,9 +35,10 @@ func test_172_every_group_names_real_families_and_sane_numbers() -> void:
 
 func test_173_only_pieces_of_the_same_kind_that_share_an_edge_count() -> void:
 	var g := _synergy_farm()
+	var wide := g.footprint("chicken_coop").x
 	var a := _coop(g, 1, 1)
 	_eq(g.adjacency.count(a), 0, "alone: no neighbour")
-	var b := _coop(g, 1, 4)           # shares an edge with a
+	var b := _coop(g, 1, 1 + wide)    # shares an edge with a
 	var far := _coop(g, 1, 8)         # a column of grass between: not touching
 	_eq(g.adjacency.count(a), 1, "a touches b")
 	_eq(g.adjacency.count(b), 1, "b touches a")
@@ -49,13 +50,14 @@ func test_173_only_pieces_of_the_same_kind_that_share_an_edge_count() -> void:
 
 func test_174_the_bonus_is_capped_and_a_piece_in_hand_does_not_count() -> void:
 	var g := _synergy_farm()
+	var fp := g.footprint("chicken_coop")
 	var mid := _coop(g, 4, 4)
-	_coop(g, 4, 7)
-	_coop(g, 4, 1)
-	_coop(g, 6, 4)
-	var top := _coop(g, 2, 4)
+	_coop(g, 4, 4 + fp.x)
+	_coop(g, 4, 4 - fp.x)
+	_coop(g, 4 + fp.y, 4)
+	var top := _coop(g, 4 - fp.y, 4)
 	_eq(g.adjacency.neighbours_at("chicken_coop", 4, 4, int(mid["uid"])).size(), 4, "four around")
-	_coop(g, 6, 7)   # a fifth, touching the one below
+	_coop(g, 4 + fp.y, 4 + fp.x)   # a fifth, touching the one below
 	_eq(g.adjacency.count(mid), 4, "the cap is four neighbours")
 	_check(absf(g.adjacency.coin_multiplier(mid) - 1.4) < 0.0001, "capped at +40%")
 	_eq(g.adjacency.count_at("chicken_coop", 4, 4, int(top["uid"])), 3, "a piece lifted into the hand stops counting")
@@ -67,7 +69,7 @@ func test_175_a_collect_pays_the_bonus_and_it_can_be_switched_off() -> void:
 	var g := _synergy_farm()
 	g.feeds.active = false
 	var a := _coop(g, 1, 1)
-	_coop(g, 1, 4)
+	_coop(g, 1, 1 + g.footprint("chicken_coop").x)
 	a["inside"] = {"chicken": 3}
 	g.debug_time_offset += g.cycle_of(a) + 1
 	var base := g.object_payout(a).x
