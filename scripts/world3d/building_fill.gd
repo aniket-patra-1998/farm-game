@@ -72,6 +72,7 @@ var _produce: Node3D
 var _peekers: Node3D           # heads looking out of the windows while the home is full
 var _trough: Node3D            # the feed trough of a home that eats: full when fed, bare when hungry
 var _feed := -2                # what the trough shows: -2 not asked yet, -1 eats nothing, 0 hungry, 1 fed
+var _trough_feed := -2         # the feed state the trough was last built for
 var _feed_msec := 0            # when that was last asked
 var _empty_dress: Node3D       # what an empty yard holds instead of animals (a trough, hay, a feed pan, tufts)
 var _windows: Array = []
@@ -134,7 +135,8 @@ func refresh(o: Dictionary) -> void:
 	# are hungry. Asked every few seconds (it turns on feed bought and on time passing), not at every look.
 	var now := Time.get_ticks_msec()
 	if _feed < -1 or now - _feed_msec >= FEED_CHECK_MSEC:
-		_feed_msec = now
+		# (each home on its own beat, by its uid: sixty homes asked in the same frame was a hitch every five seconds)
+		_feed_msec = now if _feed >= -1 else now - posmod(uid * 977, FEED_CHECK_MSEC)
 		_feed = -1 if not Game.feeds.is_feedable(o) else (0 if Game.feeds.is_hungry(o) else 1)
 	var stage := "%d|%s|%d" % [step, Game.is_ready(o), _feed]
 	var fill: Dictionary = _spec.get("fill", {})
@@ -151,8 +153,8 @@ func refresh(o: Dictionary) -> void:
 		_dress_empty_yard(Game.inside_total(o) == 0)
 	if stage != _stage:
 		_show_produce(str(fill.get("produce", "")), step, fill.get("at", [0.78, 0.9]), o)
-		if not fill.has("plants"):
-			_show_trough(fill.get("at", [0.78, 0.9]))
+	if not fill.has("plants") and (_feed != _trough_feed or who != _who):
+		_show_trough(fill.get("at", [0.78, 0.9]))   # (only when fed or hungry turned, or who lives here did)
 	_who = who
 	_stage = stage
 	var full := Game.capacity(o) > 0 and Game.inside_total(o) >= Game.capacity(o) and not fill.has("plants")
@@ -695,6 +697,7 @@ func _open_shutter(open: bool) -> void:
 ## animals are fed, bare boards when they are hungry, and none for a home that eats nothing. Hungry animals look
 ## up from the grass and about (AnimalBehaviour.hungry), so hunger is seen in the yard, not only in a bubble.
 func _show_trough(at: Array) -> void:
+	_trough_feed = _feed
 	if _trough != null:
 		_trough.queue_free()
 		_trough = null
@@ -708,6 +711,7 @@ func _show_trough(at: Array) -> void:
 	ModelKit.tub(root, p + Vector3(-TROUGH.x, 0, -TROUGH.z), p + Vector3(TROUGH.x, TROUGH.y, TROUGH.z), 0.018,
 		ModelKit.surface(BuildingModel.WOOD, "boards", 0.2), ModelKit.paint(FEED_GOLD) if _feed == 1 else null, 0.85)
 	_trough = ModelKit.bake(root)
+	_trough.visible = _lod <= 0   # (a detail of the near view, like the yard's far animals: _set_lod)
 	add_child(_trough)
 
 
@@ -869,6 +873,8 @@ func _set_lod(cam: Camera3D) -> void:
 	if tier == _lod:
 		return
 	_lod = tier
+	if _trough != null:
+		_trough.visible = tier <= 0
 	var shown := residents.size()
 	if tier == 1:
 		shown = int(ceil(residents.size() / 2.0))

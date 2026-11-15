@@ -101,8 +101,7 @@ func pan_by(screen_delta: Vector2) -> void:
 func zoom_by(factor: float, screen_pos: Vector2, instant := false) -> void:
 	target_zoom = clampf(target_zoom * factor, min_zoom, max_zoom)
 	_focus = screen_pos
-	if _going:
-		_focus = get_viewport_rect().size / 2.0   # (on a journey the view zooms about its middle)
+	_going = false   # (the player's own zoom ends a journey)
 	if instant:
 		_apply_zoom(target_zoom)
 

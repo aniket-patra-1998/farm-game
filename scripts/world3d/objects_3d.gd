@@ -236,7 +236,7 @@ func _mark_ready(known := {}) -> void:
 			continue
 		# (`known`: what a timer's look has just found, thing by thing, so nothing is asked twice)
 		var ready: bool = known[uid] if known.has(uid) else \
-			(Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0))
+			Game.has_ready(o)
 		if ready:
 			var node: Node3D = _views[uid]["node"]
 			if node is Animal3D:
@@ -366,7 +366,7 @@ func _key(o: Dictionary) -> String:
 		_plain[id] = Game.kind_of(o) == "decor" and Game.links.group_of(id) == "" and not AssetRegistry.has_model(id)
 	if _plain[id] and not o.get("stray", false):
 		return "decor|%s|%d|%d|%s|%s" % [id, int(o["row"]), int(o["col"]), o.get("flip", false),
-			shows_of(o)]
+			STAGE + str(Game.farmhouse_stage()) if id == FARMHOUSE else o.get("crop", o.get("flower", ""))]
 	if Game.links.group_of(str(o["id"])) != "":
 		return "link|%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]   # how it joins is the LinkLayer's business
 	if uses_file(o):
@@ -427,11 +427,11 @@ func _light_some() -> void:
 		if v["key"] != _key(o):
 			queue_sync()
 			return
-		_sweep_ready[uid] = Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
+		_sweep_ready[uid] = Game.has_ready(o)
 		if v.get("file", false):
 			AssetRegistry.apply_state(v["node"], state_of(o))
-		var fill := fill_of(uid)
-		if fill != null:
+		var fill := v.get("fill") as BuildingFill   # (kept with the view: no search through the node each second)
+		if fill != null and is_instance_valid(fill):
 			fill.refresh(o)
 	_sweep = end
 	if end >= Game.objects.size():

@@ -401,7 +401,7 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 		else:
 			PlaceholderArt.draw_frame(ci, corners, it)
 		return
-	var is_ready_now := Game.is_ready(o) or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0)
+	var is_ready_now := Game.has_ready(o)
 	var building := Game.is_home(o)
 	var inside := Game.inside_total(o) if building else 0
 	var cap := Game.capacity(o) if building else 0
@@ -638,8 +638,7 @@ func spots_of(kind: String) -> Array[Dictionary]:
 		var is_it := false
 		match kind:
 			"ready":
-				is_it = not GameState.NEVER_READY.has(Game.kind_of(o)) and (Game.is_ready(o)
-					or (Game.crafting.is_crafting(o) and Game.crafting.crafts_done(o) > 0))
+				is_it = not GameState.NEVER_READY.has(Game.kind_of(o)) and Game.has_ready(o)
 			"hungry":
 				is_it = Game.feeds.enabled() and Game.feeds.is_hungry(o)
 			"stray":

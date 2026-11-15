@@ -27,6 +27,7 @@ enum Tutorial { HARVEST, PLOW, PLANT, DONE }
 
 const WET: Array[String] = ["rain", "storm"]               # the weather that waters the fields
 const FALLING: Array[String] = ["rain", "storm", "snow"]   # the weather the forecast speaks of
+const STATES_KEPT := 512     # weather blocks kept (two months of them) before the keeping starts again
 const RAIN_LOOK_MOST := 64   # weather blocks one look for rain covers at most (8 days of growing)
 # More tiles changed at once than this, and the whole field is laid again instead of each plot.
 const WHOLE_FIELD_TILES := 96
@@ -153,6 +154,8 @@ var _occupied := {}                # tile index -> uid of the object covering it
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
 var _weather := {}                # the last answer of weather(), and when and for what it was made
+var _states := {}                 # weather block index -> its state (weather_state_at), and what they were made for
+var _states_for := "?"
 var _forecast := {}               # the last answer of forecast(), and the weather block it was made in
 var _forecast_block := -1
 var _weather_at := -1
@@ -627,6 +630,12 @@ func crop_art_for(i: int) -> String:
 	return art if SpriteBank.has(art) else ""
 
 
+## Whether a thing has something to take now, so wears a ready sign: its produce (`is_ready`), or a crafting
+## building's finished crafts. The one place that says so (the signs, the Next ready button, the away card).
+func has_ready(obj: Dictionary) -> bool:
+	return is_ready(obj) or (crafting.is_crafting(obj) and crafting.crafts_done(obj) > 0)
+
+
 func is_ready(obj: Dictionary) -> bool:
 	if obj.get("stray", false):
 		return false
@@ -984,8 +993,20 @@ func off_season(crop_id: String) -> bool:
 
 ## The weather's state ("rain", "clear"...) in the block holding a time, by the season of that day.
 func weather_state_at(unix_time: int) -> String:
-	var bias := DayCycle.device_bias_minutes()
-	return Weather.state_at(unix_time, Season.odds_key(Season.at(unix_time, bias)), DayCycle.local_hour(unix_time, bias))
+	# Kept by block (a harvest asks about every block its crop grew through, a field of them the same ones over
+	# and over: 0.6 ms a harvest for a four-day crop before). Made again when the region or the switch changes.
+	var made_for := Season.region() if Season.enabled() else ""
+	if made_for != _states_for or _states.size() > STATES_KEPT:
+		_states_for = made_for
+		_states.clear()
+	var index := int(floor(unix_time / float(Weather.block())))
+	var state: Variant = _states.get(index)
+	if state == null:
+		var bias := DayCycle.device_bias_minutes()
+		state = Weather.state_at(unix_time, Season.odds_key(Season.at(unix_time, bias)),
+			DayCycle.local_hour(unix_time, bias))
+		_states[index] = state
+	return str(state)
 
 
 ## Whether it rained at any time between two moments (a crop's growing): the weather is a pure function of the
@@ -999,7 +1020,10 @@ func rained_between(from_t: int, to_t: int) -> bool:
 	t -= posmod(t, length)
 	var looked := 0
 	while t < to_t and looked < RAIN_LOOK_MOST:
-		if WET.has(weather_state_at(t)):
+		# (the first block is asked the full way, which also checks the kept blocks are for this region; the rest
+		# are read straight from what is kept when it is there)
+		var kept: Variant = _states.get(int(t / float(length))) if looked > 0 else null
+		if WET.has(str(kept) if kept != null else weather_state_at(t)):
 			return true
 		t += length
 		looked += 1

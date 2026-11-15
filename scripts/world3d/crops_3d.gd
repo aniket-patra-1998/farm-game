@@ -27,6 +27,7 @@ const PLANT_FLOATS := 20    # a plant in the MultiMesh buffer: transform (12), c
 var wind := 0.6: set = _set_wind
 var _due := -1   # the soonest time (Game.now) any plot's plants change look on their own; -1: none will
 
+var _mastered := {}   # crop id -> how far it is mastered, for the plots of one laying (update)
 var _layers := {}   # "shape|stage|colour" -> MultiMeshInstance3D
 var _material: ShaderMaterial
 var _materials := {}   # colour -> that colour's material (material_for)
@@ -196,6 +197,7 @@ static func stage_of(i: int) -> Array:
 ## out again, from per-plot pieces kept ready. So plowing, planting or harvesting one plot touches one or two
 ## groups, not the whole field, and the clock looks again only when the soonest plot is due (`_on_clock`).
 func update(indices: Array = []) -> void:
+	_mastered.clear()
 	var whole := indices.is_empty()
 	if whole:
 		indices = _all_plots()
@@ -257,7 +259,9 @@ func _look_of(i: int) -> Array:
 	var crop: Dictionary = Game.crops[crop_id]
 	var col := Color.html(str(crop.get("color", "#e2453c")))
 	var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
-	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i), mastered(crop_id))]
+	if not _mastered.has(crop_id):   # (asked once per crop per laying, not once per plot)
+		_mastered[crop_id] = mastered(crop_id)
+	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i), _mastered[crop_id])]
 
 
 ## Plot `i`'s plants as MultiMesh buffer data: for each, its transform (3 rows of 4), its colour, its data.

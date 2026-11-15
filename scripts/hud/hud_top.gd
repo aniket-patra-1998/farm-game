@@ -13,6 +13,7 @@ var plaque: PanelContainer
 var clock: Label
 var forecast: Label   # under the clock: "Rain at 4:00 pm: watered crops pay +10%" (hidden when nothing is due)
 var xp: UiXpBar
+var _forecast_at := -2   # the forecast last shown (its time; -1 none)
 
 
 func _init(owner: FarmHud) -> void:
@@ -78,6 +79,10 @@ func build(root: Control) -> void:
 ## The forecast line for what the sky does next (Game.forecast: {name, at, starts}; {} hides it): rain to come
 ## says what it is worth, rain falling says when it stops.
 func show_forecast(next: Dictionary) -> void:
+	var at_unix := int(next.get("at", -1))
+	if at_unix == _forecast_at:
+		return   # (asked every second; it changes every few hours)
+	_forecast_at = at_unix
 	forecast.visible = not next.is_empty()
 	if next.is_empty():
 		return
