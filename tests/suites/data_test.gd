@@ -176,5 +176,5 @@ func test_89_player_text_comes_from_the_strings_file() -> void:
 	_eq(wrong.size(), 0, "every key reads back as its English text %s" % [wrong])
 	var g := _farm(true)
 	g.tutorial_step = GameState.Tutorial.PLOW
-	_check(g.tutorial_text().begins_with("Choose Plow"), "tutorial hints are translated, not shown as keys")
+	_check(g.tutorial_text().begins_with("Pick the hoe"), "tutorial hints are translated, not shown as keys")
 	_done(g)

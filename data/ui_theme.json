@@ -82,6 +82,7 @@
     "button_border": 3,
     "button_pad": 14,
     "bubble_width": 250,
+    "unlock_picture": 64,
     "panel_button_width": 150,
     "panel_button_height": 50,
     "plaque_height": 38,

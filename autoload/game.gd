@@ -1080,6 +1080,18 @@ func level_reward(lvl: int) -> int:
 	return 100 * lvl
 
 
+## Ids of the crops, trees, animals and buildings that unlock at exactly this level (in this release).
+func unlock_ids_at(lvl: int) -> Array[String]:
+	var ids: Array[String] = []
+	for id in crop_order:
+		if int(crops[id]["unlock_level"]) == lvl and Release.has(id):
+			ids.append(id)
+	for id in item_order:
+		if int(items[id]["unlock_level"]) == lvl and Release.has(id):
+			ids.append(id)
+	return ids
+
+
 ## Names of crops, trees, animals and buildings that unlock at exactly this level.
 func unlocks_at(lvl: int) -> Array[String]:
 	var names: Array[String] = []

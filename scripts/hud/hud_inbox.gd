@@ -55,7 +55,7 @@ func line_for(item: Dictionary) -> PanelContainer:
 	var what := str(give.get("what", ""))
 	if what in [InboxItem.ITEM, InboxItem.YOUNG, InboxItem.PART]:
 		row.add_child(UiKit.count_row([[str(give["id"]), "×%d" % int(give.get("n", 1))]]))
-	var words := BookPanel.text(sentence(item), 18)
+	var words := BookPanel.text(_who(item), 18)   # (just who: the picture, the count and the button say the rest)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(words)
@@ -68,6 +68,11 @@ func line_for(item: Dictionary) -> PanelContainer:
 	var card := BookPanel.card()
 	card.add_child(row)
 	return BookPanel.card_frame(card)
+
+
+## Who sent it: a neighbour's name, or your farm.
+func _who(item: Dictionary) -> String:
+	return tr("INBOX_YOUR_FARM") if int(item.get("from", 0)) == InboxItem.FARM else Game.social.sender(item)
 
 
 ## What a line says: "Maple sent you 2 Bricks", "Your farm: a Cow, grown up in the nursery", "Barley asks for 3 Nails".

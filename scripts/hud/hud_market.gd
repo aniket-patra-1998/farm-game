@@ -124,8 +124,12 @@ func item_card(id: String, it: Dictionary, tell: Callable) -> Button:
 	else:
 		var price := price_of(id, it)
 		badge = UiKit.price_badge(price[0], price[1], not affordable)
-	var line := tr("NEEDS_N_FIRST") % unmet if unmet > 0 and not locked else short_detail(id, it)
+	# Picture, name and price; what it earns and how fast on a long press (a card says only what's needed to pick).
+	var line := tr("NEEDS_N_FIRST") % unmet if unmet > 0 and not locked else ""
 	var card := UiKit.item_card(ItemIcons.of(id), str(it["name"]), line, badge, blocked, MasteryStars.of(id))
+	var detail := short_detail(id, it)
+	if detail != "":
+		UiKit.long_press_name(card, "%s: %s" % [it["name"], detail])
 	var buyable := not blocked and affordable and unmet == 0
 	card.set_meta(&"buyable", buyable)
 	card.pressed.connect(func() -> void:

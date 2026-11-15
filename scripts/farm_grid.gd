@@ -1160,10 +1160,20 @@ static func status_of(obj: Dictionary) -> String:
 		return TranslationServer.translate("BUBBLE_NEEDS") % Game.nurture.supply_name(supply)
 	if Game.kind_of(obj) == "decor":
 		return ""
+	var line := ""
 	if Game.is_ready(obj):
-		return TranslationServer.translate("BUBBLE_READY")
-	var wait := Game.seconds_until_ready(obj)
-	return TranslationServer.translate("BUBBLE_READY_IN") % format_duration(wait) if wait > 0 else ""
+		line = TranslationServer.translate("BUBBLE_READY")
+	else:
+		var wait := Game.seconds_until_ready(obj)
+		line = TranslationServer.translate("BUBBLE_READY_IN") % format_duration(wait) if wait > 0 else ""
+	if Game.is_home(obj) and Game.capacity(obj) > 0:
+		# How full a home is, then when it's ready: "6/10 · Ready in 3h".
+		var held := 0
+		for n in (obj.get("inside", {}) as Dictionary).values():
+			held += int(n)
+		var full := "%d/%d" % [held, Game.capacity(obj)]
+		line = full if line == "" else full + "  ·  " + line
+	return line
 
 
 static func format_duration(seconds: int) -> String:

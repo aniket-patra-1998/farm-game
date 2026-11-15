@@ -103,15 +103,21 @@ static func has_panel(o: Dictionary) -> bool:
 		or Game.nurture.supply_for(o) != "")
 
 
-## The one thing to do for `o` right from its bubble, as {"words", "do"}, or {}: feed a hungry animal or home
-## with the best feed in the Barn, for more coins (the first effect), queued for the farmer as any farm work.
+## The one thing to do for `o` right from its bubble, as {"words", "do"}, or {}: expand a building that can grow
+## now, or feed a hungry animal or home with the best feed in the Barn, for more coins (the first effect),
+## queued for the farmer as any farm work.
 static func action_of(o: Dictionary) -> Dictionary:
-	if o.is_empty() or not Game.feeds.is_feedable(o) or not Game.feeds.effect_of(o).is_empty():
+	if o.is_empty():
+		return {}
+	var uid := int(o["uid"])
+	if Game.is_building_item(str(o["id"])) and not Game.under_construction(o) and Game.buildings.can_expand(o).ok():
+		# A building that can grow now (its parts in, the coins there): Expand, right from its bubble.
+		return {"words": TranslationServer.translate("EXPAND"), "do": func() -> void: Game.land.upgrade_building(uid)}
+	if not Game.feeds.is_feedable(o) or not Game.feeds.effect_of(o).is_empty():
 		return {}
 	var best := Game.feeds.best_feed_for(o)
 	if best.is_empty():
 		return {}
-	var uid := int(o["uid"])
 	var effect := str(Game.feeds.effects()[0])
 	return {"words": TranslationServer.translate("BUBBLE_FEED"), "do": func() -> void:
 		Game.player.enqueue({"kind": "feed", "uid": uid, "feed": best["feed"], "effect": effect,

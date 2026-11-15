@@ -106,13 +106,26 @@ func _show(lvl: int) -> void:
 	_reward_label.text = tr("COINS_GEM") % [Game.level_reward(lvl), Balance.i("economy.gems_per_level")]
 	for child in _unlocks.get_children():
 		child.queue_free()
-	var names := Game.unlocks_at(lvl)
-	_unlock_title.visible = not names.is_empty()
-	for n in names:
-		_unlocks.add_child(_chip(n))
+	# What's new, as pictures (its name on a long press): the pictures say it faster than a list of names.
+	var ids := Game.unlock_ids_at(lvl)
+	_unlock_title.visible = not ids.is_empty()
+	for id in ids:
+		_unlocks.add_child(_picture(id))
 	_card.custom_minimum_size.x = minf(620.0, get_viewport_rect().size.x - 64.0)
 	_pop_in()
 	_burst_confetti()
+
+
+func _picture(id: String) -> Control:
+	var pic := TextureRect.new()
+	pic.texture = ItemIcons.of(id)
+	pic.custom_minimum_size = Vector2.ONE * UiTheme.size("unlock_picture")
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.material = UiFx.glint()
+	var it: Dictionary = Game.item_data(id) if not Game.crops.has(id) else Game.crops[id]
+	pic.tooltip_text = str(it.get("name", id))
+	return pic
 
 
 func _next() -> void:
@@ -164,21 +177,3 @@ func _label(words: String, size: int, color: Color) -> Label:
 	return l
 
 
-func _chip(words: String) -> PanelContainer:
-	var p := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = CREAM
-	sb.border_color = WOOD_DARK
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(12)
-	sb.content_margin_left = 12
-	sb.content_margin_right = 12
-	sb.content_margin_top = 6
-	sb.content_margin_bottom = 6
-	p.add_theme_stylebox_override("panel", sb)
-	var l := Label.new()
-	l.text = words
-	l.add_theme_font_size_override("font_size", UiTheme.font(20))
-	l.add_theme_color_override("font_color", INK)
-	p.add_child(l)
-	return p
