@@ -24,6 +24,8 @@ signal inbox_changed             # the neighbours' mail changed (arrived, claime
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
 
+# More tiles changed at once than this, and the whole field is laid again instead of each plot.
+const WHOLE_FIELD_TILES := 96
 # Each step's hint, as keys in locale/strings.csv (tutorial_text() translates it).
 const TUTORIAL_TEXT := {
 	Tutorial.HARVEST: "YOUR_FIRST_CROPS_ARE_READY_TAP",
@@ -135,10 +137,12 @@ var persistence: Persistence          # saving and loading (not in `systems`: it
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
 
 
+var tiles_revision := 0            # goes up only when which tile holds what has really changed (unlike the next)
 var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
 var _level := 1                    # level() remembered for this XP (and this version of the Balance numbers)
 var _level_xp := -1
 var _level_rev := -1
+var _tiles_changed := {}           # tiles whose occupant changed since the farm was last told (objects_updated)
 var _occupied := {}                # tile index -> uid of the object covering it
 var _uid_index := {}               # uid -> its position in objects (see object_by_uid)
 
@@ -294,6 +298,7 @@ func debug_skip(seconds: int) -> void:
 	strays.check_strays()
 	daily.check_daily_gift()
 	plot_changed.emit(-1)
+	_tiles_changed.clear()   # (the whole field has just been told)
 	check_rescue()
 	queue_save()
 
@@ -388,6 +393,11 @@ func add_object(o: Dictionary) -> void:
 	objects.append(o)
 	if o.has("row") and o.has("col"):
 		_occupy(o)
+		tiles_revision += 1
+		var fp := footprint(o["id"])
+		for r in range(int(o["row"]), int(o["row"]) + fp.y):
+			for c in range(int(o["col"]), int(o["col"]) + fp.x):
+				_tiles_changed[index_of(r, c)] = true
 
 
 func remove_object(o: Dictionary) -> void:
@@ -406,10 +416,24 @@ func is_occupied(i: int) -> bool:
 
 
 func rebuild_occupancy() -> void:
-	_occupied.clear()
+	var before := _occupied
+	_occupied = {}
 	layout_revision += 1
 	for o in objects:
 		_occupy(o)
+	# Which tiles hold something else now than they did (for most changes: none) is kept until the farm is told
+	# (objects_updated), so only those plots are laid again and nothing that follows the ground looks again.
+	var moved := false
+	for i: int in _occupied:
+		if int(before.get(i, -1)) != int(_occupied[i]):
+			_tiles_changed[i] = true
+			moved = true
+	for i: int in before:
+		if not _occupied.has(i):
+			_tiles_changed[i] = true
+			moved = true
+	if moved:
+		tiles_revision += 1
 
 
 ## Whether `item_id` can stand at row, col (the rule and its reasons: BuildingSystem.can_place).
@@ -901,7 +925,15 @@ func objects_updated() -> void:
 		_held_update = true   # (told once, when the batch ends: release_updates)
 		return
 	objects_changed.emit()
-	plot_changed.emit(-1)
+	# Only the plots whose tile holds something else now are laid again: none, for a turn, a feed or an upgrade
+	# (the whole field was laid again after every change, though nothing on it had moved).
+	var tiles: Array = _tiles_changed.keys()
+	_tiles_changed.clear()
+	if tiles.size() > WHOLE_FIELD_TILES:
+		plot_changed.emit(-1)
+	else:
+		for i: int in tiles:
+			plot_changed.emit(i)
 	queue_save()
 
 
@@ -957,6 +989,7 @@ func use_unwither() -> bool:
 	message.emit(tr("UNWITHERED_PLOTS_THEY_RE_READY_TO") % count)
 	inventory_changed.emit()
 	plot_changed.emit(-1)
+	_tiles_changed.clear()   # (the whole field has just been told)
 	queue_save()
 	return true
 
@@ -1171,6 +1204,8 @@ func _new_game() -> void:
 	next_uid = 1
 	_occupied.clear()
 	layout_revision += 1
+	tiles_revision += 1
+	_tiles_changed.clear()
 	plots.clear()
 	farm_size = START_SIZE
 	unwithers = Balance.i("economy.start_unwithers")
@@ -1280,6 +1315,7 @@ func in_showcase() -> bool:
 func settle_objects() -> int:
 	_occupied.clear()
 	layout_revision += 1
+	tiles_revision += 1
 	var misfits: Array = []
 	for o in objects:
 		if can_place(o["id"], int(o["row"]), int(o["col"]), -1, false):
@@ -1330,6 +1366,7 @@ func reset_game() -> void:
 	inventory_changed.emit()
 	farm_expanded.emit(farm_size)
 	plot_changed.emit(-1)
+	_tiles_changed.clear()   # (the whole field has just been told)
 
 
 func plot_updated(i: int) -> void:

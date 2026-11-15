@@ -72,8 +72,15 @@ Measured, once built (before -> after): 100 decorations 350 -> 170 draws; 300: 1
 nodes, built in 9.3 s over 48 frames -> 0.3 s in 1; 700: 2,610 -> 433 draws, 4,136 -> 1,696 nodes, 634,000 ->
 451,000 triangles, a change on the farm 17.9 -> 9.3 ms of script (the farm's whole budget is 2,250 draws).
 Open, in order of what it buys:
-- A change should name the thing that changed (`objects_changed` carries nothing): the farm still looks at every
-  thing after each collect or placement (9 ms at 700 decorations).
+- Done since: what one change costs on that 700-decoration farm went from about 40 ms of script to about 8 ms.
+  The whole field was laid again after every change (now only the plots whose tile holds something else:
+  `Game.tiles_revision`, `objects_updated`), the hidden 2D layer placed and redrew every piece (17 ms -> 2), and
+  the ground and the fences looked again though nothing had moved.
+- What is left of a change is the 3D layer looking at every thing (4 ms at 700) and the occupancy being rebuilt
+  (1.5 ms): to go lower, a change has to name its thing (`objects_changed` carries nothing; things are plain
+  dictionaries changed in place in 35 places).
+- The timer's look each second at trees and buildings still runs in one frame on this branch (spread over
+  frames on `building-look`, not merged).
 - A simpler far version of each decoration (they average about 650 triangles and are small on screen zoomed out).
 - Trees that are decorations, the bridge, buildings and animals are still a node each; the same layer could draw
   whatever of those stands still.

@@ -67,6 +67,8 @@ var _full := true        # the queued sync looks at everything (a change), not o
 var _ticks := 0
 
 var _scenery: Node3D
+var _links_at := -1     # Game.tiles_revision, and how many things there were, when the fences were last joined
+var _links_count := -1
 var _plain := {}   # item id -> whether it is a plain decoration (code-built, standing alone): see _key
 var _links: LinkLayer   # draws the fences, hedges, walls and paths, joined up
 var _ghost_mask := -1
@@ -141,7 +143,11 @@ func sync() -> void:
 	_full = false
 	if not light and _links_due:
 		_links_due = false   # (once per change: not again on each frame the building carries on over)
-		_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
+		if Game.tiles_revision != _links_at or Game.objects.size() != _links_count:
+			# (fences join by where things stand: a change that moved nothing changes none of it)
+			_links_at = Game.tiles_revision
+			_links_count = Game.objects.size()
+			_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
 	var seen := {}
 	var began := Time.get_ticks_msec()
 	var built := 0
@@ -161,8 +167,8 @@ func sync() -> void:
 		if v.get("key", "") == key:
 			if v.get("file", false):
 				AssetRegistry.apply_state(v["node"], state_of(o))   # (ready, at work... shown in place)
-			var fill := fill_of(uid)
-			if fill != null:
+			var fill := v.get("fill") as BuildingFill   # (kept with the view: finding it took a look through the node)
+			if fill != null and is_instance_valid(fill):
 				fill.refresh(o)  # who's in, how near ready: shown without rebuilding the building
 			continue
 		if spent > BUILD_BUDGET_MS * 1000:
@@ -178,6 +184,7 @@ func sync() -> void:
 		var step := _step(o)
 		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
 			"file": uses_file(o)}
+		_views[uid]["fill"] = fill_of(uid)
 		if Game.catalog.get_def(str(o["id"])) is TreeDef:
 			_views[uid]["crown"] = _crown_of(_views[uid]["box"])
 		if not fresh and _synced_once and step > int(v.get("step", step)):

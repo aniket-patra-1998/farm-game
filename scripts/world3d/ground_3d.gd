@@ -65,6 +65,7 @@ var _farm_flowers := {}            # farm tile index -> its flowers ([transform,
 var _meadow_flowers: Array = []    # the meadow's flowers, the same way (only the farm's size moves them)
 var _farm_tufts := {}              # farm tile index -> its tufts (MultiMesh buffer data), kept per tile
 var _lush := _make_lush()          # how thick the grass grows, a slow noise over the land
+var _tiles_seen := -1              # Game.tiles_revision when the shade was last checked
 var _shade_signature := 0
 var _forest_map: ImageTexture      # where the woods are: R, 1 under the trees fading out
 
@@ -238,6 +239,10 @@ func queue_rebuild() -> void:
 		set_meta("queued", true)
 		(func() -> void:
 			remove_meta("queued")
+			# Nothing has come, gone or moved since the last look: even asking what stands where is skipped.
+			if Game.tiles_revision == _tiles_seen and Game.farm_size == _size:
+				return
+			_tiles_seen = Game.tiles_revision
 			# Collecting or upgrading changes nothing on the ground: only a change in what stands where does.
 			if is_inside_tree() and hash([Game.farm_size, _kinds(Game.farm_size)]) != _shade_signature:
 				rebuild()).call_deferred()

@@ -1980,3 +1980,33 @@ func test_356_decorations_are_drawn_in_batches_that_follow_each_one() -> void:
 	objects.queue_free()
 	Game.reset_game()
 	await get_tree().process_frame
+
+
+## A change on the farm lays again only the plots whose tile holds something else now: none when a thing is
+## turned, the tiles it left and took when it moves (the whole field was laid again after every change).
+func test_357_only_the_plots_under_what_moved_are_laid_again() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	for i in Game.plots.size():
+		Game.plots[i] = {"state": "grass"}
+	var told: Array = []
+	var listen := func(i: int) -> void: told.append(i)
+	Game.plot_changed.connect(listen)
+	var bench := {"uid": Game.next_uid, "id": "bench", "row": 3, "col": 3, "t": Game.now()}
+	Game.next_uid += 1
+	Game.add_object(bench)
+	Game.objects_updated()
+	_eq(told, [Game.index_of(3, 3)], "placed: the one tile it stands on")
+	var tiles := Game.tiles_revision
+	told.clear()
+	bench["flip"] = true
+	Game.objects_updated()
+	_check(told.is_empty(), "turned: no plot is laid again (%s)" % [told])
+	_eq(Game.tiles_revision, tiles, "and nothing that follows the ground is told it moved")
+	bench["row"] = 5
+	Game.objects_updated()
+	told.sort()
+	_eq(told, [Game.index_of(3, 3), Game.index_of(5, 3)], "moved: the tile it left and the tile it took")
+	_check(Game.tiles_revision > tiles, "and the ground's followers know")
+	Game.plot_changed.disconnect(listen)
+	Game.reset_game()
