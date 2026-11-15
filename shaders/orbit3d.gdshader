@@ -12,16 +12,33 @@ uniform float swing = 0.0;      // > 0: swings this many radians either way inst
 uniform float bob = 0.0;        // up and down by this much
 uniform float bob_rate = 2.0;   // bobs a second (x tau)
 uniform float phase = 0.0;
+uniform float flap = 0.0;       // > 0: a flier's wings (whatever lies further out than `shoulder` either side) beat
+uniform float flap_rate = 10.0; // this many radians up and down, at this pace, in bursts with glides between
+uniform float shoulder = 0.03;
 
 void vertex() {
 	vec3 root = NODE_POSITION_WORLD;
 	float t = TIME + phase + root.x * 0.37 + root.z * 0.23;
 	float a = swing > 0.0 ? sin(t * speed) * swing * (0.5 + wind * 0.5) : t * speed;
-	vec3 p = VERTEX + vec3(radius, 0.0, 0.0);
+	vec3 v = VERTEX;
+	vec3 n = NORMAL;
+	if (flap > 0.0 && abs(v.x) > shoulder) {
+		// Both wings turn about their shoulders together, up then down; between bursts it glides, wings level.
+		float side = sign(v.x);
+		float a0 = sin(t * flap_rate) * flap * smoothstep(-0.2, 0.4, sin(t * 0.9));
+		float ca = cos(a0);
+		float sa = sin(a0);
+		float out_x = abs(v.x) - shoulder;
+		v.x = side * (shoulder + out_x * ca - v.y * sa);
+		v.y = out_x * sa + v.y * ca;
+		float n_out = n.x * side;
+		n = vec3(side * (n_out * ca - n.y * sa), n_out * sa + n.y * ca, n.z);
+	}
+	vec3 p = v + vec3(radius, 0.0, 0.0);
 	float c = cos(a);
 	float s = sin(a);
 	VERTEX = vec3(p.x * c + p.z * s, p.y + sin(t * bob_rate * 6.2832) * bob, -p.x * s + p.z * c);
-	NORMAL = vec3(NORMAL.x * c + NORMAL.z * s, NORMAL.y, -NORMAL.x * s + NORMAL.z * c);
+	NORMAL = vec3(n.x * c + n.z * s, n.y, -n.x * s + n.z * c);
 }
 
 void fragment() {
