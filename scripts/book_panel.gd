@@ -4,6 +4,7 @@ extends Control
 ## a plaque, a round close button, tabs when it has them (the Market's shelves), and scrolling content that a
 ## builder fills (and fills again on `refresh`). Every panel of the game opens in it.
 
+const MIN_FONT := 11   # no panel text smaller than this (readable on any phone)
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
 const CREAM := Color("#fbefd2")
@@ -194,10 +195,16 @@ static func card_frame(inner: Control) -> PanelContainer:
 static func text(words: String, font_size := 22, color := INK) -> Label:
 	var l := Label.new()
 	l.text = words
-	l.add_theme_font_size_override("font_size", font_size)
+	l.add_theme_font_size_override("font_size", font_px(font_size))
 	l.add_theme_color_override("font_color", color)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l
+
+
+## A panel's text size `font_size` at the interface's scale (UiTheme.scale) and its `text_share` (panels read best
+## a little smaller than their design sizes on a phone).
+static func font_px(font_size: int) -> int:
+	return maxi(int(round(font_size * UiTheme.scale() * UiTheme.size("text_share"))), MIN_FONT)
 
 
 static func chip(words: String, filled: bool) -> PanelContainer:

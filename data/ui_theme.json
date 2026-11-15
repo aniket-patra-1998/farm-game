@@ -87,6 +87,7 @@
     "gloss_share": 0.45,
   "round_share": 0.5,
   "tool_round_share": 0.28,
+  "text_share": 0.9,
     "font_bar": 19,
     "font_plaque": 19,
     "font_star": 22,
