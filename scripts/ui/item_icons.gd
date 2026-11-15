@@ -33,6 +33,8 @@ const LIGHTS := [[-48.0, 28.0, Color(1.0, 0.96, 0.88), 0.85, true], [-20.0, -120
 const AMBIENT := Color(0.42, 0.42, 0.48)
 const STAGE := &"Stage"   # not-ui (the node holding the model in a slot)
 
+const SIZED := "@"            # "cow_shed@3": the picture of a building at that size (see `sized`)
+
 static var shipping := false   # making the pictures that go into the game (tools/bake_icons.tscn)
 static var _shown: ItemIcons
 static var _side := 0          # this screen's picture size, worked out once
@@ -65,6 +67,11 @@ static func of(item_id: String) -> Texture2D:
 	if _waiting.has(item_id):
 		_asked[item_id] = Engine.get_process_frames()
 	return _textures[item_id]
+
+
+## The picture of building `id` at size `level` (made once and kept, like any item's).
+static func sized(id: String, level: int) -> Texture2D:
+	return of("%s%s%d" % [id, SIZED, level])
 
 
 ## The pictures' size in pixels on this screen: SIDE at the game's own scale, more where the screen draws the
@@ -110,7 +117,12 @@ static func _shipped(item_id: String) -> String:
 
 
 static func _key(item_id: String) -> int:
-	return hash([Game.item_data(item_id), LOOK, ProjectSettings.get_setting("application/config/version", "")])
+	# (a building at one of its sizes, "id@size", is keyed by the building's data and that size's numbers)
+	var sized := item_id.split(SIZED)
+	var data: Variant = Game.item_data(sized[0])
+	if sized.size() > 1:
+		data = [data, BuildingModel.spec(sized[0], int(sized[1]))]
+	return hash([data, LOOK, ProjectSettings.get_setting("application/config/version", "")])
 
 
 ## The waiting item asked for most recently (the cards on screen), the first of those in order.
@@ -273,6 +285,9 @@ func _set_up(k: int, id: String) -> bool:
 static func _model(id: String) -> Node3D:
 	if id.begins_with(UI):
 		return UiModels.build(id.trim_prefix(UI))   # an interface icon (UiIcon draws it)
+	if id.contains(SIZED):   # a building at one of its sizes (what its next size looks like)
+		var sized := id.split(SIZED)
+		return ModelKit.bake(BuildingModel.build(Game.item_data(sized[0]), Game.footprint(sized[0]), int(sized[1])))
 	var art := AssetRegistry.instance(id)   # (made as a file: its picture is of the file)
 	if art != null:
 		return art

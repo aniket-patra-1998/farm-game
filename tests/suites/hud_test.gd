@@ -34,7 +34,8 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 		seen[key] = true
 		hud.show_building(int(o["uid"]))
 		opened += 1
-		_check(book.visible, "tapping %s opens its panel" % key)
+		var sheet_up := hud.sheet != null and hud.sheet.visible   # (a finished building opens as its sheet)
+		_check(book.visible or sheet_up, "tapping %s opens its panel" % key)
 	_check(opened > 20, "many different panels were opened (%d)" % opened)
 	var box := VBoxContainer.new()
 	main.add_child(box)
@@ -245,8 +246,8 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 	var coop := Game.object_at(Game.index_of(spot.x, spot.y))
 	hud.show_building(int(coop["uid"]))
 	var buttons := {}
-	for b: Button in book.find_children("*", "Button", true, false):
-		if not b.is_queued_for_deletion():
+	for b: Button in hud.sheet.find_children("*", "Button", true, false):
+		if not b.is_queued_for_deletion() and b.is_visible_in_tree():
 			buttons[b.text] = b
 	for word: String in [tr("TOOL_MOVE"), tr("TOOL_SELL")]:
 		_check(buttons.has(word), "the panel offers %s" % word)
@@ -271,15 +272,15 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 		_check(not refusal.ok() and greyed and told, "the Barn's Sell is greyed and says why before any tap")
 		hud.show_building(int(coop["uid"]))
 		buttons.clear()
-		for b: Button in book.find_children("*", "Button", true, false):
+		for b: Button in hud.sheet.find_children("*", "Button", true, false):
 			if not b.is_queued_for_deletion():
 				buttons[b.text] = b
 	var sell: Button = buttons[tr("TOOL_SELL")]
 	sell.pressed.emit()
-	_check(book.visible and not Game.object_by_uid(int(coop["uid"])).is_empty(), "the first tap on Sell only asks")
+	_check(hud.sheet.visible and not Game.object_by_uid(int(coop["uid"])).is_empty(), "the first tap on Sell only asks")
 	_check(sell.text != tr("TOOL_SELL"), "with the price on the button (%s)" % sell.text)
 	sell.pressed.emit()
-	_check(Game.object_by_uid(int(coop["uid"])).is_empty() and not book.visible, "the second sells it")
+	_check(Game.object_by_uid(int(coop["uid"])).is_empty() and not hud.sheet.visible, "the second sells it")
 	main.queue_free()
 	await get_tree().process_frame
 
@@ -427,3 +428,37 @@ func test_353_a_tapped_thing_tells_about_itself_in_a_bubble() -> void:
 	hud.bubble.close()
 	_check(not hud.bubble.visible, "and goes")
 	hud.queue_free()
+
+
+func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(20)
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var spot := Vector2i(-1, -1)
+	for r in Game.farm_size:
+		for c in Game.farm_size:
+			if spot.x < 0 and Game.can_place("chicken_coop", r, c):
+				spot = Vector2i(r, c)
+	_check(Game.buy_and_place("chicken_coop", spot.x, spot.y), "a Coop")
+	var coop := Game.object_at(Game.index_of(spot.x, spot.y))
+	hud.show_building(int(coop["uid"]))
+	_check(hud.sheet != null and hud.sheet.visible, "a finished home opens as its sheet")
+	_check(not (hud.get("_book") as BookPanel).visible, "not as the full panel")
+	var before := hud.sheet.find_children("*", "Control", true, false)
+	var words := ""
+	for l: Label in hud.sheet.find_children("*", "Label", true, false):
+		words += l.text + "|"
+	_check(words.contains(tr("ADDS_CHUTE")), "it says what the next size adds (%s)" % words)
+	# A change on the farm, and tapping the same home again, refill it: nothing is built again.
+	Game.objects_changed.emit()
+	hud.show_building(int(coop["uid"]))
+	var after := hud.sheet.find_children("*", "Control", true, false)
+	_eq(after.size(), before.size(), "refilled with the same parts")
+	_check(after.size() > 0 and after[0] == before[0] and after[-1] == before[-1], "the very same ones")
+	main.queue_free()
+	await get_tree().process_frame
