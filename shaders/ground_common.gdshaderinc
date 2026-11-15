@@ -42,6 +42,13 @@ vec3 ground_static(vec2 p, out float fine) {
 	col *= 0.92 + 0.16 * fine;
 	col *= 1.0 + patchy * (fbm(p * 0.09 + 31.0) - 0.5);
 	if (farm_n > 0.0) {
+		// The kept lawn's own detail: soft drifts of fresher, lighter grass, and clover: small round darker
+		// leaves gathered in patches, a few of them in flower (white specks).
+		col = mix(col, col * vec3(1.1, 1.13, 0.98) + vec3(0.01, 0.02, 0.0), 0.6 * smoothstep(0.52, 0.66, fbm(p * 0.75 + 23.0)));
+		float clover = smoothstep(0.6, 0.7, fbm(p * 0.55 + 140.0));
+		float leaf = smoothstep(0.55, 0.8, noise(p * 9.0 + 5.0));
+		col = mix(col, col * vec3(0.8, 0.94, 0.86), clover * leaf * 0.7);
+		col = mix(col, vec3(0.9, 0.93, 0.85), clover * step(0.955, noise(p * 21.0 + 9.0)) * 0.85);
 		col *= 1.0 + mow * (step(0.5, fract((p.x + p.y) * 0.25)) - 0.5);
 		float d = min(min(p.x, p.y), min(farm_n - p.x, farm_n - p.y));
 		float ragged = (fine - 0.5) * 0.2 + (noise(p * 1.7) - 0.5) * 0.12;

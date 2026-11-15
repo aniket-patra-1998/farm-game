@@ -6,7 +6,7 @@ extends Node3D
 
 const SOIL_SHADER := preload("res://shaders/soil3d.gdshader")
 const BED := 0.9           # a bed's width, in tiles (the gaps between beds are grass)
-const HEIGHT := 0.09
+const HEIGHT := 0.025        # how far a bed stands above the grass: barely (FarmVille's plots lie almost flush)
 const BEVEL := 0.05         # how far in from its foot a bed's flat top begins (soil3d `top_half`: BED / 2 less this)
 const BED_FLOATS := 16     # a bed in the MultiMesh buffer: transform (12) and data (4)
 

@@ -39,6 +39,8 @@ const LAWN := {"grass_light": Color(0.32, 0.48, 0.21), "grass_dark": Color(0.27,
 	"dryness": 0.05}
 const TUFT_FLOATS := 16           # a tuft in the MultiMesh buffer: transform (12) and colour (4)
 const CLUMP_MAX := 9               # tufts in the thickest clump on a tile
+const LAWN_FLOWER_CHANCE := 0.14   # of a tile of the farm's lawn having a small patch of flowers
+const LAWN_FLOWER_WEAR := 0.35     # none where the grass is worn more than this (a path's edge, a yard)
 const FLOWER_CHANCE := 0.22        # of a meadow tile having a patch of wild flowers
 
 const FLOWERS := [Color("#f5f1e6"), Color("#ffd84a"), Color("#c99be8"), Color("#ff8fa3"), Color("#8fc6ff")]
@@ -59,6 +61,8 @@ var _meadow_tufts := PackedFloat32Array()   # the meadow's tufts (MultiMesh buff
 var _shade_texture: ImageTexture
 var _baked_size := -1              # the farm size the ground's still look was painted for
 var _bakes_waiting: Array = []     # [material, its viewport (weak), rect]: painted this frame, read from the next
+var _farm_flowers := {}            # farm tile index -> its flowers ([transform, colour] pairs), kept per tile
+var _meadow_flowers: Array = []    # the meadow's flowers, the same way (only the farm's size moves them)
 var _farm_tufts := {}              # farm tile index -> its tufts (MultiMesh buffer data), kept per tile
 var _lush := _make_lush()          # how thick the grass grows, a slow noise over the land
 var _shade_signature := 0
@@ -388,10 +392,13 @@ func _scatter_tufts(n: int) -> void:
 				if r < 0 or c < 0 or r >= n or c >= n:
 					_meadow_tufts.append_array(_tile_tufts(r, c, false))
 	_farm_tufts.clear()
+	_farm_flowers.clear()
 	for r in n:
 		for c in n:
 			_farm_tufts[Game.index_of(r, c)] = _tile_tufts(r, c, true)
+			_farm_flowers[Game.index_of(r, c)] = _tile_flowers(r, c)
 	_lay_tufts()
+	_lay_flowers()
 
 
 ## The tufts of farm plots `indices` follow their ground (grass, or a bed with none), and only theirs.
@@ -399,11 +406,17 @@ func update_tiles(indices: Array) -> void:
 	if indices.is_empty() or _farm_tufts.is_empty():
 		_scatter_tufts(Game.farm_size)
 		return
+	var flowers_moved := false
 	for i: int in indices:
 		if not _farm_tufts.has(i):
 			continue   # (off the farm as it is now)
 		_farm_tufts[i] = _tile_tufts(GameState.row_of(i), GameState.col_of(i), true)
+		var flowers := _tile_flowers(GameState.row_of(i), GameState.col_of(i))
+		flowers_moved = flowers_moved or flowers.size() != (_farm_flowers.get(i, []) as Array).size()
+		_farm_flowers[i] = flowers
 	_lay_tufts()
+	if flowers_moved:   # (most plots have no flowers to lose: the batch is laid again only when one does)
+		_lay_flowers()
 
 
 ## How many tufts the farm's own tiles carry (the meadow's left out).
@@ -466,34 +479,65 @@ func _tile_tufts(r: int, c: int, on_farm: bool) -> PackedFloat32Array:
 
 ## Patches of wild flowers in the meadow and along the farm's edge, a few colours to a patch.
 func _scatter_flowers(n: int) -> void:
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_custom_data = true
-	mm.mesh = _flower_mesh()
-	var spots: Array[Transform3D] = []
-	var tints: Array[Color] = []
+	_meadow_flowers.clear()
 	var rng := RandomNumberGenerator.new()
 	var reach := int(TUFT_REACH)
 	for r in range(-reach, n + reach):
 		for c in range(-reach, n + reach):
 			var on_farm := r >= 0 and c >= 0 and r < n and c < n
 			if on_farm:
-				continue
+				continue   # (the lawn's own flowers follow each tile: _tile_flowers)
 			rng.seed = hash(Vector3i(r, c, 31))
 			if rng.randf() > FLOWER_CHANCE:
 				continue
-			var centre := Vector2(c + rng.randf(), r + rng.randf())
-			var col: Color = FLOWERS[rng.randi() % FLOWERS.size()]
-			for k in rng.randi_range(3, 7):
-				var p := centre + Vector2(rng.randfn(0.0, 0.14), rng.randfn(0.0, 0.14))
-				var s := rng.randf_range(0.8, 1.2)
-				spots.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)),
-					Vector3(p.x, -SLAB, p.y)))
-				tints.append(col.lightened(rng.randf_range(0.0, 0.15)))
-	mm.instance_count = spots.size()
-	for i in spots.size():
-		mm.set_instance_transform(i, spots[i])
-		mm.set_instance_custom_data(i, tints[i])
+			_flower_patch(_meadow_flowers, rng, Vector2(c + rng.randf(), r + rng.randf()), rng.randi_range(3, 7),
+				0.14, -SLAB)
+
+
+## One patch of flowers of a colour round `centre`, added to `into` as [transform, colour] pairs.
+static func _flower_patch(into: Array, rng: RandomNumberGenerator, centre: Vector2, count: int, spread: float,
+		y: float) -> void:
+	var col: Color = FLOWERS[rng.randi() % FLOWERS.size()]
+	for k in count:
+		var p := centre + Vector2(rng.randfn(0.0, spread), rng.randfn(0.0, spread))
+		var s := rng.randf_range(0.8, 1.2)
+		into.append([Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)), Vector3(p.x, y, p.y)),
+			col.lightened(rng.randf_range(0.0, 0.15))])
+
+
+## The flowers on farm tile (r, c): now and then a small patch of one colour in the lawn (none on a bed, under
+## a building, or where the grass is worn thin), kept inside its tile.
+func _tile_flowers(r: int, c: int) -> Array:
+	var out: Array = []
+	if Game.plots[Game.index_of(r, c)].get("state", "grass") != "grass" or COVERS_GRASS.has(_kind_at(r, c)):
+		return out
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector3i(r, c, 57))
+	if rng.randf() > LAWN_FLOWER_CHANCE or shade_at(Vector2(c + 0.5, r + 0.5)).y > LAWN_FLOWER_WEAR:
+		return out
+	var patch: Array = []
+	_flower_patch(patch, rng, Vector2(c + rng.randf_range(0.3, 0.7), r + rng.randf_range(0.3, 0.7)),
+		rng.randi_range(3, 6), 0.1, 0.0)
+	for pair: Array in patch:
+		var at: Vector3 = (pair[0] as Transform3D).origin
+		if at.x > c + 0.04 and at.x < c + 0.96 and at.z > r + 0.04 and at.z < r + 0.96:
+			out.append(pair)
+	return out
+
+
+## Every flower into the one batch: the meadow's (kept) and the lawn's (tile by tile).
+func _lay_flowers() -> void:
+	var all: Array = _meadow_flowers.duplicate()
+	for i: int in _farm_flowers:
+		all.append_array(_farm_flowers[i])
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_custom_data = true
+	mm.mesh = _flower_mesh()
+	mm.instance_count = all.size()
+	for i in all.size():
+		mm.set_instance_transform(i, all[i][0])
+		mm.set_instance_custom_data(i, all[i][1])
 	_flowers.multimesh = mm
 
 

@@ -26,7 +26,7 @@ const OBJECT_JOBS := ["collect", "nurture", "feed"]   # jobs done beside an obje
 const STEPS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 	Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]   # a step to each of the eight tiles round
 const DEFAULT_LOOK := {"body": "a", "skin": "#f1c9a5", "hair": "#5a3a1e", "hair_style": "short",
-	"shirt": "#d9483b", "overalls": "#3f6fb5", "hat": "straw", "shoes": "#5b3b22"}
+	"shirt": "#d9483b", "overalls": "#3f6fb5", "hat": "none", "shoes": "#5b3b22"}
 
 var farmer_name := ""
 var farm_name := ""
