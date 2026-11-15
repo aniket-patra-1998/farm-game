@@ -189,3 +189,17 @@ func test_352_a_tap_lands_on_the_animal_under_it_and_a_window_shows_its_own_head
 	_check(head != null and head.get_aabb().size.x < cow.pick_box().size.x / cow._size,
 		"a window shows the cow's head cut from its file, not the whole cow")
 	cow.free()
+
+
+func test_353_an_items_picture_follows_its_art() -> void:
+	var tree := ItemIcons._model("apple_tree")
+	_check(AssetRegistry.triangles(tree) > 0, "a tree made as a file is pictured in a look")
+	tree.free()
+	var before := ItemIcons._key("cow")
+	var files: Dictionary = ArtVersion._data["files"]
+	var was: String = files["cow"]
+	files["cow"] = "changed"
+	_check(ItemIcons._key("cow") != before, "new art for the cow: its picture is made again")
+	files["cow"] = was
+	_eq(ItemIcons._key("cow"), before, "the same art: the same picture")
+	_check(ArtVersion.of("wheat") != ArtVersion.of("cow"), "a crop's picture follows its own form's file")

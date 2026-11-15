@@ -20,9 +20,9 @@ const CACHE := "user://icons"
 const SHIPPED := "res://baked/icons"   # every picture made ahead of time by CI, in the game
 const UI := "ui:"             # an interface icon's picture is asked for as "ui:<kind>" (UiModels)
 const UI_CLOSE := 0.8   # interface icons are framed this much closer than items
-## Bump when the models' look changes, so pictures kept on disk are made again (the item's data and the game's
-## version are in the key too).
-const LOOK := 7
+## The state an item made as a file is pictured in (AssetRegistry): its first look and size, ready (a tree in
+## fruit).
+const PICTURED := {"look": 0, "ready": true, "level": 1}
 ## The global shader values that change how the farm looks (weather, night). A picture made while any is set
 ## is shown this session but not kept, so a snowy or dark picture is never saved for good.
 const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark"]
@@ -99,7 +99,8 @@ static func start(parent: Node) -> void:
 	parent.add_child(_shown)
 
 
-## Where an item's picture is kept: its key changes with the item's data, the look and the game's version.
+## Where an item's picture is kept: its key changes with the item's data, its art (ArtVersion: so a picture is
+## made again by itself, on every device, when the art changes) and the game's version.
 static func _file(item_id: String) -> String:
 	return "%s/%s-%x.png" % [CACHE, item_id, _key(item_id)]
 
@@ -110,7 +111,8 @@ static func _shipped(item_id: String) -> String:
 
 
 static func _key(item_id: String) -> int:
-	return hash([Game.item_data(item_id), LOOK, ProjectSettings.get_setting("application/config/version", "")])
+	return hash([Game.item_data(item_id), ArtVersion.of(item_id),
+		ProjectSettings.get_setting("application/config/version", "")])
 
 
 ## The waiting item asked for most recently (the cards on screen), the first of those in order.
@@ -273,7 +275,7 @@ func _set_up(k: int, id: String) -> bool:
 static func _model(id: String) -> Node3D:
 	if id.begins_with(UI):
 		return UiModels.build(id.trim_prefix(UI))   # an interface icon (UiIcon draws it)
-	var art := AssetRegistry.instance(id)   # (made as a file: its picture is of the file)
+	var art := AssetRegistry.instance(id, PICTURED)   # (made as a file: its picture is of the file)
 	if art != null:
 		return art
 	var it := Game.item_data(id)
