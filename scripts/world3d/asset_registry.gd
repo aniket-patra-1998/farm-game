@@ -23,6 +23,7 @@ static var _scenes := {}     # path -> PackedScene, its materials already made m
 static var _masters := {}    # colour and texture -> the master material instance for them
 static var _said := {}       # paths already reported missing or broken
 static var _extra := {}      # entries added at run time (tests)
+static var _parts := {}      # "id|state|value" -> that part's mesh (things drawn many at once take a mesh, not a node)
 
 
 ## Item `id`'s entry ({"model": path, "budget": kind...}), or {} when it is drawn by its stand-in.
@@ -51,9 +52,28 @@ static func instance(id: String, state := {}) -> Node3D:
 	if node == null:
 		_say(str(e["model"]), "is not a 3D scene")   # not-ui (a log line)
 		return null
-	_to_masters(node)   # (a mesh's own materials change once, as the mesh is shared; a node's overrides each time)
+	# (A mesh's own materials change once, as the mesh is shared; a node's overrides each time.)
+	_to_masters(node, float(e.get("sway", 0.0)))
 	apply_state(node, state)
 	return node
+
+
+## The mesh of item `id`'s part made for `state` at `value` (the part named `when_<state>_<value>`), or null when
+## its file has none: for things drawn many at once (a field of crops), which take a stage's mesh and draw it
+## with their own material.
+static func part_mesh(id: String, state: String, value: String) -> Mesh:
+	var key := "%s|%s|%s" % [id, state, value]
+	if not _parts.has(key):
+		var mesh: Mesh = null
+		var e := entry(id)
+		var scene := _scene(str(e.get("model", ""))) if not e.is_empty() else null
+		if scene != null:
+			var node := scene.instantiate()
+			var part := node.find_child(STATE + state + "_" + value, true, false) as MeshInstance3D
+			mesh = part.mesh if part != null else null
+			node.free()
+		_parts[key] = mesh
+	return _parts[key]
 
 
 ## Shows the parts of `node` made for `state` and hides the ones made for another value of the same state.
@@ -112,6 +132,7 @@ static func add(id: String, e: Dictionary) -> void:
 ## Lets loaded files go (tests, and a file changed while running).
 static func forget() -> void:
 	_scenes.clear()
+	_parts.clear()
 	_said.clear()
 
 
@@ -141,20 +162,21 @@ static func _scene(path: String) -> PackedScene:
 	return scene
 
 
-static func _to_masters(node: Node) -> void:
+## `sway`: how far the model bends in the wind (its entry's `sway`: trees and other plants; 0: still).
+static func _to_masters(node: Node, sway := 0.0) -> void:
 	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
 		var mi := node as MeshInstance3D
 		for s in mi.mesh.get_surface_count():
 			var m := mi.mesh.surface_get_material(s)
 			if is_plain(m):
-				mi.mesh.surface_set_material(s, master_for(m as BaseMaterial3D))
+				mi.mesh.surface_set_material(s, master_for(m as BaseMaterial3D, sway))
 			var o := mi.get_surface_override_material(s)
 			if is_plain(o):
-				mi.set_surface_override_material(s, master_for(o as BaseMaterial3D))
+				mi.set_surface_override_material(s, master_for(o as BaseMaterial3D, sway))
 		if is_plain(mi.material_override):
-			mi.material_override = master_for(mi.material_override as BaseMaterial3D)
+			mi.material_override = master_for(mi.material_override as BaseMaterial3D, sway)
 	for c in node.get_children():
-		_to_masters(c)
+		_to_masters(c, sway)
 
 
 ## Whether `m` is a plain painted material the master material draws the same (opaque, lit, culled, no glow, no
@@ -169,11 +191,12 @@ static func is_plain(m: Material) -> bool:
 		and not b.normal_enabled and b.albedo_color.a >= 1.0)
 
 
-## The master material with plain `m`'s colour, texture, roughness and metal (shared by everything with the same).
-static func master_for(m: BaseMaterial3D) -> ShaderMaterial:
+## The master material with plain `m`'s colour, texture, roughness and metal, bending in the wind by `sway`
+## (shared by everything with the same).
+static func master_for(m: BaseMaterial3D, sway := 0.0) -> ShaderMaterial:
 	var tex := m.albedo_texture
-	var key := "%s|%s|%.2f|%.2f" % [m.albedo_color.to_html(), tex.get_rid() if tex != null else "", m.roughness,
-		m.metallic]
+	var key := "%s|%s|%.2f|%.2f|%.3f" % [m.albedo_color.to_html(), tex.get_rid() if tex != null else "", m.roughness,
+		m.metallic, sway]
 	if not _masters.has(key):
 		var sm := ShaderMaterial.new()
 		sm.shader = MASTER
@@ -183,6 +206,8 @@ static func master_for(m: BaseMaterial3D) -> ShaderMaterial:
 		if tex != null:
 			sm.set_shader_parameter("albedo_texture", tex)
 			sm.set_shader_parameter("use_texture", true)
+		if sway > 0.0:
+			sm.set_shader_parameter("sway", sway)
 		_masters[key] = sm
 	return _masters[key]
 

@@ -87,7 +87,13 @@ atlas or texture array, so a building is one or two draws whatever its detail.
     "cow": {"model": "res://art/animals/cow.glb", "family": "cow", "impostor": true, "budget": "animal"}
 
 `AssetRegistry.instance(id, state)` returns a ready node in that state (from a shared, already-loaded
-resource); `Objects3D` and `ItemIcons` ask it first. (Batches for `MultiMesh` crowds come with the animals.) Callers never load paths. If the file is missing, the
+resource); `Objects3D` and `ItemIcons` ask it first. (Batches for `MultiMesh` crowds come with the animals.) Callers never load paths.
+Things drawn many at once take a mesh, not a node: a crop's file holds one part per growth stage
+(`when_stage_sprout`, `_young`, `_ripe`, `_withered`), `AssetRegistry.part_mesh(id, "stage", stage)` gives that
+part's mesh, and `Crops3D` draws it through the same MultiMeshes and crop shader as a code-built plant (so growth,
+sway, fertiliser and each crop's produce colour are unchanged; produce is marked with vertex alpha 0, as the crop
+shader reads it; a stage the file leaves out, such as bare seeds, is built as before). An entry's `"sway"` is how
+far a model bends in the wind (trees: `TreeModel.SWAY`), set on its master material. If the file is missing, the
 registry returns today's code-built model (`ModelKit`) as the stand-in, so moving to files can go one asset at a
 time and nothing ever breaks.
 

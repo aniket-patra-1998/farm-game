@@ -321,8 +321,10 @@ func _key(o: Dictionary) -> String:
 	if Game.links.group_of(str(o["id"])) != "":
 		return "link|%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]   # how it joins is the LinkLayer's business
 	if uses_file(o):
-		# Made as a file: rebuilt whenever its state changes (ready, level, at work...), so its parts follow.
-		return "file|%s|%d|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false), str(state_of(o))]
+		# Made as a file: rebuilt whenever its state changes (ready, level, at work...), so its parts follow, and
+		# when neighbours come or go (a tree among others is neither turned nor resized: `_build`).
+		return "file|%s|%d|%d|%s|%s|%d" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false),
+			str(state_of(o)), Crowding.mask(o)]
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),

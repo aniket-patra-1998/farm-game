@@ -133,3 +133,38 @@ func _find(n: Node, part: String) -> Node:
 		if f != null:
 			return f
 	return null
+
+
+func test_351_a_crop_made_as_a_file_is_drawn_by_the_same_crop_code_and_a_file_tree_sways() -> void:
+	AssetRegistry.forget()
+	# A listed crop: the crop code takes each stage's plant from the file (its growth, sway and produce colour are
+	# the crop shader's, as for every crop); bare seeds, which the file leaves out, are built as before.
+	var shape := str((Game.crops["strawberries"] as Dictionary).get("shape", "berry"))
+	var look := CropForms.look_of("strawberries", shape)
+	_check(look.begins_with(CropForms.FILE), "a crop listed in data/assets.json is drawn from its file")
+	for stage: String in ["sprout", "young", "ripe", "withered"]:
+		var m := CropModels.mesh(look, stage)
+		_check(m != null and m == AssetRegistry.part_mesh("strawberries", "stage", stage),
+			"its %s plant is the file's" % stage)
+		_check(m != null and m.get_surface_count() == 1 and m.surface_get_array_len(0) > 3,
+			"and is one surface (%s)" % stage)
+	_check(CropModels.mesh(look, "seeds") == CropModels.mesh(CropForms.form_of("strawberries", shape), "seeds"),
+		"a stage the file leaves out is built as before")
+	_check(AssetRegistry.part_mesh("strawberries", "stage", "no_such_stage") == null,
+		"a part the file lacks is none")
+	# An unlisted crop is untouched.
+	_check(CropForms.look_of("corn", "stalk") == CropForms.form_of("corn", "stalk"),
+		"a crop without a file keeps its form")
+	# A tree made as a file: its fruit follows `ready`, and its entry's `sway` bends it in the wind like every tree.
+	var tree := AssetRegistry.instance("apple_tree", {"ready": true})
+	_check(tree != null, "the apple tree's file loads")
+	if tree != null:
+		_check((_find(tree, "when_ready_true") as Node3D).visible, "ripe fruit shows while ready")
+		_check(not (_find(tree, "when_ready_false") as Node3D).visible, "and growing fruit is hidden")
+		var body := _find(tree, "body") as MeshInstance3D
+		var m := body.get_active_material(0) as ShaderMaterial
+		_check(m != null and m.shader == AssetRegistry.MASTER, "it draws with the master material")
+		_check(m != null and is_equal_approx(float(m.get_shader_parameter("sway")), TreeModel.SWAY),
+			"bending as built trees do")
+		tree.free()
+

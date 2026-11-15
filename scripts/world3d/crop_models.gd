@@ -17,11 +17,21 @@ const STEM := Color("#5c8a2e")
 static var _cache := {}
 
 
-static func mesh(shape: String, stage: String) -> ArrayMesh:
+## The plant of `shape` (a catalog shape, a form, or a crop made as a file: CropForms.look_of) at `stage`. A crop
+## made as a file gives its part for the stage (`when_stage_<stage>`); a stage its file leaves out (bare seeds)
+## is built here as before, so the file only has to hold the plant.
+static func mesh(shape: String, stage: String) -> Mesh:
 	var key := shape + "|" + stage
 	if not _cache.has(key):
-		_cache[key] = _build(shape, stage)
+		_cache[key] = _from_file(shape, stage) if shape.begins_with(CropForms.FILE) else _build(shape, stage)
 	return _cache[key]
+
+
+## A crop made as a file (`file:<crop>:<form>`): its part for `stage`, or what its form builds when it has none.
+static func _from_file(look: String, stage: String) -> Mesh:
+	var parts := look.trim_prefix(CropForms.FILE).split(":")
+	var made := AssetRegistry.part_mesh(parts[0], "stage", stage)
+	return made if made != null else mesh(parts[1] if parts.size() > 1 else "berry", stage)
 
 
 ## Produce colour in the vertex: `shade` 0..1 (how lit), alpha 0 marks it as produce (every other

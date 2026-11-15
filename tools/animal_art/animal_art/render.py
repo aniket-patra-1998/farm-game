@@ -16,8 +16,10 @@ def extent(a, yaw, pitch=0.5):
     return max(d[0], d[1])
 
 
-def paint(a, yaw, pitch=0.5, size=640, baked=True, fancy=True, span=None, center=None, V=None, vn=None):
-    """`V` and `vn` draw the animal in a pose (same triangles, moved points); `center` holds the camera still."""
+def paint(a, yaw, pitch=0.5, size=640, baked=True, fancy=True, span=None, center=None, V=None, vn=None, rim=0.3, step_k=0.03, ink=1.0):
+    """`V` and `vn` draw the animal in a pose (same triangles, moved points); `center` holds the camera still.
+    `rim` is the strength of the rim of light (0: matte, for plants); `step_k` is how big a jump in depth, as a share of
+    the picture's span, draws an inner outline (higher: fewer inner lines); `ink` is how dark the outline is."""
     V = a["V"] if V is None else V; vn = a["vn"] if vn is None else vn
     T, cols, nb = a["T"], a["C"], a["nbody"]
     Bk = a["bake"] if baked else np.ones((len(V), 3))
@@ -84,8 +86,8 @@ def paint(a, yaw, pitch=0.5, size=640, baked=True, fancy=True, span=None, center
             # two tones with a soft edge between them: a warm lit side and a cool shadow side, as a painter would
             tone = SHADE_COL[None, None, :] + (LIT_COL - SHADE_COL)[None, None, :] * s_[..., None]
             px = base[None, None, :] * bk * tone
-            rim = np.clip(1 - nn[..., 2], 0, 1) ** 3 * np.clip(0.55 + 0.45 * nn[..., 1], 0, 1) * 0.3
-            px = px + rim[..., None] * np.array([255, 246, 222], np.float32)
+            glow = np.clip(1 - nn[..., 2], 0, 1) ** 3 * np.clip(0.55 + 0.45 * nn[..., 1], 0, 1) * rim
+            px = px + glow[..., None] * np.array([255, 246, 222], np.float32)
         else:
             px = base[None, None, :] * bk * (0.55 + 0.45 * np.maximum(0.0, ndl))[..., None]
         img[mny:mxy + 1, mnx:mxx + 1][m] = px[m]
@@ -96,8 +98,8 @@ def paint(a, yaw, pitch=0.5, size=640, baked=True, fancy=True, span=None, center
         near = ndimage.maximum_filter(np.where(mask[..., None], img, 0), size=(2 * w + 3, 2 * w + 3, 1))
         ring = ndimage.binary_dilation(mask, iterations=w) & ~mask
         zf = np.where(mask, zb, zb[mask].min())
-        step = mask & ((ndimage.maximum_filter(zf, size=2 * w + 1) - zf) > span * 0.03)
-        line = ndimage.gaussian_filter((ring | step).astype(np.float32), 0.7)
+        step = mask & ((ndimage.maximum_filter(zf, size=2 * w + 1) - zf) > span * step_k)
+        line = ndimage.gaussian_filter((ring | step).astype(np.float32), 0.7) * ink
         dark = near * 0.22 + np.array([34, 18, 24], np.float32) * 0.6
         img = img * (1 - line[..., None]) + dark * line[..., None]
     return Image.fromarray(np.clip(img, 0, 255).astype(np.uint8))

@@ -6,6 +6,7 @@ extends RefCounted
 ## Produce (a head, a fruit, a bloom) is marked with vertex alpha 0 and takes the crop's colour at draw time.
 
 const PATH := "res://data/crop_forms.json"
+const FILE := "file:"   # how a look drawn from a model file begins (`look_of`)
 const STEM := Color("#5c8a2e")
 const BARK := Color("#6b4a26")
 const STAKE := Color("#7a5a30")
@@ -28,6 +29,13 @@ static func _load() -> void:
 static func form_of(crop_id: String, shape: String) -> String:
 	_load()
 	return str((_data["crops"] as Dictionary).get(crop_id, shape))
+
+
+## What a crop's plants are drawn from (CropModels.mesh): its model made as a file when it has one (AssetRegistry),
+## written `file:<crop>:<form>` so each such crop is its own group of plants; else its form, as before.
+static func look_of(crop_id: String, shape: String) -> String:
+	var form := form_of(crop_id, shape)
+	return "%s%s:%s" % [FILE, crop_id, form] if AssetRegistry.has_model(crop_id) else form
 
 
 static func spec(form: String) -> Dictionary:
