@@ -53,6 +53,7 @@ static var _head_meshes := {}  # animal id -> its head cut from its file (_head_
 
 var uid := -1
 var residents: Array[Animal3D] = []
+var _idle_hidden := 0.0   # seconds since the residents hidden by the zoom last thought
 
 var _id := ""
 var _fp := Vector2i.ONE
@@ -118,12 +119,14 @@ func refresh(o: Dictionary) -> void:
 	var inside: Dictionary = o.get("inside", {})
 	var share := ready_share(o)
 	var step := int(floor(share * PRODUCE_STEPS))
-	var who := JSON.stringify(inside) + "|" + str(Game.capacity(o))
+	var who := "%d|%d" % [inside.hash(), Game.capacity(o)]   # (who's in, as a number: asked every second)
 	var stage := "%d|%s" % [step, Game.is_ready(o)]
 	var fill: Dictionary = _spec.get("fill", {})
 	if fill.has("stock"):
 		_show_stock(str(fill["stock"]), fill.get("at", [0.5, 0.95]), o)
 		return
+	if who == _who and stage == _stage and who == _who_peeking:
+		return   # nothing it shows has changed since the last look (nearly every look: this is asked each second)
 	if fill.has("plants"):
 		if who != _who or stage != _stage:
 			_show_plants(o, int(fill["plants"]))  # trees fruit, blooms open, when ready
@@ -372,6 +375,9 @@ func _show_peekers(inside: Dictionary) -> void:
 			head = _head(Color.html(str(it.get("color", "#ffffff"))), float(w["size"]))
 		head.position = w["at"] as Vector3
 		head.scale = Vector3.ZERO
+		for part in head.find_children("*", "GeometryInstance3D", true, false) + [head]:  # not-ui
+			if part is GeometryInstance3D:   # (a head at a window throws no shadow worth drawing it twice for)
+				(part as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		holder.add_child(head)
 		var tween := head.create_tween()
 		tween.tween_interval(rng.randf_range(0.0, 1.5))
@@ -774,10 +780,17 @@ func _process(delta: float) -> void:
 			a.behaviour.update(_idle)
 		_idle = 0.0
 		return
+	# One hidden by the zoom (see _set_lod) thinks a few times a second, like a yard out of sight: nobody sees it.
+	_idle_hidden += delta
+	var think_hidden := (Engine.get_process_frames() + get_instance_id()) % OFFSCREEN_STRIDE == 0
 	for a in residents:
-		a.behaviour.update(_idle)
 		if a.visible:
+			a.behaviour.update(_idle)
 			a.animate(_idle, cam)
+		elif think_hidden:
+			a.behaviour.update(_idle_hidden)
+	if think_hidden:
+		_idle_hidden = 0.0
 	_idle = 0.0
 
 

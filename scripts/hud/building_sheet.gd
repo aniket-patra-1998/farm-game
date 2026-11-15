@@ -49,6 +49,7 @@ var _next_pic: TextureRect
 var _pay: Control
 var _since := 0.0
 var _counting := false
+var _dirty := false   # the farm changed while the sheet was up: refill it this frame
 
 
 func _init(owner: FarmHud) -> void:
@@ -118,15 +119,23 @@ func close() -> void:
 func _process(delta: float) -> void:
 	if not visible:
 		return
+	if _dirty:   # (however many changes in a frame: refilled once)
+		_dirty = false
+		_since = 0.0
+		_refill()
+		return
 	_since += delta
 	if _since >= TICK:
 		_since = 0.0
-		_refill()
+		var o := Game.object_by_uid(_uid)
+		if o.is_empty():
+			close()
+		else:
+			_clock(o, Game.is_ready(o))
 
 
 func _on_changed() -> void:
-	if visible:
-		_refill()
+	_dirty = visible
 
 
 func _build_head(gap: int) -> Control:
@@ -279,13 +288,8 @@ func _refill() -> void:
 	var ready := Game.is_ready(o)
 	_pic.texture = ItemIcons.of(id)
 	_name.text = Game.size_name(o)
-	_state.text = hud.buildings.state_line(o)
-	var cycle := maxf(float(Game.cycle_of(o)), 1.0)
-	_ring.share = 1.0 if ready else (clampf(1.0 - Game.seconds_until_ready(o) / cycle, 0.0, 1.0) if total > 0 else 0.0)
-	var pays := Game.object_payout(o) != Vector2i.ZERO or ready
+	_clock(o, ready)
 	_fill_block.modulate.a = 1.0 if cap > 0 else 0.0   # (a building that holds nothing: no bar, the row keeps its place)
-	_pay.visible = pays
-	_ring.visible = pays
 	_spaces.text = tr("OF_SPACES_USED") % [total, cap]
 	_bar.max_value = maxi(cap, 1)
 	_bar.value = total
@@ -306,11 +310,6 @@ func _refill() -> void:
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
 	_inside.visible = total > 0
-	# The big button says what it is waiting for when it can't be pressed; a building that never pays has none.
-	_collect.visible = pays
-	_collect.disabled = not ready
-	_collect.text = tr("COLLECT") if ready else _state.text
-	_collect.modulate.a = 1.0 if ready else 0.5
 	var loose := Game.homes.loose_matching(o) if id != "beehive" else 0
 	_fill.visible = loose > 0   # (nothing to move in: no button, not a grey one)
 	_fill.text = tr("MOVE_IN") % loose
@@ -329,6 +328,23 @@ func _refill() -> void:
 	_next_card.visible = _next.text != ""
 	if _next_card.visible:
 		_next_pic.texture = ItemIcons.sized(id, Game.level_of(o) + 1)
+
+
+## What the clock alone changes, set every second while the sheet is up: how long until ready (its line, its
+## ring) and the big button, which says what it is waiting for when it can't be pressed. A building that never
+## pays has neither ring nor button.
+func _clock(o: Dictionary, ready: bool) -> void:
+	_state.text = hud.buildings.state_line(o)
+	var cycle := maxf(float(Game.cycle_of(o)), 1.0)
+	var along := clampf(1.0 - Game.seconds_until_ready(o) / cycle, 0.0, 1.0) if Game.inside_total(o) > 0 else 0.0
+	_ring.share = 1.0 if ready else along
+	var pays := Game.object_payout(o) != Vector2i.ZERO or ready
+	_pay.visible = pays
+	_ring.visible = pays
+	_collect.visible = pays
+	_collect.disabled = not ready
+	_collect.text = tr("COLLECT") if ready else _state.text
+	_collect.modulate.a = 1.0 if ready else 0.5
 
 
 ## What the next size of home `o` adds, in a line ("" at its biggest size): more spaces, and the one new thing

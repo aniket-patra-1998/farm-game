@@ -79,11 +79,12 @@ func sync() -> void:
 	_sync_queued = false
 	var want := {}
 	var n := Game.farm_size
-	for r in n:
-		for c in n:
-			var i := Game.index_of(r, c)
-			if _wants_plot(i):
-				want["p%d" % i] = true
+	if not three_d:   # (in 3D a plot has no piece here: Plots3D and Crops3D are the whole of it)
+		for r in n:
+			for c in n:
+				var i := Game.index_of(r, c)
+				if _wants_plot(i):
+					want["p%d" % i] = true
 	var lifted := int(grid.placing.get("uid", -1))
 	for o in Game.objects:
 		if int(o["uid"]) != lifted:
@@ -116,12 +117,15 @@ func sync() -> void:
 				else:
 					p.drop_in()
 			continue
+		if three_d and Objects3D.handles(Game.object_by_uid(p.uid)):
+			p.visible = false   # its 3D twin is the whole of it: nothing here to place, redraw or land
+			continue
 		var moved_from := p.base
 		_place(p)
 		p.refresh()
 		if _settled and p.plot < 0 and moved_from != p.base:
 			p.drop_in()  # moved: it lands in its new spot
-	_ready_list = pieces.values().filter(func(p): return p.is_ready())
+	_note_ready()
 	_settled = true
 
 
@@ -150,7 +154,13 @@ func refresh_all() -> void:
 		# In 3D the hidden pieces draw nothing (their 3D twins show it); they only report what's ready.
 		if not three_d or (p as FarmPiece).visible:
 			(p as FarmPiece).refresh()
-	_ready_list = pieces.values().filter(func(p): return p.is_ready())
+	_note_ready()
+
+
+## The pieces with something ready, for the 2D world's ready signs. (In 3D those are ReadyMarks' and nothing reads
+## this list: asking every piece each second and after every change was work for nobody.)
+func _note_ready() -> void:
+	_ready_list = [] if three_d else pieces.values().filter(func(p): return p.is_ready())
 
 
 
@@ -175,7 +185,7 @@ func ready_pieces() -> Array:
 
 
 func _wants_plot(i: int) -> bool:
-	return Game.field.phase(i) != GameState.Phase.GRASS and not Game.is_occupied(i)
+	return not three_d and Game.field.phase(i) != GameState.Phase.GRASS and not Game.is_occupied(i)
 
 
 
