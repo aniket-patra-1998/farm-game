@@ -35,6 +35,7 @@ const PLANT_LOD_EVERY := 10       # frames between looks at the zoom for an orch
 const TREE_FILL := 0.95           # an orchard tree's size against the space between trees (crowns touch, trunks show)
 const ORCHARD_SMALLEST := 0.8    # an orchard tree is drawn between these sizes (against a lone tree at 1.0)
 const ORCHARD_BIGGEST := 1.1     # (no bigger, or the crown reaches out of the field's border)
+const ORCHARD_GAP_MOST := 0.8    # an orchard's trees stand no further apart than this (tiles): their crowns meet
 const ORCHARD_VARIANTS := 3      # looks of each kind in an orchard (turned and sized: no clones)
 const PLANT_BUDGET_MS := 12      # an orchard builds new kinds of tree for at most this long a frame
 const TREE_CROWN := 0.3           # the crown radius an orchard tree is sized for; wider crowned kinds are drawn smaller
@@ -410,10 +411,15 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	# A grid in the field's own proportions, inside its tile's border with each crown kept in; trees are packed
 	# tight, crowns just touching (FarmVille's orchards).
 	var room := SpaceFit.tile_room(_fp)
-	var per_row := maxi(ceili(sqrt(slots * _fp.x / maxf(_fp.y, 1.0))), 1)
-	var rows := ceili(float(slots) / per_row)
+	# An orchard's grid is for the trees it holds now, standing together in the middle of the field (a few make a
+	# clump of crowns, not a line along one fence); a garden's is for all its places, in beds.
+	var count := maxi(mini(slots, Game.inside_total(o)), 1) if trees else slots
+	var per_row := maxi(ceili(sqrt(count * _fp.x / maxf(_fp.y, 1.0))), 1)
+	var rows := ceili(float(count) / per_row)
 	var span := room.grow(-TREE_CROWN * 1.1).abs()
 	var gap := minf(span.size.x / maxf(per_row - 1.0, 1.0), span.size.y / maxf(rows - 1.0, 1.0))
+	if trees:
+		gap = minf(gap, ORCHARD_GAP_MOST)
 	# (A crown is TREE_CROWN wide each way at size 1: the size that makes crowns just meet across the gap.)
 	var size := clampf(gap * TREE_FILL / (2.0 * TREE_CROWN), ORCHARD_SMALLEST, ORCHARD_BIGGEST)
 	if not trees:
@@ -438,6 +444,10 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			else room.get_center().y
 		var x := span.position.x + span.size.x * places[k].x / maxf(per_row - 1.0, 1.0) if per_row > 1 \
 			else room.get_center().x
+		if trees:
+			var in_row := mini(per_row, ids.size() - places[k].y * per_row)   # (a short last row stands in the middle)
+			x = room.get_center().x + (places[k].x - (in_row - 1) / 2.0) * gap
+			z = room.get_center().y + (places[k].y - (rows - 1) / 2.0) * gap
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
 			var d := Game.catalog.get_def(ids[k]) as BloomDef
