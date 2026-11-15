@@ -46,7 +46,7 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 		var ids := building_section(str(section[0]))
 		if ids.is_empty():
 			continue
-		content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.size("font_section")), BookPanel.SUN))
+		content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.design("font_section")), BookPanel.SUN))
 		_add_grid(content, ids, tell)
 
 

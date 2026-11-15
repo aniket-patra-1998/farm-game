@@ -83,7 +83,7 @@ func _ready() -> void:
 	go.custom_minimum_size = Vector2(260, 64)
 	go.focus_mode = Control.FOCUS_NONE
 	go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	go.add_theme_font_size_override("font_size", 26)
+	go.add_theme_font_size_override("font_size", UiTheme.font(26))
 	go.pressed.connect(_next)
 	col.add_child(go)
 
@@ -159,7 +159,7 @@ func _label(words: String, size: int, color: Color) -> Label:
 	var l := Label.new()
 	l.text = words
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", UiTheme.font(size))
 	l.add_theme_color_override("font_color", color)
 	return l
 
@@ -178,7 +178,7 @@ func _chip(words: String) -> PanelContainer:
 	p.add_theme_stylebox_override("panel", sb)
 	var l := Label.new()
 	l.text = words
-	l.add_theme_font_size_override("font_size", 20)
+	l.add_theme_font_size_override("font_size", UiTheme.font(20))
 	l.add_theme_color_override("font_color", INK)
 	p.add_child(l)
 	return p

@@ -1,6 +1,7 @@
 extends TestSuite
 ## The interface kit: every colour and size it asks the theme for exists, each icon draws (rendered ones have a
-## model), each part builds, tool names fade once learned, and a long press names a button.
+## model), each part builds, tool names fade once learned, a long press names a button, and panel text is
+## scaled once.
 
 
 func test_215_the_theme_has_every_name_the_kit_asks_for() -> void:
@@ -53,8 +54,11 @@ func test_340_a_tools_name_shows_until_it_is_learned() -> void:
 	var id := "test_tool"
 	PlayerSettings.keep(HudTools.LEARNED, {id: null})
 	_check(not HudTools.learned(id), "a new tool is not learned")
-	PlayerSettings.keep(HudTools.LEARNED, {id: HudTools.LEARN_USES})
-	_check(HudTools.learned(id), "picked LEARN_USES times, it is learned")
+	for k in HudTools.LEARN_USES - 1:
+		_check(not HudTools.count_pick(id), "pick %d: its name still shows" % (k + 1))
+	_check(HudTools.count_pick(id), "picked LEARN_USES times, it is learned")
+	_check(HudTools.count_pick(id), "and stays learned")
+	_eq(int(PlayerSettings.value(HudTools.LEARNED, id, 0)), HudTools.LEARN_USES, "the count stops at LEARN_USES")
 	PlayerSettings.keep(HudTools.LEARNED, {id: null})
 	var shown := UiKit.tool_button("hoe", "Plow", 64.0, 64.0, 0.0)
 	var bare := UiKit.tool_button("hoe", "Plow", 64.0, 64.0, 0.0, null, false)
@@ -72,4 +76,19 @@ func test_341_a_long_press_names_the_button_without_pressing_it() -> void:
 	_eq(timers.size(), 1, "a long press is timed")
 	_eq((timers[0] as Timer).wait_time, UiKit.LONG_PRESS, "for LONG_PRESS seconds")
 	_check((timers[0] as Timer).one_shot, "once per hold")
+	(timers[0] as Timer).timeout.emit()   # (held long enough)
+	_check(b.disabled, "the hold drops the press under way, so letting go doesn't press it")
 	b.free()
+
+
+func test_342_panel_text_is_scaled_once_and_never_too_small() -> void:
+	_eq(UiTheme.font_for(20.0, 1.0, 0.9), 18, "a design size at scale 1 and share 0.9")
+	_eq(UiTheme.font_for(20.0, 0.7, 0.9), 13, "smaller on a smaller interface, rounded")
+	_eq(UiTheme.font_for(12.0, 0.7, 0.9), UiTheme.MIN_FONT, "never under MIN_FONT")
+	_eq(BookPanel.font_px(20), UiTheme.font(20.0), "panels size their text through UiTheme.font")
+	_eq(UiTheme.design("font_section") * UiTheme.scale(), UiTheme.size("font_section"), "design is size before scale")
+	for file in ["res://scripts/hud.gd", "res://scripts/level_up_popup.gd", "res://scripts/book_panel.gd"]:
+		var rx := RegEx.create_from_string("font_size\", [0-9]")
+		_check(rx.search(FileAccess.get_file_as_string(file)) == null, "%s sizes no text by a bare number" % file)
+	var market := FileAccess.get_file_as_string("res://scripts/hud/hud_market.gd")
+	_check(not market.contains("BookPanel.text(tr(str(section[1])), int(UiTheme.size("), "no scaled size scaled again")

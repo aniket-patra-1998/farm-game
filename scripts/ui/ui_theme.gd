@@ -5,6 +5,7 @@ extends RefCounted
 ## a set share of the screen (`scale.short_share` of its shorter side for a tool button) and never less than a
 ## comfortable touch on a phone (`scale.touch_mm`), so it is neither huge on a small screen nor tiny on a dense one.
 
+const MIN_FONT := 11   # no text smaller than this (readable on any phone)
 const DATA := "res://data/ui_theme.json"
 
 static var _data := {}
@@ -40,6 +41,23 @@ static func size(key: String) -> float:
 		push_error("ui_theme.json has no size '%s'" % key)
 		return 0.0
 	return float(v) if key.ends_with("_share") else float(v) * scale()
+
+
+## A named size as designed, before the interface's scale (for passing on to something that scales it itself).
+static func design(key: String) -> float:
+	return size(key) / (1.0 if key.ends_with("_share") else maxf(scale(), 0.01))
+
+
+## A panel text's design size `design_px` in pixels on this screen: at the interface's scale and `text_share`
+## (panel text reads best a little smaller than its design size on a phone), never under MIN_FONT. Every panel,
+## popup and strip of words sizes its text through this, once (a size from `size` is already scaled).
+static func font(design_px: float) -> int:
+	return font_for(design_px, scale(), size("text_share"))
+
+
+## `font`'s sum on its own: `design_px` at `ui_scale` and `share`, never under MIN_FONT.
+static func font_for(design_px: float, ui_scale: float, share: float) -> int:
+	return maxi(int(round(design_px * ui_scale * share)), MIN_FONT)
 
 
 ## How big the interface is drawn against its design sizes: a tool button `short_share` of the screen's shorter

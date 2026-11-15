@@ -54,13 +54,18 @@ static func learned(id: String) -> bool:
 	return int(PlayerSettings.value(LEARNED, id, 0)) >= LEARN_USES
 
 
-func _pick(id: String) -> void:
-	Feedback.moment("tap")
+## Counts one pick of tool `id` (up to LEARN_USES, kept on the phone); true once the player knows it.
+static func count_pick(id: String) -> bool:
 	var uses := int(PlayerSettings.value(LEARNED, id, 0))
 	if uses < LEARN_USES:
 		PlayerSettings.keep(LEARNED, {id: uses + 1})
+	return learned(id)
+
+
+func _pick(id: String) -> void:
+	Feedback.moment("tap")
 	var b: Button = buttons[id]
-	if learned(id):
+	if count_pick(id):
 		(b.get_meta("label") as Label).visible = false
 		UiKit.name_bubble(b, (b.get_meta("label") as Label).text)
 	if id == "plant":
