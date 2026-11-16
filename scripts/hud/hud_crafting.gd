@@ -190,7 +190,11 @@ static func star_row(size: int, recipe_stars: int) -> HBoxContainer:
 		if k >= size:
 			star.modulate = Color(1, 1, 1, 0.3)
 		row.add_child(star)
-	row.add_child(BookPanel.text(TranslationServer.translate("CRAFT_SLOTS") % size, 18))
-	if recipe_stars > 0:
-		row.add_child(BookPanel.text(TranslationServer.translate("RECIPE_STARS") % recipe_stars, 18))
+	for words in [TranslationServer.translate("CRAFT_SLOTS") % size,
+			TranslationServer.translate("RECIPE_STARS") % recipe_stars if recipe_stars > 0 else ""]:
+		if words == "":
+			continue
+		var l := BookPanel.text(words, 18)
+		l.autowrap_mode = TextServer.AUTOWRAP_OFF   # (a wrapping label in a row has no width of its own)
+		row.add_child(l)
 	return row

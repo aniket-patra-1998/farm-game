@@ -19,6 +19,8 @@ const HEIGHT_SHARE := 0.66
 const INFO_SIZE := 1.6   # an ⓘ's size against the text beside it
 const INFO_LEAST := 40.0   # ..and never smaller than this (a finger must hit it)
 const WIDEST := 2.0
+const SECTION_LINE := 1.0   # px of the thin line under a section (card_frame)
+const SECTION_PAD := 10.0   # px above and below a section's content
 
 var _title: Label
 var _panel: PanelContainer
@@ -270,17 +272,30 @@ static func card() -> VBoxContainer:
 	return VBoxContainer.new()
 
 
+## A section of a panel: flat on the wood, no box round it, a thin line under it (our own look: fewer boxes in
+## boxes). The dark words inside turn cream so they read on the wood (words on a card or a button inside keep
+## theirs); words added later should be cream already.
 static func card_frame(inner: Control) -> PanelContainer:
 	var frame := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = CREAM
-	sb.border_color = WOOD_DARK
-	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(16)
-	sb.set_content_margin_all(16)
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.border_color = UiTheme.color("divider")
+	sb.border_width_bottom = int(SECTION_LINE)
+	sb.content_margin_top = SECTION_PAD
+	sb.content_margin_bottom = SECTION_PAD
 	frame.add_theme_stylebox_override("panel", sb)
 	frame.add_child(inner)
+	on_wood(inner)
 	return frame
+
+
+## Turns the dark words in `node` (not those on a card, button or tile of their own) cream, for the wood.
+static func on_wood(node: Node) -> void:
+	if node is Label and (node as Label).get_theme_color("font_color").is_equal_approx(INK):
+		(node as Label).add_theme_color_override("font_color", CREAM)
+	for c in node.get_children():
+		if not (c is BaseButton or c is PanelContainer):
+			on_wood(c)
 
 
 static func text(words: String, font_size := 22, color := INK) -> Label:

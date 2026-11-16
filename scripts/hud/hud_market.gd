@@ -127,10 +127,10 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(words)
-	words.add_child(BookPanel.text(str(it["name"]), 22))
+	words.add_child(BookPanel.text(str(it["name"]), 22, BookPanel.CREAM))
 	if why != "":
-		words.add_child(BookPanel.text(why, 18, UiTheme.color("price_short")))
-	words.add_child(BookPanel.text(detail_of(id, it), 17))
+		words.add_child(BookPanel.text(why, 18, UiTheme.color("note_on_wood")))
+	words.add_child(BookPanel.text(detail_of(id, it), 17, BookPanel.CREAM))
 	strip.visible = true
 	hud._book.scroll_to_top()
 
