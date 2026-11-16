@@ -9,6 +9,7 @@ extends BaseButton
 ## a long press), buyable (kept as meta for tests and the panel). In the picture's place a card may show a ring
 ## (`ring`: [share, words], a collection's progress) or a sticker icon (`icon`: [kind, tint, faded], a ribbon).
 
+const TIDIED := ["line", "long"]   # a face's words whose numbers are written short (a name has none)
 const NAME_LINES := 2     # a long name wraps to at most this many lines
 const SPACE := 2.0        # px between the parts of a card, top to bottom
 const LOCKED_PICTURE := Color(1, 1, 1, 0.45)
@@ -52,10 +53,15 @@ func _notification(what: int) -> void:
 ## Shows item `new_id` with `new_face` and its `new_picture` on this card.
 func show_face(new_id: String, new_face: Dictionary, new_picture: Texture2D) -> void:
 	id = new_id
-	face = new_face.duplicate()
-	for k in ["name", "line", "long"]:   # (numbers in a card's words the one way: UiTheme.tidy)
+	face = new_face
+	for k in TIDIED:   # (numbers in a card's words the one way, UiTheme.tidy; copied only when one changes)
 		if face.has(k):
-			face[k] = UiTheme.tidy(str(face[k]))
+			var said := str(face[k])
+			var tidied := UiTheme.tidy(said)
+			if tidied != said:
+				if is_same(face, new_face):
+					face = new_face.duplicate()
+				face[k] = tidied
 	picture = new_picture
 	tooltip_text = str(face.get("long", "")) if str(face.get("long", "")) != "" else str(face.get("name", ""))
 	set_meta(&"buyable", bool(face.get("buyable", false)))

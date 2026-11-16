@@ -20,6 +20,8 @@ func build_inbox(content: VBoxContainer) -> void:
 	content.add_child(head)
 	var list := CardList.rows(_ids(), func() -> Control: return MarginContainer.new(),
 		func(row: Control, id: String) -> void: CardList.refill(row, line_for(_item(int(id)))))
+	list.search_menu = "inbox"
+	list.search_words = func(id: String) -> Dictionary: return words_of(_item(int(id)))
 	content.add_child(list)
 	var update := func() -> void:
 		CardList.refill(head, _head())
@@ -69,6 +71,15 @@ func _ids() -> Array[String]:
 
 
 ## One inbox item as a line (flat on the panel, a thin line between: CardList rows): who, what, and its button.
+## How an inbox line is found: what it gives (its item's words) and who sent it.
+func words_of(item: Dictionary) -> Dictionary:
+	if item.is_empty():
+		return {}
+	var give: Dictionary = item.get("give", {})
+	var w := ItemSearch.words_of(str(give.get("id", "")))
+	return {"name": str(w.get("name", "")), "more": "%s %s" % [w.get("more", ""), _who(item)]}   # not-ui
+
+
 func line_for(item: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)

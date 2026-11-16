@@ -7,14 +7,24 @@ extends Control
 ## - rows (`rows`): one full-width row per item, flat, a thin line between them (no box round each), made by
 ##   `row_make` once per row on screen and filled for whichever item it shows (`row_fill`).
 ## `refresh` fills what is on screen again in place (coins changed, an item was bought); `set_ids` when the list
-## itself changes (the inbox). Every menu of cards or lines is one: the Market, seeds, the Barn, Collections,
-## Ribbons, the inbox, a building's recipes.
+## itself changes (the inbox).
+## Search (docs/SEARCH.md): once it holds `from_items` things (data/search.json) a list puts a `SearchBar` over
+## itself; `search_menu` names its chips and recent searches ("" turns it off), `search_pool` is searched
+## instead of its own ids (the Market: every shelf), `search_words` how a row is found (cards are found by their
+## item's words, ItemSearch.words_of, or their card's name).
+## Every menu of cards or lines is one: the Market, seeds, the Barn, Collections, Ribbons, the inbox, a building's
+## recipes.
 
 const SPARE_ROWS := 1     # rows kept ready above and below the view
 const ROW_GUESS := 64.0   # a row's height until the first row on screen is measured
 const DIVIDER := 1.0      # the line between rows, px
 
-var ids: Array[String] = []
+var ids: Array[String] = []        # the ids shown now (all of them, or what a search found)
+var all_ids: Array[String] = []    # every id the list holds
+var search_menu := "list"          # its chips and recent searches (data/search.json); "" for no search
+var search_pool: Array[String] = []   # searched instead of all_ids (the Market's every shelf)
+var search_words: Callable         # (id) -> {name, more}: how a thing is found (rows; cards default to their item)
+var search_bar: SearchBar
 var face_of: Callable      # grid: (id) -> the card's face (CardFace)
 var on_tap: Callable       # grid: (id) -> void
 var picture_of: Callable   # grid: (id) -> Texture2D
@@ -55,6 +65,7 @@ static func rows(list: Array[String], make_row: Callable, fill: Callable) -> Car
 static func _new_list(list: Array[String]) -> CardList:
 	var cl := CardList.new()
 	cl.ids = list
+	cl.all_ids = list
 	cl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cl.mouse_filter = Control.MOUSE_FILTER_PASS
 	cl._pop = UiFx.pop_next
@@ -72,6 +83,7 @@ func _ready() -> void:
 	if _scroll != null:
 		_scroll.get_v_scroll_bar().value_changed.connect(func(_v: float) -> void: _later())
 		_scroll.resized.connect(_later)
+	_offer_search.call_deferred()
 	resized.connect(func() -> void:
 		if size.x > 0.0 and not _is_rows():
 			_set_columns(size.x)
@@ -91,13 +103,51 @@ func refresh() -> void:
 	queue_redraw()
 
 
-## The list itself changed (an inbox line taken): the new `list`, laid out again; rows are kept and refilled.
+## The list itself changed (an inbox line taken): the new `list`, laid out again; rows are kept and refilled; a
+## search going on looks again.
 func set_ids(list: Array[String]) -> void:
+	all_ids = list
+	if search_bar != null and search_bar.searching():
+		search_bar.reapply()
+		return
+	show_ids(list)
+
+
+## Shows `list` (a search's results, or all again), laid out from the top; the cards are reused.
+func show_ids(list: Array[String]) -> void:
 	ids = list
 	for k: int in _shown.keys():
 		_put_away(k)
 	_size_to_ids()
 	_later()
+
+
+## The ids a search looks among: the pool when given, else the list's own.
+func searched() -> Array[String]:
+	return search_pool if not search_pool.is_empty() else all_ids
+
+
+## How thing `id` is found: `search_words`, else its item's words, else its card's name and line.
+func words_of_card(id: String) -> Dictionary:
+	if search_words.is_valid():
+		return search_words.call(id)
+	var w := ItemSearch.words_of(id)
+	if w.is_empty() and face_of.is_valid():
+		var face: Dictionary = face_of.call(id)
+		w = {"name": str(face.get("name", "")), "more": str(face.get("line", ""))}
+	return w
+
+
+## Puts a search field over the list when it holds enough to need one (once).
+func _offer_search() -> void:
+	if search_bar != null or search_menu == "" or searched().size() < ItemSearch.rule("from_items"):
+		return
+	var page := get_parent()
+	if page == null:
+		return
+	search_bar = SearchBar.new(self, search_menu)
+	page.add_child(search_bar)
+	page.move_child(search_bar, get_index())
 
 
 ## The same as tapping the card of `id`, whether it is on screen or not (tests, and a list that is searched).

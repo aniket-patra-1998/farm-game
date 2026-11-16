@@ -1,6 +1,7 @@
 # Search, everywhere it helps
 
-Status: design for review. Our own touch: FarmVille (2009) had no search. First in the build order.
+Status: built (steps 1 and 2 and most of 3); "Show on farm" and naming a result's shelf in the Market are still to
+come. Our own touch: FarmVille (2009) had no search.
 
 ## What the player gets
 
@@ -26,19 +27,22 @@ Status: design for review. Our own touch: FarmVille (2009) had no search. First 
 
 ## How it is built (one way, used everywhere)
 
-- `SearchIndex` (scripts/ui/search_index.gd, pure, tested): built once per list from its ids and a
-  `words_of(id)` callable; each id's words are normalised (lower case, accents and punctuation off) into
-  tokens with weights: name 3, alias 2, kind and family 1. `find(query, chips) -> Array[String]` ranks by
-  best token match (exact > word start > inside > one typo), then the list's own order; a query of fewer than
-  `search.least_letters` letters matches word starts only. Cost held by a test: 5,000 items under 2 ms a key.
+- `SearchIndex` (scripts/ui/search_index.gd, pure, tested): built at the first letter typed from the list's ids
+  and a `words_of(id)` callable ({name, more}); words made plain (lower case, letters and digits, plurals as
+  one) and every thing's words joined into one string, so a query is a few engine `find`s, not a loop over every
+  thing; scores go into packed arrays and rank in groups (no per-item sort). Ranking: name word whole > name
+  word begun > other word whole > begun > inside a word > one typo; every typed word must be found. Cost held
+  by a test: 5,000 things under 4 ms a letter on the CI machine.
 - Words of an item: `ItemSearch.words_of(id)`, one function for every menu, read from the catalog (name,
   `kind`, family, `product`, `holds`) and data/search.json (`aliases` per id or family, in locale keys so they
   translate; the chips each menu offers and what each tests). A new catalog item is searchable with no work;
   an alias is a line of data.
 - `SearchBar` (kit, scripts/ui/search_bar.gd): the field, clear button, chips and recent row, on the paper
   look; drives any `CardList` (grid or rows) by `set_ids(index.find(...))`, so cards are reused, nothing is
-  rebuilt, and the virtual list stays fast. `CardList` gets `searchable(words_of, chips)`; BookPanel tabs share
-  one bar across shelves (the Market searches all its shelves and shows which shelf each card is from).
+  rebuilt, and the virtual list stays fast. A `CardList` puts the bar over itself once it holds `from_items`
+  things; `search_menu`, `search_pool` and `search_words` say which chips, what to search and how a row is
+  found. The Market's first list on each shelf searches every shelf (`search_pool`), and while it searches the
+  rest of the page steps aside.
 - Phone keyboard: the field stays above the on-screen keyboard (the panel moves up by its height); Enter or
   Done closes the keyboard and keeps the results.
 - Text: the field's hint and chip names in locale/strings.csv; numbers in results the usual way.

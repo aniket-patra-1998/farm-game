@@ -89,6 +89,19 @@ func _single(content: VBoxContainer) -> VBoxContainer:
 	return holder
 
 
+## Everything for sale, every shelf, in shelf order (what the Market's search looks among).
+func all_for_sale() -> Array[String]:
+	var out: Array[String] = []
+	for shelf: Array in SHELVES:
+		var kind := str(shelf[0])
+		if kind == "building":
+			for section: Array in BUILDING_TABS:
+				out.append_array(building_section(str(section[0])))
+		else:
+			out.append_array(shelf_items(kind))
+	return out
+
+
 ## The items of one kind for sale, in catalog order (buildings have their own sections: building_section).
 func shelf_items(kind: String) -> Array[String]:
 	return _shelves.get(kind, [] as Array[String])
@@ -106,6 +119,11 @@ static func _for_sale(id: String) -> bool:
 func _add_list(content: VBoxContainer, ids: Array[String], tell: Callable) -> CardList:
 	var list := CardList.make(ids, card_face, func(id: String) -> void: tap(id, tell),
 		hud.get_viewport().get_visible_rect().size.x)
+	# Search: the first list of a shelf searches the whole Market (every shelf), the others leave it to that one.
+	var first := content.find_children("*", "CardList", false, false).is_empty()   # not-ui (a class)
+	list.search_menu = "market" if first else ""
+	if first:
+		list.search_pool = all_for_sale()
 	content.add_child(list)
 	return list
 

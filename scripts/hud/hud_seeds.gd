@@ -22,6 +22,7 @@ func build_seeds(content: VBoxContainer) -> void:
 	var list := CardList.make(_ids, seed_face, func(id: String) -> void:
 		if Game.is_unlocked(id):
 			hud.choose_seed(id), hud.get_viewport().get_visible_rect().size.x)
+	list.search_menu = "seeds"
 	content.add_child(list)
 	BookPanel.set_live(content, list.refresh)
 

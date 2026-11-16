@@ -1,0 +1,27 @@
+{
+ "_doc": "Search everywhere it helps (docs/SEARCH.md; ItemSearch, SearchIndex, SearchBar). from_items: a list shows its search field from this many things. least_letters: a shorter query matches word starts only. typo_from: words this long may be one letter off. recent_kept: recent searches kept per menu. kind_words: more words for each catalog kind (locale keys: a space-separated list). chips: per menu, filters shown under the field: face (a card face's field that must be true) or kinds (catalog kinds, any of).",
+ "from_items": 10,
+ "least_letters": 2,
+ "typo_from": 4,
+ "recent_kept": 5,
+ "kind_words": {
+  "animal": "SEARCH_WORDS_ANIMAL",
+  "tree": "SEARCH_WORDS_TREE",
+  "bloom": "SEARCH_WORDS_BLOOM",
+  "decor": "SEARCH_WORDS_DECOR",
+  "building": "SEARCH_WORDS_BUILDING",
+  "vehicle": "SEARCH_WORDS_VEHICLE",
+  "young": "SEARCH_WORDS_YOUNG"
+ },
+ "chips": {
+  "market": [{"key": "can_buy", "words": "SEARCH_CHIP_CAN_BUY", "face": "buyable"}],
+  "seeds": [{"key": "can_buy", "words": "SEARCH_CHIP_CAN_PLANT", "face": "buyable"}],
+  "pantry": [{"key": "can_buy", "words": "SEARCH_CHIP_CAN_BUY", "face": "buyable"}],
+  "barn": [
+   {"key": "animals", "words": "SEARCH_CHIP_ANIMALS", "kinds": ["animal", "young"]},
+   {"key": "trees", "words": "SEARCH_CHIP_TREES", "kinds": ["tree", "bloom"]},
+   {"key": "decor", "words": "SEARCH_CHIP_DECOR", "kinds": ["decor"]},
+   {"key": "buildings", "words": "SEARCH_CHIP_BUILDINGS", "kinds": ["building", "vehicle"]}
+  ]
+ }
+}

@@ -25,6 +25,7 @@ func build_collections(content: VBoxContainer) -> void:
 	var list := CardList.make(ids, set_face, func(coll_id: String) -> void:
 		hud.book.open_panel(str(_set_of(coll_id)["name"]), func(c: VBoxContainer) -> void: build_collection(c, coll_id)),
 		hud.get_viewport().get_visible_rect().size.x)
+	list.search_menu = "collections"
 	content.add_child(list)
 	BookPanel.set_live(content, list.refresh)
 
@@ -131,6 +132,7 @@ func build_ribbons(content: VBoxContainer) -> void:
 		ids.append(str(r["id"]))
 	var list := CardList.make(ids, ribbon_face, func(_id: String) -> void: pass,
 		hud.get_viewport().get_visible_rect().size.x)
+	list.search_menu = "ribbons"
 	content.add_child(list)
 	BookPanel.set_live(content, list.refresh)
 
