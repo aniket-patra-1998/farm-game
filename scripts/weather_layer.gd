@@ -1,10 +1,12 @@
 class_name WeatherLayer
 extends CanvasLayer
 ## Weather drawn over the farm in screen space: rain streaks and splashes, snowflakes and
-## lightning flashes. Main sets `look` (from Weather.current) every frame.
+## lightning flashes. Main sets `look` (from Weather.current) every frame; a strike (WeatherEvents.struck)
+## flashes the screen (`flash_now`).
 
 const MAX_DROPS := 320
 const MAX_FLAKES := 180
+const FLASH_FALL := 2.8   # a flash fades this fast (a second)
 
 var look := {}
 var _canvas: Node2D
@@ -12,7 +14,6 @@ var _drops: Array = []   # Vector3(x 0..1, y 0..1, speed)
 var _flakes: Array = []  # Vector4(x, y, speed, phase)
 var _splashes: Array = [] # Vector3(x, y, age)
 var _flash := 0.0
-var _next_flash := 4.0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -28,10 +29,14 @@ func _ready() -> void:
 		_flakes.append(Vector4(_rng.randf(), _rng.randf(), _rng.randf_range(0.6, 1.2), _rng.randf() * TAU))
 
 
+## A lightning strike's flash on the screen, `strength` 0..1 (a near strike is brighter).
+func flash_now(strength: float) -> void:
+	_flash = maxf(_flash, clampf(strength, 0.0, 1.0))
+
+
 func _process(delta: float) -> void:
 	var rain := float(look.get("rain", 0.0))
 	var snow := float(look.get("snow", 0.0))
-	var lightning := float(look.get("lightning", 0.0))
 	for k in _drops.size():
 		var d: Vector3 = _drops[k]
 		d.y += delta * 1.6 * d.z
@@ -54,12 +59,7 @@ func _process(delta: float) -> void:
 		if s.z < 0.25:
 			kept.append(s)
 	_splashes = kept.slice(-120)
-	_flash = maxf(0.0, _flash - delta * 2.8)
-	if lightning > 0.0:
-		_next_flash -= delta
-		if _next_flash <= 0.0:
-			_flash = 1.0
-			_next_flash = _rng.randf_range(5.0, 13.0)
+	_flash = maxf(0.0, _flash - delta * FLASH_FALL)
 	if rain > 0.0 or snow > 0.0 or _flash > 0.0 or not _splashes.is_empty():
 		_canvas.queue_redraw()
 	elif _canvas.visible:

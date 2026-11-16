@@ -1,4 +1,7 @@
 extends TestSuite
+
+const SHORT_SECONDS := 2.0   # an effect's longest
+const LONG_SECONDS := 5.0    # a recipe marked "long" (thunder)
 ## Sound and touch feedback: every sound builds into clean audio, every sound the game asks for exists,
 ## every animal has a voice, and the player's settings are kept.
 
@@ -26,7 +29,9 @@ func test_98_every_sound_builds_clean_and_every_animal_has_a_voice() -> void:
 			energy += float(v) * v
 		var rms := sqrt(energy / maxf(samples, 1.0)) / 32767.0
 		_check(samples > Sound.MIX_RATE * 0.03, "%s lasts long enough to hear (%d samples)" % [event, samples])
-		_check(samples < Sound.MIX_RATE * 2.0, "%s is a short effect, not a track" % event)
+		# (an effect is short; a sound of the sky, "long": thunder rolling, may run a few seconds)
+		var most := LONG_SECONDS if r.get("long", false) else SHORT_SECONDS
+		_check(samples < Sound.MIX_RATE * most, "%s is an effect (under %.0f s), not a track" % [event, most])
 		_check(peak < 32767, "%s never clips (peak %d)" % [event, peak])
 		_check(rms > 0.02, "%s is audible (rms %.3f)" % [event, rms])
 		# Starts and ends at silence, so it never clicks.

@@ -1,6 +1,6 @@
 # Weather, season by season: rain first
 
-Status: design for review (nothing built yet). Our own touch throughout: FarmVille (2009) had no weather.
+Status: building. Done: search (step 1), the fog fix, lightning, thunder and the rain's sound (step 2). Our own touch throughout: FarmVille (2009) had no weather.
 Switch: `Release.on("weather_life")`; every number below lives in data (`data/weather.json`, Balance `weather.*`).
 
 ## What we have today

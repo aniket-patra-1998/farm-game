@@ -11,6 +11,8 @@ extends Node3D
 
 # Night is a bright moonlit evening, not dark: the farm stays playable (on a phone outdoors too) while the windows,
 # lamps and stars still say it is night.
+const FLASH_BRIGHT := 0.55   # a lightning flash brightens the frame this much at full..
+const FLASH_AMBIENT := 1.2   # ..and lifts the ambient light this much
 const MOON_ENERGY := 0.8      # (lifted after the UI review: an evening farm was hard to see behind panels)
 const NIGHT_AMBIENT := 0.6
 const SETTING := "farm/world/use_3d"
@@ -28,6 +30,7 @@ var grid: FarmGrid
 var camera_2d: Camera2D
 
 var camera: Camera3D
+var lightning: Lightning3D   # a storm's bolts and their flash (WeatherEvents.struck)
 var sun: DirectionalLight3D
 var fill: DirectionalLight3D     # soft sky light from the side away from the sun, so shade keeps its form
 var environment: Environment
@@ -44,6 +47,7 @@ var _grade_contrast := 1.0
 var _changed := {}            # plots changed since the last update (index -> true)
 var _changed_all := false     # or the whole field
 var _plots_queued := false
+var _ambient := 0.0          # the ambient light's own energy this moment (a flash adds to it)
 
 
 static func enabled() -> bool:
@@ -57,6 +61,8 @@ func _ready() -> void:
 	camera.far = 400.0
 	add_child(camera)
 	camera.make_current()
+	lightning = Lightning3D.new()
+	add_child(lightning)
 	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
@@ -194,6 +200,28 @@ func _process_timed(_delta: float) -> void:
 		return
 	var centre := grid.to_local(camera_2d.get_screen_center_position())
 	IsoProjection.aim(camera, centre, camera_2d.zoom.x, get_viewport().get_visible_rect().size.y)
+	if environment.fog_enabled:
+		_fit_fog()
+	# A lightning flash lights the whole frame for a moment (Lightning3D.flash).
+	environment.adjustment_brightness = 1.0 + lightning.flash * FLASH_BRIGHT
+	if _ambient > 0.0:   # (once the day's light is set)
+		environment.ambient_light_energy = _ambient + lightning.flash * FLASH_AMBIENT
+
+
+## The fog begins past the farm's far corner as the camera sees it, and thickens over the land beyond.
+func fog_reach() -> Vector2:
+	var rules := WeatherEvents.data("fog")
+	var n := float(Game.farm_size)
+	var ahead := -camera.global_transform.basis.z
+	var middle := (Vector3(n / 2.0, 0.0, n / 2.0) - camera.global_position).dot(ahead)
+	var begin := middle + n * 0.7071 * float(rules.get("begin", 1.0))
+	return Vector2(begin, begin + n * float(rules.get("span", 1.6)))
+
+
+func _fit_fog() -> void:
+	var reach := fog_reach()
+	environment.fog_depth_begin = reach.x
+	environment.fog_depth_end = reach.y
 
 
 ## Main's screen grade (saturation, contrast, a cool lift in the shadows at night) done here, in the 3D frame's own
@@ -261,10 +289,17 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.adjustment_contrast = GRADE_CONTRAST * _grade_contrast
 	var low_sun := pow(1.0 - sin(maxf(s, 0.0) * PI), 3.0) if s >= 0.0 else 0.0
 	_set_grade(clampf(GRADE_BASE_WARMTH + low_sun * 0.9, 0.0, 1.0) * (1.0 - cover * 0.6) * (1.0 - dark))
+	# Fog that begins past the farm (data/weather.json fog; `_fit_fog` each frame): the farm stays clear, the
+	# meadow and woods fade into haze, and a thin mist lies on the ground.
 	var fog := float(weather.get("fog", 0.0))
+	var rules := WeatherEvents.data("fog")
 	environment.fog_enabled = fog > 0.01
+	environment.fog_mode = Environment.FOG_MODE_DEPTH
 	environment.fog_light_color = horizon.lerp(Color(0.85, 0.88, 0.9), 0.6)
-	environment.fog_density = 0.012 * fog
+	environment.fog_density = fog * float(rules.get("most", 0.85))
+	environment.fog_height = float(rules.get("height", 0.6))
+	environment.fog_height_density = fog * float(rules.get("height_density", 0.0))
+	_ambient = environment.ambient_light_energy
 	ground.wind = float(weather.get("wind", 0.6))
 	crops.wind = ground.wind
 

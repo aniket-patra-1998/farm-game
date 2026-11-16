@@ -6,6 +6,8 @@ extends Node2D
 ## Touch: pinch to zoom, two-finger drag to move, or one-finger drag with the Hand tool.
 ## Mouse: wheel to zoom, right- or middle-drag to move. Trackpad gestures also work.
 
+const FAR_FLASH := 0.35       # the 2D world's screen flash for the farthest strike (a near one is full)
+const SCREEN_FLASH_3D := 0.35 # in 3D the frame lights itself (Lightning3D.flash): the screen adds a little
 const INK := 0.0   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
 const INK_FROM := 0.22    # how small a jump in light or colour is an edge (lower: more lines)
 const INK_REACH := 1.0    # how many pixels out it looks, so how thick the line is
@@ -30,6 +32,7 @@ var night: NightGlow
 var shadows: CloudShadows
 var grade: ColorRect       # colour grade over the farm and sky
 var weather_fx: WeatherLayer
+var weather_events: WeatherEvents
 var world_3d: Farm3D        # the farm in real 3D (project setting farm/world/use_3d), behind the 2D layers
 
 var _base_zoom := 1.0       # zoom that shows the whole farm (you can pull back a little past it)
@@ -72,6 +75,9 @@ func _ready() -> void:
 
 	weather_fx = WeatherLayer.new()
 	add_child(weather_fx)
+	weather_events = WeatherEvents.new()   # (lightning, thunder and the rain's sound: docs/WEATHER.md)
+	add_child(weather_events)
+	weather_events.struck.connect(_on_struck)
 
 	night = NightGlow.new()
 	night.grid = grid
@@ -171,6 +177,13 @@ func _fit_camera() -> void:
 	# The free area is shifted down by half the difference between the bars.
 	var shift := (FarmHud.top_h() - FarmHud.bottom_h()) / 2.0
 	camera.snap(bounds.get_center() - Vector2(0, shift / _base_zoom), _base_zoom)
+
+
+## A storm's lightning struck (WeatherEvents): the screen flashes and, in 3D, a bolt falls past the farm.
+func _on_struck(far: float, toward: float) -> void:
+	weather_fx.flash_now(lerpf(1.0, FAR_FLASH, far) if world_3d == null else lerpf(SCREEN_FLASH_3D, 0.0, far))
+	if world_3d != null:
+		world_3d.lightning.strike(far, toward, world_3d.camera, Game.farm_size, WeatherEvents.data("storm"))
 
 
 ## The Next ready button: the view travels to the nearest thing with something to take that it has not shown yet
@@ -287,6 +300,7 @@ func _process(_delta: float) -> void:
 		light.color = l
 	sky.weather = w
 	weather_fx.look = w
+	weather_events.look = w
 	# Windows light up at night and in a dark storm.
 	night.dark = maxf(dark, clampf(float(w["dim"]) * 1.6 - 0.2, 0.0, 0.7))
 	# Cloud shadows need the sun out and some cloud about.
