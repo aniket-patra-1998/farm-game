@@ -50,6 +50,7 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
 		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag"]
 	known.append_array(BuildingModel.SIGNATURES)
+	known.append_array(BuildingDress.FEATURES)   # (the dressing's own: sacks, a windmill, an oven...)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))
 	for id in data["buildings"]:
 		for f: Dictionary in (data["buildings"][id] as Dictionary).get("features", []):
@@ -90,7 +91,12 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 	var pools := baked.get_children().filter(func(n: Node) -> bool:
 		return n is MeshInstance3D and (n as MeshInstance3D).material_override == ModelKit.glow_material()).size()
 	_check(pools == 2, "with a pool of light at its door and one at its windows (%d)" % pools)
-	_check(_count_meshes(baked) - door_meshes - pools <= 2, "and drawn as at most two meshes (%d)" % _count_meshes(baked))
+	var shades := baked.get_children().filter(func(n: Node) -> bool:
+		var plane := n is MeshInstance3D and (n as MeshInstance3D).mesh is PlaneMesh
+		return plane and (n as MeshInstance3D).material_override != ModelKit.glow_material()).size()
+	_eq(shades, 1, "and the soft shade round its foot")
+	_check(_count_meshes(baked) - door_meshes - pools - shades <= 2, "and drawn as at most two meshes (%d)"
+		% _count_meshes(baked))
 	_check(doors.size() == 2 and door_meshes <= 4, "its barn doors kept whole on hinges, a draw or two each (%d)"
 		% door_meshes)
 	_eq(_count_vertices(baked), verts, "with every vertex kept")

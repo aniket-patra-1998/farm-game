@@ -9,7 +9,12 @@ const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
 const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
-const RAKE_WIDTH := 0.035
+const RAKE_WIDTH := 0.05
+const FLARE := 0.06           # a roof's eaves kick out this much further, at a shallower slope (a storybook roof)..
+const FLARE_DROP := 0.3       # ..falling this share of what the slope above would over that run
+const EAVE_THICK := 0.07      # a roof's edge is this thick at the eaves..
+const FASCIA := 0.03          # ..over a board this high in the trim's colour
+const RIDGE_CAP := 0.045      # the cap along a ridge: half its width, and its height
 const SPRIG_LEAVES := 9        # leaves on a sprig
 const FRUIT_SHADER := "res://shaders/fruit3d.gdshader"
 const BLOOM_SHADER := "res://shaders/bloom3d.gdshader"
@@ -48,7 +53,7 @@ const LOD_MIN_TRIANGLES := 600     # a baked mesh this big or bigger gets simple
 const LOD_NORMAL_MERGE := 25.0     # degrees: faces this close in angle may merge when a level is made simpler
 const LOD_NORMAL_SPLIT := 60.0     # and faces this far apart keep a hard edge
 const WALL_SHADER := "res://shaders/wall3d.gdshader"
-const WALL_STYLES := 6             # boards, logs, stone, plaster, shingles, metal
+const WALL_STYLES := 7             # boards, logs, stone, plaster, shingles, metal, planks
 const WALL_AO_STEP := 0.02         # the ground shade packed for a wall is a whole number of these
 
 
@@ -298,7 +303,8 @@ static func foliage_cards(parent: Node3D, centre: Vector3, radii: Vector3, rng: 
 		var roll := rng.randf_range(-0.8, 0.8)
 		var right := (along * cos(roll) + rise * sin(roll)).normalized()
 		var up := (rise * cos(roll) - along * sin(roll)).normalized()
-		if up.y < 0.0:                                 # sprigs reach upward and outward, they do not point at the ground
+		# sprigs reach upward and outward, they do not point at the ground
+		if up.y < 0.0:
 			up = -up
 			right = -right
 		var size := card * rng.randf_range(0.8, 1.25)
@@ -356,14 +362,15 @@ static func sway_all(root: Node, amount: float) -> void:
 
 
 ## A wall or roof surface with a pattern (see shaders/wall3d.gdshader): boards, logs, stone, plaster,
-## shingles or metal.
+## shingles, metal or planks (a barn's upright boards).
 static func surface(col: Color, style: String, ao := 0.45) -> ShaderMaterial:
 	var key := "surface:%s:%s:%.2f" % [col.to_html(), style, ao]
 	if not _materials.has(key):
 		var m := ShaderMaterial.new()
 		m.shader = load("res://shaders/wall3d.gdshader")
 		m.set_shader_parameter("base_color", col)
-		m.set_shader_parameter("style", ["boards", "logs", "stone", "plaster", "shingles", "metal"].find(style))
+		m.set_shader_parameter("style", ["boards", "logs", "stone", "plaster", "shingles", "metal",
+			"planks"].find(style))
 		m.set_shader_parameter("ground_ao", ao)
 		_materials[key] = m
 	return _materials[key]
@@ -457,7 +464,8 @@ static func tub(parent: Node3D, lo: Vector3, hi: Vector3, wall: float, mat: Mate
 	box(parent, Vector3(lo.x + wall, lo.y, hi.z - wall), Vector3(hi.x - wall, hi.y, hi.z), mat)
 	if fill != null:
 		var top := lerpf(lo.y + wall, hi.y, fill_to)
-		box(parent, Vector3(lo.x + wall, lo.y + wall, lo.z + wall), Vector3(hi.x - wall, top, hi.z - wall), fill, false)
+		box(parent, Vector3(lo.x + wall, lo.y + wall, lo.z + wall), Vector3(hi.x - wall, top, hi.z - wall), fill,
+			false)
 
 
 ## An upright cylinder (or a cone, with `top_r` 0) standing on `base`.
@@ -648,6 +656,8 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 			faces(parent, ends, inside, gable_mat)
 			_roof_edges(parent, slopes, mat)
 			_rake_boards(parent, slopes)
+			var crest: Array = slopes[slopes.size() - 1]
+			_ridge_cap(parent, crest[3], crest[2], mat)
 		"hip":
 			var cx := (x0 + x1) / 2.0
 			var cz := (z0 + z1) / 2.0
@@ -663,6 +673,22 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 				faces(parent, [[c00, c10, r1, r0], [c01, c11, r1, r0], [c00, c01, r0], [c10, c11, r1]], inside, mat)
 			else:
 				faces(parent, [[c00, c01, r1, r0], [c10, c11, r1, r0], [c00, c10, r0], [c01, c11, r1]], inside, mat)
+			# The eaves kick out all round, with a thick edge under them; a cap along the ridge and down each hip.
+			var k := e - FLARE * FLARE_DROP * rise / maxf(half, 0.01)
+			var k00 := Vector3(x0 - FLARE, k, z0 - FLARE)
+			var k10 := Vector3(x1 + FLARE, k, z0 - FLARE)
+			var k11 := Vector3(x1 + FLARE, k, z1 + FLARE)
+			var k01 := Vector3(x0 - FLARE, k, z1 + FLARE)
+			faces(parent, [[k00, k10, c10, c00], [k10, k11, c11, c10], [k11, k01, c01, c11], [k01, k00, c00, c01]],
+				inside,
+				mat)
+			var dark := _darker(mat)
+			for side: Array in [[k00, k10], [k10, k11], [k11, k01], [k01, k00]]:
+				_edge_board(parent, side[0], side[1], dark)
+			_ridge_cap(parent, r0, r1, mat)
+			for hip: Array in ([[c00, r0], [c01, r0], [c10, r1], [c11, r1]] if along_x
+					else [[c00, r0], [c10, r0], [c01, r1], [c11, r1]]):
+				_ridge_cap(parent, hip[0], hip[1], mat)
 		"shed":
 			# One slope, high at the back (low z and x) and low over the front the camera sees.
 			var back_h := top
@@ -706,15 +732,17 @@ static func _ridge_roof(kind: String, lo: Vector3, hi: Vector3, rise: float, ove
 	var wall_v0 := (lo.z if along_x else lo.x)
 	var wall_v1 := (hi.z if along_x else hi.x)
 	var eave := y - over * rise / maxf(vm - v0, 0.01)
+	# The eaves kick out: a last strip of roof, shallower than the slope above it, on each side.
+	var kick := eave - FLARE * FLARE_DROP * rise / maxf(vm - v0, 0.01)
 	var slopes: Array = []
 	var ends: Array = []
 	if kind == "gable":
-		slopes = [[
-			map.call(u0, v0, eave),
-			map.call(u1, v0, eave),
-			map.call(u1, vm, top),
-			map.call(u0, vm, top)
-		],
+		slopes = [
+			[map.call(u0, v0 - FLARE, kick), map.call(u1, v0 - FLARE, kick), map.call(u1, v0, eave), map.call(u0, v0,
+				eave)],
+			[map.call(u0, v0, eave), map.call(u1, v0, eave), map.call(u1, vm, top), map.call(u0, vm, top)],
+			[map.call(u0, v1 + FLARE, kick), map.call(u1, v1 + FLARE, kick), map.call(u1, v1, eave), map.call(u0, v1,
+				eave)],
 			[map.call(u0, v1, eave), map.call(u1, v1, eave), map.call(u1, vm, top), map.call(u0, vm, top)]]
 		for u: float in [lo.x if along_x else lo.z, hi.x if along_x else hi.z]:
 			ends.append([map.call(u, wall_v0, y), map.call(u, wall_v1, y), map.call(u, vm, top)])
@@ -722,13 +750,13 @@ static func _ridge_roof(kind: String, lo: Vector3, hi: Vector3, rise: float, ove
 		var knee := y + rise * 0.62
 		var kv0 := v0 + (vm - v0) * 0.32
 		var kv1 := v1 - (v1 - vm) * 0.32
-		slopes = [[
-			map.call(u0, v0, eave),
-			map.call(u1, v0, eave),
-			map.call(u1, kv0, knee),
-			map.call(u0, kv0, knee)
-		],
+		slopes = [
+			[map.call(u0, v0 - FLARE, kick), map.call(u1, v0 - FLARE, kick), map.call(u1, v0, eave), map.call(u0, v0,
+				eave)],
+			[map.call(u0, v0, eave), map.call(u1, v0, eave), map.call(u1, kv0, knee), map.call(u0, kv0, knee)],
 			[map.call(u0, kv0, knee), map.call(u1, kv0, knee), map.call(u1, vm, top), map.call(u0, vm, top)],
+			[map.call(u0, v1 + FLARE, kick), map.call(u1, v1 + FLARE, kick), map.call(u1, v1, eave), map.call(u0, v1,
+				eave)],
 			[map.call(u0, v1, eave), map.call(u1, v1, eave), map.call(u1, kv1, knee), map.call(u0, kv1, knee)],
 			[map.call(u0, kv1, knee), map.call(u1, kv1, knee), map.call(u1, vm, top), map.call(u0, vm, top)]]
 		var wk0 := wall_v0 + (vm - wall_v0) * 0.3
@@ -760,23 +788,49 @@ static func _rake_boards(parent: Node3D, slopes: Array) -> void:
 			var mi := box(parent, Vector3(-RAKE_WIDTH / 2.0, -RAKE_WIDTH / 2.0, -length / 2.0),
 				Vector3(RAKE_WIDTH / 2.0, RAKE_WIDTH / 2.0, length / 2.0), white)
 			var dir := (b - a) / length
-			mi.transform = Transform3D(Basis.looking_at(dir, Vector3.UP), (a + b) / 2.0 + Vector3(0, RAKE_WIDTH * 0.4, 0))
+			mi.transform = Transform3D(Basis.looking_at(dir, Vector3.UP), (a + b) / 2.0 + Vector3(0, RAKE_WIDTH * 0.4,
+				0))
 
 
 static func _roof_edges(parent: Node3D, slopes: Array, mat: Material) -> void:
-	var edge := mat
-	if mat is ShaderMaterial:
-		# A patterned surface keeps its colour in base_color, a painted one in albedo.
-		var sm := mat as ShaderMaterial
-		var v: Variant = sm.get_shader_parameter("base_color")
-		var col: Color = v if v != null else sm.get_shader_parameter("albedo")
-		edge = paint(col.darkened(0.2))
+	var edge := _darker(mat)
 	for s: Array in [slopes[0], slopes[slopes.size() / 2]]:
-		var a: Vector3 = s[0]
-		var b: Vector3 = s[1]
-		var lo := Vector3(minf(a.x, b.x), a.y - 0.05, minf(a.z, b.z)) - Vector3(0.01, 0, 0.01)
-		var hi := Vector3(maxf(a.x, b.x), a.y + 0.005, maxf(a.z, b.z)) + Vector3(0.01, 0, 0.01)
-		box(parent, lo, hi, edge)
+		_edge_board(parent, s[0], s[1], edge)
+
+
+## `mat`'s colour, darker, as a plain paint (a roof's edge, its ridge cap).
+static func _darker(mat: Material) -> Material:
+	if not (mat is ShaderMaterial):
+		return mat
+	# A patterned surface keeps its colour in base_color, a painted one in albedo.
+	var sm := mat as ShaderMaterial
+	var v: Variant = sm.get_shader_parameter("base_color")
+	var col: Color = v if v != null else sm.get_shader_parameter("albedo")
+	return paint(col.darkened(0.28))
+
+
+## The thick edge of a roof along its eave from `a` to `b` (level, along x or z): the roof's own dark edge, over a
+## fascia board in the trim's colour.
+static func _edge_board(parent: Node3D, a: Vector3, b: Vector3, edge: Material) -> void:
+	var lo := Vector3(minf(a.x, b.x), a.y - EAVE_THICK, minf(a.z, b.z)) - Vector3(0.012, 0, 0.012)
+	var hi := Vector3(maxf(a.x, b.x), a.y + 0.006, maxf(a.z, b.z)) + Vector3(0.012, 0, 0.012)
+	box(parent, lo, hi, edge)
+	box(parent, Vector3(lo.x + 0.02, lo.y - FASCIA, lo.z + 0.02), Vector3(hi.x - 0.02, lo.y, hi.z - 0.02),
+		paint(RAKE_COLOUR), false)
+
+
+## A cap along a ridge (or down a hip) from `a` to `b`: a rounded board in the roof's colour, darker, that the
+## two slopes meet under.
+static func _ridge_cap(parent: Node3D, a: Vector3, b: Vector3, mat: Material) -> void:
+	var length := a.distance_to(b)
+	if length < 0.01:
+		return
+	var cap := cylinder(parent, Vector3.ZERO, RIDGE_CAP, length + 0.04, _darker(mat), -1.0, 5)
+	cap.transform = Transform3D(Basis.looking_at((b - a) / length, Vector3.UP) * Basis(Vector3.RIGHT, PI / 2.0),
+		(a + b) / 2.0 + Vector3(0, RIDGE_CAP * 0.3, 0))
+	cap.scale = Vector3(1.0, 1.0, 0.75)
+	# (it lies on the roof, whose shadow covers its own)
+	cap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 # ---------------------------------------------------------------- merging

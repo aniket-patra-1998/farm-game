@@ -11,7 +11,10 @@ const SKIRT_PITCH := 0.3      # the pent roof round a ground floor under an uppe
 const SKIRT_OVER := 0.1        # and how far it overhangs
 const SPILL_REACH := 0.8      # how far a lit building's light reaches over the ground, in tiles
 const SILO_CHECKS := 14   # dark panels in the chequered band of a silo
-const PLINTH := 0.09
+const PLINTH := 0.13         # a building's stone footing stands this high..
+const FOOT_OUT := 0.085      # ..on a broad low course this much wider than the walls (it is battered)
+const FRIEZE := 0.075        # the board that runs round the top of the walls, under the eaves
+const FRAME_OUT := 0.04      # a window's frame stands this proud of its wall
 const PICKET_GAP := 0.12      # between a picket fence's pickets, in tiles
 const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals can look out of ([{at, size}])
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
@@ -273,11 +276,13 @@ static func _broken(ctx: Dictionary) -> void:
 		if k % 2 == 0:
 			var x := lerpf(lo.x, hi.x, g.x)
 			var y := lo.y + h * g.y
-			ModelKit.box(root, Vector3(x - g.z * 0.5, y, hi.z), Vector3(x + g.z * 0.5, y + BOARD_GAP, hi.z + 0.006), gap)
+			ModelKit.box(root, Vector3(x - g.z * 0.5, y, hi.z), Vector3(x + g.z * 0.5, y + BOARD_GAP, hi.z + 0.006),
+				gap)
 		else:
 			var z := lerpf(lo.z, hi.z, g.x)
 			var y2 := lo.y + h * g.y
-			ModelKit.box(root, Vector3(hi.x, y2, z - g.z * 0.5), Vector3(hi.x + 0.006, y2 + BOARD_GAP, z + g.z * 0.5), gap)
+			ModelKit.box(root, Vector3(hi.x, y2, z - g.z * 0.5), Vector3(hi.x + 0.006, y2 + BOARD_GAP, z + g.z * 0.5),
+				gap)
 	# A loose board hanging askew on the side wall, and two lying by the front.
 	var board := ModelKit.surface(WOOD, "boards")
 	var loose := ModelKit.box(root, Vector3(-0.17, -0.02, -0.004), Vector3(0.17, 0.02, 0.004), board)
@@ -325,7 +330,8 @@ static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1
 	# The footing, a side at a time.
 	var footing := _stage(p, SITE_FOOTING, SITE_FLOOR)
 	if footing > 0.0:
-		var sides := [[Vector3(lo.x, 0, lo.z), Vector3(hi.x, 0, lo.z)], [Vector3(hi.x, 0, lo.z), Vector3(hi.x, 0, hi.z)],
+		var sides := [[Vector3(lo.x, 0, lo.z), Vector3(hi.x, 0, lo.z)], [Vector3(hi.x, 0, lo.z), Vector3(hi.x, 0,
+			hi.z)],
 			[Vector3(hi.x, 0, hi.z), Vector3(lo.x, 0, hi.z)], [Vector3(lo.x, 0, hi.z), Vector3(lo.x, 0, lo.z)]]
 		for k in 4:
 			var share := clampf(footing * 4.0 - k, 0.0, 1.0)
@@ -334,7 +340,8 @@ static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1
 			var a: Vector3 = sides[k][0]
 			var b: Vector3 = a.lerp(sides[k][1], share)
 			ModelKit.box(root, Vector3(minf(a.x, b.x), 0, minf(a.z, b.z)) - Vector3(0.05, 0, 0.05),
-				Vector3(maxf(a.x, b.x), PLINTH, maxf(a.z, b.z)) + Vector3(0.05, 0, 0.05), ModelKit.surface(STONE, "stone", 0.3))
+				Vector3(maxf(a.x, b.x), PLINTH, maxf(a.z, b.z)) + Vector3(0.05, 0, 0.05), ModelKit.surface(STONE,
+					"stone", 0.3))
 	if p >= SITE_FLOOR:
 		ModelKit.box(root, Vector3(lo.x, PLINTH * 0.5, lo.z), Vector3(hi.x, PLINTH + 0.01, hi.z), timber)
 		_posts(root, lo, hi, timber)
@@ -424,7 +431,8 @@ static func _scaffold(root: Node3D, lo: Vector3, hi: Vector3, up_to: float, timb
 	# A ladder up the front scaffold.
 	var lx := lo.x + 0.15
 	for side: float in [-0.07, 0.07]:
-		ModelKit.box(root, Vector3(lx + side - 0.01, 0, z + 0.05), Vector3(lx + side + 0.01, top - 0.1, z + 0.07), timber)
+		ModelKit.box(root, Vector3(lx + side - 0.01, 0, z + 0.05), Vector3(lx + side + 0.01, top - 0.1, z + 0.07),
+			timber)
 	var rung := 0.1
 	while rung < top - 0.15:
 		ModelKit.box(root, Vector3(lx - 0.07, rung, z + 0.05), Vector3(lx + 0.07, rung + 0.015, z + 0.07), timber)
@@ -461,7 +469,8 @@ static func _beam(root: Node3D, a: Vector3, b: Vector3, t: float, mat: Material)
 	var length := a.distance_to(b)
 	if length < 0.001:
 		return
-	var mi := ModelKit.box(root, Vector3(-t / 2.0, -t / 2.0, -length / 2.0), Vector3(t / 2.0, t / 2.0, length / 2.0), mat)
+	var mi := ModelKit.box(root, Vector3(-t / 2.0, -t / 2.0, -length / 2.0), Vector3(t / 2.0, t / 2.0, length / 2.0),
+		mat)
 	var dir := (b - a) / length
 	var up := Vector3.UP if absf(dir.y) < 0.99 else Vector3.FORWARD
 	mi.transform = Transform3D(Basis.looking_at(dir, up), (a + b) / 2.0)
@@ -481,7 +490,8 @@ static func _materials_pile(root: Node3D, at: Vector3, left: float, timber: Mate
 	ModelKit.box(root, b + Vector3(-0.1, 0.03, -0.08), b + Vector3(0.1, 0.03 + bricks * 0.04, 0.08),
 		ModelKit.surface(Color("#b4553c"), "stone", 0.0))
 	if left > 0.4:
-		ModelKit.cylinder(root, at + Vector3(0.0, 0, -0.38), 0.06, 0.12, ModelKit.surface(Color("#7c4a2a"), "boards", 0.2))
+		ModelKit.cylinder(root, at + Vector3(0.0, 0, -0.38), 0.06, 0.12, ModelKit.surface(Color("#7c4a2a"), "boards",
+			0.2))
 
 
 # ---------------------------------------------------------------- the main block
@@ -500,8 +510,12 @@ static func _body(ctx: Dictionary) -> void:
 	var walls := str((s["body"] as Dictionary).get("walls", "boards"))
 	var trim := Color.html(str(s.get("trim", "#f3eee2")))
 	if lift <= 0.0:
-		# A stone footing a little wider than the walls: the building stands on something.
-		ModelKit.box(root, lo - Vector3(0.04, 0, 0.04), Vector3(hi.x + 0.04, PLINTH, hi.z + 0.04),
+		# A stone footing, battered: a broad low course, and the footing proper on it, wider than the walls. The
+		# building stands on something.
+		ModelKit.box(root, lo - Vector3(FOOT_OUT, 0, FOOT_OUT), Vector3(hi.x + FOOT_OUT, PLINTH * 0.42,
+			hi.z + FOOT_OUT),
+			ModelKit.surface(STONE.darkened(0.12), "stone", 0.35))
+		ModelKit.box(root, lo - Vector3(0.045, 0, 0.045), Vector3(hi.x + 0.045, PLINTH, hi.z + 0.045),
 			ModelKit.surface(STONE, "stone", 0.3))
 	var wall_mat := ModelKit.surface(ctx["wall"], walls)
 	ModelKit.box(root, Vector3(lo.x, maxf(lo.y, PLINTH * 0.5), lo.z), hi, wall_mat)
@@ -510,6 +524,11 @@ static func _body(ctx: Dictionary) -> void:
 	for corner: Vector2 in [Vector2(lo.x, lo.z), Vector2(hi.x, lo.z), Vector2(hi.x, hi.z), Vector2(lo.x, hi.z)]:
 		ModelKit.box(root, Vector3(corner.x - t, lo.y, corner.y - t), Vector3(corner.x + t, hi.y, corner.y + t),
 			ModelKit.paint(trim))
+	# A frieze board round the top of the walls, and the shadow the eaves throw under it.
+	ModelKit.box(root, Vector3(lo.x - 0.014, hi.y - FRIEZE, lo.z - 0.014), Vector3(hi.x + 0.014, hi.y, hi.z + 0.014),
+		ModelKit.paint(trim))
+	ModelKit.box(root, Vector3(lo.x - 0.006, hi.y - FRIEZE - 0.03, lo.z - 0.006), Vector3(hi.x + 0.006, hi.y - FRIEZE,
+		hi.z + 0.006), ModelKit.paint((ctx["wall"] as Color).darkened(0.42)), false)
 	# Roof.
 	var r: Dictionary = s["roof"]
 	var kind := str(r.get("type", "gable"))
@@ -522,7 +541,7 @@ static func _body(ctx: Dictionary) -> void:
 		var rise := float(r.get("pitch", 0.7)) * span / 2.0
 		var roof_mat := ModelKit.surface(Color.html(str(r.get("color", "#8e3b2c"))), str(r.get("style", "shingles")),
 			0.0)
-		top = ModelKit.roof(root, kind, lo, hi, rise, float(r.get("overhang", 0.08)), roof_mat, wall_mat)
+		top = ModelKit.roof(root, kind, lo, hi, rise, float(r.get("overhang", 0.1)), roof_mat, wall_mat)
 	ctx["top"] = top
 	ctx["lo"] = lo
 	ctx["hi"] = hi
@@ -533,6 +552,7 @@ static func _body(ctx: Dictionary) -> void:
 	marker.set_meta(WINDOWS, ctx.get("window_at", []))
 	root.add_child(marker)
 	_light_spill(ctx)
+	BuildingDress.ground(ctx)
 
 
 ## A second storey (the top size of a big building): the ground floor under a low pent roof that runs all
@@ -567,7 +587,8 @@ static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: M
 	ModelKit.box(root, ulo - Vector3(0.02, 0, 0.02), Vector3(uhi.x + 0.02, ulo.y + 0.04, uhi.z + 0.02),
 		ModelKit.paint(trim))
 	var t := 0.03
-	for corner: Vector2 in [Vector2(ulo.x, ulo.z), Vector2(uhi.x, ulo.z), Vector2(uhi.x, uhi.z), Vector2(ulo.x, uhi.z)]:
+	for corner: Vector2 in [Vector2(ulo.x, ulo.z), Vector2(uhi.x, ulo.z), Vector2(uhi.x, uhi.z), Vector2(ulo.x,
+		uhi.z)]:
 		ModelKit.box(root, Vector3(corner.x - t, ulo.y, corner.y - t), Vector3(corner.x + t, uhi.y, corner.y + t),
 			ModelKit.paint(trim))
 	var up_roof: Dictionary = upper.get("roof", {})
@@ -578,7 +599,8 @@ static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: M
 		var mat := roof_mat
 		if up_roof.has("color"):
 			mat = ModelKit.surface(Color.html(str(up_roof["color"])), str(r.get("style", "shingles")), 0.0)
-		top = ModelKit.roof(root, kind, ulo, uhi, pitch * minf(uw, ud) / 2.0, float(r.get("overhang", 0.08)), mat, own_wall)
+		top = ModelKit.roof(root, kind, ulo, uhi, pitch * minf(uw, ud) / 2.0, float(r.get("overhang", 0.08)), mat,
+			own_wall)
 	ctx["upper_lo"] = ulo
 	ctx["upper_hi"] = uhi
 	var sub := ctx.duplicate()
@@ -631,19 +653,32 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 				var leaf := _hinge(root, Vector3(x + side * w / 2.0, y0, z), side)
 				var cx := x + side * w / 4.0
 				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.004), Vector3(cx + w / 4.0, y0 + h, z + 0.029),
-					ModelKit.paint((ctx["wall"] as Color).darkened(0.25)))   # (painted like its braces: a leaf is one draw)
+					# (painted like its braces: a leaf is one draw)
+					ModelKit.paint((ctx["wall"] as Color).darkened(0.25)))
 				# The white X-braces of a barn door.
 				var brace := ModelKit.paint(trim)
 				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0, z + 0.029), Vector3(cx + w / 4.0, y0 + 0.04, z + 0.044),
 					brace)
 				ModelKit.box(leaf, Vector3(cx - w / 4.0, y0 + h - 0.04, z + 0.029),
 					Vector3(cx + w / 4.0, y0 + h, z + 0.044), brace)
-				var diag := ModelKit.box(leaf, Vector3(cx - 0.02, y0, z + 0.029), Vector3(cx + 0.02, y0 + h * 1.05, z + 0.044),
+				var diag := ModelKit.box(leaf, Vector3(cx - 0.02, y0, z + 0.029), Vector3(cx + 0.02, y0 + h * 1.05,
+					z + 0.044),
 					brace)
 				if diag != null:
 					diag.rotation.z = side * atan2(w / 2.0, h)
-			ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0 + h, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.04, z + 0.05),
+			# Its frame: a post each side and a heavy lintel, and iron strap hinges on each leaf.
+			ModelKit.box(root, Vector3(x - w / 2 - 0.06, y0 + h, z), Vector3(x + w / 2 + 0.06, y0 + h + 0.06,
+				z + 0.06),
 				ModelKit.paint(trim))
+			for side: float in [-1.0, 1.0]:
+				ModelKit.box(root, Vector3(x + side * (w / 2 + 0.03) - 0.03, y0, z),
+					Vector3(x + side * (w / 2 + 0.03) + 0.03,
+					y0 + h, z + 0.05), ModelKit.paint(trim))
+				for strap: float in [0.2, 0.8]:
+					ModelKit.box(root, Vector3(x + side * w / 2 - (0.0 if side < 0 else w * 0.2),
+						y0 + h * strap - 0.014, z + 0.05),
+						Vector3(x + side * w / 2 + (w * 0.2 if side < 0 else 0.0), y0 + h * strap + 0.014, z + 0.058),
+						ModelKit.paint(BuildingDress.IRON, 0.3), false)
 		"roller":
 			var shutter := _hinge(root, Vector3(x, y0, z), 0.0)
 			shutter.get_parent().set_meta("slide", h * 0.85)
@@ -651,14 +686,17 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 				ModelKit.surface(Color("#c9ced2"), "metal"))
 		"mesh", "hatch":
 			var flap := _hinge(root, Vector3(x - w / 2, y0, z), -1.0)
-			ModelKit.box(flap, Vector3(x - w / 2, y0, z + 0.004), Vector3(x + w / 2, y0 + h, z + 0.024), ModelKit.paint(DARK)
+			ModelKit.box(flap, Vector3(x - w / 2, y0, z + 0.004), Vector3(x + w / 2, y0 + h, z + 0.024),
+				ModelKit.paint(DARK)
 				if style == "mesh" else ModelKit.surface(WOOD, "boards"))
-			ModelKit.box(root, Vector3(x - w / 2 - 0.02, y0 + h, z), Vector3(x + w / 2 + 0.02, y0 + h + 0.03, z + 0.04),
+			ModelKit.box(root, Vector3(x - w / 2 - 0.02, y0 + h, z), Vector3(x + w / 2 + 0.02, y0 + h + 0.03,
+				z + 0.04),
 				ModelKit.paint(trim))
 		_:
 			# A painted door in a frame (and, for an arch, a rounded top instead of a lintel).
 			if style != "arch":
-				ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0 + h, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.03, z + 0.02),
+				ModelKit.box(root, Vector3(x - w / 2 - 0.03, y0 + h, z), Vector3(x + w / 2 + 0.03, y0 + h + 0.03,
+					z + 0.02),
 					ModelKit.paint(trim))
 			for side: float in [-1.0, 1.0]:
 				ModelKit.box(root, Vector3(x + side * (w / 2 + 0.015) - 0.015, y0, z),
@@ -666,7 +704,8 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 			var door := _hinge(root, Vector3(x - w / 2, y0, z), -1.0)
 			ModelKit.box(door, Vector3(x - w / 2, y0, z + 0.006), Vector3(x + w / 2, y0 + h, z + 0.026),
 				ModelKit.paint(Color("#6b3f26")))
-			ModelKit.ball(door, Vector3(x + w / 2 - 0.04, y0 + h * 0.5, z + 0.03), 0.012, ModelKit.paint(Color("#d4b04a"), 0.7))
+			ModelKit.ball(door, Vector3(x + w / 2 - 0.04, y0 + h * 0.5, z + 0.03), 0.012,
+				ModelKit.paint(Color("#d4b04a"), 0.7))
 			if style == "arch":
 				# Discs centred on the door's top, set back so their lower halves hide behind the door and its
 				# posts: what shows is a rounded top in the door's colour inside a ring of trim.
@@ -674,10 +713,14 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 					var arch := ModelKit.cylinder(root, Vector3.ZERO, disc[0], 0.008, ModelKit.paint(disc[2]))
 					arch.rotation.x = PI / 2.0
 					arch.position = Vector3(x, y0 + h, disc[1] + 0.004)
-	# A step up to the door.
+	# Two broad steps up to the door, and a lantern on the wall beside it.
 	if lo.y <= 0.0:
-		ModelKit.box(root, Vector3(x - w / 2 - 0.05, 0, z), Vector3(x + w / 2 + 0.05, PLINTH * 0.7, z + 0.1),
+		ModelKit.box(root, Vector3(x - w / 2 - 0.1, 0, z), Vector3(x + w / 2 + 0.1, PLINTH * 0.45, z + 0.2),
+			ModelKit.surface(STONE.lightened(0.06), "stone", 0.2))
+		ModelKit.box(root, Vector3(x - w / 2 - 0.06, 0, z), Vector3(x + w / 2 + 0.06, PLINTH * 0.9, z + 0.11),
 			ModelKit.surface(STONE, "stone", 0.2))
+	if style != "mesh" and style != "hatch" and (hi.x - lo.x) - w > 0.34:
+		BuildingDress.lantern(root, Vector3(x + w / 2 + 0.1, y0 + h * 0.86, z), Vector3(0, 0, 1))
 
 
 ## A hinge for a door at `at` (on its outer edge, at the foot): returns the node to build the door under,
@@ -716,19 +759,26 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 	for k in count:
 		var z := lerpf(lo.z, hi.z, (k + 1.0) / (count + 1.0))
 		spots.append({"at": Vector3(hi.x, y, z), "size": size})
-		var frame := 0.025 * _look("trim")
+		var frame := 0.03 * _look("trim")
+		# A thick frame standing proud of the wall, the glass set back in it behind a cross of bars.
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame, z - size / 2 - frame),
-			Vector3(hi.x + 0.02, y + size / 2 + frame, z + size / 2 + frame), ModelKit.paint(trim))
-		ModelKit.box(root, Vector3(hi.x + 0.02, y - size / 2, z - size / 2), Vector3(hi.x + 0.03, y + size / 2, z + size / 2),
-			ModelKit.glass())
-		# Panes: a cross of bars over the glass.
-		ModelKit.box(root, Vector3(hi.x + 0.03, y - 0.008, z - size / 2), Vector3(hi.x + 0.04, y + 0.008, z + size / 2),
-			ModelKit.paint(trim))
-		ModelKit.box(root, Vector3(hi.x + 0.03, y - size / 2, z - 0.008), Vector3(hi.x + 0.04, y + size / 2, z + 0.008),
-			ModelKit.paint(trim))
-		# A sill with a shadow under it.
-		ModelKit.box(root, Vector3(hi.x, y - size / 2 - 0.05, z - size / 2 - 0.04),
-			Vector3(hi.x + 0.06, y - size / 2 - 0.025, z + size / 2 + 0.04), ModelKit.paint(trim))
+			Vector3(hi.x + FRAME_OUT, y + size / 2 + frame, z + size / 2 + frame), ModelKit.paint(trim))
+		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - size / 2, z - size / 2), Vector3(hi.x + FRAME_OUT + 0.004,
+			y + size / 2, z + size / 2), ModelKit.glass())
+		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - 0.011, z - size / 2), Vector3(hi.x + FRAME_OUT + 0.014,
+			y + 0.011,
+			z + size / 2), ModelKit.paint(trim), false)
+		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - size / 2, z - 0.011), Vector3(hi.x + FRAME_OUT + 0.014,
+			y + size / 2, z + 0.011), ModelKit.paint(trim), false)
+		# A header over it, a deep sill under it, and the shadow the sill throws.
+		ModelKit.box(root, Vector3(hi.x, y + size / 2 + frame, z - size / 2 - frame - 0.025),
+			Vector3(hi.x + FRAME_OUT + 0.025, y + size / 2 + frame + 0.035,
+				z + size / 2 + frame + 0.025), ModelKit.paint(trim))
+		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame - 0.035, z - size / 2 - frame - 0.035),
+			Vector3(hi.x + 0.095, y - size / 2 - frame, z + size / 2 + frame + 0.035), ModelKit.paint(trim))
+		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame - 0.065, z - size / 2 - frame),
+			Vector3(hi.x + 0.006, y - size / 2 - frame - 0.035, z + size / 2 + frame),
+			ModelKit.paint((ctx["wall"] as Color).darkened(0.4)), false)
 		_dress_window(ctx, Vector3(hi.x, y, z), size, k)
 
 
@@ -742,13 +792,16 @@ static func _dress_window(ctx: Dictionary, at: Vector3, size: float, index: int)
 		return
 	if dress in ["shutters", "both"]:
 		var roof_col := Color.html(str((spec["roof"] as Dictionary).get("color", "#8e3b2c")))
-		var shutter := ModelKit.surface(Color.html(str(spec.get("shutter", "#" + roof_col.darkened(0.05).to_html(false)))),
+		var shutter := ModelKit.surface(Color.html(str(spec.get("shutter",
+			"#" + roof_col.darkened(0.05).to_html(false)))),
 			"boards", 0.0)
 		for side: float in [-1.0, 1.0]:
 			var z0 := at.z + side * (size / 2.0 + 0.03)
 			var z1 := z0 + side * size * 0.38
 			ModelKit.box(root, Vector3(at.x, at.y - size / 2.0, minf(z0, z1)),
 				Vector3(at.x + 0.03, at.y + size / 2.0, maxf(z0, z1)), shutter)
+			ModelKit.box(root, Vector3(at.x + 0.03, at.y - 0.016, minf(z0, z1)),   # (its batten)
+				Vector3(at.x + 0.042, at.y + 0.016, maxf(z0, z1)), shutter, false)
 	if dress in ["flower_boxes", "both"]:
 		var wood := ModelKit.surface(WOOD, "boards")
 		var y := at.y - size / 2.0 - 0.1
@@ -757,7 +810,8 @@ static func _dress_window(ctx: Dictionary, at: Vector3, size: float, index: int)
 		var blooms: Array[Color] = [Color("#e8506e"), Color("#f5c518"), Color("#f7f2e8"), Color("#9b7be0")]
 		for b in 4:
 			var bz := lerpf(at.z - size / 2.0, at.z + size / 2.0, (b + 0.5) / 4.0)
-			ModelKit.ball(root, Vector3(at.x + 0.04, y + 0.07, bz), 0.024, ModelKit.paint(blooms[(index + b) % blooms.size()]))
+			ModelKit.ball(root, Vector3(at.x + 0.04, y + 0.07, bz), 0.024,
+				ModelKit.paint(blooms[(index + b) % blooms.size()]))
 			ModelKit.ball(root, Vector3(at.x + 0.04, y + 0.05, bz), 0.02, ModelKit.paint(Color("#4a8f36")))
 
 
@@ -771,12 +825,15 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 	var c: Vector3 = ctx["centre"]
 	var lo: Vector3 = ctx.get("lo", c)
 	var hi: Vector3 = ctx.get("hi", c)
+	if BuildingDress.feature(ctx, f):
+		return
 	match str(f.get("type", "")):
 		"stilts":
 			var lift: float = ctx["lift"]
 			for corner: Vector2 in [Vector2(lo.x + 0.05, lo.z + 0.05), Vector2(hi.x - 0.05, lo.z + 0.05),
 					Vector2(hi.x - 0.05, hi.z - 0.05), Vector2(lo.x + 0.05, hi.z - 0.05)]:
-				ModelKit.box(root, Vector3(corner.x - 0.03, 0, corner.y - 0.03), Vector3(corner.x + 0.03, lift, corner.y + 0.03),
+				ModelKit.box(root, Vector3(corner.x - 0.03, 0, corner.y - 0.03), Vector3(corner.x + 0.03, lift,
+					corner.y + 0.03),
 					ModelKit.paint(WOOD))
 		"ramp":
 			var ramp := ModelKit.box(
@@ -802,7 +859,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var from := lo.y + 0.08
 			for k in chutes:
 				var z := lerpf(lo.z + 0.08, hi.z - 0.08, (k + 0.5) / chutes)
-				var chute := ModelKit.box(root, Vector3(-0.04, -0.012, 0.0), Vector3(0.04, 0.012, Vector2(0.26, from).length()),
+				var chute := ModelKit.box(root, Vector3(-0.04, -0.012, 0.0), Vector3(0.04, 0.012, Vector2(0.26,
+					from).length()),
 					ModelKit.surface(WOOD, "boards"))
 				if chute != null:
 					chute.position = Vector3(hi.x, from, z)
@@ -817,7 +875,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var base := Vector3(float(at[0]) * fw, 0, float(at[1]) * fd)
 			var r := float(f.get("r", 0.22))
 			var h := float(f.get("h", 1.6))
-			var plain := bool(f.get("plain", false))   # a second or third silo: fewer sides and no chequered band (cheaper)
+			# a second or third silo: fewer sides and no chequered band (cheaper)
+			var plain := bool(f.get("plain", false))
 			var sides := 12 if plain else 20
 			ModelKit.cylinder(root, base, r + 0.03, 0.08, ModelKit.surface(STONE, "stone", 0.2), -1.0, sides)
 			ModelKit.cylinder(root, base, r, h, ModelKit.surface(Color("#d9dcde"), "metal", 0.35), -1.0, sides)
@@ -854,7 +913,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.paint(HAY)
 			)
 			# Straw spilling over the sill.
-			ModelKit.ball(root, Vector3(x - 0.04, y - 0.01, hi.z + 0.06), 0.045, ModelKit.paint(HAY), Vector3(1.6, 0.7, 1))
+			ModelKit.ball(root, Vector3(x - 0.04, y - 0.01, hi.z + 0.06), 0.045, ModelKit.paint(HAY), Vector3(1.6,
+				0.7, 1))
 			ModelKit.ball(root, Vector3(x + 0.05, y - 0.03, hi.z + 0.07), 0.035, ModelKit.paint(HAY.darkened(0.1)),
 				Vector3(1.4, 0.8, 1))
 		"balcony":
@@ -867,10 +927,12 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var out := float(f.get("depth", 0.16))
 			var wood := ModelKit.surface(WOOD, "boards")
 			var rail := ModelKit.paint(Color("#f3eee2"))
-			ModelKit.box(root, Vector3(x - span / 2.0, y, uhi.z), Vector3(x + span / 2.0, y + 0.025, uhi.z + out), wood)
+			ModelKit.box(root, Vector3(x - span / 2.0, y, uhi.z), Vector3(x + span / 2.0, y + 0.025, uhi.z + out),
+				wood)
 			for k in 2:
 				var bx := x + (k - 0.5) * span * 0.8
-				ModelKit.box(root, Vector3(bx - 0.012, y - 0.09, uhi.z), Vector3(bx + 0.012, y, uhi.z + out * 0.8), wood)
+				ModelKit.box(root, Vector3(bx - 0.012, y - 0.09, uhi.z), Vector3(bx + 0.012, y, uhi.z + out * 0.8),
+					wood)
 			ModelKit.box(root, Vector3(x - span / 2.0, y + 0.12, uhi.z + out - 0.015),
 				Vector3(x + span / 2.0, y + 0.135, uhi.z + out), rail)
 			ModelKit.box(root, Vector3(x - span / 2.0, y + 0.12, uhi.z), Vector3(x - span / 2.0 + 0.015, y + 0.135,
@@ -891,11 +953,14 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var out := float(f.get("depth", 0.24))
 			var wood := ModelKit.paint(WOOD)
 			ModelKit.box(root, Vector3(x - 0.015, y, uhi.z - 0.02), Vector3(x + 0.015, y + 0.03, uhi.z + out), wood)
-			ModelKit.box(root, Vector3(x - 0.012, y - 0.1, uhi.z + out * 0.15), Vector3(x + 0.012, y, uhi.z + out * 0.15 + 0.02),
+			ModelKit.box(root, Vector3(x - 0.012, y - 0.1, uhi.z + out * 0.15), Vector3(x + 0.012, y,
+				uhi.z + out * 0.15 + 0.02),
 				wood)
-			ModelKit.cylinder(root, Vector3(x - 0.02, y - 0.03, uhi.z + out), 0.03, 0.04, ModelKit.paint(Color("#3a3a3a")),
+			ModelKit.cylinder(root, Vector3(x - 0.02, y - 0.03, uhi.z + out), 0.03, 0.04,
+				ModelKit.paint(Color("#3a3a3a")),
 				-1.0, 10).rotation.z = PI / 2.0
-			ModelKit.box(root, Vector3(x - 0.004, y - 0.2, uhi.z + out - 0.004), Vector3(x + 0.004, y, uhi.z + out + 0.004),
+			ModelKit.box(root, Vector3(x - 0.004, y - 0.2, uhi.z + out - 0.004), Vector3(x + 0.004, y,
+				uhi.z + out + 0.004),
 				ModelKit.paint(Color("#c8a96a")))
 		"dormers":
 			# Small gabled windows poking out of the roof's front slope.
@@ -913,7 +978,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.box(root, dlo, dhi, ModelKit.paint(trim))
 				ModelKit.box(root, Vector3(x - 0.05, y + 0.03, dhi.z), Vector3(x + 0.05, y + 0.12, dhi.z + 0.01),
 					ModelKit.glass())
-				ModelKit.roof(root, "gable", Vector3(dlo.x, dlo.y, dlo.z), Vector3(dhi.x, dhi.y, dhi.z), 0.07, 0.025, rmat,
+				ModelKit.roof(root, "gable", Vector3(dlo.x, dlo.y, dlo.z), Vector3(dhi.x, dhi.y, dhi.z), 0.07, 0.025,
+					rmat,
 					ModelKit.paint(trim))
 		"awning":
 			# A striped canopy over the front door, sloping down and out.
@@ -968,7 +1034,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.box(root, Vector3(x - w / 2, y0, hi.z + 0.02), Vector3(x + w / 2, y0 + 0.3, hi.z + 0.035),
 					ModelKit.surface(Color("#7a4a2a"), "boards"))
 				# The open top half: dark inside the stall.
-				ModelKit.box(root, Vector3(x - w / 2, y0 + 0.3, hi.z + 0.005), Vector3(x + w / 2, y0 + 0.52, hi.z + 0.02),
+				ModelKit.box(root, Vector3(x - w / 2, y0 + 0.3, hi.z + 0.005), Vector3(x + w / 2, y0 + 0.52,
+					hi.z + 0.02),
 					ModelKit.paint(Color("#1f1612")))
 		"porch":
 			var x0 := lo.x + 0.05
@@ -1033,7 +1100,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var x := fw - 0.3 if bare else minf(hi.x + 0.25, fw - 0.15)
 			for k in 3:
 				var z := lerpf(0.3, 0.9, k / 2.0) if bare else lerpf(lo.z + 0.15, hi.z - 0.15, k / 2.0)
-				ModelKit.cylinder(root, Vector3(x, 0, z), 0.1, 0.24, ModelKit.surface(Color("#7c4a2a"), "boards", 0.25))
+				ModelKit.cylinder(root, Vector3(x, 0, z), 0.1, 0.24, ModelKit.surface(Color("#7c4a2a"), "boards",
+					0.25))
 				ModelKit.cylinder(root, Vector3(x, 0.05, z), 0.105, 0.025, ModelKit.paint(Color("#3a3a3a"), 0.5))
 				ModelKit.cylinder(root, Vector3(x, 0.18, z), 0.105, 0.025, ModelKit.paint(Color("#3a3a3a"), 0.5))
 		"flowers":
@@ -1061,7 +1129,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 					p + Vector3(0.17, 0.52, 0.15),
 					ModelKit.paint(Color("#c9a24a"))
 				)
-				ModelKit.box(root, p + Vector3(-0.05, 0.09, 0.12), p + Vector3(0.05, 0.11, 0.13), ModelKit.paint(DARK))
+				ModelKit.box(root, p + Vector3(-0.05, 0.09, 0.12), p + Vector3(0.05, 0.11, 0.13),
+					ModelKit.paint(DARK))
 		"pond":
 			var rx := fw * 0.4
 			var rz := fd * 0.36
@@ -1107,7 +1176,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var z := fd / 2.0
 			var white := ModelKit.paint(Color("#f4f1ea"))
 			for side: float in [-1.0, 1.0]:
-				ModelKit.box(root, Vector3(x - 0.025, 0, z + side * 0.4 - 0.025), Vector3(x + 0.025, 0.7, z + side * 0.4 + 0.025),
+				ModelKit.box(root, Vector3(x - 0.025, 0, z + side * 0.4 - 0.025), Vector3(x + 0.025, 0.7,
+					z + side * 0.4 + 0.025),
 					white)
 			for k in 13:
 				var a := PI * k / 12.0
@@ -1124,8 +1194,10 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var z := (lo.z + hi.z) / 2.0
 			var iron := ModelKit.paint(Color("#2e2e2e"), 0.3)
 			ModelKit.box(root, Vector3(x - 0.008, top, z - 0.008), Vector3(x + 0.008, top + 0.34, z + 0.008), iron)
-			ModelKit.box(root, Vector3(x - 0.12, top + 0.22, z - 0.004), Vector3(x + 0.12, top + 0.235, z + 0.004), iron)
-			ModelKit.box(root, Vector3(x - 0.004, top + 0.22, z - 0.09), Vector3(x + 0.004, top + 0.235, z + 0.09), iron)
+			ModelKit.box(root, Vector3(x - 0.12, top + 0.22, z - 0.004), Vector3(x + 0.12, top + 0.235, z + 0.004),
+				iron)
+			ModelKit.box(root, Vector3(x - 0.004, top + 0.22, z - 0.09), Vector3(x + 0.004, top + 0.235, z + 0.09),
+				iron)
 			# The cockerel and its arrow, swinging round with the wind.
 			var vane := Node3D.new()
 			var gold := ModelKit.paint(Color("#c9a24a"), 0.6)
@@ -1183,7 +1255,8 @@ static func _signature(ctx: Dictionary, f: Dictionary) -> void:
 			ModelKit.box(root, at - Vector3(r, 0, r * 0.7), at + Vector3(r, 0.03, r * 0.7), soil)
 			for row in 3:
 				for k in 4:
-					var p := at + Vector3(lerpf(-r * 0.75, r * 0.75, k / 3.0), 0.03, lerpf(-r * 0.45, r * 0.45, row / 2.0))
+					var p := at + Vector3(lerpf(-r * 0.75, r * 0.75, k / 3.0), 0.03, lerpf(-r * 0.45, r * 0.45,
+						row / 2.0))
 					ModelKit.ball(root, p, 0.022, ModelKit.paint(Color("#e8822a")), Vector3(1, 0.8, 1))
 					ModelKit.cylinder(root, p, 0.02, 0.09, ModelKit.paint(Color("#4f9a34")), 0.0, 5)
 		"fuel_pump":
@@ -1251,7 +1324,8 @@ static func _wing(ctx: Dictionary, f: Dictionary) -> void:
 	var w := minf(0.16, h * 0.35)
 	if front:
 		var x := (wlo.x + whi.x) / 2.0
-		ModelKit.box(root, Vector3(x - w / 2 - 0.02, y - w / 2 - 0.02, whi.z), Vector3(x + w / 2 + 0.02, y + w / 2 + 0.02,
+		ModelKit.box(root, Vector3(x - w / 2 - 0.02, y - w / 2 - 0.02, whi.z), Vector3(x + w / 2 + 0.02,
+			y + w / 2 + 0.02,
 			whi.z + 0.02), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(x - w / 2, y - w / 2, whi.z + 0.02), Vector3(x + w / 2, y + w / 2, whi.z + 0.03),
 			ModelKit.glass())
@@ -1299,6 +1373,29 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 	var col: Color = GROUNDS.get(ground, GROUNDS["dirt"])
 	ModelKit.box(root, Vector3(inset, 0, inset), Vector3(fw - inset, 0.012, fd - inset),
 		ModelKit.surface(col, "plaster", 0.0), false)
+	# The ground is not one flat colour: trodden patches, darker where the animals stand, and loose straw or
+	# stones lying about.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(str((ctx["it"] as Dictionary).get("id", ""))) + 3
+	for k in 5:
+		var p := Vector3(rng.randf_range(inset + 0.35, fw - inset - 0.35), 0.012, rng.randf_range(inset + 0.35,
+			fd - inset - 0.35))
+		var r := rng.randf_range(0.18, 0.3)
+		var patch := ModelKit.cylinder(root, p, r, 0.004,
+			ModelKit.surface(col.darkened(0.1 + 0.08 * (k % 2)) if k % 3 != 0
+			else col.lightened(0.1), "plaster", 0.0), r * 0.85, 7)
+		patch.scale.x = 1.0 + rng.randf() * 0.4
+		patch.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for k in 10:
+		var p := Vector3(rng.randf_range(inset + 0.1, fw - inset - 0.1), 0.014, rng.randf_range(inset + 0.1,
+			fd - inset - 0.1))
+		if ground == "straw" or k % 3 == 0:
+			var wisp := ModelKit.box(root, Vector3(-0.05, 0, -0.008), Vector3(0.05, 0.008, 0.008), ModelKit.paint(HAY
+				.lightened(0.1 * (k % 2))), false)
+			wisp.position = p
+			wisp.rotation.y = rng.randf() * PI
+		else:
+			BuildingDress.stone(root, p, rng.randf_range(0.025, 0.04), STONE.darkened(0.1))
 	var fence := str(f.get("fence", "rail"))
 	var mat := ModelKit.paint(FENCE if fence == "picket" else RAIL)
 	var corners := [Vector3(inset, 0, inset), Vector3(fw - inset, 0, inset), Vector3(fw - inset, 0, fd - inset),
@@ -1312,6 +1409,20 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 			var gap := (b - a).normalized() * 0.22
 			_fence(root, a, mid - gap, fence, mat)
 			_fence(root, mid + gap, b, fence, mat)
+			# Its gate posts stand taller, with caps; the gate hangs ajar on the nearer one.
+			for post: Vector3 in [mid - gap, mid + gap]:
+				ModelKit.box(root, post - Vector3(0.032, 0, 0.032), post + Vector3(0.032, 0.34, 0.032), mat)
+				ModelKit.box(root, post + Vector3(-0.042, 0.34, -0.042), post + Vector3(0.042, 0.36, 0.042), mat)
+			var gate := Node3D.new()
+			gate.position = mid + gap
+			gate.rotation.y = -0.6
+			root.add_child(gate)
+			var wide := gap.length() * 1.85
+			for bar: float in [0.08, 0.2]:
+				ModelKit.box(gate, Vector3(-wide, bar, -0.012), Vector3(0, bar + 0.03, 0.012), mat)
+			for end: float in [0.0, 1.0]:
+				ModelKit.box(gate, Vector3(-wide * end - 0.014, 0.04, -0.014), Vector3(-wide * end + 0.014, 0.26,
+					0.014), mat)
 		else:
 			_fence(root, a, b, fence, mat)
 
@@ -1323,7 +1434,7 @@ static func _fence(root: Node3D, a: Vector3, b: Vector3, kind: String, mat: Mate
 	var posts := maxi(1, int(ceil(length / 0.33)))
 	for k in posts + 1:
 		var p := a + dir * (length * k / posts)
-		ModelKit.box(root, p - Vector3(0.022, 0, 0.022), p + Vector3(0.022, 0.24, 0.022), mat)
+		ModelKit.box(root, p - Vector3(0.026, 0, 0.026), p + Vector3(0.026, 0.26, 0.026), mat)
 	if kind == "picket":
 		var n := int(length / PICKET_GAP)   # (fewer, broader pickets: a white fence at a third less to draw)
 		for k in n:
