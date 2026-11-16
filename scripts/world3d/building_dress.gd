@@ -23,11 +23,16 @@ const SHADE_STRENGTH := 0.5   # ..and is this dark at its middle
 const SHADE_LIFT := 0.014     # it lies this far above the ground (over a yard's floor)
 const GOLDEN := 2.39996
 ## Every feature this dressing builds (`feature`); BuildingModel builds the rest.
-const FEATURES: Array[String] = ["sacks", "crates", "cask", "oven", "steam", "emblem", "crown", "sails", "chute",
-	"press", "pour", "jet", "rack", "hay_rack",
+const FEATURES: Array[String] = ["sacks", "crates", "cask", "oven", "emblem", "crown", "sails", "chute",
+	"press", "pour", "boiler", "jet", "rack", "hay_rack",
 	"milk_cans", "perch", "feeder", "bench", "woodpile"]
 const GOLD := Color("#f2c14e")
 const GRAIN := Color("#e8b93c")
+## The features that can be a crafting building's animated part: each is a thing you can see when it stands still.
+const MACHINES: Array[String] = ["sails", "chute", "oven", "chimney", "press", "pour", "boiler", "jet"]
+## Steam puffing from a boiler's pipe.
+const PUFF := {"streams": 5, "per_stream": 1, "life": 2.0, "rise": 0.22, "gravity": -0.02, "reach": 0.1, "size": 1.4,
+	"end_size": 2.2, "colour": Color("#f4f6f7"), "sheen": 0.1, "round": true}
 const ANIMATED := "animated"  # a feature's `part`: it moves while the building is crafting, and only then
 const STORAGE := "storage"    # a feature's `part`: it shows how full the building is, in FILLS looks
 const FILLS := 4              # empty, a quarter, half and full
@@ -131,8 +136,6 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 	var c: Vector3 = ctx["centre"]
 	var lo: Vector3 = ctx.get("lo", c)
 	var hi: Vector3 = ctx.get("hi", c)
-	# An animated part moves while the building is crafting, and only then.
-	var moving := bool(ctx.get("active", true))
 	var spot: Array = f.get("at", [])
 	var at := Vector3(float(spot[0]) * fw, 0, float(spot[1]) * fd) if spot.size() == 2 \
 		else Vector3(minf(hi.x + 0.3, fw - 0.22), 0, minf(hi.z + 0.25, fd - 0.2))
@@ -191,14 +194,13 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			if str(f.get("part", "")) == STORAGE:
 				# How full it is shows in the kegs drawn off it, standing before its head: one, then two, then three
 				# with a fourth on top and wine pooled under the tap.
-				var drawn := int(ctx.get("fill", 0))
 				var row := p.z + r * 0.85 + 0.2
-				for k in mini(drawn, FULL):
-					_keg(root, Vector3(p.x + (k - 1) * 0.21, 0, row))
-				if drawn >= FULL:
-					_keg(root, Vector3(p.x - 0.105, 0.2, row))
-					ModelKit.cylinder(root, Vector3(p.x + 0.16, 0, row + 0.16), 0.15, 0.012, ModelKit.paint(GRAPE), 0.13,
-						10)
+				for held in range(1, FILLS):
+					for k in mini(held, FULL):
+						_keg(when(ctx, "fill", held), Vector3(p.x + (k - 1) * 0.21, 0, row))
+				_keg(when(ctx, "fill", FULL), Vector3(p.x - 0.105, 0.2, row))
+				ModelKit.cylinder(when(ctx, "fill", FULL), Vector3(p.x + 0.16, 0, row + 0.16), 0.15, 0.012,
+					ModelKit.paint(GRAPE), 0.13, 10)
 		"emblem":
 			# The sign of its trade on a round plaque high on the front gable: a loaf, or a bunch of grapes.
 			var up_lo: Vector3 = ctx.get("upper_lo", lo)
@@ -251,15 +253,28 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			star.position = tip + Vector3(0, 0.16 + STAR_R, 0)
 			star.rotation.y = PI / 4.0   # (turned to the camera)
 			root.add_child(star)
-		"steam":
-			# Steam off warm water (a spa's pool), while the building works.
-			if moving:
-				DecorMotion.spray(root, at + Vector3(0, float(f.get("up", 0.12)), 0), DecorMotion.STEAM)
+		"boiler":
+			# A copper boiler on a stone bed beside the bath, a pipe out of its top. While the building works it
+			# puffs steam, and so does the pool it heats (`pool`: where, as shares of the plot).
+			var copper := ModelKit.paint(Color("#c9793a"), 0.6)
+			ModelKit.cylinder(root, at, 0.22, 0.08, ModelKit.surface(STONE, "stone", 0.2), 0.2, 10)
+			ModelKit.cylinder(root, at + Vector3(0, 0.08, 0), 0.16, 0.32, copper, -1.0, 10)
+			ModelKit.ball(root, at + Vector3(0, 0.4, 0), 0.16, copper, Vector3(1, 0.6, 1), true)
+			for band: float in [0.14, 0.32]:
+				ModelKit.cylinder(root, at + Vector3(0, band, 0), 0.166, 0.028, ModelKit.paint(IRON, 0.4), -1.0, 10)
+			ModelKit.cylinder(root, at + Vector3(0, 0.46, 0), 0.035, 0.22, copper, -1.0, 6)
+			ModelKit.box(root, at + Vector3(-0.055, 0.1, 0.15), at + Vector3(0.055, 0.21, 0.168), ModelKit.paint(IRON))
+			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, 0.7, 0), PUFF)
+			var pool: Array = f.get("pool", [])
+			if pool.size() == 2:
+				DecorMotion.spray(when(ctx, "working", true), Vector3(float(pool[0]) * fw, 0.12, float(pool[1]) * fd),
+					DecorMotion.STEAM)
 		"jet":
-			# A fountain in the pool: a stone spout, and its jet while the building works.
-			ModelKit.cylinder(root, at, 0.05, 0.14, ModelKit.surface(STONE.lightened(0.1), "stone", 0.2), 0.035, 8)
-			if moving:
-				DecorMotion.spray(root, at + Vector3(0, 0.15, 0), DecorMotion.JET)
+			# A fountain in the pool: a stone bowl on a stem, and its jet while the building works.
+			var marble := ModelKit.surface(STONE.lightened(0.2), "plaster", 0.1)
+			ModelKit.cylinder(root, at, 0.05, 0.2, marble, 0.04, 8)
+			ModelKit.cylinder(root, at + Vector3(0, 0.2, 0), 0.06, 0.05, marble, 0.14, 10)
+			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, 0.27, 0), DecorMotion.JET)
 		"sails":
 			# A windmill's sails on its tower's top storey or (`"on": "lower"`) its lower one. One set faces the
 			# camera. Two stand on opposite sides: the top one over the door, on the left as you see it, and the
@@ -273,9 +288,15 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				twin = twin or (str(other.get("type", "")) == "sails" and str(other.get("on", "top")) == "lower")
 			var face := Vector3(1, 0, 0) if low else (Vector3(0, 0, 1) if twin else Vector3(1, 0, 1).normalized())
 			var hub: Vector2 = hubs["lower" if low else "top"]
-			sails(root, c + face * hub.x + Vector3(0, hub.y, 0), face, float(f.get("reach", 0.7)),
-				moving and not bool(f.get("broken", false)), bool(f.get("broken", false)),
-				Color.html(str(f.get("stripe", "#" + CREAM.to_html(false)))))
+			var hub_at := c + face * hub.x + Vector3(0, hub.y, 0)
+			var reach := float(f.get("reach", 0.7))
+			var stripe := Color.html(str(f.get("stripe", "#" + CREAM.to_html(false))))
+			if bool(f.get("broken", false)) or str(f.get("part", "")) != ANIMATED:
+				sails(root, hub_at, face, reach, false, bool(f.get("broken", false)), stripe)
+			else:
+				# (turning while the building works, standing still otherwise: a set for each state)
+				sails(when(ctx, "working", true), hub_at, face, reach, true, false, stripe)
+				sails(when(ctx, "working", false), hub_at, face, reach, false, false, stripe)
 		"chute":
 			# A grain chute from the mill down to an open bin; grain runs from it while the building works.
 			var boards := ModelKit.surface(WOOD, "boards", 0.2)
@@ -290,8 +311,7 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				board.rotation = Vector3(-CHUTE_TILT, atan2(toward.x, toward.z), 0)
 				board.position = at + Vector3(0, CHUTE_HIGH, 0) + run * CHUTE_LONG / 2.0 + board.basis * Vector3(
 					(float(part[0]) + float(part[1])) / 2.0, (float(part[2]) + float(part[3])) / 2.0, 0)
-			if moving:
-				DecorMotion.spray(root, at + Vector3(0, CHUTE_HIGH, 0), GRAIN_FALL)
+			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, CHUTE_HIGH, 0), GRAIN_FALL)
 		"press":
 			# A wine press: a slatted tub on a stone bed, a screw up its middle, and the bar that turns it while
 			# the building works.
@@ -301,11 +321,8 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				ModelKit.cylinder(root, at + Vector3(0, hoop, 0), 0.225, 0.03, ModelKit.paint(IRON, 0.4), -1.0, 10)
 			ModelKit.cylinder(root, at + Vector3(0, 0.33, 0), 0.19, 0.02, ModelKit.paint(GRAPE.darkened(0.2)), -1.0, 10)
 			ModelKit.cylinder(root, at + Vector3(0, 0.33, 0), 0.03, 0.34, ModelKit.paint(DARK_WOOD), -1.0, 6)
-			var bar := Node3D.new()
-			ModelKit.box(bar, Vector3(-0.3, -0.02, -0.02), Vector3(0.3, 0.02, 0.02), ModelKit.paint(DARK_WOOD))
-			for end: float in [-0.3, 0.3]:
-				bead(bar, Vector3(end, 0, 0), 0.04, ModelKit.paint(WOOD.lightened(0.2)))
-			_turns(root, at + Vector3(0, 0.6, 0), bar, moving, 1.1)
+			_turns(when(ctx, "working", true), at + Vector3(0, 0.6, 0), _press_bar(), true, 1.1)
+			_turns(when(ctx, "working", false), at + Vector3(0, 0.6, 0), _press_bar(), false, 1.1)
 		"pour":
 			# A keg on a stand with a pail under its tap; the wine runs while the building works.
 			var keg := ModelKit.cylinder(root, Vector3.ZERO, 0.13, 0.3, ModelKit.surface(Color("#8a5530"), "boards", 0.2),
@@ -318,30 +335,33 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			ModelKit.box(root, at + Vector3(-0.015, 0.29, 0.15), at + Vector3(0.015, 0.33, 0.22), ModelKit.paint(IRON, 0.4))
 			ModelKit.tub(root, at + Vector3(-0.08, 0, 0.13), at + Vector3(0.08, 0.12, 0.29), 0.015,
 				ModelKit.surface(WOOD.lightened(0.1), "boards", 0.2), ModelKit.paint(GRAPE.darkened(0.25)))
-			if moving:
-				DecorMotion.spray(root, at + Vector3(0, 0.29, 0.21), POUR)
+			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, 0.29, 0.21), POUR)
 		"rack":
-			# Shelves of goods standing by the building, facing you: a storage part. Its three shelves fill from
-			# the bottom as the building fills, and a full one has a crate more on the ground beside it.
-			var held := int(ctx.get("fill", 0))
+			# A stall of goods by the building, facing you, under a little roof in the building's colour: a
+			# storage part. Its three shelves fill from the bottom as the building fills, and a full one has a
+			# crate more on the ground beside it.
 			var goods := str(f.get("goods", "loaves"))
-			var boards := ModelKit.surface(WOOD, "boards", 0.2)
-			for side: float in [-1.0, 1.0]:
-				ModelKit.box(root, at + Vector3(side * RACK_WIDE / 2.0 - 0.02, 0, -0.08), at + Vector3(
-					side * RACK_WIDE / 2.0 + 0.02, RACK_TALL, 0.08), boards)
-			ModelKit.box(root, at + Vector3(-RACK_WIDE / 2.0 - 0.04, RACK_TALL, -0.1), at + Vector3(
-				RACK_WIDE / 2.0 + 0.04, RACK_TALL + 0.03, 0.12), ModelKit.paint(DARK_WOOD))
+			var boards := ModelKit.surface(WOOD.lightened(0.25), "boards", 0.2)
+			for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+				var leg := at + Vector3(corner.x * RACK_WIDE / 2.0, 0, corner.y * 0.08)
+				ModelKit.box(root, leg + Vector3(-0.015, 0, -0.015), leg + Vector3(0.015, RACK_TALL, 0.015), boards)
+			var roof := ModelKit.box(root, Vector3(-RACK_WIDE / 2.0 - 0.05, -0.012, -0.15), Vector3(RACK_WIDE / 2.0 + 0.05,
+				0.012, 0.15), ModelKit.paint(Color.html(str(f.get("color", "#c0392b")))))
+			roof.position = at + Vector3(0, RACK_TALL + 0.03, 0.02)
+			roof.rotation.x = 0.3
 			for k in 3:
-				var shelf := at + Vector3(0, 0.07 + k * RACK_TALL * 0.31, 0)
+				var shelf := at + Vector3(0, 0.07 + k * RACK_TALL * 0.3, 0)
 				ModelKit.box(root, shelf + Vector3(-RACK_WIDE / 2.0, 0, -0.08), shelf + Vector3(RACK_WIDE / 2.0, 0.02,
 					0.08), boards)
-				for n in (3 if held > k else 0):
-					_good(root, shelf + Vector3((n - 1) * RACK_WIDE * 0.3, 0.02, 0.01), goods, n + k)
-			if held >= FULL:
-				var crate := at + Vector3(RACK_WIDE / 2.0 + 0.16, 0, 0.1)
-				ModelKit.tub(root, crate + Vector3(-0.11, 0, -0.08), crate + Vector3(0.11, 0.1, 0.08), 0.015, boards)
-				for n in 4:
-					_good(root, crate + Vector3(-0.05 + 0.1 * (n % 2), 0.08, -0.03 + 0.06 * (n / 2)), goods, n)
+				for held in range(k + 1, FILLS):
+					for n in 3:
+						_good(when(ctx, "fill", held), shelf + Vector3((n - 1) * RACK_WIDE * 0.3, 0.02, 0.01), goods, n + k)
+			var crate := at + Vector3(RACK_WIDE / 2.0 + 0.16, 0, 0.1)
+			ModelKit.box(when(ctx, "fill", FULL), crate + Vector3(-0.11, 0, -0.08), crate + Vector3(0.11, 0.08, 0.08),
+				ModelKit.paint(WOOD.lightened(0.1)))
+			for n in 4:
+				_good(when(ctx, "fill", FULL), crate + Vector3(-0.05 + 0.1 * (n % 2), 0.08, -0.03 + 0.06 * (n / 2)),
+					goods, n)
 		"oven":
 			_oven(ctx, f)
 		"hay_rack":
@@ -446,8 +466,10 @@ static func _oven(ctx: Dictionary, f: Dictionary) -> void:
 		ModelKit.surface(STONE, "plaster", 0.0))
 	ModelKit.cylinder(root, Vector3(x + 0.11, stack_top + 0.05, z), 0.055, 0.1, ModelKit.paint(Color("#8a4630")),
 		0.045, 8)
-	if ctx.get("active", true):
-		DecorMotion.spray(root, Vector3(x + 0.11, stack_top + 0.17, z), DecorMotion.SMOKE)
+	# While the building works: a fire in its mouth and smoke from its chimney.
+	var busy := when(ctx, "working", true)
+	DecorMotion.flame(busy, Vector3(x + deep + 0.012, 0.13, z), 0.07, 0.15, Color("#ff9a2e"), Color("#ffe27a"))
+	DecorMotion.spray(busy, Vector3(x + 0.11, stack_top + 0.17, z), DecorMotion.SMOKE)
 
 
 ## A round tower for a body (a windmill; `"shape": "tower"` in data/building_models.json): a stone foot, walls
@@ -474,10 +496,13 @@ static func tower(ctx: Dictionary) -> Array:
 	# Each storey: [from, to, its radius at the foot, and at the top].
 	var storeys: Array = [[foot * 0.5, bh, r0, r0 * float(body.get("taper", TOWER_TAPER))]]
 	var lower := float(body.get("lower", 0.0))
+	var low_top := float(body.get("lower_taper", LOWER_TAPER))
+	var up_foot := float(body.get("upper_foot", UPPER_FOOT))
+	var up_top := float(body.get("upper_top", UPPER_TOP))
 	if lower > 0.0:
-		storeys = [[foot * 0.5, lower, r0, r0 * LOWER_TAPER], [lower + LOWER_ROOF, bh, r0 * UPPER_FOOT, r0 * UPPER_TOP]]
-		ModelKit.cylinder(root, c + Vector3(0, lower, 0), r0 * LOWER_TAPER + over, LOWER_ROOF, roof_mat,
-			r0 * UPPER_FOOT, TOWER_SIDES)
+		storeys = [[foot * 0.5, lower, r0, r0 * low_top], [lower + LOWER_ROOF, bh, r0 * up_foot, r0 * up_top]]
+		ModelKit.cylinder(root, c + Vector3(0, lower, 0), r0 * low_top + over, LOWER_ROOF, roof_mat,
+			r0 * up_foot, TOWER_SIDES)
 	var windows: Array = []
 	var r1 := r0
 	for storey: Array in storeys:
@@ -519,7 +544,7 @@ static func tower(ctx: Dictionary) -> Array:
 	# Where sails can hang (the "sails" feature): how far from the middle and how high, on the top storey and on
 	# the lower one.
 	ctx["hubs"] = {"top": Vector2(r1 + over + 0.03, bh + CAP_EAVE + rise * 0.16),
-		"lower": Vector2(r0 * LOWER_TAPER + over + 0.06, lower + 0.05)}
+		"lower": Vector2(r0 * low_top + over + 0.06, lower + 0.05)}
 	# The door's case: a stone porch standing out of the foot of the tower, under a slab the roof's colour.
 	var door: Dictionary = s.get("door", {})
 	var w := float(door.get("w", 0.28)) * float(ctx["bw"]) / 0.7
@@ -609,15 +634,15 @@ static func gauge(root: Node3D, foot: Vector3, out: Vector3, tall: float, fill: 
 
 ## A small keg standing on end at `at`.
 static func _keg(root: Node3D, at: Vector3) -> void:
-	ModelKit.cylinder(root, at, 0.09, 0.2, ModelKit.surface(Color("#8a5530"), "boards", 0.2), 0.08, 8)
-	ModelKit.cylinder(root, at + Vector3(0, 0.085, 0), 0.094, 0.03, ModelKit.paint(IRON, 0.4), 0.092, 8)
+	ModelKit.cylinder(root, at, 0.09, 0.2, ModelKit.paint(Color("#8a5530")), 0.08, 8)
+	ModelKit.cylinder(root, at + Vector3(0, 0.085, 0), 0.094, 0.03, ModelKit.paint(IRON), 0.092, 8)
 
 
 ## One of the goods on a rack: a loaf, or a bottle.
 static func _good(root: Node3D, at: Vector3, kind: String, n: int) -> void:
 	if kind == "bottles":
 		var glass: Color = [Color("#3b9bb8"), Color("#e58fb0"), Color("#f3eee2")][n % 3]
-		ModelKit.cylinder(root, at, 0.035, 0.09, ModelKit.paint(glass, 0.5), 0.03, 6)
+		ModelKit.cylinder(root, at, 0.035, 0.09, ModelKit.paint(glass), 0.03, 6)
 		bead(root, at + Vector3(0, 0.105, 0), 0.02, ModelKit.paint(DARK_WOOD))
 	else:
 		bead(root, at + Vector3(0, 0.04, 0), 0.06, ModelKit.paint(BAKED.darkened(0.08 * (n % 2))), Vector3(1.0, 0.7,
@@ -632,3 +657,28 @@ static func _turns(root: Node3D, at: Vector3, part: Node3D, moving: bool, speed:
 	part.position = at
 	part.rotation.y = 0.6
 	root.add_child(part)
+
+
+## The part of the building shown only in one state, as AssetRegistry names states (`when_working_true`,
+## `when_fill_2`...): one node for each, shared by every feature. An animated part puts what moves in
+## `when("working", true)` and what stands still in its place in `when("working", false)`; a storage part puts
+## each of its looks in `when("fill", n)`. `BuildingModel.build` merges each into a mesh or two.
+static func when(ctx: Dictionary, key: String, value: Variant) -> Node3D:
+	var states: Dictionary = ctx.get("states", {})
+	ctx["states"] = states
+	var part := "%s%s_%s" % [AssetRegistry.STATE, key, str(value).to_lower()]
+	if not states.has(part):
+		var node := Node3D.new()
+		node.name = part
+		(ctx["root"] as Node3D).add_child(node)
+		states[part] = node
+	return states[part]
+
+
+## The bar that turns a wine press's screw: a beam with a knob at each end.
+static func _press_bar() -> Node3D:
+	var bar := Node3D.new()
+	ModelKit.box(bar, Vector3(-0.3, -0.02, -0.02), Vector3(0.3, 0.02, 0.02), ModelKit.paint(DARK_WOOD))
+	for end: float in [-0.3, 0.3]:
+		bead(bar, Vector3(end, 0, 0), 0.04, ModelKit.paint(WOOD.lightened(0.2)))
+	return bar

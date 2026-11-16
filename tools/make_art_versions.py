@@ -11,7 +11,7 @@ since, so a builder change never silently leaves the game drawing the old files.
 
     python3 tools/make_art_versions.py          # write it (after changing any art)
     python3 tools/make_art_versions.py --check  # exit 1 if anything is out of date (CI runs this)
-    python3 tools/make_art_versions.py --exported plants|animals   # (the exporters run this when they finish)
+    python3 tools/make_art_versions.py --exported plants|buildings|animals   # (the exporters run this when they finish)
 """
 import glob
 import hashlib
@@ -44,6 +44,13 @@ SOURCES = {
                 "shaders/fruit3d.gdshader", "shaders/bloom3d.gdshader",
                 "tools/export_plants.gd"],
                "godot --headless --path . res://tools/export_plants.tscn"),
+    "buildings": (["scripts/world3d/building_model.gd", "scripts/world3d/building_dress.gd",
+                   "scripts/world3d/model_kit.gd", "scripts/world3d/decor_motion.gd",
+                   "scripts/world/space_fit.gd", "data/building_models.json", "data/catalog/buildings.json",
+                   "shaders/wall3d.gdshader", "shaders/paint3d.gdshader", "shaders/orbit3d.gdshader",
+                   "shaders/spray3d.gdshader", "shaders/flame3d.gdshader", "shaders/glow3d.gdshader",
+                   "shaders/contact3d.gdshader", "tools/export_buildings.gd"],
+                  "godot --headless --path . res://tools/export_buildings.tscn"),
     "animals": (["tools/animal_art/animal_art/**/*.py"],
                 "cd tools/animal_art && python3 -m animal_art export ../../art/models/animals \"<every animal>\""),
 }

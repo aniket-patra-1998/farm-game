@@ -90,7 +90,7 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 		door_meshes += _count_meshes(d)
 	var pools := baked.get_children().filter(func(n: Node) -> bool:
 		return n is MeshInstance3D and (n as MeshInstance3D).material_override == ModelKit.glow_material()).size()
-	_check(pools == 2, "with a pool of light at its door and one at its windows (%d)" % pools)
+	_check(pools == 1, "with the pools of light at its door and its windows, drawn as one (%d)" % pools)
 	var shades := baked.get_children().filter(func(n: Node) -> bool:
 		var plane := n is MeshInstance3D and (n as MeshInstance3D).mesh is PlaneMesh
 		return plane and (n as MeshInstance3D).material_override != ModelKit.glow_material()).size()
@@ -141,8 +141,8 @@ func test_384_a_mill_shows_its_work_and_grows_with_its_level() -> void:
 
 func test_385_crafting_buildings_follow_the_building_rules() -> void:
 	# The rules for crafting buildings (CLAUDE.md): four levels, each with its own look; animated parts 0, 1, 1, 2
-	# by level, moving while the building crafts and only then; storage parts 1, 1, 2, then 2 or 3, with four looks
-	# (empty, a quarter, half, full) by how full the building is.
+	# by level, each a machine you can see standing still, moving while the building crafts and only then;
+	# storage parts 1, 1, 2, then 2 or 3, with four looks (empty, a quarter, half, full) by how full it is.
 	var g := _farm()
 	var moving: Array[String] = [DecorMotion.ORBIT_SHADER, DecorMotion.SPRAY_SHADER, DecorMotion.FLAME_SHADER]
 	var checked := 0
@@ -159,6 +159,9 @@ func test_385_crafting_buildings_follow_the_building_rules() -> void:
 			for f: Dictionary in BuildingModel.spec(id, level).get("features", []):
 				if parts.has(str(f.get("part", ""))):
 					parts[str(f["part"])] += 1
+				if str(f.get("part", "")) == BuildingDress.ANIMATED:
+					_check(BuildingDress.MACHINES.has(str(f["type"])), "%s level %d: its animated part is a machine (%s)"
+						% [id, level, f["type"]])
 			var animated: int = parts[BuildingDress.ANIMATED]
 			_eq(animated, [0, 1, 1, 2][level - 1], "%s level %d: its animated parts" % [id, level])
 			var stores: int = parts[BuildingDress.STORAGE]
@@ -179,7 +182,13 @@ func test_385_crafting_buildings_follow_the_building_rules() -> void:
 			for fill in BuildingDress.FILLS:
 				var held := BuildingModel.build(it, fp, level, false, false, fill)
 				fills[_outline(held)] = true
+				# One model holds every state: switching it shows what building it in that state does.
+				BuildingModel.show_state(idle, true, fill)
+				var built := BuildingModel.build(it, fp, level, true, false, fill)
+				_eq(_outline(idle), _outline(built), "%s level %d: switched to crafting and fill %d in place"
+					% [id, level, fill])
 				held.free()
+				built.free()
 			_eq(fills.size(), BuildingDress.FILLS, "%s level %d: its storage shows empty, a quarter, half and full"
 				% [id, level])
 			idle.free()
@@ -189,21 +198,43 @@ func test_385_crafting_buildings_follow_the_building_rules() -> void:
 	_done(g)
 
 
+func test_387_storage_looks_follow_the_share_of_slots_finished() -> void:
+	# A storage part shows a quarter from a quarter of the slots finished, half from half, full when all are.
+	for row: Array in [[0, 1, 0], [1, 1, 3], [1, 2, 2], [2, 2, 3], [1, 3, 1], [2, 3, 2], [3, 3, 3], [1, 4, 1], [2, 4, 2],
+			[3, 4, 2], [4, 4, 3], [0, 4, 0]]:
+		_eq(Objects3D.store_fill_for(row[0], row[1]), row[2], "%d of %d slots finished" % [row[0], row[1]])
+
+
+## Meshes under `node` drawn with `shader`, leaving out parts hidden for another state.
 func _shaded(node: Node, shader: String) -> int:
 	var n := 0
-	for mi in _meshes_in(node):
+	for mi in _shown_meshes(node):
 		var mat := mi.material_override as ShaderMaterial
 		if mat != null and mat.shader != null and mat.shader.resource_path == shader:
 			n += 1
 	return n
 
 
-## A number that changes when a model's parts change in count or size (the sizes of all its meshes, summed).
+func _shown_meshes(node: Node) -> Array[MeshInstance3D]:
+	var out: Array[MeshInstance3D] = []
+	if node is Node3D and not (node as Node3D).visible:
+		return out
+	if node is MeshInstance3D:
+		out.append(node)
+	for c in node.get_children():
+		out.append_array(_shown_meshes(c))
+	return out
+
+
+## A number that changes when what a model shows changes (every vertex of every mesh shown, weighed by where
+## it is).
 func _outline(node: Node) -> int:
 	var sum := 0.0
-	for mi in _meshes_in(node):
-		sum += mi.get_aabb().size.length() * mi.scale.length()
-	return roundi(sum * 10000.0)
+	for mi in _shown_meshes(node):
+		for k in mi.mesh.get_surface_count():
+			for v: Vector3 in mi.mesh.surface_get_arrays(k)[Mesh.ARRAY_VERTEX]:
+				sum += 1.0 + absf(v.x) + 2.0 * absf(v.y) + 3.0 * absf(v.z)
+	return roundi(sum * 1000.0)
 
 
 func _count_meshes(node: Node) -> int:

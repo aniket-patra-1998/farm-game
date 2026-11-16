@@ -201,27 +201,37 @@ Open:
   shelf when a craft is done); the planned FarmVille recipes return with the crops exercise; sunflower blooms
   give no produce (the crop already gives sunflowers); making a recipe is two taps (pick its card, then Make).
 
-## Buildings: the storybook redesign and the building rules (branch `feel-upgrades`)
+## Buildings: the storybook redesign and the building rules (branch `feel-upgrades`, pull request 9)
 
 The rules are in CLAUDE.md (four types: decor, crafting, harvesting, storing). Done for the four crafting
-buildings (Feed Mill, Bakery, Winery, Spa), and held by a test (`world3d_test` test_385):
+buildings (Feed Mill, Bakery, Winery, Spa), and held by tests (`world3d_test` test_385, 387; `assets_test` 388):
 
 - Four levels, a look each, 1 to 4 slots; the 15 recipes are spread 4, 4, 4, 3 by what they are worth (the Feed
   Mill's ten: 4, 2, 2, 2), and times, prices, XP, fuel and level costs are retuned for four tiers.
-- Animated parts 0, 1, 1, 2 by level, moving only while crafting: the mill's sails (level 1's are broken) and grain chute, the
-  bakery's oven and roof chimney, the winery's press and tap, the spa's steam and fountain.
+- Animated parts 0, 1, 1, 2 by level, each a machine you can see standing still, moving only while crafting:
+  the mill's sails (level 1's are broken) and grain chute, the bakery's oven (fire and smoke) and roof chimney,
+  the winery's press and tap, the spa's boiler and fountain.
 - Storage parts 1, 1, 2, then 2 or 3, with four looks (empty, a quarter, half, full): the mill's silos (three
-  when maxed; a glass up the side; a full one runs over), the bakery's and spa's shelves, the winery's casks (kegs drawn off them).
+  when maxed; a glass up the side; a full one runs over), the bakery's and spa's stalls, the winery's casks
+  (kegs drawn off them).
+- Every state is a named part of one model per level (`BuildingDress.when`: `when_working_true`,
+  `when_fill_2`...), switched in place; nothing is built again when a craft starts or finishes.
+- They ship as files (`art/models/buildings/<id>.scn`, `tools/export_buildings.tscn`), tied to their builders
+  like the plants. The building draw budget is 10 (was 8): a storage look and the animated parts are draws of
+  their own. At the top level, crafting and full, they are 8 to 10 draws and under 8,000 triangles.
 - A maxed building has gold roof edges, a gold band and a gold star (still: only animated parts move).
+- The Spa is a round bathhouse under a dome (the tower body the mill uses, broad and low).
 
 Open:
 
 - Decor (no upgrades, a yellow light at night), harvesting and storing buildings are not brought under the
-  rules yet; the other buildings still have the older shapes.
+  rules yet; the other buildings still have the older shapes and are built in code.
 - The balance bot (30 days, three visits a day, 2026-11-16) reaches level 25, where crafting unlocks, on day 25
   with about 670,000 coins, earning about 2,000 coins an hour by then. It does not buy or use crafting buildings,
   so the crafting numbers are checked by a table only: a craft gains 340 to 530 coins a slot-hour over its
   ingredients at every star. Teaching the bot to craft is open.
 - A building under construction is drawn as a square frame even when it will be a round tower.
-- The moving parts have only been checked in still pictures, not on a phone.
+- The moving parts have only been checked in still pictures, not on a phone, and the file buildings' windows
+  have not been looked at by night (a test holds that they are the kit's glowing glass).
+- The code review workflow runs for pushes to main; on a branch it is started by hand.
 - Animals' walking still looks unconnected to the ground (not started).

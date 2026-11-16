@@ -22,8 +22,10 @@ func test_346_every_listed_asset_loads_fits_its_budget_and_its_footprint() -> vo
 			or form in ExportPlants.crop_forms() or id.begins_with(Farmer3D.FILE),
 			"%s is a catalog item, a crop's form or the farmer" % id)
 		_check(budgets.has(str(e.get("budget", ""))), "%s has a budget kind" % id)
-		# (A tree's file holds each of its looks, ripe and not: one of them is drawn at a time.)
-		var node := AssetRegistry.instance(id, {"look": 0, "ready": true})
+		# (A tree's file holds each of its looks, ripe and not: one of them is drawn at a time. A building's holds
+		# each level and state: it is counted at its top level, crafting and full, the most it ever draws.)
+		var node := AssetRegistry.instance(id, {"look": 0, "ready": true, "level": Game.max_level(id), "working": true,
+			"fill": BuildingDress.FULL})
 		_check(node != null, "%s loads (%s)" % [id, e.get("model", "")])
 		if node == null:
 			continue
@@ -204,3 +206,41 @@ func test_353_an_items_picture_follows_its_art() -> void:
 	files["cow"] = was
 	_eq(ItemIcons._key("cow"), before, "the same art: the same picture")
 	_check(ArtVersion.of("wheat") != ArtVersion.of("cow"), "a crop's picture follows its own form's file")
+
+
+func test_388_crafting_buildings_are_files_that_show_work_and_fill_in_place() -> void:
+	# The four crafting buildings are made as files, each holding every level and state. What changes with time
+	# (at work or not, how full) is shown on the model that stands, never by building it again; and its windows are
+	# the kit's own glass, which glows at night with every other window.
+	var objects := Objects3D.new()
+	for id: String in ["bakery", "winery", "spa", "feed_mill"]:
+		_check(AssetRegistry.has_model(id), "%s is made as a file" % id)
+	var mill := {"uid": 9101, "id": "feed_mill", "row": 0, "col": 0, "level": 4, "built": true, "slots": []}
+	_check(objects.uses_file(mill), "the Feed Mill is drawn from its file")
+	var busy := mill.duplicate(true)
+	busy["slots"] = [{"r": "animal_feed_sacks", "done": Game.now() + 600, "took": 600}]
+	var full := mill.duplicate(true)
+	for k in 4:
+		full["slots"].append({"r": "animal_feed_sacks", "done": Game.now() - 5, "took": 600})
+	_eq(objects._key(busy), objects._key(mill), "starting a craft doesn't build it again")
+	_eq(objects._key(full), objects._key(mill), "nor does filling up")
+	_eq(objects.state_of(mill)["working"], false, "an empty mill is idle")
+	_eq(objects.state_of(busy)["working"], true, "one with something in a slot is at work")
+	_eq(objects.state_of(full)["fill"], BuildingDress.FULL, "one with every slot finished is full")
+	var node := AssetRegistry.instance("feed_mill", objects.state_of(mill))
+	var built := ModelKit.bake(BuildingModel.build(Game.item_data("feed_mill"), Game.footprint("feed_mill"), 4, false))
+	_eq(AssetRegistry.triangles(node), AssetRegistry.triangles(built), "idle, the file shows what the builder makes")
+	for state: Dictionary in [objects.state_of(busy), objects.state_of(full)]:
+		AssetRegistry.apply_state(node, state)
+		BuildingModel.show_state(built, state["working"], state["fill"])
+		_eq(AssetRegistry.triangles(node), AssetRegistry.triangles(built), "and the same at work %s, fill %d"
+			% [state["working"], state["fill"]])
+	var glass := 0
+	for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
+		for k in mi.get_surface_override_material_count():
+			glass += 1 if mi.get_surface_override_material(k) == ModelKit.glass() else 0
+	_check(glass >= 4, "its windows are the kit's own glass at every level (%d)" % glass)
+	node.free()
+	built.free()
+	objects.free()
+

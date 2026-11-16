@@ -8,6 +8,8 @@ const PAINT_SHADER := "res://shaders/paint3d.gdshader"
 const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
 const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
+const LIVE_GLASS := "kit_glass"   # the names the kit's living materials are saved under in exported files (`adopt`)
+const LIVE_GLOW := "kit_glow"
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.05
 const FLARE := 0.06           # a roof's eaves kick out this much further, at a shallower slope (a storybook roof)..
@@ -390,6 +392,7 @@ static func glass() -> StandardMaterial3D:
 		m.emission_enabled = true
 		m.emission = Color(1.0, 0.78, 0.42)
 		m.emission_energy_multiplier = 0.0
+		m.resource_name = LIVE_GLASS
 		_materials["glass"] = m
 	return _materials["glass"]
 
@@ -400,28 +403,57 @@ static func set_window_glow(glow: float) -> void:
 	ShaderGlobals.set_value(&"dark", glow)  # butterflies and fireflies read it too
 
 
+## Gives a model loaded from a file the kit's own window glass and pools of light in place of the copies saved in
+## it: their glow changes with the hour (`set_window_glow`), and a saved copy would stay dark.
+static func adopt(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		mi.material_override = _live(mi.material_override)
+		for k in mi.get_surface_override_material_count():
+			mi.set_surface_override_material(k, _live(mi.get_surface_override_material(k)))
+	for c in node.get_children():
+		adopt(c)
+
+
 ## The shared material of every pool of light a lit window or door throws on the ground (shaders/glow3d).
 static func glow_material() -> ShaderMaterial:
 	if not _materials.has("glow"):
 		var m := ShaderMaterial.new()
 		m.shader = load("res://shaders/glow3d.gdshader")
+		m.resource_name = LIVE_GLOW
 		_materials["glow"] = m
 	return _materials["glow"]
 
 
-## A pool of warm light on the ground, `size` across, centred on `at` (x, z). Left out of the bake (it
-## is drawn blended and shares nothing), casts no shadow.
-static func glow_pool(parent: Node3D, at: Vector3, size: Vector2) -> MeshInstance3D:
-	var mesh := PlaneMesh.new()
-	mesh.size = size
+## Pools of warm light on the ground, each [where its middle is (x, z), how big across], as one mesh. Left out
+## of the bake (it is drawn blended and shares nothing), casts no shadow.
+static func glow_pools(parent: Node3D, pools: Array) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for pool: Array in pools:
+		var at: Vector3 = pool[0]
+		var half: Vector2 = (pool[1] as Vector2) / 2.0
+		var corners: Array[Vector2] = [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]
+		for k: int in [0, 1, 2, 0, 2, 3]:
+			st.set_normal(Vector3.UP)
+			st.set_uv((corners[k] + Vector2.ONE) / 2.0)
+			st.add_vertex(Vector3(at.x + corners[k].x * half.x, 0, at.z + corners[k].y * half.y))
 	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
+	mi.mesh = st.commit()
 	mi.material_override = glow_material()
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.position = Vector3(at.x, GLOW_LIFT, at.z)
+	mi.position = Vector3(0, GLOW_LIFT, 0)
 	mi.set_meta(KEEP, true)
 	parent.add_child(mi)
 	return mi
+
+
+## Stops everything under `node` casting a shadow.
+static func no_shadows(node: Node) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for c in node.get_children():
+		no_shadows(c)
 
 
 ## Still water: shared and rippling (DecorMotion.water: shaders/water3d), one material for all of it.
@@ -844,6 +876,14 @@ static func _ridge_cap(parent: Node3D, a: Vector3, b: Vector3, mat: Material) ->
 
 
 # ---------------------------------------------------------------- merging
+
+
+static func _live(m: Material) -> Material:
+	if m != null and m.resource_name == LIVE_GLASS:
+		return glass()
+	if m != null and m.resource_name == LIVE_GLOW:
+		return glow_material()
+	return m
 
 
 ## Merges every mesh under `root` into as few as possible: one MeshInstance3D for the parts that cast

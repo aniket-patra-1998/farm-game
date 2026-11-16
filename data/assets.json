@@ -23,7 +23,7 @@
     },
     "building": {
       "triangles": 15000.0,
-      "draws": 8.0
+      "draws": 10.0
     },
     "farmer": {
       "triangles": 21000.0,
@@ -766,6 +766,22 @@
     "iris_full_bloom": {
       "model": "res://art/models/blooms/iris_full_bloom.scn",
       "budget": "bloom"
+    },
+    "bakery": {
+      "model": "res://art/models/buildings/bakery.scn",
+      "budget": "building"
+    },
+    "winery": {
+      "model": "res://art/models/buildings/winery.scn",
+      "budget": "building"
+    },
+    "spa": {
+      "model": "res://art/models/buildings/spa.scn",
+      "budget": "building"
+    },
+    "feed_mill": {
+      "model": "res://art/models/buildings/feed_mill.scn",
+      "budget": "building"
     }
   }
 }

@@ -208,7 +208,8 @@ static func yard_spot(f: Dictionary, fw: float, fd: float) -> Vector2:
 ## `active` is whether it is at work (a bakery with something in the oven): only then does its chimney smoke.
 ## `fill` is how full a crafting building is of finished things, 0 to BuildingDress.FULL: its storage parts
 ## (features marked `"part": "storage"`) show it. Its animated parts (`"part": "animated"`) move only while
-## it is `active`.
+## it is `active`. Every state is in the one model (parts named as AssetRegistry's states are); `active` and
+## `fill` only say which it shows first, and `show_state` changes that without building anything.
 static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, broken := false,
 		fill := 0) -> Node3D:
 	var root := Node3D.new()
@@ -247,7 +248,31 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 	ModelKit.roof_trim = ModelKit.RAKE_COLOUR
 	if broken and ctx.has("lo"):
 		_broken(ctx)
+	if str(it.get("kind", "")) == "crafting":
+		# Nobody goes in and out of a crafting building: its door is part of the walls, not a thing on hinges.
+		for c in root.get_children():
+			if c.has_meta(DOOR):
+				c.remove_meta(DOOR)
+				c.remove_meta(ModelKit.KEEP)
+	# What shows in one state only (BuildingDress.when) is merged, part by part, and kept apart from the rest so
+	# it can be switched; the building comes out showing the state asked for.
+	for part: String in (ctx.get("states", {}) as Dictionary):
+		var loose: Node3D = ctx["states"][part]
+		root.remove_child(loose)
+		if part.begins_with(AssetRegistry.STATE + "fill"):
+			ModelKit.no_shadows(loose)   # (a storage look is small things: one draw, no shadow pass of its own)
+		var merged := ModelKit.bake(loose)
+		merged.name = part
+		merged.set_meta(ModelKit.KEEP, true)
+		root.add_child(merged)
+	show_state(root, active, fill)
 	return SpaceFit.fit_model(root, fp)
+
+
+## Shows a built building (or a copy of one) at work or not and as full as `fill` (0 to BuildingDress.FULL): its
+## animated parts move or stand still, its storage parts show that look. Nothing is built again.
+static func show_state(model: Node3D, working: bool, fill := 0) -> void:
+	AssetRegistry.apply_state(model, {"working": working, "fill": fill})
 
 
 ## FarmVille's starter Barn before it is repaired: a blue tarp over part of the roof on the side you see, boards
@@ -647,12 +672,14 @@ static func _light_spill(ctx: Dictionary) -> void:
 	var door: Dictionary = (ctx["spec"] as Dictionary).get("door", {})
 	var reach_z := minf(SPILL_REACH, float(ctx["fd"]) - hi.z + 0.05)   # never off the footprint
 	var reach_x := minf(SPILL_REACH, float(ctx["fw"]) - hi.x + 0.05)
+	var pools: Array = []   # (one at the door, one under the windows: drawn together)
 	if str(door.get("style", "barn")) != "none" and reach_z > 0.1:
-		ModelKit.glow_pool(root, Vector3((lo.x + hi.x) / 2.0, 0, hi.z - 0.05 + reach_z / 2.0),
-			Vector2((hi.x - lo.x) * 0.9, reach_z))
+		pools.append([Vector3((lo.x + hi.x) / 2.0, 0, hi.z - 0.05 + reach_z / 2.0), Vector2((hi.x - lo.x) * 0.9, reach_z)])
 	if int((ctx["spec"] as Dictionary).get("windows", 2)) > 0 and reach_x > 0.1:
-		ModelKit.glow_pool(root, Vector3(hi.x - 0.05 + reach_x / 2.0, 0, (lo.z + hi.z) / 2.0),
-			Vector2(reach_x, (hi.z - lo.z) * 0.9))
+		pools.append([Vector3(hi.x - 0.05 + reach_x / 2.0, 0, (lo.z + hi.z) / 2.0), Vector2(reach_x,
+			(hi.z - lo.z) * 0.9)])
+	if not pools.is_empty():
+		ModelKit.glow_pools(root, pools)
 
 
 ## The door, on the front (the +z face, toward the camera's left).
@@ -913,21 +940,19 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 					check.position = base + Vector3(sin(a) * (r - 0.002), h * 0.78 + row * 0.07 + 0.035,
 						cos(a) * (r - 0.002))
 					check.rotation.y = a
-			var held := int(ctx.get("fill", 0)) if str(f.get("part", "")) == BuildingDress.STORAGE else -1
-			if held >= 0:
-				# A storage part: a glass up its side shows the grain in it, and a full one runs over.
-				var out := Vector3(1, 0, 1).normalized()
-				BuildingDress.gauge(root, base + out * (r - 0.004) + Vector3(0, h * 0.14, 0), out, h * 0.7, held,
+			if str(f.get("part", "")) != BuildingDress.STORAGE:
+				_silo_top(root, f, base, r, h, sides)
+				return
+			# A storage part: a glass up its side shows the grain in it, and a full one runs over. A look for each.
+			var out := Vector3(1, 0, 1).normalized()
+			for held in BuildingDress.FILLS:
+				var part := BuildingDress.when(ctx, "fill", held)
+				BuildingDress.gauge(part, base + out * (r - 0.004) + Vector3(0, h * 0.14, 0), out, h * 0.7, held,
 					BuildingDress.GRAIN)
-			if held >= BuildingDress.FULL:
-				BuildingDress.overflow(root, base, r, h)
-			elif f.has("cap"):
-				# (a cone roof in the building's own roof colour, overhanging a little)
-				ModelKit.cylinder(root, base + Vector3(0, h, 0), r + 0.05, r * 0.95, ModelKit.paint(Color.html(str(
-					f["cap"]))), 0.03, sides)
-			else:
-				ModelKit.ball(root, base + Vector3(0, h, 0), r, ModelKit.paint(Color("#b9c0c4"), 0.6),
-					Vector3(1, 0.6, 1))
+				if held >= BuildingDress.FULL:
+					BuildingDress.overflow(part, base, r, h)
+				else:
+					_silo_top(part, f, base, r, h, sides)
 		"loft_door":
 			var y := float(ctx.get("hi", c).y) + 0.12
 			var x := (lo.x + hi.x) / 2.0
@@ -1120,8 +1145,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.box(root, Vector3(mid.x - half - 0.03, top + 0.15, mid.z - half - 0.03), Vector3(
 					mid.x + half + 0.03, top + 0.2, mid.z + half + 0.03), ModelKit.paint(STONE.lightened(0.1)))
 			# Smoke curling up from it (GPU-animated, one draw), while the building works.
-			if ctx.get("active", true):
-				DecorMotion.spray(root, Vector3(mid.x, top + 0.22, mid.z), DecorMotion.SMOKE)
+			DecorMotion.spray(BuildingDress.when(ctx, "working", true), Vector3(mid.x, top + 0.22, mid.z),
+				DecorMotion.SMOKE)
 		"water_trough":
 			var x := minf(hi.x + 0.45, fw - 0.3)
 			var z := minf(hi.z + 0.35, fd - 0.2)
@@ -1151,9 +1176,10 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				var p := Vector3(rng.randf_range(0.1, fw - 0.1), 0, fd - rng.randf_range(0.05, 0.3))
 				if p.x > lo.x - 0.05 and p.x < hi.x + 0.05 and p.z < hi.z + 0.05:
 					continue
-				ModelKit.cylinder(root, p, 0.008, 0.08, ModelKit.paint(Color("#4f8a2f")))
+				ModelKit.box(root, p + Vector3(-0.006, 0, -0.006), p + Vector3(0.006, 0.08, 0.006),
+					ModelKit.paint(Color("#4f8a2f")), false)
 				var petal: Color = [Color("#ff7aa8"), Color("#ffd23f"), Color("#ffffff"), Color("#b388ff")][k % 4]
-				ModelKit.ball(root, p + Vector3(0, 0.09, 0), 0.03, ModelKit.paint(petal))
+				BuildingDress.bead(root, p + Vector3(0, 0.09, 0), 0.032, ModelKit.paint(petal))
 		"beehives":
 			var n := int(f.get("count", 3))
 			for k in n:
@@ -1258,6 +1284,15 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				p + Vector3(0.14, 0.42, 0.025),
 				ModelKit.surface(Color("#c8a26a"), "boards", 0.0)
 			)
+
+
+## A silo's top: a cone roof in its `cap` colour, or a metal dome.
+static func _silo_top(root: Node3D, f: Dictionary, base: Vector3, r: float, h: float, sides: int) -> void:
+	if f.has("cap"):
+		ModelKit.cylinder(root, base + Vector3(0, h, 0), r + 0.05, r * 0.95, ModelKit.paint(Color.html(str(f["cap"]))),
+			0.03, sides)
+	else:
+		ModelKit.ball(root, base + Vector3(0, h, 0), r, ModelKit.paint(Color("#b9c0c4"), 0.6), Vector3(1, 0.6, 1))
 
 
 ## The one thing a building has that no other does (data/building_models.json `features`): a Goat Pen's

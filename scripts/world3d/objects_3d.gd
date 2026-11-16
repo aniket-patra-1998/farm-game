@@ -202,7 +202,7 @@ func _shown_in_place(o: Dictionary) -> bool:
 		return false
 	if v.has("crown") or v.has("blooms"):
 		_ripen_view(v, o)   # (a tree just harvested: its fruit starts over; nothing when its cycle is as it was)
-	if v.get("file", false):
+	if v.get("file", false) or v.get("states", false):
 		AssetRegistry.apply_state(v["node"], state_of(o))   # (ready, at work... shown in place)
 	var fill := v.get("fill") as BuildingFill   # (kept with the view: finding it took a look through the node)
 	if fill != null and is_instance_valid(fill):
@@ -223,7 +223,7 @@ func _rebuild(o: Dictionary) -> void:
 	var fresh := not v.has("node")
 	var step := _step(o)
 	_views[uid] = {"node": node, "key": _key(o), "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
-		"file": uses_file(o)}
+		"file": uses_file(o), "states": Game.is_building_item(str(o["id"]))}
 	_views[uid]["fill"] = fill_of(uid)
 	if Game.catalog.get_def(str(o["id"])) is TreeDef:
 		_views[uid]["crown"] = _crown_of(_views[uid]["box"])
@@ -454,7 +454,7 @@ func _key(o: Dictionary) -> String:
 		o.get("flip", false), site, false,
 		_mask(o),
 		str(o.get("broken", false)) + shows_of(o) + "|%d|%s|%s" % [int(o.get("fed", 0)),
-			false, str(_at_work(o)) + str(_fill_of(o))]]   # (a bloom's withering is its shader's: no new model)
+			false, false]]   # (withering, work and fill are shown in place: no new model)
 
 
 
@@ -501,7 +501,7 @@ func _light_some() -> void:
 			queue_sync()
 			return
 		_sweep_ready[uid] = Game.has_ready(o)
-		if v.get("file", false):
+		if v.get("file", false) or v.get("states", false):
 			AssetRegistry.apply_state(v["node"], state_of(o))
 		var fill := v.get("fill") as BuildingFill   # (kept with the view: no search through the node each second)
 		if fill != null and is_instance_valid(fill):
@@ -522,11 +522,15 @@ func _at_work(o: Dictionary) -> bool:
 
 ## How full a crafting building is of finished things waiting to be collected, as the look its storage parts
 ## show: 0 empty, 1 from a quarter of its slots, 2 from half, 3 (BuildingDress.FULL) when every slot holds one.
-func _fill_of(o: Dictionary) -> int:
+static func store_fill(o: Dictionary) -> int:
 	if not Game.crafting.is_crafting(o):
 		return 0
-	var slots := Game.crafting.slot_count(o)
-	var share := float(Game.crafting.crafts_done(o)) / maxi(slots, 1)
+	return store_fill_for(Game.crafting.crafts_done(o), Game.crafting.slot_count(o))
+
+
+## The storage look for `done` finished things in `slots` slots: 0 empty, 1 from a quarter, 2 from half, 3 full.
+static func store_fill_for(done: int, slots: int) -> int:
+	var share := float(done) / maxi(slots, 1)
 	var fill := 0
 	for step: float in FILL_FROM:
 		fill += 1 if share >= step else 0
@@ -592,6 +596,7 @@ func state_of(o: Dictionary) -> Dictionary:
 	if Game.is_building_item(str(o["id"])):
 		state["level"] = Game.level_of(o)
 		state["working"] = _at_work(o)
+		state["fill"] = store_fill(o)
 		if Game.under_construction(o):
 			state["stage"] = mini(int(Game.land.construction_progress(o) * BUILD_STAGES), BUILD_STAGES - 1)
 	return state
@@ -737,13 +742,13 @@ static func _decor_built(id: String, look: int, shows: String) -> Node3D:
 	return built
 
 
-## A building's look at `level`, at work or not, broken or not, and how full (a crafting building's storage
-## parts: `_fill_of`).
-static func building_look(id: String, level: int, working: bool, broken: bool, fill := 0) -> Node3D:
+## A building's look at `level`, broken or not: one model with every state in it (at work or not, how full:
+## BuildingModel.show_state, or AssetRegistry.apply_state with `state_of`).
+static func building_look(id: String, level: int, broken := false) -> Node3D:
 	var it := Game.item_data(id)
 	var fp := Game.footprint(id)
-	return Instancer.copy_of(Instancer.key_of(["building", id, level, working, broken, fill]),
-		func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, working, broken, fill)))
+	return Instancer.copy_of(Instancer.key_of(["building", id, level, broken]),
+		func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, true, broken)))
 
 
 ## Every look a farm may show that is worth having ready before it is asked for (CI keeps them in the game,
@@ -767,12 +772,9 @@ static func make_every_look() -> int:
 						looks.append(decor_look(id, look, ""))
 			"building", "barn", "crafting":
 				for level in range(1, maxi(Game.max_level(id), 1) + 1):
-					for working: bool in [false, true]:
-						looks.append(building_look(id, level, working, false))
-					if kind == "crafting":
-						looks.append(building_look(id, level, false, false, BuildingDress.FULL))
+					looks.append(building_look(id, level))
 				if kind == "barn":
-					looks.append(building_look(id, 1, false, true))
+					looks.append(building_look(id, 1, true))
 		for n in looks:
 			n.free()
 		made += looks.size()
@@ -847,8 +849,8 @@ func _build(o: Dictionary) -> Node3D:
 				if Game.under_construction(o):
 					node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 				else:
-					node = building_look(str(o["id"]), Game.level_of(o), _at_work(o), bool(o.get("broken", false)),
-						_fill_of(o))
+					node = building_look(str(o["id"]), Game.level_of(o), bool(o.get("broken", false)))
+					AssetRegistry.apply_state(node, state_of(o))
 					if BuildingFill.shows(o):
 						node.add_child(BuildingFill.create(o, node))
 	var dressing: Node3D = null if not batch.is_empty() else Dressing.make(Game.kind_of(o), fp, int(o["uid"]))

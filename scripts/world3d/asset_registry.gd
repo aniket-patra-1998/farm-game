@@ -53,6 +53,7 @@ static func instance(id: String, state := {}) -> Node3D:
 		_say(str(e["model"]), "is not a 3D scene")   # not-ui (a log line)
 		return null
 	_to_masters(node)   # (a mesh's own materials change once, as the mesh is shared; a node's overrides each time)
+	ModelKit.adopt(node)   # (window glass and pools of light glow with the hour)
 	apply_state(node, state)
 	return node
 
