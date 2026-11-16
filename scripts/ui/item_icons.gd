@@ -51,6 +51,8 @@ var _to_style: Array[IconDevelop] = []
 var _slots: Array[SubViewport] = []
 var _making: Array[String] = []   # the item drawn in each slot ("" when the slot is idle)
 var _pass: Array[int] = []        # each slot's render under way: 0 on black, 1 on white (IconDevelop)
+var _read: Array[int] = []        # each slot's read back: 0 not asked, 1 under way (GpuRead), 2 come
+var _got: Array = []              # each slot's image read back
 var _blacks: Array[Image] = []    # each slot's render on black, kept until the one on white comes
 var _developing: Array[IconDevelop] = []
 
@@ -161,6 +163,8 @@ func _ready() -> void:
 		_slots.append(_slot())
 		_making.append("")
 		_pass.append(0)
+		_read.append(0)
+		_got.append(null)
 		_blacks.append(null)
 
 
@@ -207,8 +211,12 @@ func _process_timed(_delta: float) -> void:
 		_waiting.clear()         # (nothing draws without a screen: the cards keep their blank pictures)
 		return
 	var keep := _calm()
+	var pt := PerfReadout.start()
 	_develop()
+	PerfReadout.stop("pictures_develop", pt)
+	pt = PerfReadout.start()
 	_style_next()
+	PerfReadout.stop("pictures_style", pt)
 	for k in SLOTS:
 		if _making[k] != "":
 			_finish(k, keep)
@@ -220,7 +228,10 @@ func _process_timed(_delta: float) -> void:
 			continue   # (still on its second render)
 		var id := _next()
 		_waiting.erase(id)
-		if _set_up(k, id):
+		var su := PerfReadout.start()
+		var ready := _set_up(k, id)
+		PerfReadout.stop("pictures_build", su)
+		if ready:
 			_making[k] = id
 			_pass[k] = 0
 			(_slots[k].get_meta(&"env") as Environment).background_color = Color.BLACK
@@ -230,7 +241,18 @@ func _process_timed(_delta: float) -> void:
 ## Takes the render drawn last frame in slot `k`: the one on black is kept and the item drawn again on white; with
 ## both, the picture goes to be developed (IconDevelop) and the slot is free.
 func _finish(k: int, keep: bool) -> void:
-	var image := _slots[k].get_texture().get_image()
+	if _read[k] == 0:   # (the render is drawn: copy it off the chip in the background, not stopping the frame)
+		_read[k] = 1
+		var pt := PerfReadout.start()
+		GpuRead.take(_slots[k], func(img: Image) -> void:
+			_got[k] = img
+			_read[k] = 2)
+		PerfReadout.stop("pictures_read", pt)
+	if _read[k] != 2:
+		return
+	_read[k] = 0
+	var image: Image = _got[k]
+	_got[k] = null
 	if _pass[k] == 0 and image != null:
 		_blacks[k] = image
 		_pass[k] = 1
