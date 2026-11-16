@@ -15,6 +15,7 @@ render_mode cull_disabled;
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
 global uniform float crop_clock;  // seconds on the farm's clock (Crops3D), the same for every plant
 uniform vec3 dry : source_color = vec3(0.60, 0.48, 0.26);   // a withered plant's leaves (CropModels.DRY)
+uniform vec3 unripe : source_color = vec3(0.40, 0.62, 0.22);   // fruit that has only just set: leaf green
 uniform float droop = 0.5;        // how much lower a fully wilted plant stands
 uniform float master_size = 0.1;  // how much bigger a fully mastered crop's plants are
 uniform float rich_size = 1.18;   // a fertilised plant's size, of an ordinary one's
@@ -61,7 +62,7 @@ void fragment() {
 	leaf = mix(leaf, leaf * vec3(1.12, 1.06, 0.72) + vec3(0.035, 0.025, 0.0), gold * 0.8);
 	fruit = mix(fruit, fruit * 1.12 + vec3(0.05, 0.035, 0.0), gold);
 	// Ripening: the fruit starts as green as the leaves and takes its colour as the crop comes ripe.
-	fruit = mix(leaf * vec3(1.08, 1.1, 0.9), fruit, smoothstep(0.1, 1.0, ripen));
+	fruit = mix(unripe * (0.55 + 0.6 * COLOR.r), fruit, smoothstep(0.1, 1.0, ripen));
 	// Wilting: the leaves yellow, then dry to the brown of a withered crop; the fruit dulls and darkens.
 	leaf = mix(leaf, mix(leaf * vec3(1.25, 1.1, 0.55), dry, smoothstep(0.35, 1.0, wilt)), smoothstep(0.0, 0.5, wilt));
 	fruit = mix(fruit, fruit * 0.5 + dry * 0.22, smoothstep(0.2, 1.0, wilt));

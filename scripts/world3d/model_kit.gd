@@ -11,6 +11,8 @@ const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.035
 const SPRIG_LEAVES := 9        # leaves on a sprig
+const FRUIT_SHADER := "res://shaders/fruit3d.gdshader"
+const FRUIT := &"fruit_turn"   # meta on a fruit: its turn to grow, 0..1 (bake writes it into the fruit's vertices)
 const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leaves it whole
 
 ## Tessellation: enough to read round at farm zoom on a phone, no more (each ball is ~170 triangles,
@@ -35,7 +37,7 @@ const CYLINDER_SIDES := 12
 
 ## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
 const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color",
-	"res://shaders/canopy3d.gdshader": "albedo"}
+	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
 const LOD_LEVELS := &"lod_levels"   # meta on a baked mesh: how many simpler levels it carries
@@ -82,6 +84,39 @@ static func paint(col: Color, shine := 0.0, sway := 0.0) -> ShaderMaterial:
 			m.set_shader_parameter("sway", sway)
 		_materials[key] = m
 	return _materials[key]
+
+
+## A tree's fruit in `col`: it grows and colours on the tree (shaders/fruit3d.gdshader). Mark each fruit made
+## with it (`mark_fruit`) so the merged model knows where each one's middle is and when its turn comes.
+static func fruit_paint(col: Color) -> ShaderMaterial:
+	var key := "fruit:%s" % col.to_html()
+	if not _materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load(FRUIT_SHADER)
+		m.set_shader_parameter("albedo", col)
+		_materials[key] = m
+	return _materials[key]
+
+
+## Marks a part as one fruit whose turn to grow is `turn` (0 first, 1 last).
+static func mark_fruit(part: MeshInstance3D, turn: float) -> void:
+	part.set_meta(FRUIT, clampf(turn, 0.0, 1.0))
+
+
+## A fruit's arrays with its middle (`middle`, in the merged model's space) and its turn in every vertex: UV is
+## the middle's x and y, UV2 its z and the turn (fruit3d reads them to grow the fruit about its own middle).
+static func fruit_arrays(arrays: Array, middle: Vector3, turn: float) -> Array:
+	var out := arrays.duplicate()
+	var count := (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	var uv := PackedVector2Array()
+	var uv2 := PackedVector2Array()
+	uv.resize(count)
+	uv2.resize(count)
+	uv.fill(Vector2(middle.x, middle.y))
+	uv2.fill(Vector2(middle.z, turn))
+	out[Mesh.ARRAY_TEX_UV] = uv
+	out[Mesh.ARRAY_TEX_UV2] = uv2
+	return out
 
 
 ## One white painted material that reads each part's shine from its vertex alpha (see `shine_arrays`), so parts of
@@ -795,6 +830,8 @@ static func _collect(node: Node, xf: Transform3D, groups: Dictionary, kept: Arra
 				if not tint.is_empty():
 					mat = tint[0]
 					arrays = tint_arrays(arrays, tint[1])
+				if mi.has_meta(FRUIT):
+					arrays = fruit_arrays(arrays, cxf.origin, float(mi.get_meta(FRUIT)))
 				# Surfaces only merge with the same vertex layout (a box has UVs, a hand-made face doesn't).
 				var fmt := 0
 				for k: int in [Mesh.ARRAY_TEX_UV, Mesh.ARRAY_COLOR, Mesh.ARRAY_TANGENT]:

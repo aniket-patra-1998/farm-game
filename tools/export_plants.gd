@@ -3,7 +3,7 @@ extends Node
 ## Exports every tree and crop look to files (docs/ASSETS.md: art is made ahead of time as files, asked for by
 ## name through AssetRegistry), from the code builders that author them (TreeModel, CropModels/CropForms).
 ## Scenes, not glTF: the leaves' and crops' own shaders (sway, growth) only survive in Godot's format.
-##   art/models/trees/<id>.scn    a lone tree: parts when_look_<n> (n < TREE_LOOKS), each when_ready_<bool>
+##   art/models/trees/<id>.scn    a lone tree: parts when_look_<n> (n < TREE_LOOKS), the whole tree
 ##   art/models/crops/<form>.scn  a crop form: one MeshInstance3D per stage, named after it
 ## Lists them in data/assets.json. Run: godot --headless --path . res://tools/export_plants.tscn
 
@@ -54,10 +54,10 @@ func _tree(id: String) -> Node3D:
 		var holder := Node3D.new()
 		holder.name = "when_look_%d" % look
 		root.add_child(holder)
-		for ready: bool in [false, true]:
-			var tree := Objects3D.tree_look(id, ready, 0, look, false)
-			tree.name = "when_ready_%s" % str(ready).to_lower()
-			holder.add_child(tree)
+		# (one model whether ready or not: its fruit grows on it, shaders/fruit3d.gdshader)
+		var tree := Objects3D.tree_look(id, 0, look, false)
+		tree.name = "tree"   # not-ui
+		holder.add_child(tree)
 	return root
 
 

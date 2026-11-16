@@ -610,3 +610,53 @@ func test_365_every_find_shares_one_look_and_the_field_glints() -> void:
 	Game.drops_enabled = drops
 	Game.reset_game()
 
+
+## A tree's fruit grows on the tree: every fruit is in the one model, each knowing its own middle and its turn, and
+## the tree is told its cycle, so fruit comes one piece at a time and the tree is not rebuilt when it is ready.
+func test_366_a_trees_fruit_ripens_on_the_tree() -> void:
+	var g := _farm()
+	var holder := Node3D.new()
+	TreeModel.build_at(holder, Vector3.ZERO, g.item_data("apple_tree"), 1.0, true, 1)
+	var baked := ModelKit.bake(holder)
+	var turns := {}
+	var fruit_surfaces := 0
+	var box := AABB()
+	for part in baked.find_children("*", "MeshInstance3D", true, false):
+		var mesh := (part as MeshInstance3D).mesh
+		box = box.merge(mesh.get_aabb())
+		for s in mesh.get_surface_count():
+			var mat := (part as MeshInstance3D).get_active_material(s) as ShaderMaterial
+			if mat == null or mat.shader.resource_path != ModelKit.FRUIT_SHADER:
+				continue
+			fruit_surfaces += 1
+			var arrays := mesh.surface_get_arrays(s)
+			var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+			var uv2: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV2]
+			_check(uv2 != null and uv2.size() == uv.size() and uv.size() > 0, "every fruit vertex carries its fruit")
+			for k in uv.size():
+				turns[snappedf(uv2[k].y, 0.001)] = true
+				if k % 37 == 0:
+					_check(box.grow(0.05).has_point(Vector3(uv[k].x, uv[k].y, uv2[k].x)),
+						"a fruit's middle is on the tree (%s)" % Vector3(uv[k].x, uv[k].y, uv2[k].x))
+	_eq(fruit_surfaces, 1, "all the tree's fruit is one surface of its own")
+	_check(turns.size() >= 10, "the fruit come at many different turns, not all at once (%d)" % turns.size())
+	for turn: float in turns:
+		_check(turn >= 0.0 and turn <= 1.0, "a turn is a share of the cycle (%s)" % turn)
+	Objects3D.ripen(baked, 500.0 + Crops3D.clock_base, 3600.0)   # (telling a tree its cycle is safe on any model)
+	baked.queue_free()   # (the merged model owns what was built into it)
+	_done(g)
+	Game.saving_enabled = false
+	Game.reset_game()
+	var tree := {"uid": Game.next_uid, "id": "apple_tree", "row": 2, "col": 2, "t": Game.now()}
+	Game.next_uid += 1
+	Game.add_object(tree)
+	var objects := Objects3D.new()
+	add_child(objects)
+	var growing: String = objects.call("_key", tree)
+	Game.debug_time_offset += Game.cycle_of(tree) + 5
+	_check(Game.is_ready(tree), "(the tree is ready)")
+	_eq(objects.call("_key", tree), growing, "a tree is the same model ready or not: it is not rebuilt when it ripens")
+	objects.queue_free()
+	Game.debug_time_offset = 0
+	Game.reset_game()
+

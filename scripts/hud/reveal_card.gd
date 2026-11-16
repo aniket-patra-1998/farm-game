@@ -34,11 +34,14 @@ func _init() -> void:
 	add_child(_dim)
 	_title = _words(26, Color("#fbf6ea"))
 	_title.offset_top = -PICTURE - 70
+	var middle := Control.new()   # (the screen's middle: the picture shakes about it)
+	middle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	middle.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	add_child(middle)
 	_picture = Control.new()
 	_picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_picture.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	_picture.draw.connect(_draw_picture)
-	add_child(_picture)
+	middle.add_child(_picture)
 	_sparks = Control.new()
 	_sparks.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_sparks.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -60,7 +63,7 @@ func play(what: String, title: String, prize: String, rarity: String) -> void:
 	_prize.scale = Vector2(0.4, 0.4)
 	_picture.modulate.a = 1.0
 	_picture.scale = Vector2.ONE
-	_picture.position.x = 0.0
+	_picture.position = Vector2.ZERO
 	_picture.queue_redraw()
 	_open = false
 	visible = true
@@ -70,13 +73,12 @@ func play(what: String, title: String, prize: String, rarity: String) -> void:
 		_tween.kill()
 	_tween = create_tween()
 	_tween.tween_property(self, "modulate:a", 1.0, 0.15)
-	var home := _picture.position.x
 	for k in SHAKES:
 		var reach := SHAKE_REACH * (k + 1)
 		_tween.tween_callback(func() -> void: Feedback.moment("reveal_shake"))
-		_tween.tween_property(_picture, "position:x", home + reach, 0.05)
-		_tween.tween_property(_picture, "position:x", home - reach, 0.1)
-		_tween.tween_property(_picture, "position:x", home, 0.05)
+		_tween.tween_property(_picture, "position:x", reach, 0.05)
+		_tween.tween_property(_picture, "position:x", -reach, 0.1)
+		_tween.tween_property(_picture, "position:x", 0.0, 0.05)
 		_tween.tween_interval(0.12)
 	_tween.tween_property(_picture, "scale", Vector2(1.35, 1.35), 0.1).set_ease(Tween.EASE_IN)
 	_tween.parallel().tween_property(_picture, "modulate:a", 0.0, 0.1)

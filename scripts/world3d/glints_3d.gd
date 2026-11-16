@@ -8,7 +8,7 @@ extends MultiMeshInstance3D
 ## to ripen or wither, like the crops' own.
 
 const SIZE := 0.5             # the glint's width in tiles
-const ABOVE := 0.42           # how far over the bed it hangs
+const ABOVE := 0.85           # how far over the bed it hangs: clear of the tallest crop, so none hides it
 const CHECK := 1.0            # seconds between looks at the clock
 
 var _held := {}               # plot index -> {from, to, color}: plots that hold a find, and when they are ripe

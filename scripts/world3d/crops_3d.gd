@@ -28,6 +28,9 @@ const VARY_LEAN := 0.16    # radians a plant may lean
 const PLANT_SCALE := 3.1    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 const PLANT_FLOATS := 20    # a plant in the MultiMesh buffer: transform (12), colour (4), data (4)
 
+## The farm clock's zero (Game.now seconds): what a time is counted from for the `crop_clock` shader global, which
+## everything that grows by the clock reads (the crops, and a tree's ripening fruit: Objects3D.ripen).
+static var clock_base := 0.0
 static var _start := {}   # form|stage -> the size that stage starts at (start_size), measured once
 
 var wind := 0.6: set = _set_wind
@@ -49,6 +52,7 @@ func _ready() -> void:
 	_material.shader = CROP_SHADER
 	_material.set_shader_parameter("rich_size", FERTILIZED_SIZE)
 	_base = floorf(_now())
+	clock_base = _base
 	var timer := Timer.new()
 	timer.wait_time = GROW_CHECK
 	timer.autostart = true

@@ -181,6 +181,8 @@ func sync() -> void:
 		var key := _key(o)
 		var v: Dictionary = _views.get(uid, {})
 		if v.get("key", "") == key:
+			if v.has("crown"):
+				_ripen_view(v, o)   # (a tree just harvested: its fruit starts over; nothing when its cycle is as it was)
 			if v.get("file", false):
 				AssetRegistry.apply_state(v["node"], state_of(o))   # (ready, at work... shown in place)
 			var fill := v.get("fill") as BuildingFill   # (kept with the view: finding it took a look through the node)
@@ -205,6 +207,7 @@ func sync() -> void:
 		_views[uid]["fill"] = fill_of(uid)
 		if Game.catalog.get_def(str(o["id"])) is TreeDef:
 			_views[uid]["crown"] = _crown_of(_views[uid]["box"])
+			_ripen_view(_views[uid], o)
 		if not fresh and _synced_once and step > int(v.get("step", step)):
 			grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
 		if fresh and _synced_once and not _unopened.has(uid):
@@ -388,7 +391,7 @@ func _key(o: Dictionary) -> String:
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
-		o.get("flip", false), site, Game.kind_of(o) in ["tree", "bloom"] and Game.is_ready(o),
+		o.get("flip", false), site, Game.kind_of(o) == "bloom" and Game.is_ready(o),
 		_mask(o),
 		str(o.get("broken", false)) + shows_of(o) + "|%d|%s|%s" % [int(o.get("fed", 0)),
 			Game.is_withered(o), _at_work(o)]]
@@ -524,17 +527,37 @@ func state_of(o: Dictionary) -> Dictionary:
 ## A tree's look (one of Instancer.VARIANTS, `look`), shared. A lone tree comes from its file (one of its
 ## TREE_LOOKS, ready or not: art/models/trees, made by tools/export_plants); one standing among others
 ## (`mask`: Crowding) and a tree with no file are built once, or loaded when kept (ModelStore).
-static func tree_look(id: String, ready: bool, mask: int, look: int, from_file := true) -> Node3D:
+static func tree_look(id: String, mask: int, look: int, from_file := true) -> Node3D:
 	if from_file and mask == 0 and AssetRegistry.has_model(id):
-		return AssetRegistry.instance(id, {"look": look % TREE_LOOKS, "ready": ready})
+		return AssetRegistry.instance(id, {"look": look % TREE_LOOKS})
 	var it := Game.item_data(id)
 	var fp := Game.footprint(id)
 	var grown := ScaleGuide.factor(id)
-	return Instancer.copy_of(Instancer.key_of(["tree", id, grown, ready, mask, look]), func() -> Node3D:
+	return Instancer.copy_of(Instancer.key_of(["tree", id, grown, mask, look]), func() -> Node3D:
 		var tree := Node3D.new()
-		TreeModel.build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, ready, look, true, TreeModel.UNSET,
+		TreeModel.build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, true, look, true, TreeModel.UNSET,
 			mask)
 		return ModelKit.bake(tree))
+
+
+## Starts a tree's fruit growing for the cycle it is in, when that is not the one its model was last told.
+func _ripen_view(v: Dictionary, o: Dictionary) -> void:
+	var cycle := [float(o.get("t", 0)), float(Game.cycle_of(o))]
+	if v.get("ripe") != cycle:
+		v["ripe"] = cycle
+		ripen(v["node"], cycle[0], cycle[1])
+
+
+## Tells a tree's model when its cycle began and how long it lasts, so its fruit grows on it by the farm's clock
+## (shaders/fruit3d.gdshader): each fruit comes in its turn, swells and colours, and the tree is full exactly
+## when it is ready. Set when the tree is built and again when it is harvested (its cycle starts over); between
+## the two the shader does the growing, and nothing is asked of the tree.
+static func ripen(node: Node, from_unix: float, cycle: float) -> void:
+	if node is GeometryInstance3D:
+		(node as GeometryInstance3D).set_instance_shader_parameter(&"ripe_from", from_unix - Crops3D.clock_base)
+		(node as GeometryInstance3D).set_instance_shader_parameter(&"ripe_len", maxf(cycle, 1.0))
+	for c in node.get_children():
+		ripen(c, from_unix, cycle)
 
 
 ## A decoration's look: its kind, one of a few variants by where it stands (`look`), and the mastered crop or
@@ -586,8 +609,7 @@ static func make_every_look() -> int:
 		match kind:
 			"tree":
 				for look in Instancer.VARIANTS:
-					for ready: bool in [false, true]:
-						looks.append(tree_look(id, ready, 0, look))
+					looks.append(tree_look(id, 0, look))
 			"decor":
 				if Game.links.group_of(id) == "":
 					for look in (Instancer.VARIANTS if VARIED_DECOR.has(id) else 1):
@@ -632,9 +654,8 @@ func _build(o: Dictionary) -> Node3D:
 				# One of a few built looks of this kind (Instancer), turned and sized a little for this one.
 				var look := Instancer.variant(int(o["row"]), int(o["col"]))
 				var grown := ScaleGuide.factor(str(o["id"]))
-				var ready := Game.is_ready(o)
 				var mask := Crowding.mask(o)
-				node = tree_look(str(o["id"]), ready, mask, look)
+				node = tree_look(str(o["id"]), mask, look)   # (one look, ready or not: its fruit grows on it, `ripen`)
 				# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of
 				# its look, and its crown must not reach into theirs.)
 				if mask == 0:

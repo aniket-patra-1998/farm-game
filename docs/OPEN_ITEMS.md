@@ -132,3 +132,21 @@ Open:
   start; the seasons' numbers (1.5x, half the ripe time, +10% for rain, from level 6) are first guesses, not
   yet run through the balance simulation; the weather is the game's own, made from the date, not the real sky.
 
+## Finds, reveals and smooth growth (branch `feel-upgrades`)
+
+- Done: a crop's luck is decided when it is planted and kept with its plot (`FieldSystem._hold_luck`,
+  `HarvestDrops.decide_drop`/`give_drop`, `FindsSystem.decide`/`give`); a ripe plot that holds a find glints in its
+  rarity's colour (`Glints3D`); every find, on a plot or on a thing, is said by one burst with one colour, size and
+  chime per rarity (`Game.found`, `Game.found_on`, `FarmGrid.show_find`, `Feedback.rarity`, data/feedback.json).
+- Done: a mystery young one shakes three times and opens into what it was (`Objects3D.hatch`), named in its
+  rarity; a Mystery Egg and the Mystery Box open the same way over the panels (`RevealCard`).
+- Done: a crop's life is one smooth change: each stage starts at the height the one before ended at, the ripe plant
+  is drawn from three-quarters grown with green fruit that colours up, and a ripe crop wilts over the last 40%
+  of its time (crop3d). A tree's fruit grows on the tree, one piece at a time, by the farm's clock (fruit3d,
+  `Objects3D.ripen`); trees are one model each now, not a bare and a full one.
+- Open: a crop left to wither loses what it held, and the luck spent on it is not given back; the withered crop
+  is still its own model, taken up at the wilted plant's colour and lowness (a small change, not a blend);
+  blooms still change picture when they open and when they wither; picked fruit does not fall and bounce; the
+  shake-open of a mystery young one, the glints' twinkle and the reveal have been seen in stills, not in motion;
+  in the 2D fallback view (not what ships) there are no glints and a mystery opens at once.
+

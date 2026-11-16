@@ -4,7 +4,8 @@ extends RefCounted
 ## glossy ball on a short trunk, a cherry's tall oval in blossom, an olive's wide silvery crown on a thick
 ## trunk, a willow's drooping curtain, a palm's ringed trunk and fronds, a banana's paddle leaves, a
 ## pomegranate's many stems. Fruit hangs in its own way too: round, oval, in long bunches, huge on the
-## trunk, or as many small nuts. While a tree grows its fruit is small and green; ready, it's full-coloured.
+## trunk, or as many small nuts. Its fruit comes one piece at a
+## time as it ripens, each small and green, then full-coloured.
 ##
 ## No two trees are the same: each is varied by its own seed (height, lean, where its clumps sit, their
 ## shade), so an orchard of one kind still reads as trees and not copies.
@@ -42,13 +43,13 @@ const META_REACH := &"crown_reach"   # and how far its crown reaches from the tr
 const META_FAR := &"far_look"   # and what its far look needs: trunk height, crown bottom and top, reach, trunk r, leaf
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
-const FRUIT_READY := 30     # fruit on a ready tree (fewer, small and green, while it grows)
+const FRUIT_READY := 30     # fruit on a full tree (they come one at a time as it ripens: _fruit)
 const FRUIT_R := 0.064      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
 const FRUIT_SMALL_R := 0.02
 const FRUIT_OUT := 1.2      # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
 const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
 const STEM := Color("#5a4a2a")
-const FRUIT_GROWING := 3
+const TURN_STEP := 0.618    # each fruit's turn to grow is this much on from the one before (wrapping at 1): spread out
 const FRUIT_HANG_EVERY := 6   # one fruit in this many hangs under the crown on a stem; the rest sit on its face
 const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
 const TRUNK_TALL := 0.85    # trunks are short: a big full crown on a slim trunk, FarmVille's way
@@ -160,7 +161,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
 		var fruit_col := _pick(sh, "", "fruit_alts", "#d93b30", colours, str(it.get("color", "")))
-		_fruit(t, crown, fruit_col, ready)
+		_fruit(t, crown, fruit_col)
 	ModelKit.sway_all(root, SWAY)
 	return root
 
@@ -539,20 +540,23 @@ static func _blossom(t: Dictionary, centre: Vector3, col: Color) -> void:
 		ModelKit.ball(root, p, 0.022 * k, ModelKit.paint(col.lightened(rng.randf_range(0.0, 0.15))), Vector3(1, 0.6, 1))
 
 
-## Fruit, hung the kind's way. Small and green while the tree grows, its full colour once it's ready.
-static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> void:
+## Fruit, hung the kind's way: every fruit of a full tree, each marked with its turn to grow (ModelKit.mark_fruit).
+## The model always holds them all; the fruit's shader shows each one come in its turn, small and green, swell
+## and take its colour as the tree's cycle goes (shaders/fruit3d.gdshader), so a tree ripens piece by piece
+## instead of changing picture when it comes ready.
+static func _fruit(t: Dictionary, centre: Vector3, col: Color) -> void:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var rng: RandomNumberGenerator = t["rng"]
 	var shape := str(sh.get("fruit_shape", "round"))
-	var size := float(sh.get("fruit_size", 1.0)) * (1.0 if ready else 0.65)
-	var c := col if ready else col.lerp(LEAF, 0.6)
-	var mat := ModelKit.paint(c, 0.4)
+	var size := float(sh.get("fruit_size", 1.0))
+	var c := col
+	var mat := ModelKit.fruit_paint(c)
 	# Three shades, so a tree's fruit isn't a row of identical balls: sunny side, middle, shaded underside.
-	var shades := [ModelKit.paint(_sunlit(c), 0.5), mat, ModelKit.paint(c.darkened(0.2), 0.3)]
+	var shades := [ModelKit.fruit_paint(_sunlit(c)), mat, ModelKit.fruit_paint(c.darkened(0.2))]
 	var cr := float(sh["crown_r"]) * k
-	var count := FRUIT_READY if ready else FRUIT_GROWING
+	var count := FRUIT_READY
 	match shape:
 		"long", "cluster":
 			# Hanging bunches under the crown: bananas point up in hands, dates hang in strings.
@@ -564,16 +568,17 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				for i in (8 if shape == "long" else 6):
 					var ring := TAU * i / 6.0
 					var p := at + Vector3(cos(ring) * 0.035, -0.06 - 0.025 * int(i / 3.0), sin(ring) * 0.035) * k * size
+					var turn := fposmod((b * 8 + i) * TURN_STEP, 1.0)
 					if shape == "long":
-						ModelKit.ball(root, p, 0.018 * k * size, mat, Vector3(1, 3.0, 1))
+						ModelKit.mark_fruit(ModelKit.ball(root, p, 0.018 * k * size, mat, Vector3(1, 3.0, 1)), turn)
 					else:
-						ModelKit.ball(root, p, 0.016 * k * size, mat)
+						ModelKit.mark_fruit(ModelKit.ball(root, p, 0.016 * k * size, mat), turn)
 		"big":
 			# Huge fruit growing straight off the trunk and the lowest limbs.
-			for i in (4 if ready else 2):
+			for i in 4:
 				var a := TAU * i / 4.0 + rng.randf() * 0.4
 				var p := Vector3(cos(a) * 0.09 * k, centre.y * rng.randf_range(0.35, 0.7), sin(a) * 0.09 * k)
-				ModelKit.ball(root, p, 0.06 * k * size, mat, Vector3(0.85, 1.25, 0.85))
+				ModelKit.mark_fruit(ModelKit.ball(root, p, 0.06 * k * size, mat, Vector3(0.85, 1.25, 0.85)), i / 4.0)
 		_:
 			var n := count * (3 if shape == "small" else 1)
 			var r := (FRUIT_SMALL_R if shape == "small" else FRUIT_R) * k * size
@@ -614,4 +619,5 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color, ready: bool) -> v
 				if str(sh["form"]) == "palm":
 					# Coconuts cluster under the fronds, against the trunk.
 					p = centre + Vector3(cos(a) * 0.06 * k, -0.06 * k, sin(a) * 0.06 * k)
-				ModelKit.ball(root, p, fruit_r, fruit_mat, Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE)
+				ModelKit.mark_fruit(ModelKit.ball(root, p, fruit_r, fruit_mat,
+					Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE), fposmod(i * TURN_STEP, 1.0))

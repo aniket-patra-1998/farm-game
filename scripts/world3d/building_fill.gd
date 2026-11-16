@@ -88,6 +88,8 @@ var _planting := false
 var _to_plant: Array = []        # kinds of tree an orchard still has to stand (a few each frame)
 var _plant_stand := {}
 var _plant_ready := false
+var _plants_are_trees := false   # the plants are trees (planted once; their fruit grows by the clock)
+var _plants_cycle: Array = []    # [when the cycle began, how long it lasts]: what the trees' fruit was last told
 var _plant_detail := 1.0
 var _plant_into: Node3D
 var _plant_rng: RandomNumberGenerator
@@ -146,8 +148,11 @@ func refresh(o: Dictionary) -> void:
 	if who == _who and stage == _stage and who == _who_peeking:
 		return   # nothing it shows has changed since the last look (nearly every look: this is asked each second)
 	if fill.has("plants"):
-		if who != _who or stage != _stage:
-			_show_plants(o, int(fill["plants"]))  # trees fruit, blooms open, when ready
+		# Blooms open when ready (another picture: planted again); trees are planted once and their fruit grows
+		# on them by the clock (Objects3D.ripen), started over when the orchard is harvested.
+		if who != _who or (stage != _stage and not _plants_are_trees):
+			_show_plants(o, int(fill["plants"]))
+		_ripen_plants(o)
 	elif who != _who:
 		_show_residents(o)
 		_dress_empty_yard(Game.inside_total(o) == 0)
@@ -494,7 +499,18 @@ static func _head(col: Color, size: float) -> Node3D:
 
 ## The trees or blooms living in an Orchard or Bloom Garden, packed in a grid from the middle out: more as it
 ## fills, each different kind inside shown (up to MAX_KINDS), fruiting or open when ready.
+## Starts the orchard's trees' fruit growing for the cycle it is in (nothing when they were told it already).
+func _ripen_plants(o: Dictionary) -> void:
+	var cycle := [float(o.get("t", 0)), float(Game.cycle_of(o))]
+	if not _plants_are_trees or cycle == _plants_cycle:
+		return
+	_plants_cycle = cycle
+	for tree in _near_trees:
+		Objects3D.ripen(tree, cycle[0], cycle[1])
+
+
 func _show_plants(o: Dictionary, slots: int) -> void:
+	_plants_cycle = [float(o.get("t", 0)), float(Game.cycle_of(o))]
 	if _plants != null:
 		_plants.queue_free()
 	_near_trees.clear()
@@ -508,6 +524,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			first = id
 			break
 	var trees := first == "" or Game.kind_of({"id": first}) == "tree"
+	_plants_are_trees = trees
 	# A grid in the field's own proportions, inside its tile's border with each crown kept in; trees are packed
 	# tight, crowns just touching (FarmVille's orchards).
 	var room := SpaceFit.tile_room(_fp)
@@ -602,7 +619,6 @@ func _plant_some() -> void:
 func _plant_kind(id: String) -> void:
 	var holder := _plant_into
 	var detail := _plant_detail
-	var ready := _plant_ready
 	var size: float = _plant_stand[id]["size"]
 	var spots: Array = _plant_stand[id]["at"]
 	var it := Game.item_data(id)
@@ -612,16 +628,19 @@ func _plant_kind(id: String) -> void:
 		for k in range(v, spots.size(), variants):
 			var scale := 1.0 + _plant_rng.randf_range(-TREE_SIZE_JITTER, TREE_SIZE_JITTER)
 			here.append(Transform3D(Basis(Vector3.UP, _plant_rng.randf() * TAU).scaled(Vector3.ONE * scale), spots[k]))
-		var key := Instancer.key_of(["orchard_tree", id, ready, size, detail, v])
+		var key := Instancer.key_of(["orchard_tree", id, size, detail, v])
 		var measured := {}   # what the near tree measured, for its far look
-		_near_trees.append_array(Instancer.place(holder, Instancer.parts_of(key, func() -> Node3D:
+		var near := Instancer.place(holder, Instancer.parts_of(key, func() -> Node3D:
 			var tree := Node3D.new()
 			var was := ModelKit.detail
 			ModelKit.detail = detail
-			var built := TreeModel.build_at(tree, Vector3.ZERO, it, size, ready, v * 977 + 1)
+			var built := TreeModel.build_at(tree, Vector3.ZERO, it, size, true, v * 977 + 1)
 			ModelKit.detail = was
 			measured["far"] = built.get_meta(TreeModel.META_FAR, [])
-			return ModelKit.bake(tree)), here))
+			return ModelKit.bake(tree)), here)
+		for tree in near:
+			Objects3D.ripen(tree, _plants_cycle[0], _plants_cycle[1])   # (their fruit grows by the orchard's cycle)
+		_near_trees.append_array(near)
 		var blob := Instancer.parts_of(Instancer.key_of([key, LOD_FAR_PPU]), func() -> Node3D:
 			return TreeModel.far_from(measured.get("far", []), it, size, v * 977 + 1))
 		var far := Instancer.place(holder, blob, here)

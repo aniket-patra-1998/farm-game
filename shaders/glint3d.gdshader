@@ -11,8 +11,8 @@ varying float glow;              // 0..1: how bright this twinkle is now
 
 void vertex() {
 	float t = TIME * rate + INSTANCE_CUSTOM.r * 6.2831;
-	// Mostly dim, with a bright flash each beat and a smaller one between: a glint, not a lamp.
-	glow = 0.28 + 0.72 * pow(max(sin(t), 0.0), 5.0) + 0.3 * pow(max(sin(t * 2.0 + 1.3), 0.0), 9.0);
+	// Never quite out (it can always be found), with a bright flash each beat and a smaller one between: a glint, not a lamp.
+	glow = 0.42 + 0.58 * pow(max(sin(t), 0.0), 5.0) + 0.3 * pow(max(sin(t * 2.0 + 1.3), 0.0), 9.0);
 	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
 	VERTEX *= 0.6 + 0.55 * glow;
 	VERTEX.y += sin(t * 0.5) * drift;
