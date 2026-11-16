@@ -1,0 +1,15 @@
+{
+ "_doc": "The weather's own numbers (docs/WEATHER.md; our own touch). fog: depth fog that begins past the farm (WeatherFog in Farm3D): it starts `begin` farm half-diagonals beyond the farm's middle (1.0: its far corner, as the camera sees it), thickens over `span` farm sizes, and is at most `most` (0..1) times the state's fog; `height` and `height_density` lay a thin ground mist. storm (WeatherEvents): strikes a minute at full lightning [least, most], the share that are near, how far (tiles past the farm's edge) near and far ones strike, thunder's delay in seconds [near, far], the flash's strength and the bolt's life in seconds.",
+ "fog": {"begin": 1.0, "span": 1.6, "most": 0.85, "height": 0.6, "height_density": 0.12},
+ "storm": {
+  "strikes_per_minute": [3.0, 7.0],
+  "near_share": 0.25,
+  "near_tiles": [2.0, 6.0],
+  "far_tiles": [8.0, 24.0],
+  "thunder_delay": [0.35, 4.0],
+  "flash": 1.0,
+  "bolt_seconds": 0.32,
+  "bolt_height": 26.0
+ },
+ "rain_sound": {"from": 0.05, "least_db": -30.0}
+}

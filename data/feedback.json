@@ -10,6 +10,9 @@
     "tap": {"sound": "tap", "buzz": 8},
     "touch": {"buzz": 8},
     "place": {"sound": "place", "buzz": 24},
+    "thunder_near": {"sound": "thunder_near", "buzz": 30},
+    "thunder_mid": {"sound": "thunder_mid"},
+    "thunder_far": {"sound": "thunder_far"},
     "snap": {"sound": "snap", "buzz": 10},
     "error": {"sound": "error", "buzz": 40},
     "plow": {"sound": "plow", "buzz": 8},
@@ -33,7 +36,8 @@
     "vibration_check": {"buzz": 60}
   },
   "hums": {
-    "engine": {"sound": "engine", "gain_db": -16}
+    "engine": {"sound": "engine", "gain_db": -16},
+    "rain": {"sound": "rain", "gain_db": -10}
   },
   "floats": {
     "coins": "#ffd23f",

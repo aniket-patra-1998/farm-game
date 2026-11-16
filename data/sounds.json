@@ -1,9 +1,24 @@
 {
-  "_doc": "Every sound the game makes, as a synthesis recipe (autoload/sound.gd builds each once, the first time it plays). A sound is a list of layers mixed together; each layer: wave (sine, square, saw, triangle, noise), freq and freq_end in Hz (a glide), dur and delay in seconds, attack and release (seconds of fade in and out), gain, lowpass (Hz, softens saw, square and noise), vibrato [rate Hz, depth as a share of pitch], tremolo [rate Hz, depth 0..1], repeat [count, gap seconds]. A real recording can replace any recipe later: give the event a \"file\" (res://...) instead of layers. pitch_jitter varies the pitch a little each time so repeats don't sound mechanical.",
+  "_doc": "Every sound the game makes, as a synthesis recipe (autoload/sound.gd builds each once, the first time it plays). A sound is a list of layers mixed together; each layer: wave (sine, square, saw, triangle, noise), freq and freq_end in Hz (a glide), dur and delay in seconds, attack and release (seconds of fade in and out), gain, lowpass (Hz, softens saw, square and noise), vibrato [rate Hz, depth as a share of pitch], tremolo [rate Hz, depth 0..1], repeat [count, gap seconds]. A real recording can replace any recipe later: give the event a \"file\" (res://...) instead of layers. pitch_jitter varies the pitch a little each time so repeats don't sound mechanical. An effect is under 2 s; one marked \"long\" (thunder rolling) may run 5 s.",
   "volume_db": -6.0,
   "sounds": {
     "tap": {"pitch_jitter": 0.06, "layers": [
       {"wave": "sine", "freq": 880, "freq_end": 660, "dur": 0.05, "attack": 0.002, "release": 0.04, "gain": 0.35}]},
+    "thunder_near": {"long": true, "pitch_jitter": 0.12, "layers": [
+      {"wave": "noise", "lowpass": 5000, "dur": 0.12, "attack": 0.002, "release": 0.1, "gain": 0.9},
+      {"wave": "noise", "lowpass": 900, "dur": 0.6, "delay": 0.04, "attack": 0.01, "release": 0.5, "gain": 0.8},
+      {"wave": "noise", "lowpass": 260, "dur": 3.2, "delay": 0.1, "attack": 0.08, "release": 2.8, "gain": 0.9, "tremolo": [6, 0.45]},
+      {"wave": "sine", "freq": 48, "freq_end": 34, "dur": 2.4, "delay": 0.05, "attack": 0.05, "release": 2.0, "gain": 0.5}]},
+    "thunder_mid": {"long": true, "pitch_jitter": 0.15, "layers": [
+      {"wave": "noise", "lowpass": 700, "dur": 0.5, "attack": 0.03, "release": 0.4, "gain": 0.55},
+      {"wave": "noise", "lowpass": 220, "dur": 3.6, "delay": 0.15, "attack": 0.25, "release": 3.0, "gain": 0.85, "tremolo": [4.5, 0.5]},
+      {"wave": "sine", "freq": 40, "freq_end": 30, "dur": 2.8, "delay": 0.2, "attack": 0.3, "release": 2.2, "gain": 0.4}]},
+    "thunder_far": {"long": true, "pitch_jitter": 0.15, "layers": [
+      {"wave": "noise", "lowpass": 160, "dur": 4.2, "attack": 0.6, "release": 3.4, "gain": 0.75, "tremolo": [3.2, 0.55]},
+      {"wave": "sine", "freq": 34, "freq_end": 28, "dur": 3.4, "delay": 0.3, "attack": 0.6, "release": 2.6, "gain": 0.3}]},
+    "rain": {"loop": true, "pitch_jitter": 0.0, "layers": [
+      {"wave": "noise", "lowpass": 3200, "dur": 2.0, "gain": 0.5},
+      {"wave": "noise", "lowpass": 700, "dur": 2.0, "gain": 0.35, "tremolo": [0.6, 0.2]}]},
     "engine": {"loop": true, "pitch_jitter": 0.0, "layers": [
       {"wave": "sine", "freq": 44, "dur": 1.0, "gain": 0.55, "tremolo": [11, 0.5]},
       {"wave": "sine", "freq": 88, "dur": 1.0, "gain": 0.4, "tremolo": [11, 0.4]},
