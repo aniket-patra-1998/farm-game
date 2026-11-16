@@ -299,7 +299,7 @@ static func on_wood(node: Node) -> void:
 
 
 static func text(words: String, font_size := 22, color := INK) -> Label:
-	var l := Label.new()
+	var l := PanelText.new()   # (wraps only where it has a width: never a letter a line)
 	l.text = words
 	l.add_theme_font_size_override("font_size", font_px(font_size))
 	l.add_theme_color_override("font_color", color)
