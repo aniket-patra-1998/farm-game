@@ -8,17 +8,90 @@ extends RefCounted
 ## A wooden panel's style (the frame of the HUD's bars and of every panel).
 const LONG_PRESS := 0.45     # seconds held before a button's name shows (and the press is let go)
 const BUBBLE_SECONDS := 1.2   # how long a name bubble stays
+const PAPER_RADIUS := 26       # a sheet's or a panel's corners
+const PAPER_SHADOW := 14       # ..and its soft shadow
 
-static func panel_box() -> StyleBoxFlat:
+static var _paper_theme: Theme
+
+## The one surface of the interface (the unified look, docs/UI.md): warm paper with round corners and a soft
+## shadow, no frame. Every panel, sheet, card that floats and the tool panel stand on it.
+static func panel_box(radius := -1) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = UiTheme.color("wood")
-	sb.border_color = UiTheme.color("wood_dark")
-	sb.set_border_width_all(int(UiTheme.size("panel_border")))
-	sb.set_corner_radius_all(int(UiTheme.size("panel_radius")))
-	sb.shadow_color = Color(0, 0, 0, 0.3)
-	sb.shadow_size = 4
-	sb.shadow_offset = Vector2(0, 2)
+	sb.bg_color = UiTheme.color("paper")
+	sb.set_corner_radius_all(radius if radius >= 0 else int(UiTheme.size("panel_radius")))
+	sb.shadow_color = Color(0, 0, 0, 0.26)
+	sb.shadow_size = PAPER_SHADOW
+	sb.shadow_offset = Vector2(0, 3)
 	return sb
+
+
+## A panel or sheet's own paper (`panel_box` at the large radius, with `margin` inside).
+static func paper_box(margin: float) -> StyleBoxFlat:
+	var sb := panel_box(PAPER_RADIUS)
+	sb.set_content_margin_all(margin)
+	return sb
+
+
+## What stands on paper reads the paper way: dark ink words, flat boxes (no box in a box), a light track with
+## the accent fill for bars. Set on a panel's or sheet's root; its buttons keep the interface's own.
+static func paper_theme() -> Theme:
+	if _paper_theme == null:
+		var t := Theme.new()
+		t.set_color("font_color", "Label", UiTheme.color("ink"))
+		var flat := StyleBoxEmpty.new()
+		t.set_stylebox("panel", "PanelContainer", flat)
+		var track := StyleBoxFlat.new()
+		track.bg_color = UiTheme.color("track")
+		track.set_corner_radius_all(7)
+		var fill := StyleBoxFlat.new()
+		fill.bg_color = UiTheme.color("accent")
+		fill.set_corner_radius_all(7)
+		t.set_stylebox("background", "ProgressBar", track)
+		t.set_stylebox("fill", "ProgressBar", fill)
+		_paper_theme = t
+	return _paper_theme
+
+
+## The close button of every panel and sheet: the same round cross everywhere.
+static func close_button() -> Button:
+	var b := icon_button("cross", UiTheme.size("toggle_size") * 0.8)
+	b.tooltip_text = TranslationServer.translate("CLOSE")
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return b
+
+
+## A quiet text button (Move, Turn, Sell): there, but not what the panel is about. The same everywhere.
+static func quiet_button(words: String, px: int) -> Button:
+	var b := Button.new()
+	b.text = words
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.add_theme_font_size_override("font_size", px)
+	b.add_theme_color_override("font_color", UiTheme.color("soft"))
+	b.add_theme_color_override("font_hover_color", UiTheme.color("ink"))
+	b.add_theme_color_override("font_pressed_color", UiTheme.color("ink"))
+	b.add_theme_color_override("font_disabled_color", UiTheme.color("track").darkened(0.15))
+	UiFx.press_bounce(b)
+	return b
+
+
+## Makes `b` the one main action of what it stands in (Collect, Make, Buy...): filled with the accent, white words.
+## A panel or sheet has at most one.
+static func primary(b: Button) -> Button:
+	for state: String in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = UiTheme.color("accent").darkened(0.12) if state.contains("pressed") else UiTheme.color("accent")
+		if state == "disabled":
+			sb.bg_color = UiTheme.color("track")
+		sb.set_corner_radius_all(int(UiTheme.size("button_radius")) + 6)
+		sb.content_margin_left = 18
+		sb.content_margin_right = 18
+		b.add_theme_stylebox_override(state, sb)
+	for state: String in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
+		b.add_theme_color_override(state, UiTheme.color("accent_text"))
+	b.add_theme_color_override("font_disabled_color", UiTheme.color("soft"))
+	return b
 
 
 ## A glossy rounded bar: a face colour, a darker edge, and a light sheen over its top half.
@@ -219,10 +292,8 @@ static func tab_button(words: String, on: bool) -> Button:
 	var face := UiTheme.color("tab_face_on" if on else "tab_face")
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		var sb := StyleBoxFlat.new()
-		sb.bg_color = face.lightened(0.12) if state == "hover" else face
-		sb.border_color = UiTheme.color("wood_dark")
-		sb.set_border_width_all(int(UiTheme.size("button_border")))
-		sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
+		sb.bg_color = face.lightened(0.12) if state == "hover" and not on else face   # (pills on paper, no frame)
+		sb.set_corner_radius_all(int(UiTheme.size("tab_height") / 2.0))
 		sb.content_margin_left = UiTheme.size("tab_pad")
 		sb.content_margin_right = UiTheme.size("tab_pad")
 		b.add_theme_stylebox_override(state, sb)

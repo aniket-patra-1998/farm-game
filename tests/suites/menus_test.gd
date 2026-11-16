@@ -4,11 +4,16 @@ extends TestSuite
 ## each building's full panel), on a laptop, a wide phone and a tablet, read for what a player would see broken:
 ## a word broken inside itself (a wrapping line with no width: letters stacked one a line), a raw id or an
 ## untranslated key in place of words, a "%s" never filled, and text or a box spilling past its panel's sides.
+## And the one look (docs/UI.md): every word standing on the paper reads on it (contrast at least `LEAST_CONTRAST`:
+## no cream or yellow left over from the wooden panels), and no wooden box sits inside a panel.
 ## Every problem is reported once, with where it was, so one run lists them all.
 
 const SHAPES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(2340, 1080), Vector2i(1024, 768)]
 const RAW_ID := "\\b[a-z]+_[a-z0-9_]+\\b"        # snake_case: an item or feed id shown as it is stored
 const RAW_KEY := "\\b[A-Z]{2,}_[A-Z0-9_]+\\b"    # a strings.csv key never translated
+
+const LEAST_CONTRAST := 3.0   # WCAG's least for large text: words on paper must reach it
+const WOOD_KEYS: Array[String] = ["wood", "wood_dark", "wood_light", "plaque"]   # the old frame's colours
 
 var _raw_id := RegEx.create_from_string(RAW_ID)
 var _raw_key := RegEx.create_from_string(RAW_KEY)
@@ -209,7 +214,42 @@ func _sweep(root: Control, where: String, bad: Dictionary) -> void:
 					if font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > l.size.x + 1.0:
 						bad["%s: \"%s\" breaks inside a word (%d px wide)" % [where, short, l.size.x]] = true
 						break
+		if c is Label and text.strip_edges() != "" and _on_paper(c, root):
+			var ratio := contrast(c.get_theme_color("font_color"), UiTheme.color("paper"))
+			if ratio < LEAST_CONTRAST:
+				bad["%s: \"%s\" is too faint on the paper (%.1f:1)" % [where, text.left(40), ratio]] = true
+		if c is PanelContainer and c.has_theme_stylebox("panel") and c.get_theme_stylebox("panel") is StyleBoxFlat:
+			var face := (c.get_theme_stylebox("panel") as StyleBoxFlat).bg_color
+			for key in WOOD_KEYS:
+				if face.a > 0.5 and face.is_equal_approx(UiTheme.color(key)):
+					bad["%s: a %s box inside the paper" % [where, key]] = true
 		if (c is Label or c is Container) and c.size.x > 0.0:
 			var r := c.get_global_rect()
 			if r.position.x < page.position.x - 1.0 or r.end.x > page.end.x + 1.0:
 				bad["%s: %s \"%s\" spills past the panel's side" % [where, c.get_class(), text.left(40)]] = true
+
+
+## Whether label `l` stands on the paper itself: not on a button, nor on a tile, badge or box of its own.
+func _on_paper(l: Control, root: Control) -> bool:
+	var n := l.get_parent()
+	while n != null and n != root:
+		if n is BaseButton:
+			return false
+		if n is PanelContainer and (n as Control).has_theme_stylebox("panel"):
+			var box := (n as Control).get_theme_stylebox("panel")
+			if box is StyleBoxFlat and (box as StyleBoxFlat).bg_color.a > 0.5:
+				return false
+		n = n.get_parent()
+	return true
+
+
+## How far apart two colours read (WCAG): 1 is the same, 21 black on white.
+static func contrast(a: Color, b: Color) -> float:
+	var la := _luminance(a)
+	var lb := _luminance(b)
+	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
+
+
+static func _luminance(c: Color) -> float:
+	var lin := func(v: float) -> float: return v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4)
+	return 0.2126 * float(lin.call(c.r)) + 0.7152 * float(lin.call(c.g)) + 0.0722 * float(lin.call(c.b))

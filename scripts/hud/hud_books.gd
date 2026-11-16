@@ -18,7 +18,7 @@ func _init(owner: FarmHud) -> void:
 ## can be traded in; a tap opens the set (its items, Trade in and its prize: `build_collection`).
 func build_collections(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.info(
-		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), tr("ITEMS_TURN_UP_WHILE_YOU_FARM_INFO"), 20, BookPanel.CREAM))
+		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), tr("ITEMS_TURN_UP_WHILE_YOU_FARM_INFO"), 20, BookPanel.SOFT))
 	var ids: Array[String] = []
 	for coll in Game.collectibles.collections:
 		ids.append(str(coll["id"]))

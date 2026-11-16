@@ -1,18 +1,20 @@
 class_name BookPanel
 extends Control
-## A full-screen overlay menu on the interface kit (UiKit): a dimmed backdrop, a wooden panel with its title on
-## a plaque, a round close button, tabs when it has them (the Market's shelves), and scrolling content that a
+## A full-screen overlay menu on the interface kit (UiKit), in the unified paper look (docs/UI.md): a dimmed
+## backdrop, the paper surface with its title in ink at the left and the round close button at the right, pill tabs
+## when it has them (the Market's shelves), and scrolling content that a
 ## builder fills. Each tab's page is built once while the panel is open (going back to a tab shows it again); `refresh`
 ## builds the page again, or, when its builder marked it live (`set_live`), only updates it in place (a CardList
 ## reads its faces again). Every panel of the game opens in it.
 
-const WOOD := Color("#7a4f2c")
-const WOOD_DARK := Color("#5c3a1e")
-const CREAM := Color("#fbefd2")
+## Words on paper, by their role (the values are data/ui_theme.json's "ink", "soft" and "done"): INK for what is
+## read, SOFT for what is said beside it (a hint, a time, a reason), HEAD for a section's heading, GOOD for done
+## ("done"). A test holds every word on the paper to a readable contrast.
 const INK := Color("#3a2614")
-const SUN := Color("#ffd34d")
-const MUTED := Color("#c9b48f")
-const GOOD := Color("#7ccf5a")
+const SOFT := Color("#8a7763")
+const HEAD := Color("#3a2614")
+const GOOD := Color("#3c7a2a")   # (the "done" green: the accent itself is too light for words)
+const DIM := 0.35          # the backdrop's darkness
 ## The panel uses the screen (a phone's 20:9 especially): its scrolling area is this share of the screen's
 ## height, and it is as wide as the screen allows up to this many times the screen's height.
 const HEIGHT_SHARE := 0.66
@@ -41,7 +43,7 @@ func _ready() -> void:
 	visible = false
 
 	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.45)
+	dim.color = Color(0, 0, 0, DIM)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.gui_input.connect(_on_backdrop_input)
 	add_child(dim)
@@ -59,35 +61,26 @@ func _ready() -> void:
 
 	var panel := PanelContainer.new()
 	_panel = panel
-	var sb := UiKit.panel_box()
-	sb.set_corner_radius_all(int(UiTheme.size("book_radius")))
-	sb.set_border_width_all(int(UiTheme.size("book_border")))
-	sb.set_content_margin_all(UiTheme.size("book_margin"))
-	panel.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", UiKit.paper_box(UiTheme.size("book_margin")))
+	panel.theme = UiKit.paper_theme()
 	center.add_child(panel)
 
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	panel.add_child(col)
 
-	# The title on a plaque in the middle, the close button at the right.
+	# The title in ink at the left (as a building's sheet names it), the close button at the right.
 	var header := HBoxContainer.new()
 	col.add_child(header)
-	var left := Control.new()
-	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(left)
-	var plaque := UiKit.plaque("")
-	_title = plaque.get_meta("label")
+	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", UiTheme.text_px("font_book_title"))
-	header.add_child(plaque)
-	var right := HBoxContainer.new()
-	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	right.alignment = BoxContainer.ALIGNMENT_END
-	header.add_child(right)
-	var close := UiKit.icon_button("cross", UiTheme.size("toggle_size"))
-	close.tooltip_text = tr("CLOSE")
+	_title.add_theme_color_override("font_color", INK)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(_title)
+	var close := UiKit.close_button()
 	close.pressed.connect(close_panel)
-	right.add_child(close)
+	header.add_child(close)
 
 	# Tabs, when the panel has them.
 	_tab_bar = HBoxContainer.new()
@@ -272,9 +265,8 @@ static func card() -> VBoxContainer:
 	return VBoxContainer.new()
 
 
-## A section of a panel: flat on the wood, no box round it, a thin line under it (our own look: fewer boxes in
-## boxes). The dark words inside turn cream so they read on the wood (words on a card or a button inside keep
-## theirs); words added later should be cream already.
+## A section of a panel: flat on the paper, no box round it, a thin line under it (our own look: fewer boxes in
+## boxes).
 static func card_frame(inner: Control) -> PanelContainer:
 	var frame := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
@@ -285,17 +277,7 @@ static func card_frame(inner: Control) -> PanelContainer:
 	sb.content_margin_bottom = SECTION_PAD
 	frame.add_theme_stylebox_override("panel", sb)
 	frame.add_child(inner)
-	on_wood(inner)
 	return frame
-
-
-## Turns the dark words in `node` (not those on a card, button or tile of their own) cream, for the wood.
-static func on_wood(node: Node) -> void:
-	if node is Label and (node as Label).get_theme_color("font_color").is_equal_approx(INK):
-		(node as Label).add_theme_color_override("font_color", CREAM)
-	for c in node.get_children():
-		if not (c is BaseButton or c is PanelContainer):
-			on_wood(c)
 
 
 static func text(words: String, font_size := 22, color := INK) -> Label:
@@ -331,8 +313,8 @@ static func font_px(font_size: int) -> int:
 static func chip(words: String, filled: bool) -> PanelContainer:
 	var p := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = SUN if filled else Color(0, 0, 0, 0)
-	sb.border_color = WOOD_DARK if filled else MUTED
+	sb.bg_color = UiTheme.color("accent") if filled else Color(0, 0, 0, 0)
+	sb.border_color = UiTheme.color("accent") if filled else UiTheme.color("track")
 	sb.set_border_width_all(2)
 	sb.set_corner_radius_all(12)
 	sb.content_margin_left = 10
@@ -343,6 +325,6 @@ static func chip(words: String, filled: bool) -> PanelContainer:
 	var l := Label.new()
 	l.text = words
 	l.add_theme_font_size_override("font_size", UiTheme.font(18))
-	l.add_theme_color_override("font_color", INK if filled else MUTED.darkened(0.25))
+	l.add_theme_color_override("font_color", UiTheme.color("accent_text") if filled else SOFT)
 	p.add_child(l)
 	return p
