@@ -102,6 +102,10 @@ func _spawn_stray() -> bool:
 	game.message.emit(
 		tr("A_LONELY_WANDERED_ONTO_YOUR_FARM") % game.item_data(animal_id)["name"].to_lower()
 	)
+	# Said where it stands, like every find: a lost animal (never sold, only adopted) is rare.
+	var lost: bool = game.items[animal_id].get("lost", false) or game.items[animal_id].get("stray_only", false)
+	game.found_on.emit(game.next_uid - 1, tr("STRAY_HERE") % str(game.item_data(animal_id)["name"]),
+		"rare" if lost else "uncommon")
 	return true
 
 

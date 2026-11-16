@@ -10,12 +10,14 @@ const DATA := "res://data/feedback.json"
 var _moments := {}
 var _floats := {}
 var _hums := {}
+var _rarities := {}
 
 
 func _ready() -> void:
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(DATA))
 	_moments = data.get("moments", {})
 	_hums = data.get("hums", {})
+	_rarities = data.get("rarities", {})
 	for style: String in data.get("floats", {}):
 		_floats[style] = Color(str(data["floats"][style]))
 
@@ -78,6 +80,20 @@ func color(style: String) -> Color:
 		push_warning("Feedback: no float style called %s" % style)
 		return Color.WHITE
 	return _floats[style]
+
+
+## The one look and sound of a find by how rare it is ("common", "uncommon", "rare", "legendary"; anything else
+## is common): {color, moment, sparks, reach, size, words, hold}. Every find uses it, so a colour always means
+## the same rarity: in the field's glints, the burst when it is found, and what a mystery item opens to.
+func rarity(name: String) -> Dictionary:
+	var look: Dictionary = _rarities.get(name, _rarities.get("common", {}))
+	var out := look.duplicate()
+	out["color"] = Color(str(look.get("color", "#ffffff")))
+	return out
+
+
+func rarities() -> Array:
+	return _rarities.keys()
 
 
 func has_float(style: String) -> bool:

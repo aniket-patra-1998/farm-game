@@ -114,6 +114,7 @@ func _ready() -> void:
 		# Taps go to what's drawn under the finger; tapped things react; harvests pop; landings puff.
 		grid.picker = func(screen_pos: Vector2) -> int: return objects.pick(camera, screen_pos)
 		grid.ready_things = func() -> int: return objects.ready_shown
+		grid.hatcher = func(young: int, grown: int, then: Callable) -> void: objects.hatch(young, grown, then)
 		grid.outliner = func(uid: int) -> PackedVector2Array: return objects.outline_of(uid)
 		grid.object_poked.connect(_poked)
 		grid.plants_popped.connect(crops.pop)

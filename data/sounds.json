@@ -37,6 +37,22 @@
       {"wave": "sine", "freq": 990, "freq_end": 1480, "dur": 0.2, "attack": 0.01, "release": 0.15, "gain": 0.2}]},
     "error": {"pitch_jitter": 0.0, "layers": [
       {"wave": "square", "lowpass": 1200, "freq": 220, "freq_end": 180, "dur": 0.16, "attack": 0.004, "release": 0.12, "gain": 0.3}]},
+    "find_common": {"pitch_jitter": 0.0, "layers": [
+      {"wave": "triangle", "freq": 880, "dur": 0.18, "attack": 0.004, "release": 0.14, "gain": 0.26}]},
+    "find_uncommon": {"pitch_jitter": 0.0, "layers": [
+      {"wave": "triangle", "freq": 784, "dur": 0.12, "attack": 0.004, "release": 0.09, "gain": 0.28},
+      {"wave": "triangle", "freq": 1047, "dur": 0.26, "attack": 0.004, "release": 0.2, "gain": 0.3, "delay": 0.1}]},
+    "find_rare": {"pitch_jitter": 0.0, "layers": [
+      {"wave": "triangle", "freq": 659, "dur": 0.12, "attack": 0.004, "release": 0.09, "gain": 0.28},
+      {"wave": "triangle", "freq": 880, "dur": 0.12, "attack": 0.004, "release": 0.09, "gain": 0.28, "delay": 0.1},
+      {"wave": "triangle", "freq": 1319, "dur": 0.4, "attack": 0.004, "release": 0.32, "gain": 0.32, "delay": 0.2, "vibrato": [6, 0.01]}]},
+    "find_legendary": {"pitch_jitter": 0.0, "layers": [
+      {"wave": "triangle", "freq": 523, "dur": 0.12, "attack": 0.004, "release": 0.09, "gain": 0.3},
+      {"wave": "triangle", "freq": 659, "dur": 0.12, "attack": 0.004, "release": 0.09, "gain": 0.3, "delay": 0.09},
+      {"wave": "triangle", "freq": 784, "dur": 0.12, "attack": 0.004, "release": 0.09, "gain": 0.3, "delay": 0.18},
+      {"wave": "triangle", "freq": 1047, "dur": 0.14, "attack": 0.004, "release": 0.1, "gain": 0.32, "delay": 0.27},
+      {"wave": "triangle", "freq": 1568, "dur": 0.7, "attack": 0.004, "release": 0.6, "gain": 0.34, "delay": 0.38, "vibrato": [7, 0.012]},
+      {"wave": "sine", "freq": 2093, "dur": 0.7, "attack": 0.004, "release": 0.6, "gain": 0.12, "delay": 0.38, "vibrato": [7, 0.012]}]},
     "level_up": {"pitch_jitter": 0.0, "layers": [
       {"wave": "triangle", "freq": 523, "dur": 0.14, "attack": 0.005, "release": 0.1, "gain": 0.35},
       {"wave": "triangle", "freq": 659, "dur": 0.14, "delay": 0.12, "attack": 0.005, "release": 0.1, "gain": 0.35},

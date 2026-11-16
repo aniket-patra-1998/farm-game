@@ -32,6 +32,9 @@ const SELL_CONFIRM_MS := 3000    # a second tap within this long confirms a sale
 # Tap versus drag: a press only acts if the finger lifts without moving far.
 # Anything further is a drag, which moves the camera (main.gd) instead of farming.
 const DRAG_THRESHOLD := 14.0 # screen pixels
+const FIND_STACK_MSEC := 500   # finds said at one place within this long of each other rise one above the other
+const FIND_BEAT := 0.28        # seconds between them (each chimes on its own beat)
+const FIND_RISE := 40.0        # pixels between them
 const RAIN_BLUE := Color("#8fd0ff")   # the words of a rain-watered harvest
 const COUNT_TAG := "x%d"     # not-ui: a count (a swipe's plots, a streak), the same in every language
 const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is walked in
@@ -72,6 +75,7 @@ var life: FarmLife       # the animals' minds, read by the 2D and 3D worlds
 var picker := Callable()
 ## uid -> the outline of that building on screen (grid space), set by the 3D world; unset in the 2D fallback.
 var outliner := Callable()
+var hatcher := Callable()        # (young uid, grown uid, then): the 3D world shakes a mystery open, then calls `then`
 var ready_things := Callable()   # () -> int: how many things wear a ready sign now (the 3D world's; else counted)
 
 var fx: FxLayer          # rewards flying to the top bar (set by main)
@@ -92,6 +96,9 @@ var _pressing := false
 var _swiping := false        # this press farms every plot the finger crosses (a swipe tool, Balance `input.*`)
 var _swiped := {}            # plots this swipe has already worked (index -> true)
 var _swipe_at := Vector2.ZERO   # where the swipe's finger was last seen (the path since is walked, no plot skipped)
+var _find_at := Vector2.INF  # where the last find was said, when, and how many were said there together
+var _find_msec := 0
+var _find_stack := 0
 var _ripe := -1              # how many plots are ripe, kept: counted again only when it can have changed..
 var _ripe_until := 0         # ..a plot changed (-1 above), or the clock reached this (a crop ripens or withers)
 var _ready_seen := {}        # ready things the Next ready button has already shown this round (spot key -> true)
@@ -146,9 +153,14 @@ func _ready() -> void:
 	pieces.sync()
 	Game.building_upgraded.connect(_on_building_upgraded)
 	# Finds while farming (fuel, collectibles, Perfect Bunches) float up from their plot.
-	Game.found.connect(
-		func(i: int, text: String) -> void: _float(center_of(i) + Vector2(0, -90), text, "part", 1.8)
-	)
+	# Every find, wherever it was made, is said the same way in its rarity's colours (show_find).
+	Game.found.connect(func(i: int, text: String, rarity: String) -> void: show_find(center_of(i), text, rarity))
+	Game.found_on.connect(func(uid: int, text: String, rarity: String) -> void:
+		var o := Game.object_by_uid(uid)
+		if not o.is_empty() and o.has("row"):
+			var fp := Game.footprint(o["id"])
+			var box := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+			show_find((box[0] + box[2]) / 2.0, text, rarity))
 
 
 
@@ -1004,6 +1016,71 @@ func _show_vehicle(run: VehicleWork) -> void:
 
 
 
+## A find, said where it was made, the same way for every kind of find (a gopher, a collectible, a bird, a golden
+## harvest, a baby born, a stray, what a mystery opens to): its words rise in the colour of how rare it is,
+## sparks fly, and it chimes: one note for a common find up to a full run for a legendary one (Feedback.rarity,
+## data/feedback.json). So a colour and a sound always mean the same luck. Finds made at one place at one time
+## (a harvest that turns up two things) rise one above the other, a beat apart.
+func show_find(at: Vector2, text: String, rarity: String) -> void:
+	var now := Time.get_ticks_msec()
+	if at.distance_squared_to(_find_at) > 4.0 or now - _find_msec > FIND_STACK_MSEC:
+		_find_stack = 0
+	_find_at = at
+	_find_msec = now
+	var nth := _find_stack
+	_find_stack += 1
+	if nth == 0:
+		_burst_find(at, text, rarity, 0)
+	else:
+		get_tree().create_timer(FIND_BEAT * nth).timeout.connect(_burst_find.bind(at, text, rarity, nth))
+
+
+func _burst_find(at: Vector2, text: String, rarity: String, nth: int) -> void:
+	var look := Feedback.rarity(rarity)
+	var color: Color = look["color"]
+	Feedback.moment(str(look["moment"]))
+	# The words: in the rarity's colour and size, popping in, then rising and fading.
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size = Vector2(520, 48)
+	label.pivot_offset = label.size / 2.0
+	label.position = at + Vector2(-260, -96 - FIND_RISE * nth)
+	label.z_index = 12
+	label.add_theme_font_size_override("font_size", int(look["words"]))
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color(0.16, 0.1, 0.05))
+	label.add_theme_constant_override("outline_size", 9)
+	label.scale = Vector2(0.4, 0.4)
+	add_child(label)
+	var hold := float(look["hold"])
+	var tw := label.create_tween()
+	tw.tween_property(label, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(label, "position:y", label.position.y - 46.0, hold).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(label, "modulate:a", 0.0, hold * 0.4).set_delay(hold * 0.6)
+	tw.tween_callback(label.queue_free)
+	# The sparks: four-pointed stars flying out, more of them, bigger and further the rarer the find.
+	var sparks := int(look["sparks"])
+	var star := PackedVector2Array()
+	for j in 8:
+		star.append(Vector2.from_angle(TAU * j / 8.0) * (7.0 if j % 2 == 0 else 2.4) * float(look["size"]))
+	for k in sparks:
+		var dot := Polygon2D.new()
+		dot.polygon = star
+		dot.color = color.lerp(Color.WHITE, 0.35 if k % 3 == 0 else 0.0)
+		dot.position = at + Vector2(0, -30)
+		dot.z_index = 11
+		add_child(dot)
+		var dir := Vector2.from_angle(TAU * (k + randf() * 0.6) / sparks) * float(look["reach"]) * randf_range(0.55, 1.0)
+		var fly := dot.create_tween().set_parallel(true)
+		fly.tween_property(dot, "position", dot.position + dir * Vector2(1.0, 0.7), 0.6).set_ease(Tween.EASE_OUT) \
+			.set_trans(Tween.TRANS_CUBIC)
+		fly.tween_property(dot, "rotation", randf_range(-2.0, 2.0), 0.6)
+		fly.tween_property(dot, "scale", Vector2(0.2, 0.2), 0.6).set_ease(Tween.EASE_IN)
+		fly.tween_property(dot, "modulate:a", 0.0, 0.25).set_delay(0.35)
+		fly.chain().tween_callback(dot.queue_free)
+
+
 ## A young one was given its supply: how far along it is, or what it grew into.
 func _show_nurture(job: Dictionary, result: Dictionary) -> void:
 	var grown := str(result["grown"])
@@ -1022,13 +1099,18 @@ func _show_nurture(job: Dictionary, result: Dictionary) -> void:
 		Feedback.moment("fertilize")
 		_float(at + Vector2(0, -40), "%d/%d" % [int(result["fed"]), int(result["needs"])], "fert")
 		return
-	for g in Game.objects:
-		if g["id"] == grown and int(g["uid"]) == Game.next_uid - 1:
-			var at := center_of(Game.index_of(int(g["row"]), int(g["col"])))
-			Feedback.moment("collect")
-			_float(at + Vector2(0, -60), Game.item_data(grown)["name"] + "!", "golden", 1.8)
-			_sparkle(at, "golden")
-			_poke(int(g["uid"]))
+	# The reveal: the mystery shakes, opens, and what it was all along stands there, named in the colours of how
+	# rare it is. The 3D world plays the shaking and the opening (`hatcher`); without it, it opens at once.
+	var at := center_of(Game.index_of(int(result["row"]), int(result["col"])))
+	var grown_uid := int(result.get("grown_uid", -1))
+	var opened := func() -> void:
+		Feedback.moment("reveal_open")
+		world_fx.burst("sparkle", at + Vector2(0, -40))
+		show_find(at, tr("ITS_A") % str(Game.item_data(grown)["name"]), Game.rarity_of_item(grown))
+	if hatcher.is_valid():
+		hatcher.call(int(result.get("young", -1)), grown_uid, opened)
+	else:
+		opened.call()
 
 
 func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
@@ -1054,15 +1136,10 @@ func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 	if result.get("feed", "") != "":
 		_float(at + Vector2(0, -192), tr("FOUND_FEED") % Game.feeds.feed_name(result["feed"], bool(result["feed_rich"])),
 			Game.feeds.feed_color(result["feed"]), 1.6)
-	if result.get("bee", "") != "":
-		_float(at + Vector2(0, -96), result["bee"], "golden", 1.6)
 	if int(result.get("pollinated", 0)) > 0:
 		_float(at + Vector2(0, -160), tr("POLLINATED_SEEDS") % int(result["pollinated"]), "find", 1.8)
 		_sparkle(at, "find")
-	if result["drop"] != "":
-		var c := "golden" if result["drop"] == "golden" else "find"
-		_float(at + Vector2(0, -64), result["drop_text"], c, 1.6)
-		_sparkle(at, c)
+	# (what it turned up, a drop, a creature, a bee, was said as it was found: Game.found -> show_find)
 
 
 ## Fed (our own touch): the home hops, a heart and what the feed will do float up.
@@ -1109,10 +1186,7 @@ func _show_collect(uid: int, result: Dictionary) -> void:
 		lift -= 32
 	if not result.get("extras", []).is_empty():
 		_sparkle(at, "golden")
-	if result["drop"] != "":
-		var c := "golden" if result["drop"] == "golden" else "find"
-		_float(at + Vector2(0, -84), result["drop_text"], c, 1.6)
-		_sparkle(at, c)
+	# (a drop, a collectible, a baby born: said as it was found, Game.found_on -> show_find)
 
 
 ## Works plot `i` (or what stands on it) with the tool in hand. `loud`: a tap, which says why when nothing can be

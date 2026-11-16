@@ -95,10 +95,12 @@ func receive_queen() -> void:
 
 
 ## Flower harvests: a rare Queen Bee (a find, see data/finds.json), or a worker bee joining a hive that has a queen.
-func flower_harvest_bees() -> String:
+## `roll_queen` false when the plot already held its finds since planting (FieldSystem: the Queen was decided
+## then, and is given with them).
+func flower_harvest_bees(roll_queen := true) -> String:
 	if not game.drops_enabled:
 		return ""
-	if not game.finds.roll("flower_harvest").is_empty():
+	if roll_queen and not game.finds.roll("flower_harvest").is_empty():
 		return tr("A_QUEEN_BEE")
 	var all := hives()
 	for h in all:

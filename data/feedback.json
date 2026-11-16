@@ -1,5 +1,11 @@
 {
-  "_about": "Every moment the game answers with a sound and a buzz, and every colour a floating number or word takes, in one place (autoload/feedback.gd). `sound` is a name in sounds.json, `buzz` a vibration in ms (phones), `gain_db` makes the sound softer or louder. Code asks by name: Feedback.moment(\"place\").",
+  "_about": "Every moment the game answers with a sound and a buzz, and every colour a floating number or word takes, in one place (autoload/feedback.gd). `sound` is a name in sounds.json, `buzz` a vibration in ms (phones), `gain_db` makes the sound softer or louder. Code asks by name: Feedback.moment(\"place\"). `rarities` is the one look and sound of every find, by how rare it is (a gopher, a collectible, a bird, a baby, a stray, what a mystery item opens to): its colour, its moment, how many sparks fly and how far, how big they are, the size of its words and how long they stay.",
+  "rarities": {
+    "common": {"color": "#fff1c9", "moment": "find_common", "sparks": 8, "reach": 70, "size": 1.0, "words": 28, "hold": 1.5},
+    "uncommon": {"color": "#8ed8ff", "moment": "find_uncommon", "sparks": 12, "reach": 90, "size": 1.2, "words": 30, "hold": 1.8},
+    "rare": {"color": "#d3a8ff", "moment": "find_rare", "sparks": 16, "reach": 112, "size": 1.4, "words": 33, "hold": 2.1},
+    "legendary": {"color": "#ffcf3f", "moment": "find_legendary", "sparks": 26, "reach": 140, "size": 1.7, "words": 37, "hold": 2.6}
+  },
   "moments": {
     "tap": {"sound": "tap", "buzz": 8},
     "touch": {"buzz": 8},
@@ -15,6 +21,12 @@
     "level_up": {"sound": "level_up", "buzz": 60},
     "level_up_soft": {"sound": "level_up", "buzz": 24},
     "sell": {"sound": "coin", "buzz": 8},
+    "find_common": {"sound": "find_common", "buzz": 12},
+    "find_uncommon": {"sound": "find_uncommon", "buzz": 20},
+    "find_rare": {"sound": "find_rare", "buzz": 34},
+    "find_legendary": {"sound": "find_legendary", "buzz": 60},
+    "reveal_shake": {"sound": "tap", "buzz": 14},
+    "reveal_open": {"sound": "place", "buzz": 40},
     "dawn": {"sound": "crow", "gain_db": -6.0},
     "coin_land": {"sound": "coin", "gain_db": -8.0},
     "volume_check": {"sound": "coin"},

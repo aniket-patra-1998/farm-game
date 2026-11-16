@@ -164,7 +164,13 @@ func _advance(o: Dictionary) -> Dictionary:
 	o["fed"] = fed(o) + 1
 	var out := {"fed": fed(o), "needs": needs(o), "grown": "", "regrown": false}
 	if fed(o) >= needs(o):
+		# Where it stood, who it was and who it is now: the farm opens it there (FarmGrid's reveal).
+		out["row"] = int(o["row"])
+		out["col"] = int(o["col"])
+		out["young"] = int(o["uid"])
+		var before := game.next_uid
 		out["grown"] = _grow(o)
+		out["grown_uid"] = before if not game.object_by_uid(before).is_empty() else -1
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return out
@@ -263,8 +269,9 @@ func from_orchard(orchard: Dictionary) -> Array[String]:
 	if not game.drops_enabled:
 		return out
 	var becomes := _pick_tree(orchard.get("inside", {}))
-	if becomes != "" and game.rng.randf() < Balance.f("nurture.seedling_share") and _found(SEEDLING, becomes):
-		out.append(game.item_data(SEEDLING)["name"] + "!")
+	if becomes != "" and game.rng.randf() < Balance.f("nurture.seedling_share") \
+			and _found(SEEDLING, becomes, int(orchard.get("uid", -1))):
+		pass   # (said on the Orchard as a find: _found)
 	else:
 		add_supply("watering_can", 1)
 		out.append(tr("WATERING_CAN_FOUND"))
@@ -287,8 +294,9 @@ func from_home(home: Dictionary) -> Array[String]:
 	if game.rng.randf() < Balance.f("nurture.home_feed_chance"):
 		add_supply("animal_feed", 1)
 		out.append(tr("ANIMAL_FEED_N") % 1)
-	if game.rng.randf() < Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost and _found(BABY, becomes):
-		out.append(game.item_data(BABY)["name"] + "!")
+	if game.rng.randf() < Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost \
+			and _found(BABY, becomes, int(home.get("uid", -1))):
+		pass   # (said on the home as a find: _found)
 	return out
 
 
@@ -302,8 +310,9 @@ func from_bloom(bloom: Dictionary) -> Array[String]:
 		add_supply("flower_food", 1)
 		out.append(tr("FLOWER_FOOD_N") % 1)
 	var d := game.catalog.get_def(bloom["id"]) as BloomDef
-	if game.rng.randf() < Balance.f("nurture.bulb_chance") * d.mastery_points() and _found(BULB, _pick_bloom({})):
-		out.append(game.item_data(BULB)["name"] + "!")
+	if game.rng.randf() < Balance.f("nurture.bulb_chance") * d.mastery_points() \
+			and _found(BULB, _pick_bloom({}), int(bloom.get("uid", -1))):
+		pass   # (said on the bloom as a find: _found)
 	return out
 
 
@@ -316,16 +325,21 @@ func from_garden(garden: Dictionary) -> Array[String]:
 	out.append(tr("FLOWER_FOOD_N") % Balance.i("nurture.garden_food"))
 	if game.rng.randf() < Balance.f("nurture.garden_bulb_chance") and _found(
 		BULB,
-		_pick_bloom(garden.get("inside", {}))
+		_pick_bloom(garden.get("inside", {})),
+		int(garden.get("uid", -1))
 	):
-		out.append(game.item_data(BULB)["name"] + "!")
+		pass   # (said on the garden as a find: _found)
 	return out
 
 
-## Puts a found young on the farm (or in the Barn with no room), secretly set to become `becomes`.
-func _found(young_id: String, becomes: String) -> bool:
+## Puts a found young on the farm (or in the Barn with no room), secretly set to become `becomes`. Found while
+## harvesting the thing `at_uid`, it is said there as a find (rare: a mystery is always worth a look); -1 for one
+## that came another way (a neighbour's gift).
+func _found(young_id: String, becomes: String, at_uid := -1) -> bool:
 	if not Release.on("mystery_young"):
 		return false
+	if at_uid >= 0:
+		game.found_on.emit(at_uid, tr("FOUND") + str(game.item_data(young_id)["name"]), "rare")
 	var o := {"uid": game.next_uid, "id": young_id, "t": game.now(), "fed": 0, "becomes": becomes}
 	game.next_uid += 1
 	var spot := game.free_spot_for(young_id)

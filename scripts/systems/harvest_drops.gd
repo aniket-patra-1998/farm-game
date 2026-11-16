@@ -25,9 +25,16 @@ func load_from(data: Dictionary) -> void:
 	pity = {"golden": int(saved.get("golden", 0)), "collectible": int(saved.get("collectible", 0))}
 
 
-## One roll per harvest. Rarest outcomes are checked first; pity counters
-## guarantee a golden harvest or a collectible after a long dry spell.
+## What a harvest turns up, decided and given in one go (animals and trees, which have no plot to hold it).
 func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
+	return give_drop(decide_drop(crop_id, stars, super_mult))
+
+
+## Decides what a harvest will turn up, without giving it: {} or {type} ("golden", "super_harvest", "bonus_xp"),
+## and for a "bird" or a "collectible" which `item` (and the `crop` whose set it is from). The luck is spent here
+## (the pity counters move); a crop's is decided when it is planted and kept with its plot, so a plot holding
+## something can glint before it is harvested (FieldSystem).
+func decide_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 	if not game.drops_enabled:
 		return {}
 	pity["golden"] = int(pity["golden"]) + 1
@@ -38,18 +45,13 @@ func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 	var golden := Balance.f("harvest.golden_chance") * luck
 	if int(pity["golden"]) >= Balance.i("harvest.golden_pity") or game.rng.randf() < golden:
 		pity["golden"] = 0
-		return {"type": "golden", "text": tr("GOLDEN_HARVEST")}
+		return {"type": "golden"}
 
 	# A due collectible (pity) always wins over a bird visit.
 	var collectible_due := int(pity["collectible"]) >= Balance.i("harvest.collectible_pity")
 	var bird := Balance.f("harvest.bird_chance")
 	if not game.collectibles.bird_collection.is_empty() and not collectible_due and game.rng.randf() < bird:
-		var bird_id := game.collectibles.pick_item(game.collectibles.bird_collection)
-		game.collectibles.owned[bird_id] = int(game.collectibles.owned.get(bird_id, 0)) + 1
-		game.ribbons.bump("birds_seen", 1)
-		game.collections_changed.emit()
-		return {"type": "bird", "text": tr("A_VISITED") % game.collectibles.item_names[bird_id].to_lower(),
-			"name": game.collectibles.item_names[bird_id], "collection": game.collectibles.bird_collection["name"]}
+		return {"type": "bird", "item": game.collectibles.pick_item(game.collectibles.bird_collection)}
 
 	var coll: Dictionary = game.collectibles.collection_of_crop.get(crop_id, {})
 	if not coll.is_empty() and (
@@ -57,16 +59,60 @@ func roll_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 		or game.rng.randf() < Balance.f("harvest.collectible_chance") * luck
 	):
 		pity["collectible"] = 0
-		var item_id := game.collectibles.pick_item(coll)
-		game.collectibles.owned[item_id] = int(game.collectibles.owned.get(item_id, 0)) + 1
-		game.collections_changed.emit()
-		return {"type": "collectible", "text": tr("FOUND") + game.collectibles.item_names[item_id],
-			"name": game.collectibles.item_names[item_id], "collection": coll["name"]}
+		return {"type": "collectible", "item": game.collectibles.pick_item(coll), "crop": crop_id}
 
 	var r := game.rng.randf()
 	var super_chance := Balance.f("harvest.super_harvest_chance") * super_mult
 	if r < super_chance:
-		return {"type": "super_harvest", "text": tr("SUPER_HARVEST_X_COINS")}
+		return {"type": "super_harvest"}
 	if r < super_chance + Balance.f("harvest.bonus_xp_chance"):
-		return {"type": "bonus_xp", "text": tr("BONUS_XP")}
+		return {"type": "bonus_xp"}
 	return {}
+
+
+## Gives a decided drop (a bird or a collectible joins its set) and returns it with its words: {type, text,
+## rarity}, and {name, collection} for a bird or a collectible. {} for none.
+func give_drop(drop: Dictionary) -> Dictionary:
+	var out := drop.duplicate()
+	match str(drop.get("type", "")):
+		"":
+			return {}
+		"golden":
+			out["text"] = tr("GOLDEN_HARVEST")
+		"super_harvest":
+			out["text"] = tr("SUPER_HARVEST_X_COINS")
+		"bonus_xp":
+			out["text"] = tr("BONUS_XP")
+		"bird", "collectible":
+			var item := str(drop["item"])
+			var is_bird := str(drop["type"]) == "bird"
+			var coll: Dictionary = game.collectibles.bird_collection if is_bird \
+				else game.collectibles.collection_of_crop.get(str(drop.get("crop", "")), {})
+			game.collectibles.owned[item] = int(game.collectibles.owned.get(item, 0)) + 1
+			if is_bird:
+				game.ribbons.bump("birds_seen", 1)
+			game.collections_changed.emit()
+			var item_name := str(game.collectibles.item_names.get(item, item))
+			out["name"] = item_name
+			out["collection"] = str(coll.get("name", ""))
+			out["text"] = tr("A_VISITED") % item_name.to_lower() if is_bird else tr("FOUND") + item_name
+	out["rarity"] = rarity_of(drop)
+	return out
+
+
+## How rare a decided drop is, for its glint in the field and its burst when found: a golden harvest is
+## legendary, a bird rare, a collectible as rare as its item; the small bonuses are common (and do not glint).
+func rarity_of(drop: Dictionary) -> String:
+	match str(drop.get("type", "")):
+		"golden":
+			return "legendary"
+		"bird":
+			return "rare"
+		"collectible":
+			return game.collectibles.rarity_of(str(drop.get("item", "")))
+	return "common"
+
+
+## Whether a decided drop is a find worth a glint before the harvest (the small bonuses stay a surprise).
+static func glints(drop: Dictionary) -> bool:
+	return str(drop.get("type", "")) in ["golden", "bird", "collectible"]

@@ -65,6 +65,12 @@ func _pick_baby(b: Dictionary, plain: String) -> String:
 	return plain
 
 
+## A baby born at a home: said on the home as a find. A breed's own baby (a Pink Calf, not the plain one) is rare.
+func _born(b: Dictionary, baby: String) -> void:
+	var plain := baby in ["calf", "foal", "lamb", "piglet", "kid"]
+	game.found_on.emit(int(b["uid"]), tr("BORN") % str(game.item_data(baby)["name"]), "uncommon" if plain else "rare")
+
+
 ## Extra results of collecting a building, as short popup texts.
 func building_specials(b: Dictionary) -> Array[String]:
 	var out: Array[String] = []
@@ -75,7 +81,7 @@ func building_specials(b: Dictionary) -> Array[String]:
 				game.mystery.mystery_eggs[colour] = int(game.mystery.mystery_eggs.get(colour, 0)) + 1
 				var egg_name: String = game.mystery.egg_data["colours"][colour]["name"]
 				game.message.emit(tr("YOU_FOUND_A_OPEN_IT_FROM") % egg_name)
-				out.append(egg_name + "!")
+				game.found_on.emit(int(b["uid"]), tr("FOUND") + egg_name, "rare")
 		"calves":
 			if game.drops_enabled and game.rng.randf() < Balance.f("specials.fertilizer_chance"):
 				game.fertilizer_bags += 1
@@ -86,7 +92,7 @@ func building_specials(b: Dictionary) -> Array[String]:
 					game.message.emit(
 						tr("A_WAS_BORN_RAISE_IT_IN") % game.item_data(calf)["name"].to_lower()
 					)
-					out.append("A %s!" % game.item_data(calf)["name"].to_lower())
+					_born(b, calf)
 		"foals":
 			var with_stallion := game.has_inside(b, "stallion")
 			if game.drops_enabled and with_stallion and game.rng.randf() < Balance.f("specials.foal_chance"):
@@ -95,7 +101,7 @@ func building_specials(b: Dictionary) -> Array[String]:
 					game.message.emit(
 						tr("A_WAS_BORN_RAISE_IT_IN") % game.item_data(foal)["name"].to_lower()
 					)
-					out.append("A %s!" % game.item_data(foal)["name"].to_lower())
+					_born(b, foal)
 			if game.drops_enabled and game.rng.randf() < Balance.f("specials.stable_helper_chance"):
 				game.farmhands += 1
 				out.append(tr("FARMHAND"))
@@ -111,12 +117,12 @@ func building_specials(b: Dictionary) -> Array[String]:
 			if game.has_inside(b, "ram") and game.drops_enabled and game.rng.randf() < Balance.f("specials.lamb_chance"):
 				if game.place_somewhere("lamb"):
 					game.message.emit(tr("A_LAMB_WAS_BORN_RAISE_IT"))
-					out.append(tr("A_LAMB"))
+					_born(b, "lamb")
 		"truffles":
 			if game.has_inside(b, "boar") and game.drops_enabled and game.rng.randf() < Balance.f("specials.piglet_chance"):
 				if game.place_somewhere("piglet"):
 					game.message.emit(tr("A_PIGLET_WAS_BORN_RAISE_IT"))
-					out.append(tr("A_PIGLET"))
+					_born(b, "piglet")
 		"beehive":
 			if game.drops_enabled and game.rng.randf() < Balance.f("specials.fertilize_all_chance"):
 				game.fertilize_alls += 1

@@ -11,6 +11,9 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const HATCH_SHAKES := 3      # a mystery shakes this many times before it opens, each harder..
+const HATCH_REACH := 0.035   # ..by this much more, in tiles, to either side
+const HATCH_REST := 0.1      # seconds between shakes
 const FARMHOUSE := "farmhouse"   # not-ui
 const STAGE := "stage"           # not-ui: how the farmhouse's stage is written in its look ("stage3")
 const BOX := &"box"               # on a batched thing's stand-in: the box round its model, in the model's space
@@ -71,6 +74,8 @@ var _full := true        # the queued sync looks at everything (a change), not o
 var _ticks := 0
 
 var _scenery: Node3D
+var _hatching := {}     # young uid -> {into, then}: a mystery about to open (hatch), kept for its shaking
+var _unopened := {}     # the uid it opens into -> true: built hidden until it opens
 var _links_at := -1     # Game.tiles_revision, and how many things there were, when the fences were last joined
 var _links_count := -1
 var _plain := {}   # item id -> whether it is a plain decoration (code-built, standing alone): see _key
@@ -191,6 +196,8 @@ func sync() -> void:
 			(v["node"] as Node3D).queue_free()
 		var node := _build(o)
 		add_child(node)
+		if _unopened.has(uid):
+			node.visible = false   # (what a mystery is opening into: shown when it opens, _shake_open)
 		var fresh := not v.has("node")
 		var step := _step(o)
 		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
@@ -200,12 +207,15 @@ func sync() -> void:
 			_views[uid]["crown"] = _crown_of(_views[uid]["box"])
 		if not fresh and _synced_once and step > int(v.get("step", step)):
 			grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
-		if fresh and _synced_once:
+		if fresh and _synced_once and not _unopened.has(uid):
 			drop_in(uid)  # newly bought or placed: it drops onto the farm
 		spent += Time.get_ticks_usec() - build_began
 	for uid in _views.keys():
 		if not seen.has(uid):
-			(_views[uid]["node"] as Node3D).queue_free()
+			if _hatching.has(uid):
+				_shake_open(uid)   # (a mystery opening: it shakes where it stood before it goes)
+			else:
+				(_views[uid]["node"] as Node3D).queue_free()
 			_views.erase(uid)
 	_mark_ready()
 	if built > 0:
@@ -1154,6 +1164,46 @@ func grow_in(uid: int, grand: bool) -> void:
 		.set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "scale", Vector3.ONE, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	transformed.emit(node.position, grand)
+
+
+## A mystery young one opens (the reveal): where it stood it shakes three times, each harder, swells and is gone,
+## and what it grew into (`grown_uid`, -1 when that went to the Barn) swells up in its place; `then` is called at
+## the opening, for its words and sparks. Called right after it grew, before the look that finds it gone: that
+## look keeps its model for the shaking instead of removing it, and builds the grown one hidden until then.
+func hatch(young_uid: int, grown_uid: int, then: Callable) -> void:
+	if not _views.has(young_uid):
+		then.call()
+		return
+	_hatching[young_uid] = {"into": grown_uid, "then": then}
+	if grown_uid >= 0:
+		_unopened[grown_uid] = true
+
+
+func _shake_open(young_uid: int) -> void:
+	var h: Dictionary = _hatching[young_uid]
+	_hatching.erase(young_uid)
+	var node: Node3D = _views[young_uid]["node"]
+	var home := node.position
+	var tw := _tween(node)
+	for k in HATCH_SHAKES:
+		var reach := HATCH_REACH * (k + 1)
+		tw.tween_callback(func() -> void: Feedback.moment("reveal_shake"))
+		tw.tween_property(node, "position:x", home.x + reach, 0.05)
+		tw.parallel().tween_property(node, "scale", Vector3(1.06, 0.94, 1.06), 0.05)
+		tw.tween_property(node, "position:x", home.x - reach, 0.1)
+		tw.tween_property(node, "position:x", home.x, 0.05)
+		tw.parallel().tween_property(node, "scale", Vector3.ONE, 0.05)
+		tw.tween_interval(HATCH_REST)
+	tw.tween_property(node, "scale", Vector3.ONE * 1.3, 0.09).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func() -> void:
+		node.queue_free()
+		var into := int(h["into"])
+		_unopened.erase(into)
+		var grown := _node(into)
+		if grown != null:
+			grown.visible = true
+			grow_in(into, true)
+		(h["then"] as Callable).call())
 
 
 ## Newly on the farm: it falls in from above, lands with a squash and settles.

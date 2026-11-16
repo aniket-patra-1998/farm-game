@@ -232,7 +232,7 @@ func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> vo
 	# Plowing, planting and fertilizing can all turn one up.
 	g.coins = 1000000
 	var finds := [0]
-	g.found.connect(func(_i: int, text: String) -> void:
+	g.found.connect(func(_i: int, text: String, _rarity: String) -> void:
 		if text.begins_with("Found:"):
 			finds[0] += 1)
 	for k in 300:
@@ -259,7 +259,7 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 	g.vehicles.fuel_t = g.now()
 	g.vehicles.fuel_tanks = 0
 	var fuel_finds := [0]
-	g.found.connect(func(_i: int, text: String) -> void:
+	g.found.connect(func(_i: int, text: String, _rarity: String) -> void:
 		if text.begins_with("Found fuel"):
 			fuel_finds[0] += 1)
 	for k in 200:
@@ -281,7 +281,7 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 	var low := _farm(true)
 	low.coins = 1000000
 	var low_found := [0]
-	low.found.connect(func(_i: int, text: String) -> void:
+	low.found.connect(func(_i: int, text: String, _rarity: String) -> void:
 		if text.begins_with("Found fuel"):
 			low_found[0] += 1)
 	for k in 100:

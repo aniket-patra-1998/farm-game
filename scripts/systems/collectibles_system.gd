@@ -11,6 +11,8 @@ var collections_data := {}         # the whole file: levels, rarity weights
 var collection_of_crop := {}       # crop id -> collection dictionary
 var bird_collection := {}          # the collection whose items are birds
 var item_names := {}               # item id -> display name
+var item_rarity := {}               # item id -> "common", "uncommon" or "rare"
+var last_found := ""                # the item the last roll off a plot found (Game.collect reads it for its burst)
 var owned := {}                    # item id -> count held
 
 
@@ -32,6 +34,7 @@ func load_data() -> void:
 			collection_of_crop[crop_id] = coll
 		for item in coll["items"]:
 			item_names[item["id"]] = item["name"]
+			item_rarity[item["id"]] = str(item.get("rarity", "common"))
 
 
 func reset() -> void:
@@ -135,10 +138,16 @@ func roll_collectible(coll: Dictionary, chance: float, index := -1) -> String:
 	game.collections_changed.emit()
 	var text: String = tr("FOUND") + str(item_names[item_id])
 	if index >= 0:
-		game.found.emit(index, text)
+		game.found.emit(index, text, rarity_of(item_id))
 	else:
 		game.message.emit(tr("COLLECTION") % [text, coll["name"]])
+		last_found = item_id   # (found on a thing: its collect says where, Game.collect)
 	return item_names[item_id]
+
+
+## How rare a collection's item is ("common", "uncommon", "rare").
+func rarity_of(item_id: String) -> String:
+	return str(item_rarity.get(item_id, "common"))
 
 
 ## A collection to roll on a plow: the set of the crop that was there, or one for a crop you can grow.

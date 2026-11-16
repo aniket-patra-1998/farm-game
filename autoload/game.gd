@@ -16,7 +16,10 @@ signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
 signal objects_changed
-signal found(index: int, text: String) # a find on a plot (fuel, a collectible...): floats up from it
+# A find, said where it was made in its rarity's colours ("common", "uncommon", "rare", "legendary"): on a plot
+# (fuel, a collectible, a gopher, a golden harvest...) or on a thing (a bird at a tree, a calf born, a stray).
+signal found(index: int, text: String, rarity: String)
+signal found_on(uid: int, text: String, rarity: String)
 signal building_upgraded(uid: int, level: int)
 signal farm_expanded(size: int)
 signal inventory_changed
@@ -630,6 +633,18 @@ func crop_art_for(i: int) -> String:
 	return art if SpriteBank.has(art) else ""
 
 
+## How rare a thing is to come by, for the colours of its reveal when a mystery young one grows into it: a tree's
+## rare variety and a lost animal (never sold, only found) are rare, something only gems buy is uncommon.
+func rarity_of_item(item_id: String) -> String:
+	var it := item_data(item_id)
+	if it.get("lost", false) or it.get("stray_only", false):
+		return "rare"
+	for k: String in item_order:
+		if str(items[k].get("rare_sapling", "")) == item_id:
+			return "rare"
+	return "uncommon" if it.has("gem_cost") else "common"
+
+
 ## Whether a thing has something to take now, so wears a ready sign: its produce (`is_ready`), or a crafting
 ## building's finished crafts. The one place that says so (the signs, the Next ready button, the away card).
 func has_ready(obj: Dictionary) -> bool:
@@ -699,6 +714,8 @@ func collect(uid: int) -> Dictionary:
 			earned *= 2
 		"bonus_xp":
 			gained += Balance.i("economy.bonus_xp")
+	if not drop.is_empty():
+		found_on.emit(uid, str(drop["text"]), str(drop["rarity"]))   # (said on the thing, in its rarity's colours)
 	obj["t"] = now()
 	add_coins(earned)
 	add_xp(gained)
@@ -727,6 +744,7 @@ func collect(uid: int) -> Dictionary:
 	obj.erase(FeedSystem.FED)   # what it was fed was for this cycle
 	feeds.rare_boost = 1.0
 	var coll_find := ""
+	collectibles.last_found = ""
 	if kind_of(obj) == "tree":
 		var fruit := feeds.roll_tree()
 		if fruit != "":
@@ -741,7 +759,7 @@ func collect(uid: int) -> Dictionary:
 			Balance.f("economy.animal_collectible_chance")
 		)
 	if coll_find != "":
-		extras.append(tr("FOUND") + coll_find)
+		found_on.emit(uid, tr("FOUND") + coll_find, collectibles.rarity_of(collectibles.last_found))
 	if drop.get("type", "") == "golden":
 		ribbons.bump("golden_finds", 1)
 		message.emit(tr("GOLDEN_COLLECTION_X_COINS") % Balance.i("economy.golden_coin_multiplier"))

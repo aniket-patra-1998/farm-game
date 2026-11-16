@@ -70,7 +70,7 @@ func roll_fuel_find(i: int) -> int:
 	fuel_found_day = game.day_number()
 	var n := int(Balance.i("vehicles.fuel_tank") * Balance.f("vehicles.fuel_find_share"))
 	add_fuel(n)
-	game.found.emit(i, tr("FOUND_FUEL") % n)
+	game.found.emit(i, tr("FOUND_FUEL") % n, "uncommon")
 	return n
 
 

@@ -7,6 +7,7 @@ extends GameSystem
 ## Reached as `Game.finds`.
 
 const DATA := "res://data/finds.json"
+const RARITIES: Array[String] = ["common", "uncommon", "rare", "legendary"]   # not-ui: least to most rare
 
 var owned := {}           # kind id -> how many found
 var pity := {}            # family -> dry rolls since the last find
@@ -41,9 +42,16 @@ func load_from(data: Dictionary) -> void:
 			claimed[str(k)] = bool(saved[k])
 
 
-## Rolls every family triggered by `work` ("harvest"); returns what was found: [{family, id, name, rarity}].
+## Rolls every family triggered by `work` ("harvest") and gives what turns up: [{family, id, name, rarity}].
 func roll(work: String, stars := 0) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
+	return give(decide(work, stars))
+
+
+## Decides what `work` will turn up without giving it: [[family, kind id]]. The luck is spent here (the pity
+## counters move). A crop's is decided when it is planted and kept with its plot (FieldSystem), so a plot
+## holding a find can glint before the harvest; `give` hands it over.
+func decide(work: String, stars := 0) -> Array:
+	var out: Array = []
 	if not game.drops_enabled or not Release.on("finds"):
 		return out
 	for fid: String in families:
@@ -56,8 +64,37 @@ func roll(work: String, stars := 0) -> Array[Dictionary]:
 			pity[fid] = 0
 			var kind := pick(fid)
 			if not kind.is_empty():
-				out.append(add(fid, kind))
+				out.append([fid, str(kind["id"])])
 	return out
+
+
+## Gives decided finds ([[family, kind id]], as `decide` made them): each is one more owned. Returns
+## [{family, id, name, rarity}]; one whose family or kind is no longer in the data is passed over.
+func give(decided: Array) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for pair: Array in decided:
+		var kind := kind_of(str(pair[0]), str(pair[1]))
+		if not kind.is_empty():
+			out.append(add(str(pair[0]), kind))
+	return out
+
+
+## A family's kind by its id ({} when there is none).
+func kind_of(family: String, kind_id: String) -> Dictionary:
+	for k: Dictionary in families.get(family, {}).get("kinds", []):
+		if str(k["id"]) == kind_id:
+			return k
+	return {}
+
+
+## The rarest of decided finds ("" for none), for a plot's glint.
+func rarest(decided: Array) -> String:
+	var best := ""
+	for pair: Array in decided:
+		var rarity := str(kind_of(str(pair[0]), str(pair[1])).get("rarity", "common"))
+		if best == "" or RARITIES.find(rarity) > RARITIES.find(best):
+			best = rarity
+	return best
 
 
 ## A condition a trigger names in data (`when`): "" always holds.

@@ -159,11 +159,51 @@ func plant(i: int, crop_id: String) -> bool:
 		game.plots[i]["off"] = true   # planted out of its seasons: sells for more, withers sooner (kept with the plot)
 	if use_pollinated:
 		game.plots[i]["pol"] = true
+	_hold_luck(i, crop_id, use_pollinated)
 	game.collectibles.roll_collectible(game.collectibles.collection_of_crop.get(crop_id, {}),
 		Balance.f("economy.collectible_action_chance"), i)
 	game.advance_tutorial(GameState.Tutorial.PLANT)
 	game.plot_updated(i)
 	return true
+
+
+## Decides, as a crop is planted, what its harvest will turn up, and keeps it with the plot (`held`): the drop
+## (a golden harvest, a bird, a collectible...) and the finds (a gopher, a dog, a Queen Bee among flowers). So
+## a ripe plot that holds something can glint before it is harvested (`held_rarity`): luck to look forward to,
+## not a note after the fact. The luck is the same as before, only spent a crop's growing time earlier; a crop
+## left to wither loses what it held. A plot planted before this (an old save) has no `held` and is rolled at
+## its harvest, as it always was.
+func _hold_luck(i: int, crop_id: String, pollinated: bool) -> void:
+	if not game.drops_enabled:
+		return
+	var stars := game.mastery.stars(crop_id)
+	var held := {}
+	var drop := game.drops.decide_drop(crop_id, stars,
+		Balance.i("economy.pollinated_super_mult") if pollinated else 1)
+	if not drop.is_empty():
+		held["drop"] = drop
+	var finds := game.finds.decide("harvest", stars)
+	if game.crops[crop_id].get("flower", false):
+		finds.append_array(game.finds.decide("flower_harvest"))
+	if not finds.is_empty():
+		held["finds"] = finds
+	game.plots[i]["held"] = held
+
+
+## How rare what plot `i` holds is ("" when it holds nothing worth a glint): the rarest of its drop and its
+## finds. Only a find glints (a golden harvest, a bird, a collectible, a creature); the small bonuses stay a
+## surprise.
+func held_rarity(i: int) -> String:
+	var held: Variant = game.plots[i].get("held")
+	if not held is Dictionary or (held as Dictionary).is_empty():
+		return ""
+	var best := game.finds.rarest(held.get("finds", []))
+	var drop: Dictionary = held.get("drop", {})
+	if HarvestDrops.glints(drop):
+		var rarity := game.drops.rarity_of(drop)
+		if best == "" or FindsSystem.RARITIES.find(rarity) > FindsSystem.RARITIES.find(best):
+			best = rarity
+	return best
 
 
 func is_fertilized(i: int) -> bool:
@@ -214,7 +254,10 @@ func harvest(i: int) -> Dictionary:
 	var gained := int(crop["xp"])
 
 	var was_pollinated: bool = game.plots[i].get("pol", false)
-	var drop := game.drops.roll_drop(
+	# What the plot held since it was planted (`_hold_luck`) is given now; a plot planted before luck was held
+	# (an old save) is rolled here, as it always was.
+	var held: Variant = game.plots[i].get("held")
+	var drop: Dictionary = game.drops.give_drop(held.get("drop", {})) if held is Dictionary else game.drops.roll_drop(
 		crop_id,
 		stars_before,
 		Balance.i("economy.pollinated_super_mult") if was_pollinated else 1
@@ -244,12 +287,20 @@ func harvest(i: int) -> Dictionary:
 	var part := game.daily.roll_part()
 	var bushel := game.crafting.roll_bushel(crop_id)
 	var bunch := game.shed.roll_bunch(crop_id, i)
-	var found := game.finds.roll("harvest", stars_before)
+	var found: Array[Dictionary] = game.finds.give(held.get("finds", [])) if held is Dictionary \
+		else game.finds.roll("harvest", stars_before)
 	var rich: bool = drop.get("type", "") in ["golden", "super_harvest"] or was_pollinated
 	var feed_found := game.feeds.roll_harvest(crop_id, stars_before, rich)
 	var bee_news := ""
 	if crop.get("flower", false):
-		bee_news = game.bees.flower_harvest_bees()
+		bee_news = game.bees.flower_harvest_bees(not held is Dictionary)
+	# Every find is said where it was made, in its rarity's colours (FarmGrid's one burst for all finds).
+	if not drop.is_empty():
+		game.found.emit(i, str(drop["text"]), str(drop["rarity"]))
+	for f: Dictionary in found:
+		game.found.emit(i, tr("FOUND") + str(f["name"]), str(f["rarity"]))
+	if bee_news != "":
+		game.found.emit(i, bee_news, "rare" if bee_news == tr("A_QUEEN_BEE") else "uncommon")
 	var seeds := game.bees.pollinate(crop_id) if fertilized else 0
 	# A fertilized harvest counts double toward mastery (stars are awarded as they're reached).
 	game.mastery.add(crop_id, 2 if fertilized else 1)
