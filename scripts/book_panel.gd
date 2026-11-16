@@ -2,7 +2,9 @@ class_name BookPanel
 extends Control
 ## A full-screen overlay menu on the interface kit (UiKit): a dimmed backdrop, a wooden panel with its title on
 ## a plaque, a round close button, tabs when it has them (the Market's shelves), and scrolling content that a
-## builder fills (and fills again on `refresh`). Every panel of the game opens in it.
+## builder fills. Each tab's page is built once while the panel is open (going back to a tab shows it again); `refresh`
+## builds the page again, or, when its builder marked it live (`set_live`), only updates it in place (a CardList
+## reads its faces again). Every panel of the game opens in it.
 
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
@@ -27,6 +29,8 @@ var _tabs: Array = []          # [[name, builder]] of the panel open, or empty
 var _tab := 0
 var _scroll: ScrollContainer
 var _refresh_due := false   # a refresh is waiting for the end of the frame
+var _pages := {}            # tab -> its page (a VBoxContainer in the content), built once while the panel is open
+var _stale := {}            # tabs whose live page missed a refresh while hidden
 
 
 func _ready() -> void:
@@ -106,6 +110,7 @@ func _ready() -> void:
 func _on_screen_changed() -> void:
 	if visible:
 		_fit_screen()
+		_clear_pages()
 		_build_now()
 
 
@@ -128,6 +133,7 @@ static func width_for(view_w: float, view_h := -1.0) -> float:
 ## builder(content: VBoxContainer) fills the panel; it runs again on refresh().
 func open_panel(title: String, builder: Callable) -> void:
 	_tabs = []
+	_tab = 0
 	_show(title, builder)
 
 
@@ -145,7 +151,7 @@ func show_tab(index: int) -> void:
 	_tab = index
 	_builder = _tabs[index][1]
 	_build_tab_bar()
-	_build_now()
+	_show_page()
 	_scroll.scroll_vertical = 0
 
 
@@ -156,6 +162,7 @@ func _show(title: String, builder: Callable) -> void:
 	_build_tab_bar()
 	UiFx.pop_next = not visible   # (a panel opening pops its cards in; a tab or a refresh doesn't)
 	UiFx.popped = 0
+	_clear_pages()
 	_build_now()
 	UiFx.pop_next = false
 	if not visible:
@@ -193,16 +200,63 @@ func refresh() -> void:
 
 func _build_again() -> void:
 	_refresh_due = false
-	if visible:
+	if not visible:
+		return
+	for k: int in _pages.keys():   # (the hidden pages: a live one updates when shown again, others are rebuilt)
+		if k != _tab:
+			if (_pages[k] as Node).has_meta(&"live"):
+				_stale[k] = true
+			else:
+				(_pages[k] as Node).queue_free()
+				_pages.erase(k)
+	var shown := page()
+	if shown != null and shown.has_meta(&"live"):
+		(shown.get_meta(&"live") as Callable).call()
+	else:
 		_build_now()
 
 
+## Marks `on_page` live: a refresh calls `update` (which updates it in place) instead of building it again.
+static func set_live(on_page: Control, update: Callable) -> void:
+	on_page.set_meta(&"live", update)
+
+
+## The page shown now (the content of the tab open).
+func page() -> VBoxContainer:
+	return _pages.get(_tab)
+
+
+## Builds the page of the tab open afresh.
 func _build_now() -> void:
 	if not _builder.is_valid():
 		return
+	if _pages.has(_tab):
+		(_pages[_tab] as Node).queue_free()
+	var fresh := VBoxContainer.new()
+	fresh.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fresh.add_theme_constant_override("separation", 14)
+	_content.add_child(fresh)
+	_pages[_tab] = fresh
+	_stale.erase(_tab)
+	_builder.call(fresh)
+
+
+## Shows the tab open's page, building it the first time.
+func _show_page() -> void:
+	for k: int in _pages:
+		(_pages[k] as Control).visible = k == _tab
+	if not _pages.has(_tab):
+		_build_now()
+	elif _stale.has(_tab):
+		_stale.erase(_tab)
+		(page().get_meta(&"live") as Callable).call()
+
+
+func _clear_pages() -> void:
 	for child in _content.get_children():
 		child.queue_free()
-	_builder.call(_content)
+	_pages.clear()
+	_stale.clear()
 
 
 func _on_backdrop_input(event: InputEvent) -> void:

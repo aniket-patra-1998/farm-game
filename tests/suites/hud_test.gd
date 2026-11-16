@@ -169,40 +169,36 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 		book.show_tab(k)
 		var kind := str(HudMarket.SHELVES[k - 1][0])
 		var cards := 0
-		var grids := 0
-		for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
-			if not grid.is_queued_for_deletion():
-				cards += grid.get_child_count()
-				grids += 1
+		var lists := book.page().find_children("*", "CardList", true, false)
+		for list: CardList in lists:
+			cards += list.ids.size()
 		_eq(cards, int(want.get(kind, 0)), "the %s shelf has a card for each" % kind)
 		if kind == "building":
-			_eq(grids, filled, "a grid under a heading for each section that has buildings")
+			_eq(lists.size(), filled, "a grid under a heading for each section that has buildings")
 	var placed := []
 	hud.place_requested.connect(func(id: String) -> void: placed.append(id))
 	book.show_tab(HudMarket.SHELVES.find(["decor", "DECORATIONS"]) + 1)
-	var bought := false
+	await get_tree().process_frame
+	var shelf: CardList = book.page().find_children("*", "CardList", true, false)[0]
+	_check(not shelf.shown().is_empty() and shelf.shown().size() <= shelf.ids.size(),
+		"the shelf shows cards for the items in view")
 	var told := false
-	for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
-		if grid.is_queued_for_deletion():
-			continue
-		for card: Button in grid.get_children():
-			if not told and not card.get_meta(&"buyable", true):
-				card.pressed.emit()
-				told = true
+	for id in shelf.ids:
+		if not told and not hud.market.card_face(id)["buyable"]:
+			shelf.press(id)
+			told = true
 	_check(told, "the decorations shelf has a card that can't be bought yet")
 	var strips := 0
-	for strip: PanelContainer in book.find_children("*", "PanelContainer", true, false):
+	for strip: PanelContainer in book.page().find_children("*", "PanelContainer", true, false):
 		if strip.visible and not strip.is_queued_for_deletion() and strip.has_meta(&"about"):
 			strips += 1
 	_check(strips == 1 and placed.is_empty() and book.visible,
 		"tapping it shows all about it at the top of the shelf, and buys nothing")
-	for grid: GridContainer in book.find_children("*", "GridContainer", true, false):
-		if grid.is_queued_for_deletion():
-			continue
-		for card: Button in grid.get_children():
-			if not bought and card.get_meta(&"buyable", false):
-				card.pressed.emit()
-				bought = true
+	var bought := false
+	for card in shelf.shown():
+		if not bought and card.get_meta(&"buyable", false):
+			card.pressed.emit()
+			bought = true
 	_check(bought and placed.size() == 1, "tapping an open card puts that item in hand")
 	_check(not book.visible, "and closes the Market")
 	main.queue_free()
@@ -646,3 +642,58 @@ func test_361_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 	Game.modal_open = false
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## A menu of cards scales to any number of items (scaling report: menus build only what's visible): a list of
+## 2,000 made-up items keeps only the cards in view, opens, scrolls and refreshes within a budget, and a refresh
+## reads only the faces on screen.
+func test_362_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
+	const ITEMS := 2000
+	const MOST_CARDS := 80       # cards that may exist at once, whatever the count
+	const OPEN_MS := 60.0        # budgets on a desktop CI runner (a phone is a few times slower)
+	const SCROLL_MS := 20.0
+	const REFRESH_MS := 10.0
+	var ids: Array[String] = []
+	for k in ITEMS:
+		ids.append("fake_%d" % k)
+	var asked := [0]
+	var picture := ImageTexture.create_from_image(Image.create(8, 8, false, Image.FORMAT_RGBA8))
+	var face := func(id: String) -> Dictionary:
+		asked[0] += 1
+		return {"name": id, "line": "", "badge": ["coin", "100"], "locked": false, "stars": [], "buyable": true}
+	var tapped := []
+	var scroll := ScrollContainer.new()
+	scroll.size = Vector2(1200, 700)
+	add_child(scroll)
+	var page := VBoxContainer.new()
+	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(page)
+	var started := Time.get_ticks_usec()
+	var list := CardList.make(ids, face, func(id: String) -> void: tapped.append(id), 1200.0,
+		func(_id: String) -> Texture2D: return picture)
+	page.add_child(list)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var open_ms := (Time.get_ticks_usec() - started) / 1000.0
+	_check(list.get_child_count() <= MOST_CARDS and not list.shown().is_empty(),
+		"only the cards in view are made (%d of %d)" % [list.get_child_count(), ITEMS])
+	_check(list.custom_minimum_size.y > scroll.size.y * 10.0, "but the list is as tall as all its rows")
+	_check(open_ms < OPEN_MS, "it opens within budget (%.1f ms)" % open_ms)
+	started = Time.get_ticks_usec()
+	for k in 10:
+		scroll.scroll_vertical = int(list.custom_minimum_size.y * k / 10.0)
+		list._lay_out()
+	var scroll_ms := (Time.get_ticks_usec() - started) / 1000.0
+	_check(scroll_ms < SCROLL_MS, "scrolling the whole list is within budget (%.1f ms)" % scroll_ms)
+	_check(list.get_child_count() <= MOST_CARDS, "and the cards are reused, not made again")
+	var last: CardFace = list.shown()[0]
+	_check(int(last.id.trim_prefix("fake_")) > ITEMS / 2, "the cards show the items scrolled to")
+	asked[0] = 0
+	started = Time.get_ticks_usec()
+	list.refresh()
+	var refresh_ms := (Time.get_ticks_usec() - started) / 1000.0
+	_check(asked[0] == list.shown().size(), "a refresh reads only the faces on screen")
+	_check(refresh_ms < REFRESH_MS, "within budget (%.1f ms)" % refresh_ms)
+	list.press("fake_1999")
+	_eq(tapped, ["fake_1999"], "a card's item can be pressed whether it is on screen or not")
+	scroll.free()

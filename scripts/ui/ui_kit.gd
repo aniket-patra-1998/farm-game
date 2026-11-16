@@ -172,7 +172,7 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 
 ## Holding `button` a moment shows its name in a small bubble above it (an icon-only button's name, on a phone
 ## where nothing hovers), and that hold doesn't press it.
-static func long_press_name(button: Button, words: String) -> void:
+static func long_press_name(button: BaseButton, words: String) -> void:
 	button.tooltip_text = words
 	var timer := Timer.new()
 	timer.one_shot = true
