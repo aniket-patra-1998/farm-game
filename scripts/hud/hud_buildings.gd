@@ -293,6 +293,8 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 				eggs.add_child(b)
 			if eggs.get_child_count() > 0:
 				content.add_child(eggs)
+			else:
+				eggs.free()   # (no eggs: the row was never shown; one left out of the tree is never freed)
 		"calves":
 			var bull := tr("A_BULL_LIVES_HERE_HARVESTS_CAN") if Game.has_inside(o, "bull") else tr("NO_BULL_YET_A_LONELY_BULL")
 			content.add_child(
