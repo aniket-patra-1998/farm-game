@@ -143,6 +143,9 @@ var strays: StraySystem
 var crafting: CraftingSystem
 var homes: HousingSystem
 var buildings: BuildingSystem
+var collecting: CollectSystem   # collecting what is ready (Game.collect)
+var shop: ShopSystem               # buying and selling what stands on the farm
+var helpers: HelperSystem          # using a farmhand, arborist or gardener
 var persistence: Persistence          # saving and loading (not in `systems`: it has no state of its own)
 
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
@@ -197,10 +200,13 @@ func _init() -> void:
 	crafting = CraftingSystem.new(self)
 	homes = HousingSystem.new(self)
 	buildings = BuildingSystem.new(self)
+	collecting = CollectSystem.new(self)
+	shop = ShopSystem.new(self)
+	helpers = HelperSystem.new(self)
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social]
+		social, collecting, shop, helpers]
 
 
 func _ready() -> void:
@@ -486,53 +492,11 @@ func can_afford_item(item_id: String) -> bool:
 ## (its XP, the decorating ribbon, a first vehicle filling the fuel tank). False, with a message, if it
 ## can't be bought.
 func buy_item(item_id: String) -> bool:
-	var it := item_data(item_id)
-	var verdict := buildings.can_buy(item_id)  # its level, the farm's limit, its price
-	if not verdict.ok():
-		if verdict.text != "":
-			message.emit(verdict.text)
-		return false
-	var price := buildings.price_of(item_id)
-	if not (spend_gems(int(price["gems"])) if price.has("gems") else spend(int(price.get("coins", 0)))):
-		return false
-	var bought_xp := buy_xp(item_id)
-	if bought_xp > 0:
-		add_xp(bought_xp)
-	if it["kind"] == "decor":
-		ribbons.bump("decor_bought", 1)
-	if it["kind"] == "vehicle":
-		vehicles.on_vehicle_bought()
-	return true
+	return shop.buy_item(item_id)
 
 
 func buy_and_place(item_id: String, row: int, col: int) -> bool:
-	var it := item_data(item_id)
-	if it.is_empty() or not can_place(item_id, row, col) or not buy_item(item_id):
-		return false
-	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
-	if it.get("special", "") == "garden_shed":
-		shed.on_shed_built()
-	if it["kind"] == "crafting":
-		crafting.on_crafting_built(obj)
-	if it["kind"] == "building":
-		obj["level"] = maxi(1, finds.tier(str(it.get("home_of", ""))))
-		obj["inside"] = {}
-		if it.has("build_materials"):
-			obj["construction"] = {} # a frame: finished with materials, like FarmVille
-			message.emit(tr("FRAME_PLACED_TAP_IT_TO_ADD") % it["name"])
-		else:
-			message.emit(tr("BUILT_OPEN_IT_TO_MOVE_ANIMALS") % it["name"])
-	elif it["kind"] == "vehicle":
-		if it.has("build_materials"):
-			obj["construction"] = {} # the Combine's chassis, finished with Vehicle Parts
-			message.emit(tr("CHASSIS_PLACED_TAP_IT_TO_ADD") % it["name"])
-		else:
-			message.emit(tr("BOUGHT_PICK_IT_IN_THE_TOOLBAR") % it["name"])
-	next_uid += 1
-	grass_over(item_id, row, col)
-	add_object(obj)
-	objects_updated()
-	return true
+	return shop.buy_and_place(item_id, row, col)
 
 
 func move_object(uid: int, row: int, col: int) -> bool:
@@ -693,75 +657,7 @@ func object_payout(obj: Dictionary) -> Vector2i:
 
 ## Returns {"coins", "xp", "drop", "drop_text", "name"} or {} if nothing was ready.
 func collect(uid: int) -> Dictionary:
-	var obj := object_by_uid(uid)
-	if obj.is_empty() or not is_ready(obj):
-		return {}
-	# FarmVille: collecting pays coins and mastery, never XP (an animal or tree gave its XP once, when bought);
-	# only a bonus drop adds XP.
-	# Fed or hungry, and touching its own kind.
-	var earned := roundi(object_payout(obj).x * feeds.coin_multiplier(obj) * adjacency.coin_multiplier(obj))
-	feeds.rare_boost = feeds.rare_multiplier(obj)
-	var gained := 0
-	var drop := drops.roll_drop("", 0)
-	match drop.get("type", ""):
-		"golden":
-			earned *= Balance.i("economy.golden_coin_multiplier")
-			gained += Balance.i("economy.golden_xp")
-		"super_harvest":
-			earned *= 2
-		"bonus_xp":
-			gained += Balance.i("economy.bonus_xp")
-	obj["t"] = now()
-	add_coins(earned)
-	add_xp(gained)
-	ribbons.bump("collected", 1)
-	var part := daily.roll_part()
-	var extras: Array[String] = []
-	var name_before: String = item_data(obj["id"])["name"]
-	# Every animal, tree or bloom harvested earns its own mastery, loose or living in a home.
-	if is_home(obj):
-		var inside: Dictionary = obj.get("inside", {})
-		for id in inside:
-			mastery.add_harvest(id, int(inside[id]))
-	else:
-		mastery.add_harvest(obj["id"], 1)
-	if kind_of(obj) == "bloom":
-		extras.append_array(nurture.from_bloom(obj))
-	if is_home(obj):
-		extras.append_array(specials.building_specials(obj))
-		extras.append_array(specials.grow_up_inside(obj))
-	else:
-		var adult := specials.grows_into(obj["id"])
-		if adult != "":
-			obj["id"] = adult
-			message.emit(tr("YOUR_GREW_UP_INTO_A") % [name_before.to_lower(), item_data(adult)["name"].to_lower()])
-			extras.append(tr("GREW_UP"))
-	obj.erase(FeedSystem.FED)   # what it was fed was for this cycle
-	feeds.rare_boost = 1.0
-	var coll_find := ""
-	if kind_of(obj) == "tree":
-		var fruit := feeds.roll_tree()
-		if fruit != "":
-			extras.append(tr("FOUND_FEED") % feeds.feed_name(fruit))
-		coll_find = collectibles.roll_collectible(
-			collectibles.tree_collection,
-			Balance.f("economy.animal_collectible_chance")
-		)
-	elif kind_of(obj) == "animal" or is_home(obj):
-		coll_find = collectibles.roll_collectible(
-			collectibles.animal_collection,
-			Balance.f("economy.animal_collectible_chance")
-		)
-	if coll_find != "":
-		extras.append(tr("FOUND") + coll_find)
-	if drop.get("type", "") == "golden":
-		ribbons.bump("golden_finds", 1)
-		message.emit(tr("GOLDEN_COLLECTION_X_COINS") % Balance.i("economy.golden_coin_multiplier"))
-	elif drop.get("type", "") == "bird":
-		message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
-	objects_updated(uid)
-	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
-		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras}
+	return collecting.collect(uid)
 
 
 # ---------------------------------------------------------------- buildings
@@ -845,30 +741,7 @@ func helpers_held(kind: String) -> int:
 ## A helper does everything the action registry (data/actions.json) gives its kind: collects what is ready, then
 ## feeds what is hungry for the cycle ahead. One helper is used up whatever it did.
 func use_helper(kind: String) -> int:
-	var helper: Dictionary = HELPERS[kind]
-	if helpers_held(kind) <= 0:
-		message.emit(tr("NO_LEFT") % tr(helper["name"]))
-		return 0
-	var actions := Actions.for_helper(kind)
-	var ready: Array = []
-	if "collect" in actions:
-		for o in objects:
-			if kind_of(o) == kind and is_ready(o):
-				ready.append(int(o["uid"]))
-	var coins_total := 0
-	for uid in ready:
-		coins_total += int(collect(uid).get("coins", 0))
-	var fed := feeds.feed_all(kind) if "feed" in actions else 0
-	if ready.is_empty() and fed == 0:
-		message.emit(tr("NOTHING_IS_READY_TO_COLLECT_YET"))
-		return 0
-	set(helper["field"], helpers_held(kind) - 1)
-	if not ready.is_empty():
-		message.emit(tr(helper["done"]) % [ready.size(), coins_total])
-	if fed > 0:
-		message.emit(tr("FED_ANIMALS") % fed)
-	inventory_changed.emit()
-	return ready.size() + fed
+	return helpers.use_helper(kind)
 
 
 # ---------------------------------------------------------------- buying XP, selling and turning
@@ -882,8 +755,7 @@ func buy_xp(item_id: String) -> int:
 
 ## What selling an object returns: 5% of its price, as in FarmVille.
 func sell_value(obj: Dictionary) -> int:
-	var d := catalog.get_def(obj["id"])
-	return (d as PlaceableDef).sell_value() if d is PlaceableDef else 0
+	return shop.sell_value(obj)
 
 
 func can_sell(obj: Dictionary) -> bool:
@@ -892,38 +764,7 @@ func can_sell(obj: Dictionary) -> bool:
 
 ## Sells an object. Animals, trees or vehicles inside a building move back onto the farm first.
 func sell_object(uid: int) -> bool:
-	var o := object_by_uid(uid)
-	var verdict := buildings.can_sell(o)
-	if not verdict.ok():
-		message.emit(verdict.text)
-		return false
-	var held: Array[String] = []
-	for id in o.get("inside", {}):
-		for k in int(o["inside"][id]):
-			held.append(id)
-	remove_object(o)
-	if held.size() > 0:
-		# Room check: the building's own tiles are free now that it's gone.
-		var free := 0
-		for r in farm_size:
-			for c in farm_size:
-				var i := index_of(r, c)
-				if plots[i].get("state", "grass") == "grass" and not is_occupied(i):
-					free += 1
-		if free < held.size():
-			add_object(o)
-			message.emit(tr("NOT_ENOUGH_OPEN_GRASS_FOR_THE") % held.size())
-			return false
-		for id in held:
-			place_somewhere(id)
-	var value := sell_value(o)
-	add_coins(value)
-	ribbons.bump("items_sold", 1)
-	var moved := (tr("MOVED_OUT_ONTO_THE_FARM") % held.size()) if held.size() > 0 else ""
-	message.emit(tr("SOLD_THE_FOR_COINS") % [item_data(o["id"])["name"], value, moved])
-	inventory_changed.emit()
-	objects_updated()
-	return true
+	return shop.sell_object(uid)
 
 
 ## Turns an object to face the other way. Only square ones turn, so nothing changes size.
