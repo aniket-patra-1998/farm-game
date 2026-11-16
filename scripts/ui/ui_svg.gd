@@ -5,7 +5,8 @@ extends RefCounted
 ## for the screen's density), so it is crisp at any size, then kept. `of` gives null for a kind with no file.
 
 const DIR := "res://art/icons/ui/"
-const STEP := 8          # sizes are rounded up to this many pixels, so near sizes share one drawing
+const LEAST := 32        # the smallest drawing; sizes go up in powers of two, so an icon swelling in a pulse
+						 # never draws itself again for every size it passes (mipmaps take it down smoothly)
 const OVERSAMPLE := 1.5  # drawn this much larger than shown, then smoothed down (mipmaps)
 
 static var _cache := {}  # "kind:px" -> ImageTexture
@@ -22,7 +23,7 @@ static func of(kind: String, px: float) -> Texture2D:
 	var text := _text(kind)
 	if text == "":
 		return null
-	var side := int(ceil(px * OVERSAMPLE / STEP)) * STEP
+	var side := maxi(LEAST, nearest_po2(int(ceil(px * OVERSAMPLE))))
 	var key := "%s:%d" % [kind, side]
 	if _cache.has(key):
 		return _cache[key]

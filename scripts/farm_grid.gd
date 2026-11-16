@@ -187,6 +187,12 @@ func _reward(at: Vector2, coins: int, xp: int) -> void:
 
 
 func _on_objects_changed() -> void:
+	var pt := PerfReadout.start()
+	_on_objects_changed_timed()
+	PerfReadout.stop("grid_objects", pt)
+
+
+func _on_objects_changed_timed() -> void:
 	placement.refresh_homes()  # a home may have filled up, or gone
 	pieces.queue_sync()
 	shadows.queue_redraw()
@@ -970,6 +976,12 @@ func _run(kind: String, i: int) -> int:
 
 ## The farmer got to a job and did it (or found nothing left to do: an empty result).
 func _on_action_done(job: Dictionary, result: Dictionary) -> void:
+	var pt := PerfReadout.start()
+	_on_action_done_timed(job, result)
+	PerfReadout.stop("farm_action_done", pt)
+
+
+func _on_action_done_timed(job: Dictionary, result: Dictionary) -> void:
 	if result.is_empty():
 		if job["kind"] != "vehicle":
 			Feedback.moment("error")

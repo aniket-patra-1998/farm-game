@@ -184,6 +184,12 @@ func _apply_quality() -> void:
 
 
 func _process(_delta: float) -> void:
+	var pt := PerfReadout.start()
+	_process_timed(_delta)
+	PerfReadout.stop("world_3d", pt)
+
+
+func _process_timed(_delta: float) -> void:
 	if grid == null or camera_2d == null:
 		return
 	var centre := grid.to_local(camera_2d.get_screen_center_position())

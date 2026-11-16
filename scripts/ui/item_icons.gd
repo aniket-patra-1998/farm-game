@@ -196,6 +196,12 @@ func _slot() -> SubViewport:
 
 
 func _process(_delta: float) -> void:
+	var pt := PerfReadout.start()
+	_process_timed(_delta)
+	PerfReadout.stop("item_pictures", pt)
+
+
+func _process_timed(_delta: float) -> void:
 	if DisplayServer.get_name() == "headless":
 		_waiting.clear()         # (nothing draws without a screen: the cards keep their blank pictures)
 		return

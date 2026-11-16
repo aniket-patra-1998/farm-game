@@ -26,6 +26,7 @@ func _ready() -> void:
 ## moment this one is (a swipe's plots, a streak of harvests): each step plays a note higher up the scale
 ## (Balance `feel.run_scale`, in semitones), and past its end the top note holds.
 func moment(name: String, step := 0) -> void:
+	PerfReadout.note(name)
 	var m: Dictionary = _moments.get(name, {})
 	if m.is_empty():
 		push_warning("Feedback: no moment called %s" % name)

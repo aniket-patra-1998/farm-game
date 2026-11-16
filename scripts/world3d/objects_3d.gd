@@ -238,6 +238,12 @@ func _rebuild(o: Dictionary) -> void:
 
 
 func sync() -> void:
+	var pt := PerfReadout.start()
+	sync_timed()
+	PerfReadout.stop("objects_3d_sync", pt)
+
+
+func sync_timed() -> void:
 	_queued = false
 	var light := not _full   # a timer tick: only what time changes
 	_full = false

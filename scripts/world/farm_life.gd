@@ -31,6 +31,12 @@ func queue_sync() -> void:
 ## A new animal, or one moved to a new spot or turned into another (a calf grown up), starts afresh there,
 ## on its own beat (seeded by its uid, so the farm moves the same way each time it loads).
 func sync() -> void:
+	var pt := PerfReadout.start()
+	sync_timed()
+	PerfReadout.stop("animals_sync", pt)
+
+
+func sync_timed() -> void:
 	_queued = false
 	var seen := {}
 	for o in Game.objects:
