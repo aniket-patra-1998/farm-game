@@ -1,14 +1,22 @@
 class_name BuildingSheet
 extends PanelContainer
-## A tapped home's sheet: a compact card that slides up from the bottom of the screen, the farm still in view
-## above it. What you came for is the one big button (Collect); how full the home is, what it pays (a coin and a
-## star, not a sentence), a ring for how long until it is ready, and what its next size adds are each a glance.
-## Move and Sell are small; everything else a home can do (feed, its own extras, building the next size) is one
-## tap away in its full panel (More).
+## A tapped building's sheet, for every building: a compact card that slides up from the bottom of the screen,
+## the farm still in view above it. One layout for all (its picture, name and state, a ring for the time to wait,
+## Move/Turn/Sell small at the top, a line with a bar, what it holds, the one big button and More for its full
+## panel); only the middle and the big button differ by its `Kind`:
+## - a home: how full, what it pays (a coin and a star), who lives in it, Collect and Add N, what its next size adds;
+## - a crafting building: how many slots are in use and each one's time; Collect when one is done, else Make
+##   (its recipes, the full panel);
+## - a building site: how far built and each material had of needed; Add my materials;
+## - the Barn: how full its storage is; Open storage (or Repair while broken);
+## - anything else (a home for finds, a shed...): its state; Open.
+## Everything else a building can do (feed, its own extras, building the next size) is in its full panel.
 ##
 ## Built once and kept: opening it for another home, and every change while it is open, only sets its words,
 ## bars and pictures (`_refill`); nothing is thrown away and built again. Its picture is ItemIcons' own (made
 ## once per item and kept).
+
+enum Kind { HOME, CRAFT, BUILD, BARN, OTHER }   # which middle and big button a building gets
 
 const ACCENT := Color("#4fb043")       # the one colour that means "do this"
 const PAPER := Color("#fbf6ea")
@@ -47,6 +55,9 @@ var _fill_block: Control
 var _next_card: PanelContainer
 var _next_pic: TextureRect
 var _pay: Control
+var _detail: Label    # a crafting building's slots, a site's materials: a line each
+var _more: Button
+var _kind := Kind.OTHER
 var _since := 0.0
 var _counting := false
 var _dirty := false   # the farm changed while the sheet was up: refill it this frame
@@ -74,6 +85,8 @@ func _init(owner: FarmHud) -> void:
 	column.add_child(_build_numbers(gap))
 	_inside = HBoxContainer.new()
 	column.add_child(_inside)
+	_detail = BookPanel.text("", 17, SOFT)
+	column.add_child(_detail)
 	column.add_child(_build_next(gap))
 	_note = BookPanel.text("", 16, UiTheme.color("price_short"))
 	column.add_child(_note)
@@ -83,10 +96,22 @@ func _init(owner: FarmHud) -> void:
 	UiKit.keep_fitted(self, _place)   # (as tall as what it says now, and back at the bottom)
 
 
-## Whether thing `o` opens in the sheet: a finished home (a building site, and a home for finds, keep their panel).
+## Whether thing `o` opens in the sheet: every building (homes, crafting buildings, the Barn, building sites...).
 static func suits(o: Dictionary) -> bool:
-	return Game.is_home(o) and not Game.under_construction(o) \
-		and str(Game.item_data(o["id"]).get("special", "")) != "finds_home"
+	return not o.is_empty() and Game.is_building_item(str(o["id"]))
+
+
+## Which middle and big button building `o` gets.
+static func kind_of(o: Dictionary) -> Kind:
+	if Game.under_construction(o):
+		return Kind.BUILD
+	if str(Game.item_data(o["id"]).get("kind", "")) == "barn":
+		return Kind.BARN
+	if Game.crafting.is_crafting(o):
+		return Kind.CRAFT
+	if Game.is_home(o) and str(Game.item_data(o["id"]).get("special", "")) != "finds_home":
+		return Kind.HOME
+	return Kind.OTHER
 
 
 func open(uid: int) -> void:
@@ -272,14 +297,14 @@ func _build_actions(gap: int) -> Control:
 	_collect.add_theme_color_override("font_color", Color.WHITE)
 	_collect.add_theme_color_override("font_hover_color", Color.WHITE)
 	_collect.add_theme_color_override("font_pressed_color", Color.WHITE)
-	_collect.pressed.connect(_on_collect)
+	_collect.pressed.connect(_on_main)
 	row.add_child(_collect)
 	_fill = hud._panel_button("")
 	_fill.pressed.connect(func() -> void: Game.homes.fill_building(_uid))
 	row.add_child(_fill)
-	var more := hud._panel_button(tr("SHEET_MORE"))
-	more.pressed.connect(_on_more)
-	row.add_child(more)
+	_more = hud._panel_button(tr("SHEET_MORE"))
+	_more.pressed.connect(_on_more)
+	row.add_child(_more)
 	return row
 
 
@@ -305,16 +330,15 @@ func _refill() -> void:
 		close()
 		return
 	var id := str(o["id"])
-	var total := Game.inside_total(o)
-	var cap := Game.capacity(o)
+	_kind = kind_of(o)
+	var home := _kind == Kind.HOME
+	var total := Game.inside_total(o) if home else 0
+	var cap := Game.capacity(o) if home else 0
 	var ready := Game.is_ready(o)
 	_pic.texture = ItemIcons.of(id)
 	_name.text = Game.size_name(o)
 	_clock(o, ready)
-	_fill_block.modulate.a = 1.0 if cap > 0 else 0.0   # (a building that holds nothing: no bar, the row keeps its place)
-	_spaces.text = tr("OF_SPACES_USED") % [total, cap]
-	_bar.max_value = maxi(cap, 1)
-	_bar.value = total
+	_numbers(o, total, cap)
 	if not _counting:
 		var pay := Game.object_payout(o)
 		_coins.text = "+" + FarmHud._thousands(pay.x)   # not-ui
@@ -331,8 +355,8 @@ func _refill() -> void:
 			var held_row := UiKit.count_row(held, false)   # (the picture and the count: no cut-off names)
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
-	_inside.visible = total > 0
-	var room := Game.homes.room_for_loose(o) if id != "beehive" else 0
+	_inside.visible = home and total > 0
+	var room := Game.homes.room_for_loose(o) if home and id != "beehive" else 0
 	_fill.visible = room > 0   # (nothing that would move in, none loose or no room: no button, not a grey one)
 	_fill.text = HudBuildings.move_in_words(o, room)
 	_turn.visible = Game.buildings.can_rotate(o).ok()   # (what can never turn has no Turn)
@@ -349,7 +373,7 @@ func _refill() -> void:
 			reasons.append(verdict.text)
 	_note.text = "\n".join(PackedStringArray(reasons))
 	_note.visible = not reasons.is_empty()
-	_next.text = _next_size(o, cap)
+	_next.text = _next_size(o, cap) if home else ""
 	_next_card.visible = _next.text != ""
 	if _next_card.visible:
 		_next_pic.texture = ItemIcons.sized(id, Game.level_of(o) + 1)
@@ -359,7 +383,13 @@ func _refill() -> void:
 ## ring) and the big button, which says what it is waiting for when it can't be pressed. A building that never
 ## pays has neither ring nor button.
 func _clock(o: Dictionary, ready: bool) -> void:
+	_more.visible = true
+	if _kind != Kind.HOME:
+		_clock_other(o)
+		return
 	_state.text = hud.buildings.state_line(o)
+	_state.visible = true
+	_detail.visible = false
 	var cycle := maxf(float(Game.cycle_of(o)), 1.0)
 	var along := clampf(1.0 - Game.seconds_until_ready(o) / cycle, 0.0, 1.0) if Game.inside_total(o) > 0 else 0.0
 	_ring.share = 1.0 if ready else along
@@ -442,7 +472,107 @@ func _on_more() -> void:
 	var o := Game.object_by_uid(_uid)
 	if o.is_empty():
 		return
-	hud.open_building_panel(_uid)   # (which closes this sheet)
+	hud.open_full_panel(_uid)   # (which closes this sheet)
+
+
+## The big button: what this building is for, right now.
+func _on_main() -> void:
+	var o := Game.object_by_uid(_uid)
+	if o.is_empty():
+		return
+	match _kind:
+		Kind.HOME:
+			_on_collect()
+		Kind.CRAFT:
+			if Game.crafting.crafts_done(o) > 0:
+				Game.crafting.finish_crafts(_uid)   # (the sheet refills from the change)
+			else:
+				_on_more()   # Make: its recipes
+		Kind.BUILD:
+			Game.land.add_materials(_uid)
+		_:
+			_on_more()
+
+
+## The line with a bar: a home's spaces, a crafting building's slots in use, a site's materials, the Barn's
+## storage; a building with none of these has no such line.
+func _numbers(o: Dictionary, total: int, cap: int) -> void:
+	var shown := true
+	match _kind:
+		Kind.HOME:
+			_spaces.text = tr("OF_SPACES_USED") % [total, cap]
+			_set_bar(total, cap)
+			shown = cap > 0
+		Kind.CRAFT:
+			var busy := (o.get("slots", []) as Array).size()
+			var all := Game.crafting.slot_count(o)
+			_spaces.text = tr("SHEET_SLOTS") % [busy, all]
+			_set_bar(busy, all)
+		Kind.BUILD:
+			_spaces.text = tr("SHEET_MATERIALS")
+			_set_bar(roundi(Game.land.construction_progress(o) * 100.0), 100)
+		Kind.BARN:
+			_spaces.text = tr("OF_SPACES_USED") % [Game.storage.stored.size(), Game.storage.total_limit()]
+			_set_bar(Game.storage.stored.size(), Game.storage.total_limit())
+		_:
+			shown = false
+	_fill_block.modulate.a = 1.0 if shown else 0.0   # (the pay beside it keeps the row's place)
+	(_fill_block.get_parent() as Control).visible = shown or _pay.visible
+
+
+func _set_bar(value: int, most: int) -> void:
+	_bar.max_value = maxi(most, 1)
+	_bar.value = value
+
+
+## The clock's part for a building that isn't a home: its state and ring, its lines (a crafting building's slots,
+## a site's materials), and what its big button says.
+func _clock_other(o: Dictionary) -> void:
+	_pay.visible = false
+	_ring.visible = false
+	_collect.visible = true
+	_collect.disabled = false
+	_collect.modulate.a = 1.0
+	var state := hud.buildings.state_line(o)
+	var lines: Array[String] = []
+	match _kind:
+		Kind.CRAFT:
+			var done := Game.crafting.crafts_done(o)
+			var soonest := -1
+			for slot: Dictionary in o.get("slots", []):
+				var left := int(slot["done"]) - Game.now()
+				lines.append("%s: %s" % [Game.catalog.get_def(str(slot["r"])).name,   # not-ui (a recipe and its time)
+					tr("SLOT_READY") if left <= 0 else FarmGrid.format_duration(left)])
+				if left > 0 and (soonest < 0 or left < soonest):
+					soonest = left
+			if done > 0:
+				state = tr("READY_TO_COLLECT")
+			elif soonest > 0:
+				state = tr("STATE_READY_IN") % FarmGrid.format_duration(soonest)
+				_ring.visible = true
+				_ring.share = clampf(1.0 - float(soonest) / maxf(float(Game.crafting.craft_seconds(o)), 1.0), 0.0, 1.0)
+				_ring.words = FarmGrid.format_duration(soonest)
+			else:
+				state = tr("SHEET_IDLE")
+			_collect.text = tr("COLLECT") if done > 0 else tr("SHEET_MAKE")
+			_more.visible = done > 0   # (Make is its full panel: no second button to the same place)
+		Kind.BUILD:
+			var need: Dictionary = Game.item_data(o["id"]).get("build_materials", {})
+			var have: Dictionary = o.get("construction", {})
+			for m: String in need:
+				lines.append(tr("OF_YOU_HOLD") % [GameState.part_names.get(m, m), int(have.get(m, 0)), int(need[m]),
+					int(Game.parts.get(m, 0))])
+			_collect.text = tr("ADD_MY_MATERIALS")
+		Kind.BARN:
+			_collect.text = tr("SHEET_REPAIR") if o.get("broken", false) else tr("SHEET_OPEN_STORAGE")
+			_more.visible = false
+		_:
+			_collect.text = tr("SHEET_OPEN")
+			_more.visible = false
+	_state.text = state
+	_state.visible = state != ""
+	_detail.text = "\n".join(PackedStringArray(lines))
+	_detail.visible = not lines.is_empty()
 
 
 ## How far along a home is, as a ring that fills.

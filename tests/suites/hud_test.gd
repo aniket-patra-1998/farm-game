@@ -797,3 +797,51 @@ func _sheet_fits(sheet: BuildingSheet, what: String) -> void:
 	_check(sheet.position.y >= 0.0 and absf(sheet.position.y + sheet.size.y - (area.y - BuildingSheet.EDGE)) < 1.0,
 		"%s sits wholly on the screen at the bottom (top %d)" % [what, sheet.position.y])
 	_check(sheet.position.x >= 0.0 and sheet.position.x + sheet.size.x <= area.x + 0.5, "%s is inside the width" % what)
+
+
+## The farmer pictures in Settings sit in the middle of their buttons: they were centred before they had a size,
+## so each hung off its button's corner over the line below. Anything anchored to the middle of its parent in the
+## panel lies inside it, and `UiKit.centered` centres a thing that has no size yet.
+func test_367_centred_pictures_sit_inside_their_buttons() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.tutorial_step = GameState.Tutorial.DONE
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var book: BookPanel = hud.get("_book")
+	hud.call("_show_settings")
+	for f in 3:
+		await get_tree().process_frame
+	var faces := book.find_children("*", "PortraitIcon", true, false)
+	_check(faces.size() >= 2, "a picture for each farmer (%d)" % faces.size())
+	for face: PortraitIcon in faces:
+		var inside: Rect2 = face.get_global_rect()
+		var holder: Rect2 = (face.get_parent() as Control).get_global_rect()
+		_check(face.size.x > 0.0 and holder.grow(0.5).encloses(inside),
+			"a farmer picture lies inside its button (%s in %s)" % [inside, holder])
+		_check(inside.get_center().distance_to(holder.get_center()) < 1.0, "and in its middle")
+	var centred := 0
+	for c: Control in book.find_children("*", "Control", true, false):
+		var parent := c.get_parent() as Control
+		if parent == null or not c.is_visible_in_tree() or c.anchor_left != 0.5 or c.anchor_top != 0.5:
+			continue
+		centred += 1
+		_check(parent.get_global_rect().grow(0.5).encloses(c.get_global_rect()),
+			"%s, centred, lies inside %s" % [c.name, parent.name])
+	_check(centred >= 2, "the panel has centred things to check (%d)" % centred)
+	book.close_panel()
+	Game.modal_open = false
+	# Centred before it has a size: it grows from the middle once it gets one.
+	var box := Control.new()
+	box.size = Vector2(100, 100)
+	add_child(box)
+	var thing := UiKit.centered(Control.new())
+	thing.custom_minimum_size = Vector2(40, 20)
+	box.add_child(thing)
+	await get_tree().process_frame
+	_eq(thing.position, Vector2(30, 40), "a thing centred before it had a size grows from the middle")
+	box.free()
+	main.queue_free()
+	await get_tree().process_frame
