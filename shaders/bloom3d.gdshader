@@ -17,7 +17,8 @@ uniform float span = 0.4;          // the part of the cycle one head takes to op
 uniform float bud_wide = 0.26;     // a closed bud's width, of the open flower's..
 uniform float bud_tall = 0.5;      // ..and its height
 uniform float sway = 0.035;        // how far the top of the plant sways, per tile of height squared
-uniform float roughness = 0.72;
+uniform float roughness = 0.9;
+uniform float wrap = 0.6;          // how far light wraps round a petal or a leaf: they are thin and soft
 global uniform float crop_clock;   // seconds on the farm's clock (Crops3D)
 global uniform float wetness;      // 0..1: how wet everything is (SurfaceWeather)
 instance uniform float ripe_from = -1000000.0;
@@ -57,7 +58,10 @@ void fragment() {
 		NORMAL = -NORMAL;
 	}
 	ROUGHNESS = roughness * (1.0 - 0.4 * wetness);
-	SPECULAR = 0.2;
-	RIM = 0.25 * head;
-	RIM_TINT = 0.7;
+	SPECULAR = 0.0;
+}
+
+// Petals and leaves are thin and soft: light wraps round them (no hard dark side) and they never shine.
+void light() {
+	DIFFUSE_LIGHT += clamp((dot(NORMAL, LIGHT) + wrap) / (1.0 + wrap), 0.0, 1.0) * ATTENUATION * LIGHT_COLOR;
 }

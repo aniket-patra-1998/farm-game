@@ -1,7 +1,7 @@
 extends TestSuite
 ## FarmVille's random events: surprise drops, collectibles, fuel finds, bunches, mystery prizes.
 
-const BLOOM_MOST_TRIANGLES := 3400   # the most a bloom may be made of (a Full Bloom of seven roses is the heaviest)
+const BLOOM_MOST_TRIANGLES := 3100   # the most a bloom may be made of (a Full Bloom of sunflowers is the heaviest)
 
 
 func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:

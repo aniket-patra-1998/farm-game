@@ -159,12 +159,15 @@ Open:
   stand inside one tile (`FULL_*`), its heads lighter (`_head`'s `light`). Petals and leaves are smooth shared
   blades that carry their own colours: foot to tip, a darker crease or a lighter vein (a tulip's warm foot, a
   lily's pale throat, a sunflower's orange-to-yellow rays, a rose's light rims). A bloom is one surface, one
-  draw. Its whole life is its shader's (bloom3d): heads start as closed green buds and open at their turn, and
+  draw. Nothing in a flower is ruled: stems are bent tubes, heads look a little their own way, petals and
+  leaves each sit, tilt, measure and twist a little differently, a rose's petals follow a spiral, and each flower
+  takes its own tone of the kind's colour (`TONES`), which is painted softer than the catalog's (`SOFT`). Light
+  wraps round petals and leaves and they never shine (bloom3d's `light`). Its whole life is its shader's (bloom3d): heads start as closed green buds and open at their turn, and
   a Single Bloom left too long yellows, browns and bends over the last 40% of the time it may stand ready. One
   model per bloom, never rebuilt (`Objects3D.ripen`); a garden's blooms are planted once, smaller, as a bed. The
   Bloom Garden has a white picket fence and its arch from the first size.
 - Open: blooms are still built in code when first needed, not exported as files like trees and crops (the
-  project's rule for new art); petals shade but have no speckles (FarmVille's tiger lily); a Full Bloom of roses
-  is 3,300 triangles (the heaviest; the test's limit is 3,400); the Bloom Garden's ground is plain soil, with no
+  project's rule for new art); petals shade but have no speckles (FarmVille's tiger lily); a Full Bloom of
+  sunflowers is 2,950 triangles (the heaviest; the test's limit is 3,100); the Bloom Garden's ground is plain soil, with no
   raised beds or paths between rows; only the six flowers the catalog has (FarmVille had dozens).
 
