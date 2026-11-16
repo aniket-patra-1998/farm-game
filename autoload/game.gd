@@ -735,6 +735,9 @@ func collect(uid: int) -> Dictionary:
 			mastery.add_harvest(id, int(inside[id]))
 	else:
 		mastery.add_harvest(obj["id"], 1)
+	var produce := crafting.roll_produce(obj)   # (milk, eggs, apples, roses... for crafting)
+	for ingredient: String in produce:
+		extras.append(tr("PRODUCE_FOUND") % [int(produce[ingredient]), name_of(ingredient)])
 	if kind_of(obj) == "bloom":
 		extras.append_array(nurture.from_bloom(obj))
 	if is_home(obj):
@@ -1343,8 +1346,8 @@ func _load_items() -> void:
 	_load_catalog()
 	for id in catalog.order:
 		var d := catalog.get_def(id)
-		if d.kind == "crop" or d.kind == "material" or d.kind == "recipe":
-			continue
+		if d.kind in ["crop", "material", "recipe", "ingredient"]:
+			continue   # (not things that stand on the farm)
 		items[id] = d.data
 		item_order.append(id)
 

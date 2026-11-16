@@ -6,6 +6,7 @@
   "Icon": "A single game icon for a cozy farming game's menus: one object, centered, front three-quarter view, slightly from above, complete and uncropped, a bold readable silhouette that reads at small size, isolated on a plain flat light grey (#e8e8e8) background with nothing else: no text, no letters, no numbers, no border, no frame, no watermark. All the images given are style references only: match their painting style, brushwork, palette and lighting exactly, but don't copy their subjects.",
   "Material": "A single game icon for a cozy farming game's menus: one object, centered, front three-quarter view, slightly from above, complete and uncropped, a bold readable silhouette that reads at small size, isolated on a plain flat light grey (#e8e8e8) background with nothing else: no text, no letters, no numbers, no border, no frame, no watermark. All the images given are style references only: match their painting style, brushwork, palette and lighting exactly, but don't copy their subjects.",
   "Recipe": "A single game icon for a cozy farming game's menus: one object, centered, front three-quarter view, slightly from above, complete and uncropped, a bold readable silhouette that reads at small size, isolated on a plain flat light grey (#e8e8e8) background with nothing else: no text, no letters, no numbers, no border, no frame, no watermark. All the images given are style references only: match their painting style, brushwork, palette and lighting exactly, but don't copy their subjects.",
+  "Ingredient": "A single game icon for a cozy farming game's menus: one object, centered, front three-quarter view, slightly from above, complete and uncropped, a bold readable silhouette that reads at small size, isolated on a plain flat light grey (#e8e8e8) background with nothing else: no text, no letters, no numbers, no border, no frame, no watermark. All the images given are style references only: match their painting style, brushwork, palette and lighting exactly, but don't copy their subjects.",
   "Avatar": "A single full-body character for a cozy isometric farming game, seen from 30 degrees above like the rest of the game, standing on flat ground, centered, complete from hat to boots and uncropped, isolated on a plain flat light grey (#e8e8e8) background with nothing else: no shadow on the background, no text, no border, no watermark. If the first image shows this same farmer, keep exactly the same person: face, hair, body, clothes and colours, changing only the pose and direction. The last three images are style references only: match their painting style, brushwork, palette and lighting exactly.",
   "Crop": "Four farm plants of one kind for a cozy isometric farming game, seen from 30 degrees above, standing in a diamond (one at the back, one left, one right, one at the front) as if growing on a square plot. Only the plants: leaves, stems, flowers and fruit, with their stems ending where they meet the ground. Absolutely no soil, no dirt, no plot, no tile, no base, no ground, no shadow; isolated on a plain flat light grey (#e8e8e8) background with nothing else, no text, no border, no watermark. The first image is a layout sketch showing where the four plants stand and how big they are. The last three images are style references only: match their painting style, brushwork, palette and lighting exactly."
  },
@@ -7506,16 +7507,6 @@
    "subject": "Pumpkin Bread, a homemade baked good from a country farm, made from pumpkins, wheat; appetising and charming"
   },
   {
-   "id": "good_spicy_muffins",
-   "item": "spicy_muffins",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Spicy Muffins, a homemade baked good from a country farm, made from carrots, ghost chili, bell peppers; appetising and charming"
-  },
-  {
    "id": "good_strawberry_shortcake",
    "item": "strawberry_shortcake",
    "class": "Recipe",
@@ -7526,14 +7517,14 @@
    "subject": "Strawberry Shortcake, a homemade baked good from a country farm, made from strawberries, wheat; appetising and charming"
   },
   {
-   "id": "good_pattypan_tart",
-   "item": "pattypan_tart",
+   "id": "good_carrot_muffins",
+   "item": "carrot_muffins",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Pattypan Tart, a homemade baked good from a country farm, made from onions, pattypan squash, rice; appetising and charming"
+   "subject": "Carrot Muffins, a homemade baked good from a country farm, made from carrots, wheat, eggs; appetising and charming"
   },
   {
    "id": "good_peanut_butter_cookies",
@@ -7546,24 +7537,24 @@
    "subject": "Peanut Butter Cookies, a homemade baked good from a country farm, made from peanuts, rice, sugarcane; appetising and charming"
   },
   {
-   "id": "good_triple_berry_pie",
-   "item": "triple_berry_pie",
+   "id": "good_three_berry_pie",
+   "item": "three_berry_pie",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Triple Berry Pie, a homemade baked good from a country farm, made from blackberries, blueberries, raspberries; appetising and charming"
+   "subject": "Three Berry Pie, a homemade baked good from a country farm, made from strawberries, raspberries, cranberries, milk; appetising and charming"
   },
   {
-   "id": "good_mocha_blackberry_cake",
-   "item": "mocha_blackberry_cake",
+   "id": "good_summer_squash_tart",
+   "item": "summer_squash_tart",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Mocha Blackberry Cake, a homemade baked good from a country farm, made from blackberries, coffee, rice; appetising and charming"
+   "subject": "Summer Squash Tart, a homemade baked good from a country farm, made from squash, tomatoes, eggs, wheat; appetising and charming"
   },
   {
    "id": "good_raspberry_blondie",
@@ -7573,87 +7564,87 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Raspberry Blondie, a homemade baked good from a country farm, made from raspberries, rice, wheat; appetising and charming"
+   "subject": "Raspberry Blondie, a homemade baked good from a country farm, made from raspberries, rice, wheat, honey; appetising and charming"
   },
   {
-   "id": "good_vegetable_tart",
-   "item": "vegetable_tart",
+   "id": "good_apple_pie",
+   "item": "apple_pie",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Vegetable Tart, a homemade baked good from a country farm, made from asparagus, broccoli, peas; appetising and charming"
+   "subject": "Apple Pie, a homemade baked good from a country farm, made from apples, wheat, sugarcane, milk; appetising and charming"
   },
   {
-   "id": "good_baked_cucumber",
-   "item": "baked_cucumber",
+   "id": "good_cherry_almond_cake",
+   "item": "cherry_almond_cake",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Baked Cucumber, a homemade baked good from a country farm, made from basil, cucumber, bell peppers; appetising and charming"
+   "subject": "Cherry Almond Cake, a homemade baked good from a country farm, made from cherries, almonds, wheat, eggs; appetising and charming"
   },
   {
-   "id": "good_oatmeal_cookies",
-   "item": "oatmeal_cookies",
+   "id": "good_farmhouse_pizza",
+   "item": "farmhouse_pizza",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Oatmeal Cookies, a homemade baked good from a country farm, made from oats, sugarcane, wheat; appetising and charming"
+   "subject": "Farmhouse Pizza, a homemade baked good from a country farm, made from tomatoes, bell peppers, wheat, milk; appetising and charming"
   },
   {
-   "id": "good_pizza_bread",
-   "item": "pizza_bread",
+   "id": "good_corn_bread",
+   "item": "corn_bread",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Pizza Bread, a homemade baked good from a country farm, made from basil, tomatoes, wheat; appetising and charming"
+   "subject": "Honey Corn Bread, a homemade baked good from a country farm, made from corn, milk, eggs, honey; appetising and charming"
   },
   {
-   "id": "good_carrot_cake",
-   "item": "carrot_cake",
+   "id": "good_banana_nut_loaf",
+   "item": "banana_nut_loaf",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Carrot Cake, a homemade baked good from a country farm, made from carrots, cranberries, red wheat, soybeans; appetising and charming"
+   "subject": "Banana Nut Loaf, a homemade baked good from a country farm, made from bananas, peanuts, sugarcane, eggs; appetising and charming"
   },
   {
-   "id": "good_ginger_snaps",
-   "item": "ginger_snaps",
+   "id": "good_honey_carrot_cake",
+   "item": "honey_carrot_cake",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Ginger Snaps, a homemade baked good from a country farm, made from ginger, oats, rice, sugarcane; appetising and charming"
+   "subject": "Honey Carrot Cake, a homemade baked good from a country farm, made from carrots, wheat, eggs, honey; appetising and charming"
   },
   {
-   "id": "good_potato_and_onion_bread",
-   "item": "potato_and_onion_bread",
+   "id": "good_peach_cobbler",
+   "item": "peach_cobbler",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Potato and Onion Bread, a homemade baked good from a country farm, made from onions, posole corn, potatoes, wheat; appetising and charming"
+   "subject": "Peach Cobbler, a homemade baked good from a country farm, made from peaches, sugarcane, wheat, milk; appetising and charming"
   },
   {
-   "id": "good_floral_perfume",
-   "item": "floral_perfume",
+   "id": "good_truffle_pie",
+   "item": "truffle_pie",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Floral Perfume, a homemade spa good from a country farm, made from blueberries, morning glory; appetising and charming"
+   "subject": "Truffle Pie, a homemade baked good from a country farm, made from truffles, eggs, wheat, milk; appetising and charming"
   },
   {
    "id": "good_fresh_sachet",
@@ -7666,144 +7657,144 @@
    "subject": "Fresh Sachet, a homemade spa good from a country farm, made from cranberries, pumpkins, sunflowers; appetising and charming"
   },
   {
-   "id": "good_soothing_herbal_lotion",
-   "item": "soothing_herbal_lotion",
+   "id": "good_rose_water",
+   "item": "rose_water",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Soothing Herbal Lotion, a homemade spa good from a country farm, made from aloe vera, green tea; appetising and charming"
+   "subject": "Rose Water, a homemade spa good from a country farm, made from cut roses, strawberries; appetising and charming"
   },
   {
-   "id": "good_devotion_perfume",
-   "item": "devotion_perfume",
+   "id": "good_cotton_wash_cloth",
+   "item": "cotton_wash_cloth",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Devotion Perfume, a homemade spa good from a country farm, made from basil, blueberries, lilac; appetising and charming"
+   "subject": "Cotton Wash Cloth, a homemade spa good from a country farm, made from cotton, wool; appetising and charming"
   },
   {
-   "id": "good_petal_sachet",
-   "item": "petal_sachet",
+   "id": "good_goat_milk_soap",
+   "item": "goat_milk_soap",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Petal Sachet, a homemade spa good from a country farm, made from iris, bell peppers, sunflowers; appetising and charming"
+   "subject": "Goat Milk Soap, a homemade spa good from a country farm, made from goat milk, honey, cut roses; appetising and charming"
   },
   {
-   "id": "good_relaxation_oil",
-   "item": "relaxation_oil",
+   "id": "good_tulip_sachet",
+   "item": "tulip_sachet",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Relaxation Oil, a homemade spa good from a country farm, made from blackberries, morning glory; appetising and charming"
+   "subject": "Tulip Sachet, a homemade spa good from a country farm, made from cut tulips, cotton; appetising and charming"
   },
   {
-   "id": "good_energizing_lotion",
-   "item": "energizing_lotion",
+   "id": "good_citrus_bath_oil",
+   "item": "citrus_bath_oil",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Energizing Lotion, a homemade spa good from a country farm, made from aloe vera, blackberries, red tulips; appetising and charming"
+   "subject": "Citrus Bath Oil, a homemade spa good from a country farm, made from lemons, oranges, sunflowers; appetising and charming"
   },
   {
-   "id": "good_lily_of_the_valley_soap",
-   "item": "lily_of_the_valley_soap",
+   "id": "good_daisy_lotion",
+   "item": "daisy_lotion",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Lily of the Valley Soap, a homemade spa good from a country farm, made from blueberries, lilies, morning glory; appetising and charming"
+   "subject": "Daisy Lotion, a homemade spa good from a country farm, made from cut daisies, goat milk, almonds; appetising and charming"
   },
   {
-   "id": "good_restoring_candle",
-   "item": "restoring_candle",
+   "id": "good_honey_candle",
+   "item": "honey_candle",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Restoring Candle, a homemade spa good from a country farm, made from ghost chili, green tea, sunflowers; appetising and charming"
+   "subject": "Honey Candle, a homemade spa good from a country farm, made from honey, cotton; appetising and charming"
   },
   {
-   "id": "good_iris_soap",
-   "item": "iris_soap",
+   "id": "good_feather_pillow",
+   "item": "feather_pillow",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Iris Soap, a homemade spa good from a country farm, made from aloe vera, iris, sunflowers; appetising and charming"
+   "subject": "Feather Pillow, a homemade spa good from a country farm, made from feathers, cotton, wool; appetising and charming"
   },
   {
-   "id": "good_meditation_candle",
-   "item": "meditation_candle",
+   "id": "good_lily_soap",
+   "item": "lily_soap",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Meditation Candle, a homemade spa good from a country farm, made from ginger, green tea, lemon balm; appetising and charming"
+   "subject": "Lily Soap, a homemade spa good from a country farm, made from cut lilies, goat milk, honey; appetising and charming"
   },
   {
-   "id": "good_pick_me_up_sachet",
-   "item": "pick_me_up_sachet",
+   "id": "good_wool_blanket",
+   "item": "wool_blanket",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Pick Me Up Sachet, a homemade spa good from a country farm, made from basil, coffee, lemon balm; appetising and charming"
+   "subject": "Wool Blanket, a homemade spa good from a country farm, made from wool, cotton; appetising and charming"
   },
   {
-   "id": "good_daffodil_lotion",
-   "item": "daffodil_lotion",
+   "id": "good_sunflower_oil_rub",
+   "item": "sunflower_oil_rub",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Daffodil Lotion, a homemade spa good from a country farm, made from aloe vera, daffodils, lilies, strawberries; appetising and charming"
+   "subject": "Sunflower Oil Rub, a homemade spa good from a country farm, made from sunflowers, almonds, lemons; appetising and charming"
   },
   {
-   "id": "good_farmers_frenzy_perfume",
-   "item": "farmers_frenzy_perfume",
+   "id": "good_iris_perfume",
+   "item": "iris_perfume",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Farmers Frenzy Perfume, a homemade spa good from a country farm, made from ginger, lavender, lilac, purple poppies; appetising and charming"
+   "subject": "Iris Perfume, a homemade spa good from a country farm, made from cut irises, cut roses, honey; appetising and charming"
   },
   {
-   "id": "good_transcendent_candle",
-   "item": "transcendent_candle",
+   "id": "good_meadow_candle",
+   "item": "meadow_candle",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Transcendent Candle, a homemade spa good from a country farm, made from daffodils, lilac, morning glory, pink roses; appetising and charming"
+   "subject": "Meadow Candle, a homemade spa good from a country farm, made from cut lilies, cut daisies, honey; appetising and charming"
   },
   {
-   "id": "good_red_table_wine",
-   "item": "red_table_wine",
+   "id": "good_royal_bath_set",
+   "item": "royal_bath_set",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Red Table Wine, a homemade drink from a country farm, made from grapes, white grapes; appetising and charming"
+   "subject": "Royal Bath Set, a homemade spa good from a country farm, made from cut irises, goat milk, wool, cut tulips; appetising and charming"
   },
   {
    "id": "good_sweet_saki",
@@ -7816,34 +7807,24 @@
    "subject": "Sweet Saki, a homemade drink from a country farm, made from cranberries, rice; appetising and charming"
   },
   {
-   "id": "good_white_sangria",
-   "item": "white_sangria",
+   "id": "good_strawberry_cranberry_juice",
+   "item": "strawberry_cranberry_juice",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "White Sangria, a homemade drink from a country farm, made from strawberries, sugarcane, white grapes; appetising and charming"
+   "subject": "Strawberry Cranberry Juice, a homemade drink from a country farm, made from cranberries, raspberries, strawberries; appetising and charming"
   },
   {
-   "id": "good_dry_saki",
-   "item": "dry_saki",
+   "id": "good_apple_cider",
+   "item": "apple_cider",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Dry Saki, a homemade drink from a country farm, made from green tea, lilac, rice; appetising and charming"
-  },
-  {
-   "id": "good_fruit_wine",
-   "item": "fruit_wine",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Fruit Wine, a homemade drink from a country farm, made from blueberries, raspberries, sugarcane; appetising and charming"
+   "subject": "Apple Cider, a homemade drink from a country farm, made from apples, sugarcane; appetising and charming"
   },
   {
    "id": "good_spicy_tomato_juice",
@@ -7856,94 +7837,114 @@
    "subject": "Spicy Tomato Juice, a homemade drink from a country farm, made from carrots, bell peppers, tomatoes; appetising and charming"
   },
   {
-   "id": "good_blackberry_wine",
-   "item": "blackberry_wine",
+   "id": "good_berry_wine",
+   "item": "berry_wine",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Blackberry Wine, a homemade drink from a country farm, made from blackberries, grapes, white grapes; appetising and charming"
+   "subject": "Berry Wine, a homemade drink from a country farm, made from raspberries, cranberries, sugarcane; appetising and charming"
   },
   {
-   "id": "good_raspberry_wine",
-   "item": "raspberry_wine",
+   "id": "good_lemonade",
+   "item": "lemonade",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Raspberry Wine, a homemade drink from a country farm, made from blackberries, grapes, raspberries; appetising and charming"
+   "subject": "Honey Lemonade, a homemade drink from a country farm, made from lemons, sugarcane, honey; appetising and charming"
   },
   {
-   "id": "good_strawberry_cranberry_juice",
-   "item": "strawberry_cranberry_juice",
+   "id": "good_country_red_wine",
+   "item": "country_red_wine",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Strawberry Cranberry Juice, a homemade drink from a country farm, made from cranberries, raspberries, strawberries; appetising and charming"
+   "subject": "Country Red Wine, a homemade drink from a country farm, made from grapes, sugarcane; appetising and charming"
   },
   {
-   "id": "good_blueberry_wine",
-   "item": "blueberry_wine",
+   "id": "good_sunrise_punch",
+   "item": "sunrise_punch",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Blueberry Wine, a homemade drink from a country farm, made from blackberries, blueberries, white grapes; appetising and charming"
+   "subject": "Sunrise Punch, a homemade drink from a country farm, made from oranges, pineapples, cherries; appetising and charming"
   },
   {
-   "id": "good_herbal_elixir",
-   "item": "herbal_elixir",
+   "id": "good_plum_wine",
+   "item": "plum_wine",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Herbal Elixir, a homemade drink from a country farm, made from basil, ginger, green tea; appetising and charming"
+   "subject": "Plum Wine, a homemade drink from a country farm, made from plums, rice, sugarcane; appetising and charming"
   },
   {
-   "id": "good_pumpkin_vinegar",
-   "item": "pumpkin_vinegar",
+   "id": "good_watermelon_cooler",
+   "item": "watermelon_cooler",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Pumpkin Vinegar, a homemade drink from a country farm, made from acorn squash, pumpkins, rice; appetising and charming"
+   "subject": "Watermelon Cooler, a homemade drink from a country farm, made from watermelon, lemons, sugarcane; appetising and charming"
   },
   {
-   "id": "good_cucumber_wine",
-   "item": "cucumber_wine",
+   "id": "good_honey_mead",
+   "item": "honey_mead",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Cucumber Wine, a homemade drink from a country farm, made from acorn squash, cucumber, rice, squash; appetising and charming"
+   "subject": "Honey Mead, a homemade drink from a country farm, made from honey, apples, wheat; appetising and charming"
   },
   {
-   "id": "good_melon_juice",
-   "item": "melon_juice",
+   "id": "good_peach_sangria",
+   "item": "peach_sangria",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Melon Juice, a homemade drink from a country farm, made from carrots, strawberries, watermelon, yellow melon; appetising and charming"
+   "subject": "Peach Sangria, a homemade drink from a country farm, made from peaches, grapes, oranges; appetising and charming"
   },
   {
-   "id": "good_rose_petal_water",
-   "item": "rose_petal_water",
+   "id": "good_reserve_wine",
+   "item": "reserve_wine",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Rose Petal Water, a homemade drink from a country farm, made from lavender, morning glory, pink roses, sunflowers; appetising and charming"
+   "subject": "Reserve Wine, a homemade drink from a country farm, made from grapes, cherries, honey; appetising and charming"
+  },
+  {
+   "id": "good_tropical_punch",
+   "item": "tropical_punch",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Tropical Punch, a homemade drink from a country farm, made from pineapples, bananas, watermelon, oranges; appetising and charming"
+  },
+  {
+   "id": "good_golden_corn_cordial",
+   "item": "golden_corn_cordial",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Golden Corn Cordial, a homemade drink from a country farm, made from corn, sugarcane, honey; appetising and charming"
   },
   {
    "id": "good_animal_feed_sacks",
@@ -7973,7 +7974,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Rich Green Mash, a homemade rich feed from a country farm, made from spinach, cabbage; appetising and charming"
+   "subject": "Rich Green Mash, a homemade rich feed from a country farm, made from spinach, soybeans; appetising and charming"
   },
   {
    "id": "good_rich_root_meal",
@@ -7983,7 +7984,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Rich Root Meal, a homemade rich feed from a country farm, made from carrots, potatoes; appetising and charming"
+   "subject": "Rich Root Meal, a homemade rich feed from a country farm, made from carrots, pumpkins; appetising and charming"
   },
   {
    "id": "good_rich_fruit_blend",
@@ -7993,7 +7994,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Rich Fruit Blend, a homemade rich feed from a country farm, made from strawberries, blueberries; appetising and charming"
+   "subject": "Rich Fruit Blend, a homemade rich feed from a country farm, made from strawberries, apples; appetising and charming"
   },
   {
    "id": "good_rich_nectar_cake",
@@ -8003,7 +8004,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Rich Nectar Cake, a homemade rich feed from a country farm, made from sunflowers, lilac; appetising and charming"
+   "subject": "Rich Nectar Cake, a homemade rich feed from a country farm, made from sunflowers, honey; appetising and charming"
   },
   {
    "id": "good_grain_feast",
@@ -8013,7 +8014,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Grain Feast, a homemade rich feed from a country farm, made from rice, oats, rye; appetising and charming"
+   "subject": "Grain Feast, a homemade rich feed from a country farm, made from rice, wheat, corn; appetising and charming"
   },
   {
    "id": "good_garden_feast",
@@ -8023,7 +8024,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Garden Feast, a homemade rich feed from a country farm, made from broccoli, asparagus, cucumber; appetising and charming"
+   "subject": "Garden Feast, a homemade rich feed from a country farm, made from spinach, soybeans, eggplant; appetising and charming"
   },
   {
    "id": "good_harvest_feast",
@@ -8033,7 +8034,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Harvest Feast, a homemade rich feed from a country farm, made from pumpkins, squash, onions; appetising and charming"
+   "subject": "Harvest Feast, a homemade rich feed from a country farm, made from pumpkins, squash, carrots; appetising and charming"
   },
   {
    "id": "good_orchard_feast",
@@ -8043,7 +8044,7 @@
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Orchard Feast, a homemade rich feed from a country farm, made from raspberries, blackberries, cranberries; appetising and charming"
+   "subject": "Orchard Feast, a homemade rich feed from a country farm, made from raspberries, cranberries, peaches; appetising and charming"
   },
   {
    "id": "mystery_seedling",
@@ -8512,6 +8513,226 @@
     "refs/iris_full_bloom_withered.png"
    ],
    "subject": "full iris bloom"
+  },
+  {
+   "id": "ingredient_eggs",
+   "item": "eggs",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of eggs, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_milk",
+   "item": "milk",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of milk, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_goat_milk",
+   "item": "goat_milk",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of goat milk, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_wool",
+   "item": "wool",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of wool, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_feathers",
+   "item": "feathers",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of feathers, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_truffles",
+   "item": "truffles",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of truffles, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_honey",
+   "item": "honey",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of honey, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_apples",
+   "item": "apples",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of apples, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_plums",
+   "item": "plums",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of plums, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_lemons",
+   "item": "lemons",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of lemons, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_figs",
+   "item": "figs",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of figs, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_almonds",
+   "item": "almonds",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of almonds, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_cherries",
+   "item": "cherries",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of cherries, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_bananas",
+   "item": "bananas",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of bananas, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_oranges",
+   "item": "oranges",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of oranges, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_chestnuts",
+   "item": "chestnuts",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of chestnuts, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_peaches",
+   "item": "peaches",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of peaches, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_cut_roses",
+   "item": "cut_roses",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of cut roses, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_cut_tulips",
+   "item": "cut_tulips",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of cut tulips, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_cut_daisies",
+   "item": "cut_daisies",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of cut daisies, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_cut_lilies",
+   "item": "cut_lilies",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of cut lilies, fresh farm produce for crafting, simple, bold and readable at small size"
+  },
+  {
+   "id": "ingredient_cut_irises",
+   "item": "cut_irises",
+   "class": "Ingredient",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a game icon of cut irises, fresh farm produce for crafting, simple, bold and readable at small size"
   },
   {
    "id": "avatar_farmer_m_idle_front",

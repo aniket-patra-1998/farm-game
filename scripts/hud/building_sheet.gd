@@ -514,18 +514,20 @@ func _clock_other(o: Dictionary) -> void:
 		Kind.CRAFT:
 			var done := Game.crafting.crafts_done(o)
 			var soonest := -1
+			var took := 1   # (how long the soonest craft takes in all: the ring shows its share done)
 			for slot: Dictionary in o.get("slots", []):
 				var left := int(slot["done"]) - Game.now()
 				lines.append("%s: %s" % [Game.catalog.get_def(str(slot["r"])).name,   # not-ui (a recipe and its time)
 					tr("SLOT_READY") if left <= 0 else FarmGrid.format_duration(left)])
 				if left > 0 and (soonest < 0 or left < soonest):
 					soonest = left
+					took = int(slot.get("took", left))
 			if done > 0:
 				state = tr("READY_TO_COLLECT")
 			elif soonest > 0:
 				state = tr("STATE_READY_IN") % FarmGrid.format_duration(soonest)
 				_ring.visible = true
-				_ring.share = clampf(1.0 - float(soonest) / maxf(float(Game.crafting.craft_seconds(o)), 1.0), 0.0, 1.0)
+				_ring.share = clampf(1.0 - float(soonest) / maxf(float(took), 1.0), 0.0, 1.0)
 				_ring.words = FarmGrid.format_duration(soonest)
 			else:
 				state = tr("SHEET_IDLE")

@@ -23,7 +23,7 @@ func test_179_every_feed_recipe_is_made_of_real_crops_and_feeds() -> void:
 			"%s: a real feed (or the young ones' Animal Feed)" % r.id)
 		_check(int(r.feed()["units"]) > 0, "%s: at least a unit" % r.id)
 		for c in r.inputs():
-			_check(g.crops.has(c), "%s: %s is a crop" % [r.id, c])
+			_check(g.crops.has(c) or g.catalog.get_def(c) is IngredientDef, "%s: %s is a crop or produce" % [r.id, c])
 	_check(seen >= 5, "the mill has recipes at several stars")
 	for id in g.feeds.feed_ids():
 		var made := false

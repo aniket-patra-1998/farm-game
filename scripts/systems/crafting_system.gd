@@ -1,14 +1,19 @@
 class_name CraftingSystem
 extends GameSystem
-## Crafting (Bakery, Winery, Spa): bushels, recipes, recipe mastery, goods and the Farmers Market.
+## Crafting (Bakery, Winery, Spa, Feed Mill): bushels and produce, recipes, recipe mastery, goods and the Farmers
+## Market. Harvests drop bushels of their crop; collecting from animals, the beehive, trees and blooms drops
+## their produce (milk, eggs, honey, apples, roses: data/catalog/ingredients.json). Both are held together
+## (`bushels`) and recipes use either.
 ## Part of the game state: reached as `Game.crafting`; shared state is on `game`.
 
+const PRODUCE_ROLLS_MOST := 40     # a home's animals of one kind roll for their produce this many times at most
 
-var bushels := {}                  # crop id -> bushels held, for crafting
+var bushels := {}                  # crop or ingredient id -> how many held, for crafting
 var goods := {}                    # recipe id -> crafted goods held
 var crafted := {}                  # recipe id -> lifetime crafts (recipe mastery)
 var stall := {}                    # crop id -> bushels for sale at the Farmers Market today
 var stall_day := 0
+var _produce := {}                 # item id -> the ingredient it gives, or "" (found once per item)
 
 
 func _init(owner: GameState) -> void:
@@ -70,7 +75,59 @@ func _recipe(rid: String) -> RecipeDef:
 ## docs/V1.md).
 func recipes_of(building_id: String) -> Array[RecipeDef]:
 	return game.catalog.recipes_of(building_id).filter(func(r: RecipeDef) -> bool:
-		return r.inputs().keys().all(func(c: String) -> bool: return Release.has(c)))
+		return r.inputs().keys().all(func(c: String) -> bool: return in_release(c)))
+
+
+## Whether ingredient `id` can be had in this release: a crop that is in it, or produce something in it gives.
+func in_release(id: String) -> bool:
+	var d := game.catalog.get_def(id)
+	if not (d is IngredientDef):
+		return Release.has(id)
+	for item_id: String in game.items:
+		if (d as IngredientDef).given_by(game.items[item_id]) and Release.has(item_id):
+			return true
+	return false
+
+
+## The ingredient the thing `item_id` gives when collected ("" for none).
+func produce_of(item_id: String) -> String:
+	if not _produce.has(item_id):
+		_produce[item_id] = ""
+		for d in game.catalog.of_kind("ingredient"):
+			if (d as IngredientDef).given_by(game.item_data(item_id)):
+				_produce[item_id] = d.id
+				break
+	return _produce[item_id]
+
+
+## Collecting from `obj` (an animal, the beehive, a tree, a bloom, or a home full of them) may give its produce
+## for crafting, once you own a crafting building: each one collected has its own chance. Returns what was
+## given, ingredient id -> how many.
+func roll_produce(obj: Dictionary) -> Dictionary:
+	var out := {}
+	if not game.drops_enabled or not owns_crafting():
+		return out
+	var givers := {str(obj["id"]): 1}
+	if game.is_home(obj):
+		for id: String in obj.get("inside", {}):
+			givers[id] = int(givers.get(id, 0)) + int(obj["inside"][id])
+	for id: String in givers:
+		var ingredient := produce_of(id)
+		if ingredient == "":
+			continue
+		var n := 0
+		for k in mini(int(givers[id]), PRODUCE_ROLLS_MOST):
+			if game.rng.randf() < Balance.f("crafting.produce_chance"):
+				n += 1
+		var got := add_bushels(ingredient, n) if n > 0 else 0
+		if got > 0:
+			out[ingredient] = int(out.get(ingredient, 0)) + got
+	return out
+
+
+## What one of ingredient `id` costs at the Farmers Market, and is worth in a recipe.
+func value_of(id: String) -> int:
+	return RecipeDef.worth_of(game.catalog, id)
 
 
 func recipe_unlocked(obj: Dictionary, rid: String) -> bool:
@@ -129,9 +186,9 @@ func slot_count(obj: Dictionary) -> int:
 	return _crafting_def(obj).slots(game.level_of(obj))
 
 
-## How long one craft takes in building `obj`.
-func craft_seconds(obj: Dictionary) -> int:
-	return _crafting_def(obj).craft_seconds()
+## How long making recipe `rid` takes.
+func craft_seconds(rid: String) -> int:
+	return _recipe(rid).craft_seconds()
 
 
 func free_slots(obj: Dictionary) -> int:
@@ -161,7 +218,8 @@ func start_craft(uid: int, rid: String) -> bool:
 		bushels[c] = int(bushels[c]) - int(ins[c])
 		if int(bushels[c]) <= 0:
 			bushels.erase(c)
-	(obj["slots"] as Array).append({"r": rid, "done": game.now() + _crafting_def(obj).craft_seconds()})
+	var took := craft_seconds(rid)
+	(obj["slots"] as Array).append({"r": rid, "done": game.now() + took, "took": took})
 	game.ribbons.bump("crafts_started", 1)
 	game.inventory_changed.emit()
 	game.objects_updated(uid)
@@ -218,7 +276,7 @@ func finish_crafts(uid: int) -> int:
 				goods[rid] = int(goods.get(rid, 0)) + 1
 				goods_made += 1
 			crafted[rid] = int(crafted.get(rid, 0)) + 1
-			game.add_xp(Balance.i("crafting.craft_xp_per_star") * _recipe(rid).star())
+			game.add_xp(_recipe(rid).xp())
 			game.ribbons.bump("crafted", 1)
 			if recipe_stars(rid) > before:
 				game.message.emit(tr("MASTERY_STARS") % [_recipe(rid).name, recipe_stars(rid)])
@@ -262,7 +320,7 @@ func _deliver_feed(r: RecipeDef) -> void:
 
 
 func good_price(rid: String) -> int:
-	return _recipe(rid).sell_price(game.crops, recipe_stars(rid))
+	return _recipe(rid).sell_price(game.catalog, recipe_stars(rid))
 
 
 func good_fuel(rid: String) -> int:
@@ -359,7 +417,7 @@ func market_stall() -> Dictionary:
 
 
 func bushel_price(crop_id: String) -> int:
-	return int(game.crops[crop_id]["sell_price"])
+	return value_of(crop_id)
 
 
 func buy_bushel(crop_id: String) -> bool:

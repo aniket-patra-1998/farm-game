@@ -2,32 +2,46 @@ extends TestSuite
 ## Crafting: bushels, recipes, mastery, goods and the Farmers Market.
 
 
-func test_79_crafting_recipes_match_farmville() -> void:
+func test_79_every_building_has_three_recipes_a_star_made_of_what_the_farm_gives() -> void:
 	var g := _farm()
 	for b in ["bakery", "winery", "spa"]:
 		var rs := g.crafting.recipes_of(b)
 		_eq(rs.size(), 15, "%s has 15 recipes" % b)
+		var dearest := 0   # what the dearest good of the star below sells for
 		for star in range(1, 6):
-			_eq(rs.filter(func(r): return r.star() == star).size(), 3, "%s: 3 recipes at %d stars" % [b, star])
+			var of_star := rs.filter(func(r): return r.star() == star)
+			_eq(of_star.size(), 3, "%s: 3 recipes at %d stars" % [b, star])
+			var cheapest := 1 << 30
+			var top := 0
+			for r: RecipeDef in of_star:
+				cheapest = mini(cheapest, r.sell_price(g.catalog, 0))
+				top = maxi(top, r.sell_price(g.catalog, 0))
+				for c: String in r.inputs():
+					_check(g.crops.has(c) or g.catalog.get_def(c) is IngredientDef, "%s: %s is a crop or produce" % [r.id, c])
+			_check(cheapest > dearest, "%s: every %d-star good sells for more than any below (%d > %d)" % [b, star,
+				cheapest, dearest])
+			dearest = top
 	_eq(
 		_ints((g.catalog.get_def("pumpkin_bread") as RecipeDef).inputs()),
 		{"pumpkins": 4, "wheat": 4},
-		"Pumpkin Bread: 4 pumpkins, 4 wheat"
+		"Pumpkin Bread is FarmVille's own: 4 pumpkins, 4 wheat"
 	)
-	_eq(
-		_ints((g.catalog.get_def("red_table_wine") as RecipeDef).inputs()),
-		{"grapes": 2, "white_grapes": 5},
-		"Red Table Wine: 2 grapes, 5 white grapes"
-	)
-	_eq(
-		_ints((g.catalog.get_def("floral_perfume") as RecipeDef).inputs()),
-		{"blueberries": 4, "morning_glory": 4},
-		"Floral Perfume: 4 blueberries, 4 morning glory"
-	)
-	_check(
-		g.crops.has("aloe_vera") and g.crops.has("pattypan_squash") and g.crops.has("pink_roses"),
-		"the crops recipes need are in the game"
-	)
+	_check(g.catalog.planned.has("red_table_wine") and g.catalog.get_def("red_table_wine") == null,
+		"FarmVille's recipes for crops outside the first release are kept, planned")
+	# The first release shows every one of them: nothing needs a crop or an animal it leaves out.
+	var whole := Release.whole
+	Release.whole = false
+	for b in ["bakery", "winery", "spa"]:
+		_eq(g.crafting.recipes_of(b).size(), 15, "%s: all 15 recipes in the first release" % b)
+	_eq(g.crafting.recipes_of("feed_mill").size(), g.catalog.recipes_of("feed_mill").size(),
+		"the Feed Mill: every recipe in the first release")
+	Release.whole = whole
+	# A recipe's star sets its time, fuel and XP.
+	var bread := g.catalog.get_def("pumpkin_bread") as RecipeDef
+	var pie := g.catalog.get_def("truffle_pie") as RecipeDef
+	_eq(bread.craft_seconds(), 3600, "a 1-star recipe takes an hour")
+	_eq(pie.craft_seconds(), 8 * 3600, "a 5-star one takes eight")
+	_check(pie.fuel(0) > bread.fuel(0) and pie.xp() > bread.xp(), "a higher star gives more fuel and XP")
 	var bakery := g.catalog.get_def("bakery") as CraftingDef
 	_eq(bakery.unlock_level, 25, "crafting unlocks at level 25, as in FarmVille")
 	_eq(
@@ -97,13 +111,15 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	# Craft Pumpkin Bread.
 	g.crafting.bushels = {"pumpkins": 4, "wheat": 5}
 	_eq(g.crafting.craft_problem(uid, "pumpkin_bread"), "", "ready to bake")
-	_eq(g.crafting.craft_problem(uid, "pattypan_tart"), "Unlocks at 2 stars", "2-star recipes are locked")
+	_eq(g.crafting.craft_problem(uid, "three_berry_pie"), "Unlocks at 2 stars", "2-star recipes are locked")
 	_check(g.crafting.start_craft(uid, "pumpkin_bread"), "baking")
 	_eq(g.crafting.bushels, {"wheat": 1}, "bushels used")
 	_eq(g.crafting.craft_problem(uid, "strawberry_shortcake"), "Every slot is busy", "one slot at 1 star")
 	_eq(g.crafting.finish_crafts(uid), 0, "not done yet")
-	_skip(g, 6 * 3600)
-	_eq(g.crafting.finish_crafts(uid), 1, "done after 6 hours")
+	_skip(g, 1800)
+	_eq(g.crafting.finish_crafts(uid), 0, "nor after half an hour")
+	_skip(g, 1800)
+	_eq(g.crafting.finish_crafts(uid), 1, "done after an hour: a 1-star recipe's time")
 	_eq(int(g.crafting.goods["pumpkin_bread"]), 1, "a loaf of pumpkin bread")
 	_eq(g.ribbons.stat("crafted"), 1, "counted for the Crafty ribbon")
 	var price := g.crafting.good_price("pumpkin_bread")
@@ -139,17 +155,17 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	var uid := _crafting_building(g, "winery")
 	var o := g.object_by_uid(uid)
 	_check(not g.crafting.can_add_star(uid, false), "no recipe stars yet")
-	g.crafting.crafted = {"red_table_wine": 15, "sweet_saki": 15, "white_sangria": 5}
-	_eq(g.crafting.recipe_stars("red_table_wine"), 2, "15 crafts: 2 mastery stars")
+	g.crafting.crafted = {"apple_cider": 15, "sweet_saki": 15, "strawberry_cranberry_juice": 5}
+	_eq(g.crafting.recipe_stars("apple_cider"), 2, "15 crafts: 2 mastery stars")
 	_eq(g.crafting.building_recipe_stars("winery"), 5, "5 stars across the Winery's recipes")
 	_check(not g.crafting.can_add_star(uid, false), "6 are needed")
-	g.crafting.crafted["white_sangria"] = 15
+	g.crafting.crafted["strawberry_cranberry_juice"] = 15
 	_check(g.crafting.can_add_star(uid, false), "now there are 6")
 	var coins := g.coins
 	_check(g.crafting.add_star(uid, false), "2 stars")
 	_eq(g.coins, coins - 50000, "for 50,000 coins")
 	_eq(g.crafting.free_slots(o), 2, "2 slots")
-	_check(g.crafting.recipe_unlocked(o, "dry_saki"), "2-star recipes unlocked")
+	_check(g.crafting.recipe_unlocked(o, "berry_wine"), "2-star recipes unlocked")
 	g.gems = 25
 	_check(g.crafting.add_star(uid, true), "3 stars for gems")
 	_eq(g.gems, 0, "25 gems")
@@ -177,4 +193,51 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	# Bushels are capped.
 	g.crafting.bushels = {"rice": Balance.i("crafting.bushel_cap")}
 	_eq(g.crafting.add_bushels("wheat", 1), 0, "no room past %d bushels" % Balance.i("crafting.bushel_cap"))
+	_done(g)
+
+
+func test_371_collecting_gives_produce_and_recipes_use_it() -> void:
+	var g := _farm(true)
+	g.coins = 10000000
+	g.xp = g.xp_for_level(30)
+	_eq(g.crafting.produce_of("cow"), "milk", "a cow gives milk")
+	_eq(g.crafting.produce_of("brown_chicken"), "eggs", "any chicken gives eggs")
+	_eq(g.crafting.produce_of("apple_tree"), "apples", "an apple tree gives apples")
+	_eq(g.crafting.produce_of("rose_full_bloom"), "cut_roses", "a rose bloom gives cut roses")
+	_eq(g.crafting.produce_of("beehive"), "honey", "the beehive gives honey")
+	_eq(g.crafting.produce_of("bull"), "", "a bull gives nothing")
+	_eq(g.crafting.produce_of("bakery"), "", "nor does a building that isn't a hive")
+	_check(g.buy_and_place("cow", 3, 3), "a cow")
+	var cow := int(g.object_at(g.index_of(3, 3))["uid"])
+	for k in 20:
+		_skip(g, 2 * 86400)
+		g.collect(cow)
+	_check(g.crafting.bushels.is_empty(), "no produce before there is a crafting building")
+	var uid := _crafting_building(g)
+	_check(g.buy_and_place("cow", 3, 3), "a cow again (the helper clears the animals)")
+	cow = int(g.object_at(g.index_of(3, 3))["uid"])
+	var said := 0
+	for k in 60:
+		_skip(g, 2 * 86400)
+		for extra: String in g.collect(cow).get("extras", []):
+			if extra.contains(g.name_of("milk")):
+				said += 1
+	var milk := int(g.crafting.bushels.get("milk", 0))
+	_check(milk > 5 and milk < 45, "about a third of collections give milk (%d of 60)" % milk)
+	_eq(said, milk, "each one is said with the collection")
+	# A home's animals each have their chance.
+	g.crafting.bushels = {}
+	var given := g.crafting.roll_produce({"id": "cow_shed", "uid": -5, "inside": {"cow": 20}})
+	_check(int(given.get("milk", 0)) > 1, "a shed of 20 cows gives several (%s)" % given)
+	# Produce is held with the bushels and used like one.
+	g.crafting.bushels = {"carrots": 3, "wheat": 3, "eggs": 1}
+	_eq(g.crafting.missing_bushels("carrot_muffins"), {"eggs": 1}, "Carrot Muffins need two eggs")
+	g.crafting.bushels["eggs"] = 2
+	_check(g.crafting.start_craft(uid, "carrot_muffins"), "baking with eggs")
+	_check(g.crafting.bushels.is_empty(), "the eggs are used")
+	_eq(g.crafting.value_of("milk"), (g.catalog.get_def("milk") as IngredientDef).value(), "produce has its own worth")
+	_eq(g.crafting.value_of("wheat"), int(g.crops["wheat"]["sell_price"]), "a bushel is worth what its crop sells for")
+	g.crafting.bushels = {"rice": Balance.i("crafting.bushel_cap")}
+	_check(g.crafting.roll_produce({"id": "cow_shed", "uid": -5, "inside": {"cow": 40}}).is_empty(),
+		"no room for produce past the bushels' cap")
 	_done(g)

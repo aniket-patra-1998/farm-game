@@ -264,7 +264,9 @@ func detail_of(id: String, it: Dictionary) -> String:
 			var def := Game.building_def(id)
 			detail = tr("HOLDS_X_TILES_UPGRADES_TO") % [def.capacity(1), holds, fp.x, fp.y, def.capacity(def.max_level())]
 		"crafting":
-			detail = tr("CRAFTING_RECIPES_OVER_STARS_PER_CRAFT") % FarmGrid.format_duration(int(it.get("craft_seconds", 21600)))
+			var hours := Balance.a("crafting.craft_hours_by_star")
+			detail = tr("CRAFTING_RECIPES_OVER_STARS_PER_CRAFT") % [FarmGrid.format_duration(int(float(hours[0]) * 3600.0)),
+				FarmGrid.format_duration(int(float(hours[-1]) * 3600.0))]
 		"vehicle":
 			var verbs := {
 				"plow": tr("PLOWS"),

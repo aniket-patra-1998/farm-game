@@ -1,6 +1,6 @@
 {
   "class": "Recipe",
-  "_note": "FarmVille's 2010 crafting recipes, 3 per star level per building (from the SuperCheats crafting guide). Inputs are bushels.",
+  "_note": "Three recipes per star per building, made from what the first release grows and raises: bushels of its crops, and produce (data/catalog/ingredients.json: eggs, milk, honey, orchard fruit, cut flowers). Ingredients are chosen so a recipe's worth rises with its star. FarmVille's 2010 recipes (the SuperCheats crafting guide) that need crops outside the first release are kept as planned, for when those crops come; the ones marked in the game are FarmVille's own.",
   "defaults": {
     "unlock_level": 99
   },
@@ -8,7 +8,7 @@
     {
       "id": "bakery_recipes",
       "name": "Bakery recipes",
-      "doc": "Made in the Bakery.",
+      "doc": "Made in the Bakery. The ones marked planned are FarmVille's own, waiting for their crops.",
       "defaults": {
         "building": "bakery",
         "product": "Baked goods"
@@ -21,17 +21,8 @@
           "inputs": {
             "pumpkins": 4,
             "wheat": 4
-          }
-        },
-        {
-          "id": "spicy_muffins",
-          "name": "Spicy Muffins",
-          "star": 1,
-          "inputs": {
-            "carrots": 3,
-            "ghost_chili": 3,
-            "bell_peppers": 1
-          }
+          },
+          "shape": "loaf"
         },
         {
           "id": "strawberry_shortcake",
@@ -40,16 +31,18 @@
           "inputs": {
             "strawberries": 4,
             "wheat": 4
-          }
+          },
+          "shape": "cake"
         },
         {
-          "id": "pattypan_tart",
-          "name": "Pattypan Tart",
-          "star": 2,
+          "id": "carrot_muffins",
+          "name": "Carrot Muffins",
+          "star": 1,
+          "shape": "muffin",
           "inputs": {
-            "onions": 2,
-            "pattypan_squash": 3,
-            "rice": 3
+            "carrots": 3,
+            "wheat": 3,
+            "eggs": 2
           }
         },
         {
@@ -60,26 +53,31 @@
             "peanuts": 2,
             "rice": 3,
             "sugarcane": 3
-          }
+          },
+          "shape": "cookies"
         },
         {
-          "id": "triple_berry_pie",
-          "name": "Triple Berry Pie",
+          "id": "three_berry_pie",
+          "name": "Three Berry Pie",
           "star": 2,
+          "shape": "pie",
           "inputs": {
-            "blackberries": 2,
-            "blueberries": 3,
-            "raspberries": 3
+            "strawberries": 3,
+            "raspberries": 3,
+            "cranberries": 4,
+            "milk": 2
           }
         },
         {
-          "id": "mocha_blackberry_cake",
-          "name": "Mocha Blackberry Cake",
-          "star": 3,
+          "id": "summer_squash_tart",
+          "name": "Summer Squash Tart",
+          "star": 2,
+          "shape": "tart",
           "inputs": {
-            "blackberries": 3,
-            "coffee": 3,
-            "rice": 2
+            "squash": 3,
+            "tomatoes": 2,
+            "eggs": 2,
+            "wheat": 2
           }
         },
         {
@@ -89,8 +87,150 @@
           "inputs": {
             "raspberries": 3,
             "rice": 3,
-            "wheat": 2
+            "wheat": 2,
+            "honey": 3
+          },
+          "shape": "cake"
+        },
+        {
+          "id": "apple_pie",
+          "name": "Apple Pie",
+          "star": 3,
+          "shape": "pie",
+          "inputs": {
+            "apples": 4,
+            "wheat": 3,
+            "sugarcane": 2,
+            "milk": 2
           }
+        },
+        {
+          "id": "cherry_almond_cake",
+          "name": "Cherry Almond Cake",
+          "star": 3,
+          "shape": "cake",
+          "inputs": {
+            "cherries": 4,
+            "almonds": 3,
+            "wheat": 3,
+            "eggs": 3
+          }
+        },
+        {
+          "id": "farmhouse_pizza",
+          "name": "Farmhouse Pizza",
+          "star": 4,
+          "shape": "pizza",
+          "inputs": {
+            "tomatoes": 4,
+            "bell_peppers": 2,
+            "wheat": 4,
+            "milk": 3
+          }
+        },
+        {
+          "id": "corn_bread",
+          "name": "Honey Corn Bread",
+          "star": 4,
+          "shape": "loaf",
+          "inputs": {
+            "corn": 3,
+            "milk": 2,
+            "eggs": 2,
+            "honey": 1
+          }
+        },
+        {
+          "id": "banana_nut_loaf",
+          "name": "Banana Nut Loaf",
+          "star": 4,
+          "shape": "loaf",
+          "inputs": {
+            "bananas": 4,
+            "peanuts": 3,
+            "sugarcane": 3,
+            "eggs": 3
+          }
+        },
+        {
+          "id": "honey_carrot_cake",
+          "name": "Honey Carrot Cake",
+          "star": 5,
+          "shape": "cake",
+          "inputs": {
+            "carrots": 4,
+            "wheat": 3,
+            "eggs": 3,
+            "honey": 4
+          }
+        },
+        {
+          "id": "peach_cobbler",
+          "name": "Peach Cobbler",
+          "star": 5,
+          "shape": "pie",
+          "inputs": {
+            "peaches": 5,
+            "sugarcane": 3,
+            "wheat": 3,
+            "milk": 3
+          }
+        },
+        {
+          "id": "truffle_pie",
+          "name": "Truffle Pie",
+          "star": 5,
+          "shape": "tart",
+          "inputs": {
+            "truffles": 5,
+            "eggs": 3,
+            "wheat": 4,
+            "milk": 3
+          }
+        },
+        {
+          "id": "spicy_muffins",
+          "name": "Spicy Muffins",
+          "star": 1,
+          "inputs": {
+            "carrots": 3,
+            "ghost_chili": 3,
+            "bell_peppers": 1
+          },
+          "status": "planned"
+        },
+        {
+          "id": "pattypan_tart",
+          "name": "Pattypan Tart",
+          "star": 2,
+          "inputs": {
+            "onions": 2,
+            "pattypan_squash": 3,
+            "rice": 3
+          },
+          "status": "planned"
+        },
+        {
+          "id": "triple_berry_pie",
+          "name": "Triple Berry Pie",
+          "star": 2,
+          "inputs": {
+            "blackberries": 2,
+            "blueberries": 3,
+            "raspberries": 3
+          },
+          "status": "planned"
+        },
+        {
+          "id": "mocha_blackberry_cake",
+          "name": "Mocha Blackberry Cake",
+          "star": 3,
+          "inputs": {
+            "blackberries": 3,
+            "coffee": 3,
+            "rice": 2
+          },
+          "status": "planned"
         },
         {
           "id": "vegetable_tart",
@@ -100,7 +240,8 @@
             "asparagus": 2,
             "broccoli": 1,
             "peas": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "baked_cucumber",
@@ -110,7 +251,8 @@
             "basil": 4,
             "cucumber": 1,
             "bell_peppers": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "oatmeal_cookies",
@@ -120,7 +262,8 @@
             "oats": 4,
             "sugarcane": 2,
             "wheat": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "pizza_bread",
@@ -130,7 +273,8 @@
             "basil": 2,
             "tomatoes": 2,
             "wheat": 4
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "carrot_cake",
@@ -141,7 +285,8 @@
             "cranberries": 2,
             "red_wheat": 1,
             "soybeans": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "ginger_snaps",
@@ -152,7 +297,8 @@
             "oats": 2,
             "rice": 2,
             "sugarcane": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "potato_and_onion_bread",
@@ -163,28 +309,20 @@
             "posole_corn": 1,
             "potatoes": 1,
             "wheat": 2
-          }
+          },
+          "status": "planned"
         }
       ]
     },
     {
       "id": "spa_recipes",
       "name": "Spa recipes",
-      "doc": "Made in the Spa.",
+      "doc": "Made in the Spa. The ones marked planned are FarmVille's own, waiting for their crops.",
       "defaults": {
         "building": "spa",
         "product": "Spa goods"
       },
       "variants": [
-        {
-          "id": "floral_perfume",
-          "name": "Floral Perfume",
-          "star": 1,
-          "inputs": {
-            "blueberries": 4,
-            "morning_glory": 4
-          }
-        },
         {
           "id": "fresh_sachet",
           "name": "Fresh Sachet",
@@ -193,7 +331,168 @@
             "cranberries": 3,
             "pumpkins": 3,
             "sunflowers": 1
+          },
+          "shape": "sachet"
+        },
+        {
+          "id": "rose_water",
+          "name": "Rose Water",
+          "star": 1,
+          "shape": "perfume",
+          "inputs": {
+            "cut_roses": 2,
+            "strawberries": 3
           }
+        },
+        {
+          "id": "cotton_wash_cloth",
+          "name": "Cotton Wash Cloth",
+          "star": 1,
+          "shape": "cloth",
+          "inputs": {
+            "cotton": 3,
+            "wool": 1
+          }
+        },
+        {
+          "id": "goat_milk_soap",
+          "name": "Goat Milk Soap",
+          "star": 2,
+          "shape": "soap",
+          "inputs": {
+            "goat_milk": 3,
+            "honey": 1,
+            "cut_roses": 2
+          }
+        },
+        {
+          "id": "tulip_sachet",
+          "name": "Tulip Sachet",
+          "star": 2,
+          "shape": "sachet",
+          "inputs": {
+            "cut_tulips": 3,
+            "cotton": 2
+          }
+        },
+        {
+          "id": "citrus_bath_oil",
+          "name": "Citrus Bath Oil",
+          "star": 2,
+          "shape": "lotion",
+          "inputs": {
+            "lemons": 4,
+            "oranges": 3,
+            "sunflowers": 1
+          }
+        },
+        {
+          "id": "daisy_lotion",
+          "name": "Daisy Lotion",
+          "star": 3,
+          "shape": "lotion",
+          "inputs": {
+            "cut_daisies": 3,
+            "goat_milk": 3,
+            "almonds": 2
+          }
+        },
+        {
+          "id": "honey_candle",
+          "name": "Honey Candle",
+          "star": 3,
+          "shape": "candle",
+          "inputs": {
+            "honey": 4,
+            "cotton": 2
+          }
+        },
+        {
+          "id": "feather_pillow",
+          "name": "Feather Pillow",
+          "star": 3,
+          "shape": "cloth",
+          "inputs": {
+            "feathers": 6,
+            "cotton": 3,
+            "wool": 1
+          }
+        },
+        {
+          "id": "lily_soap",
+          "name": "Lily Soap",
+          "star": 4,
+          "shape": "soap",
+          "inputs": {
+            "cut_lilies": 3,
+            "goat_milk": 3,
+            "honey": 2
+          }
+        },
+        {
+          "id": "wool_blanket",
+          "name": "Wool Blanket",
+          "star": 4,
+          "shape": "cloth",
+          "inputs": {
+            "wool": 6,
+            "cotton": 4
+          }
+        },
+        {
+          "id": "sunflower_oil_rub",
+          "name": "Sunflower Oil Rub",
+          "star": 4,
+          "shape": "lotion",
+          "inputs": {
+            "sunflowers": 4,
+            "almonds": 3,
+            "lemons": 2
+          }
+        },
+        {
+          "id": "iris_perfume",
+          "name": "Iris Perfume",
+          "star": 5,
+          "shape": "perfume",
+          "inputs": {
+            "cut_irises": 4,
+            "cut_roses": 3,
+            "honey": 2
+          }
+        },
+        {
+          "id": "meadow_candle",
+          "name": "Meadow Candle",
+          "star": 5,
+          "shape": "candle",
+          "inputs": {
+            "cut_lilies": 3,
+            "cut_daisies": 3,
+            "honey": 3
+          }
+        },
+        {
+          "id": "royal_bath_set",
+          "name": "Royal Bath Set",
+          "star": 5,
+          "shape": "soap",
+          "inputs": {
+            "cut_irises": 3,
+            "goat_milk": 4,
+            "wool": 3,
+            "cut_tulips": 2
+          }
+        },
+        {
+          "id": "floral_perfume",
+          "name": "Floral Perfume",
+          "star": 1,
+          "inputs": {
+            "blueberries": 4,
+            "morning_glory": 4
+          },
+          "status": "planned"
         },
         {
           "id": "soothing_herbal_lotion",
@@ -202,7 +501,8 @@
           "inputs": {
             "aloe_vera": 4,
             "green_tea": 4
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "devotion_perfume",
@@ -212,7 +512,8 @@
             "basil": 3,
             "blueberries": 3,
             "lilac": 3
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "petal_sachet",
@@ -222,7 +523,8 @@
             "iris": 1,
             "bell_peppers": 1,
             "sunflowers": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "relaxation_oil",
@@ -231,7 +533,8 @@
           "inputs": {
             "blackberries": 4,
             "morning_glory": 4
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "energizing_lotion",
@@ -241,7 +544,8 @@
             "aloe_vera": 3,
             "blackberries": 3,
             "red_tulips": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "lily_of_the_valley_soap",
@@ -251,7 +555,8 @@
             "blueberries": 3,
             "lilies": 1,
             "morning_glory": 3
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "restoring_candle",
@@ -261,7 +566,8 @@
             "ghost_chili": 2,
             "green_tea": 4,
             "sunflowers": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "iris_soap",
@@ -271,7 +577,8 @@
             "aloe_vera": 3,
             "iris": 2,
             "sunflowers": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "meditation_candle",
@@ -281,7 +588,8 @@
             "ginger": 2,
             "green_tea": 3,
             "lemon_balm": 3
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "pick_me_up_sachet",
@@ -291,7 +599,8 @@
             "basil": 3,
             "coffee": 2,
             "lemon_balm": 3
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "daffodil_lotion",
@@ -302,7 +611,8 @@
             "daffodils": 1,
             "lilies": 1,
             "strawberries": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "farmers_frenzy_perfume",
@@ -313,7 +623,8 @@
             "lavender": 1,
             "lilac": 2,
             "purple_poppies": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "transcendent_candle",
@@ -324,28 +635,20 @@
             "lilac": 2,
             "morning_glory": 2,
             "pink_roses": 1
-          }
+          },
+          "status": "planned"
         }
       ]
     },
     {
       "id": "winery_recipes",
       "name": "Winery recipes",
-      "doc": "Made in the Winery.",
+      "doc": "Made in the Winery. The ones marked planned are FarmVille's own, waiting for their crops.",
       "defaults": {
         "building": "winery",
         "product": "Drinks"
       },
       "variants": [
-        {
-          "id": "red_table_wine",
-          "name": "Red Table Wine",
-          "star": 1,
-          "inputs": {
-            "grapes": 2,
-            "white_grapes": 5
-          }
-        },
         {
           "id": "sweet_saki",
           "name": "Sweet Saki",
@@ -353,36 +656,28 @@
           "inputs": {
             "cranberries": 3,
             "rice": 5
-          }
+          },
+          "shape": "bottle"
         },
         {
-          "id": "white_sangria",
-          "name": "White Sangria",
+          "id": "strawberry_cranberry_juice",
+          "name": "Strawberry Cranberry Juice",
           "star": 1,
           "inputs": {
-            "strawberries": 3,
-            "sugarcane": 2,
-            "white_grapes": 3
-          }
+            "cranberries": 3,
+            "raspberries": 2,
+            "strawberries": 3
+          },
+          "shape": "glass"
         },
         {
-          "id": "dry_saki",
-          "name": "Dry Saki",
-          "star": 2,
+          "id": "apple_cider",
+          "name": "Apple Cider",
+          "star": 1,
+          "shape": "jug",
           "inputs": {
-            "green_tea": 2,
-            "lilac": 2,
-            "rice": 4
-          }
-        },
-        {
-          "id": "fruit_wine",
-          "name": "Fruit Wine",
-          "star": 2,
-          "inputs": {
-            "blueberries": 3,
-            "raspberries": 3,
-            "sugarcane": 2
+            "apples": 4,
+            "sugarcane": 1
           }
         },
         {
@@ -393,7 +688,172 @@
             "carrots": 3,
             "bell_peppers": 1,
             "tomatoes": 3
+          },
+          "shape": "glass"
+        },
+        {
+          "id": "berry_wine",
+          "name": "Berry Wine",
+          "star": 2,
+          "shape": "bottle",
+          "inputs": {
+            "raspberries": 4,
+            "cranberries": 4,
+            "sugarcane": 2
           }
+        },
+        {
+          "id": "lemonade",
+          "name": "Honey Lemonade",
+          "star": 2,
+          "shape": "jug",
+          "inputs": {
+            "lemons": 4,
+            "sugarcane": 2,
+            "honey": 1
+          }
+        },
+        {
+          "id": "country_red_wine",
+          "name": "Country Red Wine",
+          "star": 3,
+          "shape": "bottle",
+          "inputs": {
+            "grapes": 4,
+            "sugarcane": 1
+          }
+        },
+        {
+          "id": "sunrise_punch",
+          "name": "Sunrise Punch",
+          "star": 3,
+          "shape": "glass",
+          "inputs": {
+            "oranges": 4,
+            "pineapples": 2,
+            "cherries": 2
+          }
+        },
+        {
+          "id": "plum_wine",
+          "name": "Plum Wine",
+          "star": 3,
+          "shape": "bottle",
+          "inputs": {
+            "plums": 5,
+            "rice": 4,
+            "sugarcane": 2
+          }
+        },
+        {
+          "id": "watermelon_cooler",
+          "name": "Watermelon Cooler",
+          "star": 4,
+          "shape": "glass",
+          "inputs": {
+            "watermelon": 3,
+            "lemons": 3,
+            "sugarcane": 2
+          }
+        },
+        {
+          "id": "honey_mead",
+          "name": "Honey Mead",
+          "star": 4,
+          "shape": "jug",
+          "inputs": {
+            "honey": 5,
+            "apples": 3,
+            "wheat": 4
+          }
+        },
+        {
+          "id": "peach_sangria",
+          "name": "Peach Sangria",
+          "star": 4,
+          "shape": "jug",
+          "inputs": {
+            "peaches": 4,
+            "grapes": 3,
+            "oranges": 2
+          }
+        },
+        {
+          "id": "reserve_wine",
+          "name": "Reserve Wine",
+          "star": 5,
+          "shape": "bottle",
+          "inputs": {
+            "grapes": 6,
+            "cherries": 3,
+            "honey": 2
+          }
+        },
+        {
+          "id": "tropical_punch",
+          "name": "Tropical Punch",
+          "star": 5,
+          "shape": "glass",
+          "inputs": {
+            "pineapples": 4,
+            "bananas": 3,
+            "watermelon": 2,
+            "oranges": 2
+          }
+        },
+        {
+          "id": "golden_corn_cordial",
+          "name": "Golden Corn Cordial",
+          "star": 5,
+          "shape": "bottle",
+          "inputs": {
+            "corn": 4,
+            "sugarcane": 3,
+            "honey": 1
+          }
+        },
+        {
+          "id": "red_table_wine",
+          "name": "Red Table Wine",
+          "star": 1,
+          "inputs": {
+            "grapes": 2,
+            "white_grapes": 5
+          },
+          "status": "planned"
+        },
+        {
+          "id": "white_sangria",
+          "name": "White Sangria",
+          "star": 1,
+          "inputs": {
+            "strawberries": 3,
+            "sugarcane": 2,
+            "white_grapes": 3
+          },
+          "status": "planned"
+        },
+        {
+          "id": "dry_saki",
+          "name": "Dry Saki",
+          "star": 2,
+          "inputs": {
+            "green_tea": 2,
+            "lilac": 2,
+            "rice": 4
+          },
+          "status": "planned"
+        },
+        {
+          "id": "fruit_wine",
+          "name": "Fruit Wine",
+          "star": 2,
+          "inputs": {
+            "blueberries": 3,
+            "raspberries": 3,
+            "sugarcane": 2
+          },
+          "status": "planned"
         },
         {
           "id": "blackberry_wine",
@@ -403,7 +863,8 @@
             "blackberries": 3,
             "grapes": 1,
             "white_grapes": 3
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "raspberry_wine",
@@ -413,17 +874,8 @@
             "blackberries": 2,
             "grapes": 2,
             "raspberries": 3
-          }
-        },
-        {
-          "id": "strawberry_cranberry_juice",
-          "name": "Strawberry Cranberry Juice",
-          "star": 3,
-          "inputs": {
-            "cranberries": 3,
-            "raspberries": 2,
-            "strawberries": 3
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "blueberry_wine",
@@ -433,7 +885,8 @@
             "blackberries": 2,
             "blueberries": 4,
             "white_grapes": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "herbal_elixir",
@@ -443,7 +896,8 @@
             "basil": 3,
             "ginger": 3,
             "green_tea": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "pumpkin_vinegar",
@@ -453,7 +907,8 @@
             "acorn_squash": 2,
             "pumpkins": 4,
             "rice": 2
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "cucumber_wine",
@@ -464,7 +919,8 @@
             "cucumber": 2,
             "rice": 1,
             "squash": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "melon_juice",
@@ -475,7 +931,8 @@
             "strawberries": 1,
             "watermelon": 1,
             "yellow_melon": 1
-          }
+          },
+          "status": "planned"
         },
         {
           "id": "rose_petal_water",
@@ -486,7 +943,8 @@
             "morning_glory": 2,
             "pink_roses": 1,
             "sunflowers": 1
-          }
+          },
+          "status": "planned"
         }
       ]
     },
@@ -510,7 +968,8 @@
           "feed": {
             "type": "animal_feed",
             "units": 5
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "rich_grain_mix",
@@ -523,7 +982,8 @@
           "feed": {
             "type": "grain",
             "units": 3
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "rich_green_mash",
@@ -531,12 +991,13 @@
           "star": 1,
           "inputs": {
             "spinach": 3,
-            "cabbage": 3
+            "soybeans": 3
           },
           "feed": {
             "type": "greens",
             "units": 3
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "rich_root_meal",
@@ -544,12 +1005,13 @@
           "star": 1,
           "inputs": {
             "carrots": 3,
-            "potatoes": 3
+            "pumpkins": 3
           },
           "feed": {
             "type": "roots",
             "units": 3
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "rich_fruit_blend",
@@ -557,25 +1019,27 @@
           "star": 2,
           "inputs": {
             "strawberries": 3,
-            "blueberries": 3
+            "apples": 3
           },
           "feed": {
             "type": "fruit",
             "units": 3
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "rich_nectar_cake",
           "name": "Rich Nectar Cake",
           "star": 2,
           "inputs": {
-            "sunflowers": 3,
-            "lilac": 3
+            "sunflowers": 2,
+            "honey": 2
           },
           "feed": {
             "type": "nectar",
             "units": 3
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "grain_feast",
@@ -583,27 +1047,29 @@
           "star": 3,
           "inputs": {
             "rice": 4,
-            "oats": 4,
-            "rye": 4
+            "wheat": 4,
+            "corn": 2
           },
           "feed": {
             "type": "grain",
             "units": 8
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "garden_feast",
           "name": "Garden Feast",
           "star": 3,
           "inputs": {
-            "broccoli": 4,
-            "asparagus": 4,
-            "cucumber": 4
+            "spinach": 4,
+            "soybeans": 4,
+            "eggplant": 4
           },
           "feed": {
             "type": "greens",
             "units": 8
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "harvest_feast",
@@ -612,12 +1078,13 @@
           "inputs": {
             "pumpkins": 4,
             "squash": 4,
-            "onions": 4
+            "carrots": 4
           },
           "feed": {
             "type": "roots",
             "units": 8
-          }
+          },
+          "shape": "sack"
         },
         {
           "id": "orchard_feast",
@@ -625,13 +1092,14 @@
           "star": 5,
           "inputs": {
             "raspberries": 5,
-            "blackberries": 5,
-            "cranberries": 5
+            "cranberries": 5,
+            "peaches": 3
           },
           "feed": {
             "type": "fruit",
             "units": 8
-          }
+          },
+          "shape": "sack"
         }
       ]
     }

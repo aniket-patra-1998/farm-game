@@ -29,7 +29,8 @@
             "crafting",
             "recipe",
             "young",
-            "bloom"
+            "bloom",
+            "ingredient"
           ],
           "doc": "Set by the class; only override for special cases (bee, barn)."
         },
@@ -523,7 +524,7 @@
         "craft_seconds": {
           "type": "int",
           "default": 21600,
-          "doc": "How long one craft takes (FarmVille: 6 hours)."
+          "doc": "Unused since recipes take their star's time (balance crafting.craft_hours_by_star); kept for saves and FarmVille's record (6 hours)."
         },
         "extra_gem_cost": {
           "type": "int",
@@ -534,7 +535,7 @@
     "Recipe": {
       "extends": "Item",
       "kind": "recipe",
-      "doc": "Something a crafting building makes from bushels.",
+      "doc": "Something a crafting building makes from bushels and produce.",
       "fields": {
         "building": {
           "type": "string",
@@ -545,12 +546,12 @@
         "star": {
           "type": "int",
           "default": 1,
-          "doc": "The building's star level that unlocks it."
+          "doc": "The building's star level that unlocks it. Its price, fuel, XP and time rise with it (balance: recipes, crafting)."
         },
         "inputs": {
           "type": "map<int>",
           "required": true,
-          "doc": "Bushels used: crop id -> how many."
+          "doc": "What it uses: crop id (a bushel) or ingredient id (data/catalog/ingredients.json) -> how many."
         },
         "product": {
           "type": "string",
@@ -559,6 +560,14 @@
         "feed": {
           "type": "map",
           "doc": "Our own touch (Feed Mill): makes rich feed for the Barn instead of a good. {type: feed id from data/feeds.json, units: how many}."
+        },
+        "shape": {
+          "type": "string",
+          "doc": "How the good is pictured (GoodsModel): loaf, muffin, cake, pie, cookies, tart, pizza, bottle, jug, glass, perfume, lotion, candle, sachet, soap, cloth, sack."
+        },
+        "craft_seconds": {
+          "type": "int",
+          "doc": "How long it takes, when not its star's usual time (balance crafting.craft_hours_by_star)."
         }
       },
       "lifecycle": {
@@ -632,6 +641,42 @@
         "fill": 0.6,
         "doc": "growing until ready; a Single Bloom left ready 7 days withers."
       }
+    },
+    "Ingredient": {
+      "extends": "Item",
+      "kind": "ingredient",
+      "doc": "Our own touch: something an animal, the beehive, a tree or a bloom gives for crafting, beside its coins (milk, eggs, apples, roses). Held with the bushels; recipes use it like a bushel.",
+      "fields": {
+        "value": {
+          "type": "int",
+          "required": true,
+          "doc": "What one is worth in coins: a recipe's price follows its ingredients' worth, and the Farmers Market sells it for this."
+        },
+        "products": {
+          "type": "list<string>",
+          "doc": "Animals that give it, by their `product` (\"Milk\")."
+        },
+        "families": {
+          "type": "list<string>",
+          "doc": "Trees or blooms that give it, by family (\"apple\", \"rose\")."
+        },
+        "items": {
+          "type": "list<string>",
+          "doc": "Things that give it, by id (\"beehive\")."
+        },
+        "shape": {
+          "type": "string",
+          "doc": "How it is pictured (GoodsModel): pail, eggs, wool, feather, truffle, jar, fruit, nut, berries, banana, flower."
+        }
+      },
+      "lifecycle": {
+        "stages": [
+          "icon"
+        ],
+        "pattern": "ingredient_{id}",
+        "fill": 0.5,
+        "doc": "An icon for menus."
+      }
     }
   },
   "files": {
@@ -644,7 +689,8 @@
     "decorations": "Decoration",
     "recipes": "Recipe",
     "young": "Young",
-    "blooms": "Bloom"
+    "blooms": "Bloom",
+    "ingredients": "Ingredient"
   },
   "kind_classes": {
     "barn": "Barn",

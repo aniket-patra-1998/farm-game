@@ -14,11 +14,12 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Buildings | 6 | 21 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 40 | 0 |
-| recipes | 4 | 55 | 0 |
+| recipes | 4 | 55 | 37 |
 | young | 3 | 3 | 0 |
 | blooms | 6 | 12 | 0 |
+| Ingredients | 3 | 22 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **111** | **445** | **6** |
+| **All** | **114** | **467** | **43** |
 
 ## Adding an item
 
@@ -48,7 +49,8 @@ Item - Anything in the catalog.
     Vehicle - Works an area of plots per tap and burns fuel.
     Decoration - Scenery. 1 XP per 100 coins (at least 5).
     Young - FarmVille's mystery young: found while harvesting, put on the farm, given its supply one at a time; on the last it grows into what it was all along (NurtureSystem).
-  Recipe - Something a crafting building makes from bushels.
+  Recipe - Something a crafting building makes from bushels and produce.
+  Ingredient - Our own touch: something an animal, the beehive, a tree or a bloom gives for crafting, beside its coins (milk, eggs, apples, roses). Held with the bushels; recipes use it like a bushel.
 ```
 
 ### Item
@@ -59,7 +61,7 @@ Anything in the catalog.
 |---|---|---|---|---|
 | `id` | string |  | yes | Unique snake_case id. Saves refer to it, so never rename one that has shipped. |
 | `name` | string |  | yes | Shown to the player. |
-| `kind` | enum of crop, tree, animal, bee, building, barn, vehicle, decor, material, crafting, recipe, young, bloom |  |  | Set by the class; only override for special cases (bee, barn). |
+| `kind` | enum of crop, tree, animal, bee, building, barn, vehicle, decor, material, crafting, recipe, young, bloom, ingredient |  |  | Set by the class; only override for special cases (bee, barn). |
 | `unlock_level` | int | 1 |  | Level that unlocks it. 99 = never in the Market (earned, traded or starter only). |
 | `color` | color | "#999999" |  | Main colour of the code-drawn placeholder. |
 | `accent` | color |  |  | Second colour of the placeholder. |
@@ -202,20 +204,22 @@ FarmVille's crafting cottages: bushels in, goods out. Sizes are star levels (cap
 
 | Field | Type | Default | Required | Meaning |
 |---|---|---|---|---|
-| `craft_seconds` | int | 21600 |  | How long one craft takes (FarmVille: 6 hours). |
+| `craft_seconds` | int | 21600 |  | Unused since recipes take their star's time (balance crafting.craft_hours_by_star); kept for saves and FarmVille's record (6 hours). |
 | `extra_gem_cost` | int |  |  | Price in gems once you already own a crafting building (FarmVille: the first was coins, the rest Farm Cash). |
 
 ### Recipe (extends Item)
 
-Something a crafting building makes from bushels.
+Something a crafting building makes from bushels and produce.
 
 | Field | Type | Default | Required | Meaning |
 |---|---|---|---|---|
 | `building` | string → Crafting |  | yes | Where it's made. |
-| `star` | int | 1 |  | The building's star level that unlocks it. |
-| `inputs` | map<int> |  | yes | Bushels used: crop id -> how many. |
+| `star` | int | 1 |  | The building's star level that unlocks it. Its price, fuel, XP and time rise with it (balance: recipes, crafting). |
+| `inputs` | map<int> |  | yes | What it uses: crop id (a bushel) or ingredient id (data/catalog/ingredients.json) -> how many. |
 | `product` | string |  |  | What kind of good (bread, wine, perfume). |
 | `feed` | map |  |  | Our own touch (Feed Mill): makes rich feed for the Barn instead of a good. {type: feed id from data/feeds.json, units: how many}. |
+| `shape` | string |  |  | How the good is pictured (GoodsModel): loaf, muffin, cake, pie, cookies, tart, pizza, bottle, jug, glass, perfume, lotion, candle, sachet, soap, cloth, sack. |
+| `craft_seconds` | int |  |  | How long it takes, when not its star's usual time (balance crafting.craft_hours_by_star). |
 
 ### Young (extends Placeable)
 
@@ -237,6 +241,18 @@ FarmVille's Blooms: flowers harvested every cycle. A Single Bloom withers if lef
 | `single_of` | string → Bloom |  |  | For a Full Bloom: the Single Bloom it's upgraded from. |
 | `upgrade_gems` | int |  |  | For a Single Bloom: gems to upgrade it to its Full Bloom. |
 | `accent` | color |  |  | The flower's centre. |
+
+### Ingredient (extends Item)
+
+Our own touch: something an animal, the beehive, a tree or a bloom gives for crafting, beside its coins (milk, eggs, apples, roses). Held with the bushels; recipes use it like a bushel.
+
+| Field | Type | Default | Required | Meaning |
+|---|---|---|---|---|
+| `value` | int |  | yes | What one is worth in coins: a recipe's price follows its ingredients' worth, and the Farmers Market sells it for this. |
+| `products` | list<string> |  |  | Animals that give it, by their `product` ("Milk"). |
+| `families` | list<string> |  |  | Trees or blooms that give it, by family ("apple", "rose"). |
+| `items` | list<string> |  |  | Things that give it, by id ("beehive"). |
+| `shape` | string |  |  | How it is pictured (GoodsModel): pail, eggs, wool, feather, truffle, jar, fruit, nut, berries, banana, flower. |
 
 ## Crops
 
@@ -1099,79 +1115,116 @@ Given, never bought.
 
 ## recipes
 
-FarmVille's 2010 crafting recipes, 3 per star level per building (from the SuperCheats crafting guide). Inputs are bushels.
+Three recipes per star per building, made from what the first release grows and raises: bushels of its crops, and produce (data/catalog/ingredients.json: eggs, milk, honey, orchard fruit, cut flowers). Ingredients are chosen so a recipe's worth rises with its star. FarmVille's 2010 recipes (the SuperCheats crafting guide) that need crops outside the first release are kept as planned, for when those crops come; the ones marked in the game are FarmVille's own.
 
 ### Bakery recipes
 
-Made in the Bakery.
+Made in the Bakery. The ones marked planned are FarmVille's own, waiting for their crops.
 
 Shared: `building` = "bakery", `product` = "Baked goods"
 
 | | Item | id |  |
 |---|---|---|
 | ✅ | Pumpkin Bread | `pumpkin_bread` |  |
-| ✅ | Spicy Muffins | `spicy_muffins` |  |
 | ✅ | Strawberry Shortcake | `strawberry_shortcake` |  |
-| ✅ | Pattypan Tart | `pattypan_tart` |  |
+| ✅ | Carrot Muffins | `carrot_muffins` |  |
 | ✅ | Peanut Butter Cookies | `peanut_butter_cookies` |  |
-| ✅ | Triple Berry Pie | `triple_berry_pie` |  |
-| ✅ | Mocha Blackberry Cake | `mocha_blackberry_cake` |  |
+| ✅ | Three Berry Pie | `three_berry_pie` |  |
+| ✅ | Summer Squash Tart | `summer_squash_tart` |  |
 | ✅ | Raspberry Blondie | `raspberry_blondie` |  |
-| ✅ | Vegetable Tart | `vegetable_tart` |  |
-| ✅ | Baked Cucumber | `baked_cucumber` |  |
-| ✅ | Oatmeal Cookies | `oatmeal_cookies` |  |
-| ✅ | Pizza Bread | `pizza_bread` |  |
-| ✅ | Carrot Cake | `carrot_cake` |  |
-| ✅ | Ginger Snaps | `ginger_snaps` |  |
-| ✅ | Potato and Onion Bread | `potato_and_onion_bread` |  |
+| ✅ | Apple Pie | `apple_pie` |  |
+| ✅ | Cherry Almond Cake | `cherry_almond_cake` |  |
+| ✅ | Farmhouse Pizza | `farmhouse_pizza` |  |
+| ✅ | Honey Corn Bread | `corn_bread` |  |
+| ✅ | Banana Nut Loaf | `banana_nut_loaf` |  |
+| ✅ | Honey Carrot Cake | `honey_carrot_cake` |  |
+| ✅ | Peach Cobbler | `peach_cobbler` |  |
+| ✅ | Truffle Pie | `truffle_pie` |  |
+| 🕓 | Spicy Muffins | `spicy_muffins` |  |
+| 🕓 | Pattypan Tart | `pattypan_tart` |  |
+| 🕓 | Triple Berry Pie | `triple_berry_pie` |  |
+| 🕓 | Mocha Blackberry Cake | `mocha_blackberry_cake` |  |
+| 🕓 | Vegetable Tart | `vegetable_tart` |  |
+| 🕓 | Baked Cucumber | `baked_cucumber` |  |
+| 🕓 | Oatmeal Cookies | `oatmeal_cookies` |  |
+| 🕓 | Pizza Bread | `pizza_bread` |  |
+| 🕓 | Carrot Cake | `carrot_cake` |  |
+| 🕓 | Ginger Snaps | `ginger_snaps` |  |
+| 🕓 | Potato and Onion Bread | `potato_and_onion_bread` |  |
 
 ### Spa recipes
 
-Made in the Spa.
+Made in the Spa. The ones marked planned are FarmVille's own, waiting for their crops.
 
 Shared: `building` = "spa", `product` = "Spa goods"
 
 | | Item | id |  |
 |---|---|---|
-| ✅ | Floral Perfume | `floral_perfume` |  |
 | ✅ | Fresh Sachet | `fresh_sachet` |  |
-| ✅ | Soothing Herbal Lotion | `soothing_herbal_lotion` |  |
-| ✅ | Devotion Perfume | `devotion_perfume` |  |
-| ✅ | Petal Sachet | `petal_sachet` |  |
-| ✅ | Relaxation Oil | `relaxation_oil` |  |
-| ✅ | Energizing Lotion | `energizing_lotion` |  |
-| ✅ | Lily of the Valley Soap | `lily_of_the_valley_soap` |  |
-| ✅ | Restoring Candle | `restoring_candle` |  |
-| ✅ | Iris Soap | `iris_soap` |  |
-| ✅ | Meditation Candle | `meditation_candle` |  |
-| ✅ | Pick Me Up Sachet | `pick_me_up_sachet` |  |
-| ✅ | Daffodil Lotion | `daffodil_lotion` |  |
-| ✅ | Farmers Frenzy Perfume | `farmers_frenzy_perfume` |  |
-| ✅ | Transcendent Candle | `transcendent_candle` |  |
+| ✅ | Rose Water | `rose_water` |  |
+| ✅ | Cotton Wash Cloth | `cotton_wash_cloth` |  |
+| ✅ | Goat Milk Soap | `goat_milk_soap` |  |
+| ✅ | Tulip Sachet | `tulip_sachet` |  |
+| ✅ | Citrus Bath Oil | `citrus_bath_oil` |  |
+| ✅ | Daisy Lotion | `daisy_lotion` |  |
+| ✅ | Honey Candle | `honey_candle` |  |
+| ✅ | Feather Pillow | `feather_pillow` |  |
+| ✅ | Lily Soap | `lily_soap` |  |
+| ✅ | Wool Blanket | `wool_blanket` |  |
+| ✅ | Sunflower Oil Rub | `sunflower_oil_rub` |  |
+| ✅ | Iris Perfume | `iris_perfume` |  |
+| ✅ | Meadow Candle | `meadow_candle` |  |
+| ✅ | Royal Bath Set | `royal_bath_set` |  |
+| 🕓 | Floral Perfume | `floral_perfume` |  |
+| 🕓 | Soothing Herbal Lotion | `soothing_herbal_lotion` |  |
+| 🕓 | Devotion Perfume | `devotion_perfume` |  |
+| 🕓 | Petal Sachet | `petal_sachet` |  |
+| 🕓 | Relaxation Oil | `relaxation_oil` |  |
+| 🕓 | Energizing Lotion | `energizing_lotion` |  |
+| 🕓 | Lily of the Valley Soap | `lily_of_the_valley_soap` |  |
+| 🕓 | Restoring Candle | `restoring_candle` |  |
+| 🕓 | Iris Soap | `iris_soap` |  |
+| 🕓 | Meditation Candle | `meditation_candle` |  |
+| 🕓 | Pick Me Up Sachet | `pick_me_up_sachet` |  |
+| 🕓 | Daffodil Lotion | `daffodil_lotion` |  |
+| 🕓 | Farmers Frenzy Perfume | `farmers_frenzy_perfume` |  |
+| 🕓 | Transcendent Candle | `transcendent_candle` |  |
 
 ### Winery recipes
 
-Made in the Winery.
+Made in the Winery. The ones marked planned are FarmVille's own, waiting for their crops.
 
 Shared: `building` = "winery", `product` = "Drinks"
 
 | | Item | id |  |
 |---|---|---|
-| ✅ | Red Table Wine | `red_table_wine` |  |
 | ✅ | Sweet Saki | `sweet_saki` |  |
-| ✅ | White Sangria | `white_sangria` |  |
-| ✅ | Dry Saki | `dry_saki` |  |
-| ✅ | Fruit Wine | `fruit_wine` |  |
-| ✅ | Spicy Tomato Juice | `spicy_tomato_juice` |  |
-| ✅ | Blackberry Wine | `blackberry_wine` |  |
-| ✅ | Raspberry Wine | `raspberry_wine` |  |
 | ✅ | Strawberry Cranberry Juice | `strawberry_cranberry_juice` |  |
-| ✅ | Blueberry Wine | `blueberry_wine` |  |
-| ✅ | Herbal Elixir | `herbal_elixir` |  |
-| ✅ | Pumpkin Vinegar | `pumpkin_vinegar` |  |
-| ✅ | Cucumber Wine | `cucumber_wine` |  |
-| ✅ | Melon Juice | `melon_juice` |  |
-| ✅ | Rose Petal Water | `rose_petal_water` |  |
+| ✅ | Apple Cider | `apple_cider` |  |
+| ✅ | Spicy Tomato Juice | `spicy_tomato_juice` |  |
+| ✅ | Berry Wine | `berry_wine` |  |
+| ✅ | Honey Lemonade | `lemonade` |  |
+| ✅ | Country Red Wine | `country_red_wine` |  |
+| ✅ | Sunrise Punch | `sunrise_punch` |  |
+| ✅ | Plum Wine | `plum_wine` |  |
+| ✅ | Watermelon Cooler | `watermelon_cooler` |  |
+| ✅ | Honey Mead | `honey_mead` |  |
+| ✅ | Peach Sangria | `peach_sangria` |  |
+| ✅ | Reserve Wine | `reserve_wine` |  |
+| ✅ | Tropical Punch | `tropical_punch` |  |
+| ✅ | Golden Corn Cordial | `golden_corn_cordial` |  |
+| 🕓 | Red Table Wine | `red_table_wine` |  |
+| 🕓 | White Sangria | `white_sangria` |  |
+| 🕓 | Dry Saki | `dry_saki` |  |
+| 🕓 | Fruit Wine | `fruit_wine` |  |
+| 🕓 | Blackberry Wine | `blackberry_wine` |  |
+| 🕓 | Raspberry Wine | `raspberry_wine` |  |
+| 🕓 | Blueberry Wine | `blueberry_wine` |  |
+| 🕓 | Herbal Elixir | `herbal_elixir` |  |
+| 🕓 | Pumpkin Vinegar | `pumpkin_vinegar` |  |
+| 🕓 | Cucumber Wine | `cucumber_wine` |  |
+| 🕓 | Melon Juice | `melon_juice` |  |
+| 🕓 | Rose Petal Water | `rose_petal_water` |  |
 
 ### Feed Mill recipes
 
@@ -1289,6 +1342,53 @@ Shared: `color` = "#6b5bd2", `accent` = "#f6d743"
 |---|---|---|
 | ✅ | Single Iris Bloom | `iris_bloom` |  |
 | ✅ | Full Iris Bloom | `iris_full_bloom` |  |
+
+## Ingredients
+
+Our own touch: what animals, the beehive, trees and blooms give for crafting, beside their coins. Found when collecting (crafting.produce_chance), once you own a crafting building; held with the bushels. Values are ours: about what its giver pays for a day, so a recipe's price follows what went into it.
+
+### Animal Produce
+
+From the animals, by what each gives (an animal's `product`), and from the beehive.
+
+| | Item | id | Worth | From |
+|---|---|---|---|---|
+| ✅ | Eggs | `eggs` | 70 | Eggs, Brown Eggs |
+| ✅ | Milk | `milk` | 120 | Milk |
+| ✅ | Goat Milk | `goat_milk` | 150 | Goat Milk |
+| ✅ | Wool | `wool` | 140 | Wool, Black Wool |
+| ✅ | Feathers | `feathers` | 90 | Feathers |
+| ✅ | Truffles | `truffles` | 300 | Truffles |
+| ✅ | Honey | `honey` | 220 | beehive |
+
+### Orchard Fruit
+
+From the trees, by family (every apple tree gives apples), loose or in an Orchard.
+
+| | Item | id | Worth | From |
+|---|---|---|---|---|
+| ✅ | Apples | `apples` | 90 | apple |
+| ✅ | Plums | `plums` | 100 | plum |
+| ✅ | Lemons | `lemons` | 110 | lemon |
+| ✅ | Figs | `figs` | 120 | fig |
+| ✅ | Almonds | `almonds` | 130 | almond |
+| ✅ | Cherries | `cherries` | 130 | cherry |
+| ✅ | Bananas | `bananas` | 140 | banana |
+| ✅ | Oranges | `oranges` | 140 | orange |
+| ✅ | Chestnuts | `chestnuts` | 150 | chestnut |
+| ✅ | Peaches | `peaches` | 160 | peach |
+
+### Cut Flowers
+
+From the blooms, by family, loose or in a Bloom Garden.
+
+| | Item | id | Worth | From |
+|---|---|---|---|---|
+| ✅ | Cut Roses | `cut_roses` | 180 | rose |
+| ✅ | Cut Tulips | `cut_tulips` | 200 | tulip |
+| ✅ | Cut Daisies | `cut_daisies` | 220 | daisy |
+| ✅ | Cut Lilies | `cut_lilies` | 260 | lily |
+| ✅ | Cut Irises | `cut_irises` | 280 | iris |
 
 ## Collectibles
 

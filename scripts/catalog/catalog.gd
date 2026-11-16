@@ -31,6 +31,7 @@ static func new_def(cls: String) -> ItemDef:
 	match cls:
 		"Crop": return CropDef.new()
 		"Material": return MaterialDef.new()
+		"Ingredient": return IngredientDef.new()
 		"Tree": return TreeDef.new()
 		"Animal": return AnimalDef.new()
 		"Building": return BuildingDef.new()

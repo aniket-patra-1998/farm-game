@@ -39,7 +39,7 @@ CROP = ("Four farm plants of one kind for a cozy isometric farming game, seen fr
         "no base, no ground, no shadow; isolated on a plain flat light grey (#e8e8e8) background with nothing else, no text, "
         "no border, no watermark. The first image is a layout sketch showing where the four plants stand and how big they are. "
         "The last three images are style references only: match their painting style, brushwork, palette and lighting exactly.")
-COMMONS = {"Icon": ICON, "Material": ICON, "Recipe": ICON, "Avatar": AVATAR, "Crop": CROP}
+COMMONS = {"Icon": ICON, "Material": ICON, "Recipe": ICON, "Ingredient": ICON, "Avatar": AVATAR, "Crop": CROP}
 STYLES = {"painterly": "Style: hand-painted cozy cartoon game art, soft painterly brushwork, warm golden-hour sunlight from the "
                        "upper left, gentle ambient occlusion, rich but natural colors, crisp readable silhouette with a soft dark "
                        "outline, premium mobile game quality."}
@@ -111,6 +111,8 @@ def subject(cls, e, stage, n_sizes):
         return f"{look}. Size {n} of {n_sizes}: {size}"
     if cls == "Recipe":
         return f"{name}, a homemade {e.get('product', 'good').lower().rstrip('s')} from a country farm, made from {', '.join(c.replace('_', ' ') for c in e['inputs'])}; appetising and charming"
+    if cls == "Ingredient":
+        return f"a game icon of {name.lower()}, fresh farm produce for crafting, simple, bold and readable at small size"
     if cls == "Material":
         return f"a game icon of {name.lower()}, a building material, simple, bold and readable at small size"
     if cls == "Decoration" and not e.get("look"):
@@ -169,7 +171,7 @@ def build():
                 stages = [str(n) for n in range(1, len(e.get("sizes", [{}])) + 1)] if lc["stages"] == "sizes" else lc["stages"]
                 for stage in stages:
                     art = lc["pattern"].replace("{id}", e["id"]).replace("{stage}", stage).replace("{n}", stage)
-                    refs = [] if cls in ("Material", "Recipe") else [f"refs/{art}.png"]
+                    refs = [] if cls in ("Material", "Recipe", "Ingredient") else [f"refs/{art}.png"]
                     if os.path.exists(os.path.join(ROOT, "art", "refs3d", e["id"] + ".png")):
                         refs.append(f"refs3d/{e['id']}.png")
                     items.append({"id": art, "item": e["id"], "class": cls, "stage": stage,

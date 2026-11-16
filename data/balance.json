@@ -118,8 +118,26 @@
    "note": "\"Buy all ingredients\" with premium currency"
   },
   "craft_xp_per_star": {
-   "v": 5,
-   "note": "XP for a craft, per star of the recipe."
+   "v": 10,
+   "note": "XP added per star of the recipe (so 20 to 60; FarmVille gave 50 a product)."
+  },
+  "produce_chance": {
+   "v": 0.35,
+   "note": "each animal, hive, tree or bloom collected drops its produce (milk, eggs, apples, roses) this often, once you own a crafting building. Higher than a bushel's: they are collected far less often than plots are harvested."
+  },
+  "craft_hours_by_star": {
+   "v": [
+    1,
+    2,
+    4,
+    6,
+    8
+   ],
+   "note": "how long a recipe takes, by the star that unlocks it (FarmVille: 6 hours for all). Short first recipes keep a new building busy; the best take a night."
+  },
+  "craft_xp_base": {
+   "v": 10,
+   "note": "XP for a craft, before its star's share."
   }
  },
  "specials": {
@@ -432,15 +450,23 @@
  "recipes": {
   "sell_markup": {
    "v": 1.5,
-   "note": "A crafted good sells for its ingredients times this."
+   "note": "A 1-star good sells for its ingredients' worth times this."
   },
   "fuel_base": {
    "v": 20,
-   "note": "Fuel a craft is worth, before stars."
+   "note": "Fuel a 1-star good is worth, before mastery."
   },
   "fuel_per_star": {
    "v": 10,
-   "note": "Fuel added per star of the recipe."
+   "note": "Fuel added per recipe mastery star."
+  },
+  "markup_per_star": {
+   "v": 0.25,
+   "note": "Added to the markup per star above the first: a 5-star good sells for 2.5 times what went into it."
+  },
+  "fuel_per_recipe_star": {
+   "v": 10,
+   "note": "Fuel added per star of the recipe above the first."
   }
  },
  "market": {
@@ -716,31 +742,103 @@
   }
  },
  "seasons": {
-  "enabled": {"v": 1, "note": "1 the seasons are on (scripts/season.gd, data/seasons.json; our own touch): the season follows the real calendar where the player lives, crops have home seasons, and rain waters the fields. 0: always summer, as before"},
-  "from_level": {"v": 6, "note": "crops planted below this level are never off-season: a new farm learns plain farming first"},
-  "off_price_mult": {"v": 1.5, "note": "an off-season crop sells for this many times its price (the seed shelf says so)"},
-  "off_window_mult": {"v": 0.5, "note": "and stays ripe this share of its usual time before it withers: more coins, less slack"},
-  "rain_bonus": {"v": 0.1, "note": "a crop it rained on while it grew sells for this much more (added with the fertilizer and mastery bonuses); the forecast under the clock says when rain is due"},
-  "forecast_blocks": {"v": 8, "note": "how many weather blocks ahead the forecast looks (8 x 3 h: a day)"}
+  "enabled": {
+   "v": 1,
+   "note": "1 the seasons are on (scripts/season.gd, data/seasons.json; our own touch): the season follows the real calendar where the player lives, crops have home seasons, and rain waters the fields. 0: always summer, as before"
+  },
+  "from_level": {
+   "v": 6,
+   "note": "crops planted below this level are never off-season: a new farm learns plain farming first"
+  },
+  "off_price_mult": {
+   "v": 1.5,
+   "note": "an off-season crop sells for this many times its price (the seed shelf says so)"
+  },
+  "off_window_mult": {
+   "v": 0.5,
+   "note": "and stays ripe this share of its usual time before it withers: more coins, less slack"
+  },
+  "rain_bonus": {
+   "v": 0.1,
+   "note": "a crop it rained on while it grew sells for this much more (added with the fertilizer and mastery bonuses); the forecast under the clock says when rain is due"
+  },
+  "forecast_blocks": {
+   "v": 8,
+   "note": "how many weather blocks ahead the forecast looks (8 x 3 h: a day)"
+  }
  },
  "feel": {
-  "run_scale": {"v": [0, 2, 4, 5, 7, 9, 11, 12], "note": "the notes a run of the same sound climbs (a swipe's plots, a streak of harvests), in semitones above the first; past the end the top note holds (autoload/feedback.gd). Our own touch."},
-  "streak_gap_seconds": {"v": 4.0, "note": "the farmer's next job of the same kind within this long carries the streak on (scripts/farm_grid.gd); longer and the notes start again"},
-  "streak_shout_every": {"v": 5, "note": "a streak says its count over the plot at every multiple of this (x5, x10...); 0 never"},
-  "farmhouse_levels": {"v": [10, 20, 35], "note": "the farmer's levels at which the farmhouse gains its next part (data/building_models.json farmhouse.levels 2, 3, 4)"},
-  "idle_view_seconds": {"v": 20.0, "note": "with no touch for this long the interface fades away and the farm plays on; the next touch brings it back and does nothing else (scripts/main.gd). 0 never"},
-  "away_card_seconds": {"v": 12.0, "note": "how long the While you were away card stays before it leaves by itself (scripts/hud/away_card.gd)"},
-  "ready_check_seconds": {"v": 2.0, "note": "how often the Next ready button counts what is ready (scripts/hud/hud_side.gd)"}
+  "run_scale": {
+   "v": [
+    0,
+    2,
+    4,
+    5,
+    7,
+    9,
+    11,
+    12
+   ],
+   "note": "the notes a run of the same sound climbs (a swipe's plots, a streak of harvests), in semitones above the first; past the end the top note holds (autoload/feedback.gd). Our own touch."
+  },
+  "streak_gap_seconds": {
+   "v": 4.0,
+   "note": "the farmer's next job of the same kind within this long carries the streak on (scripts/farm_grid.gd); longer and the notes start again"
+  },
+  "streak_shout_every": {
+   "v": 5,
+   "note": "a streak says its count over the plot at every multiple of this (x5, x10...); 0 never"
+  },
+  "farmhouse_levels": {
+   "v": [
+    10,
+    20,
+    35
+   ],
+   "note": "the farmer's levels at which the farmhouse gains its next part (data/building_models.json farmhouse.levels 2, 3, 4)"
+  },
+  "idle_view_seconds": {
+   "v": 20.0,
+   "note": "with no touch for this long the interface fades away and the farm plays on; the next touch brings it back and does nothing else (scripts/main.gd). 0 never"
+  },
+  "away_card_seconds": {
+   "v": 12.0,
+   "note": "how long the While you were away card stays before it leaves by itself (scripts/hud/away_card.gd)"
+  },
+  "ready_check_seconds": {
+   "v": 2.0,
+   "note": "how often the Next ready button counts what is ready (scripts/hud/hud_side.gd)"
+  }
  },
  "input": {
-  "swipe_farm": {"v": 1, "note": "1 swipe to farm on (our own touch, not FarmVille 2009, which farmed one click a plot and left many plots at once to the vehicles): a one-finger drag with a swipe tool works every plot it crosses; 0 off: every drag pans"},
-  "swipe_tools": {"v": ["plow", "plant", "harvest", "fertilize"], "note": "the tools a swipe works plots with (scripts/farm_grid.gd); any other tool's drag pans"}
+  "swipe_farm": {
+   "v": 1,
+   "note": "1 swipe to farm on (our own touch, not FarmVille 2009, which farmed one click a plot and left many plots at once to the vehicles): a one-finger drag with a swipe tool works every plot it crosses; 0 off: every drag pans"
+  },
+  "swipe_tools": {
+   "v": [
+    "plow",
+    "plant",
+    "harvest",
+    "fertilize"
+   ],
+   "note": "the tools a swipe works plots with (scripts/farm_grid.gd); any other tool's drag pans"
+  }
  },
  "raising": {
-  "feed_per_baby": {"v": 10, "note": "Animal Feed one baby in a nursery eats to grow up (FarmVille: a Mystery Baby took 10 Animal Feed); its trough takes this much per baby, no more"},
-  "grown_xp": {"v": 25, "note": "XP for each baby raised (ours; in place of the old nursery's spare-baby XP)"}
+  "feed_per_baby": {
+   "v": 10,
+   "note": "Animal Feed one baby in a nursery eats to grow up (FarmVille: a Mystery Baby took 10 Animal Feed); its trough takes this much per baby, no more"
+  },
+  "grown_xp": {
+   "v": 25,
+   "note": "XP for each baby raised (ours; in place of the old nursery's spare-baby XP)"
+  }
  },
  "player": {
-  "queue_max": {"v": 60, "note": "jobs the farmer takes at once (taps or a swipe); on purpose: a whole field is a vehicle's work, as in FarmVille, and reaching it says so"}
+  "queue_max": {
+   "v": 60,
+   "note": "jobs the farmer takes at once (taps or a swipe); on purpose: a whole field is a vehicle's work, as in FarmVille, and reaching it says so"
+  }
  }
 }

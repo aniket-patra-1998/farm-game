@@ -67,9 +67,12 @@ COLUMNS = {
                 ("Upgrade parts", lambda e: ", ".join(str(x) for x in e.get("upgrade_parts", [])))],
     "Decoration": [("Unlock", unlock), ("Cost", money), ("Size", lambda e: f"{e.get('w', 1)}x{e.get('h', 1)}"), ("Shape", lambda e: e.get("shape", ""))],
     "Material": [("Basic", lambda e: "yes" if e.get("basic") else "")],
+    "Ingredient": [("Worth", lambda e: e.get("value", "")),
+                   ("From", lambda e: ", ".join(e.get("products", []) + e.get("families", []) + e.get("items", [])))],
 }
 TITLES = {"crops": "Crops", "trees": "Trees", "animals": "Animals", "buildings": "Buildings", "vehicles": "Vehicles",
-          "decorations": "Decorations", "materials": "Materials"}
+          "decorations": "Decorations", "materials": "Materials",
+          "ingredients": "Ingredients"}
 
 
 def stack(cls, file_defaults, fam_defaults, entry):

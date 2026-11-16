@@ -1,0 +1,250 @@
+{
+  "class": "Ingredient",
+  "_note": "Our own touch: what animals, the beehive, trees and blooms give for crafting, beside their coins. Found when collecting (crafting.produce_chance), once you own a crafting building; held with the bushels. Values are ours: about what its giver pays for a day, so a recipe's price follows what went into it.",
+  "defaults": {},
+  "families": [
+    {
+      "id": "animal_produce",
+      "name": "Animal Produce",
+      "doc": "From the animals, by what each gives (an animal's `product`), and from the beehive.",
+      "variants": [
+        {
+          "id": "eggs",
+          "name": "Eggs",
+          "value": 70,
+          "shape": "eggs",
+          "color": "#f3e3c4",
+          "products": [
+            "Eggs",
+            "Brown Eggs"
+          ]
+        },
+        {
+          "id": "milk",
+          "name": "Milk",
+          "value": 120,
+          "shape": "pail",
+          "color": "#fbfaf4",
+          "products": [
+            "Milk"
+          ]
+        },
+        {
+          "id": "goat_milk",
+          "name": "Goat Milk",
+          "value": 150,
+          "shape": "pail",
+          "color": "#f6efdc",
+          "products": [
+            "Goat Milk"
+          ]
+        },
+        {
+          "id": "wool",
+          "name": "Wool",
+          "value": 140,
+          "shape": "wool",
+          "color": "#f2efe6",
+          "products": [
+            "Wool",
+            "Black Wool"
+          ]
+        },
+        {
+          "id": "feathers",
+          "name": "Feathers",
+          "value": 90,
+          "shape": "feather",
+          "color": "#e9e4d8",
+          "products": [
+            "Feathers"
+          ]
+        },
+        {
+          "id": "truffles",
+          "name": "Truffles",
+          "value": 300,
+          "shape": "truffle",
+          "color": "#5a4636",
+          "products": [
+            "Truffles"
+          ]
+        },
+        {
+          "id": "honey",
+          "name": "Honey",
+          "value": 220,
+          "shape": "jar",
+          "color": "#e9a21c",
+          "items": [
+            "beehive"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "orchard_fruit",
+      "name": "Orchard Fruit",
+      "doc": "From the trees, by family (every apple tree gives apples), loose or in an Orchard.",
+      "variants": [
+        {
+          "id": "apples",
+          "name": "Apples",
+          "value": 90,
+          "shape": "fruit",
+          "color": "#d93b30",
+          "families": [
+            "apple"
+          ]
+        },
+        {
+          "id": "plums",
+          "name": "Plums",
+          "value": 100,
+          "shape": "fruit",
+          "color": "#7a3a8a",
+          "families": [
+            "plum"
+          ]
+        },
+        {
+          "id": "lemons",
+          "name": "Lemons",
+          "value": 110,
+          "shape": "fruit",
+          "color": "#f2d53c",
+          "families": [
+            "lemon"
+          ]
+        },
+        {
+          "id": "figs",
+          "name": "Figs",
+          "value": 120,
+          "shape": "fruit",
+          "color": "#6a3f6f",
+          "families": [
+            "fig"
+          ]
+        },
+        {
+          "id": "almonds",
+          "name": "Almonds",
+          "value": 130,
+          "shape": "nut",
+          "color": "#c79a63",
+          "families": [
+            "almond"
+          ]
+        },
+        {
+          "id": "cherries",
+          "name": "Cherries",
+          "value": 130,
+          "shape": "berries",
+          "color": "#c2182f",
+          "families": [
+            "cherry"
+          ]
+        },
+        {
+          "id": "bananas",
+          "name": "Bananas",
+          "value": 140,
+          "shape": "banana",
+          "color": "#f1cf3a",
+          "families": [
+            "banana"
+          ]
+        },
+        {
+          "id": "oranges",
+          "name": "Oranges",
+          "value": 140,
+          "shape": "fruit",
+          "color": "#f08a1d",
+          "families": [
+            "orange"
+          ]
+        },
+        {
+          "id": "chestnuts",
+          "name": "Chestnuts",
+          "value": 150,
+          "shape": "nut",
+          "color": "#8a5a33",
+          "families": [
+            "chestnut"
+          ]
+        },
+        {
+          "id": "peaches",
+          "name": "Peaches",
+          "value": 160,
+          "shape": "fruit",
+          "color": "#f6a868",
+          "families": [
+            "peach"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cut_flowers",
+      "name": "Cut Flowers",
+      "doc": "From the blooms, by family, loose or in a Bloom Garden.",
+      "variants": [
+        {
+          "id": "cut_roses",
+          "name": "Cut Roses",
+          "value": 180,
+          "shape": "flower",
+          "color": "#d6304a",
+          "families": [
+            "rose"
+          ]
+        },
+        {
+          "id": "cut_tulips",
+          "name": "Cut Tulips",
+          "value": 200,
+          "shape": "flower",
+          "color": "#f27a1a",
+          "families": [
+            "tulip"
+          ]
+        },
+        {
+          "id": "cut_daisies",
+          "name": "Cut Daisies",
+          "value": 220,
+          "shape": "flower",
+          "color": "#fbfbf5",
+          "families": [
+            "daisy"
+          ]
+        },
+        {
+          "id": "cut_lilies",
+          "name": "Cut Lilies",
+          "value": 260,
+          "shape": "flower",
+          "color": "#f7b5c8",
+          "families": [
+            "lily"
+          ]
+        },
+        {
+          "id": "cut_irises",
+          "name": "Cut Irises",
+          "value": 280,
+          "shape": "flower",
+          "color": "#6b5bd2",
+          "families": [
+            "iris"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -128,7 +128,7 @@ func build_crafting(content: VBoxContainer) -> void:
 	for c in stall:
 		var crop_id: String = c
 		var b := hud._panel_button(
-			tr("LEFT_COINS") % [Game.crops[crop_id]["name"], int(stall[c]), Game.crafting.bushel_price(crop_id)]
+			tr("LEFT_COINS") % [Game.name_of(crop_id), int(stall[c]), Game.crafting.bushel_price(crop_id)]
 		)
 		var full := Game.crafting.total_bushels() >= Balance.i("crafting.bushel_cap")
 		b.disabled = int(stall[c]) <= 0 or Game.coins < Game.crafting.bushel_price(crop_id) or full
