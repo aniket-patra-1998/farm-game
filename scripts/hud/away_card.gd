@@ -7,10 +7,6 @@ extends PanelContainer
 ## Made once and kept; it is not a modal: the farm under it works.
 
 const ICONS := {"ripe": "basket", "withered": "hoe", "ready": "ready", "hungry": "barn", "stray": "star"}
-const PAPER := Color("#fbf6ea")
-const INK := Color("#4a3728")
-const SOFT := Color("#8a7763")
-const ROW := Color("#efe6d0")
 const WIDTH := 480.0
 const GO := "›"              # not-ui: a row's "go there" mark
 const ROW_HEIGHT := 52.0
@@ -28,13 +24,8 @@ func _init(owner: FarmHud) -> void:
 	hud = owner
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = PAPER
-	sb.set_corner_radius_all(22)
-	sb.set_content_margin_all(14)
-	sb.shadow_color = Color(0, 0, 0, 0.26)
-	sb.shadow_size = 12
-	add_theme_stylebox_override("panel", sb)
+	add_theme_stylebox_override("panel", UiKit.paper_box(14.0))
+	theme = UiKit.paper_theme()
 	anchor_left = 0.5
 	anchor_right = 0.5
 	grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -47,11 +38,11 @@ func _init(owner: FarmHud) -> void:
 	column.add_child(head)
 	var title := Label.new()
 	title.text = tr("AWAY_TITLE")
-	title.add_theme_color_override("font_color", INK)
+	title.add_theme_color_override("font_color", UiTheme.color("ink"))
 	title.add_theme_font_size_override("font_size", 24)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	var cross := UiKit.icon_button("cross", 40.0)
+	var cross := UiKit.close_button()
 	cross.pressed.connect(close)
 	head.add_child(cross)
 	_rows = VBoxContainer.new()
@@ -72,7 +63,7 @@ func open(rows: Array, notes: Array) -> void:
 		note.text = text
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		note.custom_minimum_size.x = WIDTH
-		note.add_theme_color_override("font_color", SOFT)
+		note.add_theme_color_override("font_color", UiTheme.color("soft"))
 		note.add_theme_font_size_override("font_size", 18)
 		_rows.add_child(note)
 	_left = Balance.f("feel.away_card_seconds")
@@ -112,7 +103,7 @@ func _row(item: Dictionary) -> Button:
 	b.focus_mode = Control.FOCUS_NONE
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		var sb := StyleBoxFlat.new()
-		sb.bg_color = ROW.darkened(0.08) if state.contains("pressed") else ROW
+		sb.bg_color = UiTheme.color("tab_face").darkened(0.08) if state.contains("pressed") else UiTheme.color("tab_face")
 		sb.set_corner_radius_all(14)
 		b.add_theme_stylebox_override(state, sb)
 	var line := HBoxContainer.new()
@@ -128,7 +119,7 @@ func _row(item: Dictionary) -> Button:
 	line.add_child(icon)
 	var words := Label.new()
 	words.text = AbsenceReport.words(item)
-	words.add_theme_color_override("font_color", INK)
+	words.add_theme_color_override("font_color", UiTheme.color("ink"))
 	words.add_theme_font_size_override("font_size", 20)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.clip_text = true   # (a long line in another language is cut, not pushed out of the row)
@@ -137,7 +128,7 @@ func _row(item: Dictionary) -> Button:
 	line.add_child(words)
 	var go := Label.new()
 	go.text = GO
-	go.add_theme_color_override("font_color", SOFT)
+	go.add_theme_color_override("font_color", UiTheme.color("soft"))
 	go.add_theme_font_size_override("font_size", 30)
 	go.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	line.add_child(go)

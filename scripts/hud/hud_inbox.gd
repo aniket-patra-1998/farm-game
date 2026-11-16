@@ -42,13 +42,13 @@ func _head() -> Control:
 		hud._book.refresh())
 	all.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(all)
-	var left := BookPanel.text(tr("INBOX_HELPS_LEFT") % Game.social.helps_left(), 18, BookPanel.CREAM)
+	var left := BookPanel.text(tr("INBOX_HELPS_LEFT") % Game.social.helps_left(), 18, BookPanel.SOFT)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # (a wrapping label in a row needs its width)
 	left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(left)
 	col.add_child(head)
 	if Game.social.inbox.is_empty():
-		col.add_child(BookPanel.info(tr("INBOX_EMPTY"), tr("INBOX_EMPTY_INFO"), 20, BookPanel.CREAM))
+		col.add_child(BookPanel.info(tr("INBOX_EMPTY"), tr("INBOX_EMPTY_INFO"), 20, BookPanel.SOFT))
 	return col
 
 
@@ -97,7 +97,7 @@ func line_for(item: Dictionary) -> Control:
 	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	words.clip_text = true
 	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	words.add_theme_color_override("font_color", BookPanel.CREAM)
+	words.add_theme_color_override("font_color", BookPanel.SOFT)
 	row.add_child(words)
 	var id := int(item["id"])
 	var button := hud._panel_button(tr(button_key(item)))

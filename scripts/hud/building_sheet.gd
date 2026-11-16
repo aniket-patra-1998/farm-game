@@ -18,11 +18,7 @@ extends PanelContainer
 
 enum Kind { HOME, CRAFT, BUILD, BARN, OTHER }   # which middle and big button a building gets
 
-const ACCENT := Color("#4fb043")       # the one colour that means "do this"
-const PAPER := Color("#fbf6ea")
-const INK := Color("#4a3728")
-const SOFT := Color("#8a7763")
-const TRACK := Color("#e6dcc6")
+const MARGIN := 18.0                   # the paper's inside margin
 const SLIDE := 0.18                    # seconds the sheet takes to slide in
 const COUNT_UP := 0.6                  # seconds a collected sum takes to count up
 const WIDTH_SHARE := 0.62              # of the screen's width..
@@ -70,13 +66,8 @@ func _init(owner: FarmHud) -> void:
 	hud = owner
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = PAPER
-	sb.set_corner_radius_all(26)
-	sb.set_content_margin_all(18)
-	sb.shadow_color = Color(0, 0, 0, 0.28)
-	sb.shadow_size = 14
-	add_theme_stylebox_override("panel", sb)
+	add_theme_stylebox_override("panel", UiKit.paper_box(MARGIN))
+	theme = UiKit.paper_theme()   # (the same paper as every panel: one look, docs/UI.md)
 	var gap := int(UiTheme.size("hud_gap"))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", gap)
@@ -85,7 +76,7 @@ func _init(owner: FarmHud) -> void:
 	column.add_child(_build_numbers(gap))
 	_inside = HBoxContainer.new()
 	column.add_child(_inside)
-	_detail = BookPanel.text("", 17, SOFT)
+	_detail = BookPanel.text("", 17, UiTheme.color("soft"))
 	column.add_child(_detail)
 	column.add_child(_build_next(gap))
 	_note = BookPanel.text("", 16, UiTheme.color("price_short"))
@@ -195,8 +186,8 @@ func _build_head(gap: int) -> Control:
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.alignment = BoxContainer.ALIGNMENT_CENTER
-	_name = BookPanel.text("", 24, INK)
-	_state = BookPanel.text("", 17, SOFT)
+	_name = BookPanel.text("", 24, UiTheme.color("ink"))
+	_state = BookPanel.text("", 17, UiTheme.color("soft"))
 	words.add_child(_name)
 	words.add_child(_state)
 	row.add_child(words)
@@ -213,7 +204,7 @@ func _build_head(gap: int) -> Control:
 	_sell = _small(tr("TOOL_SELL"))
 	_sell.pressed.connect(_on_sell)
 	row.add_child(_sell)
-	var shut := _small("×")   # not-ui (a symbol)
+	var shut := UiKit.close_button()
 	shut.pressed.connect(close)
 	row.add_child(shut)
 	return row
@@ -223,7 +214,7 @@ func _build_head(gap: int) -> Control:
 func _build_next(gap: int) -> Control:
 	_next_card = PanelContainer.new()
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = TRACK.lightened(0.45)
+	sb.bg_color = UiTheme.color("track").lightened(0.45)
 	sb.set_corner_radius_all(16)
 	sb.set_content_margin_all(10)
 	_next_card.add_theme_stylebox_override("panel", sb)
@@ -234,7 +225,7 @@ func _build_next(gap: int) -> Control:
 	_next_pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_next_pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(_next_pic)
-	_next = BookPanel.text("", 17, INK)
+	_next = BookPanel.text("", 17, UiTheme.color("ink"))
 	_next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_next.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_next)
@@ -247,16 +238,16 @@ func _build_numbers(gap: int) -> Control:
 	row.add_theme_constant_override("separation", gap)
 	var fill := VBoxContainer.new()
 	fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_spaces = BookPanel.text("", 18, INK)
+	_spaces = BookPanel.text("", 18, UiTheme.color("ink"))
 	fill.add_child(_spaces)
 	_bar = ProgressBar.new()
 	_bar.show_percentage = false
 	_bar.custom_minimum_size.y = 14
 	var track := StyleBoxFlat.new()
-	track.bg_color = TRACK
+	track.bg_color = UiTheme.color("track")
 	track.set_corner_radius_all(7)
 	var done := StyleBoxFlat.new()
-	done.bg_color = ACCENT
+	done.bg_color = UiTheme.color("accent")
 	done.set_corner_radius_all(7)
 	_bar.add_theme_stylebox_override("background", track)
 	_bar.add_theme_stylebox_override("fill", done)
@@ -266,7 +257,7 @@ func _build_numbers(gap: int) -> Control:
 	_pay = HBoxContainer.new()
 	_pay.add_theme_constant_override("separation", gap / 2)
 	row.add_child(_pay)
-	_pay.add_child(BookPanel.text(tr("SHEET_PAYS"), 18, SOFT))   # "Pays +4,380 (coin) +84 (star)"
+	_pay.add_child(BookPanel.text(tr("SHEET_PAYS"), 18, UiTheme.color("soft")))   # "Pays +4,380 (coin) +84 (star)"
 	_coins = _number(_pay, "coin")
 	_xp = _number(_pay, "star")
 	return row
@@ -277,7 +268,7 @@ func _number(row: HBoxContainer, icon_kind: String) -> Label:
 	var icon := UiIcon.make(icon_kind, UiTheme.size("panel_icon") * 0.42)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(icon)
-	var label := BookPanel.text("", 22, INK)
+	var label := BookPanel.text("", 22, UiTheme.color("ink"))
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(label)
@@ -289,14 +280,7 @@ func _build_actions(gap: int) -> Control:
 	row.add_theme_constant_override("separation", gap)
 	_collect = hud._panel_button(tr("COLLECT"))
 	_collect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for state: String in ["normal", "hover", "pressed"]:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = ACCENT if state != "pressed" else ACCENT.darkened(0.12)
-		sb.set_corner_radius_all(18)
-		_collect.add_theme_stylebox_override(state, sb)
-	_collect.add_theme_color_override("font_color", Color.WHITE)
-	_collect.add_theme_color_override("font_hover_color", Color.WHITE)
-	_collect.add_theme_color_override("font_pressed_color", Color.WHITE)
+	UiKit.primary(_collect)   # (the one main action: the accent, as every panel's)
 	_collect.pressed.connect(_on_main)
 	row.add_child(_collect)
 	_fill = hud._panel_button("")
@@ -308,18 +292,9 @@ func _build_actions(gap: int) -> Control:
 	return row
 
 
-## A small quiet button (Move, Sell, close): there, but not what the sheet is about.
+## A small quiet button (Move, Turn, Sell): the kit's, as on every panel.
 func _small(words: String) -> Button:
-	var b := Button.new()
-	b.text = words
-	b.flat = true
-	b.focus_mode = Control.FOCUS_NONE
-	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	b.add_theme_font_size_override("font_size", BookPanel.font_px(16))
-	b.add_theme_color_override("font_color", SOFT)
-	b.add_theme_color_override("font_hover_color", INK)
-	b.add_theme_color_override("font_disabled_color", TRACK.darkened(0.15))
-	return b
+	return UiKit.quiet_button(words, BookPanel.font_px(16))
 
 
 ## Sets everything the sheet says from the home as it is now. Nothing is built here but the row of who lives in
@@ -598,10 +573,11 @@ class Ring:
 	static func paint(on: CanvasItem, rect: Rect2, filled: float, middle: String, font: Font) -> void:
 		var r := minf(rect.size.x, rect.size.y) / 2.0 - 4.0
 		var c := rect.get_center()
-		on.draw_arc(c, r, 0.0, TAU, 40, TRACK, 6.0, true)
+		on.draw_arc(c, r, 0.0, TAU, 40, UiTheme.color("track"), 6.0, true)
 		if filled > 0.0:
-			on.draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * filled, 40, ACCENT, 6.0, true)
+			on.draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * filled, 40, UiTheme.color("accent"), 6.0, true)
 		if middle != "":
 			var px := UiTheme.min_font()
 			var w := font.get_string_size(middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
-			on.draw_string(font, c + Vector2(-w / 2.0, px * 0.35), middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px, INK)
+			on.draw_string(font, c + Vector2(-w / 2.0, px * 0.35), middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px,
+				UiTheme.color("ink"))

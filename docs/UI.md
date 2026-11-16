@@ -3,6 +3,24 @@
 A whole-new initiative: the HUD and every panel move to one FarmVille-style look, built from one kit, in code.
 Principle as everywhere: first pure FarmVille, then our own touch, clearly marked.
 
+## The unified look (paper), Nov 2026
+One look for everything the player reads or presses, taken from the building sheet the player picked as the model
+(our own touch over FarmVille's wooden frames). Every panel, sheet and floating card follows it; a test holds it.
+- **Surface:** one warm paper (`paper`), round corners, a soft shadow, no frame (`UiKit.paper_box`, `panel_box`). The
+  tool panel and the name bubbles stand on it too. Inside: flat sections with a thin `divider` line, never a box in
+  a box (`UiKit.paper_theme`: plain PanelContainers are see-through on paper).
+- **Words by role** (`BookPanel.INK/SOFT/HEAD/GOOD`, `UiTheme` "ink", "soft", "note", "price_short"): ink for what is
+  read, soft for what is said beside it, note for a reason something can't be done, red for short of something.
+  Every word on the paper reaches 3:1 contrast (`menus_test`); no cream or yellow words from the old wood.
+- **Title:** ink, at the left; the same round cross at the right on every panel and sheet (`UiKit.close_button`).
+- **Buttons, three kinds:** the one main action, filled with the accent, white words (`UiKit.primary`; at most one
+  per panel or sheet); ordinary cream buttons (`FarmHud._panel_button`); quiet text buttons for Move, Turn, Sell
+  (`UiKit.quiet_button`).
+- **Tabs:** pills on paper, the chosen one in ink (`UiKit.tab_button`).
+- **Items:** white cards with a light edge (`CardFace`, "card_face"), contents as picture tiles with counts
+  (`UiKit.count_row`), progress as a light track with the accent fill (paper theme's ProgressBar).
+- **Text:** never a letter a line (`PanelText`), sizes through `UiTheme.font`, never under the smallest.
+
 ## Decisions (agreed)
 - Neighbour bar: no neighbours yet, so the bottom strip stays a placeholder (a quick bar of tools, our own touch).
 - Currency: coins and gems. Gems get FarmVille's Farm Cash treatment (a bar with a "+").

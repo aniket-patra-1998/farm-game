@@ -35,12 +35,12 @@ func build_crafting(content: VBoxContainer) -> void:
 				(tr("ONE_FREE_SLOT_PICK_A_RECIPE") if Game.crafting.free_slots(o) == 1
 					else tr("FREE_SLOTS_PICK_A_RECIPE_BELOW")) % Game.crafting.free_slots(o),
 				18,
-				BookPanel.CREAM
+				BookPanel.SOFT
 			)
 		)
 	content.add_child(BookPanel.card_frame(top))
 	# Recipes
-	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.SUN))
+	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.HEAD))
 	var recipes: Array[String] = []
 	for r in Game.crafting.recipes_of(o["id"]):
 		recipes.append(r.id)
@@ -52,7 +52,7 @@ func build_crafting(content: VBoxContainer) -> void:
 	for r in Game.crafting.recipes_of(o["id"]):
 		makes_goods = makes_goods or not r.makes_feed()
 	if makes_goods:
-		content.add_child(BookPanel.text(tr("YOUR_GOODS"), 26, BookPanel.SUN))
+		content.add_child(BookPanel.text(tr("YOUR_GOODS"), 26, BookPanel.HEAD))
 		var any_goods := false
 		for r in Game.crafting.recipes_of(o["id"]):
 			var n := int(Game.crafting.goods.get(r.id, 0))
@@ -79,7 +79,7 @@ func build_crafting(content: VBoxContainer) -> void:
 				BookPanel.text(
 					tr("NOTHING_YET_FINISHED_CRAFTS_LAND_HERE"),
 					17,
-					BookPanel.CREAM
+					BookPanel.SOFT
 				)
 			)
 	# Stars
@@ -110,17 +110,17 @@ func build_crafting(content: VBoxContainer) -> void:
 		BookPanel.text(
 			tr("BUSHELS_OF") % [Game.crafting.total_bushels(), Balance.i("crafting.bushel_cap")],
 			26,
-			BookPanel.SUN
+			BookPanel.HEAD
 		)
 	)
 	var held: Array = []
 	for c: String in Game.crafting.bushels:
 		held.append([c, "×%d" % int(Game.crafting.bushels[c])])
 	if held.is_empty():
-		content.add_child(BookPanel.text(tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"), 17, BookPanel.CREAM))
+		content.add_child(BookPanel.text(tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"), 17, BookPanel.SOFT))
 	else:
 		content.add_child(UiKit.count_row(held))
-	content.add_child(BookPanel.text(tr("FARMERS_MARKET_TODAY"), 22, BookPanel.SUN))
+	content.add_child(BookPanel.text(tr("FARMERS_MARKET_TODAY"), 22, BookPanel.HEAD))
 	var stall := Game.crafting.market_stall()
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", 10)
@@ -143,7 +143,7 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	var inner := VBoxContainer.new()
 	var unlocked := Game.crafting.recipe_unlocked(o, r.id)
 	var stars := Game.crafting.recipe_stars(r.id)
-	inner.add_child(BookPanel.text(r.name + (tr("MASTERY_OF") % stars if stars > 0 else ""), 20, BookPanel.CREAM))
+	inner.add_child(BookPanel.text(r.name + (tr("MASTERY_OF") % stars if stars > 0 else ""), 20, BookPanel.SOFT))
 	var need: Array = []
 	for c: String in r.inputs():
 		var have := int(Game.crafting.bushels.get(c, 0))
@@ -152,11 +152,11 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	if r.makes_feed():
 		inner.add_child(BookPanel.text(
 			tr("RECIPE_MAKES_FEED") % [int(r.feed()["units"]), Game.crafting.feed_product_name(r)], 17,
-			BookPanel.SUN))
+			BookPanel.HEAD))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 10)
 	if not unlocked:
-		row.add_child(BookPanel.text(tr("UNLOCKS_AT_STARS") % r.star(), 17, BookPanel.CREAM))
+		row.add_child(BookPanel.text(tr("UNLOCKS_AT_STARS") % r.star(), 17, BookPanel.SOFT))
 	else:
 		var make := hud._panel_button(tr("MAKE_IT"))
 		make.disabled = Game.crafting.craft_problem(uid, r.id) != ""

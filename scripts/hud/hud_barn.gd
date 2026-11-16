@@ -26,7 +26,7 @@ func build_barn(content: VBoxContainer) -> void:
 ## The boosts you have, used from here as FarmVille's were from the gift box: Fertilize All, Unwither and the
 ## helpers (each works the whole farm at once), and the fuel for the vehicles once you have one.
 func add_boosts(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("BOOSTS"), 26, BookPanel.SUN))
+	content.add_child(BookPanel.text(tr("BOOSTS"), 26, BookPanel.HEAD))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 10)
 	row.add_theme_constant_override("v_separation", 10)
@@ -53,7 +53,7 @@ func add_boosts(content: VBoxContainer) -> void:
 func build_barn_repair(content: VBoxContainer) -> void:
 	var it := Game.item_data("barn")
 	content.add_child(BookPanel.info(
-		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT_INFO"), 20, BookPanel.CREAM))
+		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT_INFO"), 20, BookPanel.SOFT))
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 10)
 	var need := Game.storage.repair_needs()
@@ -88,7 +88,7 @@ func build_barn_repair(content: VBoxContainer) -> void:
 func build_barn_storage(content: VBoxContainer) -> void:
 	var cap := Game.storage.barn_capacity()
 	content.add_child(BookPanel.info(tr("HOLDS_OF_USE_THE_STORE_TOOL") % [Game.storage.stored.size(), cap],
-		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [Game.storage.stored.size(), cap], 20, BookPanel.CREAM))
+		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [Game.storage.stored.size(), cap], 20, BookPanel.SOFT))
 	# What is stored first (it is what the Barn is opened for), then its parts, its next size and the feed.
 	if not Game.storage.stored.is_empty():   # (nothing stored: no empty box saying so)
 		add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
@@ -96,7 +96,7 @@ func build_barn_storage(content: VBoxContainer) -> void:
 	var parts: Array = []
 	for p: String in GameState.part_ids:
 		parts.append([p, "×%d" % int(Game.parts.get(p, 0))])
-	content.add_child(BookPanel.text(tr("PARTS_HEADING"), 17, BookPanel.CREAM))
+	content.add_child(BookPanel.text(tr("PARTS_HEADING"), 17, BookPanel.SOFT))
 	content.add_child(UiKit.count_row(parts))
 	var barn := Game.storage.barn()
 	if not barn.is_empty():
@@ -109,7 +109,7 @@ func add_gift_box(content: VBoxContainer, cap: int) -> void:
 	var extra := Game.storage.in_gift_box()
 	if extra <= 0:
 		return
-	content.add_child(BookPanel.text(tr("GIFT_BOX_HOLDS") % [extra, BarnStorage.GIFT_BOX_LIMIT], 18, BookPanel.CREAM))
+	content.add_child(BookPanel.text(tr("GIFT_BOX_HOLDS") % [extra, BarnStorage.GIFT_BOX_LIMIT], 18, BookPanel.SOFT))
 	add_grouped(content, cap, Game.storage.stored.size())
 
 
@@ -141,9 +141,9 @@ func build_bloom(content: VBoxContainer) -> void:
 		return
 	var uid := hud._building_uid
 	if Game.is_withered(o):
-		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), 20, BookPanel.CREAM))
+		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), 20, BookPanel.SOFT))
 		content.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply("flower_food"),
-			Game.nurture.supply_name("flower_food")], 18, BookPanel.CREAM))
+			Game.nurture.supply_name("flower_food")], 18, BookPanel.SOFT))
 		var regrow := hud._panel_button(tr("REGROW_IT"))
 		regrow.disabled = Game.nurture.free_supply("flower_food") <= 0
 		regrow.pressed.connect(func() -> void:
@@ -159,10 +159,10 @@ func build_bloom(content: VBoxContainer) -> void:
 		content.add_child(buy)
 	else:
 		content.add_child(BookPanel.text(tr("READY_IN") % [d.data["name"], tr("FLOWERS"),
-			FarmGrid.format_duration(Game.seconds_until_ready(o))], 20, BookPanel.CREAM))
+			FarmGrid.format_duration(Game.seconds_until_ready(o))], 20, BookPanel.SOFT))
 	if d.withers():
 		content.add_child(BookPanel.info(tr("A_SINGLE_BLOOM_WITHERS"), tr("A_SINGLE_BLOOM_WITHERS_INFO"), 17,
-			BookPanel.CREAM))
+			BookPanel.SOFT))
 		var up := hud._panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
 		up.disabled = Game.gems < d.upgrade_gems()
 		up.pressed.connect(func() -> void:
@@ -179,7 +179,7 @@ func build_young(content: VBoxContainer) -> void:
 	var supply := Game.nurture.supply_of(o)
 	var name := Game.nurture.supply_name(supply)
 	content.add_child(BookPanel.text(tr("GIVE_IT_TO_SEE_WHAT_IT_GROWS_INTO") % [Game.nurture.needs(o), name], 20,
-		BookPanel.CREAM))
+		BookPanel.SOFT))
 	var card := BookPanel.card()
 	card.add_child(BookPanel.text(tr("OF_2") % [name, Game.nurture.fed(o), Game.nurture.needs(o)], 20))
 	var bar := ProgressBar.new()
