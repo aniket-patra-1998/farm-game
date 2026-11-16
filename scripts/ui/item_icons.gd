@@ -23,6 +23,9 @@ const UI_CLOSE := 0.8   # interface icons are framed this much closer than items
 ## The state an item made as a file is pictured in (AssetRegistry): its first look and size, ready (a tree in
 ## fruit).
 const PICTURED := {"look": 0, "ready": true, "level": 1}
+const PICTURE_PLANTS := 4         # trees or blooms standing in a home for them, in its picture..
+const PICTURE_SPREAD := 0.2       # ..this share of its footprint out from the middle each way..
+const PICTURE_PLANT_SIZE := 0.8   # ..at this share of their own size
 ## The global shader values that change how the farm looks (weather, night). A picture made while any is set
 ## is shown this session but not kept, so a snowy or dark picture is never saved for good.
 const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark"]
@@ -297,5 +300,31 @@ static func _model(id: String) -> Node3D:
 		# A crop: one ripe bed of it; a building part: the thing itself (null for anything unknown).
 		return Crops3D.picture_model(id) if Game.crops.has(id) else MaterialModel.build(id)
 	if str(it.get("kind", "")) in ["building", "barn", "crafting"]:
-		return ModelKit.bake(BuildingModel.build(it, Game.footprint(id), 1))
+		var home := ModelKit.bake(BuildingModel.build(it, Game.footprint(id), 1))
+		_plant_picture(home, it, Game.footprint(id))
+		return home
 	return ScaleGuide.model_of(id)
+
+
+## A home for trees or blooms (the Orchard, the Bloom Garden) is pictured with a few of them standing in it: an
+## empty one is a flat square of grass and says nothing.
+static func _plant_picture(home: Node3D, it: Dictionary, fp: Vector2i) -> void:
+	var holds := str(it.get("holds_kind", ""))
+	if not holds in ["tree", "bloom"]:
+		return
+	var first := ""
+	for other: String in Game.item_order:
+		if str(Game.item_data(other).get("kind", "")) == holds:
+			first = other
+			break
+	if first == "":
+		return
+	for k in PICTURE_PLANTS:
+		var plant := _model(first)
+		if plant == null:
+			continue
+		var side := 1.0 if k % 2 == 0 else -1.0
+		var row := 1.0 if k < 2 else -1.0
+		plant.position = Vector3(side * fp.x * PICTURE_SPREAD, 0.0, row * fp.y * PICTURE_SPREAD)
+		plant.scale = Vector3.ONE * PICTURE_PLANT_SIZE
+		home.add_child(plant)

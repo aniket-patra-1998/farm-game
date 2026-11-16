@@ -11,8 +11,8 @@ extends Node3D
 
 # Night is a bright moonlit evening, not dark: the farm stays playable (on a phone outdoors too) while the windows,
 # lamps and stars still say it is night.
-const MOON_ENERGY := 0.62
-const NIGHT_AMBIENT := 0.46
+const MOON_ENERGY := 0.8      # (lifted after the UI review: an evening farm was hard to see behind panels)
+const NIGHT_AMBIENT := 0.6
 const SETTING := "farm/world/use_3d"
 const SHADOW_DISTANCE := 90.0
 const SUN_MAX_ELEVATION := deg_to_rad(58.0)

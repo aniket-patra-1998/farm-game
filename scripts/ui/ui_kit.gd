@@ -262,13 +262,15 @@ static func price_badge(kind: String, words: String, short := false) -> PanelCon
 ## What a home, a store or a recipe holds, FarmVille's way: each thing as its picture with its count on it and its
 ## name under it (`entries`: [[item id, count text, short]], `short` paints the count in the price-short red: not
 ## enough yet). One row that wraps, for every "what's inside" in the game.
-static func count_row(entries: Array) -> HFlowContainer:
+static func count_row(entries: Array, named := true) -> HFlowContainer:
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap") * 0.5))
 	flow.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap") * 0.5))
 	for e: Array in entries:
 		var id := str(e[0])
-		flow.add_child(count_tile(ItemIcons.of(id), str(e[1]), Game.name_of(id), e.size() > 2 and bool(e[2])))
+		var tile := count_tile(ItemIcons.of(id), str(e[1]), Game.name_of(id) if named else "", e.size() > 2 and bool(e[2]))
+		tile.tooltip_text = Game.name_of(id)
+		flow.add_child(tile)
 	return flow
 
 
@@ -304,10 +306,24 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_badge"))
-	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
-	label.add_theme_color_override("font_outline_color", UiTheme.color(face))
-	label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
+	if short:
+		# Not enough of it ("0/4"): a red pill with white words under the corner, read at a glance.
+		var pill := StyleBoxFlat.new()
+		pill.bg_color = UiTheme.color("badge")
+		pill.set_corner_radius_all(int(UiTheme.size("button_radius")))
+		pill.content_margin_left = 4
+		pill.content_margin_right = 4
+		label.add_theme_stylebox_override("normal", pill)
+		label.add_theme_color_override("font_color", Color.WHITE)
+		label.size_flags_horizontal = Control.SIZE_SHRINK_END
+		label.size_flags_vertical = Control.SIZE_SHRINK_END
+	else:
+		label.add_theme_color_override("font_color", UiTheme.color("ink"))
+		label.add_theme_color_override("font_outline_color", UiTheme.color(face))
+		label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
 	tile.add_child(label)
+	if name == "":   # (no name under it: its picture and count say it; the name is its tooltip)
+		return col
 	var caption := Label.new()
 	caption.text = name
 	caption.set_meta(&"count_name", true)
@@ -364,6 +380,16 @@ static func card_grid(view_width: float) -> GridContainer:
 ## An item's card in a shop grid: its picture, its name, a line about it and its price badge; the whole card is
 ## the button. A locked one is greyed with a lock and the level it opens at instead of a price. `extra` (its
 ## mastery stars, say) goes under the picture.
+## A card's face (`face`, a theme colour), its edge and its corners: what every card in a grid is drawn with.
+static func card_box(face := "card_face") -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiTheme.color(face)
+	sb.border_color = UiTheme.color("card_edge")
+	sb.set_border_width_all(int(UiTheme.size("button_border")))
+	sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
+	return sb
+
+
 static func item_card(picture: Texture2D, name: String, about: String, badge: Control, locked: bool,
 		extra: Control = null) -> Button:
 	var b := Button.new()

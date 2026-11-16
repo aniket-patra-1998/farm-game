@@ -8,6 +8,11 @@ const QUALITY_WORDS := {"low": "GRAPHICS_LOW", "mid": "GRAPHICS_MID", "high": "G
 const NAME_MAX := 24     # letters in a farm's name (the plaque fits them)
 
 const KIND_WORDS := {"a": "FARMER_BOY", "b": "FARMER_GIRL"}   # the look's body -> its words
+const FARMER_STYLES := {"a": "short", "b": "long"}   # ..and its picture's hair (PortraitIcon)
+const FARMER_BUTTON := 1.25   # a farmer's picture button against the picture
+## What each graphics level does, in a word.
+const QUALITY_EFFECTS := {"low": "GRAPHICS_LOW_EFFECT", "mid": "GRAPHICS_MID_EFFECT", "high": "GRAPHICS_HIGH_EFFECT",
+	"ultra": "GRAPHICS_ULTRA_EFFECT"}
 var hud: FarmHud
 
 
@@ -60,18 +65,23 @@ func quality_card() -> PanelContainer:
 	var inner := BookPanel.card()
 	inner.add_theme_constant_override("separation", 10)
 	inner.add_child(BookPanel.text(tr("GRAPHICS"), 26))
-	inner.add_child(BookPanel.text(tr("GRAPHICS_HELP"), 18))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	inner.add_child(row)
 	var group := ButtonGroup.new()
 	for name: String in Quality.offered():
+		# Each level and, under it, what it does in a word (Battery, Balanced, Sharp, Finest).
+		var col := VBoxContainer.new()
 		var b := hud._panel_button(tr(QUALITY_WORDS[name]))
 		b.toggle_mode = true
 		b.button_group = group
 		b.button_pressed = Quality.level() == name
 		b.pressed.connect(func() -> void: Quality.choose(name))
-		row.add_child(b)
+		col.add_child(b)
+		var effect := BookPanel.text(tr(QUALITY_EFFECTS[name]), 16)
+		effect.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(effect)
+		row.add_child(col)
 	var day := CheckButton.new()   # (our own touch: FarmVille followed the clock)
 	day.text = tr("ALWAYS_DAYTIME")
 	day.button_pressed = DayCycle.always_day()
@@ -114,7 +124,15 @@ func name_card() -> PanelContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	for kind: String in KIND_WORDS:
-		var b := hud._panel_button(tr(KIND_WORDS[kind]))
+		# A picture of each (a boy with short hair, a girl with long), the word only on a long press.
+		var b := hud._panel_button("")
+		var face := Game.player.look.duplicate()
+		face["style"] = FARMER_STYLES[kind]
+		var pic := PortraitIcon.of(face, UiTheme.size("panel_icon"))
+		pic.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		b.custom_minimum_size = Vector2.ONE * UiTheme.size("panel_icon") * FARMER_BUTTON
+		b.add_child(pic)
+		UiKit.long_press_name(b, tr(KIND_WORDS[kind]))
 		b.toggle_mode = true
 		b.button_pressed = str(Game.player.look["body"]) == kind
 		b.pressed.connect(func() -> void:

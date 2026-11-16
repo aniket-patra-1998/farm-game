@@ -220,6 +220,7 @@ func _build_numbers(gap: int) -> Control:
 	_pay = HBoxContainer.new()
 	_pay.add_theme_constant_override("separation", gap / 2)
 	row.add_child(_pay)
+	_pay.add_child(BookPanel.text(tr("SHEET_PAYS"), 18, SOFT))   # "Pays +4,380 (coin) +84 (star)"
 	_coins = _number(_pay, "coin")
 	_xp = _number(_pay, "star")
 	return row
@@ -295,8 +296,8 @@ func _refill() -> void:
 	_bar.value = total
 	if not _counting:
 		var pay := Game.object_payout(o)
-		_coins.text = FarmHud._thousands(pay.x)
-		_xp.text = str(pay.y)
+		_coins.text = "+" + FarmHud._thousands(pay.x)   # not-ui
+		_xp.text = "+%d" % pay.y   # not-ui
 	var key := str(o.get("inside", {}))
 	if key != _inside_key:
 		_inside_key = key
@@ -306,7 +307,7 @@ func _refill() -> void:
 		for kind: String in o.get("inside", {}):
 			held.append([kind, "×%d" % int(o["inside"][kind])])   # not-ui (a count)
 		if not held.is_empty():
-			var held_row := UiKit.count_row(held)
+			var held_row := UiKit.count_row(held, false)   # (the picture and the count: no cut-off names)
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
 	_inside.visible = total > 0
@@ -343,7 +344,9 @@ func _clock(o: Dictionary, ready: bool) -> void:
 	_ring.share = 1.0 if ready else along
 	var pays := Game.object_payout(o) != Vector2i.ZERO or ready
 	_pay.visible = pays
-	_ring.visible = pays
+	# The ring is the time to wait, with it written inside; nothing inside to wait for: no ring at all.
+	_ring.visible = pays and (ready or Game.inside_total(o) > 0)
+	_ring.words = "" if ready else FarmGrid.format_duration(Game.seconds_until_ready(o))
 	_collect.visible = pays
 	_collect.disabled = not ready
 	_collect.text = tr("COLLECT") if ready else _state.text
@@ -426,13 +429,24 @@ class Ring:
 	extends Control
 
 	var share := 0.0: set = _set_share
+	var words := "": set = _set_words   # the time left, written in the middle
 
 	func _set_share(value: float) -> void:
 		share = value
 		queue_redraw()
+
+	func _set_words(value: String) -> void:
+		if value != words:
+			words = value
+			queue_redraw()
 
 	func _draw() -> void:
 		var r := minf(size.x, size.y) / 2.0 - 4.0
 		draw_arc(size / 2.0, r, 0.0, TAU, 40, TRACK, 6.0, true)
 		if share > 0.0:
 			draw_arc(size / 2.0, r, -PI / 2.0, -PI / 2.0 + TAU * share, 40, ACCENT, 6.0, true)
+		if words != "":
+			var font := get_theme_default_font()
+			var px := UiTheme.min_font()
+			var w := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
+			draw_string(font, size / 2.0 + Vector2(-w / 2.0, px * 0.35), words, HORIZONTAL_ALIGNMENT_LEFT, -1, px, INK)

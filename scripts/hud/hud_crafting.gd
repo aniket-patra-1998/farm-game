@@ -3,6 +3,9 @@ extends RefCounted
 ## The crafting buildings' panel: recipes, what is cooking, what is ready.
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
+const BIGGEST := 5      # a crafting building's most stars (sizes)
+const STAR_SIZE := 1.6   # its stars against a mastery star
+
 var hud: FarmHud
 
 
@@ -21,16 +24,7 @@ func build_crafting(content: VBoxContainer) -> void:
 	var lvl := Game.level_of(o)
 	# Slots
 	var top := BookPanel.card()
-	top.add_child(
-		BookPanel.text(
-			tr("OF_STARS_CRAFTING_SLOTS_RECIPE_MASTERY") % [
-				lvl,
-				lvl,
-				Game.crafting.building_recipe_stars(o["id"])
-			],
-			20
-		)
-	)
+	top.add_child(star_row(lvl, Game.crafting.building_recipe_stars(o["id"])))
 	for slot in o.get("slots", []):
 		var left := int(slot["done"]) - Game.now()
 		var what := tr("SLOT_READY") if left <= 0 else tr("READY_IN_3") + FarmGrid.format_duration(left)
@@ -180,3 +174,19 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 			row.add_child(buy)
 	inner.add_child(row)
 	return BookPanel.card_frame(inner)
+
+
+## A crafting building's size and skill in one row: its stars (filled up to its size; one star, one crafting
+## slot) and, once it has any, its recipe mastery stars.
+static func star_row(size: int, recipe_stars: int) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	for k in BIGGEST:
+		var star := UiIcon.make("star", UiTheme.size("mastery_star") * STAR_SIZE)
+		if k >= size:
+			star.modulate = Color(1, 1, 1, 0.3)
+		row.add_child(star)
+	row.add_child(BookPanel.text(TranslationServer.translate("CRAFT_SLOTS") % size, 18))
+	if recipe_stars > 0:
+		row.add_child(BookPanel.text(TranslationServer.translate("RECIPE_STARS") % recipe_stars, 18))
+	return row

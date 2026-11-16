@@ -5,6 +5,8 @@ extends RefCounted
 
 const RARITY_KEYS := {"common": "RARITY_COMMON", "uncommon": "RARITY_UNCOMMON", "rare": "RARITY_RARE"}
 
+const RING_SHARE := 0.55   # a set card's ring against the card
+
 var hud: FarmHud
 
 
@@ -12,38 +14,80 @@ func _init(owner: FarmHud) -> void:
 	hud = owner
 
 
+## Collections as a grid of sets, each a card with a ring for how much of it you have ("3/5") and Ready once it
+## can be traded in; a tap opens the set (its items, Trade in and its prize: `build_collection`).
 func build_collections(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.info(
 		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), tr("ITEMS_TURN_UP_WHILE_YOU_FARM_INFO"), 20, BookPanel.CREAM))
+	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
 	for coll in Game.collectibles.collections:
+		grid.add_child(set_card(coll))
+	content.add_child(grid)
+
+
+## One set's card in the grid: a ring (items held of the set's items) with the count in it, and its name.
+func set_card(coll: Dictionary) -> Button:
+	var items: Array = coll["items"]
+	var held := 0
+	for item: Dictionary in items:
+		held += 1 if int(Game.collectibles.owned.get(item["id"], 0)) > 0 else 0
+	var card := Button.new()
+	card.focus_mode = Control.FOCUS_NONE
+	card.custom_minimum_size = Vector2(UiTheme.size("card_width"), UiTheme.size("card_width"))
+	card.add_theme_stylebox_override("normal", UiKit.card_box())
+	card.add_theme_stylebox_override("hover", UiKit.card_box())
+	card.add_theme_stylebox_override("pressed", UiKit.card_box())
+	var col := VBoxContainer.new()
+	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(col)
+	var ring := BuildingSheet.Ring.new()
+	ring.custom_minimum_size = Vector2.ONE * UiTheme.size("card_width") * RING_SHARE
+	ring.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.share = float(held) / maxf(items.size(), 1.0)
+	ring.words = "%d/%d" % [held, items.size()]   # not-ui
+	col.add_child(ring)
+	var name := BookPanel.text(str(coll["name"]), 18)
+	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(name)
+	if Game.collectibles.can_trade_in(coll):
+		var ready := BookPanel.text(tr("SLOT_READY"), 16, BookPanel.GOOD)
+		ready.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		ready.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(ready)
+	var coll_id := str(coll["id"])
+	card.pressed.connect(func() -> void:
+		hud._book.open_panel(str(coll["name"]), func(c: VBoxContainer) -> void: build_collection(c, coll_id)))
+	UiFx.press_bounce(card)
+	return card
+
+
+## One set opened: its items with how many you hold of how many a trade needs, Trade in once it can be, and its
+## prize; a Back to the grid.
+func build_collection(content: VBoxContainer, coll_id: String) -> void:
+	var back := hud._panel_button(tr("BACK"))
+	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	back.pressed.connect(hud._show_collections)
+	content.add_child(back)
+	for coll in Game.collectibles.collections:
+		if str(coll["id"]) != coll_id:
+			continue
 		var inner := BookPanel.card()
 		inner.add_theme_constant_override("separation", 10)
 
-		var crop_names: Array[String] = []
-		for crop_id in coll.get("crops", []):
-			crop_names.append(Game.crops[crop_id]["name"])
-		var head := HBoxContainer.new()
-		var title := BookPanel.text(coll["name"], 26)
-		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		head.add_child(title)
+		var head := HBoxContainer.new()   # (the set's name is the panel's title)
+		head.alignment = BoxContainer.ALIGNMENT_END
 		var trade := Button.new()
 		trade.text = tr("TRADE_IN")
 		trade.custom_minimum_size = Vector2(140, 48)
 		trade.focus_mode = Control.FOCUS_NONE
 		trade.visible = Game.collectibles.can_trade_in(coll)   # (there only when a set is complete)
-		var coll_id: String = coll["id"]
 		trade.pressed.connect(func() -> void: Game.collectibles.trade_in(coll_id))
 		head.add_child(trade)
 		inner.add_child(head)
-
-		if coll.get("birds", false):
-			inner.add_child(BookPanel.text(tr("BIRDS_CAN_LAND_DURING_ANY_HARVEST"), 18))
-		elif coll.get("source", "") == "trees":
-			inner.add_child(BookPanel.text(tr("FOUND_WHILE_HARVESTING_TREES"), 18))
-		elif coll.get("source", "") == "animals":
-			inner.add_child(BookPanel.text(tr("FOUND_WHILE_COLLECTING_FROM_ANIMALS_AND"), 18))
-		else:
-			inner.add_child(BookPanel.text(tr("FOUND_WHILE_HARVESTING") % ", ".join(PackedStringArray(crop_names)), 18))
 
 		# Each item as its picture with how many you have of how many the next trade needs (red while short), its
 		# name under it; uncommon and rare ones on their own tile colours.

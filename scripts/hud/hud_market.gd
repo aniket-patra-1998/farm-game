@@ -18,14 +18,14 @@ func _init(owner: FarmHud) -> void:
 	hud = owner
 
 
-## The Market's shelves, FarmVille's way: Seeds, then one shelf per kind of item as a grid of cards, then
-## Specials (land and the Mystery Box). Each shelf is a tab of the book.
+## The Market's shelves, FarmVille's way: Seeds, then one shelf per kind of item as a grid of cards. The Mystery
+## Box opens the Decorations shelf and more land closes the Buildings shelf (no Specials tab of its own). Each
+## shelf is a tab of the book.
 func tabs() -> Array:
 	var out: Array = [[tr("SEED_LIST"), hud.seeds.build_seeds]]
 	for shelf: Array in SHELVES:
 		var kind := str(shelf[0])
 		out.append([tr(str(shelf[1])), func(content: VBoxContainer) -> void: build_shelf(content, kind)])
-	out.append([tr("SPECIALS"), build_specials])
 	return out
 
 
@@ -38,6 +38,8 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	strip.set_meta(&"about", true)
 	content.add_child(strip)
 	var tell := func(id: String, it: Dictionary, why: String) -> void: show_about(strip, about, id, it, why)
+	if kind == "decor":
+		content.add_child(mystery_box_card())   # (the Mystery Box first among the decorations)
 	if kind != "building":
 		_add_grid(content, shelf_items(kind), tell)
 		return
@@ -47,6 +49,9 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 			continue
 		content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.design("font_section")), BookPanel.SUN))
 		_add_grid(content, ids, tell)
+	# More land, after the buildings: it is a farm's biggest building job.
+	content.add_child(BookPanel.text(tr("LAND"), int(UiTheme.design("font_section")), BookPanel.SUN))
+	content.add_child(land_card())
 
 
 ## The items of one kind for sale, in catalog order (buildings have their own sections: building_section).
@@ -148,12 +153,6 @@ func item_card(id: String, it: Dictionary, tell: Callable) -> Button:
 
 
 ## Land and the Mystery Box.
-func build_specials(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("LAND"), 26, BookPanel.SUN))
-	content.add_child(land_card())
-	content.add_child(mystery_box_card())
-
-
 ## What an item costs, as [badge icon, words]: coins, gems, or free.
 func price_of(id: String, it: Dictionary) -> Array:
 	if it["kind"] == "crafting":

@@ -4,6 +4,7 @@ extends RefCounted
 ## tools, Next ready and the whole-farm view. Nothing else: sound is in Settings, the interface rests by itself
 ## on an idle farm (Main's idle view), pinching zooms, and the neighbours wait in the inbox behind their button.
 
+const SEEN := "seen"   # PlayerSettings section: what the player has already looked at (the menu's dots)
 const READY_MOST := 99           # the Next ready count stops here ("99+")
 const INBOX_CHECK := 300.0       # seconds between catching the neighbours' mail up (the inbox's count)
 
@@ -13,6 +14,7 @@ var zoom: HBoxContainer
 var _ready: Button   # Next ready: goes to the nearest thing with something to take (hidden when nothing has)
 var _ready_badge: Label   # how many there are
 var _badge: Label   # the inbox's count on the Neighbours button
+var _news := {}      # menu entry ("MARKET", "COLLECTIONS") -> its dot: something new inside
 
 
 func _init(owner: FarmHud) -> void:
@@ -43,6 +45,14 @@ func build(root: Control) -> void:
 		var b := UiKit.tool_button(str(entry[0]), tr(str(entry[1])), w, h, 0.0, null, false)
 		b.pressed.connect(entry[2])
 		menu.add_child(b)
+		if entry[1] in ["MARKET", "COLLECTIONS"]:
+			var dot := UiKit.count_badge(b)
+			dot.text = "!"   # not-ui (a sign, not a word)
+			_news[entry[1]] = dot
+			if entry[1] == "MARKET":
+				b.pressed.connect(func() -> void:   # (opening the Market sees what is new in it)
+					PlayerSettings.keep(SEEN, {"market_level": Game.level()})
+					show_news())
 		if entry[1] == "NEIGHBOURS":
 			_badge = UiKit.count_badge(b)   # how many things wait in the inbox
 			Game.inbox_changed.connect(show_inbox_count)
@@ -53,6 +63,10 @@ func build(root: Control) -> void:
 			mail.timeout.connect(func() -> void: Game.social.settle())
 			b.add_child(mail)
 			Game.social.settle.call_deferred()
+
+	Game.leveled_up.connect(func(_l: int) -> void: show_news())
+	Game.collections_changed.connect(show_news)
+	show_news.call_deferred()
 
 	zoom = HBoxContainer.new()
 	zoom.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -83,6 +97,27 @@ func build(root: Control) -> void:
 	zoom.add_child(fit)
 
 
+## The dots on the menu: the Market has something new (unlocked since it was last opened), a collection can
+## be traded in. Asked again when the level or the collections change.
+func show_news() -> void:
+	if not is_instance_valid(menu):   # (a HUD that has gone: the game's signals outlive it)
+		return
+	if _news.has("MARKET"):
+		var seen := int(PlayerSettings.value(SEEN, "market_level", Game.level()))
+		var fresh := false
+		for id: String in Game.item_order:
+			var at := int(Game.item_data(id).get("unlock_level", 0))
+			if at > seen and at <= Game.level() and Release.has(id):
+				fresh = true
+				break
+		(_news["MARKET"] as Label).get_parent().visible = fresh
+	if _news.has("COLLECTIONS"):
+		var full := false
+		for coll in Game.collectibles.collections:
+			full = full or Game.collectibles.can_trade_in(coll)
+		(_news["COLLECTIONS"] as Label).get_parent().visible = full
+
+
 ## How many things are ready, on the Next ready button (the button is away when nothing is). Not counted while
 ## the interface is hidden: nobody is looking at the number.
 func show_ready_count() -> void:
@@ -95,6 +130,8 @@ func show_ready_count() -> void:
 
 ## The inbox's count on the Neighbours button (hidden when nothing waits).
 func show_inbox_count() -> void:
+	if not is_instance_valid(_badge):   # (a HUD that has gone: the game's signals outlive it)
+		return
 	var n := Game.social.inbox.size()
 	_badge.text = str(n)
 	_badge.get_parent().visible = n > 0

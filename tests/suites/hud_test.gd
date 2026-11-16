@@ -145,7 +145,8 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 	var book: BookPanel = hud.get("_book")
 	hud._show_market()
 	var tabs: Array = book.get("_tabs")
-	_eq(tabs.size(), HudMarket.SHELVES.size() + 2, "Seeds, a shelf per kind and Specials")
+	# (The Mystery Box opens Decorations and land closes Buildings: no Specials tab.)
+	_eq(tabs.size(), HudMarket.SHELVES.size() + 1, "Seeds and a shelf per kind")
 	# Every building for sale is in exactly one section, every other item on its kind's shelf: counted from
 	# the catalog's classes, not from the Market's own lists.
 	var sections := {}
