@@ -190,12 +190,12 @@ func tap(id: String, tell: Callable) -> void:
 func price_of(id: String, it: Dictionary) -> Array:
 	if it["kind"] == "crafting":
 		var price := Game.crafting.crafting_price(id)
-		return ["gem", str(int(price["gems"]))] if price.has("gems") \
-			else ["coin", FarmHud._thousands(int(price["coins"]))]
+		return ["gem", UiTheme.number(int(price["gems"]))] if price.has("gems") \
+			else ["coin", UiTheme.number(int(price["coins"]))]
 	if it.has("gem_cost"):
-		return ["gem", str(int(it["gem_cost"]))]
+		return ["gem", UiTheme.number(int(it["gem_cost"]))]
 	if int(it["cost"]) > 0:
-		return ["coin", FarmHud._thousands(int(it["cost"]))]
+		return ["coin", UiTheme.number(int(it["cost"]))]
 	return ["", tr("FREE_FRAME")]
 
 
@@ -234,7 +234,7 @@ func land_card() -> Control:
 		with_coins.text = tr("COINS_REACH_LEVEL") % int(step["level"])
 		with_coins.disabled = true
 	else:
-		with_coins.text = tr("EXPAND_COINS") % FarmHud._thousands(int(step["coins"]))
+		with_coins.text = tr("EXPAND_COINS") % UiTheme.number(int(step["coins"]))
 		with_coins.disabled = Game.coins < int(step["coins"])
 	with_coins.pressed.connect(func() -> void: Game.land.expand(false))
 	row.add_child(with_coins)

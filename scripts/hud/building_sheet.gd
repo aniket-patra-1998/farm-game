@@ -597,7 +597,7 @@ func _refill() -> void:
 	_numbers(o, total, cap)
 	if not _counting:
 		var pay := Game.object_payout(o)
-		_coins.text = "+" + FarmHud._thousands(pay.x)   # not-ui
+		_coins.text = "+" + UiTheme.number(pay.x)   # not-ui
 		_xp.text = "+%d" % pay.y   # not-ui
 	var key := str(o.get("inside", {}))
 	if key != _inside_key:
@@ -704,7 +704,7 @@ func _on_collect() -> void:
 	hud.show_message(tr("COINS_XP") % [r["coins"], r["xp"]])
 	_counting = true
 	var tween := create_tween()
-	tween.tween_method(func(v: float) -> void: _coins.text = "+" + FarmHud._thousands(int(v)),   # not-ui (a sum)
+	tween.tween_method(func(v: float) -> void: _coins.text = "+" + UiTheme.number(int(v)),   # not-ui (a sum)
 		0.0, float(r["coins"]), COUNT_UP)
 	tween.tween_callback(func() -> void:
 		_counting = false
@@ -725,7 +725,7 @@ func _on_sell() -> void:
 		return
 	if not _sell.has_meta(&"sure"):   # (selling asks twice)
 		_sell.set_meta(&"sure", true)
-		_sell.text = tr("SELL_FOR_COINS") % FarmHud._thousands(Game.sell_value(o))
+		_sell.text = tr("SELL_FOR_COINS") % UiTheme.number(Game.sell_value(o))
 		return
 	var uid := _uid
 	close()

@@ -107,7 +107,7 @@ func build_make(content: VBoxContainer) -> void:
 	if cost.is_empty():
 		return
 	var up := BookPanel.card()
-	up.add_child(BookPanel.text(tr("NEXT_STAR_COINS_AND_RECIPE_MASTERY") % [FarmHud._thousands(int(cost["coins"])),
+	up.add_child(BookPanel.text(tr("NEXT_STAR_COINS_AND_RECIPE_MASTERY") % [UiTheme.number(int(cost["coins"])),
 		int(cost["recipe_stars"]), Game.crafting.building_recipe_stars(o["id"]), int(cost["gems"])], 18))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
@@ -207,7 +207,7 @@ func recipe_face(o: Dictionary, id: String) -> Dictionary:
 		colour = "price_short"
 	return {"name": r.name, "line": line, "line_colour": colour, "locked": not unlocked,
 		"badge": ["", FarmGrid.format_duration(r.craft_seconds())] if r.makes_feed()
-			else ["coin", FarmHud._thousands(Game.crafting.good_price(id))],
+			else ["coin", UiTheme.number(Game.crafting.good_price(id))],
 		"long": gives(r), "can_make": unlocked and short == 0}
 
 
@@ -216,7 +216,7 @@ func gives(r: RecipeDef) -> String:
 	var time := FarmGrid.format_duration(r.craft_seconds())
 	if r.makes_feed():
 		return tr("CRAFT_GIVES_FEED") % [int(r.feed()["units"]), Game.crafting.feed_product_name(r), time, r.xp()]
-	return tr("CRAFT_GIVES") % [FarmHud._thousands(Game.crafting.good_price(r.id)), time, Game.crafting.good_fuel(r.id),
+	return tr("CRAFT_GIVES") % [UiTheme.number(Game.crafting.good_price(r.id)), time, Game.crafting.good_fuel(r.id),
 		r.xp()]
 
 
@@ -288,7 +288,7 @@ func build_goods(content: VBoxContainer) -> void:
 		_good = id
 		show_good(about)
 		hud.scroll_panels_to_top(), _view_width()))
-	var all := hud.panel_button(tr("SELL_ALL_GOODS") % FarmHud._thousands(worth))
+	var all := hud.panel_button(tr("SELL_ALL_GOODS") % UiTheme.number(worth))
 	all.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	all.pressed.connect(func() -> void:
 		for id in ids:
@@ -301,7 +301,7 @@ func build_goods(content: VBoxContainer) -> void:
 ## A good's card (CardFace): its picture and name, how many there are and what one sells for.
 func good_face(id: String) -> Dictionary:
 	return {"name": Game.name_of(id), "line": tr("TIMES_N") % int(Game.crafting.goods.get(id, 0)),
-		"badge": ["coin", FarmHud._thousands(Game.crafting.good_price(id))]}
+		"badge": ["coin", UiTheme.number(Game.crafting.good_price(id))]}
 
 
 ## Fills the Goods tab's strip with the good picked: its picture, name and how many, and its buttons: sell one
@@ -315,7 +315,7 @@ func show_good(about: VBoxContainer) -> void:
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
 	about.add_child(row)
-	var sell := UiKit.primary(hud.panel_button(tr("SELL_COINS") % FarmHud._thousands(Game.crafting.good_price(rid))))
+	var sell := UiKit.primary(hud.panel_button(tr("SELL_COINS") % UiTheme.number(Game.crafting.good_price(rid))))
 	sell.pressed.connect(func() -> void:
 		Game.crafting.sell_good(rid)
 		hud.refresh_panels())
@@ -359,7 +359,7 @@ func stall_face(id: String) -> Dictionary:
 	var price := Game.crafting.bushel_price(id)
 	var full := Game.crafting.total_bushels() >= Balance.i("crafting.bushel_cap")
 	return {"name": Game.name_of(id), "line": tr("MARKET_LEFT") % left, "locked": left <= 0 or full,
-		"badge": ["coin", FarmHud._thousands(price), Game.coins < price],
+		"badge": ["coin", UiTheme.number(price), Game.coins < price],
 		"buyable": left > 0 and not full and Game.coins >= price}
 
 

@@ -324,7 +324,7 @@ func pulse(which: String) -> void:
 
 func _set_shown_coins(v: float) -> void:
 	_shown_coins = v
-	top.coins_label.text = _thousands(int(round(v)))
+	top.coins_label.text = UiTheme.short_number(int(round(v)))
 
 
 ## The coin counter rolls to the new amount instead of jumping (spends snap down at once).
@@ -352,7 +352,7 @@ func _refresh() -> void:
 	var lo := Game.xp_for_level(lvl)
 	var hi := Game.xp_for_level(lvl + 1)
 	_roll_coins()
-	top.gems_label.text = _thousands(Game.gems)
+	top.gems_label.text = UiTheme.short_number(Game.gems)
 	var ratio := clampf(float(Game.xp - lo) / maxf(hi - lo, 1.0), 0.0, 1.0)
 	# The bar fills smoothly; on a level-up it starts again from the new level.
 	if top.xp.level != lvl or ratio < top.xp.ratio:
@@ -361,16 +361,8 @@ func _refresh() -> void:
 		var tw := top.xp.create_tween()
 		tw.tween_property(top.xp, "ratio", ratio, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	top.xp.level = lvl
-	top.xp.text = tr("XP_2") % [_thousands(Game.xp), _thousands(hi)]
+	top.xp.text = tr("XP_2") % [UiTheme.number(Game.xp), UiTheme.number(hi)]
 
-
-static func _thousands(n: int) -> String:
-	var digits := str(absi(n))
-	var out := ""
-	while digits.length() > 3:
-		out = "," + digits.substr(digits.length() - 3) + out
-		digits = digits.substr(0, digits.length() - 3)
-	return ("-" if n < 0 else "") + digits + out
 
 
 func _refresh_clock() -> void:
