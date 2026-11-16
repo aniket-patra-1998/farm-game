@@ -320,7 +320,10 @@ func _refill() -> void:
 	for pair: Array in [[_move, Game.buildings.can_move(o)], [_sell, Game.buildings.can_sell(o)]]:
 		var verdict: BuildingSystem.Verdict = pair[1]
 		(pair[0] as Button).disabled = not verdict.ok()
-		if not verdict.ok() and verdict.text != "" and not reasons.has(verdict.text):
+		# (What is never sold, the Barn, has no Sell and no word about it, as what never turns has no Turn.)
+		(pair[0] as Button).visible = verdict.why != BuildingSystem.Why.KEPT
+		if not verdict.ok() and verdict.why != BuildingSystem.Why.KEPT and verdict.text != "" \
+				and not reasons.has(verdict.text):
 			reasons.append(verdict.text)
 	_note.text = "\n".join(PackedStringArray(reasons))
 	_note.visible = not reasons.is_empty()
