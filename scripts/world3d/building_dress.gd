@@ -19,7 +19,6 @@ const PATH := Color("#b08d5c")
 const CREAM := Color("#f3eee2")
 const BAKED := Color("#c98b4a")
 const SHADE_OUT := 0.3        # the shade round a building's foot reaches this far past its walls..
-const SHADE_STRENGTH := 0.5   # ..and is this dark at its middle
 const SHADE_LIFT := 0.014     # it lies this far above the ground (over a yard's floor)
 const GOLDEN := 2.39996
 ## Every feature this dressing builds (`feature`); BuildingModel builds the rest.
@@ -30,9 +29,6 @@ const GOLD := Color("#f2c14e")
 const GRAIN := Color("#e8b93c")
 ## The features that can be a crafting building's animated part: each is a thing you can see when it stands still.
 const MACHINES: Array[String] = ["sails", "chute", "oven", "chimney", "press", "pour", "boiler", "jet"]
-## Steam puffing from a boiler's pipe.
-const PUFF := {"streams": 5, "per_stream": 1, "life": 2.0, "rise": 0.22, "gravity": -0.02, "reach": 0.1, "size": 1.4,
-	"end_size": 2.2, "colour": Color("#f4f6f7"), "sheen": 0.1, "round": true}
 const ANIMATED := "animated"  # a feature's `part`: it moves while the building is crafting, and only then
 const STORAGE := "storage"    # a feature's `part`: it shows how full the building is, in FILLS looks
 const FILLS := 4              # empty, a quarter, half and full
@@ -40,15 +36,9 @@ const FULL := 3
 const CHUTE_LONG := 0.7       # a grain chute: how long its spout is..
 const CHUTE_TILT := 0.55       # ..how steeply it runs down (radians)..
 const CHUTE_HIGH := 0.42       # ..and how high its mouth is over the ground
-## Grain running off the end of a chute into the bin under it.
-const GRAIN_FALL := {"streams": 4, "per_stream": 6, "life": 0.42, "rise": 0.0, "gravity": 2.8, "reach": 0.03,
-	"size": 1.0, "colour": GRAIN}
 const RACK_WIDE := 0.4
 const RACK_TALL := 0.52
 const GAUGE_WIDE := 0.11
-## Wine running from a keg's tap into the pail under it.
-const POUR := {"streams": 3, "per_stream": 6, "life": 0.36, "rise": 0.0, "gravity": 2.8, "reach": 0.012,
-	"size": 0.9, "colour": Color("#8e2f5a")}
 const GRAPE := Color("#6a3a8f")
 const STAR_R := 0.24          # a maxed building's star: its radius..
 const STAR_WAIST := 0.45      # ..how far in its inner points are..
@@ -61,9 +51,9 @@ const TOWER_SIDES := 14       # a round tower's sides
 const TOWER_TAPER := 0.7      # how wide its top is, as a share of its foot
 const CAP_SIDES := 18         # a tower cap's dome: how round it is
 const CAP_EAVE := 0.05        # and the dark eave under it
+const SAIL_SPEED := 0.55      # how fast a windmill's sails turn (radians a second)
 const SAIL_WIDE := 0.27       # a windmill sail's width, as a share of its length
 
-static var _shade: ShaderMaterial
 
 
 ## The ground a building stands on: a soft shade round its foot (it sits on the earth), a worn path from its
@@ -112,15 +102,11 @@ static func bead(root: Node3D, at: Vector3, r: float, mat: Material, scale := Ve
 ## A soft dark patch on the ground, `size` across, centred on `at` (x, z): where a building blocks the sky. Left
 ## out of the bake (it is drawn blended), casts no shadow.
 static func shade_pool(parent: Node3D, at: Vector3, size: Vector2) -> MeshInstance3D:
-	if _shade == null:
-		_shade = ShaderMaterial.new()
-		_shade.shader = load("res://shaders/contact3d.gdshader")
-		_shade.set_shader_parameter("strength", SHADE_STRENGTH)
 	var mesh := PlaneMesh.new()
 	mesh.size = size
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
-	mi.material_override = _shade
+	mi.material_override = ModelKit.shade_material()
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.position = Vector3(at.x, SHADE_LIFT, at.z)
 	mi.set_meta(ModelKit.KEEP, true)
@@ -254,8 +240,8 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			star.rotation.y = PI / 4.0   # (turned to the camera)
 			root.add_child(star)
 		"boiler":
-			# A copper boiler on a stone bed beside the bath, a pipe out of its top. While the building works it
-			# puffs steam, and so does the pool it heats (`pool`: where, as shares of the plot).
+			# A copper boiler on a stone bed beside the bath, a pipe out of its top. While the building works, the
+			# pool it heats steams (`pool`: where, as shares of the plot).
 			var copper := ModelKit.paint(Color("#c9793a"), 0.6)
 			ModelKit.cylinder(root, at, 0.22, 0.08, ModelKit.surface(STONE, "stone", 0.2), 0.2, 10)
 			ModelKit.cylinder(root, at + Vector3(0, 0.08, 0), 0.16, 0.32, copper, -1.0, 10)
@@ -264,17 +250,15 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				ModelKit.cylinder(root, at + Vector3(0, band, 0), 0.166, 0.028, ModelKit.paint(IRON, 0.4), -1.0, 10)
 			ModelKit.cylinder(root, at + Vector3(0, 0.46, 0), 0.035, 0.22, copper, -1.0, 6)
 			ModelKit.box(root, at + Vector3(-0.055, 0.1, 0.15), at + Vector3(0.055, 0.21, 0.168), ModelKit.paint(IRON))
-			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, 0.7, 0), PUFF)
 			var pool: Array = f.get("pool", [])
-			if pool.size() == 2:
-				DecorMotion.spray(when(ctx, "working", true), Vector3(float(pool[0]) * fw, 0.12, float(pool[1]) * fd),
-					DecorMotion.STEAM)
+			DecorMotion.effect(when(ctx, "working", true), "steam", Vector3(float(pool[0]) * fw, 0.12,
+				float(pool[1]) * fd) if pool.size() == 2 else at + Vector3(0, 0.7, 0))
 		"jet":
 			# A fountain in the pool: a stone bowl on a stem, and its jet while the building works.
 			var marble := ModelKit.surface(STONE.lightened(0.2), "plaster", 0.1)
 			ModelKit.cylinder(root, at, 0.05, 0.2, marble, 0.04, 8)
 			ModelKit.cylinder(root, at + Vector3(0, 0.2, 0), 0.06, 0.05, marble, 0.14, 10)
-			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, 0.27, 0), DecorMotion.JET)
+			DecorMotion.effect(when(ctx, "working", true), "jet", at + Vector3(0, 0.27, 0))
 		"sails":
 			# A windmill's sails on its tower's top storey or (`"on": "lower"`) its lower one. One set faces the
 			# camera. Two stand on opposite sides: the top one over the door, on the left as you see it, and the
@@ -291,6 +275,10 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			var hub_at := c + face * hub.x + Vector3(0, hub.y, 0)
 			var reach := float(f.get("reach", 0.7))
 			var stripe := Color.html(str(f.get("stripe", "#" + CREAM.to_html(false))))
+			# (the shaft they hang on stands whatever the state)
+			var shaft := ModelKit.cylinder(root, Vector3.ZERO, 0.04, 0.3, ModelKit.paint(DARK_WOOD), -1.0, 8)
+			shaft.position = hub_at - face * 0.13
+			shaft.rotation = Vector3(PI / 2.0, atan2(face.x, face.z), 0)
 			if bool(f.get("broken", false)) or str(f.get("part", "")) != ANIMATED:
 				sails(root, hub_at, face, reach, false, bool(f.get("broken", false)), stripe)
 			else:
@@ -311,7 +299,7 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				board.rotation = Vector3(-CHUTE_TILT, atan2(toward.x, toward.z), 0)
 				board.position = at + Vector3(0, CHUTE_HIGH, 0) + run * CHUTE_LONG / 2.0 + board.basis * Vector3(
 					(float(part[0]) + float(part[1])) / 2.0, (float(part[2]) + float(part[3])) / 2.0, 0)
-			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, CHUTE_HIGH, 0), GRAIN_FALL)
+			DecorMotion.effect(when(ctx, "working", true), "grain", at + Vector3(0, CHUTE_HIGH, 0))
 		"press":
 			# A wine press: a slatted tub on a stone bed, a screw up its middle, and the bar that turns it while
 			# the building works.
@@ -335,7 +323,7 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			ModelKit.box(root, at + Vector3(-0.015, 0.29, 0.15), at + Vector3(0.015, 0.33, 0.22), ModelKit.paint(IRON, 0.4))
 			ModelKit.tub(root, at + Vector3(-0.08, 0, 0.13), at + Vector3(0.08, 0.12, 0.29), 0.015,
 				ModelKit.surface(WOOD.lightened(0.1), "boards", 0.2), ModelKit.paint(GRAPE.darkened(0.25)))
-			DecorMotion.spray(when(ctx, "working", true), at + Vector3(0, 0.29, 0.21), POUR)
+			DecorMotion.effect(when(ctx, "working", true), "pour", at + Vector3(0, 0.29, 0.21))
 		"rack":
 			# A stall of goods by the building, facing you, under a little roof in the building's colour: a
 			# storage part. Its three shelves fill from the bottom as the building fills, and a full one has a
@@ -466,10 +454,8 @@ static func _oven(ctx: Dictionary, f: Dictionary) -> void:
 		ModelKit.surface(STONE, "plaster", 0.0))
 	ModelKit.cylinder(root, Vector3(x + 0.11, stack_top + 0.05, z), 0.055, 0.1, ModelKit.paint(Color("#8a4630")),
 		0.045, 8)
-	# While the building works: a fire in its mouth and smoke from its chimney.
-	var busy := when(ctx, "working", true)
-	DecorMotion.flame(busy, Vector3(x + deep + 0.012, 0.13, z), 0.07, 0.15, Color("#ff9a2e"), Color("#ffe27a"))
-	DecorMotion.spray(busy, Vector3(x + 0.11, stack_top + 0.17, z), DecorMotion.SMOKE)
+	# While the building works, its chimney smokes.
+	DecorMotion.effect(when(ctx, "working", true), "smoke", Vector3(x + 0.11, stack_top + 0.17, z))
 
 
 ## A round tower for a body (a windmill; `"shape": "tower"` in data/building_models.json): a stone foot, walls
@@ -559,16 +545,13 @@ static func tower(ctx: Dictionary) -> Array:
 	return [case_lo, case_hi]
 
 
-## A windmill's four sails on a shaft at `hub`, facing `out` (level): each a spar, a cloth and a rail along its
-## edge; every other cloth is `stripe`. They turn while the mill is `turning` (one draw, spun on the GPU) and
+## A windmill's four sails at `hub`, facing `out` (level): each a spar, a cloth and a rail along its
+## edge; every other cloth is `stripe`. They turn while the mill is `turning` (a `spin` part: DecorMotion.spin) and
 ## stand still otherwise. A `broken` wheel has one sail snapped off short, its cloth gone.
 static func sails(root: Node3D, hub: Vector3, out: Vector3, reach: float, turning: bool, broken := false,
 		stripe := CREAM) -> void:
 	# Built to turn about its own y (the orbit shader's axis), then laid over so that axis points along `out`.
 	var lay := Vector3(PI / 2.0, atan2(out.x, out.z), 0)
-	var shaft := ModelKit.cylinder(root, Vector3.ZERO, 0.04, 0.3, ModelKit.paint(DARK_WOOD), -1.0, 8)
-	shaft.position = hub - out * 0.13
-	shaft.rotation = lay
 	var wheel := Node3D.new()
 	ModelKit.cylinder(wheel, Vector3(0, -0.03, 0), 0.07, 0.08, ModelKit.paint(DARK_WOOD.darkened(0.2)), 0.05, 8)
 	var wide := reach * SAIL_WIDE
@@ -590,20 +573,15 @@ static func sails(root: Node3D, hub: Vector3, out: Vector3, reach: float, turnin
 			ModelKit.paint(stripe if k % 2 == 0 else CREAM))
 		ModelKit.box(arm, Vector3(reach * 0.22, -0.011, 0.016 + wide - 0.012), Vector3(reach * 0.98, 0.011,
 			0.016 + wide + 0.012), ModelKit.paint(DARK_WOOD.lightened(0.12)))
-	var holder: Node3D
 	if turning:
-		holder = DecorMotion.orbit(root, hub, wheel, {"speed": 0.55, "radius": 0.0})
-		for part in holder.get_children():
-			if part is MeshInstance3D:
-				(part as MeshInstance3D).custom_aabb = AABB(Vector3(-reach, -0.2, -reach), Vector3(reach * 2.0, 0.4,
-					reach * 2.0))
-	else:
-		holder = Node3D.new()
-		holder.position = hub
-		holder.add_child(wheel)
-		wheel.rotation.y = 0.5
-		root.add_child(holder)
+		DecorMotion.spin(root, hub, lay, wheel, SAIL_SPEED)
+		return
+	var holder := Node3D.new()
+	holder.position = hub
 	holder.rotation = lay
+	holder.add_child(wheel)
+	wheel.rotation.y = 0.5
+	root.add_child(holder)
 
 
 ## A full silo running over: its lid is off, grain is heaped out of its top and lies in a mound at its foot,
@@ -649,10 +627,10 @@ static func _good(root: Node3D, at: Vector3, kind: String, n: int) -> void:
 			0.8))
 
 
-## Puts `part` at `at`, turning about its own upright (one draw, spun on the GPU) while `moving`, still otherwise.
+## Puts `part` at `at`, turning about its own upright (a `spin` part) while `moving`, still otherwise.
 static func _turns(root: Node3D, at: Vector3, part: Node3D, moving: bool, speed: float) -> void:
 	if moving:
-		DecorMotion.orbit(root, at, part, {"speed": speed, "radius": 0.0})
+		DecorMotion.spin(root, at, Vector3.ZERO, part, speed)
 		return
 	part.position = at
 	part.rotation.y = 0.6

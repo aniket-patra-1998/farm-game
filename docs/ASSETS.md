@@ -30,9 +30,14 @@ targets, and Godot imports it natively. Our builders' Python never runs on a pho
 **Conventions every file follows** (checked by CI, `tools/asset_lint`):
 - 1 unit = 1 tile; origin at the footprint's centre on the ground; facing +X.
 - Named parts the game needs: `door` / `door_left` (direct children of the root: they swing open on collect),
-  `window_*` (where animals look out; the part's scale sizes the head), `smoke`, `yard`, `slot_*`.
-- States: a part named `when_<state>_<value>` shows only in that state (§10.4); a thing drawn from a file is
-  rebuilt whenever its state changes.
+  `window_*` (where animals look out; the part's scale sizes the head), `yard`, `slot_*`.
+- Named parts that move (`DecorMotion.start`): a part named for an effect (`smoke_*`, `steam_*`, `jet_*`,
+  `pour_*`, `grain_*`: `DecorMotion.EFFECTS`) starts that effect where it stands; `spin_<speed>_*` turns about
+  its own upright (the speed in hundredths of a radian a second). The file holds the part and its name, never
+  the effect.
+- States: a part named `when_<state>_<value>` shows only in that state (§10.4). States that come and go (ready,
+  at work, how full) are switched on the model that stands. A building's level and its construction stage are
+  a file each (`{level}` and `{stage}` in its paths in data/assets.json), so only what stands is loaded.
 - Which kinds may come from files today: buildings, trees, plain decorations and blooms
   (`Objects3D.FILE_KINDS`). Animals, vehicles, young ones and joining fences and hedges get their file path
   with their own step, as they need more than a model (clips, implements, joins).
@@ -64,6 +69,14 @@ light, rim, optional outline), `foliage` (sway, translucency), `water`, `glass`,
 instance with parameters (colour, texture set, shine), never a new shader. All of them read the global shader
 values (`wetness`, `snow_cover`, `dark`) so weather and night apply to every asset. Textures of a kind share an
 atlas or texture array, so a building is one or two draws whatever its detail.
+
+Today: `master_solid` is the master every plain material in a file becomes (`AssetRegistry.master_for`). A
+builder names its materials `paint` or `wall` (`ModelKit.FILE_PAINT`, `FILE_WALL`); those get the parameters
+that read each part's shine or surface pattern from its vertex alpha (`alpha_holds`; the patterns are
+shaders/surface_patterns.gdshaderinc, shared with the builders' own wall shader). Glass, pools of light, the
+shade at a building's foot and water are the kit's single shared materials, put back by the names the file
+gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`: `ModelKit.adopt`). A crafting building is 6 to
+8 draws: walls, paint and glass, the light pools, the shade, its storage look and its animated parts.
 
 ## 4. Animation: clips, blended, with layers; crowds on the GPU
 

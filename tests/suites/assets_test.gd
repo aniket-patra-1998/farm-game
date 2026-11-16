@@ -208,13 +208,44 @@ func test_353_an_items_picture_follows_its_art() -> void:
 	_check(ArtVersion.of("wheat") != ArtVersion.of("cow"), "a crop's picture follows its own form's file")
 
 
-func test_388_crafting_buildings_are_files_that_show_work_and_fill_in_place() -> void:
-	# The four crafting buildings are made as files, each holding every level and state. What changes with time
-	# (at work or not, how full) is shown on the model that stands, never by building it again; and its windows are
-	# the kit's own glass, which glows at night with every other window.
+func test_388_crafting_buildings_are_gltf_files_that_follow_the_art_rules() -> void:
+	# The four crafting buildings are made as glTF files, one for each level (only the level that stands is
+	# loaded), brought in by Godot's importer (shadow meshes). They draw with the master shader and the kit's own
+	# shared glass, light pools, shade and water, nothing else. What changes with time (at work or not, how
+	# full) is shown on the model that stands, never by building it again; what moves is a named part.
 	var objects := Objects3D.new()
+	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water()]
 	for id: String in ["bakery", "winery", "spa", "feed_mill"]:
 		_check(AssetRegistry.has_model(id), "%s is made as a file" % id)
+		for level in range(1, 5):
+			var path := AssetRegistry.file_of(AssetRegistry.entry(id), {"level": level})
+			_check(path.ends_with("_%d.glb" % level) and ResourceLoader.exists(path), "%s level %d has its own glTF file"
+				% [id, level])
+			var at_level := AssetRegistry.instance(id, {"level": level, "working": true, "fill": BuildingDress.FULL})
+			var wrong := 0
+			var shadowed := 0
+			for mi: MeshInstance3D in at_level.find_children("*", "MeshInstance3D", true, false):
+				if DecorMotion.is_part(mi.get_parent()) and not String(mi.get_parent().name).begins_with(DecorMotion.SPIN):
+					continue   # (an effect the game started under a named part: smoke, steam)
+				shadowed += 1 if (mi.mesh as ArrayMesh).shadow_mesh != null else 0
+				for k in mi.mesh.get_surface_count():
+					var mat := mi.get_active_material(k)
+					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
+					wrong += 0 if master or mat in shared else 1
+			_eq(wrong, 0, "%s level %d draws with the master shader and the kit's shared materials only" % [id, level])
+			_check(shadowed > 0, "%s level %d went through the importer (shadow meshes)" % [id, level])
+			at_level.free()
+		# Going up, it is drawn from files too: one for each stage.
+		_check(AssetRegistry.has_site(id), "%s going up is made as files" % id)
+		for stage in Objects3D.BUILD_STAGES:
+			var going_up := AssetRegistry.instance(id, {"stage": stage})
+			var site := ModelKit.bake(BuildingModel.build_site(Game.item_data(id), Game.footprint(id),
+				stage / float(Objects3D.BUILD_STAGES)))
+			_check(going_up != null and AssetRegistry.triangles(going_up) == AssetRegistry.triangles(site),
+				"%s stage %d: its file shows what the builder makes" % [id, stage])
+			if going_up != null:
+				going_up.free()
+			site.free()
 	var mill := {"uid": 9101, "id": "feed_mill", "row": 0, "col": 0, "level": 4, "built": true, "slots": []}
 	_check(objects.uses_file(mill), "the Feed Mill is drawn from its file")
 	var busy := mill.duplicate(true)
@@ -235,12 +266,15 @@ func test_388_crafting_buildings_are_files_that_show_work_and_fill_in_place() ->
 		BuildingModel.show_state(built, state["working"], state["fill"])
 		_eq(AssetRegistry.triangles(node), AssetRegistry.triangles(built), "and the same at work %s, fill %d"
 			% [state["working"], state["fill"]])
+	AssetRegistry.apply_state(node, objects.state_of(busy))
+	var spinners := node.find_children("*", "Spinner", true, false)
+	_eq(spinners.size(), 1, "its sails are a named part the game turns")
+	_check(is_equal_approx((spinners[0] as Spinner).speed, BuildingDress.SAIL_SPEED), "at the speed its name carries")
 	var glass := 0
 	for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
-		for k in mi.get_surface_override_material_count():
-			glass += 1 if mi.get_surface_override_material(k) == ModelKit.glass() else 0
-	_check(glass >= 4, "its windows are the kit's own glass at every level (%d)" % glass)
+		for k in mi.mesh.get_surface_count():
+			glass += 1 if mi.get_active_material(k) == ModelKit.glass() else 0
+	_check(glass >= 1, "its windows are the kit's own glass, which glows at night (%d)" % glass)
 	node.free()
 	built.free()
 	objects.free()
-

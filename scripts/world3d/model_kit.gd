@@ -8,8 +8,16 @@ const PAINT_SHADER := "res://shaders/paint3d.gdshader"
 const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
 const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
-const LIVE_GLASS := "kit_glass"   # the names the kit's living materials are saved under in exported files (`adopt`)
+# The names a model's file gives its materials (a glTF file carries plain materials; these say which they are).
+# PAINT and WALL become instances of the master shader (AssetRegistry.master_for); the LIVE ones are the kit's
+# own shared materials, put back when the file is drawn (`adopt`).
+const FILE_PAINT := "paint"
+const FILE_WALL := "wall"
+const LIVE_GLASS := "kit_glass"
 const LIVE_GLOW := "kit_glow"
+const LIVE_SHADE := "kit_shade"
+const LIVE_WATER := "kit_water"
+const SHADE_STRENGTH := 0.5   # how dark the soft shade round a building's foot is at its middle
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.05
 const FLARE := 0.06           # a roof's eaves kick out this much further, at a shallower slope (a storybook roof)..
@@ -403,14 +411,50 @@ static func set_window_glow(glow: float) -> void:
 	ShaderGlobals.set_value(&"dark", glow)  # butterflies and fireflies read it too
 
 
-## Gives a model loaded from a file the kit's own window glass and pools of light in place of the copies saved in
-## it: their glow changes with the hour (`set_window_glow`), and a saved copy would stay dark.
+## The shared material of the soft shade a building stands in (shaders/contact3d).
+static func shade_material() -> ShaderMaterial:
+	if not _materials.has("shade"):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/contact3d.gdshader")
+		m.set_shader_parameter("strength", SHADE_STRENGTH)
+		_materials["shade"] = m
+	return _materials["shade"]
+
+
+## The name a model's file gives `mat` (FILE_PAINT, FILE_WALL or a LIVE name), or "" when a file cannot carry it.
+static func file_name_of(mat: Material) -> String:
+	if mat == coat():
+		return FILE_PAINT
+	if mat == wall_coat():
+		return FILE_WALL
+	if mat == glass():
+		return LIVE_GLASS
+	if mat == glow_material():
+		return LIVE_GLOW
+	if mat == shade_material():
+		return LIVE_SHADE
+	if mat == water():
+		return LIVE_WATER
+	return ""
+
+
+## Gives a model loaded from a file the kit's own shared materials in place of the plain ones the file names
+## for them: window glass and pools of light (their glow changes with the hour), the shade at its foot, water.
+## Those are drawn blended on the ground or lit from inside: they cast no shadow.
 static func adopt(node: Node) -> void:
 	if node is MeshInstance3D:
 		var mi := node as MeshInstance3D
-		mi.material_override = _live(mi.material_override)
-		for k in mi.get_surface_override_material_count():
-			mi.set_surface_override_material(k, _live(mi.get_surface_override_material(k)))
+		var live := false
+		for k in (mi.mesh.get_surface_count() if mi.mesh != null else 0):
+			var own := _live(mi.mesh.surface_get_material(k))
+			if own != mi.mesh.surface_get_material(k):
+				mi.mesh.surface_set_material(k, own)   # (the mesh is shared: once for every copy)
+			var over := _live(mi.get_surface_override_material(k))
+			if over != mi.get_surface_override_material(k):
+				mi.set_surface_override_material(k, over)
+			live = live or mi.get_active_material(k) in [glow_material(), shade_material(), water()]
+		if live:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for c in node.get_children():
 		adopt(c)
 
@@ -450,10 +494,16 @@ static func glow_pools(parent: Node3D, pools: Array) -> MeshInstance3D:
 
 ## Stops everything under `node` casting a shadow.
 static func no_shadows(node: Node) -> void:
+	shadows(node, false)
+
+
+## Makes everything under `node` cast a shadow, or none.
+static func shadows(node: Node, cast: bool) -> void:
 	if node is GeometryInstance3D:
-		(node as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		(node as GeometryInstance3D).cast_shadow = (GeometryInstance3D.SHADOW_CASTING_SETTING_ON if cast
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
 	for c in node.get_children():
-		no_shadows(c)
+		shadows(c, cast)
 
 
 ## Still water: shared and rippling (DecorMotion.water: shaders/water3d), one material for all of it.
@@ -879,10 +929,17 @@ static func _ridge_cap(parent: Node3D, a: Vector3, b: Vector3, mat: Material) ->
 
 
 static func _live(m: Material) -> Material:
-	if m != null and m.resource_name == LIVE_GLASS:
-		return glass()
-	if m != null and m.resource_name == LIVE_GLOW:
-		return glow_material()
+	if m == null:
+		return m
+	match m.resource_name:
+		LIVE_GLASS:
+			return glass()
+		LIVE_GLOW:
+			return glow_material()
+		LIVE_SHADE:
+			return shade_material()
+		LIVE_WATER:
+			return water()
 	return m
 
 
@@ -905,8 +962,9 @@ static func bake(root: Node3D) -> Node3D:
 		# What hangs on it is baked too: a door is one or two draws, not a dozen boxes. A child that's already
 		# a finished mesh (no parts under it: a moving effect, a part baked before) is left as it is;
 		# re-baking it would bake nothing and lose it.
+		# A part kept in its own right (a named part: an effect, something that turns) stays whole, name and all.
 		for part in n.get_children():
-			if part is Node3D and part.get_child_count() > 0:
+			if part is Node3D and part.get_child_count() > 0 and not part.has_meta(KEEP):
 				n.remove_child(part)
 				n.add_child(bake(part))
 	for shadow: bool in [true, false]:

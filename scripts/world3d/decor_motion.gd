@@ -9,6 +9,15 @@ extends RefCounted
 ## them: a jet, a cascade off a rim, embers rising, a flame.
 
 const DROP_RADIUS := 0.02           # a drop at full size (the shader scales it)
+## Grain running off the end of a chute into the bin under it.
+const GRAIN_FALL := {"streams": 4, "per_stream": 6, "life": 0.42, "rise": 0.0, "gravity": 2.8, "reach": 0.03,
+	"size": 1.0, "colour": Color("#e8b93c")}
+## Wine running from a keg's tap into the pail under it.
+const POUR := {"streams": 3, "per_stream": 6, "life": 0.36, "rise": 0.0, "gravity": 2.8, "reach": 0.012,
+	"size": 0.9, "colour": Color("#8e2f5a")}
+## The effects a model's named part can ask for (a part named `smoke_2` smokes): docs/ASSETS.md §1.
+const EFFECTS := {"smoke": SMOKE, "steam": STEAM, "jet": JET, "pour": POUR, "grain": GRAIN_FALL}
+const SPIN := "spin"     # a part that turns about its own upright (its name carries the speed)
 const PUFF_SIDES := 8               # a smoke puff's roundness
 const PUFF_RINGS := 4
 const SPRAY_SHADER := "res://shaders/spray3d.gdshader"
@@ -96,6 +105,58 @@ static func spray(parent: Node3D, at: Vector3, settings: Dictionary) -> MeshInst
 	mi.set_meta(ModelKit.KEEP, true)
 	parent.add_child(mi)
 	return mi
+
+
+## The part of a model that asks for `kind` of effect (EFFECTS) at `at`: a node named as a file names it
+## (`smoke_3`), with the effect running under it.
+static func effect(parent: Node3D, kind: String, at: Vector3) -> Node3D:
+	var part := Node3D.new()
+	part.name = "%s_%d" % [kind, parent.get_child_count()]
+	part.position = at
+	part.set_meta(ModelKit.KEEP, true)
+	parent.add_child(part)
+	start(part)
+	return part
+
+
+## Puts `part` (built to turn about its own upright) at `at`, turned by `turn`, as a model's spinning part: a
+## node named as a file names it (`spin_55_2`: 0.55 radians a second), merged to a draw, turned by a Spinner.
+static func spin(parent: Node3D, at: Vector3, turn: Vector3, part: Node3D, speed: float) -> Node3D:
+	ModelKit.shadows(part, true)   # (it casts one shadow, as one thing: one draw)
+	var merged := ModelKit.bake(part)
+	merged.name = "%s_%d_%d" % [SPIN, roundi(speed * 100.0), parent.get_child_count()]
+	merged.position = at
+	merged.rotation = turn
+	merged.set_meta(ModelKit.KEEP, true)
+	parent.add_child(merged)
+	start(merged)
+	return merged
+
+
+## Starts what a named part asks for, by its name (docs/ASSETS.md §1): an effect under it, or its turning.
+static func start(part: Node3D) -> void:
+	var words := String(part.name).split("_")
+	if words[0] == SPIN:
+		var spinner := Spinner.new()
+		spinner.speed = (words[1].to_float() if words.size() > 1 else 100.0) / 100.0
+		part.add_child(spinner)
+	elif EFFECTS.has(words[0]):
+		spray(part, Vector3.ZERO, EFFECTS[words[0]])
+
+
+## Whether `n` is a named part that `start` gives life to.
+static func is_part(n: Node) -> bool:
+	var kind := String(n.name).split("_")[0]
+	return n is Node3D and (kind == SPIN or EFFECTS.has(kind))
+
+
+## Starts every named part of a model that came from a file.
+static func dress(model: Node) -> void:
+	for c in model.get_children():
+		if is_part(c):
+			start(c)
+		else:
+			dress(c)
 
 
 ## A flame standing on `at`: a tongue `r` wide and `h` tall that flickers and licks upward.

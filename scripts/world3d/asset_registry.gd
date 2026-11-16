@@ -16,6 +16,15 @@ extends RefCounted
 const DATA := "res://data/assets.json"
 const MASTER := preload("res://shaders/master_solid.gdshader")
 const STATE := "when_"
+const LEVEL := "{level}"   # not-ui (in a model path: the level's number goes here, a file for each level)
+const STAGE := "{stage}"   # not-ui (in a site's path: the construction stage's number)
+## The master's parameters for the materials a builder's file names (ModelKit.FILE_PAINT, FILE_WALL): painted
+## parts carry their shine in their vertex alpha and are lit as the builders' paint is; patterned surfaces carry
+## their pattern there.
+const NAMED := {
+	"paint": {"alpha_holds": 1, "ground_ao": 0.32, "edge": 0.4, "rim": 0.1, "rim_tint": 0.9},
+	"wall": {"alpha_holds": 2},
+}
 const CROP := "crop:"   # a crop form's entry: crop:<form> (CropModels.mesh)
 
 static var _data := {}
@@ -37,7 +46,7 @@ static func entry(id: String) -> Dictionary:
 ## Whether item `id` is drawn from a file now (listed and loadable).
 static func has_model(id: String) -> bool:
 	var e := entry(id)
-	return not e.is_empty() and _scene(str(e.get("model", ""))) != null
+	return not e.is_empty() and _scene(file_of(e, {})) != null
 
 
 ## A new node of item `id`'s model in `state` ({"level": 2, "ready": true}...), or null (draw the stand-in).
@@ -45,17 +54,35 @@ static func instance(id: String, state := {}) -> Node3D:
 	var e := entry(id)
 	if e.is_empty():
 		return null
-	var scene := _scene(str(e.get("model", "")))
+	var scene := _scene(file_of(e, state))
 	if scene == null:
 		return null
 	var node := scene.instantiate() as Node3D
 	if node == null:
-		_say(str(e["model"]), "is not a 3D scene")   # not-ui (a log line)
+		_say(file_of(e, state), "is not a 3D scene")   # not-ui (a log line)
 		return null
+	ModelKit.adopt(node)   # (the kit's own glass, light pools, shade and water, by the names the file gives them)
 	_to_masters(node)   # (a mesh's own materials change once, as the mesh is shared; a node's overrides each time)
-	ModelKit.adopt(node)   # (window glass and pools of light glow with the hour)
+	DecorMotion.dress(node)   # (named parts: smoke rises, sails turn)
+	for c in node.get_children():
+		if String(c.name).begins_with(STATE + "fill"):
+			ModelKit.no_shadows(c)   # (a storage look is small things: no shadow pass of its own)
 	apply_state(node, state)
 	return node
+
+
+## The file entry `e` is drawn from in `state`. A model path with `{level}` in it is a file for each level
+## (a building: only the level that stands is loaded).
+static func file_of(e: Dictionary, state: Dictionary) -> String:
+	if state.has("stage") and e.has("site"):
+		return str(e["site"]).replace(STAGE, str(int(state["stage"])))   # (going up: a file for each stage)
+	return str(e.get("model", "")).replace(LEVEL, str(int(state.get("level", 1))))
+
+
+## Whether item `id` going up is drawn from files too (its entry's `site`).
+static func has_site(id: String) -> bool:
+	var e := entry(id)
+	return e.has("site") and _scene(file_of(e, {"stage": 0})) != null
 
 
 ## Shows the parts of `node` made for `state` and hides the ones made for another value of the same state.
@@ -178,8 +205,9 @@ static func is_plain(m: Material) -> bool:
 ## The master material with plain `m`'s colour, texture, roughness and metal (shared by everything with the same).
 static func master_for(m: BaseMaterial3D) -> ShaderMaterial:
 	var tex := m.albedo_texture
-	var key := "%s|%s|%.2f|%.2f" % [m.albedo_color.to_html(), tex.get_rid() if tex != null else "", m.roughness,
-		m.metallic]
+	var named := str(m.resource_name)
+	var key := "%s|%s|%.2f|%.2f|%s" % [m.albedo_color.to_html(), tex.get_rid() if tex != null else "", m.roughness,
+		m.metallic, named if NAMED.has(named) else ""]
 	if not _masters.has(key):
 		var sm := ShaderMaterial.new()
 		sm.shader = MASTER
@@ -189,6 +217,8 @@ static func master_for(m: BaseMaterial3D) -> ShaderMaterial:
 		if tex != null:
 			sm.set_shader_parameter("albedo_texture", tex)
 			sm.set_shader_parameter("use_texture", true)
+		for param: String in (NAMED.get(named, {}) as Dictionary):
+			sm.set_shader_parameter(param, NAMED[named][param])
 		_masters[key] = sm
 	return _masters[key]
 

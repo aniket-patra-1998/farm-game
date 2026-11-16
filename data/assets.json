@@ -23,7 +23,7 @@
     },
     "building": {
       "triangles": 15000.0,
-      "draws": 10.0
+      "draws": 8.0
     },
     "farmer": {
       "triangles": 21000.0,
@@ -768,19 +768,23 @@
       "budget": "bloom"
     },
     "bakery": {
-      "model": "res://art/models/buildings/bakery.scn",
+      "model": "res://art/models/buildings/bakery_{level}.glb",
+      "site": "res://art/models/buildings/bakery_site_{stage}.glb",
       "budget": "building"
     },
     "winery": {
-      "model": "res://art/models/buildings/winery.scn",
+      "model": "res://art/models/buildings/winery_{level}.glb",
+      "site": "res://art/models/buildings/winery_site_{stage}.glb",
       "budget": "building"
     },
     "spa": {
-      "model": "res://art/models/buildings/spa.scn",
+      "model": "res://art/models/buildings/spa_{level}.glb",
+      "site": "res://art/models/buildings/spa_site_{stage}.glb",
       "budget": "building"
     },
     "feed_mill": {
-      "model": "res://art/models/buildings/feed_mill.scn",
+      "model": "res://art/models/buildings/feed_mill_{level}.glb",
+      "site": "res://art/models/buildings/feed_mill_site_{stage}.glb",
       "budget": "building"
     }
   }

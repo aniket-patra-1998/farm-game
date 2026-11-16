@@ -128,11 +128,10 @@ func test_384_a_mill_shows_its_work_and_grows_with_its_level() -> void:
 	var busy := BuildingModel.build(it, fp, 4, true)
 	var second := BuildingModel.build(it, fp, 2, true)
 	var first := BuildingModel.build(it, fp, 1, true)
-	_eq(_shaded(idle, DecorMotion.ORBIT_SHADER), 0, "an idle mill's sails stand still")
-	_check(_shaded(busy, DecorMotion.ORBIT_SHADER) > 0 and _shaded(second, DecorMotion.ORBIT_SHADER) > 0,
-		"a working mill's sails turn, from level 2 up")
+	_eq(_turning(idle), 0, "an idle mill's sails stand still")
+	_check(_turning(busy) == 1 and _turning(second) == 1, "a working mill's sails turn, from level 2 up")
 	_eq(_shaded(busy, DecorMotion.SPRAY_SHADER), 1, "and grain runs down the maxed mill's chute")
-	_eq(_shaded(first, DecorMotion.ORBIT_SHADER), 0, "the level 1 mill's broken sails never turn")
+	_eq(_turning(first), 0, "the level 1 mill's broken sails never turn")
 	_check(_bounds(idle).size.y > _bounds(first).size.y * 1.3, "the maxed mill stands well over the first one")
 	for n: Node3D in [idle, busy, second, first]:
 		n.free()
@@ -145,6 +144,7 @@ func test_385_crafting_buildings_follow_the_building_rules() -> void:
 	# storage parts 1, 1, 2, then 2 or 3, with four looks (empty, a quarter, half, full) by how full it is.
 	var g := _farm()
 	var moving: Array[String] = [DecorMotion.ORBIT_SHADER, DecorMotion.SPRAY_SHADER, DecorMotion.FLAME_SHADER]
+	var named := 0
 	var checked := 0
 	for id: String in g.items:
 		var it: Dictionary = g.item_data(id)
@@ -169,8 +169,9 @@ func test_385_crafting_buildings_follow_the_building_rules() -> void:
 				"%s level %d: its storage parts (%d)" % [id, level, stores])
 			var idle := BuildingModel.build(it, fp, level, false)
 			var busy := BuildingModel.build(it, fp, level, true)
-			var still := 0
-			var moves := 0
+			var still := _turning(idle)
+			var moves := _turning(busy)
+			named += _named_parts(busy)
 			for shader in moving:
 				still += _shaded(idle, shader)
 				moves += _shaded(busy, shader)
@@ -195,6 +196,7 @@ func test_385_crafting_buildings_follow_the_building_rules() -> void:
 			busy.free()
 		_eq(looks.size(), 4, "%s has a look for each level" % id)
 	_check(checked >= 4, "the Bakery, Winery, Spa and Feed Mill were checked (%d)" % checked)
+	_check(named >= 16, "what moves is a named part, as a file names it: smoke_3, spin_55_2 (%d)" % named)
 	_done(g)
 
 
@@ -212,6 +214,24 @@ func _shaded(node: Node, shader: String) -> int:
 		var mat := mi.material_override as ShaderMaterial
 		if mat != null and mat.shader != null and mat.shader.resource_path == shader:
 			n += 1
+	return n
+
+
+## Parts under `node` that a Spinner is turning, leaving out parts hidden for another state.
+func _turning(node: Node) -> int:
+	if node is Node3D and not (node as Node3D).visible:
+		return 0
+	var n := 1 if node is Spinner else 0
+	for c in node.get_children():
+		n += _turning(c)
+	return n
+
+
+## Named parts under `node` that the game gives life to (DecorMotion.start), shown or not.
+func _named_parts(node: Node) -> int:
+	var n := 1 if DecorMotion.is_part(node) else 0
+	for c in node.get_children():
+		n += _named_parts(c)
 	return n
 
 

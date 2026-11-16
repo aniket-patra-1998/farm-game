@@ -216,16 +216,23 @@ buildings (Feed Mill, Bakery, Winery, Spa), and held by tests (`world3d_test` te
   (kegs drawn off them).
 - Every state is a named part of one model per level (`BuildingDress.when`: `when_working_true`,
   `when_fill_2`...), switched in place; nothing is built again when a craft starts or finishes.
-- They ship as files (`art/models/buildings/<id>.scn`, `tools/export_buildings.tscn`), tied to their builders
-  like the plants. The building draw budget is 10 (was 8): a storage look and the animated parts are draws of
-  their own. At the top level, crafting and full, they are 8 to 10 draws and under 8,000 triangles.
+- They ship as glTF files through Godot's importer (`art/models/buildings/<id>_<level>.glb`, and
+  `<id>_site_<stage>.glb` for the building going up; `tools/export_buildings.tscn`), tied to their builders like
+  the plants. Only the level or stage that stands is loaded. They draw with the master shader (which now
+  carries the wall patterns and per-part shine) and the kit's shared glass, light pools and shade; what moves
+  is a named part the game starts (`smoke_3`, `spin_55_2`). At the top level, crafting and full, they are 8
+  draws (the budget, back from 10) and under 6,000 triangles. To fit: the Spa's pool is still painted water,
+  the oven has no fire of its own, and the boiler's steam rises from the pool only.
 - A maxed building has gold roof edges, a gold band and a gold star (still: only animated parts move).
 - The Spa is a round bathhouse under a dome (the tower body the mill uses, broad and low).
 
 Open:
 
 - Decor (no upgrades, a yellow light at night), harvesting and storing buildings are not brought under the
-  rules yet; the other buildings still have the older shapes and are built in code.
+  rules yet; the other buildings still have the older shapes and are built in code. Each moves to glTF files,
+  as above, when its type is redesigned (CLAUDE.md).
+- The plants' files (trees, crops, blooms) are still Godot scenes with shaders of their own, not glTF with the
+  master shader; `tools/asset_lint` and the per-type import scripts docs/ASSETS.md names do not exist yet.
 - The balance bot (30 days, three visits a day, 2026-11-16) reaches level 25, where crafting unlocks, on day 25
   with about 670,000 coins, earning about 2,000 coins an hour by then. It does not buy or use crafting buildings,
   so the crafting numbers are checked by a table only: a craft gains 340 to 530 coins a slot-hour over its

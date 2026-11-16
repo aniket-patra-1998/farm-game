@@ -1145,8 +1145,7 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.box(root, Vector3(mid.x - half - 0.03, top + 0.15, mid.z - half - 0.03), Vector3(
 					mid.x + half + 0.03, top + 0.2, mid.z + half + 0.03), ModelKit.paint(STONE.lightened(0.1)))
 			# Smoke curling up from it (GPU-animated, one draw), while the building works.
-			DecorMotion.spray(BuildingDress.when(ctx, "working", true), Vector3(mid.x, top + 0.22, mid.z),
-				DecorMotion.SMOKE)
+			DecorMotion.effect(BuildingDress.when(ctx, "working", true), "smoke", Vector3(mid.x, top + 0.22, mid.z))
 		"water_trough":
 			var x := minf(hi.x + 0.45, fw - 0.3)
 			var z := minf(hi.z + 0.35, fd - 0.2)
@@ -1314,10 +1313,12 @@ static func _signature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.surface(WOOD, "boards"))
 		"pool":
 			ModelKit.cylinder(root, at, r + 0.05, 0.1, ModelKit.surface(STONE, "stone", 0.2), -1.0, 24)
-			var water := ModelKit.cylinder(root, at + Vector3(0, 0.101, 0), r, 0.004, ModelKit.water(), -1.0, 24)
+			# (`still`: painted water that does not ripple, for a crafting building, where only animated parts move;
+			# it steams while the building works: the "boiler" feature)
+			var water := ModelKit.cylinder(root, at + Vector3(0, 0.101, 0), r, 0.004, ModelKit.paint(Color("#3f9fd0"),
+				0.9) if bool(f.get("still", false)) else ModelKit.water(), -1.0, 24)
 			if water != null:
 				water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			# (it steams while the building works: the "steam" feature, an animated part)
 		"wallow":
 			ModelKit.ball(root, at + Vector3(0, -0.01, 0), 1.0, ModelKit.paint(GROUNDS["mud"].darkened(0.25), 0.4),
 				Vector3(r, 0.04, r * 0.8))

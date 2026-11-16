@@ -41,7 +41,7 @@ const BLOOM_LOOKS := 4    # and of each bloom (bloom_look)
 # half and full.
 const FILL_FROM: Array[float] = [0.25, 0.5, 1.0]
 const WINDOW_SIZE := 0.22       # a `window_*` part's size at scale 1 (how big a head looking out of it is)
-const BUILD_STAGES := 3        # a construction site made as a file shows `when_stage_0`..`_2` as it goes up
+const BUILD_STAGES := 10       # a construction site made as files has this many stages, a file each, as it goes up
 const SCENERY_Y := -Ground3D.SLAB
 const SCENERY_CELL := 14.0    # woods are baked in squares this many tiles across
 const GROVE_MASK := 0xff       # woods stand shoulder to shoulder: their trees are drawn crowded on every side
@@ -452,8 +452,8 @@ func _key(o: Dictionary) -> String:
 		# Made as a file: rebuilt only when it becomes another model (its level, broken or mended, withered); the
 		# states that come and go (ready, at work) are shown in place (`sync`), so a collect's door swing and the
 		# yard's animals carry on.
-		return "file|%s|%d|%d|%s|%d|%s|%s" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false),
-			int(o.get("level", 1)), o.get("broken", false), Game.is_withered(o)]
+		return "file|%s|%d|%d|%s|%d|%s|%s|%d" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false),
+			int(o.get("level", 1)), o.get("broken", false), Game.is_withered(o), int(state_of(o).get("stage", -1))]
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
@@ -550,8 +550,10 @@ static func store_fill_for(done: int, slots: int) -> int:
 func uses_file(o: Dictionary) -> bool:
 	if not str(Game.kind_of(o)) in FILE_KINDS or o.get("stray", false):
 		return false
-	if Game.links.group_of(str(o["id"])) != "" or Game.under_construction(o):
+	if Game.links.group_of(str(o["id"])) != "":
 		return false
+	if Game.under_construction(o):
+		return AssetRegistry.has_site(str(o["id"]))   # (going up: its site's files, a stage each)
 	return AssetRegistry.has_model(str(o["id"]))
 
 
