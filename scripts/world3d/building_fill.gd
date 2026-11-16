@@ -53,7 +53,7 @@ const TROUGH := Vector3(0.15, 0.085, 0.055)   # a feed trough's half length, its
 const FEED_GOLD := Color("#dcb548")           # the feed in it
 const EMPTY_DRESS := 0.12        # an empty yard's things (a trough, hay, a feed pan) are this big, in tiles
 const EMPTY_TUFTS := 6            # and this many tufts of grass grow in it
-const BLOOM_SIZE := 1.5           # a bloom in a Bloom Garden, against one on its own tile (1.6)
+const BLOOM_SIZE := 0.95          # a bloom in a Bloom Garden, against one on its own tile (1.6): a bed of them
 
 static var planting := 0          # orchards still standing their trees, over frames
 static var _head_meshes := {}  # animal id -> its head cut from its file (_head_mesh), or null

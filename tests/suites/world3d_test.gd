@@ -819,8 +819,8 @@ func test_131_every_kind_stands_within_its_size_range_and_flowers_are_smaller_th
 		low[kind] = minf(low[kind], h)
 	_check(low["tree"] >= 1.39 and top["tree"] <= 2.41,
 		"trees stand 1.4-2.4 tiles (%.2f-%.2f)" % [low["tree"], top["tree"]])
-	_check(low["bloom"] >= 0.29 and top["bloom"] <= 0.51,
-		"blooms stand 0.3-0.5 (%.2f-%.2f)" % [low["bloom"], top["bloom"]])
+	_check(low["bloom"] >= 0.84 and top["bloom"] <= 1.11,
+		"blooms stand 0.85-1.1 tiles, a flower filling its tile (%.2f-%.2f)" % [low["bloom"], top["bloom"]])
 	_check(top["bloom"] < low["tree"], "the tallest flower is shorter than the shortest tree")
 
 

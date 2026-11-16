@@ -1,7 +1,7 @@
 extends TestSuite
 ## FarmVille's random events: surprise drops, collectibles, fuel finds, bunches, mystery prizes.
 
-const BLOOM_MOST_TRIANGLES := 2600   # the most a bloom may be made of (a Full Bloom of five roses is the heaviest)
+const BLOOM_MOST_TRIANGLES := 3400   # the most a bloom may be made of (a Full Bloom of seven roses is the heaviest)
 
 
 func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
@@ -697,7 +697,8 @@ func test_367_each_bloom_is_its_own_flower_and_one_model_for_life() -> void:
 							turns[snappedf(uv2.y, 0.01)] = true
 			_eq(surfaces, 1, "%s is one surface: one draw" % id)
 			_check(stems > 0 and not turns.is_empty(), "%s has stems and leaves, and heads that open" % id)
-			_eq(turns.size(), BloomModel.STEMS_FULL if full else 1, "%s: each head has its own turn to open" % id)
+			_eq(turns.size(), BloomModel.STEMS_FULL if full else BloomModel.STEMS_SINGLE,
+				"%s: each head has its own turn to open" % id)
 			_check(triangles < BLOOM_MOST_TRIANGLES, "%s is light (%d triangles)" % [id, triangles])
 			if not full:
 				shapes[kind] = triangles
