@@ -16,10 +16,7 @@ const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
 const KNOB_RING := 0.12    # a knob's ring, of its width
 const OUTLINE := 0.075     # the outline's width, of the icon's size
-const SHADOW_DROP := 0.05  # how far the shadow falls below a shape, of the icon's size
-const SHADE_TOP := 0.22    # a fill is lightened this much at its top..
-const SHADE_BOTTOM := 0.18 # ..and darkened this much at its bottom
-const GLOSS := 0.42        # the highlight's strength
+const WHITE_EDGE := 2.4    # the white edge round it, against the outline's width
 const ROUND := 20          # points on a circle
 const RENDER_INSET := 0.04 # a rendered picture sits this far in from the icon's edge (room for its outline)
 const RENDER_RECHECK := 0.3   # seconds before looking again for a rendered picture still being made
@@ -111,44 +108,18 @@ func _ring(x: float, y: float, rr: float, squash := 1.0) -> PackedVector2Array:
 
 
 ## One shape in the sticker style: shadow, outline, a fill lighter at the top, and a gloss on its upper part.
-func _shape(pts: PackedVector2Array, fill: Color, gloss := true, shadow := true) -> void:
+func _shape(pts: PackedVector2Array, fill: Color, _gloss := true, _shadow := true) -> void:
 	if pts.size() < 3:
 		return
+	# The flat sticker look, as the item pictures (IconStyle): a white edge, a dark outline, a flat fill; no drop
+	# shadow and no gloss (the last two arguments are kept for the callers, and ask for nothing now).
 	var w := maxf(1.5, _s * OUTLINE)
 	var ink := UiTheme.color("icon_outline")
-	if shadow:
-		var drop := PackedVector2Array()
-		for p in pts:
-			drop.append(p + Vector2(0, _s * SHADOW_DROP))
-		draw_colored_polygon(drop, UiTheme.color("icon_shadow"))
 	var closed := pts.duplicate()
 	closed.append(pts[0])
+	draw_polyline(closed, Color.WHITE, w * WHITE_EDGE, true)
 	draw_polyline(closed, ink, w, true)
-	var top := INF
-	var bottom := -INF
-	for p in pts:
-		top = minf(top, p.y)
-		bottom = maxf(bottom, p.y)
-	var cols := PackedColorArray()
-	for p in pts:
-		var t := (p.y - top) / maxf(bottom - top, 0.001)
-		cols.append(fill.lightened(SHADE_TOP * (1.0 - t)).darkened(SHADE_BOTTOM * t))
-	draw_polygon(pts, cols)
-	if gloss:
-		# The highlight: the shape pulled in toward its middle, cut to its upper part, in see-through white (cut
-		# with Geometry2D, so any shape, concave too, gives a clean one).
-		var mid := Vector2.ZERO
-		for p in pts:
-			mid += p
-		mid /= pts.size()
-		var inset := PackedVector2Array()
-		for p in pts:
-			inset.append(mid + (p - mid) * 0.74 + Vector2(0, -_s * 0.02))
-		var band := PackedVector2Array([Vector2(-_s, top - _s), Vector2(_s * 2.0, top - _s),
-			Vector2(_s * 2.0, lerpf(top, bottom, 0.42)), Vector2(-_s, lerpf(top, bottom, 0.42))])
-		for shine: PackedVector2Array in Geometry2D.intersect_polygons(inset, band):
-			if shine.size() >= 3 and not Geometry2D.is_polygon_clockwise(shine):   # (a clockwise one is a hole)
-				draw_colored_polygon(shine, Color(1, 1, 1, GLOSS * 0.55))
+	draw_colored_polygon(pts, fill)
 
 
 ## A line of detail in the outline's ink (or `col`).
