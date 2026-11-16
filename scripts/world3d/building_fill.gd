@@ -87,7 +87,6 @@ var _plants_far := false
 var _planting := false
 var _to_plant: Array = []        # kinds of tree an orchard still has to stand (a few each frame)
 var _plant_stand := {}
-var _plant_ready := false
 var _plants_are_trees := false   # the plants are trees (planted once; their fruit grows by the clock)
 var _plants_cycle: Array = []    # [when the cycle began, how long it lasts]: what the trees' fruit was last told
 var _plant_detail := 1.0
@@ -148,9 +147,9 @@ func refresh(o: Dictionary) -> void:
 	if who == _who and stage == _stage and who == _who_peeking:
 		return   # nothing it shows has changed since the last look (nearly every look: this is asked each second)
 	if fill.has("plants"):
-		# Blooms open when ready (another picture: planted again); trees are planted once and their fruit grows
-		# on them by the clock (Objects3D.ripen), started over when the orchard is harvested.
-		if who != _who or (stage != _stage and not _plants_are_trees):
+		# Trees and blooms are planted once: a tree's fruit grows on it and a bloom's heads open by the clock
+		# (Objects3D.ripen), started over when the orchard or garden is harvested.
+		if who != _who:
 			_show_plants(o, int(fill["plants"]))
 		_ripen_plants(o)
 	elif who != _who:
@@ -502,11 +501,13 @@ static func _head(col: Color, size: float) -> Node3D:
 ## Starts the orchard's trees' fruit growing for the cycle it is in (nothing when they were told it already).
 func _ripen_plants(o: Dictionary) -> void:
 	var cycle := [float(o.get("t", 0)), float(Game.cycle_of(o))]
-	if not _plants_are_trees or cycle == _plants_cycle:
+	if cycle == _plants_cycle:
 		return
 	_plants_cycle = cycle
 	for tree in _near_trees:
 		Objects3D.ripen(tree, cycle[0], cycle[1])
+	if not _plants_are_trees and _plants != null:
+		Objects3D.ripen(_plants, cycle[0], cycle[1])   # (blooms in a garden never wither)
 
 
 func _show_plants(o: Dictionary, slots: int) -> void:
@@ -517,7 +518,6 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	_far_trees.clear()
 	var holder := Node3D.new()
 	var inside: Dictionary = o.get("inside", {})
-	var ready := Game.is_ready(o)
 	var first := ""
 	for id: String in inside:
 		if int(inside[id]) > 0:
@@ -568,18 +568,20 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
 			var d := Game.catalog.get_def(ids[k]) as BloomDef
-			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE * ScaleGuide.factor(ids[k]), ready, false,
-				d.is_full(), uid + k)
+			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE * ScaleGuide.factor(ids[k]), d.is_full(),
+				uid + k)
 		else:
 			var fit := clampf(TREE_CROWN / float(TreeModel.shape_of(it).get("crown_r", TREE_CROWN)), 0.7, 1.1)
 			var grown := size * fit * minf(ScaleGuide.factor(ids[k]), 1.0)
 			if not stand.has(ids[k]):
 				stand[ids[k]] = {"size": grown, "at": []}
 			(stand[ids[k]]["at"] as Array).append(Vector3(x, 0, z))
-	_plant_trees(holder, stand, ready)
+	_plant_trees(holder, stand)
 	ModelKit.detail = 1.0
 	_plants = ModelKit.bake(holder) if holder.get_child_count() > 0 and stand.is_empty() else holder
 	add_child(_plants)
+	if not trees:
+		Objects3D.ripen(_plants, _plants_cycle[0], _plants_cycle[1])
 	_apply_plant_lod()
 
 
@@ -588,11 +590,10 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 ## differently, drawn as one batch per variant (Instancer). Zoomed far out each is drawn as its far look instead
 ## (`TreeModel.far_from`, made from the near tree's own measurements, `_plant_lod`). Building new kinds takes
 ## at most PLANT_BUDGET_MS a frame: a big orchard stands over a few frames instead of freezing the game.
-func _plant_trees(holder: Node3D, stand: Dictionary, ready: bool) -> void:
+func _plant_trees(holder: Node3D, stand: Dictionary) -> void:
 	_plant_rng = RandomNumberGenerator.new()
 	_plant_rng.seed = uid
 	_plant_stand = stand
-	_plant_ready = ready
 	_plant_detail = ModelKit.detail
 	_plant_into = holder
 	_to_plant = stand.keys()

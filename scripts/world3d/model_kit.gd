@@ -12,6 +12,9 @@ const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.035
 const SPRIG_LEAVES := 9        # leaves on a sprig
 const FRUIT_SHADER := "res://shaders/fruit3d.gdshader"
+const BLOOM_SHADER := "res://shaders/bloom3d.gdshader"
+# Meta: where the middle a part grows about is, in the part's own space (else its origin).
+const FRUIT_AT := &"fruit_middle"
 const FRUIT := &"fruit_turn"   # meta on a fruit: its turn to grow, 0..1 (bake writes it into the fruit's vertices)
 const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leaves it whole
 
@@ -37,7 +40,7 @@ const CYLINDER_SIDES := 12
 
 ## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
 const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color",
-	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo"}
+	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
 const LOD_LEVELS := &"lod_levels"   # meta on a baked mesh: how many simpler levels it carries
@@ -101,6 +104,24 @@ static func fruit_paint(col: Color) -> ShaderMaterial:
 ## Marks a part as one fruit whose turn to grow is `turn` (0 first, 1 last).
 static func mark_fruit(part: MeshInstance3D, turn: float) -> void:
 	part.set_meta(FRUIT, clampf(turn, 0.0, 1.0))
+
+
+## A Bloom's paint in `col` (shaders/bloom3d.gdshader): for every part of a bloom, each marked with `mark_bloom`.
+static func bloom_paint(col: Color) -> ShaderMaterial:
+	var key := "bloom:%s" % col.to_html()
+	if not _materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load(BLOOM_SHADER)
+		m.set_shader_parameter("albedo", col)
+		_materials[key] = m
+	return _materials[key]
+
+
+## Marks a part of a bloom: a part of a flower head opens about the head's `middle` (in the part's parent's
+## space) at the head's `turn` (0 first, 1 last); a stem or a leaf is marked with a turn below 0 and stays as it is.
+static func mark_bloom(part: MeshInstance3D, turn: float, middle := Vector3.ZERO) -> void:
+	part.set_meta(FRUIT, turn)
+	part.set_meta(FRUIT_AT, part.transform.affine_inverse() * middle)
 
 
 ## A fruit's arrays with its middle (`middle`, in the merged model's space) and its turn in every vertex: UV is
@@ -831,7 +852,8 @@ static func _collect(node: Node, xf: Transform3D, groups: Dictionary, kept: Arra
 					mat = tint[0]
 					arrays = tint_arrays(arrays, tint[1])
 				if mi.has_meta(FRUIT):
-					arrays = fruit_arrays(arrays, cxf.origin, float(mi.get_meta(FRUIT)))
+					arrays = fruit_arrays(arrays, cxf * (mi.get_meta(FRUIT_AT, Vector3.ZERO) as Vector3),
+						float(mi.get_meta(FRUIT)))
 				# Surfaces only merge with the same vertex layout (a box has UVs, a hand-made face doesn't).
 				var fmt := 0
 				for k: int in [Mesh.ARRAY_TEX_UV, Mesh.ARRAY_COLOR, Mesh.ARRAY_TANGENT]:

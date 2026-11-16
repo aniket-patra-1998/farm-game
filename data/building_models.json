@@ -723,11 +723,14 @@
         {
           "type": "yard",
           "ground": "grass",
-          "fence": "rail",
+          "fence": "picket",
           "whole": true
         },
         {
           "type": "sign"
+        },
+        {
+          "type": "arch"
         }
       ],
       "levels": {
@@ -737,7 +740,7 @@
           },
           "features": [
             {
-              "type": "arch"
+              "type": "flowers"
             }
           ]
         },
@@ -747,7 +750,7 @@
           },
           "features": [
             {
-              "type": "flowers"
+              "type": "barrels"
             }
           ]
         }

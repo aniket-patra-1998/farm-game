@@ -1,6 +1,8 @@
 extends TestSuite
 ## FarmVille's random events: surprise drops, collectibles, fuel finds, bunches, mystery prizes.
 
+const BLOOM_MOST_TRIANGLES := 2600   # the most a bloom may be made of (a Full Bloom of five roses is the heaviest)
+
 
 func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
 	var g := _farm(true)
@@ -656,6 +658,70 @@ func test_366_a_trees_fruit_ripens_on_the_tree() -> void:
 	Game.debug_time_offset += Game.cycle_of(tree) + 5
 	_check(Game.is_ready(tree), "(the tree is ready)")
 	_eq(objects.call("_key", tree), growing, "a tree is the same model ready or not: it is not rebuilt when it ripens")
+	objects.queue_free()
+	Game.debug_time_offset = 0
+	Game.reset_game()
+
+
+## Each kind of bloom is its own flower, a Full Bloom a bunch of them, and a bloom is one model for its whole life:
+## every part says which head it belongs to and when that head opens, and the plant is told its cycle and its
+## wilting, so it opens and withers little by little and is never rebuilt.
+func test_367_each_bloom_is_its_own_flower_and_one_model_for_life() -> void:
+	var g := _farm()
+	var shapes := {}
+	for kind: String in BloomModel.FORMS:
+		for full: bool in [false, true]:
+			var id := kind + ("_full_bloom" if full else "_bloom")
+			_check(g.items.has(id), "%s is in the catalog" % id)
+			_eq(BloomModel.kind_of(g.item_data(id)), kind, "%s is a %s" % [id, kind])
+			var holder := Node3D.new()
+			BloomModel.build_at(holder, Vector3.ZERO, g.item_data(id), 1.0, full, 3)
+			var baked := ModelKit.bake(holder)
+			var surfaces := 0
+			var triangles := 0
+			var turns := {}
+			var stems := 0
+			for part in baked.find_children("*", "MeshInstance3D", true, false):
+				var mesh := (part as MeshInstance3D).mesh
+				for s in mesh.get_surface_count():
+					surfaces += 1
+					var mat := (part as MeshInstance3D).get_active_material(s) as ShaderMaterial
+					_check(mat != null and mat.shader.resource_path == ModelKit.BLOOM_SHADER, "%s is all bloom paint" % id)
+					var arrays := mesh.surface_get_arrays(s)
+					triangles += (arrays[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3 if arrays[Mesh.ARRAY_INDEX] != null \
+						else (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
+					for uv2: Vector2 in (arrays[Mesh.ARRAY_TEX_UV2] as PackedVector2Array):
+						if uv2.y < 0.0:
+							stems += 1
+						else:
+							turns[snappedf(uv2.y, 0.01)] = true
+			_eq(surfaces, 1, "%s is one surface: one draw" % id)
+			_check(stems > 0 and not turns.is_empty(), "%s has stems and leaves, and heads that open" % id)
+			_eq(turns.size(), BloomModel.STEMS_FULL if full else 1, "%s: each head has its own turn to open" % id)
+			_check(triangles < BLOOM_MOST_TRIANGLES, "%s is light (%d triangles)" % [id, triangles])
+			if not full:
+				shapes[kind] = triangles
+			baked.queue_free()
+	_eq(shapes.values().size(), 6, "six kinds")
+	var distinct := {}
+	for kind: String in shapes:
+		distinct[shapes[kind]] = true
+	_check(distinct.size() >= 5, "the kinds are different flowers, not one in six colours (%s)" % shapes)
+	_done(g)
+	Game.saving_enabled = false
+	Game.reset_game()
+	var bloom := {"uid": Game.next_uid, "id": "rose_bloom", "row": 2, "col": 2, "t": Game.now()}
+	Game.next_uid += 1
+	Game.add_object(bloom)
+	var objects := Objects3D.new()
+	add_child(objects)
+	var in_bud: String = objects.call("_key", bloom)
+	Game.debug_time_offset += Game.cycle_of(bloom) + 5
+	_check(Game.is_ready(bloom), "(the bloom is ready)")
+	_eq(objects.call("_key", bloom), in_bud, "ready, it is the same model")
+	Game.debug_time_offset += Balance.i("blooms.wither_after") + 5
+	_check(Game.is_withered(bloom), "(left too long, it has withered)")
+	_eq(objects.call("_key", bloom), in_bud, "and withered, still the same model")
 	objects.queue_free()
 	Game.debug_time_offset = 0
 	Game.reset_game()

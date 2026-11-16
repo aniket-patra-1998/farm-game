@@ -150,3 +150,17 @@ Open:
   shake-open of a mystery young one, the glints' twinkle and the reveal have been seen in stills, not in motion;
   in the 2D fallback view (not what ships) there are no glints and a mystery opens at once.
 
+## Blooms and the Bloom Garden (branch `feel-upgrades`)
+
+- Done: each of the six blooms is its own flower (`BloomModel`: a rose's layered cup, a tulip's egg, a daisy's
+  rays, a sunflower's disc, a lily's recurved star, an iris's standards and falls), with its own leaves; a Full
+  Bloom is a bunch of five. Petals and leaves are small shared blades; a bloom is one surface, one draw. Its
+  whole life is its shader's (bloom3d): heads start as closed green buds and open at their turn, and a Single
+  Bloom left too long yellows, browns and bends over the last 40% of the time it may stand ready. One model per
+  bloom, never rebuilt (`Objects3D.ripen`); a garden's blooms are planted once. The Bloom Garden has a white
+  picket fence and its arch from the first size.
+- Open: blooms are still built in code when first needed, not exported as files like trees and crops (the
+  project's rule for new art); petals are one flat colour each (no stripes or speckles: FarmVille's tiger lily);
+  the Bloom Garden's ground is plain soil, with no raised beds or paths between rows; only the six flowers the
+  catalog has (FarmVille had dozens).
+

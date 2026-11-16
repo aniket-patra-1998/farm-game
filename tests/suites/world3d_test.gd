@@ -1743,7 +1743,8 @@ func test_326_beds_tufts_and_plants_follow_each_plot_and_a_smaller_farm() -> voi
 
 
 ## Decorations and blooms are built once per look and shared (Instancer): two of a kind in the same look share
-## their meshes, and what changes a look (a sign's mastered crop, a bloom going ready) gives a new one.
+## their meshes, and what changes a look (a sign's mastered crop) gives a new one; a bloom's
+## life is its shader's, not a new look.
 func test_329_decor_and_blooms_share_built_looks_by_what_they_show() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
@@ -1777,7 +1778,7 @@ func test_329_decor_and_blooms_share_built_looks_by_what_they_show() -> void:
 	var cycle := int(Game.item_data(bloom).get("cycle_seconds", 86400))
 	var young: Node3D = objects._build({"uid": 5, "id": bloom, "row": 6, "col": 6, "t": Game.now()})
 	var ready: Node3D = objects._build({"uid": 6, "id": bloom, "row": 6, "col": 6 + look, "t": Game.now() - cycle - 1})
-	_check(_mesh_ids(young) != _mesh_ids(ready), "a ready bloom has its own look")
+	_check(_mesh_ids(young) == _mesh_ids(ready), "a bloom is one model in bud and in bloom (its shader opens it)")
 	for n: Node in [a, b, s1, s2, young, ready, objects]:
 		n.free()
 	Game.reset_game()

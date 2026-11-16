@@ -97,8 +97,7 @@ func _lay() -> void:
 	multimesh.instance_count = ripe.size()
 	for k in ripe.size():
 		var i: int = ripe[k]
-		@warning_ignore("integer_division")
-		var at := Vector3(i % GameState.MAX_SIZE + 0.5, Plots3D.HEIGHT + ABOVE, i / GameState.MAX_SIZE + 0.5)
+		var at := Vector3(GameState.col_of(i) + 0.5, Plots3D.HEIGHT + ABOVE, GameState.row_of(i) + 0.5)
 		multimesh.set_instance_transform(k, Transform3D(Basis.IDENTITY, at))
 		multimesh.set_instance_color(k, _held[i]["color"])
 		multimesh.set_instance_custom_data(k, Color(fposmod(i * 0.618, 1.0), 0, 0, 0))

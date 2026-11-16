@@ -11,6 +11,8 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const NEVER := 1.0e9         # a time that never comes (a bloom that does not wilt): seconds on the farm's clock
+const WILT_SHARE := 0.4      # the last part of the time a bloom may stand ready over which it wilts
 const HATCH_SHAKES := 3      # a mystery shakes this many times before it opens, each harder..
 const HATCH_REACH := 0.035   # ..by this much more, in tiles, to either side
 const HATCH_REST := 0.1      # seconds between shakes
@@ -181,7 +183,7 @@ func sync() -> void:
 		var key := _key(o)
 		var v: Dictionary = _views.get(uid, {})
 		if v.get("key", "") == key:
-			if v.has("crown"):
+			if v.has("crown") or v.has("blooms"):
 				_ripen_view(v, o)   # (a tree just harvested: its fruit starts over; nothing when its cycle is as it was)
 			if v.get("file", false):
 				AssetRegistry.apply_state(v["node"], state_of(o))   # (ready, at work... shown in place)
@@ -207,6 +209,9 @@ func sync() -> void:
 		_views[uid]["fill"] = fill_of(uid)
 		if Game.catalog.get_def(str(o["id"])) is TreeDef:
 			_views[uid]["crown"] = _crown_of(_views[uid]["box"])
+			_ripen_view(_views[uid], o)
+		elif Game.catalog.get_def(str(o["id"])) is BloomDef:
+			_views[uid]["blooms"] = true
 			_ripen_view(_views[uid], o)
 		if not fresh and _synced_once and step > int(v.get("step", step)):
 			grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
@@ -391,10 +396,10 @@ func _key(o: Dictionary) -> String:
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
 	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
-		o.get("flip", false), site, Game.kind_of(o) == "bloom" and Game.is_ready(o),
+		o.get("flip", false), site, false,
 		_mask(o),
 		str(o.get("broken", false)) + shows_of(o) + "|%d|%s|%s" % [int(o.get("fed", 0)),
-			Game.is_withered(o), _at_work(o)]]
+			false, _at_work(o)]]   # (a bloom's withering is its shader's: no new model)
 
 
 
@@ -540,11 +545,19 @@ static func tree_look(id: String, mask: int, look: int, from_file := true) -> No
 		return ModelKit.bake(tree))
 
 
-## Starts a tree's fruit growing for the cycle it is in, when that is not the one its model was last told.
+## Starts a tree's fruit growing, or a bloom opening, for the cycle it is in, when that is not the one its model
+## was last told. A bloom that withers is told too when its wilting starts (the last part of the time it may
+## stand ready, `WILT_SHARE`) so it withers little by little; one that never withers is told nothing of it.
 func _ripen_view(v: Dictionary, o: Dictionary) -> void:
 	var cycle := [float(o.get("t", 0)), float(Game.cycle_of(o))]
-	if v.get("ripe") != cycle:
-		v["ripe"] = cycle
+	if v.get("ripe") == cycle:
+		return
+	v["ripe"] = cycle
+	var d := Game.catalog.get_def(str(o["id"])) as BloomDef
+	if d != null and d.withers():
+		var stands := float(Balance.i("blooms.wither_after"))
+		ripen(v["node"], cycle[0], cycle[1], cycle[0] + cycle[1] + stands * (1.0 - WILT_SHARE), stands * WILT_SHARE)
+	else:
 		ripen(v["node"], cycle[0], cycle[1])
 
 
@@ -552,12 +565,16 @@ func _ripen_view(v: Dictionary, o: Dictionary) -> void:
 ## (shaders/fruit3d.gdshader): each fruit comes in its turn, swells and colours, and the tree is full exactly
 ## when it is ready. Set when the tree is built and again when it is harvested (its cycle starts over); between
 ## the two the shader does the growing, and nothing is asked of the tree.
-static func ripen(node: Node, from_unix: float, cycle: float) -> void:
+static func ripen(node: Node, from_unix: float, cycle: float, wilt_unix := -1.0, wilt_takes := 1.0) -> void:
 	if node is GeometryInstance3D:
-		(node as GeometryInstance3D).set_instance_shader_parameter(&"ripe_from", from_unix - Crops3D.clock_base)
-		(node as GeometryInstance3D).set_instance_shader_parameter(&"ripe_len", maxf(cycle, 1.0))
+		var part := node as GeometryInstance3D
+		part.set_instance_shader_parameter(&"ripe_from", from_unix - Crops3D.clock_base)
+		part.set_instance_shader_parameter(&"ripe_len", maxf(cycle, 1.0))
+		# (a bloom's wilting: when it starts, a time below 0 for what does not wither, and how long it takes)
+		part.set_instance_shader_parameter(&"wilt_from", NEVER if wilt_unix < 0.0 else wilt_unix - Crops3D.clock_base)
+		part.set_instance_shader_parameter(&"wilt_len", maxf(wilt_takes, 1.0))
 	for c in node.get_children():
-		ripen(c, from_unix, cycle)
+		ripen(c, from_unix, cycle, wilt_unix, wilt_takes)
 
 
 ## A decoration's look: its kind, one of a few variants by where it stands (`look`), and the mastered crop or
@@ -691,7 +708,8 @@ func _build(o: Dictionary) -> Node3D:
 				var look := Instancer.variant(int(o["row"]), int(o["col"]))
 				var grown := ScaleGuide.factor(str(o["id"]))
 				var d := Game.catalog.get_def(str(o["id"])) as BloomDef
-				node = Instancer.copy_of(Instancer.key_of(["bloom", o["id"], grown, Game.is_ready(o), Game.is_withered(o),
+				# (one look whether in bud, in bloom or withered: its shader shows its life by the clock, `ripen`)
+				node = Instancer.copy_of(Instancer.key_of(["bloom", o["id"], grown,
 					d != null and d.is_full(), Crowding.mask(o), look]), func() -> Node3D:
 						return SpaceFit.fit_model(BloomModel.build(it, o, grown, look), fp))
 			_:
