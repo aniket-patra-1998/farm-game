@@ -44,6 +44,7 @@ static var _side := 0          # this screen's picture size, worked out once
 static var _textures := {}    # item id -> ImageTexture (blank until made)
 static var _waiting: Array[String] = []
 static var _asked := {}       # item id -> the frame it was last asked for
+static var _on_disk := {}     # item id -> its files in the cache (listed once a session)
 
 var _style: IconStyle            # the flat look, drawn on each picture once (IconStyle)
 var _to_style: Array[IconDevelop] = []
@@ -273,16 +274,33 @@ func _show_and_keep(job: IconDevelop) -> void:
 		DirAccess.make_dir_recursive_absolute(SHIPPED)
 		ResourceSaver.save(job.picture, _shipped(job.id), ResourceSaver.FLAG_COMPRESS)
 	elif job.keep:
-		DirAccess.make_dir_recursive_absolute(CACHE)
-		_forget_old(job.id)
-		job.picture.save_png(_file(job.id))
+		# Kept on disk off the main thread (writing a PNG is a frame's worth of work).
+		var path := _file(job.id)
+		var old := _forget_old(job.id)
+		var picture := job.picture
+		WorkerThreadPool.add_task(func() -> void:
+			DirAccess.make_dir_recursive_absolute(CACHE)
+			for f in old:
+				DirAccess.remove_absolute(f)
+			picture.save_png(path))
 
 
-## Removes pictures of `id` kept under an older key.
-static func _forget_old(id: String) -> void:
-	for f in DirAccess.get_files_at(CACHE):
-		if f.begins_with(id + "-"):
-			DirAccess.remove_absolute(CACHE + "/" + f)
+## Pictures of `id` kept under an older key, to remove (the folder listed once a session, not per picture).
+static func _forget_old(id: String) -> PackedStringArray:
+	if _on_disk.is_empty():
+		_on_disk = {"": true}
+		for f in DirAccess.get_files_at(CACHE):
+			var named := f.get_slice("-", 0)   # (an id has no "-": "-" begins its key)
+			if not _on_disk.has(named):
+				_on_disk[named] = PackedStringArray()
+			(_on_disk[named] as PackedStringArray).append(CACHE + "/" + f)
+	var old: PackedStringArray = _on_disk.get(id, PackedStringArray())
+	_on_disk[id] = PackedStringArray([_file(id)])
+	var out := PackedStringArray()
+	for f in old:
+		if f != _file(id):
+			out.append(f)
+	return out
 
 
 ## Builds the item's model in slot `k` and points its camera at it, so it fills the picture. False when the item
@@ -317,7 +335,7 @@ static func _model(id: String) -> Node3D:
 		return UiModels.build(id.trim_prefix(UI))   # an interface icon (UiIcon draws it)
 	if id.contains(SIZED):   # a building at one of its sizes (what its next size looks like)
 		var sized := id.split(SIZED)
-		return ModelKit.bake(BuildingModel.build(Game.item_data(sized[0]), Game.footprint(sized[0]), int(sized[1])))
+		return Objects3D.building_look(sized[0], int(sized[1]))   # (shared with the farm's: built once)
 	var art := AssetRegistry.instance(id, PICTURED)   # (made as a file: its picture is of the file)
 	if art != null:
 		return art
@@ -330,7 +348,7 @@ static func _model(id: String) -> Node3D:
 		var good := GoodsModel.build(id)
 		return good if good != null else MaterialModel.build(id)
 	if str(it.get("kind", "")) in ["building", "barn", "crafting"]:
-		var home := ModelKit.bake(BuildingModel.build(it, Game.footprint(id), 1))
+		var home := Objects3D.building_look(id, 1)   # (the farm's own copy when it stands there)
 		_plant_picture(home, it, Game.footprint(id))
 		return home
 	return ScaleGuide.model_of(id)

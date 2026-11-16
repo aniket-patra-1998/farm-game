@@ -6,6 +6,7 @@ extends RefCounted
 
 
 const DATA := "res://data/scale_guide.json"
+const PICTURE_LOOK := 7   # the look an item's picture shows (of Instancer.VARIANTS)
 
 static var _ranges := {}
 static var _factors := {}
@@ -85,20 +86,20 @@ static func model_of(id: String) -> Node3D:
 			var a := Animal3D.create(it, null, mid)
 			a.update(0.016)
 			return a
-		"tree":
+		"tree":   # (at full size, as the guide measures it: a tree's picture is of its file, ItemIcons)
 			var t := Node3D.new()
-			TreeModel.build_at(t, mid, it, 1.0, true, 7)
+			TreeModel.build_at(t, mid, it, 1.0, true, PICTURE_LOOK)
 			return ModelKit.bake(t)
 		"vehicle":
 			return VehicleModel.build(it, false)
 		"decor":
-			return DecorModel.build(it, fp, {"id": id, "uid": 7})
+			return Objects3D.decor_look(id, PICTURE_LOOK, "")   # (the farm's shared looks: built once)
 		"bloom":
 			return BloomModel.build(it, {"id": id, "uid": 7, "t": Game.now() - int(it.get("cycle_seconds", 86400)) - 1})
 		"young":
 			return DecorModel.build_young(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
 		"building", "barn", "crafting":
-			return ModelKit.bake(BuildingModel.build(it, fp, Game.max_level(id)))
+			return Objects3D.building_look(id, Game.max_level(id))
 	return null
 
 
