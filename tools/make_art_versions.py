@@ -22,9 +22,15 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = "data/art_versions.json"
 # What code-built looks are made from (a change to any of them redraws the pictures of every code-built item).
-BUILT = ["scripts/world3d/*.gd", "scripts/world/animals/*.gd", "scripts/world/space_fit.gd", "shaders/*.gdshader*",
-         "data/building_models.json", "data/tree_shapes.json", "data/crop_forms.json", "data/animal_rigs.json",
-         "data/linking.json", "data/quality.json"]
+BUILT = ["scripts/world3d/*.gd", "scripts/world/animals/*.gd", "scripts/world/space_fit.gd", "scripts/season.gd",
+         "shaders/*.gdshader*", "data/building_models.json", "data/tree_shapes.json", "data/crop_forms.json",
+         "data/animal_rigs.json", "data/linking.json", "data/quality.json", "data/crowding.json", "data/dressing.json",
+         "data/scale_guide.json", "data/seasons.json"]
+# Where look code lives: every data file it reads must be in BUILT (--check finds them itself), so a new one can
+# never shape a look without redrawing its pictures.
+LOOK_CODE = ["scripts/world3d/*.gd", "scripts/world/animals/*.gd", "scripts/ui/ui_models.gd", "scripts/ui/item_icons.gd",
+             "scripts/season.gd"]
+NOT_LOOKS = {"data/art_versions.json", "data/assets.json"}   # (the fingerprints themselves; the files are fingerprinted)
 STUDIO = ["scripts/ui/item_icons.gd", "scripts/ui/icon_develop.gd", "scripts/ui/ui_models.gd"]
 SOURCES_OUT = "data/art_sources.json"
 # What each kind of exported art file is made from, and the exporter to run when any of it changes.
@@ -33,6 +39,7 @@ SOURCES = {
                 "scripts/world3d/mesh_builder.gd", "scripts/world3d/model_kit.gd", "scripts/world3d/crowding.gd",
                 "scripts/world3d/scale_guide.gd", "data/tree_shapes.json", "data/crop_forms.json",
                 "shaders/foliage3d.gdshader", "shaders/canopy3d.gdshader", "shaders/crop3d.gdshader",
+                "shaders/fruit3d.gdshader",
                 "tools/export_plants.gd"],
                "godot --headless --path . res://tools/export_plants.tscn"),
     "animals": (["tools/animal_art/animal_art/**/*.py"],
@@ -69,6 +76,15 @@ def make():
     return json.dumps(out, indent=2) + "\n"
 
 
+def _read_by_looks():
+    import re
+    found = set()
+    for path in _expand(LOOK_CODE):
+        with open(os.path.join(ROOT, path)) as f:
+            found |= {m.replace("res://", "") for m in re.findall(r"res://data/[a-z_/]+\.json", f.read())}
+    return found
+
+
 def _sources():
     return {kind: _digest(_expand(files)) for kind, (files, _run) in SOURCES.items()}
 
@@ -90,6 +106,9 @@ def main():
     if "--check" in sys.argv:
         stamps = _stamps()
         stale = False
+        for data in _read_by_looks() - set(_expand(BUILT)) - NOT_LOOKS:
+            print("%s shapes a look but is not in BUILT (tools/make_art_versions.py): add it" % data)
+            stale = True
         for kind, now in _sources().items():
             if stamps.get(kind) != now:
                 print("the %s builders changed since their files were exported: run %s" % (kind, SOURCES[kind][1]))
