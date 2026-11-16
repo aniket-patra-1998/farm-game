@@ -11,7 +11,7 @@ since, so a builder change never silently leaves the game drawing the old files.
 
     python3 tools/make_art_versions.py          # write it (after changing any art)
     python3 tools/make_art_versions.py --check  # exit 1 if anything is out of date (CI runs this)
-    python3 tools/make_art_versions.py --exported plants|animals   # (the exporters run this when they finish)
+    python3 tools/make_art_versions.py --exported plants|animals|sounds   # (the exporters run this when they finish)
 """
 import glob
 import hashlib
@@ -44,6 +44,8 @@ SOURCES = {
                 "shaders/fruit3d.gdshader", "shaders/bloom3d.gdshader",
                 "tools/export_plants.gd"],
                "godot --headless --path . res://tools/export_plants.tscn"),
+    "sounds": (["tools/sound_cuts/*.py"],
+               "python3 tools/sound_cuts/make_generated.py (and make_sounds.py <downloads> for the cut recordings)"),
     "animals": (["tools/animal_art/animal_art/**/*.py"],
                 "cd tools/animal_art && python3 -m animal_art export ../../art/models/animals \"<every animal>\""),
 }

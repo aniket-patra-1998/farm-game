@@ -101,5 +101,13 @@ def main(src: pathlib.Path) -> None:
         write(make_bed(load(src / file, 2), start, length), OUT / "ambience" / f"{name}.ogg", 3)
 
 
+
+def stamp() -> None:
+    """Records that the sound files are made from these builders now (tools/make_art_versions.py checks it)."""
+    import subprocess
+    subprocess.run([sys.executable, str(OUT.parents[1] / "tools" / "make_art_versions.py"), "--exported", "sounds"], check=True)
+
+
 if __name__ == "__main__":
     main(pathlib.Path(sys.argv[1]))
+    stamp()

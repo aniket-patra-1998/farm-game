@@ -187,3 +187,29 @@ func _scripts_in(dir: String) -> Array[String]:
 	for d in DirAccess.get_directories_at(dir):
 		out.append_array(_scripts_in(dir.path_join(d)))
 	return out
+
+
+## The soundscape follows the sky: rain lays its loop over the bed and clear skies take it away; the farm sounds at
+## zero play nothing; the music has real tracks, long pieces, never a short call.
+func test_103_the_background_follows_the_weather_and_the_players_volume() -> void:
+	var scape := Sound.soundscape
+	var before := [Game.weather_override, Sound.ambience_volume]
+	Sound.ambience_volume = 0.8
+	Game.weather_override = "rain"
+	scape.look()
+	_check(scape.bed_name != "", "in the rain there is still a bed under it (%s)" % scape.bed_name)
+	_eq(scape.layer_name, "rain", "and the rain's loop is laid over it")
+	Game.weather_override = "clear"
+	scape.look()
+	_eq(scape.layer_name, "", "clear skies take the rain away")
+	Sound.ambience_volume = 0.0
+	scape.look()
+	_eq(scape.bed_name, "", "with farm sounds at zero nothing plays")
+	_eq(scape.layer_name, "", "not even the rain")
+	_check(scape.has_music(), "there is music")
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Soundscape.DATA))
+	for path: String in data["music"]["tracks"]:
+		var track := load(path) as AudioStream
+		_check(track != null and track.get_length() > 30.0, "%s is a piece of music, not a call" % path)
+	Game.weather_override = before[0]
+	Sound.ambience_volume = before[1]

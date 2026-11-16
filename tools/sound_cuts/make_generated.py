@@ -14,7 +14,7 @@ import pathlib
 import numpy as np
 from scipy import signal
 
-from make_sounds import OUT, SR, VOICE_RMS_DB, PEAK_DB, level, write
+from make_sounds import OUT, SR, VOICE_RMS_DB, level, stamp, write
 
 RNG = np.random.default_rng(7)
 MUSIC_RMS_DB = -21.0
@@ -269,3 +269,4 @@ def music():
 if __name__ == "__main__":
     voices()
     music()
+    stamp()
