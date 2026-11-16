@@ -786,6 +786,21 @@
       "model": "res://art/models/buildings/feed_mill_{level}.glb",
       "site": "res://art/models/buildings/feed_mill_site_{stage}.glb",
       "budget": "building"
+    },
+    "chicken_coop": {
+      "model": "res://art/models/buildings/chicken_coop_{level}.glb",
+      "site": "res://art/models/buildings/chicken_coop_site_{stage}.glb",
+      "budget": "building"
+    },
+    "cow_shed": {
+      "model": "res://art/models/buildings/cow_shed_{level}.glb",
+      "site": "res://art/models/buildings/cow_shed_site_{stage}.glb",
+      "budget": "building"
+    },
+    "beehive": {
+      "model": "res://art/models/buildings/beehive_{level}.glb",
+      "site": "res://art/models/buildings/beehive_site_{stage}.glb",
+      "budget": "building"
     }
   }
 }

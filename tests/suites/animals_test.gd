@@ -98,7 +98,7 @@ func test_47_beehive_frame_and_queen_bee() -> void:
 	_check(not g.under_construction(hive), "frame finished with smokers, beeswax and the basics")
 	_eq(int(g.parts["smokers"]), 0, "smokers used")
 	_eq(g.capacity(hive), 200, "holds up to 200 bees")
-	_check(g.land.expansion_needs(hive).is_empty(), "a hive isn't expanded: it grows as bees join")
+	_check(not g.land.expansion_needs(hive).is_empty(), "a hive has a second size, like every harvesting building")
 	g.bees.queen_bees = 0
 	_check(not g.bees.add_queen(uid), "no queen held")
 	g.gems = Balance.i("bees.queen_gem_cost")

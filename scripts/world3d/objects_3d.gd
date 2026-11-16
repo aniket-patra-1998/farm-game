@@ -40,6 +40,7 @@ const BLOOM_LOOKS := 4    # and of each bloom (bloom_look)
 # The share of its slots holding something finished at which a crafting building's storage parts show a quarter,
 # half and full.
 const FILL_FROM: Array[float] = [0.25, 0.5, 1.0]
+const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
 const WINDOW_SIZE := 0.22       # a `window_*` part's size at scale 1 (how big a head looking out of it is)
 const BUILD_STAGES := 10       # a construction site made as files has this many stages, a file each, as it goes up
 const SCENERY_Y := -Ground3D.SLAB
@@ -518,6 +519,12 @@ func _light_some() -> void:
 		_mark_ready(_sweep_ready)
 
 
+## Whether a harvesting building's animals are asleep in it: at night, when anyone lives there. Then nobody is
+## out in its yard or at its windows, and a "zzz" rises from it (its `when_asleep_true` part).
+static func asleep(o: Dictionary) -> bool:
+	return AnimalBehaviour.night and Game.inside_total(o) > 0 and not Game.under_construction(o)
+
+
 ## Whether a building is at work right now: a crafting building with something in its ovens or vats. (Other
 ## buildings are always "at work": their chimneys, if any, smoke.)
 func _at_work(o: Dictionary) -> bool:
@@ -529,6 +536,9 @@ func _at_work(o: Dictionary) -> bool:
 ## How full a crafting building is of finished things waiting to be collected, as the look its storage parts
 ## show: 0 empty, 1 from a quarter of its slots, 2 from half, 3 (BuildingDress.FULL) when every slot holds one.
 static func store_fill(o: Dictionary) -> int:
+	if Game.building_type(str(o["id"])) == HARVESTING:
+		# A harvesting building's ready part fills as its collect timer runs: full when it is ready to collect.
+		return FILL_FROM.size() if Game.is_ready(o) else fill_for_share(BuildingFill.ready_share(o))
 	if not Game.crafting.is_crafting(o):
 		return 0
 	return store_fill_for(Game.crafting.crafts_done(o), Game.crafting.slot_count(o))
@@ -536,7 +546,11 @@ static func store_fill(o: Dictionary) -> int:
 
 ## The storage look for `done` finished things in `slots` slots: 0 empty, 1 from a quarter, 2 from half, 3 full.
 static func store_fill_for(done: int, slots: int) -> int:
-	var share := float(done) / maxi(slots, 1)
+	return fill_for_share(float(done) / maxi(slots, 1))
+
+
+## The look for a part that is `share` full (0..1): 0 empty, 1 from a quarter, 2 from half, 3 full (FILL_FROM).
+static func fill_for_share(share: float) -> int:
 	var fill := 0
 	for step: float in FILL_FROM:
 		fill += 1 if share >= step else 0
@@ -605,6 +619,8 @@ func state_of(o: Dictionary) -> Dictionary:
 		state["level"] = Game.level_of(o)
 		state["working"] = _at_work(o)
 		state["fill"] = store_fill(o)
+		if Game.building_type(str(o["id"])) == HARVESTING:
+			state["asleep"] = asleep(o)
 		if Game.under_construction(o):
 			state["stage"] = mini(int(Game.land.construction_progress(o) * BUILD_STAGES), BUILD_STAGES - 1)
 	return state

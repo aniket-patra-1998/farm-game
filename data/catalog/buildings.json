@@ -40,17 +40,8 @@
               "name": "Chicken Coop"
             },
             {
-              "capacity": 40,
-              "name": "Big Chicken Coop",
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10
-              }
-            },
-            {
               "capacity": 60,
-              "name": "Huge Chicken Coop",
+              "name": "Big Chicken Coop",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
@@ -59,7 +50,8 @@
             }
           ],
           "w": 2,
-          "h": 2
+          "h": 2,
+          "type": "harvesting"
         },
         {
           "id": "duck_pond",
@@ -83,24 +75,16 @@
               "name": "Duck Pond"
             },
             {
-              "capacity": 30,
+              "capacity": 40,
               "name": "Big Duck Pond",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
                 "boards": 10
               }
-            },
-            {
-              "capacity": 40,
-              "name": "Huge Duck Pond",
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10
-              }
             }
-          ]
+          ],
+          "type": "harvesting"
         },
         {
           "id": "cow_shed",
@@ -134,24 +118,16 @@
               "name": "Dairy Farm"
             },
             {
-              "capacity": 30,
+              "capacity": 40,
               "name": "Big Dairy Farm",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
                 "boards": 10
               }
-            },
-            {
-              "capacity": 40,
-              "name": "Huge Dairy Farm",
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10
-              }
             }
-          ]
+          ],
+          "type": "harvesting"
         },
         {
           "id": "sheep_pen",
@@ -178,24 +154,16 @@
               "name": "Sheep Pen"
             },
             {
-              "capacity": 30,
+              "capacity": 40,
               "name": "Big Sheep Pen",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
                 "boards": 10
               }
-            },
-            {
-              "capacity": 40,
-              "name": "Huge Sheep Pen",
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10
-              }
             }
-          ]
+          ],
+          "type": "harvesting"
         },
         {
           "id": "goat_pen",
@@ -216,24 +184,16 @@
               "name": "Goat Pen"
             },
             {
-              "capacity": 30,
+              "capacity": 40,
               "name": "Big Goat Pen",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
                 "boards": 10
               }
-            },
-            {
-              "capacity": 40,
-              "name": "Huge Goat Pen",
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10
-              }
             }
-          ]
+          ],
+          "type": "harvesting"
         },
         {
           "id": "rabbit_hutch",
@@ -254,24 +214,16 @@
               "name": "Rabbit Hutch"
             },
             {
-              "capacity": 30,
+              "capacity": 40,
               "name": "Big Rabbit Hutch",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
                 "boards": 10
               }
-            },
-            {
-              "capacity": 40,
-              "name": "Huge Rabbit Hutch",
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10
-              }
             }
-          ]
+          ],
+          "type": "harvesting"
         },
         {
           "id": "pig_pen",
@@ -301,10 +253,19 @@
           "sizes": [
             {
               "capacity": 30
+            },
+            {
+              "capacity": 40,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
             }
           ],
           "w": 3,
-          "h": 3
+          "h": 3,
+          "type": "harvesting"
         },
         {
           "id": "horse_stable",
@@ -340,36 +301,6 @@
               "capacity": 20
             },
             {
-              "capacity": 25,
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10,
-                "harnesses": 10,
-                "horseshoes": 10
-              }
-            },
-            {
-              "capacity": 30,
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10,
-                "harnesses": 10,
-                "horseshoes": 10
-              }
-            },
-            {
-              "capacity": 35,
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10,
-                "harnesses": 10,
-                "horseshoes": 10
-              }
-            },
-            {
               "capacity": 40,
               "materials": {
                 "bricks": 10,
@@ -379,7 +310,8 @@
                 "horseshoes": 10
               }
             }
-          ]
+          ],
+          "type": "harvesting"
         }
       ],
       "defaults": {
@@ -447,16 +379,6 @@
               "capacity": 20
             },
             {
-              "capacity": 30,
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10,
-                "bottles": 10,
-                "blankets": 10
-              }
-            },
-            {
               "capacity": 40,
               "materials": {
                 "bricks": 10,
@@ -466,7 +388,8 @@
                 "blankets": 10
               }
             }
-          ]
+          ],
+          "type": "harvesting"
         }
       ],
       "defaults": {
@@ -496,14 +419,6 @@
               "capacity": 20
             },
             {
-              "capacity": 30,
-              "materials": {
-                "bricks": 10,
-                "nails": 10,
-                "boards": 10
-              }
-            },
-            {
               "capacity": 40,
               "materials": {
                 "bricks": 10,
@@ -511,7 +426,8 @@
                 "boards": 10
               }
             }
-          ]
+          ],
+          "type": "harvesting"
         },
         {
           "id": "bloom_garden",
@@ -536,14 +452,6 @@
               "capacity": 20
             },
             {
-              "capacity": 30,
-              "materials": {
-                "flower_ties": 10,
-                "garden_edging": 10,
-                "trellises": 10
-              }
-            },
-            {
               "capacity": 40,
               "materials": {
                 "flower_ties": 10,
@@ -551,7 +459,8 @@
                 "trellises": 10
               }
             }
-          ]
+          ],
+          "type": "harvesting"
         }
       ],
       "defaults": {
@@ -587,8 +496,17 @@
           "sizes": [
             {
               "capacity": 200
+            },
+            {
+              "capacity": 300,
+              "materials": {
+                "bricks": 10,
+                "nails": 10,
+                "boards": 10
+              }
             }
-          ]
+          ],
+          "type": "harvesting"
         },
         {
           "id": "greenhouse",
@@ -652,7 +570,8 @@
               "recipe_stars": 32,
               "gems": 60
             }
-          ]
+          ],
+          "type": "crafting"
         },
         {
           "id": "winery",
@@ -693,7 +612,8 @@
               "recipe_stars": 32,
               "gems": 60
             }
-          ]
+          ],
+          "type": "crafting"
         },
         {
           "id": "spa",
@@ -734,7 +654,8 @@
               "recipe_stars": 32,
               "gems": 60
             }
-          ]
+          ],
+          "type": "crafting"
         },
         {
           "id": "juice_press",
@@ -785,7 +706,8 @@
               "recipe_stars": 32,
               "gems": 60
             }
-          ]
+          ],
+          "type": "crafting"
         }
       ],
       "defaults": {
@@ -856,7 +778,8 @@
                 "boards": 50
               }
             }
-          ]
+          ],
+          "type": "storing"
         },
         {
           "id": "garage",
@@ -881,7 +804,8 @@
             {
               "capacity": 20
             }
-          ]
+          ],
+          "type": "storing"
         },
         {
           "id": "garden_shed",
@@ -901,7 +825,8 @@
             {
               "capacity": 100
             }
-          ]
+          ],
+          "type": "storing"
         },
         {
           "id": "gopher_garden",
@@ -940,7 +865,8 @@
               "capacity": 20,
               "name": "Grand Gopher Garden"
             }
-          ]
+          ],
+          "type": "decor"
         },
         {
           "id": "dog_house",
@@ -980,7 +906,8 @@
               "capacity": 20,
               "name": "Grand Dog House"
             }
-          ]
+          ],
+          "type": "decor"
         },
         {
           "id": "storage_shed",

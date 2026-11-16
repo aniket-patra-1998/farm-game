@@ -20,6 +20,12 @@ const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 ## The features that are one building's own (`_signature`).
+const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
+const PANE := Color("#2c3a4a")    # a harvesting building's window: dark glass, by day and by night (nobody lights it)
+const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
+const ROUGH_MOUNDS := 7           # low humps in a rough yard's ground..
+const ROUGH_TUFTS := 8            # ..and tufts of straw lying on it
+const HIVE_BOX := Vector3(0.29, 0.18, 0.25)   # a beehive's box: half width, height and half depth, in tiles
 const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pump", "mobile"]
 ## Yard features' size (their radius in tiles, unless the data gives `r`).
 const FEATURE_R := {"rock": 0.3, "pool": 0.32, "wallow": 0.34, "carrots": 0.26, "fuel_pump": 0.18}
@@ -167,6 +173,17 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 					out.append(Rect2(lo.x, hi.y, bw, depth))
 				else:
 					out.append(Rect2(hi.x, lo.y, depth, bd))
+			"hay_bales" when f.has("at"):
+				var spot := yard_spot(f, fw, fd)
+				var half := Vector2(BALE.x * 2.0 + 0.04, BALE.z * 2.0) * float(f.get("scale", 1.0))
+				out.append(Rect2(spot - half, half * 2.0))
+			"rack" when f.has("at"):
+				var spot := yard_spot(f, fw, fd)
+				out.append(Rect2(spot.x - 0.28, spot.y - 0.16, 0.56, 0.32))
+			"hive":
+				var spot := yard_spot(f, fw, fd)
+				out.append(Rect2(spot.x - HIVE_BOX.x - 0.08, spot.y - HIVE_BOX.z - 0.06, HIVE_BOX.x * 2.0 + 0.16,
+					HIVE_BOX.z * 2.0 + 0.3))
 			"lean_to", "terrace", "barrels", "hay_bales":
 				out.append(Rect2(hi.x, lo.y, minf(0.5, fw - hi.x), bd))
 			"porch", "stall_doors":
@@ -228,7 +245,8 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 			lift = float(f.get("h", 0.2))
 	var wall_col := Color.html(str(it.get("color", "#c0392b")))
 	var ctx := {"root": root, "fw": fw, "fd": fd, "centre": centre, "bw": bw, "bd": bd, "bh": bh, "lift": lift,
-		"wall": wall_col, "spec": s, "it": it, "active": active, "fill": fill}
+		"wall": wall_col, "spec": s, "it": it, "active": active, "fill": fill,
+		"dark": str(it.get("type", "")) == HARVESTING}
 	# Yards go down first (they're on the ground, under everything).
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "yard":
@@ -248,6 +266,11 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 	ModelKit.roof_trim = ModelKit.RAKE_COLOUR
 	if broken and ctx.has("lo"):
 		_broken(ctx)
+	if ctx["dark"]:
+		# A harvesting building's animals sleep in it at night: a "zzz" rises over its roof then, and only then
+		# (Objects3D.asleep).
+		var peak: Vector3 = ctx.get("peak", Vector3(centre.x, float(ctx.get("top", bh)), centre.z))
+		DecorMotion.effect(BuildingDress.when(ctx, "asleep", true), "zzz", peak + Vector3(0.1, 0.12, 0.1))
 	if str(it.get("kind", "")) == "crafting":
 		# Nobody goes in and out of a crafting building: its door is part of the walls, not a thing on hinges.
 		for c in root.get_children():
@@ -605,7 +628,8 @@ static func _settle(ctx: Dictionary) -> void:
 	marker.set_meta(ModelKit.KEEP, true)
 	marker.set_meta(WINDOWS, ctx.get("window_at", []))
 	root.add_child(marker)
-	_light_spill(ctx)
+	if not ctx.get("dark", false):
+		_light_spill(ctx)
 	BuildingDress.ground(ctx)
 
 
@@ -815,7 +839,7 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame, z - size / 2 - frame),
 			Vector3(hi.x + FRAME_OUT, y + size / 2 + frame, z + size / 2 + frame), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - size / 2, z - size / 2), Vector3(hi.x + FRAME_OUT + 0.004,
-			y + size / 2, z + size / 2), ModelKit.glass())
+			y + size / 2, z + size / 2), ModelKit.paint(PANE, 0.5) if ctx.get("dark", false) else ModelKit.glass())
 		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - 0.011, z - size / 2), Vector3(hi.x + FRAME_OUT + 0.014,
 			y + 0.011,
 			z + size / 2), ModelKit.paint(trim), false)
@@ -1149,8 +1173,28 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 		"water_trough":
 			var x := minf(hi.x + 0.45, fw - 0.3)
 			var z := minf(hi.z + 0.35, fd - 0.2)
+			# (a harvesting building's trough holds painted water, which does not ripple: a draw less)
 			ModelKit.tub(root, Vector3(x - 0.2, 0, z - 0.07), Vector3(x + 0.2, 0.12, z + 0.07), 0.02,
-				ModelKit.surface(WOOD, "boards", 0.2), ModelKit.water())
+				ModelKit.surface(WOOD, "boards", 0.2), ModelKit.paint(Color("#3f9fd0"), 0.9) if ctx.get("dark", false)
+				else ModelKit.water())
+		"hay_bales" when f.has("at"):
+			# A couple of bales in the yard: one lying square, one turned and leaning on it, each tied with two
+			# bands of twine.
+			var spot := yard_spot(f, fw, fd)
+			for k in int(f.get("count", 2)):
+				var bale := Node3D.new()
+				var size := float(f.get("scale", 1.0))
+				bale.position = Vector3(spot.x + (k * 2 - 1) * (BALE.x + 0.015) * size, 0, spot.y + k * 0.03 * size)
+				bale.rotation.y = 0.0 if k == 0 else 0.5
+				bale.scale = Vector3.ONE * size
+				root.add_child(bale)
+				ModelKit.box(bale, Vector3(-BALE.x, 0, -BALE.z), Vector3(BALE.x, BALE.y, BALE.z),
+					ModelKit.paint(HAY.darkened(0.06 * k)))
+				for band: float in [-0.5, 0.5]:
+					ModelKit.box(bale, Vector3(band * BALE.x - 0.008, 0, -BALE.z - 0.004), Vector3(band * BALE.x + 0.008,
+						BALE.y + 0.004, BALE.z + 0.004), ModelKit.paint(HAY.darkened(0.35)), false)
+		"hive":
+			_hive(ctx, f)
 		"hay_bales":
 			var x := minf(hi.x + 0.3, fw - 0.25)
 			var z := clampf(lo.z + 0.2, 0.2, fd - 0.2)
@@ -1462,6 +1506,22 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 			else col.lightened(0.1), "plaster", 0.0), r * 0.85, 7)
 		patch.scale.x = 1.0 + rng.randf() * 0.4
 		patch.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if f.get("rough", false):
+		# Rough ground: low humps the hooves have left, and straw trodden into it.
+		for k in ROUGH_MOUNDS:
+			var p := Vector3(rng.randf_range(inset + 0.2, fw - inset - 0.2), 0.0, rng.randf_range(inset + 0.2,
+				fd - inset - 0.2))
+			var r := rng.randf_range(0.1, 0.2)
+			var hump := ModelKit.ball(root, p, r, ModelKit.surface(col.darkened(0.04 + 0.05 * (k % 3)), "plaster",
+				0.0), Vector3(1.0 + rng.randf() * 0.5, 0.22, 1.0))
+			hump.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for k in ROUGH_TUFTS:
+			var p := Vector3(rng.randf_range(inset + 0.15, fw - inset - 0.15), 0.012, rng.randf_range(inset + 0.15,
+				fd - inset - 0.15))
+			var wisp := ModelKit.box(root, Vector3(-0.07, 0, -0.006), Vector3(0.07, 0.008, 0.006),
+				ModelKit.paint(HAY.lightened(0.1)), false)
+			wisp.position = p
+			wisp.rotation.y = rng.randf() * PI
 	var fence := str(f.get("fence", "rail"))
 	var mat := ModelKit.paint(FENCE if fence == "picket" else RAIL)
 	var corners := [Vector3(inset, 0, inset), Vector3(fw - inset, 0, inset), Vector3(fw - inset, 0, fd - inset),
@@ -1491,6 +1551,55 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 					0.014), mat)
 		else:
 			_fence(root, a, b, fence, mat)
+
+
+## A beehive on its stand (the Beehive building, which has no walls of its own): a box hive of `tiers` storeys,
+## each a stack of two boxes in the building's colours with a landing board and its dark way in, the upper one
+## narrower over a little pent roof, and a pitched roof on top. The "zzz" of its sleeping bees rises from it.
+static func _hive(ctx: Dictionary, f: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
+	var spot := yard_spot(f, ctx["fw"], ctx["fd"])
+	var it: Dictionary = ctx["it"]
+	var roof_mat := ModelKit.paint(Color.html(str(it.get("roof", "#c98a1a"))))
+	var wood := ModelKit.surface(WOOD, "boards", 0.2)
+	var at := Vector3(spot.x, 0, spot.y)
+	# The stand: four legs and a deck.
+	for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+		var leg := at + Vector3(corner.x * (HIVE_BOX.x - 0.02), 0, corner.y * (HIVE_BOX.z - 0.02))
+		ModelKit.box(root, leg + Vector3(-0.025, 0, -0.025), leg + Vector3(0.025, 0.16, 0.025), wood)
+	ModelKit.box(root, at + Vector3(-HIVE_BOX.x - 0.03, 0.16, -HIVE_BOX.z - 0.03), at + Vector3(HIVE_BOX.x + 0.03,
+		0.2, HIVE_BOX.z + 0.1), wood)
+	var y := 0.2
+	var tiers := int(f.get("tiers", 1))
+	for tier in tiers:
+		var narrow := 1.0 if tier == 0 else 0.78
+		var half := Vector3(HIVE_BOX.x * narrow, HIVE_BOX.y, HIVE_BOX.z * narrow)
+		for box in 2:
+			var tint: Color = (ctx["wall"] as Color).lightened(0.25 if box == 0 else 0.0)
+			ModelKit.box(root, at + Vector3(-half.x, y, -half.z), at + Vector3(half.x, y + half.y - 0.012, half.z),
+				ModelKit.surface(tint, "boards", 0.2))
+			# (the lip where two boxes meet)
+			ModelKit.box(root, at + Vector3(-half.x - 0.012, y + half.y - 0.012, -half.z - 0.012), at + Vector3(
+				half.x + 0.012, y + half.y, half.z + 0.012), ModelKit.paint(Color("#f3eee2")))
+			if box == 0:
+				# The way in, on the front, over a landing board.
+				ModelKit.box(root, at + Vector3(-half.x * 0.5, y + 0.012, half.z), at + Vector3(half.x * 0.5, y + 0.04,
+					half.z + 0.004), ModelKit.paint(DARK), false)
+				ModelKit.box(root, at + Vector3(-half.x * 0.7, y - 0.004, half.z), at + Vector3(half.x * 0.7, y + 0.008,
+					half.z + 0.07), wood)
+			y += half.y
+		var lo := at + Vector3(-half.x, y, -half.z)
+		var hi := at + Vector3(half.x, y, half.z)
+		if tier < tiers - 1:
+			ModelKit.roof(root, "hip", lo, hi, SKIRT_PITCH * half.z, 0.03, roof_mat, roof_mat)   # (a pent ledge)
+			y += 0.035
+		else:
+			y = ModelKit.roof(root, "gable", lo, hi, half.z * 0.8, 0.07, roof_mat, roof_mat)
+		ctx["upper_lo"] = lo - Vector3(0, half.y * 2.0, 0)
+		ctx["upper_hi"] = hi
+	ctx["top"] = y
+	ctx["peak"] = Vector3(at.x, y, at.z)
+	BuildingDress.shade_pool(root, at, Vector2(HIVE_BOX.x * 2.0 + 0.5, HIVE_BOX.z * 2.0 + 0.5))
 
 
 ## A run of fence: posts, with two rails (rail) or pointed pickets (picket).

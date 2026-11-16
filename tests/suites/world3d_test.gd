@@ -48,7 +48,8 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 	var known := ["yard", "silo", "stilts", "ramp", "egg_chutes", "chimney", "cupola", "loft_door",
 		"stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
-		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag"]
+		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag",
+		"hive"]
 	known.append_array(BuildingModel.SIGNATURES)
 	known.append_array(BuildingDress.FEATURES)   # (the dressing's own: sacks, a windmill, an oven...)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))
@@ -90,13 +91,18 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 		door_meshes += _count_meshes(d)
 	var pools := baked.get_children().filter(func(n: Node) -> bool:
 		return n is MeshInstance3D and (n as MeshInstance3D).material_override == ModelKit.glow_material()).size()
-	_check(pools == 1, "with the pools of light at its door and its windows, drawn as one (%d)" % pools)
+	_eq(pools, 0, "a harvesting building's windows stay dark at night: no pools of light")
+	var lit := ModelKit.bake(BuildingModel.build(g.item_data("barn"), g.footprint("barn")))
+	_eq(lit.get_children().filter(func(n: Node) -> bool:
+		return n is MeshInstance3D and (n as MeshInstance3D).material_override == ModelKit.glow_material()).size(), 1,
+		"another building's pools of light at its door and its windows are drawn as one")
+	lit.free()
 	var shades := baked.get_children().filter(func(n: Node) -> bool:
 		var plane := n is MeshInstance3D and (n as MeshInstance3D).mesh is PlaneMesh
 		return plane and (n as MeshInstance3D).material_override != ModelKit.glow_material()).size()
 	_eq(shades, 1, "and the soft shade round its foot")
-	_check(_count_meshes(baked) - door_meshes - pools - shades <= 2, "and drawn as at most two meshes (%d)"
-		% _count_meshes(baked))
+	var body := baked.get_children().filter(func(n: Node) -> bool: return n is MeshInstance3D).size()
+	_check(body - pools - shades <= 2, "and drawn as at most two meshes (%d)" % body)
 	_check(doors.size() == 2 and door_meshes <= 4, "its barn doors kept whole on hinges, a draw or two each (%d)"
 		% door_meshes)
 	_eq(_count_vertices(baked), verts, "with every vertex kept")
@@ -645,12 +651,15 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	add_child(model)
 	_check(fill.residents.size() >= 2 and fill.residents.size() <= BuildingFill.SHOWN_BIGGEST,
 		"some of the yard's cows are out (%d)" % fill.residents.size())
-	var piled := _count_vertices(fill) - _residents_vertices(fill)
-	_check(piled > 0, "milk churns stand by the door as it nears ready")
-	dairy["t"] = Game.now() - Game.cycle_of(dairy) + 10
+	# What it has made stands on its own ready part (milk cans on a table: a look of the model, shown in place),
+	# so the yard piles nothing beside it.
+	_eq(Objects3D.store_fill(dairy), 2, "half way to ready, its ready part is half full")
+	dairy["t"] = Game.now() - Game.cycle_of(dairy) - 10
 	fill.refresh(dairy)
 	await get_tree().process_frame
-	_check(_count_vertices(fill) - _residents_vertices(fill) > piled, "more of them, nearer ready")
+	_eq(Objects3D.store_fill(dairy), BuildingDress.FULL, "and full when it is ready to collect")
+	_check(fill._produce == null, "the yard piles no produce of its own beside a building that shows it")
+	dairy["t"] = Game.now() - int(Game.cycle_of(dairy) / 2.0)
 	# Whoever lives in a home looks out of its windows, half full or full (when a head fits them: one too big for
 	# the windows doesn't squeeze in, and nobody looks out).
 	var fits := fill._windows.is_empty() or BuildingFill._file_head("cow", float(fill._windows[0]["size"])) != null

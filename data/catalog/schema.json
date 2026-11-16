@@ -398,6 +398,16 @@
           "type": "map",
           "ref": "Animal",
           "doc": "Nursery: baby id -> adult id."
+        },
+        "type": {
+          "type": "enum",
+          "values": [
+            "decor",
+            "crafting",
+            "harvesting",
+            "storing"
+          ],
+          "doc": "Which of the four types of building it is; each type has its rules for levels, moving parts and storage looks (CLAUDE.md)."
         }
       },
       "lifecycle": {

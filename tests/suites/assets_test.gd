@@ -278,3 +278,109 @@ func test_388_crafting_buildings_are_gltf_files_that_follow_the_art_rules() -> v
 	node.free()
 	built.free()
 	objects.free()
+
+
+func test_389_harvesting_buildings_follow_their_rules() -> void:
+	# A harvesting building (animals, bees, trees or blooms live in it and it is collected from) has two sizes:
+	# one storey, then two. The ones redesigned so far are glTF files like the crafting buildings, with a rough
+	# yard and a couple of hay bales, windows that stay dark, a ready part that fills as the collect timer runs,
+	# and a "zzz" that rises at night while the animals are in: then nobody is out in the yard or at a window.
+	var harvesting := 0
+	for id: String in Game.item_order:
+		if Game.building_type(id) == Objects3D.HARVESTING:
+			harvesting += 1
+			_eq(Game.max_level(id), 2, "%s has two sizes" % id)
+	_eq(harvesting, 12, "the twelve harvesting buildings")
+	var objects := Objects3D.new()
+	var shared: Array = [ModelKit.shade_material(), ModelKit.water()]
+	for id: String in ExportBuildings.HARVESTING:
+		var fp := Game.footprint(id)
+		_eq(Game.building_type(id), Objects3D.HARVESTING, "%s is a harvesting building" % id)
+		var tall: Array[float] = []
+		for level in [1, 2]:
+			var spec := BuildingModel.spec(id, level)
+			var path := AssetRegistry.file_of(AssetRegistry.entry(id), {"level": level})
+			_check(path.ends_with("_%d.glb" % level) and ResourceLoader.exists(path), "%s size %d has its own glTF file"
+				% [id, level])
+			var node := AssetRegistry.instance(id, {"level": level, "fill": BuildingDress.FULL, "asleep": true})
+			var wrong := 0
+			var lit := 0
+			var top := 0.0
+			for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
+				if DecorMotion.is_part(mi.get_parent()):
+					continue   # (the "zzz" the game started under its named part)
+				top = maxf(top, (Objects3D._local_to(node, mi) * mi.mesh.get_aabb()).end.y)
+				for k in mi.mesh.get_surface_count():
+					var mat := mi.get_active_material(k)
+					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
+					wrong += 0 if master or mat in shared else 1
+					lit += 1 if mat == ModelKit.glass() or mat == ModelKit.glow_material() else 0
+			tall.append(top)
+			_eq(wrong, 0, "%s size %d draws with the master shader and the kit's shared materials only" % [id, level])
+			_eq(lit, 0, "%s size %d: its windows stay dark at night (no lit glass, no pools of light)" % [id, level])
+			_check(AssetRegistry.draws(node) <= AssetRegistry.budget_of(id, "draws"),
+				"%s size %d: full and asleep, %d draws within %d" % [id, level, AssetRegistry.draws(node),
+				AssetRegistry.budget_of(id, "draws")])
+			# Its states are parts of the one model: the looks of its ready part, and its sleep.
+			for look in range(1, BuildingDress.FILLS):
+				var part := node.find_child("%sfill_%d" % [AssetRegistry.STATE, look], true, false) as Node3D
+				_check(part != null and part.visible == (look == BuildingDress.FULL), "%s size %d: ready look %d is a part"
+					% [id, level, look])
+			var sleep := node.find_child(AssetRegistry.STATE + "asleep_true", true, false) as Node3D
+			_check(sleep != null and sleep.visible, "%s size %d: asleep, its sleep part shows" % [id, level])
+			var zeds := 0
+			for c in (sleep.get_children() if sleep != null else []):
+				zeds += 1 if String(c.name).begins_with("zzz") and c.get_child_count() == 1 else 0
+			_eq(zeds, 1, "%s size %d: a zzz rises from it, one draw" % [id, level])
+			AssetRegistry.apply_state(node, {"level": level, "fill": 0, "asleep": false})
+			_check(sleep != null and not sleep.visible, "%s size %d: awake, no zzz" % [id, level])
+			node.free()
+			# A yard is rough ground with a couple of hay bales.
+			for f: Dictionary in spec["features"]:
+				if f["type"] == "yard":
+					_check(f.get("rough", false), "%s size %d: its yard is rough ground" % [id, level])
+					var bales := (spec["features"] as Array).filter(func(b: Dictionary) -> bool:
+						return b["type"] == "hay_bales")
+					_check(bales.size() == 1 and int(bales[0].get("count", 0)) == 2, "%s size %d: with a couple of hay bales"
+						% [id, level])
+		_check(tall[1] > tall[0] * 1.3, "%s: one storey, then two (%.2f, %.2f tall)" % [id, tall[0], tall[1]])
+		_check(AssetRegistry.has_site(id), "%s going up is made as files" % id)
+		_check(fp.x > 0, "%s has a footprint" % id)
+	# The ready part fills as the collect timer runs; night with someone in is sleep, and neither builds it again.
+	var dairy := {"uid": 9301, "id": "cow_shed", "row": 0, "col": 0, "level": 2, "built": true, "t": Game.now(),
+		"inside": {"cow": 6}}
+	var cycle := Game.cycle_of(dairy)
+	var key := objects._key(dairy)
+	for step: Array in [[0.0, 0], [0.3, 1], [0.6, 2], [1.01, BuildingDress.FULL]]:
+		dairy["t"] = Game.now() - int(cycle * float(step[0]))
+		_eq(objects.state_of(dairy)["fill"], step[1], "%d%% of the way to ready: ready look %d" % [int(float(step[0])
+			* 100.0), step[1]])
+		_eq(objects._key(dairy), key, "shown in place, not built again")
+	var was_night := AnimalBehaviour.night
+	AnimalBehaviour.night = false
+	_eq(objects.state_of(dairy)["asleep"], false, "by day nobody sleeps")
+	var node := AssetRegistry.instance("cow_shed", objects.state_of(dairy))
+	Objects3D.mark_parts(node)
+	var fill := BuildingFill.create(dairy, node)
+	node.add_child(fill)
+	add_child(node)
+	_check(fill._doors.size() == 2 and fill._windows.size() >= 2, "its file names its doors and windows (%d, %d)"
+		% [fill._doors.size(), fill._windows.size()])
+	_check(fill.residents.size() > 0 and fill.residents.all(func(a: Animal3D) -> bool: return a.visible),
+		"by day its cows are out in the yard")
+	_check(fill._produce == null, "and the yard piles no produce beside its ready part")
+	AnimalBehaviour.night = true
+	_eq(objects.state_of(dairy)["asleep"], true, "at night, with cows in, it is asleep")
+	_eq(objects._key(dairy), key, "night doesn't build it again")
+	fill.refresh(dairy)
+	_check(fill.residents.all(func(a: Animal3D) -> bool: return not a.visible), "at night no cow is out in the yard")
+	_check(fill._peekers == null or not fill._peekers.visible, "and none looks out of a window")
+	var empty := dairy.duplicate(true)
+	empty["inside"] = {}
+	_eq(objects.state_of(empty)["asleep"], false, "an empty building has nobody asleep in it: no zzz")
+	AnimalBehaviour.night = false
+	fill.refresh(dairy)
+	_check(fill.residents.all(func(a: Animal3D) -> bool: return a.visible), "in the morning they are back out")
+	AnimalBehaviour.night = was_night
+	node.queue_free()
+	objects.free()

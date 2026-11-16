@@ -572,6 +572,14 @@ func is_home(obj: Dictionary) -> bool:
 	return item_data(obj["id"]).get("kind", "") == "building"
 
 
+## Which of the four types of building `building_id` is: "decor", "crafting", "harvesting" (animals, bees, trees
+## or blooms live in it and it is collected from) or "storing"; "" for anything else. Each type has its rules
+## for levels and looks (CLAUDE.md).
+func building_type(building_id: String) -> String:
+	var d := catalog.get_def(building_id)
+	return (d as BuildingDef).type() if d is BuildingDef else ""
+
+
 ## Art id to draw for a placed object right now, by its lifecycle stage (see data/catalog/schema.json).
 ## Returns "" when there's no art for that stage yet, so the code drawing is used.
 func art_for(obj: Dictionary) -> String:

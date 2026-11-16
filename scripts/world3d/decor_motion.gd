@@ -16,7 +16,7 @@ const GRAIN_FALL := {"streams": 4, "per_stream": 6, "life": 0.42, "rise": 0.0, "
 const POUR := {"streams": 3, "per_stream": 6, "life": 0.36, "rise": 0.0, "gravity": 2.8, "reach": 0.012,
 	"size": 0.9, "colour": Color("#8e2f5a")}
 ## The effects a model's named part can ask for (a part named `smoke_2` smokes): docs/ASSETS.md §1.
-const EFFECTS := {"smoke": SMOKE, "steam": STEAM, "jet": JET, "pour": POUR, "grain": GRAIN_FALL}
+const EFFECTS := {"smoke": SMOKE, "steam": STEAM, "jet": JET, "pour": POUR, "grain": GRAIN_FALL, "zzz": ZZZ}
 const SPIN := "spin"     # a part that turns about its own upright (its name carries the speed)
 const PUFF_SIDES := 8               # a smoke puff's roundness
 const PUFF_RINGS := 4
@@ -54,6 +54,16 @@ const SMOKE := {"streams": 7, "per_stream": 1, "life": 3.2, "rise": 0.22, "gravi
 const STEAM := {"streams": 9, "per_stream": 1, "life": 2.6, "rise": 0.16, "gravity": -0.015, "reach": 0.22,
 	"size": 1.8, "end_size": 3.0, "colour": Color("#f4f6f7"), "sheen": 0.1, "round": true, "start_radius": 0.12}
 
+## Sleep rising from a building whose animals are in for the night: a letter Z after another, drifting up and
+## to one side and growing as it goes, lit by itself so it shows in the dark (`zed`: each is a Z, `heading`: the
+## one way they all drift, as a share of a turn).
+const ZZZ := {"streams": 1, "per_stream": 3, "life": 3.6, "rise": 0.2, "gravity": -0.01, "reach": 0.22,
+	"size": 1.5, "end_size": 2.4, "colour": Color("#eef4ff"), "sheen": 0.75, "grow_in": 0.18, "zed": true,
+	"heading": 0.875}
+const ZED_THICK := 0.3              # a Z's thickness, against half its height
+const ZED_BAR := 0.34               # ..and how thick its strokes are
+const SHAPES: Array[String] = ["streams", "per_stream", "round", "zed", "heading"]   # settings the mesh is built by
+
 static var _materials := {}         # settings -> ShaderMaterial (shared by every effect alike)
 
 
@@ -73,12 +83,16 @@ static func spray(parent: Node3D, at: Vector3, settings: Dictionary) -> MeshInst
 		# Each stream on its own heading round the circle and its own offset in time; its drops follow
 		# one another along it, evenly spaced, so the stream is never empty or bunched.
 		var angle := (k + rng.randf_range(-0.2, 0.2)) / streams
+		if settings.has("heading"):
+			angle = float(settings["heading"])
 		var offset := rng.randf()
 		var reach := rng.randf_range(0.7, 1.0)
 		for j in per:
 			var data := Vector2(fposmod(offset + float(j) / per, 1.0), angle)
 			if settings.get("round", false):
 				_puff(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
+			elif settings.get("zed", false):
+				_zed(verts, normals, uv, uv2, data, Vector2(reach, 1.0))
 			else:
 				_drop(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
 	var arrays := []
@@ -271,6 +285,41 @@ static func _puff(verts: PackedVector3Array, normals: PackedVector3Array, uv: Pa
 				uv2.append(data2)
 
 
+## A letter Z at the origin, standing upright and facing the camera (which looks along -x and -z): three
+## strokes, each a slab.
+static func _zed(verts: PackedVector3Array, normals: PackedVector3Array, uv: PackedVector2Array,
+		uv2: PackedVector2Array, data: Vector2, data2: Vector2) -> void:
+	var r := DROP_RADIUS * 1.6
+	var right := Vector3(1, 0, -1).normalized() * r
+	var up := Vector3(0, r, 0)
+	var out := Vector3(1, 0, 1).normalized() * r * ZED_THICK
+	var b := 1.0 - ZED_BAR
+	var strokes := [
+		[Vector2(-1, b), Vector2(1, b), Vector2(1, 1), Vector2(-1, 1)],
+		[Vector2(-1, -1), Vector2(1, -1), Vector2(1, -b), Vector2(-1, -b)],
+		[Vector2(-1, -b), Vector2(-1 + ZED_BAR * 1.6, -b), Vector2(1, b), Vector2(1 - ZED_BAR * 1.6, b)]]
+	for stroke: Array in strokes:
+		var front: Array[Vector3] = []
+		var back: Array[Vector3] = []
+		for p: Vector2 in stroke:
+			front.append(right * p.x + up * p.y + out)
+			back.append(right * p.x + up * p.y - out)
+		var quads := [[front[0], front[1], front[2], front[3], out], [back[1], back[0], back[3], back[2], -out]]
+		for k in 4:
+			var n := (front[k] + front[(k + 1) % 4]) / 2.0 - (front[0] + front[1] + front[2] + front[3]) / 4.0
+			quads.append([front[k], back[k], back[(k + 1) % 4], front[(k + 1) % 4], n])
+		for q: Array in quads:
+			var facing: Vector3 = (q[4] as Vector3).normalized()
+			for tri: Array in [[q[0], q[1], q[2]], [q[0], q[2], q[3]]]:
+				# Clockwise seen from outside (Godot's front faces: the cross product points inward).
+				var turned: bool = ((tri[1] - tri[0]) as Vector3).cross(tri[2] - tri[0]).dot(facing) > 0.0
+				for v: Vector3 in ([tri[0], tri[2], tri[1]] if turned else tri):
+					verts.append(v)
+					normals.append(facing)
+					uv.append(data)
+					uv2.append(data2)
+
+
 static func _on_sphere(theta: float, phi: float) -> Vector3:
 	return Vector3(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi))
 
@@ -281,7 +330,7 @@ static func _material(shader_path: String, settings: Dictionary) -> ShaderMateri
 		var m := ShaderMaterial.new()
 		m.shader = load(shader_path)
 		for k in settings:
-			if not k in ["streams", "per_stream", "round"]:
+			if not k in SHAPES:
 				m.set_shader_parameter(k, settings[k])
 		_materials[key] = m
 	return _materials[key]

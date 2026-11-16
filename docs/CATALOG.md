@@ -162,6 +162,7 @@ Holds animals, trees or vehicles; may be built from a frame and grown size by si
 | `home_of` | string |  |  | A finds family (data/finds.json) this building is the home of: its level follows how many have been found. |
 | `produces` | bool | true |  | false = never ready to collect (the Garage). |
 | `grows_into` | map → Animal |  |  | Nursery: baby id -> adult id. |
+| `type` | enum of decor, crafting, harvesting, storing |  |  | Which of the four types of building it is; each type has its rules for levels, moving parts and storage looks (CLAUDE.md). |
 
 ### Barn (extends Building)
 
@@ -911,14 +912,14 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 2x2 | 20 / 40 / 60 | animal | 2 |  | mystery_eggs |
-| ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  |  |
-| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  | calves |
-| ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  | lambs |
-| ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  |  |
-| ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 30 / 40 | animal | 2 |  |  |
-| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x3 | 30 | animal | 2 | frame | truffles |
-| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 3x3 | 20 / 25 / 30 / 35 / 40 | animal | 2 | frame | foals |
+| ✅ | Chicken Coop | `chicken_coop` | 4 | 5,000 | 2x2 | 20 / 60 | animal | 2 |  | mystery_eggs |
+| ✅ | Duck Pond | `duck_pond` | 5 | 4,000 | 3x3 | 20 / 40 | animal | 2 |  |  |
+| ✅ | Dairy Farm | `cow_shed` | 6 | 10,000 | 3x3 | 20 / 40 | animal | 2 |  | calves |
+| ✅ | Sheep Pen | `sheep_pen` | 7 | 6,000 | 3x3 | 20 / 40 | animal | 2 |  | lambs |
+| ✅ | Goat Pen | `goat_pen` | 9 | 6,000 | 3x3 | 20 / 40 | animal | 2 |  |  |
+| ✅ | Rabbit Hutch | `rabbit_hutch` | 8 | 4,000 | 2x2 | 20 / 40 | animal | 2 |  |  |
+| ✅ | Pig Pen | `pig_pen` | 16 | 5,000 | 3x3 | 30 / 40 | animal | 2 | frame | truffles |
+| ✅ | Horse Stable | `horse_stable` | 12 | 5,000 | 3x3 | 20 / 40 | animal | 2 | frame | foals |
 
 ### Nursery
 
@@ -928,7 +929,7 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 3x3 | 20 / 30 / 40 | animal | 2 | frame | nursery |
+| ✅ | Nursery Barn | `nursery_barn` | 8 | free | 3x3 | 20 / 40 | animal | 2 | frame | nursery |
 
 ### Orchards
 
@@ -938,8 +939,8 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Orchard | `orchard` | 8 | 6,000 | 3x3 | 20 / 30 / 40 | animal | 2 |  | saplings |
-| ✅ | Bloom Garden | `bloom_garden` | 10 | 5 | 3x3 | 20 / 30 / 40 | animal | 2 | frame | blooms |
+| ✅ | Orchard | `orchard` | 8 | 6,000 | 3x3 | 20 / 40 | animal | 2 |  | saplings |
+| ✅ | Bloom Garden | `bloom_garden` | 10 | 5 | 3x3 | 20 / 40 | animal | 2 | frame | blooms |
 
 ### Production
 
@@ -949,7 +950,7 @@ Shared: `tab` = "animal"
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Beehive | `beehive` | 3 | 5,000 | 2x2 | 200 | animal | 2 | frame | beehive |
+| ✅ | Beehive | `beehive` | 3 | 5,000 | 2x2 | 200 / 300 | animal | 2 | frame | beehive |
 | 🕓 | Greenhouse (breeds hybrid crop seeds) | `greenhouse` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Windmill (grinds grain into flour) | `windmill` | 1 |  |  |  |  |  |  |  |
 

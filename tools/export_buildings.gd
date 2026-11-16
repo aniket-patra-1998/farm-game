@@ -1,18 +1,25 @@
 class_name ExportBuildings
 extends Node
-## Exports the crafting buildings to glTF files (docs/ASSETS.md §1: art is made ahead of time as files, in the
-## interchange format, and asked for by name through AssetRegistry), from the code builder that authors them
+## Exports the buildings that follow the building rules (CLAUDE.md) to glTF files (docs/ASSETS.md §1: art is
+## made ahead of time as files, in the interchange format, and asked for by name through AssetRegistry), from
+## the code builder that authors them
 ## (BuildingModel, BuildingDress). Godot's importer then gives each its lower-detail levels and shadow mesh.
 ##   art/models/buildings/<id>_<level>.glb        the building at that level, a file for each level
 ##   art/models/buildings/<id>_site_<stage>.glb   the building going up, a file for each stage
 ## What a file holds: meshes with plain materials named for what they are (ModelKit.FILE_PAINT, FILE_WALL and
 ## the LIVE names; each part's colour and finish ride in its vertex colours), states as parts named
 ## `when_working_true`, `when_fill_2`..., and named parts with nothing in them where the game starts an effect
-## or turns something (`smoke_3`, `spin_55_2`: DecorMotion.start).
+## or turns something (`smoke_3`, `spin_55_2`, `zzz_4`: DecorMotion.start). A building animals live in also has
+## its doors as parts named `door_<n>` (`door_<n>_left` swings the other way) and a part named `window_<n>` at
+## each window a head can look out of, sized by its scale (Objects3D.mark_parts).
 ## Lists them in data/assets.json. Run: godot --headless --path . res://tools/export_buildings.tscn
 
 const BUILDINGS := "res://art/models/buildings/"
-const KINDS: Array[String] = ["crafting"]   # the kinds of building made as files so far
+const KINDS: Array[String] = ["crafting"]   # the kinds of building made as files so far..
+## ..and the harvesting buildings redesigned to the rules so far (the rest follow, a few at a time).
+const HARVESTING: Array[String] = ["chicken_coop", "cow_shed", "beehive"]
+
+const WINDOW := "window"   # not-ui (a part's name)
 
 static var _plain: Dictionary = {}   # the plain material written for each name
 
@@ -23,7 +30,7 @@ func _ready() -> void:
 	var assets: Dictionary = listed["assets"]
 	var n := 0
 	for id: String in Game.item_order:
-		if not str(Game.items[id].get("kind", "")) in KINDS:
+		if not exported(id):
 			continue
 		for level in range(1, Game.max_level(id) + 1):
 			_write(building(id, level), "%s%s_%d.glb" % [BUILDINGS, id, level])
@@ -41,10 +48,16 @@ func _ready() -> void:
 	get_tree().quit()
 
 
+## Whether building `id` is made as files.
+static func exported(id: String) -> bool:
+	return str(Game.items[id].get("kind", "")) in KINDS or id in HARVESTING
+
+
 ## Building `id` at `level` as its file holds it: every state, plain named materials, named parts left empty.
 static func building(id: String, level: int) -> Node3D:
 	var built := ModelKit.bake(BuildingModel.build(Game.item_data(id), Game.footprint(id), level, false))
 	built.name = "%s_%d" % [id, level]
+	_name_fill_parts(built)
 	return _filed(built)
 
 
@@ -54,6 +67,22 @@ static func site(id: String, stage: int) -> Node3D:
 		stage / float(Objects3D.BUILD_STAGES)))
 	built.name = "%s_site_%d" % [id, stage]
 	return _filed(built)
+
+
+## Names what the yard's life needs of a building (BuildingFill, through Objects3D.mark_parts): its doors, and a
+## part at each window.
+static func _name_fill_parts(built: Node3D) -> void:
+	for c in built.get_children():
+		if c.has_meta(BuildingModel.DOOR):
+			c.name = "door_%d%s" % [c.get_index(), "_left" if float(c.get_meta(BuildingModel.DOOR)) < 0.0 else ""]
+		if c.has_meta(BuildingModel.WINDOWS):
+			var spots: Array = c.get_meta(BuildingModel.WINDOWS)
+			for k in spots.size():
+				var part := Node3D.new()
+				part.name = "window_%d" % k
+				part.position = ((c as Node3D).transform * (spots[k]["at"] as Vector3))
+				part.scale = Vector3.ONE * (float(spots[k]["size"]) / Objects3D.WINDOW_SIZE)
+				built.add_child(part)
 
 
 static func _filed(built: Node3D) -> Node3D:
@@ -125,7 +154,8 @@ static func _for_file(n: Node) -> void:
 		_for_file(c)
 		# (a part with nothing in it and no name the game knows carries nothing: a marker only the builder reads)
 		if c.get_child_count() == 0 and not c is MeshInstance3D and not DecorMotion.is_part(c) \
-				and not String(c.name).begins_with(AssetRegistry.STATE):
+				and not String(c.name).begins_with(AssetRegistry.STATE) \
+				and not String(c.name).begins_with(WINDOW):
 			n.remove_child(c)
 			c.free()
 	if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:

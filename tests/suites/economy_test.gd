@@ -524,7 +524,7 @@ func test_69_art_manifest_is_complete() -> void:
 	)
 	_eq(
 		g.catalog.art_ids_of("chicken_coop"),
-		["chicken_coop_size1", "chicken_coop_size2", "chicken_coop_size3"],
+		["chicken_coop_size1", "chicken_coop_size2"],
 		"buildings: one per size"
 	)
 	_eq(g.catalog.art_ids_of("cow"), ["cow"], "animals: one look")

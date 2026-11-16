@@ -6140,7 +6140,7 @@
    "refs": [
     "refs/chicken_coop_size1.png"
    ],
-   "subject": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens. Size 1 of 3: the small starter size"
+   "subject": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens. Size 1 of 2: the small starter size"
   },
   {
    "id": "chicken_coop_size2",
@@ -6152,19 +6152,7 @@
    "refs": [
     "refs/chicken_coop_size2.png"
    ],
-   "subject": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "chicken_coop_size3",
-   "item": "chicken_coop",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 2,
-   "fill": 0.96,
-   "refs": [
-    "refs/chicken_coop_size3.png"
-   ],
-   "subject": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a small wooden chicken coop raised on short legs, with a ramp, nesting boxes, a red roof and a small wire-fenced run with a few white hens. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "duck_pond_size1",
@@ -6176,7 +6164,7 @@
    "refs": [
     "refs/duck_pond_size1.png"
    ],
-   "subject": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming. Size 1 of 3: the small starter size"
+   "subject": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming. Size 1 of 2: the small starter size"
   },
   {
    "id": "duck_pond_size2",
@@ -6188,19 +6176,7 @@
    "refs": [
     "refs/duck_pond_size2.png"
    ],
-   "subject": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "duck_pond_size3",
-   "item": "duck_pond",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/duck_pond_size3.png"
-   ],
-   "subject": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a round farm pond with a little wooden duck house on stilts at its edge, reeds and lily pads, a few white ducks swimming. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "cow_shed_size1",
@@ -6212,7 +6188,7 @@
    "refs": [
     "refs/cow_shed_size1.png"
    ],
-   "subject": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door. Size 1 of 3: the small starter size"
+   "subject": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door. Size 1 of 2: the small starter size"
   },
   {
    "id": "cow_shed_size2",
@@ -6224,19 +6200,7 @@
    "refs": [
     "refs/cow_shed_size2.png"
    ],
-   "subject": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "cow_shed_size3",
-   "item": "cow_shed",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/cow_shed_size3.png"
-   ],
-   "subject": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "sheep_pen_size1",
@@ -6248,7 +6212,7 @@
    "refs": [
     "refs/sheep_pen_size1.png"
    ],
-   "subject": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep. Size 1 of 3: the small starter size"
+   "subject": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep. Size 1 of 2: the small starter size"
   },
   {
    "id": "sheep_pen_size2",
@@ -6260,19 +6224,7 @@
    "refs": [
     "refs/sheep_pen_size2.png"
    ],
-   "subject": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "sheep_pen_size3",
-   "item": "sheep_pen",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/sheep_pen_size3.png"
-   ],
-   "subject": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "goat_pen_size1",
@@ -6284,7 +6236,7 @@
    "refs": [
     "refs/goat_pen_size1.png"
    ],
-   "subject": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats. Size 1 of 3: the small starter size"
+   "subject": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats. Size 1 of 2: the small starter size"
   },
   {
    "id": "goat_pen_size2",
@@ -6296,19 +6248,7 @@
    "refs": [
     "refs/goat_pen_size2.png"
    ],
-   "subject": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "goat_pen_size3",
-   "item": "goat_pen",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/goat_pen_size3.png"
-   ],
-   "subject": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "rabbit_hutch_size1",
@@ -6320,7 +6260,7 @@
    "refs": [
     "refs/rabbit_hutch_size1.png"
    ],
-   "subject": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it. Size 1 of 3: the small starter size"
+   "subject": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it. Size 1 of 2: the small starter size"
   },
   {
    "id": "rabbit_hutch_size2",
@@ -6332,19 +6272,7 @@
    "refs": [
     "refs/rabbit_hutch_size2.png"
    ],
-   "subject": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "rabbit_hutch_size3",
-   "item": "rabbit_hutch",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 2,
-   "fill": 0.96,
-   "refs": [
-    "refs/rabbit_hutch_size3.png"
-   ],
-   "subject": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a small wooden rabbit hutch on legs with a wire-mesh front, a little carrot patch beside it. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "pig_pen_size1",
@@ -6356,7 +6284,19 @@
    "refs": [
     "refs/pig_pen_size1.png"
    ],
-   "subject": "a fenced muddy pig yard with a lean-to wooden shed, a mud puddle and a feeding trough, a few pink pigs"
+   "subject": "a fenced muddy pig yard with a lean-to wooden shed, a mud puddle and a feeding trough, a few pink pigs. Size 1 of 2: the small starter size"
+  },
+  {
+   "id": "pig_pen_size2",
+   "item": "pig_pen",
+   "class": "Building",
+   "stage": "2",
+   "tiles": 3,
+   "fill": 0.96,
+   "refs": [
+    "refs/pig_pen_size2.png"
+   ],
+   "subject": "a fenced muddy pig yard with a lean-to wooden shed, a mud puddle and a feeding trough, a few pink pigs. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "horse_stable_size1",
@@ -6368,7 +6308,7 @@
    "refs": [
     "refs/horse_stable_size1.png"
    ],
-   "subject": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front. Size 1 of 5: the small starter size"
+   "subject": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front. Size 1 of 2: the small starter size"
   },
   {
    "id": "horse_stable_size2",
@@ -6380,43 +6320,7 @@
    "refs": [
     "refs/horse_stable_size2.png"
    ],
-   "subject": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front. Size 2 of 5: a bigger, grander version with more detail"
-  },
-  {
-   "id": "horse_stable_size3",
-   "item": "horse_stable",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/horse_stable_size3.png"
-   ],
-   "subject": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front. Size 3 of 5: the biggest, grandest version, with extra decoration and flourishes"
-  },
-  {
-   "id": "horse_stable_size4",
-   "item": "horse_stable",
-   "class": "Building",
-   "stage": "4",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/horse_stable_size4.png"
-   ],
-   "subject": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front. Size 4 of 5: an even larger deluxe version"
-  },
-  {
-   "id": "horse_stable_size5",
-   "item": "horse_stable",
-   "class": "Building",
-   "stage": "5",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/horse_stable_size5.png"
-   ],
-   "subject": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front. Size 5 of 5: the largest, most luxurious version"
+   "subject": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "nursery_barn_size1",
@@ -6428,7 +6332,7 @@
    "refs": [
     "refs/nursery_barn_size1.png"
    ],
-   "subject": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals. Size 1 of 3: the small starter size"
+   "subject": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals. Size 1 of 2: the small starter size"
   },
   {
    "id": "nursery_barn_size2",
@@ -6440,19 +6344,7 @@
    "refs": [
     "refs/nursery_barn_size2.png"
    ],
-   "subject": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "nursery_barn_size3",
-   "item": "nursery_barn",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/nursery_barn_size3.png"
-   ],
-   "subject": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a small pastel-yellow barn with a sage-green roof, a heart on its gable and a little fenced pen in front for baby animals. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "orchard_size1",
@@ -6464,7 +6356,7 @@
    "refs": [
     "refs/orchard_size1.png"
    ],
-   "subject": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket. Size 1 of 3: the small starter size"
+   "subject": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket. Size 1 of 2: the small starter size"
   },
   {
    "id": "orchard_size2",
@@ -6476,19 +6368,7 @@
    "refs": [
     "refs/orchard_size2.png"
    ],
-   "subject": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "orchard_size3",
-   "item": "orchard",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/orchard_size3.png"
-   ],
-   "subject": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a fenced square orchard field with neat rows of small fruit trees and a wooden gate with a fruit basket. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "bloom_garden_size1",
@@ -6500,7 +6380,7 @@
    "refs": [
     "refs/bloom_garden_size1.png"
    ],
-   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 1 of 3: the small starter size"
+   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 1 of 2: the small starter size"
   },
   {
    "id": "bloom_garden_size2",
@@ -6512,19 +6392,7 @@
    "refs": [
     "refs/bloom_garden_size2.png"
    ],
-   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 2 of 3: a bigger, grander version with more detail"
-  },
-  {
-   "id": "bloom_garden_size3",
-   "item": "bloom_garden",
-   "class": "Building",
-   "stage": "3",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/bloom_garden_size3.png"
-   ],
-   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 3 of 3: the biggest, grandest version, with extra decoration and flourishes"
+   "subject": "a fenced flower garden of neat raised beds full of blooming flowers, with a white trellis arch over the gate. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "beehive_size1",
@@ -6536,7 +6404,19 @@
    "refs": [
     "refs/beehive_size1.png"
    ],
-   "subject": "stacked white wooden beehive boxes on a small stand, surrounded by colourful flowers, bees buzzing around"
+   "subject": "stacked white wooden beehive boxes on a small stand, surrounded by colourful flowers, bees buzzing around. Size 1 of 2: the small starter size"
+  },
+  {
+   "id": "beehive_size2",
+   "item": "beehive",
+   "class": "Building",
+   "stage": "2",
+   "tiles": 2,
+   "fill": 0.96,
+   "refs": [
+    "refs/beehive_size2.png"
+   ],
+   "subject": "stacked white wooden beehive boxes on a small stand, surrounded by colourful flowers, bees buzzing around. Size 2 of 2: a bigger, grander version with more detail"
   },
   {
    "id": "bakery_size1",

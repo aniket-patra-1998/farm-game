@@ -81,6 +81,12 @@ func grows_with_finds() -> bool:
 	return str(data.get("home_of", "")) != ""
 
 
+## Which of the four types of building it is ("decor", "crafting", "harvesting", "storing"; "" when not said):
+## each type has its rules (CLAUDE.md).
+func type() -> String:
+	return str(data.get("type", ""))
+
+
 func holds() -> Array:
 	return data.get("holds", [])
 

@@ -226,11 +226,26 @@ buildings (Feed Mill, Bakery, Winery, Spa), and held by tests (`world3d_test` te
 - A maxed building has gold roof edges, a gold band and a gold star (still: only animated parts move).
 - The Spa is a round bathhouse under a dome (the tower body the mill uses, broad and low).
 
+Harvesting buildings (2026-11-17; rules in CLAUDE.md, held by `assets_test` test_389):
+
+- All twelve have two sizes now (the first and the last of what they had; the Pig Pen and the Beehive gained
+  a second), named "Big ..." at the second. A farm saved with a bigger size is brought down to the second.
+- A pilot of three is redesigned and shipped as glTF files: the Cow Shed (a red gambrel barn, milk cans on a
+  table), the Chicken Coop (on stilts, an egg stall) and the Beehive (one hive on a stand, honey pots; two
+  tiers at the second size). Each: rough yard with two hay bales, dark windows, a ready part with four looks,
+  and at night nobody out or at a window and a "zzz" over the roof (one draw, `DecorMotion.ZZZ`). Full and
+  asleep they are 7, 5 and 5 draws.
+- The other nine (Duck Pond, Sheep Pen, Goat Pen, Rabbit Hutch, Pig Pen, Horse Stable, Nursery Barn, Orchard,
+  Bloom Garden) follow the night rule already (it is in `BuildingFill` and the builder), but still wear their
+  old looks, built in code, with their old top look folded into level 2. They are to be redesigned and added
+  to `ExportBuildings.HARVESTING`.
+- Not checked on a phone: how the "zzz" reads at farm zoom.
+
 Open:
 
-- Decor (no upgrades, a yellow light at night), harvesting and storing buildings are not brought under the
-  rules yet; the other buildings still have the older shapes and are built in code. Each moves to glTF files,
-  as above, when its type is redesigned (CLAUDE.md).
+- Decor (no upgrades, a yellow light at night) and storing buildings are not brought under the rules yet; they
+  and the nine harvesting buildings above still have the older shapes and are built in code. Each moves to
+  glTF files, as above, when it is redesigned (CLAUDE.md).
 - The plants' files (trees, crops, blooms) are still Godot scenes with shaders of their own, not glTF with the
   master shader; `tools/asset_lint` and the per-type import scripts docs/ASSETS.md names do not exist yet.
 - The balance bot (30 days, three visits a day, 2026-11-16) reaches level 25, where crafting unlocks, on day 25

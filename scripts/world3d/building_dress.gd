@@ -36,6 +36,7 @@ const FULL := 3
 const CHUTE_LONG := 0.7       # a grain chute: how long its spout is..
 const CHUTE_TILT := 0.55       # ..how steeply it runs down (radians)..
 const CHUTE_HIGH := 0.42       # ..and how high its mouth is over the ground
+const TABLE := Vector3(0.22, 0.2, 0.11)   # a table of goods: half its length, its height and half its width
 const RACK_WIDE := 0.4
 const RACK_TALL := 0.52
 const GAUGE_WIDE := 0.11
@@ -225,7 +226,8 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 					w_hi.z + 0.022), gold)
 			var tip := Vector3((w_lo.x + w_hi.x) / 2.0 + float(f.get("shift", 0.0)), float(ctx.get("top", w_hi.y)),
 				(w_lo.z + w_hi.z) / 2.0)
-			ModelKit.cylinder(root, tip, 0.016, 0.16, gold, -1.0, 6)
+			var star_r := float(f.get("r", STAR_R))   # (a small building wears a smaller star)
+			ModelKit.cylinder(root, tip, 0.016, star_r * 0.67, gold, -1.0, 6)
 			var star := Node3D.new()
 			var points: Array[Vector3] = []
 			for k in 10:
@@ -236,7 +238,8 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				sides.append([points[k], points[(k + 1) % 10], Vector3(0, 0, STAR_THICK)])
 				sides.append([points[(k + 1) % 10], points[k], Vector3(0, 0, -STAR_THICK)])
 			ModelKit.faces(star, sides, Vector3.ZERO, gold)
-			star.position = tip + Vector3(0, 0.16 + STAR_R, 0)
+			star.scale = Vector3.ONE * (star_r / STAR_R)
+			star.position = tip + Vector3(0, star_r * 1.67, 0)
 			star.rotation.y = PI / 4.0   # (turned to the camera)
 			root.add_child(star)
 		"boiler":
@@ -330,6 +333,9 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			# crate more on the ground beside it.
 			var goods := str(f.get("goods", "loaves"))
 			var boards := ModelKit.surface(WOOD.lightened(0.25), "boards", 0.2)
+			if str(f.get("style", "stall")) == "table":
+				_table(ctx, at, goods, boards)
+				return true
 			for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
 				var leg := at + Vector3(corner.x * RACK_WIDE / 2.0, 0, corner.y * 0.08)
 				ModelKit.box(root, leg + Vector3(-0.015, 0, -0.015), leg + Vector3(0.015, RACK_TALL, 0.015), boards)
@@ -616,9 +622,40 @@ static func _keg(root: Node3D, at: Vector3) -> void:
 	ModelKit.cylinder(root, at + Vector3(0, 0.085, 0), 0.094, 0.03, ModelKit.paint(IRON), 0.092, 8)
 
 
-## One of the goods on a rack: a loaf, or a bottle.
+## A low table of goods by the building (a rack's other style): two a row, a row more as the building fills,
+## and one on the ground beside it when it is full.
+static func _table(ctx: Dictionary, at: Vector3, goods: String, boards: Material) -> void:
+	var root: Node3D = ctx["root"]
+	for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+		var leg := at + Vector3(corner.x * (TABLE.x - 0.025), 0, corner.y * (TABLE.z - 0.025))
+		ModelKit.box(root, leg + Vector3(-0.016, 0, -0.016), leg + Vector3(0.016, TABLE.y, 0.016), boards)
+	ModelKit.box(root, at + Vector3(-TABLE.x, TABLE.y, -TABLE.z), at + Vector3(TABLE.x, TABLE.y + 0.022, TABLE.z),
+		boards)
+	for row in 3:
+		for held in range(row + 1, FILLS):
+			for n in 2:
+				_good(when(ctx, "fill", held), at + Vector3((row - 1) * TABLE.x * 0.62, TABLE.y + 0.022,
+					(n - 0.5) * TABLE.z * 0.9), goods, n + row)
+	_good(when(ctx, "fill", FULL), at + Vector3(TABLE.x + 0.09, 0, TABLE.z * 0.4), goods, 1)
+
+
+## One of the goods on a rack: a loaf, a bottle, a tray of eggs, a milk can or a pot of honey.
 static func _good(root: Node3D, at: Vector3, kind: String, n: int) -> void:
-	if kind == "bottles":
+	if kind == "eggs":
+		# A straw tray with three eggs in it.
+		ModelKit.box(root, at + Vector3(-0.055, 0, -0.04), at + Vector3(0.055, 0.02, 0.04), ModelKit.paint(HAY))
+		for egg in 3:
+			bead(root, at + Vector3((egg - 1) * 0.036, 0.04, 0.0), 0.022, ModelKit.paint(
+				Color("#fbf3e0") if (egg + n) % 3 != 0 else Color("#d9a877")), Vector3(1.0, 1.3, 1.0))
+	elif kind == "cans":
+		var tin := ModelKit.paint(Color("#c5ccd1").darkened(0.06 * (n % 2)), 0.6)
+		ModelKit.cylinder(root, at, 0.05, 0.13, tin, 0.05, 8)
+		ModelKit.cylinder(root, at + Vector3(0, 0.13, 0), 0.05, 0.035, tin, 0.03, 8)
+		ModelKit.cylinder(root, at + Vector3(0, 0.165, 0), 0.036, 0.018, tin, 0.04, 8)
+	elif kind == "pots":
+		ModelKit.cylinder(root, at, 0.042, 0.085, ModelKit.paint(Color("#e9a11b"), 0.7), 0.05, 8)
+		ModelKit.cylinder(root, at + Vector3(0, 0.085, 0), 0.054, 0.022, ModelKit.paint(CREAM), 0.054, 8)
+	elif kind == "bottles":
 		var glass: Color = [Color("#3b9bb8"), Color("#e58fb0"), Color("#f3eee2")][n % 3]
 		ModelKit.cylinder(root, at, 0.035, 0.09, ModelKit.paint(glass), 0.03, 6)
 		bead(root, at + Vector3(0, 0.105, 0), 0.02, ModelKit.paint(DARK_WOOD))

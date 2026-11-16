@@ -32,7 +32,7 @@ targets, and Godot imports it natively. Our builders' Python never runs on a pho
 - Named parts the game needs: `door` / `door_left` (direct children of the root: they swing open on collect),
   `window_*` (where animals look out; the part's scale sizes the head), `yard`, `slot_*`.
 - Named parts that move (`DecorMotion.start`): a part named for an effect (`smoke_*`, `steam_*`, `jet_*`,
-  `pour_*`, `grain_*`: `DecorMotion.EFFECTS`) starts that effect where it stands; `spin_<speed>_*` turns about
+  `pour_*`, `grain_*`, `zzz_*`: `DecorMotion.EFFECTS`) starts that effect where it stands; `spin_<speed>_*` turns about
   its own upright (the speed in hundredths of a radian a second). The file holds the part and its name, never
   the effect.
 - States: a part named `when_<state>_<value>` shows only in that state (§10.4). States that come and go (ready,

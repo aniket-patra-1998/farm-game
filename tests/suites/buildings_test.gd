@@ -42,8 +42,9 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 	for m in GameState.basic_parts:
 		g.parts[m] = 10
 	_check(g.land.upgrade_building(uid), "expand with 10 bricks, nails and boards")
-	_eq(g.capacity(coop), 40, "Big Chicken Coop holds 40")
-	_eq(g.size_name(coop), "Big Chicken Coop", "named like FarmVille")
+	_eq(g.capacity(coop), 60, "Big Chicken Coop holds 60")
+	_eq(g.size_name(coop), "Big Chicken Coop", "its second size, and its last")
+	_check(not g.land.can_expand(coop), "a harvesting building has two sizes")
 	_eq(int(g.parts["bricks"]), 0, "materials used up")
 	_done(g)
 
@@ -277,10 +278,10 @@ func test_43_expansions_cost_materials_and_follow_farmville_sizes() -> void:
 	var sizes: Array[int] = [g.capacity(st)]
 	while g.land.upgrade_building(uid):
 		sizes.append(g.capacity(st))
-	_eq(sizes, [20, 25, 30, 35, 40] as Array[int], "stable grows 20 to 40 in steps of 5")
+	_eq(sizes, [20, 40] as Array[int], "a stable has two sizes: 20, then 40")
 	_check(not g.land.can_expand(st), "no expansion past full size")
 	_eq(g.cycle_of(st), 86400, "expanding doesn't change timing")
-	_eq(g.building_def("chicken_coop").capacities(), [20, 40, 60] as Array[int], "Chicken Coop, Big, Huge: 20, 40, 60")
+	_eq(g.building_def("chicken_coop").capacities(), [20, 60] as Array[int], "Chicken Coop, then Big: 20, 60")
 	_done(g)
 
 
