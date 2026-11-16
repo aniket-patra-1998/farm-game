@@ -35,11 +35,12 @@ STUDIO = ["scripts/ui/item_icons.gd", "scripts/ui/icon_develop.gd", "scripts/ui/
 SOURCES_OUT = "data/art_sources.json"
 # What each kind of exported art file is made from, and the exporter to run when any of it changes.
 SOURCES = {
-    "plants": (["scripts/world3d/tree_model.gd", "scripts/world3d/crop_models.gd", "scripts/world3d/crop_forms.gd",
+    "plants": (["scripts/world3d/tree_model.gd", "scripts/world3d/bloom_model.gd", "scripts/world3d/crop_models.gd",
+                "scripts/world3d/crop_forms.gd", "data/scale_guide.json", "data/catalog/blooms.json",
                 "scripts/world3d/mesh_builder.gd", "scripts/world3d/model_kit.gd", "scripts/world3d/crowding.gd",
                 "scripts/world3d/scale_guide.gd", "data/tree_shapes.json", "data/crop_forms.json",
                 "shaders/foliage3d.gdshader", "shaders/canopy3d.gdshader", "shaders/crop3d.gdshader",
-                "shaders/fruit3d.gdshader",
+                "shaders/fruit3d.gdshader", "shaders/bloom3d.gdshader",
                 "tools/export_plants.gd"],
                "godot --headless --path . res://tools/export_plants.tscn"),
     "animals": (["tools/animal_art/animal_art/**/*.py"],

@@ -21,10 +21,10 @@ uniform float roughness = 0.9;
 uniform float wrap = 0.6;          // how far light wraps round a petal or a leaf: they are thin and soft
 global uniform float crop_clock;   // seconds on the farm's clock (Crops3D)
 global uniform float wetness;      // 0..1: how wet everything is (SurfaceWeather)
-instance uniform float ripe_from = -1000000.0;
-instance uniform float ripe_len = 1.0;
-instance uniform float wilt_from = 1000000000.0;
-instance uniform float wilt_len = 1.0;
+uniform float ripe_from = -1000000.0;
+uniform float ripe_len = 1.0;
+uniform float wilt_from = 1000000000.0;
+uniform float wilt_len = 1.0;
 
 varying vec3 tint;     // the part's own colour
 varying float open;    // 0..1: how far this head has opened (1 for a stem or a leaf)

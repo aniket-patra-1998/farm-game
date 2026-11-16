@@ -196,12 +196,13 @@ static func _tube(flower: Node3D, h: float, bend: Vector3, r: float, parts: int)
 	ModelKit.mark_bloom(mi, NOT_A_HEAD)
 
 
-## A bloom on the farm, as its own baked model (`look`: the variant its small differences come from, or its uid).
-static func build(it: Dictionary, o: Dictionary, scale := 1.0, look := -1) -> Node3D:
+## A bloom on the farm, as its own baked model (`look`: the variant its small differences come from, or its uid;
+## `mask`: which sides have neighbours, or below 0 to ask where `o` stands).
+static func build(it: Dictionary, o: Dictionary, scale := 1.0, look := -1, mask := -1) -> Node3D:
 	var holder := Node3D.new()
 	var d := Game.catalog.get_def(str(it.get("id", ""))) as BloomDef
 	build_at(holder, Vector3(0.5, 0, 0.5), it, 1.6 * scale, d != null and d.is_full(),
-		look if look >= 0 else int(o.get("uid", 0)), Crowding.mask(o))
+		look if look >= 0 else int(o.get("uid", 0)), Crowding.mask(o) if mask < 0 else mask)
 	return ModelKit.bake(holder)
 
 

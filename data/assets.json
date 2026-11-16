@@ -9,6 +9,10 @@
       "triangles": 14000.0,
       "draws": 8.0
     },
+    "bloom": {
+      "triangles": 3500.0,
+      "draws": 2.0
+    },
     "crop": {
       "triangles": 10000.0,
       "draws": 5.0
@@ -714,6 +718,54 @@
     "farmer_b_ponytail": {
       "model": "res://art/models/farmer/farmer_b_ponytail.glb",
       "budget": "farmer"
+    },
+    "rose_bloom": {
+      "model": "res://art/models/blooms/rose_bloom.scn",
+      "budget": "bloom"
+    },
+    "rose_full_bloom": {
+      "model": "res://art/models/blooms/rose_full_bloom.scn",
+      "budget": "bloom"
+    },
+    "tulip_bloom": {
+      "model": "res://art/models/blooms/tulip_bloom.scn",
+      "budget": "bloom"
+    },
+    "tulip_full_bloom": {
+      "model": "res://art/models/blooms/tulip_full_bloom.scn",
+      "budget": "bloom"
+    },
+    "daisy_bloom": {
+      "model": "res://art/models/blooms/daisy_bloom.scn",
+      "budget": "bloom"
+    },
+    "daisy_full_bloom": {
+      "model": "res://art/models/blooms/daisy_full_bloom.scn",
+      "budget": "bloom"
+    },
+    "sunflower_bloom": {
+      "model": "res://art/models/blooms/sunflower_bloom.scn",
+      "budget": "bloom"
+    },
+    "sunflower_full_bloom": {
+      "model": "res://art/models/blooms/sunflower_full_bloom.scn",
+      "budget": "bloom"
+    },
+    "lily_bloom": {
+      "model": "res://art/models/blooms/lily_bloom.scn",
+      "budget": "bloom"
+    },
+    "lily_full_bloom": {
+      "model": "res://art/models/blooms/lily_full_bloom.scn",
+      "budget": "bloom"
+    },
+    "iris_bloom": {
+      "model": "res://art/models/blooms/iris_bloom.scn",
+      "budget": "bloom"
+    },
+    "iris_full_bloom": {
+      "model": "res://art/models/blooms/iris_full_bloom.scn",
+      "budget": "bloom"
     }
   }
 }

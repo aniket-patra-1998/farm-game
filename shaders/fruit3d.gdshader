@@ -17,8 +17,8 @@ uniform float span = 0.4;          // the part of the cycle one fruit takes to g
 uniform float small = 0.3;         // the size a fruit appears at, of its full size
 global uniform float crop_clock;   // seconds on the farm's clock (Crops3D), the same for everything that grows
 global uniform float wetness;      // 0..1: how wet everything is (SurfaceWeather)
-instance uniform float ripe_from = -1000000.0;
-instance uniform float ripe_len = 1.0;
+uniform float ripe_from = -1000000.0;
+uniform float ripe_len = 1.0;
 
 varying vec3 tint;     // the fruit's own colour (its shade of the kind's)
 varying float mine;    // 0..1: how far this fruit has grown

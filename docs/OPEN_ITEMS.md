@@ -166,8 +166,13 @@ Open:
   a Single Bloom left too long yellows, browns and bends over the last 40% of the time it may stand ready. One
   model per bloom, never rebuilt (`Objects3D.ripen`); a garden's blooms are planted once, smaller, as a bed. The
   Bloom Garden has a white picket fence and its arch from the first size.
-- Open: blooms are still built in code when first needed, not exported as files like trees and crops (the
-  project's rule for new art); petals shade but have no speckles (FarmVille's tiger lily); a Full Bloom of
+- Done: blooms are made ahead of time as files like trees (`art/models/blooms/<id>.scn`, four looks each,
+  `tools/export_plants`; `Objects3D.bloom_look`): a bloom on its own comes from its file, one crowded by
+  neighbours is still built once in code, as a tree is. Ripening and wilting times are a material's own, shared
+  by everything on the same cycle (`Objects3D.timed_material`), not per-instance shader values: the renderer
+  holds only 4,096 things with those, and CI's screenshot run on a full farm went over it.
+- Open: a Bloom Garden's blooms are still built in code, as an Orchard's trees are; petals shade but have no
+  speckles (FarmVille's tiger lily); a Full Bloom of
   sunflowers is 2,950 triangles (the heaviest; the test's limit is 3,100); the Bloom Garden's ground is plain soil, with no
   raised beds or paths between rows; only the six flowers the catalog has (FarmVille had dozens).
 
@@ -184,13 +189,14 @@ Open:
 - Done, pictures: every good and every produce is a small 3D model (`GoodsModel`): a good is its recipe's
   `shape` in the colours of what goes into it, produce its own shape; ItemIcons pictures them and the CI baker
   covers them.
-- Done, the menu (`HudCrafting`): three tabs. Make: the slots as tiles with a bar and the time left (kept up to
-  date; a craft that finishes with the panel open lands in Goods), every recipe as a card (picture, mastery,
-  price, time, fuel, XP, each ingredient as have of need, Make or the missing ingredients for gems), the next
-  star. Goods: each good with Sell and Use, and Sell all. Pantry: what is held, and the Farmers Market as cards.
+- Done, the menu (`HudCrafting`): three tabs, built from the menus' shared pieces (CardList cards, a strip that
+  tells about the card picked, `UiKit.count_row`, the panel's buttons). Make: the slots as cards with a bar and
+  the time left (kept up to date; a craft that finishes with the panel open lands in Goods), the recipe picked
+  (what it gives, each ingredient as have of need, Make or the missing ingredients for gems), every recipe as a
+  card (tap to pick), the next star. Goods: the goods as cards; the one picked is sold or used, and Sell all.
+  Pantry: what is held, and the Farmers Market as cards (a tap buys one).
 - Open: the new numbers (produce chance, markups, craft times) have not been run through the balance bot; the
   feed sacks differ only by colour; goods are only pictures (nothing shows on the building or flies to the
   shelf when a craft is done); the planned FarmVille recipes return with the crops exercise; sunflower blooms
-  give no produce (the crop already gives sunflowers); recipe cards are real controls, 15 a building (fine
-  here, not for hundreds).
+  give no produce (the crop already gives sunflowers); making a recipe is two taps (pick its card, then Make).
 

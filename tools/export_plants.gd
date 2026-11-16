@@ -1,28 +1,33 @@
 class_name ExportPlants
 extends Node
-## Exports every tree and crop look to files (docs/ASSETS.md: art is made ahead of time as files, asked for by
-## name through AssetRegistry), from the code builders that author them (TreeModel, CropModels/CropForms).
+## Exports every tree, bloom and crop look to files (docs/ASSETS.md: art is made ahead of time as files, asked
+## for by name through AssetRegistry), from the code builders that author them (TreeModel, BloomModel,
+## CropModels/CropForms).
 ## Scenes, not glTF: the leaves' and crops' own shaders (sway, growth) only survive in Godot's format.
 ##   art/models/trees/<id>.scn    a lone tree: parts when_look_<n> (n < TREE_LOOKS), the whole tree
+##   art/models/blooms/<id>.scn   a bloom on its own: parts when_look_<n> (n < BLOOM_LOOKS), the whole bloom
 ##   art/models/crops/<form>.scn  a crop form: one MeshInstance3D per stage, named after it
 ## Lists them in data/assets.json. Run: godot --headless --path . res://tools/export_plants.tscn
 
 const TREES := "res://art/models/trees/"
+const BLOOMS := "res://art/models/blooms/"
 const CROPS := "res://art/models/crops/"
 
 
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(TREES))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(BLOOMS))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(CROPS))
 	var listed: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetRegistry.DATA))
 	var assets: Dictionary = listed["assets"]
 	var n := 0
 	for id: String in Game.item_order:
-		if str(Game.items[id].get("kind", "")) != "tree":
+		var kind := str(Game.items[id].get("kind", ""))
+		if not kind in ["tree", "bloom"]:
 			continue
-		var path := TREES + id + ".scn"
-		_save(_tree(id), path)
-		assets[id] = {"model": path, "budget": "tree"}
+		var path := (TREES if kind == "tree" else BLOOMS) + id + ".scn"
+		_save(_tree(id) if kind == "tree" else _bloom(id), path)
+		assets[id] = {"model": path, "budget": kind}
 		n += 1
 	for form: String in crop_forms():
 		var path := CROPS + form + ".scn"
@@ -58,6 +63,20 @@ func _tree(id: String) -> Node3D:
 		var tree := Objects3D.tree_look(id, 0, look, false)
 		tree.name = "tree"   # not-ui
 		holder.add_child(tree)
+	return root
+
+
+func _bloom(id: String) -> Node3D:
+	var root := Node3D.new()
+	root.name = id
+	for look in Objects3D.BLOOM_LOOKS:
+		var holder := Node3D.new()
+		holder.name = "when_look_%d" % look
+		root.add_child(holder)
+		# (one model for its whole life, bud to withered: shaders/bloom3d.gdshader)
+		var bloom := Objects3D.bloom_look(id, 0, look, false)
+		bloom.name = "bloom"   # not-ui
+		holder.add_child(bloom)
 	return root
 
 

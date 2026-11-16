@@ -727,3 +727,46 @@ func test_367_each_bloom_is_its_own_flower_and_one_model_for_life() -> void:
 	Game.debug_time_offset = 0
 	Game.reset_game()
 
+
+## Ripening times are a material's own, shared, never per-instance shader values: the phones' renderer holds
+## only 4,096 things with those, and a full farm of trees and blooms has more (CI's log gate caught it).
+func test_375_ripening_times_are_shared_materials_not_per_instance_values() -> void:
+	var dir := DirAccess.open("res://shaders")
+	for file in dir.get_files():
+		if file.ends_with(".gdshader"):
+			_check(not FileAccess.get_file_as_string("res://shaders/" + file).contains("instance uniform"),
+				"%s has no per-instance value" % file)
+	var g := _farm()
+	var made: Array[Node3D] = []
+	for k in 3:
+		var holder := Node3D.new()
+		BloomModel.build_at(holder, Vector3.ZERO, g.item_data("rose_bloom"), 1.0, false, 3)
+		made.append(ModelKit.bake(holder))
+		add_child(made[k])
+	var base := Crops3D.clock_base
+	var before := Objects3D.drop_unused_timed()   # (what other things still standing are drawn with)
+	Objects3D.ripen(made[0], base + 100.0, 3600.0, base + 9000.0, 500.0)
+	Objects3D.ripen(made[1], base + 100.0, 3600.0, base + 9000.0, 500.0)
+	Objects3D.ripen(made[2], base + 700.0, 3600.0)
+	var mats: Array[ShaderMaterial] = []
+	for model in made:
+		var part := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+		mats.append(part.get_active_material(0) as ShaderMaterial)
+	_check(mats[0] == mats[1], "two blooms with the same cycle are drawn with one material")
+	_check(mats[0] != mats[2], "one on another cycle with another")
+	_eq(float(mats[0].get_shader_parameter("ripe_from")), 100.0, "which holds when its cycle began")
+	_eq(float(mats[0].get_shader_parameter("wilt_len")), 500.0, "and how long its wilting takes")
+	_eq(float(mats[2].get_shader_parameter("wilt_from")), Objects3D.NEVER, "one that never withers is told so")
+	_eq(mats[0].shader.resource_path, ModelKit.BLOOM_SHADER, "still the bloom's own shader")
+	# Harvested: its cycle starts over on a new material; the old one is forgotten once nothing is drawn with it.
+	Objects3D.ripen(made[0], base + 5000.0, 3600.0)
+	Objects3D.ripen(made[1], base + 5000.0, 3600.0)
+	var part0 := made[0].find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	_eq(float((part0.get_active_material(0) as ShaderMaterial).get_shader_parameter("ripe_from")), 5000.0,
+		"a new cycle is told to the same model")
+	mats.clear()
+	_eq(Objects3D.drop_unused_timed() - before, 2, "only the materials in use are kept: the two cycles standing")
+	for model in made:
+		model.queue_free()
+	_done(g)
+
