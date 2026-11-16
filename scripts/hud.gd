@@ -146,35 +146,20 @@ func _fit_safe_area() -> void:
 
 
 func _build_placing_bar(root: Control) -> void:
+	# The placing hint in floating words with Turn and Cancel as small round buttons beside it: no box.
 	_placing_bar = PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = CREAM
-	sb.border_color = WOOD_DARK
-	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(14)
-	sb.content_margin_left = 20
-	sb.content_margin_right = 10
-	sb.content_margin_top = 6
-	sb.content_margin_bottom = 6
-	_placing_bar.add_theme_stylebox_override("panel", sb)
+	_placing_bar.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	_placing_bar.add_child(row)
-	_placing_label = Label.new()
-	_placing_label.add_theme_color_override("font_color", INK)
+	_placing_label = FloatText.label("", 20)
 	_placing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_placing_label)
 	# A decoration being moved can be turned here (FarmVille's rotate, folded into Move).
-	_turn_button = Button.new()
-	_turn_button.text = tr("TURN")
-	_turn_button.custom_minimum_size = Vector2(110, 48)
-	_turn_button.focus_mode = Control.FOCUS_NONE
+	_turn_button = FloatText.action("turn", tr("TURN"))
 	_turn_button.pressed.connect(func() -> void: Game.rotate_object(_moving_uid()))
 	row.add_child(_turn_button)
-	var cancel := Button.new()
-	cancel.text = tr("CANCEL")
-	cancel.custom_minimum_size = Vector2(110, 48)
-	cancel.focus_mode = Control.FOCUS_NONE
+	var cancel := FloatText.action("cross", tr("CANCEL"))
 	cancel.pressed.connect(func() -> void: cancel_place_requested.emit())
 	row.add_child(cancel)
 	_placing_bar.visible = false
@@ -259,21 +244,7 @@ func zoom_view(factor: float) -> void:
 
 
 func _build_tutorial(root: Control) -> void:
-	_tutorial = Label.new()
-	_tutorial.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_tutorial.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tutorial.add_theme_color_override("font_color", INK)
-	_tutorial.add_theme_font_size_override("font_size", UiTheme.font(24))
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = SUN
-	sb.border_color = WOOD_DARK
-	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(14)
-	sb.content_margin_left = 24
-	sb.content_margin_right = 24
-	sb.content_margin_top = 10
-	sb.content_margin_bottom = 10
-	_tutorial.add_theme_stylebox_override("normal", sb)
+	_tutorial = FloatText.label("", 24, SUN)   # (the next step in floating words, sun-yellow: no box)
 	_top_holder(root, top_h() + 12).add_child(_tutorial)
 
 
@@ -299,20 +270,7 @@ func _top_holder(root: Control, y: float) -> CenterContainer:
 
 
 func _build_toast(root: Control) -> void:
-	_toast = Label.new()
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_toast.add_theme_color_override("font_color", INK)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = CREAM
-	sb.set_corner_radius_all(14)
-	sb.content_margin_left = 24
-	sb.content_margin_right = 24
-	sb.content_margin_top = 10
-	sb.content_margin_bottom = 10
-	sb.shadow_color = Color(0, 0, 0, 0.2)
-	sb.shadow_size = 4
-	_toast.add_theme_stylebox_override("normal", sb)
+	_toast = FloatText.label("", 22)   # (floating words, no box: FloatText)
 	_toast.modulate.a = 0.0
 	_toast_holder = _top_holder(root, top_h() + 16)
 	_toast_holder.add_child(_toast)
@@ -325,8 +283,8 @@ func show_message(text: String) -> void:
 	_toast.text = text
 	if _toast_tween:
 		_toast_tween.kill()
-	_toast.modulate.a = 1.0
 	_toast_tween = create_tween()
+	_toast_tween.tween_property(_toast, "modulate:a", 1.0, FloatText.RISE_TIME)
 	_toast_tween.tween_interval(1.8)
 	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
 

@@ -184,7 +184,7 @@ static func long_press_name(button: Button, words: String) -> void:
 		# Off for a moment: that drops the press under way, so letting go doesn't press it; on again next frame.
 		button.disabled = true
 		button.set_deferred("disabled", false)
-		name_bubble(button, words))
+		name_bubble(button, button.tooltip_text if button.tooltip_text != "" else words))
 
 
 ## A small name bubble over `control` that fades after a moment.

@@ -252,6 +252,18 @@ func _draw() -> void:
 		"cross":
 			_shape(_pts([-0.62, -0.42, -0.42, -0.62, 0.0, -0.2, 0.42, -0.62, 0.62, -0.42, 0.2, 0.0, 0.62, 0.42,
 				0.42, 0.62, 0.0, 0.2, -0.42, 0.62, -0.62, 0.42, -0.2, 0.0]), UiTheme.color("berry"), false)
+		"feed":   # a bowl heaped with grain (feed an animal or a home)
+			_shape(_pts([-0.85, -0.05, 0.85, -0.05, 0.6, 0.6, -0.6, 0.6]), UiTheme.color("wood_light"))
+			_shape(_ring(0, -0.12, 0.62, 0.45), UiTheme.color("sack"), false, false)
+			for k in 5:
+				_dot(_p(-0.4 + k * 0.2, -0.22 - absf(k - 2) * -0.04), 0.07, UiTheme.color("coin_edge"))
+		"up":   # an arrow up (expand, grow)
+			_shape(_pts([0.0, -0.9, 0.72, -0.05, 0.28, -0.05, 0.28, 0.85, -0.28, 0.85, -0.28, -0.05, -0.72, -0.05]),
+				UiTheme.color("plus_face"))
+		"turn":   # a curved arrow (turn a thing round)
+			draw_arc(_c, _r * 0.55, PI * 0.15, PI * 1.6, 20, UiTheme.color("icon_outline"), maxf(4.0, _s * 0.2), true)
+			draw_arc(_c, _r * 0.55, PI * 0.15, PI * 1.6, 20, UiTheme.color("gem"), maxf(2.0, _s * 0.11), true)
+			_shape(_pts([0.25, -0.05, 0.85, -0.05, 0.55, 0.45]), UiTheme.color("gem"))
 		"info":   # ⓘ: more words behind a tap (BookPanel.info)
 			_shape(_ring(0, 0, 0.85), UiTheme.color("sky_ink"))
 			_dot(_p(0, -0.42), 0.13, Color.WHITE)
