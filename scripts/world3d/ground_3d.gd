@@ -216,6 +216,12 @@ func _set_wind(v: float) -> void:
 
 
 func rebuild() -> void:
+	var pt := PerfReadout.start()
+	rebuild_timed()
+	PerfReadout.stop("ground_rebuild", pt)
+
+
+func rebuild_timed() -> void:
 	var n := Game.farm_size
 	if n != _size:
 		_size = n

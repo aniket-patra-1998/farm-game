@@ -14,10 +14,14 @@ const FONT_SIZE := 22
 const HITCH_MS := 25.0       # a frame this long (and well over the average) is a hitch, kept with what came before it
 const HITCH_OVER := 1.8      # ..and at least this many times the average frame
 const HITCHES_KEPT := 4      # the latest hitches listed under the numbers
+const TOP_PARTS := 4        # the timed parts a hitch lists
+const PART_SHOWN_US := 1000  # ..each when it took at least this long (µs)
 const AFTER_MS := 1500       # a hitch this soon after an action names it
 
 static var last_action := ""   # the latest thing the player did (Feedback.moment, a building opened), for hitches
 static var last_action_at := 0
+static var timing := false     # while the readout is on: the heavy parts of a frame time themselves (`start`/`stop`)
+static var _spans := {}        # part -> microseconds it took since the last frame was looked at
 
 static var _shown: PerfReadout
 
@@ -26,6 +30,17 @@ var _times := PackedFloat32Array()
 var _next := 0
 var _since := 0.0
 var _hitches: Array[String] = []
+
+
+## The start of a timed part (0 while nothing is measuring: no cost).
+static func start() -> int:
+	return Time.get_ticks_usec() if timing else 0
+
+
+## The end of timed part `part`, begun at `began`; a hitch lists the parts that took longest.
+static func stop(part: String, began: int) -> void:
+	if timing and began != 0:
+		_spans[part] = int(_spans.get(part, 0)) + Time.get_ticks_usec() - began
 
 
 ## Notes what the player just did, so a hitch right after it says so (called by Feedback.moment and the HUD).
@@ -72,6 +87,8 @@ func _ready() -> void:
 	_label.add_theme_color_override("font_color", Color.WHITE)
 	back.add_child(_label)
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
+	timing = true
+	tree_exiting.connect(func() -> void: timing = false)
 
 
 func _process(delta: float) -> void:
@@ -88,6 +105,8 @@ func _process(delta: float) -> void:
 ## A frame far over the average: what it cost where (scripts, the renderer on the processor, the graphics chip)
 ## and what the player did just before, listed and written to the log (user://logs) for measuring on a PC.
 func _watch_hitch(delta: float) -> void:
+	var parts := _spans
+	_spans = {}
 	var n := mini(_next, WINDOW)
 	if n < WINDOW / 2:
 		return
@@ -104,9 +123,21 @@ func _watch_hitch(delta: float) -> void:
 		Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
 		RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp),
 		(tr("PERF_HITCH_AFTER") % [since, last_action]) if since < AFTER_MS else ""]
+	line += _top_parts(parts)
 	print(line)   # not-ui (a measurement for the log)
 	_hitches.push_front(line)
 	_hitches.resize(mini(_hitches.size(), HITCHES_KEPT))
+
+
+## The parts that took longest since the frame before, longest first ("objects 3D sync 95.2").
+static func _top_parts(parts: Dictionary) -> String:
+	var names := parts.keys()
+	names.sort_custom(func(a: String, b: String) -> bool: return int(parts[a]) > int(parts[b]))
+	var out := PackedStringArray()
+	for part: String in names.slice(0, TOP_PARTS):
+		if int(parts[part]) >= PART_SHOWN_US:
+			out.append("%s %.1f" % [part, int(parts[part]) / 1000.0])
+	return ("\n    " + " · ".join(out)) if not out.is_empty() else ""
 
 
 ## The readout's text for the frames measured so far.

@@ -97,6 +97,12 @@ static func _shadow_setting() -> GeometryInstance3D.ShadowCastingSetting:
 
 
 func _process(_delta: float) -> void:
+	var pt := PerfReadout.start()
+	_process_timed(_delta)
+	PerfReadout.stop("crops_3d", pt)
+
+
+func _process_timed(_delta: float) -> void:
 	RenderingServer.global_shader_parameter_set(&"crop_clock", _now() - _base)  # every frame: see ShaderGlobals
 
 

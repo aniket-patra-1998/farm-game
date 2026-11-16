@@ -383,6 +383,12 @@ func _refresh_clock() -> void:
 
 
 func _refresh_book() -> void:
+	var pt := PerfReadout.start()
+	_refresh_book_timed()
+	PerfReadout.stop("hud_book_refresh", pt)
+
+
+func _refresh_book_timed() -> void:
 	if book.visible:
 		book.refresh()
 
@@ -412,6 +418,12 @@ func show_market() -> void:
 
 ## Opened when a building that isn't ready is tapped.
 func show_building(uid: int) -> void:
+	var pt := PerfReadout.start()
+	show_building_timed(uid)
+	PerfReadout.stop("open_building", pt)
+
+
+func show_building_timed(uid: int) -> void:
 	building_uid = uid
 	var o := Game.object_by_uid(uid)
 	PerfReadout.note(str(o.get("id", "")))   # (a building opened)
@@ -437,6 +449,12 @@ func open_full_panel(uid: int) -> void:
 ## The panel or sheet on screen shows things as they are now (a card picked, a sale): built again, once a frame.
 ## (A building's pages are built by the same builders whether they are in the sheet or a panel.)
 func refresh_panels() -> void:
+	var pt := PerfReadout.start()
+	refresh_panels_timed()
+	PerfReadout.stop("refresh_panels", pt)
+
+
+func refresh_panels_timed() -> void:
 	if book.visible:
 		book.refresh()
 	elif sheet != null and sheet.visible:
