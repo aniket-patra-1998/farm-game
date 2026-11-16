@@ -131,7 +131,23 @@ func fill_building(uid: int) -> int:
 	return moved
 
 
-## How many loose animals or trees on the farm this building would take.
+## How many loose ones on the farm Fill (`fill_building`) would move in now: those that match, while there is
+## room. A full home takes none, however many wait outside; one-each homes take one of each. Worked out on a copy
+## of the building, step by step as `fill_building` goes, so the button's number is the number that moves.
+func room_for_loose(building: Dictionary) -> int:
+	if building.is_empty() or not game.is_home(building) or game.under_construction(building):
+		return 0
+	var copy := building.duplicate(true)
+	var n := 0
+	for o in game.objects:
+		if can_move_in(building, o) and fit(copy, o["id"], {"uid": int(o["uid"])}) == Fit.FITS:
+			var inside: Dictionary = copy.get_or_add("inside", {})
+			inside[o["id"]] = 1 if game.is_one_each(copy, o["id"]) else int(inside.get(o["id"], 0)) + 1
+			n += 1
+	return n
+
+
+## How many loose animals or trees on the farm are of a kind this building houses (room or not).
 func loose_matching(building: Dictionary) -> int:
 	var n := 0
 	for o in game.objects:

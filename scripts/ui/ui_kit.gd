@@ -448,3 +448,22 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 	UiFx.press_bounce(b)
 	UiFx.pop_in(b)
 	return b
+
+
+## Keeps `card`, a panel floating free on the interface (not inside a container), exactly as big as what it holds,
+## whenever that changes, then calls `place` (if given) so a card kept to an edge of the screen puts itself back.
+## Godot only ever grows such a Control to its minimum size, never shrinks it: a card whose wrapped text was
+## first measured before it had a width (one word a line, very tall), or that once held more, would otherwise
+## stay that big for good, mostly empty, and pushed off the screen. Every free-floating card fits through this.
+static func keep_fitted(card: Control, place := Callable()) -> void:
+	var fit := func() -> void:
+		if not is_instance_valid(card):
+			return
+		card.set_meta(&"fitting", false)
+		card.size = Vector2.ZERO   # (a Control is never smaller than its minimum: this is the minimum)
+		if place.is_valid():
+			place.call()
+	card.minimum_size_changed.connect(func() -> void:
+		if not card.get_meta(&"fitting", false):   # (however many changes in a frame: fitted once, after them)
+			card.set_meta(&"fitting", true)
+			fit.call_deferred())

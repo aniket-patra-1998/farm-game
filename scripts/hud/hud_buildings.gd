@@ -68,9 +68,9 @@ func build_building(content: VBoxContainer) -> void:
 				hud.show_message(tr("COINS_XP") % [r["coins"], r["xp"]]))
 		actions.add_child(collect)
 	if o["id"] != "beehive":
-		var loose := Game.homes.loose_matching(o)
-		var fill := hud._panel_button(move_in_words(o, loose) if loose > 0 else tr("NONE_ON_FARM"))
-		fill.disabled = loose == 0
+		var room := Game.homes.room_for_loose(o)
+		var fill := hud._panel_button(fill_words(o, room))
+		fill.disabled = room == 0
 		fill.pressed.connect(func() -> void: Game.homes.fill_building(uid))
 		actions.add_child(fill)
 	content.add_child(actions)
@@ -78,6 +78,13 @@ func build_building(content: VBoxContainer) -> void:
 	hud.feed.add_feed_card(content, o)
 	add_building_special_info(content, o)
 	add_expansion_card(content, o, uid)
+
+
+## The fill button's words: how many would move in, else why none would (the home is full, or none are loose).
+static func fill_words(o: Dictionary, room: int) -> String:
+	if room > 0:
+		return move_in_words(o, room)
+	return TranslationServer.translate("FILL_FULL" if Game.homes.loose_matching(o) > 0 else "NONE_ON_FARM")
 
 
 ## The words on a home's fill button: "Add 10 animals" for an animal home, "Add 3" for one that holds vehicles,
