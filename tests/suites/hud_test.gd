@@ -650,7 +650,7 @@ func test_361_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 func test_362_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 	const ITEMS := 5000
 	const MOST_CARDS := 80       # cards that may exist at once, whatever the count
-	const OPEN_MS := 60.0        # budgets on a desktop CI runner (a phone is a few times slower)
+	const OPEN_MS := 20.0        # budgets on a desktop CI runner (a phone is a few times slower); about 2 ms now
 	const SCROLL_MS := 20.0
 	const REFRESH_MS := 10.0
 	var ids: Array[String] = []
@@ -668,13 +668,23 @@ func test_362_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 	var page := VBoxContainer.new()
 	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(page)
+	# (Only the list's own work is timed: making it, then laying out its first screen. The frames between are the
+	# engine's and the whole test scene's, not the list's, and timing them made the budget flaky.)
 	var started := Time.get_ticks_usec()
 	var list := CardList.make(ids, face, func(id: String) -> void: tapped.append(id), 1200.0,
 		func(_id: String) -> Texture2D: return picture)
 	page.add_child(list)
-	await get_tree().process_frame
-	await get_tree().process_frame
 	var open_ms := (Time.get_ticks_usec() - started) / 1000.0
+	await get_tree().process_frame
+	await get_tree().process_frame
+	for card: CardFace in list.shown():   # (the first screen again, from nothing, now the list has its size)
+		card.queue_free()
+	list._shown.clear()
+	list._spare.clear()
+	await get_tree().process_frame
+	started = Time.get_ticks_usec()
+	list._lay_out()
+	open_ms += (Time.get_ticks_usec() - started) / 1000.0
 	_check(list.get_child_count() <= MOST_CARDS and not list.shown().is_empty(),
 		"only the cards in view are made (%d of %d)" % [list.get_child_count(), ITEMS])
 	_check(list.custom_minimum_size.y > scroll.size.y * 10.0, "but the list is as tall as all its rows")
