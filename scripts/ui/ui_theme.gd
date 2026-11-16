@@ -9,6 +9,8 @@ const MIN_FONT := 14   # no text smaller than this many units..
 const MIN_FONT_DP := 14.0   # ..nor, on a phone, than this many dp (Android's density-independent pixels)
 const DATA := "res://data/ui_theme.json"
 
+const BOLD := preload("res://fonts/Poppins-Bold.ttf")   # not-ui
+
 static var _data := {}
 static var _scale := 0.0   # worked out once (and again after a resize: `rescale`)
 static var _least := MIN_FONT   # the smallest text on this screen (`min_font`), worked out with the scale
@@ -26,6 +28,12 @@ static func _load() -> void:
 
 
 ## A named colour (magenta, loudly, when the name is not in the data).
+## The game's bold face (Poppins Bold, fonts/: numbers, prices, names that lead, floating words); the regular text
+## is Poppins Medium, the project's own font (project.godot gui/theme/custom_font).
+static func bold() -> Font:
+	return BOLD
+
+
 static func color(key: String) -> Color:
 	_load()
 	var hex: Variant = (_data.get("colors", {}) as Dictionary).get(key)

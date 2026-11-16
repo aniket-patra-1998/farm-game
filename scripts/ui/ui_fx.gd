@@ -1,7 +1,7 @@
 class_name UiFx
 extends RefCounted
 ## The interface's life (our own touch, the plush feel of modern farm games): things press in and spring back,
-## cards pop in one after another as a panel opens, pictures catch a passing shine, and a panel swells open.
+## cards pop in one after another as a panel opens, and a panel swells open.
 ## Every motion is here, so the whole interface moves alike.
 
 const PRESS_SCALE := 0.92         # a pressed thing sinks to this size..
@@ -14,11 +14,9 @@ const POP_STAGGER := 0.035        # each next card starts this much later..
 const POP_MOST := 0.5             # ..but none later than this
 const OPEN_FROM := 0.9            # a panel swells open from this size
 const OPEN_TIME := 0.26
-const GLINT := preload("res://shaders/glint.gdshader")
 
 static var pop_next := false      # the panel being opened pops its cards in (not on every refresh)..
 static var popped := 0            # ..each a little after the last (set back to 0 as a panel opens)
-static var _glint: ShaderMaterial
 
 
 ## `control` sinks a little while pressed and springs back past its size when let go.
@@ -64,13 +62,6 @@ static func open(panel: Control) -> void:
 	t.tween_property(panel, "scale", Vector2.ONE, OPEN_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_property(panel, "modulate:a", 1.0, OPEN_TIME * 0.6)
 
-
-## The shared shine for item pictures (each sweeps at its own time).
-static func glint() -> ShaderMaterial:
-	if _glint == null:
-		_glint = ShaderMaterial.new()
-		_glint.shader = GLINT
-	return _glint
 
 
 static func _scale_to(control: Control, to: float, time: float, trans: Tween.TransitionType) -> void:

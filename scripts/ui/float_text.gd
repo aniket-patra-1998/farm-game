@@ -8,11 +8,8 @@ extends RefCounted
 const OUTLINE_SHARE := 0.28   # the outline's width against the text size
 const SHADOW := Color(0, 0, 0, 0.45)
 const SHADOW_DROP := 2        # px the shadow falls below the words
-const BOLD := 0.7             # how much bolder than the plain font (FontVariation's embolden)
 const RISE := 10.0            # px floating words rise as they come
 const RISE_TIME := 0.25       # seconds they take to rise and fade in
-
-static var _bold: FontVariation
 
 
 ## Gives `label` the floating look at `design_px` (UiTheme.font) in `colour` (white by default).
@@ -49,13 +46,9 @@ static func action(icon_kind: String, words: String, side := 0.0) -> Button:
 	return b
 
 
-## The plain font made bold, once.
-static func bold() -> FontVariation:
-	if _bold == null:
-		_bold = FontVariation.new()
-		_bold.base_font = ThemeDB.fallback_font
-		_bold.variation_embolden = BOLD
-	return _bold
+## The game's bold face (UiTheme.bold).
+static func bold() -> Font:
+	return UiTheme.bold()
 
 
 ## Floats `control` in: up from a little below where it ends and from clear to seen.

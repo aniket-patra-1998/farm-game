@@ -63,7 +63,7 @@ func _draw() -> void:
 		fill.set_corner_radius_all(maxi(radius - 3, 1))
 		draw_style_box(fill, Rect2(inner.position, Vector2(maxf(inner.size.x * ratio, inner.size.y), inner.size.y)))
 	if text != "" and showing_numbers():
-		var font := get_theme_default_font()
+		var font := UiTheme.bold()
 		var fs := int(UiTheme.size("font_xp"))
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		var at := Vector2(rect.position.x + (rect.size.x - w) / 2.0 - star_d * 0.2,
@@ -75,7 +75,7 @@ func _draw() -> void:
 	var pts := UiIcon.star_points(c + Vector2(0, 2), star_d * 0.52)
 	draw_colored_polygon(pts, UiTheme.color("star"))
 	draw_polyline(PackedVector2Array(Array(pts) + [pts[0]]), UiTheme.color("star_edge"), 3.0)
-	var font2 := get_theme_default_font()
+	var font2 := UiTheme.bold()
 	var fs2 := int(UiTheme.size("font_star"))
 	var label := str(level)
 	var lw := font2.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2).x

@@ -67,3 +67,7 @@ snow_cover={
 "type": "float",
 "value": 0.0
 }
+
+[gui]
+
+theme/custom_font="res://fonts/Poppins-Medium.ttf"
