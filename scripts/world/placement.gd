@@ -112,7 +112,7 @@ func _lay(line: Array, ok: Array) -> void:
 		return
 	if not grid.pieces.three_d:
 		Feedback.moment("place")
-	grid._float(grid.corners_of(last.x, last.y, 1, 1)[2], "-%d" % (laid * cost), "cost")
+	grid.float_words(grid.corners_of(last.x, last.y, 1, 1)[2], "-%d" % (laid * cost), "cost")
 	if laid < line.size():
 		grid.info.emit(tr("LAID_OF_THE_REST_WERE_BLOCKED") % [laid, line.size()])
 	cancel()
@@ -205,10 +205,10 @@ func input(event: InputEvent) -> void:
 		pos = d.position
 	else:
 		return
-	if not grid._on_farm_area(pos):
+	if not grid.on_farm_area(pos):
 		return
 	var fp := Game.footprint(state["item"])
-	var tile := grid._tile_at_screen(pos)
+	var tile := grid.tile_at_screen(pos)
 	if _lays_a_line():
 		_line_input(event, tile, released)
 		return
@@ -233,7 +233,7 @@ func input(event: InputEvent) -> void:
 			Feedback.moment("place")
 			if source.has("buy"):
 				var hfp := Game.footprint(home["id"])
-				grid._float(grid.corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
+				grid.float_words(grid.corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
 					"-%d" % int(Game.item_data(state["item"])["cost"]), "cost")
 			cancel()
 		else:
@@ -260,7 +260,7 @@ func input(event: InputEvent) -> void:
 		if uid != -1 or not grid.pieces.three_d:
 			Feedback.moment("place")
 		if uid == -1 and from_storage < 0:
-			grid._float(
+			grid.float_words(
 				grid.corners_of(row, col, fp.x, fp.y)[2],
 				"-%d" % int(Game.item_data(state["item"])["cost"]),
 				"cost"

@@ -35,11 +35,11 @@ func _head() -> Control:
 	var col := VBoxContainer.new()
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 14)
-	var all := hud._panel_button(tr("INBOX_ACCEPT_ALL"))
+	var all := hud.panel_button(tr("INBOX_ACCEPT_ALL"))
 	all.disabled = Game.social.inbox.is_empty()
 	all.pressed.connect(func() -> void:
 		Game.social.help_all()
-		hud._book.refresh())
+		hud.book.refresh())
 	all.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(all)
 	var left := BookPanel.text(tr("INBOX_HELPS_LEFT") % Game.social.helps_left(), 18, BookPanel.SOFT)
@@ -100,7 +100,7 @@ func line_for(item: Dictionary) -> Control:
 	words.add_theme_color_override("font_color", BookPanel.SOFT)
 	row.add_child(words)
 	var id := int(item["id"])
-	var button := hud._panel_button(tr(button_key(item)))
+	var button := hud.panel_button(tr(button_key(item)))
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.disabled = InboxItem.is_help(item) and Game.social.helps_left() <= 0
 	button.pressed.connect(func() -> void: _take(id, what == InboxItem.ITEM))
@@ -139,10 +139,10 @@ static func button_key(item: Dictionary) -> String:
 ## Claims item `id`; a thing to place goes from the Barn straight into the player's hand.
 func _take(id: int, place: bool) -> void:
 	if not Game.social.claim(id):
-		hud._book.refresh()
+		hud.book.refresh()
 		return
 	if place:
-		hud._book.close_panel()
+		hud.book.close_panel()
 		hud.place_stored_requested.emit(Game.storage.stored.size() - 1)
 	else:
-		hud._book.refresh()
+		hud.book.refresh()

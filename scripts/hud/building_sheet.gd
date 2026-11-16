@@ -278,15 +278,15 @@ func _number(row: HBoxContainer, icon_kind: String) -> Label:
 func _build_actions(gap: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", gap)
-	_collect = hud._panel_button(tr("COLLECT"))
+	_collect = hud.panel_button(tr("COLLECT"))
 	_collect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UiKit.primary(_collect)   # (the one main action: the accent, as every panel's)
 	_collect.pressed.connect(_on_main)
 	row.add_child(_collect)
-	_fill = hud._panel_button("")
+	_fill = hud.panel_button("")
 	_fill.pressed.connect(func() -> void: Game.homes.fill_building(_uid))
 	row.add_child(_fill)
-	_more = hud._panel_button(tr("SHEET_MORE"))
+	_more = hud.panel_button(tr("SHEET_MORE"))
 	_more.pressed.connect(_on_more)
 	row.add_child(_more)
 	return row

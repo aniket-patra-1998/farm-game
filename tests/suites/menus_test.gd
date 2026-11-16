@@ -19,7 +19,7 @@ var _raw_id := RegEx.create_from_string(RAW_ID)
 var _raw_key := RegEx.create_from_string(RAW_KEY)
 
 
-func test_368_every_menu_reads_whole_on_every_screen() -> void:
+func test_380_every_menu_reads_whole_on_every_screen() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.open_showcase()
@@ -28,7 +28,7 @@ func test_368_every_menu_reads_whole_on_every_screen() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
-	var book: BookPanel = hud.get("_book")
+	var book: BookPanel = hud.get("book")
 	for f in Game.feeds.feed_ids():
 		Game.feeds.add(f)   # (so feed cards have their buttons)
 	var window := get_tree().root
@@ -76,7 +76,7 @@ func test_369_every_building_opens_as_the_sheet() -> void:
 	add_child(main)
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
-	var book: BookPanel = hud.get("_book")
+	var book: BookPanel = hud.get("book")
 	var kinds := {}
 	var seen := {}
 	for o in Game.objects.duplicate():
@@ -164,14 +164,14 @@ func _settle() -> void:
 
 ## Every screen to sweep: [name, how to open it].
 func _screens(hud: FarmHud) -> Array:
-	var out: Array = [["Market", hud._show_market], ["Collections", hud._show_collections],
-		["Ribbons", hud._show_ribbons], ["Settings", hud._show_settings], ["Seeds", hud.show_seeds],
+	var out: Array = [["Market", hud.show_market], ["Collections", hud.show_collections],
+		["Ribbons", hud.show_ribbons], ["Settings", hud.show_settings], ["Seeds", hud.show_seeds],
 		["Inbox", hud.show_inbox],
-		["Fuel", func() -> void: hud._book.open_panel(tr("FUEL"), hud.buildings.build_fuel)]]
+		["Fuel", func() -> void: hud.book.open_panel(tr("FUEL"), hud.buildings.build_fuel)]]
 	for coll: Dictionary in Game.collectibles.collections:
 		var cid := str(coll["id"])
 		out.append(["Collection " + cid, func() -> void:
-			hud._book.open_panel(str(coll["name"]), func(c: VBoxContainer) -> void: hud.books.build_collection(c, cid))])
+			hud.book.open_panel(str(coll["name"]), func(c: VBoxContainer) -> void: hud.books.build_collection(c, cid))])
 	var seen := {}
 	for o in Game.objects:
 		var id := str(o["id"])

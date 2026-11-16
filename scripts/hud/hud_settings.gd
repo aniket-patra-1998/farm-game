@@ -72,7 +72,7 @@ func quality_card() -> PanelContainer:
 	for name: String in Quality.offered():
 		# Each level and, under it, what it does in a word (Battery, Balanced, Sharp, Finest).
 		var col := VBoxContainer.new()
-		var b := hud._panel_button(tr(QUALITY_WORDS[name]))
+		var b := hud.panel_button(tr(QUALITY_WORDS[name]))
 		b.toggle_mode = true
 		b.button_group = group
 		b.button_pressed = Quality.level() == name
@@ -115,8 +115,7 @@ func name_card() -> PanelContainer:
 	field.custom_minimum_size = Vector2(320, 48)
 	field.text_submitted.connect(func(_t: String) -> void: field.release_focus())
 	field.text_changed.connect(func(t: String) -> void:
-		Game.player.farm_name = t.strip_edges()
-		Game.queue_save()
+		Game.player.set_farm_name(t)
 		hud.top.show_name())
 	inner.add_child(field)
 	# Who the farmer is: a boy or a girl (the one chosen is marked; the farmer on the farm changes at once).
@@ -125,7 +124,7 @@ func name_card() -> PanelContainer:
 	row.add_theme_constant_override("separation", 12)
 	for kind: String in KIND_WORDS:
 		# A picture of each (a boy with short hair, a girl with long), the word only on a long press.
-		var b := hud._panel_button("")
+		var b := hud.panel_button("")
 		var face := Game.player.look.duplicate()
 		face["style"] = FARMER_STYLES[kind]
 		var pic := PortraitIcon.of(face, UiTheme.size("panel_icon"))
@@ -137,7 +136,7 @@ func name_card() -> PanelContainer:
 		b.button_pressed = str(Game.player.look["body"]) == kind
 		b.pressed.connect(func() -> void:
 			Game.player.set_kind(kind)
-			hud._book.refresh())
+			hud.book.refresh())
 		row.add_child(b)
 	inner.add_child(row)
 	# Where the farm is, for its seasons (guessed from the phone; the one in use is marked).
@@ -146,12 +145,12 @@ func name_card() -> PanelContainer:
 		var places := HBoxContainer.new()
 		places.add_theme_constant_override("separation", 12)
 		for region: String in Season.regions():
-			var b := hud._panel_button(tr(str(Season.data()["regions"][region]["name"])))
+			var b := hud.panel_button(tr(str(Season.data()["regions"][region]["name"])))
 			b.toggle_mode = true
 			b.button_pressed = Season.region() == region
 			b.pressed.connect(func() -> void:
 				Season.set_region(region)   # (the clock's line follows at its next tick; the lawn at the next start)
-				hud._book.refresh())
+				hud.book.refresh())
 			places.add_child(b)
 		inner.add_child(places)
 	return BookPanel.card_frame(inner)
@@ -170,10 +169,10 @@ func debug_card() -> PanelContainer:
 			["DEBUG_BEES", func() -> void: Game.debug_add_bees(20)],
 			["DEBUG_MATERIALS", func() -> void: Game.debug_add_materials(10)],
 			["DEBUG_LEVEL_UP", Game.debug_level_up], ["DEBUG_SKIP_H", func() -> void: Game.debug_skip(3600)]]:
-		var b := hud._panel_button(tr(str(entry[0])))
+		var b := hud.panel_button(tr(str(entry[0])))
 		b.pressed.connect(entry[1])
 		row.add_child(b)
-	var reset := hud._panel_button(tr("DEBUG_NEW_FARM"))
+	var reset := hud.panel_button(tr("DEBUG_NEW_FARM"))
 	reset.pressed.connect(func() -> void:
 		if reset.text == tr("TAP_AGAIN_TO_RESET"):
 			Game.reset_game()
@@ -197,7 +196,7 @@ func showcase_card() -> PanelContainer:
 	go.custom_minimum_size = Vector2(320, 56)
 	go.focus_mode = Control.FOCUS_NONE
 	go.pressed.connect(func() -> void:
-		hud._book.close_panel()
+		hud.book.close_panel()
 		if Game.in_showcase():
 			Game.open_own_farm()
 		else:

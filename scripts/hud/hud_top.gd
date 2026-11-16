@@ -40,12 +40,12 @@ func build(root: Control) -> void:
 	coins = UiKit.meter("coin", true)
 	coins.custom_minimum_size.x = UiTheme.size("coin_bar_width")
 	coins_label = coins.get_meta("value_label")
-	(coins.get_meta("plus_button") as Button).pressed.connect(hud._show_market)
+	(coins.get_meta("plus_button") as Button).pressed.connect(hud.show_market)
 	money.add_child(coins)
 	gems = UiKit.meter("gem", true)
 	gems.custom_minimum_size.x = UiTheme.size("gem_bar_width")
 	gems_label = gems.get_meta("value_label")
-	(gems.get_meta("plus_button") as Button).pressed.connect(hud._show_market)
+	(gems.get_meta("plus_button") as Button).pressed.connect(hud.show_market)
 	money.add_child(gems)
 
 	# The farm's name in the middle, and the time of day under it.

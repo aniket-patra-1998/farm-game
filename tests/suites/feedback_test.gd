@@ -9,7 +9,7 @@ func test_204_every_moment_and_float_style_the_game_asks_for_exists() -> void:
 	var moments := RegEx.create_from_string("Feedback\\.moment\\(\"([a-z_]+)\"")
 	var either := RegEx.create_from_string("Feedback\\.moment\\([^\\n]*?\"([a-z_]+)\" if [^\\n]*? else \"([a-z_]+)\"")
 	var styles := RegEx.create_from_string("Feedback\\.color\\(\"([a-z_]+)\"")
-	var floats := RegEx.create_from_string("_float\\([^\\n]*?, \"([a-z]+)\"[,)]")
+	var floats := RegEx.create_from_string("float_words\\([^\\n]*?, \"([a-z]+)\"[,)]")
 	var asked := {}
 	var styled := {}
 	for dir in SCAN_DIRS:
