@@ -89,8 +89,16 @@ func test_369_every_building_opens_as_the_sheet() -> void:
 		var area := sheet.get_parent_area_size()
 		_check(absf(sheet.size.y - sheet.get_combined_minimum_size().y) < 1.0 and sheet.size.y < area.y * 0.8,
 			"%s's sheet is as tall as what it says (%d of %d)" % [id, sheet.size.y, area.y])
-		var big: Button = sheet.get("_collect")
-		_check(big.visible and big.text.strip_edges() != "", "%s's sheet has its big button (%s)" % [id, big.text])
+		# Something to do on it, each saying what: the big button (Collect, Make, Open...), Add N, or More (a
+		# store that never pays, the Garage or the Shed, has no Collect: what is inside, Add N and More).
+		var doing := 0
+		for b: Button in [sheet.get("_collect"), sheet.get("_fill"), sheet.get("_more")]:
+			if b.visible:
+				doing += 1
+				_check(b.text.strip_edges() != "", "%s's sheet: a button with no words" % id)
+		_check(doing > 0, "%s's sheet has something to do" % id)
+		if BuildingSheet.kind_of(o) != BuildingSheet.Kind.HOME:
+			_check((sheet.get("_collect") as Button).visible, "%s's sheet has its big button" % id)
 		hud.open_full_panel(int(o["uid"]))
 		_check(book.visible and not sheet.visible, "%s's More opens its full panel" % id)
 		book.close_panel()
@@ -174,9 +182,9 @@ func _screens(hud: FarmHud) -> Array:
 
 ## Reads every visible thing under `root` for what a player would see broken; each problem once, in `bad`.
 func _sweep(root: Control, where: String, bad: Dictionary) -> void:
-	var page := root.get_global_rect()
 	if root is BookPanel:
-		page = (root.get("_panel") as Control).get_global_rect()
+		root = root.get("_panel") as Control   # (what it shows: not the full-screen frame that centres it)
+	var page := root.get_global_rect()
 	for c: Control in root.find_children("*", "Control", true, false):
 		if c.is_queued_for_deletion() or not c.is_visible_in_tree():
 			continue
