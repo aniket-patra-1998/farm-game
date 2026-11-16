@@ -45,7 +45,7 @@ func feed_slop(uid: int) -> bool:
 		return false
 	pen["forage_until"] = game.now() + Balance.i("pigpen.forage_seconds")
 	game.message.emit(tr("THE_PIGS_ARE_OUT_LOOKING_FOR"))
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 
@@ -60,7 +60,7 @@ func collect_truffles(uid: int) -> int:
 	game.ribbons.bump("truffles", dug)
 	game.message.emit(tr("YOUR_PIGS_FOUND_TRUFFLES") % dug)
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return dug
 
 

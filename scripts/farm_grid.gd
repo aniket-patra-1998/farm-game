@@ -146,6 +146,7 @@ func _ready() -> void:
 	Game.plot_changed.connect(pieces.on_plot)
 	Game.plot_changed.connect(func(_i: int) -> void: _ripe = -1)   # (the kept ripe count is made again when asked)
 	Game.objects_changed.connect(_on_objects_changed)
+	Game.object_changed.connect(_on_object_changed)
 	Game.farm_expanded.connect(func(_n: int) -> void:
 		ground.queue_redraw()
 		pieces.queue_sync())
@@ -189,6 +190,12 @@ func _on_objects_changed() -> void:
 	placement.refresh_homes()  # a home may have filled up, or gone
 	pieces.queue_sync()
 	shadows.queue_redraw()
+
+
+## One thing changed where it stands: its piece only (and a home being offered may have filled up).
+func _on_object_changed(uid: int) -> void:
+	placement.refresh_homes()
+	pieces.refresh_one(uid)
 
 
 

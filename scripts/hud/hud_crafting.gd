@@ -151,7 +151,7 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	inner.add_child(UiKit.count_row(need))   # each bushel: have of need, red while short
 	if r.makes_feed():
 		inner.add_child(BookPanel.text(
-			tr("RECIPE_MAKES_FEED") % [int(r.feed()["units"]), Game.feeds.feed_name(str(r.feed()["type"]), true)], 17,
+			tr("RECIPE_MAKES_FEED") % [int(r.feed()["units"]), Game.crafting.feed_product_name(r)], 17,
 			BookPanel.SUN))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 10)

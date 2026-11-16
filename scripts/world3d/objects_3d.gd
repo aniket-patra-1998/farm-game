@@ -72,6 +72,8 @@ var _ghost_tint := ""
 var _ghost_key := ""
 var _lifted := -1
 var _queued := false
+var _one_due := {}       # uid -> true: things changed in place, looked at alone at the end of the frame
+var _ready_of := {}      # uid -> whether it shows the ready sign, as last worked out (the signs of one thing redone)
 var _full := true        # the queued sync looks at everything (a change), not only what time changes
 var _ticks := 0
 
@@ -154,6 +156,78 @@ func queue_sync() -> void:
 
 
 
+## One thing changed where it stands (Game.object_changed): only it is looked at, at the end of the frame.
+func queue_one(uid: int) -> void:
+	if _one_due.is_empty():
+		_sync_some.call_deferred()
+	_one_due[uid] = true
+
+
+func _sync_some() -> void:
+	var uids := _one_due.keys()
+	_one_due.clear()
+	if _queued and _full:
+		return   # (the whole farm is being looked at this frame anyway)
+	var built := false
+	for uid: int in uids:
+		var o := Game.object_by_uid(uid)
+		if o.is_empty() or not handles(o):
+			continue
+		_ready_of.erase(uid)
+		if not _shown_in_place(o):
+			_rebuild(o)
+			built = true
+	_mark_ready(_ready_of)
+	if built:
+		_animals.clear()
+		for v in _views.values():
+			if v["node"] is Animal3D:
+				_animals.append(v["node"])
+
+
+## When `o` still looks as it is drawn (its key), shows what changed in place (ready, at work, who's in) and says
+## so; false when it must be built again.
+func _shown_in_place(o: Dictionary) -> bool:
+	var v: Dictionary = _views.get(int(o["uid"]), {})
+	if v.get("key", "") != _key(o):
+		return false
+	if v.has("crown") or v.has("blooms"):
+		_ripen_view(v, o)   # (a tree just harvested: its fruit starts over; nothing when its cycle is as it was)
+	if v.get("file", false):
+		AssetRegistry.apply_state(v["node"], state_of(o))   # (ready, at work... shown in place)
+	var fill := v.get("fill") as BuildingFill   # (kept with the view: finding it took a look through the node)
+	if fill != null and is_instance_valid(fill):
+		fill.refresh(o)  # who's in, how near ready: shown without rebuilding the building
+	return true
+
+
+## Builds `o`'s look again (or for the first time), and plays it dropping in or swelling up.
+func _rebuild(o: Dictionary) -> void:
+	var uid := int(o["uid"])
+	var v: Dictionary = _views.get(uid, {})
+	if v.has("node"):
+		(v["node"] as Node3D).queue_free()
+	var node := _build(o)
+	add_child(node)
+	if _unopened.has(uid):
+		node.visible = false   # (what a mystery is opening into: shown when it opens, _shake_open)
+	var fresh := not v.has("node")
+	var step := _step(o)
+	_views[uid] = {"node": node, "key": _key(o), "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
+		"file": uses_file(o)}
+	_views[uid]["fill"] = fill_of(uid)
+	if Game.catalog.get_def(str(o["id"])) is TreeDef:
+		_views[uid]["crown"] = _crown_of(_views[uid]["box"])
+		_ripen_view(_views[uid], o)
+	elif Game.catalog.get_def(str(o["id"])) is BloomDef:
+		_views[uid]["blooms"] = true
+		_ripen_view(_views[uid], o)
+	if not fresh and _synced_once and step > int(v.get("step", step)):
+		grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
+	if fresh and _synced_once and not _unopened.has(uid):
+		drop_in(uid)  # newly bought or placed: it drops onto the farm
+
+
 func sync() -> void:
 	_queued = false
 	var light := not _full   # a timer tick: only what time changes
@@ -180,43 +254,14 @@ func sync() -> void:
 		seen[uid] = true
 		if light and _views.has(uid) and not timed(o):
 			continue
-		var key := _key(o)
-		var v: Dictionary = _views.get(uid, {})
-		if v.get("key", "") == key:
-			if v.has("crown") or v.has("blooms"):
-				_ripen_view(v, o)   # (a tree just harvested: its fruit starts over; nothing when its cycle is as it was)
-			if v.get("file", false):
-				AssetRegistry.apply_state(v["node"], state_of(o))   # (ready, at work... shown in place)
-			var fill := v.get("fill") as BuildingFill   # (kept with the view: finding it took a look through the node)
-			if fill != null and is_instance_valid(fill):
-				fill.refresh(o)  # who's in, how near ready: shown without rebuilding the building
+		if _shown_in_place(o):
 			continue
 		if spent > BUILD_BUDGET_MS * 1000:
 			left += 1          # out of time this frame: built on the next
 			continue
 		built += 1
 		var build_began := Time.get_ticks_usec()
-		if v.has("node"):
-			(v["node"] as Node3D).queue_free()
-		var node := _build(o)
-		add_child(node)
-		if _unopened.has(uid):
-			node.visible = false   # (what a mystery is opening into: shown when it opens, _shake_open)
-		var fresh := not v.has("node")
-		var step := _step(o)
-		_views[uid] = {"node": node, "key": key, "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
-			"file": uses_file(o)}
-		_views[uid]["fill"] = fill_of(uid)
-		if Game.catalog.get_def(str(o["id"])) is TreeDef:
-			_views[uid]["crown"] = _crown_of(_views[uid]["box"])
-			_ripen_view(_views[uid], o)
-		elif Game.catalog.get_def(str(o["id"])) is BloomDef:
-			_views[uid]["blooms"] = true
-			_ripen_view(_views[uid], o)
-		if not fresh and _synced_once and step > int(v.get("step", step)):
-			grow_in(uid, int(v.get("step", step)) == 0)  # upgraded or finished: it swells in with a flourish
-		if fresh and _synced_once and not _unopened.has(uid):
-			drop_in(uid)  # newly bought or placed: it drops onto the farm
+		_rebuild(o)
 		spent += Time.get_ticks_usec() - build_began
 	for uid in _views.keys():
 		if not seen.has(uid):
@@ -255,6 +300,7 @@ func _mark_ready(known := {}) -> void:
 		# (`known`: what a timer's look has just found, thing by thing, so nothing is asked twice)
 		var ready: bool = known[uid] if known.has(uid) else \
 			Game.has_ready(o)
+		_ready_of[uid] = ready
 		if ready:
 			var node: Node3D = _views[uid]["node"]
 			if node is Animal3D:

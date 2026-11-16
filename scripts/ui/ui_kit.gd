@@ -467,3 +467,13 @@ static func keep_fitted(card: Control, place := Callable()) -> void:
 		if not card.get_meta(&"fitting", false):   # (however many changes in a frame: fitted once, after them)
 			card.set_meta(&"fitting", true)
 			fit.call_deferred())
+
+
+## Puts `c` in the middle of its parent and has it grow from there, both ways. A Control is centred by its size at
+## the moment it is anchored, and one not yet in a tree has none (its `custom_minimum_size` comes later): left to
+## grow the default way, its corner sits at the middle and it spills down and right. Centre things with this.
+static func centered(c: Control) -> Control:
+	c.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	c.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	c.grow_vertical = Control.GROW_DIRECTION_BOTH
+	return c

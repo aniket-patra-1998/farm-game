@@ -36,9 +36,7 @@ func _build(farm_name: String) -> void:
 	back.mouse_filter = Control.MOUSE_FILTER_STOP   # (no taps reach the farm under it)
 	add_child(back)
 	var col := VBoxContainer.new()
-	col.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	col.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	col.grow_vertical = Control.GROW_DIRECTION_BOTH
+	UiKit.centered(col)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	back.add_child(col)
 	col.add_child(UiIcon.make("barn", UiTheme.size("loading_icon")))

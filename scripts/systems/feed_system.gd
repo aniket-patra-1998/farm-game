@@ -280,7 +280,7 @@ func feed(uid: int, feed_id: String, effect: String, rich := false) -> Dictionar
 	obj[FED] = {"effect": effect, "power": p, "t": int(obj["t"])}
 	game.ribbons.bump("fed", 1)
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return {"feed": feed_id, "effect": effect, "power": p, "units": units, "rich": rich}
 
 

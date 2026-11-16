@@ -75,7 +75,7 @@ func add_queen(uid: int, buy := false) -> bool:
 	hive["queen"] = true
 	game.message.emit(tr("THE_QUEEN_BEE_MOVED_IN_WORKER"))
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 

@@ -2040,3 +2040,51 @@ func test_357_only_the_plots_under_what_moved_are_laid_again() -> void:
 	_check(Game.tiles_revision > tiles, "and the ground's followers know")
 	Game.plot_changed.disconnect(listen)
 	Game.reset_game()
+
+
+## A thing that changes where it stands (fed, collected, grown ready) is told alone (Game.object_changed): the 3D
+## world looks at it only and shows the change, the ground isn't redone; a move is still the whole farm's change.
+func test_367_a_thing_changed_in_place_is_looked_at_alone() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.objects.clear()
+	var cow := {"uid": 9101, "id": "cow", "row": 5, "col": 5, "t": Game.now()}
+	Game.objects.append(cow)
+	Game.rebuild_occupancy()
+	Game.objects_updated()   # (the farm as set up, told: what stands where is known)
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var world: Farm3D = main.get("world_3d")
+	_check(world != null, "the farm is drawn in 3D")
+	if world == null:
+		main.free()
+		return
+	var whole := [0]
+	var one: Array[int] = []
+	var count_whole := func() -> void: whole[0] += 1
+	var count_one := func(uid: int) -> void: one.append(uid)
+	Game.objects_changed.connect(count_whole)
+	Game.object_changed.connect(count_one)
+	var before := world.objects.ready_shown
+	cow["t"] = Game.now() - int(Game.item_data("cow").get("cycle_seconds", 86400)) - 10   # (ready now)
+	Game.objects_updated(9101)
+	_eq(one, [9101] as Array[int], "the change is told for the cow alone")
+	_eq(whole[0], 0, "and not as a change to the whole farm")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(world.objects.ready_shown == before + 1, "the cow wears its ready sign at once")
+	Game.hold_updates()
+	Game.objects_updated(9101)
+	Game.objects_updated(9101)
+	Game.release_updates()
+	_eq(one.size(), 2, "changes held in a batch are told once a thing")
+	_check(Game.move_object(9101, 7, 7), "the cow moves")
+	_eq(whole[0], 1, "a move is the whole farm's change (what stands where changed)")
+	Game.objects_updated(424242)
+	_eq(whole[0], 2, "a thing not on the farm is told as a whole change, never lost")
+	Game.objects_changed.disconnect(count_whole)
+	Game.object_changed.disconnect(count_one)
+	main.free()
+	Game.reset_game()

@@ -114,6 +114,7 @@ func _ready() -> void:
 	Game.collections_changed.connect(_refresh_book)
 	Game.ribbons_changed.connect(_refresh_book)
 	Game.objects_changed.connect(_refresh_book)
+	Game.object_changed.connect(func(_uid: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.gems_changed.connect(func(_g: int) -> void: _refresh())
@@ -425,17 +426,12 @@ func show_building(uid: int) -> void:
 		_book.open_panel(Game.item_data(o["id"])["name"], barn.build_young)
 	elif Game.kind_of(o) == "bloom":
 		_book.open_panel(Game.item_data(o["id"])["name"], barn.build_bloom)
-	elif o["id"] == "barn":
-		_book.open_panel(tr("BARN"), barn.build_barn)
 	elif Game.kind_of(o) == "animal" and Game.feeds.is_feedable(o):
 		_book.open_panel(Game.item_data(o["id"])["name"], feed.build_animal)
 	elif Game.kind_of(o) == "vehicle" and not Game.under_construction(o):
 		_book.open_panel(tr("FUEL"), buildings.build_fuel)   # a vehicle tapped with an empty tank
-	elif Game.crafting.is_crafting(o):
-		Game.crafting.finish_crafts(uid)
-		_book.open_panel(Game.size_name(o), crafting.build_crafting)
 	elif BuildingSheet.suits(o):
-		# A finished home opens as a small sheet at the bottom, the farm still in view (its full panel is its More).
+		# Every building opens as a small sheet at the bottom, the farm still in view (its full panel is its More).
 		if sheet == null:
 			sheet = BuildingSheet.new(self)
 			_book.get_parent().add_child(sheet)
@@ -445,7 +441,26 @@ func show_building(uid: int) -> void:
 		open_building_panel(uid)
 
 
-## A building's full panel (its feed, its own extras, building its next size).
+## Any building's full panel (a sheet's More): the Barn's storage, a crafting building's recipes and goods, or
+## its own panel (feed, extras, building its next size, a site's materials).
+func open_full_panel(uid: int) -> void:
+	var o := Game.object_by_uid(uid)
+	if o.is_empty():
+		return
+	_building_uid = uid
+	if sheet != null:
+		sheet.close()
+	match BuildingSheet.kind_of(o):
+		BuildingSheet.Kind.BARN:
+			_book.open_panel(tr("BARN"), barn.build_barn)
+		BuildingSheet.Kind.CRAFT:
+			Game.crafting.finish_crafts(uid)
+			_book.open_panel(Game.size_name(o), crafting.build_crafting)
+		_:
+			open_building_panel(uid)
+
+
+## A building's own full panel (its feed, its own extras, building its next size).
 func open_building_panel(uid: int) -> void:
 	_building_uid = uid
 	if sheet != null:

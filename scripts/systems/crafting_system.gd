@@ -124,6 +124,16 @@ func missing_bushels(rid: String) -> Dictionary:
 	return out
 
 
+## How many crafts building `obj` can make at once at its size.
+func slot_count(obj: Dictionary) -> int:
+	return _crafting_def(obj).slots(game.level_of(obj))
+
+
+## How long one craft takes in building `obj`.
+func craft_seconds(obj: Dictionary) -> int:
+	return _crafting_def(obj).craft_seconds()
+
+
 func free_slots(obj: Dictionary) -> int:
 	return _crafting_def(obj).slots(game.level_of(obj)) - (obj.get("slots", []) as Array).size()
 
@@ -154,7 +164,7 @@ func start_craft(uid: int, rid: String) -> bool:
 	(obj["slots"] as Array).append({"r": rid, "done": game.now() + _crafting_def(obj).craft_seconds()})
 	game.ribbons.bump("crafts_started", 1)
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 
@@ -192,12 +202,18 @@ func finish_crafts(uid: int) -> int:
 	var still: Array = []
 	var n := 0
 	var goods_made := 0
+	var rich_made := 0                      # rich feed, to the Barn
+	var supplies_made: Array[String] = []   # Animal Feed, to the young ones' supplies: said by its own name
 	for slot in obj.get("slots", []):
 		if game.now() >= int(slot["done"]):
 			var rid: String = slot["r"]
 			var before := recipe_stars(rid)
 			if _recipe(rid).makes_feed():
 				_deliver_feed(_recipe(rid))
+				if not makes_supply(_recipe(rid)):
+					rich_made += 1
+				elif not supplies_made.has(feed_product_name(_recipe(rid))):
+					supplies_made.append(feed_product_name(_recipe(rid)))
 			else:
 				goods[rid] = int(goods.get(rid, 0)) + 1
 				goods_made += 1
@@ -212,20 +228,34 @@ func finish_crafts(uid: int) -> int:
 	obj["slots"] = still
 	if goods_made > 0:
 		game.message.emit((tr("FINISHED_ONE_GOOD") if goods_made == 1 else tr("FINISHED_GOODS")) % goods_made)
-	if n > goods_made:
+	if rich_made > 0:
 		game.message.emit(tr("FINISHED_FEED"))
+	for supply in supplies_made:
+		game.message.emit(tr("FINISHED_SUPPLY") % supply)
 	if n > 0:
 		game.inventory_changed.emit()
-		game.objects_updated()
+		game.objects_updated(uid)
 	return n
 
 
+## Whether feed recipe `r` makes a supply for the young ones (Animal Feed: RaisingSystem, NurtureSystem) rather
+## than rich feed for the Barn. Every word and every delivery about a feed recipe asks this, never its type by hand.
+static func makes_supply(r: RecipeDef) -> bool:
+	return NurtureSystem.SUPPLIES.has(str(r.feed().get("type", "")))
+
+
+## What feed recipe `r` makes, by name: the supply ("Animal Feed") or rich feed of its kind ("Rich Grain").
+func feed_product_name(r: RecipeDef) -> String:
+	var kind := str(r.feed()["type"])
+	return game.nurture.supply_name(kind) if makes_supply(r) else game.feeds.feed_name(kind, true)
+
+
 ## A feed recipe's units go to the Barn as rich feed (what doesn't fit is sold, as feed drops are), or, for
-## Animal Feed, to the supplies that raise young ones.
+## a supply (Animal Feed), to the supplies that raise young ones.
 func _deliver_feed(r: RecipeDef) -> void:
 	var f := r.feed()
-	if str(f["type"]) == "animal_feed":   # the young ones' feed (RaisingSystem, NurtureSystem), not the Barn's
-		game.nurture.add_supply("animal_feed", int(f["units"]))
+	if makes_supply(r):
+		game.nurture.add_supply(str(f["type"]), int(f["units"]))
 		return
 	for i in int(f["units"]):
 		game.feeds.add(str(f["type"]), true)
@@ -299,7 +329,7 @@ func add_star(uid: int, with_gems: bool) -> bool:
 			game.level_of(obj)
 		]
 	)
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 

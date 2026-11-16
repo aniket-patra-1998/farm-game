@@ -129,9 +129,7 @@ func name_card() -> PanelContainer:
 		var face := Game.player.look.duplicate()
 		face["style"] = FARMER_STYLES[kind]
 		var pic := PortraitIcon.of(face, UiTheme.size("panel_icon"))
-		pic.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-		pic.grow_horizontal = Control.GROW_DIRECTION_BOTH   # (its size comes later: it grows out from the middle)
-		pic.grow_vertical = Control.GROW_DIRECTION_BOTH
+		UiKit.centered(pic)   # (in the middle of its button, not hanging off its corner)
 		b.custom_minimum_size = Vector2.ONE * UiTheme.size("panel_icon") * FARMER_BUTTON
 		b.add_child(pic)
 		UiKit.long_press_name(b, tr(KIND_WORDS[kind]))

@@ -159,7 +159,7 @@ func _ready() -> void:
 	Game.crafting.goods = {"pumpkin_bread": 2, "spicy_muffins": 1}
 	Game.crafting.crafted = {"pumpkin_bread": 16, "spicy_muffins": 6}
 	Game.objects[0]["level"] = 2
-	(_main.get("hud") as FarmHud).show_building(bakery_uid)
+	(_main.get("hud") as FarmHud).open_full_panel(bakery_uid)   # (its full panel; a tap opens its sheet)
 	await _frames(6)
 	_shot(dir + "/crafting_panel.png")
 	var hud: FarmHud = _main.get("hud")

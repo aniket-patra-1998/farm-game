@@ -14,6 +14,7 @@ var _queued := false
 
 func _ready() -> void:
 	Game.objects_changed.connect(queue_sync)
+	Game.object_changed.connect(sync_one)
 	sync()
 
 
@@ -47,6 +48,17 @@ func sync() -> void:
 	for uid in _minds.keys():
 		if not seen.has(uid):
 			_minds.erase(uid)
+
+
+## One thing changed where it stands (a calf grown up into a cow): its mind only.
+func sync_one(uid: int) -> void:
+	var o := Game.object_by_uid(uid)
+	if o.is_empty() or not lives(o):
+		return
+	var key := "%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]
+	if str(_minds.get(uid, {}).get("key", "")) != key:
+		_minds[uid] = {"key": key, "mind": AnimalBehaviour.new(AnimalRig.of(Game.item_data(o["id"])), uid * 7919,
+			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))}
 
 
 func mind(uid: int) -> AnimalBehaviour:
