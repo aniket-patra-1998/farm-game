@@ -200,3 +200,16 @@ Open:
   shelf when a craft is done); the planned FarmVille recipes return with the crops exercise; sunflower blooms
   give no produce (the crop already gives sunflowers); making a recipe is two taps (pick its card, then Make).
 
+## Buildings: the storybook redesign (branch `feel-upgrades`)
+
+Done for the four crafting buildings (Feed Mill, Bakery, Winery, Spa): one bold shape and one thing of its trade
+each, an emblem or a coloured door, and a maxed look (gold roof edges, a gold band and a turning gold star).
+The Feed Mill is a tower windmill that grows from a broken sail at level 1 to two storeys, two sets of sails
+and two silos at level 5.
+
+- The other buildings still have the older shapes. Cow Shed, Chicken Coop and Farmhouse got props in the
+  pilot and lost the small clutter (tufts, lanterns, strap hinges) with everything else, but not a new shape.
+- A building under construction is drawn as a square frame even when it will be a round tower.
+- The sails, the star and the steam have only been checked in still pictures, not on a phone.
+- Animals' walking still looks unconnected to the ground (not started).
+

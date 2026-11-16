@@ -14,6 +14,9 @@ const FLARE := 0.06           # a roof's eaves kick out this much further, at a 
 const FLARE_DROP := 0.3       # ..falling this share of what the slope above would over that run
 const EAVE_THICK := 0.07      # a roof's edge is this thick at the eaves..
 const FASCIA := 0.03          # ..over a board this high in the trim's colour
+const DOME_FILL := 0.9   # a dome's width, as a share of the roof it stands on
+const CORNICE := 0.07    # the slab under it
+const DOME_DRUM := 0.14  # and the drum it stands on
 const RIDGE_CAP := 0.045      # the cap along a ridge: half its width, and its height
 const SPRIG_LEAVES := 9        # leaves on a sprig
 const FRUIT_SHADER := "res://shaders/fruit3d.gdshader"
@@ -58,6 +61,7 @@ const WALL_AO_STEP := 0.02         # the ground shade packed for a wall is a who
 
 
 
+static var roof_trim := RAKE_COLOUR   # the colour of roofs' edge boards being built (gold on a maxed building)
 static var _facet_mesh: ArrayMesh
 static var _facet_low: ArrayMesh   # the same ball with fewer facets, for crowds
 ## How much detail the parts built now get, 1 full .. MIN_DETAIL: orchards and gardens build dozens of the
@@ -705,8 +709,14 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 			box(parent, Vector3(x0, y, z0), Vector3(x1, y + 0.06, z1), mat)
 			top = y + 0.06
 		"dome":
-			var r := minf(hi.x - lo.x, hi.z - lo.z) / 2.0
-			ball(parent, Vector3(inside.x, y, inside.z), r, mat, Vector3(1, rise / maxf(r, 0.01), 1))
+			# A bathhouse roof: a flat roof with a cornice, and on it a dome on a low drum, a ball on its crown.
+			var r := minf(hi.x - lo.x, hi.z - lo.z) / 2.0 * DOME_FILL
+			box(parent, Vector3(x0, y, z0), Vector3(x1, y + CORNICE, z1), gable_mat)
+			cylinder(parent, Vector3(inside.x, y + CORNICE, inside.z), r * 1.04, DOME_DRUM, _darker(mat), -1.0, 14)
+			ball(parent, Vector3(inside.x, y + CORNICE + DOME_DRUM, inside.z), r, mat, Vector3(1, rise / maxf(r,
+				0.01), 1), true)
+			top = y + CORNICE + DOME_DRUM + rise
+			ball(parent, Vector3(inside.x, top + 0.03, inside.z), 0.05, gable_mat)
 	return top
 
 
@@ -777,7 +787,7 @@ static func roof_slopes(kind: String, lo: Vector3, hi: Vector3, rise: float, ove
 ## The white boards that run up the sloped ends of a gable or gambrel roof (a farm building's barge boards):
 ## one along each slope's two end edges, a little proud of the roof.
 static func _rake_boards(parent: Node3D, slopes: Array) -> void:
-	var white := paint(RAKE_COLOUR)
+	var white := paint(roof_trim)
 	for s: Array in slopes:
 		for pair: Array in [[s[0], s[3]], [s[1], s[2]]]:
 			var a: Vector3 = pair[0]
@@ -816,7 +826,7 @@ static func _edge_board(parent: Node3D, a: Vector3, b: Vector3, edge: Material) 
 	var hi := Vector3(maxf(a.x, b.x), a.y + 0.006, maxf(a.z, b.z)) + Vector3(0.012, 0, 0.012)
 	box(parent, lo, hi, edge)
 	box(parent, Vector3(lo.x + 0.02, lo.y - FASCIA, lo.z + 0.02), Vector3(hi.x - 0.02, lo.y, hi.z - 0.02),
-		paint(RAKE_COLOUR), false)
+		paint(roof_trim), false)
 
 
 ## A cap along a ridge (or down a hip) from `a` to `b`: a rounded board in the roof's colour, darker, that the

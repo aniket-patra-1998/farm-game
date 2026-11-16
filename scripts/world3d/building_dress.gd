@@ -1,11 +1,11 @@
 class_name BuildingDress
 extends RefCounted
 ## What makes a building a place and says what it is for (the storybook look, data/building_models.json
-## `features`): the ground it stands on (a soft shade round its foot, a worn path to its door, grass, stones
-## and flowers along its walls), a lantern by its door, and the things of its trade: a mill's turning sails,
-## hopper and sacks, a bakery's brick oven, bread baskets and hanging sign, a winery's stacked barrels and
-## vine-covered pergola, a barn's hay rack and milk cans, a coop's perch and feeder, a house's bench and
-## woodpile. BuildingModel builds the block, roof, door and windows and calls this for the rest.
+## `features`): the ground it stands on (a soft shade round its foot and a worn path to its door) and the one
+## thing of its trade: a mill's round tower and turning sails, a bakery's brick oven, a winery's great
+## cask, a spa's steaming pool, a barn's hay rack and milk cans, a coop's perch and feeder, a house's bench
+## and woodpile. One bold thing each, not many small ones. BuildingModel builds the block, roof, door and
+## windows and calls this for the rest.
 
 const STONE := Color("#9b958a")
 const WOOD := Color("#8a5a36")
@@ -21,20 +21,33 @@ const BAKED := Color("#c98b4a")
 const SHADE_OUT := 0.3        # the shade round a building's foot reaches this far past its walls..
 const SHADE_STRENGTH := 0.5   # ..and is this dark at its middle
 const SHADE_LIFT := 0.014     # it lies this far above the ground (over a yard's floor)
-const TUFTS := 12             # tufts of grass along a building's walls..
-const TUFT_STONES := 5        # ..and stones among them
 const GOLDEN := 2.39996
 ## Every feature this dressing builds (`feature`); BuildingModel builds the rest.
-const FEATURES: Array[String] = ["sacks", "crates", "barrel_stack", "windmill", "hopper", "oven", "bread",
-	"hanging_sign", "pergola", "half_timber", "hay_rack", "milk_cans", "perch", "feeder", "bench", "woodpile"]
+const FEATURES: Array[String] = ["sacks", "crates", "cask", "oven", "steam", "emblem", "crown", "hay_rack",
+	"milk_cans", "perch", "feeder", "bench", "woodpile"]
+const GOLD := Color("#f2c14e")
+const GRAPE := Color("#6a3a8f")
+const STAR_R := 0.24          # a maxed building's star: its radius..
+const STAR_WAIST := 0.45      # ..how far in its inner points are..
+const STAR_THICK := 0.05      # ..and half its thickness at the middle
+const LOWER_TAPER := 0.86     # a two-storey tower: how wide its lower storey's top is, as a share of its foot..
+const UPPER_FOOT := 0.64      # ..and its upper storey's foot..
+const UPPER_TOP := 0.5        # ..and top
+const LOWER_ROOF := 0.22      # the height of the pent roof between the two
+const TOWER_SIDES := 14       # a round tower's sides
+const TOWER_TAPER := 0.7      # how wide its top is, as a share of its foot
+const CAP_SKIRT := 0.2        # the share of a tower cap's height that is its flared skirt
+const CAP_NECK := 0.8         # how wide the cap is where the skirt ends, as a share of the tower's top..
+const CAP_SHOULDER := 0.46    # ..and at its shoulder,
+const CAP_SHOULDER_AT := 0.62   # which is this far up the cap
+const SAIL_WIDE := 0.27       # a windmill sail's width, as a share of its length
+const STEAM := {"streams": 5, "per_stream": 1, "life": 2.6, "rise": 0.2, "gravity": -0.02, "reach": 0.22}
 
 static var _shade: ShaderMaterial
-static var _tuft: ArrayMesh
 
 
 ## The ground a building stands on: a soft shade round its foot (it sits on the earth), a worn path from its
-## door to the edge of its plot when it has no yard, and tufts of grass, stones and a few flowers along the
-## walls the camera sees.
+## door to the edge of its plot when it has no yard.
 static func ground(ctx: Dictionary) -> void:
 	var root: Node3D = ctx["root"]
 	var lo: Vector3 = ctx["lo"]
@@ -52,67 +65,11 @@ static func ground(ctx: Dictionary) -> void:
 	var door: Dictionary = spec.get("door", {})
 	var x := (lo.x + hi.x) / 2.0
 	if not yard and str(door.get("style", "barn")) != "none" and fd - hi.z > 0.25:
-		# The path: trodden earth widening from the door, with a few flat stones set in it.
+		# The path: trodden earth widening from the door.
 		var reach := fd - hi.z - 0.06
 		var w := float(door.get("w", 0.28)) * float(ctx["bw"]) / 0.7 + 0.1
 		ModelKit.ball(root, Vector3(x, 0.0, hi.z + reach * 0.5), reach * 0.52, ModelKit.surface(PATH, "plaster", 0.0),
 			Vector3(w / reach * 1.25, 0.03, 1.0))
-		for k in 4:
-			ModelKit.cylinder(root, Vector3(x + (0.05 if k % 2 == 0 else -0.06), 0.012,
-				hi.z + 0.16 + reach * 0.2 * k),
-				0.07, 0.012, ModelKit.surface(STONE.lightened(0.08 * (k % 2)), "plaster", 0.0), 0.06, 7)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(str((ctx["it"] as Dictionary).get("id", ""))) + int(ctx["bw"] * 100.0)
-	if lo.y > 0.0:
-		return   # (on stilts: nothing grows against it)
-	var half_door := float(door.get("w", 0.28)) * float(ctx["bw"]) / 0.7 / 2.0 + 0.08
-	for k in TUFTS:
-		# Along the front wall (+z) and the side wall (+x), the two the camera sees; never across the doorway.
-		var front := k % 2 == 0
-		var t := rng.randf()
-		var out := rng.randf_range(0.05, 0.13)
-		var at := Vector3(lerpf(lo.x, hi.x, t), 0, hi.z + out) if front else Vector3(hi.x + out, 0, lerpf(lo.z, hi.z,
-			t))
-		if (front and absf(at.x - x) < half_door) or at.x > fw - 0.04 or at.z > fd - 0.04:
-			continue
-		if k < TUFT_STONES * 2 and k % 4 == 1:
-			stone(root, at, rng.randf_range(0.04, 0.065), STONE.darkened(rng.randf() * 0.15))
-			continue
-		tuft(root, at, rng.randf_range(0.08, 0.14), Color("#5aa63a").darkened(rng.randf() * 0.2), rng.randf() * TAU)
-		if k % 5 == 0:
-			var petal: Color = [Color("#ff7aa8"), Color("#ffd23f"), Color("#ffffff"), Color("#b388ff")][k % 4]
-			bead(root, at + Vector3(0.02, 0.1, 0.02), 0.026, ModelKit.paint(petal))
-
-
-## A tuft of grass `h` high at `at`: three blades from one small shared mesh (nine triangles).
-static func tuft(root: Node3D, at: Vector3, h: float, col: Color, turn: float) -> void:
-	if _tuft == null:
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		for blade in 3:
-			var a := TAU * blade / 3.0
-			var foot := Vector3(cos(a), 0, sin(a)) * 0.12
-			var tip := Vector3(cos(a) * 0.3, 1.0, sin(a) * 0.3)
-			var side := Vector3(-sin(a), 0, cos(a)) * 0.13
-			for tri: Array in [[foot - side, foot + side, tip], [foot + side, foot * 0.2, tip], [foot * 0.2,
-				foot - side, tip]]:
-				var n := ((tri[1] as Vector3) - (tri[0] as Vector3)).cross((tri[2] as Vector3) - (tri[0] as Vector3)).normalized()
-				for v: Vector3 in [tri[0], tri[2], tri[1]]:
-					st.set_normal(-n)
-					st.add_vertex(v)
-		_tuft = st.commit()
-	var mi := MeshInstance3D.new()
-	mi.mesh = _tuft
-	mi.material_override = ModelKit.paint(col)
-	mi.transform = Transform3D(Basis(Vector3.UP, turn).scaled(Vector3(h, h, h)), at)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	root.add_child(mi)
-
-
-## A stone on the ground: a low five-sided lump.
-static func stone(root: Node3D, at: Vector3, r: float, col: Color) -> void:
-	ModelKit.cylinder(root, at, r, r * 0.7, ModelKit.surface(col, "plaster", 0.2), r * 0.6, 5).cast_shadow \
-		= GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # (too small for its shadow to show: half the cost)
 
 
 ## A small round thing (a berry, a grape, a flower's head): a ball of few faces, since there are many.
@@ -149,19 +106,6 @@ static func shade_pool(parent: Node3D, at: Vector3, size: Vector2) -> MeshInstan
 	mi.set_meta(ModelKit.KEEP, true)
 	parent.add_child(mi)
 	return mi
-
-
-## A lantern on the wall at `at` (the point it hangs from), facing out along `out`: an iron bracket and cage
-## round glass that glows warm at night (the windows' own glass).
-static func lantern(root: Node3D, at: Vector3, out: Vector3) -> void:
-	var iron := ModelKit.paint(IRON, 0.3)
-	var hang := at + out * 0.07
-	ModelKit.box(root, Vector3(minf(at.x, hang.x) - 0.008, at.y, minf(at.z, hang.z) - 0.008),
-		Vector3(maxf(at.x, hang.x) + 0.008, at.y + 0.014, maxf(at.z, hang.z) + 0.008), iron)
-	ModelKit.box(root, hang + Vector3(-0.034, -0.03, -0.034), hang + Vector3(0.034, -0.015, 0.034), iron)
-	ModelKit.box(root, hang + Vector3(-0.026, -0.1, -0.026), hang + Vector3(0.026, -0.03, 0.026), ModelKit.glass())
-	ModelKit.box(root, hang + Vector3(-0.034, -0.115, -0.034), hang + Vector3(0.034, -0.1, 0.034), iron)
-	ModelKit.cylinder(root, hang + Vector3(0, -0.015, 0), 0.03, 0.03, iron, 0.004, 4)
 
 
 ## Builds feature `f` if it is one of the dressing's own, and says whether it was.
@@ -204,92 +148,85 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				for b in 6:
 					bead(root, p + Vector3(-0.05 + 0.05 * (b % 3), 0.11, -0.03 + 0.06 * (b / 3)), 0.03,
 						ModelKit.paint(fruit.darkened(0.06 * (b % 2)), 0.3))
-		"barrel_stack":
-			# Barrels on their sides against the side wall: two below and one on top, a tap on the nearest.
-			var x := minf(hi.x + 0.17, fw - 0.17)
-			var z0 := float(f.get("z", 0.5)) * (hi.z - lo.z) + lo.z
-			for k in 3:
-				var p := Vector3(x, 0.13 + (0.2 if k == 2 else 0.0), z0 + (0.13 if k == 2 else 0.26 * k))
-				var barrel := ModelKit.cylinder(root, Vector3.ZERO, 0.12, 0.28, ModelKit.surface(Color("#7c4a2a"),
-					"boards", 0.2),
-					-1.0, 10)
-				barrel.rotation.z = PI / 2.0
-				barrel.position = p
-				for hoop: float in [-0.09, 0.09]:
-					var band := ModelKit.cylinder(root, Vector3.ZERO, 0.125, 0.022, ModelKit.paint(IRON, 0.4), -1.0,
-						10)
-					band.rotation.z = PI / 2.0
-					band.position = p + Vector3(hoop, 0, 0)
-				ModelKit.cylinder(root, p + Vector3(0.14, -0.012, 0), 0.03, 0.024, ModelKit.paint(Color("#4a2a1a")),
-					-1.0, 8) \
-					.rotation.z = PI / 2.0
-			for chock: float in [-0.1, 0.36]:
-				ModelKit.box(root, Vector3(x - 0.1, 0, z0 + chock - 0.02), Vector3(x + 0.1, 0.04, z0 + chock + 0.02),
-					ModelKit.paint(DARK_WOOD))
-		"windmill":
-			_windmill(ctx, f)
-		"hopper":
-			# A grain hopper on legs with a sack under its spout, fed by a chute from high on the mill's wall.
-			var legs := ModelKit.paint(DARK_WOOD)
-			for corner: Vector2 in [Vector2(-0.14, -0.14), Vector2(0.14, -0.14), Vector2(0.14, 0.14), Vector2(-0.14,
-				0.14)]:
-				ModelKit.box(root, at + Vector3(corner.x - 0.018, 0, corner.y - 0.018),
-					at + Vector3(corner.x + 0.018, 0.46, corner.y + 0.018), legs)
-			ModelKit.cylinder(root, at + Vector3(0, 0.26, 0), 0.045, 0.2, ModelKit.surface(Color("#c9a56a"), "boards",
-				0.1), 0.2, 4) \
-				.rotation.y = PI / 4.0
-			ModelKit.box(root, at + Vector3(-0.16, 0.44, -0.16), at + Vector3(0.16, 0.5, 0.16),
-				ModelKit.surface(Color("#c9a56a"), "boards", 0.1))
-			ModelKit.ball(root, at + Vector3(0, 0.5, 0), 0.13, ModelKit.paint(Color("#e8c96a")), Vector3(1, 0.45, 1))
-			ModelKit.ball(root, at + Vector3(0, 0.07, 0), 0.09, ModelKit.paint(BURLAP), Vector3(1, 0.75, 1), true)
-			var from := Vector3(hi.x, hi.y * 0.9, clampf(at.z, lo.z + 0.1, hi.z - 0.1))
-			var to := at + Vector3(0, 0.52, 0)
-			var chute := ModelKit.box(root, Vector3(-0.035, -0.03, -from.distance_to(to) / 2.0),
-				Vector3(0.035, 0.03, from.distance_to(to) / 2.0), ModelKit.surface(WOOD, "boards", 0.0))
-			chute.transform = Transform3D(Basis.looking_at((to - from).normalized(), Vector3.UP), (from + to) / 2.0)
+		"cask":
+			# One great cask on its side beside the building, on a cradle, its head and tap toward you.
+			var r := float(f.get("r", 0.36))
+			var p := Vector3(minf(hi.x + r + 0.1, fw - r - 0.04), r + 0.05, lerpf(lo.z, hi.z, float(f.get("z", 0.6))))
+			var oak := ModelKit.surface(Color("#8a5530"), "boards", 0.2)
+			for side: float in [-1.0, 1.0]:
+				# (two halves, each widest at the middle: a cask bulges)
+				var half := ModelKit.cylinder(root, Vector3.ZERO, r, r * 0.85, oak, r * 0.82, 12)
+				half.rotation.x = side * PI / 2.0
+				half.position = p + Vector3(0, 0, side * r * 0.425)
+				var hoop := ModelKit.cylinder(root, Vector3.ZERO, r * 0.885 + 0.012, 0.04, ModelKit.paint(IRON, 0.4),
+					-1.0, 12)
+				hoop.rotation.x = PI / 2.0
+				hoop.position = p + Vector3(0, 0, side * r * 0.55)
+				ModelKit.box(root, Vector3(p.x - r * 0.8, 0, p.z + side * r * 0.5 - 0.04),
+					Vector3(p.x + r * 0.8, r * 0.3, p.z + side * r * 0.5 + 0.04), ModelKit.paint(DARK_WOOD))
+			var head := ModelKit.cylinder(root, Vector3.ZERO, r * 0.74, 0.02, ModelKit.paint(Color("#b98552")), -1.0,
+				12)
+			head.rotation.x = PI / 2.0
+			head.position = p + Vector3(0, 0, r * 0.85)
+			var tap := ModelKit.cylinder(root, Vector3.ZERO, 0.03, 0.1, ModelKit.paint(IRON, 0.4), -1.0, 6)
+			tap.rotation.x = PI / 2.0
+			tap.position = p + Vector3(0, -r * 0.45, r * 0.85 + 0.05)
+		"emblem":
+			# The sign of its trade on a round plaque high on the front gable: a loaf, or a bunch of grapes.
+			var up_lo: Vector3 = ctx.get("upper_lo", lo)
+			var up_hi: Vector3 = ctx.get("upper_hi", hi)
+			var roof_top: float = ctx.get("top", up_hi.y)
+			var e := Vector3((up_lo.x + up_hi.x) / 2.0, up_hi.y + (roof_top - up_hi.y) * float(f.get("up", 0.3)),
+				up_hi.z)
+			var plaque := ModelKit.cylinder(root, Vector3.ZERO, 0.22, 0.03, ModelKit.paint(CREAM), -1.0, 12)
+			plaque.rotation.x = PI / 2.0
+			plaque.position = e + Vector3(0, 0, 0.015)
+			if str(f.get("icon", "loaf")) == "grapes":
+				for k in 6:
+					var row := 0 if k < 3 else (1 if k < 5 else 2)
+					var across := (k - 1.0) if row == 0 else ((k - 3.5) if row == 1 else 0.0)
+					bead(root, e + Vector3(across * 0.085, 0.03 - row * 0.075, 0.05), 0.05, ModelKit.paint(GRAPE))
+				bead(root, e + Vector3(0.03, 0.11, 0.045), 0.05, ModelKit.paint(LEAF), Vector3(1.3, 0.6, 0.5))
+			else:
+				bead(root, e + Vector3(0, 0, 0.04), 0.15, ModelKit.paint(BAKED), Vector3(1.0, 0.62, 0.42))
+				for k in 3:
+					var cut := ModelKit.box(root, Vector3(-0.011, -0.05, 0), Vector3(0.011, 0.05, 0.012),
+						ModelKit.paint(CREAM), false)
+					cut.position = e + Vector3(-0.07 + 0.07 * k, 0.012, 0.094)
+					cut.rotation.z = -0.5
+		"crown":
+			# What a maxed building wears: a band of gold round the top of its walls, and a gold star turning over
+			# its roof.
+			var gold := ModelKit.paint(GOLD, 0.8)
+			var w_lo: Vector3 = ctx.get("upper_lo", lo)
+			var w_hi: Vector3 = ctx.get("upper_hi", hi)
+			var band := w_hi.y - BuildingModel.FRIEZE - 0.09
+			if ctx.has("tower_top"):
+				var tr: float = ctx["tower_top"]
+				ModelKit.cylinder(root, Vector3(c.x, band - 0.03, c.z), tr + 0.055, 0.09, gold, tr + 0.05, TOWER_SIDES)
+			else:
+				ModelKit.box(root, Vector3(w_lo.x - 0.022, band, w_lo.z - 0.022), Vector3(w_hi.x + 0.022, band + 0.08,
+					w_hi.z + 0.022), gold)
+			var tip := Vector3((w_lo.x + w_hi.x) / 2.0 + float(f.get("shift", 0.0)), float(ctx.get("top", w_hi.y)),
+				(w_lo.z + w_hi.z) / 2.0)
+			ModelKit.cylinder(root, tip, 0.016, 0.16, gold, -1.0, 6)
+			var star := Node3D.new()
+			var points: Array[Vector3] = []
+			for k in 10:
+				var reach := STAR_R * (1.0 if k % 2 == 0 else STAR_WAIST)
+				points.append(Vector3(sin(TAU * k / 10.0) * reach, cos(TAU * k / 10.0) * reach, 0))
+			var sides: Array = []
+			for k in 10:
+				sides.append([points[k], points[(k + 1) % 10], Vector3(0, 0, STAR_THICK)])
+				sides.append([points[(k + 1) % 10], points[k], Vector3(0, 0, -STAR_THICK)])
+			ModelKit.faces(star, sides, Vector3.ZERO, gold)
+			DecorMotion.orbit(root, tip + Vector3(0, 0.16 + STAR_R, 0), star, {"speed": 0.9, "radius": 0.0})
+		"steam":
+			# Steam off warm water (a spa's pool), while the building works.
+			if bool(ctx.get("active", true)):
+				DecorMotion.spray(root, at + Vector3(0, float(f.get("up", 0.08)), 0), STEAM)
 		"oven":
 			_oven(ctx, f)
-		"bread":
-			# Baskets of bread by the door: round loaves and a sheaf of long ones standing in a crock.
-			var side := float(f.get("side", 1.0))
-			var x := (lo.x + hi.x) / 2.0 + side * (hi.x - lo.x) * 0.36
-			var p := Vector3(x, 0, hi.z + 0.16)
-			ModelKit.cylinder(root, p, 0.1, 0.09, ModelKit.surface(Color("#b98b4a"), "logs", 0.2), 0.13, 10)
-			for k in 5:
-				ModelKit.ball(root, p + Vector3(cos(k * GOLDEN) * 0.05, 0.1 + 0.02 * (k % 2), sin(k * GOLDEN) * 0.05),
-					0.045,
-					ModelKit.paint(BAKED.lightened(0.06 * (k % 3))), Vector3(1.2, 0.8, 1.0))
-			var crock := p + Vector3(-side * 0.2, 0, 0.04)
-			ModelKit.cylinder(root, crock, 0.055, 0.12, ModelKit.paint(Color("#8f6a4a"), 0.3), 0.065, 8)
-			for k in 4:
-				var loaf := bead(root, crock + Vector3(0.02 * (k - 1.5), 0.2, 0.012 * (k % 2)), 0.028,
-					ModelKit.paint(BAKED.lightened(0.1)), Vector3(1.0, 4.4, 1.0))
-				loaf.rotation.z = 0.12 * (k - 1.5)
-		"hanging_sign":
-			_hanging_sign(ctx, f)
-		"pergola":
-			_pergola(ctx, f)
-		"half_timber":
-			# Dark timbers on the plaster: posts, a rail, and braces leaning from the corners, on the two walls the
-			# camera sees.
-			var beam := ModelKit.paint(Color.html(str(f.get("color", "#5a3a24"))))
-			var y0 := lo.y + BuildingModel.PLINTH
-			var mid := lerpf(y0, hi.y, 0.52)
-			for wall in 2:
-				var a := Vector3(lo.x, 0, hi.z) if wall == 0 else Vector3(hi.x, 0, lo.z)
-				var b := Vector3(hi.x, 0, hi.z) if wall == 0 else Vector3(hi.x, 0, hi.z)
-				var out := Vector3(0, 0, 1) if wall == 0 else Vector3(1, 0, 0)
-				var run := (b - a).normalized()
-				var length := a.distance_to(b)
-				_timber(root, a + Vector3(0, mid, 0), b + Vector3(0, mid, 0), out, beam)
-				for share: float in [0.24, 0.76]:
-					var foot := a + run * length * share
-					_timber(root, foot + Vector3(0, y0, 0), foot + Vector3(0, hi.y, 0), out, beam)
-				for end: float in [0.0, 1.0]:
-					var corner := a + run * length * end
-					var inward := run * (1.0 if end == 0.0 else -1.0)
-					_timber(root, corner + inward * 0.05 + Vector3(0, mid, 0), corner + inward * length * 0.22
-						+ Vector3(0, hi.y - 0.06, 0), out, beam)
 		"hay_rack":
 			# A hay rack on crossed legs, full, with what the animals pulled out lying under it.
 			for end: float in [-0.2, 0.2]:
@@ -363,45 +300,6 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 	return true
 
 
-## A mill's sails, turning: four lattice arms with their cloths on a hub high on the gable the camera sees
-## (the front, or the side when the ridge runs across), on a shaft through the wall. Turned by the GPU
-## (DecorMotion.orbit): no script, one draw.
-static func _windmill(ctx: Dictionary, f: Dictionary) -> void:
-	var root: Node3D = ctx["root"]
-	var lo: Vector3 = ctx["lo"]
-	var hi: Vector3 = ctx["hi"]
-	var top: float = ctx.get("top", hi.y)
-	var front := (hi.x - lo.x) <= (hi.z - lo.z)   # (the gable faces the front when the ridge runs front to back)
-	var reach := float(f.get("reach", 0.62))
-	var y := hi.y + (top - hi.y) * float(f.get("up", 0.3))
-	var hub := Vector3((lo.x + hi.x) / 2.0, y, hi.z + 0.1) if front else Vector3(hi.x + 0.1, y, (lo.z + hi.z) / 2.0)
-	var shaft := ModelKit.cylinder(root, Vector3.ZERO, 0.035, 0.16, ModelKit.paint(DARK_WOOD), -1.0, 8)
-	shaft.position = hub - (Vector3(0, 0, 0.06) if front else Vector3(0.06, 0, 0))
-	shaft.rotation = Vector3(PI / 2.0, 0, 0) if front else Vector3(0, 0, PI / 2.0)
-	# Built to turn about its own y (the orbit shader's axis), then laid over so that axis points out of the wall.
-	var sails := Node3D.new()
-	ModelKit.cylinder(sails, Vector3(0, -0.03, 0), 0.06, 0.07, ModelKit.paint(DARK_WOOD.darkened(0.2)), 0.045, 8)
-	for k in 4:
-		var arm := Node3D.new()
-		arm.rotation.y = TAU * k / 4.0
-		sails.add_child(arm)
-		ModelKit.box(arm, Vector3(0.03, -0.012, -0.014), Vector3(reach, 0.012, 0.014), ModelKit.paint(DARK_WOOD))
-		ModelKit.box(arm, Vector3(reach * 0.24, -0.006, 0.014), Vector3(reach * 0.98, 0.006, 0.014 + reach * 0.24),
-			ModelKit.paint(Color.html(str(f.get("cloth", "#f3ead2")))))
-		for slat in 4:
-			var at_x := lerpf(reach * 0.24, reach * 0.98, slat / 3.0)
-			ModelKit.box(arm, Vector3(at_x - 0.008, -0.01, 0.014), Vector3(at_x + 0.008, 0.01, 0.014 + reach * 0.24),
-				ModelKit.paint(DARK_WOOD.lightened(0.1)))
-		ModelKit.box(arm, Vector3(reach * 0.24, -0.01, 0.014 + reach * 0.24 - 0.008),
-			Vector3(reach * 0.98, 0.01, 0.014 + reach * 0.24 + 0.008), ModelKit.paint(DARK_WOOD.lightened(0.1)))
-	var turning := DecorMotion.orbit(root, hub, sails, {"speed": float(f.get("speed", 0.55)), "radius": 0.0})
-	turning.rotation = Vector3(PI / 2.0, 0, 0) if front else Vector3(0, 0, -PI / 2.0)
-	for part in turning.get_children():
-		if part is MeshInstance3D:
-			(part as MeshInstance3D).custom_aabb = AABB(Vector3(-reach, -0.2, -reach), Vector3(reach * 2.0, 0.4,
-				reach * 2.0))
-
-
 ## A bakery's brick oven built against its side wall: a broad base with an arched mouth and its glow, a
 ## shoulder, and a tall chimney stepping in to a cap and a pot above the roof; it smokes when baking.
 static func _oven(ctx: Dictionary, f: Dictionary) -> void:
@@ -435,87 +333,135 @@ static func _oven(ctx: Dictionary, f: Dictionary) -> void:
 		DecorMotion.spray(root, Vector3(x + 0.11, stack_top + 0.17, z), DecorMotion.SMOKE)
 
 
-## A sign hanging from an iron bracket over the door: a board with the emblem of the trade (`icon`: loaf,
-## grapes, wheat, drop).
-static func _hanging_sign(ctx: Dictionary, f: Dictionary) -> void:
+## A round tower for a body (a windmill; `"shape": "tower"` in data/building_models.json): a stone foot, walls
+## that taper under a band of trim, and a bell-shaped cap that flares at its eaves. With `lower` (a height) it
+## has two storeys: a broad lower one under a pent roof, and a slimmer upper one. Each storey has a window, and
+## can carry four sails (`sails` on the top storey, facing the camera, and `low_sails` on the lower: their
+## length; with both, the top set is on the left as you see it and the lower on the right), turning while the
+## building works; `broken` snaps one of them off, `stripe` colours every other one. Leaves the tower's bounds
+## in ctx as lo, hi and top (and tower_top, its radius there), and returns the flat-fronted case its door
+## stands in, as [lo, hi]: a door cannot hang on a round wall.
+static func tower(ctx: Dictionary) -> Array:
 	var root: Node3D = ctx["root"]
-	var lo: Vector3 = ctx["lo"]
-	var hi: Vector3 = ctx["hi"]
-	var x := (lo.x + hi.x) / 2.0 + float(f.get("shift", -0.32)) * (hi.x - lo.x)
-	var y := lo.y + (hi.y - lo.y) * float(f.get("up", 0.78))
-	var iron := ModelKit.paint(IRON, 0.3)
-	ModelKit.box(root, Vector3(x - 0.01, y, hi.z), Vector3(x + 0.01, y + 0.015, hi.z + 0.26), iron)
-	ModelKit.box(root, Vector3(x - 0.008, y - 0.1, hi.z), Vector3(x + 0.008, y, hi.z + 0.012), iron)
-	var board := Vector3(x, y - 0.14, hi.z + 0.16)
-	ModelKit.box(root, board + Vector3(-0.014, -0.1, -0.11), board + Vector3(0.014, 0.1, 0.11),
-		ModelKit.paint(Color.html(str(f.get("color", "#f3e6c4")))))
-	ModelKit.box(root, board + Vector3(-0.018, 0.1, -0.12), board + Vector3(0.018, 0.115, 0.12),
-		ModelKit.paint(DARK_WOOD))
-	ModelKit.box(root, board + Vector3(-0.018, -0.115, -0.12), board + Vector3(0.018, -0.1, 0.12),
-		ModelKit.paint(DARK_WOOD))
-	for chain: float in [-0.08, 0.08]:
-		ModelKit.box(root, board + Vector3(-0.004, 0.115, chain - 0.004), Vector3(x + 0.004, y,
-			board.z + chain + 0.004), iron)
-	for face: float in [-1.0, 1.0]:   # (the emblem, on both faces)
-		var e := board + Vector3(face * 0.018, 0, 0)
-		match str(f.get("icon", "loaf")):
-			"grapes":
-				for k in 6:
-					bead(root, e + Vector3(0, 0.03 - 0.03 * (k / 3) - (0.03 if k == 5 else 0.0),
-						-0.03 + 0.03 * (k % 3)
-						+ (0.015 if k >= 3 else 0.0)), 0.022, ModelKit.paint(Color("#6a3a8f"), 0.4), Vector3(0.5, 1, 1))
-				ModelKit.ball(root, e + Vector3(0, 0.07, 0.01), 0.03, ModelKit.paint(LEAF), Vector3(0.4, 0.6, 1.2))
-			"wheat":
-				for k in 5:
-					bead(root, e + Vector3(0, -0.05 + 0.028 * k, 0.012 * (k % 2 * 2 - 1)), 0.02,
-						ModelKit.paint(Color("#e2b23a")), Vector3(0.5, 1.3, 0.8))
-			"drop":
-				ModelKit.ball(root, e, 0.045, ModelKit.paint(Color("#6fc3d9"), 0.5), Vector3(0.4, 1.25, 1.0))
-			_:
-				ModelKit.ball(root, e, 0.06, ModelKit.paint(BAKED), Vector3(0.4, 0.75, 1.3), true)
+	var s: Dictionary = ctx["spec"]
+	var body: Dictionary = s["body"]
+	var c: Vector3 = ctx["centre"]
+	var bh: float = ctx["bh"]
+	var r0 := minf(ctx["bw"], ctx["bd"]) / 2.0
+	var trim := ModelKit.paint(Color.html(str(s.get("trim", "#f3eee2"))))
+	var r: Dictionary = s["roof"]
+	var roof_col := Color.html(str(r.get("color", "#8e3b2c")))
+	var roof_mat := ModelKit.surface(roof_col, str(r.get("style", "shingles")), 0.0)
+	var over := float(r.get("overhang", 0.14))
+	var wall := ModelKit.surface(ctx["wall"], str(body.get("walls", "plaster")))
+	var foot := BuildingModel.PLINTH * 1.5
+	# One set of sails faces the camera. Two stand on opposite sides: the top one over the door, on the left as
+	# you see it, and the lower one on the right.
+	var twin := body.has("low_sails") and float(body.get("lower", 0.0)) > 0.0
+	var out := Vector3(0, 0, 1) if twin else Vector3(1, 0, 1).normalized()
+	var turning := bool(ctx.get("active", true))
+	var stripe := Color.html(str(body.get("stripe", "#" + CREAM.to_html(false))))
+	ModelKit.cylinder(root, c, r0 + 0.07, foot, ModelKit.surface(STONE, "stone", 0.3), r0 + 0.03, TOWER_SIDES)
+	# Each storey: [from, to, its radius at the foot, and at the top].
+	var storeys: Array = [[foot * 0.5, bh, r0, r0 * float(body.get("taper", TOWER_TAPER))]]
+	var lower := float(body.get("lower", 0.0))
+	if lower > 0.0:
+		storeys = [[foot * 0.5, lower, r0, r0 * LOWER_TAPER], [lower + LOWER_ROOF, bh, r0 * UPPER_FOOT, r0 * UPPER_TOP]]
+		ModelKit.cylinder(root, c + Vector3(0, lower, 0), r0 * LOWER_TAPER + over, LOWER_ROOF, roof_mat,
+			r0 * UPPER_FOOT, TOWER_SIDES)
+		if body.has("low_sails"):
+			sails(root, c + Vector3(r0 * LOWER_TAPER + over + 0.06, lower + 0.05, 0), Vector3(1, 0, 0),
+				float(body["low_sails"]), turning, false, stripe)
+	var windows: Array = []
+	var r1 := r0
+	for storey: Array in storeys:
+		var from: float = storey[0]
+		var to: float = storey[1]
+		var wide: float = storey[2]
+		r1 = storey[3]
+		ModelKit.cylinder(root, c + Vector3(0, from, 0), wide, to - from, wall, r1, TOWER_SIDES)
+		ModelKit.cylinder(root, c + Vector3(0, to - 0.08, 0), r1 + 0.035, 0.08, trim, r1 + 0.03, TOWER_SIDES)
+		# A window, in a frame deep enough to stand out of the round wall.
+		var size := 0.24 if windows.is_empty() else 0.2
+		var at := Vector3(c.x + lerpf(wide, r1, 0.55), lerpf(from, to, 0.55), c.z)
+		ModelKit.box(root, at + Vector3(-0.07, -size / 2 - 0.035, -size / 2 - 0.035),
+			at + Vector3(0.04, size / 2 + 0.035, size / 2 + 0.035), trim)
+		ModelKit.box(root, at + Vector3(0.04, -size / 2, -size / 2), at + Vector3(0.044, size / 2, size / 2),
+			ModelKit.glass())
+		windows.append({"at": at + Vector3(0.04, 0, 0), "size": size})
+	ctx["window_at"] = windows
+	# The cap, bell-shaped: a shallow skirt that flares out over the walls, a steep neck, a rounder shoulder up
+	# to the tip, and a ball on it.
+	var rise := float(r.get("pitch", 1.5)) * r1
+	var rings := [r1 + over, r1 * CAP_NECK, r1 * CAP_SHOULDER, 0.02]
+	var heights := [0.0, rise * CAP_SKIRT, rise * CAP_SHOULDER_AT, rise]
+	for k in 3:
+		ModelKit.cylinder(root, c + Vector3(0, bh + heights[k], 0), rings[k], heights[k + 1] - heights[k], roof_mat,
+			rings[k + 1], TOWER_SIDES)
+	ModelKit.ball(root, c + Vector3(0, bh + rise + 0.03, 0), 0.05, trim)
+	ctx["lo"] = Vector3(c.x - r0, 0, c.z - r0)
+	ctx["hi"] = Vector3(c.x + r0, bh, c.z + r0)
+	ctx["top"] = bh + rise + 0.08
+	ctx["tower_top"] = r1
+	if body.has("sails"):
+		sails(root, c + out * (r1 + over + 0.03) + Vector3(0, bh + rise * CAP_SKIRT * 0.25, 0), out,
+			float(body["sails"]), turning, bool(body.get("broken", false)), stripe)
+	# The door's case: a stone porch standing out of the foot of the tower, under a slab the roof's colour.
+	var door: Dictionary = s.get("door", {})
+	var w := float(door.get("w", 0.28)) * float(ctx["bw"]) / 0.7
+	var arch := w / 2.0 if str(door.get("style", "barn")) == "arch" else 0.0
+	var back: float = (storeys[0] as Array)[3]
+	var case_lo := Vector3(c.x - w / 2.0 - 0.08, 0, c.z + back * 0.8)
+	var case_hi := Vector3(c.x + w / 2.0 + 0.08, BuildingModel.PLINTH + float(door.get("h", 0.5)) + arch + 0.08,
+		c.z + r0 + 0.06)
+	ModelKit.box(root, case_lo, case_hi, ModelKit.surface(STONE.lightened(0.14), "stone", 0.3))
+	ModelKit.box(root, Vector3(case_lo.x - 0.05, case_hi.y, case_lo.z), Vector3(case_hi.x + 0.05, case_hi.y + 0.06,
+		case_hi.z + 0.06), ModelKit.paint(roof_col.darkened(0.1)))
+	return [case_lo, case_hi]
 
 
-## A pergola over the yard beside the building, grown over with vines: posts and beams, a roof of leaves, and
-## bunches of grapes hanging under it.
-static func _pergola(ctx: Dictionary, f: Dictionary) -> void:
-	var root: Node3D = ctx["root"]
-	var lo: Vector3 = ctx["lo"]
-	var hi: Vector3 = ctx["hi"]
-	var fw: float = ctx["fw"]
-	var x0 := hi.x + 0.04
-	var x1 := minf(hi.x + float(f.get("depth", 0.46)), fw - 0.1)
-	var z0 := lerpf(lo.z, hi.z, float(f.get("from", 0.3)))
-	var z1 := hi.z - 0.04
-	var h := float(f.get("h", 0.62))
-	var post := ModelKit.paint(DARK_WOOD)
-	for z: float in [z0, z1]:
-		ModelKit.box(root, Vector3(x1 - 0.025, 0, z - 0.025), Vector3(x1 + 0.025, h, z + 0.025), post)
-		ModelKit.box(root, Vector3(x0, h - 0.03, z - 0.02), Vector3(x1 + 0.06, h, z + 0.02), post)
+## A windmill's four sails on a shaft at `hub`, facing `out` (level): each a spar, a cloth and a rail along its
+## edge; every other cloth is `stripe`. They turn while the mill is `turning` (one draw, spun on the GPU) and
+## stand still otherwise. A `broken` wheel has one sail snapped off short, its cloth gone.
+static func sails(root: Node3D, hub: Vector3, out: Vector3, reach: float, turning: bool, broken := false,
+		stripe := CREAM) -> void:
+	# Built to turn about its own y (the orbit shader's axis), then laid over so that axis points along `out`.
+	var lay := Vector3(PI / 2.0, atan2(out.x, out.z), 0)
+	var shaft := ModelKit.cylinder(root, Vector3.ZERO, 0.04, 0.3, ModelKit.paint(DARK_WOOD), -1.0, 8)
+	shaft.position = hub - out * 0.13
+	shaft.rotation = lay
+	var wheel := Node3D.new()
+	ModelKit.cylinder(wheel, Vector3(0, -0.03, 0), 0.07, 0.08, ModelKit.paint(DARK_WOOD.darkened(0.2)), 0.05, 8)
+	var wide := reach * SAIL_WIDE
 	for k in 4:
-		var x := lerpf(x0 + 0.04, x1, k / 3.0)
-		ModelKit.box(root, Vector3(x - 0.014, h, z0 - 0.06), Vector3(x + 0.014, h + 0.025, z1 + 0.06), post)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 77
-	var grape := Color.html(str(f.get("color", "#6a3a8f")))
-	for k in 16:
-		var p := Vector3(rng.randf_range(x0 + 0.03, x1 + 0.03), h + 0.03, rng.randf_range(z0 - 0.04, z1 + 0.04))
-		bead(root, p, rng.randf_range(0.07, 0.11), ModelKit.paint(LEAF.darkened(rng.randf() * 0.25)),
-			Vector3(1.2, 0.45, 1.1))
-		if k % 3 == 0:
-			for b in 5:
-				bead(root, p + Vector3(0.02 * (b % 2), -0.06 - 0.03 * (b / 2), 0.02 * ((b + 1) % 2)), 0.026,
-					ModelKit.paint(grape.darkened(0.1 * (b % 2)), 0.4))
-	# The vine itself, climbing the outer post.
-	var stem := ModelKit.cylinder(root, Vector3(x1 + 0.03, 0, z1), 0.016, h, ModelKit.paint(Color("#6a4a2a")), 0.01,
-		5)
-	stem.rotation.x = 0.06
-
-
-## A timber on a wall from `a` to `b` (points on the wall's foot line, with heights), standing proud of it
-## along `out`.
-static func _timber(root: Node3D, a: Vector3, b: Vector3, out: Vector3, mat: Material) -> void:
-	var length := a.distance_to(b)
-	if length < 0.01:
-		return
-	var beam := ModelKit.box(root, Vector3(-0.022, -0.008, -length / 2.0), Vector3(0.022, 0.008, length / 2.0), mat)
-	beam.transform = Transform3D(Basis.looking_at((b - a) / length, out), (a + b) / 2.0 + out * 0.008)
+		var arm := Node3D.new()
+		arm.rotation.y = TAU * k / 4.0
+		wheel.add_child(arm)
+		if broken and k == 1:
+			# (the stump of a spar, splintered at an angle)
+			ModelKit.box(arm, Vector3(0.03, -0.014, -0.016), Vector3(reach * 0.34, 0.014, 0.016),
+				ModelKit.paint(DARK_WOOD))
+			var splinter := ModelKit.box(arm, Vector3(0, -0.012, -0.012), Vector3(reach * 0.14, 0.012, 0.012),
+				ModelKit.paint(DARK_WOOD.lightened(0.2)))
+			splinter.position = Vector3(reach * 0.32, 0, 0)
+			splinter.rotation.y = 0.7
+			continue
+		ModelKit.box(arm, Vector3(0.03, -0.014, -0.016), Vector3(reach, 0.014, 0.016), ModelKit.paint(DARK_WOOD))
+		ModelKit.box(arm, Vector3(reach * 0.22, -0.006, 0.016), Vector3(reach * 0.98, 0.006, 0.016 + wide),
+			ModelKit.paint(stripe if k % 2 == 0 else CREAM))
+		ModelKit.box(arm, Vector3(reach * 0.22, -0.011, 0.016 + wide - 0.012), Vector3(reach * 0.98, 0.011,
+			0.016 + wide + 0.012), ModelKit.paint(DARK_WOOD.lightened(0.12)))
+	var holder: Node3D
+	if turning:
+		holder = DecorMotion.orbit(root, hub, wheel, {"speed": 0.55, "radius": 0.0})
+		for part in holder.get_children():
+			if part is MeshInstance3D:
+				(part as MeshInstance3D).custom_aabb = AABB(Vector3(-reach, -0.2, -reach), Vector3(reach * 2.0, 0.4,
+					reach * 2.0))
+	else:
+		holder = Node3D.new()
+		holder.position = hub
+		holder.add_child(wheel)
+		wheel.rotation.y = 0.5
+		root.add_child(holder)
+	holder.rotation = lay

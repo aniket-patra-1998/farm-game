@@ -347,8 +347,8 @@
         ]
       }
     },
-    "bakery": {"body": {"w": 0.56, "d": 0.6, "h": 1.28, "at": [0.4, 0.38], "walls": "plaster"}, "roof": {"type": "gable", "pitch": 1.3, "overhang": 0.13, "color": "#b55a3c"}, "door": {"w": 0.24, "h": 0.48, "style": "arch"}, "windows": 2, "dress": "both", "features": [{"type": "half_timber"}, {"type": "oven", "z": 0.3}, {"type": "bread", "side": -1.0}, {"type": "hanging_sign", "icon": "loaf", "shift": 0.34}, {"type": "awning", "a": "#c0392b", "b": "#f3eee2", "w": 0.42, "h": 0.92}], "levels": {"2": {"features": [{"type": "flowers"}, {"type": "crates", "at": [0.1, 0.76], "color": "#e2b23a", "count": 1}]}, "3": {"features": [{"type": "wing", "depth": 0.28, "span": 0.5, "h": 0.6, "side": "front", "shift": -0.24}, {"type": "woodpile", "z": 0.72}]}, "4": {"body": {"h": 1.1}, "upper": {"w": 0.9, "d": 0.92, "h": 0.66, "walls": "plaster", "windows": 2, "roof": {"type": "gable", "pitch": 1.3}}, "features": [{"type": "sacks", "at": [0.84, 0.84], "count": 3}]}, "5": {"features": [{"type": "weathervane", "shift": -0.15}, {"type": "dormers"}, {"type": "flag", "color": "#d9a521"}]}}},
-    "winery": {"body": {"w": 0.58, "d": 0.58, "h": 1.3, "at": [0.38, 0.36], "walls": "stone"}, "roof": {"type": "hip", "pitch": 1.0, "overhang": 0.1, "color": "#7a2f3a"}, "door": {"w": 0.3, "h": 0.5, "style": "arch"}, "windows": 2, "features": [{"type": "pergola", "from": 0.42}, {"type": "barrel_stack", "z": 0.02}, {"type": "hanging_sign", "icon": "grapes", "shift": 0.36}, {"type": "crates", "at": [0.14, 0.82], "color": "#6a3a8f"}], "levels": {"2": {"features": [{"type": "flowers"}, {"type": "barrels"}]}, "3": {"features": [{"type": "wing", "depth": 0.28, "span": 0.5, "h": 0.6, "side": "front", "shift": -0.24}, {"type": "chimney"}]}, "4": {"body": {"h": 1.1}, "upper": {"w": 0.9, "d": 0.9, "h": 0.66, "walls": "plaster", "color": "#e8dcc0", "windows": 2, "roof": {"type": "hip", "pitch": 1.1}}, "features": [{"type": "half_timber"}]}, "5": {"features": [{"type": "cupola"}, {"type": "weathervane"}, {"type": "dormers"}]}}},
+    "bakery": {"body": {"w": 0.56, "d": 0.6, "h": 1.2, "at": [0.4, 0.38], "walls": "plaster"}, "roof": {"type": "gable", "pitch": 1.55, "overhang": 0.13, "color": "#b55a3c"}, "door": {"w": 0.2, "h": 0.48, "style": "arch", "color": "#8a5a36"}, "windows": 2, "dress": "none", "features": [{"type": "oven", "z": 0.3}, {"type": "awning", "a": "#c0392b", "b": "#f3eee2", "w": 0.38, "h": 0.92}, {"type": "emblem", "icon": "loaf"}], "levels": {"2": {"features": [{"type": "flowers"}]}, "3": {"features": [{"type": "wing", "depth": 0.28, "span": 0.5, "h": 0.6, "side": "front", "shift": -0.24}]}, "4": {"body": {"h": 1.1}, "upper": {"w": 0.9, "d": 0.92, "h": 0.66, "walls": "plaster", "windows": 2, "roof": {"type": "gable", "pitch": 1.55}}}, "5": {"features": [{"type": "dormers"}, {"type": "crown"}]}}},
+    "winery": {"body": {"w": 0.56, "d": 0.6, "h": 1.25, "at": [0.38, 0.38], "walls": "stone"}, "roof": {"type": "gable", "pitch": 1.4, "overhang": 0.12, "color": "#7a2f3a"}, "door": {"w": 0.22, "h": 0.5, "style": "arch", "color": "#5b2a4a"}, "windows": 2, "dress": "none", "features": [{"type": "cask"}, {"type": "emblem", "icon": "grapes"}], "levels": {"2": {"features": [{"type": "barrels"}]}, "3": {"features": [{"type": "wing", "depth": 0.28, "span": 0.5, "h": 0.6, "side": "front", "shift": -0.24}]}, "4": {"body": {"h": 1.1}, "upper": {"w": 0.9, "d": 0.92, "h": 0.66, "walls": "plaster", "color": "#e8dcc0", "windows": 2, "roof": {"type": "gable", "pitch": 1.4}}}, "5": {"features": [{"type": "dormers"}, {"type": "crown"}]}}},
     "farmhouse": {"body": {"w": 0.72, "d": 0.6, "h": 1.35, "at": [0.48, 0.4], "walls": "boards"}, "roof": {"type": "gable", "pitch": 1.15, "overhang": 0.13, "color": "#8e3b2c"}, "door": {"w": 0.22, "h": 0.55, "style": "plain"}, "windows": 3, "features": [{"type": "porch"}, {"type": "chimney"}, {"type": "flowers"}, {"type": "bench", "shift": 0.3}, {"type": "woodpile", "z": 0.2}], "levels": {"2": {"features": [{"type": "wing", "side": "front", "depth": 0.26, "span": 0.42, "shift": 0.2, "h": 0.62}, {"type": "barrels"}]}, "3": {"upper": {"w": 0.82, "d": 0.86, "h": 0.55, "windows": 2, "roof": {"type": "gable", "pitch": 0.85}}}, "4": {"features": [{"type": "balcony", "span": 0.5}, {"type": "flag", "color": "#c8452f", "shift": 0.0}, {"type": "weathervane"}]}}, "dress": "both"},
     "log_cabin": {
       "body": {
@@ -381,108 +381,7 @@
         }
       ]
     },
-    "spa": {
-      "body": {
-        "w": 0.6,
-        "d": 0.68,
-        "h": 1.5,
-        "at": [
-          0.48,
-          0.4
-        ],
-        "walls": "plaster"
-      },
-      "roof": {
-        "type": "dome",
-        "pitch": 0.9,
-        "color": "#4f8a8f"
-      },
-      "door": {
-        "w": 0.26,
-        "h": 0.55,
-        "style": "plain"
-      },
-      "features": [
-        {
-          "type": "terrace"
-        },
-        {
-          "type": "flowers"
-        },
-        {
-          "type": "sign"
-        },
-        {
-          "type": "pool",
-          "at": [
-            0.74,
-            0.82
-          ],
-          "r": 0.4
-        }
-      ],
-      "levels": {
-        "2": {
-          "features": [
-            {
-              "type": "barrels"
-            }
-          ]
-        },
-        "3": {
-          "drop": [
-            "terrace"
-          ],
-          "features": [
-            {
-              "type": "wing",
-              "depth": 0.3,
-              "span": 0.6,
-              "h": 0.6
-            }
-          ]
-        },
-        "4": {
-          "body": {
-            "h": 1.05
-          },
-          "window_rows": 1,
-          "windows": 2,
-          "upper": {
-            "w": 0.78,
-            "d": 0.82,
-            "h": 0.68,
-            "windows": 2,
-            "roof": {
-              "type": "dome",
-              "pitch": 1.0
-            }
-          },
-          "features": [
-            {
-              "type": "awning",
-              "a": "#3b9bb8",
-              "b": "#f3eee2",
-              "w": 0.4
-            }
-          ]
-        },
-        "5": {
-          "features": [
-            {
-              "type": "porch"
-            },
-            {
-              "type": "weathervane"
-            },
-            {
-              "type": "balcony",
-              "span": 0.5
-            }
-          ]
-        }
-      }
-    },
+    "spa": {"body": {"w": 0.56, "d": 0.6, "h": 1.15, "at": [0.42, 0.38], "walls": "plaster"}, "roof": {"type": "dome", "pitch": 1.0, "overhang": 0.08, "color": "#4f8a8f"}, "door": {"w": 0.2, "h": 0.48, "style": "arch", "color": "#2f7f86"}, "windows": 2, "dress": "none", "features": [{"type": "pool", "at": [0.78, 0.82], "r": 0.4}, {"type": "steam", "at": [0.78, 0.82]}, {"type": "awning", "a": "#3b9bb8", "b": "#f3eee2", "w": 0.38, "h": 0.92}], "levels": {"2": {"features": [{"type": "flowers"}]}, "3": {"features": [{"type": "wing", "depth": 0.3, "span": 0.6, "h": 0.6}]}, "4": {"body": {"h": 1.05}, "upper": {"w": 0.78, "d": 0.82, "h": 0.68, "windows": 2, "roof": {"type": "dome", "pitch": 1.0}}}, "5": {"features": [{"type": "porch"}, {"type": "crown"}]}}},
     "bloom_garden": {
       "body": {
         "w": 0.0,
@@ -537,7 +436,7 @@
         ]
       }
     },
-    "feed_mill": {"body": {"w": 0.42, "d": 0.5, "h": 1.75, "at": [0.4, 0.36], "walls": "boards"}, "roof": {"type": "gable", "pitch": 1.45, "overhang": 0.1, "color": "#5b6b3a"}, "door": {"w": 0.26, "h": 0.56, "style": "barn"}, "windows": 1, "window_rows": 2, "dress": "none", "features": [{"type": "windmill", "reach": 0.66}, {"type": "hopper", "at": [0.8, 0.42]}, {"type": "sacks", "at": [0.62, 0.8]}, {"type": "hanging_sign", "icon": "wheat", "shift": 0.0, "up": 0.52}], "levels": {"2": {"features": [{"type": "wing", "depth": 0.3, "span": 0.7, "h": 0.6}, {"type": "sacks", "at": [0.22, 0.84], "count": 3, "mark": "#3f78b5"}]}, "3": {"body": {"h": 1.9}, "features": [{"type": "silo", "at": [0.84, 0.14], "r": 0.17, "h": 1.5, "plain": true}, {"type": "hay_bales"}]}, "4": {"features": [{"type": "hoist"}, {"type": "crates", "at": [0.12, 0.6], "color": "#e8c96a"}, {"type": "weathervane"}]}, "5": {"body": {"h": 2.05}, "features": [{"type": "cupola"}, {"type": "silo", "at": [0.86, 0.82], "r": 0.14, "h": 1.0, "plain": true}, {"type": "flowers"}]}}},
+    "feed_mill": {"body": {"shape": "tower", "w": 0.44, "d": 0.44, "h": 1.8, "sails": 0.78, "broken": true, "at": [0.45, 0.42], "walls": "plaster"}, "roof": {"type": "cone", "pitch": 1.5, "overhang": 0.14, "color": "#a8452f", "style": "planks"}, "door": {"w": 0.17, "h": 0.5, "style": "arch", "color": "#8f3b28"}, "windows": 1, "dress": "none", "features": [{"type": "sacks", "at": [0.76, 0.76]}], "levels": {"2": {"body": {"broken": false}, "features": [{"type": "sacks", "at": [0.2, 0.76], "count": 3, "mark": "#3f78b5"}]}, "3": {"body": {"h": 2.15, "sails": 0.88}, "features": [{"type": "silo", "at": [0.86, 0.16], "r": 0.17, "h": 1.4, "plain": true}, {"type": "hay_bales"}]}, "4": {"body": {"w": 0.5, "d": 0.5, "lower": 1.25, "h": 2.85, "sails": 0.78}}, "5": {"body": {"low_sails": 0.45, "stripe": "#c0392b"}, "features": [{"type": "silo", "at": [0.88, 0.32], "r": 0.15, "h": 1.1, "plain": true}, {"type": "crown"}]}}},
     "dog_house": {
       "body": {
         "w": 0.3,

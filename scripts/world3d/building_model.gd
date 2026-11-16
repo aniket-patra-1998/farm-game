@@ -228,11 +228,19 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "yard":
 			_yard(ctx, f)
+	# A maxed building (it wears a crown) has its roofs edged in gold.
+	for f: Dictionary in s.get("features", []):
+		if f.get("type") == "crown":
+			ModelKit.roof_trim = BuildingDress.GOLD
 	if bw > 0.0 and bh > 0.0:
-		_body(ctx)
+		if str(body.get("shape", "block")) == "tower":
+			_tower(ctx)
+		else:
+			_body(ctx)
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") != "yard":
 			_feature(ctx, f)
+	ModelKit.roof_trim = ModelKit.RAKE_COLOUR
 	if broken and ctx.has("lo"):
 		_broken(ctx)
 	return SpaceFit.fit_model(root, fp)
@@ -547,6 +555,23 @@ static func _body(ctx: Dictionary) -> void:
 	ctx["hi"] = hi
 	_door(ctx, trim)
 	_windows(ctx, int(s.get("windows", 2)), trim, int(s.get("window_rows", 1)))
+	_settle(ctx)
+
+
+## A round tower instead of a block (a windmill): BuildingDress builds it, and its door hangs in the flat case
+## at its foot.
+static func _tower(ctx: Dictionary) -> void:
+	var case := BuildingDress.tower(ctx)
+	var at_door := ctx.duplicate()
+	at_door["lo"] = case[0]
+	at_door["hi"] = case[1]
+	_door(at_door, Color.html(str((ctx["spec"] as Dictionary).get("trim", "#f3eee2"))))
+	_settle(ctx)
+
+
+## What every body ends with: where its windows are, the light it spills at night, and the ground it stands on.
+static func _settle(ctx: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
 	var marker := Node3D.new()   # (read by BuildingFill, which puts animals' heads in them when the home is full)
 	marker.set_meta(ModelKit.KEEP, true)
 	marker.set_meta(WINDOWS, ctx.get("window_at", []))
@@ -666,7 +691,7 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 					brace)
 				if diag != null:
 					diag.rotation.z = side * atan2(w / 2.0, h)
-			# Its frame: a post each side and a heavy lintel, and iron strap hinges on each leaf.
+			# Its frame: a post each side and a heavy lintel.
 			ModelKit.box(root, Vector3(x - w / 2 - 0.06, y0 + h, z), Vector3(x + w / 2 + 0.06, y0 + h + 0.06,
 				z + 0.06),
 				ModelKit.paint(trim))
@@ -674,11 +699,6 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 				ModelKit.box(root, Vector3(x + side * (w / 2 + 0.03) - 0.03, y0, z),
 					Vector3(x + side * (w / 2 + 0.03) + 0.03,
 					y0 + h, z + 0.05), ModelKit.paint(trim))
-				for strap: float in [0.2, 0.8]:
-					ModelKit.box(root, Vector3(x + side * w / 2 - (0.0 if side < 0 else w * 0.2),
-						y0 + h * strap - 0.014, z + 0.05),
-						Vector3(x + side * w / 2 + (w * 0.2 if side < 0 else 0.0), y0 + h * strap + 0.014, z + 0.058),
-						ModelKit.paint(BuildingDress.IRON, 0.3), false)
 		"roller":
 			var shutter := _hinge(root, Vector3(x, y0, z), 0.0)
 			shutter.get_parent().set_meta("slide", h * 0.85)
@@ -701,26 +721,26 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 			for side: float in [-1.0, 1.0]:
 				ModelKit.box(root, Vector3(x + side * (w / 2 + 0.015) - 0.015, y0, z),
 					Vector3(x + side * (w / 2 + 0.015) + 0.015, y0 + h, z + 0.02), ModelKit.paint(trim))
+			var door_col := Color.html(str(d.get("color", "#6b3f26")))
 			var door := _hinge(root, Vector3(x - w / 2, y0, z), -1.0)
 			ModelKit.box(door, Vector3(x - w / 2, y0, z + 0.006), Vector3(x + w / 2, y0 + h, z + 0.026),
-				ModelKit.paint(Color("#6b3f26")))
+				ModelKit.paint(door_col))
 			ModelKit.ball(door, Vector3(x + w / 2 - 0.04, y0 + h * 0.5, z + 0.03), 0.012,
 				ModelKit.paint(Color("#d4b04a"), 0.7))
 			if style == "arch":
 				# Discs centred on the door's top, set back so their lower halves hide behind the door and its
 				# posts: what shows is a rounded top in the door's colour inside a ring of trim.
-				for disc: Array in [[w / 2.0 + 0.03, z + 0.001, trim], [w / 2.0, z + 0.003, Color("#6b3f26")]]:
+				for disc: Array in [[w / 2.0 + 0.03, z + 0.001, trim], [w / 2.0, z + 0.003, door_col]]:
 					var arch := ModelKit.cylinder(root, Vector3.ZERO, disc[0], 0.008, ModelKit.paint(disc[2]))
 					arch.rotation.x = PI / 2.0
 					arch.position = Vector3(x, y0 + h, disc[1] + 0.004)
-	# Two broad steps up to the door, and a lantern on the wall beside it.
+	# Two broad steps up to the door.
 	if lo.y <= 0.0:
 		ModelKit.box(root, Vector3(x - w / 2 - 0.1, 0, z), Vector3(x + w / 2 + 0.1, PLINTH * 0.45, z + 0.2),
 			ModelKit.surface(STONE.lightened(0.06), "stone", 0.2))
 		ModelKit.box(root, Vector3(x - w / 2 - 0.06, 0, z), Vector3(x + w / 2 + 0.06, PLINTH * 0.9, z + 0.11),
 			ModelKit.surface(STONE, "stone", 0.2))
-	if style != "mesh" and style != "hatch" and (hi.x - lo.x) - w > 0.34:
-		BuildingDress.lantern(root, Vector3(x + w / 2 + 0.1, y0 + h * 0.86, z), Vector3(0, 0, 1))
+
 
 
 ## A hinge for a door at `at` (on its outer edge, at the foot): returns the node to build the door under,
@@ -770,15 +790,12 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 			z + size / 2), ModelKit.paint(trim), false)
 		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - size / 2, z - 0.011), Vector3(hi.x + FRAME_OUT + 0.014,
 			y + size / 2, z + 0.011), ModelKit.paint(trim), false)
-		# A header over it, a deep sill under it, and the shadow the sill throws.
+		# A header over it and a deep sill under it.
 		ModelKit.box(root, Vector3(hi.x, y + size / 2 + frame, z - size / 2 - frame - 0.025),
 			Vector3(hi.x + FRAME_OUT + 0.025, y + size / 2 + frame + 0.035,
 				z + size / 2 + frame + 0.025), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame - 0.035, z - size / 2 - frame - 0.035),
 			Vector3(hi.x + 0.095, y - size / 2 - frame, z + size / 2 + frame + 0.035), ModelKit.paint(trim))
-		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame - 0.065, z - size / 2 - frame),
-			Vector3(hi.x + 0.006, y - size / 2 - frame - 0.035, z + size / 2 + frame),
-			ModelKit.paint((ctx["wall"] as Color).darkened(0.4)), false)
 		_dress_window(ctx, Vector3(hi.x, y, z), size, k)
 
 
@@ -800,8 +817,6 @@ static func _dress_window(ctx: Dictionary, at: Vector3, size: float, index: int)
 			var z1 := z0 + side * size * 0.38
 			ModelKit.box(root, Vector3(at.x, at.y - size / 2.0, minf(z0, z1)),
 				Vector3(at.x + 0.03, at.y + size / 2.0, maxf(z0, z1)), shutter)
-			ModelKit.box(root, Vector3(at.x + 0.03, at.y - 0.016, minf(z0, z1)),   # (its batten)
-				Vector3(at.x + 0.042, at.y + 0.016, maxf(z0, z1)), shutter, false)
 	if dress in ["flower_boxes", "both"]:
 		var wood := ModelKit.surface(WOOD, "boards")
 		var y := at.y - size / 2.0 - 0.1
@@ -1377,7 +1392,7 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 	# stones lying about.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str((ctx["it"] as Dictionary).get("id", ""))) + 3
-	for k in 5:
+	for k in 3:
 		var p := Vector3(rng.randf_range(inset + 0.35, fw - inset - 0.35), 0.012, rng.randf_range(inset + 0.35,
 			fd - inset - 0.35))
 		var r := rng.randf_range(0.18, 0.3)
@@ -1386,16 +1401,6 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 			else col.lightened(0.1), "plaster", 0.0), r * 0.85, 7)
 		patch.scale.x = 1.0 + rng.randf() * 0.4
 		patch.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	for k in 10:
-		var p := Vector3(rng.randf_range(inset + 0.1, fw - inset - 0.1), 0.014, rng.randf_range(inset + 0.1,
-			fd - inset - 0.1))
-		if ground == "straw" or k % 3 == 0:
-			var wisp := ModelKit.box(root, Vector3(-0.05, 0, -0.008), Vector3(0.05, 0.008, 0.008), ModelKit.paint(HAY
-				.lightened(0.1 * (k % 2))), false)
-			wisp.position = p
-			wisp.rotation.y = rng.randf() * PI
-		else:
-			BuildingDress.stone(root, p, rng.randf_range(0.025, 0.04), STONE.darkened(0.1))
 	var fence := str(f.get("fence", "rail"))
 	var mat := ModelKit.paint(FENCE if fence == "picket" else RAIL)
 	var corners := [Vector3(inset, 0, inset), Vector3(fw - inset, 0, inset), Vector3(fw - inset, 0, fd - inset),
