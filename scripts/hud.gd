@@ -22,6 +22,7 @@ const INK := Color("#3a2614")
 const SUN := Color("#ffd34d")
 
 const LOCKED := Color("#d8cbb0")
+const BUTTON_EDGE := 0.5   # a panel button's edge, against the theme's button border
 
 
 var top: HudTop
@@ -293,7 +294,7 @@ func _build_toast(root: Control) -> void:
 
 
 func show_message(text: String) -> void:
-	_toast.text = text
+	_toast.text = UiTheme.tidy(text)
 	if _toast_tween:
 		_toast_tween.kill()
 	_toast_tween = create_tween()
@@ -327,7 +328,7 @@ func pulse(which: String) -> void:
 
 func _set_shown_coins(v: float) -> void:
 	_shown_coins = v
-	top.coins_label.text = UiTheme.short_number(int(round(v)))
+	top.coins_label.text = UiTheme.number(int(round(v)))
 
 
 ## The coin counter rolls to the new amount instead of jumping (spends snap down at once).
@@ -355,7 +356,7 @@ func _refresh() -> void:
 	var lo := Game.xp_for_level(lvl)
 	var hi := Game.xp_for_level(lvl + 1)
 	_roll_coins()
-	top.gems_label.text = UiTheme.short_number(Game.gems)
+	top.gems_label.text = UiTheme.number(Game.gems)
 	var ratio := clampf(float(Game.xp - lo) / maxf(hi - lo, 1.0), 0.0, 1.0)
 	# The bar fills smoothly; on a level-up it starts again from the new level.
 	if top.xp.level != lvl or ratio < top.xp.ratio:
@@ -401,7 +402,7 @@ func show_inbox() -> void:
 	var note := Game.social.settle()
 	if note != "":
 		show_message(note)
-	book.open_panel(tr("INBOX"), inbox.build_inbox)
+	book.open_panel(tr("INBOX"), inbox.build_inbox, BookPanel.Shape.LIST)
 
 
 func show_ribbons() -> void:
@@ -409,7 +410,7 @@ func show_ribbons() -> void:
 
 
 func show_settings() -> void:
-	book.open_panel(tr("SETTINGS"), settings.build_settings)
+	book.open_panel(tr("SETTINGS"), settings.build_settings, BookPanel.Shape.LIST)
 
 
 func show_market() -> void:
@@ -478,7 +479,7 @@ func close_panels() -> void:
 
 func panel_button(words: String) -> Button:
 	var b := Button.new()
-	b.text = words
+	b.text = UiTheme.tidy(words)
 	b.custom_minimum_size = Vector2(UiTheme.size("panel_button_width"), UiTheme.size("panel_button_height"))
 	b.focus_mode = Control.FOCUS_NONE
 	UiFx.press_bounce(b)
@@ -490,7 +491,7 @@ func panel_button(words: String) -> Button:
 
 func _make_theme() -> Theme:
 	var t := Theme.new()
-	t.default_font_size = UiTheme.font(22)
+	t.default_font_size = UiTheme.font(UiTheme.BODY)   # (panel words are body text; titles and headings say so)
 
 	var panel := StyleBoxFlat.new()
 	panel.bg_color = WOOD
@@ -503,11 +504,12 @@ func _make_theme() -> Theme:
 	panel.content_margin_bottom = 12
 	t.set_stylebox("panel", "PanelContainer", panel)
 
-	t.set_stylebox("normal", "Button", _button_box(CREAM, WOOD_DARK))
-	t.set_stylebox("hover", "Button", _button_box(CREAM.lightened(0.3), WOOD_DARK))
-	t.set_stylebox("pressed", "Button", _button_box(SUN, INK, true))
-	t.set_stylebox("hover_pressed", "Button", _button_box(SUN, INK, true))
-	t.set_stylebox("disabled", "Button", _button_box(LOCKED, WOOD_DARK))
+	var edge := UiTheme.color("card_edge")
+	t.set_stylebox("normal", "Button", _button_box(CREAM, edge))
+	t.set_stylebox("hover", "Button", _button_box(CREAM.lightened(0.3), edge))
+	t.set_stylebox("pressed", "Button", _button_box(SUN, SUN.darkened(0.25), true))
+	t.set_stylebox("hover_pressed", "Button", _button_box(SUN, SUN.darkened(0.25), true))
+	t.set_stylebox("disabled", "Button", _button_box(LOCKED, edge))
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color"]:
 		t.set_color(state, "Button", INK)
@@ -555,21 +557,17 @@ func _theme_fields(t: Theme, fill: StyleBoxFlat) -> void:
 	t.set_icon("grabber_highlight", slider, knob)
 
 
-## A plush button: round, a darker lip underneath like a key that can be pressed (thinner when pressed: it has
-## gone down), and a soft shadow on what it sits on.
-func _button_box(fill: Color, border: Color, down := false) -> StyleBoxFlat:
+## A panel button (the modern look, as the cards): a flat pill with a thin edge, no lip or shadow; chosen (a
+## toggle that is on) it takes the fill it is given. Its padding hugs its words: buttons are as big as they say.
+func _button_box(fill: Color, border: Color, _down := false) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = fill
 	sb.border_color = border
-	sb.set_border_width_all(int(UiTheme.size("button_border")))
-	sb.border_width_bottom = int(UiTheme.size("button_border") * (1.5 if down else 3.0))
-	sb.set_corner_radius_all(int(UiTheme.size("button_radius") * 1.6))
-	sb.shadow_color = Color(0, 0, 0, 0.0 if down else 0.22)
-	sb.shadow_size = int(UiTheme.size("button_border") * 2.0)
-	sb.shadow_offset = Vector2(0, UiTheme.size("button_border"))
+	sb.set_border_width_all(maxi(1, int(UiTheme.size("button_border") * BUTTON_EDGE)))
+	sb.set_corner_radius_all(int(UiTheme.size("panel_button_height")))   # (a pill: rounder than it is high)
 	sb.anti_aliasing_size = 1.2
 	sb.content_margin_left = UiTheme.size("button_pad")
 	sb.content_margin_right = UiTheme.size("button_pad")
-	sb.content_margin_top = UiTheme.size("button_pad") * 0.4
-	sb.content_margin_bottom = UiTheme.size("button_pad") * 0.4 + (0.0 if down else UiTheme.size("button_border") * 1.5)
+	sb.content_margin_top = UiTheme.size("button_pad") * 0.35
+	sb.content_margin_bottom = UiTheme.size("button_pad") * 0.35
 	return sb

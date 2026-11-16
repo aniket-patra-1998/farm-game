@@ -24,7 +24,7 @@ func add_feed_card(content: VBoxContainer, o: Dictionary) -> void:
 	var uid := int(o["uid"])
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 8)
-	card.add_child(BookPanel.text(tr("FEEDING_OUR_OWN_TOUCH"), 22))
+	card.add_child(BookPanel.text(tr("FEEDING_OUR_OWN_TOUCH"), UiTheme.BODY))
 	card.add_child(BookPanel.text(_status(o), 18))
 	var any := false
 	for f in Game.feeds.feed_ids():
@@ -73,7 +73,7 @@ func add_barn_stock(content: VBoxContainer) -> void:
 	if not Game.feeds.enabled():
 		return
 	var card := BookPanel.card()
-	card.add_child(BookPanel.text(tr("FEED_IN_THE_BARN") % Game.feeds.cap(), 20))
+	card.add_child(BookPanel.text(tr("FEED_IN_THE_BARN") % Game.feeds.cap(), UiTheme.BODY))
 	for f in Game.feeds.feed_ids():
 		var line := "%s %d" % [Game.feeds.feed_name(f), Game.feeds.count(f)]
 		if Game.feeds.count(f, true) > 0:

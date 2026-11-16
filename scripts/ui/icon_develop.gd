@@ -25,6 +25,7 @@ var _black: PackedByteArray
 var _white: PackedByteArray
 var _out: PackedByteArray
 var _shade: PackedByteArray
+var _raw: Array = []   # the two renders still to bring to size (black, then white)
 var _side := 0
 var _row := 0
 
@@ -35,12 +36,7 @@ func _init(item_id: String, black: Image, white: Image, side: int, keep_it: bool
 	keep = keep_it
 	shadow = with_shadow
 	_side = side
-	for img: Image in [black, white]:
-		img.convert(Image.FORMAT_RGBA8)
-		if img.get_width() != side:
-			img.resize(side, side, Image.INTERPOLATE_LANCZOS)
-	_black = black.get_data()
-	_white = white.get_data()
+	_raw = [black, white]   # (brought to size in `step`, one a call: never a whole picture's work in one frame)
 	_out = PackedByteArray()
 	_out.resize(side * side * 4)
 	_shade = PackedByteArray()
@@ -51,6 +47,17 @@ func _init(item_id: String, black: Image, white: Image, side: int, keep_it: bool
 func step() -> bool:
 	if done:
 		return true
+	if not _raw.is_empty():
+		var img: Image = _raw.pop_front()
+		img.convert(Image.FORMAT_RGBA8)
+		if img.get_width() != _side:
+			# An exact halving averages each 2x2 block (bilinear at half size): the supersampled edge, smooth.
+			img.resize(_side, _side, Image.INTERPOLATE_BILINEAR)
+		if _raw.size() == 1:
+			_black = img.get_data()
+		else:
+			_white = img.get_data()
+		return false
 	var end := mini(_row + ROWS_PER_STEP, _side)
 	for p in range(_row * _side * 4, end * _side * 4, 4):
 		var alpha := clampi(255 - (int(_white[p + 1]) - int(_black[p + 1])), 0, 255)

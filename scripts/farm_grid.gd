@@ -1060,7 +1060,7 @@ func _burst_find(at: Vector2, text: String, rarity: String, nth: int) -> void:
 	Feedback.moment(str(look["moment"]))
 	# The words: in the rarity's colour and size, popping in, then rising and fading.
 	var label := Label.new()
-	label.text = text
+	label.text = UiTheme.tidy(text)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.size = Vector2(520, 48)
 	label.pivot_offset = label.size / 2.0

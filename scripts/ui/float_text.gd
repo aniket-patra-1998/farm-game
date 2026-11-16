@@ -31,7 +31,7 @@ static func style(label: Label, design_px := 20, colour := Color(0, 0, 0, 0)) ->
 ## A new floating label with `words`.
 static func label(words: String, design_px := 20, colour := Color(0, 0, 0, 0)) -> Label:
 	var l := Label.new()
-	l.text = words
+	l.text = UiTheme.tidy(words)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return style(l, design_px, colour)

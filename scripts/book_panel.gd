@@ -10,6 +10,8 @@ extends Control
 ## Words on paper, by their role (the values are data/ui_theme.json's "ink", "soft" and "done"): INK for what is
 ## read, SOFT for what is said beside it (a hint, a time, a reason), HEAD for a section's heading, GOOD for done
 ## ("done"). A test holds every word on the paper to a readable contrast.
+enum Shape { CARDS, LIST }   # what a panel holds, and so how wide it is (`open_panel`)
+
 const INK := Color("#3a2614")
 const SOFT := Color("#8a7763")
 const HEAD := Color("#3a2614")
@@ -20,10 +22,12 @@ const DIM := 0.35          # the backdrop's darkness
 const HEIGHT_SHARE := 0.66
 const INFO_SIZE := 1.6   # an ⓘ's size against the text beside it
 const INFO_LEAST := 40.0   # ..and never smaller than this (a finger must hit it)
+const PICTURE_PILL := 1.4   # a picture pill's side, in panel buttons' heights
 const WIDEST := 2.0
 const SECTION_LINE := 1.0   # px of the thin line under a section (card_frame)
 const SECTION_PAD := 10.0   # px above and below a section's content
 
+var shape := Shape.CARDS   # what the panel open holds (`open_panel`)
 var _title: Label
 var _panel: PanelContainer
 var _content: VBoxContainer
@@ -74,6 +78,7 @@ func _ready() -> void:
 	col.add_child(header)
 	_title = Label.new()
 	_title.add_theme_font_size_override("font_size", UiTheme.text_px("font_book_title"))
+	_title.set_meta(&"title", true)   # (the one text larger than a heading: tests/suites/menus_test.gd)
 	_title.add_theme_color_override("font_color", INK)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -113,7 +118,8 @@ func _on_screen_changed() -> void:
 ## design size where the screen has room for it), so a shelf shows more than two rows.
 func _fit_screen() -> void:
 	var view := get_viewport_rect().size
-	_panel.custom_minimum_size.x = width_for(view.x, view.y)
+	_panel.custom_minimum_size.x = width_for(view.x, view.y) if shape == Shape.CARDS \
+		else minf(UiTheme.size("book_list_width"), view.x - UiTheme.size("book_inset"))
 	_scroll.custom_minimum_size.y = view.y * HEIGHT_SHARE
 
 
@@ -125,8 +131,11 @@ static func width_for(view_w: float, view_h := -1.0) -> float:
 	return minf(maxf(UiTheme.size("book_width"), h * WIDEST), view_w - UiTheme.size("book_inset"))
 
 
-## builder(content: VBoxContainer) fills the panel; it runs again on refresh().
-func open_panel(title: String, builder: Callable) -> void:
+## builder(content: VBoxContainer) fills the panel; it runs again on refresh(). `as_shape`: CARDS (a shelf of
+## cards: as wide as the screen allows) or LIST (rows and choices, Settings, the inbox: a column as wide as its
+## words need, `book_list_width`).
+func open_panel(title: String, builder: Callable, as_shape := Shape.CARDS) -> void:
+	shape = as_shape
 	_tabs = []
 	_tab = 0
 	_show(title, builder)
@@ -134,6 +143,7 @@ func open_panel(title: String, builder: Callable) -> void:
 
 ## Opens a panel with tabs: `tabs` = [[name, builder]], `first` the one shown (FarmVille's Market shelves).
 func open_tabs(title: String, tabs: Array, first := 0) -> void:
+	shape = Shape.CARDS
 	_tabs = tabs
 	_tab = clampi(first, 0, tabs.size() - 1)
 	_show(title, tabs[_tab][1])
@@ -265,6 +275,71 @@ static func card() -> VBoxContainer:
 	return VBoxContainer.new()
 
 
+## A section's heading (heading size, the head ink): what a group of rows is about.
+static func heading(words: String) -> Label:
+	return text(words, UiTheme.HEADING, HEAD)
+
+
+## A setting's row, as phones lay them out (our own look): its name at the left, its control at the right, one
+## line high. `help` (optional) is said on a long press of the row's name, not printed under it.
+static func row(words: String, control: Control, help := "") -> HBoxContainer:
+	var r := HBoxContainer.new()
+	r.add_theme_constant_override("separation", int(SECTION_PAD))
+	var name := text(words)
+	name.autowrap_mode = TextServer.AUTOWRAP_OFF   # (a setting's name is a few words: it keeps its line)
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL if not control is FlowContainer else Control.SIZE_FILL
+	name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	r.add_child(name)
+	if help != "":
+		name.tooltip_text = UiTheme.tidy(help)
+		name.mouse_filter = Control.MOUSE_FILTER_PASS
+	control.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if control is FlowContainer:   # (choices take the rest of the line, and wrap onto a second when they must)
+		control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	r.add_child(control)
+	return r
+
+
+## A switch for a row (on or off), `toggled(on)` told when flipped.
+static func switch(on: bool, toggled: Callable) -> CheckButton:
+	var c := CheckButton.new()
+	c.button_pressed = on
+	c.focus_mode = Control.FOCUS_NONE
+	c.toggled.connect(toggled)
+	return c
+
+
+## A small set of choices in one line (pills, the one in use lit): `options` [[key, words]] or [[key, words,
+## picture]] (a picture pill: the picture alone, its words on a long press), `pick(key)` told on a tap. Each pill
+## is as wide as its words.
+static func choice(options: Array, current: String, pick: Callable) -> HFlowContainer:
+	var r := HFlowContainer.new()
+	r.alignment = FlowContainer.ALIGNMENT_END
+	r.add_theme_constant_override("h_separation", int(SECTION_PAD / 2.0))
+	r.add_theme_constant_override("v_separation", int(SECTION_PAD / 2.0))
+	var group := ButtonGroup.new()
+	for o: Array in options:
+		var b := Button.new()
+		b.text = str(o[1])
+		if o.size() > 2 and o[2] is Control:   # (a picture in place of the words)
+			b.text = ""
+			var pic: Control = o[2]
+			b.custom_minimum_size = Vector2.ONE * UiTheme.size("panel_button_height") * PICTURE_PILL
+			b.add_child(pic)
+			UiKit.centered(pic)
+			UiKit.long_press_name(b, str(o[1]))
+		b.toggle_mode = true
+		b.button_group = group
+		b.button_pressed = str(o[0]) == current
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_font_size_override("font_size", font_px(UiTheme.BODY))
+		var key := str(o[0])
+		b.pressed.connect(func() -> void: pick.call(key))
+		UiFx.press_bounce(b)
+		r.add_child(b)
+	return r
+
+
 ## A section of a panel: flat on the paper, no box round it, a thin line under it (our own look: fewer boxes in
 ## boxes).
 static func card_frame(inner: Control) -> PanelContainer:
@@ -280,9 +355,9 @@ static func card_frame(inner: Control) -> PanelContainer:
 	return frame
 
 
-static func text(words: String, font_size := 22, color := INK) -> Label:
+static func text(words: String, font_size := UiTheme.BODY, color := INK) -> Label:
 	var l := PanelText.new()   # (wraps only where it has a width: never a letter a line)
-	l.text = words
+	l.text = UiTheme.tidy(words)
 	l.add_theme_font_size_override("font_size", font_px(font_size))
 	l.add_theme_color_override("font_color", color)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -291,7 +366,7 @@ static func text(words: String, font_size := 22, color := INK) -> Label:
 
 ## One short line with an ⓘ beside it: the line says what matters at a glance, the ⓘ shows `more` (the whole
 ## explanation) as a message when tapped. Panels open with one of these, never a paragraph.
-static func info(words: String, more: String, font_size := 20, color := INK) -> HBoxContainer:
+static func info(words: String, more: String, font_size := UiTheme.BODY, color := INK) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	var line := text(words, font_size, color)

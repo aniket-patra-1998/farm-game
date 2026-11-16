@@ -33,8 +33,8 @@ enum Kind { HOME, CRAFT, BUILD, BARN, OTHER, ANIMAL, YOUNG, BLOOM, VEHICLE }   #
 const MARGIN := 18.0                   # the paper's inside margin
 const SLIDE := 0.18                    # seconds the sheet takes to slide in
 const COUNT_UP := 0.6                  # seconds a collected sum takes to count up
-const WIDTH_SHARE := 0.62              # of the screen's width..
-const WIDTH_LEAST := 560.0             # ..but never narrower than this
+const WIDTH_SHARE := 0.5               # of the screen's width..
+const WIDTH_LEAST := 480.0             # ..but never narrower than this
 const EDGE := 14.0                     # its gap from the bottom of the screen
 const TICK := 1.0                      # seconds between looks at the clock while open
 const TALL_SHARE := 0.78               # the tall sheet's height, of the screen's
@@ -59,7 +59,6 @@ var _pic: TextureRect
 var _name: Label
 var _state: Label
 var _ring: Ring
-var _spaces: Label
 var _bar: ProgressBar
 var _inside: HBoxContainer
 var _inside_key := ""
@@ -470,7 +469,8 @@ func _build_head(gap: int) -> Control:
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.alignment = BoxContainer.ALIGNMENT_CENTER
-	_name = BookPanel.text("", 24, UiTheme.color("ink"))
+	_name = BookPanel.text("", UiTheme.TITLE, UiTheme.color("ink"))
+	_name.set_meta(&"title", true)
 	_state = BookPanel.text("", 17, UiTheme.color("soft"))
 	words.add_child(_name)
 	words.add_child(_state)
@@ -509,7 +509,7 @@ func _build_next(gap: int) -> Control:
 	_next_pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_next_pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(_next_pic)
-	_next = BookPanel.text("", 17, UiTheme.color("ink"))
+	_next = BookPanel.text("", UiTheme.BODY, UiTheme.color("ink"))
 	_next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_next.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_next)
@@ -522,26 +522,15 @@ func _build_numbers(gap: int) -> Control:
 	row.add_theme_constant_override("separation", gap)
 	var fill := VBoxContainer.new()
 	fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_spaces = BookPanel.text("", 18, UiTheme.color("ink"))
-	fill.add_child(_spaces)
-	_bar = ProgressBar.new()
-	_bar.show_percentage = false
-	_bar.custom_minimum_size.y = 14
-	var track := StyleBoxFlat.new()
-	track.bg_color = UiTheme.color("track")
-	track.set_corner_radius_all(7)
-	var done := StyleBoxFlat.new()
-	done.bg_color = UiTheme.color("accent")
-	done.set_corner_radius_all(7)
-	_bar.add_theme_stylebox_override("background", track)
-	_bar.add_theme_stylebox_override("fill", done)
+	fill.alignment = BoxContainer.ALIGNMENT_CENTER
+	_bar = UiKit.word_bar()   # (the count on the bar itself: one thing, not words over a bar)
 	fill.add_child(_bar)
 	row.add_child(fill)
 	_fill_block = fill
 	_pay = HBoxContainer.new()
 	_pay.add_theme_constant_override("separation", gap / 2)
 	row.add_child(_pay)
-	_pay.add_child(BookPanel.text(tr("SHEET_PAYS"), 18, UiTheme.color("soft")))   # "Pays +4,380 (coin) +84 (star)"
+	_pay.add_child(BookPanel.text(tr("SHEET_PAYS"), UiTheme.BODY, UiTheme.color("soft")))   # "Pays +4.3k (coin) +84"
 	_coins = _number(_pay, "coin")
 	_xp = _number(_pay, "star")
 	return row
@@ -552,7 +541,7 @@ func _number(row: HBoxContainer, icon_kind: String) -> Label:
 	var icon := UiIcon.make(icon_kind, UiTheme.size("panel_icon") * 0.42)
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(icon)
-	var label := BookPanel.text("", 22, UiTheme.color("ink"))
+	var label := BookPanel.text("", UiTheme.HEADING, UiTheme.color("ink"))
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(label)
@@ -597,8 +586,8 @@ func _refill() -> void:
 	_numbers(o, total, cap)
 	if not _counting:
 		var pay := Game.object_payout(o)
-		_coins.text = "+" + UiTheme.number(pay.x)   # not-ui
-		_xp.text = "+%d" % pay.y   # not-ui
+		_coins.text = UiTheme.signed(pay.x)
+		_xp.text = UiTheme.signed(pay.y)
 	var key := str(o.get("inside", {}))
 	if key != _inside_key:
 		_inside_key = key
@@ -662,10 +651,13 @@ func _clock(o: Dictionary, ready: bool) -> void:
 	# The ring is the time to wait, with it written inside; nothing inside to wait for: no ring at all.
 	_ring.visible = pays and (ready or Game.inside_total(o) > 0)
 	_ring.words = "" if ready else FarmGrid.format_duration(Game.seconds_until_ready(o))
-	_collect.visible = pays
-	_collect.disabled = not ready
-	_collect.text = tr("COLLECT") if ready else _state.text
-	_collect.modulate.a = 1.0 if ready else 0.5
+	# One fact once: while waiting, the ring says how long (no line, no greyed button saying it again); ready,
+	# the big button says Collect.
+	_collect.visible = pays and ready
+	_collect.disabled = false
+	_collect.text = tr("COLLECT")
+	_collect.modulate.a = 1.0
+	_state.visible = not (_ring.visible and not ready) and not _collect.visible
 
 
 ## What the next size of home `o` adds, in a line ("" at its biggest size): more spaces, and the one new thing
@@ -704,7 +696,7 @@ func _on_collect() -> void:
 	hud.show_message(tr("COINS_XP") % [r["coins"], r["xp"]])
 	_counting = true
 	var tween := create_tween()
-	tween.tween_method(func(v: float) -> void: _coins.text = "+" + UiTheme.number(int(v)),   # not-ui (a sum)
+	tween.tween_method(func(v: float) -> void: _coins.text = UiTheme.signed(int(v)),   # (a sum)
 		0.0, float(r["coins"]), COUNT_UP)
 	tween.tween_callback(func() -> void:
 		_counting = false
@@ -752,26 +744,19 @@ func _numbers(o: Dictionary, total: int, cap: int) -> void:
 	var shown := true
 	match _kind:
 		Kind.HOME:
-			_spaces.text = tr("OF_SPACES_USED") % [total, cap]
-			_set_bar(total, cap)
+			UiKit.set_bar(_bar, total, cap, tr("OF_SPACES_USED") % [total, cap])
 			shown = cap > 0
 		Kind.CRAFT:
 			shown = false   # (its slots say it: its Make page)
 		Kind.BUILD:
-			_spaces.text = tr("SHEET_MATERIALS")
-			_set_bar(roundi(Game.land.construction_progress(o) * 100.0), 100)
+			UiKit.set_bar(_bar, roundi(Game.land.construction_progress(o) * 100.0), 100, tr("SHEET_MATERIALS"))
 		Kind.BARN:
-			_spaces.text = tr("OF_SPACES_USED") % [Game.storage.stored.size(), Game.storage.total_limit()]
-			_set_bar(Game.storage.stored.size(), Game.storage.total_limit())
+			UiKit.set_bar(_bar, Game.storage.stored.size(), Game.storage.total_limit(),
+				tr("OF_SPACES_USED") % [Game.storage.stored.size(), Game.storage.total_limit()])
 		_:
 			shown = false
 	_fill_block.modulate.a = 1.0 if shown else 0.0   # (the pay beside it keeps the row's place)
 	(_fill_block.get_parent() as Control).visible = shown or _pay.visible
-
-
-func _set_bar(value: int, most: int) -> void:
-	_bar.max_value = maxi(most, 1)
-	_bar.value = value
 
 
 ## The clock's part for a building that isn't a home: its state and ring, its lines (a crafting building's slots,
@@ -801,6 +786,7 @@ func _clock_other(o: Dictionary) -> void:
 				_ring.visible = true
 				_ring.share = clampf(1.0 - float(soonest) / maxf(float(took), 1.0), 0.0, 1.0)
 				_ring.words = FarmGrid.format_duration(soonest)
+				state = ""   # (the ring says it)
 			else:
 				state = ""   # (its empty slots say it)
 			_collect.text = tr("CRAFT_COLLECT_N") % done

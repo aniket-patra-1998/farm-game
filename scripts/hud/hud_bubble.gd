@@ -61,8 +61,8 @@ func _init(owner: FarmHud) -> void:
 func show_at(at: Vector2, title: String, line: String, uid: int) -> void:
 	_at = at
 	_uid = uid
-	_title.text = title
-	_line.text = line
+	_title.text = UiTheme.tidy(title)
+	_line.text = UiTheme.tidy(line)
 	# A long word (a reason something can't be done) wraps at a set width; a name stays on one line.
 	var long := title.length() > WRAP_AFTER
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if long else TextServer.AUTOWRAP_OFF
