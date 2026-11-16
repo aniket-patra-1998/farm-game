@@ -34,6 +34,7 @@ var environment: Environment
 var ground: Ground3D
 var plots: Plots3D
 var crops: Crops3D
+var glints: Glints3D
 var objects: Objects3D
 var farmer: Farmer3D
 var _grade_warmth := -1.0
@@ -90,6 +91,8 @@ func _ready() -> void:
 	add_child(plots)
 	crops = Crops3D.new()
 	add_child(crops)
+	glints = Glints3D.new()   # (over ripe plots that hold a find)
+	add_child(glints)
 	objects = Objects3D.new()
 	objects.life = grid.life if grid != null else null
 	objects.grid = grid
@@ -166,6 +169,7 @@ func _plots_changed(i: int) -> void:
 		_changed_all = false
 		plots.update(indices)
 		crops.update(indices)
+		glints.update(indices)
 		ground.update_tiles(indices)).call_deferred()
 
 

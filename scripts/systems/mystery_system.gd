@@ -4,7 +4,11 @@ extends GameSystem
 ## Part of the game state: reached as `Game.mystery`; shared state is on `game`.
 
 
+# A prize is uncommon, rare, legendary when its share of the weights is under these.
+const RARE_SHARES: Array[float] = [0.3, 0.12, 0.04]
+
 var mystery_eggs := {}             # egg colour -> count
+var last_rarity := "common"        # how rare the prize last opened was (the reveal reads it)
 var egg_data := {}                 # data/mystery_eggs.json
 var box_data := {}                 # data/mystery_box.json
 
@@ -55,7 +59,9 @@ func open_mystery_egg(colour: String) -> String:
 	if int(mystery_eggs.get(colour, 0)) <= 0:
 		return ""
 	mystery_eggs[colour] = int(mystery_eggs[colour]) - 1
-	var text := give_prize(_weighted_prize(egg_data["colours"][colour]["prizes"]))
+	var won := _weighted_prize(egg_data["colours"][colour]["prizes"])
+	last_rarity = rarity_of_prize(egg_data["colours"][colour]["prizes"], won)
+	var text := give_prize(won)
 	game.ribbons.bump("eggs_opened", 1)
 	game.message.emit("%s: %s" % [egg_data["colours"][colour]["name"], text])
 	game.inventory_changed.emit()
@@ -105,6 +111,19 @@ func give_prize(prize: Array) -> String:
 	return ""
 
 
+## How rare a prize is among the prizes it was drawn from, by its share of their weights: the reveal's colours.
+static func rarity_of_prize(prizes: Array, prize: Array) -> String:
+	var total := 0
+	for p: Array in prizes:
+		total += int(p[2])
+	var share := float(prize[2]) / maxi(total, 1)
+	if share < RARE_SHARES[2]:
+		return "legendary"
+	if share < RARE_SHARES[1]:
+		return "rare"
+	return "uncommon" if share < RARE_SHARES[0] else "common"
+
+
 ## Picks one prize from a weighted list: [kind, amount or item, weight].
 func _weighted_prize(prizes: Array) -> Array:
 	var total := 0
@@ -129,7 +148,9 @@ func buy_mystery_box() -> String:
 
 
 func _open_box() -> String:
-	var text := give_prize(_weighted_prize(box_data["prizes"]))
+	var won := _weighted_prize(box_data["prizes"])
+	last_rarity = rarity_of_prize(box_data["prizes"], won)
+	var text := give_prize(won)
 	game.ribbons.bump("boxes_opened", 1)
 	game.message.emit(tr("MYSTERY_BOX_2") % text)
 	game.inventory_changed.emit()

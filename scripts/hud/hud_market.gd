@@ -282,7 +282,7 @@ func mystery_box_card() -> Control:
 	buy.pressed.connect(func() -> void:
 		var prize := Game.mystery.buy_mystery_box()
 		if prize != "":
-			hud.show_message(tr("YOU_GOT") + prize)
+			hud.reveal(RevealCard.BOX, tr("MYSTERY_BOX"), prize, Game.mystery.last_rarity)
 			hud._book.refresh())
 	inner.add_child(buy)
 	return BookPanel.card_frame(inner)

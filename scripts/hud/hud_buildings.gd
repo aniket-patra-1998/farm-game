@@ -255,7 +255,8 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 				b.pressed.connect(func() -> void:
 					var prize := Game.mystery.open_mystery_egg(c)
 					if prize != "":
-						hud.show_message(tr("YOU_GOT") + prize))
+						hud.reveal(c, str(Game.mystery.egg_data["colours"][c]["name"]), prize, Game.mystery.last_rarity)
+						hud._book.refresh())
 				eggs.add_child(b)
 			if eggs.get_child_count() > 0:
 				content.add_child(eggs)

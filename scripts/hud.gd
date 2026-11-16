@@ -38,6 +38,7 @@ var resting := false                # the interface has faded away over an idle 
 var next_ready: Callable            # set by Main: goes to the next thing ready to take
 var fit_view: Callable              # set by Main: shows the whole farm
 
+var _reveal: RevealCard   # the reveal of a mystery egg or box (made when first needed, then kept)
 var _away: AwayCard   # the While you were away card (made when first needed, then kept)
 var _rest_tween: Tween
 var _toast: Label
@@ -234,6 +235,16 @@ func set_resting(on: bool) -> void:
 ## fade from under it.
 func reading() -> bool:
 	return (sheet != null and sheet.visible) or (_away != null and _away.visible)
+
+
+## The reveal of a mystery opened from a panel (an egg's colour name or RevealCard.BOX): it shakes, bursts, and
+## what was inside is named in its rarity's colours, over everything.
+func reveal(what: String, title: String, prize: String, rarity: String) -> void:
+	if _reveal == null:
+		_reveal = RevealCard.new()
+		add_child(_reveal)   # (over the panels: it is the last thing added)
+	_reveal.move_to_front()
+	_reveal.play(what, title, prize, rarity)
 
 
 ## While you were away, as a card of rows (Game.away_recap). It waits for a panel that opened first (the daily

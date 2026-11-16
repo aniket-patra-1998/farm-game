@@ -482,3 +482,131 @@ func test_184_a_queen_bee_is_a_find_that_only_rolls_when_one_would_be_of_use() -
 	_eq(g.bees.queen_bees, 1, "she goes to the Barn for a hive")
 	_eq(g.finds.count("queen_bee") > 0, true, "and is counted as a find")
 	_check(not g.finds.claimed.get("queen_bee", false), "with no collection prize to claim")
+
+
+## What a harvest will turn up is decided when the crop is planted and kept with its plot, so the plot can glint
+## before the harvest; the harvest gives it and rolls nothing again. A plot from before luck was held (an old
+## save) is rolled at its harvest as it always was.
+func test_364_a_plot_holds_its_luck_from_planting() -> void:
+	var g := _farm(true)
+	g.coins = 100000
+	g.xp = g.xp_for_level(20)
+	var said: Array = []
+	g.found.connect(func(i: int, text: String, rarity: String) -> void: said.append([i, text, rarity]))
+	var a := _free(g)
+	g.field.plow(a)
+	g.drops.pity["golden"] = Balance.i("harvest.golden_pity")   # the next crop planted is golden for sure
+	g.field.plant(a, "wheat")
+	var held: Dictionary = g.plots[a].get("held", {})
+	_eq(str(held.get("drop", {}).get("type", "")), "golden", "the golden harvest is decided at planting")
+	_eq(int(g.drops.pity["golden"]), 0, "and the luck is spent then")
+	_eq(g.field.held_rarity(a), "legendary", "the plot holds something legendary")
+	_skip(g, int(g.crops["wheat"]["grow_seconds"]) + 5)
+	_eq(g.field.held_rarity(a), "legendary", "still, when ripe")
+	said.clear()
+	var got := g.field.harvest(a)
+	_eq(str(got["drop"]), "golden", "the harvest gives what the plot held")
+	_eq(int(g.drops.pity["golden"]), 0, "and rolls nothing again")
+	_check(said.any(func(f: Array) -> bool: return f[0] == a and f[2] == "legendary"), "said on the plot as legendary")
+	_check(not g.plots[a].has("held"), "the plot holds nothing after")
+	# A creature: decided at planting, owned only at the harvest.
+	var family: String = g.finds.families.keys()[0]
+	var need := int(g.finds.families[family]["trigger"]["pity"])
+	g.finds.pity[family] = need
+	g.field.plant(a, "wheat")
+	var finds: Array = g.plots[a].get("held", {}).get("finds", [])
+	_check(finds.any(func(f: Array) -> bool: return f[0] == family), "a %s is in the plot" % family)
+	_eq(g.finds.total(family), 0, "not owned yet")
+	_check(g.field.held_rarity(a) != "", "and the plot glints for it")
+	_skip(g, int(g.crops["wheat"]["grow_seconds"]) + 5)
+	said.clear()
+	g.field.harvest(a)
+	_eq(g.finds.total(family), 1, "owned at the harvest")
+	_check(said.size() >= 1, "and said on the plot (%s)" % [said])
+	# A small bonus is held too, but does not glint; a plot with nothing held does not either.
+	g.field.plant(a, "wheat")
+	g.plots[a]["held"] = {"drop": {"type": "bonus_xp"}}
+	_eq(g.field.held_rarity(a), "", "a small bonus stays a surprise")
+	g.plots[a]["held"] = {}
+	_eq(g.field.held_rarity(a), "", "nothing held, no glint")
+	# An old save's plot: no `held`, rolled at the harvest.
+	g.plots[a].erase("held")
+	g.drops.pity["golden"] = Balance.i("harvest.golden_pity")
+	_skip(g, int(g.crops["wheat"]["grow_seconds"]) + 5)
+	_eq(str(g.field.harvest(a)["drop"]), "golden", "a plot planted before luck was held is rolled at its harvest")
+	# A crop left to wither loses what it held.
+	g.drops.pity["golden"] = Balance.i("harvest.golden_pity")
+	g.field.plant(a, "wheat")
+	_skip(g, 40 * 86400)
+	_eq(g.field.phase(a), GameState.Phase.WITHERED, "left too long, it withers")
+	g.field.plow(a)
+	_check(not g.plots[a].has("held"), "and what it held is gone with it")
+	_done(g)
+
+
+## Every find has the one look and sound of its rarity; the field's glints show over ripe plots that hold one;
+## a mystery opens to something named in its rarity; a found young one and a baby born are finds too.
+func test_365_every_find_shares_one_look_and_the_field_glints() -> void:
+	for rarity: String in FindsSystem.RARITIES:
+		var look := Feedback.rarity(rarity)
+		_check(Feedback.has_moment(str(look["moment"])), "%s has its moment" % rarity)
+		_check(int(look["sparks"]) > 0 and float(look["hold"]) > 0.0, "%s has its sparks and its time" % rarity)
+	_check(int(Feedback.rarity("legendary")["sparks"]) > int(Feedback.rarity("common")["sparks"]),
+		"a legendary find bursts bigger than a common one")
+	_eq(Feedback.rarity("no such"), Feedback.rarity("common"), "an unknown rarity is common")
+	var g := _farm(true)
+	for fid: String in g.finds.families:
+		for kind: Dictionary in g.finds.families[fid]["kinds"]:
+			_check(FindsSystem.RARITIES.has(str(kind.get("rarity", "common"))), "%s has a known rarity" % kind["id"])
+	for item: String in g.collectibles.item_rarity:
+		_check(FindsSystem.RARITIES.has(g.collectibles.rarity_of(item)), "%s has a known rarity" % item)
+	_eq(MysterySystem.rarity_of_prize([["coins", 1, 97], ["gems", 1, 3]], ["gems", 1, 3]), "legendary",
+		"a prize drawn three times in a hundred is legendary")
+	_eq(MysterySystem.rarity_of_prize([["coins", 1, 97], ["gems", 1, 3]], ["coins", 1, 97]), "common",
+		"the usual one is common")
+	# A young one found at a home is said there; grown, it says where it stood and what it is.
+	var on: Array = []
+	g.found_on.connect(func(uid: int, text: String, rarity: String) -> void: on.append([uid, text, rarity]))
+	Release.whole = true
+	_check(g.nurture.call("_found", NurtureSystem.BABY, "cow", 77), "a mystery baby is found")
+	_check(on.any(func(f: Array) -> bool: return f[0] == 77 and f[2] == "rare"), "and said where it was found, as rare")
+	var young: Dictionary = g.objects.filter(func(o: Dictionary) -> bool: return o["id"] == NurtureSystem.BABY)[0]
+	young["fed"] = g.nurture.needs(young) - 1
+	g.nurture.add_supply(g.nurture.supply_of(young), 1)
+	var result := g.nurture.feed(int(young["uid"]))
+	_eq(str(result["grown"]), "cow", "fed its last, it is what it was all along")
+	_eq(int(result["young"]), int(young["uid"]), "the reveal knows who it was")
+	_check(not g.object_by_uid(int(result["grown_uid"])).is_empty(), "who it is now")
+	_check(result.has("row") and result.has("col"), "and where it stood")
+	_eq(g.rarity_of_item("cow"), "common", "a cow is a common thing to be")
+	_done(g)
+	# The glints: over a held plot only while it is ripe.
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 100000
+	Game.xp = Game.xp_for_level(20)
+	var drops := Game.drops_enabled
+	Game.drops_enabled = true
+	var i := -1
+	for k in Game.plots.size():
+		if i < 0 and not Game.is_occupied(k) and Game.field.phase(k) == GameState.Phase.GRASS:
+			i = k
+	Game.field.plow(i)
+	Game.drops.pity["golden"] = Balance.i("harvest.golden_pity")
+	Game.field.plant(i, "wheat")
+	var glints := Glints3D.new()
+	add_child(glints)
+	_check(not glints.shown().has(i), "a growing crop does not glint")
+	Game.debug_time_offset += int(Game.crops["wheat"]["grow_seconds"]) + 5
+	glints.call("_on_clock")
+	_check(glints.shown().has(i), "ripe, the plot that holds a find glints")
+	_check(glints.color_of(i).is_equal_approx(Feedback.rarity("legendary")["color"]), "in its rarity's colour")
+	_eq(glints.multimesh.instance_count, glints.shown().size(), "one quad for each glinting plot")
+	Game.field.harvest(i)
+	glints.update([i])
+	_check(not glints.shown().has(i), "harvested, the glint is gone")
+	glints.queue_free()
+	Game.debug_time_offset = 0
+	Game.drops_enabled = drops
+	Game.reset_game()
+
