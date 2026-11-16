@@ -66,6 +66,7 @@ var _coins: Label
 var _xp: Label
 var _next: Label
 var _note: Label
+var _more: Button     # the ⓘ by the name: a home's layout and boost lines
 var _collect: Button
 var _fill: Button
 var _move: Button
@@ -123,7 +124,7 @@ func _init(owner: FarmHud) -> void:
 	_main.add_child(_build_numbers(gap))
 	_inside = HBoxContainer.new()
 	_main.add_child(_inside)
-	_detail = BookPanel.text("", 17, UiTheme.color("soft"))
+	_detail = BookPanel.text("", UiTheme.BODY, UiTheme.color("soft"))
 	_main.add_child(_detail)
 	_extras = VBoxContainer.new()
 	_extras.add_theme_constant_override("separation", gap)
@@ -324,10 +325,8 @@ func _fill_extras(o: Dictionary) -> void:
 		_extras.remove_child(c)
 		c.queue_free()
 	match _kind:
-		Kind.HOME:
-			for line in [hud.feed.layout_line(o), hud.feed.boost_line(o)]:
-				if line != "":
-					_extras.add_child(BookPanel.text(line, 16, BookPanel.SOFT))
+		Kind.HOME:   # (its layout and boost lines: details, behind the ⓘ by its name)
+			pass
 		Kind.BUILD:
 			var finish := Game.buildings.can_finish(o)
 			if not finish.ok() and finish.text != "":
@@ -336,6 +335,12 @@ func _fill_extras(o: Dictionary) -> void:
 			hud.buildings.add_buy_missing(_extras, Game.land.construction_needs(o),
 				func() -> void: Game.land.add_materials(uid))
 	_extras.visible = _extras.get_child_count() > 0
+	var details := PackedStringArray()
+	if _kind == Kind.HOME:
+		for line in [hud.feed.layout_line(o), hud.feed.boost_line(o)]:
+			if line != "":
+				details.append(line)
+	BookPanel.set_more(_more, details)
 
 
 ## Whether it has a tall height: a building with more to show there.
@@ -471,8 +476,13 @@ func _build_head(gap: int) -> Control:
 	words.alignment = BoxContainer.ALIGNMENT_CENTER
 	_name = BookPanel.text("", UiTheme.TITLE, UiTheme.color("ink"))
 	_name.set_meta(&"title", true)
-	_state = BookPanel.text("", 17, UiTheme.color("soft"))
-	words.add_child(_name)
+	_state = BookPanel.text("", UiTheme.BODY, UiTheme.color("soft"))
+	var title := HBoxContainer.new()   # (the name, and an ⓘ for its details: BookPanel.more_button)
+	_name.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	title.add_child(_name)
+	_more = BookPanel.more_button()
+	title.add_child(_more)
+	words.add_child(title)
 	words.add_child(_state)
 	row.add_child(words)
 	_ring = Ring.new()

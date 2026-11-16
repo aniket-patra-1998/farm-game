@@ -280,6 +280,25 @@ static func heading(words: String) -> Label:
 	return text(words, UiTheme.HEADING, HEAD)
 
 
+## The ⓘ for what a thing has to say beyond its one line (our own look: details on asking, not printed): a tap
+## says `lines` in the message strip. `set_more` changes them; it hides itself with none.
+static func more_button(lines := PackedStringArray()) -> Button:
+	var b := UiKit.icon_button("info", INFO_LEAST)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	set_more(b, lines)
+	b.pressed.connect(func() -> void:
+		var said: PackedStringArray = b.get_meta(&"lines", PackedStringArray())
+		if not said.is_empty():
+			Game.message.emit("\n".join(said)))
+	return b
+
+
+## Sets what a `more_button` says (shown only when there is something).
+static func set_more(b: Button, lines: PackedStringArray) -> void:
+	b.set_meta(&"lines", lines)
+	b.visible = not lines.is_empty()
+
+
 ## A setting's row, as phones lay them out (our own look): its name at the left, its control at the right, one
 ## line high. `help` (optional) is said on a long press of the row's name, not printed under it.
 static func row(words: String, control: Control, help := "") -> HBoxContainer:
