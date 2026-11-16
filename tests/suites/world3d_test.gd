@@ -2044,7 +2044,7 @@ func test_357_only_the_plots_under_what_moved_are_laid_again() -> void:
 
 ## A thing that changes where it stands (fed, collected, grown ready) is told alone (Game.object_changed): the 3D
 ## world looks at it only and shows the change, the ground isn't redone; a move is still the whole farm's change.
-func test_367_a_thing_changed_in_place_is_looked_at_alone() -> void:
+func test_371_a_thing_changed_in_place_is_looked_at_alone() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.objects.clear()

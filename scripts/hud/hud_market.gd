@@ -132,7 +132,7 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 		words.add_child(BookPanel.text(why, 18, UiTheme.color("note")))
 	words.add_child(BookPanel.text(detail_of(id, it), 17, BookPanel.SOFT))
 	strip.visible = true
-	hud._book.scroll_to_top()
+	hud.book.scroll_to_top()
 
 
 ## One item's card face (CardFace): its picture, name, a line, its price, and whether it can be bought now and if
@@ -179,7 +179,7 @@ func card_face(id: String) -> Dictionary:
 func tap(id: String, tell: Callable) -> void:
 	var face := card_face(id)
 	if face["buyable"]:
-		hud._book.close_panel()
+		hud.book.close_panel()
 		hud.place_requested.emit(id)
 	else:
 		tell.call(id, Game.item_data(id), str(face["why"]))
@@ -229,7 +229,7 @@ func land_card() -> Control:
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 12)
 	row.add_theme_constant_override("v_separation", 12)
-	var with_coins := hud._panel_button("")
+	var with_coins := hud.panel_button("")
 	if Game.level() < int(step["level"]):
 		with_coins.text = tr("COINS_REACH_LEVEL") % int(step["level"])
 		with_coins.disabled = true
@@ -238,7 +238,7 @@ func land_card() -> Control:
 		with_coins.disabled = Game.coins < int(step["coins"])
 	with_coins.pressed.connect(func() -> void: Game.land.expand(false))
 	row.add_child(with_coins)
-	var with_gems := hud._panel_button(tr("EXPAND_NOW_GEMS") % int(step["gems"]))
+	var with_gems := hud.panel_button(tr("EXPAND_NOW_GEMS") % int(step["gems"]))
 	with_gems.disabled = Game.gems < int(step["gems"])
 	with_gems.pressed.connect(func() -> void: Game.land.expand(true))
 	row.add_child(with_gems)
@@ -311,12 +311,12 @@ func mystery_box_card() -> Control:
 		)
 	)
 	var cost := int(Game.mystery.box_data.get("gem_cost", Balance.i("mystery.mystery_box_gem_cost")))
-	var buy := hud._panel_button(tr("OPEN_ONE_GEMS") % cost)
+	var buy := hud.panel_button(tr("OPEN_ONE_GEMS") % cost)
 	buy.disabled = Game.gems < cost
 	buy.pressed.connect(func() -> void:
 		var prize := Game.mystery.buy_mystery_box()
 		if prize != "":
 			hud.reveal(RevealCard.BOX, tr("MYSTERY_BOX"), prize, Game.mystery.last_rarity)
-			hud._book.refresh())
+			hud.book.refresh())
 	inner.add_child(buy)
 	return BookPanel.card_frame(inner)

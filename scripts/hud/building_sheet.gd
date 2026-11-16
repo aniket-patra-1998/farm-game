@@ -100,7 +100,7 @@ static func kind_of(o: Dictionary) -> Kind:
 		return Kind.BARN
 	if Game.crafting.is_crafting(o):
 		return Kind.CRAFT
-	if Game.is_home(o) and str(Game.item_data(o["id"]).get("special", "")) != "finds_home":
+	if Game.is_home(o) and Game.special_of(o) != "finds_home":
 		return Kind.HOME
 	return Kind.OTHER
 
@@ -278,15 +278,15 @@ func _number(row: HBoxContainer, icon_kind: String) -> Label:
 func _build_actions(gap: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", gap)
-	_collect = hud._panel_button(tr("COLLECT"))
+	_collect = hud.panel_button(tr("COLLECT"))
 	_collect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UiKit.primary(_collect)   # (the one main action: the accent, as every panel's)
 	_collect.pressed.connect(_on_main)
 	row.add_child(_collect)
-	_fill = hud._panel_button("")
+	_fill = hud.panel_button("")
 	_fill.pressed.connect(func() -> void: Game.homes.fill_building(_uid))
 	row.add_child(_fill)
-	_more = hud._panel_button(tr("SHEET_MORE"))
+	_more = hud.panel_button(tr("SHEET_MORE"))
 	_more.pressed.connect(_on_more)
 	row.add_child(_more)
 	return row
@@ -331,7 +331,7 @@ func _refill() -> void:
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
 	_inside.visible = home and total > 0
-	var room := Game.homes.room_for_loose(o) if home and id != "beehive" else 0
+	var room := Game.homes.room_for_loose(o) if home else 0
 	_fill.visible = room > 0   # (nothing that would move in, none loose or no room: no button, not a grey one)
 	_fill.text = HudBuildings.move_in_words(o, room)
 	_turn.visible = Game.buildings.can_rotate(o).ok()   # (what can never turn has no Turn)

@@ -74,7 +74,7 @@ func _born(b: Dictionary, baby: String) -> void:
 ## Extra results of collecting a building, as short popup texts.
 func building_specials(b: Dictionary) -> Array[String]:
 	var out: Array[String] = []
-	match game.item_data(b["id"]).get("special", ""):
+	match game.special_of(b):
 		"mystery_eggs":
 			var colour := game.mystery.roll_mystery_egg(b)
 			if colour != "":
@@ -133,7 +133,7 @@ func building_specials(b: Dictionary) -> Array[String]:
 		"blooms":
 			out.append_array(game.nurture.from_garden(b))
 	# Any home with animals in it: a Mystery Baby now and then, and Animal Feed (NurtureSystem).
-	if not str(game.item_data(b["id"]).get("special", "")) in ["saplings", "blooms"]:
+	if not game.special_of(b) in ["saplings", "blooms"]:
 		out.append_array(game.nurture.from_home(b))
 	if not out.is_empty():
 		game.inventory_changed.emit()

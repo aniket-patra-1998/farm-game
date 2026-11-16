@@ -74,14 +74,14 @@ func _ready() -> void:
 		for k in 60:   # (the item pictures are drawn a few a frame)
 			await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(p[0]) + ".png"))
-		hud._book.close_panel()
-	for p: Array in [["seeds_panel", hud.show_seeds], ["collections_panel", hud._show_collections],
-			["ribbons_panel", hud._show_ribbons], ["inbox_panel", hud.show_inbox]]:
+		hud.book.close_panel()
+	for p: Array in [["seeds_panel", hud.show_seeds], ["collections_panel", hud.show_collections],
+			["ribbons_panel", hud.show_ribbons], ["inbox_panel", hud.show_inbox]]:
 		(p[1] as Callable).call()
 		for k in 90:
 			await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(p[0]) + ".png"))
-		hud._book.close_panel()
+		hud.book.close_panel()
 	if level != "":
 		Quality.choose(was_level)
 	get_tree().quit()

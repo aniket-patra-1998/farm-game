@@ -11,7 +11,7 @@ const COLLECT_MS := 5.0       # a collect, the rule and its telling, on a full f
 
 ## Every tile of the largest farm holding a thing (900; the scaling report's 2,000 can't stand on 30x30 tiles):
 ## a change to one costs one, not all (Game.object_changed), and a change to the whole farm stays within budget.
-func test_368_a_farm_of_thousands_changes_one_thing_at_one_things_cost() -> void:
+func test_372_a_farm_of_thousands_changes_one_thing_at_one_things_cost() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.objects.clear()

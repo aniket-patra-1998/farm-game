@@ -80,7 +80,7 @@ func owned_vehicles() -> Array[String]:
 	for o in game.objects:
 		if game.kind_of(o) == "vehicle" and not game.under_construction(o) and not out.has(o["id"]):
 			out.append(o["id"])
-		elif o["id"] == "garage":
+		elif game.special_of(o) == "garage":
 			for id in o.get("inside", {}):
 				if int(o["inside"][id]) > 0 and not out.has(id):
 					out.append(id)
@@ -95,7 +95,7 @@ func owned_vehicles() -> Array[String]:
 func usable_vehicles() -> Array[String]:
 	var out: Array[String] = []
 	for o in game.objects:
-		if o["id"] == "garage" and not game.under_construction(o):
+		if game.special_of(o) == "garage" and not game.under_construction(o):
 			for id in o.get("inside", {}):
 				if int(o["inside"][id]) > 0 and not out.has(id):
 					out.append(id)
@@ -296,7 +296,7 @@ func vehicle_upgrade_level_needed(id: String) -> int:
 
 func has_garage() -> bool:
 	for o in game.objects:
-		if o["id"] == "garage" and not game.under_construction(o):
+		if game.special_of(o) == "garage" and not game.under_construction(o):
 			return true
 	return false
 

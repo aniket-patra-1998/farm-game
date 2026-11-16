@@ -309,22 +309,3 @@ static func info(words: String, more: String, font_size := 20, color := INK) -> 
 static func font_px(font_size: int) -> int:
 	return UiTheme.font(font_size)
 
-
-static func chip(words: String, filled: bool) -> PanelContainer:
-	var p := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = UiTheme.color("accent") if filled else Color(0, 0, 0, 0)
-	sb.border_color = UiTheme.color("accent") if filled else UiTheme.color("track")
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(12)
-	sb.content_margin_left = 10
-	sb.content_margin_right = 10
-	sb.content_margin_top = 6
-	sb.content_margin_bottom = 6
-	p.add_theme_stylebox_override("panel", sb)
-	var l := Label.new()
-	l.text = words
-	l.add_theme_font_size_override("font_size", UiTheme.font(18))
-	l.add_theme_color_override("font_color", UiTheme.color("accent_text") if filled else SOFT)
-	p.add_child(l)
-	return p

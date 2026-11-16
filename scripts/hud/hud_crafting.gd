@@ -1,19 +1,25 @@
 class_name HudCrafting
 extends RefCounted
-## The crafting buildings' panel, as tabs of the book:
-## - Make: what is cooking in each slot (its picture, a bar filling, the time left), every recipe as a card (the
-##   good's picture, its mastery, what it sells for and gives, how long it takes, each ingredient as have of
-##   need, and its Make button), and the building's next star;
-## - Goods: what has been made, each with its picture: sell it for coins or use it for fuel (a feed building
-##   makes none: its rich feed goes to the Barn);
-## - Pantry: the bushels and produce held, and the Farmers Market's offer for today.
+## The crafting buildings' panel, as tabs of the book, built from the menus' shared pieces (CardList cards on
+## the paper, a strip that tells about the card picked, UiKit.count_row, the panel's buttons):
+## - Make: what is cooking in each slot (a card with the good's picture and a bar filling with the time left),
+##   the recipe picked (what it sells for and gives, how long it takes, each ingredient as have of need, and
+##   Make or the missing ingredients for gems), every recipe as a card (tap one to pick it), the next star;
+## - Goods: what has been made, as cards: pick one to sell it for coins or use it for fuel, or sell everything
+##   (a feed building makes none: its rich feed goes to the Barn);
+## - Pantry: the bushels and produce held, and the Farmers Market's offer for today (tap a card to buy one).
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
 const BIGGEST := 5      # a crafting building's most stars (sizes)
 const STAR_SIZE := 1.6   # its stars against a mastery star
 const TICK := 1.0        # the slots' bars and times are brought up to date this often, in seconds
+const SLOT := "slot:"    # not-ui (a slot's card id: "slot:<index>" a craft under way, FREE, NEXT)
+const FREE := "free:"    # not-ui
+const NEXT := "next"     # not-ui (the slot the next star adds)
 
 var hud: FarmHud
+var _recipe := ""        # the recipe picked on Make..
+var _good := ""          # ..and the good picked on Goods
 
 
 func _init(owner: FarmHud) -> void:
@@ -39,26 +45,65 @@ static func makes_goods(o: Dictionary) -> bool:
 
 ## The building this panel is about, or {} once it is gone (the panel then closes).
 func _building() -> Dictionary:
-	var o := Game.object_by_uid(hud._building_uid)
+	var o := Game.object_by_uid(hud.building_uid)
 	if o.is_empty():
-		hud._book.close_panel()
+		hud.book.close_panel()
 	return o
 
 
-## Make: the slots, the recipes, the next star.
+func _view_width() -> float:
+	return hud.get_viewport().get_visible_rect().size.x
+
+
+## A strip that tells about the card picked: flat on the paper, filled by `fill` (the VBox to fill).
+static func _strip(content: VBoxContainer) -> VBoxContainer:
+	var about := BookPanel.card()
+	about.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
+	content.add_child(BookPanel.card_frame(about))
+	return about
+
+
+## The top of a strip: the thing's picture beside its `lines` ([[words, size, colour]]).
+static func _about(about: VBoxContainer, id: String, lines: Array) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
+	about.add_child(row)
+	var pic := TextureRect.new()
+	pic.texture = ItemIcons.of(id)
+	pic.custom_minimum_size = Vector2.ONE * UiTheme.size("card_icon")
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	row.add_child(pic)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(words)
+	for line: Array in lines:
+		words.add_child(BookPanel.text(str(line[0]), int(line[1]), line[2]))
+
+
+## Make: the slots, the recipe picked, the recipes, the next star.
 func build_make(content: VBoxContainer) -> void:
 	var o := _building()
 	if o.is_empty():
 		return
-	var uid := hud._building_uid
+	var uid := hud.building_uid
 	hud.buildings.add_building_bar(content, o)
 	content.add_child(star_row(Game.level_of(o), Game.crafting.building_recipe_stars(o["id"])))
-	content.add_child(_slots(uid, o))
-	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.HEAD))
-	var grid := _grid("recipe_card_width")
+	_add_slots(content, uid, o)
+	var ids: Array[String] = []
 	for r in Game.crafting.recipes_of(o["id"]):
-		grid.add_child(recipe_card(uid, o, r))
-	content.add_child(grid)
+		ids.append(r.id)
+	if not ids.has(_recipe):
+		_recipe = first_to_make(o)
+	var about := _strip(content)
+	show_recipe(about, uid, o)
+	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.HEAD))
+	content.add_child(CardList.make(ids, func(id: String) -> Dictionary: return recipe_face(o, id),
+		func(id: String) -> void:
+			_recipe = id
+			show_recipe(about, uid, o)
+			hud.book.scroll_to_top(), _view_width()))
 	var cost := Game.crafting.star_cost(o)
 	if cost.is_empty():
 		return
@@ -68,258 +113,222 @@ func build_make(content: VBoxContainer) -> void:
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
 	for with_gems: bool in [false, true]:
-		var b := hud._panel_button(tr("UPGRADE_GEMS") % int(cost["gems"]) if with_gems else tr("UPGRADE_WITH_COINS"))
+		var b := hud.panel_button(tr("UPGRADE_GEMS") % int(cost["gems"]) if with_gems else tr("UPGRADE_WITH_COINS"))
 		b.disabled = not Game.crafting.can_add_star(uid, with_gems)
 		b.pressed.connect(func() -> void:
 			Game.crafting.add_star(uid, with_gems)
-			hud._book.open_tabs(Game.size_name(Game.object_by_uid(uid)), tabs(Game.object_by_uid(uid))))
+			hud.book.open_tabs(Game.size_name(Game.object_by_uid(uid)), tabs(Game.object_by_uid(uid))))
 		row.add_child(b)
 	up.add_child(row)
 	content.add_child(BookPanel.card_frame(up))
 
 
-## The building's slots in a row: each craft under way as a tile (the good's picture, its name, a bar filling
-## and the time left, kept up to date while the panel is open), each free slot as an empty tile, and the slot the
-## next star adds as a locked one.
-func _slots(uid: int, o: Dictionary) -> Control:
-	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
-	row.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
-	var live: Array = []   # [slot, bar, time label] of each craft under way
-	for slot: Dictionary in o.get("slots", []):
-		var tile := _slot_tile(ItemIcons.of(str(slot["r"])), Game.name_of(str(slot["r"])), false)
-		var bar := ProgressBar.new()
-		bar.show_percentage = false
-		bar.max_value = 1.0
-		bar.custom_minimum_size.y = UiTheme.size("progress_height")
-		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		for part: Array in [["background", "progress_back"], ["fill", "progress_fill"]]:
-			var sb := StyleBoxFlat.new()
-			sb.bg_color = UiTheme.color(str(part[1]))
-			sb.set_corner_radius_all(int(UiTheme.size("progress_height") / 2.0))
-			bar.add_theme_stylebox_override(str(part[0]), sb)
-		var time := BookPanel.text("", 16, BookPanel.SOFT)
-		time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		(tile.get_child(0) as VBoxContainer).add_child(bar)
-		(tile.get_child(0) as VBoxContainer).add_child(time)
-		live.append([slot, bar, time])
-		row.add_child(tile)
+## The recipe to show first: one there are the ingredients for, else the first one unlocked.
+func first_to_make(o: Dictionary) -> String:
+	var first := ""
+	for r in Game.crafting.recipes_of(o["id"]):
+		if not Game.crafting.recipe_unlocked(o, r.id):
+			continue
+		if Game.crafting.missing_bushels(r.id).is_empty():
+			return r.id
+		if first == "":
+			first = r.id
+	return first
+
+
+## The building's slots as a row of cards, kept up to date while the panel is open: each craft under way (the
+## good's picture, its name, a bar filling with the time left), each free slot, and the slot the next star adds.
+## A craft that finishes with the panel open lands in Goods and frees its slot.
+func _add_slots(content: VBoxContainer, uid: int, o: Dictionary) -> void:
+	var ids: Array[String] = []
+	for k in (o.get("slots", []) as Array).size():
+		ids.append(SLOT + str(k))
 	for k in Game.crafting.free_slots(o):
-		row.add_child(_slot_tile(null, tr("CRAFT_FREE_SLOT"), false))
+		ids.append(FREE + str(k))
 	if Game.level_of(o) < BIGGEST:
-		row.add_child(_slot_tile(null, tr("CRAFT_SLOT_AT_STARS") % (Game.level_of(o) + 1), true))
-	var update := func() -> void:
+		ids.append(NEXT)
+	var list := CardList.make(ids, func(id: String) -> Dictionary: return slot_face(o, id),
+		func(id: String) -> void:
+			if id.begins_with(SLOT):
+				_recipe = str(_slot(o, id).get("r", _recipe))
+				hud.book.refresh(),
+		_view_width(), func(id: String) -> Texture2D:
+			return ItemIcons.of(str(_slot(o, id)["r"])) if id.begins_with(SLOT) and not _slot(o, id).is_empty() else null)
+	content.add_child(list)
+	if (o.get("slots", []) as Array).is_empty():
+		return
+	var timer := Timer.new()
+	timer.wait_time = TICK
+	timer.autostart = true
+	timer.timeout.connect(func() -> void:
 		var done := false
-		for e: Array in live:
-			var left := int(e[0]["done"]) - Game.now()
-			(e[1] as ProgressBar).value = clampf(1.0 - float(left) / maxf(float(e[0].get("took", left)), 1.0), 0.0, 1.0)
-			(e[2] as Label).text = tr("SLOT_READY") if left <= 0 else FarmGrid.format_duration(left)
-			done = done or left <= 0
+		for slot: Dictionary in o.get("slots", []):
+			done = done or Game.now() >= int(slot["done"])
 		if done and Game.crafting.finish_crafts(uid) > 0:
-			hud._book.refresh()   # (it lands in Goods, and its slot is free again)
-	update.call()
-	if not live.is_empty():
-		var timer := Timer.new()
-		timer.wait_time = TICK
-		timer.autostart = true
-		timer.timeout.connect(update)
-		row.add_child(timer)
-	return row
+			hud.book.refresh()
+		else:
+			list.refresh())
+	list.add_child(timer)
 
 
-## One slot's tile: a picture (none for an empty or a locked slot) over a line of words.
-static func _slot_tile(picture: Texture2D, words: String, locked: bool) -> PanelContainer:
-	var tile := PanelContainer.new()
-	tile.add_theme_stylebox_override("panel", UiKit.card_box("card_locked" if locked else "card_face"))
-	tile.custom_minimum_size.x = UiTheme.size("card_width")
-	var col := VBoxContainer.new()
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.5))
-	tile.add_child(col)
-	var pic := TextureRect.new()
-	pic.texture = picture
-	pic.custom_minimum_size = Vector2.ONE * UiTheme.size("count_tile")
-	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(pic)
-	var label := BookPanel.text(words, 17, BookPanel.SOFT if picture == null else BookPanel.INK)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(label)
-	return tile
+## The craft in the slot a slot card `id` stands for ({} when it is gone).
+static func _slot(o: Dictionary, id: String) -> Dictionary:
+	var slots: Array = o.get("slots", [])
+	var k := int(id.trim_prefix(SLOT))
+	return slots[k] if id.begins_with(SLOT) and k < slots.size() else {}
 
 
-## A grid for cards `width` wide (a theme size), as many columns as fit the panel.
-func _grid(width: String) -> GridContainer:
-	var grid := GridContainer.new()
-	var room := BookPanel.width_for(hud.get_viewport().get_visible_rect().size.x) - 2.0 * UiTheme.size("book_margin") \
-		- UiTheme.size("scroll_bar")
-	grid.columns = maxi(1, floori(room / (UiTheme.size(width) + UiTheme.size("hud_gap"))))
-	grid.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
-	grid.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
-	return grid
+## A slot's card (CardFace): a craft under way with its bar, a free slot, or the next star's.
+func slot_face(o: Dictionary, id: String) -> Dictionary:
+	if id == NEXT:
+		return {"name": tr("CRAFT_SLOT_AT_STARS") % (Game.level_of(o) + 1), "locked": true,
+			"icon": ["lock", Color(0, 0, 0, 0), true]}
+	var slot := _slot(o, id)
+	if slot.is_empty():
+		return {"name": tr("CRAFT_FREE_SLOT"), "icon": ["basket", Color(0, 0, 0, 0), true]}
+	var left := int(slot["done"]) - Game.now()
+	return {"name": Game.name_of(str(slot["r"])), "bar": [1.0 - float(left) / maxf(float(slot.get("took", left)), 1.0),
+		tr("SLOT_READY") if left <= 0 else FarmGrid.format_duration(left)]}
 
 
-## A card: a framed column `width` wide (a theme size), greyed when `locked`.
-static func _card(width: String, locked := false) -> VBoxContainer:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.75))
-	var frame := PanelContainer.new()
-	var sb := UiKit.card_box("card_locked" if locked else "card_face")
-	sb.set_content_margin_all(UiTheme.size("card_pad") * 2.0)
-	frame.add_theme_stylebox_override("panel", sb)
-	frame.custom_minimum_size.x = UiTheme.size(width)
-	frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	frame.add_child(col)
-	return col   # (add `col.get_parent()` to the grid)
+## A recipe's card (CardFace): the good's picture and name, what it sells for (a feed recipe: how long it takes),
+## and one line: the star it unlocks at, how many ingredients it is short of, or its mastery.
+func recipe_face(o: Dictionary, id: String) -> Dictionary:
+	var r := Game.catalog.get_def(id) as RecipeDef
+	var unlocked := Game.crafting.recipe_unlocked(o, id)
+	var short := 0
+	for c in Game.crafting.missing_bushels(id).values():
+		short += int(c)
+	var line := tr("CRAFT_MASTERY") % Game.crafting.recipe_stars(id)
+	var colour := "tool_label"
+	if not unlocked:
+		line = tr("UNLOCKS_AT_STARS") % r.star()
+	elif short > 0:
+		line = tr("CRAFT_NEEDS_MORE") % short
+		colour = "price_short"
+	return {"name": r.name, "line": line, "line_colour": colour, "locked": not unlocked,
+		"badge": ["", FarmGrid.format_duration(r.craft_seconds())] if r.makes_feed()
+			else ["coin", FarmHud._thousands(Game.crafting.good_price(id))],
+		"long": gives(r), "can_make": unlocked and short == 0}
 
 
-## A good's or an ingredient's picture, `side` across (a theme size).
-static func _picture(id: String, side: String, dim := false) -> TextureRect:
-	var pic := TextureRect.new()
-	pic.texture = ItemIcons.of(id)
-	pic.custom_minimum_size = Vector2.ONE * UiTheme.size(side)
-	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if dim:
-		pic.modulate = Color(1, 1, 1, 0.45)
-	return pic
-
-
-## A recipe's mastery: five small stars, the earned ones lit.
-static func mastery_stars(stars: int) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 2)
-	for k in BIGGEST:
-		var star := UiIcon.make("star", UiTheme.size("mastery_star"))
-		if k >= stars:
-			star.modulate = Color(1, 1, 1, 0.25)
-		row.add_child(star)
-	return row
-
-
-## One recipe as a card: the good's picture beside its name, its mastery, what it sells for and gives and how
-## long it takes; under them each ingredient as have of need (red while short); then its button: Make, the
-## missing ingredients for gems, or the star it unlocks at.
-func recipe_card(uid: int, o: Dictionary, r: RecipeDef) -> Control:
-	var unlocked := Game.crafting.recipe_unlocked(o, r.id)
-	var stars := Game.crafting.recipe_stars(r.id)
-	var col := _card("recipe_card_width", not unlocked)
-	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
-	top.add_child(_picture(r.id, "card_icon", not unlocked))
-	var words := VBoxContainer.new()
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.add_theme_constant_override("separation", 2)
-	words.add_child(BookPanel.text(r.name, 20))
-	words.add_child(mastery_stars(stars))
+## What a recipe gives, in a line: what it sells for (or the feed it makes), its time, fuel and XP.
+func gives(r: RecipeDef) -> String:
+	var time := FarmGrid.format_duration(r.craft_seconds())
 	if r.makes_feed():
-		words.add_child(BookPanel.text(tr("RECIPE_MAKES_FEED") % [int(r.feed()["units"]),
-			Game.crafting.feed_product_name(r)], 17, BookPanel.HEAD))
-		words.add_child(BookPanel.text(tr("CRAFT_TAKES_XP") % [FarmGrid.format_duration(r.craft_seconds()), r.xp()], 15,
-			BookPanel.SOFT))
-	else:
-		var price := UiKit.price_badge("coin", FarmHud._thousands(Game.crafting.good_price(r.id)))
-		price.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-		words.add_child(price)
-		words.add_child(BookPanel.text(tr("CRAFT_GIVES") % [FarmGrid.format_duration(r.craft_seconds()),
-			Game.crafting.good_fuel(r.id), r.xp()], 15, BookPanel.SOFT))
-	top.add_child(words)
-	col.add_child(top)
+		return tr("CRAFT_GIVES_FEED") % [int(r.feed()["units"]), Game.crafting.feed_product_name(r), time, r.xp()]
+	return tr("CRAFT_GIVES") % [FarmHud._thousands(Game.crafting.good_price(r.id)), time, Game.crafting.good_fuel(r.id),
+		r.xp()]
+
+
+## Fills the Make tab's strip with the recipe picked: its picture, name and mastery, what it gives, each
+## ingredient as have of need (red while short), and its button: Make, the missing ingredients for gems, or why
+## it can't be made.
+func show_recipe(about: VBoxContainer, uid: int, o: Dictionary) -> void:
+	for c in about.get_children():
+		c.queue_free()
+	var r := Game.catalog.get_def(_recipe) as RecipeDef
+	if r == null:
+		return
+	_about(about, r.id, [[r.name, 22, BookPanel.HEAD], [gives(r), 17, BookPanel.INK],
+		[tr("CRAFT_MASTERY_MADE") % [Game.crafting.recipe_stars(r.id), int(Game.crafting.crafted.get(r.id, 0))], 17,
+			BookPanel.SOFT]])
 	var need: Array = []
 	for c: String in r.inputs():
 		var have := int(Game.crafting.bushels.get(c, 0))
 		need.append([c, "%d/%d" % [have, int(r.inputs()[c])], have < int(r.inputs()[c])])   # not-ui (have of need)
-	col.add_child(UiKit.count_row(need))
+	about.add_child(UiKit.count_row(need))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
-	if not unlocked:
-		row.add_child(BookPanel.text(tr("UNLOCKS_AT_STARS") % r.star(), 17, BookPanel.SOFT))
-	else:
-		var rid := r.id
-		var problem := Game.crafting.craft_problem(uid, rid)
-		var make := UiKit.primary(hud._panel_button(tr("MAKE_IT")))
-		make.disabled = problem != ""
-		make.pressed.connect(func() -> void:
-			Game.crafting.start_craft(uid, rid)
-			hud._book.refresh())
-		row.add_child(make)
-		var missing := Game.crafting.missing_bushels(rid)
-		if not missing.is_empty() and Game.crafting.free_slots(o) > 0:
-			var n := 0
-			for c in missing:
-				n += int(missing[c])
-			var buy := hud._panel_button(tr("BUY_MISSING_GEMS") % (n * Balance.i("crafting.bushel_gem_cost")))
-			buy.disabled = Game.gems < n * Balance.i("crafting.bushel_gem_cost")
-			buy.pressed.connect(func() -> void:
-				Game.crafting.buy_missing_and_craft(uid, rid)
-				hud._book.refresh())
-			row.add_child(buy)
-		elif problem != "":
-			row.add_child(BookPanel.text(problem, 15, BookPanel.SOFT))   # (every slot is busy)
-	col.add_child(row)
-	return col.get_parent()
+	about.add_child(row)
+	var rid := r.id
+	var problem := Game.crafting.craft_problem(uid, rid)
+	var make := UiKit.primary(hud.panel_button(tr("MAKE_IT")))
+	make.disabled = problem != ""
+	make.pressed.connect(func() -> void:
+		Game.crafting.start_craft(uid, rid)
+		hud.book.refresh())
+	row.add_child(make)
+	var missing := Game.crafting.missing_bushels(rid)
+	if Game.crafting.recipe_unlocked(o, rid) and not missing.is_empty() and Game.crafting.free_slots(o) > 0:
+		var n := 0
+		for c in missing:
+			n += int(missing[c])
+		var buy := hud.panel_button(tr("BUY_MISSING_GEMS") % (n * Balance.i("crafting.bushel_gem_cost")))
+		buy.disabled = Game.gems < n * Balance.i("crafting.bushel_gem_cost")
+		buy.pressed.connect(func() -> void:
+			Game.crafting.buy_missing_and_craft(uid, rid)
+			hud.book.refresh())
+		row.add_child(buy)
+	elif problem != "":
+		about.add_child(BookPanel.text(problem, 17, UiTheme.color("note")))   # (locked, or every slot is busy)
 
 
-## Goods: everything made here, each as a card with its picture and how many: sell one for coins, or use one
-## for fuel; and all of them sold at once.
+## Goods: everything made here as cards; the one picked can be sold for coins or used for fuel, and all of them
+## sold at once.
 func build_goods(content: VBoxContainer) -> void:
 	var o := _building()
 	if o.is_empty():
 		return
-	var held: Array[RecipeDef] = []
+	var ids: Array[String] = []
 	var worth := 0
 	for r in Game.crafting.recipes_of(o["id"]):
 		var n := int(Game.crafting.goods.get(r.id, 0))
 		if n > 0:
-			held.append(r)
+			ids.append(r.id)
 			worth += n * Game.crafting.good_price(r.id)
 	content.add_child(BookPanel.text(tr("YOUR_GOODS"), 26, BookPanel.HEAD))
-	if held.is_empty():
+	if ids.is_empty():
 		content.add_child(BookPanel.text(tr("NOTHING_YET_FINISHED_CRAFTS_LAND_HERE"), 17, BookPanel.SOFT))
 		return
-	var grid := _grid("recipe_card_width")
-	for r in held:
-		var rid := r.id
-		var col := _card("recipe_card_width")
-		var top := HBoxContainer.new()
-		top.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
-		top.add_child(_picture(rid, "card_icon"))
-		var words := VBoxContainer.new()
-		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		words.alignment = BoxContainer.ALIGNMENT_CENTER
-		words.add_child(BookPanel.text(tr("CRAFT_GOOD_COUNT") % [int(Game.crafting.goods[rid]), r.name], 20))
-		words.add_child(mastery_stars(Game.crafting.recipe_stars(rid)))
-		top.add_child(words)
-		col.add_child(top)
-		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
-		var sell := UiKit.primary(hud._panel_button(tr("SELL_COINS") % FarmHud._thousands(Game.crafting.good_price(rid))))
-		sell.pressed.connect(func() -> void:
-			Game.crafting.sell_good(rid)
-			hud._book.refresh())
-		row.add_child(sell)
-		var use := hud._panel_button(tr("USE_FUEL") % Game.crafting.good_fuel(rid))
-		use.pressed.connect(func() -> void:
-			hud.show_message(tr("FUEL_2") % Game.crafting.use_good(rid))
-			hud._book.refresh())
-		row.add_child(use)
-		col.add_child(row)
-		grid.add_child(col.get_parent())
-	content.add_child(grid)
-	var all := hud._panel_button(tr("SELL_ALL_GOODS") % FarmHud._thousands(worth))
+	if not ids.has(_good):
+		_good = ids[0]
+	var about := _strip(content)
+	show_good(about)
+	content.add_child(CardList.make(ids, good_face, func(id: String) -> void:
+		_good = id
+		show_good(about)
+		hud.book.scroll_to_top(), _view_width()))
+	var all := hud.panel_button(tr("SELL_ALL_GOODS") % FarmHud._thousands(worth))
 	all.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	all.pressed.connect(func() -> void:
-		for r in held:
-			while Game.crafting.sell_good(r.id) > 0:
+		for id in ids:
+			while Game.crafting.sell_good(id) > 0:
 				pass
-		hud._book.refresh())
+		hud.book.refresh())
 	content.add_child(all)
 
 
-## Pantry: the bushels and produce held, and the Farmers Market's offer for today.
+## A good's card (CardFace): its picture and name, how many there are and what one sells for.
+func good_face(id: String) -> Dictionary:
+	return {"name": Game.name_of(id), "line": tr("TIMES_N") % int(Game.crafting.goods.get(id, 0)),
+		"badge": ["coin", FarmHud._thousands(Game.crafting.good_price(id))]}
+
+
+## Fills the Goods tab's strip with the good picked: its picture, name and how many, and its buttons: sell one
+## for coins, use one for fuel.
+func show_good(about: VBoxContainer) -> void:
+	for c in about.get_children():
+		c.queue_free()
+	var rid := _good
+	_about(about, rid, [[Game.name_of(rid), 22, BookPanel.HEAD],
+		[tr("CRAFT_GOOD_COUNT") % int(Game.crafting.goods.get(rid, 0)), 17, BookPanel.SOFT]])
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+	about.add_child(row)
+	var sell := UiKit.primary(hud.panel_button(tr("SELL_COINS") % FarmHud._thousands(Game.crafting.good_price(rid))))
+	sell.pressed.connect(func() -> void:
+		Game.crafting.sell_good(rid)
+		hud.book.refresh())
+	row.add_child(sell)
+	var use := hud.panel_button(tr("USE_FUEL") % Game.crafting.good_fuel(rid))
+	use.pressed.connect(func() -> void:
+		hud.show_message(tr("FUEL_2") % Game.crafting.use_good(rid))
+		hud.book.refresh())
+	row.add_child(use)
+
+
+## Pantry: the bushels and produce held, and the Farmers Market's offer for today as cards (tap one to buy one).
 func build_pantry(content: VBoxContainer) -> void:
 	if _building().is_empty():
 		return
@@ -327,43 +336,32 @@ func build_pantry(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(tr("BUSHELS_OF") % [Game.crafting.total_bushels(), cap], 26, BookPanel.HEAD))
 	var held: Array = []
 	for c: String in Game.crafting.bushels:
-		held.append([c, "×%d" % int(Game.crafting.bushels[c])])   # not-ui (a count)
+		held.append([c, tr("TIMES_N") % int(Game.crafting.bushels[c])])
 	held.sort_custom(func(a: Array, b: Array) -> bool: return Game.name_of(str(a[0])) < Game.name_of(str(b[0])))
 	if held.is_empty():
 		content.add_child(BookPanel.text(tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"), 17, BookPanel.SOFT))
 	else:
 		content.add_child(UiKit.count_row(held))
 	content.add_child(BookPanel.text(tr("FARMERS_MARKET_TODAY"), 26, BookPanel.HEAD))
-	var stall := Game.crafting.market_stall()
-	var full := Game.crafting.total_bushels() >= cap
-	var grid := _grid("card_width")
-	for c in stall:
-		var id: String = c
-		var price := Game.crafting.bushel_price(id)
-		var sold_out := int(stall[c]) <= 0
-		var col := _card("card_width", sold_out)
-		col.alignment = BoxContainer.ALIGNMENT_CENTER
-		var pic := _picture(id, "count_tile", sold_out)
-		pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		col.add_child(pic)
-		for words: Array in [[Game.name_of(id), 17, BookPanel.INK], [tr("MARKET_LEFT") % int(stall[c]), 15, BookPanel.SOFT]]:
-			var l := BookPanel.text(str(words[0]), int(words[1]), words[2])
-			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			col.add_child(l)
-		var buy := Button.new()
-		buy.focus_mode = Control.FOCUS_NONE
-		buy.custom_minimum_size.y = UiTheme.size("panel_button_height")
-		buy.text = tr("MARKET_BUY") % FarmHud._thousands(price)
-		buy.disabled = sold_out or Game.coins < price or full
-		UiFx.press_bounce(buy)
-		buy.pressed.connect(func() -> void:
-			Game.crafting.buy_bushel(id)
-			hud._book.refresh())
-		col.add_child(buy)
-		grid.add_child(col.get_parent())
-	content.add_child(grid)
-	if full:
-		content.add_child(BookPanel.text(tr("PANTRY_FULL"), 17, BookPanel.SOFT))
+	if Game.crafting.total_bushels() >= cap:
+		content.add_child(BookPanel.text(tr("PANTRY_FULL"), 17, UiTheme.color("note")))
+	var ids: Array[String] = []
+	ids.assign(Game.crafting.market_stall().keys())
+	content.add_child(CardList.make(ids, stall_face, func(id: String) -> void:
+		if not Game.crafting.buy_bushel(id):
+			hud.show_message(tr("MARKET_CANT_BUY"))
+		hud.book.refresh(), _view_width()))
+
+
+## A Farmers Market card (CardFace): the ingredient, how many are left today and what one costs (red when it is
+## more than the coins held; greyed when sold out or the pantry is full).
+func stall_face(id: String) -> Dictionary:
+	var left := int(Game.crafting.market_stall().get(id, 0))
+	var price := Game.crafting.bushel_price(id)
+	var full := Game.crafting.total_bushels() >= Balance.i("crafting.bushel_cap")
+	return {"name": Game.name_of(id), "line": tr("MARKET_LEFT") % left, "locked": left <= 0 or full,
+		"badge": ["coin", FarmHud._thousands(price), Game.coins < price],
+		"buyable": left > 0 and not full and Game.coins >= price}
 
 
 ## A building's star row: its size in stars (lit up to `size`), how many slots that is (one crafting slot per
