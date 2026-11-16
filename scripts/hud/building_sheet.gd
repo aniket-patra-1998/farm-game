@@ -312,7 +312,7 @@ func _refill() -> void:
 	_inside.visible = total > 0
 	var loose := Game.homes.loose_matching(o) if id != "beehive" else 0
 	_fill.visible = loose > 0   # (nothing to move in: no button, not a grey one)
-	_fill.text = tr("MOVE_IN") % loose
+	_fill.text = HudBuildings.move_in_words(o, loose)
 	_turn.visible = Game.buildings.can_rotate(o).ok()   # (what can never turn has no Turn)
 	if _sell.has_meta(&"sure") and not _counting and _sell.text == tr("TOOL_SELL"):
 		_sell.remove_meta(&"sure")

@@ -13,7 +13,8 @@ var progress := 0.0        # of the way to the next star (1 when all are earned)
 
 ## The stars of `id`, or null when it can't be mastered.
 static func of(id: String) -> MasteryStars:
-	if not Game.mastery.masterable(id):
+	# (None until there is something to show: a card with no stars yet and no points toward one shows nothing.)
+	if not Game.mastery.masterable(id) or (Game.mastery.stars(id) == 0 and Game.mastery.progress(id) <= 0.0):
 		return null
 	var m := MasteryStars.new()
 	m.earned = Game.mastery.stars(id)

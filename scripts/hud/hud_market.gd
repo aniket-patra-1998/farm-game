@@ -271,8 +271,8 @@ func mystery_box_card() -> Control:
 	inner.add_theme_constant_override("separation", 10)
 	inner.add_child(BookPanel.text(tr("MYSTERY_BOX"), 22))
 	inner.add_child(
-		BookPanel.text(
-			tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION"),
+		BookPanel.info(
+			tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION"), tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION_INFO"),
 			17
 		)
 	)

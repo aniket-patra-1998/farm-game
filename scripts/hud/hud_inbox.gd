@@ -31,7 +31,7 @@ func build_inbox(content: VBoxContainer) -> void:
 	head.add_child(left)
 	content.add_child(head)
 	if Game.social.inbox.is_empty():
-		content.add_child(BookPanel.text(tr("INBOX_EMPTY"), 20, BookPanel.CREAM))
+		content.add_child(BookPanel.info(tr("INBOX_EMPTY"), tr("INBOX_EMPTY_INFO"), 20, BookPanel.CREAM))
 		return
 	var items := Game.social.inbox.duplicate()
 	items.reverse()   # (newest first)
@@ -55,7 +55,12 @@ func line_for(item: Dictionary) -> PanelContainer:
 	var what := str(give.get("what", ""))
 	if what in [InboxItem.ITEM, InboxItem.YOUNG, InboxItem.PART]:
 		row.add_child(UiKit.count_row([[str(give["id"]), "×%d" % int(give.get("n", 1))]]))
-	var words := BookPanel.text(_who(item), 18)   # (just who: the picture, the count and the button say the rest)
+	# Just who sent it (the picture, the count and the button say the rest); a thing from your own farm says
+	# what waits for you instead ("A Cow is waiting", then Place).
+	var label := _who(item)
+	if from == InboxItem.FARM and what == InboxItem.ITEM:
+		label = tr("INBOX_WAITING") % str(Game.item_data(str(give["id"])).get("name", ""))
+	var words := BookPanel.text(label, 18)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(words)

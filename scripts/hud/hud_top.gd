@@ -1,8 +1,17 @@
 class_name HudTop
 extends RefCounted
 ## The top of the screen, FarmVille's way: the coin and cash bars at the left (their "+" opens the Market), the
-## farm's name on a plaque in the middle with the season, weather and time under it, and the XP bar with the
-## level star at the right. Built from the kit (UiKit); the counters' values are set by FarmHud.
+## farm's name on a plaque in the middle with the season and the sky as icons and the time under it, and the XP
+## bar with the level star at the right. Built from the kit (UiKit); the counters' values are set by FarmHud.
+
+signal sky_tapped   # the season and sky icons tapped: their words are shown (FarmHud)
+
+const SKY_ICON := 2.2   # the season and sky icons, as a share of the clock's text size
+## The season's sign, by season (Season names): a flower, the sun, a leaf, a snowflake, rain drops.
+const SEASON_ICONS := {"Spring": "flower", "Summer": "sun", "Autumn": "leaf", "Winter": "flake", "Monsoon": "drops"}
+## The sky's picture, by weather state (Weather.NAMES); a clear night shows the moon.
+const WEATHER_ICONS := {"clear": "sun", "partly_cloudy": "sun_cloud", "cloudy": "cloud", "rain": "rain",
+	"storm": "storm", "fog": "fog", "snow": "snow"}
 
 var hud: FarmHud
 var coins: PanelContainer
@@ -10,7 +19,9 @@ var gems: PanelContainer
 var coins_label: Label
 var gems_label: Label
 var plaque: PanelContainer
-var clock: Label
+var clock: Label   # the time alone (the season and sky are the icons beside it)
+var season_icon: UiIcon
+var weather_icon: UiIcon
 var forecast: Label   # under the clock: "Rain at 4:00 pm: watered crops pay +10%" (hidden when nothing is due)
 var xp: UiXpBar
 var _forecast_at := -2   # the forecast last shown (its time; -1 none)
@@ -49,17 +60,32 @@ func build(root: Control) -> void:
 	plaque = UiKit.plaque(farm_name())
 	plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	middle.add_child(plaque)
+	# The season and the sky as two icons and the time beside them: read at a glance, the words on a tap.
+	var sky := HBoxContainer.new()
+	sky.alignment = BoxContainer.ALIGNMENT_CENTER
+	sky.add_theme_constant_override("separation", 4)
+	sky.mouse_filter = Control.MOUSE_FILTER_STOP
+	sky.gui_input.connect(func(e: InputEvent) -> void:
+		if (e is InputEventMouseButton and e.pressed) or (e is InputEventScreenTouch and e.pressed):
+			sky_tapped.emit())
+	middle.add_child(sky)
+	var px := UiTheme.size("font_clock") * SKY_ICON
+	season_icon = UiIcon.make("sun", px)
+	weather_icon = UiIcon.make("sun", px)
+	for icon: UiIcon in [season_icon, weather_icon]:
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		sky.add_child(icon)
 	clock = Label.new()
 	clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	clock.add_theme_font_size_override("font_size", int(UiTheme.size("font_clock")))
+	clock.add_theme_font_size_override("font_size", UiTheme.text_px("font_clock"))
 	clock.add_theme_color_override("font_color", UiTheme.color("hud_hint"))
 	clock.add_theme_color_override("font_shadow_color", UiTheme.color("bar_text_shadow"))
 	clock.add_theme_constant_override("shadow_offset_y", 1)
-	middle.add_child(clock)
+	sky.add_child(clock)
 	# The forecast (our own touch): when rain is due or will stop, so a visit can be planned round it.
 	forecast = Label.new()
 	forecast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	forecast.add_theme_font_size_override("font_size", int(UiTheme.size("font_clock")))
+	forecast.add_theme_font_size_override("font_size", UiTheme.text_px("font_clock"))
 	forecast.add_theme_color_override("font_color", UiTheme.color("hud_hint"))
 	forecast.add_theme_color_override("font_shadow_color", UiTheme.color("bar_text_shadow"))
 	forecast.add_theme_constant_override("shadow_offset_y", 1)

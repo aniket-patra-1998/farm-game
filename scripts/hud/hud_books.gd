@@ -13,8 +13,8 @@ func _init(owner: FarmHud) -> void:
 
 
 func build_collections(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(
-		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), 20, BookPanel.CREAM))
+	content.add_child(BookPanel.info(
+		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), tr("ITEMS_TURN_UP_WHILE_YOU_FARM_INFO"), 20, BookPanel.CREAM))
 	for coll in Game.collectibles.collections:
 		var inner := BookPanel.card()
 		inner.add_theme_constant_override("separation", 10)
@@ -30,7 +30,7 @@ func build_collections(content: VBoxContainer) -> void:
 		trade.text = tr("TRADE_IN")
 		trade.custom_minimum_size = Vector2(140, 48)
 		trade.focus_mode = Control.FOCUS_NONE
-		trade.disabled = not Game.collectibles.can_trade_in(coll)
+		trade.visible = Game.collectibles.can_trade_in(coll)   # (there only when a set is complete)
 		var coll_id: String = coll["id"]
 		trade.pressed.connect(func() -> void: Game.collectibles.trade_in(coll_id))
 		head.add_child(trade)
@@ -92,56 +92,39 @@ func prize_text(prize: Array) -> String:
 	return "%d %s" % [int(prize[1]), str(prize[0]).capitalize()]
 
 
+## Each ribbon as one card: the medal of the tier being worked toward (or the last one won), its name, and a bar
+## for how far along it is ("12 / 25"). No legend of the four tiers and no intro: the medal's colour is the tier.
 func build_ribbons(content: VBoxContainer) -> void:
 	var data: Dictionary = Game.ribbons.ribbon_data
 	var tier_names: Array = data.get("tiers", [])
-	content.add_child(BookPanel.text(
-		tr("EACH_RIBBON_HAS_FOUR_TIERS_YELLOW"), 20, BookPanel.CREAM))
 	for r in data.get("ribbons", []):
 		var earned := int(Game.ribbons.ribbon_tiers.get(r["id"], 0))
 		var thresholds: Array = r["thresholds"]
 		var value := Game.ribbons.stat(r["stat"])
+		var done := earned >= thresholds.size()
+		var shown := mini(earned, tier_names.size() - 1) if done else earned
 
 		var inner := BookPanel.card()
 		inner.add_theme_constant_override("separation", 8)
 		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", 10)
+		var medal := UiIcon.make("ribbon", UiTheme.size("ribbon_icon"), UiTheme.color("ribbon_tier_%d" % shown))
+		if not done:
+			medal.modulate = Color(1, 1, 1, 0.55)   # (still to win)
+		head.add_child(medal)
 		var title := BookPanel.text(r["name"], 26)
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		head.add_child(title)
-		var tiers := HBoxContainer.new()
-		tiers.add_theme_constant_override("separation", 6)
-		for k in tier_names.size():
-			# Each tier as its own coloured ribbon (FarmVille's yellow, white, red and blue) with its name under
-			# it; a faded one is still to come.
-			var tier := VBoxContainer.new()
-			tier.add_theme_constant_override("separation", 0)
-			tier.add_child(UiIcon.make("ribbon", UiTheme.size("ribbon_icon"), UiTheme.color("ribbon_tier_%d" % k)))
-			var name := Label.new()
-			name.text = str(tier_names[k])
-			name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			name.add_theme_font_size_override("font_size", int(UiTheme.size("font_count_name")))
-			name.add_theme_color_override("font_color", UiTheme.color("tool_label"))
-			tier.add_child(name)
-			if k >= earned:
-				tier.modulate = Color(1, 1, 1, 0.35)
-			tiers.add_child(tier)
-		head.add_child(tiers)
 		inner.add_child(head)
-
-		var line: String
-		if earned >= thresholds.size():
-			line = tr("COMPLETE") % [value, r["what"]]
-		else:
+		if done:
+			inner.add_child(BookPanel.text(tr("COMPLETE") % [value, r["what"]], 18))
+		elif value > 0:   # (not started: the medal and its name only, no "0 / 25")
 			var goal := int(thresholds[earned])
-			line = tr("FOR") % [mini(value, goal), goal, r["what"], tier_names[earned]]
 			var bar := ProgressBar.new()
 			bar.show_percentage = false
 			bar.custom_minimum_size.y = 18
 			bar.max_value = goal
 			bar.value = mini(value, goal)
-			inner.add_child(BookPanel.text(line, 18))
 			inner.add_child(bar)
-			content.add_child(BookPanel.card_frame(inner))
-			continue
-		inner.add_child(BookPanel.text(line, 18))
+			inner.add_child(BookPanel.text("%d / %d" % [mini(value, goal), goal], 18))   # not-ui
 		content.add_child(BookPanel.card_frame(inner))

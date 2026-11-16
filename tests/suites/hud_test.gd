@@ -89,7 +89,6 @@ func test_147_the_hud_fits_every_screen_shape_without_overlaps() -> void:
 		var parts: Array[Control] = hud.top.hideable()
 		parts.append(hud.tools.panel)
 		parts.append_array(hud.side.hideable())
-		parts.append(hud.side.toggles)
 		for a in parts:
 			var ra := a.get_global_rect()
 			_check(view.grow(1.0).encloses(ra), "%s: %s is on screen (%s in %s)" % [shape, a.name, ra, view.size])
@@ -125,8 +124,8 @@ func test_148_plant_asks_for_a_seed_and_the_eye_hides_the_interface() -> void:
 	(hud.tools.buttons["harvest"] as Button).pressed.emit()
 	_eq(grid.tool, "harvest", "Harvest goes in hand")
 	hud.set_interface_hidden(true)
-	_check(not hud.tools.panel.visible and not hud.top.xp.visible and not hud.side.menu.visible, "the eye hides it all")
-	_check(hud.side.toggles.visible, "but the eye itself")
+	_check(not hud.tools.panel.visible and not hud.top.xp.visible and not hud.side.menu.visible,
+		"hiding the interface hides it all")
 	hud.set_interface_hidden(false)
 	_check(hud.tools.panel.visible, "and brings it back")
 	main.queue_free()
@@ -619,3 +618,30 @@ func test_360_the_away_card_and_the_idle_view() -> void:
 	await get_tree().process_frame
 	Game.reset_game()
 
+
+
+func test_361_no_text_in_the_interface_is_under_the_smallest_size() -> void:
+	# Every word on the main screen and in every panel is at least UiTheme.min_font: nothing to squint at.
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var least := UiTheme.min_font()
+	var screens: Array = [["the main screen", func() -> void: pass], ["the Market", hud._show_market],
+		["Collections", hud._show_collections], ["Ribbons", hud._show_ribbons], ["Settings", hud._show_settings],
+		["the inbox", hud.show_inbox],
+		["the Barn", func() -> void: hud.show_building(int(Game.objects.filter(
+			func(o: Dictionary) -> bool: return o["id"] == "barn")[0]["uid"]))]]
+	for screen: Array in screens:
+		(screen[1] as Callable).call()
+		await get_tree().process_frame
+		for l: Label in hud.find_children("*", "Label", true, false):
+			if l.is_visible_in_tree() and l.text.strip_edges() != "":
+				var px := l.get_theme_font_size("font_size")
+				_check(px >= least, "%s: \"%s\" is %d, at least %d" % [screen[0], l.text.left(30), px, least])
+	(hud.get("_book") as BookPanel).close_panel()
+	Game.modal_open = false
+	main.queue_free()
+	await get_tree().process_frame

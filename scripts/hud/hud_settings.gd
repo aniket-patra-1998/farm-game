@@ -39,9 +39,7 @@ func build_settings(content: VBoxContainer) -> void:
 	mute.text = tr("MUTE_SOUND")
 	mute.button_pressed = Sound.muted
 	mute.focus_mode = Control.FOCUS_NONE
-	mute.toggled.connect(func(on: bool) -> void:
-		Sound.muted = on
-		hud.side.show_sound())
+	mute.toggled.connect(func(on: bool) -> void: Sound.muted = on)
 	inner.add_child(mute)
 	var buzz := CheckButton.new()
 	buzz.text = tr("VIBRATION")

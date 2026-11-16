@@ -1,23 +1,18 @@
 class_name HudSide
 extends RefCounted
-## The sides of the screen, FarmVille's way: at the left the view toggles (hide the interface, sound on/off); at the
-## right the menu (Market, Collections, Ribbons, Neighbours, Settings) and the zoom buttons; at the bottom left the
-## neighbours' strip (a placeholder until neighbours land: their names from the social system, our own touch).
+## The right side of the screen: the menu (Market, Collections, Ribbons, Neighbours, Settings) and, above the
+## tools, Next ready and the whole-farm view. Nothing else: sound is in Settings, the interface rests by itself
+## on an idle farm (Main's idle view), pinching zooms, and the neighbours wait in the inbox behind their button.
 
-const STRIP_NEIGHBOURS := 4      # neighbours shown on the strip
 const READY_MOST := 99           # the Next ready count stops here ("99+")
 const INBOX_CHECK := 300.0       # seconds between catching the neighbours' mail up (the inbox's count)
 
 var hud: FarmHud
-var toggles: VBoxContainer
 var menu: VBoxContainer
 var zoom: HBoxContainer
-var strip: PanelContainer
 var _ready: Button   # Next ready: goes to the nearest thing with something to take (hidden when nothing has)
 var _ready_badge: Label   # how many there are
 var _badge: Label   # the inbox's count on the Neighbours button
-var _eye: Button
-var _sound: Button
 
 
 func _init(owner: FarmHud) -> void:
@@ -28,20 +23,6 @@ func build(root: Control) -> void:
 	var margin := UiTheme.size("hud_margin")
 	var gap := UiTheme.size("hud_gap")
 	var top := UiTheme.size("top_height") + margin
-
-	toggles = VBoxContainer.new()
-	toggles.position = Vector2(margin, top)
-	toggles.add_theme_constant_override("separation", int(gap))
-	root.add_child(toggles)
-	_eye = UiKit.icon_button("eye", UiTheme.size("toggle_size"))
-	_eye.pressed.connect(func() -> void: hud.set_interface_hidden(not hud.interface_hidden))
-	toggles.add_child(_eye)
-	_sound = UiKit.icon_button("speaker", UiTheme.size("toggle_size"))
-	_sound.pressed.connect(func() -> void:
-		Sound.muted = not Sound.muted
-		show_sound())
-	toggles.add_child(_sound)
-	show_sound()
 
 	menu = VBoxContainer.new()
 	menu.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -96,29 +77,10 @@ func build(root: Control) -> void:
 	count.timeout.connect(show_ready_count)
 	_ready.add_child(count)
 	show_ready_count.call_deferred()
-	for entry: Array in [["zoom_in", 1.25], ["zoom_out", 0.8], ["fit", 0.0]]:
-		var b := UiKit.icon_button(str(entry[0]), UiTheme.size("zoom_size"))
-		var factor: float = entry[1]
-		b.pressed.connect(func() -> void: hud.zoom_view(factor))
-		zoom.add_child(b)
-
-	strip = PanelContainer.new()
-	strip.add_theme_stylebox_override("panel", UiKit.panel_box())
-	strip.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	strip.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	strip.offset_left = margin
-	strip.offset_bottom = -margin
-	root.add_child(strip)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", int(gap * 0.6))
-	strip.add_child(row)
-	var names := Game.social.roster()
-	for k in mini(STRIP_NEIGHBOURS, names.size()):
-		var face := PortraitIcon.of(Game.social.look_of(names[k]), UiTheme.size("tool_icon"))
-		var b := UiKit.tool_button("neighbours", names[k], UiTheme.size("neighbour_width"), UiTheme.size("tool_size"), 0.0,
-			face)
-		b.pressed.connect(_show_neighbours)
-		row.add_child(b)
+	# The whole farm in one press (pinching zooms in and out; on a computer, the wheel).
+	var fit := UiKit.icon_button("fit", UiTheme.size("zoom_size"))
+	fit.pressed.connect(func() -> void: hud.zoom_view(0.0))
+	zoom.add_child(fit)
 
 
 ## How many things are ready, on the Next ready button (the button is away when nothing is). Not counted while
@@ -138,21 +100,12 @@ func show_inbox_count() -> void:
 	_badge.get_parent().visible = n > 0
 
 
-## The speaker shows struck through while the sound is off.
-func show_sound() -> void:
-	(_sound.get_meta("icon") as UiIcon).struck = Sound.muted
-
-
 ## The neighbours' button and faces open the one inbox (their mail and your farm's gifts).
 func _show_neighbours() -> void:
 	hud.show_inbox()
 
 
-## Everything but the eye, to hide with it.
+## What hides with the rest of the interface.
 func hideable() -> Array[Control]:
-	var out: Array[Control] = [_sound, menu, zoom, strip]
+	var out: Array[Control] = [menu, zoom]
 	return out
-
-
-func show_eye(hidden: bool) -> void:
-	(_eye.get_meta("icon") as UiIcon).struck = hidden

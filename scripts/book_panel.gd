@@ -11,6 +11,12 @@ const INK := Color("#3a2614")
 const SUN := Color("#ffd34d")
 const MUTED := Color("#c9b48f")
 const GOOD := Color("#7ccf5a")
+## The panel uses the screen (a phone's 20:9 especially): its scrolling area is this share of the screen's
+## height, and it is as wide as the screen allows up to this many times the screen's height.
+const HEIGHT_SHARE := 0.66
+const INFO_SIZE := 1.6   # an ⓘ's size against the text beside it
+const INFO_LEAST := 40.0   # ..and never smaller than this (a finger must hit it)
+const WIDEST := 2.0
 
 var _title: Label
 var _panel: PanelContainer
@@ -66,7 +72,7 @@ func _ready() -> void:
 	header.add_child(left)
 	var plaque := UiKit.plaque("")
 	_title = plaque.get_meta("label")
-	_title.add_theme_font_size_override("font_size", int(UiTheme.size("font_book_title")))
+	_title.add_theme_font_size_override("font_size", UiTheme.text_px("font_book_title"))
 	header.add_child(plaque)
 	var right := HBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -99,9 +105,24 @@ func _ready() -> void:
 ## The screen turned or changed size: the panel takes the new width and its grids lay out again.
 func _on_screen_changed() -> void:
 	if visible:
-		_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"),
-			get_viewport_rect().size.x - UiTheme.size("book_inset"))
+		_fit_screen()
 		_build_now()
+
+
+## Sizes the panel to the screen: nearly its full height and as wide as it allows (never under the theme's
+## design size where the screen has room for it), so a shelf shows more than two rows.
+func _fit_screen() -> void:
+	var view := get_viewport_rect().size
+	_panel.custom_minimum_size.x = width_for(view.x, view.y)
+	_scroll.custom_minimum_size.y = view.y * HEIGHT_SHARE
+
+
+## How wide a panel is on a screen `view_w` across (and `view_h` high: the screen's own when not given): as wide
+## as the screen allows up to WIDEST times its height, never under the theme's design width where it fits.
+static func width_for(view_w: float, view_h := -1.0) -> float:
+	var tree := Engine.get_main_loop() as SceneTree
+	var h := view_h if view_h > 0.0 else (tree.root.get_visible_rect().size.y if tree != null else view_w / WIDEST)
+	return minf(maxf(UiTheme.size("book_width"), h * WIDEST), view_w - UiTheme.size("book_inset"))
 
 
 ## builder(content: VBoxContainer) fills the panel; it runs again on refresh().
@@ -131,9 +152,7 @@ func show_tab(index: int) -> void:
 func _show(title: String, builder: Callable) -> void:
 	_title.text = title
 	_builder = builder
-	# As wide as the theme says, narrower on small screens.
-	_panel.custom_minimum_size.x = minf(UiTheme.size("book_width"),
-		get_viewport_rect().size.x - UiTheme.size("book_inset"))
+	_fit_screen()
 	_build_tab_bar()
 	UiFx.pop_next = not visible   # (a panel opening pops its cards in; a tab or a refresh doesn't)
 	UiFx.popped = 0
@@ -217,6 +236,22 @@ static func text(words: String, font_size := 22, color := INK) -> Label:
 	l.add_theme_color_override("font_color", color)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l
+
+
+## One short line with an ⓘ beside it: the line says what matters at a glance, the ⓘ shows `more` (the whole
+## explanation) as a message when tapped. Panels open with one of these, never a paragraph.
+static func info(words: String, more: String, font_size := 20, color := INK) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var line := text(words, font_size, color)
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(line)
+	var tip := UiKit.icon_button("info", maxf(font_px(font_size) * INFO_SIZE, INFO_LEAST))
+	tip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tip.pressed.connect(func() -> void: Game.message.emit(more))
+	UiKit.long_press_name(tip, more)
+	row.add_child(tip)
+	return row
 
 
 ## A panel's text size `font_size` (a design size) on this screen (UiTheme.font).

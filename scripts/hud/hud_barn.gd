@@ -52,8 +52,8 @@ func add_boosts(content: VBoxContainer) -> void:
 
 func build_barn_repair(content: VBoxContainer) -> void:
 	var it := Game.item_data("barn")
-	content.add_child(BookPanel.text(
-		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), 20, BookPanel.CREAM))
+	content.add_child(BookPanel.info(
+		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT_INFO"), 20, BookPanel.CREAM))
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 10)
 	var need := Game.storage.repair_needs()
@@ -87,12 +87,10 @@ func build_barn_repair(content: VBoxContainer) -> void:
 
 func build_barn_storage(content: VBoxContainer) -> void:
 	var cap := Game.storage.barn_capacity()
-	content.add_child(BookPanel.text(
-		tr("HOLDS_OF_USE_THE_STORE_TOOL") % [Game.storage.stored.size(), cap], 20, BookPanel.CREAM))
+	content.add_child(BookPanel.info(tr("HOLDS_OF_USE_THE_STORE_TOOL") % [Game.storage.stored.size(), cap],
+		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [Game.storage.stored.size(), cap], 20, BookPanel.CREAM))
 	# What is stored first (it is what the Barn is opened for), then its parts, its next size and the feed.
-	if Game.storage.stored.is_empty():
-		content.add_child(BookPanel.card_frame(BookPanel.text(tr("NOTHING_STORED_YET"), 20)))
-	else:
+	if not Game.storage.stored.is_empty():   # (nothing stored: no empty box saying so)
 		add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
 		add_gift_box(content, cap)
 	var parts: Array = []
@@ -187,7 +185,8 @@ func build_bloom(content: VBoxContainer) -> void:
 		content.add_child(BookPanel.text(tr("READY_IN") % [d.data["name"], tr("FLOWERS"),
 			FarmGrid.format_duration(Game.seconds_until_ready(o))], 20, BookPanel.CREAM))
 	if d.withers():
-		content.add_child(BookPanel.text(tr("A_SINGLE_BLOOM_WITHERS"), 17, BookPanel.CREAM))
+		content.add_child(BookPanel.info(tr("A_SINGLE_BLOOM_WITHERS"), tr("A_SINGLE_BLOOM_WITHERS_INFO"), 17,
+			BookPanel.CREAM))
 		var up := hud._panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
 		up.disabled = Game.gems < d.upgrade_gems()
 		up.pressed.connect(func() -> void:

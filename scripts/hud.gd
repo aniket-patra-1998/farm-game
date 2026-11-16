@@ -93,6 +93,8 @@ func _ready() -> void:
 	ItemIcons.start(self)   # the shop's pictures, made from the models when first shown
 	top = HudTop.new(self)
 	top.build(root)
+	top.sky_tapped.connect(func() -> void:   # (the icons' words, on a tap)
+		show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])]))
 	side = HudSide.new(self)
 	side.build(root)
 	tools = HudTools.new(self)
@@ -207,7 +209,7 @@ func choose_seed(crop_id: String) -> void:
 	show_message(tr("TAP_PLOWED_PLOTS_TO_PLANT") % Game.crops[crop_id]["name"])
 
 
-## Hides everything but the eye (FarmVille's view toggle, for looking at the farm), or shows it again.
+## Hides the whole interface (for looking at the farm, or a screenshot), or shows it again.
 func set_interface_hidden(on: bool) -> void:
 	interface_hidden = on
 	var all: Array[Control] = top.hideable()
@@ -215,7 +217,6 @@ func set_interface_hidden(on: bool) -> void:
 	all.append_array(side.hideable())
 	for c in all:
 		c.visible = not on
-	side.show_eye(on)
 
 
 ## Fades the whole interface away over an idle farm (Main, after Balance `feel.idle_view_seconds` with no touch),
@@ -406,11 +407,12 @@ static func _thousands(n: int) -> String:
 
 func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
-	top.clock.text = "%s · %s · %s" % [
-		tr("SEASON_" + Game.season().to_upper()),
-		tr(Game.weather()["name"]),
-		DayCycle.clock_text(hour)
-	]
+	var weather := Game.weather()
+	var state := str(weather.get("state", "clear"))
+	var night := hour < DayCycle.SUNRISE or hour >= DayCycle.SUNSET
+	top.season_icon.kind = str(HudTop.SEASON_ICONS.get(Game.season(), "sun"))
+	top.weather_icon.kind = "moon" if state == "clear" and night else str(HudTop.WEATHER_ICONS.get(state, "sun"))
+	top.clock.text = DayCycle.clock_text(hour)
 	top.show_forecast(Game.forecast() if Season.enabled() else {})
 
 

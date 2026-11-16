@@ -48,7 +48,7 @@ static func meter(kind: String, plus := false) -> PanelContainer:
 	box.add_child(row)
 	row.add_child(UiIcon.make(kind))
 	var value := Label.new()
-	value.add_theme_font_size_override("font_size", int(UiTheme.size("font_bar")))
+	value.add_theme_font_size_override("font_size", UiTheme.text_px("font_bar"))
 	value.add_theme_color_override("font_color", UiTheme.color("bar_text"))
 	value.add_theme_color_override("font_shadow_color", UiTheme.color("bar_text_shadow"))
 	value.add_theme_constant_override("shadow_offset_y", 2)
@@ -108,7 +108,7 @@ static func plaque(text: String) -> PanelContainer:
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_plaque")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_plaque"))
 	label.add_theme_color_override("font_color", UiTheme.color("plaque_text"))
 	box.add_child(label)
 	box.set_meta("label", label)
@@ -154,11 +154,15 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	var label := Label.new()
 	label.text = words
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_tool")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_tool"))
 	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.visible = labelled
 	box.add_child(label)
+	if labelled:   # (a longer word, "Fertilize", widens its button rather than being cut or shrunk)
+		var font := label.get_theme_default_font()
+		var wide := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.text_px("font_tool")).x
+		b.custom_minimum_size.x = maxf(bw, wide + UiTheme.size("button_pad"))
 	b.set_meta("icon", icon)
 	b.set_meta("label", label)
 	long_press_name(b, words)
@@ -189,7 +193,7 @@ static func name_bubble(control: Control, words: String) -> void:
 	bubble.add_theme_stylebox_override("panel", panel_box())
 	var label := Label.new()
 	label.text = words
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_tool")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_tool"))
 	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
 	bubble.add_child(label)
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -211,7 +215,7 @@ static func tab_button(words: String, on: bool) -> Button:
 	b.text = words
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size.y = UiTheme.size("tab_height")
-	b.add_theme_font_size_override("font_size", int(UiTheme.size("font_tab")))
+	b.add_theme_font_size_override("font_size", UiTheme.text_px("font_tab"))
 	var face := UiTheme.color("tab_face_on" if on else "tab_face")
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		var sb := StyleBoxFlat.new()
@@ -249,7 +253,7 @@ static func price_badge(kind: String, words: String, short := false) -> PanelCon
 		row.add_child(UiIcon.make(kind, UiTheme.size("badge_height") - 8.0))
 	var label := Label.new()
 	label.text = words
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_badge"))
 	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
 	row.add_child(label)
 	return box
@@ -299,7 +303,7 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_badge"))
 	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
 	label.add_theme_color_override("font_outline_color", UiTheme.color(face))
 	label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
@@ -311,7 +315,7 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	caption.custom_minimum_size.x = side
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption.add_theme_font_size_override("font_size", int(UiTheme.size("font_count_name")))
+	caption.add_theme_font_size_override("font_size", UiTheme.text_px("font_count_name"))
 	caption.add_theme_color_override("font_color", UiTheme.color("tool_label"))
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(caption)
@@ -339,7 +343,7 @@ static func count_badge(button: Control) -> Label:
 	var label := Label.new()
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_badge"))
 	label.add_theme_color_override("font_color", UiTheme.color("cream"))
 	dot.add_child(label)
 	button.add_child(dot)
@@ -350,8 +354,7 @@ static func count_badge(button: Control) -> Label:
 ## shelves, the Barn's store).
 static func card_grid(view_width: float) -> GridContainer:
 	var grid := GridContainer.new()
-	var room := minf(UiTheme.size("book_width"), view_width - UiTheme.size("book_inset")) \
-		- 2.0 * UiTheme.size("book_margin") - UiTheme.size("scroll_bar")
+	var room := BookPanel.width_for(view_width) - 2.0 * UiTheme.size("book_margin") - UiTheme.size("scroll_bar")
 	grid.columns = maxi(1, floori(room / (UiTheme.size("card_width") + UiTheme.size("hud_gap"))))
 	grid.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
 	grid.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
@@ -408,7 +411,7 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size.x = UiTheme.size("card_width") - 2.0 * UiTheme.size("card_pad")
-		l.add_theme_font_size_override("font_size", int(UiTheme.size(str(words[1]))))
+		l.add_theme_font_size_override("font_size", UiTheme.text_px(str(words[1])))
 		l.add_theme_color_override("font_color", UiTheme.color(str(words[2])))
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		col.add_child(l)
