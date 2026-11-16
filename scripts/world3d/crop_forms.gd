@@ -15,6 +15,18 @@ const STAKE := Color("#7a5a30")
 const STRAW := Color("#d8b85a")
 const WHITE := Color(0.95, 0.94, 0.88)
 
+## How many pieces a crop's harvest picture gathers, by its form's "plot" (big produce fewer, small more).
+const HARVEST_PIECES := {"melons": 3, "heads": 1, "peppers": 3, "stakes": 1, "default": 5}
+const HARVEST_SPREAD := 0.06   # how far a harvest's pieces sit from its middle (a melon's own size sets its own)
+const HARVEST_BUNCHED := ["flowers", "spikes", "ears", "roots"]   # held up as a bunch, not heaped (`_bunch`)
+const HARVEST_FAN := deg_to_rad(20.0)   # between one stem of a bunch and the next, across the picture
+const HARVEST_LEAN := deg_to_rad(0.0)   # how far a bunch leans toward the viewer (the pictures already look down)..
+const HARVEST_FLOWER_LEAN := deg_to_rad(50.0)   # ..but flowers face the viewer, their heads tipped to the camera
+const PULLED_ROOT := 1.8   # a pulled root against the size it shows in the field..
+const PULLED_TOPS := 2.5   # ..and its tops' leaves broader, so they read green at a picture's size
+const TOWARD_VIEW := Vector3(0.7071, 0.0, 0.7071)   # the pictures look from +x +z (ItemIcons)..
+const ACROSS := Vector3(0.7071, 0.0, -0.7071)       # ..and this runs across them
+
 static var _data := {}
 
 
@@ -118,18 +130,81 @@ static func _plot(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, k:
 	var leaf := _col(s, "leaf", "#3f8a32")
 	_carpet(mb, rng, s, leaf, ripe)
 	for at: Vector3 in _plot_spots(rng, int(s.get("count", 4)), 1.0 if ripe else 0.92):
-		match str(s["plot"]):
-			"melons": _melon(mb, rng, s, at, ripe, leaf)
-			"berries": _berry(mb, rng, at, ripe, leaf)
-			"peppers": _pepper(mb, rng, at, ripe, leaf)
-			"heads": _head(mb, rng, s, at, ripe, leaf)
-			"stakes": _staked(mb, rng, at, k, ripe, leaf)
-			"balls": _balls(mb, rng, s, at, ripe, leaf)
-			"roots": _rooted(mb, rng, s, at, ripe, leaf)
-			"ears": _ears(mb, rng, s, at, ripe, leaf)
-			"spikes": _spike_tuft(mb, rng, s, at, ripe, leaf)
-			"flowers": _flower(mb, rng, s, at, ripe, leaf)
-			_: _leafy(mb, rng, at, ripe, leaf)
+		_piece(mb, rng, s, at, k, ripe, leaf)
+
+
+## Upright produce (flowers, spikes, ears, roots) as a bunch: `n` pieces built upright one by one, fanned out
+## across the picture from one foot (HARVEST_FAN apart) and leant toward the viewer (HARVEST_LEAN), so every head
+## shows and none hides behind another, as a bunch is held up to be seen.
+static func _bunch(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, n: int, leaf: Color) -> void:
+	var lean := Basis(ACROSS, HARVEST_FLOWER_LEAN if str(s["plot"]) == "flowers" else HARVEST_LEAN)
+	for i in n:
+		var one := MeshBuilder.new()
+		one.produce_scale = mb.produce_scale
+		if str(s["plot"]) == "roots":
+			_pulled(one, rng, s, leaf)
+		else:
+			_piece(one, rng, s, Vector3.ZERO, 1.0, true, leaf)
+		var fan := Basis(TOWARD_VIEW, (i - (n - 1) / 2.0) * HARVEST_FAN)
+		mb.add(one, Transform3D(lean * fan, Vector3.ZERO))
+
+
+## A root crop pulled up, for its picture: the root itself below its tops, long and pointed when the form is tall
+## (a carrot), round when not (an onion), PULLED_ROOT times the size it shows in the field (mostly underground).
+static func _pulled(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, leaf: Color) -> void:
+	# (all of it above the ground line: the crop shader shades whatever is below it as soil)
+	var r := float(s.get("size", 0.024)) * PULLED_ROOT
+	var tall := float(s.get("tall", 1.0))
+	var root := r * tall * 3.0 if tall > 1.1 else r * tall * 2.0
+	if tall > 1.1:
+		mb.cone(Vector3.ZERO, 0.002, r, root, _p(rng.randf_range(0.85, 1.0)), 8)
+		mb.ellipsoid(_up(root), Vector3(r, r * 0.35, r), _p(0.95), 8, 3)   # (its shoulder: the cone is open above)
+	else:
+		mb.ellipsoid(_up(root * 0.5), Vector3(r, r * tall, r), _p(rng.randf_range(0.85, 1.0)), 8, 5)
+	for j in int(s.get("tops", 6)):
+		var a := TAU * j / float(s.get("tops", 6)) + rng.randf() * 0.4
+		var top := _ring(a, 0.03) + _up(root + float(s.get("top_h", 0.1)))
+		mb.blade(_up(root), top, float(s.get("top_w", 0.014)) * PULLED_TOPS, leaf.darkened(0.15), leaf.lightened(0.2),
+			_ring(a, 0.01))
+
+
+## One piece of a plot's produce at `at` (a melon, a berry, an ear of grain, a flower...), by the form's "plot".
+static func _piece(mb: MeshBuilder, rng: RandomNumberGenerator, s: Dictionary, at: Vector3, k: float, ripe: bool,
+		leaf: Color) -> void:
+	match str(s["plot"]):
+		"melons": _melon(mb, rng, s, at, ripe, leaf)
+		"berries": _berry(mb, rng, at, ripe, leaf)
+		"peppers": _pepper(mb, rng, at, ripe, leaf)
+		"heads": _head(mb, rng, s, at, ripe, leaf)
+		"stakes": _staked(mb, rng, at, k, ripe, leaf)
+		"balls": _balls(mb, rng, s, at, ripe, leaf)
+		"roots": _rooted(mb, rng, s, at, ripe, leaf)
+		"ears": _ears(mb, rng, s, at, ripe, leaf)
+		"spikes": _spike_tuft(mb, rng, s, at, ripe, leaf)
+		"flowers": _flower(mb, rng, s, at, ripe, leaf)
+		_: _leafy(mb, rng, at, ripe, leaf)
+
+
+## A crop as its picture shows it (the market, the Barn, a recipe): its harvest, a few pieces of its ripe produce
+## gathered close (HARVEST_PIECES: a triangle of three, or one in a ring of four), with no carpet of leaves and no
+## soil under them, so a pumpkin reads as pumpkins and wheat as ears of wheat. False for a form that is not a plot.
+static func harvest(mb: MeshBuilder, form: String, rng: RandomNumberGenerator) -> bool:
+	var s := spec(form)
+	if s.is_empty() or not s.has("plot"):
+		return false
+	mb.produce_scale = 1.0
+	var leaf := _col(s, "leaf", "#3f8a32")
+	var n := int(HARVEST_PIECES.get(str(s["plot"]), HARVEST_PIECES["default"]))
+	if str(s["plot"]) in HARVEST_BUNCHED:
+		_bunch(mb, rng, s, n, leaf)
+		return true
+	var size: Variant = s.get("size", 0.0)   # (a melon's is [x, y, z]; some forms give one number)
+	var spread := float(size[0]) * 1.4 if size is Array and not (size as Array).is_empty() else HARVEST_SPREAD
+	for i in n:
+		var ring := n if n < 5 else 4   # (five: one in the middle of a ring of four)
+		var at := Vector3.ZERO if (n == 5 and i == 0) else _ring(TAU * i / float(ring) + 0.5, spread)
+		_piece(mb, rng, s, at, 1.0, true, leaf)
+	return true
 
 
 ## The carpet: a dark floor (no soil shows through) and tufts of leaves all over it, a little past the plot's edge;

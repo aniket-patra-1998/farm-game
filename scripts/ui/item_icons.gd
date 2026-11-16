@@ -19,7 +19,7 @@ const DEVELOP_US := 4000      # developing pictures (IconDevelop) stops after th
 const CACHE := "user://icons"
 const SHIPPED := "res://baked/icons"   # every picture made ahead of time by CI, in the game
 const UI := "ui:"             # an interface icon's picture is asked for as "ui:<kind>" (UiModels)
-const UI_CLOSE := 0.8   # interface icons are framed this much closer than items
+const UI_CLOSE := 1.0   # interface icons are framed as items are (room for their outline and white edge)
 ## The state an item made as a file is pictured in (AssetRegistry): its first look and size, ready (a tree in
 ## fruit).
 const PICTURED := {"look": 0, "ready": true, "level": 1}
@@ -45,6 +45,8 @@ static var _textures := {}    # item id -> ImageTexture (blank until made)
 static var _waiting: Array[String] = []
 static var _asked := {}       # item id -> the frame it was last asked for
 
+var _style: IconStyle            # the flat look, drawn on each picture once (IconStyle)
+var _to_style: Array[IconDevelop] = []
 var _slots: Array[SubViewport] = []
 var _making: Array[String] = []   # the item drawn in each slot ("" when the slot is idle)
 var _pass: Array[int] = []        # each slot's render under way: 0 on black, 1 on white (IconDevelop)
@@ -98,7 +100,9 @@ static func is_made(item_id: String) -> bool:
 static func _shown_making(item_id: String) -> bool:
 	if not is_instance_valid(_shown):
 		return false
-	return _shown._making.has(item_id) or _shown._developing.any(func(j: IconDevelop) -> bool: return j.id == item_id)
+	var mine := func(j: IconDevelop) -> bool: return j.id == item_id
+	return _shown._making.has(item_id) or _shown._developing.any(mine) or _shown._to_style.any(mine) \
+		or _shown._style.holds(item_id)
 
 
 ## Puts the renderer under `parent` (once).
@@ -150,6 +154,8 @@ static func _calm() -> bool:
 
 
 func _ready() -> void:
+	_style = IconStyle.new()
+	add_child(_style)
 	for k in SLOTS:
 		_slots.append(_slot())
 		_making.append("")
@@ -195,6 +201,7 @@ func _process(_delta: float) -> void:
 		return
 	var keep := _calm()
 	_develop()
+	_style_next()
 	for k in SLOTS:
 		if _making[k] != "":
 			_finish(k, keep)
@@ -226,7 +233,7 @@ func _finish(k: int, keep: bool) -> void:
 	var id := _making[k]
 	_making[k] = ""
 	if image != null and not image.is_empty() and _blacks[k] != null:
-		_developing.append(IconDevelop.new(id, _blacks[k], image, side(), keep, not id.begins_with(UI)))
+		_developing.append(IconDevelop.new(id, _blacks[k], image, side(), keep, false))   # (flat: no shadow)
 	_blacks[k] = null
 	var stage: Node = _slots[k].get_node_or_null(NodePath(STAGE))
 	if stage != null:
@@ -242,14 +249,27 @@ func _develop() -> void:
 		if not job.step():
 			continue
 		_developing.pop_front()
-		(_textures[job.id] as ImageTexture).update(job.picture)
-		if job.keep and shipping:
-			DirAccess.make_dir_recursive_absolute(SHIPPED)
-			ResourceSaver.save(job.picture, _shipped(job.id), ResourceSaver.FLAG_COMPRESS)
-		elif job.keep:
-			DirAccess.make_dir_recursive_absolute(CACHE)
-			_forget_old(job.id)
-			job.picture.save_png(_file(job.id))
+		_to_style.append(job)
+
+
+## The flat look (IconStyle): one developed picture a turn is drawn through it, then shown and kept.
+func _style_next() -> void:
+	var job := _style.finished()
+	if job != null:
+		_show_and_keep(job)
+	if not _style.busy() and not _to_style.is_empty():
+		_style.take(_to_style.pop_front())
+
+
+func _show_and_keep(job: IconDevelop) -> void:
+	(_textures[job.id] as ImageTexture).update(job.picture)
+	if job.keep and shipping:
+		DirAccess.make_dir_recursive_absolute(SHIPPED)
+		ResourceSaver.save(job.picture, _shipped(job.id), ResourceSaver.FLAG_COMPRESS)
+	elif job.keep:
+		DirAccess.make_dir_recursive_absolute(CACHE)
+		_forget_old(job.id)
+		job.picture.save_png(_file(job.id))
 
 
 ## Removes pictures of `id` kept under an older key.

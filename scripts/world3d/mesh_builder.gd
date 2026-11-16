@@ -26,6 +26,14 @@ func commit() -> ArrayMesh:
 	return _st.commit()
 
 
+## Adds everything `other` built, moved by `xf` (a piece built upright at the origin, then leant or turned).
+func add(other: MeshBuilder, xf: Transform3D) -> void:
+	if other._empty:
+		return
+	_st.append_from(other.commit(), 0, xf)
+	_empty = false
+
+
 ## How much bigger a piece of colour `col`, `size` from its middle to its edge, is drawn (see `produce_scale`).
 func _grown(col: Color, size: float) -> float:
 	if col.a >= 0.5 or is_equal_approx(produce_scale, 1.0):
