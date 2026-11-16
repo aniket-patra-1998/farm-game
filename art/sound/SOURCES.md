@@ -28,5 +28,17 @@ Pixabay...) goes in here.
 | ambience/night | cricket-night.mp3 | crickets at night |
 | ambience/rain | rain.mp3 | rain, laid over the bed when it rains |
 
-Still to find (CC0): a horse's neigh (the horse still plays the made-up one), a goose's honk of its own, and the
-music (data/soundscape.json `music.tracks` is empty, so no music plays and Settings shows no music slider yet).
+## Made from scratch (ours, CC0)
+
+No CC0 recording was found for these, so `tools/sound_cuts/make_generated.py` makes them: the calls source-filter
+style (a buzzing throat through vowel resonances, with breath), the music written out note by note and played by
+small instrument models (plucked-string guitar and bass, flute, reed pad, shaker, a made-up room).
+
+| Game files | What |
+| --- | --- |
+| voices/horse_1-3 | a horse's whinny (two with a snort after) |
+| voices/goose_1-3 | a goose's honk |
+| music/sunny_fields | "Sunny Fields": fingerpicked guitar and flute, 100 bpm, G major, 80 s |
+| music/evening_porch | "Evening Porch": a waltz, guitar lead, 76 bpm, D major, 98 s |
+
+A real recording can replace any of these later: put it in `data/sounds.json` (or `data/soundscape.json`) in its place.

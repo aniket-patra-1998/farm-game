@@ -27,5 +27,5 @@
     "snow": {"bed_db": -10.0},
     "fog": {"bed_db": -4.0}
   },
-  "music": {"tracks": [], "first_after": 20.0, "gap": [90.0, 240.0], "fade": 3.0, "gain_db": -3.0}
+  "music": {"tracks": ["res://art/sound/music/sunny_fields.ogg", "res://art/sound/music/evening_porch.ogg"], "first_after": 20.0, "gap": [90.0, 240.0], "fade": 3.0, "gain_db": -3.0}
 }
