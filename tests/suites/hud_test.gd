@@ -617,7 +617,7 @@ func test_360_the_away_card_and_the_idle_view() -> void:
 
 
 
-func test_361_no_text_in_the_interface_is_under_the_smallest_size() -> void:
+func test_373_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 	# Every word on the main screen and in every panel is at least UiTheme.min_font: nothing to squint at.
 	Game.saving_enabled = false
 	Game.reset_game()
@@ -647,7 +647,7 @@ func test_361_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 ## A menu of cards scales to any number of items (scaling report: menus build only what's visible): a list of
 ## 5,000 made-up items keeps only the cards in view, opens, scrolls and refreshes within a budget, and a refresh
 ## reads only the faces on screen.
-func test_362_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
+func test_374_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 	const ITEMS := 5000
 	const MOST_CARDS := 80       # cards that may exist at once, whatever the count
 	const OPEN_MS := 20.0        # budgets on a desktop CI runner (a phone is a few times slower); about 2 ms now
