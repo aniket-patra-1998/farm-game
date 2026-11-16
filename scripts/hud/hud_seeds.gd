@@ -15,7 +15,7 @@ func _init(owner: FarmHud) -> void:
 
 
 func build_seeds(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("PICK_A_SEED_THEN_TAP_PLOWED_PLOTS"), 20, BookPanel.SOFT))
+	content.add_child(BookPanel.text(tr("PICK_A_SEED_THEN_TAP_PLOWED_PLOTS"), UiTheme.BODY, BookPanel.SOFT))
 	if Season.enabled() and Game.level() >= Balance.i("seasons.from_level"):
 		content.add_child(BookPanel.text(tr("SEASON_SHELF") % [tr("SEASON_" + Game.season().to_upper()),
 			roundi((Balance.f("seasons.off_price_mult") - 1.0) * 100.0)], 18, BookPanel.SOFT))

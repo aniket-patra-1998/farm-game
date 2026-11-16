@@ -127,7 +127,7 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(words)
-	words.add_child(BookPanel.text(str(it["name"]), 22, BookPanel.SOFT))
+	words.add_child(BookPanel.text(str(it["name"]), UiTheme.HEADING, BookPanel.SOFT))
 	if why != "":
 		words.add_child(BookPanel.text(why, 18, UiTheme.color("note")))
 	words.add_child(BookPanel.text(detail_of(id, it), 17, BookPanel.SOFT))
@@ -220,10 +220,10 @@ func land_card() -> Control:
 	var step := Game.land.next_expansion()
 	var size := Game.farm_size
 	if step.is_empty():
-		inner.add_child(BookPanel.text(tr("YOUR_FARM_IS_FULL_SIZE_X") % [size, size], 22))
+		inner.add_child(BookPanel.text(tr("YOUR_FARM_IS_FULL_SIZE_X") % [size, size], UiTheme.BODY))
 		return BookPanel.card_frame(inner)
 	var next := int(step["size"])
-	inner.add_child(BookPanel.text(tr("EXPAND_FROM_X_TO_X") % [size, size, next, next], 22))
+	inner.add_child(BookPanel.text(tr("EXPAND_FROM_X_TO_X") % [size, size, next, next], UiTheme.BODY))
 	inner.add_child(BookPanel.text(
 		tr("ADDS_PLOTS_THE_DASHED_AREA_ON") % (next * next - size * size), 17))
 	var row := HFlowContainer.new()
@@ -303,7 +303,7 @@ func detail_of(id: String, it: Dictionary) -> String:
 func mystery_box_card() -> Control:
 	var inner := VBoxContainer.new()
 	inner.add_theme_constant_override("separation", 10)
-	inner.add_child(BookPanel.text(tr("MYSTERY_BOX"), 22))
+	inner.add_child(BookPanel.text(tr("MYSTERY_BOX"), UiTheme.BODY))
 	inner.add_child(
 		BookPanel.info(
 			tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION"), tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION_INFO"),

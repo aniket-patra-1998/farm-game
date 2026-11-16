@@ -12,10 +12,17 @@ const DATA := "res://data/ui_theme.json"
 const BOLD := preload("res://fonts/Poppins-BoldTab.ttf")   # not-ui (its digits one width: tools/make_tabular_font.py)
 ## The type scale, design px: caption, body, heading, title, display (docs/UI.md).
 const TYPE_SCALE: Array[float] = [12.0, 15.0, 18.0, 24.0, 32.0]
-const SHORT_FROM := 1000000   # a number this big is written short where room is tight ("1.25M")
+const CAPTION := 12   # the type scale by role (design px): small notes..
+const BODY := 15      # ..panel words, buttons, rows..
+const HEADING := 18   # ..a section's heading, a sheet's figures..
+const TITLE := 24     # ..a panel's or sheet's title..
+const DISPLAY := 32   # ..and a big moment (level up)
+const SHORT_STEPS := [[1000000000, "B"], [1000000, "M"], [1000, "k"]]   # not-ui (the short forms' units)
+const DIGITS := "(?<![\\w.,:/])\\d{1,3}(?:,\\d{3})+(?![\\w.,]?\\d)|(?<![\\w.,:/])\\d{4,}(?![\\w.]?\\d)"   # not-ui
 
 static var _data := {}
 static var _scale := 0.0   # worked out once (and again after a resize: `rescale`)
+static var _digits: RegEx   # (tidy: whole numbers in digits)
 static var _least := MIN_FONT   # the smallest text on this screen (`min_font`), worked out with the scale
 
 
@@ -30,9 +37,32 @@ static func _load() -> void:
 		_data = {"colors": {}, "sizes": {}}
 
 
-## A named colour (magenta, loudly, when the name is not in the data).
-## A number as the game writes it: digits grouped by commas ("12,450").
+## A number as the game writes it everywhere (our own look, data/ui_theme.json "numbers"): in full below
+## `short_from` ("950"), then short and rounded down so it never claims more than there is: "4.8k", "12.4k",
+## "125k", "1.2M". Prices, pay, rewards, counts and messages all go through here (or `tidy`); only `exact` writes
+## every digit, for the few places the exact figure matters.
 static func number(n: int) -> String:
+	_load()
+	var rules: Dictionary = _data.get("numbers", {})
+	var from := int(rules.get("short_from", 1000))
+	var a := absi(n)
+	if a < from:
+		return exact(n)
+	var out := ""
+	for step: Array in SHORT_STEPS:
+		if a >= int(step[0]):
+			var v := float(a) / float(step[0])
+			if v < float(rules.get("one_decimal_below", 100)):
+				var tenth := floorf(v * 10.0) / 10.0
+				out = (str(int(tenth)) if is_equal_approx(tenth, roundf(tenth)) else "%.1f" % tenth) + str(step[1])
+			else:
+				out = str(int(floorf(v))) + str(step[1])
+			break
+	return ("-" if n < 0 else "") + out
+
+
+## Every digit, with commas ("12,450"): only where the exact figure matters (the player's own sums when asked).
+static func exact(n: int) -> String:
 	var digits := str(absi(n))
 	var out := ""
 	while digits.length() > 3:
@@ -41,17 +71,25 @@ static func number(n: int) -> String:
 	return ("-" if n < 0 else "") + digits + out
 
 
-## A number where room is tight (the HUD's counters): in full below SHORT_FROM, then short ("1.25M", "12.4M").
-static func short_number(n: int) -> String:
-	if absi(n) < SHORT_FROM:
-		return number(n)
-	var m := n / 1000000.0
-	return ("%.2fM" if absf(m) < 10.0 else "%.1fM") % m   # not-ui
-
-
-## A change shown as a reward ("+250", "-40").
+## A change shown as a reward ("+250", "+4.8k", "-40").
 static func signed(n: int) -> String:
 	return ("+" if n >= 0 else "") + number(n)
+
+
+## `text` with every whole number written in digits (12450, 12,450) written as `number` does ("12.4k"): the
+## places that show the game's words (messages, the tap bubble, floating words, panel text, cards, buttons) pass
+## their text through here, so a message made anywhere, now or later, writes its numbers the one way.
+static func tidy(text: String) -> String:
+	if text.length() < 4:
+		return text
+	if _digits == null:
+		_digits = RegEx.create_from_string(DIGITS)
+	var out := ""
+	var at := 0
+	for m in _digits.search_all(text):
+		out += text.substr(at, m.get_start() - at) + number(int(m.get_string().replace(",", "")))
+		at = m.get_end()
+	return out + text.substr(at) if at > 0 else text
 
 
 ## The game's bold face (Poppins Bold with its digits one width, fonts/: numbers, prices, names that lead, floating

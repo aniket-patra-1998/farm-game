@@ -11,6 +11,8 @@ const BUBBLE_SECONDS := 1.2   # how long a name bubble stays
 const PAPER_RADIUS := 26       # a sheet's or a panel's corners
 const PAPER_SHADOW := 14       # ..and its soft shadow
 const METER_SHADOW := 0.14   # the soft shadow under a HUD pill or round button
+const WORD_BAR_LABEL := "Words"   # not-ui (a node name)
+const WORD_BAR_HIGH := 1.7   # a word bar's height, in its words' size
 const HALO := 0.5            # a HUD button's paper disc under a finger (its alpha)..
 const HALO_ON := 0.85        # ..and round the tool in hand
 const HALO_RING := 1.6       # the tool in hand's green ring, against a button's edge
@@ -69,7 +71,7 @@ static func close_button() -> Button:
 ## A quiet text button (Move, Turn, Sell): there, but not what the panel is about. The same everywhere.
 static func quiet_button(words: String, px: int) -> Button:
 	var b := Button.new()
-	b.text = words
+	b.text = UiTheme.tidy(words)
 	b.flat = true
 	b.focus_mode = Control.FOCUS_NONE
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -158,6 +160,38 @@ static func icon_button(kind: String, side := 0.0) -> Button:
 	b.set_meta("icon", icon)
 	UiFx.press_bounce(b)
 	return b
+
+
+## A bar with its words on it (our own look: one thing, not a line of words over a bar saying the same): a
+## rounded track filled in the accent, its words (caption size, ink) in the middle. `set_bar` fills it.
+static func word_bar() -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	var px := UiTheme.font(UiTheme.CAPTION)
+	bar.custom_minimum_size.y = px * WORD_BAR_HIGH
+	var radius := int(bar.custom_minimum_size.y / 2.0)
+	for part: Array in [["background", "track"], ["fill", "accent_soft"]]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = UiTheme.color(str(part[1]))
+		sb.set_corner_radius_all(radius)
+		bar.add_theme_stylebox_override(str(part[0]), sb)
+	var words := Label.new()
+	words.name = WORD_BAR_LABEL
+	words.add_theme_font_size_override("font_size", px)
+	words.add_theme_color_override("font_color", UiTheme.color("ink"))
+	words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	words.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(words)
+	words.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return bar
+
+
+## Fills a `word_bar` to `value` of `most` and writes `words` on it (its numbers the one way: UiTheme.tidy).
+static func set_bar(bar: ProgressBar, value: int, most: int, words: String) -> void:
+	bar.max_value = maxi(most, 1)
+	bar.value = value
+	(bar.get_node(WORD_BAR_LABEL) as Label).text = UiTheme.tidy(words)
 
 
 ## A HUD button's look (the modern look: the icon is the button, a flat sticker floating over the farm): nothing

@@ -51,7 +51,7 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 	var fam: Dictionary = Game.finds.families.get(family, {})
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 8)
-	card.add_child(BookPanel.text(Game.size_name(o), 22))
+	card.add_child(BookPanel.text(Game.size_name(o), UiTheme.HEADING))
 	card.add_child(BookPanel.text(tr("FINDS_HOME_FOUND") % [fam.get("name", family), Game.finds.total(family),
 		Game.finds.distinct(family), (fam.get("kinds", []) as Array).size()], 18))
 	for kind: Dictionary in fam.get("kinds", []):
@@ -275,7 +275,7 @@ func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 	card.add_theme_constant_override("separation", 8)
 	var line := Game.raising.babies(o)
 	var need := Game.raising.need_each()
-	card.add_child(BookPanel.text(tr("TROUGH_OF") % [Game.raising.trough(o), line.size() * need], 20))
+	card.add_child(BookPanel.text(tr("TROUGH_OF") % [Game.raising.trough(o), line.size() * need], UiTheme.BODY))
 	var bar := ProgressBar.new()
 	bar.show_percentage = false
 	bar.custom_minimum_size.y = 14
@@ -351,7 +351,7 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 	var pigs := Game.inside_total(o)
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 8)
-	card.add_child(BookPanel.text(tr("TRUFFLES_HELD") % Game.pigpen.truffles, 21))
+	card.add_child(BookPanel.text(tr("TRUFFLES_HELD") % Game.pigpen.truffles, UiTheme.BODY))
 	if not Game.pigpen.is_foraging(o):
 		card.add_child(BookPanel.text(tr("FEED_THE_PIGS_SLOP_AND_THEY") % Balance.i("pigpen.pigs_per_truffle"), 17))
 		var feed := hud.panel_button(tr("FEED_SLOP_COINS") % Balance.i("pigpen.slop_cost"))
@@ -393,7 +393,7 @@ func add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void
 	var next_name := str(next.get("name", tr("NEXT_SIZE")))
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 6)
-	card.add_child(BookPanel.text(tr("EXPAND_TO_HOLDS") % [next_name, int(next["capacity"])], 21))
+	card.add_child(BookPanel.text(tr("EXPAND_TO_HOLDS") % [next_name, int(next["capacity"])], UiTheme.BODY))
 	for m in need:
 		var have := int(Game.parts.get(m, 0))
 		var done := have >= int(need[m])

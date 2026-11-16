@@ -14,7 +14,7 @@ func _init(owner: FarmHud) -> void:
 ## The boosts you have, used from here as FarmVille's were from the gift box: Fertilize All, Unwither and the
 ## helpers (each works the whole farm at once), and the fuel for the vehicles once you have one.
 func add_boosts(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("BOOSTS"), 26, BookPanel.HEAD))
+	content.add_child(BookPanel.heading(tr("BOOSTS")))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 10)
 	row.add_theme_constant_override("v_separation", 10)
@@ -51,7 +51,7 @@ func build_barn_repair(content: VBoxContainer) -> void:
 		if want <= 0:
 			continue          # (not needed for this repair)
 		var have := int(Game.parts.get(p, 0))
-		card.add_child(BookPanel.text(tr("OF_2") % [GameState.part_names[p], mini(have, want), want], 20))
+		card.add_child(BookPanel.text(tr("OF_2") % [GameState.part_names[p], mini(have, want), want], UiTheme.BODY))
 		var bar := ProgressBar.new()
 		bar.show_percentage = false
 		bar.custom_minimum_size.y = 16
@@ -130,7 +130,7 @@ func build_bloom(content: VBoxContainer) -> void:
 		return
 	var uid := hud.building_uid
 	if Game.is_withered(o):
-		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), 20, BookPanel.SOFT))
+		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), UiTheme.BODY, BookPanel.SOFT))
 		content.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply("flower_food"),
 			Game.nurture.supply_name("flower_food")], 18, BookPanel.SOFT))
 		var regrow := hud.panel_button(tr("REGROW_IT"))
@@ -167,10 +167,10 @@ func build_young(content: VBoxContainer) -> void:
 		return
 	var supply := Game.nurture.supply_of(o)
 	var name := Game.nurture.supply_name(supply)
-	content.add_child(BookPanel.text(tr("GIVE_IT_TO_SEE_WHAT_IT_GROWS_INTO") % [Game.nurture.needs(o), name], 20,
+	content.add_child(BookPanel.text(tr("GIVE_IT_TO_SEE_WHAT_IT_GROWS_INTO") % [Game.nurture.needs(o), name], UiTheme.BODY,
 		BookPanel.SOFT))
 	var card := BookPanel.card()
-	card.add_child(BookPanel.text(tr("OF_2") % [name, Game.nurture.fed(o), Game.nurture.needs(o)], 20))
+	card.add_child(BookPanel.text(tr("OF_2") % [name, Game.nurture.fed(o), Game.nurture.needs(o)], UiTheme.BODY))
 	var bar := ProgressBar.new()
 	bar.show_percentage = false
 	bar.custom_minimum_size.y = 16

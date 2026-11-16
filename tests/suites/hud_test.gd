@@ -1007,11 +1007,16 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 ## reward's sign), every text size on the type scale, and the bold face's digits one width so a changing number
 ## never shifts sideways.
 func test_375_numbers_are_written_alike_and_text_sits_on_the_type_scale() -> void:
-	_eq(UiTheme.number(12450), "12,450", "digits grouped by commas")
-	_eq(UiTheme.number(-1500), "-1,500", "a negative too")
-	_eq(UiTheme.short_number(999999), "999,999", "in full below a million")
-	_eq(UiTheme.short_number(1250000), "1.25M", "short past it")
-	_eq(UiTheme.signed(250), "+250", "a reward carries its sign")
+	_eq(UiTheme.number(950), "950", "in full below a thousand")
+	_eq(UiTheme.number(4860), "4.8k", "short from a thousand, rounded down")
+	_eq(UiTheme.number(12000), "12k", "no .0")
+	_eq(UiTheme.number(125999), "125k", "whole units from a hundred")
+	_eq(UiTheme.number(1250000), "1.2M", "millions")
+	_eq(UiTheme.number(-1500), "-1.5k", "a negative too")
+	_eq(UiTheme.exact(12450), "12,450", "exact: every digit, grouped by commas")
+	_eq(UiTheme.signed(4860), "+4.8k", "a reward carries its sign")
+	_eq(UiTheme.tidy("Sold the Cow for 12450 coins, +1,500 XP at 10:30, level 12"),
+		"Sold the Cow for 12.4k coins, +1.5k XP at 10:30, level 12", "numbers in words come out the one way")
 	for px in [11.0, 13.0, 17.0, 20.0, 26.0, 40.0]:
 		_check(UiTheme.on_scale(px) in UiTheme.TYPE_SCALE, "%d px asked comes out on the scale" % px)
 	var bold := UiTheme.bold()

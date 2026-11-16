@@ -206,6 +206,12 @@ func _sweep(root: Control, where: String, bad: Dictionary) -> void:
 				bad["%s: a raw id in \"%s\"" % [where, short]] = true
 			if _raw_key.search(text) != null:
 				bad["%s: an untranslated key in \"%s\"" % [where, short]] = true
+			if UiTheme.tidy(text) != text:
+				bad["%s: a number written long in \"%s\" (UiTheme.number: 4.8k)" % [where, short]] = true
+			var size_px := c.get_theme_font_size("font_size")
+			if size_px > UiTheme.font(UiTheme.HEADING) and not c.has_meta(&"title"):
+				bad["%s: %s \"%s\" is larger than a heading (%d px; only titles are)" % [where, c.get_class(), short,
+					size_px]] = true
 			if text.contains("%s") or text.contains("%d"):
 				bad["%s: an unfilled \"%%s\" in \"%s\"" % [where, short]] = true
 			if c is Label and (c as Label).autowrap_mode != TextServer.AUTOWRAP_OFF:

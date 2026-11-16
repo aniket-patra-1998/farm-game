@@ -154,7 +154,7 @@ func _show_count(k: int) -> void:
 	var n: int = _left[k].call()
 	var badge := _counts[k]
 	badge.get_parent().visible = n >= 0
-	badge.text = UiTheme.short_number(n) if n >= 0 else ""
+	badge.text = UiTheme.number(n) if n >= 0 else ""
 	_petals[k].modulate.a = FADED if n == 0 else 1.0
 	_petals[k].disabled = n == 0
 

@@ -97,7 +97,7 @@ func build_make(content: VBoxContainer) -> void:
 		_recipe = first_to_make(o)
 	var about := _strip(content)
 	show_recipe(about, uid, o)
-	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.HEAD))
+	content.add_child(BookPanel.heading(tr("RECIPES")))
 	content.add_child(CardList.make(ids, func(id: String) -> Dictionary: return recipe_face(o, id),
 		func(id: String) -> void:
 			_recipe = id
@@ -229,7 +229,7 @@ func show_recipe(about: VBoxContainer, uid: int, o: Dictionary) -> void:
 	var r := Game.catalog.get_def(_recipe) as RecipeDef
 	if r == null:
 		return
-	_about(about, r.id, [[r.name, 22, BookPanel.HEAD], [gives(r), 17, BookPanel.INK],
+	_about(about, r.id, [[r.name, UiTheme.HEADING, BookPanel.HEAD], [gives(r), UiTheme.BODY, BookPanel.INK],
 		[tr("CRAFT_MASTERY_MADE") % [Game.crafting.recipe_stars(r.id), int(Game.crafting.crafted.get(r.id, 0))], 17,
 			BookPanel.SOFT]])
 	var need: Array = []
@@ -276,9 +276,9 @@ func build_goods(content: VBoxContainer) -> void:
 		if n > 0:
 			ids.append(r.id)
 			worth += n * Game.crafting.good_price(r.id)
-	content.add_child(BookPanel.text(tr("YOUR_GOODS"), 26, BookPanel.HEAD))
+	content.add_child(BookPanel.heading(tr("YOUR_GOODS")))
 	if ids.is_empty():
-		content.add_child(BookPanel.text(tr("NOTHING_YET_FINISHED_CRAFTS_LAND_HERE"), 17, BookPanel.SOFT))
+		content.add_child(BookPanel.text(tr("NOTHING_YET_FINISHED_CRAFTS_LAND_HERE"), UiTheme.BODY, BookPanel.SOFT))
 		return
 	if not ids.has(_good):
 		_good = ids[0]
@@ -310,8 +310,8 @@ func show_good(about: VBoxContainer) -> void:
 	for c in about.get_children():
 		c.queue_free()
 	var rid := _good
-	_about(about, rid, [[Game.name_of(rid), 22, BookPanel.HEAD],
-		[tr("CRAFT_GOOD_COUNT") % int(Game.crafting.goods.get(rid, 0)), 17, BookPanel.SOFT]])
+	_about(about, rid, [[Game.name_of(rid), UiTheme.HEADING, BookPanel.HEAD],
+		[tr("CRAFT_GOOD_COUNT") % int(Game.crafting.goods.get(rid, 0)), UiTheme.BODY, BookPanel.SOFT]])
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
 	about.add_child(row)
@@ -332,16 +332,16 @@ func build_pantry(content: VBoxContainer) -> void:
 	if _building().is_empty():
 		return
 	var cap := Balance.i("crafting.bushel_cap")
-	content.add_child(BookPanel.text(tr("BUSHELS_OF") % [Game.crafting.total_bushels(), cap], 26, BookPanel.HEAD))
+	content.add_child(BookPanel.heading(tr("BUSHELS_OF") % [Game.crafting.total_bushels(), cap]))
 	var held: Array = []
 	for c: String in Game.crafting.bushels:
 		held.append([c, tr("TIMES_N") % int(Game.crafting.bushels[c])])
 	held.sort_custom(func(a: Array, b: Array) -> bool: return Game.name_of(str(a[0])) < Game.name_of(str(b[0])))
 	if held.is_empty():
-		content.add_child(BookPanel.text(tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"), 17, BookPanel.SOFT))
+		content.add_child(BookPanel.text(tr("NONE_YET_HARVESTS_DROP_BUSHELS_OF"), UiTheme.BODY, BookPanel.SOFT))
 	else:
 		content.add_child(UiKit.count_row(held))
-	content.add_child(BookPanel.text(tr("FARMERS_MARKET_TODAY"), 26, BookPanel.HEAD))
+	content.add_child(BookPanel.heading(tr("FARMERS_MARKET_TODAY")))
 	if Game.crafting.total_bushels() >= cap:
 		content.add_child(BookPanel.text(tr("PANTRY_FULL"), 17, UiTheme.color("note")))
 	var ids: Array[String] = []

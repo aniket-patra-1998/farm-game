@@ -52,7 +52,10 @@ func _notification(what: int) -> void:
 ## Shows item `new_id` with `new_face` and its `new_picture` on this card.
 func show_face(new_id: String, new_face: Dictionary, new_picture: Texture2D) -> void:
 	id = new_id
-	face = new_face
+	face = new_face.duplicate()
+	for k in ["name", "line", "long"]:   # (numbers in a card's words the one way: UiTheme.tidy)
+		if face.has(k):
+			face[k] = UiTheme.tidy(str(face[k]))
 	picture = new_picture
 	tooltip_text = str(face.get("long", "")) if str(face.get("long", "")) != "" else str(face.get("name", ""))
 	set_meta(&"buyable", bool(face.get("buyable", false)))

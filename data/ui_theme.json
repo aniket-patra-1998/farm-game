@@ -4,6 +4,7 @@
     "paper": "#fbf6ea",
     "soft": "#8a7763",
     "track": "#e6dcc6",
+    "accent_soft": "#a8d98a",
     "accent": "#4fb043",
     "accent_text": "#ffffff",
     "wood": "#7a4f2c",
@@ -93,8 +94,8 @@
     "button_pad": 14,
     "bubble_width": 250,
     "unlock_picture": 64,
-    "panel_button_width": 150,
-    "panel_button_height": 50,
+    "panel_button_width": 72,
+    "panel_button_height": 40,
     "plaque_height": 38,
     "plaque_radius": 10,
     "panel_radius": 14,
@@ -140,7 +141,7 @@
     "book_margin": 20,
     "font_book_title": 24,
     "book_height": 470,
-    "book_width": 1000,
+    "book_width": 1000, "book_list_width": 640,
     "tab_height": 46,
     "font_tab": 15,
     "card_width": 124,
@@ -161,5 +162,6 @@
   "loading_title": 40,
     "card_words": 74
   },
+ "numbers": {"_doc": "UiTheme.number: in full below short_from, then short (4.8k, 125k, 1.2M), rounded down, one decimal below one_decimal_below of a unit", "short_from": 1000, "one_decimal_below": 100},
  "scale": {"_doc": "UiTheme.scale: a tool button takes short_share of the screen's shorter side, held between least and most, never under touch_mm on a phone", "short_share": 0.075, "touch_mm": 7.0, "least": 0.7, "most": 1.0}
 }

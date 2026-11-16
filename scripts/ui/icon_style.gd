@@ -11,6 +11,8 @@ const WAIT_FRAMES := 2   # frames from asking for a draw to its image being read
 var _rect: TextureRect
 var _job: IconDevelop
 var _wait := 0
+var _read := 0         # 0: not asked, 1: under way (GpuRead), 2: come
+var _got: Image
 
 
 func _init() -> void:
@@ -51,7 +53,16 @@ func finished() -> IconDevelop:
 	_wait -= 1
 	if _wait > 0:
 		return null
-	var image := get_texture().get_image()
+	if _read == 0:   # (copied off the chip in the background: the frame doesn't wait for it)
+		_read = 1
+		GpuRead.take(self, func(img: Image) -> void:
+			_got = img
+			_read = 2)
+	if _read != 2:
+		return null
+	_read = 0
+	var image := _got
+	_got = null
 	if image != null and not image.is_empty():
 		image.convert(Image.FORMAT_RGBA8)
 		_job.picture = image
