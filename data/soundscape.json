@@ -1,0 +1,31 @@
+{
+  "_doc": "The farm's background sound and music (scripts/soundscape.gd). beds: looping recordings by name. phases: the beds that may play in each part of the day (DayCycle.phase_name), one chosen by the day; seasons: beds kept to those seasons. weather: by weather state, a loop laid over the bed (layer, at layer_db) and how much quieter the bed goes (bed_db). fade: seconds of every cross-fade; check_every: seconds between looks. music: tracks (res:// paths, CC0 or credited), the rest between them (gap: seconds, least and most), the first after start (first_after), gain_db.",
+  "gain_db": 0.0,
+  "fade": 5.0,
+  "check_every": 2.0,
+  "beds": {
+    "morning": "res://art/sound/ambience/morning.ogg",
+    "farm_day_a": "res://art/sound/ambience/farm_day_a.ogg",
+    "farm_day_b": "res://art/sound/ambience/farm_day_b.ogg",
+    "farm_day_c": "res://art/sound/ambience/farm_day_c.ogg",
+    "summer": "res://art/sound/ambience/summer.ogg",
+    "night": "res://art/sound/ambience/night.ogg",
+    "rain": "res://art/sound/ambience/rain.ogg"
+  },
+  "phases": {
+    "dawn": ["morning"],
+    "morning": ["morning", "farm_day_a"],
+    "midday": ["farm_day_a", "farm_day_b", "summer", "farm_day_c"],
+    "afternoon": ["farm_day_b", "summer", "farm_day_c", "farm_day_a"],
+    "dusk": ["farm_day_c", "farm_day_b"],
+    "night": ["night"]
+  },
+  "seasons": {"summer": ["Summer"]},
+  "weather": {
+    "rain": {"layer": "rain", "layer_db": 0.0, "bed_db": -8.0},
+    "storm": {"layer": "rain", "layer_db": 4.0, "bed_db": -12.0},
+    "snow": {"bed_db": -10.0},
+    "fog": {"bed_db": -4.0}
+  },
+  "music": {"tracks": [], "first_after": 20.0, "gap": [90.0, 240.0], "fade": 3.0, "gain_db": -3.0}
+}

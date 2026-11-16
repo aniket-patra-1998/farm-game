@@ -16,6 +16,14 @@ func test_98_every_sound_builds_clean_and_every_animal_has_a_voice() -> void:
 		if r.has("file"):
 			_check(ResourceLoader.exists(str(r["file"])), "%s: its recording exists" % event)
 			continue
+		if r.has("files"):
+			_check(not (r["files"] as Array).is_empty(), "%s has at least one take" % event)
+			for path: String in r["files"]:
+				_check(ResourceLoader.exists(path), "%s: its take %s exists" % [event, path])
+			for take: AudioStream in Sound.takes_of(event):
+				var length := take.get_length() if take != null else 0.0
+				_check(length > 0.1 and length < 4.0, "%s: a take is a short call, not a track (%.2fs)" % [event, length])
+			continue
 		if r.get("loop", false):
 			_loop_checks(event, r)
 			continue
@@ -44,6 +52,12 @@ func test_98_every_sound_builds_clean_and_every_animal_has_a_voice() -> void:
 	for family in AnimalRig.families():
 		_check(voices.has(family), "the %s has a voice" % family)
 		_check(sounds.has(str(voices.get(family, ""))), "the %s's voice is a real sound" % family)
+	for family: String in data.get("young_voices", {}):
+		_check(sounds.has(str(data["young_voices"][family])), "the young %s's voice is a real sound" % family)
+		_check(AnimalRig.families().has(family), "a young voice is for a family the game has (%s)" % family)
+	for key: String in data.get("voice_pitch", {}):
+		var pitch := float(data["voice_pitch"][key])
+		_check(pitch > 0.5 and pitch < 2.0, "%s's call is shifted, not mangled (%s)" % [key, pitch])
 
 
 ## A loop plays round without a click: it is whole samples, set to loop over all of them, and the step from its
@@ -107,6 +121,62 @@ func test_100_the_players_sound_settings_are_kept() -> void:
 	Sound.volume = before[0]
 	Sound.muted = before[1]
 	Sound.vibration = before[2]
+	# The farm's background sound and the music: each its own bus and volume, kept, and silenced by mute.
+	var levels := [Sound.ambience_volume, Sound.music_volume]
+	Sound.ambience_volume = 0.4
+	Sound.music_volume = 0.25
+	Sound.set("_loading", true)
+	Sound.ambience_volume = 1.0
+	Sound.music_volume = 1.0
+	Sound.set("_loading", false)
+	Sound.load_settings()
+	_check(is_equal_approx(Sound.ambience_volume, 0.4), "the farm sounds' volume is remembered")
+	_check(is_equal_approx(Sound.music_volume, 0.25), "the music's volume is remembered")
+	for name: String in [Sound.AMBIENCE_BUS, Sound.MUSIC_BUS]:
+		var b := AudioServer.get_bus_index(name)
+		_check(b != -1, "%s has its own bus" % name)
+		Sound.muted = true
+		_check(AudioServer.is_bus_mute(b), "mute silences %s too" % name)
+		Sound.muted = before[1]
+	Sound.ambience_volume = levels[0]
+	Sound.music_volume = levels[1]
+
+
+## An animal tapped over and over calls once per VOICE_GAP_MS, not every tap; a baby and its parent each call.
+func test_101_animals_call_once_in_a_while_and_babies_have_their_own() -> void:
+	Sound.set("_voiced_at", {})
+	Sound.voice("cow")
+	var first: Dictionary = (Sound.get("_voiced_at") as Dictionary).duplicate()
+	Sound.voice("cow")
+	_eq(Sound.get("_voiced_at"), first, "a second moo straight after the first stays quiet")
+	Sound.voice("cow", true)
+	_check((Sound.get("_voiced_at") as Dictionary).has("cow+young"), "a calf calls even while its mother just did")
+	_check(Sound.has_sound("moo_young"), "and a calf has its own call")
+
+
+## The soundscape: every bed is a recording that loops, every part of the day has a bed in every season, the
+## weather's loops are beds, and a day keeps its bed while the next may differ.
+func test_102_the_farm_always_has_a_background_and_it_follows_the_day() -> void:
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Soundscape.DATA))
+	var beds: Dictionary = data["beds"]
+	for name: String in beds:
+		_check(ResourceLoader.exists(str(beds[name])), "the %s bed's recording exists" % name)
+	var scape := Sound.soundscape
+	_check(scape != null, "Sound has a soundscape")
+	for phase: String in ["dawn", "morning", "midday", "afternoon", "dusk", "night"]:
+		for season: String in ["Spring", "Summer", "Monsoon", "Autumn", "Winter"]:
+			var bed := scape.bed_for(phase, season, 3)
+			_check(beds.has(bed), "%s in %s has a bed (%s)" % [phase, season, bed])
+	_eq(scape.bed_for("midday", "Winter", 7), scape.bed_for("midday", "Winter", 7), "a day keeps its bed")
+	_check(scape.bed_for("midday", "Summer", 7) != scape.bed_for("midday", "Summer", 8), "the next day sounds different")
+	_check(not scape.bed_for("midday", "Winter", 2).begins_with("summer"), "the summer bed waits for summer")
+	for state: String in data["weather"]:
+		var layer := str((data["weather"][state] as Dictionary).get("layer", ""))
+		_check(layer == "" or beds.has(layer), "%s's loop is a bed" % state)
+	for path: String in (data["music"] as Dictionary).get("tracks", []):
+		_check(ResourceLoader.exists(path), "music track %s exists" % path)
+	scape.look()
+	_check(scape.bed_name == "" or beds.has(scape.bed_name), "looking now picks a real bed")
 
 
 func _scripts_in(dir: String) -> Array[String]:

@@ -869,7 +869,8 @@ func _poke(uid: int) -> void:
 	var obj := Game.object_by_uid(uid)
 	var kind := Game.kind_of(obj) if not obj.is_empty() else ""
 	if kind == "animal":
-		Sound.voice(AnimalRig.of(Game.item_data(obj["id"])).family)
+		var rig := AnimalRig.of(Game.item_data(obj["id"]))
+		Sound.voice(rig.family, rig.young, str(obj["id"]))
 	Feedback.moment("touch")
 
 

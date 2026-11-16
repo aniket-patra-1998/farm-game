@@ -1,25 +1,40 @@
 extends Node
 ## The game's sound and touch feedback, autoloaded as `Sound`. Every sound is described in data/sounds.json:
-## either a recording (a "file") or a synthesis recipe, which is turned into audio once, the first time it
-## plays, and kept. Sounds play on their own "SFX" bus through a small pool of voices (the oldest is
-## reused when all are busy), each with a slight random pitch so repeats don't sound mechanical.
-## `buzz` gives a short vibration on phones. Every button in the game clicks when pressed. Volume, mute
-## and vibration are the player's settings, kept in user://settings.cfg.
+## either a recording (a "file", or takes of one: "files", a different take each time) or a synthesis recipe,
+## which is turned into audio once, the first time it plays, and kept. Sounds play on their own "SFX" bus
+## through a small pool of voices (the oldest is reused when all are busy), each with a slight random pitch so
+## repeats don't sound mechanical.
+## `buzz` gives a short vibration on phones. Every button in the game clicks when pressed. Animals answer a tap
+## with their family's call (`voice`: a baby with its own, or the adult's higher), never more than one call per
+## VOICE_GAP_MS each. The farm's background sound and music are its `Soundscape` (data/soundscape.json), on
+## the "Ambience" and "Music" buses. Effects, ambience and music volumes, mute (all three) and vibration are the
+## player's settings, kept in user://settings.cfg.
 
 const DATA := "res://data/sounds.json"
 const MIX_RATE := 22050
 const VOICES := 8
 const MAX_LOOPS := 3   # engines (or other beds) humming at once; a fourth stays silent
 const BUS := "SFX"  # not-ui
+const AMBIENCE_BUS := "Ambience"  # not-ui
+const MUSIC_BUS := "Music"  # not-ui
+const VOICE_GAP_MS := 700   # an animal tapped again sooner stays quiet (tapping fast never machine-guns a moo)
+const YOUNG_PITCH := 1.3    # a baby without a call of its own uses the adult's, this much higher
 
 
 var volume := 1.0: set = set_volume      # 0..1, the player's sound-effects volume
 var muted := false: set = set_muted
 var vibration := true: set = set_vibration
+var ambience_volume := 0.8: set = set_ambience_volume   # 0..1, the farm's background sound
+var music_volume := 0.6: set = set_music_volume         # 0..1
+var soundscape: Soundscape
 
 
 var _recipes := {}
 var _voices_by_family := {}
+var _young_voices := {}
+var _voice_pitch := {}
+var _voiced_at := {}                      # family (and young) -> when it last called, in ms
+var _last_take := {}                      # event -> the take played last
 var _base_db := 0.0
 var _cache := {}                          # event -> AudioStream
 var _players: Array[AudioStreamPlayer] = []
@@ -36,17 +51,23 @@ func _ready() -> void:
 		parsed = {}
 	_recipes = parsed.get("sounds", {})
 	_voices_by_family = parsed.get("voices", {})
+	_young_voices = parsed.get("young_voices", {})
+	_voice_pitch = parsed.get("voice_pitch", {})
 	_base_db = float(parsed.get("volume_db", 0.0))
-	if AudioServer.get_bus_index(BUS) == -1:
-		AudioServer.add_bus()
-		AudioServer.set_bus_name(AudioServer.bus_count - 1, BUS)
-		AudioServer.set_bus_send(AudioServer.bus_count - 1, &"Master")  # not-ui
+	for bus: String in [BUS, AMBIENCE_BUS, MUSIC_BUS]:
+		if AudioServer.get_bus_index(bus) == -1:
+			AudioServer.add_bus()
+			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus)
+			AudioServer.set_bus_send(AudioServer.bus_count - 1, &"Master")  # not-ui
 	for k in VOICES:
 		var p := AudioStreamPlayer.new()
 		p.bus = BUS
 		add_child(p)
 		_players.append(p)
 	_load_settings()
+	_apply_bus()
+	soundscape = Soundscape.new()
+	add_child(soundscape)
 	get_tree().node_added.connect(_on_node_added)
 	_warm = _recipes.keys()
 
@@ -69,7 +90,7 @@ func _on_node_added(node: Node) -> void:
 func play(event: String, gain_db := 0.0, pitch := 1.0) -> void:
 	if not audible():
 		return
-	var stream := stream_of(event)
+	var stream := _take_of(event)
 	if stream == null:
 		return
 	var p := _players[_next]
@@ -77,7 +98,7 @@ func play(event: String, gain_db := 0.0, pitch := 1.0) -> void:
 	var jitter := float((_recipes.get(event, {}) as Dictionary).get("pitch_jitter", 0.05))
 	p.stream = stream
 	p.pitch_scale = pitch * (1.0 + randf_range(-jitter, jitter))
-	p.volume_db = _base_db + gain_db
+	p.volume_db = _base_db + gain_db + float((_recipes.get(event, {}) as Dictionary).get("gain_db", 0.0))
 	p.play()
 
 
@@ -110,11 +131,24 @@ func loops_running() -> int:
 	return _loops.size()
 
 
-## An animal's voice, by its family (a cow moos, a hen clucks).
-func voice(family: String) -> void:
-	var event := str(_voices_by_family.get(family, ""))
-	if event != "":
-		play(event, -2.0)
+## An animal's call, by its family (a cow moos, a hen clucks); `young`: a baby's (a calf's own, or the adult's
+## higher); `item_id` may have a pitch of its own (voice_pitch), else the family's. Quiet when this family (and
+## age) called within VOICE_GAP_MS.
+func voice(family: String, young := false, item_id := "") -> void:
+	var key := family + ("+young" if young else "")  # not-ui
+	var now := Time.get_ticks_msec()
+	if _voiced_at.has(key) and now - int(_voiced_at[key]) < VOICE_GAP_MS:
+		return
+	var event := str(_young_voices.get(family, "")) if young else ""
+	var pitch := 1.0
+	if event == "":
+		event = str(_voices_by_family.get(family, ""))
+		pitch = YOUNG_PITCH if young else 1.0
+	if event == "":
+		return
+	_voiced_at[key] = now
+	pitch *= float(_voice_pitch.get(item_id, _voice_pitch.get(family, 1.0)))
+	play(event, -2.0, pitch)
 
 
 ## A short vibration (phones only), if the player has vibration on.
@@ -131,7 +165,32 @@ func has_sound(event: String) -> bool:
 	return _recipes.has(event)
 
 
-## The audio for an event: its recording, or its recipe synthesised (once, then cached).
+## The takes of an event with recordings in takes ("files"), each loaded once.
+func takes_of(event: String) -> Array:
+	var key := event + "#takes"  # not-ui
+	if not _cache.has(key):
+		var list: Array = []
+		for path: String in (_recipes.get(event, {}) as Dictionary).get("files", []):
+			list.append(load(path) as AudioStream)
+		_cache[key] = list
+	return _cache[key]
+
+
+## What to play for an event now: one of its takes (never the one just played, when it has more), or its sound.
+func _take_of(event: String) -> AudioStream:
+	if not (_recipes.get(event, {}) as Dictionary).has("files"):
+		return stream_of(event)
+	var takes := takes_of(event)
+	if takes.is_empty():
+		return null
+	var k := randi() % takes.size()
+	if takes.size() > 1 and k == int(_last_take.get(event, -1)):
+		k = (k + 1) % takes.size()
+	_last_take[event] = k
+	return takes[k]
+
+
+## The audio for an event: its recording (its first take), or its recipe synthesised (once, then cached).
 func stream_of(event: String) -> AudioStream:
 	if _cache.has(event):
 		return _cache[event]
@@ -139,6 +198,10 @@ func stream_of(event: String) -> AudioStream:
 	if r.is_empty():
 		push_warning("no sound called " + event)
 		return null
+	if r.has("files"):
+		var takes := takes_of(event)
+		_cache[event] = takes[0] if not takes.is_empty() else null
+		return _cache[event]
 	var stream: AudioStream
 	if r.has("file"):
 		stream = load(str(r["file"])) as AudioStream
@@ -162,7 +225,7 @@ func bake_all() -> int:
 	var made := 0
 	for event: String in _recipes:
 		var r: Dictionary = _recipes[event]
-		if not r.has("file") and ResourceSaver.save(synthesize(r), baked_path(event, r)) == OK:
+		if not r.has("file") and not r.has("files") and ResourceSaver.save(synthesize(r), baked_path(event, r)) == OK:
 			made += 1
 	return made
 
@@ -264,11 +327,25 @@ func set_vibration(on: bool) -> void:
 	_save_settings()
 
 
+func set_ambience_volume(v: float) -> void:
+	ambience_volume = clampf(v, 0.0, 1.0)
+	_apply_bus()
+	_save_settings()
+
+
+func set_music_volume(v: float) -> void:
+	music_volume = clampf(v, 0.0, 1.0)
+	_apply_bus()
+	_save_settings()
+
+
+## Each bus at its own volume; mute silences all three.
 func _apply_bus() -> void:
-	var bus := AudioServer.get_bus_index(BUS)
-	if bus != -1:
-		AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(volume, 0.0001)))
-		AudioServer.set_bus_mute(bus, not audible())
+	for pair: Array in [[BUS, volume], [AMBIENCE_BUS, ambience_volume], [MUSIC_BUS, music_volume]]:
+		var bus := AudioServer.get_bus_index(str(pair[0]))
+		if bus != -1:
+			AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(float(pair[1]), 0.0001)))
+			AudioServer.set_bus_mute(bus, muted or float(pair[1]) <= 0.0)
 
 
 ## Reads the player's settings back (the defaults when there are none yet).
@@ -281,10 +358,13 @@ func _load_settings() -> void:
 	volume = float(PlayerSettings.value("sound", "volume", 1.0))
 	muted = bool(PlayerSettings.value("sound", "muted", false))
 	vibration = bool(PlayerSettings.value("sound", "vibration", true))
+	ambience_volume = float(PlayerSettings.value("sound", "ambience", 0.8))
+	music_volume = float(PlayerSettings.value("sound", "music", 0.6))
 	_loading = false
 
 
 func _save_settings() -> void:
 	if _loading or not is_inside_tree():
 		return
-	PlayerSettings.keep("sound", {"volume": volume, "muted": muted, "vibration": vibration})
+	PlayerSettings.keep("sound", {"volume": volume, "muted": muted, "vibration": vibration,
+		"ambience": ambience_volume, "music": music_volume})
