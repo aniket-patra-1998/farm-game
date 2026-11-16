@@ -9,6 +9,7 @@ extends VBoxContainer
 
 const FIELD_HIGH := 1.2   # the field's height, in panel buttons' heights
 const ICON_SHARE := 0.55  # the magnifier, of the field's height
+const ON_FARM_SHOWN := 3  # the best things found that may offer "Show on farm"
 
 var list: CardList
 var menu := ""
@@ -19,6 +20,7 @@ var _chips_on := {}
 var _chip_row: HFlowContainer
 var _recent_row: HFlowContainer
 var _none: HBoxContainer
+var _on_farm: HFlowContainer   # "Show on farm" for the best things found that stand on the farm
 var _due := false
 var _stepped_aside: Array[Control] = []
 
@@ -51,6 +53,9 @@ func _init(cards: CardList, menu_key: String) -> void:
 	_none = HBoxContainer.new()
 	_none.visible = false
 	add_child(_none)
+	_on_farm = _flow()
+	_on_farm.visible = false
+	add_child(_on_farm)
 
 
 ## Whether it is narrowing the list now (words typed or a chip on).
@@ -136,6 +141,7 @@ func _apply() -> void:
 	if not searching():
 		list.show_ids(list.all_ids)
 		_step_back()
+		_on_farm.visible = false
 		_none.visible = false
 		if field.has_focus():
 			_show_recent()
@@ -143,9 +149,10 @@ func _apply() -> void:
 	if _index == null:   # (made at the first letter: a menu never searched costs nothing)
 		_index = SearchIndex.new(list.searched(), list.words_of_card)
 	var found := _index.find(field.text, _keep())
-	list.show_ids(found)
+	list.show_ids(found, true)
 	_step_aside()
 	_show_none(found.is_empty())
+	_show_on_farm(found)
 
 
 ## The filters on now, as one test.
@@ -157,7 +164,7 @@ func _keep() -> Callable:
 		if _chips_on.has(str(c["key"])):
 			on.append(c["test"])
 	return func(id: String) -> bool:
-		var face: Dictionary = list.face_of.call(id) if list.face_of.is_valid() else {}
+		var face: Dictionary = list.face(id) if list.face_of.is_valid() or list.search_face_of.is_valid() else {}
 		for test: Callable in on:
 			if not test.call(id, face):
 				return false
@@ -199,6 +206,24 @@ func _show_none(empty: bool) -> void:
 				b.set_pressed_no_signal(false)
 			_apply())
 		_none.add_child(c)
+
+
+## For the best few things found that stand on the farm (or live in a home there): "Cow ×3 on your farm", a tap
+## shows the nearest (ItemSearch.show_on_farm: the panel closes and the view travels to it).
+func _show_on_farm(found: Array[String]) -> void:
+	for c in _on_farm.get_children():
+		c.queue_free()
+	_on_farm.visible = false
+	if not ItemSearch.show_on_farm.is_valid():
+		return
+	for id in found.slice(0, ON_FARM_SHOWN):
+		var n := ItemSearch.on_farm(id)
+		if n <= 0:
+			continue
+		var b := UiKit.quiet_button(tr("SEARCH_ON_FARM") % [Game.name_of(id), n], BookPanel.font_px(UiTheme.BODY))
+		b.pressed.connect(func() -> void: ItemSearch.show_on_farm.call(id))
+		_on_farm.add_child(b)
+		_on_farm.visible = true
 
 
 ## While searching, the rest of the page after the list steps aside (its other sections, a land card).

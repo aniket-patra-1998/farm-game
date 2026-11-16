@@ -76,6 +76,12 @@ func test_388_menus_get_a_search_field_and_the_market_searches_every_shelf() -> 
 		await get_tree().process_frame
 		await get_tree().process_frame
 		_check("chicken_coop" in bar.list.ids, "searching a shelf finds things on another (the coop)")
+		_check(str(bar.list.face("chicken_coop").get("line", "")) != "", "and says its shelf, or its own line")
+		bar.search("strawbery")
+		await get_tree().process_frame
+		await get_tree().process_frame
+		_check(bar.list.ids.any(func(id: String) -> bool: return Game.crops.has(id)),
+			"seeds are found from any shelf, one typo and all")
 		bar.search("")
 		await get_tree().process_frame
 		_eq(bar.list.ids, bar.list.all_ids, "clearing shows the shelf again")

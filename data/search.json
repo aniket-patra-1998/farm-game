@@ -5,6 +5,7 @@
  "typo_from": 4,
  "recent_kept": 5,
  "kind_words": {
+  "crop": "SEARCH_WORDS_CROP",
   "animal": "SEARCH_WORDS_ANIMAL",
   "tree": "SEARCH_WORDS_TREE",
   "bloom": "SEARCH_WORDS_BLOOM",

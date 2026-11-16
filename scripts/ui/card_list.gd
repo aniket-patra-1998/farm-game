@@ -25,6 +25,8 @@ var search_menu := "list"          # its chips and recent searches (data/search.
 var search_pool: Array[String] = []   # searched instead of all_ids (the Market's every shelf)
 var search_words: Callable         # (id) -> {name, more}: how a thing is found (rows; cards default to their item)
 var search_bar: SearchBar
+var search_face_of: Callable       # (id) -> face, for what a search found (pool items of other shelves); else face_of
+var search_on_tap: Callable        # (id) -> void, the same for a tap; else on_tap
 var face_of: Callable      # grid: (id) -> the card's face (CardFace)
 var on_tap: Callable       # grid: (id) -> void
 var picture_of: Callable   # grid: (id) -> Texture2D
@@ -34,6 +36,7 @@ var row_fill: Callable     # rows: (row, id) -> void
 var columns := 1
 var _scroll: ScrollContainer
 var _shown := {}           # index -> its card or row
+var _searching := false    # showing what a search found
 var _spare: Array[Control] = []
 var _due := false
 var _pop := false          # the panel is opening: the first cards pop in (UiFx)
@@ -113,13 +116,27 @@ func set_ids(list: Array[String]) -> void:
 	show_ids(list)
 
 
-## Shows `list` (a search's results, or all again), laid out from the top; the cards are reused.
-func show_ids(list: Array[String]) -> void:
+## Shows `list` (a search's results, `found`, or all again), laid out from the top; the cards are reused.
+func show_ids(list: Array[String], found := false) -> void:
 	ids = list
+	_searching = found
 	for k: int in _shown.keys():
 		_put_away(k)
 	_size_to_ids()
 	_later()
+
+
+## Card `id`'s face: a search's own for what it found, else the list's.
+func face(id: String) -> Dictionary:
+	return search_face_of.call(id) if _searching and search_face_of.is_valid() else face_of.call(id)
+
+
+## A tap on card `id`: a search's own for what it found, else the list's.
+func tap(id: String) -> void:
+	if _searching and search_on_tap.is_valid():
+		search_on_tap.call(id)
+	elif on_tap.is_valid():
+		on_tap.call(id)
 
 
 ## The ids a search looks among: the pool when given, else the list's own.
@@ -132,9 +149,9 @@ func words_of_card(id: String) -> Dictionary:
 	if search_words.is_valid():
 		return search_words.call(id)
 	var w := ItemSearch.words_of(id)
-	if w.is_empty() and face_of.is_valid():
-		var face: Dictionary = face_of.call(id)
-		w = {"name": str(face.get("name", "")), "more": str(face.get("line", ""))}
+	if w.is_empty() and (face_of.is_valid() or search_face_of.is_valid()):
+		var f: Dictionary = search_face_of.call(id) if search_face_of.is_valid() else face_of.call(id)
+		w = {"name": str(f.get("name", "")), "more": str(f.get("line", ""))}
 	return w
 
 
@@ -152,8 +169,7 @@ func _offer_search() -> void:
 
 ## The same as tapping the card of `id`, whether it is on screen or not (tests, and a list that is searched).
 func press(id: String) -> void:
-	if on_tap.is_valid():
-		on_tap.call(id)
+	tap(id)
 
 
 ## The cards (or rows) on screen now.
@@ -265,7 +281,7 @@ func _fill(card: Control, k: int) -> void:
 	if _is_rows():
 		row_fill.call(card, ids[k])
 	else:
-		(card as CardFace).show_face(ids[k], face_of.call(ids[k]), picture_of.call(ids[k]))
+		(card as CardFace).show_face(ids[k], face(ids[k]), picture_of.call(ids[k]))
 
 
 func _new_card() -> Control:
@@ -274,7 +290,7 @@ func _new_card() -> Control:
 		card = row_make.call()
 	else:
 		var face := CardFace.new()
-		face.pressed.connect(func() -> void: on_tap.call(face.id))
+		face.pressed.connect(func() -> void: tap(face.id))
 		card = face
 	add_child(card)
 	return card

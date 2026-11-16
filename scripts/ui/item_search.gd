@@ -8,6 +8,7 @@ const DATA := "res://data/search.json"
 const SECTION := "search"   # the recent searches' section in user://settings.cfg (PlayerSettings)
 
 static var _data: Dictionary = {}
+static var show_on_farm: Callable   # (id): closes the panels and takes the view to the nearest one (Main sets it)
 
 
 ## A rule from data/search.json (from_items, least_letters, typo_from, recent_kept).
@@ -21,6 +22,9 @@ static func rule(key: String) -> int:
 ## in the catalog (its list finds it by its card's name instead).
 static func words_of(id: String) -> Dictionary:
 	var name := Game.name_of(id)
+	if name == "" and Game.crops.has(id):   # (a crop: found by its name and as a crop, a seed)
+		var crop: Dictionary = Game.crops[id]
+		return {"name": str(crop.get("name", "")), "more": TranslationServer.translate(str(_data_kinds().get("crop", "")))}
 	if name == "":
 		return {}
 	var it := Game.item_data(id)
@@ -37,6 +41,16 @@ static func words_of(id: String) -> Dictionary:
 		more.append(Game.name_of(str(held)))
 		more.append(str(Game.item_data(str(held)).get("product", "")))
 	return {"name": name, "more": " ".join(more)}
+
+
+## How many of item `id` stand on the farm or live in a home there.
+static func on_farm(id: String) -> int:
+	var n := 0
+	for o: Dictionary in Game.objects:
+		if str(o["id"]) == id:
+			n += 1
+		n += int((o.get("inside", {}) as Dictionary).get(id, 0))
+	return n
 
 
 ## The filters menu `menu` offers: [{key, words (shown), test (id, face) -> bool}].

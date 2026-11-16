@@ -22,8 +22,11 @@ come. Our own touch: FarmVille (2009) had no search.
   button in the field; the back gesture clears first, then closes.
 - Nothing found: says so in one line and offers the nearest match ("Did you mean Strawberry?") or clearing
   the chips.
-- On the farm: from the Barn or a home's contents, "Show on farm" for a placed thing pans the camera to it
-  (FarmVille players lose their cows on a big farm too).
+- On the farm: when the best few things found stand on the farm (or live in a home there), the bar offers
+  "Show Cow on farm (×3)"; a tap closes the panel and the view travels to the nearest one and points it out
+  (`ItemSearch.show_on_farm`, `FarmGrid.spots_of("item:<id>")`), in every searchable menu.
+- The Market's search looks among every shelf and the seeds; each card found says its shelf when it has no line
+  of its own, and a found seed is picked to plant as on the Seeds shelf (`search_face_of`, `search_on_tap`).
 
 ## How it is built (one way, used everywhere)
 
