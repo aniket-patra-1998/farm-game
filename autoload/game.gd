@@ -16,6 +16,10 @@ signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
 signal objects_changed
+## One thing changed where it stands (fed, collected, upgraded, filled): only it needs looking at again, not the
+## whole farm (scaling report: a change costs one object, not all of them). A move, a turn, a purchase or a sale is
+## still `objects_changed`.
+signal object_changed(uid: int)
 signal found(index: int, text: String) # a find on a plot (fuel, a collectible...): floats up from it
 signal building_upgraded(uid: int, level: int)
 signal farm_expanded(size: int)
@@ -162,6 +166,7 @@ var _weather_at := -1
 var _weather_for := "?"
 var _holding := 0          # hold_updates depth
 var _held_update := false  # an objects_updated came while held
+var _held_uids := {}       # ..or only these things changed in place while held
 
 
 func _init() -> void:
@@ -747,7 +752,7 @@ func collect(uid: int) -> Dictionary:
 		message.emit(tr("GOLDEN_COLLECTION_X_COINS") % Balance.i("economy.golden_coin_multiplier"))
 	elif drop.get("type", "") == "bird":
 		message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
-	objects_updated()
+	objects_updated(uid)
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
 		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras}
 
@@ -929,7 +934,7 @@ func rotate_object(uid: int) -> bool:
 		message.emit(verdict.text)
 		return false
 	o["flip"] = not o.get("flip", false)
-	objects_updated()
+	objects_updated(uid)
 	return true
 
 
@@ -944,12 +949,31 @@ func hold_updates() -> void:
 
 func release_updates() -> void:
 	_holding = maxi(_holding - 1, 0)
-	if _holding == 0 and _held_update:
+	if _holding > 0:
+		return
+	if _held_update:
 		_held_update = false
+		_held_uids.clear()
 		objects_updated()
+	elif not _held_uids.is_empty():
+		var uids := _held_uids.keys()
+		_held_uids.clear()
+		for uid: int in uids:
+			object_changed.emit(uid)
+		queue_save()
 
 
-func objects_updated() -> void:
+## Tells the farm its things changed. Given `uid` (the one thing a rule just changed), and that thing still standing
+## on the tiles it held, only it is looked at again (`object_changed`); otherwise (moved, turned, gone, or not
+## said) the whole farm is (`objects_changed`).
+func objects_updated(uid := -1) -> void:
+	if uid >= 0 and _in_place(uid):
+		if _holding > 0:
+			_held_uids[uid] = true
+		else:
+			object_changed.emit(uid)
+			queue_save()
+		return
 	rebuild_occupancy()
 	if _holding > 0:
 		_held_update = true   # (told once, when the batch ends: release_updates)
@@ -1459,6 +1483,23 @@ func nearest_free_spot(item_id: String, row: int, col: int) -> Vector2i:
 				best = Vector2i(r, c)
 				best_d = dist
 	return best
+
+
+## Whether thing `uid` is on the farm and on exactly the tiles it was (nothing moved since the tiles were known).
+func _in_place(uid: int) -> bool:
+	if not _tiles_changed.is_empty():
+		return false
+	var o := object_by_uid(uid)
+	if o.is_empty():
+		return false
+	if not (o.has("row") and o.has("col")):
+		return true
+	var fp := footprint(o["id"])
+	for r in range(int(o["row"]), int(o["row"]) + fp.y):
+		for c in range(int(o["col"]), int(o["col"]) + fp.x):
+			if int(_occupied.get(index_of(r, c), -1)) != uid:
+				return false
+	return true
 
 
 func _occupy(o: Dictionary) -> void:

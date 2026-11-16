@@ -113,6 +113,7 @@ func _ready() -> void:
 	Game.collections_changed.connect(_refresh_book)
 	Game.ribbons_changed.connect(_refresh_book)
 	Game.objects_changed.connect(_refresh_book)
+	Game.object_changed.connect(func(_uid: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh_book())
 	Game.coins_changed.connect(func(_c: int) -> void: _refresh())
 	Game.gems_changed.connect(func(_g: int) -> void: _refresh())

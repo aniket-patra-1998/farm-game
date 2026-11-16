@@ -79,6 +79,7 @@ func _init(owner: FarmHud) -> void:
 	column.add_child(_note)
 	column.add_child(_build_actions(gap))
 	Game.objects_changed.connect(_on_changed)
+	Game.object_changed.connect(func(_uid: int) -> void: _on_changed())   # (another home fed takes from the same feed)
 	UiKit.keep_fitted(self, _place)   # (as tall as what it says now, and back at the bottom)
 
 

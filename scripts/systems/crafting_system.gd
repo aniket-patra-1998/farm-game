@@ -154,7 +154,7 @@ func start_craft(uid: int, rid: String) -> bool:
 	(obj["slots"] as Array).append({"r": rid, "done": game.now() + _crafting_def(obj).craft_seconds()})
 	game.ribbons.bump("crafts_started", 1)
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 
@@ -216,7 +216,7 @@ func finish_crafts(uid: int) -> int:
 		game.message.emit(tr("FINISHED_FEED"))
 	if n > 0:
 		game.inventory_changed.emit()
-		game.objects_updated()
+		game.objects_updated(uid)
 	return n
 
 
@@ -299,7 +299,7 @@ func add_star(uid: int, with_gems: bool) -> bool:
 			game.level_of(obj)
 		]
 	)
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 

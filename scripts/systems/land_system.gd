@@ -76,7 +76,7 @@ func add_materials(uid: int) -> int:
 	else:
 		game.message.emit(tr("ADDED_MATERIALS_TO_THE") % [added, game.item_data(b["id"])["name"]])
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return added
 
 
@@ -104,7 +104,7 @@ func upgrade_building(uid: int) -> bool:
 	game.ribbons.bump("upgrades", 1)
 	game.building_upgraded.emit(uid, game.level_of(b))
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 

@@ -69,7 +69,7 @@ func pour(uid: int, most := -1) -> Array[String]:
 	o[TROUGH] = trough(o) + game.nurture.take_supply("animal_feed", n)
 	var grown := eat(o)
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)
 	return grown
 
 

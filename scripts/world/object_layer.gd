@@ -131,6 +131,15 @@ func sync() -> void:
 
 
 
+## Thing `uid` changed where it stands (Game.object_changed): its piece is drawn again, nothing else looked at.
+func refresh_one(uid: int) -> void:
+	var p: FarmPiece = pieces.get("o%d" % uid)
+	if p == null or (three_d and Objects3D.handles(Game.object_by_uid(uid))):
+		return
+	p.refresh()
+	_note_ready()
+
+
 ## A tapped object squashes and springs back.
 func bounce(uid: int) -> void:
 	var p: FarmPiece = pieces.get("o%d" % uid)

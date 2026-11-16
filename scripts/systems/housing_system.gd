@@ -101,7 +101,7 @@ func put_in_home(building_uid: int, item_id: String, source: Dictionary) -> bool
 	game.message.emit(tr("MOVED_INTO_HOME") % [str(game.item_data(item_id)["name"]),
 		str(game.item_data(b["id"])["name"])])
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(building_uid)
 	return true
 
 
@@ -127,7 +127,7 @@ func fill_building(uid: int) -> int:
 		return 0
 	game.set_objects(keep)
 	game.message.emit(tr("MOVED_INTO_THE") % [moved, game.item_data(b["id"])["name"]])
-	game.objects_updated()
+	game.objects_updated(uid)
 	return moved
 
 

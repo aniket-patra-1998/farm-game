@@ -139,7 +139,7 @@ func feed(uid: int) -> Dictionary:
 		# It starts its cycle again, as if just harvested.
 		o["t"] = game.now()
 		game.inventory_changed.emit()
-		game.objects_updated()
+		game.objects_updated(uid)
 		return {
 			"fed": Balance.i("nurture.regrow_food"),
 			"needs": Balance.i("nurture.regrow_food"),
@@ -166,7 +166,7 @@ func _advance(o: Dictionary) -> Dictionary:
 	if fed(o) >= needs(o):
 		out["grown"] = _grow(o)
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(int(o["uid"]))
 	return out
 
 
@@ -213,7 +213,7 @@ func upgrade_bloom(uid: int) -> bool:
 		return false
 	o["id"] = (d as BloomDef).full_id()
 	game.message.emit(tr("NOW_A_IT_WILL_NEVER_WITHER") % game.item_data(o["id"])["name"])
-	game.objects_updated()
+	game.objects_updated(uid)
 	return true
 
 

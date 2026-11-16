@@ -645,10 +645,10 @@ func test_361_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 
 
 ## A menu of cards scales to any number of items (scaling report: menus build only what's visible): a list of
-## 2,000 made-up items keeps only the cards in view, opens, scrolls and refreshes within a budget, and a refresh
+## 5,000 made-up items keeps only the cards in view, opens, scrolls and refreshes within a budget, and a refresh
 ## reads only the faces on screen.
 func test_362_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
-	const ITEMS := 2000
+	const ITEMS := 5000
 	const MOST_CARDS := 80       # cards that may exist at once, whatever the count
 	const OPEN_MS := 60.0        # budgets on a desktop CI runner (a phone is a few times slower)
 	const SCROLL_MS := 20.0
@@ -694,8 +694,8 @@ func test_362_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 	var refresh_ms := (Time.get_ticks_usec() - started) / 1000.0
 	_check(asked[0] == list.shown().size(), "a refresh reads only the faces on screen")
 	_check(refresh_ms < REFRESH_MS, "within budget (%.1f ms)" % refresh_ms)
-	list.press("fake_1999")
-	_eq(tapped, ["fake_1999"], "a card's item can be pressed whether it is on screen or not")
+	list.press("fake_4999")
+	_eq(tapped, ["fake_4999"], "a card's item can be pressed whether it is on screen or not")
 	scroll.free()
 
 
