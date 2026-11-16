@@ -961,12 +961,12 @@ Shared: `tab` = "crafting", `limit_group` = "crafting", `group_limit` = 3
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Bakery | `bakery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
-| ✅ | Winery | `winery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
-| ✅ | Spa | `spa` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Bakery | `bakery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
+| ✅ | Winery | `winery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
+| ✅ | Spa | `spa` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
 | 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |  |  |
-| ✅ | Feed Mill | `feed_mill` | 28 | 120,000 | 3x3 | 1 / 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Feed Mill | `feed_mill` | 28 | 120,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
 
 ### Storage
 
@@ -1127,18 +1127,18 @@ Shared: `building` = "bakery", `product` = "Baked goods"
 |---|---|---|
 | ✅ | Pumpkin Bread | `pumpkin_bread` |  |
 | ✅ | Strawberry Shortcake | `strawberry_shortcake` |  |
-| ✅ | Carrot Muffins | `carrot_muffins` |  |
-| ✅ | Peanut Butter Cookies | `peanut_butter_cookies` |  |
 | ✅ | Three Berry Pie | `three_berry_pie` |  |
+| ✅ | Carrot Muffins | `carrot_muffins` |  |
 | ✅ | Summer Squash Tart | `summer_squash_tart` |  |
+| ✅ | Peanut Butter Cookies | `peanut_butter_cookies` |  |
 | ✅ | Raspberry Blondie | `raspberry_blondie` |  |
 | ✅ | Apple Pie | `apple_pie` |  |
 | ✅ | Cherry Almond Cake | `cherry_almond_cake` |  |
 | ✅ | Farmhouse Pizza | `farmhouse_pizza` |  |
-| ✅ | Honey Corn Bread | `corn_bread` |  |
 | ✅ | Banana Nut Loaf | `banana_nut_loaf` |  |
-| ✅ | Honey Carrot Cake | `honey_carrot_cake` |  |
+| ✅ | Honey Corn Bread | `corn_bread` |  |
 | ✅ | Peach Cobbler | `peach_cobbler` |  |
+| ✅ | Honey Carrot Cake | `honey_carrot_cake` |  |
 | ✅ | Truffle Pie | `truffle_pie` |  |
 | 🕓 | Spicy Muffins | `spicy_muffins` |  |
 | 🕓 | Pattypan Tart | `pattypan_tart` |  |
@@ -1160,17 +1160,17 @@ Shared: `building` = "spa", `product` = "Spa goods"
 
 | | Item | id |  |
 |---|---|---|
-| ✅ | Fresh Sachet | `fresh_sachet` |  |
 | ✅ | Rose Water | `rose_water` |  |
 | ✅ | Cotton Wash Cloth | `cotton_wash_cloth` |  |
-| ✅ | Goat Milk Soap | `goat_milk_soap` |  |
+| ✅ | Fresh Sachet | `fresh_sachet` |  |
 | ✅ | Tulip Sachet | `tulip_sachet` |  |
+| ✅ | Goat Milk Soap | `goat_milk_soap` |  |
 | ✅ | Citrus Bath Oil | `citrus_bath_oil` |  |
-| ✅ | Daisy Lotion | `daisy_lotion` |  |
 | ✅ | Honey Candle | `honey_candle` |  |
 | ✅ | Feather Pillow | `feather_pillow` |  |
-| ✅ | Lily Soap | `lily_soap` |  |
+| ✅ | Daisy Lotion | `daisy_lotion` |  |
 | ✅ | Wool Blanket | `wool_blanket` |  |
+| ✅ | Lily Soap | `lily_soap` |  |
 | ✅ | Sunflower Oil Rub | `sunflower_oil_rub` |  |
 | ✅ | Iris Perfume | `iris_perfume` |  |
 | ✅ | Meadow Candle | `meadow_candle` |  |
@@ -1198,20 +1198,20 @@ Shared: `building` = "winery", `product` = "Drinks"
 
 | | Item | id |  |
 |---|---|---|
-| ✅ | Sweet Saki | `sweet_saki` |  |
 | ✅ | Strawberry Cranberry Juice | `strawberry_cranberry_juice` |  |
 | ✅ | Apple Cider | `apple_cider` |  |
-| ✅ | Spicy Tomato Juice | `spicy_tomato_juice` |  |
+| ✅ | Sweet Saki | `sweet_saki` |  |
 | ✅ | Berry Wine | `berry_wine` |  |
 | ✅ | Honey Lemonade | `lemonade` |  |
-| ✅ | Country Red Wine | `country_red_wine` |  |
 | ✅ | Sunrise Punch | `sunrise_punch` |  |
+| ✅ | Spicy Tomato Juice | `spicy_tomato_juice` |  |
+| ✅ | Country Red Wine | `country_red_wine` |  |
 | ✅ | Plum Wine | `plum_wine` |  |
-| ✅ | Watermelon Cooler | `watermelon_cooler` |  |
 | ✅ | Honey Mead | `honey_mead` |  |
 | ✅ | Peach Sangria | `peach_sangria` |  |
-| ✅ | Reserve Wine | `reserve_wine` |  |
+| ✅ | Watermelon Cooler | `watermelon_cooler` |  |
 | ✅ | Tropical Punch | `tropical_punch` |  |
+| ✅ | Reserve Wine | `reserve_wine` |  |
 | ✅ | Golden Corn Cordial | `golden_corn_cordial` |  |
 | 🕓 | Red Table Wine | `red_table_wine` |  |
 | 🕓 | White Sangria | `white_sangria` |  |

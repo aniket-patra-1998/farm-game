@@ -206,10 +206,11 @@ static func yard_spot(f: Dictionary, fw: float, fd: float) -> Vector2:
 
 ## The whole building at its size, under a new node. `fp` is the footprint in tiles (columns, rows).
 ## `active` is whether it is at work (a bakery with something in the oven): only then does its chimney smoke.
-## `full` is whether a crafting building's every slot holds something finished: a mill's silos run over, and
-## goods stand in crates by the others' doors.
+## `fill` is how full a crafting building is of finished things, 0 to BuildingDress.FULL: its storage parts
+## (features marked `"part": "storage"`) show it. Its animated parts (`"part": "animated"`) move only while
+## it is `active`.
 static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, broken := false,
-		full := false) -> Node3D:
+		fill := 0) -> Node3D:
 	var root := Node3D.new()
 	var s := spec(str(it.get("id", "")), level)
 	var fw := float(fp.x)
@@ -226,7 +227,7 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 			lift = float(f.get("h", 0.2))
 	var wall_col := Color.html(str(it.get("color", "#c0392b")))
 	var ctx := {"root": root, "fw": fw, "fd": fd, "centre": centre, "bw": bw, "bd": bd, "bh": bh, "lift": lift,
-		"wall": wall_col, "spec": s, "it": it, "active": active, "full": full}
+		"wall": wall_col, "spec": s, "it": it, "active": active, "fill": fill}
 	# Yards go down first (they're on the ground, under everything).
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "yard":
@@ -241,9 +242,7 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 		else:
 			_body(ctx)
 	for f: Dictionary in s.get("features", []):
-		# (a feature can be for one state only: `"when": "full"` or `"working"`)
-		var when := str(f.get("when", ""))
-		if f.get("type") != "yard" and (when == "" or (when == "full" and full) or (when == "working" and active)):
+		if f.get("type") != "yard":
 			_feature(ctx, f)
 	ModelKit.roof_trim = ModelKit.RAKE_COLOUR
 	if broken and ctx.has("lo"):
@@ -914,7 +913,13 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 					check.position = base + Vector3(sin(a) * (r - 0.002), h * 0.78 + row * 0.07 + 0.035,
 						cos(a) * (r - 0.002))
 					check.rotation.y = a
-			if bool(ctx.get("full", false)):
+			var held := int(ctx.get("fill", 0)) if str(f.get("part", "")) == BuildingDress.STORAGE else -1
+			if held >= 0:
+				# A storage part: a glass up its side shows the grain in it, and a full one runs over.
+				var out := Vector3(1, 0, 1).normalized()
+				BuildingDress.gauge(root, base + out * (r - 0.004) + Vector3(0, h * 0.14, 0), out, h * 0.7, held,
+					BuildingDress.GRAIN)
+			if held >= BuildingDress.FULL:
 				BuildingDress.overflow(root, base, r, h)
 			else:
 				ModelKit.ball(root, base + Vector3(0, h, 0), r, ModelKit.paint(Color("#b9c0c4"), 0.6),
@@ -1266,7 +1271,7 @@ static func _signature(ctx: Dictionary, f: Dictionary) -> void:
 			var water := ModelKit.cylinder(root, at + Vector3(0, 0.101, 0), r, 0.004, ModelKit.water(), -1.0, 24)
 			if water != null:
 				water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			DecorMotion.spray(root, at + Vector3(0, 0.12, 0), DecorMotion.STEAM)
+			# (it steams while the building works: the "steam" feature, an animated part)
 		"wallow":
 			ModelKit.ball(root, at + Vector3(0, -0.01, 0), 1.0, ModelKit.paint(GROUNDS["mud"].darkened(0.25), 0.4),
 				Vector3(r, 0.04, r * 0.8))

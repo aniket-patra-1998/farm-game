@@ -118,8 +118,8 @@
    "note": "\"Buy all ingredients\" with premium currency"
   },
   "craft_xp_per_star": {
-   "v": 10,
-   "note": "XP added per star of the recipe (so 20 to 60; FarmVille gave 50 a product)."
+   "v": 12,
+   "note": "XP added per star of the recipe (so 22 to 58; FarmVille gave 50 a product)."
   },
   "produce_chance": {
    "v": 0.35,
@@ -130,7 +130,6 @@
     1,
     2,
     4,
-    6,
     8
    ],
    "note": "how long a recipe takes, by the star that unlocks it (FarmVille: 6 hours for all). Short first recipes keep a new building busy; the best take a night."
@@ -461,11 +460,11 @@
    "note": "Fuel added per recipe mastery star."
   },
   "markup_per_star": {
-   "v": 0.25,
-   "note": "Added to the markup per star above the first: a 5-star good sells for 2.5 times what went into it."
+   "v": 0.33,
+   "note": "Added to the markup per star above the first: a 4-star good sells for 2.5 times what went into it."
   },
   "fuel_per_recipe_star": {
-   "v": 10,
+   "v": 12,
    "note": "Fuel added per star of the recipe above the first."
   }
  },

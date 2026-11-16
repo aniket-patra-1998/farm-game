@@ -1313,13 +1313,17 @@ func in_showcase() -> bool:
 
 
 ## Lays every object back on the farm; one that no longer fits where it stood (its footprint changed, or the
-## farm's rules did) moves to the nearest free spot. Returns how many moved. Leaves the occupancy rebuilt.
+## farm's rules did) moves to the nearest free spot, and one above its top level comes down to it. Returns how
+## many moved. Leaves the occupancy rebuilt.
 func settle_objects() -> int:
 	_occupied.clear()
 	layout_revision += 1
 	tiles_revision += 1
 	var misfits: Array = []
 	for o in objects:
+		# (a building saved above what is now its top level comes down to the top)
+		if is_building_item(str(o["id"])) and int(o.get("level", 1)) > max_level(str(o["id"])):
+			o["level"] = max_level(str(o["id"]))
 		if can_place(o["id"], int(o["row"]), int(o["col"]), -1, false):
 			_occupy(o)
 		else:

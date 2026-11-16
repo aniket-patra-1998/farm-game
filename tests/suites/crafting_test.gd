@@ -2,15 +2,16 @@ extends TestSuite
 ## Crafting: bushels, recipes, mastery, goods and the Farmers Market.
 
 
-func test_79_every_building_has_three_recipes_a_star_made_of_what_the_farm_gives() -> void:
+func test_79_every_building_has_fifteen_recipes_over_four_stars_made_of_what_the_farm_gives() -> void:
 	var g := _farm()
 	for b in ["bakery", "winery", "spa"]:
 		var rs := g.crafting.recipes_of(b)
 		_eq(rs.size(), 15, "%s has 15 recipes" % b)
 		var dearest := 0   # what the dearest good of the star below sells for
-		for star in range(1, 6):
+		for star in range(1, 5):
 			var of_star := rs.filter(func(r): return r.star() == star)
-			_eq(of_star.size(), 3, "%s: 3 recipes at %d stars" % [b, star])
+			var due := 4 if star < 4 else 3
+			_eq(of_star.size(), due, "%s: %d recipes at %d stars" % [b, due, star])
 			var cheapest := 1 << 30
 			var top := 0
 			for r: RecipeDef in of_star:
@@ -40,7 +41,7 @@ func test_79_every_building_has_three_recipes_a_star_made_of_what_the_farm_gives
 	var bread := g.catalog.get_def("pumpkin_bread") as RecipeDef
 	var pie := g.catalog.get_def("truffle_pie") as RecipeDef
 	_eq(bread.craft_seconds(), 3600, "a 1-star recipe takes an hour")
-	_eq(pie.craft_seconds(), 8 * 3600, "a 5-star one takes eight")
+	_eq(pie.craft_seconds(), 8 * 3600, "a 4-star one takes eight")
 	_check(pie.fuel(0) > bread.fuel(0) and pie.xp() > bread.xp(), "a higher star gives more fuel and XP")
 	var bakery := g.catalog.get_def("bakery") as CraftingDef
 	_eq(bakery.unlock_level, 25, "crafting unlocks at level 25, as in FarmVille")
@@ -50,11 +51,12 @@ func test_79_every_building_has_three_recipes_a_star_made_of_what_the_farm_gives
 		"2 stars: 50,000 coins and 6 recipe stars, or 15 gems"
 	)
 	_eq(
-		bakery.star_cost(4),
-		{"coins": 1000000, "recipe_stars": 36, "gems": 60},
-		"5 stars: 1,000,000 coins and 36 recipe stars, or 60 gems"
+		bakery.star_cost(3),
+		{"coins": 1000000, "recipe_stars": 32, "gems": 60},
+		"4 stars: 1,000,000 coins and 32 recipe stars, or 60 gems"
 	)
-	_eq(bakery.star_cost(5), {}, "5 stars is the top")
+	_eq(bakery.star_cost(4), {}, "4 stars is the top")
+	_eq(bakery.max_level(), 4, "a crafting building has four levels")
 	_check(not g.items.has("pumpkin_bread"), "recipes aren't placeable items")
 	_done(g)
 
@@ -77,6 +79,17 @@ func test_80_first_crafting_building_is_coins_the_rest_gems() -> void:
 
 
 
+
+
+func test_386_a_saved_crafting_building_above_four_stars_comes_down_to_four() -> void:
+	# Crafting buildings had five stars once. A farm saved then loads with its building at the top there is now.
+	var g := _farm(true)
+	g.add_object({"uid": g.next_uid, "id": "bakery", "row": 1, "col": 1, "level": 5, "built": true})
+	g.settle_objects()
+	var bakery: Dictionary = g.objects.filter(func(o): return str(o["id"]) == "bakery")[0]
+	_eq(g.level_of(bakery), 4, "a 5-star Bakery from an old save is a 4-star one")
+	_eq(g.crafting.slot_count(bakery), 4, "with four slots")
+	_done(g)
 
 
 func _ints(d: Dictionary) -> Dictionary:
@@ -111,7 +124,7 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	# Craft Pumpkin Bread.
 	g.crafting.bushels = {"pumpkins": 4, "wheat": 5}
 	_eq(g.crafting.craft_problem(uid, "pumpkin_bread"), "", "ready to bake")
-	_eq(g.crafting.craft_problem(uid, "three_berry_pie"), "Unlocks at 2 stars", "2-star recipes are locked")
+	_eq(g.crafting.craft_problem(uid, "apple_pie"), "Unlocks at 2 stars", "2-star recipes are locked")
 	_check(g.crafting.start_craft(uid, "pumpkin_bread"), "baking")
 	_eq(g.crafting.bushels, {"wheat": 1}, "bushels used")
 	_eq(g.crafting.craft_problem(uid, "strawberry_shortcake"), "Every slot is busy", "one slot at 1 star")

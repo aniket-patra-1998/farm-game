@@ -6548,7 +6548,7 @@
    "refs": [
     "refs/bakery_size1.png"
    ],
-   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 1 of 5: a modest cottage"
+   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 1 of 4: a modest cottage"
   },
   {
    "id": "bakery_size2",
@@ -6560,7 +6560,7 @@
    "refs": [
     "refs/bakery_size2.png"
    ],
-   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 2 of 5: a little bigger, with more trim and a second window"
+   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 2 of 4: a little bigger, with more trim and a second window"
   },
   {
    "id": "bakery_size3",
@@ -6572,7 +6572,7 @@
    "refs": [
     "refs/bakery_size3.png"
    ],
-   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 3 of 5: bigger again, with a porch and more decoration"
+   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 3 of 4: bigger again, with a porch and more decoration"
   },
   {
    "id": "bakery_size4",
@@ -6584,19 +6584,7 @@
    "refs": [
     "refs/bakery_size4.png"
    ],
-   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 4 of 5: a grand version with an extra wing and flower boxes"
-  },
-  {
-   "id": "bakery_size5",
-   "item": "bakery",
-   "class": "Crafting",
-   "stage": "5",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/bakery_size5.png"
-   ],
-   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 5 of 5: the grandest, most charming version, with golden details and a little tower"
+   "subject": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign. Star level 4 of 4: a grand version with an extra wing and flower boxes"
   },
   {
    "id": "winery_size1",
@@ -6608,7 +6596,7 @@
    "refs": [
     "refs/winery_size1.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 1 of 5: a modest cottage"
+   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 1 of 4: a modest cottage"
   },
   {
    "id": "winery_size2",
@@ -6620,7 +6608,7 @@
    "refs": [
     "refs/winery_size2.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 2 of 5: a little bigger, with more trim and a second window"
+   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 2 of 4: a little bigger, with more trim and a second window"
   },
   {
    "id": "winery_size3",
@@ -6632,7 +6620,7 @@
    "refs": [
     "refs/winery_size3.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 3 of 5: bigger again, with a porch and more decoration"
+   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 3 of 4: bigger again, with a porch and more decoration"
   },
   {
    "id": "winery_size4",
@@ -6644,19 +6632,7 @@
    "refs": [
     "refs/winery_size4.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 4 of 5: a grand version with an extra wing and flower boxes"
-  },
-  {
-   "id": "winery_size5",
-   "item": "winery",
-   "class": "Crafting",
-   "stage": "5",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/winery_size5.png"
-   ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 5 of 5: the grandest, most charming version, with golden details and a little tower"
+   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 4 of 4: a grand version with an extra wing and flower boxes"
   },
   {
    "id": "spa_size1",
@@ -6668,7 +6644,7 @@
    "refs": [
     "refs/spa_size1.png"
    ],
-   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 1 of 5: a modest cottage"
+   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 1 of 4: a modest cottage"
   },
   {
    "id": "spa_size2",
@@ -6680,7 +6656,7 @@
    "refs": [
     "refs/spa_size2.png"
    ],
-   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 2 of 5: a little bigger, with more trim and a second window"
+   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 2 of 4: a little bigger, with more trim and a second window"
   },
   {
    "id": "spa_size3",
@@ -6692,7 +6668,7 @@
    "refs": [
     "refs/spa_size3.png"
    ],
-   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 3 of 5: bigger again, with a porch and more decoration"
+   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 3 of 4: bigger again, with a porch and more decoration"
   },
   {
    "id": "spa_size4",
@@ -6704,19 +6680,7 @@
    "refs": [
     "refs/spa_size4.png"
    ],
-   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 4 of 5: a grand version with an extra wing and flower boxes"
-  },
-  {
-   "id": "spa_size5",
-   "item": "spa",
-   "class": "Crafting",
-   "stage": "5",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/spa_size5.png"
-   ],
-   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 5 of 5: the grandest, most charming version, with golden details and a little tower"
+   "subject": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower. Star level 4 of 4: a grand version with an extra wing and flower boxes"
   },
   {
    "id": "feed_mill_size1",
@@ -6728,7 +6692,7 @@
    "refs": [
     "refs/feed_mill_size1.png"
    ],
-   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 1 of 5: a modest cottage"
+   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 1 of 4: a modest cottage"
   },
   {
    "id": "feed_mill_size2",
@@ -6740,7 +6704,7 @@
    "refs": [
     "refs/feed_mill_size2.png"
    ],
-   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 2 of 5: a little bigger, with more trim and a second window"
+   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 2 of 4: a little bigger, with more trim and a second window"
   },
   {
    "id": "feed_mill_size3",
@@ -6752,7 +6716,7 @@
    "refs": [
     "refs/feed_mill_size3.png"
    ],
-   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 3 of 5: bigger again, with a porch and more decoration"
+   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 3 of 4: bigger again, with a porch and more decoration"
   },
   {
    "id": "feed_mill_size4",
@@ -6764,19 +6728,7 @@
    "refs": [
     "refs/feed_mill_size4.png"
    ],
-   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 4 of 5: a grand version with an extra wing and flower boxes"
-  },
-  {
-   "id": "feed_mill_size5",
-   "item": "feed_mill",
-   "class": "Crafting",
-   "stage": "5",
-   "tiles": 3,
-   "fill": 0.96,
-   "refs": [
-    "refs/feed_mill_size5.png"
-   ],
-   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 5 of 5: the grandest, most charming version, with golden details and a little tower"
+   "subject": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it. Star level 4 of 4: a grand version with an extra wing and flower boxes"
   },
   {
    "id": "barn_size1",
@@ -7517,26 +7469,6 @@
    "subject": "Strawberry Shortcake, a homemade baked good from a country farm, made from strawberries, wheat; appetising and charming"
   },
   {
-   "id": "good_carrot_muffins",
-   "item": "carrot_muffins",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Carrot Muffins, a homemade baked good from a country farm, made from carrots, wheat, eggs; appetising and charming"
-  },
-  {
-   "id": "good_peanut_butter_cookies",
-   "item": "peanut_butter_cookies",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Peanut Butter Cookies, a homemade baked good from a country farm, made from peanuts, rice, sugarcane; appetising and charming"
-  },
-  {
    "id": "good_three_berry_pie",
    "item": "three_berry_pie",
    "class": "Recipe",
@@ -7547,6 +7479,16 @@
    "subject": "Three Berry Pie, a homemade baked good from a country farm, made from strawberries, raspberries, cranberries, milk; appetising and charming"
   },
   {
+   "id": "good_carrot_muffins",
+   "item": "carrot_muffins",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Carrot Muffins, a homemade baked good from a country farm, made from carrots, wheat, eggs; appetising and charming"
+  },
+  {
    "id": "good_summer_squash_tart",
    "item": "summer_squash_tart",
    "class": "Recipe",
@@ -7555,6 +7497,16 @@
    "fill": 0.5,
    "refs": [],
    "subject": "Summer Squash Tart, a homemade baked good from a country farm, made from squash, tomatoes, eggs, wheat; appetising and charming"
+  },
+  {
+   "id": "good_peanut_butter_cookies",
+   "item": "peanut_butter_cookies",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Peanut Butter Cookies, a homemade baked good from a country farm, made from peanuts, rice, sugarcane; appetising and charming"
   },
   {
    "id": "good_raspberry_blondie",
@@ -7597,16 +7549,6 @@
    "subject": "Farmhouse Pizza, a homemade baked good from a country farm, made from tomatoes, bell peppers, wheat, milk; appetising and charming"
   },
   {
-   "id": "good_corn_bread",
-   "item": "corn_bread",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Honey Corn Bread, a homemade baked good from a country farm, made from corn, milk, eggs, honey; appetising and charming"
-  },
-  {
    "id": "good_banana_nut_loaf",
    "item": "banana_nut_loaf",
    "class": "Recipe",
@@ -7617,14 +7559,14 @@
    "subject": "Banana Nut Loaf, a homemade baked good from a country farm, made from bananas, peanuts, sugarcane, eggs; appetising and charming"
   },
   {
-   "id": "good_honey_carrot_cake",
-   "item": "honey_carrot_cake",
+   "id": "good_corn_bread",
+   "item": "corn_bread",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Honey Carrot Cake, a homemade baked good from a country farm, made from carrots, wheat, eggs, honey; appetising and charming"
+   "subject": "Honey Corn Bread, a homemade baked good from a country farm, made from corn, milk, eggs, honey; appetising and charming"
   },
   {
    "id": "good_peach_cobbler",
@@ -7637,6 +7579,16 @@
    "subject": "Peach Cobbler, a homemade baked good from a country farm, made from peaches, sugarcane, wheat, milk; appetising and charming"
   },
   {
+   "id": "good_honey_carrot_cake",
+   "item": "honey_carrot_cake",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Honey Carrot Cake, a homemade baked good from a country farm, made from carrots, wheat, eggs, honey; appetising and charming"
+  },
+  {
    "id": "good_truffle_pie",
    "item": "truffle_pie",
    "class": "Recipe",
@@ -7645,16 +7597,6 @@
    "fill": 0.5,
    "refs": [],
    "subject": "Truffle Pie, a homemade baked good from a country farm, made from truffles, eggs, wheat, milk; appetising and charming"
-  },
-  {
-   "id": "good_fresh_sachet",
-   "item": "fresh_sachet",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Fresh Sachet, a homemade spa good from a country farm, made from cranberries, pumpkins, sunflowers; appetising and charming"
   },
   {
    "id": "good_rose_water",
@@ -7677,14 +7619,14 @@
    "subject": "Cotton Wash Cloth, a homemade spa good from a country farm, made from cotton, wool; appetising and charming"
   },
   {
-   "id": "good_goat_milk_soap",
-   "item": "goat_milk_soap",
+   "id": "good_fresh_sachet",
+   "item": "fresh_sachet",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Goat Milk Soap, a homemade spa good from a country farm, made from goat milk, honey, cut roses; appetising and charming"
+   "subject": "Fresh Sachet, a homemade spa good from a country farm, made from cranberries, pumpkins, sunflowers; appetising and charming"
   },
   {
    "id": "good_tulip_sachet",
@@ -7697,6 +7639,16 @@
    "subject": "Tulip Sachet, a homemade spa good from a country farm, made from cut tulips, cotton; appetising and charming"
   },
   {
+   "id": "good_goat_milk_soap",
+   "item": "goat_milk_soap",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Goat Milk Soap, a homemade spa good from a country farm, made from goat milk, honey, cut roses; appetising and charming"
+  },
+  {
    "id": "good_citrus_bath_oil",
    "item": "citrus_bath_oil",
    "class": "Recipe",
@@ -7705,16 +7657,6 @@
    "fill": 0.5,
    "refs": [],
    "subject": "Citrus Bath Oil, a homemade spa good from a country farm, made from lemons, oranges, sunflowers; appetising and charming"
-  },
-  {
-   "id": "good_daisy_lotion",
-   "item": "daisy_lotion",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Daisy Lotion, a homemade spa good from a country farm, made from cut daisies, goat milk, almonds; appetising and charming"
   },
   {
    "id": "good_honey_candle",
@@ -7737,14 +7679,14 @@
    "subject": "Feather Pillow, a homemade spa good from a country farm, made from feathers, cotton, wool; appetising and charming"
   },
   {
-   "id": "good_lily_soap",
-   "item": "lily_soap",
+   "id": "good_daisy_lotion",
+   "item": "daisy_lotion",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Lily Soap, a homemade spa good from a country farm, made from cut lilies, goat milk, honey; appetising and charming"
+   "subject": "Daisy Lotion, a homemade spa good from a country farm, made from cut daisies, goat milk, almonds; appetising and charming"
   },
   {
    "id": "good_wool_blanket",
@@ -7755,6 +7697,16 @@
    "fill": 0.5,
    "refs": [],
    "subject": "Wool Blanket, a homemade spa good from a country farm, made from wool, cotton; appetising and charming"
+  },
+  {
+   "id": "good_lily_soap",
+   "item": "lily_soap",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Lily Soap, a homemade spa good from a country farm, made from cut lilies, goat milk, honey; appetising and charming"
   },
   {
    "id": "good_sunflower_oil_rub",
@@ -7797,16 +7749,6 @@
    "subject": "Royal Bath Set, a homemade spa good from a country farm, made from cut irises, goat milk, wool, cut tulips; appetising and charming"
   },
   {
-   "id": "good_sweet_saki",
-   "item": "sweet_saki",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Sweet Saki, a homemade drink from a country farm, made from cranberries, rice; appetising and charming"
-  },
-  {
    "id": "good_strawberry_cranberry_juice",
    "item": "strawberry_cranberry_juice",
    "class": "Recipe",
@@ -7827,14 +7769,14 @@
    "subject": "Apple Cider, a homemade drink from a country farm, made from apples, sugarcane; appetising and charming"
   },
   {
-   "id": "good_spicy_tomato_juice",
-   "item": "spicy_tomato_juice",
+   "id": "good_sweet_saki",
+   "item": "sweet_saki",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Spicy Tomato Juice, a homemade drink from a country farm, made from carrots, bell peppers, tomatoes; appetising and charming"
+   "subject": "Sweet Saki, a homemade drink from a country farm, made from cranberries, rice; appetising and charming"
   },
   {
    "id": "good_berry_wine",
@@ -7857,16 +7799,6 @@
    "subject": "Honey Lemonade, a homemade drink from a country farm, made from lemons, sugarcane, honey; appetising and charming"
   },
   {
-   "id": "good_country_red_wine",
-   "item": "country_red_wine",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Country Red Wine, a homemade drink from a country farm, made from grapes, sugarcane; appetising and charming"
-  },
-  {
    "id": "good_sunrise_punch",
    "item": "sunrise_punch",
    "class": "Recipe",
@@ -7877,6 +7809,26 @@
    "subject": "Sunrise Punch, a homemade drink from a country farm, made from oranges, pineapples, cherries; appetising and charming"
   },
   {
+   "id": "good_spicy_tomato_juice",
+   "item": "spicy_tomato_juice",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Spicy Tomato Juice, a homemade drink from a country farm, made from carrots, bell peppers, tomatoes; appetising and charming"
+  },
+  {
+   "id": "good_country_red_wine",
+   "item": "country_red_wine",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Country Red Wine, a homemade drink from a country farm, made from grapes, sugarcane; appetising and charming"
+  },
+  {
    "id": "good_plum_wine",
    "item": "plum_wine",
    "class": "Recipe",
@@ -7885,16 +7837,6 @@
    "fill": 0.5,
    "refs": [],
    "subject": "Plum Wine, a homemade drink from a country farm, made from plums, rice, sugarcane; appetising and charming"
-  },
-  {
-   "id": "good_watermelon_cooler",
-   "item": "watermelon_cooler",
-   "class": "Recipe",
-   "stage": "good",
-   "tiles": 1,
-   "fill": 0.5,
-   "refs": [],
-   "subject": "Watermelon Cooler, a homemade drink from a country farm, made from watermelon, lemons, sugarcane; appetising and charming"
   },
   {
    "id": "good_honey_mead",
@@ -7917,14 +7859,14 @@
    "subject": "Peach Sangria, a homemade drink from a country farm, made from peaches, grapes, oranges; appetising and charming"
   },
   {
-   "id": "good_reserve_wine",
-   "item": "reserve_wine",
+   "id": "good_watermelon_cooler",
+   "item": "watermelon_cooler",
    "class": "Recipe",
    "stage": "good",
    "tiles": 1,
    "fill": 0.5,
    "refs": [],
-   "subject": "Reserve Wine, a homemade drink from a country farm, made from grapes, cherries, honey; appetising and charming"
+   "subject": "Watermelon Cooler, a homemade drink from a country farm, made from watermelon, lemons, sugarcane; appetising and charming"
   },
   {
    "id": "good_tropical_punch",
@@ -7935,6 +7877,16 @@
    "fill": 0.5,
    "refs": [],
    "subject": "Tropical Punch, a homemade drink from a country farm, made from pineapples, bananas, watermelon, oranges; appetising and charming"
+  },
+  {
+   "id": "good_reserve_wine",
+   "item": "reserve_wine",
+   "class": "Recipe",
+   "stage": "good",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "Reserve Wine, a homemade drink from a country farm, made from grapes, cherries, honey; appetising and charming"
   },
   {
    "id": "good_golden_corn_cordial",

@@ -641,22 +641,15 @@
             {
               "capacity": 3,
               "name": "3-Star Bakery",
-              "coins": 100000,
+              "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
               "capacity": 4,
               "name": "4-Star Bakery",
-              "coins": 400000,
-              "recipe_stars": 27,
-              "gems": 40
-            },
-            {
-              "capacity": 5,
-              "name": "5-Star Bakery",
               "coins": 1000000,
-              "recipe_stars": 36,
+              "recipe_stars": 32,
               "gems": 60
             }
           ]
@@ -689,22 +682,15 @@
             {
               "capacity": 3,
               "name": "3-Star Winery",
-              "coins": 100000,
+              "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
               "capacity": 4,
               "name": "4-Star Winery",
-              "coins": 400000,
-              "recipe_stars": 27,
-              "gems": 40
-            },
-            {
-              "capacity": 5,
-              "name": "5-Star Winery",
               "coins": 1000000,
-              "recipe_stars": 36,
+              "recipe_stars": 32,
               "gems": 60
             }
           ]
@@ -737,22 +723,15 @@
             {
               "capacity": 3,
               "name": "3-Star Spa",
-              "coins": 100000,
+              "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
               "capacity": 4,
               "name": "4-Star Spa",
-              "coins": 400000,
-              "recipe_stars": 27,
-              "gems": 40
-            },
-            {
-              "capacity": 5,
-              "name": "5-Star Spa",
               "coins": 1000000,
-              "recipe_stars": 36,
+              "recipe_stars": 32,
               "gems": 60
             }
           ]
@@ -795,22 +774,15 @@
             {
               "capacity": 3,
               "name": "3-Star Feed Mill",
-              "coins": 100000,
+              "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
               "capacity": 4,
               "name": "4-Star Feed Mill",
-              "coins": 400000,
-              "recipe_stars": 27,
-              "gems": 40
-            },
-            {
-              "capacity": 5,
-              "name": "5-Star Feed Mill",
               "coins": 1000000,
-              "recipe_stars": 36,
+              "recipe_stars": 32,
               "gems": 60
             }
           ]

@@ -936,7 +936,7 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 	_eq(bread["badge"], ["coin", FarmHud._thousands(Game.crafting.good_price("pumpkin_bread"))],
 		"a recipe's card says what the good sells for")
 	_check(bool(recipes.face_of.call("truffle_pie")["locked"]) and recipes.face_of.call("truffle_pie")["line"]
-		== tr("UNLOCKS_AT_STARS") % 5, "a locked one says the star it unlocks at")
+		== tr("UNLOCKS_AT_STARS") % 4, "a locked one says the star it unlocks at")
 	_eq(recipes.face_of.call("carrot_muffins")["line"], tr("CRAFT_NEEDS_MORE") % 5,
 		"one short of ingredients says how many (3 carrots, 2 eggs)")
 	var seen := _words_on(page)

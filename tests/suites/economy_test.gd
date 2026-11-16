@@ -530,7 +530,7 @@ func test_69_art_manifest_is_complete() -> void:
 	_eq(g.catalog.art_ids_of("cow"), ["cow"], "animals: one look")
 	_eq(
 		g.catalog.art_ids_of("bakery"),
-		["bakery_size1", "bakery_size2", "bakery_size3", "bakery_size4", "bakery_size5"],
+		["bakery_size1", "bakery_size2", "bakery_size3", "bakery_size4"],
 		"crafting: one per star"
 	)
 	_eq(g.catalog.art_ids_of("pumpkin_bread"), ["good_pumpkin_bread"], "goods: one icon")

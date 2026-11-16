@@ -118,27 +118,71 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 	_done(g)
 
 
-func test_384_a_mill_shows_its_work_and_when_it_is_full() -> void:
-	# The Feed Mill is a tower windmill. Its sails turn only while it works; one is broken off at level 1; maxed it
-	# has two sets; and when every slot holds something finished its silos run over.
+func test_384_a_mill_shows_its_work_and_grows_with_its_level() -> void:
+	# The Feed Mill is a tower windmill. Its sails turn only while it works; at level 1 one is broken off and they
+	# never turn; maxed it has two storeys and two sets.
 	var g := _farm()
 	var it := g.item_data("feed_mill")
 	var fp := Vector2i(3, 3)
-	var idle := BuildingModel.build(it, fp, 5, false)
-	var busy := BuildingModel.build(it, fp, 5, true)
-	var full := BuildingModel.build(it, fp, 5, false, false, true)
-	_check(_shaded(busy, DecorMotion.ORBIT_SHADER) > _shaded(idle, DecorMotion.ORBIT_SHADER),
-		"a working mill's sails turn, an idle mill's stand still")
-	_eq(_shaded(idle, DecorMotion.SPRAY_SHADER), 0, "nothing spills from a mill that is not full")
-	_eq(_shaded(full, DecorMotion.SPRAY_SHADER), 2, "grain runs over both silos of a full maxed mill")
-	var first := BuildingModel.build(it, fp, 1, false)
-	var second := BuildingModel.build(it, fp, 2, false)
-	_check(_count_vertices(first) < _count_vertices(second), "the level 1 mill has a sail broken off")
+	var idle := BuildingModel.build(it, fp, 4, false)
+	var busy := BuildingModel.build(it, fp, 4, true)
+	var second := BuildingModel.build(it, fp, 2, true)
+	var first := BuildingModel.build(it, fp, 1, true)
+	_eq(_shaded(idle, DecorMotion.ORBIT_SHADER), 0, "an idle mill's sails stand still")
+	_check(_shaded(busy, DecorMotion.ORBIT_SHADER) > _shaded(second, DecorMotion.ORBIT_SHADER)
+		and _shaded(second, DecorMotion.ORBIT_SHADER) > 0, "a working mill's turn: one set at level 2, two maxed")
+	_eq(_shaded(first, DecorMotion.ORBIT_SHADER), 0, "the level 1 mill's broken sails never turn")
 	_check(_bounds(idle).size.y > _bounds(first).size.y * 1.3, "the maxed mill stands well over the first one")
-	var heaped := BuildingModel.build(it, fp, 1, false, false, true)
-	_check(_count_meshes(heaped) > _count_meshes(first), "with no silo, a full mill heaps its grain on the ground")
-	for n: Node3D in [idle, busy, full, first, second, heaped]:
+	for n: Node3D in [idle, busy, second, first]:
 		n.free()
+	_done(g)
+
+
+func test_385_crafting_buildings_follow_the_building_rules() -> void:
+	# The rules for crafting buildings (CLAUDE.md): four levels, each with its own look; animated parts 0, 1, 1, 2
+	# by level, moving while the building crafts and only then; storage parts 1, 1, 2, 2, which show four looks
+	# (empty, a quarter, half, full) by how full the building is.
+	var g := _farm()
+	var moving: Array[String] = [DecorMotion.ORBIT_SHADER, DecorMotion.SPRAY_SHADER, DecorMotion.FLAME_SHADER]
+	var checked := 0
+	for id: String in g.items:
+		var it: Dictionary = g.item_data(id)
+		if str(it.get("kind", "")) != "crafting":
+			continue
+		checked += 1
+		_eq(g.max_level(id), 4, "%s has four levels" % id)
+		var fp := g.footprint(id)
+		var looks := {}
+		for level in range(1, 5):
+			var parts := {BuildingDress.ANIMATED: 0, BuildingDress.STORAGE: 0}
+			for f: Dictionary in BuildingModel.spec(id, level).get("features", []):
+				if parts.has(str(f.get("part", ""))):
+					parts[str(f["part"])] += 1
+			var animated: int = parts[BuildingDress.ANIMATED]
+			_eq(animated, [0, 1, 1, 2][level - 1], "%s level %d: its animated parts" % [id, level])
+			_eq(parts[BuildingDress.STORAGE], [1, 1, 2, 2][level - 1], "%s level %d: its storage parts" % [id, level])
+			var idle := BuildingModel.build(it, fp, level, false)
+			var busy := BuildingModel.build(it, fp, level, true)
+			var still := 0
+			var moves := 0
+			for shader in moving:
+				still += _shaded(idle, shader)
+				moves += _shaded(busy, shader)
+			_eq(still, 0, "%s level %d: nothing moves when it is not crafting" % [id, level])
+			_check(moves >= animated and (animated > 0 or moves == 0),
+				"%s level %d: each animated part moves while it crafts, and nothing else (%d)" % [id, level, moves])
+			looks[_outline(idle)] = true
+			var fills := {}
+			for fill in BuildingDress.FILLS:
+				var held := BuildingModel.build(it, fp, level, false, false, fill)
+				fills[_outline(held)] = true
+				held.free()
+			_eq(fills.size(), BuildingDress.FILLS, "%s level %d: its storage shows empty, a quarter, half and full"
+				% [id, level])
+			idle.free()
+			busy.free()
+		_eq(looks.size(), 4, "%s has a look for each level" % id)
+	_check(checked >= 4, "the Bakery, Winery, Spa and Feed Mill were checked (%d)" % checked)
 	_done(g)
 
 
@@ -149,6 +193,14 @@ func _shaded(node: Node, shader: String) -> int:
 		if mat != null and mat.shader != null and mat.shader.resource_path == shader:
 			n += 1
 	return n
+
+
+## A number that changes when a model's parts change in count or size (the sizes of all its meshes, summed).
+func _outline(node: Node) -> int:
+	var sum := 0.0
+	for mi in _meshes_in(node):
+		sum += mi.get_aabb().size.length() * mi.scale.length()
+	return roundi(sum * 10000.0)
 
 
 func _count_meshes(node: Node) -> int:

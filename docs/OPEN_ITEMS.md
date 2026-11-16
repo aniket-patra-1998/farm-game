@@ -178,7 +178,8 @@ Open:
 
 ## Crafting: recipes, pictures and the menu (branch `feel-upgrades`)
 
-- Done, recipes and balance: Bakery, Winery and Spa each have 15 recipes, three a star, made only of what the
+- Done, recipes and balance: Bakery, Winery and Spa each have 15 recipes over four stars (4, 4, 4, 3, by what
+  they are worth), made only of what the
   first release grows and raises (`data/catalog/recipes.json`); FarmVille's recipes that need other crops are
   kept there as planned, for when those crops come. A new catalog class, Ingredient
   (`data/catalog/ingredients.json`): eggs, milk, goat milk, wool, feathers, truffles, honey, ten orchard fruits
@@ -200,19 +201,24 @@ Open:
   shelf when a craft is done); the planned FarmVille recipes return with the crops exercise; sunflower blooms
   give no produce (the crop already gives sunflowers); making a recipe is two taps (pick its card, then Make).
 
-## Buildings: the storybook redesign (branch `feel-upgrades`)
+## Buildings: the storybook redesign and the building rules (branch `feel-upgrades`)
 
-Done for the four crafting buildings (Feed Mill, Bakery, Winery, Spa): one bold shape and one thing of its trade
-each, an emblem or a coloured door, and a maxed look (gold roof edges, a gold band and a turning gold star).
-The Feed Mill is a tower windmill that grows from a broken sail at level 1 to two storeys, two sets of sails
-and two silos at level 5.
+The rules are in CLAUDE.md (four types: decor, crafting, harvesting, storing). Done for the four crafting
+buildings (Feed Mill, Bakery, Winery, Spa), and held by a test (`world3d_test` test_385):
 
-- The other buildings still have the older shapes. Cow Shed, Chicken Coop and Farmhouse got props in the
-  pilot and lost the small clutter (tufts, lanterns, strap hinges) with everything else, but not a new shape.
+- Four levels, a look each, 1 to 4 slots; the 15 recipes are spread 4, 4, 4, 3 by what they are worth (the Feed
+  Mill's ten: 4, 2, 2, 2), and times, prices, XP, fuel and level costs are retuned for four tiers.
+- Animated parts 0, 1, 1, 2 by level, moving only while crafting: the mill's sails (level 1's are broken), the
+  bakery's oven and roof chimney, the winery's press and tap, the spa's steam and fountain.
+- Storage parts 1, 1, 2, 2 with four looks (empty, a quarter, half, full): the mill's silos (a glass up the
+  side; a full one runs over), the bakery's and spa's shelves, the winery's casks (kegs drawn off them).
+- A maxed building has gold roof edges, a gold band and a gold star (still: only animated parts move).
+
+Open:
+
+- Decor (no upgrades, a yellow light at night), harvesting and storing buildings are not brought under the
+  rules yet; the other buildings still have the older shapes.
+- The new numbers (four tiers) have not been run through the balance bot.
 - A building under construction is drawn as a square frame even when it will be a round tower.
-- The sails, the star and the steam have only been checked in still pictures, not on a phone.
-- A crafting building shows three states: idle, working (the mill's sails turn, the bakery smokes, the spa
-  steams) and full, when every slot holds something finished (the mill's silos run over; crates of goods stand
-  by the others' doors). The Winery has nothing that moves while it works yet.
+- The moving parts have only been checked in still pictures, not on a phone.
 - Animals' walking still looks unconnected to the ground (not started).
-
