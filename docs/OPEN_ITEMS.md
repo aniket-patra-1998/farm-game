@@ -171,3 +171,26 @@ Open:
   sunflowers is 2,950 triangles (the heaviest; the test's limit is 3,100); the Bloom Garden's ground is plain soil, with no
   raised beds or paths between rows; only the six flowers the catalog has (FarmVille had dozens).
 
+## Crafting: recipes, pictures and the menu (branch `feel-upgrades`)
+
+- Done, recipes and balance: Bakery, Winery and Spa each have 15 recipes, three a star, made only of what the
+  first release grows and raises (`data/catalog/recipes.json`); FarmVille's recipes that need other crops are
+  kept there as planned, for when those crops come. A new catalog class, Ingredient
+  (`data/catalog/ingredients.json`): eggs, milk, goat milk, wool, feathers, truffles, honey, ten orchard fruits
+  and five cut flowers, dropped when collecting from animals, the beehive, trees and blooms once you own a
+  crafting building (`crafting.produce_chance`), held with the bushels and used by recipes like one. A good's
+  price, fuel, XP and time rise with its star (`recipes.markup_per_star`, `fuel_per_recipe_star`,
+  `crafting.craft_xp_*`, `craft_hours_by_star`); every star's goods sell for more than any below (tested).
+- Done, pictures: every good and every produce is a small 3D model (`GoodsModel`): a good is its recipe's
+  `shape` in the colours of what goes into it, produce its own shape; ItemIcons pictures them and the CI baker
+  covers them.
+- Done, the menu (`HudCrafting`): three tabs. Make: the slots as tiles with a bar and the time left (kept up to
+  date; a craft that finishes with the panel open lands in Goods), every recipe as a card (picture, mastery,
+  price, time, fuel, XP, each ingredient as have of need, Make or the missing ingredients for gems), the next
+  star. Goods: each good with Sell and Use, and Sell all. Pantry: what is held, and the Farmers Market as cards.
+- Open: the new numbers (produce chance, markups, craft times) have not been run through the balance bot; the
+  feed sacks differ only by colour; goods are only pictures (nothing shows on the building or flies to the
+  shelf when a craft is done); the planned FarmVille recipes return with the crops exercise; sunflower blooms
+  give no produce (the crop already gives sunflowers); recipe cards are real controls, 15 a building (fine
+  here, not for hundreds).
+

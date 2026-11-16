@@ -855,3 +855,110 @@ func test_367_centred_pictures_sit_inside_their_buttons() -> void:
 	box.free()
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## The words on every label and button showing under `node`, and the buttons by their words.
+func _words_on(node: Node) -> Dictionary:
+	var out := {"words": {}, "buttons": {}}
+	for c in node.find_children("*", "Control", true, false):
+		if c.is_queued_for_deletion() or not (c as Control).is_visible_in_tree():
+			continue
+		if c is Label:
+			out["words"][(c as Label).text] = true
+		elif c is Button:
+			out["words"][(c as Button).text] = true
+			if not out["buttons"].has((c as Button).text):
+				out["buttons"][(c as Button).text] = []
+			out["buttons"][(c as Button).text].append(c)
+	return out
+
+
+func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantry() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(30)
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var book: BookPanel = hud.get("_book")
+	var spot := Vector2i(-1, -1)
+	for r in Game.farm_size:
+		for c in Game.farm_size:
+			if spot.x < 0 and Game.can_place("bakery", r, c):
+				spot = Vector2i(r, c)
+	_check(Game.buy_and_place("bakery", spot.x, spot.y), "a Bakery")
+	var o := Game.object_at(Game.index_of(spot.x, spot.y))
+	var uid := int(o["uid"])
+	Game.crafting.bushels = {"pumpkins": 8, "wheat": 12, "strawberries": 4}
+	_check(Game.crafting.start_craft(uid, "pumpkin_bread"), "a loaf in the oven")
+	Game.crafting.goods = {"strawberry_shortcake": 2}
+	hud.open_full_panel(uid)
+	for f in 3:
+		await get_tree().process_frame
+	var tabs: Array = book.get("_tabs")
+	_eq(tabs.map(func(t: Array) -> String: return str(t[0])), [tr("CRAFT_TAB_MAKE"), tr("CRAFT_TAB_GOODS"),
+		tr("CRAFT_TAB_PANTRY")], "three tabs: Make, Goods, Pantry")
+	_eq(hud.crafting.tabs({"id": "feed_mill"}).size(), 2, "a Feed Mill makes no goods: no Goods tab")
+	# Make: the slot under way with its bar, the next star's slot, every recipe as a card.
+	var seen := _words_on(book.page())
+	_eq(book.page().find_children("*", "ProgressBar", true, false).size(), 1, "one craft under way: one bar")
+	_check(seen["words"].has(tr("CRAFT_SLOT_AT_STARS") % 2), "the slot the next star adds is shown, locked")
+	for r in Game.crafting.recipes_of("bakery"):
+		_check(seen["words"].has(r.name), "%s has its card" % r.name)
+	_check(seen["words"].has(FarmHud._thousands(Game.crafting.good_price("pumpkin_bread"))),
+		"a card says what the good sells for")
+	_check(seen["words"].has(tr("CRAFT_GIVES") % [FarmGrid.format_duration(3600), Game.crafting.good_fuel("pumpkin_bread"),
+		(Game.catalog.get_def("pumpkin_bread") as RecipeDef).xp()]), "and its time, fuel and XP")
+	var makes: Array = seen["buttons"].get(tr("MAKE_IT"), [])
+	_eq(makes.size(), 3, "a Make button on each unlocked recipe (3 at one star)")
+	_check(makes.all(func(b: Button) -> bool: return b.disabled), "none can start while the only slot is busy")
+	_check(seen["words"].has(tr("UNLOCKS_AT_STARS") % 5), "a locked recipe says the star it unlocks at")
+	# The craft finishes while the panel is open: it lands in Goods and the slot is free.
+	Game.debug_time_offset += 3600
+	await get_tree().create_timer(HudCrafting.TICK + 0.3).timeout
+	for f in 3:
+		await get_tree().process_frame
+	_eq(int(Game.crafting.goods.get("pumpkin_bread", 0)), 1, "the loaf is done, with the panel open")
+	seen = _words_on(book.page())
+	_check(seen["words"].has(tr("CRAFT_FREE_SLOT")), "its slot shows free")
+	var ready: Array = (seen["buttons"].get(tr("MAKE_IT"), []) as Array).filter(
+		func(b: Button) -> bool: return not b.disabled)
+	_eq(ready.size(), 2, "the two recipes there are ingredients for can be made")
+	(ready[0] as Button).pressed.emit()
+	_eq((o.get("slots", []) as Array).size(), 1, "Make starts it")
+	# Goods: each good with Sell and Use, and all sold at once.
+	book.show_tab(1)
+	for f in 3:
+		await get_tree().process_frame
+	seen = _words_on(book.page())
+	_check(seen["words"].has(tr("CRAFT_GOOD_COUNT") % [2, Game.name_of("strawberry_shortcake")]),
+		"two shortcakes on the shelf")
+	_check(seen["buttons"].has(tr("USE_FUEL") % Game.crafting.good_fuel("strawberry_shortcake")),
+		"one can be used for fuel")
+	var coins := Game.coins
+	var worth := 2 * Game.crafting.good_price("strawberry_shortcake") + Game.crafting.good_price("pumpkin_bread")
+	_check(seen["buttons"].has(tr("SELL_ALL_GOODS") % FarmHud._thousands(worth)), "Sell all says what it brings")
+	(seen["buttons"][tr("SELL_ALL_GOODS") % FarmHud._thousands(worth)][0] as Button).pressed.emit()
+	_check(Game.coins >= coins + worth, "and brings it (a first sale's ribbon may add its own)")
+	_check(Game.crafting.goods.is_empty(), "the shelf is empty")
+	# Pantry: what is held, and the Farmers Market's offer.
+	book.show_tab(2)
+	for f in 3:
+		await get_tree().process_frame
+	seen = _words_on(book.page())
+	_check(seen["words"].has(tr("BUSHELS_OF") % [Game.crafting.total_bushels(), Balance.i("crafting.bushel_cap")]),
+		"the pantry says how full it is")
+	var offer := Game.crafting.market_stall()
+	var id: String = offer.keys()[0]
+	var buy: String = tr("MARKET_BUY") % FarmHud._thousands(Game.crafting.bushel_price(id))
+	_check(seen["buttons"].has(buy), "the market sells %s at its price" % id)
+	var had := int(Game.crafting.bushels.get(id, 0))
+	(seen["buttons"][buy][0] as Button).pressed.emit()
+	_check(Game.crafting.total_bushels() > 0 and int(offer[id]) == Balance.i("crafting.stall_each") - 1
+		or int(Game.crafting.bushels.get(id, 0)) > had, "Buy buys one")
+	book.close_panel()
+	Game.modal_open = false
+	main.queue_free()
+

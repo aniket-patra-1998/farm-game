@@ -288,17 +288,15 @@ static func _produce(root: Node3D, d: IngredientDef) -> void:
 				ModelKit.ball(root, C + Vector3(cos(a) * out, 0.11 + 0.16 * (1.0 - k / 10.0), sin(a) * out), 0.12,
 					ModelKit.paint(col.darkened(0.03 * (k % 3))))
 		"feather":
-			for k in 3:   # (three, fanned and leaning back, each a vane on its quill)
+			# Three, fanned from where their quills meet, each a flat vane facing the pictures' view.
+			for k in 3:
 				var feather := Node3D.new()
-				feather.position = C + Vector3(0, 0.02, 0)
-				feather.rotation = Vector3(-1.2, PI / 4.0 + 0.5 * (k - 1), 0)
+				feather.position = C + Vector3(0, 0.03, 0)
+				feather.rotation = Vector3(0, PI / 4.0, 0.55 * (1 - k))
 				root.add_child(feather)
-				ModelKit.ball(feather, Vector3(0, 0, 0.42), 0.34, ModelKit.paint(col.darkened(0.06 * k)),
-					Vector3(0.34, 0.05, 1.0), true)
-				var quill := ModelKit.cylinder(feather, Vector3.ZERO, 0.012, 0.8,
-					ModelKit.paint(CERAMIC.darkened(0.3)), 0.006, 5)
-				quill.rotation.x = PI / 2.0
-				quill.position = Vector3(0, 0.02, 0.4)
+				ModelKit.ball(feather, Vector3(0, 0.36, -0.01 * k), 0.3, ModelKit.paint(col.darkened(0.07 * absi(k - 1))),
+					Vector3(0.34, 1.0, 0.06), true)
+				ModelKit.cylinder(feather, Vector3(0, 0, 0.012 - 0.01 * k), 0.011, 0.66, ModelKit.paint(CREAM), 0.005, 5)
 		"truffle":
 			for k in 3:
 				var at := Vector3(cos(TAU * k / 3.0), 0, sin(TAU * k / 3.0)) * 0.14
@@ -331,16 +329,16 @@ static func _produce(root: Node3D, d: IngredientDef) -> void:
 				stem.rotation.z = 0.5 * side
 			ModelKit.ball(root, C + Vector3(0.08, 0.43, 0), 0.1, ModelKit.paint(LEAF), Vector3(1.3, 0.12, 0.6))
 		"banana":
-			for k in 3:   # (a hand of three, each a curve of five rounds with a dark tip)
-				var yaw := 0.5 * (k - 1) + PI / 4.0
-				var along := Vector3(sin(yaw), 0, cos(yaw))
-				for part in 5:
-					var t := part / 4.0
-					ModelKit.ball(root, C + along * (t - 0.45) * 0.5 + Vector3(0,
-						0.08 + 0.16 * (t - 0.5) * (t - 0.5) * 4.0 * 0.5, 0),
-						0.075 - 0.02 * absf(t - 0.5), ModelKit.paint(col.darkened(0.04 * k), 0.3), Vector3.ONE, true)
-				ModelKit.ball(root, C + along * 0.3 + Vector3(0, 0.17, 0), 0.03, ModelKit.paint(STALK.darkened(0.3)))
-			ModelKit.ball(root, C + Vector3(-0.17, 0.17, -0.17), 0.055, ModelKit.paint(STALK))   # (where they join)
+			# A hand of three: each a curve of rounds running out from the stalk they share, sagging in the middle.
+			var stalk := C - ASIDE * 0.26 + Vector3(0, 0.2, 0)
+			for k in 3:
+				var along := ASIDE.rotated(Vector3.UP, 0.34 * (k - 1))
+				for part in 14:   # (close together, so they run into one curve)
+					var t := part / 13.0
+					ModelKit.ball(root, stalk + along * 0.54 * t + Vector3(0, -0.15 * sin(PI * t) - 0.02 * k, 0.0),
+						0.08 - 0.035 * pow(absf(t - 0.5) * 2.0, 2.0), ModelKit.paint(col.darkened(0.05 * k), 0.3))
+				ModelKit.ball(root, stalk + along * 0.56 + Vector3(0, -0.02 * k, 0), 0.026, ModelKit.paint(STALK.darkened(0.3)))
+			ModelKit.ball(root, stalk, 0.06, ModelKit.paint(STALK))
 		"flower":
 			# A bunch of the cut flower, wrapped: the bloom's own flowers (BloomModel), so a cut rose is the farm's rose.
 			var family: String = (d.data.get("families", [""]) as Array)[0]

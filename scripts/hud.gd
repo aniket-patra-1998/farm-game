@@ -455,7 +455,7 @@ func open_full_panel(uid: int) -> void:
 			_book.open_panel(tr("BARN"), barn.build_barn)
 		BuildingSheet.Kind.CRAFT:
 			Game.crafting.finish_crafts(uid)
-			_book.open_panel(Game.size_name(o), crafting.build_crafting)
+			_book.open_tabs(Game.size_name(o), crafting.tabs(o))
 		_:
 			open_building_panel(uid)
 
