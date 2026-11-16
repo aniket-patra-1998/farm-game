@@ -28,7 +28,7 @@ Strength and depths come from `data/weather.json`, per state.
 
 - Stardew Valley: rain waters crops; storms bring lightning that can destroy crops and trees, and lightning
   rods catch strikes and turn them into Battery Packs; a Rain Totem calls rain. We take: rain that matters to
-  crops, lightning with something to catch it. We leave: losing crops to lightning (too harsh for a cozy farm).
+  crops. We leave: lightning striking the farm (too harsh for a cozy farm), and so no lightning rod.
 - Animal Crossing: some creatures appear only in rain (snails), others hide (butterflies, many beetles);
   heavy rain darkens the sky more; thunderstorms are cosmetic; villagers carry umbrellas; the music changes;
   flowers are watered. We take: rain-only creatures, umbrellas, a rain music and sound layer, darker heavy rain.
@@ -52,7 +52,7 @@ full rain, then it eases off, and the farm is wet and alive for a while after.
 - Rain sounds in two layers (light patter, heavy downpour) by strength; closer to roofs when zoomed in.
 - Animals shelter: those out in yards go in (heads at the windows), back out when it stops. The farmer wears a
   raincoat or carries an umbrella. Butterflies and birds leave (as now).
-- Frogs come out near puddles and ponds and hop about; snails crawl on fences and decorations; earthworms show
+- Frogs come out near puddles and ponds and hop about (scenery: a tap does nothing); snails crawl on fences and decorations; earthworms show
   on plowed plots. All drawn in batches (one MultiMesh per kind), few on low quality.
 
 ### Storms (heavy rain)
@@ -60,8 +60,7 @@ full rain, then it eases off, and the farm is wet and alive for a while after.
   sun light flash white, then **thunder after a delay** that says how far it struck (0.5 to 4 s; near ones a
   crack, far ones a rumble; three or four recorded or synthesised variants, never the same twice in a row).
 - Frequency rises and falls with the storm's strength; a strike close to the farm is rare.
-- Lightning Rod (decoration, our own touch): a rod on the farm catches strikes; each catch gives a small reward
-  (coins, or a material for crafting). Nothing on the farm is ever destroyed by lightning.
+- Nothing on the farm is ever struck or destroyed by lightning: it is sky and sound only.
 
 ### Afterwards
 - The farm drips and dries: wetness and puddles ease out over an hour or so; puddles last longest in shade.
@@ -110,16 +109,15 @@ full rain, then it eases off, and the farm is wet and alive for a while after.
 
 ## Build order
 
-1. Fog fix (depth fog), thunder and the lightning bolt and flash; the rain sound layers.
-2. Rules: wither in the wet, monsoon finds, the frogs family; `WeatherSystem` and data/weather.json.
-3. Puddles and ripples in the ground and water shaders; rain particles in 3D.
-4. Rain life: frogs, snails, worms; animals sheltering; the farmer's umbrella.
-5. Afterwards: mushrooms, rainbow, morning mist; Lightning Rod and rain barrel.
+1. Search everywhere it helps (docs/SEARCH.md), before the weather.
+2. Fog fix (depth fog), thunder and the lightning bolt and flash; the rain sound layers.
+3. Rules: wither in the wet, monsoon finds, the frogs family; `WeatherSystem` and data/weather.json.
+4. Puddles and ripples in the ground and water shaders; rain particles in 3D.
+5. Rain life: frogs, snails, worms; animals sheltering; the farmer's umbrella.
+6. Afterwards: mushrooms, rainbow, morning mist; the rain barrel.
 
-## Open questions
+## Decided
 
-- Should tapping a frog do anything (a ribbit and a small chance of a coin), or are they scenery only?
-- Lightning Rod's reward: coins, or a new crafting material (and in which recipes)?
-- Monsoon region (South Asia): longer, heavier rain spells in its monsoon season, with more frogs and finds?
-</content>
-</invoke>
+- Frogs are scenery: a tap does nothing.
+- No lightning rod.
+- The South Asia monsoon region's own longer, heavier rains: later, not now.
