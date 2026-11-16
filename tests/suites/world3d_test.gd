@@ -120,7 +120,7 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 
 func test_384_a_mill_shows_its_work_and_grows_with_its_level() -> void:
 	# The Feed Mill is a tower windmill. Its sails turn only while it works; at level 1 one is broken off and they
-	# never turn; maxed it has two storeys and two sets.
+	# never turn; maxed it has two storeys, one bigger set and a grain chute.
 	var g := _farm()
 	var it := g.item_data("feed_mill")
 	var fp := Vector2i(3, 3)
@@ -129,8 +129,9 @@ func test_384_a_mill_shows_its_work_and_grows_with_its_level() -> void:
 	var second := BuildingModel.build(it, fp, 2, true)
 	var first := BuildingModel.build(it, fp, 1, true)
 	_eq(_shaded(idle, DecorMotion.ORBIT_SHADER), 0, "an idle mill's sails stand still")
-	_check(_shaded(busy, DecorMotion.ORBIT_SHADER) > _shaded(second, DecorMotion.ORBIT_SHADER)
-		and _shaded(second, DecorMotion.ORBIT_SHADER) > 0, "a working mill's turn: one set at level 2, two maxed")
+	_check(_shaded(busy, DecorMotion.ORBIT_SHADER) > 0 and _shaded(second, DecorMotion.ORBIT_SHADER) > 0,
+		"a working mill's sails turn, from level 2 up")
+	_eq(_shaded(busy, DecorMotion.SPRAY_SHADER), 1, "and grain runs down the maxed mill's chute")
 	_eq(_shaded(first, DecorMotion.ORBIT_SHADER), 0, "the level 1 mill's broken sails never turn")
 	_check(_bounds(idle).size.y > _bounds(first).size.y * 1.3, "the maxed mill stands well over the first one")
 	for n: Node3D in [idle, busy, second, first]:
@@ -140,7 +141,7 @@ func test_384_a_mill_shows_its_work_and_grows_with_its_level() -> void:
 
 func test_385_crafting_buildings_follow_the_building_rules() -> void:
 	# The rules for crafting buildings (CLAUDE.md): four levels, each with its own look; animated parts 0, 1, 1, 2
-	# by level, moving while the building crafts and only then; storage parts 1, 1, 2, 2, which show four looks
+	# by level, moving while the building crafts and only then; storage parts 1, 1, 2, then 2 or 3, with four looks
 	# (empty, a quarter, half, full) by how full the building is.
 	var g := _farm()
 	var moving: Array[String] = [DecorMotion.ORBIT_SHADER, DecorMotion.SPRAY_SHADER, DecorMotion.FLAME_SHADER]
@@ -160,7 +161,9 @@ func test_385_crafting_buildings_follow_the_building_rules() -> void:
 					parts[str(f["part"])] += 1
 			var animated: int = parts[BuildingDress.ANIMATED]
 			_eq(animated, [0, 1, 1, 2][level - 1], "%s level %d: its animated parts" % [id, level])
-			_eq(parts[BuildingDress.STORAGE], [1, 1, 2, 2][level - 1], "%s level %d: its storage parts" % [id, level])
+			var stores: int = parts[BuildingDress.STORAGE]
+			_check(stores == [1, 1, 2, 2][level - 1] or (level == 4 and stores == 3),
+				"%s level %d: its storage parts (%d)" % [id, level, stores])
 			var idle := BuildingModel.build(it, fp, level, false)
 			var busy := BuildingModel.build(it, fp, level, true)
 			var still := 0

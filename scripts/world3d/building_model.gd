@@ -921,6 +921,10 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 					BuildingDress.GRAIN)
 			if held >= BuildingDress.FULL:
 				BuildingDress.overflow(root, base, r, h)
+			elif f.has("cap"):
+				# (a cone roof in the building's own roof colour, overhanging a little)
+				ModelKit.cylinder(root, base + Vector3(0, h, 0), r + 0.05, r * 0.95, ModelKit.paint(Color.html(str(
+					f["cap"]))), 0.03, sides)
 			else:
 				ModelKit.ball(root, base + Vector3(0, h, 0), r, ModelKit.paint(Color("#b9c0c4"), 0.6),
 					Vector3(1, 0.6, 1))
@@ -1105,12 +1109,19 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				ModelKit.paint(Color("#f3eee2"))
 			)
 		"chimney":
+			# Through the roof near the back corner, or at `x`, `z` (shares of the walls) and `w` wide, with a cap.
 			var top: float = ctx.get("top", hi.y)
-			ModelKit.box(root, Vector3(hi.x - 0.22, hi.y, lo.z + 0.12), Vector3(hi.x - 0.08, top + 0.15, lo.z + 0.26),
+			var half := float(f.get("w", 0.14)) / 2.0
+			var mid := Vector3(lerpf(lo.x, hi.x, float(f["x"])) if f.has("x") else hi.x - 0.15, 0,
+				lerpf(lo.z, hi.z, float(f["z"])) if f.has("z") else lo.z + 0.19)
+			ModelKit.box(root, Vector3(mid.x - half, hi.y, mid.z - half), Vector3(mid.x + half, top + 0.15, mid.z + half),
 				ModelKit.surface(Color("#a6533c"), "stone", 0.0))
-			# Smoke curling up from it (GPU-animated, one draw).
+			if f.has("w"):
+				ModelKit.box(root, Vector3(mid.x - half - 0.03, top + 0.15, mid.z - half - 0.03), Vector3(
+					mid.x + half + 0.03, top + 0.2, mid.z + half + 0.03), ModelKit.paint(STONE.lightened(0.1)))
+			# Smoke curling up from it (GPU-animated, one draw), while the building works.
 			if ctx.get("active", true):
-				DecorMotion.spray(root, Vector3(hi.x - 0.15, top + 0.17, lo.z + 0.19), DecorMotion.SMOKE)
+				DecorMotion.spray(root, Vector3(mid.x, top + 0.22, mid.z), DecorMotion.SMOKE)
 		"water_trough":
 			var x := minf(hi.x + 0.45, fw - 0.3)
 			var z := minf(hi.z + 0.35, fd - 0.2)

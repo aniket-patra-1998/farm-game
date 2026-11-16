@@ -208,17 +208,20 @@ buildings (Feed Mill, Bakery, Winery, Spa), and held by a test (`world3d_test` t
 
 - Four levels, a look each, 1 to 4 slots; the 15 recipes are spread 4, 4, 4, 3 by what they are worth (the Feed
   Mill's ten: 4, 2, 2, 2), and times, prices, XP, fuel and level costs are retuned for four tiers.
-- Animated parts 0, 1, 1, 2 by level, moving only while crafting: the mill's sails (level 1's are broken), the
+- Animated parts 0, 1, 1, 2 by level, moving only while crafting: the mill's sails (level 1's are broken) and grain chute, the
   bakery's oven and roof chimney, the winery's press and tap, the spa's steam and fountain.
-- Storage parts 1, 1, 2, 2 with four looks (empty, a quarter, half, full): the mill's silos (a glass up the
-  side; a full one runs over), the bakery's and spa's shelves, the winery's casks (kegs drawn off them).
+- Storage parts 1, 1, 2, then 2 or 3, with four looks (empty, a quarter, half, full): the mill's silos (three
+  when maxed; a glass up the side; a full one runs over), the bakery's and spa's shelves, the winery's casks (kegs drawn off them).
 - A maxed building has gold roof edges, a gold band and a gold star (still: only animated parts move).
 
 Open:
 
 - Decor (no upgrades, a yellow light at night), harvesting and storing buildings are not brought under the
   rules yet; the other buildings still have the older shapes.
-- The new numbers (four tiers) have not been run through the balance bot.
+- The balance bot (30 days, three visits a day, 2026-11-16) reaches level 25, where crafting unlocks, on day 25
+  with about 670,000 coins, earning about 2,000 coins an hour by then. It does not buy or use crafting buildings,
+  so the crafting numbers are checked by a table only: a craft gains 340 to 530 coins a slot-hour over its
+  ingredients at every star. Teaching the bot to craft is open.
 - A building under construction is drawn as a square frame even when it will be a round tower.
 - The moving parts have only been checked in still pictures, not on a phone.
 - Animals' walking still looks unconnected to the ground (not started).

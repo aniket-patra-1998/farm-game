@@ -23,8 +23,8 @@ const SHADE_STRENGTH := 0.5   # ..and is this dark at its middle
 const SHADE_LIFT := 0.014     # it lies this far above the ground (over a yard's floor)
 const GOLDEN := 2.39996
 ## Every feature this dressing builds (`feature`); BuildingModel builds the rest.
-const FEATURES: Array[String] = ["sacks", "crates", "cask", "oven", "steam", "emblem", "crown", "sails", "press",
-	"pour", "jet", "rack", "hay_rack",
+const FEATURES: Array[String] = ["sacks", "crates", "cask", "oven", "steam", "emblem", "crown", "sails", "chute",
+	"press", "pour", "jet", "rack", "hay_rack",
 	"milk_cans", "perch", "feeder", "bench", "woodpile"]
 const GOLD := Color("#f2c14e")
 const GRAIN := Color("#e8b93c")
@@ -32,6 +32,12 @@ const ANIMATED := "animated"  # a feature's `part`: it moves while the building 
 const STORAGE := "storage"    # a feature's `part`: it shows how full the building is, in FILLS looks
 const FILLS := 4              # empty, a quarter, half and full
 const FULL := 3
+const CHUTE_LONG := 0.7       # a grain chute: how long its spout is..
+const CHUTE_TILT := 0.55       # ..how steeply it runs down (radians)..
+const CHUTE_HIGH := 0.42       # ..and how high its mouth is over the ground
+## Grain running off the end of a chute into the bin under it.
+const GRAIN_FALL := {"streams": 4, "per_stream": 6, "life": 0.42, "rise": 0.0, "gravity": 2.8, "reach": 0.03,
+	"size": 1.0, "colour": GRAIN}
 const RACK_WIDE := 0.4
 const RACK_TALL := 0.52
 const GAUGE_WIDE := 0.11
@@ -48,10 +54,8 @@ const UPPER_TOP := 0.5        # ..and top
 const LOWER_ROOF := 0.22      # the height of the pent roof between the two
 const TOWER_SIDES := 14       # a round tower's sides
 const TOWER_TAPER := 0.7      # how wide its top is, as a share of its foot
-const CAP_SKIRT := 0.2        # the share of a tower cap's height that is its flared skirt
-const CAP_NECK := 0.8         # how wide the cap is where the skirt ends, as a share of the tower's top..
-const CAP_SHOULDER := 0.46    # ..and at its shoulder,
-const CAP_SHOULDER_AT := 0.62   # which is this far up the cap
+const CAP_SIDES := 18         # a tower cap's dome: how round it is
+const CAP_EAVE := 0.05        # and the dark eave under it
 const SAIL_WIDE := 0.27       # a windmill sail's width, as a share of its length
 
 static var _shade: ShaderMaterial
@@ -272,6 +276,22 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			sails(root, c + face * hub.x + Vector3(0, hub.y, 0), face, float(f.get("reach", 0.7)),
 				moving and not bool(f.get("broken", false)), bool(f.get("broken", false)),
 				Color.html(str(f.get("stripe", "#" + CREAM.to_html(false)))))
+		"chute":
+			# A grain chute from the mill down to an open bin; grain runs from it while the building works.
+			var boards := ModelKit.surface(WOOD, "boards", 0.2)
+			ModelKit.tub(root, at + Vector3(-0.17, 0, -0.17), at + Vector3(0.17, 0.2, 0.17), 0.02, boards,
+				ModelKit.paint(GRAIN))
+			var toward := Vector3(c.x - at.x, 0, c.z - at.z).normalized()
+			# (a trough: a floor and two sides, running down from the mill's wall to over the bin)
+			var run := Vector3(0, sin(CHUTE_TILT), 0) + toward * cos(CHUTE_TILT)
+			for part: Array in [[-0.08, 0.08, -0.02, 0.02], [-0.1, -0.07, -0.02, 0.07], [0.07, 0.1, -0.02, 0.07]]:
+				var board := ModelKit.box(root, Vector3(part[0], part[2], -CHUTE_LONG / 2.0), Vector3(part[1], part[3],
+					CHUTE_LONG / 2.0), boards)
+				board.rotation = Vector3(-CHUTE_TILT, atan2(toward.x, toward.z), 0)
+				board.position = at + Vector3(0, CHUTE_HIGH, 0) + run * CHUTE_LONG / 2.0 + board.basis * Vector3(
+					(float(part[0]) + float(part[1])) / 2.0, (float(part[2]) + float(part[3])) / 2.0, 0)
+			if moving:
+				DecorMotion.spray(root, at + Vector3(0, CHUTE_HIGH, 0), GRAIN_FALL)
 		"press":
 			# A wine press: a slatted tub on a stone bed, a screw up its middle, and the bar that turns it while
 			# the building works.
@@ -431,7 +451,7 @@ static func _oven(ctx: Dictionary, f: Dictionary) -> void:
 
 
 ## A round tower for a body (a windmill; `"shape": "tower"` in data/building_models.json): a stone foot, walls
-## that taper under a band of trim, and a bell-shaped cap that flares at its eaves. With `lower` (a height) it
+## that taper under a band of trim, and a pointed dome for a cap. With `lower` (a height) it
 ## has two storeys: a broad lower one under a pent roof, and a slimmer upper one. Each storey has a window.
 ## Leaves the tower's bounds in ctx as lo, hi and top (tower_top is its radius there, hubs where its "sails"
 ## features hang), and returns the flat-fronted case its door stands in, as [lo, hi]: a door cannot hang on a
@@ -446,7 +466,7 @@ static func tower(ctx: Dictionary) -> Array:
 	var trim := ModelKit.paint(Color.html(str(s.get("trim", "#f3eee2"))))
 	var r: Dictionary = s["roof"]
 	var roof_col := Color.html(str(r.get("color", "#8e3b2c")))
-	var roof_mat := ModelKit.surface(roof_col, str(r.get("style", "shingles")), 0.0)
+	var roof_mat := ModelKit.paint(roof_col)
 	var over := float(r.get("overhang", 0.14))
 	var wall := ModelKit.surface(ctx["wall"], str(body.get("walls", "plaster")))
 	var foot := BuildingModel.PLINTH * 1.5
@@ -476,22 +496,29 @@ static func tower(ctx: Dictionary) -> Array:
 			ModelKit.glass())
 		windows.append({"at": at + Vector3(0.04, 0, 0), "size": size})
 	ctx["window_at"] = windows
-	# The cap, bell-shaped: a shallow skirt that flares out over the walls, a steep neck, a rounder shoulder up
-	# to the tip, and a ball on it.
+	# The cap: a smooth dome a little taller than it is wide, over a dark eave, with a ball on its tip.
 	var rise := float(r.get("pitch", 1.5)) * r1
-	var rings := [r1 + over, r1 * CAP_NECK, r1 * CAP_SHOULDER, 0.02]
-	var heights := [0.0, rise * CAP_SKIRT, rise * CAP_SHOULDER_AT, rise]
-	for k in 3:
-		ModelKit.cylinder(root, c + Vector3(0, bh + heights[k], 0), rings[k], heights[k + 1] - heights[k], roof_mat,
-			rings[k + 1], TOWER_SIDES)
-	ModelKit.ball(root, c + Vector3(0, bh + rise + 0.03, 0), 0.05, trim)
+	ModelKit.cylinder(root, c + Vector3(0, bh, 0), r1 + over + 0.02, CAP_EAVE, ModelKit.paint(roof_col.darkened(0.25)),
+		-1.0, CAP_SIDES)
+	var dome := MeshInstance3D.new()
+	var round := SphereMesh.new()
+	round.is_hemisphere = true
+	round.radius = r1 + over
+	round.height = rise
+	round.radial_segments = CAP_SIDES
+	round.rings = CAP_SIDES / 2
+	dome.mesh = round
+	dome.position = c + Vector3(0, bh + CAP_EAVE, 0)
+	dome.material_override = ModelKit.paint(roof_col)
+	root.add_child(dome)
+	ModelKit.ball(root, c + Vector3(0, bh + CAP_EAVE + rise + 0.03, 0), 0.05, trim)
 	ctx["lo"] = Vector3(c.x - r0, 0, c.z - r0)
 	ctx["hi"] = Vector3(c.x + r0, bh, c.z + r0)
-	ctx["top"] = bh + rise + 0.08
+	ctx["top"] = bh + CAP_EAVE + rise + 0.08
 	ctx["tower_top"] = r1
 	# Where sails can hang (the "sails" feature): how far from the middle and how high, on the top storey and on
 	# the lower one.
-	ctx["hubs"] = {"top": Vector2(r1 + over + 0.03, bh + rise * CAP_SKIRT * 0.25),
+	ctx["hubs"] = {"top": Vector2(r1 + over + 0.03, bh + CAP_EAVE + rise * 0.16),
 		"lower": Vector2(r0 * LOWER_TAPER + over + 0.06, lower + 0.05)}
 	# The door's case: a stone porch standing out of the foot of the tower, under a slab the roof's colour.
 	var door: Dictionary = s.get("door", {})
