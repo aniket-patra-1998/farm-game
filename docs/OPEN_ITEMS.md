@@ -211,5 +211,8 @@ and two silos at level 5.
   pilot and lost the small clutter (tufts, lanterns, strap hinges) with everything else, but not a new shape.
 - A building under construction is drawn as a square frame even when it will be a round tower.
 - The sails, the star and the steam have only been checked in still pictures, not on a phone.
+- A crafting building shows three states: idle, working (the mill's sails turn, the bakery smokes, the spa
+  steams) and full, when every slot holds something finished (the mill's silos run over; crates of goods stand
+  by the others' doors). The Winery has nothing that moves while it works yet.
 - Animals' walking still looks unconnected to the ground (not started).
 

@@ -451,7 +451,7 @@ func _key(o: Dictionary) -> String:
 		o.get("flip", false), site, false,
 		_mask(o),
 		str(o.get("broken", false)) + shows_of(o) + "|%d|%s|%s" % [int(o.get("fed", 0)),
-			false, _at_work(o)]]   # (a bloom's withering is its shader's: no new model)
+			false, str(_at_work(o)) + str(_is_full(o))]]   # (a bloom's withering is its shader's: no new model)
 
 
 
@@ -515,6 +515,15 @@ func _at_work(o: Dictionary) -> bool:
 	if not Game.crafting.is_crafting(o):
 		return true
 	return Game.crafting.crafts_done(o) < (o.get("slots", []) as Array).size()
+
+
+## Whether a crafting building is full: every one of its slots holds something finished, so nothing more can be
+## made until it is collected. (Its model shows it: a mill's silos run over.)
+func _is_full(o: Dictionary) -> bool:
+	if not Game.crafting.is_crafting(o):
+		return false
+	var held := (o.get("slots", []) as Array).size()
+	return held > 0 and held >= Game.crafting.slot_count(o) and Game.crafting.crafts_done(o) >= held
 
 
 ## Whether `o` is drawn from its file (AssetRegistry): only the kinds whose whole pipeline the file path keeps
@@ -721,12 +730,13 @@ static func _decor_built(id: String, look: int, shows: String) -> Node3D:
 	return built
 
 
-## A building's look at `level`, at work or not, broken or not.
-static func building_look(id: String, level: int, working: bool, broken: bool) -> Node3D:
+## A building's look at `level`, at work or not, broken or not, full or not (a crafting building whose every
+## slot holds something finished).
+static func building_look(id: String, level: int, working: bool, broken: bool, full := false) -> Node3D:
 	var it := Game.item_data(id)
 	var fp := Game.footprint(id)
-	return Instancer.copy_of(Instancer.key_of(["building", id, level, working, broken]),
-		func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, working, broken)))
+	return Instancer.copy_of(Instancer.key_of(["building", id, level, working, broken, full]),
+		func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, working, broken, full)))
 
 
 ## Every look a farm may show that is worth having ready before it is asked for (CI keeps them in the game,
@@ -752,6 +762,8 @@ static func make_every_look() -> int:
 				for level in range(1, maxi(Game.max_level(id), 1) + 1):
 					for working: bool in [false, true]:
 						looks.append(building_look(id, level, working, false))
+					if kind == "crafting":
+						looks.append(building_look(id, level, false, false, true))
 				if kind == "barn":
 					looks.append(building_look(id, 1, false, true))
 		for n in looks:
@@ -828,7 +840,8 @@ func _build(o: Dictionary) -> Node3D:
 				if Game.under_construction(o):
 					node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 				else:
-					node = building_look(str(o["id"]), Game.level_of(o), _at_work(o), bool(o.get("broken", false)))
+					node = building_look(str(o["id"]), Game.level_of(o), _at_work(o), bool(o.get("broken", false)),
+						_is_full(o))
 					if BuildingFill.shows(o):
 						node.add_child(BuildingFill.create(o, node))
 	var dressing: Node3D = null if not batch.is_empty() else Dressing.make(Game.kind_of(o), fp, int(o["uid"]))

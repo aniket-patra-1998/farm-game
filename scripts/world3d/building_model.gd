@@ -206,7 +206,10 @@ static func yard_spot(f: Dictionary, fw: float, fd: float) -> Vector2:
 
 ## The whole building at its size, under a new node. `fp` is the footprint in tiles (columns, rows).
 ## `active` is whether it is at work (a bakery with something in the oven): only then does its chimney smoke.
-static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, broken := false) -> Node3D:
+## `full` is whether a crafting building's every slot holds something finished: a mill's silos run over, and
+## goods stand in crates by the others' doors.
+static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, broken := false,
+		full := false) -> Node3D:
 	var root := Node3D.new()
 	var s := spec(str(it.get("id", "")), level)
 	var fw := float(fp.x)
@@ -223,7 +226,7 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 			lift = float(f.get("h", 0.2))
 	var wall_col := Color.html(str(it.get("color", "#c0392b")))
 	var ctx := {"root": root, "fw": fw, "fd": fd, "centre": centre, "bw": bw, "bd": bd, "bh": bh, "lift": lift,
-		"wall": wall_col, "spec": s, "it": it, "active": active}
+		"wall": wall_col, "spec": s, "it": it, "active": active, "full": full}
 	# Yards go down first (they're on the ground, under everything).
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "yard":
@@ -238,7 +241,9 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 		else:
 			_body(ctx)
 	for f: Dictionary in s.get("features", []):
-		if f.get("type") != "yard":
+		# (a feature can be for one state only: `"when": "full"` or `"working"`)
+		var when := str(f.get("when", ""))
+		if f.get("type") != "yard" and (when == "" or (when == "full" and full) or (when == "working" and active)):
 			_feature(ctx, f)
 	ModelKit.roof_trim = ModelKit.RAKE_COLOUR
 	if broken and ctx.has("lo"):
@@ -909,7 +914,11 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 					check.position = base + Vector3(sin(a) * (r - 0.002), h * 0.78 + row * 0.07 + 0.035,
 						cos(a) * (r - 0.002))
 					check.rotation.y = a
-			ModelKit.ball(root, base + Vector3(0, h, 0), r, ModelKit.paint(Color("#b9c0c4"), 0.6), Vector3(1, 0.6, 1))
+			if bool(ctx.get("full", false)):
+				BuildingDress.overflow(root, base, r, h)
+			else:
+				ModelKit.ball(root, base + Vector3(0, h, 0), r, ModelKit.paint(Color("#b9c0c4"), 0.6),
+					Vector3(1, 0.6, 1))
 		"loft_door":
 			var y := float(ctx.get("hi", c).y) + 0.12
 			var x := (lo.x + hi.x) / 2.0

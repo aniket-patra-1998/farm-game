@@ -118,6 +118,39 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 	_done(g)
 
 
+func test_384_a_mill_shows_its_work_and_when_it_is_full() -> void:
+	# The Feed Mill is a tower windmill. Its sails turn only while it works; one is broken off at level 1; maxed it
+	# has two sets; and when every slot holds something finished its silos run over.
+	var g := _farm()
+	var it := g.item_data("feed_mill")
+	var fp := Vector2i(3, 3)
+	var idle := BuildingModel.build(it, fp, 5, false)
+	var busy := BuildingModel.build(it, fp, 5, true)
+	var full := BuildingModel.build(it, fp, 5, false, false, true)
+	_check(_shaded(busy, DecorMotion.ORBIT_SHADER) > _shaded(idle, DecorMotion.ORBIT_SHADER),
+		"a working mill's sails turn, an idle mill's stand still")
+	_eq(_shaded(idle, DecorMotion.SPRAY_SHADER), 0, "nothing spills from a mill that is not full")
+	_eq(_shaded(full, DecorMotion.SPRAY_SHADER), 2, "grain runs over both silos of a full maxed mill")
+	var first := BuildingModel.build(it, fp, 1, false)
+	var second := BuildingModel.build(it, fp, 2, false)
+	_check(_count_vertices(first) < _count_vertices(second), "the level 1 mill has a sail broken off")
+	_check(_bounds(idle).size.y > _bounds(first).size.y * 1.3, "the maxed mill stands well over the first one")
+	var heaped := BuildingModel.build(it, fp, 1, false, false, true)
+	_check(_count_meshes(heaped) > _count_meshes(first), "with no silo, a full mill heaps its grain on the ground")
+	for n: Node3D in [idle, busy, full, first, second, heaped]:
+		n.free()
+	_done(g)
+
+
+func _shaded(node: Node, shader: String) -> int:
+	var n := 0
+	for mi in _meshes_in(node):
+		var mat := mi.material_override as ShaderMaterial
+		if mat != null and mat.shader != null and mat.shader.resource_path == shader:
+			n += 1
+	return n
+
+
 func _count_meshes(node: Node) -> int:
 	var n := 1 if node is MeshInstance3D else 0
 	for c in node.get_children():

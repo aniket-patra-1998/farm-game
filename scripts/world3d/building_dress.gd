@@ -23,9 +23,13 @@ const SHADE_STRENGTH := 0.5   # ..and is this dark at its middle
 const SHADE_LIFT := 0.014     # it lies this far above the ground (over a yard's floor)
 const GOLDEN := 2.39996
 ## Every feature this dressing builds (`feature`); BuildingModel builds the rest.
-const FEATURES: Array[String] = ["sacks", "crates", "cask", "oven", "steam", "emblem", "crown", "hay_rack",
+const FEATURES: Array[String] = ["sacks", "crates", "cask", "oven", "steam", "emblem", "crown", "heap", "hay_rack",
 	"milk_cans", "perch", "feeder", "bench", "woodpile"]
 const GOLD := Color("#f2c14e")
+const GRAIN := Color("#e8b93c")
+## Grain running over the rim of a full silo and down its side.
+const SPILL := {"streams": 6, "per_stream": 5, "life": 0.9, "rise": 0.04, "gravity": 2.4, "reach": 0.05, "size": 0.9,
+	"colour": GRAIN}
 const GRAPE := Color("#6a3a8f")
 const STAR_R := 0.24          # a maxed building's star: its radius..
 const STAR_WAIST := 0.45      # ..how far in its inner points are..
@@ -221,6 +225,12 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				sides.append([points[(k + 1) % 10], points[k], Vector3(0, 0, -STAR_THICK)])
 			ModelKit.faces(star, sides, Vector3.ZERO, gold)
 			DecorMotion.orbit(root, tip + Vector3(0, 0.16 + STAR_R, 0), star, {"speed": 0.9, "radius": 0.0})
+		"heap":
+			# A mound of loose grain on the ground (a full mill with no silo to hold it).
+			var hr := float(f.get("r", 0.28))
+			ModelKit.cylinder(root, at, hr, hr * 0.7, ModelKit.paint(GRAIN), 0.03, 10)
+			ModelKit.cylinder(root, at + Vector3(hr * 0.9, 0, hr * 0.3), hr * 0.55, hr * 0.38, ModelKit.paint(
+				GRAIN.darkened(0.08)), 0.02, 8)
 		"steam":
 			# Steam off warm water (a spa's pool), while the building works.
 			if bool(ctx.get("active", true)):
@@ -465,3 +475,17 @@ static func sails(root: Node3D, hub: Vector3, out: Vector3, reach: float, turnin
 		wheel.rotation.y = 0.5
 		root.add_child(holder)
 	holder.rotation = lay
+
+
+## A full silo running over: its lid is off, grain is heaped out of its top, runs down the side the camera sees
+## and lies in a mound at its foot. `base` is the middle of its foot, `r` its radius and `h` its height.
+static func overflow(root: Node3D, base: Vector3, r: float, h: float) -> void:
+	var grain := ModelKit.paint(GRAIN)
+	var out := Vector3(1, 0, 1).normalized()
+	ModelKit.cylinder(root, base + Vector3(0, h, 0), r + 0.04, r * 1.2, grain, 0.03, 10)
+	var run := ModelKit.box(root, Vector3(-0.05, 0, 0), Vector3(0.05, h * 0.55, 0.016), ModelKit.paint(GRAIN.darkened(
+		0.08)), false)
+	run.position = base + out * (r - 0.004) + Vector3(0, h * 0.47, 0)
+	run.rotation.y = atan2(out.x, out.z)
+	ModelKit.cylinder(root, base + out * (r + 0.1), 0.17, 0.1, grain, 0.03, 8)
+	DecorMotion.spray(root, base + out * (r + 0.03) + Vector3(0, h + 0.02, 0), SPILL)
