@@ -3,8 +3,9 @@ extends RefCounted
 ## A Bloom in 3D, each kind its own flower: a rose is a cup of layered petals, a tulip an egg of six, a daisy a
 ## ring of white rays round a yellow button, a sunflower a dark disc in two rows of rays, a lily six long petals
 ## curling back round its stamens, an iris three standards up and three falls down. A Single Bloom is one tall
-## flower on its leafy stem with a smaller one beside it; a Full Bloom a bunch of seven that fills its tile. Each kind has its own leaves too
-## (a tulip's straps, a sunflower's hearts, an iris's swords). Built from the catalog's colour and accent.
+## flower on its leafy stem with a smaller one beside it; a Full Bloom a bunch of seven that fills its tile.
+## Each kind has its own leaves too (a tulip's straps, a sunflower's hearts, an iris's swords). Built from the
+## catalog's colour and accent.
 ##
 ## One model holds a bloom's whole life: its heads are built open, and the bloom's shader (bloom3d) shows each
 ## one as a closed green bud that opens at its turn in the cycle, and wilts the whole plant little by little
