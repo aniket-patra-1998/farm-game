@@ -35,7 +35,7 @@ const STEMS_SINGLE := 2                   # flowers in a Single Bloom: its own, 
 const FULL_SPREAD := 0.1                  # how far from the middle a Full Bloom's outer stems stand, in tiles
 const FULL_LEAN := 0.16                   # and how far they lean outward, in radians (they bend outward too)
 const FULL_TALL := 1.25                   # a Full Bloom's stems against a Single's: a tall bunch, not a wide one..
-const FULL_HEAD := 0.75                   # ..of heads this much of a Single's, so seven stand inside one tile
+const FULL_HEAD := 0.86                   # ..of heads this much of a Single's, so seven stand inside one tile
 const FULL_LEAF := 0.7                    # and its outer stems' leaves, against a Single's
 const SIDE_OUT := 0.1                     # a Single Bloom's second stem stands this far from the main one..
 const SIDE_LEAN := 0.55                   # ..leaning out this much (radians), to one side as the camera sees it..
@@ -52,7 +52,7 @@ const CREASE := 0.9                       # a petal's midrib, against the petal 
 # Each kind's measures for a bloom of size 1, in tiles: its head's radius, its stem's height and thickness, and
 # how far its face tilts from straight up (radians). Heads are big: a bloom is its flower.
 const FORMS := {
-	"rose": {"head": 0.2, "height": 0.5, "stem": 0.02, "tilt": 0.45},
+	"rose": {"head": 0.225, "height": 0.5, "stem": 0.02, "tilt": 0.45},
 	"tulip": {"head": 0.13, "height": 0.48, "stem": 0.022, "tilt": 0.1},
 	"daisy": {"head": 0.21, "height": 0.46, "stem": 0.016, "tilt": 0.65},
 	"sunflower": {"head": 0.27, "height": 0.62, "stem": 0.03, "tilt": 0.85},
@@ -101,7 +101,7 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, f
 		var flower := Node3D.new()
 		root.add_child(flower)
 		if full:
-			h *= FULL_TALL * (1.1 if k == 0 else rng.randf_range(0.7, 0.98))
+			h *= FULL_TALL * (1.1 if k == 0 else rng.randf_range(0.78, 1.0))
 			flower.position = out * FULL_SPREAD * size * rng.randf_range(0.8, 1.2)
 			flower.rotation = Vector3(out.z, 0, -out.x) * FULL_LEAN * rng.randf_range(0.6, 1.2)   # (like a bunch)
 			var bend := (out * rng.randf_range(0.06, 0.16) + _aside(rng) * 0.05) * h
@@ -135,9 +135,9 @@ static func _stem(kind: String, flower: Node3D, h: float, bend: Vector3, size: f
 	_tube(flower, h, bend, float(form["stem"]) * size, 3 if light else 4)
 	if leafy > 0.0:
 		_leaves(kind, flower, h, bend, size * leaf_size, rng, leafy)
-	var face := (TOWARDS + out * 0.7).normalized().rotated(Vector3.UP, rng.randf_range(-0.45, 0.45))
-	var tilt := float(form["tilt"]) * rng.randf_range(0.8, 1.15)
-	var up := (Vector3.UP * cos(tilt) + face * sin(tilt) + _along(h, bend, 1.0) * 0.4).normalized()
+	var face := (TOWARDS + out * 0.7).normalized().rotated(Vector3.UP, rng.randf_range(-0.3, 0.3))
+	var tilt := float(form["tilt"]) * rng.randf_range(0.9, 1.15)
+	var up := (Vector3.UP * cos(tilt) + face * sin(tilt) + _along(h, bend, 1.0) * 0.15).normalized()
 	var head := Node3D.new()
 	head.transform = Transform3D(_basis_up(up, rng.randf() * TAU), _on(h, bend, 1.0))
 	flower.add_child(head)
