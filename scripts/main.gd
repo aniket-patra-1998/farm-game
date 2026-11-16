@@ -102,6 +102,9 @@ func _ready() -> void:
 	hud.fit_view = _fit_camera
 	hud.next_ready = go_to_next_ready
 	hud.go_to = go_to_kind
+	ItemSearch.show_on_farm = func(id: String) -> void:   # (search's Show on farm)
+		hud.close_panels()
+		go_to_kind(FarmGrid.ITEM_SPOT + id)
 	_idle_after_msec = int(Balance.f("feel.idle_view_seconds") * 1000.0)
 	hud.tool_selected.connect(grid.set_tool)
 	hud.place_requested.connect(grid.start_placing)

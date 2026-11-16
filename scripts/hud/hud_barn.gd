@@ -116,9 +116,11 @@ func add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 	kinds.assign(first.keys())
 	var face := func(id: String) -> Dictionary:
 		return {"name": Game.name_of(id), "line": tr("TIMES_N") % count[id], "badge": ["", tr("PLACE_2")]}
-	content.add_child(CardList.make(kinds, face, func(id: String) -> void:
+	var stored := CardList.make(kinds, face, func(id: String) -> void:
 		hud.close_panels()
-		hud.place_stored_requested.emit(int(first[id])), hud.get_viewport().get_visible_rect().size.x))
+		hud.place_stored_requested.emit(int(first[id])), hud.get_viewport().get_visible_rect().size.x)
+	stored.search_menu = "barn"
+	content.add_child(stored)
 
 
 ## A bloom's card: when it's ready, whether it has withered (and regrowing it with Flower Food), and for a

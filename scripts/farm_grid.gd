@@ -16,6 +16,7 @@ signal plants_popped(index: int, crop_id: String)  # a plot was harvested: its p
 signal collected(uid: int)                         # a building or animal was collected from
 
 
+const ITEM_SPOT := "item:"   # not-ui (spots_of: the things of one id)
 const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
 const TILE_W := 128.0
 const TILE_H := 64.0
@@ -668,6 +669,10 @@ func spots_of(kind: String) -> Array[Dictionary]:
 				is_it = Game.feeds.enabled() and Game.feeds.is_hungry(o)
 			"stray":
 				is_it = o.get("stray", false)
+			_:   # ("item:<id>": the things of one id, and the homes they live in: search's Show on farm)
+				var id := kind.trim_prefix(ITEM_SPOT)
+				is_it = kind.begins_with(ITEM_SPOT) and (str(o["id"]) == id
+					or (o.get("inside", {}) as Dictionary).has(id))
 		if is_it:
 			var fp := Game.footprint(o["id"])
 			var box := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)

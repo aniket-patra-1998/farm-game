@@ -14,6 +14,7 @@ const BUILDING_TABS := [["animal", "ANIMAL_BUILDINGS"], ["storage", "STORAGE_BUI
 var hud: FarmHud
 var _shelves := {}    # kind -> the ids for sale on that shelf, worked out once at load (the catalog doesn't change)
 var _sections := {}   # building tab -> its ids
+var _shelf_names := {}   # id -> the shelf it is on (a search result says it)
 
 
 func _init(owner: FarmHud) -> void:
@@ -89,6 +90,39 @@ func _single(content: VBoxContainer) -> VBoxContainer:
 	return holder
 
 
+## A card found by the Market's search: its own face (a seed's or the Market's), saying which shelf it is on.
+func search_face(id: String) -> Dictionary:
+	var face: Dictionary = hud.seeds.seed_face(id) if Game.crops.has(id) else card_face(id)
+	if str(face.get("line", "")) == "":
+		face["line"] = _shelf_names.get(id, "")
+	return face
+
+
+## Everything for sale, every shelf (seeds first), in shelf order (what the Market's search looks among).
+func all_for_sale() -> Array[String]:
+	var out: Array[String] = hud.seeds.ids().duplicate()
+	var naming := _shelf_names.is_empty()
+	for id in out:
+		_shelf_names[id] = tr("SEED_LIST")
+	for shelf: Array in SHELVES:
+		var ids := _shelf_ids(str(shelf[0]))
+		out.append_array(ids)
+		if naming:
+			for id in ids:
+				_shelf_names[id] = tr(str(shelf[1]))
+	return out
+
+
+## The ids on shelf `kind` (the Buildings shelf's sections one after another).
+func _shelf_ids(kind: String) -> Array[String]:
+	if kind != "building":
+		return shelf_items(kind)
+	var out: Array[String] = []
+	for section: Array in BUILDING_TABS:
+		out.append_array(building_section(str(section[0])))
+	return out
+
+
 ## The items of one kind for sale, in catalog order (buildings have their own sections: building_section).
 func shelf_items(kind: String) -> Array[String]:
 	return _shelves.get(kind, [] as Array[String])
@@ -106,6 +140,18 @@ static func _for_sale(id: String) -> bool:
 func _add_list(content: VBoxContainer, ids: Array[String], tell: Callable) -> CardList:
 	var list := CardList.make(ids, card_face, func(id: String) -> void: tap(id, tell),
 		hud.get_viewport().get_visible_rect().size.x)
+	# Search: the first list of a shelf searches the whole Market (every shelf), the others leave it to that one.
+	var first := content.find_children("*", "CardList", false, false).is_empty()   # not-ui (a class)
+	list.search_menu = "market" if first else ""
+	if first:   # (seeds too, and every result says its shelf)
+		list.search_pool = all_for_sale()
+		list.search_face_of = search_face
+		list.search_on_tap = func(id: String) -> void:
+			if Game.crops.has(id):
+				if Game.is_unlocked(id):
+					hud.choose_seed(id)
+			else:
+				tap(id, tell)
 	content.add_child(list)
 	return list
 

@@ -22,12 +22,18 @@ func build_seeds(content: VBoxContainer) -> void:
 	var list := CardList.make(_ids, seed_face, func(id: String) -> void:
 		if Game.is_unlocked(id):
 			hud.choose_seed(id), hud.get_viewport().get_visible_rect().size.x)
+	list.search_menu = "seeds"
 	content.add_child(list)
 	BookPanel.set_live(content, list.refresh)
 
 
 ## One crop's card face, as FarmVille's seed shelf showed it: its picture, its mastery stars, its name, how long
 ## it grows and what it sells for, and its seed price (free while pollinated seeds last); tapping picks it.
+## The crops in this release, in order (what the Seeds shelf shows; the Market's search looks among them too).
+func ids() -> Array[String]:
+	return _ids
+
+
 func seed_face(id: String) -> Dictionary:
 	var crop: Dictionary = Game.crops[id]
 	var locked := not Game.is_unlocked(id)

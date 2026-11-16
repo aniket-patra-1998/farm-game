@@ -649,7 +649,7 @@ func test_373_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 ## reads only the faces on screen.
 func test_374_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 	const ITEMS := 5000
-	const MOST_CARDS := 80       # cards that may exist at once, whatever the count
+	const MOST_CARDS := 90       # cards that may exist at once, whatever the count (a screen and a spare row each way)
 	const OPEN_MS := 20.0        # budgets on a desktop CI runner (a phone is a few times slower); about 2 ms now
 	const SCROLL_MS := 20.0
 	const REFRESH_MS := 10.0
@@ -695,7 +695,7 @@ func test_374_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 		list._lay_out()
 	var scroll_ms := (Time.get_ticks_usec() - started) / 1000.0
 	_check(scroll_ms < SCROLL_MS, "scrolling the whole list is within budget (%.1f ms)" % scroll_ms)
-	_check(list.get_child_count() <= MOST_CARDS, "and the cards are reused, not made again")
+	_check(list.get_child_count() <= MOST_CARDS, "and the cards are reused, not made again (%d)" % list.get_child_count())
 	var last: CardFace = list.shown()[0]
 	_check(int(last.id.trim_prefix("fake_")) > ITEMS / 2, "the cards show the items scrolled to")
 	asked[0] = 0

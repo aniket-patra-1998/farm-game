@@ -100,6 +100,7 @@ var _settle: Tween
 
 func _init(owner: FarmHud) -> void:
 	hud = owner
+	add_to_group(&"keyboard_aware")   # (a search field in it asks it to go tall: SearchBar)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	add_theme_stylebox_override("panel", UiKit.paper_box(MARGIN))
@@ -368,6 +369,12 @@ func show_page(key: String) -> void:
 
 
 ## Dragged up for it: tall, if it has more to show.
+## A search field in the sheet took the keyboard: the sheet goes tall, so the field stays above it.
+func keyboard_up(_field: Control) -> void:
+	if visible and is_ancestor_of(_field):
+		make_tall()
+
+
 func make_tall() -> void:
 	if _can_be_tall() and not tall:
 		_set_tall(true)

@@ -98,11 +98,13 @@ func build_make(content: VBoxContainer) -> void:
 	var about := _strip(content)
 	show_recipe(about, uid, o)
 	content.add_child(BookPanel.heading(tr("RECIPES")))
-	content.add_child(CardList.make(ids, func(id: String) -> Dictionary: return recipe_face(o, id),
+	var recipes := CardList.make(ids, func(id: String) -> Dictionary: return recipe_face(o, id),
 		func(id: String) -> void:
 			_recipe = id
 			show_recipe(about, uid, o)
-			hud.scroll_panels_to_top(), _view_width()))
+			hud.scroll_panels_to_top(), _view_width())
+	recipes.search_menu = "recipes"
+	content.add_child(recipes)
 	var cost := Game.crafting.star_cost(o)
 	if cost.is_empty():
 		return
@@ -284,10 +286,12 @@ func build_goods(content: VBoxContainer) -> void:
 		_good = ids[0]
 	var about := _strip(content)
 	show_good(about)
-	content.add_child(CardList.make(ids, good_face, func(id: String) -> void:
+	var goods := CardList.make(ids, good_face, func(id: String) -> void:
 		_good = id
 		show_good(about)
-		hud.scroll_panels_to_top(), _view_width()))
+		hud.scroll_panels_to_top(), _view_width())
+	goods.search_menu = "goods"
+	content.add_child(goods)
 	var all := hud.panel_button(tr("SELL_ALL_GOODS") % UiTheme.number(worth))
 	all.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	all.pressed.connect(func() -> void:
@@ -346,10 +350,12 @@ func build_pantry(content: VBoxContainer) -> void:
 		content.add_child(BookPanel.text(tr("PANTRY_FULL"), 17, UiTheme.color("note")))
 	var ids: Array[String] = []
 	ids.assign(Game.crafting.market_stall().keys())
-	content.add_child(CardList.make(ids, stall_face, func(id: String) -> void:
+	var stall := CardList.make(ids, stall_face, func(id: String) -> void:
 		if not Game.crafting.buy_bushel(id):
 			hud.show_message(tr("MARKET_CANT_BUY"))
-		hud.refresh_panels(), _view_width()))
+		hud.refresh_panels(), _view_width())
+	stall.search_menu = "pantry"
+	content.add_child(stall)
 
 
 ## A Farmers Market card (CardFace): the ingredient, how many are left today and what one costs (red when it is
