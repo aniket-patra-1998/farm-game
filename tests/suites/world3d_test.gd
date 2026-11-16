@@ -1130,7 +1130,7 @@ func test_207_a_growing_plant_carries_its_stage_and_the_shader_does_the_growing(
 	var i := Game.index_of(1, 1)
 	Game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
 	var seeds := Crops3D.stage_of(i)
-	_eq(seeds, ["seeds", 0.0, 0.0], "just planted: seeds, nothing growing yet")
+	_eq(seeds, ["seeds", 0.0, 0.0, 0.0, false], "just planted: seeds, nothing growing yet")
 	var planted := float(Game.plots[i]["planted_at"])
 	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.SPROUT_FROM + 0.01))
 	var sprout := Crops3D.stage_of(i)
@@ -1140,8 +1140,32 @@ func test_207_a_growing_plant_carries_its_stage_and_the_shader_does_the_growing(
 	_check(is_equal_approx(float(sprout[2]), sprouting), "and lasts until it is young")
 	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.YOUNG_FROM + 0.01))
 	var young := Crops3D.stage_of(i)
+	_eq(str(young[0]), "young", "then a young plant")
 	var finishes := float(young[1]) + float(young[2])
-	_check(is_equal_approx(finishes, planted + grow), "a young plant finishes growing exactly when ripe")
+	_check(is_equal_approx(finishes, planted + Crops3D.RIPEN_FROM * grow), "which grows until the ripe plant takes over")
+	_check(float(young[3]) >= Crops3D.FROM_LEAST and float(young[3]) <= Crops3D.FROM_MOST,
+		"starting at the height the sprout ended at (%.2f of its own)" % float(young[3]))
+	# The ripe plant is drawn from before it is ripe: growing still, its fruit colouring up, so nothing snaps.
+	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.RIPEN_FROM + 0.01))
+	var ripening := Crops3D.stage_of(i)
+	_eq(str(ripening[0]), "ripe", "then the ripe plant, before it is ripe")
+	_check(bool(ripening[4]), "its fruit ripening")
+	_check(is_equal_approx(float(ripening[1]) + float(ripening[2]), planted + grow), "done growing exactly when ripe")
+	_check(float(ripening[3]) >= Crops3D.FROM_LEAST and float(ripening[3]) <= Crops3D.FROM_MOST,
+		"starting at the height the young plant ended at (%.2f of its own)" % float(ripening[3]))
+	_eq(Game.field.phase(i), GameState.Phase.GROWING, "(the crop itself is still growing)")
+	# Ripe: the same model stays, and it carries when it will start to wilt, and for how long, before it withers.
+	Game.debug_time_offset = saved_offset + int(grow) + 5
+	var ripe := Crops3D.stage_of(i)
+	_eq(str(ripe[0]), "ripe", "ripe: the same plant, no change of model")
+	_check(not bool(ripe[4]) and float(ripe[2]) < 0.0, "now carrying its wilting (a negative stretch)")
+	var window := float(Game.field.window_of(Game.plots[i], Game.crops[crop_id]))
+	_check(is_equal_approx(float(ripe[1]) - float(ripe[2]), planted + grow + window), "which ends as it withers")
+	_check(is_equal_approx(-float(ripe[2]), Crops3D.WILT_SHARE * window), "and takes the last part of its ripe time")
+	var carried := Crops3D.pack(60.0, 120.0, true, 0.5, 0.4, true)
+	_check(is_equal_approx(carried.b, 1.4) and is_equal_approx(Crops3D.mastered_in(carried), 0.5) and carried.a >= 1.0,
+		"richness, start size, mastery and ripening share two numbers and come back whole (%s)" % carried)
+	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.YOUNG_FROM + 0.01))
 	# Within a stage the picture does not change, so nothing is laid out again as time passes.
 	var crops := Crops3D.new()
 	var before: Array = crops.call("_look_of", i)
@@ -1780,6 +1804,8 @@ func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
 	Game.reset_game()
 	var crop: String = Game.crop_order[0]
 	var grow := int(Game.crops[crop]["grow_seconds"])
+	for k in Game.plots.size():
+		Game.plots[k] = {"state": "grass"}   # (only this plot grows: a new farm's own crops have their own due times)
 	var i := Game.index_of(1, 1)
 	Game.plots[i] = {"state": "planted", "crop": crop, "planted_at": Game.now()}
 	var crops := Crops3D.new()
@@ -1792,6 +1818,9 @@ func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
 	crops._on_clock()
 	_check(crops._plot_look[i] != seeds, "at the due time the sprouts show")
 	_eq(crops.due(), int(Game.plots[i]["planted_at"]) + ceili(Crops3D.YOUNG_FROM * grow), "next: young plants")
+	Game.debug_time_offset += ceili((Crops3D.YOUNG_FROM - Crops3D.SPROUT_FROM) * grow)
+	crops._on_clock()
+	_eq(crops.due(), int(Game.plots[i]["planted_at"]) + ceili(Crops3D.RIPEN_FROM * grow), "then: the ripe plant, ripening")
 	Game.debug_time_offset += grow
 	crops._on_clock()
 	_eq(Crops3D.stage_of(i)[0], "ripe", "(ripe now)")

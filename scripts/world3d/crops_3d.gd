@@ -16,13 +16,19 @@ const ONE_SPOT := [Vector2.ZERO]
 const GROW_CHECK := 1.0     # seconds between checks of the clock against the next plot due to change look
 const SPROUT_FROM := 0.2    # of the growing time: the seeds have sprouted
 const YOUNG_FROM := 0.45    # and the sprouts are young plants
-const SIZE_FROM := 0.55     # the size a plant starts a growing stage at, of its full size
+const RIPEN_FROM := 0.75    # and the plant is the ripe one, still growing, its fruit green and colouring up
+const SPROUT_START := 0.3   # the size a sprout comes up at, of its full size
+const WILT_SHARE := 0.4     # the last part of a ripe crop's time over which it wilts before it withers
+const FROM_LEAST := 0.3     # a stage never starts smaller than this of its full size..
+const FROM_MOST := 0.95     # ..nor bigger (it must still have growing to do)
 const POP_HEIGHT := 0.5    # how high harvested plants spring before vanishing
 const POP_TIME := 0.42
 const FERTILIZED_SIZE := 1.18     # fertilised plants grow bigger (the shader applies it)
 const VARY_LEAN := 0.16    # radians a plant may lean
 const PLANT_SCALE := 3.1    # plants are modelled at about a fifth of a tile; on the farm they fill their bed
 const PLANT_FLOATS := 20    # a plant in the MultiMesh buffer: transform (12), colour (4), data (4)
+
+static var _start := {}   # form|stage -> the size that stage starts at (start_size), measured once
 
 var wind := 0.6: set = _set_wind
 var _due := -1   # the soonest time (Game.now) any plot's plants change look on their own; -1: none will
@@ -41,7 +47,6 @@ var _size := -1        # the farm size last drawn (a smaller one drops the plant
 func _ready() -> void:
 	_material = ShaderMaterial.new()
 	_material.shader = CROP_SHADER
-	_material.set_shader_parameter("size_from", SIZE_FROM)
 	_material.set_shader_parameter("rich_size", FERTILIZED_SIZE)
 	_base = floorf(_now())
 	var timer := Timer.new()
@@ -68,7 +73,7 @@ static func next_change(i: int) -> int:
 	if Game.field.phase(i) == GameState.Phase.GROWING:
 		var plot: Dictionary = Game.plots[i]
 		var grow := float(Game.crops[plot["crop"]]["grow_seconds"])
-		for share: float in [SPROUT_FROM, YOUNG_FROM]:
+		for share: float in [SPROUT_FROM, YOUNG_FROM, RIPEN_FROM]:
 			var t := int(plot["planted_at"]) + ceili(share * grow)
 			if t > Game.now():
 				return t
@@ -99,8 +104,30 @@ static func _now() -> float:
 ## What an instance carries for the shader: when its growing stage began and how long that stage lasts (0: fully
 ## grown), in minutes on the farm clock (small numbers: the compatibility renderer keeps instance data as 16-bit
 ## floats), and whether it is fertilised. Its crop's colour is in the material (`material_for`).
-static func pack(started: float, length: float, rich: bool, mastered := 0.0) -> Color:
-	return Color(started / 60.0, length / 60.0, 1.0 if rich else 0.0, mastered)
+## A plant's instance data for the shader (crop3d): when its stretch began and how long it lasts (seconds on the
+## farm clock; a negative length is wilting), whether it is fertilised, how far its crop is mastered (0..1), the
+## size it grows from (of full size, under 1) and whether its fruit is ripening (taking its colour as it grows).
+static func pack(started: float, length: float, rich: bool, mastered := 0.0, from := 0.0, ripening := false) -> Color:
+	return Color(started / 60.0, length / 60.0, (1.0 if rich else 0.0) + clampf(from, 0.0, FROM_MOST),
+		(1.0 if ripening else 0.0) + clampf(mastered, 0.0, 1.0) * 0.9)
+
+
+## How far mastered the crop of a packed plant is (0..1), read back from `pack`'s data.
+static func mastered_in(data: Color) -> float:
+	return fposmod(data.a, 1.0) / 0.9
+
+
+## The size a stage of a crop's form starts at, of its full size: the height the stage before it ended at, so
+## the plant never jumps as its model changes (a young plant comes up as tall as the sprout it grew from, the
+## ripe plant as tall as the young one). Measured once per form from the models themselves.
+static func start_size(form: String, stage: String) -> float:
+	var key := form + "|" + stage
+	if not _start.has(key):
+		var before := "sprout" if stage == "young" else "young"
+		var was := CropModels.mesh(form, before).get_aabb().size.y
+		var now := CropModels.mesh(form, stage).get_aabb().size.y
+		_start[key] = clampf(was / now if now > 0.0 else 1.0, FROM_LEAST, FROM_MOST)
+	return _start[key]
 
 
 ## How far a crop is mastered, 0..1 (its stars of all it can earn): its plants stand fuller and take a golden
@@ -171,25 +198,38 @@ static func _basis_for(count: int, turn: float, seed_value: int) -> Basis:
 	return Basis(Vector3.UP, floorf(turn / (PI / 2.0)) * PI / 2.0).scaled(Vector3.ONE * PLANT_SCALE)
 
 
-## The stage a plot's plants are drawn at, and the stretch of time (unix seconds) the stage's growing spans:
-## [stage, from, length], with a length of 0 for a stage that is done growing.
+## What a plot's plants are drawn as, and the stretch of time they are changing over:
+## [model, from, length, start size, ripening]. `model` is the stage whose model is drawn ("seeds", "sprout",
+## "young", "ripe", "withered"; "" none). `from` and `length` (unix seconds) are the stretch: a positive length is
+## growing (from `start size` of full size to full), a negative one is a ripe crop wilting towards withering,
+## 0 neither. `ripening`: the ripe plant drawn while still growing, its fruit colouring up. So a crop's life is
+## one smooth change: seeds, a sprout coming up, a young plant taking over at the sprout's height, the ripe plant
+## taking over at the young one's with green fruit that colours as it ripens, then (left too long) a slow wilt.
 static func stage_of(i: int) -> Array:
+	var plot: Dictionary = Game.plots[i]
 	match Game.field.phase(i):
 		GameState.Phase.RIPE:
-			return ["ripe", 0.0, 0.0]
+			var crop: Dictionary = Game.crops[plot["crop"]]
+			var window := float(Game.field.window_of(plot, crop))
+			var wither_at := float(plot["planted_at"]) + float(crop["grow_seconds"]) + window
+			return ["ripe", wither_at - WILT_SHARE * window, -WILT_SHARE * window, 0.0, false]
 		GameState.Phase.WITHERED:
-			return ["withered", 0.0, 0.0]
+			return ["withered", 0.0, 0.0, 0.0, false]
 		GameState.Phase.GROWING:
-			var plot: Dictionary = Game.plots[i]
 			var planted := float(plot["planted_at"])
-			var grow := float(Game.crops[plot["crop"]]["grow_seconds"])
+			var crop_id := str(plot["crop"])
+			var grow := float(Game.crops[crop_id]["grow_seconds"])
 			var g := Game.field.growth(i)
 			if g < SPROUT_FROM:
-				return ["seeds", 0.0, 0.0]
+				return ["seeds", 0.0, 0.0, 0.0, false]
 			if g < YOUNG_FROM:
-				return ["sprout", planted + SPROUT_FROM * grow, (YOUNG_FROM - SPROUT_FROM) * grow]
-			return ["young", planted + YOUNG_FROM * grow, (1.0 - YOUNG_FROM) * grow]
-	return ["", 0.0, 0.0]
+				return ["sprout", planted + SPROUT_FROM * grow, (YOUNG_FROM - SPROUT_FROM) * grow, SPROUT_START, false]
+			var form := CropForms.form_of(crop_id, str(Game.crops[crop_id].get("shape", "berry")))
+			if g < RIPEN_FROM:
+				return ["young", planted + YOUNG_FROM * grow, (RIPEN_FROM - YOUNG_FROM) * grow,
+					start_size(form, "young"), false]
+			return ["ripe", planted + RIPEN_FROM * grow, (1.0 - RIPEN_FROM) * grow, start_size(form, "ripe"), true]
+	return ["", 0.0, 0.0, 0.0, false]
 
 
 ## Brings the plants of plots `indices` up to date (all of them when empty): a plot whose look (form, stage,
@@ -261,7 +301,8 @@ func _look_of(i: int) -> Array:
 	var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
 	if not _mastered.has(crop_id):   # (asked once per crop per laying, not once per plot)
 		_mastered[crop_id] = mastered(crop_id)
-	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i), _mastered[crop_id])]
+	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i), _mastered[crop_id],
+		float(st[3]), bool(st[4]))]
 
 
 ## Plot `i`'s plants as MultiMesh buffer data: for each, its transform (3 rows of 4), its colour, its data.

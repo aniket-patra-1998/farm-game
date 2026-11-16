@@ -113,8 +113,9 @@ func test_363_progress_and_life_show_on_the_farm() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	_eq(Crops3D.mastered("strawberries"), 0.0, "an unmastered crop is plain")
-	_eq(Crops3D.pack(0.0, 0.0, false, 0.5).a, 0.5, "a plant carries how far its crop is mastered")
-	_eq(Crops3D.pack(0.0, 0.0, false).a, 0.0, "and nothing when it is not")
+	_check(is_equal_approx(Crops3D.mastered_in(Crops3D.pack(0.0, 0.0, false, 0.5)), 0.5),
+		"a plant carries how far its crop is mastered")
+	_eq(Crops3D.mastered_in(Crops3D.pack(0.0, 0.0, false)), 0.0, "and nothing when it is not")
 	_eq(Game.farmhouse_stage(), 1, "a new farm's house is the first")
 	var house := {"uid": 1, "id": "farmhouse", "row": 0, "col": 0}
 	var first := Objects3D.shows_of(house)
