@@ -14,7 +14,6 @@ signal place_stored_requested(index: int)
 const REST_FADE := 1.4     # seconds the interface takes to fade away over an idle farm..
 const WAKE_FADE := 0.2     # ..and to come back at a touch
 const AWAY_WAIT := 0.5     # seconds between looks for a panel to close before the away card shows
-const GROUP_PAGE := 30     # rows of a long grouped list (the barn) built at a time
 
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")

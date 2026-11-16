@@ -41,8 +41,12 @@ func build_crafting(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.card_frame(top))
 	# Recipes
 	content.add_child(BookPanel.text(tr("RECIPES"), 26, BookPanel.SUN))
+	var recipes: Array[String] = []
 	for r in Game.crafting.recipes_of(o["id"]):
-		content.add_child(recipe_row(uid, o, r))
+		recipes.append(r.id)
+	content.add_child(CardList.rows(recipes, func() -> Control: return MarginContainer.new(),
+		func(row: Control, rid: String) -> void:
+			CardList.refill(row, recipe_row(uid, o, Game.catalog.get_def(rid) as RecipeDef))))
 	# Goods (a feed building makes none: its rich feed goes to the Barn)
 	var makes_goods := false
 	for r in Game.crafting.recipes_of(o["id"]):
@@ -139,7 +143,7 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 	var inner := VBoxContainer.new()
 	var unlocked := Game.crafting.recipe_unlocked(o, r.id)
 	var stars := Game.crafting.recipe_stars(r.id)
-	inner.add_child(BookPanel.text(r.name + (tr("MASTERY_OF") % stars if stars > 0 else ""), 20))
+	inner.add_child(BookPanel.text(r.name + (tr("MASTERY_OF") % stars if stars > 0 else ""), 20, BookPanel.CREAM))
 	var need: Array = []
 	for c: String in r.inputs():
 		var have := int(Game.crafting.bushels.get(c, 0))
@@ -173,7 +177,7 @@ func recipe_row(uid: int, o: Dictionary, r: RecipeDef) -> Control:
 				hud._book.refresh())
 			row.add_child(buy)
 	inner.add_child(row)
-	return BookPanel.card_frame(inner)
+	return inner   # (flat on the panel: the list draws a thin line between recipes)
 
 
 ## A crafting building's size and skill in one row: its stars (filled up to its size; one star, one crafting

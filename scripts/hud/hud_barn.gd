@@ -113,8 +113,8 @@ func add_gift_box(content: VBoxContainer, cap: int) -> void:
 	add_grouped(content, cap, Game.storage.stored.size())
 
 
-## One row per kind among the stored things from index `from` up to `to` (a full barn is hundreds, the gift box
-## thousands: a row each would be a wall of nodes), with how many there are; Place takes the first of that kind.
+## One card per kind among the stored things from index `from` up to `to` (as FarmVille's storage: the picture,
+## how many, tap to place the first of that kind), on a CardList (a full barn is hundreds, the gift box thousands).
 func add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 	var first := {}
 	var count := {}
@@ -123,37 +123,13 @@ func add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 		if not first.has(id):
 			first[id] = k
 		count[id] = int(count.get(id, 0)) + 1
-	add_group_rows(content, first.keys(), first, count, 0)
-
-
-## Group rows a page at a time: a store with hundreds of different kinds would otherwise build hundreds of
-## rows at once. The button at the end adds the next page.
-func add_group_rows(content: VBoxContainer, ids: Array, first: Dictionary, count: Dictionary, from: int) -> void:
-	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
-	content.add_child(grid)
-	add_group_cards(grid, content, ids, first, count, from)
-
-
-## One card per kind, a page at a time (as FarmVille's storage: the picture, how many, tap to place one).
-func add_group_cards(grid: GridContainer, content: VBoxContainer, ids: Array, first: Dictionary, count: Dictionary,
-		from: int) -> void:
-	var to := mini(from + FarmHud.GROUP_PAGE, ids.size())
-	for i in range(from, to):
-		var id: String = ids[i]
-		var card := UiKit.item_card(ItemIcons.of(id), str(Game.item_data(id)["name"]), tr("TIMES_N") % count[id],
-			UiKit.price_badge("", tr("PLACE_2")), false)
-		var index: int = first[id]
-		card.pressed.connect(func() -> void:
-			hud._book.close_panel()
-			hud.place_stored_requested.emit(index))
-		grid.add_child(card)
-	if to < ids.size():
-		var more := hud._panel_button(tr("SHOW_MORE_KINDS") % (ids.size() - to))
-		more.pressed.connect(func() -> void:
-			more.queue_free()
-			add_group_cards(grid, content, ids, first, count, to))
-		content.add_child(more)
-		content.move_child(more, grid.get_index() + 1)   # (right under the grid it extends)
+	var kinds: Array[String] = []
+	kinds.assign(first.keys())
+	var face := func(id: String) -> Dictionary:
+		return {"name": Game.name_of(id), "line": tr("TIMES_N") % count[id], "badge": ["", tr("PLACE_2")]}
+	content.add_child(CardList.make(kinds, face, func(id: String) -> void:
+		hud._book.close_panel()
+		hud.place_stored_requested.emit(int(first[id])), hud.get_viewport().get_visible_rect().size.x))
 
 
 ## A bloom's card: when it's ready, whether it has withered (and regrowing it with Flower Food), and for a

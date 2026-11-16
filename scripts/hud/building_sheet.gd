@@ -461,12 +461,16 @@ class Ring:
 			queue_redraw()
 
 	func _draw() -> void:
-		var r := minf(size.x, size.y) / 2.0 - 4.0
-		draw_arc(size / 2.0, r, 0.0, TAU, 40, TRACK, 6.0, true)
-		if share > 0.0:
-			draw_arc(size / 2.0, r, -PI / 2.0, -PI / 2.0 + TAU * share, 40, ACCENT, 6.0, true)
-		if words != "":
-			var font := get_theme_default_font()
+		paint(self, Rect2(Vector2.ZERO, size), share, words, get_theme_default_font())
+
+	## Draws a ring `share` full with `words` in the middle on `on`, inside `rect` (a CardFace draws one itself).
+	static func paint(on: CanvasItem, rect: Rect2, filled: float, middle: String, font: Font) -> void:
+		var r := minf(rect.size.x, rect.size.y) / 2.0 - 4.0
+		var c := rect.get_center()
+		on.draw_arc(c, r, 0.0, TAU, 40, TRACK, 6.0, true)
+		if filled > 0.0:
+			on.draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * filled, 40, ACCENT, 6.0, true)
+		if middle != "":
 			var px := UiTheme.min_font()
-			var w := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
-			draw_string(font, size / 2.0 + Vector2(-w / 2.0, px * 0.35), words, HORIZONTAL_ALIGNMENT_LEFT, -1, px, INK)
+			var w := font.get_string_size(middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
+			on.draw_string(font, c + Vector2(-w / 2.0, px * 0.35), middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px, INK)

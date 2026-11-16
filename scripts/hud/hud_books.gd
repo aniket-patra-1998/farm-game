@@ -19,50 +19,37 @@ func _init(owner: FarmHud) -> void:
 func build_collections(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.info(
 		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), tr("ITEMS_TURN_UP_WHILE_YOU_FARM_INFO"), 20, BookPanel.CREAM))
-	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
+	var ids: Array[String] = []
 	for coll in Game.collectibles.collections:
-		grid.add_child(set_card(coll))
-	content.add_child(grid)
+		ids.append(str(coll["id"]))
+	var list := CardList.make(ids, set_face, func(coll_id: String) -> void:
+		hud._book.open_panel(str(_set_of(coll_id)["name"]), func(c: VBoxContainer) -> void: build_collection(c, coll_id)),
+		hud.get_viewport().get_visible_rect().size.x)
+	content.add_child(list)
+	BookPanel.set_live(content, list.refresh)
 
 
-## One set's card in the grid: a ring (items held of the set's items) with the count in it, and its name.
-func set_card(coll: Dictionary) -> Button:
+## One set's card face: a ring (items held of the set's items) with the count in it, its name, and Ready once it
+## can be traded in.
+func set_face(coll_id: String) -> Dictionary:
+	var coll := _set_of(coll_id)
 	var items: Array = coll["items"]
 	var held := 0
 	for item: Dictionary in items:
 		held += 1 if int(Game.collectibles.owned.get(item["id"], 0)) > 0 else 0
-	var card := Button.new()
-	card.focus_mode = Control.FOCUS_NONE
-	card.custom_minimum_size = Vector2(UiTheme.size("card_width"), UiTheme.size("card_width"))
-	card.add_theme_stylebox_override("normal", UiKit.card_box())
-	card.add_theme_stylebox_override("hover", UiKit.card_box())
-	card.add_theme_stylebox_override("pressed", UiKit.card_box())
-	var col := VBoxContainer.new()
-	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(col)
-	var ring := BuildingSheet.Ring.new()
-	ring.custom_minimum_size = Vector2.ONE * UiTheme.size("card_width") * RING_SHARE
-	ring.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ring.share = float(held) / maxf(items.size(), 1.0)
-	ring.words = "%d/%d" % [held, items.size()]   # not-ui
-	col.add_child(ring)
-	var name := BookPanel.text(str(coll["name"]), 18)
-	name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	col.add_child(name)
-	if Game.collectibles.can_trade_in(coll):
-		var ready := BookPanel.text(tr("SLOT_READY"), 16, BookPanel.GOOD)
-		ready.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		ready.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		col.add_child(ready)
-	var coll_id := str(coll["id"])
-	card.pressed.connect(func() -> void:
-		hud._book.open_panel(str(coll["name"]), func(c: VBoxContainer) -> void: build_collection(c, coll_id)))
-	UiFx.press_bounce(card)
-	return card
+	return {
+		"name": str(coll["name"]),
+		"ring": [float(held) / maxf(items.size(), 1.0), "%d/%d" % [held, items.size()]],   # not-ui
+		"line": tr("SLOT_READY") if Game.collectibles.can_trade_in(coll) else "",
+		"line_colour": BookPanel.GOOD,
+	}
+
+
+func _set_of(coll_id: String) -> Dictionary:
+	for coll in Game.collectibles.collections:
+		if str(coll["id"]) == coll_id:
+			return coll
+	return {}
 
 
 ## One set opened: its items with how many you hold of how many a trade needs, Trade in once it can be, and its
@@ -139,36 +126,35 @@ func prize_text(prize: Array) -> String:
 ## Each ribbon as one card: the medal of the tier being worked toward (or the last one won), its name, and a bar
 ## for how far along it is ("12 / 25"). No legend of the four tiers and no intro: the medal's colour is the tier.
 func build_ribbons(content: VBoxContainer) -> void:
+	var ids: Array[String] = []
+	for r in Game.ribbons.ribbon_data.get("ribbons", []):
+		ids.append(str(r["id"]))
+	var list := CardList.make(ids, ribbon_face, func(_id: String) -> void: pass,
+		hud.get_viewport().get_visible_rect().size.x)
+	content.add_child(list)
+	BookPanel.set_live(content, list.refresh)
+
+
+## One ribbon's card face: the medal of the tier being worked toward (or the last one won, faded while still to
+## win), its name, and a bar for how far along it is ("12 / 25"); none before it is started.
+func ribbon_face(ribbon_id: String) -> Dictionary:
 	var data: Dictionary = Game.ribbons.ribbon_data
 	var tier_names: Array = data.get("tiers", [])
 	for r in data.get("ribbons", []):
+		if str(r["id"]) != ribbon_id:
+			continue
 		var earned := int(Game.ribbons.ribbon_tiers.get(r["id"], 0))
 		var thresholds: Array = r["thresholds"]
 		var value := Game.ribbons.stat(r["stat"])
 		var done := earned >= thresholds.size()
 		var shown := mini(earned, tier_names.size() - 1) if done else earned
-
-		var inner := BookPanel.card()
-		inner.add_theme_constant_override("separation", 8)
-		var head := HBoxContainer.new()
-		head.add_theme_constant_override("separation", 10)
-		var medal := UiIcon.make("ribbon", UiTheme.size("ribbon_icon"), UiTheme.color("ribbon_tier_%d" % shown))
-		if not done:
-			medal.modulate = Color(1, 1, 1, 0.55)   # (still to win)
-		head.add_child(medal)
-		var title := BookPanel.text(r["name"], 26)
-		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		head.add_child(title)
-		inner.add_child(head)
+		var face := {"name": str(r["name"]), "icon": ["ribbon", UiTheme.color("ribbon_tier_%d" % shown), not done],
+			"long": "%s: %s" % [r["name"], r["what"]]}
 		if done:
-			inner.add_child(BookPanel.text(tr("COMPLETE") % [value, r["what"]], 18))
+			face["bar"] = [1.0, tr("RIBBON_DONE")]
+			face["long"] = tr("COMPLETE") % [value, r["what"]]
 		elif value > 0:   # (not started: the medal and its name only, no "0 / 25")
 			var goal := int(thresholds[earned])
-			var bar := ProgressBar.new()
-			bar.show_percentage = false
-			bar.custom_minimum_size.y = 18
-			bar.max_value = goal
-			bar.value = mini(value, goal)
-			inner.add_child(bar)
-			inner.add_child(BookPanel.text("%d / %d" % [mini(value, goal), goal], 18))   # not-ui
-		content.add_child(BookPanel.card_frame(inner))
+			face["bar"] = [float(mini(value, goal)) / goal, "%d / %d" % [mini(value, goal), goal]]   # not-ui
+		return face
+	return {}
