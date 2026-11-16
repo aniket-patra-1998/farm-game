@@ -18,6 +18,9 @@ func _ready() -> void:
 		ids.append(id)
 	for id: String in GameState.part_ids:
 		ids.append(id)
+	for kind: String in ["recipe", "ingredient"]:   # crafted goods and produce (GoodsModel)
+		for d in Game.catalog.of_kind(kind):
+			ids.append(d.id)
 	for kind in UiModels.KINDS:
 		ids.append(ItemIcons.UI + kind)
 	for id in ids:

@@ -563,7 +563,7 @@
         },
         "shape": {
           "type": "string",
-          "doc": "How the good is pictured (GoodsModel): loaf, muffin, cake, pie, cookies, tart, pizza, bottle, jug, glass, perfume, lotion, candle, sachet, soap, cloth, sack."
+          "doc": "How the good is pictured (GoodsModel): loaf, muffin, cake, pie, cookies, tart, pizza, bottle, jug, glass, perfume, lotion, candle, sachet, soap, cloth, pillow, sack."
         },
         "craft_seconds": {
           "type": "int",
@@ -666,7 +666,7 @@
         },
         "shape": {
           "type": "string",
-          "doc": "How it is pictured (GoodsModel): pail, eggs, wool, feather, truffle, jar, fruit, nut, berries, banana, flower."
+          "doc": "How it is pictured (GoodsModel): pail, milk_bottle, eggs, wool, feather, truffle, jar, fruit, nut, berries, banana, flower."
         }
       },
       "lifecycle": {

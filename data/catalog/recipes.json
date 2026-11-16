@@ -411,7 +411,7 @@
           "id": "feather_pillow",
           "name": "Feather Pillow",
           "star": 3,
-          "shape": "cloth",
+          "shape": "pillow",
           "inputs": {
             "feathers": 6,
             "cotton": 3,

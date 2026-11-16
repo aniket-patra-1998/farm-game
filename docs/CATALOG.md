@@ -218,7 +218,7 @@ Something a crafting building makes from bushels and produce.
 | `inputs` | map<int> |  | yes | What it uses: crop id (a bushel) or ingredient id (data/catalog/ingredients.json) -> how many. |
 | `product` | string |  |  | What kind of good (bread, wine, perfume). |
 | `feed` | map |  |  | Our own touch (Feed Mill): makes rich feed for the Barn instead of a good. {type: feed id from data/feeds.json, units: how many}. |
-| `shape` | string |  |  | How the good is pictured (GoodsModel): loaf, muffin, cake, pie, cookies, tart, pizza, bottle, jug, glass, perfume, lotion, candle, sachet, soap, cloth, sack. |
+| `shape` | string |  |  | How the good is pictured (GoodsModel): loaf, muffin, cake, pie, cookies, tart, pizza, bottle, jug, glass, perfume, lotion, candle, sachet, soap, cloth, pillow, sack. |
 | `craft_seconds` | int |  |  | How long it takes, when not its star's usual time (balance crafting.craft_hours_by_star). |
 
 ### Young (extends Placeable)
@@ -252,7 +252,7 @@ Our own touch: something an animal, the beehive, a tree or a bloom gives for cra
 | `products` | list<string> |  |  | Animals that give it, by their `product` ("Milk"). |
 | `families` | list<string> |  |  | Trees or blooms that give it, by family ("apple", "rose"). |
 | `items` | list<string> |  |  | Things that give it, by id ("beehive"). |
-| `shape` | string |  |  | How it is pictured (GoodsModel): pail, eggs, wool, feather, truffle, jar, fruit, nut, berries, banana, flower. |
+| `shape` | string |  |  | How it is pictured (GoodsModel): pail, milk_bottle, eggs, wool, feather, truffle, jar, fruit, nut, berries, banana, flower. |
 
 ## Crops
 

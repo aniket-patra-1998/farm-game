@@ -241,3 +241,36 @@ func test_371_collecting_gives_produce_and_recipes_use_it() -> void:
 	_check(g.crafting.roll_produce({"id": "cow_shed", "uid": -5, "inside": {"cow": 40}}).is_empty(),
 		"no room for produce past the bushels' cap")
 	_done(g)
+
+
+func test_372_every_good_and_every_produce_has_its_own_picture() -> void:
+	var g := _farm()
+	var looks := {}
+	for kind: String in ["recipe", "ingredient"]:
+		for d in g.catalog.of_kind(kind):
+			var shape := (d as RecipeDef).shape() if d is RecipeDef else (d as IngredientDef).shape()
+			_check((GoodsModel.GOODS if d is RecipeDef else GoodsModel.PRODUCE).has(shape),
+				"%s: %s is a shape the pictures know" % [d.id, shape])
+			var model := GoodsModel.build(d.id)
+			_check(model != null, "%s has a model" % d.id)
+			if model == null:
+				continue
+			var points := 0
+			var colours := []
+			for part in model.find_children("*", "MeshInstance3D", true, false):
+				var mesh := (part as MeshInstance3D).mesh
+				for s in mesh.get_surface_count():
+					points += (mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			_check(points > 60, "%s is a thing, not a blob (%d points)" % [d.id, points])
+			if d is RecipeDef:
+				colours = GoodsModel.flavours(d as RecipeDef)
+				_eq(colours.size() >= 3, true, "%s takes its colours from what goes into it" % d.id)
+				looks["%s %s" % [shape, (colours[0] as Color).to_html(false)]] = true
+			model.free()
+	_check(looks.size() >= 40, "the goods are told apart by shape and colour (%d looks)" % looks.size())
+	_check(GoodsModel.build("wheat") == null and GoodsModel.build("nails") == null and GoodsModel.build("nope") == null,
+		"a crop, a building part or nothing is not a good")
+	var loaf := GoodsModel.flavours(g.catalog.get_def("pumpkin_bread") as RecipeDef)
+	_eq(loaf[0].to_html(false), GoodsModel.colour_of("pumpkins").to_html(false), "Pumpkin Bread is pumpkin coloured first")
+	_done(g)
+

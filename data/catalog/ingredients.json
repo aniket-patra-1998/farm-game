@@ -33,7 +33,7 @@
           "id": "goat_milk",
           "name": "Goat Milk",
           "value": 150,
-          "shape": "pail",
+          "shape": "milk_bottle",
           "color": "#f6efdc",
           "products": [
             "Goat Milk"
@@ -55,7 +55,7 @@
           "name": "Feathers",
           "value": 90,
           "shape": "feather",
-          "color": "#e9e4d8",
+          "color": "#f4f0e6",
           "products": [
             "Feathers"
           ]
@@ -102,7 +102,7 @@
           "name": "Plums",
           "value": 100,
           "shape": "fruit",
-          "color": "#7a3a8a",
+          "color": "#6447b3",
           "families": [
             "plum"
           ]
@@ -122,7 +122,7 @@
           "name": "Figs",
           "value": 120,
           "shape": "fruit",
-          "color": "#6a3f6f",
+          "color": "#8c4f7a",
           "families": [
             "fig"
           ]

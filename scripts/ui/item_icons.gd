@@ -297,8 +297,12 @@ static func _model(id: String) -> Node3D:
 		return art
 	var it := Game.item_data(id)
 	if it.is_empty():
-		# A crop: one ripe bed of it; a building part: the thing itself (null for anything unknown).
-		return Crops3D.picture_model(id) if Game.crops.has(id) else MaterialModel.build(id)
+		# A crop: one ripe bed of it; a crafted good or produce: the thing itself (GoodsModel); a building part
+		# likewise (null for anything unknown).
+		if Game.crops.has(id):
+			return Crops3D.picture_model(id)
+		var good := GoodsModel.build(id)
+		return good if good != null else MaterialModel.build(id)
 	if str(it.get("kind", "")) in ["building", "barn", "crafting"]:
 		var home := ModelKit.bake(BuildingModel.build(it, Game.footprint(id), 1))
 		_plant_picture(home, it, Game.footprint(id))

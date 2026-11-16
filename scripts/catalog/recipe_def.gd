@@ -13,6 +13,11 @@ func star() -> int:
 	return int(data.get("star", 1))
 
 
+## How the good is pictured (GoodsModel): a loaf when it doesn't say.
+func shape() -> String:
+	return str(data.get("shape", "loaf"))
+
+
 ## A feed recipe (Feed Mill, our own touch) makes rich feed for the Barn instead of a good: {"type", "units"}.
 func feed() -> Dictionary:
 	return data.get("feed", {})
