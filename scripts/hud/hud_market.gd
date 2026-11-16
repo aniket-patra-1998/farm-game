@@ -65,10 +65,10 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 			var ids := building_section(str(section[0]))
 			if ids.is_empty():
 				continue
-			content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.design("font_section")), BookPanel.SUN))
+			content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.design("font_section")), BookPanel.HEAD))
 			lists.append(_add_list(content, ids, tell))
 		# More land, after the buildings: it is a farm's biggest building job.
-		content.add_child(BookPanel.text(tr("LAND"), int(UiTheme.design("font_section")), BookPanel.SUN))
+		content.add_child(BookPanel.text(tr("LAND"), int(UiTheme.design("font_section")), BookPanel.HEAD))
 		singles.append([_single(content), land_card])
 	var update := func() -> void:
 		for list in lists:
@@ -127,10 +127,10 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(words)
-	words.add_child(BookPanel.text(str(it["name"]), 22, BookPanel.CREAM))
+	words.add_child(BookPanel.text(str(it["name"]), 22, BookPanel.SOFT))
 	if why != "":
-		words.add_child(BookPanel.text(why, 18, UiTheme.color("note_on_wood")))
-	words.add_child(BookPanel.text(detail_of(id, it), 17, BookPanel.CREAM))
+		words.add_child(BookPanel.text(why, 18, UiTheme.color("note")))
+	words.add_child(BookPanel.text(detail_of(id, it), 17, BookPanel.SOFT))
 	strip.visible = true
 	hud._book.scroll_to_top()
 

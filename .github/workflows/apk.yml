@@ -9,6 +9,7 @@ name: Debug APK
 on:
   push:
     branches: [main]
+    paths-ignore: ['docs/**', '**.md', 'tests/**']   # (nothing that changes the app)
   workflow_dispatch:
 
 permissions:

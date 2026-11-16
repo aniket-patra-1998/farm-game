@@ -1,0 +1,99 @@
+name: Screenshots
+
+# Draws every building and panel with a real (software) renderer, so drawing errors fail and the pictures can be
+# checked: download them from the run's "screenshots" artifact. About 7 minutes, so it runs apart from the
+# Tests (which the code review waits on): on pushes to main only, the newest push cancelling an older run (only
+# the latest pictures matter), docs-only pushes skipped, and on demand (Actions > Screenshots > Run workflow,
+# for a branch before its PR merges).
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GODOT_VERSION: 4.7.2
+    steps:
+      - uses: actions/checkout@v4
+
+      # Keep the Godot binary between runs, so each push doesn't download it again.
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p godot-bin
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          # -f makes HTTP errors count as failures, so the retries actually happen.
+          for attempt in 1 2 3 4 5; do
+            if curl -fsSL --retry 3 --retry-delay 5 -o godot.zip "$url" && unzip -tq godot.zip; then
+              break
+            fi
+            echo "Download attempt $attempt failed; retrying in 15 s"
+            rm -f godot.zip
+            sleep 15
+          done
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot
+          chmod +x godot-bin/godot
+
+      - name: Import project
+        # Builds Godot's class list so class_name scripts resolve when run headless.
+        # (The import itself may grumble about generated files; a script that doesn't compile is a failure.)
+        run: |
+          # The import's own exit code may be non-zero for harmless reasons, so it doesn't fail the step by
+          # itself; but a crash (killed by a signal: code 128 and up) or a script that won't load does.
+          set +e
+          ./godot-bin/godot --headless --path . --import > import.log 2>&1
+          code=$?
+          set -e
+          cat import.log
+          if [ "$code" -ge 128 ]; then
+            echo "The import crashed (exit code $code)"; exit 1
+          fi
+          if grep -E "Parse Error|Compile Error|Failed to load script" import.log; then
+            echo "A script didn't import"; exit 1
+          fi
+
+      # Draws every building with a real (software) renderer, so drawing errors fail the build
+      # and the pictures can be checked. Download them from the run's "screenshots" artifact.
+      - name: Render building screenshots
+        run: |
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
+          # (A software renderer draws the full farm at about a second a frame: 960x540 keeps this under ~10 minutes,
+          # and the timeout makes a stuck run fail by itself instead of using up the whole job.)
+          timeout 1000 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+            --rendering-driver opengl3 --resolution 960x540 --path . res://tests/shots.tscn 2>&1 | tee shots.log
+          if grep -E "SCRIPT ERROR|triangulat|Invalid polygon" shots.log; then
+            echo "Drawing errors found"; exit 1
+          fi
+          python3 tools/check_godot_log.py shots.log
+          ls ci_shots
+          timeout 120 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
+            --rendering-driver opengl3 --resolution 1280x720 --path . res://tools/style_preview.tscn 2>&1 | grep -E "STYLE|ERROR" || true
+          # Also printed into the log, for tools that can read logs but not artifacts.
+          for f in ci_shots/*.png; do echo "SHOT $(basename "$f") $(base64 -w0 "$f")"; done
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: ci_shots/

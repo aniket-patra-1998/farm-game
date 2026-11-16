@@ -1,8 +1,18 @@
 name: Tests
 
+# Runs on pushes to main and on pull requests (a branch is tested through its PR: open a draft PR for CI), not
+# on every branch push as well, which ran each PR twice. A newer push to a PR cancels its older run; main keeps
+# one run per push, since the code review follows each one. Docs-only changes skip it.
 on:
   push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**.md']
   pull_request:
+    paths-ignore: ['docs/**', '**.md']
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read   # tests only read the repository
@@ -83,29 +93,3 @@ jobs:
           grep -E "checks, 0 failed" tests.log || { echo "Tests didn't all pass"; exit 1; }
           # Any engine or script error (what the editor's Errors panel would show) fails the build too.
           python3 tools/check_godot_log.py tests.log
-
-      # Draws every building with a real (software) renderer, so drawing errors fail the build
-      # and the pictures can be checked. Download them from the run's "screenshots" artifact.
-      - name: Render building screenshots
-        run: |
-          sudo apt-get install -y -qq xvfb libgl1-mesa-dri > /dev/null
-          # (A software renderer draws the full farm at about a second a frame: 960x540 keeps this under ~10 minutes,
-          # and the timeout makes a stuck run fail by itself instead of using up the whole job.)
-          timeout 1000 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
-            --rendering-driver opengl3 --resolution 960x540 --path . res://tests/shots.tscn 2>&1 | tee shots.log
-          if grep -E "SCRIPT ERROR|triangulat|Invalid polygon" shots.log; then
-            echo "Drawing errors found"; exit 1
-          fi
-          python3 tools/check_godot_log.py shots.log
-          ls ci_shots
-          timeout 120 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-method gl_compatibility \
-            --rendering-driver opengl3 --resolution 1280x720 --path . res://tools/style_preview.tscn 2>&1 | grep -E "STYLE|ERROR" || true
-          # Also printed into the log, for tools that can read logs but not artifacts.
-          for f in ci_shots/*.png; do echo "SHOT $(basename "$f") $(base64 -w0 "$f")"; done
-
-      - name: Upload screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots
-          path: ci_shots/
