@@ -15,10 +15,8 @@ static var _data := {}
 static func of(id: String) -> String:
 	_load()
 	var files: Dictionary = _data.get("files", {})
-	var own := id
-	if Game.crops.has(id) and not Game.items.has(id):
-		own = AssetRegistry.CROP + CropForms.form_of(id, str((Game.crops[id] as Dictionary).get("shape", "berry")))
-	var look := str(files[own]) if files.has(own) else str(_data.get("built", ""))
+	# (a crop's picture is its harvest, built from the crop builders' code, not its exported field: CropForms.harvest)
+	var look := str(files[id]) if files.has(id) else str(_data.get("built", ""))
 	return look + "/" + str(_data.get("studio", ""))
 
 

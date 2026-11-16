@@ -357,14 +357,8 @@ func _draw_rendered() -> bool:
 	if not ItemIcons.is_made(id):
 		get_tree().create_timer(RENDER_RECHECK).timeout.connect(queue_redraw, CONNECT_ONE_SHOT)
 		return false
+	# (the picture carries its own outline and white edge: IconStyle's flat look, no shadow under it)
 	var rect := Rect2(_c - Vector2.ONE * _s / 2.0, Vector2.ONE * _s).grow(-_s * RENDER_INSET)
-	var w := maxf(1.0, _s * OUTLINE * 0.5)
-	draw_texture_rect(tex, Rect2(rect.position + Vector2(0, _s * SHADOW_DROP), rect.size), false,
-		UiTheme.color("icon_shadow"))
-	var ink := UiTheme.color("icon_outline")
-	for k in 8:
-		var a := TAU * k / 8.0
-		draw_texture_rect(tex, Rect2(rect.position + Vector2(cos(a), sin(a)) * w, rect.size), false, ink)
 	draw_texture_rect(tex, rect, false)
 	if struck:
 		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.16)

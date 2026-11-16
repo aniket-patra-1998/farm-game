@@ -5,6 +5,7 @@ extends RefCounted
 ## plot through MultiMeshes. Leaves are coloured in the mesh; produce is marked (vertex alpha 0) and
 ## takes each crop's own colour from its instance, so seventy crops need only fifty meshes.
 
+const HARVEST := "harvest"   # the stage a crop's picture is drawn at: its produce gathered (CropForms.harvest)
 const STAGES := ["seeds", "sprout", "young", "ripe", "withered"]
 const LEAF := Color("#4f9a36")
 const LEAF_DARK := Color("#2f6b24")
@@ -24,6 +25,7 @@ static var _files := {}   # form|stage -> its mesh from the form's file (null: i
 
 ## A crop form's mesh at `stage`: from its file (art/models/crops, AssetRegistry `crop:<form>`, made by
 ## tools/export_plants), else built here (`from_file` false: the export itself).
+
 static func mesh(shape: String, stage: String, from_file := true) -> ArrayMesh:
 	var key := shape + "|" + stage
 	if from_file:
@@ -37,6 +39,8 @@ static func mesh(shape: String, stage: String, from_file := true) -> ArrayMesh:
 				model.free()
 		if _files[key] != null:
 			return _files[key]
+	if not _cache.has(key) and stage == HARVEST:
+		_cache[key] = _build(shape, stage)   # (a picture's: the camera frames it, no plot to fit)
 	if not _cache.has(key):
 		var ripe := stage == "ripe"
 		var cap := CropForms.look("height", 0.0) * (1.0 if ripe else CropForms.look("young", 1.0))
@@ -163,6 +167,11 @@ static func _build(shape: String, stage: String) -> ArrayMesh:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(shape + stage)
 	match stage:
+		"harvest":
+			if CropForms.harvest(mb, shape, rng):
+				return mb.commit()
+			CropForms.build(mb, shape, rng, 1.0, true)   # (a form that isn't a plot: one ripe plant)
+			return mb.commit()
 		"seeds":
 			for k in 4:
 				var a := TAU * k / 4.0 + 0.4

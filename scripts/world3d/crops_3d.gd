@@ -144,29 +144,24 @@ static func mastered(crop_id: String) -> float:
 ## The material for a crop colour: the shared one with that colour set, made once.
 ## A crop as its picture shows it (ItemIcons, the seed shelf): one ripe bed of it, as the farm draws it.
 static func picture_model(id: String) -> Node3D:
+	# The crop's picture is its harvest (CropForms.harvest: a few pieces of its ripe produce gathered, no soil or
+	# leaf carpet): what you pick, not the patch it grows in.
 	var crop: Dictionary = Game.crops.get(id, {})
 	if crop.is_empty():
 		return null
 	var root := Node3D.new()
-	var bed := MeshInstance3D.new()
-	bed.mesh = Plots3D.bed_mesh()
-	bed.material_override = Plots3D.soil_material()
-	bed.position = Vector3(0.5, 0, 0.5)
-	root.add_child(bed)
 	var mat := ShaderMaterial.new()
 	mat.shader = CROP_SHADER
 	mat.set_shader_parameter("produce_colour", Color.html(str(crop.get("color", "#e2453c"))))
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
-	mm.mesh = CropModels.mesh(CropForms.form_of(id, str(crop.get("shape", "berry"))), "ripe")
-	var spots := spots_of(id)
-	mm.instance_count = spots.size()
-	for k in spots.size():
-		var spot: Vector2 = spots[k]
-		mm.set_instance_transform(k, Transform3D(_basis_for(spots.size(), float(k * 13 % 17) / 17.0 * TAU, k),
-			Vector3(0.5 + spot.x, Plots3D.HEIGHT, 0.5 + spot.y)))
-		mm.set_instance_custom_data(k, pack(0.0, 0.0, false))
+	mm.use_colors = true   # (as the field's: an unset instance colour is black, and every leaf would read as produce)
+	mm.mesh = CropModels.mesh(CropForms.form_of(id, str(crop.get("shape", "berry"))), CropModels.HARVEST, false)
+	mm.instance_count = 1
+	mm.set_instance_transform(0, Transform3D(Basis(), Vector3(0.5, 0.0, 0.5)))
+	mm.set_instance_color(0, Color.WHITE)
+	mm.set_instance_custom_data(0, pack(0.0, 0.0, false))
 	var plants := MultiMeshInstance3D.new()
 	plants.multimesh = mm
 	plants.material_override = mat
