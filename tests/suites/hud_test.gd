@@ -697,3 +697,103 @@ func test_362_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 	list.press("fake_1999")
 	_eq(tapped, ["fake_1999"], "a card's item can be pressed whether it is on screen or not")
 	scroll.free()
+
+
+## A home's sheet is exactly as tall as what it says and sits wholly on the screen at the bottom: its wrapped
+## lines were once measured before they had a width (a word a line), so it opened screen-tall with only its
+## buttons in view, the rest an empty box. It also shrinks back when it says less, comes back fitted after a stale
+## size, keeps inside a narrow screen, and the away card (the other free-floating card) shrinks the same way.
+func test_366_a_home_sheet_fits_what_it_says_and_stays_on_the_screen() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(20)
+	Game.tutorial_step = GameState.Tutorial.DONE
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var homes := 0
+	for id: String in ["chicken_coop", "dairy_farm", "horse_stable", "pig_pen", "goat_pen"]:
+		if not Game.items.has(id):
+			continue
+		var spot := Vector2i(-1, -1)
+		for r in Game.farm_size:
+			for c in Game.farm_size:
+				if spot.x < 0 and Game.can_place(id, r, c):
+					spot = Vector2i(r, c)
+		if spot.x < 0 or not Game.buy_and_place(id, spot.x, spot.y):
+			continue
+		var home := Game.object_at(Game.index_of(spot.x, spot.y))
+		_all_materials(Game, 10)
+		Game.land.add_materials(int(home["uid"]))
+		if not BuildingSheet.suits(home):
+			continue
+		homes += 1
+		hud.show_building(int(home["uid"]))
+		for f in 4:   # (the slide, and the frame its wrapped lines learn their width)
+			await get_tree().process_frame
+		await get_tree().create_timer(BuildingSheet.SLIDE + 0.05).timeout
+		_sheet_fits(hud.sheet, "%s's sheet" % id)
+	_check(homes >= 2, "several homes opened as sheets (%d)" % homes)
+	var sheet := hud.sheet
+	if sheet == null:
+		main.queue_free()
+		await get_tree().process_frame
+		return
+	# Says more, then less: it grows, then shrinks back, still at the bottom.
+	var note: Label = sheet.get("_note")
+	var before := sheet.size.y
+	note.text = "a\nb\nc\nd\ne"   # not-ui
+	note.visible = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(sheet.size.y > before, "five more lines: taller (%d > %d)" % [sheet.size.y, before])
+	_sheet_fits(sheet, "taller")
+	note.text = ""
+	note.visible = false
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(absf(sheet.size.y - before) < 1.0, "the lines gone: back to its size (%d, was %d)" % [sheet.size.y, before])
+	_sheet_fits(sheet, "shrunk back")
+	# A stale, screen-high size (the bug) is gone when it opens again.
+	var uid := int(sheet.get("_uid"))
+	sheet.close()
+	sheet.size = Vector2(sheet.size.x, sheet.get_parent_area_size().y * 3.0)
+	hud.show_building(uid)
+	await get_tree().create_timer(BuildingSheet.SLIDE + 0.05).timeout
+	_sheet_fits(sheet, "opened again after a stale size")
+	sheet.close()
+	for area: Vector2 in [Vector2(360, 780), Vector2(780, 360), Vector2(2560, 1440)]:
+		var w := BuildingSheet.width_for(area)
+		_check(w <= area.x - 2.0 * BuildingSheet.EDGE and w > 0.0, "a %s screen keeps it inside (%d)" % [area, w])
+	# The away card, the other free-floating card: fewer rows, smaller card.
+	Game.absence_items = [{"kind": "ripe", "count": 3}, {"kind": "ripe", "count": 4}, {"kind": "ripe", "count": 5}]
+	Game.absence_note = "head\none\ntwo\nthree"   # not-ui
+	Game.call("_show_absence")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var card: AwayCard = hud.get("_away")
+	var tall := card.size.y if card != null else 0.0
+	Game.absence_items = [{"kind": "ripe", "count": 1}]
+	Game.absence_note = "head"   # not-ui
+	Game.call("_show_absence")
+	for f in 3:
+		await get_tree().process_frame
+	if card != null:
+		_check(card.size.y < tall, "the away card shrinks with fewer rows (%d < %d)" % [card.size.y, tall])
+		_check(absf(card.size.y - card.get_combined_minimum_size().y) < 1.0, "and is just as big as they are")
+		card.close()
+	main.queue_free()
+	await get_tree().process_frame
+
+
+func _sheet_fits(sheet: BuildingSheet, what: String) -> void:
+	var area := sheet.get_parent_area_size()
+	_check(sheet.visible, "%s is up" % what)
+	_check(absf(sheet.size.y - sheet.get_combined_minimum_size().y) < 1.0,
+		"%s is as tall as what it says (%d, needs %d)" % [what, sheet.size.y, sheet.get_combined_minimum_size().y])
+	_check(sheet.size.y < area.y * 0.8, "%s is not screen-tall (%d of %d)" % [what, sheet.size.y, area.y])
+	_check(sheet.position.y >= 0.0 and absf(sheet.position.y + sheet.size.y - (area.y - BuildingSheet.EDGE)) < 1.0,
+		"%s sits wholly on the screen at the bottom (top %d)" % [what, sheet.position.y])
+	_check(sheet.position.x >= 0.0 and sheet.position.x + sheet.size.x <= area.x + 0.5, "%s is inside the width" % what)

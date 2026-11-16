@@ -50,6 +50,9 @@ var _pay: Control
 var _since := 0.0
 var _counting := false
 var _dirty := false   # the farm changed while the sheet was up: refill it this frame
+var _shown := 0.0     # how far it has slid up: 0 below the screen, 1 at rest
+var _slide: Tween
+var _area := Vector2.ZERO   # the screen it was placed on (a turned phone or resized window places it again)
 
 
 func _init(owner: FarmHud) -> void:
@@ -63,13 +66,6 @@ func _init(owner: FarmHud) -> void:
 	sb.shadow_color = Color(0, 0, 0, 0.28)
 	sb.shadow_size = 14
 	add_theme_stylebox_override("panel", sb)
-	anchor_left = 0.5
-	anchor_right = 0.5
-	anchor_top = 1.0
-	anchor_bottom = 1.0
-	grow_horizontal = Control.GROW_DIRECTION_BOTH
-	grow_vertical = Control.GROW_DIRECTION_BEGIN
-	offset_bottom = -EDGE
 	var gap := int(UiTheme.size("hud_gap"))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", gap)
@@ -83,6 +79,7 @@ func _init(owner: FarmHud) -> void:
 	column.add_child(_note)
 	column.add_child(_build_actions(gap))
 	Game.objects_changed.connect(_on_changed)
+	UiKit.keep_fitted(self, _place)   # (as tall as what it says now, and back at the bottom)
 
 
 ## Whether thing `o` opens in the sheet: a finished home (a building site, and a home for finds, keep their panel).
@@ -96,29 +93,52 @@ func open(uid: int) -> void:
 	_inside_key = ""
 	_sell.remove_meta(&"sure")
 	_sell.text = tr("TOOL_SELL")
-	custom_minimum_size.x = maxf(get_parent_area_size().x * WIDTH_SHARE, WIDTH_LEAST)
 	_refill()
 	if _uid < 0:
 		return
-	var shown := visible
-	visible = true
-	if shown:
+	if visible:
 		return   # (already up: another home tapped, it only changes what it says)
-	await get_tree().process_frame
-	var rest := get_parent_area_size().y - size.y - EDGE
-	position.y = get_parent_area_size().y
-	create_tween().tween_property(self, "position:y", rest, SLIDE).set_trans(Tween.TRANS_CUBIC).set_ease(
-		Tween.EASE_OUT)
+	visible = true
+	_shown = 0.0
+	_place()
+	# It slides by a share of the way, not to a point worked out now: it is sized by what it says, which settles
+	# a frame later (wrapped lines learn their width), and every refit puts it back on the same path.
+	_slide = create_tween()
+	_slide.tween_method(_slid, 0.0, 1.0, SLIDE).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
 func close() -> void:
+	if _slide != null and _slide.is_valid():
+		_slide.kill()
 	visible = false
 	_uid = -1
+
+
+## Its width: a share of the screen, never narrower than a comfortable sheet, never wider than the screen.
+static func width_for(area: Vector2) -> float:
+	return minf(maxf(area.x * WIDTH_SHARE, WIDTH_LEAST), area.x - 2.0 * EDGE)
+
+
+func _slid(share: float) -> void:
+	_shown = share
+	_place()
+
+
+## Puts the sheet at the bottom middle of the screen exactly as big as what it says now (`_shown` of the way up).
+func _place() -> void:
+	var area := get_parent_area_size()
+	_area = area
+	custom_minimum_size.x = width_for(area)
+	size = Vector2.ZERO   # (never smaller than its minimum: so exactly that)
+	var rest := area.y - size.y - EDGE
+	position = Vector2((area.x - size.x) / 2.0, lerpf(area.y, rest, _shown))
 
 
 func _process(delta: float) -> void:
 	if not visible:
 		return
+	if get_parent_area_size() != _area:
+		_place()
 	if _dirty:   # (however many changes in a frame: refilled once)
 		_dirty = false
 		_since = 0.0
@@ -311,9 +331,9 @@ func _refill() -> void:
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
 	_inside.visible = total > 0
-	var loose := Game.homes.loose_matching(o) if id != "beehive" else 0
-	_fill.visible = loose > 0   # (nothing to move in: no button, not a grey one)
-	_fill.text = HudBuildings.move_in_words(o, loose)
+	var room := Game.homes.room_for_loose(o) if id != "beehive" else 0
+	_fill.visible = room > 0   # (nothing that would move in, none loose or no room: no button, not a grey one)
+	_fill.text = HudBuildings.move_in_words(o, room)
 	_turn.visible = Game.buildings.can_rotate(o).ok()   # (what can never turn has no Turn)
 	if _sell.has_meta(&"sure") and not _counting and _sell.text == tr("TOOL_SELL"):
 		_sell.remove_meta(&"sure")
