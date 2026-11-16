@@ -65,9 +65,8 @@ func test_380_every_menu_reads_whole_on_every_screen() -> void:
 	await get_tree().process_frame
 
 
-## Every building, tapped, opens as the one sheet (never straight into an old panel): on the screen at the
-## bottom, as tall as what it says, with its big button saying what it does, and More (or the big button) opens
-## its full panel.
+## Every building, tapped, opens as the one sheet (never an old panel): on the screen at the bottom, as tall as
+## what it says, with something to do in it, and everything it does there: no other window.
 func test_369_every_building_opens_as_the_sheet() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
@@ -97,16 +96,19 @@ func test_369_every_building_opens_as_the_sheet() -> void:
 		# Something to do on it, each saying what: the big button (Collect, Make, Open...), Add N, or More (a
 		# store that never pays, the Garage or the Shed, has no Collect: what is inside, Add N and More).
 		var doing := 0
-		for b: Button in [sheet.get("_collect"), sheet.get("_fill"), sheet.get("_more")]:
+		for b: Button in [sheet.get("_collect"), sheet.get("_fill")]:
 			if b.visible:
 				doing += 1
 				_check(b.text.strip_edges() != "", "%s's sheet: a button with no words" % id)
+		for part: String in ["_tabs", "_extras", "_page_scroll"]:   # (its pages, its own extras)
+			doing += 1 if (sheet.get(part) as Control).visible else 0
 		_check(doing > 0, "%s's sheet has something to do" % id)
-		if BuildingSheet.kind_of(o) != BuildingSheet.Kind.HOME:
+		if BuildingSheet.kind_of(o) == BuildingSheet.Kind.BUILD:
 			_check((sheet.get("_collect") as Button).visible, "%s's sheet has its big button" % id)
 		hud.open_full_panel(int(o["uid"]))
-		_check(book.visible and not sheet.visible, "%s's More opens its full panel" % id)
-		book.close_panel()
+		await _settle()
+		_check(sheet.visible and not book.visible, "%s: everything is in its sheet, no other window" % id)
+		sheet.close()
 		Game.modal_open = false
 	_check(seen.size() >= 6, "many buildings tapped (%d)" % seen.size())
 	for k: BuildingSheet.Kind in [BuildingSheet.Kind.HOME, BuildingSheet.Kind.CRAFT, BuildingSheet.Kind.BARN]:
@@ -253,3 +255,111 @@ static func contrast(a: Color, b: Color) -> float:
 static func _luminance(c: Color) -> float:
 	var lin := func(v: float) -> float: return v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4)
 	return 0.2126 * float(lin.call(c.r)) + 0.7152 * float(lin.call(c.g)) + 0.0722 * float(lin.call(c.b))
+
+
+## A crafting building does everything in its sheet, never another window: its menu's tabs (Make, Goods,
+## Pantry) are the sheet's pages, and a done craft is collected from the sheet's big button.
+func test_382_crafting_happens_in_the_sheet() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var book: BookPanel = hud.book
+	var o := {}
+	for x: Dictionary in Game.objects:
+		if o.is_empty() and Game.crafting.is_crafting(x) and not Game.under_construction(x) \
+				and HudCrafting.makes_goods(x):
+			o = x
+	_check(not o.is_empty(), "a crafting building")
+	if o.is_empty():
+		main.queue_free()
+		return
+	var uid := int(o["uid"])
+	o["slots"] = []
+	hud.show_building(uid)
+	await _settle()
+	var tabs: SheetTabs = hud.sheet.get("_tabs")
+	_check(hud.sheet.visible and tabs.visible and not book.visible, "its menu's tabs in the sheet, no other window")
+	_eq(tabs.get_child_count(), hud.crafting.tabs(o).size(), "Make, Goods and Pantry")
+	_check((hud.sheet.get("_page") as Control).get_child_count() > 0, "its Make page is filled")
+	var r: RecipeDef = Game.crafting.recipes_of(str(o["id"]))[0]
+	for crop: String in r.inputs():
+		Game.crafting.bushels[crop] = int(r.inputs()[crop])
+	_check(Game.crafting.start_craft(uid, r.id), "a craft started")
+	for slot: Dictionary in Game.object_by_uid(uid)["slots"]:
+		slot["done"] = 0
+	hud.sheet.call("_refill")
+	var collect: Button = hud.sheet.get("_collect")
+	_check(collect.visible, "something done: Collect")
+	collect.pressed.emit()
+	await _settle()
+	_eq((Game.object_by_uid(uid)["slots"] as Array).size(), 0, "collected from the sheet")
+	_check(not book.visible, "and still no other window")
+	hud.sheet.close()
+	main.queue_free()
+	await get_tree().process_frame
+
+
+## The sheet drags: a crafting building's goes up to tall (its page filling it), down to compact, down again to
+## close; a home with pages (Feed, Grow) goes tall too; one with nothing more to show only closes.
+func test_383_the_sheet_drags_tall_and_closed() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var craft_uid := -1
+	var home_uid := -1
+	for x: Dictionary in Game.objects:
+		match BuildingSheet.kind_of(x):
+			BuildingSheet.Kind.CRAFT:
+				craft_uid = int(x["uid"]) if craft_uid < 0 else craft_uid
+			BuildingSheet.Kind.HOME:
+				home_uid = int(x["uid"]) if home_uid < 0 else home_uid
+	hud.show_building(craft_uid)
+	await get_tree().create_timer(BuildingSheet.SLIDE + 0.1).timeout
+	var sheet := hud.sheet
+	var compact := sheet.size.y
+	await _pull(sheet, -200.0)
+	_check(sheet.tall, "pulled up: tall")
+	_check(sheet.size.y > compact * 1.3, "and taller (%d > %d)" % [sheet.size.y, compact])
+	_check((sheet.get("_page_scroll") as Control).visible, "its page fills the tall sheet")
+	await _pull(sheet, 200.0)
+	_check(not sheet.tall and sheet.visible, "pulled down: compact")
+	await _pull(sheet, 200.0)
+	_check(not sheet.visible, "pulled down again: closed")
+	hud.show_building(home_uid)
+	await get_tree().create_timer(BuildingSheet.SLIDE + 0.1).timeout
+	var pages := (sheet.get("_tabs") as Control).visible
+	await _pull(sheet, -200.0)
+	_check(sheet.tall == pages and sheet.visible, "a home goes tall only with pages to show (pages: %s)" % pages)
+	sheet.close()
+	main.queue_free()
+	await get_tree().process_frame
+
+
+## A drag of `dy` px on the sheet (from its middle), then time to settle.
+func _pull(sheet: BuildingSheet, dy: float) -> void:
+	var at := sheet.size / 2.0
+	var down := InputEventMouseButton.new()
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	down.position = at
+	down.global_position = sheet.global_position + at
+	sheet._gui_input(down)
+	for k in 5:
+		var move := InputEventMouseMotion.new()
+		move.global_position = down.global_position + Vector2(0, dy * (k + 1) / 5.0)
+		sheet._gui_input(move)
+		await get_tree().process_frame
+	var up := InputEventMouseButton.new()
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.pressed = false
+	up.global_position = down.global_position + Vector2(0, dy)
+	sheet._gui_input(up)
+	await get_tree().create_timer(BuildingSheet.SETTLE + 0.15).timeout

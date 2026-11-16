@@ -16,19 +16,6 @@ func _init(owner: FarmHud) -> void:
 	hud = owner
 
 
-## A loose animal that isn't ready: what it is, then its feed card.
-func build_animal(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(hud.building_uid)
-	if o.is_empty():
-		hud.book.close_panel()
-		return
-	var it := Game.item_data(o["id"])
-	var card := BookPanel.card()
-	card.add_child(BookPanel.text(it["name"], 22))
-	card.add_child(BookPanel.text(tr("STATE_READY_IN") % FarmGrid.format_duration(Game.seconds_until_ready(o)), 18))
-	content.add_child(BookPanel.card_frame(card))
-	add_feed_card(content, o)
-
 
 ## How it is fed now, and what feeding it (with what, for which effect) would do.
 func add_feed_card(content: VBoxContainer, o: Dictionary) -> void:
@@ -77,7 +64,7 @@ func _effect_button(o: Dictionary, uid: int, feed: String, effect: String, rich:
 		b.tooltip_text = tr(PROBLEM_TEXT.get(why, why))
 	b.pressed.connect(func() -> void:
 		Game.player.enqueue({"kind": "feed", "uid": uid, "feed": feed, "effect": effect, "rich": rich})
-		hud.book.close_panel())
+		hud.close_panels())
 	return b
 
 

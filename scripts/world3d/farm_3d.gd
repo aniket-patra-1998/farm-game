@@ -163,15 +163,18 @@ func _plots_changed(i: int) -> void:
 	if _plots_queued or is_queued_for_deletion():
 		return
 	_plots_queued = true
-	(func() -> void:
-		_plots_queued = false
-		var indices: Array = [] if _changed_all else _changed.keys()
-		_changed.clear()
-		_changed_all = false
-		plots.update(indices)
-		crops.update(indices)
-		glints.update(indices)
-		ground.update_tiles(indices)).call_deferred()
+	_update_changed_plots.call_deferred()   # (a method, not a lambda: dropped if the farm is freed first)
+
+
+func _update_changed_plots() -> void:
+	_plots_queued = false
+	var indices: Array = [] if _changed_all else _changed.keys()
+	_changed.clear()
+	_changed_all = false
+	plots.update(indices)
+	crops.update(indices)
+	glints.update(indices)
+	ground.update_tiles(indices)
 
 
 ## The graphics quality in use, on this farm's sun, glow, resolution, detail and animals (Quality).

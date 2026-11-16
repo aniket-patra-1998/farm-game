@@ -875,14 +875,19 @@ func _words_on(node: Node) -> Dictionary:
 
 ## The card lists on the page showing, top to bottom.
 func _lists_on(book: BookPanel) -> Array:
+	return _lists_in(book.page())
+
+
+## The card lists in `node` (a panel's page, a sheet's page).
+func _lists_in(node: Node) -> Array:
 	var out: Array = []
-	for c in book.page().find_children("*", "CardList", true, false):
+	for c in node.find_children("*", "CardList", true, false):
 		if not c.is_queued_for_deletion():
 			out.append(c)
 	return out
 
 
-func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantry() -> void:
+func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.coins = 1000000
@@ -892,6 +897,8 @@ func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantr
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
 	var book := hud.book
+	var tab_row: SheetTabs
+	var page: VBoxContainer
 	var spot := Vector2i(-1, -1)
 	for r in Game.farm_size:
 		for c in Game.farm_size:
@@ -906,12 +913,15 @@ func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantr
 	hud.open_full_panel(uid)
 	for f in 3:
 		await get_tree().process_frame
-	var tabs: Array = book.get("_tabs")
+	_check(hud.sheet.visible and not book.visible, "the menu is in the building's sheet, not another window")
+	tab_row = hud.sheet.get("_tabs")
+	page = hud.sheet.get("_page")
+	var tabs: Array = hud.sheet.get("_specs")
 	_eq(tabs.map(func(t: Array) -> String: return str(t[0])), [tr("CRAFT_TAB_MAKE"), tr("CRAFT_TAB_GOODS"),
 		tr("CRAFT_TAB_PANTRY")], "three tabs: Make, Goods, Pantry")
 	_eq(hud.crafting.tabs({"id": "feed_mill"}).size(), 2, "a Feed Mill makes no goods: no Goods tab")
 	# Make: the slots and the recipes are the menus' own card lists; the recipe picked is told in the strip.
-	var lists := _lists_on(book)
+	var lists := _lists_in(page)
 	_eq(lists.size(), 2, "Make is two card lists: the slots, the recipes")
 	var slots: CardList = lists[0]
 	var recipes: CardList = lists[1]
@@ -929,7 +939,7 @@ func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantr
 		== tr("UNLOCKS_AT_STARS") % 5, "a locked one says the star it unlocks at")
 	_eq(recipes.face_of.call("carrot_muffins")["line"], tr("CRAFT_NEEDS_MORE") % 5,
 		"one short of ingredients says how many (3 carrots, 2 eggs)")
-	var seen := _words_on(book.page())
+	var seen := _words_on(page)
 	_check(seen["words"].has(hud.crafting.gives(Game.catalog.get_def("pumpkin_bread") as RecipeDef)),
 		"the strip tells what the recipe picked gives (the first there are ingredients for)")
 	var makes: Array = seen["buttons"].get(tr("MAKE_IT"), [])
@@ -942,12 +952,12 @@ func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantr
 	for f in 3:
 		await get_tree().process_frame
 	_eq(int(Game.crafting.goods.get("pumpkin_bread", 0)), 1, "the loaf is done, with the panel open")
-	lists = _lists_on(book)
+	lists = _lists_in(page)
 	_eq((lists[0] as CardList).ids, [HudCrafting.FREE + "0", HudCrafting.NEXT] as Array[String], "its slot shows free")
 	(lists[1] as CardList).press("strawberry_shortcake")
 	for f in 3:
 		await get_tree().process_frame
-	seen = _words_on(book.page())
+	seen = _words_on(page)
 	_check(seen["words"].has(hud.crafting.gives(Game.catalog.get_def("strawberry_shortcake") as RecipeDef)),
 		"tapping a recipe's card picks it: the strip tells about it")
 	makes = seen["buttons"].get(tr("MAKE_IT"), [])
@@ -956,16 +966,16 @@ func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantr
 	_eq((o.get("slots", []) as Array).size(), 1, "Make starts it")
 	_eq(str(o["slots"][0]["r"]), "strawberry_shortcake", "the recipe picked")
 	# Goods: each good a card; the one picked is sold or used; all sold at once.
-	book.show_tab(1)
+	tab_row.pick(1)
 	for f in 3:
 		await get_tree().process_frame
-	lists = _lists_on(book)
+	lists = _lists_in(page)
 	_eq((lists[0] as CardList).ids, ["pumpkin_bread", "strawberry_shortcake"] as Array[String], "the goods on the shelf")
 	_eq((lists[0] as CardList).face_of.call("strawberry_shortcake")["line"], tr("TIMES_N") % 2, "two shortcakes")
 	(lists[0] as CardList).press("strawberry_shortcake")
 	for f in 3:
 		await get_tree().process_frame
-	seen = _words_on(book.page())
+	seen = _words_on(page)
 	_check(seen["buttons"].has(tr("USE_FUEL") % Game.crafting.good_fuel("strawberry_shortcake")),
 		"the one picked can be used for fuel")
 	var coins := Game.coins
@@ -975,13 +985,13 @@ func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantr
 	_check(Game.coins >= coins + worth, "and brings it (a first sale's ribbon may add its own)")
 	_check(Game.crafting.goods.is_empty(), "the shelf is empty")
 	# Pantry: what is held, and the Farmers Market's offer as cards: a tap buys one.
-	book.show_tab(2)
+	tab_row.pick(2)
 	for f in 3:
 		await get_tree().process_frame
-	seen = _words_on(book.page())
+	seen = _words_on(page)
 	_check(seen["words"].has(tr("BUSHELS_OF") % [Game.crafting.total_bushels(), Balance.i("crafting.bushel_cap")]),
 		"the pantry says how full it is")
-	var stall: CardList = _lists_on(book)[0]
+	var stall: CardList = _lists_in(page)[0]
 	_eq(stall.ids.size(), Balance.i("crafting.stall_crops"), "the market's offer for today")
 	var id: String = stall.ids[0]
 	_eq(stall.face_of.call(id)["badge"], ["coin", FarmHud._thousands(Game.crafting.bushel_price(id)), false],
@@ -989,6 +999,5 @@ func test_373_the_crafting_panel_is_tabs_of_slots_recipe_cards_goods_and_a_pantr
 	var had := int(Game.crafting.bushels.get(id, 0))
 	stall.press(id)
 	_eq(int(Game.crafting.bushels.get(id, 0)), had + 1, "a tap buys one")
-	book.close_panel()
-	Game.modal_open = false
+	hud.sheet.close()
 	main.queue_free()

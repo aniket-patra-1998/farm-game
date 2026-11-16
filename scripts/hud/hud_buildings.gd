@@ -1,9 +1,9 @@
 class_name HudBuildings
 extends RefCounted
-## The panel of a tapped building: its state, upgrades and its own extras (Garage, hives, pig pen, shed).
-## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
+## Pieces of a tapped building's sheet (BuildingSheet): its next size, its own extras (Garage, hives, pig pen,
+## shed, nursery), a site's materials, a Dog House's finds, the vehicles' fuel. Each builds into the page or part
+## it is given; shared helpers (buttons, messages) are on `hud`.
 
-const SMALL_PX := 17   # design px of the small Move, Turn and Sell on a building panel
 
 var hud: FarmHud
 
@@ -11,73 +11,6 @@ var hud: FarmHud
 func _init(owner: FarmHud) -> void:
 	hud = owner
 
-
-func build_building(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(hud.building_uid)
-	if o.is_empty():
-		hud.book.close_panel()
-		return
-	var uid := hud.building_uid
-	add_building_bar(content, o)
-	if Game.under_construction(o):
-		build_construction(content, o, uid)
-		return
-	if Game.special_of(o) == "finds_home":
-		build_finds_home(content, o)
-		return
-	var total := Game.inside_total(o)
-	var cap := Game.capacity(o)
-	var pay := Game.object_payout(o)
-
-	var status := BookPanel.card()
-	status.add_theme_constant_override("separation", 8)
-	status.add_child(BookPanel.text(tr("OF_SPACES_USED") % [total, cap], 22))
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 18
-	bar.max_value = cap
-	bar.value = total
-	status.add_child(bar)
-	var inside: Dictionary = o["inside"]
-	if inside.is_empty():
-		status.add_child(BookPanel.text(tr("EMPTY_MOVE_ANIMALS_IN_TO_START"), 18))
-	else:
-		var held: Array = []
-		for id: String in inside:
-			held.append([id, "×%d" % int(inside[id])])
-		status.add_child(UiKit.count_row(held))   # what's inside, as pictures with counts (FarmVille's way)
-		if total > 0 and pay != Vector2i.ZERO:
-			var pays := tr("PAYS_COINS_XP") % [pay.x, pay.y] if pay.y > 0 else tr("PAYS_COINS") % pay.x
-			status.add_child(BookPanel.text(pays, 18))   # (when: the line at the top)
-	var layout := hud.feed.layout_line(o)
-	if layout != "":
-		status.add_child(BookPanel.text(layout, 18))
-	var boost := hud.feed.boost_line(o)
-	if boost != "":
-		status.add_child(BookPanel.text(boost, 18))
-	content.add_child(BookPanel.card_frame(status))
-
-	var actions := HFlowContainer.new()
-	actions.add_theme_constant_override("h_separation", 12)
-	actions.add_theme_constant_override("v_separation", 12)
-	if Game.is_ready(o):
-		var collect := hud.panel_button(tr("COLLECT"))
-		collect.pressed.connect(func() -> void:
-			var r := Game.collect(uid)
-			if not r.is_empty():
-				hud.show_message(tr("COINS_XP") % [r["coins"], r["xp"]]))
-		actions.add_child(collect)
-	if Game.homes.fills_by_hand(o):
-		var room := Game.homes.room_for_loose(o)
-		var fill := hud.panel_button(fill_words(o, room))
-		fill.disabled = room == 0
-		fill.pressed.connect(func() -> void: Game.homes.fill_building(uid))
-		actions.add_child(fill)
-	content.add_child(actions)
-
-	hud.feed.add_feed_card(content, o)
-	add_building_special_info(content, o)
-	add_expansion_card(content, o, uid)
 
 
 ## The fill button's words: how many would move in, else why none would (the home is full, or none are loose).
@@ -94,68 +27,6 @@ static func move_in_words(o: Dictionary, n: int) -> String:
 	return TranslationServer.translate("MOVE_IN_ANIMALS" if holds == "" else "MOVE_IN") % n
 
 
-## A small flat text button for what can be done to a building wherever it stands (Move, Turn, Sell): there but
-## quiet, at the top right of its panel, as on a home's sheet; the panel's big buttons are for what it is for.
-static func _small(words: String) -> Button:
-	return UiKit.quiet_button(words, BookPanel.font_px(SMALL_PX))
-
-
-## The top of every building's panel: its picture, its state in a line, and what can be done to it
-## wherever it stands (Move, Turn, Sell), each asking the building rules (Game.buildings) as it is built, so
-## the panel never repeats a rule and a refusal is explained before the tap. Selling asks twice. (The verdicts are
-## taken when the panel is built; selling and turning ask again when tapped.)
-func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
-	var uid := int(o["uid"])
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
-	var pic := TextureRect.new()
-	pic.texture = ItemIcons.of(str(o["id"]))
-	pic.custom_minimum_size = Vector2.ONE * UiTheme.size("panel_icon")
-	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	row.add_child(pic)
-	var words := VBoxContainer.new()
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.alignment = BoxContainer.ALIGNMENT_CENTER
-	words.add_child(BookPanel.text(state_line(o), 19, BookPanel.HEAD))   # (its name is the panel's title)
-	row.add_child(words)
-	var buttons := HBoxContainer.new()
-	buttons.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.6))
-	row.add_child(buttons)
-	# Each button asks its rule now: one that can never work here (Turn, on a building that doesn't turn) is
-	# left out; one that can't work yet is greyed with its reason shown underneath.
-	var reasons: Array[String] = []
-	var move_ok := Game.buildings.can_move(o)
-	var move := _small(tr("TOOL_MOVE"))
-	move.disabled = not move_ok.ok()
-	move.pressed.connect(func() -> void:
-		hud.book.close_panel()
-		if hud.grid != null:
-			hud.grid.start_placing(str(o["id"]), uid))
-	buttons.add_child(move)
-	if Game.buildings.can_rotate(o).ok():   # (one that can never turn has no Turn button)
-		var turn := _small(tr("TURN"))
-		turn.pressed.connect(func() -> void: Game.rotate_object(uid))
-		buttons.add_child(turn)
-	var sell_ok := Game.buildings.can_sell(o)
-	var sell := _small(tr("TOOL_SELL"))
-	sell.visible = sell_ok.why != BuildingSystem.Why.KEPT   # (one that is never sold, the Barn, has no Sell)
-	sell.disabled = not sell_ok.ok()
-	sell.pressed.connect(func() -> void:
-		if not sell.has_meta(&"sure"):
-			sell.set_meta(&"sure", true)
-			sell.text = tr("SELL_FOR_COINS") % FarmHud._thousands(Game.sell_value(o))
-			return
-		hud.book.close_panel()
-		Game.sell_object(uid))
-	buttons.add_child(sell)
-	for verdict: BuildingSystem.Verdict in [move_ok, sell_ok]:
-		if not verdict.ok() and verdict.why != BuildingSystem.Why.KEPT and verdict.text != "" \
-				and not reasons.has(verdict.text):
-			reasons.append(verdict.text)
-	content.add_child(row)
-	if not reasons.is_empty():
-		content.add_child(BookPanel.text("\n".join(PackedStringArray(reasons)), 16, UiTheme.color("note")))
 
 
 ## A building's state in a few words: a frame and how far along, broken, ready, or how long until it is.
@@ -201,44 +72,6 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 	content.add_child(BookPanel.card_frame(card))
 
 
-## Frame being built: what's in, what's missing, and a button to add held materials.
-func build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> void:
-	var it := Game.item_data(o["id"])
-	content.add_child(
-		BookPanel.info(
-			tr("THIS_IS_A_BUILDING_FRAME_FINISH"), tr("THIS_IS_A_BUILDING_FRAME_FINISH_INFO"),
-			19,
-			BookPanel.SOFT
-		)
-	)
-	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
-	var need: Dictionary = it.get("build_materials", {})
-	var have: Dictionary = o["construction"]
-	for m in need:
-		var got := int(have.get(m, 0))
-		var want := int(need[m])
-		card.add_child(
-			BookPanel.text(
-				tr("OF_YOU_HOLD") % [GameState.part_names[m], got, want, int(Game.parts.get(m, 0))],
-				19
-			)
-		)
-		var bar := ProgressBar.new()
-		bar.show_percentage = false
-		bar.custom_minimum_size.y = 14
-		bar.max_value = want
-		bar.value = got
-		card.add_child(bar)
-	content.add_child(BookPanel.card_frame(card))
-	var finish := Game.buildings.can_finish(o)
-	if not finish.ok():
-		content.add_child(BookPanel.text(finish.text, 17, BookPanel.SOFT))
-	var add := hud.panel_button(tr("ADD_MY_MATERIALS"))
-	add.pressed.connect(func() -> void: Game.land.add_materials(uid))
-	content.add_child(add)
-	add_buy_missing(content, Game.land.construction_needs(o), func() -> void: Game.land.add_materials(uid))
-
 
 ## FarmVille sold building materials for Farm Cash: a button to buy what's still missing with gems, then
 ## use them (`then`). Nothing when nothing is missing.
@@ -251,7 +84,7 @@ func add_buy_missing(content: Control, need: Dictionary, then: Callable) -> void
 	buy.pressed.connect(func() -> void:
 		if Game.buildings.buy_missing(need):
 			then.call()
-		hud.book.refresh())
+		hud.refresh_panels())
 	content.add_child(buy)
 
 
@@ -280,7 +113,7 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 					var prize := Game.mystery.open_mystery_egg(c)
 					if prize != "":
 						hud.reveal(c, str(Game.mystery.egg_data["colours"][c]["name"]), prize, Game.mystery.last_rarity)
-						hud.book.refresh())
+						hud.refresh_panels())
 				eggs.add_child(b)
 			if eggs.get_child_count() > 0:
 				content.add_child(eggs)
@@ -336,7 +169,7 @@ func add_shed_info(content: VBoxContainer) -> void:
 		b.pressed.connect(func() -> void:
 			var at := Game.shed.unpack_bunch(idx)
 			if at >= 0:
-				hud.book.close_panel()
+				hud.close_panels()
 				hud.place_stored_requested.emit(at))
 		flow.add_child(b)
 	content.add_child(flow)
@@ -381,7 +214,7 @@ func add_garage_info(content: VBoxContainer) -> void:
 		var vid: String = id
 		var drive := hud.panel_button(tr("USE_VEHICLE"))
 		drive.pressed.connect(func() -> void:
-			hud.book.close_panel()
+			hud.close_panels()
 			hud.tool_selected.emit("vehicle", vid))
 		card.add_child(drive)
 		if cost < 0:
@@ -469,7 +302,7 @@ func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 		var grown := Game.raising.pour(uid)
 		if not grown.is_empty():
 			Feedback.moment("level_up_soft")
-		hud.book.refresh())
+		hud.refresh_panels())
 	row.add_child(pour)
 	card.add_child(row)
 	card.add_child(BookPanel.text(tr("ANIMAL_FEED_HAVE") % have, 16, BookPanel.SOFT))

@@ -239,18 +239,23 @@ func rebuild() -> void:
 
 ## Things on the farm moved, came or went: the shade and wear under them, and where grass grows, follow
 ## (coalesced to once a frame).
+## (A method, not a lambda, is deferred: a deferred lambda whose node is freed first runs on whatever object takes
+## its place in the engine's table; a method's call is dropped with its object.)
 func queue_rebuild() -> void:
 	if not has_meta("queued"):
 		set_meta("queued", true)
-		(func() -> void:
-			remove_meta("queued")
-			# Nothing has come, gone or moved since the last look: even asking what stands where is skipped.
-			if Game.tiles_revision == _tiles_seen and Game.farm_size == _size:
-				return
-			_tiles_seen = Game.tiles_revision
-			# Collecting or upgrading changes nothing on the ground: only a change in what stands where does.
-			if is_inside_tree() and hash([Game.farm_size, _kinds(Game.farm_size)]) != _shade_signature:
-				rebuild()).call_deferred()
+		_rebuild_if_moved.call_deferred()
+
+
+func _rebuild_if_moved() -> void:
+	remove_meta("queued")
+	# Nothing has come, gone or moved since the last look: even asking what stands where is skipped.
+	if Game.tiles_revision == _tiles_seen and Game.farm_size == _size:
+		return
+	_tiles_seen = Game.tiles_revision
+	# Collecting or upgrading changes nothing on the ground: only a change in what stands where does.
+	if is_inside_tree() and hash([Game.farm_size, _kinds(Game.farm_size)]) != _shade_signature:
+		rebuild()
 
 
 ## The shade map: what stands on each tile, painted as blocks and blurred out (by shrinking the image

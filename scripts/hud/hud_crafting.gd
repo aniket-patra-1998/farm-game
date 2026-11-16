@@ -1,7 +1,7 @@
 class_name HudCrafting
 extends RefCounted
-## The crafting buildings' panel, as tabs of the book, built from the menus' shared pieces (CardList cards on
-## the paper, a strip that tells about the card picked, UiKit.count_row, the panel's buttons):
+## The crafting buildings' menu, as tabs of the building's sheet (BuildingSheet), built from the menus' shared
+## pieces (CardList cards on the paper, a strip that tells about the card picked, UiKit.count_row, buttons):
 ## - Make: what is cooking in each slot (a card with the good's picture and a bar filling with the time left),
 ##   the recipe picked (what it sells for and gives, how long it takes, each ingredient as have of need, and
 ##   Make or the missing ingredients for gems), every recipe as a card (tap one to pick it), the next star;
@@ -47,7 +47,7 @@ static func makes_goods(o: Dictionary) -> bool:
 func _building() -> Dictionary:
 	var o := Game.object_by_uid(hud.building_uid)
 	if o.is_empty():
-		hud.book.close_panel()
+		hud.close_panels()
 	return o
 
 
@@ -88,7 +88,6 @@ func build_make(content: VBoxContainer) -> void:
 	if o.is_empty():
 		return
 	var uid := hud.building_uid
-	hud.buildings.add_building_bar(content, o)
 	content.add_child(star_row(Game.level_of(o), Game.crafting.building_recipe_stars(o["id"])))
 	_add_slots(content, uid, o)
 	var ids: Array[String] = []
@@ -103,7 +102,7 @@ func build_make(content: VBoxContainer) -> void:
 		func(id: String) -> void:
 			_recipe = id
 			show_recipe(about, uid, o)
-			hud.book.scroll_to_top(), _view_width()))
+			hud.scroll_panels_to_top(), _view_width()))
 	var cost := Game.crafting.star_cost(o)
 	if cost.is_empty():
 		return
@@ -117,7 +116,7 @@ func build_make(content: VBoxContainer) -> void:
 		b.disabled = not Game.crafting.can_add_star(uid, with_gems)
 		b.pressed.connect(func() -> void:
 			Game.crafting.add_star(uid, with_gems)
-			hud.book.open_tabs(Game.size_name(Game.object_by_uid(uid)), tabs(Game.object_by_uid(uid))))
+			hud.refresh_panels())   # (a new star: its slots and recipes)
 		row.add_child(b)
 	up.add_child(row)
 	content.add_child(BookPanel.card_frame(up))
@@ -151,7 +150,7 @@ func _add_slots(content: VBoxContainer, uid: int, o: Dictionary) -> void:
 		func(id: String) -> void:
 			if id.begins_with(SLOT):
 				_recipe = str(_slot(o, id).get("r", _recipe))
-				hud.book.refresh(),
+				hud.refresh_panels(),
 		_view_width(), func(id: String) -> Texture2D:
 			return ItemIcons.of(str(_slot(o, id)["r"])) if id.begins_with(SLOT) and not _slot(o, id).is_empty() else null)
 	content.add_child(list)
@@ -165,7 +164,7 @@ func _add_slots(content: VBoxContainer, uid: int, o: Dictionary) -> void:
 		for slot: Dictionary in o.get("slots", []):
 			done = done or Game.now() >= int(slot["done"])
 		if done and Game.crafting.finish_crafts(uid) > 0:
-			hud.book.refresh()
+			hud.refresh_panels()
 		else:
 			list.refresh())
 	list.add_child(timer)
@@ -247,7 +246,7 @@ func show_recipe(about: VBoxContainer, uid: int, o: Dictionary) -> void:
 	make.disabled = problem != ""
 	make.pressed.connect(func() -> void:
 		Game.crafting.start_craft(uid, rid)
-		hud.book.refresh())
+		hud.refresh_panels())
 	row.add_child(make)
 	var missing := Game.crafting.missing_bushels(rid)
 	if Game.crafting.recipe_unlocked(o, rid) and not missing.is_empty() and Game.crafting.free_slots(o) > 0:
@@ -258,7 +257,7 @@ func show_recipe(about: VBoxContainer, uid: int, o: Dictionary) -> void:
 		buy.disabled = Game.gems < n * Balance.i("crafting.bushel_gem_cost")
 		buy.pressed.connect(func() -> void:
 			Game.crafting.buy_missing_and_craft(uid, rid)
-			hud.book.refresh())
+			hud.refresh_panels())
 		row.add_child(buy)
 	elif problem != "":
 		about.add_child(BookPanel.text(problem, 17, UiTheme.color("note")))   # (locked, or every slot is busy)
@@ -288,14 +287,14 @@ func build_goods(content: VBoxContainer) -> void:
 	content.add_child(CardList.make(ids, good_face, func(id: String) -> void:
 		_good = id
 		show_good(about)
-		hud.book.scroll_to_top(), _view_width()))
+		hud.scroll_panels_to_top(), _view_width()))
 	var all := hud.panel_button(tr("SELL_ALL_GOODS") % FarmHud._thousands(worth))
 	all.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	all.pressed.connect(func() -> void:
 		for id in ids:
 			while Game.crafting.sell_good(id) > 0:
 				pass
-		hud.book.refresh())
+		hud.refresh_panels())
 	content.add_child(all)
 
 
@@ -319,12 +318,12 @@ func show_good(about: VBoxContainer) -> void:
 	var sell := UiKit.primary(hud.panel_button(tr("SELL_COINS") % FarmHud._thousands(Game.crafting.good_price(rid))))
 	sell.pressed.connect(func() -> void:
 		Game.crafting.sell_good(rid)
-		hud.book.refresh())
+		hud.refresh_panels())
 	row.add_child(sell)
 	var use := hud.panel_button(tr("USE_FUEL") % Game.crafting.good_fuel(rid))
 	use.pressed.connect(func() -> void:
 		hud.show_message(tr("FUEL_2") % Game.crafting.use_good(rid))
-		hud.book.refresh())
+		hud.refresh_panels())
 	row.add_child(use)
 
 
@@ -350,7 +349,7 @@ func build_pantry(content: VBoxContainer) -> void:
 	content.add_child(CardList.make(ids, stall_face, func(id: String) -> void:
 		if not Game.crafting.buy_bushel(id):
 			hud.show_message(tr("MARKET_CANT_BUY"))
-		hud.book.refresh(), _view_width()))
+		hud.refresh_panels(), _view_width()))
 
 
 ## A Farmers Market card (CardFace): the ingredient, how many are left today and what one costs (red when it is
