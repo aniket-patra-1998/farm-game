@@ -14,7 +14,7 @@ const METER_SHADOW := 0.14   # the soft shadow under a HUD pill or round button
 const HALO := 0.5            # a HUD button's paper disc under a finger (its alpha)..
 const HALO_ON := 0.85        # ..and round the tool in hand
 const HALO_RING := 1.6       # the tool in hand's green ring, against a button's edge
-const FLOAT_ICON := 0.82     # a floating button's icon, of its size (no disc round it to leave room for)
+const FLOAT_ICON := 0.94     # a floating button's icon, of its size (no disc round it to leave room for)
 
 static var _paper_theme: Theme
 

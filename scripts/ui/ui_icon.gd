@@ -10,7 +10,7 @@ extends Control
 
 const KINDS: Array[String] = ["coin", "gem", "star", "eye", "speaker", "note", "zoom_in", "zoom_out", "fit", "camera",
 	"arrow", "ribbon", "plus", "hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag", "market", "album",
-	"neighbours", "gear", "cross", "lock", "ready"]
+	"neighbours", "gear", "cross", "lock", "ready", "helpers", "farmhand", "arborist", "gardener", "unwither", "fuel"]
 const READY_PINK := Color(1.0, 0.66, 0.8)   # the ready sign's pink (shaders/ready3d.gdshader)
 const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
@@ -137,7 +137,7 @@ func _draw() -> void:
 		return
 	_c = size / 2.0
 	_r = _s / 2.0 * 0.86   # (room for the outline and the shadow)
-	if _draw_rendered():
+	if _draw_svg() or _draw_rendered():
 		return
 	var light := UiTheme.color("icon_light")
 	match kind:
@@ -315,6 +315,21 @@ func _draw_sky() -> void:
 				var rr: float = d[2]
 				_shape(_pts([x, y - rr * 1.6, x + rr, y, x + rr * 0.7, y + rr * 0.7, x, y + rr, x - rr * 0.7, y + rr * 0.7,
 					x - rr, y]), drop)
+
+
+## Draws this icon from its vector file (UiSvg) when it has one: the look of every HUD icon. A tinted ribbon (a
+## tier's colour) keeps its drawn shape.
+func _draw_svg() -> bool:
+	if not rendered or (kind == "ribbon" and tint.a > 0.0) or not UiSvg.has(kind):
+		return false
+	var tex := UiSvg.of(kind, _s)
+	if tex == null:
+		return false
+	draw_texture_rect(tex, Rect2(_c - Vector2.ONE * _s / 2.0, Vector2.ONE * _s), false)
+	if struck:
+		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.16)
+		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.09, Color("#e0493a"))
+	return true
 
 
 ## Draws this icon's rendered picture (UiModels, made once by ItemIcons) when it has one and it is ready: its

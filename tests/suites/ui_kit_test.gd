@@ -120,3 +120,21 @@ func test_344_a_picture_is_cut_out_from_its_renders_on_black_and_white() -> void
 	while not shaded.step():
 		pass
 	_check(shaded.picture.get_pixel(6, side - 1).a8 < 255, "the shadow is soft and see-through")
+
+
+## Every vector icon (art/icons/ui) loads and is drawn at the size asked for, with see-through corners.
+func test_384_vector_icons_draw() -> void:
+	var dir := DirAccess.open(UiSvg.DIR)
+	var count := 0
+	for f in dir.get_files():
+		if not f.ends_with(".svg"):
+			continue
+		count += 1
+		var kind := f.get_basename()
+		var tex := UiSvg.of(kind, 40.0)
+		_check(tex != null, "%s draws" % kind)
+		if tex != null:
+			var img := tex.get_image()
+			_check(img.get_width() >= 40 and img.get_pixel(0, 0).a < 0.1, "%s is its size, see-through round it" % kind)
+	_check(count >= 20, "the HUD's icons are files")
+	_check(UiSvg.of("no_such_icon", 40.0) == null, "a kind with no file draws nothing (the drawn one stays)")

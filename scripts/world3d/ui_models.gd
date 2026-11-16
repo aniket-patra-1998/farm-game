@@ -9,7 +9,9 @@ extends RefCounted
 ## Modelled about a tile across, centred on (0.5, 0, 0.5), facing the icon camera (it looks from the front left).
 
 const KINDS: Array[String] = ["coin", "gem", "hoe", "seeds", "basket", "fertilizer", "barn", "tag", "market", "album",
-	"gear"]
+	"gear", "helpers", "farmhand", "arborist", "gardener", "unwither", "fuel"]
+const STRAW := Color("#e8c66a")
+const CAN_GREEN := Color("#4f9a52")
 const GOLD := Color("#f2b632")
 const GOLD_DEEP := Color("#c98a1a")
 const WOOD := Color("#b7834a")
@@ -119,6 +121,45 @@ static func build(kind: String) -> Node3D:
 				ModelKit.box(gear, Vector3(cos(a) * 0.3 - 0.06, -0.05, sin(a) * 0.3 - 0.06),
 					Vector3(cos(a) * 0.3 + 0.06, 0.05, sin(a) * 0.3 + 0.06), ModelKit.paint(STEEL.darkened(0.15), 0.7))
 			ModelKit.cylinder(gear, Vector3(0, -0.06, 0), 0.1, 0.12, ModelKit.paint(Color("#3b2412")), -1.0, 16)
+		"helpers":   # a straw hat with a red band: the helpers' flower (HudHelpers)
+			ModelKit.cylinder(root, c + Vector3(0, 0.2, 0), 0.48, 0.05, ModelKit.surface(STRAW, "boards", 0.2), -1.0, 24)
+			ModelKit.cylinder(root, c + Vector3(0, 0.24, 0), 0.25, 0.24, ModelKit.paint(STRAW), 0.2, 20)
+			ModelKit.cylinder(root, c + Vector3(0, 0.25, 0), 0.255, 0.07, ModelKit.paint(RED), -1.0, 20)
+			ModelKit.ball(root, c + Vector3(0, 0.48, 0), 0.2, ModelKit.paint(STRAW), Vector3(1.0, 0.35, 1.0))
+		"farmhand":   # a milk pail
+			ModelKit.cylinder(root, c + Vector3(0, 0.05, 0), 0.26, 0.5, ModelKit.paint(STEEL, 0.8), 0.32, 20)
+			ModelKit.cylinder(root, c + Vector3(0, 0.53, 0), 0.3, 0.03, ModelKit.paint(CREAM), -1.0, 20)
+			var bail := ModelKit.cylinder(root, Vector3.ZERO, 0.02, 0.66, ModelKit.paint(STEEL.darkened(0.3)), -1.0, 6)
+			bail.rotation = Vector3(0, 0, PI / 2.0)
+			bail.position = c + Vector3(0.33, 0.78, 0)
+		"arborist":   # an axe
+			var haft := ModelKit.cylinder(root, Vector3.ZERO, 0.06, 1.0, ModelKit.surface(WOOD, "boards", 0.2), -1.0, 8)
+			haft.rotation = Vector3(0, 0, 0.6)
+			haft.position = c + Vector3(0.3, 0.02, 0)
+			var head := ModelKit.box(root, Vector3(-0.24, -0.12, -0.05), Vector3(0.1, 0.14, 0.05), ModelKit.paint(STEEL, 0.8))
+			head.rotation = Vector3(0, 0.3, 0.6)
+			head.position = c + Vector3(-0.2, 0.78, 0)
+		"gardener":   # a watering can
+			ModelKit.cylinder(root, c + Vector3(0.05, 0.05, 0), 0.24, 0.42, ModelKit.paint(CAN_GREEN, 0.5), 0.2, 18)
+			var spout := ModelKit.cylinder(root, Vector3.ZERO, 0.04, 0.5, ModelKit.paint(CAN_GREEN, 0.5), 0.07, 8)
+			spout.rotation = Vector3(0, 0, 0.9)
+			spout.position = c + Vector3(-0.15, 0.2, 0)
+			var arc := ModelKit.cylinder(root, Vector3.ZERO, 0.035, 0.4, ModelKit.paint(CAN_GREEN.darkened(0.2)), -1.0, 6)
+			arc.rotation = Vector3(0, 0, -PI / 2.0)
+			arc.position = c + Vector3(-0.12, 0.6, 0)
+		"unwither":   # a green tonic with a leaf
+			ModelKit.ball(root, c + Vector3(0, 0.3, 0), 0.28, ModelKit.paint(Color("#6cc96a"), 0.8))
+			ModelKit.cylinder(root, c + Vector3(0, 0.52, 0), 0.09, 0.18, ModelKit.paint(Color("#bfe8f0"), 0.8))
+			ModelKit.cylinder(root, c + Vector3(0, 0.68, 0), 0.1, 0.09, ModelKit.paint(WOOD), -1.0, 10)
+			var leaf := ModelKit.ball(root, c + Vector3(0.14, 0.82, 0), 0.12, ModelKit.paint(LEAF), Vector3(1.0, 0.35, 0.6))
+			leaf.rotation.z = 0.6
+		"fuel":   # a red jerry can
+			ModelKit.box(root, c + Vector3(-0.26, 0, -0.14), c + Vector3(0.26, 0.62, 0.14), ModelKit.paint(RED, 0.6))
+			ModelKit.box(root, c + Vector3(-0.18, 0.62, -0.06), c + Vector3(0.06, 0.72, 0.06), ModelKit.paint(RED.darkened(0.2)))
+			var neck := ModelKit.cylinder(root, Vector3.ZERO, 0.06, 0.14, ModelKit.paint(GOLD_DEEP), -1.0, 10)
+			neck.rotation.z = -0.5
+			neck.position = c + Vector3(0.16, 0.62, 0)
+			ModelKit.box(root, c + Vector3(-0.2, 0.2, 0.14), c + Vector3(0.2, 0.42, 0.15), ModelKit.paint(CREAM))
 		_:
 			root.free()
 			return null

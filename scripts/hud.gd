@@ -29,6 +29,7 @@ var sheet: BuildingSheet   # a tapped home's sheet (made when first needed, then
 var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
 var side: HudSide
+var helpers: HudHelpers   # the helpers' flower, bottom left
 var interface_hidden := false
 var camera: FarmCamera              # set by Main, for the zoom buttons
 var grid: FarmGrid                  # set by Main: what is being moved (the placing bar's Turn button)
@@ -98,6 +99,8 @@ func _ready() -> void:
 	side.build(root)
 	tools = HudTools.new(self)
 	tools.build(root)
+	helpers = HudHelpers.new(self)
+	helpers.build(root)
 	_build_tutorial(root)
 	_build_toast(root)
 	bubble = HudBubble.new(self)

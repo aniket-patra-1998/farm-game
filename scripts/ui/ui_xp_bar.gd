@@ -6,6 +6,8 @@ extends Control
 const STAR_INSET := 0.58        # the star's centre this many of its sizes in from the right (its points reach 0.52)
 const STAR_LABEL_ROOM := 0.62   # the widest the level's number may be, as a share of the star's size
 const NUMBERS_FOR := 3.0        # seconds the XP numbers show after a tap (the bar alone says how far along)
+const STAR_ART := 1.05          # the star picture's size, of the star's room (its edge and outline reach out)
+const LEVEL_OUTLINE := 5        # px of ink round the level's number
 
 ## How full the bar is, 0 to 1.
 @export var ratio := 0.0: set = _set_ratio
@@ -72,9 +74,13 @@ func _draw() -> void:
 		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UiTheme.color("xp_text"))
 	# The star over the right end, with the level on it.
 	var c := star_centre()
-	var pts := UiIcon.star_points(c + Vector2(0, 2), star_d * 0.52)
-	draw_colored_polygon(pts, UiTheme.color("star"))
-	draw_polyline(PackedVector2Array(Array(pts) + [pts[0]]), UiTheme.color("star_edge"), 3.0)
+	var star_px := star_d * STAR_ART   # (the level's star: the vector icon, UiSvg)
+	var art := UiSvg.of("star", star_px)
+	if art != null:
+		draw_texture_rect(art, Rect2(c - Vector2.ONE * star_px / 2.0, Vector2.ONE * star_px), false)
+	else:
+		var pts := UiIcon.star_points(c + Vector2(0, 2), star_d * 0.52)
+		draw_colored_polygon(pts, UiTheme.color("star"))
 	var font2 := UiTheme.bold()
 	var fs2 := int(UiTheme.size("font_star"))
 	var label := str(level)
@@ -83,8 +89,10 @@ func _draw() -> void:
 	if lw > room:
 		fs2 = maxi(int(fs2 * room / lw), 8)
 		lw = font2.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2).x
-	draw_string(font2, c + Vector2(-lw / 2.0, fs2 * 0.42), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2,
-		UiTheme.color("star_text"))
+	var at2 := c + Vector2(-lw / 2.0, fs2 * 0.42 + star_d * 0.04)
+	draw_string_outline(font2, at2, label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2, LEVEL_OUTLINE,
+		UiTheme.color("icon_outline"))
+	draw_string(font2, at2, label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2, Color.WHITE)
 
 
 ## Whether the XP numbers are on the bar: only for a few seconds after a tap (docs/UI.md: the bar alone says how
