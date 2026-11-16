@@ -52,7 +52,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `scripts/hud.gd`: the heads-up display on the kit (`scripts/ui/`, data/ui_theme.json; docs/UI.md): `HudTop` (coins, cash, farm plaque, XP star), `HudTools` (seven tools; Select in hand by default, a press and hold lifts anything to move it), `HudSide` (the menu, Next ready and the whole-farm view; sound is in Settings, the interface rests on an idle farm, pinching zooms), messages and the placing bar; its panels live in `scripts/hud/` (`HudMarket`, `HudSeeds`, `HudCrafting`, `HudBuildings`, `HudBarn` (with the boosts), `HudBooks`, `HudSettings`, each reached as `hud.market` etc.). `scripts/placeholder_art.gd`: code-drawn art until painted art
   (`art/final`, via `SpriteBank`) replaces it.
 - `tests/suites/*_test.gd`: rule tests, one `TestSuite` per area (helpers in `tests/test_suite.gd`), run by
-  `tests/test_runner.gd` headless in CI. `tests/shots.gd`: screenshots in CI.
+  `tests/test_runner.gd` headless in CI. `tests/shots.gd`: screenshots, drawn by the Screenshots workflow (pushes to main, or on demand; apart from Tests, which the review waits on).
 - Tools to look before and after a change: `tools/perf_probe.tscn` (frame cost, draw calls, what each system
   costs, on the showcase farm), `tools/contact_sheet.tscn` (every model in a labelled grid, to spot broken
   pieces) and `tools/state_sheet.tscn` (every building as a frame, empty, half full and full and ready); all
@@ -68,6 +68,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 ## Rules
 - Art follows docs/ASSETS.md: looks and smoothness first (size is no constraint up to 250 MB installed); art is made offline as files (glTF), imported under rules, asked for by name through one registry, with a fallback and a budget; code never builds art at runtime in new work.
 - Run `tools/precheck.sh <godot>` before every push: what CI checks (gdlint's limits, generated docs, strings, all tests and the log gate).
+- CI runs Tests on pushes to main and on pull requests, not on other branch pushes: a branch gets CI by opening a (draft) PR. Docs-only changes skip Tests, Screenshots and the phone build.
 - A plot index's row and column are `GameState.row_of`/`col_of`, and `Game.on_farm(i)` says whether it lies on the farm now; never the maths by hand.
 - docs/V1.md is the line for the first release (what is in, what is switched off, the dates and the launch bar); work outside it waits unless asked. `Release` (data/v1.json) applies it: `Release.has(id)` for anything sold, unlocked, given or found, `Release.on(feature)` for switched-off systems, and the release's own balance values; nothing is deleted, and tests run with everything on (`Release.whole`).
 - docs/AUDIT.md is the plan: every system a full FarmVille replica first, smooth on low-end phones. A request
