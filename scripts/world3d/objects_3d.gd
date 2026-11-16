@@ -519,12 +519,6 @@ func _light_some() -> void:
 		_mark_ready(_sweep_ready)
 
 
-## Whether a harvesting building's animals are asleep in it: at night, when anyone lives there. Then nobody is
-## out in its yard or at its windows, and a "zzz" rises from it (its `when_asleep_true` part).
-static func asleep(o: Dictionary) -> bool:
-	return AnimalBehaviour.night and Game.inside_total(o) > 0 and not Game.under_construction(o)
-
-
 ## Whether a building is at work right now: a crafting building with something in its ovens or vats. (Other
 ## buildings are always "at work": their chimneys, if any, smoke.)
 func _at_work(o: Dictionary) -> bool:
@@ -619,8 +613,6 @@ func state_of(o: Dictionary) -> Dictionary:
 		state["level"] = Game.level_of(o)
 		state["working"] = _at_work(o)
 		state["fill"] = store_fill(o)
-		if Game.building_type(str(o["id"])) == HARVESTING:
-			state["asleep"] = asleep(o)
 		if Game.under_construction(o):
 			state["stage"] = mini(int(Game.land.construction_progress(o) * BUILD_STAGES), BUILD_STAGES - 1)
 	return state

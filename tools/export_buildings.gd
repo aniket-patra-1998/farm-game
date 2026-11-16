@@ -9,7 +9,7 @@ extends Node
 ## What a file holds: meshes with plain materials named for what they are (ModelKit.FILE_PAINT, FILE_WALL and
 ## the LIVE names; each part's colour and finish ride in its vertex colours), states as parts named
 ## `when_working_true`, `when_fill_2`..., and named parts with nothing in them where the game starts an effect
-## or turns something (`smoke_3`, `spin_55_2`, `zzz_4`: DecorMotion.start). A building animals live in also has
+## or turns something (`smoke_3`, `spin_55_2`: DecorMotion.start). A building animals live in also has
 ## its doors as parts named `door_<n>` (`door_<n>_left` swings the other way) and a part named `window_<n>` at
 ## each window a head can look out of, sized by its scale (Objects3D.mark_parts).
 ## Lists them in data/assets.json. Run: godot --headless --path . res://tools/export_buildings.tscn

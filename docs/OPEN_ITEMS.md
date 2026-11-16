@@ -232,14 +232,14 @@ Harvesting buildings (2026-11-17; rules in CLAUDE.md, held by `assets_test` test
   a second), named "Big ..." at the second. A farm saved with a bigger size is brought down to the second.
 - A pilot of three is redesigned and shipped as glTF files: the Cow Shed (a red gambrel barn, milk cans on a
   table), the Chicken Coop (on stilts, an egg stall) and the Beehive (one hive on a stand, honey pots; two
-  tiers at the second size). Each: rough yard with two hay bales, dark windows, a ready part with four looks,
-  and at night nobody out or at a window and a "zzz" over the roof (one draw, `DecorMotion.ZZZ`). Full and
-  asleep they are 7, 5 and 5 draws.
+  tiers at the second size). Each: rough yard with two hay bales, dark windows and a ready
+  part with four looks. Full, they are 6, 4 and 4 draws.
 - The other nine (Duck Pond, Sheep Pen, Goat Pen, Rabbit Hutch, Pig Pen, Horse Stable, Nursery Barn, Orchard,
-  Bloom Garden) follow the night rule already (it is in `BuildingFill` and the builder), but still wear their
-  old looks, built in code, with their old top look folded into level 2. They are to be redesigned and added
-  to `ExportBuildings.HARVESTING`.
-- Not checked on a phone: how the "zzz" reads at farm zoom.
+  Bloom Garden) have the dark windows already (it is in the builder), but still wear their old looks, built
+  in code, with their old top look folded into level 2. They are to be redesigned and added to
+  `ExportBuildings.HARVESTING`.
+- Night: nothing is hidden. The animals sleep where they stand in the yard, as before (the first plan, to
+  take them indoors and raise a "zzz", was dropped on 2026-11-17).
 
 Open:
 

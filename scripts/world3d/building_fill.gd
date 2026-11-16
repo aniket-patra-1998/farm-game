@@ -94,8 +94,6 @@ var _plant_into: Node3D
 var _plant_rng: RandomNumberGenerator
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
-var _sleeps := false           # a harvesting building: at night its animals are inside, none out or at a window
-var _asleep := false           # ..and they are now
 var _own_ready := false        # the model has its own ready part (`when_fill_*`): no pile of produce beside it
 
 
@@ -106,7 +104,6 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 	f._id = str(o["id"])
 	f._fp = Game.footprint(f._id)
 	f._spec = BuildingModel.spec(f._id, Game.level_of(o))
-	f._sleeps = Game.building_type(f._id) == Objects3D.HARVESTING
 	f._own_ready = model.find_child(AssetRegistry.STATE + "fill_1", true, false) != null   # not-ui (a part's name)
 	for c in model.get_children():
 		if c.has_meta(BuildingModel.WINDOWS):
@@ -150,7 +147,6 @@ func refresh(o: Dictionary) -> void:
 		_show_stock(str(fill["stock"]), fill.get("at", [0.5, 0.95]), o)
 		return
 	if who == _who and stage == _stage and who == _who_peeking:
-		_sleep(_sleeps and Objects3D.asleep(o))
 		return   # nothing it shows has changed since the last look (nearly every look: this is asked each second)
 	if fill.has("plants"):
 		# Trees and blooms are planted once: a tree's fruit grows on it and a bloom's heads open by the clock
@@ -172,21 +168,6 @@ func refresh(o: Dictionary) -> void:
 	if who != _who_peeking:
 		_who_peeking = who
 		_show_peekers(inside)   # (whoever lives here looks out of its windows, full or not)
-	_asleep = false   # (whoever was just shown stands out in the open: put to bed again if it is night)
-	_sleep(_sleeps and Objects3D.asleep(o))
-
-
-## Night in a harvesting building: its animals are inside asleep, none out in the yard and none at a window
-## (the model's own `when_asleep_true` part shows the "zzz"). By day they are back where they were.
-func _sleep(asleep: bool) -> void:
-	if asleep == _asleep:
-		return
-	_asleep = asleep
-	for a in residents:
-		a.visible = not asleep
-	if _peekers != null:
-		_peekers.visible = not asleep
-	_lod = -1   # (awake again: shown or hidden for the zoom next frame)
 
 
 ## How near the building is to ready, 0..1 (0 when empty: nothing is being made).
@@ -867,8 +848,8 @@ func _process(delta: float) -> void:
 		var eye := get_viewport().get_camera_3d()
 		if eye != null:
 			_plant_lod(eye)
-	if residents.is_empty() or _asleep:
-		return   # (nobody out in the yard: nothing thinks or moves)
+	if residents.is_empty():
+		return
 	var cam := get_viewport().get_camera_3d()
 	# Out of sight, the yard's minds think a few times a second, not every frame (nobody sees it).
 	var seen := cam == null or _yard_in_view(cam)

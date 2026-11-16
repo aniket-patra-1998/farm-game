@@ -266,11 +266,6 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 	ModelKit.roof_trim = ModelKit.RAKE_COLOUR
 	if broken and ctx.has("lo"):
 		_broken(ctx)
-	if ctx["dark"]:
-		# A harvesting building's animals sleep in it at night: a "zzz" rises over its roof then, and only then
-		# (Objects3D.asleep).
-		var peak: Vector3 = ctx.get("peak", Vector3(centre.x, float(ctx.get("top", bh)), centre.z))
-		DecorMotion.effect(BuildingDress.when(ctx, "asleep", true), "zzz", peak + Vector3(0.1, 0.12, 0.1))
 	if str(it.get("kind", "")) == "crafting":
 		# Nobody goes in and out of a crafting building: its door is part of the walls, not a thing on hinges.
 		for c in root.get_children():
@@ -1555,7 +1550,7 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 
 ## A beehive on its stand (the Beehive building, which has no walls of its own): a box hive of `tiers` storeys,
 ## each a stack of two boxes in the building's colours with a landing board and its dark way in, the upper one
-## narrower over a little pent roof, and a pitched roof on top. The "zzz" of its sleeping bees rises from it.
+## narrower over a little pent roof, and a pitched roof on top.
 static func _hive(ctx: Dictionary, f: Dictionary) -> void:
 	var root: Node3D = ctx["root"]
 	var spot := yard_spot(f, ctx["fw"], ctx["fd"])
@@ -1598,7 +1593,6 @@ static func _hive(ctx: Dictionary, f: Dictionary) -> void:
 		ctx["upper_lo"] = lo - Vector3(0, half.y * 2.0, 0)
 		ctx["upper_hi"] = hi
 	ctx["top"] = y
-	ctx["peak"] = Vector3(at.x, y, at.z)
 	BuildingDress.shade_pool(root, at, Vector2(HIVE_BOX.x * 2.0 + 0.5, HIVE_BOX.z * 2.0 + 0.5))
 
 
