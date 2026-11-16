@@ -10,18 +10,6 @@ func _init(owner: FarmHud) -> void:
 	hud = owner
 
 
-func build_barn(content: VBoxContainer) -> void:
-	var b := Game.storage.barn()
-	if b.is_empty():
-		hud.book.close_panel()
-		return
-	hud.buildings.add_building_bar(content, b)
-	add_boosts(content)
-	if b.get("broken", false):
-		build_barn_repair(content)
-	else:
-		build_barn_storage(content)
-
 
 ## The boosts you have, used from here as FarmVille's were from the gift box: Fertilize All, Unwither and the
 ## helpers (each works the whole farm at once), and the fuel for the vehicles once you have one.
@@ -42,7 +30,8 @@ func add_boosts(content: VBoxContainer) -> void:
 	]
 	if Game.vehicles.fuel_unlocked:
 		boosts.append([tr("FUEL_TANKS") % [Game.vehicles.fuel_now(), Balance.i("vehicles.fuel_tank"),
-			Game.vehicles.fuel_tanks], true, func() -> void: hud.book.open_panel(tr("FUEL"), hud.buildings.build_fuel)])
+			Game.vehicles.fuel_tanks], true, func() -> void:
+				hud.sheet.show_page("SHEET_TAB_FUEL")])   # (the Barn's own Fuel page)
 	for entry: Array in boosts:
 		var use := hud.panel_button(str(entry[0]))
 		use.disabled = not bool(entry[1])
@@ -128,7 +117,7 @@ func add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 	var face := func(id: String) -> Dictionary:
 		return {"name": Game.name_of(id), "line": tr("TIMES_N") % count[id], "badge": ["", tr("PLACE_2")]}
 	content.add_child(CardList.make(kinds, face, func(id: String) -> void:
-		hud.book.close_panel()
+		hud.close_panels()
 		hud.place_stored_requested.emit(int(first[id])), hud.get_viewport().get_visible_rect().size.x))
 
 
@@ -148,7 +137,7 @@ func build_bloom(content: VBoxContainer) -> void:
 		regrow.disabled = Game.nurture.free_supply("flower_food") <= 0
 		regrow.pressed.connect(func() -> void:
 			Game.player.enqueue({"kind": "nurture", "uid": uid})
-			hud.book.close_panel())
+			hud.close_panels())
 		content.add_child(regrow)
 		var buy := hud.panel_button(tr("BUY_ONE_FOR_GEMS") % [Game.nurture.supply_name("flower_food"),
 			int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])])
@@ -195,7 +184,7 @@ func build_young(content: VBoxContainer) -> void:
 	give.disabled = Game.nurture.free_supply(supply) <= 0
 	give.pressed.connect(func() -> void:
 		Game.player.enqueue({"kind": "nurture", "uid": uid})
-		hud.book.close_panel())
+		hud.close_panels())
 	content.add_child(give)
 	var gems := int(NurtureSystem.SUPPLIES[supply]["gem_cost"])
 	var buy := hud.panel_button(tr("BUY_ONE_FOR_GEMS") % [name, gems])

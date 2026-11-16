@@ -421,50 +421,45 @@ func show_building(uid: int) -> void:
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
 		return
-	if Game.nurture.is_young(o):
-		book.open_panel(Game.item_data(o["id"])["name"], barn.build_young)
-	elif Game.kind_of(o) == "bloom":
-		book.open_panel(Game.item_data(o["id"])["name"], barn.build_bloom)
-	elif Game.kind_of(o) == "animal" and Game.feeds.is_feedable(o):
-		book.open_panel(Game.item_data(o["id"])["name"], feed.build_animal)
-	elif Game.kind_of(o) == "vehicle" and not Game.under_construction(o):
-		book.open_panel(tr("FUEL"), buildings.build_fuel)   # a vehicle tapped with an empty tank
-	elif BuildingSheet.suits(o):
-		# Every building opens as a small sheet at the bottom, the farm still in view (its full panel is its More).
+	if BuildingSheet.suits(o):
+		# Every building (and an animal to feed, a young one, a bloom, a vehicle) opens as its sheet at the bottom,
+		# the farm still in view: everything it does is in it.
 		if sheet == null:
 			sheet = BuildingSheet.new(self)
 			book.get_parent().add_child(sheet)
 		book.close_panel()
 		sheet.open(uid)
-	else:
-		open_building_panel(uid)
 
 
-## Any building's full panel (a sheet's More): the Barn's storage, a crafting building's recipes and goods, or
-## its own panel (feed, extras, building its next size, a site's materials).
+## A building's everything: its sheet, tall. A building has no other window (the sheet holds its pages).
 func open_full_panel(uid: int) -> void:
-	var o := Game.object_by_uid(uid)
-	if o.is_empty():
-		return
-	building_uid = uid
-	if sheet != null:
-		sheet.close()
-	match BuildingSheet.kind_of(o):
-		BuildingSheet.Kind.BARN:
-			book.open_panel(tr("BARN"), barn.build_barn)
-		BuildingSheet.Kind.CRAFT:
-			Game.crafting.finish_crafts(uid)
-			book.open_tabs(Game.size_name(o), crafting.tabs(o))
-		_:
-			open_building_panel(uid)
+	show_building(uid)
+	if sheet != null and sheet.visible:
+		sheet.make_tall()
 
 
-## A building's own full panel (its feed, its own extras, building its next size).
-func open_building_panel(uid: int) -> void:
-	building_uid = uid
+## The panel or sheet on screen shows things as they are now (a card picked, a sale): built again, once a frame.
+## (A building's pages are built by the same builders whether they are in the sheet or a panel.)
+func refresh_panels() -> void:
+	if book.visible:
+		book.refresh()
+	elif sheet != null and sheet.visible:
+		sheet.refill_soon()
+
+
+## The panel or sheet on screen back at its top (a recipe picked shows at the top).
+func scroll_panels_to_top() -> void:
+	if book.visible:
+		book.scroll_to_top()
+	elif sheet != null and sheet.visible:
+		sheet.scroll_to_top()
+
+
+## Every panel and sheet away: something was taken in hand (to place, to drive), the farm comes back in view.
+func close_panels() -> void:
+	book.close_panel()
 	if sheet != null:
 		sheet.close()
-	book.open_panel(Game.item_data(Game.object_by_uid(uid)["id"])["name"], buildings.build_building)
 
 
 func panel_button(words: String) -> Button:
