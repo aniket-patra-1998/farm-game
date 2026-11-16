@@ -10,11 +10,17 @@ const LONG_PRESS := 0.45     # seconds held before a button's name shows (and th
 const BUBBLE_SECONDS := 1.2   # how long a name bubble stays
 const PAPER_RADIUS := 26       # a sheet's or a panel's corners
 const PAPER_SHADOW := 14       # ..and its soft shadow
+const METER_SHADOW := 0.14   # the soft shadow under a HUD pill or round button
+const HALO := 0.5            # a HUD button's paper disc under a finger (its alpha)..
+const HALO_ON := 0.85        # ..and round the tool in hand
+const HALO_RING := 1.6       # the tool in hand's green ring, against a button's edge
+const FLOAT_ICON := 0.94     # a floating button's icon, of its size (no disc round it to leave room for)
 
 static var _paper_theme: Theme
 
 ## The one surface of the interface (the unified look, docs/UI.md): warm paper with round corners and a soft
 ## shadow, no frame. Every panel, sheet, card that floats and the tool panel stand on it.
+
 static func panel_box(radius := -1) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = UiTheme.color("paper")
@@ -100,41 +106,39 @@ static func meter_box(face: Color, edge: Color) -> StyleBoxFlat:
 	sb.bg_color = face
 	sb.border_color = edge
 	sb.set_border_width_all(int(UiTheme.size("bar_border")))
-	sb.set_corner_radius_all(int(UiTheme.size("bar_radius")))
-	sb.shadow_color = Color(0, 0, 0, 0.25)
-	sb.shadow_size = 3
-	sb.shadow_offset = Vector2(0, 2)
+	sb.set_corner_radius_all(int(UiTheme.size("bar_height") / 2.0))   # (a pill)
+	sb.shadow_color = Color(0, 0, 0, METER_SHADOW)
+	sb.shadow_size = 2
+	sb.shadow_offset = Vector2(0, 1)
 	return sb
 
 
-## A counter with its icon on the left and a number (the coins, the cash). `kind` is "coin" or "gem". With
-## `plus` a "+" button sits at its right end (what opens the Market); `value_label` and `plus_button` are found
-## by those meta names on the returned control.
+## A counter with its icon on the left and a number (the coins, the cash): a paper pill, the number in bold ink
+## (the modern look: one surface, no coloured boxes). `kind` is "coin" or "gem". With `plus` a small round green
+## "+" sits at its right end (what opens the Market); `value_label` and `plus_button` are found by those meta names
+## on the returned control.
 static func meter(kind: String, plus := false) -> PanelContainer:
-	var coin := kind == "coin"
 	var box := PanelContainer.new()
-	box.add_theme_stylebox_override("panel", meter_box(UiTheme.color("coin_bar" if coin else "cash_bar"),
-		UiTheme.color("coin_bar_dark" if coin else "cash_bar_dark")))
+	box.add_theme_stylebox_override("panel", meter_box(UiTheme.color("paper"), UiTheme.color("card_edge")))
 	box.custom_minimum_size.y = UiTheme.size("bar_height")
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", int(UiTheme.size("bar_padding")))
 	box.add_child(row)
 	row.add_child(UiIcon.make(kind))
 	var value := Label.new()
+	value.add_theme_font_override("font", UiTheme.bold())
 	value.add_theme_font_size_override("font_size", UiTheme.text_px("font_bar"))
-	value.add_theme_color_override("font_color", UiTheme.color("bar_text"))
-	value.add_theme_color_override("font_shadow_color", UiTheme.color("bar_text_shadow"))
-	value.add_theme_constant_override("shadow_offset_y", 2)
+	value.add_theme_color_override("font_color", UiTheme.color("ink"))
 	value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(value)
 	box.set_meta("value_label", value)
 	if plus:
 		var add := icon_button("plus", UiTheme.size("bar_height") - 8.0)
-		add.add_theme_stylebox_override("normal", meter_box(UiTheme.color("plus_face"), UiTheme.color("coin_bar_dark")))
-		add.add_theme_stylebox_override("pressed", meter_box(UiTheme.color("coin_bar_dark"), UiTheme.color("ink")))
-		add.add_theme_stylebox_override("hover", meter_box(UiTheme.color("plus_face").lightened(0.15),
-			UiTheme.color("coin_bar_dark")))
+		add.add_theme_stylebox_override("normal", meter_box(UiTheme.color("accent"), UiTheme.color("accent")))
+		add.add_theme_stylebox_override("pressed", meter_box(UiTheme.color("coin_bar_dark"), UiTheme.color("coin_bar_dark")))
+		add.add_theme_stylebox_override("hover", meter_box(UiTheme.color("accent").lightened(0.15),
+			UiTheme.color("accent")))
 		row.add_child(add)
 		box.set_meta("plus_button", add)
 	return box
@@ -146,17 +150,8 @@ static func icon_button(kind: String, side := 0.0) -> Button:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(px, px)
 	b.focus_mode = Control.FOCUS_NONE
-	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
-		var face := UiTheme.color("button_face_down" if state.contains("pressed") else "button_face")
-		if state == "hover":
-			face = face.lightened(0.25)
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = face
-		sb.border_color = UiTheme.color("button_edge")
-		sb.set_border_width_all(int(UiTheme.size("button_border")))
-		sb.set_corner_radius_all(int(px * UiTheme.size("round_share")))
-		b.add_theme_stylebox_override(state, sb)
-	var icon := UiIcon.make(kind, px * 0.62)
+	_float_states(b, px, px)
+	var icon := UiIcon.make(kind, px * FLOAT_ICON)
 	icon.size = icon.custom_minimum_size
 	icon.position = (Vector2(px, px) - icon.size) / 2.0
 	b.add_child(icon)
@@ -165,14 +160,31 @@ static func icon_button(kind: String, side := 0.0) -> Button:
 	return b
 
 
+## A HUD button's look (the modern look: the icon is the button, a flat sticker floating over the farm): nothing
+## drawn at rest, a soft paper disc under a finger, and a fuller one ringed green while it is the one in hand.
+static func _float_states(b: Button, w: float, h: float) -> void:
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		if state in ["normal", "disabled"]:
+			b.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+			continue
+		var on := (state as String).contains("pressed")
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(UiTheme.color("paper"), HALO_ON if on else HALO)
+		if on:   # (green on the grass would vanish: the paper disc carries it, its ring says "in hand")
+			sb.border_color = UiTheme.color("accent")
+			sb.set_border_width_all(int(UiTheme.size("button_border") * HALO_RING))
+		sb.set_corner_radius_all(int(minf(w, h) / 2.0))
+		b.add_theme_stylebox_override(state, sb)
+
+
 ## A brown name plaque (the farm's name).
 static func plaque(text: String) -> PanelContainer:
 	var box := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = UiTheme.color("plaque")
-	sb.border_color = UiTheme.color("wood_dark")
-	sb.set_border_width_all(int(UiTheme.size("button_border")))
-	sb.set_corner_radius_all(int(UiTheme.size("plaque_radius")))
+	sb.bg_color = UiTheme.color("paper")   # (a paper pill like the counters)
+	sb.border_color = UiTheme.color("card_edge")
+	sb.set_border_width_all(int(UiTheme.size("bar_border")))
+	sb.set_corner_radius_all(int(UiTheme.size("plaque_height") / 2.0))
 	sb.content_margin_left = 18
 	sb.content_margin_right = 18
 	box.add_theme_stylebox_override("panel", sb)
@@ -182,7 +194,7 @@ static func plaque(text: String) -> PanelContainer:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_plaque"))
-	label.add_theme_color_override("font_color", UiTheme.color("plaque_text"))
+	label.add_theme_color_override("font_color", UiTheme.color("ink"))
 	box.add_child(label)
 	box.set_meta("label", label)
 	return box
@@ -193,7 +205,7 @@ static func xp_bar() -> UiXpBar:
 	return UiXpBar.make()
 
 
-## A tool or menu button: an icon over a short label, on a cream face; lit (the tool in hand) when pressed.
+## A tool or menu button: an icon over a short label, floating (no face; a green halo round the tool in hand).
 ## `w` and `h` default to the theme's tool size.
 static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px := 0.0,
 		picture: UiIcon = null, labelled := true) -> Button:
@@ -202,16 +214,7 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(bw, bh)
 	b.focus_mode = Control.FOCUS_NONE
-	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
-		var face := UiTheme.color("tool_face_on" if state.contains("pressed") else "button_face")
-		if state == "hover":
-			face = face.lightened(0.25)
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = face
-		sb.border_color = UiTheme.color("cream") if state.contains("pressed") else UiTheme.color("button_edge")
-		sb.set_border_width_all(int(UiTheme.size("button_border")))
-		sb.set_corner_radius_all(int(minf(bw, bh) * UiTheme.size("tool_round_share")))
-		b.add_theme_stylebox_override(state, sb)
+	_float_states(b, bw, bh)
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -227,8 +230,7 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	var label := Label.new()
 	label.text = words
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_tool"))
-	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
+	FloatText.style(label, int(UiTheme.design("font_tool")))   # (over the farm: white with an outline, as all its words)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.visible = labelled
 	box.add_child(label)
@@ -338,7 +340,6 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	else:
 		var pic := TextureRect.new()
 		pic.texture = picture
-		pic.material = UiFx.glint()
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE

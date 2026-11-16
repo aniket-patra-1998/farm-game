@@ -122,7 +122,6 @@ func _picture(id: String) -> Control:
 	pic.custom_minimum_size = Vector2.ONE * UiTheme.size("unlock_picture")
 	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pic.material = UiFx.glint()
 	var it: Dictionary = Game.item_data(id) if not Game.crops.has(id) else Game.crops[id]
 	pic.tooltip_text = str(it.get("name", id))
 	return pic

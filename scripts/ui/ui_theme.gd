@@ -9,6 +9,11 @@ const MIN_FONT := 14   # no text smaller than this many units..
 const MIN_FONT_DP := 14.0   # ..nor, on a phone, than this many dp (Android's density-independent pixels)
 const DATA := "res://data/ui_theme.json"
 
+const BOLD := preload("res://fonts/Poppins-BoldTab.ttf")   # not-ui (its digits one width: tools/make_tabular_font.py)
+## The type scale, design px: caption, body, heading, title, display (docs/UI.md).
+const TYPE_SCALE: Array[float] = [12.0, 15.0, 18.0, 24.0, 32.0]
+const SHORT_FROM := 1000000   # a number this big is written short where room is tight ("1.25M")
+
 static var _data := {}
 static var _scale := 0.0   # worked out once (and again after a resize: `rescale`)
 static var _least := MIN_FONT   # the smallest text on this screen (`min_font`), worked out with the scale
@@ -26,6 +31,36 @@ static func _load() -> void:
 
 
 ## A named colour (magenta, loudly, when the name is not in the data).
+## A number as the game writes it: digits grouped by commas ("12,450").
+static func number(n: int) -> String:
+	var digits := str(absi(n))
+	var out := ""
+	while digits.length() > 3:
+		out = "," + digits.substr(digits.length() - 3) + out
+		digits = digits.substr(0, digits.length() - 3)
+	return ("-" if n < 0 else "") + digits + out
+
+
+## A number where room is tight (the HUD's counters): in full below SHORT_FROM, then short ("1.25M", "12.4M").
+static func short_number(n: int) -> String:
+	if absi(n) < SHORT_FROM:
+		return number(n)
+	var m := n / 1000000.0
+	return ("%.2fM" if absf(m) < 10.0 else "%.1fM") % m   # not-ui
+
+
+## A change shown as a reward ("+250", "-40").
+static func signed(n: int) -> String:
+	return ("+" if n >= 0 else "") + number(n)
+
+
+## The game's bold face (Poppins Bold with its digits one width, fonts/: numbers, prices, names that lead, floating
+## words); the regular text
+## is Poppins Medium, the project's own font (project.godot gui/theme/custom_font).
+static func bold() -> Font:
+	return BOLD
+
+
 static func color(key: String) -> Color:
 	_load()
 	var hex: Variant = (_data.get("colors", {}) as Dictionary).get(key)
@@ -54,7 +89,17 @@ static func design(key: String) -> float:
 ## (panel text reads best a little smaller than its design size on a phone), never under MIN_FONT. Every panel,
 ## popup and strip of words sizes its text through this, once (a size from `size` is already scaled).
 static func font(design_px: float) -> int:
-	return font_for(design_px, scale(), size("text_share"), min_font())
+	return font_for(on_scale(design_px), scale(), size("text_share"), min_font())
+
+
+## `design_px` brought to the nearest step of the type scale (TYPE_SCALE: caption, body, heading, title, display),
+## so every text in the game is one of a few sizes whatever size its code asked for.
+static func on_scale(design_px: float) -> float:
+	var best: float = TYPE_SCALE[0]
+	for step: float in TYPE_SCALE:
+		if absf(step - design_px) < absf(best - design_px):
+			best = step
+	return best
 
 
 ## `font`'s sum on its own: `design_px` at `ui_scale` and `share`, never under `least`.

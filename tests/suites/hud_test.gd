@@ -933,7 +933,7 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 	_check(bool(slots.face_of.call(HudCrafting.NEXT)["locked"]), "the next star's slot is locked")
 	_eq(recipes.ids.size(), 15, "every recipe has its card")
 	var bread: Dictionary = recipes.face_of.call("pumpkin_bread")
-	_eq(bread["badge"], ["coin", FarmHud._thousands(Game.crafting.good_price("pumpkin_bread"))],
+	_eq(bread["badge"], ["coin", UiTheme.number(Game.crafting.good_price("pumpkin_bread"))],
 		"a recipe's card says what the good sells for")
 	_check(bool(recipes.face_of.call("truffle_pie")["locked"]) and recipes.face_of.call("truffle_pie")["line"]
 		== tr("UNLOCKS_AT_STARS") % 4, "a locked one says the star it unlocks at")
@@ -980,8 +980,8 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 		"the one picked can be used for fuel")
 	var coins := Game.coins
 	var worth := 2 * Game.crafting.good_price("strawberry_shortcake") + Game.crafting.good_price("pumpkin_bread")
-	_check(seen["buttons"].has(tr("SELL_ALL_GOODS") % FarmHud._thousands(worth)), "Sell all says what it brings")
-	(seen["buttons"][tr("SELL_ALL_GOODS") % FarmHud._thousands(worth)][0] as Button).pressed.emit()
+	_check(seen["buttons"].has(tr("SELL_ALL_GOODS") % UiTheme.number(worth)), "Sell all says what it brings")
+	(seen["buttons"][tr("SELL_ALL_GOODS") % UiTheme.number(worth)][0] as Button).pressed.emit()
 	_check(Game.coins >= coins + worth, "and brings it (a first sale's ribbon may add its own)")
 	_check(Game.crafting.goods.is_empty(), "the shelf is empty")
 	# Pantry: what is held, and the Farmers Market's offer as cards: a tap buys one.
@@ -994,10 +994,28 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 	var stall: CardList = _lists_in(page)[0]
 	_eq(stall.ids.size(), Balance.i("crafting.stall_crops"), "the market's offer for today")
 	var id: String = stall.ids[0]
-	_eq(stall.face_of.call(id)["badge"], ["coin", FarmHud._thousands(Game.crafting.bushel_price(id)), false],
+	_eq(stall.face_of.call(id)["badge"], ["coin", UiTheme.number(Game.crafting.bushel_price(id)), false],
 		"a market card says its price")
 	var had := int(Game.crafting.bushels.get(id, 0))
 	stall.press(id)
 	_eq(int(Game.crafting.bushels.get(id, 0)), had + 1, "a tap buys one")
 	hud.sheet.close()
 	main.queue_free()
+
+
+## Numbers and type (the type pass): one formatter (grouped digits, short past a million where room is tight, a
+## reward's sign), every text size on the type scale, and the bold face's digits one width so a changing number
+## never shifts sideways.
+func test_375_numbers_are_written_alike_and_text_sits_on_the_type_scale() -> void:
+	_eq(UiTheme.number(12450), "12,450", "digits grouped by commas")
+	_eq(UiTheme.number(-1500), "-1,500", "a negative too")
+	_eq(UiTheme.short_number(999999), "999,999", "in full below a million")
+	_eq(UiTheme.short_number(1250000), "1.25M", "short past it")
+	_eq(UiTheme.signed(250), "+250", "a reward carries its sign")
+	for px in [11.0, 13.0, 17.0, 20.0, 26.0, 40.0]:
+		_check(UiTheme.on_scale(px) in UiTheme.TYPE_SCALE, "%d px asked comes out on the scale" % px)
+	var bold := UiTheme.bold()
+	var widths := {}
+	for d in 10:
+		widths[bold.get_string_size(str(d), HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x] = true
+	_eq(widths.size(), 1, "every digit of the bold face is one width")

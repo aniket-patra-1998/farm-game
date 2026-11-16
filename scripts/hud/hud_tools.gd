@@ -28,7 +28,7 @@ func _init(owner: FarmHud) -> void:
 func build(root: Control) -> void:
 	var margin := UiTheme.size("hud_margin")
 	panel = PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UiKit.panel_box())
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())   # (no strip behind: the tools float)
 	panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
@@ -39,7 +39,8 @@ func build(root: Control) -> void:
 	row.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.6))
 	panel.add_child(row)
 	for t: Array in TOOLS:
-		var b := UiKit.tool_button(str(t[1]), tr(str(t[2])), 0.0, 0.0, 0.0, null, not learned(str(t[0])))
+		var b := UiKit.tool_button(str(t[1]), tr(str(t[2])), 0.0, 0.0, 0.0, null, false)
+		# (icons only: the name shows on hover or a long press)
 		b.toggle_mode = true
 		b.button_group = _group
 		var id := str(t[0])
