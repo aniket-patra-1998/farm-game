@@ -17,9 +17,9 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 		main.queue_free()
 		await get_tree().process_frame
 		return
-	var book: BookPanel = hud.get("_book")
+	var book: BookPanel = hud.get("book")
 	var opened := 0
-	for panel in ["_show_market", "_show_collections", "_show_ribbons", "_show_settings"]:
+	for panel in ["show_market", "show_collections", "show_ribbons", "show_settings"]:
 		hud.call(panel)
 		opened += 1
 		_check(book.visible, "%s opens the book" % panel)
@@ -114,7 +114,7 @@ func test_148_plant_asks_for_a_seed_and_the_eye_hides_the_interface() -> void:
 	var hud: FarmHud = main.get("hud")
 	var grid: FarmGrid = main.get("grid")
 	(hud.tools.buttons["plant"] as Button).pressed.emit()
-	var book: BookPanel = hud.get("_book")
+	var book: BookPanel = hud.get("book")
 	_check(book.visible, "Plant opens the seed list")
 	hud.choose_seed("strawberries")
 	_check(not book.visible, "picking a seed closes it")
@@ -142,8 +142,8 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 	add_child(main)
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
-	var book: BookPanel = hud.get("_book")
-	hud._show_market()
+	var book: BookPanel = hud.get("book")
+	hud.show_market()
 	var tabs: Array = book.get("_tabs")
 	# (The Mystery Box opens Decorations and land closes Buildings: no Specials tab.)
 	_eq(tabs.size(), HudMarket.SHELVES.size() + 1, "Seeds and a shelf per kind")
@@ -232,7 +232,7 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 	add_child(main)
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
-	var book: BookPanel = hud.get("_book")
+	var book: BookPanel = hud.get("book")
 	var spot := Vector2i(-1, -1)
 	for r in Game.farm_size:
 		for c in Game.farm_size:
@@ -445,7 +445,7 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	var coop := Game.object_at(Game.index_of(spot.x, spot.y))
 	hud.show_building(int(coop["uid"]))
 	_check(hud.sheet != null and hud.sheet.visible, "a finished home opens as its sheet")
-	_check(not (hud.get("_book") as BookPanel).visible, "not as the full panel")
+	_check(not (hud.get("book") as BookPanel).visible, "not as the full panel")
 	var before := hud.sheet.find_children("*", "Control", true, false)
 	var words := ""
 	for l: Label in hud.sheet.find_children("*", "Label", true, false):
@@ -626,8 +626,8 @@ func test_373_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
 	var least := UiTheme.min_font()
-	var screens: Array = [["the main screen", func() -> void: pass], ["the Market", hud._show_market],
-		["Collections", hud._show_collections], ["Ribbons", hud._show_ribbons], ["Settings", hud._show_settings],
+	var screens: Array = [["the main screen", func() -> void: pass], ["the Market", hud.show_market],
+		["Collections", hud.show_collections], ["Ribbons", hud.show_ribbons], ["Settings", hud.show_settings],
 		["the inbox", hud.show_inbox],
 		["the Barn", func() -> void: hud.show_building(int(Game.objects.filter(
 			func(o: Dictionary) -> bool: return o["id"] == "barn")[0]["uid"]))]]
@@ -638,7 +638,7 @@ func test_373_no_text_in_the_interface_is_under_the_smallest_size() -> void:
 			if l.is_visible_in_tree() and l.text.strip_edges() != "":
 				var px := l.get_theme_font_size("font_size")
 				_check(px >= least, "%s: \"%s\" is %d, at least %d" % [screen[0], l.text.left(30), px, least])
-	(hud.get("_book") as BookPanel).close_panel()
+	(hud.get("book") as BookPanel).close_panel()
 	Game.modal_open = false
 	main.queue_free()
 	await get_tree().process_frame
@@ -820,8 +820,8 @@ func test_367_centred_pictures_sit_inside_their_buttons() -> void:
 	add_child(main)
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
-	var book: BookPanel = hud.get("_book")
-	hud.call("_show_settings")
+	var book: BookPanel = hud.get("book")
+	hud.call("show_settings")
 	for f in 3:
 		await get_tree().process_frame
 	var faces := book.find_children("*", "PortraitIcon", true, false)

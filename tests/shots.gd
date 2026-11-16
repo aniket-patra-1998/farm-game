@@ -164,17 +164,17 @@ func _ready() -> void:
 	_shot(dir + "/crafting_panel.png")
 	var hud: FarmHud = _main.get("hud")
 	# The Market's animal shelf (cards with pictures made from the models) and Settings (the graphics level).
-	hud._show_market()
-	hud._book.show_tab(HudMarket.SHELVES.find(["animal", "ANIMALS"]) + 1)
+	hud.show_market()
+	hud.book.show_tab(HudMarket.SHELVES.find(["animal", "ANIMALS"]) + 1)
 	await _frames(90)   # (pictures are made a few a frame: two renders each, then developed)
 	_shot(dir + "/market_animals.png")
-	hud._book.show_tab(HudMarket.SHELVES.find(["building", "BUILDINGS"]) + 1)
+	hud.book.show_tab(HudMarket.SHELVES.find(["building", "BUILDINGS"]) + 1)
 	await _frames(90)
 	_shot(dir + "/market_buildings.png")
-	hud._show_settings()
+	hud.show_settings()
 	await _frames(4)
 	_shot(dir + "/settings_panel.png")
-	hud._book.close_panel()
+	hud.book.close_panel()
 	# A building's own panel: picture, state, Move/Turn/Sell.
 	for o in Game.objects:
 		if Game.is_home(o) and not Game.under_construction(o):
@@ -182,7 +182,7 @@ func _ready() -> void:
 			break
 	await _frames(20)
 	_shot(dir + "/building_panel.png")
-	hud._book.close_panel()
+	hud.book.close_panel()
 	# Times of day and weather, on a farm of crops (using whatever finished art is in art/final).
 	Game.objects.clear()
 	var art_crops := [

@@ -13,11 +13,11 @@ func _init(owner: FarmHud) -> void:
 
 
 func build_building(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(hud._building_uid)
+	var o := Game.object_by_uid(hud.building_uid)
 	if o.is_empty():
-		hud._book.close_panel()
+		hud.book.close_panel()
 		return
-	var uid := hud._building_uid
+	var uid := hud.building_uid
 	add_building_bar(content, o)
 	if Game.under_construction(o):
 		build_construction(content, o, uid)
@@ -61,7 +61,7 @@ func build_building(content: VBoxContainer) -> void:
 	actions.add_theme_constant_override("h_separation", 12)
 	actions.add_theme_constant_override("v_separation", 12)
 	if Game.is_ready(o):
-		var collect := hud._panel_button(tr("COLLECT"))
+		var collect := hud.panel_button(tr("COLLECT"))
 		collect.pressed.connect(func() -> void:
 			var r := Game.collect(uid)
 			if not r.is_empty():
@@ -69,7 +69,7 @@ func build_building(content: VBoxContainer) -> void:
 		actions.add_child(collect)
 	if o["id"] != "beehive":
 		var room := Game.homes.room_for_loose(o)
-		var fill := hud._panel_button(fill_words(o, room))
+		var fill := hud.panel_button(fill_words(o, room))
 		fill.disabled = room == 0
 		fill.pressed.connect(func() -> void: Game.homes.fill_building(uid))
 		actions.add_child(fill)
@@ -129,7 +129,7 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 	var move := _small(tr("TOOL_MOVE"))
 	move.disabled = not move_ok.ok()
 	move.pressed.connect(func() -> void:
-		hud._book.close_panel()
+		hud.book.close_panel()
 		if hud.grid != null:
 			hud.grid.start_placing(str(o["id"]), uid))
 	buttons.add_child(move)
@@ -146,7 +146,7 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 			sell.set_meta(&"sure", true)
 			sell.text = tr("SELL_FOR_COINS") % FarmHud._thousands(Game.sell_value(o))
 			return
-		hud._book.close_panel()
+		hud.book.close_panel()
 		Game.sell_object(uid))
 	buttons.add_child(sell)
 	for verdict: BuildingSystem.Verdict in [move_ok, sell_ok]:
@@ -234,7 +234,7 @@ func build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> void
 	var finish := Game.buildings.can_finish(o)
 	if not finish.ok():
 		content.add_child(BookPanel.text(finish.text, 17, BookPanel.SOFT))
-	var add := hud._panel_button(tr("ADD_MY_MATERIALS"))
+	var add := hud.panel_button(tr("ADD_MY_MATERIALS"))
 	add.pressed.connect(func() -> void: Game.land.add_materials(uid))
 	content.add_child(add)
 	add_buy_missing(content, Game.land.construction_needs(o), func() -> void: Game.land.add_materials(uid))
@@ -246,12 +246,12 @@ func add_buy_missing(content: Control, need: Dictionary, then: Callable) -> void
 	var gems := Game.buildings.gems_for(need)
 	if gems <= 0:
 		return
-	var buy := hud._panel_button(tr("BUY_MISSING_FOR_GEMS") % gems)
+	var buy := hud.panel_button(tr("BUY_MISSING_FOR_GEMS") % gems)
 	buy.disabled = Game.gems < gems
 	buy.pressed.connect(func() -> void:
 		if Game.buildings.buy_missing(need):
 			then.call()
-		hud._book.refresh())
+		hud.book.refresh())
 	content.add_child(buy)
 
 
@@ -274,7 +274,7 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 				var n := int(Game.mystery.mystery_eggs.get(colour, 0))
 				if n <= 0:
 					continue
-				var b := hud._panel_button(tr("OPEN") % [Game.mystery.egg_data["colours"][colour]["name"], n])
+				var b := hud.panel_button(tr("OPEN") % [Game.mystery.egg_data["colours"][colour]["name"], n])
 				var c: String = colour
 				b.pressed.connect(func() -> void:
 					var prize := Game.mystery.open_mystery_egg(c)
@@ -330,12 +330,12 @@ func add_shed_info(content: VBoxContainer) -> void:
 	flow.add_theme_constant_override("v_separation", 10)
 	for k in Game.shed.bunches.size():
 		var flower: String = Game.shed.bunches[k]
-		var b := hud._panel_button(tr("PLACE") % Game.crops[flower]["name"])
+		var b := hud.panel_button(tr("PLACE") % Game.crops[flower]["name"])
 		var idx := k
 		b.pressed.connect(func() -> void:
 			var at := Game.shed.unpack_bunch(idx)
 			if at >= 0:
-				hud._book.close_panel()
+				hud.book.close_panel()
 				hud.place_stored_requested.emit(at))
 		flow.add_child(b)
 	content.add_child(flow)
@@ -378,9 +378,9 @@ func add_garage_info(content: VBoxContainer) -> void:
 		)
 		var cost := Game.vehicles.vehicle_upgrade_cost(id)
 		var vid: String = id
-		var drive := hud._panel_button(tr("USE_VEHICLE"))
+		var drive := hud.panel_button(tr("USE_VEHICLE"))
 		drive.pressed.connect(func() -> void:
-			hud._book.close_panel()
+			hud.book.close_panel()
 			hud.tool_selected.emit("vehicle", vid))
 		card.add_child(drive)
 		if cost < 0:
@@ -392,7 +392,7 @@ func add_garage_info(content: VBoxContainer) -> void:
 			if need_lvl > Game.level():
 				line += tr("LEVEL_3") % need_lvl
 			card.add_child(BookPanel.text(line, 18))
-			var up := hud._panel_button(tr("UPGRADE"))
+			var up := hud.panel_button(tr("UPGRADE"))
 			up.disabled = not Game.vehicles.can_upgrade_vehicle(id)
 			up.pressed.connect(func() -> void: Game.vehicles.upgrade_vehicle(vid))
 			card.add_child(up)
@@ -426,7 +426,7 @@ func build_fuel(content: VBoxContainer) -> void:
 	bar.max_value = Balance.i("vehicles.fuel_tank")
 	bar.value = fuel
 	card.add_child(bar)
-	var buy := hud._panel_button(tr("BUY_A_FULL_TANK_GEMS") % Balance.i("vehicles.fuel_tank_gem_cost"))
+	var buy := hud.panel_button(tr("BUY_A_FULL_TANK_GEMS") % Balance.i("vehicles.fuel_tank_gem_cost"))
 	buy.disabled = Game.gems < Balance.i("vehicles.fuel_tank_gem_cost")
 	buy.pressed.connect(func() -> void: Game.vehicles.buy_fuel_tank())
 	card.add_child(buy)
@@ -461,14 +461,14 @@ func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 	row.add_theme_constant_override("h_separation", 12)
 	var have := Game.nurture.has_supply("animal_feed")
 	var pours := Game.raising.can_pour(o)
-	var pour := hud._panel_button(tr("POUR_FEED") % pours if pours > 0 else (tr("TROUGH_FULL")
+	var pour := hud.panel_button(tr("POUR_FEED") % pours if pours > 0 else (tr("TROUGH_FULL")
 		if Game.raising.room(o) == 0 and not line.is_empty() else tr("NO_ANIMAL_FEED")))
 	pour.disabled = pours <= 0
 	pour.pressed.connect(func() -> void:
 		var grown := Game.raising.pour(uid)
 		if not grown.is_empty():
 			Feedback.moment("level_up_soft")
-		hud._book.refresh())
+		hud.book.refresh())
 	row.add_child(pour)
 	card.add_child(row)
 	card.add_child(BookPanel.text(tr("ANIMAL_FEED_HAVE") % have, 16, BookPanel.SOFT))
@@ -490,11 +490,11 @@ func add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
 		)
 		var row := HFlowContainer.new()
 		row.add_theme_constant_override("h_separation", 12)
-		var put := hud._panel_button(tr("ADD_QUEEN_BEE_HELD") % Game.bees.queen_bees)
+		var put := hud.panel_button(tr("ADD_QUEEN_BEE_HELD") % Game.bees.queen_bees)
 		put.disabled = Game.bees.queen_bees <= 0
 		put.pressed.connect(func() -> void: Game.bees.add_queen(uid))
 		row.add_child(put)
-		var buy := hud._panel_button(tr("BUY_QUEEN_BEE_GEMS") % Balance.i("bees.queen_gem_cost"))
+		var buy := hud.panel_button(tr("BUY_QUEEN_BEE_GEMS") % Balance.i("bees.queen_gem_cost"))
 		buy.disabled = Game.gems < Balance.i("bees.queen_gem_cost")
 		buy.pressed.connect(func() -> void: Game.bees.add_queen(uid, true))
 		row.add_child(buy)
@@ -520,7 +520,7 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 	card.add_child(BookPanel.text(tr("TRUFFLES_HELD") % Game.pigpen.truffles, 21))
 	if not Game.pigpen.is_foraging(o):
 		card.add_child(BookPanel.text(tr("FEED_THE_PIGS_SLOP_AND_THEY") % Balance.i("pigpen.pigs_per_truffle"), 17))
-		var feed := hud._panel_button(tr("FEED_SLOP_COINS") % Balance.i("pigpen.slop_cost"))
+		var feed := hud.panel_button(tr("FEED_SLOP_COINS") % Balance.i("pigpen.slop_cost"))
 		feed.disabled = pigs == 0 or Game.coins < Balance.i("pigpen.slop_cost")
 		feed.pressed.connect(func() -> void: Game.pigpen.feed_slop(uid))
 		card.add_child(feed)
@@ -529,7 +529,7 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 			BookPanel.text(tr("FORAGING_BACK_IN") + FarmGrid.format_duration(Game.pigpen.forage_seconds_left(o)), 18)
 		)
 	else:
-		var dig := hud._panel_button(tr("COLLECT_TRUFFLES"))
+		var dig := hud.panel_button(tr("COLLECT_TRUFFLES"))
 		dig.pressed.connect(func() -> void:
 			var n := Game.pigpen.collect_truffles(uid)
 			if n > 0:
@@ -540,7 +540,7 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 	breeds.add_theme_constant_override("h_separation", 10)
 	breeds.add_theme_constant_override("v_separation", 10)
 	for id in Game.pigpen.rare_pigs():
-		var b := hud._panel_button(Game.item_data(id)["name"])
+		var b := hud.panel_button(Game.item_data(id)["name"])
 		b.disabled = Game.pigpen.truffles < Balance.i("pigpen.truffles_per_pig")
 		var breed: String = id
 		b.pressed.connect(func() -> void: Game.pigpen.trade_truffles(breed))
@@ -569,7 +569,7 @@ func add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void
 	var verdict := Game.buildings.can_expand(o)
 	if not verdict.ok() and verdict.text != "":
 		card.add_child(BookPanel.text(verdict.text, 16, UiTheme.color("price_short")))
-	var up := hud._panel_button(tr("EXPAND"))
+	var up := hud.panel_button(tr("EXPAND"))
 	up.disabled = not verdict.ok()
 	up.pressed.connect(func() -> void: Game.land.upgrade_building(uid))
 	card.add_child(up)

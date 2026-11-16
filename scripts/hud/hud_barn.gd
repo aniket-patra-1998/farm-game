@@ -13,7 +13,7 @@ func _init(owner: FarmHud) -> void:
 func build_barn(content: VBoxContainer) -> void:
 	var b := Game.storage.barn()
 	if b.is_empty():
-		hud._book.close_panel()
+		hud.book.close_panel()
 		return
 	hud.buildings.add_building_bar(content, b)
 	add_boosts(content)
@@ -42,9 +42,9 @@ func add_boosts(content: VBoxContainer) -> void:
 	]
 	if Game.vehicles.fuel_unlocked:
 		boosts.append([tr("FUEL_TANKS") % [Game.vehicles.fuel_now(), Balance.i("vehicles.fuel_tank"),
-			Game.vehicles.fuel_tanks], true, func() -> void: hud._book.open_panel(tr("FUEL"), hud.buildings.build_fuel)])
+			Game.vehicles.fuel_tanks], true, func() -> void: hud.book.open_panel(tr("FUEL"), hud.buildings.build_fuel)])
 	for entry: Array in boosts:
-		var use := hud._panel_button(str(entry[0]))
+		var use := hud.panel_button(str(entry[0]))
 		use.disabled = not bool(entry[1])
 		use.pressed.connect(entry[2])
 		row.add_child(use)
@@ -79,7 +79,7 @@ func build_barn_repair(content: VBoxContainer) -> void:
 		)
 	)
 	content.add_child(BookPanel.card_frame(card))
-	var fix := hud._panel_button(tr("REPAIR_THE_BARN") if Game.storage.can_repair_barn() else tr("NOT_ENOUGH_PARTS_YET"))
+	var fix := hud.panel_button(tr("REPAIR_THE_BARN") if Game.storage.can_repair_barn() else tr("NOT_ENOUGH_PARTS_YET"))
 	fix.disabled = not Game.storage.can_repair_barn()
 	fix.pressed.connect(func() -> void: Game.storage.repair_barn())
 	content.add_child(fix)
@@ -128,29 +128,29 @@ func add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 	var face := func(id: String) -> Dictionary:
 		return {"name": Game.name_of(id), "line": tr("TIMES_N") % count[id], "badge": ["", tr("PLACE_2")]}
 	content.add_child(CardList.make(kinds, face, func(id: String) -> void:
-		hud._book.close_panel()
+		hud.book.close_panel()
 		hud.place_stored_requested.emit(int(first[id])), hud.get_viewport().get_visible_rect().size.x))
 
 
 ## A bloom's card: when it's ready, whether it has withered (and regrowing it with Flower Food), and for a
 ## Single Bloom, upgrading it to a Full Bloom that never withers.
 func build_bloom(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(hud._building_uid)
+	var o := Game.object_by_uid(hud.building_uid)
 	var d := Game.catalog.get_def(str(o.get("id", ""))) as BloomDef
 	if d == null:
 		return
-	var uid := hud._building_uid
+	var uid := hud.building_uid
 	if Game.is_withered(o):
 		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), 20, BookPanel.SOFT))
 		content.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply("flower_food"),
 			Game.nurture.supply_name("flower_food")], 18, BookPanel.SOFT))
-		var regrow := hud._panel_button(tr("REGROW_IT"))
+		var regrow := hud.panel_button(tr("REGROW_IT"))
 		regrow.disabled = Game.nurture.free_supply("flower_food") <= 0
 		regrow.pressed.connect(func() -> void:
 			Game.player.enqueue({"kind": "nurture", "uid": uid})
-			hud._book.close_panel())
+			hud.book.close_panel())
 		content.add_child(regrow)
-		var buy := hud._panel_button(tr("BUY_ONE_FOR_GEMS") % [Game.nurture.supply_name("flower_food"),
+		var buy := hud.panel_button(tr("BUY_ONE_FOR_GEMS") % [Game.nurture.supply_name("flower_food"),
 			int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])])
 		buy.disabled = Game.gems < int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])
 		buy.pressed.connect(func() -> void:
@@ -163,7 +163,7 @@ func build_bloom(content: VBoxContainer) -> void:
 	if d.withers():
 		content.add_child(BookPanel.info(tr("A_SINGLE_BLOOM_WITHERS"), tr("A_SINGLE_BLOOM_WITHERS_INFO"), 17,
 			BookPanel.SOFT))
-		var up := hud._panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
+		var up := hud.panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
 		up.disabled = Game.gems < d.upgrade_gems()
 		up.pressed.connect(func() -> void:
 			if Game.nurture.upgrade_bloom(uid):
@@ -173,7 +173,7 @@ func build_bloom(content: VBoxContainer) -> void:
 
 ## A mystery young's card: how far it has grown, the supply it needs and how many you have, and more for gems.
 func build_young(content: VBoxContainer) -> void:
-	var o := Game.object_by_uid(hud._building_uid)
+	var o := Game.object_by_uid(hud.building_uid)
 	if not Game.nurture.is_young(o):
 		return
 	var supply := Game.nurture.supply_of(o)
@@ -190,15 +190,15 @@ func build_young(content: VBoxContainer) -> void:
 	card.add_child(bar)
 	card.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply(supply), name], 18))
 	content.add_child(BookPanel.card_frame(card))
-	var uid := hud._building_uid
-	var give := hud._panel_button(tr("GIVE_ONE"))
+	var uid := hud.building_uid
+	var give := hud.panel_button(tr("GIVE_ONE"))
 	give.disabled = Game.nurture.free_supply(supply) <= 0
 	give.pressed.connect(func() -> void:
 		Game.player.enqueue({"kind": "nurture", "uid": uid})
-		hud._book.close_panel())
+		hud.book.close_panel())
 	content.add_child(give)
 	var gems := int(NurtureSystem.SUPPLIES[supply]["gem_cost"])
-	var buy := hud._panel_button(tr("BUY_ONE_FOR_GEMS") % [name, gems])
+	var buy := hud.panel_button(tr("BUY_ONE_FOR_GEMS") % [name, gems])
 	buy.disabled = Game.gems < gems
 	buy.pressed.connect(func() -> void:
 		if Game.nurture.buy_supply(supply, 1):

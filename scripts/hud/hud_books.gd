@@ -23,7 +23,7 @@ func build_collections(content: VBoxContainer) -> void:
 	for coll in Game.collectibles.collections:
 		ids.append(str(coll["id"]))
 	var list := CardList.make(ids, set_face, func(coll_id: String) -> void:
-		hud._book.open_panel(str(_set_of(coll_id)["name"]), func(c: VBoxContainer) -> void: build_collection(c, coll_id)),
+		hud.book.open_panel(str(_set_of(coll_id)["name"]), func(c: VBoxContainer) -> void: build_collection(c, coll_id)),
 		hud.get_viewport().get_visible_rect().size.x)
 	content.add_child(list)
 	BookPanel.set_live(content, list.refresh)
@@ -55,9 +55,9 @@ func _set_of(coll_id: String) -> Dictionary:
 ## One set opened: its items with how many you hold of how many a trade needs, Trade in once it can be, and its
 ## prize; a Back to the grid.
 func build_collection(content: VBoxContainer, coll_id: String) -> void:
-	var back := hud._panel_button(tr("BACK"))
+	var back := hud.panel_button(tr("BACK"))
 	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	back.pressed.connect(hud._show_collections)
+	back.pressed.connect(hud.show_collections)
 	content.add_child(back)
 	for coll in Game.collectibles.collections:
 		if str(coll["id"]) != coll_id:

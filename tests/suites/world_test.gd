@@ -136,7 +136,7 @@ func test_37_tap_farms_swipe_farms_and_hand_drag_moves_the_view() -> void:
 	var i := Game.index_of(11, 11)
 	_eq(Game.field.phase(i), GameState.Phase.GRASS, "tile starts as grass")
 	var tap_at := _screen_pos(grid, i)
-	_check(grid._on_farm_area(tap_at), "the tile is on screen (view %s, tile at %s)" % [str(view), str(tap_at)])
+	_check(grid.on_farm_area(tap_at), "the tile is on screen (view %s, tile at %s)" % [str(view), str(tap_at)])
 	await _touch(tap_at, true)
 	await _touch(tap_at, false)
 	Game.player.advance(60.0)  # the farmer walks over and does it
@@ -185,7 +185,7 @@ func test_37_tap_farms_swipe_farms_and_hand_drag_moves_the_view() -> void:
 			var run: Array[int] = []
 			for k in 4:
 				var p := Game.index_of(r, c + k)
-				if Game.field.phase(p) == GameState.Phase.GRASS and grid._on_farm_area(_screen_pos(grid, p)) \
+				if Game.field.phase(p) == GameState.Phase.GRASS and grid.on_farm_area(_screen_pos(grid, p)) \
 						and grid.swipe_start(_screen_pos(grid, p), "plow") == p:   # (open, nothing drawn over it)
 					run.append(p)
 			if run.size() == 4:

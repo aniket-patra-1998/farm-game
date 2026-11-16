@@ -68,6 +68,12 @@ func reset() -> void:
 
 
 ## Makes the farmer a boy ("a") or a girl ("b"), with that kind's own hair to start with.
+## Names the farm (Settings); saved with the farm.
+func set_farm_name(words: String) -> void:
+	farm_name = words.strip_edges()
+	game.queue_save()
+
+
 func set_kind(kind: String) -> void:
 	if not KIND_HAIR.has(kind) or str(look["body"]) == kind:
 		return

@@ -37,19 +37,18 @@ var resting := false                # the interface has faded away over an idle 
 var next_ready: Callable            # set by Main: goes to the next thing ready to take
 var fit_view: Callable              # set by Main: shows the whole farm
 
+var book: BookPanel      # every full panel opens in it (panels and the sheet reach it as hud.book)
+var building_uid := -1   # the building whose panel is open
 var _away: AwayCard   # the While you were away card (made when first needed, then kept)
 var _rest_tween: Tween
 var _toast: Label
 var _toast_tween: Tween
 var _toast_holder: CenterContainer
 var _tutorial: Label
-var _book: BookPanel
 var _level_popup: LevelUpPopup
 var _placing_bar: PanelContainer
 var _placing_label: Label
 var _turn_button: Button
-
-var _building_uid := -1
 
 
 var _shown_coins := -1.0   # the number the coin counter shows while it rolls toward Game.coins
@@ -103,8 +102,8 @@ func _ready() -> void:
 	bubble = HudBubble.new(self)
 	root.add_child(bubble)
 	_build_placing_bar(root)
-	_book = BookPanel.new()
-	root.add_child(_book)
+	book = BookPanel.new()
+	root.add_child(book)
 	_level_popup = LevelUpPopup.new()
 	root.add_child(_level_popup)
 	Game.leveled_up.connect(_level_popup.celebrate)
@@ -183,12 +182,12 @@ func _moving_uid() -> int:
 
 ## Opens the seed list (the Plant tool).
 func show_seeds() -> void:
-	_book.open_panel(tr("SEED_LIST"), seeds.build_seeds)
+	book.open_panel(tr("SEED_LIST"), seeds.build_seeds)
 
 
 ## A seed picked: it goes in hand, and the Plant tool lights.
 func choose_seed(crop_id: String) -> void:
-	_book.close_panel()
+	book.close_panel()
 	tool_selected.emit("plant", crop_id)
 	tools.show_tool("plant")
 	show_message(tr("TAP_PLOWED_PLOTS_TO_PLANT") % Game.crops[crop_id]["name"])
@@ -378,53 +377,53 @@ func _refresh_clock() -> void:
 
 
 func _refresh_book() -> void:
-	if _book.visible:
-		_book.refresh()
+	if book.visible:
+		book.refresh()
 
 
-func _show_collections() -> void:
-	_book.open_panel(tr("COLLECTIONS"), books.build_collections)
+func show_collections() -> void:
+	book.open_panel(tr("COLLECTIONS"), books.build_collections)
 
 
 func show_inbox() -> void:
 	var note := Game.social.settle()
 	if note != "":
 		show_message(note)
-	_book.open_panel(tr("INBOX"), inbox.build_inbox)
+	book.open_panel(tr("INBOX"), inbox.build_inbox)
 
 
-func _show_ribbons() -> void:
-	_book.open_panel(tr("RIBBONS"), books.build_ribbons)
+func show_ribbons() -> void:
+	book.open_panel(tr("RIBBONS"), books.build_ribbons)
 
 
-func _show_settings() -> void:
-	_book.open_panel(tr("SETTINGS"), settings.build_settings)
+func show_settings() -> void:
+	book.open_panel(tr("SETTINGS"), settings.build_settings)
 
 
-func _show_market() -> void:
-	_book.open_tabs(tr("MARKET"), market.tabs(), 1)   # (the first shelf after Seeds: trees, as FarmVille opened)
+func show_market() -> void:
+	book.open_tabs(tr("MARKET"), market.tabs(), 1)   # (the first shelf after Seeds: trees, as FarmVille opened)
 
 
 ## Opened when a building that isn't ready is tapped.
 func show_building(uid: int) -> void:
-	_building_uid = uid
+	building_uid = uid
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
 		return
 	if Game.nurture.is_young(o):
-		_book.open_panel(Game.item_data(o["id"])["name"], barn.build_young)
+		book.open_panel(Game.item_data(o["id"])["name"], barn.build_young)
 	elif Game.kind_of(o) == "bloom":
-		_book.open_panel(Game.item_data(o["id"])["name"], barn.build_bloom)
+		book.open_panel(Game.item_data(o["id"])["name"], barn.build_bloom)
 	elif Game.kind_of(o) == "animal" and Game.feeds.is_feedable(o):
-		_book.open_panel(Game.item_data(o["id"])["name"], feed.build_animal)
+		book.open_panel(Game.item_data(o["id"])["name"], feed.build_animal)
 	elif Game.kind_of(o) == "vehicle" and not Game.under_construction(o):
-		_book.open_panel(tr("FUEL"), buildings.build_fuel)   # a vehicle tapped with an empty tank
+		book.open_panel(tr("FUEL"), buildings.build_fuel)   # a vehicle tapped with an empty tank
 	elif BuildingSheet.suits(o):
 		# Every building opens as a small sheet at the bottom, the farm still in view (its full panel is its More).
 		if sheet == null:
 			sheet = BuildingSheet.new(self)
-			_book.get_parent().add_child(sheet)
-		_book.close_panel()
+			book.get_parent().add_child(sheet)
+		book.close_panel()
 		sheet.open(uid)
 	else:
 		open_building_panel(uid)
@@ -436,28 +435,28 @@ func open_full_panel(uid: int) -> void:
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
 		return
-	_building_uid = uid
+	building_uid = uid
 	if sheet != null:
 		sheet.close()
 	match BuildingSheet.kind_of(o):
 		BuildingSheet.Kind.BARN:
-			_book.open_panel(tr("BARN"), barn.build_barn)
+			book.open_panel(tr("BARN"), barn.build_barn)
 		BuildingSheet.Kind.CRAFT:
 			Game.crafting.finish_crafts(uid)
-			_book.open_panel(Game.size_name(o), crafting.build_crafting)
+			book.open_panel(Game.size_name(o), crafting.build_crafting)
 		_:
 			open_building_panel(uid)
 
 
 ## A building's own full panel (its feed, its own extras, building its next size).
 func open_building_panel(uid: int) -> void:
-	_building_uid = uid
+	building_uid = uid
 	if sheet != null:
 		sheet.close()
-	_book.open_panel(Game.item_data(Game.object_by_uid(uid)["id"])["name"], buildings.build_building)
+	book.open_panel(Game.item_data(Game.object_by_uid(uid)["id"])["name"], buildings.build_building)
 
 
-func _panel_button(words: String) -> Button:
+func panel_button(words: String) -> Button:
 	var b := Button.new()
 	b.text = words
 	b.custom_minimum_size = Vector2(UiTheme.size("panel_button_width"), UiTheme.size("panel_button_height"))
