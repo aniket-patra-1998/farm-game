@@ -247,9 +247,27 @@ func _draw() -> void:
 			_draw_tool(light)
 		"market", "album", "neighbours", "gear":
 			_draw_menu(light)
+		"sun", "moon", "cloud", "rain", "storm", "fog", "snow", "sun_cloud", "flower", "leaf", "flake", "drops":
+			_draw_sky()
 		"cross":
 			_shape(_pts([-0.62, -0.42, -0.42, -0.62, 0.0, -0.2, 0.42, -0.62, 0.62, -0.42, 0.2, 0.0, 0.62, 0.42,
 				0.42, 0.62, 0.0, 0.2, -0.42, 0.62, -0.62, 0.42, -0.2, 0.0]), UiTheme.color("berry"), false)
+		"feed":   # a bowl heaped with grain (feed an animal or a home)
+			_shape(_pts([-0.85, -0.05, 0.85, -0.05, 0.6, 0.6, -0.6, 0.6]), UiTheme.color("wood_light"))
+			_shape(_ring(0, -0.12, 0.62, 0.45), UiTheme.color("sack"), false, false)
+			for k in 5:
+				_dot(_p(-0.4 + k * 0.2, -0.22 - absf(k - 2) * -0.04), 0.07, UiTheme.color("coin_edge"))
+		"up":   # an arrow up (expand, grow)
+			_shape(_pts([0.0, -0.9, 0.72, -0.05, 0.28, -0.05, 0.28, 0.85, -0.28, 0.85, -0.28, -0.05, -0.72, -0.05]),
+				UiTheme.color("plus_face"))
+		"turn":   # a curved arrow (turn a thing round)
+			draw_arc(_c, _r * 0.55, PI * 0.15, PI * 1.6, 20, UiTheme.color("icon_outline"), maxf(4.0, _s * 0.2), true)
+			draw_arc(_c, _r * 0.55, PI * 0.15, PI * 1.6, 20, UiTheme.color("gem"), maxf(2.0, _s * 0.11), true)
+			_shape(_pts([0.25, -0.05, 0.85, -0.05, 0.55, 0.45]), UiTheme.color("gem"))
+		"info":   # ⓘ: more words behind a tap (BookPanel.info)
+			_shape(_ring(0, 0, 0.85), UiTheme.color("sky_ink"))
+			_dot(_p(0, -0.42), 0.13, Color.WHITE)
+			_line(_p(0, -0.12), _p(0, 0.5), 0.17, Color.WHITE)
 		"lock":
 			draw_arc(_p(0, -0.2), _r * 0.4, PI, TAU, 16, UiTheme.color("icon_outline"), maxf(2.5, _s * 0.16), true)
 			draw_arc(_p(0, -0.2), _r * 0.4, PI, TAU, 16, UiTheme.color("metal"), maxf(1.2, _s * 0.07), true)
@@ -261,6 +279,71 @@ func _draw() -> void:
 	if struck:
 		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.16)
 		_line(_p(-0.95, -0.95), _p(0.95, 0.95), 0.09, Color("#e0493a"))
+
+
+## The sky's and the seasons' icons (the clock's line, HudTop): the weather (sun, moon, cloud, rain, storm, fog,
+## snow, sun behind a cloud) and a sign for each season (a flower, the sun, a leaf, a snowflake, rain drops).
+func _draw_sky() -> void:
+	var sun := UiTheme.color("coin")
+	var cloud := UiTheme.color("icon_light")
+	var drop := UiTheme.color("sky_ink").lightened(0.2)
+	match kind:
+		"sun":
+			for k in 8:
+				var a := TAU * k / 8.0
+				_line(_p(cos(a) * 0.62, sin(a) * 0.62), _p(cos(a) * 0.92, sin(a) * 0.92), 0.11, sun.darkened(0.1))
+			_shape(_ring(0, 0, 0.5), sun)
+		"moon":   # a crescent: the outer edge's arc, then back along a smaller circle set off to one side
+			var cres := PackedVector2Array()
+			for k in 17:
+				var a := lerpf(0.45 * PI, 1.55 * PI, k / 16.0)
+				cres.append(_p(cos(a) * 0.78, sin(a) * 0.78))
+			for k in 17:
+				var a := lerpf(1.45 * PI, 0.55 * PI, k / 16.0)
+				cres.append(_p(0.3 + cos(a) * 0.62, sin(a) * 0.62))
+			_shape(cres, UiTheme.color("icon_light"))
+		"cloud", "rain", "storm", "snow", "sun_cloud":
+			if kind == "sun_cloud":
+				_shape(_ring(0.28, -0.3, 0.42), sun)
+			var lift := -0.18 if kind in ["rain", "storm", "snow"] else 0.0
+			var puffs := PackedVector2Array()
+			for k in 24:
+				var a := TAU * k / 24.0
+				var bump := 0.12 * maxf(0.0, sin(a * 3.0 + 0.6))
+				puffs.append(_p(cos(a) * (0.72 + bump), lift + 0.1 + sin(a) * (0.42 + bump)))
+			_shape(puffs, cloud)
+			if kind == "rain":
+				for x: float in [-0.4, 0.0, 0.4]:
+					_line(_p(x, 0.42), _p(x - 0.12, 0.8), 0.09, drop)
+			elif kind == "storm":
+				_shape(_pts([0.05, 0.3, -0.25, 0.65, 0.0, 0.65, -0.15, 0.98, 0.3, 0.52, 0.05, 0.52, 0.2, 0.3]), sun)
+			elif kind == "snow":
+				for x: float in [-0.4, 0.0, 0.4]:
+					_dot(_p(x, 0.62 + absf(x) * 0.2), 0.11, Color.WHITE)
+		"fog":
+			for k in 4:
+				var y := -0.55 + k * 0.36
+				_line(_p(-0.8 + (k % 2) * 0.2, y), _p(0.8 - ((k + 1) % 2) * 0.2, y), 0.13, cloud)
+		"flower":   # spring
+			for k in 5:
+				var a := TAU * k / 5.0 - PI / 2.0
+				_shape(_ring(cos(a) * 0.42, sin(a) * 0.42, 0.34), UiTheme.color("berry").lightened(0.35))
+			_shape(_ring(0, 0, 0.3), sun, true, false)
+		"leaf":   # autumn
+			_shape(_pts([0.0, -0.9, 0.55, -0.35, 0.6, 0.25, 0.0, 0.8, -0.6, 0.25, -0.55, -0.35]), Color("#d9822b"))
+			_line(_p(0.0, -0.7), _p(0.0, 0.95), 0.07, Color("#8a4a17"))
+		"flake":   # winter
+			for k in 3:
+				var a := PI * k / 3.0
+				_line(_p(cos(a) * -0.85, sin(a) * -0.85), _p(cos(a) * 0.85, sin(a) * 0.85), 0.12, Color("#e8f4ff"))
+			_dot(_c, 0.18, Color("#e8f4ff"))
+		"drops":   # the monsoon
+			for d: Array in [[-0.35, -0.2, 0.42], [0.35, 0.15, 0.42], [-0.05, 0.55, 0.3]]:
+				var x: float = d[0]
+				var y: float = d[1]
+				var rr: float = d[2]
+				_shape(_pts([x, y - rr * 1.6, x + rr, y, x + rr * 0.7, y + rr * 0.7, x, y + rr, x - rr * 0.7, y + rr * 0.7,
+					x - rr, y]), drop)
 
 
 ## Draws this icon's rendered picture (UiModels, made once by ItemIcons) when it has one and it is ready: its

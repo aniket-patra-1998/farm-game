@@ -40,15 +40,19 @@ static func pop_in(control: Control) -> void:
 		return
 	var order := popped
 	popped += 1
-	control.tree_entered.connect(func() -> void:
-		control.pivot_offset = control.custom_minimum_size / 2.0
-		control.scale = Vector2.ONE * POP_FROM
-		control.modulate.a = 0.0
-		var t := control.create_tween().set_parallel()
-		var wait := minf(order * POP_STAGGER, POP_MOST)
-		t.tween_property(control, "scale", Vector2.ONE, POP_TIME).set_delay(wait).set_trans(Tween.TRANS_BACK) \
-			.set_ease(Tween.EASE_OUT)
-		t.tween_property(control, "modulate:a", 1.0, POP_TIME * 0.6).set_delay(wait), CONNECT_ONE_SHOT)
+	control.tree_entered.connect(func() -> void: pop_now(control, order), CONNECT_ONE_SHOT)
+
+
+## `control` (in the tree) pops in now, `order` cards after the first (a CardList's cards as a panel opens).
+static func pop_now(control: Control, order: int) -> void:
+	control.pivot_offset = control.custom_minimum_size / 2.0
+	control.scale = Vector2.ONE * POP_FROM
+	control.modulate.a = 0.0
+	var t := control.create_tween().set_parallel()
+	var wait := minf(order * POP_STAGGER, POP_MOST)
+	t.tween_property(control, "scale", Vector2.ONE, POP_TIME).set_delay(wait).set_trans(Tween.TRANS_BACK) \
+		.set_ease(Tween.EASE_OUT)
+	t.tween_property(control, "modulate:a", 1.0, POP_TIME * 0.6).set_delay(wait)
 
 
 ## A panel swelling open from a little smaller, fading in.

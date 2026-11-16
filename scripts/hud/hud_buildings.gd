@@ -3,6 +3,8 @@ extends RefCounted
 ## The panel of a tapped building: its state, upgrades and its own extras (Garage, hives, pig pen, shed).
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
+const SMALL_PX := 17   # design px of the small Move, Turn and Sell on a building panel
+
 var hud: FarmHud
 
 
@@ -66,9 +68,9 @@ func build_building(content: VBoxContainer) -> void:
 				hud.show_message(tr("COINS_XP") % [r["coins"], r["xp"]]))
 		actions.add_child(collect)
 	if o["id"] != "beehive":
-		var loose := Game.homes.loose_matching(o)
-		var fill := hud._panel_button(tr("MOVE_IN") % loose if loose > 0 else tr("NONE_ON_FARM"))
-		fill.disabled = loose == 0
+		var room := Game.homes.room_for_loose(o)
+		var fill := hud._panel_button(fill_words(o, room))
+		fill.disabled = room == 0
 		fill.pressed.connect(func() -> void: Game.homes.fill_building(uid))
 		actions.add_child(fill)
 	content.add_child(actions)
@@ -76,6 +78,36 @@ func build_building(content: VBoxContainer) -> void:
 	hud.feed.add_feed_card(content, o)
 	add_building_special_info(content, o)
 	add_expansion_card(content, o, uid)
+
+
+## The fill button's words: how many would move in, else why none would (the home is full, or none are loose).
+static func fill_words(o: Dictionary, room: int) -> String:
+	if room > 0:
+		return move_in_words(o, room)
+	return TranslationServer.translate("FILL_FULL" if Game.homes.loose_matching(o) > 0 else "NONE_ON_FARM")
+
+
+## The words on a home's fill button: "Add 10 animals" for an animal home, "Add 3" for one that holds vehicles,
+## trees or blooms (the home's picture says what).
+static func move_in_words(o: Dictionary, n: int) -> String:
+	var holds := str(Game.item_data(str(o.get("id", ""))).get("holds_kind", ""))
+	return TranslationServer.translate("MOVE_IN_ANIMALS" if holds == "" else "MOVE_IN") % n
+
+
+## A small flat text button for what can be done to a building wherever it stands (Move, Turn, Sell): there but
+## quiet, at the top right of its panel, as on a home's sheet; the panel's big buttons are for what it is for.
+static func _small(words: String) -> Button:
+	var b := Button.new()
+	b.text = words
+	b.flat = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	b.add_theme_font_size_override("font_size", BookPanel.font_px(SMALL_PX))
+	b.add_theme_color_override("font_color", UiTheme.color("cream"))
+	b.add_theme_color_override("font_hover_color", UiTheme.color("button_face_down"))
+	b.add_theme_color_override("font_disabled_color", Color(UiTheme.color("cream"), 0.4))
+	UiFx.press_bounce(b)
+	return b
 
 
 ## The top of every building's panel: its picture, its state in a line, and what can be done to it
@@ -104,7 +136,7 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 	# left out; one that can't work yet is greyed with its reason shown underneath.
 	var reasons: Array[String] = []
 	var move_ok := Game.buildings.can_move(o)
-	var move := hud._panel_button(tr("TOOL_MOVE"))
+	var move := _small(tr("TOOL_MOVE"))
 	move.disabled = not move_ok.ok()
 	move.pressed.connect(func() -> void:
 		hud._book.close_panel()
@@ -112,11 +144,11 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 			hud.grid.start_placing(str(o["id"]), uid))
 	buttons.add_child(move)
 	if Game.buildings.can_rotate(o).ok():   # (one that can never turn has no Turn button)
-		var turn := hud._panel_button(tr("TURN"))
+		var turn := _small(tr("TURN"))
 		turn.pressed.connect(func() -> void: Game.rotate_object(uid))
 		buttons.add_child(turn)
 	var sell_ok := Game.buildings.can_sell(o)
-	var sell := hud._panel_button(tr("TOOL_SELL"))
+	var sell := _small(tr("TOOL_SELL"))
 	sell.visible = sell_ok.why != BuildingSystem.Why.KEPT   # (one that is never sold, the Barn, has no Sell)
 	sell.disabled = not sell_ok.ok()
 	sell.pressed.connect(func() -> void:
@@ -183,8 +215,8 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 func build_construction(content: VBoxContainer, o: Dictionary, uid: int) -> void:
 	var it := Game.item_data(o["id"])
 	content.add_child(
-		BookPanel.text(
-			tr("THIS_IS_A_BUILDING_FRAME_FINISH"),
+		BookPanel.info(
+			tr("THIS_IS_A_BUILDING_FRAME_FINISH"), tr("THIS_IS_A_BUILDING_FRAME_FINISH_INFO"),
 			19,
 			BookPanel.CREAM
 		)
@@ -239,8 +271,8 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 	match it.get("special", ""):
 		"mystery_eggs":
 			content.add_child(
-				BookPanel.text(
-					tr("HARVESTING_CAN_TURN_UP_MYSTERY_EGGS"),
+				BookPanel.info(
+					tr("HARVESTING_CAN_TURN_UP_MYSTERY_EGGS"), tr("HARVESTING_CAN_TURN_UP_MYSTERY_EGGS_INFO"),
 					17,
 					BookPanel.CREAM
 				)
@@ -289,8 +321,8 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 			add_shed_info(content)
 		"saplings":
 			content.add_child(
-				BookPanel.text(
-					tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR"),
+				BookPanel.info(
+					tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR"), tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR_INFO"),
 					17,
 					BookPanel.CREAM
 				)
@@ -299,7 +331,8 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 
 ## The Garden Shed: Perfect Bunches found while harvesting flowers, ready to place for 14 days.
 func add_shed_info(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("PERFECT_BUNCHES_OF_HARVESTING_FLOWERS_SOMETIMES") % [
+	content.add_child(BookPanel.info(tr("PERFECT_BUNCHES_OF_HARVESTING_FLOWERS_SOMETIMES") % [
+		Game.shed.bunches.size(), Game.shed.bunch_cap()], tr("PERFECT_BUNCHES_OF_HARVESTING_FLOWERS_SOMETIMES_INFO") % [
 		Game.shed.bunches.size(), Game.shed.bunch_cap(), Balance.i("barn.bunch_days")], 17, BookPanel.CREAM))
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", 10)
@@ -319,8 +352,9 @@ func add_shed_info(content: VBoxContainer) -> void:
 
 func add_garage_info(content: VBoxContainer) -> void:
 	content.add_child(
-		BookPanel.text(
+		BookPanel.info(
 			tr("VEHICLE_PARTS_HELD_THEY_TURN_UP") % int(Game.parts.get("vehicle_parts", 0)),
+			tr("VEHICLE_PARTS_HELD_THEY_TURN_UP_INFO") % int(Game.parts.get("vehicle_parts", 0)),
 			17,
 			BookPanel.CREAM
 		)
@@ -377,8 +411,9 @@ func add_garage_info(content: VBoxContainer) -> void:
 func build_fuel(content: VBoxContainer) -> void:
 	var fuel := Game.vehicles.fuel_now()
 	content.add_child(
-		BookPanel.text(
-			tr("ALL_VEHICLES_SHARE_ONE_TANK_OF") % [
+		BookPanel.info(
+			tr("ALL_VEHICLES_SHARE_ONE_TANK_OF") % Balance.i("vehicles.fuel_tank"),
+			tr("ALL_VEHICLES_SHARE_ONE_TANK_OF_INFO") % [
 				Balance.i("vehicles.fuel_tank"),
 				int(Balance.i("vehicles.fuel_regen_seconds") / 60.0)
 			],
@@ -430,7 +465,7 @@ func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 			var has := clampi(Game.raising.trough(o) - k * need, 0, need)
 			queue.append([line[k], "%d/%d" % [has, need]])
 		card.add_child(UiKit.count_row(queue))
-		card.add_child(BookPanel.text(tr("NURSERY_HOW") % need, 17))
+		card.add_child(BookPanel.info(tr("NURSERY_HOW") % need, tr("NURSERY_HOW_INFO") % need, 17))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 12)
 	var have := Game.nurture.has_supply("animal_feed")
@@ -452,11 +487,12 @@ func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 func add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
 	var uid := int(o["uid"])
 	if Game.bees.has_queen(o):
-		content.add_child(BookPanel.text(tr("THE_QUEEN_BEE_LIVES_HERE_WORKER") % Game.capacity(o), 17, BookPanel.CREAM))
+		content.add_child(BookPanel.info(tr("THE_QUEEN_BEE_LIVES_HERE_WORKER") % Game.capacity(o),
+			tr("THE_QUEEN_BEE_LIVES_HERE_WORKER_INFO") % Game.capacity(o), 17, BookPanel.CREAM))
 	else:
 		content.add_child(
-			BookPanel.text(
-				tr("THIS_HIVE_NEEDS_A_QUEEN_BEE"),
+			BookPanel.info(
+				tr("THIS_HIVE_NEEDS_A_QUEEN_BEE"), tr("THIS_HIVE_NEEDS_A_QUEEN_BEE_INFO"),
 				17,
 				BookPanel.CREAM
 			)
@@ -473,8 +509,9 @@ func add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
 		row.add_child(buy)
 		content.add_child(row)
 	content.add_child(
-		BookPanel.text(
-			tr("POLLINATION_HARVESTING_A_FERTILIZED_CROP_HAS") % [
+		BookPanel.info(
+			tr("POLLINATION_HARVESTING_A_FERTILIZED_CROP_HAS"),
+			tr("POLLINATION_HARVESTING_A_FERTILIZED_CROP_HAS_INFO") % [
 				int(round(Game.bees.pollination_chance() * 100)),
 				Balance.i("bees.bees_stay_days")
 			],

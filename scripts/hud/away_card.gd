@@ -57,6 +57,7 @@ func _init(owner: FarmHud) -> void:
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 6)
 	column.add_child(_rows)
+	UiKit.keep_fitted(self)   # (shrinks back when it holds fewer rows than last time)
 	set_process(false)
 
 

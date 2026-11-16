@@ -14,7 +14,6 @@ signal place_stored_requested(index: int)
 const REST_FADE := 1.4     # seconds the interface takes to fade away over an idle farm..
 const WAKE_FADE := 0.2     # ..and to come back at a touch
 const AWAY_WAIT := 0.5     # seconds between looks for a panel to close before the away card shows
-const GROUP_PAGE := 30     # rows of a long grouped list (the barn) built at a time
 
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
@@ -94,6 +93,8 @@ func _ready() -> void:
 	ItemIcons.start(self)   # the shop's pictures, made from the models when first shown
 	top = HudTop.new(self)
 	top.build(root)
+	top.sky_tapped.connect(func() -> void:   # (the icons' words, on a tap)
+		show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])]))
 	side = HudSide.new(self)
 	side.build(root)
 	tools = HudTools.new(self)
@@ -145,35 +146,20 @@ func _fit_safe_area() -> void:
 
 
 func _build_placing_bar(root: Control) -> void:
+	# The placing hint in floating words with Turn and Cancel as small round buttons beside it: no box.
 	_placing_bar = PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = CREAM
-	sb.border_color = WOOD_DARK
-	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(14)
-	sb.content_margin_left = 20
-	sb.content_margin_right = 10
-	sb.content_margin_top = 6
-	sb.content_margin_bottom = 6
-	_placing_bar.add_theme_stylebox_override("panel", sb)
+	_placing_bar.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	_placing_bar.add_child(row)
-	_placing_label = Label.new()
-	_placing_label.add_theme_color_override("font_color", INK)
+	_placing_label = FloatText.label("", 20)
 	_placing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_placing_label)
 	# A decoration being moved can be turned here (FarmVille's rotate, folded into Move).
-	_turn_button = Button.new()
-	_turn_button.text = tr("TURN")
-	_turn_button.custom_minimum_size = Vector2(110, 48)
-	_turn_button.focus_mode = Control.FOCUS_NONE
+	_turn_button = FloatText.action("turn", tr("TURN"))
 	_turn_button.pressed.connect(func() -> void: Game.rotate_object(_moving_uid()))
 	row.add_child(_turn_button)
-	var cancel := Button.new()
-	cancel.text = tr("CANCEL")
-	cancel.custom_minimum_size = Vector2(110, 48)
-	cancel.focus_mode = Control.FOCUS_NONE
+	var cancel := FloatText.action("cross", tr("CANCEL"))
 	cancel.pressed.connect(func() -> void: cancel_place_requested.emit())
 	row.add_child(cancel)
 	_placing_bar.visible = false
@@ -208,7 +194,7 @@ func choose_seed(crop_id: String) -> void:
 	show_message(tr("TAP_PLOWED_PLOTS_TO_PLANT") % Game.crops[crop_id]["name"])
 
 
-## Hides everything but the eye (FarmVille's view toggle, for looking at the farm), or shows it again.
+## Hides the whole interface (for looking at the farm, or a screenshot), or shows it again.
 func set_interface_hidden(on: bool) -> void:
 	interface_hidden = on
 	var all: Array[Control] = top.hideable()
@@ -216,7 +202,6 @@ func set_interface_hidden(on: bool) -> void:
 	all.append_array(side.hideable())
 	for c in all:
 		c.visible = not on
-	side.show_eye(on)
 
 
 ## Fades the whole interface away over an idle farm (Main, after Balance `feel.idle_view_seconds` with no touch),
@@ -269,21 +254,7 @@ func zoom_view(factor: float) -> void:
 
 
 func _build_tutorial(root: Control) -> void:
-	_tutorial = Label.new()
-	_tutorial.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_tutorial.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tutorial.add_theme_color_override("font_color", INK)
-	_tutorial.add_theme_font_size_override("font_size", UiTheme.font(24))
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = SUN
-	sb.border_color = WOOD_DARK
-	sb.set_border_width_all(3)
-	sb.set_corner_radius_all(14)
-	sb.content_margin_left = 24
-	sb.content_margin_right = 24
-	sb.content_margin_top = 10
-	sb.content_margin_bottom = 10
-	_tutorial.add_theme_stylebox_override("normal", sb)
+	_tutorial = FloatText.label("", 24, SUN)   # (the next step in floating words, sun-yellow: no box)
 	_top_holder(root, top_h() + 12).add_child(_tutorial)
 
 
@@ -309,20 +280,7 @@ func _top_holder(root: Control, y: float) -> CenterContainer:
 
 
 func _build_toast(root: Control) -> void:
-	_toast = Label.new()
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_toast.add_theme_color_override("font_color", INK)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = CREAM
-	sb.set_corner_radius_all(14)
-	sb.content_margin_left = 24
-	sb.content_margin_right = 24
-	sb.content_margin_top = 10
-	sb.content_margin_bottom = 10
-	sb.shadow_color = Color(0, 0, 0, 0.2)
-	sb.shadow_size = 4
-	_toast.add_theme_stylebox_override("normal", sb)
+	_toast = FloatText.label("", 22)   # (floating words, no box: FloatText)
 	_toast.modulate.a = 0.0
 	_toast_holder = _top_holder(root, top_h() + 16)
 	_toast_holder.add_child(_toast)
@@ -335,8 +293,8 @@ func show_message(text: String) -> void:
 	_toast.text = text
 	if _toast_tween:
 		_toast_tween.kill()
-	_toast.modulate.a = 1.0
 	_toast_tween = create_tween()
+	_toast_tween.tween_property(_toast, "modulate:a", 1.0, FloatText.RISE_TIME)
 	_toast_tween.tween_interval(1.8)
 	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
 
@@ -417,11 +375,12 @@ static func _thousands(n: int) -> String:
 
 func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
-	top.clock.text = "%s · %s · %s" % [
-		tr("SEASON_" + Game.season().to_upper()),
-		tr(Game.weather()["name"]),
-		DayCycle.clock_text(hour)
-	]
+	var weather := Game.weather()
+	var state := str(weather.get("state", "clear"))
+	var night := hour < DayCycle.SUNRISE or hour >= DayCycle.SUNSET
+	top.season_icon.kind = str(HudTop.SEASON_ICONS.get(Game.season(), "sun"))
+	top.weather_icon.kind = "moon" if state == "clear" and night else str(HudTop.WEATHER_ICONS.get(state, "sun"))
+	top.clock.text = DayCycle.clock_text(hour)
 	top.show_forecast(Game.forecast() if Season.enabled() else {})
 
 

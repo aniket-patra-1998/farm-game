@@ -67,6 +67,10 @@
     "lock_text": "#7a2e1e",
     "price_short": "#c0392b",
     "note_on_wood": "#ffd98a",
+    "float_text": "#ffffff",
+    "float_outline": "#2b1a0e",
+    "float_line": "#fff2c4",
+    "divider": "#e8d2a659",
     "done": "#3c7a2a"
   },
   "sizes": {

@@ -12,71 +12,102 @@ const BUILDING_TABS := [["animal", "ANIMAL_BUILDINGS"], ["storage", "STORAGE_BUI
 	["crafting", "CRAFTING"], ["decor", "DECORATIVE_BUILDINGS"]]
 
 var hud: FarmHud
+var _shelves := {}    # kind -> the ids for sale on that shelf, worked out once at load (the catalog doesn't change)
+var _sections := {}   # building tab -> its ids
 
 
 func _init(owner: FarmHud) -> void:
 	hud = owner
+	for id in Game.item_order:
+		if not _for_sale(id):
+			continue
+		if Game.is_building_item(id):
+			var tab := Game.building_def(id).tab()
+			if not _sections.has(tab):
+				_sections[tab] = [] as Array[String]
+			(_sections[tab] as Array[String]).append(id)
+		else:
+			var kind := str(Game.item_data(id)["kind"])
+			if not _shelves.has(kind):
+				_shelves[kind] = [] as Array[String]
+			(_shelves[kind] as Array[String]).append(id)
 
 
-## The Market's shelves, FarmVille's way: Seeds, then one shelf per kind of item as a grid of cards, then
-## Specials (land and the Mystery Box). Each shelf is a tab of the book.
+## The Market's shelves, FarmVille's way: Seeds, then one shelf per kind of item as a grid of cards. The Mystery
+## Box opens the Decorations shelf and more land closes the Buildings shelf (no Specials tab of its own). Each
+## shelf is a tab of the book.
 func tabs() -> Array:
 	var out: Array = [[tr("SEED_LIST"), hud.seeds.build_seeds]]
 	for shelf: Array in SHELVES:
 		var kind := str(shelf[0])
 		out.append([tr(str(shelf[1])), func(content: VBoxContainer) -> void: build_shelf(content, kind)])
-	out.append([tr("SPECIALS"), build_specials])
 	return out
 
 
 ## Everything of one kind for sale, as a grid of cards (its picture, name, a line about it, its price), under a
-## strip that tells all about a card that can't be bought yet when it is tapped (a phone has no tooltips).
+## strip that tells all about a card that can't be bought yet when it is tapped (a phone has no tooltips). The
+## page is live: a refresh (coins changed) updates the cards on screen and the land and box cards in place.
 func build_shelf(content: VBoxContainer, kind: String) -> void:
+	var lists: Array[CardList] = []
+	var singles: Array = []   # [holder, builder] of the land card and the Mystery Box
 	var about := VBoxContainer.new()
 	var strip := BookPanel.card_frame(about)
 	strip.visible = false
 	strip.set_meta(&"about", true)
 	content.add_child(strip)
 	var tell := func(id: String, it: Dictionary, why: String) -> void: show_about(strip, about, id, it, why)
+	if kind == "decor":
+		singles.append([_single(content), mystery_box_card])   # (the Mystery Box first among the decorations)
 	if kind != "building":
-		_add_grid(content, shelf_items(kind), tell)
-		return
-	for section: Array in BUILDING_TABS:
-		var ids := building_section(str(section[0]))
-		if ids.is_empty():
-			continue
-		content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.design("font_section")), BookPanel.SUN))
-		_add_grid(content, ids, tell)
+		lists.append(_add_list(content, shelf_items(kind), tell))
+	else:
+		for section: Array in BUILDING_TABS:
+			var ids := building_section(str(section[0]))
+			if ids.is_empty():
+				continue
+			content.add_child(BookPanel.text(tr(str(section[1])), int(UiTheme.design("font_section")), BookPanel.SUN))
+			lists.append(_add_list(content, ids, tell))
+		# More land, after the buildings: it is a farm's biggest building job.
+		content.add_child(BookPanel.text(tr("LAND"), int(UiTheme.design("font_section")), BookPanel.SUN))
+		singles.append([_single(content), land_card])
+	var update := func() -> void:
+		for list in lists:
+			list.refresh()
+		for one: Array in singles:
+			var holder: Container = one[0]
+			for c in holder.get_children():
+				c.queue_free()
+			holder.add_child((one[1] as Callable).call())
+	update.call()
+	BookPanel.set_live(content, update)
+
+
+## A place on the page for one card that is built again on a refresh.
+func _single(content: VBoxContainer) -> VBoxContainer:
+	var holder := VBoxContainer.new()
+	content.add_child(holder)
+	return holder
 
 
 ## The items of one kind for sale, in catalog order (buildings have their own sections: building_section).
 func shelf_items(kind: String) -> Array[String]:
-	var out: Array[String] = []
-	for id in Game.item_order:
-		if Game.item_data(id)["kind"] == kind and not Game.is_building_item(id) and _for_sale(id):
-			out.append(id)
-	return out
+	return _shelves.get(kind, [] as Array[String])
 
 
 ## The buildings for sale in one section of the Buildings shelf (their catalog `tab`), in catalog order.
 func building_section(tab: String) -> Array[String]:
-	var out: Array[String] = []
-	for id in Game.item_order:
-		if Game.is_building_item(id) and _for_sale(id) and Game.building_def(id).tab() == tab:
-			out.append(id)
-	return out
+	return _sections.get(tab, [] as Array[String])
 
 
 static func _for_sale(id: String) -> bool:
 	return int(Game.item_data(id)["unlock_level"]) < 99 and Release.has(id)
 
 
-func _add_grid(content: VBoxContainer, ids: Array[String], tell: Callable) -> void:
-	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
-	content.add_child(grid)
-	for id in ids:
-		var it := Game.item_data(id)
-		grid.add_child(item_card(id, it, func(why: String) -> void: tell.call(id, it, why)))
+func _add_list(content: VBoxContainer, ids: Array[String], tell: Callable) -> CardList:
+	var list := CardList.make(ids, card_face, func(id: String) -> void: tap(id, tell),
+		hud.get_viewport().get_visible_rect().size.x)
+	content.add_child(list)
+	return list
 
 
 ## Fills the strip at the top of a shelf with all about one item: its picture and name, why it can't be bought
@@ -96,17 +127,18 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 	var words := VBoxContainer.new()
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(words)
-	words.add_child(BookPanel.text(str(it["name"]), 22))
+	words.add_child(BookPanel.text(str(it["name"]), 22, BookPanel.CREAM))
 	if why != "":
-		words.add_child(BookPanel.text(why, 18, UiTheme.color("price_short")))
-	words.add_child(BookPanel.text(detail_of(id, it), 17))
+		words.add_child(BookPanel.text(why, 18, UiTheme.color("note_on_wood")))
+	words.add_child(BookPanel.text(detail_of(id, it), 17, BookPanel.CREAM))
 	strip.visible = true
 	hud._book.scroll_to_top()
 
 
-## One item's card: tapping it buys it (and puts it in hand to place), or, when it can't be bought now, shows
-## all about it in the shelf's strip (`tell`, given why).
-func item_card(id: String, it: Dictionary, tell: Callable) -> Button:
+## One item's card face (CardFace): its picture, name, a line, its price, and whether it can be bought now and if
+## not why (`why`, shown in the shelf's strip when tapped).
+func card_face(id: String) -> Dictionary:
+	var it := Game.item_data(id)
 	var locked := Game.level() < int(it["unlock_level"])
 	var verdict := Game.buildings.can_buy(id)
 	var blocked := locked or verdict.why in [BuildingSystem.Why.LIMIT, BuildingSystem.Why.GROUP_LIMIT,
@@ -116,44 +148,44 @@ func item_card(id: String, it: Dictionary, tell: Callable) -> Button:
 	for need in Requirements.list(Game, id):
 		if not need["ok"]:
 			unmet += 1
-	var badge: Control
+	var badge: Array
+	var why := ""
 	if locked:
-		badge = UiKit.price_badge("lock", tr("UNLOCKS_LEVEL") % int(it["unlock_level"]))
+		badge = ["lock", tr("UNLOCKS_LEVEL") % int(it["unlock_level"])]
+		why = tr("UNLOCKS_AT_LEVEL") % [it["name"], int(it["unlock_level"])]
 	elif blocked:
-		badge = UiKit.price_badge("", verdict.short)
+		badge = ["", verdict.short]
+		why = verdict.text
 	else:
 		var price := price_of(id, it)
-		badge = UiKit.price_badge(price[0], price[1], not affordable)
+		badge = [price[0], price[1], not affordable]
+		why = "" if affordable else tr("NOT_ENOUGH_TO_BUY") % it["name"]
 	# Picture, name and price; what it earns and how fast on a long press (a card says only what's needed to pick).
-	var line := tr("NEEDS_N_FIRST") % unmet if unmet > 0 and not locked else ""
-	var card := UiKit.item_card(ItemIcons.of(id), str(it["name"]), line, badge, blocked, MasteryStars.of(id))
 	var detail := short_detail(id, it)
-	if detail != "":
-		UiKit.long_press_name(card, "%s: %s" % [it["name"], detail])
-	var buyable := not blocked and affordable and unmet == 0
-	card.set_meta(&"buyable", buyable)
-	card.pressed.connect(func() -> void:
-		if buyable:
-			hud._book.close_panel()
-			hud.place_requested.emit(id)
-		elif locked:
-			tell.call(tr("UNLOCKS_AT_LEVEL") % [it["name"], int(it["unlock_level"])])
-		elif blocked:
-			tell.call(verdict.text)
-		elif not affordable:
-			tell.call(tr("NOT_ENOUGH_TO_BUY") % it["name"])
-		else:
-			tell.call(""))
-	return card
+	return {
+		"name": str(it["name"]),
+		"line": tr("NEEDS_N_FIRST") % unmet if unmet > 0 and not locked else "",
+		"badge": badge,
+		"locked": blocked,
+		"stars": MasteryStars.values(id),
+		"long": "%s: %s" % [it["name"], detail] if detail != "" else "",
+		"buyable": not blocked and affordable and unmet == 0,
+		"why": why,
+	}
+
+
+## Tapping a card buys it (and puts it in hand to place), or, when it can't be bought now, shows all about it in
+## the shelf's strip (`tell`, given why).
+func tap(id: String, tell: Callable) -> void:
+	var face := card_face(id)
+	if face["buyable"]:
+		hud._book.close_panel()
+		hud.place_requested.emit(id)
+	else:
+		tell.call(id, Game.item_data(id), str(face["why"]))
 
 
 ## Land and the Mystery Box.
-func build_specials(content: VBoxContainer) -> void:
-	content.add_child(BookPanel.text(tr("LAND"), 26, BookPanel.SUN))
-	content.add_child(land_card())
-	content.add_child(mystery_box_card())
-
-
 ## What an item costs, as [badge icon, words]: coins, gems, or free.
 func price_of(id: String, it: Dictionary) -> Array:
 	if it["kind"] == "crafting":
@@ -271,8 +303,8 @@ func mystery_box_card() -> Control:
 	inner.add_theme_constant_override("separation", 10)
 	inner.add_child(BookPanel.text(tr("MYSTERY_BOX"), 22))
 	inner.add_child(
-		BookPanel.text(
-			tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION"),
+		BookPanel.info(
+			tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION"), tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION_INFO"),
 			17
 		)
 	)

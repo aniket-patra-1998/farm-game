@@ -48,7 +48,7 @@ static func meter(kind: String, plus := false) -> PanelContainer:
 	box.add_child(row)
 	row.add_child(UiIcon.make(kind))
 	var value := Label.new()
-	value.add_theme_font_size_override("font_size", int(UiTheme.size("font_bar")))
+	value.add_theme_font_size_override("font_size", UiTheme.text_px("font_bar"))
 	value.add_theme_color_override("font_color", UiTheme.color("bar_text"))
 	value.add_theme_color_override("font_shadow_color", UiTheme.color("bar_text_shadow"))
 	value.add_theme_constant_override("shadow_offset_y", 2)
@@ -108,7 +108,7 @@ static func plaque(text: String) -> PanelContainer:
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_plaque")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_plaque"))
 	label.add_theme_color_override("font_color", UiTheme.color("plaque_text"))
 	box.add_child(label)
 	box.set_meta("label", label)
@@ -154,11 +154,15 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 	var label := Label.new()
 	label.text = words
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_tool")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_tool"))
 	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.visible = labelled
 	box.add_child(label)
+	if labelled:   # (a longer word, "Fertilize", widens its button rather than being cut or shrunk)
+		var font := label.get_theme_default_font()
+		var wide := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.text_px("font_tool")).x
+		b.custom_minimum_size.x = maxf(bw, wide + UiTheme.size("button_pad"))
 	b.set_meta("icon", icon)
 	b.set_meta("label", label)
 	long_press_name(b, words)
@@ -168,7 +172,7 @@ static func tool_button(kind: String, words: String, w := 0.0, h := 0.0, icon_px
 
 ## Holding `button` a moment shows its name in a small bubble above it (an icon-only button's name, on a phone
 ## where nothing hovers), and that hold doesn't press it.
-static func long_press_name(button: Button, words: String) -> void:
+static func long_press_name(button: BaseButton, words: String) -> void:
 	button.tooltip_text = words
 	var timer := Timer.new()
 	timer.one_shot = true
@@ -180,7 +184,7 @@ static func long_press_name(button: Button, words: String) -> void:
 		# Off for a moment: that drops the press under way, so letting go doesn't press it; on again next frame.
 		button.disabled = true
 		button.set_deferred("disabled", false)
-		name_bubble(button, words))
+		name_bubble(button, button.tooltip_text if button.tooltip_text != "" else words))
 
 
 ## A small name bubble over `control` that fades after a moment.
@@ -189,7 +193,7 @@ static func name_bubble(control: Control, words: String) -> void:
 	bubble.add_theme_stylebox_override("panel", panel_box())
 	var label := Label.new()
 	label.text = words
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_tool")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_tool"))
 	label.add_theme_color_override("font_color", UiTheme.color("tool_label"))
 	bubble.add_child(label)
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -211,7 +215,7 @@ static func tab_button(words: String, on: bool) -> Button:
 	b.text = words
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size.y = UiTheme.size("tab_height")
-	b.add_theme_font_size_override("font_size", int(UiTheme.size("font_tab")))
+	b.add_theme_font_size_override("font_size", UiTheme.text_px("font_tab"))
 	var face := UiTheme.color("tab_face_on" if on else "tab_face")
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		var sb := StyleBoxFlat.new()
@@ -249,7 +253,7 @@ static func price_badge(kind: String, words: String, short := false) -> PanelCon
 		row.add_child(UiIcon.make(kind, UiTheme.size("badge_height") - 8.0))
 	var label := Label.new()
 	label.text = words
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_badge"))
 	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
 	row.add_child(label)
 	return box
@@ -258,13 +262,15 @@ static func price_badge(kind: String, words: String, short := false) -> PanelCon
 ## What a home, a store or a recipe holds, FarmVille's way: each thing as its picture with its count on it and its
 ## name under it (`entries`: [[item id, count text, short]], `short` paints the count in the price-short red: not
 ## enough yet). One row that wraps, for every "what's inside" in the game.
-static func count_row(entries: Array) -> HFlowContainer:
+static func count_row(entries: Array, named := true) -> HFlowContainer:
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap") * 0.5))
 	flow.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap") * 0.5))
 	for e: Array in entries:
 		var id := str(e[0])
-		flow.add_child(count_tile(ItemIcons.of(id), str(e[1]), Game.name_of(id), e.size() > 2 and bool(e[2])))
+		var tile := count_tile(ItemIcons.of(id), str(e[1]), Game.name_of(id) if named else "", e.size() > 2 and bool(e[2]))
+		tile.tooltip_text = Game.name_of(id)
+		flow.add_child(tile)
 	return flow
 
 
@@ -299,11 +305,25 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
-	label.add_theme_color_override("font_color", UiTheme.color("price_short" if short else "ink"))
-	label.add_theme_color_override("font_outline_color", UiTheme.color(face))
-	label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_badge"))
+	if short:
+		# Not enough of it ("0/4"): a red pill with white words under the corner, read at a glance.
+		var pill := StyleBoxFlat.new()
+		pill.bg_color = UiTheme.color("badge")
+		pill.set_corner_radius_all(int(UiTheme.size("button_radius")))
+		pill.content_margin_left = 4
+		pill.content_margin_right = 4
+		label.add_theme_stylebox_override("normal", pill)
+		label.add_theme_color_override("font_color", Color.WHITE)
+		label.size_flags_horizontal = Control.SIZE_SHRINK_END
+		label.size_flags_vertical = Control.SIZE_SHRINK_END
+	else:
+		label.add_theme_color_override("font_color", UiTheme.color("ink"))
+		label.add_theme_color_override("font_outline_color", UiTheme.color(face))
+		label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
 	tile.add_child(label)
+	if name == "":   # (no name under it: its picture and count say it; the name is its tooltip)
+		return col
 	var caption := Label.new()
 	caption.text = name
 	caption.set_meta(&"count_name", true)
@@ -311,7 +331,7 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	caption.custom_minimum_size.x = side
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption.add_theme_font_size_override("font_size", int(UiTheme.size("font_count_name")))
+	caption.add_theme_font_size_override("font_size", UiTheme.text_px("font_count_name"))
 	caption.add_theme_color_override("font_color", UiTheme.color("tool_label"))
 	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(caption)
@@ -339,7 +359,7 @@ static func count_badge(button: Control) -> Label:
 	var label := Label.new()
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", int(UiTheme.size("font_badge")))
+	label.add_theme_font_size_override("font_size", UiTheme.text_px("font_badge"))
 	label.add_theme_color_override("font_color", UiTheme.color("cream"))
 	dot.add_child(label)
 	button.add_child(dot)
@@ -350,8 +370,7 @@ static func count_badge(button: Control) -> Label:
 ## shelves, the Barn's store).
 static func card_grid(view_width: float) -> GridContainer:
 	var grid := GridContainer.new()
-	var room := minf(UiTheme.size("book_width"), view_width - UiTheme.size("book_inset")) \
-		- 2.0 * UiTheme.size("book_margin") - UiTheme.size("scroll_bar")
+	var room := BookPanel.width_for(view_width) - 2.0 * UiTheme.size("book_margin") - UiTheme.size("scroll_bar")
 	grid.columns = maxi(1, floori(room / (UiTheme.size("card_width") + UiTheme.size("hud_gap"))))
 	grid.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
 	grid.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
@@ -361,6 +380,16 @@ static func card_grid(view_width: float) -> GridContainer:
 ## An item's card in a shop grid: its picture, its name, a line about it and its price badge; the whole card is
 ## the button. A locked one is greyed with a lock and the level it opens at instead of a price. `extra` (its
 ## mastery stars, say) goes under the picture.
+## A card's face (`face`, a theme colour), its edge and its corners: what every card in a grid is drawn with.
+static func card_box(face := "card_face") -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiTheme.color(face)
+	sb.border_color = UiTheme.color("card_edge")
+	sb.set_border_width_all(int(UiTheme.size("button_border")))
+	sb.set_corner_radius_all(int(UiTheme.size("button_radius")))
+	return sb
+
+
 static func item_card(picture: Texture2D, name: String, about: String, badge: Control, locked: bool,
 		extra: Control = null) -> Button:
 	var b := Button.new()
@@ -408,7 +437,7 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size.x = UiTheme.size("card_width") - 2.0 * UiTheme.size("card_pad")
-		l.add_theme_font_size_override("font_size", int(UiTheme.size(str(words[1]))))
+		l.add_theme_font_size_override("font_size", UiTheme.text_px(str(words[1])))
 		l.add_theme_color_override("font_color", UiTheme.color(str(words[2])))
 		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		col.add_child(l)
@@ -419,3 +448,22 @@ static func item_card(picture: Texture2D, name: String, about: String, badge: Co
 	UiFx.press_bounce(b)
 	UiFx.pop_in(b)
 	return b
+
+
+## Keeps `card`, a panel floating free on the interface (not inside a container), exactly as big as what it holds,
+## whenever that changes, then calls `place` (if given) so a card kept to an edge of the screen puts itself back.
+## Godot only ever grows such a Control to its minimum size, never shrinks it: a card whose wrapped text was
+## first measured before it had a width (one word a line, very tall), or that once held more, would otherwise
+## stay that big for good, mostly empty, and pushed off the screen. Every free-floating card fits through this.
+static func keep_fitted(card: Control, place := Callable()) -> void:
+	var fit := func() -> void:
+		if not is_instance_valid(card):
+			return
+		card.set_meta(&"fitting", false)
+		card.size = Vector2.ZERO   # (a Control is never smaller than its minimum: this is the minimum)
+		if place.is_valid():
+			place.call()
+	card.minimum_size_changed.connect(func() -> void:
+		if not card.get_meta(&"fitting", false):   # (however many changes in a frame: fitted once, after them)
+			card.set_meta(&"fitting", true)
+			fit.call_deferred())

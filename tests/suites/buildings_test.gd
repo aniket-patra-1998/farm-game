@@ -515,3 +515,49 @@ func test_309_trees_and_buildings_keep_off_each_others_edges() -> void:
 	_eq(g.settle_objects(), 0, "a farm already laid out that way is not rearranged when loaded")
 	_done(g)
 
+
+
+## Fill offers only what would move in: a home with one space left offers one, however many wait outside; a
+## full home offers none (it said "Add 3 animals" on a full pen, and the press did nothing). The number on the
+## button is always the number Fill moves.
+func test_364_fill_offers_only_what_fits_and_a_full_home_offers_none() -> void:
+	var g := _farm()
+	g.coins = 100000
+	g.add_xp(g.xp_for_level(4))
+	_check(g.buy_and_place("chicken_coop", 8, 8), "a coop")
+	_check(g.buy_and_place("chicken", 11, 0), "one more chicken loose")
+	var coop := g.object_at(g.index_of(8, 8))
+	var uid := int(coop["uid"])
+	var loose := g.homes.loose_matching(coop)
+	_check(loose >= 2, "chickens wait outside (%d)" % loose)
+	_eq(g.homes.room_for_loose(coop), loose, "an empty coop offers every loose chicken")
+	coop["inside"] = {"chicken": g.capacity(coop) - 1}   # (one space left)
+	_eq(g.homes.room_for_loose(coop), 1, "one space left: offers one, not %d" % loose)
+	_eq(g.homes.fill_building(uid), 1, "and one moves in")
+	_eq(g.inside_total(coop), g.capacity(coop), "the coop is full")
+	_eq(g.homes.loose_matching(coop), loose - 1, "the rest still wait outside")
+	_eq(g.homes.room_for_loose(coop), 0, "a full home offers none")
+	_eq(g.homes.fill_building(uid), 0, "and Fill moves none")
+	_check(g.homes.room_for_loose({}) == 0, "nothing offered for no building")
+	_done(g)
+
+
+## A one-each home (the stable's stallion) is offered one of each: two stallions loose, one offered, one moves in;
+## with him inside, none offered (the earlier offer counted every loose one).
+func test_365_fill_offers_one_of_each_to_a_one_each_home() -> void:
+	var g := _farm(true)
+	g.coins = 1000000
+	g.xp = g.xp_for_level(12)
+	_check(g.buy_and_place("horse_stable", 8, 8), "a stable")
+	var st := g.object_at(g.index_of(8, 8))
+	var uid := int(st["uid"])
+	_all_materials(g, 10)
+	g.land.add_materials(uid)
+	_check(not g.under_construction(st), "built")
+	for n in 2:
+		_check(g.place_somewhere("stallion"), "stallion %d loose" % n)
+	_eq(g.homes.loose_matching(st), 2, "two stallions wait outside")
+	_eq(g.homes.room_for_loose(st), 1, "one is offered")
+	_eq(g.homes.fill_building(uid), 1, "one moves in")
+	_eq(g.homes.room_for_loose(st), 0, "with him inside, none offered")
+	_done(g)

@@ -5,11 +5,13 @@ extends RefCounted
 ## a set share of the screen (`scale.short_share` of its shorter side for a tool button) and never less than a
 ## comfortable touch on a phone (`scale.touch_mm`), so it is neither huge on a small screen nor tiny on a dense one.
 
-const MIN_FONT := 11   # no text smaller than this (readable on any phone)
+const MIN_FONT := 14   # no text smaller than this many units..
+const MIN_FONT_DP := 14.0   # ..nor, on a phone, than this many dp (Android's density-independent pixels)
 const DATA := "res://data/ui_theme.json"
 
 static var _data := {}
 static var _scale := 0.0   # worked out once (and again after a resize: `rescale`)
+static var _least := MIN_FONT   # the smallest text on this screen (`min_font`), worked out with the scale
 
 
 static func _load() -> void:
@@ -52,12 +54,24 @@ static func design(key: String) -> float:
 ## (panel text reads best a little smaller than its design size on a phone), never under MIN_FONT. Every panel,
 ## popup and strip of words sizes its text through this, once (a size from `size` is already scaled).
 static func font(design_px: float) -> int:
-	return font_for(design_px, scale(), size("text_share"))
+	return font_for(design_px, scale(), size("text_share"), min_font())
 
 
-## `font`'s sum on its own: `design_px` at `ui_scale` and `share`, never under MIN_FONT.
-static func font_for(design_px: float, ui_scale: float, share: float) -> int:
-	return maxi(int(round(design_px * ui_scale * share)), MIN_FONT)
+## `font`'s sum on its own: `design_px` at `ui_scale` and `share`, never under `least`.
+static func font_for(design_px: float, ui_scale: float, share: float, least := MIN_FONT) -> int:
+	return maxi(int(round(design_px * ui_scale * share)), least)
+
+
+## A text size from the theme's sizes (`key`, already scaled), never under `min_font`: the one way the interface's
+## own labels (bars, tools, tabs, badges) are sized, so nothing is too small to read.
+static func text_px(key: String) -> int:
+	return maxi(int(size(key)), min_font())
+
+
+## The smallest text on this screen, in units: MIN_FONT, and on a phone never under MIN_FONT_DP.
+static func min_font() -> int:
+	scale()
+	return _least
 
 
 ## How big the interface is drawn against its design sizes: a tool button `short_share` of the screen's shorter
@@ -74,8 +88,12 @@ static func scale() -> float:
 	var rules: Dictionary = _data.get("scale", {})
 	var view := tree.root.get_visible_rect().size
 	var tool := float((_data.get("sizes", {}) as Dictionary).get("tool_size", 64))
-	_scale = scale_for(minf(view.x, view.y), tool, Vector2(DisplayServer.window_get_size()).y / maxf(view.y, 1.0),
-		float(DisplayServer.screen_get_dpi()), OS.has_feature("mobile"), rules)
+	var px_per_unit := Vector2(DisplayServer.window_get_size()).y / maxf(view.y, 1.0)
+	var dpi := float(DisplayServer.screen_get_dpi())
+	_scale = scale_for(minf(view.x, view.y), tool, px_per_unit, dpi, OS.has_feature("mobile"), rules)
+	_least = MIN_FONT
+	if OS.has_feature("mobile") and dpi > 0.0:
+		_least = maxi(MIN_FONT, ceili(MIN_FONT_DP * dpi / 160.0 / maxf(px_per_unit, 0.01)))
 	return _scale
 
 

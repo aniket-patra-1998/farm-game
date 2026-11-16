@@ -50,6 +50,9 @@ var _pay: Control
 var _since := 0.0
 var _counting := false
 var _dirty := false   # the farm changed while the sheet was up: refill it this frame
+var _shown := 0.0     # how far it has slid up: 0 below the screen, 1 at rest
+var _slide: Tween
+var _area := Vector2.ZERO   # the screen it was placed on (a turned phone or resized window places it again)
 
 
 func _init(owner: FarmHud) -> void:
@@ -63,13 +66,6 @@ func _init(owner: FarmHud) -> void:
 	sb.shadow_color = Color(0, 0, 0, 0.28)
 	sb.shadow_size = 14
 	add_theme_stylebox_override("panel", sb)
-	anchor_left = 0.5
-	anchor_right = 0.5
-	anchor_top = 1.0
-	anchor_bottom = 1.0
-	grow_horizontal = Control.GROW_DIRECTION_BOTH
-	grow_vertical = Control.GROW_DIRECTION_BEGIN
-	offset_bottom = -EDGE
 	var gap := int(UiTheme.size("hud_gap"))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", gap)
@@ -83,6 +79,7 @@ func _init(owner: FarmHud) -> void:
 	column.add_child(_note)
 	column.add_child(_build_actions(gap))
 	Game.objects_changed.connect(_on_changed)
+	UiKit.keep_fitted(self, _place)   # (as tall as what it says now, and back at the bottom)
 
 
 ## Whether thing `o` opens in the sheet: a finished home (a building site, and a home for finds, keep their panel).
@@ -96,29 +93,52 @@ func open(uid: int) -> void:
 	_inside_key = ""
 	_sell.remove_meta(&"sure")
 	_sell.text = tr("TOOL_SELL")
-	custom_minimum_size.x = maxf(get_parent_area_size().x * WIDTH_SHARE, WIDTH_LEAST)
 	_refill()
 	if _uid < 0:
 		return
-	var shown := visible
-	visible = true
-	if shown:
+	if visible:
 		return   # (already up: another home tapped, it only changes what it says)
-	await get_tree().process_frame
-	var rest := get_parent_area_size().y - size.y - EDGE
-	position.y = get_parent_area_size().y
-	create_tween().tween_property(self, "position:y", rest, SLIDE).set_trans(Tween.TRANS_CUBIC).set_ease(
-		Tween.EASE_OUT)
+	visible = true
+	_shown = 0.0
+	_place()
+	# It slides by a share of the way, not to a point worked out now: it is sized by what it says, which settles
+	# a frame later (wrapped lines learn their width), and every refit puts it back on the same path.
+	_slide = create_tween()
+	_slide.tween_method(_slid, 0.0, 1.0, SLIDE).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
 func close() -> void:
+	if _slide != null and _slide.is_valid():
+		_slide.kill()
 	visible = false
 	_uid = -1
+
+
+## Its width: a share of the screen, never narrower than a comfortable sheet, never wider than the screen.
+static func width_for(area: Vector2) -> float:
+	return minf(maxf(area.x * WIDTH_SHARE, WIDTH_LEAST), area.x - 2.0 * EDGE)
+
+
+func _slid(share: float) -> void:
+	_shown = share
+	_place()
+
+
+## Puts the sheet at the bottom middle of the screen exactly as big as what it says now (`_shown` of the way up).
+func _place() -> void:
+	var area := get_parent_area_size()
+	_area = area
+	custom_minimum_size.x = width_for(area)
+	size = Vector2.ZERO   # (never smaller than its minimum: so exactly that)
+	var rest := area.y - size.y - EDGE
+	position = Vector2((area.x - size.x) / 2.0, lerpf(area.y, rest, _shown))
 
 
 func _process(delta: float) -> void:
 	if not visible:
 		return
+	if get_parent_area_size() != _area:
+		_place()
 	if _dirty:   # (however many changes in a frame: refilled once)
 		_dirty = false
 		_since = 0.0
@@ -220,6 +240,7 @@ func _build_numbers(gap: int) -> Control:
 	_pay = HBoxContainer.new()
 	_pay.add_theme_constant_override("separation", gap / 2)
 	row.add_child(_pay)
+	_pay.add_child(BookPanel.text(tr("SHEET_PAYS"), 18, SOFT))   # "Pays +4,380 (coin) +84 (star)"
 	_coins = _number(_pay, "coin")
 	_xp = _number(_pay, "star")
 	return row
@@ -295,8 +316,8 @@ func _refill() -> void:
 	_bar.value = total
 	if not _counting:
 		var pay := Game.object_payout(o)
-		_coins.text = FarmHud._thousands(pay.x)
-		_xp.text = str(pay.y)
+		_coins.text = "+" + FarmHud._thousands(pay.x)   # not-ui
+		_xp.text = "+%d" % pay.y   # not-ui
 	var key := str(o.get("inside", {}))
 	if key != _inside_key:
 		_inside_key = key
@@ -306,13 +327,13 @@ func _refill() -> void:
 		for kind: String in o.get("inside", {}):
 			held.append([kind, "×%d" % int(o["inside"][kind])])   # not-ui (a count)
 		if not held.is_empty():
-			var held_row := UiKit.count_row(held)
+			var held_row := UiKit.count_row(held, false)   # (the picture and the count: no cut-off names)
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
 	_inside.visible = total > 0
-	var loose := Game.homes.loose_matching(o) if id != "beehive" else 0
-	_fill.visible = loose > 0   # (nothing to move in: no button, not a grey one)
-	_fill.text = tr("MOVE_IN") % loose
+	var room := Game.homes.room_for_loose(o) if id != "beehive" else 0
+	_fill.visible = room > 0   # (nothing that would move in, none loose or no room: no button, not a grey one)
+	_fill.text = HudBuildings.move_in_words(o, room)
 	_turn.visible = Game.buildings.can_rotate(o).ok()   # (what can never turn has no Turn)
 	if _sell.has_meta(&"sure") and not _counting and _sell.text == tr("TOOL_SELL"):
 		_sell.remove_meta(&"sure")
@@ -343,7 +364,9 @@ func _clock(o: Dictionary, ready: bool) -> void:
 	_ring.share = 1.0 if ready else along
 	var pays := Game.object_payout(o) != Vector2i.ZERO or ready
 	_pay.visible = pays
-	_ring.visible = pays
+	# The ring is the time to wait, with it written inside; nothing inside to wait for: no ring at all.
+	_ring.visible = pays and (ready or Game.inside_total(o) > 0)
+	_ring.words = "" if ready else FarmGrid.format_duration(Game.seconds_until_ready(o))
 	_collect.visible = pays
 	_collect.disabled = not ready
 	_collect.text = tr("COLLECT") if ready else _state.text
@@ -426,13 +449,28 @@ class Ring:
 	extends Control
 
 	var share := 0.0: set = _set_share
+	var words := "": set = _set_words   # the time left, written in the middle
 
 	func _set_share(value: float) -> void:
 		share = value
 		queue_redraw()
 
+	func _set_words(value: String) -> void:
+		if value != words:
+			words = value
+			queue_redraw()
+
 	func _draw() -> void:
-		var r := minf(size.x, size.y) / 2.0 - 4.0
-		draw_arc(size / 2.0, r, 0.0, TAU, 40, TRACK, 6.0, true)
-		if share > 0.0:
-			draw_arc(size / 2.0, r, -PI / 2.0, -PI / 2.0 + TAU * share, 40, ACCENT, 6.0, true)
+		paint(self, Rect2(Vector2.ZERO, size), share, words, get_theme_default_font())
+
+	## Draws a ring `share` full with `words` in the middle on `on`, inside `rect` (a CardFace draws one itself).
+	static func paint(on: CanvasItem, rect: Rect2, filled: float, middle: String, font: Font) -> void:
+		var r := minf(rect.size.x, rect.size.y) / 2.0 - 4.0
+		var c := rect.get_center()
+		on.draw_arc(c, r, 0.0, TAU, 40, TRACK, 6.0, true)
+		if filled > 0.0:
+			on.draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * filled, 40, ACCENT, 6.0, true)
+		if middle != "":
+			var px := UiTheme.min_font()
+			var w := font.get_string_size(middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
+			on.draw_string(font, c + Vector2(-w / 2.0, px * 0.35), middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px, INK)

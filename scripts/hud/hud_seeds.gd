@@ -4,10 +4,14 @@ extends RefCounted
 ## pollinated seeds; picking one puts it in hand to plant on plowed plots. Locked crops say their level.
 
 var hud: FarmHud
+var _ids: Array[String] = []   # the crops in this release, in order, worked out once at load
 
 
 func _init(owner: FarmHud) -> void:
 	hud = owner
+	for id: String in Game.crop_order:
+		if Release.has(id):
+			_ids.append(id)
 
 
 func build_seeds(content: VBoxContainer) -> void:
@@ -15,32 +19,34 @@ func build_seeds(content: VBoxContainer) -> void:
 	if Season.enabled() and Game.level() >= Balance.i("seasons.from_level"):
 		content.add_child(BookPanel.text(tr("SEASON_SHELF") % [tr("SEASON_" + Game.season().to_upper()),
 			roundi((Balance.f("seasons.off_price_mult") - 1.0) * 100.0)], 18, BookPanel.CREAM))
-	var grid := UiKit.card_grid(hud.get_viewport().get_visible_rect().size.x)
-	for id: String in Game.crop_order:
-		if not Release.has(id):
-			continue
-		grid.add_child(seed_card(id))
-	content.add_child(grid)
+	var list := CardList.make(_ids, seed_face, func(id: String) -> void:
+		if Game.is_unlocked(id):
+			hud.choose_seed(id), hud.get_viewport().get_visible_rect().size.x)
+	content.add_child(list)
+	BookPanel.set_live(content, list.refresh)
 
 
-## One crop's card, as FarmVille's seed shelf showed it: its picture, its mastery stars, its name, how long it
-## grows and what it sells for, and its seed price (free while pollinated seeds last); tapping picks it.
-func seed_card(id: String) -> Button:
+## One crop's card face, as FarmVille's seed shelf showed it: its picture, its mastery stars, its name, how long
+## it grows and what it sells for, and its seed price (free while pollinated seeds last); tapping picks it.
+func seed_face(id: String) -> Dictionary:
 	var crop: Dictionary = Game.crops[id]
 	var locked := not Game.is_unlocked(id)
 	var pol := Game.bees.pollinated_seeds(id)
-	var badge: Control
+	var badge: Array
 	if locked:
-		badge = UiKit.price_badge("lock", tr("UNLOCKS_LEVEL") % int(crop["unlock_level"]))
+		badge = ["lock", tr("UNLOCKS_LEVEL") % int(crop["unlock_level"])]
 	elif pol > 0:
-		badge = UiKit.price_badge("", tr("FREE_SEEDS_LEFT") % pol)
+		badge = ["", tr("FREE_SEEDS_LEFT") % pol]
 	else:
-		badge = UiKit.price_badge("coin", str(int(crop["seed_cost"])), Game.coins < int(crop["seed_cost"]))
+		badge = ["coin", str(int(crop["seed_cost"])), Game.coins < int(crop["seed_cost"])]
 	# The season's price board (our own touch): an off-season crop shows what it sells for now, and says why.
 	var off := Game.off_season(id)
 	var sells := roundi(int(crop["sell_price"]) * (Balance.f("seasons.off_price_mult") if off else 1.0))
-	var about := tr("SEED_CARD_OFF" if off else "SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), sells]
-	var card := UiKit.item_card(ItemIcons.of(id), str(crop["name"]), about, badge, locked, MasteryStars.of(id))
-	if not locked:
-		card.pressed.connect(func() -> void: hud.choose_seed(id))
-	return card
+	return {
+		"name": str(crop["name"]),
+		"line": tr("SEED_CARD_OFF" if off else "SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), sells],
+		"badge": badge,
+		"locked": locked,
+		"stars": MasteryStars.values(id),
+		"buyable": not locked,
+	}

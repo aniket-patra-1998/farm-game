@@ -1409,11 +1409,12 @@ static func format_duration(seconds: int) -> String:
 	var d := int(seconds / 86400.0)
 	var h := int((seconds % 86400) / 3600.0)
 	var m := int((seconds % 3600) / 60.0)
+	# Never a zero part: "4h", "1d", "12h 30m", "1d 6h" (not "4h 0m" or "1d 0h").
 	if d > 0:
-		return "%dd %dh" % [d, h]
+		return "%dd %dh" % [d, h] if h > 0 else "%dd" % d   # not-ui
 	if h > 0:
-		return "%dh %dm" % [h, m]
-	return "%dm" % m
+		return "%dh %dm" % [h, m] if m > 0 else "%dh" % h   # not-ui
+	return "%dm" % m   # not-ui
 
 
 

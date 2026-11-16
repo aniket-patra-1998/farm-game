@@ -83,7 +83,7 @@ func test_341_a_long_press_names_the_button_without_pressing_it() -> void:
 
 func test_342_panel_text_is_scaled_once_and_never_too_small() -> void:
 	_eq(UiTheme.font_for(20.0, 1.0, 0.9), 18, "a design size at scale 1 and share 0.9")
-	_eq(UiTheme.font_for(20.0, 0.7, 0.9), 13, "smaller on a smaller interface, rounded")
+	_eq(UiTheme.font_for(30.0, 0.7, 0.9), 19, "smaller on a smaller interface, rounded")
 	_eq(UiTheme.font_for(12.0, 0.7, 0.9), UiTheme.MIN_FONT, "never under MIN_FONT")
 	_eq(BookPanel.font_px(20), UiTheme.font(20.0), "panels size their text through UiTheme.font")
 	_eq(UiTheme.design("font_section") * UiTheme.scale(), UiTheme.size("font_section"), "design is size before scale")

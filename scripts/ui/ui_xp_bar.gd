@@ -5,6 +5,7 @@ extends Control
 
 const STAR_INSET := 0.58        # the star's centre this many of its sizes in from the right (its points reach 0.52)
 const STAR_LABEL_ROOM := 0.62   # the widest the level's number may be, as a share of the star's size
+const NUMBERS_FOR := 3.0        # seconds the XP numbers show after a tap (the bar alone says how far along)
 
 ## How full the bar is, 0 to 1.
 @export var ratio := 0.0: set = _set_ratio
@@ -12,12 +13,14 @@ const STAR_LABEL_ROOM := 0.62   # the widest the level's number may be, as a sha
 ## What is written on the bar (XP so far and to go).
 @export var text := "": set = _set_text
 
+var _numbers_until := 0   # ticks (msec) until which the XP numbers show
+
 
 static func make() -> UiXpBar:
 	var bar := UiXpBar.new()
 	bar.custom_minimum_size = Vector2(UiTheme.size("xp_bar_width") + UiTheme.size("star_size") * 0.4,
 		UiTheme.size("star_size"))
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.mouse_filter = Control.MOUSE_FILTER_STOP   # (a tap shows the numbers)
 	return bar
 
 
@@ -59,7 +62,7 @@ func _draw() -> void:
 		fill.bg_color = UiTheme.color("xp_fill")
 		fill.set_corner_radius_all(maxi(radius - 3, 1))
 		draw_style_box(fill, Rect2(inner.position, Vector2(maxf(inner.size.x * ratio, inner.size.y), inner.size.y)))
-	if text != "":
+	if text != "" and showing_numbers():
 		var font := get_theme_default_font()
 		var fs := int(UiTheme.size("font_xp"))
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
@@ -82,3 +85,19 @@ func _draw() -> void:
 		lw = font2.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2).x
 	draw_string(font2, c + Vector2(-lw / 2.0, fs2 * 0.42), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2,
 		UiTheme.color("star_text"))
+
+
+## Whether the XP numbers are on the bar: only for a few seconds after a tap (docs/UI.md: the bar alone says how
+## far along; the numbers are there for whoever asks).
+func showing_numbers() -> bool:
+	return Time.get_ticks_msec() < _numbers_until
+
+
+func _gui_input(event: InputEvent) -> void:
+	var pressed := (event is InputEventMouseButton and (event as InputEventMouseButton).pressed) \
+		or (event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed)
+	if not pressed:
+		return
+	_numbers_until = Time.get_ticks_msec() + int(NUMBERS_FOR * 1000.0)
+	queue_redraw()
+	get_tree().create_timer(NUMBERS_FOR + 0.05).timeout.connect(queue_redraw)

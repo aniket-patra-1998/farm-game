@@ -4,7 +4,9 @@ and the code asks for it by key, with tr("KEY") (TranslationServer.translate("KE
 CI runs `python3 tools/strings_lint.py`, which fails when:
   - a script under autoload/ or scripts/ has a player-facing string literal outside tr(),
   - code asks for a key that locale/strings.csv doesn't have,
-  - locale/strings.csv has a key nothing uses, a duplicate key, or an empty English text.
+  - locale/strings.csv has a key nothing uses, a duplicate key, or an empty English text,
+  - a text is longer than LONGEST characters: say it in one short line and put the rest behind an ⓘ, under the
+    same key with _INFO (BookPanel.info); _HELP texts (Settings) and the developer readouts may be longer.
 
 What counts as player-facing: a literal with words in it that isn't an id or key ("cow", "grows_into"),
 a path, a colour ("#ffd34d"), a format with no words ("%d|%s"), a dictionary key or subscript, or a
@@ -29,6 +31,9 @@ THEME_API = re.compile(r"\b(set_stylebox|set_color|set_constant|set_font|set_fon
                        r"has_theme_\w+|is_class|set_type_variation)\(")
 KEY_CALL = re.compile(r'\b(?:tr|translate)\(\s*"([A-Z0-9_]+)"\s*\)')
 KEY_LIKE = re.compile(r"[A-Z][A-Z0-9_]*")
+LONGEST = 100   # characters a text the player reads at a glance may have (button 2 words, card line 6: docs/UI.md)
+LONG_OK = ("_INFO", "_HELP")   # what is read on purpose, behind an ⓘ or in Settings
+DEVELOPER = {"PERF_READOUT"}   # the testing readout (debug builds only)
 
 
 def csv_keys():
@@ -50,6 +55,9 @@ def csv_keys():
         if not KEY_LIKE.fullmatch(row[0]):
             errors.append("%s:%d: key %s should be UPPER_SNAKE_CASE" % (STRINGS_CSV, n, row[0]))
         keys[row[0]] = row[1]
+        if len(row[1]) > LONGEST and not row[0].endswith(LONG_OK) and row[0] not in DEVELOPER:
+            errors.append("%s:%d: %s is %d characters (at most %d): one short line, the rest in %s_INFO behind an ⓘ" % (
+                STRINGS_CSV, n, row[0], len(row[1]), LONGEST, row[0]))
     return keys, errors
 
 
