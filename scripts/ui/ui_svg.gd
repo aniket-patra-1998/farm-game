@@ -6,7 +6,7 @@ extends RefCounted
 
 const DIR := "res://art/icons/ui/"
 const LEAST := 32        # the smallest drawing; sizes go up in powers of two, so an icon swelling in a pulse
-						 # never draws itself again for every size it passes (mipmaps take it down smoothly)
+                         # never draws itself again for every size it passes (mipmaps take it down smoothly)
 const OVERSAMPLE := 1.5  # drawn this much larger than shown, then smoothed down (mipmaps)
 
 static var _cache := {}  # "kind:px" -> ImageTexture

@@ -63,7 +63,11 @@ func build(root: Control) -> void:
 	_add_petal("fuel", "SHEET_TAB_FUEL", func() -> int: return Game.vehicles.fuel_now(), _open_fuel)
 	hat = UiKit.tool_button("helpers", tr("BOOSTS"), side, side, 0.0, null, false)
 	hat.pivot_offset = Vector2(side, side) / 2.0
-	hat.pressed.connect(func() -> void: shut() if is_open else open())
+	hat.pressed.connect(func() -> void:
+		if is_open:
+			shut()
+		else:
+			open())
 	add_child(hat)
 
 
