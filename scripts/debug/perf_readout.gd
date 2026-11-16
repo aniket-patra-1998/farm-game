@@ -11,6 +11,13 @@ const WINDOW := 120          # frames the average and the worst are taken over (
 const REFRESH := 0.5         # seconds between updates of the text
 const LAYER := 100           # above everything else
 const FONT_SIZE := 22
+const HITCH_MS := 25.0       # a frame this long (and well over the average) is a hitch, kept with what came before it
+const HITCH_OVER := 1.8      # ..and at least this many times the average frame
+const HITCHES_KEPT := 4      # the latest hitches listed under the numbers
+const AFTER_MS := 1500       # a hitch this soon after an action names it
+
+static var last_action := ""   # the latest thing the player did (Feedback.moment, a building opened), for hitches
+static var last_action_at := 0
 
 static var _shown: PerfReadout
 
@@ -18,6 +25,13 @@ var _label: Label
 var _times := PackedFloat32Array()
 var _next := 0
 var _since := 0.0
+var _hitches: Array[String] = []
+
+
+## Notes what the player just did, so a hitch right after it says so (called by Feedback.moment and the HUD).
+static func note(action: String) -> void:
+	last_action = action
+	last_action_at = Time.get_ticks_msec()
 
 
 ## Whether the readout is switched on (always off in a release build).
@@ -57,9 +71,11 @@ func _ready() -> void:
 	_label.add_theme_font_size_override("font_size", FONT_SIZE)
 	_label.add_theme_color_override("font_color", Color.WHITE)
 	back.add_child(_label)
+	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
 
 
 func _process(delta: float) -> void:
+	_watch_hitch(delta)
 	_times[_next % WINDOW] = delta
 	_next += 1
 	_since += delta
@@ -67,6 +83,30 @@ func _process(delta: float) -> void:
 		return
 	_since = 0.0
 	_label.text = text_now()
+
+
+## A frame far over the average: what it cost where (scripts, the renderer on the processor, the graphics chip)
+## and what the player did just before, listed and written to the log (user://logs) for measuring on a PC.
+func _watch_hitch(delta: float) -> void:
+	var n := mini(_next, WINDOW)
+	if n < WINDOW / 2:
+		return
+	var total := 0.0
+	for i in n:
+		total += _times[i]
+	var ms := delta * 1000.0
+	if ms < HITCH_MS or ms < total / n * 1000.0 * HITCH_OVER:
+		return
+	var vp := get_viewport().get_viewport_rid()
+	var since := Time.get_ticks_msec() - last_action_at
+	var line := tr("PERF_HITCH") % [ms,
+		Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
+		Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
+		RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp),
+		(tr("PERF_HITCH_AFTER") % [since, last_action]) if since < AFTER_MS else ""]
+	print(line)   # not-ui (a measurement for the log)
+	_hitches.push_front(line)
+	_hitches.resize(mini(_hitches.size(), HITCHES_KEPT))
 
 
 ## The readout's text for the frames measured so far.
@@ -86,4 +126,5 @@ func text_now() -> String:
 		int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
 		int(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0),
 		int(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0),
-		RenderingServer.get_video_adapter_name(), int(size.x), int(size.y)]
+		RenderingServer.get_video_adapter_name(), int(size.x), int(size.y)] \
+		+ ("\n" + "\n".join(_hitches) if not _hitches.is_empty() else "")

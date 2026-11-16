@@ -414,6 +414,7 @@ func show_market() -> void:
 func show_building(uid: int) -> void:
 	building_uid = uid
 	var o := Game.object_by_uid(uid)
+	PerfReadout.note(str(o.get("id", "")))   # (a building opened)
 	if o.is_empty():
 		return
 	if BuildingSheet.suits(o):
