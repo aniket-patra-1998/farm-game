@@ -73,7 +73,15 @@ func test_88_every_system_saves_and_loads_its_own_fields() -> void:
 		system.save_to(again)
 	_eq(JSON.stringify(again), JSON.stringify(data), "every system's state survives a save and load")
 	_eq(h.crafting.bushels, {"wheat": 3}, "numbers come back as whole numbers")
-	_eq(h.systems.size(), 27, "all subsystems are registered")
+	# Every subsystem the game holds is registered (so it is reset, saved and loaded), counted from the game
+	# itself rather than a number kept by hand (Persistence has no state of its own and is the one left out).
+	var held := 0
+	for p: Dictionary in h.get_property_list():
+		var v: Variant = h.get(str(p["name"])) if int(p["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE else null
+		if v is GameSystem and not v is Persistence:
+			held += 1
+			_check(h.systems.has(v), "the %s system is registered" % p["name"])
+	_eq(h.systems.size(), held, "all subsystems are registered (%d)" % held)
 	h.queue_free()
 	_done(g)
 
