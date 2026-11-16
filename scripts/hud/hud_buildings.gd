@@ -117,6 +117,7 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 		buttons.add_child(turn)
 	var sell_ok := Game.buildings.can_sell(o)
 	var sell := hud._panel_button(tr("TOOL_SELL"))
+	sell.visible = sell_ok.why != BuildingSystem.Why.KEPT   # (one that is never sold, the Barn, has no Sell)
 	sell.disabled = not sell_ok.ok()
 	sell.pressed.connect(func() -> void:
 		if not sell.has_meta(&"sure"):
@@ -127,11 +128,12 @@ func add_building_bar(content: VBoxContainer, o: Dictionary) -> void:
 		Game.sell_object(uid))
 	buttons.add_child(sell)
 	for verdict: BuildingSystem.Verdict in [move_ok, sell_ok]:
-		if not verdict.ok() and verdict.text != "" and not reasons.has(verdict.text):
+		if not verdict.ok() and verdict.why != BuildingSystem.Why.KEPT and verdict.text != "" \
+				and not reasons.has(verdict.text):
 			reasons.append(verdict.text)
 	content.add_child(row)
 	if not reasons.is_empty():
-		content.add_child(BookPanel.text("\n".join(PackedStringArray(reasons)), 16, UiTheme.color("price_short")))
+		content.add_child(BookPanel.text("\n".join(PackedStringArray(reasons)), 16, UiTheme.color("note_on_wood")))
 
 
 ## A building's state in a few words: a frame and how far along, broken, ready, or how long until it is.

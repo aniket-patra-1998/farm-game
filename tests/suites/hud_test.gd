@@ -262,14 +262,15 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 	var barn := Game.storage.barn()
 	if not barn.is_empty():
 		hud.show_building(int(barn["uid"]))
+		# What is never sold (the Barn) has no Sell and no word about it, as what never turns has no Turn.
 		var refusal := Game.buildings.can_sell(barn)
-		var greyed := false
+		var shown := false
 		var told := false
 		for b: Button in book.find_children("*", "Button", true, false):
-			greyed = greyed or (not b.is_queued_for_deletion() and b.text == tr("TOOL_SELL") and b.disabled)
+			shown = shown or (not b.is_queued_for_deletion() and b.text == tr("TOOL_SELL") and b.is_visible_in_tree())
 		for l: Label in book.find_children("*", "Label", true, false):
-			told = told or (not l.is_queued_for_deletion() and l.text.contains(refusal.text))
-		_check(not refusal.ok() and greyed and told, "the Barn's Sell is greyed and says why before any tap")
+			told = told or (not l.is_queued_for_deletion() and l.is_visible_in_tree() and l.text.contains(refusal.text))
+		_check(not refusal.ok() and not shown and not told, "the Barn, never sold, has no Sell and no refusal under it")
 		hud.show_building(int(coop["uid"]))
 		buttons.clear()
 		for b: Button in hud.sheet.find_children("*", "Button", true, false):

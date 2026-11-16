@@ -3,6 +3,9 @@ extends Control
 ## FarmVille's level meter: a dark bar with a white fill and the XP numbers on it, a gold star with the level
 ## sitting over its right end. Drawn in code from the theme.
 
+const STAR_INSET := 0.58        # the star's centre this many of its sizes in from the right (its points reach 0.52)
+const STAR_LABEL_ROOM := 0.62   # the widest the level's number may be, as a share of the star's size
+
 ## How full the bar is, 0 to 1.
 @export var ratio := 0.0: set = _set_ratio
 @export var level := 1: set = _set_level
@@ -20,7 +23,8 @@ static func make() -> UiXpBar:
 
 ## Where the star's centre is (floating level-up effects fly to it).
 func star_centre() -> Vector2:
-	return Vector2(size.x - UiTheme.size("star_size") / 2.0, size.y / 2.0)
+	# (Inset so the star's points and outline stay inside the bar's box: nothing is cut at the screen's edge.)
+	return Vector2(size.x - UiTheme.size("star_size") * STAR_INSET, size.y / 2.0)
 
 
 func _set_ratio(v: float) -> void:
@@ -72,5 +76,9 @@ func _draw() -> void:
 	var fs2 := int(UiTheme.size("font_star"))
 	var label := str(level)
 	var lw := font2.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2).x
+	var room := star_d * STAR_LABEL_ROOM   # a long level (104) is set smaller to stay on the star
+	if lw > room:
+		fs2 = maxi(int(fs2 * room / lw), 8)
+		lw = font2.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2).x
 	draw_string(font2, c + Vector2(-lw / 2.0, fs2 * 0.42), label, HORIZONTAL_ALIGNMENT_LEFT, -1, fs2,
 		UiTheme.color("star_text"))
