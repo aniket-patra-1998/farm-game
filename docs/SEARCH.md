@@ -1,7 +1,6 @@
 # Search, everywhere it helps
 
-Status: built (steps 1 and 2 and most of 3); "Show on farm" and naming a result's shelf in the Market are still to
-come. Our own touch: FarmVille (2009) had no search.
+Status: built. Our own touch: FarmVille (2009) had no search.
 
 ## What the player gets
 
