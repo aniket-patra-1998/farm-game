@@ -22,7 +22,7 @@ func build_building(content: VBoxContainer) -> void:
 	if Game.under_construction(o):
 		build_construction(content, o, uid)
 		return
-	if str(Game.item_data(o["id"]).get("special", "")) == "finds_home":
+	if Game.special_of(o) == "finds_home":
 		build_finds_home(content, o)
 		return
 	var total := Game.inside_total(o)
@@ -67,7 +67,7 @@ func build_building(content: VBoxContainer) -> void:
 			if not r.is_empty():
 				hud.show_message(tr("COINS_XP") % [r["coins"], r["xp"]]))
 		actions.add_child(collect)
-	if o["id"] != "beehive":
+	if Game.homes.fills_by_hand(o):
 		var room := Game.homes.room_for_loose(o)
 		var fill := hud.panel_button(fill_words(o, room))
 		fill.disabled = room == 0

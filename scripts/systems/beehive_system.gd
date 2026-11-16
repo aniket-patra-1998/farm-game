@@ -37,7 +37,7 @@ func load_from(data: Dictionary) -> void:
 func hives() -> Array:
 	var out: Array = []
 	for o in game.objects:
-		if o["id"] == "beehive" and not game.under_construction(o):
+		if game.special_of(o) == "beehive" and not game.under_construction(o):
 			out.append(o)
 	return out
 
@@ -61,7 +61,7 @@ func pollination_chance() -> float:
 ## Puts a Queen Bee in a finished hive: one you hold, or one bought for gems.
 func add_queen(uid: int, buy := false) -> bool:
 	var hive := game.object_by_uid(uid)
-	if hive.is_empty() or hive["id"] != "beehive" or game.under_construction(hive) or has_queen(hive):
+	if hive.is_empty() or game.special_of(hive) != "beehive" or game.under_construction(hive) or has_queen(hive):
 		return false
 	if not buy and queen_bees > 0:
 		queen_bees -= 1

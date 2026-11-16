@@ -594,6 +594,13 @@ func kind_of(obj: Dictionary) -> String:
 
 ## Whether a placed object is a home: a building of kind "building", holding animals, trees, bees or vehicles
 ## (not the Barn or a crafting building; for "any building" ask `is_building_item`).
+## A building's special role from the catalog ("" for none): "beehive", "garage", "nursery", "truffles",
+## "finds_home"... Code asks for the role, never for a building by its id, so a second building with the
+## same role behaves the same with no code changed.
+func special_of(obj: Dictionary) -> String:
+	return "" if obj.is_empty() else str(item_data(str(obj.get("id", ""))).get("special", ""))
+
+
 func is_home(obj: Dictionary) -> bool:
 	return item_data(obj["id"]).get("kind", "") == "building"
 

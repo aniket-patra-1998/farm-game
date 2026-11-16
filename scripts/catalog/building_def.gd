@@ -94,6 +94,12 @@ func stores_anything() -> bool:
 	return false
 
 
+## Whether loose things on the farm move into it by hand (Fill, "Add N"): not a beehive, whose bees join from
+## flower harvests.
+func fills_by_hand() -> bool:
+	return str(data.get("special", "")) != "beehive"
+
+
 ## Babies moved in here grow up (the Nursery Barn).
 func grows_young() -> bool:
 	return str(data.get("special", "")) == "nursery"

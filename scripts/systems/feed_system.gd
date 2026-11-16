@@ -103,10 +103,8 @@ func taste(family: String, feed: String) -> float:
 
 
 func cap() -> int:
-	var level := 1
-	for o in game.objects:
-		if str(o["id"]) == "barn":
-			level = game.level_of(o)
+	var barn := game.storage.barn()
+	var level := 1 if barn.is_empty() else game.level_of(barn)
 	return Balance.i("feeds.stock_cap") + Balance.i("feeds.cap_per_barn_level") * (level - 1)
 
 

@@ -314,7 +314,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 		if Game.under_construction(o):
 			continue
 		var counts := Vector2i(-1, -1)
-		if o["id"] == "barn" and not o.get("broken", false):
+		if Game.storage.is_barn(o) and not o.get("broken", false):
 			counts = Vector2i(mini(Game.storage.stored.size(), Game.storage.barn_capacity()), Game.storage.barn_capacity())
 		elif Game.is_home(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
@@ -412,7 +412,7 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 	var building := Game.is_home(o)
 	var inside := Game.inside_total(o) if building else 0
 	var cap := Game.capacity(o) if building else 0
-	if o["id"] == "barn":
+	if Game.storage.is_barn(o):
 		inside = Game.storage.stored.size()
 		cap = Game.storage.barn_capacity()
 	if o["id"] == "mastery_sign" and Game.mastery.colour_of(str(o.get("crop", ""))) != "":
