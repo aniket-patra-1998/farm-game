@@ -16,8 +16,7 @@ extends Node
 
 const BUILDINGS := "res://art/models/buildings/"
 const KINDS: Array[String] = ["crafting"]   # the kinds of building made as files so far..
-## ..and the harvesting buildings redesigned to the rules so far (the rest follow, a few at a time).
-const HARVESTING: Array[String] = ["chicken_coop", "cow_shed", "beehive"]
+const TYPES: Array[String] = ["harvesting"]   # ..and the types (Game.building_type)
 
 const WINDOW := "window"   # not-ui (a part's name)
 
@@ -50,7 +49,7 @@ func _ready() -> void:
 
 ## Whether building `id` is made as files.
 static func exported(id: String) -> bool:
-	return str(Game.items[id].get("kind", "")) in KINDS or id in HARVESTING
+	return str(Game.items[id].get("kind", "")) in KINDS or Game.building_type(id) in TYPES
 
 
 ## Building `id` at `level` as its file holds it: every state, plain named materials, named parts left empty.

@@ -41,7 +41,7 @@
             },
             {
               "capacity": 60,
-              "name": "Big Chicken Coop",
+              "name": "Huge Chicken Coop",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
@@ -76,7 +76,7 @@
             },
             {
               "capacity": 40,
-              "name": "Big Duck Pond",
+              "name": "Huge Duck Pond",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
@@ -119,7 +119,7 @@
             },
             {
               "capacity": 40,
-              "name": "Big Dairy Farm",
+              "name": "Huge Dairy Farm",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
@@ -155,7 +155,7 @@
             },
             {
               "capacity": 40,
-              "name": "Big Sheep Pen",
+              "name": "Huge Sheep Pen",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
@@ -185,7 +185,7 @@
             },
             {
               "capacity": 40,
-              "name": "Big Goat Pen",
+              "name": "Huge Goat Pen",
               "materials": {
                 "bricks": 10,
                 "nails": 10,
@@ -215,7 +215,7 @@
             },
             {
               "capacity": 40,
-              "name": "Big Rabbit Hutch",
+              "name": "Huge Rabbit Hutch",
               "materials": {
                 "bricks": 10,
                 "nails": 10,

@@ -801,6 +801,51 @@
       "model": "res://art/models/buildings/beehive_{level}.glb",
       "site": "res://art/models/buildings/beehive_site_{stage}.glb",
       "budget": "building"
+    },
+    "duck_pond": {
+      "model": "res://art/models/buildings/duck_pond_{level}.glb",
+      "site": "res://art/models/buildings/duck_pond_site_{stage}.glb",
+      "budget": "building"
+    },
+    "sheep_pen": {
+      "model": "res://art/models/buildings/sheep_pen_{level}.glb",
+      "site": "res://art/models/buildings/sheep_pen_site_{stage}.glb",
+      "budget": "building"
+    },
+    "goat_pen": {
+      "model": "res://art/models/buildings/goat_pen_{level}.glb",
+      "site": "res://art/models/buildings/goat_pen_site_{stage}.glb",
+      "budget": "building"
+    },
+    "rabbit_hutch": {
+      "model": "res://art/models/buildings/rabbit_hutch_{level}.glb",
+      "site": "res://art/models/buildings/rabbit_hutch_site_{stage}.glb",
+      "budget": "building"
+    },
+    "pig_pen": {
+      "model": "res://art/models/buildings/pig_pen_{level}.glb",
+      "site": "res://art/models/buildings/pig_pen_site_{stage}.glb",
+      "budget": "building"
+    },
+    "horse_stable": {
+      "model": "res://art/models/buildings/horse_stable_{level}.glb",
+      "site": "res://art/models/buildings/horse_stable_site_{stage}.glb",
+      "budget": "building"
+    },
+    "nursery_barn": {
+      "model": "res://art/models/buildings/nursery_barn_{level}.glb",
+      "site": "res://art/models/buildings/nursery_barn_site_{stage}.glb",
+      "budget": "building"
+    },
+    "orchard": {
+      "model": "res://art/models/buildings/orchard_{level}.glb",
+      "site": "res://art/models/buildings/orchard_site_{stage}.glb",
+      "budget": "building"
+    },
+    "bloom_garden": {
+      "model": "res://art/models/buildings/bloom_garden_{level}.glb",
+      "site": "res://art/models/buildings/bloom_garden_site_{stage}.glb",
+      "budget": "building"
     }
   }
 }

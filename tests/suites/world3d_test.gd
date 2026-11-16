@@ -91,12 +91,7 @@ func test_96_models_are_merged_and_face_outwards() -> void:
 		door_meshes += _count_meshes(d)
 	var pools := baked.get_children().filter(func(n: Node) -> bool:
 		return n is MeshInstance3D and (n as MeshInstance3D).material_override == ModelKit.glow_material()).size()
-	_eq(pools, 0, "a harvesting building's windows stay dark at night: no pools of light")
-	var lit := ModelKit.bake(BuildingModel.build(g.item_data("barn"), g.footprint("barn")))
-	_eq(lit.get_children().filter(func(n: Node) -> bool:
-		return n is MeshInstance3D and (n as MeshInstance3D).material_override == ModelKit.glow_material()).size(), 1,
-		"another building's pools of light at its door and its windows are drawn as one")
-	lit.free()
+	_check(pools == 1, "with the pools of light at its door and its windows, drawn as one (%d)" % pools)
 	var shades := baked.get_children().filter(func(n: Node) -> bool:
 		var plane := n is MeshInstance3D and (n as MeshInstance3D).mesh is PlaneMesh
 		return plane and (n as MeshInstance3D).material_override != ModelKit.glow_material()).size()

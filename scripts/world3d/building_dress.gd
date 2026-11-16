@@ -639,9 +639,32 @@ static func _table(ctx: Dictionary, at: Vector3, goods: String, boards: Material
 	_good(when(ctx, "fill", FULL), at + Vector3(TABLE.x + 0.09, 0, TABLE.z * 0.4), goods, 1)
 
 
-## One of the goods on a rack: a loaf, a bottle, a tray of eggs, a milk can or a pot of honey.
+## One of the goods on a rack: a loaf, a bottle, a tray of eggs, a milk can, a pot of honey, a bundle of wool, a
+## basket of truffles, a sack of oats, a crate of fruit or a basket of flowers.
 static func _good(root: Node3D, at: Vector3, kind: String, n: int) -> void:
-	if kind == "eggs":
+	if kind == "wool":
+		# A bundle of fleece tied round the middle.
+		for puff in 3:
+			bead(root, at + Vector3((puff - 1) * 0.03, 0.04 + 0.012 * (puff % 2), 0), 0.04, ModelKit.paint(CREAM))
+		ModelKit.box(root, at + Vector3(-0.006, 0, -0.045), at + Vector3(0.006, 0.085, 0.045), ModelKit.paint(BURLAP))
+	elif kind in ["truffles", "crates", "baskets"]:
+		# A little crate or basket, heaped with what was gathered.
+		var basket := kind != "crates"
+		ModelKit.box(root, at + Vector3(-0.055, 0, -0.045), at + Vector3(0.055, 0.05, 0.045),
+			ModelKit.paint(BURLAP.darkened(0.15) if basket else WOOD.lightened(0.15)))
+		var heap: Array[Color] = [Color("#4a3426"), Color("#5c4332"), Color("#3a281d")]
+		if kind == "crates":
+			heap = [Color("#d8402f"), Color("#e8b93c"), Color("#7fb23a")]
+		elif kind == "baskets":
+			heap = [Color("#ff7aa8"), Color("#ffd23f"), Color("#b388ff")]
+		for k in 4:
+			bead(root, at + Vector3(-0.026 + 0.052 * (k % 2), 0.066, -0.02 + 0.04 * (k / 2)), 0.026,
+				ModelKit.paint(heap[(k + n) % heap.size()]))
+	elif kind == "sacks":
+		bead(root, at + Vector3(0, 0.055, 0), 0.055, ModelKit.paint(BURLAP.darkened(0.05 * (n % 2))), Vector3(0.9, 1.0,
+			0.8))
+		bead(root, at + Vector3(0, 0.115, 0), 0.018, ModelKit.paint(BURLAP.darkened(0.2)))
+	elif kind == "eggs":
 		# A straw tray with three eggs in it.
 		ModelKit.box(root, at + Vector3(-0.055, 0, -0.04), at + Vector3(0.055, 0.02, 0.04), ModelKit.paint(HAY))
 		for egg in 3:

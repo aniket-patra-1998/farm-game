@@ -282,20 +282,21 @@ func test_388_crafting_buildings_are_gltf_files_that_follow_the_art_rules() -> v
 
 func test_389_harvesting_buildings_follow_their_rules() -> void:
 	# A harvesting building (animals, bees, trees or blooms live in it and it is collected from) has two sizes:
-	# one storey, then two. The ones redesigned so far are glTF files like the crafting buildings, with a rough
-	# yard and a couple of hay bales, windows that stay dark and a ready part that fills as the collect timer
+	# one storey, then two. Each is a glTF file like the crafting buildings, with a rough yard and a couple of
+	# hay bales, windows lit at night as every building's are, and a ready part that fills as the collect timer
 	# runs. Night hides nothing: the animals sleep where they stand in the yard.
-	var harvesting := 0
+	var harvesting: Array[String] = []
 	for id: String in Game.item_order:
 		if Game.building_type(id) == Objects3D.HARVESTING:
-			harvesting += 1
+			harvesting.append(id)
 			_eq(Game.max_level(id), 2, "%s has two sizes" % id)
-	_eq(harvesting, 12, "the twelve harvesting buildings")
+	_eq(harvesting.size(), 12, "the twelve harvesting buildings")
 	var objects := Objects3D.new()
-	var shared: Array = [ModelKit.shade_material(), ModelKit.water()]
-	for id: String in ExportBuildings.HARVESTING:
+	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.pond_water()]
+	for id: String in harvesting:
 		var fp := Game.footprint(id)
-		_eq(Game.building_type(id), Objects3D.HARVESTING, "%s is a harvesting building" % id)
+		_check(AssetRegistry.has_model(id), "%s is made as a file" % id)
 		var tall: Array[float] = []
 		for level in [1, 2]:
 			var spec := BuildingModel.spec(id, level)
@@ -312,10 +313,11 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 					var mat := mi.get_active_material(k)
 					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
 					wrong += 0 if master or mat in shared else 1
-					lit += 1 if mat == ModelKit.glass() or mat == ModelKit.glow_material() else 0
+					lit += 1 if mat == ModelKit.glass() else 0
 			tall.append(top)
 			_eq(wrong, 0, "%s size %d draws with the master shader and the kit's shared materials only" % [id, level])
-			_eq(lit, 0, "%s size %d: its windows stay dark at night (no lit glass, no pools of light)" % [id, level])
+			_check(lit > 0 or int(spec.get("windows", 0)) == 0 or float(spec["body"]["w"]) <= 0.0,
+				"%s size %d: its windows are the kit's own glass, lit at night" % [id, level])
 			_check(AssetRegistry.draws(node) <= AssetRegistry.budget_of(id, "draws"),
 				"%s size %d: full, %d draws within %d" % [id, level, AssetRegistry.draws(node),
 				AssetRegistry.budget_of(id, "draws")])

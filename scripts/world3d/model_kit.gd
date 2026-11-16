@@ -17,6 +17,7 @@ const LIVE_GLASS := "kit_glass"
 const LIVE_GLOW := "kit_glow"
 const LIVE_SHADE := "kit_shade"
 const LIVE_WATER := "kit_water"
+const LIVE_POND := "kit_pond"
 const SHADE_STRENGTH := 0.5   # how dark the soft shade round a building's foot is at its middle
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.05
@@ -71,6 +72,8 @@ const WALL_AO_STEP := 0.02         # the ground shade packed for a wall is a who
 
 
 
+## Materials of the builders' own that draw a mesh by its vertex colours alone: a file carries them as paint.
+static var paint_like: Array[Material] = []
 static var roof_trim := RAKE_COLOUR   # the colour of roofs' edge boards being built (gold on a maxed building)
 static var _facet_mesh: ArrayMesh
 static var _facet_low: ArrayMesh   # the same ball with fewer facets, for crowds
@@ -435,6 +438,10 @@ static func file_name_of(mat: Material) -> String:
 		return LIVE_SHADE
 	if mat == water():
 		return LIVE_WATER
+	if mat == pond_water():
+		return LIVE_POND
+	if mat in paint_like:
+		return FILE_PAINT
 	return ""
 
 
@@ -452,7 +459,7 @@ static func adopt(node: Node) -> void:
 			var over := _live(mi.get_surface_override_material(k))
 			if over != mi.get_surface_override_material(k):
 				mi.set_surface_override_material(k, over)
-			live = live or mi.get_active_material(k) in [glow_material(), shade_material(), water()]
+			live = live or mi.get_active_material(k) in [glow_material(), shade_material(), water(), pond_water()]
 		if live:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for c in node.get_children():
@@ -940,6 +947,8 @@ static func _live(m: Material) -> Material:
 			return shade_material()
 		LIVE_WATER:
 			return water()
+		LIVE_POND:
+			return pond_water()
 	return m
 
 

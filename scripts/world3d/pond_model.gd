@@ -32,8 +32,10 @@ const BLOOM_HEART := Color("#f2c230")
 static var _earth_material: StandardMaterial3D
 
 
-## Builds a pond under `root`, centred at `c`, `rx` by `rz` at its shore.
-static func build(root: Node3D, c: Vector3, rx: float, rz: float, seed_value: int, lilies := 4) -> void:
+## Builds a pond under `root`, centred at `c`, `rx` by `rz` at its shore. `still`: its reeds do not sway (a
+## building made as a file moves only by its named parts).
+static func build(root: Node3D, c: Vector3, rx: float, rz: float, seed_value: int, lilies := 4,
+		still := false) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value * 7919 + 13
 	var phase := rng.randf() * TAU
@@ -52,7 +54,7 @@ static func build(root: Node3D, c: Vector3, rx: float, rz: float, seed_value: in
 	root.add_child(water)
 	_shallows(root, c, rx, rz, shore, rng)
 	_stones(root, c, rx, rz, shore, rng)
-	_cattails(root, c, rx, rz, shore, rng)
+	_cattails(root, c, rx, rz, shore, rng, still)
 	_lilies(root, c, rx, rz, rng, lilies)
 
 
@@ -80,14 +82,14 @@ static func _ground(c: Vector3, rx: float, rz: float, shore: PackedFloat32Array)
 			var q0 := _at(c, rx, rz, shore, k, b[0], b[1])
 			var q1 := _at(c, rx, rz, shore, k + 1, b[0], b[1])
 			for v: Array in [[p0, a[2]], [q1, b[2]], [q0, b[2]], [p0, a[2]], [p1, a[2]], [q1, b[2]]]:
-				st.set_color(v[1])
+				st.set_color(Color(v[1], 0.0))   # (alpha 0: matte, when a file draws it with the master shader)
 				st.add_vertex(v[0])
 	# The bowl's floor.
 	var floor_y := DEEP_HEIGHT
 	for k in SHORE_POINTS:
 		for v: Vector3 in [c + Vector3(0, floor_y, 0), _at(c, rx, rz, shore, k, DEEP, floor_y),
 				_at(c, rx, rz, shore, k + 1, DEEP, floor_y)]:
-			st.set_color(BED.darkened(0.15))
+			st.set_color(Color(BED.darkened(0.15), 0.0))
 			st.add_vertex(v)
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
@@ -138,7 +140,7 @@ static func _stones(root: Node3D, c: Vector3, rx: float, rz: float, shore: Packe
 
 ## Cattails and reeds in clumps at the water's edge: thin leaves and stalks with brown heads.
 static func _cattails(root: Node3D, c: Vector3, rx: float, rz: float, shore: PackedFloat32Array,
-		rng: RandomNumberGenerator) -> void:
+		rng: RandomNumberGenerator, still := false) -> void:
 	for clump in 3:
 		var i := int(SHORE_POINTS * (clump + 0.6 + rng.randf() * 0.3) / 3.0)
 		var at := _at(c, rx, rz, shore, i, rng.randf_range(0.93, 1.02), WATER_LEVEL - 0.01)
@@ -146,7 +148,8 @@ static func _cattails(root: Node3D, c: Vector3, rx: float, rz: float, shore: Pac
 			var h := rng.randf_range(0.16, 0.32)
 			var foot := at + Vector3(rng.randf_range(-0.05, 0.05), 0.0, rng.randf_range(-0.05, 0.05))
 			var lean := Vector3(rng.randf_range(-0.25, 0.25), 0.0, rng.randf_range(-0.25, 0.25))
-			var leaf := ModelKit.cylinder(root, foot, 0.008, h, ModelKit.paint(REED.darkened(rng.randf() * 0.2), 0.0, 0.5),
+			var leaf := ModelKit.cylinder(root, foot, 0.008, h, ModelKit.paint(REED.darkened(rng.randf() * 0.2), 0.0,
+				0.0 if still else 0.5),
 				0.002, 4)
 			leaf.rotation = lean
 			if k % 3 == 0:   # a cattail's brown head near the top of its stalk
@@ -193,4 +196,5 @@ static func _earth() -> StandardMaterial3D:
 		_earth_material = StandardMaterial3D.new()
 		_earth_material.vertex_color_use_as_albedo = true
 		_earth_material.roughness = 1.0
+		ModelKit.paint_like.append(_earth_material)   # (a file carries it as plain paint: its colours are the mesh's)
 	return _earth_material

@@ -530,6 +530,10 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 	# A grid in the field's own proportions, inside its tile's border with each crown kept in; trees are packed
 	# tight, crowns just touching (FarmVille's orchards).
 	var room := SpaceFit.tile_room(_fp)
+	# (a shed stands along the back of the field: the plants start in front of it, `plants_from` of the way down)
+	var from := float((_spec.get("fill", {}) as Dictionary).get("plants_from", 0.0)) * _fp.y
+	if from > room.position.y:
+		room = Rect2(room.position.x, from, room.size.x, room.end.y - from)
 	# An orchard's grid is for the trees it holds now, standing together in the middle of the field (a few make a
 	# clump of crowns, not a line along one fence); a garden's is for all its places, in beds.
 	var count := maxi(mini(slots, Game.inside_total(o)), 1) if trees else slots

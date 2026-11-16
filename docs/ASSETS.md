@@ -75,7 +75,7 @@ builder names its materials `paint` or `wall` (`ModelKit.FILE_PAINT`, `FILE_WALL
 that read each part's shine or surface pattern from its vertex alpha (`alpha_holds`; the patterns are
 shaders/surface_patterns.gdshaderinc, shared with the builders' own wall shader). Glass, pools of light, the
 shade at a building's foot and water are the kit's single shared materials, put back by the names the file
-gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`: `ModelKit.adopt`). A crafting building is 6 to
+gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`, `kit_pond`: `ModelKit.adopt`). A crafting building is 6 to
 8 draws: walls, paint and glass, the light pools, the shade, its storage look and its animated parts.
 
 ## 4. Animation: clips, blended, with layers; crowds on the GPU

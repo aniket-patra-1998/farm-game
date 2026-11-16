@@ -228,24 +228,23 @@ buildings (Feed Mill, Bakery, Winery, Spa), and held by tests (`world3d_test` te
 
 Harvesting buildings (2026-11-17; rules in CLAUDE.md, held by `assets_test` test_389):
 
-- All twelve have two sizes now (the first and the last of what they had; the Pig Pen and the Beehive gained
-  a second), named "Big ..." at the second. A farm saved with a bigger size is brought down to the second.
-- A pilot of three is redesigned and shipped as glTF files: the Cow Shed (a red gambrel barn, milk cans on a
-  table), the Chicken Coop (on stilts, an egg stall) and the Beehive (one hive on a stand, honey pots; two
-  tiers at the second size). Each: rough yard with two hay bales, dark windows and a ready
-  part with four looks. Full, they are 6, 4 and 4 draws.
-- The other nine (Duck Pond, Sheep Pen, Goat Pen, Rabbit Hutch, Pig Pen, Horse Stable, Nursery Barn, Orchard,
-  Bloom Garden) have the dark windows already (it is in the builder), but still wear their old looks, built
-  in code, with their old top look folded into level 2. They are to be redesigned and added to
-  `ExportBuildings.HARVESTING`.
+- All twelve have two sizes now (the first and the last of what they had, names kept; the Pig Pen and the
+  Beehive gained a second). A farm saved with a bigger size is brought down to the second.
+- All twelve are redesigned and shipped as glTF files, a file for each size and construction stage: one
+  storey, then two with gold roof edges and a star; a rough yard with two hay bales; windows lit at night; a
+  ready part with four looks (eggs, milk cans, honey pots, wool, truffles, oat sacks, feeding bottles, fruit
+  crates, flower baskets). The Beehive is one hive on a stand (two tiers at size 2), the Duck Pond's house
+  stands on stilts with a second on top, the Orchard and Bloom Garden have a shed and a pavilion at the back
+  with their plants in front. Full, they are 4 to 8 draws.
 - Night: nothing is hidden. The animals sleep where they stand in the yard, as before (the first plan, to
-  take them indoors and raise a "zzz", was dropped on 2026-11-17).
+  take them indoors, darken the windows and raise a "zzz", was dropped on 2026-11-17).
+- Not checked on a phone.
 
 Open:
 
 - Decor (no upgrades, a yellow light at night) and storing buildings are not brought under the rules yet; they
-  and the nine harvesting buildings above still have the older shapes and are built in code. Each moves to
-  glTF files, as above, when it is redesigned (CLAUDE.md).
+  still have the older shapes and are built in code. Each moves to glTF files, as above, when it is
+  redesigned (CLAUDE.md).
 - The plants' files (trees, crops, blooms) are still Godot scenes with shaders of their own, not glTF with the
   master shader; `tools/asset_lint` and the per-type import scripts docs/ASSETS.md names do not exist yet.
 - The balance bot (30 days, three visits a day, 2026-11-16) reaches level 25, where crafting unlocks, on day 25

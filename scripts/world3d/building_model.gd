@@ -21,10 +21,10 @@ const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 ## The features that are one building's own (`_signature`).
 const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
-const PANE := Color("#2c3a4a")    # a harvesting building's window: dark glass, by day and by night (nobody lights it)
 const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
 const ROUGH_MOUNDS := 7           # low humps in a rough yard's ground..
 const ROUGH_TUFTS := 8            # ..and tufts of straw lying on it
+const DUCK_HOUSE := Vector3(0.2, 0.24, 0.16)   # a duck house: half its width, its walls' height, half its depth
 const HIVE_BOX := Vector3(0.29, 0.18, 0.25)   # a beehive's box: half width, height and half depth, in tiles
 const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pump", "mobile"]
 ## Yard features' size (their radius in tiles, unless the data gives `r`).
@@ -198,7 +198,7 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 				out.append(Rect2(float(p[0]) * fw - r, float(p[1]) * fd - r, r * 2.0, r * 2.0))
 			"duck_house":
 				var p: Array = f.get("at", [0.82, 0.2])
-				out.append(Rect2(float(p[0]) * fw - 0.2, float(p[1]) * fd - 0.17, 0.4, 0.34))
+				out.append(Rect2(float(p[0]) * fw - 0.24, float(p[1]) * fd - 0.2, 0.48, 0.8))
 			"beehives":
 				var n := int(f.get("count", 3))
 				for k in n:
@@ -246,7 +246,7 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 	var wall_col := Color.html(str(it.get("color", "#c0392b")))
 	var ctx := {"root": root, "fw": fw, "fd": fd, "centre": centre, "bw": bw, "bd": bd, "bh": bh, "lift": lift,
 		"wall": wall_col, "spec": s, "it": it, "active": active, "fill": fill,
-		"dark": str(it.get("type", "")) == HARVESTING}
+		"harvesting": str(it.get("type", "")) == HARVESTING}
 	# Yards go down first (they're on the ground, under everything).
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "yard":
@@ -623,8 +623,7 @@ static func _settle(ctx: Dictionary) -> void:
 	marker.set_meta(ModelKit.KEEP, true)
 	marker.set_meta(WINDOWS, ctx.get("window_at", []))
 	root.add_child(marker)
-	if not ctx.get("dark", false):
-		_light_spill(ctx)
+	_light_spill(ctx)
 	BuildingDress.ground(ctx)
 
 
@@ -834,7 +833,7 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame, z - size / 2 - frame),
 			Vector3(hi.x + FRAME_OUT, y + size / 2 + frame, z + size / 2 + frame), ModelKit.paint(trim))
 		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - size / 2, z - size / 2), Vector3(hi.x + FRAME_OUT + 0.004,
-			y + size / 2, z + size / 2), ModelKit.paint(PANE, 0.5) if ctx.get("dark", false) else ModelKit.glass())
+			y + size / 2, z + size / 2), ModelKit.glass())
 		ModelKit.box(root, Vector3(hi.x + FRAME_OUT, y - 0.011, z - size / 2), Vector3(hi.x + FRAME_OUT + 0.014,
 			y + 0.011,
 			z + size / 2), ModelKit.paint(trim), false)
@@ -1170,8 +1169,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var z := minf(hi.z + 0.35, fd - 0.2)
 			# (a harvesting building's trough holds painted water, which does not ripple: a draw less)
 			ModelKit.tub(root, Vector3(x - 0.2, 0, z - 0.07), Vector3(x + 0.2, 0.12, z + 0.07), 0.02,
-				ModelKit.surface(WOOD, "boards", 0.2), ModelKit.paint(Color("#3f9fd0"), 0.9) if ctx.get("dark", false)
-				else ModelKit.water())
+				ModelKit.surface(WOOD, "boards", 0.2), ModelKit.paint(Color("#3f9fd0"), 0.9)
+				if ctx.get("harvesting", false) else ModelKit.water())
 		"hay_bales" when f.has("at"):
 			# A couple of bales in the yard: one lying square, one turned and leaning on it, each tied with two
 			# bands of twine.
@@ -1241,25 +1240,10 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var centre := Vector3(fw / 2.0, 0, fd / 2.0)
 			# No ducks of its own: a Duck Pond's ducks are the ones living in it (BuildingFill), so an empty
 			# pond looks empty.
-			PondModel.build(root, centre, rx, rz, 7, 5)
+			# (`still`: its reeds do not sway; a building's file moves only by its named parts)
+			PondModel.build(root, centre, rx, rz, 7, 5, true)
 		"duck_house":
-			var spot: Array = f.get("at", [0.82, 0.2])
-			var p := Vector3(fw * float(spot[0]), 0, fd * float(spot[1]))
-			for k in 4:
-				ModelKit.box(root, p + Vector3(
-					-0.15 + (k % 2) * 0.27,
-					0,
-					-0.12 + (k / 2) * 0.21
-				), p + Vector3(-0.12 + (k % 2) * 0.27,
-					0.15, -0.09 + (k / 2) * 0.21), ModelKit.paint(WOOD))
-			ModelKit.box(
-				root,
-				p + Vector3(-0.17, 0.15, -0.14),
-				p + Vector3(0.17, 0.35, 0.14),
-				ModelKit.surface(Color("#e9d7a8"), "boards")
-			)
-			ModelKit.roof(root, "gable", p + Vector3(-0.17, 0.15, -0.14), p + Vector3(0.17, 0.35, 0.14), 0.12, 0.04,
-				ModelKit.surface(Color("#b5492f"), "shingles", 0.0), ModelKit.surface(Color("#e9d7a8"), "boards"))
+			_duck_house(ctx, f)
 		"trees":
 			# Rows of three, spread over the yard; more trees, more rows, a little smaller.
 			var n := int(f.get("count", 6))
@@ -1546,6 +1530,46 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 					0.014), mat)
 		else:
 			_fence(root, a, b, fence, mat)
+
+
+## A duck house on the bank of a Duck Pond (which has no walls of its own): a boarded house on legs under a red
+## roof, a ramp down to the water; with `tiers` 2 it stands on tall stilts with a second, smaller house on top
+## of the first, over a little pent roof.
+static func _duck_house(ctx: Dictionary, f: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
+	var spot := yard_spot(f, ctx["fw"], ctx["fd"]) if f.has("at") else Vector2(0.82 * float(ctx["fw"]),
+		0.2 * float(ctx["fd"]))
+	var p := Vector3(spot.x, 0, spot.y)
+	var tiers := int(f.get("tiers", 1))
+	var legs := 0.15 if tiers == 1 else 0.3
+	var boards := ModelKit.surface(Color("#e9d7a8"), "boards")
+	var roof_mat := ModelKit.surface(Color("#b5492f"), "shingles", 0.0)
+	var half := Vector3(DUCK_HOUSE.x, 0, DUCK_HOUSE.z)
+	for k in 4:
+		var leg := p + Vector3((k % 2 * 2 - 1) * (half.x - 0.03), 0, (k / 2 * 2 - 1) * (half.z - 0.03))
+		ModelKit.box(root, leg + Vector3(-0.018, 0, -0.018), leg + Vector3(0.018, legs, 0.018), ModelKit.paint(WOOD))
+	ModelKit.box(root, p + Vector3(-half.x - 0.03, legs - 0.02, -half.z - 0.03), p + Vector3(half.x + 0.03, legs,
+		half.z + 0.03), ModelKit.surface(WOOD, "boards"))
+	var ramp := ModelKit.box(root, Vector3(-0.06, -0.008, 0), Vector3(0.06, 0.008, legs * 1.7),
+		ModelKit.surface(WOOD, "boards"))
+	ramp.position = p + Vector3(0, legs - 0.01, half.z + 0.02)
+	ramp.rotation.x = atan2(legs, legs * 1.4)
+	var y := legs
+	for tier in tiers:
+		var narrow := 1.0 if tier == 0 else 0.76
+		var lo := p + Vector3(-half.x * narrow, y, -half.z * narrow)
+		var hi := p + Vector3(half.x * narrow, y + DUCK_HOUSE.y, half.z * narrow)
+		ModelKit.box(root, lo, hi, boards)
+		# (the way in: a dark round-topped hole on the front)
+		ModelKit.box(root, Vector3(p.x - 0.05, y + 0.02, hi.z), Vector3(p.x + 0.05, y + DUCK_HOUSE.y * 0.6, hi.z + 0.004),
+			ModelKit.paint(DARK), false)
+		if tier < tiers - 1:
+			ModelKit.roof(root, "hip", lo, hi, SKIRT_PITCH * half.z, 0.05, roof_mat, boards)
+			y = hi.y + 0.03
+		else:
+			ctx["top"] = ModelKit.roof(root, "gable", lo, hi, half.z * narrow * 0.85, 0.05, roof_mat, boards)
+			ctx["upper_lo"] = lo
+			ctx["upper_hi"] = hi
 
 
 ## A beehive on its stand (the Beehive building, which has no walls of its own): a box hive of `tiers` storeys,
