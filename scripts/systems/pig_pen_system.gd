@@ -35,7 +35,7 @@ func forage_seconds_left(pen: Dictionary) -> int:
 ## Feeds slop to the pigs inside; they forage for truffles for 8 hours.
 func feed_slop(uid: int) -> bool:
 	var pen := game.object_by_uid(uid)
-	if pen.is_empty() or pen["id"] != "pig_pen" or game.under_construction(pen) or is_foraging(pen):
+	if pen.is_empty() or game.special_of(pen) != "truffles" or game.under_construction(pen) or is_foraging(pen):
 		return false
 	if game.inside_total(pen) == 0:
 		game.message.emit(tr("MOVE_SOME_PIGS_IN_FIRST"))

@@ -561,3 +561,45 @@ func test_365_fill_offers_one_of_each_to_a_one_each_home() -> void:
 	_eq(g.homes.fill_building(uid), 1, "one moves in")
 	_eq(g.homes.room_for_loose(st), 0, "with him inside, none offered")
 	_done(g)
+
+
+## Buildings are told apart by their catalog role, never by their id in code (REVIEW.md: item behaviour on
+## catalog classes): `special_of` reads the role, the Barn is known by its class, Fill is the catalog's (a beehive
+## takes none: its bees join from harvests); and no game rule or panel compares an object's id with a building's.
+func test_381_buildings_are_known_by_their_role_not_their_id() -> void:
+	var g := _farm()
+	var buildings := 0
+	for id: String in g.items:
+		if not g.is_building_item(id):
+			continue
+		buildings += 1
+		_eq(g.special_of({"id": id}), str(g.item_data(id).get("special", "")), "%s's role is the catalog's" % id)
+		_eq(g.homes.fills_by_hand({"id": id}), g.special_of({"id": id}) != "beehive", "%s: Fill is the catalog's" % id)
+	_check(buildings > 10, "every building checked (%d)" % buildings)
+	_eq(g.special_of({}), "", "nothing has no role")
+	_check(g.storage.is_barn(g.storage.barn()), "the Barn is known by its class")
+	_check(not g.storage.is_barn({"id": "chicken_coop"}) and not g.storage.is_barn({}), "and nothing else is")
+	var hive_id := ""
+	for id: String in g.items:
+		if g.special_of({"id": id}) == "beehive":
+			hive_id = id
+	_check(hive_id != "" and not g.homes.fills_by_hand({"id": hive_id}), "a beehive takes nothing by hand")
+	# The source: no `o["id"] == "<a building>"` in the rules or the interface (the art may name its models).
+	var ids: Array[String] = []
+	for id: String in g.items:
+		if g.is_building_item(id):
+			ids.append(id)
+	var by_id := RegEx.create_from_string("\\[\"id\"\\]\\)?\\s*(==|!=)\\s*\"(%s)\"" % "|".join(ids))
+	var found: Array[String] = []
+	for dir: String in ["res://autoload", "res://scripts/systems", "res://scripts/hud", "res://scripts/catalog",
+			"res://scripts/ui"]:
+		for f in DirAccess.get_files_at(dir):
+			if f.ends_with(".gd"):
+				var text := FileAccess.get_file_as_string(dir + "/" + f)
+				for m in by_id.search_all(text):
+					found.append("%s: %s" % [f, m.get_string()])
+	for f in ["res://scripts/farm_grid.gd", "res://scripts/hud.gd"]:
+		for m in by_id.search_all(FileAccess.get_file_as_string(f)):
+			found.append("%s: %s" % [f.get_file(), m.get_string()])
+	_eq(found, [] as Array[String], "no building is checked by its id in the rules or the interface")
+	_done(g)

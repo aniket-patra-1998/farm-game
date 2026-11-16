@@ -31,9 +31,14 @@ func load_from(data: Dictionary) -> void:
 
 func barn() -> Dictionary:
 	for o in game.objects:
-		if o["id"] == "barn":
+		if is_barn(o):
 			return o
 	return {}
+
+
+## Whether `o` is the Barn: by its catalog class (a BarnDef), never by its id.
+func is_barn(o: Dictionary) -> bool:
+	return not o.is_empty() and game.catalog.get_def(str(o["id"])) is BarnDef
 
 
 func barn_repaired() -> bool:

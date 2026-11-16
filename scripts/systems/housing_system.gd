@@ -108,7 +108,7 @@ func put_in_home(building_uid: int, item_id: String, source: Dictionary) -> bool
 ## Moves every loose animal or tree of the right type into the building, up to its capacity.
 func fill_building(uid: int) -> int:
 	var b := game.object_by_uid(uid)
-	if b.is_empty() or not game.is_home(b) or game.under_construction(b):
+	if b.is_empty() or not game.is_home(b) or game.under_construction(b) or not fills_by_hand(b):
 		return 0
 	var moved := 0
 	var keep: Array = []
@@ -135,7 +135,8 @@ func fill_building(uid: int) -> int:
 ## room. A full home takes none, however many wait outside; one-each homes take one of each. Worked out on a copy
 ## of the building, step by step as `fill_building` goes, so the button's number is the number that moves.
 func room_for_loose(building: Dictionary) -> int:
-	if building.is_empty() or not game.is_home(building) or game.under_construction(building):
+	if building.is_empty() or not game.is_home(building) or game.under_construction(building) \
+			or not fills_by_hand(building):
 		return 0
 	var copy := building.duplicate(true)
 	var n := 0
@@ -145,6 +146,12 @@ func room_for_loose(building: Dictionary) -> int:
 			inside[o["id"]] = 1 if game.is_one_each(copy, o["id"]) else int(inside.get(o["id"], 0)) + 1
 			n += 1
 	return n
+
+
+## Whether building `b` takes loose things moved in by hand (Fill); a beehive's bees come from harvests.
+func fills_by_hand(b: Dictionary) -> bool:
+	var def := game.catalog.get_def(str(b.get("id", ""))) as BuildingDef
+	return def != null and def.fills_by_hand()
 
 
 ## How many loose animals or trees on the farm are of a kind this building houses (room or not).

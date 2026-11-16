@@ -277,7 +277,7 @@ func from_home(home: Dictionary) -> Array[String]:
 	if not game.drops_enabled:
 		return out
 	var inside: Dictionary = home.get("inside", {})
-	if game.item_data(home["id"]).get("special", "") == "nursery":
+	if game.special_of(home) == "nursery":
 		add_supply("animal_feed", Balance.i("nurture.nursery_feed"))
 		out.append(tr("ANIMAL_FEED_N") % Balance.i("nurture.nursery_feed"))
 		return out

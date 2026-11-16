@@ -100,7 +100,7 @@ static func kind_of(o: Dictionary) -> Kind:
 		return Kind.BARN
 	if Game.crafting.is_crafting(o):
 		return Kind.CRAFT
-	if Game.is_home(o) and str(Game.item_data(o["id"]).get("special", "")) != "finds_home":
+	if Game.is_home(o) and Game.special_of(o) != "finds_home":
 		return Kind.HOME
 	return Kind.OTHER
 
@@ -331,7 +331,7 @@ func _refill() -> void:
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
 	_inside.visible = home and total > 0
-	var room := Game.homes.room_for_loose(o) if home and id != "beehive" else 0
+	var room := Game.homes.room_for_loose(o) if home else 0
 	_fill.visible = room > 0   # (nothing that would move in, none loose or no room: no button, not a grey one)
 	_fill.text = HudBuildings.move_in_words(o, room)
 	_turn.visible = Game.buildings.can_rotate(o).ok()   # (what can never turn has no Turn)
