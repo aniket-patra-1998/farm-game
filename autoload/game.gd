@@ -158,6 +158,7 @@ var persistence: Persistence          # saving and loading (not in `systems`: it
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
 
 
+var objects_revision := 0          # goes up whenever anything on the farm may have changed (derived totals key on it)
 var tiles_revision := 0            # goes up only when which tile holds what has really changed (unlike the next)
 var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
 var _closing := false   # a computer's close button was pressed: going (_close)
@@ -470,6 +471,7 @@ func add_object(o: Dictionary) -> void:
 		push_warning("add_object: uid %d is already on the farm" % int(o["uid"]))
 		return  # two things never share a uid: taps, saves and the uid index all depend on it
 	objects.append(o)
+	objects_revision += 1
 	if o.has("row") and o.has("col"):
 		_occupy(o)
 		tiles_revision += 1
@@ -481,12 +483,14 @@ func add_object(o: Dictionary) -> void:
 
 func remove_object(o: Dictionary) -> void:
 	objects.erase(o)
+	objects_revision += 1
 	rebuild_occupancy()
 
 
 ## Replaces the whole list (a sweep that drops several at once).
 func set_objects(list: Array) -> void:
 	objects = list
+	objects_revision += 1
 	rebuild_occupancy()
 
 
@@ -891,6 +895,7 @@ func release_updates() -> void:
 ## on the tiles it held, only it is looked at again (`object_changed`); otherwise (moved, turned, gone, or not
 ## said) the whole farm is (`objects_changed`).
 func objects_updated(uid := -1) -> void:
+	objects_revision += 1
 	if uid >= 0 and _in_place(uid):
 		if _holding > 0:
 			_held_uids[uid] = true

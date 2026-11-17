@@ -106,6 +106,8 @@ var _masks_at := Vector2i(-1, -1)   # the farm's layout (its revision, how many 
 var _masks := {}         # uid -> its Crowding.mask: neighbours only change with the farm, so kept between changes
 var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
+var _todo: Array[int] = []   # their uids: the next frame builds only these, without looking the farm over again
+var _resuming := false   # this sync carries on from one that ran out of time, with no change since
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
 var _rust_marks: RustMarks     # the rust sign, over every rusty vehicle (or the Garage it stands in)
 var _fireworks: Fireworks3D    # the fireworks over a building that has just grown
@@ -180,6 +182,7 @@ static func timed(o: Dictionary) -> bool:
 
 func queue_sync() -> void:
 	_full = true
+	_resuming = false   # (a change: the whole farm is looked at again)
 	_links_due = true
 	if not _queued:
 		_queued = true
@@ -279,6 +282,12 @@ func sync_timed() -> void:
 			_links_at = Game.tiles_revision
 			_links_count = Game.objects.size()
 			_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
+	if _resuming and not light:
+		_resuming = false
+		_build_todo()
+		return
+	_resuming = false
+	_todo.clear()
 	var seen := {}
 	var began := Time.get_ticks_msec()
 	var built := 0
@@ -297,6 +306,7 @@ func sync_timed() -> void:
 			continue
 		if spent > BUILD_BUDGET_MS * 1000:
 			left += 1          # out of time this frame: built on the next
+			_todo.append(uid)
 			continue
 		built += 1
 		var build_began := Time.get_ticks_usec()
@@ -324,6 +334,31 @@ func sync_timed() -> void:
 	for v in _views.values():
 		if v["node"] is Animal3D:
 			_animals.append(v["node"])
+
+
+## Carries on a sync that ran out of time: builds only what it left (`_todo`), within the budget, instead of
+## looking every thing on the farm over again each frame (on a full farm that alone cost more than the building).
+func _build_todo() -> void:
+	var began := Time.get_ticks_usec()
+	var built := 0
+	while not _todo.is_empty() and Time.get_ticks_usec() - began <= BUILD_BUDGET_MS * 1000:
+		var o: Dictionary = Game.object_by_uid(_todo.pop_front())
+		if o.is_empty() or not handles(o) or _shown_in_place(o):
+			continue   # (gone, or already drawn as it is)
+		_rebuild(o)
+		built += 1
+	_left = _todo.size()
+	if _left > 0:
+		_full = true
+		_carry_on = true
+	else:
+		_synced_once = true
+	if built > 0:
+		_mark_ready()
+		_animals.clear()
+		for v in _views.values():
+			if v["node"] is Animal3D:
+				_animals.append(v["node"])
 
 
 ## FarmVille's one ready sign over everything that has something to collect: a building or its finished
@@ -458,6 +493,7 @@ static func until_settled(tree: SceneTree, most := 3000) -> void:
 func _process(delta: float) -> void:
 	if _carry_on and not _queued:   # the rest of a sync that ran out of time
 		_carry_on = false
+		_resuming = true
 		sync()
 	if _sweep >= 0:
 		_light_some()

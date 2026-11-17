@@ -7,9 +7,12 @@ extends GameSystem
 const DATA := "res://data/home_boosts.json"
 
 var _boosts := {}   # boost id -> {"cap", "homes": {item id -> amount}}
+var _sums := {}     # boost id -> the homes' shares summed (uncapped), as of _sums_at
+var _sums_at := -1  # the farm's objects_revision the sums were taken at
 
 
 func load_data() -> void:
+	_sums_at = -1
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
 	var d: Dictionary = parsed if parsed is Dictionary else {}
 	_boosts = d.get("boosts", {})
@@ -34,10 +37,15 @@ func share_of(o: Dictionary, boost: String) -> float:
 func total(boost: String) -> float:
 	if not is_on() or not _boosts.has(boost):
 		return 0.0
-	var sum := 0.0
-	for o in game.objects:
-		sum += share_of(o, boost)
-	return minf(sum, float(_boosts[boost]["cap"])) * game.vip.boost()
+	if _sums_at != game.objects_revision:   # (summed once per change to the farm, not once per roll)
+		_sums.clear()
+		_sums_at = game.objects_revision
+	if not _sums.has(boost):
+		var sum := 0.0
+		for o in game.objects:
+			sum += share_of(o, boost)
+		_sums[boost] = sum
+	return minf(float(_sums[boost]), float(_boosts[boost]["cap"])) * game.vip.boost()
 
 
 ## The boosts one home gives right now, as {boost id: share}.
