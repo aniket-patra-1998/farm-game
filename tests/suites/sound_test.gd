@@ -2,6 +2,8 @@ extends TestSuite
 
 const SHORT_SECONDS := 2.0   # an effect's longest
 const LONG_SECONDS := 5.0    # a recipe marked "long" (thunder)
+const SOUND_ART := "res://art/sound"
+const SOURCES := "res://art/sound/SOURCES.md"
 ## Sound and touch feedback: every sound builds into clean audio, every sound the game asks for exists,
 ## every animal has a voice, and the player's settings are kept.
 
@@ -215,3 +217,38 @@ func test_103_the_background_follows_the_weather_and_the_players_volume() -> voi
 		_check(track != null and track.get_length() > 30.0, "%s is a piece of music, not a call" % path)
 	Game.weather_override = before[0]
 	Sound.ambience_volume = before[1]
+
+
+## Every sound file can be traced: art/sound/SOURCES.md has a row for it, and the row is either a Freesound page
+## (CC0, the licence the whole table is under) or made here. A file with no row, or a row with no source, fails.
+func test_104_every_sound_file_says_where_it_came_from() -> void:
+	var sources := FileAccess.get_file_as_string(SOURCES)
+	_check(sources.contains("creativecommons.org/publicdomain/zero/1.0"), "the recordings' licence is CC0")
+	var rows: Array[String] = []
+	for line in sources.split("\n"):
+		if line.begins_with("| `"):
+			rows.append(line)
+	var files := _sound_files("")
+	_check(files.size() > 20, "the sound files are found (%d)" % files.size())
+	for file: String in files:
+		var row := ""
+		for r in rows:
+			if file.match(r.get_slice("`", 1)):
+				row = r
+		_check(row != "", "%s has a row in SOURCES.md" % file)
+		_check(row == "" or row.contains("freesound.org/s/") or row.contains("made here"),
+			"%s comes from a Freesound page or was made here" % file)
+
+
+## Every .ogg under art/sound/ (path relative to it).
+func _sound_files(sub: String) -> Array[String]:
+	var found: Array[String] = []
+	var dir := DirAccess.open(SOUND_ART.path_join(sub))
+	if dir == null:
+		return found
+	for name in dir.get_files():
+		if name.get_extension() == "ogg":
+			found.append(sub.path_join(name) if sub != "" else name)
+	for folder in dir.get_directories():
+		found.append_array(_sound_files(sub.path_join(folder) if sub != "" else folder))
+	return found

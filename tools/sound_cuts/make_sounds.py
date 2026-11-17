@@ -40,9 +40,6 @@ VOICES = {
 }
 # name -> (source file, start s, length s)
 BEDS = {
-    "farm_day_a": ("farm-sound.wav", 0.0, 60.0),
-    "farm_day_b": ("farm-sound-3.wav", 10.0, 60.0),
-    "farm_day_c": ("farm-son-2.mp3", 15.0, 60.0),
     "morning": ("morning-bird.mp3", 1.0, 60.0),
     "summer": ("summer-ambience.mp3", 0.0, 58.0),
     "night": ("cricket-night.mp3", 20.0, 75.0),

@@ -1,11 +1,14 @@
-"""Makes the sounds no CC0 recording was found for, from scratch (our own work, so ours to give away: CC0):
-a horse's whinny and snort, a goose's honk, and the farm's music. Written into art/sound/ like the cuts.
+"""Makes the sounds no traceable CC0 recording was found for, from scratch (our own work, so ours to give away:
+CC0): a horse's whinny and snort, a goose's honk, the three farmyards by day, and the farm's music. Written into
+art/sound/ like the cuts.
 
 python3 tools/sound_cuts/make_generated.py
 
 Calls are made source-filter style, the way a throat makes them: a buzzing source (pulses at the voice's
 pitch, which glides and trembles as the animal's does) through resonances (formants) that shape the vowel,
-with breath noise. The music is written out note by note below (MELODIES) and played by small instrument
+with breath noise. A farmyard is wind and birdsong made here, with the game's own traced CC0 calls
+(art/sound/voices, cut by make_sounds.py) heard now and then from across the farm: quieter, duller, to one
+side, in the open air; it loops without a seam, as the cut beds do. The music is written out note by note below (MELODIES) and played by small instrument
 models: a plucked string (Karplus-Strong) for guitar and bass, a breathy flute, a soft reed pad and a shaker,
 in a little room (a made-up reverb). Needs numpy, scipy and ffmpeg. Seeded: the same files every run.
 """
@@ -14,7 +17,7 @@ import pathlib
 import numpy as np
 from scipy import signal
 
-from make_sounds import OUT, SR, VOICE_RMS_DB, level, stamp, write
+from make_sounds import OUT, SR, VOICE_RMS_DB, level, load, stamp, write
 
 RNG = np.random.default_rng(7)
 MUSIC_RMS_DB = -21.0
@@ -266,7 +269,89 @@ def music():
         write(level(piece(score), MUSIC_RMS_DB), OUT / "music" / f"{name}.ogg", 5)
 
 
+# ---------------------------------------------------------------- farmyards
+
+YARD_SECONDS = 60.0
+YARD_RMS_DB = -26.0          # the cut beds' loudness (make_sounds.BED_RMS_DB)
+# name -> (seed, the calls heard and how often each, relative; seconds between calls, least and most)
+YARDS = {
+    "farm_day_a": (11, {"cow": 3, "hen": 4, "rooster": 0.4, "duck": 1}, (2.5, 6.0)),
+    "farm_day_b": (12, {"sheep": 3, "goat": 2, "kid": 1, "duck": 2, "hen": 2}, (2.5, 6.5)),
+    "farm_day_c": (13, {"cow": 2, "pig": 2, "hen": 2, "donkey": 0.4, "sheep": 1}, (3.5, 8.0)),
+}
+
+
+def wind(n, rng):
+    """Air moving over open fields: soft low noise, each side its own, swelling and easing slowly."""
+    b, a = signal.butter(2, 380 / (SR / 2))
+    out = np.empty((n, 2))
+    for c in range(2):
+        x = signal.lfilter(b, a, rng.standard_normal(n))
+        gust = signal.lfilter([1.0], [1, -0.99997], rng.standard_normal(n))
+        gust = 0.55 + 0.45 * np.tanh(gust / (np.abs(gust).max() + 1e-9) * 2.5)
+        out[:, c] = x * gust
+    return out / np.abs(out).max() * 0.25
+
+
+def chirp(rng):
+    """One small bird's call: a few quick whistles sliding up or down."""
+    notes = []
+    base = rng.uniform(2600, 4800)
+    for k in range(rng.integers(2, 6)):
+        length = rng.uniform(0.04, 0.12)
+        m = int(length * SR)
+        t = np.arange(m) / SR
+        slide = rng.uniform(-0.35, 0.35)
+        f = base * (1 + slide * t / length) * (1 + 0.04 * np.sin(2 * np.pi * rng.uniform(25, 60) * t))
+        notes += [np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * t / length) ** 2,
+                  np.zeros(int(rng.uniform(0.03, 0.09) * SR))]
+        base *= rng.uniform(0.85, 1.15)
+    return np.concatenate(notes)
+
+
+def far_off(x, rng):
+    """A call from across the farm: duller (the air takes the highs), quieter, to one side."""
+    b, a = signal.butter(1, rng.uniform(2200, 4200) / (SR / 2))
+    y = signal.lfilter(b, a, x) * 10 ** (rng.uniform(-15, -6) / 20)
+    pan = rng.uniform(0.15, 0.85)
+    return np.stack([y * np.cos(pan * np.pi / 2), y * np.sin(pan * np.pi / 2)], axis=1)
+
+
+def farmyard(seed, calls, gap):
+    rng = np.random.default_rng(seed)
+    xfade = int(3.0 * SR)
+    n = int(YARD_SECONDS * SR) + xfade
+    mix = wind(n, rng)
+    t = rng.uniform(0, 0.8)
+    while t < YARD_SECONDS + 3.0:             # birds all through
+        c = chirp(rng)[:, None] * rng.uniform(0.04, 0.12)
+        at = int(t * SR)
+        mix[at:at + len(c)] += c[: max(0, n - at)] * np.array([rng.uniform(0.3, 1), rng.uniform(0.3, 1)])
+        t += rng.exponential(1.1)
+    takes = {name: sorted((OUT / "voices").glob(f"{name}_*.ogg")) for name in calls}
+    names, weights = list(calls), np.array(list(calls.values()), float)
+    t = rng.uniform(0.5, 2.0)
+    while t < YARD_SECONDS:
+        name = names[rng.choice(len(names), p=weights / weights.sum())]
+        voice = far_off(load(takes[name][rng.integers(len(takes[name]))], 1)[:, 0], rng)
+        at = int(t * SR)
+        end = min(n, at + len(voice))
+        mix[at:end] += voice[: end - at]
+        t += rng.uniform(*gap)
+    mix = room(mix, 1.2, 0.18)
+    loop = mix[: n - xfade].copy()
+    w = np.linspace(0, np.pi / 2, xfade)[:, None]
+    loop[:xfade] = mix[:xfade] * np.sin(w) + mix[n - xfade:] * np.cos(w)
+    return level(loop, YARD_RMS_DB)
+
+
+def farmyards():
+    for name, (seed, calls, gap) in YARDS.items():
+        write(farmyard(seed, calls, gap), OUT / "ambience" / f"{name}.ogg", 3)
+
+
 if __name__ == "__main__":
     voices()
     music()
+    farmyards()   # last: the music and calls keep the same random draws, so they come out the same
     stamp()
