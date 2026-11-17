@@ -125,10 +125,17 @@ ICONS = {
     "search": [L("M78 78 L108 108", 12, "#b8773a"),
                P("circle", "#e8f6fd", cx=54, cy=54, r=32),
                HI("ellipse", 0.7, cx=44, cy=42, rx=9, ry=6)],
-    "helpers": [P("ellipse", "#f0c96a", cx=64, cy=84, rx=54, ry=20),
-                P("path", "#f5d47e", d="M36 84 C32 22 96 22 92 84 Z"),
-                P("path", "#e5483b", d="M35 66 L93 66 L93 80 L35 80 Z"),
-                HI("ellipse", 0.5, cx=52, cy=46, rx=7, ry=11)],
+    # A farmer's straw hat, three-quarter view: the brim's far half, the crown on it with a red band and bow, then
+    # the brim's near lip over the crown's foot, so it reads as a hat and not a dome.
+    "helpers": [P("ellipse", "#e2b455", cx=64, cy=80, rx=58, ry=24),
+                P("ellipse", "#c38c35", cx=64, cy=76, rx=33, ry=11),
+                P("path", "#f4d47c", d="M33 78 C31 50 40 32 64 32 C88 32 97 50 95 78 C84 85 44 85 33 78 Z"),
+                P("path", "#e5483b", d="M33 66 C44 73 84 73 95 66 L95 78 C84 85 44 85 33 78 Z"),
+                P("path", "#c4332a", d="M84 70 L98 62 L100 78 Z"),
+                P("path", "#f0c766", d="M6 80 C8 96 34 104 64 104 C94 104 120 96 122 80 C106 92 86 95 64 95 "
+                                       "C42 95 22 92 6 80 Z"),
+                HI("ellipse", 0.5, cx=50, cy=46, rx=7, ry=10),
+                HI("path", 0.35, d="M24 92 C38 98 52 99 64 99 L64 102 C50 102 36 100 22 95 Z")],
     "farmhand": [L("M34 54 C34 12 94 12 94 54", 5, "#5b6772"),
                  P("path", "#c3ccd4", d="M30 50 L98 50 L88 108 C87 112 84 114 80 114 L48 114 C44 114 41 112 40 108 Z"),
                  P("ellipse", "#e4e9ee", cx=64, cy=50, rx=34, ry=9),

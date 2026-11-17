@@ -257,6 +257,9 @@ func _show_absence() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and not OS.has_feature("mobile"):
+		# Saved: the window goes at once, so the engine taking the 3D world down after it is never seen as a freeze.
+		get_window().hide()
 
 
 func _exit_tree() -> void:
