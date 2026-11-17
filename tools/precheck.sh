@@ -42,7 +42,9 @@ python3 tools/make_art_versions.py --check
 python3 tools/strings_lint.py
 log="$(mktemp)"
 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true
-"$GODOT" --headless --path . res://tests/run_tests.tscn >"$log" 2>&1 || true
+rc=0
+"$GODOT" --headless --path . res://tests/run_tests.tscn >"$log" 2>&1 || rc=$?
 if grep -E "Parse Error|Compile Error|Failed to load script" "$log"; then echo "A script didn't load"; exit 1; fi
 grep -E "checks, 0 failed" "$log" || { grep -E "^FAIL|^  - " "$log"; echo "Tests didn't all pass"; exit 1; }
+if [ "$rc" != 0 ]; then echo "The tests passed but the engine crashed on quit (exit $rc)"; exit 1; fi
 python3 tools/check_godot_log.py "$log"

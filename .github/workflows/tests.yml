@@ -87,9 +87,14 @@ jobs:
 
       - name: Run tests
         run: |
+          set +e
           ./godot-bin/godot --headless --path . res://tests/run_tests.tscn 2>&1 | tee tests.log
+          rc=${PIPESTATUS[0]}
+          set -e
           # A script that fails to load can let the runner exit cleanly: fail on that, and on anything but "0 failed".
           if grep -E "Parse Error|Compile Error|Failed to load script" tests.log; then echo "A script didn't load"; exit 1; fi
           grep -E "checks, 0 failed" tests.log || { echo "Tests didn't all pass"; exit 1; }
+          # A crash on quit (a heap corruption at shutdown) fails too, though every test passed.
+          if [ "$rc" != 0 ]; then echo "The tests passed but the engine crashed on quit (exit $rc)"; exit 1; fi
           # Any engine or script error (what the editor's Errors panel would show) fails the build too.
           python3 tools/check_godot_log.py tests.log

@@ -108,9 +108,7 @@ func _ready() -> void:
 	hud.fit_view = _fit_camera
 	hud.next_ready = go_to_next_ready
 	hud.go_to = go_to_kind
-	ItemSearch.show_on_farm = func(id: String) -> void:   # (search's Show on farm)
-		hud.close_panels()
-		go_to_kind(FarmGrid.ITEM_SPOT + id)
+	ItemSearch.show_on_farm = show_item_on_farm   # (search's Show on farm; a method, cleared in _exit_tree)
 	_idle_after_msec = int(Balance.f("feel.idle_view_seconds") * 1000.0)
 	hud.tool_selected.connect(grid.set_tool)
 	hud.place_requested.connect(grid.start_placing)
@@ -147,6 +145,19 @@ func _ready() -> void:
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that
 ## now have 3D models step aside; taps, highlights, signs and effects stay in 2D on top.
+
+
+## Leaving: nothing static may keep a callable into this scene. A lambda kept in a static outlives the scene's
+## script and corrupts the heap when the engine shuts down (the crash on every quit, a freeze on a computer).
+func _exit_tree() -> void:
+	ItemSearch.show_on_farm = Callable()
+
+
+## Search's Show on farm: the panels close and the view goes to the nearest `id`.
+func show_item_on_farm(id: String) -> void:
+	hud.close_panels()
+	go_to_kind(FarmGrid.ITEM_SPOT + id)
+
 func _use_3d() -> void:
 	world_3d = Farm3D.new()
 	world_3d.grid = grid
