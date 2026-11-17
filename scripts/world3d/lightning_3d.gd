@@ -43,6 +43,9 @@ func _ready() -> void:
 
 ## A strike `far` out (0 near .. 1 far) toward `toward` (0..TAU: where across the view), seen by
 ## `camera`, on a farm `size` tiles across, by the rules `storm` (data/weather.json).
+var foot := Vector3.ZERO   # where the last bolt met the ground
+
+
 func strike(far: float, toward: float, camera: Camera3D, size: int, storm: Dictionary) -> void:
 	# Past the farm's far corner as the camera sees it (so never on the farm), as far again as the strike is
 	# far, and across the view's width by `toward` (so a near one is seen, not lost behind the camera).
@@ -64,6 +67,7 @@ func strike(far: float, toward: float, camera: Camera3D, size: int, storm: Dicti
 	var aside := absf((target + right * across - centre).dot(right))
 	var past := (centre - target).dot(ahead) + maxf(0.0, size * 0.7071 - aside) + tiles
 	var ground := target + ahead * past + right * across
+	foot = ground
 	var top := ground + Vector3(_rng.randf_range(-3.0, 3.0), float(storm.get("bolt_height", 26.0)),
 		_rng.randf_range(-3.0, 3.0))
 	_bolt.mesh = _mesh(top, ground, camera)

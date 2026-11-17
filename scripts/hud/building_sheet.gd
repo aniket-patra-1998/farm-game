@@ -768,8 +768,9 @@ func _numbers(o: Dictionary, total: int, cap: int) -> void:
 		Kind.BUILD:
 			UiKit.set_bar(_bar, roundi(Game.land.construction_progress(o) * 100.0), 100, tr("SHEET_MATERIALS"))
 		Kind.BARN:
-			UiKit.set_bar(_bar, Game.storage.stored.size(), Game.storage.total_limit(),
-				tr("OF_SPACES_USED") % [Game.storage.stored.size(), Game.storage.total_limit()])
+			var held := mini(Game.storage.stored.size(), Game.storage.barn_capacity())   # (the overflow: its own line)
+			UiKit.set_bar(_bar, held, Game.storage.barn_capacity(),
+				tr("OF_SPACES_USED") % [held, Game.storage.barn_capacity()])
 		_:
 			shown = false
 	_fill_block.modulate.a = 1.0 if shown else 0.0   # (the pay beside it keeps the row's place)

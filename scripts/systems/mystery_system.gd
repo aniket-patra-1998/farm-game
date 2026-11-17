@@ -74,13 +74,10 @@ func give_prize(prize: Array) -> String:
 	match kind:
 		"coins":
 			game.add_coins(int(prize[1]))
-			return "%d coins" % int(prize[1])
 		"xp":
 			game.add_xp(int(prize[1]))
-			return tr("XP_3") % int(prize[1])
 		"gems":
 			game.add_gems(int(prize[1]))
-			return "%d gems" % int(prize[1])
 		"chicken", "item":
 			# (a prize to place arrives as every new thing does: the Barn, or the inbox when it is full)
 			var went := game.storage.welcome(str(prize[1]))
@@ -94,19 +91,43 @@ func give_prize(prize: Array) -> String:
 			return ", ".join(PackedStringArray(got))
 		"unwither":
 			game.add_unwithers(int(prize[1]))
-			return tr("UNWITHER") % int(prize[1])
 		"farmhand":
 			game.farmhands += int(prize[1])
-			return tr("FARMHAND_2") % int(prize[1])
 		"arborist":
 			game.arborists += int(prize[1])
-			return tr("ARBORIST_2") % int(prize[1])
 		"fuel":
 			game.vehicles.add_fuel(int(prize[1]))
-			return "%d fuel" % int(prize[1])
 		"fertilize_all":
 			game.fertilize_alls += int(prize[1])
-			return tr("FERTILIZE_ALL") % int(prize[1])
+		_:
+			return ""
+	return prize_words(prize)
+
+
+## A prize ([kind, amount or item]) in words ("3 gems", "a Cow"), for the prize itself and the reward lines.
+static func prize_words(prize: Array) -> String:
+	var n := int(prize[1]) if str(prize[0]) not in ["chicken", "item"] else 1
+	match str(prize[0]):
+		"chicken", "item":
+			return TranslationServer.translate("A_THING") % str(Game.item_data(str(prize[1])).get("name", prize[1]))
+		"coins":
+			return TranslationServer.translate("SOCIAL_COINS") % n
+		"xp":
+			return TranslationServer.translate("XP_3") % n
+		"gems":
+			return TranslationServer.translate("GEMS_N") % n
+		"unwither":
+			return TranslationServer.translate("UNWITHER") % n
+		"farmhand":
+			return TranslationServer.translate("FARMHAND_2") % n
+		"arborist":
+			return TranslationServer.translate("ARBORIST_2") % n
+		"fuel":
+			return TranslationServer.translate("SOCIAL_FUEL") % n
+		"fertilize_all":
+			return TranslationServer.translate("FERTILIZE_ALL") % n
+		"materials":
+			return TranslationServer.translate("MATERIALS_N") % n
 	return ""
 
 
