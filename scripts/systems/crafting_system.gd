@@ -71,8 +71,6 @@ func _recipe(rid: String) -> RecipeDef:
 	return game.catalog.get_def(rid) as RecipeDef
 
 
-## Every recipe the building knows, unlocked or not, by star (only those whose crops are all in this release:
-## docs/V1.md).
 ## The showcase's crafting buildings show each of their looks in turn: one at work, the next with its goods
 ## finished and waiting, the next idle.
 func showcase() -> void:
@@ -88,6 +86,8 @@ func showcase() -> void:
 		turn += 1
 
 
+## Every recipe the building knows, unlocked or not, by star (only those whose crops are all in this release:
+## docs/V1.md).
 func recipes_of(building_id: String) -> Array[RecipeDef]:
 	return game.catalog.recipes_of(building_id).filter(func(r: RecipeDef) -> bool:
 		return r.inputs().keys().all(func(c: String) -> bool: return in_release(c)))
