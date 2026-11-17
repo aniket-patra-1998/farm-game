@@ -4,7 +4,7 @@ extends GameSystem
 ## reached with points, from the daily gift's login streak or bought with gems, and is kept for good. Its
 ## bonuses work only while VIP is active: three days come with each new level, more days cost gems. Active
 ## VIP multiplies what buildings give (boosts, layout bonuses, the chances on a collection), from 1 at no VIP
-## to 2 at the top level; it gates nothing. The Barn shows the level (BarnDef.look_level, Objects3D.state_of).
+## to vip.top_boost at the top; it gates nothing. The Barn shows the level (BarnDef.look_level, Objects3D.state_of).
 ## Part of the game state: reached as `Game.vip`. Numbers: Balance `vip.*`. Switch: Release "vip".
 
 const DAY := 86400

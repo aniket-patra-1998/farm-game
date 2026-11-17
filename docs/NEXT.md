@@ -99,3 +99,17 @@ first; the buildings items below continue alongside.
   strength (`BloomModel`), fatter buds and light at the farm's strength (bloom3d divided by PI).
 - Open: the lily is still a thin star; a bed in bud is still mostly stems; not seen on a phone or at dusk.
 
+## Economy (17 Nov 2026): fixed, and open for the owner
+- Fixed: decorations give 1 XP per 100 coins like everything (the 5-XP minimum let a buy-and-sell loop pay from
+  level 38: coins, gems and VIP without end; economy_test 61 now checks no coin buy can pay for a level); land
+  needs its level with gems too (gems skip only the coins).
+- VIP's top boost is now x1.5 (owner, 17 Nov); still open: a weekly cap on the points gems buy. The economy pass, in its own
+  session with the balance bot: an XP curve that grows after level 20 (now a flat 1,000) with unlocks spread
+  through 31-40 and a level-up reward that is felt; 8 of the 21 V1 crops never worth planting (bell pepper, corn,
+  cotton, pineapple, raspberry, rice, spinach, watermelon: a crop stays ripe as long as it grew, so 24-hour crops
+  win), tomato/sugarcane and sunflower/grapes near twins; off-season x1.5 always wins for anyone playing twice a
+  day; pony (32-day payback) and chestnut tree (twice the best coin tree); homes earn about twice crops per tile;
+  crafting needs about 640 gems (a wall at level 25 on 8-10 free gems a week); before 25 the Mystery Box gives
+  about 50 coins a gem against 500-6,000 elsewhere; rust level 1 repair is too cheap to be a decision.
+- Also open: rain life (docs/WEATHER.md steps 3-6: puddles, rain creatures, mushrooms, rain rules); tree batching
+  (above); building the first hour and goals (docs/PLAYER_EXPERIENCE.md; the owner's five decisions are at its end).

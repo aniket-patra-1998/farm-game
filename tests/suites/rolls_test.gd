@@ -32,9 +32,10 @@ func test_431_vip_raises_only_the_rolls_listed_for_it() -> void:
 	g.vip.reset()
 	_check(is_equal_approx(g.rolls.odds("calf", 0.1), 0.1) and is_equal_approx(g.rolls.odds("golden", 0.1), 0.1),
 		"without VIP every roll is as it is")
-	g.vip.points = 18000   # (the top level: twice)
+	g.vip.points = 18000   # (the top level)
 	g.vip.until = g.now() + 86400
-	_check(is_equal_approx(g.rolls.odds("calf", 0.1), 0.2), "a roll listed for VIP doubles at the top level")
+	_check(is_equal_approx(g.rolls.odds("calf", 0.1), 0.1 * Balance.f("vip.top_boost")),
+		"a roll listed for VIP is multiplied by the top boost")
 	_check(is_equal_approx(g.rolls.odds("golden", 0.1), 0.1), "one that isn't stays as it is")
 	_check(is_equal_approx(g.rolls.odds("calf", 0.8), 1.0), "never more than certain")
 	_done(g)

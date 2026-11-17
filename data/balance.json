@@ -886,7 +886,7 @@
    "note": "gems more for those days at each VIP level (8 at VIP 1, 50 at VIP 15)"
   },
   "top_boost": {
-   "v": 2.0,
+   "v": 1.5,
    "note": "what active VIP multiplies the buildings' bonuses and chances by at the top level; each level adds the same step from 1"
   }
  },
