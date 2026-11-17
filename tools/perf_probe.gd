@@ -5,6 +5,7 @@ extends Node
 ## Headless (godot --headless ...), wall time per frame is the CPU cost; draw calls need the renderer.
 ## As a phone sees it: `-- --quality=low --size=2400x1080 --tiles=12` (a quality level, the window's size, and the
 ## view: about this many tiles across, centred on the farm; without --tiles, the whole-farm view the game opens on).
+## `--fill` fills every free tile with a few kinds over and over (ShowcaseFarm.fill), as players' farms are.
 ## With `-- --bake=<stamp>` (CI, headless, before the phone build) the models it builds are saved into the game
 ## (res://baked, ModelStore) under that stamp. With `-- --store`, models are kept on disk as a phone build keeps
 ## them: run it twice to time a farm opening from them.
@@ -43,6 +44,8 @@ func _ready() -> void:
 	var t0 := Time.get_ticks_usec()
 	Game.open_showcase()
 	var t_build := Time.get_ticks_usec() - t0
+	if "--fill" in OS.get_cmdline_user_args():   # (a farm as played: every free tile, a few kinds over and over)
+		print("PERF fill: %d more things" % ShowcaseFarm.fill(Game))
 	var stress := "--stress" in OS.get_cmdline_user_args()
 	if stress:
 		print("PERF stress: %d things in storage" % ShowcaseFarm.fill_storage(Game))

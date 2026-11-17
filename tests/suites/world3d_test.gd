@@ -918,6 +918,26 @@ func test_127_things_stand_among_grass_flowers_and_stones() -> void:
 		"it stays at the footprint's edge (%s)" % box)
 	for n: Node in [a, b, c]:
 		n.free()
+	# On the farm it is drawn in batches: two buildings alike share theirs, and none is a mesh under the model.
+	Game.saving_enabled = false
+	Game.reset_game()
+	var objects := Objects3D.new()
+	var shed := ""
+	for id: String in Game.items:
+		if Game.kind_of({"id": id}) == "building" and not AssetRegistry.has_model(id):
+			shed = id
+			break
+	var one: Node3D = objects._build({"uid": 1, "id": shed, "row": 0, "col": 0})
+	var two: Node3D = objects._build({"uid": 1 + Objects3D.DRESSINGS, "id": shed, "row": 0, "col": 8})
+	var round_one := Objects3D.dressing_id(1)
+	var round_two := Objects3D.dressing_id(1 + Objects3D.DRESSINGS)
+	_check(objects.decor.has_piece(round_one) and objects.decor.has_piece(round_two),
+		"a building's grass and stones are drawn by the batching layer")
+	_check(objects.decor.meshes_of(round_one) == objects.decor.meshes_of(round_two),
+		"two buildings alike share one batch for them")
+	for n: Node in [one, two, objects]:
+		n.free()
+	Game.reset_game()
 
 
 func test_128_the_farm_has_butterflies_fireflies_and_birds_that_cost_three_draws() -> void:
@@ -1440,8 +1460,6 @@ func test_310_everything_but_trees_as_placed_stay_inside_their_tile_border() -> 
 		var fp := Game.footprint(id)
 		var holder: Node3D = view._build({"uid": 7, "id": id, "row": 0, "col": 0, "t": Game.now()})
 		var model := holder.get_child(0) as Node3D
-		if model.has_node(Objects3D.DRESSING):
-			model.get_node(Objects3D.DRESSING).free()
 		for fill: BuildingFill in model.find_children("*", "BuildingFill", true, false):
 			if fill._props != null:
 				fill._props.free()   # (the trees of the Barn's yard overhang as any tree does)
@@ -1939,18 +1957,12 @@ func test_329_decor_and_blooms_share_built_looks_by_what_they_show() -> void:
 	Game.reset_game()
 
 
-## The meshes of the model drawn under `node`, by identity (its own dressing, grass and stones at its foot, left
-## out: that is per piece by design).
+## The meshes of the model drawn under `node`, by identity (the grass and stones at its foot are the
+## DecorLayer's, never under it).
 func _mesh_ids(node: Node) -> Array:
 	var out: Array = []
 	for mi in node.find_children("*", "MeshInstance3D", true, false):
-		var dressing := false
-		var up: Node = mi
-		while up != node:
-			dressing = dressing or up.name == StringName(String(Objects3D.DRESSING))
-			up = up.get_parent()
-		if not dressing:
-			out.append((mi as MeshInstance3D).mesh.get_instance_id())
+		out.append((mi as MeshInstance3D).mesh.get_instance_id())
 	return out
 
 

@@ -63,3 +63,24 @@ first; the buildings items below continue alongside.
   rust and crafting so far), and its card in Settings walks building sizes and the VIP level by hand.
 - Still open from the building work: a real phone check, the economy with VIP on (balance bot), a full farm
   with frames, rare-quality crafts, rare babies, instant repair with gems.
+
+## Phone performance (session of 17 Nov 2026): where it stands, and the next step
+- Measure as a phone sees it: `xvfb-run -a -s "-screen 0 2400x1080x24" godot --rendering-method gl_compatibility
+  --path . res://tools/perf_probe.tscn -- --quality=low --size=2400x1080 [--tiles=12] [--fill]` (--fill: every
+  free tile taken by a few kinds over and over, as players' farms are; ShowcaseFarm.fill).
+- Low now drops to models' lighter levels sooner (quality.json low lod_pixels 12). Everything's grass and
+  stones (Dressing) is drawn in shared batches by the DecorLayer (`Objects3D._dress`, 2 looks per kind and size).
+- Filled farm on low: whole farm 1,787 draws, 890k triangles; a playing view (12 tiles) 1,025 draws, 646k.
+  Trees are most of it: 175 trees, 891 draws (about 5 each: one mesh of canopy, foliage, paint and fruit
+  surfaces, and one of bark). Animals 276 draws (one each). Decorations, batched: 125 things, 20 draws.
+- Next: batch trees (and blooms) through the DecorLayer, as decorations are. The catch is fruit: each tree
+  ripens on its own clock (`Objects3D.ripen`, timed copies of the fruit material, `timed_material`), and the
+  fruit is a surface inside the canopy mesh. Design to build: when a model is taken apart for batching
+  (`Instancer.pieces_of`), split a clocked surface (fruit3d, bloom3d) into its own piece, keeping its levels of
+  detail (RenderingServer.mesh_get_surface(...)["lods"] into ArrayMesh.add_surface_from_arrays' lods). Then
+  a tree is two batched things: its still parts under its uid, in the look's shared batch; its fruit under a
+  second id, in a batch keyed by look and its times rounded to a minute, drawn with the timed material, so a
+  row harvested in one sweep shares one. `_ripen_view` re-puts the fruit when the cycle changes. Shake,
+  lift (`_show`), drop and outline follow the stand-in as for decorations. Measure with --fill before and after.
+- After that: animals (276 draws) as batches, their poses in the shader; the phone budget's limits lowered
+  to each new measure (data/perf_budget.json, `_measured`).

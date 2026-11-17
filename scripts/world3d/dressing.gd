@@ -12,6 +12,12 @@ const TUFT_BLADES := 3
 static var _data := {}
 
 
+## Whether things of `kind` have grass and stones round them.
+static func has_kind(kind: String) -> bool:
+	_load()
+	return (_data.get("kinds", {}) as Dictionary).has(kind)
+
+
 ## The dressing for an object of `kind` on a `fp` footprint, as a node to put under the object's model (which
 ## has the footprint's back corner as its origin); null if that kind gets none.
 static func make(kind: String, fp: Vector2i, seed_value: int) -> Node3D:
