@@ -223,7 +223,7 @@ func test_319_place_move_in_store_and_finish_say_yes_or_why_not() -> void:
 	var taken := g.buildings.can_place("cow_shed", 2, 2)
 	_eq(taken.why, BuildingSystem.Why.TAKEN, "a spot with something on it")
 	_check(taken.text.contains(str(g.item_data("chicken_coop")["name"])), "names what is there: %s" % taken.text)
-	g.plots[g.index_of(16, 2)] = {"state": "planted", "crop": "strawberries", "t": g.now()}
+	g.plots[g.index_of(16, 2)] = {"state": "planted", "crop": "strawberries", "planted_at": g.now()}
 	_eq(g.buildings.can_place("hay_bale", 16, 2).why, BuildingSystem.Why.PLANTED, "on crops")
 	_eq(g.buildings.can_place("apple_tree", 2, 2 + g.footprint("chicken_coop").x).why, BuildingSystem.Why.CROWDED,
 		"a tree hard against a building")

@@ -1081,16 +1081,26 @@ func cheapest_seed_cost() -> int:
 	return cheapest
 
 
-## Quiet backstop: a player who can't buy seeds and has nothing growing or ripe
-## gets enough coins to plant again, so the farm can never get stuck.
+## Quiet backstop: a player who can't plant (seeds, and the plow too when no plot is plowed) and has nothing
+## growing or ripe gets enough coins to plant again, so the farm can never get stuck.
 func check_rescue() -> void:
-	if coins >= cheapest_seed_cost():
+	if coins >= coins_to_plant():
 		return
 	if any_plot_in(Phase.GROWING) or any_plot_in(Phase.RIPE):
 		return
 	var gift := Balance.i("economy.rescue_coins") - coins
+	if gift <= 0:
+		return
 	add_coins(gift, false)
 	message.emit(tr("YOU_FOUND_COINS_IN_THE_BARN") % gift)
+
+
+## The coins the next planting needs: the cheapest seed, and the plow when no plot is plowed and waiting.
+func coins_to_plant() -> int:
+	var need := cheapest_seed_cost()
+	if not any_plot_in(Phase.PLOWED):
+		need += Balance.i("economy.plow_cost")
+	return need
 
 
 func any_plot_in(wanted: Phase) -> bool:

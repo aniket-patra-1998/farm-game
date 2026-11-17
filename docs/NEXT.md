@@ -133,3 +133,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Yards: done, the lawn inside the fence with a trodden path gate to door (owner picked A).
 - Farmer face: done, button eyes and an open smile (owner picked D).
 - Ground: done, mown stripes (owner picked C) and no grass clumps (D); ready sign: the pink pin (C).
+
+## Polish loop (hourly runs, 18 Nov 2026; log: the Claude doc "Farm game: polish loop log")
+- Run 1 (economy audit): the rescue now also covers a farm with a seed's coins but not the plow's and nothing
+  plowed (it was stuck for good). Findings ranked in the log's backlog; next: progression audit or the top item.
