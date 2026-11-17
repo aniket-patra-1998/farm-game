@@ -50,8 +50,8 @@ first; the buildings items below continue alongside.
   vehicle rust with its sign and repair bubble (docs/RUST.md); the Barn on 4 by 4 with its badge and a yard
   that grows with VIP; the frame of what a building's next size adds (`BuildingModel._plan`, off for the Barn);
   level-up fireworks (`Fireworks3D`).
-- Waiting for the owner's pick, built but not pushed: new looks for the Farmhouse, Log Cabin, Gopher Garden
-  (the burrow hill) and Dog House (the bone sign), and lighter Barn roofs at VIP 4 to 12.
+- Picked by the owner and in: new looks for the Farmhouse, Log Cabin, Gopher Garden (the burrow hill) and
+  Dog House (the bone sign); lighter Barn roofs at VIP 4 to 12.
 - Not built: rare-quality crafted goods, rare babies, instant repair with gems (docs/VIP.md, docs/RUST.md);
   the four decor buildings above are still built at run time, not files.
 - Not checked: anything on a phone; the economy with VIP on (run the balance bot); a full farm with frames.
