@@ -281,8 +281,7 @@ func test_52_pig_pen_truffles_and_rare_breeds() -> void:
 	_check(not g.pigpen.trade_truffles("pig"), "only rare breeds")
 	_check(g.pigpen.trade_truffles("berkshire_pig"), "trade for a Berkshire")
 	_eq(g.pigpen.truffles, 0, "10 truffles spent")
-	_eq(_count(g, "berkshire_pig"), 1, "the Berkshire is on the farm")
-	_eq(g.homes.fill_building(uid), 1, "and moves into the pen")
+	_eq(_arrived(g, "berkshire_pig"), 1, "the Berkshire arrives in the Barn or the inbox, as every new animal")
 	_eq(g.pigpen.rare_pigs().size(), 4, "4 rare breeds")
 	for id in g.pigpen.rare_pigs():
 		_check(int(g.item_data(id)["payout"]) > int(g.item_data("pig")["payout"]), "%s pays more than a pig" % id)

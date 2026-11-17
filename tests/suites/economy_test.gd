@@ -365,7 +365,7 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	for d in 40:
 		_skip(g, 86400)
 		g.collect(int(pen["uid"]))
-	_check(_count(g, "lamb") > 0, "lambs were born (%d)" % _count(g, "lamb"))
+	_check(_arrived(g, "lamb") > 0, "lambs were born (%d)" % _arrived(g, "lamb"))
 	pigs.erase("construction")
 	g.place_somewhere("pig")
 	g.place_somewhere("boar")
@@ -375,8 +375,10 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	for d in 40:
 		_skip(g, 86400)
 		g.collect(int(pigs["uid"]))
-	_check(_count(g, "piglet") > 0, "piglets were born (%d)" % _count(g, "piglet"))
-	# The nursery raises them.
+	_check(_arrived(g, "piglet") > 0, "piglets were born (%d)" % _arrived(g, "piglet"))
+	# The nursery raises them (the player places them from the Barn first).
+	for baby in ["lamb", "piglet"]:
+		g.place_somewhere(baby)
 	nursery.erase("construction")
 	g.homes.fill_building(int(nursery["uid"]))
 	g.nurture.add_supply("animal_feed", 1000)

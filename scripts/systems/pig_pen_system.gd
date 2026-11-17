@@ -76,11 +76,8 @@ func rare_pigs() -> Array[String]:
 func trade_truffles(breed: String) -> bool:
 	if not game.item_data(breed).get("rare_pig", false) or truffles < Balance.i("pigpen.truffles_per_pig"):
 		return false
-	if not game.place_somewhere(breed):
-		game.message.emit(tr("NO_ROOM_ON_THE_FARM_FOR"))
-		return false
 	truffles -= Balance.i("pigpen.truffles_per_pig")
-	game.message.emit(tr("A_JOINED_YOUR_FARM") % game.item_data(breed)["name"])
+	game.message.emit(game.storage.welcome_words("A_JOINED_YOUR_FARM", breed, game.storage.welcome(breed)))
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true

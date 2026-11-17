@@ -143,7 +143,8 @@ func test_39_stable_horses_daily_stallion_brings_foals() -> void:
 	for d in 40:
 		_skip(g, 86400)
 		g.collect(uid)
-	_check(_count(g, "foal") > 0, "foals were born (%d)" % _count(g, "foal"))
+	_check(_arrived(g, "foal") > 0, "foals were born, into the Barn or the inbox (%d)" % _arrived(g, "foal"))
+	_eq(_count(g, "foal"), 0, "never dropped on the farm")
 	_check(g.farmhands + g.arborists > 0, "harvests gave farmhands or arborists")
 	_done(g)
 
@@ -169,7 +170,7 @@ func test_40_dairy_bull_brings_calves_and_fertilizer() -> void:
 	for d in 40:
 		_skip(g, 86400)
 		g.collect(uid)
-	_check(_count(g, "calf") > 0, "calves were born (%d)" % _count(g, "calf"))
+	_check(_arrived(g, "calf") > 0, "calves were born, into the Barn or the inbox (%d)" % _arrived(g, "calf"))
 	_check(g.fertilizer_bags > 0, "harvests left fertilizer")
 	# A fertilizer bag is used before coins.
 	var i := _free(g)

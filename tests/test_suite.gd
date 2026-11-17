@@ -98,6 +98,18 @@ func _count(g: GameState, item_id: String) -> int:
 	return n
 
 
+## How many of `item_id` have arrived new (born, won, traded): in the Barn or waiting in the inbox.
+func _arrived(g: GameState, item_id: String) -> int:
+	var n := 0
+	for kept: Dictionary in g.storage.stored:
+		if str(kept["id"]) == item_id:
+			n += 1
+	for m: Dictionary in g.social.inbox:
+		if str((m["give"] as Dictionary).get("id", "")) == item_id:
+			n += int((m["give"] as Dictionary).get("n", 1))
+	return n
+
+
 
 
 
