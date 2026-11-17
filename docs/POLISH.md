@@ -4,28 +4,44 @@ A scheduled session runs this every hour (18 Nov 2026, until 08:15 IST). Its log
 polish loop log" (https://claude.ai/artifact/N3Tco9YLD79rwmApLH9hWP, doc id aa67cd85-0a81-4920-b45b-dc016d1fe1a8).
 Read this, CLAUDE.md and docs/NEXT.md first. Act as the owner would ask, in the nature and depth they ask.
 
+## The goal
+We have a car's chassis and engine that run; it must look, feel and drive like a Mercedes. Not a new car. Every
+part of the game is brought up to this finished-product bar:
+1. Looks finished: any screen could be a store screenshot; coherent, soft, warm art; nothing cheap, flat, sharp or
+   clashing; good on a full farm, at dawn, noon, dusk and night, on a small phone.
+2. Feels good: motion with weight and real timing, every tap answered, sound and animation tuned, nothing jittery,
+   rushed or placeholder.
+3. Works: no bugs, crashes or stuck states; edge cases handled (full Barn, long offline, clock change, an empty or
+   crammed farm); inside the phone performance budget.
+4. Fair: the economy and progression make every choice worth something, rewards felt (a player gets a kick from
+   achieving), challenging enough to come back daily, at most slightly pay-to-win, nothing redundant.
+5. Solid: saves safe, cheating guarded against, code clean and data-driven.
+
 ## What the game is
 The original FarmVille (2009), recreated in Godot 4.7 for Android phones and tablets, landscape. Pure FarmVille
 first; our own touch only where it is clearly marked. Every system is built (docs/V1.md); new features are frozen
-(17 Nov 2026). The product exists but is not yet a finished, usable one: the work now is to make what is there
-complete, polished, fair and robust, never to replace it.
+(17 Nov 2026). The work now is to bring what is there up to the bar, never to replace it.
 
-## How the owner judges (from their sessions)
-- They play on a phone and react to what looks cheap, shallow, scary, sharp, cluttered or inconsistent. They want
-  it to look like a finished commercial game: soft, rounded, warm, coherent, cosy.
+## How the owner judges (from every session: project docs claude/owner-inputs/*.md hold their words)
+- They play on a phone and react to what looks cheap, shallow, scary, sharp, cluttered, immature or inconsistent.
+  They want a finished commercial game: soft, rounded, warm, cosy, mature. Over-saturated, deep colours read as
+  immature to them (the rainbow was "too deep and saturated"); lighter, gentler colours win.
 - Consistency is a rule: an icon in another style, a colour that does not match, a shape sharper than its
   neighbours stands out to them at once. Match the set; never introduce a new style.
-- Motion must feel real and weighty: animals walk on the ground (not rubber, not puppets), peck and turn at
-  real speeds; nothing too fast or jittery.
-- They improve what exists; they rarely want it replaced. Smaller, softer, better coloured, more detail where
-  the eye goes (zoomed in), less noise where it doesn't.
-- They notice what is missing from the whole (does the farm look good filled? at night? on a small phone?).
-- Economy and progression: fair, no exploits, every choice worth something, rewards felt, nothing absurdly cheap
-  or expensive.
+- Motion must feel real and weighty: animals walk on the ground (not rubber, not puppets on threads), peck and
+  turn at real speeds; celebrations stay restrained (a level-up is fireworks only, nothing else bouncing).
+- Interactions stay minimal: a tap does the one obvious thing (a rusty vehicle's sign opens only its repair).
+- They improve what exists; they rarely want it replaced: smaller, softer, better coloured, more detail where the
+  eye goes (zoomed in), less noise where it doesn't.
+- They look at the whole: does the farm look good filled? at night? does the showcase farm show every feature
+  (it must keep up by itself)? The Barn is the hero building.
+- Think beyond their words: their ideas are a starting point; find what else would make the same thing better.
+- Audits run on main, never a feature branch. Rebase on main before pushing.
 - Code quality is expected throughout: data-driven, each fix applied to every similar module, tests for rules.
 - Picked looks so far (keep them): mown-stripes lawn with no grass clumps; ready signs as small bubblegum-pink
   pins; lawn yards with a trodden path gate to door; farmer with button eyes and an open smile; inbox icon an
-  envelope with a red seal; chunky flowers; calm deep water; VIP and rust on; VIP top boost x1.5.
+  envelope with a red seal; chunky flowers; calm deep water with life; storybook buildings; VIP and rust on; VIP
+  top boost x1.5. Parked by the owner: the Barn's weather looks (storm, wind, winter liked; a lighter rainbow).
 
 ## Guardrails
 - Fix and polish only: code quality, stress tests, edge cases, phone UI checks, player progression, economy,
