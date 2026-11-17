@@ -39,6 +39,7 @@ const STATES_KEPT := 512     # weather blocks kept (two months of them) before t
 const RAIN_LOOK_MOST := 64   # weather blocks one look for rain covers at most (8 days of growing)
 # More tiles changed at once than this, and the whole field is laid again instead of each plot.
 const WHOLE_FIELD_TILES := 96
+const CLOSE_FRAMES := 2      # frames for a hidden window to leave the screen before the game quits
 # Each step's hint, as keys in locale/strings.csv (tutorial_text() translates it).
 const TUTORIAL_TEXT := {
 	Tutorial.HARVEST: "YOUR_FIRST_CROPS_ARE_READY_TAP",
@@ -159,6 +160,7 @@ var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/sa
 
 var tiles_revision := 0            # goes up only when which tile holds what has really changed (unlike the next)
 var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
+var _closing := false   # a computer's close button was pressed: going (_close)
 var _level := 1                    # level() remembered for this XP (and this version of the Balance numbers)
 var _level_xp := -1
 var _level_rev := -1
@@ -219,6 +221,8 @@ func _init() -> void:
 
 func _ready() -> void:
 	rng.randomize()
+	if not OS.has_feature("mobile"):
+		get_tree().set_auto_accept_quit(false)   # (closing is ours: _close, so the window goes before the teardown)
 	_load_crops()
 	_load_items()
 	for system in systems:
@@ -263,8 +267,19 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and not OS.has_feature("mobile"):
-		# Saved: the window goes at once, so the engine taking the 3D world down after it is never seen as a freeze.
-		get_window().hide()
+		_close()
+
+
+## A computer's close button: saved (above), the window is hidden and given frames to really go, and only then
+## does the game quit, so the engine taking the 3D world down happens out of sight, never as a frozen window.
+func _close() -> void:
+	if _closing:
+		return
+	_closing = true
+	get_window().hide()
+	for k in CLOSE_FRAMES:
+		await get_tree().process_frame
+	get_tree().quit()
 
 
 func _exit_tree() -> void:
