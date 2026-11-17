@@ -9,8 +9,12 @@ extends GameSystem
 
 const DAY := 86400
 
-var points := 0   # VIP points gathered so far (never fewer)
+var points := 0:   # VIP points gathered so far (never fewer)
+	set(value):
+		points = value
+		_level = level_for(value)
 var until := 0    # when active VIP runs out (0: never been active)
+var _level := 0    # the level those points make (kept: every bonus and chance a building gives asks for it)
 
 
 func reset() -> void:
@@ -50,7 +54,7 @@ func level_for(with_points: int) -> int:
 
 ## The VIP level now (0: none yet).
 func level() -> int:
-	return level_for(points) if is_on() else 0
+	return _level if is_on() else 0
 
 
 ## The points the next level takes in all, or -1 at the top level.
@@ -72,9 +76,9 @@ func seconds_left() -> int:
 ## What everything buildings give is multiplied by: 1 with no active VIP, rising by the same step each level to
 ## Balance `vip.top_boost` at the top level.
 func boost() -> float:
-	if not active():
+	if _level <= 0 or not active():   # (most farms most of the time: nothing more to work out)
 		return 1.0
-	return lerpf(1.0, Balance.f("vip.top_boost"), float(level()) / maxi(max_level(), 1))
+	return lerpf(1.0, Balance.f("vip.top_boost"), float(_level) / maxi(max_level(), 1))
 
 
 ## A chance as active VIP makes it: multiplied by the boost, never over certain.

@@ -46,7 +46,7 @@ SOURCES = {
                 "tools/export_plants.gd"],
                "godot --headless --path . res://tools/export_plants.tscn"),
     "buildings": (["scripts/world3d/building_model.gd", "scripts/world3d/building_dress.gd",
-                   "scripts/world3d/model_kit.gd", "scripts/world3d/decor_motion.gd",
+                   "scripts/world3d/vip_badge.gd", "scripts/world3d/model_kit.gd", "scripts/world3d/decor_motion.gd",
                    "scripts/world/space_fit.gd", "data/building_models.json", "data/catalog/buildings.json",
                    "shaders/wall3d.gdshader", "shaders/paint3d.gdshader", "shaders/orbit3d.gdshader",
                    "shaders/spray3d.gdshader", "shaders/flame3d.gdshader", "shaders/glow3d.gdshader",
