@@ -36,21 +36,22 @@ const FULL := 3
 const CHUTE_LONG := 0.7       # a grain chute: how long its spout is..
 const CHUTE_TILT := 0.55       # ..how steeply it runs down (radians)..
 const CHUTE_HIGH := 0.42       # ..and how high its mouth is over the ground
-const BADGE_R := 0.24             # the VIP badge: its medallion's radius, in tiles..
-const BADGE_THICK := 0.022        # ..half its thickness..
-const BADGE_POST := 0.16          # ..the finial it stands on..
+const BADGE_R := 0.3              # the VIP badge: its radius, in tiles (big: it is what the eye goes to)..
+const BADGE_RIM := 0.13           # ..its rim's thickness, against that..
+const BADGE_POST := 0.12          # ..the foot it stands on..
 const BADGE_BOB := 0.025          # ..how far it rides up and down while VIP is active..
 const BADGE_TIER := 3             # ..and the VIP levels to a tier of it
-## A tier's metal, the enamel its number stands on, and its gems: bronze, silver, gold, gold on green, and
-## gold on royal purple with diamonds.
-const BADGE_METALS: Array[Color] = [Color("#cf8a45"), Color("#d9dee4"), Color("#f6c443"), Color("#f6c443"),
-	Color("#ffd65a")]
-const BADGE_ENAMELS: Array[Color] = [Color("#5c2413"), Color("#1d3566"), Color("#96172a"), Color("#0e6a46"),
-	Color("#4a1e96")]
-const BADGE_GEMS: Array[Color] = [Color("#e2553d"), Color("#4fb3ff"), Color("#e2553d"), Color("#ff5c7a"),
-	Color("#bff3ff")]
-const DIGIT_GAP := 0.28           # the space between two digits, against a digit's width
-const DIGIT_STROKE := 0.26        # a stroke's thickness, against a digit's width
+## A tier's metal, the enamel its number stands on, and the balls of its crown: bronze, silver, then gold on
+## red, on green and on royal purple.
+const BADGE_METALS: Array[Color] = [Color("#d08a48"), Color("#dfe4ea"), Color("#f7c63f"), Color("#f7c63f"),
+	Color("#ffd75e")]
+const BADGE_ENAMELS: Array[Color] = [Color("#7a3015"), Color("#2450a8"), Color("#c21f33"), Color("#12894f"),
+	Color("#6a2bd0")]
+const BADGE_GEMS: Array[Color] = [Color("#ffd9a8"), Color("#7fd0ff"), Color("#ff5c5c"), Color("#7dffb0"),
+	Color("#ffffff")]
+const DIGIT_GAP := 0.34           # the space between two digits, against a digit's width
+const DIGIT_STROKE := 0.3         # a stroke's thickness, against a digit's width
+const DIGIT_PAIR := 0.72          # how much smaller two digits are drawn than one, to share the face
 ## The digits 0 to 9 as lines, each a run of x, y points in a box 1 wide and 2 tall (corners cut, so they read
 ## as round).
 const DIGIT_STROKES := [
@@ -656,12 +657,13 @@ static func _keg(root: Node3D, at: Vector3) -> void:
 	ModelKit.cylinder(root, at + Vector3(0, 0.085, 0), 0.094, 0.03, ModelKit.paint(IRON), 0.092, 8)
 
 
-## The Barn's VIP badge (docs/VIP.md): a crest over the roof with the VIP level's number on it, which is the
-## building's level (BarnDef.look_level). It grows richer by tier (three levels each): bronze, then silver with
-## a laurel, gold with wings, a crown, and at the last rays and gems. Two looks of one part, switched in place:
-## while VIP is active its metal glimmers (ModelKit.to_shine), glints twinkle round it and it rides gently up
-## and down (`when_vip_true`); lapsed, the same crest stands still in dull grey (`when_vip_false`), so what
-## was lost is plain to see. Neither shows before the first VIP level.
+## The Barn's VIP badge (docs/VIP.md): one big, round, simple thing over the roof, in the farm's own chunky
+## look, as a farm game shows a level: a fat coin with a thick rim, a domed enamel face, the VIP level's number
+## large and outlined on it (the building's level, BarnDef.look_level), and a crown on top. Only its colours
+## change by tier (three levels each): bronze, silver, then gold on red, on green and on royal purple. Two
+## looks of one part, switched in place: while VIP is active its metal glimmers (ModelKit.to_shine), a few big
+## glints twinkle at its rim and it rides gently up and down (`when_vip_true`); lapsed, the same badge stands
+## still in dull grey (`when_vip_false`). Neither shows before the first VIP level.
 static func _vip_badge(ctx: Dictionary, lo: Vector3, hi: Vector3) -> void:
 	var root: Node3D = ctx["root"]
 	var w_lo: Vector3 = ctx.get("upper_lo", lo)
@@ -671,18 +673,17 @@ static func _vip_badge(ctx: Dictionary, lo: Vector3, hi: Vector3) -> void:
 	var turn := Vector3(0, PI / 4.0, 0)   # (its face to the camera)
 	var level := int(ctx.get("level", 1))
 	var tier := clampi((level - 1) / BADGE_TIER, 0, BADGE_METALS.size() - 1)
-	# What it stands on: a turned finial of dark iron (it never changes).
+	# What it stands on: a short turned foot of dark iron (it never changes).
 	var iron := ModelKit.paint(Color("#3f454c"), 0.5)
-	ModelKit.cylinder(root, foot, 0.07, 0.03, iron, 0.05, 8)
-	ModelKit.cylinder(root, foot + Vector3(0, 0.03, 0), 0.028, BADGE_POST - 0.03, iron, 0.02, 8)
-	bead(root, foot + Vector3(0, BADGE_POST * 0.55, 0), 0.04, iron)
+	ModelKit.cylinder(root, foot, 0.09, 0.035, iron, 0.06, 10)
+	ModelKit.cylinder(root, foot + Vector3(0, 0.035, 0), 0.04, BADGE_POST - 0.035, iron, 0.03, 10)
 	for on: bool in [true, false]:
 		var face := Node3D.new()
 		_crest(face, level, tier, on)
 		var part := when(ctx, "vip", on)
 		if on:
-			var glints := DecorMotion.effect(face, "sparkle", Vector3(0, 0, BADGE_THICK * 3.0))
-			glints.rotation.x = PI / 2.0   # (its ring stands in the crest's own flat, facing out)
+			var glints := DecorMotion.effect(face, "sparkle", Vector3(0, 0, BADGE_R * 0.3))
+			glints.rotation.x = PI / 2.0   # (its ring stands in the badge's own flat, facing out)
 			ModelKit.to_shine(DecorMotion.bob(part, at, turn, face, BADGE_BOB))
 		else:
 			face.position = at
@@ -690,59 +691,41 @@ static func _vip_badge(ctx: Dictionary, lo: Vector3, hi: Vector3) -> void:
 			part.add_child(face)
 
 
-## The crest itself, built facing +z about its own middle: `on` in its tier's metal and enamel, or in greys.
+## The badge itself, built facing +z about its own middle: `on` in its tier's metal and enamel, or in greys.
 static func _crest(face: Node3D, level: int, tier: int, on: bool) -> void:
 	var metal_col: Color = BADGE_METALS[tier] if on else Color("#8f969d")
 	var metal := ModelKit.paint(metal_col, 0.9 if on else 0.3)
-	var pale := ModelKit.paint(metal_col.lightened(0.35), 0.9 if on else 0.3)
-	var enamel := ModelKit.paint(BADGE_ENAMELS[tier] if on else Color("#4f555c"), 0.6 if on else 0.1)
-	var ink := ModelKit.paint(Color("#fff8e6") if on else Color("#b9bfc5"), 0.8 if on else 0.2)
+	var pale := ModelKit.paint(metal_col.lightened(0.3), 0.9 if on else 0.3)
+	var enamel := ModelKit.paint(BADGE_ENAMELS[tier] if on else Color("#4f555c"), 0.7 if on else 0.1)
+	var ink := ModelKit.paint(Color("#fffaf0") if on else Color("#c2c8ce"), 0.8 if on else 0.2)
+	var edge := ModelKit.paint((BADGE_ENAMELS[tier] if on else Color("#4f555c")).darkened(0.55), 0.2)
 	var gem := ModelKit.paint(BADGE_GEMS[tier] if on else Color("#737a82"), 1.0 if on else 0.2)
-	if tier >= 4:
-		# Rays behind it, long and short by turns.
-		for k in 12:
-			var ray := _turned(face, Vector3(0, 0, -BADGE_THICK * 1.5), TAU * k / 12.0)
-			var long := BADGE_R * (0.75 if k % 2 == 0 else 0.5)
-			ModelKit.faces(ray, [[Vector3(-0.028, BADGE_R * 0.95, 0), Vector3(0.028, BADGE_R * 0.95, 0),
-				Vector3(0, BADGE_R * 0.95 + long, 0)]], Vector3(0, 0, -1), pale)
-	if tier >= 2:
-		# Wings: three feathers a side, fanned up and out.
-		for side: float in [-1.0, 1.0]:
-			for k in 3:
-				var feather := _turned(face, Vector3(side * BADGE_R * 0.8, -0.02 + 0.05 * k, -BADGE_THICK * 0.5),
-					-side * (PI / 2.0 - 0.3 - 0.36 * k))
-				var long := BADGE_R * (1.25 - 0.22 * k)
-				ModelKit.faces(feather, [[Vector3(-0.035, 0, 0), Vector3(0.035, 0, 0), Vector3(0.02, long * 0.8, 0),
-					Vector3(-0.02, long * 0.8, 0)], [Vector3(-0.02, long * 0.8, 0), Vector3(0.02, long * 0.8, 0),
-					Vector3(0, long, 0)]], Vector3(0, long * 0.4, -1), pale if k == 1 else metal)
-	elif tier >= 1:
-		# A laurel: leaves up each side of the ring.
-		for side: float in [-1.0, 1.0]:
-			for k in 5:
-				var a := -PI / 2.0 + side * (0.5 + 0.44 * k)
-				var leaf := _turned(face, Vector3(cos(a), sin(a), 0) * BADGE_R * 1.14, a + side * 0.9)
-				bead(leaf, Vector3.ZERO, 0.05, pale, Vector3(1.25, 0.5, 0.4))
-	# The medallion: a ring of metal, studs round it, and enamel within.
-	_disc(face, Vector3.ZERO, BADGE_R, BADGE_THICK * 2.0, metal, 16)
-	_disc(face, Vector3(0, 0, BADGE_THICK * 0.4), BADGE_R * 0.8, BADGE_THICK * 2.0, enamel, 16)
-	for k in 12:
-		bead(face, Vector3(cos(TAU * k / 12.0), sin(TAU * k / 12.0), 0) * BADGE_R * 0.9 + Vector3(0, 0, BADGE_THICK),
-			0.017, pale)
-	_stroke_number(face, level, ink, BADGE_R * 0.78, BADGE_THICK * 1.4)
-	if tier >= 3:
-		# A crown on top: a band, three points, a gem on each.
-		var base := Vector3(0, BADGE_R * 0.98, 0)
-		ModelKit.box(face, base + Vector3(-0.1, 0, -0.03), base + Vector3(0.1, 0.045, 0.03), metal, false)
-		for k in 3:
-			var x := (k - 1) * 0.075
-			var tall := 0.1 if k == 1 else 0.075
-			ModelKit.cylinder(face, base + Vector3(x, 0.045, 0), 0.034, tall, pale, 0.0, 4)
-			bead(face, base + Vector3(x, 0.045 + tall, 0), 0.022, gem)
-		bead(face, base + Vector3(0, 0.022, 0.03), 0.02, gem)
-	if tier >= 4:
-		for side: float in [-1.0, 1.0]:
-			bead(face, Vector3(side * BADGE_R * 0.9, 0, BADGE_THICK), 0.03, gem)
-		bead(face, Vector3(0, -BADGE_R * 0.9, BADGE_THICK), 0.03, gem)
+	# A fat round rim, and a domed face within it.
+	var rim := MeshInstance3D.new()
+	var ring := TorusMesh.new()
+	ring.outer_radius = BADGE_R
+	ring.inner_radius = BADGE_R * (1.0 - BADGE_RIM * 2.0)
+	ring.rings = 24
+	ring.ring_segments = 8
+	rim.mesh = ring
+	rim.material_override = metal
+	rim.rotation.x = PI / 2.0
+	face.add_child(rim)
+	bead(face, Vector3.ZERO, BADGE_R * (1.0 - BADGE_RIM), enamel, Vector3(1, 1, 0.22))
+	# The number: big, in fat round strokes, a dark edge behind it so it reads from afar.
+	var front := BADGE_R * (1.0 - BADGE_RIM) * 0.22
+	_stroke_number(face, level, edge, BADGE_R * 1.25, front - 0.012, DIGIT_STROKE + 0.14)
+	_stroke_number(face, level, ink, BADGE_R * 1.25, front, DIGIT_STROKE)
+	# A crown on top: a band, three fat points, a ball on each.
+	var base := Vector3(0, BADGE_R * 0.93, 0)
+	var wide := BADGE_R * 0.52
+	var crown := metal if tier >= 2 else pale
+	ModelKit.box(face, base + Vector3(-wide, 0, -0.045), base + Vector3(wide, BADGE_R * 0.2, 0.045), crown, false)
+	for k in 3:
+		var x := (k - 1) * wide * 0.72
+		var tall := BADGE_R * (0.42 if k == 1 else 0.32)
+		ModelKit.cylinder(face, base + Vector3(x, BADGE_R * 0.2, 0), wide * 0.36, tall, crown, 0.0, 8)
+		bead(face, base + Vector3(x, BADGE_R * 0.2 + tall, 0), BADGE_R * 0.1, gem)
 
 
 ## A node at `at` turned by `turn` about the axis out of the crest's face: what is built under it points along
@@ -755,33 +738,28 @@ static func _turned(face: Node3D, at: Vector3, turn: float) -> Node3D:
 	return n
 
 
-## A disc facing +z, its middle at `at`.
-static func _disc(face: Node3D, at: Vector3, r: float, thick: float, mat: Material, sides: int) -> void:
-	var flat := Node3D.new()
-	flat.position = at
-	flat.rotation.x = PI / 2.0
-	face.add_child(flat)
-	ModelKit.cylinder(flat, Vector3(0, -thick / 2.0, 0), r, thick, mat, r, sides)
-
-
-## A number drawn in strokes on a crest's face, centred, `tall` high: each digit a few lines with their
-## corners cut (DIGIT_STROKES), each line a raised bar.
-static func _stroke_number(face: Node3D, number: int, mat: Material, tall: float, z: float) -> void:
+## A number drawn in fat round strokes on the badge's face, centred, `tall` high: each digit a few lines with
+## their corners cut (DIGIT_STROKES), each line a raised bar with a round cap at each end; `stroke` is a
+## stroke's thickness against a digit's width.
+static func _stroke_number(face: Node3D, number: int, mat: Material, tall: float, z: float, stroke: float) -> void:
 	var digits := str(clampi(number, 0, 99))
 	var unit := tall / 2.0                       # (a digit is 1 wide and 2 tall in its own units)
 	if digits.length() > 1:
-		unit *= 0.78                             # (two digits share the face)
+		unit *= DIGIT_PAIR                       # (two digits share the face)
 	var wide := digits.length() + (digits.length() - 1) * DIGIT_GAP
-	var thick := unit * DIGIT_STROKE
+	var thick := unit * stroke
 	for k in digits.length():
 		var left := (k * (1.0 + DIGIT_GAP) - wide / 2.0) * unit
 		for line: Array in DIGIT_STROKES[digits.unicode_at(k) - 48]:
-			for n in range(0, line.size() - 2, 2):
+			for n in range(0, line.size(), 2):
 				var a := Vector3(left + float(line[n]) * unit, (float(line[n + 1]) - 1.0) * unit, z)
+				bead(face, a + Vector3(0, 0, 0.012), thick / 2.0, mat, Vector3(1, 1, 0.5))
+				if n + 3 >= line.size():
+					continue
 				var b := Vector3(left + float(line[n + 2]) * unit, (float(line[n + 3]) - 1.0) * unit, z)
 				var bar := _turned(face, (a + b) / 2.0, atan2(b.y - a.y, b.x - a.x))
-				var half := a.distance_to(b) / 2.0 + thick / 2.0
-				ModelKit.box(bar, Vector3(-half, -thick / 2.0, 0), Vector3(half, thick / 2.0, 0.014), mat, false)
+				var half := a.distance_to(b) / 2.0
+				ModelKit.box(bar, Vector3(-half, -thick / 2.0, 0), Vector3(half, thick / 2.0, 0.022), mat, false)
 
 
 ## A low table of goods by the building (a rack's other style): two a row, a row more as the building fills,

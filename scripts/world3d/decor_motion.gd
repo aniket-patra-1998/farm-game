@@ -56,13 +56,13 @@ const SMOKE := {"streams": 7, "per_stream": 1, "life": 3.2, "rise": 0.22, "gravi
 const STEAM := {"streams": 9, "per_stream": 1, "life": 2.6, "rise": 0.16, "gravity": -0.015, "reach": 0.22,
 	"size": 1.8, "end_size": 3.0, "colour": Color("#f4f6f7"), "sheen": 0.1, "round": true, "start_radius": 0.12}
 
-## Glints of light twinkling round something precious (the Barn's VIP badge while VIP is active): four-pointed
-## stars born on a ring, growing from nothing, drifting a little outward and shrinking away, lit by themselves
+## Glints of light at the rim of something precious (the Barn's VIP badge while VIP is active): a few big
+## four-pointed stars, each born on a ring, swelling from nothing and shrinking away where it is, lit by itself
 ## (`glint`: each is a flat star; the ring lies in the part's own flat, so the part is turned to face).
-const SPARKLE := {"streams": 9, "per_stream": 2, "life": 1.7, "rise": 0.03, "gravity": 0.0, "reach": 0.12,
-	"start_radius": 0.22, "size": 1.15, "end_size": 0.3, "grow_in": 0.3, "colour": Color("#fff4c4"), "sheen": 1.0,
+const SPARKLE := {"streams": 4, "per_stream": 1, "life": 2.4, "rise": 0.0, "gravity": 0.0, "reach": 0.03,
+	"start_radius": 0.3, "size": 1.0, "end_size": 0.4, "grow_in": 0.4, "colour": Color("#fffbe6"), "sheen": 1.0,
 	"glint": true}
-const GLINT_ARM := 3.6              # a glint's arm, against a drop's radius..
+const GLINT_ARM := 6.0              # a glint's arm, against a drop's radius..
 const GLINT_WAIST := 0.2            # ..and its waist, against its arm
 const SHAPES: Array[String] = ["streams", "per_stream", "round", "glint"]   # settings the mesh is built by
 
