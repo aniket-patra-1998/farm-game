@@ -121,19 +121,20 @@ func can_expand_with_coins() -> bool:
 	return not step.is_empty() and game.level() >= int(step["level"]) and game.coins >= int(step["coins"])
 
 
-## Coins need the step's level; gems skip the level requirement.
+## Every step needs its level, bought with coins or gems: gems skip the coins, never the level (land is the
+## farm's size, and bought early it let a payer level two or three times as fast).
 func expand(use_gems: bool) -> bool:
 	var step := next_expansion()
 	if step.is_empty():
+		return false
+	if game.level() < int(step["level"]):
+		game.message.emit(tr("REACH_LEVEL_TO_EXPAND") % int(step["level"]))
 		return false
 	if use_gems:
 		if not game.spend_gems(int(step["gems"])):
 			game.message.emit(tr("NOT_ENOUGH_GEMS_TO_EXPAND"))
 			return false
 	else:
-		if game.level() < int(step["level"]):
-			game.message.emit(tr("REACH_LEVEL_TO_EXPAND_WITH_COINS") % int(step["level"]))
-			return false
 		if not game.spend(int(step["coins"])):
 			game.message.emit(tr("NOT_ENOUGH_COINS_TO_EXPAND"))
 			return false

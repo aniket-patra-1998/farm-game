@@ -476,10 +476,6 @@
   "sell_coins_per_gem": {
    "v": 50,
    "note": "our guess for items bought with gems"
-  },
-  "min_xp": {
-   "v": 5,
-   "note": "The least XP buying a priced decoration gives."
   }
  },
  "crops": {

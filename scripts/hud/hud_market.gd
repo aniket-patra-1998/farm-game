@@ -275,19 +275,19 @@ func land_card() -> Control:
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 12)
 	row.add_theme_constant_override("v_separation", 12)
-	var with_coins := hud.panel_button("")
-	if Game.level() < int(step["level"]):
-		with_coins.text = tr("COINS_REACH_LEVEL") % int(step["level"])
-		with_coins.disabled = true
+	if Game.level() < int(step["level"]):   # (coins or gems, every step needs its level: LandSystem.expand)
+		var wait := hud.panel_button(tr("REACH_LEVEL_TO_EXPAND") % int(step["level"]))
+		wait.disabled = true
+		row.add_child(wait)
 	else:
-		with_coins.text = tr("EXPAND_COINS") % UiTheme.number(int(step["coins"]))
+		var with_coins := hud.panel_button(tr("EXPAND_COINS") % UiTheme.number(int(step["coins"])))
 		with_coins.disabled = Game.coins < int(step["coins"])
-	with_coins.pressed.connect(func() -> void: Game.land.expand(false))
-	row.add_child(with_coins)
-	var with_gems := hud.panel_button(tr("EXPAND_NOW_GEMS") % int(step["gems"]))
-	with_gems.disabled = Game.gems < int(step["gems"])
-	with_gems.pressed.connect(func() -> void: Game.land.expand(true))
-	row.add_child(with_gems)
+		with_coins.pressed.connect(func() -> void: Game.land.expand(false))
+		row.add_child(with_coins)
+		var with_gems := hud.panel_button(tr("EXPAND_NOW_GEMS") % int(step["gems"]))
+		with_gems.disabled = Game.gems < int(step["gems"])
+		with_gems.pressed.connect(func() -> void: Game.land.expand(true))
+		row.add_child(with_gems)
 	inner.add_child(row)
 	return BookPanel.card_frame(inner)
 

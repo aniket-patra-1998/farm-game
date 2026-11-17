@@ -53,12 +53,15 @@ func test_11_shelter_fill_collect_upgrade() -> void:
 
 
 
-func test_12_expand_with_coins_needs_level_gems_do_not() -> void:
+func test_12_every_expansion_needs_its_level_gems_skip_only_the_coins() -> void:
 	var g := _farm()
 	g.coins = 100000
-	_check(not g.land.expand(false), "coins need level 5")
 	g.gems = 20
-	_check(g.land.expand(true), "gems expand at level 1")
+	_check(not g.land.expand(false), "coins need level 5")
+	_check(not g.land.expand(true), "and so do gems: they never skip the level")
+	_eq(g.gems, 20, "nothing spent")
+	g.xp = g.xp_for_level(int(g.land.next_expansion()["level"]))
+	_check(g.land.expand(true), "at its level, gems expand (no coins asked)")
 	_eq(g.farm_size, 14, "farm grew to 14")
 	_eq(g.gems, 10, "10 gems spent")
 	_check(g.can_place("chicken", 13, 13), "new land is usable")

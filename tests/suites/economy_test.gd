@@ -256,17 +256,17 @@ func test_32_new_trees_animals_and_birds_work() -> void:
 
 
 
-func test_61_decorations_give_xp_like_farmville() -> void:
+func test_61_decorations_give_xp_as_everything_does_and_no_buy_and_sell_pays() -> void:
 	var g := _farm()
 	g.coins = 10000000
-	_eq(g.buy_xp("hay_bale"), 5, "a 100-coin hay bale gives 5 XP")
-	_eq(g.buy_xp("white_picket_fence"), 5, "a 300-coin fence gives 5 XP")
+	_eq(g.buy_xp("hay_bale"), 1, "a 100-coin hay bale gives 1 XP")
+	_eq(g.buy_xp("white_picket_fence"), 3, "a 300-coin fence gives 3 XP")
 	_eq(g.buy_xp("log_cabin"), 2500, "a 250,000-coin Log Cabin gives 2,500 XP")
 	_eq(g.buy_xp("tractor"), 50, "other buys give 1 XP per 100 coins")
 	_eq(g.buy_xp("brown_chicken"), 0, "gem buys give none")
 	var xp := g.xp
 	_check(g.buy_and_place("hay_bale", 8, 8), "buy a hay bale")
-	_eq(g.xp - xp, 5, "5 XP for it")
+	_eq(g.xp - xp, 1, "1 XP for it")
 	_eq(g.ribbons.stat("decor_bought"), 1, "decorations counted for the Decorator ribbon")
 	var count := 0
 	for id in g.item_order:
@@ -274,6 +274,17 @@ func test_61_decorations_give_xp_like_farmville() -> void:
 		if it["kind"] == "decor" and int(it["unlock_level"]) < 99:
 			count += 1
 	_check(count >= 30, "at least 30 decorations in the Market (%d)" % count)
+	# No coin buy, sold straight back, makes a level cost less than the level pays (it once did, from level 38:
+	# coins and gems without end). Checked for everything bought with coins, up to a high level.
+	var top := 100
+	for id in g.item_order:
+		var d := g.catalog.get_def(id) as PlaceableDef
+		if d == null or d.coin_cost() <= 0 or d.buy_xp() <= 0:
+			continue
+		var per_xp := float(d.coin_cost() - d.sell_value()) / d.buy_xp()
+		var level_costs := per_xp * (g.xp_for_level(top + 1) - g.xp_for_level(top))
+		_check(level_costs > g.level_reward(top), "buying and selling %s never pays for a level (%.0f against %d)"
+			% [id, level_costs, g.level_reward(top)])
 	_done(g)
 
 

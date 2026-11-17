@@ -91,7 +91,7 @@ func test_71_defaults_stack_and_classes_add_rules() -> void:
 	d.setup(entry)
 	_eq(d.kind, "decor", "its kind comes from its class")
 	_eq(d.footprint(), Vector2i(1, 1), "1x1 by default")
-	_eq(d.buy_xp(), 5, "decorations give at least 5 XP (Decoration overrides Item)")
+	_eq(d.buy_xp(), 3, "a decoration gives 1 XP per 100 coins, as everything does")
 	_eq(d.sell_value(), 15, "sells for 5% (from Placeable)")
 	# Family defaults sit between the file's and the entry's.
 	var stacked := c._build(

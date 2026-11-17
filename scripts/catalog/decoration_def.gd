@@ -1,14 +1,10 @@
 class_name DecorationDef
 extends PlaceableDef
-## Scenery. FarmVille gave at least 5 XP for any bought decoration.
+## Scenery. (FarmVille gave at least 5 XP for any bought decoration; with sales back at 5% and level rewards that
+## grow, cheap paths bought and sold made coins and gems without end, so here a decoration's XP is the rule for
+## everything: ItemDef.buy_xp, 1 per 100 coins.)
 
 const STARTER_SCENERY := ["farmhouse", "mailbox", "farm_stand"]  ## drawn by id, not shape
-
-
-func buy_xp() -> int:
-	if coin_cost() <= 0:
-		return super.buy_xp()
-	return maxi(Balance.i("market.min_xp"), super.buy_xp())
 
 
 ## Whether its pieces join their neighbours (see Linking): they turn themselves, so the player doesn't.
