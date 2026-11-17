@@ -203,3 +203,10 @@ static func _badge_box() -> StyleBoxFlat:
 		_badge.set_border_width_all(int(UiTheme.size("badge_border")))
 		_badge.set_corner_radius_all(int(UiTheme.size("badge_height") / 2.0))
 	return _badge
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_badge = null
+	_gold = null
+	_soft = null

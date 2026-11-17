@@ -198,3 +198,8 @@ static func _earth() -> StandardMaterial3D:
 		_earth_material.roughness = 1.0
 		ModelKit.paint_like.append(_earth_material)   # (a file carries it as plain paint: its colours are the mesh's)
 	return _earth_material
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_earth_material = null

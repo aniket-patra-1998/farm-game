@@ -43,6 +43,7 @@ static var _shown: ItemIcons
 static var _side := 0          # this screen's picture size, worked out once
 static var _textures := {}    # item id -> ImageTexture (blank until made)
 static var _waiting: Array[String] = []
+static var _saving: Array[int] = []   # pictures being written to disk off the main thread (task ids)
 static var _asked := {}       # item id -> the frame it was last asked for
 static var _on_disk := {}     # item id -> its files in the cache (listed once a session)
 
@@ -300,11 +301,21 @@ func _show_and_keep(job: IconDevelop) -> void:
 		var path := _file(job.id)
 		var old := _forget_old(job.id)
 		var picture := job.picture
-		WorkerThreadPool.add_task(func() -> void:
+		_finish_saves(false)
+		_saving.append(WorkerThreadPool.add_task(func() -> void:
 			DirAccess.make_dir_recursive_absolute(CACHE)
 			for f in old:
 				DirAccess.remove_absolute(f)
-			picture.save_png(path))
+			picture.save_png(path)))
+
+
+## Waits on the pictures being saved: those already written (`all` false), or every one (on quit). Every task the
+## pool is given must be waited on, or it and the picture it holds are never let go.
+static func _finish_saves(all: bool) -> void:
+	for t in _saving.duplicate():
+		if all or WorkerThreadPool.is_task_completed(t):
+			WorkerThreadPool.wait_for_task_completion(t)
+			_saving.erase(t)
 
 
 ## Pictures of `id` kept under an older key, to remove (the folder listed once a session, not per picture).
@@ -398,3 +409,9 @@ static func _plant_picture(home: Node3D, it: Dictionary, fp: Vector2i) -> void:
 		plant.position = Vector3(side * fp.x * PICTURE_SPREAD, 0.0, row * fp.y * PICTURE_SPREAD)
 		plant.scale = Vector3.ONE * PICTURE_PLANT_SIZE
 		home.add_child(plant)
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_finish_saves(true)
+	_textures.clear()

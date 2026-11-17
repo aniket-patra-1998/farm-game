@@ -284,6 +284,24 @@ func _close() -> void:
 
 func _exit_tree() -> void:
 	Instancer.clear()   # the shared looks live in statics: let them go before the engine reports leaks
+	if self != Game:   # (a test's own GameState leaving: the shared caches stay for the next test)
+		return
+	ItemIcons.release_statics()
+	UiSvg.release_statics()
+	UiKit.release_statics()
+	CardFace.release_statics()
+	BuildingFill.release_statics()
+	LinkModels.release_statics()
+	# (the art builders' own caches, cleared from here so their files, fingerprinted for the exported art, stay as
+	# they are: a change to them means re-exporting every plant and building)
+	for cache: Variant in [ModelKit._materials, ModelKit._meshes, ModelKit._white, ModelKit.paint_like,
+			CropModels._cache, CropModels._files, DecorMotion._materials]:
+		cache.clear()
+	ModelKit._facet_mesh = null
+	ModelKit._facet_low = null
+	ModelKit._sprig = null
+	PondModel.release_statics()
+	WorldFx.release_statics()
 
 
 # ---------------------------------------------------------------- time

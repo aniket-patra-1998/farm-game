@@ -42,3 +42,8 @@ static func _text(kind: String) -> String:
 		var path := DIR + kind + ".svg"
 		_source[kind] = FileAccess.get_file_as_string(path) if FileAccess.file_exists(path) else ""
 	return _source[kind]
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_cache.clear()

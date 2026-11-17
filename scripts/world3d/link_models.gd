@@ -302,3 +302,8 @@ static func _path(root: Node3D, id: String, col: Color, mask: int, rng: RandomNu
 						ModelKit.paint(col.lerp(WALL_STONE, 0.6).lightened(0.1).darkened(rng.randf() * 0.25)), r * 0.82, 7)
 					stone.scale = Vector3(1.0, 1.0, rng.randf_range(0.8, 1.2))
 					stone.rotation.y = rng.randf() * PI
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_cache.clear()

@@ -484,3 +484,8 @@ static func centered(c: Control) -> Control:
 	c.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	c.grow_vertical = Control.GROW_DIRECTION_BOTH
 	return c
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_paper_theme = null

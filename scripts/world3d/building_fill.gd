@@ -1072,3 +1072,8 @@ func doors_open() -> bool:
 		if hinge.has_meta(BuildingModel.SLIDE) and hinge.position.y > float(hinge.get_meta("rest_y", 0.0)) + 0.05:
 			return true
 	return false
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_head_meshes.clear()

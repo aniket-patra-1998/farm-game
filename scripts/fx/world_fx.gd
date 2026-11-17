@@ -176,3 +176,8 @@ class PlantsGhost extends Node2D:
 			SpriteBank.draw(self, art, Vector2.ZERO)
 		else:
 			PlaceholderArt.draw_crop(self, Vector2.ZERO, FarmGrid.TILE_W, FarmGrid.TILE_H, crop, "ripe", 1.0)
+
+
+## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.
+static func release_statics() -> void:
+	_dot = null
