@@ -143,3 +143,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Run 4: level reward coins in data (economy.coins_per_level), unlocks_at built on unlock_ids_at; the
   engine-hum test (vehicle_motion test_206) no longer fails when another test left a loop running, so the local
   precheck passes on a 2-core container. Next: an audit of phone UI (every third run) or the economy's open items.
+- Run 5 (phone UI, measured with the menu sweep): Move, Sell, search chips, choice pills and switches drew only
+  as tall as their words (29 units, under 3 mm on a phone); now every one is at least panel_button_height
+  (`UiKit.tappable`) and menus_test checks every button. Open: 40 units is still about 4 mm on a 20:9 phone
+  against a 7 mm finger (the shared panel button size: the owner's call). Next run: a full audit (run 6).
