@@ -130,6 +130,6 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - The pink ready triangles over everything on the farm: owner asked to turn "the pink triangle" off; the button
   is off, ask whether the marks over animals and trees go too.
 - Animals still seen overlapping buildings? (the footing was the measured clash; check a pen close up).
-- Building floors/yards lack detail and depth when zoomed in (all buildings).
-- The farmer avatar looks scary (face and eyes).
+- Yards: done, the lawn inside the fence with a trodden path gate to door (owner picked A).
+- Farmer face: done, button eyes and an open smile (owner picked D).
 - Ground: done, mown stripes (owner picked C) and no grass clumps (D); ready sign: the pink pin (C).

@@ -22,7 +22,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 from . import decal
-from .decal import Mesh, ell, eye, fan, frame, strip
+from .decal import Mesh, ell, fan, frame, strip
 from .export import _write
 from .geometry import cast, vnormals
 from .look import bake
@@ -50,6 +50,10 @@ LID, BLUSH, BROW, NOSE, CUFF = (0.84, 0.7, 0.575), (0.95, 0.63, 0.6), (0.2, 0.13
     (0.2, 0.36, 0.6)
 BRASS, MOUTH, IRIS = (0.91, 0.76, 0.29), (0.5, 0.2, 0.17), (0.23, 0.44, 0.72)
 LIPS = (0.8, 0.33, 0.36)
+PUPIL = (0.12, 0.08, 0.06)   # the button eyes' dark
+EYE_R, EYE_X, EYE_Y = 0.034, 0.08, 0.76   # an eye's radius, how far from the middle, how high (of S)
+BROW_R = 0.045           # the brows' span, as an eye's would be
+MOUTH_Y, SMILE_HALF, SMILE_DEEP = 0.69, 0.04, 0.035   # the open smile: how high, half its width, its depth
 REGIONS = ("fixed", "skin", "hair", "shirt", "overalls", "shoes")
 WEARS = {SKIN: (1, (1, 1, 1)), HAIR: (2, (1, 1, 1)), SHIRT: (3, (1, 1, 1)), OVERALLS: (4, (1, 1, 1)), SHOES: (5, (1, 1, 1)),
          LID: (1, (0.9, 0.9, 0.9)), BLUSH: (1, (1.0, 0.8, 0.86)), NOSE: (1, (0.93, 0.92, 0.9)), BROW: (2, (0.6, 0.6, 0.6)),
@@ -134,7 +138,9 @@ def shapes(hair="short", kind="a"):
 
 
 def _face(m, V, T, wh, kind="a"):
-    """Eyes, brows, blush and a smile, drawn flat and seated on the head's own surface. Returns each eye's points."""
+    """Button eyes (round and dark, a big glint and a small one), soft brows, blush and an open smile, drawn flat
+    and seated on the head's own surface (the owner's pick, 17 Nov: the big pale eyes read as staring). Returns
+    each eye's points."""
     Th = T[(wh[T] > 0.3).any(1)]
     fwd = np.array([0.0, 0.0, 1.0])
 
@@ -144,25 +150,30 @@ def _face(m, V, T, wh, kind="a"):
 
     decal.PROJ = lambda P, o: cast(V, Th, P + o * 1.5, -o)[0]
     girl = kind == "b"
-    r = (0.059 if girl else 0.056) * S
+    r = EYE_R * S
     eyes = []
     for sx in (-1, 1):
-        p, n = seat(sx * 0.088, 0.772)
+        p, n = seat(sx * EYE_X, EYE_Y)
         out = 0.6 * n + 0.4 * fwd
         out /= np.linalg.norm(out)
         u, up = frame(out, np.array([1.0, 0.0, 0.0]))
         e0 = m.n
-        eye(m, p, u, up, out, r, LID, lashes=girl, lid=0.6 if girl else 0.66, pupil=0.78, iris=IRIS)
+        fan(m, p, u, up, out, ell(r, r * 1.12), 1, PUPIL)
+        fan(m, p, u, up, out, ell(r * 0.42, r * 0.42, r * 0.28, r * 0.38, 12), 2, (1, 1, 1))
+        fan(m, p, u, up, out, ell(r * 0.18, r * 0.18, -r * 0.3, -r * 0.35, 8), 2, (1, 1, 1))
         eyes.append((e0, m.n, p.copy(), up.copy()))
-        brow = [(x * r, (1.72 + 0.16 * (1 - x * x) - 0.1 * sx * x) * r) for x in np.linspace(-1.05, 1.05, 9)]
-        thick = (0.06 if girl else 0.1) * r
+        rb = BROW_R * S
+        brow = [(x * rb * 0.8, (1.55 + 0.18 * (1 - x * x)) * rb) for x in np.linspace(-1, 1, 9)]
+        thick = (0.05 if girl else 0.07) * rb
         strip(m, p, u, up, out, [(a, b + thick) for a, b in brow], [(a, b - thick) for a, b in brow], 0, BROW)
-        fan(m, p, u, up, out, ell(0.46 * r, 0.3 * r, sx * 0.85 * r, -1.5 * r, 14), 0, BLUSH)
-    p, n = seat(0.0, 0.672)
+        fan(m, p, u, up, out, ell(0.025 * S, 0.015 * S, sx * 0.035 * S, -0.0625 * S, 14), 0, BLUSH)
+    p, n = seat(0.0, MOUTH_Y)
     u, up = frame(n, np.array([1.0, 0.0, 0.0]))
-    half, th = (0.052 if girl else 0.062) * S, (0.011 if girl else 0.0085) * S
-    smile = [(x * half, 0.03 * S * x * x) for x in np.linspace(-1, 1, 11)]
-    strip(m, p, u, up, n, [(a, b + th) for a, b in smile], [(a, b - th) for a, b in smile], 0, LIPS if girl else MOUTH)
+    half = SMILE_HALF * S
+    lip = 0.004 * S
+    top = [(x * half, lip) for x in np.linspace(-1, 1, 11)]
+    bottom = [(x * half, lip - SMILE_DEEP * S * math.sqrt(max(0.0, 1 - x * x))) for x in np.linspace(-1, 1, 11)]
+    strip(m, p, u, up, n, top, bottom, 0, LIPS if girl else MOUTH)
     decal.PROJ = None
     return eyes
 
