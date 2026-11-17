@@ -15,7 +15,7 @@ One look for everything the player reads or presses, taken from the building she
 - **Title:** ink, at the left; the same round cross at the right on every panel and sheet (`UiKit.close_button`).
 - **Buttons, three kinds:** the one main action, filled with the accent, white words (`UiKit.primary`; at most one
   per panel or sheet); ordinary cream buttons (`FarmHud._panel_button`); quiet text buttons for Move, Turn, Sell
-  (`UiKit.quiet_button`).
+  (`UiKit.quiet_button`). Every button, pill and switch is at least panel_button_height each way to tap (`UiKit.tappable`; the menu sweep checks it).
 - **Tabs:** pills on paper, the chosen one in ink (`UiKit.tab_button`).
 - **Items:** white cards with a light edge (`CardFace`, "card_face"), contents as picture tiles with counts
   (`UiKit.count_row`), progress as a light track with the accent fill (paper theme's ProgressBar).

@@ -260,4 +260,5 @@ func _pill(words: String) -> Button:
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_size_override("font_size", BookPanel.font_px(UiTheme.BODY))
 	UiFx.press_bounce(b)
+	UiKit.tappable(b)
 	return b

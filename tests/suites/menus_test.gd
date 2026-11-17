@@ -3,7 +3,8 @@ extends TestSuite
 ## Settings, the seed list, the inbox, the fuel panel, every kind of thing on the showcase farm as it opens and
 ## each building's full panel), on a laptop, a wide phone and a tablet, read for what a player would see broken:
 ## a word broken inside itself (a wrapping line with no width: letters stacked one a line), a raw id or an
-## untranslated key in place of words, a "%s" never filled, and text or a box spilling past its panel's sides.
+## untranslated key in place of words, a "%s" never filled, text or a box spilling past its panel's sides, and a
+## button too small for a finger (under panel_button_height either way, less `TAP_SLACK`).
 ## And the one look (docs/UI.md): every word standing on the paper reads on it (contrast at least `LEAST_CONTRAST`:
 ## no cream or yellow left over from the wooden panels), and no wooden box sits inside a panel.
 ## Every problem is reported once, with where it was, so one run lists them all.
@@ -12,6 +13,7 @@ const SHAPES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(2340, 1080), Vect
 const RAW_ID := "\\b[a-z]+_[a-z0-9_]+\\b"        # snake_case: an item or feed id shown as it is stored
 const RAW_KEY := "\\b[A-Z]{2,}_[A-Z0-9_]+\\b"    # a strings.csv key never translated
 
+const TAP_SLACK := 2.0   # (units: the round close button is 38 across)
 const LEAST_CONTRAST := 3.0   # WCAG's least for large text: words on paper must reach it
 const WOOD_KEYS: Array[String] = ["wood", "wood_dark", "wood_light", "plaque"]   # the old frame's colours
 
@@ -231,6 +233,9 @@ func _sweep(root: Control, where: String, bad: Dictionary) -> void:
 			for key in WOOD_KEYS:
 				if face.a > 0.5 and face.is_equal_approx(UiTheme.color(key)):
 					bad["%s: a %s box inside the paper" % [where, key]] = true
+		if c is BaseButton and minf(c.size.x, c.size.y) < UiTheme.size("panel_button_height") - TAP_SLACK:
+			bad["%s: %s \"%s\" is too small to tap (%dx%d)" % [where, c.get_class(), text.left(40), c.size.x,
+				c.size.y]] = true
 		if (c is Label or c is Container) and c.size.x > 0.0:
 			var r := c.get_global_rect()
 			if r.position.x < page.position.x - 1.0 or r.end.x > page.end.x + 1.0:

@@ -81,6 +81,14 @@ static func quiet_button(words: String, px: int) -> Button:
 	b.add_theme_color_override("font_pressed_color", UiTheme.color("ink"))
 	b.add_theme_color_override("font_disabled_color", UiTheme.color("track").darkened(0.15))
 	UiFx.press_bounce(b)
+	return tappable(b)
+
+
+## Makes `b` at least a finger's size to tap (panel_button_height each way), however short its words: a quiet
+## button or a pill drew only as tall as its text (29 units: under 3 mm on a phone).
+static func tappable(b: Control) -> Control:
+	var least := UiTheme.size("panel_button_height")
+	b.custom_minimum_size = Vector2(maxf(b.custom_minimum_size.x, least), maxf(b.custom_minimum_size.y, least))
 	return b
 
 

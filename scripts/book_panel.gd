@@ -325,6 +325,7 @@ static func switch(on: bool, toggled: Callable) -> CheckButton:
 	c.button_pressed = on
 	c.focus_mode = Control.FOCUS_NONE
 	c.toggled.connect(toggled)
+	UiKit.tappable(c)
 	return c
 
 
@@ -355,6 +356,7 @@ static func choice(options: Array, current: String, pick: Callable) -> HFlowCont
 		var key := str(o[0])
 		b.pressed.connect(func() -> void: pick.call(key))
 		UiFx.press_bounce(b)
+		UiKit.tappable(b)
 		r.add_child(b)
 	return r
 
