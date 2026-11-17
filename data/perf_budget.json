@@ -13,7 +13,8 @@
    "draws": 1650,
    "triangles": 2300000,
    "target_draws": 500,
-   "target_triangles": 300000
+   "target_triangles": 300000,
+   "_measured": "What a phone really draws, measured with a renderer (tools/perf_probe.tscn -- --quality=low --size=2400x1080 [--tiles=12]), showcase farm, 17 Nov 2026: the whole farm in view 965 draws, 620k triangles; a playing view of 12 tiles across 552 draws, 335k triangles (lod_pixels 12 on low; 450k at 4). The limits above are the headless count of everything at full detail, which knows no culling or levels of detail: a ratchet, not the phone's own number."
   }
  ]
 }
