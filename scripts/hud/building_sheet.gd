@@ -43,6 +43,7 @@ const FLICK := 900.0                   # px a second: a quicker drag counts what
 const HANDLE := Vector2(56, 6)         # the handle's size, before the UI's scale
 const SETTLE := 0.2                    # seconds to settle at a height
 const PAGE_SHARE := 0.42               # a tab's page, compact: at most this share of the screen (it scrolls)
+const INSIDE_SHARE := 0.2              # who lives inside, as pictures: at most this share of the screen (it scrolls)
 const SPECIAL_TABS := {                # a building's own extras (catalog `special`) get a tab, named for them
 	"mystery_eggs": "SHEET_TAB_EGGS", "calves": "SHEET_TAB_BABIES", "foals": "SHEET_TAB_BABIES",
 	"nursery": "SHEET_TAB_BABIES", "beehive": "SHEET_TAB_BEES", "truffles": "SHEET_TAB_TRUFFLES",
@@ -61,6 +62,7 @@ var _state: Label
 var _ring: Ring
 var _bar: ProgressBar
 var _inside: HBoxContainer
+var _inside_scroll: ScrollContainer   # (a full orchard's every kind would push the sheet off the top)
 var _inside_key := ""
 var _coins: Label
 var _xp: Label
@@ -123,8 +125,12 @@ func _init(owner: FarmHud) -> void:
 	_main.add_theme_constant_override("separation", gap)
 	column.add_child(_main)
 	_main.add_child(_build_numbers(gap))
+	_inside_scroll = ScrollContainer.new()
+	_inside_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_inside = HBoxContainer.new()
-	_main.add_child(_inside)
+	_inside.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_inside_scroll.add_child(_inside)
+	_main.add_child(_inside_scroll)
 	_detail = BookPanel.text("", UiTheme.BODY, UiTheme.color("soft"))
 	_main.add_child(_detail)
 	_extras = VBoxContainer.new()
@@ -242,6 +248,7 @@ func _place() -> void:
 		_page_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL if tall else Control.SIZE_FILL
 		_page_scroll.custom_minimum_size.y = 0.0 if tall \
 			else minf(_page.get_combined_minimum_size().y, area.y * PAGE_SHARE)
+	_inside_scroll.custom_minimum_size.y = minf(_inside.get_combined_minimum_size().y, area.y * INSIDE_SHARE)
 	size = Vector2.ZERO   # (never smaller than its minimum: so exactly that)
 	var high := size.y + maxf(-_drag, 0.0)   # compact: pulled up, it grows
 	var lower := maxf(_drag, 0.0)            # ..pulled down, it moves down
@@ -621,7 +628,7 @@ func _refill() -> void:
 			var held_row := UiKit.count_row(held, false)   # (the picture and the count: no cut-off names)
 			held_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_inside.add_child(held_row)
-	_inside.visible = home and total > 0
+	_inside_scroll.visible = home and total > 0
 	_specs = _specs_for(o)
 	_tabs.set_tabs(_specs.map(func(spec: Array) -> String: return str(spec[0])))
 	_fill_extras(o)

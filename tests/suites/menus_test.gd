@@ -3,8 +3,9 @@ extends TestSuite
 ## Settings, the seed list, the inbox, the fuel panel, every kind of thing on the showcase farm as it opens and
 ## each building's full panel), on a laptop, a wide phone and a tablet, read for what a player would see broken:
 ## a word broken inside itself (a wrapping line with no width: letters stacked one a line), a raw id or an
-## untranslated key in place of words, a "%s" never filled, text or a box spilling past its panel's sides, and a
-## button too small for a finger (under panel_button_height either way, less `TAP_SLACK`).
+## untranslated key in place of words, a "%s" never filled, text or a box spilling past its panel's sides, a panel
+## running off the screen (a sheet where it rests, not on its way up), and a button too small for a finger (under
+## panel_button_height either way, less `TAP_SLACK`).
 ## And the one look (docs/UI.md): every word standing on the paper reads on it (contrast at least `LEAST_CONTRAST`:
 ## no cream or yellow left over from the wooden panels), and no wooden box sits inside a panel.
 ## Every problem is reported once, with where it was, so one run lists them all.
@@ -43,6 +44,9 @@ func test_380_every_menu_reads_whole_on_every_screen() -> void:
 		for screen: Array in _screens(hud):
 			(screen[1] as Callable).call()
 			await _settle()
+			if hud.sheet != null and hud.sheet.visible:   # (swept where it rests, not on its way up)
+				await get_tree().create_timer(BuildingSheet.SLIDE).timeout
+				await _settle()
 			var tabs: Array = book.get("_tabs")
 			for k in maxi(tabs.size(), 1):
 				if tabs.size() > 1:
@@ -194,6 +198,9 @@ func _sweep(root: Control, where: String, bad: Dictionary) -> void:
 	if root is BookPanel:
 		root = root.get("_panel") as Control   # (what it shows: not the full-screen frame that centres it)
 	var page := root.get_global_rect()
+	var screen := root.get_viewport_rect().grow(1.0)
+	if not screen.encloses(page):
+		bad["%s: the panel runs off the screen (%s on %s)" % [where, page, screen.size]] = true
 	for c: Control in root.find_children("*", "Control", true, false):
 		if c.is_queued_for_deletion() or not c.is_visible_in_tree():
 			continue
