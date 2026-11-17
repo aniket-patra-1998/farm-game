@@ -120,3 +120,16 @@ first; the buildings items below continue alongside.
 - Not watched in motion yet (measured and tested only): ask for a clip or check on a phone. Animals now walk
   about as fast as they used to up the screen (a cow 0.22 tiles a second), which is twice the old pace across.
 - The art tool's own preview walk (tools/animal_art/motion.py `script`) still hops on a sine; only the game changed.
+
+## Feature freeze (owner, 17 Nov 2026): fixing the game
+No new features until the game is fixed. Done: landscape only on phones (the portrait screen broke the panels),
+the mailbox opens the inbox, Next ready button off (v1.json `next_ready`), hens peck slower and ducks stay tipped
+under while feeding, yard animals keep off the walls' stone footing.
+Open, from the owner's play on a phone (each a look: show a sheet of options first):
+- Inbox button: a letter icon (options sheet shown 17 Nov: plain envelope, red seal, heart seal, letter peeking).
+- The pink ready triangles over everything on the farm: owner asked to turn "the pink triangle" off; the button
+  is off, ask whether the marks over animals and trees go too.
+- Animals still seen overlapping buildings? (the footing was the measured clash; check a pen close up).
+- Building floors/yards lack detail and depth when zoomed in (all buildings).
+- The farmer avatar looks scary (face and eyes).
+- The farm ground looks cheap and flat (the meadow).
