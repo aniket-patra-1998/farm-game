@@ -1,9 +1,10 @@
 class_name HudHelpers
 extends Control
-## The helpers' flower (our own touch): one button at the bottom left (a straw hat) that opens like a flower into
-## the boosts that work the whole farm at once: Fertilize All, Unwither, the farmhands, arborists and gardeners,
-## and the vehicles' fuel once there are vehicles. Each petal shows how many are left; a tap uses one (the rules
-## and their messages are the systems' own). A tap anywhere else, or the hat again, folds it shut.
+## The helpers' flower (our own touch): one button at the bottom left (a wheelbarrow of supplies) that opens
+## like a flower into the boosts that work the whole farm at once: Fertilize All, Unwither, the farmhands,
+## arborists and gardeners, and the vehicles' fuel once there are vehicles. Each petal shows how many are left;
+## a tap uses one (the rules and their messages are the systems' own). A tap anywhere else, or the button again,
+## folds it shut.
 
 const OPEN_TIME := 0.32      # s for a petal to bloom out..
 const SHUT_TIME := 0.16      # ..and to fold back in

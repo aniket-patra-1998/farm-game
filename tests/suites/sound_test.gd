@@ -4,6 +4,14 @@ const SHORT_SECONDS := 2.0   # an effect's longest
 const LONG_SECONDS := 5.0    # a recipe marked "long" (thunder)
 const SOUND_ART := "res://art/sound"
 const SOURCES := "res://art/sound/SOURCES.md"
+const CALL_FILE_DB := -18.0     # tools/sound_cuts/make_sounds.py VOICE_RMS_DB
+const BED_FILE_DB := -26.0      # make_sounds.py BED_RMS_DB (the made farmyards: YARD_RMS_DB, the same)
+const MUSIC_FILE_DB := -21.0    # make_generated.py MUSIC_RMS_DB
+const VOICE_GAIN_DB := -2.0     # Sound.voice plays a call this much under the base
+const DEFAULT_AMBIENCE := 0.8   # Sound.ambience_volume before the player moves it
+const DEFAULT_MUSIC := 0.6      # Sound.music_volume
+const BED_UNDER_DB := 10.0
+const MUSIC_UNDER_DB := 8.0
 ## Sound and touch feedback: every sound builds into clean audio, every sound the game asks for exists,
 ## every animal has a voice, and the player's settings are kept.
 
@@ -252,3 +260,22 @@ func _sound_files(sub: String) -> Array[String]:
 	for folder in dir.get_directories():
 		found.append_array(_sound_files(sub.path_join(folder) if sub != "" else folder))
 	return found
+
+
+## The mix: what plays in the background sits well under what the player does. The files are levelled by
+## tools/sound_cuts (a call's loud part to CALL_FILE_DB, a bed to BED_FILE_DB, music to MUSIC_FILE_DB); with the
+## game's gains and the default volumes, the beds and the rain sit BED_UNDER_DB or more under a tapped animal's
+## call, the music MUSIC_UNDER_DB or more.
+func test_105_the_background_sits_under_the_calls() -> void:
+	var sounds: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/sounds.json"))
+	var scape: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Soundscape.DATA))
+	var feedback: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/feedback.json"))
+	var hums: Dictionary = feedback["hums"]
+	var base := float(sounds["volume_db"])
+	var call := CALL_FILE_DB + base + VOICE_GAIN_DB
+	var bed := BED_FILE_DB + float(scape["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
+	var music := MUSIC_FILE_DB + float(scape["music"]["gain_db"]) + linear_to_db(DEFAULT_MUSIC)
+	var rain := BED_FILE_DB + base + float(hums["rain"]["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
+	_check(call - bed >= BED_UNDER_DB, "the farm's sound sits under a call (%.1f dB under)" % (call - bed))
+	_check(call - rain >= BED_UNDER_DB, "the rain sits under a call (%.1f dB under)" % (call - rain))
+	_check(call - music >= MUSIC_UNDER_DB, "the music sits under a call (%.1f dB under)" % (call - music))
