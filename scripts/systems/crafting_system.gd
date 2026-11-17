@@ -73,6 +73,21 @@ func _recipe(rid: String) -> RecipeDef:
 
 ## Every recipe the building knows, unlocked or not, by star (only those whose crops are all in this release:
 ## docs/V1.md).
+## The showcase's crafting buildings show each of their looks in turn: one at work, the next with its goods
+## finished and waiting, the next idle.
+func showcase() -> void:
+	var turn := 0
+	for o in game.objects:
+		var recipes := recipes_of(str(o["id"])) if game.kind_of(o) == "crafting" else ([] as Array[RecipeDef])
+		if recipes.is_empty() or game.under_construction(o):
+			continue
+		var took := craft_seconds(recipes[0].id)
+		if turn % 3 < 2:
+			(o["slots"] as Array).append({"r": recipes[0].id, "done": game.now() + (took if turn % 3 == 0 else -1),
+				"took": took})
+		turn += 1
+
+
 func recipes_of(building_id: String) -> Array[RecipeDef]:
 	return game.catalog.recipes_of(building_id).filter(func(r: RecipeDef) -> bool:
 		return r.inputs().keys().all(func(c: String) -> bool: return in_release(c)))

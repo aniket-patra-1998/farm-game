@@ -162,6 +162,21 @@ func showcase_card() -> PanelContainer:
 		else:
 			Game.open_showcase())
 	inner.add_child(go)
+	if Game.in_showcase():
+		# What stands at one size or level at a time is walked by hand (ShowcaseFarm): every building's looks, and
+		# the Barn's by its VIP level.
+		var walk := HFlowContainer.new()
+		walk.add_theme_constant_override("h_separation", 10)
+		walk.add_theme_constant_override("v_separation", 10)
+		inner.add_child(walk)
+		for entry: Array in [["SHOWCASE_SIZES_DOWN", ShowcaseFarm.step_sizes.bind(Game, -1)],
+				["SHOWCASE_SIZES_UP", ShowcaseFarm.step_sizes.bind(Game, 1)],
+				["SHOWCASE_VIP_DOWN", ShowcaseFarm.step_vip.bind(Game, -1)],
+				["SHOWCASE_VIP_UP", ShowcaseFarm.step_vip.bind(Game, 1)],
+				["SHOWCASE_VIP_TOGGLE", ShowcaseFarm.toggle_vip.bind(Game)]]:
+			var step := hud.panel_button(tr(str(entry[0])))
+			step.pressed.connect(entry[1])
+			walk.add_child(step)
 	inner.add_child(BookPanel.row(tr("PERF_READOUT_TOGGLE"), BookPanel.switch(PerfReadout.wanted(),
 		func(on: bool) -> void:
 			PerfReadout.set_wanted(on)

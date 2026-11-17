@@ -41,6 +41,15 @@ func load_from(data: Dictionary) -> void:
 				"out": bool(v.get("out", false)), "fix": int(v.get("fix", 0))}
 
 
+## The showcase's vehicles show every look of rust between them: clean, the stages between, and seized.
+func showcase() -> void:
+	var owned := game.vehicles.owned_vehicles()
+	for k in owned.size():
+		var rusty := roundi(float(k) * max_level() / maxi(owned.size() - 1, 1))
+		vehicles[owned[k]] = {"w": (rusty + 0.3) * Balance.f("rust.level_days") * DAY, "t": game.now(),
+			"out": stands_outside(owned[k]), "fix": 0}
+
+
 ## Whether rust is part of this release at all.
 func is_on() -> bool:
 	return Release.on("rust")

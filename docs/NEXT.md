@@ -57,3 +57,9 @@ first; the buildings items below continue alongside.
 - Not built: rare-quality crafted goods, rare babies, instant repair with gems (docs/VIP.md, docs/RUST.md);
   the four decor buildings above are still built at run time, not files.
 - Not checked: anything on a phone; the economy with VIP on (run the balance bot); a full farm with frames.
+
+## Branch showcase-update (not merged; merging is the owner's call)
+- The showcase farm keeps up with the game: every system dresses its own part (`GameSystem.showcase()`: VIP,
+  rust and crafting so far), and its card in Settings walks building sizes and the VIP level by hand.
+- Still open from the building work: a real phone check, the economy with VIP on (balance bot), a full farm
+  with frames, rare-quality crafts, rare babies, instant repair with gems.

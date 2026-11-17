@@ -24,6 +24,13 @@ func reset() -> void:
 	pass
 
 
+## Sets the system's state for the showcase farm (ShowcaseFarm, debug builds): everything it has to show, at
+## its best, on the farm already laid out. A system with something to show there says so here, so the
+## showcase keeps up with the game by itself; one with nothing to show leaves this alone.
+func showcase() -> void:
+	pass
+
+
 ## Adds the system's fields to a save. Keys share one flat dictionary, so they must be unique.
 func save_to(_data: Dictionary) -> void:
 	pass

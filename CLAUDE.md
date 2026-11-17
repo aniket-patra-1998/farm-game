@@ -6,7 +6,9 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 ## Map (the detail: docs/ARCHITECTURE.md; open only the part you touch)
 - `autoload/game.gd` (`Game`, `GameState`): the shared core and every signal; owns the subsystems in
   `scripts/systems/` (`Game.storage`, `Game.crafting`, `Game.social`...), each a `GameSystem` that saves its own
-  fields. `Game.player` is the farmer: farm work is queued and done when the farmer walks there.
+  fields and says what the showcase farm shows of it (`showcase()`: a new feature with a state worth seeing
+  adds its own, so the showcase keeps up). `Game.player` is the farmer: farm work is queued and done when the farmer
+  walks there.
 - `data/catalog/*.json` → `scripts/catalog/` classes (item behaviour lives there); every other number or rule
   is in `data/*.json` (Balance, Release, Quality, Feedback, sounds, weather...).
 - `scripts/farm_grid.gd` and `scripts/world/`: farm geometry, input, placing; `scripts/world3d/`: the 3D farm,

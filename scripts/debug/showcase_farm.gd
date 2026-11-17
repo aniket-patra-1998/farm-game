@@ -14,6 +14,13 @@ extends RefCounted
 ##   crops         across the bottom rows: every crop, most ripe, some growing, with a few plots withered
 ##                 and a few plowed and waiting for seed
 ##
+## Then every system dresses its own part (GameSystem.showcase): VIP at its top level and active, so the Barn
+## is the farm's hero at its best; the vehicles at every stage of rust, half of them left outside the Garage;
+## the crafting buildings at work, finished and idle in turn. A new system with something to show adds its own
+## there, so the showcase keeps up with the game. What stands at one size or level at a time is walked by hand
+## (the showcase card's buttons): `step_sizes` for every building's looks and the frame of what its next size
+## adds, `step_vip` and `toggle_vip` for the Barn's looks, its badge and its yard.
+##
 ## It's built in its own save (SAVE_PATH), so the player's own farm is never touched.
 
 const SAVE_PATH := "user://showcase.json"
@@ -82,6 +89,8 @@ static func build(g: GameState) -> Array[String]:
 	_raise_young(g)
 	_plant_field(g, now)
 	g.rebuild_occupancy()
+	for system in g.systems:
+		system.showcase()
 	announce(g)
 	return left_out
 
@@ -204,11 +213,41 @@ static func _fill_homes(g: GameState, now: int) -> void:
 							g.homes.house(b, id)
 							added = true
 		if str(b["id"]) == "garage" and not g.under_construction(b):
-			g.homes.fill_building(int(b["uid"]))  # park the vehicles standing on the farm
+			_park_some(g, b)
 		var cycle := g.cycle_of(b)
 		if cycle > 0 and not g.under_construction(b):
 			b["t"] = now - (cycle + 1 if k % READY_EVERY != READY_EVERY - 1 else int(cycle * PART_WAY))
 		k += 1
+
+
+## Parks every other vehicle standing on the farm in Garage `garage`, so both are seen: vehicles in a Garage and
+## vehicles left out on the farm (they rust differently, and wear their rust signs differently).
+static func _park_some(g: GameState, garage: Dictionary) -> void:
+	var standing := g.objects.filter(func(o: Dictionary) -> bool: return g.kind_of(o) == "vehicle")
+	for k in range(0, standing.size(), 2):
+		g.homes.put_in_home(int(garage["uid"]), str(standing[k]["id"]), {"uid": int(standing[k]["uid"])})
+
+
+## Steps every finished building a size (`by`: 1 or -1), within the sizes it has: the way to see each look of
+## every building, and the frame of what its next size adds. (The Barn's look is its VIP level: step_vip.)
+static func step_sizes(g: GameState, by: int) -> void:
+	for o in g.objects:
+		if g.is_building_item(str(o["id"])) and not g.under_construction(o):
+			o["level"] = clampi(g.level_of(o) + by, 1, g.max_level(str(o["id"])))
+	g.objects_updated()
+
+
+## Steps the VIP level (`by`), from none to the top: each look of the Barn, its badge's number, its yard.
+static func step_vip(g: GameState, by: int) -> void:
+	var level := clampi(g.vip.level() + by, 0, g.vip.max_level())
+	g.vip.points = 0 if level == 0 else int(Balance.a("vip.level_points")[level - 1])
+	g.objects_updated()
+
+
+## Lets the showcase's VIP lapse, or starts it again: the badge grey and still, or lit and turning.
+static func toggle_vip(g: GameState) -> void:
+	g.vip.until = 0 if g.vip.active() else g.now() + Balance.i("vip.week_days") * VipSystem.DAY
+	g.objects_updated()
 
 
 ## The crop field across the bottom: every crop in a row, most ripe and a few at each stage of growing;

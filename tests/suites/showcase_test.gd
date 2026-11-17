@@ -71,3 +71,57 @@ func test_106_the_showcase_farm_has_everything_laid_out() -> void:
 	_check(not g.in_showcase(), "and back to your own farm")
 	_check(g.farm_size < GameState.MAX_SIZE, "which is the farm you had")
 	_done(g)
+
+
+func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_walked() -> void:
+	var g := _farm()
+	g.open_showcase()
+	# Every system dresses its own part (GameSystem.showcase), so the showcase keeps up with the game.
+	var dressed: Array[String] = []
+	for system in g.systems:
+		var own: Array = (system.get_script() as Script).get_script_method_list()
+		if own.any(func(m: Dictionary) -> bool: return m["name"] == "showcase"):   # not-ui
+			dressed.append(str((system.get_script() as Script).get_global_name()))
+	for name: String in ["VipSystem", "RustSystem", "CraftingSystem"]:   # not-ui
+		_check(dressed.has(name), "%s says what the showcase shows of it" % name)
+	# The Barn is the hero at its best: whole, at the top VIP level, and VIP active.
+	var barns := g.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "barn")
+	_eq(barns.size(), 1, "the showcase has its Barn")
+	_check(not bool(barns[0].get("broken", false)), "whole, not broken")
+	_check(g.vip.active() and g.vip.level() == g.vip.max_level(), "VIP is at its top level and active")
+	_eq(g.look_level(barns[0]), g.look_levels("barn"), "so the Barn wears its grandest look")
+	# Vehicles at every stage of rust between them, some in the Garage and some left out.
+	var rusts: Array = g.vehicles.owned_vehicles().map(func(id: String) -> int: return g.rust.level(id))
+	_check(rusts.has(0) and rusts.has(g.rust.max_level()), "vehicles from clean to seized %s" % [rusts])
+	var out := g.vehicles.owned_vehicles().filter(func(id: String) -> bool: return g.rust.stands_outside(id))
+	_check(out.size() > 0 and out.size() < rusts.size(), "some left out on the farm, some in the Garage")
+	# Crafting buildings at work, finished and idle.
+	var states := {}
+	for o in g.objects:
+		if g.kind_of(o) == "crafting" and not g.under_construction(o):
+			var slots: Array = o["slots"]
+			states["idle" if slots.is_empty() else ("done" if int(slots[0]["done"]) <= g.now() else "working")] = true
+	_eq(states.size(), 3, "crafting buildings show all three of their looks %s" % [states.keys()])
+	# What stands at one size at a time is walked by hand.
+	var bakery := g.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "bakery")[0] as Dictionary
+	var top := g.max_level("bakery")
+	ShowcaseFarm.step_sizes(g, -1)
+	_eq(g.level_of(bakery), top - 1, "a step down: every building a size smaller")
+	for step in top + 2:
+		ShowcaseFarm.step_sizes(g, -1)
+	_eq(g.level_of(bakery), 1, "never under its first size")
+	for step in top + 2:
+		ShowcaseFarm.step_sizes(g, 1)
+	_eq(g.level_of(bakery), top, "and back up to its biggest, never past it")
+	ShowcaseFarm.step_vip(g, -1)
+	_eq(g.vip.level(), g.vip.max_level() - 1, "a VIP level down: the Barn's look before")
+	for step in g.vip.max_level() + 2:
+		ShowcaseFarm.step_vip(g, -1)
+	_eq(g.vip.level(), 0, "down to no VIP at all")
+	ShowcaseFarm.step_vip(g, 1)
+	_eq(g.vip.level(), 1, "and up again")
+	ShowcaseFarm.toggle_vip(g)
+	_check(not g.vip.active(), "VIP lapses (the badge grey and still)")
+	ShowcaseFarm.toggle_vip(g)
+	_check(g.vip.active(), "and starts again")
+	_done(g)

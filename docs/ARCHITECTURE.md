@@ -28,6 +28,12 @@ the hard rules and a short map; open the part of this file for the area you chan
   queued there and happens when the farmer has walked to it (the farm grid shows results from its
   `action_done` signal; tests drive it with `player.advance(seconds)`). Each saves its own fields
   (`reset`/`save_to`/`load_from`); saving and loading the farm itself is `Persistence` (`Game.persistence`, with `SaveCheck` mending damaged saves); a new feature with its own state gets its own system, not more `game.gd`.
+- The showcase farm (`ShowcaseFarm`, debug builds): the farm with everything on it, laid out from the catalog,
+  then dressed by every system (`GameSystem.showcase()`): VIP at its top level and active, so the Barn stands
+  as the farm's hero; vehicles at every stage of rust, half left outside the Garage; crafting buildings at
+  work, finished and idle. What stands at one size or level at a time is walked from its card in Settings:
+  every building a size down or up (each look, and the frame of what the next adds), the VIP level down or
+  up, VIP lapsed or active. A new system with something to show implements `showcase()`.
 - `data/catalog/*.json` + `data/catalog/schema.json`: every item, by category -> family -> variant.
   Loaded into the classes in `scripts/catalog/` (ItemDef -> CropDef, PlaceableDef -> ProducerDef ->
   TreeDef/AnimalDef, BuildingDef -> BarnDef/CraftingDef, VehicleDef, DecorationDef, RecipeDef...).

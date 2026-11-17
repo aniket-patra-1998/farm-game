@@ -32,6 +32,12 @@ func load_from(data: Dictionary) -> void:
 	until = maxi(0, int(data.get("vip_until", 0)))
 
 
+## The showcase's Barn is the farm's hero at its best: the top VIP level, active (its look, badge and yard).
+func showcase() -> void:
+	points = int(Balance.a("vip.level_points")[max_level() - 1])
+	until = game.now() + Balance.i("vip.week_days") * DAY
+
+
 ## Whether VIP is part of this release at all.
 func is_on() -> bool:
 	return Release.on("vip")
