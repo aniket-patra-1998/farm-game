@@ -40,6 +40,7 @@ const BLOOM_LOOKS := 4    # and of each bloom (bloom_look)
 # The share of its slots holding something finished at which a crafting building's storage parts show a quarter,
 # half and full.
 const FILL_FROM: Array[float] = [0.25, 0.5, 1.0]
+const ROLL := "_roll_"   # not-ui (in a part's name: a door that rolls up, mark_parts)
 const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
 const WINDOW_SIZE := 0.22       # a `window_*` part's size at scale 1 (how big a head looking out of it is)
 const BUILD_STAGES := 10       # a construction site made as files has this many stages, a file each, as it goes up
@@ -585,7 +586,10 @@ static func mark_parts(model: Node3D) -> void:
 		if not n is Node3D or n == model:
 			continue
 		var part := String(n.name)
-		if part.begins_with("door"):
+		if part.begins_with("door") and part.contains(ROLL):
+			n.set_meta(BuildingModel.DOOR, 0.0)   # (a shutter: it rolls up by the height its name ends with)
+			n.set_meta(BuildingModel.SLIDE, part.get_slice(ROLL, 1).to_float() / 100.0)
+		elif part.begins_with("door"):
 			n.set_meta(BuildingModel.DOOR, -1.0 if part.ends_with("left") else 1.0)
 		elif part.begins_with("window"):
 			windows.append({"at": _local_to(model, n as Node3D).origin, "size": WINDOW_SIZE * (n as Node3D).scale.x})

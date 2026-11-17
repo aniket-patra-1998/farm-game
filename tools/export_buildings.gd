@@ -10,13 +10,14 @@ extends Node
 ## the LIVE names; each part's colour and finish ride in its vertex colours), states as parts named
 ## `when_working_true`, `when_fill_2`..., and named parts with nothing in them where the game starts an effect
 ## or turns something (`smoke_3`, `spin_55_2`: DecorMotion.start). A building animals live in also has
-## its doors as parts named `door_<n>` (`door_<n>_left` swings the other way) and a part named `window_<n>` at
-## each window a head can look out of, sized by its scale (Objects3D.mark_parts).
+## its doors as parts named `door_<n>` (`door_<n>_left` swings the other way, `door_<n>_roll_<rise>` rolls up)
+## and a part named `window_<n>` at each window a head can look out of, sized by its scale
+## (Objects3D.mark_parts).
 ## Lists them in data/assets.json. Run: godot --headless --path . res://tools/export_buildings.tscn
 
 const BUILDINGS := "res://art/models/buildings/"
 const KINDS: Array[String] = ["crafting"]   # the kinds of building made as files so far..
-const TYPES: Array[String] = ["harvesting"]   # ..and the types (Game.building_type)
+const TYPES: Array[String] = ["harvesting", "storing"]   # ..and the types (Game.building_type)
 
 const WINDOW := "window"   # not-ui (a part's name)
 
@@ -74,6 +75,10 @@ static func _name_fill_parts(built: Node3D) -> void:
 	for c in built.get_children():
 		if c.has_meta(BuildingModel.DOOR):
 			c.name = "door_%d%s" % [c.get_index(), "_left" if float(c.get_meta(BuildingModel.DOOR)) < 0.0 else ""]
+			if c.has_meta(BuildingModel.SLIDE):
+				# (a shutter that rolls up: how far, in hundredths of a tile)
+				c.name = "door_%d%s%d" % [c.get_index(), Objects3D.ROLL, roundi(float(c.get_meta(BuildingModel.SLIDE))
+					* 100.0)]
 		if c.has_meta(BuildingModel.WINDOWS):
 			var spots: Array = c.get_meta(BuildingModel.WINDOWS)
 			for k in spots.size():

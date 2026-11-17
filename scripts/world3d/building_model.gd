@@ -20,6 +20,7 @@ const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals
 const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 ## The features that are one building's own (`_signature`).
+const SLIDE := "slide"   # not-ui (a meta on a door that rolls up: how far)
 const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
 const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
 const ROUGH_MOUNDS := 7           # low humps in a rough yard's ground..
@@ -750,7 +751,7 @@ static func _door(ctx: Dictionary, trim: Color) -> void:
 					y0 + h, z + 0.05), ModelKit.paint(trim))
 		"roller":
 			var shutter := _hinge(root, Vector3(x, y0, z), 0.0)
-			shutter.get_parent().set_meta("slide", h * 0.85)
+			shutter.get_parent().set_meta(SLIDE, h * 0.85)
 			ModelKit.box(shutter, Vector3(x - w / 2, y0, z + 0.004), Vector3(x + w / 2, y0 + h, z + 0.024),
 				ModelKit.surface(Color("#c9ced2"), "metal"))
 		"mesh", "hatch":

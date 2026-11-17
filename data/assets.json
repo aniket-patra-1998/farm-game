@@ -846,6 +846,21 @@
       "model": "res://art/models/buildings/bloom_garden_{level}.glb",
       "site": "res://art/models/buildings/bloom_garden_site_{stage}.glb",
       "budget": "building"
+    },
+    "barn": {
+      "model": "res://art/models/buildings/barn_{level}.glb",
+      "site": "res://art/models/buildings/barn_site_{stage}.glb",
+      "budget": "building"
+    },
+    "garage": {
+      "model": "res://art/models/buildings/garage_{level}.glb",
+      "site": "res://art/models/buildings/garage_site_{stage}.glb",
+      "budget": "building"
+    },
+    "garden_shed": {
+      "model": "res://art/models/buildings/garden_shed_{level}.glb",
+      "site": "res://art/models/buildings/garden_shed_site_{stage}.glb",
+      "budget": "building"
     }
   }
 }

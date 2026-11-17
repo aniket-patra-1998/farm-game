@@ -369,3 +369,47 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 	AnimalBehaviour.night = was_night
 	node.queue_free()
 	objects.free()
+
+
+func test_390_storing_buildings_are_gltf_files_too() -> void:
+	# The Barn, the Garage and the Garden Shed keep their sizes and what they do; their new looks are glTF
+	# files like the other buildings', a file for each size and construction stage, drawn with the master shader
+	# and the kit's shared materials, within the building budget. The Barn grows a look with each size; the
+	# Garage's shutter is a named part that rolls up.
+	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water()]
+	var storing: Array[String] = []
+	for id: String in Game.item_order:
+		if Game.building_type(id) == "storing":
+			storing.append(id)
+	_eq(storing.size(), 3, "the three storing buildings")
+	_eq(Game.building_def("barn").capacities(), [30, 60, 100, 160, 250] as Array[int], "the Barn keeps its five sizes")
+	for id: String in storing:
+		_check(AssetRegistry.has_model(id) and AssetRegistry.has_site(id), "%s and its building site are files" % id)
+		var seen := {}
+		for level in range(1, Game.max_level(id) + 1):
+			var path := AssetRegistry.file_of(AssetRegistry.entry(id), {"level": level})
+			_check(path.ends_with("_%d.glb" % level) and ResourceLoader.exists(path), "%s size %d has its own glTF file"
+				% [id, level])
+			var node := AssetRegistry.instance(id, {"level": level})
+			var wrong := 0
+			for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
+				for k in mi.mesh.get_surface_count():
+					var mat := mi.get_active_material(k)
+					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
+					wrong += 0 if master or mat in shared else 1
+			_eq(wrong, 0, "%s size %d draws with the master shader and the kit's shared materials only" % [id, level])
+			_check(AssetRegistry.draws(node) <= AssetRegistry.budget_of(id, "draws"), "%s size %d: %d draws within %d"
+				% [id, level, AssetRegistry.draws(node), AssetRegistry.budget_of(id, "draws")])
+			var built := ModelKit.bake(BuildingModel.build(Game.item_data(id), Game.footprint(id), level))
+			_eq(AssetRegistry.triangles(node), AssetRegistry.triangles(built), "%s size %d: the file is what the builder makes"
+				% [id, level])
+			seen[AssetRegistry.triangles(node)] = true
+			built.free()
+			node.free()
+		_eq(seen.size(), Game.max_level(id), "%s: a look of its own at each size" % id)
+	var garage := AssetRegistry.instance("garage", {"level": 1})
+	Objects3D.mark_parts(garage)
+	var shutters := garage.get_children().filter(func(n: Node) -> bool: return n.has_meta(BuildingModel.SLIDE))
+	_check(shutters.size() == 1 and float(shutters[0].get_meta(BuildingModel.SLIDE)) > 0.3
+		and float(shutters[0].get_meta(BuildingModel.DOOR)) == 0.0, "the Garage's shutter is a part that rolls up")
+	garage.free()

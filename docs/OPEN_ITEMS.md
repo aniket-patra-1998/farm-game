@@ -242,9 +242,13 @@ Harvesting buildings (2026-11-17; rules in CLAUDE.md, held by `assets_test` test
 
 Open:
 
-- Decor (no upgrades, a yellow light at night) and storing buildings are not brought under the rules yet; they
-  still have the older shapes and are built in code. Each moves to glTF files, as above, when it is
-  redesigned (CLAUDE.md).
+- Storing buildings (2026-11-17): the Barn, Garage and Garden Shed keep their sizes and what they do; their
+  looks are redone in line with the others and shipped as glTF files (`assets_test` test_390). The Barn gains
+  a look for each of its five sizes (a silo at 2, a second storey at 3, a second silo at 4, gold and a star
+  at 5).
+- Decor (no upgrades, a yellow light at night) is not brought under the rules yet: the Farmhouse, Log Cabin,
+  Gopher Garden and Dog House still have the older shapes and are built in code. Open questions for it: the
+  Gopher Garden and Dog House have four sizes today, and the Farmhouse grows in stages.
 - The plants' files (trees, crops, blooms) are still Godot scenes with shaders of their own, not glTF with the
   master shader; `tools/asset_lint` and the per-type import scripts docs/ASSETS.md names do not exist yet.
 - The balance bot (30 days, three visits a day, 2026-11-16) reaches level 25, where crafting unlocks, on day 25

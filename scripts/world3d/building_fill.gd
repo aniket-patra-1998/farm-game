@@ -704,11 +704,11 @@ func _show_stock(kind: String, at: Array, o: Dictionary) -> void:
 ## A Garage with vehicles in it keeps its shutter rolled up, so they show; an empty one is shut.
 func _open_shutter(open: bool) -> void:
 	for hinge in _doors:
-		if not hinge.has_meta("slide"):
+		if not hinge.has_meta(BuildingModel.SLIDE):
 			continue
 		if not hinge.has_meta("rest_y"):
 			hinge.set_meta("rest_y", hinge.position.y)
-		var y := float(hinge.get_meta("rest_y")) + (float(hinge.get_meta("slide")) if open else 0.0)
+		var y := float(hinge.get_meta("rest_y")) + (float(hinge.get_meta(BuildingModel.SLIDE)) if open else 0.0)
 		if not is_inside_tree() or not is_visible_in_tree():
 			hinge.position.y = y                         # not on screen yet: just be there
 			continue
@@ -924,8 +924,8 @@ func celebrate() -> void:
 	for hinge in _doors:
 		var swing := float(hinge.get_meta(BuildingModel.DOOR))
 		var tw := hinge.create_tween()
-		if hinge.has_meta("slide"):
-			var up := float(hinge.get_meta("slide"))
+		if hinge.has_meta(BuildingModel.SLIDE):
+			var up := float(hinge.get_meta(BuildingModel.SLIDE))
 			tw.tween_property(hinge, "position:y", hinge.position.y + up, 0.3).set_trans(Tween.TRANS_QUAD) \
 				.set_ease(Tween.EASE_OUT)
 			tw.tween_interval(DOOR_HOLD)
@@ -953,6 +953,6 @@ func doors_open() -> bool:
 	for hinge in _doors:
 		if absf(hinge.rotation.y) > 0.3:
 			return true
-		if hinge.has_meta("slide") and hinge.position.y > float(hinge.get_meta("rest_y", 0.0)) + 0.05:
+		if hinge.has_meta(BuildingModel.SLIDE) and hinge.position.y > float(hinge.get_meta("rest_y", 0.0)) + 0.05:
 			return true
 	return false
