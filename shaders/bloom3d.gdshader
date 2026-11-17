@@ -14,11 +14,11 @@ uniform vec3 albedo : source_color = vec3(1.0);
 uniform vec3 bud : source_color = vec3(0.42, 0.62, 0.26);     // a closed bud: sepal green
 uniform vec3 dead : source_color = vec3(0.54, 0.43, 0.23);    // a withered bloom
 uniform float span = 0.4;          // the part of the cycle one head takes to open
-uniform float bud_wide = 0.26;     // a closed bud's width, of the open flower's..
-uniform float bud_tall = 0.5;      // ..and its height
+uniform float bud_wide = 0.42;     // a closed bud's width, of the open flower's..
+uniform float bud_tall = 0.62;     // ..and its height
 uniform float sway = 0.035;        // how far the top of the plant sways, per tile of height squared
 uniform float roughness = 0.9;
-uniform float wrap = 0.6;          // how far light wraps round a petal or a leaf: they are thin and soft
+uniform float wrap = 0.85;         // how far light wraps round a petal or a leaf: they are soft
 global uniform float crop_clock;   // seconds on the farm's clock (Crops3D)
 global uniform float wetness;      // 0..1: how wet everything is (SurfaceWeather)
 uniform float ripe_from = -1000000.0;
@@ -61,7 +61,9 @@ void fragment() {
 	SPECULAR = 0.0;
 }
 
-// Petals and leaves are thin and soft: light wraps round them (no hard dark side) and they never shine.
+// Petals and leaves are soft: light wraps round them (no hard dark side) and they never shine. (A light's
+// colour comes multiplied by PI, as the engine's own shading divides by it: so does this, or a bloom is lit three
+// times as brightly as the farm round it and its colours wash out to paper.)
 void light() {
-	DIFFUSE_LIGHT += clamp((dot(NORMAL, LIGHT) + wrap) / (1.0 + wrap), 0.0, 1.0) * ATTENUATION * LIGHT_COLOR;
+	DIFFUSE_LIGHT += clamp((dot(NORMAL, LIGHT) + wrap) / (1.0 + wrap), 0.0, 1.0) * ATTENUATION * LIGHT_COLOR / PI;
 }

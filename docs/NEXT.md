@@ -93,6 +93,12 @@ first; the buildings items below continue alongside.
   (background under calls on a clear day; in rain and storms the rain leads, bed and music step back).
 - Open: the rain is a light-rain recording; a CC0 heavy-rain one (Freesound 200272, jmbphilmes) would suit storms.
 
+## Flowers (flower-looks branch, not merged; merging is the owner's call)
+- The owner found the blooms papery and off the farm's look, and picked the chunky direction from a sheet:
+  blades with a body, five stems to a Full Bloom, thick stems, fat leaves, the catalog's colours at full
+  strength (`BloomModel`), fatter buds and light at the farm's strength (bloom3d divided by PI).
+- Open: the lily is still a thin star; a bed in bud is still mostly stems; not seen on a phone or at dusk.
+
 ## Economy (17 Nov 2026): fixed, and open for the owner
 - Fixed: decorations give 1 XP per 100 coins like everything (the 5-XP minimum let a buy-and-sell loop pay from
   level 38: coins, gems and VIP without end; economy_test 61 now checks no coin buy can pay for a level); land
