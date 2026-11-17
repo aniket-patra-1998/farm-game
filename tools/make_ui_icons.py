@@ -112,6 +112,14 @@ ICONS = {
                    P("circle", "#f5c8a2", cx=50, cy=62, r=20),
                    P("path", "#5a3418", d="M30 60 C30 34 70 34 70 60 C60 50 40 50 30 60 Z"),
                    HI("ellipse", 0.4, cx=40, cy=96, rx=8, ry=5)],
+    # The inbox: a cream envelope shut with a red wax seal stamped with a gold star (the owner's pick, 17 Nov).
+    "inbox": [P("path", "#f4ead2", d="M14 38 L114 38 L114 104 C114 108 111 110 107 110 L21 110 C17 110 14 108 14 104 Z"),
+              P("path", "#e6d6b0", d="M14 104 L56 70 L72 70 L114 104 L114 106 C114 109 111 110 107 110 L21 110 "
+                                     "C17 110 14 109 14 106 Z"),
+              P("path", "#fbf4e2", d="M14 40 L64 82 L114 40 L114 38 L14 38 Z"),
+              P("circle", "#d9452f", cx=64, cy=80, r=15),
+              P("path", "#f6c23a", d=star(64, 80, 8, 3.5)),
+              HI("ellipse", 0.5, cx=58, cy=74, rx=4, ry=3)],
     "gear": [P("path", "#a7b3bf", d=gear(64, 64, 50, 38)),
              P("circle", "#d8dee4", cx=64, cy=64, r=22),
              P("circle", "#5b6772", cx=64, cy=64, r=10),

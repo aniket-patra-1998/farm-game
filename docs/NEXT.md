@@ -126,7 +126,7 @@ No new features until the game is fixed. Done: landscape only on phones (the por
 the mailbox opens the inbox, Next ready button off (v1.json `next_ready`), hens peck slower and ducks stay tipped
 under while feeding, yard animals keep off the walls' stone footing.
 Open, from the owner's play on a phone (each a look: show a sheet of options first):
-- Inbox button: a letter icon (options sheet shown 17 Nov: plain envelope, red seal, heart seal, letter peeking).
+- Inbox button: done, the red-seal envelope (owner picked B).
 - The pink ready triangles over everything on the farm: owner asked to turn "the pink triangle" off; the button
   is off, ask whether the marks over animals and trees go too.
 - Animals still seen overlapping buildings? (the footing was the measured clash; check a pen close up).

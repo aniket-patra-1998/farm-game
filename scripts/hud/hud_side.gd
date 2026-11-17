@@ -36,7 +36,7 @@ func build(root: Control) -> void:
 	var w := UiTheme.size("side_width")
 	var h := UiTheme.size("side_height")
 	for entry: Array in [["market", "MARKET", hud.show_market], ["album", "COLLECTIONS", hud.show_collections],
-			["ribbon", "RIBBONS", hud.show_ribbons], ["neighbours", "NEIGHBOURS", _show_neighbours],
+			["ribbon", "RIBBONS", hud.show_ribbons], ["inbox", "INBOX", _show_neighbours],
 			["gear", "SETTINGS", hud.show_settings]]:
 		if (entry[1] == "COLLECTIONS" and not Release.on("collections")) or (entry[1] == "RIBBONS"
 				and not Release.on("ribbons")):

@@ -10,8 +10,8 @@ extends Control
 
 const KINDS: Array[String] = ["coin", "gem", "star", "eye", "speaker", "note", "zoom_in", "zoom_out", "fit", "camera",
 	"arrow", "ribbon", "plus", "hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag", "market", "album",
-	"neighbours", "gear", "cross", "lock", "ready", "helpers", "farmhand", "arborist", "gardener", "unwither", "fuel",
-	"search"]
+	"neighbours", "inbox", "gear", "cross", "lock", "ready", "helpers", "farmhand", "arborist", "gardener", "unwither",
+	"fuel", "search"]
 const READY_PINK := Color(1.0, 0.66, 0.8)   # the ready sign's pink (shaders/ready3d.gdshader)
 const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
@@ -217,7 +217,7 @@ func _draw() -> void:
 				-0.25, 0.75, -0.25, 0.25, -0.75, 0.25, -0.75, -0.25, -0.25, -0.25]), UiTheme.color("plus"), false)
 		"hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag":
 			_draw_tool(light)
-		"market", "album", "neighbours", "gear":
+		"market", "album", "neighbours", "inbox", "gear":
 			_draw_menu(light)
 		"sun", "moon", "cloud", "rain", "storm", "fog", "snow", "sun_cloud", "flower", "leaf", "flake", "drops":
 			_draw_sky()
@@ -452,6 +452,10 @@ func _draw_menu(light: Color) -> void:
 			_line(_p(0.0, -0.56), _p(0.0, 0.92), 0.05)
 			_shape(star_points(_p(-0.42, 0.06), _r * 0.24), UiTheme.color("star"), false, false)
 			_shape(_ring(0.42, 0.06, 0.2), UiTheme.color("berry"), false, false)
+		"inbox":   # (drawn when its file is missing) an envelope shut with a red seal
+			_shape(_pts([-0.9, -0.6, 0.9, -0.6, 0.9, 0.8, -0.9, 0.8]), UiTheme.color("paper"))
+			_shape(_pts([-0.9, -0.6, 0.0, 0.2, 0.9, -0.6]), UiTheme.color("paper").darkened(0.08), false, false)
+			_shape(_ring(0.0, 0.2, 0.26), UiTheme.color("berry"))
 		"neighbours":
 			for k in 2:
 				var x := 0.34 if k == 0 else -0.34
