@@ -67,10 +67,11 @@ first; our own touch only where it is clearly marked. Every system is built (doc
    the full precheck, fast-forward main to it, and log it; if unsure, report it instead. Never merge a red one.
 5. Audit and fix, never idle. The loop does not stop at the backlog: it keeps auditing the game aspect by
    aspect (on main) and fixing what it finds. Each run does one of:
-   - Fix: the highest-impact open finding in the log's backlog, if one is ready (most runs).
+   - Fix: the best open finding in the log's backlog (most runs). Easy gains first: rank by what the player
+     gains for the effort, so a cheap fix that clearly improves the game beats a big one.
    - Audit: when no finding is ready, or every third run, take the next aspect in the rotation below, analyse it
      in full against the goal's bar (measure: tests, probes, the balance bot, the code itself), write its
-     findings into the backlog ranked by impact on the player, then fix the top one if it is cheap.
+     findings into the backlog ranked by gain for effort (easy gains first), then fix the top one if it is cheap.
    Rotation (then round again, deeper each time): economy; player progression; phone UI; edge cases and stress;
    cheating and save safety; code quality; whole-farm look (full farm, dawn, noon, dusk, night); motion and
    animation; feedback and sound; first-hour feel of what exists; performance on a phone.
