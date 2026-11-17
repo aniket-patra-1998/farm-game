@@ -215,6 +215,7 @@ func test_388_crafting_buildings_are_gltf_files_that_follow_the_art_rules() -> v
 	# full) is shown on the model that stands, never by building it again; what moves is a named part.
 	var objects := Objects3D.new()
 	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.yard_material(),
 		ModelKit.frame_material()]
 	for id: String in ["bakery", "winery", "spa", "feed_mill"]:
 		_check(AssetRegistry.has_model(id), "%s is made as a file" % id)
@@ -294,6 +295,7 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 	_eq(harvesting.size(), 12, "the twelve harvesting buildings")
 	var objects := Objects3D.new()
 	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.yard_material(),
 		ModelKit.frame_material(),
 		ModelKit.pond_water()]
 	for id: String in harvesting:
@@ -382,6 +384,7 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 	# level's number that glimmers and turns while VIP is active and is still and grey when it has lapsed, and a
 	# file for the starter Barn standing broken.
 	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.yard_material(),
 		ModelKit.frame_material(),
 		ModelKit.shine_material()]
 	var storing: Array[String] = []

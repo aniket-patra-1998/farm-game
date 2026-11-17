@@ -77,18 +77,27 @@ var _forest_map: ImageTexture      # where the woods are: R, 1 under the trees f
 var _size := -1
 
 
+## Gives a grass material the farm's lawn: LAWN, coloured by the season (Season: lush in the monsoon, strawy in
+## summer, pale in winter); without `mown`, no mowing stripes (a building's yard).
+static func lawn_on(grass: ShaderMaterial, mown := true) -> void:
+	for key: String in LAWN:
+		grass.set_shader_parameter(key, LAWN[key])
+	if not mown:
+		grass.set_shader_parameter("mow", 0.0)
+	var seasonal := Season.lawn(Game.season())
+	for key: String in seasonal:
+		grass.set_shader_parameter(key, seasonal[key])
+
+
 func _ready() -> void:
 	var grass := ShaderMaterial.new()
 	grass.shader = load("res://shaders/ground3d.gdshader")
 	var meadow_grass := grass.duplicate() as ShaderMaterial
 	# The farm's lawn is kept: an even, bright green (FarmVille's), with only a little of the countryside's
 	# patchiness (the meadow keeps the shader's own, wilder numbers).
-	for key: String in LAWN:
-		grass.set_shader_parameter(key, LAWN[key])
-	# The season colours the lawn (Season: lush in the monsoon, strawy in summer, pale in winter).
+	lawn_on(grass)
+	lawn_on(ModelKit.yard_material(), false)   # (the yards inside the fences are the same lawn, ungrazed by stripes)
 	var seasonal := Season.lawn(Game.season())
-	for key: String in seasonal:
-		grass.set_shader_parameter(key, seasonal[key])
 	meadow_grass.set_shader_parameter("checker", 0.0)
 	meadow_grass.set_shader_parameter("dryness", clampf(0.32 + float(seasonal.get("dryness", LAWN["dryness"]))
 		- float(LAWN["dryness"]), 0.0, 1.0))   # (the countryside dries and greens with the farm)

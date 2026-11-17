@@ -120,7 +120,7 @@ static func _write(root: Node3D, path: String) -> void:
 ## for each kind of material: the builder keeps them apart for reasons a file does not carry (which cast a
 ## shadow), and apart they are a draw each.
 static func _one_body(n: Node) -> void:
-	var solid: Array[String] = [ModelKit.FILE_PAINT, ModelKit.FILE_WALL, ModelKit.LIVE_GLASS]
+	var solid: Array[String] = [ModelKit.FILE_PAINT, ModelKit.FILE_WALL, ModelKit.LIVE_GLASS, ModelKit.LIVE_YARD]
 	var tools := {}
 	var first: MeshInstance3D = null
 	for c in n.get_children():

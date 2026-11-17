@@ -20,6 +20,7 @@ const LIVE_WATER := "kit_water"
 const LIVE_POND := "kit_pond"
 const LIVE_SHINE := "kit_shine"
 const LIVE_FRAME := "kit_frame"
+const LIVE_YARD := "kit_yard"
 const SHADE_STRENGTH := 0.5   # how dark the soft shade round a building's foot is at its middle
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.05
@@ -446,6 +447,8 @@ static func file_name_of(mat: Material) -> String:
 		return LIVE_SHINE
 	if mat == frame_material():
 		return LIVE_FRAME
+	if mat == yard_material():
+		return LIVE_YARD
 	if mat in paint_like:
 		return FILE_PAINT
 	return ""
@@ -482,6 +485,18 @@ static func shine_material() -> ShaderMaterial:
 		m.resource_name = LIVE_SHINE
 		_materials["shine"] = m
 	return _materials["shine"]
+
+
+## The shared material of every building's yard floor (shaders/yard3d: the farm's lawn carried inside the fence;
+## Ground3D gives it the lawn's colours, season by season).
+static func yard_material() -> ShaderMaterial:
+	if not _materials.has("yard"):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/yard3d.gdshader")
+		m.resource_name = LIVE_YARD
+		Ground3D.lawn_on(m, false)
+		_materials["yard"] = m
+	return _materials["yard"]
 
 
 ## The shared material of what a building does not have yet (shaders/frame3d: a timber frame in place of the
@@ -992,6 +1007,8 @@ static func _live(m: Material) -> Material:
 			return shine_material()
 		LIVE_FRAME:
 			return frame_material()
+		LIVE_YARD:
+			return yard_material()
 	return m
 
 

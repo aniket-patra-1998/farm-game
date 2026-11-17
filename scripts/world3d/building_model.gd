@@ -26,8 +26,9 @@ const PLAN := "plan"         # not-ui (the state of the part that shows what is 
 const PLAN_SNAP := 0.005     # two shapes within this of each other, in tiles, are the same shape
 const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
 const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
-const ROUGH_MOUNDS := 7           # low humps in a rough yard's ground..
-const ROUGH_TUFTS := 8            # ..and tufts of straw lying on it
+const ROUGH_TUFTS := 8            # wisps of straw lying on a rough yard's grass
+const PATH_STEP := 0.12           # the trodden path from a yard's gate to the door: a worn patch this far apart..
+const PATH_WIDTH := Vector2(0.1, 0.15)   # ..each this wide (a radius, in tiles, at random between)
 const DUCK_HOUSE := Vector3(0.2, 0.24, 0.16)   # a duck house: half its width, its walls' height, half its depth
 const HIVE_BOX := Vector3(0.29, 0.18, 0.25)   # a beehive's box: half width, height and half depth, in tiles
 const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pump", "mobile", "burrow"]
@@ -1584,38 +1585,33 @@ static func _lean_to(ctx: Dictionary, f: Dictionary) -> void:
 		ModelKit.box(root, at + Vector3(-0.1, 0, -0.08), at + Vector3(0.1, 0.13, 0.08), ModelKit.paint(HAY))
 
 
-## A yard on the footprint around the building: a patch of dirt, straw, grass or mud, and a fence.
+## A yard on the footprint around the building: the farm's lawn carried inside the fence (ModelKit.yard_material,
+## the owner's pick), a trodden earth path from the gate to the door, straw lying about on a rough one, and a fence.
 static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 	var root: Node3D = ctx["root"]
 	var fw: float = ctx["fw"]
 	var fd: float = ctx["fd"]
 	var inset := 0.06
 	var ground := str(f.get("ground", "dirt"))
-	var col: Color = GROUNDS.get(ground, GROUNDS["dirt"])
-	ModelKit.box(root, Vector3(inset, 0, inset), Vector3(fw - inset, 0.012, fd - inset),
-		ModelKit.surface(col, "plaster", 0.0), false)
-	# The ground is not one flat colour: trodden patches, darker where the animals stand, and loose straw or
-	# stones lying about.
+	ModelKit.box(root, Vector3(inset, 0, inset), Vector3(fw - inset, 0.012, fd - inset), ModelKit.yard_material(),
+		false)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str((ctx["it"] as Dictionary).get("id", ""))) + 3
-	for k in 3:
-		var p := Vector3(rng.randf_range(inset + 0.35, fw - inset - 0.35), 0.012, rng.randf_range(inset + 0.35,
-			fd - inset - 0.35))
-		var r := rng.randf_range(0.18, 0.3)
-		var patch := ModelKit.cylinder(root, p, r, 0.004,
-			ModelKit.surface(col.darkened(0.1 + 0.08 * (k % 2)) if k % 3 != 0
-			else col.lightened(0.1), "plaster", 0.0), r * 0.85, 7)
-		patch.scale.x = 1.0 + rng.randf() * 0.4
-		patch.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if float(ctx["bw"]) > 0.0:
+		# The path the animals and the farmer wear from the gate (the middle of the front fence) to the door (the
+		# middle of the building's front), in the yard's own earth: ragged, a row of worn patches.
+		var earth: Color = GROUNDS["dirt" if ground == "grass" else ground]
+		var centre: Vector3 = ctx["centre"]
+		var door := Vector3(centre.x, 0.0, centre.z + float(ctx["bd"]) / 2.0)
+		var gate := Vector3(fw / 2.0, 0.0, fd - inset)
+		var steps := maxi(int(ceil(door.distance_to(gate) / PATH_STEP)), 1)
+		for k in steps + 1:
+			var p := door.lerp(gate, float(k) / steps) + Vector3(rng.randf_range(-0.03, 0.03), 0.012, 0.0)
+			var r := rng.randf_range(PATH_WIDTH.x, PATH_WIDTH.y)
+			var worn := ModelKit.cylinder(root, p, r, 0.003, ModelKit.surface(earth, "plaster", 0.0), r * 0.9, 8)
+			worn.scale.x = 1.0 + rng.randf() * 0.3
+			worn.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if f.get("rough", false):
-		# Rough ground: low humps the hooves have left, and straw trodden into it.
-		for k in ROUGH_MOUNDS:
-			var p := Vector3(rng.randf_range(inset + 0.2, fw - inset - 0.2), 0.0, rng.randf_range(inset + 0.2,
-				fd - inset - 0.2))
-			var r := rng.randf_range(0.1, 0.2)
-			var hump := ModelKit.ball(root, p, r, ModelKit.surface(col.darkened(0.04 + 0.05 * (k % 3)), "plaster",
-				0.0), Vector3(1.0 + rng.randf() * 0.5, 0.22, 1.0))
-			hump.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		for k in ROUGH_TUFTS:
 			var p := Vector3(rng.randf_range(inset + 0.15, fw - inset - 0.15), 0.012, rng.randf_range(inset + 0.15,
 				fd - inset - 0.15))
