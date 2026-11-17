@@ -1,30 +1,68 @@
-# Polish: what the game lacks against how builder games are made
+# The polish loop: the owner's vision, taste and guardrails
 
-The art is kept (it is a good base). What is missing is the layer on top of it that makes a farm feel finished.
-Each gap below is a general system, not a fix for one item, so it improves every object at once.
+A scheduled session runs this every hour (18 Nov 2026, until 08:15 IST). Its log is the Claude doc "Farm game:
+polish loop log" (https://claude.ai/artifact/N3Tco9YLD79rwmApLH9hWP, doc id aa67cd85-0a81-4920-b45b-dc016d1fe1a8).
+Read this, CLAUDE.md and docs/NEXT.md first. Act as the owner would ask, in the nature and depth they ask.
 
-Sources that could be checked: a developer's post-mortem
-([PocketGamer.biz](https://www.pocketgamer.biz/behind-the-scenes-how-the-little-details-in-game-development-can-make-the-biggest-impact))
-says to add small environmental effects for a living world, to playtest for moments where nothing interesting
-happens and fill them, and to make scenery tappable; a juice guide
-([itch.io](https://itch.io/blog/1059831/making-a-game-feel-juicy-with-simple-effects)) lists squash and stretch,
-particles, layered randomised sound, easing, and idle and reactive animation. Everything else here is general
-practice in mobile builders as I know it, not something I could confirm from a source.
+## What the game is
+The original FarmVille (2009), recreated in Godot 4.7 for Android phones and tablets, landscape. Pure FarmVille
+first; our own touch only where it is clearly marked. Every system is built (docs/V1.md); new features are frozen
+(17 Nov 2026). The product exists but is not yet a finished, usable one: the work now is to make what is there
+complete, polished, fair and robust, never to replace it.
 
-| # | Gap | What builders do | Here | Status |
-|---|-----|------------------|------|--------|
-| 1 | Ground dressing | grass tufts, flowers, stones round every object, so nothing sits on bare grass | none | **done**: `Dressing` (data/dressing.json), every building, decoration and vehicle; trees get their own base |
-| 2 | Foliage and form | many small lit planes, sun/shade colour shift, rough outline | smooth same-colour balls | **done** for trees (faceted clumps, yellow-green sun, blue-green shade, roots) |
-| 3 | Size hierarchy | each kind its own scale (chicken, goat, cow, horse) | all about one size | **done**: `scale` per animal family, 0.7 to 1.12 |
-| 4 | Colour and light | saturated palette, warm light, lifted shadows, night that stays readable | desaturated, murky dusk and night | **tuned** (saturation, ambient, moonlight); needs a look at every hour |
-| 5 | Silhouette variety | each building recognisable by shape alone | similar block and gable | **partly**: two-storey top sizes; mid sizes still alike |
-| 6 | Idle motion everywhere | flags, smoke, windmills, birds, butterflies, hanging things swinging | smoke, water, wind in plants | **partly**: butterflies by day, fireflies at night, a flock of birds crossing (`AmbientLife`, GPU only); pennants flutter; windmill blades, awnings, falling leaves open |
-| 7 | State read at a glance | ready glow, bubbles with icons, full flags, produce piling | bubbles, count signs | **partly**: full pennant, bigger piles; ready glow open |
-| 8 | Action feedback | squash and stretch, particles, floating numbers, layered sound | squash on collect, some sound | **open**: coin and XP pop-ups, harvest particles, dust on plow and place |
-| 9 | Night | lit windows, lamps, fireflies, glow pools | windows glow, light pools, fireflies | **partly**: lamps' own glow open |
-| 10 | Crops | dense, full beds, size by growth, rows | five plants per plot, bigger | **tuned**; no per-crop detail yet |
-| 11 | Terrain variety | paths, worn ground near doors, patches, water edges | wear map, tufts | **open**: paths, doorstep wear, borders |
-| 12 | Tests for looks | contact sheets and state sheets compared as pictures | sheets exist | **open**: no automatic check; only a person looks |
+## How the owner judges (from their sessions)
+- They play on a phone and react to what looks cheap, shallow, scary, sharp, cluttered or inconsistent. They want
+  it to look like a finished commercial game: soft, rounded, warm, coherent, cosy.
+- Consistency is a rule: an icon in another style, a colour that does not match, a shape sharper than its
+  neighbours stands out to them at once. Match the set; never introduce a new style.
+- Motion must feel real and weighty: animals walk on the ground (not rubber, not puppets), peck and turn at
+  real speeds; nothing too fast or jittery.
+- They improve what exists; they rarely want it replaced. Smaller, softer, better coloured, more detail where
+  the eye goes (zoomed in), less noise where it doesn't.
+- They notice what is missing from the whole (does the farm look good filled? at night? on a small phone?).
+- Economy and progression: fair, no exploits, every choice worth something, rewards felt, nothing absurdly cheap
+  or expensive.
+- Code quality is expected throughout: data-driven, each fix applied to every similar module, tests for rules.
+- Picked looks so far (keep them): mown-stripes lawn with no grass clumps; ready signs as small bubblegum-pink
+  pins; lawn yards with a trodden path gate to door; farmer with button eyes and an open smile; inbox icon an
+  envelope with a red seal; chunky flowers; calm deep water; VIP and rust on; VIP top boost x1.5.
 
-Next, in the order that adds most: 8 (action feedback), 6 (idle motion and ambient life), 11 (paths and ground),
-5 (more shape difference at each size), 4 (a look at every hour of the day).
+## Guardrails
+- Fix and polish only: code quality, stress tests, edge cases, phone UI checks, player progression, economy,
+  bugs, cheating and bad practice, the whole farm's look, small UI, graphics and animation improvements.
+- Stop and report in the log's "Reported, not built" (never build) when the work would: start a new feature;
+  diverge from the vision above; need a new look or concept the owner has not picked (make the options sheet
+  only if cheap, attach nothing, describe it); or be a very expensive change or a redo (say what and the rough cost).
+- Do not change the model or use another one (no model switch, no sub-agents on another model).
+- Be economical: one backlog item per run, read only what you need (grep), no pictures sent to the owner.
+- Never touch the owner's real save, secrets or settings; never delete branches; never force-push main.
+
+## Procedure for one run
+1. Setup: the repo is at /home/claude/farm-game (else clone aniket-patra-1998/farm-game there); `git config
+   core.hooksPath tools/hooks`. Godot: /home/claude/godot/godot. If Godot is missing and cannot be installed,
+   push a branch, open a pull request and let CI's Tests check it before merging.
+2. Deadline: if it is past 08:15 IST on 18 Nov 2026, disable this scheduled task, add a final summary line to
+   the log, and stop.
+3. Read the log doc (its Backlog and the last rows) and `git log --oneline -15` to see what the last runs did.
+4. Other sessions' branches first (every run): for each remote branch with commits not on main and each open
+   pull request: read its diff and description; if it is finished, in scope and safe, rebase it on main, run
+   the full precheck, fast-forward main to it, and log it; if unsure, report it instead. Never merge a red one.
+5. Take the first open backlog item; find the problem by measuring (tests, probes: tools/perf_probe,
+   tools/look_shot, tools/balance_sim, the test suite), not by guessing.
+6. Fix it on a branch `polish/<topic>`, with a test for any rule; apply the fix to every similar module.
+7. Merge properly: `git fetch origin && git rebase origin/main`, then `tools/precheck.sh <godot>` must pass,
+   then `git push origin HEAD:main` (a fast-forward: no merge commits). If main moved meanwhile, rebase and
+   check again. CI's review runs on the push.
+8. Log: one row in "Merged to main" (time, what changed and why, short sha) or "Reported, not built"; tick or add
+   backlog items; keep docs/NEXT.md's handoff current.
+
+## Backlog (seed; the log doc's copy is the live one)
+1. Other sessions' branches (see step 4).
+2. Phone UI: every panel and sheet at 20:9 and 4:3; nothing cut, off screen or too small to tap.
+3. Edge cases and stress: full farm, empty farm, full Barn and inbox, long offline time, clock changes.
+4. Cheating and bad practice: save tampering, clock rewinds, buy-and-sell loops, negative counts.
+5. Economy pass with the balance bot (docs/NEXT.md "Economy" lists the findings).
+6. Player progression: XP curve after level 20, unlocks through 31-40, a level-up reward that is felt.
+7. Code quality: long functions, logic repeated across similar modules, rules outside data.
+8. Whole-farm look: a filled farm at dawn, noon, dusk and night; anything cheap or out of place.
+9. Small polish: UI motion, animation timing, sound balance (sound: measure first, tools/sound_cuts/audit.py).
