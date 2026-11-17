@@ -24,8 +24,7 @@ const FARMHOUSE := "farmhouse"   # not-ui
 const STAGE := "stage"           # not-ui: how the farmhouse's stage is written in its look ("stage3")
 const PIECES := &"pieces"       # meta on a batched decoration's stand-in: the pieces the DecorLayer draws it from
 const BOX := &"box"               # on a batched thing's stand-in: the box round its model, in the model's space
-const DRESSINGS := 6              # looks of the grass and stones round a batched decoration (shared, by its uid)
-const DRESSING := ^"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
+const DRESSINGS := 2              # looks of the grass and stones round a thing of a kind and size (shared, by its uid)
 const TREE_SIZE_JITTER := 0.0   # each tree of a kind is this much bigger or smaller than the built look it copies
 const GROUP := &"objects_3d"   # every Objects3D, for until_settled
 const LIGHT_BUDGET_USEC := 800   # a timer's look works for this long a frame, then carries on the next (no hitch)
@@ -972,10 +971,6 @@ func _build(o: Dictionary) -> Node3D:
 					AssetRegistry.apply_state(node, state_of(o))
 					if BuildingFill.shows(o):
 						node.add_child(BuildingFill.create(o, node))
-	var dressing: Node3D = null if not batch.is_empty() else Dressing.make(Game.kind_of(o), fp, int(o["uid"]))
-	if dressing != null:
-		dressing.name = String(DRESSING)
-		node.add_child(dressing)
 	# The view stands at the footprint's centre on the ground, so it squashes, bounces and lands about
 	# its base; the model hangs under it, shifted back to the footprint's corner.
 	var holder := Node3D.new()
@@ -990,32 +985,49 @@ func _build(o: Dictionary) -> Node3D:
 	node.transform = Transform3D(basis, -(basis * centre)) * node.transform
 	holder.add_child(node)
 	if not batch.is_empty():
-		_batch(holder, node, o, batch, batch_look, fp)
+		_batch(holder, node, o, batch, batch_look)
+	_dress(holder, node, o, fp)
 	return holder
 
 
-## Hands a batched decoration to the DecorLayer: its model, and the grass and stones round it (one of a few
-## shared looks, by its uid), both where the stand-in `node` under `holder` stands; and takes them back out when
-## the stand-in goes.
-func _batch(holder: Node3D, node: Node3D, o: Dictionary, batch: Dictionary, look: String, fp: Vector2i) -> void:
-	if decor == null:   # (asked to build before it was in the tree: tests)
-		decor = DecorLayer.new()
-		add_child(decor)
+## Hands a batched decoration's model to the DecorLayer, where the stand-in `node` under `holder` stands, and
+## takes it back out when the stand-in goes.
+func _batch(holder: Node3D, node: Node3D, o: Dictionary, batch: Dictionary, look: String) -> void:
 	var uid := int(o["uid"])
-	var kind := Game.kind_of(o)
-	var at := holder.transform * node.transform
-	var serials := [decor.put(uid, look, batch["pieces"], at, holder.position), -1]
-	var round_it := posmod(uid, DRESSINGS)
-	var dress_key := Instancer.key_of(["dressing", kind, fp.x, fp.y, round_it])
-	var dress := Instancer.pieces_of(dress_key, func() -> Node3D: return Dressing.make(kind, fp, round_it))
-	if not (dress["pieces"] as Array).is_empty():
-		# (it hangs on the model, as it did when it was a node under it)
-		serials[1] = decor.put(dressing_id(uid), dress_key, dress["pieces"], at, holder.position)
-	var layer := decor
+	var layer := _decor_layer()
+	var serial := layer.put(uid, look, batch["pieces"], holder.transform * node.transform, holder.position)
 	holder.tree_exiting.connect(func() -> void:
 		if is_instance_valid(layer):
-			layer.remove(uid, serials[0])
-			layer.remove(dressing_id(uid), serials[1]))
+			layer.remove(uid, serial))
+
+
+## The grass, flowers and stones round anything that has them (Dressing, data/dressing.json: buildings, vehicles,
+## decorations): one of a few shared looks per kind and footprint (by its uid), drawn in batches by the
+## DecorLayer with every other alike, not a draw of its own per thing; where the model `node` under `holder`
+## stands (turned with it), hidden with it (`_show`), and taken out when it goes.
+func _dress(holder: Node3D, node: Node3D, o: Dictionary, fp: Vector2i) -> void:
+	var kind := Game.kind_of(o)
+	if not Dressing.has_kind(kind):
+		return
+	var uid := int(o["uid"])
+	var round_it := posmod(uid, DRESSINGS)
+	var key := Instancer.key_of(["dressing", kind, fp.x, fp.y, round_it])
+	var dress := Instancer.pieces_of(key, func() -> Node3D: return Dressing.make(kind, fp, round_it))
+	if (dress["pieces"] as Array).is_empty():
+		return
+	var layer := _decor_layer()
+	var serial := layer.put(dressing_id(uid), key, dress["pieces"], holder.transform * node.transform, holder.position)
+	holder.tree_exiting.connect(func() -> void:
+		if is_instance_valid(layer):
+			layer.remove(dressing_id(uid), serial))
+
+
+## The layer that draws things in batches (made here when asked before this was in the tree: tests).
+func _decor_layer() -> DecorLayer:
+	if decor == null:
+		decor = DecorLayer.new()
+		add_child(decor)
+	return decor
 
 
 ## The DecorLayer's number for the grass and stones round decoration `uid` (its model's is the uid itself).

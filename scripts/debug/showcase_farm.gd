@@ -33,6 +33,7 @@ const PLOWED_PLOTS := 6
 const ZONES: Array[String] = ["building", "vehicle", "tree", "animal", "decor"]
 const RUN_IDS := ["hedge", "white_picket_fence", "wooden_fence", "tall_wooden_fence", "stone_wall"]
 const RUN_LENGTH := 6   # tiles in a straight run of one fence kind in the showcase
+const FILL_KINDS := ["apple_tree", "cow", "hay_bale", "chicken", "orange_tree", "sheep"]   # what fill() repeats
 
 
 ## Builds the showcase into `g` (which is reset first). Returns what was left out for want of room (ids;
@@ -84,6 +85,24 @@ static func build(g: GameState) -> Array[String]:
 	g.rebuild_occupancy()
 	announce(g)
 	return left_out
+
+
+## A farm as players fill theirs (perf_probe --fill): every free tile of the showcase taken by a few kinds over
+## and over (`FILL_KINDS`, in rows), so what is drawn many times alike is measured as it is played, not only one
+## of each. Returns how many it put down.
+static func fill(g: GameState) -> int:
+	var now := int(g.now())
+	var put := 0
+	for row in g.farm_size:
+		var id: String = FILL_KINDS[row % FILL_KINDS.size()]
+		if not g.items.has(id):
+			continue
+		for col in g.farm_size:
+			if g.can_place(id, row, col):
+				_place(g, id, row, col, now)
+				put += 1
+	g.objects_updated()
+	return put
 
 
 ## A straight run of each fence, hedge and wall (they join their neighbours, so one piece shows nothing): the first
