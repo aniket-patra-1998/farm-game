@@ -41,6 +41,27 @@ func _ready() -> void:
 	_rest_until = float(_music_data().get("first_after", 20.0))
 
 
+## On quit: every player stopped and let go of its stream, the fades ended and the loaded streams dropped, so no
+## sound is still decoding (and held) when the engine shuts down.
+func _exit_tree() -> void:
+	release()
+
+
+func release() -> void:
+	for t: Tween in _tweens.values():
+		if t.is_valid():
+			t.kill()
+	_tweens.clear()
+	_aimed.clear()
+	for p in _bed + [_music]:
+		if p != null:
+			p.stop()
+			p.stream = null
+	_streams.clear()
+	bed_name = ""
+	track = ""
+
+
 func _player(bus: String) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new()
 	p.bus = bus

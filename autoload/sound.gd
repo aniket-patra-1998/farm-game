@@ -119,6 +119,17 @@ func start_loop(event: String, gain_db := 0.0) -> AudioStreamPlayer:
 	return p
 
 
+## On quit: every sound stopped and let go of (the loops, the pool's players, the cached streams), so nothing is
+## still playing, or held, as the engine shuts down.
+func _exit_tree() -> void:
+	for p in _loops.duplicate():
+		stop_loop(p)
+	for p in _players:
+		p.stop()
+		p.stream = null
+	_cache.clear()
+
+
 func stop_loop(p: AudioStreamPlayer) -> void:
 	if p == null:
 		return
