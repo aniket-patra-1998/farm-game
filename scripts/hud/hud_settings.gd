@@ -97,8 +97,9 @@ func sound_card() -> PanelContainer:
 	if Sound.soundscape != null and Sound.soundscape.has_music():
 		inner.add_child(BookPanel.row(tr("MUSIC"),
 			_volume_slider(Sound.music_volume, func(v: float) -> void: Sound.music_volume = v)))
-	inner.add_child(BookPanel.row(tr("MUTE_SOUND"), BookPanel.switch(Sound.muted,
-		func(on: bool) -> void: Sound.muted = on)))
+	# (a switch says what is on, as phones do: Sound on plays, off is silence; never a "Mute" that is on)
+	inner.add_child(BookPanel.row(tr("SOUND_ON"), BookPanel.switch(not Sound.muted,
+		func(on: bool) -> void: Sound.muted = not on)))
 	inner.add_child(BookPanel.row(tr("VIBRATION"), BookPanel.switch(Sound.vibration, func(on: bool) -> void:
 		Sound.vibration = on
 		Feedback.moment("vibration_check"))))  # feel it come on
