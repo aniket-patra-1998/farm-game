@@ -4,7 +4,8 @@ extends Node
 ## and birds; Stardew Valley's music follows the seasons). data/soundscape.json says it all:
 ## - a bed: one looping recording for the part of the day (birds at dawn, the farmyard by day, crickets at night),
 ##   chosen among the phase's beds by the day, so each day sounds a little different; a bed can be kept to seasons;
-## - weather over it: rain falling has its own loop on top, and the bed goes quieter under rain, storm, snow or fog;
+## - the weather: the bed goes quieter under rain, storm, snow or fog (the rain itself is WeatherEvents' loop, as
+##   loud as it falls, on the same bus);
 ## - music: tracks played one at a time with a long rest between them, so the farm is heard most of the time.
 ## Every change cross-fades. It looks again every `check_every` seconds (not each frame). Beds play on the
 ## "Ambience" bus, music on "Music", each with the player's own volume (Sound), muted with everything else.
@@ -15,13 +16,11 @@ const SILENT_DB := -60.0
 const DAY_SECONDS := 86400
 
 var bed_name := ""        # the bed playing (or fading in) now; "" for none
-var layer_name := ""      # the weather's loop over it; "" for none
 var track := ""           # the music playing now; "" while resting
 
 var _data := {}
 var _streams := {}                            # path -> AudioStream, each loaded once
 var _bed: Array[AudioStreamPlayer] = []       # two, cross-fading
-var _layer: AudioStreamPlayer
 var _music: AudioStreamPlayer
 var _bed_db := 0.0
 var _aimed := {}                              # player -> the level it is fading towards (no fade begun twice)
@@ -37,7 +36,6 @@ func _ready() -> void:
 		push_error(DATA + " is missing or not valid JSON")
 	for k in 2:
 		_bed.append(_player(Sound.AMBIENCE_BUS))
-	_layer = _player(Sound.AMBIENCE_BUS)
 	_music = _player(Sound.MUSIC_BUS)
 	_music.finished.connect(_on_track_done)
 	_rest_until = float(_music_data().get("first_after", 20.0))
@@ -66,7 +64,6 @@ func look() -> void:
 	if Sound.ambience_volume <= 0.0:
 		wanted = ""   # nothing to hear: nothing playing, nothing decoding
 	_set_bed(wanted)
-	_set_layer(str(weather.get("layer", "")) if wanted != "" else "", float(weather.get("layer_db", 0.0)))
 	_look_music()
 
 
@@ -134,22 +131,6 @@ func _set_bed(name: String) -> void:
 	_aimed.erase(fresh)
 	fresh.play(randf() * maxf(fresh.stream.get_length() - 1.0, 0.0))   # a loop heard from anywhere in it
 	_fade(fresh, _bed_db)
-
-
-func _set_layer(name: String, gain_db: float) -> void:
-	if name == layer_name:
-		if name != "":
-			_fade(_layer, gain_db)
-		return
-	layer_name = name
-	if name == "":
-		_fade(_layer, SILENT_DB, true)
-		return
-	_layer.stream = _stream(_bed_path(name), true)
-	_layer.volume_db = SILENT_DB
-	_aimed.erase(_layer)
-	_layer.play()
-	_fade(_layer, gain_db)
 
 
 ## Music: after its rest, the next track (never the one just heard twice running), faded in; none while the

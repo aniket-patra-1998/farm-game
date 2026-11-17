@@ -1,5 +1,5 @@
 {
-  "_doc": "Every sound the game makes, as a synthesis recipe (autoload/sound.gd builds each once, the first time it plays). A sound is a list of layers mixed together; each layer: wave (sine, square, saw, triangle, noise), freq and freq_end in Hz (a glide), dur and delay in seconds, attack and release (seconds of fade in and out), gain, lowpass (Hz, softens saw, square and noise), vibrato [rate Hz, depth as a share of pitch], tremolo [rate Hz, depth 0..1], repeat [count, gap seconds]. A real recording can replace any recipe later: give the event a \"file\" (res://...) instead of layers. pitch_jitter varies the pitch a little each time so repeats don't sound mechanical. An effect is under 2 s; one marked \"long\" (thunder rolling) may run 5 s. A recording can also come in takes: \"files\" (a list); each play picks one, never the same twice running. Recordings are cut from CC0 downloads by tools/sound_cuts/make_sounds.py, or made from scratch by make_generated.py (art/sound/SOURCES.md). voices: each animal family's call; young_voices: a baby's own call (a family without one uses the adult's, higher: Sound.YOUNG_PITCH); voice_pitch: a family's (or an item's) call played lower or higher.",
+  "_doc": "Every sound the game makes, as a synthesis recipe (autoload/sound.gd builds each once, the first time it plays). A sound is a list of layers mixed together; each layer: wave (sine, square, saw, triangle, noise), freq and freq_end in Hz (a glide), dur and delay in seconds, attack and release (seconds of fade in and out), gain, lowpass (Hz, softens saw, square and noise), vibrato [rate Hz, depth as a share of pitch], tremolo [rate Hz, depth 0..1], repeat [count, gap seconds]. A real recording can replace any recipe later: give the event a \"file\" (res://...) instead of layers (a \"loop\" one loops; \"bus\" puts a loop on another bus, Ambience for the farm's sounds). pitch_jitter varies the pitch a little each time so repeats don't sound mechanical. An effect is under 2 s; one marked \"long\" (thunder rolling) may run 5 s. A recording can also come in takes: \"files\" (a list); each play picks one, never the same twice running. Recordings are cut from CC0 downloads by tools/sound_cuts/make_sounds.py, or made from scratch by make_generated.py (art/sound/SOURCES.md). voices: each animal family's call; young_voices: a baby's own call (a family without one uses the adult's, higher: Sound.YOUNG_PITCH); voice_pitch: a family's (or an item's) call played lower or higher.",
   "volume_db": -6.0,
   "sounds": {
     "tap": {"pitch_jitter": 0.06, "layers": [
@@ -16,9 +16,7 @@
     "thunder_far": {"long": true, "pitch_jitter": 0.15, "layers": [
       {"wave": "noise", "lowpass": 160, "dur": 4.2, "attack": 0.6, "release": 3.4, "gain": 0.75, "tremolo": [3.2, 0.55]},
       {"wave": "sine", "freq": 34, "freq_end": 28, "dur": 3.4, "delay": 0.3, "attack": 0.6, "release": 2.6, "gain": 0.3}]},
-    "rain": {"loop": true, "pitch_jitter": 0.0, "layers": [
-      {"wave": "noise", "lowpass": 3200, "dur": 2.0, "gain": 0.5},
-      {"wave": "noise", "lowpass": 700, "dur": 2.0, "gain": 0.35, "tremolo": [0.6, 0.2]}]},
+    "rain": {"loop": true, "bus": "Ambience", "file": "res://art/sound/ambience/rain.ogg"},
     "engine": {"loop": true, "pitch_jitter": 0.0, "layers": [
       {"wave": "sine", "freq": 44, "dur": 1.0, "gain": 0.55, "tremolo": [11, 0.5]},
       {"wave": "sine", "freq": 88, "dur": 1.0, "gain": 0.4, "tremolo": [11, 0.4]},

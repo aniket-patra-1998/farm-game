@@ -26,7 +26,7 @@ Pixabay...) goes in here.
 | ambience/morning | morning-bird.mp3 | morning birds |
 | ambience/summer | summer-ambience.mp3 | a summer day |
 | ambience/night | cricket-night.mp3 | crickets at night |
-| ambience/rain | rain.mp3 | rain, laid over the bed when it rains |
+| ambience/rain | rain.mp3 | rain, the weather's loop (WeatherEvents), as loud as it falls |
 
 ## Made from scratch (ours, CC0)
 

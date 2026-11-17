@@ -110,7 +110,7 @@ func start_loop(event: String, gain_db := 0.0) -> AudioStreamPlayer:
 	if stream == null or _loops.size() >= MAX_LOOPS:
 		return null
 	var p := AudioStreamPlayer.new()
-	p.bus = BUS
+	p.bus = str((_recipes.get(event, {}) as Dictionary).get("bus", BUS))
 	p.stream = stream
 	p.volume_db = _base_db + gain_db
 	add_child(p)
@@ -205,6 +205,8 @@ func stream_of(event: String) -> AudioStream:
 	var stream: AudioStream
 	if r.has("file"):
 		stream = load(str(r["file"])) as AudioStream
+		if stream is AudioStreamOggVorbis and r.get("loop", false):
+			(stream as AudioStreamOggVorbis).loop = true
 	elif ResourceLoader.exists(baked_path(event, r)):
 		stream = load(baked_path(event, r)) as AudioStream   # made ahead of time, in the game (bake_all)
 	else:

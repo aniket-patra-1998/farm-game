@@ -171,8 +171,7 @@ func test_102_the_farm_always_has_a_background_and_it_follows_the_day() -> void:
 	_check(scape.bed_for("midday", "Summer", 7) != scape.bed_for("midday", "Summer", 8), "the next day sounds different")
 	_check(not scape.bed_for("midday", "Winter", 2).begins_with("summer"), "the summer bed waits for summer")
 	for state: String in data["weather"]:
-		var layer := str((data["weather"][state] as Dictionary).get("layer", ""))
-		_check(layer == "" or beds.has(layer), "%s's loop is a bed" % state)
+		_check(Weather.STATES.has(state), "the soundscape's %s is a real weather" % state)
 	for path: String in (data["music"] as Dictionary).get("tracks", []):
 		_check(ResourceLoader.exists(path), "music track %s exists" % path)
 	scape.look()
@@ -189,23 +188,26 @@ func _scripts_in(dir: String) -> Array[String]:
 	return out
 
 
-## The soundscape follows the sky: rain lays its loop over the bed and clear skies take it away; the farm sounds at
-## zero play nothing; the music has real tracks, long pieces, never a short call.
+## The soundscape follows the sky: the bed goes quieter in the rain and back up when it clears; the farm sounds at
+## zero play nothing; the rain is the recording, looping, on the farm sounds' bus; the music has real tracks.
 func test_103_the_background_follows_the_weather_and_the_players_volume() -> void:
 	var scape := Sound.soundscape
 	var before := [Game.weather_override, Sound.ambience_volume]
 	Sound.ambience_volume = 0.8
 	Game.weather_override = "rain"
 	scape.look()
-	_check(scape.bed_name != "", "in the rain there is still a bed under it (%s)" % scape.bed_name)
-	_eq(scape.layer_name, "rain", "and the rain's loop is laid over it")
+	_check(scape.bed_name != "", "in the rain there is still a bed (%s)" % scape.bed_name)
+	var wet := float(scape.get("_bed_db"))
 	Game.weather_override = "clear"
 	scape.look()
-	_eq(scape.layer_name, "", "clear skies take the rain away")
+	_check(float(scape.get("_bed_db")) > wet, "the bed is quieter in the rain than under a clear sky")
 	Sound.ambience_volume = 0.0
 	scape.look()
 	_eq(scape.bed_name, "", "with farm sounds at zero nothing plays")
-	_eq(scape.layer_name, "", "not even the rain")
+	var rain := Sound.start_loop("rain")
+	_check(rain != null and rain.bus == Sound.AMBIENCE_BUS, "the rain plays on the farm sounds' bus")
+	_check(rain != null and (rain.stream as AudioStreamOggVorbis).loop, "the rain's recording loops")
+	Sound.stop_loop(rain)
 	_check(scape.has_music(), "there is music")
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Soundscape.DATA))
 	for path: String in data["music"]["tracks"]:
