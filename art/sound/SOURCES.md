@@ -13,6 +13,8 @@ sound and could not be traced, so they were dropped and the farmyards made here 
 
 The cut recordings are made by `tools/sound_cuts/make_sounds.py <folder of the downloads>` (its cut list is the
 whole recipe); the rest by `tools/sound_cuts/make_generated.py`.
+Both level every file the same way, by how loud it sounds on a phone or laptop speaker, and measure them into
+`data/sound_levels.json` (`tools/sound_cuts/audit.py`); the files' sources don't change by levelling.
 
 ## CC0 recordings (Freesound)
 

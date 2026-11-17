@@ -4,9 +4,11 @@ const SHORT_SECONDS := 2.0   # an effect's longest
 const LONG_SECONDS := 5.0    # a recipe marked "long" (thunder)
 const SOUND_ART := "res://art/sound"
 const SOURCES := "res://art/sound/SOURCES.md"
-const CALL_FILE_DB := -18.0     # tools/sound_cuts/make_sounds.py VOICE_RMS_DB
-const BED_FILE_DB := -26.0      # make_sounds.py BED_RMS_DB (the made farmyards: YARD_RMS_DB, the same)
-const MUSIC_FILE_DB := -21.0    # make_generated.py MUSIC_RMS_DB
+const LEVELS := "res://data/sound_levels.json"   # every file's measures (tools/sound_cuts/audit.py --write)
+const CALLS_SPREAD_DB := 2.0    # every call within this of the calls' middle, as a phone plays them
+const CALLS_FULL_OVER_DB := 4.0 # and on full-range speakers no call this far over the calls' middle
+const BEDS_SPREAD_DB := 1.5     # the farm's beds within this of each other
+const PEAK_MOST_DB := -0.5      # no file touches full scale
 const VOICE_GAIN_DB := -2.0     # Sound.voice plays a call this much under the base
 const DEFAULT_AMBIENCE := 0.8   # Sound.ambience_volume before the player moves it
 const DEFAULT_MUSIC := 0.6      # Sound.music_volume
@@ -265,8 +267,8 @@ func _sound_files(sub: String) -> Array[String]:
 
 
 ## The mix: what plays in the background sits well under what the player does, and in a shower the rain is what
-## is heard. The files are levelled by tools/sound_cuts (a call's loud part to CALL_FILE_DB, a bed and the rain to
-## BED_FILE_DB, music to MUSIC_FILE_DB); with the game's gains and the default volumes: under a clear sky the beds
+## is heard. From each kind's measured loudness as a phone plays it (data/sound_levels.json), with the game's
+## gains and the default volumes: under a clear sky the beds
 ## sit BED_UNDER_DB or more under a tapped animal's call and the music MUSIC_UNDER_DB or more; while it rains (or
 ## storms) the rain at its heaviest still lets a call through (RAIN_UNDER_CALL_DB), the bed and the music step back
 ## under it (RAIN_OVER_DB at half the rain), and even the lightest rain is heard over them.
@@ -276,12 +278,13 @@ func test_105_the_background_sits_under_the_calls_and_the_rain_leads_in_a_shower
 	var feedback: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/feedback.json"))
 	var weather: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/weather.json"))
 	var base := float(sounds["volume_db"])
-	var call := CALL_FILE_DB + base + VOICE_GAIN_DB
-	var bed := BED_FILE_DB + float(scape["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
-	var music := MUSIC_FILE_DB + float(scape["music"]["gain_db"]) + linear_to_db(DEFAULT_MUSIC)
+	var call := _middle("voices/", "phone_db") + base + VOICE_GAIN_DB
+	var bed := _middle("ambience/", "phone_db", "ambience/rain") + float(scape["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
+	var music := _middle("music/", "phone_db") + float(scape["music"]["gain_db"]) + linear_to_db(DEFAULT_MUSIC)
 	_check(call - bed >= BED_UNDER_DB, "under a clear sky the farm's sound sits under a call (%.1f dB)" % (call - bed))
 	_check(call - music >= MUSIC_UNDER_DB, "and the music too (%.1f dB under)" % (call - music))
-	var rain := BED_FILE_DB + base + float(feedback["hums"]["rain"]["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
+	var rain_file := float(_levels()["ambience/rain.ogg"]["phone_db"])
+	var rain := rain_file + base + float(feedback["hums"]["rain"]["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
 	var rule: Dictionary = weather["rain_sound"]
 	var least := float(rule["least_db"])
 	var lightest := rain + lerpf(least, 0.0, float(rule["from"]))
@@ -298,3 +301,45 @@ func test_105_the_background_sits_under_the_calls_and_the_rain_leads_in_a_shower
 		_check(half - wet_music >= RAIN_OVER_DB,
 			"in %s the music steps back under the rain (%.1f dB)" % [state, half - wet_music])
 		_check(lightest > maxf(wet_bed, wet_music), "in %s even the lightest rain is heard over them" % state)
+
+
+## Every sound file was measured (tools/sound_cuts/audit.py), and the measures are of the file in the repo (its
+## sha256); the calls are one loudness on a phone and none booms on full-range speakers, the beds match, and no
+## file touches full scale. A file changed without measuring it again fails here.
+func test_106_every_sound_was_measured_and_is_in_balance() -> void:
+	var levels := _levels()
+	for file: String in _sound_files(""):
+		var row: Dictionary = levels.get(file, {})
+		_check(not row.is_empty(), "%s was measured" % file)
+		if row.is_empty():
+			continue
+		_eq(str(row["sha256"]), FileAccess.get_sha256(SOUND_ART.path_join(file)), "%s's measures are of this file" % file)
+		_check(float(row["peak_db"]) <= PEAK_MOST_DB, "%s never touches full scale (%.1f dB)" % [file, row["peak_db"]])
+	var calls := _middle("voices/", "phone_db")
+	var beds := _middle("ambience/", "phone_db", "ambience/rain")
+	for file: String in levels:
+		var row: Dictionary = levels[file]
+		if file.begins_with("voices/"):
+			_check(absf(float(row["phone_db"]) - calls) <= CALLS_SPREAD_DB,
+				"%s is as loud as the other calls on a phone (%.1f, the calls %.1f)" % [file, row["phone_db"], calls])
+			_check(float(row["full_db"]) - calls <= CALLS_FULL_OVER_DB,
+				"%s doesn't boom on headphones (%.1f)" % [file, row["full_db"]])
+		elif file.begins_with("ambience/") and not file.begins_with("ambience/rain"):
+			_check(absf(float(row["phone_db"]) - beds) <= BEDS_SPREAD_DB, "%s matches the other beds" % file)
+
+
+## The measures by file (data/sound_levels.json).
+func _levels() -> Dictionary:
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(LEVELS))
+	return (parsed as Dictionary).get("files", {}) if parsed is Dictionary else {}
+
+
+## The middle (median) of one measure over the files under `under`, leaving out those starting with `but`.
+func _middle(under: String, measure: String, but := "") -> float:
+	var values: Array[float] = []
+	var levels := _levels()
+	for file: String in levels:
+		if file.begins_with(under) and (but == "" or not file.begins_with(but)):
+			values.append(float(levels[file][measure]))
+	values.sort()
+	return values[int(values.size() / 2.0)] if not values.is_empty() else 0.0

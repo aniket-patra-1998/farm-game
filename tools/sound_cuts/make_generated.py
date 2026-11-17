@@ -17,10 +17,10 @@ import pathlib
 import numpy as np
 from scipy import signal
 
-from make_sounds import OUT, SR, VOICE_RMS_DB, level, load, stamp, write
+from make_sounds import BED_LOW_CUT, OUT, SR, VOICE_RMS_DB, level, load, stamp, write
 
 RNG = np.random.default_rng(7)
-MUSIC_RMS_DB = -21.0
+MUSIC_RMS_DB = -24.0    # as a phone plays it (make_sounds.phone_loudness)
 
 
 # ---------------------------------------------------------------- voices
@@ -266,13 +266,13 @@ def piece(score):
 
 def music():
     for name, score in [("sunny_fields", SUNNY), ("evening_porch", PORCH)]:
-        write(level(piece(score), MUSIC_RMS_DB), OUT / "music" / f"{name}.ogg", 5)
+        write(level(piece(score), MUSIC_RMS_DB, 40.0), OUT / "music" / f"{name}.ogg", 5)
 
 
 # ---------------------------------------------------------------- farmyards
 
 YARD_SECONDS = 60.0
-YARD_RMS_DB = -26.0          # the cut beds' loudness (make_sounds.BED_RMS_DB)
+YARD_RMS_DB = -30.0          # the cut beds' loudness (make_sounds.BED_RMS_DB)
 # name -> (seed, the calls heard and how often each, relative; seconds between calls, least and most)
 YARDS = {
     "farm_day_a": (11, {"cow": 3, "hen": 4, "rooster": 0.4, "duck": 1}, (2.5, 6.0)),
@@ -342,7 +342,7 @@ def farmyard(seed, calls, gap):
     loop = mix[: n - xfade].copy()
     w = np.linspace(0, np.pi / 2, xfade)[:, None]
     loop[:xfade] = mix[:xfade] * np.sin(w) + mix[n - xfade:] * np.cos(w)
-    return level(loop, YARD_RMS_DB)
+    return level(loop, YARD_RMS_DB, BED_LOW_CUT)
 
 
 def farmyards():

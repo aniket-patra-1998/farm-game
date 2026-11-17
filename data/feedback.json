@@ -37,7 +37,7 @@
   },
   "hums": {
     "engine": {"sound": "engine", "gain_db": -16},
-    "rain": {"sound": "rain", "gain_db": 4}
+    "rain": {"sound": "rain", "gain_db": -1}
   },
   "floats": {
     "coins": "#ffd23f",

@@ -1,0 +1,392 @@
+{
+ "_doc": "Every sound file's measures (tools/sound_cuts/audit.py --write); sound_test holds them to the targets.",
+ "files": {
+  "ambience/farm_day_a.ogg": {
+   "sha256": "2a30a071b78c3037b1ac8aa56a6c44ea355214b9871f429b429d4476353a6415",
+   "seconds": 60.0,
+   "phone_db": -27.21,
+   "full_db": -25.15,
+   "lost_db": 2.06,
+   "peak_db": -5.7,
+   "centroid_hz": 1108
+  },
+  "ambience/farm_day_b.ogg": {
+   "sha256": "1e6a4ed3eeacaf48d80a23c9aef562103fc9d72d8e5d0e68ac26a67350533e8c",
+   "seconds": 60.0,
+   "phone_db": -27.22,
+   "full_db": -25.16,
+   "lost_db": 2.06,
+   "peak_db": -6.76,
+   "centroid_hz": 1177
+  },
+  "ambience/farm_day_c.ogg": {
+   "sha256": "2f4908c5dfe4ee6830a26e55da7abff7939b7b6fd83ba4dfce3643e2471e055c",
+   "seconds": 60.0,
+   "phone_db": -27.23,
+   "full_db": -25.11,
+   "lost_db": 2.12,
+   "peak_db": -7.84,
+   "centroid_hz": 1257
+  },
+  "ambience/morning.ogg": {
+   "sha256": "922520d0fb2d7ae86d78dc1b59c266c86e08250b6a7e40e29e6f4cd30e0b54bf",
+   "seconds": 59.63,
+   "phone_db": -27.25,
+   "full_db": -26.36,
+   "lost_db": 0.89,
+   "peak_db": -3.73,
+   "centroid_hz": 4394
+  },
+  "ambience/night.ogg": {
+   "sha256": "09680e12470b38120cb9f7bfa4d1f880e87eb9bb0e48f797733d996c429846b0",
+   "seconds": 75.0,
+   "phone_db": -27.26,
+   "full_db": -24.6,
+   "lost_db": 2.66,
+   "peak_db": -7.55,
+   "centroid_hz": 1418
+  },
+  "ambience/rain.ogg": {
+   "sha256": "89175ecdb8897f91fd1306533c34d2e0fbefa0666035384bbb06336c19a9d9d5",
+   "seconds": 75.0,
+   "phone_db": -22.76,
+   "full_db": -21.69,
+   "lost_db": 1.07,
+   "peak_db": -2.47,
+   "centroid_hz": 1947
+  },
+  "ambience/summer.ogg": {
+   "sha256": "52523d77ffc4b93d7bf86b91c7047961fb8f2c88cbe0ed27d45bd1a7404c5da9",
+   "seconds": 56.53,
+   "phone_db": -27.24,
+   "full_db": -26.04,
+   "lost_db": 1.2,
+   "peak_db": -9.36,
+   "centroid_hz": 5563
+  },
+  "music/evening_porch.ogg": {
+   "sha256": "bb75784e3e41f49ca0146ae33830bf13cbe7f7a3209d4c28a293d8cc9ae9b123",
+   "seconds": 97.74,
+   "phone_db": -21.11,
+   "full_db": -20.11,
+   "lost_db": 1.0,
+   "peak_db": -1.06,
+   "centroid_hz": 1792
+  },
+  "music/sunny_fields.ogg": {
+   "sha256": "5d71316ed348ed9b1f7b0ff8fdd28515a696db5e2c2f078243ee5d3f135d3f5f",
+   "seconds": 79.8,
+   "phone_db": -21.0,
+   "full_db": -20.72,
+   "lost_db": 0.28,
+   "peak_db": -7.09,
+   "centroid_hz": 930
+  },
+  "voices/alpaca_1.ogg": {
+   "sha256": "7fabccf44f4994c77f28390ebb202039272e498395d3403e56084f4255f1508f",
+   "seconds": 0.56,
+   "phone_db": -20.01,
+   "full_db": -18.53,
+   "lost_db": 1.48,
+   "peak_db": -2.18,
+   "centroid_hz": 6047
+  },
+  "voices/bee_1.ogg": {
+   "sha256": "e08ac6149475978bb60f2b7fc2ca57ad353a518e9accc4d88d05d2797ead786f",
+   "seconds": 2.18,
+   "phone_db": -21.92,
+   "full_db": -16.95,
+   "lost_db": 4.97,
+   "peak_db": -5.51,
+   "centroid_hz": 337
+  },
+  "voices/calf_1.ogg": {
+   "sha256": "9dc44899e09bb81391edf2a8257383abb5d59502abcfd19ae8248f28da3f4e1d",
+   "seconds": 1.67,
+   "phone_db": -19.95,
+   "full_db": -18.55,
+   "lost_db": 1.4,
+   "peak_db": -8.08,
+   "centroid_hz": 450
+  },
+  "voices/cow_1.ogg": {
+   "sha256": "56ffec00e6ba7bdddeab5e9bd2aff06914c5f901508f81f176dc7ce9a2533368",
+   "seconds": 2.2,
+   "phone_db": -20.02,
+   "full_db": -19.28,
+   "lost_db": 0.74,
+   "peak_db": -3.61,
+   "centroid_hz": 941
+  },
+  "voices/donkey_1.ogg": {
+   "sha256": "5622b5a1ff0646ceb1f1c51e73dd2c301cd8a92bd0a0c2a851daa0627ae81971",
+   "seconds": 1.28,
+   "phone_db": -20.2,
+   "full_db": -20.17,
+   "lost_db": 0.03,
+   "peak_db": -1.7,
+   "centroid_hz": 1400
+  },
+  "voices/duck_1.ogg": {
+   "sha256": "079efd1a2efc880957e2c8d8c520557abee3f91a25a5f0cebec07378363a972c",
+   "seconds": 0.65,
+   "phone_db": -20.66,
+   "full_db": -20.64,
+   "lost_db": 0.02,
+   "peak_db": -4.47,
+   "centroid_hz": 1706
+  },
+  "voices/duck_2.ogg": {
+   "sha256": "1480208361a4cecff64a6ab763dcb4f2c062972f1467ad54b1dfe66db914361f",
+   "seconds": 0.43,
+   "phone_db": -20.21,
+   "full_db": -20.19,
+   "lost_db": 0.02,
+   "peak_db": -8.07,
+   "centroid_hz": 1582
+  },
+  "voices/duck_3.ogg": {
+   "sha256": "79715964a23df7d833b4c9e29faab75575244eb1395e797d1924512d1d6a098c",
+   "seconds": 1.13,
+   "phone_db": -20.72,
+   "full_db": -20.71,
+   "lost_db": 0.01,
+   "peak_db": -3.97,
+   "centroid_hz": 1679
+  },
+  "voices/goat_1.ogg": {
+   "sha256": "93610668d841382743d8b9f20d4c742102f94c29842dcbd206ab5ca81cfa9527",
+   "seconds": 0.83,
+   "phone_db": -20.06,
+   "full_db": -19.84,
+   "lost_db": 0.22,
+   "peak_db": -6.21,
+   "centroid_hz": 1757
+  },
+  "voices/goat_2.ogg": {
+   "sha256": "24bc1d742c65ab5951fec1108e355ed7d1a19531d4713b62a2600a4c40ff1601",
+   "seconds": 0.85,
+   "phone_db": -20.3,
+   "full_db": -19.35,
+   "lost_db": 0.95,
+   "peak_db": -2.84,
+   "centroid_hz": 1392
+  },
+  "voices/goose_1.ogg": {
+   "sha256": "da09569c700e20d2b9dfefe2e23552878a560d987462a95fc1965f57b8e74b29",
+   "seconds": 0.31,
+   "phone_db": -19.97,
+   "full_db": -19.78,
+   "lost_db": 0.19,
+   "peak_db": -10.23,
+   "centroid_hz": 674
+  },
+  "voices/goose_2.ogg": {
+   "sha256": "6b6c3ca915025f629b5fe1adb2a50ee427bf326922104ba65be4e7f08ebe11f6",
+   "seconds": 0.62,
+   "phone_db": -19.95,
+   "full_db": -19.78,
+   "lost_db": 0.17,
+   "peak_db": -9.94,
+   "centroid_hz": 682
+  },
+  "voices/goose_3.ogg": {
+   "sha256": "58175633b69507c6c5963701dd844fe7728674a6713de7dd20d2e1c95a3a46de",
+   "seconds": 0.39,
+   "phone_db": -19.95,
+   "full_db": -19.79,
+   "lost_db": 0.16,
+   "peak_db": -12.86,
+   "centroid_hz": 671
+  },
+  "voices/hen_1.ogg": {
+   "sha256": "56b88de810d77b587a73db6fa2ffa16385576012c32f4fc63a0329c2f5d3183d",
+   "seconds": 0.44,
+   "phone_db": -19.96,
+   "full_db": -19.93,
+   "lost_db": 0.03,
+   "peak_db": -8.27,
+   "centroid_hz": 1054
+  },
+  "voices/hen_2.ogg": {
+   "sha256": "95cb2e15b67d71a62049a8317fb6147f894312eee2a8e09183d44501af0911a6",
+   "seconds": 0.56,
+   "phone_db": -20.05,
+   "full_db": -19.58,
+   "lost_db": 0.47,
+   "peak_db": -4.35,
+   "centroid_hz": 1913
+  },
+  "voices/hen_3.ogg": {
+   "sha256": "436de3cd7f40cd8d311a034e4f883c922ce67773c47e98a5fb526371ff4e2e64",
+   "seconds": 0.48,
+   "phone_db": -20.07,
+   "full_db": -19.18,
+   "lost_db": 0.89,
+   "peak_db": -3.26,
+   "centroid_hz": 818
+  },
+  "voices/hen_4.ogg": {
+   "sha256": "b344be299f48f0c954d127f61542cfe5b2225ba1dce37e2ec455bf81ee00e97e",
+   "seconds": 0.46,
+   "phone_db": -20.09,
+   "full_db": -18.06,
+   "lost_db": 2.03,
+   "peak_db": -3.37,
+   "centroid_hz": 704
+  },
+  "voices/hen_5.ogg": {
+   "sha256": "572a13e672e726630f983f66e631470f9e8e1b495cd24d971b3b604817a83757",
+   "seconds": 0.35,
+   "phone_db": -20.12,
+   "full_db": -19.15,
+   "lost_db": 0.97,
+   "peak_db": -3.11,
+   "centroid_hz": 3544
+  },
+  "voices/horse_1.ogg": {
+   "sha256": "118f087d68fad92a12df278c85235d7e5bb93a26e6d1880b1052b946021467bd",
+   "seconds": 1.61,
+   "phone_db": -20.07,
+   "full_db": -19.9,
+   "lost_db": 0.17,
+   "peak_db": -3.58,
+   "centroid_hz": 827
+  },
+  "voices/horse_2.ogg": {
+   "sha256": "cffba4a16e0937e03dca62c851028d616fb64dea430b2367f6935f1115944818",
+   "seconds": 0.95,
+   "phone_db": -20.03,
+   "full_db": -19.97,
+   "lost_db": 0.06,
+   "peak_db": -8.57,
+   "centroid_hz": 818
+  },
+  "voices/horse_3.ogg": {
+   "sha256": "b3b01aa18367c310536412b65a01937e02a9ff95f98a1ba0db23bd89eb4dc9bc",
+   "seconds": 1.91,
+   "phone_db": -20.05,
+   "full_db": -19.9,
+   "lost_db": 0.15,
+   "peak_db": -4.79,
+   "centroid_hz": 806
+  },
+  "voices/kid_1.ogg": {
+   "sha256": "586c888529a65d006b760f13cd85f8e5b9034be132c24e207e3081d6ddaa9628",
+   "seconds": 0.86,
+   "phone_db": -21.05,
+   "full_db": -19.8,
+   "lost_db": 1.25,
+   "peak_db": -0.85,
+   "centroid_hz": 5549
+  },
+  "voices/kid_2.ogg": {
+   "sha256": "4a45cc5aafb3e4d6ede037efac2c037fb3004fd178ea30c899b2a09930f300f0",
+   "seconds": 0.73,
+   "phone_db": -21.23,
+   "full_db": -20.0,
+   "lost_db": 1.23,
+   "peak_db": -0.98,
+   "centroid_hz": 5346
+  },
+  "voices/kid_3.ogg": {
+   "sha256": "f056fd0c1608eb0184f8ac3244d0d293c2d5211fc8459c8a8ecc731b518b47cb",
+   "seconds": 0.97,
+   "phone_db": -20.23,
+   "full_db": -19.68,
+   "lost_db": 0.55,
+   "peak_db": -0.75,
+   "centroid_hz": 3733
+  },
+  "voices/kid_4.ogg": {
+   "sha256": "282650d5ae6ee6608992394abaa119d668299c5be15fceb65731e3c72cee0e92",
+   "seconds": 0.85,
+   "phone_db": -20.71,
+   "full_db": -21.47,
+   "lost_db": -0.76,
+   "peak_db": -1.34,
+   "centroid_hz": 4441
+  },
+  "voices/lamb_1.ogg": {
+   "sha256": "74f94ccf637aaa110136ee6e575249db05131b072293ce74df17f685690260c9",
+   "seconds": 1.55,
+   "phone_db": -19.99,
+   "full_db": -19.83,
+   "lost_db": 0.16,
+   "peak_db": -7.97,
+   "centroid_hz": 3408
+  },
+  "voices/lamb_2.ogg": {
+   "sha256": "3720772257ae690093fe412bcc6434618f7ea815e85523bb63b7e89f42093c55",
+   "seconds": 1.05,
+   "phone_db": -20.1,
+   "full_db": -19.87,
+   "lost_db": 0.23,
+   "peak_db": -2.68,
+   "centroid_hz": 3834
+  },
+  "voices/lamb_3.ogg": {
+   "sha256": "9900d8290da360a6a72f7fb9e693e0f02d5f73d2c30a0eb60a6686ee5d1c0277",
+   "seconds": 1.3,
+   "phone_db": -20.01,
+   "full_db": -19.84,
+   "lost_db": 0.17,
+   "peak_db": -4.73,
+   "centroid_hz": 3475
+  },
+  "voices/lamb_4.ogg": {
+   "sha256": "b316a5054aad5b6dfb02a9a7be73de9f6586392912440c5eb3d959805a3b110f",
+   "seconds": 1.55,
+   "phone_db": -20.0,
+   "full_db": -19.91,
+   "lost_db": 0.09,
+   "peak_db": -7.23,
+   "centroid_hz": 2724
+  },
+  "voices/pig_1.ogg": {
+   "sha256": "056456d70392c3f6c83af8e993c32d7ab32eafd93beb877aa3e2f57ec54c7b42",
+   "seconds": 0.74,
+   "phone_db": -20.18,
+   "full_db": -19.72,
+   "lost_db": 0.46,
+   "peak_db": -5.27,
+   "centroid_hz": 2235
+  },
+  "voices/rooster_1.ogg": {
+   "sha256": "c1c12537e1b8c8660ecd4c5d4eee72a4419b7804f97eb4201c4564e7f3c848ef",
+   "seconds": 2.1,
+   "phone_db": -20.04,
+   "full_db": -20.03,
+   "lost_db": 0.01,
+   "peak_db": -9.34,
+   "centroid_hz": 1341
+  },
+  "voices/sheep_1.ogg": {
+   "sha256": "7b9f863e17cedd15b2b84f651f1ee43d4a1ff72004a1a4322463d09160198cb4",
+   "seconds": 1.8,
+   "phone_db": -20.02,
+   "full_db": -19.73,
+   "lost_db": 0.29,
+   "peak_db": -3.02,
+   "centroid_hz": 3313
+  },
+  "voices/sheep_2.ogg": {
+   "sha256": "ef45cbe5ccca30ce9ee6f1a78c479d9044d47f18f63d4976e28d57afa406809c",
+   "seconds": 1.17,
+   "phone_db": -20.07,
+   "full_db": -19.89,
+   "lost_db": 0.18,
+   "peak_db": -6.06,
+   "centroid_hz": 2712
+  },
+  "voices/turkey_1.ogg": {
+   "sha256": "2ad8367be209355b424bea658a125171bd9258d27c5388c16ffc793b3fc20172",
+   "seconds": 1.03,
+   "phone_db": -20.07,
+   "full_db": -20.06,
+   "lost_db": 0.01,
+   "peak_db": -4.21,
+   "centroid_hz": 1257
+  }
+ }
+}

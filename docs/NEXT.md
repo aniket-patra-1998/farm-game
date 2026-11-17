@@ -84,3 +84,11 @@ first; the buildings items below continue alongside.
   lift (`_show`), drop and outline follow the stand-in as for decorations. Measure with --fill before and after.
 - After that: animals (276 draws) as batches, their poses in the shader; the phone budget's limits lowered
   to each new measure (data/perf_budget.json, `_measured`).
+
+## Sound (sound-rain branch, Nov 2026)
+- First step for any sound change: `python3 tools/sound_cuts/audit.py` (every file's loudness as a phone or
+  laptop speaker plays it, full-range loudness, peak, tone). make_sounds.py / make_generated.py level every file
+  by phone loudness per kind (calls, beds, rain, music), cut rumble, round off peaks, cap full-range boom, and
+  write data/sound_levels.json; sound_test 106 fails on a file not measured or out of balance, 105 holds the mix
+  (background under calls on a clear day; in rain and storms the rain leads, bed and music step back).
+- Open: the rain is a light-rain recording; a CC0 heavy-rain one (Freesound 200272, jmbphilmes) would suit storms.

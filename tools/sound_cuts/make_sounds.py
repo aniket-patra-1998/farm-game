@@ -2,9 +2,12 @@
 
 python3 tools/sound_cuts/make_sounds.py <folder with the downloads>
 
-Animal calls: each cut is trimmed to its call, faded in and out (no clicks), brought to one loudness and kept
-mono. Ambience beds: a stretch of each recording, its end cross-faded into its start so it loops without a seam,
-brought to a quieter loudness, kept stereo. Everything is written as Ogg Vorbis into art/sound/. Needs ffmpeg and
+Animal calls: each cut is trimmed to its call, faded in and out (no clicks) and kept mono. Ambience beds: a
+stretch of each recording, its end cross-faded into its start so it loops without a seam, kept stereo. Every file
+is then levelled the same way (`level`): the rumble under its kind's floor taken out, its loudness measured as a
+phone's speaker plays it (nothing much under 300 Hz or over 8 kHz, so a deep moo is not counted as loud as it
+reads), brought to its kind's target (calls, beds, the rain, music), and sharp peaks rounded off instead of the
+whole sound turned down for them. tools/sound_cuts/audit.py prints every file's measures. Everything is written as Ogg Vorbis into art/sound/. Needs ffmpeg and
 numpy. The cut list below is the whole recipe: change it and run again.
 """
 import pathlib
@@ -12,12 +15,20 @@ import subprocess
 import sys
 
 import numpy as np
+from scipy import signal
 
 SR = 44100
 OUT = pathlib.Path(__file__).resolve().parents[2] / "art" / "sound"
-VOICE_RMS_DB = -18.0    # the loudness every call is brought to (of its loud part)
-BED_RMS_DB = -26.0      # ambience sits well under the effects
+# Loudness targets, as a phone plays them (`phone_loudness`); the game's gains set the mix on top (sound_test).
+VOICE_RMS_DB = -20.0    # every animal call
+BED_RMS_DB = -30.0      # the farm's background beds
+RAIN_RMS_DB = -26.0     # the rain: the sound heard while it rains
 PEAK_DB = -1.0
+KNEE_DB = -6.0          # peaks over this are rounded off, not the whole sound turned down
+FULL_OVER_DB = 3.0      # on full-range speakers (laptop, headphones) a sound is never more than this over its target
+VOICE_LOW_CUT = 90.0    # Hz: under this a call is only rumble (handling, wind)
+BED_LOW_CUT = 120.0     # a bed's wind rumble, unheard on a phone and muddy elsewhere
+BED_TARGETS = {"rain": RAIN_RMS_DB}
 FADE_IN, FADE_OUT = 0.008, 0.05
 BED_XFADE = 3.0
 
@@ -53,14 +64,50 @@ def load(path: pathlib.Path, channels: int) -> np.ndarray:
     return np.frombuffer(raw, np.float32).reshape(-1, channels).copy()
 
 
-def level(x: np.ndarray, rms_db: float) -> np.ndarray:
-    """Brings the loud part (the top fifth of 10 ms blocks) to rms_db, never peaking over PEAK_DB."""
-    hop = SR // 100
-    blocks = [np.sqrt(np.mean(x[i:i + hop] ** 2)) for i in range(0, max(len(x) - hop, 1), hop)]
-    loud = np.sort(blocks)[-max(1, len(blocks) // 5):].mean()
-    gain = 10 ** (rms_db / 20) / max(loud, 1e-6)
-    gain = min(gain, 10 ** (PEAK_DB / 20) / max(np.abs(x).max(), 1e-6))
-    return x * gain
+PHONE = (signal.butter(4, 300 / (SR / 2), "high", output="sos"), signal.butter(2, 8000 / (SR / 2), "low", output="sos"))
+
+
+def phone_loudness(x: np.ndarray) -> float:
+    """How loud a sound is through a phone's speaker: its level after the speaker's band (300 Hz to 8 kHz), over
+    the 50 ms blocks that sound (within 20 dB of its loudest), so quiet gaps don't count."""
+    m = signal.sosfilt(PHONE[1], signal.sosfilt(PHONE[0], x.mean(axis=1)))
+    hop = SR // 20
+    blocks = np.array([np.sqrt(np.mean(m[i:i + hop] ** 2)) for i in range(0, max(len(m) - hop, 1), hop)])
+    heard = blocks[blocks > blocks.max() * 0.1]
+    return float(np.sqrt(np.mean(heard ** 2)))
+
+
+def full_loudness(x: np.ndarray) -> float:
+    """phone_loudness over the whole band, as headphones and good laptop speakers give it."""
+    m = x.mean(axis=1)
+    hop = SR // 20
+    blocks = np.array([np.sqrt(np.mean(m[i:i + hop] ** 2)) for i in range(0, max(len(m) - hop, 1), hop)])
+    heard = blocks[blocks > blocks.max() * 0.1]
+    return float(np.sqrt(np.mean(heard ** 2)))
+
+
+def soft_peaks(x: np.ndarray) -> np.ndarray:
+    """Rounds off what goes over KNEE_DB (a smooth knee, never past full scale)."""
+    knee = 10 ** (KNEE_DB / 20)
+    a = np.abs(x)
+    over = a > knee
+    y = x.copy()
+    y[over] = np.sign(x[over]) * (knee + (1 - knee) * np.tanh((a[over] - knee) / (1 - knee)))
+    return y
+
+
+def level(x: np.ndarray, rms_db: float, low_cut: float = VOICE_LOW_CUT) -> np.ndarray:
+    """The rumble under low_cut taken out, then the sound brought to rms_db as a phone plays it (and no more than
+    FULL_OVER_DB over it on full-range speakers), its peaks rounded off; never over PEAK_DB."""
+    x = signal.sosfilt(signal.butter(2, low_cut / (SR / 2), "high", output="sos"), x, axis=0)
+    target, ceiling = 10 ** (rms_db / 20), 10 ** ((rms_db + FULL_OVER_DB) / 20)
+    gain = target / max(phone_loudness(x), 1e-9)
+    for _ in range(3):      # rounding the peaks takes a little loudness away: aim again
+        y = soft_peaks(x * gain)
+        # a deep sound (a moo, a buzz) aimed for a phone would boom on headphones: held under the ceiling
+        gain *= min(target / max(phone_loudness(y), 1e-9), ceiling / max(full_loudness(y), 1e-9))
+    y = soft_peaks(x * gain)
+    return y * min(1.0, 10 ** (PEAK_DB / 20) / max(np.abs(y).max(), 1e-9))
 
 
 def write(x: np.ndarray, path: pathlib.Path, quality: int) -> None:
@@ -86,7 +133,7 @@ def make_bed(x: np.ndarray, start: float, length: float) -> np.ndarray:
     t = np.linspace(0, np.pi / 2, c)[:, None]
     loop = y[:n].copy()
     loop[:c] = y[:c] * np.sin(t) + y[n:n + c] * np.cos(t)
-    return level(loop, BED_RMS_DB)
+    return loop
 
 
 def main(src: pathlib.Path) -> None:
@@ -95,14 +142,17 @@ def main(src: pathlib.Path) -> None:
         for k, (a, b) in enumerate(cuts, 1):
             write(cut_voice(x, a, b), OUT / "voices" / f"{name}_{k}.ogg", 5)
     for name, (file, start, length) in BEDS.items():
-        write(make_bed(load(src / file, 2), start, length), OUT / "ambience" / f"{name}.ogg", 3)
+        bed = level(make_bed(load(src / file, 2), start, length), BED_TARGETS.get(name, BED_RMS_DB), BED_LOW_CUT)
+        write(bed, OUT / "ambience" / f"{name}.ogg", 3)
 
 
 
 def stamp() -> None:
-    """Records that the sound files are made from these builders now (tools/make_art_versions.py checks it)."""
-    import subprocess
-    subprocess.run([sys.executable, str(OUT.parents[1] / "tools" / "make_art_versions.py"), "--exported", "sounds"], check=True)
+    """Records that the sound files are made from these builders now (tools/make_art_versions.py checks it),
+    and measures every file into data/sound_levels.json (audit.py), which sound_test holds to the targets."""
+    tools = OUT.parents[1] / "tools"
+    subprocess.run([sys.executable, str(tools / "make_art_versions.py"), "--exported", "sounds"], check=True)
+    subprocess.run([sys.executable, str(tools / "sound_cuts" / "audit.py"), "--write"], check=True)
 
 
 if __name__ == "__main__":
