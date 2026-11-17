@@ -1,8 +1,9 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never, depth_test_disabled, fog_disabled;
 // The one "ready" sign for everything with something to collect (buildings, animals, trees, blooms), as
-// FarmVille drew it: a soft, light pink triangle pointing down, its corners rounded, hovering over the thing
-// and bobbing gently up and down. Always facing the camera and drawn over what stands in front. One quad per
+// FarmVille drew it, in our own softer shape (the owner's pick, 17 Nov): a plump bubblegum-pink pin pointing
+// down (a round head flowing into a soft point), with a glossy highlight and a crisp white edge, hovering over
+// the thing and bobbing gently up and down. Always facing the camera and drawn over what stands in front. One quad per
 // ready thing in one MultiMesh (ReadyMarks); the instance's custom red channel is its phase, so they don't
 // bob in step. `zoom` grows it as the camera pulls back, so it stays the same size on screen.
 
@@ -11,9 +12,10 @@ uniform float zoom = 1.0;
 // is 1) fade by this much, so the buildings' signs stay and the farm doesn't read as a field of triangles.
 uniform float minor_fade = 0.0;
 varying float fade;
-uniform vec3 face : source_color = vec3(1.0, 0.75, 0.86);
-uniform vec3 light : source_color = vec3(1.0, 0.91, 0.95);
-uniform vec3 rim : source_color = vec3(0.95, 0.58, 0.74);
+uniform vec3 face : source_color = vec3(1.0, 0.48, 0.72);
+uniform vec3 light : source_color = vec3(1.0, 0.84, 0.92);
+uniform vec3 rim : source_color = vec3(0.82, 0.29, 0.55);
+uniform float outline = 0.06;  // the white edge round it, so it reads on any ground (of the quad's half-width)
 uniform float bob = 0.04;      // tiles it rises and falls
 uniform float rate = 2.2;      // how fast
 
@@ -29,6 +31,15 @@ float tri(vec2 p, float r) {
 	return -length(p) * sign(p.y);
 }
 
+// Signed distance to the pin: a circle on top joined smoothly to a downward triangle (y down).
+float pin(vec2 p) {
+	float head = length(p + vec2(0.0, 0.15)) - 0.42;
+	float point = tri(vec2(p.x * 1.05, p.y - 0.05), 0.42) - 0.12;
+	const float k = 0.18;
+	float h = clamp(0.5 + 0.5 * (point - head) / k, 0.0, 1.0);
+	return mix(point, head, h) - k * h * (1.0 - h);
+}
+
 void vertex() {
 	float phase = INSTANCE_CUSTOM.r * 6.2831;
 	fade = 1.0 - minor_fade * INSTANCE_CUSTOM.g;
@@ -38,17 +49,16 @@ void vertex() {
 }
 
 void fragment() {
-	vec2 p = vec2(UV.x * 2.0 - 1.0, UV.y * 2.0 - 1.0);   // y down: the triangle points down
-	p.y -= 0.12;                                          // (its weight sits a little high in the quad)
-	float d = tri(p, 0.5) - 0.22;                         // well-rounded corners: soft, not sharp
+	vec2 p = vec2(UV.x * 2.0 - 1.0, UV.y * 2.0 - 1.0);   // y down: the pin points down
+	float d = pin(p);
 	float edge = fwidth(d) * 1.2;
 	float body = 1.0 - smoothstep(-edge, edge, d);
-	float halo = (1.0 - smoothstep(0.0, 0.16, d)) * 0.28;  // a faint white glow, so it reads on dark ground
-	float inner = smoothstep(-0.1, -0.02, d);             // a thin deeper pink line round the rim
+	float ring = 1.0 - smoothstep(outline - edge, outline + edge, d);   // the white edge round it
+	float inner = smoothstep(-0.09, -0.02, d);            // a thin deeper pink line round the rim
 	vec3 col = mix(light, face, clamp(UV.y * 1.2, 0.0, 1.0));
-	col = mix(col, rim, inner * 0.8);
-	float gloss = 1.0 - smoothstep(0.0, 0.16, length((p - vec2(-0.18, -0.28)) * vec2(1.0, 1.9)));
-	col = mix(col, vec3(1.0), gloss * 0.6);
+	col = mix(col, rim, inner * 0.9);
+	float gloss = 1.0 - smoothstep(0.0, 0.2, length((p - vec2(-0.2, -0.3)) * vec2(1.0, 1.9)));
+	col = mix(col, vec3(1.0), gloss * 0.75);
 	ALBEDO = mix(vec3(1.0), col, body);
-	ALPHA = max(body * 0.95, halo) * fade;
+	ALPHA = max(body * 0.97, ring) * fade;
 }

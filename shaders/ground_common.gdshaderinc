@@ -36,10 +36,18 @@ vec3 ground_static(vec2 p, out float fine) {
 	col = mix(col, dry, dryness * smoothstep(0.55, 0.85, fbm(p * 0.37 + 11.0)));
 	// A mottle in between the broad patches and the grain, so a stretch of lawn has a texture to it.
 	col *= 0.94 + 0.12 * fbm(p * 1.1 + 70.0);
+	// Patches a few tiles across lean sunlit yellow-green or cool blue-green, so the green is alive.
+	float drift = fbm(p * 0.22 + 300.0);
+	col = mix(col, col * vec3(1.12, 1.06, 0.78), hue_drift * smoothstep(0.5, 0.75, drift));
+	col = mix(col, col * vec3(0.86, 1.0, 1.12), hue_drift * smoothstep(0.5, 0.25, drift));
 	// Bare earth where the meadow is trodden thin: ragged-edged patches, rare.
 	float earth = smoothstep(0.66, 0.74, fbm(p * 0.5 + 7.0) + (fine - 0.5) * 0.12);
 	col = mix(col, bare * (0.85 + 0.3 * fine), earth * bare_amount);
 	col *= 0.92 + 0.16 * fine;
+	// Blade tips catching the light, and the dark gaps between them.
+	float blade = noise(p * 26.0 + 3.0);
+	col = mix(col, col * vec3(1.25, 1.22, 0.95), blades * step(0.82, blade) * 0.7);
+	col = mix(col, col * 0.78, blades * step(blade, 0.12) * 0.6);
 	col *= 1.0 + patchy * (fbm(p * 0.09 + 31.0) - 0.5);
 	if (farm_n > 0.0) {
 		// The kept lawn's own detail: soft drifts of fresher, lighter grass, and clover: small round darker
@@ -49,7 +57,8 @@ vec3 ground_static(vec2 p, out float fine) {
 		float leaf = smoothstep(0.55, 0.8, noise(p * 9.0 + 5.0));
 		col = mix(col, col * vec3(0.8, 0.94, 0.86), clover * leaf * 0.7);
 		col = mix(col, vec3(0.9, 0.93, 0.85), clover * step(0.955, noise(p * 21.0 + 9.0)) * 0.85);
-		col *= 1.0 + mow * (step(0.5, fract((p.x + p.y) * 0.25)) - 0.5);
+		// Mown in diagonal bands, lighter and darker by the way the mower went, with soft edges.
+		col *= 1.0 + mow * (smoothstep(0.42, 0.58, abs(fract((p.x - p.y) / mow_width) - 0.5) * 2.0) - 0.5);
 		float d = min(min(p.x, p.y), min(farm_n - p.x, farm_n - p.y));
 		float ragged = (fine - 0.5) * 0.2 + (noise(p * 1.7) - 0.5) * 0.12;
 		// A mown border a tile wide just in from the edge (lighter, cut short), a lip of bare earth along the

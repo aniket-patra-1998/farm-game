@@ -12,7 +12,7 @@ const KINDS: Array[String] = ["coin", "gem", "star", "eye", "speaker", "note", "
 	"arrow", "ribbon", "plus", "hoe", "seeds", "basket", "fertilizer", "move", "barn", "tag", "market", "album",
 	"neighbours", "inbox", "gear", "cross", "lock", "ready", "helpers", "farmhand", "arborist", "gardener", "unwither",
 	"fuel", "search"]
-const READY_PINK := Color(1.0, 0.66, 0.8)   # the ready sign's pink (shaders/ready3d.gdshader)
+const READY_PINK := Color(1.0, 0.48, 0.72)   # the ready sign's pink (shaders/ready3d.gdshader)
 const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
 const KNOB_RING := 0.12    # a knob's ring, of its width

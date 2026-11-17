@@ -1,7 +1,7 @@
 class_name ReadyMarks
 extends MultiMeshInstance3D
-## The one "ready" sign over everything with something to collect, FarmVille's way: a soft, light pink
-## triangle pointing down, hovering and bobbing gently (shaders/ready3d.gdshader). Buildings, trees, blooms and
+## The one "ready" sign over everything with something to collect, FarmVille's way: a small bubblegum-pink pin
+## pointing down, hovering and bobbing gently (shaders/ready3d.gdshader). Buildings, trees, blooms and
 ## animals all wear the same one, so the farm reads at a glance and it costs one draw for all of them.
 ## Objects3D says where: `show_at` for what stands still (over its top) and `follow_animals` for animals, whose
 ## signs move with them each frame. The camera's zoom keeps them a steady size on screen (`follow`), and pulled
@@ -9,7 +9,7 @@ extends MultiMeshInstance3D
 ## `MINOR_FADE_TO`), so the buildings' signs stay and the farm doesn't read as a field of triangles; zoom in to
 ## see every one (our own touch: FarmVille's farms were smaller on screen).
 
-const SIZE := 0.27            # the sign's width in tiles, at the nearest zoom
+const SIZE := 0.2             # the sign's width in tiles, at the nearest zoom (small: it marks, it doesn't cover)
 const ABOVE := 0.22           # how far above a thing's top it hovers, in tiles
 const ZOOM_REF := 9.0         # the camera size (tiles on screen) the sign is drawn at SIZE for
 const ZOOM_MOST := 2.0        # and the most it grows by when the camera pulls back
