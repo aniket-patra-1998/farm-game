@@ -132,4 +132,4 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Animals still seen overlapping buildings? (the footing was the measured clash; check a pen close up).
 - Building floors/yards lack detail and depth when zoomed in (all buildings).
 - The farmer avatar looks scary (face and eyes).
-- The farm ground looks cheap and flat (the meadow).
+- Ground: done, mown stripes (owner picked C) and no grass clumps (D); ready sign: the pink pin (C).

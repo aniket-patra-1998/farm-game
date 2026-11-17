@@ -39,6 +39,9 @@ const BAKE_PARAMS: Array[String] = ["grass_light", "grass_dark", "dry", "checker
 ## patches leaning warm or cool, and blade tips that catch the light. The seasons recolour it (data/seasons.json).
 const LAWN := {"grass_light": Color(0.44, 0.64, 0.24), "grass_dark": Color(0.33, 0.53, 0.2), "hollows": 0.1,
 	"dryness": 0.05, "checker": 0.0, "mow": 0.14, "mow_width": 2.0, "hue_drift": 0.4, "blades": 0.45}
+## Whether the grass clumps are drawn: off (the owner's pick, 17 Nov: a clean mown lawn reads better than spiky
+## clumps). They are still worked out, so turning this on brings them back as they were.
+const SHOW_TUFTS := false
 const TUFT_FLOATS := 16           # a tuft in the MultiMesh buffer: transform (12) and colour (4)
 const CLUMP_MAX := 9               # tufts in the thickest clump on a tile
 const LAWN_FLOWER_CHANCE := 0.14   # of a tile of the farm's lawn having a small patch of flowers
@@ -110,6 +113,7 @@ func _ready() -> void:
 	_tuft_material = ShaderMaterial.new()
 	_tuft_material.shader = load("res://shaders/tuft3d.gdshader")
 	_tufts.material_override = _tuft_material
+	_tufts.visible = SHOW_TUFTS
 	add_child(_tufts)
 	_flowers = MultiMeshInstance3D.new()
 	_flowers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
