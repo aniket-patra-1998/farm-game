@@ -5,7 +5,6 @@ extends GameSystem
 
 const BARN := "barn"     # not-ui (welcome: where a new thing went)
 const INBOX := "inbox"   # not-ui
-const GIFT_BOX_LIMIT := 9999        # what spills past the barn waits in the gift box, up to this many
 
 var stored: Array = []             # objects put away in the barn (no row or col)
 
@@ -86,16 +85,6 @@ func barn_capacity() -> int:
 	return game.capacity(b) if not b.is_empty() else game.building_def("barn").capacity(1)
 
 
-## Everything that can be kept: the barn's own space and the gift box beyond it.
-func total_limit() -> int:
-	return barn_capacity() + GIFT_BOX_LIMIT
-
-
-## How many things have spilled past the barn into the gift box.
-func in_gift_box() -> int:
-	return maxi(stored.size() - barn_capacity(), 0)
-
-
 ## Trees, animals and scenery can be stored; shelters, the barn and strays can't.
 func storable_kind(obj: Dictionary) -> bool:
 	if obj.is_empty() or obj.get("stray", false):
@@ -113,9 +102,12 @@ func store_object(uid: int) -> bool:
 	game.remove_object(o)
 	o.erase("row")
 	o.erase("col")
-	stored.append(o)
-	game.message.emit(tr("STORED_IN_THE_BARN" if stored.size() <= barn_capacity() else "SENT_TO_THE_GIFT_BOX")
-		% game.item_data(o["id"])["name"])
+	if has_room():
+		stored.append(o)
+		game.message.emit(tr("STORED_IN_THE_BARN") % game.item_data(o["id"])["name"])
+	else:   # (the Barn full: it waits in the inbox, FarmVille's Gift Box, as it was)
+		_send_on(o)
+		game.message.emit(tr("SENT_TO_THE_GIFT_BOX") % game.item_data(o["id"])["name"])
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true
@@ -123,12 +115,30 @@ func store_object(uid: int) -> bool:
 
 ## Where a new thing arrives (a baby born, a prize won, a breed traded for): the Barn while it is repaired and its
 ## own space has room, else the inbox (FarmVille's Gift Box, from the farm), never dropped on the farm or into a
-## home. Returns where it went: BARN or INBOX.
-func welcome(item_id: String) -> String:
-	if barn_repaired() and stored.size() < barn_capacity() and receive(item_id):
+## home. `keep`: its own fields, kept on the way (a young one's "becomes"). Returns where it went: BARN or INBOX.
+func welcome(item_id: String, keep := {}) -> String:
+	if barn_repaired() and receive(item_id, keep):
 		return BARN
-	game.social.deliver({"what": InboxItem.ITEM, "id": item_id, "n": 1})
+	game.social.deliver({"what": InboxItem.ITEM, "id": item_id, "n": 1, "keep": keep})
 	return INBOX
+
+
+## Sends a thing on to the inbox with its own fields (what isn't its place or its uid).
+func _send_on(o: Dictionary) -> void:
+	var keep := o.duplicate(true)
+	for f in ["uid", "id", "t", "row", "col"]:
+		keep.erase(f)
+	game.social.deliver({"what": InboxItem.ITEM, "id": str(o["id"]), "n": 1, "keep": keep})
+
+
+## After a load: what an older save kept past the Barn's space (it once had an overflow of its own) goes to the
+## inbox, the one Gift Box, newest first out. Returns how many moved.
+func spill_over() -> int:
+	var moved := 0
+	while stored.size() > barn_capacity():
+		_send_on(stored.pop_back())
+		moved += 1
+	return moved
 
 
 ## The message for `item_id` arriving at `went` (welcome): "A calf was born! It's in the Barn." with `key` the
@@ -138,17 +148,19 @@ func welcome_words(key: String, item_id: String, went: String) -> String:
 		else "ARRIVED_IN_INBOX")
 
 
-## Whether one more thing fits (in the Barn or its overflow).
-func has_room() -> bool:
-	return stored.size() < total_limit()
+## Whether `n` more things fit in the Barn's own space (past it, things wait in the inbox).
+func has_room(n := 1) -> bool:
+	return stored.size() + n <= barn_capacity()
 
 
-## Takes in a new `item_id` straight to storage (a grown baby, a gift): into the Barn while it has room, then the
-## Gift Box. Returns false when even the Gift Box is full.
-func receive(item_id: String) -> bool:
+## Takes in a new `item_id` straight to the Barn (a grown baby, a gift), with its own fields `keep`. Returns false
+## when the Barn is full.
+func receive(item_id: String, keep := {}) -> bool:
 	if not has_room():
 		return false
-	stored.append({"uid": game.next_uid, "id": item_id, "t": game.now()})
+	var o := keep.duplicate(true)
+	o.merge({"uid": game.next_uid, "id": item_id, "t": game.now()}, true)
+	stored.append(o)
 	game.next_uid += 1
 	game.inventory_changed.emit()
 	return true

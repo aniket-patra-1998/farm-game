@@ -133,13 +133,12 @@ func build_vip(content: VBoxContainer) -> void:
 
 func build_barn_storage(content: VBoxContainer) -> void:
 	var cap := Game.storage.barn_capacity()
-	var held := mini(Game.storage.stored.size(), cap)   # (what spilled past it is the gift box's line, below)
+	var held := Game.storage.stored.size()
 	content.add_child(BookPanel.info(tr("HOLDS_OF_USE_THE_STORE_TOOL") % [held, cap],
 		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [held, cap], 20, BookPanel.SOFT))
 	# What is stored first (it is what the Barn is opened for), then its parts, its next size and the feed.
 	if not Game.storage.stored.is_empty():   # (nothing stored: no empty box saying so)
-		add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
-		add_gift_box(content, cap)
+		add_grouped(content, 0, held)
 	var parts: Array = []
 	for p: String in GameState.part_ids:
 		parts.append([p, "×%d" % int(Game.parts.get(p, 0))])
@@ -149,15 +148,6 @@ func build_barn_storage(content: VBoxContainer) -> void:
 	if not barn.is_empty():
 		hud.buildings.add_expansion_card(content, barn, int(barn["uid"]))
 	hud.feed.add_barn_stock(content)
-
-
-## What has spilled past the barn, grouped by kind (there can be thousands: one row each would be a wall).
-func add_gift_box(content: VBoxContainer, cap: int) -> void:
-	var extra := Game.storage.in_gift_box()
-	if extra <= 0:
-		return
-	content.add_child(BookPanel.text(tr("GIFT_BOX_HOLDS") % [extra, BarnStorage.GIFT_BOX_LIMIT], 18, BookPanel.SOFT))
-	add_grouped(content, cap, Game.storage.stored.size())
 
 
 ## One card per kind among the stored things from index `from` up to `to` (as FarmVille's storage: the picture,

@@ -772,7 +772,7 @@ func _numbers(o: Dictionary, total: int, cap: int) -> void:
 		Kind.BUILD:
 			UiKit.set_bar(_bar, roundi(Game.land.construction_progress(o) * 100.0), 100, tr("SHEET_MATERIALS"))
 		Kind.BARN:
-			var held := mini(Game.storage.stored.size(), Game.storage.barn_capacity())   # (the overflow: its own line)
+			var held := Game.storage.stored.size()
 			UiKit.set_bar(_bar, held, Game.storage.barn_capacity(),
 				tr("OF_SPACES_USED") % [held, Game.storage.barn_capacity()])
 		_:

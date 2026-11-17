@@ -264,15 +264,13 @@ func can_move_in(b: Dictionary, item_id: String, source := {}) -> Verdict:
 	return Verdict.new(FIT_WHY[fit], game.homes.refusal(b, item_id, fit))
 
 
-## Can `o` be put away in the Barn? Trees, animals and scenery can; the Barn must be repaired and have room.
+## Can `o` be put away in the Barn? Trees, animals and scenery can, once the Barn is repaired (full: the inbox).
 func can_store(o: Dictionary) -> Verdict:
 	if not game.storage.storable_kind(o):
 		return Verdict.new(Why.CANT_STORE, tr("THAT_CAN_T_GO_IN_THE"))
 	if not game.storage.barn_repaired():
 		return Verdict.new(Why.BARN_BROKEN, tr("FIX_THE_BARN_FIRST_TO_STORE"))
-	if game.storage.stored.size() >= game.storage.total_limit():
-		return Verdict.new(Why.FULL, tr("THE_BARN_IS_FULL"))
-	return yes()
+	return yes()   # (a full Barn sends it on to the inbox: store_object)
 
 
 ## Can frame `b` be finished now: is it a frame, and are all the materials it still needs in hand?

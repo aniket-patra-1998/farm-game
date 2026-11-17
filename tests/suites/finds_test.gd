@@ -571,6 +571,10 @@ func test_365_every_find_shares_one_look_and_the_field_glints() -> void:
 	g.found_on.connect(func(uid: int, text: String, rarity: String) -> void: on.append([uid, text, rarity]))
 	Release.whole = true
 	_check(g.nurture.call("_found", NurtureSystem.BABY, "cow", 77), "a mystery baby is found")
+	if not g.storage.barn_repaired():   # (it waits in the inbox: claimed into the Barn, then placed from it)
+		g.social.claim(int(g.social.inbox.back()["id"]))
+	var spot := g.free_spot_for(NurtureSystem.BABY)
+	_check(g.storage.place_from_storage(g.storage.stored.size() - 1, spot.x, spot.y), "placed from the Barn")
 	_check(on.any(func(f: Array) -> bool: return f[0] == 77 and f[2] == "rare"), "and said where it was found, as rare")
 	var young: Dictionary = g.objects.filter(func(o: Dictionary) -> bool: return o["id"] == NurtureSystem.BABY)[0]
 	young["fed"] = g.nurture.needs(young) - 1
