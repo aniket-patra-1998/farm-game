@@ -236,12 +236,11 @@ func _grow(o: Dictionary) -> String:
 	if not game.can_place(into, row, col):
 		var spot := game.nearest_free_spot(into, row, col)
 		if spot.x < 0:
-			# Nowhere at all: it waits in the Barn.
-			grown.erase("row")
-			grown.erase("col")
-			game.storage.stored.append(grown)
-			game.message.emit(tr("GREW_INTO_A_KEPT_IN_THE_BARN") % [game.item_data(o["id"])["name"],
-				game.item_data(into)["name"]])
+			# Nowhere at all: it arrives like any new thing.
+			game.next_uid -= 1
+			var went := game.storage.welcome(into)
+			game.message.emit(tr("GREW_INTO") % [game.item_data(o["id"])["name"], game.item_data(into)["name"]] + " "
+				+ tr("ARRIVED_IN_BARN" if went == BarnStorage.BARN else "ARRIVED_IN_INBOX"))
 			game.ribbons.bump("young_raised", 1)
 			return into
 		grown["row"] = spot.x
@@ -332,7 +331,7 @@ func from_garden(garden: Dictionary) -> Array[String]:
 	return out
 
 
-## Puts a found young on the farm (or in the Barn with no room), secretly set to become `becomes`. Found while
+## Sends a found young to the Barn (or the inbox when full), secretly set to become `becomes`. Found while
 ## harvesting the thing `at_uid`, it is said there as a find (rare: a mystery is always worth a look); -1 for one
 ## that came another way (a neighbour's gift).
 func _found(young_id: String, becomes: String, at_uid := -1) -> bool:
@@ -340,19 +339,8 @@ func _found(young_id: String, becomes: String, at_uid := -1) -> bool:
 		return false
 	if at_uid >= 0:
 		game.found_on.emit(at_uid, tr("FOUND") + str(game.item_data(young_id)["name"]), "rare")
-	var o := {"uid": game.next_uid, "id": young_id, "t": game.now(), "fed": 0, "becomes": becomes}
-	game.next_uid += 1
-	var spot := game.free_spot_for(young_id)
-	if spot.x < 0:
-		game.storage.stored.append(o)
-		game.message.emit(tr("YOU_FOUND_A_IT_S_IN_THE_BARN") % game.item_data(young_id)["name"])
-	else:
-		o["row"] = spot.x
-		o["col"] = spot.y
-		game.add_object(o)
-		game.message.emit(tr("YOU_FOUND_A_GIVE_IT") % [game.item_data(young_id)["name"], needs_of(young_id),
-			supply_name(str(game.item_data(young_id)["supply"]))])
-	game.objects_updated()
+	var went := game.storage.welcome(young_id, {"fed": 0, "becomes": becomes})   # (placed from there, then fed)
+	game.message.emit(game.storage.welcome_words("YOU_FOUND_A", young_id, went))
 	return true
 
 

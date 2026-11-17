@@ -6,7 +6,7 @@ func test_120_a_mystery_young_grows_into_its_secret_on_the_last_supply() -> void
 	var g := _farm()
 	g.farm_size = GameState.MAX_SIZE
 	var p := g.player
-	_check(g.nurture._found("mystery_seedling", "apple_tree"), "a seedling is found")
+	_check(_find_young(g, "mystery_seedling", "apple_tree"), "a seedling is found")
 	var o: Dictionary = g.objects[-1]
 	var uid := int(o["uid"])
 	var at := Vector2i(int(o["row"]), int(o["col"]))
@@ -27,7 +27,7 @@ func test_120_a_mystery_young_grows_into_its_secret_on_the_last_supply() -> void
 	_eq(grown.get("id", ""), "apple_tree", "an apple tree stands where it grew")
 	_eq(g.nurture.has_supply("watering_can"), 2, "8 cans in all")
 	# Supplies promised to queued jobs aren't promised twice.
-	g.nurture._found("mystery_baby", "cow")
+	_find_young(g, "mystery_baby", "cow")
 	var baby: Dictionary = g.objects[-1]
 	g.nurture.add_supply("animal_feed", 1)
 	_eq(p.enqueue({"kind": "nurture", "uid": int(baby["uid"])}), PlayerSystem.Refused.NONE, "one feed queued")
@@ -61,18 +61,18 @@ func test_121_animal_homes_give_mystery_babies_of_their_kinds_and_feed() -> void
 	for k in 300:
 		_skip(g, g.cycle_of(shed))
 		g.collect(int(shed["uid"]))
-	for o in g.objects:
-		if o["id"] == "mystery_baby":
-			found += 1
-			_eq(o["becomes"], "cow", "a baby of the home's grows into its adult")
+	for o: Dictionary in _young_all(g, "mystery_baby"):
+		found += 1
+		_eq(o["becomes"], "cow", "a baby of the home's grows into its adult")
 	_check(found > 5 and found < 50, "babies now and then (%d in 300)" % found)
 	_check(g.nurture.has_supply("animal_feed") > 30, "and feed (%d)" % g.nurture.has_supply("animal_feed"))
-	# With no room on the farm, what's found waits in the Barn.
-	var stored := g.storage.stored.size()
-	g.farm_size = 0
+	# What's found arrives in the Barn, never dropped on the farm.
+	var kept := _young_all(g, "mystery_seedling").size()
+	var on_farm := g.objects.size()
 	g.nurture._found("mystery_seedling", "apple_tree")
-	_eq(g.storage.stored.size(), stored + 1, "no room: it's kept in the Barn")
-	_eq(g.storage.stored[-1]["becomes"], "apple_tree", "still knowing what it'll be")
+	_eq(_young_all(g, "mystery_seedling").size(), kept + 1, "it's kept in the Barn (or the inbox)")
+	_eq(g.objects.size(), on_farm, "not on the farm")
+	_eq(_young_all(g, "mystery_seedling")[-1]["becomes"], "apple_tree", "still knowing what it'll be")
 	_done(g)
 
 
@@ -127,7 +127,7 @@ func test_123_mystery_bulbs_and_the_bloom_garden() -> void:
 	g.coins = 100000
 	g.xp = g.xp_for_level(ShowcaseFarm.top_level(g))
 	# A Mystery Bulb: 5 Flower Food grow it into a Single Bloom.
-	g.nurture._found("mystery_bulb", "lily_bloom")
+	_find_young(g, "mystery_bulb", "lily_bloom")
 	var bulb: Dictionary = g.objects[-1]
 	_eq(g.nurture.needs(bulb), 5, "FarmVille: about 5 Flower Food")
 	g.nurture.add_supply("flower_food", 5)
@@ -156,10 +156,9 @@ func test_123_mystery_bulbs_and_the_bloom_garden() -> void:
 	# Blooms on the farm give bulbs now and then, Full Blooms twice as often.
 	for k in 400:
 		g.nurture.from_bloom({"id": "daisy_bloom"})
-	var bulbs := g.objects.filter(func(o: Dictionary) -> bool: return o["id"] == "mystery_bulb").size()
+	var bulbs := _young_all(g, "mystery_bulb").size()
 	_check(bulbs > 5 and bulbs < 40, "bulbs now and then (%d in 400)" % bulbs)
-	for o in g.objects:
-		if o["id"] == "mystery_bulb":
-			_check(g.catalog.get_def(o["becomes"]) is BloomDef and not (g.catalog.get_def(o["becomes"]) as BloomDef).is_full(),
-				"a bulb grows into a Single Bloom")
+	for o: Dictionary in _young_all(g, "mystery_bulb"):
+		_check(g.catalog.get_def(o["becomes"]) is BloomDef and not (g.catalog.get_def(o["becomes"]) as BloomDef).is_full(),
+			"a bulb grows into a Single Bloom")
 	_done(g)

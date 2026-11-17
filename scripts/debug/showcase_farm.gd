@@ -267,7 +267,7 @@ static func fill_storage(g: GameState) -> int:
 		return 0
 	var now := g.now()
 	g.storage.stored.clear()
-	while g.storage.stored.size() < g.storage.total_limit():
+	while g.storage.has_room():
 		var id := ids[g.storage.stored.size() % ids.size()]
 		g.storage.stored.append({"uid": g.next_uid, "id": id, "t": now})
 		g.next_uid += 1

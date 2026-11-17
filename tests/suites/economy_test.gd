@@ -223,13 +223,10 @@ func test_31_storage_limits() -> void:
 		g.storage.stored.append({"uid": 9000 + k, "id": "chicken", "t": 0})
 	var kept_id := str(g.object_at(g.index_of(9, 3))["id"])
 	_check(g.storage.store_object(int(g.object_at(g.index_of(9, 3))["uid"])),
-		"past the barn's space it goes to the gift box")
-	_eq(g.storage.in_gift_box(), 1, "one thing in the gift box")
-	while g.storage.stored.size() < g.storage.total_limit():
-		g.storage.stored.append({"uid": 90000 + g.storage.stored.size(), "id": "chicken", "t": 0})
-	_check(g.buy_and_place("hay_bale", 9, 6), "another one to try")
-	_check(not g.storage.store_object(int(g.object_at(g.index_of(9, 6))["uid"])),
-		"barn and gift box both full refuses more")
+		"past the barn's space it goes to the inbox")
+	_eq(g.storage.stored.size(), g.storage.barn_capacity(), "the Barn holds its own space, never more")
+	var sent: Dictionary = g.social.inbox.back()
+	_eq(str(sent["give"]["id"]), kept_id, "the inbox holds it, to place later")
 	_done(g)
 
 

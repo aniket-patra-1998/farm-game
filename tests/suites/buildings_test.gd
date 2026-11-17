@@ -472,22 +472,19 @@ func test_93_vehicles_and_babies_through_the_drop() -> void:
 	_done(g)
 
 
-func test_135_the_barn_grows_and_what_spills_past_it_waits_in_the_gift_box() -> void:
+func test_135_the_barn_grows_and_what_is_past_its_space_waits_in_the_inbox() -> void:
 	var g := _farm()
 	_eq(g.building_def("barn").max_level(), 5, "the barn has five sizes")
 	_check(g.building_def("barn").capacity(5) > g.building_def("barn").capacity(1) * 5,
 		"the biggest holds many times more")
 	var cap := g.storage.barn_capacity()
-	_eq(g.storage.total_limit(), cap + BarnStorage.GIFT_BOX_LIMIT, "the gift box adds up to 9,999 more")
-	for k in cap + 7:
+	for k in cap + 7:   # (an older save, kept past the Barn's space)
 		g.storage.stored.append({"uid": 9000 + k, "id": "chicken", "t": 0})
-	_eq(g.storage.in_gift_box(), 7, "seven spilled past the barn into the gift box")
-	var full := {"uid": 1, "id": "chicken", "t": 0}
-	for k in BarnStorage.GIFT_BOX_LIMIT:
-		if g.storage.stored.size() >= g.storage.total_limit():
-			break
-		g.storage.stored.append(full.duplicate())
-	_eq(g.storage.in_gift_box(), BarnStorage.GIFT_BOX_LIMIT, "the gift box stops at 9,999")
+	var mail := g.social.inbox.size()
+	_eq(g.storage.spill_over(), 7, "on load, the seven past the Barn's space..")
+	_eq(g.social.inbox.size(), mail + 7, "..go to the inbox, the one Gift Box")
+	_eq(g.storage.stored.size(), cap, "and the Barn holds its own space, never more")
+	_check(not g.storage.receive("cow"), "a full Barn takes nothing more")
 	_done(g)
 
 

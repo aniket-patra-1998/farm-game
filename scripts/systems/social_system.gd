@@ -99,7 +99,7 @@ func claim(item_id: int) -> bool:
 	if at < 0 or (not enabled() and int(inbox[at].get("from", 0)) != InboxItem.FARM):
 		return false
 	var item := inbox[at]
-	if str(item["give"].get("what", "")) == InboxItem.ITEM and not game.storage.has_room():
+	if str(item["give"].get("what", "")) == InboxItem.ITEM and not game.storage.has_room(int(item["give"].get("n", 1))):
 		game.message.emit(tr("INBOX_NO_ROOM"))   # (a thing to place waits until the Barn has room)
 		return false
 	if InboxItem.is_help(item):
@@ -355,7 +355,7 @@ func grant(give: Dictionary) -> String:
 			return tr("SOCIAL_WATERED") if game.nurture.help_young(int(give.get("uid", 0))) else ""
 		InboxItem.ITEM:
 			for i in n:
-				game.storage.receive(id)   # (to the Barn: placed from there, Placement)
+				game.storage.receive(id, give.get("keep", {}))   # (to the Barn: placed from there, Placement)
 			return words(give)
 	return ""
 

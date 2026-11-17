@@ -110,6 +110,31 @@ func _arrived(g: GameState, item_id: String) -> int:
 	return n
 
 
+## Every Mystery young `young_id` that has arrived, wherever it is (the farm, the Barn, the inbox), each as a
+## dictionary with its own fields ("becomes", "fed").
+func _young_all(g: GameState, young_id: String) -> Array:
+	var out: Array = []
+	for o: Dictionary in g.objects + g.storage.stored:
+		if str(o["id"]) == young_id:
+			out.append(o)
+	for m: Dictionary in g.social.inbox:
+		var give: Dictionary = m["give"]
+		if str(give.get("id", "")) == young_id and give.has("keep"):
+			out.append(give["keep"])
+	return out
+
+
+## A found Mystery young, placed from the Barn the way the player would (it arrives there: BarnStorage.welcome).
+func _find_young(g: GameState, young_id: String, becomes: String) -> bool:
+	if not g.nurture._found(young_id, becomes):
+		return false
+	if not g.storage.barn_repaired():   # (the Barn broken: it waited in the inbox; claimed into the Barn)
+		g.social.claim(int(g.social.inbox.back()["id"]))
+	var at := g.storage.stored.size() - 1
+	var spot := g.free_spot_for(young_id)
+	return spot.x >= 0 and g.storage.place_from_storage(at, spot.x, spot.y)
+
+
 
 
 

@@ -262,8 +262,9 @@ func test_319_place_move_in_store_and_finish_say_yes_or_why_not() -> void:
 	_eq(g.buildings.can_store(bale).why, BuildingSystem.Why.BARN_BROKEN, "a broken Barn stores nothing")
 	barn.erase("broken")
 	_check(g.buildings.can_store(bale).ok(), "a repaired Barn takes the bale")
-	for k in g.storage.total_limit():
+	for k in g.storage.barn_capacity():
 		g.storage.stored.append({"id": "hay_bale", "uid": 90000 + k})
-	_eq(g.buildings.can_store(bale).why, BuildingSystem.Why.FULL, "a full Barn")
-	_check(not g.storage.store_object(int(bale["uid"])), "and storing anyway is refused")
+	_check(g.buildings.can_store(bale).ok(), "a full Barn still takes it..")
+	_check(g.storage.store_object(int(bale["uid"])), "..storing it")
+	_eq(g.storage.stored.size(), g.storage.barn_capacity(), "past its space, to the inbox, not the Barn")
 	g.queue_free()
