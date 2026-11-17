@@ -22,6 +22,8 @@ const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 ## The features that are one building's own (`_signature`).
 const SLIDE := "slide"   # not-ui (a meta on a door that rolls up: how far)
 const STORING := "storing"   # not-ui (a building type: Game.building_type)
+const PLAN := "plan"         # not-ui (the state of the part that shows what is still to be built: `_plan`)
+const PLAN_SNAP := 0.005     # two shapes within this of each other, in tiles, are the same shape
 const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
 const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
 const ROUGH_MOUNDS := 7           # low humps in a rough yard's ground..
@@ -231,6 +233,91 @@ static func yard_spot(f: Dictionary, fw: float, fd: float) -> Vector2:
 ## `fill` only say which it shows first, and `show_state` changes that without building anything.
 static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, broken := false,
 		fill := 0) -> Node3D:
+	var ctx := _assemble(it, fp, level, active, broken, fill)
+	var root: Node3D = ctx["root"]
+	if not broken:
+		_plan(ctx, it, fp, level)
+	# What shows in one state only (BuildingDress.when) is merged, part by part, and kept apart from the rest so
+	# it can be switched; the building comes out showing the state asked for.
+	for part: String in (ctx.get("states", {}) as Dictionary):
+		var loose: Node3D = ctx["states"][part]
+		root.remove_child(loose)
+		if part.begins_with(AssetRegistry.STATE + "fill"):
+			ModelKit.no_shadows(loose)   # (a storage look is small things: one draw, no shadow pass of its own)
+		var merged := ModelKit.bake(loose)
+		merged.name = part
+		merged.set_meta(ModelKit.KEEP, true)
+		root.add_child(merged)
+	show_state(root, active, fill)
+	return SpaceFit.fit_model(root, fp)
+
+
+## The size after `level` that changes how building `id` looks, or -1 when `level` is its last look.
+static func next_size(id: String, level: int) -> int:
+	var next := -1
+	for size: int in sizes_of(id):
+		if size > level and (next < 0 or size < next):
+			next = size
+	return next
+
+
+## What the building does not have yet (a rule for every building that grows; our own touch): each shape its
+## next size has and this one lacks, gathered into one part that is drawn as a timber frame
+## (`when_plan_true`, ModelKit.frame_material), so a building that can still grow shows what it will become.
+## Shapes are told apart by where they are and how big: a wall repainted is the same shape, a taller one is
+## not. What shows in one state only, and what moves by an effect, is left out. A building whose description
+## says `"plan": false` shows none.
+static func _plan(ctx: Dictionary, it: Dictionary, fp: Vector2i, level: int) -> void:
+	var next := next_size(str(it.get("id", "")), level)
+	if next < 0 or not bool((ctx["spec"] as Dictionary).get("plan", true)):
+		return
+	var have := {}
+	for shape: Array in _shapes(ctx["root"], Transform3D.IDENTITY):
+		have[_shape_key(shape)] = true
+	var ahead: Node3D = _assemble(it, fp, next, false, false, 0)["root"]
+	for shape: Array in _shapes(ahead, Transform3D.IDENTITY):
+		if have.has(_shape_key(shape)):
+			continue
+		var from := shape[0] as MeshInstance3D
+		var mesh := ArrayMesh.new()
+		for s in from.mesh.get_surface_count():   # (one vertex layout for all of them: they merge into one draw)
+			mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,
+				ModelKit.tint_arrays(from.mesh.surface_get_arrays(s), Color.WHITE))
+		var copy := MeshInstance3D.new()
+		copy.mesh = mesh
+		copy.transform = shape[1]
+		copy.material_override = ModelKit.frame_material()
+		copy.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		BuildingDress.when(ctx, PLAN, true).add_child(copy)
+	ahead.free()
+
+
+## Every solid shape under `node` as [its mesh instance, where it is in the model]: not what shows in one state
+## only, nor an effect.
+static func _shapes(node: Node, xf: Transform3D) -> Array:
+	var out := []
+	for child in node.get_children():
+		var kind := String(child.name).split("_")[0]
+		if not child is Node3D or String(child.name).begins_with(AssetRegistry.STATE) or DecorMotion.EFFECTS.has(kind):
+			continue
+		var c := child as Node3D
+		var cxf := xf * c.transform
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh != null:
+			out.append([c, cxf])
+		out.append_array(_shapes(c, cxf))
+	return out
+
+
+## What tells one shape from another: the box it fills in the model, to PLAN_SNAP.
+static func _shape_key(shape: Array) -> String:
+	var box: AABB = (shape[1] as Transform3D) * (shape[0] as MeshInstance3D).mesh.get_aabb()
+	var grain := Vector3.ONE * PLAN_SNAP
+	return "%s|%s" % [box.position.snapped(grain), box.size.snapped(grain)]
+
+
+## Everything a building is made of at a size, loose under a new node (`root` in what it returns, the build's
+## own notes with it): `build` merges it and fits it to its plot.
+static func _assemble(it: Dictionary, fp: Vector2i, level: int, active: bool, broken: bool, fill: int) -> Dictionary:
 	var root := Node3D.new()
 	var s := spec(str(it.get("id", "")), level)
 	var fw := float(fp.x)
@@ -276,19 +363,7 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 			if c.has_meta(DOOR) and not c.has_meta(SLIDE):
 				c.remove_meta(DOOR)
 				c.remove_meta(ModelKit.KEEP)
-	# What shows in one state only (BuildingDress.when) is merged, part by part, and kept apart from the rest so
-	# it can be switched; the building comes out showing the state asked for.
-	for part: String in (ctx.get("states", {}) as Dictionary):
-		var loose: Node3D = ctx["states"][part]
-		root.remove_child(loose)
-		if part.begins_with(AssetRegistry.STATE + "fill"):
-			ModelKit.no_shadows(loose)   # (a storage look is small things: one draw, no shadow pass of its own)
-		var merged := ModelKit.bake(loose)
-		merged.name = part
-		merged.set_meta(ModelKit.KEEP, true)
-		root.add_child(merged)
-	show_state(root, active, fill)
-	return SpaceFit.fit_model(root, fp)
+	return ctx
 
 
 ## Shows a built building (or a copy of one) at work or not and as full as `fill` (0 to BuildingDress.FULL): its

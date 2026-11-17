@@ -25,6 +25,7 @@ signal object_changed(uid: int)
 signal found(index: int, text: String, rarity: String)
 signal found_on(uid: int, text: String, rarity: String)
 signal building_upgraded(uid: int, level: int)
+signal vip_level_reached(level: int)   # a new VIP level (VipSystem): the Barn has a new look
 signal farm_expanded(size: int)
 signal inventory_changed
 signal inbox_changed             # the neighbours' mail changed (arrived, claimed, answered)

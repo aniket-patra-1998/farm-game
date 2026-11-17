@@ -76,6 +76,7 @@ var life: FarmLife       # the animals' minds, read by the 2D and 3D worlds
 ## what the player sees, even an animal that has wandered off its tile.
 var picker := Callable()
 var rust_picker := Callable()   # the rusty vehicle whose sign is under a screen point ("" if none)
+var fireworks := Callable()     # fireworks over a building that has just grown, by its uid (the 3D world's)
 ## uid -> the outline of that building on screen (grid space), set by the 3D world; unset in the 2D fallback.
 var outliner := Callable()
 var hatcher := Callable()        # (young uid, grown uid, then): the 3D world shakes a mystery open, then calls `then`
@@ -156,6 +157,7 @@ func _ready() -> void:
 	placing_changed.connect(func(_t: String) -> void: _on_objects_changed())
 	pieces.sync()
 	Game.building_upgraded.connect(_on_building_upgraded)
+	Game.vip_level_reached.connect(_on_vip_level_reached)
 	# Finds while farming (fuel, collectibles, Perfect Bunches) float up from their plot.
 	# Every find, wherever it was made, is said the same way in its rarity's colours (show_find).
 	Game.found.connect(func(i: int, text: String, rarity: String) -> void: show_find(center_of(i), text, rarity))
@@ -1451,7 +1453,8 @@ static func format_duration(seconds: int) -> String:
 
 
 
-## Celebrates an upgrade on the building itself: a big sparkle burst and a level popup.
+## Celebrates an upgrade on the building itself: fireworks over it (the 3D world's: `fireworks`; a burst of
+## sparkles without it) and a level popup.
 func _on_building_upgraded(uid: int, level: int) -> void:
 	var o := Game.object_by_uid(uid)
 	if o.is_empty():
@@ -1461,8 +1464,18 @@ func _on_building_upgraded(uid: int, level: int) -> void:
 	var at := (g[0] + g[2]) / 2.0 + Vector2(0, -60)
 	float_words(at, (tr("BUILT") if level == 1 else "%s!" % Game.size_name(o)), "golden", 2.0)
 	float_words(at + Vector2(0, 34), tr("HOLDS") % Game.capacity(o), "xp", 2.0)
+	if fireworks.is_valid():
+		fireworks.call(uid)
+		return
 	for k in 3:
 		_sparkle(at + Vector2(-50 + 50 * k, 20), "golden")
+
+
+## A new VIP level gives the Barn a new look: its fireworks go up.
+func _on_vip_level_reached(_level: int) -> void:
+	for o in Game.objects:
+		if fireworks.is_valid() and Game.is_building_item(str(o["id"])) and Game.building_def(str(o["id"])).shows_vip():
+			fireworks.call(int(o["uid"]))
 
 
 

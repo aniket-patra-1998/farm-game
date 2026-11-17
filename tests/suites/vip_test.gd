@@ -157,3 +157,31 @@ func test_405_vip_is_saved_and_gates_nothing() -> void:
 	_eq(g.buildings.can_buy("cow_shed").ok(), can, "VIP unlocks nothing")
 	_done(other)
 	_done(g)
+
+
+func test_416_a_building_that_grows_gets_fireworks_and_the_barn_a_show() -> void:
+	_check(Game.building_def("barn").grand() and not Game.building_def("bakery").grand(),
+		"the Barn's growing is the grand occasion, a Bakery's is not")
+	var sky := Fireworks3D.new()
+	add_child(sky)
+	var top := Vector3(4, 2, 4)
+	sky.launch(top)
+	_eq([sky.live(), sky.rockets()], [int(Fireworks3D.SMALL["sparks"]), 0],
+		"a building's fireworks: one small burst over its roof, at once")
+	sky.advance(float(Fireworks3D.SMALL["life"]) + 0.1)
+	_check(sky.live() == 0 and not sky.is_processing(), "its sparks die and the sky sleeps again")
+	sky.launch(top, true)
+	_eq(sky.rockets(), Fireworks3D.SHOW.size(), "the Barn's show: three rockets, one after another")
+	var most := 0
+	for step in 60:
+		sky.advance(0.05)
+		most = maxi(most, sky.live())
+	_check(most > int(Fireworks3D.BIG["sparks"]), "each climbs trailing sparks and bursts bigger than a small one")
+	_check(sky.rockets() == 0 and sky.live() == 0, "and when the last has burst and faded the sky is empty")
+	sky.queue_free()
+	# A new VIP level is told, so the Barn's fireworks can go up.
+	var g := _farm()
+	var told: Array[int] = []
+	g.vip_level_reached.connect(func(level: int) -> void: told.append(level))
+	g.vip.add_points(int(Balance.a("vip.level_points")[1]))
+	_eq(told, [2] as Array[int], "points that reach a new VIP level say so once, with the level reached")

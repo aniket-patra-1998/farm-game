@@ -35,10 +35,13 @@ Still to build, on the same multiplier: rare-quality crafted goods and rare babi
 
 - Its storage is as before: five sizes bought with materials, nothing to do with VIP.
 - It is the biggest building of a farm: it stands on four tiles by four, where other buildings take three.
-- Its yard shows the farm prospering (`fill.company` in data/building_models.json, `BuildingFill`): with each
-  storage size one more stands by it, each at a spot of its own. A cow at the first size, two apple trees at
-  the second, a tractor at the third, a pig at the fourth and a horse at the fifth. They are for show: they
-  are not the player's, give nothing, and a broken Barn has none.
+- Its yard shows the farm prospering (`fill.company` in data/building_models.json, `BuildingFill`), more with
+  every five VIP levels, each thing at a spot of its own: two apple trees from the start, a cow and a pig from
+  VIP 6, a tractor from VIP 11. They are for show: they are not the player's, give nothing, and a broken Barn
+  has none. Its storage size changes none of it.
+- It shows no frame of what is to come (`"plan": false`): its looks are VIP levels, not something built, and a
+  frame round the whole Barn would hide its badge.
+- A new VIP level sends the Barn's fireworks up (`Game.vip_level_reached`), as growing its storage does.
 - Its look follows the VIP level: 15 looks (five shapes of three steps each), a glTF file for each
   (docs/ASSETS.md). On top stands the VIP badge, the thing a player's eye should go to: one big, round,
   simple shape in the farm's own chunky look, as farm games show a level. A fat coin with a thick rim, a domed

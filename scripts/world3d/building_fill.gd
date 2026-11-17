@@ -96,7 +96,7 @@ var _plant_rng: RandomNumberGenerator
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
 var _own_ready := false        # the model has its own ready part (`when_fill_*`): no pile of produce beside it
-var _company_size := -1        # the size the yard's company was last shown for (a store that keeps company)
+var _company_look := -1        # the look the yard's company was last shown for (a store that keeps company)
 var _props: Node3D             # ..and what of it stands still: its trees, its vehicle
 
 
@@ -325,14 +325,14 @@ func _show_residents(o: Dictionary) -> void:
 
 
 ## The company a thriving store keeps in its yard (the Barn, data/building_models.json `fill.company`: our own
-## touch): at each of its sizes one more of the list stands there, so a bigger Barn looks a richer farm. Each
-## stands at its own spot (`at`): an animal lives there as a home's does. They are for show: they belong to
-## the Barn, are not counted or collected, and a broken Barn has none.
+## touch): each of the list stands there from the look it names (`from`: for the Barn its VIP level), so a
+## grander Barn looks a richer farm. Each stands at its own spot (`at`): an animal lives there as a home's
+## does. They are for show: they belong to the Barn, are not counted or collected, and a broken Barn has none.
 func _show_company(company: Array, o: Dictionary) -> void:
-	var size := 0 if company.is_empty() or o.get("broken", false) else Game.level_of(o)
-	if size == _company_size:
+	var look := 0 if company.is_empty() or o.get("broken", false) else Game.look_level(o)
+	if look == _company_look:
 		return
-	_company_size = size
+	_company_look = look
 	if _props != null:
 		_props.queue_free()
 	_props = Node3D.new()
@@ -340,7 +340,7 @@ func _show_company(company: Array, o: Dictionary) -> void:
 	var picks: Array = []
 	var spots: Array = []
 	for one: Dictionary in company:
-		if int(one.get("from", 1)) > size:
+		if int(one.get("from", 1)) > look:
 			continue
 		var it := Game.item_data(str(one["id"]))
 		var spot := BuildingModel.yard_spot(one, _fp.x, _fp.y)

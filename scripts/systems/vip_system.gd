@@ -101,6 +101,7 @@ func add_points(n: int) -> void:
 	if after > before:
 		_add_days((after - before) * Balance.i("vip.level_days"))
 		game.message.emit(tr("VIP_LEVEL_REACHED") % [after, Balance.i("vip.level_days")])
+		game.vip_level_reached.emit(after)
 		_barn_changed()
 	game.queue_save()
 

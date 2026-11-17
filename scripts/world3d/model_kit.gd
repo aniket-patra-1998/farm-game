@@ -19,6 +19,7 @@ const LIVE_SHADE := "kit_shade"
 const LIVE_WATER := "kit_water"
 const LIVE_POND := "kit_pond"
 const LIVE_SHINE := "kit_shine"
+const LIVE_FRAME := "kit_frame"
 const SHADE_STRENGTH := 0.5   # how dark the soft shade round a building's foot is at its middle
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.05
@@ -443,6 +444,8 @@ static func file_name_of(mat: Material) -> String:
 		return LIVE_POND
 	if mat == shine_material():
 		return LIVE_SHINE
+	if mat == frame_material():
+		return LIVE_FRAME
 	if mat in paint_like:
 		return FILE_PAINT
 	return ""
@@ -462,7 +465,8 @@ static func adopt(node: Node) -> void:
 			var over := _live(mi.get_surface_override_material(k))
 			if over != mi.get_surface_override_material(k):
 				mi.set_surface_override_material(k, over)
-			live = live or mi.get_active_material(k) in [glow_material(), shade_material(), water(), pond_water()]
+			live = live or mi.get_active_material(k) in [glow_material(), shade_material(), water(), pond_water(),
+				frame_material()]
 		if live:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for c in node.get_children():
@@ -478,6 +482,17 @@ static func shine_material() -> ShaderMaterial:
 		m.resource_name = LIVE_SHINE
 		_materials["shine"] = m
 	return _materials["shine"]
+
+
+## The shared material of what a building does not have yet (shaders/frame3d: a timber frame in place of the
+## solid shape; BuildingModel's plan).
+static func frame_material() -> ShaderMaterial:
+	if not _materials.has("frame"):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/frame3d.gdshader")
+		m.resource_name = LIVE_FRAME
+		_materials["frame"] = m
+	return _materials["frame"]
 
 
 ## Makes the merged paint of `node` (a baked part) glimmer: its painted surface is drawn with the shine
@@ -975,6 +990,8 @@ static func _live(m: Material) -> Material:
 			return pond_water()
 		LIVE_SHINE:
 			return shine_material()
+		LIVE_FRAME:
+			return frame_material()
 	return m
 
 

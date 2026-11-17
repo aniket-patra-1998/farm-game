@@ -37,6 +37,9 @@ targets, and Godot imports it natively. Our builders' Python never runs on a pho
 - States: a part named `when_<state>_<value>` shows only in that state (§10.4). States that come and go (ready,
   at work, how full) are switched on the model that stands. A building's level and its construction stage are
   a file each (`{level}` and `{stage}` in its paths in data/assets.json), so only what stands is loaded.
+- What a building does not have yet: a part named `when_plan_true` holds the shapes its next size adds, drawn
+  as a timber frame with the kit's `kit_frame` material (`BuildingModel._plan`). The builder makes it for every
+  building with a next look; a file carries it like any state part, and it shows only on the farm.
 - Which kinds may come from files today: buildings, trees, plain decorations and blooms
   (`Objects3D.FILE_KINDS`). Animals, vehicles, young ones and joining fences and hedges get their file path
   with their own step, as they need more than a model (clips, implements, joins).
@@ -74,7 +77,7 @@ builder names its materials `paint` or `wall` (`ModelKit.FILE_PAINT`, `FILE_WALL
 that read each part's shine or surface pattern from its vertex alpha (`alpha_holds`; the patterns are
 shaders/surface_patterns.gdshaderinc, shared with the builders' own wall shader). Glass, pools of light, the
 shade at a building's foot and water are the kit's single shared materials, put back by the names the file
-gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`, `kit_pond`, `kit_shine`: `ModelKit.adopt`). A crafting building is 6 to
+gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`, `kit_pond`, `kit_shine`, `kit_frame`: `ModelKit.adopt`). A crafting building is 6 to
 8 draws: walls, paint and glass, the light pools, the shade, its storage look and its animated parts.
 
 ## 4. Animation: clips, blended, with layers; crowds on the GPU

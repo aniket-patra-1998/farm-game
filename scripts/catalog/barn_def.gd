@@ -20,6 +20,10 @@ func shows_vip() -> bool:
 	return true
 
 
+func grand() -> bool:
+	return true
+
+
 func validate(catalog) -> Array[String]:
 	var out := super.validate(catalog)
 	for m in data.get("repair_parts", {}):

@@ -267,6 +267,8 @@ func _count_meshes(node: Node) -> int:
 
 func _count_vertices(node: Node) -> int:
 	var n := 0
+	if String(node.name).begins_with(AssetRegistry.STATE + BuildingModel.PLAN):
+		return 0   # (the frame of what a building does not have yet is not part of it)
 	if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
 		var mesh := (node as MeshInstance3D).mesh
 		for s in mesh.get_surface_count():
@@ -1440,6 +1442,9 @@ func test_310_everything_but_trees_as_placed_stay_inside_their_tile_border() -> 
 		var model := holder.get_child(0) as Node3D
 		if model.has_node(Objects3D.DRESSING):
 			model.get_node(Objects3D.DRESSING).free()
+		for fill: BuildingFill in model.find_children("*", "BuildingFill", true, false):
+			if fill._props != null:
+				fill._props.free()   # (the trees of the Barn's yard overhang as any tree does)
 		var reach := SpaceFit.reach(model, model.transform)
 		var room := SpaceFit.tile_room(fp).grow(0.02)
 		room.position -= Vector2(fp) / 2.0   # (the model is measured about the footprint's centre)
@@ -1790,7 +1795,8 @@ func test_321_ready_things_wear_the_one_sign_and_the_broken_barn_looks_broken() 
 	var faces := [0, 0]
 	for k in 2:
 		for n in ([whole, broken][k] as Node3D).find_children("*", "MeshInstance3D", true, false):
-			if (n as MeshInstance3D).mesh != null:
+			var planned := String(n.get_parent().name).begins_with(AssetRegistry.STATE + BuildingModel.PLAN)
+			if (n as MeshInstance3D).mesh != null and not planned:   # (not the frame of what is still to come)
 				faces[k] += (n as MeshInstance3D).mesh.get_faces().size()
 	_check(faces[1] > faces[0], "the broken Barn has its tarp, gaps and loose boards (%d > %d)" % [faces[1], faces[0]])
 	var barn := {"uid": 9405, "id": "barn", "row": 14, "col": 14, "t": Game.now(), "level": 1, "broken": true}

@@ -43,6 +43,11 @@ func shows_vip() -> bool:
 	return false
 
 
+## Whether its growing is an occasion for the whole farm (the Barn, the farm's centre): its fireworks are a show.
+func grand() -> bool:
+	return false
+
+
 ## Whether it can stand broken, with a look for it (the starter Barn, until it is repaired).
 func can_break() -> bool:
 	return data.has("repair_parts")

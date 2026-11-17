@@ -214,7 +214,8 @@ func test_388_crafting_buildings_are_gltf_files_that_follow_the_art_rules() -> v
 	# shared glass, light pools, shade and water, nothing else. What changes with time (at work or not, how
 	# full) is shown on the model that stands, never by building it again; what moves is a named part.
 	var objects := Objects3D.new()
-	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water()]
+	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.frame_material()]
 	for id: String in ["bakery", "winery", "spa", "feed_mill"]:
 		_check(AssetRegistry.has_model(id), "%s is made as a file" % id)
 		for level in range(1, 5):
@@ -293,6 +294,7 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 	_eq(harvesting.size(), 12, "the twelve harvesting buildings")
 	var objects := Objects3D.new()
 	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.frame_material(),
 		ModelKit.pond_water()]
 	for id: String in harvesting:
 		var fp := Game.footprint(id)
@@ -308,7 +310,8 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 			var lit := 0
 			var top := 0.0
 			for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
-				top = maxf(top, (Objects3D._local_to(node, mi) * mi.mesh.get_aabb()).end.y)
+				if mi.get_active_material(0) != ModelKit.frame_material():   # (not the frame of what is to come)
+					top = maxf(top, (Objects3D._local_to(node, mi) * mi.mesh.get_aabb()).end.y)
 				for k in mi.mesh.get_surface_count():
 					var mat := mi.get_active_material(k)
 					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
@@ -379,6 +382,7 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 	# level's number that glimmers and turns while VIP is active and is still and grey when it has lapsed, and a
 	# file for the starter Barn standing broken.
 	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.frame_material(),
 		ModelKit.shine_material()]
 	var storing: Array[String] = []
 	for id: String in Game.item_order:
@@ -477,14 +481,16 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 	objects.free()
 
 
-func test_391_a_bigger_barn_keeps_more_company_in_its_yard() -> void:
-	# The Barn is the farm's centre: a 4 by 4 plot, larger than any other building's. At each of its storage
-	# sizes one more thing stands in its yard, for show (data/building_models.json `fill.company`): a cow, two
-	# trees, a tractor, a pig, a horse. A broken Barn has none.
+func test_391_a_grander_barn_keeps_more_company_in_its_yard() -> void:
+	# The Barn is the farm's centre: a 4 by 4 plot, larger than any other building's. Its yard keeps company
+	# for show (data/building_models.json `fill.company`), more with every five VIP levels: two trees from the
+	# start, a cow and a pig from VIP 6, a tractor from VIP 11. A broken Barn has none.
 	_eq(Game.footprint("barn"), Vector2i(4, 4), "the Barn stands on a 4 by 4 plot")
 	for id: String in Game.item_order:
 		if Game.is_building_item(id) and id != "barn":
 			_check(Game.footprint(id).x * Game.footprint(id).y < 16, "%s is smaller than the Barn" % id)
+	Game.saving_enabled = false
+	Game.reset_game()
 	var barn := {"uid": 9402, "id": "barn", "row": 0, "col": 0, "level": 1, "built": true, "t": Game.now()}
 	var node := AssetRegistry.instance("barn", {"level": 1})
 	Objects3D.mark_parts(node)
@@ -492,12 +498,16 @@ func test_391_a_bigger_barn_keeps_more_company_in_its_yard() -> void:
 	node.add_child(fill)
 	add_child(node)
 	var seen: Array = []
-	for size in range(1, Game.max_level("barn") + 1):
-		barn["level"] = size
+	var points: Array = Balance.a("vip.level_points")
+	for vip in [0, 1, 5, 6, 10, 11, 15]:
+		Game.vip.points = 0 if vip == 0 else int(points[vip - 1])
 		fill.refresh(barn)
 		seen.append([fill.residents.size(), fill._props.get_child_count()])
-	_eq(seen, [[1, 0], [1, 2], [1, 3], [2, 3], [3, 3]],
-		"a cow, then two trees, a tractor, a pig and a horse: [animals, trees and vehicles] at each size")
+	_eq(seen, [[0, 2], [0, 2], [0, 2], [2, 2], [2, 2], [2, 3], [2, 3]],
+		"two trees, then a cow and a pig, then a tractor: [animals, trees and vehicles] at VIP 0, 1, 5, 6, 10, 11, 15")
+	barn["level"] = Game.max_level("barn")
+	fill.refresh(barn)
+	_eq([fill.residents.size(), fill._props.get_child_count()], [2, 3], "its storage size changes none of it")
 	var fp := Game.footprint("barn")
 	var spots: Array[Vector2] = [BuildingModel.yard_spot(fill._spec["fill"], fp.x, fp.y)]
 	for one: Dictionary in fill._spec["fill"]["company"]:
@@ -519,3 +529,50 @@ func test_391_a_bigger_barn_keeps_more_company_in_its_yard() -> void:
 	fill.refresh(barn)
 	_check(fill.residents.is_empty() and fill._props.get_child_count() == 0, "a broken Barn keeps no company")
 	node.queue_free()
+
+
+func test_392_a_building_that_can_still_grow_shows_what_it_lacks_as_a_frame() -> void:
+	var part := AssetRegistry.STATE + BuildingModel.PLAN + "_true"   # not-ui (a part's name)
+	for id: String in ["bakery", "chicken_coop", "winery"]:
+		var last := Game.look_levels(id)
+		for level in [1, last]:
+			var model := AssetRegistry.instance(id, {"level": level, "working": false, "fill": 0})
+			var frame := model.get_node_or_null(part) as Node3D
+			if level == last:
+				_check(frame == null, "%s at its last look has nothing left to show" % id)
+				model.free()
+				continue
+			_check(frame != null and not frame.visible, "%s look %d has the frame, hidden until it is asked for" % [id, level])
+			var meshes := frame.find_children("*", "MeshInstance3D", true, false)
+			var draws := 0
+			var shapes := 0
+			for mi: MeshInstance3D in meshes:
+				draws += mi.mesh.get_surface_count()
+				shapes += mi.mesh.get_faces().size()
+				_check(mi.get_active_material(0) == ModelKit.frame_material(), "%s: drawn with the kit's frame material" % id)
+				_eq(mi.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "%s: a frame casts no shadow" % id)
+			_eq(draws, 1, "%s look %d: its whole frame is one draw" % [id, level])
+			var next := AssetRegistry.instance(id, {"level": level + 1, "working": false, "fill": 0})
+			var whole := 0
+			for mi: MeshInstance3D in next.find_children("*", "MeshInstance3D", true, false):
+				if mi.is_visible_in_tree() or not mi.is_inside_tree():
+					whole += mi.mesh.get_faces().size()
+			_check(shapes > 0 and shapes < whole, "%s look %d frames only what the next adds (%d of %d)" % [id, level,
+				shapes, whole])
+			AssetRegistry.apply_state(model, {"level": level, "working": false, "fill": 0, BuildingModel.PLAN: true})
+			_check(frame.visible, "%s: and it shows when the building stands on the farm" % id)
+			model.free()
+			next.free()
+	# The Barn's looks are its VIP level, not something built: its description turns the frame off.
+	var barn := BuildingModel.build(Game.item_data("barn"), Game.footprint("barn"), 1, false)
+	_check(barn.get_node_or_null(part) == null, "the Barn shows no frame")
+	barn.free()
+	Game.saving_enabled = false
+	Game.reset_game()
+	var objects := Objects3D.new()
+	add_child(objects)
+	var coop := {"uid": 9501, "id": "chicken_coop", "row": 1, "col": 1, "t": Game.now(), "level": 1, "inside": {}}
+	_check(objects.state_of(coop)[BuildingModel.PLAN], "a building on the farm is asked to show its frame")
+	coop["broken"] = true
+	_check(not objects.state_of(coop)[BuildingModel.PLAN], "not a broken one")
+	objects.queue_free()

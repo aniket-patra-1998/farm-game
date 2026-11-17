@@ -107,6 +107,7 @@ var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
 var _rust_marks: RustMarks     # the rust sign, over every rusty vehicle (or the Garage it stands in)
+var _fireworks: Fireworks3D    # the fireworks over a building that has just grown
 var _links_due := true          # the farm changed since the fences and hedges were last joined up
 
 
@@ -131,6 +132,8 @@ func _ready() -> void:
 	add_child(_ready_marks)
 	_rust_marks = RustMarks.new()
 	add_child(_rust_marks)
+	_fireworks = Fireworks3D.new()
+	add_child(_fireworks)
 	sync()
 	Game.farm_expanded.connect(func(_n: int) -> void: _build_scenery())
 	# A vehicle standing on the farm is out of sight while it is drawn at work (VehicleRuns), and back after.
@@ -664,6 +667,7 @@ func state_of(o: Dictionary) -> Dictionary:
 		state["level"] = Game.look_level(o)
 		state["working"] = _at_work(o)
 		state["fill"] = store_fill(o)
+		state[BuildingModel.PLAN] = Release.on("plans") and not state["broken"]   # (what its next size adds, framed)
 		if Game.vip.level() > 0 and not state["broken"] and Game.building_def(str(o["id"])).shows_vip():
 			state["vip"] = Game.vip.active()   # (its badge: gold and turning, or grey metal; none before VIP 1)
 		if Game.under_construction(o):
@@ -1269,6 +1273,21 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 	return best
 
 
+
+
+## Fireworks over building `uid`, which has just grown (Fireworks3D): a small burst, or a show for the Barn.
+func fireworks_over(uid: int) -> void:
+	var o := Game.object_by_uid(uid)
+	if o.is_empty() or not _views.has(uid):
+		return
+	var box: AABB = _views[uid]["box"]
+	_fireworks.launch(Vector3(box.get_center().x, box.end.y, box.get_center().z),
+		Game.building_def(str(o["id"])).grand())
+
+
+## The fireworks (for tests and tools).
+func fireworks_node() -> Fireworks3D:
+	return _fireworks
 
 
 ## The rusty vehicle whose sign is under a screen point ("" if none).
