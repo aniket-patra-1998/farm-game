@@ -162,10 +162,7 @@ static func _one_body(n: Node) -> void:
 ## effect running under it; every mesh gets plain materials named for the ones it was drawn with.
 static func _for_file(n: Node) -> void:
 	for c in n.get_children():
-		# (what the game starts under a named part is not the file's: a Spinner, a Bobber, an effect's own mesh;
-		# a part that turns or rides is itself the thing drawn, and stays)
-		if c is Spinner or c is Bobber or (DecorMotion.is_part(n)
-				and not String(n.name).split("_")[0] in [DecorMotion.SPIN, DecorMotion.BOB]):
+		if c is Spinner or (DecorMotion.is_part(n) and String(n.name).split("_")[0] != DecorMotion.SPIN):
 			n.remove_child(c)
 			c.free()
 			continue

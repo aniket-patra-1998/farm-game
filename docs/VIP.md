@@ -34,6 +34,11 @@ Still to build, on the same multiplier: rare-quality crafted goods and rare babi
 ## The Barn
 
 - Its storage is as before: five sizes bought with materials, nothing to do with VIP.
+- It is the biggest building of a farm: it stands on four tiles by four, where other buildings take three.
+- Its yard shows the farm prospering (`fill.company` in data/building_models.json, `BuildingFill`): with each
+  storage size one more stands by it, each at a spot of its own. A cow at the first size, two apple trees at
+  the second, a tractor at the third, a pig at the fourth and a horse at the fifth. They are for show: they
+  are not the player's, give nothing, and a broken Barn has none.
 - Its look follows the VIP level: 15 looks (five shapes of three steps each), a glTF file for each
   (docs/ASSETS.md). On top stands the VIP badge, the thing a player's eye should go to: one big, round,
   simple shape in the farm's own chunky look, as farm games show a level. A fat coin with a thick rim, a domed
@@ -41,7 +46,8 @@ Still to build, on the same multiplier: rare-quality crafted goods and rare babi
   three levels each: bronze, silver, then gold on red, on green and on royal purple.
   - While VIP is active (`when_vip_true`) its metal glimmers: a band of light crosses it every few seconds and
     it glows a little by itself, day and night (`ModelKit.shine_material`, one draw); a few big glints twinkle
-    at its rim (the `sparkle` effect, one draw); and it rides gently up and down (a `bob_*` part).
+    at its rim (the `sparkle` effect, one draw); and it turns slowly about its upright, its number on both
+    faces (a `spin_*` part).
   - Lapsed (`when_vip_false`) the same badge stands still in dull grey: the level is still there to read, and
     what was lost is plain to see.
   - Before the first VIP level the Barn wears the first look with no badge.

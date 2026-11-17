@@ -36,10 +36,10 @@ const FULL := 3
 const CHUTE_LONG := 0.7       # a grain chute: how long its spout is..
 const CHUTE_TILT := 0.55       # ..how steeply it runs down (radians)..
 const CHUTE_HIGH := 0.42       # ..and how high its mouth is over the ground
-const BADGE_R := 0.3              # the VIP badge: its radius, in tiles (big: it is what the eye goes to)..
+const BADGE_R := 0.36             # the VIP badge: its radius, in tiles (big: it is what the eye goes to)..
 const BADGE_RIM := 0.13           # ..its rim's thickness, against that..
 const BADGE_POST := 0.12          # ..the foot it stands on..
-const BADGE_BOB := 0.025          # ..how far it rides up and down while VIP is active..
+const BADGE_TURN := 0.6           # ..how fast it turns while VIP is active, in radians a second..
 const BADGE_TIER := 3             # ..and the VIP levels to a tier of it
 ## A tier's metal, the enamel its number stands on, and the balls of its crown: bronze, silver, then gold on
 ## red, on green and on royal purple.
@@ -662,8 +662,9 @@ static func _keg(root: Node3D, at: Vector3) -> void:
 ## large and outlined on it (the building's level, BarnDef.look_level), and a crown on top. Only its colours
 ## change by tier (three levels each): bronze, silver, then gold on red, on green and on royal purple. Two
 ## looks of one part, switched in place: while VIP is active its metal glimmers (ModelKit.to_shine), a few big
-## glints twinkle at its rim and it rides gently up and down (`when_vip_true`); lapsed, the same badge stands
-## still in dull grey (`when_vip_false`). Neither shows before the first VIP level.
+## glints twinkle round it and it turns slowly on its foot, its number on both faces (`when_vip_true`); lapsed,
+## the same badge stands still in dull grey, facing out (`when_vip_false`). Neither shows before the first VIP
+## level.
 static func _vip_badge(ctx: Dictionary, lo: Vector3, hi: Vector3) -> void:
 	var root: Node3D = ctx["root"]
 	var w_lo: Vector3 = ctx.get("upper_lo", lo)
@@ -682,9 +683,10 @@ static func _vip_badge(ctx: Dictionary, lo: Vector3, hi: Vector3) -> void:
 		_crest(face, level, tier, on)
 		var part := when(ctx, "vip", on)
 		if on:
-			var glints := DecorMotion.effect(face, "sparkle", Vector3(0, 0, BADGE_R * 0.3))
-			glints.rotation.x = PI / 2.0   # (its ring stands in the badge's own flat, facing out)
-			ModelKit.to_shine(DecorMotion.bob(part, at, turn, face, BADGE_BOB))
+			# It turns slowly on its foot, its metal glimmering; the glints stay facing out, round where it turns.
+			ModelKit.to_shine(DecorMotion.spin(part, at, turn, face, BADGE_TURN))
+			var glints := DecorMotion.effect(part, "sparkle", at)
+			glints.rotation = Vector3(PI / 2.0, turn.y, 0)   # (its ring upright, facing the camera)
 		else:
 			face.position = at
 			face.rotation = turn
@@ -713,9 +715,13 @@ static func _crest(face: Node3D, level: int, tier: int, on: bool) -> void:
 	face.add_child(rim)
 	bead(face, Vector3.ZERO, BADGE_R * (1.0 - BADGE_RIM), enamel, Vector3(1, 1, 0.22))
 	# The number: big, in fat round strokes, a dark edge behind it so it reads from afar.
+	# (on both faces: it turns, and reads from either side)
 	var front := BADGE_R * (1.0 - BADGE_RIM) * 0.22
-	_stroke_number(face, level, edge, BADGE_R * 1.25, front - 0.012, DIGIT_STROKE + 0.14)
-	_stroke_number(face, level, ink, BADGE_R * 1.25, front, DIGIT_STROKE)
+	for side in 2:
+		var half := _turned(face, Vector3.ZERO, 0.0)
+		half.rotation.y = PI * side
+		_stroke_number(half, level, edge, BADGE_R * 1.25, front - 0.012, DIGIT_STROKE + 0.14)
+		_stroke_number(half, level, ink, BADGE_R * 1.25, front, DIGIT_STROKE)
 	# A crown on top: a band, three fat points, a ball on each.
 	var base := Vector3(0, BADGE_R * 0.93, 0)
 	var wide := BADGE_R * 0.52

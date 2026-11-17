@@ -376,8 +376,8 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 	# like the other buildings', a file for each look and construction stage, drawn with the master shader and
 	# the kit's shared materials, within the building budget. The Garage's shutter is a named part that rolls
 	# up. The Barn's look follows the VIP level, not its size (docs/VIP.md): fifteen looks, a badge with the
-	# level's number that is gold and rides up and down while VIP is active and grey metal when it has lapsed,
-	# and a file for the starter Barn standing broken.
+	# level's number that glimmers and turns while VIP is active and is still and grey when it has lapsed, and a
+	# file for the starter Barn standing broken.
 	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
 		ModelKit.shine_material()]
 	var storing: Array[String] = []
@@ -440,27 +440,25 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 	var on := node.find_child(AssetRegistry.STATE + "vip_true", true, false) as Node3D
 	var off := node.find_child(AssetRegistry.STATE + "vip_false", true, false) as Node3D
 	_check(on != null and off != null and on.visible and not off.visible, "gold while VIP is active")
-	var riding := 0
-	for c in (on.get_children() if on != null else []):
-		riding += 1 if String(c.name).begins_with(DecorMotion.BOB) and c.get_children().any(
-			func(n: Node) -> bool: return n is Bobber) else 0
-	_eq(riding, 1, "and riding gently up and down: a named part the game moves")
-	var crest := on.get_children().filter(func(n: Node) -> bool: return String(n.name).begins_with(DecorMotion.BOB))
+	var turning := on.get_children().filter(func(n: Node) -> bool:
+		return String(n.name).begins_with(DecorMotion.SPIN) and n.get_children().any(
+			func(c: Node) -> bool: return c is Spinner))
+	_eq(turning.size(), 1, "and turning slowly on its foot: a named part the game turns")
 	var glimmers := 0
-	var glints := 0
-	for c in (crest[0].get_children() if crest.size() == 1 else []):
+	for c in (turning[0].get_children() if turning.size() == 1 else []):
 		var mi := c as MeshInstance3D
-		for k in (mi.mesh.get_surface_count() if mi != null and not DecorMotion.is_part(c) else 0):
+		for k in (mi.mesh.get_surface_count() if mi != null else 0):
 			glimmers += 1 if mi.get_active_material(k) == ModelKit.shine_material() else 0
-		glints += 1 if String(c.name).begins_with("sparkle") and c.get_child_count() == 1 else 0
 	_eq(glimmers, 1, "its metal glimmers: one draw with the kit's shine")
-	_eq(glints, 1, "and glints twinkle round it: a named effect, one draw")
+	var glints := on.get_children().filter(func(n: Node) -> bool:
+		return String(n.name).begins_with("sparkle") and n.get_child_count() == 1)
+	_eq(glints.size(), 1, "and glints twinkle round it: a named effect, one draw")
 	Game.vip.until = Game.now() - 1
 	_eq(objects.state_of(barn)["vip"], false, "lapsed: the grey one")
 	_eq(objects._key(barn), key, "shown in place, not built again")
 	AssetRegistry.apply_state(node, objects.state_of(barn))
 	_check(on != null and off != null and off.visible and not on.visible, "grey metal, and still")
-	_check(off == null or off.find_children("*", "Bobber", true, false).is_empty(), "nothing moves it")
+	_check(off == null or off.find_children("*", "Spinner", true, false).is_empty(), "nothing turns it")
 	var dull := 0
 	for mi: MeshInstance3D in (off.find_children("*", "MeshInstance3D", true, false) if off != null else []):
 		for k in mi.mesh.get_surface_count():
@@ -477,3 +475,47 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 	Game.vip.points = points
 	Game.vip.until = until
 	objects.free()
+
+
+func test_391_a_bigger_barn_keeps_more_company_in_its_yard() -> void:
+	# The Barn is the farm's centre: a 4 by 4 plot, larger than any other building's. At each of its storage
+	# sizes one more thing stands in its yard, for show (data/building_models.json `fill.company`): a cow, two
+	# trees, a tractor, a pig, a horse. A broken Barn has none.
+	_eq(Game.footprint("barn"), Vector2i(4, 4), "the Barn stands on a 4 by 4 plot")
+	for id: String in Game.item_order:
+		if Game.is_building_item(id) and id != "barn":
+			_check(Game.footprint(id).x * Game.footprint(id).y < 16, "%s is smaller than the Barn" % id)
+	var barn := {"uid": 9402, "id": "barn", "row": 0, "col": 0, "level": 1, "built": true, "t": Game.now()}
+	var node := AssetRegistry.instance("barn", {"level": 1})
+	Objects3D.mark_parts(node)
+	var fill := BuildingFill.create(barn, node)
+	node.add_child(fill)
+	add_child(node)
+	var seen: Array = []
+	for size in range(1, Game.max_level("barn") + 1):
+		barn["level"] = size
+		fill.refresh(barn)
+		seen.append([fill.residents.size(), fill._props.get_child_count()])
+	_eq(seen, [[1, 0], [1, 2], [1, 3], [2, 3], [3, 3]],
+		"a cow, then two trees, a tractor, a pig and a horse: [animals, trees and vehicles] at each size")
+	var fp := Game.footprint("barn")
+	var spots: Array[Vector2] = [BuildingModel.yard_spot(fill._spec["fill"], fp.x, fp.y)]
+	for one: Dictionary in fill._spec["fill"]["company"]:
+		_check(one.has("at"), "each of its company has a spot of its own (%s)" % one["id"])
+		spots.append(BuildingModel.yard_spot(one, fp.x, fp.y))
+	var room := SpaceFit.tile_room(fp)
+	var built := BuildingModel.taken(fill._spec, fp)
+	for k in spots.size():
+		_check(room.has_point(spots[k]), "its company stands inside its plot")
+		_check(not built.any(func(rect: Rect2) -> bool: return rect.has_point(spots[k])),
+			"clear of the Barn and its silos (spot %d)" % k)
+		for other in range(k + 1, spots.size()):
+			_check(spots[k].distance_to(spots[other]) > 0.6, "and of each other (spots %d and %d)" % [k, other])
+	for a: Animal3D in fill.residents:
+		_check(spots.any(func(spot: Vector2) -> bool:
+			return spot.distance_to(Vector2(a.position.x, a.position.z)) <= BuildingFill.WANDER * 2.0),
+			"an animal of its company keeps to its spot")
+	barn["broken"] = true
+	fill.refresh(barn)
+	_check(fill.residents.is_empty() and fill._props.get_child_count() == 0, "a broken Barn keeps no company")
+	node.queue_free()

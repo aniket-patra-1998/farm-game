@@ -356,8 +356,8 @@ func test_64_new_homes_rams_boars_lambs_piglets() -> void:
 	var pen := g.object_at(g.index_of(0, 4))
 	_check(g.buy_and_place("pig_pen", 8, 8), "Pig Pen")
 	var pigs := g.object_at(g.index_of(8, 8))
-	g.buy_and_place("nursery_barn", 3, 6)
-	var nursery := g.object_at(g.index_of(3, 6))
+	g.buy_and_place("nursery_barn", 4, 6)
+	var nursery := g.object_at(g.index_of(4, 6))
 	for id in ["sheep", "sheep", "llama", "alpaca", "ram"]:
 		g.place_somewhere(id)
 	_eq(g.homes.fill_building(int(pen["uid"])), 5, "sheep, llama, alpaca and the ram move in")

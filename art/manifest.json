@@ -6615,7 +6615,7 @@
    "item": "barn",
    "class": "Barn",
    "stage": "1",
-   "tiles": 3,
+   "tiles": 4,
    "fill": 0.96,
    "refs": [
     "refs/barn_size1.png"
@@ -6627,7 +6627,7 @@
    "item": "barn",
    "class": "Barn",
    "stage": "2",
-   "tiles": 3,
+   "tiles": 4,
    "fill": 0.96,
    "refs": [
     "refs/barn_size2.png"
@@ -6639,7 +6639,7 @@
    "item": "barn",
    "class": "Barn",
    "stage": "3",
-   "tiles": 3,
+   "tiles": 4,
    "fill": 0.96,
    "refs": [
     "refs/barn_size3.png"
@@ -6651,7 +6651,7 @@
    "item": "barn",
    "class": "Barn",
    "stage": "4",
-   "tiles": 3,
+   "tiles": 4,
    "fill": 0.96,
    "refs": [
     "refs/barn_size4.png"
@@ -6663,7 +6663,7 @@
    "item": "barn",
    "class": "Barn",
    "stage": "5",
-   "tiles": 3,
+   "tiles": 4,
    "fill": 0.96,
    "refs": [
     "refs/barn_size5.png"

@@ -19,7 +19,6 @@ const POUR := {"streams": 3, "per_stream": 6, "life": 0.36, "rise": 0.0, "gravit
 const EFFECTS := {"smoke": SMOKE, "steam": STEAM, "jet": JET, "pour": POUR, "grain": GRAIN_FALL,
 	"sparkle": SPARKLE}
 const SPIN := "spin"     # a part that turns about its own upright (its name carries the speed)
-const BOB := "bob"   # not-ui (a part that rides up and down: `bob_<height in thousandths>_<n>`)
 const PUFF_SIDES := 8               # a smoke puff's roundness
 const PUFF_RINGS := 4
 const SPRAY_SHADER := "res://shaders/spray3d.gdshader"
@@ -60,7 +59,7 @@ const STEAM := {"streams": 9, "per_stream": 1, "life": 2.6, "rise": 0.16, "gravi
 ## four-pointed stars, each born on a ring, swelling from nothing and shrinking away where it is, lit by itself
 ## (`glint`: each is a flat star; the ring lies in the part's own flat, so the part is turned to face).
 const SPARKLE := {"streams": 4, "per_stream": 1, "life": 2.4, "rise": 0.0, "gravity": 0.0, "reach": 0.03,
-	"start_radius": 0.3, "size": 1.0, "end_size": 0.4, "grow_in": 0.4, "colour": Color("#fffbe6"), "sheen": 1.0,
+	"start_radius": 0.38, "size": 1.0, "end_size": 0.4, "grow_in": 0.4, "colour": Color("#fffbe6"), "sheen": 1.0,
 	"glint": true}
 const GLINT_ARM := 6.0              # a glint's arm, against a drop's radius..
 const GLINT_WAIST := 0.2            # ..and its waist, against its arm
@@ -147,32 +146,13 @@ static func spin(parent: Node3D, at: Vector3, turn: Vector3, part: Node3D, speed
 	return merged
 
 
-## Puts `part` at `at`, turned by `turn`, as a model's part that rides gently up and down by `height`: a node
-## named as a file names it (`bob_20_3`: 0.020 tiles), its painted pieces merged to a draw, moved by a Bobber.
-static func bob(parent: Node3D, at: Vector3, turn: Vector3, part: Node3D, height: float) -> Node3D:
-	ModelKit.shadows(part, false)   # (a small thing in the air: no shadow pass of its own)
-	var merged := ModelKit.bake(part)
-	merged.name = "%s_%d_%d" % [BOB, roundi(height * 1000.0), parent.get_child_count()]
-	merged.position = at
-	merged.rotation = turn
-	merged.set_meta(ModelKit.KEEP, true)
-	parent.add_child(merged)
-	start(merged)
-	return merged
-
-
-## Starts what a named part asks for, by its name (docs/ASSETS.md §1): an effect under it, its turning or its
-## riding up and down.
+## Starts what a named part asks for, by its name (docs/ASSETS.md §1): an effect under it, or its turning.
 static func start(part: Node3D) -> void:
 	var words := String(part.name).split("_")
 	if words[0] == SPIN:
 		var spinner := Spinner.new()
 		spinner.speed = (words[1].to_float() if words.size() > 1 else 100.0) / 100.0
 		part.add_child(spinner)
-	elif words[0] == BOB:
-		var bobber := Bobber.new()
-		bobber.height = (words[1].to_float() if words.size() > 1 else 20.0) / 1000.0
-		part.add_child(bobber)
 	elif EFFECTS.has(words[0]):
 		spray(part, Vector3.ZERO, EFFECTS[words[0]])
 
@@ -180,7 +160,7 @@ static func start(part: Node3D) -> void:
 ## Whether `n` is a named part that `start` gives life to.
 static func is_part(n: Node) -> bool:
 	var kind := String(n.name).split("_")[0]
-	return n is Node3D and (kind == SPIN or kind == BOB or EFFECTS.has(kind))
+	return n is Node3D and (kind == SPIN or EFFECTS.has(kind))
 
 
 ## Starts every named part of a model that came from a file.
@@ -188,8 +168,6 @@ static func dress(model: Node) -> void:
 	for c in model.get_children():
 		if is_part(c):
 			start(c)
-			if String(c.name).split("_")[0] in [SPIN, BOB]:
-				dress(c)   # (what turns or rides can carry named parts of its own: a badge's sparkle)
 		else:
 			dress(c)
 

@@ -352,7 +352,7 @@ func test_87_perfect_bunches_and_the_garden_shed() -> void:
 	)
 	var at := g.shed.unpack_bunch(0)
 	_check(at >= 0, "a bunch taken out to place")
-	_check(g.storage.place_from_storage(at, 2, 8) or g.storage.place_from_storage(at, 3, 9), "placed on the farm")
+	_check(g.storage.place_from_storage(at, 5, 8) or g.storage.place_from_storage(at, 6, 9), "placed on the farm")
 	var placed: Array = g.objects.filter(func(o): return o["id"] == "perfect_bunch")
 	_eq(placed.size(), 1, "one bunch on the farm")
 	_eq(int(placed[0]["expires"]) - g.now(), Balance.i("barn.bunch_days") * 86400, "it lasts 14 days")

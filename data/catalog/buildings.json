@@ -779,7 +779,9 @@
               }
             }
           ],
-          "type": "storing"
+          "type": "storing",
+          "w": 4,
+          "h": 4
         },
         {
           "id": "garage",

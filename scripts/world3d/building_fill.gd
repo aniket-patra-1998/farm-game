@@ -9,6 +9,7 @@ extends Node3D
 ## Lives under a building's model (the footprint's back corner is its origin), so it turns with it. What
 ## to show comes from the building's description (data/building_models.json "fill").
 
+const COMPANY_TURN := -0.6   # how a vehicle of a store's company is turned where it stands, in radians
 const OFFSCREEN_STRIDE := 6      # a yard out of sight thinks one frame in this many
 const LOD_MID_PPU := 64.0     # screen pixels per world unit below which only half the yard's animals are drawn
 const LOD_FAR_PPU := 40.0     # ...and below which only a few are (a cow is then a speck)
@@ -95,12 +96,14 @@ var _plant_rng: RandomNumberGenerator
 var _plants: Node3D               # the trees or blooms growing in an Orchard or Bloom Garden
 var _doors: Array[Node3D] = []
 var _own_ready := false        # the model has its own ready part (`when_fill_*`): no pile of produce beside it
+var _company_size := -1        # the size the yard's company was last shown for (a store that keeps company)
+var _props: Node3D             # ..and what of it stands still: its trees, its vehicle
 
 
 ## The fill layer for building `o`, under its model `model` (which holds its doors).
 static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 	var f := BuildingFill.new()
-	f.uid = int(o["uid"])
+	f.uid = int(o.get("uid", 0))   # (a model shown outside a farm, a shop card's, has none)
 	f._id = str(o["id"])
 	f._fp = Game.footprint(f._id)
 	f._spec = BuildingModel.spec(f._id, Game.look_level(o))
@@ -117,7 +120,8 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 
 ## Whether a building shows anything of what's inside it.
 static func shows(o: Dictionary) -> bool:
-	if Game.under_construction(o) or not Game.is_home(o):
+	# (a home, or a store that shows its stock and keeps company in its yard: the Barn is its own kind)
+	if Game.under_construction(o) or not Game.is_building_item(str(o["id"])):
 		return false
 	var def := Game.catalog.get_def(str(o["id"]))
 	# Homes for named animals, or gardens for a kind (trees in an Orchard, blooms in a Bloom Garden).
@@ -145,6 +149,7 @@ func refresh(o: Dictionary) -> void:
 	var fill: Dictionary = _spec.get("fill", {})
 	if fill.has("stock"):
 		_show_stock(str(fill["stock"]), fill.get("at", [0.5, 0.95]), o)
+		_show_company(fill.get("company", []), o)
 		return
 	if who == _who and stage == _stage and who == _who_peeking:
 		return   # nothing it shows has changed since the last look (nearly every look: this is asked each second)
@@ -310,17 +315,75 @@ static func grouped(ids: Array[String]) -> Array[String]:
 
 
 func _show_residents(o: Dictionary) -> void:
-	for a in residents:
-		a.queue_free()
-	residents.clear()
 	var picks := rarest(o.get("inside", {}), shown_cap(Game.level_of(o), Game.max_level(_id)))
-	_lod = -1  # (the new animals are shown or hidden for the zoom next frame)
 	var radii: Array[float] = []
 	for id in picks:
 		radii.append(radius_of(Game.item_data(id)))
 	radii = radii.slice(0, shown_count(_id, Game.level_of(o), Game.max_level(_id), radii, uid))
 	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), BuildingModel.taken(_spec, _fp), radii, uid, ANIMAL_SMALLEST)
-	var spots: Array = fit["spots"]
+	_stand_residents(picks, fit["spots"], float(fit["size"]))
+
+
+## The company a thriving store keeps in its yard (the Barn, data/building_models.json `fill.company`: our own
+## touch): at each of its sizes one more of the list stands there, so a bigger Barn looks a richer farm. Each
+## stands at its own spot (`at`): an animal lives there as a home's does. They are for show: they belong to
+## the Barn, are not counted or collected, and a broken Barn has none.
+func _show_company(company: Array, o: Dictionary) -> void:
+	var size := 0 if company.is_empty() or o.get("broken", false) else Game.level_of(o)
+	if size == _company_size:
+		return
+	_company_size = size
+	if _props != null:
+		_props.queue_free()
+	_props = Node3D.new()
+	add_child(_props)
+	var picks: Array = []
+	var spots: Array = []
+	for one: Dictionary in company:
+		if int(one.get("from", 1)) > size:
+			continue
+		var it := Game.item_data(str(one["id"]))
+		var spot := BuildingModel.yard_spot(one, _fp.x, _fp.y)
+		match str(it.get("kind", "")):
+			"animal":
+				picks.append(str(one["id"]))
+				spots.append(spot)
+			"tree":
+				var tree := Objects3D.tree_look(str(one["id"]), 0, _props.get_child_count())
+				_keep_look(tree)
+				tree.position = Vector3(spot.x - 0.5, 0, spot.y - 0.5)   # (a tree's look stands in its own tile)
+				_props.add_child(tree)
+			"vehicle":
+				var pivot := Node3D.new()
+				pivot.position = Vector3(spot.x, 0, spot.y)
+				pivot.rotation.y = COMPANY_TURN
+				var car := VehicleModel.build(it)
+				car.position = Vector3(-0.5, 0, -0.5)                    # (turned about its own middle)
+				pivot.add_child(car)
+				_props.add_child(pivot)
+	_stand_residents(picks, spots, 1.0)
+
+
+## Makes the look a model from a file shows now the only one it has: its other looks go, and the one shown is
+## no longer a state part. (What stands in a building's yard is under the building's own model, whose states
+## are switched through everything under it: a tree there would lose its look to the Barn's.)
+static func _keep_look(model: Node) -> void:
+	for c in model.get_children():
+		if not String(c.name).begins_with(AssetRegistry.STATE):
+			continue
+		if c is Node3D and (c as Node3D).visible:
+			c.name = "look"   # not-ui (a part's name)
+		else:
+			model.remove_child(c)
+			c.free()
+
+
+## Stands `picks` (animal ids) in the yard, the first of them at each of `spots`, drawn at `size`.
+func _stand_residents(picks: Array, spots: Array, size: float) -> void:
+	for a in residents:
+		a.queue_free()
+	residents.clear()
+	_lod = -1  # (the new animals are shown or hidden for the zoom next frame)
 	for k in spots.size():
 		var it := Game.item_data(picks[k])
 		if it.is_empty():
@@ -328,7 +391,7 @@ func _show_residents(o: Dictionary) -> void:
 		var mind := AnimalBehaviour.new(AnimalRig.of(it), uid * 131 + k * 17,
 			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
 		var at := spots[k] as Vector2
-		var a := Animal3D.create(it, mind, Vector3(at.x, 0.0, at.y), float(fit["size"]))
+		var a := Animal3D.create(it, mind, Vector3(at.x, 0.0, at.y), size)
 		add_child(a)
 		a.update(0.0)
 		residents.append(a)

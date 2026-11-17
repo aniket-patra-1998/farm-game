@@ -71,7 +71,7 @@ func test_411_rust_burns_more_fuel_and_works_fewer_plots() -> void:
 	_check(is_equal_approx(g.rust.fuel_factor("tractor"), 1.4), "four tenths more fuel")
 	_eq(g.rust.plots_worked("tractor", 4), 1, "a fifth of 4 rounds down to none: it still works one")
 	_eq(g.rust.plots_worked("tractor", 16), 3, "3 of 16")
-	r = g.vehicles.use_vehicle("tractor", 2, 8)
+	r = g.vehicles.use_vehicle("tractor", 5, 8)
 	_eq(int(r["plots"]), 1, "one plot plowed")
 	_skip(g, 7 * DAY)
 	_check(g.rust.seized("tractor"), "level 5")
