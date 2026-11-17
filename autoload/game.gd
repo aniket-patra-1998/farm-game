@@ -280,6 +280,7 @@ func _close() -> void:
 		return
 	_closing = true
 	get_window().hide()
+	Sound.silence()   # let go while frames remain for the audio thread to drop what played
 	for k in CLOSE_FRAMES:
 		await get_tree().process_frame
 	get_tree().quit()

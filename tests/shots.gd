@@ -238,6 +238,8 @@ func _ready() -> void:
 	_shot(dir + "/start.png")
 	await _shots_3d(dir)
 	print("Screenshots saved to " + dir)
+	Sound.silence()
+	await _frames(5)
 	get_tree().quit()
 
 

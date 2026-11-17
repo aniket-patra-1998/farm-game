@@ -54,6 +54,7 @@ func _ready() -> void:
 	if DisplayServer.get_name() == "headless":
 		# Work still under way (a picture being read back from the GPU or styled) is let finish, so nothing it holds
 		# is still in use when the engine shuts down (the log gate fails on that).
+		Sound.silence()   # every sound let go while there are frames left for the audio thread to drop them
 		for k in SETTLE_FRAMES:
 			await get_tree().process_frame
 		get_tree().quit(1 if failed > 0 else 0)
