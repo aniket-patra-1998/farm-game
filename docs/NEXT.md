@@ -106,4 +106,4 @@ first; the buildings items below continue alongside.
   crafting needs about 640 gems (a wall at level 25 on 8-10 free gems a week); before 25 the Mystery Box gives
   about 50 coins a gem against 500-6,000 elsewhere; rust level 1 repair is too cheap to be a decision.
 - Also open: rain life (docs/WEATHER.md steps 3-6: puddles, rain creatures, mushrooms, rain rules); tree batching
-  (above); the five player-experience decisions (docs/PLAYER_EXPERIENCE.md).
+  (above); building the first hour and goals (docs/PLAYER_EXPERIENCE.md; the owner's five decisions are at its end).

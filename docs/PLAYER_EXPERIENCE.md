@@ -29,7 +29,7 @@ The four parts, in the order to build them:
   crafting; Barley: animals; Maple: the orchard; Poppy: decorating). Finishing one gives a reward worth having
   (an item to place, a building at a discount, a rare breed) and opens the next.
 - **Farm projects** (our own touch): a few long goals of 1 to 4 weeks that change the farm where you can see them:
-  restore the old Barn (the broken starter Barn already exists), plant an orchard of 9 trees of 3 kinds, raise a
+  rebuild the broken old Tractor (parked rusted on the starter farm; RUST.md's look), plant an orchard of 9 trees of 3 kinds, raise a
   full coop of rare breeds, build the Bakery and master three recipes, a flower garden with a Bloom Garden full.
   Each has stages (a stage is a step), and its reward stands on the farm (a sign, a statue, a ribbon on the
   building).
@@ -107,7 +107,7 @@ The four parts, in the order to build them:
 - **Welcome** (the tutorial, Part 2): 8 steps.
 - **Six neighbour chains of 3 to 6 steps each** (about 25 steps), unlocked from level 2 to 12.
 - **Daily templates**: about 15.
-- **Three projects**: the old Barn, the orchard, the coop of rare breeds.
+- **Three projects**: the orchard, rebuilding the broken Tractor, the coop of rare breeds.
 
 All of it is written as data, so more is writing, not code.
 
@@ -127,7 +127,7 @@ wait for in the first session but the plants.
 | 2-5 | Plow two plots, plant Strawberries; Maple gives **Starter Seeds** for one plot that ripen in 3 minutes (our own touch, the first session only, not sold) so the loop closes at once. | plow, plant, wait |
 | 5-10 | The starter seeds ripen: harvest, **level 2**. Barley gives a free chicken: place it, collect its first egg (ready at once). | animals, placing, collecting |
 | 10-20 | Buy an Apple Tree in the Market (Maple's step; the Market button appears now, lit). Tree has fruit ready the first time. | the Market, trees |
-| 20-30 | The old Barn project opens: materials come from harvests; a guaranteed first find from a harvest shows Collections. | finds, projects |
+| 20-30 | The broken Tractor project opens: materials come from harvests; a guaranteed first find from a harvest shows Collections. | finds, projects |
 | 30-45 | Level 3: **Today's jobs** appear. A second chicken, a coop to aim for (Barley's chain). | daily jobs, goals |
 | 45-60 | Plant a crop that ripens overnight (the game says which: "ready when you wake"). The faces show tomorrow's goals. | coming back |
 
@@ -174,7 +174,7 @@ workstream below is done when its shots are better side by side with the last on
 
 ### Workstreams
 1. **The starter farm** (with Part 2): a layout that looks loved from minute 0: the house with a little garden
-   (flowers, a bench, a mailbox), the old Barn with materials stacked by it, two or three fruit trees, a path from
+   (flowers, a bench, a mailbox), the broken old Tractor with parts stacked by it, two or three fruit trees, a path from
    the road to the house, a fence along one side, a few ripe plots. Data in `data/starter_farm.json`.
 2. **The land around the farm**: today the meadow and woods ring the farm; it should read as countryside with a
    few clear features: a road with the mailbox and a gate, a stream or pond beyond the edge, tree clusters of
@@ -270,13 +270,10 @@ tried in the bot first (docs/BALANCE.md shows how).
 | 8 | Economy tuning to the targets | 6, 7 |
 | 9 | Beauty workstreams 3-8 | 5 |
 
-## Decisions for you
-1. **Starter Seeds** (one plot that grows in 3 minutes, the first session only): yes or no? It closes the first
-   loop at once; FarmVille made you wait.
-2. **Show the interface as it is needed** (buttons appear as goals bring them): yes, or keep every button from
-   the start?
-3. **Neighbours as quest givers** (the six from the inbox, each with their own chain and part of the farm): yes?
-4. **Daily jobs' bonus**: a Mystery Box every day and a gem every third day: right size?
-5. **Farm projects**: the three to start with (old Barn, orchard, rare coop): the right three?
-</content>
-</invoke>
+## Decisions (owner, 17 Nov 2026)
+1. **Starter Seeds** (one plot that grows in 3 minutes, the first session only): yes.
+2. **Show the interface as it is needed** (buttons appear as goals bring them): yes.
+3. **Neighbours as quest givers** (the six from the inbox, each with their own chain and part of the farm): yes.
+4. **Daily jobs' bonus**: a Mystery Box every day and a gem every third day: right for now (the economy pass may
+   revisit it).
+5. **Farm projects**: the orchard, rebuilding the broken Tractor, and the coop of rare breeds (not the old Barn).
