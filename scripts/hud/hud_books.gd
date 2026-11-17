@@ -110,18 +110,9 @@ func build_collection(content: VBoxContainer, coll_id: String) -> void:
 		content.add_child(BookPanel.card_frame(inner))
 
 
-## A prize ([kind, amount or item]) in words, for reward lines.
+## A prize ([kind, amount or item]) in words, for reward lines (the same words as winning it).
 func prize_text(prize: Array) -> String:
-	match str(prize[0]):
-		"item":
-			return "a " + str(Game.item_data(str(prize[1])).get("name", prize[1]))
-		"fertilize_all":
-			return tr("FERTILIZE_ALL") % int(prize[1])
-		"unwither":
-			return tr("UNWITHER") % int(prize[1])
-		"fuel":
-			return "%d fuel" % int(prize[1])
-	return "%d %s" % [int(prize[1]), str(prize[0]).capitalize()]
+	return MysterySystem.prize_words(prize)
 
 
 ## Each ribbon as one card: the medal of the tier being worked toward (or the last one won), its name, and a bar

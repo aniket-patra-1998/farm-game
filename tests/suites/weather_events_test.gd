@@ -42,10 +42,9 @@ func test_390_a_strike_draws_a_bolt_past_the_farm_and_the_fog_begins_past_it() -
 	world.lightning.strike(0.1, PI, world.camera, Game.farm_size, WeatherEvents.data("storm"))
 	var bolt: MeshInstance3D = world.lightning.get_child(0)
 	_check(bolt.mesh != null and bolt.visible, "a strike draws a bolt")
-	var aabb := bolt.mesh.get_aabb()
 	var n := float(Game.farm_size)
 	var middle := Vector3(n / 2.0, 0.0, n / 2.0)
-	var foot := Vector2(aabb.position.x + aabb.size.x / 2.0, aabb.position.z + aabb.size.z / 2.0)
+	var foot := Vector2(world.lightning.foot.x, world.lightning.foot.z)   # (where it meets the ground, not its branches)
 	var on_farm := foot.x > 0.0 and foot.x < n and foot.y > 0.0 and foot.y < n
 	_check(not on_farm, "it falls past the farm's edge, never on it (%s)" % foot)
 	_check(world.lightning.flash > 0.0, "and the frame flashes")

@@ -80,7 +80,7 @@ func eat(o: Dictionary) -> Array[String]:
 	while not line.is_empty() and trough(o) >= need_each():
 		var baby := str(line[0][0])
 		var adult := adult_of(o, baby)
-		game.social.deliver({"what": InboxItem.ITEM, "id": adult, "n": 1})   # (the one inbox: FarmVille's Gift Box)
+		var went := game.storage.welcome(adult)   # (the Barn, or the inbox when it is full)
 		o[TROUGH] = trough(o) - need_each()
 		line.pop_front()
 		var inside: Dictionary = o.get("inside", {})
@@ -90,7 +90,8 @@ func eat(o: Dictionary) -> Array[String]:
 		game.add_xp(Balance.i("raising.grown_xp"))
 		game.ribbons.bump("babies_raised", 1)
 		var name := str(game.item_data(adult).get("name", adult))
-		game.message.emit(tr("GREW_UP_SENT_TO_INBOX") % [game.item_data(baby).get("name", baby), name])
+		game.message.emit(tr("GREW_INTO") % [game.item_data(baby).get("name", baby), name] + " "
+			+ tr("ARRIVED_IN_BARN" if went == BarnStorage.BARN else "ARRIVED_IN_INBOX"))
 		out.append(name)
 	return out
 

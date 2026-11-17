@@ -18,6 +18,7 @@ const ACROSS := 0.4   # strikes fall across this share of the view's width eithe
 const COLOUR := Color(0.86, 0.9, 1.0)
 
 var flash := 0.0
+var foot := Vector3.ZERO   # where the last bolt met the ground
 var _bolt: MeshInstance3D
 var _life := 0.0
 var _span := 1.0
@@ -64,6 +65,7 @@ func strike(far: float, toward: float, camera: Camera3D, size: int, storm: Dicti
 	var aside := absf((target + right * across - centre).dot(right))
 	var past := (centre - target).dot(ahead) + maxf(0.0, size * 0.7071 - aside) + tiles
 	var ground := target + ahead * past + right * across
+	foot = ground
 	var top := ground + Vector3(_rng.randf_range(-3.0, 3.0), float(storm.get("bolt_height", 26.0)),
 		_rng.randf_range(-3.0, 3.0))
 	_bolt.mesh = _mesh(top, ground, camera)

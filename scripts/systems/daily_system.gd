@@ -109,7 +109,7 @@ func _give_daily_bonus(day: int) -> Array[String]:
 	var reward := daily_reward(day)
 	if reward.has("coins"):
 		game.add_coins(int(reward["coins"]), false)
-		got.append("%d coins" % int(reward["coins"]))
+		got.append(tr("SOCIAL_COINS") % int(reward["coins"]))
 	if reward.has("fertilizer"):
 		game.fertilizer_bags += int(reward["fertilizer"])
 		got.append(tr("FERTILIZER_2") % int(reward["fertilizer"]))
@@ -118,5 +118,5 @@ func _give_daily_bonus(day: int) -> Array[String]:
 		got.append(tr("UNWITHER") % int(reward["unwither"]))
 	if reward.has("gems"):
 		game.add_gems(int(reward["gems"]))
-		got.append("%d gem" % int(reward["gems"]))
+		got.append(tr("GEMS_N") % int(reward["gems"]))
 	return got

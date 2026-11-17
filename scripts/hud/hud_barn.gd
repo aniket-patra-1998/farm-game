@@ -133,8 +133,9 @@ func build_vip(content: VBoxContainer) -> void:
 
 func build_barn_storage(content: VBoxContainer) -> void:
 	var cap := Game.storage.barn_capacity()
-	content.add_child(BookPanel.info(tr("HOLDS_OF_USE_THE_STORE_TOOL") % [Game.storage.stored.size(), cap],
-		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [Game.storage.stored.size(), cap], 20, BookPanel.SOFT))
+	var held := mini(Game.storage.stored.size(), cap)   # (what spilled past it is the gift box's line, below)
+	content.add_child(BookPanel.info(tr("HOLDS_OF_USE_THE_STORE_TOOL") % [held, cap],
+		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [held, cap], 20, BookPanel.SOFT))
 	# What is stored first (it is what the Barn is opened for), then its parts, its next size and the feed.
 	if not Game.storage.stored.is_empty():   # (nothing stored: no empty box saying so)
 		add_grouped(content, 0, mini(Game.storage.stored.size(), cap))
