@@ -139,3 +139,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   plowed (it was stuck for good). Findings ranked in the log's backlog; next: progression audit or the top item.
 - Run 2 (progression): levels past the table (21+) each need 40 XP more than the last (was a flat 1,000), so
   levels no longer speed up as the farm grows. Still open: unlocks spread through 31-40, a level-up reward felt.
+- Run 3 (progression audit): 17 of the V1 level-ups 2-40 unlock nothing (reported to the owner in the log).
+- Run 4: level reward coins in data (economy.coins_per_level), unlocks_at built on unlock_ids_at; the
+  engine-hum test (vehicle_motion test_206) no longer fails when another test left a loop running, so the local
+  precheck passes on a 2-core container. Next: an audit of phone UI (every third run) or the economy's open items.
