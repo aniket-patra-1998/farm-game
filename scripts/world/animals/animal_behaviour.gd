@@ -16,7 +16,8 @@ const TURN_SPEED := 7.0          # facing changes through 0: the body narrows, t
 const STRIDE_EASE := 7.0         # how fast the legs blend between standing and walking
 const HEAD_DOWN_EASE := 3.2      # lowering the head to graze
 const HEAD_UP_EASE := 5.0
-const PECK_RATE := 2.6           # pecks a second while pecking
+const PECK_RATE := 1.1           # pecks a second while pecking (a hen's unhurried dips, not a woodpecker)
+const BIRD_HEAD := 2.0           # a bird lowers and lifts its head this many times as fast as a grazer
 const BLINK_EVERY := Vector2(2.0, 6.0)
 const BLINK_TIME := 0.13
 const EAR_EVERY := Vector2(2.5, 8.0)
@@ -309,7 +310,7 @@ func _ease_body(delta: float) -> void:
 				_left = minf(_left, 0.5)   # (dawn: it wakes)
 	var rate := HEAD_DOWN_EASE if head_to > pose.head else HEAD_UP_EASE
 	if is_bird():
-		rate *= 4.0  # birds peck fast
+		rate *= BIRD_HEAD  # a bird's head moves quicker than a cow's, though not in a blur
 	pose.head = move_toward(pose.head, head_to, delta * rate)
 	pose.look = lerpf(pose.look, look_to, 1.0 - exp(-delta * 4.0))
 	pose.jaw = sin(pose.time * 11.0) * pose.head if state == State.GRAZE and not is_bird() else 0.0

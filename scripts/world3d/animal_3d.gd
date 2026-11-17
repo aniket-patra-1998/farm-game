@@ -20,6 +20,8 @@ const REST_LEFT := PI * 17.0 / 12.0
 const SETTLE_RATE := 1.2                        # how fast it eases round to stand side-on (radians/s)
 const FLOAT_SINK := 0.22                        # how much of its height is under the water when it swims
 const FLOAT_EASE := 3.0                         # how fast it settles into the water or steps out (per second)
+const DABBLE_EASE := 1.4                        # how fast a swimmer tips under to feed and comes up (per second):
+                                                # it stays under for the whole of its feeding, as a duck does
 const DABBLE_TIP := 1.15                        # radians a swimmer tips forward when it dabbles: head under, tail up
 const EYE := Color("#1b140f")
 const HOOF := Color("#3a2c22")
@@ -991,7 +993,7 @@ func update(delta: float) -> void:
 		position = home + IsoProjection.ground_of(behaviour.offset) + Vector3(0, drop - sunk, 0)
 	# (only while it feeds: a swimmer asleep keeps its head low without going under)
 	var feeding := behaviour != null and behaviour.state == AnimalBehaviour.State.GRAZE
-	dabble = move_toward(dabble, smoothstep(0.0, 1.0, p.head) if feeding else 0.0, FLOAT_EASE * delta)
+	dabble = move_toward(dabble, 1.0 if feeding else 0.0, DABBLE_EASE * delta)
 	rotation.z = -DABBLE_TIP * dabble * float_share
 	# Face where it's going: it comes round to its way, stepping round as it turns (its mind waits for it
 	# to, before it sets off, and moves its legs for the turn: AnimalBehaviour.turned).
