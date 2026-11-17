@@ -104,7 +104,7 @@ first; the buildings items below continue alongside.
   level 38: coins, gems and VIP without end; economy_test 61 now checks no coin buy can pay for a level); land
   needs its level with gems too (gems skip only the coins).
 - VIP's top boost is now x1.5 (owner, 17 Nov); still open: a weekly cap on the points gems buy. The economy pass, in its own
-  session with the balance bot: an XP curve that grows after level 20 (now a flat 1,000) with unlocks spread
+  session with the balance bot: the XP curve after level 20 (now grows 40 a level: L30 on day 37 at three visits, was 34) with unlocks spread
   through 31-40 and a level-up reward that is felt; 8 of the 21 V1 crops never worth planting (bell pepper, corn,
   cotton, pineapple, raspberry, rice, spinach, watermelon: a crop stays ripe as long as it grew, so 24-hour crops
   win), tomato/sugarcane and sunflower/grapes near twins; off-season x1.5 always wins for anyone playing twice a
@@ -137,3 +137,5 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 ## Polish loop (hourly runs, 18 Nov 2026; log: the Claude doc "Farm game: polish loop log")
 - Run 1 (economy audit): the rescue now also covers a farm with a seed's coins but not the plow's and nothing
   plowed (it was stuck for good). Findings ranked in the log's backlog; next: progression audit or the top item.
+- Run 2 (progression): levels past the table (21+) each need 40 XP more than the last (was a flat 1,000), so
+  levels no longer speed up as the farm grows. Still open: unlocks spread through 31-40, a level-up reward felt.

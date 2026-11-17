@@ -1168,7 +1168,9 @@ func xp_for_level(lvl: int) -> int:
 	var table := Balance.a("economy.level_xp")
 	if lvl - 1 < table.size():
 		return int(table[lvl - 1])
-	return int(table[-1]) + (lvl - table.size()) * Balance.i("economy.xp_per_level_after_table")
+	var n := lvl - table.size()   # levels past the table: each needs a little more than the one before
+	return int(table[-1]) + n * Balance.i("economy.xp_per_level_after_table") \
+		+ Balance.i("economy.xp_growth_after_table") * n * (n - 1) / 2
 
 
 func level() -> int:

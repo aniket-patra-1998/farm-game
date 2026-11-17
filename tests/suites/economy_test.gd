@@ -620,3 +620,13 @@ func test_187_the_day_turns_over_at_the_players_midnight_and_animals_do_not_feed
 	_eq(int(g.drops.pity["collectible"]), 0, "a roll with no crop never raises the collectible pity")
 	g.drops.roll_drop("wheat", 0)
 	_eq(int(g.drops.pity["collectible"]), 1, "a crop harvest does")
+
+
+func test_435_levels_past_the_table_keep_slowing() -> void:
+	var g := _farm()
+	var last := Balance.a("economy.level_xp").size()
+	for lvl in range(last, 90):
+		var step := g.xp_for_level(lvl + 1) - g.xp_for_level(lvl)
+		var before := g.xp_for_level(lvl) - g.xp_for_level(lvl - 1)
+		_check(step > before, "level %d needs more XP than the last (%d after %d)" % [lvl + 1, step, before])
+	_done(g)

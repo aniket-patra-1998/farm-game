@@ -414,7 +414,11 @@
   },
   "xp_per_level_after_table": {
    "v": 1000,
-   "note": "XP per level beyond the level table."
+   "note": "XP for the first level beyond the level table."
+  },
+  "xp_growth_after_table": {
+   "v": 40,
+   "note": "and this much more for each level after it, so levels keep slowing as the farm earns more (the table grows about as fast)"
   },
   "mastery_price_bonus": {
    "v": 0.05,
