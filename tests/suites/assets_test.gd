@@ -378,7 +378,8 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 	# up. The Barn's look follows the VIP level, not its size (docs/VIP.md): fifteen looks, a badge with the
 	# level's number that is gold and rides up and down while VIP is active and grey metal when it has lapsed,
 	# and a file for the starter Barn standing broken.
-	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water()]
+	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water(),
+		ModelKit.shine_material()]
 	var storing: Array[String] = []
 	for id: String in Game.item_order:
 		if Game.building_type(id) == "storing":
@@ -397,6 +398,8 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 			var node := AssetRegistry.instance(id, {"level": level, "vip": true})
 			var wrong := 0
 			for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
+				if String(mi.get_parent().name).begins_with("sparkle"):
+					continue   # (the glints the game started under their named part: an effect's own mesh)
 				for k in mi.mesh.get_surface_count():
 					var mat := mi.get_active_material(k)
 					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
@@ -442,12 +445,27 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 		riding += 1 if String(c.name).begins_with(DecorMotion.BOB) and c.get_children().any(
 			func(n: Node) -> bool: return n is Bobber) else 0
 	_eq(riding, 1, "and riding gently up and down: a named part the game moves")
+	var crest := on.get_children().filter(func(n: Node) -> bool: return String(n.name).begins_with(DecorMotion.BOB))
+	var glimmers := 0
+	var glints := 0
+	for c in (crest[0].get_children() if crest.size() == 1 else []):
+		var mi := c as MeshInstance3D
+		for k in (mi.mesh.get_surface_count() if mi != null and not DecorMotion.is_part(c) else 0):
+			glimmers += 1 if mi.get_active_material(k) == ModelKit.shine_material() else 0
+		glints += 1 if String(c.name).begins_with("sparkle") and c.get_child_count() == 1 else 0
+	_eq(glimmers, 1, "its metal glimmers: one draw with the kit's shine")
+	_eq(glints, 1, "and glints twinkle round it: a named effect, one draw")
 	Game.vip.until = Game.now() - 1
 	_eq(objects.state_of(barn)["vip"], false, "lapsed: the grey one")
 	_eq(objects._key(barn), key, "shown in place, not built again")
 	AssetRegistry.apply_state(node, objects.state_of(barn))
 	_check(on != null and off != null and off.visible and not on.visible, "grey metal, and still")
 	_check(off == null or off.find_children("*", "Bobber", true, false).is_empty(), "nothing moves it")
+	var dull := 0
+	for mi: MeshInstance3D in (off.find_children("*", "MeshInstance3D", true, false) if off != null else []):
+		for k in mi.mesh.get_surface_count():
+			dull += 1 if mi.get_active_material(k) == ModelKit.shine_material() else 0
+	_eq(dull, 0, "and nothing glimmers")
 	Game.vip.points = 1600   # VIP 6
 	_check(objects._key(barn) != key, "a new VIP level is a new look")
 	node.free()

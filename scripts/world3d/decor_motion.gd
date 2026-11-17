@@ -16,7 +16,8 @@ const GRAIN_FALL := {"streams": 4, "per_stream": 6, "life": 0.42, "rise": 0.0, "
 const POUR := {"streams": 3, "per_stream": 6, "life": 0.36, "rise": 0.0, "gravity": 2.8, "reach": 0.012,
 	"size": 0.9, "colour": Color("#8e2f5a")}
 ## The effects a model's named part can ask for (a part named `smoke_2` smokes): docs/ASSETS.md §1.
-const EFFECTS := {"smoke": SMOKE, "steam": STEAM, "jet": JET, "pour": POUR, "grain": GRAIN_FALL}
+const EFFECTS := {"smoke": SMOKE, "steam": STEAM, "jet": JET, "pour": POUR, "grain": GRAIN_FALL,
+	"sparkle": SPARKLE}
 const SPIN := "spin"     # a part that turns about its own upright (its name carries the speed)
 const BOB := "bob"   # not-ui (a part that rides up and down: `bob_<height in thousandths>_<n>`)
 const PUFF_SIDES := 8               # a smoke puff's roundness
@@ -55,6 +56,16 @@ const SMOKE := {"streams": 7, "per_stream": 1, "life": 3.2, "rise": 0.22, "gravi
 const STEAM := {"streams": 9, "per_stream": 1, "life": 2.6, "rise": 0.16, "gravity": -0.015, "reach": 0.22,
 	"size": 1.8, "end_size": 3.0, "colour": Color("#f4f6f7"), "sheen": 0.1, "round": true, "start_radius": 0.12}
 
+## Glints of light twinkling round something precious (the Barn's VIP badge while VIP is active): four-pointed
+## stars born on a ring, growing from nothing, drifting a little outward and shrinking away, lit by themselves
+## (`glint`: each is a flat star; the ring lies in the part's own flat, so the part is turned to face).
+const SPARKLE := {"streams": 9, "per_stream": 2, "life": 1.7, "rise": 0.03, "gravity": 0.0, "reach": 0.12,
+	"start_radius": 0.22, "size": 1.15, "end_size": 0.3, "grow_in": 0.3, "colour": Color("#fff4c4"), "sheen": 1.0,
+	"glint": true}
+const GLINT_ARM := 3.6              # a glint's arm, against a drop's radius..
+const GLINT_WAIST := 0.2            # ..and its waist, against its arm
+const SHAPES: Array[String] = ["streams", "per_stream", "round", "glint"]   # settings the mesh is built by
+
 static var _materials := {}         # settings -> ShaderMaterial (shared by every effect alike)
 
 
@@ -80,6 +91,8 @@ static func spray(parent: Node3D, at: Vector3, settings: Dictionary) -> MeshInst
 			var data := Vector2(fposmod(offset + float(j) / per, 1.0), angle)
 			if settings.get("round", false):
 				_puff(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
+			elif settings.get("glint", false):
+				_glint(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
 			else:
 				_drop(verts, normals, uv, uv2, data, Vector2(reach, rng.randf()))
 	var arrays := []
@@ -175,6 +188,8 @@ static func dress(model: Node) -> void:
 	for c in model.get_children():
 		if is_part(c):
 			start(c)
+			if String(c.name).split("_")[0] in [SPIN, BOB]:
+				dress(c)   # (what turns or rides can carry named parts of its own: a badge's sparkle)
 		else:
 			dress(c)
 
@@ -291,6 +306,27 @@ static func _puff(verts: PackedVector3Array, normals: PackedVector3Array, uv: Pa
 				uv2.append(data2)
 
 
+## A four-pointed star lying flat at the origin (in the effect's own flat), drawn from both sides.
+static func _glint(verts: PackedVector3Array, normals: PackedVector3Array, uv: PackedVector2Array,
+		uv2: PackedVector2Array, data: Vector2, data2: Vector2) -> void:
+	var arm := DROP_RADIUS * GLINT_ARM
+	var rim: Array[Vector3] = []
+	for k in 8:
+		var reach := arm if k % 2 == 0 else arm * GLINT_WAIST
+		rim.append(Vector3(cos(TAU * k / 8.0) * reach, 0.0, sin(TAU * k / 8.0) * reach))
+	for facing: Vector3 in [Vector3.UP, Vector3.DOWN]:
+		for k in 8:
+			var tri: Array[Vector3] = [Vector3.ZERO, rim[k], rim[(k + 1) % 8]]
+			# Clockwise seen from outside (Godot's front faces: the cross product points inward).
+			if (tri[1] - tri[0]).cross(tri[2] - tri[0]).dot(facing) > 0.0:
+				tri = [tri[0], tri[2], tri[1]]
+			for v: Vector3 in tri:
+				verts.append(v)
+				normals.append(facing)
+				uv.append(data)
+				uv2.append(data2)
+
+
 static func _on_sphere(theta: float, phi: float) -> Vector3:
 	return Vector3(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi))
 
@@ -301,7 +337,7 @@ static func _material(shader_path: String, settings: Dictionary) -> ShaderMateri
 		var m := ShaderMaterial.new()
 		m.shader = load(shader_path)
 		for k in settings:
-			if not k in ["streams", "per_stream", "round"]:
+			if not k in SHAPES:
 				m.set_shader_parameter(k, settings[k])
 		_materials[key] = m
 	return _materials[key]

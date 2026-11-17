@@ -35,9 +35,15 @@ Still to build, on the same multiplier: rare-quality crafted goods and rare babi
 
 - Its storage is as before: five sizes bought with materials, nothing to do with VIP.
 - Its look follows the VIP level: 15 looks (five shapes of three steps each), a glTF file for each
-  (docs/ASSETS.md). On top stands a badge with the level's number: gold and slowly turning while VIP is
-  active, grey metal and still when it has lapsed (the parts `when_vip_true` / `when_vip_false`, switched in
-  place). Before the first VIP level the Barn wears the first look with no badge.
+  (docs/ASSETS.md). On top stands a crest with the level's number, the thing a player's eye should go to. It
+  grows richer by tier, three levels each: bronze; silver with a laurel; gold with wings; a crown; and at the
+  last rays and gems, each tier with its own enamel behind the number.
+  - While VIP is active (`when_vip_true`) its metal glimmers: a band of light crosses it every few seconds and
+    it glows a little by itself, day and night (`ModelKit.shine_material`, one draw); glints twinkle round it
+    (the `sparkle` effect, one draw); and it rides gently up and down (a `bob_*` part).
+  - Lapsed (`when_vip_false`) the same crest stands still in dull grey: the level is still there to read, and
+    what was lost is plain to see.
+  - Before the first VIP level the Barn wears the first look with no crest.
 - Its sheet has a VIP page: the level, the points to the next, the time left, and the buttons to buy points
   and time.
 

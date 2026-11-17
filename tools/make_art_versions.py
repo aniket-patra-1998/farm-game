@@ -50,6 +50,7 @@ SOURCES = {
                    "scripts/world/space_fit.gd", "data/building_models.json", "data/catalog/buildings.json",
                    "shaders/wall3d.gdshader", "shaders/paint3d.gdshader", "shaders/orbit3d.gdshader",
                    "shaders/spray3d.gdshader", "shaders/flame3d.gdshader", "shaders/glow3d.gdshader",
+                   "shaders/shine3d.gdshader",
                    "shaders/contact3d.gdshader", "tools/export_buildings.gd"],
                   "godot --headless --path . res://tools/export_buildings.tscn"),
     "sounds": (["tools/sound_cuts/*.py"],

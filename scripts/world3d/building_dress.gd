@@ -36,14 +36,36 @@ const FULL := 3
 const CHUTE_LONG := 0.7       # a grain chute: how long its spout is..
 const CHUTE_TILT := 0.55       # ..how steeply it runs down (radians)..
 const CHUTE_HIGH := 0.42       # ..and how high its mouth is over the ground
-const BADGE_R := 0.21             # the VIP badge: its medallion's radius, in tiles..
-const BADGE_THICK := 0.02         # ..half its thickness..
-const BADGE_POST := 0.18          # ..the post it stands on..
-const BADGE_DOT := 0.038          # ..a block of its number..
-const BADGE_BOB := 0.025          # ..and how far it rides up and down while VIP is active
-## The digits 0 to 9 as five rows of three blocks each (a bit a block, the left one the highest).
-const DIGITS := [[7, 5, 5, 5, 7], [2, 6, 2, 2, 7], [7, 1, 7, 4, 7], [7, 1, 7, 1, 7], [5, 5, 7, 1, 1],
-	[7, 4, 7, 1, 7], [7, 4, 7, 5, 7], [7, 1, 1, 1, 1], [7, 5, 7, 5, 7], [7, 5, 7, 1, 7]]
+const BADGE_R := 0.24             # the VIP badge: its medallion's radius, in tiles..
+const BADGE_THICK := 0.022        # ..half its thickness..
+const BADGE_POST := 0.16          # ..the finial it stands on..
+const BADGE_BOB := 0.025          # ..how far it rides up and down while VIP is active..
+const BADGE_TIER := 3             # ..and the VIP levels to a tier of it
+## A tier's metal, the enamel its number stands on, and its gems: bronze, silver, gold, gold on green, and
+## gold on royal purple with diamonds.
+const BADGE_METALS: Array[Color] = [Color("#cf8a45"), Color("#d9dee4"), Color("#f6c443"), Color("#f6c443"),
+	Color("#ffd65a")]
+const BADGE_ENAMELS: Array[Color] = [Color("#5c2413"), Color("#1d3566"), Color("#96172a"), Color("#0e6a46"),
+	Color("#4a1e96")]
+const BADGE_GEMS: Array[Color] = [Color("#e2553d"), Color("#4fb3ff"), Color("#e2553d"), Color("#ff5c7a"),
+	Color("#bff3ff")]
+const DIGIT_GAP := 0.28           # the space between two digits, against a digit's width
+const DIGIT_STROKE := 0.26        # a stroke's thickness, against a digit's width
+## The digits 0 to 9 as lines, each a run of x, y points in a box 1 wide and 2 tall (corners cut, so they read
+## as round).
+const DIGIT_STROKES := [
+	[[0.25, 0, 0.75, 0, 1, 0.3, 1, 1.7, 0.75, 2, 0.25, 2, 0, 1.7, 0, 0.3, 0.25, 0]],
+	[[0.15, 1.5, 0.6, 2, 0.6, 0], [0.15, 0, 1, 0]],
+	[[0, 1.65, 0.3, 2, 0.7, 2, 1, 1.65, 1, 1.25, 0, 0, 1, 0]],
+	[[0, 1.7, 0.3, 2, 0.7, 2, 1, 1.7, 1, 1.3, 0.7, 1.05, 0.35, 1.05], [0.7, 1.05, 1, 0.75, 1, 0.3, 0.7, 0, 0.3, 0,
+		0, 0.3]],
+	[[0.75, 0, 0.75, 2, 0, 0.65, 1, 0.65]],
+	[[1, 2, 0.1, 2, 0.1, 1.15, 0.7, 1.15, 1, 0.85, 1, 0.3, 0.7, 0, 0.3, 0, 0, 0.3]],
+	[[0.9, 2, 0.45, 2, 0, 1.4, 0, 0.3, 0.3, 0, 0.7, 0, 1, 0.3, 1, 0.8, 0.7, 1.1, 0.3, 1.1, 0, 0.8]],
+	[[0, 2, 1, 2, 0.4, 0]],
+	[[0.3, 1.05, 0.05, 1.3, 0.05, 1.7, 0.3, 2, 0.7, 2, 0.95, 1.7, 0.95, 1.3, 0.7, 1.05, 0.3, 1.05, 0, 0.75, 0, 0.3,
+		0.3, 0, 0.7, 0, 1, 0.3, 1, 0.75, 0.7, 1.05]],
+	[[0.1, 0, 0.55, 0, 1, 0.6, 1, 1.7, 0.7, 2, 0.3, 2, 0, 1.7, 0, 1.2, 0.3, 0.9, 0.7, 0.9, 1, 1.2]]]
 const TABLE := Vector3(0.22, 0.2, 0.11)   # a table of goods: half its length, its height and half its width
 const RACK_WIDE := 0.4
 const RACK_TALL := 0.52
@@ -634,53 +656,132 @@ static func _keg(root: Node3D, at: Vector3) -> void:
 	ModelKit.cylinder(root, at + Vector3(0, 0.085, 0), 0.094, 0.03, ModelKit.paint(IRON), 0.092, 8)
 
 
-## The Barn's VIP badge (docs/VIP.md): a medallion on a post over the roof with the VIP level's number on it,
-## which is the building's level (BarnDef.look_level). Two looks of one part, switched in place: gold, riding
-## gently up and down with a halo of light at night while VIP is active (`when_vip_true`); grey metal and
-## still when it has lapsed (`when_vip_false`). Neither shows before the first VIP level.
+## The Barn's VIP badge (docs/VIP.md): a crest over the roof with the VIP level's number on it, which is the
+## building's level (BarnDef.look_level). It grows richer by tier (three levels each): bronze, then silver with
+## a laurel, gold with wings, a crown, and at the last rays and gems. Two looks of one part, switched in place:
+## while VIP is active its metal glimmers (ModelKit.to_shine), glints twinkle round it and it rides gently up
+## and down (`when_vip_true`); lapsed, the same crest stands still in dull grey (`when_vip_false`), so what
+## was lost is plain to see. Neither shows before the first VIP level.
 static func _vip_badge(ctx: Dictionary, lo: Vector3, hi: Vector3) -> void:
 	var root: Node3D = ctx["root"]
 	var w_lo: Vector3 = ctx.get("upper_lo", lo)
 	var w_hi: Vector3 = ctx.get("upper_hi", hi)
-	var foot := Vector3((w_lo.x + w_hi.x) / 2.0, float(ctx.get("top", w_hi.y)) - 0.02, (w_lo.z + w_hi.z) / 2.0)
+	var foot := Vector3((w_lo.x + w_hi.x) / 2.0, float(ctx.get("top", w_hi.y)) - 0.03, (w_lo.z + w_hi.z) / 2.0)
 	var at := foot + Vector3(0, BADGE_POST + BADGE_R, 0)
 	var turn := Vector3(0, PI / 4.0, 0)   # (its face to the camera)
-	ModelKit.cylinder(root, foot, 0.022, BADGE_POST, ModelKit.paint(Color("#6f767d"), 0.6), -1.0, 6)
+	var level := int(ctx.get("level", 1))
+	var tier := clampi((level - 1) / BADGE_TIER, 0, BADGE_METALS.size() - 1)
+	# What it stands on: a turned finial of dark iron (it never changes).
+	var iron := ModelKit.paint(Color("#3f454c"), 0.5)
+	ModelKit.cylinder(root, foot, 0.07, 0.03, iron, 0.05, 8)
+	ModelKit.cylinder(root, foot + Vector3(0, 0.03, 0), 0.028, BADGE_POST - 0.03, iron, 0.02, 8)
+	bead(root, foot + Vector3(0, BADGE_POST * 0.55, 0), 0.04, iron)
 	for on: bool in [true, false]:
 		var face := Node3D.new()
-		var metal := ModelKit.paint(GOLD if on else Color("#a7afb6"), 0.9 if on else 0.7)
-		var ink := ModelKit.paint(Color("#6a2a14") if on else Color("#59616a"))
-		# The medallion: a rim and a face, the number raised on it.
-		var rim := ModelKit.cylinder(face, Vector3.ZERO, BADGE_R, BADGE_THICK * 2.0, metal, BADGE_R, 12)
-		rim.rotation.x = PI / 2.0
-		rim.position = Vector3.ZERO
-		_number(face, int(ctx.get("level", 1)), ink)
+		_crest(face, level, tier, on)
 		var part := when(ctx, "vip", on)
 		if on:
-			var halo := ModelKit.glow_pools(face, [[Vector3.ZERO, Vector2.ONE * BADGE_R * 5.0]])
-			halo.rotation.x = PI / 2.0     # (upright behind the medallion: a soft light round it at night)
-			halo.position = Vector3(0, 0, -BADGE_THICK * 2.5)
-			DecorMotion.bob(part, at, turn, face, BADGE_BOB)
+			var glints := DecorMotion.effect(face, "sparkle", Vector3(0, 0, BADGE_THICK * 3.0))
+			glints.rotation.x = PI / 2.0   # (its ring stands in the crest's own flat, facing out)
+			ModelKit.to_shine(DecorMotion.bob(part, at, turn, face, BADGE_BOB))
 		else:
 			face.position = at
 			face.rotation = turn
 			part.add_child(face)
 
 
-## A number in raised blocks on a badge's face, centred: each digit five blocks tall and three wide.
-static func _number(face: Node3D, number: int, mat: Material) -> void:
+## The crest itself, built facing +z about its own middle: `on` in its tier's metal and enamel, or in greys.
+static func _crest(face: Node3D, level: int, tier: int, on: bool) -> void:
+	var metal_col: Color = BADGE_METALS[tier] if on else Color("#8f969d")
+	var metal := ModelKit.paint(metal_col, 0.9 if on else 0.3)
+	var pale := ModelKit.paint(metal_col.lightened(0.35), 0.9 if on else 0.3)
+	var enamel := ModelKit.paint(BADGE_ENAMELS[tier] if on else Color("#4f555c"), 0.6 if on else 0.1)
+	var ink := ModelKit.paint(Color("#fff8e6") if on else Color("#b9bfc5"), 0.8 if on else 0.2)
+	var gem := ModelKit.paint(BADGE_GEMS[tier] if on else Color("#737a82"), 1.0 if on else 0.2)
+	if tier >= 4:
+		# Rays behind it, long and short by turns.
+		for k in 12:
+			var ray := _turned(face, Vector3(0, 0, -BADGE_THICK * 1.5), TAU * k / 12.0)
+			var long := BADGE_R * (0.75 if k % 2 == 0 else 0.5)
+			ModelKit.faces(ray, [[Vector3(-0.028, BADGE_R * 0.95, 0), Vector3(0.028, BADGE_R * 0.95, 0),
+				Vector3(0, BADGE_R * 0.95 + long, 0)]], Vector3(0, 0, -1), pale)
+	if tier >= 2:
+		# Wings: three feathers a side, fanned up and out.
+		for side: float in [-1.0, 1.0]:
+			for k in 3:
+				var feather := _turned(face, Vector3(side * BADGE_R * 0.8, -0.02 + 0.05 * k, -BADGE_THICK * 0.5),
+					-side * (PI / 2.0 - 0.3 - 0.36 * k))
+				var long := BADGE_R * (1.25 - 0.22 * k)
+				ModelKit.faces(feather, [[Vector3(-0.035, 0, 0), Vector3(0.035, 0, 0), Vector3(0.02, long * 0.8, 0),
+					Vector3(-0.02, long * 0.8, 0)], [Vector3(-0.02, long * 0.8, 0), Vector3(0.02, long * 0.8, 0),
+					Vector3(0, long, 0)]], Vector3(0, long * 0.4, -1), pale if k == 1 else metal)
+	elif tier >= 1:
+		# A laurel: leaves up each side of the ring.
+		for side: float in [-1.0, 1.0]:
+			for k in 5:
+				var a := -PI / 2.0 + side * (0.5 + 0.44 * k)
+				var leaf := _turned(face, Vector3(cos(a), sin(a), 0) * BADGE_R * 1.14, a + side * 0.9)
+				bead(leaf, Vector3.ZERO, 0.05, pale, Vector3(1.25, 0.5, 0.4))
+	# The medallion: a ring of metal, studs round it, and enamel within.
+	_disc(face, Vector3.ZERO, BADGE_R, BADGE_THICK * 2.0, metal, 16)
+	_disc(face, Vector3(0, 0, BADGE_THICK * 0.4), BADGE_R * 0.8, BADGE_THICK * 2.0, enamel, 16)
+	for k in 12:
+		bead(face, Vector3(cos(TAU * k / 12.0), sin(TAU * k / 12.0), 0) * BADGE_R * 0.9 + Vector3(0, 0, BADGE_THICK),
+			0.017, pale)
+	_stroke_number(face, level, ink, BADGE_R * 0.78, BADGE_THICK * 1.4)
+	if tier >= 3:
+		# A crown on top: a band, three points, a gem on each.
+		var base := Vector3(0, BADGE_R * 0.98, 0)
+		ModelKit.box(face, base + Vector3(-0.1, 0, -0.03), base + Vector3(0.1, 0.045, 0.03), metal, false)
+		for k in 3:
+			var x := (k - 1) * 0.075
+			var tall := 0.1 if k == 1 else 0.075
+			ModelKit.cylinder(face, base + Vector3(x, 0.045, 0), 0.034, tall, pale, 0.0, 4)
+			bead(face, base + Vector3(x, 0.045 + tall, 0), 0.022, gem)
+		bead(face, base + Vector3(0, 0.022, 0.03), 0.02, gem)
+	if tier >= 4:
+		for side: float in [-1.0, 1.0]:
+			bead(face, Vector3(side * BADGE_R * 0.9, 0, BADGE_THICK), 0.03, gem)
+		bead(face, Vector3(0, -BADGE_R * 0.9, BADGE_THICK), 0.03, gem)
+
+
+## A node at `at` turned by `turn` about the axis out of the crest's face: what is built under it points along
+## its own upright.
+static func _turned(face: Node3D, at: Vector3, turn: float) -> Node3D:
+	var n := Node3D.new()
+	n.position = at
+	n.rotation.z = turn
+	face.add_child(n)
+	return n
+
+
+## A disc facing +z, its middle at `at`.
+static func _disc(face: Node3D, at: Vector3, r: float, thick: float, mat: Material, sides: int) -> void:
+	var flat := Node3D.new()
+	flat.position = at
+	flat.rotation.x = PI / 2.0
+	face.add_child(flat)
+	ModelKit.cylinder(flat, Vector3(0, -thick / 2.0, 0), r, thick, mat, r, sides)
+
+
+## A number drawn in strokes on a crest's face, centred, `tall` high: each digit a few lines with their
+## corners cut (DIGIT_STROKES), each line a raised bar.
+static func _stroke_number(face: Node3D, number: int, mat: Material, tall: float, z: float) -> void:
 	var digits := str(clampi(number, 0, 99))
-	var wide := digits.length() * 3 + (digits.length() - 1)
+	var unit := tall / 2.0                       # (a digit is 1 wide and 2 tall in its own units)
+	if digits.length() > 1:
+		unit *= 0.78                             # (two digits share the face)
+	var wide := digits.length() + (digits.length() - 1) * DIGIT_GAP
+	var thick := unit * DIGIT_STROKE
 	for k in digits.length():
-		var rows: Array = DIGITS[digits.unicode_at(k) - 48]
-		for row in 5:
-			for col in 3:
-				if (int(rows[row]) >> (2 - col)) & 1 == 0:
-					continue
-				var x := (k * 4 + col - wide / 2.0) * BADGE_DOT
-				var y := (2.0 - row) * BADGE_DOT - BADGE_DOT / 2.0
-				ModelKit.box(face, Vector3(x, y, BADGE_THICK), Vector3(x + BADGE_DOT, y + BADGE_DOT, BADGE_THICK + 0.012),
-					mat, false)
+		var left := (k * (1.0 + DIGIT_GAP) - wide / 2.0) * unit
+		for line: Array in DIGIT_STROKES[digits.unicode_at(k) - 48]:
+			for n in range(0, line.size() - 2, 2):
+				var a := Vector3(left + float(line[n]) * unit, (float(line[n + 1]) - 1.0) * unit, z)
+				var b := Vector3(left + float(line[n + 2]) * unit, (float(line[n + 3]) - 1.0) * unit, z)
+				var bar := _turned(face, (a + b) / 2.0, atan2(b.y - a.y, b.x - a.x))
+				var half := a.distance_to(b) / 2.0 + thick / 2.0
+				ModelKit.box(bar, Vector3(-half, -thick / 2.0, 0), Vector3(half, thick / 2.0, 0.014), mat, false)
 
 
 ## A low table of goods by the building (a rack's other style): two a row, a row more as the building fills,

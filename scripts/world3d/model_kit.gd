@@ -18,6 +18,7 @@ const LIVE_GLOW := "kit_glow"
 const LIVE_SHADE := "kit_shade"
 const LIVE_WATER := "kit_water"
 const LIVE_POND := "kit_pond"
+const LIVE_SHINE := "kit_shine"
 const SHADE_STRENGTH := 0.5   # how dark the soft shade round a building's foot is at its middle
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.05
@@ -440,6 +441,8 @@ static func file_name_of(mat: Material) -> String:
 		return LIVE_WATER
 	if mat == pond_water():
 		return LIVE_POND
+	if mat == shine_material():
+		return LIVE_SHINE
 	if mat in paint_like:
 		return FILE_PAINT
 	return ""
@@ -464,6 +467,27 @@ static func adopt(node: Node) -> void:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for c in node.get_children():
 		adopt(c)
+
+
+## The shared material of polished metal that glimmers (shaders/shine3d: the Barn's VIP badge while VIP is
+## active). It takes each part's colour from its vertex colour, as merged paint does.
+static func shine_material() -> ShaderMaterial:
+	if not _materials.has("shine"):
+		var m := ShaderMaterial.new()
+		m.shader = load("res://shaders/shine3d.gdshader")
+		m.resource_name = LIVE_SHINE
+		_materials["shine"] = m
+	return _materials["shine"]
+
+
+## Makes the merged paint of `node` (a baked part) glimmer: its painted surface is drawn with the shine
+## material in place of the paint's, colours kept.
+static func to_shine(node: Node3D) -> void:
+	for c in node.get_children():
+		var mi := c as MeshInstance3D
+		for k in (mi.mesh.get_surface_count() if mi != null and mi.mesh != null else 0):
+			if mi.get_surface_override_material(k) == coat():
+				mi.set_surface_override_material(k, shine_material())
 
 
 ## The shared material of every pool of light a lit window or door throws on the ground (shaders/glow3d).
@@ -949,6 +973,8 @@ static func _live(m: Material) -> Material:
 			return water()
 		LIVE_POND:
 			return pond_water()
+		LIVE_SHINE:
+			return shine_material()
 	return m
 
 

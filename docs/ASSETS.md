@@ -32,7 +32,7 @@ targets, and Godot imports it natively. Our builders' Python never runs on a pho
 - Named parts the game needs: `door` / `door_left` (direct children of the root: they swing open on collect),
   `window_*` (where animals look out; the part's scale sizes the head), `yard`, `slot_*`.
 - Named parts that move (`DecorMotion.start`): a part named for an effect (`smoke_*`, `steam_*`, `jet_*`,
-  `pour_*`, `grain_*`: `DecorMotion.EFFECTS`) starts that effect where it stands; `spin_<speed>_*` turns about
+  `pour_*`, `grain_*`, `sparkle_*`: `DecorMotion.EFFECTS`) starts that effect where it stands; `spin_<speed>_*` turns about
   its own upright (the speed in hundredths of a radian a second); `bob_<height>_*` rides gently up and down
   (the height in thousandths of a tile). The file holds the part and its name, never the effect.
 - States: a part named `when_<state>_<value>` shows only in that state (§10.4). States that come and go (ready,
@@ -75,7 +75,7 @@ builder names its materials `paint` or `wall` (`ModelKit.FILE_PAINT`, `FILE_WALL
 that read each part's shine or surface pattern from its vertex alpha (`alpha_holds`; the patterns are
 shaders/surface_patterns.gdshaderinc, shared with the builders' own wall shader). Glass, pools of light, the
 shade at a building's foot and water are the kit's single shared materials, put back by the names the file
-gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`, `kit_pond`: `ModelKit.adopt`). A crafting building is 6 to
+gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`, `kit_pond`, `kit_shine`: `ModelKit.adopt`). A crafting building is 6 to
 8 draws: walls, paint and glass, the light pools, the shade, its storage look and its animated parts.
 
 ## 4. Animation: clips, blended, with layers; crowds on the GPU
