@@ -16,6 +16,9 @@ const TURN_RATE := 6.0                          # how fast it turns to face wher
 const REST_RIGHT := PI / 12.0
 const REST_LEFT := PI * 17.0 / 12.0
 const SETTLE_RATE := 1.2                        # how fast it eases round to stand side-on (radians/s)
+const FLOAT_SINK := 0.22                        # how much of its height is under the water when it swims
+const FLOAT_EASE := 3.0                         # how fast it settles into the water or steps out (per second)
+const DABBLE_TIP := 1.15                        # radians a swimmer tips forward when it dabbles: head under, tail up
 const EYE := Color("#1b140f")
 const HOOF := Color("#3a2c22")
 const PINK := Color("#eba9a3")
@@ -60,6 +63,9 @@ var heading := 0.0               # radians around +y; 0 faces +x
 var home := Vector3.ZERO         # the tile centre it wanders around
 
 var drop := 0.0                  # height above the ground while dropping in (tweened by land())
+var afloat := false              # it is on water (BuildingFill says so): it swims low and dabbles, not pecks
+var float_share := 0.0           # how far it has settled into the water, 0..1
+var dabble := 0.0                # how far a swimmer has tipped forward to feed, 0..1
 
 var _body: Node3D
 var _head: Node3D
@@ -927,15 +933,22 @@ func land() -> void:
 ## Poses the animal for this frame from its behaviour (call every frame it's on screen).
 func update(delta: float) -> void:
 	var p: AnimalPose = behaviour.pose if behaviour != null else AnimalPose.rest()
+	# On water it sits low, its legs under the surface; its peck is a dabble, tipping forward with its head under.
+	float_share = move_toward(float_share, 1.0 if afloat else 0.0, FLOAT_EASE * delta)
 	if behaviour != null:
-		position = home + IsoProjection.ground_of(behaviour.offset) + Vector3(0, drop, 0)
+		var sunk := reach().y * FLOAT_SINK * float_share
+		position = home + IsoProjection.ground_of(behaviour.offset) + Vector3(0, drop - sunk, 0)
+	# (only while it feeds: a swimmer asleep keeps its head low without going under)
+	var feeding := behaviour != null and behaviour.state == AnimalBehaviour.State.GRAZE
+	dabble = move_toward(dabble, smoothstep(0.0, 1.0, p.head) if feeding else 0.0, FLOAT_EASE * delta)
+	rotation.z = -DABBLE_TIP * dabble * float_share
 	# Face where it's going: turn smoothly toward its direction of travel.
 	var moved := position - _last
 	_last = position
 	if Vector2(moved.x, moved.z).length() > 0.0005:
 		var want := atan2(-moved.z, moved.x)
 		heading = rotate_toward(heading, want, TURN_RATE * delta)
-	else:
+	elif behaviour == null or not behaviour.drinking:
 		# Standing (grazing, idling): it settles side-on to the view, as FarmVille always showed its animals,
 		# never tail-on or head-on (which, from above, reads as a pole).
 		var rest := REST_RIGHT if absf(angle_difference(heading, REST_RIGHT)) < absf(angle_difference(heading, REST_LEFT)) \

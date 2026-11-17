@@ -15,6 +15,7 @@ uniform float phase = 0.0;
 uniform float flap = 0.0;       // > 0: a flier's wings (whatever lies further out than `shoulder` either side) beat
 uniform float flap_rate = 10.0; // this many radians up and down, at this pace, in bursts with glides between
 uniform float shoulder = 0.03;
+uniform float dip = 0.0;        // > 0: a swimmer that dabbles: now and then it tips forward this far (radians), head under
 
 void vertex() {
 	vec3 root = NODE_POSITION_WORLD;
@@ -33,6 +34,14 @@ void vertex() {
 		v.y = out_x * sa + v.y * ca;
 		float n_out = n.x * side;
 		n = vec3(side * (n_out * ca - n.y * sa), n_out * sa + n.y * ca, n.z);
+	}
+	if (dip > 0.0) {
+		// It faces -z: tipping forward turns it about its own middle, so its head goes down and its tail up.
+		float tip = dip * smoothstep(0.8, 0.95, sin(t * 0.7 + phase * 1.9));
+		float ct = cos(tip);
+		float st = sin(tip);
+		v = vec3(v.x, v.y * ct + v.z * st, v.z * ct - v.y * st);
+		n = vec3(n.x, n.y * ct + n.z * st, n.z * ct - n.y * st);
 	}
 	vec3 p = v + vec3(radius, 0.0, 0.0);
 	float c = cos(a);

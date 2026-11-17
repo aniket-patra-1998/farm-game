@@ -14,8 +14,8 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `autoload/sound.gd`, `autoload/feedback.gd`: sounds and the game's moments. `tests/suites/`: one `TestSuite`
   per area. `tools/`: precheck, generators, probes (perf, contact sheet, state sheet).
 - Docs: V1.md (the first release's line), AUDIT.md (the plan), ASSETS.md and ART_BIBLE.md (art), UI.md,
-  WEATHER.md, SEARCH.md, PLAYER_EXPERIENCE.md, VIP.md (VIP and the Barn), RUST.md (vehicle rust), NEXT.md
-  (handoff between sessions).
+  WEATHER.md, SEARCH.md, PLAYER_EXPERIENCE.md, VIP.md (VIP and the Barn), RUST.md (vehicle rust), WATER.md
+  (water and what lives on it), NEXT.md (handoff between sessions).
 
 ## Rules
 - Before every push `tools/precheck.sh <godot>` passes (the pre-push hook runs it: set it up once per clone

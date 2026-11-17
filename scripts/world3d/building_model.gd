@@ -34,6 +34,7 @@ const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pu
 ## Yard features' size (their radius in tiles, unless the data gives `r`).
 const FEATURE_R := {"rock": 0.3, "pool": 0.32, "wallow": 0.34, "carrots": 0.26, "fuel_pump": 0.18, "burrow": 0.34}
 const HILL := Color("#6fae45")   # a burrow's grassy hill
+const STILL_WATER := Color("#2999d6")   # painted water that does not move, in the water's own blue
 ## A goat's climbing rock: (x, z offset as shares of its radius, radius share, height share).
 const ROCK_BOULDERS: Array[Vector4] = [Vector4(0, 0, 0.75, 1.3), Vector4(0.55, 0.3, 0.5, 0.9),
 	Vector4(-0.5, 0.35, 0.45, 0.8), Vector4(0.1, -0.5, 0.5, 0.95), Vector4(0.15, 0.1, 0.45, 2.1)]
@@ -194,9 +195,8 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 			"porch", "stall_doors":
 				out.append(Rect2(lo.x, hi.y, bw, 0.32))
 			"water_trough":
-				var x := minf(hi.x + 0.45, fw - 0.3)
-				var z := minf(hi.y + 0.35, fd - 0.2)
-				out.append(Rect2(x - 0.22, z - 0.09, 0.44, 0.18))
+				var spot := _trough_at(hi, fw, fd)
+				out.append(Rect2(spot.x - 0.22, spot.y - 0.09, 0.44, 0.18))
 			"silo":
 				var p: Array = f.get("at", [0.85, 0.2])
 				var r := float(f.get("r", 0.22)) + 0.04
@@ -217,6 +217,24 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 				var spot := yard_spot(f, fw, fd)
 				var r := float(f.get("r", FEATURE_R.get(str(f["type"]), 0.3)))
 				out.append(Rect2(spot.x - r, spot.y - r, r * 2.0, r * 2.0))
+	return out
+
+
+## Where a yard's water trough stands, by its building's front right corner `hi` (x, z).
+static func _trough_at(hi: Vector2, fw: float, fd: float) -> Vector2:
+	return Vector2(minf(hi.x + 0.45, fw - 0.3), minf(hi.y + 0.35, fd - 0.2))
+
+
+## Where the animals of a yard can drink: the middle of each water trough in it (BuildingFill sends them).
+static func troughs(s: Dictionary, fp: Vector2i) -> Array[Vector2]:
+	var body: Dictionary = s["body"]
+	var at: Array = body.get("at", [0.5, 0.42])
+	var hi := Vector2(float(at[0]) * fp.x + float(body.get("w", 0.7)) * fp.x / 2.0,
+		float(at[1]) * fp.y + float(body.get("d", 0.66)) * fp.y / 2.0)
+	var out: Array[Vector2] = []
+	for f: Dictionary in s.get("features", []):
+		if str(f.get("type", "")) == "water_trough":
+			out.append(_trough_at(hi, fp.x, fp.y))
 	return out
 
 
@@ -1245,11 +1263,13 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			# Smoke curling up from it (GPU-animated, one draw), while the building works.
 			DecorMotion.effect(BuildingDress.when(ctx, "working", true), "smoke", Vector3(mid.x, top + 0.22, mid.z))
 		"water_trough":
-			var x := minf(hi.x + 0.45, fw - 0.3)
-			var z := minf(hi.z + 0.35, fd - 0.2)
-			# (a harvesting building's trough holds painted water, which does not ripple: a draw less)
+			var spot := _trough_at(Vector2(hi.x, hi.z), fw, fd)
+			var x := spot.x
+			var z := spot.y
+			# (a harvesting building's trough holds painted water in the water's own blue, which does not move: the
+			# real water would be a draw more than a building's budget has)
 			ModelKit.tub(root, Vector3(x - 0.2, 0, z - 0.07), Vector3(x + 0.2, 0.12, z + 0.07), 0.02,
-				ModelKit.surface(WOOD, "boards", 0.2), ModelKit.paint(Color("#3f9fd0"), 0.9)
+				ModelKit.surface(WOOD, "boards", 0.2), ModelKit.paint(STILL_WATER, 0.9)
 				if ctx.get("harvesting", false) else ModelKit.water())
 		"hay_bales" when f.has("at"):
 			# A couple of bales in the yard: one lying square, one turned and leaning on it, each tied with two
@@ -1440,7 +1460,7 @@ static func _signature(ctx: Dictionary, f: Dictionary) -> void:
 			ModelKit.cylinder(root, at, r + 0.05, 0.1, ModelKit.surface(STONE, "stone", 0.2), -1.0, 24)
 			# (`still`: painted water that does not ripple, for a crafting building, where only animated parts move;
 			# it steams while the building works: the "boiler" feature)
-			var water := ModelKit.cylinder(root, at + Vector3(0, 0.101, 0), r, 0.004, ModelKit.paint(Color("#3f9fd0"),
+			var water := ModelKit.cylinder(root, at + Vector3(0, 0.101, 0), r, 0.004, ModelKit.paint(STILL_WATER,
 				0.9) if bool(f.get("still", false)) else ModelKit.water(), -1.0, 24)
 			if water != null:
 				water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

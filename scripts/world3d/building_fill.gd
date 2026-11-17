@@ -10,6 +10,12 @@ extends Node3D
 ## to show comes from the building's description (data/building_models.json "fill").
 
 const COMPANY_TURN := -0.6   # how a vehicle of a store's company is turned where it stands, in radians
+const SWIM_WITHIN := 0.9     # an animal this far out from a pond's middle (1: its shore) or less is on the water
+const WAKE_EVERY := 0.35     # seconds between the looks at who leaves a ring on the water (each in its turn)..
+const WAKE_TURNS := 3        # ..one swimmer in this many at each look
+const WAKE := Vector3(0.12, 0.4, 1.5)   # a swimmer's ring: tiles across at first and at last, and the seconds it lasts
+const DRINK_NEAR := 0.7      # an animal standing this near a water trough (tiles) goes to it to drink
+const DRINK_SHORT := 0.2     # ..and stops this far short of its middle
 const OFFSCREEN_STRIDE := 6      # a yard out of sight thinks one frame in this many
 const LOD_MID_PPU := 64.0     # screen pixels per world unit below which only half the yard's animals are drawn
 const LOD_FAR_PPU := 40.0     # ...and below which only a few are (a cow is then a speck)
@@ -98,6 +104,10 @@ var _doors: Array[Node3D] = []
 var _own_ready := false        # the model has its own ready part (`when_fill_*`): no pile of produce beside it
 var _company_look := -1        # the look the yard's company was last shown for (a store that keeps company)
 var _props: Node3D             # ..and what of it stands still: its trees, its vehicle
+var _water := {}               # the pond its animals swim on, here: {"at": its middle, "reach": its half sizes}
+var _rings: WaterRings         # where its swimmers' rings go (Objects3D's)
+var _wake_in := 0.0
+var _wake_turn := 0
 
 
 ## The fill layer for building `o`, under its model `model` (which holds its doors).
@@ -364,6 +374,17 @@ func _show_company(company: Array, o: Dictionary) -> void:
 	_stand_residents(picks, spots, 1.0)
 
 
+## Where an animal standing at `at` goes to drink, from there, in the farm grid's px (AnimalBehaviour.drink_at):
+## just short of the nearest water trough of its yard, when one is near; Vector2.INF when none is.
+func _drink_from(at: Vector2) -> Vector2:
+	var best := Vector2.INF
+	for trough: Vector2 in BuildingModel.troughs(_spec, _fp):
+		var way := trough - at
+		if way.length() <= DRINK_NEAR and (not best.is_finite() or way.length() < best.length()):
+			best = way.limit_length(maxf(way.length() - DRINK_SHORT, 0.0))
+	return IsoProjection.grid_of(Vector3(best.x, 0, best.y)) if best.is_finite() else Vector2.INF
+
+
 ## Makes the look a model from a file shows now the only one it has: its other looks go, and the one shown is
 ## no longer a state part. (What stands in a building's yard is under the building's own model, whose states
 ## are switched through everything under it: a tree there would lose its look to the Barn's.)
@@ -391,6 +412,7 @@ func _stand_residents(picks: Array, spots: Array, size: float) -> void:
 		var mind := AnimalBehaviour.new(AnimalRig.of(it), uid * 131 + k * 17,
 			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
 		var at := spots[k] as Vector2
+		mind.drink_at = _drink_from(at)
 		var a := Animal3D.create(it, mind, Vector3(at.x, 0.0, at.y), size)
 		add_child(a)
 		a.update(0.0)
@@ -942,6 +964,37 @@ func _process(delta: float) -> void:
 	if think_hidden:
 		_idle_hidden = 0.0
 	_idle = 0.0
+	if not _water.is_empty():
+		_swim(delta)
+
+
+## The pond in this yard (Objects3D found it in the model): the middle of its surface and its half sizes, in the
+## yard's own space. Its animals swim on it; their rings go to `rings`.
+func set_water(at: Vector3, reach: Vector2, rings: WaterRings) -> void:
+	_water = {"at": at, "reach": reach}
+	_rings = rings
+
+
+## The animals over the pond's water float on it (Animal3D.afloat), unless it is frozen: then they stand on the
+## ice. Each swimmer leaves a ring on the water now and then, a wider one while it dabbles.
+func _swim(delta: float) -> void:
+	var at: Vector3 = _water["at"]
+	var reach: Vector2 = _water["reach"]
+	var open := not PondLife.frozen()
+	for a in residents:
+		var out := Vector2((a.position.x - at.x) / reach.x, (a.position.z - at.z) / reach.y)
+		a.afloat = open and out.length() <= SWIM_WITHIN
+	_wake_in -= delta
+	if _wake_in > 0.0 or _rings == null:
+		return
+	_wake_in = WAKE_EVERY
+	_wake_turn += 1
+	for k in residents.size():
+		var a := residents[k]
+		if (k + _wake_turn) % WAKE_TURNS != 0 or not a.visible or a.float_share < 0.5:
+			continue
+		var wide := WAKE.y * (1.5 if a.behaviour.state == AnimalBehaviour.State.GRAZE else 1.0)
+		_rings.ring(to_global(Vector3(a.position.x, at.y, a.position.z)) + Vector3(0, 0.004, 0), WAKE.x, wide, WAKE.z)
 
 
 ## Zoomed out, a yard's animals are specks and a full home would cost hundreds of draws: draw half of them,

@@ -30,7 +30,7 @@ const ORBIT_SHADER := "res://shaders/orbit3d.gdshader"
 ## weathervane swinging with the wind.
 const CIRCLING := {"speed": 1.6, "radius": 0.3, "bob": 0.035, "bob_rate": 1.4, "flap": 0.7, "flap_rate": 11.0,
 	"shoulder": 0.028}   # (a bird: its wings beat in bursts, gliding between)
-const PADDLING := {"speed": 0.35, "radius": 0.22, "bob": 0.006, "bob_rate": 0.6}
+const PADDLING := {"speed": 0.35, "radius": 0.22, "bob": 0.006, "bob_rate": 0.6, "dip": 1.1}   # (it dabbles)
 const BOBBING := {"speed": 0.0, "bob": 0.025, "bob_rate": 0.25}
 const VANE := {"speed": 0.45, "swing": 0.7}
 ## A pennant streaming from its pole: swings quickly and a little, harder in wind.

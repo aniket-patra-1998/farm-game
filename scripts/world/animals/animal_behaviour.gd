@@ -35,6 +35,8 @@ const SLEEP_SHARE := 0.85        # of an animal's choices at night that are to s
 const SLEEP_HEAD := 0.75         # how low a sleeping animal's head hangs (1: grazing)
 const SLEEP_BREATH := 1.1        # a sleeper's breathing, slower than awake (2.1)
 const POKE_HOP := 0.45           # how high it starts when tapped (of a frolic's bounce)
+const DRINK_SHARE := 0.2         # of the choices of an animal with water near that are to go and drink
+const DRINK_REACH := 4.0         # how far past its wander range it may go for a drink (times the range)
 
 const DURATIONS := {
 	State.IDLE: Vector2(1.5, 4.0),
@@ -60,10 +62,13 @@ var shown_facing := 1.0          ## eases toward facing (the turn)
 var range_px := Vector2(14, 7)   ## how far it may wander: an ellipse, flattened like the ground
 var hungry := false              ## its home is waiting to be fed (BuildingFill): it looks about instead of grazing
 var noticed := 0.0               ## seconds left looking at whoever tapped it
+var drink_at := Vector2.INF      ## water near enough to drink from, from its home spot, in px (BuildingFill)
+var drinking := false            ## it has gone to the water and has its head down to it
 
 var _rng := RandomNumberGenerator.new()
 var _left := 0.0                 # seconds left in this state
 var _target := Vector2.ZERO
+var _to_drink := false           # the walk it is on ends at the water
 var _look_to := 0.0
 var _blink_in := 0.0
 var _blink_left := 0.0
@@ -126,6 +131,7 @@ func time_left() -> float:
 
 
 func _choose_next() -> void:
+	drinking = false
 	# At night most of what an animal does is sleep where it stands: head low, eyes shut, breathing slow. Now and
 	# then one stirs (the rest of the time's choices), so a sleeping farm is still alive.
 	if night and _rng.randf() < SLEEP_SHARE:
@@ -135,6 +141,14 @@ func _choose_next() -> void:
 	if hungry and _rng.randf() < HUNGRY_SHARE:
 		_look_to = _rng.randf_range(0.2, 1.0)
 		_enter(State.LOOK)
+		return
+	# Water near (a trough in its yard): now and then it walks up to it and drinks, its head down to the water.
+	if drink_at.is_finite() and _rng.randf() < DRINK_SHARE:
+		_target = drink_at / maxf(_norm(drink_at) / DRINK_REACH, 1.0)   # (as near as it may stray)
+		if absf(_target.x - offset.x) > 1.0:
+			facing = signf(_target.x - offset.x)
+		_to_drink = true
+		_enter(State.WALK)
 		return
 	var weights := rig.behaviour()
 	var total := 0.0
@@ -195,6 +209,10 @@ func _walk(delta: float) -> void:
 	if to.length() <= ARRIVED:
 		if state == State.FROLIC and _rng.randf() < FROLIC_AGAIN:
 			_start_walk(true)  # and off again
+		elif _to_drink:
+			_to_drink = false
+			drinking = true
+			_enter(State.GRAZE)
 		else:
 			_enter(State.IDLE)
 		return

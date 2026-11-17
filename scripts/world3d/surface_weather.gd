@@ -2,8 +2,9 @@ class_name SurfaceWeather
 extends Node
 ## What the weather leaves on the farm's surfaces. Rain wets everything (darker, glossier, puddles in the
 ## hollows) and wetness lingers after it stops; snow settles on what faces up and melts slowly. The shaders
-## read two global values, `wetness` and `snow_cover` (0..1), eased here toward what the weather asks, so a
-## shower darkens the farm over half a minute and a snowfall whitens it over a minute: never a jump.
+## read global values, `wetness` and `snow_cover` (0..1), eased here toward what the weather asks, so a
+## shower darkens the farm over half a minute and a snowfall whitens it over a minute: never a jump. `rain`
+## (0..1) is how hard it rains this moment: the rings on every water (shaders/water3d.gdshader).
 
 const WET_RISE := 1.0 / 30.0      # per second while it rains
 const WET_FALL := 1.0 / 150.0     # and drying out afterwards
@@ -11,12 +12,15 @@ const SNOW_RISE := 1.0 / 60.0
 const SNOW_MELT := 1.0 / 120.0
 const RAIN_FOR_FULL := 0.7        # a rain level (Weather's "rain") that soaks everything
 const SNOW_FOR_FULL := 0.7
+const RAIN_EASE := 1.0 / 4.0       # how fast the rain on the water comes on and lets up, per second
 const MIN_CHANGE := 0.002         # globals are only set when they moved this much
 
 var wet := 0.0
 var snow := 0.0
+var rain := 0.0                   # how hard it rains now, 0..1 (the rings on every water)
 var _sent_wet := -1.0
 var _sent_snow := -1.0
+var _sent_rain := -1.0
 
 
 func _process(delta: float) -> void:
@@ -33,6 +37,10 @@ func advance(weather: Dictionary, delta: float) -> void:
 	if absf(snow - _sent_snow) > MIN_CHANGE:
 		_sent_snow = snow
 		ShaderGlobals.set_value(&"snow_cover", snow)
+	rain = ease_toward(rain, minf(float(weather.get("rain", 0.0)) / RAIN_FOR_FULL, 1.0), delta, RAIN_EASE, RAIN_EASE)
+	if absf(rain - _sent_rain) > MIN_CHANGE:
+		_sent_rain = rain
+		ShaderGlobals.set_value(&"rain", rain)
 
 
 ## `current` moved toward `target` at `rise` per second going up, `fall` going down.

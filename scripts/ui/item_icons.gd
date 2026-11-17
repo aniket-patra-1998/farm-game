@@ -28,7 +28,7 @@ const PICTURE_SPREAD := 0.2       # ..this share of its footprint out from the m
 const PICTURE_PLANT_SIZE := 0.8   # ..at this share of their own size
 ## The global shader values that change how the farm looks (weather, night). A picture made while any is set
 ## is shown this session but not kept, so a snowy or dark picture is never saved for good.
-const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark"]
+const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark", &"rain"]
 const CALM := 0.01
 ## The studio's lights: [pitch°, yaw°, colour, energy, shadows]: key, fill, rim.
 const LIGHTS := [[-48.0, 28.0, Color(1.0, 0.96, 0.88), 0.85, true], [-20.0, -120.0, Color(0.75, 0.84, 1.0), 0.18,

@@ -22,6 +22,7 @@ const HATCH_REST := 0.1      # seconds between shakes
 const RUST := "rust"             # not-ui: how a vehicle's rust is written in its look ("rust2")
 const FARMHOUSE := "farmhouse"   # not-ui
 const STAGE := "stage"           # not-ui: how the farmhouse's stage is written in its look ("stage3")
+const PIECES := &"pieces"       # meta on a batched decoration's stand-in: the pieces the DecorLayer draws it from
 const BOX := &"box"               # on a batched thing's stand-in: the box round its model, in the model's space
 const DRESSINGS := 6              # looks of the grass and stones round a batched decoration (shared, by its uid)
 const DRESSING := ^"dressing_round"   # the name of the grass and stones round an object (outside its footprint)
@@ -108,6 +109,7 @@ var _left := 0           # objects a sync ran out of time for, still to build
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
 var _rust_marks: RustMarks     # the rust sign, over every rusty vehicle (or the Garage it stands in)
 var _fireworks: Fireworks3D    # the fireworks over a building that has just grown
+var _rings: WaterRings         # the rings on water: swimmers' wakes, splashes, a fish's leap
 var _links_due := true          # the farm changed since the fences and hedges were last joined up
 
 
@@ -134,6 +136,8 @@ func _ready() -> void:
 	add_child(_rust_marks)
 	_fireworks = Fireworks3D.new()
 	add_child(_fireworks)
+	_rings = WaterRings.new()
+	add_child(_rings)
 	sync()
 	Game.farm_expanded.connect(func(_n: int) -> void: _build_scenery())
 	# A vehicle standing on the farm is out of sight while it is drawn at work (VehicleRuns), and back after.
@@ -244,6 +248,7 @@ func _rebuild(o: Dictionary) -> void:
 	_views[uid] = {"node": node, "key": _key(o), "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
 		"file": uses_file(o), "states": Game.is_building_item(str(o["id"]))}
 	_views[uid]["fill"] = fill_of(uid)
+	_dress_water(uid, o)
 	if Game.catalog.get_def(str(o["id"])) is TreeDef:
 		_views[uid]["crown"] = _crown_of(_views[uid]["box"])
 		_ripen_view(_views[uid], o)
@@ -916,6 +921,7 @@ func _build(o: Dictionary) -> Node3D:
 						node = Node3D.new()
 						node.transform = batch["root"]
 						node.set_meta(BOX, batch["box"])
+						node.set_meta(PIECES, batch["pieces"])
 			"young":
 				node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
 			"bloom":
@@ -1273,6 +1279,85 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 	return best
 
 
+
+
+## The water in what is drawn at a view: its biggest sheet of the kit's water, as {"at": the middle of its
+## surface, "reach": its half sizes, "pond": whether it is a pond, with a shore}, all in `holder`'s own space;
+## {} when it has none. A batched decoration's meshes are the DecorLayer's (meta PIECES on its stand-in).
+static func water_in(holder: Node3D) -> Dictionary:
+	var sheets: Array = []   # [mesh, where it is in the holder, its instance or null, the material over it all]
+	var stand := holder.get_child(0) as Node3D if holder.get_child_count() > 0 else null
+	if stand != null and stand.has_meta(PIECES):
+		for piece: Dictionary in stand.get_meta(PIECES):
+			sheets.append([piece["mesh"], stand.transform * (piece["xf"] as Transform3D), null, piece["material"]])
+	else:
+		for mi: MeshInstance3D in holder.find_children("*", "MeshInstance3D", true, false):  # not-ui
+			if mi.mesh != null:
+				sheets.append([mi.mesh, _local_to(holder, mi), mi, null])
+	var best := {}
+	var most := 0.0
+	for sheet: Array in sheets:
+		var mesh: Mesh = sheet[0]
+		var mi := sheet[2] as MeshInstance3D
+		for k in mesh.get_surface_count():
+			var mat: Material = sheet[3]
+			if mat == null:
+				mat = mi.get_active_material(k) if mi != null else mesh.surface_get_material(k)
+			if mat != ModelKit.pond_water() and mat != ModelKit.water():
+				continue
+			# (that surface's own reach: a file's mesh holds the whole building, the water one surface of it)
+			var points: PackedVector3Array = mesh.surface_get_arrays(k)[Mesh.ARRAY_VERTEX]
+			if points.is_empty():
+				continue
+			var to_here: Transform3D = sheet[1]
+			var box := AABB(to_here * points[0], Vector3.ZERO)
+			for point in points:
+				box = box.expand(to_here * point)
+			if box.size.x * box.size.z > most:
+				most = box.size.x * box.size.z
+				best = {"at": Vector3(box.get_center().x, box.end.y, box.get_center().z),
+					"reach": Vector2(box.size.x, box.size.z) / 2.0, "pond": mat == ModelKit.pond_water()}
+	return best
+
+
+## Notes the water a building or a decoration has, and brings a pond to life: its own PondLife, and its animals
+## swim on it (BuildingFill.set_water).
+func _dress_water(uid: int, o: Dictionary) -> void:
+	var v: Dictionary = _views[uid]
+	var def := Game.catalog.get_def(str(o["id"]))
+	if not (def is BuildingDef or def is DecorationDef) or Game.under_construction(o):
+		return
+	var node: Node3D = v["node"]
+	var water := water_in(node)
+	v["water"] = water
+	if water.is_empty() or not water["pond"]:
+		return
+	node.add_child(PondLife.create(water["at"], water["reach"], uid, _rings))
+	var fill := v.get("fill") as BuildingFill
+	if fill != null:
+		var here := fill.global_transform.affine_inverse() * node.global_transform
+		fill.set_water(here * (water["at"] as Vector3), (water["reach"] as Vector2) * here.basis.get_scale().x, _rings)
+
+
+## The water of thing `uid` was tapped, at `at` on the ground: a splash there, or in its middle when the tap fell
+## beside it (a basin stands above the ground). Nothing on ice.
+func splash(uid: int, at: Vector3) -> void:
+	var v: Dictionary = _views.get(uid, {})
+	var water: Dictionary = v.get("water", {})
+	if water.is_empty() or PondLife.frozen():
+		return
+	var node: Node3D = v["node"]
+	var centre: Vector3 = water["at"]
+	var reach: Vector2 = water["reach"]
+	var tap := node.to_local(at)
+	var off := Vector2((tap.x - centre.x) / reach.x, (tap.z - centre.z) / reach.y)
+	var where := Vector3(tap.x, centre.y, tap.z) if water["pond"] and off.length() < 0.85 else centre
+	_rings.splash(node.to_global(where) + Vector3(0, 0.004, 0), clampf(minf(reach.x, reach.y) / 0.6, 0.3, 1.0))
+
+
+## The rings on water (for tests and tools).
+func rings_node() -> WaterRings:
+	return _rings
 
 
 ## Fireworks over building `uid`, which has just grown (Fireworks3D): a small burst, or a show for the Barn.

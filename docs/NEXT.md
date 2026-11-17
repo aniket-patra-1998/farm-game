@@ -52,6 +52,8 @@ first; the buildings items below continue alongside.
   level-up fireworks (`Fireworks3D`).
 - Picked by the owner and in: new looks for the Farmhouse, Log Cabin, Gopher Garden (the burrow hill) and
   Dog House (the bone sign); lighter Barn roofs at VIP 4 to 12.
+- Water (docs/WATER.md): the calm, deep look with rain, wind, ice and moonlight; rings; pond life; birds
+  that swim and dabble; animals that drink at a trough; a splash where water is tapped.
 - Not built: rare-quality crafted goods, rare babies, instant repair with gems (docs/VIP.md, docs/RUST.md);
   the four decor buildings above are still built at run time, not files.
 - Not checked: anything on a phone; the economy with VIP on (run the balance bot); a full farm with frames.
