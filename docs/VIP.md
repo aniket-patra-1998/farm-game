@@ -42,7 +42,9 @@ Still to build, on the same multiplier: rare-quality crafted goods and rare babi
 - Its look follows the VIP level: 15 looks (five shapes of three steps each), a glTF file for each
   (docs/ASSETS.md). On top stands the VIP badge, the thing a player's eye should go to: one big, round,
   simple shape in the farm's own chunky look, as farm games show a level. A fat coin with a thick rim, a domed
-  enamel face, the level's number large and outlined on it, and a crown. Only its colours change by tier,
+  enamel face, the level's number on it, and a crown. The number is in the game's own bold face (Poppins
+  Bold), outlined dark, and sized by what it covers so one digit or two both fill the face without touching
+  the rim. Only its colours change by tier,
   three levels each: bronze, silver, then gold on red, on green and on royal purple.
   - While VIP is active (`when_vip_true`) its metal glimmers: a band of light crosses it every few seconds and
     it glows a little by itself, day and night (`ModelKit.shine_material`, one draw); a few big glints twinkle

@@ -49,24 +49,14 @@ const BADGE_ENAMELS: Array[Color] = [Color("#7a3015"), Color("#2450a8"), Color("
 	Color("#6a2bd0")]
 const BADGE_GEMS: Array[Color] = [Color("#ffd9a8"), Color("#7fd0ff"), Color("#ff5c5c"), Color("#7dffb0"),
 	Color("#ffffff")]
-const DIGIT_GAP := 0.34           # the space between two digits, against a digit's width
-const DIGIT_STROKE := 0.3         # a stroke's thickness, against a digit's width
-const DIGIT_PAIR := 0.72          # how much smaller two digits are drawn than one, to share the face
-## The digits 0 to 9 as lines, each a run of x, y points in a box 1 wide and 2 tall (corners cut, so they read
-## as round).
-const DIGIT_STROKES := [
-	[[0.25, 0, 0.75, 0, 1, 0.3, 1, 1.7, 0.75, 2, 0.25, 2, 0, 1.7, 0, 0.3, 0.25, 0]],
-	[[0.15, 1.5, 0.6, 2, 0.6, 0], [0.15, 0, 1, 0]],
-	[[0, 1.65, 0.3, 2, 0.7, 2, 1, 1.65, 1, 1.25, 0, 0, 1, 0]],
-	[[0, 1.7, 0.3, 2, 0.7, 2, 1, 1.7, 1, 1.3, 0.7, 1.05, 0.35, 1.05], [0.7, 1.05, 1, 0.75, 1, 0.3, 0.7, 0, 0.3, 0,
-		0, 0.3]],
-	[[0.75, 0, 0.75, 2, 0, 0.65, 1, 0.65]],
-	[[1, 2, 0.1, 2, 0.1, 1.15, 0.7, 1.15, 1, 0.85, 1, 0.3, 0.7, 0, 0.3, 0, 0, 0.3]],
-	[[0.9, 2, 0.45, 2, 0, 1.4, 0, 0.3, 0.3, 0, 0.7, 0, 1, 0.3, 1, 0.8, 0.7, 1.1, 0.3, 1.1, 0, 0.8]],
-	[[0, 2, 1, 2, 0.4, 0]],
-	[[0.3, 1.05, 0.05, 1.3, 0.05, 1.7, 0.3, 2, 0.7, 2, 0.95, 1.7, 0.95, 1.3, 0.7, 1.05, 0.3, 1.05, 0, 0.75, 0, 0.3,
-		0.3, 0, 0.7, 0, 1, 0.3, 1, 0.75, 0.7, 1.05]],
-	[[0.1, 0, 0.55, 0, 1, 0.6, 1, 1.7, 0.7, 2, 0.3, 2, 0, 1.7, 0, 1.2, 0.3, 0.9, 0.7, 0.9, 1, 1.2]]]
+const BADGE_FONT := preload("res://fonts/Poppins-Bold.ttf")   # not-ui (the game's own bold face, as its numbers)
+const NUMBER_FILL := 0.92         # the VIP number: how far out on the badge's face it may reach, outline and all..
+const NUMBER_ROUND := 0.9         # ..how much of its box's half diagonal it reaches (digits have round corners)..
+const NUMBER_OUTLINE := 0.045     # ..its dark outline's width, against its digits' height..
+const NUMBER_RING := 6            # ..the copies of it, a ring round, that make that outline..
+const NUMBER_DEPTH := 0.03        # ..how far it stands out of the face, in tiles..
+const NUMBER_PX := 64             # ..and the size its letters are cut at, with the curve step that keeps them light
+const NUMBER_STEP := 4.0
 const TABLE := Vector3(0.22, 0.2, 0.11)   # a table of goods: half its length, its height and half its width
 const RACK_WIDE := 0.4
 const RACK_TALL := 0.52
@@ -714,14 +704,13 @@ static func _crest(face: Node3D, level: int, tier: int, on: bool) -> void:
 	rim.rotation.x = PI / 2.0
 	face.add_child(rim)
 	bead(face, Vector3.ZERO, BADGE_R * (1.0 - BADGE_RIM), enamel, Vector3(1, 1, 0.22))
-	# The number: big, in fat round strokes, a dark edge behind it so it reads from afar.
-	# (on both faces: it turns, and reads from either side)
+	# The number: big, in the game's own bold face, a dark outline round it so it reads from afar; on both
+	# faces (it turns, and reads from either side).
 	var front := BADGE_R * (1.0 - BADGE_RIM) * 0.22
 	for side in 2:
 		var half := _turned(face, Vector3.ZERO, 0.0)
 		half.rotation.y = PI * side
-		_stroke_number(half, level, edge, BADGE_R * 1.25, front - 0.012, DIGIT_STROKE + 0.14)
-		_stroke_number(half, level, ink, BADGE_R * 1.25, front, DIGIT_STROKE)
+		_number(half, level, ink, edge, ring.inner_radius, front)
 	# A crown on top: a band, three fat points, a ball on each.
 	var base := Vector3(0, BADGE_R * 0.93, 0)
 	var wide := BADGE_R * 0.52
@@ -744,28 +733,35 @@ static func _turned(face: Node3D, at: Vector3, turn: float) -> Node3D:
 	return n
 
 
-## A number drawn in fat round strokes on the badge's face, centred, `tall` high: each digit a few lines with
-## their corners cut (DIGIT_STROKES), each line a raised bar with a round cap at each end; `stroke` is a
-## stroke's thickness against a digit's width.
-static func _stroke_number(face: Node3D, number: int, mat: Material, tall: float, z: float, stroke: float) -> void:
-	var digits := str(clampi(number, 0, 99))
-	var unit := tall / 2.0                       # (a digit is 1 wide and 2 tall in its own units)
-	if digits.length() > 1:
-		unit *= DIGIT_PAIR                       # (two digits share the face)
-	var wide := digits.length() + (digits.length() - 1) * DIGIT_GAP
-	var thick := unit * stroke
-	for k in digits.length():
-		var left := (k * (1.0 + DIGIT_GAP) - wide / 2.0) * unit
-		for line: Array in DIGIT_STROKES[digits.unicode_at(k) - 48]:
-			for n in range(0, line.size(), 2):
-				var a := Vector3(left + float(line[n]) * unit, (float(line[n + 1]) - 1.0) * unit, z)
-				bead(face, a + Vector3(0, 0, 0.012), thick / 2.0, mat, Vector3(1, 1, 0.5))
-				if n + 3 >= line.size():
-					continue
-				var b := Vector3(left + float(line[n + 2]) * unit, (float(line[n + 3]) - 1.0) * unit, z)
-				var bar := _turned(face, (a + b) / 2.0, atan2(b.y - a.y, b.x - a.x))
-				var half := a.distance_to(b) / 2.0
-				ModelKit.box(bar, Vector3(-half, -thick / 2.0, 0), Vector3(half, thick / 2.0, 0.022), mat, false)
+## A number on the badge's round face (`room` its radius, `z` its surface), as big as fits it: the game's bold
+## letters standing out of the face in `ink`, with an outline in `edge` (the same letters flat on the face, a
+## ring of them round). It is sized by what it really covers, so one digit or two both sit inside the rim.
+static func _number(face: Node3D, number: int, ink: Material, edge: Material, room: float, z: float) -> void:
+	var text := TextMesh.new()
+	text.text = str(clampi(number, 0, 99))
+	text.font = BADGE_FONT
+	text.font_size = NUMBER_PX
+	text.curve_step = NUMBER_STEP
+	var box := text.get_aabb()
+	var reach := Vector2(box.size.x, box.size.y).length() / 2.0 * NUMBER_ROUND
+	var outline := box.size.y * room * NUMBER_FILL / reach * NUMBER_OUTLINE
+	var size := (room * NUMBER_FILL - outline) / reach
+	text.depth = NUMBER_DEPTH / size
+	var flat: TextMesh = text.duplicate()
+	flat.depth = 0.0   # (the outline's copies are only seen from the front: a face each, no sides or back)
+	# (its letters are laid out on their baseline: it is centred by what is drawn)
+	var middle := Vector3(box.get_center().x, box.get_center().y, 0) * size
+	for k in NUMBER_RING + 1:
+		var mi := MeshInstance3D.new()
+		mi.mesh = text if k == 0 else flat
+		mi.scale = Vector3.ONE * size
+		mi.material_override = ink if k == 0 else edge
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # (too small for its shadow to show)
+		var out := Vector3(0, 0, NUMBER_DEPTH / 2.0)
+		if k > 0:
+			out = Vector3(outline, 0, NUMBER_DEPTH * 0.2).rotated(Vector3.BACK, TAU * k / NUMBER_RING)
+		mi.position = Vector3(0, 0, z) - middle + out
+		face.add_child(mi)
 
 
 ## A low table of goods by the building (a rack's other style): two a row, a row more as the building fills,
