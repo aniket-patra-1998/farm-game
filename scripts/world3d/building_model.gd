@@ -30,9 +30,10 @@ const ROUGH_MOUNDS := 7           # low humps in a rough yard's ground..
 const ROUGH_TUFTS := 8            # ..and tufts of straw lying on it
 const DUCK_HOUSE := Vector3(0.2, 0.24, 0.16)   # a duck house: half its width, its walls' height, half its depth
 const HIVE_BOX := Vector3(0.29, 0.18, 0.25)   # a beehive's box: half width, height and half depth, in tiles
-const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pump", "mobile"]
+const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pump", "mobile", "burrow"]
 ## Yard features' size (their radius in tiles, unless the data gives `r`).
-const FEATURE_R := {"rock": 0.3, "pool": 0.32, "wallow": 0.34, "carrots": 0.26, "fuel_pump": 0.18}
+const FEATURE_R := {"rock": 0.3, "pool": 0.32, "wallow": 0.34, "carrots": 0.26, "fuel_pump": 0.18, "burrow": 0.34}
+const HILL := Color("#6fae45")   # a burrow's grassy hill
 ## A goat's climbing rock: (x, z offset as shares of its radius, radius share, height share).
 const ROCK_BOULDERS: Array[Vector4] = [Vector4(0, 0, 0.75, 1.3), Vector4(0.55, 0.3, 0.5, 0.9),
 	Vector4(-0.5, 0.35, 0.45, 0.8), Vector4(0.1, -0.5, 0.5, 0.95), Vector4(0.15, 0.1, 0.45, 2.1)]
@@ -212,7 +213,7 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 				out.append(Rect2((lo.x + hi.x) / 2.0 - 0.1, hi.y, 0.2, 0.45))
 			"nest_boxes":
 				out.append(Rect2(hi.x, lo.y, 0.14, bd))
-			"rock", "pool", "wallow", "carrots", "fuel_pump":
+			"rock", "pool", "wallow", "carrots", "fuel_pump", "burrow":
 				var spot := yard_spot(f, fw, fd)
 				var r := float(f.get("r", FEATURE_R.get(str(f["type"]), 0.3)))
 				out.append(Rect2(spot.x - r, spot.y - r, r * 2.0, r * 2.0))
@@ -1353,7 +1354,7 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 				if k % 2 == 1:
 					ModelKit.ball(root, p + Vector3(0.035, 0.03, 0), 0.04,
 						ModelKit.paint(Color("#d6304a") if k % 4 == 1 else Color("#4f8a34")))
-		"rock", "pool", "wallow", "carrots", "fuel_pump", "mobile":
+		"rock", "pool", "wallow", "carrots", "fuel_pump", "mobile", "burrow":
 			_signature(ctx, f)
 		"weathervane":
 			var top: float = ctx.get("top", hi.y)
@@ -1406,6 +1407,28 @@ static func _signature(ctx: Dictionary, f: Dictionary) -> void:
 	var at := Vector3(spot.x, 0, spot.y)
 	var r := float(f.get("r", FEATURE_R.get(kind, 0.3)))
 	match kind:
+		"burrow":
+			# The gophers' own home (the Gopher Garden): a round grassy hill with a round wooden door in its
+			# front, a little lit window in its side, a tin pipe for a chimney and flowers growing on it.
+			ModelKit.ball(root, at, r, ModelKit.paint(HILL), Vector3(1.0, 0.82, 1.0), true)
+			var wood := ModelKit.surface(WOOD, "boards", 0.0)
+			var frame := ModelKit.cylinder(root, Vector3.ZERO, r * 0.46, 0.04, ModelKit.paint(DARK), -1.0, 14)
+			frame.rotation.x = PI / 2.0
+			frame.position = at + Vector3(0, r * 0.36, r * 0.86)
+			var door := ModelKit.cylinder(root, Vector3.ZERO, r * 0.38, 0.05, wood, -1.0, 14)
+			door.rotation.x = PI / 2.0
+			door.position = at + Vector3(0, r * 0.36, r * 0.88)
+			BuildingDress.bead(root, at + Vector3(r * 0.2, r * 0.36, r * 0.97), r * 0.05, ModelKit.paint(BuildingDress.GOLD))
+			var pane := ModelKit.cylinder(root, Vector3.ZERO, r * 0.2, 0.04, ModelKit.glass(), -1.0, 12)
+			pane.rotation.z = PI / 2.0
+			pane.position = at + Vector3(r * 0.88, r * 0.42, 0)
+			var pipe := ModelKit.cylinder(root, at + Vector3(-r * 0.3, r * 0.6, -r * 0.2), r * 0.09, r * 0.5,
+				ModelKit.paint(BuildingDress.IRON), -1.0, 8)
+			pipe.rotation.z = 0.2
+			for k in 5:
+				var round := 0.4 + k * 1.1
+				BuildingDress.bead(root, at + Vector3(cos(round) * r * 0.55, r * 0.72, sin(round) * r * 0.5), r * 0.07,
+					ModelKit.paint(PASTELS[k % PASTELS.size()]))
 		"rock":
 			# Boulders piled into a little mountain, a ledge on top for the goats to stand on.
 			var stone := ModelKit.surface(STONE, "stone", 0.15)

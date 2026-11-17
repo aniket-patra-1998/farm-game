@@ -189,16 +189,28 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 				ModelKit.cylinder(when(ctx, "fill", FULL), Vector3(p.x + 0.16, 0, row + 0.16), 0.15, 0.012,
 					ModelKit.paint(GRAPE), 0.13, 10)
 		"emblem":
-			# The sign of its trade on a round plaque high on the front gable: a loaf, or a bunch of grapes.
+			# The sign of its trade on a round plaque high on the front gable: a loaf, a bunch of grapes, a bone.
 			var up_lo: Vector3 = ctx.get("upper_lo", lo)
 			var up_hi: Vector3 = ctx.get("upper_hi", hi)
 			var roof_top: float = ctx.get("top", up_hi.y)
 			var e := Vector3((up_lo.x + up_hi.x) / 2.0, up_hi.y + (roof_top - up_hi.y) * float(f.get("up", 0.3)),
 				up_hi.z)
-			var plaque := ModelKit.cylinder(root, Vector3.ZERO, 0.22, 0.03, ModelKit.paint(CREAM), -1.0, 12)
+			var size := float(f.get("r", 0.22))   # (the plaque's radius; a small building gives a smaller one)
+			var plaque := ModelKit.cylinder(root, Vector3.ZERO, size, 0.03, ModelKit.paint(CREAM), -1.0, 12)
 			plaque.rotation.x = PI / 2.0
 			plaque.position = e + Vector3(0, 0, 0.015)
-			if str(f.get("icon", "loaf")) == "grapes":
+			if str(f.get("icon", "loaf")) == "bone":   # (a Dog House's)
+				var bone := ModelKit.paint(CREAM)
+				var k := size / 0.22
+				var long := ModelKit.box(root, Vector3(-0.1, -0.03, 0) * k, Vector3(0.1, 0.03, 0.05) * k, bone, false)
+				long.position = e + Vector3(0, 0, 0.03)
+				long.rotation.z = 0.35
+				for end in [-1.0, 1.0]:
+					for knob in [-1.0, 1.0]:
+						var knuckle := Vector3(end * 0.1, knob * 0.035, 0).rotated(Vector3.BACK, 0.35) * k
+						bead(root, e + knuckle + Vector3(0, 0, 0.055 * k), 0.045 * k, bone)
+				plaque.material_override = ModelKit.paint(Color("#7a4a2e"))   # (a dark board, so the bone shows)
+			elif str(f.get("icon", "loaf")) == "grapes":
 				for k in 6:
 					var row := 0 if k < 3 else (1 if k < 5 else 2)
 					var across := (k - 1.0) if row == 0 else ((k - 3.5) if row == 1 else 0.0)
