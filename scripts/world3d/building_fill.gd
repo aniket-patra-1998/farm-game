@@ -128,6 +128,18 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 	return f
 
 
+## Where the yard's animals keep off (BuildingModel.taken): the building's block grown by the stone footing its
+## walls stand on (BuildingModel.FOOT_OUT), which the block leaves out, so no animal's feet stand in it. (A
+## building on stilts has none: there is room round its legs.)
+static func kept_clear(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
+	var out := BuildingModel.taken(s, fp)
+	var body: Dictionary = s["body"]
+	var stilts := (s.get("features", []) as Array).any(func(f: Dictionary) -> bool: return f.get("type") == "stilts")
+	if not out.is_empty() and float(body.get("w", 0.7)) > 0.0 and not stilts:
+		out[0] = out[0].grow(BuildingModel.FOOT_OUT)
+	return out
+
+
 ## Whether a building shows anything of what's inside it.
 static func shows(o: Dictionary) -> bool:
 	# (a home, or a store that shows its stock and keeps company in its yard: the Barn is its own kind)
@@ -204,7 +216,7 @@ static func shown_count(id: String, level: int, max_level: int, radii: Array[flo
 	var yard := SpaceFit.yard_room(Game.footprint(id))
 	var most := 0
 	for lv in range(1, level + 1):
-		var taken := BuildingModel.taken(BuildingModel.spec(id, lv), Game.footprint(id))
+		var taken := kept_clear(BuildingModel.spec(id, lv), Game.footprint(id))
 		var lo := 0
 		var hi := mini(shown_cap(lv, max_level), radii.size())
 		while lo < hi:   # the most that fit readably: fitting only gets harder with more
@@ -330,7 +342,7 @@ func _show_residents(o: Dictionary) -> void:
 	for id in picks:
 		radii.append(radius_of(Game.item_data(id)))
 	radii = radii.slice(0, shown_count(_id, Game.level_of(o), Game.max_level(_id), radii, uid))
-	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), BuildingModel.taken(_spec, _fp), radii, uid, ANIMAL_SMALLEST)
+	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), kept_clear(_spec, _fp), radii, uid, ANIMAL_SMALLEST)
 	_stand_residents(picks, fit["spots"], float(fit["size"]))
 
 
@@ -429,7 +441,7 @@ func _dress_empty_yard(empty: bool) -> void:
 		return
 	_empty_dress = Node3D.new()
 	var r := EMPTY_DRESS
-	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), BuildingModel.taken(_spec, _fp), [r * 1.6, r, r] as Array[float],
+	var fit := SpaceFit.pack(SpaceFit.yard_room(_fp), kept_clear(_spec, _fp), [r * 1.6, r, r] as Array[float],
 		uid)
 	var spots: Array = fit["spots"]
 	var wood := Color("#8a5a32")

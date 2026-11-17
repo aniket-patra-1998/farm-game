@@ -545,7 +545,7 @@ func _family_with(shapes: Dictionary, form: String) -> String:
 
 func _pack(id: String, level: int, radii: Array[float]) -> Dictionary:
 	var fp := Game.footprint(id)
-	return SpaceFit.pack(SpaceFit.yard_room(fp), BuildingModel.taken(BuildingModel.spec(id, level), fp), radii, 3,
+	return SpaceFit.pack(SpaceFit.yard_room(fp), BuildingFill.kept_clear(BuildingModel.spec(id, level), fp), radii, 3,
 		BuildingFill.ANIMAL_SMALLEST)
 
 
@@ -623,9 +623,9 @@ func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 			var r := radii[k] * float(fit["size"])
 			_check(yard.grow(0.001).encloses(Rect2(at - Vector2.ONE * r, Vector2.ONE * r * 2.0)),
 				"%s: %s stands clear inside the fence" % [id, picks[k]])
-			for q: Rect2 in BuildingModel.taken(spec, fp):
+			for q: Rect2 in BuildingFill.kept_clear(spec, fp):
 				_check(not q.grow(r * SpaceFit.WALL_CLEAR - 0.001).has_point(at),
-					"%s: %s stands clear of the building" % [id, picks[k]])
+					"%s: %s stands clear of the building and its footing" % [id, picks[k]])
 	# Every building keeps a clear border inside its tile, so neighbours never touch.
 	for id in Game.item_order:
 		var kind := str(Game.item_data(id).get("kind", ""))
