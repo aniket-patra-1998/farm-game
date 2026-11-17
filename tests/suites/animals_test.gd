@@ -434,7 +434,7 @@ func test_90_animals_walk_on_their_legs() -> void:
 	_check(max_out <= 1.001, "an animal stays within its wander range (went %.2f)" % max_out)
 	_check(states.has(AnimalBehaviour.State.WALK) and states.has(AnimalBehaviour.State.GRAZE),
 		"over a few minutes a cow walks and grazes")
-	_check(not gait_moved_while_still, "legs only cycle while the body actually moves")
+	_check(not gait_moved_while_still, "legs only cycle while the body actually moves (or steps round: test_432)")
 	# A long frame (the app resuming) doesn't fling it.
 	var c := AnimalBehaviour.new(cow, 7, Vector2(14, 7))
 	var start := c.offset   # (each starts somewhere of its own in its range: never a straight row)
@@ -531,4 +531,77 @@ func test_116_animals_and_trees_are_mastered_and_collecting_gives_no_xp() -> voi
 	_check(g.objects.any(func(o: Dictionary) -> bool: return o["id"] == "mastery_sign" and o.get("crop") == "pig"),
 		"and full mastery puts up the pig's mastery sign")
 	_check(not g.mastery.masterable("hay_bale"), "decorations aren't mastered")
+	_done(g)
+
+
+## An animal goes one stride of ground for each cycle of its legs whichever way it walks, so its feet grip the
+## ground; it bounds as a thrown body does, not as a ball; and it comes round to its way before it sets off.
+func test_432_animals_feet_grip_the_ground() -> void:
+	var g := _farm(true)
+	var rig := AnimalRig.of(g.item_data("cow"))
+	var stride := 0.33
+	var speeds: Array[float] = []
+	for way: Vector2 in [Vector2(1, 0), Vector2(0, 1), Vector2(-1, 1)]:
+		var a := AnimalBehaviour.new(rig, 5, Vector2(900, 900))
+		a.stride_tiles = stride
+		a.offset = Vector2.ZERO
+		a._target = way.normalized() * 800.0
+		a._enter(AnimalBehaviour.State.WALK, 600.0)
+		for i in 60:
+			a.update(1.0 / 60.0)   # (its legs blend in)
+		var from := a.offset
+		var cycles := 0.0
+		for i in 120:
+			var gait := a.pose.gait
+			a.update(1.0 / 60.0)
+			cycles += fposmod(a.pose.gait - gait, 1.0)
+		var ground := IsoProjection.ground_of(a.offset - from).length()
+		_check(absf(ground / cycles - stride) < 0.001, "going %s it covers a stride a cycle (%.4f)" % [way, ground / cycles])
+		speeds.append(ground / 2.0)
+	_check(absf(speeds[0] - speeds[1]) < 0.001 and absf(speeds[0] - speeds[2]) < 0.001,
+		"and goes as fast over the ground up the screen as across it %s" % [speeds])
+	# Its body's own stride is what it walks at: the file's walk, measured.
+	var made := Animal3D.file_stride("cow")
+	_check(made > 0.2 and made < 0.6, "a cow's walk covers a third of a tile or so a cycle (%.3f)" % made)
+	var mind := AnimalBehaviour.new(rig, 5, Vector2(60, 30))
+	var body := Animal3D.create(g.item_data("cow"), mind, Vector3.ZERO)
+	_check(is_equal_approx(mind.stride_tiles, body.stride()) and is_equal_approx(body.stride(), made),
+		"and its mind is told so")
+	body.free()
+	# A bound: up from the ground, highest half way through its flight, down again, and then on the ground.
+	var air := AnimalBehaviour.AIR
+	_check(is_zero_approx(AnimalBehaviour.bound(0.0)) and is_equal_approx(AnimalBehaviour.bound(air / 2.0), 1.0),
+		"a bound leaves the ground and tops out half way through its flight")
+	_check(is_equal_approx(AnimalBehaviour.bound(air * 0.25), AnimalBehaviour.bound(air * 0.75)),
+		"it falls as it rose")
+	_check(is_zero_approx(AnimalBehaviour.bound(air + 0.05)) and is_zero_approx(AnimalBehaviour.bound(0.99)),
+		"and it is on the ground between bounds, not bounced straight back up")
+	# Facing the wrong way it stands and steps round; once it has come round, it goes.
+	var t := AnimalBehaviour.new(rig, 9, Vector2(900, 900))
+	t.stride_tiles = stride
+	t.offset = Vector2.ZERO
+	t._target = Vector2(800, 0)
+	t._enter(AnimalBehaviour.State.WALK, 600.0)
+	t.turned(PI, 0.0)
+	for i in 30:
+		t.update(1.0 / 60.0)
+	_check(t.offset.length() < 0.001, "an animal facing away doesn't walk off sideways")
+	var gait := t.pose.gait
+	t.turned(PI * 0.9, stride * 0.25)
+	_check(is_equal_approx(fposmod(t.pose.gait - gait, 1.0), 0.25), "its legs step as far as the turn carries its feet")
+	t.update(1.0 / 60.0)
+	_check(t.pose.stride > 0.0, "(stepping, not sliding round)")
+	t.turned(0.0, 0.0)
+	for i in 30:
+		t.update(1.0 / 60.0)
+	_check(t.offset.x > 1.0, "and once it faces its way it sets off")
+	# Tapped, it gives a start: off the ground and back, not held up.
+	var p := AnimalBehaviour.new(rig, 11, Vector2(60, 30))
+	p.poke()
+	var top := 0.0
+	for i in ceili(AnimalBehaviour.JUMP_TIME * 60.0) + 2:
+		p.update(1.0 / 60.0)
+		top = maxf(top, p.pose.hop)
+	_check(top > AnimalBehaviour.POKE_HOP * 0.9 and is_zero_approx(p.pose.hop),
+		"a tapped animal jumps and lands (%.2f)" % top)
 	_done(g)

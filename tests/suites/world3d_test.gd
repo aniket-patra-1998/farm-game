@@ -324,6 +324,7 @@ func test_97_taps_land_on_what_is_drawn_and_it_reacts() -> void:
 	# Tapped, the cow stops and looks round, and gives a little start.
 	grid.object_poked.emit(9001)
 	_eq(mind.state, AnimalBehaviour.State.LOOK, "a tapped cow looks round")
+	mind.update(1.0 / 60.0)   # (its jump takes off)
 	_check(mind.pose.hop > 0.0, "with a little start")
 	# Pressed and held, the Dairy Farm lifts off; dragged to bare grass and let go, it is set down there.
 	var press := InputEventScreenTouch.new()
@@ -1201,6 +1202,7 @@ func test_185_a_fed_animal_hops() -> void:
 		mind.pose.hop = 0.0
 	grid._show_fed(9101, {"feed": "greens", "effect": "produce"})
 	if mind != null:
+		mind.update(1.0 / 60.0)   # (its jump takes off)
 		_check(mind.pose.hop > 0.0, "a fed animal hops")
 	Game.feeds.active = false
 	main.free()

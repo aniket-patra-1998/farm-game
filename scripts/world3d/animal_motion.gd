@@ -1,7 +1,8 @@
 class_name AnimalMotion
 extends RefCounted
 ## The weight of an animal's body: the secondary motion a mind doesn't decide but a body has, worked out
-## with springs so it overshoots and settles like flesh does instead of snapping. It leans into the turns,
+## with springs so it gives and settles like flesh does instead of snapping (firmly damped: a body with
+## weight comes to rest in one go, where rubber would wobble). It leans into the turns,
 ## lifts its front as it sets off and dips it as it pulls up; its hips sway with its steps; its head lags
 ## a turn and then catches up, stays steadier than its bobbing body, and turns to look at you when you tap
 ## it; its tail and ears swing on after the body moves; it squashes when it lands from a hop; and standing
@@ -82,8 +83,8 @@ func _step(dt: float, speed: float, heading: float, hop: float, stride: float, l
 	# Leaning: pitched by speeding up and slowing down, rolled into turns; the hips sway with the steps.
 	# (Setting off, the hindquarters push and the front lifts; pulling up, the weight comes forward onto the
 	# front. A turn leans it in toward the inside, which is its left, -z, for a turn to the left, +heading.)
-	pitch = _pitch.step(clampf(accel * LEAN_ACCEL, -MAX_LEAN, MAX_LEAN), dt, 2.2, 0.45)
-	roll = _roll.step(clampf(-turn * speed * LEAN_TURN, -MAX_LEAN, MAX_LEAN), dt, 2.6, 0.5)
+	pitch = _pitch.step(clampf(accel * LEAN_ACCEL, -MAX_LEAN, MAX_LEAN), dt, 2.2, 0.8)
+	roll = _roll.step(clampf(-turn * speed * LEAN_TURN, -MAX_LEAN, MAX_LEAN), dt, 2.6, 0.8)
 	# The head lags a turn, then catches up past straight and settles; keenly, it looks where it's told.
 	var want := lerpf(-turn * HEAD_LAG * 0.12, look_yaw, keen)
 	head_yaw = _head.step(clampf(want, -1.1, 1.1), dt, 3.0 if keen > 0.1 else 1.8, 0.55)
@@ -96,9 +97,9 @@ func _step(dt: float, speed: float, heading: float, hop: float, stride: float, l
 	if hop > 0.02:
 		_air = maxf(_air, hop)
 	elif _air > 0.05:
-		_squash.v -= _air * SQUASH * 18.0
+		_squash.v -= _air * SQUASH * 25.0
 		_air = 0.0
-	squash = -_squash.step(0.0, dt, 4.0, 0.35)
+	squash = -_squash.step(0.0, dt, 4.0, 0.7)
 	# Into a trot when it runs.
 	trot = clampf(_trot.step(smoothstep(TROT_FROM - 0.25, TROT_FROM + 0.25, speed), dt, 3.0, 1.0), 0.0, 1.0)
 	# Standing a while, it rests a hind leg, then stands square again before setting off.

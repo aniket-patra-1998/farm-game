@@ -93,7 +93,7 @@ first; the buildings items below continue alongside.
   (background under calls on a clear day; in rain and storms the rain leads, bed and music step back).
 - Open: the rain is a light-rain recording; a CC0 heavy-rain one (Freesound 200272, jmbphilmes) would suit storms.
 
-## Flowers (flower-looks branch, not merged; merging is the owner's call)
+## Flowers (flower-looks, merged 17 Nov)
 - The owner found the blooms papery and off the farm's look, and picked the chunky direction from a sheet:
   blades with a body, five stems to a Full Bloom, thick stems, fat leaves, the catalog's colours at full
   strength (`BloomModel`), fatter buds and light at the farm's strength (bloom3d divided by PI).
@@ -113,3 +113,10 @@ first; the buildings items below continue alongside.
   about 50 coins a gem against 500-6,000 elsewhere; rust level 1 repair is too cheap to be a decision.
 - Also open: rain life (docs/WEATHER.md steps 3-6: puddles, rain creatures, mushrooms, rain rules); tree batching
   (above); building the first hour and goals (docs/PLAYER_EXPERIENCE.md; the owner's five decisions are at its end).
+
+## Animal motion (animal-motion, merged 17 Nov)
+- Feet now grip (docs/ART_BIBLE.md, Motion; animals_test 432): ground speed is stride x leg pace in every
+  direction, bounds are thrown arcs with a landing, animals turn before they walk, body springs are firmer.
+- Not watched in motion yet (measured and tested only): ask for a clip or check on a phone. Animals now walk
+  about as fast as they used to up the screen (a cow 0.22 tiles a second), which is twice the old pace across.
+- The art tool's own preview walk (tools/animal_art/motion.py `script`) still hops on a sine; only the game changed.

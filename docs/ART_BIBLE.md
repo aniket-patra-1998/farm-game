@@ -47,6 +47,12 @@ changed.
 
 - Alive, never still: idle breathing, blinking, a tail or leaf sway. Movement has weight: lean into turns, lag,
   squash on landing (`AnimalMotion`). Clips are short loops that blend; nothing snaps.
+- Feet grip the ground: an animal goes one stride of ground for each cycle of its legs, whichever way it
+  walks on the screen (the stride is measured from its file's walk, `Animal3D.file_stride`; its mind walks it
+  at that, `AnimalBehaviour.stride_tiles`). It comes round to face its way before it sets off and steps round
+  as it turns (`AnimalBehaviour.turned`), never walking sideways. A bound rises and falls as a thrown body
+  does and lands before the next (`AnimalBehaviour.bound`), never a ball's bounce; springs are firmly damped
+  (weight, not rubber).
 - Interface motion follows the same feel: press in, spring back, pop in (`UiFx`).
 
 ## Scale and the camera
