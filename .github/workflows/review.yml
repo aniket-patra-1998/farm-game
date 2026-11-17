@@ -29,6 +29,9 @@ jobs:
       id-token: write
     env:
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      BIG_CHANGE: 300                 # changed lines (code, not art) from which the review runs on Opus, else Sonnet
+      SMALL_MODEL: claude-sonnet-5-5
+      BIG_MODEL: claude-opus-5-5
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
     steps:
@@ -66,16 +69,24 @@ jobs:
           else
             range=""; files=$(git show --name-only --format= "$SHA")  # no earlier review on this line of history
           fi
-          code=$(echo "$files" | grep -vE '^(art/|docs/CATALOG\.md$|tools/generate_art\.ipynb$)' || true)
+          code=$(echo "$files" | grep -vE '^(art/|docs/|tools/generate_art\.ipynb$)|\.md$' || true)
           if [ -z "$code" ]; then
-            echo "Only art or generated files changed: no review."; echo "go=false" >> "$GITHUB_OUTPUT"
-            gh api "repos/$REPO/issues/$n/comments" -f body="$(date -u +%F) $SHA: art or generated files only, not reviewed." > /dev/null
+            echo "Only art, docs or generated files changed: no review."; echo "go=false" >> "$GITHUB_OUTPUT"
+            gh api "repos/$REPO/issues/$n/comments" -f body="$(date -u +%F) $SHA: art, docs or generated files only, not reviewed." > /dev/null
             exit 0
           fi
+          skip=(-- . ':!art' ':!docs' ':!*.md' ':!tools/generate_art.ipynb')
+          if [ -n "$range" ]; then
+            lines=$(git diff --numstat "$range" "${skip[@]}" | awk '{s += $1 + $2} END {print s + 0}')
+          else
+            lines=$(git show --numstat --format= "$SHA" "${skip[@]}" | awk '{s += $1 + $2} END {print s + 0}')
+          fi
+          model="$SMALL_MODEL"; [ "$lines" -gt "$BIG_CHANGE" ] && model="$BIG_MODEL"
+          echo "$lines lines of code changed: reviewing with $model."
           tests=$(gh api "repos/$REPO/actions/workflows/tests.yml/runs?head_sha=$SHA&per_page=1" \
             --jq '.workflow_runs[0] | (.conclusion // .status) // "not run"')
           {
-            echo "go=true"; echo "issue=$n"; echo "tests=${tests:-not run}"
+            echo "go=true"; echo "issue=$n"; echo "tests=${tests:-not run}"; echo "model=$model"
             if [ -n "$range" ]; then
               echo "commands=git log --oneline $range && git diff $range -- . ':!art' ':!docs/CATALOG.md' ':!tools/generate_art.ipynb'"
             else
@@ -88,12 +99,13 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: |
-            --model claude-opus-5-5
+            --model ${{ steps.range.outputs.model }}
             --max-turns 40
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh api:*)"
           prompt: |
             You are an independent senior game developer reviewing ${{ github.repository }} at commit ${{ env.SHA }}
-            (its Tests workflow: ${{ steps.range.outputs.tests }}). Read CLAUDE.md and REVIEW.md first.
+            (its Tests workflow: ${{ steps.range.outputs.tests }}). Read CLAUDE.md and REVIEW.md first; for the areas
+            the change touches, open only the matching parts of docs/ARCHITECTURE.md, not the whole file.
             The changes to review (everything since the last review): `${{ steps.range.outputs.commands }}`.
             Read the surrounding code as needed so you judge the change in context. If the tests didn't pass,
             say so first and look for the cause.

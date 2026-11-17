@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Runs tools/precheck.sh before every push, so a lint or test failure never reaches the remote.
+# Set up once per clone: git config core.hooksPath tools/hooks
+# A push that changes only docs (docs/ or *.md) skips it, as CI does. GODOT: the engine to run (default: godot
+# on the PATH, else /home/claude/godot/godot). Never bypass it with --no-verify.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+none=0000000000000000000000000000000000000000
+changed=""
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+	[ "$local_sha" = "$none" ] && continue   # (a branch being deleted)
+	base="$remote_sha"
+	if [ "$base" = "$none" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+		base=$(git merge-base "$local_sha" origin/main 2>/dev/null || true)
+	fi
+	if [ -n "$base" ]; then
+		changed+="$(git diff --name-only "$base" "$local_sha")"$'\n'
+	else
+		changed+=$'everything\n'   # (nothing to compare with: check it all)
+	fi
+done
+code=$(printf '%s' "$changed" | grep -vE '^(docs/.*|.*\.md)?$' || true)
+if [ -z "$code" ]; then
+	echo "pre-push: docs only, no precheck needed."
+	exit 0
+fi
+GODOT="${GODOT:-$(command -v godot || echo /home/claude/godot/godot)}"
+echo "pre-push: running tools/precheck.sh (a few minutes)..."
+exec tools/precheck.sh "$GODOT"
