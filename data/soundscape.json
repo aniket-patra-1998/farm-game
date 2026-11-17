@@ -1,5 +1,5 @@
 {
-  "_doc": "The farm's background sound and music (scripts/soundscape.gd). beds: looping recordings by name. phases: the beds that may play in each part of the day (DayCycle.phase_name), one chosen by the day; seasons: beds kept to those seasons. weather: by weather state, how much quieter the bed goes (bed_db; the rain itself is WeatherEvents' loop). fade: seconds of every cross-fade; check_every: seconds between looks. gain_db: the beds' level, set so the farm's sound sits well under the calls and clicks (the mix, held by sound_test: beds 10 dB or more under a call, music 8 or more). music: tracks (res:// paths, CC0 or credited), the rest between them (gap: seconds, least and most), the first after start (first_after), gain_db.",
+  "_doc": "The farm's background sound and music (scripts/soundscape.gd). beds: looping recordings by name. phases: the beds that may play in each part of the day (DayCycle.phase_name), one chosen by the day; seasons: beds kept to those seasons. weather: by weather state, how much quieter the bed (bed_db) and the music (music_db) go; in rain and storms they step well back so the rain (WeatherEvents' loop) is the sound heard, held by sound_test. fade: seconds of every cross-fade; check_every: seconds between looks. gain_db: the beds' level, set so the farm's sound sits well under the calls and clicks (the mix, held by sound_test: beds 10 dB or more under a call, music 8 or more). music: tracks (res:// paths, CC0 or credited), the rest between them (gap: seconds, least and most), the first after start (first_after), gain_db.",
   "gain_db": -10.0,
   "fade": 5.0,
   "check_every": 2.0,
@@ -21,10 +21,10 @@
   },
   "seasons": {"summer": ["Summer"]},
   "weather": {
-    "rain": {"bed_db": -8.0},
-    "storm": {"bed_db": -12.0},
-    "snow": {"bed_db": -10.0},
-    "fog": {"bed_db": -4.0}
+    "rain": {"bed_db": -10.0, "music_db": -10.0},
+    "storm": {"bed_db": -14.0, "music_db": -14.0},
+    "snow": {"bed_db": -10.0, "music_db": -4.0},
+    "fog": {"bed_db": -4.0, "music_db": -2.0}
   },
   "music": {"tracks": ["res://art/sound/music/sunny_fields.ogg", "res://art/sound/music/evening_porch.ogg"], "first_after": 20.0, "gap": [90.0, 240.0], "fade": 3.0, "gain_db": -11.0}
 }

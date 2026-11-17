@@ -12,6 +12,8 @@ const DEFAULT_AMBIENCE := 0.8   # Sound.ambience_volume before the player moves 
 const DEFAULT_MUSIC := 0.6      # Sound.music_volume
 const BED_UNDER_DB := 10.0
 const MUSIC_UNDER_DB := 8.0
+const RAIN_UNDER_CALL_DB := Vector2(2.0, 8.0)   # the heaviest rain this far under a call, least and most
+const RAIN_OVER_DB := 8.0                       # the bed and the music this far under half the rain
 ## Sound and touch feedback: every sound builds into clean audio, every sound the game asks for exists,
 ## every animal has a voice, and the player's settings are kept.
 
@@ -262,20 +264,37 @@ func _sound_files(sub: String) -> Array[String]:
 	return found
 
 
-## The mix: what plays in the background sits well under what the player does. The files are levelled by
-## tools/sound_cuts (a call's loud part to CALL_FILE_DB, a bed to BED_FILE_DB, music to MUSIC_FILE_DB); with the
-## game's gains and the default volumes, the beds and the rain sit BED_UNDER_DB or more under a tapped animal's
-## call, the music MUSIC_UNDER_DB or more.
-func test_105_the_background_sits_under_the_calls() -> void:
+## The mix: what plays in the background sits well under what the player does, and in a shower the rain is what
+## is heard. The files are levelled by tools/sound_cuts (a call's loud part to CALL_FILE_DB, a bed and the rain to
+## BED_FILE_DB, music to MUSIC_FILE_DB); with the game's gains and the default volumes: under a clear sky the beds
+## sit BED_UNDER_DB or more under a tapped animal's call and the music MUSIC_UNDER_DB or more; while it rains (or
+## storms) the rain at its heaviest still lets a call through (RAIN_UNDER_CALL_DB), the bed and the music step back
+## under it (RAIN_OVER_DB at half the rain), and even the lightest rain is heard over them.
+func test_105_the_background_sits_under_the_calls_and_the_rain_leads_in_a_shower() -> void:
 	var sounds: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/sounds.json"))
 	var scape: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Soundscape.DATA))
 	var feedback: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/feedback.json"))
-	var hums: Dictionary = feedback["hums"]
+	var weather: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/weather.json"))
 	var base := float(sounds["volume_db"])
 	var call := CALL_FILE_DB + base + VOICE_GAIN_DB
 	var bed := BED_FILE_DB + float(scape["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
 	var music := MUSIC_FILE_DB + float(scape["music"]["gain_db"]) + linear_to_db(DEFAULT_MUSIC)
-	var rain := BED_FILE_DB + base + float(hums["rain"]["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
-	_check(call - bed >= BED_UNDER_DB, "the farm's sound sits under a call (%.1f dB under)" % (call - bed))
-	_check(call - rain >= BED_UNDER_DB, "the rain sits under a call (%.1f dB under)" % (call - rain))
-	_check(call - music >= MUSIC_UNDER_DB, "the music sits under a call (%.1f dB under)" % (call - music))
+	_check(call - bed >= BED_UNDER_DB, "under a clear sky the farm's sound sits under a call (%.1f dB)" % (call - bed))
+	_check(call - music >= MUSIC_UNDER_DB, "and the music too (%.1f dB under)" % (call - music))
+	var rain := BED_FILE_DB + base + float(feedback["hums"]["rain"]["gain_db"]) + linear_to_db(DEFAULT_AMBIENCE)
+	var rule: Dictionary = weather["rain_sound"]
+	var least := float(rule["least_db"])
+	var lightest := rain + lerpf(least, 0.0, float(rule["from"]))
+	var half := rain + lerpf(least, 0.0, 0.5)
+	var under := call - rain
+	_check(under >= RAIN_UNDER_CALL_DB.x and under <= RAIN_UNDER_CALL_DB.y,
+		"the heaviest rain leads but a call still comes through (%.1f dB under it)" % under)
+	_check(bool(sounds["sounds"]["rain"].get("always", false)), "the rain is never refused for engines humming")
+	for state: String in ["rain", "storm"]:
+		var step: Dictionary = scape["weather"][state]
+		var wet_bed := bed + float(step.get("bed_db", 0.0))
+		var wet_music := music + float(step.get("music_db", 0.0))
+		_check(half - wet_bed >= RAIN_OVER_DB, "in %s the bed steps back under the rain (%.1f dB)" % [state, half - wet_bed])
+		_check(half - wet_music >= RAIN_OVER_DB,
+			"in %s the music steps back under the rain (%.1f dB)" % [state, half - wet_music])
+		_check(lightest > maxf(wet_bed, wet_music), "in %s even the lightest rain is heard over them" % state)

@@ -13,7 +13,7 @@ extends Node
 const DATA := "res://data/sounds.json"
 const MIX_RATE := 22050
 const VOICES := 8
-const MAX_LOOPS := 3   # engines (or other beds) humming at once; a fourth stays silent
+const MAX_LOOPS := 3   # engines humming at once; a fourth stays silent (an "always" loop, the rain, never)
 const BUS := "SFX"  # not-ui
 const AMBIENCE_BUS := "Ambience"  # not-ui
 const MUSIC_BUS := "Music"  # not-ui
@@ -107,7 +107,8 @@ func play(event: String, gain_db := 0.0, pitch := 1.0) -> void:
 ## MAX_LOOPS are already humming. Mute and volume are the bus's, so they still apply.
 func start_loop(event: String, gain_db := 0.0) -> AudioStreamPlayer:
 	var stream := stream_of(event)
-	if stream == null or _loops.size() >= MAX_LOOPS:
+	var always := bool((_recipes.get(event, {}) as Dictionary).get("always", false))
+	if stream == null or (_loops.size() >= MAX_LOOPS and not always):
 		return null
 	var p := AudioStreamPlayer.new()
 	p.bus = str((_recipes.get(event, {}) as Dictionary).get("bus", BUS))

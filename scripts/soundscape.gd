@@ -4,8 +4,8 @@ extends Node
 ## and birds; Stardew Valley's music follows the seasons). data/soundscape.json says it all:
 ## - a bed: one looping recording for the part of the day (birds at dawn, the farmyard by day, crickets at night),
 ##   chosen among the phase's beds by the day, so each day sounds a little different; a bed can be kept to seasons;
-## - the weather: the bed goes quieter under rain, storm, snow or fog (the rain itself is WeatherEvents' loop, as
-##   loud as it falls, on the same bus);
+## - the weather: under rain, storm, snow or fog the bed and the music step back (`bed_db`, `music_db`), so in a
+##   shower the rain itself is what is heard (WeatherEvents' loop, as loud as it falls, on the Ambience bus);
 ## - music: tracks played one at a time with a long rest between them, so the farm is heard most of the time.
 ## Every change cross-fades. It looks again every `check_every` seconds (not each frame). Beds play on the
 ## "Ambience" bus, music on "Music", each with the player's own volume (Sound), muted with everything else.
@@ -23,6 +23,7 @@ var _streams := {}                            # path -> AudioStream, each loaded
 var _bed: Array[AudioStreamPlayer] = []       # two, cross-fading
 var _music: AudioStreamPlayer
 var _bed_db := 0.0
+var _music_db := 0.0                          # the music's level now: its gain, less what the weather takes
 var _aimed := {}                              # player -> the level it is fading towards (no fade begun twice)
 var _tweens := {}                             # player -> its fade, ended when another begins
 var _rest_until := 0.0                        # music rests until this time (seconds since start)
@@ -60,6 +61,7 @@ func look() -> void:
 	var hour := DayCycle.lit_hour(DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes()))
 	var weather: Dictionary = (_data.get("weather", {}) as Dictionary).get(str(Game.weather().get("state", "")), {})
 	_bed_db = float(_data.get("gain_db", 0.0)) + float(weather.get("bed_db", 0.0))
+	_music_db = float(_music_data().get("gain_db", 0.0)) + float(weather.get("music_db", 0.0))
 	var wanted := bed_for(DayCycle.phase_name(hour), Game.season(), int(Game.now() / DAY_SECONDS))
 	if Sound.ambience_volume <= 0.0:
 		wanted = ""   # nothing to hear: nothing playing, nothing decoding
@@ -142,7 +144,10 @@ func _look_music() -> void:
 			_fade(_music, SILENT_DB, true)
 			track = ""
 		return
-	if _music.playing or _since < _rest_until:
+	if _music.playing:
+		_fade(_music, _music_db)   # follows the weather while it plays
+		return
+	if _since < _rest_until:
 		return
 	var choices := tracks.filter(func(t: String) -> bool: return t != track or tracks.size() == 1)
 	track = str(choices[randi() % choices.size()])
@@ -150,7 +155,7 @@ func _look_music() -> void:
 	_music.volume_db = SILENT_DB
 	_aimed.erase(_music)
 	_music.play()
-	_fade(_music, float(_music_data().get("gain_db", 0.0)))
+	_fade(_music, _music_db)
 
 
 func _on_track_done() -> void:

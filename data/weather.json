@@ -11,5 +11,5 @@
   "bolt_seconds": 0.32,
   "bolt_height": 26.0
  },
- "rain_sound": {"from": 0.05, "least_db": -30.0}
+ "rain_sound": {"from": 0.05, "least_db": -12.0}
 }
