@@ -3,6 +3,8 @@ extends GameSystem
 ## The barn: repairing it, and storing objects away.
 ## Part of the game state: reached as `Game.storage`; shared state is on `game`.
 
+const BARN := "barn"     # not-ui (welcome: where a new thing went)
+const INBOX := "inbox"   # not-ui
 const GIFT_BOX_LIMIT := 9999        # what spills past the barn waits in the gift box, up to this many
 
 var stored: Array = []             # objects put away in the barn (no row or col)
@@ -117,6 +119,23 @@ func store_object(uid: int) -> bool:
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true
+
+
+## Where a new thing arrives (a baby born, a prize won, a breed traded for): the Barn while it is repaired and its
+## own space has room, else the inbox (FarmVille's Gift Box, from the farm), never dropped on the farm or into a
+## home. Returns where it went: BARN or INBOX.
+func welcome(item_id: String) -> String:
+	if barn_repaired() and stored.size() < barn_capacity() and receive(item_id):
+		return BARN
+	game.social.deliver({"what": InboxItem.ITEM, "id": item_id, "n": 1})
+	return INBOX
+
+
+## The message for `item_id` arriving at `went` (welcome): "A calf was born! It's in the Barn." with `key` the
+## news ("A_WAS_BORN") and the place after it.
+func welcome_words(key: String, item_id: String, went: String) -> String:
+	return tr(key) % str(game.item_data(item_id)["name"]) + " " + tr("ARRIVED_IN_BARN" if went == BARN
+		else "ARRIVED_IN_INBOX")
 
 
 ## Whether one more thing fits (in the Barn or its overflow).

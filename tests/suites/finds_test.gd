@@ -117,7 +117,7 @@ func test_75_breeds_have_their_own_babies() -> void:
 	for d in 40:
 		_skip(g, 86400)
 		g.collect(int(dairy["uid"]))
-	_check(_count(g, "jersey_calf") > 0, "Jersey calves were born (%d)" % _count(g, "jersey_calf"))
+	_check(_arrived(g, "jersey_calf") > 0, "Jersey calves were born (%d)" % _arrived(g, "jersey_calf"))
 	_eq(_count(g, "calf"), 0, "and no plain calves")
 	_done(g)
 

@@ -71,6 +71,14 @@ func _born(b: Dictionary, baby: String) -> void:
 	game.found_on.emit(int(b["uid"]), tr("BORN") % str(game.item_data(baby)["name"]), "uncommon" if plain else "rare")
 
 
+## A baby born at home `b`: it goes to the Barn, or the inbox when the Barn is full (`BarnStorage.welcome`),
+## never into the home it was born in nor onto the farm; said, and shown on the home as a find.
+func _welcome_baby(b: Dictionary, baby: String) -> void:
+	var went := game.storage.welcome(baby)
+	game.message.emit(game.storage.welcome_words("A_WAS_BORN", baby, went))
+	_born(b, baby)
+
+
 ## Extra results of collecting a building, as short popup texts.
 func building_specials(b: Dictionary) -> Array[String]:
 	var out: Array[String] = []
@@ -88,21 +96,11 @@ func building_specials(b: Dictionary) -> Array[String]:
 				out.append(tr("FERTILIZER"))
 			if game.has_inside(b, "bull") and game.drops_enabled and \
 					game.rng.randf() < game.vip.chance(Balance.f("specials.calf_chance")):
-				var calf := _pick_baby(b, "calf")
-				if game.place_somewhere(calf):
-					game.message.emit(
-						tr("A_WAS_BORN_RAISE_IT_IN") % game.item_data(calf)["name"].to_lower()
-					)
-					_born(b, calf)
+				_welcome_baby(b, _pick_baby(b, "calf"))
 		"foals":
 			var with_stallion := game.has_inside(b, "stallion")
 			if game.drops_enabled and with_stallion and game.rng.randf() < game.vip.chance(Balance.f("specials.foal_chance")):
-				var foal := _pick_baby(b, "foal")
-				if game.place_somewhere(foal):
-					game.message.emit(
-						tr("A_WAS_BORN_RAISE_IT_IN") % game.item_data(foal)["name"].to_lower()
-					)
-					_born(b, foal)
+				_welcome_baby(b, _pick_baby(b, "foal"))
 			if game.drops_enabled and game.rng.randf() < game.vip.chance(Balance.f("specials.stable_helper_chance")):
 				game.farmhands += 1
 				out.append(tr("FARMHAND"))
@@ -118,15 +116,11 @@ func building_specials(b: Dictionary) -> Array[String]:
 		"lambs":
 			if game.has_inside(b, "ram") and game.drops_enabled and \
 					game.rng.randf() < game.vip.chance(Balance.f("specials.lamb_chance")):
-				if game.place_somewhere("lamb"):
-					game.message.emit(tr("A_LAMB_WAS_BORN_RAISE_IT"))
-					_born(b, "lamb")
+				_welcome_baby(b, "lamb")
 		"truffles":
 			if game.has_inside(b, "boar") and game.drops_enabled and \
 					game.rng.randf() < game.vip.chance(Balance.f("specials.piglet_chance")):
-				if game.place_somewhere("piglet"):
-					game.message.emit(tr("A_PIGLET_WAS_BORN_RAISE_IT"))
-					_born(b, "piglet")
+				_welcome_baby(b, "piglet")
 		"beehive":
 			if game.drops_enabled and game.rng.randf() < game.vip.chance(Balance.f("specials.fertilize_all_chance")):
 				game.fertilize_alls += 1

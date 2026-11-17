@@ -5,9 +5,8 @@ extends RefCounted
 ## for the screen's density), so it is crisp at any size, then kept. `of` gives null for a kind with no file.
 
 const DIR := "res://art/icons/ui/"
-# The smallest drawing; sizes go up in powers of two, so an icon swelling in a pulse never draws itself again
-# for every size it passes (mipmaps take it down smoothly).
-const LEAST := 32
+const LEAST := 32        # the smallest drawing; sizes go up in powers of two, so an icon swelling in a pulse
+                         # never draws itself again for every size it passes (mipmaps take it down smoothly)
 const OVERSAMPLE := 1.5  # drawn this much larger than shown, then smoothed down (mipmaps)
 
 static var _cache := {}  # "kind:px" -> ImageTexture

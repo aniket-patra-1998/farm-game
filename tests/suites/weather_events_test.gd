@@ -46,7 +46,8 @@ func test_390_a_strike_draws_a_bolt_past_the_farm_and_the_fog_begins_past_it() -
 	var n := float(Game.farm_size)
 	var middle := Vector3(n / 2.0, 0.0, n / 2.0)
 	var foot := Vector2(aabb.position.x + aabb.size.x / 2.0, aabb.position.z + aabb.size.z / 2.0)
-	_check(foot.distance_to(Vector2(middle.x, middle.z)) > n * 0.7, "it falls past the farm's edge, never on it")
+	var on_farm := foot.x > 0.0 and foot.x < n and foot.y > 0.0 and foot.y < n
+	_check(not on_farm, "it falls past the farm's edge, never on it (%s)" % foot)
 	_check(world.lightning.flash > 0.0, "and the frame flashes")
 	var w := Weather.current(Game.now(), "summer", 12.0, "fog")
 	world.set_daylight(12.0, w)

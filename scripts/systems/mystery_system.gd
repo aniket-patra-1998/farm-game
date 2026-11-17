@@ -82,10 +82,9 @@ func give_prize(prize: Array) -> String:
 			game.add_gems(int(prize[1]))
 			return "%d gems" % int(prize[1])
 		"chicken", "item":
-			if game.place_somewhere(prize[1]):
-				return "a %s" % game.item_data(prize[1])["name"]
-			game.add_coins(200)
-			return tr("COINS_NO_ROOM_FOR_A") % game.item_data(prize[1])["name"]
+			# (a prize to place arrives as every new thing does: the Barn, or the inbox when it is full)
+			var went := game.storage.welcome(str(prize[1]))
+			return tr("PRIZE_IN_BARN" if went == BarnStorage.BARN else "PRIZE_IN_INBOX") % game.item_data(prize[1])["name"]
 		"materials":
 			var got: Array[String] = []
 			for k in int(prize[1]):

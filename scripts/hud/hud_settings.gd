@@ -89,22 +89,34 @@ func quality_card() -> PanelContainer:
 func sound_card() -> PanelContainer:
 	var inner := BookPanel.card()
 	inner.add_child(BookPanel.heading(tr("SOUND_EFFECTS")))
-	var volume := HSlider.new()
-	volume.min_value = 0.0
-	volume.max_value = 1.0
-	volume.step = 0.05
-	volume.value = Sound.volume
-	volume.custom_minimum_size.x = UiTheme.size("panel_button_width") * FIELD_WIDE
-	volume.focus_mode = Control.FOCUS_NONE
-	volume.value_changed.connect(func(v: float) -> void: Sound.volume = v)
+	var volume := _volume_slider(Sound.volume, func(v: float) -> void: Sound.volume = v)
 	volume.drag_ended.connect(func(_changed: bool) -> void: Feedback.moment("volume_check"))  # hear the new level
 	inner.add_child(BookPanel.row(tr("VOLUME"), volume))
-	inner.add_child(BookPanel.row(tr("MUTE_SOUND"), BookPanel.switch(Sound.muted,
-		func(on: bool) -> void: Sound.muted = on)))
+	inner.add_child(BookPanel.row(tr("FARM_SOUNDS"),
+		_volume_slider(Sound.ambience_volume, func(v: float) -> void: Sound.ambience_volume = v)))
+	if Sound.soundscape != null and Sound.soundscape.has_music():
+		inner.add_child(BookPanel.row(tr("MUSIC"),
+			_volume_slider(Sound.music_volume, func(v: float) -> void: Sound.music_volume = v)))
+	# (a switch says what is on, as phones do: Sound on plays, off is silence; never a "Mute" that is on)
+	inner.add_child(BookPanel.row(tr("SOUND_ON"), BookPanel.switch(not Sound.muted,
+		func(on: bool) -> void: Sound.muted = not on)))
 	inner.add_child(BookPanel.row(tr("VIBRATION"), BookPanel.switch(Sound.vibration, func(on: bool) -> void:
 		Sound.vibration = on
 		Feedback.moment("vibration_check"))))  # feel it come on
 	return BookPanel.card_frame(inner)
+
+
+## A 0..1 volume slider, as wide as a settings field, that hands each new value to `on_change`.
+func _volume_slider(value: float, on_change: Callable) -> HSlider:
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = 1.0
+	slider.step = 0.05
+	slider.value = value
+	slider.custom_minimum_size.x = UiTheme.size("panel_button_width") * FIELD_WIDE
+	slider.focus_mode = Control.FOCUS_NONE
+	slider.value_changed.connect(on_change)
+	return slider
 
 
 ## Debug builds: quick changes for testing (moved here from the tool bar): coins, bees, materials, a level, an hour,
