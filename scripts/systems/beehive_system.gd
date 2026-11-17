@@ -34,6 +34,11 @@ func load_from(data: Dictionary) -> void:
 			pollinated[c] = [int(e[0]), int(e[1])]
 
 
+func shift_clock(seconds: int) -> void:
+	for c: String in pollinated:
+		pollinated[c][1] = int(pollinated[c][1]) - seconds
+
+
 func hives() -> Array:
 	var out: Array = []
 	for o in game.objects:

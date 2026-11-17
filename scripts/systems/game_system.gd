@@ -41,6 +41,12 @@ func load_from(_data: Dictionary) -> void:
 	pass
 
 
+## The device clock was set back `seconds` since the save (called after load_from): every saved moment of the
+## system's timers moves back by it, so each keeps its progress instead of waiting the difference on top.
+func shift_clock(_seconds: int) -> void:
+	pass
+
+
 ## A saved map with its values read back as ints (JSON numbers load as floats).
 static func int_map(d: Variant) -> Dictionary:
 	var out := {}

@@ -23,6 +23,10 @@ func load_from(data: Dictionary) -> void:
 	next_stray_at = int(data.get("next_stray_at", 0))
 
 
+func shift_clock(seconds: int) -> void:
+	next_stray_at -= seconds
+
+
 ## Called on start, every 30 seconds, and after a debug time skip.
 func check_strays() -> void:
 	game.shed.expire_bunches()

@@ -319,6 +319,49 @@ func test_178_a_clock_set_back_does_not_leave_timers_in_the_future() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
 
 
+func test_436_a_clock_set_back_moves_every_timer_not_just_crops_and_objects() -> void:
+	var path := "user://test_save_clock_all.json"
+	const BACK := 3600
+	var g := _farm()
+	g.save_path = path
+	g.saving_enabled = true
+	g.set_objects([])
+	var t := g.now()
+	g.vehicles.fuel_t = t - 10
+	g.vip.until = t + 5000
+	g.strays.next_stray_at = t + 700
+	g.bees.pollinated = {"wheat": [3, t + 900]}
+	g.rust.vehicles = {"tractor": {"w": 0.0, "t": t - 20, "out": true, "fix": t + 300}}
+	g.clear_until = t + 400
+	g.add_object({"uid": 900, "id": "chicken_coop", "row": 1, "col": 1, "t": t, "forage_until": t + 600,
+		"slots": [{"r": "x", "done": t + 800, "took": 800}]})
+	g.save_game()
+	g.finish_saving()
+	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	saved["saved_at"] = int(saved["saved_at"]) + BACK   # the device clock has since been set back an hour
+	var out := FileAccess.open(path, FileAccess.WRITE)
+	out.store_string(JSON.stringify(saved))
+	out.close()
+	var h := _farm()
+	h.save_path = path
+	h.saving_enabled = false
+	_check(h.load_game(), "loads")
+	var near := func(got: int, want: int) -> bool: return absi(got - want) <= 2
+	_check(near.call(h.vehicles.fuel_t, t - 10 - BACK), "the fuel refill clock")
+	_check(near.call(h.vip.until, t + 5000 - BACK), "active VIP keeps its time left, not an hour more")
+	_check(near.call(h.strays.next_stray_at, t + 700 - BACK), "the next stray")
+	_check(near.call(int(h.bees.pollinated["wheat"][1]), t + 900 - BACK), "pollinated seeds' end")
+	var r: Dictionary = h.rust.vehicles.get("tractor", {})
+	_check(not r.is_empty() and near.call(int(r["fix"]), t + 300 - BACK) and near.call(int(r["t"]), t - 20 - BACK),
+		"a vehicle's rust and its repair under way")
+	_check(near.call(h.clear_until, t + 400 - BACK), "a new farm's clear weather")
+	var o := h.object_by_uid(900)
+	_check(not o.is_empty() and near.call(int(o["forage_until"]), t + 600 - BACK), "an object's own moments")
+	_check(not o.is_empty() and near.call(int(o["slots"][0]["done"]), t + 800 - BACK), "a crafting slot")
+	for suffix in ["", ".bak", ".tmp"]:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
+
+
 func test_188_saves_are_brought_up_one_version_at_a_time() -> void:
 	var data := {"version": GameState.OLDEST_SAVE_VERSION, "plots": []}
 	_check(SaveMigrations.upgrade(data), "the oldest version we read upgrades")

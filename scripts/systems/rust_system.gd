@@ -41,6 +41,14 @@ func load_from(data: Dictionary) -> void:
 				"out": bool(v.get("out", false)), "fix": int(v.get("fix", 0))}
 
 
+func shift_clock(seconds: int) -> void:
+	for id: String in vehicles:
+		var v: Dictionary = vehicles[id]
+		v["t"] = int(v["t"]) - seconds
+		if int(v["fix"]) > 0:   # (0: no repair under way)
+			v["fix"] = int(v["fix"]) - seconds
+
+
 ## The showcase's vehicles show every look of rust between them: clean, the stages between, and seized.
 func showcase() -> void:
 	var owned := game.vehicles.owned_vehicles()

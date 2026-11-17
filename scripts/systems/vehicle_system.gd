@@ -47,6 +47,10 @@ func load_from(data: Dictionary) -> void:
 	fuel_found_day = int(data.get("fuel_found_day", 0))
 
 
+func shift_clock(seconds: int) -> void:
+	fuel_t -= seconds
+
+
 ## Adds fuel; past a full tank it fills spare tanks.
 func add_fuel(n: int) -> void:
 	if not fuel_unlocked:

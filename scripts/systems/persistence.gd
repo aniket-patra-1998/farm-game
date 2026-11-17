@@ -4,7 +4,11 @@ extends GameSystem
 ## the real one, on a thread when queued), reading the newest good file, and putting a save back into the game.
 ## The fields it handles are the shared core's; each other system saves its own through save_to/load_from.
 
-var due_msec := -1            # when a queued save is written (-1: nothing waiting)
+## Moments a placed object keeps besides its "t" (a pig pen's forage, a perfect bunch's end); crafting slots'
+## "done" too. Each moves with the clock when a device clock was set back (see load_from).
+const OBJECT_MOMENTS: Array[String] = ["forage_until", "expires"]
+
+var due_msec := -1           # when a queued save is written (-1: nothing waiting)
 var _thread: Thread           # a queued save being turned into text and written off the main thread
 
 
@@ -164,20 +168,28 @@ func load_save() -> bool:
 	game.debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
 	# Saves from before the tutorial existed belong to players who already know the basics.
 	game.tutorial_step = int(data.get("tutorial_step", GameState.Tutorial.DONE))
-	for system in game.systems:
-		system.load_from(data)
-	game.set_objects([])
 	# A device clock set back since the save would leave every timer in the future: all of them wait the
 	# difference on top of their cycle. Shifting them back by it keeps each one's progress.
 	var skew := maxi(0, int(data.get("saved_at", game.now())) - game.now())
+	for system in game.systems:
+		system.load_from(data)
+		if skew > 0:
+			system.shift_clock(skew)
+	if game.clear_until > 0:
+		game.clear_until -= skew
+	game.set_objects([])
 	for o in data.get("objects", []):
 		var obj: Dictionary = o
 		if not game.items.has(obj.get("id", "")):
 			continue # item removed from the data file
 		obj["t"] = int(obj["t"]) - skew
 		# (SaveCheck has already made uid, row, col, t and level whole numbers.)
-		if obj.has("forage_until"):
-			obj["forage_until"] = int(obj["forage_until"])
+		for key: String in OBJECT_MOMENTS:
+			if obj.has(key):
+				obj[key] = int(obj[key]) - skew
+		for slot: Variant in obj.get("slots", []):
+			if typeof(slot) == TYPE_DICTIONARY and (slot as Dictionary).has("done"):
+				slot["done"] = int(slot["done"]) - skew
 		game.add_object(obj)
 	game.next_uid = int(data.get("next_uid", 1))
 	game.absence_note = game.bees.apply_absence(maxi(0, game.now() - int(data.get("saved_at", game.now()))))

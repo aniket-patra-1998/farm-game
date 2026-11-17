@@ -32,6 +32,11 @@ func load_from(data: Dictionary) -> void:
 	until = maxi(0, int(data.get("vip_until", 0)))
 
 
+func shift_clock(seconds: int) -> void:
+	if until > 0:
+		until -= seconds
+
+
 ## The showcase's Barn is the farm's hero at its best: the top VIP level, active (its look, badge and yard).
 func showcase() -> void:
 	points = int(Balance.a("vip.level_points")[max_level() - 1])
