@@ -1,0 +1,129 @@
+{
+  "_doc": "Every chance the game's rules roll for a reward (scripts/systems/roll_system.gd, Game.rolls.roll(id, base)), in one place. vip: whether active VIP multiplies it (VipSystem.chance: by the boost, never over certain; docs/VIP.md). Turning VIP on or off for a roll is this flag, nothing else. A roll used in code and missing here, or listed here and used nowhere, fails tests/suites/rolls_test.gd. what: the roll, for people.",
+  "rolls": {
+    "calf": {
+      "vip": true,
+      "what": "a calf from a Dairy Farm with a bull, on collect"
+    },
+    "foal": {
+      "vip": true,
+      "what": "a foal from a Horse Stable with a stallion, on collect"
+    },
+    "lamb": {
+      "vip": true,
+      "what": "a lamb from a Sheep Pen with a ram, on collect"
+    },
+    "piglet": {
+      "vip": true,
+      "what": "a piglet from a Pig Pen with a boar, on collect"
+    },
+    "fertilizer": {
+      "vip": true,
+      "what": "fertilizer from a home, on collect"
+    },
+    "fertilize_all": {
+      "vip": true,
+      "what": "a Fertilize All from a home, on collect"
+    },
+    "stable_helper": {
+      "vip": true,
+      "what": "a farmhand or arborist from the Horse Stable, on collect"
+    },
+    "stable_xp": {
+      "vip": true,
+      "what": "bonus XP from the Horse Stable, on collect"
+    },
+    "rare_sapling": {
+      "vip": true,
+      "what": "a rare sapling from the Orchard"
+    },
+    "find": {
+      "vip": true,
+      "what": "a find (gophers, dogs...) on a harvest"
+    },
+    "mystery_egg": {
+      "vip": true,
+      "what": "a Mystery Egg from a Chicken Coop"
+    },
+    "golden": {
+      "vip": false,
+      "what": "a golden harvest"
+    },
+    "bird": {
+      "vip": false,
+      "what": "a bird visiting a harvest (for its collection)"
+    },
+    "collectible": {
+      "vip": false,
+      "what": "a collectible on a crop's harvest"
+    },
+    "seedling": {
+      "vip": false,
+      "what": "a Mystery Seedling from the Orchard instead of a watering can"
+    },
+    "home_feed": {
+      "vip": false,
+      "what": "animal feed from a home, on collect"
+    },
+    "mystery_baby": {
+      "vip": false,
+      "what": "a Mystery Baby from a home, on collect"
+    },
+    "bloom_food": {
+      "vip": false,
+      "what": "bloom food from the Garden Shed"
+    },
+    "bulb": {
+      "vip": false,
+      "what": "a Mystery Bulb from a bloom"
+    },
+    "garden_bulb": {
+      "vip": false,
+      "what": "a Mystery Bulb from the Garden"
+    },
+    "crafting_produce": {
+      "vip": false,
+      "what": "extra goods from a crafting building"
+    },
+    "tractor_coins": {
+      "vip": false,
+      "what": "coins a tractor turns up while working"
+    },
+    "bee": {
+      "vip": false,
+      "what": "a bee joining a beehive"
+    },
+    "pollination": {
+      "vip": false,
+      "what": "bees pollinating a crop near their hive"
+    },
+    "set_collectible": {
+      "vip": false,
+      "what": "a collectible from a set outside harvests"
+    },
+    "bushel": {
+      "vip": false,
+      "what": "a bushel on a harvest, for crafting"
+    },
+    "daily_part": {
+      "vip": false,
+      "what": "a building part in the daily gift"
+    },
+    "crop_feed": {
+      "vip": false,
+      "what": "feed from a crop's harvest"
+    },
+    "tree_feed": {
+      "vip": false,
+      "what": "feed from a tree's harvest"
+    },
+    "bunch": {
+      "vip": false,
+      "what": "a flower bunch for the Garden Shed on a flower's harvest"
+    },
+    "fuel_find": {
+      "vip": false,
+      "what": "fuel found while working the farm"
+    }
+  }
+}

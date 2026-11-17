@@ -3,7 +3,7 @@
  "default_phone": "mid",
  "default_computer": "high",
  "levels": {
-  "low": {"shadows": false, "shadow_splits": 1, "shadow_distance": 50, "glow": false, "scale": 0.7, "lod_pixels": 4.0, "pose_every": 2, "crop_shadows": false, "max_fps": 30, "screen_grade": false, "msaa": 0, "shadow_size": 2048, "animal_shadows": false},
+  "low": {"shadows": false, "shadow_splits": 1, "shadow_distance": 50, "glow": false, "scale": 0.7, "lod_pixels": 12.0, "pose_every": 2, "crop_shadows": false, "max_fps": 30, "screen_grade": false, "msaa": 0, "shadow_size": 2048, "animal_shadows": false},
   "mid": {"shadows": true, "shadow_splits": 1, "shadow_distance": 70, "glow": false, "scale": 0.85, "lod_pixels": 2.0, "pose_every": 1, "crop_shadows": false, "max_fps": 0, "screen_grade": false, "msaa": 1, "shadow_size": 2048, "animal_shadows": false},
   "high": {"shadows": true, "shadow_splits": 2, "shadow_distance": 90, "glow": true, "scale": 1.0, "lod_pixels": 1.0, "pose_every": 1, "crop_shadows": true, "max_fps": 0, "screen_grade": true, "msaa": 1, "shadow_size": 4096, "animal_shadows": true},
   "ultra": {"shadows": true, "shadow_splits": 4, "shadow_distance": 110, "glow": true, "scale": 1.0, "lod_pixels": 0.75, "pose_every": 1, "crop_shadows": true, "max_fps": 0, "screen_grade": true, "msaa": 2, "shadow_size": 8192, "animal_shadows": true}

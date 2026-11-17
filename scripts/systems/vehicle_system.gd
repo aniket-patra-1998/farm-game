@@ -65,7 +65,7 @@ func add_fuel(n: int) -> void:
 func roll_fuel_find(i: int) -> int:
 	if not game.drops_enabled or game.level() < Balance.i("vehicles.fuel_level") or fuel_found_day == game.day_number():
 		return 0
-	if game.rng.randf() >= Balance.f("vehicles.fuel_find_chance"):
+	if not game.rolls.roll("fuel_find", Balance.f("vehicles.fuel_find_chance")):
 		return 0
 	fuel_found_day = game.day_number()
 	var n := int(Balance.i("vehicles.fuel_tank") * Balance.f("vehicles.fuel_find_share"))
@@ -305,7 +305,7 @@ func _vehicle_work(job: String, i: int, crop_id: String, out: Dictionary) -> boo
 	):
 		if game.field.plow(i):
 			did = true
-			if game.drops_enabled and game.rng.randf() < Balance.f("vehicles.tractor_coin_chance"):
+			if game.drops_enabled and game.rolls.roll("tractor_coins", Balance.f("vehicles.tractor_coin_chance")):
 				game.add_coins(Balance.i("vehicles.tractor_coins"))
 	if (job == "plant" or job == "all") and crop_id != "" and game.field.phase(i) == GameState.Phase.PLOWED:
 		if game.field.plant(i, crop_id):

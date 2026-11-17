@@ -105,7 +105,7 @@ func flower_harvest_bees(roll_queen := true) -> String:
 	var all := hives()
 	for h in all:
 		if has_queen(h) and game.inside_total(h) < game.capacity(h):
-			if game.rng.randf() >= Balance.f("bees.bee_chance"):
+			if not game.rolls.roll("bee", Balance.f("bees.bee_chance")):
 				return ""
 			put_bee_in(h)
 			game.ribbons.bump("bees_found", 1)
@@ -135,7 +135,7 @@ func take_pollinated_seed(crop_id: String) -> bool:
 
 ## Bees pollinate a fertilized crop as it's harvested: pollinated seeds of that crop.
 func pollinate(crop_id: String) -> int:
-	if not game.drops_enabled or game.rng.randf() >= pollination_chance():
+	if not game.drops_enabled or not game.rolls.roll("pollination", pollination_chance()):
 		return 0
 	var n := pollinated_seeds(crop_id) + Balance.i("bees.pollinated_seeds")
 	pollinated[crop_id] = [n, game.now() + Balance.i("bees.pollinated_lifetime")]

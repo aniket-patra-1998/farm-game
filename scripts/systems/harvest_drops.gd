@@ -43,20 +43,20 @@ func decide_drop(crop_id: String, stars: int, super_mult := 1) -> Dictionary:
 	var luck := 1.0 + Balance.f("harvest.mastery_luck_bonus") * stars + game.boosts.total("golden_luck")
 
 	var golden := Balance.f("harvest.golden_chance") * luck
-	if int(pity["golden"]) >= Balance.i("harvest.golden_pity") or game.rng.randf() < golden:
+	if int(pity["golden"]) >= Balance.i("harvest.golden_pity") or game.rolls.roll("golden", golden):
 		pity["golden"] = 0
 		return {"type": "golden"}
 
 	# A due collectible (pity) always wins over a bird visit.
 	var collectible_due := int(pity["collectible"]) >= Balance.i("harvest.collectible_pity")
 	var bird := Balance.f("harvest.bird_chance")
-	if not game.collectibles.bird_collection.is_empty() and not collectible_due and game.rng.randf() < bird:
+	if not game.collectibles.bird_collection.is_empty() and not collectible_due and game.rolls.roll("bird", bird):
 		return {"type": "bird", "item": game.collectibles.pick_item(game.collectibles.bird_collection)}
 
 	var coll: Dictionary = game.collectibles.collection_of_crop.get(crop_id, {})
 	if not coll.is_empty() and (
 		int(pity["collectible"]) >= Balance.i("harvest.collectible_pity")
-		or game.rng.randf() < Balance.f("harvest.collectible_chance") * luck
+		or game.rolls.roll("collectible", Balance.f("harvest.collectible_chance") * luck)
 	):
 		pity["collectible"] = 0
 		return {"type": "collectible", "item": game.collectibles.pick_item(coll), "crop": crop_id}

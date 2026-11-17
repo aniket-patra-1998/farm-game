@@ -3,6 +3,8 @@ extends Node
 ## (script time, draw calls, objects, nodes) and how long opening took. Run with a renderer for draw calls:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/perf_probe.tscn
 ## Headless (godot --headless ...), wall time per frame is the CPU cost; draw calls need the renderer.
+## As a phone sees it: `-- --quality=low --size=2400x1080 --tiles=12` (a quality level, the window's size, and the
+## view: about this many tiles across, centred on the farm; without --tiles, the whole-farm view the game opens on).
 ## With `-- --bake=<stamp>` (CI, headless, before the phone build) the models it builds are saved into the game
 ## (res://baked, ModelStore) under that stamp. With `-- --store`, models are kept on disk as a phone build keeps
 ## them: run it twice to time a farm opening from them.
@@ -28,6 +30,13 @@ func _ready() -> void:
 			f.close()
 			print("PERF sounds baked=%d" % Sound.bake_all())
 			print("PERF every look made=%d" % Objects3D.make_every_look())
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--quality="):
+			Quality._level = a.trim_prefix("--quality=")
+			Quality.notifier.emitted.emit()
+		elif a.begins_with("--size="):
+			var wh := a.trim_prefix("--size=").split("x")
+			get_window().size = Vector2i(int(wh[0]), int(wh[1]))
 	var main: Node = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await get_tree().process_frame
@@ -59,6 +68,13 @@ func _ready() -> void:
 	print("PERF models loaded=%d saved=%d" % [ModelStore.loaded, ModelStore.saved])
 	print("PERF settle_ms=%.0f settle_frames=%d settle_worst_frame_ms=%.0f"
 		% [(settle_last - t0) / 1000.0, settle_frames, settle_worst / 1000.0])
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--tiles="):   # (a playing view: this many tiles across, at the farm's middle)
+			var cam: FarmCamera = main.get("camera")
+			var across := float(a.trim_prefix("--tiles="))
+			cam.snap(main.get("grid").get_bounds().get_center(), get_viewport().get_visible_rect().size.x
+				/ (across * FarmGrid.TILE_W))
+	print("PERF view quality=%s size=%s" % [Quality.level(), get_window().size])
 	for i in WARM_FRAMES:
 		await get_tree().process_frame
 	var draws := 0

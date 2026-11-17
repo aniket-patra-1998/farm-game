@@ -91,38 +91,38 @@ func building_specials(b: Dictionary) -> Array[String]:
 				game.message.emit(tr("YOU_FOUND_A_OPEN_IT_FROM") % egg_name)
 				game.found_on.emit(int(b["uid"]), tr("FOUND") + egg_name, "rare")
 		"calves":
-			if game.drops_enabled and game.rng.randf() < game.vip.chance(Balance.f("specials.fertilizer_chance")):
+			if game.drops_enabled and game.rolls.roll("fertilizer", Balance.f("specials.fertilizer_chance")):
 				game.fertilizer_bags += 1
 				out.append(tr("FERTILIZER"))
 			if game.has_inside(b, "bull") and game.drops_enabled and \
-					game.rng.randf() < game.vip.chance(Balance.f("specials.calf_chance")):
+					game.rolls.roll("calf", Balance.f("specials.calf_chance")):
 				_welcome_baby(b, _pick_baby(b, "calf"))
 		"foals":
 			var with_stallion := game.has_inside(b, "stallion")
-			if game.drops_enabled and with_stallion and game.rng.randf() < game.vip.chance(Balance.f("specials.foal_chance")):
+			if game.drops_enabled and with_stallion and game.rolls.roll("foal", Balance.f("specials.foal_chance")):
 				_welcome_baby(b, _pick_baby(b, "foal"))
-			if game.drops_enabled and game.rng.randf() < game.vip.chance(Balance.f("specials.stable_helper_chance")):
+			if game.drops_enabled and game.rolls.roll("stable_helper", Balance.f("specials.stable_helper_chance")):
 				game.farmhands += 1
 				out.append(tr("FARMHAND"))
-			if game.drops_enabled and game.rng.randf() < game.vip.chance(Balance.f("specials.stable_helper_chance")):
+			if game.drops_enabled and game.rolls.roll("stable_helper", Balance.f("specials.stable_helper_chance")):
 				game.arborists += 1
 				out.append(tr("ARBORIST"))
 			if game.drops_enabled and with_stallion and \
-					game.rng.randf() < game.vip.chance(Balance.f("specials.stable_xp_chance")):
+					game.rolls.roll("stable_xp", Balance.f("specials.stable_xp_chance")):
 				game.add_xp(Balance.i("specials.stable_xp"))
 				out.append(tr("XP") % Balance.i("specials.stable_xp"))
 		"nursery":
 			pass   # (babies grow on Animal Feed in the trough, RaisingSystem; the harvest gives feed: from_home)
 		"lambs":
 			if game.has_inside(b, "ram") and game.drops_enabled and \
-					game.rng.randf() < game.vip.chance(Balance.f("specials.lamb_chance")):
+					game.rolls.roll("lamb", Balance.f("specials.lamb_chance")):
 				_welcome_baby(b, "lamb")
 		"truffles":
 			if game.has_inside(b, "boar") and game.drops_enabled and \
-					game.rng.randf() < game.vip.chance(Balance.f("specials.piglet_chance")):
+					game.rolls.roll("piglet", Balance.f("specials.piglet_chance")):
 				_welcome_baby(b, "piglet")
 		"beehive":
-			if game.drops_enabled and game.rng.randf() < game.vip.chance(Balance.f("specials.fertilize_all_chance")):
+			if game.drops_enabled and game.rolls.roll("fertilize_all", Balance.f("specials.fertilize_all_chance")):
 				game.fertilize_alls += 1
 				game.message.emit(tr("THE_BEES_LEFT_A_FERTILIZE_ALL"))
 				out.append(tr("FERTILIZE_ALL_2"))

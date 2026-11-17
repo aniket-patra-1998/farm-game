@@ -144,6 +144,7 @@ var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
 var vip: VipSystem
+var rolls: RollSystem
 var rust: RustSystem
 var field: FieldSystem
 var strays: StraySystem
@@ -197,6 +198,7 @@ func _init() -> void:
 	pigpen = PigPenSystem.new(self)
 	vehicles = VehicleSystem.new(self)
 	vip = VipSystem.new(self)
+	rolls = RollSystem.new(self)
 	rust = RustSystem.new(self)
 	field = FieldSystem.new(self)
 	player = PlayerSystem.new(self)
@@ -217,7 +219,7 @@ func _init() -> void:
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social, collecting, shop, helpers, vip, rust]
+		social, collecting, shop, helpers, vip, rust, rolls]
 
 
 func _ready() -> void:

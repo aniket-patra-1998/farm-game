@@ -41,7 +41,7 @@ func add_bunch(flower: String) -> bool:
 
 func roll_bunch(crop_id: String, i: int) -> String:
 	var chance := Balance.f("shed.perfect_bunch_chance")
-	if not game.drops_enabled or not game.crops[crop_id].get("flower", false) or game.rng.randf() >= chance:
+	if not game.drops_enabled or not game.crops[crop_id].get("flower", false) or not game.rolls.roll("bunch", chance):
 		return ""
 	if not add_bunch(crop_id):
 		return ""

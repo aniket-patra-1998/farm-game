@@ -131,7 +131,8 @@ func trade_in(coll_id: String) -> bool:
 
 ## One roll for a collectible from a set, outside harvests (no pity). Returns the item name or "".
 func roll_collectible(coll: Dictionary, chance: float, index := -1) -> String:
-	if coll.is_empty() or not game.drops_enabled or not Release.on("collections") or game.rng.randf() >= chance:
+	if coll.is_empty() or not game.drops_enabled or not Release.on("collections") \
+			or not game.rolls.roll("set_collectible", chance):
 		return ""
 	var item_id := pick_item(coll)
 	owned[item_id] = int(owned.get(item_id, 0)) + 1

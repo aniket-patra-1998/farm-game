@@ -1,6 +1,20 @@
 {
- "_doc": "What the showcase farm (every item, homes full: the heaviest farm there is) may cost, counted headless by tests/suites/world3d_test.gd test_338 as draws (each mesh or batch drawn, once per pass it is in: shown, and the sun's shadow when it casts one, on the level named) and triangles. A change that pushes past these fails CI: make it cheaper, or raise the budget here on purpose with a reason in the commit. Raised to 2.3M triangles for the new animals made as files (about 5,000 to 10,000 each, against 1,700 built): the importer gives each its levels of detail, so far ones cost less than counted here.",
- "level": "mid",
- "draws": 2250,
- "triangles": 2300000
+ "_doc": "What the showcase farm (every item, homes full: the heaviest farm there is) may cost, counted headless by tests/suites/world3d_test.gd test_338 as draws (each mesh or batch drawn, once per pass it is in: shown, and the sun's shadow when it casts one, on the level named) and triangles, one budget per entry. A change that pushes past a budget fails CI: make it cheaper, or raise it here on purpose with a reason in the commit. 'desktop' (mid): raised to 2.3M triangles for the animals made as files (5,000 to 10,000 each; the importer gives far ones fewer). 'phone' (low): what a low-end Android phone gets; draws and triangles are where it stands now, held so it never gets worse, and target_draws and target_triangles are where the work is heading (a low-end phone is comfortable at about 300 to 500 draws); lower the limits as it gets there, never raise them.",
+ "budgets": [
+  {
+   "name": "desktop",
+   "level": "mid",
+   "draws": 2250,
+   "triangles": 2300000
+  },
+  {
+   "name": "phone",
+   "level": "low",
+   "draws": 1650,
+   "triangles": 2300000,
+   "target_draws": 500,
+   "target_triangles": 300000,
+   "_measured": "What a phone really draws, measured with a renderer (tools/perf_probe.tscn -- --quality=low --size=2400x1080 [--tiles=12]), showcase farm, 17 Nov 2026: the whole farm in view 965 draws, 620k triangles; a playing view of 12 tiles across 552 draws, 335k triangles (lod_pixels 12 on low; 450k at 4). The limits above are the headless count of everything at full detail, which knows no culling or levels of detail: a ratchet, not the phone's own number."
+  }
+ ]
 }
