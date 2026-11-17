@@ -65,16 +65,23 @@ first; our own touch only where it is clearly marked. Every system is built (doc
 4. Other sessions' branches first (every run): for each remote branch with commits not on main and each open
    pull request: read its diff and description; if it is finished, in scope and safe, rebase it on main, run
    the full precheck, fast-forward main to it, and log it; if unsure, report it instead. Never merge a red one.
-5. Take the first open backlog item; find the problem by measuring (tests, probes: tools/perf_probe,
-   tools/look_shot, tools/balance_sim, the test suite), not by guessing.
-6. Fix it on a branch `polish/<topic>`, with a test for any rule; apply the fix to every similar module.
+5. Audit and fix, never idle. The loop does not stop at the backlog: it keeps auditing the game aspect by
+   aspect (on main) and fixing what it finds. Each run does one of:
+   - Fix: the highest-impact open finding in the log's backlog, if one is ready (most runs).
+   - Audit: when no finding is ready, or every third run, take the next aspect in the rotation below, analyse it
+     in full against the goal's bar (measure: tests, probes, the balance bot, the code itself), write its
+     findings into the backlog ranked by impact on the player, then fix the top one if it is cheap.
+   Rotation (then round again, deeper each time): economy; player progression; phone UI; edge cases and stress;
+   cheating and save safety; code quality; whole-farm look (full farm, dawn, noon, dusk, night); motion and
+   animation; feedback and sound; first-hour feel of what exists; performance on a phone.
+6. Fix on a branch `polish/<topic>`, with a test for any rule; apply the fix to every similar module.
 7. Merge properly: `git fetch origin && git rebase origin/main`, then `tools/precheck.sh <godot>` must pass,
    then `git push origin HEAD:main` (a fast-forward: no merge commits). If main moved meanwhile, rebase and
    check again. CI's review runs on the push.
 8. Log: one row in "Merged to main" (time, what changed and why, short sha) or "Reported, not built"; tick or add
    backlog items; keep docs/NEXT.md's handoff current.
 
-## Backlog (seed; the log doc's copy is the live one)
+## Backlog (seed; the log doc's copy is the live one, fed by the audits)
 1. Other sessions' branches (see step 4).
 2. Phone UI: every panel and sheet at 20:9 and 4:3; nothing cut, off screen or too small to tap.
 3. Edge cases and stress: full farm, empty farm, full Barn and inbox, long offline time, clock changes.
