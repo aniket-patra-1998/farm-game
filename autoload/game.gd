@@ -1192,7 +1192,7 @@ func is_unlocked(crop_id: String) -> bool:
 
 ## Coins paid on reaching a level: grows with level so later levels still feel big.
 func level_reward(lvl: int) -> int:
-	return 100 * lvl
+	return Balance.i("economy.coins_per_level") * lvl
 
 
 ## Ids of the crops, trees, animals and buildings that unlock at exactly this level (in this release).
@@ -1210,12 +1210,8 @@ func unlock_ids_at(lvl: int) -> Array[String]:
 ## Names of crops, trees, animals and buildings that unlock at exactly this level.
 func unlocks_at(lvl: int) -> Array[String]:
 	var names: Array[String] = []
-	for id in crop_order:
-		if int(crops[id]["unlock_level"]) == lvl and Release.has(id):
-			names.append(crops[id]["name"] + tr("SEEDS"))
-	for id in item_order:
-		if int(items[id]["unlock_level"]) == lvl and Release.has(id):
-			names.append(items[id]["name"])
+	for id in unlock_ids_at(lvl):
+		names.append(crops[id]["name"] + tr("SEEDS") if crops.has(id) else items[id]["name"])
 	return names
 
 

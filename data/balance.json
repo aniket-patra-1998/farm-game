@@ -404,6 +404,10 @@
    "v": 1,
    "note": "Gems for each level gained."
   },
+  "coins_per_level": {
+   "v": 100,
+   "note": "Coins for reaching a level, times the level reached (level 10 pays 1,000)."
+  },
   "plow_cost": {
    "v": 15,
    "note": "Coins to plow one plot."

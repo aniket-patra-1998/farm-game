@@ -49,6 +49,14 @@ func test_21_every_level_to_20_unlocks_something() -> void:
 
 
 
+func test_21b_level_reward_and_unlock_names_follow_the_data() -> void:
+	var g := _farm()
+	for lvl in [2, 10, 30]:
+		_eq(g.level_reward(lvl), Balance.i("economy.coins_per_level") * lvl, "level %d reward from data" % lvl)
+		_eq(g.unlocks_at(lvl).size(), g.unlock_ids_at(lvl).size(), "level %d: a name for each unlock" % lvl)
+	_done(g)
+
+
 func test_22_level_curve_rises_and_paces_the_beta() -> void:
 	var g := _farm()
 	for lvl in range(2, 60):

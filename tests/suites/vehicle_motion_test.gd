@@ -269,7 +269,7 @@ func test_206_implements_go_down_to_work_and_the_engine_hums_only_while_it_is_th
 	_eq(Sound.loops_running(), Sound.MAX_LOOPS, "the number of engines humming is capped")
 	for p in hums:
 		Sound.stop_loop(p)
-	_eq(Sound.loops_running(), 0, "and they all stop")
+	_eq(Sound.loops_running(), humming_before, "and they all stop (a loop another test left is not ours)")
 	_done(g)
 
 
