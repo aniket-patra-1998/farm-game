@@ -10,7 +10,9 @@ extends Node3D
 ## 128-pixel tile) times PX, so a cow is a little over half a tile long.
 
 const PX := 1.9 / IsoProjection.PX_PER_UNIT    # rig pixels to world units (a cow is about a tile long, as in FarmVille)
-const TURN_RATE := 6.0                          # how fast it turns to face where it's going (radians/s)
+const TURN_RATE := 3.5                          # how fast it turns to face where it's going (radians/s)
+const SHUFFLE_REACH := 0.1                      # its feet's travel for each radian it turns, as a share of its length
+const FEET_SHARE := 0.06                        # of a file-made animal's height, from the ground up, that is its feet
 ## The two ways an animal stands when still: side-on to the camera, turned a little toward it (FarmVille's
 ## three-quarter view), facing screen right or screen left. 0 faces +x; screen right is +x -z (pi/4).
 const REST_RIGHT := PI / 12.0
@@ -49,6 +51,7 @@ static var min_stride := 1
 static var _frame := -1          # the frame _seen counts
 static var _seen := 0            # animals on screen so far this frame
 static var _lengths := {}         # animal id -> its file's length (file_length)
+static var _strides := {}         # animal id -> the ground one cycle of its file's walk covers (file_stride)
 
 static var _seen_last := 0       # and last frame, which sets this frame's stride
 
@@ -128,7 +131,11 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1
 	a._last = at
 	a.heading = REST_LEFT if mind != null and mind.facing < 0.0 else REST_RIGHT
 	a.motion = AnimalMotion.new(hash(str(it.get("id", ""))) + int(at.x * 97.0 + at.z * 31.0))
-	a._walk_speed = maxf(IsoProjection.ground_of(Vector2(a.rig.num("speed", 10.0) * a.rig.scale, 0)).length(), 0.001)
+	# Its pace is its legs': a stride of ground for each cycle of them (and its mind walks it at that).
+	var stride := a.stride()
+	a._walk_speed = maxf(stride * a.rig.num("speed", 10.0) * a.rig.scale / maxf(a.rig.cycle_length(), 0.001), 0.001)
+	if mind != null:
+		mind.stride_tiles = stride
 	a._slot = a.get_instance_id() % MAX_STRIDE
 	a.rotation.y = a.heading
 	return a
@@ -247,6 +254,50 @@ func _build_file() -> bool:
 	_apply_shadow()
 	_build_contact()
 	return true
+
+
+## The ground one cycle of its legs covers, in tiles: its file's own walk, or the walk it is posed with.
+func stride() -> float:
+	var made := file_stride(_id) * _size if _file_mesh != null else 0.0
+	return made if made > 0.0 else maxf(AnimalArt.STRIDE * _leg / AnimalArt.STANCE, 0.001)
+
+
+## The ground one cycle of a file-made animal's walk covers, in tiles at full size (0 when it has no file or
+## no walk): how far its feet reach back while they are down (the travel of its lowest points through the
+## walk's moves), over the share of the cycle a foot is down. Worked out once a kind.
+static func file_stride(id: String) -> float:
+	if not _strides.has(id):
+		var stride := 0.0
+		var model := AssetRegistry.instance(id) if AssetRegistry.has_model(id) else null
+		var mi := _first_mesh(model) if model != null else null
+		if mi != null and mi.mesh is ArrayMesh and mi.mesh.get_surface_count() > 0:
+			stride = _feet_reach(mi.mesh as ArrayMesh) / AnimalArt.STANCE
+		if model != null:
+			model.free()
+		_strides[id] = stride
+	return _strides[id]
+
+
+static func _feet_reach(mesh: ArrayMesh) -> float:
+	var rest: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var moves := mesh.surface_get_blend_shape_arrays(0)
+	var steps: Array[PackedVector3Array] = []
+	for k in mesh.get_blend_shape_count():
+		if String(mesh.get_blend_shape_name(k)).begins_with("walk_"):   # not-ui
+			steps.append(moves[k][Mesh.ARRAY_VERTEX])
+	var box := mesh.get_aabb()
+	var reaches: Array[float] = []
+	for k in rest.size():
+		if rest[k].y > box.position.y + box.size.y * FEET_SHARE:
+			continue
+		var back := INF
+		var fore := -INF
+		for step in steps:
+			back = minf(back, step[k].x)
+			fore = maxf(fore, step[k].x)
+		reaches.append(fore - back)
+	reaches.sort()
+	return reaches[reaches.size() >> 1] if not reaches.is_empty() and not steps.is_empty() else 0.0
 
 
 ## How long an animal made as a file is, nose to tail, in tiles (0 when it has none); worked out once a kind.
@@ -942,18 +993,25 @@ func update(delta: float) -> void:
 	var feeding := behaviour != null and behaviour.state == AnimalBehaviour.State.GRAZE
 	dabble = move_toward(dabble, smoothstep(0.0, 1.0, p.head) if feeding else 0.0, FLOAT_EASE * delta)
 	rotation.z = -DABBLE_TIP * dabble * float_share
-	# Face where it's going: turn smoothly toward its direction of travel.
+	# Face where it's going: it comes round to its way, stepping round as it turns (its mind waits for it
+	# to, before it sets off, and moves its legs for the turn: AnimalBehaviour.turned).
 	var moved := position - _last
 	_last = position
-	if Vector2(moved.x, moved.z).length() > 0.0005:
-		var want := atan2(-moved.z, moved.x)
+	var was := heading
+	var off := 0.0
+	var way := IsoProjection.ground_of(behaviour.going) if behaviour != null else Vector3.ZERO
+	if way.length() > 0.0:
+		var want := atan2(-way.z, way.x)
 		heading = rotate_toward(heading, want, TURN_RATE * delta)
+		off = absf(angle_difference(heading, want))
 	elif behaviour == null or not behaviour.drinking:
 		# Standing (grazing, idling): it settles side-on to the view, as FarmVille always showed its animals,
 		# never tail-on or head-on (which, from above, reads as a pole).
 		var rest := REST_RIGHT if absf(angle_difference(heading, REST_RIGHT)) < absf(angle_difference(heading, REST_LEFT)) \
 			else REST_LEFT
 		heading = rotate_toward(heading, rest, SETTLE_RATE * delta)
+	if behaviour != null:
+		behaviour.turned(off, absf(angle_difference(was, heading)) * _r.x * 2.0 * SHUFFLE_REACH)
 	rotation.y = heading
 	# The body's weight: how fast it's going (in walks), turning, hopping, and whether it's been tapped and
 	# should look round at you.

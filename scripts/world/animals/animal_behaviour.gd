@@ -6,7 +6,7 @@ extends RefCounted
 ## behaviour): restless, with bursts of bouncing play. Runs a small state machine and writes an
 ## AnimalPose every frame; the animal's piece reads `offset` and `facing`.
 ##
-## Every value eases toward its target (no snapping), the walk cycle advances with the distance actually
+## Every value eases toward its target (no snapping), the walk cycle advances with the ground actually
 ## walked (so feet stay planted), and each animal has its own random stream, seeded by its uid, so a farm
 ## looks the same every time it loads but no two animals move in step.
 
@@ -27,7 +27,14 @@ const START_SPREAD := 0.85      # how far into its wander range an animal starts
 const MIN_WALK := 0.35           # a walk covers at least this share of the wander range
 const ARRIVED := 0.6             # px
 const FROLIC_SPEED := 2.4        # a frolic is a dash: this many times walking speed
-const BOUNCE_RATE := 3.0         # bounces a second while frolicking
+const AIR := 0.8                 # of a bounding stride it is off the ground; the rest it lands and gathers
+const AIR_PACE := 1.2            # it covers ground faster in the air than its even pace..
+const LAND_PACE := 0.4           # ..and checks as it lands (its weight comes down before it springs again)
+const TURN_FREE := 0.5           # radians off its way it may be and still walk on (it curves round)
+const TURN_HOLD := 1.6           # this far off it stands and comes round first: it never walks sideways
+const SHUFFLE := 0.45            # how much of a stride its legs take stepping round on the spot
+const SHUFFLE_FOR := 0.2         # seconds its legs stay ready after the last step of a turn
+const JUMP_TIME := 0.32          # seconds a tapped animal's start takes, up and down
 const FROLIC_AGAIN := 0.45       # chance a frolic runs straight into another
 const POKE_LOOK := 1.6           # seconds a tapped animal looks round at you
 const HUNGRY_SHARE := 0.7        # of a hungry animal's choices that are to look up and about for feed
@@ -64,6 +71,8 @@ var hungry := false              ## its home is waiting to be fed (BuildingFill)
 var noticed := 0.0               ## seconds left looking at whoever tapped it
 var drink_at := Vector2.INF      ## water near enough to drink from, from its home spot, in px (BuildingFill)
 var drinking := false            ## it has gone to the water and has its head down to it
+var stride_tiles := 0.0          ## the ground one cycle of its legs covers, in tiles (its body says: Animal3D)
+var going := Vector2.ZERO        ## the way it is walking, in px (a direction; zero while it stays where it is)
 
 var _rng := RandomNumberGenerator.new()
 var _left := 0.0                 # seconds left in this state
@@ -77,6 +86,9 @@ var _ear_left := 0.0
 var _swish_in := 0.0
 var _swish_left := 0.0
 var _phase := 0.0                # a per-animal offset for the slow idle motions
+var _off_course := 0.0           # radians its body still has to come round to face its way (turned)
+var _shuffle := 0.0              # seconds its legs stay stepping after a turn on the spot
+var _jump := 0.0                 # seconds left of the start it gives when tapped
 
 
 func _init(animal_rig: AnimalRig, seed_value: int, wander: Vector2) -> void:
@@ -104,8 +116,11 @@ func update(delta: float) -> void:
 	pose.time += delta
 	_left -= delta
 	noticed = maxf(noticed - delta, 0.0)
+	_shuffle = maxf(_shuffle - delta, 0.0)
 	if state == State.WALK or state == State.FROLIC:
 		_walk(delta)
+	else:
+		going = Vector2.ZERO
 	if _left <= 0.0:
 		_choose_next()
 	_ease_body(delta)
@@ -121,7 +136,7 @@ func poke() -> void:
 	noticed = POKE_LOOK
 	_look_to = 1.0
 	_target = offset
-	pose.hop = maxf(pose.hop, POKE_HOP)
+	_jump = JUMP_TIME
 	if is_bird():
 		pose.wing = 1.0
 
@@ -207,6 +222,7 @@ func _norm(v: Vector2) -> float:
 func _walk(delta: float) -> void:
 	var to := _target - offset
 	if to.length() <= ARRIVED:
+		going = Vector2.ZERO
 		if state == State.FROLIC and _rng.randf() < FROLIC_AGAIN:
 			_start_walk(true)  # and off again
 		elif _to_drink:
@@ -216,16 +232,63 @@ func _walk(delta: float) -> void:
 		else:
 			_enter(State.IDLE)
 		return
-	# Speed follows the legs: slow while they blend in, full once walking.
-	var speed := rig.num("speed", 10.0) * rig.scale * (FROLIC_SPEED if state == State.FROLIC else 1.0)
-	var step := minf(to.length(), speed * delta * maxf(pose.stride, 0.15))
-	offset += to.normalized() * step
-	pose.gait = fposmod(pose.gait + step / maxf(rig.cycle_length(), 0.001), 1.0)
+	# It goes at the pace of its legs: one cycle of them carries it one stride over the ground, whichever way
+	# that is on the screen (a pixel up the screen is twice the ground of a pixel across), so its feet grip.
+	# Slow while the legs blend in; standing to come round first when it faces the wrong way.
+	going = to.normalized()
+	var per_px := IsoProjection.ground_of(going).length()
+	var stride := stride_on_ground()
+	var speed := stride * rig.num("speed", 10.0) * rig.scale / maxf(rig.cycle_length(), 0.001)
+	speed *= (FROLIC_SPEED if state == State.FROLIC else 1.0) * _flight_pace()
+	speed *= 1.0 - smoothstep(TURN_FREE, TURN_HOLD, _off_course)
+	var ground := minf(to.length() * per_px, speed * delta * maxf(pose.stride, 0.15))
+	offset += going * ground / per_px
+	pose.gait = fposmod(pose.gait + ground / stride, 1.0)
+
+
+## The ground one cycle of its legs covers, in tiles: what its body measured (`stride_tiles`), or, with no
+## body, its rig's stride as drawn across the screen.
+func stride_on_ground() -> float:
+	if stride_tiles > 0.0:
+		return stride_tiles
+	return maxf(IsoProjection.ground_of(Vector2(rig.cycle_length(), 0)).length(), 0.001)
+
+
+## Its body says how it stands to where it is going (Animal3D, every frame): `off` radians it still has to
+## come round, and `feet` tiles the turn it just made carried its feet. It steps round on the spot as it
+## turns, and `_walk` waits for it to face its way, so its feet never slide.
+func turned(off: float, feet: float) -> void:
+	_off_course = off
+	if feet > 0.0:
+		pose.gait = fposmod(pose.gait + feet / stride_on_ground(), 1.0)
+		_shuffle = SHUFFLE_FOR
+
+
+## How high a bounding animal is at `u` of its stride (0..1), 0 on the ground .. 1 at the top: it springs up
+## and falls as a thrown thing does, then is down for the rest of the stride, gathering for the next (a ball
+## bounces straight back up; a body does not).
+static func bound(u: float) -> float:
+	var t := fposmod(u, 1.0) / AIR
+	return 4.0 * t * (1.0 - t) if t < 1.0 else 0.0
+
+
+## Whether its going is a bounding one: a hopper's always, anyone's frolic.
+func _bounds() -> bool:
+	return rig.type == "hop" or state == State.FROLIC
+
+
+func _flight_pace() -> float:
+	if not _bounds():
+		return 1.0
+	return AIR_PACE if pose.gait < AIR else LAND_PACE
 
 
 func _ease_body(delta: float) -> void:
 	var walking := state == State.WALK or state == State.FROLIC
-	pose.stride = move_toward(pose.stride, 1.0 if walking else 0.0, delta * STRIDE_EASE)
+	# (standing to come round, or stepping round on the spot, its legs take part of a stride)
+	var stride_to := lerpf(1.0, SHUFFLE, smoothstep(TURN_FREE, TURN_HOLD, _off_course)) if walking else (
+		SHUFFLE if _shuffle > 0.0 else 0.0)
+	pose.stride = move_toward(pose.stride, stride_to, delta * STRIDE_EASE)
 	var head_to := 0.0
 	var look_to := 0.0
 	match state:
@@ -252,10 +315,12 @@ func _ease_body(delta: float) -> void:
 	pose.jaw = sin(pose.time * 11.0) * pose.head if state == State.GRAZE and not is_bird() else 0.0
 	pose.wing = move_toward(pose.wing, 1.0 if state == State.FLAP else 0.0, delta * 9.0)
 	pose.display = move_toward(pose.display, 1.0 if state == State.DISPLAY else 0.0, delta * 2.5)
-	if rig.type == "hop":
-		pose.hop = absf(sin(pose.gait * TAU)) * pose.stride
-	elif state == State.FROLIC:
-		pose.hop = pow(absf(sin(pose.time * BOUNCE_RATE * PI + _phase)), 0.7) * pose.stride
+	if _jump > 0.0:
+		_jump = maxf(_jump - delta, 0.0)
+		var t := 1.0 - _jump / JUMP_TIME
+		pose.hop = POKE_HOP * 4.0 * t * (1.0 - t)
+	elif walking and _bounds():
+		pose.hop = bound(pose.gait) * pose.stride
 	else:
 		pose.hop = move_toward(pose.hop, 0.0, delta * 6.0)
 
