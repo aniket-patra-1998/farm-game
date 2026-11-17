@@ -18,6 +18,7 @@ const ACROSS := 0.4   # strikes fall across this share of the view's width eithe
 const COLOUR := Color(0.86, 0.9, 1.0)
 
 var flash := 0.0
+var foot := Vector3.ZERO   # where the last bolt met the ground
 var _bolt: MeshInstance3D
 var _life := 0.0
 var _span := 1.0
@@ -43,9 +44,6 @@ func _ready() -> void:
 
 ## A strike `far` out (0 near .. 1 far) toward `toward` (0..TAU: where across the view), seen by
 ## `camera`, on a farm `size` tiles across, by the rules `storm` (data/weather.json).
-var foot := Vector3.ZERO   # where the last bolt met the ground
-
-
 func strike(far: float, toward: float, camera: Camera3D, size: int, storm: Dictionary) -> void:
 	# Past the farm's far corner as the camera sees it (so never on the farm), as far again as the strike is
 	# far, and across the view's width by `toward` (so a near one is seen, not lost behind the camera).
