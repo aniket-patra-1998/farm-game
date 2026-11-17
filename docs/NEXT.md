@@ -147,3 +147,8 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   as tall as their words (29 units, under 3 mm on a phone); now every one is at least panel_button_height
   (`UiKit.tappable`) and menus_test checks every button. Open: 40 units is still about 4 mm on a 20:9 phone
   against a 7 mm finger (the shared panel button size: the owner's call). Next run: a full audit (run 6).
+- Run 6 (edge cases, clock set back): load already shifted objects' "t" and plots, but crafting slots, pig
+  forage, bunch ends, fuel refill, VIP time, rust/repairs, strays, pollination and clear weather waited the
+  hour on top (active VIP gained it). Now `GameSystem.shift_clock(seconds)` per system (test 436); a new timer
+  in a system adds itself there. Social's last_settled stays forward-only on purpose. Open in edge cases: a full
+  Barn and inbox, long offline, a crammed farm. Next: fix the next ready item, or audit cheating (run 9).
