@@ -3,7 +3,7 @@ extends RefCounted
 ## A Bloom in 3D, each kind its own flower: a rose is a cup of layered petals, a tulip an egg of six, a daisy a
 ## ring of white rays round a yellow button, a sunflower a dark disc in two rows of rays, a lily six long petals
 ## curling back round its stamens, an iris three standards up and three falls down. A Single Bloom is one tall
-## flower on its leafy stem with a smaller one beside it; a Full Bloom a bunch of seven that fills its tile.
+## flower on its leafy stem with a smaller one beside it; a Full Bloom a bunch of five that fills its tile.
 ## Each kind has its own leaves too (a tulip's straps, a sunflower's hearts, an iris's swords). Built from the
 ## catalog's colour and accent.
 ##
@@ -15,27 +15,28 @@ extends RefCounted
 ## Nothing in a flower is ruled: stems bend, heads look a little their own way, no two petals or leaves sit, tilt
 ## or measure quite alike, and each flower takes its own tone of the kind's colour (all from the bloom's seed, so
 ## it is the same flower every time it is built).
-## Petals and leaves are small cupped blades (a dozen triangles each, made once and shared), not balls.
+## Chunky, as the rest of the farm is: thick stems, a few big petals to a head and fat leaves, each a cupped
+## blade with a body to it (rounded on top, a belly underneath; a few dozen triangles, made once and shared),
+## never a sheet of paper, in the catalog's colours at full strength.
 
-const STEM := Color("#5a8f42")             # a stem at its top..
-const STEM_FOOT := Color("#3d6a30")        # ..and at its foot
-const LEAF := Color("#356b2c")            # a leaf at its foot..
-const LEAF_TIP := Color("#6aa24a")        # ..and at its tip
-const BLUE_LEAF := Color("#42805a")       # a tulip's and an iris's leaves: a bluer green
-const BLUE_LEAF_TIP := Color("#7bb284")
+const STEM := Color("#4c9a3e")             # a stem at its top..
+const STEM_FOOT := Color("#2f7430")        # ..and at its foot
+const LEAF := Color("#2f7d33")            # a leaf at its foot..
+const LEAF_TIP := Color("#58b044")        # ..and at its tip
+const BLUE_LEAF := Color("#2f8a4c")       # a tulip's and an iris's leaves: a bluer green
+const BLUE_LEAF_TIP := Color("#5cb86a")
 const ANTHER := Color("#a8552a")          # the pollen on a lily's stamens
-const SOFT := 0.86                        # how strong the catalog's colours are painted: petals aren't paint
 const TONES := [[0.0, 1.0], [-0.012, 0.95], [0.012, 1.0], [0.0, 0.91], [0.007, 0.97]]   # a flower's own tone of
                                           # its kind's colour: [hue shift, brightness], picked by its seed
 const SHADES := [0.9, 1.0, 1.1]           # and a leaf's own shade of green
-const TUBE_SIDES := 5                     # a stem is a bent tube this many sides round
+const TUBE_SIDES := 6                     # a stem is a bent tube this many sides round
 const GOLDEN := 2.39996                   # the angle between one rose petal and the next (as petals really grow)
-const STEMS_FULL := 7                     # flowers in a Full Bloom: one in the middle, the rest round it
+const STEMS_FULL := 5                     # flowers in a Full Bloom: one in the middle, the rest round it
 const STEMS_SINGLE := 2                   # flowers in a Single Bloom: its own, and a smaller one beside it
-const FULL_SPREAD := 0.1                  # how far from the middle a Full Bloom's outer stems stand, in tiles
-const FULL_LEAN := 0.16                   # and how far they lean outward, in radians (they bend outward too)
+const FULL_SPREAD := 0.13                 # how far from the middle a Full Bloom's outer stems stand, in tiles
+const FULL_LEAN := 0.2                    # and how far they lean outward, in radians (they bend outward too)
 const FULL_TALL := 1.25                   # a Full Bloom's stems against a Single's: a tall bunch, not a wide one..
-const FULL_HEAD := 0.86                   # ..of heads this much of a Single's, so seven stand inside one tile
+const FULL_HEAD := 1.0                    # ..of heads as big as a Single's: five of them fill one tile
 const FULL_LEAF := 0.7                    # and its outer stems' leaves, against a Single's
 const SIDE_OUT := 0.1                     # a Single Bloom's second stem stands this far from the main one..
 const SIDE_LEAN := 0.55                   # ..leaning out this much (radians), to one side as the camera sees it..
@@ -48,29 +49,34 @@ const NOT_A_HEAD := -1.0                  # the turn a stem or a leaf is marked 
 const FIRST_TURN := 0.35                  # a Full Bloom's first head opens at this turn, its last at 1
 const VEIN := 1.12                        # a leaf's midrib, against the leaf (lighter)
 const CREASE := 0.9                       # a petal's midrib, against the petal (darker)
+const UNDER := 0.6                        # a blade's belly underneath, against its rounding on top..
+const UNDER_SHADE := 0.82                 # ..and how bright its underside is painted
+const THIN_TIP := 0.4                     # how thick a blade is at its tip, against its foot
 
 # Each kind's measures for a bloom of size 1, in tiles: its head's radius, its stem's height and thickness, and
 # how far its face tilts from straight up (radians). Heads are big: a bloom is its flower.
 const FORMS := {
-	"rose": {"head": 0.225, "height": 0.5, "stem": 0.02, "tilt": 0.45},
-	"tulip": {"head": 0.13, "height": 0.48, "stem": 0.022, "tilt": 0.1},
-	"daisy": {"head": 0.21, "height": 0.46, "stem": 0.016, "tilt": 0.65},
-	"sunflower": {"head": 0.27, "height": 0.62, "stem": 0.03, "tilt": 0.85},
-	"lily": {"head": 0.24, "height": 0.54, "stem": 0.02, "tilt": 0.6},
-	"iris": {"head": 0.19, "height": 0.52, "stem": 0.02, "tilt": 0.2},
+	"rose": {"head": 0.225, "height": 0.5, "stem": 0.03, "tilt": 0.45},
+	"tulip": {"head": 0.15, "height": 0.48, "stem": 0.032, "tilt": 0.1},
+	"daisy": {"head": 0.21, "height": 0.46, "stem": 0.026, "tilt": 0.65},
+	"sunflower": {"head": 0.27, "height": 0.62, "stem": 0.042, "tilt": 0.85},
+	"lily": {"head": 0.24, "height": 0.54, "stem": 0.03, "tilt": 0.6},
+	"iris": {"head": 0.19, "height": 0.52, "stem": 0.03, "tilt": 0.2},
 }
 
 # The blades: [where along it is widest, how pointed its end (0 round, 1 a point), how cupped across, how much
-# it curls along its length (up, or down when negative), how many rows it is made of, how far its rim rolls back].
+# it curls along its length (up, or down when negative), how many rows it is made of, how far its rim rolls back,
+# how thick its body is at its middle (a share of its width), whether it has an underside (a blade that lies
+# out flat, a ray or a leaf, is rounded on top and open underneath: nothing looks up at it)].
 const BLADES := {
-	"petal": [0.62, 0.0, 0.6, 0.34, 4, 0.2],        # a rose's petal: a cup with its rim rolled back
-	"round": [0.6, 0.0, 0.55, 0.3, 4, 0.06],        # an iris's standard, a sunflower's leaf
-	"pointed": [0.45, 0.8, 0.6, 0.12, 4, 0.05],     # a tulip's petal
-	"ray": [0.6, 0.3, 0.2, 0.06, 2, 0.0],           # a daisy's and a sunflower's rays, a stamen (many, so lighter)
-	"recurved": [0.4, 0.9, 0.35, -0.55, 4, 0.0],    # a lily's petal, curling back
-	"fall": [0.62, 0.15, 0.3, -0.45, 4, 0.0],       # an iris's fall, hanging
-	"leaf": [0.42, 1.0, 0.3, -0.3, 3, 0.0],
-	"strap": [0.35, 0.8, 0.55, -0.15, 3, 0.0],      # a tulip's and an iris's long leaves
+	"petal": [0.62, 0.0, 0.6, 0.34, 4, 0.2, 0.5, true],       # a rose's petal: a cup with its rim rolled back
+	"round": [0.6, 0.0, 0.55, 0.3, 4, 0.06, 0.45, true],      # an iris's standard, a sunflower's leaf
+	"pointed": [0.5, 0.5, 0.6, 0.12, 4, 0.05, 0.5, true],     # a tulip's petal
+	"ray": [0.6, 0.2, 0.2, 0.06, 2, 0.0, 0.45, false],        # a daisy's and a sunflower's rays, a stamen (many, lighter)
+	"recurved": [0.4, 0.7, 0.35, -0.55, 4, 0.0, 0.4, true],   # a lily's petal, curling back
+	"fall": [0.62, 0.15, 0.3, -0.45, 4, 0.0, 0.4, true],      # an iris's fall, hanging
+	"leaf": [0.45, 0.7, 0.3, -0.3, 3, 0.0, 0.35, false],
+	"strap": [0.4, 0.6, 0.55, -0.15, 3, 0.0, 0.3, true],      # a tulip's and an iris's long leaves, standing
 }
 
 static var _blades := {}   # blade name and colours -> its mesh (made once)
@@ -121,8 +127,9 @@ static func build_at(parent: Node3D, at: Vector3, it: Dictionary, size: float, f
 				rng, 0.0, 1.0, true)
 	if full:
 		# A Full Bloom stands in a rosette of big leaves, so it is a mass of green under its flowers.
-		for k in ModelKit.scaled(8, 4):
-			_leaf(root, kind, Vector3.ZERO, turn_around + TAU * k / 8.0 + 0.3, 1.05, 0.34 * size, 0.15 * size, rng)
+		var rosette := ModelKit.scaled(6, 4)
+		for k in rosette:
+			_leaf(root, kind, Vector3.ZERO, turn_around + TAU * k / rosette + 0.3, 1.05, 0.34 * size, 0.2 * size, rng)
 
 
 ## One stem `h` tall standing in `flower`, bending `bend` aside by its top, with its leaves (`leafy`: how many of
@@ -212,9 +219,9 @@ static func kind_of(it: Dictionary) -> String:
 	return kind if FORMS.has(kind) else "rose"
 
 
-## A catalog colour as a petal wears it: a little less strong, a little lighter.
+## A catalog colour as a petal wears it: as strong, a touch lighter.
 static func soft(col: Color) -> Color:
-	return Color.from_hsv(col.h, col.s * SOFT, lerpf(col.v, 1.0, 0.06))
+	return Color.from_hsv(col.h, col.s, lerpf(col.v, 1.0, 0.06))
 
 
 ## One flower's own tone of its kind's colour (one of TONES, so the blades' meshes are few).
@@ -225,7 +232,7 @@ static func tone(col: Color, rng: RandomNumberGenerator) -> Color:
 
 ## The flower head of a kind, built open about `head`'s origin, facing up its y: radius `r`. Petals shade from
 ## their foot to their tip and carry a darker crease, so a head has depth and is not one flat colour. A `light`
-## head (one of a Full Bloom's seven, a Single's small second flower) leaves out what a bunch hides or a small
+## head (one of a Full Bloom's five, a Single's small second flower) leaves out what a bunch hides or a small
 ## head doesn't show (the second row of rays, the sepals behind, half the stamens), and its petals are made of
 ## fewer points.
 static func _head(kind: String, head: Node3D, r: float, col: Color, accent: Color, turn: float, light: bool,
@@ -236,8 +243,8 @@ static func _head(kind: String, head: Node3D, r: float, col: Color, accent: Colo
 			# Petals one after another round a spiral, as a rose grows them: upright and small at the heart, lying
 			# open and large outside, each dark at its foot with a lighter, rolled-back rim.
 			var heart := col.darkened(0.3)
-			_ball(head, Vector3(0, r * 0.3, 0), r * 0.26, heart, turn, Vector3(1, 1.2, 1), not light)
-			var petals := ModelKit.scaled(12 if light else 20, 8)
+			_ball(head, Vector3(0, r * 0.3, 0), r * 0.34, heart, turn, Vector3(1, 1.2, 1), not light)
+			var petals := ModelKit.scaled(7 if light else 10, 5)
 			for k in petals:
 				var f := (k + 0.5) / petals
 				var a := k * GOLDEN
@@ -245,7 +252,7 @@ static func _head(kind: String, head: Node3D, r: float, col: Color, accent: Colo
 				var big := lerpf(0.74, 1.12, f) * rng.randf_range(0.94, 1.06)
 				var radial := Vector3(cos(a), 0, sin(a))
 				_blade_at(head, "petal", radial * r * lerpf(0.03, 0.1, f) + Vector3(0, r * 0.08, 0),
-					radial * sin(tilt) + Vector3(0, cos(tilt), 0), r * big, r * big, heart.lerp(col.darkened(0.38), f),
+					radial * sin(tilt) + Vector3(0, cos(tilt), 0), r * big, r * big * 1.25, heart.lerp(col.darkened(0.38), f),
 					col.lightened(lerpf(0.0, 0.22, f)), 1.0, turn, RIM, cols, rng.randf_range(-0.2, 0.2))
 			if not light:
 				_ring(head, rng, "leaf", 5, 2.0, r * 0.6, r * 0.22, LEAF, LEAF_TIP, turn, 0.3, r * 0.05)
@@ -255,27 +262,27 @@ static func _head(kind: String, head: Node3D, r: float, col: Color, accent: Colo
 				CREASE, 0.7, cols, 0.5)
 			_ring(head, rng, "pointed", 3, 0.26, r * 2.2, r * 1.6, foot, col.darkened(0.05), turn, PI / 3.0, r * 0.22, 0.0,
 				CREASE, 0.7, cols, 0.5)
-		"daisy":   # white rays (two rows of them) round a domed yellow button
-			var shade := col.lerp(accent, 0.18).darkened(0.12)
-			_ring(head, rng, "ray", 15, 1.4, r * 1.0, r * 0.33, shade, col, turn, 0.0, r * 0.22)
-			_ball(head, Vector3(0, r * 0.06, 0), r * 0.36, accent, turn, Vector3(1, 0.6, 1), not light)
+		"daisy":   # broad white rays (two rows of them) round a domed yellow button
+			var shade := col.lerp(accent, 0.18).darkened(0.04)
+			_ring(head, rng, "ray", 11, 1.4, r * 1.0, r * 0.46, shade, col, turn, 0.0, r * 0.22)
+			_ball(head, Vector3(0, r * 0.06, 0), r * 0.42, accent, turn, Vector3(1, 0.6, 1), not light)
 			if not light:
-				_ring(head, rng, "ray", 15, 1.5, r * 0.92, r * 0.3, shade, col.darkened(0.06), turn, PI / 15.0, r * 0.2)
-				_ball(head, Vector3(0, r * 0.16, 0), r * 0.18, accent.darkened(0.2), turn, Vector3(1, 0.6, 1))
+				_ring(head, rng, "ray", 11, 1.5, r * 0.92, r * 0.42, shade, col.darkened(0.06), turn, PI / 11.0, r * 0.2)
+				_ball(head, Vector3(0, r * 0.16, 0), r * 0.22, accent.darkened(0.2), turn, Vector3(1, 0.6, 1))
 		"sunflower":   # a dark seed disc in rays that start orange (two rows of them), green bracts behind
-			var ember := col.lerp(Color("#d9620f"), 0.6)
-			_ring(head, rng, "ray", 16, 1.36, r * 0.82, r * 0.28, ember, col, turn, 0.0, r * 0.46)
-			_ball(head, Vector3(0, r * 0.03, 0), r * 0.54, accent, turn, Vector3(1, 0.36, 1), not light)
+			var ember := col.lerp(Color("#d9620f"), 0.35)
+			_ring(head, rng, "ray", 13, 1.36, r * 0.82, r * 0.4, ember, col, turn, 0.0, r * 0.46)
+			_ball(head, Vector3(0, r * 0.03, 0), r * 0.58, accent, turn, Vector3(1, 0.36, 1), not light)
 			_ball(head, Vector3(0, r * 0.1, 0), r * 0.3, accent.darkened(0.4), turn, Vector3(1, 0.4, 1))
 			if not light:
-				_ring(head, rng, "ray", 16, 1.48, r * 0.72, r * 0.28, ember, col.lerp(Color("#f0a020"), 0.4), turn,
-					PI / 16.0, r * 0.43)
+				_ring(head, rng, "ray", 13, 1.48, r * 0.72, r * 0.38, ember, col.lerp(Color("#f0a020"), 0.4), turn,
+					PI / 13.0, r * 0.43)
 				_ring(head, rng, "leaf", 8, 1.78, r * 0.62, r * 0.3, LEAF, LEAF_TIP, turn, 0.2, r * 0.3)
 		"lily":   # six long petals curling back, pale in the throat with a dark stripe, round long stamens
 			var throat := col.lerp(Color.WHITE, 0.55).lerp(accent, 0.25)
-			_ring(head, rng, "recurved", 3, 0.9, r * 1.6, r * 0.62, throat, col.darkened(0.05), turn, 0.0, r * 0.08, 0.0,
+			_ring(head, rng, "recurved", 3, 0.9, r * 1.6, r * 0.78, throat, col.darkened(0.05), turn, 0.0, r * 0.08, 0.0,
 				0.78, 0.7, cols)
-			_ring(head, rng, "recurved", 3, 1.0, r * 1.55, r * 0.56, throat, col.lightened(0.1), turn, PI / 3.0, r * 0.08,
+			_ring(head, rng, "recurved", 3, 1.0, r * 1.55, r * 0.7, throat, col.lightened(0.1), turn, PI / 3.0, r * 0.08,
 				0.0, 0.78, 0.7, cols)
 			var stamens := 3 if light else ModelKit.scaled(6, 3)
 			for k in stamens:
@@ -312,24 +319,24 @@ static func _leaves(kind: String, flower: Node3D, h: float, bend: Vector3, size:
 		leafy: float) -> void:
 	var start := rng.randf() * TAU
 	match kind:
-		"rose":   # oval leaves up the stem, side to side
-			for k in maxi(1, roundi(ModelKit.scaled(5, 3) * leafy)):
-				_leaf(flower, kind, _on(h, bend, 0.18 + 0.14 * k), start + PI * k + 0.5, 1.05, 0.26 * size, 0.14 * size, rng)
+		"rose":   # fat oval leaves up the stem, side to side
+			for k in maxi(1, roundi(ModelKit.scaled(3, 2) * leafy)):
+				_leaf(flower, kind, _on(h, bend, 0.18 + 0.2 * k), start + PI * k + 0.5, 1.05, 0.28 * size, 0.19 * size, rng)
 		"tulip":   # broad straps rising from the foot
-			for k in maxi(1, roundi(ModelKit.scaled(4, 2) * leafy)):
-				_leaf(flower, kind, Vector3.ZERO, start + TAU * k / 4.0, 0.42, h * 0.85, 0.16 * size, rng)
+			for k in maxi(1, roundi(ModelKit.scaled(3, 2) * leafy)):
+				_leaf(flower, kind, Vector3.ZERO, start + TAU * k / 3.0, 0.42, h * 0.8, 0.2 * size, rng)
 		"daisy":   # a low tuft, and a few up the stem
-			for k in maxi(1, roundi(ModelKit.scaled(6, 3) * leafy)):
-				_leaf(flower, kind, _on(h, bend, 0.09 * k), start + 2.4 * k, 1.1, 0.22 * size, 0.09 * size, rng)
+			for k in maxi(1, roundi(ModelKit.scaled(4, 2) * leafy)):
+				_leaf(flower, kind, _on(h, bend, 0.12 * k), start + 2.4 * k, 1.1, 0.24 * size, 0.13 * size, rng)
 		"sunflower":   # big heart-shaped leaves
-			for k in maxi(1, roundi(ModelKit.scaled(5, 3) * leafy)):
-				_leaf(flower, kind, _on(h, bend, 0.16 + 0.15 * k), start + 2.2 * k, 1.15, 0.34 * size, 0.27 * size, rng)
-		"lily":   # many narrow leaves spiralling up
-			for k in maxi(2, roundi(ModelKit.scaled(9, 4) * leafy)):
-				_leaf(flower, kind, _on(h, bend, 0.08 + 0.09 * k), start + 2.4 * k, 0.95, 0.27 * size, 0.07 * size, rng)
+			for k in maxi(1, roundi(ModelKit.scaled(3, 2) * leafy)):
+				_leaf(flower, kind, _on(h, bend, 0.16 + 0.22 * k), start + 2.2 * k, 1.15, 0.34 * size, 0.3 * size, rng)
+		"lily":   # leaves spiralling up
+			for k in maxi(2, roundi(ModelKit.scaled(5, 3) * leafy)):
+				_leaf(flower, kind, _on(h, bend, 0.08 + 0.15 * k), start + 2.4 * k, 0.95, 0.27 * size, 0.11 * size, rng)
 		"iris":   # a fan of swords from the foot
-			for k in maxi(1, roundi(ModelKit.scaled(5, 3) * leafy)):
-				_leaf(flower, kind, Vector3.ZERO, start + TAU * k / 5.0, 0.22, h * (0.8 + 0.07 * k), 0.1 * size, rng)
+			for k in maxi(1, roundi(ModelKit.scaled(4, 2) * leafy)):
+				_leaf(flower, kind, Vector3.ZERO, start + TAU * k / 4.0, 0.22, h * (0.75 + 0.07 * k), 0.14 * size, rng)
 
 
 ## One leaf from `base`, pointing out at angle `around` and `tilt` from straight up, give or take; no two are the
@@ -387,7 +394,10 @@ static func _ball(head: Node3D, at: Vector3, r: float, col: Color, turn: float, 
 
 ## A blade's mesh, made once per shape and colours: lying along +z from its base at the origin, 1 long and 1
 ## across at its widest, `cols` points across each row (a curved cup, not a fold), its points shared so it is lit
-## as one smooth surface. Its shape is BLADES[name]; its points shade from `foot` (as far as `reach` of the way
+## as one smooth surface. It has a body: rounded on top and with a belly underneath (a point a row, under its
+## midrib), thickest at its foot, the two faces meeting at its edges (so it is a shape, lit round its rim, never
+## a sheet).
+## Its shape is BLADES[name]; its points shade from `foot` (as far as `reach` of the way
 ## along, or only at the rim when `reach` is RIM) to `tip`, the midrib `rib` times as bright (a petal's dark
 ## crease, a leaf's light vein), fading to the edges.
 static func blade_mesh(name: String, foot: Color, tip: Color, rib: float, reach := 0.7, cols := 3) -> ArrayMesh:
@@ -399,21 +409,38 @@ static func blade_mesh(name: String, foot: Color, tip: Color, rib: float, reach 
 	var count := int(shape[4])
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var belly: Array[Vector3] = []   # its underside's own points: one a row, under its midrib
+	var belly_cols: Array[Color] = []
 	for row in count + 1:
 		var t := 1.0 - pow(1.0 - float(row) / count, 1.6)   # (rows closer towards the tip: a round end is round)
 		var w := lerpf(0.16, 0.5, sin(t / waist * PI / 2.0)) if t <= waist else 0.5 * lerpf(
 			sqrt(1.0 - pow((t - waist) / (1.0 - waist), 2.0)), 1.0 - (t - waist) / (1.0 - waist), float(shape[1]))
 		var y := float(shape[3]) * t * t - float(shape[5]) * smoothstep(0.55, 1.0, t)
 		var col := foot.lerp(tip, t * t * t if reach <= RIM else smoothstep(0.0, reach, t))
+		var thick := float(shape[6]) * w * lerpf(1.0, THIN_TIP, t)
 		for c in cols:
 			var u := 2.0 * c / (cols - 1) - 1.0   # -1 at one edge, 0 on the midrib, 1 at the other edge
 			var bright := lerpf(rib, 1.0, absf(u))
 			st.set_color(Color(col.r * bright, col.g * bright, col.b * bright))
-			st.add_vertex(Vector3(u * w, y + float(shape[2]) * w * u * u, t))
+			st.add_vertex(Vector3(u * w, y + float(shape[2]) * w * u * u + thick * sqrt(1.0 - u * u), t))
+		belly.append(Vector3(0, y - thick * UNDER, t))
+		belly_cols.append(Color(col.r, col.g, col.b) * (rib * UNDER_SHADE))
 	for row in count:
 		for c in cols - 1:
 			var a := row * cols + c
 			for i: int in [a, a + cols + 1, a + 1, a, a + cols, a + cols + 1]:
+				st.add_index(i)
+	if bool(shape[7]):
+		# Its underside, facing down: from each edge in to the belly under the midrib.
+		var under := (count + 1) * cols
+		for k in belly.size():
+			st.set_color(belly_cols[k])
+			st.add_vertex(belly[k])
+		for row in count:
+			var left := row * cols
+			var right := left + cols - 1
+			var mid := under + row
+			for i: int in [left, mid, mid + 1, left, mid + 1, left + cols, mid, right, right + cols, mid, right + cols, mid + 1]:
 				st.add_index(i)
 	st.generate_normals()
 	_blades[key] = st.commit()

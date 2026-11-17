@@ -155,7 +155,7 @@ Open:
 - Done: each of the six blooms is its own flower (`BloomModel`: a rose's layered cup, a tulip's egg, a daisy's
   rays, a sunflower's disc, a lily's recurved star, an iris's standards and falls), with its own leaves. A bloom
   fills its tile (`data/scale_guide.json`: 0.85-1.1 tiles tall) and is mostly head. A Single Bloom is its
-  flower and a smaller one beside it; a Full Bloom is a tall bunch of seven in a rosette of leaves, built to
+  flower and a smaller one beside it; a Full Bloom is a tall bunch of five in a rosette of leaves, built to
   stand inside one tile (`FULL_*`), its heads lighter (`_head`'s `light`). Petals and leaves are smooth shared
   blades that carry their own colours: foot to tip, a darker crease or a lighter vein (a tulip's warm foot, a
   lily's pale throat, a sunflower's orange-to-yellow rays, a rose's light rims). A bloom is one surface, one
