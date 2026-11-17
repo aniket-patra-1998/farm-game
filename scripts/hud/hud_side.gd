@@ -124,7 +124,7 @@ func show_ready_count() -> void:
 	if hud.grid == null or not zoom.is_visible_in_tree():
 		return
 	var n := hud.grid.ready_count()
-	_ready.visible = n > 0
+	_ready.visible = n > 0 and Release.on("next_ready")   # (off in the first release: the owner's call)
 	_ready_badge.text = str(mini(n, READY_MOST)) + ("+" if n > READY_MOST else "")   # not-ui
 
 

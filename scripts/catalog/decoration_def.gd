@@ -5,6 +5,12 @@ extends PlaceableDef
 ## everything: ItemDef.buy_xp, 1 per 100 coins.)
 
 const STARTER_SCENERY := ["farmhouse", "mailbox", "farm_stand"]  ## drawn by id, not shape
+const OPENS := {"mailbox": "inbox"}   ## a tap on these opens a panel of the interface (FarmHud.show_panel)
+
+
+## The panel a tap on it opens ("" for none): the mailbox opens the inbox.
+func opens() -> String:
+	return OPENS.get(id, "")
 
 
 ## Whether its pieces join their neighbours (see Linking): they turn themselves, so the player doesn't.

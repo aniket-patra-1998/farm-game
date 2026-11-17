@@ -5,6 +5,7 @@ extends Node2D
 
 signal info(text: String)   ## a word about what was just tapped: shown in a bubble where the finger was
 signal object_tapped(uid: int)        # a building was tapped while not ready
+signal panel_requested(panel: String)   # a thing that opens a panel was tapped (the mailbox: "inbox")
 ## Something tapped tells about itself in a small bubble above it (FarmVille's way, not a panel): `at` is where
 ## (this grid's space), `uid` the thing tapped (-1 for a plot), so its bubble can offer its panel.
 signal tapped_info(at: Vector2, title: String, line: String, uid: int)
@@ -1300,7 +1301,12 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	if kind == "decor" and tool != "move":
 		if loud:
 			_poke(uid)
-			_tell(obj)
+			var def := Game.catalog.get_def(str(obj["id"]))
+			var panel: String = (def as DecorationDef).opens() if def is DecorationDef else ""
+			if panel != "":
+				panel_requested.emit(panel)
+			else:
+				_tell(obj)
 		return
 	if obj.get("stray", false) and tool != "move":
 		if loud:

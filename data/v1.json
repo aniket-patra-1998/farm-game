@@ -9,7 +9,8 @@
     "mystery_young": true,
     "bees": true,
     "collections": true,
-    "ribbons": true
+    "ribbons": true,
+    "next_ready": false
   },
   "balance": {},
   "items": [

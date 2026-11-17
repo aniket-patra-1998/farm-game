@@ -434,3 +434,24 @@ func test_327_auto_quality_steps_down_when_frames_stay_slow_and_the_players_choi
 	Quality.apply_frame_cap()
 	Quality.notifier.emitted.emit()
 
+
+
+func test_433_a_tap_on_the_mailbox_opens_the_inbox() -> void:
+	Game.reset_game()
+	var main = MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	var asked: Array[String] = []
+	grid.panel_requested.connect(func(panel: String) -> void: asked.append(panel))
+	var box := {"uid": Game.next_uid, "id": "mailbox", "row": 2, "col": 2, "t": Game.now()}
+	Game.next_uid += 1
+	Game.add_object(box)
+	grid.tool = "hand"
+	grid.call("_act_on_object", box, true)
+	_eq(asked, ["inbox"] as Array[String], "the mailbox asks for the inbox")
+	var hud: FarmHud = main.get("hud")
+	await get_tree().process_frame
+	_check(hud.book.visible, "and the inbox opens")
+	hud.close_panels()
+	main.free()

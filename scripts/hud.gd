@@ -398,6 +398,13 @@ func show_collections() -> void:
 	book.open_panel(tr("COLLECTIONS"), books.build_collections)
 
 
+## The panel named `panel` (DecorationDef.OPENS: a tap on the farm's mailbox opens the inbox).
+func show_panel(panel: String) -> void:
+	match panel:
+		"inbox":
+			show_inbox()
+
+
 func show_inbox() -> void:
 	var note := Game.social.settle()
 	if note != "":
