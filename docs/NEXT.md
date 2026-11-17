@@ -97,7 +97,7 @@ first; the buildings items below continue alongside.
 - Fixed: decorations give 1 XP per 100 coins like everything (the 5-XP minimum let a buy-and-sell loop pay from
   level 38: coins, gems and VIP without end; economy_test 61 now checks no coin buy can pay for a level); land
   needs its level with gems too (gems skip only the coins).
-- Open, owner's call: VIP (cap the points gems buy per week; top boost x2 or x1.5). The economy pass, in its own
+- VIP's top boost is now x1.5 (owner, 17 Nov); still open: a weekly cap on the points gems buy. The economy pass, in its own
   session with the balance bot: an XP curve that grows after level 20 (now a flat 1,000) with unlocks spread
   through 31-40 and a level-up reward that is felt; 8 of the 21 V1 crops never worth planting (bell pepper, corn,
   cotton, pineapple, raspberry, rice, spinach, watermelon: a crop stays ripe as long as it grew, so 24-hour crops

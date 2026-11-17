@@ -20,7 +20,7 @@ changes nothing else. Only the farmer's level gates things. The Barn is the farm
 
 ## What active VIP does
 
-Everything buildings give is multiplied, from 1 at no VIP to 2 at VIP 15, by the same step each level
+Everything buildings give is multiplied, from 1 at no VIP to 1.5 at VIP 15, by the same step each level
 (`VipSystem.boost`):
 
 - the boosts stocked homes give the farm (`HomeBoostSystem.total`, and its caps with it);

@@ -109,11 +109,12 @@ func test_404_active_vip_multiplies_what_buildings_give() -> void:
 	g.xp = g.xp_for_level(30)
 	g.vip.points = 300   # VIP 3
 	g.vip.until = g.now() + DAY
-	_check(is_equal_approx(g.vip.boost(), 1.0 + 3.0 / 15.0), "VIP 3 of 15: a fifth of the way from 1 to 2 (%.3f)"
-		% g.vip.boost())
+	var top := Balance.f("vip.top_boost")
+	_check(is_equal_approx(g.vip.boost(), 1.0 + (top - 1.0) * 3.0 / 15.0),
+		"VIP 3 of 15: a fifth of the way from 1 to the top boost (%.3f)" % g.vip.boost())
 	g.vip.points = 18000
-	_check(is_equal_approx(g.vip.boost(), 2.0), "the top level: twice")
-	_check(is_equal_approx(g.vip.chance(0.1), 0.2), "a chance of 10% becomes 20%")
+	_check(is_equal_approx(g.vip.boost(), top), "the top level: the top boost")
+	_check(is_equal_approx(g.vip.chance(0.1), 0.1 * top), "a chance of 10% is multiplied by it")
 	_check(is_equal_approx(g.vip.chance(0.8), 1.0), "and never more than certain")
 	# Pieces of one kind that touch pay more: twice the bonus.
 	_check(g.buy_and_place("chicken_coop", 8, 4) and g.buy_and_place("chicken_coop", 8, 6), "two coops side by side")
@@ -121,8 +122,8 @@ func test_404_active_vip_multiplies_what_buildings_give() -> void:
 	var with_vip := g.adjacency.coin_multiplier(coop) - 1.0
 	g.vip.until = 0
 	var without := g.adjacency.coin_multiplier(coop) - 1.0
-	_check(without > 0.0 and is_equal_approx(with_vip, without * 2.0),
-		"the layout bonus is doubled (%.2f, %.2f without VIP)" % [with_vip, without])
+	_check(without > 0.0 and is_equal_approx(with_vip, without * Balance.f("vip.top_boost")),
+		"the layout bonus is multiplied by the top boost (%.2f, %.2f without VIP)" % [with_vip, without])
 	# The boosts stocked homes give the farm, caps and all.
 	var boosted := 0
 	for boost: String in g.boosts.boost_ids():
