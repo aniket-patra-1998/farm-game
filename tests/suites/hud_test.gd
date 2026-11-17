@@ -1024,3 +1024,16 @@ func test_375_numbers_are_written_alike_and_text_sits_on_the_type_scale() -> voi
 	for d in 10:
 		widths[bold.get_string_size(str(d), HORIZONTAL_ALIGNMENT_LEFT, -1, 30).x] = true
 	_eq(widths.size(), 1, "every digit of the bold face is one width")
+
+
+func test_391_the_helpers_flower_opens_close_round_its_button() -> void:
+	var side := 100.0
+	for n in [1, 3, 5, 6]:   # (the flower holds six at most)
+		var spots := HudHelpers.spots_for(n, side)
+		_eq(spots.size(), n, "every petal has a place (%d)" % n)
+		var petal := side * HudHelpers.PETAL_SHARE
+		for i in n:
+			_check(spots[i].length() <= side * 2.3, "petals stay close: within 2.3 buttons (%d)" % n)
+			_check(spots[i].x >= -0.01 and spots[i].y <= 0.01, "up and to the right, on the screen (%d)" % n)
+			for j in range(i + 1, n):
+				_check(spots[i].distance_to(spots[j]) >= petal * 0.99, "petals never overlap (%d)" % n)

@@ -9,9 +9,10 @@ extends Control
 const OPEN_TIME := 0.32      # s for a petal to bloom out..
 const SHUT_TIME := 0.16      # ..and to fold back in
 const STAGGER := 0.035       # s between one petal and the next
-const PETAL_SHARE := 1.0     # a petal's size, of the hat's
-const SPACING := 1.15        # petals' centres apart along the arc, in petals
-const LEAST_REACH := 2.0     # the arc's radius at least, in hats
+const PETAL_SHARE := 0.85    # a petal's size, of the button's
+const SPACING := 1.08        # petals' centres apart along an arc, in petals
+const LEAST_REACH := 1.3     # the first ring's radius, in buttons (tight round it)
+const RING_GAP := 1.0        # a further ring this much further out, in petals, when one ring can't hold them all
 const ARC := PI / 2.0        # the petals fan from straight up round to the right
 const SPIN := -PI / 2.0      # a petal turns in from this far as it opens
 const HAT_TURN := 0.35       # the hat tilts this much while open (rad)
@@ -80,15 +81,13 @@ func open() -> void:
 	_catch.visible = true
 	var shown := _shown()
 	var side := UiTheme.size("side_width")
-	var petal := side * PETAL_SHARE
-	var reach := maxf(LEAST_REACH * side, SPACING * petal * maxf(1.0, shown.size() - 1.0) / ARC)
 	var centre := Vector2(side, side) / 2.0
+	var spots := spots_for(shown.size(), side)
 	_restart()
 	for k in shown.size():
 		var b := _petals[shown[k]]
 		_show_count(shown[k])
-		var a := -PI / 2.0 + (ARC * k / maxf(1.0, shown.size() - 1.0) if shown.size() > 1 else ARC / 2.0)
-		var to := centre + Vector2(cos(a), sin(a)) * reach - b.size / 2.0
+		var to := centre + spots[k] - b.size / 2.0
 		b.visible = true
 		b.position = centre - b.size / 2.0
 		b.scale = Vector2.ZERO
@@ -102,6 +101,23 @@ func open() -> void:
 			.set_ease(Tween.EASE_OUT)
 	_tween.tween_property(hat, "rotation", HAT_TURN, OPEN_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	Feedback.moment("tap")
+
+
+## Where `n` petals stand round a button `side` across (offsets from its centre): rings close round it, each
+## holding as many as fit along the arc a petal apart, the next a ring further out; each ring's petals spread
+## evenly over the arc.
+static func spots_for(n: int, side: float) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	var petal := side * PETAL_SHARE
+	var reach := LEAST_REACH * side
+	while out.size() < n:
+		var fits := int(floor(ARC * reach / (SPACING * petal))) + 1
+		var here := mini(fits, n - out.size())
+		for k in here:
+			var a := -PI / 2.0 + (ARC * k / float(here - 1) if here > 1 else ARC / 2.0)
+			out.append(Vector2(cos(a), sin(a)) * reach)
+		reach += RING_GAP * petal
+	return out
 
 
 ## Folds the flower shut: the petals draw back into the hat.
