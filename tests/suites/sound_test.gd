@@ -343,3 +343,18 @@ func _middle(under: String, measure: String, but := "") -> float:
 			values.append(float(levels[file][measure]))
 	values.sort()
 	return values[int(values.size() / 2.0)] if not values.is_empty() else 0.0
+
+
+## Quitting lets every sound go: a soundscape released (as on quit) has nothing playing and holds no stream, so the
+## engine never finds a background loop or a track still loaded at exit (it did, now and then, before).
+func test_107_quitting_lets_the_background_go() -> void:
+	var scape := Soundscape.new()
+	Sound.add_child(scape)
+	scape.look()
+	scape.release()
+	_eq(scape.bed_name, "", "no bed after release")
+	_eq((scape.get("_streams") as Dictionary).size(), 0, "no stream kept")
+	for p: AudioStreamPlayer in scape.get("_bed") + [scape.get("_music")]:
+		_check(not p.playing and p.stream == null, "a player stopped and empty")
+	scape.queue_free()
+	Sound.soundscape.look()

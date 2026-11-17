@@ -17,6 +17,7 @@ const DAY_SECONDS := 86400
 
 var bed_name := ""        # the bed playing (or fading in) now; "" for none
 var track := ""           # the music playing now; "" while resting
+var released := false     # let go before quitting: plays nothing more
 
 var _data := {}
 var _streams := {}                            # path -> AudioStream, each loaded once
@@ -42,6 +43,29 @@ func _ready() -> void:
 	_rest_until = float(_music_data().get("first_after", 20.0))
 
 
+## Before quitting (Sound.silence, a few frames ahead, so the audio thread lets go too; and again on exit):
+## every player stopped and let go of its stream, the fades ended, the loaded streams dropped, and no more looks,
+## so nothing is decoding, or held, when the engine shuts down.
+func _exit_tree() -> void:
+	release()
+
+
+func release() -> void:
+	released = true
+	for t: Tween in _tweens.values():
+		if t.is_valid():
+			t.kill()
+	_tweens.clear()
+	_aimed.clear()
+	for p in _bed + [_music]:
+		if p != null:
+			p.stop()
+			p.stream = null
+	_streams.clear()
+	bed_name = ""
+	track = ""
+
+
 func _player(bus: String) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new()
 	p.bus = bus
@@ -51,6 +75,8 @@ func _player(bus: String) -> AudioStreamPlayer:
 
 
 func _process(delta: float) -> void:
+	if released:
+		return
 	_since += delta
 	if fmod(_since, float(_data.get("check_every", 2.0))) < delta:
 		look()

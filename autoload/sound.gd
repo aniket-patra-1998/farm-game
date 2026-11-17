@@ -120,6 +120,25 @@ func start_loop(event: String, gain_db := 0.0) -> AudioStreamPlayer:
 	return p
 
 
+## Before quitting, a few frames ahead (Game's close, the test runner, the screenshots): every sound stopped and
+## let go of (the soundscape, the loops, the pool's players, the cached streams). The audio thread drops a stopped
+## sound only on its next pass, so stopping at exit is too late: a track still playing is left loaded and the
+## engine reports it in use. Done again on exit, in case.
+func silence() -> void:
+	if soundscape != null:
+		soundscape.release()
+	for p in _loops.duplicate():
+		stop_loop(p)
+	for p in _players:
+		p.stop()
+		p.stream = null
+	_cache.clear()
+
+
+func _exit_tree() -> void:
+	silence()
+
+
 func stop_loop(p: AudioStreamPlayer) -> void:
 	if p == null:
 		return
