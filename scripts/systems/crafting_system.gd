@@ -117,7 +117,7 @@ func roll_produce(obj: Dictionary) -> Dictionary:
 			continue
 		var n := 0
 		for k in mini(int(givers[id]), PRODUCE_ROLLS_MOST):
-			if game.rng.randf() < Balance.f("crafting.produce_chance"):
+			if game.rolls.roll("crafting_produce", Balance.f("crafting.produce_chance")):
 				n += 1
 		var got := add_bushels(ingredient, n) if n > 0 else 0
 		if got > 0:
@@ -164,7 +164,7 @@ func add_bushels(crop_id: String, n: int) -> int:
 
 
 func roll_bushel(crop_id: String) -> String:
-	if not game.drops_enabled or not owns_crafting() or game.rng.randf() >= Balance.f("crafting.bushel_chance"):
+	if not game.drops_enabled or not owns_crafting() or not game.rolls.roll("bushel", Balance.f("crafting.bushel_chance")):
 		return ""
 	# FarmVille: each bushel found comes with one extra per mastery star on that crop.
 	return crop_id if add_bushels(crop_id, 1 + game.mastery.stars(crop_id)) > 0 else ""

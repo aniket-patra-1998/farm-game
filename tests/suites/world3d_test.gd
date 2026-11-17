@@ -2020,22 +2020,26 @@ func test_336_a_pond_stands_on_the_ground_never_under_it() -> void:
 ## on the phone's level, counted as the renderer would: each mesh or batch drawn, plus again in the sun's shadow
 ## when it casts one, and their triangles.
 func test_338_the_heaviest_farm_stays_inside_its_draw_budget() -> void:
-	var budget: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/perf_budget.json"))
+	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/perf_budget.json"))
 	var was_level := Quality.level()
-	Quality._level = str(budget["level"])
-	Quality.notifier.emitted.emit()
 	Game.saving_enabled = false
-	Game.reset_game()
-	ShowcaseFarm.build(Game)
-	var objects := Objects3D.new()
-	add_child(objects)
-	await Objects3D.until_settled(get_tree(), 3000)
-	objects.sync()
-	var cost := Objects3D.draw_cost(objects)
-	print("PERF budget: %d draws, %d triangles" % [cost.x, cost.y])  # not-ui
-	_check(cost.x <= int(budget["draws"]), "draws %d within %d" % [cost.x, int(budget["draws"])])
-	_check(cost.y <= int(budget["triangles"]), "triangles %d within %d" % [cost.y, int(budget["triangles"])])
-	objects.free()
+	for budget: Dictionary in data["budgets"]:
+		Quality._level = str(budget["level"])
+		Quality.notifier.emitted.emit()
+		Game.reset_game()
+		ShowcaseFarm.build(Game)
+		var objects := Objects3D.new()
+		add_child(objects)
+		await Objects3D.until_settled(get_tree(), 3000)
+		objects.sync()
+		var cost := Objects3D.draw_cost(objects)
+		var name := str(budget["name"])
+		print("PERF %s budget (%s): %d draws, %d triangles; target %s draws" % [name, budget["level"], cost.x, cost.y,
+			budget.get("target_draws", "-")])  # not-ui
+		_check(cost.x <= int(budget["draws"]), "%s: draws %d within %d" % [name, cost.x, int(budget["draws"])])
+		_check(cost.y <= int(budget["triangles"]), "%s: triangles %d within %d" % [name, cost.y, int(budget["triangles"])])
+		objects.free()
+		await get_tree().process_frame
 	Game.reset_game()
 	Quality._level = was_level
 	Quality.notifier.emitted.emit()

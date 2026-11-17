@@ -268,7 +268,7 @@ func from_orchard(orchard: Dictionary) -> Array[String]:
 	if not game.drops_enabled:
 		return out
 	var becomes := _pick_tree(orchard.get("inside", {}))
-	if becomes != "" and game.rng.randf() < Balance.f("nurture.seedling_share") \
+	if becomes != "" and game.rolls.roll("seedling", Balance.f("nurture.seedling_share")) \
 			and _found(SEEDLING, becomes, int(orchard.get("uid", -1))):
 		pass   # (said on the Orchard as a find: _found)
 	else:
@@ -290,10 +290,10 @@ func from_home(home: Dictionary) -> Array[String]:
 	var becomes := _pick_animal(inside)
 	if becomes == "":
 		return out
-	if game.rng.randf() < Balance.f("nurture.home_feed_chance"):
+	if game.rolls.roll("home_feed", Balance.f("nurture.home_feed_chance")):
 		add_supply("animal_feed", 1)
 		out.append(tr("ANIMAL_FEED_N") % 1)
-	if game.rng.randf() < Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost \
+	if game.rolls.roll("mystery_baby", Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost) \
 			and _found(BABY, becomes, int(home.get("uid", -1))):
 		pass   # (said on the home as a find: _found)
 	return out
@@ -305,11 +305,11 @@ func from_bloom(bloom: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	if not game.drops_enabled:
 		return out
-	if game.rng.randf() < Balance.f("nurture.bloom_food_chance"):
+	if game.rolls.roll("bloom_food", Balance.f("nurture.bloom_food_chance")):
 		add_supply("flower_food", 1)
 		out.append(tr("FLOWER_FOOD_N") % 1)
 	var d := game.catalog.get_def(bloom["id"]) as BloomDef
-	if game.rng.randf() < Balance.f("nurture.bulb_chance") * d.mastery_points() \
+	if game.rolls.roll("bulb", Balance.f("nurture.bulb_chance") * d.mastery_points()) \
 			and _found(BULB, _pick_bloom({}), int(bloom.get("uid", -1))):
 		pass   # (said on the bloom as a find: _found)
 	return out
@@ -322,7 +322,7 @@ func from_garden(garden: Dictionary) -> Array[String]:
 		return out
 	add_supply("flower_food", Balance.i("nurture.garden_food"))
 	out.append(tr("FLOWER_FOOD_N") % Balance.i("nurture.garden_food"))
-	if game.rng.randf() < Balance.f("nurture.garden_bulb_chance") and _found(
+	if game.rolls.roll("garden_bulb", Balance.f("nurture.garden_bulb_chance")) and _found(
 		BULB,
 		_pick_bloom(garden.get("inside", {})),
 		int(garden.get("uid", -1))
@@ -354,7 +354,7 @@ func _pick_tree(inside: Dictionary) -> String:
 	if id == "":
 		return ""
 	var rare := str(game.item_data(id).get("rare_sapling", ""))
-	if rare != "" and game.items.has(rare) and game.rng.randf() < game.vip.chance(Balance.f("nurture.rare_chance")):
+	if rare != "" and game.items.has(rare) and game.rolls.roll("rare_sapling", Balance.f("nurture.rare_chance")):
 		return rare
 	return id
 

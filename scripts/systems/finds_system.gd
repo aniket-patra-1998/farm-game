@@ -60,7 +60,7 @@ func decide(work: String, stars := 0) -> Array:
 			continue
 		pity[fid] = int(pity.get(fid, 0)) + 1
 		var chance := float(trig.get("chance", 0.0)) * (1.0 + float(trig.get("mastery_luck", 0.0)) * stars + help_for(fid))
-		if int(pity[fid]) >= int(trig.get("pity", 1000000)) or game.rng.randf() < game.vip.chance(chance):
+		if int(pity[fid]) >= int(trig.get("pity", 1000000)) or game.rolls.roll("find", chance):
 			pity[fid] = 0
 			var kind := pick(fid)
 			if not kind.is_empty():

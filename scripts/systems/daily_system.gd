@@ -34,7 +34,7 @@ func load_from(data: Dictionary) -> void:
 
 ## A part for this harvest or collection, or "" for none. Fewer-held parts are likelier.
 func roll_part() -> String:
-	if not game.drops_enabled or game.rng.randf() >= Balance.f("daily.part_chance"):
+	if not game.drops_enabled or not game.rolls.roll("daily_part", Balance.f("daily.part_chance")):
 		return ""
 	var p := pick_part()
 	add_part(p, 1)

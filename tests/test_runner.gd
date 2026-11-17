@@ -1,4 +1,6 @@
 extends Node
+
+const SETTLE_FRAMES := 30   # frames given to work under way before quitting
 ## Runs every rule test: each file in tests/suites/ is a TestSuite, and each of its test_ methods a test.
 ##
 ## In Godot: open tests/run_tests.tscn and press F6 (Run Current Scene). Results print in the Output panel.
@@ -50,6 +52,10 @@ func _ready() -> void:
 		print("  - " + f)
 	print("%d tests, %d checks, %d failed" % [tests, checks, failed])
 	if DisplayServer.get_name() == "headless":
+		# Work still under way (a picture being read back from the GPU or styled) is let finish, so nothing it holds
+		# is still in use when the engine shuts down (the log gate fails on that).
+		for k in SETTLE_FRAMES:
+			await get_tree().process_frame
 		get_tree().quit(1 if failed > 0 else 0)
 
 
