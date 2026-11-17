@@ -850,7 +850,8 @@
     "barn": {
       "model": "res://art/models/buildings/barn_{level}.glb",
       "site": "res://art/models/buildings/barn_site_{stage}.glb",
-      "budget": "building"
+      "budget": "building",
+      "broken": "res://art/models/buildings/barn_broken.glb"
     },
     "garage": {
       "model": "res://art/models/buildings/garage_{level}.glb",

@@ -76,6 +76,8 @@ static func instance(id: String, state := {}) -> Node3D:
 static func file_of(e: Dictionary, state: Dictionary) -> String:
 	if state.has("stage") and e.has("site"):
 		return str(e["site"]).replace(STAGE, str(int(state["stage"])))   # (going up: a file for each stage)
+	if bool(state.get("broken", false)) and e.has("broken"):
+		return str(e["broken"])   # (standing broken: the starter Barn before it is repaired)
 	return str(e.get("model", "")).replace(LEVEL, str(int(state.get("level", 1))))
 
 

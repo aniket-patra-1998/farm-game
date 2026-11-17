@@ -21,6 +21,7 @@ const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 ## The features that are one building's own (`_signature`).
 const SLIDE := "slide"   # not-ui (a meta on a door that rolls up: how far)
+const STORING := "storing"   # not-ui (a building type: Game.building_type)
 const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
 const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
 const ROUGH_MOUNDS := 7           # low humps in a rough yard's ground..
@@ -244,10 +245,11 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "stilts":
 			lift = float(f.get("h", 0.2))
-	var wall_col := Color.html(str(it.get("color", "#c0392b")))
+	# (a level's spec can repaint the walls: the Barn's first looks are bare planks, then red)
+	var wall_col := Color.html(str(s.get("color", it.get("color", "#c0392b"))))
 	var ctx := {"root": root, "fw": fw, "fd": fd, "centre": centre, "bw": bw, "bd": bd, "bh": bh, "lift": lift,
 		"wall": wall_col, "spec": s, "it": it, "active": active, "fill": fill,
-		"harvesting": str(it.get("type", "")) == HARVESTING}
+		"harvesting": str(it.get("type", "")) == HARVESTING, "level": level}
 	# Yards go down first (they're on the ground, under everything).
 	for f: Dictionary in s.get("features", []):
 		if f.get("type") == "yard":
@@ -267,10 +269,11 @@ static func build(it: Dictionary, fp: Vector2i, level := 1, active := true, brok
 	ModelKit.roof_trim = ModelKit.RAKE_COLOUR
 	if broken and ctx.has("lo"):
 		_broken(ctx)
-	if str(it.get("kind", "")) == "crafting":
-		# Nobody goes in and out of a crafting building: its door is part of the walls, not a thing on hinges.
+	if str(it.get("kind", "")) == "crafting" or str(it.get("type", "")) == STORING:
+		# Nobody goes in and out of a crafting building or a store: its door is part of the walls, not a thing
+		# on hinges (a Garage's shutter does roll up: it stays a part).
 		for c in root.get_children():
-			if c.has_meta(DOOR):
+			if c.has_meta(DOOR) and not c.has_meta(SLIDE):
 				c.remove_meta(DOOR)
 				c.remove_meta(ModelKit.KEEP)
 	# What shows in one state only (BuildingDress.when) is merged, part by part, and kept apart from the rest so

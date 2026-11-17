@@ -29,6 +29,10 @@ var _system: VehicleSystem
 var _stops: Array[Dictionary] = []   # {"dist": tiles along the road, "plot": index}, in driving order
 var _next := 0
 var _per := 1                         # fuel per plot
+var _fuel_factor := 1.0               # ..times this for the vehicle's rust (RustSystem.fuel_factor)
+var _owed := 0.0                      # fuel burned so far in parts of one: whole ones leave the tank
+var _allowed := -1                    # the plots of its area it works with its rust (-1: all of them)
+var _passed := 0                      # the plots of its area passed so far
 var _halt := false                    # out of fuel: stop where it is
 
 
@@ -42,6 +46,7 @@ static func create(system: VehicleSystem, vehicle_id: String, r: int, c: int, cr
 	w.job = str(it["job"])
 	w.crop = crop_id
 	w._per = int(it.get("fuel_per_plot", 1))
+	w._fuel_factor = system.game.rust.fuel_factor(vehicle_id)
 	var full := system.vehicle_area(vehicle_id)
 	var game := system.game
 	var r0 := maxi(r, 0)
@@ -54,6 +59,9 @@ static func create(system: VehicleSystem, vehicle_id: String, r: int, c: int, cr
 	w.motion = VehicleMotion.new(float(it.get("weight", 0.5)))
 	if w.area.x > 0 and w.area.y > 0:
 		w._plan()
+		# A rusty vehicle gives up early: it works only so many of its area's plots, in the order it drives them.
+		var worked := system.game.rust.plots_worked(vehicle_id, w._stops.size())
+		w._allowed = worked if worked < w._stops.size() else -1
 	else:
 		w.done = true
 	return w
@@ -96,8 +104,8 @@ func _plan() -> void:
 
 ## Does anything in the area need this vehicle's job right now?
 func has_work() -> bool:
-	for s in _stops:
-		if _system.has_work(job, int(s["plot"]), crop):
+	for k in _stops.size():
+		if (_allowed < 0 or k < _allowed) and _system.has_work(job, int(_stops[k]["plot"]), crop):
 			return true
 	return false
 
@@ -127,6 +135,9 @@ func advance(delta: float) -> void:
 	while not _halt and _next < _stops.size() and travelled >= float(_stops[_next]["dist"]):
 		_work(int(_stops[_next]["plot"]))
 		_next += 1
+		_passed += 1
+		if _allowed >= 0 and _passed >= _allowed:
+			_halt = true   # (its rust: it stops here, the rest of the area untouched)
 	if (travelled >= total or _halt) and motion.speed < 0.05:
 		_finish()
 
@@ -135,11 +146,14 @@ func advance(delta: float) -> void:
 func _work(plot: int) -> void:
 	if game.is_occupied(plot) or not _system.has_work(job, plot, crop):
 		return
-	if not _system.burn_fuel(_per):
+	# Rust burns more a plot: the parts of one add up, and whole ones leave the tank.
+	var burn := floori(_owed + _per * _fuel_factor + 0.0001)
+	if not _system.burn_fuel(burn):
 		out_of_fuel = true
 		_halt = true
 		return
-	result["fuel"] = int(result["fuel"]) + _per
+	_owed += _per * _fuel_factor - burn
+	result["fuel"] = int(result["fuel"]) + burn
 	var coins_before := game.coins
 	var xp_before := game.xp
 	if _system.work_plot(job, plot, crop, result):

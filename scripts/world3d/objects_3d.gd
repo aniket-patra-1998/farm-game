@@ -19,6 +19,7 @@ const TIMED_KEPT := 256      # timed materials kept before the ones nothing is d
 const HATCH_SHAKES := 3      # a mystery shakes this many times before it opens, each harder..
 const HATCH_REACH := 0.035   # ..by this much more, in tiles, to either side
 const HATCH_REST := 0.1      # seconds between shakes
+const RUST := "rust"             # not-ui: how a vehicle's rust is written in its look ("rust2")
 const FARMHOUSE := "farmhouse"   # not-ui
 const STAGE := "stage"           # not-ui: how the farmhouse's stage is written in its look ("stage3")
 const BOX := &"box"               # on a batched thing's stand-in: the box round its model, in the model's space
@@ -129,6 +130,9 @@ func _ready() -> void:
 	add_child(_ready_marks)
 	sync()
 	Game.farm_expanded.connect(func(_n: int) -> void: _build_scenery())
+	# A vehicle standing on the farm is out of sight while it is drawn at work (VehicleRuns), and back after.
+	Game.vehicles.run_started.connect(func(run: VehicleWork) -> void: _show_standing(run.id, false))
+	Game.vehicles.run_finished.connect(func(run: VehicleWork) -> void: _show_standing(run.id, true))
 	_build_scenery()
 	var timer := Timer.new()
 	timer.wait_time = 1.0  # trees ripen and buildings become ready over time
@@ -137,6 +141,13 @@ func _ready() -> void:
 	add_child(timer)
 
 
+
+
+## Shows or hides the vehicle `id` where it stands on the farm.
+func _show_standing(id: String, shown: bool) -> void:
+	for o in Game.objects:
+		if str(o["id"]) == id and Game.kind_of(o) == "vehicle" and _views.has(int(o["uid"])):
+			(_views[int(o["uid"])]["node"] as Node3D).visible = shown
 
 
 ## Each second: only what time changes (trees ripening, buildings filling, sites rising) is looked at again; every
@@ -455,10 +466,10 @@ func _key(o: Dictionary) -> String:
 		# states that come and go (ready, at work) are shown in place (`sync`), so a collect's door swing and the
 		# yard's animals carry on.
 		return "file|%s|%d|%d|%s|%d|%s|%s|%d" % [o["id"], int(o["row"]), int(o["col"]), o.get("flip", false),
-			int(o.get("level", 1)), o.get("broken", false), Game.is_withered(o), int(state_of(o).get("stage", -1))]
+			Game.look_level(o), o.get("broken", false), Game.is_withered(o), int(state_of(o).get("stage", -1))]
 	# A building site is rebuilt as each tenth of its materials goes in.
 	var site := int(Game.land.construction_progress(o) * 10.0) if Game.under_construction(o) else -1
-	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), int(o.get("level", 1)),
+	return "%s|%d|%d|%d|%s|%d|%s|%d|%s" % [o["id"], int(o["row"]), int(o["col"]), Game.look_level(o),
 		o.get("flip", false), site, false,
 		_mask(o),
 		str(o.get("broken", false)) + shows_of(o) + "|%d|%s|%s" % [int(o.get("fed", 0)),
@@ -614,9 +625,11 @@ static func _local_to(root: Node3D, n: Node3D) -> Transform3D:
 func state_of(o: Dictionary) -> Dictionary:
 	var state := {"ready": Game.is_ready(o), "withered": Game.is_withered(o), "broken": bool(o.get("broken", false))}
 	if Game.is_building_item(str(o["id"])):
-		state["level"] = Game.level_of(o)
+		state["level"] = Game.look_level(o)
 		state["working"] = _at_work(o)
 		state["fill"] = store_fill(o)
+		if Game.vip.level() > 0 and not state["broken"] and Game.building_def(str(o["id"])).shows_vip():
+			state["vip"] = Game.vip.active()   # (its badge: gold and turning, or grey metal; none before VIP 1)
 		if Game.under_construction(o):
 			state["stage"] = mini(int(Game.land.construction_progress(o) * BUILD_STAGES), BUILD_STAGES - 1)
 	return state
@@ -746,6 +759,8 @@ static func decor_look(id: String, look: int, shows: String) -> Node3D:
 static func shows_of(o: Dictionary) -> String:
 	if str(o["id"]) == FARMHOUSE:
 		return STAGE + str(Game.farmhouse_stage())
+	if Game.kind_of(o) == "vehicle":
+		return RUST + str(Game.rust.level(str(o["id"])))   # (its rust shows in its paint: VehicleModel.build)
 	return str(o.get("crop", o.get("flower", "")))
 
 
@@ -836,7 +851,9 @@ func _build(o: Dictionary) -> Node3D:
 				if mask == 0:
 					turn = _tree_turn(o)
 			"vehicle":
-				node = SpaceFit.fit_model(VehicleModel.build(it, Game.under_construction(o)), fp)
+				node = SpaceFit.fit_model(VehicleModel.build(it, Game.under_construction(o), false,
+					Game.rust.level(str(o["id"]))), fp)
+				node.visible = not Game.vehicles.is_running(str(o["id"]))   # (out at work: it is drawn driving)
 			"decor":
 				if Game.links.group_of(str(o["id"])) != "":
 					node = Node3D.new()   # drawn by the LinkLayer, which joins it to its neighbours; this stands in for taps
@@ -869,7 +886,7 @@ func _build(o: Dictionary) -> Node3D:
 				if Game.under_construction(o):
 					node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
 				else:
-					node = building_look(str(o["id"]), Game.level_of(o), bool(o.get("broken", false)))
+					node = building_look(str(o["id"]), Game.look_level(o), bool(o.get("broken", false)))
 					AssetRegistry.apply_state(node, state_of(o))
 					if BuildingFill.shows(o):
 						node.add_child(BuildingFill.create(o, node))
@@ -1280,7 +1297,7 @@ func _parts(node: Node3D, o: Dictionary) -> Array[AABB]:
 		return [_bounds(node, o)]
 	var model := node.get_child(0) as Node3D
 	var fp := Game.footprint(o["id"])
-	var spec := BuildingModel.spec(str(o["id"]), Game.level_of(o))
+	var spec := BuildingModel.spec(str(o["id"]), Game.look_level(o))
 	var out: Array[AABB] = [node.transform * (model.transform * AABB(Vector3.ZERO, Vector3(fp.x, YARD_HEIGHT, fp.y)))]
 	var taken := BuildingModel.taken(spec, fp)
 	var body: Dictionary = spec["body"]

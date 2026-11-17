@@ -839,5 +839,97 @@
    "v": 60,
    "note": "jobs the farmer takes at once (taps or a swipe); on purpose: a whole field is a vehicle's work, as in FarmVille, and reaching it says so"
   }
+ },
+ "vip": {
+  "level_points": {
+   "v": [
+    10,
+    100,
+    300,
+    600,
+    1000,
+    1600,
+    2400,
+    3400,
+    4600,
+    6000,
+    7800,
+    9800,
+    12200,
+    15000,
+    18000
+   ],
+   "note": "VIP points each VIP level takes in all (docs/VIP.md): a free player who logs in every day is at the last in about twelve months"
+  },
+  "streak_points": {
+   "v": 10,
+   "note": "VIP points the daily gift gives on the first day of a login streak, and more by as much each day in a row"
+  },
+  "streak_days": {
+   "v": 5,
+   "note": "the day of the streak at which the daily VIP points stop growing (50 a day)"
+  },
+  "points_per_gem": {
+   "v": 10,
+   "note": "VIP points one gem buys"
+  },
+  "level_days": {
+   "v": 3,
+   "note": "days of active VIP that come with each new VIP level"
+  },
+  "week_days": {
+   "v": 7,
+   "note": "days of active VIP bought at once"
+  },
+  "week_gems": {
+   "v": 5,
+   "note": "gems for those days, before the level's share"
+  },
+  "week_gems_per_level": {
+   "v": 3,
+   "note": "gems more for those days at each VIP level (8 at VIP 1, 50 at VIP 15)"
+  },
+  "top_boost": {
+   "v": 2.0,
+   "note": "what active VIP multiplies the buildings' bonuses and chances by at the top level; each level adds the same step from 1"
+  }
+ },
+ "rust": {
+  "level_days": {
+   "v": 14,
+   "note": "days a vehicle parked in a Garage takes to gain a level of rust (docs/RUST.md)"
+  },
+  "outside_rate": {
+   "v": 2.0,
+   "note": "times as fast a vehicle standing outside rusts (a level every 7 days)"
+  },
+  "fuel_more": {
+   "v": 0.1,
+   "note": "more fuel a plot at each level of rust"
+  },
+  "area_less": {
+   "v": 0.2,
+   "note": "share fewer plots a vehicle works at each level of rust (rounded down, never under one)"
+  },
+  "repair_share": {
+   "v": [
+    0.05,
+    0.12,
+    0.22,
+    0.35,
+    0.5
+   ],
+   "note": "the repair's coins at each level of rust, as a share of the vehicle's price; as many levels as there are entries, and at the last the vehicle does not work"
+  },
+  "repair_seconds": {
+   "v": [
+    600,
+    1800,
+    3600,
+    7200,
+    14400
+   ],
+   "note": "how long the repair takes at each level of rust"
+  }
  }
 }

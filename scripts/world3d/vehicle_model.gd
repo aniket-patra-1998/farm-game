@@ -6,6 +6,8 @@ extends RefCounted
 ## the Combine (a big body, a wide header with a turning reel, an unloading pipe, a glazed cab). The
 ## Combine still being built is a bare chassis on blocks. The node's origin is its tile's back corner.
 
+const RUST := Color("#7a4a2a")      # what a vehicle's paint turns towards as it rusts
+const RUST_STEP := 0.17             # ..and how far at each level of rust
 const TYRE := Color("#2a2a2a")
 const RIM := Color("#f1e6b8")
 const MUD := Color("#5b4731")   # the caked dirt on a tyre
@@ -41,14 +43,15 @@ static func width_of(it: Dictionary) -> float:
 
 ## The model of vehicle `it`. A `rig` keeps each wheel and reel as a pivot of its own (VehicleRun turns them);
 ## otherwise everything is merged into a few draws.
-static func build(it: Dictionary, chassis := false, rig := false) -> Node3D:
+static func build(it: Dictionary, chassis := false, rig := false, rust := 0) -> Node3D:
 	_rig = rig and not chassis
 	var root := Node3D.new()
 	var body := Node3D.new()
 	body.position = Vector3(0.5, 0, 0.5)
 	body.scale = Vector3.ONE * scale_of(it)
 	root.add_child(body)
-	var col := Color.html(str(it.get("color", "#c0392b")))
+	# Rust spreads through the paint it has (docs/RUST.md): browner and duller at each level.
+	var col := Color.html(str(it.get("color", "#c0392b"))).lerp(RUST, minf(1.0, RUST_STEP * rust))
 	if chassis:
 		_chassis(body, col)
 		return ModelKit.bake(root)

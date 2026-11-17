@@ -27,6 +27,7 @@ func buy_item(item_id: String) -> bool:
 		game.ribbons.bump("decor_bought", 1)
 	if it["kind"] == "vehicle":
 		game.vehicles.on_vehicle_bought()
+		game.rust.bought(item_id)   # (a new one starts clean: docs/RUST.md)
 	return true
 
 

@@ -103,7 +103,7 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 	f.uid = int(o["uid"])
 	f._id = str(o["id"])
 	f._fp = Game.footprint(f._id)
-	f._spec = BuildingModel.spec(f._id, Game.level_of(o))
+	f._spec = BuildingModel.spec(f._id, Game.look_level(o))
 	f._own_ready = model.find_child(AssetRegistry.STATE + "fill_1", true, false) != null   # not-ui (a part's name)
 	for c in model.get_children():
 		if c.has_meta(BuildingModel.WINDOWS):
@@ -125,7 +125,7 @@ static func shows(o: Dictionary) -> bool:
 		return false
 	return (not (def as BuildingDef).holds().is_empty()
 		or str((def as BuildingDef).data.get("holds_kind", "")) in PLANT_KINDS
-		or BuildingModel.fill_of(str(o["id"]), Game.level_of(o)).has("stock"))
+		or BuildingModel.fill_of(str(o["id"]), Game.look_level(o)).has("stock"))
 
 
 ## Brings what's shown up to date: who's in, how near ready. Rebuilds only what changed.

@@ -141,6 +141,8 @@ var boosts: HomeBoostSystem
 var player: PlayerSystem
 var pigpen: PigPenSystem
 var vehicles: VehicleSystem
+var vip: VipSystem
+var rust: RustSystem
 var field: FieldSystem
 var strays: StraySystem
 var crafting: CraftingSystem
@@ -190,6 +192,8 @@ func _init() -> void:
 	mastery = MasterySystem.new(self)
 	pigpen = PigPenSystem.new(self)
 	vehicles = VehicleSystem.new(self)
+	vip = VipSystem.new(self)
+	rust = RustSystem.new(self)
 	field = FieldSystem.new(self)
 	player = PlayerSystem.new(self)
 	nurture = NurtureSystem.new(self)
@@ -209,7 +213,7 @@ func _init() -> void:
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social, collecting, shop, helpers]
+		social, collecting, shop, helpers, vip, rust]
 
 
 func _ready() -> void:
@@ -522,6 +526,18 @@ func cycle_of(obj: Dictionary) -> int:
 
 func level_of(obj: Dictionary) -> int:
 	return int(obj.get("level", 1))
+
+
+## The look a building wears now (BuildingDef.look_level: its size, or for the Barn the VIP level), and how
+## many looks it has.
+func look_level(obj: Dictionary) -> int:
+	var d := catalog.get_def(str(obj["id"]))
+	return (d as BuildingDef).look_level(obj, self) if d is BuildingDef else level_of(obj)
+
+
+func look_levels(building_id: String) -> int:
+	var d := catalog.get_def(building_id)
+	return (d as BuildingDef).look_levels() if d is BuildingDef else 1
 
 
 func max_level(building_id: String) -> int:

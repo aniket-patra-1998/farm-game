@@ -43,7 +43,7 @@ func roll_mystery_egg(coop: Dictionary) -> String:
 		float(egg_data.get("max_chance", 0.4)),
 		chickens * float(egg_data.get("chance_per_chicken", 0.005))
 	)
-	if game.rng.randf() >= chance:
+	if game.rng.randf() >= game.vip.chance(chance):
 		return ""
 	var pick := game.rng.randi_range(1, chickens)
 	var inside: Dictionary = coop["inside"]

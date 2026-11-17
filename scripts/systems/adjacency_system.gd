@@ -70,10 +70,10 @@ func count(o: Dictionary) -> int:
 	return count_at(str(o["id"]), int(o["row"]), int(o["col"]), int(o.get("uid", -1)))
 
 
-## The bonus share a count of neighbours gives an item (0.2 = +20%).
+## The bonus share a count of neighbours gives an item (0.2 = +20%); active VIP multiplies it (docs/VIP.md).
 func bonus_for(item_id: String, neighbours: int) -> float:
 	var g := group_of(item_id)
-	return 0.0 if g.is_empty() else float(_groups[g]["per_neighbour"]) * neighbours
+	return 0.0 if g.is_empty() else float(_groups[g]["per_neighbour"]) * neighbours * game.vip.boost()
 
 
 ## The coins multiplier for collecting this piece (1 when it touches none of its kind).

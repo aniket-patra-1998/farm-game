@@ -29,7 +29,10 @@ const FLOWER_COLOURS := [Color("#d6304a"), Color("#f5c518"), Color("#f7b5c8"), C
 static func signature(kind: String, o: Dictionary) -> String:
 	match kind:
 		"vehicles":
-			return JSON.stringify(o.get("inside", {}))
+			var rust := ""   # (their rust shows in their paint)
+			for id: String in o.get("inside", {}):
+				rust += str(Game.rust.level(id))
+			return JSON.stringify(o.get("inside", {})) + rust
 		"bunches":
 			return str(Game.shed.bunches.size())
 		"goods":
@@ -75,7 +78,7 @@ static func _vehicles(root: Node3D, o: Dictionary, p: Vector3, fp: Vector2i) -> 
 	var left := -widths * fit / 2.0
 	for n in shown.size():
 		var it := Game.item_data(shown[n])
-		var car := VehicleModel.build(it)
+		var car := VehicleModel.build(it, false, false, Game.rust.level(str(shown[n])))
 		var pivot := Node3D.new()
 		pivot.rotation.y = -PI / 2.0                       # the model faces +x; the doorway faces +z
 		pivot.scale = Vector3.ONE * fit

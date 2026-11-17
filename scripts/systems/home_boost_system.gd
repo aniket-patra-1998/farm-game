@@ -30,14 +30,14 @@ func share_of(o: Dictionary, boost: String) -> float:
 	return float(_boosts.get(boost, {}).get("homes", {}).get(str(o["id"]), 0.0))
 
 
-## The farm's total for a boost, capped.
+## The farm's total for a boost, capped; active VIP multiplies it, cap and all (docs/VIP.md).
 func total(boost: String) -> float:
 	if not is_on() or not _boosts.has(boost):
 		return 0.0
 	var sum := 0.0
 	for o in game.objects:
 		sum += share_of(o, boost)
-	return minf(sum, float(_boosts[boost]["cap"]))
+	return minf(sum, float(_boosts[boost]["cap"])) * game.vip.boost()
 
 
 ## The boosts one home gives right now, as {boost id: share}.

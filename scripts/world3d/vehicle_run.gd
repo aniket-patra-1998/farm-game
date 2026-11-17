@@ -68,7 +68,7 @@ func _start() -> void:
 	_scale = VehicleModel.scale_of(item)
 	_dust_tint = VehicleMotion.dust_colour(work.job)
 	_dust_tint.a = 0.45
-	_model = VehicleModel.build(item, false, true)
+	_model = VehicleModel.build(item, false, true, work.game.rust.level(work.id))
 	_model.position = Vector3(-0.5, 0, -0.5)     # turn about the vehicle's middle
 	add_child(_model)
 	_rig()

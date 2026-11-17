@@ -286,6 +286,8 @@ func _specs_for(o: Dictionary) -> Array:
 				return [["SHEET_TAB_STORAGE", hud.barn.build_barn_repair]]
 			var barn: Array = [["SHEET_TAB_STORAGE", hud.barn.build_barn_storage],
 				["SHEET_TAB_BOOSTS", hud.barn.add_boosts]]
+			if Game.vip.is_on():
+				barn.append(["SHEET_TAB_VIP", hud.barn.build_vip])
 			if Game.vehicles.fuel_unlocked:
 				barn.append(["SHEET_TAB_FUEL", hud.buildings.build_fuel])
 			return barn
@@ -300,7 +302,9 @@ func _specs_for(o: Dictionary) -> Array:
 		Kind.BLOOM:
 			return [["SHEET_TAB_HOME", hud.barn.build_bloom]]
 		Kind.VEHICLE:
-			return [["SHEET_TAB_HOME", hud.buildings.build_fuel]]
+			return [["SHEET_TAB_HOME", func(page: VBoxContainer) -> void:
+				hud.buildings.add_rust_card(page, str(Game.object_by_uid(_uid).get("id", "")))
+				hud.buildings.build_fuel(page)]]
 	return [["SHEET_TAB_HOME", main]]
 
 

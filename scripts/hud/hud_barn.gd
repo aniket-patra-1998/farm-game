@@ -3,6 +3,12 @@ extends RefCounted
 ## The Barn, the Garden Shed's bloom list and the nursery's young list: repair, storage and grouped lists.
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
+const VIP_PACK_GEMS := 10   # the gems of the smaller VIP points purchase
+## The chances the VIP page shows: [the name's key, the Balance number].
+const VIP_ODDS := [["VIP_ODD_FERTILIZER", "specials.fertilizer_chance"], ["VIP_ODD_CALF", "specials.calf_chance"],
+	["VIP_ODD_FOAL", "specials.foal_chance"], ["VIP_ODD_LAMB", "specials.lamb_chance"],
+	["VIP_ODD_PIGLET", "specials.piglet_chance"], ["VIP_ODD_SAPLING", "nurture.rare_chance"]]
+
 var hud: FarmHud
 
 
@@ -72,6 +78,57 @@ func build_barn_repair(content: VBoxContainer) -> void:
 	fix.disabled = not Game.storage.can_repair_barn()
 	fix.pressed.connect(func() -> void: Game.storage.repair_barn())
 	content.add_child(fix)
+
+
+## The Barn's VIP page (docs/VIP.md): the level, the points to the next, whether VIP is active and for how long,
+## what it multiplies by, the buttons to buy time and points, and the chances as they stand.
+func build_vip(content: VBoxContainer) -> void:
+	var vip := Game.vip
+	var at := vip.level()
+	content.add_child(BookPanel.heading(tr("VIP_HEADING") % [at, vip.max_level()]))
+	content.add_child(BookPanel.info(tr("VIP_WHAT"), tr("VIP_WHAT_INFO"), 18, BookPanel.SOFT))
+	var next := vip.next_level_points()
+	content.add_child(BookPanel.text(tr("VIP_POINTS_TOP") % vip.points if next < 0
+		else tr("VIP_POINTS_NEXT") % [vip.points, next, at + 1], 20))
+	content.add_child(BookPanel.text(tr("VIP_STREAK_LINE") % vip.streak_points(Balance.i("vip.streak_days")), 17,
+		BookPanel.SOFT))
+	if at <= 0:
+		content.add_child(BookPanel.text(tr("VIP_NONE_YET"), 18, BookPanel.SOFT))
+	else:
+		var top_boost := lerpf(1.0, Balance.f("vip.top_boost"), float(at) / vip.max_level())
+		if vip.active():
+			content.add_child(BookPanel.text(tr("VIP_ACTIVE_FOR") % FarmGrid.format_duration(vip.seconds_left()), 20,
+				BookPanel.GOOD))
+			content.add_child(BookPanel.text(tr("VIP_BOOST_NOW") % vip.boost(), 18))
+		else:
+			content.add_child(BookPanel.text(tr("VIP_LAPSED"), 20))
+			content.add_child(BookPanel.text(tr("VIP_BOOST_WHEN_ACTIVE") % top_boost, 18, BookPanel.SOFT))
+		var week := hud.panel_button(tr("VIP_BUY_WEEK") % [Balance.i("vip.week_days"), vip.week_cost()])
+		week.disabled = Game.gems < vip.week_cost()
+		week.pressed.connect(func() -> void:
+			Game.vip.buy_week()
+			hud.refresh_panels())
+		content.add_child(week)
+	if next >= 0:
+		var pack := Balance.i("vip.points_per_gem") * VIP_PACK_GEMS
+		var some := hud.panel_button(tr("VIP_BUY_POINTS") % [pack, VIP_PACK_GEMS])
+		some.disabled = Game.gems < VIP_PACK_GEMS
+		some.pressed.connect(func() -> void:
+			Game.vip.buy_points(VIP_PACK_GEMS)
+			hud.refresh_panels())
+		content.add_child(some)
+		var whole := hud.panel_button(tr("VIP_BUY_LEVEL") % vip.gems_to_next_level())
+		whole.disabled = Game.gems < vip.gems_to_next_level()
+		whole.pressed.connect(func() -> void:
+			Game.vip.buy_points(Game.vip.gems_to_next_level())
+			hud.refresh_panels())
+		content.add_child(whole)
+	# The chances as they stand, with VIP and without (gems can raise them: they are shown).
+	content.add_child(BookPanel.text(tr("VIP_ODDS_HEADING"), 17, BookPanel.SOFT))
+	for odd: Array in VIP_ODDS:
+		var base := Balance.f(str(odd[1]))
+		content.add_child(BookPanel.text(tr("VIP_ODDS_ROW") % [tr(str(odd[0])), vip.chance(base) * 100.0, base * 100.0],
+			17, BookPanel.SOFT))
 
 
 func build_barn_storage(content: VBoxContainer) -> void:

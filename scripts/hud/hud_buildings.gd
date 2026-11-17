@@ -230,7 +230,46 @@ func add_garage_info(content: VBoxContainer) -> void:
 			up.disabled = not Game.vehicles.can_upgrade_vehicle(id)
 			up.pressed.connect(func() -> void: Game.vehicles.upgrade_vehicle(vid))
 			card.add_child(up)
+		add_rust_lines(card, id)
 		content.add_child(BookPanel.card_frame(card))
+
+
+## A vehicle's rust as a card of its own (the sheet of one standing on the farm).
+func add_rust_card(content: VBoxContainer, id: String) -> void:
+	if id == "" or not Game.rust.is_on():
+		return
+	var card := BookPanel.card()
+	card.add_theme_constant_override("separation", 6)
+	add_rust_lines(card, id)
+	content.add_child(BookPanel.card_frame(card))
+
+
+## A vehicle's rust (docs/RUST.md): its level and what that costs, where it stands, and its repair.
+func add_rust_lines(card: Container, id: String) -> void:
+	var rust := Game.rust
+	if not rust.is_on():
+		return
+	var at := rust.level(id)
+	if rust.repairing(id):
+		card.add_child(BookPanel.text(tr("RUST_REPAIR_LEFT") % FarmGrid.format_duration(rust.repair_left(id)), 18))
+	elif at <= 0:
+		card.add_child(BookPanel.text(tr("RUST_NONE"), 18, BookPanel.SOFT))
+	elif rust.seized(id):
+		card.add_child(BookPanel.text(tr("RUST_SEIZED_LINE") % at, 18))
+	else:
+		card.add_child(BookPanel.text(tr("RUST_LEVEL_LINE") % [at, rust.max_level(),
+			roundi(Balance.f("rust.fuel_more") * at * 100.0), roundi(Balance.f("rust.area_less") * at * 100.0)], 18))
+	if rust.stands_outside(id):
+		card.add_child(BookPanel.text(tr("RUST_OUTSIDE_LINE"), 16, BookPanel.SOFT))
+	var cost := rust.repair_cost(id)
+	if not cost.is_empty() and not rust.repairing(id):
+		var fix := hud.panel_button(tr("RUST_REPAIR_BUTTON") % [int(cost["coins"]),
+			FarmGrid.format_duration(int(cost["seconds"]))])
+		fix.disabled = not rust.can_repair(id)
+		fix.pressed.connect(func() -> void:
+			Game.rust.repair(id)
+			hud.refresh_panels())
+		card.add_child(fix)
 
 
 func build_fuel(content: VBoxContainer) -> void:

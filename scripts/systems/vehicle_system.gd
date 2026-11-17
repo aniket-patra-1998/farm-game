@@ -91,8 +91,15 @@ func owned_vehicles() -> Array[String]:
 	return ordered
 
 
-## Vehicles you can drive: only those parked inside a finished Garage (FarmVille's tools live in the garage).
+## Vehicles you can drive. With rust on (our own rule, docs/RUST.md) every finished vehicle you own, parked or
+## standing on the farm: one left outside only rusts faster. Without it, only those parked inside a finished
+## Garage (FarmVille's tools live in the garage).
 func usable_vehicles() -> Array[String]:
+	return owned_vehicles() if game.rust.is_on() else parked_vehicles()
+
+
+## Vehicles parked inside a finished Garage (where they are upgraded, and rust half as fast).
+func parked_vehicles() -> Array[String]:
 	var out: Array[String] = []
 	for o in game.objects:
 		if game.special_of(o) == "garage" and not game.under_construction(o):
@@ -170,6 +177,12 @@ func make_run(id: String, row: int, col: int, crop_id := "") -> VehicleWork:
 		if owned_vehicles().has(id):
 			game.message.emit(tr("PARK_IT_IN_THE_GARAGE_TO_USE_IT"))
 		return null
+	if game.rust.repairing(id):
+		game.message.emit(tr("RUST_BEING_REPAIRED") % game.item_data(id)["name"])
+		return null
+	if game.rust.seized(id):
+		game.message.emit(tr("RUST_TOO_RUSTY") % game.item_data(id)["name"])
+		return null
 	var job: String = game.item_data(id)["job"]
 	if job == "plant" and crop_id == "":
 		game.message.emit(tr("PICK_A_SEED_FIRST_THEN_THE"))
@@ -221,6 +234,22 @@ func use_vehicle(id: String, row: int, col: int, crop_id := "") -> Dictionary:
 	return run.settle()
 
 
+## A vehicle standing on the farm goes straight into a Garage that has room for it (after a job: it rusts
+## half as fast in there, docs/RUST.md). True when it went in.
+func park(id: String) -> bool:
+	if not game.rust.is_on():
+		return false
+	for o in game.objects:
+		if str(o["id"]) != id or game.kind_of(o) != "vehicle" or game.under_construction(o):
+			continue
+		var source := {"uid": int(o["uid"])}
+		for g in game.objects:
+			if game.special_of(g) == "garage" and game.homes.fit(g, id, source) == HousingSystem.Fit.FITS:
+				return game.homes.put_in_home(int(g["uid"]), id, source)
+		return false
+	return false
+
+
 ## A run ended (called by VehicleWork): what it did is added up and told.
 func finish(run: VehicleWork) -> void:
 	if int(run.result["plots"]) > 0:
@@ -230,6 +259,7 @@ func finish(run: VehicleWork) -> void:
 	if runs.has(run):
 		runs.erase(run)
 		run_finished.emit(run)
+	park(run.id)
 	game.inventory_changed.emit()
 	game.queue_save()
 
@@ -303,7 +333,7 @@ func has_garage() -> bool:
 
 func can_upgrade_vehicle(id: String) -> bool:
 	var cost := vehicle_upgrade_cost(id)
-	return has_garage() and usable_vehicles().has(id) and cost > 0 \
+	return has_garage() and parked_vehicles().has(id) and cost > 0 \
 		and game.level() >= vehicle_upgrade_level_needed(id) and int(game.parts.get("vehicle_parts", 0)) >= cost
 
 

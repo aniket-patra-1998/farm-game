@@ -33,8 +33,8 @@ targets, and Godot imports it natively. Our builders' Python never runs on a pho
   `window_*` (where animals look out; the part's scale sizes the head), `yard`, `slot_*`.
 - Named parts that move (`DecorMotion.start`): a part named for an effect (`smoke_*`, `steam_*`, `jet_*`,
   `pour_*`, `grain_*`: `DecorMotion.EFFECTS`) starts that effect where it stands; `spin_<speed>_*` turns about
-  its own upright (the speed in hundredths of a radian a second). The file holds the part and its name, never
-  the effect.
+  its own upright (the speed in hundredths of a radian a second); `bob_<height>_*` rides gently up and down
+  (the height in thousandths of a tile). The file holds the part and its name, never the effect.
 - States: a part named `when_<state>_<value>` shows only in that state (§10.4). States that come and go (ready,
   at work, how full) are switched on the model that stands. A building's level and its construction stage are
   a file each (`{level}` and `{stage}` in its paths in data/assets.json), so only what stands is loaded.

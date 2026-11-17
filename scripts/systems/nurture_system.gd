@@ -366,7 +366,7 @@ func _pick_tree(inside: Dictionary) -> String:
 	if id == "":
 		return ""
 	var rare := str(game.item_data(id).get("rare_sapling", ""))
-	if rare != "" and game.items.has(rare) and game.rng.randf() < Balance.f("nurture.rare_chance"):
+	if rare != "" and game.items.has(rare) and game.rng.randf() < game.vip.chance(Balance.f("nurture.rare_chance")):
 		return rare
 	return id
 

@@ -372,10 +372,12 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 
 
 func test_390_storing_buildings_are_gltf_files_too() -> void:
-	# The Barn, the Garage and the Garden Shed keep their sizes and what they do; their new looks are glTF
-	# files like the other buildings', a file for each size and construction stage, drawn with the master shader
-	# and the kit's shared materials, within the building budget. The Barn grows a look with each size; the
-	# Garage's shutter is a named part that rolls up.
+	# The Barn, the Garage and the Garden Shed keep their sizes and what they do; their looks are glTF files
+	# like the other buildings', a file for each look and construction stage, drawn with the master shader and
+	# the kit's shared materials, within the building budget. The Garage's shutter is a named part that rolls
+	# up. The Barn's look follows the VIP level, not its size (docs/VIP.md): fifteen looks, a badge with the
+	# level's number that is gold and rides up and down while VIP is active and grey metal when it has lapsed,
+	# and a file for the starter Barn standing broken.
 	var shared: Array = [ModelKit.glass(), ModelKit.glow_material(), ModelKit.shade_material(), ModelKit.water()]
 	var storing: Array[String] = []
 	for id: String in Game.item_order:
@@ -383,33 +385,77 @@ func test_390_storing_buildings_are_gltf_files_too() -> void:
 			storing.append(id)
 	_eq(storing.size(), 3, "the three storing buildings")
 	_eq(Game.building_def("barn").capacities(), [30, 60, 100, 160, 250] as Array[int], "the Barn keeps its five sizes")
+	_eq(Game.look_levels("barn"), Game.vip.max_level(), "and has a look for each VIP level")
+	_eq(Game.look_levels("garage"), 1, "a building's looks are its sizes otherwise")
 	for id: String in storing:
 		_check(AssetRegistry.has_model(id) and AssetRegistry.has_site(id), "%s and its building site are files" % id)
 		var seen := {}
-		for level in range(1, Game.max_level(id) + 1):
+		for level in range(1, Game.look_levels(id) + 1):
 			var path := AssetRegistry.file_of(AssetRegistry.entry(id), {"level": level})
-			_check(path.ends_with("_%d.glb" % level) and ResourceLoader.exists(path), "%s size %d has its own glTF file"
+			_check(path.ends_with("_%d.glb" % level) and ResourceLoader.exists(path), "%s look %d has its own glTF file"
 				% [id, level])
-			var node := AssetRegistry.instance(id, {"level": level})
+			var node := AssetRegistry.instance(id, {"level": level, "vip": true})
 			var wrong := 0
 			for mi: MeshInstance3D in node.find_children("*", "MeshInstance3D", true, false):
 				for k in mi.mesh.get_surface_count():
 					var mat := mi.get_active_material(k)
 					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
 					wrong += 0 if master or mat in shared else 1
-			_eq(wrong, 0, "%s size %d draws with the master shader and the kit's shared materials only" % [id, level])
-			_check(AssetRegistry.draws(node) <= AssetRegistry.budget_of(id, "draws"), "%s size %d: %d draws within %d"
+			_eq(wrong, 0, "%s look %d draws with the master shader and the kit's shared materials only" % [id, level])
+			_check(AssetRegistry.draws(node) <= AssetRegistry.budget_of(id, "draws"), "%s look %d: %d draws within %d"
 				% [id, level, AssetRegistry.draws(node), AssetRegistry.budget_of(id, "draws")])
 			var built := ModelKit.bake(BuildingModel.build(Game.item_data(id), Game.footprint(id), level))
-			_eq(AssetRegistry.triangles(node), AssetRegistry.triangles(built), "%s size %d: the file is what the builder makes"
+			AssetRegistry.apply_state(built, {"level": level, "vip": true})
+			_eq(AssetRegistry.triangles(node), AssetRegistry.triangles(built), "%s look %d: the file is what the builder makes"
 				% [id, level])
-			seen[AssetRegistry.triangles(node)] = true
+			seen[JSON.stringify(BuildingModel.spec(id, level))] = true
 			built.free()
 			node.free()
-		_eq(seen.size(), Game.max_level(id), "%s: a look of its own at each size" % id)
+		_eq(seen.size(), Game.look_levels(id), "%s: each look is its own" % id)
 	var garage := AssetRegistry.instance("garage", {"level": 1})
 	Objects3D.mark_parts(garage)
 	var shutters := garage.get_children().filter(func(n: Node) -> bool: return n.has_meta(BuildingModel.SLIDE))
 	_check(shutters.size() == 1 and float(shutters[0].get_meta(BuildingModel.SLIDE)) > 0.3
 		and float(shutters[0].get_meta(BuildingModel.DOOR)) == 0.0, "the Garage's shutter is a part that rolls up")
 	garage.free()
+	# The Barn shows the VIP level and whether VIP is active, in place.
+	var objects := Objects3D.new()
+	var points := Game.vip.points
+	var until := Game.vip.until
+	var barn := {"uid": 9401, "id": "barn", "row": 0, "col": 0, "level": 2, "built": true, "t": Game.now()}
+	Game.vip.points = 0
+	Game.vip.until = 0
+	_eq(Game.look_level(barn), 1, "before the first VIP level the Barn wears its first look")
+	_check(not objects.state_of(barn).has("vip"), "with no badge")
+	Game.vip.points = 1000   # VIP 5
+	Game.vip.until = Game.now() + 1000
+	_eq(Game.look_level(barn), 5, "at VIP 5 it wears its fifth look, whatever its size")
+	_eq(objects.state_of(barn)["level"], 5, "that look's file is the one shown")
+	_eq(objects.state_of(barn)["vip"], true, "its badge is the active one")
+	var key := objects._key(barn)
+	var node := AssetRegistry.instance("barn", objects.state_of(barn))
+	var on := node.find_child(AssetRegistry.STATE + "vip_true", true, false) as Node3D
+	var off := node.find_child(AssetRegistry.STATE + "vip_false", true, false) as Node3D
+	_check(on != null and off != null and on.visible and not off.visible, "gold while VIP is active")
+	var riding := 0
+	for c in (on.get_children() if on != null else []):
+		riding += 1 if String(c.name).begins_with(DecorMotion.BOB) and c.get_children().any(
+			func(n: Node) -> bool: return n is Bobber) else 0
+	_eq(riding, 1, "and riding gently up and down: a named part the game moves")
+	Game.vip.until = Game.now() - 1
+	_eq(objects.state_of(barn)["vip"], false, "lapsed: the grey one")
+	_eq(objects._key(barn), key, "shown in place, not built again")
+	AssetRegistry.apply_state(node, objects.state_of(barn))
+	_check(on != null and off != null and off.visible and not on.visible, "grey metal, and still")
+	_check(off == null or off.find_children("*", "Bobber", true, false).is_empty(), "nothing moves it")
+	Game.vip.points = 1600   # VIP 6
+	_check(objects._key(barn) != key, "a new VIP level is a new look")
+	node.free()
+	barn["broken"] = true
+	_check(not objects.state_of(barn).has("vip"), "the starter Barn standing broken wears no badge")
+	var broken_path := AssetRegistry.file_of(AssetRegistry.entry("barn"), objects.state_of(barn))
+	_check(broken_path.ends_with("barn_broken.glb") and ResourceLoader.exists(broken_path),
+		"and has a file of its own for that")
+	Game.vip.points = points
+	Game.vip.until = until
+	objects.free()

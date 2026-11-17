@@ -27,6 +27,27 @@ func max_level() -> int:
 	return sizes().size()
 
 
+## How many looks the building has: one for each size, unless something else decides its look (the Barn's
+## follows the VIP level).
+func look_levels() -> int:
+	return maxi(max_level(), 1)
+
+
+## The look `obj` wears now, 1 up to look_levels().
+func look_level(obj: Dictionary, _game: GameState) -> int:
+	return clampi(int(obj.get("level", 1)), 1, look_levels())
+
+
+## Whether it wears the VIP badge (the Barn).
+func shows_vip() -> bool:
+	return false
+
+
+## Whether it can stand broken, with a look for it (the starter Barn, until it is repaired).
+func can_break() -> bool:
+	return data.has("repair_parts")
+
+
 ## The record for a size (clamped into range), or {} for a building with no sizes.
 func size(level: int) -> Dictionary:
 	return sizes()[clampi(level, 1, max_level()) - 1] if max_level() > 0 else {}

@@ -94,6 +94,7 @@ func check_daily_gift() -> void:
 		add_part(p, 1)
 		got.append(GameState.part_names[p])
 	game.ribbons.bump("daily_bonuses", 1)
+	game.vip.add_points(game.vip.streak_points(daily_streak))   # (each day of the streak is worth more: docs/VIP.md)
 	game.message.emit(tr("DAY_BONUS") % [mini(daily_streak, DAILY_STREAK.size()), ", ".join(PackedStringArray(got))])
 	game.queue_save()
 

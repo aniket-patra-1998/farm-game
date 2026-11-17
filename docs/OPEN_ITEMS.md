@@ -240,6 +240,20 @@ Harvesting buildings (2026-11-17; rules in CLAUDE.md, held by `assets_test` test
   take them indoors, darken the windows and raise a "zzz", was dropped on 2026-11-17).
 - Not checked on a phone.
 
+VIP and vehicle rust (2026-11-17; docs/VIP.md, docs/RUST.md, `vip_test`, `rust_test`, `assets_test` test_390):
+
+- Built: the VIP system (points from the login streak and gems, 15 levels, active time, the 1 to 2 multiplier
+  on home boosts, layout bonuses and the collection chances), the Barn's 15 VIP looks with its badge and its
+  VIP page, and vehicle rust (pace, fuel and area, repair, parking after a job, the rust in the paint, the
+  lines and the Repair button on a vehicle's card).
+- Still to build on VIP: rare-quality crafted goods and rare babies in the Nursery Barn (new rolls on the same
+  multiplier); a way to finish a repair at once with gems.
+- The Garage unlocks at level 22 and the Tractor at 12: until 22 a vehicle can only stand outside, at the
+  faster pace. To decide: unlock the Garage with the first vehicle.
+- docs/PLAYER_EXPERIENCE.md part 4 ("a fair economy") was written before VIP: its targets are a free
+  player's. The balance bot does not yet play a VIP 15 farm beside the free one.
+- Not checked on a phone: the badge at farm zoom, its halo at night.
+
 Open:
 
 - Storing buildings (2026-11-17): the Barn, Garage and Garden Shed keep their sizes and what they do; their

@@ -36,6 +36,14 @@ const FULL := 3
 const CHUTE_LONG := 0.7       # a grain chute: how long its spout is..
 const CHUTE_TILT := 0.55       # ..how steeply it runs down (radians)..
 const CHUTE_HIGH := 0.42       # ..and how high its mouth is over the ground
+const BADGE_R := 0.21             # the VIP badge: its medallion's radius, in tiles..
+const BADGE_THICK := 0.02         # ..half its thickness..
+const BADGE_POST := 0.18          # ..the post it stands on..
+const BADGE_DOT := 0.038          # ..a block of its number..
+const BADGE_BOB := 0.025          # ..and how far it rides up and down while VIP is active
+## The digits 0 to 9 as five rows of three blocks each (a bit a block, the left one the highest).
+const DIGITS := [[7, 5, 5, 5, 7], [2, 6, 2, 2, 7], [7, 1, 7, 4, 7], [7, 1, 7, 1, 7], [5, 5, 7, 1, 1],
+	[7, 4, 7, 1, 7], [7, 4, 7, 5, 7], [7, 1, 1, 1, 1], [7, 5, 7, 5, 7], [7, 5, 7, 1, 7]]
 const TABLE := Vector3(0.22, 0.2, 0.11)   # a table of goods: half its length, its height and half its width
 const RACK_WIDE := 0.4
 const RACK_TALL := 0.52
@@ -226,6 +234,8 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 					w_hi.z + 0.022), gold)
 			var tip := Vector3((w_lo.x + w_hi.x) / 2.0 + float(f.get("shift", 0.0)), float(ctx.get("top", w_hi.y)),
 				(w_lo.z + w_hi.z) / 2.0)
+			if not f.get("star", true):
+				return true   # (the gold alone: something else stands on its roof, as the Barn's badge does)
 			var star_r := float(f.get("r", STAR_R))   # (a small building wears a smaller star)
 			ModelKit.cylinder(root, tip, 0.016, star_r * 0.67, gold, -1.0, 6)
 			var star := Node3D.new()
@@ -242,6 +252,8 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			star.position = tip + Vector3(0, star_r * 1.67, 0)
 			star.rotation.y = PI / 4.0   # (turned to the camera)
 			root.add_child(star)
+		"vip_badge":
+			_vip_badge(ctx, lo, hi)
 		"boiler":
 			# A copper boiler on a stone bed beside the bath, a pipe out of its top. While the building works, the
 			# pool it heats steams (`pool`: where, as shares of the plot).
@@ -620,6 +632,55 @@ static func gauge(root: Node3D, foot: Vector3, out: Vector3, tall: float, fill: 
 static func _keg(root: Node3D, at: Vector3) -> void:
 	ModelKit.cylinder(root, at, 0.09, 0.2, ModelKit.paint(Color("#8a5530")), 0.08, 8)
 	ModelKit.cylinder(root, at + Vector3(0, 0.085, 0), 0.094, 0.03, ModelKit.paint(IRON), 0.092, 8)
+
+
+## The Barn's VIP badge (docs/VIP.md): a medallion on a post over the roof with the VIP level's number on it,
+## which is the building's level (BarnDef.look_level). Two looks of one part, switched in place: gold, riding
+## gently up and down with a halo of light at night while VIP is active (`when_vip_true`); grey metal and
+## still when it has lapsed (`when_vip_false`). Neither shows before the first VIP level.
+static func _vip_badge(ctx: Dictionary, lo: Vector3, hi: Vector3) -> void:
+	var root: Node3D = ctx["root"]
+	var w_lo: Vector3 = ctx.get("upper_lo", lo)
+	var w_hi: Vector3 = ctx.get("upper_hi", hi)
+	var foot := Vector3((w_lo.x + w_hi.x) / 2.0, float(ctx.get("top", w_hi.y)) - 0.02, (w_lo.z + w_hi.z) / 2.0)
+	var at := foot + Vector3(0, BADGE_POST + BADGE_R, 0)
+	var turn := Vector3(0, PI / 4.0, 0)   # (its face to the camera)
+	ModelKit.cylinder(root, foot, 0.022, BADGE_POST, ModelKit.paint(Color("#6f767d"), 0.6), -1.0, 6)
+	for on: bool in [true, false]:
+		var face := Node3D.new()
+		var metal := ModelKit.paint(GOLD if on else Color("#a7afb6"), 0.9 if on else 0.7)
+		var ink := ModelKit.paint(Color("#6a2a14") if on else Color("#59616a"))
+		# The medallion: a rim and a face, the number raised on it.
+		var rim := ModelKit.cylinder(face, Vector3.ZERO, BADGE_R, BADGE_THICK * 2.0, metal, BADGE_R, 12)
+		rim.rotation.x = PI / 2.0
+		rim.position = Vector3.ZERO
+		_number(face, int(ctx.get("level", 1)), ink)
+		var part := when(ctx, "vip", on)
+		if on:
+			var halo := ModelKit.glow_pools(face, [[Vector3.ZERO, Vector2.ONE * BADGE_R * 5.0]])
+			halo.rotation.x = PI / 2.0     # (upright behind the medallion: a soft light round it at night)
+			halo.position = Vector3(0, 0, -BADGE_THICK * 2.5)
+			DecorMotion.bob(part, at, turn, face, BADGE_BOB)
+		else:
+			face.position = at
+			face.rotation = turn
+			part.add_child(face)
+
+
+## A number in raised blocks on a badge's face, centred: each digit five blocks tall and three wide.
+static func _number(face: Node3D, number: int, mat: Material) -> void:
+	var digits := str(clampi(number, 0, 99))
+	var wide := digits.length() * 3 + (digits.length() - 1)
+	for k in digits.length():
+		var rows: Array = DIGITS[digits.unicode_at(k) - 48]
+		for row in 5:
+			for col in 3:
+				if (int(rows[row]) >> (2 - col)) & 1 == 0:
+					continue
+				var x := (k * 4 + col - wide / 2.0) * BADGE_DOT
+				var y := (2.0 - row) * BADGE_DOT - BADGE_DOT / 2.0
+				ModelKit.box(face, Vector3(x, y, BADGE_THICK), Vector3(x + BADGE_DOT, y + BADGE_DOT, BADGE_THICK + 0.012),
+					mat, false)
 
 
 ## A low table of goods by the building (a rack's other style): two a row, a row more as the building fills,

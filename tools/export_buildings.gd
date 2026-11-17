@@ -32,7 +32,7 @@ func _ready() -> void:
 	for id: String in Game.item_order:
 		if not exported(id):
 			continue
-		for level in range(1, Game.max_level(id) + 1):
+		for level in range(1, Game.look_levels(id) + 1):
 			_write(building(id, level), "%s%s_%d.glb" % [BUILDINGS, id, level])
 			n += 1
 		for stage in Objects3D.BUILD_STAGES:
@@ -40,6 +40,10 @@ func _ready() -> void:
 			n += 1
 		assets[id] = {"model": "%s%s_%s.glb" % [BUILDINGS, id, AssetRegistry.LEVEL],
 			"site": "%s%s_site_%s.glb" % [BUILDINGS, id, AssetRegistry.STAGE], "budget": "building"}
+		if Game.building_def(id).can_break():
+			_write(broken(id), "%s%s_broken.glb" % [BUILDINGS, id])
+			assets[id]["broken"] = "%s%s_broken.glb" % [BUILDINGS, id]
+			n += 1
 	FileAccess.open(AssetRegistry.DATA, FileAccess.WRITE).store_string(JSON.stringify(listed, "  ", false) + "\n")
 	print("exported %d building files" % n)   # not-ui (a tool's log)
 	# The files are now what the builders make: record it (tools/make_art_versions.py).
@@ -58,6 +62,13 @@ static func building(id: String, level: int) -> Node3D:
 	var built := ModelKit.bake(BuildingModel.build(Game.item_data(id), Game.footprint(id), level, false))
 	built.name = "%s_%d" % [id, level]
 	_name_fill_parts(built)
+	return _filed(built)
+
+
+## Building `id` standing broken (the starter Barn before its repair), as its file holds it.
+static func broken(id: String) -> Node3D:
+	var built := ModelKit.bake(BuildingModel.build(Game.item_data(id), Game.footprint(id), 1, false, true))
+	built.name = "%s_broken" % id
 	return _filed(built)
 
 
@@ -151,7 +162,10 @@ static func _one_body(n: Node) -> void:
 ## effect running under it; every mesh gets plain materials named for the ones it was drawn with.
 static func _for_file(n: Node) -> void:
 	for c in n.get_children():
-		if c is Spinner or (DecorMotion.is_part(n) and String(n.name).split("_")[0] != DecorMotion.SPIN):
+		# (what the game starts under a named part is not the file's: a Spinner, a Bobber, an effect's own mesh;
+		# a part that turns or rides is itself the thing drawn, and stays)
+		if c is Spinner or c is Bobber or (DecorMotion.is_part(n)
+				and not String(n.name).split("_")[0] in [DecorMotion.SPIN, DecorMotion.BOB]):
 			n.remove_child(c)
 			c.free()
 			continue

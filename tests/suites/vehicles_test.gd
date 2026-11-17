@@ -23,6 +23,7 @@ func _park(g: GameState, ids: Array) -> void:
 			g.remove_object(o)
 	g.add_object({"uid": g.next_uid, "id": "garage", "row": 0, "col": 8, "level": 1, "inside": inside, "t": g.now()})
 	g.next_uid += 1
+	g.objects_updated()   # (things changed places: told, as every rule that moves something tells it)
 
 
 func test_55_tractor_plows_two_by_two_with_fuel() -> void:
@@ -36,7 +37,8 @@ func test_55_tractor_plows_two_by_two_with_fuel() -> void:
 	_check(g.vehicles.fuel_unlocked, "the first vehicle unlocks the fuel tank")
 	_eq(g.vehicles.fuel_now(), Balance.i("vehicles.fuel_tank"), "it starts full: 150")
 	_eq(g.vehicles.vehicle_area("tractor"), Vector2i(2, 2), "a new tractor works 2x2")
-	_check(g.vehicles.use_vehicle("tractor", 8, 8).is_empty(), "a tractor standing outside can't be driven")
+	_eq(g.vehicles.usable_vehicles(), ["tractor"] as Array[String],
+		"a tractor standing outside can be driven too (it only rusts faster: docs/RUST.md)")
 	_park(g, ["tractor"])
 	_check(g.vehicles.use_vehicle("seeder", 8, 8, "wheat").is_empty(), "can't drive a vehicle you don't own")
 	var coins := g.coins
@@ -137,10 +139,10 @@ func test_58_garage_upgrades_vehicles_with_parts() -> void:
 	g.land.add_materials(int(garage["uid"]))
 	_check(not g.under_construction(garage), "10 bricks, nails and boards finish it")
 	_check(not g.vehicles.upgrade_vehicle("tractor"), "a tractor standing outside can't be upgraded")
-	_check(g.vehicles.usable_vehicles().is_empty(), "nor driven: it has to be parked in the Garage")
+	_eq(g.vehicles.usable_vehicles(), ["tractor"] as Array[String], "though it can be driven from where it stands")
 	var tractor: Dictionary = g.objects.filter(func(o: Dictionary) -> bool: return o["id"] == "tractor")[0]
 	_check(g.homes.put_in_home(int(garage["uid"]), "tractor", tractor), "parked in the Garage")
-	_eq(g.vehicles.usable_vehicles(), ["tractor"] as Array[String], "now it can be driven")
+	_eq(g.vehicles.parked_vehicles(), ["tractor"] as Array[String], "now it is parked, and can be upgraded")
 	var sizes: Array = [g.vehicles.vehicle_area("tractor")]
 	_check(g.vehicles.upgrade_vehicle("tractor"), "upgrade 1")
 	sizes.append(g.vehicles.vehicle_area("tractor"))
