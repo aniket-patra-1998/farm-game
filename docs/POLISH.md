@@ -50,7 +50,9 @@ first; our own touch only where it is clearly marked. Every system is built (doc
   diverge from the vision above; need a new look or concept the owner has not picked (make the options sheet
   only if cheap, attach nothing, describe it); or be a very expensive change or a redo (say what and the rough cost).
 - Do not change the model or use another one (no model switch, no sub-agents on another model).
-- Be economical: one backlog item per run, read only what you need (grep), no pictures sent to the owner.
+- Be very frugal with Claude usage (the owner's plan limits): one backlog item per run; grep, never read whole
+  files; no sub-agents; no screenshots unless a look must be checked (then one, at 1x, never sent); skip a run's
+  item if it cannot be finished cheaply and report it; a run with nothing worth doing ends at once.
 - Never touch the owner's real save, secrets or settings; never delete branches; never force-push main.
 
 ## Procedure for one run
