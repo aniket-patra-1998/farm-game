@@ -88,7 +88,7 @@ jobs:
       - name: Run tests
         run: |
           set +e
-          ./godot-bin/godot --headless --path . res://tests/run_tests.tscn 2>&1 | tee tests.log
+          ./godot-bin/godot --headless --verbose --path . res://tests/run_tests.tscn 2>&1 | tee tests.log
           rc=${PIPESTATUS[0]}
           set -e
           # A script that fails to load can let the runner exit cleanly: fail on that, and on anything but "0 failed".
