@@ -14,6 +14,7 @@ var hud: FarmHud
 var to_screen: Callable       # grid space -> screen, from the farm (FarmMain)
 var _at := Vector2.ZERO
 var _uid := -1
+var _rusty := ""           # the vehicle whose repair this bubble offers (show_repair), or ""
 var _left := 0.0
 var _title: Label
 var _line: Label
@@ -43,8 +44,7 @@ func _init(owner: FarmHud) -> void:
 	_act = FloatText.action("feed", "")
 	_act.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_act.pressed.connect(func() -> void:
-		var o := Game.object_by_uid(_uid)
-		var deed := action_of(o)
+		var deed := repair_of(_rusty) if _rusty != "" else action_of(Game.object_by_uid(_uid))
 		close()
 		if not deed.is_empty():
 			(deed["do"] as Callable).call())
@@ -59,8 +59,29 @@ func _init(owner: FarmHud) -> void:
 
 ## Shows `title` and `line` over grid point `at`; `uid` the thing (-1: a plot), offering its panel when it has one.
 func show_at(at: Vector2, title: String, line: String, uid: int) -> void:
-	_at = at
 	_uid = uid
+	_rusty = ""
+	var o := Game.object_by_uid(uid) if uid >= 0 else {}
+	_present(at, title, line, has_panel(o), action_of(o))
+
+
+## Offers the repair of rusty vehicle `id` over grid point `at` (its rust sign was tapped; docs/RUST.md): what it
+## costs and how long it takes, and the one button that starts it. Nothing more: the vehicle's own bubble and
+## sheet are a tap on the vehicle.
+func show_repair(at: Vector2, id: String) -> void:
+	var cost := Game.rust.repair_cost(id)
+	if cost.is_empty():
+		return
+	_uid = -1
+	_rusty = id
+	_present(at, str(Game.item_data(id)["name"]), tr("RUST_REPAIR_BUTTON") % [int(cost["coins"]),
+		FarmGrid.format_duration(int(cost["seconds"]))], false, repair_of(id))
+
+
+## The bubble itself: `title` and `line` over `at`, with the button to its panel (`open`) and the one for `deed`
+## (see action_of; {} for none).
+func _present(at: Vector2, title: String, line: String, open: bool, deed: Dictionary) -> void:
+	_at = at
 	_title.text = UiTheme.tidy(title)
 	_line.text = UiTheme.tidy(line)
 	# A long word (a reason something can't be done) wraps at a set width; a name stays on one line.
@@ -68,9 +89,7 @@ func show_at(at: Vector2, title: String, line: String, uid: int) -> void:
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if long else TextServer.AUTOWRAP_OFF
 	_title.custom_minimum_size.x = UiTheme.size("bubble_width") if long else 0.0
 	_line.visible = line != ""
-	var o := Game.object_by_uid(uid) if uid >= 0 else {}
-	_open.visible = has_panel(o)
-	var deed := action_of(o)
+	_open.visible = open
 	_act.visible = not deed.is_empty()
 	if _act.visible:   # (its picture says what; its words are its long-press name)
 		(_act.get_meta("icon") as UiIcon).kind = str(deed["icon"])
@@ -90,6 +109,7 @@ func show_at(at: Vector2, title: String, line: String, uid: int) -> void:
 func close() -> void:
 	visible = false
 	_uid = -1
+	_rusty = ""
 
 
 ## Whether a placed thing has a panel worth opening from its bubble: a building (its yard, its recipes, its
@@ -122,6 +142,13 @@ static func action_of(o: Dictionary) -> Dictionary:
 	return {"words": TranslationServer.translate("BUBBLE_FEED"), "icon": "feed", "do": func() -> void:
 		Game.player.enqueue({"kind": "feed", "uid": uid, "feed": best["feed"], "effect": effect,
 			"rich": best["rich"]})}
+
+
+## The repair of rusty vehicle `id` as a bubble's one thing to do (as action_of): it starts now, for coins.
+static func repair_of(id: String) -> Dictionary:
+	return {"words": TranslationServer.translate("RUST_REPAIR"), "icon": "repair", "do": func() -> void:
+		if not Game.rust.repair(id):
+			Game.message.emit(TranslationServer.translate("RUST_REPAIR_NO_COINS"))}
 
 
 func _process(delta: float) -> void:

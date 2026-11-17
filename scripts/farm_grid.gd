@@ -8,6 +8,7 @@ signal object_tapped(uid: int)        # a building was tapped while not ready
 ## Something tapped tells about itself in a small bubble above it (FarmVille's way, not a panel): `at` is where
 ## (this grid's space), `uid` the thing tapped (-1 for a plot), so its bubble can offer its panel.
 signal tapped_info(at: Vector2, title: String, line: String, uid: int)
+signal tapped_rust(at: Vector2, id: String)   # a rusty vehicle's sign was tapped (`at` in the grid's space)
 
 signal placing_changed(text: String)  # "" when placement ends
 signal tool_changed(tool: String)     # the tool in hand changed here, not from the tool panel (a vehicle tapped)
@@ -74,6 +75,7 @@ var life: FarmLife       # the animals' minds, read by the 2D and 3D worlds
 ## In 3D, finds what's drawn under a screen point (Farm3D.pick): the uid of the object, or -1. Taps go to
 ## what the player sees, even an animal that has wandered off its tile.
 var picker := Callable()
+var rust_picker := Callable()   # the rusty vehicle whose sign is under a screen point ("" if none)
 ## uid -> the outline of that building on screen (grid space), set by the 3D world; unset in the 2D fallback.
 var outliner := Callable()
 var hatcher := Callable()        # (young uid, grown uid, then): the 3D world shakes a mystery open, then calls `then`
@@ -844,13 +846,18 @@ func _apply_at(screen_pos: Vector2) -> void:
 	# Ignore touches on the top bar, the toolbar, or while a menu covers the farm.
 	if not on_farm_area(screen_pos):
 		return
+	var world := get_canvas_transform().affine_inverse() * screen_pos
+	if rust_picker.is_valid() and tool != "vehicle":
+		var rusty := str(rust_picker.call(screen_pos))
+		if rusty != "":   # (its rust sign: only its repair is offered, not what a tap on the vehicle says)
+			tapped_rust.emit(to_local(world), rusty)
+			return
 	if picker.is_valid() and tool != "vehicle":
 		var uid: int = picker.call(screen_pos)
 		var picked := Game.object_by_uid(uid)
 		if not picked.is_empty():
 			_act_on_object(picked, true)
 			return
-	var world := get_canvas_transform().affine_inverse() * screen_pos
 	var i := index_at(to_local(world))
 	if i < 0:
 		return

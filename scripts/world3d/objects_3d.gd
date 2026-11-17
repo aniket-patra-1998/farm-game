@@ -106,6 +106,7 @@ var _masks := {}         # uid -> its Crowding.mask: neighbours only change with
 var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
+var _rust_marks: RustMarks     # the rust sign, over every rusty vehicle (or the Garage it stands in)
 var _links_due := true          # the farm changed since the fences and hedges were last joined up
 
 
@@ -128,6 +129,8 @@ func _ready() -> void:
 	add_child(decor)
 	_ready_marks = ReadyMarks.new()
 	add_child(_ready_marks)
+	_rust_marks = RustMarks.new()
+	add_child(_rust_marks)
 	sync()
 	Game.farm_expanded.connect(func(_n: int) -> void: _build_scenery())
 	# A vehicle standing on the farm is out of sight while it is drawn at work (VehicleRuns), and back after.
@@ -339,6 +342,33 @@ func _mark_ready(known := {}) -> void:
 				minor.append(not Game.is_building_item(str(o["id"])))   # (trees and blooms: small, fade far out)
 	ready_shown = tops.size() + animals.size()
 	_ready_marks.show_at(tops, animals, minor)
+	_mark_rust()
+
+
+## The rust sign (RustMarks; docs/RUST.md) over every vehicle that needs a repair: over the vehicle where it
+## stands outside, or over its Garage, which wears the sign of the rustiest vehicle in it.
+func _mark_rust() -> void:
+	var tops: Array[Vector3] = []
+	var ids: Array[String] = []
+	var shares: Array[float] = []
+	var rust := Game.rust
+	if rust.is_on() and not rust.vehicles.is_empty():
+		for o in Game.objects:
+			var uid := int(o["uid"])
+			var id := ""
+			if not _views.has(uid) or Game.under_construction(o):
+				continue
+			if Game.kind_of(o) == "vehicle":
+				id = str(o["id"]) if (_views[uid]["node"] as Node3D).visible and rust.needs_repair(str(o["id"])) else ""
+			elif Game.special_of(o) == "garage":
+				id = rust.rustiest(o.get("inside", {}))
+			if id == "":
+				continue
+			var box: AABB = _views[uid]["box"]
+			tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
+			ids.append(id)
+			shares.append(float(rust.level(id)) / rust.max_level())
+	_rust_marks.show_at(tops, ids, shares)
 
 
 ## What drawing everything under `root` costs, counted as the renderer would (for the budget test and tools):
@@ -388,6 +418,11 @@ func ready_marks() -> int:
 	return _ready_marks.count()
 
 
+## The rust signs (for tests and tools).
+func rust_marks_node() -> RustMarks:
+	return _rust_marks
+
+
 ## Whether everything is built: every object, the woods, and every orchard's trees (the farm goes up over a few
 ## frames after it opens; screenshots and measurements wait for this).
 func settled() -> bool:
@@ -424,6 +459,7 @@ func _process(delta: float) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if cam != null and cam.projection == Camera3D.PROJECTION_ORTHOGONAL:
 		_ready_marks.follow(cam.size)
+		_rust_marks.follow(cam.size)
 	_ready_marks.follow_animals()
 	for a in _animals:
 		if not is_instance_valid(a):
@@ -1233,6 +1269,11 @@ func pick(camera: Camera3D, screen_pos: Vector2) -> int:
 	return best
 
 
+
+
+## The rusty vehicle whose sign is under a screen point ("" if none).
+func pick_rust(camera: Camera3D, screen_pos: Vector2) -> String:
+	return _rust_marks.pick(camera, screen_pos)
 
 
 ## The outline of a thing on screen, in the farm grid's space: the hull of its parts' boxes as the camera sees

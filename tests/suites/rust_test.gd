@@ -151,3 +151,60 @@ func test_414_rust_is_saved_and_a_new_vehicle_starts_clean() -> void:
 	_eq(g.rust.level("tractor"), 0, "a tractor just bought has no rust")
 	_done(other)
 	_done(g)
+
+
+func test_415_a_rusty_vehicle_wears_the_rust_sign_and_a_tap_on_it_offers_only_its_repair() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.farm_size = 24
+	Game.set_objects([])
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(30)
+	Game.buy_and_place("tractor", 11, 0)
+	var objects := Objects3D.new()
+	add_child(objects)
+	await Objects3D.until_settled(get_tree(), 600)
+	objects.sync()
+	var marks := objects.rust_marks_node()
+	_check(marks.ids().is_empty() and not marks.visible, "a clean vehicle wears no sign")
+	_skip(Game, 15 * DAY)
+	objects.sync()
+	_eq(marks.ids(), ["tractor"] as Array[String], "two weeks outside: the Tractor wears the rust sign")
+	_check(is_equal_approx(marks.shares()[0], 2.0 / Game.rust.max_level()), "which shows its two levels of rust")
+	# A tap anywhere on the sign is for the sign; beside it, not.
+	var at := marks.where(0)
+	var cam := Camera3D.new()
+	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	cam.size = ReadyMarks.ZOOM_REF
+	add_child(cam)
+	cam.position = at + Vector3(0, 0, 10)
+	var middle := cam.unproject_position(at)
+	_eq(marks.pick(cam, middle), "tractor", "a tap on the sign finds its vehicle")
+	_eq(marks.pick(cam, middle + Vector2(get_viewport().get_visible_rect().size.y * 0.2, 0)), "", "one beside it does not")
+	# The bubble it opens offers the repair and nothing else.
+	var hud := FarmHud.new()
+	add_child(hud)
+	await get_tree().process_frame
+	hud.bubble.to_screen = func(p: Vector2) -> Vector2: return p
+	hud.bubble.show_repair(Vector2(300, 300), "tractor")
+	_check(hud.bubble.visible and hud.bubble._act.visible and not hud.bubble._open.visible,
+		"its bubble has the Repair button and no way to the vehicle's sheet")
+	_check(hud.bubble._line.text.contains(str(int(Game.rust.repair_cost("tractor")["coins"]))), "and says what it costs")
+	# In a Garage, the Garage wears the sign of the rustiest vehicle in it.
+	var garage := _add_garage(Game)
+	_park(Game, garage)
+	Game.objects_updated()
+	await Objects3D.until_settled(get_tree(), 600)
+	objects.sync()
+	_eq(marks.ids(), ["tractor"] as Array[String], "parked: its Garage wears the sign")
+	_check(marks.where(0).distance_to(at) > 1.0, "over the Garage, not where it stood")
+	# The button starts the repair, and a vehicle in for repair wears no sign.
+	var deed := HudBubble.repair_of("tractor")
+	_eq(str(deed["icon"]), "repair", "the button is the broken gear")
+	(deed["do"] as Callable).call()
+	_check(Game.rust.repairing("tractor"), "the bubble's button starts the repair")
+	objects.sync()
+	_check(marks.ids().is_empty(), "in for repair: no sign")
+	hud.queue_free()
+	cam.queue_free()
+	objects.queue_free()

@@ -232,6 +232,16 @@ func _draw() -> void:
 		"up":   # an arrow up (expand, grow)
 			_shape(_pts([0.0, -0.9, 0.72, -0.05, 0.28, -0.05, 0.28, 0.85, -0.28, 0.85, -0.28, -0.05, -0.72, -0.05]),
 				UiTheme.color("plus_face"))
+		"repair":   # a broken gear (repair a rusty vehicle: the rust sign's own picture, shaders/rust3d.gdshader)
+			var cog := PackedVector2Array()
+			for k in 32:
+				var a := TAU * (k / 32.0)
+				var out := 0.95 if (k / 2) % 2 == 0 else 0.7
+				cog.append(_p(cos(a) * out, sin(a) * out))
+			_shape(cog, UiTheme.color("berry"))
+			_shape(_ring(0, 0, 0.3), light, false, false)
+			draw_polyline(_pts([0.2, -0.95, -0.12, -0.45, 0.2, 0.0, -0.16, 0.45, 0.12, 0.95]), light,
+				maxf(2.0, _s * 0.1), true)
 		"turn":   # a curved arrow (turn a thing round)
 			draw_arc(_c, _r * 0.55, PI * 0.15, PI * 1.6, 20, UiTheme.color("icon_outline"), maxf(4.0, _s * 0.2), true)
 			draw_arc(_c, _r * 0.55, PI * 0.15, PI * 1.6, 20, UiTheme.color("gem"), maxf(2.0, _s * 0.11), true)

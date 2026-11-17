@@ -110,6 +110,20 @@ func seized(id: String) -> bool:
 	return level(id) >= max_level()
 
 
+## Whether it wants a repair: rusty, and not in for one now.
+func needs_repair(id: String) -> bool:
+	return is_on() and level(id) > 0 and not repairing(id)
+
+
+## The rustiest of the vehicles `inside` a Garage (id -> how many) that needs a repair ("" if none does).
+func rustiest(inside: Dictionary) -> String:
+	var worst := ""
+	for id: String in inside:
+		if int(inside[id]) > 0 and needs_repair(id) and (worst == "" or level(id) > level(worst)):
+			worst = id
+	return worst
+
+
 ## What each plot's fuel is multiplied by for this vehicle's rust.
 func fuel_factor(id: String) -> float:
 	return 1.0 + Balance.f("rust.fuel_more") * level(id)

@@ -13,6 +13,12 @@ A vehicle rusts with time, wherever it stands; a Garage halves it.
   minutes, 30 minutes, 1, 2 and 4 hours. It cannot work while it is being repaired, and comes out with no
   rust.
 - **Look**: rust spreads over the vehicle's paint with each level, in the paint it already has.
+- **The rust sign** (`RustMarks`, shaders/rust3d.gdshader): from the first level a rusty vehicle wears a sign, a
+  bubble with a broken gear and a pip for each level: amber at levels 1 and 2, orange at 3 and 4, red all
+  through at 5. It hovers over a vehicle standing outside; a Garage wears the sign of the rustiest vehicle in
+  it. A vehicle in for repair wears none. All the signs are one draw. A tap on a sign offers only that
+  vehicle's repair, in a bubble (`HudBubble.show_repair`): what it costs, how long it takes, and one button.
+  The vehicle's own bubble and sheet are a tap on the vehicle.
 
 Rust is worked out from the clock, so it is right after days away. Switch: `Release.on("rust")`. Numbers:
 Balance `rust.*`. Rules: `scripts/systems/rust_system.gd`, held by `tests/suites/rust_test.gd`.
