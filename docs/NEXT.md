@@ -390,6 +390,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   at /home/claude/godot/godot (CI's zip) and a ~1 min `--import`; the six panels' look_shot takes ~6 min. Next:
   home and crafting sheets (the Bakery's ingredient tiles' red "0/1" badges sit clipped at the sheet's bottom),
   then motion timing.
+- Art run 12 (18 Nov 22:05 IST): main only, broken pieces in panels. f86937f: cards in a row stand level (CardFace
+  keeps room for NAME_LINES where the card has it: the album's rings under one-line names stood lower; seeds and
+  market unchanged as their cards have no spare room) and count tiles' "×1" kept off the rounded edge (UiKit
+  count_tile, home sheets and inbox). Test in 354. The precheck's ModelKit/dummy-mesh race (model_kit.gd:1094,
+  "Parameter m is null") still fails about one run in three; the retry passes. Main moves every few minutes now:
+  budget three rebase+precheck rounds (~4 min each). Next: the ribbons card with a bar still stands higher than
+  its row (less spare room); the Bakery's ingredient badges at the scroll's bottom; then motion timing.
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
