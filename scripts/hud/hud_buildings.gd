@@ -129,7 +129,9 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 				else tr("NO_STALLION_YET_A_WANDERING_STALLION")
 			content.add_child(
 				BookPanel.text(
-					tr("HORSES_HERE_ARE_READY_EVERY_DAY") + st + tr("HARVESTS_CAN_ALSO_GIVE_FARMHANDS_AND"),
+					tr("HORSES_HERE_ARE_READY_EVERY_DAY") % [FarmGrid.format_duration(Game.cycle_of(o)),
+						FarmGrid.format_duration(int(Game.item_data("horse").get("cycle_seconds", 0)))]
+						+ st + tr("HARVESTS_CAN_ALSO_GIVE_FARMHANDS_AND"),
 					17,
 					BookPanel.SOFT
 				)
@@ -147,7 +149,8 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 		"saplings":
 			content.add_child(
 				BookPanel.info(
-					tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR"), tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR_INFO"),
+					tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR"), tr("HARVESTS_GIVE_A_MYSTERY_SEEDLING_OR_INFO")
+						% (Game.catalog.get_def("mystery_seedling") as YoungDef).needs(),
 					17,
 					BookPanel.SOFT
 				)

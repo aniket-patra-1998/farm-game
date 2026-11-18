@@ -1044,3 +1044,45 @@ func test_391_the_helpers_flower_opens_close_round_its_button() -> void:
 			_check(spots[i].x >= -0.01 and spots[i].y <= 0.01, "up and to the right, on the screen (%d)" % n)
 			for j in range(i + 1, n):
 				_check(spots[i].distance_to(spots[j]) >= petal * 0.99, "petals never overlap (%d)" % n)
+
+
+## The info texts name the data's numbers, not their own copy of them (a changed number in the data changes the
+## text): the Stable's day against a loose horse's three, the seedling's cans, a Single Bloom's days ready.
+func test_440_info_texts_take_their_numbers_from_the_data() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.farm_size = GameState.MAX_SIZE
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(ShowcaseFarm.top_level(Game))
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var shown := func(content: VBoxContainer) -> String:
+		var out := ""
+		for l: Label in content.find_children("*", "Label", true, false):
+			out += l.text + "\n"
+		for b: BaseButton in content.find_children("*", "BaseButton", true, false):
+			out += b.tooltip_text + "\n"   # (an info button's longer words)
+		content.free()
+		return out
+	var stable_box := VBoxContainer.new()
+	hud.buildings.add_building_special_info(stable_box, {"id": "horse_stable", "uid": -1})
+	var horse := int(Game.item_data("horse")["cycle_seconds"])
+	var text: String = shown.call(stable_box)
+	_check(FarmGrid.format_duration(horse) in text and FarmGrid.format_duration(86400) in text,
+		"the Stable's text names its day and a loose horse's cycle: %s" % text)
+	var sapling_box := VBoxContainer.new()
+	hud.buildings.add_building_special_info(sapling_box, {"id": "orchard", "uid": -1})
+	var cans := (Game.catalog.get_def("mystery_seedling") as YoungDef).needs()
+	text = shown.call(sapling_box)
+	_check(str(cans) in text and not "%d" in text, "the Orchard's text names the seedling's %d cans" % cans)
+	_check(Game.buy_and_place("rose_bloom", 20, 20), "(a Single Rose Bloom)")
+	hud.building_uid = int(Game.object_at(Game.index_of(20, 20))["uid"])
+	var bloom_box := VBoxContainer.new()
+	hud.barn.build_bloom(bloom_box)
+	text = shown.call(bloom_box)
+	_check(text.count(FarmGrid.format_duration(Balance.i("blooms.wither_after"))) >= 2 and not "%s" in text,
+		"a Single Bloom's text names its days ready")
+	main.queue_free()
+	await get_tree().process_frame

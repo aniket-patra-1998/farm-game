@@ -200,8 +200,9 @@ func build_bloom(content: VBoxContainer) -> void:
 		content.add_child(BookPanel.text(tr("READY_IN") % [d.data["name"], tr("FLOWERS"),
 			FarmGrid.format_duration(Game.seconds_until_ready(o))], 20, BookPanel.SOFT))
 	if d.withers():
-		content.add_child(BookPanel.info(tr("A_SINGLE_BLOOM_WITHERS"), tr("A_SINGLE_BLOOM_WITHERS_INFO"), 17,
-			BookPanel.SOFT))
+		var stands := FarmGrid.format_duration(Balance.i("blooms.wither_after"))
+		content.add_child(BookPanel.info(tr("A_SINGLE_BLOOM_WITHERS") % stands,
+			tr("A_SINGLE_BLOOM_WITHERS_INFO") % stands, 17, BookPanel.SOFT))
 		var up := hud.panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
 		up.disabled = Game.gems < d.upgrade_gems()
 		up.pressed.connect(func() -> void:

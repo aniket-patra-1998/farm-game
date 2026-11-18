@@ -195,3 +195,8 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   the showcase is brighter on average than at 12:30 (mean RGB 95,116,80 against 70,93,36; noon read deep,
   saturated yellow-green, night like a soft overcast day). Not yet split from the weather (each hour rolls its
   own): next, the same views with the weather held clear, at 6, 12.5, 18.5 and 22, then rank the findings.
+- Run 15 (code quality, the open item from run 13): the Stable's words ("daily, not every 3 days"), the
+  Orchard's "8 cans" and a Single Bloom's "7 days" now take the data's numbers (`Game.cycle_of`, horse
+  `cycle_seconds`, `YoungDef.needs`, `blooms.wither_after`); hud test 440 reads the texts and their info tips.
+  Left: a collection set's "3 common, 1 uncommon and 1 rare" (a structural rule of every set). Next: the
+  whole-farm look with the weather held clear (run 14's next step), or the economy items.
