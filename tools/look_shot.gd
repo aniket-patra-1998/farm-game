@@ -6,6 +6,7 @@ extends Node
 ## by --out=<dir> (default ci_shots/look).
 ## --hour=<h> shows another local hour than noon (6 dawn, 18.5 dusk, 22 night).
 ## --weather=<state> holds the weather (clear, rain, storm...) so two hours differ only by the day's light.
+## --views=<a,b,...> takes only the named pictures (views and panels alike), e.g. --views=all,trees_animals.
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
 ## tools/look_compare.py joins two such folders side by side.
@@ -20,6 +21,7 @@ func _ready() -> void:
 	var level := ""
 	var hour := NOON
 	var weather := ""
+	var only := PackedStringArray()   # the pictures to take (empty: every one)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.substr(6)
@@ -27,6 +29,8 @@ func _ready() -> void:
 			hour = float(a.substr(7))
 		elif a.begins_with("--weather="):   # hold a weather state, e.g. clear (default: the real weather)
 			weather = a.substr(10)
+		elif a.begins_with("--views="):   # only these pictures, e.g. all,buildings,seeds_panel
+			only = a.substr(8).split(",", false)
 		elif a.begins_with("--quality="):   # low, mid or high (default: this computer's choice)
 			level = a.substr(10)
 	var was_level := Quality.level()
@@ -63,6 +67,7 @@ func _ready() -> void:
 	var barn := Game.storage.barn()
 	if not barn.is_empty():
 		views.append(["barn_broken", int(barn["row"]) + 1, int(barn["col"]) + 1, 1.8])
+	views = views.filter(func(v: Array) -> bool: return only.is_empty() or only.has(str(v[0])))
 	for v: Array in views:
 		if str(v[0]) == "barn_broken":   # the starter Barn as it is before it is repaired
 			barn["broken"] = true
@@ -79,7 +84,7 @@ func _ready() -> void:
 	homes.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["inside"].size() > b["inside"].size())
 	var crafting := Game.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "bakery")
 	for p: Array in [["home_panel", homes], ["crafting_panel", crafting]]:
-		if (p[1] as Array).is_empty():
+		if (p[1] as Array).is_empty() or not (only.is_empty() or only.has(str(p[0]))):
 			continue
 		hud.show_building(int(p[1][0]["uid"]))
 		for k in 60:   # (the item pictures are drawn a few a frame)
@@ -88,6 +93,8 @@ func _ready() -> void:
 		hud.book.close_panel()
 	for p: Array in [["seeds_panel", hud.show_seeds], ["collections_panel", hud.show_collections],
 			["ribbons_panel", hud.show_ribbons], ["inbox_panel", hud.show_inbox]]:
+		if not (only.is_empty() or only.has(str(p[0]))):
+			continue
 		(p[1] as Callable).call()
 		for k in 90:
 			await RenderingServer.frame_post_draw
