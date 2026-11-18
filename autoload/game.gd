@@ -1307,9 +1307,11 @@ func _new_game() -> void:
 	_add_starter_object("barn", 0, 8, {"broken": true})
 	_add_starter_object("mailbox", 4, 0)
 	_add_starter_object("farm_stand", 4, 1)
-	_add_starter_object("chicken", 9, 2)
-	_add_starter_object("chicken", 9, 3)
-	_add_starter_object("cow", 10, 6)
+	# The animals have their first collect waiting, so the first session also teaches collecting (a starter
+	# animal placed with a fresh timer stood a whole cycle, a day or more, before its first tap).
+	_add_starter_object("chicken", 9, 2, _ready_now("chicken"))
+	_add_starter_object("chicken", 9, 3, _ready_now("chicken"))
+	_add_starter_object("cow", 10, 6, _ready_now("cow"))
 	parts = {}
 	for p in part_ids:
 		parts[p] = 0
@@ -1323,9 +1325,14 @@ func _new_game() -> void:
 
 func _add_starter_object(item_id: String, row: int, col: int, extra := {}) -> void:
 	var obj := {"uid": next_uid, "id": item_id, "row": row, "col": col, "t": now()}
-	obj.merge(extra)
+	obj.merge(extra, true)   # (an extra "t" replaces the fresh timer)
 	add_object(obj)
 	next_uid += 1
+
+
+## A starter thing's timer set one cycle back: ready to collect from the first minute.
+func _ready_now(item_id: String) -> Dictionary:
+	return {"t": now() - int(item_data(item_id).get("cycle_seconds", 86400))}
 
 
 func _set_starter(row: int, col: int, crop_id: String, planted_at: int) -> void:

@@ -16,6 +16,9 @@ func test_01_new_farm_starts_like_the_classic_opening() -> void:
 	for want in ["farmhouse", "barn", "mailbox", "farm_stand", "cow"]:
 		_check(ids.has(want), "starter farm has a %s" % want)
 	_eq(ids.count("chicken"), 2, "two starter chickens")
+	for o in g.objects:
+		if o["id"] in ["chicken", "cow"]:
+			_check(g.is_ready(o), "starter %s has its first collect waiting" % o["id"])
 	_check(g.storage.barn().get("broken", false), "the barn starts broken")
 	_check(not g.is_occupied(g.index_of(5, 4)), "no object on the starter crops")
 	_done(g)
