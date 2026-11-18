@@ -414,6 +414,24 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   flies the reward with `FloatText`. Task words need locale keys per verb ("GOAL_DO_HARVEST" = "Harvest %s", ...).
   New icons (calendar, project) in tools/make_ui_icons.py's style; list them in the log. Done when the menu sweep
   passes for every phone shape; then the checkpoint picture (noon, 20:9) under "Goals: waiting for your look".
+- Run 3 (18 Nov 21:37-22:25 IST): step 3 merged (8212d49, branch goals/3-hud-goals). `HudGoals`
+  (scripts/hud/hud_goals.gd, `hud.goals`, `hud.show_goals(tab)`): up to three faces under the coin meter
+  (`GoalFace`: paper disc, `BuildingSheet.Ring.paint` ring, `UiKit.count_badge` "!" when done), rebuilt on
+  `Game.goals_changed`; the sheet is `book.open_tabs` Story/Today/Projects; daily jobs one line (calendar, word bar,
+  Show me, Swap/Collect), chains and projects a card (portrait, giver name, `say` as a locale key, a bar per task,
+  Collect). Show me per verb in data/goals.json `show` (tool:<id>, seeds, market, farm:<spot kind>|farm:item);
+  `hud.show_market_for(id)` opens the Market on the thing's shelf. Task words: `GOAL_DO_<VERB>` ("Harvest %s"),
+  `GOAL_DO_<VERB>_ANY` for what "", `GOAL_KIND_<KIND>` for a kind, `GOAL_DO_LEVEL`; `HudGoals.keys_of(task)` lists
+  them and test 465 holds every task in the data to them (step 4/7 content: a new verb needs its keys). Chain
+  `say` and project `name` are locale keys; giver names match the inbox roster case-insensitively. New icon:
+  calendar (make_ui_icons.py). `GoalSystem.showcase()` now emits goals_changed; look_shot takes goals_panel.
+  Menu sweep includes the goal sheet. Tests 465-466. The checkpoint picture is in the log under "Goals: waiting
+  for your look".
+- Next (while the owner looks): step 6 on goals/6-bot-goals: tools/balance_sim.gd's `_visit` gains a goal follower
+  (Game.goals.refresh, claim every `is_done` key, prefer the crop/action the open tasks name when choosing
+  `_best_crop`/spending) and breaks; print per day goals collected and chain steps, and first-hour numbers (minutes
+  to first harvest, level at 60 minutes, coins at 60 minutes) for the log. Then step 7's data (six chains, more
+  daily templates, three projects) on goals/7-content. Step 4 only after the owner's yes in the log.
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
