@@ -447,6 +447,21 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `_best_crop`/spending) and breaks; print per day goals collected and chain steps, and first-hour numbers (minutes
   to first harvest, level at 60 minutes, coins at 60 minutes) for the log. Then step 7's data (six chains, more
   daily templates, three projects) on goals/7-content. Step 4 only after the owner's yes in the log.
+- Run 4 (18 Nov 22:36-23:15 IST; no owner verdict on the checkpoint yet, so step 4 waits): step 6 merged (b22e464,
+  goals/6-bot-goals): tools/balance_sim `--style=plain|goals|casual`, `--away=3,7`, `--first-hour`; per day coins
+  spent, goals collected, jobs left, chain steps, feed used. The bot plays a given farm (`sim.game`), so tests drive
+  it (483). Then a step-2 rule fix the bot found (b344b9f, goals/2-doable-jobs): harvest jobs pick `@crop_quick`
+  (ripens within Balance `goals.daily_crop_hours`), collect/feed templates are `per_owned` (`GoalSystem.per_day_of`,
+  `goals.daily_play_hours`); test 484. Numbers (seed 1): first hour: first harvest at minute 0, L2 at minute 1, then
+  L2 and 2 coins from minute 1 to 60, nothing bought, 3 jobs done (2 starter plots ripe; every coin goes into 4-hour
+  crops: the gap step 4's Starter Seeds and Welcome chain fill; Part 2 wants L3 by minute 30-40). 14 days: goals
+  L10 day 5, L15 day 9, 43 goals; casual (1 visit, away days 3 and 7) L10 day 13, 27 goals; plain L15 day 10.
+- Still open for step 7's data (seen in the bot, not fixed): a job to plant or harvest can't be done when every plot
+  is growing a long crop (the bot fills the farm; idle 0) and some days a "collect from chicken" stays 0 / n with
+  chickens on the farm (check whether a chicken collected the evening before is ready again within the day; maybe
+  per_day_of should count only the ones ready today). Next: step 7's data on goals/7-content (six chains, about 15
+  daily templates, three projects; each new verb needs its GOAL_DO_* keys, test 465), then the bot completing every
+  chain (`chain` column). Step 4 only after the owner's yes in the log.
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
