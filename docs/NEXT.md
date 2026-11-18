@@ -232,6 +232,18 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   a vehicle's finished run is now heard by its job (`FarmGrid.vehicle_moment`, test 445); Rotate, Store and a
   refused Sell or first sell tap now answer (test 446), and storing with the Store tool no longer errors (it read
   the thing's row after the Barn took it). Next audit: first-hour feel.
+- Run 20 (first-hour feel audit, then phone performance measured): the first session had nothing to tap but
+  crops for a day: the starter chickens and cow now start with their first collect waiting (`_ready_now`; the
+  starter's extra fields could not set `t` before: `Dictionary.merge` keeps existing keys without `true`);
+  farming test 01. Level 2 is now 12 XP (was 55, three visits): harvesting the two ripe plots and plowing about
+  ten ends the first visit on a level-up; levels 3 and up unchanged (farming test 01b). The first-hour plan
+  (docs/PLAYER_EXPERIENCE.md Part 2: Welcome chain, Guide, reveal, Starter Seeds) is unbuilt and reported.
+  Performance, filled showcase (615 things, headless, low): a full Objects3D look over is 11-12 ms (keys 3.1,
+  ready signs 4.7 of which `Game.has_ready` 2.1, building fills 0.7); it runs only after a change, the timer's
+  look is already spread over frames (`_light_some`), so no hitch each second (perf_probe's "every second"
+  label is wrong). Skipping `AssetRegistry.apply_state` when a view's state is unchanged saved ~1 ms of it, not
+  pushed: objects_3d.gd is fingerprinted look code (art lane). Next audit: phone performance with a renderer,
+  or round two from the economy.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
