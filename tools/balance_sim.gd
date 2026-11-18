@@ -5,12 +5,15 @@ extends Node
 ## weeks take seconds. Change a number in data/balance.json (or pass `--set=section.name=value`) and run it again
 ## to see the effect before shipping it. Headless:
 ##   godot --headless --path . res://tools/balance_sim.tscn -- --days=14 --visits=3 --minutes=5 --seed=1 \
-##     [--style=plain|goals|casual] [--away=3,7] [--first-hour] [--set=harvest.golden_chance=0.01]
+##     [--style=plain|goals|casual|builder] [--away=3,7] [--first-hour] [--set=harvest.golden_chance=0.01]
 ## Styles (docs/PLAYER_EXPERIENCE.md Part 4): `plain` the field loop only; `goals` also does what the goal faces
 ## say (prefers the crops and things the open goals name, swaps a job it cannot do, collects every finished goal);
 ## `casual` follows goals at one visit a day and skips days 3 and 7 unless `--away` says which. `--away=3,7`: the
-## days the bot does not come (1 is the first). `--first-hour`: one 60-minute first session from minute zero,
-## played a minute at a time (with goals), then its numbers (first harvest, levels, coins, goals) and stop.
+## days the bot does not come (1 is the first). `builder` follows goals and, at each visit's end, also buys the
+## Market's progress buys it can afford (market_wants: cheapest first, at most BUILDER_BUYS a visit; frames that
+## need materials are left, the bot never finishes one): does a player who buys keep idle coins down?
+## `--first-hour`: one 60-minute first session from minute zero, played a minute at a time (with goals), then
+## its numbers (first harvest, levels, coins, goals) and stop.
 ## Reads the real systems, so a rule change shows up here too. A test drives it on its own farm (`game`).
 
 const SECONDS_PER_ACTION := 1.15   # the farmer works 0.75 s at each job and walks a little between them
@@ -19,6 +22,10 @@ const LOOKAHEAD_VISITS := 12   # how many visits ahead a crop may ripen in
 const CASUAL_AWAY := [3, 7]    # the days a casual player skips when --away is not given
 const FIRST_HOUR_MINUTES := 60
 const FIRST_HOUR_MARKS := [10, 20, 30, 40, 60]   # minutes at which the first hour prints the level and coins
+const WANT_VISITS := [1.0, 3.0]   # Part 4's "something to buy": a thing costing 1 to 3 visits of income
+const IDLE_VISITS_MAX := 5.0      # Part 4: idle coins stay under about 5 visits of income
+const BUILDER_BUYS := 3          # purchases a builder makes at a visit's end (a tap or two each)
+const WANT_SKIP_KINDS := ["decor", "crop", "material", "ingredient", "recipe", "young"]   # not progress buys
 
 var game: GameState       # the farm it plays (the real one when run as a tool)
 var style := "plain"      # plain, goals or casual
@@ -43,10 +50,17 @@ var _cleared := 0         # plots cleared to make room for what a goal asks to b
 var _last_cleared := -1
 var _spent := 0           # coins spent (every fall of the purse)
 var _last_coins := 0
+var _gems_earned := 0     # gems gained (every rise; Part 4: a free player earns a few a week)
+var _last_gems := 0
 var _away_days := 0
 var _keep := 0           # coins kept for what an open goal asks to buy (not spent on seeds)
 var _want_plant := {}     # crops a goal asks to plant (planted even when no visit finds them ripe)
 var _want := {}           # crop id -> plots a goal still wants planted with it (this visit)
+var _market_days := 0     # days measured against Part 4's Market targets (a day the bot came and earned)
+var _want_days := 0       # of those, days the Market held 1 to 3 things costing 1 to 3 visits of income
+var _per_visit := 0.0     # yesterday's income per visit (the builder's sense of what a thing costs)
+var _last_wants := []    # what the Market held on the last day measured (market_wants)
+var _idle_days := 0       # of those, days that ended with idle coins over IDLE_VISITS_MAX visits of income
 
 
 func _ready() -> void:
@@ -112,13 +126,16 @@ func _visit_hours() -> Array:
 
 
 func follows_goals() -> bool:
-	return style in ["goals", "casual"] and game.goals.active()
+	return style in ["goals", "casual", "builder"] and game.goals.active()
 
 
 func _watch_coins() -> void:
 	_last_coins = game.coins
 	if not game.coins_changed.is_connected(_on_coins):
 		game.coins_changed.connect(_on_coins)
+	_last_gems = game.gems
+	if not game.gems_changed.is_connected(_on_gems):
+		game.gems_changed.connect(_on_gems)
 
 
 func _on_coins(coins: int) -> void:
@@ -127,12 +144,18 @@ func _on_coins(coins: int) -> void:
 	_last_coins = coins
 
 
+func _on_gems(gems: int) -> void:
+	if gems > _last_gems:
+		_gems_earned += gems - _last_gems
+	_last_gems = gems
+
+
 func _play() -> void:
 	_watch_coins()
 	var hours := _visit_hours()   # (the clock already stands at the first one: _ready)
 	var start := game.now()
 	print("day  level   coins  harvests  coins/h   spent  golden  collect  super  bonus  idle plots  goals  left  chain"
-		+ "  fed")
+		+ "  fed  idle_v  want")
 	var coins_at_day_start := game.coins
 	var harvests_at_day_start := 0
 	for day in _days:
@@ -147,11 +170,24 @@ func _play() -> void:
 				_visit(_visits_after(hours, v))
 			game.debug_time_offset += int(_gap_after(hours, v) * 3600.0)
 		var earned := game.coins - coins_at_day_start + _spent - spent_at_day_start
-		print("%3d  %5d  %6d  %8d  %7.0f  %6d  %6d  %7d  %5d  %5d  %10d  %5d  %4d  %5d  %3d%s" % [
+		var per_visit := float(earned) / float(hours.size())
+		var idle_v := float(game.coins) / per_visit if per_visit > 0.0 else 0.0
+		if per_visit > 0.0:
+			_per_visit = per_visit
+		var wants := market_wants(per_visit) if per_visit > 0.0 else []
+		if here and per_visit > 0.0:
+			_market_days += 1
+			_last_wants = wants
+			if wants.size() >= 1:
+				_want_days += 1
+			if idle_v > IDLE_VISITS_MAX:
+				_idle_days += 1
+		print("%3d  %5d  %6d  %8d  %7.0f  %6d  %6d  %7d  %5d  %5d  %10d  %5d  %4d  %5d  %3d  %6.1f  %4d%s" % [
 			day + 1, game.level(), game.coins, _harvests - harvests_at_day_start, earned / 24.0,
 			_spent - spent_at_day_start, _drops.get("golden", 0), _drops.get("collectible", 0),
 			_drops.get("super_harvest", 0), _drops.get("bonus_xp", 0), _idle_plots(),
-			goals_claimed - goals_at_day_start, jobs_left(), chain_steps, _fed - fed_at_day_start, "" if here else "  (away)"])
+			goals_claimed - goals_at_day_start, jobs_left(), chain_steps, _fed - fed_at_day_start, idle_v, wants.size(),
+			"" if here else "  (away)"])
 		coins_at_day_start = game.coins
 		harvests_at_day_start = _harvests
 		for lvl in range(2, game.level() + 1):
@@ -174,6 +210,8 @@ func _play() -> void:
 		", ".join(PackedStringArray(bought)), _expansions, game.farm_size, game.farm_size, _collected, _fed])
 	print("goals collected %d (chain steps %d, jobs swapped %d); coins spent %d" % [
 		goals_claimed, chain_steps, swaps, _spent])
+	print(market_line())
+	print("gems earned %d (%.1f a week), held %d" % [_gems_earned, _gems_earned * 7.0 / maxf(_days, 1), game.gems])
 	if follows_goals():
 		var at := []
 		for id: String in game.goals.chain_step:
@@ -182,6 +220,74 @@ func _play() -> void:
 			game.goals.chains_done)), ", ".join(PackedStringArray(at)), _cleared])
 		print("projects done: %s; open: %s" % [", ".join(PackedStringArray(game.goals.projects_done)),
 			game.goals.project_stage])
+
+
+## Part 4's Market targets over the days measured: the share of days with something to buy (1 to 3 visits of
+## income) and of days ending with idle coins over IDLE_VISITS_MAX visits of income.
+func market_line() -> String:
+	var n := maxi(_market_days, 1)
+	return ("market: something to buy on %d%% of days, idle coins over %.0f visits on %d%% (of %d days measured);"
+		+ " the last day's: %s") % [100 * _want_days / n, IDLE_VISITS_MAX, 100 * _idle_days / n, _market_days,
+		", ".join(PackedStringArray(_last_wants))]
+
+
+## What the Market holds now that a player would buy for progress (homes, buildings, trees, animals, vehicles,
+## the next land; not decorations, seeds or materials) costing WANT_VISITS of `per_visit` income: ids (land is
+## "land"). Level, limit and requirements must be met; only the coins may be short.
+func market_wants(per_visit: float) -> Array:
+	var out := []
+	var low := WANT_VISITS[0] * per_visit
+	var high := WANT_VISITS[1] * per_visit
+	for id: String in game.items:
+		var it: Dictionary = game.items[id]
+		if str(it.get("kind", "")) in WANT_SKIP_KINDS or int(it.get("unlock_level", 1)) >= 99 or not Release.has(id):
+			continue
+		if it.get("stray_only", false):
+			continue
+		var price := game.buildings.price_of(id)
+		if price.has("gems"):
+			continue
+		var cost := float(price.get("coins", 0))
+		if cost < low or cost > high:
+			continue
+		var why := game.buildings.can_buy(id).why
+		if why == BuildingSystem.Why.OK or why == BuildingSystem.Why.COINS:
+			out.append(id)
+	var step := game.land.next_expansion()
+	if not step.is_empty() and game.level() >= int(step["level"]) and not step.has("gems_only"):
+		var land := float(step.get("coins", 0))
+		if land >= low and land <= high:
+			out.append("land")
+	return out
+
+
+## The builder's shopping: the Market's progress buys it can afford now, cheapest first (land through expanding),
+## skipping frames built from materials; at most BUILDER_BUYS a visit.
+func _buy_wants() -> void:
+	if _per_visit <= 0.0:
+		return
+	var wants := market_wants(_per_visit)
+	wants.sort_custom(func(a: String, b: String) -> bool: return _want_cost(a) < _want_cost(b))
+	var bought := 0
+	for id: String in wants:
+		if bought >= BUILDER_BUYS or _want_cost(id) > game.coins:
+			break
+		if id == "land":
+			if game.land.expand(false):
+				_expansions += 1
+				bought += 1
+			continue
+		if game.items[id].has("build_materials"):
+			continue
+		_actions += 1   # (a purchase is a tap of its own, after the visit's field work)
+		if _buy_somewhere(id):
+			bought += 1
+
+
+func _want_cost(id: String) -> int:
+	if id == "land":
+		return int(game.land.next_expansion().get("coins", 0))
+	return int(game.buildings.price_of(id).get("coins", 0))
 
 
 ## Today's jobs still open (not collected) now: at a day's end, the jobs the day did not finish.
@@ -347,6 +453,8 @@ func _visit(next_visits: Array) -> void:
 						_want_plant.erase(crop)
 	_claim_goals()
 	_spend()
+	if style == "builder":
+		_buy_wants()
 	_claim_goals()
 
 

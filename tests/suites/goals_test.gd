@@ -402,3 +402,31 @@ func test_515_the_goal_bot_completes_every_chain() -> void:
 	_eq(left, [], "every chain done in 21 days")
 	sim.free()
 	_done(g)
+
+
+## Part 4's Market measure in the balance bot (step 8): a progress buy counts as "something to buy" when it costs
+## 1 to 3 visits of income (too cheap or too dear does not), decorations never count, the next land counts when
+## its level is met; the builder style buys what it can afford of them, cheapest first.
+func test_525_the_bot_measures_the_market_against_part_4() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(15)
+	var sim: Node = load(BOT).new()
+	sim.set("game", g)
+	var tree := float(g.buildings.price_of("apple_tree")["coins"])
+	_check((sim.call("market_wants", tree / 2.0) as Array).has("apple_tree"), "a tree costing two visits is wanted")
+	_check(not (sim.call("market_wants", tree * 4.0) as Array).has("apple_tree"), "nor one costing a quarter visit")
+	_check(not (sim.call("market_wants", tree / 6.0) as Array).has("apple_tree"), "nor one costing six visits")
+	for id: String in sim.call("market_wants", 1.0e9 / 3.0) + sim.call("market_wants", 100.0):
+		_check(id == "land" or str(g.items[id]["kind"]) != "decor", "a decoration is never a progress buy: " + id)
+	var step: Dictionary = g.land.next_expansion()
+	if not step.is_empty() and g.level() >= int(step["level"]):
+		_check((sim.call("market_wants", float(step["coins"]) / 2.0) as Array).has("land"), "the next land is wanted")
+	g.coins = int(tree * 3.0)
+	sim.set("_per_visit", tree / 2.0)
+	sim.set("_actions", 0)
+	sim.call("_buy_wants")
+	_check((sim.get("_bought") as Dictionary).size() >= 1, "the builder buys what it wants and can afford")
+	_check(g.coins < int(tree * 3.0), "and pays for it")
+	_check(str(sim.call("market_line")).begins_with("market:"), "the summary line prints")
+	sim.free()
+	_done(g)
