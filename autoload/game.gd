@@ -16,6 +16,7 @@ signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
 signal objects_changed
+signal farm_opened   # another farm was laid out in place of this one (the showcase, or back to your own)
 ## One thing changed where it stands (fed, collected, upgraded, filled): only it needs looking at again, not the
 ## whole farm (scaling report: a change costs one object, not all of them). A move, a turn, a purchase or a sale is
 ## still `objects_changed`.
@@ -1375,6 +1376,7 @@ func open_showcase() -> Array[String]:
 	save_game()
 	LoadTrace.mark("showcase saved")  # not-ui
 	message.emit(tr("SHOWCASE_OPENED"))
+	farm_opened.emit()
 	return left_out
 
 
@@ -1387,6 +1389,7 @@ func open_own_farm() -> void:
 		_new_game()
 	rebuild_occupancy()
 	ShowcaseFarm.announce(self)
+	farm_opened.emit()
 
 
 func in_showcase() -> bool:

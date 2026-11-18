@@ -35,6 +35,7 @@ const FULL_EVERY := 10        # a full look at everything every this many second
 const VARIED_DECOR := ["wooden_bridge", "pine_tree", "oak_tree", "maple_tree", "willow_tree"]
 const BUILD_BUDGET_MS := 12
 const OPENING_BUDGET_MS := 40   # ..and while a farm opens (nothing stands yet, the player waits for it): more a frame
+const COVERED_BUDGET_MS := 150  # ..and under the loading cover (nothing is seen, so a frame may build for long)
 ## The kinds `uses_file` draws from files (a tree and a bloom come from theirs by look: tree_look, bloom_look).
 const FILE_KINDS := ["building", "barn", "crafting", "decor"]
 const TREE_LOOKS := 4     # looks of each tree kept in its file (tree_look; tools/export_plants)
@@ -106,6 +107,7 @@ var _masks_at := Vector2i(-1, -1)   # the farm's layout (its revision, how many 
 var _masks := {}         # uid -> its Crowding.mask: neighbours only change with the farm, so kept between changes
 var _carry_on := false  # a sync ran out of time: the rest comes next frame
 var _left := 0           # objects a sync ran out of time for, still to build
+var _most_left := 0   # the most there was left to build since the farm last stood whole (progress_in)
 var _todo: Array[int] = []   # their uids: the next frame builds only these, without looking the farm over again
 var _resuming := false   # this sync carries on from one that ran out of time, with no change since
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
@@ -341,6 +343,8 @@ func sync_timed() -> void:
 ## How long a frame may build for: longer while a farm opens (nothing stands yet and the player is waiting for it),
 ## the usual BUILD_BUDGET_MS once it stands (so later changes never cost a hitch).
 func _budget_ms() -> int:
+	if LoadingCover.covering > 0:
+		return COVERED_BUDGET_MS
 	return BUILD_BUDGET_MS if _synced_once else OPENING_BUDGET_MS
 
 
@@ -488,6 +492,18 @@ func rust_marks_node() -> RustMarks:
 
 ## Whether everything is built: every object, the woods, and every orchard's trees (the farm goes up over a few
 ## frames after it opens; screenshots and measurements wait for this).
+## How much of the farms on the screen is built, 0..1, against the most there was left to build since they were
+## last whole (for the loading cover's count).
+static func progress_in(tree: SceneTree) -> float:
+	var left := 0
+	var most := 0
+	for o: Objects3D in tree.get_nodes_in_group(GROUP):
+		left += o._left
+		o._most_left = maxi(o._most_left, o._left) if o._left > 0 else 0
+		most += o._most_left
+	return 1.0 if left == 0 else 1.0 - float(left) / float(maxi(most, left))
+
+
 func settled() -> bool:
 	return _left == 0 and _woods.is_empty() and BuildingFill.planting == 0
 

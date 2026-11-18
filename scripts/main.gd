@@ -140,6 +140,14 @@ func _ready() -> void:
 	# when the game itself is running: the screenshot and probe tools load this scene inside their own).
 	if get_tree().current_scene == self:
 		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"))
+		Game.farm_opened.connect(_on_farm_opened)
+
+
+## Another farm laid out in place of this one (the showcase, or back to your own): it is covered while it is
+## built and drawn, as the game's first farm is, and seen whole (so every material is drawn once under the cover).
+func _on_farm_opened() -> void:
+	_fit_camera()
+	LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"))
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that

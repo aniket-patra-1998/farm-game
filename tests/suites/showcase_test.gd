@@ -125,3 +125,24 @@ func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_wa
 	ShowcaseFarm.toggle_vip(g)
 	_check(g.vip.active(), "and starts again")
 	_done(g)
+
+
+func test_454_a_farm_opened_in_place_is_covered_and_built_at_full_speed() -> void:
+	var g := GameState.new()
+	add_child(g)
+	g.saving_enabled = false
+	g.reset_game()
+	var told := [0]
+	g.farm_opened.connect(func() -> void: told[0] += 1)
+	g.open_showcase()
+	_eq(told[0], 1, "opening the showcase says a farm was opened in place (Main covers it)")
+	g.open_own_farm()
+	_eq(told[0], 2, "and so does going back to your own")
+	g.free()
+	var objects := Objects3D.new()
+	add_child(objects)
+	_eq(objects.call("_budget_ms"), Objects3D.OPENING_BUDGET_MS, "a farm first opening builds more a frame")
+	LoadingCover.covering += 1
+	_eq(objects.call("_budget_ms"), Objects3D.COVERED_BUDGET_MS, "and under the loading cover, at full speed")
+	LoadingCover.covering -= 1
+	objects.free()
