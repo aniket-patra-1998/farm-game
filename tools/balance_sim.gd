@@ -11,6 +11,7 @@ extends Node
 
 const SECONDS_PER_ACTION := 1.15   # the farmer works 0.75 s at each job and walks a little between them
 const HOURS_DEFAULT := [8.0, 13.0, 20.0]     # local hours of the day the bot visits (with --visits=3)
+const LOOKAHEAD_VISITS := 12   # how many visits ahead a crop may ripen in
 
 var _days := 14
 var _visits := 3
@@ -76,7 +77,7 @@ func _play() -> void:
 	var harvests_at_day_start := 0
 	for day in _days:
 		for v in hours.size():
-			_visit(_gap_after(hours, v))
+			_visit(_visits_after(hours, v))
 			Game.debug_time_offset += int(_gap_after(hours, v) * 3600.0)
 		var earned := Game.coins - coins_at_day_start
 		print("%3d  %5d  %6d  %8d  %7.0f  %6d  %7d  %5d  %5d  %5d" % [
@@ -105,14 +106,25 @@ func _play() -> void:
 		", ".join(PackedStringArray(bought)), _expansions, Game.farm_size, Game.farm_size, _collected, _fed])
 
 
-func _gap_after(hours: Array, v: int) -> float:
+static func _gap_after(hours: Array, v: int) -> float:
 	var next: float = hours[(v + 1) % hours.size()] + (24.0 if v + 1 >= hours.size() else 0.0)
 	return next - float(hours[v])
 
 
+## How long after visit `v` each of the next visits comes, in seconds (the real schedule: with two visits a
+## day the gaps alternate, 14 and 10 hours, so the k-th visit is not k equal gaps on).
+static func _visits_after(hours: Array, v: int) -> Array:
+	var out := []
+	var t := 0.0
+	for k in LOOKAHEAD_VISITS:
+		t += _gap_after(hours, (v + k) % hours.size())
+		out.append(t * 3600.0)
+	return out
+
+
 ## One visit: harvest what's ripe, plow what the coins reach, plant the best-paying crop for the time until
-## the next visit.
-func _visit(gap_hours: float) -> void:
+## a later visit finds it ripe.
+func _visit(next_visits: Array) -> void:
 	_actions = int(_minutes * 60.0 / SECONDS_PER_ACTION)
 	_collect_ready()
 	_feed_hungry()
@@ -134,14 +146,16 @@ func _visit(gap_hours: float) -> void:
 			if Game.is_occupied(i):
 				continue
 			var ph := Game.field.phase(i)
+			var crop := _best_crop(next_visits)
+			if crop == "":
+				break   # nothing affordable that a later visit finds ripe: plowing now would only waste coins
 			if ph == GameState.Phase.GRASS:
-				if Game.coins < Balance.i("economy.plow_cost") + _cheapest_seed() or not _act():
+				if Game.coins < Balance.i("economy.plow_cost") + int(Game.crops[crop]["seed_cost"]) or not _act():
 					continue
 				Game.field.plow(i)
 				ph = Game.field.phase(i)
 			if ph == GameState.Phase.PLOWED:
-				var crop := _best_crop(gap_hours * 3600.0)
-				if crop != "" and _act() and not Game.field.plant(i, crop):
+				if _act() and not Game.field.plant(i, crop):
 					break   # out of coins: the rest wait for the next visit
 	_spend()
 
@@ -254,14 +268,10 @@ func _record(h: Dictionary) -> void:
 	_by_crop[crop] = int(_by_crop.get(crop, 0)) + 1
 
 
-func _cheapest_seed() -> int:
-	return Game.cheapest_seed_cost()
-
-
 ## The crop with the best profit per second it takes, counting the wait until the next visit as time spent,
 ## that will be ripe at the next visit and not yet withered (a crop withers as long after ripening as it took to
 ## grow, so a player who visits once a day can't use a 12-hour crop: it's gone by the next visit).
-func _best_crop(gap_seconds: float) -> String:
+func _best_crop(next_visits: Array) -> String:
 	var best := ""
 	var best_rate := -INF
 	for id: String in Game.crops:
@@ -270,11 +280,11 @@ func _best_crop(gap_seconds: float) -> String:
 			continue
 		var grow := float(crop["grow_seconds"])
 		var window := float(Game.field.ripe_window(crop))
-		# The first visit that finds it ripe and not yet withered (visits come every gap, so the k-th is k gaps on).
+		# The first visit that finds it ripe and not yet withered.
 		var wait := 0.0
-		for k in range(1, 13):
-			if grow <= k * gap_seconds and k * gap_seconds < grow + window:
-				wait = k * gap_seconds
+		for at: float in next_visits:
+			if grow <= at and at < grow + window:
+				wait = at
 				break
 		if wait == 0.0:
 			continue   # always ripens between visits and withers before the next

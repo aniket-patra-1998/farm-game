@@ -670,3 +670,12 @@ func test_443_no_loop_of_farm_actions_pays_coins_without_a_wait() -> void:
 		and f.contains("pays"))
 	_eq(free, [], "no loop pays coins with no wait")
 	Game.reset_game()
+
+
+## The balance bot plants for its real visit times: with two visits a day (7:00 and 21:00) the gaps alternate,
+## 14 and 10 hours, so a crop is judged by when a later visit finds it ripe, not by k equal gaps.
+func test_448_the_balance_bot_plants_for_its_real_visit_times() -> void:
+	var sim: GDScript = load("res://tools/balance_sim.gd")
+	var after: Array = sim.call("_visits_after", [7.0, 21.0], 1)
+	_eq(after.slice(0, 3), [10 * 3600.0, 24 * 3600.0, 34 * 3600.0], "after the evening visit: 10 h, 24 h, 34 h on")
+	_eq((sim.call("_visits_after", [7.0, 21.0], 0) as Array)[0], 14 * 3600.0, "after the morning one: 14 h on")
