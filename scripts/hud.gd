@@ -328,11 +328,7 @@ func xp_target() -> Vector2:
 func pulse(which: String) -> void:
 	if which == "coins":
 		Feedback.moment("coin_land")  # each coin chinks as it lands
-	var c: Control = top.coins if which == "coins" else top.xp
-	c.pivot_offset = c.size / 2.0
-	var tw := c.create_tween()
-	tw.tween_property(c, "scale", Vector2(1.18, 1.18), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(c, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	UiFx.pulse(top.coins if which == "coins" else top.xp)
 
 
 func _set_shown_coins(v: float) -> void:

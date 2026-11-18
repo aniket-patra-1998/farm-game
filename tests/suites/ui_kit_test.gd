@@ -178,6 +178,33 @@ func test_491_panel_words_take_a_type_role_not_a_number() -> void:
 						m.get_string(1), args[at].strip_edges()])
 
 
+
+## One motion language: anything springing back settles with one soft overshoot (UiFx.settle), never an elastic
+## wobble; the counters' pulse replaces one still running instead of stacking tweens on the same size.
+func test_510_nothing_springs_back_like_rubber() -> void:
+	for dir: String in _script_dirs("res://scripts/"):
+		for f: String in DirAccess.get_files_at(dir):
+			if f.ends_with(".gd"):
+				_check(not FileAccess.get_file_as_string(dir + f).contains("TRANS_ELASTIC"),
+					"%s%s: a spring back is UiFx.settle, not TRANS_ELASTIC" % [dir, f])
+	var c := Control.new()
+	c.size = Vector2(40, 20)
+	add_child(c)
+	UiFx.pulse(c)
+	var first: Variant = c.get_meta(&"fx_tween") if c.has_meta(&"fx_tween") else null
+	UiFx.pulse(c)
+	_check(first is Tween and not (first as Tween).is_valid(), "a second pulse replaces the first")
+	_check(c.pivot_offset == c.size / 2.0, "a pulse swells from the middle")
+	c.queue_free()
+
+
+## `root` and every folder under it.
+static func _script_dirs(root: String) -> PackedStringArray:
+	var out := PackedStringArray([root])
+	for d: String in DirAccess.get_directories_at(root):
+		out.append_array(_script_dirs(root + d + "/"))
+	return out
+
 ## The top-level arguments of a call whose "(" ends just before `from` (strings and brackets skipped).
 static func _args(text: String, from: int) -> PackedStringArray:
 	var out := PackedStringArray()

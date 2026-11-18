@@ -78,7 +78,7 @@ func drop_in() -> void:
 		Vector2(1.16, 0.84),
 		0.07
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.chain().tween_property(self, "squash", Vector2.ONE, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	UiFx.settle(tw.chain(), self, "squash", Vector2.ONE)
 
 
 ## A freshly plowed bed rises out of the grass.
@@ -93,7 +93,7 @@ func bounce() -> void:
 	var tw := _restart_tween()
 	tw.tween_property(self, "squash", Vector2(1.12, 0.88), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(self, "squash", Vector2(0.95, 1.07), 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(self, "squash", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	UiFx.settle(tw, self, "squash", Vector2.ONE)
 
 
 ## Seedlings grow in after planting.

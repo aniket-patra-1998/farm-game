@@ -14,6 +14,10 @@ const POP_STAGGER := 0.035        # each next card starts this much later..
 const POP_MOST := 0.5             # ..but none later than this
 const OPEN_FROM := 0.9            # a panel swells open from this size
 const OPEN_TIME := 0.26
+const PULSE_SCALE := 1.12         # a counter swells to this as a reward lands..
+const PULSE_TIME := 0.08          # ..this quickly..
+const PULSE_SETTLE := 0.22        # ..and settles back in this
+const SETTLE_TIME := 0.32         # a squashed or swelled thing on the farm settles back to its size in this
 
 static var pop_next := false      # the panel being opened pops its cards in (not on every refresh)..
 static var popped := 0            # ..each a little after the last (set back to 0 as a panel opens)
@@ -63,6 +67,24 @@ static func open(panel: Control) -> void:
 	t.tween_property(panel, "modulate:a", 1.0, OPEN_TIME * 0.6)
 
 
+## `control` swells a little and settles back (a counter as a reward lands on it); a pulse already running is
+## replaced, so coins landing one after another never fight over its size.
+static func pulse(control: Control) -> void:
+	control.pivot_offset = control.size / 2.0
+	var t := _fresh_tween(control)
+	if t == null:
+		return
+	t.tween_property(control, "scale", Vector2.ONE * PULSE_SCALE, PULSE_TIME).set_trans(Tween.TRANS_QUAD) \
+		.set_ease(Tween.EASE_OUT)
+	settle(t, control, "scale", Vector2.ONE, PULSE_SETTLE)
+
+
+## The one way anything springs back to its size or place, in the interface and on the farm: a single soft
+## overshoot and rest, never an elastic wobble (things have weight; nothing is rubber). Added to `tween` in turn.
+static func settle(tween: Tween, target: Object, property: NodePath, to: Variant,
+		time: float = SETTLE_TIME) -> PropertyTweener:
+	return tween.tween_property(target, property, to, time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 
 static func _scale_to(control: Control, to: float, time: float, trans: Tween.TransitionType) -> void:
 	var t := _fresh_tween(control)
@@ -74,7 +96,7 @@ static func _scale_to(control: Control, to: float, time: float, trans: Tween.Tra
 static func _fresh_tween(control: Control) -> Tween:
 	if not control.is_inside_tree():
 		return null
-	var old: Variant = control.get_meta(&"fx_tween", null)
+	var old: Variant = control.get_meta(&"fx_tween") if control.has_meta(&"fx_tween") else null   # (a null default errors)
 	if old is Tween and (old as Tween).is_valid():
 		(old as Tween).kill()
 	var t := control.create_tween()

@@ -1598,7 +1598,7 @@ func bounce(uid: int) -> void:
 		.set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "scale", base * Vector3(0.95, 1.08, 0.95), 0.09).set_trans(Tween.TRANS_QUAD) \
 		.set_ease(Tween.EASE_OUT)
-	tw.tween_property(node, "scale", base, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	UiFx.settle(tw, node, "scale", base)
 
 
 
@@ -1612,7 +1612,7 @@ func grow_in(uid: int, grand: bool) -> void:
 	var tw := _tween(node)
 	tw.tween_property(node, "scale", Vector3.ONE * Vector3(1.1, 1.14, 1.1), 0.16).set_trans(Tween.TRANS_QUAD) \
 		.set_ease(Tween.EASE_OUT)
-	tw.tween_property(node, "scale", Vector3.ONE, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	UiFx.settle(tw, node, "scale", Vector3.ONE, UiFx.SETTLE_TIME * 1.25)   # (a grown building, a touch slower)
 	transformed.emit(node.position, grand)
 
 
@@ -1680,7 +1680,7 @@ func drop_in(uid: int) -> void:
 	tw.tween_property(node, "position", ground, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_property(node, "scale", base * Vector3(1.14, 0.82, 1.14), 0.07).set_trans(Tween.TRANS_QUAD) \
 		.set_ease(Tween.EASE_OUT)
-	tw.tween_property(node, "scale", base, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	UiFx.settle(tw, node, "scale", base)
 	landed.emit(ground)
 
 
