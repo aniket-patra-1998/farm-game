@@ -1232,15 +1232,7 @@ func _on_level_reached(lvl: int) -> void:
 
 
 func read_json(path: String) -> Dictionary:
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		push_error("Missing " + path)
-		return {}
-	var parsed = JSON.parse_string(f.get_as_text())
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error(path + " is not valid JSON")
-		return {}
-	return parsed
+	return DataFile.read(path)
 
 
 ## Loads the catalog once; crops, items and materials all come from it.

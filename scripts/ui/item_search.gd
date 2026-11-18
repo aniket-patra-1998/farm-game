@@ -94,5 +94,4 @@ static func _data_kinds() -> Dictionary:
 
 static func _load() -> void:
 	if _data.is_empty():
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-		_data = parsed if parsed is Dictionary else {}
+		_data = DataFile.read(DATA)

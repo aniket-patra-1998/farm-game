@@ -37,11 +37,7 @@ static func _load() -> void:
 	if not _forced and not bool(ProjectSettings.get_setting(SETTING, false)):
 		return
 	var path := dir + "/sprites.json"
-	if not FileAccess.file_exists(path):
-		return
-	var meta = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if typeof(meta) != TYPE_DICTIONARY:
-		return
+	var meta := DataFile.read_optional(path)
 	for name in meta:
 		var id := str(name).split("__")[0] # "cow__0" -> "cow"; the first variant wins
 		if _sprites.has(id):

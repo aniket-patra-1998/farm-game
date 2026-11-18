@@ -54,8 +54,7 @@ static func smoke_colour() -> Color:
 
 static func _load() -> Dictionary:
 	if _data.is_empty():
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-		_data = parsed as Dictionary if parsed is Dictionary else {}
+		_data = DataFile.read(DATA)
 	return _data
 
 

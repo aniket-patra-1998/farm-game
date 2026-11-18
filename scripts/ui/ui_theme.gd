@@ -29,11 +29,8 @@ static var _least := MIN_FONT   # the smallest text on this screen (`min_font`),
 static func _load() -> void:
 	if not _data.is_empty():
 		return
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	if parsed is Dictionary:
-		_data = parsed
-	else:
-		push_error(DATA + " is missing or not valid JSON")
+	_data = DataFile.read(DATA)
+	if _data.is_empty():
 		_data = {"colors": {}, "sizes": {}}
 
 

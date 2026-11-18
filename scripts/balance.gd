@@ -18,9 +18,8 @@ static func _load() -> void:
 	if _loaded:
 		return
 	_loaded = true
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-	if not parsed is Dictionary:
-		push_error("balance.json can't be read")
+	var parsed := DataFile.read(PATH)
+	if parsed.is_empty():
 		return
 	for section: String in parsed:
 		if section.begins_with("_"):

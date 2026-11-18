@@ -16,8 +16,7 @@ var families := {}        # family id -> its data
 
 
 func load_data() -> void:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	families = (parsed as Dictionary).get("families", {}) if parsed is Dictionary else {}
+	families = DataFile.read(DATA).get("families", {})
 
 
 func reset() -> void:

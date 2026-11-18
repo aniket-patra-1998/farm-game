@@ -29,8 +29,7 @@ func _ready() -> void:
 ## A section of data/weather.json (storm, fog, rain_sound).
 static func data(section: String) -> Dictionary:
 	if _rules.is_empty():
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-		_rules = parsed if parsed is Dictionary else {}
+		_rules = DataFile.read(DATA)
 	return _rules.get(section, {})
 
 

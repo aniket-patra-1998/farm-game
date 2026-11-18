@@ -39,10 +39,8 @@ static func _load() -> void:
 	if _read:
 		return
 	_read = true
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	if not parsed is Dictionary:
-		push_error(DATA + " is missing or not valid JSON")
+	_data = DataFile.read(DATA)
+	if _data.is_empty():
 		return
-	_data = parsed
 	for id: String in _data.get("items", []):
 		_items[id] = true

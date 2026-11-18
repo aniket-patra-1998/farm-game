@@ -1,6 +1,10 @@
 extends TestSuite
 ## The data files and the catalog: every item well formed, every string in the strings file.
 
+## Look code (the 3D builders, the animal rigs, the seasons) is left as it is until its next look change: its source
+## is fingerprinted with the exported art (tools/make_art_versions.py), so touching it means a re-export.
+const LOOK_CODE: Array[String] = ["res://scripts/world3d/", "res://scripts/world/animals/", "res://scripts/season.gd"]
+
 
 func test_17_data_files_are_consistent() -> void:
 	var g := _farm()
@@ -178,3 +182,26 @@ func test_89_player_text_comes_from_the_strings_file() -> void:
 	g.tutorial_step = GameState.Tutorial.PLOW
 	_check(g.tutorial_text().begins_with("Pick the hoe"), "tutorial hints are translated, not shown as keys")
 	_done(g)
+
+
+func test_441_data_files_are_read_through_one_place() -> void:
+	var offenders: Array[String] = []
+	for dir in ["res://scripts", "res://autoload"]:
+		for path in _gd_files(dir):
+			if path.ends_with("/data_file.gd") or LOOK_CODE.any(func(p: String) -> bool: return path.begins_with(p)):
+				continue
+			if FileAccess.get_file_as_string(path).contains("JSON.parse_string(FileAccess.get_file_as_string("):
+				offenders.append(path)
+	_eq(offenders, [] as Array[String], "DataFile.read, so a missing or broken file is handled one way")
+	_eq(DataFile.read_optional("res://data/no_such_file.json"), {}, "an absent optional file reads as empty")
+	_check(not DataFile.read(Balance.PATH).is_empty(), "a real data file reads")
+
+
+func _gd_files(dir: String) -> Array[String]:
+	var out: Array[String] = []
+	for name in DirAccess.get_files_at(dir):
+		if name.ends_with(".gd"):
+			out.append(dir.path_join(name))
+	for sub in DirAccess.get_directories_at(dir):
+		out.append_array(_gd_files(dir.path_join(sub)))
+	return out

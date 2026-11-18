@@ -12,8 +12,7 @@ var pools := {}            # "gifts", "requests", "shares" -> [{w, give, collab?
 
 
 func _init() -> void:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	var data: Dictionary = parsed if parsed is Dictionary else {}
+	var data := DataFile.read(DATA)
 	cast = data.get("neighbours", [])
 	for pool: String in ["gifts", "requests", "shares"]:
 		pools[pool] = data.get(pool, [])

@@ -13,8 +13,7 @@ var _sums_at := -1  # the farm's objects_revision the sums were taken at
 
 func load_data() -> void:
 	_sums_at = -1
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	var d: Dictionary = parsed if parsed is Dictionary else {}
+	var d := DataFile.read(DATA)
 	_boosts = d.get("boosts", {})
 
 

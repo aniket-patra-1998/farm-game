@@ -11,9 +11,7 @@ static var _groups: Dictionary = {}
 static func _load() -> void:
 	if not _groups.is_empty():
 		return
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-	if parsed is Dictionary:
-		_groups = (parsed as Dictionary).get("groups", {})
+	_groups = DataFile.read(PATH).get("groups", {})
 
 
 ## The group a catalog shape belongs to ("" when its pieces don't join).

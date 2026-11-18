@@ -36,8 +36,7 @@ func _init(owner: GameState) -> void:
 
 
 func load_data() -> void:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	var d: Dictionary = parsed if parsed is Dictionary else {}
+	var d := DataFile.read(DATA)
 	_feeds = d.get("feeds", {})
 	_crop_feed = d.get("crop_families", {})
 	_tree_feed = str(d.get("tree_feed", ""))

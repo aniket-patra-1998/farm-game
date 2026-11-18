@@ -9,8 +9,7 @@ var _rolls := {}   # id -> {"vip": bool, "what": String}
 
 
 func load_data() -> void:
-	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	_rolls = (data as Dictionary).get("rolls", {}) if data is Dictionary else {}
+	_rolls = DataFile.read(DATA).get("rolls", {})
 
 
 ## The chance of roll `id` now, from its `base`: raised by active VIP when the roll is listed for it.

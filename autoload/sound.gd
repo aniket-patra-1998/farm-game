@@ -45,10 +45,7 @@ var _warm: Array = []                     # sounds still to synthesise ahead of 
 
 
 func _ready() -> void:
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error(DATA + " is missing or not valid JSON")
-		parsed = {}
+	var parsed := DataFile.read(DATA)
 	_recipes = parsed.get("sounds", {})
 	_voices_by_family = parsed.get("voices", {})
 	_young_voices = parsed.get("young_voices", {})

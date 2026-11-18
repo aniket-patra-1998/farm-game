@@ -208,6 +208,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   that stopped, animals walk a planted-foot gait at their stride, UI motion lives in `UiFx`. Open, reported:
   the level-up confetti is 90 hard-edged rectangles in deep colours (a softer shape is a look to pick). Next
   audit: feedback and sound.
+- Run 17 (code quality: repeated logic): 31 modules each parsed their own data file, most silently empty when a
+  file was missing or broken (feedback.gd would crash). 20 moved: Now `DataFile.read(path)` (and
+  `read_optional` for files that may be absent) is the one place, logs the error, returns {}; `Game.read_json`
+  goes through it; data test 441 fails a new copy. Left on their own read on purpose: the look code
+  (scripts/world3d, world/animals, season.gd), whose source is fingerprinted with the exported art (a touch means
+  a re-export): move each with its next look change and drop it from the test's `LOOK_CODE`. Note: the full
+  precheck takes ~16 min on this 2-core container; run it in the background. Next audit: feedback on taps.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens

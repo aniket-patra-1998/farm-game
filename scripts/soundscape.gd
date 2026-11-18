@@ -32,10 +32,7 @@ var _since := 0.0
 
 
 func _ready() -> void:
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {}
-	if _data.is_empty():
-		push_error(DATA + " is missing or not valid JSON")
+	_data = DataFile.read(DATA)
 	for k in 2:
 		_bed.append(_player(Sound.AMBIENCE_BUS))
 	_music = _player(Sound.MUSIC_BUS)

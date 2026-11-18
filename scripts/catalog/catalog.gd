@@ -308,7 +308,4 @@ static func _sizes_problem(v) -> String:
 
 
 static func _read(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+	return DataFile.read_optional(path)

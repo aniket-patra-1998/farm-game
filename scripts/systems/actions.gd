@@ -11,8 +11,7 @@ static var _actions := {}
 
 static func all() -> Dictionary:
 	if _actions.is_empty():
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-		_actions = (parsed as Dictionary).get("actions", {}) if parsed is Dictionary else {}
+		_actions = DataFile.read(DATA).get("actions", {})
 	return _actions
 
 

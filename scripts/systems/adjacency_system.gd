@@ -12,8 +12,7 @@ var _groups := {}   # group id -> {"families", "per_neighbour", "max_neighbours"
 
 
 func load_data() -> void:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-	var d: Dictionary = parsed if parsed is Dictionary else {}
+	var d := DataFile.read(DATA)
 	_groups = d.get("groups", {})
 
 

@@ -14,7 +14,7 @@ var _rarities := {}
 
 
 func _ready() -> void:
-	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(DATA))
+	var data := DataFile.read(DATA)
 	_moments = data.get("moments", {})
 	_hums = data.get("hums", {})
 	_rarities = data.get("rarities", {})
