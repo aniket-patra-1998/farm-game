@@ -1,11 +1,11 @@
 extends TestSuite
-## The number files outside the catalog (balance, rolls, prizes, finds...) are checked as data, so a typo in a
+## The number files outside the catalog (balance, rolls, prizes, finds, goals...) are checked as data, so a typo in a
 ## tuning change fails the build instead of the game: no negative number, no chance over 1, no missing field,
 ## every weighted prize list able to roll. The look files (crowding, linking, seasons...) hold signed offsets and
 ## are not number files.
 
 const NUMBER_FILES: Array[String] = ["balance", "rolls", "mystery_box", "mystery_eggs", "finds", "social",
-	"expansions", "feeds", "home_boosts", "synergies", "ribbons", "collections"]
+	"expansions", "feeds", "home_boosts", "synergies", "ribbons", "collections", "goals", "reveal", "search"]
 const FRACTION_ENDINGS: Array[String] = ["chance", "_share"]   # a key named so is a chance or a share: 0 to 1
 const WEIGHT_NOTE := "weight"   # a balance entry whose note starts so is a weight, not a fraction
 const FIELDS := {   # the fields every record of a list must have: file -> {record list -> fields}
@@ -14,6 +14,7 @@ const FIELDS := {   # the fields every record of a list must have: file -> {reco
 	"ribbons": {"ribbons": ["id", "name", "stat", "thresholds"]},
 	"collections": {"collections": ["id", "name", "items", "rewards"]},
 	"finds": {"families": ["name", "trigger", "kinds"]},
+	"goals": {"chains": ["id", "giver", "steps"]},
 }
 
 
@@ -106,5 +107,6 @@ func test_442_number_files_have_no_negative_no_chance_over_one_and_no_missing_fi
 	_eq(problems("mystery_box", {"prizes": [["coins", 100, 0]]}).size(), 1, "a prize that can never roll is found")
 	_eq(problems("expansions", {"steps": [{"size": 14, "level": 5, "coins": 5000}]}).size(), 1,
 		"a step without its gem price is found")
+	_eq(problems("goals", {"chains": [{"id": "welcome", "giver": "maple"}]}).size(), 1, "a chain without its steps is found")
 	_eq(problems("ribbons", {"tiers": ["Yellow"], "tier_reward_coins": [100], "tier_reward_xp": [],
 		"ribbons": [{"id": "a", "name": "A", "stat": "s", "thresholds": [1]}]}).size(), 1, "a missing tier's reward is found")
