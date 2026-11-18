@@ -379,6 +379,24 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Step 2 notes: goal verbs (PLAYER_EXPERIENCE Part 1) map to events.json verbs; still missing as events: place,
   move_in, level, own (state verbs read the state, not the stream). `sell` today is selling a placed thing;
   selling crafted goods is `sell_good` (a goal "sell" may want both: decide in step 2's data).
+- Run 2 (18 Nov 20:37-21:10 IST): step 1 merged (cf8acf0, after a rebase on 75ac7da; the window is 20:35-08:35
+  now, side by side with the perf build). Step 2 merged (c96869d, branch goals/2-goal-system): `GoalSystem`
+  (`Game.goals`, scripts/systems/goal_system.gd), data/goals.json (format; daily templates only, `chains` and
+  `projects` empty: they are content for steps 4 and 7), `Game.goals_changed`, Release feature `goals`, Balance
+  `goals.daily_coins_per / daily_xp / daily_full_level`, `MysterySystem.gift_box()`. API for step 3:
+  `refresh()` (call when the HUD opens: makes today's jobs), `open_keys()` ("chain:<id>", "daily:<i>",
+  "project:<id>", faces in that order, show the first three), `tasks_of(key)`, `progress_of(key)` -> [[have, need]],
+  `is_done(key)`, `claim(key)` -> the reward given, `swap_daily(i)`, `chain_step`, `daily_jobs`. Tests 458-464.
+  Bot play of a new farm after each merge: unchanged (L3 on day 1, no errors).
+- Next: step 3 `HudGoals` on goals/3-hud-goals (not started: did not fit this run). Faces: a column of up to three
+  round faces at the left edge under the coin meter (scripts/hud/hud_top.gd has the meter), giver portrait from
+  `Game.social.look_of(name)` (daily jobs: a calendar icon; projects: the project's item picture), ring for
+  progress, a dot when `is_done`. Sheet: `BookPanel` with `SheetTabs` (scripts/hud/sheet_tabs.gd) Story / Today /
+  Projects; each task a `UiKit.word_bar()` line; Show me: `hud.show_market()` (needs an item argument: check
+  hud.gd:423), `HudTools` for plow, `ItemSearch.show_on_farm` for things on the farm; Collect calls `claim` and
+  flies the reward with `FloatText`. Task words need locale keys per verb ("GOAL_DO_HARVEST" = "Harvest %s", ...).
+  New icons (calendar, project) in tools/make_ui_icons.py's style; list them in the log. Done when the menu sweep
+  passes for every phone shape; then the checkpoint picture (noon, 20:9) under "Goals: waiting for your look".
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
