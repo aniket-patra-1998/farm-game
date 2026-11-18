@@ -84,12 +84,19 @@ jobs:
           for log in $(gcloud storage ls "$bucket/$dir/**/logcat"); do
             name=$(echo "$log" | sed "s#$bucket/$dir/##; s#/logcat##; s#/#_#g")
             line=$(gcloud storage cat "$log" | grep -o 'BENCH {.*}' | tail -1 | sed 's/^BENCH //')
+            echo "--- $name: the game's log lines (the last 40)"
+            gcloud storage cat "$log" | grep -iE "godot|BENCH|FATAL|AndroidRuntime" | tail -40 || true
             if [ -n "$line" ]; then
               echo "$line" > "reports/$name.json"; found=1
               printf '### %s\n```json\n%s\n```\n' "$name" "$line" >> "$GITHUB_STEP_SUMMARY"
             else
               printf '### %s\nNo report in the log (the app may not have finished).\n' "$name" >> "$GITHUB_STEP_SUMMARY"
             fi
+          done
+          for d in "${devs[@]}"; do   # why a phone was skipped: its GPU and Android level
+            m=$(echo "$d" | sed 's/model=\([^,]*\).*/\1/')
+            gcloud firebase test android models describe "$m" --project "$PROJECT" --format=json \
+              | grep -iE '"(id|name|manufacturer|supportedAbis|perVersionInfo|form)"|vulkan|opengl|gles' | head -20 || true
           done
           echo "Physical devices available:" && gcloud firebase test android models list --project "$PROJECT" \
             --filter="form=PHYSICAL" --format="value(id,name,supportedVersionIds.list())" | head -40
