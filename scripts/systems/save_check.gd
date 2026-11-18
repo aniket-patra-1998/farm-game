@@ -8,6 +8,7 @@ const FIELDS := ["uid", "row", "col", "t"]            # every placed object has 
 const COUNTS := ["coins", "gems", "xp", "unwithers", "fertilize_alls", "farmhands", "arborists", "gardeners",
 	"fertilizer_bags", "queen_bees", "truffles", "fuel", "fuel_tanks", "daily_streak"]   # never negative
 # (Saved maps of counts are read through GameSystem.int_map, which drops a negative or unreadable entry.)
+const MAX_WHOLE := 9007199254740992.0   # 2^53: past it a JSON number is no longer an exact whole number
 
 
 ## `data` is changed in place. `known_items` says which ids exist; `max_size` is the farm grid's edge;
@@ -86,10 +87,12 @@ static func _object(o: Variant, known_items: Dictionary, max_size: int) -> Dicti
 	return obj
 
 
-## A number as a whole number (JSON gives floats), or null for anything else, NaN and infinity included.
+## A number as a whole number (JSON gives floats), or null for anything else: NaN, infinity and a number too
+## big to be exact (a hand-edited 1e300 would turn into the largest int on a phone's ARM chip, and wrap negative
+## at the next coin added; on a PC into the most negative one).
 static func whole(v: Variant) -> Variant:
 	if v is int:
 		return v
-	if v is float and is_finite(v):
+	if v is float and is_finite(v) and absf(v) <= MAX_WHOLE:
 		return int(v)
 	return null

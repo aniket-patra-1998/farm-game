@@ -451,7 +451,8 @@ func test_437_a_tampered_save_never_loads_a_negative_count() -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify({"version": GameState.SAVE_VERSION, "coins": 77, "plots": plots, "next_uid": 3,
 		"objects": [{"id": "hay_bale", "uid": 1, "row": 1, "col": 1, "t": 0}],
-		"parts": {part: -5}, "bushels": {"wheat": -3, "corn": 2, "odd": {"x": 1}}, "feed_stock": {"hay": -1},
+		"parts": {part: -5}, "bushels": {"wheat": -3, "corn": 2, "odd": {"x": 1}, "rice": 1e300}, "gems": 1e300,
+		"feed_stock": {"hay": -1},
 		"mystery_eggs": {"white": NAN}, "owned": {"bell": -2}, "mastery": {"wheat": -40},
 		"queen_bees": -2, "truffles": -9, "fuel": -100, "fuel_tanks": -1, "daily_streak": -4,
 		"stored": [{"id": "hay_bale", "uid": 2}, "junk", {"id": "hay_bale"}, {"id": "hay_bale", "uid": 1}]}))
@@ -461,6 +462,10 @@ func test_437_a_tampered_save_never_loads_a_negative_count() -> void:
 	_eq(int(g.parts.get(part, 0)), 0, "a negative part count is dropped")
 	_check(not g.crafting.bushels.has("wheat") and not g.crafting.bushels.has("odd"), "bad bushel counts are dropped")
 	_eq(int(g.crafting.bushels.get("corn", 0)), 2, "a good one is kept")
+	_check(not g.crafting.bushels.has("rice"), "a count too big to be exact is dropped")
+	_check(g.gems >= 0 and g.gems < 1000000, "so are gems of 1e300 (%d)" % g.gems)
+	_eq(SaveCheck.whole(1e300), null, "on every chip, not only where it would turn negative")
+	_eq(SaveCheck.whole(9.0e15), 9000000000000000, "a big exact one stays")
 	_check(not g.feeds.stock.has("hay"), "no negative feed")
 	_check(g.mystery.mystery_eggs.is_empty(), "no unreadable egg count")
 	_check(not g.collectibles.owned.has("bell"), "no negative collectible")
