@@ -107,6 +107,7 @@ func test_442_number_files_have_no_negative_no_chance_over_one_and_no_missing_fi
 	_eq(problems("mystery_box", {"prizes": [["coins", 100, 0]]}).size(), 1, "a prize that can never roll is found")
 	_eq(problems("expansions", {"steps": [{"size": 14, "level": 5, "coins": 5000}]}).size(), 1,
 		"a step without its gem price is found")
-	_eq(problems("goals", {"chains": [{"id": "welcome", "giver": "maple"}]}).size(), 1, "a chain without its steps is found")
+	_eq(problems("goals", {"chains": [{"id": "welcome", "giver": "maple"}]}).size(), 1,
+		"a chain without its steps is found")
 	_eq(problems("ribbons", {"tiers": ["Yellow"], "tier_reward_coins": [100], "tier_reward_xp": [],
 		"ribbons": [{"id": "a", "name": "A", "stat": "s", "thresholds": [1]}]}).size(), 1, "a missing tier's reward is found")
