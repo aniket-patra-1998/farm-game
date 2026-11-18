@@ -499,6 +499,10 @@
   "fuel_per_recipe_star": {
    "v": 12,
    "note": "Fuel added per star of the recipe above the first."
+  },
+  "markup_per_mastery_star": {
+   "v": 0.1,
+   "note": "A good sells for this much more (a share of its price) per recipe mastery star."
   }
  },
  "market": {

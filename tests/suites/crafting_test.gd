@@ -325,3 +325,16 @@ func test_485_a_harvest_reports_the_bushels_it_added() -> void:
 		if found >= 5 or g.crafting.total_bushels() > cap - 10:
 			break
 	_check(found > 0, "bushels found")
+
+
+## A good's price per recipe mastery star is data (recipes.markup_per_mastery_star), not a number in code.
+func test_520_a_goods_mastery_markup_is_data() -> void:
+	var cat := Game.catalog
+	var recipe := cat.of_kind("recipe")[0] as RecipeDef
+	var plain := recipe.sell_price(cat, 0)
+	_check(plain > 0, "a good sells for something (%d)" % plain)
+	_check(recipe.sell_price(cat, 3) > plain, "mastery stars raise its price")
+	Balance.override("recipes.markup_per_mastery_star", 0.5)
+	_eq(recipe.sell_price(cat, 2), int(round(recipe.worth(cat) * Balance.f("recipes.sell_markup")
+		* (1.0 + Balance.f("recipes.markup_per_star") * (recipe.star() - 1)) * 2.0)), "the price follows the data")
+	Balance.reload()

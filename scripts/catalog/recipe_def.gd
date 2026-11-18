@@ -55,11 +55,11 @@ func worth(catalog) -> int:
 	return v
 
 
-## What the good sells for: its ingredients' worth marked up, more for a higher star, plus 10% per recipe
-## mastery star.
+## What the good sells for: its ingredients' worth marked up, more for a higher star, and more per recipe mastery
+## star (recipes.markup_per_mastery_star).
 func sell_price(catalog, mastery_stars: int) -> int:
 	var markup := Balance.f("recipes.sell_markup") + Balance.f("recipes.markup_per_star") * (star() - 1)
-	return int(round(worth(catalog) * markup * (1.0 + 0.1 * mastery_stars)))
+	return int(round(worth(catalog) * markup * (1.0 + Balance.f("recipes.markup_per_mastery_star") * mastery_stars)))
 
 
 ## Fuel the good gives when used: more for a higher star, and for each recipe mastery star.
