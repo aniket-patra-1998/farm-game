@@ -34,6 +34,7 @@ const RENDER_RECHECK := 0.3   # seconds before looking again for a rendered pict
 var _s := 1.0   # the icon's size this draw
 var _c := Vector2.ZERO
 var _r := 1.0
+var _edge_pass := false   # this draw's first pass: only the white sticker edges (see `_painted`)
 
 
 static func make(icon_kind: String, px := 0.0, colour := Color(0, 0, 0, 0)) -> UiIcon:
@@ -116,28 +117,36 @@ func _shape(pts: PackedVector2Array, fill: Color, _gloss := true, _shadow := tru
 	# The flat sticker look, as the item pictures (IconStyle): a white edge, a dark outline, a flat fill; no drop
 	# shadow and no gloss (the last two arguments are kept for the callers, and ask for nothing now).
 	var w := maxf(1.5, _s * OUTLINE)
-	var ink := UiTheme.color("icon_outline")
 	var closed := pts.duplicate()
 	closed.append(pts[0])
-	draw_polyline(closed, Color.WHITE, w * WHITE_EDGE, true)
-	draw_polyline(closed, ink, w, true)
+	if _edge_pass:
+		draw_polyline(closed, Color.WHITE, w * WHITE_EDGE, true)
+		draw_colored_polygon(pts, Color.WHITE)
+		return
+	draw_polyline(closed, UiTheme.color("icon_outline"), w, true)
 	draw_colored_polygon(pts, fill)
 
 
 ## A thick stroke that stands out like a shape: the white sticker edge round it, then the stroke (a speaker's
 ## sound waves, a lock's shackle: without the edge they vanished on the panels' brown).
 func _arc(at: Vector2, radius: float, from: float, to: float, width: float, col: Color) -> void:
-	var edge := maxf(1.5, _s * OUTLINE) * (WHITE_EDGE - 1.0)
-	draw_arc(at, radius, from, to, ARC_POINTS, Color.WHITE, width + edge, true)
+	if _edge_pass:
+		var edge := maxf(1.5, _s * OUTLINE) * (WHITE_EDGE - 1.0)
+		draw_arc(at, radius, from, to, ARC_POINTS, Color.WHITE, width + edge, true)
+		return
 	draw_arc(at, radius, from, to, ARC_POINTS, col, width, true)
 
 
 ## A line of detail in the outline's ink (or `col`).
 func _line(a: Vector2, b: Vector2, width := 0.06, col := Color(0, 0, 0, 0)) -> void:
+	if _edge_pass:   # (a detail line lies on a shape: no edge of its own)
+		return
 	draw_line(a, b, col if col.a > 0.0 else UiTheme.color("icon_outline"), maxf(1.2, _s * width), true)
 
 
 func _dot(at: Vector2, rr: float, col: Color) -> void:
+	if _edge_pass:
+		return
 	draw_circle(at, rr * _r, col)
 
 
@@ -149,6 +158,21 @@ func _draw() -> void:
 	_r = _s / 2.0 * 0.86   # (room for the outline and the shadow)
 	if _draw_svg() or _draw_rendered():
 		return
+	_painted()
+
+
+## Paints the drawn icon in two passes: first every shape's white sticker edge, then the outlines and fills over
+## them, so the white edge rings the whole silhouette and never cuts across a part laid on another (a hat's
+## crown on its brim, a coin's star on its face). Subclasses paint in `_paint`.
+func _painted() -> void:
+	_edge_pass = true
+	_paint()
+	_edge_pass = false
+	_paint()
+
+
+## The drawn icon (called once per pass: see `_painted`).
+func _paint() -> void:
 	var light := UiTheme.color("icon_light")
 	match kind:
 		"coin":

@@ -38,6 +38,10 @@ func _draw() -> void:
 		return
 	_c = size / 2.0
 	_r = _s / 2.0 * 0.86
+	_painted()
+
+
+func _paint() -> void:
 	_thing()
 
 

@@ -30,6 +30,10 @@ func _draw() -> void:
 		return
 	_c = size / 2.0
 	_r = _s / 2.0 * 0.86
+	_painted()
+
+
+func _paint() -> void:
 	var skin := _col("skin", "#f1c7a1")
 	var hair := _col("hair", "#6b4423")
 	var style := str(look.get("style", "short"))
