@@ -154,9 +154,10 @@ func has_room(n := 1) -> bool:
 
 
 ## Takes in a new `item_id` straight to the Barn (a grown baby, a gift), with its own fields `keep`. Returns false
-## when the Barn is full.
-func receive(item_id: String, keep := {}) -> bool:
-	if not has_room():
+## when the Barn is full. `to_hand`: it is taken out at once to be placed, so it may go one past the space (the
+## hand slot; given back by `spill_over` if the hand is emptied).
+func receive(item_id: String, keep := {}, to_hand := false) -> bool:
+	if not has_room(0 if to_hand else 1):
 		return false
 	var o := keep.duplicate(true)
 	o.merge({"uid": game.next_uid, "id": item_id, "t": game.now()}, true)

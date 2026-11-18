@@ -181,7 +181,11 @@ func start_stored(index: int) -> void:
 
 
 func cancel() -> void:
+	var from_storage := int(state.get("stored", -1)) >= 0
 	state = {}
+	if from_storage:   # (a thing placed from the inbox past a full Barn goes back to the inbox: SocialSystem.claim)
+		if Game.storage.spill_over() > 0:
+			Game.inventory_changed.emit()
 	grid.placing_changed.emit("")
 	grid.queue_redraw()
 

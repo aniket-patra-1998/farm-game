@@ -156,3 +156,8 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   sheet swept where it rests, after `BuildingSheet.SLIDE`). Found: a full orchard's sheet (every kind inside as
   pictures) was 789 tall on a 720 screen, its head cut off; who lives inside now scrolls past `INSIDE_SHARE`
   of the screen. Local precheck: the search budget test (387) can flake at ~4 ms in a 2-core container; rerun.
+- Run 8 (edge cases, a full Barn): a thing from the farm waiting in the inbox (a grown baby, a prize) could
+  not be placed while the Barn was full: Place said "Barn full" though it goes straight onto the farm. Now
+  `SocialSystem.claim(id, to_place)` holds it one past the Barn's space for the hand; an emptied hand
+  (`Placement.cancel`) gives it back to the inbox through `spill_over` (test 19). Open in edge cases: long
+  offline (weeks), a crammed farm. Next: audit cheating and save safety (run 9).

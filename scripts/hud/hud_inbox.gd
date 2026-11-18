@@ -149,7 +149,7 @@ static func button_key(item: Dictionary) -> String:
 
 ## Claims item `id`; a thing to place goes from the Barn straight into the player's hand.
 func _take(id: int, place: bool) -> void:
-	if not Game.social.claim(id):
+	if not Game.social.claim(id, place):
 		hud.book.refresh()
 		return
 	if place:

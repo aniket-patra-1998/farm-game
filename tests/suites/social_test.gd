@@ -303,6 +303,14 @@ func test_19_grown_babies_wait_in_the_one_inbox_to_be_placed() -> void:
 		g.next_uid += 1
 	_check(not g.social.claim(id), "the Barn full: it waits in the inbox")
 	_check(g.social.inbox.any(func(m: Dictionary) -> bool: return int(m["id"]) == id), "(still there)")
+	# Place with the Barn full: it goes straight into the hand (one past the space), and back if not placed.
+	var full := g.storage.stored.size()
+	_check(g.social.claim(id, true), "the Barn full: Place still takes it into the hand")
+	_eq(g.storage.stored.size(), full + 1, "held one past the Barn's space")
+	_eq(g.storage.spill_over(), 1, "an emptied hand gives it back")
+	_eq(str(g.social.inbox.back()["give"]["id"]), "cow", "to the inbox, waiting again")
+	_eq(g.storage.stored.size(), full, "the Barn as it was")
+	id = int(g.social.inbox.back()["id"])
 	g.storage.stored.clear()
 	_check(g.social.claim(id), "with room, it is claimed")
 	_eq(str(g.storage.stored.back()["id"]), "cow", "into the Barn, ready for the hand")

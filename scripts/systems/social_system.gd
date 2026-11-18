@@ -94,12 +94,16 @@ func free_count() -> int:
 
 ## Claims one inbox item: free things are given, a request or shared seedling is helped for its reward.
 ## Returns whether it was claimed (a help is refused when none are left today).
-func claim(item_id: int) -> bool:
+## `to_place`: a thing from the farm goes straight into the hand (Place), so a full Barn does not stop it: it is
+## held in the Barn's hand slot, one past its space, and goes back to the inbox if the hand is emptied (Placement).
+func claim(item_id: int, to_place := false) -> bool:
 	var at := _index_of(inbox, item_id)
 	if at < 0 or (not enabled() and int(inbox[at].get("from", 0)) != InboxItem.FARM):
 		return false
 	var item := inbox[at]
-	if str(item["give"].get("what", "")) == InboxItem.ITEM and not game.storage.has_room(int(item["give"].get("n", 1))):
+	var hand := 1 if to_place else 0
+	if str(item["give"].get("what", "")) == InboxItem.ITEM \
+			and not game.storage.has_room(int(item["give"].get("n", 1)) - hand):
 		game.message.emit(tr("INBOX_NO_ROOM"))   # (a thing to place waits until the Barn has room)
 		return false
 	if InboxItem.is_help(item):
@@ -112,7 +116,7 @@ func claim(item_id: int) -> bool:
 		game.ribbons.bump("neighbours_helped", 1)
 		game.message.emit(tr("SOCIAL_HELPED") % Balance.i("social.help_coins"))
 	else:
-		var got := grant(item["give"])
+		var got := grant(item["give"], to_place)
 		if got != "":
 			game.message.emit(tr("SOCIAL_CLAIMED") % got)
 	inbox.remove_at(at)
@@ -331,7 +335,7 @@ func _usable(item: Dictionary) -> bool:
 # ---------------------------------------------------------------- giving what was claimed
 
 ## Hands over a `give` to the farm. Returns the words for it ("2 Bricks").
-func grant(give: Dictionary) -> String:
+func grant(give: Dictionary, to_place := false) -> String:
 	var n := int(give.get("n", 1))
 	var id := str(give.get("id", ""))
 	match str(give.get("what", "")):
@@ -354,8 +358,8 @@ func grant(give: Dictionary) -> String:
 		InboxItem.WATER:
 			return tr("SOCIAL_WATERED") if game.nurture.help_young(int(give.get("uid", 0))) else ""
 		InboxItem.ITEM:
-			for i in n:
-				game.storage.receive(id, give.get("keep", {}))   # (to the Barn: placed from there, Placement)
+			for i in n:   # (to the Barn: placed from there, Placement; the last one into the hand when placing)
+				game.storage.receive(id, give.get("keep", {}), to_place and i == n - 1)
 			return words(give)
 	return ""
 
