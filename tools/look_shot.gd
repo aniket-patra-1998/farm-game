@@ -1,6 +1,6 @@
 extends Node
 ## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes nine pictures
-## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage, barn_broken, home_panel,
+## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garden, garage, barn_broken, home_panel,
 ## crafting_panel, seeds_panel, collections_panel, ribbons_panel,
 ## inbox_panel, goals_panel: the goal sheet on Today) into the folder given
 ## by --out=<dir> (default ci_shots/look).
@@ -62,6 +62,9 @@ func _ready() -> void:
 	if orchard.x >= 0:
 		views.append(["orchard", orchard.x, orchard.y, 1.5])
 		views.append(["orchard_far", orchard.x, orchard.y, 0.3])   # far enough for its trees' far look
+	var garden := _centre_of(func(o: Dictionary) -> bool: return str(o["id"]) == "bloom_garden")
+	if garden.x >= 0:
+		views.append(["garden", garden.x, garden.y, 1.5])
 	var garage := _centre_of(func(o: Dictionary) -> bool: return str(o["id"]) == "garage")
 	if garage.x >= 0:
 		views.append(["garage", garage.x, garage.y, 1.8])

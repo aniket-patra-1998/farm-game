@@ -642,22 +642,32 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 		gap = minf(gap, ORCHARD_GAP_MOST)
 	# (A crown is TREE_CROWN wide each way at size 1: the size that makes crowns just meet across the gap.)
 	var size := clampf(gap * TREE_FILL / (2.0 * TREE_CROWN), ORCHARD_SMALLEST, ORCHARD_BIGGEST)
+	var total := Game.inside_total(o)
+	# Every tree and bloom inside is there to see (FarmVille's orchards and gardens).
+	var shown := mini(slots, total)
+	var ids := grouped(pick_kinds(inside, shown, 99))  # a garden shows every different kind in it
+	# A garden of blooms is one baked model kept on disk (ModelStore: shipped for the showcase, saved on the phone
+	# the first time), so it opens without building its blooms again; the same model, so it looks the same.
+	var key := ""
+	if not trees and ids.all(func(i: String) -> bool: return Game.kind_of({"id": i}) == "bloom"):
+		key = Instancer.key_of(["garden", uid, _fp, room, span, per_row, rows, BLOOM_SIZE, ",".join(ids),
+			_crowd_detail(ids.size())])
+		var kept := ModelStore.fetch(key)
+		if kept != null:
+			_stand_plants(kept)
+			return
 	if not trees:
 		# Blooms grow in soil beds, one a row.
 		for r in rows:
 			var bz := span.position.y + span.size.y * r / maxf(rows - 1.0, 1.0) if rows > 1 else room.get_center().y
 			ModelKit.box(holder, Vector3(room.position.x, 0, bz - 0.22), Vector3(room.end.x, 0.05, bz + 0.22),
 				ModelKit.paint(Color("#6b4a2b")))
-	var total := Game.inside_total(o)
-	# Every tree and bloom inside is there to see (FarmVille's orchards and gardens).
-	var shown := mini(slots, total)
-	var ids := grouped(pick_kinds(inside, shown, 99))  # a garden shows every different kind in it
 	# Row by row, each kind together in straight lines, as FarmVille's orchards had them.
 	var places: Array[Vector2i] = []
 	for k in per_row * rows:
 		places.append(Vector2i(k % per_row, int(k / float(per_row))))
 	# Dozens of the same model: each gets less detail, so a full orchard costs about what a few trees do.
-	ModelKit.detail = clampf(sqrt(CROWD_FULL_DETAIL / maxf(ids.size(), 1.0)), ModelKit.MIN_DETAIL, 1.0)
+	ModelKit.detail = _crowd_detail(ids.size())
 	var stand := {}   # trees to stand: id -> {size, at: [where]}
 	for k in ids.size():
 		var z := span.position.y + span.size.y * places[k].y / maxf(rows - 1.0, 1.0) if rows > 1 \
@@ -681,9 +691,22 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			(stand[ids[k]]["at"] as Array).append(Vector3(x, 0, z))
 	_plant_trees(holder, stand)
 	ModelKit.detail = 1.0
-	_plants = ModelKit.bake(holder) if holder.get_child_count() > 0 and stand.is_empty() else holder
+	var plants := ModelKit.bake(holder) if holder.get_child_count() > 0 and stand.is_empty() else holder
+	if key != "" and plants != holder:
+		ModelStore.keep(key, plants)
+	_stand_plants(plants)
+
+
+## How much detail each of `count` trees or blooms in one orchard or garden is built with (ModelKit.detail).
+static func _crowd_detail(count: int) -> float:
+	return clampf(sqrt(CROWD_FULL_DETAIL / maxf(count, 1.0)), ModelKit.MIN_DETAIL, 1.0)
+
+
+## Stands the orchard's or garden's plants, built or kept, and sets them growing for the cycle it is in.
+func _stand_plants(plants: Node3D) -> void:
+	_plants = plants
 	add_child(_plants)
-	if not trees:
+	if not _plants_are_trees:
 		Objects3D.ripen(_plants, _plants_cycle[0], _plants_cycle[1])
 	_apply_plant_lod()
 

@@ -585,6 +585,37 @@ func test_105_orchards_and_gardens_keep_their_plants_inside_the_tile() -> void:
 		model.free()
 
 
+func test_481_a_bloom_gardens_blooms_are_kept_and_come_back_the_same() -> void:
+	# A garden of blooms is built once and kept (ModelStore), then loaded as the same model: no building again.
+	Game.reset_game()
+	Game.objects.clear()
+	ModelStore.stamp = "test"   # (kept in user://models/test, as on a phone)
+	var blooms: Array = Game.item_order.filter(func(i: String) -> bool:
+		return str(Game.item_data(i).get("kind", "")) == "bloom")
+	var level := Game.max_level("bloom_garden")
+	var field := {"uid": 9302, "id": "bloom_garden", "row": 2, "col": 2, "t": Game.now(), "level": level, "inside": {}}
+	field["inside"] = {blooms[0]: 3, blooms[1]: 2}
+	Game.objects.append(field)
+	Game.rebuild_occupancy()
+	var made: Array[Vector3] = []   # (saved, loaded, surfaces) for each opening
+	for k in 2:
+		var saved := ModelStore.saved
+		var loaded := ModelStore.loaded
+		var model := ModelKit.bake(BuildingModel.build(Game.item_data("bloom_garden"), Game.footprint("bloom_garden"),
+			level))
+		var fill := BuildingFill.create(field, model)
+		model.add_child(fill)
+		add_child(model)
+		made.append(Vector3(ModelStore.saved - saved, ModelStore.loaded - loaded, _surfaces(fill.get("_plants"), false)))
+		model.free()
+	_check(made[0].x >= 1 and made[0].y == 0, "the first opening builds the garden and keeps it (%s)" % made[0])
+	_check(made[1].y >= 1 and made[1].x == 0, "the next one loads it, building nothing (%s)" % made[1])
+	_eq(made[1].z, made[0].z, "the same model comes back")
+	ModelStore._remove_tree(ModelStore.KEPT + "/test")
+	ModelStore.stamp = ""
+	Game.objects.clear()
+
+
 func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
