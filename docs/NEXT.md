@@ -215,6 +215,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   (scripts/world3d, world/animals, season.gd), whose source is fingerprinted with the exported art (a touch means
   a re-export): move each with its next look change and drop it from the test's `LOOK_CODE`. Note: the full
   precheck takes ~16 min on this 2-core container; run it in the background. Next audit: feedback on taps.
+- Run 18 (the owner-approved A, B, C, all merged; plus the art loop's timing-flake report): timing budgets
+  hold the fastest of 5 runs (`TestSuite._fastest_ms`), so a busy core no longer blocks pushes. B: number
+  files checked as data (tests/suites/number_files_test.gd, test 442: no negative, no *chance/*_share over 1
+  but a balance weight, no missing value or field, prizes that can roll, ribbon tiers in step). A: random play
+  (test 194) covers crafting, feeding, Barn storing, helpers, VIP, rust, mystery prizes and clock jumps (+1 h,
+  +1 day, +30 days, -1 day), and no system may save a negative count; nightly `.github/workflows/fuzz.yml`
+  runs 300 seeds x 2000 steps (`-- --fuzz-seeds= --fuzz-steps=`). C: `tools/exploit_hunt.tscn` searches every
+  loop of up to N actions on a tile (test 443 fails a loop paying coins with no wait); its one finding,
+  plow-place-sell buys 1 XP for 34 coins with no wait (FarmVille's own), is reported for the owner. Precheck
+  took ~2-3 min this run. Next: the feedback-on-taps audit, then first-hour feel.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
