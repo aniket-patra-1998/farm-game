@@ -41,3 +41,14 @@ func test_372_a_farm_of_thousands_changes_one_thing_at_one_things_cost() -> void
 	_check(collect < COLLECT_MS, "collecting from one cow costs %.2f ms" % collect)
 	Game.object_changed.disconnect(count)
 	Game.reset_game()
+
+
+func test_444_a_timing_budget_is_scaled_back_only_on_a_slower_machine() -> void:
+	var raw := INF
+	for t in TIMING_TRIES:
+		var began := Time.get_ticks_usec()
+		OS.delay_usec(3000)
+		raw = minf(raw, (Time.get_ticks_usec() - began) / 1000.0)
+	var measured := _fastest_ms(func() -> void: OS.delay_usec(3000))
+	_check(measured <= raw * 1.1, "the measure is never more than the work's own time (%.2f, %.2f)" % [measured, raw])
+	_check(measured >= 3.0 * YARDSTICK_MS / 8.0, "and scaled back no more than the yardstick ran slow (%.2f)" % measured)

@@ -16,6 +16,9 @@ const MORE_START := 25
 const NAME_INSIDE := 15
 const MORE_INSIDE := 5
 const TYPO := 20
+const BAR := 124   # "|", between words
+const PLACE_BITS := 32   # a ranking key: the score above these bits, the place in the list below
+const PLACE_MASK := (1 << PLACE_BITS) - 1
 const INSIDE_FROM := 3   # a typed word this long may match inside a word, not only at its start
 
 static var _plain: RegEx
@@ -65,8 +68,7 @@ func find(query: String, keep := Callable()) -> Array[String]:
 		for k in ids.size():
 			order[k] = k
 	else:
-		var total := PackedInt32Array()   # each place's score so far
-		total.resize(ids.size())
+		var total := PackedInt32Array()   # each place's score so far (the first word's, then added to)
 		var alive := PackedInt32Array()   # the places every word so far was found in
 		for n in words.size():
 			var best := PackedInt32Array()
@@ -74,14 +76,14 @@ func find(query: String, keep := Callable()) -> Array[String]:
 			var touched := _found(words[n], best)
 			if n == 0:
 				alive = touched
-			else:
-				var still := PackedInt32Array()
-				for k in alive:
-					if best[k] > 0:
-						still.append(k)
-				alive = still
+				total = best   # (the first word's scores are the total so far: no loop to add them)
+				continue
+			var still := PackedInt32Array()
 			for k in alive:
-				total[k] += best[k]
+				if best[k] > 0:
+					still.append(k)
+					total[k] += best[k]
+			alive = still
 			if alive.is_empty():
 				break
 		if alive.is_empty():
@@ -91,8 +93,13 @@ func find(query: String, keep := Callable()) -> Array[String]:
 				total[k] = TYPO
 		order = _ranked(alive, total)
 	var out: Array[String] = []
+	if not keep.is_valid():
+		out.resize(order.size())
+		for i in order.size():
+			out[i] = ids[order[i]]
+		return out
 	for k in order:
-		if not keep.is_valid() or keep.call(ids[k]):
+		if keep.call(ids[k]):
 			out.append(ids[k])
 	return out
 
@@ -177,13 +184,19 @@ func _mark(best: PackedInt32Array, touched: PackedInt32Array, all: String, at: P
 		scores: Array) -> void:
 	var anywhere := w.length() >= maxi(INSIDE_FROM, ItemSearch.rule("least_letters"))
 	var needle := w if anywhere else "|" + w
+	var whole: int = scores[0]
+	var begun: int = scores[1]
+	var inside: int = scores[2]
+	var last := at.size() - 1
+	var k := 0   # the thing the hit is in: hits come in order, so it only moves forward (no search per hit)
 	var pos := all.find(needle)
 	while pos >= 0:
 		var from := pos if anywhere else pos + 1   # (where the typed word itself begins)
-		var score: int = scores[2]
-		if all[from - 1] == "|":
-			score = scores[0] if all[from + w.length()] == "|" else scores[1]
-		var k := at.bsearch(from, false) - 1
+		var score := inside
+		if all.unicode_at(from - 1) == BAR:   # (a code, not a one-letter String made per hit)
+			score = whole if all.unicode_at(from + w.length()) == BAR else begun
+		while k < last and at[k + 1] <= from:
+			k += 1
 		if best[k] == 0:
 			touched.append(k)
 		if score > best[k]:
@@ -191,22 +204,20 @@ func _mark(best: PackedInt32Array, touched: PackedInt32Array, all: String, at: P
 		pos = all.find(needle, pos + 1)
 
 
-## `places` best first by `score`, then in the list's order (scores are a few fixed sums: grouped).
+## `places` best first by `score`, then in the list's order: one sort run by the engine over keys that hold both
+## (the score above, the place below), not a loop that groups them.
 static func _ranked(places: PackedInt32Array, score: PackedInt32Array) -> PackedInt32Array:
-	var by_score := {}
+	var keys := PackedInt64Array()
+	keys.resize(places.size())
+	var n := 0
 	for k in places:
-		var sc := score[k]
-		if not by_score.has(sc):
-			by_score[sc] = []   # (an Array, held by reference: a packed one would be copied on every append)
-		(by_score[sc] as Array).append(k)
-	var levels := by_score.keys()
-	levels.sort()
-	levels.reverse()
+		keys[n] = (int(-score[k]) << PLACE_BITS) | k
+		n += 1
+	keys.sort()
 	var out := PackedInt32Array()
-	for sc: int in levels:
-		var group := PackedInt32Array(by_score[sc])
-		group.sort()
-		out.append_array(group)
+	out.resize(n)
+	for i in n:
+		out[i] = keys[i] & PLACE_MASK
 	return out
 
 

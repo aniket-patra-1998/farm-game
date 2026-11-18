@@ -5,7 +5,8 @@ extends Node
 
 const MAIN_SCENE := preload("res://scenes/main.tscn")
 
-const TIMING_TRIES := 5   # runs of a timed piece of work; its budget holds the fastest (_fastest_ms)
+const TIMING_TRIES := 10   # runs of a timed piece of work; its budget holds the fastest (_fastest_ms)
+const YARDSTICK_MS := 1.9   # _yardstick at its fastest on the 2-core runner the budgets hold on
 
 var checks := 0
 var failures: Array[String] = []
@@ -18,15 +19,37 @@ func _check(condition: bool, what: String) -> void:
 		failures.append("%s: %s" % [current, what])
 
 
-## A timing budget's measure: the fastest of a few runs of `work`, in ms. Noise (another process, a busy core)
-## only ever adds time, so the fastest run is the work's own cost; one slow run on a shared runner is not a fail.
+## A timing budget's measure: the fastest of a few runs of `work`, in ms, as on the machine the budgets were set
+## on. Noise (another process, a busy core) only ever adds time, so the fastest run is the work's own cost; and a
+## shared runner can run slow for seconds at a time (a fixed piece of work measured here swings 1.8 to 3.6 ms),
+## so each run is paired with that fixed work (`_yardstick`) and a slower machine's time is scaled back by how
+## much slower the yardstick ran. A faster machine is never scaled up: the budget stays the budget.
 func _fastest_ms(work: Callable, tries := TIMING_TRIES) -> float:
 	var best := INF
+	var yard := INF
 	for t in tries:
 		var began := Time.get_ticks_usec()
+		_yardstick()
+		yard = minf(yard, (Time.get_ticks_usec() - began) / 1000.0)
+		began = Time.get_ticks_usec()
 		work.call()
 		best = minf(best, (Time.get_ticks_usec() - began) / 1000.0)
-	return best
+	return best * YARDSTICK_MS / maxf(yard, YARDSTICK_MS)
+
+
+## A fixed piece of plain work (packed array and dictionary writes, as the timed code does), about
+## YARDSTICK_MS on the machine the budgets were set on.
+static func _yardstick() -> void:
+	var a := PackedInt32Array()
+	a.resize(4096)
+	var s := 0
+	for i in 20000:
+		var k := i & 4095
+		a[k] += i
+		s += a[k] & 7
+	var d := {}
+	for i in 2000:
+		d[i] = str(i + s)
 
 
 
