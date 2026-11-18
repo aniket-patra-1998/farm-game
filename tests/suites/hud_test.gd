@@ -1152,3 +1152,43 @@ func test_524_inbox_names_stand_in_one_column() -> void:
 		_check(w > 0.0 and absf(w - widths[0]) < 1.0, "each inbox line keeps the thing's room (%s)" % str(widths))
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## The top bar at its widest: the longest farm name (in the widest letter) and a late farm's counters fit beside
+## the coins and the level star on every screen; a longer name from a hand-edited save is cut to the longest.
+func test_525_the_top_bar_fits_the_longest_name_and_the_biggest_counters() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var data := {}
+	Game.player.farm_name = "W".repeat(PlayerSystem.NAME_MAX * 3)
+	Game.player.save_to(data)
+	Game.player.load_from(data)
+	_eq(Game.player.farm_name, "W".repeat(PlayerSystem.NAME_MAX), "a saved name longer than the longest is cut")
+	Game.player.set_farm_name("  %s  " % "M".repeat(PlayerSystem.NAME_MAX + 5))
+	_eq(Game.player.farm_name.length(), PlayerSystem.NAME_MAX, "a name is kept at most the longest")
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	Game.player.farm_name = "W".repeat(PlayerSystem.NAME_MAX)
+	hud.top.show_name()
+	Game.coins = 987654321
+	Game.gems = 99999
+	Game.xp = 99999999
+	Game.coins_changed.emit(Game.coins)
+	Game.gems_changed.emit(Game.gems)
+	Game.xp_changed.emit(Game.xp, Game.level())
+	var window := get_tree().root
+	var was := window.size
+	for shape: Vector2i in [Vector2i(1280, 720), Vector2i(2340, 1080), Vector2i(1024, 768)]:
+		window.size = shape
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var parts: Array[Control] = hud.top.hideable()
+		for a in parts:
+			for b in parts:
+				if a != b and a.get_global_rect().intersects(b.get_global_rect()):
+					_check(false, "%s: %s and %s don't overlap at the widest" % [shape, a.name, b.name])
+	window.size = was
+	main.queue_free()
+	await get_tree().process_frame

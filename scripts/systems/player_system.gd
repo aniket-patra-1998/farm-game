@@ -25,6 +25,7 @@ const JOB_KINDS := ["plow", "plant", "harvest", "fertilize", "collect", "nurture
 const OBJECT_JOBS := ["collect", "nurture", "feed"]   # jobs done beside an object, not on a plot
 const STEPS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 	Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]   # a step to each of the eight tiles round
+const NAME_MAX := 24   # letters in a name (the plaque at the top fits this many of the widest)
 const KIND_HAIR := {"a": "short", "b": "ponytail"}   # the hair a boy or a girl starts with (look `body`: a, b)
 const DEFAULT_LOOK := {"body": "a", "skin": "#f1c9a5", "hair": "#5a3a1e", "hair_style": "short",
 	"shirt": "#d9483b", "overalls": "#3f6fb5", "hat": "none", "shoes": "#5b3b22"}
@@ -70,8 +71,14 @@ func reset() -> void:
 ## Makes the farmer a boy ("a") or a girl ("b"), with that kind's own hair to start with.
 ## Names the farm (Settings); saved with the farm.
 func set_farm_name(words: String) -> void:
-	farm_name = words.strip_edges()
+	farm_name = fit_name(words)
 	game.queue_save()
+
+
+## A name as it is kept: trimmed and at most NAME_MAX letters (a longer one, from a hand-edited save, would run
+## over the coins and the level star on the plaque).
+static func fit_name(words: String) -> String:
+	return words.strip_edges().left(NAME_MAX).strip_edges()
 
 
 func set_kind(kind: String) -> void:
@@ -92,8 +99,8 @@ func save_to(data: Dictionary) -> void:
 
 func load_from(data: Dictionary) -> void:
 	reset()
-	farmer_name = str(data.get("farmer_name", ""))
-	farm_name = str(data.get("farm_name", ""))
+	farmer_name = fit_name(str(data.get("farmer_name", "")))
+	farm_name = fit_name(str(data.get("farm_name", "")))
 	var saved: Variant = data.get("farmer_look", {})
 	if typeof(saved) == TYPE_DICTIONARY:
 		for k in DEFAULT_LOOK:

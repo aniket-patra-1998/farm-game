@@ -5,7 +5,6 @@ extends RefCounted
 
 const QUALITY_WORDS := {"low": "GRAPHICS_LOW", "mid": "GRAPHICS_MID", "high": "GRAPHICS_HIGH",
 	"ultra": "GRAPHICS_ULTRA"}
-const NAME_MAX := 24     # letters in a farm's name (the plaque fits them)
 
 const KIND_WORDS := {"a": "FARMER_BOY", "b": "FARMER_GIRL"}   # the look's body -> its words
 const FARMER_STYLES := {"a": "short", "b": "long"}   # a look's body -> its picture's hair (PortraitIcon)
@@ -39,7 +38,7 @@ func farm_card() -> PanelContainer:
 	var field := LineEdit.new()
 	field.text = Game.player.farm_name
 	field.placeholder_text = tr("MY_FARM")
-	field.max_length = NAME_MAX
+	field.max_length = PlayerSystem.NAME_MAX
 	field.custom_minimum_size.x = UiTheme.size("panel_button_width") * FIELD_WIDE
 	field.text_submitted.connect(func(_t: String) -> void: field.release_focus())
 	field.text_changed.connect(func(t: String) -> void:
