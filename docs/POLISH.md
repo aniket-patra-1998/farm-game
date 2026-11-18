@@ -41,7 +41,7 @@ first; our own touch only where it is clearly marked. Every system is built (doc
 - Picked looks so far (keep them): mown-stripes lawn with no grass clumps; ready signs as small bubblegum-pink
   pins; lawn yards with a trodden path gate to door; farmer with button eyes and an open smile; inbox icon an
   envelope with a red seal; chunky flowers; calm deep water with life; storybook buildings; VIP and rust on; VIP
-  top boost x1.5. Parked by the owner: the Barn's weather looks (storm, wind, winter liked; a lighter rainbow).
+  top boost x1.5; the goal faces, the goal sheet and its calendar icon (approved 18 Nov 23:32). Parked by the owner: the Barn's weather looks (storm, wind, winter liked; a lighter rainbow).
 
 ## Guardrails
 - Fix and polish only: code quality, stress tests, edge cases, phone UI checks, player progression, economy,
