@@ -111,6 +111,8 @@
     "font_xp": 12,
     "hud_margin": 12,
     "hud_gap": 8,
+    "row_gap": 12,
+    "section_gap": 16,
     "tool_size": 64,
     "tool_icon": 56,
     "font_tool": 12,

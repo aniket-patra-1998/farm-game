@@ -101,7 +101,7 @@ func _ready() -> void:
 
 	_content = VBoxContainer.new()
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_content.add_theme_constant_override("separation", 14)
+	_content.add_theme_constant_override("separation", int(UiTheme.size("section_gap")))
 	scroll.add_child(_content)
 	get_viewport().size_changed.connect(_on_screen_changed)
 
@@ -239,7 +239,7 @@ func _build_now() -> void:
 		(_pages[_tab] as Node).queue_free()
 	var fresh := VBoxContainer.new()
 	fresh.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	fresh.add_theme_constant_override("separation", 14)
+	fresh.add_theme_constant_override("separation", int(UiTheme.size("section_gap")))
 	_content.add_child(fresh)
 	_pages[_tab] = fresh
 	_stale.erase(_tab)

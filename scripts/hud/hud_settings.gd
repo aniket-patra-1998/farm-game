@@ -123,10 +123,10 @@ func _volume_slider(value: float, on_change: Callable) -> HSlider:
 ## a new farm (two taps).
 func debug_card() -> PanelContainer:
 	var inner := BookPanel.card()
-	inner.add_theme_constant_override("separation", 10)
+	inner.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 10)
-	row.add_theme_constant_override("v_separation", 10)
+	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+	row.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 	inner.add_child(row)
 	for entry: Array in [["DEBUG_COINS", func() -> void: Game.debug_add_coins(10000)],
 			["DEBUG_BEES", func() -> void: Game.debug_add_bees(20)],
@@ -151,7 +151,7 @@ func debug_card() -> PanelContainer:
 ## performance numbers (PerfReadout).
 func showcase_card() -> PanelContainer:
 	var inner := BookPanel.card()
-	inner.add_theme_constant_override("separation", 10)
+	inner.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	inner.add_child(BookPanel.heading(tr("TESTING")))
 	var go := hud.panel_button(tr("BACK_TO_MY_FARM") if Game.in_showcase() else tr("OPEN_SHOWCASE_FARM"))
 	go.tooltip_text = tr("SHOWCASE_HELP")
@@ -166,8 +166,8 @@ func showcase_card() -> PanelContainer:
 		# What stands at one size or level at a time is walked by hand (ShowcaseFarm): every building's looks, and
 		# the Barn's by its VIP level.
 		var walk := HFlowContainer.new()
-		walk.add_theme_constant_override("h_separation", 10)
-		walk.add_theme_constant_override("v_separation", 10)
+		walk.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+		walk.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 		inner.add_child(walk)
 		for entry: Array in [["SHOWCASE_SIZES_DOWN", ShowcaseFarm.step_sizes.bind(Game, -1)],
 				["SHOWCASE_SIZES_UP", ShowcaseFarm.step_sizes.bind(Game, 1)],

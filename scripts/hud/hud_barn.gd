@@ -22,8 +22,8 @@ func _init(owner: FarmHud) -> void:
 func add_boosts(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.heading(tr("BOOSTS")))
 	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 10)
-	row.add_theme_constant_override("v_separation", 10)
+	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+	row.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 	content.add_child(row)
 	var boosts := [
 		[tr("FERTILIZE_ALL_LEFT") % Game.fertilize_alls, Game.fertilize_alls > 0,
@@ -51,7 +51,7 @@ func build_barn_repair(content: VBoxContainer) -> void:
 		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT_INFO"),
 		UiTheme.HEADING, BookPanel.SOFT))
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 10)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	var need := Game.storage.repair_needs()
 	for p in GameState.part_ids:
 		var want := int(need.get(p, 0))

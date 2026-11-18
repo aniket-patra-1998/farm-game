@@ -101,8 +101,8 @@ func add_building_special_info(content: VBoxContainer, o: Dictionary) -> void:
 				)
 			)
 			var eggs := HFlowContainer.new()
-			eggs.add_theme_constant_override("h_separation", 10)
-			eggs.add_theme_constant_override("v_separation", 10)
+			eggs.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+			eggs.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 			for colour in Game.mystery.egg_data.get("colours", {}):
 				var n := int(Game.mystery.mystery_eggs.get(colour, 0))
 				if n <= 0:
@@ -163,8 +163,8 @@ func add_shed_info(content: VBoxContainer) -> void:
 		Game.shed.bunches.size(), Game.shed.bunch_cap()], tr("PERFECT_BUNCHES_OF_HARVESTING_FLOWERS_SOMETIMES_INFO") % [
 		Game.shed.bunches.size(), Game.shed.bunch_cap(), Balance.i("barn.bunch_days")], UiTheme.HEADING, BookPanel.SOFT))
 	var flow := HFlowContainer.new()
-	flow.add_theme_constant_override("h_separation", 10)
-	flow.add_theme_constant_override("v_separation", 10)
+	flow.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+	flow.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 	for k in Game.shed.bunches.size():
 		var flower: String = Game.shed.bunches[k]
 		var b := hud.panel_button(tr("PLACE") % Game.crops[flower]["name"])
@@ -336,7 +336,7 @@ func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 		card.add_child(UiKit.count_row(queue))
 		card.add_child(BookPanel.info(tr("NURSERY_HOW") % need, tr("NURSERY_HOW_INFO") % need, UiTheme.HEADING))
 	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 12)
+	row.add_theme_constant_override("h_separation", int(UiTheme.size("row_gap")))
 	var have := Game.nurture.has_supply("animal_feed")
 	var pours := Game.raising.can_pour(o)
 	var pour := hud.panel_button(tr("POUR_FEED") % pours if pours > 0 else (tr("TROUGH_FULL")
@@ -367,7 +367,7 @@ func add_hive_info(content: VBoxContainer, o: Dictionary) -> void:
 			)
 		)
 		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", 12)
+		row.add_theme_constant_override("h_separation", int(UiTheme.size("row_gap")))
 		var put := hud.panel_button(tr("ADD_QUEEN_BEE_HELD") % Game.bees.queen_bees)
 		put.disabled = Game.bees.queen_bees <= 0
 		put.pressed.connect(func() -> void: Game.bees.add_queen(uid))
@@ -418,8 +418,8 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 	card.add_child(BookPanel.text(tr("TRADE_TRUFFLES_FOR_A_RARE_PIG") % Balance.i("pigpen.truffles_per_pig"),
 			UiTheme.HEADING))
 	var breeds := HFlowContainer.new()
-	breeds.add_theme_constant_override("h_separation", 10)
-	breeds.add_theme_constant_override("v_separation", 10)
+	breeds.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+	breeds.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 	for id in Game.pigpen.rare_pigs():
 		var b := hud.panel_button(Game.item_data(id)["name"])
 		b.disabled = Game.pigpen.truffles < Balance.i("pigpen.truffles_per_pig")

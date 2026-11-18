@@ -38,8 +38,8 @@ func add_feed_card(content: VBoxContainer, o: Dictionary) -> void:
 			card.add_child(BookPanel.text(tr("FEED_LINE") % [Game.feeds.feed_name(f, rich),
 				Game.feeds.count(f, rich), liking, Game.feeds.units_needed(o)], UiTheme.HEADING))
 			var row := HFlowContainer.new()
-			row.add_theme_constant_override("h_separation", 10)
-			row.add_theme_constant_override("v_separation", 10)
+			row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+			row.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 			for effect: String in Game.feeds.effects():
 				row.add_child(_effect_button(o, uid, f, effect, rich))
 			card.add_child(row)

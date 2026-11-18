@@ -64,7 +64,7 @@ func build_collection(content: VBoxContainer, coll_id: String) -> void:
 		if str(coll["id"]) != coll_id:
 			continue
 		var inner := BookPanel.card()
-		inner.add_theme_constant_override("separation", 10)
+		inner.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 
 		var head := HBoxContainer.new()   # (the set's name is the panel's title)
 		head.alignment = BoxContainer.ALIGNMENT_END

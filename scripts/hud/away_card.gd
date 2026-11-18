@@ -111,7 +111,7 @@ func _row(item: Dictionary) -> Button:
 	line.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	line.offset_left = 12
 	line.offset_right = -12
-	line.add_theme_constant_override("separation", 10)
+	line.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(line)
 	var icon := UiIcon.make(str(ICONS.get(item["kind"], "star")), 30.0)

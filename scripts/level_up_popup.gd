@@ -55,7 +55,7 @@ func _ready() -> void:
 
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 14)
+	col.add_theme_constant_override("separation", int(UiTheme.size("section_gap")))
 	_card.add_child(col)
 
 	var eyebrow := _label(tr("LEVEL_UP"), 28, CREAM)

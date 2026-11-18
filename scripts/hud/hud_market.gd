@@ -262,7 +262,7 @@ func short_detail(id: String, it: Dictionary) -> String:
 
 func land_card() -> Control:
 	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 10)
+	inner.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	var step := Game.land.next_expansion()
 	var size := Game.farm_size
 	if step.is_empty():
@@ -273,8 +273,8 @@ func land_card() -> Control:
 	inner.add_child(BookPanel.text(
 		tr("ADDS_PLOTS_THE_DASHED_AREA_ON") % (next * next - size * size), UiTheme.HEADING))
 	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 12)
-	row.add_theme_constant_override("v_separation", 12)
+	row.add_theme_constant_override("h_separation", int(UiTheme.size("row_gap")))
+	row.add_theme_constant_override("v_separation", int(UiTheme.size("row_gap")))
 	if Game.level() < int(step["level"]):   # (coins or gems, every step needs its level: LandSystem.expand)
 		var wait := hud.panel_button(tr("REACH_LEVEL_TO_EXPAND") % int(step["level"]))
 		wait.disabled = true
@@ -348,7 +348,7 @@ func detail_of(id: String, it: Dictionary) -> String:
 ## FarmVille's Mystery Box: one random prize, and the only way to get a Donkey.
 func mystery_box_card() -> Control:
 	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 10)
+	inner.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	inner.add_child(BookPanel.text(tr("MYSTERY_BOX"), UiTheme.BODY))
 	inner.add_child(
 		BookPanel.info(
