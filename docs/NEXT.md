@@ -477,6 +477,35 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   per_day_of should count only the ones ready today). Next: step 7's data on goals/7-content (six chains, about 15
   daily templates, three projects; each new verb needs its GOAL_DO_* keys, test 465), then the bot completing every
   chain (`chain` column). Step 4 only after the owner's yes in the log.
+- Run 5 (18 Nov 23:36 - 19 Nov 00:10 IST; owner approved the checkpoint 23:32): step 4's first half on goals/4-welcome
+  (2497ce3), not
+  merged (step 4 is not finished: the reveals are still to do). Built: the Welcome chain (data/goals.json chain
+  `welcome`, giver Maple, `new_farm: true`, 8 steps: harvest 2, plow 2 + plant 2 Strawberries -> Starter Seeds,
+  plant + harvest them -> Barley's chicken (ready), collect a chicken, buy an Apple Tree (comes ready) + pick it,
+  plow + plant 4, level 3 -> today's jobs, plant Wheat "ready when you wake"). GoalSystem: `new_farm_chains()`
+  opened by reset (a brand-new farm); load_from marks them done on a farm saved without them (old saves skip
+  Welcome); reward `seeds` (gift seeds, `seeds_of`/`take_seed`, saved "goal_seeds"), `place` + `ready` (the gift
+  comes ready: BarnStorage.place_from_storage), a task's `ready` (the thing it counts as bought comes ready:
+  `take_ready`, ShopSystem.buy_and_place); daily.level 3 (jobs wait for level 3); `welcome_say()`.
+  Game: `can_plant(id)` (unlocked or gift seeds held: FieldSystem.plant, the Seeds shelf, Show me), a new farm's
+  `tutorial_step` is DONE when goals run (the Welcome chain teaches; `tutorial_text()` falls back to the open
+  Welcome step's line, the HUD refreshes it on goals_changed; old farms mid-tutorial keep it). Starter Seeds:
+  crops.json `starter_seeds` (`starter: true`, 3 minutes, unlock 99, free; schema field), only on the Seeds shelf
+  while held. Locale `GOAL_SAY_*` (strings_lint prefix), `GOAL_GOT_SEEDS`. Bot: plants with `can_plant`, keeps
+  coins for a goal's buy (`_keep`), places inbox gifts (`_place_gifts`). Tests 500-503 (tests/suites/welcome_test.gd).
+  Bot first hour (seed 1): Welcome done by minute 8 (8 chain steps), L2 at 1, L3 at 8, first purchase (Apple Tree)
+  at 6, then 52 idle minutes with today's jobs open and 14 coins (every plot growing; the bot plays a minute's
+  worth of taps at once, so its minutes run far ahead of a player's: Part 2's L3 at 30-40 is a player's pace).
+- Not done in run 5 (next, on goals/4-welcome, then merge): `HudReveal` + data/reveal.json (button -> the goal or
+  level that shows it; on a new farm only the tools in use and the Market; Collections, Ribbons, Neighbours,
+  Settings appear with a short shine as a goal needs them; a farm past Welcome sees everything) and the bot test
+  that every Part 2 row happens (the Tractor project's row needs step 7's project data). Starter Seeds have no
+  crop_forms.json entry (adding one re-exports every plant file: art churn beside the perf build), so they draw
+  as the catalog's berry shape, not as Strawberries: a look question for the owner (reported). The `Guide`
+  hand (Part 2 principles) is not in step 4's list: reported, not built.
+- Rebasing goals/4-welcome: its commit also carries this run-5 note in docs/NEXT.md (an older copy); on a
+  conflict keep main's NEXT.md. art/models (105 plant files) and data/art_sources.json come from
+  tools/export_plants.tscn: on a conflict take main's, then export again and run tools/make_art_versions.py.
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
