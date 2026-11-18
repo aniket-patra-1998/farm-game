@@ -278,6 +278,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   until the clock catches up. A damaged goal save: a chain's or project's step past its end is dropped, a short
   collected list filled with false. Goals tests 483-484 (481 is perf's). Next audit: code quality, round two (the goal system
   and the HUD goals are new code since round one).
+- Run 25 (23:20; code quality, round two): a harvest's bushel float said 1 + the stars after the harvest,
+  uncapped, while the stall had taken 1 + the stars before it up to its cap (near a full stall: "+4", kept 1);
+  `CraftingSystem.roll_bushel` returns the count it added and the harvest reports that (crafting test 485).
+  Into data: mastery.fertilized_points, collections' duplicate_damping and trade-in levels repeating after data's
+  last (finds test 486). The goal system and HUD goals were left to the goals build (its lane). Seen once: a
+  pre-push precheck failed on dummy-renderer RID errors in the godot log, passing before and after (a 3D test
+  flake). Next audit: whole-farm look (mostly the art lane; check numbers only), then motion, feedback.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
