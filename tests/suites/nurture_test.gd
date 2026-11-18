@@ -37,7 +37,9 @@ func test_120_a_mystery_young_grows_into_its_secret_on_the_last_supply() -> void
 	# Supplies for gems; saved with the farm.
 	g.gems = 10
 	_check(g.nurture.buy_supply("animal_feed", 2), "feed bought with gems")
-	_eq(g.gems, 10 - 2 * int(NurtureSystem.SUPPLIES["animal_feed"]["gem_cost"]), "at its price")
+	_eq(g.gems, 10 - 2 * NurtureSystem.gem_cost("animal_feed"), "at its price")
+	for s: String in NurtureSystem.SUPPLIES:
+		_check(NurtureSystem.gem_cost(s) > 0, "%s has its gem price in data (nurture.supply_gems)" % s)
 	_check(not g.nurture.buy_supply("animal_feed", 100), "not with gems you don't have")
 	var data := {}
 	g.nurture.save_to(data)

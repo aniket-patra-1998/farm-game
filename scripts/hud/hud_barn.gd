@@ -190,8 +190,8 @@ func build_bloom(content: VBoxContainer) -> void:
 			hud.close_panels())
 		content.add_child(regrow)
 		var buy := hud.panel_button(tr("BUY_ONE_FOR_GEMS") % [Game.nurture.supply_name("flower_food"),
-			int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])])
-		buy.disabled = Game.gems < int(NurtureSystem.SUPPLIES["flower_food"]["gem_cost"])
+			NurtureSystem.gem_cost("flower_food")])
+		buy.disabled = Game.gems < NurtureSystem.gem_cost("flower_food")
 		buy.pressed.connect(func() -> void:
 			if Game.nurture.buy_supply("flower_food", 1):
 				hud.show_building(uid))
@@ -237,7 +237,7 @@ func build_young(content: VBoxContainer) -> void:
 		Game.player.enqueue({"kind": "nurture", "uid": uid})
 		hud.close_panels())
 	content.add_child(give)
-	var gems := int(NurtureSystem.SUPPLIES[supply]["gem_cost"])
+	var gems := NurtureSystem.gem_cost(supply)
 	var buy := hud.panel_button(tr("BUY_ONE_FOR_GEMS") % [name, gems])
 	buy.disabled = Game.gems < gems
 	buy.pressed.connect(func() -> void:

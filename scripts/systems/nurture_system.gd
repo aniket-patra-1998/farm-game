@@ -13,9 +13,9 @@ extends GameSystem
 ## Placed young are objects with two fields of their own: "fed" (supplies given) and "becomes" (an item id).
 
 const SUPPLIES := {
-	"watering_can": {"name": "WATERING_CAN", "gem_cost": 2},
-	"animal_feed": {"name": "ANIMAL_FEED", "gem_cost": 2},
-	"flower_food": {"name": "FLOWER_FOOD", "gem_cost": 2},
+	"watering_can": {"name": "WATERING_CAN"},
+	"animal_feed": {"name": "ANIMAL_FEED"},
+	"flower_food": {"name": "FLOWER_FOOD"},
 }
 ## FarmVille: every Orchard harvest gave a seedling or a can. The split is our guess (sources don't say).
 ## Blooms (FarmVille 2012): harvests give Mystery Bulbs, a Full Bloom more often; Flower Food regrows a
@@ -78,9 +78,14 @@ func supply_name(supply: String) -> String:
 	return tr(SUPPLIES[supply]["name"])
 
 
+## Gems one of a supply costs (data/balance.json nurture.supply_gems).
+static func gem_cost(supply: String) -> int:
+	return int(Balance.d("nurture.supply_gems").get(supply, 0))
+
+
 ## Buys `n` of a supply with gems. Returns whether it was bought.
 func buy_supply(supply: String, n: int) -> bool:
-	if not SUPPLIES.has(supply) or n <= 0 or not game.spend_gems(int(SUPPLIES[supply]["gem_cost"]) * n):
+	if not SUPPLIES.has(supply) or n <= 0 or not game.spend_gems(gem_cost(supply) * n):
 		return false
 	add_supply(supply, n)
 	return true

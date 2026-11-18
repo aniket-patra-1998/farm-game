@@ -270,6 +270,10 @@
   }
  },
  "nurture": {
+  "supply_gems": {
+   "v": {"watering_can": 2, "animal_feed": 2, "flower_food": 2},
+   "note": "gems one Watering Can, Animal Feed or Flower Food costs when none are left"
+  },
   "seedling_share": {
    "v": 0.5,
    "note": "An Orchard harvest gives a Mystery Seedling this often (otherwise a Watering Can)."
