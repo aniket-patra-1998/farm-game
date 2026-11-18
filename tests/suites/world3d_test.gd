@@ -2368,3 +2368,18 @@ func test_497_the_phone_benchmark_line_reads_back_whole() -> void:
 	var back: Variant = JSON.parse_string(line.trim_prefix(LoadBenchmark.MARK))
 	_check(back is Dictionary and back.get("done") == false, "it says the run is not done yet")
 	_eq(int((back as Dictionary).get("showcase_cold", {}).get("built_ms", -1)), 3, "and keeps what was measured")
+
+
+func test_511_every_phone_build_ships_its_shaders_compiled() -> void:
+	# A phone compiles a shader the first time something draws with it, a stall it feels (docs/PERF_RUN.md, win 1):
+	# every Android export bakes them ahead (apk.yml exports under a Vulkan so the baker runs).
+	var presets := ConfigFile.new()
+	_eq(presets.load("res://export_presets.cfg"), OK, "the export presets read")
+	var android := 0
+	for section in presets.get_sections():
+		var preset := (section as String).trim_suffix(".options")
+		if preset == section or presets.get_value(preset, "platform", "") != "Android":
+			continue
+		android += 1
+		_check(presets.get_value(section, "shader_baker/enabled", false) == true, "%s bakes its shaders" % section)
+	_check(android >= 2, "the Android presets are found (%d)" % android)
