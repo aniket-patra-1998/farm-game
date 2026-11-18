@@ -11,8 +11,9 @@ make the whole game's art and design look unified and coherent, not parts pieced
 palette and gradients for improvement opportunities.
 
 ## What a run may change directly (refinement)
-- Colour: one palette across UI, icons and 3D (data/ui_theme.json, model colours, shader tints); gradients made
-  consistent (same direction, strength, highlight); saturation calmed where it reads immature; contrast for
+- Colour: improve the existing palette, never shrink or limit it: richer, more harmonious hues that sit well
+  together across UI, icons and 3D (data/ui_theme.json, model colours, shader tints); better gradients (depth,
+  light, consistent direction and highlight); saturation tuned where it reads immature or dull; contrast for
   legibility on a phone.
 - Shape and finish: outline weights, corner radii, shadows, highlights and sticker edges made the same everywhere;
   icons nudged to sit in one set (tools/make_ui_icons.py), without changing what an icon depicts.
