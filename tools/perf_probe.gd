@@ -115,6 +115,7 @@ func _ready() -> void:
 		vp.get_render_info(Viewport.RENDER_INFO_TYPE_SHADOW, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME)])
 	_shadow_casters()
 	_census()
+	_materials()
 	_breakdown()
 	await _processing()
 	get_tree().quit()
@@ -267,6 +268,46 @@ func _census() -> void:
 
 
 ## Which kind of thing an Objects3D mesh belongs to: the view (a child of Objects3D) it hangs under.
+## How many distinct materials and shaders the farm draws with (each shader is compiled for the phone, and each
+## material is a state change): "PERF materials=.. shaders=..", then the shaders with the most materials. What
+## step 4 of docs/PERF_RUN.md measures before and after merging near-duplicates.
+func _materials() -> void:
+	var mats := {}      # material -> true
+	var per_shader := {}   # shader path (or the material's class) -> materials drawn with it
+	var stack: Array[Node] = [get_tree().root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if not n is GeometryInstance3D or not (n as GeometryInstance3D).is_visible_in_tree():
+			continue
+		var g := n as GeometryInstance3D
+		var mesh: Mesh = null
+		if g is MeshInstance3D:
+			mesh = (g as MeshInstance3D).mesh
+		elif g is MultiMeshInstance3D and (g as MultiMeshInstance3D).multimesh != null:
+			mesh = (g as MultiMeshInstance3D).multimesh.mesh
+		var used: Array[Material] = []
+		if g.material_override != null:
+			used.append(g.material_override)
+		elif mesh != null:
+			for k in mesh.get_surface_count():
+				var m: Material = (g as MeshInstance3D).get_surface_override_material(k) if g is MeshInstance3D else null
+				used.append(m if m != null else mesh.surface_get_material(k))
+		for m in used:
+			if m == null or mats.has(m):
+				continue
+			mats[m] = true
+			var what := m.get_class()
+			if m is ShaderMaterial and (m as ShaderMaterial).shader != null:
+				what = (m as ShaderMaterial).shader.resource_path.get_file()
+			per_shader[what] = int(per_shader.get(what, 0)) + 1
+	print("PERF materials=%d shaders=%d" % [mats.size(), per_shader.size()])
+	var rows: Array = per_shader.keys()
+	rows.sort_custom(func(x, y): return per_shader[x] > per_shader[y])
+	for k in rows.slice(0, 12):
+		print("PERF   shader %s: %d materials" % [k, per_shader[k]])
+
+
 func _view_kind(objects3d: Node, mesh: Node) -> String:
 	var top: Node = mesh
 	while top != null and top.get_parent() != objects3d:
