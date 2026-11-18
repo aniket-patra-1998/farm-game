@@ -270,6 +270,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `CLOCK_SLACK` (2 s) is left alone. Fuel's clock is not moved before fuel is unlocked. Saving test 480.
   Neighbours' answers on their way now move with it too (SocialSystem.shift_clock; last_settled stays forward).
   Next audit in the rotation: cheating and save safety, round two.
+- Run 24 (22:20; cheating and save safety, round two): every daily limit and daily pick (today's goal jobs,
+  neighbours' helps and gifts, the fuel find, the market stall) turned on any change of day, so a clock set to
+  yesterday and back gave the day anew each time. `Game.day_turned(day)` turns only forward (the daily gift
+  already did); `Game.day_moved_back` moves the day markers back with a clock that ran two days or more ahead
+  and is put right (each system's shift_clock), so an honest fix of a wrong clock does not lock the day's limits
+  until the clock catches up. A damaged goal save: a chain's or project's step past its end is dropped, a short
+  collected list filled with false. Goals tests 481-482. Next audit: code quality, round two (the goal system
+  and the HUD goals are new code since round one).
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
