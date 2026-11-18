@@ -109,6 +109,11 @@ func _ready() -> void:
 	_build_placing_bar(root)
 	book = BookPanel.new()
 	root.add_child(book)
+	# One window at a time: a panel opened from the HUD (Seeds, Market, the album...) puts a building's sheet away,
+	# as a sheet opening closes the panel (show_building); else the sheet stayed drawn over the panel.
+	book.visibility_changed.connect(func() -> void:
+		if book.visible and sheet != null and sheet.visible:
+			sheet.close())
 	_level_popup = LevelUpPopup.new()
 	root.add_child(_level_popup)
 	Game.leveled_up.connect(_level_popup.celebrate)

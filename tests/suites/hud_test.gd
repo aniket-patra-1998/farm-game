@@ -464,6 +464,11 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	var after := hud.sheet.find_children("*", "Control", true, false)
 	_eq(after.size(), before.size(), "refilled with the same parts")
 	_check(after.size() > 0 and after[0] == before[0] and after[-1] == before[-1], "the very same ones")
+	# One window at a time: a panel opened from the HUD puts the sheet away (it was drawn over the panel).
+	hud.show_seeds()
+	_check((hud.get("book") as BookPanel).visible, "Seeds opens over a home's sheet")
+	_check(not hud.sheet.visible, "and the sheet goes")
+	(hud.get("book") as BookPanel).close_panel()   # (Game.modal_open is shared with the next test)
 	main.queue_free()
 	await get_tree().process_frame
 
