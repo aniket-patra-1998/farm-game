@@ -742,6 +742,25 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   headless) the same way (time the per-kind and per-object work under Objects3D/Animal3D build; `file_length`
   instances each animal file again, ~0.2 ms a kind, small).
 
+- Run 7 (19 Nov 02:51 - 03:40 IST): the 02:10 nightly phone run never fired (no phone_bench run after 18 Nov 17:37
+  UTC by 21:44 UTC: GitHub dropped or delayed the schedule), so one phone run was started by hand at 21:45 UTC on
+  the baked benchmark APK of 21:31 UTC (it may be refused for the free plan's daily quota). Profiled the showcase's
+  settle headless (perf_probe -- --store, timers in Objects3D._rebuild, BuildingFill, Animal3D: scratch, not
+  committed): of ~2.7 s, ~1.0 s is ShowcaseFarm.build (the showcase's own layout, not a player's farm), ~0.75 s
+  Objects3D building, the rest the other layers over ~40 frames. In the building: BuildingFill.create ~280 ms
+  (orchard 45 ms: its trees, not kept; garage 29 ms: code-built vehicles; animal templates 117 ms for 85 kinds,
+  ~1.4 ms each, mostly loading their files; window heads 29 ms). Merged ddf6fc9: BuildingFill.head_triangles cuts
+  a window head judging each corner once and writing in place: 29 -> 13 ms, the same triangles in the same order
+  (test 523), so the look is the same.
+- Flaky budget: world3d test 338 (the heaviest farm's triangles) measures 2.295-2.302M against a 2.3M limit, run to
+  run (animals moving); one precheck in three or so fails on it since goals step 7. Not raised (the budget must not
+  slip): the next perf run should make the count steady (a fixed time or pose for the measure) or find the
+  triangles goals step 7 added.
+- Next run: read the hand-started phone run's report (phone_bench run 6) first; if it has a BENCH line, work on its
+  biggest number. Else on loading: the animal templates (85 kinds x ~1.4 ms: AssetRegistry.instance of each file,
+  _build_contact) and the garage's code-built vehicles (VehicleModel.build; a kept model through ModelStore as
+  the garden's blooms are, keyed by what it is built from).
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
