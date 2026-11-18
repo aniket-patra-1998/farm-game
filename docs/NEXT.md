@@ -152,3 +152,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   hour on top (active VIP gained it). Now `GameSystem.shift_clock(seconds)` per system (test 436); a new timer
   in a system adds itself there. Social's last_settled stays forward-only on purpose. Open in edge cases: a full
   Barn and inbox, long offline, a crammed farm. Next: fix the next ready item, or audit cheating (run 9).
+- Run 7 (phone UI, panels off the screen): menus_test now fails a panel or sheet that runs off the screen (the
+  sheet swept where it rests, after `BuildingSheet.SLIDE`). Found: a full orchard's sheet (every kind inside as
+  pictures) was 789 tall on a 720 screen, its head cut off; who lives inside now scrolls past `INSIDE_SHARE`
+  of the screen. Local precheck: the search budget test (387) can flake at ~4 ms in a 2-core container; rerun.
