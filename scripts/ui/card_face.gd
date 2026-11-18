@@ -97,6 +97,10 @@ func _draw() -> void:
 	var name_room := clampf(font.get_height(name_px) * NAME_LINES, name_high, maxf(name_high,
 		size.y - 2.0 * pad - (total - name_high)))
 	total += name_room - name_high
+	# Likewise a badge's or bar's room is kept where there is room, so a card with a bar (a ribbon on its way)
+	# stands level with its neighbours that have none (the content is centred, and the bar made it taller).
+	var footer_room := clampf(UiTheme.size("badge_height"), badge_high, maxf(badge_high, size.y - 2.0 * pad - total))
+	total += footer_room - badge_high
 	var y := maxf(pad, (size.y - total) / 2.0)
 	picture_top = y
 	# The picture, on its own canvas item (the shine).

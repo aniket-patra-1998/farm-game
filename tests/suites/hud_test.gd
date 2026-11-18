@@ -478,17 +478,22 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	# Cards in a row keep their pictures level whether a name takes one line or two (the album's rings stood lower
 	# under a one-line name).
 	var tops: Array[float] = []
-	for card_name: String in ["Pea Pod", "Wildflower Meadow Overflowing"]:   # not-ui
+	# A card with a bar (a ribbon on its way) stands level too: it was centred taller, so its picture stood higher.
+	var faces: Array[Dictionary] = [{"name": "Pea Pod"}, {"name": "Wildflower Meadow Overflowing"},   # not-ui
+		{"name": "Regular", "bar": [0.2, "1 / 5"]}]   # not-ui
+	for face: Dictionary in faces:
 		var card := CardFace.new()
 		card.size = Vector2(UiTheme.size("card_width"), UiTheme.size("card_icon") + UiTheme.size("card_words"))
 		add_child(card)
-		card.show_face("pea", {"name": card_name, "ring": [0.0, "0/5"]}, null)   # not-ui
+		face["ring"] = [0.0, "0/5"]   # not-ui
+		card.show_face("pea", face, null)
 		await get_tree().process_frame
 		await get_tree().process_frame
 		tops.append(card.picture_top)
 		card.queue_free()
 	_check(tops[0] > 0.0, "a card's picture was drawn")
 	_eq(tops[0], tops[1], "a one-line and a two-line name leave the picture at one height")
+	_eq(tops[0], tops[2], "a card with a bar leaves its picture at the same height")
 	main.queue_free()
 	await get_tree().process_frame
 
