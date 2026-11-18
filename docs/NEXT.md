@@ -341,6 +341,11 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   container needs Godot 4.7.2 at /home/claude/godot/godot and a full `--import` before any export (an export run
   against a half-imported project writes empty 168-byte .scn files: check `git diff --stat art/` before
   committing). Next: icons, menus, motion (order of work 3) or animal life; colour only on the ground and light.
+- Art run 8b (17:00 IST, a manual fire on the owner's 16:28 condition): the approved crown softening (a9e864c, mix
+  0.3) turned pink crowns salmon and purple ones grey, so TreeModel.tone now keeps each kind's own hue exactly and
+  leaf_tone is mix 0.1, saturation 0.85 (d80e9fd; test 103 checks every kind keeps hue and at least 0.6 of its
+  saturation). Orchard rendered at noon and dusk: pink, red, yellow and purple read as themselves. This is the
+  limit the colour rule names: do not mute objects further. art_versions conflicts on rebase: take main's, rerun.
 - Art run 9 (16:37 IST): main only, no taste change. 3527af1: words over the farm (coins, XP, costs, a swipe's and
   streak's count) in FloatText's look via `FloatText.style_world` (bold, float outline, soft shadow, fixed world px
   `FarmGrid.WORDS_PX`/`COMBO_PX`; numbers through UiTheme.tidy). Animal life (owner-approved, looks only):
