@@ -601,3 +601,26 @@ func test_453_files_load_side_by_side_on_worker_threads() -> void:
 	AssetRegistry.preload_files(["", "res://art/models/none_such.glb"])   # (missing: skipped, nothing said)
 	AssetRegistry.threaded = threaded
 	AssetRegistry.forget()
+
+
+func test_523_a_window_head_keeps_the_same_triangles_as_cut_one_by_one() -> void:
+	var model := AssetRegistry.instance("cow")
+	var mi := Animal3D._first_mesh(model)
+	var arrays := mi.mesh.surface_get_arrays(0)
+	var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var all := mi.get_aabb()
+	var front := all.end.x - all.size.x * BuildingFill.HEAD_SHARE
+	var above := all.position.y + all.size.y * BuildingFill.HEAD_ABOVE
+	var one_by_one := PackedInt32Array()
+	for t in range(0, idx.size(), 3):
+		var inside := true
+		for j in 3:
+			var p := v[idx[t + j]]
+			inside = inside and p.x > front and p.y > above
+		if inside:
+			one_by_one.append_array([idx[t], idx[t + 1], idx[t + 2]])
+	var kept := BuildingFill.head_triangles(v, idx, front, above)
+	_check(not kept.is_empty() and kept.size() < idx.size(), "the cow's head is some of its triangles, not none or all")
+	_eq(kept, one_by_one, "the same triangles in the same order as judging each corner of each triangle")
+	model.free()
