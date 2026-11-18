@@ -265,6 +265,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   (off without res://baked). Suspects to test: MultiMesh LOD picked from the batch's region-sized custom_aabb
   (DecorLayer._make_views), and Instancer._take_apart writing override materials onto shared meshes.
 
+- Art run 4 (13:15 IST): main 753f593, look_shot `--views=a,b` (only the named pictures). art-polish 25fea36
+  (rebased on main): run 3's calmer lawn on top of the grade; noon saturation 192 -> 138, dusk 223 -> 173
+  (trees_animals, clear). The before/after sheet (main vs art-polish, noon and dusk, trees_animals and all) is in
+  the log under "Art: waiting for your look": merge art-polish only on the owner's approval. If they find the lawn
+  dusty, the halfway values are hue -0.006, saturation x0.89, value x0.98 of main's. Precheck now passes first try
+  (the yardstick fix). A worktree's .godot copied from another checkout misses new classes: reimport it.
+  Next: half-built decorations in look_shot (suspects above), then contact shadows (main), then order of work 2
+  (trees' and buildings' outlines into the animals' style, on art-polish).
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
