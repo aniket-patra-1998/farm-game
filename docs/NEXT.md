@@ -756,10 +756,25 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   run (animals moving); one precheck in three or so fails on it since goals step 7. Not raised (the budget must not
   slip): the next perf run should make the count steady (a fixed time or pose for the measure) or find the
   triangles goals step 7 added.
-- Next run: read the hand-started phone run's report (phone_bench run 6) first; if it has a BENCH line, work on its
-  biggest number. Else on loading: the animal templates (85 kinds x ~1.4 ms: AssetRegistry.instance of each file,
-  _build_contact) and the garage's code-built vehicles (VehicleModel.build; a kept model through ModelStore as
-  the garden's blooms are, keyed by what it is built from).
+- First phone number (phone_bench run 6, 21:45 UTC, Galaxy A05s, Adreno 610, Android 15, baked APK of 21:31 UTC):
+  `"startup_ms": 8193`, then nothing. The engine took 8.2 s from start to LoadBenchmark._run (autoloads and the
+  main scene), and ~4 s later Test Lab's Robo crawler closed the app (its surfaces removed at 13:54:00, `am`
+  commands after it): the Robo wait script (a987841) does not hold the app open, so no phase is measured yet.
+  The artifact zip cannot be downloaded from this container (its blob host is refused by the egress proxy):
+  read the numbers in the run's log (`gh run view <id> --log | grep BENCH`).
+- Here (headless, desktop CPU): from start to the first script after the autoloads ~1.9-2.1 s, main.tscn's load
+  ~0.16-0.19 s (a scratch `-s` SceneTree script printing Time.get_ticks_msec() at _initialize). So the start is
+  mostly the autoloads' setup (Game and its systems, the catalog and data files, Sound, Feedback...).
+- Next run, in order: 1) the start (8.2 s on the phone, the biggest number there is): time each autoload's
+  _ready / _init (project.godot's autoload list; a scratch probe, or LoadTrace marks committed so the phone shows
+  them) and move what the first screen does not need off the start (loaded later, threaded) without changing
+  anything seen. 2) Keep the phone run going past the start: Test Lab's game-loop test type (`--type game-loop`,
+  an intent filter for com.google.intent.action.TEST_LOOP in the benchmark export's manifest, the app finishing
+  itself when the report is done) waits for the app instead of crawling it; or check why the Robo script's wait
+  is ignored (robo_wait.json is uploaded; its actions.json in the results bucket shows what Robo did). Until then
+  each phone run only gives startup_ms. 3) Loading after the start: the animal templates (85 kinds x ~1.4 ms:
+  AssetRegistry.instance of each file, _build_contact) and the garage's code-built vehicles (a kept model through
+  ModelStore as the garden's blooms are).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
