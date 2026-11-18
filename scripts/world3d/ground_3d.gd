@@ -37,7 +37,7 @@ const BAKE_PARAMS: Array[String] = ["grass_light", "grass_dark", "dry", "checker
 	"forest_moss", "litter", "edge_n", "hollows", "mow_width", "hue_drift", "blades"]
 ## The farm's lawn (the owner's pick, 17 Nov): a bright kept green mown in wide diagonal stripes, no tile checker,
 ## patches leaning warm or cool, and blade tips that catch the light. The seasons recolour it (data/seasons.json).
-const LAWN := {"grass_light": Color(0.44, 0.64, 0.24), "grass_dark": Color(0.33, 0.53, 0.2), "hollows": 0.1,
+const LAWN := {"grass_light": Color(0.49, 0.61, 0.31), "grass_dark": Color(0.38, 0.51, 0.26), "hollows": 0.1,
 	"dryness": 0.05, "checker": 0.0, "mow": 0.14, "mow_width": 2.0, "hue_drift": 0.4, "blades": 0.45}
 ## Whether the grass clumps are drawn: off (the owner's pick, 17 Nov: a clean mown lawn reads better than spiky
 ## clumps). They are still worked out, so turning this on brings them back as they were.
