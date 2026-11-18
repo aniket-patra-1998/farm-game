@@ -35,6 +35,31 @@ Render compositions of these pairings (look_shot views or a scratch scene) at no
 render hold even though this renderer is brighter than a phone; absolute colour does not, so tune relative to the
 neighbours, and keep the farm's best-looking pieces (the owner's picks) as the reference the rest moves towards.
 
+## The survey (18 Nov, noon and dusk) and the agreed target
+Why it is not beautiful yet, biggest first:
+1. The lawn outshines what stands on it: the brightest, most saturated thing on screen (acid green); stripes and
+   dark hollows read as stains. The ground must be calmer than its subjects.
+2. Three styles on one farm: crisp black-outlined high-contrast buildings, soft painted animals, noisy candy
+   trees (pink, teal, orange). Neighbours do not belong together.
+3. Flat light: noon has no shape; dusk is the same picture darker and greyer (no golden warmth, no cool shadow,
+   no rim light).
+4. Nothing grounded: weak or no soft contact shadow under decorations and animals.
+5. Clutter with no rest for the eye (rows of animals, a wall of noisy trees).
+Target (approved by the owner): a warm storybook farm in Hay Day's spirit, refined from what exists: warm sun and
+cool shadows, a golden dusk; a calmer ground so subjects pop; one family of soft painted materials with warm dark
+outlines instead of black; the existing palette made richer and in tune; everything grounded.
+Order of work: (1) lighting and grade, the ground's calm, contact shadows; (2) trees and building outlines into
+the animals' style; (3) icons, menus, motion.
+
+## Taste changes wait for the owner's eye; objective fixes merge
+- Taste changes (lighting, grade, colours, the trees' or buildings' style) go on branch `art-polish` (rebased on
+  main each time), never main. When it holds a set worth judging (about every 2-3 hours), make ONE before/after
+  sheet (same views, before = main, after = art-polish, noon and dusk), upload it into the log doc under a
+  heading "Art: waiting for your look" (Claude Docs: guide topic.uploads), list what changed beside it, and add a
+  row to "Reported, not built". Merge art-polish into main only after the owner approves in the log or in chat.
+- Objective fixes (broken pieces, misalignment, clipping, missing contact shadows, timing, consistent outline
+  weights and spacing) merge to main directly as docs/POLISH.md says.
+
 ## What a run may change directly (refinement)
 - Colour: improve the existing palette, never shrink or limit it: richer, more harmonious hues that sit well
   together across UI, icons and 3D (data/ui_theme.json, model colours, shader tints); better gradients (depth,
