@@ -7,6 +7,7 @@ import colorsys, math, os, re
 INK = "#3b2414"
 OUT = os.path.join(os.path.dirname(__file__), "..", "art", "icons", "ui")
 EDGE, LINE = 11.0, 4.5
+FIT, FIT_GROW = 112.0, 1.15   # one visual size for the set: the longest side drawn, of 128; the most one grows (view)
 
 
 def shade(hexc, k):
@@ -198,10 +199,10 @@ ICONS = {
 ICONS["arrow"] = [ICONS["arrow"][0], HI("path", 0.0, d="M44 30 L44 44 L54 40 Z")]
 
 
-def _arc_ys(x0, y0, rx, ry, phi, large, sweep, x1, y1, steps=24):
-    """Points along an SVG arc (the spec's endpoint to centre conversion), for its height."""
+def _arc_pts(x0, y0, rx, ry, phi, large, sweep, x1, y1, steps=24):
+    """Points along an SVG arc (the spec's endpoint to centre conversion)."""
     if rx == 0 or ry == 0:
-        return [y1]
+        return [(x1, y1)]
     c, s = math.cos(math.radians(phi)), math.sin(math.radians(phi))
     dx, dy = (x0 - x1) / 2, (y0 - y1) / 2
     xp, yp = c * dx + s * dy, -s * dx + c * dy
@@ -222,20 +223,21 @@ def _arc_ys(x0, y0, rx, ry, phi, large, sweep, x1, y1, steps=24):
         da += 2 * math.pi
     elif not sweep and da > 0:
         da -= 2 * math.pi
-    return [cy + s * rx * math.cos(a0 + da * t / steps) + c * ry * math.sin(a0 + da * t / steps)
+    return [(cx + c * rx * math.cos(a0 + da * t / steps) - s * ry * math.sin(a0 + da * t / steps),
+             cy + s * rx * math.cos(a0 + da * t / steps) + c * ry * math.sin(a0 + da * t / steps))
             for t in range(steps + 1)]
 
 
-def extent(tag, a):
-    """A shape's top and bottom in its own coordinates (curves followed, not their control points)."""
-    if tag == "circle":
-        return a["cy"] - a["r"], a["cy"] + a["r"]
-    if tag == "ellipse":
-        return a["cy"] - a["ry"], a["cy"] + a["ry"]
+def outline(tag, a):
+    """A shape's outline as points in its own coordinates (curves followed, not their control points)."""
+    if tag in ("circle", "ellipse"):
+        rx, ry = (a["r"], a["r"]) if tag == "circle" else (a["rx"], a["ry"])
+        return [(a["cx"] + rx * math.cos(t * math.pi / 12), a["cy"] + ry * math.sin(t * math.pi / 12)) for t in range(24)]
     if tag == "rect":
-        return a["y"], a["y"] + a["height"]
+        x, y, w, h = a["x"], a["y"], a["width"], a["height"]
+        return [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
     toks = re.findall(r"[MLCAZ]|-?[0-9.]+", a["d"])
-    ys, cmd, cur, start, i = [], "M", (0.0, 0.0), (0.0, 0.0), 0
+    pts, cmd, cur, start, i = [], "M", (0.0, 0.0), (0.0, 0.0), 0
     while i < len(toks):
         if toks[i] in "MLCAZ":
             cmd = toks[i]
@@ -247,17 +249,65 @@ def extent(tag, a):
         v = [float(t) for t in toks[i:i + n]]
         i += n
         if cmd == "C":
-            p0, p1, p2, p3 = cur[1], v[1], v[3], v[5]
-            ys += [(1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t * t * p2 + t ** 3 * p3
-                   for t in (j / 24 for j in range(25))]
+            q = [cur, (v[0], v[1]), (v[2], v[3]), (v[4], v[5])]
+            pts += [tuple((1 - t) ** 3 * q[0][k] + 3 * (1 - t) ** 2 * t * q[1][k] + 3 * (1 - t) * t * t * q[2][k]
+                          + t ** 3 * q[3][k] for k in (0, 1)) for t in (j / 24 for j in range(25))]
         elif cmd == "A":
-            ys += _arc_ys(cur[0], cur[1], v[0], v[1], v[2], int(v[3]), int(v[4]), v[5], v[6])
+            pts += _arc_pts(cur[0], cur[1], v[0], v[1], v[2], int(v[3]), int(v[4]), v[5], v[6])
         cur = (v[-2], v[-1])
-        ys.append(cur[1])
+        pts.append(cur)
         if cmd == "M":
             start = cur
             cmd = "L"   # (more pairs after an M are lines)
+    return pts
+
+
+def extent(tag, a):
+    """A shape's top and bottom in its own coordinates."""
+    ys = [p[1] for p in outline(tag, a)]
     return min(ys), max(ys)
+
+
+def placed(pts, transform):
+    """Points moved by an SVG transform of translate() and rotate() steps (applied right to left, as SVG does)."""
+    for step, args in reversed(re.findall(r"(translate|rotate)\(([^)]*)\)", transform or "")):
+        v = [float(t) for t in args.replace(",", " ").split()]
+        if step == "translate":
+            pts = [(x + v[0], y + (v[1] if len(v) > 1 else 0.0)) for x, y in pts]
+            continue
+        c, s = math.cos(math.radians(v[0])), math.sin(math.radians(v[0]))
+        ox, oy = (v[1], v[2]) if len(v) > 2 else (0.0, 0.0)
+        pts = [(ox + c * (x - ox) - s * (y - oy), oy + s * (x - ox) + c * (y - oy)) for x, y in pts]
+    return pts
+
+
+def bounds(parts):
+    """The drawn icon's box on the canvas, its white sticker edge included: (left, top, right, bottom)."""
+    xs, ys = [], []
+    for part in parts:
+        tag, a, col = part[0], part[1], part[2]
+        if col is None:   # (a highlight lies on a shape)
+            continue
+        if tag == "line":
+            pts, pad = outline("path", a), (a["w"] + LINE + EDGE) / 2
+        else:
+            pts, pad = placed(outline(tag, a), a.get("transform")), (LINE + EDGE) / 2
+        xs += [x - pad for x, _ in pts] + [x + pad for x, _ in pts]
+        ys += [y - pad for _, y in pts] + [y + pad for _, y in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def view(parts):
+    """The canvas window an icon is drawn through: one visual size for the set. An icon drawn smaller than FIT
+    (its longest side, of the 128 canvas) is enlarged to it, up to FIT_GROW, and centred, so a thin cursor or a
+    small sack sits as large as the barn and the coin beside it in the tool bar; larger ones are left as drawn."""
+    left, top, right, bottom = bounds(parts)
+    longest = max(right - left, bottom - top)
+    if longest >= FIT:
+        return "0 0 128 128"
+    side = 128 * longest / min(FIT, longest * FIT_GROW)
+    cx, cy = (left + right) / 2, (top + bottom) / 2
+    return "%.1f %.1f %.1f %.1f" % (cx - side / 2, cy - side / 2, side, side)
 
 
 # The top-lit gradient spans the shape's own height, in its coordinates (userSpaceOnUse): Godot's SVG renderer
@@ -296,8 +346,8 @@ def build(parts):
         defs.append(grad(gid, col, *extent(tag, a)))
         edge.append('<%s %s fill="#ffffff" stroke="#ffffff" stroke-width="%.1f" stroke-linejoin="round"/>' % (tag, attrs(a), EDGE + LINE))
         body.append('<%s %s fill="url(#%s)" stroke="%s" stroke-width="%.1f" stroke-linejoin="round"/>' % (tag, attrs(a), gid, INK, LINE))
-    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">'
-            '<defs>%s</defs>%s%s</svg>\n') % ("".join(defs), "".join(edge), "".join(body))
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s" width="128" height="128">'
+            '<defs>%s</defs>%s%s</svg>\n') % (view(parts), "".join(defs), "".join(edge), "".join(body))
 
 
 def main():

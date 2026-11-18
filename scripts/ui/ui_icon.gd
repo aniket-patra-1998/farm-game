@@ -22,6 +22,9 @@ const WHITE_EDGE := 2.4    # the white edge round it, against the outline's widt
 const ROUND := 20          # points on a circle
 const RENDER_INSET := 0.04 # a rendered picture sits this far in from the icon's edge (room for its outline)
 const RENDER_RECHECK := 0.3   # seconds before looking again for a rendered picture still being made
+## Drawn icons that drew smaller than the set's one visual size (the vector icons are fitted by
+## tools/make_ui_icons.py): the music note and the lock sat about 12% smaller than the speaker and eye beside them.
+const GROW := {"note": 1.12, "lock": 1.12}
 
 @export var kind := "coin": set = _set_kind
 ## A muted icon (sound off, UI hidden) is drawn with a slash through it.
@@ -155,7 +158,7 @@ func _draw() -> void:
 	if _s <= 0.0:
 		return
 	_c = size / 2.0
-	_r = _s / 2.0 * 0.86   # (room for the outline and the shadow)
+	_r = _s / 2.0 * 0.86 * GROW.get(kind, 1.0)   # (room for the outline and the shadow)
 	if _draw_svg() or _draw_rendered():
 		return
 	_painted()
