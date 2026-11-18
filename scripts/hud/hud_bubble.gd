@@ -8,6 +8,7 @@ extends PanelContainer
 const SHOW_FOR := 3.0         # seconds a bubble stays..
 const SHOW_FOR_ACTION := 5.0  # ..and with a button to press
 const GAP := 6.0              # px between the bubble's point and the thing
+const EDGE := 8.0             # px the bubble keeps from the screen's edges (a thing tapped at an edge)
 const WRAP_AFTER := 26        # characters past which a bubble's words wrap (at ui_theme's `bubble_width`)
 
 var hud: FarmHud
@@ -166,4 +167,10 @@ func _follow() -> void:
 		return
 	var p: Vector2 = to_screen.call(_at)
 	# (screen space: the HUD root may sit inside safe insets)
-	global_position = p - Vector2(size.x / 2.0, size.y + GAP - _rise)
+	var at := p - Vector2(size.x / 2.0, size.y + GAP - _rise)
+	var view := get_viewport().get_visible_rect().grow(-EDGE)
+	if at.y < view.position.y:   # (no room above a thing at the top: it shows below it)
+		at.y = p.y + GAP + _rise
+	at.x = clampf(at.x, view.position.x, maxf(view.position.x, view.end.x - size.x))
+	at.y = clampf(at.y, view.position.y, maxf(view.position.y, view.end.y - size.y))
+	global_position = at

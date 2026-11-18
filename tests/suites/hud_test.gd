@@ -431,6 +431,13 @@ func test_353_a_tapped_thing_tells_about_itself_in_a_bubble() -> void:
 	_check(hud.bubble.visible, "the bubble shows")
 	_check(hud.bubble.global_position.y < 300.0, "above the thing")
 	hud.bubble.close()
+	var view := hud.get_viewport().get_visible_rect()
+	for at: Vector2 in [Vector2(2, 2), Vector2(view.end.x - 2, 10), Vector2(3, view.end.y - 3), view.end - Vector2(1, 1)]:
+		hud.bubble.show_at(at, "Chicken", "Ready in 14 h", -1)
+		await get_tree().process_frame
+		hud.bubble.call("_follow")
+		_check(view.encloses(hud.bubble.get_global_rect()), "a bubble for a thing at the edge (%s) stays on the screen" % at)
+		hud.bubble.close()
 	_check(not hud.bubble.visible, "and goes")
 	hud.queue_free()
 
