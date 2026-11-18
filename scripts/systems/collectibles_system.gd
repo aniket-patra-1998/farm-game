@@ -52,6 +52,19 @@ func load_from(data: Dictionary) -> void:
 	coll_levels = int_map(data.get("coll_levels", {}))
 
 
+## The showcase: the collections in turn complete (ready to trade in), part found and not begun, a few
+## already traded in, so the collections sheet shows each state.
+func showcase() -> void:
+	for k in collections.size():
+		var coll: Dictionary = collections[k]
+		var items: Array = coll["items"]
+		var found := items.size() if k % 3 == 0 else (items.size() / 2 if k % 3 == 1 else 0)
+		for n in found:
+			owned[items[n]["id"]] = 1 + n % 2
+		if k % 4 == 1:
+			coll_levels[coll["id"]] = 1
+
+
 ## Items you hold fewer of are more likely, so sets fill up instead of piling duplicates.
 func pick_item(coll: Dictionary) -> String:
 	var weights: Array[float] = []

@@ -32,6 +32,21 @@ func stat(stat_name: String) -> int:
 	return int(stats.get(stat_name, 0))
 
 
+## The showcase: the ribbons in turn at every tier, from none to Blue, their counters where those tiers are earned.
+func showcase() -> void:
+	if ribbon_data.is_empty():
+		return
+	var ribbons: Array = ribbon_data["ribbons"]
+	for k in ribbons.size():
+		var thresholds: Array = ribbons[k]["thresholds"]
+		var tier := k % (thresholds.size() + 1)
+		if tier > 0:
+			stats[ribbons[k]["stat"]] = maxi(stat(ribbons[k]["stat"]), int(thresholds[tier - 1]))
+	for r: Dictionary in ribbons:
+		var have := stat(r["stat"])
+		ribbon_tiers[r["id"]] = (r["thresholds"] as Array).filter(func(t: Variant) -> bool: return have >= int(t)).size()
+
+
 ## The counter an event adds to (data/events.json), or "" when it counts for no ribbon.
 func stat_of(verb: String, subject: String) -> String:
 	var kind := str(game.item_data(subject).get("kind", ""))

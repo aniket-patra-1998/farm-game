@@ -126,6 +126,15 @@ func add(feed: String, rich := false) -> bool:
 	return true
 
 
+## The showcase: the Barn's feed stock half full of each feed, a few of them Rich.
+func showcase() -> void:
+	if not enabled():
+		return
+	for feed in feed_ids():
+		stock[feed] = cap() / 2
+		stock[RICH + feed] = cap() / 10
+
+
 func _take(feed: String, rich: bool, n: int) -> void:
 	var key := (RICH if rich else "") + feed
 	stock[key] = maxi(0, int(stock.get(key, 0)) - n)

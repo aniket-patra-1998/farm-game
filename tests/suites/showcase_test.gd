@@ -75,6 +75,7 @@ func test_106_the_showcase_farm_has_everything_laid_out() -> void:
 
 func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_walked() -> void:
 	var g := _farm()
+	g.feeds.active = true   # as in the game (test farms turn feeding off for exact payouts)
 	g.open_showcase()
 	# Every system dresses its own part (GameSystem.showcase), so the showcase keeps up with the game.
 	var dressed: Array[String] = []
@@ -83,7 +84,7 @@ func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_wa
 		if own.any(func(m: Dictionary) -> bool: return m["name"] == "showcase"):   # not-ui
 			dressed.append(str((system.get_script() as Script).get_global_name()))
 	for name: String in ["VipSystem", "RustSystem", "CraftingSystem", "FieldSystem", "MasterySystem", "StraySystem",
-			"BeehiveSystem", "PigPenSystem"]:   # not-ui
+			"BeehiveSystem", "PigPenSystem", "BarnStorage", "CollectiblesSystem", "RibbonsSystem", "FeedSystem"]:   # not-ui
 		_check(dressed.has(name), "%s says what the showcase shows of it" % name)
 	# What the farm and its sheets show of those: a stray to adopt, fertilized beds beside plain ones, crops at
 	# every count of stars (mastered too), a hive with its Queen Bee, a pen's truffles ready to collect.
@@ -99,6 +100,17 @@ func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_wa
 	var pens := g.objects.filter(func(o: Dictionary) -> bool: return g.special_of(o) == "truffles")
 	_check(pens.any(func(o: Dictionary) -> bool: return g.pigpen.is_foraging(o) and g.pigpen.forage_seconds_left(o) == 0),
 		"a pen's truffles are ready")
+	# And what the sheets show: the Barn half full, collections and ribbons at every stage, the feed stock.
+	_check(g.storage.stored.size() > 0 and g.storage.has_room(), "the Barn holds things, with room to spare")
+	var sets := g.collectibles.collections.map(func(c: Dictionary) -> int:
+		return (c["items"] as Array).filter(func(it: Dictionary) -> bool: return g.collectibles.owned.has(it["id"])).size())
+	var whole := (g.collectibles.collections[0]["items"] as Array).size()
+	_check(sets.has(0) and sets.has(whole), "sets complete and not begun %s" % [sets])
+	var tiers := {}
+	for r: Dictionary in g.ribbons.ribbon_data["ribbons"]:
+		tiers[int(g.ribbons.ribbon_tiers.get(r["id"], 0))] = true
+	_eq(tiers.size(), (g.ribbons.ribbon_data["tiers"] as Array).size() + 1, "ribbons at every tier")
+	_check(g.feeds.feed_ids().all(func(f: String) -> bool: return g.feeds.total(f) > 0), "the feed stock holds each feed")
 	# The Barn is the hero at its best: whole, at the top VIP level, and VIP active.
 	var barns := g.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "barn")
 	_eq(barns.size(), 1, "the showcase has its Barn")

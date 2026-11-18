@@ -6,6 +6,8 @@ extends GameSystem
 const BARN := "barn"     # not-ui (welcome: where a new thing went)
 const INBOX := "inbox"   # not-ui
 
+## How many of each kind the showcase farm's Barn holds.
+const SHOWCASE_PER_KIND := 3
 var stored: Array = []             # objects put away in the barn (no row or col)
 
 
@@ -91,6 +93,18 @@ func storable_kind(obj: Dictionary) -> bool:
 		return false
 	var k := game.kind_of(obj)
 	return k == "tree" or k == "animal" or k == "decor"
+
+
+## The showcase: the Barn, the farm's hero, holding a few of each kind it keeps, half its space taken.
+func showcase() -> void:
+	var per_kind := {}
+	for id: String in game.item_order:
+		if stored.size() >= barn_capacity() / 2:
+			return
+		var kind := game.kind_of({"id": id})
+		if Release.has(id) and storable_kind({"id": id}) and int(per_kind.get(kind, 0)) < SHOWCASE_PER_KIND:
+			receive(id)
+			per_kind[kind] = int(per_kind.get(kind, 0)) + 1
 
 
 func store_object(uid: int) -> bool:
