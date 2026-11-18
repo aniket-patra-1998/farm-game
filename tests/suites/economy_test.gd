@@ -657,3 +657,16 @@ func test_439_a_mastery_sign_on_a_farm_with_no_grass_is_not_lost() -> void:
 		found = found or (str(give.get("id", "")) == "mastery_sign" and give.get("keep", {}).get("crop", "") == "wheat")
 	_check(found, "the wheat sign waits in the Barn or the inbox, still for wheat")
 	_done(g)
+
+
+## The exploit hunter (tools/exploit_hunt.gd) searches every loop of up to 3 farm actions on one tile: none pays
+## coins without a wait. (Its XP finding, plow-place-sell, is FarmVille's own and the owner's call.)
+func test_443_no_loop_of_farm_actions_pays_coins_without_a_wait() -> void:
+	var loops := ExploitHunt.hunt(Game, 3)
+	_check(loops.size() >= 5, "the hunter finds the farm's loops (%d)" % loops.size())
+	_check(loops.any(func(l: Dictionary) -> bool: return l["coins"] > 0 and l["waited"] > 0),
+		"a crop grown and harvested is a loop that pays, after its wait")
+	var free := ExploitHunt.findings(loops).filter(func(f: String) -> bool: return f.contains("no wait") \
+		and f.contains("pays"))
+	_eq(free, [], "no loop pays coins with no wait")
+	Game.reset_game()
