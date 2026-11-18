@@ -139,7 +139,7 @@ func _ready() -> void:
 	# The farm is built; its first frames, while the renderer prepares every material, stay under a cover (only
 	# when the game itself is running: the screenshot and probe tools load this scene inside their own).
 	if get_tree().current_scene == self:
-		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"))
+		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
 		Game.farm_opened.connect(_on_farm_opened)
 		if LoadBenchmark.wanted():
 			LoadBenchmark.start(self)   # (the benchmark build measures loading on the phone by itself, then quits)
@@ -149,7 +149,7 @@ func _ready() -> void:
 ## built and drawn, as the game's first farm is, and seen whole (so every material is drawn once under the cover).
 func _on_farm_opened() -> void:
 	_fit_camera()
-	LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"))
+	LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that

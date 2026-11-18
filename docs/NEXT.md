@@ -398,6 +398,27 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   New icons (calendar, project) in tools/make_ui_icons.py's style; list them in the log. Done when the menu sweep
   passes for every phone shape; then the checkpoint picture (noon, 20:9) under "Goals: waiting for your look".
 
+## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
+- Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
+  Merged perf/hide-world-while-building: LoadingCover hides the 3D farm (`world` passed by main.gd) until
+  `Objects3D.progress_in` reaches 1, then draws it whole under the cover. Showcase opened cold (gl_compatibility,
+  2400x1080): build frames drew 14,089 draws / 7.33M triangles in all (1,006 a frame), now 2,213 / 0.81M (184: the
+  first frame, before the cover's first _process); after it is built, 1,437 draws a frame under the cover, as before.
+- How it was measured: a scratch probe (not committed) run as the main scene, `--path . res://tools/_cover_probe.tscn`
+  under xvfb-run with XDG_DATA_HOME set to a scratch folder (never the real save): it adds a monitor node to the root,
+  changes to scenes/main.tscn (so the cover runs), then opens the showcase cold, own farm, showcase warm, and prints
+  per phase the frames until built and the cover lifts, and Performance RENDER_TOTAL_DRAW_CALLS/PRIMITIVES summed
+  over the build frames. One pass takes about 7 minutes here; the cover always lifts at MOST_SECONDS (software
+  frames never settle). Worth committing as tools/cover_probe if the next steps keep needing it.
+- Next: step 1, the Bloom Garden. `BuildingFill._show_plants` (building_fill.gd ~646-685) builds every bloom in code
+  (`BloomModel.build_at`, seed uid+k, size BLOOM_SIZE * ScaleGuide.factor, full or not by `BloomDef.is_full`) and
+  bakes them. A bloom on its own tile comes from art/models/blooms/<id>.scn (`Objects3D.bloom_look`, BLOOM_LOOKS 4
+  looks). Plan: take the garden's blooms from those files (look k % BLOOM_LOOKS), scaled to BLOOM_SIZE against the
+  file's size, batched per look through Instancer, ripened as now. Check before building that the file's model at
+  that scale matches build_at's (stems, crowding mask 0, full flag): if each garden bloom being one of 4 looks
+  instead of unique reads differently, that is a look change: report it, do not build. Measure the showcase's cold
+  CPU build (headless) and draws before and after.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
