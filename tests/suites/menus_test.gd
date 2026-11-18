@@ -16,6 +16,8 @@ const RAW_KEY := "\\b[A-Z]{2,}_[A-Z0-9_]+\\b"    # a strings.csv key never trans
 
 const TAP_SLACK := 2.0   # (units: the round close button is 38 across)
 const LEAST_CONTRAST := 3.0   # WCAG's least for large text: words on paper must reach it
+const POP_SETTLES := 1.1   # seconds the level-up's pop-in and its number's pulses take
+const BUSIEST_UP_TO := 70   # levels searched for the level-up with the most unlocks
 const WOOD_KEYS: Array[String] = ["wood", "wood_dark", "wood_light", "plaque"]   # the old frame's colours
 
 var _raw_id := RegEx.create_from_string(RAW_ID)
@@ -381,3 +383,58 @@ func _pull(sheet: BuildingSheet, dy: float) -> void:
 	up.global_position = down.global_position + Vector2(0, dy)
 	sheet._gui_input(up)
 	await get_tree().create_timer(BuildingSheet.SETTLE + 0.15).timeout
+
+
+## The cards that come over the farm (While you were away with every kind of row and its notes, the level-up
+## with the most unlocks) read whole on every screen, as the menus do, and the away card keeps
+## clear of the tool bar and the side buttons, whose taps it would otherwise cover.
+func test_449_the_cards_over_the_farm_read_whole_on_every_screen() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.tutorial_step = GameState.Tutorial.DONE
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var rows: Array = []
+	for kind: String in AwayCard.ICONS:
+		rows.append({"kind": kind, "count": 12})
+	var notes: Array = ["The bees left the hive while you were away", "Some buildings changed shape and moved"]   # not-ui
+	var busiest := 2
+	for lvl in range(2, BUSIEST_UP_TO + 1):
+		if Game.unlock_ids_at(lvl).size() > Game.unlock_ids_at(busiest).size():
+			busiest = lvl
+	var window := get_tree().root
+	var was := window.size
+	var bad := {}
+	for shape: Vector2i in SHAPES:
+		window.size = shape
+		await _settle()
+		var where := "%dx%d" % [shape.x, shape.y]
+		hud.call("_show_away", rows, notes)
+		await _settle()
+		var card: AwayCard = hud.get("_away")
+		_sweep(card, where + " away card", bad)
+		var others: Array[Control] = [hud.tools.panel]
+		others.append_array(hud.side.hideable())
+		for other in others:
+			if other.is_visible_in_tree() and card.get_global_rect().intersects(other.get_global_rect()):
+				bad["%s away card covers %s" % [where, other.name]] = true
+		card.close()
+		var popup: LevelUpPopup = hud.get("_level_popup")
+		popup.call("_show", busiest)
+		await get_tree().create_timer(POP_SETTLES).timeout   # (read where it rests, not mid-pop or mid-pulse)
+		var party := {}   # (a celebration on its own dark card: its big words and light colours are its look)
+		_sweep(popup.get("_card") as Control, "%s level-up %d" % [where, busiest], party)
+		for problem: String in party:
+			if not ("larger than a heading" in problem or "too faint" in problem):
+				bad[problem] = true
+		popup.visible = false
+		Game.modal_open = false
+	window.size = was
+	_check(Game.unlock_ids_at(busiest).size() > 1, "the busiest level-up shows several unlocks (level %d)" % busiest)
+	for problem: String in bad:
+		_check(false, problem)
+	main.queue_free()
+	await get_tree().process_frame

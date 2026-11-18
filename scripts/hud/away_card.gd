@@ -39,7 +39,8 @@ func _init(owner: FarmHud) -> void:
 	var title := Label.new()
 	title.text = tr("AWAY_TITLE")
 	title.add_theme_color_override("font_color", UiTheme.color("ink"))
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", UiTheme.font(UiTheme.TITLE))
+	title.set_meta(&"title", true)   # (the card's one text larger than a heading)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	var cross := UiKit.close_button()
@@ -64,7 +65,7 @@ func open(rows: Array, notes: Array) -> void:
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		note.custom_minimum_size.x = WIDTH
 		note.add_theme_color_override("font_color", UiTheme.color("soft"))
-		note.add_theme_font_size_override("font_size", 18)
+		note.add_theme_font_size_override("font_size", UiTheme.font(UiTheme.BODY))
 		_rows.add_child(note)
 	_left = Balance.f("feel.away_card_seconds")
 	visible = true
@@ -120,7 +121,7 @@ func _row(item: Dictionary) -> Button:
 	var words := Label.new()
 	words.text = AbsenceReport.words(item)
 	words.add_theme_color_override("font_color", UiTheme.color("ink"))
-	words.add_theme_font_size_override("font_size", 20)
+	words.add_theme_font_size_override("font_size", UiTheme.font(UiTheme.HEADING))
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.clip_text = true   # (a long line in another language is cut, not pushed out of the row)
 	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -129,7 +130,7 @@ func _row(item: Dictionary) -> Button:
 	var go := Label.new()
 	go.text = GO
 	go.add_theme_color_override("font_color", UiTheme.color("soft"))
-	go.add_theme_font_size_override("font_size", 30)
+	go.add_theme_font_size_override("font_size", UiTheme.font(UiTheme.HEADING))
 	go.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	line.add_child(go)
 	var kind := str(item["kind"])
