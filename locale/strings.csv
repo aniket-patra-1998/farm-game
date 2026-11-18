@@ -38,6 +38,7 @@
 "NICE_CROPS_GROW_IN_REAL_TIME","Nice! Come back when they're ready."
 "MASTERY_STAR","%s mastery: star %d!"
 "MASTERED_A_MASTERY_SIGN_WAS_PUT","%s mastered! A mastery sign was put on your farm."
+"MASTERED_A_MASTERY_SIGN_IS_WAITING","%s mastered! A mastery sign is waiting for you."
 "SEEDS"," seeds"
 "CLOSE","Close"
 "TAP_THE_FIELD_THE_WORKS_X","Tap the field: the %s works %dx%d plots"

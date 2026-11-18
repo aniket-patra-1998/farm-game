@@ -171,6 +171,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Run 10 (last run; cheating: buy-and-sell loops): selling gives 5% back (gem items 50 coins a gem, and
   gems can't be bought with coins), so no buy-and-sell loop; but the out-of-coins rescue could be farmed:
   spend the 50 on a decoration, reopen, rescued again, for ever. Now `Game.rescued` (saved) holds the next
-  rescue until a harvest or a collect (test 438). The loop ended at 08:15 IST; its backlog stays in the log
-  doc (open: long offline weeks, a crammed farm, the economy items, unlocks through 31-40, code quality,
-  whole-farm look, motion, sound).
+  rescue until a harvest or a collect (test 438).
+- Run 11 (edge cases: long offline, a crammed farm): the showcase farm reopened 60 days later loads in 87 ms,
+  no errors, one stray, nothing lost. On a farm with no free grass a third mastery star's sign was silently
+  lost (place_somewhere found no spot); now it arrives through `BarnStorage.welcome` with its crop (test 439).
+  The loop runs until 16:15 IST (POLISH.md). Open: the economy items, unlocks through 31-40, code quality,
+  whole-farm look, motion, sound.

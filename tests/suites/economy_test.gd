@@ -638,3 +638,19 @@ func test_435_levels_past_the_table_keep_slowing() -> void:
 		var before := g.xp_for_level(lvl) - g.xp_for_level(lvl - 1)
 		_check(step > before, "level %d needs more XP than the last (%d after %d)" % [lvl + 1, step, before])
 	_done(g)
+
+
+func test_439_a_mastery_sign_on_a_farm_with_no_grass_is_not_lost() -> void:
+	var g := _farm()
+	for i in g.plots.size():
+		g.plots[i] = {"state": "plowed"}   # not one tile of free grass
+	var before := g.objects.size()
+	g.mastery.award_star("wheat", 3)
+	_eq(g.objects.size(), before, "nothing is dropped on the full farm")
+	var found := g.storage.stored.any(func(o: Dictionary) -> bool:
+		return o["id"] == "mastery_sign" and o.get("crop", "") == "wheat")
+	for m in g.social.inbox:
+		var give: Dictionary = m.get("give", {})
+		found = found or (str(give.get("id", "")) == "mastery_sign" and give.get("keep", {}).get("crop", "") == "wheat")
+	_check(found, "the wheat sign waits in the Barn or the inbox, still for wheat")
+	_done(g)

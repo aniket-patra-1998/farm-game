@@ -112,10 +112,18 @@ func award_star(id: String, star: int) -> void:
 	game.add_xp(STAR_XP[star - 1])
 	game.message.emit(tr("MASTERY_STAR") % [name_of(id), star])
 	game.ribbons.bump("mastery_stars", 1)
-	if star == 3 and game.place_somewhere("mastery_sign"):
-		game.objects[-1]["crop"] = id  # FarmVille's mastery sign, to show off on the farm (any mastered item)
+	if star != 3:
+		return
+	# FarmVille's mastery sign, to show off on the farm (any mastered item).
+	if game.place_somewhere("mastery_sign"):
+		game.objects[-1]["crop"] = id
 		game.message.emit(tr("MASTERED_A_MASTERY_SIGN_WAS_PUT") % name_of(id))
 		game.objects_updated()
+		return
+	# A farm with no free grass: it arrives like any new thing, never lost.
+	var went := game.storage.welcome("mastery_sign", {"crop": id})
+	game.message.emit(tr("MASTERED_A_MASTERY_SIGN_IS_WAITING") % name_of(id) + " "
+		+ tr("ARRIVED_IN_BARN" if went == BarnStorage.BARN else "ARRIVED_IN_INBOX"))
 
 
 ## What a mastery sign or message calls the item.
