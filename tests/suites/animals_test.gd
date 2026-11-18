@@ -680,3 +680,38 @@ func test_451_animals_turn_from_the_rain_and_keep_close_in_a_storm() -> void:
 	AnimalBehaviour.hour = was[0]
 	AnimalBehaviour.night = was[1]
 	AnimalBehaviour.rain = was[2]
+
+
+## Animals notice the farmer walking by (looks only): one standing near their way turns to watch them a moment,
+## facing their side, and not again for a while; one far off, asleep or walking does not.
+func test_452_animals_turn_to_watch_the_farmer_walk_by() -> void:
+	var cow := AnimalRig.of(_farm().item_data("cow"))
+	var was_night := AnimalBehaviour.night
+	AnimalBehaviour.night = false
+	var mind := AnimalBehaviour.new(cow, 11, Vector2(14, 7))
+	mind.state = AnimalBehaviour.State.GRAZE
+	mind.facing = 1.0
+	_check(mind.see_farmer(-1.0), "a grazing cow turns to the farmer passing on its left")
+	_check(mind.state == AnimalBehaviour.State.LOOK and mind.facing == -1.0, "and watches them, facing their way")
+	_eq(mind.time_left(), AnimalRig.farmer("look", 0.0), "for a moment")
+	mind.state = AnimalBehaviour.State.IDLE
+	_check(not mind.see_farmer(1.0), "but not again straight away")
+	mind.update(AnimalRig.farmer("again", 9.0) + 0.5)   # (one long step is cut to 0.1 s: wait it out)
+	for k in int(AnimalRig.farmer("again", 9.0) * 10.0) + 5:
+		mind.update(0.1)
+	mind.state = AnimalBehaviour.State.IDLE
+	mind.noticed = 0.0
+	_check(mind.see_farmer(1.0), "only after a while")
+	var sleeper := AnimalBehaviour.new(cow, 12, Vector2(14, 7))
+	sleeper.state = AnimalBehaviour.State.SLEEP
+	_check(not sleeper.see_farmer(1.0), "a sleeping one sleeps on")
+	var life := FarmLife.new()
+	var near := AnimalBehaviour.new(cow, 13, Vector2(14, 7))
+	var far := AnimalBehaviour.new(cow, 14, Vector2(14, 7))
+	near.state = AnimalBehaviour.State.IDLE
+	far.state = AnimalBehaviour.State.IDLE
+	life.set("_minds", {1: {"mind": near, "home": Vector2(3.5, 3.5)}, 2: {"mind": far, "home": Vector2(12.5, 12.5)}})
+	_eq(life.see_farmer(Vector2(4.5, 3.5)), 1, "the farm: only the one near their way turns")
+	_eq(near.facing, 1.0, "towards them (a tile further along its column is to the screen's right)")
+	life.free()
+	AnimalBehaviour.night = was_night

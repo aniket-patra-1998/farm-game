@@ -91,6 +91,7 @@ var _swish_left := 0.0
 var _phase := 0.0                # a per-animal offset for the slow idle motions
 var _off_course := 0.0           # radians its body still has to come round to face its way (turned)
 var _shuffle := 0.0              # seconds its legs stay stepping after a turn on the spot
+var _farmer_again := 0.0        # seconds before it may turn to watch the farmer again
 var _jump := 0.0                 # seconds left of the start it gives when tapped
 
 
@@ -119,6 +120,7 @@ func update(delta: float) -> void:
 	pose.time += delta
 	_left -= delta
 	noticed = maxf(noticed - delta, 0.0)
+	_farmer_again = maxf(_farmer_again - delta, 0.0)
 	_shuffle = maxf(_shuffle - delta, 0.0)
 	if state == State.WALK or state == State.FROLIC:
 		_walk(delta)
@@ -131,7 +133,19 @@ func update(delta: float) -> void:
 	shown_facing = move_toward(shown_facing, facing, delta * TURN_SPEED)
 
 
-## Seconds left in what it's doing (tests).
+## The farmer walks by on its `side` (1 screen right, -1 left): one standing about, awake and not already
+## looking turns to watch them a moment (AnimalRig.farmer), then carries on. Returns whether it did.
+func see_farmer(side: float) -> bool:
+	if _farmer_again > 0.0 or noticed > 0.0 or state in [State.SLEEP, State.WALK, State.FROLIC, State.LOOK]:
+		return false
+	_farmer_again = AnimalRig.farmer("again", 9.0)
+	_enter(State.LOOK, AnimalRig.farmer("look", 1.4))
+	if side != 0.0:
+		facing = signf(side)   # (after: it turns to them even in the rain)
+	_look_to = 1.0
+	return true
+
+
 ## Tapped: it stops what it's doing, gives a little start (a hop, or a flap for a bird) and looks round at
 ## you for a moment before carrying on.
 func poke() -> void:
@@ -144,6 +158,7 @@ func poke() -> void:
 		pose.wing = 1.0
 
 
+## Seconds left in what it's doing (tests).
 func time_left() -> float:
 	return _left
 

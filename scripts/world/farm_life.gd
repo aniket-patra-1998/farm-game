@@ -10,6 +10,7 @@ const WANDER := 0.22   # how far an animal strays from its tile centre, in tiles
 
 var _minds := {}       # uid -> {"mind": AnimalBehaviour, "key": String}
 var _queued := false
+var _farmer_in := 0.0   # seconds until it next looks whether the farmer is walking by
 
 
 func _ready() -> void:
@@ -50,7 +51,7 @@ func sync_timed() -> void:
 			continue
 		var mind := AnimalBehaviour.new(AnimalRig.of(Game.item_data(o["id"])), uid * 7919,
 			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
-		_minds[uid] = {"mind": mind, "key": key}
+		_minds[uid] = {"mind": mind, "key": key, "home": _home(o)}
 	for uid in _minds.keys():
 		if not seen.has(uid):
 			_minds.erase(uid)
@@ -63,8 +64,8 @@ func sync_one(uid: int) -> void:
 		return
 	var key := "%s|%d|%d" % [o["id"], int(o["row"]), int(o["col"])]
 	if str(_minds.get(uid, {}).get("key", "")) != key:
-		_minds[uid] = {"key": key, "mind": AnimalBehaviour.new(AnimalRig.of(Game.item_data(o["id"])), uid * 7919,
-			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))}
+		_minds[uid] = {"key": key, "home": _home(o), "mind": AnimalBehaviour.new(AnimalRig.of(Game.item_data(o["id"])),
+			uid * 7919, Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))}
 
 
 func mind(uid: int) -> AnimalBehaviour:
@@ -72,7 +73,29 @@ func mind(uid: int) -> AnimalBehaviour:
 	return m.get("mind")
 
 
+## Where an animal's home spot is, in tiles (x: col, y: row), as the farmer's position is.
+static func _home(o: Dictionary) -> Vector2:
+	return Vector2(float(o["col"]) + 0.5, float(o["row"]) + 0.5)
+
+
+## The farmer walking by: animals near their way turn to watch them a moment (AnimalRig.farmer; looks only).
+## Returns how many turned (tests).
+func see_farmer(at: Vector2) -> int:
+	var reach := AnimalRig.farmer("reach", 2.2)
+	var turned := 0
+	for m in _minds.values():
+		var d: Vector2 = at - (m["home"] as Vector2)
+		if d.length() <= reach and (m["mind"] as AnimalBehaviour).see_farmer(signf(d.x - d.y)):
+			turned += 1   # (screen right is +col, -row)
+	return turned
+
+
 func _process(delta: float) -> void:
+	_farmer_in -= delta
+	if _farmer_in <= 0.0:
+		_farmer_in = AnimalRig.farmer("every", 1.5)
+		if Game.player.is_walking():
+			see_farmer(Game.player.pos)
 	var frame := Engine.get_process_frames()
 	var n := 0
 	for m in _minds.values():

@@ -81,6 +81,12 @@ static func weather(key: String, fallback: float) -> float:
 	return float((_data.get("weather", {}) as Dictionary).get(key, fallback))
 
 
+## A number from the data's `farmer` (how animals notice the farmer walking by), `fallback` when it has none.
+static func farmer(key: String, fallback: float) -> float:
+	_load()
+	return float((_data.get("farmer", {}) as Dictionary).get(key, fallback))
+
+
 ## This animal drawn at `size` times its size (a rig of its own: the shared one, from `of`, is never changed).
 static func scaled(it: Dictionary, size: float) -> AnimalRig:
 	var r := _build(it)
