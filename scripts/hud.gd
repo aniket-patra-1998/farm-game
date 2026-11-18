@@ -27,6 +27,7 @@ const BUTTON_EDGE := 0.5   # a panel button's edge, against the theme's button b
 
 var top: HudTop
 var goals: HudGoals   # the goal faces under the coin meter and the goal sheet
+var reveals: HudReveal   # the tools and menu buttons a new farm sees as goals need them
 var sheet: BuildingSheet   # a tapped home's sheet (made when first needed, then kept)
 var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
@@ -102,6 +103,8 @@ func _ready() -> void:
 	goals = HudGoals.new(self)
 	tools = HudTools.new(self)
 	tools.build(root)
+	reveals = HudReveal.new(self)
+	reveals.build()
 	helpers = HudHelpers.new(self)
 	helpers.build(root)
 	_build_tutorial(root)

@@ -11,6 +11,7 @@ const INBOX_CHECK := 300.0       # seconds between catching the neighbours' mail
 var hud: FarmHud
 var menu: VBoxContainer
 var zoom: HBoxContainer
+var buttons := {}    # menu entry ("MARKET", "INBOX") -> its button (HudReveal shows them as goals need them)
 var _ready: Button   # Next ready: goes to the nearest thing with something to take (hidden when nothing has)
 var _ready_badge: Label   # how many there are
 var _badge: Label   # the inbox's count on the Neighbours button
@@ -45,6 +46,7 @@ func build(root: Control) -> void:
 		var b := UiKit.tool_button(str(entry[0]), tr(str(entry[1])), w, h, 0.0, null, false)
 		b.pressed.connect(entry[2])
 		menu.add_child(b)
+		buttons[str(entry[1])] = b
 		if entry[1] in ["MARKET", "COLLECTIONS"]:
 			var dot := UiKit.count_badge(b)
 			dot.text = "!"   # not-ui (a sign, not a word)
@@ -53,7 +55,7 @@ func build(root: Control) -> void:
 				b.pressed.connect(func() -> void:   # (opening the Market sees what is new in it)
 					PlayerSettings.keep(SEEN, {"market_level": Game.level()})
 					show_news())
-		if entry[1] == "NEIGHBOURS":
+		if entry[1] == "INBOX":
 			_badge = UiKit.count_badge(b)   # how many things wait in the inbox
 			Game.inbox_changed.connect(show_inbox_count)
 			show_inbox_count()

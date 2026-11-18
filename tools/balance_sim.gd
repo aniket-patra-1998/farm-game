@@ -187,13 +187,14 @@ func jobs_left() -> int:
 ## The first session of a new farm, from minute zero: the bot plays a minute at a time for an hour (as a player
 ## who stays), following the goals, and notes when things first happen. Returns the numbers and printable lines:
 ## {first_harvest, first_buy, level_at (minute -> level), coins_at, minute_of_level (level -> minute), goals,
-## stuck_minutes (minutes with an open goal and nothing done), lines}.
+## stuck_minutes (minutes with an open goal and nothing done), chain_minutes (chain id -> the minute each of its
+## steps was collected, in order: Part 2's minute-by-minute plan), lines}.
 func play_first_hour() -> Dictionary:
 	if style == "plain":
 		style = "goals"
 	_watch_coins()
 	var out := {"first_harvest": -1, "first_buy": -1, "level_at": {}, "coins_at": {}, "minute_of_level": {},
-		"goals": 0, "stuck_minutes": 0, "lines": []}
+		"goals": 0, "stuck_minutes": 0, "chain_minutes": {}, "lines": []}
 	var per_minute := int(60.0 / SECONDS_PER_ACTION)
 	var visit_minutes := _minutes   # (each minute is a short visit; later visits are the usual length)
 	_minutes = per_minute * SECONDS_PER_ACTION / 60.0
@@ -209,7 +210,15 @@ func play_first_hour() -> Dictionary:
 		var harvests := _harvests
 		var bought := _bought.duplicate()
 		var level := game.level()
+		var steps := game.goals.chain_step.duplicate()
+		var done := game.goals.chains_done.duplicate()
 		_visit(ahead)
+		for id: String in steps:
+			var now := int(game.goals.chain_step.get(id, -1))
+			var gone := (game.goals.chain_of(id)["steps"] as Array).size() if (game.goals.chains_done.has(id)
+				and not done.has(id)) else now
+			for _s in range(int(steps[id]), gone):
+				(out["chain_minutes"].get_or_add(id, []) as Array).append(m)
 		if harvests == 0 and _harvests > 0 and out["first_harvest"] < 0:
 			out["first_harvest"] = m
 		if out["first_buy"] < 0 and bought != _bought:
@@ -230,6 +239,8 @@ func play_first_hour() -> Dictionary:
 	for l: int in out["minute_of_level"]:
 		levels.append("L%d at %d" % [l, out["minute_of_level"][l]])
 	lines.append("levels: %s" % ", ".join(PackedStringArray(levels)))
+	for id: String in out["chain_minutes"]:
+		lines.append("chain %s: steps collected at minutes %s" % [id, out["chain_minutes"][id]])
 	var marks := []
 	for at: int in FIRST_HOUR_MARKS:
 		marks.append("%d min: L%d, %d coins" % [at, out["level_at"][at], out["coins_at"][at]])

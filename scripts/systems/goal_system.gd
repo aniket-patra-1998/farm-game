@@ -8,6 +8,7 @@ extends GameSystem
 ## goals' own state. Off when the release switches `goals` off.
 
 const DATA_PATH := "res://data/goals.json"
+const REVEAL_PATH := "res://data/reveal.json"   # which buttons a new farm waits to see (shows, reveal_now)
 const STATE_VERBS := ["level", "own"]   # true or not now, read from the farm rather than counted
 const PICK := "@"                         # a `what` starting with it is a pick for daily jobs (@crop_unlocked...)
 const ANY := ""                           # a `what` that matches anything done with the verb
@@ -29,6 +30,8 @@ var daily_claimed: Array = []   # which of them were collected
 var daily_swaps := 0            # swaps used today
 var daily_bonus_given := false
 var seeds := {}                 # seeds a goal gave (Starter Seeds): crop id -> how many plots' worth are held
+var reveal_data := {}           # data/reveal.json: {after, buttons: {button -> {verbs, level, inbox}}}
+var revealed: Array[String] = []   # listed buttons this farm has been shown (they stay)
 
 var _chain_by_id := {}
 var _ready_next := ""           # a thing just bought that a `ready` task counted (take_ready)
@@ -37,6 +40,7 @@ var _project_by_id := {}
 
 func load_data() -> void:
 	use_data(DataFile.read(DATA_PATH))
+	reveal_data = DataFile.read(REVEAL_PATH)
 	if not game.did.is_connected(_on_did):
 		game.did.connect(_on_did)
 	if not game.xp_changed.is_connected(_on_xp):
@@ -70,6 +74,7 @@ func reset() -> void:
 	daily_swaps = 0
 	daily_bonus_given = false
 	seeds = {}
+	revealed = []
 
 
 ## The chains a brand-new farm starts on (`new_farm`: the Welcome chain), at their first step. A farm saved
@@ -96,6 +101,7 @@ func save_to(data: Dictionary) -> void:
 	data["goal_daily"] = {"day": daily_day, "jobs": daily_jobs.duplicate(true), "claimed": daily_claimed.duplicate(),
 		"swaps": daily_swaps, "bonus": daily_bonus_given}
 	data["goal_seeds"] = seeds.duplicate()
+	data["goal_revealed"] = revealed.duplicate()
 
 
 func load_from(data: Dictionary) -> void:
@@ -109,6 +115,7 @@ func load_from(data: Dictionary) -> void:
 	for id: String in new_farm_chains():
 		if not chain_step.has(id) and not chains_done.has(id):
 			chains_done.append(id)
+	revealed = _strings(data.get("goal_revealed", []))
 	var held := int_map(data.get("goal_seeds", {}))
 	for id: String in held:
 		if game.crops.has(id) and int(held[id]) > 0:
@@ -137,6 +144,9 @@ func showcase() -> void:
 	if not active():
 		return
 	refresh()
+	for b: String in reveal_data.get("buttons", {}):   # (the showcase shows every button)
+		if not revealed.has(b):
+			revealed.append(b)
 	if not daily_jobs.is_empty():
 		var need := int(daily_jobs[0]["n"])
 		progress["daily:0"] = [need]
@@ -571,4 +581,44 @@ func _owned_of_kind(kind: String) -> Array:
 		var id := str(o["id"])
 		if not out.has(id) and str(game.item_data(id).get("kind", "")) == kind:
 			out.append(id)
+	return out
+
+
+# ---------------------------------------------------------------- showing the interface as it is needed
+
+
+## Whether HUD button `button` ("tool:plow", "menu:MARKET") shows on this farm now (data/reveal.json): a button
+## not listed, a farm without goals and a farm past the `after` chains see it; else once a goal needs it (an open
+## task's verb), at its level, or (`inbox`) while something waits in the inbox, and from then on.
+func shows(button: String) -> bool:
+	var rule: Variant = reveal_data.get("buttons", {}).get(button)
+	if not active() or typeof(rule) != TYPE_DICTIONARY or revealed.has(button) or past_welcome():
+		return true
+	if game.level() >= int(rule.get("level", 1)):
+		return true
+	if rule.get("inbox", false) and not game.social.inbox.is_empty():
+		return true
+	var verbs: Array = rule.get("verbs", [])
+	for key: String in open_keys():
+		for task: Dictionary in tasks_of(key):
+			if verbs.has(str(task.get("do", ""))):
+				return true
+	return false
+
+
+## Whether the farm is past the chains that teach it (reveal.json `after`): then every button shows.
+func past_welcome() -> bool:
+	for id: Variant in reveal_data.get("after", []):
+		if not chains_done.has(str(id)):
+			return false
+	return true
+
+
+## The listed buttons that show now for the first time (kept as shown; the HUD gives each its shine).
+func reveal_now() -> Array[String]:
+	var out: Array[String] = []
+	for b: String in reveal_data.get("buttons", {}):
+		if not revealed.has(b) and shows(b):
+			revealed.append(b)
+			out.append(b)
 	return out

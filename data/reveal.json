@@ -1,0 +1,16 @@
+{
+  "_about": "Show the interface as it is needed (docs/PLAYER_EXPERIENCE.md Part 2, our own touch): on a brand-new farm a button listed here waits until a goal that needs it is open (one of its `verbs` is a task's verb), the farm reaches its `level`, or (`inbox`) something waits in the inbox; then it appears with a short shine and stays (saved). A farm with every chain of `after` done (old saves, a farm past Welcome) sees everything; a button not listed always shows. Buttons: tool:<HudTools id>, menu:<HudSide key>.",
+  "after": ["welcome"],
+  "buttons": {
+    "tool:plow": {"verbs": ["plow"], "level": 2},
+    "tool:plant": {"verbs": ["plant"], "level": 2},
+    "tool:fertilize": {"verbs": ["fertilize"], "level": 4},
+    "tool:store": {"verbs": [], "level": 4},
+    "tool:sell": {"verbs": ["sell", "clear_plot"], "level": 4},
+    "menu:MARKET": {"verbs": ["buy", "build", "own"], "level": 3},
+    "menu:COLLECTIONS": {"verbs": ["find", "trade_collection"], "level": 5},
+    "menu:RIBBONS": {"verbs": [], "level": 4},
+    "menu:INBOX": {"verbs": ["help", "gift", "share"], "level": 3, "inbox": true},
+    "menu:SETTINGS": {"verbs": [], "level": 2}
+  }
+}

@@ -17,6 +17,8 @@ const OPEN_TIME := 0.26
 const PULSE_SCALE := 1.12         # a counter swells to this as a reward lands..
 const PULSE_TIME := 0.08          # ..this quickly..
 const PULSE_SETTLE := 0.22        # ..and settles back in this
+const SHINE_LIGHT := 1.6          # a button that has just appeared glows this bright..
+const SHINE_TIME := 0.9           # ..and fades back to its colour in this, swelling once
 const SETTLE_TIME := 0.32         # a squashed or swelled thing on the farm settles back to its size in this
 
 static var pop_next := false      # the panel being opened pops its cards in (not on every refresh)..
@@ -77,6 +79,14 @@ static func pulse(control: Control) -> void:
 	t.tween_property(control, "scale", Vector2.ONE * PULSE_SCALE, PULSE_TIME).set_trans(Tween.TRANS_QUAD) \
 		.set_ease(Tween.EASE_OUT)
 	settle(t, control, "scale", Vector2.ONE, PULSE_SETTLE)
+
+
+## A short shine on a button that has just appeared (HudReveal): it glows, swells once and settles.
+static func shine(control: Control) -> void:
+	control.modulate = Color(SHINE_LIGHT, SHINE_LIGHT, SHINE_LIGHT)
+	var t := control.create_tween()
+	t.tween_property(control, "modulate", Color.WHITE, SHINE_TIME).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	pulse(control)
 
 
 ## The one way anything springs back to its size or place, in the interface and on the farm: a single soft
