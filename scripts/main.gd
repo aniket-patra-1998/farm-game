@@ -11,8 +11,6 @@ const SCREEN_FLASH_3D := 0.35 # in 3D the frame lights itself (Lightning3D.flash
 const INK := 0.0   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
 const INK_FROM := 0.22    # how small a jump in light or colour is an edge (lower: more lines)
 const INK_REACH := 1.0    # how many pixels out it looks, so how thick the line is
-const DAY_SATURATION := 1.32   # FarmVille's colour is rich: the daytime grade
-const DAY_CONTRAST := 1.14
 const TAP_WORDS_MS := 300   # the game's words this soon after a tap belong to it (shown in its bubble)
 const CLOSEST_TILES := 3.5   # the closest zoom shows about this many tiles across, whatever the farm's size
 const MIN_CLOSE_FACTOR := 1.5 # (and is always at least this much closer than the whole-farm view)
@@ -322,8 +320,8 @@ func _process(_delta: float) -> void:
 	shadows.strength = 0.0 if sun < 0.0 else (1.0 - dark) * clampf(1.0 - absf(cover - 0.45) / 0.4, 0.0, 1.0)
 	# Colour grade: richer by day, cool and soft at night, warm low sun, fog haze.
 	var m := grade.material as ShaderMaterial
-	var sat := lerpf(DAY_SATURATION, 0.92, dark) * (1.0 - float(w["desat"]))
-	var contrast := lerpf(DAY_CONTRAST, 0.98, dark)
+	var sat := lerpf(Grade.value("day_saturation"), Grade.value("night_saturation"), dark) * (1.0 - float(w["desat"]))
+	var contrast := lerpf(Grade.value("day_contrast"), Grade.value("night_contrast"), dark)
 	var lift := Vector3(0.02, 0.035, 0.08) * dark
 	if world_3d != null:
 		# In 3D the frame's own adjustments take the grade and the 3D fog the haze; the full-screen pass is left
