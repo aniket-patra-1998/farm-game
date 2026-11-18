@@ -238,3 +238,37 @@ func test_484_a_damaged_goal_save_loads_without_a_crash() -> void:
 	_eq(g.goals.daily_claimed, [true, false], "a short claimed list is filled with not collected")
 	_check(not g.goals.daily_bonus_given and g.goals.open_keys().has("daily:1"), "the second job is open")
 	_done(g)
+
+
+## The balance bot as a goal follower (tools/balance_sim, step 6): on a new farm from minute zero it harvests the
+## starter's ripe plots at once, reaches level 2 in the first minutes, collects goals and is never left without
+## an open goal; over three days of visits it collects goals every day it comes, and nothing on a day it is away.
+func test_483_the_goal_follower_plays_a_new_farm_without_getting_stuck() -> void:
+	var g := _farm()
+	var sim: Node = load("res://tools/balance_sim.gd").new()
+	sim.set("game", g)
+	sim.set("style", "goals")
+	var hours: Array = sim.call("_visit_hours")
+	g.debug_time_offset += int(sim.call("_seconds_until", hours[0], g.now()))   # a farm made at the first visit's hour
+	g.reset_game()
+	var hour: Dictionary = sim.call("play_first_hour")
+	_eq(hour["first_harvest"], 0, "the starter's ripe plots are harvested in the first minute")
+	_check(int(hour["level_at"][10]) >= 2, "level 2 within ten minutes")
+	_check(int(hour["goals"]) >= 1, "a goal is collected in the first hour")
+	_check(not g.goals.open_keys().is_empty(), "the goal faces are never empty after the first hour")
+	sim.set("away", [2])
+	var got := {1: int(hour["goals"])}   # day -> goals collected (day 1 is the first, with its first hour)
+	for day in range(1, 4):
+		for v in hours.size():
+			if day == 1 and v == 0:
+				continue   # the first hour was this visit
+			g.debug_time_offset += int(sim.call("_seconds_until", hours[v], g.now()))
+			var before := int(sim.get("goals_claimed"))
+			if day != 2:
+				sim.call("_visit", sim.call("_visits_after", hours, v))
+			got[day] = int(got.get(day, 0)) + int(sim.get("goals_claimed")) - before
+			_check(day == 2 or not g.goals.open_keys().is_empty(), "day %d: always an open goal" % day)
+	_check(int(got[1]) > 0 and int(got[3]) > 0, "goals collected every day it comes: %s" % got)
+	_eq(got[2], 0, "nothing on the day it is away")
+	sim.free()
+	_done(g)
