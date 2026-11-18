@@ -292,7 +292,7 @@ func harvest(i: int) -> Dictionary:
 	elif drop.get("type", "") == "bird":
 		game.message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
 	var part := game.daily.roll_part()
-	var bushel := game.crafting.roll_bushel(crop_id)
+	var bushels := game.crafting.roll_bushel(crop_id)   # (rolled on the stars before this harvest's)
 	var bunch := game.shed.roll_bunch(crop_id, i)
 	var found: Array[Dictionary] = game.finds.give(held.get("finds", [])) if held is Dictionary \
 		else game.finds.roll("harvest", stars_before)
@@ -309,12 +309,12 @@ func harvest(i: int) -> Dictionary:
 	if bee_news != "":
 		game.found.emit(i, bee_news, "rare" if bee_news == tr("A_QUEEN_BEE") else "uncommon")
 	var seeds := game.bees.pollinate(crop_id) if fertilized else 0
-	# A fertilized harvest counts double toward mastery (stars are awarded as they're reached).
-	game.mastery.add(crop_id, 2 if fertilized else 1)
+	# A fertilized harvest counts more toward mastery (mastery.fertilized_points; stars are awarded as they're reached).
+	game.mastery.add(crop_id, Balance.i("mastery.fertilized_points") if fertilized else 1)
 	if game.tutorial_step == GameState.Tutorial.HARVEST and not game.any_plot_in(GameState.Phase.RIPE):
 		game.advance_tutorial(GameState.Tutorial.HARVEST)
 	game.plot_updated(i)
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
-		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part, "bushel": bushel,
-		"bushels": (1 + game.mastery.stars(crop_id)) if bushel != "" else 0, "bunch": bunch, "found": found,
+		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part,
+		"bushel": crop_id if bushels > 0 else "", "bushels": bushels, "bunch": bunch, "found": found,
 		"feed": feed_found, "feed_rich": rich, "rain": rained, "off": off}

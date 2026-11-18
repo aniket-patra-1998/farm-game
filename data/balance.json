@@ -80,7 +80,8 @@
   "producer_points_two_days": {"v": [6, 18, 36], "note": "for one ready every two days"},
   "producer_points_slow": {"v": [3, 9, 18], "note": "for one ready less often"},
   "star_coins": {"v": [100, 300, 1000], "note": "coins each mastery star pays"},
-  "star_xp": {"v": [10, 30, 100], "note": "XP each mastery star pays"}
+  "star_xp": {"v": [10, 30, 100], "note": "XP each mastery star pays"},
+  "fertilized_points": {"v": 2, "note": "mastery points a fertilized crop's harvest counts for (a plain one counts 1)"}
  },
  "strays": {
   "stray_min_gap": {

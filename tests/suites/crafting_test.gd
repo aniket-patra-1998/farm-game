@@ -287,3 +287,41 @@ func test_372_every_good_and_every_produce_has_its_own_picture() -> void:
 	_eq(loaf[0].to_html(false), GoodsModel.colour_of("pumpkins").to_html(false), "Pumpkin Bread is pumpkin coloured first")
 	_done(g)
 
+
+
+## A harvest says the bushels the stall really took: with one place left and a star on the crop (two found),
+## it reports one, and a harvest that reaches a star still reports what the stars before it gave.
+func test_485_a_harvest_reports_the_bushels_it_added() -> void:
+	var g := _farm(true)
+	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal")
+	g.rebuild_occupancy()
+	_crafting_building(g)
+	g.mastery.add("wheat", 1000)
+	_check(g.mastery.stars("wheat") >= 1, "wheat has a star")
+	var cap := Balance.i("crafting.bushel_cap")
+	var seen := 0
+	for k in 300:
+		g.crafting.bushels = {"pumpkins": cap - 1}
+		var r := _grow_and_harvest(g, _open_plot(g), "wheat")
+		if r.get("bushel", "") == "":
+			continue
+		seen += 1
+		_eq(int(r["bushels"]), 1, "one place left: one bushel said")
+		_eq(int(g.crafting.bushels.get("wheat", 0)), 1, "and one kept")
+		if seen >= 2:
+			break
+	_check(seen > 0, "a bushel was found in 300 harvests")
+	g.crafting.bushels = {}
+	g.mastery.points.erase("wheat")
+	var found := 0
+	for k in 300:
+		var before := g.mastery.stars("wheat")
+		var had := int(g.crafting.bushels.get("wheat", 0))
+		var r := _grow_and_harvest(g, _open_plot(g), "wheat")
+		if r.get("bushel", "") != "":
+			found += 1
+			_eq(int(r["bushels"]), 1 + before, "the bushels said are the ones the stars before the harvest gave")
+			_eq(int(g.crafting.bushels.get("wheat", 0)) - had, int(r["bushels"]), "and the ones kept")
+		if found >= 5 or g.crafting.total_bushels() > cap - 10:
+			break
+	_check(found > 0, "bushels found")
