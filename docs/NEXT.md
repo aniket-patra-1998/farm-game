@@ -639,6 +639,23 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   is the one that fits the rules unattended: run the bot styles (plain, goals, casual, --away) against Part 4's
   targets, tune data/balance.json and goals rewards, log before/after. Step 5 and 9 are new looks: a sheet of
   options for the owner first (CLAUDE.md), nothing wired before a pick.
+- Run 9 (19 Nov 03:36-04:20 IST): step 6's last Part 4 pieces merged (c4311b5, goals/6-builder-market):
+  `--style=builder` (follows goals, then `_buy_wants`: the Market's progress buys it can afford, cheapest first,
+  BUILDER_BUYS 3 a visit, frames with materials skipped) and the Market measure: per day `idle_v` (coins / that
+  day's income per visit) and `want` (`market_wants(per_visit)`: homes, buildings, trees, animals, vehicles, the
+  next land costing 1-3 visits; not decor, seeds, materials), a `market:` summary line, gems earned a week. Test 525.
+  This container had no Godot (4.7.2 from the CI URL into /home/claude/godot) and no gdlint (pypi is blocked here;
+  precheck's own line check runs instead).
+- Step 8 measured (seed 1, 42 days) against Part 4: levels on pace (goals L20 day 13, L30 day 30; casual L20 day
+  29; builder L20 day 11); gems 5-10 a week (target "a few"); something to buy on 85-90% of days (casual 50%);
+  idle coins over 5 visits of income on 76-83% of days in EVERY style, the builder too: it buys every progress
+  thing by about level 15-20 and then sits at 15-25 visits (683k on day 40; only the Garage, a materials frame,
+  left). So data tuning of prices alone cannot meet "idle under 5 visits": past level ~20 the Market has no
+  repeatable coin sink at 1-3 visits of income (~35k a visit). Reported in the log (a design call: new sinks or
+  less income at high levels; FarmVille's own prices stand). Step 8 stays open until the owner picks.
+- Next: with no owner pick, the rest of step 8 that the spec does decide: the feeding target (a never-feed bot
+  loses at most 30% of animal income: add `--no-feed` and compare collect income), crafting's 30% markup over
+  ingredients (a check over data/catalog/recipes.json) and "a week away loses nothing" (`--away=2,3,4,5,6,7,8`).
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
