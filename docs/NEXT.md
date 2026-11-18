@@ -565,6 +565,28 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   does not say which: decide in data, e.g. a task reward `find`), orchard, rare coop; six neighbour chains (Barley
   first: second chicken, the coop); about 15 daily templates; every new verb needs GOAL_DO_* keys (test 465) and
   reveal.json verbs if it needs a hidden button (collections: find). Then the bot completes every chain.
+- Run 7 (19 Nov 01:36-02:25 IST): step 7 mostly built on goals/7-content (14ca49d, 975b328), pushed, NOT merged
+  (the Tractor project is still to do). Full precheck passed on it (rebased on 01fe97f). Built: six neighbour chains
+  (21 steps, levels 3-12, two lines: barley_coop -> poppy_decor -> hazel_baker; maple_orchard -> clover_bees ->
+  rusty_tractor; test 513 holds 3-6 steps, one chain per neighbour, at most two open at once, every reward in the
+  release); 16 daily templates (new: harvest any, collect @tree_owned / animal, fertilize, earn, gift, pollinate,
+  vehicle_work, start_craft, sell_good; a template's `needs` (id or kind) waits until the farm has one; test 514);
+  projects `orchard` (own 3 Apple, 3 Plum, 3 Lemon -> Fountain) and `rare_coop` (own a coop, collect 20 chicken,
+  open_egg 3 -> Brown Chicken), names GOAL_PROJECT_* (strings_lint prefix). Choices made where the spec is silent:
+  `own` not `build` for the coop (a building with no materials never records "build": only finishing a frame does);
+  Clover's bees are her chain's reward (a Beehive needs materials the bot never gathers); Rusty's first step is
+  harvest 40 (a full farm has no grass to plow); Hazel's chain is the baker's crops (crafting buildings unlock at 25).
+- Bot (tools/balance_sim): buys a kind's cheapest thing (`_goal_item`), clears an empty plot when nothing fits or for
+  a vehicle run (`_clear_a_plot`), collects blooms, sends vehicles (`_goal_vehicles`), opens Mystery Eggs a goal asks
+  for; prints chains and projects done. Every chain done by day 19 (seeds 1-3, 21 days, 3 visits): test 515 (~15 s).
+  The rare coop stops at "open 3 Mystery Eggs": the bot never moves hens into the coop (eggs come from there?):
+  check, then teach the bot. First hour unchanged (Welcome by minute 8; Barley's chain opens at L3).
+- Next: the Tractor project on goals/7-content (Part 2's 20-30 minute row): a rusted Tractor parked on the starter
+  farm (RUST.md's look exists), opens at level 2 or after Welcome step 5, stages of harvest-sourced materials, its
+  first find guaranteed (decide in data: e.g. a stage reward `find`), repaired at the end (a `repair` event for a
+  vehicle); add its row to test 503; then rebase, full precheck, fast-forward push (step 7 done).
+- Seen: world3d test 338 (showcase draw budget) is flaky: the same commit gave 2,296,113 / 2,296,793 / 2,302,157
+  triangles in three runs (budget 2,300,000): the showcase is not deterministic and sits at the edge (perf lane).
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
