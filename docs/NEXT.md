@@ -557,6 +557,27 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   shader baker (preset option `shader_baker/enabled`) would ship compiled shaders, but it may need a non-headless
   export with a rendering device (CI exports headless): check on the next run before relying on it.
 
+- Run 4 (18 Nov 23:51 - 19 Nov 00:40 IST): still no phone report. phone_bench runs 1-5 (all 18 Nov, 17:12-17:37
+  UTC) have no BENCH line; run 5 (Galaxy A05s, before the Robo wait script a987841 and before the log lines were
+  printed) ended after 25 s of test time. The Spark plan's 5 phone runs a day were all used on 18 Nov, so the 02:10
+  IST nightly (20:40 UTC, the same day in UTC and Pacific time) may be refused for quota: if it is, the next phone
+  run that can work is after the quota day turns (likely 08:00 UTC = 13:30 IST, if it is Pacific midnight). No
+  phone run started this run (it would most likely hit the same quota, and the nightly already takes the newest APK).
+  Merged c26c513/32efcb3: LoadBenchmark prints the report so far after every phase ("done": false until the end;
+  phone_bench takes the last BENCH line), so a run cut short still gives numbers. Merged 78c24fb (test 454 no longer
+  hangs on build speed) and 6a27e82 (AssetRegistry.threaded: no worker-thread loads without a screen; the headless
+  stand-in renderer's mesh store is not thread-safe, which left engine errors in ~1 precheck in 2 for every loop;
+  phones unchanged). Prechecks before: 2 of 4 failed (test 454, RID errors); after: 5 of 5 passed. Note: headless
+  probes (perf_probe -- --store) now load files serially, so their cold times are not comparable with run 2's.
+- APK findings (the 8046621 benchmark APK, 205 MB): libgodot 77.6 MB, .godot/imported 112 MB of which 91 MB are 327
+  model scenes (.scn from .glb), ctex 11.7 MB, music 9.4 MB, baked icons 21 MB. The glb files carry no textures and
+  no normal maps, yet 903 of 982 meshes carry tangents; the biggest scenes are the animals and farmers with blend
+  shapes (grey_chicken: 8,489 vertices, 10,604 triangles, 16 blend shapes, 2.2 MB). Next for loading (win 2), once a
+  phone report says loading is the cost: measure what the generated LODs and the tangents add per scene (re-import
+  one with meshes/generate_lods off and compare size) and the animals' blend-shape cost; dropping tangents needs the
+  exporter (art builders) not to write them: that is the art lane, report it.
+- Next run: read the nightly's report first (if it ran). If the A05s again gives no BENCH line, the log lines now
+  printed say whether the app started, crashed, or was killed.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
