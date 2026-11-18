@@ -1028,7 +1028,13 @@ func _on_action_done_timed(job: Dictionary, result: Dictionary) -> void:
 			Feedback.moment("tap")   # it sets off; what it did is shown when it finishes (_show_vehicle)
 
 
-## A vehicle finished its run: what it did, floating up where it worked.
+## The moment a vehicle's finished run is heard by: its job's own (plow, plant, harvest), a harvest for one that
+## does them all (what pays).
+static func vehicle_moment(job: String) -> String:
+	return job if Feedback.has_moment(job) else "harvest"
+
+
+## A vehicle finished its run: what it did, floating up where it worked, and its job's sound.
 func _show_vehicle(run: VehicleWork) -> void:
 	var r := run.result
 	var row := run.row
@@ -1037,6 +1043,8 @@ func _show_vehicle(run: VehicleWork) -> void:
 	var at := center_of(
 		Game.index_of(clampi(row + int(area.y / 2.0), 0, MAX - 1), clampi(col + int(area.x / 2.0), 0, MAX - 1))
 	)
+	if int(r["plots"]) > 0:   # the payoff is heard once, as a farmer's own work is (the engine hum was the work)
+		Feedback.moment(vehicle_moment(run.job))
 	var coins_moved := int(r["coins"])
 	if coins_moved != 0:
 		float_words(at, ("+%d" if coins_moved > 0 else "%d") % coins_moved, "coins" if coins_moved > 0 else "cost")

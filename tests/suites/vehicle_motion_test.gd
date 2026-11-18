@@ -281,3 +281,26 @@ func test_163_a_garage_doorway_holds_two_vehicles_side_by_side_at_their_own_size
 	var fit := minf(BuildingStock.VEHICLE_SCALE, door * BuildingStock.DOOR_FILL / widths)
 	_check(widths * fit <= door, "a Combine and a Tractor fit a three tile door (%.2f of %.2f)" % [widths * fit, door])
 	_check(fit > 0.5, "without shrinking to nothing (%.2f)" % fit)
+
+
+func test_445_a_vehicle_run_that_did_work_is_heard_by_its_job_once_it_finishes() -> void:
+	_eq(FarmGrid.vehicle_moment("plow"), "plow", "a tractor's run sounds like plowing")
+	_eq(FarmGrid.vehicle_moment("harvest"), "harvest", "a harvester's like harvesting")
+	_eq(FarmGrid.vehicle_moment("plant"), "plant", "a seeder's like planting")
+	_eq(FarmGrid.vehicle_moment("all"), "harvest", "one that does it all like what pays")
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	var run := VehicleWork.new()
+	run.job = "plow"
+	PerfReadout.note("none")
+	grid.call("_show_vehicle", run)
+	_eq(PerfReadout.last_action, "none", "a run that did nothing is not heard")
+	run.result["plots"] = 6
+	grid.call("_show_vehicle", run)
+	_eq(PerfReadout.last_action, "plow", "a run that did work is heard by its job")
+	main.free()
+	Game.reset_game()
