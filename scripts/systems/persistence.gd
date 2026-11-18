@@ -5,10 +5,12 @@ extends GameSystem
 ## The fields it handles are the shared core's; each other system saves its own through save_to/load_from.
 
 ## Moments a placed object keeps besides its "t" (a pig pen's forage, a perfect bunch's end); crafting slots'
-## "done" too. Each moves with the clock when a device clock was set back (see load_from).
+## "done" too. Each moves with the clock when a device clock was set back (see shift_all).
 const OBJECT_MOMENTS: Array[String] = ["forage_until", "expires"]
+const CLOCK_SLACK := 2       # seconds the device clock may step back (a network time correction) unnoticed
 
 var due_msec := -1           # when a queued save is written (-1: nothing waiting)
+var _seen := 0               # the latest moment the running game has seen (0: not yet), for watch_clock
 var _thread: Thread           # a queued save being turned into text and written off the main thread
 
 
@@ -21,6 +23,7 @@ func queue() -> void:
 
 ## Writes a queued save that has come due (called every frame by the game).
 func tick() -> void:
+	watch_clock()
 	if due_msec >= 0 and Time.get_ticks_msec() >= due_msec:
 		save(true)
 
@@ -175,35 +178,23 @@ func load_save() -> bool:
 	var skew := maxi(0, int(data.get("saved_at", game.now())) - game.now())
 	for system in game.systems:
 		system.load_from(data)
-		if skew > 0:
-			system.shift_clock(skew)
-	if game.clear_until > 0:
-		game.clear_until -= skew
 	game.set_objects([])
 	for o in data.get("objects", []):
 		var obj: Dictionary = o
 		if not game.items.has(obj.get("id", "")):
 			continue # item removed from the data file
-		obj["t"] = int(obj["t"]) - skew
-		# (SaveCheck has already made uid, row, col, t and level whole numbers.)
-		for key: String in OBJECT_MOMENTS:
-			if obj.has(key):
-				obj[key] = int(obj[key]) - skew
-		for slot: Variant in obj.get("slots", []):
-			if typeof(slot) == TYPE_DICTIONARY and (slot as Dictionary).has("done"):
-				slot["done"] = int(slot["done"]) - skew
-		game.add_object(obj)
+		game.add_object(obj)   # (SaveCheck has already made uid, row, col, t and level whole numbers.)
 	game.next_uid = int(data.get("next_uid", 1))
 	game.absence_note = game.bees.apply_absence(maxi(0, game.now() - int(data.get("saved_at", game.now()))))
 	game.plots.clear()
 	for p in saved_plots:
 		var plot: Dictionary = p
-		if plot.get("state") == "planted":
-			plot["planted_at"] = int(plot.get("planted_at", 0)) - skew
 		# Drop plots whose crop no longer exists in the data file.
 		if plot.get("state") == "planted" and not game.crops.has(plot.get("crop", "")):
 			plot = {"state": "plowed"}
 		game.plots.append(plot)
+	shift_all(skew)
+	_seen = game.now()
 	game.absence_items = AbsenceReport.items(game, int(data.get("saved_at", game.now())) - skew, game.now())
 	var away := AbsenceReport.line(game.absence_items)
 	game.absence_head = away
@@ -222,3 +213,38 @@ func load_save() -> bool:
 		var note := game.tr("SOME_BUILDINGS_CHANGED_SHAPE_AND") % moved
 		game.absence_note = note if game.absence_note == "" else game.absence_note + "\n" + note
 	return true
+
+
+## The device clock was set back `skew` seconds (since the save, or while the game ran or waited in the
+## background): every timer would wait the difference on top of its cycle, so each moves back by it and keeps
+## its progress: the systems' own, the weather's clear spell, every placed thing's moments and growing crops.
+func shift_all(skew: int) -> void:
+	if skew <= 0:
+		return
+	for system in game.systems:
+		system.shift_clock(skew)
+	if game.clear_until > 0:
+		game.clear_until -= skew
+	for o: Dictionary in game.objects:
+		for key: String in ["t"] + OBJECT_MOMENTS:
+			if o.has(key):
+				o[key] = int(o[key]) - skew
+		for slot: Variant in o.get("slots", []):
+			if typeof(slot) == TYPE_DICTIONARY and (slot as Dictionary).has("done"):
+				slot["done"] = int(slot["done"]) - skew
+	for plot: Dictionary in game.plots:
+		if plot.get("state") == "planted":
+			plot["planted_at"] = int(plot.get("planted_at", 0)) - skew
+
+
+## Called every frame: a phone's clock set back while the game runs or waits in the background (it resumes
+## without loading) shifts every timer as loading does, so nothing waits the difference on top. Returns the shift.
+func watch_clock() -> int:
+	var t := game.now()
+	var skew := _seen - t if _seen > 0 and t < _seen - CLOCK_SLACK else 0
+	if skew > 0:
+		shift_all(skew)
+		game.objects_updated()
+		game.queue_save()
+	_seen = maxi(_seen, t) if skew == 0 else t
+	return skew

@@ -89,6 +89,7 @@ func _act(g: GameState, dice: RandomNumberGenerator, action: String, placeable: 
 			g.debug_time_offset += int(CLOCK_JUMPS[dice.randi_range(0, CLOCK_JUMPS.size() - 1)])
 		_:
 			_act_more(g, dice, action, any, tile)
+	g.persistence.watch_clock()   # (the game looks every frame: a clock set back moves every timer with it)
 	g.objects_updated()
 
 
@@ -169,6 +170,16 @@ func _broken(g: GameState) -> String:
 			var i := g.index_of(r, c)
 			if g.is_occupied(i) and not tiles.has(i):
 				return "tile %d,%d is marked occupied but nothing stands there" % [r, c]
+	for o: Dictionary in g.storage.stored:   # the Barn's things keep uids of their own, never a farm thing's
+		var uid := int(o.get("uid", -1))
+		if seen.has(uid):
+			return "%s (uid %d) is in the Barn and elsewhere" % [o.get("id", "?"), uid]
+		seen[uid] = true
+	if g.storage.stored.size() > g.storage.barn_capacity() + 1:   # (+1: the hand slot, receive's to_hand)
+		return "the Barn holds %d past its space %d" % [g.storage.stored.size(), g.storage.barn_capacity()]
+	for i in g.plots.size():   # (the clock jumping back shifts growth, so nothing was planted in the future)
+		if g.plots[i].get("state", "") == "planted" and int(g.plots[i].get("planted_at", 0)) > g.now():
+			return "plot %d,%d was planted in the future" % [GameState.row_of(i), GameState.col_of(i)]
 	for uid: int in seen:
 		if g.next_uid <= uid:
 			return "next_uid %d would repeat uid %d" % [g.next_uid, uid]

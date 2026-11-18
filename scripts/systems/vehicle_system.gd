@@ -48,7 +48,8 @@ func load_from(data: Dictionary) -> void:
 
 
 func shift_clock(seconds: int) -> void:
-	fuel_t -= seconds
+	if fuel_t > 0:   # (0: fuel not yet unlocked, no clock running)
+		fuel_t -= seconds
 
 
 ## Adds fuel; past a full tank it fills spare tanks.

@@ -476,3 +476,33 @@ func test_437_a_tampered_save_never_loads_a_negative_count() -> void:
 	_check(g.next_uid > 2, "new things are numbered above the stored ones")
 	_done(g)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func test_480_a_clock_set_back_while_the_game_runs_moves_every_timer_with_it() -> void:
+	# A phone resumes without loading: a clock set back while the game waited in the background was only noticed
+	# on the next load, so until then every timer waited the difference on top (a crop an hour from ripe, two).
+	const BACK := 3600
+	var g := _farm()
+	g.set_objects([])
+	var t := g.now()
+	g.persistence.watch_clock()
+	g.vip.until = t + 5000
+	g.clear_until = t + 400
+	g.add_object({"uid": 900, "id": "chicken_coop", "row": 1, "col": 1, "t": t, "forage_until": t + 600,
+		"slots": [{"r": "x", "done": t + 800, "took": 800}]})
+	var i := g.index_of(6, 6)
+	g.plots[i] = {"state": "planted", "crop": "wheat", "planted_at": t - 100}
+	g.debug_time_offset -= BACK
+	var near := func(got: int, want: int) -> bool: return absi(got - want) <= 2
+	_check(near.call(g.persistence.watch_clock(), BACK), "the step back is seen")
+	_check(near.call(int(g.plots[i]["planted_at"]), t - 100 - BACK), "a growing crop keeps its progress")
+	_check(near.call(g.vip.until, t + 5000 - BACK), "the systems' timers (VIP) move with it")
+	_check(near.call(g.clear_until, t + 400 - BACK), "and the clear spell")
+	var o := g.object_by_uid(900)
+	_check(near.call(int(o["t"]), t - BACK) and near.call(int(o["forage_until"]), t + 600 - BACK)
+		and near.call(int(o["slots"][0]["done"]), t + 800 - BACK), "a placed thing's moments and its crafting slot")
+	g.debug_time_offset -= Persistence.CLOCK_SLACK - 1
+	_eq(g.persistence.watch_clock(), 0, "a network time correction of a second is left alone")
+	g.debug_time_offset += BACK * 5
+	_eq(g.persistence.watch_clock(), 0, "a clock moved on is time passing, not a shift")
+	_check(near.call(int(g.plots[i]["planted_at"]), t - 100 - BACK), "so nothing moves")
