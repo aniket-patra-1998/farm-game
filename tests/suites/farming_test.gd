@@ -28,6 +28,32 @@ func test_01_new_farm_starts_like_the_classic_opening() -> void:
 
 
 
+## The first visit closes on a level-up: harvesting the ripe plots, collecting the animals and plowing a field of
+## ten (about half the coins in hand) reaches level 2 (data/balance.json level_xp; it took 55 XP, three visits).
+func test_01b_first_visit_reaches_level_2() -> void:
+	var g := _farm()
+	g.field.harvest(g.index_of(5, 4))
+	g.field.harvest(g.index_of(5, 5))
+	for o in g.objects.duplicate():
+		if g.is_ready(o):
+			g.collect(int(o["uid"]))
+	var plowed := 0
+	for i in g.plots.size():
+		if plowed == 10:
+			break
+		if g.on_farm(i) and not g.is_occupied(i) and g.plots[i]["state"] == "grass" and g.field.plow(i):
+			g.field.plant(i, "strawberries")
+			plowed += 1
+	_eq(plowed, 10, "ten plots plowed and planted")
+	_check(g.coins > 0, "with coins left over")
+	_eq(g.level(), 2, "level 2 in the first visit")
+	_done(g)
+
+
+
+
+
+
 func test_02_plow_plant_grow_wither() -> void:
 	var g := _farm()
 	var i := _free(g)
