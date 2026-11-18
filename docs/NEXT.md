@@ -286,6 +286,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   Next: half-built decorations in look_shot (suspects above), then contact shadows (main), then order of work 2
   (trees' and buildings' outlines into the animals' style, on art-polish).
 
+- Art run 5 (13:36 IST): main 2a93f68 and a62557e: contact shades for every standing thing that had none
+  (GroundShade, a slot in the farm's one ContactShades batch): standing decorations (not joined pieces, flat under
+  0.25 tiles or wide over 1.6), the farmer and vehicles at work (`follow`). ContactShades frees a batch whose farm is
+  gone before it joins, and skips a top shrunk to nothing. art-polish rebased on main (e394abf); still waiting for the
+  owner's look. Half-built decorations: not seen in 3 shots this run (weather clear): likely a weather or pop-in
+  case; leave unless seen again. Next: order of work 2 on art-polish: the buildings' near-black trim bands (from
+  their file-made art: find the builder in data/art_sources.json; a builder change needs its re-export) into a warm
+  dark brown, and the trees' candy hues nearer the animals' family; then a second before/after sheet.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
