@@ -33,3 +33,18 @@ Only report, never build: a change to how anything looks, far-zoom picture stand
   force, never a merge commit; a half-done step stays on its branch with a handoff in docs/NEXT.md ("Perf").
 - Re-export art when a builder changes (data/art_sources.json); never render beside a precheck or push.
 - Frugal: read only what you need; no sub-agents; no model change; never send pictures.
+
+## Phone measurements (the only measure that counts; 18 Nov)
+The cloud container has no GPU and draws in software (~0.7 s a frame): it cannot judge loading or smoothness on a
+phone, and shader compiling, likely the biggest phone cost, does not show there at all. So every claim is measured
+on real phones:
+- LoadBenchmark (scripts/debug/load_benchmark.gd): the showcase opened cold, your own farm, the showcase warm, then
+  5 s of play at the playing zoom; built and whole times, long frames (first draws, shaders), frame times, draws.
+  One "BENCH {json}" log line and user://load_benchmark.json. Runs by itself in the benchmark APK (export feature
+  "benchmark", app "Farm Game (benchmark)", installs beside the test build), or from Settings > Testing >
+  Measure loading (the report is copied to the clipboard).
+- .github/workflows/phone_bench.yml: Firebase Test Lab installs the benchmark APK from the "Latest phone build"
+  release on real phones (nightly at 02:10 IST and by hand) and puts each phone's report in the run's summary.
+  Setup once: a Firebase project (free Spark plan: 5 physical-device runs a day), a service account with the
+  roles Firebase Test Lab Admin and Storage Admin, its JSON key as the repo secret FIREBASE_SA_KEY, the project id
+  as the repo variable FIREBASE_PROJECT; optionally FTL_DEVICES (each run prints the phones available).

@@ -1,0 +1,95 @@
+name: Phone benchmark
+
+# Measures loading and smoothness on real Android phones in Firebase Test Lab (the cloud renders in software and
+# cannot judge it). Installs the benchmark APK from the "Latest phone build" release (apk.yml makes it), lets it
+# measure itself (LoadBenchmark: the showcase cold and warm, your own farm, playing), and puts each phone's report
+# in this run's summary and an artifact.
+# Needs once (docs/PERF_RUN.md "Phone measurements"): the secret FIREBASE_SA_KEY (a service account's JSON key with
+# the Firebase Test Lab Admin and Storage Admin roles) and the variable FIREBASE_PROJECT (the project id).
+# The free Spark plan allows 5 physical-device runs a day: this runs nightly and by hand, two phones each time.
+
+on:
+  workflow_dispatch:
+    inputs:
+      devices:
+        description: "Devices, ';'-separated gcloud --device values (empty: the variable FTL_DEVICES or the default)"
+        required: false
+  schedule:
+    - cron: "40 20 * * *"   # 02:10 IST
+
+concurrency:
+  group: phone-bench
+  cancel-in-progress: false
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PROJECT: ${{ vars.FIREBASE_PROJECT }}
+      DEVICES: ${{ github.event.inputs.devices || vars.FTL_DEVICES || 'model=a10,version=29;model=oriole,version=33' }}
+    steps:
+      - name: Set up?
+        id: ready
+        env:
+          KEY: ${{ secrets.FIREBASE_SA_KEY }}
+        run: |
+          if [ -z "$KEY" ] || [ -z "$PROJECT" ]; then
+            echo "Firebase is not set up yet (secret FIREBASE_SA_KEY, variable FIREBASE_PROJECT): skipping." \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: The latest benchmark APK
+        if: steps.ready.outputs.go == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download apk-latest -R "$GITHUB_REPOSITORY" -p farm-game-benchmark.apk
+          ls -l farm-game-benchmark.apk
+
+      - uses: google-github-actions/auth@v2
+        if: steps.ready.outputs.go == 'true'
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.ready.outputs.go == 'true'
+
+      - name: Run on real phones
+        if: steps.ready.outputs.go == 'true'
+        run: |
+          bucket="gs://${PROJECT}-phone-bench"
+          gsutil ls "$bucket" > /dev/null 2>&1 || gsutil mb -p "$PROJECT" "$bucket"
+          dir="run-${GITHUB_RUN_ID}"
+          args=()
+          IFS=';' read -ra devs <<< "$DEVICES"
+          for d in "${devs[@]}"; do args+=(--device "$d"); done
+          # (a Robo test just launches the app; the benchmark build measures and quits by itself; its taps land on
+          # the loading cover. The outcome may say "failed" when the app quits: the report is in the log.)
+          gcloud firebase test android run --project "$PROJECT" --type robo --app farm-game-benchmark.apk \
+            "${args[@]}" --timeout 6m --results-bucket "$bucket" --results-dir "$dir" --no-record-video \
+            --no-performance-metrics || true
+          echo "## Phone benchmark ($(date -u +'%F %H:%M') UTC)" >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p reports
+          for log in $(gsutil ls "$bucket/$dir/**/logcat" 2>/dev/null); do
+            name=$(echo "$log" | sed "s#$bucket/$dir/##; s#/logcat##; s#/#_#g")
+            line=$(gsutil cat "$log" | grep -o 'BENCH {.*}' | tail -1 | sed 's/^BENCH //')
+            if [ -n "$line" ]; then
+              echo "$line" > "reports/$name.json"
+              printf '### %s\n```json\n%s\n```\n' "$name" "$line" >> "$GITHUB_STEP_SUMMARY"
+            else
+              printf '### %s\nNo report in the log (the app may not have finished).\n' "$name" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          echo "Physical devices available:" && gcloud firebase test android models list --project "$PROJECT" \
+            --filter="form=PHYSICAL" --format="value(id,name,supportedVersionIds.list())" | head -40
+
+      - uses: actions/upload-artifact@v4
+        if: steps.ready.outputs.go == 'true'
+        with:
+          name: phone-bench-reports
+          path: reports/
+          retention-days: 30

@@ -122,6 +122,11 @@ jobs:
             | tee export.log
           test -s build/farm-game-debug.apk || { echo "No APK was made"; exit 1; }
           ls -l build/farm-game-debug.apk
+          # The benchmark build: the same game with the "benchmark" feature, which measures loading on the phone by
+          # itself and quits (LoadBenchmark; phone_bench.yml runs it on real phones in Firebase Test Lab).
+          ./godot-bin/godot --headless --path . --export-debug "Android (benchmark APK)" build/farm-game-benchmark.apk \
+            2>&1 | tail -5
+          test -s build/farm-game-benchmark.apk || { echo "No benchmark APK was made"; exit 1; }
 
       - name: Upload the APK
         uses: actions/upload-artifact@v4
@@ -141,4 +146,4 @@ jobs:
           else
             gh release create apk-latest --title "Latest phone build" --notes "$notes" --prerelease
           fi
-          gh release upload apk-latest build/farm-game-debug.apk --clobber
+          gh release upload apk-latest build/farm-game-debug.apk build/farm-game-benchmark.apk --clobber

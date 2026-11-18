@@ -181,6 +181,15 @@ func showcase_card() -> PanelContainer:
 		func(on: bool) -> void:
 			PerfReadout.set_wanted(on)
 			PerfReadout.show_in(hud.get_tree(), on)), tr("PERF_READOUT_HELP")))
+	var measure := hud.panel_button(tr("BENCHMARK_RUN"))
+	measure.tooltip_text = tr("BENCHMARK_HELP")
+	measure.pressed.connect(func() -> void:
+		hud.book.close_panel()
+		var bench := LoadBenchmark.start(hud.get_parent())
+		bench.finished.connect(func(report: Dictionary) -> void:
+			DisplayServer.clipboard_set(JSON.stringify(report))
+			hud.show_message(tr("BENCHMARK_DONE") % LoadBenchmark.summary(report))))
+	inner.add_child(measure)
 	var trace := LoadTrace.previous()
 	if trace != "":
 		inner.add_child(BookPanel.text(tr("LOAD_TRACE_HELP"), UiTheme.CAPTION, BookPanel.SOFT))

@@ -141,6 +141,8 @@ func _ready() -> void:
 	if get_tree().current_scene == self:
 		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"))
 		Game.farm_opened.connect(_on_farm_opened)
+		if LoadBenchmark.wanted():
+			LoadBenchmark.start(self)   # (the benchmark build measures loading on the phone by itself, then quits)
 
 
 ## Another farm laid out in place of this one (the showcase, or back to your own): it is covered while it is
