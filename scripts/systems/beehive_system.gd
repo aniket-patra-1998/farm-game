@@ -84,6 +84,13 @@ func add_queen(uid: int, buy := false) -> bool:
 	return true
 
 
+## The showcase: the first finished hive has its Queen Bee.
+func showcase() -> void:
+	for hive: Dictionary in hives():
+		hive["queen"] = true
+		return
+
+
 ## Is a Queen Bee of any use? None is held and either there is no hive yet or one is queenless.
 func queen_wanted() -> bool:
 	if queen_bees > 0:

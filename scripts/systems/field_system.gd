@@ -211,6 +211,16 @@ func is_fertilized(i: int) -> bool:
 	return game.plots[i].get("fert", false)
 
 
+## The showcase: every other growing or ripe crop fertilized, so both beds are seen side by side.
+func showcase() -> void:
+	var k := 0
+	for i in game.plots.size():
+		if phase(i) == GameState.Phase.GROWING or phase(i) == GameState.Phase.RIPE:
+			if k % 2 == 0:
+				game.plots[i]["fert"] = true
+			k += 1
+
+
 ## Fertilizer goes on a planted crop that isn't ripe or withered yet.
 func fertilize(i: int) -> bool:
 	if phase(i) != GameState.Phase.GROWING or is_fertilized(i):

@@ -64,6 +64,14 @@ func collect_truffles(uid: int) -> int:
 	return dug
 
 
+## The showcase: the first finished pen with pigs back from foraging, truffles ready to collect.
+func showcase() -> void:
+	for pen: Dictionary in game.objects:
+		if game.special_of(pen) == "truffles" and not game.under_construction(pen) and game.inside_total(pen) > 0:
+			pen["forage_until"] = game.now()
+			return
+
+
 func rare_pigs() -> Array[String]:
 	var out: Array[String] = []
 	for id in game.item_order:

@@ -82,8 +82,23 @@ func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_wa
 		var own: Array = (system.get_script() as Script).get_script_method_list()
 		if own.any(func(m: Dictionary) -> bool: return m["name"] == "showcase"):   # not-ui
 			dressed.append(str((system.get_script() as Script).get_global_name()))
-	for name: String in ["VipSystem", "RustSystem", "CraftingSystem"]:   # not-ui
+	for name: String in ["VipSystem", "RustSystem", "CraftingSystem", "FieldSystem", "MasterySystem", "StraySystem",
+			"BeehiveSystem", "PigPenSystem"]:   # not-ui
 		_check(dressed.has(name), "%s says what the showcase shows of it" % name)
+	# What the farm and its sheets show of those: a stray to adopt, fertilized beds beside plain ones, crops at
+	# every count of stars (mastered too), a hive with its Queen Bee, a pen's truffles ready to collect.
+	_check(g.objects.any(func(o: Dictionary) -> bool: return o.get("stray", false)), "a stray waits on the farm")
+	var beds := range(g.plots.size()).filter(func(i: int) -> bool: return g.field.phase(i) == GameState.Phase.RIPE)
+	var fed_beds := beds.filter(func(i: int) -> bool: return g.field.is_fertilized(i))
+	_check(fed_beds.size() > 0 and fed_beds.size() < beds.size(), "fertilized beds beside plain ones")
+	var star_counts := {}
+	for crop_id: String in g.crop_order:
+		star_counts[g.mastery.stars(crop_id)] = true
+	_eq(star_counts.size(), g.mastery.thresholds(g.crop_order[0]).size() + 1, "crops at every count of stars")
+	_check(g.bees.hives().any(func(h: Dictionary) -> bool: return g.bees.has_queen(h)), "a hive has its Queen Bee")
+	var pens := g.objects.filter(func(o: Dictionary) -> bool: return g.special_of(o) == "truffles")
+	_check(pens.any(func(o: Dictionary) -> bool: return g.pigpen.is_foraging(o) and g.pigpen.forage_seconds_left(o) == 0),
+		"a pen's truffles are ready")
 	# The Barn is the hero at its best: whole, at the top VIP level, and VIP active.
 	var barns := g.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "barn")
 	_eq(barns.size(), 1, "the showcase has its Barn")

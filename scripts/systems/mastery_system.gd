@@ -81,6 +81,19 @@ func masterable(id: String) -> bool:
 	return game.crops.has(id) or ["tree", "animal", "bloom"].has(str(game.item_data(id).get("kind", "")))
 
 
+## The showcase: what is harvested at every count of stars in turn, from none to mastered, so each crop's
+## mastered look and the mastery sheet's stars are all seen.
+func showcase() -> void:
+	var k := 0
+	for id: String in game.crop_order + game.item_order:
+		if points.has(id) or not masterable(id):
+			continue
+		var needs := thresholds(id)
+		var star := k % (needs.size() + 1)
+		points[id] = 0 if star == 0 else int(needs[star - 1])
+		k += 1
+
+
 ## `count` harvests of `id`: points for what it's mastered as (a Full Bloom counts double, for its flower's
 ## shared mastery under the Single Bloom's id). Returns the stars gained.
 func add_harvest(id: String, count: int) -> int:

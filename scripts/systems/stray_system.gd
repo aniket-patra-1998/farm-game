@@ -56,6 +56,12 @@ func _has_stray() -> bool:
 	return false
 
 
+## The showcase: a stray waiting on the farm to be adopted.
+func showcase() -> void:
+	if not _has_stray():
+		_spawn_stray()
+
+
 ## Picks an animal near the player's level (cheaper ones more often) and an open grass tile.
 func _spawn_stray() -> bool:
 	if not Release.on("strays"):
