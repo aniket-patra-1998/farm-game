@@ -161,3 +161,10 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `SocialSystem.claim(id, to_place)` holds it one past the Barn's space for the hand; an emptied hand
   (`Placement.cancel`) gives it back to the inbox through `spill_over` (test 19). Open in edge cases: long
   offline (weeks), a crammed farm. Next: audit cheating and save safety (run 9).
+- Run 9 (cheating and save safety audit): only the top-level counts were guarded; every saved count map
+  (bushels, goods, feed, eggs, collectibles, mastery, supplies, parts...) and five system counts (queen bees,
+  truffles, fuel, fuel tanks, daily streak) loaded a negative value as is, a nested value crashed the system's
+  load, and a broken Barn entry crashed it. Now `GameSystem.int_map` drops a negative or unreadable entry,
+  `SaveCheck.COUNTS` covers the five, and SaveCheck mends "stored" (uids unique with the farm's) (test 437).
+  Open: a clock set forward finishes every timer (offline play cannot tell it apart: report, not a fix); the
+  save has no checksum, so hand-editing coins up is possible (an owner's call: cheap HMAC, easy to bypass).
