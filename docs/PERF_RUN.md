@@ -1,6 +1,6 @@
 # The loading and performance build (owner-approved 18 Nov 2026)
 
-Hourly sessions, 20:50 IST 18 Nov to 04:50 IST 19 Nov, make the farm load and run like a big commercial farm game:
+Hourly sessions, 20:50 IST 18 Nov to 08:35 IST 19 Nov, make the farm load and run like a big commercial farm game:
 the farm opens fast and whole, and a large, crowded farm stays smooth on a low-end Android phone. The look must
 not change (same models, colours and motion; an optimisation that changes how something looks is reported, not
 built). Follow CLAUDE.md and docs/POLISH.md's "Safe merging and no overlap". Log: the Claude doc "Farm game: polish
@@ -52,3 +52,25 @@ on real phones:
   Setup once: a Firebase project (free Spark plan: 5 physical-device runs a day), a service account with the
   roles Firebase Test Lab Admin and Storage Object Viewer, its JSON key as the repo secret FIREBASE_SA_KEY, the project id
   as the repo variable FIREBASE_PROJECT; optionally FTL_DEVICES (each run prints the phones available).
+
+## Phone-driven from 18 Nov 23:00 (owner: "real wins, not proposals")
+Real phones now work (Firebase project farm-game-20372; the Spark plan allows 5 physical-phone runs a day, so
+by default one phone a run: a Galaxy A13, low-end, Mali-G52). From now on:
+- Every run starts from the newest phone report (`gh api repos/aniket-patra-1998/farm-game/actions/workflows/phone_bench.yml/runs`,
+  then the run's artifact "phone-bench-reports"). Its biggest cost is the next thing worked on, whatever the step list says.
+- After merging a change that should move a phone number, start one phone run (`gh api -X POST
+  repos/aniket-patra-1998/farm-game/actions/workflows/phone_bench.yml/dispatches -f ref=main`) once the phone build
+  (apk.yml) for that commit is published, and log the before and after phone numbers. At most one phone run per hour
+  and 4 a day (count today's runs first); the nightly run is the fifth.
+- A run merges a real, measured win or leaves a precise handoff: never only a proposal.
+- Where the wins are, biggest first, to be confirmed by the phone report:
+  1. First-draw stalls (long_frames, longest_ms): shaders compiled the first time something is drawn. Warm every
+     material and shader variant the farm uses under the loading cover (one hidden draw each, or the renderer's
+     pipeline cache); fewer variants (merge near-duplicates where the look is the same).
+  2. Loading (built_ms, whole_ms): the APK is ~205 MB and art/ ~174 MB. Find what is loaded at start and how big:
+     oversized textures (resize to what the phone shows, VRAM-compressed ETC2/ASTC), meshes with more triangles
+     than a phone sees, files loaded but not needed for the first screen (load them later, threaded).
+  3. Frame time while playing (avg_ms, p95_ms, draws): batching (MultiMesh through Instancer) of trees, crops,
+     animals, fences and decorations; per-frame scripts thinned; anything off screen not processed.
+  4. The quality the phone gets: Quality's existing levels picked for the device by a short measured test at first
+     start (never a new look; the levels exist). Report it before building if it would change the default phone look.
