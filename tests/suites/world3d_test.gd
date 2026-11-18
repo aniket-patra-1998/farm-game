@@ -2022,7 +2022,7 @@ func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
 	Game.plots[i] = {"state": "planted", "crop": crop, "planted_at": Game.now()}
 	var crops := Crops3D.new()
 	add_child(crops)
-	_eq(crops.due(), Game.now() + ceili(Crops3D.SPROUT_FROM * grow), "due when the seeds sprout")
+	_eq(crops.due(), int(Game.plots[i]["planted_at"]) + ceili(Crops3D.SPROUT_FROM * grow), "due when the seeds sprout")
 	var seeds: Array = crops._plot_look[i]
 	crops._on_clock()
 	_eq(crops._plot_look[i], seeds, "a tick before then changes nothing")
