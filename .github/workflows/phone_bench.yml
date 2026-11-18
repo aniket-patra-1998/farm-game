@@ -5,7 +5,7 @@ name: Phone benchmark
 # measure itself (LoadBenchmark: the showcase cold and warm, your own farm, playing), and puts each phone's report
 # in this run's summary and an artifact.
 # Needs once (docs/PERF_RUN.md "Phone measurements"): the secret FIREBASE_SA_KEY (a service account's JSON key with
-# the Firebase Test Lab Admin and Storage Admin roles) and the variable FIREBASE_PROJECT (the project id).
+# the Firebase Test Lab Admin and Storage Object Viewer roles) and the variable FIREBASE_PROJECT (the project id).
 # The free Spark plan allows 5 physical-device runs a day: this runs nightly and by hand, two phones each time.
 
 on:
@@ -61,17 +61,17 @@ jobs:
       - name: Run on real phones
         if: steps.ready.outputs.go == 'true'
         run: |
-          bucket="gs://${PROJECT}-phone-bench"
-          gsutil ls "$bucket" > /dev/null 2>&1 || gsutil mb -p "$PROJECT" "$bucket"
-          dir="run-${GITHUB_RUN_ID}"
           args=()
           IFS=';' read -ra devs <<< "$DEVICES"
           for d in "${devs[@]}"; do args+=(--device "$d"); done
           # (a Robo test just launches the app; the benchmark build measures and quits by itself; its taps land on
           # the loading cover. The outcome may say "failed" when the app quits: the report is in the log.)
+          # Results go to Test Lab's own bucket (free on the Spark plan); its path is read from the output.
           gcloud firebase test android run --project "$PROJECT" --type robo --app farm-game-benchmark.apk \
-            "${args[@]}" --timeout 6m --results-bucket "$bucket" --results-dir "$dir" --no-record-video \
-            --no-performance-metrics || true
+            "${args[@]}" --timeout 6m --no-record-video --no-performance-metrics 2>&1 | tee run.log || true
+          where=$(grep -oE 'test-lab-[a-z0-9-]+/[^]/ ]+' run.log | head -1)
+          bucket="gs://${where%%/*}"
+          dir="${where#*/}"
           echo "## Phone benchmark ($(date -u +'%F %H:%M') UTC)" >> "$GITHUB_STEP_SUMMARY"
           mkdir -p reports
           for log in $(gsutil ls "$bucket/$dir/**/logcat" 2>/dev/null); do
