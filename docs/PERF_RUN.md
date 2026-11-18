@@ -48,7 +48,7 @@ on real phones:
   "benchmark", app "Farm Game (benchmark)", installs beside the test build), or from Settings > Testing >
   Measure loading (the report is copied to the clipboard).
 - .github/workflows/phone_bench.yml: Firebase Test Lab installs the benchmark APK from the "Latest phone build"
-  release on real phones (nightly at 02:10 IST and by hand) and puts each phone's report in the run's summary.
+  release on real phones (nightly at 02:10 IST and by hand; by default one low-end phone, a Galaxy A13, so the free 5 runs a day go further) and puts each phone's report in the run's summary.
   Setup once: a Firebase project (free Spark plan: 5 physical-device runs a day), a service account with the
   roles Firebase Test Lab Admin and Storage Object Viewer, its JSON key as the repo secret FIREBASE_SA_KEY, the project id
   as the repo variable FIREBASE_PROJECT; optionally FTL_DEVICES (each run prints the phones available).
