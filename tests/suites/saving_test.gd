@@ -492,6 +492,7 @@ func test_480_a_clock_set_back_while_the_game_runs_moves_every_timer_with_it() -
 		"slots": [{"r": "x", "done": t + 800, "took": 800}]})
 	var i := g.index_of(6, 6)
 	g.plots[i] = {"state": "planted", "crop": "wheat", "planted_at": t - 100}
+	g.social.outbox.append({"id": 77, "t": t - 50, "answers": [{"by": 0, "due": t + 900, "give": {}}]})
 	g.debug_time_offset -= BACK
 	var near := func(got: int, want: int) -> bool: return absi(got - want) <= 2
 	_check(near.call(g.persistence.watch_clock(), BACK), "the step back is seen")
@@ -501,6 +502,9 @@ func test_480_a_clock_set_back_while_the_game_runs_moves_every_timer_with_it() -
 	var o := g.object_by_uid(900)
 	_check(near.call(int(o["t"]), t - BACK) and near.call(int(o["forage_until"]), t + 600 - BACK)
 		and near.call(int(o["slots"][0]["done"]), t + 800 - BACK), "a placed thing's moments and its crafting slot")
+	var post: Dictionary = g.social.outbox.back()
+	_check(near.call(int(post["t"]), t - 50 - BACK) and near.call(int(post["answers"][0]["due"]), t + 900 - BACK),
+		"a neighbour's answer on its way arrives when it would have")
 	g.debug_time_offset -= Persistence.CLOCK_SLACK - 1
 	_eq(g.persistence.watch_clock(), 0, "a network time correction of a second is left alone")
 	g.debug_time_offset += BACK * 5
