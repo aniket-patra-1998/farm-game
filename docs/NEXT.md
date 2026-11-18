@@ -464,6 +464,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   flaky draw budget (perf loop's lane). The cursor still reads light (a thin outline shape, by design); plus and
   cross are marks sized by their buttons, left. Next: reveal_card's bare timings (goals' step 4 merged), then
   panels' spacing grid.
+- Art run 17 (19 Nov 03:05 IST): main only. 1218311: celebration cards in the one motion language (RevealCard's
+  shakes eased 0.26 s rocks with a 0.14 s breath, burst 0.14 s, prize through UiFx.settle, every time a named
+  constant; the level-up card opens with UiFx.open and its number swells once with UiFx.pulse, no looping pulse).
+  ui_kit test 523. 9271146: inbox names in one column (a line with no thing keeps the count tile's room; hud test
+  524). b539463: panels space on one grid of 4 (UiTheme sizes hud_gap 8, row_gap 12, section_gap 16 replace bare
+  10/12/14 separations, now scaled with the interface; hud_goals.gd left to the goals loop). Left: the cards'
+  inner separation 6 (hud_buildings, away_card rows, hud_bubble) is off the grid (4 or 8 changes card heights:
+  render the home sheets first). Fresh container: Godot 4.7.2 zip, `--import` ~1 min; look_shot of two panels
+  ~3.5 min. Next: the 6s onto the grid, then the level-up confetti look stays reported (a look to pick).
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
