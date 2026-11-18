@@ -302,6 +302,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   now covers goals, reveal and search. Note: this container's clone had no core.hooksPath set until mid-run, so
   4d05045 reached main with a 122-character line (precheck red about 6 minutes); fixed in 01338f7. Set the hook
   path before the first push. Next audit: economy round three (the open items all need the owner's taste).
+- Run 28 (02:21; economy round three, then edge cases): the exploit hunter (length 5) finds no free loop; the
+  goals bot (30 days, 3 visits) keeps the level pace (20 on day 15) but sits on ~1M coins by day 30 (the known
+  "something to buy" design item, PLAYER_EXPERIENCE Part 4). Fixed: recipe mastery markup into data
+  (`recipes.markup_per_mastery_star`, test 520); `Game.place_somewhere` and a stray's arrival pick through
+  `free_spot_for` (BuildingSystem's rule), so a sold Orchard's trees no longer land against a building, and still
+  land when only crowded spots are left (test 521). This container had no Godot (reinstalled 4.7.2 from the CI
+  URL) and a shallow, stale clone (`git fetch --unshallow`). Next audit: player progression round three.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
