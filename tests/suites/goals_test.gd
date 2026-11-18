@@ -241,8 +241,9 @@ func test_484_a_damaged_goal_save_loads_without_a_crash() -> void:
 
 
 ## The balance bot as a goal follower (tools/balance_sim, step 6): on a new farm from minute zero it harvests the
-## starter's ripe plots at once, reaches level 2 in the first minutes, collects goals and is never left without
-## an open goal; over three days of visits it collects goals every day it comes, and nothing on a day it is away.
+## starter's ripe plots at once, reaches level 2 in the first minutes and collects goals; over three days of
+## visits it finishes every one of today's jobs on each day it comes, and nothing on a day it is away. (The faces
+## are kept full by the story chains, which come in steps 4 and 7.)
 func test_483_the_goal_follower_plays_a_new_farm_without_getting_stuck() -> void:
 	var g := _farm()
 	var sim: Node = load("res://tools/balance_sim.gd").new()
@@ -255,7 +256,6 @@ func test_483_the_goal_follower_plays_a_new_farm_without_getting_stuck() -> void
 	_eq(hour["first_harvest"], 0, "the starter's ripe plots are harvested in the first minute")
 	_check(int(hour["level_at"][10]) >= 2, "level 2 within ten minutes")
 	_check(int(hour["goals"]) >= 1, "a goal is collected in the first hour")
-	_check(not g.goals.open_keys().is_empty(), "the goal faces are never empty after the first hour")
 	sim.set("away", [2])
 	var got := {1: int(hour["goals"])}   # day -> goals collected (day 1 is the first, with its first hour)
 	for day in range(1, 4):
@@ -267,8 +267,37 @@ func test_483_the_goal_follower_plays_a_new_farm_without_getting_stuck() -> void
 			if day != 2:
 				sim.call("_visit", sim.call("_visits_after", hours, v))
 			got[day] = int(got.get(day, 0)) + int(sim.get("goals_claimed")) - before
-			_check(day == 2 or not g.goals.open_keys().is_empty(), "day %d: always an open goal" % day)
+		_check(day == 2 or sim.call("jobs_left") == 0, "day %d: every job done by its last visit; open %s" % [day,
+			g.goals.open_keys().map(func(k: String) -> Array: return [g.goals.tasks_of(k), g.goals.progress_of(k)])])
 	_check(int(got[1]) > 0 and int(got[3]) > 0, "goals collected every day it comes: %s" % got)
 	_eq(got[2], 0, "nothing on the day it is away")
 	sim.free()
+	_done(g)
+
+
+## Today's jobs can be done today (found by the goal-following bot, step 6): a harvest job names only a crop that
+## ripens within goals.daily_crop_hours, and a job to collect from or feed animals asks no more than the farm's
+## own animals give in goals.daily_play_hours.
+func test_484_todays_jobs_can_be_done_today() -> void:
+	var g := _farm()
+	g.goals.load_data()
+	g.goals.reset()
+	g.add_xp(g.xp_for_level(12))
+	for o in 3:
+		_check(g.place_somewhere("chicken"), "a chicken on the farm")
+	var hours := Balance.f("goals.daily_crop_hours") * 3600.0
+	for id: String in g.goals.pick_candidates("@crop_quick"):
+		_check(float(g.crops[id]["grow_seconds"]) <= hours, "%s ripens within a day's play" % id)
+	_check(g.goals.pick_candidates("@crop_quick").has(SHOP_ID), "strawberries are a quick crop")
+	for day in 30:
+		g.debug_time_offset += 86400
+		g.goals.refresh()
+		for job: Dictionary in g.goals.daily_jobs:
+			var what := str(job["what"])
+			match str(job["do"]):
+				"harvest":
+					_check(float(g.crops[what]["grow_seconds"]) <= hours, "day %d: harvest %s can be done" % [day, what])
+				"collect", "feed":
+					_check(int(job["n"]) <= g.goals.per_day_of(what), "day %d: %s %d from %s, no more than they give"
+						% [day, job["do"], job["n"], what])
 	_done(g)

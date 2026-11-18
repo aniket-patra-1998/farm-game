@@ -972,6 +972,14 @@
   "daily_full_level": {
    "v": 20,
    "note": "the level at which today's jobs ask for the top of their range (data/goals.json daily.templates n); below it, a share"
+  },
+  "daily_crop_hours": {
+   "v": 8,
+   "note": "a job to harvest a crop (@crop_quick) names only crops that ripen within this many hours, so a crop planted at a morning visit is ready by an evening one: the job can be done today"
+  },
+  "daily_play_hours": {
+   "v": 12,
+   "note": "the span of a day's play: a job to collect from or feed animals (per_owned) asks at most what the farm's own animals give in it (each at least once)"
   }
  }
 }

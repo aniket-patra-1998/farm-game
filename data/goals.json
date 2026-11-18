@@ -1,5 +1,5 @@
 {
-  "_about": "Goals (docs/PLAYER_EXPERIENCE.md Part 1), read by GoalSystem. chains: the neighbours' story chains ({id, giver, after, level, locked?, steps: [{say, tasks, reward}]}); daily: today's jobs ({count, swap, bonus, templates: [{do, what, n: [low, high], weight, level}]}); projects: long goals ({id, level, stages: [{tasks, reward?}], reward}). A task is {do, what, n}: `do` a verb of data/events.json or a state verb (level, own); `what` an item or crop id, a kind (animal, tree, crop...), \"\" for anything, or for daily jobs a pick (@crop_unlocked, @animal_owned, @building_owned, @recipe_known). A chain step's `say` and a project's `name` are locale keys. show: where a task's Show me goes, by verb (tool:<id>, seeds, market, farm:<kind of spot> or farm:item for the task's own thing; HudGoals). Rewards: coins, xp, gems, item or place (to the Barn or inbox), box (a Mystery Box), unlock_chain. The Welcome chain, the six neighbours' chains and the three projects are written in steps 4 and 7 (docs/FIRST_HOUR_RUN.md).",
+  "_about": "Goals (docs/PLAYER_EXPERIENCE.md Part 1), read by GoalSystem. chains: the neighbours' story chains ({id, giver, after, level, locked?, steps: [{say, tasks, reward}]}); daily: today's jobs ({count, swap, bonus, templates: [{do, what, n: [low, high], weight, level}]}); projects: long goals ({id, level, stages: [{tasks, reward?}], reward}). A task is {do, what, n}: `do` a verb of data/events.json or a state verb (level, own); `what` an item or crop id, a kind (animal, tree, crop...), \"\" for anything, or for daily jobs a pick (@crop_unlocked, @crop_quick: one that ripens within goals.daily_crop_hours, @animal_owned, @building_owned, @recipe_known); a template's per_owned caps its n at what the farm's own things give in a day (GoalSystem.per_day_of). A chain step's `say` and a project's `name` are locale keys. show: where a task's Show me goes, by verb (tool:<id>, seeds, market, farm:<kind of spot> or farm:item for the task's own thing; HudGoals). Rewards: coins, xp, gems, item or place (to the Barn or inbox), box (a Mystery Box), unlock_chain. The Welcome chain, the six neighbours' chains and the three projects are written in steps 4 and 7 (docs/FIRST_HOUR_RUN.md).",
   "show": {"plow": "tool:plow", "plant": "seeds", "harvest": "farm:ripe", "fertilize": "tool:fertilize",
     "collect": "farm:item", "feed": "farm:item", "upgrade": "farm:item", "start_craft": "farm:item", "craft": "farm:item",
     "buy": "market", "build": "market", "own": "market"},
@@ -9,11 +9,11 @@
     "swap": 1,
     "bonus": {"box": "mystery_box", "gems_every": 3},
     "templates": [
-      {"do": "harvest", "what": "@crop_unlocked", "n": [6, 20], "weight": 3},
+      {"do": "harvest", "what": "@crop_quick", "n": [6, 20], "weight": 3},
       {"do": "plant", "what": "@crop_unlocked", "n": [6, 20], "weight": 2},
       {"do": "plow", "what": "", "n": [6, 20], "weight": 1},
-      {"do": "collect", "what": "@animal_owned", "n": [2, 8], "weight": 2},
-      {"do": "feed", "what": "@animal_owned", "n": [2, 6], "weight": 1, "level": 5},
+      {"do": "collect", "what": "@animal_owned", "n": [2, 8], "weight": 2, "per_owned": true},
+      {"do": "feed", "what": "@animal_owned", "n": [2, 6], "weight": 1, "level": 5, "per_owned": true},
       {"do": "craft", "what": "@recipe_known", "n": [1, 2], "weight": 1, "level": 8}
     ]
   },

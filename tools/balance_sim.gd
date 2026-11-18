@@ -194,7 +194,9 @@ func play_first_hour() -> Dictionary:
 	var out := {"first_harvest": -1, "first_buy": -1, "level_at": {}, "coins_at": {}, "minute_of_level": {},
 		"goals": 0, "stuck_minutes": 0, "lines": []}
 	var per_minute := int(60.0 / SECONDS_PER_ACTION)
-	var later := []   # after the hour: the real day's visits (the overnight crop is judged by them)
+	var visit_minutes := _minutes   # (each minute is a short visit; later visits are the usual length)
+	_minutes = per_minute * SECONDS_PER_ACTION / 60.0
+	var later := []   # the real day's later visits after the first one (the session started at it)
 	for t: float in _visits_after(_visit_hours(), 0):
 		later.append(t)
 	for m in FIRST_HOUR_MINUTES:
@@ -202,11 +204,10 @@ func play_first_hour() -> Dictionary:
 		for k in range(1, FIRST_HOUR_MINUTES - m):
 			ahead.append(k * 60.0)
 		for t: float in later:
-			ahead.append(t + (FIRST_HOUR_MINUTES - m) * 60.0)
+			ahead.append(t - m * 60.0)   # the day's next visits, counted from this minute
 		var harvests := _harvests
 		var bought := _bought.duplicate()
 		var level := game.level()
-		_minutes = per_minute * SECONDS_PER_ACTION / 60.0
 		_visit(ahead)
 		if harvests == 0 and _harvests > 0 and out["first_harvest"] < 0:
 			out["first_harvest"] = m
@@ -214,12 +215,13 @@ func play_first_hour() -> Dictionary:
 			out["first_buy"] = m
 		for l in range(level + 1, game.level() + 1):
 			out["minute_of_level"][l] = m + 1
-		if _actions >= per_minute and not game.goals.open_keys().is_empty():
+		if _actions >= int(_minutes * 60.0 / SECONDS_PER_ACTION) and not game.goals.open_keys().is_empty():
 			out["stuck_minutes"] += 1   # nothing at all done this minute while goals wait
 		game.debug_time_offset += 60
 		if FIRST_HOUR_MARKS.has(m + 1):
 			out["level_at"][m + 1] = game.level()
 			out["coins_at"][m + 1] = game.coins
+	_minutes = visit_minutes
 	out["goals"] = goals_claimed
 	var lines: Array = out["lines"]
 	lines.append("first harvest at minute %d, first purchase at minute %d" % [out["first_harvest"], out["first_buy"]])
@@ -268,6 +270,7 @@ static func _visits_after(hours: Array, v: int) -> Array:
 func _visit(next_visits: Array) -> void:
 	_actions = int(_minutes * 60.0 / SECONDS_PER_ACTION)
 	if follows_goals():
+		_claim_goals()   # yesterday's finished jobs first: the day's refresh replaces them
 		game.goals.refresh()
 		_swap_undoable()
 	_collect_ready()
@@ -320,7 +323,7 @@ func _claim_goals() -> void:
 	while again:
 		again = false
 		for key in game.goals.open_keys():
-			if game.goals.is_done(key) and _act():
+			if game.goals.is_done(key):   # (a tap on a face: never left for want of time)
 				game.goals.claim(key)
 				goals_claimed += 1
 				if key.begins_with("chain:"):

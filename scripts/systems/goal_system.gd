@@ -460,15 +460,33 @@ func _pick_job(rng: RandomNumberGenerator, taken: Array) -> Dictionary:
 	if typeof(n) == TYPE_ARRAY:
 		var share := clampf(float(game.level()) / maxf(1.0, Balance.f("goals.daily_full_level")), 0.0, 1.0)
 		size = roundi(lerpf(float(n[0]), float(n[1]), share))
+	if t.get("per_owned", false):
+		size = mini(size, per_day_of(str(o[1])))
 	return {"do": str(t["do"]), "what": o[1], "n": maxi(1, size)}
 
 
-## What a daily template's `what` can be on this farm now: a pick (@crop_unlocked, @animal_owned, @recipe_known,
-## @building_owned) gives the choices, anything else is itself.
+## How many times the things standing on the farm that `what` names give in a day's play (a job to collect from
+## them asks no more): each one's count times the times its cycle fits in goals.daily_play_hours, at least once.
+func per_day_of(what: String) -> int:
+	var n := 0
+	for o: Dictionary in game.objects:
+		var id := str(o["id"])
+		if matches(what, id):
+			var cycle := float(game.item_data(id).get("cycle_seconds", 86400))
+			n += maxi(1, floori(Balance.f("goals.daily_play_hours") * 3600.0 / maxf(cycle, 1.0)))
+	return n
+
+
+## What a daily template's `what` can be on this farm now: a pick (@crop_unlocked, @crop_quick, @animal_owned,
+## @recipe_known, @building_owned) gives the choices, anything else is itself.
 func pick_candidates(what: String) -> Array:
 	match what:
 		"@crop_unlocked":
-			return game.crops.keys().filter(func(id: String) -> bool: return game.is_unlocked(id) and Release.has(id))
+			return _unlocked_crops()
+		"@crop_quick":   # one that ripens within a day's play (a job to harvest it can be done today)
+			var hours := Balance.f("goals.daily_crop_hours") * 3600.0
+			return _unlocked_crops().filter(
+				func(id: String) -> bool: return float(game.crops[id]["grow_seconds"]) <= hours)
 		"@animal_owned":
 			return _owned_of_kind("animal")
 		"@building_owned":
@@ -481,6 +499,10 @@ func pick_candidates(what: String) -> Array:
 						out.append(r.id)
 			return out
 	return [] if what.begins_with(PICK) else [what]
+
+
+func _unlocked_crops() -> Array:
+	return game.crops.keys().filter(func(id: String) -> bool: return game.is_unlocked(id) and Release.has(id))
 
 
 func _owned_of_kind(kind: String) -> Array:
