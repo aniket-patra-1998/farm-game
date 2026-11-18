@@ -257,7 +257,7 @@ func park(id: String) -> bool:
 ## A run ended (called by VehicleWork): what it did is added up and told.
 func finish(run: VehicleWork) -> void:
 	if int(run.result["plots"]) > 0:
-		game.ribbons.bump("vehicle_plots", int(run.result["plots"]))
+		game.record("vehicle_work", run.id, int(run.result["plots"]))
 	if run.out_of_fuel:
 		game.message.emit(tr("OUT_OF_FUEL_IT_REFILLS_SLOWLY"))
 	if runs.has(run):
@@ -355,7 +355,7 @@ func upgrade_vehicle(id: String) -> bool:
 	game.parts["vehicle_parts"] = int(game.parts["vehicle_parts"]) - vehicle_upgrade_cost(id)
 	vehicle_levels[id] = vehicle_level(id) + 1
 	var area := vehicle_area(id)
-	game.ribbons.bump("vehicle_upgrades", 1)
+	game.record("upgrade", id)
 	game.message.emit(tr("UPGRADED_IT_NOW_WORKS_X_PLOTS") % [game.item_data(id)["name"], area.x, area.y])
 	game.inventory_changed.emit()
 	game.objects_updated()

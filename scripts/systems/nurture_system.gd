@@ -246,13 +246,13 @@ func _grow(o: Dictionary) -> String:
 			var went := game.storage.welcome(into)
 			game.message.emit(tr("GREW_INTO") % [game.item_data(o["id"])["name"], game.item_data(into)["name"]] + " "
 				+ tr("ARRIVED_IN_BARN" if went == BarnStorage.BARN else "ARRIVED_IN_INBOX"))
-			game.ribbons.bump("young_raised", 1)
+			game.record("grow_up", into)
 			return into
 		grown["row"] = spot.x
 		grown["col"] = spot.y
 	game.add_object(grown)
 	game.message.emit(tr("YOUR_GREW_INTO_A") % [game.item_data(o["id"])["name"], game.item_data(into)["name"]])
-	game.ribbons.bump("young_raised", 1)
+	game.record("grow_up", into)
 	return into
 
 

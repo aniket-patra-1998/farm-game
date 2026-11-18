@@ -122,7 +122,7 @@ func trade_in(coll_id: String) -> bool:
 				prize
 			]
 		)
-		game.ribbons.bump("collections_traded", 1)
+		game.record("trade_collection", coll_id)
 		game.collections_changed.emit()
 		game.queue_save()
 		return true

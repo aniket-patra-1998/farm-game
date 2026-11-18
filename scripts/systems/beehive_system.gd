@@ -95,7 +95,7 @@ func queen_wanted() -> bool:
 ## A Queen Bee found (by the finds framework) goes to the Barn until a hive takes her.
 func receive_queen() -> void:
 	queen_bees += 1
-	game.ribbons.bump("queens_found", 1)
+	game.record("find_queen", "queen_bee")
 	game.inventory_changed.emit()
 
 
@@ -113,7 +113,7 @@ func flower_harvest_bees(roll_queen := true) -> String:
 			if not game.rolls.roll("bee", Balance.f("bees.bee_chance")):
 				return ""
 			put_bee_in(h)
-			game.ribbons.bump("bees_found", 1)
+			game.record("find_bee", str(h["id"]))
 			game.objects_updated()
 			return tr("A_BEE_JOINED")
 	return ""
@@ -144,7 +144,7 @@ func pollinate(crop_id: String) -> int:
 		return 0
 	var n := pollinated_seeds(crop_id) + Balance.i("bees.pollinated_seeds")
 	pollinated[crop_id] = [n, game.now() + Balance.i("bees.pollinated_lifetime")]
-	game.ribbons.bump("pollinated", 1)
+	game.record("pollinate", crop_id)
 	game.message.emit(
 		tr("YOUR_BEES_POLLINATED_THE_POLLINATED_SEEDS") % [game.crops[crop_id]["name"].to_lower(), n]
 	)
@@ -179,7 +179,7 @@ func use_fertilize_all() -> int:
 		game.message.emit(tr("NOTHING_GROWING_TO_FERTILIZE"))
 		return 0
 	game.fertilize_alls -= 1
-	game.ribbons.bump("fertilized", done)
+	game.record("fertilize", "", done)
 	game.message.emit(tr("FERTILIZED_CROPS") % done)
 	game.inventory_changed.emit()
 	game.plot_changed.emit(-1)

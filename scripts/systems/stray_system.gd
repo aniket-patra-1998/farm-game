@@ -127,7 +127,7 @@ func adopt_stray(uid: int) -> bool:
 	o.erase("stray")
 	o["t"] = game.now() # starts producing from today
 	game.add_xp(Balance.i("strays.stray_adopt_xp"))
-	game.ribbons.bump("strays_adopted", 1)
+	game.record("adopt", str(o["id"]))
 	game.message.emit(tr("YOU_ADOPTED_THE_IT_S_PART") % game.item_data(o["id"])["name"].to_lower())
 	game.objects_updated(uid)
 	return true

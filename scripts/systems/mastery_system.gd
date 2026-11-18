@@ -106,7 +106,7 @@ func award_star(id: String, star: int) -> void:
 	game.add_coins(int(Balance.a("mastery.star_coins")[star - 1]))
 	game.add_xp(int(Balance.a("mastery.star_xp")[star - 1]))
 	game.message.emit(tr("MASTERY_STAR") % [name_of(id), star])
-	game.ribbons.bump("mastery_stars", 1)
+	game.record("master", id)
 	if star != 3:
 		return
 	# FarmVille's mastery sign, to show off on the farm (any mastered item).

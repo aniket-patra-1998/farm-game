@@ -45,7 +45,7 @@ func roll_bunch(crop_id: String, i: int) -> String:
 		return ""
 	if not add_bunch(crop_id):
 		return ""
-	game.ribbons.bump("perfect_bunches", 1)
+	game.record("perfect_bunch", crop_id)
 	game.found.emit(i, tr("PERFECT_BUNCH_OF") % game.crops[crop_id]["name"], "uncommon")
 	return crop_id
 

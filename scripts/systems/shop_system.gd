@@ -23,8 +23,7 @@ func buy_item(item_id: String) -> bool:
 	var bought_xp := game.buy_xp(item_id)
 	if bought_xp > 0:
 		game.add_xp(bought_xp)
-	if it["kind"] == "decor":
-		game.ribbons.bump("decor_bought", 1)
+	game.record("buy", item_id)   # (a decoration counts for the Decorator ribbon: data/events.json)
 	if it["kind"] == "vehicle":
 		game.vehicles.on_vehicle_bought()
 		game.rust.bought(item_id)   # (a new one starts clean: docs/RUST.md)
@@ -95,7 +94,7 @@ func sell_object(uid: int) -> bool:
 			game.place_somewhere(id)
 	var value := game.sell_value(o)
 	game.add_coins(value)
-	game.ribbons.bump("items_sold", 1)
+	game.record("sell", str(o["id"]))
 	var moved := (tr("MOVED_OUT_ONTO_THE_FARM") % held.size()) if held.size() > 0 else ""
 	game.message.emit(tr("SOLD_THE_FOR_COINS") % [game.item_data(o["id"])["name"], value, moved])
 	game.inventory_changed.emit()
