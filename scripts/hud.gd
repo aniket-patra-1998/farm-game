@@ -26,6 +26,7 @@ const BUTTON_EDGE := 0.5   # a panel button's edge, against the theme's button b
 
 
 var top: HudTop
+var goals: HudGoals   # the goal faces under the coin meter and the goal sheet
 var sheet: BuildingSheet   # a tapped home's sheet (made when first needed, then kept)
 var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
@@ -98,6 +99,7 @@ func _ready() -> void:
 		show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])]))
 	side = HudSide.new(self)
 	side.build(root)
+	goals = HudGoals.new(self)
 	tools = HudTools.new(self)
 	tools.build(root)
 	helpers = HudHelpers.new(self)
@@ -109,6 +111,7 @@ func _ready() -> void:
 	_build_placing_bar(root)
 	book = BookPanel.new()
 	root.add_child(book)
+	goals.build(root)   # (after the book: a goal change refreshes an open sheet)
 	# One window at a time: a panel opened from the HUD (Seeds, Market, the album...) puts a building's sheet away,
 	# as a sheet opening closes the panel (show_building); else the sheet stayed drawn over the panel.
 	book.visibility_changed.connect(func() -> void:
@@ -211,6 +214,7 @@ func set_interface_hidden(on: bool) -> void:
 	all.append_array(side.hideable())
 	for c in all:
 		c.visible = not on
+	goals.update()
 
 
 ## Fades the whole interface away over an idle farm (Main, after Balance `feel.idle_view_seconds` with no touch),
@@ -427,6 +431,22 @@ func show_settings() -> void:
 
 func show_market() -> void:
 	book.open_tabs(tr("MARKET"), market.tabs(), 1)   # (the first shelf after Seeds: trees, as FarmVille opened)
+
+
+## The Market on the shelf that sells `id` (an item or a kind; the first shelf after Seeds for anything else).
+func show_market_for(id: String) -> void:
+	var d := Game.catalog.get_def(id)
+	var kind := d.kind if d != null else id
+	var first := 1
+	for k in HudMarket.SHELVES.size():
+		if str(HudMarket.SHELVES[k][0]) == kind:
+			first = k + 1   # (Seeds is tab 0)
+	book.open_tabs(tr("MARKET"), market.tabs(), first)
+
+
+## The goal sheet (Story, Today, Projects).
+func show_goals(first := 0) -> void:
+	goals.show_goals(first)
 
 
 ## Opened when a building that isn't ready is tapped.

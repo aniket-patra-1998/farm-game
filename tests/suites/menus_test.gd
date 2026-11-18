@@ -176,7 +176,7 @@ func _settle() -> void:
 func _screens(hud: FarmHud) -> Array:
 	var out: Array = [["Market", hud.show_market], ["Collections", hud.show_collections],
 		["Ribbons", hud.show_ribbons], ["Settings", hud.show_settings], ["Seeds", hud.show_seeds],
-		["Inbox", hud.show_inbox],
+		["Inbox", hud.show_inbox], ["Goals", hud.show_goals],
 		["Fuel", func() -> void: hud.book.open_panel(tr("FUEL"), hud.buildings.build_fuel)]]
 	for coll: Dictionary in Game.collectibles.collections:
 		var cid := str(coll["id"])

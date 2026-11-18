@@ -2,7 +2,7 @@ extends Node
 ## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes nine pictures
 ## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garage, barn_broken, home_panel,
 ## crafting_panel, seeds_panel, collections_panel, ribbons_panel,
-## inbox_panel) into the folder given
+## inbox_panel, goals_panel: the goal sheet on Today) into the folder given
 ## by --out=<dir> (default ci_shots/look).
 ## --hour=<h> shows another local hour than noon (6 dawn, 18.5 dusk, 22 night).
 ## --weather=<state> holds the weather (clear, rain, storm...) so two hours differ only by the day's light.
@@ -48,6 +48,7 @@ func _ready() -> void:
 	var local_now := int(Time.get_unix_time_from_system()) + DayCycle.device_bias_minutes() * 60
 	Game.debug_time_offset = posmod(int(hour * 3600) - local_now, 86400)
 	Game.weather_override = weather
+	Game.goals.showcase()   # (the new hour may be a new day: today's jobs again, one done)
 	await Objects3D.until_settled(get_tree())
 	for k in 12:
 		await RenderingServer.frame_post_draw
@@ -92,7 +93,8 @@ func _ready() -> void:
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(p[0]) + ".png"))
 		hud.book.close_panel()
 	for p: Array in [["seeds_panel", hud.show_seeds], ["collections_panel", hud.show_collections],
-			["ribbons_panel", hud.show_ribbons], ["inbox_panel", hud.show_inbox]]:
+			["ribbons_panel", hud.show_ribbons], ["inbox_panel", hud.show_inbox],
+			["goals_panel", func() -> void: hud.show_goals(HudGoals.tab_of("daily:0"))]]:
 		if not (only.is_empty() or only.has(str(p[0]))):
 			continue
 		(p[1] as Callable).call()

@@ -162,7 +162,7 @@ def main():
 
 
 # Keys the code builds from a prefix, so they can't be found literally.
-DYNAMIC_PREFIXES = ["REGION_", "SEASON_", "BOOST_", "FED_FX_", "FEED_GRAIN", "FEED_GREENS", "FEED_ROOTS", "FEED_FRUIT", "FEED_NECTAR",
+DYNAMIC_PREFIXES = ["REGION_", "GOAL_DO_", "GOAL_KIND_", "GOALS_NONE_", "SEASON_", "BOOST_", "FED_FX_", "FEED_GRAIN", "FEED_GREENS", "FEED_ROOTS", "FEED_FRUIT", "FEED_NECTAR",
                     "YOU_FOUND_A_QUEEN_BEE_PUT",  # names in data/feeds.json; a find family's `message` in data/finds.json
                     "SEARCH_CHIP_", "SEARCH_WORDS_"]  # chips and kind words in data/search.json
 

@@ -14,7 +14,8 @@ const ANY := ""                           # a `what` that matches anything done 
 
 var chains: Array = []          # data: [{id, giver, after, level, steps: [{say, tasks, reward}]}]
 var daily_data := {}            # data: {count, swap, bonus, templates}
-var projects: Array = []        # data: [{id, level, stages: [{tasks}], reward}]
+var projects: Array = []        # data: [{id, name, level, stages: [{tasks}], reward}]
+var show_data := {}             # data: verb -> where a task's Show me goes (HudGoals.show_of)
 
 var chain_step := {}            # open chain id -> the step it is on
 var chains_done: Array[String] = []
@@ -45,6 +46,7 @@ func use_data(d: Dictionary) -> void:
 	chains = d.get("chains", [])
 	daily_data = d.get("daily", {})
 	projects = d.get("projects", [])
+	show_data = d.get("show", {})
 	_chain_by_id.clear()
 	for c: Dictionary in chains:
 		_chain_by_id[str(c["id"])] = c
@@ -116,6 +118,7 @@ func showcase() -> void:
 		if not tasks.is_empty():
 			progress["chain:" + id] = tasks.map(func(t: Dictionary) -> int: return int(t.get("n", 1)) / 2)
 		break
+	game.goals_changed.emit()
 
 
 static func _strings(v: Variant) -> Array[String]:
@@ -176,6 +179,16 @@ func _chain_ready(c: Dictionary) -> bool:
 		if not chains_done.has(str(a)):
 			return false
 	return true
+
+
+## A chain's data by id ({} when there is none).
+func chain_of(id: String) -> Dictionary:
+	return _chain_by_id.get(id, {})
+
+
+## A project's data by id ({} when there is none).
+func project_of(id: String) -> Dictionary:
+	return _project_by_id.get(id, {})
 
 
 ## The open goals, in the order the faces show them: chains, then today's jobs, then projects.
