@@ -244,6 +244,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   label is wrong). Skipping `AssetRegistry.apply_state` when a view's state is unchanged saved ~1 ms of it, not
   pushed: objects_3d.gd is fingerprinted look code (art lane). Next audit: phone performance with a renderer,
   or round two from the economy.
+- Run 21 (economy and progression round two, then small fixes): the balance bot judged crops by equal gaps
+  between visits (2 a day alternate 14 and 10 hours) and plowed for seeds it would not plant, so it went broke and
+  idled; now it looks ahead along the real schedule (`_visits_after`, economy test 448): 3 visits reach L20 on
+  day 15, 1 visit on day 30. Economy round two found nothing new that is cheap and clearly right without the
+  owner (crop numbers are FarmVille's own; pony, ox and alpaca paybacks, gem nut trees past 20 and the level-up
+  coins are in the Economy section above). Rules moved into data: the daily streak (daily.streak), mastery's
+  star tables (mastery.*) and the Nurture supplies' gem prices (nurture.supply_gems, `NurtureSystem.gem_cost`).
+  Saves: a number past 2^53 is unreadable (`SaveCheck.whole`), since a phone's ARM chip turned 1e300 into the
+  largest int (test 437). Season reads through `DataFile.read`. `Game.is_ready` measured: no cheap gain left.
+  Next audit: phone UI (round two), then edge cases.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
