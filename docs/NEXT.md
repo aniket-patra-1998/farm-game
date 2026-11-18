@@ -245,6 +245,18 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   together may be too dull at noon: render and compare). Decor ground shade 0.2 -> 0.42 tried: no visible gain.
   Open: look_shot sometimes shoots decorations half-built (gnome, flower bed, flamingo): trace before the sheet.
   Then one before/after sheet (main vs art-polish, noon and dusk) into the log under "Art: waiting for your look".
+- Art run 3 (11:35 IST), nothing pushed: search test 387 fails the precheck in this container even with nothing
+  else running (fastest of 5: 4.39 and 4.81 ms against 4 ms; reported for the fix loop). Built and ready, redo in
+  ~5 minutes, then push when the precheck passes (never render beside a precheck: it fails timing tests):
+  1. main: look_shot `--views=a,b` (filter `views` by name; skip each panel not named), as run 1 described.
+  2. art-polish: the calmer lawn, exact values: Ground3D.LAWN grass_light (0.49, 0.61, 0.31), grass_dark
+     (0.38, 0.51, 0.26); data/seasons.json in file order (light / dark): [0.49,0.61,0.31]/[0.38,0.51,0.26],
+     [0.54,0.62,0.31]/[0.41,0.51,0.25], [0.44,0.63,0.31]/[0.32,0.51,0.25], [0.53,0.6,0.3]/[0.39,0.48,0.25],
+     [0.5,0.6,0.35]/[0.38,0.49,0.29] (HSV: hue -0.012, saturation x0.78, value x0.96); meadow left on the
+     shader's own, already muted, greens; then tools/make_art_versions.py. Render noon and dusk before keeping.
+  Half-built decorations: not seen in this run's noon shot (gnome, flower bed, flamingo whole). Not the model store
+  (off without res://baked). Suspects to test: MultiMesh LOD picked from the batch's region-sized custom_aabb
+  (DecorLayer._make_views), and Instancer._take_apart writing override materials onto shared meshes.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
