@@ -2,7 +2,7 @@ class_name DecorationDef
 extends PlaceableDef
 ## Scenery. (FarmVille gave at least 5 XP for any bought decoration; with sales back at 5% and level rewards that
 ## grow, cheap paths bought and sold made coins and gems without end, so here a decoration's XP is the rule for
-## everything: ItemDef.buy_xp, 1 per 100 coins.)
+## everything: ItemDef.buy_xp, 1 per economy.coins_per_buy_xp coins.)
 
 const STARTER_SCENERY := ["farmhouse", "mailbox", "farm_stand"]  ## drawn by id, not shape
 const OPENS := {"mailbox": "inbox"}   ## a tap on these opens a panel of the interface (FarmHud.show_panel)

@@ -37,11 +37,11 @@ func gem_cost() -> int:
 	return int(data.get("gem_cost", 0))
 
 
-## FarmVille: 1 XP per 100 coins spent. Gem buys give none.
+## FarmVille: 1 XP per economy.coins_per_buy_xp coins spent (100). Gem buys give none.
 func buy_xp() -> int:
 	if gem_cost() > 0:
 		return 0
-	return int(coin_cost() / 100.0)
+	return int(coin_cost() / float(maxi(1, Balance.i("economy.coins_per_buy_xp"))))
 
 
 func _err(msg: String) -> String:

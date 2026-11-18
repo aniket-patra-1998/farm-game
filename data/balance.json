@@ -404,6 +404,10 @@
    "v": 1,
    "note": "Gems for each level gained."
   },
+  "coins_per_buy_xp": {
+   "v": 100,
+   "note": "Coins spent for each XP a coin buy gives (FarmVille: 1 XP per 100 coins); gem buys give none."
+  },
   "coins_per_level": {
    "v": 100,
    "note": "Coins for reaching a level, times the level reached (level 10 pays 1,000)."

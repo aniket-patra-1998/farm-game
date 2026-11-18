@@ -177,3 +177,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   lost (place_somewhere found no spot); now it arrives through `BarnStorage.welcome` with its crop (test 439).
   The loop runs until 16:15 IST (POLISH.md). Open: the economy items, unlocks through 31-40, code quality,
   whole-farm look, motion, sound.
+- Run 12 (code quality audit, measured): no repeated function bodies across modules beyond two tiny pairs
+  (`PlaceholderArt._building`/`_plain_building`, `Linking._load`/`Crowding._load`); gameplay code holds no
+  stray rules but one: buy XP (1 per 100 coins) now in data (`economy.coins_per_buy_xp`). Long functions are
+  the model builders' per-kind matches (`BuildingModel._feature` 429 lines, `BuildingDress.feature`,
+  `PlaceholderArt._decor`, `ThingIcon._thing`): splitting them is costly and risky, reported. Next: fix the
+  two tiny duplicates or the economy items; the next audit is the whole-farm look.
