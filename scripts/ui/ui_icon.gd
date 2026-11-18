@@ -17,6 +17,7 @@ const STAR_POINTS := 5
 const STAR_INNER := 0.45   # the inner radius of a star, of its outer
 const KNOB_RING := 0.12    # a knob's ring, of its width
 const OUTLINE := 0.075     # the outline's width, of the icon's size
+const ARC_POINTS := 16     # the points along a drawn arc (a sound wave, a shackle)
 const WHITE_EDGE := 2.4    # the white edge round it, against the outline's width
 const ROUND := 20          # points on a circle
 const RENDER_INSET := 0.04 # a rendered picture sits this far in from the icon's edge (room for its outline)
@@ -123,6 +124,14 @@ func _shape(pts: PackedVector2Array, fill: Color, _gloss := true, _shadow := tru
 	draw_colored_polygon(pts, fill)
 
 
+## A thick stroke that stands out like a shape: the white sticker edge round it, then the stroke (a speaker's
+## sound waves, a lock's shackle: without the edge they vanished on the panels' brown).
+func _arc(at: Vector2, radius: float, from: float, to: float, width: float, col: Color) -> void:
+	var edge := maxf(1.5, _s * OUTLINE) * (WHITE_EDGE - 1.0)
+	draw_arc(at, radius, from, to, ARC_POINTS, Color.WHITE, width + edge, true)
+	draw_arc(at, radius, from, to, ARC_POINTS, col, width, true)
+
+
 ## A line of detail in the outline's ink (or `col`).
 func _line(a: Vector2, b: Vector2, width := 0.06, col := Color(0, 0, 0, 0)) -> void:
 	draw_line(a, b, col if col.a > 0.0 else UiTheme.color("icon_outline"), maxf(1.2, _s * width), true)
@@ -174,8 +183,7 @@ func _draw() -> void:
 		"speaker":
 			_shape(_pts([-0.85, -0.3, -0.4, -0.3, 0.1, -0.75, 0.1, 0.75, -0.4, 0.3, -0.85, 0.3]), UiTheme.color("metal"))
 			for k in 2:
-				draw_arc(_p(0.15, 0), _r * (0.38 + 0.3 * k), -0.85, 0.85, 12, UiTheme.color("icon_outline"),
-					maxf(1.5, _s * 0.08), true)
+				_arc(_p(0.15, 0), _r * (0.38 + 0.3 * k), -0.85, 0.85, maxf(1.5, _s * 0.08), UiTheme.color("icon_outline"))
 		"note":
 			_shape(_ring(-0.32, 0.5, 0.3, 0.8), UiTheme.color("sky_ink"))
 			_shape(_pts([0.0, 0.45, -0.02, -0.75, 0.12, -0.75, 0.12, 0.45]), UiTheme.color("sky_ink"), false)
@@ -251,7 +259,7 @@ func _draw() -> void:
 			_dot(_p(0, -0.42), 0.13, Color.WHITE)
 			_line(_p(0, -0.12), _p(0, 0.5), 0.17, Color.WHITE)
 		"lock":
-			draw_arc(_p(0, -0.2), _r * 0.4, PI, TAU, 16, UiTheme.color("icon_outline"), maxf(2.5, _s * 0.16), true)
+			_arc(_p(0, -0.2), _r * 0.4, PI, TAU, maxf(2.5, _s * 0.16), UiTheme.color("icon_outline"))
 			draw_arc(_p(0, -0.2), _r * 0.4, PI, TAU, 16, UiTheme.color("metal"), maxf(1.2, _s * 0.07), true)
 			_shape(_pts([-0.65, -0.2, 0.65, -0.2, 0.65, 0.85, -0.65, 0.85]), UiTheme.color("coin"))
 			_dot(_p(0, 0.25), 0.13, UiTheme.color("icon_outline"))
