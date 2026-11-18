@@ -1,6 +1,6 @@
 # The art and UX polish loop
 
-A second scheduled session (18 Nov 2026, 09:55 to 17:55 IST) works as a professional game designer on the look
+A second scheduled session (restarted 18 Nov 20:30 IST, until 08:35 IST 19 Nov) works as a professional game designer on the look
 and feel. It follows docs/POLISH.md (the goal, the owner's taste, the guardrails, how to merge, frugal use) and,
 for its own subject, this page. Its rows go in the same log doc, prefixed "Art:".
 

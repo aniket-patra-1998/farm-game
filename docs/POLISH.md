@@ -1,6 +1,6 @@
 # The polish loop: the owner's vision, taste and guardrails
 
-A scheduled session runs this every hour (18 Nov 2026, extended to 16:15 IST). Its log is the Claude doc "Farm game:
+A scheduled session runs this every hour (restarted 18 Nov 20:30 IST, until 08:35 IST 19 Nov). Its log is the Claude doc "Farm game:
 polish loop log" (https://claude.ai/artifact/N3Tco9YLD79rwmApLH9hWP, doc id aa67cd85-0a81-4920-b45b-dc016d1fe1a8).
 Read this, CLAUDE.md and docs/NEXT.md first. Act as the owner would ask, in the nature and depth they ask.
 
@@ -64,6 +64,10 @@ Two loops run at once (this fix loop and the art loop, docs/ART_POLISH.md), and 
 - After pushing, check `git log origin/main -3` shows your commit on top of what was there; if not, stop and report.
 - Claim before working: before starting an item, mark it "in progress (<loop> <time IST>)" in the log doc's
   backlog. Skip any item marked in progress less than 60 minutes ago; clear the mark when merged or reported.
+- Four loops run at once from 18 Nov 20:30 IST: fix (this), art, performance (docs/PERF_RUN.md, rows "Perf:")
+  and the first hour build (docs/FIRST_HOUR_RUN.md, rows "Goals:"). The fix and art loops leave alone what the other
+  two are building: goals, the first hour and its UI (GoalSystem, HudGoals, data/goals.json, the Welcome chain),
+  loading and rendering cost (Objects3D's building and batching, AssetRegistry loading, LoadingCover, Instancer).
 - Lanes: the fix loop owns rules, numbers, data, saves, tests and code quality; the art loop owns how things look
   and move (shaders, art builders and exports, ui_theme, icons, layout and animation timing). Do not change the
   other lane's files for your own item; if your item needs it, report it for the other loop instead.
@@ -74,7 +78,7 @@ Two loops run at once (this fix loop and the art loop, docs/ART_POLISH.md), and 
 1. Setup: the repo is at /home/claude/farm-game (else clone aniket-patra-1998/farm-game there); `git config
    core.hooksPath tools/hooks`. Godot: /home/claude/godot/godot. If Godot is missing and cannot be installed,
    push a branch, open a pull request and let CI's Tests check it before merging.
-2. Deadline: if it is past 16:15 IST on 18 Nov 2026, disable this scheduled task, add a final summary line to
+2. Deadline: if it is past 08:35 IST on 19 Nov 2026, disable this scheduled task, add a final summary line to
    the log, and stop.
 3. Read the log doc (its Backlog and the last rows) and `git log --oneline -15` to see what the last runs did.
 4. Other sessions' branches first (every run): for each remote branch with commits not on main and each open
