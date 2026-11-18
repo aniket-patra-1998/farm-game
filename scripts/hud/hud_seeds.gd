@@ -18,7 +18,7 @@ func build_seeds(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.text(tr("PICK_A_SEED_THEN_TAP_PLOWED_PLOTS"), UiTheme.BODY, BookPanel.SOFT))
 	if Season.enabled() and Game.level() >= Balance.i("seasons.from_level"):
 		content.add_child(BookPanel.text(tr("SEASON_SHELF") % [tr("SEASON_" + Game.season().to_upper()),
-			roundi((Balance.f("seasons.off_price_mult") - 1.0) * 100.0)], 18, BookPanel.SOFT))
+			roundi((Balance.f("seasons.off_price_mult") - 1.0) * 100.0)], UiTheme.HEADING, BookPanel.SOFT))
 	var list := CardList.make(_ids, seed_face, func(id: String) -> void:
 		if Game.is_unlocked(id):
 			hud.choose_seed(id), hud.get_viewport().get_visible_rect().size.x)

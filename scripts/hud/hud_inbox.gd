@@ -44,13 +44,13 @@ func _head() -> Control:
 		hud.book.refresh())
 	all.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(all)
-	var left := BookPanel.text(tr("INBOX_HELPS_LEFT") % Game.social.helps_left(), 18, BookPanel.SOFT)
+	var left := BookPanel.text(tr("INBOX_HELPS_LEFT") % Game.social.helps_left(), UiTheme.HEADING, BookPanel.SOFT)
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # (a wrapping label in a row needs its width)
 	left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(left)
 	col.add_child(head)
 	if Game.social.inbox.is_empty():
-		col.add_child(BookPanel.info(tr("INBOX_EMPTY"), tr("INBOX_EMPTY_INFO"), 20, BookPanel.SOFT))
+		col.add_child(BookPanel.info(tr("INBOX_EMPTY"), tr("INBOX_EMPTY_INFO"), UiTheme.HEADING, BookPanel.SOFT))
 	return col
 
 
@@ -102,7 +102,7 @@ func line_for(item: Dictionary) -> Control:
 	var label := _who(item)
 	if from == InboxItem.FARM and what == InboxItem.ITEM:
 		label = tr("INBOX_WAITING") % str(Game.item_data(str(give["id"])).get("name", ""))
-	var words := BookPanel.text(label, 18)
+	var words := BookPanel.text(label, UiTheme.HEADING)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.autowrap_mode = TextServer.AUTOWRAP_OFF   # (one line, trimmed: every line of the list is one height)
 	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS

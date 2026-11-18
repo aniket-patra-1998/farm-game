@@ -25,7 +25,7 @@ func add_feed_card(content: VBoxContainer, o: Dictionary) -> void:
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 8)
 	card.add_child(BookPanel.text(tr("FEEDING_OUR_OWN_TOUCH"), UiTheme.BODY))
-	card.add_child(BookPanel.text(_status(o), 18))
+	card.add_child(BookPanel.text(_status(o), UiTheme.HEADING))
 	var any := false
 	for f in Game.feeds.feed_ids():
 		if Game.feeds.grade(o, f) <= 0.0:
@@ -36,7 +36,7 @@ func add_feed_card(content: VBoxContainer, o: Dictionary) -> void:
 			any = true
 			var liking := tr("FAVOURITE") if Game.feeds.grade(o, f) >= 1.0 else tr("ACCEPTED")
 			card.add_child(BookPanel.text(tr("FEED_LINE") % [Game.feeds.feed_name(f, rich),
-				Game.feeds.count(f, rich), liking, Game.feeds.units_needed(o)], 18))
+				Game.feeds.count(f, rich), liking, Game.feeds.units_needed(o)], UiTheme.HEADING))
 			var row := HFlowContainer.new()
 			row.add_theme_constant_override("h_separation", 10)
 			row.add_theme_constant_override("v_separation", 10)
@@ -44,7 +44,7 @@ func add_feed_card(content: VBoxContainer, o: Dictionary) -> void:
 				row.add_child(_effect_button(o, uid, f, effect, rich))
 			card.add_child(row)
 	if not any:
-		card.add_child(BookPanel.text(tr("NO_FEED_THIS_ONE_LIKES_FARM_CROPS"), 18))
+		card.add_child(BookPanel.text(tr("NO_FEED_THIS_ONE_LIKES_FARM_CROPS"), UiTheme.HEADING))
 	content.add_child(BookPanel.card_frame(card))
 
 
@@ -78,7 +78,7 @@ func add_barn_stock(content: VBoxContainer) -> void:
 		var line := "%s %d" % [Game.feeds.feed_name(f), Game.feeds.count(f)]
 		if Game.feeds.count(f, true) > 0:
 			line += "  (+%d %s)" % [Game.feeds.count(f, true), tr("RICH")]
-		card.add_child(BookPanel.text(line, 17))
+		card.add_child(BookPanel.text(line, UiTheme.HEADING))
 	content.add_child(BookPanel.card_frame(card))
 
 

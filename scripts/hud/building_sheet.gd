@@ -145,7 +145,7 @@ func _init(owner: FarmHud) -> void:
 	_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_page_scroll.add_child(_page)
 	column.add_child(_page_scroll)
-	_note = BookPanel.text("", 16, UiTheme.color("price_short"))
+	_note = BookPanel.text("", UiTheme.BODY, UiTheme.color("price_short"))
 	column.add_child(_note)
 	column.add_child(_build_actions(gap))
 	Game.objects_changed.connect(func() -> void:
@@ -342,7 +342,7 @@ func _fill_extras(o: Dictionary) -> void:
 		Kind.BUILD:
 			var finish := Game.buildings.can_finish(o)
 			if not finish.ok() and finish.text != "":
-				_extras.add_child(BookPanel.text(finish.text, 16, BookPanel.SOFT))
+				_extras.add_child(BookPanel.text(finish.text, UiTheme.BODY, BookPanel.SOFT))
 			var uid := _uid
 			hud.buildings.add_buy_missing(_extras, Game.land.construction_needs(o),
 				func() -> void: Game.land.add_materials(uid))

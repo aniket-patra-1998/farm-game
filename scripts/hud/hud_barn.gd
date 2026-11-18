@@ -48,7 +48,8 @@ func add_boosts(content: VBoxContainer) -> void:
 func build_barn_repair(content: VBoxContainer) -> void:
 	var it := Game.item_data("barn")
 	content.add_child(BookPanel.info(
-		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT_INFO"), 20, BookPanel.SOFT))
+		tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT"), tr("THIS_OLD_BARN_NEEDS_FIXING_COLLECT_INFO"),
+		UiTheme.HEADING, BookPanel.SOFT))
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", 10)
 	var need := Game.storage.repair_needs()
@@ -70,7 +71,7 @@ func build_barn_repair(content: VBoxContainer) -> void:
 				int(it.get("repair_coins", 0)),
 				int(it.get("repair_xp", 0))
 			],
-			17
+			UiTheme.HEADING
 		)
 	)
 	content.add_child(BookPanel.card_frame(card))
@@ -86,23 +87,23 @@ func build_vip(content: VBoxContainer) -> void:
 	var vip := Game.vip
 	var at := vip.level()
 	content.add_child(BookPanel.heading(tr("VIP_HEADING") % [at, vip.max_level()]))
-	content.add_child(BookPanel.info(tr("VIP_WHAT"), tr("VIP_WHAT_INFO"), 18, BookPanel.SOFT))
+	content.add_child(BookPanel.info(tr("VIP_WHAT"), tr("VIP_WHAT_INFO"), UiTheme.HEADING, BookPanel.SOFT))
 	var next := vip.next_level_points()
 	content.add_child(BookPanel.text(tr("VIP_POINTS_TOP") % vip.points if next < 0
-		else tr("VIP_POINTS_NEXT") % [vip.points, next, at + 1], 20))
-	content.add_child(BookPanel.text(tr("VIP_STREAK_LINE") % vip.streak_points(Balance.i("vip.streak_days")), 17,
-		BookPanel.SOFT))
+		else tr("VIP_POINTS_NEXT") % [vip.points, next, at + 1], UiTheme.HEADING))
+	content.add_child(BookPanel.text(tr("VIP_STREAK_LINE") % vip.streak_points(Balance.i("vip.streak_days")),
+		UiTheme.HEADING, BookPanel.SOFT))
 	if at <= 0:
-		content.add_child(BookPanel.text(tr("VIP_NONE_YET"), 18, BookPanel.SOFT))
+		content.add_child(BookPanel.text(tr("VIP_NONE_YET"), UiTheme.HEADING, BookPanel.SOFT))
 	else:
 		var top_boost := lerpf(1.0, Balance.f("vip.top_boost"), float(at) / vip.max_level())
 		if vip.active():
-			content.add_child(BookPanel.text(tr("VIP_ACTIVE_FOR") % FarmGrid.format_duration(vip.seconds_left()), 20,
-				BookPanel.GOOD))
-			content.add_child(BookPanel.text(tr("VIP_BOOST_NOW") % vip.boost(), 18))
+			content.add_child(BookPanel.text(tr("VIP_ACTIVE_FOR") % FarmGrid.format_duration(vip.seconds_left()),
+				UiTheme.HEADING, BookPanel.GOOD))
+			content.add_child(BookPanel.text(tr("VIP_BOOST_NOW") % vip.boost(), UiTheme.HEADING))
 		else:
-			content.add_child(BookPanel.text(tr("VIP_LAPSED"), 20))
-			content.add_child(BookPanel.text(tr("VIP_BOOST_WHEN_ACTIVE") % top_boost, 18, BookPanel.SOFT))
+			content.add_child(BookPanel.text(tr("VIP_LAPSED"), UiTheme.HEADING))
+			content.add_child(BookPanel.text(tr("VIP_BOOST_WHEN_ACTIVE") % top_boost, UiTheme.HEADING, BookPanel.SOFT))
 		var week := hud.panel_button(tr("VIP_BUY_WEEK") % [Balance.i("vip.week_days"), vip.week_cost()])
 		week.disabled = Game.gems < vip.week_cost()
 		week.pressed.connect(func() -> void:
@@ -124,25 +125,25 @@ func build_vip(content: VBoxContainer) -> void:
 			hud.refresh_panels())
 		content.add_child(whole)
 	# The chances as they stand, with VIP and without (gems can raise them: they are shown).
-	content.add_child(BookPanel.text(tr("VIP_ODDS_HEADING"), 17, BookPanel.SOFT))
+	content.add_child(BookPanel.text(tr("VIP_ODDS_HEADING"), UiTheme.HEADING, BookPanel.SOFT))
 	for odd: Array in VIP_ODDS:
 		var base := Balance.f(str(odd[1]))
 		content.add_child(BookPanel.text(tr("VIP_ODDS_ROW") % [tr(str(odd[0])), vip.chance(base) * 100.0, base * 100.0],
-			17, BookPanel.SOFT))
+			UiTheme.HEADING, BookPanel.SOFT))
 
 
 func build_barn_storage(content: VBoxContainer) -> void:
 	var cap := Game.storage.barn_capacity()
 	var held := Game.storage.stored.size()
 	content.add_child(BookPanel.info(tr("HOLDS_OF_USE_THE_STORE_TOOL") % [held, cap],
-		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [held, cap], 20, BookPanel.SOFT))
+		tr("HOLDS_OF_USE_THE_STORE_TOOL_INFO") % [held, cap], UiTheme.HEADING, BookPanel.SOFT))
 	# What is stored first (it is what the Barn is opened for), then its parts, its next size and the feed.
 	if not Game.storage.stored.is_empty():   # (nothing stored: no empty box saying so)
 		add_grouped(content, 0, held)
 	var parts: Array = []
 	for p: String in GameState.part_ids:
 		parts.append([p, "×%d" % int(Game.parts.get(p, 0))])
-	content.add_child(BookPanel.text(tr("PARTS_HEADING"), 17, BookPanel.SOFT))
+	content.add_child(BookPanel.text(tr("PARTS_HEADING"), UiTheme.HEADING, BookPanel.SOFT))
 	content.add_child(UiKit.count_row(parts))
 	var barn := Game.storage.barn()
 	if not barn.is_empty():
@@ -182,7 +183,7 @@ func build_bloom(content: VBoxContainer) -> void:
 	if Game.is_withered(o):
 		content.add_child(BookPanel.text(tr("THIS_BLOOM_HAS_WITHERED"), UiTheme.BODY, BookPanel.SOFT))
 		content.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply("flower_food"),
-			Game.nurture.supply_name("flower_food")], 18, BookPanel.SOFT))
+			Game.nurture.supply_name("flower_food")], UiTheme.HEADING, BookPanel.SOFT))
 		var regrow := hud.panel_button(tr("REGROW_IT"))
 		regrow.disabled = Game.nurture.free_supply("flower_food") <= 0
 		regrow.pressed.connect(func() -> void:
@@ -198,11 +199,11 @@ func build_bloom(content: VBoxContainer) -> void:
 		content.add_child(buy)
 	else:
 		content.add_child(BookPanel.text(tr("READY_IN") % [d.data["name"], tr("FLOWERS"),
-			FarmGrid.format_duration(Game.seconds_until_ready(o))], 20, BookPanel.SOFT))
+			FarmGrid.format_duration(Game.seconds_until_ready(o))], UiTheme.HEADING, BookPanel.SOFT))
 	if d.withers():
 		var stands := FarmGrid.format_duration(Balance.i("blooms.wither_after"))
 		content.add_child(BookPanel.info(tr("A_SINGLE_BLOOM_WITHERS") % stands,
-			tr("A_SINGLE_BLOOM_WITHERS_INFO") % stands, 17, BookPanel.SOFT))
+			tr("A_SINGLE_BLOOM_WITHERS_INFO") % stands, UiTheme.HEADING, BookPanel.SOFT))
 		var up := hud.panel_button(tr("UPGRADE_TO_A_FULL_BLOOM_GEMS") % d.upgrade_gems())
 		up.disabled = Game.gems < d.upgrade_gems()
 		up.pressed.connect(func() -> void:
@@ -228,7 +229,7 @@ func build_young(content: VBoxContainer) -> void:
 	bar.max_value = Game.nurture.needs(o)
 	bar.value = Game.nurture.fed(o)
 	card.add_child(bar)
-	card.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply(supply), name], 18))
+	card.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply(supply), name], UiTheme.HEADING))
 	content.add_child(BookPanel.card_frame(card))
 	var uid := hud.building_uid
 	var give := hud.panel_button(tr("GIVE_ONE"))

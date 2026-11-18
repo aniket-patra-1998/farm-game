@@ -110,7 +110,7 @@ func build_make(content: VBoxContainer) -> void:
 		return
 	var up := BookPanel.card()
 	up.add_child(BookPanel.text(tr("NEXT_STAR_COINS_AND_RECIPE_MASTERY") % [UiTheme.number(int(cost["coins"])),
-		int(cost["recipe_stars"]), Game.crafting.building_recipe_stars(o["id"]), int(cost["gems"])], 18))
+		int(cost["recipe_stars"]), Game.crafting.building_recipe_stars(o["id"]), int(cost["gems"])], UiTheme.HEADING))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
 	for with_gems: bool in [false, true]:
@@ -232,7 +232,7 @@ func show_recipe(about: VBoxContainer, uid: int, o: Dictionary) -> void:
 	if r == null:
 		return
 	_about(about, r.id, [[r.name, UiTheme.HEADING, BookPanel.HEAD], [gives(r), UiTheme.BODY, BookPanel.INK],
-		[tr("CRAFT_MASTERY_MADE") % [Game.crafting.recipe_stars(r.id), int(Game.crafting.crafted.get(r.id, 0))], 17,
+		[tr("CRAFT_MASTERY_MADE") % [Game.crafting.recipe_stars(r.id), int(Game.crafting.crafted.get(r.id, 0))], UiTheme.BODY,
 			BookPanel.SOFT]])
 	var need: Array = []
 	for c: String in r.inputs():
@@ -262,7 +262,7 @@ func show_recipe(about: VBoxContainer, uid: int, o: Dictionary) -> void:
 			hud.refresh_panels())
 		row.add_child(buy)
 	elif problem != "":
-		about.add_child(BookPanel.text(problem, 17, UiTheme.color("note")))   # (locked, or every slot is busy)
+		about.add_child(BookPanel.text(problem, UiTheme.HEADING, UiTheme.color("note")))   # (locked, or every slot is busy)
 
 
 ## Goods: everything made here as cards; the one picked can be sold for coins or used for fuel, and all of them
@@ -347,7 +347,7 @@ func build_pantry(content: VBoxContainer) -> void:
 		content.add_child(UiKit.count_row(held))
 	content.add_child(BookPanel.heading(tr("FARMERS_MARKET_TODAY")))
 	if Game.crafting.total_bushels() >= cap:
-		content.add_child(BookPanel.text(tr("PANTRY_FULL"), 17, UiTheme.color("note")))
+		content.add_child(BookPanel.text(tr("PANTRY_FULL"), UiTheme.HEADING, UiTheme.color("note")))
 	var ids: Array[String] = []
 	ids.assign(Game.crafting.market_stall().keys())
 	var stall := CardList.make(ids, stall_face, func(id: String) -> void:
@@ -383,7 +383,7 @@ static func star_row(size: int, recipe_stars: int) -> HBoxContainer:
 			TranslationServer.translate("RECIPE_STARS") % recipe_stars if recipe_stars > 0 else ""]:
 		if words == "":
 			continue
-		var l := BookPanel.text(words, 18)
+		var l := BookPanel.text(words, UiTheme.HEADING)
 		l.autowrap_mode = TextServer.AUTOWRAP_OFF   # (a wrapping label in a row has no width of its own)
 		row.add_child(l)
 	return row

@@ -156,3 +156,52 @@ func test_453_every_vector_icons_shapes_are_drawn() -> void:
 	img.load_svg_from_string(FileAccess.get_file_as_string(dir + "neighbours.svg"), 1.0)
 	var body := img.get_pixel(40, 106)   # the front neighbour's green shirt
 	_check(body.a > 0.9 and body.g > body.r + 0.1, "the neighbours' shirt is drawn (was see-through white)")
+
+
+## Panel words are sized by their role on the type scale (UiTheme.CAPTION..DISPLAY), never by a bare number: a
+## size between two steps snapped silently, so a soft note asked for as 17 showed at heading size.
+func test_491_panel_words_take_a_type_role_not_a_number() -> void:
+	var call := RegEx.new()
+	call.compile("BookPanel\\.(text|info)\\(")
+	var bare := RegEx.new()
+	bare.compile("^\\s*\\d+\\s*$")
+	for dir: String in ["res://scripts/hud/", "res://scripts/"]:
+		for f: String in DirAccess.get_files_at(dir):
+			if not f.ends_with(".gd"):
+				continue
+			var text := FileAccess.get_file_as_string(dir + f)
+			for m in call.search_all(text):
+				var args := _args(text, m.get_end())
+				var at := 2 if m.get_string(1) == "info" else 1
+				if args.size() > at:
+					_check(bare.search(args[at]) == null, "%s: BookPanel.%s(.., %s) takes a UiTheme type role" % [f,
+						m.get_string(1), args[at].strip_edges()])
+
+
+## The top-level arguments of a call whose "(" ends just before `from` (strings and brackets skipped).
+static func _args(text: String, from: int) -> PackedStringArray:
+	var out := PackedStringArray()
+	var depth := 1
+	var start := from
+	var quote := ""
+	var k := from
+	while k < text.length() and depth > 0:
+		var c := text[k]
+		if quote != "":
+			if c == "\\":
+				k += 1
+			elif c == quote:
+				quote = ""
+		elif c == "\"" or c == "'":
+			quote = c
+		elif c in "([{":
+			depth += 1
+		elif c in ")]}":
+			depth -= 1
+			if depth == 0:
+				out.append(text.substr(start, k - start))
+		elif c == "," and depth == 1:
+			out.append(text.substr(start, k - start))
+			start = k + 1
+		k += 1
+	return out

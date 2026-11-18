@@ -175,8 +175,8 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 	row.add_child(words)
 	words.add_child(BookPanel.text(str(it["name"]), UiTheme.HEADING, BookPanel.SOFT))
 	if why != "":
-		words.add_child(BookPanel.text(why, 18, UiTheme.color("note")))
-	words.add_child(BookPanel.text(detail_of(id, it), 17, BookPanel.SOFT))
+		words.add_child(BookPanel.text(why, UiTheme.HEADING, UiTheme.color("note")))
+	words.add_child(BookPanel.text(detail_of(id, it), UiTheme.HEADING, BookPanel.SOFT))
 	strip.visible = true
 	hud.book.scroll_to_top()
 
@@ -271,7 +271,7 @@ func land_card() -> Control:
 	var next := int(step["size"])
 	inner.add_child(BookPanel.text(tr("EXPAND_FROM_X_TO_X") % [size, size, next, next], UiTheme.BODY))
 	inner.add_child(BookPanel.text(
-		tr("ADDS_PLOTS_THE_DASHED_AREA_ON") % (next * next - size * size), 17))
+		tr("ADDS_PLOTS_THE_DASHED_AREA_ON") % (next * next - size * size), UiTheme.HEADING))
 	var row := HFlowContainer.new()
 	row.add_theme_constant_override("h_separation", 12)
 	row.add_theme_constant_override("v_separation", 12)
@@ -353,7 +353,7 @@ func mystery_box_card() -> Control:
 	inner.add_child(
 		BookPanel.info(
 			tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION"), tr("ONE_SURPRISE_INSIDE_A_RARE_DECORATION_INFO"),
-			17
+			UiTheme.HEADING
 		)
 	)
 	var cost := int(Game.mystery.box_data.get("gem_cost", Balance.i("mystery.mystery_box_gem_cost")))
