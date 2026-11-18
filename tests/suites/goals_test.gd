@@ -430,3 +430,39 @@ func test_525_the_bot_measures_the_market_against_part_4() -> void:
 	_check(str(sim.call("market_line")).begins_with("market:"), "the summary line prints")
 	sim.free()
 	_done(g)
+
+
+## Part 4's feeding targets in the balance bot (step 8): a never-feeder loses at most FEED_LOSS_MAX of what a feeder
+## earns from animals (feeds.hunger_penalty is tuned for it) and nothing else, and a week away loses nothing: no
+## animal, tree or building is gone when the bot comes back (FarmVille: nothing dies).
+func test_529_never_feeding_costs_under_30_percent_and_a_week_away_loses_nothing() -> void:
+	var shares := []
+	for never: bool in [false, true]:
+		var g := _farm(true)
+		g.feeds.active = true   # (the test farm turns feeding off for exact payouts)
+		var sim: Node = load(BOT).new()
+		sim.set("game", g)
+		sim.set("style", "goals")
+		sim.set("_days", 12)
+		sim.set("no_feed", never)
+		if not never:
+			sim.set("away", [3, 4, 5, 6, 7, 8, 9])
+		var hours: Array = sim.call("_visit_hours")
+		g.debug_time_offset += int(sim.call("_seconds_until", hours[0], g.now()))
+		g.reset_game()
+		g.rng.seed = 1
+		sim.call("_play")
+		_check(int(sim.get("animal_collects")) > 0, "the bot collects from animals")
+		_eq(int(sim.get("away_lost")), 0, "nothing lost while away")
+		shares.append(float(sim.call("animal_share")))
+		if never:
+			_eq(int(sim.get("_fed")), 0, "--no-feed never feeds")
+		sim.free()
+		_done(g)
+	_check(absf(float(shares[1]) - (1.0 - Balance.f("feeds.hunger_penalty"))) < 0.01,
+		"a never-feeder's collects pay the hungry price: %.2f" % shares[1])
+	_check(float(shares[0]) > 1.0, "feeding pays more than the plain price: %.2f" % shares[0])
+	var loss := 1.0 - float(shares[1]) / float(shares[0])
+	_check(loss <= float((load(BOT) as GDScript).get_script_constant_map()["FEED_LOSS_MAX"]),
+		"never feeding loses %.0f%% of animal income (Part 4: at most 30%%)" % (loss * 100.0))
+

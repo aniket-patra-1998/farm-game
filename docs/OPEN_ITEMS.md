@@ -37,7 +37,7 @@ footprints or save changes; deterministic seeds; keep MultiMesh/bake.
 
 ## Farming core
 - Done: feeding (docs/FEEDS_DRAFT.md, approved): `FeedSystem`, five feeds from harvests and trees, tastes, one effect per
-  feeding, hunger (-30% coins, never none), the Barn's stock, the farmhand feeds; the action registry
+  feeding, hunger (-15% coins, never none; data/balance.json feeds.hunger_penalty), the Barn's stock, the farmhand feeds; the action registry
   (data/actions.json) so every action is offered to its helper.
 - Postponed by the owner (look at later): quests (data/quests.json: missions across all systems, rewards, the counts ribbons use).
 - Layout synergies (AdjacencySystem, data/synergies.json): done for orchards and animal homes (coins). Open: bloom gardens, same-crop plots, crafting beside crops, paths and decor, XP boosts, a tag on the farm outside placing.

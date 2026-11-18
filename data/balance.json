@@ -671,8 +671,8 @@
    "note": "a Rich feed (from a golden, super or pollinated harvest) adds this share to the effect"
   },
   "hunger_penalty": {
-   "v": 0.3,
-   "note": "share of the coins an unfed animal's collect loses (never all)"
+   "v": 0.15,
+   "note": "share of the coins an unfed animal's collect loses (never all); 0.15 keeps a never-feeder within Part 4's 30% of a feeder's animal income (tools/balance_sim --no-feed: feeders reach x1.07-1.18 of the plain price; 0.3 lost 33-38%, 0.2 up to 32%)"
   },
   "produce_bonus": {
    "v": 0.2,

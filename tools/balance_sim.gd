@@ -5,13 +5,16 @@ extends Node
 ## weeks take seconds. Change a number in data/balance.json (or pass `--set=section.name=value`) and run it again
 ## to see the effect before shipping it. Headless:
 ##   godot --headless --path . res://tools/balance_sim.tscn -- --days=14 --visits=3 --minutes=5 --seed=1 \
-##     [--style=plain|goals|casual|builder] [--away=3,7] [--first-hour] [--set=harvest.golden_chance=0.01]
+##     [--style=plain|goals|casual|builder] [--away=3,7] [--no-feed] [--first-hour] [--set=harvest.golden_chance=0.01]
 ## Styles (docs/PLAYER_EXPERIENCE.md Part 4): `plain` the field loop only; `goals` also does what the goal faces
 ## say (prefers the crops and things the open goals name, swaps a job it cannot do, collects every finished goal);
 ## `casual` follows goals at one visit a day and skips days 3 and 7 unless `--away` says which. `--away=3,7`: the
 ## days the bot does not come (1 is the first). `builder` follows goals and, at each visit's end, also buys the
 ## Market's progress buys it can afford (market_wants: cheapest first, at most BUILDER_BUYS a visit; frames that
 ## need materials are left, the bot never finishes one): does a player who buys keep idle coins down?
+## `--no-feed`: the bot never feeds (Part 4: a never-feeder loses at most FEED_LOSS_MAX of animal income and nothing
+## else; compare its `animals:` line with a feeding run's). Every run reports what a stretch of away days lost
+## (animals, trees and buildings gone; Part 4: a week away loses nothing).
 ## `--first-hour`: one 60-minute first session from minute zero, played a minute at a time (with goals), then
 ## its numbers (first harvest, levels, coins, goals) and stop.
 ## Reads the real systems, so a rule change shows up here too. A test drives it on its own farm (`game`).
@@ -25,6 +28,7 @@ const FIRST_HOUR_MARKS := [10, 20, 30, 40, 60]   # minutes at which the first ho
 const WANT_VISITS := [1.0, 3.0]   # Part 4's "something to buy": a thing costing 1 to 3 visits of income
 const IDLE_VISITS_MAX := 5.0      # Part 4: idle coins stay under about 5 visits of income
 const BUILDER_BUYS := 3          # purchases a builder makes at a visit's end (a tap or two each)
+const FEED_LOSS_MAX := 0.3        # Part 4: a never-feeder loses at most this share of animal income
 const WANT_SKIP_KINDS := ["decor", "crop", "material", "ingredient", "recipe", "young"]   # not progress buys
 
 var game: GameState       # the farm it plays (the real one when run as a tool)
@@ -33,6 +37,12 @@ var away: Array = []      # days (1 = the first) the bot does not come
 var goals_claimed := 0    # goals collected (chains, jobs, projects)
 var chain_steps := 0      # story chain steps collected
 var swaps := 0            # daily jobs swapped for one the bot can do
+var no_feed := false      # --no-feed: never feeds
+var animal_coins := 0     # coins from collecting animals and their homes (the feeding target's measure)
+var animal_collects := 0
+var animal_base := 0.0    # what those collects pay unfed-and-unboosted (coins / the feed multiplier)
+var away_from := -1       # what lasted (_lasting) when the current away stretch began; -1: here
+var away_lost := 0        # animals, trees and buildings gone across away stretches (Part 4: none)
 var _days := 14
 var _visits := 3
 var _seed := 1
@@ -82,6 +92,8 @@ func _ready() -> void:
 			away_given = true
 			for d in arg.get_slice("=", 1).split(",", false):
 				away.append(int(d))
+		elif arg == "--no-feed":
+			no_feed = true
 		elif arg == "--first-hour":
 			first_hour = true
 		elif arg.begins_with("--set="):
@@ -165,6 +177,11 @@ func _play() -> void:
 		var here := not away.has(day + 1)
 		if not here:
 			_away_days += 1
+			if away_from < 0:
+				away_from = _lasting()
+		elif away_from >= 0:
+			away_lost += maxi(0, away_from - _lasting())
+			away_from = -1
 		for v in hours.size():
 			if here:
 				_visit(_visits_after(hours, v))
@@ -211,6 +228,7 @@ func _play() -> void:
 	print("goals collected %d (chain steps %d, jobs swapped %d); coins spent %d" % [
 		goals_claimed, chain_steps, swaps, _spent])
 	print(market_line())
+	print(feed_line())
 	print("gems earned %d (%.1f a week), held %d" % [_gems_earned, _gems_earned * 7.0 / maxf(_days, 1), game.gems])
 	if follows_goals():
 		var at := []
@@ -220,6 +238,28 @@ func _play() -> void:
 			game.goals.chains_done)), ", ".join(PackedStringArray(at)), _cleared])
 		print("projects done: %s; open: %s" % [", ".join(PackedStringArray(game.goals.projects_done)),
 			game.goals.project_stage])
+
+
+## What lasts on a farm: animals, trees and buildings (a week away must not lose one).
+func _lasting() -> int:
+	var n := 0
+	for o in game.objects:
+		if game.kind_of(o) in ["animal", "tree", "building"]:
+			n += 1
+	return n
+
+
+## Part 4's feeding and away targets: animal coins (compare a --no-feed run's with a feeding run's: at most
+## FEED_LOSS_MAX less), what was fed, and what away stretches lost.
+func feed_line() -> String:
+	return "animals: coins %d from %d collects (x%.2f of the plain price), fed %d%s; lost while away %d" % [
+		animal_coins, animal_collects, animal_share(), _fed, " (never feeds)" if no_feed else "", away_lost]
+
+
+## Animal coins as a share of what the same collects pay at the plain price (1: neither fed nor hungry): a
+## never-feeder's is 1 - hunger_penalty; a feeder's says how much feeding adds.
+func animal_share() -> float:
+	return animal_coins / animal_base if animal_base > 0.0 else 1.0
 
 
 ## Part 4's Market targets over the days measured: the share of days with something to buy (1 to 3 visits of
@@ -669,14 +709,22 @@ func _collect_ready() -> void:
 		if game.kind_of(o) in ["tree", "animal", "bloom"] and game.is_ready(o):
 			if not _act():
 				return
+			var before := game.coins
+			var mult := game.feeds.coin_multiplier(o)
 			var got := game.collect(int(o["uid"]))
 			if not got.is_empty():
 				_collected += 1
+				if game.feeds.is_feedable(o):
+					animal_coins += game.coins - before
+					animal_base += (game.coins - before) / maxf(mult, 0.01)
+					animal_collects += 1
 
 
 ## Feeds what is hungry with the best feed in stock (an action each, like a player's tap): without it every animal
 ## pays the hunger penalty and the simulated farm earns less than a played one.
 func _feed_hungry() -> void:
+	if no_feed:
+		return
 	for o in game.objects.duplicate():
 		if not game.feeds.is_hungry(o) or game.is_ready(o):
 			continue

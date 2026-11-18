@@ -1,6 +1,8 @@
 extends TestSuite
 ## Crafting: bushels, recipes, mastery, goods and the Farmers Market.
 
+const CRAFT_MARKUP_MIN := 1.3   # Part 4: a good is worth at least 30% more than selling its ingredients
+
 
 func test_79_every_building_has_fifteen_recipes_over_four_stars_made_of_what_the_farm_gives() -> void:
 	var g := _farm()
@@ -338,3 +340,16 @@ func test_520_a_goods_mastery_markup_is_data() -> void:
 	_eq(recipe.sell_price(cat, 2), int(round(recipe.worth(cat) * Balance.f("recipes.sell_markup")
 		* (1.0 + Balance.f("recipes.markup_per_star") * (recipe.star() - 1)) * 2.0)), "the price follows the data")
 	Balance.reload()
+
+
+## Part 4's crafting target (step 8): every recipe's good, at no mastery star, sells for at least 30% more than its
+## ingredients would at the Market (RecipeDef.worth), so crafting beats selling the crops.
+func test_530_every_good_is_worth_30_percent_more_than_its_ingredients() -> void:
+	var cat := Game.catalog
+	var under := []
+	for d in cat.of_kind("recipe"):
+		var r := d as RecipeDef
+		if r.worth(cat) > 0 and r.sell_price(cat, 0) < r.worth(cat) * CRAFT_MARKUP_MIN:
+			under.append("%s %d < %d" % [r.id, r.sell_price(cat, 0), roundi(r.worth(cat) * CRAFT_MARKUP_MIN)])
+	_eq(under, [], "every good pays at least 30% over its ingredients")
+	_check(cat.of_kind("recipe").size() > 0, "there are recipes")
