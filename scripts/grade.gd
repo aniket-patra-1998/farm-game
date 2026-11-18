@@ -11,6 +11,7 @@ static var _data := {}
 ## A number of the grade (data/grade.json), 0 if it has none.
 static func value(key: String) -> float:
 	if _data.is_empty():
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
-		_data = parsed if parsed is Dictionary else {"_": ""}
+		_data = DataFile.read(DATA)
+		if _data.is_empty():
+			_data = {"_": ""}   # (read once, even when missing)
 	return float(_data.get(key, 0.0))
