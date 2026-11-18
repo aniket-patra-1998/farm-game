@@ -24,6 +24,9 @@ const LIVE_YARD := "kit_yard"
 const SHADE_STRENGTH := 0.5   # how dark the soft shade round a building's foot is at its middle
 const RAKE_COLOUR := Color("#f3eee2")   # barge boards up a roof's sloped ends
 const RAKE_WIDTH := 0.05
+const EDGE_DARKEN := 0.22     # a roof's thick edges and ridge caps: its own colour this much darker..
+const EDGE_INK := Color("#6b4a36")   # ..and drawn this far toward a warm dark brown, never toward black: a navy
+const EDGE_WARMTH := 0.3             # or dark brown roof kept a near-black band (the storybook family's warm ink)
 const FLARE := 0.06           # a roof's eaves kick out this much further, at a shallower slope (a storybook roof)..
 const FLARE_DROP := 0.3       # ..falling this share of what the slope above would over that run
 const EAVE_THICK := 0.07      # a roof's edge is this thick at the eaves..
@@ -959,7 +962,7 @@ static func _darker(mat: Material) -> Material:
 	var sm := mat as ShaderMaterial
 	var v: Variant = sm.get_shader_parameter("base_color")
 	var col: Color = v if v != null else sm.get_shader_parameter("albedo")
-	return paint(col.darkened(0.28))
+	return paint(col.darkened(EDGE_DARKEN).lerp(EDGE_INK, EDGE_WARMTH))
 
 
 ## The thick edge of a roof along its eave from `a` to `b` (level, along x or z): the roof's own dark edge, over a
