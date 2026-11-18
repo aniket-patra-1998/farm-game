@@ -55,6 +55,21 @@ first; our own touch only where it is clearly marked. Every system is built (doc
   item if it cannot be finished cheaply and report it; a run with nothing worth doing ends at once.
 - Never touch the owner's real save, secrets or settings; never delete branches; never force-push main.
 
+## Safe merging and no overlap (both loops, every run; the owner's hard rule)
+Two loops run at once (this fix loop and the art loop, docs/ART_POLISH.md), and runs of one loop can overlap.
+- Main only ever moves forward: `git push origin HEAD:main` as a fast-forward, never `--force`, never a merge
+  commit, never a push of anything that has not passed `tools/precheck.sh` on exactly that commit.
+- If the push is rejected (main moved meanwhile): `git fetch`, rebase on the new main, run the full precheck again,
+  then push. Never resolve a conflict by dropping the other side's work: keep both, or stop and report.
+- After pushing, check `git log origin/main -3` shows your commit on top of what was there; if not, stop and report.
+- Claim before working: before starting an item, mark it "in progress (<loop> <time IST>)" in the log doc's
+  backlog. Skip any item marked in progress less than 60 minutes ago; clear the mark when merged or reported.
+- Lanes: the fix loop owns rules, numbers, data, saves, tests and code quality; the art loop owns how things look
+  and move (shaders, art builders and exports, ui_theme, icons, layout and animation timing). Do not change the
+  other lane's files for your own item; if your item needs it, report it for the other loop instead.
+- Before starting, `git fetch` and look at the other loop's newest remote branches (polish/*, art/*, art-polish):
+  avoid files it is touching right now.
+
 ## Procedure for one run
 1. Setup: the repo is at /home/claude/farm-game (else clone aniket-patra-1998/farm-game there); `git config
    core.hooksPath tools/hooks`. Godot: /home/claude/godot/godot. If Godot is missing and cannot be installed,
