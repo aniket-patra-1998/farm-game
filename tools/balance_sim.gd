@@ -198,13 +198,14 @@ func jobs_left() -> int:
 ## who stays), following the goals, and notes when things first happen. Returns the numbers and printable lines:
 ## {first_harvest, first_buy, level_at (minute -> level), coins_at, minute_of_level (level -> minute), goals,
 ## stuck_minutes (minutes with an open goal and nothing done), chain_minutes (chain id -> the minute each of its
-## steps was collected, in order: Part 2's minute-by-minute plan), lines}.
+## steps was collected, in order: Part 2's minute-by-minute plan), first_find (the minute of the first find),
+## project_open (project id -> the minute it opened), lines}.
 func play_first_hour() -> Dictionary:
 	if style == "plain":
 		style = "goals"
 	_watch_coins()
-	var out := {"first_harvest": -1, "first_buy": -1, "level_at": {}, "coins_at": {}, "minute_of_level": {},
-		"goals": 0, "stuck_minutes": 0, "chain_minutes": {}, "lines": []}
+	var out := {"first_harvest": -1, "first_buy": -1, "first_find": -1, "project_open": {}, "level_at": {},
+		"coins_at": {}, "minute_of_level": {}, "goals": 0, "stuck_minutes": 0, "chain_minutes": {}, "lines": []}
 	var per_minute := int(60.0 / SECONDS_PER_ACTION)
 	var visit_minutes := _minutes   # (each minute is a short visit; later visits are the usual length)
 	_minutes = per_minute * SECONDS_PER_ACTION / 60.0
@@ -231,6 +232,11 @@ func play_first_hour() -> Dictionary:
 				(out["chain_minutes"].get_or_add(id, []) as Array).append(m)
 		if harvests == 0 and _harvests > 0 and out["first_harvest"] < 0:
 			out["first_harvest"] = m
+		if out["first_find"] < 0 and not game.finds.owned.is_empty():
+			out["first_find"] = m
+		for id: String in game.goals.project_stage:
+			if not out["project_open"].has(id):
+				out["project_open"][id] = m
 		if out["first_buy"] < 0 and bought != _bought:
 			out["first_buy"] = m
 		for l in range(level + 1, game.level() + 1):
@@ -244,7 +250,8 @@ func play_first_hour() -> Dictionary:
 	_minutes = visit_minutes
 	out["goals"] = goals_claimed
 	var lines: Array = out["lines"]
-	lines.append("first harvest at minute %d, first purchase at minute %d" % [out["first_harvest"], out["first_buy"]])
+	lines.append("first harvest at minute %d, first purchase at minute %d, first find at minute %d, projects open %s"
+		% [out["first_harvest"], out["first_buy"], out["first_find"], out["project_open"]])
 	var levels := []
 	for l: int in out["minute_of_level"]:
 		levels.append("L%d at %d" % [l, out["minute_of_level"][l]])
@@ -296,6 +303,7 @@ func _visit(next_visits: Array) -> void:
 		game.goals.refresh()
 		_swap_undoable()
 	_place_gifts()
+	_place_named()
 	_collect_ready()
 	_feed_hungry()
 	_claim_goals()
@@ -516,6 +524,28 @@ func _place_gifts() -> void:
 			for c in game.farm_size:
 				if game.can_place(id, r, c) and game.storage.place_from_storage(at, r, c):
 					return
+
+
+## Takes out of the Barn a thing an open goal's task names (the rebuilt Tractor Rusty wants driving), clearing a
+## plot when nothing fits.
+func _place_named() -> void:
+	if not follows_goals():
+		return
+	var named := {}
+	for key: String in game.goals.open_keys():
+		for t: Dictionary in game.goals.tasks_of(key):
+			named[str(t.get("what", ""))] = true
+	for at in range(game.storage.stored.size() - 1, -1, -1):
+		var id := str(game.storage.stored[at]["id"])
+		if not named.has(id):
+			continue
+		for _try in 2:
+			for r in range(game.farm_size - 1, -1, -1):
+				for c in game.farm_size:
+					if game.can_place(id, r, c) and _act() and game.storage.place_from_storage(at, r, c):
+						return
+			if not _clear_a_plot():
+				return
 
 
 ## One thing the farmer does (a harvest, a plow, a planting, a collection, a purchase); the visit has only so many.

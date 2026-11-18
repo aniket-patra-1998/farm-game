@@ -67,6 +67,27 @@ func decide(work: String, stars := 0) -> Array:
 	return out
 
 
+## The find an open goal guarantees to a harvest that turned up none (GoalSystem.take_sure_find: the broken
+## Tractor project's first find), as `decide` gives it: [[family, kind id]], or [] when none is owed. Asked at the
+## harvest, not at planting, so a crop already growing when the goal opened brings it too.
+func sure() -> Array:
+	if not game.drops_enabled or not Release.on("finds"):
+		return []
+	var kind := _sure_find()
+	return [kind] if not kind.is_empty() and game.goals.take_sure_find() else []
+
+
+## The first family a harvest rolls with no condition, and a kind of it by weight ([] when there is none).
+func _sure_find() -> Array:
+	for fid: String in families:
+		var trig: Dictionary = families[fid].get("trigger", {})
+		if str(trig.get("on", "")) == "harvest" and str(trig.get("when", "")) == "":
+			var kind := pick(fid)
+			if not kind.is_empty():
+				return [fid, str(kind["id"])]
+	return []
+
+
 ## Gives decided finds ([[family, kind id]], as `decide` made them): each is one more owned. Returns
 ## [{family, id, name, rarity}]; one whose family or kind is no longer in the data is passed over.
 func give(decided: Array) -> Array[Dictionary]:

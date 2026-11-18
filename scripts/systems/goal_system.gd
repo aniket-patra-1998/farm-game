@@ -32,6 +32,7 @@ var daily_bonus_given := false
 var seeds := {}                 # seeds a goal gave (Starter Seeds): crop id -> how many plots' worth are held
 var reveal_data := {}           # data/reveal.json: {after, buttons: {button -> {verbs, level, inbox}}}
 var revealed: Array[String] = []   # listed buttons this farm has been shown (they stay)
+var sure_spent: Array[String] = []  # goal keys whose `sure` find was handed to a harvest (take_sure_find)
 
 var _chain_by_id := {}
 var _ready_next := ""           # a thing just bought that a `ready` task counted (take_ready)
@@ -75,6 +76,7 @@ func reset() -> void:
 	daily_bonus_given = false
 	seeds = {}
 	revealed = []
+	sure_spent = []
 
 
 ## The chains a brand-new farm starts on (`new_farm`: the Welcome chain), at their first step. A farm saved
@@ -102,6 +104,7 @@ func save_to(data: Dictionary) -> void:
 		"swaps": daily_swaps, "bonus": daily_bonus_given}
 	data["goal_seeds"] = seeds.duplicate()
 	data["goal_revealed"] = revealed.duplicate()
+	data["goal_sure_spent"] = sure_spent.duplicate()
 
 
 func load_from(data: Dictionary) -> void:
@@ -116,6 +119,7 @@ func load_from(data: Dictionary) -> void:
 		if not chain_step.has(id) and not chains_done.has(id):
 			chains_done.append(id)
 	revealed = _strings(data.get("goal_revealed", []))
+	sure_spent = _strings(data.get("goal_sure_spent", []))
 	var held := int_map(data.get("goal_seeds", {}))
 	for id: String in held:
 		if game.crops.has(id) and int(held[id]) > 0:
@@ -354,6 +358,25 @@ func _on_xp(_xp: int, _level: int) -> void:
 # ---------------------------------------------------------------- collecting
 
 
+## A harvest about to be decided asks whether an open goal guarantees its find: a `find` task marked `sure`,
+## not yet done, whose sure find was not handed out yet (the broken Tractor project's first find, so a new
+## player meets Collections; PLAYER_EXPERIENCE Part 2). Yes spends it: one sure find per goal, ever.
+func take_sure_find() -> bool:
+	if not active():
+		return false
+	for key: String in open_keys():
+		if sure_spent.has(key):
+			continue
+		var tasks := tasks_of(key)
+		var have := progress_of(key)
+		for i in tasks.size():
+			var t: Dictionary = tasks[i]
+			if str(t.get("do", "")) == "find" and t.get("sure", false) and int(have[i][0]) < int(have[i][1]):
+				sure_spent.append(key)
+				return true
+	return false
+
+
 ## Collects a finished goal: its reward once, then the next step, stage or nothing. Returns the reward given.
 func claim(key: String) -> Dictionary:
 	if not active() or not is_done(key):
@@ -427,6 +450,11 @@ func give(reward: Dictionary) -> void:
 	for f in ["item", "place"]:
 		if reward.has(f):
 			game.storage.welcome(str(reward[f]), {"ready": true} if reward.get("ready", false) else {})
+	var parts: Variant = reward.get("parts", {})
+	if typeof(parts) == TYPE_DICTIONARY:
+		for m: String in parts:
+			if int(parts[m]) > 0:
+				game.daily.add_part(m, int(parts[m]))
 	if reward.has("box"):
 		game.mystery.gift_box()
 	if reward.has("seeds") and game.crops.has(str(reward["seeds"])):

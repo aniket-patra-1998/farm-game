@@ -6,6 +6,7 @@ extends TestSuite
 ## goals need them (data/reveal.json, HudReveal).
 
 const WELCOME := "welcome"
+const TRACTOR := "project:tractor"
 
 
 func test_500_a_new_farm_opens_on_the_welcome_chain_and_an_older_farm_skips_it() -> void:
@@ -97,8 +98,8 @@ func test_503_the_bot_finishes_the_welcome_chain_in_the_first_hour() -> void:
 	_check(not g.goals.daily_jobs.is_empty(), "today's jobs arrived with level 3")
 	_check(g.goals.chains_done.has(WELCOME) and not g.goals.open_keys().is_empty(), "and a goal is open after it")
 	# Part 2's minute-by-minute plan, in its order: harvest, Starter Seeds, the chicken, the Apple Tree from the
-	# Market, level 3 and today's jobs, a crop ready when you wake. (The Tractor project and Barley's coop chain
-	# are step 7's content.)
+	# Market, the broken Tractor project, level 3 and today's jobs, a crop ready when you wake. (Its sure find is
+	# test 522: this farm rolls no finds.)
 	var at: Array = hour["chain_minutes"].get(WELCOME, [])
 	_eq(at.size(), (g.goals.chain_of(WELCOME)["steps"] as Array).size(), "every Welcome step collected (%s)" % [at])
 	var sorted := at.duplicate()
@@ -108,6 +109,8 @@ func test_503_the_bot_finishes_the_welcome_chain_in_the_first_hour() -> void:
 	_check(int(hour["first_buy"]) >= 0 and at.size() > 4 and int(hour["first_buy"]) <= int(at[4]),
 		"the first purchase is the Apple Tree step's (minute %d)" % hour["first_buy"])
 	_check(int(hour["minute_of_level"].get(3, 99)) <= 60, "level 3 within the hour")
+	_check(int(hour["project_open"].get("tractor", 99)) <= 30, "the broken Tractor project open by minute 30 (%s)"
+		% [hour["project_open"]])
 	sim.free()
 	_done(g)
 
@@ -202,3 +205,40 @@ func _step_with(g: GameState, what: String) -> int:
 			if str(t.get("what", "")) == what:
 				return s
 	return -1
+
+
+func test_522_the_broken_tractor_project_opens_at_level_2_and_its_first_harvest_brings_a_find() -> void:
+	var g := _farm(true)   # finds roll only with drops on
+	g.reset_game()
+	g.goals.refresh()
+	_check(not g.goals.open_keys().has(TRACTOR), "not open at level 1")
+	while g.level() < 2:
+		g.add_xp(5)
+	g.goals.refresh()
+	_check(g.goals.open_keys().has(TRACTOR), "open at level 2 (Part 2: minutes 20-30)")
+	_check(g.goals.shows("menu:COLLECTIONS"), "its find task brings out Collections")
+	_check(g.finds.owned.is_empty(), "nothing found yet")
+	var crop := "strawberries"
+	var i := _plowed(g)
+	_check(g.field.plant(i, crop), "a crop planted")
+	var j := _plowed(g)
+	_check(g.field.plant(j, crop), "and a second")
+	g.debug_time_offset += int(g.crops[crop]["grow_seconds"])
+	g.field.harvest(i)
+	_check(not g.finds.owned.is_empty(), "the first harvest after it opened brings a find")
+	_check(g.goals.sure_spent.has(TRACTOR), "the sure find is spent")
+	_check(not g.goals.take_sure_find(), "once only")
+	var saved := {}
+	g.goals.save_to(saved)
+	g.goals.load_from(saved)
+	_check(g.goals.sure_spent.has(TRACTOR), "and stays spent after a load")
+	for _k in 6:
+		g.record("harvest", crop)
+	_check(g.goals.is_done(TRACTOR), "six harvests and a find finish the first stage")
+	var parts := int(g.parts.get("vehicle_parts", 0))
+	var reward := g.goals.claim(TRACTOR)
+	_eq(int(g.parts.get("vehicle_parts", 0)), parts + int(reward["parts"]["vehicle_parts"]), "its parts arrive")
+	_check(HudGoals.reward_words(reward).contains(g.name_of("vehicle_parts")), "and are named in the reward words")
+	var p := g.goals.project_of("tractor")
+	_eq(str(p["reward"]["item"]), "tractor", "the Tractor itself stands at the end")
+	_done(g)

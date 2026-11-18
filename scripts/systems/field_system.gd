@@ -307,6 +307,8 @@ func harvest(i: int) -> Dictionary:
 	var bunch := game.shed.roll_bunch(crop_id, i)
 	var found: Array[Dictionary] = game.finds.give(held.get("finds", [])) if held is Dictionary \
 		else game.finds.roll("harvest", stars_before)
+	if found.is_empty():
+		found = game.finds.give(game.finds.sure())
 	var rich: bool = drop.get("type", "") in ["golden", "super_harvest"] or was_pollinated
 	var feed_found := game.feeds.roll_harvest(crop_id, stars_before, rich)
 	var bee_news := ""

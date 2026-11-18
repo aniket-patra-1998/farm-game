@@ -328,6 +328,10 @@ static func reward_words(reward: Dictionary) -> String:
 			parts.append(TranslationServer.translate("GOAL_GOT_ITEM") % Game.name_of(str(reward[f])))
 	if reward.has("seeds"):
 		parts.append(TranslationServer.translate("GOAL_GOT_SEEDS") % Game.name_of(str(reward["seeds"])))
+	var mats: Variant = reward.get("parts", {})
+	if typeof(mats) == TYPE_DICTIONARY:
+		for m: String in mats:
+			parts.append(TranslationServer.translate("GOAL_GOT_PARTS") % [UiTheme.number(int(mats[m])), Game.name_of(m)])
 	if reward.has("box"):
 		parts.append(TranslationServer.translate("GOAL_GOT_BOX"))
 	return UiTheme.tidy(" · ".join(parts))

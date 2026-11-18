@@ -493,6 +493,8 @@ func test_364_a_plot_holds_its_luck_from_planting() -> void:
 	var g := _farm(true)
 	g.coins = 100000
 	g.xp = g.xp_for_level(20)
+	g.goals.refresh()
+	g.goals.take_sure_find()   # the broken Tractor's sure first find is spent: only the plot's own luck counts here
 	var said: Array = []
 	g.found.connect(func(i: int, text: String, rarity: String) -> void: said.append([i, text, rarity]))
 	var a := _free(g)
