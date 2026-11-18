@@ -285,6 +285,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   last (finds test 486). The goal system and HUD goals were left to the goals build (its lane). Seen once: a
   pre-push precheck failed on dummy-renderer RID errors in the godot log, passing before and after (a 3D test
   flake). Next audit: whole-farm look (mostly the art lane; check numbers only), then motion, feedback.
+- Run 26 (00:20; whole-farm look, numbers side): the showcase showed only VIP, rust, crafting and goals. Now
+  11 more systems dress their part (`showcase()`): a stray; every other growing or ripe crop fertilized; crops,
+  trees and animals at every star count (mastered too); a Queen Bee; a pen's truffles ready; the Barn half full;
+  collections and ribbons at every stage; feed stock; fuel unlocked and full (it was locked: placed vehicles had
+  none) with vehicles at every upgrade; crafting goods and bushels; a Mystery Egg of each colour (test 421). The
+  shed's pots and half-found finds were left out: drawn on the farm, they push test 338 past the 2.3M triangle
+  budget the showcase sits at (reported for the perf loop). Test 333's flake fixed (planted_at, not the clock).
+  Next audit: motion and animation (numbers side), then feedback.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
