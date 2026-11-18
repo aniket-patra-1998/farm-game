@@ -293,6 +293,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   shed's pots and half-found finds were left out: drawn on the farm, they push test 338 past the 2.3M triangle
   budget the showcase sits at (reported for the perf loop). Test 333's flake fixed (planted_at, not the clock).
   Next audit: motion and animation (numbers side), then feedback.
+- Run 27 (01:20; motion and feedback, numbers side, then code quality): motion is clean in the fix lane (every
+  walker clamps or carries its delta: AnimalMotion, VehicleRun, PlayerSystem.advance); feedback is clean (every
+  moment, hum and float in data/feedback.json is used and every call names one; every action is answered).
+  Fixed: nine hand-written weighted picks (Mystery Box, eggs, finds, babies, nurture, strays, collectibles, daily
+  parts, neighbours' gifts) now share `RollSystem.weighted_index(rng, weights)`: a weight of 0 never picked, an
+  empty list gives -1 (test 512 also fails any new copy in systems/ or social/). Number-file validation (test 442)
+  now covers goals, reveal and search. Note: this container's clone had no core.hooksPath set until mid-run, so
+  4d05045 reached main with a 122-character line (precheck red about 6 minutes); fixed in 01338f7. Set the hook
+  path before the first push. Next audit: economy round three (the open items all need the owner's taste).
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
