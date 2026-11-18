@@ -22,8 +22,6 @@ const SUN_MIN_ELEVATION := deg_to_rad(9.0)
 const MOON_ELEVATION := deg_to_rad(40.0)
 const FILL_ELEVATION := deg_to_rad(35.0)
 const GRADE_STEP := 0.04         # the colour grade is rebuilt only when its warmth moves this much
-const GRADE_BASE_WARMTH := 0.3   # a gentle warm grade all day, stronger as the sun sinks
-const GRADE_CONTRAST := 1.05
 const FILL_ENERGY := 0.32        # of the sun's: the sky's light into the shade
 
 var grid: FarmGrid
@@ -85,7 +83,7 @@ func _ready() -> void:
 	environment.glow_intensity = 0.25
 	environment.glow_bloom = 0.04
 	environment.adjustment_enabled = true
-	environment.adjustment_contrast = GRADE_CONTRAST
+	environment.adjustment_contrast = Grade.value("frame_contrast")
 	var world_env := WorldEnvironment.new()
 	world_env.environment = environment
 	add_child(world_env)
@@ -246,9 +244,9 @@ func _set_grade(warmth: float) -> void:
 	var g := Gradient.new()
 	g.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
 	g.colors = PackedColorArray([
-		Color(_grade_lift.x, _grade_lift.y, 0.02 + _grade_lift.z),
-		Color(0.5 + 0.02 * warmth, 0.5, 0.5 - 0.03 * warmth),
-		Color(1.0, 1.0 - 0.02 * warmth, 1.0 - 0.07 * warmth)])
+		Color(_grade_lift.x, _grade_lift.y, 0.02 + _grade_lift.z + Grade.value("shadow_cool") * warmth),
+		Color(0.5 + Grade.value("warm_mids") * warmth, 0.5, 0.5 - 1.5 * Grade.value("warm_mids") * warmth),
+		Color(1.0, 1.0 - 0.02 * warmth, 1.0 - Grade.value("warm_highlights") * warmth)])
 	var tex := GradientTexture1D.new()
 	tex.gradient = g
 	tex.width = 32
@@ -288,10 +286,12 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	# Shade is lit by the sky, but mostly warm-neutral bounce light off the grass and earth.
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
 	environment.ambient_light_energy = lerpf(0.4, NIGHT_AMBIENT, dark) * (1.0 - dim * 0.4)
-	environment.adjustment_saturation = lerpf(1.1, 0.9, dark) * (1.0 - float(weather.get("desat", 0.0))) * _grade_sat
-	environment.adjustment_contrast = GRADE_CONTRAST * _grade_contrast
+	var frame_sat := lerpf(Grade.value("frame_day_saturation"), Grade.value("frame_night_saturation"), dark)
+	environment.adjustment_saturation = frame_sat * (1.0 - float(weather.get("desat", 0.0))) * _grade_sat
+	environment.adjustment_contrast = Grade.value("frame_contrast") * _grade_contrast
 	var low_sun := pow(1.0 - sin(maxf(s, 0.0) * PI), 3.0) if s >= 0.0 else 0.0
-	_set_grade(clampf(GRADE_BASE_WARMTH + low_sun * 0.9, 0.0, 1.0) * (1.0 - cover * 0.6) * (1.0 - dark))
+	var warmth := clampf(Grade.value("base_warmth") + low_sun * Grade.value("low_sun_warmth"), 0.0, 1.0)
+	_set_grade(warmth * (1.0 - cover * 0.6) * (1.0 - dark))
 	# Fog that begins past the farm (data/weather.json fog; `_fit_fog` each frame): the farm stays clear, the
 	# meadow and woods fade into haze, and a thin mist lies on the ground.
 	var fog := float(weather.get("fog", 0.0))
