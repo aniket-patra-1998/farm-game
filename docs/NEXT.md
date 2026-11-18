@@ -365,6 +365,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   speaker's waves and the lock's shackle the white sticker edge (they vanished on brown panels). Flaky once: a
   precheck's godot log had a script error in ModelKit.canopy (model_kit.gd:702, null mesh arrays), likely a race in
   the threaded model loading (ffe2a86); passed on retry. The loop's window ends 18:20.
+- Art run 11 (18 Nov 21:05 IST, the restarted loop's first): main only, order of work 3 (menus), broken pieces
+  seen in look_shot's panels. a3e65e3: one window at a time (a HUD panel opening puts a building's sheet away; the
+  sheet was drawn over Seeds and the album). b9bf47b: card lines never cut mid-word (CardFace.fitted_line: full
+  card width, then drops trailing " · " parts; off-season seed lines green, long press says all). Then the inbox's
+  tiles without names under them (they spilled into the next row). art-polish on origin is stale (behind main,
+  holds the dropped c0b4a66): restart it from main for the next taste change. A fresh container needs Godot 4.7.2
+  at /home/claude/godot/godot (CI's zip) and a ~1 min `--import`; the six panels' look_shot takes ~6 min. Next:
+  home and crafting sheets (the Bakery's ingredient tiles' red "0/1" badges sit clipped at the sheet's bottom),
+  then motion timing.
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
