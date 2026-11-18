@@ -94,7 +94,7 @@ func line_for(item: Dictionary) -> Control:
 	var give: Dictionary = item["give"]
 	var what := str(give.get("what", ""))
 	if what in [InboxItem.ITEM, InboxItem.YOUNG, InboxItem.PART]:
-		var thing := UiKit.count_row([[str(give["id"]), "×%d" % int(give.get("n", 1))]])
+		var thing := UiKit.count_row([[str(give["id"]), "×%d" % int(give.get("n", 1))]], false)   # (one row high)
 		thing.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(thing)
 	# Just who sent it (the picture, the count and the button say the rest); a thing from your own farm says
