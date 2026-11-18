@@ -25,7 +25,7 @@ func collect(uid: int) -> Dictionary:
 			earned *= Balance.i("economy.golden_coin_multiplier")
 			gained += Balance.i("economy.golden_xp")
 		"super_harvest":
-			earned *= 2
+			earned *= Balance.i("economy.super_harvest_multiplier")
 		"bonus_xp":
 			gained += Balance.i("economy.bonus_xp")
 	if not drop.is_empty():

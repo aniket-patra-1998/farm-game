@@ -1242,9 +1242,9 @@ func _act(i: int, loud: bool) -> void:
 		_queue(job, loud)
 	elif loud:
 		if tool == "fertilize" and Game.field.phase(i) == GameState.Phase.GROWING:
-			info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE"))
+			info.emit(tr("ALREADY_FERTILIZED_THIS_HARVEST_PAYS_MORE") % roundi(Balance.f("economy.fertilizer_bonus") * 100.0))
 		elif tool == "fertilize":
-			info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS"))
+			info.emit(tr("FERTILIZE_GROWING_CROPS_FOR_MORE_COINS") % roundi(Balance.f("economy.fertilizer_bonus") * 100.0))
 		else:
 			_explain(i, Game.field.phase(i))
 

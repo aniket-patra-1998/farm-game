@@ -183,3 +183,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   the model builders' per-kind matches (`BuildingModel._feature` 429 lines, `BuildingDress.feature`,
   `PlaceholderArt._decor`, `ThingIcon._thing`): splitting them is costly and risky, reported. Next: fix the
   two tiny duplicates or the economy items; the next audit is the whole-farm look.
+- Run 13 (owner's deep pass, player paths traced: buying, harvest, collect, selling, helpers, seed shelf):
+  the seed shelf showed a crop's bare price while a harvest pays it raised 5% a mastery star (a mastered crop
+  paid 15% more than its card said); now both use `FieldSystem.sells_for(crop, off, bonus)`. Super harvest's x2
+  was written twice in code and once in words: now `economy.super_harvest_multiplier`, the words take it; the
+  fertilize hints take `economy.fertilizer_bonus`. Open (in the log's backlog): other words still repeat data
+  numbers (horses "not every 3 days", "8 cans", a bloom's "7 days", a set's 3/1/1), true today but they drift.

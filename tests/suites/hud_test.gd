@@ -313,6 +313,13 @@ func test_328_seed_tree_and_animal_cards_wear_their_mastery_stars() -> void:
 	var list: CardList = content.find_children("*", "CardList", true, false)[0]
 	_eq(list.ids.size(), Game.crop_order.size(), "a card for every crop")
 	_eq(hud.seeds.seed_face(crop)["stars"], [3, 1.0], "each wearing its stars")
+	# The card's price is what a harvest pays now: three stars raise it (it showed the bare price before).
+	var price := int(Game.crops[crop]["sell_price"])
+	var pays := Game.field.sells_for(crop, Game.off_season(crop))
+	var raised := roundi(price * (1.0 + 3 * Balance.f("economy.mastery_price_bonus"))
+		* (Balance.f("seasons.off_price_mult") if Game.off_season(crop) else 1.0))
+	_eq(pays, raised, "a mastered crop sells for its price raised by its stars")
+	_check(str(hud.seeds.seed_face(crop)["line"]).contains("%d coins" % pays), "and its seed card says so")
 	list.press(crop)
 	_eq(main.get("grid").get("selected_crop"), crop, "tapping a card picks its seed")
 	content.free()

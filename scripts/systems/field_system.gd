@@ -232,6 +232,14 @@ func fertilize(i: int) -> bool:
 
 
 ## Returns {"coins", "xp", "crop", "drop", "drop_text"} or {} if nothing was harvested.
+## What a harvest of `crop_id` sells for before its drop: the price, raised by its mastery stars and by `bonus`
+## (fertilizer, rain), times the off-season price when `off`. The seed shelf shows this, so it says what is paid.
+func sells_for(crop_id: String, off: bool, bonus := 0.0) -> int:
+	var mastery := Balance.f("economy.mastery_price_bonus") * game.mastery.stars(crop_id)
+	return roundi(float(game.crops[crop_id]["sell_price"]) * (1.0 + mastery + bonus)
+		* (Balance.f("seasons.off_price_mult") if off else 1.0))
+
+
 ## "drop" is "", "golden", "bird", "collectible", "super_harvest" or "bonus_xp".
 func harvest(i: int) -> Dictionary:
 	if phase(i) != GameState.Phase.RIPE:
@@ -240,17 +248,14 @@ func harvest(i: int) -> Dictionary:
 	var crop: Dictionary = game.crops[crop_id]
 	var stars_before := game.mastery.stars(crop_id)
 	var fertilized: bool = game.plots[i].get("fert", false)
-	var bonus := Balance.f("economy.mastery_price_bonus") * stars_before + (
-		Balance.f("economy.fertilizer_bonus") if fertilized else 0.0
-	)
+	var bonus := Balance.f("economy.fertilizer_bonus") if fertilized else 0.0
 	# The seasons (our own touch): rain while it grew watered it, and an off-season crop sells for more.
 	var planted_at := int(game.plots[i]["planted_at"])
 	var rained := game.rained_between(planted_at, planted_at + int(crop["grow_seconds"]))
 	if rained:
 		bonus += Balance.f("seasons.rain_bonus")
 	var off: bool = game.plots[i].get("off", false)
-	var earned := int(round(float(crop["sell_price"]) * (1.0 + bonus)
-		* (Balance.f("seasons.off_price_mult") if off else 1.0)))
+	var earned := sells_for(crop_id, off, bonus)
 	var gained := int(crop["xp"])
 
 	var was_pollinated: bool = game.plots[i].get("pol", false)
@@ -267,7 +272,7 @@ func harvest(i: int) -> Dictionary:
 			earned *= Balance.i("economy.golden_coin_multiplier")
 			gained += Balance.i("economy.golden_xp")
 		"super_harvest":
-			earned *= 2
+			earned *= Balance.i("economy.super_harvest_multiplier")
 		"bonus_xp":
 			gained += Balance.i("economy.bonus_xp")
 

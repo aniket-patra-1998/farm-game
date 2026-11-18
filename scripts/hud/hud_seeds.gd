@@ -47,7 +47,7 @@ func seed_face(id: String) -> Dictionary:
 		badge = ["coin", UiTheme.number(int(crop["seed_cost"])), Game.coins < int(crop["seed_cost"])]
 	# The season's price board (our own touch): an off-season crop shows what it sells for now, and says why.
 	var off := Game.off_season(id)
-	var sells := roundi(int(crop["sell_price"]) * (Balance.f("seasons.off_price_mult") if off else 1.0))
+	var sells := Game.field.sells_for(id, off)   # (what a harvest pays now: mastery stars and the season counted)
 	return {
 		"name": str(crop["name"]),
 		"line": tr("SEED_CARD_OFF" if off else "SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), sells],

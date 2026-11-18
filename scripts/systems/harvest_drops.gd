@@ -80,7 +80,7 @@ func give_drop(drop: Dictionary) -> Dictionary:
 		"golden":
 			out["text"] = tr("GOLDEN_HARVEST")
 		"super_harvest":
-			out["text"] = tr("SUPER_HARVEST_X_COINS")
+			out["text"] = tr("SUPER_HARVEST_X_COINS") % Balance.i("economy.super_harvest_multiplier")
 		"bonus_xp":
 			out["text"] = tr("BONUS_XP")
 		"bird", "collectible":

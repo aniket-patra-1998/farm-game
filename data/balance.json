@@ -404,6 +404,10 @@
    "v": 1,
    "note": "Gems for each level gained."
   },
+  "super_harvest_multiplier": {
+   "v": 2,
+   "note": "A super harvest (a harvest or collect drop) pays this many times the coins."
+  },
   "coins_per_buy_xp": {
    "v": 100,
    "note": "Coins spent for each XP a coin buy gives (FarmVille: 1 XP per 100 coins); gem buys give none."

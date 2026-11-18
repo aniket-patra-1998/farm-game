@@ -272,6 +272,8 @@ func test_61_decorations_give_xp_as_everything_does_and_no_buy_and_sell_pays() -
 	_eq(g.buy_xp("log_cabin"), 2500, "a 250,000-coin Log Cabin gives 2,500 XP")
 	_eq(g.buy_xp("tractor"), 50, "other buys give 1 XP per 100 coins")
 	_eq(Balance.i("economy.coins_per_buy_xp"), 100, "the buy XP rate lives in data (economy.coins_per_buy_xp)")
+	_eq(Balance.i("economy.super_harvest_multiplier"), 2, "a super harvest's x2 lives in data, its words say it")
+	_check(tr("SUPER_HARVEST_X_COINS").contains("%d"), "the super harvest words take the multiplier")
 	_eq(g.buy_xp("brown_chicken"), 0, "gem buys give none")
 	var xp := g.xp
 	_check(g.buy_and_place("hay_bale", 8, 8), "buy a hay bale")
