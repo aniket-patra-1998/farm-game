@@ -616,6 +616,49 @@ func test_481_a_bloom_gardens_blooms_are_kept_and_come_back_the_same() -> void:
 	Game.objects.clear()
 
 
+func test_495_a_trees_fruit_comes_apart_from_its_still_parts_with_its_levels_of_detail() -> void:
+	# Tree batching's first part (docs/NEXT.md "Phone performance"): a tree taken apart for batches has its fruit
+	# (drawn by the farm's clock) in pieces of its own, and every surface keeps its material and levels of detail.
+	var tree := AssetRegistry.instance("apple_tree", {"look": 0})
+	_check(tree != null, "the apple tree has its file")
+	if tree == null:
+		return
+	var whole := Instancer.pieces_of("test_495", func() -> Node3D:
+		var look := tree.find_child("when_look_0", false, false) as Node3D
+		tree.remove_child(look)
+		tree.free()
+		var root := Node3D.new()
+		root.add_child(look)
+		return root)
+	var clock := [ModelKit.FRUIT_SHADER, ModelKit.BLOOM_SHADER]
+	var split := Instancer.split_clocked(whole["pieces"], clock)
+	var before := _lods_by_shader(whole["pieces"])
+	var after := _lods_by_shader((split["still"] as Array) + (split["clocked"] as Array))
+	_eq(after, before, "every surface is still drawn, with its material and its levels of detail")
+	_check(before.has(ModelKit.FRUIT_SHADER), "the tree has fruit")
+	for piece: Dictionary in split["clocked"]:
+		_eq(_lods_by_shader([piece]).keys(), [ModelKit.FRUIT_SHADER], "a clocked piece holds only fruit")
+	for piece: Dictionary in split["still"]:
+		_check(not _lods_by_shader([piece]).has(ModelKit.FRUIT_SHADER), "a still piece holds no fruit")
+	Instancer.clear()
+
+
+## For each shader `pieces` (Instancer.pieces_of) draw with, the levels of detail of its surfaces, in order.
+func _lods_by_shader(pieces: Array) -> Dictionary:
+	var out := {}
+	for piece: Dictionary in pieces:
+		var mesh := piece["mesh"] as Mesh
+		for k in mesh.get_surface_count():
+			var m := mesh.surface_get_material(k) as ShaderMaterial
+			var path := m.shader.resource_path if m != null and m.shader != null else "?"
+			if not out.has(path):
+				out[path] = []
+			(out[path] as Array).append((RenderingServer.mesh_get_surface(mesh.get_rid(), k).get("lods", []) as Array).size())
+	for path in out:
+		(out[path] as Array).sort()
+	return out
+
+
 func test_104_a_building_shows_how_full_and_how_ready_it_is() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()

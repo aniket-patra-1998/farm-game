@@ -83,6 +83,46 @@ static func pieces_of(key: String, build: Callable) -> Dictionary:
 	return out
 
 
+## `pieces` (from `pieces_of`) with every surface drawn by one of `shaders` (resource paths: what ripens by the
+## clock, ModelKit.FRUIT_SHADER and BLOOM_SHADER) taken out into pieces of its own, each keeping its levels of
+## detail: {"still": [...], "clocked": [...]}, both shaped as `pieces`. So a tree can stand in its look's shared
+## batch while its fruit, which ripens on the tree's own clock, is drawn in a batch keyed by its times (tree
+## batching: docs/NEXT.md "Phone performance"). A piece with nothing clocked is kept as it is.
+static func split_clocked(pieces: Array, shaders: Array) -> Dictionary:
+	var out := {"still": [], "clocked": []}
+	for piece: Dictionary in pieces:
+		var mesh := piece["mesh"] as ArrayMesh
+		var whole := piece.get("material") as ShaderMaterial
+		if whole != null and whole.shader != null and whole.shader.resource_path in shaders:
+			(out["clocked"] as Array).append(piece)   # (the whole piece is drawn with a clocked material)
+			continue
+		var clocked: Array[int] = []
+		if mesh != null and piece.get("material") == null:
+			for k in mesh.get_surface_count():
+				var m := mesh.surface_get_material(k) as ShaderMaterial
+				if m != null and m.shader != null and m.shader.resource_path in shaders:
+					clocked.append(k)
+		if clocked.is_empty():
+			(out["still"] as Array).append(piece)
+			continue
+		if clocked.size() < mesh.get_surface_count():
+			(out["still"] as Array).append(_with_surfaces(piece, mesh, clocked, false))
+		(out["clocked"] as Array).append(_with_surfaces(piece, mesh, clocked, true))
+	return out
+
+
+## A copy of `piece` drawn with only the surfaces of `mesh` listed in `which` (`keep`), or all but those (not
+## `keep`). The copy's mesh keeps each surface's material and levels of detail.
+static func _with_surfaces(piece: Dictionary, mesh: ArrayMesh, which: Array[int], keep: bool) -> Dictionary:
+	var part := mesh.duplicate() as ArrayMesh
+	for k in range(mesh.get_surface_count() - 1, -1, -1):   # (from the last, so the numbers ahead stay)
+		if (k in which) != keep:
+			part.surface_remove(k)
+	var copy := piece.duplicate()
+	copy["mesh"] = part
+	return copy
+
+
 static func _take_apart(node: Node, xf: Transform3D, out: Dictionary) -> void:
 	for child in node.get_children():
 		if not child is Node3D:
