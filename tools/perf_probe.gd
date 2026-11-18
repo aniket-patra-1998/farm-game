@@ -233,7 +233,8 @@ func _processing() -> void:
 		var t := Time.get_ticks_usec()
 		for r in 5:
 			o.sync()
-		print("PERF   Objects3D.sync (every second): %.2fms" % ((Time.get_ticks_usec() - t) / 1000.0 / 5))
+		# (a full look over, as after a change; the game spreads its once-a-second timer look over frames)
+		print("PERF   Objects3D.sync (full, after a change): %.2fms" % ((Time.get_ticks_usec() - t) / 1000.0 / 5))
 
 
 ## Where the mesh nodes live: each counted under its nearest ancestor with a script (its class), so the
