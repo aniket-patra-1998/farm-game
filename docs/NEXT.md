@@ -321,6 +321,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   reinstalled in a fresh container (4.7.2 from the release zip) and the project imported (`--headless --import`)
   before look_shot runs. Next: the trees' candy hues (data/tree_shapes.json leaf and leaf_alts) nearer the animals'
   family, then the second before/after sheet (main vs art-polish, buildings and trees_animals, noon and dusk).
+- Art run 7 (15:36 IST): art-polish rebased on main (bf51184; data/art_versions.json conflicts are only build
+  stamps: take main's and rerun tools/make_art_versions.py) and extended (c0b4a66): tree crowns in one colour
+  family. Each kind keeps its leaf hue, but TreeModel.tone mixes it 30% towards #8c9a52 and scales saturation 0.74
+  (data/tree_shapes.json `leaf_tone`): pink, cyan, acid yellow and red crowns read as dusty rose, soft teal, butter
+  and coral. 16%/0.84 was tried first: no visible change through the shaders. TreeModel reads through
+  DataFile.read; plant files re-exported; world3d test 103 checks hue kept and saturation softened. The second
+  before/after sheet (main vs art-polish, trees_animals and buildings, noon and dusk) is in the log under "Art:
+  waiting for your look". look_shot of 2 views takes about 2-3 minutes; never render beside a precheck or a push
+  (the pre-push hook runs the precheck). Next: wait for the owner's look; meanwhile objective fixes on main
+  (consistent outline weights, icon set's sticker edges: order of work 3), or animal life (owner-approved).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
