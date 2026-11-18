@@ -15,7 +15,7 @@
   },
   "balance": {},
   "items": [
-    "strawberries", "wheat", "eggplant", "soybeans", "peanuts", "squash", "pumpkins", "spinach", "rice", "carrots",
+    "strawberries", "starter_seeds", "wheat", "eggplant", "soybeans", "peanuts", "squash", "pumpkins", "spinach", "rice", "carrots",
     "cotton", "raspberries", "cranberries", "bell_peppers", "sunflowers", "tomatoes", "pineapples", "watermelon",
     "grapes", "corn", "sugarcane", "chicken", "brown_chicken", "duck", "cow", "sheep", "pig", "goat", "horse", "pony",
     "rabbit", "turkey", "baby_turkey", "apple_tree", "plum_tree", "lemon_tree", "fig_tree", "almond_tree",

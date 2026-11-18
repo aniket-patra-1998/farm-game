@@ -22,6 +22,18 @@
           "color": "#e2453c"
         },
         {
+          "id": "starter_seeds",
+          "name": "Starter Seeds",
+          "unlock_level": 99,
+          "starter": true,
+          "seed_cost": 0,
+          "grow_seconds": 180,
+          "sell_price": 20,
+          "xp": 2,
+          "shape": "berry",
+          "color": "#e2453c"
+        },
+        {
           "id": "raspberries",
           "name": "Raspberries",
           "unlock_level": 8,

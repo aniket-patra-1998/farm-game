@@ -294,7 +294,7 @@ func show_me(task: Dictionary) -> void:
 		hud.tools.show_tool(str(to["tool"]))
 	elif to.has("seeds"):
 		var crop := str(to["seeds"])
-		if Game.crops.has(crop) and Game.is_unlocked(crop):
+		if Game.crops.has(crop) and Game.can_plant(crop):
 			hud.choose_seed(crop)
 		else:
 			hud.show_seeds()
@@ -326,6 +326,8 @@ static func reward_words(reward: Dictionary) -> String:
 	for f in ["item", "place"]:
 		if reward.has(f):
 			parts.append(TranslationServer.translate("GOAL_GOT_ITEM") % Game.name_of(str(reward[f])))
+	if reward.has("seeds"):
+		parts.append(TranslationServer.translate("GOAL_GOT_SEEDS") % Game.name_of(str(reward["seeds"])))
 	if reward.has("box"):
 		parts.append(TranslationServer.translate("GOAL_GOT_BOX"))
 	return UiTheme.tidy(" · ".join(parts))

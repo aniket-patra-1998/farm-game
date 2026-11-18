@@ -89,7 +89,8 @@ func test_23_every_crop_and_item_has_art() -> void:
 func test_24_every_crop_belongs_to_a_collection() -> void:
 	var g := _farm()
 	for id in g.crop_order:
-		_check(g.collectibles.collection_of_crop.has(id), "%s can drop collectibles" % id)
+		_check(g.crops[id].get("starter", false) or g.collectibles.collection_of_crop.has(id),
+			"%s can drop collectibles" % id)   # (Starter Seeds, one plot given once, are not a collection's)
 	_done(g)
 
 

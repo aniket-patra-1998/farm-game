@@ -311,7 +311,8 @@ func test_328_seed_tree_and_animal_cards_wear_their_mastery_stars() -> void:
 	var content := VBoxContainer.new()
 	hud.seeds.build_seeds(content)
 	var list: CardList = content.find_children("*", "CardList", true, false)[0]
-	_eq(list.ids.size(), Game.crop_order.size(), "a card for every crop")
+	var sold := Game.crop_order.filter(func(id: String) -> bool: return not Game.crops[id].get("starter", false))
+	_eq(list.ids.size(), sold.size(), "a card for every crop (Starter Seeds only while given)")
 	_eq(hud.seeds.seed_face(crop)["stars"], [3, 1.0], "each wearing its stars")
 	# The card's price is what a harvest pays now: three stars raise it (it showed the bare price before).
 	var price := int(Game.crops[crop]["sell_price"])

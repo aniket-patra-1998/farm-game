@@ -146,12 +146,13 @@ func plant(i: int, crop_id: String) -> bool:
 	if phase(i) != GameState.Phase.PLOWED or not game.crops.has(crop_id):
 		return false
 	var crop: Dictionary = game.crops[crop_id]
-	if game.level() < int(crop["unlock_level"]):
+	if not game.can_plant(crop_id):
 		game.message.emit(tr("UNLOCKS_AT_LEVEL") % [crop["name"], int(crop["unlock_level"])])
 		return false
 	# Pollinated seeds are planted first, for free.
-	var use_pollinated := game.bees.take_pollinated_seed(crop_id)
-	if not use_pollinated and not game.spend(int(crop["seed_cost"])):
+	var gift := game.goals.take_seed(crop_id)   # (Starter Seeds: a goal's gift, free)
+	var use_pollinated := not gift and game.bees.take_pollinated_seed(crop_id)
+	if not gift and not use_pollinated and not game.spend(int(crop["seed_cost"])):
 		game.message.emit(tr("NOT_ENOUGH_COINS_FOR_SEEDS") % crop["name"])
 		return false
 	game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": game.now()}

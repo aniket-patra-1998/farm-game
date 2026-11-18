@@ -45,7 +45,7 @@ func test_458_the_goals_data_is_sound() -> void:
 	var chain_ids := (d.get("chains", []) as Array).map(func(c: Dictionary) -> String: return str(c["id"]))
 	var tasks := []
 	for c: Dictionary in d.get("chains", []):
-		_check(roster.has(str(c.get("giver", ""))) or c.get("giver", "") == "guide",
+		_check(roster.has(str(c.get("giver", "")).to_lower()) or c.get("giver", "") == "guide",
 			"chain %s's giver is a neighbour" % c["id"])
 		for a: Variant in c.get("after", []):
 			_check(chain_ids.has(str(a)), "chain %s comes after a chain that exists (%s)" % [c["id"], a])

@@ -1136,8 +1136,10 @@ func any_plot_in(wanted: Phase) -> bool:
 # ---------------------------------------------------------------- tutorial
 
 
+## The next step in floating words: the old tutorial's (farms from before goals), else the open Welcome
+## chain's line (GoalSystem.welcome_say).
 func tutorial_text() -> String:
-	return tr(TUTORIAL_TEXT[tutorial_step]) if TUTORIAL_TEXT.has(tutorial_step) else ""
+	return tr(TUTORIAL_TEXT[tutorial_step]) if TUTORIAL_TEXT.has(tutorial_step) else goals.welcome_say()
 
 
 ## Moves to the next step only when the finished step is the current one.
@@ -1225,6 +1227,11 @@ func is_unlocked(crop_id: String) -> bool:
 	return level() >= int(crops[crop_id]["unlock_level"])
 
 
+## Whether this crop can be planted now: unlocked, or gift seeds of it are held (Starter Seeds).
+func can_plant(crop_id: String) -> bool:
+	return is_unlocked(crop_id) or goals.seeds_of(crop_id) > 0
+
+
 ## Coins paid on reaching a level: grows with level so later levels still feel big.
 func level_reward(lvl: int) -> int:
 	return Balance.i("economy.coins_per_level") * lvl
@@ -1304,7 +1311,8 @@ func _new_game() -> void:
 	xp = 0
 	debug_time_offset = 0
 	clear_until = now() + Balance.i("economy.fresh_farm_clear_seconds")
-	tutorial_step = Tutorial.HARVEST
+	# The Welcome chain teaches a new farm (GoalSystem); the three-step tutorial stays for farms without goals.
+	tutorial_step = Tutorial.DONE if goals.active() and not goals.new_farm_chains().is_empty() else Tutorial.HARVEST
 	objects = []
 	next_uid = 1
 	_occupied.clear()
@@ -1340,9 +1348,9 @@ func _new_game() -> void:
 	_add_starter_object("farm_stand", 4, 1)
 	# The animals have their first collect waiting, so the first session also teaches collecting (a starter
 	# animal placed with a fresh timer stood a whole cycle, a day or more, before its first tap).
-	_add_starter_object("chicken", 9, 2, _ready_now("chicken"))
-	_add_starter_object("chicken", 9, 3, _ready_now("chicken"))
-	_add_starter_object("cow", 10, 6, _ready_now("cow"))
+	_add_starter_object("chicken", 9, 2, ready_now("chicken"))
+	_add_starter_object("chicken", 9, 3, ready_now("chicken"))
+	_add_starter_object("cow", 10, 6, ready_now("cow"))
 	parts = {}
 	for p in part_ids:
 		parts[p] = 0
@@ -1362,7 +1370,7 @@ func _add_starter_object(item_id: String, row: int, col: int, extra := {}) -> vo
 
 
 ## A starter thing's timer set one cycle back: ready to collect from the first minute.
-func _ready_now(item_id: String) -> Dictionary:
+func ready_now(item_id: String) -> Dictionary:
 	return {"t": now() - int(item_data(item_id).get("cycle_seconds", 86400))}
 
 

@@ -185,6 +185,9 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	o["row"] = row
 	o["col"] = col
 	o["t"] = game.now() # production restarts when it comes back out
+	if o.get("ready", false):   # (a goal's gift that comes ready: its first harvest at once)
+		o.erase("ready")
+		o.merge(game.ready_now(str(o["id"])), true)
 	if o.get("bunch", false) and not o.has("expires"):
 		o["expires"] = game.now() + Balance.i("barn.bunch_days") * 86400
 	game.grass_over(o["id"], row, col)
