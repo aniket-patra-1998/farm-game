@@ -196,7 +196,9 @@ func test_481_a_clock_set_back_a_day_brings_no_day_round_again() -> void:
 	g.social.gifts_today = {"0": Balance.i("social.gifts_per_neighbour_per_day")}
 	g.vehicles.fuel_found_day = g.day_number()
 	var today := g.day_number()
+	g.persistence.watch_clock()
 	g.debug_time_offset -= 86400
+	g.persistence.watch_clock()   # (a day back is seen, and moves the timers, not the day markers)
 	g.goals.refresh()
 	_eq(g.goals.daily_day, today, "yesterday's clock keeps today's jobs")
 	_eq(g.goals.daily_jobs, jobs, "the same jobs")
@@ -211,6 +213,20 @@ func test_481_a_clock_set_back_a_day_brings_no_day_round_again() -> void:
 	_check(g.day_turned(today), "a real new day still turns")
 	g.goals.refresh()
 	_eq(g.goals.daily_day, today + 1, "and brings new jobs")
+	# A clock that ran a month ahead and is put right: the day markers go back with it, so today's jobs, helps
+	# and the daily gift come round today, not in a month.
+	g.debug_time_offset += 30 * 86400
+	g.persistence.watch_clock()
+	g.goals.refresh()
+	g.social._count_help()
+	g.daily.last_daily_day = g.day_number()
+	g.debug_time_offset -= 30 * 86400
+	g.persistence.watch_clock()
+	_check(not g.day_turned(g.goals.daily_day) and g.goals.daily_day >= g.day_number() - 1, "the jobs' day came back")
+	_check(not g.day_turned(g.social.help_day) and g.social.help_day <= g.day_number(), "the helps' day came back")
+	_check(g.daily.last_daily_day <= g.day_number(), "the daily gift's day came back")
+	g.debug_time_offset += 86400
+	_check(g.day_turned(g.goals.daily_day) and g.day_turned(g.social.help_day), "and the next day turns tomorrow")
 	_done(g)
 
 

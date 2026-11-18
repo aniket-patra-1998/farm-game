@@ -36,6 +36,7 @@ signal inbox_changed             # the neighbours' mail changed (arrived, claime
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
 
+const DAY_MARKER_SHIFT := 2 * 86400   # a clock step back from which day markers move with it (day_moved_back)
 const WET: Array[String] = ["rain", "storm"]               # the weather that waters the fields
 const FALLING: Array[String] = ["rain", "storm", "snow"]   # the weather the forecast speaks of
 const STATES_KEPT := 512     # weather blocks kept (two months of them) before the keeping starts again
@@ -401,6 +402,13 @@ func day_number() -> int:
 ## limit and daily pick (else setting it back and forward again gives each day's helps, gifts, jobs anew).
 func day_turned(day: int) -> bool:
 	return day_number() > day
+
+
+## A day marker (day_turned's `day`) once the clock was set back `seconds`: a clock that ran days ahead and is put
+## right (DAY_MARKER_SHIFT or more) takes its days back with it, so today's limits come round today, not when the
+## clock catches up; a smaller step leaves the marker, so no day comes round twice.
+func day_moved_back(day: int, seconds: int) -> int:
+	return day - floori(seconds / 86400.0) if day > 0 and seconds >= DAY_MARKER_SHIFT else day
 
 
 # ---------------------------------------------------------------- plots

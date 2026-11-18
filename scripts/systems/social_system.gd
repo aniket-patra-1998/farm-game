@@ -69,6 +69,8 @@ func load_from(data: Dictionary) -> void:
 ## A clock set back: neighbours' answers still on their way keep their wait, and a post its age. (`last_settled`
 ## stays: it only ever moves forward, so a clock set back never brings the neighbours' day round again.)
 func shift_clock(seconds: int) -> void:
+	gift_day = game.day_moved_back(gift_day, seconds)
+	help_day = game.day_moved_back(help_day, seconds)
 	for post: Dictionary in outbox:
 		post["t"] = int(post.get("t", 0)) - seconds
 		for a: Dictionary in post.get("answers", []):

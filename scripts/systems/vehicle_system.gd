@@ -48,6 +48,7 @@ func load_from(data: Dictionary) -> void:
 
 
 func shift_clock(seconds: int) -> void:
+	fuel_found_day = game.day_moved_back(fuel_found_day, seconds)
 	if fuel_t > 0:   # (0: fuel not yet unlocked, no clock running)
 		fuel_t -= seconds
 

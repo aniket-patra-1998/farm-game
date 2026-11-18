@@ -69,6 +69,10 @@ func reset() -> void:
 	daily_bonus_given = false
 
 
+func shift_clock(seconds: int) -> void:
+	daily_day = game.day_moved_back(daily_day, seconds)
+
+
 func save_to(data: Dictionary) -> void:
 	data["goal_chain_step"] = chain_step.duplicate()
 	data["goal_chains_done"] = chains_done.duplicate()

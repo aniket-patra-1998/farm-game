@@ -17,6 +17,10 @@ func reset() -> void:
 	daily_streak = 0
 
 
+func shift_clock(seconds: int) -> void:
+	last_daily_day = game.day_moved_back(last_daily_day, seconds)
+
+
 func save_to(data: Dictionary) -> void:
 	data["last_daily_day"] = last_daily_day
 	data["daily_streak"] = daily_streak

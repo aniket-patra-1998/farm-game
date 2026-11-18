@@ -28,6 +28,10 @@ func reset() -> void:
 	stall_day = 0
 
 
+func shift_clock(seconds: int) -> void:
+	stall_day = game.day_moved_back(stall_day, seconds)
+
+
 func save_to(data: Dictionary) -> void:
 	data["bushels"] = bushels
 	data["goods"] = goods
