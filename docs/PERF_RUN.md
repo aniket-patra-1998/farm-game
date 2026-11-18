@@ -1,11 +1,15 @@
 # The loading and performance build (owner-approved 18 Nov 2026)
 
-Hourly sessions, 18:55 IST 18 Nov to 02:55 IST 19 Nov, make the farm load and run like a big commercial farm game:
+Hourly sessions, 20:50 IST 18 Nov to 04:50 IST 19 Nov, make the farm load and run like a big commercial farm game:
 the farm opens fast and whole, and a large, crowded farm stays smooth on a low-end Android phone. The look must
 not change (same models, colours and motion; an optimisation that changes how something looks is reported, not
 built). Follow CLAUDE.md and docs/POLISH.md's "Safe merging and no overlap". Log: the Claude doc "Farm game: polish
-loop log", rows prefixed "Perf:". Measure before and after every step (tools/perf_probe --quality=low
---size=2400x1080 --fill, and showcase opening time under LoadingCover); keep a change only if it measurably helps.
+loop log", rows prefixed "Perf:". Measure before and after every step, with what this container CAN measure
+truthfully (it draws in software: wall-clock time and fps here mean nothing for a phone): draw calls and triangles
+(tools/perf_probe --quality=low --size=2400x1080 --fill, whole farm and playing zoom), CPU time to build the
+showcase cold and warm (headless), the number of distinct materials and shaders a farm draws with, memory. Keep a
+change only if these improve and the look is the same. When phone_bench.yml has reports (the run summaries, or
+the log doc), they decide: read them first and fix what they show.
 
 ## Why we are slower than Hay Day or FarmVille (the diagnosis, 18 Nov)
 They draw pre-made pictures or prefabs from shared atlases in a few batched draws, with few, precompiled shaders.
