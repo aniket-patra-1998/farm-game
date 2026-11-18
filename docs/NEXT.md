@@ -479,6 +479,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   inner separation 6 (hud_buildings, away_card rows, hud_bubble) is off the grid (4 or 8 changes card heights:
   render the home sheets first). Fresh container: Godot 4.7.2 zip, `--import` ~1 min; look_shot of two panels
   ~3.5 min. Next: the 6s onto the grid, then the level-up confetti look stays reported (a look to pick).
+- Art run 18 (19 Nov 04:05 IST): main only, one panel style. 2ceb9ff: the last bare panel gaps on the grid (cards'
+  inner 6s and 8s in hud_buildings, hud_feed, away_card rows, a bubble's buttons, BookPanel.info's row, level-up
+  unlocks, the placing bar's 16) take UiTheme hud_gap / section_gap, scaled; ui_kit test 526 fails a bare gap over 4
+  (hud_goals.gd left to the goals loop). A fresh container's local main can be an old shallow tip ("unrelated
+  histories"): `git fetch --deepen=200` and `checkout -B main origin/main` (its tip is on origin). The pre-push hook
+  runs the full precheck (~7 min): give `git push` a 20 min timeout. Seen in the home sheet render: each tile's
+  "x1" sits over its tree picture's right edge (the count tile's corner); check against the picked look before
+  moving it. Next: that badge, then the lawn's dark blotches at noon (order of work 1, taste: art-polish).
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
