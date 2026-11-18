@@ -10,6 +10,17 @@ icon. Do not change the art completely: polish, refine, improve animations a bit
 make the whole game's art and design look unified and coherent, not parts pieced together. Look at the colour
 palette and gradients for improvement opportunities.
 
+## The broad goal (owner, 18 Nov)
+Today the game as a whole is not attractive or beautiful to look at. By the end it should be: a farm a player
+enjoys just looking at, and a game that reads as one designed product. Every change serves that, through:
+1. Better colour: the existing palette improved (richer, harmonious hues, gradients with depth and light), never
+   limited.
+2. One icon set: same outline, shading, highlight, sticker edge and visual size.
+3. One panel style: one spacing grid, corner radius, shadow and type scale; calmer, clearer menus.
+4. One motion language: smooth, consistent timing; nothing too fast or bouncy.
+5. No broken pieces in any screen surveyed.
+6. A record: each change logged with what it improved; before/after pictures kept, sent only when asked.
+
 ## What a run may change directly (refinement)
 - Colour: improve the existing palette, never shrink or limit it: richer, more harmonious hues that sit well
   together across UI, icons and 3D (data/ui_theme.json, model colours, shader tints); better gradients (depth,
