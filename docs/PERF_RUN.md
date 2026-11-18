@@ -48,14 +48,14 @@ on real phones:
   "benchmark", app "Farm Game (benchmark)", installs beside the test build), or from Settings > Testing >
   Measure loading (the report is copied to the clipboard).
 - .github/workflows/phone_bench.yml: Firebase Test Lab installs the benchmark APK from the "Latest phone build"
-  release on real phones (nightly at 02:10 IST and by hand; by default one low-end phone, a Galaxy A13, so the free 5 runs a day go further) and puts each phone's report in the run's summary.
+  release on real phones (nightly at 02:10 IST and by hand; by default one low-end phone, a Galaxy A05s (Snapdragon 680, Adreno 610), so the free 5 runs a day go further) and puts each phone's report in the run's summary.
   Setup once: a Firebase project (free Spark plan: 5 physical-device runs a day), a service account with the
   roles Firebase Test Lab Admin and Storage Object Viewer, its JSON key as the repo secret FIREBASE_SA_KEY, the project id
   as the repo variable FIREBASE_PROJECT; optionally FTL_DEVICES (each run prints the phones available).
 
 ## Phone-driven from 18 Nov 23:00 (owner: "real wins, not proposals")
 Real phones now work (Firebase project farm-game-20372; the Spark plan allows 5 physical-phone runs a day, so
-by default one phone a run: a Galaxy A13, low-end, Mali-G52). From now on:
+by default one phone a run: a Galaxy A05s, low-end, Adreno 610). From now on:
 - Every run starts from the newest phone report (`gh api repos/aniket-patra-1998/farm-game/actions/workflows/phone_bench.yml/runs`,
   then the run's artifact "phone-bench-reports"). Its biggest cost is the next thing worked on, whatever the step list says.
 - After merging a change that should move a phone number, start one phone run (`gh api -X POST
@@ -74,3 +74,10 @@ by default one phone a run: a Galaxy A13, low-end, Mali-G52). From now on:
      animals, fences and decorations; per-frame scripts thinned; anything off screen not processed.
   4. The quality the phone gets: Quality's existing levels picked for the device by a short measured test at first
      start (never a new look; the levels exist). Report it before building if it would change the default phone look.
+- Finding (18 Nov 23:10): Test Lab skips the Galaxy A13 (Exynos 850, Mali-G52, Android 14) and the Galaxy A10 as
+  "incompatible" while the Pixel 6 and the Galaxy A05s run. The A10 is 32-bit only (we ship arm64 only); the A13 is
+  arm64, so the likely cause is the Vulkan level the Mobile renderer's manifest requires, which would hide the game
+  on the Play Store from many low-end Mali phones. The workflow now prints each skipped phone's details: confirm the
+  cause, then fix it (the manifest's Vulkan feature not required, with the Compatibility renderer as the fallback on
+  phones without it) and prove it by running on the A13. This is a top item: a phone that cannot install the game
+  is worse than a slow one.
