@@ -22,7 +22,7 @@ static var _region := ""       # the region in use ("" not read yet)
 
 static func data() -> Dictionary:
 	if _data.is_empty():
-		_data = JSON.parse_string(FileAccess.get_file_as_string(DATA))
+		_data = DataFile.read(DATA)
 	return _data
 
 
