@@ -356,6 +356,12 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   farmer walk by (animal_rigs.json `farmer`: within 2.2 tiles, 1.4 s, not again for 9 s; FarmLife.see_farmer
   every 1.5 s while Game.player walks). The small animal life is now all built. Next: order of work 3 (icons'
   sticker edges, menus, motion).
+- Art run 10 (17:37 IST): main only, order of work 3 (icons). 1c0ad53: vector icons draw every shape. Godot's SVG
+  renderer sizes a bounding-box gradient by a curved path's end points, so domes and bowls whose ends sit level drew
+  nothing (the neighbours' bodies and hair, the seed and helpers' sack tops, the stall's awning tabs); every gradient
+  from tools/make_ui_icons.py is now userSpaceOnUse over the shape's real height (ui kit test 453). 2b14f30: the Fit
+  icon's file drew Zoom out's minus; it has the drawn icon's frame again. Check new icons in Godot itself (rsvg is
+  not enough): `Image.load_svg_from_string` in a -s script, compared to rsvg-convert. The loop's window ends 18:20.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
