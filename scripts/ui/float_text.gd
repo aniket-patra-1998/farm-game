@@ -10,6 +10,7 @@ const SHADOW := Color(0, 0, 0, 0.45)
 const SHADOW_DROP := 2        # px the shadow falls below the words
 const RISE := 10.0            # px floating words rise as they come
 const RISE_TIME := 0.25       # seconds they take to rise and fade in
+const FADE_TIME := 0.4        # seconds words take to fade away (a toast, a name bubble, a streak's count)
 
 
 ## Gives `label` the floating look at `design_px` (UiTheme.font) in `colour` (white by default).

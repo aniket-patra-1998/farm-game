@@ -321,7 +321,7 @@ static func name_bubble(control: Control, words: String) -> void:
 		-bubble.size.y - UiTheme.size("hud_gap"))
 	var fade := bubble.create_tween()
 	fade.tween_interval(BUBBLE_SECONDS)
-	fade.tween_property(bubble, "modulate:a", 0.0, 0.25)
+	fade.tween_property(bubble, "modulate:a", 0.0, FloatText.FADE_TIME)
 	fade.finished.connect(bubble.queue_free)
 
 

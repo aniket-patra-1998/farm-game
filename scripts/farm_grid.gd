@@ -969,7 +969,7 @@ func _show_combo(i: int) -> void:
 		_combo_tween.kill()
 	_combo_tween = _combo.create_tween()
 	_combo_tween.tween_property(_combo, "scale", Vector2.ONE, 0.16).set_ease(Tween.EASE_OUT)
-	_combo_tween.tween_property(_combo, "modulate:a", 0.0, 0.5).set_delay(0.6)
+	_combo_tween.tween_property(_combo, "modulate:a", 0.0, FloatText.FADE_TIME).set_delay(0.6)
 
 
 ## How far into a streak the farmer's job on plot `i` is (0 for the first): the same kind of job as the last,

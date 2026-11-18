@@ -14,6 +14,7 @@ signal place_stored_requested(index: int)
 const REST_FADE := 1.4     # seconds the interface takes to fade away over an idle farm..
 const WAKE_FADE := 0.2     # ..and to come back at a touch
 const AWAY_WAIT := 0.5     # seconds between looks for a panel to close before the away card shows
+const TOAST_SECONDS := 1.8 # seconds a message stays before it fades (FloatText.FADE_TIME)
 
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
@@ -312,8 +313,8 @@ func show_message(text: String) -> void:
 		_toast_tween.kill()
 	_toast_tween = create_tween()
 	_toast_tween.tween_property(_toast, "modulate:a", 1.0, FloatText.RISE_TIME)
-	_toast_tween.tween_interval(1.8)
-	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
+	_toast_tween.tween_interval(TOAST_SECONDS)
+	_toast_tween.tween_property(_toast, "modulate:a", 0.0, FloatText.FADE_TIME)
 
 
 # ---------------------------------------------------------------- rolling counters and reward targets
