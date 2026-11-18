@@ -10,6 +10,7 @@
     "bees": true,
     "collections": true,
     "ribbons": true,
+    "goals": true,
     "next_ready": false
   },
   "balance": {},

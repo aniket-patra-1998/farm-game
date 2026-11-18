@@ -167,6 +167,11 @@ func buy_mystery_box() -> String:
 	return _open_box()
 
 
+## A Mystery Box given, not bought (today's jobs' bonus): opens as a bought one does. "" when there is no box.
+func gift_box() -> String:
+	return "" if box_data.is_empty() else _open_box()
+
+
 func _open_box() -> String:
 	var won := _weighted_prize(box_data["prizes"])
 	last_rarity = rarity_of_prize(box_data["prizes"], won)

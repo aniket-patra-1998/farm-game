@@ -30,6 +30,7 @@ signal building_upgraded(uid: int, level: int)
 signal vip_level_reached(level: int)   # a new VIP level (VipSystem): the Barn has a new look
 signal farm_expanded(size: int)
 signal inventory_changed
+signal goals_changed             # a goal opened, moved on or was collected (GoalSystem)
 signal inbox_changed             # the neighbours' mail changed (arrived, claimed, answered)
 
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
@@ -157,6 +158,7 @@ var buildings: BuildingSystem
 var collecting: CollectSystem   # collecting what is ready (Game.collect)
 var shop: ShopSystem               # buying and selling what stands on the farm
 var helpers: HelperSystem          # using a farmhand, arborist or gardener
+var goals: GoalSystem              # story chains, today's jobs, farm projects (data/goals.json)
 var persistence: Persistence          # saving and loading (not in `systems`: it has no state of its own)
 
 var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/save_to/load_from
@@ -219,10 +221,11 @@ func _init() -> void:
 	collecting = CollectSystem.new(self)
 	shop = ShopSystem.new(self)
 	helpers = HelperSystem.new(self)
+	goals = GoalSystem.new(self)
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social, collecting, shop, helpers, vip, rust, rolls]
+		social, collecting, shop, helpers, vip, rust, rolls, goals]
 
 
 func _ready() -> void:

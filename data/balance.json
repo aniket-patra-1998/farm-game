@@ -959,5 +959,19 @@
    ],
    "note": "how long the repair takes at each level of rust"
   }
+ },
+ "goals": {
+  "daily_coins_per": {
+   "v": 10,
+   "note": "coins a collected daily job pays for each thing it asked for (Harvest 10 Strawberries pays 100)"
+  },
+  "daily_xp": {
+   "v": 5,
+   "note": "XP a collected daily job pays"
+  },
+  "daily_full_level": {
+   "v": 20,
+   "note": "the level at which today's jobs ask for the top of their range (data/goals.json daily.templates n); below it, a share"
+  }
  }
 }
