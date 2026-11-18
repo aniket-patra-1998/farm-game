@@ -25,6 +25,7 @@ static var _soft: StyleBoxFlat   # the highlight while pressed
 var id := ""
 var face: Dictionary = {}
 var picture: Texture2D
+var picture_top := 0.0   # where the picture was last drawn from the top (cards in a row hold it level)
 
 var _pic: RID        # the picture on its own canvas item (drawn under the words)
 var _icon: UiIcon    # the badge's icon
@@ -91,7 +92,13 @@ func _draw() -> void:
 	var total := pic_side + SPACE + name_high + SPACE + badge_high
 	total += (SPACE + stars_high) if not stars.is_empty() else 0.0
 	total += (SPACE + font.get_height(line_px)) if line != "" else 0.0
+	# Where the card has the room, it keeps a name's full NAME_LINES, so in a row of cards the pictures, lines and
+	# badges stand level whether a name takes one line or two (a one-line name sits in the middle of its room).
+	var name_room := clampf(font.get_height(name_px) * NAME_LINES, name_high, maxf(name_high,
+		size.y - 2.0 * pad - (total - name_high)))
+	total += name_room - name_high
 	var y := maxf(pad, (size.y - total) / 2.0)
+	picture_top = y
 	# The picture, on its own canvas item (the shine).
 	RenderingServer.canvas_item_clear(_pic)
 	var spot := Rect2((size.x - pic_side) / 2.0, y, pic_side, pic_side)
@@ -109,9 +116,9 @@ func _draw() -> void:
 		var wide := UiTheme.size("mastery_star") * STARS_WIDE
 		MasteryStars.paint(self, Rect2((size.x - wide) / 2.0, y, wide, stars_high), int(stars[0]), float(stars[1]))
 		y += stars_high + SPACE
-	draw_multiline_string(font, Vector2(pad, y + font.get_ascent(name_px)), name, HORIZONTAL_ALIGNMENT_CENTER, inside,
-		name_px, NAME_LINES, UiTheme.color("ink"))
-	y += name_high + SPACE
+	draw_multiline_string(font, Vector2(pad, y + (name_room - name_high) / 2.0 + font.get_ascent(name_px)), name,
+		HORIZONTAL_ALIGNMENT_CENTER, inside, name_px, NAME_LINES, UiTheme.color("ink"))
+	y += name_room + SPACE
 	if line != "":
 		line = fitted_line(font, line, size.x, line_px)   # (never cut mid-word: "200 coin", "53 coins ·")
 		var room := inside if font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, line_px).x <= inside else size.x

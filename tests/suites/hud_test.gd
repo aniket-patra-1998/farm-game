@@ -475,6 +475,20 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	_eq(CardFace.fitted_line(f, short, 1000.0, 12), short, "a line that fits is whole")
 	var room := f.get_string_size(short, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 1.0
 	_eq(CardFace.fitted_line(f, short + " · off-season", room, 12), short, "a wide one loses its last part")   # not-ui
+	# Cards in a row keep their pictures level whether a name takes one line or two (the album's rings stood lower
+	# under a one-line name).
+	var tops: Array[float] = []
+	for card_name: String in ["Pea Pod", "Wildflower Meadow Overflowing"]:   # not-ui
+		var card := CardFace.new()
+		card.size = Vector2(UiTheme.size("card_width"), UiTheme.size("card_icon") + UiTheme.size("card_words"))
+		add_child(card)
+		card.show_face("pea", {"name": card_name, "ring": [0.0, "0/5"]}, null)   # not-ui
+		await get_tree().process_frame
+		await get_tree().process_frame
+		tops.append(card.picture_top)
+		card.queue_free()
+	_check(tops[0] > 0.0, "a card's picture was drawn")
+	_eq(tops[0], tops[1], "a one-line and a two-line name leave the picture at one height")
 	main.queue_free()
 	await get_tree().process_frame
 

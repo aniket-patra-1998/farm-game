@@ -404,6 +404,12 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 		label.size_flags_horizontal = Control.SIZE_SHRINK_END
 		label.size_flags_vertical = Control.SIZE_SHRINK_END
 	else:
+		# (Off the rounded corner by a card's padding, so the count is never cut at the tile's edge.)
+		var room := StyleBoxEmpty.new()
+		room.set_content_margin_all(UiTheme.size("card_pad"))
+		room.content_margin_top = 0
+		room.content_margin_bottom = UiTheme.size("card_pad") * 0.5
+		label.add_theme_stylebox_override("normal", room)
 		label.add_theme_color_override("font_color", UiTheme.color("ink"))
 		label.add_theme_color_override("font_outline_color", UiTheme.color(face))
 		label.add_theme_constant_override("outline_size", int(UiTheme.size("count_outline")))
