@@ -250,6 +250,7 @@ func _rebuild(o: Dictionary) -> void:
 	_views[uid] = {"node": node, "key": _key(o), "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
 		"file": uses_file(o), "states": Game.is_building_item(str(o["id"]))}
 	_views[uid]["fill"] = fill_of(uid)
+	_ground(node, o, _views[uid]["box"])
 	_dress_water(uid, o)
 	if Game.catalog.get_def(str(o["id"])) is TreeDef:
 		_views[uid]["crown"] = _crown_of(_views[uid]["box"])
@@ -1020,6 +1021,16 @@ func _dress(holder: Node3D, node: Node3D, o: Dictionary, fp: Vector2i) -> void:
 	holder.tree_exiting.connect(func() -> void:
 		if is_instance_valid(layer):
 			layer.remove(dressing_id(uid), serial))
+
+
+## A standing decoration's contact shade on the grass (GroundShade), as animals have; `box` is round it in this
+## node's space. Joined pieces (fences, paths), flat and large things get none.
+func _ground(holder: Node3D, o: Dictionary, box: AABB) -> void:
+	if Game.kind_of(o) != "decor" or Game.links.group_of(str(o["id"])) != "":
+		return
+	var local := holder.transform.affine_inverse() * box
+	if GroundShade.fits(local):
+		holder.add_child(GroundShade.under(local))
 
 
 ## The layer that draws things in batches (made here when asked before this was in the tree: tests).

@@ -2261,3 +2261,45 @@ func test_371_a_thing_changed_in_place_is_looked_at_alone() -> void:
 	Game.object_changed.disconnect(count_one)
 	main.free()
 	Game.reset_game()
+
+
+## A standing decoration is grounded as an animal is: a contact shade in the farm's one batch of them, under it,
+## gone while it is in hand, its slot given back when it goes; joined pieces (fences) and flat things get none.
+func test_447_standing_decorations_have_a_contact_shade_as_animals_do() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	for i in Game.plots.size():
+		Game.plots[i] = {"state": "grass"}
+	var objects := Objects3D.new()
+	add_child(objects)
+	var gnome := {"uid": Game.next_uid, "id": "garden_gnome", "row": 3, "col": 3, "t": Game.now()}
+	Game.next_uid += 1
+	Game.add_object(gnome)
+	var fence := {"uid": Game.next_uid, "id": "wooden_fence", "row": 6, "col": 6, "t": Game.now()}
+	Game.next_uid += 1
+	Game.add_object(fence)
+	for k in 40:
+		objects.sync()
+	await get_tree().process_frame
+	var shades := (objects.call("_node", int(gnome["uid"])) as Node3D).find_children("*", "GroundShade", true, false)
+	_eq(shades.size(), 1, "a gnome has one contact shade")
+	var shade := shades[0] as GroundShade
+	var at := shade._shades.where_of(shade._slot)
+	_check(Vector2(at.x - 3.5, at.z - 3.5).length() < 0.6, "under it (%s)" % str(at))
+	_check(shade._shades.strength_of(shade._slot) > 0.5, "and it shows")
+	_eq((objects.call("_node", int(fence["uid"])) as Node3D).find_children("*", "GroundShade", true, false).size(), 0,
+		"a fence, joined to its neighbours, has none")
+	_check(not GroundShade.fits(AABB(Vector3.ZERO, Vector3(1, 0.1, 1))), "nor has a flat thing")
+	_check(not GroundShade.fits(AABB(Vector3.ZERO, Vector3(3, 2, 3))), "nor a large one (its tile is shaded)")
+	objects.call("_show", int(gnome["uid"]), false)
+	_eq(shade._shades.strength_of(shade._slot), 0.0, "in hand, its shade has gone")
+	var slot := shade._slot
+	var batch := shade._shades
+	Game.remove_object(Game.object_by_uid(int(gnome["uid"])))
+	objects.queue_sync()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(batch.take() == slot, "sold, it gives its slot back")
+	objects.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()
