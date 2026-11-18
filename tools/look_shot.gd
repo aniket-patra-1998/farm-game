@@ -5,6 +5,7 @@ extends Node
 ## inbox_panel) into the folder given
 ## by --out=<dir> (default ci_shots/look).
 ## --hour=<h> shows another local hour than noon (6 dawn, 18.5 dusk, 22 night).
+## --weather=<state> holds the weather (clear, rain, storm...) so two hours differ only by the day's light.
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
 ## tools/look_compare.py joins two such folders side by side.
@@ -18,11 +19,14 @@ func _ready() -> void:
 	var out := "res://ci_shots/look"
 	var level := ""
 	var hour := NOON
+	var weather := ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.substr(6)
 		elif a.begins_with("--hour="):   # the local hour to show (default noon), e.g. 6 dawn, 18.5 dusk, 22 night
 			hour = float(a.substr(7))
+		elif a.begins_with("--weather="):   # hold a weather state, e.g. clear (default: the real weather)
+			weather = a.substr(10)
 		elif a.begins_with("--quality="):   # low, mid or high (default: this computer's choice)
 			level = a.substr(10)
 	var was_level := Quality.level()
@@ -39,6 +43,7 @@ func _ready() -> void:
 	# (after the showcase is built: building it starts a fresh farm, which clears the clock offset)
 	var local_now := int(Time.get_unix_time_from_system()) + DayCycle.device_bias_minutes() * 60
 	Game.debug_time_offset = posmod(int(hour * 3600) - local_now, 86400)
+	Game.weather_override = weather
 	await Objects3D.until_settled(get_tree())
 	for k in 12:
 		await RenderingServer.frame_post_draw
