@@ -1,0 +1,60 @@
+name: Nightly random play
+
+# The long run of random play (tests/suites/invariants_test.gd): hundreds of seeds, thousands of steps each,
+# every system and the clock jumping, the farm's invariants checked after every step. The push run (Tests) keeps
+# it small; this one looks for the rare cases. A failure names the seed and step to replay.
+on:
+  schedule:
+    - cron: '17 21 * * *'   # 02:47 IST, outside the day's pushes
+  workflow_dispatch:
+
+permissions:
+  contents: read   # it only reads the repository
+
+jobs:
+  random-play:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GODOT_VERSION: 4.7.2
+      SEEDS: 300
+      STEPS: 2000
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p godot-bin
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          for attempt in 1 2 3 4 5; do
+            if curl -fsSL --retry 3 --retry-delay 5 -o godot.zip "$url" && unzip -tq godot.zip; then
+              break
+            fi
+            echo "Download attempt $attempt failed; retrying in 15 s"
+            rm -f godot.zip
+            sleep 15
+          done
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot
+          chmod +x godot-bin/godot
+
+      - name: Import project
+        run: ./godot-bin/godot --headless --path . --import > import.log 2>&1 || true
+
+      - name: Random play, long
+        run: |
+          set +e
+          ./godot-bin/godot --headless --path . res://tests/run_tests.tscn -- --only=invariants \
+            --fuzz-seeds=$SEEDS --fuzz-steps=$STEPS 2>&1 | tee fuzz.log
+          set -e
+          if grep -E "Parse Error|Compile Error|Failed to load script" fuzz.log; then echo "A script didn't load"; exit 1; fi
+          grep -E "checks, 0 failed" fuzz.log || { echo "Random play found a broken farm"; exit 1; }
+          python3 tools/check_godot_log.py fuzz.log

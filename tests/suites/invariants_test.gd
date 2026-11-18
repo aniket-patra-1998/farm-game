@@ -1,16 +1,35 @@
 extends TestSuite
-## Random play: a seeded run of buying, placing, moving, selling, collecting, planting, harvesting, expanding and
-## letting time pass, with the farm's invariants checked after every step. It finds the cases nobody thought to
-## write a test for; a failure names the seed and the step so it can be replayed.
+## Random play: a seeded run of buying, placing, moving, selling, collecting, planting, harvesting, expanding,
+## crafting, feeding, storing, helpers, VIP, rust repairs, mystery prizes and the clock jumping (an hour, a day, a
+## month on, a day back), with the farm's invariants checked after every step. It finds the cases nobody thought
+## to write a test for; a failure names the seed and the step so it can be replayed. The push run stays small; the
+## nightly workflow (.github/workflows/fuzz.yml) runs it long: `-- --fuzz-seeds=300 --fuzz-steps=2000`.
 
 const SEEDS := [1, 7, 42, 2024, 99991]
 const STEPS := 220
 const ACTIONS := ["buy", "buy", "buy", "move", "move", "sell", "collect", "collect", "plow", "plant", "harvest",
-	"expand", "wait", "wait"]
+	"expand", "wait", "wait", "craft", "feed", "store", "unstore", "helper", "vip", "repair", "mystery", "clock"]
+const CLOCK_JUMPS := [3600, 86400, 30 * 86400, -86400]   # the device clock moved on an hour, a day, a month; back a day
+const SIGNED := ["from", "to"]   # may be negative: an inbox item's sender and receiver (InboxItem.ME, .FARM)
+
+
+## The seeds and steps to run: the push run's, or the nightly run's from the command line.
+func _plan() -> Vector2i:
+	var plan := Vector2i(SEEDS.size(), STEPS)
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--fuzz-seeds="):
+			plan.x = int(arg.trim_prefix("--fuzz-seeds="))
+		elif arg.begins_with("--fuzz-steps="):
+			plan.y = int(arg.trim_prefix("--fuzz-steps="))
+	return plan
 
 
 func test_194_random_play_keeps_the_farm_consistent() -> void:
-	for seed_value: int in SEEDS:
+	var plan := _plan()
+	var seeds: Array = SEEDS.duplicate()
+	for k in range(seeds.size(), plan.x):
+		seeds.append(k * 7919 + 13)
+	for seed_value: int in seeds.slice(0, plan.x):
 		var g := _farm(true)
 		g.rng.seed = seed_value
 		var dice := RandomNumberGenerator.new()
@@ -23,8 +42,9 @@ func test_194_random_play_keeps_the_farm_consistent() -> void:
 		for id: String in g.crops:
 			crops.append(id)
 		var bad := ""
-		for step in STEPS:
+		for step in plan.y:
 			g.coins = maxi(g.coins, 2_000_000)
+			g.gems = maxi(g.gems, 500)
 			g.xp = maxi(g.xp, g.xp_for_level(40))
 			var action: String = ACTIONS[dice.randi_range(0, ACTIONS.size() - 1)]
 			_act(g, dice, action, placeable, crops)
@@ -65,7 +85,57 @@ func _act(g: GameState, dice: RandomNumberGenerator, action: String, placeable: 
 			g.land.expand(false)
 		"wait":
 			g.debug_time_offset += dice.randi_range(60, 3 * 86400)
+		"clock":
+			g.debug_time_offset += int(CLOCK_JUMPS[dice.randi_range(0, CLOCK_JUMPS.size() - 1)])
+		_:
+			_act_more(g, dice, action, any, tile)
 	g.objects_updated()
+
+
+## The systems beyond the field: crafting, feeding, storing, helpers, VIP, rust and mystery prizes.
+func _act_more(g: GameState, dice: RandomNumberGenerator, action: String, any: Dictionary, tile: Vector2i) -> void:
+	var uid := int(any.get("uid", -1))
+	match action:
+		"craft":
+			if not any.is_empty():
+				var recipes := g.crafting.recipes_of(str(any["id"]))
+				if not recipes.is_empty():
+					g.crafting.buy_missing_and_craft(uid, recipes[dice.randi_range(0, recipes.size() - 1)].id)
+				g.crafting.finish_crafts(uid)
+				g.crafting.add_star(uid, dice.randf() < 0.5)
+		"feed":
+			if not any.is_empty():
+				g.nurture.feed(uid)
+				g.nurture.help_young(uid)
+				g.raising.pour(uid)
+		"store":
+			if not any.is_empty():
+				g.storage.store_object(uid)
+		"unstore":
+			if not g.storage.stored.is_empty():
+				g.storage.place_from_storage(dice.randi_range(0, g.storage.stored.size() - 1), tile.x, tile.y)
+		"helper":
+			g.farmhands = maxi(g.farmhands, 1)
+			g.arborists = maxi(g.arborists, 1)
+			g.gardeners = maxi(g.gardeners, 1)
+			var kinds: Array = GameState.HELPERS.keys()
+			g.helpers.use_helper(kinds[dice.randi_range(0, kinds.size() - 1)])
+		"vip":
+			if dice.randf() < 0.5:
+				g.vip.buy_week()
+			else:
+				g.vip.buy_points(dice.randi_range(1, 20))
+		"repair":
+			if not any.is_empty():
+				g.rust.repair(str(any["id"]))
+		"mystery":
+			if dice.randf() < 0.5:
+				g.mystery.buy_mystery_box()
+			else:
+				var colours: Array = g.mystery.egg_data["colours"].keys()
+				var colour: String = colours[dice.randi_range(0, colours.size() - 1)]
+				g.mystery.mystery_eggs[colour] = int(g.mystery.mystery_eggs.get(colour, 0)) + 1
+				g.mystery.open_mystery_egg(colour)
 
 
 ## What is wrong with the farm, or "" when nothing is.
@@ -102,6 +172,26 @@ func _broken(g: GameState) -> String:
 	for uid: int in seen:
 		if g.next_uid <= uid:
 			return "next_uid %d would repeat uid %d" % [g.next_uid, uid]
+	for system in g.systems:   # no system holds a negative count (bushels, goods, feed, eggs, points, fuel...)
+		var saved := {}
+		system.save_to(saved)
+		var negative := _negative(saved, system.get_script().get_global_name())
+		if negative != "":
+			return negative
+	return ""
+
+
+## The first negative number in a system's saved fields, or "". Times, clock offsets and SIGNED may be anything.
+func _negative(value: Variant, path: String) -> String:
+	if value is Dictionary or value is Array:
+		for k: Variant in (value.keys() if value is Dictionary else range(value.size())):
+			if str(k).ends_with("_at") or str(k).contains("until") or str(k).contains("offset") or str(k) in SIGNED:
+				continue
+			var found := _negative(value[k], "%s.%s" % [path, str(k)])
+			if found != "":
+				return found
+	elif (value is int or value is float) and value < 0:
+		return "%s is negative (%s)" % [path, str(value)]
 	return ""
 
 
