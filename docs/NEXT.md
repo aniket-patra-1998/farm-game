@@ -200,3 +200,11 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `cycle_seconds`, `YoungDef.needs`, `blooms.wither_after`); hud test 440 reads the texts and their info tips.
   Left: a collection set's "3 common, 1 uncommon and 1 rare" (a structural rule of every set). Next: the
   whole-farm look with the weather held clear (run 14's next step), or the economy items.
+- Run 16 (whole-farm look measured; motion audit): `look_shot --weather=<state>` holds the weather. Held clear,
+  the day cycle is right (HSV value dawn 146, noon 207, dusk 117, night 103: run 14's bright night was its
+  weather); dawn and dusk are the most saturated (212 and 220 of 255, blue nearly gone), noon 185: a gentler
+  grade is reported for the owner to pick (an options sheet with look_shot at 6, 12.5, 18.5, 22). Motion audit:
+  every smoothing and glide is frame-rate independent (exp(-k*delta)), the camera drops a fling from a finger
+  that stopped, animals walk a planted-foot gait at their stride, UI motion lives in `UiFx`. Open, reported:
+  the level-up confetti is 90 hard-edged rectangles in deep colours (a softer shape is a look to pick). Next
+  audit: feedback and sound.
