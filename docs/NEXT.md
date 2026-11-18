@@ -596,6 +596,24 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Next run: read the nightly's report first (if it ran). If the A05s again gives no BENCH line, the log lines now
   printed say whether the app started, crashed, or was killed.
 
+- Run 5 (19 Nov 00:50 - 01:40 IST): still no phone report (no phone_bench run since run 5 of 18 Nov; the 02:10 nightly
+  comes after this run). Worked on win 1 (first-draw shader stalls), which only a phone measures. Found: Godot 4.7's
+  export shader baker (`shader_baker/enabled`) is skipped without a word in a headless export (tried here: an
+  --export-pack with it on stored nothing new), because it needs the editor running the Mobile renderer on Vulkan
+  ("The editor is currently using a different renderer..."). Merged 5e5880f (perf/shader-baker): the baker on in all
+  three Android presets; apk.yml installs mesa-vulkan-drivers (lavapipe) and exports the debug and benchmark APKs
+  under xvfb with `--rendering-driver vulkan --rendering-method mobile`, falling back to the old headless export if
+  that fails (so the phone build never breaks); it also uploads farm-game-benchmark-plain.apk (headless, unbaked)
+  and the step summary says how many files only the baked APK has. phone_bench.yml has an input `apk` (default
+  farm-game-benchmark.apk, the baked one; farm-game-benchmark-plain.apk for the comparison).
+- Next run: 1) open the newest apk.yml run's "Export the debug APK" step: did the baked export run (Vulkan found,
+  "files only in the baked one" > 0)? If it fell back, its log lines say why (no Vulkan device, renderer mismatch,
+  timeout 20 min). 2) Read the nightly's report (if quota allowed). 3) When quota allows, two phone runs an hour
+  apart: `-f inputs[apk]=farm-game-benchmark-plain.apk` and then the default; compare long_frames and longest_ms
+  per phase (and built_ms: baked shaders may also shorten loading). Keep the baker only if the phone says it helps
+  (and the look is the same: it compiles the same shaders). If baking takes too long in CI, bake only the benchmark
+  and the debug APK from one export's shader cache (the second export reuses the editor's cache).
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
