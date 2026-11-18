@@ -366,6 +366,20 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   precheck's godot log had a script error in ModelKit.canopy (model_kit.gd:702, null mesh arrays), likely a race in
   the threaded model loading (ffe2a86); passed on retry. The loop's window ends 18:20.
 
+## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
+- Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
+  with data/events.json (verb -> ribbon counter rules, `kind` filter by the subject's catalog kind) replaces every
+  `ribbons.bump`; `Game.did(verb, subject, n)` is the stream goals listen to; `plant` and every `buy` are events now.
+  tests/suites/events_test.gd (454-457). Full precheck passed on the commit rebased on 318dd09.
+- Why not merged: main's FIRST_HOUR_RUN.md moved the window to 03:05-15:05 IST 19 Nov (after the perf build), but
+  the scheduled task still runs 18:25-06:40; asked the owner in the log to move it. Next run in the window:
+  fetch, rebase goals/1-record on main (the perf build touches world3d, not these systems; conflicts unlikely),
+  full precheck, fast-forward push; then a bot plays a new farm from minute zero (tools/balance_sim.tscn
+  --days=1), then step 2 (GoalSystem + data/goals.json) on goals/2-goal-system, listening to `Game.did`.
+- Step 2 notes: goal verbs (PLAYER_EXPERIENCE Part 1) map to events.json verbs; still missing as events: place,
+  move_in, level, own (state verbs read the state, not the stream). `sell` today is selling a placed thing;
+  selling crafted goods is `sell_good` (a goal "sell" may want both: decide in step 2's data).
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
