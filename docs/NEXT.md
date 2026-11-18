@@ -397,6 +397,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   "Parameter m is null") still fails about one run in three; the retry passes. Main moves every few minutes now:
   budget three rebase+precheck rounds (~4 min each). Next: the ribbons card with a bar still stands higher than
   its row (less spare room); the Bakery's ingredient badges at the scroll's bottom; then motion timing.
+- Art run 13 (18 Nov 23:06 IST): main only, type roles. f47630f: every BookPanel.text/info size is a UiTheme role
+  (73 bare 16/17/18/20 became BODY or HEADING, the step each already snapped to: nothing moves); the crafting
+  strip's soft mastery line is BODY like the Goods strip's note. ui_kit test 491 fails a bare number. Found and
+  reported: at 2400x1080 (a phone's shape) BODY 15 and HEADING 18 draw the same px (both clamp to MIN_FONT 14
+  after scale x text_share), so a panel's name, body and soft note are one size: the type scale has no hierarchy
+  on a phone. Measured: the mastery line's width is the same at 15 and 18. A fix (a floor per role, or a smaller
+  text_share step for BODY) changes every panel on a phone: the owner picks. Fresh container: Godot 4.7.2 from
+  CI's zip, `--import` ~3 min; look_shot of one panel ~6-8 min. Next: the ribbon card with a bar; motion timing.
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
