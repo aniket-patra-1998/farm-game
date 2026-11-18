@@ -75,6 +75,12 @@ static func lively() -> Array:
 	return (_data.get("rhythm", {}) as Dictionary).get("lively", [])
 
 
+## A number from the data's `weather` (how animals keep out of the rain), `fallback` when it has none.
+static func weather(key: String, fallback: float) -> float:
+	_load()
+	return float((_data.get("weather", {}) as Dictionary).get(key, fallback))
+
+
 ## This animal drawn at `size` times its size (a rig of its own: the shared one, from `of`, is never changed).
 static func scaled(it: Dictionary, size: float) -> AnimalRig:
 	var r := _build(it)

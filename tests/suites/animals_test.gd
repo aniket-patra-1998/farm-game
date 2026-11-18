@@ -637,3 +637,46 @@ func test_450_animals_are_busy_in_the_morning_and_rest_in_the_afternoon_heat() -
 		% [walks[8.0], walks[14.0]])
 	AnimalBehaviour.hour = was_hour
 	AnimalBehaviour.night = was_night
+
+
+## Animals in the weather (looks only): in the rain one standing about turns its tail to it and stands about
+## more; in a storm it keeps close to home (animal_rigs.json weather).
+func test_451_animals_turn_from_the_rain_and_keep_close_in_a_storm() -> void:
+	var cow := AnimalRig.of(_farm().item_data("cow"))
+	var was := [AnimalBehaviour.hour, AnimalBehaviour.night, AnimalBehaviour.rain]
+	AnimalBehaviour.night = false
+	AnimalBehaviour.hour = 12.0
+	var away := signf(AnimalRig.weather("away", -1.0))
+	var counts := {}
+	for r: float in [0.0, 0.7, 1.0]:
+		AnimalBehaviour.rain = r
+		var standing := 0
+		var turned := 0
+		var walks := 0
+		var farthest := 0.0
+		for s in 40:
+			var mind := AnimalBehaviour.new(cow, 2000 + s, Vector2(14, 7))
+			for k in 12:
+				mind.call("_choose_next")
+				if mind.state == AnimalBehaviour.State.WALK or mind.state == AnimalBehaviour.State.FROLIC:
+					walks += 1
+					farthest = maxf(farthest, mind.call("_norm", mind.get("_target")))
+				else:
+					standing += 1
+					if mind.facing == away:
+						turned += 1
+		counts[r] = {"standing": standing, "turned": turned, "walks": walks, "farthest": farthest}
+	_check(counts[0.0]["turned"] < counts[0.0]["standing"], "in fair weather it faces either way")
+	_eq(counts[0.7]["turned"], counts[0.7]["standing"], "in the rain every one standing about has its tail to it")
+	_check(counts[0.7]["walks"] < counts[0.0]["walks"], "and it walks about less (%d against %d)"
+		% [counts[0.7]["walks"], counts[0.0]["walks"]])
+	_check(counts[0.0]["farthest"] > 0.8, "in fair weather it wanders its whole range (%.2f)" % counts[0.0]["farthest"])
+	_check(counts[1.0]["farthest"] <= AnimalRig.weather("huddle", 1.0) + 0.001,
+		"in a storm it keeps close to home (%.2f of its range)" % counts[1.0]["farthest"])
+	var mind := AnimalBehaviour.new(cow, 7, Vector2(14, 7))
+	mind.facing = -away
+	mind.poke()
+	_eq(mind.facing, -away, "one tapped in the rain still looks round at you")
+	AnimalBehaviour.hour = was[0]
+	AnimalBehaviour.night = was[1]
+	AnimalBehaviour.rain = was[2]

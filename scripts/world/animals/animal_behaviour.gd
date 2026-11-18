@@ -59,6 +59,7 @@ const DURATIONS := {
 
 ## Night on the farm (Main sets it from the day's light; never with "always daytime"): the animals sleep.
 static var night := false
+static var rain := 0.0             ## how hard it rains, 0..1 (main.gd, the weather): see AnimalRig.weather
 static var hour := 12.0           ## the farm's hour of the day (main.gd): its rhythm, AnimalRig.busy_at
 
 
@@ -134,8 +135,8 @@ func update(delta: float) -> void:
 ## Tapped: it stops what it's doing, gives a little start (a hop, or a flap for a bird) and looks round at
 ## you for a moment before carrying on.
 func poke() -> void:
-	_enter(State.LOOK, POKE_LOOK)
 	noticed = POKE_LOOK
+	_enter(State.LOOK, POKE_LOOK)
 	_look_to = 1.0
 	_target = offset
 	_jump = JUMP_TIME
@@ -170,6 +171,8 @@ func _choose_next() -> void:
 	# Its day: lively in the cool of the morning, resting in the afternoon heat (AnimalRig.busy_at).
 	var weights := rig.behaviour()
 	var busy := AnimalRig.busy_at(hour)
+	if _sheltering():
+		busy *= AnimalRig.weather("lively", 1.0)   # (in the rain it stands about more)
 	var lively := AnimalRig.lively()
 	var total := 0.0
 	for k in weights:
@@ -203,14 +206,23 @@ func _enter(s: State, seconds := -1.0) -> void:
 	state = s
 	var d: Vector2 = DURATIONS[s]
 	_left = seconds if seconds >= 0.0 else _rng.randf_range(d.x, d.y)
+	# In the rain an animal standing about turns its tail to it (not one looking round at whoever tapped it).
+	if _sheltering() and s != State.WALK and s != State.FROLIC and noticed <= 0.0:
+		facing = signf(AnimalRig.weather("away", -1.0))
+
+
+## It rains hard enough for animals to mind (AnimalRig.weather `turn_from`).
+func _sheltering() -> bool:
+	return rain >= AnimalRig.weather("turn_from", 0.3)
 
 
 func _start_walk(frolic := false) -> void:
-	# A spot inside the wander ellipse, far enough away to be worth the walk.
+	# A spot inside the wander ellipse, far enough away to be worth the walk; in a storm, close to home.
+	var huddle := AnimalRig.weather("huddle", 1.0) if rain >= AnimalRig.weather("huddle_from", 2.0) else 1.0
 	for attempt in 6:
 		var a := _rng.randf() * TAU
 		var r := sqrt(_rng.randf())
-		var to := Vector2(cos(a) * range_px.x, sin(a) * range_px.y) * r
+		var to := Vector2(cos(a) * range_px.x, sin(a) * range_px.y) * r * huddle
 		if _norm(to - offset) >= MIN_WALK or attempt == 5:
 			_target = to
 			break

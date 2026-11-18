@@ -308,6 +308,7 @@ func _process(_delta: float) -> void:
 			_was_night = night
 			AnimalBehaviour.night = night
 			AnimalBehaviour.hour = hour
+			AnimalBehaviour.rain = float(w["rain"])
 	else:
 		light.color = l
 	sky.weather = w
