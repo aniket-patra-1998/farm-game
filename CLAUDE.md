@@ -17,7 +17,7 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   per area. `tools/`: precheck, generators, probes (perf, contact sheet, state sheet).
 - Docs: V1.md (the first release's line), AUDIT.md (the plan), ASSETS.md and ART_BIBLE.md (art), UI.md,
   WEATHER.md, SEARCH.md, PLAYER_EXPERIENCE.md, VIP.md (VIP and the Barn), RUST.md (vehicle rust), WATER.md
-  (water and what lives on it), NEXT.md (handoff between sessions), POLISH.md (the polish loop: vision and guardrails).
+  (water and what lives on it), NEXT.md (handoff between sessions), POLISH.md (the polish loop: vision and guardrails), ART_POLISH.md (its art and UX run).
 
 ## Rules
 - Before every push `tools/precheck.sh <godot>` passes (the pre-push hook runs it: set it up once per clone
