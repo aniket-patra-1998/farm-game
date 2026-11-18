@@ -4,6 +4,7 @@ extends Node
 ## crafting_panel, seeds_panel, collections_panel, ribbons_panel,
 ## inbox_panel) into the folder given
 ## by --out=<dir> (default ci_shots/look).
+## --hour=<h> shows another local hour than noon (6 dawn, 18.5 dusk, 22 night).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
 ## tools/look_compare.py joins two such folders side by side.
@@ -16,9 +17,12 @@ const NOON := 12.5
 func _ready() -> void:
 	var out := "res://ci_shots/look"
 	var level := ""
+	var hour := NOON
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.substr(6)
+		elif a.begins_with("--hour="):   # the local hour to show (default noon), e.g. 6 dawn, 18.5 dusk, 22 night
+			hour = float(a.substr(7))
 		elif a.begins_with("--quality="):   # low, mid or high (default: this computer's choice)
 			level = a.substr(10)
 	var was_level := Quality.level()
@@ -28,11 +32,13 @@ func _ready() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	ProjectSettings.set_setting(Farm3D.SETTING, true)
-	Game.debug_time_offset = (int(NOON * 3600) - int(Time.get_unix_time_from_system()) % 86400 + 86400) % 86400
 	var main := MAIN_SCENE.instantiate()
 	add_child(main)
 	await get_tree().process_frame
 	Game.open_showcase()
+	# (after the showcase is built: building it starts a fresh farm, which clears the clock offset)
+	var local_now := int(Time.get_unix_time_from_system()) + DayCycle.device_bias_minutes() * 60
+	Game.debug_time_offset = posmod(int(hour * 3600) - local_now, 86400)
 	await Objects3D.until_settled(get_tree())
 	for k in 12:
 		await RenderingServer.frame_post_draw
