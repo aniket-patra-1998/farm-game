@@ -228,6 +228,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
      NIGHT_SATURATION 0.9, LOW_SUN_SATURATION 0.9, LOW_SUN_GOLD #ffc280 mix 0.75, LOW_SUN_ENERGY +0.25,
      SHADE_COOL (0.66,0.74,0.9) mixed 0.18 x (1 + low sun) into the ambient. Then make_art_versions.py.
   Next: contact shadows under decorations (objective, main), then trees and building outlines (order of work 2).
+- Art run 2 (11:15 IST), on art-polish (7756483, rebased on main): the day grade is data (data/grade.json, Grade
+  via DataFile.read; main's screen grade times the 3D frame's). Noon saturation 1.45x -> 1.19x, contrast 1.2x ->
+  1.11x; low sun warmer (warm_mids 0.04, warm_highlights 0.12), cool shadows (shadow_cool 0.05). Run 1's grade
+  part is superseded by this; its calmer lawn (values above) still goes on top, tuned with the grade (the two
+  together may be too dull at noon: render and compare). Decor ground shade 0.2 -> 0.42 tried: no visible gain.
+  Open: look_shot sometimes shoots decorations half-built (gnome, flower bed, flamingo): trace before the sheet.
+  Then one before/after sheet (main vs art-polish, noon and dusk) into the log under "Art: waiting for your look".
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
