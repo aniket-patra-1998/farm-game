@@ -316,6 +316,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `fit_name` on set and load (test 525). A tapped thing's bubble at a screen corner went off the screen; it now
   keeps inside `HudBubble.EDGE` and shows below a thing at the top (test 353). Next audit: edge cases and stress,
   round three (or the next phone UI gaps: FloatText words at the edges are the art lane's float_words item).
+- Run 30 (04:21-05:10 IST 19 Nov, edge cases and stress, round three: a full Barn and inbox, batch actions):
+  Accept all with the Barn full said only "2 claimed", so things left in the inbox looked stuck; it now says what
+  still waits and why (`SocialSystem.help_all_words`: room in the Barn, tomorrow's helps), and with the
+  neighbours switched off still takes the farm's own things (social test 527). A Farmhand that collected and fed
+  sent two messages, the second replacing the first on screen (the coins went unsaid); now one (feeds test 168).
+  Checked clean: the inbox limit never drops the farm's own things (they bypass it), answers due on a full inbox
+  wait, settle's mail is skipped not doubled. Note: test number 526 is used twice (world3d and ui_kit), harmless.
+  Next audit: cheating and save safety, round three.
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
   387, 372, 374) in the container. Redo, then push when it passes (precheck in the background, renders not
