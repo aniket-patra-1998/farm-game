@@ -579,3 +579,22 @@ func test_392_a_building_that_can_still_grow_shows_what_it_lacks_as_a_frame() ->
 	coop["broken"] = true
 	_check(not objects.state_of(coop)[BuildingModel.PLAN], "not a broken one")
 	objects.queue_free()
+
+
+func test_453_files_load_side_by_side_on_worker_threads() -> void:
+	AssetRegistry.forget()
+	var paths: Array[String] = []
+	for id in ["cow", "chicken", "apple_tree"]:
+		paths.append(AssetRegistry.file_of(AssetRegistry.entry(id), {}))
+	AssetRegistry.preload_files(paths)
+	for p in paths:
+		_check(ResourceLoader.load_threaded_get_status(p) != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE,
+			"%s is being loaded on the loader's threads" % p)
+	AssetRegistry.preload_files(paths)   # (asked again: nothing new)
+	for id in ["cow", "chicken", "apple_tree"]:
+		var node := AssetRegistry.instance(id)
+		_check(node != null, "%s is drawn from its file once it has loaded" % id)
+		if node != null:
+			node.free()
+	AssetRegistry.preload_files(["", "res://art/models/none_such.glb"])   # (missing: skipped, nothing said)
+	AssetRegistry.forget()

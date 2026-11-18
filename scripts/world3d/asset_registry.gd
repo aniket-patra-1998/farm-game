@@ -33,6 +33,7 @@ static var _scenes := {}     # path -> PackedScene, its materials already made m
 static var _masters := {}    # colour and texture -> the master material instance for them
 static var _said := {}       # paths already reported missing or broken
 static var _extra := {}      # entries added at run time (tests)
+static var _loading := {}    # paths asked of the loader's threads (preload_files), not yet taken
 
 
 ## Item `id`'s entry ({"model": path, "budget": kind...}), or {} when it is drawn by its stand-in.
@@ -146,6 +147,9 @@ static func add(id: String, e: Dictionary) -> void:
 
 ## Lets loaded files go (tests, and a file changed while running).
 static func forget() -> void:
+	for path: String in _loading:
+		ResourceLoader.load_threaded_get(path)   # (taken, so the loader lets it go)
+	_loading.clear()
 	_scenes.clear()
 	_said.clear()
 
@@ -161,6 +165,17 @@ static func _load() -> void:
 		push_error(DATA + " is missing or not valid JSON")
 
 
+## Starts loading the files at `paths` on the engine's worker threads, all at once, so a farm opening with many
+## kinds reads and unpacks them side by side instead of one after another as each is first built (`_scene` then
+## takes each as it is done, waiting only if it is not yet). Paths already loaded, asked or missing are skipped.
+static func preload_files(paths: Array) -> void:
+	for path: String in paths:
+		if path == "" or _scenes.has(path) or _loading.has(path) or not ResourceLoader.exists(path):
+			continue
+		if ResourceLoader.load_threaded_request(path, "PackedScene", true) == OK:   # not-ui (a type name)
+			_loading[path] = true
+
+
 ## The file at `path`, loaded once; null (said once) when it can't be loaded.
 static func _scene(path: String) -> PackedScene:
 	if _scenes.has(path):
@@ -168,7 +183,8 @@ static func _scene(path: String) -> PackedScene:
 	if path == "" or not ResourceLoader.exists(path):
 		_say(path, "is missing")   # not-ui (a log line)
 		return null
-	var scene := load(path) as PackedScene
+	var scene: PackedScene = (ResourceLoader.load_threaded_get(path) if _loading.has(path) else load(path)) as PackedScene
+	_loading.erase(path)
 	if scene == null:
 		_say(path, "is not a scene")   # not-ui (a log line)
 		return null

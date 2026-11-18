@@ -34,6 +34,7 @@ const FULL_EVERY := 10        # a full look at everything every this many second
 # Decorations built a little differently by where they stand (the rest have one look).
 const VARIED_DECOR := ["wooden_bridge", "pine_tree", "oak_tree", "maple_tree", "willow_tree"]
 const BUILD_BUDGET_MS := 12
+const OPENING_BUDGET_MS := 40   # ..and while a farm opens (nothing stands yet, the player waits for it): more a frame
 ## The kinds `uses_file` draws from files (a tree and a bloom come from theirs by look: tree_look, bloom_look).
 const FILE_KINDS := ["building", "barn", "crafting", "decor"]
 const TREE_LOOKS := 4     # looks of each tree kept in its file (tree_look; tools/export_plants)
@@ -304,7 +305,7 @@ func sync_timed() -> void:
 			continue
 		if _shown_in_place(o):
 			continue
-		if spent > BUILD_BUDGET_MS * 1000:
+		if spent > _budget_ms() * 1000:
 			left += 1          # out of time this frame: built on the next
 			_todo.append(uid)
 			continue
@@ -326,6 +327,7 @@ func sync_timed() -> void:
 	if left > 0:
 		_full = _full or not light
 		_carry_on = true
+		_preload_todo()
 	else:
 		_synced_once = true   # (until the whole farm stands, nothing drops in: it is being laid out, not bought)
 	if light and built == 0:
@@ -336,12 +338,30 @@ func sync_timed() -> void:
 			_animals.append(v["node"])
 
 
+## How long a frame may build for: longer while a farm opens (nothing stands yet and the player is waiting for it),
+## the usual BUILD_BUDGET_MS once it stands (so later changes never cost a hitch).
+func _budget_ms() -> int:
+	return BUILD_BUDGET_MS if _synced_once else OPENING_BUDGET_MS
+
+
+## What the coming frames will build is loaded from its files on worker threads now, side by side
+## (AssetRegistry.preload_files), so each frame only puts together what is already read.
+func _preload_todo() -> void:
+	var paths: Array[String] = []
+	for uid in _todo:
+		var o := Game.object_by_uid(uid)
+		if not o.is_empty() and uses_file(o):
+			var e := AssetRegistry.entry(str(o["id"]))
+			paths.append(AssetRegistry.file_of(e, state_of(o)))
+	AssetRegistry.preload_files(paths)
+
+
 ## Carries on a sync that ran out of time: builds only what it left (`_todo`), within the budget, instead of
 ## looking every thing on the farm over again each frame (on a full farm that alone cost more than the building).
 func _build_todo() -> void:
 	var began := Time.get_ticks_usec()
 	var built := 0
-	while not _todo.is_empty() and Time.get_ticks_usec() - began <= BUILD_BUDGET_MS * 1000:
+	while not _todo.is_empty() and Time.get_ticks_usec() - began <= _budget_ms() * 1000:
 		var o: Dictionary = Game.object_by_uid(_todo.pop_front())
 		if o.is_empty() or not handles(o) or _shown_in_place(o):
 			continue   # (gone, or already drawn as it is)
