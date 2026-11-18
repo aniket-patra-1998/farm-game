@@ -216,6 +216,19 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   a re-export): move each with its next look change and drop it from the test's `LOOK_CODE`. Note: the full
   precheck takes ~16 min on this 2-core container; run it in the background. Next audit: feedback on taps.
 
+## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
+- Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
+  387, 372, 374) in the container. Redo, then push when it passes (precheck in the background, renders not
+  running beside it):
+  1. main: tools/look_shot.gd `--views=all,trees_animals,buildings` (filter `views` and the panel lists by name):
+     3 pictures in ~4 min instead of 15.
+  2. art-polish (taste, for the owner): lawn greens 22% less saturated, 4% darker, hue -0.012 (Ground3D.LAWN
+     0.49,0.61,0.31 / 0.38,0.51,0.26; meadow 0.42,0.54,0.31 / 0.23,0.34,0.19; the same transform on every season's
+     grass_light/grass_dark in data/seasons.json); Farm3D named constants: DAY_SATURATION 1.0 (was 1.1),
+     NIGHT_SATURATION 0.9, LOW_SUN_SATURATION 0.9, LOW_SUN_GOLD #ffc280 mix 0.75, LOW_SUN_ENERGY +0.25,
+     SHADE_COOL (0.66,0.74,0.9) mixed 0.18 x (1 + low sun) into the ambient. Then make_art_versions.py.
+  Next: contact shadows under decorations (objective, main), then trees and building outlines (order of work 2).
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
