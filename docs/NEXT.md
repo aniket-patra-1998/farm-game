@@ -341,6 +341,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   container needs Godot 4.7.2 at /home/claude/godot/godot and a full `--import` before any export (an export run
   against a half-imported project writes empty 168-byte .scn files: check `git diff --stat art/` before
   committing). Next: icons, menus, motion (order of work 3) or animal life; colour only on the ground and light.
+- Art run 9 (16:37 IST): main only, no taste change. 3527af1: words over the farm (coins, XP, costs, a swipe's and
+  streak's count) in FloatText's look via `FloatText.style_world` (bold, float outline, soft shadow, fixed world px
+  `FarmGrid.WORDS_PX`/`COMBO_PX`; numbers through UiTheme.tidy). Animal life (owner-approved, looks only):
+  2243ef9 a day's rhythm (animal_rigs.json `rhythm`: lively choices 1.7x at 8, 0.4x at 14; AnimalRig.busy_at,
+  AnimalBehaviour.hour from main.gd); the rain commit after it: tail to the rain from rain 0.3 (faces screen left,
+  the streaks fall from the upper right), half as lively, wander 0.45 of the range in a storm (animal_rigs.json
+  `weather`, AnimalBehaviour.rain). Godot reinstalled from the 4.7.2 zip here too. Next: animals turning to look as
+  the farmer walks past (FarmLife knows each mind's home tile; give a mind near the walking farmer a short LOOK
+  toward it, every 1-2 s, only on screen); then order of work 3 (icons' sticker edges, menus, motion).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
