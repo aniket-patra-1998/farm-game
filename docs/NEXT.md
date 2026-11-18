@@ -310,6 +310,12 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   land when only crowded spots are left (test 521). This container had no Godot (reinstalled 4.7.2 from the CI
   URL) and a shallow, stale clone (`git fetch --unshallow`). Next audit: player progression round three.
 
+- Run 29 (03:20-04:10 IST 19 Nov, phone UI round three): the top bar at its widest (the longest name in the
+  widest letter, 987M coins, 99,999 gems, a high level) fits every screen; a longer name only came from a
+  hand-edited save and ran the plaque over the coins and the star, so a name is cut to `PlayerSystem.NAME_MAX` by
+  `fit_name` on set and load (test 525). A tapped thing's bubble at a screen corner went off the screen; it now
+  keeps inside `HudBubble.EDGE` and shows below a thing at the top (test 353). Next audit: edge cases and stress,
+  round three (or the next phone UI gaps: FloatText words at the edges are the art lane's float_words item).
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
   387, 372, 374) in the container. Redo, then push when it passes (precheck in the background, renders not
