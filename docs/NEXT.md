@@ -490,6 +490,28 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Next: step 2, tree batching (the design in "Phone performance" above). The orchard's plants are not kept
   (trees stay separate for near/far detail and their own ripening): 41-64 ms, which step 2 or 3 takes on.
   Measure with tools/perf_probe --quality=low --size=2400x1080 --fill (draws, triangles) before and after.
+- Run 3 (18 Nov 22:50-23:25 IST): first phone runs (phone_bench.yml runs 3-4): still no report. The Galaxy A10 and
+  the A13 were both skipped, "Incompatible Architecture": their Android is 32-bit and every preset exports arm64
+  only (export_presets.cfg armeabi-v7a=false), so such budget phones cannot install the game at all (reported for the
+  owner). The Pixel 6 ran ~70 s and logged no BENCH line: the Robo crawler stops when it finds nothing to tap, likely
+  before the benchmark's three phases (up to 90 s each) and play are done. Merged a987841: a Robo script that only
+  waits five minutes (`DELAYED_MESSAGE_POSTED` actions, --timeout 7m); unverified (the day's 4 phone runs are used),
+  the 02:10 nightly tests it: if it says the script is invalid, the wait action's name is the thing to check.
+  Merged 26d488a: perf_probe prints "PERF materials=.. shaders=..". Filled showcase on low (--fill, whole farm):
+  1,822 draws, 884k triangles, 155 materials, 30 shaders (crop3d 69 materials, fruit3d 11, orbit3d 11, paint3d 10).
+- Tree batching started on perf/tree-batching (not merged, 9daee48 + art_versions): `Instancer.split_clocked`
+  takes a model's fruit/bloom surfaces into their own pieces, keeping materials and LODs (test 495). Still to do,
+  in order: in `Objects3D._build`, a lone tree from its file (`uses_file`) goes the decorations' way: pieces_of a
+  key of id + file look + ready/withered state, taking only the visible state's parts (AssetRegistry.apply_state
+  hides the others, `_take_apart` does not skip hidden nodes); the still pieces through `_batch` (look key), the
+  fruit put under a second DecorLayer id (as `dressing_id`) in a look keyed by the look and its times, with
+  `material` = `timed_material(base, times)`; `_ripen_view` re-puts the fruit instead of `ripen(node)` when the
+  stand-in has PIECES; the tree's own turn already goes through holder*node transforms. Then crowded (code-built)
+  trees the same way, the tests that read a tree's timed materials updated, and render whole farm and play zoom
+  before/after at 1x (watch LOD: a MultiMesh picks one level for its whole region, a tree alone picks its own).
+- The phone build's first-draw stalls (PERF_RUN's win 1): there is no shader warm-up anywhere. Godot 4.7's export
+  shader baker (preset option `shader_baker/enabled`) would ship compiled shaders, but it may need a non-headless
+  export with a rendering device (CI exports headless): check on the next run before relying on it.
 
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
