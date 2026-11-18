@@ -683,3 +683,10 @@ func test_448_the_balance_bot_plants_for_its_real_visit_times() -> void:
 	var after: Array = sim.call("_visits_after", [7.0, 21.0], 1)
 	_eq(after.slice(0, 3), [10 * 3600.0, 24 * 3600.0, 34 * 3600.0], "after the evening visit: 10 h, 24 h, 34 h on")
 	_eq((sim.call("_visits_after", [7.0, 21.0], 0) as Array)[0], 14 * 3600.0, "after the morning one: 14 h on")
+	# Its farm is made at its first visit's hour (a player plays the moment they install), so the clock never skips
+	# past the starter's ripe plots: the wait to an hour is under a day, and nothing when the clock reads it.
+	var t := Game.now()
+	var hour_now := DayCycle.local_hour(t, DayCycle.device_bias_minutes())
+	_check(int(sim.call("_seconds_until", hour_now, t)) <= 1, "no wait when the clock reads the first visit's hour")
+	var wait := int(sim.call("_seconds_until", fposmod(hour_now - 0.5, 24.0), t))
+	_check(wait > 23 * 3600 and wait < 24 * 3600, "an hour just past waits for tomorrow's, under a day")

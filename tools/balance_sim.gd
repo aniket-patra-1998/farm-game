@@ -46,6 +46,9 @@ func _ready() -> void:
 			Balance.override(key, int(value) if value == floorf(value) else value)
 	await get_tree().process_frame
 	Game.saving_enabled = false
+	# The farm is made at the first visit's hour, as a player plays the moment they install: made earlier, the
+	# clock then skipped to that hour (up to a day with one visit) and the starter's ripe plots withered unseen.
+	Game.debug_time_offset += _seconds_until(_visit_hours()[0], Game.now())
 	Game.reset_game()
 	Game.rng.seed = _seed
 	print("BALANCE SIM  days=%d visits/day=%d minutes/visit=%.0f seed=%d" % [_days, _visits, _minutes, _seed])
@@ -65,12 +68,7 @@ func _visit_hours() -> Array:
 
 
 func _play() -> void:
-	var hours := _visit_hours()
-	var t0 := Game.now()
-	# Start a morning, so the visits fall on the hours above.
-	Game.debug_time_offset += int(
-		fposmod(hours[0] - DayCycle.local_hour(t0, DayCycle.device_bias_minutes()), 24.0) * 3600.0
-	)
+	var hours := _visit_hours()   # (the clock already stands at the first one: _ready)
 	var start := Game.now()
 	print("day  level   coins  harvests  coins/h  golden  collect  super  bonus  idle plots")
 	var coins_at_day_start := Game.coins
@@ -104,6 +102,11 @@ func _play() -> void:
 		bought.append("%s x%d" % [id, _bought[id]])
 	print("bought: %s; land expanded %d times (farm %d x %d); collected %d; fed %d" % [
 		", ".join(PackedStringArray(bought)), _expansions, Game.farm_size, Game.farm_size, _collected, _fed])
+
+
+## Seconds from `t` to the next time the local clock reads `hour` (0 when it reads it now).
+static func _seconds_until(hour: float, t: int) -> int:
+	return int(fposmod(hour - DayCycle.local_hour(t, DayCycle.device_bias_minutes()), 24.0) * 3600.0)
 
 
 static func _gap_after(hours: Array, v: int) -> float:
