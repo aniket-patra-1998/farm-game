@@ -661,6 +661,28 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   per phase (and built_ms: baked shaders may also shorten loading). Keep the baker only if the phone says it helps
   (and the look is the same: it compiles the same shaders).
 
+- Run 6 (19 Nov 01:51 - 02:40 IST): still no phone report (phone_bench's last runs are 18 Nov's five; no run started:
+  the free plan's quota for that day is used, the 02:10 nightly is the next). apk.yml 231 baked its shaders (the
+  baker works in CI). Worked on loading, measured headless. Found: opening the showcase spent ~218 ms of CPU in
+  `Animal3D.file_stride` (68 kinds, ~3 ms each: `surface_get_blend_shape_arrays` unpacks all 16 moves of a file,
+  ~2.7 ms; the reach loop and the second instance are small). Merged f181f3e (perf/animal-strides): the strides
+  are kept in data/animal_strides.json, each with its file's fingerprint (ArtVersion.file_of); a kind whose file
+  changed is measured as before, so a stale table only costs time, never a wrong walk. Written by
+  tools/animal_strides.tscn (headless); test 513 fails when one is stale (CLAUDE.md lists it beside the other art
+  regenerations; make_art_versions keeps it out of the look fingerprint). Showcase opened headless (perf_probe):
+  settle 4.13 s -> 3.67 s (medians), worst frame 186-231 ms -> 117-127 ms; build_ms unchanged (~1.06 s; the
+  animals come after it).
+- Checked (APK size, win 2): the 88 MB of imported scenes are 69.5 MB animals (73 files), 12.3 MB farmers, 9.1 MB
+  buildings; an animal is mostly its 16 blend shapes (grey_chicken: 8,489 vertices x 17). Re-imported with
+  generate_lods off or create_shadow_meshes off: the same size (blend-shape meshes get no LODs); ensure_tangents
+  off made the chicken bigger (2.22 -> 2.69 MB). No import-setting win there; fewer vertices or moves is the art
+  lane (reported).
+- Seen for frame time (win 3): the showcase's 112 animals are ~524k triangles at full detail (~4.7k each) at every
+  zoom, since meshes with blend shapes get no LODs. A coarser far version is a look change: reported, not built.
+- Next run: read the nightly's report first. If none, still on loading: profile the rest of the settle (3.7 s
+  headless) the same way (time the per-kind and per-object work under Objects3D/Animal3D build; `file_length`
+  instances each animal file again, ~0.2 ms a kind, small).
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
