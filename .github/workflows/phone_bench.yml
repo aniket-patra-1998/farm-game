@@ -93,6 +93,15 @@ jobs:
             line=$(gcloud storage cat "$log" | grep -o 'BENCH {.*}' | tail -1 | sed 's/^BENCH //')
             echo "--- $name: the game's log lines (the last 40)"
             gcloud storage cat "$log" | grep -iE "godot|BENCH|FATAL|AndroidRuntime" | tail -40 || true
+            # (why the app closed early: the A05s run of 18 Nov was closed ~4 s after the start, the Robo script's
+            # wait notwithstanding. Robo's own steps, and the system's word on the app's process ending.)
+            echo "--- $name: Robo's steps and the app's end"
+            gcloud storage cat "$log" | grep -E " (Robo|RoboScript|Crawler|crawler)[A-Za-z]* *:" \
+              | grep -vE "mControlTarget|mSystemBarColorApps|source=ActivityRecord|Window\{" | tail -60 || true
+            gcloud storage cat "$log" | grep -iE "farmgame.*(died|kill|force.?stop|Force stopping|crash|ANR)|(died|kill|Force stopping).*farmgame" \
+              | tail -20 || true
+            echo "--- $name: what Robo did (actions.json, the start)"
+            gcloud storage cat "${log%/logcat}/actions.json" 2>/dev/null | head -c 4000 || true; echo
             if [ -n "$line" ]; then
               echo "$line" > "reports/$name.json"; found=1
               printf '### %s\n```json\n%s\n```\n' "$name" "$line" >> "$GITHUB_STEP_SUMMARY"

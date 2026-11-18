@@ -189,6 +189,7 @@ var _held_uids := {}       # ..or only these things changed in place while held
 
 
 func _init() -> void:
+	LoadBenchmark.start_mark("scripts")   # not-ui (every script compiled: the start's first measure)
 	drops = HarvestDrops.new(self)
 	collectibles = CollectiblesSystem.new(self)
 	shed = GardenShedSystem.new(self)
@@ -252,6 +253,7 @@ func _ready() -> void:
 	stray_timer.timeout.connect(strays.check_strays)
 	stray_timer.timeout.connect(daily.check_daily_gift)
 	add_child(stray_timer)
+	LoadBenchmark.start_mark("game")   # not-ui (data and the save loaded)
 
 
 ## What happened while the player was away, said once as the farm opens: as a card of rows that each go to their

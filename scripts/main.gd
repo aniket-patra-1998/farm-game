@@ -45,6 +45,7 @@ var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 
 
 func _ready() -> void:
+	LoadBenchmark.start_mark("main_made")   # not-ui (the main scene loaded)
 	PerfReadout.show_in(get_tree(), PerfReadout.wanted())   # debug builds, when switched on in Settings
 	Display.apply()   # full screen if chosen (a computer opens maximised: project.godot's window mode)
 	sky = SkyLayer.new()
@@ -138,6 +139,7 @@ func _ready() -> void:
 	AutoQuality.start_in(self)   # keeps the device smooth: steps down when frames stay slow (until the player chooses)
 	# The farm is built; its first frames, while the renderer prepares every material, stay under a cover (only
 	# when the game itself is running: the screenshot and probe tools load this scene inside their own).
+	LoadBenchmark.start_mark("main_built")   # not-ui (the farm laid out, before its first frame)
 	if get_tree().current_scene == self:
 		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
 		Game.farm_opened.connect(_on_farm_opened)

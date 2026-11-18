@@ -21,7 +21,24 @@ const PLAY_ZOOM := 1.6           # the camera zoom a player farms at
 const MOST_WAIT_SECONDS := 90.0  # never wait longer than this for one phase
 
 
+## When the start's steps were done, in ms since the engine began (start_mark), for the report's "start": the
+## scripts compiled (Game made), the game's data and save loaded (Game ready), the main scene's turn (main made,
+## main built). Where a phone's startup_ms goes.
+static var _start_marks := {}
+
 var _main: Node
+
+
+## Notes that the start reached `step` now, the first time only (a farm made again later is not the start; a
+## few calls, cheap, every build).
+static func start_mark(step: String) -> void:
+	if not _start_marks.has(step):
+		_start_marks[step] = Time.get_ticks_msec()
+
+
+## The start's steps so far (start_mark).
+static func start_marks() -> Dictionary:
+	return _start_marks.duplicate()
 
 
 ## Whether this build runs the benchmark by itself on start (the benchmark APK).
@@ -39,7 +56,7 @@ static func start(main: Node) -> LoadBenchmark:
 
 
 func _run() -> void:
-	var report := {"device": _device(), "startup_ms": Time.get_ticks_msec(), "done": false}
+	var report := {"device": _device(), "startup_ms": Time.get_ticks_msec(), "start": start_marks(), "done": false}
 	_tell(report)   # (the report so far after every phase: a phone run cut short still says what it measured)
 	var saving := Game.saving_enabled
 	Game.saving_enabled = false
