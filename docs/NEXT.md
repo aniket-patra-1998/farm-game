@@ -331,6 +331,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   waiting for your look". look_shot of 2 views takes about 2-3 minutes; never render beside a precheck or a push
   (the pre-push hook runs the precheck). Next: wait for the owner's look; meanwhile objective fixes on main
   (consistent outline weights, icon set's sticker edges: order of work 3), or animal life (owner-approved).
+- Art run 8 (16:29 IST): the owner approved art-polish at 16:28 with a condition (pink crowns stay pink), then at
+  16:30 rejected the tree-crown softening outright (docs/ART_POLISH.md "Colour rule"); another session merged the
+  grade, calmer lawn and warm roof edges to main (ba8c63a..7f1f39b) without the crowns. This run had lowered the
+  crowns' tone (hue locked, mix 0.1) and passed the precheck, but dropped it under the rule: objects keep their
+  bold colours. origin/art-polish still holds the rejected c0b4a66 on the old base (a force-push to reset it was
+  refused): the next run restarts art-polish from main and leaves c0b4a66 out. Tried and not kept: a calmer meadow
+  (patchy 0.5 -> 0.32, bare 0.6 -> 0.4, lifted grass_dark): no clear gain at orchard noon/dusk. Note: a fresh
+  container needs Godot 4.7.2 at /home/claude/godot/godot and a full `--import` before any export (an export run
+  against a half-imported project writes empty 168-byte .scn files: check `git diff --stat art/` before
+  committing). Next: icons, menus, motion (order of work 3) or animal life; colour only on the ground and light.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
