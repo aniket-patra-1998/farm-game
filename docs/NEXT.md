@@ -630,13 +630,18 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   that fails (so the phone build never breaks); it also uploads farm-game-benchmark-plain.apk (headless, unbaked)
   and the step summary says how many files only the baked APK has. phone_bench.yml has an input `apk` (default
   farm-game-benchmark.apk, the baked one; farm-game-benchmark-plain.apk for the comparison).
-- Next run: 1) open the newest apk.yml run's "Export the debug APK" step: did the baked export run (Vulkan found,
-  "files only in the baked one" > 0)? If it fell back, its log lines say why (no Vulkan device, renderer mismatch,
-  timeout 20 min). 2) Read the nightly's report (if quota allowed). 3) When quota allows, two phone runs an hour
-  apart: `-f inputs[apk]=farm-game-benchmark-plain.apk` and then the default; compare long_frames and longest_ms
+- Checked in CI (apk.yml run 228, 53cbb0b): the baked export ran (lavapipe, "Vulkan 1.4.335 - Forward Mobile",
+  "Baking shaders (202 steps)", 18 s an export, the whole step 78 s). The baked APK holds 72 compiled shaders in
+  assets/.godot/shader_cache (40 SceneForwardMobileShaderRD: the farm's materials; sky, canvas, tonemap, copy,
+  shadow, skeleton...), 210.8 MB against 205.3 MB plain (+5.4 MB); every other file is the same (the main scene
+  is stored under the baker's export folder). The debug APK is baked too. Not run on a phone yet: no phone run
+  started (the free plan's 5 runs for 18 Nov were all used); the 02:10 nightly takes the baked benchmark APK.
+- Next run: 1) if a later apk.yml run fell back (no "Baking shaders" in its export step), its log says why (no
+  Vulkan device, renderer mismatch, timeout 20 min). Also seen in the baked export's log, harmless so far: "Failed
+  loading resource: res://locale/strings.csv" (the APKs hold the same translation files) and "p_name.is_empty()".
+  2) Read the nightly's report (if quota allowed). 3) When quota allows, two phone runs an hour apart: `-f inputs[apk]=farm-game-benchmark-plain.apk` and then the default; compare long_frames and longest_ms
   per phase (and built_ms: baked shaders may also shorten loading). Keep the baker only if the phone says it helps
-  (and the look is the same: it compiles the same shaders). If baking takes too long in CI, bake only the benchmark
-  and the debug APK from one export's shader cache (the second export reuses the editor's cache).
+  (and the look is the same: it compiles the same shaders).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
