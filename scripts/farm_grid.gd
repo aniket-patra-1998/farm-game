@@ -39,6 +39,8 @@ const FIND_STACK_MSEC := 500   # finds said at one place within this long of eac
 const FIND_BEAT := 0.28        # seconds between them (each chimes on its own beat)
 const FIND_RISE := 40.0        # pixels between them
 const RAIN_BLUE := Color("#8fd0ff")   # the words of a rain-watered harvest
+const WORDS_PX := 30           # world px of the words that float off a plot (coins, XP, costs: FloatText's look)
+const COMBO_PX := 34           # world px of a swipe's count, a little bigger than the words beside it
 const COUNT_TAG := "x%d"     # not-ui: a count (a swipe's plots, a streak), the same in every language
 const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is walked in
 ## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
@@ -957,10 +959,7 @@ func _show_combo(i: int) -> void:
 		_combo.size = Vector2(160, 44)
 		_combo.pivot_offset = _combo.size / 2.0
 		_combo.z_index = 11
-		_combo.add_theme_font_size_override("font_size", 34)
-		_combo.add_theme_color_override("font_color", Feedback.color("golden"))
-		_combo.add_theme_color_override("font_outline_color", Color(0.2, 0.12, 0.05))
-		_combo.add_theme_constant_override("outline_size", 9)
+		FloatText.style_world(_combo, COMBO_PX, Feedback.color("golden"))
 		add_child(_combo)
 	_combo.text = COUNT_TAG % _swipe_count
 	_combo.position = center_of(i) - Vector2(80, 96)
@@ -1527,15 +1526,12 @@ func _sparkle(pos: Vector2, look: Variant) -> void:
 func float_words(pos: Vector2, text: String, look: Variant, duration := 1.0) -> void:
 	var color: Color = look if look is Color else Feedback.color(str(look))  # a Color, or a Feedback float style
 	var label := Label.new()
-	label.text = text
+	label.text = UiTheme.tidy(text)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.size = Vector2(320, 40)
 	label.position = pos - Vector2(160, 30)
 	label.z_index = 10
-	label.add_theme_font_size_override("font_size", 30)
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_outline_color", Color(0.2, 0.12, 0.05))
-	label.add_theme_constant_override("outline_size", 8)
+	FloatText.style_world(label, WORDS_PX, color)
 	add_child(label)
 	var tween := label.create_tween().set_parallel(true)
 	tween.tween_property(label, "position:y", label.position.y - 60.0, duration).set_ease(Tween.EASE_OUT)

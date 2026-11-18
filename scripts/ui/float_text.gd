@@ -28,6 +28,24 @@ static func style(label: Label, design_px := 20, colour := Color(0, 0, 0, 0)) ->
 	return label
 
 
+## Gives `label`, drawn in the farm's own space (it zooms with the farm, so it is not on the interface's type
+## scale), the same floating look as `style` at `px` world pixels: the bold face, the outline at its share in
+## the float outline colour, the soft drop shadow. Coins, XP, costs and counts over the plots use it.
+static func style_world(label: Label, px: int, colour: Color) -> Label:
+	var outline := maxi(3, int(px * OUTLINE_SHARE))
+	label.add_theme_font_override("font", bold())
+	label.add_theme_font_size_override("font_size", px)
+	label.add_theme_color_override("font_color", colour)
+	label.add_theme_color_override("font_outline_color", UiTheme.color("float_outline"))
+	label.add_theme_constant_override("outline_size", outline)
+	label.add_theme_color_override("font_shadow_color", SHADOW)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", SHADOW_DROP)
+	label.add_theme_constant_override("shadow_outline_size", outline)
+	label.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
+	return label
+
+
 ## A new floating label with `words`.
 static func label(words: String, design_px := 20, colour := Color(0, 0, 0, 0)) -> Label:
 	var l := Label.new()

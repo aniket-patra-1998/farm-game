@@ -496,6 +496,18 @@ func test_358_a_swipe_and_a_streak_climb_a_scale_and_count() -> void:
 	_eq(int(grid.get("_swipe_count")), 3, "a swipe counts the plots it gives the farmer")
 	var combo: Label = grid.get("_combo")
 	_check(combo != null and combo.text == FarmGrid.COUNT_TAG % 3, "and says the count over the last one")
+	if combo != null:
+		_check(combo.get_theme_font("font") == FloatText.bold()
+				and combo.get_theme_color("font_outline_color") == UiTheme.color("float_outline")
+				and combo.get_theme_constant("shadow_offset_y") == FloatText.SHADOW_DROP,
+				"in the floating words' look (bold, their outline, their shadow), as every word over the farm")
+	var words_before := grid.get_child_count()
+	grid.float_words(Vector2.ZERO, "+1500", "coins")
+	var words: Label = grid.get_child(words_before)
+	_check(words.get_theme_font("font") == FloatText.bold()
+			and words.get_theme_color("font_outline_color") == UiTheme.color("float_outline"),
+			"coins and XP over a plot float in the same look")
+	_eq(words.text, UiTheme.tidy("+1500"), "with their numbers tidied as every shown number")
 	main.queue_free()
 	await get_tree().process_frame
 	Game.reset_game()
