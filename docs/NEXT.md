@@ -267,8 +267,8 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   space plus the hand, nothing planted in the future). That found the clock set back while the game runs or waits
   in the background (a phone resumes without loading): only a load shifted the timers. `Persistence.watch_clock`
   (every frame, from tick) now shifts every timer through the same `shift_all` loading uses; a step back within
-  `CLOCK_SLACK` (2 s) is left alone. Fuel's clock is not moved before fuel is unlocked. Saving test 480. Open,
-  small: neighbours' answers due in the outbox are not shifted on a clock set back (they arrive late by the skew).
+  `CLOCK_SLACK` (2 s) is left alone. Fuel's clock is not moved before fuel is unlocked. Saving test 480.
+  Neighbours' answers on their way now move with it too (SocialSystem.shift_clock; last_settled stays forward).
   Next audit in the rotation: cheating and save safety, round two.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
