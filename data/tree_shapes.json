@@ -513,5 +513,7 @@
    ]
   }
  },
- "_leaf_doc": "Each kind has its own leaf colour (FarmVille's crowns were all sorts of colours, few of them plain green), chosen to stand apart from its fruit; leaf_alts are a lighter and a darker of it, so trees of one kind are not clones."
+ "_leaf_doc": "Each kind has its own leaf colour (FarmVille's crowns were all sorts of colours, few of them plain green), chosen to stand apart from its fruit; leaf_alts are a lighter and a darker of it, so trees of one kind are not clones.",
+ "_leaf_tone_doc": "Every leaf colour is mixed `mix` of the way towards `tint` (one shared warm green) and its saturation scaled by `saturation`, so the kinds keep their own hues but sit in one family with the animals and the lawn (TreeModel.tone).",
+ "leaf_tone": {"tint": "#8c9a52", "mix": 0.3, "saturation": 0.74}
 }

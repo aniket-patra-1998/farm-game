@@ -533,6 +533,12 @@ func test_103_every_kind_of_tree_grows_its_own_way() -> void:
 	_check(not _bounds(a).is_equal_approx(_bounds(b)), "two apple trees are not copies of each other")
 	a.free()
 	b.free()
+	# Every kind keeps its own hue but is toned into the farm's one family: never more saturated than its data.
+	for id in ["cherry", "lemon", "mandarin", "persimmon"]:
+		var raw := Color.html(str((shapes[id] as Dictionary)["leaf"]))
+		var toned := TreeModel.tone(raw)
+		_check(toned.s < raw.s, "%s's leaves are softened into the farm's family" % id)
+		_check(absf(wrapf(toned.h - raw.h + 0.5, 0.0, 1.0) - 0.5) < 0.12, "%s's leaves keep their own hue" % id)
 	_done(g)
 
 
