@@ -672,6 +672,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Next: with no owner pick, the rest of step 8 that the spec does decide: the feeding target (a never-feed bot
   loses at most 30% of animal income: add `--no-feed` and compare collect income), crafting's 30% markup over
   ingredients (a check over data/catalog/recipes.json) and "a week away loses nothing" (`--away=2,3,4,5,6,7,8`).
+- Run 10 (19 Nov 04:36-05:25 IST): step 8's feeding and away targets merged (f5f2f8c5, goals/8-feed-away).
+  `--no-feed` (the bot never feeds); every run prints `animals:` (animal coins as a share of the plain price,
+  `animal_share()`, and `away_lost`: animals, trees, buildings gone across an away stretch). Measured (goals, 28
+  days, seeds 1-3): feeders reach x1.07-1.18, a never-feeder x(1 - hunger_penalty); at 0.3 it lost 33-38% (target
+  at most 30%), so feeds.hunger_penalty is 0.15 now (worst 28%; level pace unchanged). A week away (days 8-14)
+  loses nothing. Crafting: every good sells for 1.5x+ its ingredients (sell_markup 1.5; target 1.3x). Tests 529
+  (goals), 530 (crafting). First hour after the merge (seeds 1-2): Welcome by minute 8, first find at 5.
+- Step 8 still open: idle coins over 5 visits past level ~15 (the owner's call, reported in run 9); crafting's
+  "pays back its building in about a week" is not measured (the bot never crafts: a crafter style would be
+  next, after the Bakery unlocks at 25). Steps 5 and 9 are new looks (sheet of options first).
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
