@@ -1,6 +1,10 @@
 class_name CropDef
 extends ItemDef
-## A crop. FarmVille's ripe window: as long as it takes to grow, at least 4 hours, at most 2 days.
+## A crop. FarmVille's ripe window: as long as it takes to grow, at least 4 hours, at most 2 days. Starter Seeds
+## (`starter`: a Welcome gift, one plot, never sold) never wither: a new player who leaves before they ripen finds
+## them waiting, and the Welcome step that harvests them can always be done.
+
+const STARTER_WINDOW := 100 * 365 * 86400   # (seconds: a ripe window that never ends)
 
 
 
@@ -9,6 +13,8 @@ func grow_seconds() -> int:
 
 
 func ripe_window() -> int:
+	if data.get("starter", false):
+		return STARTER_WINDOW
 	return clampi(grow_seconds(), Balance.i("crops.min_ripe_window"), Balance.i("crops.max_ripe_window"))
 
 

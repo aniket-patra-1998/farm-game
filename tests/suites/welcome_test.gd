@@ -52,6 +52,8 @@ func test_501_starter_seeds_are_a_gift_once_never_sold_and_ripen_in_minutes() ->
 	_check(not g.field.plant(_plowed(g), "starter_seeds"), "one plot only")
 	g.debug_time_offset += int(crop["grow_seconds"])
 	_eq(g.field.phase(i), GameState.Phase.RIPE, "ripe after its minutes")
+	g.debug_time_offset += 30 * 86400
+	_eq(g.field.phase(i), GameState.Phase.RIPE, "and never withers (a player who left finds them waiting)")
 	var saved := {}
 	g.goals.give({"seeds": "starter_seeds"})
 	g.goals.save_to(saved)
