@@ -84,7 +84,8 @@ func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_wa
 		if own.any(func(m: Dictionary) -> bool: return m["name"] == "showcase"):   # not-ui
 			dressed.append(str((system.get_script() as Script).get_global_name()))
 	for name: String in ["VipSystem", "RustSystem", "CraftingSystem", "FieldSystem", "MasterySystem", "StraySystem",
-			"BeehiveSystem", "PigPenSystem", "BarnStorage", "CollectiblesSystem", "RibbonsSystem", "FeedSystem"]:   # not-ui
+			"BeehiveSystem", "PigPenSystem", "BarnStorage", "CollectiblesSystem", "RibbonsSystem", "FeedSystem",
+			"VehicleSystem", "MysterySystem"]:   # not-ui
 		_check(dressed.has(name), "%s says what the showcase shows of it" % name)
 	# What the farm and its sheets show of those: a stray to adopt, fertilized beds beside plain ones, crops at
 	# every count of stars (mastered too), a hive with its Queen Bee, a pen's truffles ready to collect.
@@ -111,6 +112,13 @@ func test_421_the_showcase_shows_each_system_at_its_best_and_its_looks_can_be_wa
 		tiers[int(g.ribbons.ribbon_tiers.get(r["id"], 0))] = true
 	_eq(tiers.size(), (g.ribbons.ribbon_data["tiers"] as Array).size() + 1, "ribbons at every tier")
 	_check(g.feeds.feed_ids().all(func(f: String) -> bool: return g.feeds.total(f) > 0), "the feed stock holds each feed")
+	_check(g.vehicles.fuel_now() > 0, "the vehicles have fuel to run")
+	var ups := {}
+	for id in g.vehicles.owned_vehicles():
+		ups[g.vehicles.vehicle_level(id)] = true
+	_check(ups.size() > 1, "vehicles at more than one upgrade %s" % [ups.keys()])
+	_check(not g.crafting.goods.is_empty() and not g.crafting.bushels.is_empty(), "goods and bushels to sell and craft")
+	_check(not g.mystery.mystery_eggs.is_empty(), "Mystery Eggs to open")
 	# The Barn is the hero at its best: whole, at the top VIP level, and VIP active.
 	var barns := g.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "barn")
 	_eq(barns.size(), 1, "the showcase has its Barn")

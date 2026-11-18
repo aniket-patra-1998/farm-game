@@ -34,6 +34,12 @@ func load_from(data: Dictionary) -> void:
 	mystery_eggs = int_map(data.get("mystery_eggs", {}))
 
 
+## The showcase: a Mystery Egg of every colour waiting to be opened.
+func showcase() -> void:
+	for colour: String in egg_data.get("colours", {}):
+		mystery_eggs[colour] = maxi(int(mystery_eggs.get(colour, 0)), 1)
+
+
 ## Mystery Egg chance grows with the chickens inside; colour follows the breeds there.
 func roll_mystery_egg(coop: Dictionary) -> String:
 	if not game.drops_enabled or egg_data.is_empty():

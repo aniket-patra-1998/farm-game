@@ -370,3 +370,14 @@ func on_vehicle_bought() -> void:
 		fuel_unlocked = true
 		fuel = Balance.i("vehicles.fuel_tank")
 		fuel_t = game.now()
+
+
+## The showcase: the fuel tank full with a spare, and the vehicles at every upgrade in turn.
+func showcase() -> void:
+	var owned := owned_vehicles()
+	if owned.is_empty():
+		return
+	on_vehicle_bought()
+	fuel_tanks = maxi(fuel_tanks, 1)
+	for k in owned.size():
+		vehicle_levels[owned[k]] = k % VehicleDef.SIZES.size()

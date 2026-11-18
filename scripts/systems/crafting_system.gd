@@ -8,6 +8,8 @@ extends GameSystem
 
 const PRODUCE_ROLLS_MOST := 40     # a home's animals of one kind roll for their produce this many times at most
 
+## Goods of each crafting building's first recipe the showcase farm holds.
+const SHOWCASE_GOODS := 2
 var bushels := {}                  # crop or ingredient id -> how many held, for crafting
 var goods := {}                    # recipe id -> crafted goods held
 var crafted := {}                  # recipe id -> lifetime crafts (recipe mastery)
@@ -87,6 +89,11 @@ func showcase() -> void:
 		if turn % 3 < 2:
 			(o["slots"] as Array).append({"r": recipes[0].id, "done": game.now() + (took if turn % 3 == 0 else -1),
 				"took": took})
+		# Goods made before and the bushels for its first recipe, so its sheet can sell and craft.
+		goods[recipes[0].id] = maxi(int(goods.get(recipes[0].id, 0)), SHOWCASE_GOODS)
+		var needs := recipes[0].inputs()
+		for c: String in needs:
+			bushels[c] = maxi(int(bushels.get(c, 0)), int(needs[c]))
 		turn += 1
 
 
