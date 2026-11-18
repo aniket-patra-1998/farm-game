@@ -2,7 +2,7 @@
 """The interface's icons as smooth vector files (our own look): art/icons/ui/<kind>.svg, read by UiSvg and drawn
 crisp at any size. Each icon is a few shapes, each filled with a soft top-lit gradient of its colour, a dark ink
 outline and a white sticker edge round the whole, plus glossy highlights. Run: python3 tools/make_ui_icons.py"""
-import colorsys, math, os
+import colorsys, math, os, re
 
 INK = "#3b2414"
 OUT = os.path.join(os.path.dirname(__file__), "..", "art", "icons", "ui")
@@ -187,10 +187,75 @@ ICONS = {
 ICONS["arrow"] = [ICONS["arrow"][0], HI("path", 0.0, d="M44 30 L44 44 L54 40 Z")]
 
 
-def grad(gid, col):
-    return ('<linearGradient id="%s" x1="0" y1="0" x2="0" y2="1">'
+def _arc_ys(x0, y0, rx, ry, phi, large, sweep, x1, y1, steps=24):
+    """Points along an SVG arc (the spec's endpoint to centre conversion), for its height."""
+    if rx == 0 or ry == 0:
+        return [y1]
+    c, s = math.cos(math.radians(phi)), math.sin(math.radians(phi))
+    dx, dy = (x0 - x1) / 2, (y0 - y1) / 2
+    xp, yp = c * dx + s * dy, -s * dx + c * dy
+    rx, ry = abs(rx), abs(ry)
+    lam = xp * xp / (rx * rx) + yp * yp / (ry * ry)
+    if lam > 1:
+        rx, ry = rx * math.sqrt(lam), ry * math.sqrt(lam)
+    num = rx * rx * ry * ry - rx * rx * yp * yp - ry * ry * xp * xp
+    k = math.sqrt(max(0.0, num / (rx * rx * yp * yp + ry * ry * xp * xp)))
+    if large == sweep:
+        k = -k
+    cxp, cyp = k * rx * yp / ry, -k * ry * xp / rx
+    cx, cy = c * cxp - s * cyp + (x0 + x1) / 2, s * cxp + c * cyp + (y0 + y1) / 2
+    a0 = math.atan2((yp - cyp) / ry, (xp - cxp) / rx)
+    a1 = math.atan2((-yp - cyp) / ry, (-xp - cxp) / rx)
+    da = a1 - a0
+    if sweep and da < 0:
+        da += 2 * math.pi
+    elif not sweep and da > 0:
+        da -= 2 * math.pi
+    return [cy + s * rx * math.cos(a0 + da * t / steps) + c * ry * math.sin(a0 + da * t / steps)
+            for t in range(steps + 1)]
+
+
+def extent(tag, a):
+    """A shape's top and bottom in its own coordinates (curves followed, not their control points)."""
+    if tag == "circle":
+        return a["cy"] - a["r"], a["cy"] + a["r"]
+    if tag == "ellipse":
+        return a["cy"] - a["ry"], a["cy"] + a["ry"]
+    if tag == "rect":
+        return a["y"], a["y"] + a["height"]
+    toks = re.findall(r"[MLCAZ]|-?[0-9.]+", a["d"])
+    ys, cmd, cur, start, i = [], "M", (0.0, 0.0), (0.0, 0.0), 0
+    while i < len(toks):
+        if toks[i] in "MLCAZ":
+            cmd = toks[i]
+            i += 1
+            if cmd == "Z":
+                cur = start
+                continue
+        n = {"M": 2, "L": 2, "C": 6, "A": 7}[cmd]
+        v = [float(t) for t in toks[i:i + n]]
+        i += n
+        if cmd == "C":
+            p0, p1, p2, p3 = cur[1], v[1], v[3], v[5]
+            ys += [(1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t * t * p2 + t ** 3 * p3
+                   for t in (j / 24 for j in range(25))]
+        elif cmd == "A":
+            ys += _arc_ys(cur[0], cur[1], v[0], v[1], v[2], int(v[3]), int(v[4]), v[5], v[6])
+        cur = (v[-2], v[-1])
+        ys.append(cur[1])
+        if cmd == "M":
+            start = cur
+            cmd = "L"   # (more pairs after an M are lines)
+    return min(ys), max(ys)
+
+
+# The top-lit gradient spans the shape's own height, in its coordinates (userSpaceOnUse): Godot's SVG renderer
+# measures a curved path by its end points only, so a bounding-box gradient on a shape whose ends sit level (a
+# body's dome, a bowl) had no height and drew nothing.
+def grad(gid, col, top, bottom):
+    return ('<linearGradient id="%s" gradientUnits="userSpaceOnUse" x1="0" y1="%.1f" x2="0" y2="%.1f">'
             '<stop offset="0" stop-color="%s"/><stop offset="0.55" stop-color="%s"/><stop offset="1" stop-color="%s"/>'
-            '</linearGradient>') % (gid, shade(col, 0.12), col, shade(col, -0.12))
+            '</linearGradient>') % (gid, top, bottom, shade(col, 0.12), col, shade(col, -0.12))
 
 
 def attrs(a):
@@ -217,7 +282,7 @@ def build(parts):
             body.append('<path %s stroke="%s" stroke-width="%.1f"/>' % (common, col, w))
             continue
         gid = "g%d" % n
-        defs.append(grad(gid, col))
+        defs.append(grad(gid, col, *extent(tag, a)))
         edge.append('<%s %s fill="#ffffff" stroke="#ffffff" stroke-width="%.1f" stroke-linejoin="round"/>' % (tag, attrs(a), EDGE + LINE))
         body.append('<%s %s fill="url(#%s)" stroke="%s" stroke-width="%.1f" stroke-linejoin="round"/>' % (tag, attrs(a), gid, INK, LINE))
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">'

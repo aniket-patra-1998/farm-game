@@ -138,3 +138,21 @@ func test_384_vector_icons_draw() -> void:
 			_check(img.get_width() >= 40 and img.get_pixel(0, 0).a < 0.1, "%s is its size, see-through round it" % kind)
 	_check(count >= 20, "the HUD's icons are files")
 	_check(UiSvg.of("no_such_icon", 40.0) == null, "a kind with no file draws nothing (the drawn one stays)")
+
+
+## Every coloured shape of a vector icon is drawn: Godot's SVG renderer measures a curved path by its end points,
+## so a gradient sized to the shape's box drew nothing on a dome or bowl whose ends sit level (the neighbours'
+## bodies and hair, the seed sack's top, the stall's awning tabs). The gradients span the shape in its own units.
+func test_453_every_vector_icons_shapes_are_drawn() -> void:
+	var dir := "res://art/icons/ui/"
+	var rx := RegEx.new()
+	rx.compile("<linearGradient [^>]*>")
+	for file in DirAccess.get_files_at(dir):
+		if not file.ends_with(".svg"):
+			continue
+		for m in rx.search_all(FileAccess.get_file_as_string(dir + file)):
+			_check(m.get_string().contains("gradientUnits=\"userSpaceOnUse\""), "%s: a gradient in the shape's units" % file)
+	var img := Image.new()
+	img.load_svg_from_string(FileAccess.get_file_as_string(dir + "neighbours.svg"), 1.0)
+	var body := img.get_pixel(40, 106)   # the front neighbour's green shirt
+	_check(body.a > 0.9 and body.g > body.r + 0.1, "the neighbours' shirt is drawn (was see-through white)")
