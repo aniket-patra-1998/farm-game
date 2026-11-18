@@ -482,6 +482,8 @@ func _pick_job(rng: RandomNumberGenerator, taken: Array) -> Dictionary:
 	for t: Dictionary in daily_data.get("templates", []):
 		if game.level() < int(t.get("level", 1)):
 			continue
+		if t.has("needs") and own_count(str(t["needs"])) == 0:   # a job for bees waits for a beehive
+			continue
 		for what in pick_candidates(str(t.get("what", ANY))):
 			if taken.any(func(j: Dictionary) -> bool: return j["do"] == t["do"] and j["what"] == what):
 				continue
@@ -513,7 +515,7 @@ func per_day_of(what: String) -> int:
 	return n
 
 
-## What a daily template's `what` can be on this farm now: a pick (@crop_unlocked, @crop_quick, @animal_owned,
+## What a daily template's `what` can be on this farm now: a pick (@crop_unlocked, @crop_quick, @animal_owned, @tree_owned,
 ## @recipe_known, @building_owned) gives the choices, anything else is itself.
 func pick_candidates(what: String) -> Array:
 	match what:
@@ -525,6 +527,8 @@ func pick_candidates(what: String) -> Array:
 				func(id: String) -> bool: return float(game.crops[id]["grow_seconds"]) <= hours)
 		"@animal_owned":
 			return _owned_of_kind("animal")
+		"@tree_owned":
+			return _owned_of_kind("tree")
 		"@building_owned":
 			return _owned_of_kind("building")
 		"@recipe_known":

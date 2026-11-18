@@ -39,6 +39,8 @@ var _actions := 0         # what is left to do in this visit
 var _minutes := 5.0       # how long a visit lasts
 var _expansions := 0
 var _bought := {}         # item id -> bought
+var _cleared := 0         # plots cleared to make room for what a goal asks to buy or a vehicle
+var _last_cleared := -1
 var _spent := 0           # coins spent (every fall of the purse)
 var _last_coins := 0
 var _away_days := 0
@@ -172,6 +174,12 @@ func _play() -> void:
 		", ".join(PackedStringArray(bought)), _expansions, game.farm_size, game.farm_size, _collected, _fed])
 	print("goals collected %d (chain steps %d, jobs swapped %d); coins spent %d" % [
 		goals_claimed, chain_steps, swaps, _spent])
+	if follows_goals():
+		var at := []
+		for id: String in game.goals.chain_step:
+			at.append("%s at step %d" % [id, int(game.goals.chain_step[id]) + 1])
+		print("chains done: %s; open: %s; plots cleared for goals %d" % [", ".join(PackedStringArray(
+			game.goals.chains_done)), ", ".join(PackedStringArray(at)), _cleared])
 
 
 ## Today's jobs still open (not collected) now: at a day's end, the jobs the day did not finish.
@@ -302,6 +310,9 @@ func _visit(next_visits: Array) -> void:
 				GameState.Phase.WITHERED:
 					if _act():
 						game.field.plow(i)
+	if follows_goals():
+		_goal_buy()   # before replanting: an empty plot can still be cleared to make room for it
+		_goal_vehicles()
 	for r in game.farm_size:
 		for c in game.farm_size:
 			var i := game.index_of(r, c)
@@ -401,18 +412,79 @@ func _swap_undoable() -> void:
 			swaps += 1
 
 
-## Buys what an open goal asks to buy or own, when the coins reach (before the bot's own spending).
+## Buys what an open goal asks to buy or own, when the coins reach (before the bot's own spending): the thing
+## itself, or for a kind ("own 6 trees") the cheapest of that kind on sale. When nothing fits, an empty plot is
+## cleared to make room (as a player clears one with Sell).
 func _goal_buy() -> void:
 	for task: Dictionary in _open_tasks():
-		var id := str(task.get("what", ""))
-		if not str(task["do"]) in ["buy", "own", "build"] or not game.items.has(id):
+		if not str(task["do"]) in ["buy", "own", "build"]:
 			continue
-		for r in range(game.farm_size - 1, -1, -1):
-			for c in range(game.farm_size - 1, -1, -1):
-				if game.can_place(id, r, c):
-					if _act() and game.buy_and_place(id, r, c):
-						_bought[id] = int(_bought.get(id, 0)) + 1
-					return
+		var id := _goal_item(str(task.get("what", "")))
+		if id == "" or not game.buildings.can_buy(id).ok():
+			continue
+		if not _buy_somewhere(id) and _clear_a_plot():
+			_buy_somewhere(id)
+		return
+
+
+## Buys `id` on the first free spot from the back of the farm. False when nothing fits.
+func _buy_somewhere(id: String) -> bool:
+	for r in range(game.farm_size - 1, -1, -1):
+		for c in range(game.farm_size - 1, -1, -1):
+			if game.can_place(id, r, c):
+				if _act() and game.buy_and_place(id, r, c):
+					_bought[id] = int(_bought.get(id, 0)) + 1
+				return true
+	return false
+
+
+## The item a goal's `what` asks for: itself, or the cheapest coin-bought one of a kind the farm can buy now.
+func _goal_item(what: String) -> String:
+	if game.items.has(what):
+		return what
+	var best := ""
+	var best_cost := INF
+	for id: String in game.items:
+		var it: Dictionary = game.items[id]
+		var cost := int(game.buildings.price_of(id).get("coins", 0))
+		if str(it.get("kind", "")) == what and cost > 0 and cost < best_cost and game.buildings.can_buy(id).ok():
+			best = id
+			best_cost = cost
+	return best
+
+
+## Clears one plot that grows nothing (plowed or withered) at the back of the farm. True when one was cleared.
+func _clear_a_plot() -> bool:
+	for r in range(game.farm_size - 1, -1, -1):
+		for c in range(game.farm_size - 1, -1, -1):
+			var i := game.index_of(r, c)
+			if game.is_occupied(i) or game.plots[i].get("state") == "planted":
+				continue
+			if game.field.phase(i) != GameState.Phase.GRASS and _act() and game.field.clear_plot(i):
+				_cleared += 1
+				_last_cleared = i
+				return true
+	return false
+
+
+## Sends a vehicle on a goal's run ("plow 10 plots with the Tractor"): old plots that grow nothing are cleared
+## first when the farm has no grass left (as a player clears them with Sell), then the run starts on the grass.
+func _goal_vehicles() -> void:
+	for task: Dictionary in _open_tasks():
+		if str(task["do"]) != "vehicle_work":
+			continue
+		for id in game.vehicles.usable_vehicles():
+			if not game.goals.matches(str(task.get("what", "")), id) or game.vehicles.is_running(id):
+				continue
+			var grass := []
+			for i in game.plots.size():
+				if game.on_farm(i) and not game.is_occupied(i) and game.field.phase(i) == GameState.Phase.GRASS:
+					grass.append(i)
+			while grass.size() < int(task["left"]) and _clear_a_plot():
+				grass.append(_last_cleared)
+			if not grass.is_empty() and _act():
+				game.vehicles.use_vehicle(id, GameState.row_of(grass[0]), GameState.col_of(grass[0]))
+			return
 
 
 ## Places the things waiting in the inbox that a goal gave (the Welcome chain's chicken), as a player taps Place.
@@ -442,7 +514,7 @@ func _act() -> bool:
 
 func _collect_ready() -> void:
 	for o in game.objects.duplicate():
-		if game.kind_of(o) in ["tree", "animal"] and game.is_ready(o):
+		if game.kind_of(o) in ["tree", "animal", "bloom"] and game.is_ready(o):
 			if not _act():
 				return
 			var got := game.collect(int(o["uid"]))
