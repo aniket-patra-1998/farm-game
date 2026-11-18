@@ -208,3 +208,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   that stopped, animals walk a planted-foot gait at their stride, UI motion lives in `UiFx`. Open, reported:
   the level-up confetti is 90 hard-edged rectangles in deep colours (a softer shape is a look to pick). Next
   audit: feedback and sound.
+
+## After the feature freeze (owner-approved ideas, 18 Nov)
+- Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
+  scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
+- Launch: privacy-safe analytics (where players quit, what they buy, unused items) for tuning the economy from real
+  play; clock-tamper protection against server time with cloud saves. No AI in the game itself.

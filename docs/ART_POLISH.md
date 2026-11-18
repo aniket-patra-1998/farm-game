@@ -71,6 +71,11 @@ the animals' style; (3) icons, menus, motion.
   simpler and calmer (fewer boxes, clearer hierarchy) while doing the same things.
 - Motion: easing, timing and amplitude of UI and world animations (pop-ins, panels, bobs, sways), restrained and
   smooth; nothing too fast, bouncy or jittery.
+- Animal life, small version (owner-approved 18 Nov; looks only, never coins, finds or timers; each animal thinks
+  every 1-2 s and only on screen; settings in the animals' rig data): animals face away from rain and stand closer
+  in a storm, an activity rhythm through the day (busy morning, resting in the afternoon heat, still at night), and
+  animals turning to look as the farmer walks past. Herds, mothers and babies, fleeing into buildings and the dog
+  companion wait until after the feature freeze.
 - Broken pieces: anything misdrawn, misaligned, z-fighting, clipped, overlapping, missing a state, or out of style.
 
 ## What a run only reports (never builds)

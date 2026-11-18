@@ -98,6 +98,15 @@ Two loops run at once (this fix loop and the art loop, docs/ART_POLISH.md), and 
    backlog items; keep docs/NEXT.md's handoff current.
 
 ## Backlog (seed; the log doc's copy is the live one, fed by the audits)
+Owner-approved first (18 Nov), in order:
+A. Random play covers every system (VIP, rust, crafting levels, feeding, storing, helpers, mystery young) and
+   jumps the clock mid-run (+1 hour, +1 day, +30 days, -1 day), checking every invariant after each jump; the push
+   run stays small, a long run (hundreds of seeds, thousands of steps) goes in its own nightly CI workflow.
+B. Validation of the number files outside the catalog (balance.json, rolls.json and the rest): no negative cost,
+   no chance over 1, no missing field; fails the build.
+C. Exploit hunter: the balance simulator searches for the fastest coin and XP loops (search code, not an LLM);
+   a loop that beats the intended pace is a finding.
+(Clock-tamper protection against server time waits for cloud saves: a launch item, not now.)
 1. Other sessions' branches (see step 4).
 2. Phone UI: every panel and sheet at 20:9 and 4:3; nothing cut, off screen or too small to tap.
 3. Edge cases and stress: full farm, empty farm, full Barn and inbox, long offline time, clock changes.
