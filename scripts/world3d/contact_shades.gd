@@ -29,7 +29,13 @@ static func of(anchor: Node3D) -> ContactShades:
 		return have
 	var made := ContactShades.new()
 	made._top = top
-	top.add_child.call_deferred(made)   # (the farm may be busy adding the animal that asked)
+	# (The farm may be busy adding the thing that asked; one gone by then takes its batch with it.)
+	(func() -> void:
+		var still := instance_from_id(key) as Node   # (by its id: a freed node can't be held)
+		if still != null:
+			still.add_child(made)
+		else:
+			made.free()).call_deferred()
 	_batches[key] = made
 	return made
 
@@ -61,8 +67,8 @@ func take() -> int:
 
 ## Where a slot's shade lies (in this batch's space, which is the farm's) and how strong it is (0..1).
 func put(slot: int, where: Transform3D, strength: float) -> void:
-	if slot < 0 or slot >= multimesh.instance_count:
-		return
+	if slot < 0 or slot >= multimesh.instance_count or is_zero_approx(_top.global_transform.basis.determinant()):
+		return   # (a top shrunk to nothing, a thing popping in on its own, has no ground to shade yet)
 	var local := _top.global_transform.affine_inverse() * where
 	multimesh.set_instance_transform(slot, local)
 	multimesh.set_instance_color(slot, Color(1, 1, 1, strength))

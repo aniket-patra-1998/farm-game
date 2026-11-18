@@ -10,6 +10,7 @@ signal finished
 
 const POP_SECONDS := 0.35
 const LEAVE_SECONDS := 0.3
+const SHADE_SPAN := 1.6       # its contact shade's span, of its width (it is longer than it is wide)
 const REEL_WORK := 7.0         # radians per second a reel turns while working
 const REEL_IDLE := 2.0
 const DUST_SPREAD := 0.35      # how far out from the line the dust flies, tiles per second
@@ -71,6 +72,8 @@ func _start() -> void:
 	_model = VehicleModel.build(item, false, true, work.game.rust.level(work.id))
 	_model.position = Vector3(-0.5, 0, -0.5)     # turn about the vehicle's middle
 	add_child(_model)
+	var span := VehicleModel.width_of(item) * SHADE_SPAN   # (grounded as the farmer and the animals are)
+	add_child(GroundShade.under(AABB(Vector3(-span / 2.0, 0, -span / 2.0), Vector3(span, span, span)), true))
 	_rig()
 	_place()
 	_hum = Feedback.hum("engine")

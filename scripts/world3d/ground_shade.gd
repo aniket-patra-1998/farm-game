@@ -2,8 +2,9 @@ class_name GroundShade
 extends Node3D
 ## The soft contact shade on the grass under a standing thing that is not an animal (a gnome, a lamp, a hay
 ## bale): the same shade animals have (ContactShades, one draw for all of them), so a decoration is grounded
-## like its neighbours instead of looking stuck on. It lies under the box `fit` gives it, follows the thing's
-## visibility (in hand: gone) and gives its slot back when the thing leaves the farm.
+## like its neighbours instead of looking stuck on. It lies under the box `under` gives it, follows the thing's
+## visibility (in hand: gone) and gives its slot back when the thing leaves the farm. A shade made to `follow`
+## (the farmer, a vehicle at work) moves with what it is under.
 ## Flat things (paths, beds) and large ones (whose tile already shades the grass, Ground3D) get none: `fits`.
 
 const SPREAD := 1.5           # the shade reaches this far past the thing's footprint (the falloff hides its rim)
@@ -15,6 +16,7 @@ const MAX_SIDE := 1.6         # tiles: anything wider has its tile shaded alread
 var _shades: ContactShades
 var _slot := -1
 var _size := Vector2.ONE
+var _at := Vector3.INF        # where it was last put (a following shade is put again only when it has moved)
 
 
 ## Whether a thing whose box (in its holder's space) is `box` gets a contact shade.
@@ -23,11 +25,18 @@ static func fits(box: AABB) -> bool:
 
 
 ## A shade for the thing whose box (in the space of the node it will be added to) is `box`.
-static func under(box: AABB) -> GroundShade:
+## With `follow`, it moves with what it is under.
+static func under(box: AABB, follow := false) -> GroundShade:
 	var shade := GroundShade.new()
 	shade.position = Vector3(box.get_center().x, LIFT, box.get_center().z)
 	shade._size = Vector2(box.size.x, box.size.z) * SPREAD
+	shade.set_process(follow)
 	return shade
+
+
+func _process(_delta: float) -> void:
+	if is_visible_in_tree() and not global_position.is_equal_approx(_at):
+		_push()
 
 
 func _notification(what: int) -> void:
@@ -48,4 +57,5 @@ func _push() -> void:
 		_shades = ContactShades.of(self)
 		_slot = _shades.take()
 	var basis := Basis.from_scale(Vector3(_size.x, 1.0, _size.y))
-	_shades.put(_slot, Transform3D(basis, global_position), STRENGTH if is_visible_in_tree() else 0.0)
+	_at = global_position
+	_shades.put(_slot, Transform3D(basis, _at), STRENGTH if is_visible_in_tree() else 0.0)

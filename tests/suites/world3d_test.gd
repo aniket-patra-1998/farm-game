@@ -2300,6 +2300,18 @@ func test_447_standing_decorations_have_a_contact_shade_as_animals_do() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check(batch.take() == slot, "sold, it gives its slot back")
+	# The farmer (and a vehicle at work) has one too, and it follows them.
+	var farmer := Farmer3D.new()
+	objects.add_child(farmer)
+	await get_tree().process_frame
+	var follows := farmer.find_children("*", "GroundShade", false, false)
+	_eq(follows.size(), 1, "the farmer has a contact shade")
+	var walker := follows[0] as GroundShade
+	walker.global_position = Vector3(7, 0, 9)   # (the farmer walks where Game.player is: here, it is moved)
+	await get_tree().process_frame
+	var now := walker._shades.where_of(walker._slot)
+	var feet := walker.global_position
+	_check(Vector2(now.x - feet.x, now.z - feet.z).length() < 0.05, "that walks with them (%s)" % str(now))
 	objects.queue_free()
 	await get_tree().process_frame
 	Game.reset_game()

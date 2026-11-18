@@ -28,6 +28,7 @@ const BLINK_FOR := 0.13
 const FILE_HEAD := Vector3(-0.01, 0.6, 0.0)   # the file's head: its middle (tiles), and its radius, for a hat
 const FILE_HEAD_R := 0.15
 const ROUND := 12                 # sides of a limb or the body
+const FOOT := 0.26                # tiles: the span of the contact shade under the farmer (GroundShade), as an animal's
 const DEEP := 0.72                # the body's depth, front to back, against its width
 const SMILE := 7                  # dots in the smile
 const CHEEK := Color("#f08a8a")   # the blush mixed into the skin on the cheeks
@@ -47,6 +48,7 @@ var _swing: Array[float] = [0.0, 0.0, 0.0, 0.0]   # the file's limbs now: both l
 func _ready() -> void:
 	Game.player.look_changed.connect(rebuild)
 	rebuild()
+	add_child(GroundShade.under(AABB(Vector3(-FOOT / 2.0, 0, -FOOT / 2.0), Vector3(FOOT, HIP, FOOT)), true))
 
 
 ## Builds the farmer from Game.player.look (again whenever it changes).
