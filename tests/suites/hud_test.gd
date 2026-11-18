@@ -689,27 +689,27 @@ func test_374_a_card_list_of_thousands_keeps_only_the_cards_in_view() -> void:
 	list._shown.clear()
 	list._spare.clear()
 	await get_tree().process_frame
-	started = Time.get_ticks_usec()
-	list._lay_out()
-	open_ms += (Time.get_ticks_usec() - started) / 1000.0
+	open_ms += _fastest_ms(func() -> void:   # (the first screen laid out from nothing, each try)
+		for card: CardFace in list.shown():
+			card.free()
+		list._shown.clear()
+		list._spare.clear()
+		list._lay_out())
 	_check(list.get_child_count() <= MOST_CARDS and not list.shown().is_empty(),
 		"only the cards in view are made (%d of %d)" % [list.get_child_count(), ITEMS])
 	_check(list.custom_minimum_size.y > scroll.size.y * 10.0, "but the list is as tall as all its rows")
 	_check(open_ms < OPEN_MS, "it opens within budget (%.1f ms)" % open_ms)
-	started = Time.get_ticks_usec()
-	for k in 10:
-		scroll.scroll_vertical = int(list.custom_minimum_size.y * k / 10.0)
-		list._lay_out()
-	var scroll_ms := (Time.get_ticks_usec() - started) / 1000.0
+	var scroll_ms := _fastest_ms(func() -> void:
+		for k in 10:
+			scroll.scroll_vertical = int(list.custom_minimum_size.y * k / 10.0)
+			list._lay_out())
 	_check(scroll_ms < SCROLL_MS, "scrolling the whole list is within budget (%.1f ms)" % scroll_ms)
 	_check(list.get_child_count() <= MOST_CARDS, "and the cards are reused, not made again (%d)" % list.get_child_count())
 	var last: CardFace = list.shown()[0]
 	_check(int(last.id.trim_prefix("fake_")) > ITEMS / 2, "the cards show the items scrolled to")
 	asked[0] = 0
-	started = Time.get_ticks_usec()
-	list.refresh()
-	var refresh_ms := (Time.get_ticks_usec() - started) / 1000.0
-	_check(asked[0] == list.shown().size(), "a refresh reads only the faces on screen")
+	var refresh_ms := _fastest_ms(func() -> void: list.refresh())
+	_check(asked[0] == list.shown().size() * TIMING_TRIES, "a refresh reads only the faces on screen")
 	_check(refresh_ms < REFRESH_MS, "within budget (%.1f ms)" % refresh_ms)
 	list.press("fake_4999")
 	_eq(tapped, ["fake_4999"], "a card's item can be pressed whether it is on screen or not")

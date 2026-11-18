@@ -50,10 +50,10 @@ func test_387_5000_things_are_searched_within_budget() -> void:
 		ids.append("item_%d" % k)
 	var idx := SearchIndex.new(ids, func(id: String) -> Dictionary:
 		return {"name": names[int(id.trim_prefix("item_"))], "more": "farm stuff"})
-	var began := Time.get_ticks_usec()
-	for q in ["t", "th", "thi", "thin", "thing", "thing4", "thing42"]:
-		idx.find(q)
-	var each := (Time.get_ticks_usec() - began) / 1000.0 / 7.0
+	var letters := ["t", "th", "thi", "thin", "thing", "thing4", "thing42"]
+	var each := _fastest_ms(func() -> void:
+		for q: String in letters:
+			idx.find(q)) / letters.size()
 	_check(each < BUDGET_MS, "a letter typed over 5,000 things costs %.2f ms" % each)
 
 

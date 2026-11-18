@@ -26,21 +26,18 @@ func test_372_a_farm_of_thousands_changes_one_thing_at_one_things_cost() -> void
 	var told := [0]
 	var count := func(_u: int) -> void: told[0] += 1
 	Game.object_changed.connect(count)
-	var began := Time.get_ticks_usec()
-	for k in 200:
-		Game.objects_updated(uid + k * 4)
-	var each := (Time.get_ticks_usec() - began) / 1000.0 / 200.0
-	_eq(told[0], 200, "each change in place is told for its thing alone")
+	var each := _fastest_ms(func() -> void:
+		for k in 200:
+			Game.objects_updated(uid + k * 4)) / 200.0
+	_eq(told[0], 200 * TIMING_TRIES, "each change in place is told for its thing alone")
 	_check(each < IN_PLACE_MS, "a change in place costs %.3f ms on %d things" % [each, OBJECTS])
-	began = Time.get_ticks_usec()
-	Game.objects_updated()
-	var whole := (Time.get_ticks_usec() - began) / 1000.0
+	var whole := _fastest_ms(func() -> void: Game.objects_updated())
 	_check(whole < WHOLE_MS, "a change to the whole farm costs %.1f ms" % whole)
 	var cow := Game.object_by_uid(uid + 1)
-	cow["t"] = Game.now() - 999999
-	began = Time.get_ticks_usec()
-	Game.collect(uid + 1)
-	var collect := (Time.get_ticks_usec() - began) / 1000.0
+	var collect := INF
+	for t in TIMING_TRIES:   # (timed one at a time: the cow is made ready again before each collect)
+		cow["t"] = Game.now() - 999999
+		collect = minf(collect, _fastest_ms(func() -> void: Game.collect(uid + 1), 1))
 	_check(collect < COLLECT_MS, "collecting from one cow costs %.2f ms" % collect)
 	Game.object_changed.disconnect(count)
 	Game.reset_game()

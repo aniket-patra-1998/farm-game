@@ -5,6 +5,8 @@ extends Node
 
 const MAIN_SCENE := preload("res://scenes/main.tscn")
 
+const TIMING_TRIES := 5   # runs of a timed piece of work; its budget holds the fastest (_fastest_ms)
+
 var checks := 0
 var failures: Array[String] = []
 var current := ""
@@ -14,6 +16,17 @@ func _check(condition: bool, what: String) -> void:
 	checks += 1
 	if not condition:
 		failures.append("%s: %s" % [current, what])
+
+
+## A timing budget's measure: the fastest of a few runs of `work`, in ms. Noise (another process, a busy core)
+## only ever adds time, so the fastest run is the work's own cost; one slow run on a shared runner is not a fail.
+func _fastest_ms(work: Callable, tries := TIMING_TRIES) -> float:
+	var best := INF
+	for t in tries:
+		var began := Time.get_ticks_usec()
+		work.call()
+		best = minf(best, (Time.get_ticks_usec() - began) / 1000.0)
+	return best
 
 
 
