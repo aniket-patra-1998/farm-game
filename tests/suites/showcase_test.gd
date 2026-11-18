@@ -139,8 +139,8 @@ func test_454_a_farm_opened_in_place_is_covered_and_built_at_full_speed() -> voi
 	g.open_own_farm()
 	_eq(told[0], 2, "and so does going back to your own")
 	g.free()
-	var objects := Objects3D.new()
-	add_child(objects)
+	var objects := Objects3D.new()   # (before its first sync: in the tree, a farm small enough to stand in one
+	# frame's budget is already synced, so the check would hang on how fast this machine built the shared farm)
 	_eq(objects.call("_budget_ms"), Objects3D.OPENING_BUDGET_MS, "a farm first opening builds more a frame")
 	LoadingCover.covering += 1
 	_eq(objects.call("_budget_ms"), Objects3D.COVERED_BUDGET_MS, "and under the loading cover, at full speed")
