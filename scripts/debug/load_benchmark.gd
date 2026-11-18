@@ -14,6 +14,7 @@ signal finished(report: Dictionary)
 
 const FILE := "user://load_benchmark.json"
 const FEATURE := "benchmark"     # not-ui (an export feature tag)
+const MARK := "BENCH "           # not-ui (what starts the report's log line; phone_bench.yml reads it)
 const LONG_FRAME_MS := 100.0     # a frame this long is a stall (a material drawn the first time, a load)
 const PLAY_SECONDS := 5.0        # playing at the playing zoom, measured
 const PLAY_ZOOM := 1.6           # the camera zoom a player farms at
@@ -63,7 +64,7 @@ func _run() -> void:
 
 ## The report so far, as the log line (the last one in a log is the newest) and in FILE.
 static func line_of(report: Dictionary) -> String:
-	return "BENCH " + JSON.stringify(report)   # not-ui (a log line)
+	return MARK + JSON.stringify(report)
 
 
 func _tell(report: Dictionary) -> void:
@@ -71,7 +72,7 @@ func _tell(report: Dictionary) -> void:
 	print(line)
 	var f := FileAccess.open(FILE, FileAccess.WRITE)
 	if f != null:
-		f.store_string(line.trim_prefix("BENCH "))
+		f.store_string(line.trim_prefix(MARK))
 
 
 ## One farm opening: `open` lays it out; then the time until every thing is built, until the cover lifts (the

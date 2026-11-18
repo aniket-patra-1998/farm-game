@@ -2365,6 +2365,6 @@ func test_497_the_phone_benchmark_line_reads_back_whole() -> void:
 	var report := {"device": {"model": "test"}, "startup_ms": 12, "done": false, "showcase_cold": {"built_ms": 3}}
 	var line := LoadBenchmark.line_of(report)
 	_check(line.begins_with("BENCH {") and line.ends_with("}") and not line.contains("\n"), "one line (%s)" % line)
-	var back: Variant = JSON.parse_string(line.trim_prefix("BENCH "))
+	var back: Variant = JSON.parse_string(line.trim_prefix(LoadBenchmark.MARK))
 	_check(back is Dictionary and back.get("done") == false, "it says the run is not done yet")
 	_eq(int((back as Dictionary).get("showcase_cold", {}).get("built_ms", -1)), 3, "and keeps what was measured")
