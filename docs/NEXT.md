@@ -225,6 +225,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   loop of up to N actions on a tile (test 443 fails a loop paying coins with no wait); its one finding,
   plow-place-sell buys 1 XP for 34 coins with no wait (FarmVille's own), is reported for the owner. Precheck
   took ~2-3 min this run. Next: the feedback-on-taps audit, then first-hour feel.
+- Run 19 (tests' timing, then the feedback-on-taps audit): the 2-core runner runs slow for seconds at a time,
+  so the fastest of 5 still failed search 387 for the art loop. Every timing budget now pairs each run with a
+  fixed yardstick (`TestSuite._yardstick`, `YARDSTICK_MS`) and scales a slower machine back (never a faster one
+  up); tries 10; test 444. SearchIndex.find a third faster. Feedback audit: every farm action has its moment;
+  a vehicle's finished run is now heard by its job (`FarmGrid.vehicle_moment`, test 445); Rotate, Store and a
+  refused Sell or first sell tap now answer (test 446), and storing with the Store tool no longer errors (it read
+  the thing's row after the Barn took it). Next audit: first-hour feel.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
