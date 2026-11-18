@@ -154,7 +154,7 @@ func load_save() -> bool:
 	game.clear_until = int(data.get("clear_until", 0))
 	game.unwithers = int(data.get("unwithers", Balance.i("economy.start_unwithers")))
 	game.fertilize_alls = int(data.get("fertilize_alls", 0))
-	var saved_parts: Dictionary = data.get("parts", {})
+	var saved_parts := GameSystem.int_map(data.get("parts", {}))
 	game.parts = {}
 	for p in game.part_ids:
 		game.parts[p] = int(saved_parts.get(p, 0))

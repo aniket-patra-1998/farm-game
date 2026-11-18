@@ -437,3 +437,37 @@ func test_192_a_load_trace_is_kept_line_by_line_and_the_last_one_survives() -> v
 	_check(LoadTrace.previous().contains("begin first") and LoadTrace.previous().contains("one step"),
 		"the trace before is kept, every line of it")
 	_check(FileAccess.get_file_as_string(LoadTrace.PATH).contains("begin second"), "the new one is written at once")
+
+
+func test_437_a_tampered_save_never_loads_a_negative_count() -> void:
+	var path := "user://test_save_negative.json"
+	var g := _farm()
+	g.save_path = path
+	g.saving_enabled = false
+	var plots: Array = []
+	for i in GameState.MAX_SIZE * GameState.MAX_SIZE:
+		plots.append({"state": "grass"})
+	var part: String = GameState.part_ids[0] if not GameState.part_ids.is_empty() else "nails"
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(JSON.stringify({"version": GameState.SAVE_VERSION, "coins": 77, "plots": plots, "next_uid": 3,
+		"objects": [{"id": "hay_bale", "uid": 1, "row": 1, "col": 1, "t": 0}],
+		"parts": {part: -5}, "bushels": {"wheat": -3, "corn": 2, "odd": {"x": 1}}, "feed_stock": {"hay": -1},
+		"mystery_eggs": {"white": NAN}, "owned": {"bell": -2}, "mastery": {"wheat": -40},
+		"queen_bees": -2, "truffles": -9, "fuel": -100, "fuel_tanks": -1, "daily_streak": -4,
+		"stored": [{"id": "hay_bale", "uid": 2}, "junk", {"id": "hay_bale"}, {"id": "hay_bale", "uid": 1}]}))
+	f.close()
+	_check(g.load_game(), "a tampered save still loads")
+	_eq(g.coins, 77, "and keeps what was sound")
+	_eq(int(g.parts.get(part, 0)), 0, "a negative part count is dropped")
+	_check(not g.crafting.bushels.has("wheat") and not g.crafting.bushels.has("odd"), "bad bushel counts are dropped")
+	_eq(int(g.crafting.bushels.get("corn", 0)), 2, "a good one is kept")
+	_check(not g.feeds.stock.has("hay"), "no negative feed")
+	_check(g.mystery.mystery_eggs.is_empty(), "no unreadable egg count")
+	_check(not g.collectibles.owned.has("bell"), "no negative collectible")
+	_check(not g.mastery.points.has("wheat"), "no negative mastery")
+	for v: int in [g.bees.queen_bees, g.pigpen.truffles, g.vehicles.fuel, g.vehicles.fuel_tanks, g.daily.daily_streak]:
+		_check(v >= 0, "a system's count is never negative (%d)" % v)
+	_eq(g.storage.stored.size(), 1, "only the sound stored thing stays (no uid, junk and a uid on the farm go)")
+	_check(g.next_uid > 2, "new things are numbered above the stored ones")
+	_done(g)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

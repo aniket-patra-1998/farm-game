@@ -6,7 +6,8 @@ extends RefCounted
 
 const FIELDS := ["uid", "row", "col", "t"]            # every placed object has these, as whole numbers
 const COUNTS := ["coins", "gems", "xp", "unwithers", "fertilize_alls", "farmhands", "arborists", "gardeners",
-	"fertilizer_bags"]                                   # never negative
+	"fertilizer_bags", "queen_bees", "truffles", "fuel", "fuel_tanks", "daily_streak"]   # never negative
+# (Saved maps of counts are read through GameSystem.int_map, which drops a negative or unreadable entry.)
 
 
 ## `data` is changed in place. `known_items` says which ids exist; `max_size` is the farm grid's edge;
@@ -15,7 +16,7 @@ static func clean(data: Dictionary, known_items: Dictionary, max_size: int, empt
 	var fixed := 0
 	for key: String in COUNTS:
 		if data.has(key):
-			var v: Variant = _whole(data[key])
+			var v: Variant = whole(data[key])
 			if v == null or int(v) < 0:
 				data.erase(key)
 				fixed += 1
@@ -34,7 +35,20 @@ static func clean(data: Dictionary, known_items: Dictionary, max_size: int, empt
 		top = maxi(top, int(obj["uid"]))
 		kept.append(obj)
 	data["objects"] = kept
-	var next: Variant = _whole(data.get("next_uid", 1))
+	var stored: Array = []
+	for o in data.get("stored", []) if data.get("stored") is Array else []:
+		var uid: Variant = whole(o.get("uid")) if o is Dictionary else null
+		if uid == null or int(uid) <= 0 or seen.has(int(uid)) or not (o.get("id") is String) \
+				or not known_items.has(o["id"]):
+			fixed += 1
+			continue
+		o["uid"] = int(uid)
+		seen[o["uid"]] = true
+		top = maxi(top, int(uid))
+		stored.append(o)
+	if data.has("stored"):
+		data["stored"] = stored
+	var next: Variant = whole(data.get("next_uid", 1))
 	data["next_uid"] = maxi(1 if next == null else int(next), top + 1)
 	if data.get("plots") is Array:
 		var plots: Array = data["plots"]
@@ -53,7 +67,7 @@ static func _object(o: Variant, known_items: Dictionary, max_size: int) -> Dicti
 	if not (obj.get("id") is String) or not known_items.has(obj["id"]):
 		return {}
 	for field: String in FIELDS:
-		var v: Variant = _whole(obj.get(field))
+		var v: Variant = whole(obj.get(field))
 		if v == null and field == "t":
 			v = 0                                          # when it was made: any time will do
 		if v == null:
@@ -64,7 +78,7 @@ static func _object(o: Variant, known_items: Dictionary, max_size: int) -> Dicti
 		return {}
 	for field: String in ["level", "forage_until"]:
 		if obj.has(field):
-			var v: Variant = _whole(obj[field])
+			var v: Variant = whole(obj[field])
 			if v == null:
 				obj.erase(field)
 			else:
@@ -73,7 +87,7 @@ static func _object(o: Variant, known_items: Dictionary, max_size: int) -> Dicti
 
 
 ## A number as a whole number (JSON gives floats), or null for anything else, NaN and infinity included.
-static func _whole(v: Variant) -> Variant:
+static func whole(v: Variant) -> Variant:
 	if v is int:
 		return v
 	if v is float and is_finite(v):

@@ -47,10 +47,13 @@ func shift_clock(_seconds: int) -> void:
 	pass
 
 
-## A saved map with its values read back as ints (JSON numbers load as floats).
+## A saved map of counts with its values read back as ints (JSON numbers load as floats). A negative or
+## unreadable entry (a damaged or hand-edited save) is dropped: no count in the game goes below zero.
 static func int_map(d: Variant) -> Dictionary:
 	var out := {}
 	if typeof(d) == TYPE_DICTIONARY:
 		for k in d:
-			out[str(k)] = int(d[k])
+			var v: Variant = SaveCheck.whole(d[k])
+			if v != null and int(v) >= 0:
+				out[str(k)] = int(v)
 	return out
