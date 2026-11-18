@@ -331,3 +331,30 @@ func test_343_accept_all_rebuilds_the_farm_once() -> void:
 	_check(told[0] <= 1, "the farm hears of them once at most, not once each")
 	g.objects_changed.disconnect(count)
 	_done(g)
+
+
+func test_527_accept_all_says_what_still_waits_and_why() -> void:
+	var g := _farm()
+	while g.storage.has_room():
+		g.storage.stored.append({"uid": g.next_uid, "id": "hay_bale", "t": g.now()})
+		g.next_uid += 1
+	g.social.deliver({"what": InboxItem.ITEM, "id": "cow", "n": 1})
+	g.social.deliver({"what": InboxItem.ITEM, "id": "cow", "n": 1})
+	g.social.deliver({"what": InboxItem.COINS, "n": 5})
+	var said := [""]
+	var hear := func(text: String) -> void: said[0] = text
+	g.message.connect(hear)
+	var tally := g.social.help_all()
+	_eq(int(tally["claimed"]), 1, "the coins are claimed")
+	_eq(int(tally["no_room"]), 2, "both cows wait: the Barn is full")
+	_check(said[0].contains(tr("SOCIAL_HELP_ALL_NO_ROOM") % 2), "and Accept all says so: " + said[0])
+	_eq(g.social.help_all_words({"claimed": 0, "helped": 1, "left": 3, "no_room": 0}),
+		tr("SOCIAL_HELP_ALL") % [0, 1] + ". " + tr("SOCIAL_HELP_ALL_NO_HELPS") % 3, "helps left for tomorrow")
+	# With the neighbours switched off, the farm's own things are still taken (they never needed a neighbour).
+	g.storage.stored.clear()
+	Balance.override("social.enabled", 0)
+	tally = g.social.help_all()
+	_eq(int(tally["claimed"]), 2, "switched off: the farm's own cows are still accepted")
+	Balance.reload()
+	g.message.disconnect(hear)
+	_done(g)

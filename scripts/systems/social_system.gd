@@ -176,23 +176,35 @@ func sender(item: Dictionary) -> String:
 ## One tap: claims every free item, then helps every request and seedling the day allows, oldest first.
 ## Returns {"claimed", "helped", "left": helps still waiting that the day's limit held back}.
 func help_all() -> Dictionary:
-	var tally := {"claimed": 0, "helped": 0, "left": 0}
-	if not enabled():
-		return tally
+	var tally := {"claimed": 0, "helped": 0, "left": 0, "no_room": 0}
 	game.hold_updates()
-	for item in inbox.duplicate():
-		if InboxItem.is_free(item) and claim(int(item["id"])):
+	for item in inbox.duplicate():   # (the farm's own things are claimed with the neighbours switched off too)
+		if not InboxItem.is_free(item) or (not enabled() and int(item.get("from", 0)) != InboxItem.FARM):
+			continue
+		if claim(int(item["id"])):
 			tally["claimed"] += 1
+		elif str(item["give"].get("what", "")) == InboxItem.ITEM:
+			tally["no_room"] += 1   # (waits for room in the Barn: claim said why)
 	for item in inbox.duplicate():
-		if not InboxItem.is_help(item):
+		if not enabled() or not InboxItem.is_help(item):
 			continue
 		if helps_left() <= 0:
 			tally["left"] += 1
 		elif claim(int(item["id"])):
 			tally["helped"] += 1
 	game.release_updates()
-	game.message.emit(tr("SOCIAL_HELP_ALL") % [tally["claimed"], tally["helped"]])
+	game.message.emit(help_all_words(tally))
 	return tally
+
+
+## What Accept all says it did, and why anything is still waiting (the Barn full, no helps left today).
+func help_all_words(tally: Dictionary) -> String:
+	var said := tr("SOCIAL_HELP_ALL") % [int(tally["claimed"]), int(tally["helped"])]
+	if int(tally["no_room"]) > 0:
+		said += ". " + tr("SOCIAL_HELP_ALL_NO_ROOM") % int(tally["no_room"])
+	if int(tally["left"]) > 0:
+		said += (" " if said.ends_with(".") else ". ") + tr("SOCIAL_HELP_ALL_NO_HELPS") % int(tally["left"])
+	return said
 
 
 # ---------------------------------------------------------------- your own posts
