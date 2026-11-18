@@ -438,6 +438,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   its way" stands level with its row (hud test 354). Reported for the goals loop: the goal faces cover an open
   panel's left edge (Collections' note loses its first letter). Next: reveal_card's and toasts' bare timings into
   UiFx (reveal_card is goals' step 4: wait until it merges), then icons' visual size in one set.
+- Art run 15 (19 Nov 01:05 IST): main only, order of work 3 (one icon set). 97d3d81: drawn icons (UiIcon, PortraitIcon,
+  ThingIcon) paint in two passes (UiIcon._painted: every shape's white sticker edge, then outlines and fills; _line and
+  _dot take no edge), so a part laid on another no longer cuts a white band across it (each neighbour's hat, cap and
+  fringe had a white stripe, the collar a white V, collection items white rings inside). Subclasses paint in _paint.
+  Then words fade away at one pace (FloatText.FADE_TIME 0.4 s: the toast, a button's name bubble, a swipe's count;
+  FarmHud.TOAST_SECONDS). tools/icon_sheet.tscn renders the whole set in ~1 min: use it for icon work. A shallow
+  clone's old local main looked diverged from origin (it was not on origin's 50-commit window): kept as a local
+  branch, main reset to origin/main. Next: icons' visual size in one set (the cursor, plus and note read small
+  beside the coin and barn at 96 px), reveal_card's bare timings once goals' step 4 settles.
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
