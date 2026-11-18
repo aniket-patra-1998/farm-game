@@ -84,10 +84,9 @@ static func stands_by_itself(it: Dictionary) -> bool:
 ## The shape for a tree: its form's sizes with its family's own laid over them.
 static func shape_of(it: Dictionary) -> Dictionary:
 	if _data.is_empty():
-		var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-		_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {"forms": {}, "families": {}}
-		if typeof(parsed) != TYPE_DICTIONARY:
-			push_error(PATH + " is missing or not valid JSON")
+		_data = DataFile.read(PATH)
+		if _data.is_empty():
+			_data = {"forms": {}, "families": {}}
 	var families: Dictionary = _data.get("families", {})
 	var own: Dictionary = families.get(str(it.get("family", "")), families.get(str(it.get("id", "")), {}))
 	var form := str(own.get("form", "round"))
@@ -104,6 +103,18 @@ static func _pick(sh: Dictionary, key: String, alts: String, fallback: String, r
 	var options: Array = [str(sh.get(key, fallback)) if key != "" else (main if main != "" else fallback)]
 	options.append_array(sh.get(alts, []))
 	return Color.html(str(options[rng.randi() % options.size()]))
+
+
+## A leaf colour in the farm's one family (data/tree_shapes.json `leaf_tone`): each kind keeps its own hue, but
+## all are mixed a little towards one shared warm green and softened, so a row of pink, teal and orange crowns
+## reads as painted from the same palette as the animals and the lawn beside them, not as candy.
+static func tone(col: Color) -> Color:
+	shape_of({})
+	var tn: Dictionary = _data.get("leaf_tone", {})
+	if tn.is_empty():
+		return col
+	var c := col.lerp(Color.html(str(tn.get("tint", "#8c9a52"))), float(tn.get("mix", 0.0)))
+	return Color.from_hsv(c.h, clampf(c.s * float(tn.get("saturation", 1.0)), 0.0, 1.0), c.v, col.a)
 
 
 ## Every form the data describes (tests build each one).
@@ -141,6 +152,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-LEAF_HUE_VARY, LEAF_HUE_VARY),
 		leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
+	leaf_col = tone(leaf_col)
 	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd) \
 		* (CROWN_GROW if upright else 1.0) * CROWN_TRIM
 	sh["crown_h"] = float(sh["crown_h"]) * (CROWN_TRIM + 0.04)
