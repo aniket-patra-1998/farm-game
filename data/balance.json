@@ -72,7 +72,15 @@
   "fast_crop_seconds": {
    "v": 21600,
    "note": "A crop that grows in less than this counts as fast for mastery targets (6 hours)."
-  }
+  },
+  "crop_points_fast": {"v": [150, 450, 900], "note": "harvests for each of a fast crop's three stars (6 hours or less)"},
+  "crop_points_medium": {"v": [80, 240, 480], "note": "for a crop that grows in under a day"},
+  "crop_points_slow": {"v": [40, 120, 240], "note": "for a crop that grows a day or more"},
+  "producer_points_daily": {"v": [9, 27, 54], "note": "collections for each star of a tree or animal ready every day or sooner (FarmVille: an animal's first star took about 3 to 9)"},
+  "producer_points_two_days": {"v": [6, 18, 36], "note": "for one ready every two days"},
+  "producer_points_slow": {"v": [3, 9, 18], "note": "for one ready less often"},
+  "star_coins": {"v": [100, 300, 1000], "note": "coins each mastery star pays"},
+  "star_xp": {"v": [10, 30, 100], "note": "XP each mastery star pays"}
  },
  "strays": {
   "stray_min_gap": {
@@ -192,6 +200,10 @@
   }
  },
  "daily": {
+  "streak": {
+   "v": [{"coins": 100}, {"coins": 250}, {"coins": 500, "fertilizer": 1}, {"coins": 750, "unwither": 1}, {"coins": 1000, "gems": 1}],
+   "note": "FarmVille's daily bonus: what each day in a row gives (coins, fertilizer, unwither, gems); the last day's repeats"
+  },
   "part_chance": {
    "v": 0.08,
    "note": "per harvest or collection"

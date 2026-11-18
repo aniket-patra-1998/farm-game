@@ -4,11 +4,6 @@ extends GameSystem
 ## Part of the game state: reached as `Game.daily`; shared state is on `game`.
 
 
-# FarmVille's daily bonus: come back on consecutive days for a bigger reward, up to day 5.
-const DAILY_STREAK := [
-	{"coins": 100}, {"coins": 250}, {"coins": 500, "fertilizer": 1},
-	{"coins": 750, "unwither": 1}, {"coins": 1000, "gems": 1}]
-
 var last_daily_day := 0            # day number of the last daily gift
 var daily_streak := 0              # consecutive days the daily bonus was collected
 
@@ -95,13 +90,18 @@ func check_daily_gift() -> void:
 		got.append(GameState.part_names[p])
 	game.ribbons.bump("daily_bonuses", 1)
 	game.vip.add_points(game.vip.streak_points(daily_streak))   # (each day of the streak is worth more: docs/VIP.md)
-	game.message.emit(tr("DAY_BONUS") % [mini(daily_streak, DAILY_STREAK.size()), ", ".join(PackedStringArray(got))])
+	var day := mini(daily_streak, Balance.a("daily.streak").size())
+	game.message.emit(tr("DAY_BONUS") % [day, ", ".join(PackedStringArray(got))])
 	game.queue_save()
 
 
-## The reward for this day of the streak; day 5 and on repeat the biggest one.
+## The reward for this day of the streak (FarmVille's daily bonus, data/balance.json daily.streak); the last
+## day's repeats for as long as the streak goes on.
 func daily_reward(day: int) -> Dictionary:
-	return DAILY_STREAK[clampi(day, 1, DAILY_STREAK.size()) - 1]
+	var streak := Balance.a("daily.streak")
+	if streak.is_empty():
+		return {}
+	return streak[clampi(day, 1, streak.size()) - 1]
 
 
 func _give_daily_bonus(day: int) -> Array[String]:

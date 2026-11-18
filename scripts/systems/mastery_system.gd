@@ -10,14 +10,7 @@ extends GameSystem
 ## How many points a star needs follows how often it can be harvested: a crop by its growing time, a tree or
 ## animal by its cycle (FarmVille: an animal's first star took about 3 to 9 harvests).
 
-const CROP_FAST := [150, 450, 900]     # grows in 6 h or less
-const CROP_MEDIUM := [80, 240, 480]    # 8 to 16 h
-const CROP_SLOW := [40, 120, 240]      # 1 day or more
-const PRODUCER_DAILY := [9, 27, 54]    # trees and animals ready every day or sooner
-const PRODUCER_TWO_DAYS := [6, 18, 36]
-const PRODUCER_SLOW := [3, 9, 18]      # longer
-const STAR_COINS := [100, 300, 1000]
-const STAR_XP := [10, 30, 100]
+## The tables are data (data/balance.json, mastery): the points per star and what each star pays.
 const DAY := 86400
 
 var points := {}                       # item or crop id -> mastery points
@@ -48,12 +41,14 @@ func thresholds(id: String) -> Array:
 	if game.crops.has(id):
 		var grow := int(game.crops[id]["grow_seconds"])
 		if grow <= Balance.i("mastery.fast_crop_seconds"):
-			return CROP_FAST
-		return CROP_MEDIUM if grow < DAY else CROP_SLOW
+			return Balance.a("mastery.crop_points_fast")
+		return Balance.a("mastery.crop_points_medium") if grow < DAY else Balance.a("mastery.crop_points_slow")
 	var cycle := int(game.item_data(id).get("cycle_seconds", DAY))
 	if cycle <= DAY:
-		return PRODUCER_DAILY
-	return PRODUCER_TWO_DAYS if cycle <= 2 * DAY else PRODUCER_SLOW
+		return Balance.a("mastery.producer_points_daily")
+	if cycle <= 2 * DAY:
+		return Balance.a("mastery.producer_points_two_days")
+	return Balance.a("mastery.producer_points_slow")
 
 
 func stars(id: String) -> int:
@@ -108,8 +103,8 @@ func add(id: String, count: int) -> int:
 
 
 func award_star(id: String, star: int) -> void:
-	game.add_coins(STAR_COINS[star - 1])
-	game.add_xp(STAR_XP[star - 1])
+	game.add_coins(int(Balance.a("mastery.star_coins")[star - 1]))
+	game.add_xp(int(Balance.a("mastery.star_xp")[star - 1]))
 	game.message.emit(tr("MASTERY_STAR") % [name_of(id), star])
 	game.ribbons.bump("mastery_stars", 1)
 	if star != 3:

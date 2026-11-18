@@ -526,7 +526,7 @@ func test_116_animals_and_trees_are_mastered_and_collecting_gives_no_xp() -> voi
 	g.mastery.points["pig"] = need - 1
 	var coins := g.coins
 	_eq(g.mastery.add("pig", 1), 1, "the next harvest reaches a star")
-	_eq(g.coins - coins, MasterySystem.STAR_COINS[0], "which pays its coins")
+	_eq(g.coins - coins, int(Balance.a("mastery.star_coins")[0]), "which pays its coins")
 	g.mastery.add("pig", 1000)
 	_check(g.objects.any(func(o: Dictionary) -> bool: return o["id"] == "mastery_sign" and o.get("crop") == "pig"),
 		"and full mastery puts up the pig's mastery sign")

@@ -462,6 +462,10 @@ func test_66_daily_bonus_streak() -> void:
 	g.daily.check_daily_gift()
 	_eq(g.daily.daily_streak, 1, "missing a day starts the streak again")
 	_check(g.ribbons.stat("daily_bonuses") >= 7, "bonuses counted for the Regular ribbon")
+	Balance.override("daily.streak", [{"coins": 7}, {"coins": 9, "gems": 2}])
+	_eq(g.daily.daily_reward(1), {"coins": 7}, "the streak's gifts come from data (daily.streak)")
+	_eq(g.daily.daily_reward(5), {"coins": 9, "gems": 2}, "and its last day's repeats")
+	Balance.reload()
 	_done(g)
 
 
