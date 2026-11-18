@@ -1,6 +1,6 @@
 # The polish loop: the owner's vision, taste and guardrails
 
-A scheduled session runs this every hour (18 Nov 2026, until 08:15 IST). Its log is the Claude doc "Farm game:
+A scheduled session runs this every hour (18 Nov 2026, extended to 16:15 IST). Its log is the Claude doc "Farm game:
 polish loop log" (https://claude.ai/artifact/N3Tco9YLD79rwmApLH9hWP, doc id aa67cd85-0a81-4920-b45b-dc016d1fe1a8).
 Read this, CLAUDE.md and docs/NEXT.md first. Act as the owner would ask, in the nature and depth they ask.
 
@@ -59,7 +59,7 @@ first; our own touch only where it is clearly marked. Every system is built (doc
 1. Setup: the repo is at /home/claude/farm-game (else clone aniket-patra-1998/farm-game there); `git config
    core.hooksPath tools/hooks`. Godot: /home/claude/godot/godot. If Godot is missing and cannot be installed,
    push a branch, open a pull request and let CI's Tests check it before merging.
-2. Deadline: if it is past 08:15 IST on 18 Nov 2026, disable this scheduled task, add a final summary line to
+2. Deadline: if it is past 16:15 IST on 18 Nov 2026, disable this scheduled task, add a final summary line to
    the log, and stop.
 3. Read the log doc (its Backlog and the last rows) and `git log --oneline -15` to see what the last runs did.
 4. Other sessions' branches first (every run): for each remote branch with commits not on main and each open
