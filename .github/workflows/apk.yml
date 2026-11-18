@@ -22,7 +22,7 @@ concurrency:
 jobs:
   apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       GODOT_VERSION: 4.7.2
     steps:
@@ -118,15 +118,37 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           mkdir -p build
-          ./godot-bin/godot --headless --path . --export-debug "Android (debug APK)" build/farm-game-debug.apk 2>&1 \
-            | tee export.log
+          # Shaders compiled ahead (docs/PERF_RUN.md, win 1): the presets' shader_baker/enabled ships every shader
+          # compiled, so a phone does not stall compiling one the first time it is drawn. The baker needs the editor
+          # running the Mobile renderer on Vulkan (headless it is skipped without a word): a software Vulkan
+          # (Mesa's lavapipe) under a virtual screen. If that export fails, the headless (unbaked) one is the build.
+          sudo apt-get install -y -qq mesa-vulkan-drivers > /dev/null || true
+          baked() {   # $1 preset, $2 file
+            timeout 1200 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-driver vulkan \
+              --rendering-method mobile --path . --export-debug "$1" "$2" > "$2.log" 2>&1 && code=0 || code=$?
+            grep -iE "shader|vulkan|error" "$2.log" | grep -v "Storing File" | head -20 || true
+            if [ "$code" != 0 ]; then echo "The baked export stopped (exit code $code)"; rm -f "$2"; return 1; fi
+            test -s "$2"
+          }
+          plain() { ./godot-bin/godot --headless --path . --export-debug "$1" "$2" > "$2.log" 2>&1; tail -5 "$2.log"; }
+          baked "Android (debug APK)" build/farm-game-debug.apk || plain "Android (debug APK)" build/farm-game-debug.apk
           test -s build/farm-game-debug.apk || { echo "No APK was made"; exit 1; }
+          cp build/farm-game-debug.apk.log export.log
           ls -l build/farm-game-debug.apk
           # The benchmark build: the same game with the "benchmark" feature, which measures loading on the phone by
-          # itself and quits (LoadBenchmark; phone_bench.yml runs it on real phones in Firebase Test Lab).
-          ./godot-bin/godot --headless --path . --export-debug "Android (benchmark APK)" build/farm-game-benchmark.apk \
-            2>&1 | tail -5
+          # itself and quits (LoadBenchmark; phone_bench.yml runs it on real phones in Firebase Test Lab). A second,
+          # unbaked one (-plain) measures what the baked shaders win: phone_bench.yml's input "apk" picks it.
+          baked "Android (benchmark APK)" build/farm-game-benchmark.apk \
+            || plain "Android (benchmark APK)" build/farm-game-benchmark.apk
           test -s build/farm-game-benchmark.apk || { echo "No benchmark APK was made"; exit 1; }
+          plain "Android (benchmark APK)" build/farm-game-benchmark-plain.apk
+          test -s build/farm-game-benchmark-plain.apk || { echo "No plain benchmark APK was made"; exit 1; }
+          # What the baker added: the files the baked APK has and the plain one has not.
+          unzip -Z1 build/farm-game-benchmark.apk | sort > baked.txt
+          unzip -Z1 build/farm-game-benchmark-plain.apk | sort > plain.txt
+          echo "Baked APK: $(stat -c %s build/farm-game-benchmark.apk) bytes, plain $(stat -c %s build/farm-game-benchmark-plain.apk);" \
+            "$(comm -23 baked.txt plain.txt | wc -l) files only in the baked one:" | tee -a "$GITHUB_STEP_SUMMARY"
+          comm -23 baked.txt plain.txt | sed 's#/[^/]*$##' | sort | uniq -c | head -10 | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the APK
         uses: actions/upload-artifact@v4
@@ -146,4 +168,5 @@ jobs:
           else
             gh release create apk-latest --title "Latest phone build" --notes "$notes" --prerelease
           fi
-          gh release upload apk-latest build/farm-game-debug.apk build/farm-game-benchmark.apk --clobber
+          gh release upload apk-latest build/farm-game-debug.apk build/farm-game-benchmark.apk \
+            build/farm-game-benchmark-plain.apk --clobber

@@ -14,6 +14,10 @@ on:
       devices:
         description: "Devices, ';'-separated gcloud --device values (empty: the variable FTL_DEVICES or the default)"
         required: false
+      apk:
+        description: "Which benchmark APK of the release: farm-game-benchmark.apk (shaders baked) or farm-game-benchmark-plain.apk"
+        required: false
+        default: farm-game-benchmark.apk
   schedule:
     - cron: "40 20 * * *"   # 02:10 IST
 
@@ -46,9 +50,12 @@ jobs:
         if: steps.ready.outputs.go == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          APK: ${{ github.event.inputs.apk }}
         run: |
-          gh release download apk-latest -R "$GITHUB_REPOSITORY" -p farm-game-benchmark.apk
+          apk="${APK:-farm-game-benchmark.apk}"
+          gh release download apk-latest -R "$GITHUB_REPOSITORY" -p "$apk" -O farm-game-benchmark.apk
           ls -l farm-game-benchmark.apk
+          echo "APK: $apk ($(gh release view apk-latest -R "$GITHUB_REPOSITORY" --json body -q .body))" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - uses: google-github-actions/auth@v2
         if: steps.ready.outputs.go == 'true'
