@@ -12,6 +12,13 @@ const PICTURE := 150.0        # the mystery's size on screen, in pixels
 const SHAKES := 3
 const SHAKE_REACH := 9.0      # pixels the first shake goes to either side (each next one, as much again)
 const STAY := 2.4             # seconds the prize stays if nobody taps
+const FADE := 0.16            # the card dims the farm in and out in this (UiFx.OPEN_TIME's fade)
+const SHAKE_TIME := 0.26      # one shake, out to one side, across and back, eased like a hand rocking it..
+const SHAKE_REST := 0.14      # ..and a breath before the next
+const BURST_SCALE := 1.3      # the mystery swells to this as it bursts..
+const BURST_TIME := 0.14      # ..in this, fading out
+const SPARK_TIME := 0.8       # the burst's sparks fly this long..
+const SPARK_FADE := 0.3       # ..fading out over the last of it
 
 var _dim: ColorRect
 var _picture: Control
@@ -72,24 +79,27 @@ func play(what: String, title: String, prize: String, rarity: String) -> void:
 	if _tween != null:
 		_tween.kill()
 	_tween = create_tween()
-	_tween.tween_property(self, "modulate:a", 1.0, 0.15)
+	_tween.tween_property(self, "modulate:a", 1.0, FADE)
 	for k in SHAKES:
 		var reach := SHAKE_REACH * (k + 1)
 		_tween.tween_callback(func() -> void: Feedback.moment("reveal_shake"))
-		_tween.tween_property(_picture, "position:x", reach, 0.05)
-		_tween.tween_property(_picture, "position:x", -reach, 0.1)
-		_tween.tween_property(_picture, "position:x", 0.0, 0.05)
-		_tween.tween_interval(0.12)
-	_tween.tween_property(_picture, "scale", Vector2(1.35, 1.35), 0.1).set_ease(Tween.EASE_IN)
-	_tween.parallel().tween_property(_picture, "modulate:a", 0.0, 0.1)
+		_tween.tween_property(_picture, "position:x", reach, SHAKE_TIME * 0.25).set_trans(Tween.TRANS_SINE) \
+			.set_ease(Tween.EASE_OUT)
+		_tween.tween_property(_picture, "position:x", -reach, SHAKE_TIME * 0.5).set_trans(Tween.TRANS_SINE) \
+			.set_ease(Tween.EASE_IN_OUT)
+		_tween.tween_property(_picture, "position:x", 0.0, SHAKE_TIME * 0.25).set_trans(Tween.TRANS_SINE) \
+			.set_ease(Tween.EASE_IN)
+		_tween.tween_interval(SHAKE_REST)
+	_tween.tween_property(_picture, "scale", Vector2.ONE * BURST_SCALE, BURST_TIME).set_trans(Tween.TRANS_QUAD) \
+		.set_ease(Tween.EASE_IN)
+	_tween.parallel().tween_property(_picture, "modulate:a", 0.0, BURST_TIME)
 	_tween.tween_callback(func() -> void:
 		_open = true
 		Feedback.moment("reveal_open")
 		Feedback.moment(str(look["moment"]))
 		_burst(look))
-	_tween.tween_property(_prize, "modulate:a", 1.0, 0.12)
-	_tween.parallel().tween_property(_prize, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK) \
-		.set_ease(Tween.EASE_OUT)
+	_tween.tween_property(_prize, "modulate:a", 1.0, UiFx.POP_TIME * 0.6)
+	UiFx.settle(_tween.parallel(), _prize, "scale", Vector2.ONE)
 	_tween.tween_interval(STAY)
 	_tween.tween_callback(close)
 
@@ -101,7 +111,7 @@ func close() -> void:
 		_tween.kill()
 	Game.modal_open = false
 	_tween = create_tween()
-	_tween.tween_property(self, "modulate:a", 0.0, 0.15)
+	_tween.tween_property(self, "modulate:a", 0.0, FADE)
 	_tween.tween_callback(func() -> void: visible = false)
 
 
@@ -162,8 +172,8 @@ func _burst(look: Dictionary) -> void:
 		_sparks.add_child(dot)
 		var dir := Vector2.from_angle(TAU * (k + randf() * 0.6) / sparks) * float(look["reach"]) * randf_range(1.2, 2.6)
 		var fly := dot.create_tween().set_parallel(true)
-		fly.tween_property(dot, "position", dir, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-		fly.tween_property(dot, "rotation", randf_range(-2.5, 2.5), 0.8)
-		fly.tween_property(dot, "scale", Vector2(0.2, 0.2), 0.8).set_ease(Tween.EASE_IN)
-		fly.tween_property(dot, "modulate:a", 0.0, 0.3).set_delay(0.5)
+		fly.tween_property(dot, "position", dir, SPARK_TIME).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		fly.tween_property(dot, "rotation", randf_range(-2.5, 2.5), SPARK_TIME)
+		fly.tween_property(dot, "scale", Vector2(0.2, 0.2), SPARK_TIME).set_ease(Tween.EASE_IN)
+		fly.tween_property(dot, "modulate:a", 0.0, SPARK_FADE).set_delay(SPARK_TIME - SPARK_FADE)
 		fly.chain().tween_callback(dot.queue_free)

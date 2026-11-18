@@ -193,6 +193,19 @@ func test_491_panel_words_take_a_type_role_not_a_number() -> void:
 
 
 
+## The celebration cards (a mystery's reveal, a level-up) move in the interface's one language: every tween time
+## is named (RevealCard's constants, UiFx's), shakes are eased, and nothing pulses in a loop (a level-up is the
+## confetti; nothing else bounces).
+func test_523_celebration_cards_move_in_one_language() -> void:
+	var bare := RegEx.create_from_string("tween_property\\((?:[^()\\n]|\\([^()\\n]*\\))*, [0-9.]+\\)")
+	for path: String in ["res://scripts/hud/reveal_card.gd", "res://scripts/level_up_popup.gd"]:
+		var code := FileAccess.get_file_as_string(path)
+		for m in bare.search_all(code):
+			_check(false, "%s: a bare tween time (%s): name it" % [path, m.get_string()])
+		_check(not code.contains("set_loops"), "%s: nothing pulses in a loop" % path)
+	_check(RevealCard.SHAKE_TIME >= 0.2, "a shake is a rock, not a jitter")
+
+
 ## One motion language: anything springing back settles with one soft overshoot (UiFx.settle), never an elastic
 ## wobble; the counters' pulse replaces one still running instead of stacking tweens on the same size.
 func test_510_nothing_springs_back_like_rubber() -> void:

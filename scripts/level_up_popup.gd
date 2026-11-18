@@ -135,17 +135,14 @@ func _next() -> void:
 		_show(_queue.pop_front())
 
 
+## The card swells open like every panel (UiFx.open) and the new level swells once as it lands: the confetti is
+## the celebration, nothing else bounces.
 func _pop_in() -> void:
-	_card.pivot_offset = _card.size / 2.0
-	_card.scale = Vector2(0.6, 0.6)
-	_card.modulate.a = 0.0
-	var t := create_tween().set_parallel(true)
-	t.tween_property(_card, "scale", Vector2.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(_card, "modulate:a", 1.0, 0.2)
+	UiFx.open(_card)
 	_level_label.pivot_offset = _level_label.size / 2.0
-	var pulse := create_tween().set_loops(2)
-	pulse.tween_property(_level_label, "scale", Vector2(1.15, 1.15), 0.25)
-	pulse.tween_property(_level_label, "scale", Vector2.ONE, 0.25)
+	var land := create_tween()
+	land.tween_interval(UiFx.OPEN_TIME * 0.6)
+	land.tween_callback(func() -> void: UiFx.pulse(_level_label))
 
 
 func _burst_confetti() -> void:
