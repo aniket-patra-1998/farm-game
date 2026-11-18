@@ -523,6 +523,30 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Rebasing goals/4-welcome: its commit also carries this run-5 note in docs/NEXT.md (an older copy); on a
   conflict keep main's NEXT.md. art/models (105 plant files) and data/art_sources.json come from
   tools/export_plants.tscn: on a conflict take main's, then export again and run tools/make_art_versions.py.
+- Run 6 (19 Nov 00:36-01:20 IST): step 4 merged (9645306; branch goals/4-welcome rebased on main, then pushed
+  to main). Reveals: data/reveal.json (`after`: ["welcome"]; `buttons`: "tool:<HudTools id>" / "menu:<HudSide
+  key>" -> {verbs, level, inbox}); `GoalSystem.shows(button)`, `reveal_now()` (the ones appearing now, kept in
+  `revealed`, saved "goal_revealed"), `past_welcome()`; a button not listed (Select, Harvest) always shows; goals
+  off, a farm past Welcome, an old save and the showcase see everything. `HudReveal` (hud.reveals) hides/shows
+  `hud.tools.buttons` and `hud.side.buttons` on goals_changed, leveled_up, inbox_changed; a newly shown one gets
+  `UiFx.shine` (glow + pulse). Fixed on the way: HudSide looked for "NEIGHBOURS" (the entry is "INBOX"), so the
+  inbox's count badge and mail timer were never built (locale NEIGHBOURS removed: unused). Bot: `play_first_hour`
+  returns `chain_minutes` (chain -> minute of each step); test 503 holds Part 2's order (harvest in 0-2, every
+  Welcome step, first purchase = the Apple Tree step, L3 in the hour); 504-505 the reveals.
+- Then (dc17c1e, goals/4-starter-keeps): Starter Seeds never wither (CropDef.STARTER_WINDOW): the 2-day bot
+  planted them, came back hours later to withered seeds and the Welcome chain stuck forever at step 3.
+- Bot numbers (seed 1): first hour: Welcome steps at minutes [0, 1, 5, 6, 7, 7, 7, 8], L2 at 1, L3 at 8, Apple
+  Tree at 6, then 52 idle minutes, 14 coins, today's jobs open (the dead end step 7's Tractor project and Barley's
+  chain fill). 5 days (3 visits a day): L10 day 5, but Welcome stays at step 5 from day 3 on: the day bot plows the
+  whole farm and an Apple Tree finds no free tile (`_goal_buy` returns with no spot). A player can clear plots
+  with Sell, but nothing says so: reported. Bot fix idea: `_goal_buy` sells one empty plot when nothing fits.
+- Step 4's Part 2 rows not yet covered (step 7 content): 20-30 the broken Tractor project with a guaranteed first
+  find that shows Collections; 30-45 a second chicken and Barley's coop chain. Add them to test 503 with step 7.
+- Next: step 7 on goals/7-content: projects `tractor` (opens at level 2 or after Welcome step 5; stages of
+  harvest-sourced materials; its first find guaranteed: needs a GoalSystem rule or a drops pity hook, the spec
+  does not say which: decide in data, e.g. a task reward `find`), orchard, rare coop; six neighbour chains (Barley
+  first: second chicken, the coop); about 15 daily templates; every new verb needs GOAL_DO_* keys (test 465) and
+  reveal.json verbs if it needs a hidden button (collections: find). Then the bot completes every chain.
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
