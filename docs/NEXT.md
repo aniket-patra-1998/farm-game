@@ -189,3 +189,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   was written twice in code and once in words: now `economy.super_harvest_multiplier`, the words take it; the
   fertilize hints take `economy.fertilizer_bonus`. Open (in the log's backlog): other words still repeat data
   numbers (horses "not every 3 days", "8 cans", a bloom's "7 days", a set's 3/1/1), true today but they drift.
+- Run 14 (whole-farm look, started): tools/look_shot.gd took its shots at the real clock (building the
+  showcase starts a fresh farm, which cleared the noon offset), so before/after pictures drifted with the hour;
+  the hour is now set after it, in local time, and `--hour=<h>` shows dawn, dusk or night. First look: at 22:00
+  the showcase is brighter on average than at 12:30 (mean RGB 95,116,80 against 70,93,36; noon read deep,
+  saturated yellow-green, night like a soft overcast day). Not yet split from the weather (each hour rolls its
+  own): next, the same views with the weather held clear, at 6, 12.5, 18.5 and 22, then rank the findings.
