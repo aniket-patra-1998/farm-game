@@ -48,8 +48,8 @@ Why it is not beautiful yet, biggest first:
 Target (approved by the owner): a warm storybook farm in Hay Day's spirit, refined from what exists: warm sun and
 cool shadows, a golden dusk; a calmer ground so subjects pop; one family of soft painted materials with warm dark
 outlines instead of black; the existing palette made richer and in tune; everything grounded.
-Order of work: (1) lighting and grade, the ground's calm, contact shadows; (2) trees and building outlines into
-the animals' style; (3) icons, menus, motion.
+Order of work: (1) lighting and grade, the ground's calm, contact shadows; (2) building outlines and the trees' finish into
+the animals' style (shape and shading only, never their colours); (3) icons, menus, motion.
 
 ## Taste changes wait for the owner's eye; objective fixes merge
 - Taste changes (lighting, grade, colours, the trees' or buildings' style) go on branch `art-polish` (rebased on
@@ -59,6 +59,11 @@ the animals' style; (3) icons, menus, motion.
   row to "Reported, not built". Merge art-polish into main only after the owner approves in the log or in chat.
 - Objective fixes (broken pieces, misalignment, clipping, missing contact shadows, timing, consistent outline
   weights and spacing) merge to main directly as docs/POLISH.md says.
+
+## Colour rule (owner, 18 Nov 16:30)
+Vibrant, distinct colours on things, as FarmVille had: trees, crops, flowers, animals, buildings keep their bold,
+different colours. Never soften, mute or pull objects' colours towards one family (the tree-crown softening was
+rejected). Calm only the ground and the light, so the colourful things stand out more.
 
 ## What a run may change directly (refinement)
 - Colour: improve the existing palette, never shrink or limit it: richer, more harmonious hues that sit well
