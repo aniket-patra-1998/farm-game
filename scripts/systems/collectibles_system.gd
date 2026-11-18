@@ -57,8 +57,9 @@ func pick_item(coll: Dictionary) -> String:
 	var weights: Array[float] = []
 	var total := 0.0
 	var rarity: Dictionary = collections_data.get("rarity_weight", {})
+	var damping := float(collections_data.get("duplicate_damping", 0.0))
 	for item in coll["items"]:
-		var w := 1.0 / (1.0 + 2.0 * int(owned.get(item["id"], 0)))
+		var w := 1.0 / (1.0 + damping * int(owned.get(item["id"], 0)))
 		w *= float(rarity.get(item.get("rarity", "common"), 1))
 		weights.append(w)
 		total += w
@@ -70,9 +71,9 @@ func pick_item(coll: Dictionary) -> String:
 	return coll["items"][-1]["id"]
 
 
-## The trade-in level this set is on next: 0, 1 or 2 (after level 3 it repeats from level 1).
+## The trade-in level this set is on next, from 0 (after the last of data's levels it repeats from the first).
 func coll_level(coll: Dictionary) -> int:
-	return int(coll_levels.get(coll["id"], 0)) % 3
+	return int(coll_levels.get(coll["id"], 0)) % (collections_data["levels"] as Array).size()
 
 
 ## Item id -> how many the next trade-in takes (FarmVille: 3/2/1, then 6/4/2, then 12/8/4).

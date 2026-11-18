@@ -695,6 +695,8 @@
    "xp": 150
   }
  ],
+ "duplicate_damping": 2,
+ "_duplicate_damping": "each copy already held divides an item's chance by 1 + this many (so sets fill up instead of piling duplicates)",
  "rarity_weight": {
   "common": 6,
   "uncommon": 3,

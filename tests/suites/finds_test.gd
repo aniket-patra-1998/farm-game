@@ -774,3 +774,33 @@ func test_375_ripening_times_are_shared_materials_not_per_instance_values() -> v
 		model.queue_free()
 	_done(g)
 
+
+
+## A set's trade-in levels and how much a held copy cuts an item's chance come from data/collections.json:
+## a fourth level in data is used before it starts over, and with no damping a held item is as likely as before.
+func test_486_collection_levels_and_duplicates_follow_data() -> void:
+	var g := _farm(true)
+	var coll: Dictionary = g.collectibles.collections[0]
+	var levels: Array = g.collectibles.collections_data["levels"]
+	g.collectibles.coll_levels[coll["id"]] = levels.size()
+	_eq(g.collectibles.coll_level(coll), 0, "after data's last level it starts over")
+	levels.append(levels[-1].duplicate(true))
+	g.collectibles.coll_levels[coll["id"]] = levels.size() - 1
+	_eq(g.collectibles.coll_level(coll), levels.size() - 1, "a level added in data is used")
+	levels.pop_back()
+	var held: String = coll["items"][0]["id"]
+	var count := func(damping: float) -> int:
+		g.collectibles.collections_data["duplicate_damping"] = damping
+		var n := 0
+		for k in 3000:
+			for it in coll["items"]:
+				g.collectibles.owned[it["id"]] = 5 if it["id"] == held else 0
+			if g.collectibles.pick_item(coll) == held:
+				n += 1
+		return n
+	var damped: int = count.call(float(DataFile.read("res://data/collections.json")["duplicate_damping"]))
+	var plain: int = count.call(0.0)
+	var data_damping: float = DataFile.read("res://data/collections.json")["duplicate_damping"]
+	g.collectibles.collections_data["duplicate_damping"] = data_damping
+	_check(damped * 3 < plain, "five held copies make an item far rarer (%d against %d)" % [damped, plain])
+	_done(g)
