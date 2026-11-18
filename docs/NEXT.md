@@ -168,3 +168,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `SaveCheck.COUNTS` covers the five, and SaveCheck mends "stored" (uids unique with the farm's) (test 437).
   Open: a clock set forward finishes every timer (offline play cannot tell it apart: report, not a fix); the
   save has no checksum, so hand-editing coins up is possible (an owner's call: cheap HMAC, easy to bypass).
+- Run 10 (last run; cheating: buy-and-sell loops): selling gives 5% back (gem items 50 coins a gem, and
+  gems can't be bought with coins), so no buy-and-sell loop; but the out-of-coins rescue could be farmed:
+  spend the 50 on a decoration, reopen, rescued again, for ever. Now `Game.rescued` (saved) holds the next
+  rescue until a harvest or a collect (test 438). The loop ended at 08:15 IST; its backlog stays in the log
+  doc (open: long offline weeks, a crammed farm, the economy items, unlocks through 31-40, code quality,
+  whole-farm look, motion, sound).
