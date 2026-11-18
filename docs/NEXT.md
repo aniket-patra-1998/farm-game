@@ -262,6 +262,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `UiTheme.font`. Long messages (every string) fit the toast at 4:3 and 19.5:9 (widest 1145 of 1280). Open for
   the art lane: `FarmGrid.float_words` and the streak count draw words over the farm in their own look (raw 30
   and 34 px, a brown outline, no shadow), not FloatText's; Crowding still reads its data by hand.
+- Run 23 (window restarted 20:30, to 08:35 IST 19 Nov; edge cases and stress, round two): random play run long
+  here (60 seeds x 1,500 steps: clean), then given more invariants (the Barn's uids its own, the Barn within its
+  space plus the hand, nothing planted in the future). That found the clock set back while the game runs or waits
+  in the background (a phone resumes without loading): only a load shifted the timers. `Persistence.watch_clock`
+  (every frame, from tick) now shifts every timer through the same `shift_all` loading uses; a step back within
+  `CLOCK_SLACK` (2 s) is left alone. Fuel's clock is not moved before fuel is unlocked. Saving test 480. Open,
+  small: neighbours' answers due in the outbox are not shifted on a clock set back (they arrive late by the skew).
+  Next audit in the rotation: cheating and save safety, round two.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
