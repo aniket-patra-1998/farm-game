@@ -60,10 +60,10 @@ the animals' style (shape and shading only, never their colours); (3) icons, men
 - Objective fixes (broken pieces, misalignment, clipping, missing contact shadows, timing, consistent outline
   weights and spacing) merge to main directly as docs/POLISH.md says.
 
-## Colour rule (owner, 18 Nov 16:30)
-Vibrant, distinct colours on things, as FarmVille had: trees, crops, flowers, animals, buildings keep their bold,
-different colours. Never soften, mute or pull objects' colours towards one family (the tree-crown softening was
-rejected). Calm only the ground and the light, so the colourful things stand out more.
+## Colour rule (owner, 18 Nov 16:47)
+Things keep vibrant, distinct colours, as FarmVille had: each tree, crop, flower, animal and building keeps its own
+bold hue. The tree crowns' gentle softening (leaf_tone: each hue kept, a little less saturated) is approved and is
+the limit: do not mute objects further or pull them towards one colour. Calm the ground and the light instead.
 
 ## What a run may change directly (refinement)
 - Colour: improve the existing palette, never shrink or limit it: richer, more harmonious hues that sit well
