@@ -21,6 +21,20 @@ enjoys just looking at, and a game that reads as one designed product. Every cha
 5. No broken pieces in any screen surveyed.
 6. A record: each change logged with what it improved; before/after pictures kept, sent only when asked.
 
+## The lens: do things look good together? (owner, 18 Nov)
+Judge every piece next to its neighbours, never alone. Does an animal look good standing by a tree? A tree and an
+animal by a building? A farmer among crops, a decoration on the lawn, a vehicle by a shed? Do they look alive and
+as if they belong to one world, or out of place, pasted in from another game? Check each pairing for:
+- scale: sizes that read right against each other (data/scale_guide.json);
+- style: the same level of detail, edge softness, outline and painted light (file-made and code-built pieces alike);
+- colour: saturation, value and warmth in one family; nothing far brighter, darker or greyer than its neighbours;
+- light: each reacts to the sun, dusk and night the same way (shaders: same ambient, rim, wrap and shadow);
+- grounding: a contact shadow or footing, so nothing floats or looks stuck on;
+- life: a gentle idle motion where the real thing would move; nothing frozen beside something swaying.
+Render compositions of these pairings (look_shot views or a scratch scene) at noon and dusk. Comparisons within one
+render hold even though this renderer is brighter than a phone; absolute colour does not, so tune relative to the
+neighbours, and keep the farm's best-looking pieces (the owner's picks) as the reference the rest moves towards.
+
 ## What a run may change directly (refinement)
 - Colour: improve the existing palette, never shrink or limit it: richer, more harmonious hues that sit well
   together across UI, icons and 3D (data/ui_theme.json, model colours, shader tints); better gradients (depth,
