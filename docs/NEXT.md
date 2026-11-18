@@ -604,6 +604,26 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   vehicle); add its row to test 503; then rebase, full precheck, fast-forward push (step 7 done).
 - Seen: world3d test 338 (showcase draw budget) is flaky: the same commit gave 2,296,113 / 2,296,793 / 2,302,157
   triangles in three runs (budget 2,300,000): the showcase is not deterministic and sits at the edge (perf lane).
+- Run 8 (19 Nov 02:36-03:10 IST): step 7 merged (af66343; goals/7-content rebased: 3 commits). The broken Tractor
+  project (data/goals.json `tractor`, level 2): stages harvest 6 + find 1 (`sure`), harvest 40, harvest 120 + plow
+  60, harvest 300; stage rewards `parts` (Vehicle Parts via DailySystem.add_part; `HudGoals.reward_words` names
+  them, GOAL_GOT_PARTS), the Tractor itself at the end. A `find` task with `sure: true` guarantees a find to the
+  first harvest that turns up none while it is open (FindsSystem.sure() at FieldSystem.harvest, not at planting, so
+  a crop already growing counts; GoalSystem.take_sure_find, once per goal key, saved "goal_sure_spent"); its open
+  find task brings out Collections (reveal.json verbs). Rusty's step 3 is `own` tractor (the rebuilt one counts).
+  Bot: `_place_named` takes a goal-named thing out of the Barn (clears a plot if needed); first hour reports
+  `first_find` and `project_open`. Tests 522 (new), 503 (project open by minute 30), 364 (spends the sure find
+  first). Numbers: first hour (seeds 1-3) Welcome by minute 8, project open at 0-1, first find at minute 5; 21 days
+  (seed 1, drops on): every chain, the orchard and the Tractor done; the rare coop stops at "open 3 Mystery Eggs".
+- Choices made where the spec is silent (reported in the log): no rusted Tractor stands on the starter farm (that
+  is step 5's starter-farm layout, Part 3, a new look: a sheet of options first), so rebuilding hands over a new
+  Tractor at the end; the stage sizes (6/40/120/300 harvests) aim at 1-3 weeks of play.
+- Seen, not fixed: the 2-day bot (--days=2) leaves Welcome on its last step (plant 1 Wheat) because every plot
+  holds a long crop when it is asked; the rare coop's Mystery Eggs (the bot never moves hens into the coop).
+- Next: steps 5, 8, 9 "only if time allows". Step 8 (economy tuning to Part 4's targets, data only, goals/8-economy)
+  is the one that fits the rules unattended: run the bot styles (plain, goals, casual, --away) against Part 4's
+  targets, tune data/balance.json and goals rewards, log before/after. Step 5 and 9 are new looks: a sheet of
+  options for the owner first (CLAUDE.md), nothing wired before a pick.
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
