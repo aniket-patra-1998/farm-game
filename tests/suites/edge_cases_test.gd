@@ -122,3 +122,34 @@ func test_434_a_farm_with_coins_for_a_seed_but_not_the_plow_is_rescued() -> void
 	g.check_rescue()
 	_eq(g.coins, seed, "with a plowed plot waiting, a seed's coins are enough and nothing is given")
 	_done(g)
+
+
+func test_438_a_rescue_spent_elsewhere_waits_for_a_harvest() -> void:
+	var g := _farm()
+	_bare(g)
+	var rescue := Balance.i("economy.rescue_coins")
+	g.coins = 0
+	g.check_rescue()
+	_eq(g.coins, rescue, "a stuck farm is rescued")
+	g.coins = 0   # spent on a decoration instead of seeds
+	g.check_rescue()
+	_eq(g.coins, 0, "no second rescue without a harvest (else buy, reopen, rescued: free coins for ever)")
+	g.coins = rescue
+	var i := g.index_of(3, 3)
+	g.plots[i] = {"state": "grass"}
+	_check(g.field.plow(i), "plowed with the rescue")
+	_check(g.field.plant(i, "strawberries"), "and planted")
+	_skip(g, 4 * 3600)
+	_check(not g.field.harvest(i).is_empty(), "harvested")
+	_check(not g.rescued, "a harvest lets a later stuck farm be rescued again")
+	g.rescued = true
+	g.save_path = "user://test_rescued.json"
+	g.saving_enabled = true
+	g.save_game()
+	var again := GameState.new()
+	again.save_path = g.save_path
+	add_child(again)
+	again.saving_enabled = false
+	_check(again.rescued, "reopening the game does not forget a rescue (the loop it closes)")
+	_done(again)
+	_done(g)

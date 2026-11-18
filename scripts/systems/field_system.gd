@@ -273,6 +273,7 @@ func harvest(i: int) -> Dictionary:
 
 	game.plots[i] = {"state": "plowed"}
 	game.add_coins(earned)
+	game.rescued = false   # earned by farming: a later stuck farm may be rescued again
 	game.add_xp(gained)
 	game.ribbons.bump("harvests", 1)
 	if drop.get("type", "") == "golden":

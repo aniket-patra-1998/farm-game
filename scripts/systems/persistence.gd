@@ -45,6 +45,7 @@ func save(in_background := false) -> void:
 		"farm_size": game.farm_size,
 		"clear_until": game.clear_until,
 		"unwithers": game.unwithers,
+		"rescued": game.rescued,
 		"fertilize_alls": game.fertilize_alls,
 		"parts": game.parts,
 		"farmhands": game.farmhands,
@@ -153,6 +154,7 @@ func load_save() -> bool:
 		GameState.MAX_SIZE)
 	game.clear_until = int(data.get("clear_until", 0))
 	game.unwithers = int(data.get("unwithers", Balance.i("economy.start_unwithers")))
+	game.rescued = bool(data.get("rescued", false))
 	game.fertilize_alls = int(data.get("fertilize_alls", 0))
 	var saved_parts := GameSystem.int_map(data.get("parts", {}))
 	game.parts = {}

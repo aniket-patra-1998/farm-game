@@ -32,6 +32,7 @@ func collect(uid: int) -> Dictionary:
 		game.found_on.emit(uid, str(drop["text"]), str(drop["rarity"]))   # (said on the thing, in its rarity's colours)
 	obj["t"] = game.now()
 	game.add_coins(earned)
+	game.rescued = false   # earned by farming: a later stuck farm may be rescued again
 	game.add_xp(gained)
 	game.ribbons.bump("collected", 1)
 	var part := game.daily.roll_part()
