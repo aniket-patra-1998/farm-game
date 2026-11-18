@@ -26,9 +26,12 @@ func use_helper(kind: String) -> int:
 		game.message.emit(tr("NOTHING_IS_READY_TO_COLLECT_YET"))
 		return 0
 	game.set(helper["field"], game.helpers_held(kind) - 1)
+	# One message for both (a second would replace the first on screen: the collect's coins went unsaid).
+	var said: Array[String] = []
 	if not ready.is_empty():
-		game.message.emit(tr(helper["done"]) % [ready.size(), coins_total])
+		said.append(tr(helper["done"]) % [ready.size(), coins_total])
 	if fed > 0:
-		game.message.emit(tr("FED_ANIMALS") % fed)
+		said.append(tr("FED_ANIMALS") % fed)
+	game.message.emit(". ".join(said) if said.size() > 1 else said[0])
 	game.inventory_changed.emit()
 	return ready.size() + fed
