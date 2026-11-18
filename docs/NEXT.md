@@ -304,6 +304,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   case; leave unless seen again. Next: order of work 2 on art-polish: the buildings' near-black trim bands (from
   their file-made art: find the builder in data/art_sources.json; a builder change needs its re-export) into a warm
   dark brown, and the trees' candy hues nearer the animals' family; then a second before/after sheet.
+- Art run 6 (14:35 IST): art-polish rebased on main and extended (937fe54): roof edges in warm ink, not near-black.
+  A roof's eave edges, ridge caps and dome cornice were its colour 28% darker (ModelKit._darker), so the navy and
+  dark brown roofs drew a near-black band round every storey; now 22% darker and 30% toward #6b4a36
+  (ModelKit.EDGE_DARKEN, EDGE_INK, EDGE_WARMTH); building and plant files re-exported. Tried and dropped: a warm
+  silhouette ink for every painted shader (a vec3 shader global edge_ink multiplying the edge darkening): no visible
+  gain at this zoom. Still waiting for the owner's look on art-polish (grade, lawn, roof edges). Godot must be
+  reinstalled in a fresh container (4.7.2 from the release zip) and the project imported (`--headless --import`)
+  before look_shot runs. Next: the trees' candy hues (data/tree_shapes.json leaf and leaf_alts) nearer the animals'
+  family, then the second before/after sheet (main vs art-polish, buildings and trees_animals, noon and dusk).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
