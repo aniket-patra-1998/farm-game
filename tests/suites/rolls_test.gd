@@ -39,3 +39,21 @@ func test_431_vip_raises_only_the_rolls_listed_for_it() -> void:
 	_check(is_equal_approx(g.rolls.odds("golden", 0.1), 0.1), "one that isn't stays as it is")
 	_check(is_equal_approx(g.rolls.odds("calf", 0.8), 1.0), "never more than certain")
 	_done(g)
+
+
+func test_512_every_weighted_pick_shares_one_rule() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 512
+	_check(RollSystem.weighted_index(rng, []) == -1, "nothing to pick from: none")
+	_check(RollSystem.weighted_index(rng, [0, 0.0, -3]) == -1, "only empty weights: none")
+	var hits := [0, 0, 0, 0]
+	for n in 4000:
+		hits[RollSystem.weighted_index(rng, [0, 1, 3, -2])] += 1
+	_check(hits[0] == 0 and hits[3] == 0, "a weight of 0 or less is never picked: %s" % [hits])
+	_check(hits[2] > hits[1] * 2 and hits[2] < hits[1] * 4, "picks follow their weights (1:3): %s" % [hits])
+	var own := RegEx.create_from_string("randi_range\\(1, |randf\\(\\) \\* ")
+	for dir: String in [SYSTEMS, "res://scripts/social"]:
+		for f in DirAccess.get_files_at(dir):
+			if f.ends_with(".gd") and f != "roll_system.gd":
+				_check(own.search(FileAccess.get_file_as_string(dir.path_join(f))) == null,
+					"%s picks by weight through RollSystem.weighted_index" % f)

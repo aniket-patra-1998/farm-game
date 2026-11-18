@@ -388,16 +388,7 @@ func _pick_animal(inside: Dictionary) -> String:
 
 
 func _weighted(inside: Dictionary, keep: Callable) -> String:
-	var total := 0
-	for k in inside:
-		if game.items.has(k) and keep.call(k) and Release.has(k):
-			total += int(inside[k])
-	if total <= 0:
-		return ""
-	var pick := game.rng.randi_range(1, total)
-	for k in inside:
-		if game.items.has(k) and keep.call(k) and Release.has(k):
-			pick -= int(inside[k])
-			if pick <= 0:
-				return k
-	return ""
+	var ids := inside.keys().filter(
+		func(k: Variant) -> bool: return game.items.has(k) and keep.call(k) and Release.has(k))
+	var n := RollSystem.weighted_index(game.rng, ids.map(func(k: Variant) -> int: return int(inside[k])))
+	return str(ids[n]) if n >= 0 else ""

@@ -68,20 +68,14 @@ func showcase() -> void:
 ## Items you hold fewer of are more likely, so sets fill up instead of piling duplicates.
 func pick_item(coll: Dictionary) -> String:
 	var weights: Array[float] = []
-	var total := 0.0
 	var rarity: Dictionary = collections_data.get("rarity_weight", {})
 	var damping := float(collections_data.get("duplicate_damping", 0.0))
 	for item in coll["items"]:
 		var w := 1.0 / (1.0 + damping * int(owned.get(item["id"], 0)))
 		w *= float(rarity.get(item.get("rarity", "common"), 1))
 		weights.append(w)
-		total += w
-	var pick := game.rng.randf() * total
-	for k in weights.size():
-		pick -= weights[k]
-		if pick <= 0.0:
-			return coll["items"][k]["id"]
-	return coll["items"][-1]["id"]
+	var k := RollSystem.weighted_index(game.rng, weights)
+	return coll["items"][k if k >= 0 else -1]["id"]
 
 
 ## The trade-in level this set is on next, from 0 (after the last of data's levels it repeats from the first).

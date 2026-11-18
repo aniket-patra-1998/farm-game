@@ -51,13 +51,9 @@ func roll_mystery_egg(coop: Dictionary) -> String:
 	)
 	if not game.rolls.roll("mystery_egg", chance):
 		return ""
-	var pick := game.rng.randi_range(1, chickens)
 	var inside: Dictionary = coop["inside"]
-	for id in inside:
-		pick -= int(inside[id])
-		if pick <= 0:
-			return game.item_data(id).get("breed", "white")
-	return "white"
+	var k := RollSystem.weighted_index(game.rng, inside.values())
+	return game.item_data(inside.keys()[k]).get("breed", "white") if k >= 0 else "white"
 
 
 ## Opens one Mystery Egg of a colour. Returns the prize text, or "" if none held.
@@ -152,15 +148,8 @@ static func rarity_of_prize(prizes: Array, prize: Array) -> String:
 
 ## Picks one prize from a weighted list: [kind, amount or item, weight].
 func _weighted_prize(prizes: Array) -> Array:
-	var total := 0
-	for p in prizes:
-		total += int(p[2])
-	var roll := game.rng.randi_range(1, total)
-	for p in prizes:
-		roll -= int(p[2])
-		if roll <= 0:
-			return p
-	return prizes[-1]
+	var k := RollSystem.weighted_index(game.rng, prizes.map(func(p: Array) -> int: return int(p[2])))
+	return prizes[k] if k >= 0 else prizes[-1]
 
 
 ## FarmVille's Mystery Box: bought with premium currency, opens into one random prize.

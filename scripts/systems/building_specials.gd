@@ -47,22 +47,18 @@ func grow_up_inside(b: Dictionary) -> Array[String]:
 ## Which baby a Dairy Farm or Horse Stable brings: a breed's own baby, likelier for the breeds it holds more of.
 func _pick_baby(b: Dictionary, plain: String) -> String:
 	var inside: Dictionary = b.get("inside", {})
-	var total := 0
+	var breeds: Array[AnimalDef] = []
+	var counts := []
 	for id in inside:
 		var d := game.catalog.get_def(id)
 		if d is AnimalDef and not (d as AnimalDef).is_stray_only() and not (d as AnimalDef).is_young():
-			total += int(inside[id])
-	if total == 0:
+			breeds.append(d as AnimalDef)
+			counts.append(int(inside[id]))
+	var k := RollSystem.weighted_index(game.rng, counts)
+	if k < 0:
 		return plain
-	var pick := game.rng.randi_range(1, total)
-	for id in inside:
-		var d := game.catalog.get_def(id)
-		if d is AnimalDef and not (d as AnimalDef).is_stray_only() and not (d as AnimalDef).is_young():
-			pick -= int(inside[id])
-			if pick <= 0:
-				var baby := (d as AnimalDef).baby()
-				return baby if baby != "" else plain
-	return plain
+	var baby := breeds[k].baby()
+	return baby if baby != "" else plain
 
 
 ## A baby born at a home: said on the home as a find. A breed's own baby (a Pink Calf, not the plain one) is rare.

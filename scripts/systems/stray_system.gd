@@ -68,7 +68,6 @@ func _spawn_stray() -> bool:
 		return false
 	var choices: Array[String] = []
 	var weights: Array[float] = []
-	var total := 0.0
 	for id in game.item_order:
 		var it: Dictionary = game.items[id]
 		if it["kind"] != "animal" or not Release.has(id):
@@ -86,16 +85,9 @@ func _spawn_stray() -> bool:
 		if w > 0.0:
 			choices.append(id)
 			weights.append(w)
-			total += w
 	if choices.is_empty():
 		return false
-	var pick := game.rng.randf() * total
-	var animal_id := choices[-1]
-	for k in choices.size():
-		pick -= weights[k]
-		if pick <= 0.0:
-			animal_id = choices[k]
-			break
+	var animal_id := choices[RollSystem.weighted_index(game.rng, weights)]
 	var spots: Array[Vector2i] = []
 	for r in game.farm_size:
 		for c in game.farm_size:

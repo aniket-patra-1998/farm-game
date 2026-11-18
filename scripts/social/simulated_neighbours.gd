@@ -111,29 +111,13 @@ func _mail(rng: RandomNumberGenerator, idx: int, t: int) -> Dictionary:
 
 
 func _weighted(pool: Array, rng: RandomNumberGenerator) -> Dictionary:
-	var total := 0
-	for e: Dictionary in pool:
-		total += int(e.get("w", 1))
-	if total <= 0:
-		return {}
-	var roll := rng.randi_range(1, total)
-	for e: Dictionary in pool:
-		roll -= int(e.get("w", 1))
-		if roll <= 0:
-			return e
-	return {}
+	var k := RollSystem.weighted_index(rng, pool.map(func(e: Dictionary) -> int: return int(e.get("w", 1))))
+	return pool[k] if k >= 0 else {}
 
 
 func _weighted_key(weights: Dictionary, rng: RandomNumberGenerator) -> Variant:
-	var total := 0
-	for k: Variant in weights:
-		total += int(weights[k])
-	var roll := rng.randi_range(1, maxi(total, 1))
-	for k: Variant in weights:
-		roll -= int(weights[k])
-		if roll <= 0:
-			return k
-	return weights.keys()[0]
+	var k := RollSystem.weighted_index(rng, weights.values())
+	return weights.keys()[maxi(k, 0)]
 
 
 ## A random stream that depends only on `key`, so the same moment always rolls the same.

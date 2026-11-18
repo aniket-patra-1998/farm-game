@@ -60,17 +60,11 @@ func wanted_parts() -> Array[String]:
 func pick_part() -> String:
 	var pool := wanted_parts()
 	var weights: Array[float] = []
-	var total := 0.0
 	for p in pool:
 		var w := 1.0 / (1.0 + int(game.parts.get(p, 0)))
 		weights.append(w)
-		total += w
-	var pick := game.rng.randf() * total
-	for k in pool.size():
-		pick -= weights[k]
-		if pick <= 0.0:
-			return pool[k]
-	return pool[-1]
+	var k := RollSystem.weighted_index(game.rng, weights)
+	return pool[k if k >= 0 else -1]
 
 
 func add_part(part: String, n: int) -> void:

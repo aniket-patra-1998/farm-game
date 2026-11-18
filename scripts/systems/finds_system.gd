@@ -118,17 +118,9 @@ func help_for(target: String) -> float:
 ## A kind of the family by weight (common ones turn up more).
 func pick(family: String) -> Dictionary:
 	var kinds: Array = families.get(family, {}).get("kinds", [])
-	var total := 0
-	for k: Dictionary in kinds:
-		total += int(k.get("weight", 1))
-	if total <= 0:
-		return {}
-	var r := game.rng.randi_range(1, total)
-	for k: Dictionary in kinds:
-		r -= int(k.get("weight", 1))
-		if r <= 0:
-			return k
-	return kinds[-1]
+	var weights := kinds.map(func(kind: Dictionary) -> int: return int(kind.get("weight", 1)))
+	var k := RollSystem.weighted_index(game.rng, weights)
+	return kinds[k] if k >= 0 else {}
 
 
 ## One more of `kind` found; pays the collection reward the first time the family is complete.

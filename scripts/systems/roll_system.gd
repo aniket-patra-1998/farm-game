@@ -25,6 +25,28 @@ func roll(id: String, base: float) -> bool:
 	return game.rng.randf() < odds(id, base)
 
 
+## The index of one of `weights` picked by weight, from `rng`: a weight of 0 or less is never picked; -1 when
+## none can be. Every weighted pick in the rules (prizes, finds, babies, strays, parts, neighbours' gifts) goes
+## through here, so they share one rule.
+static func weighted_index(rng: RandomNumberGenerator, weights: Array) -> int:
+	var total := 0.0
+	for w: Variant in weights:
+		total += maxf(float(w), 0.0)
+	if total <= 0.0:
+		return -1
+	var pick := rng.randf() * total
+	var last := -1
+	for k in weights.size():
+		var w := float(weights[k])
+		if w <= 0.0:
+			continue
+		last = k
+		if pick < w:
+			return k
+		pick -= w
+	return last
+
+
 ## Every roll's id (for the test that holds code and data together).
 func ids() -> Array:
 	return _rolls.keys()
