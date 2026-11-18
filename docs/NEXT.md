@@ -445,14 +445,22 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   per phase the frames until built and the cover lifts, and Performance RENDER_TOTAL_DRAW_CALLS/PRIMITIVES summed
   over the build frames. One pass takes about 7 minutes here; the cover always lifts at MOST_SECONDS (software
   frames never settle). Worth committing as tools/cover_probe if the next steps keep needing it.
-- Next: step 1, the Bloom Garden. `BuildingFill._show_plants` (building_fill.gd ~646-685) builds every bloom in code
-  (`BloomModel.build_at`, seed uid+k, size BLOOM_SIZE * ScaleGuide.factor, full or not by `BloomDef.is_full`) and
-  bakes them. A bloom on its own tile comes from art/models/blooms/<id>.scn (`Objects3D.bloom_look`, BLOOM_LOOKS 4
-  looks). Plan: take the garden's blooms from those files (look k % BLOOM_LOOKS), scaled to BLOOM_SIZE against the
-  file's size, batched per look through Instancer, ripened as now. Check before building that the file's model at
-  that scale matches build_at's (stems, crowding mask 0, full flag): if each garden bloom being one of 4 looks
-  instead of unique reads differently, that is a look change: report it, do not build. Measure the showcase's cold
-  CPU build (headless) and draws before and after.
+- Run 2 (18 Nov 21:50-22:40 IST): still no phone_bench.yml run (no reports). Step 1 done differently from the
+  plan: the Bloom Garden's blooms (`BuildingFill._show_plants`) are one baked model kept by ModelStore, keyed by
+  everything the model comes from (uid, field, room, span, rows, blooms in order, crowd detail; the build stamp
+  covers code and data). Shipped for the showcase (CI's perf_probe --bake), saved on the phone the first time.
+  Measured headless (perf_probe -- --store, run twice): garden 147-215 ms built (about 119 ms building, 96 ms
+  baking 40 blooms) -> 4-5 ms kept. Draws and triangles the same (the same model). look_shot has a "garden" view;
+  built and kept side by side look the same. Test 481. The plan's way (the single-bloom files) is a look change
+  (4 looks at full detail instead of each bloom its own at the garden's crowd detail): reported, not built.
+- Measuring here: Godot was missing from /home/claude/godot (download 4.7.2 as fuzz.yml does, then --import).
+  A store-on render: a scratch scene that sets `ModelStore.stamp = "probe"` and changes to look_shot.tscn (run
+  twice: the second run loads). look_shot pictures differ a little run to run everywhere (animals, sway): compare
+  by eye, not by pixel count.
+- Next: step 2, tree batching (the design in "Phone performance" above). The orchard's plants are not kept
+  (trees stay separate for near/far detail and their own ripening): 41-64 ms, which step 2 or 3 takes on.
+  Measure with tools/perf_probe --quality=low --size=2400x1080 --fill (draws, triangles) before and after.
+
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
