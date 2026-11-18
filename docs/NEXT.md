@@ -447,6 +447,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   clone's old local main looked diverged from origin (it was not on origin's 50-commit window): kept as a local
   branch, main reset to origin/main. Next: icons' visual size in one set (the cursor, plus and note read small
   beside the coin and barn at 96 px), reveal_card's bare timings once goals' step 4 settles.
+- Art run 16 (19 Nov 02:05 IST): main only, one icon set. f0b6a44: icons in one visual size. tools/make_ui_icons.py
+  measures each vector icon's drawn box (outline(), placed() for transforms, bounds() with the white edge) and fits
+  one smaller than FIT (112 of 128) to it, at most FIT_GROW 1.15x, centred, through the file's viewBox (view());
+  bigger ones untouched. Grew: seeds, fertilizer, ready pin (~10-15%); hoe, tag, coin, gem, basket, neighbours,
+  fit, search, gardener re-centred and a few % larger. Drawn note and lock grow 1.12 (UiIcon.GROW). ui_kit test
+  513 (every SVG's longest side >= 0.84 of its canvas); test 453's shirt pixel moved to (40, 96). Seen once: the
+  pre-push precheck failed test 338 (triangles 2302157 vs 2300000 on the heaviest farm), passed on the retry:
+  flaky draw budget (perf loop's lane). The cursor still reads light (a thin outline shape, by design); plus and
+  cross are marks sized by their buttons, left. Next: reveal_card's bare timings (goals' step 4 merged), then
+  panels' spacing grid.
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
