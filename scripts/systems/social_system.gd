@@ -91,7 +91,7 @@ func look_of(name: String) -> Dictionary:
 
 ## How many of today's helps are left (the count restarts each day).
 func helps_left() -> int:
-	return Balance.i("social.helps_per_day") - (helps_today if help_day == game.day_number() else 0)
+	return Balance.i("social.helps_per_day") - (0 if game.day_turned(help_day) else helps_today)
 
 
 ## Items waiting that a tap would claim for free.
@@ -198,7 +198,7 @@ func help_all() -> Dictionary:
 ## Has this neighbour had a gift from you today?
 func gifted_today(neighbour: int) -> bool:
 	var limit := Balance.i("social.gifts_per_neighbour_per_day")
-	return gift_day == game.day_number() and int(gifts_today.get(str(neighbour), 0)) >= limit
+	return not game.day_turned(gift_day) and int(gifts_today.get(str(neighbour), 0)) >= limit
 
 
 ## Sends a neighbour a free gift (once a day each). `give` is one of the data's gifts.
@@ -211,7 +211,7 @@ func send_gift(neighbour: int, give: Dictionary) -> bool:
 		return false
 	if not _room_to_post():
 		return false
-	if gift_day != game.day_number():
+	if game.day_turned(gift_day):
 		gift_day = game.day_number()
 		gifts_today = {}
 	gifts_today[str(neighbour)] = int(gifts_today.get(str(neighbour), 0)) + 1
@@ -394,7 +394,7 @@ func _add_to_inbox(item: Dictionary) -> void:
 
 
 func _count_help() -> void:
-	if help_day != game.day_number():
+	if game.day_turned(help_day):
 		help_day = game.day_number()
 		helps_today = 0
 	helps_today += 1

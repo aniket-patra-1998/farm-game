@@ -68,7 +68,7 @@ func add_fuel(n: int) -> void:
 
 ## FarmVille: plowing your own farm can turn up fuel, at most once a day.
 func roll_fuel_find(i: int) -> int:
-	if not game.drops_enabled or game.level() < Balance.i("vehicles.fuel_level") or fuel_found_day == game.day_number():
+	if not game.drops_enabled or game.level() < Balance.i("vehicles.fuel_level") or not game.day_turned(fuel_found_day):
 		return 0
 	if not game.rolls.roll("fuel_find", Balance.f("vehicles.fuel_find_chance")):
 		return 0

@@ -180,3 +180,45 @@ func test_464_a_project_goes_stage_by_stage_and_its_reward_stands_on_the_farm() 
 	_check(g.goals.projects_done.has("proj"), "the project is done")
 	_eq(g.storage.stored.size() + g.social.inbox.size(), before + 1, "its reward arrives in the Barn or inbox")
 	_done(g)
+
+
+func test_481_a_clock_set_back_a_day_brings_no_day_round_again() -> void:
+	# Setting the clock back to yesterday and forward again made a new day each time: today's jobs (coins, XP, a
+	# Mystery Box, a gem), the neighbours' helps and gifts, the fuel find and the market stall came round anew.
+	var g := _goal_farm()
+	var jobs := g.goals.daily_jobs.duplicate(true)
+	var j: Dictionary = jobs[0]
+	g.record(str(j["do"]), str(j["what"]), int(j["n"]))
+	g.goals.claim("daily:0")
+	g.social.help_day = g.day_number()
+	g.social.helps_today = Balance.i("social.helps_per_day")
+	g.social.gift_day = g.day_number()
+	g.social.gifts_today = {"0": Balance.i("social.gifts_per_neighbour_per_day")}
+	g.vehicles.fuel_found_day = g.day_number()
+	var today := g.day_number()
+	g.debug_time_offset -= 86400
+	g.goals.refresh()
+	_eq(g.goals.daily_day, today, "yesterday's clock keeps today's jobs")
+	_eq(g.goals.daily_jobs, jobs, "the same jobs")
+	_check(g.goals.daily_claimed[0], "the collected one stays collected")
+	_eq(g.social.helps_left(), 0, "no helps come back")
+	_check(g.social.gifted_today(0), "no gift comes back")
+	_check(not g.day_turned(g.vehicles.fuel_found_day), "no second fuel find")
+	g.debug_time_offset += 86400
+	g.goals.refresh()
+	_check(g.goals.daily_claimed[0], "back to today: still collected")
+	g.debug_time_offset += 86400
+	_check(g.day_turned(today), "a real new day still turns")
+	g.goals.refresh()
+	_eq(g.goals.daily_day, today + 1, "and brings new jobs")
+	_done(g)
+
+
+func test_482_a_damaged_goal_save_loads_without_a_crash() -> void:
+	var g := _goal_farm()
+	g.goals.load_from({"goal_chain_step": {"first": 99}, "goal_project_stage": {"proj": 5},
+		"goal_daily": {"day": g.day_number(), "jobs": [{"do": "plow"}, {"do": "plow"}], "claimed": [true]}})
+	_check(g.goals.chain_step.is_empty() and g.goals.project_stage.is_empty(), "a step past the end is dropped")
+	_eq(g.goals.daily_claimed, [true, false], "a short claimed list is filled with not collected")
+	_check(not g.goals.daily_bonus_given and g.goals.open_keys().has("daily:1"), "the second job is open")
+	_done(g)

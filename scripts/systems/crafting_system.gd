@@ -408,10 +408,9 @@ func add_star(uid: int, with_gems: bool) -> bool:
 
 ## The Farmers Market: a few crops' bushels for coins, new each day (standing in for neighbours' stalls).
 func _refresh_stall() -> void:
-	var today := game.day_number()
-	if stall_day == today:
+	if not game.day_turned(stall_day):
 		return
-	stall_day = today
+	stall_day = game.day_number()
 	stall = {}
 	var pool: Array[String] = []
 	for b in game.objects:

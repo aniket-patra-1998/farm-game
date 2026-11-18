@@ -397,6 +397,12 @@ func day_number() -> int:
 	return floori((now() + DayCycle.device_bias_minutes() * 60) / 86400.0)
 
 
+## Has a new day come since `day`? Only forward: a clock set back to yesterday is still today for every daily
+## limit and daily pick (else setting it back and forward again gives each day's helps, gifts, jobs anew).
+func day_turned(day: int) -> bool:
+	return day_number() > day
+
+
 # ---------------------------------------------------------------- plots
 
 

@@ -82,8 +82,8 @@ func save_to(data: Dictionary) -> void:
 
 func load_from(data: Dictionary) -> void:
 	reset()
-	chain_step = _known(int_map(data.get("goal_chain_step", {})), _chain_by_id)
-	project_stage = _known(int_map(data.get("goal_project_stage", {})), _project_by_id)
+	chain_step = _known(int_map(data.get("goal_chain_step", {})), _chain_by_id, "steps")
+	project_stage = _known(int_map(data.get("goal_project_stage", {})), _project_by_id, "stages")
 	chains_done = _strings(data.get("goal_chains_done", []))
 	unlocked = _strings(data.get("goal_unlocked", []))
 	projects_done = _strings(data.get("goal_projects_done", []))
@@ -99,8 +99,9 @@ func load_from(data: Dictionary) -> void:
 		for j: Variant in dd.get("jobs", []):
 			if typeof(j) == TYPE_DICTIONARY and (j as Dictionary).has("do"):
 				daily_jobs.append({"do": str(j["do"]), "what": str(j.get("what", ANY)), "n": maxi(1, int(j.get("n", 1)))})
-		daily_claimed = (dd.get("claimed", []) as Array).map(func(v: Variant) -> bool: return bool(v))
-		daily_claimed.resize(daily_jobs.size())
+		var claimed: Variant = dd.get("claimed", [])
+		for i in daily_jobs.size():
+			daily_claimed.append(typeof(claimed) == TYPE_ARRAY and i < (claimed as Array).size() and bool(claimed[i]))
 		daily_swaps = maxi(0, int(dd.get("swaps", 0)))
 		daily_bonus_given = bool(dd.get("bonus", false))
 
@@ -129,10 +130,12 @@ static func _strings(v: Variant) -> Array[String]:
 	return out
 
 
-static func _known(m: Dictionary, by_id: Dictionary) -> Dictionary:
+## The entries of `m` (id -> step) whose id is in `by_id` and whose step is one of its `parts` (a damaged save's
+## step past the end is dropped, not a crash).
+static func _known(m: Dictionary, by_id: Dictionary, parts: String) -> Dictionary:
 	var out := {}
 	for k: String in m:
-		if by_id.has(k):
+		if by_id.has(k) and int(m[k]) < (by_id[k].get(parts, []) as Array).size():
 			out[k] = m[k]
 	return out
 
@@ -161,7 +164,7 @@ func refresh() -> void:
 			project_stage[id] = 0
 			_take("project:" + id)
 			changed = true
-	if daily_day != game.day_number():
+	if game.day_turned(daily_day):
 		make_daily_jobs()
 		changed = true
 	if changed:
