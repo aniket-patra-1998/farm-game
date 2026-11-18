@@ -296,8 +296,96 @@ func test_484_todays_jobs_can_be_done_today() -> void:
 			var what := str(job["what"])
 			match str(job["do"]):
 				"harvest":
-					_check(float(g.crops[what]["grow_seconds"]) <= hours, "day %d: harvest %s can be done" % [day, what])
+					_check(what == "" or float(g.crops[what]["grow_seconds"]) <= hours,
+						"day %d: harvest %s can be done" % [day, what])
 				"collect", "feed":
 					_check(int(job["n"]) <= g.goals.per_day_of(what), "day %d: %s %d from %s, no more than they give"
 						% [day, job["do"], job["n"], what])
+	_done(g)
+
+
+## Step 7's chains: each of the six neighbours tells one, each 3 to 6 steps of 1 to 3 tasks, opening from level 2
+## to 12, never before the chains it follows; along the level path no more than two neighbour chains are open
+## at once (the faces keep a place for today's jobs).
+func test_513_the_six_neighbours_chains_follow_the_level_path() -> void:
+	var g := _farm()
+	var d := DataFile.read(GoalSystem.DATA_PATH)
+	var by_id := {}
+	var givers := []
+	for c: Dictionary in d["chains"]:
+		by_id[str(c["id"])] = c
+		if c.get("new_farm", false):
+			continue
+		givers.append(str(c["giver"]).to_lower())
+		var steps: Array = c["steps"]
+		_check(steps.size() >= 3 and steps.size() <= 6, "%s has 3 to 6 steps" % c["id"])
+		for s: Dictionary in steps:
+			_check((s["tasks"] as Array).size() in [1, 2, 3], "%s: a step is 1 to 3 tasks" % c["id"])
+			_check(not (s.get("reward", {}) as Dictionary).is_empty(), "%s: every step gives something" % c["id"])
+		_check(int(c.get("level", 1)) >= 2 and int(c.get("level", 1)) <= 12, "%s opens from level 2 to 12" % c["id"])
+		for a: Variant in c.get("after", []):
+			_check(int(by_id.get(str(a), {}).get("level", 1)) <= int(c["level"]), "%s opens after %s" % [c["id"], a])
+	givers.sort()
+	var roster := g.social.roster().map(func(n: String) -> String: return n.to_lower())
+	roster.sort()
+	_eq(givers, roster, "each of the six neighbours tells one chain")
+	# Walk the level path finishing each open chain at once: count the neighbour chains open together.
+	var done := {"welcome": true}
+	var most := 0
+	for level in range(1, 31):
+		var open := []
+		for c: Dictionary in d["chains"]:
+			var ready: bool = not done.has(str(c["id"])) and level >= int(c.get("level", 1)) \
+				and (c.get("after", []) as Array).all(func(a: Variant) -> bool: return done.has(str(a)))
+			if ready:
+				open.append(str(c["id"]))
+		most = maxi(most, open.size())
+		for id: String in open:
+			done[id] = true
+	_check(most <= 2, "at most two neighbour chains open at once (%d)" % most)
+	_eq(done.size(), (d["chains"] as Array).size(), "every chain opens on the level path")
+	_done(g)
+
+
+## A daily template's `needs` keeps it until the farm has one (no pollinate job without a beehive), and
+## @tree_owned picks the farm's own trees.
+func test_514_a_job_waits_for_what_it_needs() -> void:
+	var g := _farm()
+	g.goals.load_data()
+	g.goals.reset()
+	g.add_xp(g.xp_for_level(12))
+	_eq(g.goals.pick_candidates("@tree_owned"), [], "no tree, no tree to pick")
+	_check(g.place_somewhere("apple_tree"), "an apple tree on the farm")
+	_eq(g.goals.pick_candidates("@tree_owned"), ["apple_tree"], "the farm's own tree")
+	var seen := {}
+	for day in 60:
+		g.debug_time_offset += 86400
+		g.goals.refresh()
+		for job: Dictionary in g.goals.daily_jobs:
+			seen[str(job["do"])] = true
+	_check(not seen.has("pollinate"), "no pollinate job without a beehive")
+	_check(not seen.has("vehicle_work"), "no vehicle job without a vehicle")
+	_check(seen.has("collect"), "collect jobs come (the apple tree)")
+	_done(g)
+
+
+## Step 7's done-when (docs/FIRST_HOUR_RUN.md): the goal-following bot, three visits a day on a brand-new farm,
+## finishes every story chain (the Welcome chain and the six neighbours') within three weeks.
+func test_515_the_goal_bot_completes_every_chain() -> void:
+	var g := _farm()
+	var sim: Node = load("res://tools/balance_sim.gd").new()
+	sim.set("game", g)
+	sim.set("style", "goals")
+	sim.set("_days", 21)
+	var hours: Array = sim.call("_visit_hours")
+	g.debug_time_offset += int(sim.call("_seconds_until", hours[0], g.now()))
+	g.reset_game()
+	g.rng.seed = 1
+	sim.call("_play")
+	var left := []
+	for c: Dictionary in g.goals.chains:
+		if not g.goals.chains_done.has(str(c["id"])):
+			left.append("%s at step %d" % [c["id"], int(g.goals.chain_step.get(str(c["id"]), -1)) + 1])
+	_eq(left, [], "every chain done in 21 days")
+	sim.free()
 	_done(g)

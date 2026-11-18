@@ -1,5 +1,5 @@
 {
-  "_about": "Goals (docs/PLAYER_EXPERIENCE.md Part 1), read by GoalSystem. chains: the neighbours' story chains ({id, giver, after, level, locked?, steps: [{say, tasks, reward}]}); daily: today's jobs ({count, swap, bonus, templates: [{do, what, n: [low, high], weight, level}]}); projects: long goals ({id, level, stages: [{tasks, reward?}], reward}). A task is {do, what, n}: `do` a verb of data/events.json or a state verb (level, own); `what` an item or crop id, a kind (animal, tree, crop...), \"\" for anything, or for daily jobs a pick (@crop_unlocked, @crop_quick: one that ripens within goals.daily_crop_hours, @animal_owned, @building_owned, @recipe_known); a template's per_owned caps its n at what the farm's own things give in a day (GoalSystem.per_day_of). A chain step's `say` and a project's `name` are locale keys. show: where a task's Show me goes, by verb (tool:<id>, seeds, market, farm:<kind of spot> or farm:item for the task's own thing; HudGoals). Rewards: coins, xp, gems, item or place (to the Barn or inbox), box (a Mystery Box), unlock_chain. A chain with new_farm (Welcome) opens on a brand-new farm (a farm saved before it skips it); a reward `seeds` gives one plot of gift seeds (Starter Seeds), `ready` with `place` makes the gift ready to harvest at once, and a task with `ready` makes the thing it counts as bought come ready (the first tree). daily.level: the level today's jobs start at. The six neighbours' chains and the three projects are written in steps 4 and 7 (docs/FIRST_HOUR_RUN.md).",
+  "_about": "Goals (docs/PLAYER_EXPERIENCE.md Part 1), read by GoalSystem. chains: the neighbours' story chains ({id, giver, after, level, locked?, steps: [{say, tasks, reward}]}); daily: today's jobs ({count, swap, bonus, templates: [{do, what, n: [low, high], weight, level}]}); projects: long goals ({id, level, stages: [{tasks, reward?}], reward}). A task is {do, what, n}: `do` a verb of data/events.json or a state verb (level, own); `what` an item or crop id, a kind (animal, tree, crop...), \"\" for anything, or for daily jobs a pick (@crop_unlocked, @crop_quick: one that ripens within goals.daily_crop_hours, @animal_owned, @tree_owned, @building_owned, @recipe_known); a template's needs (an id or a kind) keeps it until the farm has one; a template's per_owned caps its n at what the farm's own things give in a day (GoalSystem.per_day_of). A chain step's `say` and a project's `name` are locale keys. show: where a task's Show me goes, by verb (tool:<id>, seeds, market, farm:<kind of spot> or farm:item for the task's own thing; HudGoals). Rewards: coins, xp, gems, item or place (to the Barn or inbox), box (a Mystery Box), unlock_chain. A chain with new_farm (Welcome) opens on a brand-new farm (a farm saved before it skips it); a reward `seeds` gives one plot of gift seeds (Starter Seeds), `ready` with `place` makes the gift ready to harvest at once, and a task with `ready` makes the thing it counts as bought come ready (the first tree). daily.level: the level today's jobs start at. The six neighbours' chains follow each other in two lines (Barley, Poppy, Hazel; Maple, Clover, Rusty), so at most two are open with today's jobs; the three projects come in step 7 (docs/FIRST_HOUR_RUN.md).",
   "show": {"plow": "tool:plow", "plant": "seeds", "harvest": "farm:ripe", "fertilize": "tool:fertilize",
     "collect": "farm:item", "feed": "farm:item", "upgrade": "farm:item", "start_craft": "farm:item", "craft": "farm:item",
     "buy": "market", "build": "market", "own": "market"},
@@ -17,6 +17,60 @@
       {"say": "GOAL_SAY_WELCOME_6", "tasks": [{"do": "plow", "what": "", "n": 4}, {"do": "plant", "what": "", "n": 4}], "reward": {"coins": 40, "xp": 25}},
       {"say": "GOAL_SAY_WELCOME_7", "tasks": [{"do": "level", "what": "", "n": 3}], "reward": {"coins": 30, "box": "mystery_box"}},
       {"say": "GOAL_SAY_WELCOME_8", "tasks": [{"do": "plant", "what": "wheat", "n": 1}], "reward": {"coins": 50, "xp": 10}}
+    ]},
+    {"id": "barley_coop", "giver": "Barley", "after": ["welcome"], "level": 3, "steps": [
+      {"say": "GOAL_SAY_BARLEY_1", "tasks": [{"do": "buy", "what": "chicken", "n": 1}, {"do": "collect", "what": "chicken", "n": 3}],
+        "reward": {"coins": 100, "xp": 20}},
+      {"say": "GOAL_SAY_BARLEY_2", "tasks": [{"do": "buy", "what": "cow", "n": 1}, {"do": "collect", "what": "cow", "n": 1}],
+        "reward": {"coins": 150, "xp": 30, "item": "hay_bale"}},
+      {"say": "GOAL_SAY_BARLEY_3", "tasks": [{"do": "collect", "what": "animal", "n": 12}],
+        "reward": {"coins": 250, "xp": 40}},
+      {"say": "GOAL_SAY_BARLEY_4", "tasks": [{"do": "own", "what": "chicken_coop", "n": 1}],
+        "reward": {"coins": 400, "xp": 60, "item": "brown_chicken"}}
+    ]},
+    {"id": "maple_orchard", "giver": "Maple", "after": ["welcome"], "level": 4, "steps": [
+      {"say": "GOAL_SAY_MAPLE_1", "tasks": [{"do": "buy", "what": "plum_tree", "n": 1}, {"do": "collect", "what": "apple_tree", "n": 2}],
+        "reward": {"coins": 120, "xp": 25}},
+      {"say": "GOAL_SAY_MAPLE_2", "tasks": [{"do": "buy", "what": "lemon_tree", "n": 1}, {"do": "collect", "what": "tree", "n": 6}],
+        "reward": {"coins": 200, "xp": 40}},
+      {"say": "GOAL_SAY_MAPLE_3", "tasks": [{"do": "own", "what": "tree", "n": 6}],
+        "reward": {"coins": 300, "xp": 60, "item": "cherry_tree"}}
+    ]},
+    {"id": "poppy_decor", "giver": "Poppy", "after": ["barley_coop"], "level": 5, "steps": [
+      {"say": "GOAL_SAY_POPPY_1", "tasks": [{"do": "buy", "what": "flower_bed", "n": 2}],
+        "reward": {"coins": 80, "xp": 15}},
+      {"say": "GOAL_SAY_POPPY_2", "tasks": [{"do": "buy", "what": "white_picket_fence", "n": 4}, {"do": "buy", "what": "bench", "n": 1}],
+        "reward": {"coins": 150, "xp": 30}},
+      {"say": "GOAL_SAY_POPPY_3", "tasks": [{"do": "buy", "what": "scarecrow", "n": 1}],
+        "reward": {"coins": 200, "xp": 30}},
+      {"say": "GOAL_SAY_POPPY_4", "tasks": [{"do": "own", "what": "decor", "n": 12}],
+        "reward": {"coins": 250, "xp": 50, "item": "birdhouse"}}
+    ]},
+    {"id": "clover_bees", "giver": "Clover", "after": ["maple_orchard"], "level": 7, "steps": [
+      {"say": "GOAL_SAY_CLOVER_1", "tasks": [{"do": "buy", "what": "rose_bloom", "n": 2}],
+        "reward": {"coins": 150, "xp": 30}},
+      {"say": "GOAL_SAY_CLOVER_2", "tasks": [{"do": "collect", "what": "bloom", "n": 2}],
+        "reward": {"coins": 200, "xp": 40}},
+      {"say": "GOAL_SAY_CLOVER_3", "tasks": [{"do": "buy", "what": "tulip_bloom", "n": 1}, {"do": "own", "what": "bloom", "n": 4}],
+        "reward": {"coins": 300, "xp": 60, "item": "beehive"}}
+    ]},
+    {"id": "hazel_baker", "giver": "Hazel", "after": ["poppy_decor"], "level": 8, "steps": [
+      {"say": "GOAL_SAY_HAZEL_1", "tasks": [{"do": "harvest", "what": "wheat", "n": 12}, {"do": "harvest", "what": "strawberries", "n": 12}],
+        "reward": {"coins": 150, "xp": 30}},
+      {"say": "GOAL_SAY_HAZEL_2", "tasks": [{"do": "harvest", "what": "pumpkins", "n": 8}],
+        "reward": {"coins": 250, "xp": 40}},
+      {"say": "GOAL_SAY_HAZEL_3", "tasks": [{"do": "harvest", "what": "raspberries", "n": 10}],
+        "reward": {"coins": 400, "xp": 80, "box": "mystery_box"}}
+    ]},
+    {"id": "rusty_tractor", "giver": "Rusty", "after": ["clover_bees"], "level": 10, "steps": [
+      {"say": "GOAL_SAY_RUSTY_1", "tasks": [{"do": "harvest", "what": "", "n": 40}],
+        "reward": {"coins": 300, "xp": 40}},
+      {"say": "GOAL_SAY_RUSTY_2", "tasks": [{"do": "level", "what": "", "n": 12}],
+        "reward": {"coins": 500, "xp": 50}},
+      {"say": "GOAL_SAY_RUSTY_3", "tasks": [{"do": "buy", "what": "tractor", "n": 1}],
+        "reward": {"coins": 300, "xp": 100}},
+      {"say": "GOAL_SAY_RUSTY_4", "tasks": [{"do": "vehicle_work", "what": "tractor", "n": 10}],
+        "reward": {"coins": 600, "xp": 80, "item": "haystack"}}
     ]}
   ],
   "daily": {
@@ -30,7 +84,17 @@
       {"do": "plow", "what": "", "n": [6, 20], "weight": 1},
       {"do": "collect", "what": "@animal_owned", "n": [2, 8], "weight": 2, "per_owned": true},
       {"do": "feed", "what": "@animal_owned", "n": [2, 6], "weight": 1, "level": 5, "per_owned": true},
-      {"do": "craft", "what": "@recipe_known", "n": [1, 2], "weight": 1, "level": 8}
+      {"do": "craft", "what": "@recipe_known", "n": [1, 2], "weight": 1, "level": 8},
+      {"do": "harvest", "what": "", "n": [10, 30], "weight": 2},
+      {"do": "collect", "what": "@tree_owned", "n": [2, 6], "weight": 2, "per_owned": true},
+      {"do": "collect", "what": "animal", "n": [3, 10], "weight": 1, "level": 4, "needs": "animal", "per_owned": true},
+      {"do": "fertilize", "what": "", "n": [4, 12], "weight": 1, "level": 4},
+      {"do": "earn", "what": "", "n": [100, 1000], "weight": 1},
+      {"do": "gift", "what": "", "n": [1, 3], "weight": 1, "level": 3},
+      {"do": "pollinate", "what": "", "n": [3, 10], "weight": 1, "needs": "beehive"},
+      {"do": "vehicle_work", "what": "", "n": [10, 30], "weight": 1, "needs": "vehicle"},
+      {"do": "start_craft", "what": "@recipe_known", "n": [1, 3], "weight": 1},
+      {"do": "sell_good", "what": "@recipe_known", "n": [1, 2], "weight": 1}
     ]
   },
   "projects": []
