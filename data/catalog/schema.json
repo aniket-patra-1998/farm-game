@@ -125,6 +125,11 @@
           "type": "bool",
           "default": false,
           "doc": "Flower harvests can bring bees and Queen Bees."
+        },
+        "starter": {
+          "type": "bool",
+          "default": false,
+          "doc": "Starter Seeds (our own touch): given once by the Welcome chain, never sold; planted only while held (GoalSystem.seeds)."
         }
       },
       "lifecycle": {

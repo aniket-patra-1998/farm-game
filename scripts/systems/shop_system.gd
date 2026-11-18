@@ -35,6 +35,8 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	if it.is_empty() or not game.can_place(item_id, row, col) or not game.buy_item(item_id):
 		return false
 	var obj := {"uid": game.next_uid, "id": item_id, "row": row, "col": col, "t": game.now()}
+	if game.goals.take_ready(item_id):
+		obj.merge(game.ready_now(item_id), true)
 	if game.special_of(obj) == "garden_shed":
 		game.shed.on_shed_built()
 	if it["kind"] == "crafting":

@@ -7,7 +7,7 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 
 | Category | Families | In game | Planned |
 |---|---|---|---|
-| Crops | 10 | 73 | 0 |
+| Crops | 10 | 74 | 0 |
 | Materials | 2 | 13 | 0 |
 | Trees | 32 | 46 | 0 |
 | Animals | 15 | 68 | 0 |
@@ -19,7 +19,7 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | blooms | 6 | 12 | 0 |
 | Ingredients | 3 | 22 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **114** | **467** | **43** |
+| **All** | **114** | **468** | **43** |
 
 ## Adding an item
 
@@ -84,6 +84,7 @@ Planted in plowed plots, harvested when ripe.
 | `xp` | int | 1 |  | XP per harvest. |
 | `shape` | enum of berry, grain, root, stalk, flower, fruit, gourd, spike, fluff, leafy |  | yes | Placeholder drawing. |
 | `flower` | bool | false |  | Flower harvests can bring bees and Queen Bees. |
+| `starter` | bool | false |  | Starter Seeds (our own touch): given once by the Welcome chain, never sold; planted only while held (GoalSystem.seeds). |
 
 ### Material (extends Item)
 
@@ -266,6 +267,7 @@ Berries.
 | | Item | id | Unlock | Seed | Grows | Sells | XP |
 |---|---|---|---|---|---|---|---|
 | ✅ | Strawberries | `strawberries` | 1 | 10 | 4 h | 35 | 1 |
+| ✅ | Starter Seeds | `starter_seeds` | never sold | 0 | 3 min | 20 | 2 |
 | ✅ | Raspberries | `raspberries` | 8 | 20 | 2 h | 46 | 0 |
 | ✅ | Blueberries | `blueberries` | 16 | 50 | 4 h | 91 | 1 |
 | ✅ | Cranberries | `cranberries` | 10 | 55 | 10 h | 98 | 1 |

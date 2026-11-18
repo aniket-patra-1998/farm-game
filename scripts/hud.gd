@@ -133,6 +133,7 @@ func _ready() -> void:
 	Game.farm_expanded.connect(func(_s: int) -> void: _refresh_book())
 	Game.xp_changed.connect(func(_x: int, _l: int) -> void: _refresh())
 	Game.tutorial_changed.connect(func(_s: int) -> void: _refresh_tutorial())
+	Game.goals_changed.connect(_refresh_tutorial)   # (a new farm's floating words are the Welcome chain's)
 	Game.away_recap.connect(_show_away)
 	var tick := Timer.new()
 	tick.wait_time = 1.0

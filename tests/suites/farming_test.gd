@@ -11,7 +11,9 @@ func test_01_new_farm_starts_like_the_classic_opening() -> void:
 	_eq(g.field.phase(g.index_of(5, 5)), GameState.Phase.RIPE, "starter wheat ripe")
 	_eq(g.field.phase(g.index_of(6, 4)), GameState.Phase.GROWING, "half-grown plot growing")
 	_eq(g.field.phase(g.index_of(7, 4)), GameState.Phase.PLOWED, "plowed starter plot")
-	_eq(g.tutorial_step, GameState.Tutorial.HARVEST, "tutorial starts at harvest")
+	# The Welcome chain teaches a new farm (welcome_test 500); the three-step tutorial stays for farms without goals.
+	_eq(g.tutorial_step, GameState.Tutorial.DONE, "the old tutorial gives way to the Welcome chain")
+	_check(g.goals.chain_step.has("welcome"), "a new farm is on the Welcome chain")
 	var ids: Array = g.objects.map(func(o): return o["id"])
 	for want in ["farmhouse", "barn", "mailbox", "farm_stand", "cow"]:
 		_check(ids.has(want), "starter farm has a %s" % want)

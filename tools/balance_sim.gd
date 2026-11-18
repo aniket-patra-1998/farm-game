@@ -42,6 +42,7 @@ var _bought := {}         # item id -> bought
 var _spent := 0           # coins spent (every fall of the purse)
 var _last_coins := 0
 var _away_days := 0
+var _keep := 0           # coins kept for what an open goal asks to buy (not spent on seeds)
 var _want_plant := {}     # crops a goal asks to plant (planted even when no visit finds them ripe)
 var _want := {}           # crop id -> plots a goal still wants planted with it (this visit)
 
@@ -273,6 +274,7 @@ func _visit(next_visits: Array) -> void:
 		_claim_goals()   # yesterday's finished jobs first: the day's refresh replaces them
 		game.goals.refresh()
 		_swap_undoable()
+	_place_gifts()
 	_collect_ready()
 	_feed_hungry()
 	_claim_goals()
@@ -299,7 +301,7 @@ func _visit(next_visits: Array) -> void:
 			if crop == "":
 				break   # nothing affordable that a later visit finds ripe: plowing now would only waste coins
 			if ph == GameState.Phase.GRASS:
-				if game.coins < Balance.i("economy.plow_cost") + int(game.crops[crop]["seed_cost"]) or not _act():
+				if game.coins - _keep < Balance.i("economy.plow_cost") + int(game.crops[crop]["seed_cost"]) or not _act():
 					continue
 				game.field.plow(i)
 				ph = game.field.phase(i)
@@ -350,6 +352,7 @@ func _open_tasks() -> Array:
 func _want_crops() -> void:
 	_want = {}
 	_want_plant = {}
+	_keep = 0
 	var growing := {}   # crop id -> plots growing it (a harvest goal counts them already)
 	for i in game.plots.size():
 		var p: Dictionary = game.plots[i]
@@ -357,6 +360,8 @@ func _want_crops() -> void:
 			growing[str(p["crop"])] = int(growing.get(str(p["crop"]), 0)) + 1
 	for task: Dictionary in _open_tasks():
 		var id := str(task.get("what", ""))
+		if str(task["do"]) in ["buy", "own", "build"] and game.items.has(id):
+			_keep += int(game.buildings.price_of(id).get("coins", 0))
 		if not game.crops.has(id):
 			continue
 		var left := int(task["left"])
@@ -396,6 +401,23 @@ func _goal_buy() -> void:
 				if game.can_place(id, r, c):
 					if _act() and game.buy_and_place(id, r, c):
 						_bought[id] = int(_bought.get(id, 0)) + 1
+					return
+
+
+## Places the things waiting in the inbox that a goal gave (the Welcome chain's chicken), as a player taps Place.
+func _place_gifts() -> void:
+	if not follows_goals():
+		return
+	for item: Dictionary in game.social.inbox.duplicate():
+		if str(item["give"].get("what", "")) != InboxItem.ITEM or not _act():
+			continue
+		var id := str(item["give"].get("id", ""))
+		if not game.social.claim(int(item["id"]), true):
+			continue
+		var at := game.storage.stored.size() - 1
+		for r in range(game.farm_size - 1, -1, -1):
+			for c in game.farm_size:
+				if game.can_place(id, r, c) and game.storage.place_from_storage(at, r, c):
 					return
 
 
@@ -516,7 +538,7 @@ func _best_crop(next_visits: Array) -> String:
 	var best_rate := -INF
 	for id: String in game.crops:
 		var crop: Dictionary = game.crops[id]
-		if game.level() < int(crop["unlock_level"]) or int(crop["seed_cost"]) > game.coins:
+		if not game.can_plant(id) or int(crop["seed_cost"]) > game.coins - _keep:
 			continue
 		var grow := float(crop["grow_seconds"])
 		var window := float(game.field.ripe_window(crop))

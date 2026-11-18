@@ -10,7 +10,7 @@ var _ids: Array[String] = []   # the crops in this release, in order, worked out
 func _init(owner: FarmHud) -> void:
 	hud = owner
 	for id: String in Game.crop_order:
-		if Release.has(id):
+		if Release.has(id) and not Game.crops[id].get("starter", false):
 			_ids.append(id)
 
 
@@ -19,8 +19,8 @@ func build_seeds(content: VBoxContainer) -> void:
 	if Season.enabled() and Game.level() >= Balance.i("seasons.from_level"):
 		content.add_child(BookPanel.text(tr("SEASON_SHELF") % [tr("SEASON_" + Game.season().to_upper()),
 			roundi((Balance.f("seasons.off_price_mult") - 1.0) * 100.0)], UiTheme.HEADING, BookPanel.SOFT))
-	var list := CardList.make(_ids, seed_face, func(id: String) -> void:
-		if Game.is_unlocked(id):
+	var list := CardList.make(gifts() + _ids, seed_face, func(id: String) -> void:
+		if Game.can_plant(id):
 			hud.choose_seed(id), hud.get_viewport().get_visible_rect().size.x)
 	list.search_menu = "seeds"
 	content.add_child(list)
@@ -34,10 +34,19 @@ func ids() -> Array[String]:
 	return _ids
 
 
+## Seeds a goal gave (Starter Seeds), first on the shelf while any are held; never sold.
+func gifts() -> Array[String]:
+	var out: Array[String] = []
+	for id: String in Game.crop_order:
+		if Game.crops[id].get("starter", false) and Game.goals.seeds_of(id) > 0:
+			out.append(id)
+	return out
+
+
 func seed_face(id: String) -> Dictionary:
 	var crop: Dictionary = Game.crops[id]
-	var locked := not Game.is_unlocked(id)
-	var pol := Game.bees.pollinated_seeds(id)
+	var locked := not Game.can_plant(id)
+	var pol := Game.bees.pollinated_seeds(id) + Game.goals.seeds_of(id)
 	var badge: Array
 	if locked:
 		badge = ["lock", tr("UNLOCKS_LEVEL") % int(crop["unlock_level"])]

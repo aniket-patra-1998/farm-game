@@ -68,6 +68,54 @@
    "subject": "wilted, dried-out brown strawberries plants drooping over"
   },
   {
+   "id": "crop_starter_seeds_planted",
+   "item": "starter_seeds",
+   "class": "Crop",
+   "stage": "planted",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_starter_seeds_planted.png"
+   ],
+   "subject": "tiny starter seeds seedlings just sprouting, a few small leaves each; no fruit, no flowers, nothing ripe yet"
+  },
+  {
+   "id": "crop_starter_seeds_growing",
+   "item": "starter_seeds",
+   "class": "Crop",
+   "stage": "growing",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_starter_seeds_growing.png"
+   ],
+   "subject": "half-grown leafy starter seeds plants, healthy and green but not ripe yet"
+  },
+  {
+   "id": "crop_starter_seeds_ripe",
+   "item": "starter_seeds",
+   "class": "Crop",
+   "stage": "ripe",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_starter_seeds_ripe.png"
+   ],
+   "subject": "lush starter seeds plants full of ripe starter seeds, ready to harvest"
+  },
+  {
+   "id": "crop_starter_seeds_withered",
+   "item": "starter_seeds",
+   "class": "Crop",
+   "stage": "withered",
+   "tiles": 1,
+   "fill": 0.92,
+   "refs": [
+    "refs/crop_starter_seeds_withered.png"
+   ],
+   "subject": "wilted, dried-out brown starter seeds plants drooping over"
+  },
+  {
    "id": "crop_raspberries_planted",
    "item": "raspberries",
    "class": "Crop",

@@ -28,8 +28,10 @@ var daily_jobs: Array = []      # today's jobs: [{do, what, n}]
 var daily_claimed: Array = []   # which of them were collected
 var daily_swaps := 0            # swaps used today
 var daily_bonus_given := false
+var seeds := {}                 # seeds a goal gave (Starter Seeds): crop id -> how many plots' worth are held
 
 var _chain_by_id := {}
+var _ready_next := ""           # a thing just bought that a `ready` task counted (take_ready)
 var _project_by_id := {}
 
 
@@ -56,7 +58,7 @@ func use_data(d: Dictionary) -> void:
 
 
 func reset() -> void:
-	chain_step = {}
+	chain_step = new_farm_chains()
 	chains_done = []
 	unlocked = []
 	project_stage = {}
@@ -67,6 +69,17 @@ func reset() -> void:
 	daily_claimed = []
 	daily_swaps = 0
 	daily_bonus_given = false
+	seeds = {}
+
+
+## The chains a brand-new farm starts on (`new_farm`: the Welcome chain), at their first step. A farm saved
+## before it had them never sees them (load_from).
+func new_farm_chains() -> Dictionary:
+	var out := {}
+	for c: Dictionary in chains:
+		if c.get("new_farm", false):
+			out[str(c["id"])] = 0
+	return out
 
 
 func shift_clock(seconds: int) -> void:
@@ -82,6 +95,7 @@ func save_to(data: Dictionary) -> void:
 	data["goal_progress"] = progress.duplicate(true)
 	data["goal_daily"] = {"day": daily_day, "jobs": daily_jobs.duplicate(true), "claimed": daily_claimed.duplicate(),
 		"swaps": daily_swaps, "bonus": daily_bonus_given}
+	data["goal_seeds"] = seeds.duplicate()
 
 
 func load_from(data: Dictionary) -> void:
@@ -91,6 +105,14 @@ func load_from(data: Dictionary) -> void:
 	chains_done = _strings(data.get("goal_chains_done", []))
 	unlocked = _strings(data.get("goal_unlocked", []))
 	projects_done = _strings(data.get("goal_projects_done", []))
+	# A farm saved before the Welcome chain existed knows the basics: it is done.
+	for id: String in new_farm_chains():
+		if not chain_step.has(id) and not chains_done.has(id):
+			chains_done.append(id)
+	var held := int_map(data.get("goal_seeds", {}))
+	for id: String in held:
+		if game.crops.has(id) and int(held[id]) > 0:
+			seeds[id] = int(held[id])
 	var p: Variant = data.get("goal_progress", {})
 	if typeof(p) == TYPE_DICTIONARY:
 		for k: String in p:
@@ -168,7 +190,7 @@ func refresh() -> void:
 			project_stage[id] = 0
 			_take("project:" + id)
 			changed = true
-	if game.day_turned(daily_day):
+	if game.level() >= int(daily_data.get("level", 1)) and game.day_turned(daily_day):
 		make_daily_jobs()
 		changed = true
 	if changed:
@@ -305,6 +327,8 @@ func _on_did(verb: String, subject: String, n: int) -> void:
 		for t in tasks.size():
 			var task: Dictionary = tasks[t]
 			if str(task["do"]) == verb and matches(str(task.get("what", ANY)), subject):
+				if task.get("ready", false) and int(progress[key][t]) < int(task.get("n", 1)):
+					_ready_next = subject
 				progress[key][t] = mini(int(progress[key][t]) + n, int(task.get("n", 1)))
 				changed = true
 	if verb in ["expand", "build", "buy"] or changed:
@@ -392,9 +416,11 @@ func give(reward: Dictionary) -> void:
 		game.add_gems(int(reward["gems"]))
 	for f in ["item", "place"]:
 		if reward.has(f):
-			game.storage.welcome(str(reward[f]))
+			game.storage.welcome(str(reward[f]), {"ready": true} if reward.get("ready", false) else {})
 	if reward.has("box"):
 		game.mystery.gift_box()
+	if reward.has("seeds") and game.crops.has(str(reward["seeds"])):
+		seeds[str(reward["seeds"])] = int(seeds.get(str(reward["seeds"]), 0)) + 1
 	if reward.has("unlock_chain") and not unlocked.has(str(reward["unlock_chain"])):
 		unlocked.append(str(reward["unlock_chain"]))
 
@@ -499,6 +525,40 @@ func pick_candidates(what: String) -> Array:
 						out.append(r.id)
 			return out
 	return [] if what.begins_with(PICK) else [what]
+
+
+## The open new-farm chain's line for the floating words ("" when none is open).
+func welcome_say() -> String:
+	if not active():
+		return ""
+	for id: String in new_farm_chains():
+		if chain_step.has(id):
+			var say := str(_chain_by_id[id]["steps"][int(chain_step[id])].get("say", ""))
+			return tr(say) if say != "" else ""
+	return ""
+
+
+## Whether the `item_id` just bought comes ready to harvest at once: a task marked `ready` counted its buy
+## (the Welcome chain's first tree). Asked once, as it is placed (ShopSystem.buy_and_place).
+func take_ready(item_id: String) -> bool:
+	var yes := _ready_next == item_id
+	_ready_next = ""
+	return yes
+
+
+## How many plots' worth of a goal's gift seeds are held.
+func seeds_of(crop_id: String) -> int:
+	return int(seeds.get(crop_id, 0))
+
+
+## Uses one plot's worth of gift seeds, if any are held. Returns whether one was used.
+func take_seed(crop_id: String) -> bool:
+	if seeds_of(crop_id) <= 0:
+		return false
+	seeds[crop_id] = seeds_of(crop_id) - 1
+	if seeds[crop_id] == 0:
+		seeds.erase(crop_id)
+	return true
 
 
 func _unlocked_crops() -> Array:

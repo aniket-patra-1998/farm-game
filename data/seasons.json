@@ -56,6 +56,7 @@
  },
  "crops": {
   "strawberries": ["Winter", "Spring"],
+  "starter_seeds": ["Spring", "Summer", "Autumn", "Winter"],
   "raspberries": ["Spring", "Summer"],
   "blueberries": ["Spring", "Summer"],
   "cranberries": ["Autumn", "Winter"],
