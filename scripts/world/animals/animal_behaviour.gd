@@ -59,6 +59,7 @@ const DURATIONS := {
 
 ## Night on the farm (Main sets it from the day's light; never with "always daytime"): the animals sleep.
 static var night := false
+static var hour := 12.0           ## the farm's hour of the day (main.gd): its rhythm, AnimalRig.busy_at
 
 
 var rig: AnimalRig
@@ -166,14 +167,17 @@ func _choose_next() -> void:
 		_to_drink = true
 		_enter(State.WALK)
 		return
+	# Its day: lively in the cool of the morning, resting in the afternoon heat (AnimalRig.busy_at).
 	var weights := rig.behaviour()
+	var busy := AnimalRig.busy_at(hour)
+	var lively := AnimalRig.lively()
 	var total := 0.0
 	for k in weights:
-		total += float(weights[k])
+		total += float(weights[k]) * (busy if lively.has(k) else 1.0)
 	var pick := _rng.randf() * maxf(total, 0.001)
 	var next := "idle"
 	for k in weights:
-		pick -= float(weights[k])
+		pick -= float(weights[k]) * (busy if lively.has(k) else 1.0)
 		if pick <= 0.0:
 			next = str(k)
 			break

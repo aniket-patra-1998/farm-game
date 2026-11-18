@@ -51,6 +51,30 @@ static func _load() -> void:
 	_data = parsed
 
 
+## How lively animals are at `hour` (0-24) as a share of their usual: the data's `rhythm.busy` points, read in a
+## straight line between them and flat beyond the first and last (1 with no rhythm).
+static func busy_at(hour: float) -> float:
+	_load()
+	var points: Array = (_data.get("rhythm", {}) as Dictionary).get("busy", [])
+	if points.is_empty():
+		return 1.0
+	if hour <= float(points[0][0]):
+		return float(points[0][1])
+	for k in range(1, points.size()):
+		var a: Array = points[k - 1]
+		var b: Array = points[k]
+		if hour <= float(b[0]):
+			var span := maxf(float(b[0]) - float(a[0]), 0.001)
+			return lerpf(float(a[1]), float(b[1]), (hour - float(a[0])) / span)
+	return float(points[-1][1])
+
+
+## The choices the day's rhythm makes more or less likely (walking, playing, flapping, showing off).
+static func lively() -> Array:
+	_load()
+	return (_data.get("rhythm", {}) as Dictionary).get("lively", [])
+
+
 ## This animal drawn at `size` times its size (a rig of its own: the shared one, from `of`, is never changed).
 static func scaled(it: Dictionary, size: float) -> AnimalRig:
 	var r := _build(it)

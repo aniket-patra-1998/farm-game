@@ -605,3 +605,35 @@ func test_432_animals_feet_grip_the_ground() -> void:
 	_check(top > AnimalBehaviour.POKE_HOP * 0.9 and is_zero_approx(p.pose.hop),
 		"a tapped animal jumps and lands (%.2f)" % top)
 	_done(g)
+
+
+## An animal's day (looks only): lively in the cool of the morning, resting in the afternoon heat; the rhythm is
+## data (animal_rigs.json rhythm) and only shifts the lively choices against the restful ones.
+func test_450_animals_are_busy_in_the_morning_and_rest_in_the_afternoon_heat() -> void:
+	var morning := AnimalRig.busy_at(8.0)
+	var afternoon := AnimalRig.busy_at(14.0)
+	_check(morning > 1.0 and afternoon < 1.0, "busier than usual at 8 (%.2f), quieter at 14 (%.2f)" % [morning,
+		afternoon])
+	_check(is_equal_approx(AnimalRig.busy_at(19.0), 1.0) and is_equal_approx(AnimalRig.busy_at(3.0), 1.0),
+		"and their usual self in the evening and before dawn (night is sleep's)")
+	_check(AnimalRig.busy_at(9.5) < morning and AnimalRig.busy_at(9.5) > 1.0, "eased between the points, not stepped")
+	_check(AnimalRig.lively().has("walk") and not AnimalRig.lively().has("graze"), "walking is lively, grazing is not")
+	var cow := AnimalRig.of(_farm().item_data("cow"))
+	var was_hour := AnimalBehaviour.hour
+	var was_night := AnimalBehaviour.night
+	AnimalBehaviour.night = false
+	var walks := {}
+	for h: float in [8.0, 14.0]:
+		AnimalBehaviour.hour = h
+		var n := 0
+		for s in 40:
+			var mind := AnimalBehaviour.new(cow, 1000 + s, Vector2(14, 7))
+			for k in 12:
+				mind.call("_choose_next")
+				if mind.state == AnimalBehaviour.State.WALK:
+					n += 1
+		walks[h] = n
+	_check(walks[8.0] > walks[14.0] * 2, "a herd walks about far more at 8 than at 14 (%d against %d of 480 choices)"
+		% [walks[8.0], walks[14.0]])
+	AnimalBehaviour.hour = was_hour
+	AnimalBehaviour.night = was_night

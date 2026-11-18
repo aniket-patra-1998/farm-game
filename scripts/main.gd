@@ -307,6 +307,7 @@ func _process(_delta: float) -> void:
 				Feedback.moment("dawn")   # (a farm with chickens has a rooster to say so)
 			_was_night = night
 			AnimalBehaviour.night = night
+			AnimalBehaviour.hour = hour
 	else:
 		light.color = l
 	sky.weather = w
