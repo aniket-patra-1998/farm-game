@@ -16,6 +16,7 @@ const LOCKED_PICTURE := Color(1, 1, 1, 0.45)
 const ICON_INSET := 8.0   # the badge's icon is this much smaller than the badge is high
 const PRICE_GAP := 0.2    # between the price's icon and its number, of the price's height
 const STARS_WIDE := 3.4   # the stars' width, in stars (MasteryStars)
+const LINE_JOIN := " · "  # between the parts of a card's line
 
 static var _badge: StyleBoxFlat
 static var _gold: StyleBoxFlat   # a progress pill's fill
@@ -112,14 +113,25 @@ func _draw() -> void:
 		name_px, NAME_LINES, UiTheme.color("ink"))
 	y += name_high + SPACE
 	if line != "":
-		draw_string(font, Vector2(pad, y + font.get_ascent(line_px)), line, HORIZONTAL_ALIGNMENT_CENTER, inside, line_px,
-			_colour(face.get("line_colour", "tool_label")))
+		line = fitted_line(font, line, size.x, line_px)   # (never cut mid-word: "200 coin", "53 coins ·")
+		var room := inside if font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, line_px).x <= inside else size.x
+		draw_string(font, Vector2((size.x - room) / 2.0, y + font.get_ascent(line_px)), line,
+			HORIZONTAL_ALIGNMENT_CENTER, room, line_px, _colour(face.get("line_colour", "tool_label")))
 		y += font.get_height(line_px) + SPACE
 	_icon.visible = false
 	if face.has("bar"):
 		_draw_bar(font, y)
 	elif face.has("badge"):
 		_draw_badge(font, y)
+
+
+## A card's line as it fits `wide` px: whole, or with its last " · " parts left off (they come least important
+## first: "4h · 53 coins · off-season" shows "4h · 53 coins"; the long press still says it all).
+static func fitted_line(font: Font, line: String, wide: float, px: int) -> String:
+	var parts := line.split(LINE_JOIN)
+	while parts.size() > 1 and font.get_string_size(LINE_JOIN.join(parts), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x > wide:
+		parts.remove_at(parts.size() - 1)
+	return LINE_JOIN.join(parts)
 
 
 ## The sticker icon in the picture's place (a ribbon's medal in its tier's colour, faded while still to win).

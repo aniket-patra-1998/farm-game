@@ -469,6 +469,12 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	_check((hud.get("book") as BookPanel).visible, "Seeds opens over a home's sheet")
 	_check(not hud.sheet.visible, "and the sheet goes")
 	(hud.get("book") as BookPanel).close_panel()   # (Game.modal_open is shared with the next test)
+	# A card's line too wide for it leaves off its last parts whole, never cut mid-word ("4h · 53 coins ·").
+	var f := ThemeDB.fallback_font
+	var short := "4h · 53 coins"   # not-ui
+	_eq(CardFace.fitted_line(f, short, 1000.0, 12), short, "a line that fits is whole")
+	var room := f.get_string_size(short, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 1.0
+	_eq(CardFace.fitted_line(f, short + " · off-season", room, 12), short, "a wide one loses its last part")   # not-ui
 	main.queue_free()
 	await get_tree().process_frame
 

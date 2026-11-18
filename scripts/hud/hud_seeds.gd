@@ -48,9 +48,13 @@ func seed_face(id: String) -> Dictionary:
 	# The season's price board (our own touch): an off-season crop shows what it sells for now, and says why.
 	var off := Game.off_season(id)
 	var sells := Game.field.sells_for(id, off)   # (what a harvest pays now: mastery stars and the season counted)
+	var line := tr("SEED_CARD_OFF" if off else "SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), sells]
 	return {
 		"name": str(crop["name"]),
-		"line": tr("SEED_CARD_OFF" if off else "SEED_CARD") % [FarmGrid.format_duration(int(crop["grow_seconds"])), sells],
+		"line": line,
+		# Off-season, its line is green (the shelf's note says why): a narrow card may leave the words off.
+		"line_colour": BookPanel.GOOD if off else "tool_label",
+		"long": "%s: %s" % [crop["name"], line],
 		"badge": badge,
 		"locked": locked,
 		"stars": MasteryStars.values(id),
