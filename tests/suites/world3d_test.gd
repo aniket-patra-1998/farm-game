@@ -5,6 +5,7 @@ const ANIMAL_DRAWS := 5
 const ANIMAL_SHADOW_DRAWS := 2
 
 const TREE_DRAWS := 7 # one of them the leaf cards
+const LEAF_KEEPS_COLOUR := 0.6 # a toned crown keeps at least this share of its kind's saturation
 ## Telling buildings apart by shape (test_320).
 const SILHOUETTE_GRID := 40
 const SILHOUETTE_SPAN := 8.0
@@ -534,11 +535,15 @@ func test_103_every_kind_of_tree_grows_its_own_way() -> void:
 	a.free()
 	b.free()
 	# Every kind keeps its own hue but is toned into the farm's one family: never more saturated than its data.
-	for id in ["cherry", "lemon", "mandarin", "persimmon"]:
+	# And still reads as itself (owner, 18 Nov): a pink crown stays clearly pink, softer, never grey or salmon.
+	for id in shapes:
+		if not (shapes[id] is Dictionary and (shapes[id] as Dictionary).has("leaf")):
+			continue
 		var raw := Color.html(str((shapes[id] as Dictionary)["leaf"]))
 		var toned := TreeModel.tone(raw)
 		_check(toned.s < raw.s, "%s's leaves are softened into the farm's family" % id)
-		_check(absf(wrapf(toned.h - raw.h + 0.5, 0.0, 1.0) - 0.5) < 0.12, "%s's leaves keep their own hue" % id)
+		_check(toned.s >= raw.s * LEAF_KEEPS_COLOUR, "%s's leaves keep their colour (%.2f of %.2f)" % [id, toned.s, raw.s])
+		_check(absf(wrapf(toned.h - raw.h + 0.5, 0.0, 1.0) - 0.5) < 0.01, "%s's leaves keep their own hue" % id)
 	_done(g)
 
 

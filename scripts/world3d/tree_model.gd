@@ -107,14 +107,15 @@ static func _pick(sh: Dictionary, key: String, alts: String, fallback: String, r
 
 ## A leaf colour in the farm's one family (data/tree_shapes.json `leaf_tone`): each kind keeps its own hue, but
 ## all are mixed a little towards one shared warm green and softened, so a row of pink, teal and orange crowns
-## reads as painted from the same palette as the animals and the lawn beside them, not as candy.
+## reads as painted from the same palette as the animals and the lawn beside them, not as candy. The hue is always
+## the kind's own (the mix only softens and darkens it): a pink crown stays pink, never salmon or grey (owner, 18 Nov).
 static func tone(col: Color) -> Color:
 	shape_of({})
 	var tn: Dictionary = _data.get("leaf_tone", {})
 	if tn.is_empty():
 		return col
 	var c := col.lerp(Color.html(str(tn.get("tint", "#8c9a52"))), float(tn.get("mix", 0.0)))
-	return Color.from_hsv(c.h, clampf(c.s * float(tn.get("saturation", 1.0)), 0.0, 1.0), c.v, col.a)
+	return Color.from_hsv(col.h, clampf(c.s * float(tn.get("saturation", 1.0)), 0.0, 1.0), c.v, col.a)
 
 
 ## Every form the data describes (tests build each one).
