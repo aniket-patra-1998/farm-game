@@ -180,6 +180,8 @@ func _play() -> void:
 			at.append("%s at step %d" % [id, int(game.goals.chain_step[id]) + 1])
 		print("chains done: %s; open: %s; plots cleared for goals %d" % [", ".join(PackedStringArray(
 			game.goals.chains_done)), ", ".join(PackedStringArray(at)), _cleared])
+		print("projects done: %s; open: %s" % [", ".join(PackedStringArray(game.goals.projects_done)),
+			game.goals.project_stage])
 
 
 ## Today's jobs still open (not collected) now: at a day's end, the jobs the day did not finish.
@@ -313,6 +315,7 @@ func _visit(next_visits: Array) -> void:
 	if follows_goals():
 		_goal_buy()   # before replanting: an empty plot can still be cleared to make room for it
 		_goal_vehicles()
+		_goal_eggs()
 	for r in game.farm_size:
 		for c in game.farm_size:
 			var i := game.index_of(r, c)
@@ -485,6 +488,17 @@ func _goal_vehicles() -> void:
 			if not grass.is_empty() and _act():
 				game.vehicles.use_vehicle(id, GameState.row_of(grass[0]), GameState.col_of(grass[0]))
 			return
+
+
+## Opens the Mystery Eggs held when a goal asks to open some (a tap on the egg in the Barn).
+func _goal_eggs() -> void:
+	for task: Dictionary in _open_tasks():
+		if str(task["do"]) != "open_egg":
+			continue
+		for colour: String in game.mystery.mystery_eggs.keys():
+			while int(game.mystery.mystery_eggs[colour]) > 0 and _act():
+				game.mystery.open_mystery_egg(colour)
+		return
 
 
 ## Places the things waiting in the inbox that a goal gave (the Welcome chain's chicken), as a player taps Place.

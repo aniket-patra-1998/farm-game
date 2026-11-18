@@ -515,8 +515,8 @@ func per_day_of(what: String) -> int:
 	return n
 
 
-## What a daily template's `what` can be on this farm now: a pick (@crop_unlocked, @crop_quick, @animal_owned, @tree_owned,
-## @recipe_known, @building_owned) gives the choices, anything else is itself.
+## What a daily template's `what` can be on this farm now: a pick (@crop_unlocked, @crop_quick, @animal_owned,
+## @tree_owned, @recipe_known, @building_owned) gives the choices, anything else is itself.
 func pick_candidates(what: String) -> Array:
 	match what:
 		"@crop_unlocked":

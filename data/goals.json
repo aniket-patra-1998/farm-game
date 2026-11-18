@@ -97,5 +97,16 @@
       {"do": "sell_good", "what": "@recipe_known", "n": [1, 2], "weight": 1}
     ]
   },
-  "projects": []
+  "projects": [
+    {"id": "orchard", "name": "GOAL_PROJECT_ORCHARD", "level": 4, "stages": [
+      {"tasks": [{"do": "own", "what": "apple_tree", "n": 3}], "reward": {"coins": 150, "xp": 30}},
+      {"tasks": [{"do": "own", "what": "plum_tree", "n": 3}], "reward": {"coins": 250, "xp": 40}},
+      {"tasks": [{"do": "own", "what": "lemon_tree", "n": 3}]}],
+     "reward": {"coins": 500, "xp": 150, "item": "fountain"}},
+    {"id": "rare_coop", "name": "GOAL_PROJECT_RARE_COOP", "level": 5, "stages": [
+      {"tasks": [{"do": "own", "what": "chicken_coop", "n": 1}], "reward": {"coins": 200, "xp": 30}},
+      {"tasks": [{"do": "collect", "what": "chicken", "n": 20}], "reward": {"coins": 300, "xp": 50}},
+      {"tasks": [{"do": "open_egg", "what": "", "n": 3}]}],
+     "reward": {"coins": 500, "xp": 200, "item": "brown_chicken"}}
+  ]
 }

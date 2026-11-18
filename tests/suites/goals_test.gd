@@ -4,6 +4,7 @@ extends TestSuite
 ## same day, only what the farm can do, swapped once.
 
 const SHOP_ID := "strawberries"
+const BOT := "res://tools/balance_sim.gd"   # the balance bot (step 6), driven on a test farm
 
 ## A small set of goals of the data's own shape, for the rules (the real chains are content: steps 4 and 7).
 const FIXTURE := {
@@ -246,7 +247,7 @@ func test_484_a_damaged_goal_save_loads_without_a_crash() -> void:
 ## are kept full by the story chains, which come in steps 4 and 7.)
 func test_483_the_goal_follower_plays_a_new_farm_without_getting_stuck() -> void:
 	var g := _farm()
-	var sim: Node = load("res://tools/balance_sim.gd").new()
+	var sim: Node = load(BOT).new()
 	sim.set("game", g)
 	sim.set("style", "goals")
 	var hours: Array = sim.call("_visit_hours")
@@ -343,6 +344,18 @@ func test_513_the_six_neighbours_chains_follow_the_level_path() -> void:
 		for id: String in open:
 			done[id] = true
 	_check(most <= 2, "at most two neighbour chains open at once (%d)" % most)
+	for p: Dictionary in d["projects"]:
+		_check(tr(str(p.get("name", ""))) != str(p.get("name", "")), "project %s's name is in locale" % p["id"])
+		var rewards: Array = [p.get("reward", {})]
+		for s: Dictionary in p["stages"]:
+			rewards.append(s.get("reward", {}))
+		for c: Dictionary in d["chains"]:
+			for s: Dictionary in c["steps"]:
+				rewards.append(s.get("reward", {}))
+		for r: Dictionary in rewards:
+			for f in ["item", "place"]:
+				if r.has(f):
+					_check(g.items.has(str(r[f])) and Release.has(str(r[f])), "reward %s is in the release" % r[f])
 	_eq(done.size(), (d["chains"] as Array).size(), "every chain opens on the level path")
 	_done(g)
 
@@ -373,7 +386,7 @@ func test_514_a_job_waits_for_what_it_needs() -> void:
 ## finishes every story chain (the Welcome chain and the six neighbours') within three weeks.
 func test_515_the_goal_bot_completes_every_chain() -> void:
 	var g := _farm()
-	var sim: Node = load("res://tools/balance_sim.gd").new()
+	var sim: Node = load(BOT).new()
 	sim.set("game", g)
 	sim.set("style", "goals")
 	sim.set("_days", 21)
