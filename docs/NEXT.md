@@ -276,7 +276,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   already did); `Game.day_moved_back` moves the day markers back with a clock that ran two days or more ahead
   and is put right (each system's shift_clock), so an honest fix of a wrong clock does not lock the day's limits
   until the clock catches up. A damaged goal save: a chain's or project's step past its end is dropped, a short
-  collected list filled with false. Goals tests 481-482. Next audit: code quality, round two (the goal system
+  collected list filled with false. Goals tests 483-484 (481 is perf's). Next audit: code quality, round two (the goal system
   and the HUD goals are new code since round one).
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)

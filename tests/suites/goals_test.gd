@@ -182,7 +182,7 @@ func test_464_a_project_goes_stage_by_stage_and_its_reward_stands_on_the_farm() 
 	_done(g)
 
 
-func test_481_a_clock_set_back_a_day_brings_no_day_round_again() -> void:
+func test_483_a_clock_set_back_a_day_brings_no_day_round_again() -> void:
 	# Setting the clock back to yesterday and forward again made a new day each time: today's jobs (coins, XP, a
 	# Mystery Box, a gem), the neighbours' helps and gifts, the fuel find and the market stall came round anew.
 	var g := _goal_farm()
@@ -230,7 +230,7 @@ func test_481_a_clock_set_back_a_day_brings_no_day_round_again() -> void:
 	_done(g)
 
 
-func test_482_a_damaged_goal_save_loads_without_a_crash() -> void:
+func test_484_a_damaged_goal_save_loads_without_a_crash() -> void:
 	var g := _goal_farm()
 	g.goals.load_from({"goal_chain_step": {"first": 99}, "goal_project_stage": {"proj": 5},
 		"goal_daily": {"day": g.day_number(), "jobs": [{"do": "plow"}, {"do": "plow"}], "claimed": [true]}})
