@@ -1129,3 +1129,26 @@ func test_440_info_texts_take_their_numbers_from_the_data() -> void:
 		"a Single Bloom's text names its days ready")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## The inbox's lines keep one column: a line with no thing to show (a help, a plain gift) keeps the thing's room,
+## so every sender's name starts where the others' do instead of jumping left under the picture above it.
+func test_524_inbox_names_stand_in_one_column() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var widths: Array[float] = []
+	for give: Dictionary in [{"what": InboxItem.ITEM, "id": "cow", "n": 1}, {"what": InboxItem.COINS, "n": 50},
+			{"what": InboxItem.FUEL, "n": 1}]:
+		var line: Control = hud.inbox.line_for(InboxItem.make(900 + widths.size(), InboxItem.GIFT, 1, 0, give))
+		add_child(line)
+		widths.append(line.get_child(1).get_combined_minimum_size().x)
+		line.queue_free()
+	for w in widths:
+		_check(w > 0.0 and absf(w - widths[0]) < 1.0, "each inbox line keeps the thing's room (%s)" % str(widths))
+	main.queue_free()
+	await get_tree().process_frame

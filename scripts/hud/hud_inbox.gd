@@ -36,7 +36,7 @@ func build_inbox(content: VBoxContainer) -> void:
 func _head() -> Control:
 	var col := VBoxContainer.new()
 	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 14)
+	head.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
 	var all := hud.panel_button(tr("INBOX_ACCEPT_ALL"))
 	all.disabled = Game.social.inbox.is_empty()
 	all.pressed.connect(func() -> void:
@@ -82,7 +82,7 @@ func words_of(item: Dictionary) -> Dictionary:
 
 func line_for(item: Dictionary) -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
 	var from := int(item.get("from", 0))
 	var who: Control
 	if from == InboxItem.FARM:
@@ -97,6 +97,11 @@ func line_for(item: Dictionary) -> Control:
 		var thing := UiKit.count_row([[str(give["id"]), "×%d" % int(give.get("n", 1))]], false)   # (one row high)
 		thing.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(thing)
+	else:   # a help or a gift with no thing to show keeps the thing's room, so every sender's name stands in one column
+		var room := Control.new()
+		room.custom_minimum_size.x = UiTheme.size("count_tile")
+		room.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(room)
 	# Just who sent it (the picture, the count and the button say the rest); a thing from your own farm says
 	# what waits for you instead ("A Cow is waiting", then Place).
 	var label := _who(item)
