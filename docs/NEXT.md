@@ -254,6 +254,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   Saves: a number past 2^53 is unreadable (`SaveCheck.whole`), since a phone's ARM chip turned 1e300 into the
   largest int (test 437). Season reads through `DataFile.read`. `Game.is_ready` measured: no cheap gain left.
   Next audit: phone UI (round two), then edge cases.
+- Run 22 (last fix-loop run before the 16:15 stop): the balance bot now makes its farm at its first visit's
+  hour (`_seconds_until`, economy test 448), so the starter's ripe plots are harvested on day 1 (1 visit a day:
+  L2 on day 1, was 2). Phone UI round two: the cards over the farm (While you were away with every row and its
+  notes, the busiest level-up) are swept on every screen like the menus (menus test 449): all fit, and the away
+  card covers neither tool bar nor side buttons; its text was in raw pixels, now type roles through
+  `UiTheme.font`. Long messages (every string) fit the toast at 4:3 and 19.5:9 (widest 1145 of 1280). Open for
+  the art lane: `FarmGrid.float_words` and the streak count draw words over the farm in their own look (raw 30
+  and 34 px, a brown outline, no shadow), not FloatText's; Crowding still reads its data by hand.
 
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
