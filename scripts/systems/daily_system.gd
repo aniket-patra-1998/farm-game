@@ -71,7 +71,7 @@ func pick_part() -> String:
 
 func add_part(part: String, n: int) -> void:
 	game.parts[part] = int(game.parts.get(part, 0)) + n
-	game.ribbons.bump("parts_found", n)
+	game.record("find_part", part, n)
 	game.inventory_changed.emit()
 	game.queue_save()
 
@@ -88,7 +88,7 @@ func check_daily_gift() -> void:
 		var p := pick_part()
 		add_part(p, 1)
 		got.append(GameState.part_names[p])
-	game.ribbons.bump("daily_bonuses", 1)
+	game.record("daily_bonus", "")
 	game.vip.add_points(game.vip.streak_points(daily_streak))   # (each day of the streak is worth more: docs/VIP.md)
 	var day := mini(daily_streak, Balance.a("daily.streak").size())
 	game.message.emit(tr("DAY_BONUS") % [day, ", ".join(PackedStringArray(got))])

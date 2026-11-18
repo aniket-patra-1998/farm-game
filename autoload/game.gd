@@ -15,6 +15,7 @@ signal away_recap(rows: Array, notes: Array)   # what happened while away, as ro
 signal tutorial_changed(step: int)
 signal collections_changed
 signal ribbons_changed
+signal did(verb: String, subject: String, n: int)   # one thing done on the farm (record): goals listen
 signal objects_changed
 signal farm_opened   # another farm was laid out in place of this one (the showcase, or back to your own)
 ## One thing changed where it stands (fed, collected, upgraded, filled): only it needs looking at again, not the
@@ -1153,8 +1154,20 @@ func add_coins(amount: int, counts_as_earned := true) -> void:
 	coins += amount
 	coins_changed.emit(coins)
 	if counts_as_earned:
-		ribbons.bump("coins_earned", amount)
+		record("earn", "coins", amount)
 	queue_save()
+
+
+## Everything done on the farm is one event (data/events.json): it keeps the ribbon counters and is told as `did`,
+## which goals (and anything later) listen to. `subject` is what it was done to (a crop, an animal, a recipe...).
+func record(verb: String, subject: String, n := 1) -> void:
+	if n <= 0:
+		return
+	if not ribbons.event_verbs.has(verb):
+		push_error("Game.record: verb '%s' is not in data/events.json" % verb)
+		return
+	ribbons.count(verb, subject, n)
+	did.emit(verb, subject, n)
 
 
 func add_xp(amount: int) -> void:

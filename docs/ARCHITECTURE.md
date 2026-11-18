@@ -6,6 +6,7 @@ the hard rules and a short map; open the part of this file for the area you chan
 ## Layout
 - `autoload/game.gd` (`Game`, class `GameState`): the shared core (coins, gems, XP, time, plots and crops,
   placed objects, mastery, tutorial), saving, and every signal. It owns one of each subsystem.
+- One event stream (`Game.record(verb, subject, n)`, data/events.json): everything done on the farm (plow, plant, harvest, collect, buy, craft...) is recorded once, with what it was done to; it keeps the ribbon counters (each verb's rules pick its counter, by the subject's kind where one verb feeds two) and is told as `Game.did`, which goals listen to. Never bump a ribbon counter directly; a new action records its verb, and `tests/suites/events_test.gd` holds the code's verbs to the data's.
 - `autoload/feedback.gd` (`Feedback`, data/feedback.json): the game's polish in one place: each moment's sound and buzz (`Feedback.moment("place")`) and the colour of each floating text (`Feedback.color("coins")`). Never call `Sound.play`/`Sound.buzz` for a game moment or hard-code a buzz length or float colour; add it to the data, and a test checks every name exists.
 - `autoload/sound.gd` (`Sound`): sound effects and vibration. Every sound is a recipe in `data/sounds.json`
   (synthesised once, ahead of time) or a recording, or takes of one (`files`: a different take each time); code plays them by name (`Sound.play("harvest")`), and a

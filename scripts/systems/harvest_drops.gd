@@ -90,7 +90,7 @@ func give_drop(drop: Dictionary) -> Dictionary:
 				else game.collectibles.collection_of_crop.get(str(drop.get("crop", "")), {})
 			game.collectibles.owned[item] = int(game.collectibles.owned.get(item, 0)) + 1
 			if is_bird:
-				game.ribbons.bump("birds_seen", 1)
+				game.record("see_bird", item)
 			game.collections_changed.emit()
 			var item_name := str(game.collectibles.item_names.get(item, item))
 			out["name"] = item_name

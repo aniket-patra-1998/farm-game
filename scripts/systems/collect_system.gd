@@ -34,7 +34,7 @@ func collect(uid: int) -> Dictionary:
 	game.add_coins(earned)
 	game.rescued = false   # earned by farming: a later stuck farm may be rescued again
 	game.add_xp(gained)
-	game.ribbons.bump("collected", 1)
+	game.record("collect", str(obj["id"]))
 	var part := game.daily.roll_part()
 	var extras: Array[String] = []
 	var name_before: String = game.item_data(obj["id"])["name"]
@@ -79,7 +79,7 @@ func collect(uid: int) -> Dictionary:
 	if coll_find != "":
 		game.found_on.emit(uid, tr("FOUND") + coll_find, game.collectibles.rarity_of(game.collectibles.last_found))
 	if drop.get("type", "") == "golden":
-		game.ribbons.bump("golden_finds", 1)
+		game.record("golden_find", str(obj["id"]))
 		game.message.emit(tr("GOLDEN_COLLECTION_X_COINS") % Balance.i("economy.golden_coin_multiplier"))
 	elif drop.get("type", "") == "bird":
 		game.message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])

@@ -135,7 +135,7 @@ func pick(family: String) -> Dictionary:
 func add(family: String, kind: Dictionary) -> Dictionary:
 	var id := str(kind["id"])
 	owned[id] = int(owned.get(id, 0)) + 1
-	game.ribbons.bump("finds", 1)
+	game.record("find", id)
 	game.collections_changed.emit()
 	var custom := str(families[family].get("message", ""))
 	game.message.emit(tr(custom) if custom != "" else tr("YOU_FOUND_A_FIND") % [kind["name"], families[family]["name"]])

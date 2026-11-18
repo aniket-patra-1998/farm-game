@@ -275,7 +275,7 @@ func feed(uid: int, feed_id: String, effect: String, rich := false) -> Dictionar
 	var p := power(effect, grade(obj, feed_id), rich)
 	_take(feed_id, rich, units)
 	obj[FED] = {"effect": effect, "power": p, "t": int(obj["t"])}
-	game.ribbons.bump("fed", 1)
+	game.record("feed", str(obj["id"]))
 	game.inventory_changed.emit()
 	game.objects_updated(uid)
 	return {"feed": feed_id, "effect": effect, "power": p, "units": units, "rich": rich}

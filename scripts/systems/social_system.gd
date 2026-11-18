@@ -113,7 +113,7 @@ func claim(item_id: int, to_place := false) -> bool:
 		_count_help()
 		game.add_coins(Balance.i("social.help_coins"), true)
 		game.add_xp(Balance.i("social.help_xp"))
-		game.ribbons.bump("neighbours_helped", 1)
+		game.record("help", str(item.get("from", "")))
 		game.message.emit(tr("SOCIAL_HELPED") % Balance.i("social.help_coins"))
 	else:
 		var got := grant(item["give"], to_place)
@@ -207,7 +207,7 @@ func send_gift(neighbour: int, give: Dictionary) -> bool:
 		gifts_today = {}
 	gifts_today[str(neighbour)] = int(gifts_today.get(str(neighbour), 0)) + 1
 	_post(InboxItem.GIFT, g, {"need": 1, "to": neighbour})
-	game.ribbons.bump("gifts_sent", 1)
+	game.record("gift", str(g.get("id", "")))
 	return true
 
 
@@ -247,7 +247,7 @@ func post_seedling_share(uid: int) -> bool:
 	if has_open(InboxItem.SHARE, str(o["id"]), uid):
 		return false
 	_post(InboxItem.SHARE, {"what": InboxItem.YOUNG, "id": str(o["id"]), "n": 1}, {"collab": true, "ref": uid})
-	game.ribbons.bump("shared_with_neighbours", 1)
+	game.record("share", str(o["id"]))
 	game.message.emit(tr("SOCIAL_SHARED"))
 	return true
 
@@ -258,7 +258,7 @@ func post_share(give: Dictionary) -> bool:
 	if not enabled() or g.is_empty() or not _room_to_post():
 		return false
 	_post(InboxItem.SHARE, g, {"collab": false})
-	game.ribbons.bump("shared_with_neighbours", 1)
+	game.record("share", str(g.get("id", "")))
 	game.message.emit(tr("SOCIAL_SHARED"))
 	return true
 

@@ -235,7 +235,7 @@ func start_craft(uid: int, rid: String) -> bool:
 			bushels.erase(c)
 	var took := craft_seconds(rid)
 	(obj["slots"] as Array).append({"r": rid, "done": game.now() + took, "took": took})
-	game.ribbons.bump("crafts_started", 1)
+	game.record("start_craft", rid)
 	game.inventory_changed.emit()
 	game.objects_updated(uid)
 	return true
@@ -292,7 +292,7 @@ func finish_crafts(uid: int) -> int:
 				goods_made += 1
 			crafted[rid] = int(crafted.get(rid, 0)) + 1
 			game.add_xp(_recipe(rid).xp())
-			game.ribbons.bump("crafted", 1)
+			game.record("craft", rid)
 			if recipe_stars(rid) > before:
 				game.message.emit(tr("MASTERY_STARS") % [_recipe(rid).name, recipe_stars(rid)])
 			n += 1
@@ -348,7 +348,7 @@ func sell_good(rid: String) -> int:
 	var price := good_price(rid)
 	_take_good(rid)
 	game.add_coins(price)
-	game.ribbons.bump("goods_sold", 1)
+	game.record("sell_good", rid)
 	return price
 
 

@@ -57,7 +57,7 @@ func collect_truffles(uid: int) -> int:
 	var dug := maxi(1, int(game.inside_total(pen) / float(Balance.i("pigpen.pigs_per_truffle"))))
 	pen.erase("forage_until")
 	truffles += dug
-	game.ribbons.bump("truffles", dug)
+	game.record("dig_truffle", "truffle", dug)
 	game.message.emit(tr("YOUR_PIGS_FOUND_TRUFFLES") % dug)
 	game.inventory_changed.emit()
 	game.objects_updated(uid)

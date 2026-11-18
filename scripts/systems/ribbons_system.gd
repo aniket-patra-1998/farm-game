@@ -4,6 +4,7 @@ extends GameSystem
 ## Part of the game state: reached as `Game.ribbons`; shared state is on `game`.
 
 var ribbon_data := {}              # data/ribbons.json
+var event_verbs := {}              # data/events.json: verb -> the rules that pick its counter
 var stats := {}                    # lifetime counters for ribbons
 var ribbon_tiers := {}             # ribbon id -> tiers earned (0..4)
 
@@ -29,6 +30,22 @@ func load_from(data: Dictionary) -> void:
 
 func stat(stat_name: String) -> int:
 	return int(stats.get(stat_name, 0))
+
+
+## The counter an event adds to (data/events.json), or "" when it counts for no ribbon.
+func stat_of(verb: String, subject: String) -> String:
+	var kind := str(game.item_data(subject).get("kind", ""))
+	for rule: Dictionary in event_verbs.get(verb, []):
+		if not rule.has("kind") or str(rule["kind"]) == kind:
+			return str(rule["stat"])
+	return ""
+
+
+## Adds an event to its ribbon counter (called by Game.record, which also tells the event).
+func count(verb: String, subject: String, n: int) -> void:
+	var stat_name := stat_of(verb, subject)
+	if stat_name != "":
+		bump(stat_name, n)
 
 
 func bump(stat_name: String, amount: int) -> void:
@@ -60,3 +77,4 @@ func _check_ribbons(stat_name: String) -> void:
 
 func load_data() -> void:
 	ribbon_data = game.read_json("res://data/ribbons.json")
+	event_verbs = game.read_json("res://data/events.json").get("verbs", {})

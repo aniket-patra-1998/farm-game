@@ -111,7 +111,7 @@ func plow(i: int) -> bool:
 	var old_crop := str(game.plots[i].get("crop", ""))
 	game.plots[i] = {"state": "plowed"}
 	game.add_xp(Balance.i("economy.plow_xp"))
-	game.ribbons.bump("plowed", 1)
+	game.record("plow", "")
 	game.vehicles.roll_fuel_find(i)
 	game.collectibles.roll_collectible(
 		game.collectibles.plow_collection(old_crop),
@@ -137,7 +137,7 @@ func clear_plot(i: int) -> bool:
 	if not can_clear_plot(i):
 		return false
 	game.plots[i] = {"state": "grass"}
-	game.ribbons.bump("plots_cleared", 1)
+	game.record("clear_plot", "")
 	game.plot_updated(i)
 	return true
 
@@ -155,6 +155,7 @@ func plant(i: int, crop_id: String) -> bool:
 		game.message.emit(tr("NOT_ENOUGH_COINS_FOR_SEEDS") % crop["name"])
 		return false
 	game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": game.now()}
+	game.record("plant", crop_id)
 	if game.off_season(crop_id):
 		game.plots[i]["off"] = true   # planted out of its seasons: sells for more, withers sooner (kept with the plot)
 	if use_pollinated:
@@ -221,7 +222,7 @@ func fertilize(i: int) -> bool:
 		game.message.emit(tr("NOT_ENOUGH_COINS_FOR_FERTILIZER"))
 		return false
 	game.plots[i]["fert"] = true
-	game.ribbons.bump("fertilized", 1)
+	game.record("fertilize", str(game.plots[i].get("crop", "")))
 	game.collectibles.roll_collectible(
 		game.collectibles.collection_of_crop.get(str(game.plots[i]["crop"]), {}),
 		Balance.f("economy.collectible_action_chance"),
@@ -280,9 +281,9 @@ func harvest(i: int) -> Dictionary:
 	game.add_coins(earned)
 	game.rescued = false   # earned by farming: a later stuck farm may be rescued again
 	game.add_xp(gained)
-	game.ribbons.bump("harvests", 1)
+	game.record("harvest", crop_id)
 	if drop.get("type", "") == "golden":
-		game.ribbons.bump("golden_finds", 1)
+		game.record("golden_find", crop_id)
 		game.message.emit(
 			tr("GOLDEN_HARVEST_PAID_X_COINS") % [crop["name"], Balance.i("economy.golden_coin_multiplier")]
 		)

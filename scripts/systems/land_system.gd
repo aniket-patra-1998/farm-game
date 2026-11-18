@@ -71,7 +71,7 @@ func add_materials(uid: int) -> int:
 			game.message.emit(tr("FINISHED_OPEN_IT_TO_MOVE_ANIMALS") % done_it["name"])
 		if done_it.has("build_xp"):
 			game.add_xp(int(done_it["build_xp"]))
-		game.ribbons.bump("buildings_built", 1)
+		game.record("build", str(b["id"]))
 		game.building_upgraded.emit(uid, 1)
 	else:
 		game.message.emit(tr("ADDED_MATERIALS_TO_THE") % [added, game.item_data(b["id"])["name"]])
@@ -101,7 +101,7 @@ func upgrade_building(uid: int) -> bool:
 		game.parts[m] = int(game.parts[m]) - int(need[m])
 	b["level"] = game.level_of(b) + 1
 	game.message.emit(tr("NOW_HOLDS") % [game.size_name(b), game.capacity(b)])
-	game.ribbons.bump("upgrades", 1)
+	game.record("upgrade", str(b["id"]))
 	game.building_upgraded.emit(uid, game.level_of(b))
 	game.inventory_changed.emit()
 	game.objects_updated(uid)
@@ -140,7 +140,7 @@ func expand(use_gems: bool) -> bool:
 			return false
 	game.farm_size = int(step["size"])
 	game.message.emit(tr("YOUR_FARM_GREW_TO_X") % [game.farm_size, game.farm_size])
-	game.ribbons.bump("expansions", 1)
+	game.record("expand", str(game.farm_size))
 	game.farm_expanded.emit(game.farm_size)
 	game.plot_changed.emit(-1)
 	game.queue_save()

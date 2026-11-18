@@ -74,7 +74,7 @@ func repair_barn() -> bool:
 	game.add_coins(int(it.get("repair_coins", 0)))
 	game.add_xp(int(it.get("repair_xp", 0)))
 	game.message.emit(tr("THE_BARN_IS_FIXED_USE_THE"))
-	game.ribbons.bump("buildings_repaired", 1)
+	game.record("repair", "barn")
 	game.inventory_changed.emit()
 	game.objects_updated()
 	return true
