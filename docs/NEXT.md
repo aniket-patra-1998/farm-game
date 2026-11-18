@@ -808,6 +808,29 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   AssetRegistry.instance of each file, _build_contact) and the garage's code-built vehicles (a kept model through
   ModelStore as the garden's blooms are).
 
+- Run 8 (19 Nov 03:51 - 04:40 IST): no new phone report (phone_bench's newest is still run 6). Measured the start
+  headless (Time.get_ticks_usec marks in Game._init/_ready, main._ready; scratch, then committed as marks): from the
+  engine's start to Game._init ~2.1-2.3 s, and almost all of it is loading res://autoload/game.gd, i.e. Godot
+  compiling game.gd and every script it pulls in (~50k lines; --verbose shows the load of game.gd from 0.16 s to
+  2.3 s; an empty project reaches its first script at 0.1 s). Then Game._init -> _ready ~0.19-0.24 s (the other
+  autoloads, main.tscn's load), the data and the save 0.07 s, main._ready ~0.19 s. Loading every script alone in a
+  shuffled order gives no single outlier (building_fill 72 ms, farm_3d, building_stock, main ~25-35 ms each): the
+  cost is the amount of code. Merged a1390d5 (perf/start-marks): LoadBenchmark.start_mark notes "scripts" (Game
+  made), "game" (data and save loaded), "main_made", "main_built"; the BENCH line has them as "start" (test 526).
+  Merged with it: test 338 seeds Game.rng (BUDGET_SEED) so the budget farm is the same every time (2,297,577 each
+  run; unseeded 2,297,055-2,300,259 against 2.3M, the flaky precheck); phone_bench prints Robo's own log lines, the
+  system's lines about the app's process ending, and the start of actions.json.
+- No phone run started: 18 Nov (UTC and Pacific) already has 6 phone runs; the next is allowed after 00:00 UTC
+  (05:30 IST). apk.yml must have published a1390d5 or later first.
+- Next run, in order: 1) after 05:30 IST start one phone run (default baked APK); read `startup_ms` against
+  `start.scripts`: if most of the 8.2 s is before "scripts", it is script compiling on the phone; the levers are
+  then fewer scripts compiled before the first screen (the main scene references the whole HUD and every world3d
+  builder: a lighter first scene or scripts loaded by path later, without changing anything seen) — measure each
+  with the same marks here first. If most is after "scripts", time Game._ready and main._ready parts on the phone.
+  2) Read the new Robo lines in that run's log to see why the app is closed ~4 s after the start; if Robo ends
+  the app, Test Lab's game-loop type (needs an intent filter, so a gradle build for the benchmark preset) is the
+  way. 3) Loading after the start as in run 7's list (animal templates, garage vehicles).
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
