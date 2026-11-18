@@ -20,6 +20,12 @@ static func of(id: String) -> String:
 	return look + "/" + str(_data.get("studio", ""))
 
 
+## The fingerprint of the file item `id` is made from ("" when it is code-built).
+static func file_of(id: String) -> String:
+	_load()
+	return str((_data.get("files", {}) as Dictionary).get(id, ""))
+
+
 static func _load() -> void:
 	if not _data.is_empty():
 		return

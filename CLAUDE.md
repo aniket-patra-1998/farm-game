@@ -42,7 +42,8 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   `ShaderGlobals`, a new costly look as a `Quality` field; hold data/perf_budget.json.
 - Art follows docs/ASSETS.md (made offline as files, one registry, a fallback, a budget). Regenerate
   docs/CATALOG.md, art/manifest.json, tools/generate_art.ipynb and data/art_versions.json after catalog or art
-  changes; exported art stays tied to its builders (data/art_sources.json).
+  changes (animal art: also data/animal_strides.json, tools/animal_strides.tscn); exported art stays tied to
+  its builders (data/art_sources.json).
 - New looks and concepts (icons, art, layouts) are shown as a sheet of options first and wired into the game
   only after the owner picks one; nothing unpicked is pushed. (Refining a look that exists is not a new look:
   docs/ART_POLISH.md says what may be refined directly.)

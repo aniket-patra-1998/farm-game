@@ -41,6 +41,7 @@ const CONTACT_LIFT := 0.012                     # just above the grass, so it ne
 ## The usual mobile budget is 10-20 fully animated characters; the minds still think every frame.
 const FULL_RATE := 16
 const MAX_STRIDE := 4
+const STRIDES := "res://data/animal_strides.json"   # every kind's file_stride, kept (tools/animal_strides)
 const BEE_BEAT_RATE := 60.0      # a file-made bee's wing beats (radians of the beat a second)..
 const BEE_HOVER_RATE := 3.3      # ..and its slow bob in the air (as tools/animal_art's motion)
 const BEE_HOVER := 0.4           # how high the bob goes, as a share of its body's height
@@ -54,6 +55,7 @@ static var _frame := -1          # the frame _seen counts
 static var _seen := 0            # animals on screen so far this frame
 static var _lengths := {}         # animal id -> its file's length (file_length)
 static var _strides := {}         # animal id -> the ground one cycle of its file's walk covers (file_stride)
+static var _kept := {}            # animal id -> {"file": fingerprint, "stride": ..} (STRIDES, read once)
 
 static var _seen_last := 0       # and last frame, which sets this frame's stride
 
@@ -266,18 +268,46 @@ func stride() -> float:
 
 ## The ground one cycle of a file-made animal's walk covers, in tiles at full size (0 when it has no file or
 ## no walk): how far its feet reach back while they are down (the travel of its lowest points through the
-## walk's moves), over the share of the cycle a foot is down. Worked out once a kind.
+## walk's moves), over the share of the cycle a foot is down. Once a kind: from data/animal_strides.json when it
+## was measured from this very file (its fingerprint in data/art_versions.json), else measured now (reading
+## every move of a file costs ~3 ms a kind, a fifth of opening the showcase).
 static func file_stride(id: String) -> float:
 	if not _strides.has(id):
-		var stride := 0.0
-		var model := AssetRegistry.instance(id) if AssetRegistry.has_model(id) else null
-		var mi := _first_mesh(model) if model != null else null
-		if mi != null and mi.mesh is ArrayMesh and mi.mesh.get_surface_count() > 0:
-			stride = _feet_reach(mi.mesh as ArrayMesh) / AnimalArt.STANCE
-		if model != null:
-			model.free()
-		_strides[id] = stride
+		var kept := kept_stride(id)
+		_strides[id] = kept if kept >= 0.0 else measure_stride(id)
 	return _strides[id]
+
+
+## The stride kept for kind `id` in STRIDES, or -1 when none is kept for its file as it is now.
+static func kept_stride(id: String) -> float:
+	if _kept.is_empty():
+		_kept = DataFile.read_optional(STRIDES).get("strides", {})
+		_kept[""] = {}   # (read once, even when empty)
+	var e: Dictionary = _kept.get(id, {})
+	var file := ArtVersion.file_of(id)
+	return float(e["stride"]) if not file.is_empty() and str(e.get("file", "")) == file else -1.0
+
+
+## Every kind drawn from an animal file (the kinds STRIDES keeps).
+static func stride_kinds() -> Array[String]:
+	var out: Array[String] = []
+	for id: String in AssetRegistry.ids():
+		if str(AssetRegistry.entry(id).get("budget", "")) == "animal" and AssetRegistry.has_model(id):
+			out.append(id)
+	out.sort()
+	return out
+
+
+## Kind `id`'s stride measured from its file (file_stride), as tools/animal_strides keeps it.
+static func measure_stride(id: String) -> float:
+	var stride := 0.0
+	var model := AssetRegistry.instance(id) if AssetRegistry.has_model(id) else null
+	var mi := _first_mesh(model) if model != null else null
+	if mi != null and mi.mesh is ArrayMesh and mi.mesh.get_surface_count() > 0:
+		stride = _feet_reach(mi.mesh as ArrayMesh) / AnimalArt.STANCE
+	if model != null:
+		model.free()
+	return stride
 
 
 static func _feet_reach(mesh: ArrayMesh) -> float:

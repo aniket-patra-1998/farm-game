@@ -1,0 +1,297 @@
+{
+  "_doc": "Written by tools/animal_strides (do not edit): each file-made animal's stride, the ground one cycle of its walk covers in tiles at full size (Animal3D.file_stride), and the fingerprint of the file it was measured from. A kind whose file has changed since is measured as the farm opens instead.",
+  "strides": {
+    "alpaca": {
+      "file": "762c9df178268e47",
+      "stride": 0.33617440250612074
+    },
+    "arapawa_goat": {
+      "file": "93b78dc6e299cd8b",
+      "stride": 0.2797392587507925
+    },
+    "baby_turkey": {
+      "file": "25f9e37a82788745",
+      "stride": 0.0
+    },
+    "bee": {
+      "file": "22573bc30646c4f5",
+      "stride": 0.0
+    },
+    "belted_calf": {
+      "file": "3a4a43b1259f4b81",
+      "stride": 0.26955131080842787
+    },
+    "belted_cow": {
+      "file": "d4172eda1e114a89",
+      "stride": 0.32203257564575444
+    },
+    "belted_duck": {
+      "file": "06ba53c6d7dc3d29",
+      "stride": 0.0
+    },
+    "berkshire_pig": {
+      "file": "24d6fed9bdf04f5c",
+      "stride": 0.22078428056932264
+    },
+    "black_chicken": {
+      "file": "2209cb6871188b96",
+      "stride": 0.0
+    },
+    "black_lab": {
+      "file": "8e07586787461c37",
+      "stride": 0.20458472351874074
+    },
+    "black_pony": {
+      "file": "18b09dbd4fd7c456",
+      "stride": 0.34400932490825653
+    },
+    "black_sheep": {
+      "file": "688281804602724f",
+      "stride": 0.28206901324372136
+    },
+    "boar": {
+      "file": "8b25bcca0a4710a4",
+      "stride": 0.22775601114957564
+    },
+    "boer_goat": {
+      "file": "64dec521675a1d75",
+      "stride": 0.2770382189942944
+    },
+    "brown_calf": {
+      "file": "11cbc35e18232b10",
+      "stride": 0.26429889182890615
+    },
+    "brown_chicken": {
+      "file": "46aad6094b90fdb8",
+      "stride": 0.0
+    },
+    "brown_cow": {
+      "file": "db9547d2aed9a92c",
+      "stride": 0.32431783695374766
+    },
+    "brown_dog": {
+      "file": "c3e12156072416ff",
+      "stride": 0.21081051278498866
+    },
+    "bull": {
+      "file": "308ca164520e6caa",
+      "stride": 0.36256868512399737
+    },
+    "calf": {
+      "file": "ff367010785a363e",
+      "stride": 0.26514006237829885
+    },
+    "chicken": {
+      "file": "224974585c5188af",
+      "stride": 0.0
+    },
+    "cornish_chicken": {
+      "file": "afd1a89508f0461b",
+      "stride": 0.0
+    },
+    "cow": {
+      "file": "a485f7c053416ef1",
+      "stride": 0.3319968138971636
+    },
+    "donkey": {
+      "file": "b056e468df1a63b5",
+      "stride": 0.3181795920095136
+    },
+    "duck": {
+      "file": "fc35b5107dd1f98b",
+      "stride": 0.0
+    },
+    "foal": {
+      "file": "5b3d083f55f83159",
+      "stride": 0.36489050234517745
+    },
+    "galician_blond_calf": {
+      "file": "d4a70fc209fca3bf",
+      "stride": 0.2691734822527055
+    },
+    "galician_blond_cow": {
+      "file": "cc0eea776883c02b",
+      "stride": 0.3291798455099906
+    },
+    "gelbvieh_calf": {
+      "file": "b8e281444fae21a5",
+      "stride": 0.2691734822527055
+    },
+    "gelbvieh_cow": {
+      "file": "8f38049fb8f42a3e",
+      "stride": 0.33029939138120223
+    },
+    "goat": {
+      "file": "337a05223272bef3",
+      "stride": 0.30456361991743885
+    },
+    "golden_chicken": {
+      "file": "eeebd383a5f55448",
+      "stride": 0.0
+    },
+    "golden_retriever": {
+      "file": "3c580741ea0535d1",
+      "stride": 0.2086267355949648
+    },
+    "goose": {
+      "file": "9a417402bb84b7eb",
+      "stride": 0.18718815859287016
+    },
+    "gray_foal": {
+      "file": "92dae5550c4e95f0",
+      "stride": 0.36489050234517745
+    },
+    "gray_horse": {
+      "file": "72bf9226033c3dc8",
+      "stride": 0.41909633624938225
+    },
+    "grey_chicken": {
+      "file": "37897144da70e8fc",
+      "stride": 0.0
+    },
+    "hereford_calf": {
+      "file": "f3027477d568ebc9",
+      "stride": 0.26390670287993645
+    },
+    "hereford_cow": {
+      "file": "95bc94c2246cd015",
+      "stride": 0.33151790980369816
+    },
+    "horse": {
+      "file": "792cd111904e2e90",
+      "stride": 0.41909633624938225
+    },
+    "indie_dog": {
+      "file": "195ad208ec17b657",
+      "stride": 0.2764565870165825
+    },
+    "jersey_calf": {
+      "file": "cb347b14132fe0c0",
+      "stride": 0.2628275523743322
+    },
+    "jersey_cow": {
+      "file": "2d92db4e7957ee58",
+      "stride": 0.3266263512834426
+    },
+    "kunekune_pig": {
+      "file": "7d8dd4dce75b9bd7",
+      "stride": 0.19622195151544386
+    },
+    "lamb": {
+      "file": "fc0932f9d967fec2",
+      "stride": 0.19419476870567567
+    },
+    "llama": {
+      "file": "e91fa6629b4a8bf0",
+      "stride": 0.48423173927491714
+    },
+    "longhorn": {
+      "file": "9f1b503d4793c27b",
+      "stride": 0.3282396543410517
+    },
+    "longhorn_calf": {
+      "file": "6351c2963e0c79b0",
+      "stride": 0.26764014074879305
+    },
+    "mouflon_sheep": {
+      "file": "336ce38f197d7f04",
+      "stride": 0.28529277732295377
+    },
+    "mustang": {
+      "file": "d6d11822b256b304",
+      "stride": 0.40080419951869595
+    },
+    "mustang_foal": {
+      "file": "1dd2afcfbe0a1dfe",
+      "stride": 0.3587623277018147
+    },
+    "ox": {
+      "file": "e514102fedf22262",
+      "stride": 0.3548703607051603
+    },
+    "pig": {
+      "file": "ff4bb81fb47992c1",
+      "stride": 0.21235643615645747
+    },
+    "piglet": {
+      "file": "2124ba7089379806",
+      "stride": 0.1423322505527927
+    },
+    "pink_calf": {
+      "file": "c32f26455775718a",
+      "stride": 0.2691734822527055
+    },
+    "pink_cow": {
+      "file": "e27e631fcb23984d",
+      "stride": 0.33029939138120223
+    },
+    "pony": {
+      "file": "9b11c1b23c8d4db1",
+      "stride": 0.342566087361305
+    },
+    "rabbit": {
+      "file": "c56ebe32405f8d17",
+      "stride": 0.054142666199514945
+    },
+    "ram": {
+      "file": "2cf09eeab2c22f7f",
+      "stride": 0.2943350422766901
+    },
+    "red_calf": {
+      "file": "528123e66b101364",
+      "stride": 0.2691734822527055
+    },
+    "red_chicken": {
+      "file": "d1e09e9d693ffb67",
+      "stride": 0.0
+    },
+    "red_cow": {
+      "file": "e9c9d0c0d5ade44b",
+      "stride": 0.33029939138120223
+    },
+    "saddleback_pig": {
+      "file": "3aafdc8d5764c004",
+      "stride": 0.21240691984853438
+    },
+    "sheep": {
+      "file": "2bef47b96ec256d1",
+      "stride": 0.28206901324372136
+    },
+    "spotted_dog": {
+      "file": "f96e09ac85b7e4f3",
+      "stride": 0.24669192010356533
+    },
+    "spotted_pig": {
+      "file": "c6a41a474e53655c",
+      "stride": 0.21011360710667026
+    },
+    "stallion": {
+      "file": "c5123e55f7fd0805",
+      "stride": 0.4251625148519393
+    },
+    "swan": {
+      "file": "fe989f711690d02d",
+      "stride": 0.11811859064525174
+    },
+    "tamworth_pig": {
+      "file": "fe711b30764ab46a",
+      "stride": 0.22490382675201662
+    },
+    "turkey": {
+      "file": "85609b974d2780d5",
+      "stride": 0.27447608449766714
+    },
+    "turtle": {
+      "file": "5de8936d52a80abb",
+      "stride": 0.08551347399911573
+    },
+    "ugly_duckling": {
+      "file": "aa1719a9fe424986",
+      "stride": 0.0
+    },
+    "wild_turkey": {
+      "file": "65cb4d05004e71b0",
+      "stride": 0.320276323585741
+    }
+  }
+}

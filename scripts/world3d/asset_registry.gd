@@ -48,6 +48,12 @@ static func entry(id: String) -> Dictionary:
 	return (_data.get("assets", {}) as Dictionary).get(id, {})
 
 
+## Every item id listed (data/assets.json), in its order.
+static func ids() -> Array:
+	_load()
+	return (_data.get("assets", {}) as Dictionary).keys()
+
+
 ## Whether item `id` is drawn from a file now (listed and loadable).
 static func has_model(id: String) -> bool:
 	var e := entry(id)

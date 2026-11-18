@@ -715,3 +715,19 @@ func test_452_animals_turn_to_watch_the_farmer_walk_by() -> void:
 	_eq(near.facing, 1.0, "towards them (a tile further along its column is to the screen's right)")
 	life.free()
 	AnimalBehaviour.night = was_night
+
+
+func test_513_kept_strides_are_the_files_own() -> void:
+	# Every file-made kind's stride is kept, from its file as it is now (tools/animal_strides writes them), so a
+	# farm opening never reads every animal file's moves; a kept one is exactly what its file measures.
+	var stale: Array[String] = []
+	for id in Animal3D.stride_kinds():
+		var kept := Animal3D.kept_stride(id)
+		if kept < 0.0 or absf(kept - Animal3D.measure_stride(id)) > 0.00001:
+			stale.append(id)
+	_check(stale.is_empty(), "every animal's kept stride is its file's (run tools/animal_strides.tscn): %s" % [stale])
+	# A kind whose file has changed since is measured as it opens, never given an old stride.
+	var data: Dictionary = ArtVersion._data.duplicate(true)
+	ArtVersion._data["files"]["cow"] = "changed"
+	_check(Animal3D.kept_stride("cow") < 0.0, "a changed file's kept stride is not used")
+	ArtVersion._data = data
