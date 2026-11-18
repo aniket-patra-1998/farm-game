@@ -1,6 +1,6 @@
 # The first hour and goals: the automated build (owner-approved 18 Nov 2026)
 
-The feature freeze lifts for this one feature. Hourly sessions, 18:35 IST 18 Nov to 06:35 IST 19 Nov, build it end
+The feature freeze lifts for this one feature. Hourly sessions, 03:05 to 15:05 IST 19 Nov (after the performance build), build it end
 to end from docs/PLAYER_EXPERIENCE.md (its Parts 1, 2 and 4, and the owner's five decisions at its end). Each run
 works about 50 minutes. Follow CLAUDE.md, and docs/POLISH.md's "Safe merging and no overlap" and owner's taste.
 Log: the Claude doc "Farm game: polish loop log", rows prefixed "Goals:".
