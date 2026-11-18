@@ -347,9 +347,10 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   2243ef9 a day's rhythm (animal_rigs.json `rhythm`: lively choices 1.7x at 8, 0.4x at 14; AnimalRig.busy_at,
   AnimalBehaviour.hour from main.gd); the rain commit after it: tail to the rain from rain 0.3 (faces screen left,
   the streaks fall from the upper right), half as lively, wander 0.45 of the range in a storm (animal_rigs.json
-  `weather`, AnimalBehaviour.rain). Godot reinstalled from the 4.7.2 zip here too. Next: animals turning to look as
-  the farmer walks past (FarmLife knows each mind's home tile; give a mind near the walking farmer a short LOOK
-  toward it, every 1-2 s, only on screen); then order of work 3 (icons' sticker edges, menus, motion).
+  `weather`, AnimalBehaviour.rain). Godot reinstalled from the 4.7.2 zip here too. Then animals turn to watch the
+  farmer walk by (animal_rigs.json `farmer`: within 2.2 tiles, 1.4 s, not again for 9 s; FarmLife.see_farmer
+  every 1.5 s while Game.player walks). The small animal life is now all built. Next: order of work 3 (icons'
+  sticker edges, menus, motion).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
