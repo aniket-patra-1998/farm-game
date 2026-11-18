@@ -455,3 +455,30 @@ func test_433_a_tap_on_the_mailbox_opens_the_inbox() -> void:
 	_check(hud.book.visible, "and the inbox opens")
 	hud.close_panels()
 	main.free()
+
+
+func test_446_every_tool_tap_on_a_thing_is_answered() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main = MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	var heard := func(tool: String, obj: Dictionary) -> String:
+		PerfReadout.note("none")
+		grid.tool = tool
+		grid.call("_act_on_object", obj, true)
+		return PerfReadout.last_action
+	_check(Game.place_somewhere("hay_bale"), "a hay bale is on the farm")
+	var bale: Dictionary = Game.objects[Game.objects.size() - 1]
+	var turned: String = heard.call("rotate", bale)
+	_check(turned == "snap" or turned == "error", "turning it is heard (%s)" % turned)
+	_eq(heard.call("sell", bale), "tap", "a first tap to sell asks again, heard")
+	var barn := Game.storage.barn()
+	_eq(heard.call("store", bale), "error", "a broken Barn turning it away is heard")
+	barn.erase("broken")
+	_eq(heard.call("store", bale), "place", "storing it in the mended Barn is heard")
+	_eq(heard.call("store", barn), "error", "a Barn that can't be stored says so, heard")
+	_eq(heard.call("sell", barn), "error", "nor sold")
+	main.free()
+	Game.reset_game()

@@ -1283,13 +1283,17 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	if tool == "sell" and loud:
 		_try_sell(obj)
 		return
-	if tool == "rotate" and loud:
-		Game.rotate_object(uid)
+	if tool == "rotate" and loud:   # (every tool's tap is answered: it turns with a snap, or it can't and says so)
+		Feedback.moment("snap" if Game.rotate_object(uid) else "error")
 		return
 	if tool == "store" and loud:
+		var fps := Game.footprint(obj["id"])
+		var at := corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2]   # (before: storing drops its place)
 		if Game.storage.store_object(uid):
-			var fps := Game.footprint(obj["id"])
-			float_words(corners_of(int(obj["row"]), int(obj["col"]), fps.x, fps.y)[2], tr("STORED"), "xp")
+			Feedback.moment("place")
+			float_words(at, tr("STORED"), "xp")
+		else:
+			Feedback.moment("error")
 		return
 	if kind == "barn" and tool != "move":
 		if loud:
@@ -1356,6 +1360,7 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 func _try_sell(obj: Dictionary) -> void:
 	var uid := int(obj["uid"])
 	if not Game.can_sell(obj):
+		Feedback.moment("error")
 		info.emit(tr("THAT_CAN_T_BE_SOLD"))
 		return
 	var now_ms := Time.get_ticks_msec()
@@ -1370,6 +1375,7 @@ func _try_sell(obj: Dictionary) -> void:
 		return
 	_sell_pending = uid
 	_sell_pending_until = now_ms + SELL_CONFIRM_MS
+	Feedback.moment("tap")   # (asked to tap again: the first tap is answered too)
 	var extra := tr("WHAT_S_INSIDE_MOVES_OUT") if Game.inside_total(obj) > 0 else ""
 	info.emit(
 		tr("TAP_AGAIN_TO_SELL_THE_FOR") % [Game.item_data(obj["id"])["name"], Game.sell_value(obj), extra]
