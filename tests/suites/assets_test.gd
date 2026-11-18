@@ -583,6 +583,8 @@ func test_392_a_building_that_can_still_grow_shows_what_it_lacks_as_a_frame() ->
 
 func test_453_files_load_side_by_side_on_worker_threads() -> void:
 	AssetRegistry.forget()
+	var threaded := AssetRegistry.threaded
+	AssetRegistry.threaded = true   # (as on a phone; off without a screen, see AssetRegistry.threaded)
 	var paths: Array[String] = []
 	for id in ["cow", "chicken", "apple_tree"]:
 		paths.append(AssetRegistry.file_of(AssetRegistry.entry(id), {}))
@@ -597,4 +599,5 @@ func test_453_files_load_side_by_side_on_worker_threads() -> void:
 		if node != null:
 			node.free()
 	AssetRegistry.preload_files(["", "res://art/models/none_such.glb"])   # (missing: skipped, nothing said)
+	AssetRegistry.threaded = threaded
 	AssetRegistry.forget()

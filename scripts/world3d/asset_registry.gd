@@ -27,6 +27,10 @@ const NAMED := {
 }
 const CROP := "crop:"   # a crop form's entry: crop:<form> (CropModels.mesh)
 
+## Whether files load on worker threads (preload_files). Not without a screen (tests, tools): the stand-in renderer
+## there keeps its meshes unsafely for threads, and meshes made on two threads at once broke each other (engine
+## errors in about one precheck in two). Test 453 turns it on for its own few files.
+static var threaded := DisplayServer.get_name() != "headless"   # not-ui (a display server's name)
 static var _data := {}
 static var _read := false
 static var _scenes := {}     # path -> PackedScene, its materials already made masters
@@ -168,7 +172,10 @@ static func _load() -> void:
 ## Starts loading the files at `paths` on the engine's worker threads, all at once, so a farm opening with many
 ## kinds reads and unpacks them side by side instead of one after another as each is first built (`_scene` then
 ## takes each as it is done, waiting only if it is not yet). Paths already loaded, asked or missing are skipped.
+## Only when `threaded`.
 static func preload_files(paths: Array) -> void:
+	if not threaded:
+		return   # (each file is then loaded where it is first built, as before threaded loading)
 	for path: String in paths:
 		if path == "" or _scenes.has(path) or _loading.has(path) or not ResourceLoader.exists(path):
 			continue
