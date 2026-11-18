@@ -192,6 +192,19 @@ func test_491_panel_words_take_a_type_role_not_a_number() -> void:
 						m.get_string(1), args[at].strip_edges()])
 
 
+## Panels space on one grid: a gap between a card's lines, rows and buttons is a UiTheme size (hud_gap, row_gap,
+## section_gap, scaled with the interface), never a bare number; only hairlines (0, 2, 4) stay bare. The cards'
+## inner 6s sat off the grid beside their 8 neighbours. (hud_goals.gd is the goals loop's.)
+func test_526_panel_gaps_sit_on_the_spacing_grid() -> void:
+	var gap := RegEx.create_from_string("separation\", (\\d+)\\)")
+	for dir: String in ["res://scripts/hud/", "res://scripts/", "res://scripts/ui/"]:
+		for f: String in DirAccess.get_files_at(dir):
+			if not f.ends_with(".gd") or f == "hud_goals.gd":
+				continue
+			for m in gap.search_all(FileAccess.get_file_as_string(dir + f)):
+				_check(int(m.get_string(1)) <= 4, "%s: a separation of %s is a UiTheme gap size" % [f, m.get_string(1)])
+
+
 
 ## The celebration cards (a mystery's reveal, a level-up) move in the interface's one language: every tween time
 ## is named (RevealCard's constants, UiFx's), shakes are eased, and nothing pulses in a loop (a level-up is the

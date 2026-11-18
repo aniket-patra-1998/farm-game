@@ -23,7 +23,7 @@ func add_feed_card(content: VBoxContainer, o: Dictionary) -> void:
 		return
 	var uid := int(o["uid"])
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	card.add_child(BookPanel.text(tr("FEEDING_OUR_OWN_TOUCH"), UiTheme.BODY))
 	card.add_child(BookPanel.text(_status(o), UiTheme.HEADING))
 	var any := false

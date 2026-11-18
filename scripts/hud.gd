@@ -167,7 +167,7 @@ func _build_placing_bar(root: Control) -> void:
 	_placing_bar = PanelContainer.new()
 	_placing_bar.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", int(UiTheme.size("section_gap")))
 	_placing_bar.add_child(row)
 	_placing_label = FloatText.label("", 20)
 	_placing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

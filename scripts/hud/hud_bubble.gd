@@ -51,7 +51,7 @@ func _init(owner: FarmHud) -> void:
 			(deed["do"] as Callable).call())
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 6)
+	buttons.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	buttons.add_child(_act)
 	buttons.add_child(_open)
 	col.add_child(buttons)

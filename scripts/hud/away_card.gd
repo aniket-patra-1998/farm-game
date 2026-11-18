@@ -32,7 +32,7 @@ func _init(owner: FarmHud) -> void:
 	offset_top = FarmHud.top_h() + GAP_BELOW_BAR
 	custom_minimum_size.x = WIDTH
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 8)
+	column.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	add_child(column)
 	var head := HBoxContainer.new()
 	column.add_child(head)
@@ -47,7 +47,7 @@ func _init(owner: FarmHud) -> void:
 	cross.pressed.connect(close)
 	head.add_child(cross)
 	_rows = VBoxContainer.new()
-	_rows.add_theme_constant_override("separation", 6)
+	_rows.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	column.add_child(_rows)
 	UiKit.keep_fitted(self)   # (shrinks back when it holds fewer rows than last time)
 	set_process(false)

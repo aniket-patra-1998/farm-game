@@ -50,7 +50,7 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 	var family := str(Game.item_data(o["id"]).get("home_of", ""))
 	var fam: Dictionary = Game.finds.families.get(family, {})
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	card.add_child(BookPanel.text(Game.size_name(o), UiTheme.HEADING))
 	card.add_child(BookPanel.text(tr("FINDS_HOME_FOUND") % [fam.get("name", family), Game.finds.total(family),
 		Game.finds.distinct(family), (fam.get("kinds", []) as Array).size()], UiTheme.HEADING))
@@ -201,7 +201,7 @@ func add_garage_info(content: VBoxContainer) -> void:
 		var it := Game.item_data(id)
 		var area := Game.vehicles.vehicle_area(id)
 		var card := BookPanel.card()
-		card.add_theme_constant_override("separation", 6)
+		card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 		card.add_child(
 			BookPanel.text(
 				tr("WORKS_X_PLOTS_UPGRADE_OF") % [
@@ -242,7 +242,7 @@ func add_rust_card(content: VBoxContainer, id: String) -> void:
 	if id == "" or not Game.rust.is_on():
 		return
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 6)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	add_rust_lines(card, id)
 	content.add_child(BookPanel.card_frame(card))
 
@@ -291,7 +291,7 @@ func build_fuel(content: VBoxContainer) -> void:
 		)
 	)
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	card.add_child(
 		BookPanel.text(
 			tr("TANK_OF_SPARE_TANKS") % [fuel, Balance.i("vehicles.fuel_tank"), Game.vehicles.fuel_tanks],
@@ -316,7 +316,7 @@ func build_fuel(content: VBoxContainer) -> void:
 func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 	var uid := int(o["uid"])
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	var line := Game.raising.babies(o)
 	var need := Game.raising.need_each()
 	card.add_child(BookPanel.text(tr("TROUGH_OF") % [Game.raising.trough(o), line.size() * need], UiTheme.BODY))
@@ -394,7 +394,7 @@ func add_pig_pen_info(content: VBoxContainer, o: Dictionary) -> void:
 	var uid := int(o["uid"])
 	var pigs := Game.inside_total(o)
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 8)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	card.add_child(BookPanel.text(tr("TRUFFLES_HELD") % Game.pigpen.truffles, UiTheme.BODY))
 	if not Game.pigpen.is_foraging(o):
 		card.add_child(BookPanel.text(tr("FEED_THE_PIGS_SLOP_AND_THEY") % Balance.i("pigpen.pigs_per_truffle"),
@@ -439,7 +439,7 @@ func add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void
 	var next := Game.building_def(o["id"]).size(Game.level_of(o) + 1)
 	var next_name := str(next.get("name", tr("NEXT_SIZE")))
 	var card := BookPanel.card()
-	card.add_theme_constant_override("separation", 6)
+	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	card.add_child(BookPanel.text(tr("EXPAND_TO_HOLDS") % [next_name, int(next["capacity"])], UiTheme.BODY))
 	for m in need:
 		var have := int(Game.parts.get(m, 0))

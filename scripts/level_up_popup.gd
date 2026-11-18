@@ -74,8 +74,8 @@ func _ready() -> void:
 
 	_unlocks = HFlowContainer.new()
 	_unlocks.alignment = FlowContainer.ALIGNMENT_CENTER
-	_unlocks.add_theme_constant_override("h_separation", 8)
-	_unlocks.add_theme_constant_override("v_separation", 8)
+	_unlocks.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap")))
+	_unlocks.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap")))
 	col.add_child(_unlocks)
 
 	var go := Button.new()

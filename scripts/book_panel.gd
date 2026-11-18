@@ -389,7 +389,7 @@ static func text(words: String, font_size := UiTheme.BODY, color := INK) -> Labe
 ## explanation) as a message when tapped. Panels open with one of these, never a paragraph.
 static func info(words: String, more: String, font_size := UiTheme.BODY, color := INK) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+	row.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
 	var line := text(words, font_size, color)
 	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(line)
