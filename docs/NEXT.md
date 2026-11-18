@@ -361,7 +361,10 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   nothing (the neighbours' bodies and hair, the seed and helpers' sack tops, the stall's awning tabs); every gradient
   from tools/make_ui_icons.py is now userSpaceOnUse over the shape's real height (ui kit test 453). 2b14f30: the Fit
   icon's file drew Zoom out's minus; it has the drawn icon's frame again. Check new icons in Godot itself (rsvg is
-  not enough): `Image.load_svg_from_string` in a -s script, compared to rsvg-convert. The loop's window ends 18:20.
+  not enough): `Image.load_svg_from_string` in a -s script, compared to rsvg-convert. da0bdc0: UiIcon._arc gives the
+  speaker's waves and the lock's shackle the white sticker edge (they vanished on brown panels). Flaky once: a
+  precheck's godot log had a script error in ModelKit.canopy (model_kit.gd:702, null mesh arrays), likely a race in
+  the threaded model loading (ffe2a86); passed on retry. The loop's window ends 18:20.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
