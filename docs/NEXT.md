@@ -412,6 +412,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   on a phone. Measured: the mastery line's width is the same at 15 and 18. A fix (a floor per role, or a smaller
   text_share step for BODY) changes every panel on a phone: the owner picks. Fresh container: Godot 4.7.2 from
   CI's zip, `--import` ~3 min; look_shot of one panel ~6-8 min. Next: the ribbon card with a bar; motion timing.
+- Art run 14 (19 Nov 00:05 IST): main only. 6d63cda: one motion language for springing back. UiFx.settle (one
+  soft TRANS_BACK overshoot, SETTLE_TIME 0.32 s) replaces every TRANS_ELASTIC wobble (Objects3D tap, grow_in, drop;
+  FarmPiece arrive and bounce; the HUD counters); UiFx.pulse swells a counter 1.12 and replaces a running pulse
+  (coins no longer stack tweens). UiFx._fresh_tween's get_meta(.., null) logged an error on every first press: fixed.
+  ui_kit test 510 fails any TRANS_ELASTIC. The doors' TRANS_BOUNCE (BuildingFill.celebrate, a door clapping shut)
+  is kept on purpose. cbaf38b: a card with a bar keeps a badge's room like a name's two lines, so the ribbon "on
+  its way" stands level with its row (hud test 354). Reported for the goals loop: the goal faces cover an open
+  panel's left edge (Collections' note loses its first letter). Next: reveal_card's and toasts' bare timings into
+  UiFx (reveal_card is goals' step 4: wait until it merges), then icons' visual size in one set.
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
