@@ -128,7 +128,7 @@ ICONS = {
               HI("path", 0.5, d="M36 38 L60 38 L44 62 Z")],
     "fit": [L("M80 80 L108 108", 12, "#b8773a"),
             P("circle", "#cdeefc", cx=54, cy=54, r=32),
-            L("M40 54 L68 54", 6, "#3d7dd8"),
+            L("M42 42 L66 42 L66 66 L42 66 Z", 4, "#3d7dd8"),   # (a frame in the lens, as the drawn one: not a minus)
             HI("ellipse", 0.6, cx=44, cy=40, rx=9, ry=6)],
     "search": [L("M78 78 L108 108", 12, "#b8773a"),
                P("circle", "#e8f6fd", cx=54, cy=54, r=32),
