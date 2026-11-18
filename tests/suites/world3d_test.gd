@@ -2357,3 +2357,14 @@ func test_447_standing_decorations_have_a_contact_shade_as_animals_do() -> void:
 	objects.queue_free()
 	await get_tree().process_frame
 	Game.reset_game()
+
+
+func test_497_the_phone_benchmark_line_reads_back_whole() -> void:
+	# The phone run (phone_bench.yml) takes the last "BENCH {..}" line in a phone's log: after every phase the
+	# report so far, so a run cut short still says what it measured, and "done" says whether it got to the end.
+	var report := {"device": {"model": "test"}, "startup_ms": 12, "done": false, "showcase_cold": {"built_ms": 3}}
+	var line := LoadBenchmark.line_of(report)
+	_check(line.begins_with("BENCH {") and line.ends_with("}") and not line.contains("\n"), "one line (%s)" % line)
+	var back: Variant = JSON.parse_string(line.trim_prefix("BENCH "))
+	_check(back is Dictionary and back.get("done") == false, "it says the run is not done yet")
+	_eq(int((back as Dictionary).get("showcase_cold", {}).get("built_ms", -1)), 3, "and keeps what was measured")

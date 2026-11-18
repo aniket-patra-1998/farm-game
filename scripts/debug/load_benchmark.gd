@@ -5,7 +5,8 @@ extends Node
 ## warm, then plays at the playing zoom for a few seconds, and reports for each: when every thing was built, when
 ## the loading cover lifted (the farm seen whole), the long frames on the way (a first draw of a material, its
 ## shaders made, shows as one), and the frame times and draws while playing. One JSON line in the log ("BENCH ")
-## and in user://load_benchmark.json; a summary for Settings > Testing.
+## and in user://load_benchmark.json, written again after every phase ("done" false until the end, the newest line
+## last), so a phone run cut short still reports what it measured; a summary for Settings > Testing.
 ## Runs by itself in a build exported with the "benchmark" feature (the benchmark APK, Firebase Test Lab), or from
 ## Settings > Testing. Never touches the player's own save (saving is off while it runs).
 
@@ -37,25 +38,40 @@ static func start(main: Node) -> LoadBenchmark:
 
 
 func _run() -> void:
-	var report := {"device": _device(), "startup_ms": Time.get_ticks_msec()}
+	var report := {"device": _device(), "startup_ms": Time.get_ticks_msec(), "done": false}
+	_tell(report)   # (the report so far after every phase: a phone run cut short still says what it measured)
 	var saving := Game.saving_enabled
 	Game.saving_enabled = false
 	await _until_whole()
 	report["own_farm_first"] = {"ms_since_start": Time.get_ticks_msec()}
+	_tell(report)
 	report["showcase_cold"] = await _phase(func() -> void: Game.open_showcase())
+	_tell(report)
 	report["own_farm"] = await _phase(func() -> void: Game.open_own_farm())
+	_tell(report)
 	report["showcase_warm"] = await _phase(func() -> void: Game.open_showcase())
+	_tell(report)
 	report["play"] = await _play()
 	Game.open_own_farm()
 	Game.saving_enabled = saving
-	var line := JSON.stringify(report)
-	print("BENCH " + line)   # not-ui (a log line)
-	var f := FileAccess.open(FILE, FileAccess.WRITE)
-	if f != null:
-		f.store_string(line)
+	report["done"] = true
+	_tell(report)
 	finished.emit(report)
 	if wanted():
 		get_tree().quit()
+
+
+## The report so far, as the log line (the last one in a log is the newest) and in FILE.
+static func line_of(report: Dictionary) -> String:
+	return "BENCH " + JSON.stringify(report)   # not-ui (a log line)
+
+
+func _tell(report: Dictionary) -> void:
+	var line := line_of(report)
+	print(line)
+	var f := FileAccess.open(FILE, FileAccess.WRITE)
+	if f != null:
+		f.store_string(line.trim_prefix("BENCH "))
 
 
 ## One farm opening: `open` lays it out; then the time until every thing is built, until the cover lifts (the
