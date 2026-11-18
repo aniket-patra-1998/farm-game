@@ -268,3 +268,31 @@ func test_319_place_move_in_store_and_finish_say_yes_or_why_not() -> void:
 	_check(g.storage.store_object(int(bale["uid"])), "..storing it")
 	_eq(g.storage.stored.size(), g.storage.barn_capacity(), "past its space, to the inbox, not the Barn")
 	g.queue_free()
+
+
+## A thing put down for the player (a sold Orchard's trees, a stray, a mastery sign) lands where placing it by hand
+## would be allowed: a tree keeps off a building's ring while there is room elsewhere, and still lands when there
+## is not (never lost).
+func test_521_a_thing_put_down_for_the_player_keeps_the_placing_rule() -> void:
+	var g := _farm()
+	g.coins = 10000000
+	g.xp = g.xp_for_level(60)
+	_clear(g)
+	_check(g.buy_and_place("chicken_coop", 2, 2), "a Coop goes down")
+	var fp := g.footprint("chicken_coop")
+	var ring: Array[Vector2i] = []
+	for r in g.farm_size:
+		for c in g.farm_size:
+			var i := g.index_of(r, c)
+			var by_coop := r >= 1 and r <= 2 + fp.y and c >= 1 and c <= 2 + fp.x
+			if by_coop and not g.is_occupied(i):
+				ring.append(Vector2i(r, c))
+			elif not by_coop and Vector2i(r, c) != Vector2i(14, 14):
+				g.plots[i] = {"state": "planted", "crop": "strawberries", "planted_at": g.now()}
+	_check(ring.size() > 0, "grass left round the Coop")
+	_check(g.place_somewhere("apple_tree"), "a tree is put down")
+	_eq(Vector2i(int(g.objects[-1]["row"]), int(g.objects[-1]["col"])), Vector2i(14, 14),
+		"on the one spot clear of the Coop, not against it")
+	_check(g.place_somewhere("apple_tree"), "with only spots by the Coop left, a tree still lands")
+	_check(Vector2i(int(g.objects[-1]["row"]), int(g.objects[-1]["col"])) in ring, "beside the Coop")
+	_done(g)

@@ -88,15 +88,9 @@ func _spawn_stray() -> bool:
 	if choices.is_empty():
 		return false
 	var animal_id := choices[RollSystem.weighted_index(game.rng, weights)]
-	var spots: Array[Vector2i] = []
-	for r in game.farm_size:
-		for c in game.farm_size:
-			var i := game.index_of(r, c)
-			if game.plots[i].get("state", "grass") == "grass" and not game.is_occupied(i):
-				spots.append(Vector2i(r, c))
-	if spots.is_empty():
+	var spot := game.free_spot_for(animal_id)
+	if spot.x < 0:
 		return false
-	var spot := spots[game.rng.randi_range(0, spots.size() - 1)]
 	game.add_object(
 		{"uid": game.next_uid, "id": animal_id, "row": spot.x, "col": spot.y, "t": game.now(), "stray": true}
 	)

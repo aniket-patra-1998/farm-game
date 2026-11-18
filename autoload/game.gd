@@ -804,29 +804,28 @@ func inside_total(building: Dictionary) -> int:
 # ---------------------------------------------------------------- placing new animals
 
 
-## Puts a new animal on an open grass tile. False if the farm is full.
-## A random free spot on grass where `item_id` fits, or (-1, -1).
-func free_spot_for(item_id: String) -> Vector2i:
+## A random free spot on grass where `item_id` fits, or (-1, -1). `strict` as can_place: a tree keeps off a
+## building's ring and a building off a tree's.
+func free_spot_for(item_id: String, strict := true) -> Vector2i:
 	var spots: Array[Vector2i] = []
 	for r in farm_size:
 		for c in farm_size:
-			if plots[index_of(r, c)].get("state", "grass") == "grass" and can_place(item_id, r, c):
+			if plots[index_of(r, c)].get("state", "grass") == "grass" and can_place(item_id, r, c, -1, strict):
 				spots.append(Vector2i(r, c))
 	return spots[rng.randi_range(0, spots.size() - 1)] if not spots.is_empty() else Vector2i(-1, -1)
 
 
+## Puts a new thing on a random open grass tile where placing it by hand would be allowed (BuildingSystem's
+## rule); a tree from a sold Orchard with only crowded spots left still lands, beside a building, rather than
+## being lost. False if the farm is full.
 func place_somewhere(item_id: String) -> bool:
 	if buildings.owned(item_id) >= buildings.limit_of(item_id):
 		return false
-	var spots: Array[Vector2i] = []
-	for r in farm_size:
-		for c in farm_size:
-			var i := index_of(r, c)
-			if plots[i].get("state", "grass") == "grass" and not is_occupied(i):
-				spots.append(Vector2i(r, c))
-	if spots.is_empty():
+	var spot := free_spot_for(item_id)
+	if spot.x < 0:
+		spot = free_spot_for(item_id, false)
+	if spot.x < 0:
 		return false
-	var spot := spots[rng.randi_range(0, spots.size() - 1)]
 	add_object({"uid": next_uid, "id": item_id, "row": spot.x, "col": spot.y, "t": now()})
 	next_uid += 1
 	return true
