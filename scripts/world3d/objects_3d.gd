@@ -420,22 +420,30 @@ func _mark_rust() -> void:
 	var ids: Array[String] = []
 	var shares: Array[float] = []
 	var rust := Game.rust
-	if rust.is_on() and not rust.vehicles.is_empty():
+	var wear := Game.wear
+	var rusting := rust.is_on() and not rust.vehicles.is_empty()
+	if rusting or (wear.is_on() and not wear.buildings.is_empty()):
 		for o in Game.objects:
 			var uid := int(o["uid"])
 			var id := ""
+			var share := 0.0
 			if not _views.has(uid) or Game.under_construction(o):
 				continue
-			if Game.kind_of(o) == "vehicle":
+			if rusting and Game.kind_of(o) == "vehicle":
 				id = str(o["id"]) if (_views[uid]["node"] as Node3D).visible and rust.needs_repair(str(o["id"])) else ""
-			elif Game.special_of(o) == "garage":
+			elif rusting and Game.special_of(o) == "garage":
 				id = rust.rustiest(o.get("inside", {}))
+			if id != "":
+				share = float(rust.level(id)) / rust.max_level()
+			elif wear.needs_repair(o):   # (a worn building wears the same sign: docs/WEAR.md)
+				id = WearSystem.key_of(uid)
+				share = float(wear.level_of(o)) / wear.max_level()
 			if id == "":
 				continue
 			var box: AABB = _views[uid]["box"]
 			tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
 			ids.append(id)
-			shares.append(float(rust.level(id)) / rust.max_level())
+			shares.append(share)
 	_rust_marks.show_at(tops, ids, shares)
 
 

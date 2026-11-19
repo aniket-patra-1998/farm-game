@@ -26,7 +26,7 @@ func load_from(data: Dictionary) -> void:
 func bunch_cap() -> int:
 	for o in game.objects:
 		if game.special_of(o) == "garden_shed":
-			return game.capacity(o)
+			return floori(game.capacity(o) * game.wear.room_factor(o))   # (worn: less room)
 	return Balance.i("shed.bunch_cap_no_shed")
 
 

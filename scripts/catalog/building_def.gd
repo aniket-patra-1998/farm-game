@@ -81,6 +81,30 @@ func size_materials(level: int) -> Dictionary:
 	return size(level).get("materials", {})
 
 
+## What wear does to it (docs/WEAR.md): "home" (fewer coins a collect), "crafting" (slower crafts), "garage" (less
+## rust kept off), "storage" (less room, and spoiling), or "" for a building that never wears (decor). Data
+## "wear" may name it outright (false: never).
+func wear_kind() -> String:
+	var said: Variant = data.get("wear", null)
+	if typeof(said) == TYPE_BOOL and not said:
+		return ""
+	if typeof(said) == TYPE_STRING:
+		return str(said)
+	match str(data.get("special", "")):
+		"garage":
+			return "garage"
+		"finds_home":
+			return "home"   # (the Gopher Garden and Dog House: their finders' homes)
+	match str(data.get("tab", "")):
+		"animal":
+			return "home"
+		"crafting":
+			return "crafting"
+		"storage":
+			return "storage"
+	return ""
+
+
 ## Its Market section: animal, storage, crafting or decor (required in the catalog; an error when missing).
 func tab() -> String:
 	if not data.has("tab"):

@@ -104,7 +104,8 @@ func taste(family: String, feed: String) -> float:
 func cap() -> int:
 	var barn := game.storage.barn()
 	var level := 1 if barn.is_empty() else game.level_of(barn)
-	return Balance.i("feeds.stock_cap") + Balance.i("feeds.cap_per_barn_level") * (level - 1)
+	var room := 1.0 if barn.is_empty() else game.wear.room_factor(barn)   # (a worn Barn holds less)
+	return floori((Balance.i("feeds.stock_cap") + Balance.i("feeds.cap_per_barn_level") * (level - 1)) * room)
 
 
 func count(feed: String, rich := false) -> int:

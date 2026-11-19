@@ -84,7 +84,9 @@ func repair_barn() -> bool:
 
 func barn_capacity() -> int:
 	var b := barn()
-	return game.capacity(b) if not b.is_empty() else game.building_def("barn").capacity(1)
+	if b.is_empty():
+		return game.building_def("barn").capacity(1)
+	return floori(game.capacity(b) * game.wear.room_factor(b))   # (worn: less room, docs/WEAR.md)
 
 
 ## Trees, animals and scenery can be stored; shelters, the barn and strays can't.

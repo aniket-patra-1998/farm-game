@@ -71,6 +71,11 @@ var _fed := 0
 var _actions := 0         # what is left to do in this visit
 var _minutes := 5.0       # how long a visit lasts
 var _expansions := 0
+var _repairs := 0           # building repairs (docs/WEAR.md) and what they cost
+var _repair_coins := 0
+var _upgrades := 0          # building sizes grown and what they cost
+var _upgrade_coins := 0
+var _earned := 0            # coins earned in all (upkeep's share of it)
 var _bought := {}         # item id -> bought
 var _cleared := 0         # plots cleared to make room for what a goal asks to buy or a vehicle
 var _last_cleared := -1
@@ -215,6 +220,7 @@ func _play() -> void:
 				_visit(_visits_after(hours, v))
 			game.debug_time_offset += int(_gap_after(hours, v) * 3600.0)
 		var earned := game.coins - coins_at_day_start + _spent - spent_at_day_start
+		_earned += maxi(0, earned)
 		var per_visit := float(earned) / float(hours.size())
 		var idle_v := float(game.coins) / per_visit if per_visit > 0.0 else 0.0
 		if per_visit > 0.0:
@@ -255,6 +261,8 @@ func _play() -> void:
 		", ".join(PackedStringArray(bought)), _expansions, game.farm_size, game.farm_size, _collected, _fed])
 	print("goals collected %d (chain steps %d, jobs swapped %d); coins spent %d" % [
 		goals_claimed, chain_steps, swaps, _spent])
+	print("upkeep: %d repairs, %d coins; %d upgrades, %d coins; repairs %.0f%% of coins earned" % [_repairs,
+		_repair_coins, _upgrades, _upgrade_coins, 100.0 * _repair_coins / maxf(1.0, _earned)])
 	print(market_line())
 	print(feed_line())
 	if style == "crafter":
@@ -977,11 +985,31 @@ func _buy_building(reserve: int) -> void:
 				return
 
 
+## Wear (docs/WEAR.md): spoiling worked out, every building worn to level 3 or more repaired, then every building
+## that can grow a size grown, while coins stay above the reserve.
+func _upkeep(reserve: int) -> void:
+	game.wear.spoil()
+	for o in game.objects:
+		var uid := int(o["uid"])
+		if game.wear.needs_repair(o) and game.wear.level_of(o) >= 3:
+			var cost := game.wear.repair_cost(uid)
+			if game.coins >= int(cost["coins"]) + reserve and game.wear.repair(uid):
+				_repairs += 1
+				_repair_coins += int(cost["coins"])
+	for o in game.objects:
+		if game.is_building_item(str(o["id"])) and game.buildings.can_expand(o).ok():
+			var coins := game.land.expansion_coins(o)
+			if game.coins >= coins + reserve and game.land.upgrade_building(int(o["uid"])):
+				_upgrades += 1
+				_upgrade_coins += coins
+
+
 ## Spends what's above a reserve for replanting: land first when it can be bought, then whichever tree or
 ## animal pays back soonest, on free ground at the back of the farm (never more than a quarter of the farm).
 func _spend() -> void:
 	var reserve := 300
 	_goal_buy()
+	_upkeep(reserve)
 	while game.land.can_expand_with_coins() and game.coins >= int(game.land.next_expansion()["coins"]) + reserve:
 		if not game.land.expand(false):
 			break

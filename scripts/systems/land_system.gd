@@ -80,11 +80,43 @@ func add_materials(uid: int) -> int:
 	return added
 
 
-## Materials for the next expansion, or {} at full size.
+## Materials for the next expansion, or {} at full size: the size's own, and more for every upgrade the farm
+## already has (price_climb).
 func expansion_needs(b: Dictionary) -> Dictionary:
 	if game.level_of(b) >= game.max_level(b["id"]):
 		return {}
-	return game.building_def(b["id"]).size_materials(game.level_of(b) + 1)
+	var base := game.building_def(b["id"]).size_materials(game.level_of(b) + 1)
+	var out := {}
+	var climb := price_climb()
+	for m: String in base:
+		out[m] = ceili(int(base[m]) * climb)
+	return out
+
+
+## The coins for the next expansion (0 at full size, or for a size that takes no materials): a share of the
+## building's price at its second size, `upgrade.step_growth` times more at each size on, and price_climb()
+## on top (owner, 19 Nov: upgrades should get dearer as the farm grows; docs/WEAR.md).
+func expansion_coins(b: Dictionary) -> int:
+	if expansion_needs(b).is_empty():
+		return 0
+	var price := maxi(int(game.item_data(str(b["id"])).get("cost", 0)), Balance.i("wear.least_price"))
+	var steps := game.level_of(b) - 1   # (0 for the second size)
+	return roundi(price * Balance.f("upgrade.size_coins") * pow(Balance.f("upgrade.step_growth"), steps)
+		* price_climb())
+
+
+## How many upgrades the farm has: every size a building has grown and every star a crafting building has.
+func upgrades_owned() -> int:
+	var n := 0
+	for o in game.objects:
+		if game.is_building_item(str(o["id"])):
+			n += maxi(0, game.level_of(o) - 1)
+	return n
+
+
+## What every upgrade's price is multiplied by for the upgrades the farm already has.
+func price_climb() -> float:
+	return 1.0 + Balance.f("upgrade.owned_more") * upgrades_owned()
 
 
 func can_expand(b: Dictionary) -> bool:
@@ -97,6 +129,8 @@ func upgrade_building(uid: int) -> bool:
 	if b.is_empty() or not game.is_home(b) or not can_expand(b):
 		return false
 	var need := expansion_needs(b)
+	if not game.spend(expansion_coins(b)):
+		return false
 	for m in need:
 		game.parts[m] = int(game.parts[m]) - int(need[m])
 	b["level"] = game.level_of(b) + 1

@@ -109,12 +109,24 @@ func gathered(id: String) -> float:
 	if not is_on() or not vehicles.has(id):
 		return 0.0
 	var v: Dictionary = vehicles[id]
-	var rate := Balance.f("rust.outside_rate") if bool(v["out"]) else 1.0
+	var rate := _rate(id, bool(v["out"]))
 	if _repaired(id):
 		return maxf(0.0, float(game.now() - int(v["fix"]))) * rate   # (it came out of its repair clean)
 	if int(v["fix"]) > 0:
 		return float(v["w"])   # (in the workshop: it gathers none)
 	return float(v["w"]) + maxf(0.0, float(game.now() - int(v["t"]))) * rate
+
+
+## How fast `id` rusts where it stands: outside, `rust.outside_rate`; in a Garage, 1, rising to the outside pace
+## as the Garage itself wears (docs/WEAR.md: a worn-out Garage keeps no rust off).
+func _rate(id: String, out: bool) -> float:
+	var outside := Balance.f("rust.outside_rate")
+	if out:
+		return outside
+	for o in game.objects:
+		if game.special_of(o) == "garage" and int((o.get("inside", {}) as Dictionary).get(id, 0)) > 0:
+			return lerpf(1.0, outside, game.wear.garage_share(o))
+	return 1.0
 
 
 ## A vehicle's level of rust: 0 clean, up to max_level().

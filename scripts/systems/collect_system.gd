@@ -11,12 +11,13 @@ extends GameSystem
 ## Returns {"coins", "xp", "drop", "drop_text", "name"} or {} if nothing was ready.
 func collect(uid: int) -> Dictionary:
 	var obj := game.object_by_uid(uid)
-	if obj.is_empty() or not game.is_ready(obj):
-		return {}
+	if obj.is_empty() or not game.is_ready(obj) or game.wear.stopped(obj):
+		return {}   # (worn out: nothing until it is repaired, docs/WEAR.md)
 	# FarmVille: collecting pays game.coins and game.mastery, never XP (an animal or tree gave its XP once, when bought);
 	# only a bonus drop adds XP.
 	# Fed or hungry, and touching its own kind.
-	var earned := roundi(game.object_payout(obj).x * game.feeds.coin_multiplier(obj) * game.adjacency.coin_multiplier(obj))
+	var earned := roundi(game.object_payout(obj).x * game.feeds.coin_multiplier(obj) * game.adjacency.coin_multiplier(obj)
+		* game.wear.goods_factor(obj))
 	game.feeds.rare_boost = game.feeds.rare_multiplier(obj)
 	var gained := 0
 	var drop := game.drops.roll_drop("", 0)

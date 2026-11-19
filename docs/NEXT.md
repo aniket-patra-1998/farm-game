@@ -1353,3 +1353,6 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   pays 170, rare coop gives its 2 Mystery Eggs (goal reward "eggs"). Tests 585, 586.
 - Waiting on the owner: the late-game design (climbing upgrade prices + building wear, Claude Doc
   "Farm game: a harder late game"). Build nothing of it before the six questions there are answered.
+- 19 Nov, later: building wear and climbing upgrade prices built (docs/WEAR.md, tests 587-594). The bot's
+  measure: wear is upkeep, not a coin sink (repairs under 1% of earnings with the owner's 40% cap). The idle
+  coin pile is still open: asked the owner how sinks should scale with income.

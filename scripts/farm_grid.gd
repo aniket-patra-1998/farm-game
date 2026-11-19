@@ -896,7 +896,8 @@ func _apply_at(screen_pos: Vector2) -> void:
 			# A rusty vehicle tapped by hand offers its repair first, wherever the tap lands on it (owner, 19 Nov:
 			# only its little sign did, so a seized vehicle seemed to do nothing).
 			if offers_repair(picked):
-				tapped_rust.emit(to_local(world), str(picked["id"]))
+				var key := WearSystem.key_of(uid) if Game.wear.stopped(picked) else str(picked["id"])
+				tapped_rust.emit(to_local(world), key)
 				return
 			_act_on_object(picked, true)
 			return
@@ -1369,9 +1370,14 @@ func job_for(i: int) -> Dictionary:
 	return {}
 
 
-## Whether a tap by hand on `obj` offers its repair first: a vehicle with rust on it, not in for a repair now.
+## Whether a tap by hand on `obj` offers its repair first: a vehicle with rust on it, not in for a repair now, or
+## a building worn out (docs/WEAR.md: it does nothing else until repaired).
 func offers_repair(obj: Dictionary) -> bool:
-	return tool == "hand" and Game.kind_of(obj) == "vehicle" and Game.rust.needs_repair(str(obj["id"]))
+	if tool != "hand":
+		return false
+	if Game.kind_of(obj) == "vehicle":
+		return Game.rust.needs_repair(str(obj["id"]))
+	return Game.wear.stopped(obj)
 
 
 func _act_on_object(obj: Dictionary, loud: bool) -> void:

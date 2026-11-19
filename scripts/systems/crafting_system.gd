@@ -229,6 +229,8 @@ func craft_problem(uid: int, rid: String) -> String:
 		return tr("THAT_ISN_T_A_CRAFTING_BUILDING")
 	if not recipe_unlocked(obj, rid):
 		return tr("UNLOCKS_AT_STARS") % _recipe(rid).star() if _recipe(rid) else tr("UNKNOWN_RECIPE")
+	if game.wear.stopped(obj):
+		return tr("WEAR_STOPPED")
 	if free_slots(obj) <= 0:
 		return tr("EVERY_SLOT_IS_BUSY")
 	if not missing_bushels(rid).is_empty():
@@ -245,7 +247,7 @@ func start_craft(uid: int, rid: String) -> bool:
 		bushels[c] = int(bushels[c]) - int(ins[c])
 		if int(bushels[c]) <= 0:
 			bushels.erase(c)
-	var took := craft_seconds(rid)
+	var took := roundi(craft_seconds(rid) * game.wear.craft_factor(obj))   # (a worn building crafts slower)
 	(obj["slots"] as Array).append({"r": rid, "done": game.now() + took, "took": took})
 	game.record("start_craft", rid)
 	game.inventory_changed.emit()
@@ -382,8 +384,12 @@ func _take_good(rid: String) -> void:
 	game.queue_save()
 
 
+## The next star's price: the catalog's, its coins more for every upgrade the farm already has (docs/WEAR.md).
 func star_cost(obj: Dictionary) -> Dictionary:
-	return _crafting_def(obj).star_cost(game.level_of(obj))
+	var cost := _crafting_def(obj).star_cost(game.level_of(obj))
+	if cost.has("coins"):
+		cost["coins"] = roundi(int(cost["coins"]) * game.land.price_climb())
+	return cost
 
 
 func can_add_star(uid: int, with_gems: bool) -> bool:

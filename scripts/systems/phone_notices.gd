@@ -57,6 +57,15 @@ static func plan(g: GameState) -> Array:
 				animals_at = left
 	if animals_at > 0:
 		raw.append({"at": g.now() + animals_at, "text": TranslationServer.translate("NOTIFY_ANIMALS")})
+	var worn_at := -1
+	var worn := ""
+	for o: Dictionary in g.objects:   # (a building nearly worn out: once, before it stops; docs/WEAR.md)
+		var left := g.wear.seconds_until_level(o, Balance.i("wear.spoil_from"))
+		if left > 0 and (worn_at < 0 or left < worn_at):
+			worn_at = left
+			worn = g.name_of(str(o["id"]))
+	if worn_at > 0:
+		raw.append({"at": g.now() + worn_at, "text": TranslationServer.translate("NOTIFY_WEAR") % worn})
 	var bias := DayCycle.device_bias_minutes() * 60
 	var tomorrow := (g.day_number() + 1) * 86400 - bias
 	raw.append({"at": tomorrow, "text": TranslationServer.translate("NOTIFY_GIFT")})
