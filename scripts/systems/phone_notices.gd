@@ -93,7 +93,9 @@ static func schedule(g: GameState) -> void:
 	phone.call("cancelAll")
 	if not wanted() or g.save_path != GameState.SAVE_PATH:   # (never from the showcase)
 		return
-	var title: String = g.player.farm_name if g.player.farm_name != "" else str(TranslationServer.translate("NOTIFY_TITLE"))
+	var title: String = g.player.farm_name
+	if title == "":
+		title = str(TranslationServer.translate("NOTIFY_TITLE"))
 	var k := 0
 	for r: Dictionary in plan(g):
 		phone.call("schedule", k, title, str(r["text"]), maxi(int(r["at"]) - g.now(), 1))
