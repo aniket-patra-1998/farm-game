@@ -109,7 +109,8 @@ jobs:
           echo "${GODOT_VERSION}.stable" > android/.build_version
           touch android/build/.gdignore
           ls android/build/libs/release/ || true
-          gradle -p android/plugins/farm_notices assembleRelease --no-daemon -q
+          # (on Java 17, as Godot's own export: the runner's default Java is too new for gradle)
+          JAVA_HOME="$JAVA_HOME_17_X64" gradle -p android/plugins/farm_notices assembleRelease --no-daemon -q
           mkdir -p addons/farm_notices/bin
           cp android/plugins/farm_notices/build/outputs/aar/farm_notices-release.aar addons/farm_notices/bin/
           ls -l addons/farm_notices/bin/
