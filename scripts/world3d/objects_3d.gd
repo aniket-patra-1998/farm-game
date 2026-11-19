@@ -21,6 +21,7 @@ const HATCH_SHAKES := 3      # a mystery shakes this many times before it opens,
 const HATCH_REACH := 0.035   # ..by this much more, in tiles, to either side
 const HATCH_REST := 0.1      # seconds between shakes
 const RUST := "rust"             # not-ui: how a vehicle's rust is written in its look ("rust2")
+const REPAIRING := "fix"         # not-ui: written after a vehicle's rust while it is in for repair
 const FARMHOUSE := "farmhouse"   # not-ui
 const STAGE := "stage"           # not-ui: how the farmhouse's stage is written in its look ("stage3")
 const PIECES := &"pieces"       # meta on a batched decoration's stand-in: the pieces the DecorLayer draws it from
@@ -569,8 +570,10 @@ func _mind_of(a: Animal3D) -> AnimalBehaviour:
 ## What a view shows: when this changes, it's rebuilt.
 ## How far along a building is in its life: a site, or the starter Barn standing broken, counts for nothing, a
 ## finished building 100, plus 10 a level. (When it goes up, the building has been finished, repaired or
-## upgraded: see grow_in.)
+## upgraded: see grow_in.) A vehicle in for repair counts for nothing too, so it swells back in mended.
 func _step(o: Dictionary) -> int:
+	if Game.kind_of(o) == "vehicle":
+		return 0 if Game.rust.repairing(str(o["id"])) else STEP_LEVEL
 	if not Game.kind_of(o) in ["building", "barn", "crafting"]:
 		return 0
 	if Game.under_construction(o) or bool(o.get("broken", false)):
@@ -889,7 +892,8 @@ static func shows_of(o: Dictionary) -> String:
 	if str(o["id"]) == FARMHOUSE:
 		return STAGE + str(Game.farmhouse_stage())
 	if Game.kind_of(o) == "vehicle":
-		return RUST + str(Game.rust.level(str(o["id"])))   # (its rust shows in its paint: VehicleModel.build)
+		var id := str(o["id"])   # (its rust shows in its paint, VehicleModel.build; in for repair, it is built again)
+		return RUST + str(Game.rust.level(id)) + (REPAIRING if Game.rust.repairing(id) else "")
 	return str(o.get("crop", o.get("flower", "")))
 
 

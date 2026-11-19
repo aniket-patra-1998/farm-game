@@ -206,6 +206,24 @@ func repair(id: String) -> bool:
 	return true
 
 
+## Repairs that have finished since they were last looked at are closed (the vehicle comes out of the workshop
+## clean, and gathers on from that moment), each said once, and the farm's looks are told, so a mended vehicle
+## swells back in (Objects3D._step). Called on the farm's half-minute timer; returns the ids it closed.
+func finish_repairs() -> Array[String]:
+	var done: Array[String] = []
+	if not is_on():
+		return done
+	for id: String in vehicles:
+		if _repaired(id):
+			_bank(id)
+			done.append(id)
+			game.message.emit(tr("RUST_REPAIR_DONE") % str(game.item_data(id)["name"]))
+	if not done.is_empty():
+		game.objects_updated()
+		game.queue_save()
+	return done
+
+
 ## Whether its repair has finished since it was last looked at (it is clean from that moment).
 func _repaired(id: String) -> bool:
 	var fix := int((vehicles.get(id, {}) as Dictionary).get("fix", 0))

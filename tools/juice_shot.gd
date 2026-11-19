@@ -5,7 +5,7 @@ extends Node
 ## --produce=<json> tries a variant of Balance feel.produce. --hour=<h> as look_shot (12.5 noon, 18.5 dusk);
 ## --crop=<id>; --plots=<n>. --collect: a round of collecting instead (up to --plots= of the farm's animals and
 ## trees made ready, the farmer collecting from each; their own pictures fly). --repair: the starter Barn stands
-## broken, then is repaired (it swells up mended).
+## broken, then is repaired (it swells up mended). --mended: a rusty Tractor's repair finishes (it swells back in).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --fixed-fps 30 --path . res://tools/juice_shot.tscn
 
@@ -20,9 +20,12 @@ func _ready() -> void:
 	var every := 6
 	var collect := false
 	var repair := false
+	var mended := false
 	for a in OS.get_cmdline_user_args():
 		if a == "--repair":
 			repair = true
+		if a == "--mended":
+			mended = true
 		if a == "--collect":
 			collect = true
 		if a.begins_with("--out="):
@@ -62,6 +65,9 @@ func _ready() -> void:
 		return
 	if repair:
 		await _repair(grid, cam, every, out)
+		return
+	if mended:
+		await _mended(grid, cam, every, out)
 		return
 	var row: Array[int] = []
 	for i in Game.plots.size():   # a row of free grass, side by side
@@ -145,6 +151,34 @@ func _repair(grid: FarmGrid, cam: FarmCamera, every: int, out: String) -> void:
 	for p in need:
 		Game.parts[p] = int(Game.parts.get(p, 0)) + int(need[p])
 	Game.storage.repair_barn()
+	var shot := 1
+	for k in 36:
+		await RenderingServer.frame_post_draw
+		if k % every == every - 1:
+			get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/f%03d.png" % shot))
+			shot += 1
+	get_tree().quit()
+
+
+## A rusty Tractor in for repair, then its repair finishing: a frame before, then every `every` frames for 1.2 s.
+func _mended(grid: FarmGrid, cam: FarmCamera, every: int, out: String) -> void:
+	var at := -1
+	for i in Game.plots.size():   # free grass to stand it on
+		if Game.on_farm(i) and not Game.is_occupied(i) and GameState.row_of(i) > 6 and GameState.col_of(i) > 4:
+			at = i
+			break
+	Game.buy_and_place("tractor", GameState.row_of(at), GameState.col_of(at))
+	Game.debug_time_offset += 21 * 86400
+	Game.rust.settle()
+	Game.rust.repair("tractor")
+	Game.objects_updated()
+	var g := grid.corners_of(GameState.row_of(at), GameState.col_of(at), 2, 2)
+	cam.snap(grid.to_global((g[0] + g[2]) / 2.0), 1.8)
+	for k in 90:
+		await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/f000.png"))
+	Game.debug_time_offset += Game.rust.repair_left("tractor") + 1
+	Game.rust.finish_repairs()
 	var shot := 1
 	for k in 36:
 		await RenderingServer.frame_post_draw
