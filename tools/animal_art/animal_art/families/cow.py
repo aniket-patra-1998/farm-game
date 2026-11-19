@@ -21,6 +21,14 @@ COWS = {
     "galician blond cow": dict(_C, coat="e0b070", coat2="8a6030", horns="short"),
     "red cow": dict(_C, coat="b0301e", coat2="f6f2ea"),
     "belted cow": dict(_C, coat="3a2f27", coat2="f6f2ea", pattern="belt", muzzle_col="eadfd2"),
+    # unique coats (colour, pattern and fur only: the same cow underneath)
+    "strawberry cow": dict(_C, coat="f9c4d2", coat2="e8456b", pattern="spots", seed=4, tuft="e8456b"),
+    "highland cow": dict(_C, coat="c8742e", coat2="8a4a1c", fur="shaggy", horns="long", leg_r=0.32, body=(1.06, 1.06, 1.7), udder=False),
+    "galaxy cow": dict(_C, coat="2a2a6e", coat3="7a3aa8", coat2="ffe9a8", pattern="stars", seed=3, tuft="ffe9a8", muzzle_col="c9b8e8"),
+    "tiger cow": dict(_C, coat="f2a23a", coat2="3a2418", pattern="stripes", muzzle_col="f6ead8"),
+    "panda cow": dict(_C, coat="f6f2ea", coat2="2b2624", pattern="panda"),
+    "rainbow cow": dict(_C, coat="f7a8b8", coat2="fff6e0", pattern="rainbow", muzzle_col="fff6e0",
+                        hues=["f7a8b8", "f9d08a", "f6ef9a", "a8e0a8", "9ac8f0", "c0a8e8"]),
     "bull": dict(_C, body=(1.14, 1.12, 1.82), legs=1.6, leg_r=0.31, neck=0.78, skull=(0.62, 0.6, 0.66), muzzle=(0.54, 0.45, 0.52),
                  horns="short", udder=False, hump=1.7, coat="7a4a2c", coat2="2b2420", dark_front=True, ring=True, rel=1.15),
     "ox": dict(_C, body=(1.16, 1.1, 1.85), legs=1.65, leg_r=0.32, neck=0.74, skull=(0.62, 0.6, 0.68), muzzle=(0.54, 0.45, 0.54),
@@ -65,6 +73,43 @@ def cow(b):
         # dark lower legs, ears and tail tuft, a pale ring round the muzzle
         bodyc, headc, earc, muzc = tuple(coat), tuple(coat), tuple(c2), tuple(np.minimum(1, coat * 0.3 + 0.66))
         legc0 = lambda P: np.where((P[:, 1] < ll * 0.45)[:, None], c2[None, :], coat[None, :])
+    elif pat == "stripes":
+        # bands round the body that lean and waver, rings down the legs, a striped brow
+        bodyc = lambda P: np.where((np.sin(P[:, 2] * 5.2 + P[:, 1] * 1.6 + 0.7 * np.sin(P[:, 0] * 3.0)) > 0.25)[:, None], c2[None, :], coat[None, :])
+        headc = lambda P: np.where(((np.sin(P[:, 0] * 9.0) > 0.3) & (P[:, 1] > hy + skh * 0.25))[:, None], c2[None, :], coat[None, :])
+        earc, muzc = tuple(c2), hx(b.get("muzzle_col", "f6ead8"))
+        legc0 = lambda P: np.where((np.sin(P[:, 1] * 9.0) > 0.2)[:, None], c2[None, :], coat[None, :])
+    elif pat == "stars":
+        # a night coat that turns from one colour to another toward the rump, sown with pale stars (dealt from its own number)
+        c3 = np.array(hx(b.get("coat3", b["coat"]))); rs = np.random.RandomState(b.get("seed", 1)); stars = []
+        for i in range(30):
+            ang = rs.uniform(0, 2 * math.pi); z = rs.uniform(-rz * 0.9, rz * 0.9); f = math.sqrt(max(0.05, 1 - (z / (rz * 1.05)) ** 2))
+            stars.append((np.array([rx * math.cos(ang) * f, yb + ry * math.sin(ang) * f, z]), rs.uniform(0.1, 0.17)))
+
+        def bodyc(P):
+            night = coat[None, :] + (c3 - coat)[None, :] * np.clip((rz * 0.9 - P[:, 2]) / (rz * 1.8), 0, 1)[:, None]
+            lit = np.zeros(len(P), bool)
+            for sc, sr in stars:
+                lit |= np.linalg.norm(P - sc, axis=1) < sr
+            return np.where(lit[:, None], c2[None, :], night)
+
+        headc, earc, muzc = tuple(coat), tuple(c3), hx(b.get("muzzle_col", "eadfd2"))
+        legc0 = lambda P: coat[None, :] + (c3 - coat)[None, :] * np.clip((rz * 0.9 - P[:, 2]) / (rz * 1.8), 0, 1)[:, None]
+    elif pat == "rainbow":
+        # the coat runs through a row of colours from nose to tail
+        hues = np.array([hx(h) for h in b["hues"]])
+
+        def bodyc(P):
+            t = np.clip((rz * 1.2 - P[:, 2]) / (rz * 2.3), 0, 0.999) * (len(hues) - 1); i = t.astype(int); f = (t - i)[:, None]
+            return hues[i] * (1 - f) + hues[np.minimum(i + 1, len(hues) - 1)] * f
+
+        headc, earc, muzc, legc0 = bodyc, tuple(hues[1]), hx(b.get("muzzle_col", "fff6e0")), bodyc
+    elif pat == "panda":
+        # white, with black ears, eye patches and legs, and a black band over the shoulders
+        bodyc = lambda P: np.where(((P[:, 2] > rz * 0.28) & (P[:, 2] < rz * 0.72))[:, None], c2[None, :], coat[None, :])
+        headc = lambda P: np.where(((np.abs(np.abs(P[:, 0]) - skw * 0.52) < skw * 0.3) & (np.abs(P[:, 1] - hy - skh * 0.08) < skh * 0.36) & (P[:, 2] > hz - skl * 0.1))[:, None],
+                                   c2[None, :], coat[None, :])
+        earc, muzc, legc0 = tuple(c2), tuple(coat), tuple(c2)
     else:
         if b.get("dark_front"):
             dk = coat * 0.66
@@ -100,6 +145,17 @@ def cow(b):
     s.append(C(t0, tm, 0.19, 0.14, tailc, k=0.12))
     s.append(C(tm, te, 0.14, 0.1, tailc, k=0.1))
     s.append(E(te + np.array([0, -0.22, 0]), (0.27, 0.46, 0.27), tuftc, k=0.07))
+    if b.get("fur") == "shaggy":
+        # a long coat: a fringe over the brow, locks down the cheeks, a ruff on the chest and a skirt of locks along the flanks
+        dk = tuple(coat * 0.8); lt = tuple(np.minimum(1, coat * 1.22))
+        for x in (-0.5, 0.0, 0.5):
+            s.append(E((x * skw, hy + skh * 0.5 - abs(x) * 0.1, hz + skl * 0.72), (skw * 0.34, skh * 0.62, skl * 0.34), lt if x == 0 else dk, head=True, rx=0.35, k=0.07))
+        s += both(E, (skw * 0.82, hy - skh * 0.35, hz + skl * 0.15), (0.24, 0.5, 0.32), dk, head=True, k=0.08)
+        s.append(E((0, yb - ry * 0.3, rz * 0.98), (rx * 0.72, ry * 0.85, 0.46), dk, k=0.12))
+        for i, z in enumerate(np.linspace(-rz * 0.8, rz * 0.8, 7)):
+            s += both(E, (rx * 0.9, yb - ry * 0.66, z), (0.3, 0.7, 0.26), dk if i % 2 else lt, rz=0.22, k=0.06)
+        for z in (lz, -lz - 0.03):
+            s += both(E, (lx, 0.5, z), (lr * 1.5, 0.34, lr * 1.5), lt, k=0.07)
     hard = []
     hl = {"none": 0.0, "nubs": 0.34, "short": 0.62, "up": 0.95, "long": 1.55}[b["horns"]]
     if hl > 0:

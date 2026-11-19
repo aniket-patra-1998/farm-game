@@ -10,6 +10,9 @@ from .families.sheep import SHEEP, sheep
 from .families.small import bee, rabbit, turtle
 
 
+from . import unique   # (adds its rows to the families' tables before they are read below)
+from .paint import repaint
+
 MADE = {"rabbit": (rabbit, 0.29), "turtle": (turtle, 0.34), "bee": (bee, 0.2),
         }
 
@@ -96,6 +99,22 @@ for _n, _b in HORSES.items():
         _y = young(_b, legs=0.9, body=0.7, muzzle=0.78, skull=1.08, tail=0.55, rel=0.62, mane=0.45)
         _y.update(seed=5)
         MADE[_n + " foal"] = ((lambda bb=_y: horse(bb)), _y["rel"])
+
+
+# unique coats: a row that asks for a painted pattern or tufts has them put on its finished shapes
+def _painted(fn, row):
+    def make():
+        shapes, hard, face = fn()
+        return repaint(shapes, row), hard, face
+    return make
+
+
+for _n, (_fn, _rel) in list(MADE.items()):
+    _row = (getattr(_fn, "__defaults__", None) or (None,))[0]
+    if isinstance(_row, dict) and (_row.get("paint") or _row.get("tufts")):
+        MADE[_n] = (_painted(_fn, _row), _rel)
+for _n, (_coat, _pale, _paint) in unique.RABBITS.items():
+    MADE[_n] = (_painted((lambda c=_coat, p=_pale: rabbit(c, p)), dict(coat=_coat, paint=_paint)), 0.29)
 
 
 # the game's own names for animals built under a longer name here
