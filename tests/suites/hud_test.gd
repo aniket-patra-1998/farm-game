@@ -1397,3 +1397,28 @@ func test_578_a_planting_vehicle_asks_for_its_seed_first() -> void:
 	_eq(grid.tool, "plant", "the Seeds menu itself still gives the Plant tool")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_579_the_showcase_clock_tries_every_weather() -> void:
+	# Owner, 19 Nov: a way to see rain, a storm and the rest on the showcase. A tap on the clock there tries the next
+	# weather, then the real one again; leaving the showcase leaves the tried weather behind.
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var seen: Array[String] = []
+	for k in Weather.ORDER.size() + 1:
+		hud.call("_sky_tapped")
+		seen.append(str(Game.weather()["state"]))
+	for want in ["rain", "storm", "snow", "fog"]:
+		_check(seen.has(want), "the showcase shows %s %s" % [want, str(seen)])
+	hud.call("_sky_tapped")
+	_eq(Game.weather_override, "", "then back to the real weather")
+	hud.call("_sky_tapped")
+	Game.open_own_farm()
+	_eq(Game.weather_override, "", "the tried weather stays in the showcase")
+	main.queue_free()
+	await get_tree().process_frame

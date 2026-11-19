@@ -142,8 +142,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_fit_safe_area)
 	top = HudTop.new(self)
 	top.build(root)
-	top.sky_tapped.connect(func() -> void:   # (the icons' words, on a tap)
-		show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])]))
+	top.sky_tapped.connect(_sky_tapped)
 	side = HudSide.new(self)
 	side.build(root)
 	goals = HudGoals.new(self)
@@ -249,6 +248,22 @@ func _moving_uid() -> int:
 	if grid == null or grid.placement == null:
 		return -1
 	return int(grid.placement.state.get("uid", -1))
+
+
+## The clock tapped: its words (the season and the sky); on the showcase farm it tries the next weather instead, so
+## every weather can be seen there (owner, 19 Nov), then back to the real one.
+func _sky_tapped() -> void:
+	if Game.in_showcase():
+		var states: Array = Weather.ORDER + ["fog"]
+		var at := states.find(Game.weather_override)
+		if at + 1 < states.size():
+			Game.weather_override = str(states[at + 1])
+			show_message(tr("SHOWCASE_WEATHER") % tr(str(Weather.NAMES[Game.weather_override])))
+		else:
+			Game.weather_override = ""
+			show_message(tr("SHOWCASE_WEATHER_REAL"))
+		return
+	show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])])
 
 
 ## Opens the seed list (the Plant tool).
