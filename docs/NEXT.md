@@ -990,6 +990,20 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   ShowcaseFarm from game.gd), HudGoals' goal sheet ~0.4k. What is left (~31.8k) is mostly the 3D farm the first
   screen draws, so "well under half" will not come from slicing alone: the phone run says whether compiling is
   still the big part.
+- Run 15 (19 Nov 10:51 - 11:40 IST). No new phone report (quota frees at 13:30 IST; last run 03:02 UTC). Godot
+  fetched again to /home/claude/godot/godot. Slice 4 of the start (perf/debug-later): the start marks its steps
+  through StartMarks (autoload/start_clock.gd's class: `mark`, `marks`, `benchmark_wanted`), main loads
+  LoadBenchmark by path only in the benchmark build, and Game opens the showcase (ShowcaseFarm) and the load trace
+  (LoadTrace, debug builds only: Game.trace_begin / Game.trace) by path. Lines compiled before the first screen
+  31,802 -> 31,403 (tools/start_lines.py); headless scripts - engine, 7 alternating pairs: median 1,425 -> 1,414 ms
+  (within noise; ~400 lines is ~15 ms here). Test 547. Nothing seen changes (no drawing code touched).
+- Next run: 1) after 13:30 IST, once the "Latest phone build" has this commit or later, start one phone run (A05s)
+  and log start.scripts - start.engine against run 13's 3.7 s, and whether the benchmark reached "done"; then the
+  A13 if quota allows. 2) ItemIcons (~0.9k lines, `--drop=ItemIcons`): named by ui_icon, ui_kit, hud, game,
+  card_list, level_up_popup and the panels; it pulls GoodsModel, UiModels, AssetRegistry in from the UI side.
+  The top bar's icons use it at start, so a slice means a small by-path accessor (e.g. UiKit.icons()) used by
+  those few start-up scripts. 3) Past that, the ~31k left is mostly the 3D farm itself: let the phone say whether
+  compiling is still the big part before slicing further.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens

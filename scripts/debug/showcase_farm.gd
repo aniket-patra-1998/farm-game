@@ -23,7 +23,7 @@ extends RefCounted
 ##
 ## It's built in its own save (SAVE_PATH), so the player's own farm is never touched.
 
-const SAVE_PATH := "user://showcase.json"
+const SAVE_PATH := GameState.SHOWCASE_SAVE_PATH
 const CROP_ROWS := 3             # rows of plots across the bottom of the farm
 const LANE := 1                  # rows left empty between zones
 const LEVEL_PAST_UNLOCKS := 5    # the player's level, past the highest unlock level

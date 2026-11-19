@@ -2389,6 +2389,21 @@ func test_526_the_phone_report_says_where_the_start_went() -> void:
 	_check(last <= Time.get_ticks_msec(), "and none is in the future")
 
 
+func test_547_the_debug_tools_compile_after_the_first_screen() -> void:
+	# The start marks its steps through StartMarks (the first autoload) and opens the showcase and the load trace
+	# by path, so nothing on the way to the first screen names the debug tools (docs/PERF_RUN.md, the start).
+	for path: String in ["res://autoload/game.gd", "res://scripts/main.gd", "res://scripts/world3d/objects_3d.gd",
+			"res://autoload/start_clock.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		for tool in ["LoadBenchmark", "LoadTrace", "ShowcaseFarm"]:
+			_check(not RegEx.create_from_string("\\b%s\\b" % tool).search(code), "%s does not name %s" % [path, tool])
+	_eq(load(GameState.SHOWCASE_SCRIPT).get("SAVE_PATH"), GameState.SHOWCASE_SAVE_PATH, "the showcase's save is Game's")
+	_eq(load(StartMarks.BENCHMARK).get("FEATURE"), StartMarks.BENCHMARK_FEATURE,
+		"the benchmark is the one the start opens")
+	_check(load(GameState.LOAD_TRACE_SCRIPT).has_method("mark"), "the trace is where Game opens it")
+	_eq(LoadBenchmark.start_marks(), StartMarks.marks(), "the report reads the start's own marks")
+
+
 func test_511_every_phone_build_ships_its_shaders_compiled() -> void:
 	# A phone compiles a shader the first time something draws with it, a stall it feels (docs/PERF_RUN.md, win 1):
 	# every Android export bakes them ahead (apk.yml exports under a Vulkan so the baker runs).

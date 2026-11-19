@@ -13,37 +13,28 @@ extends Node
 signal finished(report: Dictionary)
 
 const FILE := "user://load_benchmark.json"
-const FEATURE := "benchmark"     # not-ui (an export feature tag)
+const FEATURE := StartMarks.BENCHMARK_FEATURE   # (an export feature tag)
 const MARK := "BENCH "           # not-ui (what starts the report's log line; phone_bench.yml reads it)
 const LONG_FRAME_MS := 100.0     # a frame this long is a stall (a material drawn the first time, a load)
 const PLAY_SECONDS := 5.0        # playing at the playing zoom, measured
 const PLAY_ZOOM := 1.6           # the camera zoom a player farms at
 const MOST_WAIT_SECONDS := 90.0  # never wait longer than this for one phase
-const ENGINE_MARK := &"start_clock_ms"   # the Engine meta autoload/start_clock.gd sets as the engine is up
-
-
-## When the start's steps were done, in ms since the engine began (start_mark), for the report's "start": the
-## engine up (the first autoload, StartClock), the scripts compiled (Game made), its systems made, the other
-## autoloads made, the catalog, the data and the save loaded (Game ready), the main scene's turn (main made, its
-## 3D world, its HUD, main built). Where a phone's startup_ms goes.
-static var _start_marks := {}
 
 var _main: Node
 
 
-## Notes that the start reached `step` now, the first time only (a farm made again later is not the start; a
-## few calls, cheap, every build).
+## Notes that the start reached `step` now (StartMarks.mark, which the start-up scripts call: they never name
+## this script, so it is not compiled before the first screen).
 static func start_mark(step: String) -> void:
-	if not _start_marks.has(step):
-		_start_marks[step] = Time.get_ticks_msec()
+	StartMarks.mark(step)
 
 
-## The start's steps so far (start_mark).
+## The start's steps so far, in ms since the engine began, for the report's "start": the engine up (the first
+## autoload, StartClock), the scripts compiled (Game made), its systems made, the other autoloads made, the
+## catalog, the data and the save loaded (Game ready), the main scene's turn (main made, its 3D world, its HUD,
+## main built). Where a phone's startup_ms goes.
 static func start_marks() -> Dictionary:
-	var marks := _start_marks.duplicate()
-	if Engine.has_meta(ENGINE_MARK):
-		marks["engine"] = int(Engine.get_meta(ENGINE_MARK))
-	return marks
+	return StartMarks.marks()
 
 
 ## Whether this build runs the benchmark by itself on start (the benchmark APK).

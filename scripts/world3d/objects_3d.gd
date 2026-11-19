@@ -324,7 +324,7 @@ func sync_timed() -> void:
 			_views.erase(uid)
 	_mark_ready()
 	if built > 0:
-		LoadTrace.mark("objects: built %d in %d ms, %d to go" % [built, Time.get_ticks_msec() - began, left])  # not-ui
+		Game.trace("objects: built %d in %d ms, %d to go" % [built, Time.get_ticks_msec() - began, left])  # not-ui
 	_left = left
 	if left > 0:
 		_full = _full or not light

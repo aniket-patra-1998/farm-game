@@ -45,7 +45,7 @@ var _since_daylight := 1.0   # (starts due, so the first frame is lit)
 
 
 func _ready() -> void:
-	LoadBenchmark.start_mark("main_made")   # not-ui (the main scene loaded)
+	StartMarks.mark("main_made")   # not-ui (the main scene loaded)
 	PerfReadout.show_in(get_tree(), PerfReadout.wanted())   # debug builds, when switched on in Settings
 	Display.apply()   # full screen if chosen (a computer opens maximised: project.godot's window mode)
 	sky = SkyLayer.new()
@@ -93,11 +93,11 @@ func _ready() -> void:
 	camera.make_current()
 	if Farm3D.enabled():
 		_use_3d()
-	LoadBenchmark.start_mark("world")   # not-ui (the farm's layers and its 3D world made)
+	StartMarks.mark("world")   # not-ui (the farm's layers and its 3D world made)
 
 	hud = FarmHud.new()
 	add_child(hud)
-	LoadBenchmark.start_mark("hud")   # not-ui (the HUD made)
+	StartMarks.mark("hud")   # not-ui (the HUD made)
 
 	var fx := FxLayer.new()
 	fx.hud = hud
@@ -141,12 +141,12 @@ func _ready() -> void:
 	AutoQuality.start_in(self)   # keeps the device smooth: steps down when frames stay slow (until the player chooses)
 	# The farm is built; its first frames, while the renderer prepares every material, stay under a cover (only
 	# when the game itself is running: the screenshot and probe tools load this scene inside their own).
-	LoadBenchmark.start_mark("main_built")   # not-ui (the farm laid out, before its first frame)
+	StartMarks.mark("main_built")   # not-ui (the farm laid out, before its first frame)
 	if get_tree().current_scene == self:
 		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
 		Game.farm_opened.connect(_on_farm_opened)
-		if LoadBenchmark.wanted():
-			LoadBenchmark.start(self)   # (the benchmark build measures loading on the phone by itself, then quits)
+		if StartMarks.benchmark_wanted():
+			load(StartMarks.BENCHMARK).start(self)   # (the benchmark build measures loading on the phone by itself, then quits)
 
 
 ## Another farm laid out in place of this one (the showcase, or back to your own): it is covered while it is

@@ -62,6 +62,10 @@ const HELPERS := {
 	"bloom": {"field": "gardeners", "name": "GARDENERS", "done": "COLLECTED_BLOOMS_FOR_COINS"},
 }
 const SAVE_PATH := "user://save.json"
+const SHOWCASE_SAVE_PATH := "user://showcase.json"   # the showcase farm's own save (ShowcaseFarm)
+## The debug tools, loaded by path when used, so the start never compiles them (docs/PERF_RUN.md, the start).
+const SHOWCASE_SCRIPT := "res://scripts/debug/showcase_farm.gd"
+const LOAD_TRACE_SCRIPT := "res://scripts/debug/load_trace.gd"
 const SAVE_DELAY_MSEC := 1500    # changes are written together, at most this often (a save is the whole farm)
 const BACKUP_SUFFIX := ".bak"     # the save before the last one: used if the newest is unreadable
 const TEMP_SUFFIX := ".tmp"
@@ -186,10 +190,11 @@ var _weather_for := "?"
 var _holding := 0          # hold_updates depth
 var _held_update := false  # an objects_updated came while held
 var _held_uids := {}       # ..or only these things changed in place while held
+var _load_trace: Script = null   # LoadTrace, once a trace was begun (trace_begin)
 
 
 func _init() -> void:
-	LoadBenchmark.start_mark("scripts")   # not-ui (every script compiled: the start's first measure)
+	StartMarks.mark("scripts")   # not-ui (every script compiled: the start's first measure)
 	drops = HarvestDrops.new(self)
 	collectibles = CollectiblesSystem.new(self)
 	shed = GardenShedSystem.new(self)
@@ -228,20 +233,20 @@ func _init() -> void:
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
 		social, collecting, shop, helpers, vip, rust, rolls, goals]
-	LoadBenchmark.start_mark("made")   # not-ui (the systems made)
+	StartMarks.mark("made")   # not-ui (the systems made)
 
 
 func _ready() -> void:
-	LoadBenchmark.start_mark("ready")   # not-ui (the other autoloads made: Sound, Feedback)
+	StartMarks.mark("ready")   # not-ui (the other autoloads made: Sound, Feedback)
 	rng.randomize()
 	if not OS.has_feature("mobile"):
 		get_tree().set_auto_accept_quit(false)   # (closing is ours: _close, so the window goes before the teardown)
 	_load_crops()
 	_load_items()
-	LoadBenchmark.start_mark("catalog")   # not-ui (crops and items read)
+	StartMarks.mark("catalog")   # not-ui (crops and items read)
 	for system in systems:
 		system.load_data()
-	LoadBenchmark.start_mark("data")   # not-ui (every system's data read)
+	StartMarks.mark("data")   # not-ui (every system's data read)
 	if not saving_enabled or not load_game():
 		_new_game()
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has(SHOWCASE_ARG):
@@ -257,7 +262,7 @@ func _ready() -> void:
 	stray_timer.timeout.connect(strays.check_strays)
 	stray_timer.timeout.connect(daily.check_daily_gift)
 	add_child(stray_timer)
-	LoadBenchmark.start_mark("game")   # not-ui (data and the save loaded)
+	StartMarks.mark("game")   # not-ui (data and the save loaded)
 
 
 ## What happened while the player was away, said once as the farm opens: as a card of rows that each go to their
@@ -1410,14 +1415,14 @@ func load_game() -> bool:
 ## The player's own farm is saved first and never touched; open_own_farm brings it back. Returns what
 ## didn't fit (nothing, normally).
 func open_showcase() -> Array[String]:
-	LoadTrace.begin("showcase", get_tree())
+	trace_begin("showcase")
 	save_game()
-	LoadTrace.mark("own farm saved")  # not-ui
-	save_path = ShowcaseFarm.SAVE_PATH
-	var left_out := ShowcaseFarm.build(self)
-	LoadTrace.mark("showcase laid out: %d objects" % objects.size())  # not-ui
+	trace("own farm saved")  # not-ui
+	save_path = SHOWCASE_SAVE_PATH
+	var left_out: Array[String] = load(SHOWCASE_SCRIPT).build(self)
+	trace("showcase laid out: %d objects" % objects.size())  # not-ui
 	save_game()
-	LoadTrace.mark("showcase saved")  # not-ui
+	trace("showcase saved")  # not-ui
 	message.emit(tr("SHOWCASE_OPENED"))
 	farm_opened.emit()
 	return left_out
@@ -1425,18 +1430,32 @@ func open_showcase() -> Array[String]:
 
 ## Back from the showcase to the player's own farm, as it was left.
 func open_own_farm() -> void:
-	LoadTrace.begin("own farm", get_tree())  # not-ui
+	trace_begin("own farm")  # not-ui
 	save_game()
 	save_path = SAVE_PATH
 	if not saving_enabled or not load_game():
 		_new_game()
 	rebuild_occupancy()
-	ShowcaseFarm.announce(self)
+	load(SHOWCASE_SCRIPT).announce(self)
 	farm_opened.emit()
 
 
+## Debug builds: a timed trace of opening a farm begins (LoadTrace, loaded only then).
+func trace_begin(what: String) -> void:
+	if not OS.is_debug_build():
+		return
+	_load_trace = load(LOAD_TRACE_SCRIPT)
+	_load_trace.begin(what, get_tree())
+
+
+## One line in the trace of opening a farm, if one was begun (LoadTrace.mark).
+func trace(what: String) -> void:
+	if _load_trace != null:
+		_load_trace.mark(what)
+
+
 func in_showcase() -> bool:
-	return save_path == ShowcaseFarm.SAVE_PATH
+	return save_path == SHOWCASE_SAVE_PATH
 
 
 ## Lays every object back on the farm; one that no longer fits where it stood (its footprint changed, or the
