@@ -573,6 +573,19 @@ func test_533_damaged_pity_counters_start_again_from_zero() -> void:
 	g.free()
 
 
+## Who lives inside a placed or stored thing loads as counts: a damaged "inside" (a word, a list, a count of the
+## wrong kind) made every count of the farm (BuildingSystem.owned) fail with a script error.
+func test_534_a_damaged_inside_loads_as_counts() -> void:
+	var data := {"objects": [
+		{"id": "chicken_coop", "uid": 1, "row": 0, "col": 0, "t": 0, "inside": "x"},
+		{"id": "chicken_coop", "uid": 2, "row": 4, "col": 0, "t": 0, "inside": {"chicken": 3, "cow": [1], "duck": -2}}],
+		"stored": [{"id": "chicken_coop", "uid": 3, "t": 0, "inside": [1]}]}
+	SaveCheck.clean(data, {"chicken_coop": {}}, GameState.MAX_SIZE, {"state": "grass"})
+	_eq(data["objects"][0]["inside"], {}, "a word inside is no one")
+	_eq(data["objects"][1]["inside"], {"chicken": 3}, "sound counts kept, damaged ones dropped")
+	_eq(data["stored"][0]["inside"], {}, "a stored thing's too")
+
+
 func _write(path: String, data: Dictionary) -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(data))

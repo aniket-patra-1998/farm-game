@@ -44,6 +44,7 @@ static func clean(data: Dictionary, known_items: Dictionary, max_size: int, empt
 			fixed += 1
 			continue
 		o["uid"] = int(uid)
+		_counts_inside(o)
 		seen[o["uid"]] = true
 		top = maxi(top, int(uid))
 		stored.append(o)
@@ -100,7 +101,15 @@ static func _object(o: Variant, known_items: Dictionary, max_size: int) -> Dicti
 				obj.erase(field)
 			else:
 				obj[field] = int(v)
+	_counts_inside(obj)
 	return obj
+
+
+## Who lives inside a home, Garage or hive, as counts by item id: a damaged entry (or the whole map of the wrong
+## kind) is dropped, since every count of the farm reads it (it made BuildingSystem.owned fail on each call).
+static func _counts_inside(obj: Dictionary) -> void:
+	if obj.has("inside"):
+		obj["inside"] = GameSystem.int_map(obj["inside"])
 
 
 ## A number as a whole number (JSON gives floats), or null for anything else: NaN, infinity and a number too
