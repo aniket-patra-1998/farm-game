@@ -163,7 +163,7 @@ static func _fence(root: Node3D, col: Color, style: String, kind: int, reach: Ar
 static func _hedge(root: Node3D, kind: int, reach: Array[float], rng: RandomNumberGenerator) -> void:
 	# A clipped hedge: a squared wall of leaf with a lighter, slightly domed top, small tufts breaking its faces
 	# and edges so it is never a plain box, darker at the foot, with the odd flower.
-	var leaf := DecorModel.LEAF
+	var leaf := DecorPaint.LEAF
 	var body := ModelKit.paint(leaf.darkened(0.28))
 	var top := ModelKit.paint(leaf.darkened(0.08))
 	var half := HEDGE_HALF * (1.12 if kind >= LinkShape.Kind.TEE else 1.0)

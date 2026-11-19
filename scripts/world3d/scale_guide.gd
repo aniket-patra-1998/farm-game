@@ -97,7 +97,7 @@ static func model_of(id: String) -> Node3D:
 		"bloom":
 			return BloomModel.build(it, {"id": id, "uid": 7, "t": Game.now() - int(it.get("cycle_seconds", 86400)) - 1})
 		"young":
-			return DecorModel.build_young(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
+			return YoungModel.build(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
 		"building", "barn", "crafting":
 			return Objects3D.building_look(id, Game.max_level(id))
 	return null

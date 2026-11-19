@@ -11,6 +11,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const DECOR_MODEL := "res://scripts/world3d/decor_model.gd"
 const NEVER := 1.0e9         # a time that never comes (a bloom that does not wilt): seconds on the farm's clock
 const WILT_SHARE := 0.4      # the last part of the time a bloom may stand ready over which it wilts
 const CLOCKED := &"clocked"  # on a part: surface -> its own material that ripens by the clock (`_clocked`)
@@ -886,9 +887,15 @@ static func decor_key(id: String, look: int, shows: String) -> String:
 	return Instancer.key_of(["decor", id, look, shows, Game.mastery.colour_of(shows)])
 
 
+## The decorations' builders (DecorModel), loaded by path when a look must be built: a look ModelStore keeps never
+## needs them, so the start does not compile them (docs/PERF_RUN.md, the start).
+static func decor_model() -> GDScript:
+	return load(DECOR_MODEL)
+
+
 static func _decor_built(id: String, look: int, shows: String) -> Node3D:
 	var fp := Game.footprint(id)
-	var built := DecorModel.build(Game.item_data(id), fp, {"uid": look, "crop": shows})
+	var built: Node3D = decor_model().build(Game.item_data(id), fp, {"uid": look, "crop": shows})
 	if not id.ends_with("_tree"):   # (a tree's crown overhangs by design)
 		built = SpaceFit.fit_model(built, fp)
 	return built
@@ -995,7 +1002,7 @@ func _build(o: Dictionary) -> Node3D:
 						node.set_meta(BOX, batch["box"])
 						node.set_meta(PIECES, batch["pieces"])
 			"young":
-				node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
+				node = SpaceFit.fit_model(YoungModel.build(it, o, Game.nurture.growth(o)), fp)
 			"bloom":
 				# One of a few looks (Instancer), as for trees: from its file when it stands on its own.
 				# (one look whether in bud, in bloom or withered: its shader shows its life by the clock, `ripen`)

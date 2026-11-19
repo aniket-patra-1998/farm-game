@@ -2528,3 +2528,23 @@ func test_581_the_crop_builders_compile_when_a_look_is_built() -> void:
 	var form := str(CropFormSpec.forms()[0])
 	_check(CropModels.mesh(form, "ripe", false).get_surface_count() > 0, "a crop is still built through the path")
 	_check(CropModels.mesh(form, CropModels.HARVEST, false).get_surface_count() > 0, "and its picture")
+
+
+func test_582_the_decoration_builders_compile_when_a_look_is_built() -> void:
+	# The farm draws decorations from looks ModelStore keeps; the builders (DecorModel, 0.9k lines) load by path
+	# only when a look has to be built, and a mystery young (built fresh as it grows) has its own small builder,
+	# so the start does not compile them (docs/PERF_RUN.md, the start).
+	for path: String in ["res://scripts/world3d/objects_3d.gd", "res://scripts/world3d/link_models.gd",
+			"res://scripts/world3d/scale_guide.gd", "res://scripts/world3d/young_model.gd",
+			"res://scripts/world3d/decor_paint.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bDecorModel\\b").search(code), "%s does not name the builders" % path)
+	_eq(Objects3D.decor_model().resource_path, Objects3D.DECOR_MODEL, "the builders come from their own file")
+	_eq([DecorModel.WOOD, DecorModel.WHITE, DecorModel.LEAF], [DecorPaint.WOOD, DecorPaint.WHITE, DecorPaint.LEAF],
+		"one set of colours, asked either way")
+	var built: Node3D = Objects3D.decor_model().build(Game.item_data("hay_bale"), Game.footprint("hay_bale"), {"uid": 0})
+	_check(built != null and built.get_child_count() > 0, "a decoration is still built through the path")
+	built.free()
+	var young := YoungModel.build(Game.item_data("mystery_seedling"), {"id": "mystery_seedling", "uid": 7}, 0.5)
+	_check(young != null and young.get_child_count() > 0, "and a young")
+	young.free()

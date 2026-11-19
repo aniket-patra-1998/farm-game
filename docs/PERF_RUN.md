@@ -157,6 +157,10 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   lines before the first screen; headless, 16 alternating runs each: scripts - engine median 2,102 -> 2,052 ms, hud
   mark 3,070 -> 2,956 ms (this container ran slower than run 22's). The 105 exported plant files carry the same
   meshes (every surface's arrays compared).
+- 19 Nov 19:30 (perf run 23): slice 9 of the start: the decorations' builders (DecorModel) load by path
+  (Objects3D.decor_model()) only when a look must be built (looks are kept by ModelStore); a mystery young, built
+  fresh as it grows, has its own small builder (YoungModel) and the decorations' colours their own place
+  (DecorPaint). 27,782 -> 26,947 lines before the first screen.
 
 ## Owner approvals (19 Nov 15:21): frame rate on slow phones
 Measured on the Galaxy A05s: playing the showcase at zoom 1.6 runs ~95 ms a frame on low (386 draws, 218k

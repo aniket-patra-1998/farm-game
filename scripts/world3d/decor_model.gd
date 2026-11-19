@@ -2,15 +2,16 @@ class_name DecorModel
 extends RefCounted
 ## Every decoration in 3D, by id: paths, fences, hedges and walls that join up with their neighbours'
 ## lines, hay, a scarecrow, a well, a fountain, a gazebo, gnomes, flamingos... The farmhouse and log cabin
-## are buildings (BuildingModel); the countryside trees share TreeModel and the pine. The node's origin is
-## the footprint's back corner; `o` is the placed object (a mastery sign's crop, a bunch's flower).
+## are buildings (BuildingModel); the countryside trees share TreeModel and the pine. The farm loads this by
+## path (Objects3D.decor_model()) only when a look must be built, which a look kept by ModelStore never needs.
+## The node's origin is the footprint's back corner; `o` is the placed object (a mastery sign's crop, a bunch's flower).
 
-const WOOD := Color("#a8743f")
-const DARK_WOOD := Color("#6e4a2a")
-const STONE := Color("#9aa4ad")
-const WHITE := Color("#f4efe4")
-const HAY := Color("#e3c46a")
-const LEAF := Color("#3c8a2e")
+const WOOD := DecorPaint.WOOD
+const DARK_WOOD := DecorPaint.DARK_WOOD
+const STONE := DecorPaint.STONE
+const WHITE := DecorPaint.WHITE
+const HAY := DecorPaint.HAY
+const LEAF := DecorPaint.LEAF
 ## Every decoration with a model here (tests check the catalog's decorations against it).
 const IDS := ["farmhouse", "log_cabin", "dirt_path", "brick_path", "stone_path", "wooden_fence", "white_picket_fence",
 	"tall_wooden_fence", "wooden_gate", "hedge", "stone_wall", "hay_bale", "haystack", "scarecrow", "water_trough",
@@ -997,28 +998,6 @@ static func _small_sign(root: Node3D, id: String, c: Vector3, col: Color, o: Dic
 				_mastery_sign(root, c, accent)
 
 
-## A mystery young on the farm: a seedling in a mound of soil (taller and leafier with each can), or a
-## covered wicker basket (a baby, stirring under its blanket) with a tag showing how far it has grown.
+## A mystery young on the farm (YoungModel.build, kept here for the tools).
 static func build_young(it: Dictionary, o: Dictionary, growth: float) -> Node3D:
-	var root := Node3D.new()
-	var c := Vector3(0.5, 0, 0.5)
-	if str(it.get("grows", "")) == "tree":
-		ModelKit.ball(root, c, 0.2, ModelKit.paint(Color("#6b4a2b")), Vector3(1, 0.35, 1))
-		var h := lerpf(0.12, 0.42, growth)
-		ModelKit.cylinder(root, c + Vector3(0, 0.05, 0), 0.012, h, ModelKit.paint(Color("#5d7a2c")), 0.008, 6)
-		var leaf := ModelKit.paint(Color.html(str(it.get("color", "#6aa84f"))))
-		for k in 2 + int(growth * 4.0):
-			var a := TAU * k / 5.0 + 0.4
-			var y := 0.06 + h * (0.45 + 0.5 * float(k) / 6.0)
-			ModelKit.ball(root, c + Vector3(cos(a) * 0.05, y, sin(a) * 0.05), 0.045, leaf, Vector3(1.4, 0.35, 0.8))
-		ModelKit.ball(root, c + Vector3(0, 0.06 + h, 0), 0.04, leaf, Vector3(1, 1.2, 1))
-	else:
-		var wicker := ModelKit.surface(Color("#b8894f"), "boards", 0.2)
-		ModelKit.tub(root, c + Vector3(-0.2, 0, -0.14), c + Vector3(0.2, 0.16, 0.14), 0.025, wicker)
-		ModelKit.ball(root, c + Vector3(0, 0.15, 0), 1.0, ModelKit.paint(Color("#9fc5e8")), Vector3(0.18, 0.06, 0.12))
-		ModelKit.box(root, c + Vector3(-0.01, 0.16, -0.16), c + Vector3(0.01, 0.3, -0.14), ModelKit.paint(WOOD))
-		# A tag on a stick: a bar filling with the feed given.
-		ModelKit.box(root, c + Vector3(-0.07, 0.26, -0.155), c + Vector3(0.07, 0.31, -0.145), ModelKit.paint(WHITE))
-		ModelKit.box(root, c + Vector3(-0.065, 0.27, -0.16), c + Vector3(-0.065 + 0.13 * maxf(growth, 0.04), 0.3, -0.158),
-			ModelKit.paint(Color("#e2a43a")))
-	return ModelKit.bake(root)
+	return YoungModel.build(it, o, growth)
