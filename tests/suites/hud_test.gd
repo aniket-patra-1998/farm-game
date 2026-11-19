@@ -649,6 +649,52 @@ func test_561_a_round_of_collecting_ends_on_its_count_over_the_last_thing() -> v
 	Game.reset_game()
 
 
+## A frame finished: the view travels to the new building, closer, holds through its flourish and goes back to
+## where it was at the zoom it had; a finger on the view ends the visit there (Balance feel.reveal). Wow build.
+func test_580_a_finished_building_is_revealed_then_the_view_goes_back() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(3)
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	var camera: FarmCamera = main.get("camera")
+	var look: Dictionary = Balance.d("feel.reveal")
+	_check(Game.buy_and_place("beehive", 8, 8), "a Beehive frame")
+	var hive := Game.object_at(Game.index_of(8, 8))
+	for k in 30:
+		camera._process(0.1)
+	var home := camera.position
+	var zoom := camera.target_zoom
+	_all_materials(Game, 10)
+	Game.land.add_materials(int(hive["uid"]))
+	_check(not Game.under_construction(hive), "built")
+	_check(camera.is_visiting() and camera.is_going(), "the view sets off to it")
+	var fp := Game.footprint(hive["id"])
+	var g := grid.corners_of(8, 8, fp.x, fp.y)
+	var at := grid.to_global((g[0] + g[2]) / 2.0)
+	_check(camera.target_zoom >= zoom - 0.001, "never further out than it was")
+	for k in int(float(look["hold_seconds"]) * 10.0) - 2:
+		camera._process(0.1)
+	_check(camera.is_visiting(), "it holds there through the flourish")
+	_check(absf(camera.position.x - at.x) < 2.0, "over the new building (%s, %s)" % [camera.position, at])
+	for k in 40:
+		camera._process(0.1)
+	_check(not camera.is_visiting(), "then it goes back")
+	_check(camera.position.distance_to(home) < 2.0, "to where the view was")
+	_eq(snappedf(camera.target_zoom, 0.001), snappedf(zoom, 0.001), "at the zoom it had")
+	camera.visit(at, zoom * 1.5, 2.0)
+	camera.begin_drag()
+	camera.end_drag()
+	_check(not camera.is_visiting(), "a finger on the view ends a visit where it is")
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()
+
+
 ## The Next ready button goes to the nearest ready thing it has not shown yet, round and round, and the view
 ## travels there by itself until a finger takes it.
 func test_359_next_ready_goes_round_everything_ready() -> void:

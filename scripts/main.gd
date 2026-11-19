@@ -134,6 +134,8 @@ func _ready() -> void:
 		else:
 			hud.show_message(text))
 
+	Game.building_upgraded.connect(_reveal)
+
 	get_viewport().size_changed.connect(_on_resized)
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
@@ -234,6 +236,21 @@ func _travel_to(spot: Dictionary) -> void:
 	var z := clampf(maxf(camera.target_zoom, _base_zoom * READY_ZOOM), camera.min_zoom, camera.max_zoom)
 	var shift := (FarmHud.top_h() - FarmHud.bottom_h()) / 2.0
 	camera.go_to(grid.to_global(spot["at"]) - Vector2(0, shift / z), z)
+
+
+## A frame just finished (`level` 1: built): the view travels to it, close enough to see its swell, sparkles and
+## fireworks, holds there, then goes back to where it was (Balance feel.reveal; FarmCamera.visit). An upgrade,
+## or with a panel open, stays where it is.
+func _reveal(uid: int, level: int) -> void:
+	var look: Dictionary = Balance.d("feel.reveal")
+	var o := Game.object_by_uid(uid)
+	if level != 1 or o.is_empty() or Game.modal_open or float(look.get("hold_seconds", 0.0)) <= 0.0:
+		return
+	var fp := Game.footprint(o["id"])
+	var g := grid.corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
+	var z := clampf(maxf(camera.target_zoom, _base_zoom * float(look["zoom"])), camera.min_zoom, camera.max_zoom)
+	var shift := (FarmHud.top_h() - FarmHud.bottom_h()) / 2.0
+	camera.visit(grid.to_global((g[0] + g[2]) / 2.0) - Vector2(0, shift / z), z, float(look["hold_seconds"]))
 
 
 # ---------------------------------------------------------------- the idle farm

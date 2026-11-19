@@ -27,6 +27,7 @@ var _going := false          # on its way to `_goal` (go_to); any touch of the v
 var _goal := Vector2.ZERO
 var _going_left := 0.0
 var _dragging := false
+var _back := {}              # a visit's way home: {"at", "zoom", "left": seconds to hold} (visit); {} none
 var _last_pan_msec := 0
 
 
@@ -37,6 +38,7 @@ func snap(world_pos: Vector2, z: float) -> void:
 	position = world_pos
 	_velocity = Vector2.ZERO
 	_going = false
+	_back = {}
 
 
 ## Travels to a place on its own, easing in (the Next ready button), zooming in to at least `least_zoom` on the
@@ -51,12 +53,26 @@ func go_to(world_pos: Vector2, least_zoom := 0.0) -> void:
 		_focus = get_viewport_rect().size / 2.0   # (about the middle: zooming doesn't pull the journey aside)
 
 
+## Goes to a place to show it (go_to) and, after `hold` seconds there, back to where the view was and its zoom
+## (a finished building's reveal). A drag, a pinch or a snap ends the visit where it is: no way back then.
+func visit(world_pos: Vector2, least_zoom: float, hold: float) -> void:
+	var home := {"at": _goal if _going else position, "zoom": target_zoom, "left": hold}
+	go_to(world_pos, least_zoom)
+	_back = home
+
+
+## On a visit, not yet gone back (visit).
+func is_visiting() -> bool:
+	return not _back.is_empty()
+
+
 func is_going() -> bool:
 	return _going
 
 
 func begin_drag() -> void:
 	_going = false
+	_back = {}
 	_dragging = true
 	_velocity = Vector2.ZERO
 
@@ -101,7 +117,8 @@ func pan_by(screen_delta: Vector2) -> void:
 func zoom_by(factor: float, screen_pos: Vector2, instant := false) -> void:
 	target_zoom = clampf(target_zoom * factor, min_zoom, max_zoom)
 	_focus = screen_pos
-	_going = false   # (the player's own zoom ends a journey)
+	_going = false   # (the player's own zoom ends a journey, and a visit)
+	_back = {}
 	if instant:
 		_apply_zoom(target_zoom)
 
@@ -113,6 +130,14 @@ func to_world(screen_pos: Vector2) -> Vector2:
 
 
 func _process(delta: float) -> void:
+	if not _back.is_empty() and not _dragging:
+		_back["left"] = float(_back["left"]) - delta
+		if float(_back["left"]) <= 0.0:   # the visit is over: home again, at the zoom it had
+			var home := _back
+			_back = {}
+			go_to(home["at"])
+			target_zoom = clampf(float(home["zoom"]), min_zoom, max_zoom)
+			_focus = get_viewport_rect().size / 2.0
 	if absf(zoom.x - target_zoom) > 0.0001:
 		_apply_zoom(lerpf(zoom.x, target_zoom, 1.0 - exp(-ZOOM_EASE * delta)))
 	if _going and not _dragging:

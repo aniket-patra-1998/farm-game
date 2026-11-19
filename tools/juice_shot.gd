@@ -4,7 +4,8 @@ extends Node
 ## to a moment after the sweep's end (run with --fixed-fps 30, so a frame is 1/30 s however slow the render).
 ## --produce=<json> tries a variant of Balance feel.produce. --hour=<h> as look_shot (12.5 noon, 18.5 dusk);
 ## --crop=<id>; --plots=<n>. --collect: a round of collecting instead (up to --plots= of the farm's animals and
-## trees made ready, the farmer collecting from each; their own pictures fly).
+## trees made ready, the farmer collecting from each; their own pictures fly). --build=<id>: a frame of that
+## building (default beehive) is finished off to the side of the view, and the view's reveal is shown.
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --fixed-fps 30 --path . res://tools/juice_shot.tscn
 
@@ -18,9 +19,14 @@ func _ready() -> void:
 	var plots := 8
 	var every := 6
 	var collect := false
+	var build := ""
 	for a in OS.get_cmdline_user_args():
 		if a == "--collect":
 			collect = true
+		if a == "--build":
+			build = "beehive"
+		elif a.begins_with("--build="):
+			build = a.substr(8)
 		if a.begins_with("--out="):
 			out = a.substr(6)
 		elif a.begins_with("--hour="):
@@ -55,6 +61,9 @@ func _ready() -> void:
 	var cam: FarmCamera = main.get("camera")
 	if collect:
 		await _collect_round(grid, cam, plots, every, out)
+		return
+	if build != "":
+		await _build_reveal(grid, cam, build, every, out)
 		return
 	var row: Array[int] = []
 	for i in Game.plots.size():   # a row of free grass, side by side
@@ -120,4 +129,42 @@ func _collect_round(grid: FarmGrid, cam: FarmCamera, most: int, every: int, out:
 		shot += 1
 		quiet = quiet + every if Game.player.queue.is_empty() else 0
 	print("juice_shot: %d frames, a round of %d collects" % [shot, uids.size()])
+	get_tree().quit()
+
+
+## A frame of `id` placed on free grass and finished with the view elsewhere: the reveal, frames as for a sweep.
+func _build_reveal(grid: FarmGrid, cam: FarmCamera, id: String, every: int, out: String) -> void:
+	var fp := Game.footprint(id)
+	var spot := Vector2i(-1, -1)
+	for i in Game.plots.size():
+		var r := GameState.row_of(i)
+		var c := GameState.col_of(i)
+		if Game.on_farm(i) and Game.buildings.can_place(id, r, c, -1).ok() and r > 4 and c > 4:
+			spot = Vector2i(r, c)
+			break
+	if not Game.buy_and_place(id, spot.x, spot.y):
+		push_error("juice_shot: no room for a %s frame" % id)
+		get_tree().quit(1)
+		return
+	var b := Game.object_at(Game.index_of(spot.x, spot.y))
+	for k in 90:
+		await RenderingServer.frame_post_draw
+	var g := grid.corners_of(spot.x, spot.y, fp.x, fp.y)
+	var aside := grid.to_global((g[0] + g[2]) / 2.0) + Vector2(380, 160)
+	cam.snap(aside, cam.zoom.x * 1.6)   # (in closer, on something else)
+	for k in 20:
+		await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/before.png"))
+	for m in GameState.part_ids:
+		Game.parts[m] = 50
+	Game.land.add_materials(int(b["uid"]))
+	var shot := 0
+	var quiet := 0
+	while quiet < 30 and shot < 400:
+		for k in every:
+			await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/f%03d.png" % shot))
+		shot += 1
+		quiet = quiet + every if not cam.is_visiting() and not cam.is_going() else 0
+	print("juice_shot: %d frames, a %s finished at %s" % [shot, id, spot])
 	get_tree().quit()

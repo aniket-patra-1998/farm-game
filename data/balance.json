@@ -821,6 +821,10 @@
    "v": {"px": 120, "rise": 110, "pop_seconds": 0.22, "hang_seconds": 0.12, "arc": 120, "fly_seconds": 0.6, "land_scale": 0.45, "trail": true, "sparks": 18, "spark_seconds": 0.45, "spark_px": 22},
    "note": "a harvested crop's picture pops out of the plot (rising `rise` px over `pop_seconds`, shown `px` across), hangs `hang_seconds`, then arcs `arc` px high to the coin counter in `fly_seconds`, landing at `land_scale`; `trail` gives it `sparks` soft sparks living `spark_seconds`, up to `spark_px` across (only where Quality fx_trails allows) (scripts/fx/fx_layer.gd). Wow build"
   },
+  "reveal": {
+   "v": {"zoom": 2.0, "hold_seconds": 2.6},
+   "note": "a frame just finished (a building built): the view travels to it, zooming in to at least `zoom` times the farm's resting zoom, holds `hold_seconds` through its swell, sparkles and fireworks, then goes back to where it was; a touch of the view ends it there; hold 0 never (scripts/main.gd, FarmCamera.visit). Wow build"
+  },
   "combo_min": {
    "v": 5,
    "note": "a streak of the same work at least this long says its count once, bigger, over the last plot when the farmer has no more of that work queued (the sweep's end: x8); 0 never (scripts/farm_grid.gd). Wow build"

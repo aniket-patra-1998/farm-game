@@ -145,9 +145,12 @@ func _snapped(_at: Vector3, _fresh: bool) -> void:
 	Feedback.moment("snap")
 
 
-## A building was finished or upgraded: sparkles at its feet, a chime (a fanfare for a new building).
+## A building was finished or upgraded: sparkles at its feet, a chime (a fanfare for a new building, and a puff of
+## dust as its scaffold comes down).
 func _transformed(at: Vector3, grand: bool) -> void:
 	grid.world_fx.burst("sparkle", IsoProjection.grid_of(at))
+	if grand:
+		grid.world_fx.burst("dust", IsoProjection.grid_of(at))   # (its scaffold comes down)
 	Feedback.moment("level_up_soft" if grand else "collect_soft")
 
 
