@@ -1425,7 +1425,7 @@ func test_579_the_showcase_clock_tries_every_weather() -> void:
 
 ## Touch hearts (wow build, item 4's animal half): an animal tapped for itself sends up a small heart over its
 ## back; a thing that is not an animal sends none; the hearts are pooled, so a run of taps never makes more.
-func test_583_a_tapped_animal_sends_up_a_pooled_heart() -> void:
+func test_584_a_tapped_animal_sends_up_a_pooled_heart() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
 	var main := MAIN_SCENE.instantiate()
