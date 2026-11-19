@@ -361,7 +361,7 @@ func test_586_the_rare_coop_gives_the_eggs_it_asks_to_open() -> void:
 	_done(g)
 
 
-func test_595_a_stray_is_fed_from_the_barn_to_be_adopted() -> void:
+func test_597_a_stray_is_fed_from_the_barn_to_be_adopted() -> void:
 	# Owner, 19 Nov: "we decided to feed animal feed to the stray animal to adopt it" (FarmVille's adoption task):
 	# a few feedings of a feed its kind eats, one unit each from the Barn, then it is the farm's.
 	var g := _farm(true)
