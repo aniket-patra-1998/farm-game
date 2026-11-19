@@ -521,6 +521,11 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   first, or the push skips the precheck (8aba68d went up so; the precheck run on it after passed, 456 tests).
   Next: the Barn sheet's "x1" and "Place" under each name (a count tile elsewhere: check against the picked look),
   then the lawn's dark blotches at noon (taste: art-polish).
+- Art run 22 (19 Nov 08:05 IST, the loop's last): main only. 51e502f: stored things' and goods' cards show how
+  many in the picture's bottom corner, as count tiles do (CardFace face "count", ink on a paper outline): the Barn's
+  sheet and the Goods tab drop their "x1" line (picture, name, Place). Godot was missing in this container
+  (reinstalled 4.7.2 from the release zip). Open for a later look pass: the lawn's dark blotches at noon (taste:
+  art-polish, which still holds the rejected c0b4a66 on a stale base).
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
