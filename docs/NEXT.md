@@ -1278,6 +1278,22 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   decor_motion.gd and BuildingDress). Local main in this clone was an unrelated old history: reset to origin/main,
   the old tip kept as local branch old-local-main.
 
+- Run 8 (19 Nov 19:37-20:10 IST): no picks yet (opening glide, build reveal, touch answers). Item 4's animal half,
+  touch hearts, built on wow/touch-hearts (0348626; not merged: a new look, a sheet in the log under "Wow: waiting
+  for your look", calmer and richer, noon and dusk). A loud tap on an animal with nothing to collect or give it
+  (FarmGrid._act_on_object's last path) emits FarmGrid.petted; Farm3D._petted asks Objects3D.animal_top (over its
+  back where it stands now) and WorldFx.hearts draws there: pooled WorldFx.Heart nodes (HEART_POOL 6, a curve
+  polygon with a cream rim), tween-driven, hidden when done. Balance feel.heart (calmer, the branch default: count 1,
+  px 22; richer: count 3, px 26; rise 28 and drift 44 keep it clear of the name over the animal). Test 584
+  (hud_test). tools/juice_shot.tscn --pet [--heart=<json>] renders a tap (~45 s). Doubt: the fading heart's last
+  frames touch the end of the name line. Collect and feed keep their own moments (no heart).
+- Next: the owner's picks (opening glide, build reveal, touch answers, touch hearts): rebase the picked branch on
+  main, precheck, fast-forward push. Test numbers: main now has 580-583, so build reveal's 580 and touch
+  answers' 582 take new numbers when they merge (touch hearts is 584). Then item 5, light and sky (cloud
+  shadows; warm windows at dusk: survey night_glow.gd; chimney smoke exists in decor_motion.gd and
+  BuildingDress). Item 6 waits for the owner's packs. Local main of this clone was an unrelated old history: kept
+  as local branch local-main-stale-1118.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
