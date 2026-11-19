@@ -201,6 +201,27 @@ static func rescale() -> void:
 	_scale = 0.0
 
 
+## The glow behind an icon of `kind` drawn `px` across (data/ui_theme.json "glow", the owner's pick C): blue-white
+## when it marks something new waiting (`fresh`), gold for money and rewards, none for every other icon and for
+## one drawn smaller than `least_px`. A clear colour means no glow.
+static func glow(kind: String, fresh: bool, px: float) -> Color:
+	_load()
+	var rules: Dictionary = _data.get("glow", {})
+	if px < float(rules.get("least_px", 0.0)):
+		return Color(0, 0, 0, 0)
+	if fresh:
+		return color("glow_new")
+	if (rules.get("gold", []) as Array).has(kind):
+		return color("glow_gold")
+	return Color(0, 0, 0, 0)
+
+
+## How wide the glow is against its icon.
+static func glow_spread() -> float:
+	_load()
+	return float((_data.get("glow", {}) as Dictionary).get("spread", 1.0))
+
+
 static func colors() -> Array:
 	_load()
 	return (_data.get("colors", {}) as Dictionary).keys()

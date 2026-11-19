@@ -113,11 +113,13 @@ func show_news() -> void:
 				fresh = true
 				break
 		(_news["MARKET"] as Label).get_parent().visible = fresh
+		_glow(buttons.get("MARKET"), fresh)
 	if _news.has("COLLECTIONS"):
 		var full := false
 		for coll in Game.collectibles.collections:
 			full = full or Game.collectibles.can_trade_in(coll)
 		(_news["COLLECTIONS"] as Label).get_parent().visible = full
+		_glow(buttons.get("COLLECTIONS"), full)
 
 
 ## How many things are ready, on the Next ready button (the button is away when nothing is). Not counted while
@@ -137,6 +139,14 @@ func show_inbox_count() -> void:
 	var n := Game.social.inbox.size()
 	_badge.text = str(n)
 	_badge.get_parent().visible = n > 0
+	_glow(buttons.get("INBOX"), n > 0)
+
+
+## A menu button's picture glows blue-white while something new waits behind it (the owner's pick C).
+static func _glow(button: Variant, waiting: bool) -> void:
+	var icon := UiKit.icon_of(button as Control) if button is Control else null
+	if icon != null:
+		icon.fresh = waiting
 
 
 ## The neighbours' button and faces open the one inbox (their mail and your farm's gifts).

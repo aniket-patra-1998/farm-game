@@ -433,6 +433,17 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 	return col
 
 
+## The picture on a button made by `tool_button` or `icon_button` (null when it has none).
+static func icon_of(button: Control) -> UiIcon:
+	for child in button.get_children():
+		if child is UiIcon:
+			return child
+		var inner := icon_of(child) if child is Control else null
+		if inner != null:
+			return inner
+	return null
+
+
 ## A small round count in the top right corner of `button` (things waiting). Returns its label; its parent
 ## (the round) is what to hide when the count is zero.
 static func count_badge(button: Control) -> Label:

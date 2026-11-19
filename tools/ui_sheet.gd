@@ -35,6 +35,15 @@ func _ready() -> void:
 	var mute := UiKit.icon_button("speaker")
 	(mute.get_meta("icon") as UiIcon).struck = true
 	row.add_child(mute)
+	var menu := HBoxContainer.new()   # the menu's pictures, plain and glowing for something new (the icon glow)
+	menu.position = Vector2(20, 200)
+	menu.add_theme_constant_override("separation", 10)
+	add_child(menu)
+	for entry: Array in [["market", false], ["market", true], ["inbox", false], ["inbox", true], ["ribbon", false]]:
+		var b := UiKit.tool_button(str(entry[0]), "", UiTheme.size("side_width"), UiTheme.size("side_height"), 0.0,
+			null, false)
+		UiKit.icon_of(b).fresh = bool(entry[1])
+		menu.add_child(b)
 	for k in 4:
 		await RenderingServer.frame_post_draw
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://ci_shots"))

@@ -75,6 +75,7 @@ func _draw() -> void:
 	# The star over the right end, with the level on it.
 	var c := star_centre()
 	var star_px := star_d * STAR_ART   # (the level's star: the vector icon, UiSvg)
+	UiIcon.draw_glow(self, c, star_px, UiTheme.glow("star", false, star_px))
 	var art := UiSvg.of("star", star_px)
 	if art != null:
 		draw_texture_rect(art, Rect2(c - Vector2.ONE * star_px / 2.0, Vector2.ONE * star_px), false)

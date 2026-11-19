@@ -25,6 +25,7 @@ const RENDER_RECHECK := 0.3   # seconds before looking again for a rendered pict
 ## Drawn icons that drew smaller than the set's one visual size (the vector icons are fitted by
 ## tools/make_ui_icons.py): the music note and the lock sat about 12% smaller than the speaker and eye beside them.
 const GROW := {"note": 1.12, "lock": 1.12}
+const GLOW_PX := 64   # the shared glow image's side (drawn scaled, filtered: soft at any size)
 
 @export var kind := "coin": set = _set_kind
 ## A muted icon (sound off, UI hidden) is drawn with a slash through it.
@@ -33,7 +34,11 @@ const GROW := {"note": 1.12, "lock": 1.12}
 @export var tint := Color(0, 0, 0, 0): set = _set_tint
 ## Drawn from its rendered 3D picture when it has one (UiModels); false keeps the drawn glyph (tools, tests).
 @export var rendered := true
+## It marks something new waiting (a letter in the inbox, new items in the Market): a soft blue-white glow behind
+## it. Money and rewards glow gold by their kind (UiTheme.glow).
+@export var fresh := false: set = _set_fresh
 
+static var _glow_tex: ImageTexture   # the one soft round image every icon's glow is drawn from
 var _s := 1.0   # the icon's size this draw
 var _c := Vector2.ZERO
 var _r := 1.0
@@ -87,6 +92,39 @@ func _set_struck(v: bool) -> void:
 func _set_tint(v: Color) -> void:
 	tint = v
 	queue_redraw()
+
+
+func _set_fresh(v: bool) -> void:
+	if fresh != v:
+		fresh = v
+		queue_redraw()
+
+
+## The shared glow: white at the middle fading softly to nothing at the rim (drawn tinted, never animated).
+static func glow_texture() -> ImageTexture:
+	if _glow_tex == null:
+		var img := Image.create(GLOW_PX, GLOW_PX, false, Image.FORMAT_RGBA8)
+		var r := GLOW_PX / 2.0
+		for y in GLOW_PX:
+			for x in GLOW_PX:
+				var t := clampf(1.0 - Vector2(x + 0.5 - r, y + 0.5 - r).length() / r, 0.0, 1.0)
+				img.set_pixel(x, y, Color(1, 1, 1, t * t * (3.0 - 2.0 * t)))   # (smoothstep: no edge)
+		_glow_tex = ImageTexture.create_from_image(img)
+	return _glow_tex
+
+
+## The soft still glow behind the icon, when its kind or `fresh` asks for one (UiTheme.glow).
+func _draw_glow() -> void:
+	draw_glow(self, _c, _s, UiTheme.glow(kind, fresh, _s))
+
+
+## Draws the shared glow on `on`, behind an icon `px` across centred at `at`, in `col` (clear: nothing). Anything
+## that draws a money or reward icon of its own (the level's star) draws its glow through here.
+static func draw_glow(on: CanvasItem, at: Vector2, px: float, col: Color) -> void:
+	if col.a <= 0.0:
+		return
+	var w := px * UiTheme.glow_spread()
+	on.draw_texture_rect(glow_texture(), Rect2(at - Vector2.ONE * w / 2.0, Vector2.ONE * w), false, col)
 
 
 # ---------------------------------------------------------------- the sticker style
@@ -159,6 +197,7 @@ func _draw() -> void:
 		return
 	_c = size / 2.0
 	_r = _s / 2.0 * 0.86 * GROW.get(kind, 1.0)   # (room for the outline and the shadow)
+	_draw_glow()
 	if _draw_svg() or _draw_rendered():
 		return
 	_painted()

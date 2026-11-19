@@ -61,6 +61,8 @@
     "tab_text_on": "#fbf6ea",
     "card_face": "#ffffff",
     "card_edge": "#e6dcc6",
+    "glow_gold": "#ffcf4ad9",
+    "glow_new": "#e2f1ffe6",
     "card_locked": "#d8cbb0",
   "count_tile": "#f3ead6",
   "badge": "#d9442f",
@@ -166,5 +168,6 @@
     "card_words": 74
   },
  "numbers": {"_doc": "UiTheme.number: in full below short_from, then short (4.8k, 125k, 1.2M), rounded down, one decimal below one_decimal_below of a unit", "short_from": 1000, "one_decimal_below": 100},
+ "glow": {"_doc": "The soft still glow drawn behind some icons (owner's pick C, 19 Nov; UiIcon._draw_glow): gold (colour glow_gold) behind money and rewards, the kinds in gold; blue-white (colour glow_new) behind something new waiting, an icon marked fresh (the inbox with letters, the Market with new items). One shared round image, never animated; spread is its width against the icon's; an icon drawn smaller than least_px (a price beside its words) goes without", "gold": ["coin", "gem", "star", "ribbon"], "spread": 1.8, "least_px": 20},
  "scale": {"_doc": "UiTheme.scale: a tool button takes short_share of the screen's shorter side, held between least and most, never under touch_mm on a phone", "short_share": 0.075, "touch_mm": 7.0, "least": 0.7, "most": 1.0}
 }

@@ -386,3 +386,27 @@ func test_550_a_panel_closes_after_its_motion_and_reopens_mid_close() -> void:
 	_check(not away.visible, "and closes at once")
 	away.free()
 	book.queue_free()
+
+
+## The icon glow (the owner's pick C, data/ui_theme.json "glow"): gold behind money and rewards, blue-white behind
+## something new waiting, nothing behind any other icon or one too small to carry it; one shared still image; the
+## menu's pictures glow while their dot or count shows.
+func test_552_money_glows_gold_and_news_glows_blue_white() -> void:
+	var big := 64.0
+	for kind: String in ["coin", "gem", "star", "ribbon"]:
+		_check(UiTheme.glow(kind, false, big) == UiTheme.color("glow_gold"), "%s glows gold" % kind)
+	for kind: String in ["gear", "market", "hoe", "eye"]:
+		_check(UiTheme.glow(kind, false, big).a == 0.0, "%s has no glow" % kind)
+	_check(UiTheme.glow("inbox", true, big) == UiTheme.color("glow_new"), "a letter waiting glows blue-white")
+	_check(UiTheme.glow("coin", true, big) == UiTheme.color("glow_new"), "news outranks money")
+	_check(UiTheme.glow("coin", false, 8.0).a == 0.0, "a coin beside a price is too small to glow")
+	_check(UiIcon.glow_texture() == UiIcon.glow_texture(), "every glow draws the one shared image")
+	var b := UiKit.tool_button("inbox", "INBOX", 64, 64, 0.0, null, false)
+	add_child(b)
+	var icon := UiKit.icon_of(b)
+	_check(icon != null and icon.kind == "inbox", "a tool button's picture is found")
+	HudSide._glow(b, true)
+	_check(icon.fresh, "a menu picture glows while something waits")
+	HudSide._glow(b, false)
+	_check(not icon.fresh, "and stops when nothing does")
+	b.queue_free()
