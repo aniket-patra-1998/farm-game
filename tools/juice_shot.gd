@@ -2,7 +2,8 @@ extends Node
 ## Harvest juice in motion (the wow build): a row of ripe plots on a fresh farm is harvested by the farmer, and
 ## a frame is written every --every=<frames> into --out=<dir> (default ci_shots/juice), from the first harvest
 ## to a moment after the sweep's end (run with --fixed-fps 30, so a frame is 1/30 s however slow the render).
-## --produce=<json> tries a variant of Balance feel.produce. --hour=<h> as look_shot (12.5 noon, 18.5 dusk); --crop=<id>; --plots=<n>.
+## --produce=<json> tries a variant of Balance feel.produce. --hour=<h> as look_shot (12.5 noon, 18.5 dusk);
+## --crop=<id>; --plots=<n>.
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --fixed-fps 30 --path . res://tools/juice_shot.tscn
 
