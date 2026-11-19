@@ -97,10 +97,10 @@ func building_specials(b: Dictionary) -> Array[String]:
 			var with_stallion := game.has_inside(b, "stallion")
 			if game.drops_enabled and with_stallion and game.rolls.roll("foal", Balance.f("specials.foal_chance")):
 				_welcome_baby(b, _pick_baby(b, "foal"))
-			if game.drops_enabled and game.rolls.roll("stable_helper", Balance.f("specials.stable_helper_chance")):
+			if game.drops_enabled and game.rolls.roll("stable_farmhand", Balance.f("specials.stable_helper_chance")):
 				game.farmhands += 1
 				out.append(tr("FARMHAND"))
-			if game.drops_enabled and game.rolls.roll("stable_helper", Balance.f("specials.stable_helper_chance")):
+			if game.drops_enabled and game.rolls.roll("stable_arborist", Balance.f("specials.stable_helper_chance")):
 				game.arborists += 1
 				out.append(tr("ARBORIST"))
 			if game.drops_enabled and with_stallion and \

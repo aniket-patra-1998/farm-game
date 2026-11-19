@@ -1,21 +1,37 @@
 {
-  "_doc": "Every chance the game's rules roll for a reward (scripts/systems/roll_system.gd, Game.rolls.roll(id, base)), in one place. vip: whether active VIP multiplies it (VipSystem.chance: by the boost, never over certain; docs/VIP.md). Turning VIP on or off for a roll is this flag, nothing else. A roll used in code and missing here, or listed here and used nowhere, fails tests/suites/rolls_test.gd. what: the roll, for people.",
+  "_doc": "Every chance the game's rules roll for a reward (scripts/systems/roll_system.gd, Game.rolls.roll(id, base)), in one place. vip: whether active VIP multiplies it (VipSystem.chance: by the boost, never over certain; docs/VIP.md). Turning VIP on or off for a roll is this flag, nothing else. A roll used in code and missing here, or listed here and used nowhere, fails tests/suites/rolls_test.gd. what: the roll, for people. cap: at most `most` of it come up a day or a week (per: day or week, from local midnight; owner 19 Nov: caps so no reward runs away on a big farm).",
   "rolls": {
     "calf": {
       "vip": true,
-      "what": "a calf from a Dairy Farm with a bull, on collect"
+      "what": "a calf from a Dairy Farm with a bull, on collect",
+      "cap": {
+        "per": "day",
+        "most": 1
+      }
     },
     "foal": {
       "vip": true,
-      "what": "a foal from a Horse Stable with a stallion, on collect"
+      "what": "a foal from a Horse Stable with a stallion, on collect",
+      "cap": {
+        "per": "day",
+        "most": 1
+      }
     },
     "lamb": {
       "vip": true,
-      "what": "a lamb from a Sheep Pen with a ram, on collect"
+      "what": "a lamb from a Sheep Pen with a ram, on collect",
+      "cap": {
+        "per": "day",
+        "most": 1
+      }
     },
     "piglet": {
       "vip": true,
-      "what": "a piglet from a Pig Pen with a boar, on collect"
+      "what": "a piglet from a Pig Pen with a boar, on collect",
+      "cap": {
+        "per": "day",
+        "most": 1
+      }
     },
     "fertilizer": {
       "vip": true,
@@ -23,15 +39,19 @@
     },
     "fertilize_all": {
       "vip": true,
-      "what": "a Fertilize All from a home, on collect"
-    },
-    "stable_helper": {
-      "vip": true,
-      "what": "a farmhand or arborist from the Horse Stable, on collect"
+      "what": "a Fertilize All from a home, on collect",
+      "cap": {
+        "per": "day",
+        "most": 1
+      }
     },
     "stable_xp": {
       "vip": true,
-      "what": "bonus XP from the Horse Stable, on collect"
+      "what": "bonus XP from the Horse Stable, on collect",
+      "cap": {
+        "per": "day",
+        "most": 1
+      }
     },
     "rare_sapling": {
       "vip": true,
@@ -67,7 +87,11 @@
     },
     "mystery_baby": {
       "vip": false,
-      "what": "a Mystery Baby from a home, on collect"
+      "what": "a Mystery Baby from a home, on collect",
+      "cap": {
+        "per": "day",
+        "most": 2
+      }
     },
     "bloom_food": {
       "vip": false,
@@ -87,7 +111,11 @@
     },
     "tractor_coins": {
       "vip": false,
-      "what": "coins a tractor turns up while working"
+      "what": "coins a tractor turns up while working",
+      "cap": {
+        "per": "day",
+        "most": 10
+      }
     },
     "bee": {
       "vip": false,
@@ -107,7 +135,11 @@
     },
     "daily_part": {
       "vip": false,
-      "what": "a building part in the daily gift"
+      "what": "a building part in the daily gift",
+      "cap": {
+        "per": "day",
+        "most": 5
+      }
     },
     "crop_feed": {
       "vip": false,
@@ -124,6 +156,22 @@
     "fuel_find": {
       "vip": false,
       "what": "fuel found while working the farm"
+    },
+    "stable_farmhand": {
+      "vip": true,
+      "what": "a farmhand from the Horse Stable, on collect",
+      "cap": {
+        "per": "week",
+        "most": 1
+      }
+    },
+    "stable_arborist": {
+      "vip": true,
+      "what": "an arborist from the Horse Stable, on collect",
+      "cap": {
+        "per": "week",
+        "most": 1
+      }
     }
   }
 }
