@@ -3,6 +3,8 @@ extends RefCounted
 ## The game's window on a computer: it opens maximised (project.godot's window mode, so it never shows small
 ## first; a phone is always full screen), or full screen when the player chose that in Settings (PlayerSettings).
 
+const ORIENTATION := DisplayServer.SCREEN_SENSOR_LANDSCAPE   # landscape, either way up
+
 const SECTION := "display"
 const KEY := "fullscreen"
 
@@ -31,6 +33,10 @@ static func mode() -> DisplayServer.WindowMode:
 static func apply() -> void:
 	if has_window() and DisplayServer.window_get_mode() != mode():
 		DisplayServer.window_set_mode(mode())
+	# A phone or tablet plays in landscape only, either way up (owner, 19 Nov): the manifest asks for it
+	# (project.godot's handheld orientation) and this holds it after the start, whatever the phone was doing.
+	if OS.has_feature("mobile") and DisplayServer.screen_get_orientation() != ORIENTATION:
+		DisplayServer.screen_set_orientation(ORIENTATION)
 
 
 ## How far in from each edge (left, top, right, bottom) the interface must stay to clear a phone's notch, camera

@@ -81,3 +81,5 @@ by default one phone a run: a Galaxy A05s, low-end, Adreno 610). From now on:
   cause, then fix it (the manifest's Vulkan feature not required, with the Compatibility renderer as the fallback on
   phones without it) and prove it by running on the A13. This is a top item: a phone that cannot install the game
   is worse than a slow one.
+- Settled (19 Nov, owner): the A10 and A13 run 32-bit Android; every Android export now ships 32-bit and 64-bit ARM
+  (test 535), so they install. A phone always plays in landscape (Display.ORIENTATION, held after the start).

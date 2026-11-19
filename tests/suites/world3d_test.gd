@@ -2391,13 +2391,40 @@ func test_526_the_phone_report_says_where_the_start_went() -> void:
 func test_511_every_phone_build_ships_its_shaders_compiled() -> void:
 	# A phone compiles a shader the first time something draws with it, a stall it feels (docs/PERF_RUN.md, win 1):
 	# every Android export bakes them ahead (apk.yml exports under a Vulkan so the baker runs).
+	var presets := _export_presets()
+	var android := _android_options(presets)
+	for section in android:
+		_check(presets.get_value(section, "shader_baker/enabled", false) == true, "%s bakes its shaders" % section)
+	_check(android.size() >= 2, "the Android presets are found (%d)" % android.size())
+
+
+## export_presets.cfg, read once per test.
+func _export_presets() -> ConfigFile:
 	var presets := ConfigFile.new()
 	_eq(presets.load("res://export_presets.cfg"), OK, "the export presets read")
-	var android := 0
+	return presets
+
+
+## The ".options" sections of the Android presets.
+func _android_options(presets: ConfigFile) -> Array[String]:
+	var found: Array[String] = []
 	for section in presets.get_sections():
 		var preset := (section as String).trim_suffix(".options")
-		if preset == section or presets.get_value(preset, "platform", "") != "Android":
-			continue
-		android += 1
-		_check(presets.get_value(section, "shader_baker/enabled", false) == true, "%s bakes its shaders" % section)
-	_check(android >= 2, "the Android presets are found (%d)" % android)
+		if preset != section and presets.get_value(preset, "platform", "") == "Android":
+			found.append(section)
+	return found
+
+
+func test_535_every_phone_installs_it_and_plays_in_landscape() -> void:
+	# Budget phones (a Galaxy A10, many A13s) run 32-bit Android: every Android export carries 32-bit and 64-bit
+	# ARM, or such a phone cannot install the game (owner, 19 Nov). And a phone always plays in landscape.
+	var presets := _export_presets()
+	var android := _android_options(presets)
+	for section in android:
+		for arch in ["armeabi-v7a", "arm64-v8a"]:
+			_check(presets.get_value(section, "architectures/" + arch, false) == true, "%s ships %s" % [section, arch])
+	_check(android.size() >= 2, "the Android presets are found (%d)" % android.size())
+	_eq(int(ProjectSettings.get_setting("display/window/handheld/orientation")), Display.ORIENTATION,
+		"the phone's manifest asks for landscape, either way up")
+	_check(Display.ORIENTATION in [DisplayServer.SCREEN_LANDSCAPE, DisplayServer.SCREEN_REVERSE_LANDSCAPE,
+		DisplayServer.SCREEN_SENSOR_LANDSCAPE], "and it is a landscape one")
