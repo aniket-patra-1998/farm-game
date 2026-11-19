@@ -315,3 +315,47 @@ func test_582_phone_notifications_are_few_true_and_never_at_night() -> void:
 	var late := day + 23 * 3600 - bias
 	_eq(PhoneNotices._out_of_quiet(late, bias), day + 86400 + int(float(quiet[1]) * 3600) - bias, "11 pm -> 8 am")
 	_done(g)
+
+
+func test_585_a_young_farm_is_helped_to_plant_once_a_day() -> void:
+	# Owner, 19 Nov ("a gentler start"): for its first week a farm short of seed money for a few plots is topped up
+	# once a day; the first day is the starting coins' and Welcome's, and a grown farm is never helped.
+	var g := _farm()
+	var need := Balance.i("economy.young_farm_plots") * (g.cheapest_seed_cost() + Balance.i("economy.plow_cost"))
+	_check(g.any_plot_in(GameState.Phase.GRASS) or g.any_plot_in(GameState.Phase.PLOWED), "room to plant")
+	g.coins = 0
+	g.check_rescue()
+	_eq(g.coins < need, true, "not on the first day")
+	g.born_day = g.day_number() - 1
+	g.helped_day = g.born_day
+	g.coins = 0
+	g.check_rescue()
+	_check(g.coins >= need, "the second day: enough for a few plots (%d)" % g.coins)
+	g.coins = 0
+	g.check_rescue()
+	_check(g.coins < need, "once a day")
+	g.born_day = g.day_number() - Balance.i("economy.young_farm_days")
+	g.helped_day = -1
+	g.check_rescue()
+	_check(g.coins < need, "a grown farm is not helped")
+	_done(g)
+
+
+func test_586_the_rare_coop_gives_the_eggs_it_asks_to_open() -> void:
+	# Owner, 19 Nov: the rare coop project could never finish (Mystery Eggs too rare); its middle step now gives
+	# the eggs its last step asks to open, through the goal reward "eggs".
+	var g := _farm()
+	var before := int(g.mystery.mystery_eggs.get("white", 0))
+	g.goals.give({"eggs": {"white": 2}})
+	_eq(int(g.mystery.mystery_eggs.get("white", 0)) - before, 2, "two white Mystery Eggs given")
+	var chain := g.goals.project_of("rare_coop")
+	_check(not chain.is_empty(), "the rare coop project exists")
+	var given := 0
+	var asked := 0
+	for s: Dictionary in chain.get("stages", []):
+		given += int((s.get("reward", {}) as Dictionary).get("eggs", {}).get("white", 0))
+		for t: Dictionary in s.get("tasks", []):
+			if str(t.get("do")) == "open_egg":
+				asked += int(t.get("n", 0))
+	_check(given >= asked and asked > 0, "gives %d, asks %d" % [given, asked])
+	_done(g)

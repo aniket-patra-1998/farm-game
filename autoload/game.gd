@@ -102,6 +102,8 @@ var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
 var farm_size := START_SIZE        # usable width and depth in tiles
 var unwithers := Balance.i("economy.start_unwithers")   # Unwither items held
 var rescued := false   # a rescue was given and no harvest since: the next waits for one (no free-coins loop)
+var born_day := -1     # the day this farm began (a young farm's daily help counts from it)
+var helped_day := -1   # the last day a young farm was helped to plant (once a day)
 var fertilize_alls := 0            # fertilize every growing crop at once
 var absence_items: Array[Dictionary] = []   # the same as rows, [{kind, count}] (AbsenceReport.items): the away card's
 var absence_head := ""             # the line of absence_note those rows already say
@@ -1125,6 +1127,7 @@ func cheapest_seed_cost() -> int:
 ## Quiet backstop: a player who can't plant (seeds, and the plow too when no plot is plowed) and has nothing
 ## growing or ripe gets enough coins to plant again, so the farm can never get stuck.
 func check_rescue() -> void:
+	_help_young_farm()
 	if coins >= coins_to_plant():
 		return
 	if any_plot_in(Phase.GROWING) or any_plot_in(Phase.RIPE):
@@ -1137,6 +1140,23 @@ func check_rescue() -> void:
 	rescued = true
 	add_coins(gift, false)
 	message.emit(tr("YOU_FOUND_COINS_IN_THE_BARN") % gift)
+
+
+## A young farm (its first `economy.young_farm_days` days) that cannot afford to plow and plant
+## `economy.young_farm_plots` plots, with empty land to plant, is topped up to that once a day (owner, 19 Nov: a
+## player who comes once a day was broke for four days, on level 2 with 70 to 95 plots bare).
+func _help_young_farm() -> void:
+	var today := day_number()
+	if born_day < 0 or today - born_day >= Balance.i("economy.young_farm_days") or helped_day == today:
+		return
+	var plots_n := Balance.i("economy.young_farm_plots")
+	var need := plots_n * (cheapest_seed_cost() + Balance.i("economy.plow_cost"))
+	if coins >= need or not (any_plot_in(Phase.GRASS) or any_plot_in(Phase.PLOWED)):
+		return
+	helped_day = today
+	var gift := need - coins
+	add_coins(gift, false)
+	message.emit(tr("YOUNG_FARM_HELP") % gift)
 
 
 ## The coins the next planting needs: the cheapest seed, and the plow when no plot is plowed and waiting.
@@ -1340,6 +1360,8 @@ func _new_game() -> void:
 	xp = 0
 	debug_time_offset = 0
 	skipped = 0
+	born_day = day_number()
+	helped_day = born_day   # (the first day is the starting coins' and the Welcome chain's)
 	clear_until = now() + Balance.i("economy.fresh_farm_clear_seconds")
 	# The Welcome chain teaches a new farm (GoalSystem); the three-step tutorial stays for farms without goals.
 	tutorial_step = Tutorial.DONE if goals.active() and not goals.new_farm_chains().is_empty() else Tutorial.HARVEST

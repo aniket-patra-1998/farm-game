@@ -457,6 +457,12 @@ func give(reward: Dictionary) -> void:
 				game.daily.add_part(m, int(parts[m]))
 	if reward.has("box"):
 		game.mystery.gift_box()
+	var eggs: Variant = reward.get("eggs", {})   # Mystery Eggs by colour (the rare coop's: owner, 19 Nov)
+	if typeof(eggs) == TYPE_DICTIONARY:
+		for colour: String in eggs:
+			game.mystery.mystery_eggs[colour] = int(game.mystery.mystery_eggs.get(colour, 0)) + int(eggs[colour])
+		if not (eggs as Dictionary).is_empty():
+			game.inventory_changed.emit()
 	if reward.has("seeds") and game.crops.has(str(reward["seeds"])):
 		seeds[str(reward["seeds"])] = int(seeds.get(str(reward["seeds"]), 0)) + 1
 	if reward.has("unlock_chain") and not unlocked.has(str(reward["unlock_chain"])):
