@@ -70,7 +70,7 @@ func build_collection(content: VBoxContainer, coll_id: String) -> void:
 		head.alignment = BoxContainer.ALIGNMENT_END
 		var trade := Button.new()
 		trade.text = tr("TRADE_IN")
-		trade.custom_minimum_size = Vector2(140, 48)
+		trade.custom_minimum_size = Vector2(UiTheme.size("trade_button_width"), UiTheme.size("panel_button_height"))
 		trade.focus_mode = Control.FOCUS_NONE
 		trade.visible = Game.collectibles.can_trade_in(coll)   # (there only when a set is complete)
 		trade.pressed.connect(func() -> void: Game.collectibles.trade_in(coll_id))

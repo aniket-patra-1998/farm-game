@@ -83,7 +83,7 @@ func _ready() -> void:
 
 	var go := Button.new()
 	go.text = tr("KEEP_FARMING")
-	go.custom_minimum_size = Vector2(260, 64)
+	go.custom_minimum_size = Vector2(UiTheme.size("wide_button_width"), UiTheme.size("button_size"))
 	go.focus_mode = Control.FOCUS_NONE
 	go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	go.add_theme_font_size_override("font_size", UiTheme.font(26))

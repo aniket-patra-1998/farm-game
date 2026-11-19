@@ -10,7 +10,12 @@ extends TestSuite
 ## no cream or yellow left over from the wooden panels), and no wooden box sits inside a panel.
 ## Every problem is reported once, with where it was, so one run lists them all.
 
-const SHAPES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(2340, 1080), Vector2i(1024, 768)]
+## Every screen shape the game meets (owner, 19 Nov: "boxes, panels, texts... hardcoded, not dynamic for laptop /
+## phone / device / orientation"): a small laptop window, a laptop, a full-HD laptop, a cheap 20:9 phone, a
+## 19.5:9 phone, a sharp 21:9 phone and a 4:3 tablet.
+const SHAPES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1366, 768), Vector2i(1920, 1080), Vector2i(1600, 720),
+	Vector2i(2340, 1080), Vector2i(3200, 1440), Vector2i(1024, 768)]
+const LONG_BAR := 0.5   # a progress bar beside other things wider than this share of its panel reads as a long line
 const RAW_ID := "\\b[a-z]+_[a-z0-9_]+\\b"        # snake_case: an item or feed id shown as it is stored
 const RAW_KEY := "\\b[A-Z]{2,}_[A-Z0-9_]+\\b"    # a strings.csv key never translated
 
@@ -246,6 +251,9 @@ func _sweep(root: Control, where: String, bad: Dictionary) -> void:
 		if c is BaseButton and minf(c.size.x, c.size.y) < UiTheme.size("panel_button_height") - TAP_SLACK:
 			bad["%s: %s \"%s\" is too small to tap (%dx%d)" % [where, c.get_class(), text.left(40), c.size.x,
 				c.size.y]] = true
+		if c is ProgressBar and c.size.x > page.size.x * LONG_BAR and c.get_parent() is HBoxContainer \
+				and c.get_parent().get_child_count() > 1:
+			bad["%s: a bar across the panel (%d of %d px), a long line" % [where, c.size.x, page.size.x]] = true
 		if (c is Label or c is Container) and c.size.x > 0.0:
 			var r := c.get_global_rect()
 			if r.position.x < page.position.x - 1.0 or r.end.x > page.end.x + 1.0:
@@ -437,5 +445,46 @@ func test_449_the_cards_over_the_farm_read_whole_on_every_screen() -> void:
 	_check(Game.unlock_ids_at(busiest).size() > 1, "the busiest level-up shows several unlocks (level %d)" % busiest)
 	for problem: String in bad:
 		_check(false, problem)
+	main.queue_free()
+	await get_tree().process_frame
+
+
+## The farm's own interface on every screen shape: the top bar, the goal faces, the side buttons, the toolbar and
+## the floating hint each stand whole on the screen and never on top of one another (owner, 19 Nov).
+func test_584_the_hud_fits_every_screen_without_overlaps() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var window := get_tree().root
+	var was := window.size
+	for shape: Vector2i in SHAPES:
+		window.size = shape
+		for k in 3:
+			await get_tree().process_frame
+		var parts: Array = []
+		for c: Control in hud.top.hideable() + hud.side.hideable():
+			parts.append([str(c.name), c])
+		parts.append(["toolbar", hud.tools.panel])
+		parts.append(["goal faces", hud.goals.column])
+		parts.append(["hint", hud.get("_tutorial")])
+		var screen := Rect2(Vector2.ZERO, main.get_viewport().get_visible_rect().size).grow(1.0)
+		var rects: Array = []
+		for p: Array in parts:
+			var c: Control = p[1]
+			if c == null or not c.is_visible_in_tree() or c.get_global_rect().size == Vector2.ZERO:
+				continue
+			var r := c.get_global_rect()
+			_check(screen.encloses(r), "%dx%d: %s stands whole on the screen (%s)" % [shape.x, shape.y, p[0], r])
+			rects.append([p[0], r.grow(-2.0)])
+		for a in rects.size():
+			for b in range(a + 1, rects.size()):
+				_check(not (rects[a][1] as Rect2).intersects(rects[b][1]),
+					"%dx%d: %s and %s don't overlap" % [shape.x, shape.y, rects[a][0], rects[b][0]])
+	window.size = was
+	Game.open_own_farm()
 	main.queue_free()
 	await get_tree().process_frame

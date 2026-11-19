@@ -5,6 +5,7 @@ extends Control
 ## is, with its sparks and its chime (Feedback.rarity: the same look every find has on the farm). A tap, or a
 ## moment's wait, closes it. Made once and kept. The prize is already given when this plays: it is the telling.
 
+const SCREEN_SHARE := 0.9   # the reveal's words take at most this share of the screen's width
 const EGGS := {"white": "#f6f1e4", "brown": "#b9814f", "red": "#c9553d", "grey": "#9aa0a8", "cornish": "#e6cf9a",
 	"black": "#3a3640", "golden": "#f2c230"}   # an egg's shell, by its colour's name (data/mystery_eggs.json)
 const BOX := "box"            # not-ui: the picture of the Mystery Box
@@ -121,10 +122,15 @@ func _words(font_size: int, color: Color) -> Label:
 	var label := Label.new()
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	label.custom_minimum_size = Vector2(900, 60)
-	label.offset_left = -450
-	label.offset_right = 450
-	label.pivot_offset = Vector2(450, 30)
+	# As wide as the theme says, never wider than the screen (owner, 19 Nov: no fixed pixels).
+	var wide := UiTheme.size("reveal_words_width")
+	if is_inside_tree():
+		wide = minf(wide, get_viewport_rect().size.x * SCREEN_SHARE)
+	var high := UiTheme.size("reveal_words_height")
+	label.custom_minimum_size = Vector2(wide, high)
+	label.offset_left = -wide / 2.0
+	label.offset_right = wide / 2.0
+	label.pivot_offset = Vector2(wide / 2.0, high / 2.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)

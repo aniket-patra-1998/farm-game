@@ -59,11 +59,7 @@ func build_barn_repair(content: VBoxContainer) -> void:
 			continue          # (not needed for this repair)
 		var have := int(Game.parts.get(p, 0))
 		card.add_child(BookPanel.text(tr("OF_2") % [GameState.part_names[p], mini(have, want), want], UiTheme.BODY))
-		var bar := ProgressBar.new()
-		bar.show_percentage = false
-		bar.custom_minimum_size.y = 16
-		bar.max_value = want
-		bar.value = mini(have, want)
+		var bar := UiKit.thin_bar(mini(have, want), want)
 		card.add_child(bar)
 	card.add_child(
 		BookPanel.text(
@@ -223,11 +219,7 @@ func build_young(content: VBoxContainer) -> void:
 		BookPanel.SOFT))
 	var card := BookPanel.card()
 	card.add_child(BookPanel.text(tr("OF_2") % [name, Game.nurture.fed(o), Game.nurture.needs(o)], UiTheme.BODY))
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 16
-	bar.max_value = Game.nurture.needs(o)
-	bar.value = Game.nurture.fed(o)
+	var bar := UiKit.thin_bar(Game.nurture.fed(o), Game.nurture.needs(o))
 	card.add_child(bar)
 	card.add_child(BookPanel.text(tr("YOU_HAVE_N") % [Game.nurture.has_supply(supply), name], UiTheme.HEADING))
 	content.add_child(BookPanel.card_frame(card))
