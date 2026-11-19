@@ -5,6 +5,9 @@ extends GameSystem
 
 
 var next_stray_at := 0             # when the next stray may turn up
+var arrived: Array[int] = []       # when each stray of the last week turned up (the weekly cap counts these)
+
+const WEEK := 7 * 86400
 
 
 func _init(owner: GameState) -> void:
@@ -17,14 +20,28 @@ func reset() -> void:
 
 func save_to(data: Dictionary) -> void:
 	data["next_stray_at"] = next_stray_at
+	data["strays_arrived"] = arrived.duplicate()
 
 
 func load_from(data: Dictionary) -> void:
 	next_stray_at = int(data.get("next_stray_at", 0))
+	arrived.clear()
+	for t: Variant in data.get("strays_arrived", []):
+		if t is float or t is int:
+			arrived.append(int(t))
 
 
 func shift_clock(seconds: int) -> void:
 	next_stray_at -= seconds
+	for k in arrived.size():
+		arrived[k] -= seconds
+
+
+## Strays that turned up in the last week (at most `strays.week_most` do, owner 19 Nov).
+func this_week() -> int:
+	var t := game.now()
+	arrived = arrived.filter(func(a: int) -> bool: return t - a < WEEK and a <= t)
+	return arrived.size()
 
 
 ## Called on start, every 30 seconds, and after a debug time skip.
@@ -41,7 +58,8 @@ func check_strays() -> void:
 			keep.append(o)
 	game.set_objects(keep)
 	if t >= next_stray_at and not _has_stray():
-		if _spawn_stray():
+		if this_week() < Balance.i("strays.week_most") and _spawn_stray():
+			arrived.append(t)
 			changed = true
 		next_stray_at = t + game.rng.randi_range(Balance.i("strays.stray_min_gap"), Balance.i("strays.stray_max_gap"))
 		game.queue_save()

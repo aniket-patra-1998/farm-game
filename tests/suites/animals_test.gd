@@ -40,6 +40,35 @@ func test_14_bees_only_join_a_hive_with_a_queen() -> void:
 
 
 
+func test_573_at_most_three_strays_a_week() -> void:
+	# Owner, 19 Nov: strays came every 3 to 6 hours, far too often. Now about one every two days, never more than
+	# strays.week_most (3) in any 7 days, and the count survives a save.
+	var g := _farm()
+	var most := Balance.i("strays.week_most")
+	_eq(most, 3, "three a week")
+	_check(Balance.i("strays.stray_min_gap") >= 86400, "never two in a day")
+	var came := 0
+	for k in 10:   # every gap forced open, a stray adopted at once: only the cap stops them
+		g.strays.next_stray_at = 0
+		g.strays.check_strays()
+		for o in g.objects.filter(func(o): return o.get("stray", false)):
+			g.strays.adopt_stray(int(o["uid"]))
+			came += 1
+		_skip(g, 3600)
+	_eq(came, most, "the fourth waits for the week to turn")
+	var data := {}
+	g.strays.save_to(data)
+	var h := _farm()
+	h.strays.load_from(JSON.parse_string(JSON.stringify(data)))
+	_eq(h.strays.arrived.size(), most, "the week's count is saved")
+	_skip(g, StraySystem.WEEK)
+	g.strays.next_stray_at = 0
+	g.strays.check_strays()
+	_eq(g.objects.filter(func(o): return o.get("stray", false)).size(), 1, "a week later one comes again")
+	_done(g)
+	_done(h)
+
+
 func test_15_strays_arrive_get_adopted_or_leave() -> void:
 	var g := _farm()
 	g.strays.next_stray_at = 0
