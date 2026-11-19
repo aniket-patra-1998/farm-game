@@ -3,7 +3,8 @@
   "volume_db": -6.0,
   "sounds": {
     "tap": {"pitch_jitter": 0.06, "layers": [
-      {"wave": "sine", "freq": 880, "freq_end": 660, "dur": 0.05, "attack": 0.002, "release": 0.04, "gain": 0.35}]},
+      {"wave": "sine", "freq": 520, "freq_end": 360, "dur": 0.045, "attack": 0.002, "release": 0.04, "gain": 0.35},
+      {"wave": "noise", "lowpass": 2500, "dur": 0.008, "attack": 0.002, "release": 0.007, "gain": 0.18}]},
     "thunder_near": {"long": true, "pitch_jitter": 0.12, "layers": [
       {"wave": "noise", "lowpass": 5000, "dur": 0.12, "attack": 0.002, "release": 0.1, "gain": 0.9},
       {"wave": "noise", "lowpass": 900, "dur": 0.6, "delay": 0.04, "attack": 0.01, "release": 0.5, "gain": 0.8},
