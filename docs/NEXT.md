@@ -1142,6 +1142,22 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   ends a journey). Build on wow/opening-glide; it is a new look, so frames go to the owner first.
 - Godot is not kept between runs: fetch 4.7.2 (apk.yml's URL) into /home/claude/godot and --import once (~3 min).
   The pre-push precheck can fail on timing-budget tests under load (card list 374): rerun, don't push around it.
+- Run 4 (19 Nov 15:35-16:10 IST): no owner pick yet for harvest juice (stays on wow/harvest-juice). Item 2, the
+  opening glide, built on wow/opening-glide (not merged: a new look, frames in the log under "Wow: waiting for your
+  look"). LoadingCover emits `lifting` as it starts to fade; main connects it for the session's first cover only
+  (OpeningGlide.wanted: not played yet, not the loading benchmark), so the showcase and a return home open plain.
+  OpeningGlide.play: FarmCamera.glide_from(start, zoom, seconds) eases (smoothstep) from a view feel.opening_zoom_from
+  (0.86) wider, never past the furthest zoom out, and feel.opening_lift (0.16 of the screen) further up the farm,
+  down to the farm's resting view (FarmCamera.resting_position: the fit view kept inside the edges, else the
+  spring-back jolted it at the end; at 0.82/0.22 the land's far edge showed in the corners, a sliver still does
+  in the first frames). The light warms in: Farm3D.opening_cool takes feel.opening_dim (0.3) off saturation and 0.35 of that off brightness, easing out. Any tap ends it on the farm's
+  view and is used up (_input); a drag or pinch takes over. 2.6 s (feel.opening_seconds; 0 turns it off). Test 565.
+  tools/opening_shot.tscn renders it at 1200x540 in steps (--hour, --steps; ~4 min). Pushed after a full precheck
+  (5.5 min). Local main had stale commits from an old polish-loop clone; kept as local branch main-stale-local.
+- Next: the owner's picks (harvest juice; the opening glide: as is, calmer = shorter and less lift, or richer =
+  longer with more warm-in); merge a pick by rebasing its branch on main, precheck, fast-forward push. While they
+  wait: item 3, building and project moments (a placed building rises out of a scaffold with a dust puff and a
+  thud; a finished project's reveal). Survey first: Feedback moments for placing, BuildingSystem, FxLayer.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
