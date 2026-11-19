@@ -114,6 +114,7 @@ var fertilizer_bags := 0           # free fertilizer, used before coins
 var clear_until := 0               # unix time until which the weather is clear (a new farm)
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
+var skipped := 0                   # seconds of debug_time_offset that came from Skip 1 hour: timers move, the sky doesn't
 var tutorial_step: int = Tutorial.HARVEST
 var catalog: Catalog               # every item, as typed definitions (scripts/catalog/)
 var items := {}                    # placeable objects from data/catalog/, as dictionaries
@@ -340,6 +341,12 @@ func now() -> int:
 	return int(Time.get_unix_time_from_system()) + debug_time_offset
 
 
+## The time the farm LOOKS like (its sky, light, clock, the animals' day): now() less what Skip 1 hour added, so a
+## test skip hurries every timer but never moves the day away from the player's real time (owner, 19 Nov).
+func look_now() -> int:
+	return now() - skipped
+
+
 func add_gems(amount: int) -> void:
 	gems += amount
 	gems_changed.emit(gems)
@@ -396,6 +403,7 @@ func debug_skip(seconds: int) -> void:
 	if not OS.is_debug_build():
 		return
 	debug_time_offset += seconds
+	skipped += seconds
 	strays.check_strays()
 	daily.check_daily_gift()
 	plot_changed.emit(-1)
@@ -1320,6 +1328,7 @@ func _new_game() -> void:
 	gems = Balance.i("economy.start_gems")
 	xp = 0
 	debug_time_offset = 0
+	skipped = 0
 	clear_until = now() + Balance.i("economy.fresh_farm_clear_seconds")
 	# The Welcome chain teaches a new farm (GoalSystem); the three-step tutorial stays for farms without goals.
 	tutorial_step = Tutorial.DONE if goals.active() and not goals.new_farm_chains().is_empty() else Tutorial.HARVEST

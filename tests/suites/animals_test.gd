@@ -760,3 +760,22 @@ func test_513_kept_strides_are_the_files_own() -> void:
 	ArtVersion._data["files"]["cow"] = "changed"
 	_check(Animal3D.kept_stride("cow") < 0.0, "a changed file's kept stride is not used")
 	ArtVersion._data = data
+
+
+func test_574_a_test_skip_hurries_timers_never_the_sky() -> void:
+	# Owner, 19 Nov: after a few presses of Skip 1 hour the farm showed 10 pm at 5 pm, for good. A skip moves every
+	# timer (now) but the farm's look (look_now: sky, clock, the animals' day) stays on the real time; an older save,
+	# whose whole offset was skips, comes back to the real time.
+	var g := _farm()
+	var look := g.look_now()
+	var t := g.now()
+	g.debug_skip(3600)
+	_eq(g.now() - t, 3600, "the timers move an hour")
+	_check(absi(g.look_now() - look) <= 1, "the sky does not")
+	var data := {"debug_time_offset": 5 * 3600}
+	var h := _farm()
+	h.debug_time_offset = int(data["debug_time_offset"])
+	h.skipped = int(data.get("skipped", h.debug_time_offset))
+	_check(absi(h.look_now() - int(Time.get_unix_time_from_system())) <= 1, "an old save's sky is back on real time")
+	_done(g)
+	_done(h)
