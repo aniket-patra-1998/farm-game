@@ -133,3 +133,6 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   by itself after "done"). Startup 16.5 s cold, 7.5 s relaunched; own farm whole 31.7 s (the cover's 30 s cap: the
   A05s never draws under 40 ms); play 94.9 ms a frame. Merged: the cover also lifts on a slow phone's steady pace.
   Item 3 (play, ~10 fps on the A05s) is next.
+- 19 Nov 15:10 (perf run 19): the phone run of 14:31 (657a40b) confirmed the cover fix (own farm whole 31.7 -> 7.7 s)
+  but played at 256.5 ms a frame on mid: AutoQuality ignored every frame over 250 ms, so the A05s was never stepped
+  down. Merged eb810f7: a steady run of slow frames counts, and a window that slow goes to the last rung.

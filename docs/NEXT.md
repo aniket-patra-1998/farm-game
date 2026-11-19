@@ -1082,6 +1082,26 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   batching of the 156 BuildingFill and 89 DecorLayer meshes). Check against the phone's play view (zoom 1.6: 386
   draws, 218k triangles) before choosing; each needs a 1x before/after.
 
+- Run 19 (19 Nov 14:50 - 15:40 IST). Godot fetched again (fresh container; local main had diverged: kept as the
+  local branch local-old-main, main reset to origin/main). The phone run of 14:31 IST (A05s, build of 657a40b, run
+  44492663510) reached "done". Run 18's cover fix confirmed: own_farm whole 31,731 -> 7,695 ms, showcase_warm whole
+  46,441 -> 27,311, own_farm_first 76,666 -> 48,453 ms after start; startup 20.8 s cold (16.5 before: cold launches
+  vary), relaunch 7.4 s. Play got slower: 94.9 -> 256.5 ms a frame (541 draws, 498k triangles; 386 / 218k before).
+  Cause: run 18's process had been stepped down to low by AutoQuality before playing (its relaunch said "low");
+  this one stayed on mid (relaunch "mid"). AutoQuality skipped every frame over max_frame_ms (250) as a hitch, and
+  the A05s on mid draws ~256 ms a frame, steady, so the slowest phones were never stepped down.
+  Merged (eb810f7): a steady run of frames over max_frame_ms (slow_run 8 in a row, each within steady_ratio 0.25
+  of the one before) is the phone's pace and counts; a window whose median is over max_frame_ms goes straight to
+  the ladder's last rung (low capped at 30). Lone hitches, resumes and first draws' uneven stalls still count for
+  nothing. No level's look changes. Test 555; precheck 470 tests, 0 failed.
+- Next run: 1) read the phone run started after eb810f7's phone build (A05s): device.quality of the relaunch
+  process (expected "low"), play avg_ms (expected ~95 ms if AutoQuality stepped before the play phase; if still
+  ~256, the benchmark's process had too few counted frames before play: check how many uncovered/steady frames
+  the phases give), and the relaunch's startup. 2) Then the play frame at low (~95 ms, ~10 fps): run 18's candidates
+  (visible triangles: BuildingFill, DecorLayer, Animal3D coarser LODs; Instancer batching of the 156 BuildingFill
+  and 89 DecorLayer meshes), each with a 1x before/after. Note the benchmark's device.quality is read at start, so
+  it does not say the level played at: adding the level at play time to the "play" part would make reports clear.
+
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
   UiTheme.glow(kind, fresh, px) is the one rule (data/ui_theme.json "glow": gold kinds, spread, least_px; colours
