@@ -331,6 +331,7 @@ func test_53_orchard_harvests_give_mystery_seedlings_or_watering_cans() -> void:
 	# FarmVille: every Orchard harvest gives a Mystery Seedling or a Watering Can. A seedling grows into one of
 	# the Orchard's trees, now and then its rare variety.
 	var g := _farm(true)
+	g.born_day = g.day_number() + 100000   # (its buildings never wear here: wear_test tests wear)
 	g.coins = 1000000
 	g.farm_size = GameState.MAX_SIZE
 	g.xp = g.xp_for_level(8)

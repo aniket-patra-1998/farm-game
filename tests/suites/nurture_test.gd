@@ -51,6 +51,7 @@ func test_120_a_mystery_young_grows_into_its_secret_on_the_last_supply() -> void
 
 func test_121_animal_homes_give_mystery_babies_of_their_kinds_and_feed() -> void:
 	var g := _farm(true)
+	g.born_day = g.day_number() + 100000   # (its buildings never wear here: wear_test tests wear)
 	g.coins = 1000000
 	g.farm_size = GameState.MAX_SIZE
 	g.xp = g.xp_for_level(ShowcaseFarm.top_level(g))
