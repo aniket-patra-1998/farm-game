@@ -49,7 +49,7 @@ file per hair style. It uses the same skin, drawings and painted light, with its
 
     python3 -m animal_art export ../../art/models/animals "chicken"
 
-writes `art/models/animals/chicken.glb`: the mesh at rest with its colours and painted light, and its moves as
+writes `art/models/animals/chicken.glb` (a limited animal's file goes to `art/models/limited/` beside it): the mesh at rest with its colours and painted light, and its moves as
 blend shapes (`export.py`: the walk cycle in 12 frames, head down, look left and right, blink, tail, breath),
 each made by this package's own motion. Listed in `data/assets.json` (`"budget": "animal"`), the game draws it
 instead of the code-built animal and sets the blend shapes from the pose it already works out

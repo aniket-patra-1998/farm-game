@@ -239,6 +239,22 @@ func _shown_in_place(o: Dictionary) -> bool:
 
 
 ## Builds `o`'s look again (or for the first time), and plays it dropping in or swelling up.
+## Files that were not in the app have arrived (AssetPacks.arrived): everything drawn from them, standing on the
+## farm or living in a home, is made again from its own file.
+func remake(paths: Array[String]) -> void:
+	var ids := {}
+	for id: String in Game.item_order:
+		if paths.has(str(AssetRegistry.entry(id).get("model", ""))):
+			ids[id] = true
+	Animal3D.clear_templates()   # (the stand-ins built so far are not what these animals are any more)
+	for o: Dictionary in Game.objects:
+		var here := ids.has(str(o["id"]))
+		for inside: String in (o.get("inside", {}) as Dictionary):
+			here = here or ids.has(inside)
+		if here:
+			_rebuild(o)
+
+
 func _rebuild(o: Dictionary) -> void:
 	var uid := int(o["uid"])
 	var v: Dictionary = _views.get(uid, {})

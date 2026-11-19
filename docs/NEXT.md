@@ -1273,7 +1273,10 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Off in the first release (`data/v1.json` `"limited": false`); the files still ship in the app (about 80 MB).
 - The touches are built (docs/LIMITED.md "Their own touches"; world3d_test 582): seen in the game as a clip at
   midday, not at night or on a phone.
-- Next: downloading a limited animal's file when first needed; baby forms for birds and rabbits; limited dogs.
+- Fetching a limited animal's file when first needed is built and off (docs/PACKS.md; packs_test 583, 584): the
+  owner has to choose where the packs are hosted, then the three steps in PACKS.md turn it on. Not tried on a
+  phone or a real address.
+- Next: baby forms for birds and rabbits; limited dogs; a real device check of touches and packs.
 - The showcase holds one limited animal a home and none loose: the heaviest-farm budget has 2,000 triangles
   of room (world3d_test 338).
 

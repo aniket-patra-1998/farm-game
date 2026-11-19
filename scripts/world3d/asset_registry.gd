@@ -194,6 +194,8 @@ static func _scene(path: String) -> PackedScene:
 	if _scenes.has(path):
 		return _scenes[path]
 	if path == "" or not ResourceLoader.exists(path):
+		if AssetPacks.shared != null and AssetPacks.shared.want(path):
+			return null   # (not in the app: its pack is on its way, and the stand-in is drawn until it arrives)
 		_say(path, "is missing")   # not-ui (a log line)
 		return null
 	var scene: PackedScene = (ResourceLoader.load_threaded_get(path) if _loading.has(path) else load(path)) as PackedScene

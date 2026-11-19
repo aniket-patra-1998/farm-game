@@ -50,8 +50,12 @@ def main(argv=None):
     elif cmd == "export":
         import os
         from .export import export
+        from .registry import LIMITED
         for n in names:
-            print(export(n, os.path.join(out, n.replace(" ", "_") + ".glb")))
+            # (a limited animal's file goes to the folder beside: those files can be left out of the app and
+            # brought when first needed, docs/PACKS.md)
+            folder = os.path.join(out, "..", "limited") if n in LIMITED else out
+            print(export(n, os.path.join(folder, n.replace(" ", "_") + ".glb")))
         # Every game animal exported: the files are what the builder makes now. Record it, and the pictures'
         # fingerprints (tools/make_art_versions.py; CI fails when the builder changes without a new export).
         game = {g for row in GAME.values() for g in row}

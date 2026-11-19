@@ -100,6 +100,11 @@ func _ready() -> void:
 	objects = Objects3D.new()
 	objects.life = grid.life if grid != null else null
 	objects.grid = grid
+	if AssetPacks.shared != null:
+		# Files that were not in the app are drawn from their own files as they arrive (docs/PACKS.md): once the
+		# frame's own building is done (a pack can arrive in the middle of drawing what asked for it), and heard
+		# from before the first thing is drawn.
+		AssetPacks.shared.arrived.connect(objects.remake, CONNECT_DEFERRED)
 	add_child(objects)
 	farmer = Farmer3D.new()
 	add_child(farmer)

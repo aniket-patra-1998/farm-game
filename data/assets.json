@@ -864,311 +864,311 @@
       "budget": "building"
     },
     "strawberry_cow": {
-      "model": "res://art/models/animals/strawberry_cow.glb",
+      "model": "res://art/models/limited/strawberry_cow.glb",
       "budget": "animal"
     },
     "strawberry_calf": {
-      "model": "res://art/models/animals/strawberry_calf.glb",
+      "model": "res://art/models/limited/strawberry_calf.glb",
       "budget": "animal"
     },
     "highland_cow": {
-      "model": "res://art/models/animals/highland_cow.glb",
+      "model": "res://art/models/limited/highland_cow.glb",
       "budget": "animal"
     },
     "highland_calf": {
-      "model": "res://art/models/animals/highland_calf.glb",
+      "model": "res://art/models/limited/highland_calf.glb",
       "budget": "animal"
     },
     "galaxy_cow": {
-      "model": "res://art/models/animals/galaxy_cow.glb",
+      "model": "res://art/models/limited/galaxy_cow.glb",
       "budget": "animal"
     },
     "galaxy_calf": {
-      "model": "res://art/models/animals/galaxy_calf.glb",
+      "model": "res://art/models/limited/galaxy_calf.glb",
       "budget": "animal"
     },
     "tiger_cow": {
-      "model": "res://art/models/animals/tiger_cow.glb",
+      "model": "res://art/models/limited/tiger_cow.glb",
       "budget": "animal"
     },
     "tiger_calf": {
-      "model": "res://art/models/animals/tiger_calf.glb",
+      "model": "res://art/models/limited/tiger_calf.glb",
       "budget": "animal"
     },
     "panda_cow": {
-      "model": "res://art/models/animals/panda_cow.glb",
+      "model": "res://art/models/limited/panda_cow.glb",
       "budget": "animal"
     },
     "panda_calf": {
-      "model": "res://art/models/animals/panda_calf.glb",
+      "model": "res://art/models/limited/panda_calf.glb",
       "budget": "animal"
     },
     "rainbow_cow": {
-      "model": "res://art/models/animals/rainbow_cow.glb",
+      "model": "res://art/models/limited/rainbow_cow.glb",
       "budget": "animal"
     },
     "rainbow_calf": {
-      "model": "res://art/models/animals/rainbow_calf.glb",
+      "model": "res://art/models/limited/rainbow_calf.glb",
       "budget": "animal"
     },
     "candy_horse": {
-      "model": "res://art/models/animals/candy_horse.glb",
+      "model": "res://art/models/limited/candy_horse.glb",
       "budget": "animal"
     },
     "candy_foal": {
-      "model": "res://art/models/animals/candy_foal.glb",
+      "model": "res://art/models/limited/candy_foal.glb",
       "budget": "animal"
     },
     "zebra_horse": {
-      "model": "res://art/models/animals/zebra_horse.glb",
+      "model": "res://art/models/limited/zebra_horse.glb",
       "budget": "animal"
     },
     "zebra_foal": {
-      "model": "res://art/models/animals/zebra_foal.glb",
+      "model": "res://art/models/limited/zebra_foal.glb",
       "budget": "animal"
     },
     "galaxy_horse": {
-      "model": "res://art/models/animals/galaxy_horse.glb",
+      "model": "res://art/models/limited/galaxy_horse.glb",
       "budget": "animal"
     },
     "galaxy_foal": {
-      "model": "res://art/models/animals/galaxy_foal.glb",
+      "model": "res://art/models/limited/galaxy_foal.glb",
       "budget": "animal"
     },
     "dapple_horse": {
-      "model": "res://art/models/animals/dapple_horse.glb",
+      "model": "res://art/models/limited/dapple_horse.glb",
       "budget": "animal"
     },
     "dapple_foal": {
-      "model": "res://art/models/animals/dapple_foal.glb",
+      "model": "res://art/models/limited/dapple_foal.glb",
       "budget": "animal"
     },
     "feather_horse": {
-      "model": "res://art/models/animals/feather_horse.glb",
+      "model": "res://art/models/limited/feather_horse.glb",
       "budget": "animal"
     },
     "feather_foal": {
-      "model": "res://art/models/animals/feather_foal.glb",
+      "model": "res://art/models/limited/feather_foal.glb",
       "budget": "animal"
     },
     "blueberry_pig": {
-      "model": "res://art/models/animals/blueberry_pig.glb",
+      "model": "res://art/models/limited/blueberry_pig.glb",
       "budget": "animal"
     },
     "blueberry_piglet": {
-      "model": "res://art/models/animals/blueberry_piglet.glb",
+      "model": "res://art/models/limited/blueberry_piglet.glb",
       "budget": "animal"
     },
     "bumblebee_pig": {
-      "model": "res://art/models/animals/bumblebee_pig.glb",
+      "model": "res://art/models/limited/bumblebee_pig.glb",
       "budget": "animal"
     },
     "bumblebee_piglet": {
-      "model": "res://art/models/animals/bumblebee_piglet.glb",
+      "model": "res://art/models/limited/bumblebee_piglet.glb",
       "budget": "animal"
     },
     "woolly_pig": {
-      "model": "res://art/models/animals/woolly_pig.glb",
+      "model": "res://art/models/limited/woolly_pig.glb",
       "budget": "animal"
     },
     "woolly_piglet": {
-      "model": "res://art/models/animals/woolly_piglet.glb",
+      "model": "res://art/models/limited/woolly_piglet.glb",
       "budget": "animal"
     },
     "rainbow_pig": {
-      "model": "res://art/models/animals/rainbow_pig.glb",
+      "model": "res://art/models/limited/rainbow_pig.glb",
       "budget": "animal"
     },
     "rainbow_piglet": {
-      "model": "res://art/models/animals/rainbow_piglet.glb",
+      "model": "res://art/models/limited/rainbow_piglet.glb",
       "budget": "animal"
     },
     "golden_pig": {
-      "model": "res://art/models/animals/golden_pig.glb",
+      "model": "res://art/models/limited/golden_pig.glb",
       "budget": "animal"
     },
     "golden_piglet": {
-      "model": "res://art/models/animals/golden_piglet.glb",
+      "model": "res://art/models/limited/golden_piglet.glb",
       "budget": "animal"
     },
     "cloud_sheep": {
-      "model": "res://art/models/animals/cloud_sheep.glb",
+      "model": "res://art/models/limited/cloud_sheep.glb",
       "budget": "animal"
     },
     "cloud_lamb": {
-      "model": "res://art/models/animals/cloud_lamb.glb",
+      "model": "res://art/models/limited/cloud_lamb.glb",
       "budget": "animal"
     },
     "shorn_sheep": {
-      "model": "res://art/models/animals/shorn_sheep.glb",
+      "model": "res://art/models/limited/shorn_sheep.glb",
       "budget": "animal"
     },
     "shorn_lamb": {
-      "model": "res://art/models/animals/shorn_lamb.glb",
+      "model": "res://art/models/limited/shorn_lamb.glb",
       "budget": "animal"
     },
     "cotton_candy_sheep": {
-      "model": "res://art/models/animals/cotton_candy_sheep.glb",
+      "model": "res://art/models/limited/cotton_candy_sheep.glb",
       "budget": "animal"
     },
     "cotton_candy_lamb": {
-      "model": "res://art/models/animals/cotton_candy_lamb.glb",
+      "model": "res://art/models/limited/cotton_candy_lamb.glb",
       "budget": "animal"
     },
     "rainbow_sheep": {
-      "model": "res://art/models/animals/rainbow_sheep.glb",
+      "model": "res://art/models/limited/rainbow_sheep.glb",
       "budget": "animal"
     },
     "rainbow_lamb": {
-      "model": "res://art/models/animals/rainbow_lamb.glb",
+      "model": "res://art/models/limited/rainbow_lamb.glb",
       "budget": "animal"
     },
     "golden_ram": {
-      "model": "res://art/models/animals/golden_ram.glb",
+      "model": "res://art/models/limited/golden_ram.glb",
       "budget": "animal"
     },
     "golden_lamb": {
-      "model": "res://art/models/animals/golden_lamb.glb",
+      "model": "res://art/models/limited/golden_lamb.glb",
       "budget": "animal"
     },
     "angora_goat": {
-      "model": "res://art/models/animals/angora_goat.glb",
+      "model": "res://art/models/limited/angora_goat.glb",
       "budget": "animal"
     },
     "lavender_goat": {
-      "model": "res://art/models/animals/lavender_goat.glb",
+      "model": "res://art/models/limited/lavender_goat.glb",
       "budget": "animal"
     },
     "dalmatian_goat": {
-      "model": "res://art/models/animals/dalmatian_goat.glb",
+      "model": "res://art/models/limited/dalmatian_goat.glb",
       "budget": "animal"
     },
     "sunset_goat": {
-      "model": "res://art/models/animals/sunset_goat.glb",
+      "model": "res://art/models/limited/sunset_goat.glb",
       "budget": "animal"
     },
     "tuxedo_goat": {
-      "model": "res://art/models/animals/tuxedo_goat.glb",
+      "model": "res://art/models/limited/tuxedo_goat.glb",
       "budget": "animal"
     },
     "cotton_candy_alpaca": {
-      "model": "res://art/models/animals/cotton_candy_alpaca.glb",
+      "model": "res://art/models/limited/cotton_candy_alpaca.glb",
       "budget": "animal"
     },
     "mint_alpaca": {
-      "model": "res://art/models/animals/mint_alpaca.glb",
+      "model": "res://art/models/limited/mint_alpaca.glb",
       "budget": "animal"
     },
     "galaxy_alpaca": {
-      "model": "res://art/models/animals/galaxy_alpaca.glb",
+      "model": "res://art/models/limited/galaxy_alpaca.glb",
       "budget": "animal"
     },
     "rainbow_llama": {
-      "model": "res://art/models/animals/rainbow_llama.glb",
+      "model": "res://art/models/limited/rainbow_llama.glb",
       "budget": "animal"
     },
     "cocoa_llama": {
-      "model": "res://art/models/animals/cocoa_llama.glb",
+      "model": "res://art/models/limited/cocoa_llama.glb",
       "budget": "animal"
     },
     "silkie_chicken": {
-      "model": "res://art/models/animals/silkie_chicken.glb",
+      "model": "res://art/models/limited/silkie_chicken.glb",
       "budget": "animal"
     },
     "peacock_chicken": {
-      "model": "res://art/models/animals/peacock_chicken.glb",
+      "model": "res://art/models/limited/peacock_chicken.glb",
       "budget": "animal"
     },
     "flame_chicken": {
-      "model": "res://art/models/animals/flame_chicken.glb",
+      "model": "res://art/models/limited/flame_chicken.glb",
       "budget": "animal"
     },
     "bubblegum_chicken": {
-      "model": "res://art/models/animals/bubblegum_chicken.glb",
+      "model": "res://art/models/limited/bubblegum_chicken.glb",
       "budget": "animal"
     },
     "galaxy_chicken": {
-      "model": "res://art/models/animals/galaxy_chicken.glb",
+      "model": "res://art/models/limited/galaxy_chicken.glb",
       "budget": "animal"
     },
     "rubber_duck": {
-      "model": "res://art/models/animals/rubber_duck.glb",
+      "model": "res://art/models/limited/rubber_duck.glb",
       "budget": "animal"
     },
     "mandarin_duck": {
-      "model": "res://art/models/animals/mandarin_duck.glb",
+      "model": "res://art/models/limited/mandarin_duck.glb",
       "budget": "animal"
     },
     "rainbow_duck": {
-      "model": "res://art/models/animals/rainbow_duck.glb",
+      "model": "res://art/models/limited/rainbow_duck.glb",
       "budget": "animal"
     },
     "mint_duck": {
-      "model": "res://art/models/animals/mint_duck.glb",
+      "model": "res://art/models/limited/mint_duck.glb",
       "budget": "animal"
     },
     "galaxy_duck": {
-      "model": "res://art/models/animals/galaxy_duck.glb",
+      "model": "res://art/models/limited/galaxy_duck.glb",
       "budget": "animal"
     },
     "peacock_turkey": {
-      "model": "res://art/models/animals/peacock_turkey.glb",
+      "model": "res://art/models/limited/peacock_turkey.glb",
       "budget": "animal"
     },
     "royal_turkey": {
-      "model": "res://art/models/animals/royal_turkey.glb",
+      "model": "res://art/models/limited/royal_turkey.glb",
       "budget": "animal"
     },
     "autumn_turkey": {
-      "model": "res://art/models/animals/autumn_turkey.glb",
+      "model": "res://art/models/limited/autumn_turkey.glb",
       "budget": "animal"
     },
     "bubblegum_turkey": {
-      "model": "res://art/models/animals/bubblegum_turkey.glb",
+      "model": "res://art/models/limited/bubblegum_turkey.glb",
       "budget": "animal"
     },
     "midnight_turkey": {
-      "model": "res://art/models/animals/midnight_turkey.glb",
+      "model": "res://art/models/limited/midnight_turkey.glb",
       "budget": "animal"
     },
     "golden_goose": {
-      "model": "res://art/models/animals/golden_goose.glb",
+      "model": "res://art/models/limited/golden_goose.glb",
       "budget": "animal"
     },
     "storm_goose": {
-      "model": "res://art/models/animals/storm_goose.glb",
+      "model": "res://art/models/limited/storm_goose.glb",
       "budget": "animal"
     },
     "rainbow_goose": {
-      "model": "res://art/models/animals/rainbow_goose.glb",
+      "model": "res://art/models/limited/rainbow_goose.glb",
       "budget": "animal"
     },
     "pink_goose": {
-      "model": "res://art/models/animals/pink_goose.glb",
+      "model": "res://art/models/limited/pink_goose.glb",
       "budget": "animal"
     },
     "tuxedo_goose": {
-      "model": "res://art/models/animals/tuxedo_goose.glb",
+      "model": "res://art/models/limited/tuxedo_goose.glb",
       "budget": "animal"
     },
     "cocoa_rabbit": {
-      "model": "res://art/models/animals/cocoa_rabbit.glb",
+      "model": "res://art/models/limited/cocoa_rabbit.glb",
       "budget": "animal"
     },
     "dutch_rabbit": {
-      "model": "res://art/models/animals/dutch_rabbit.glb",
+      "model": "res://art/models/limited/dutch_rabbit.glb",
       "budget": "animal"
     },
     "galaxy_rabbit": {
-      "model": "res://art/models/animals/galaxy_rabbit.glb",
+      "model": "res://art/models/limited/galaxy_rabbit.glb",
       "budget": "animal"
     },
     "strawberry_rabbit": {
-      "model": "res://art/models/animals/strawberry_rabbit.glb",
+      "model": "res://art/models/limited/strawberry_rabbit.glb",
       "budget": "animal"
     },
     "sunset_rabbit": {
-      "model": "res://art/models/animals/sunset_rabbit.glb",
+      "model": "res://art/models/limited/sunset_rabbit.glb",
       "budget": "animal"
     }
   }

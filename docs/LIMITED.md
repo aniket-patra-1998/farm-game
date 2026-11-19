@@ -59,7 +59,7 @@ in the catalog. Animals in a home shake and glint too; sparkles are for animals 
 list, until the owner turns it on.
 
 ## Open
-- Downloading a limited animal's file when it is first needed (the owner's plan for the app's size) is not
-  built: today every file ships in the app (about 80 MB for these).
+- Downloading a limited animal's file when it is first needed is built and off (docs/PACKS.md): it needs an
+  address to fetch from. Until then every file ships in the app (about 90 MB for these).
 - Limited dogs (five were drawn) wait for dogs to be animals you can buy and house.
 - Baby forms for chickens, ducks, geese and rabbits do not exist yet, limited or plain.
