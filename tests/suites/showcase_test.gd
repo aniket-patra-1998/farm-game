@@ -181,3 +181,13 @@ func test_454_a_farm_opened_in_place_is_covered_and_built_at_full_speed() -> voi
 	_eq(objects.call("_budget_ms"), Objects3D.COVERED_BUDGET_MS, "and under the loading cover, at full speed")
 	LoadingCover.covering -= 1
 	objects.free()
+
+
+func test_554_a_slow_phone_s_steady_frames_lift_the_loading_cover() -> void:
+	_check(LoadingCover.settled_frame(16.0, -1.0), "a quick frame is settled")
+	_check(LoadingCover.settled_frame(90.0, 80.0), "a low-end phone's own steady pace (A05s: ~70-95 ms) is settled")
+	_check(not LoadingCover.settled_frame(90.0, -1.0), "a slow first frame with none before is not")
+	_check(not LoadingCover.settled_frame(400.0, 90.0), "a first draw's stall is not")
+	_check(not LoadingCover.settled_frame(90.0, 400.0), "nor the frame right after it")
+	_check(LoadingCover.settled_frame(140.0, 145.0), "steady up to STEADY_MOST_MS")
+	_check(not LoadingCover.settled_frame(200.0, 200.0), "a phone slower than that waits for MOST_SECONDS")

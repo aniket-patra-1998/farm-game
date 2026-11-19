@@ -3,7 +3,8 @@ extends CanvasLayer
 ## What the player sees while a farm is built and drawn (the game's first, and one opened in place: the showcase,
 ## back to your own): the farm's name on the game's green, a soft pulsing word and how much is built, over
 ## everything, until every thing stands (Objects3D.all_settled) and the frames that draw it have settled
-## (`SETTLE_FRAMES` in a row under `SETTLE_MS`, or `MOST_SECONDS` at the latest), then it fades away. While it
+## (`SETTLE_FRAMES` in a row that are quick or steady: `settled_frame`; or `MOST_SECONDS` at the latest), then it
+## fades away. While it
 ## covers, the farm builds at full speed (Objects3D.COVERED_BUDGET_MS) and is not drawn until it stands (so the
 ## frames cost nothing but the cover); then, whole and in view, every material is drawn (its shaders made) under
 ## the cover: the farm appears whole, never thing by thing.
@@ -11,6 +12,8 @@ extends CanvasLayer
 
 const SETTLE_FRAMES := 8      # frames in a row this quick..
 const SETTLE_MS := 40.0       # ..mean the farm is ready to be seen
+const STEADY_MOST_MS := 150.0 # a slow phone's frame this long or shorter, close to the one before, is its pace..
+const STEADY_RATIO := 0.25    # ..when it is within this share of the frame before (a first draw's stall is not)
 const MOST_SECONDS := 30.0    # never cover the farm longer than this
 const FADE_SECONDS := 0.35
 const PULSE_RATE := 3.0
@@ -19,6 +22,7 @@ static var covering := 0      # covers on the screen now (Objects3D builds at fu
 
 var _world: Node3D   # the 3D farm: not drawn while it is still being built under the cover (frames stay cheap)
 var _quick := 0
+var _last_ms := -1.0
 var _shown := 0.0
 var _word: Label
 var _fading := false
@@ -62,6 +66,16 @@ func _build(farm_name: String) -> void:
 	col.add_child(_word)
 
 
+## Whether a frame of `ms` (after one of `last_ms`; negative: none) says the farm is drawn and settled: quick
+## (under SETTLE_MS), or a slow phone's own steady pace (under STEADY_MOST_MS and within STEADY_RATIO of the frame
+## before). A low-end phone that never draws under SETTLE_MS (the Galaxy A05s: ~70-95 ms a frame) was covered for
+## MOST_SECONDS at every farm opening; a shader made the first time is a lone long frame, never steady.
+static func settled_frame(ms: float, last_ms: float) -> bool:
+	if ms < SETTLE_MS:
+		return true
+	return last_ms > 0.0 and ms <= STEADY_MOST_MS and absf(ms - last_ms) <= last_ms * STEADY_RATIO
+
+
 func _process(delta: float) -> void:
 	_shown += delta
 	if _fading:
@@ -73,7 +87,9 @@ func _process(delta: float) -> void:
 		# gives its time to building. Built, it is drawn under the cover (its materials made) until frames settle.
 		_world.visible = built >= 1.0
 	_word.text = tr("LOADING_FARM_PERCENT") % UiTheme.number(roundi(built * 100.0)) if built < 1.0 else tr("LOADING_FARM")
-	_quick = _quick + 1 if delta * 1000.0 < SETTLE_MS and built >= 1.0 else 0
+	var ms := delta * 1000.0
+	_quick = _quick + 1 if built >= 1.0 and settled_frame(ms, _last_ms) else 0
+	_last_ms = ms
 	if _quick >= SETTLE_FRAMES or _shown >= MOST_SECONDS:
 		_fading = true
 		covering = maxi(covering - 1, 0)

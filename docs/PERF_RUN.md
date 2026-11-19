@@ -129,3 +129,7 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
 - 19 Nov 13:20 (perf run 17): slice 6 of the start (the moment cards by path: the level-up, a mystery's reveal and
   the away card are made when first needed; the level-up in its own empty layer where it stood): 30,741 -> 30,352
   lines before the first screen; headless scripts - engine median 1,666 -> 1,636 ms, hud mark 2,171 -> 2,133 ms.
+- 19 Nov 14:05 (perf run 18): the phone run of 13:31 (A05s, 4054e3f) finished the benchmark (item 1 settled: it quits
+  by itself after "done"). Startup 16.5 s cold, 7.5 s relaunched; own farm whole 31.7 s (the cover's 30 s cap: the
+  A05s never draws under 40 ms); play 94.9 ms a frame. Merged: the cover also lifts on a slow phone's steady pace.
+  Item 3 (play, ~10 fps on the A05s) is next.

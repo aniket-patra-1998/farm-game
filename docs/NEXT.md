@@ -1051,6 +1051,27 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   next; if compiling is still the big part, `tools/start_lines.py -v`: HudGoals' goal sheet (~0.2k), HudReveal is
   needed at start; the rest is the 3D farm the first screen draws.
 
+- Run 18 (19 Nov 13:51 - 14:40 IST). Godot fetched again to /home/claude/godot/godot (the container was fresh;
+  local main had diverged: worked from origin/main detached). The phone run of 13:31 IST (A05s, build of 4054e3f,
+  run 44484136679) reached "done" for the first time (order of work item 1 settled: after "done" the app quits by
+  itself; "has died" is that quit). Cold first launch, quality mid: hud at 15.5 s, startup 16.5 s (engine 3.8 s,
+  scripts by 6.9 s, world 15.0 s); own farm first whole at 76.7 s. Relaunch (quality low, AutoQuality stepped
+  down): startup 7.5 s (engine 1.2, scripts by 4.2, world 7.2). Showcase cold built 54 s / whole 85 s, warm 23 /
+  46 s; own farm built 4.9 s, whole 31.7 s, longest frame 790 ms; play (showcase, zoom 1.6) 94.9 ms a frame,
+  p95 101, 386 draws, 218k triangles.
+  Merged: the loading cover lifts on a slow phone's steady pace too (LoadingCover.settled_frame: under 40 ms, or
+  under 150 ms within 25% of the frame before; 8 in a row). The A05s never drew a frame under 40 ms, so every farm
+  opening waited the cover's 30 s cap (own farm: built 4.9 s, whole 31.7 s). Expected on the phone: own farm whole
+  ~5-6 s. Test 554. Nothing drawn changes (the same farm, shown sooner); the container draws under 40 ms, so its
+  own openings are unchanged.
+- Next run: 1) read the phone run started after this merge (A05s): own_farm.whole_ms against 31,731,
+  showcase_warm.whole_ms against 46,441, own_farm_first.ms_since_start against 76,666. 2) Then the play frame:
+  94.9 ms on the A05s at mid. Measure headless CPU per frame on the showcase at the playing zoom
+  (tools/perf_probe.tscn -- --quality=mid --size=2400x1080 --tiles=12) to tell CPU from GPU: if the CPU part is
+  small, the phone is GPU-bound at 2040x918 with MSAA 2x and shadows (Quality: changing mid's defaults changes the
+  look: report, do not build); if large, the per-frame scripts (perf_probe's _processing list) are next.
+  Also: AutoQuality steps the phone to low within the first session (the relaunch reported "low").
+
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
   UiTheme.glow(kind, fresh, px) is the one rule (data/ui_theme.json "glow": gold kinds, spread, least_px; colours
