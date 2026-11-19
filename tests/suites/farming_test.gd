@@ -359,3 +359,40 @@ func test_586_the_rare_coop_gives_the_eggs_it_asks_to_open() -> void:
 				asked += int(t.get("n", 0))
 	_check(given >= asked and asked > 0, "gives %d, asks %d" % [given, asked])
 	_done(g)
+
+
+func test_595_a_stray_is_fed_from_the_barn_to_be_adopted() -> void:
+	# Owner, 19 Nov: "we decided to feed animal feed to the stray animal to adopt it" (FarmVille's adoption task):
+	# a few feedings of a feed its kind eats, one unit each from the Barn, then it is the farm's.
+	var g := _farm(true)
+	g.feeds.active = true
+	g.xp = g.xp_for_level(8)
+	_check(g.strays._spawn_stray(), "a stray came")
+	var uid := g.next_uid - 1
+	var stray := g.object_by_uid(uid)
+	g.feeds.stock = {}
+	_eq(g.strays.feed_stray(uid), "STRAY_NO_FEED", "no feed it eats: not fed")
+	var eats := ""
+	for f in g.feeds.feed_ids():
+		if g.feeds.grade(stray, f) > 0.0:
+			eats = f
+	_check(eats != "", "its kind eats something")
+	g.feeds.stock = {eats: 10}
+	for k in g.strays.feeds_needed() - 1:
+		_eq(g.strays.feed_stray(uid), "fed", "fed %d" % (k + 1))
+		_check(g.object_by_uid(uid).get("stray", false), "still a stray")
+	_eq(g.strays.feed_stray(uid), "adopted", "the last feeding adopts it")
+	_check(not g.object_by_uid(uid).get("stray", false), "it is the farm's")
+	_eq(g.feeds.count(eats), 10 - g.strays.feeds_needed(), "a unit each feeding")
+	_done(g)
+
+
+func test_596_neighbours_send_a_few_things_a_day_not_dozens() -> void:
+	# Owner, 19 Nov: a new farm's inbox had 60 things waiting.
+	var g := _farm()
+	for k in 3:
+		_skip(g, 86400)
+		g.social.settle()
+	_check(g.social.inbox.size() <= 3 * Balance.i("social.mail_per_day"), "a few a day: %d" % g.social.inbox.size())
+	_check(g.social.inbox.size() <= Balance.i("social.inbox_limit"), "never past the limit")
+	_done(g)

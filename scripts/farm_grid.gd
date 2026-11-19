@@ -1428,12 +1428,23 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	if obj.get("stray", false) and tool != "move":
 		if loud:
 			_poke(uid)
-		if loud and Game.strays.adopt_stray(uid):
-			var fp0 := Game.footprint(obj["id"])
-			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
-			var at0 := (c0[0] + c0[2]) / 2.0
-			float_words(at0 + Vector2(0, -40), tr("ADOPTED_XP") % Balance.i("strays.stray_adopt_xp"), "find", 1.4)
-			_sparkle(at0, "find")
+		if not loud:
+			return
+		# Fed to be adopted (FarmVille's adoption task): a few feedings from the Barn, then it is the farm's.
+		var fed := Game.strays.feed_stray(uid)
+		var fp0 := Game.footprint(obj["id"])
+		var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
+		var at0 := (c0[0] + c0[2]) / 2.0
+		match fed:
+			"adopted":
+				float_words(at0 + Vector2(0, -40), tr("ADOPTED_XP") % Balance.i("strays.stray_adopt_xp"), "find", 1.4)
+				_sparkle(at0, "find")
+			"fed":
+				float_words(at0 + Vector2(0, -40), tr("STRAY_FED") % [int(obj.get("fed_n", 0)),
+					Game.strays.feeds_needed()], "find", 1.2)
+			"STRAY_NO_FEED":
+				Feedback.moment("error")
+				Game.message.emit(tr("STRAY_NO_FEED"))
 		return
 	if tool == "move":
 		if loud:

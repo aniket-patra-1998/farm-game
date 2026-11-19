@@ -100,6 +100,10 @@
    "v": 86400,
    "note": "a stray nobody adopts wanders off after a day"
   },
+  "adopt_feeds": {
+   "v": 3,
+   "note": "feedings a stray needs to be adopted: one unit each of a feed its kind eats, from the Barn (FarmVille's adoption task)"
+  },
   "stray_adopt_xp": {
    "v": 5,
    "note": "XP for adopting a stray."
@@ -713,8 +717,12 @@
    "note": "requests and shared seedlings you can help in a day (estimate)"
   },
   "inbox_limit": {
-   "v": 60,
+   "v": 20,
    "note": "most things waiting in the inbox; newer ones are not delivered while full"
+  },
+  "mail_per_day": {
+   "v": 6,
+   "note": "most things neighbours send in a day, answers to your own posts aside (owner, 19 Nov: 60 waited on a new farm)"
   },
   "outbox_limit": {
    "v": 12,

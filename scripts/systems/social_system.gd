@@ -25,6 +25,8 @@ var gifts_today := {}            # neighbour index -> gifts sent them on that da
 var help_day := 0                # the day `helps_today` counts for
 var helps_today := 0
 var last_settled := 0            # unix seconds the neighbours were last caught up to
+var mail_day := 0                # the day `mail_today` counts for
+var mail_today := 0              # neighbours' things arrived today (owner, 19 Nov: 60 waiting on a new farm)
 var transport: NeighbourTransport
 
 
@@ -42,6 +44,8 @@ func reset() -> void:
 	help_day = 0
 	helps_today = 0
 	last_settled = game.now()
+	mail_day = 0
+	mail_today = 0
 
 
 func save_to(data: Dictionary) -> void:
@@ -53,6 +57,8 @@ func save_to(data: Dictionary) -> void:
 	data["social_help_day"] = help_day
 	data["social_helps_today"] = helps_today
 	data["social_last_settled"] = last_settled
+	data["social_mail_day"] = mail_day
+	data["social_mail_today"] = mail_today
 
 
 func load_from(data: Dictionary) -> void:
@@ -64,12 +70,15 @@ func load_from(data: Dictionary) -> void:
 	help_day = int(data.get("social_help_day", 0))
 	helps_today = int(data.get("social_helps_today", 0))
 	last_settled = int(data.get("social_last_settled", game.now()))   # never moved back: see `settle`
+	mail_day = int(data.get("social_mail_day", 0))
+	mail_today = int(data.get("social_mail_today", 0))
 
 
 ## A clock set back: neighbours' answers still on their way keep their wait, and a post its age. (`last_settled`
 ## stays: it only ever moves forward, so a clock set back never brings the neighbours' day round again.)
 func shift_clock(seconds: int) -> void:
 	gift_day = game.day_moved_back(gift_day, seconds)
+	mail_day = game.day_moved_back(mail_day, seconds)
 	help_day = game.day_moved_back(help_day, seconds)
 	for post: Dictionary in outbox:
 		post["t"] = int(post.get("t", 0)) - seconds
@@ -307,13 +316,17 @@ func settle() -> String:
 	# `last_settled` only ever moves forward.
 	var from := maxi(last_settled, now - Balance.i("social.catchup_hours") * 3600)
 	var arrived := 0
+	if game.day_turned(mail_day):
+		mail_day = game.day_number()
+		mail_today = 0
 	if now > from:
 		for item in transport.incoming(from, now):
-			if inbox.size() >= Balance.i("social.inbox_limit"):
+			if inbox.size() >= Balance.i("social.inbox_limit") or mail_today >= Balance.i("social.mail_per_day"):
 				break
 			if _usable(item):
 				_add_to_inbox(item)
 				arrived += 1
+				mail_today += 1
 	last_settled = maxi(last_settled, now)
 	if answered + arrived > 0:
 		_changed()

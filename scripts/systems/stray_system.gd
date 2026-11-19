@@ -130,6 +130,44 @@ func _owns(item_id: String) -> bool:
 	return false
 
 
+## Feeds a stray once with the best feed in the Barn that its kind eats (FarmVille's adoption task, docs/AUDIT.md
+## part 4): after `strays.adopt_feeds` feedings it is adopted. Returns "fed", "adopted", or why it couldn't
+## ("STRAY_NO_FEED": nothing in the Barn it eats).
+func feed_stray(uid: int) -> String:
+	var o := game.object_by_uid(uid)
+	if o.is_empty() or not o.get("stray", false):
+		return ""
+	if not game.feeds.enabled():
+		return "adopted" if adopt_stray(uid) else ""
+	var best := ""
+	var rich := false
+	var best_grade := 0.0
+	for f in game.feeds.feed_ids():
+		var g := game.feeds.grade(o, f)
+		for r: bool in [false, true]:
+			if g > best_grade and game.feeds.count(f, r) >= 1:
+				best = f
+				rich = r
+				best_grade = g
+				break
+	if best == "":
+		return "STRAY_NO_FEED"
+	game.feeds.stock[(FeedSystem.RICH if rich else "") + best] = game.feeds.count(best, rich) - 1
+	o["fed_n"] = int(o.get("fed_n", 0)) + 1
+	game.record("feed", str(o["id"]))
+	game.inventory_changed.emit()
+	if int(o["fed_n"]) >= feeds_needed():
+		o.erase("fed_n")
+		return "adopted" if adopt_stray(uid) else ""
+	game.objects_updated(uid)
+	game.queue_save()
+	return "fed"
+
+
+func feeds_needed() -> int:
+	return maxi(1, Balance.i("strays.adopt_feeds"))
+
+
 func adopt_stray(uid: int) -> bool:
 	var o := game.object_by_uid(uid)
 	if o.is_empty() or not o.get("stray", false):
