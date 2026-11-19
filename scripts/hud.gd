@@ -47,7 +47,6 @@ var helpers: HudHelpers   # the helpers' flower, bottom left
 var interface_hidden := false
 var camera: FarmCamera              # set by Main, for the zoom buttons
 var grid: FarmGrid                  # set by Main: what is being moved (the placing bar's Turn button)
-var _seed_for := ""                  # a planting vehicle waiting for its seed from the seed list ("" for the Plant tool)
 var go_to: Callable                 # set by Main: goes to the nearest thing of a kind ("ripe", "hungry"...)
 var resting := false                # the interface has faded away over an idle farm (set_resting)
 var next_ready: Callable            # set by Main: goes to the next thing ready to take
@@ -76,6 +75,7 @@ var settings:
 var seeds:
 	get: return _panel(&"seeds")
 
+var _seed_for := ""                  # a planting vehicle waiting for its seed from the seed list ("" for the Plant tool)
 var _reveal: Variant   # (a RevealCard) the reveal of a mystery egg or box (made when first needed, then kept)
 var _away: Variant   # (an AwayCard) the While you were away card (made when first needed, then kept)
 var _rest_tween: Tween
