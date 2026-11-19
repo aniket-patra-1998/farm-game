@@ -162,6 +162,8 @@
   "ribbon_icon": 44,
   "inbox_face": 64,
   "goal_face": 64,
+  "goal_task_icon": 44,
+  "goal_bar_width": 150,
   "badge_size": 26,
   "loading_icon": 120,
   "loading_title": 40,

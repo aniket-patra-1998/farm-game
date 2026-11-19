@@ -204,14 +204,33 @@ func _buttons(key: String) -> Array[Button]:
 
 ## One task: "Harvest Strawberry 6 / 10" on a word bar, and Show me while it is not done.
 func task_row(task: Dictionary, at: Array) -> Control:
+	# One line like the inbox's (owner, 19 Nov: no bar across the whole panel): the thing's small picture, what to
+	# do in words on the left, a short bar with the count, then Show me.
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
 	var have := mini(int(at[0]), int(at[1]))
 	var need := int(at[1])
+	var what := str(task.get("what", GoalSystem.ANY))
+	var px := UiTheme.size("goal_task_icon")
+	if not Game.item_data(what).is_empty():
+		var pic := TextureRect.new()
+		pic.texture = ItemIcons.of(what)
+		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pic.custom_minimum_size = Vector2(px, px)
+		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(pic)
+	var words := BookPanel.text(UiTheme.tidy(task_words(task)), UiTheme.BODY)
+	words.autowrap_mode = TextServer.AUTOWRAP_OFF
+	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	words.clip_text = true
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(words)
 	var bar := UiKit.word_bar()
-	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.custom_minimum_size.x = UiTheme.size("goal_bar_width")
 	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	UiKit.set_bar(bar, have, need, "%s %s / %s" % [task_words(task), UiTheme.number(have), UiTheme.number(need)])
+	UiKit.set_bar(bar, have, need, "%s / %s" % [UiTheme.number(have), UiTheme.number(need)])
 	row.add_child(bar)
 	if have < need and not show_of(task).is_empty():
 		var show := hud.panel_button(tr("GOAL_SHOW_ME"))

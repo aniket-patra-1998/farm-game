@@ -160,6 +160,7 @@ func _ready() -> void:
 	book = BookPanel.new()
 	root.add_child(book)
 	goals.build(root)   # (after the book: a goal change refreshes an open sheet)
+	root.move_child(goals.column, book.get_index())   # ..but drawn under it: an open panel covers the faces (owner)
 	# One window at a time: a panel opened from the HUD (Seeds, Market, the album...) puts a building's sheet away,
 	# as a sheet opening closes the panel (show_building); else the sheet stayed drawn over the panel.
 	book.opened.connect(func() -> void:
