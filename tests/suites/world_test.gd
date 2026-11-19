@@ -552,3 +552,33 @@ func test_546_the_2d_art_compiles_after_the_first_screen() -> void:
 	main.queue_free()
 	await get_tree().process_frame
 	Game.reset_game()
+
+
+func test_565_the_opening_glide_comes_down_onto_the_farm_once_and_a_tap_ends_it() -> void:
+	var was := OpeningGlide.played
+	OpeningGlide.played = false
+	_check(OpeningGlide.wanted(false), "the session's first farm opens with the glide")
+	_check(not OpeningGlide.wanted(true), "never in the loading benchmark (it times the first frames)")
+	var goal := Vector2(400, 300)
+	var from := OpeningGlide.start_view(goal, 1.0, 720.0, 0.2)
+	_check(from.z < 1.0, "it starts wider than the farm's own view")
+	_check(from.y < goal.y and is_equal_approx(from.x, goal.x), "and further up the farm, straight above it")
+	_check(is_equal_approx(OpeningGlide.start_view(goal, 1.0, 720.0, 0.95).z, 0.95), "no wider than the furthest zoom out")
+	_check(OpeningGlide.cool_at(0.0) > 0.0 and is_zero_approx(OpeningGlide.cool_at(1.0)), "the light warms in fully")
+	_check(OpeningGlide.cool_at(0.5) < OpeningGlide.cool_at(0.0) * 0.5, "warming fastest at first")
+	_eq(FarmCamera.glide_ease(0.0), 0.0, "the glide sets out from rest..")
+	_eq(FarmCamera.glide_ease(1.0), 1.0, "..and settles on the view")
+	var cam := FarmCamera.new()
+	cam.snap(goal, 1.0)
+	cam.glide_from(Vector2(from.x, from.y), from.z, 2.0)
+	_check(cam.position.is_equal_approx(Vector2(from.x, from.y)), "it starts at the high view..")
+	_check(is_equal_approx(cam.zoom.x, from.z), "..and wider")
+	_check(cam.glide_progress() < 1.0, "a glide is under way")
+	cam.end_glide()   # (a tap)
+	_check(cam.position.is_equal_approx(goal) and is_equal_approx(cam.zoom.x, 1.0), "a tap ends it on the farm's view")
+	_eq(cam.glide_progress(), 1.0, "and it is over")
+	cam.glide_from(Vector2(from.x, from.y), from.z, 2.0)
+	cam.begin_drag()
+	_eq(cam.glide_progress(), 1.0, "a drag takes over where it is")
+	cam.free()
+	OpeningGlide.played = was

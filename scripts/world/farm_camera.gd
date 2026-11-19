@@ -27,6 +27,10 @@ var _going := false          # on its way to `_goal` (go_to); any touch of the v
 var _goal := Vector2.ZERO
 var _going_left := 0.0
 var _dragging := false
+var _glide_left := 0.0       # seconds of a glide still to go (glide_from); any touch of the view ends it
+var _glide_seconds := 0.0
+var _glide_from := Vector3.ZERO   # (x, y, zoom) it set out from..
+var _glide_to := Vector3.ZERO     # ..and the view it settles on
 var _last_pan_msec := 0
 
 
@@ -37,6 +41,44 @@ func snap(world_pos: Vector2, z: float) -> void:
 	position = world_pos
 	_velocity = Vector2.ZERO
 	_going = false
+	_glide_left = 0.0
+
+
+## Glides over `seconds` from another view to the one it shows now, easing out of the start and into the end
+## (the opening glide: scripts/world/opening_glide.gd). A drag, a pinch, a snap or `end_glide` ends it.
+func glide_from(world_pos: Vector2, z: float, seconds: float) -> void:
+	_glide_to = Vector3(position.x, position.y, target_zoom)
+	_glide_from = Vector3(world_pos.x, world_pos.y, clampf(z, min_zoom, max_zoom))
+	_glide_seconds = maxf(seconds, 0.001)
+	_glide_left = _glide_seconds
+	_velocity = Vector2.ZERO
+	_going = false
+	_glide_at(0.0)
+
+
+## How far a glide has come, 0..1 (1: none under way).
+func glide_progress() -> float:
+	return 1.0 if _glide_left <= 0.0 else 1.0 - _glide_left / _glide_seconds
+
+
+## Ends a glide on the view it was going to.
+func end_glide() -> void:
+	if _glide_left > 0.0:
+		_glide_left = 0.0
+		_glide_at(1.0)
+
+
+## The view `t` (0..1) of the way along a glide, eased in and out (smoothstep: no jolt at either end).
+static func glide_ease(t: float) -> float:
+	var c := clampf(t, 0.0, 1.0)
+	return c * c * (3.0 - 2.0 * c)
+
+
+func _glide_at(t: float) -> void:
+	var v := _glide_from.lerp(_glide_to, glide_ease(t))
+	target_zoom = v.z
+	zoom = Vector2(v.z, v.z)
+	position = Vector2(v.x, v.y)
 
 
 ## Travels to a place on its own, easing in (the Next ready button), zooming in to at least `least_zoom` on the
@@ -57,6 +99,7 @@ func is_going() -> bool:
 
 func begin_drag() -> void:
 	_going = false
+	_glide_left = 0.0
 	_dragging = true
 	_velocity = Vector2.ZERO
 
@@ -102,6 +145,7 @@ func zoom_by(factor: float, screen_pos: Vector2, instant := false) -> void:
 	target_zoom = clampf(target_zoom * factor, min_zoom, max_zoom)
 	_focus = screen_pos
 	_going = false   # (the player's own zoom ends a journey)
+	_glide_left = 0.0
 	if instant:
 		_apply_zoom(target_zoom)
 
@@ -113,6 +157,10 @@ func to_world(screen_pos: Vector2) -> Vector2:
 
 
 func _process(delta: float) -> void:
+	if _glide_left > 0.0:
+		_glide_left = maxf(_glide_left - delta, 0.0)
+		_glide_at(glide_progress())
+		return
 	if absf(zoom.x - target_zoom) > 0.0001:
 		_apply_zoom(lerpf(zoom.x, target_zoom, 1.0 - exp(-ZOOM_EASE * delta)))
 	if _going and not _dragging:

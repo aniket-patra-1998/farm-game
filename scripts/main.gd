@@ -143,7 +143,11 @@ func _ready() -> void:
 	# when the game itself is running: the screenshot and probe tools load this scene inside their own).
 	StartMarks.mark("main_built")   # not-ui (the farm laid out, before its first frame)
 	if get_tree().current_scene == self:
-		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
+		var first := LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"),
+				world_3d)
+		if first != null and OpeningGlide.wanted(StartMarks.benchmark_wanted()):
+			# The session's first farm: as the cover lifts, the view comes down onto it and the light warms in.
+			first.lifting.connect(func() -> void: OpeningGlide.play(self, camera, world_3d))
 		Game.farm_opened.connect(_on_farm_opened)
 		if StartMarks.benchmark_wanted():
 			load(StartMarks.BENCHMARK).start(self)   # (the benchmark build measures loading on the phone by itself, then quits)

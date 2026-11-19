@@ -10,6 +10,8 @@ extends CanvasLayer
 ## the cover: the farm appears whole, never thing by thing.
 ## Our own touch (FarmVille showed a loading bar). Off without a screen (tests, CI).
 
+signal lifting   ## the farm is settled and the cover starts to fade (the opening glide starts here)
+
 const SETTLE_FRAMES := 8      # frames in a row this quick..
 const SETTLE_MS := 40.0       # ..mean the farm is ready to be seen
 const STEADY_MOST_MS := 150.0 # a slow phone's frame this long or shorter, close to the one before, is its pace..
@@ -95,6 +97,7 @@ func _process(delta: float) -> void:
 		covering = maxi(covering - 1, 0)
 		if _world != null:
 			_world.visible = true
+		lifting.emit()
 		var fade := create_tween()
 		for child in get_children():
 			fade.parallel().tween_property(child, "modulate:a", 0.0, FADE_SECONDS)

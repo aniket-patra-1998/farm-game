@@ -13,6 +13,7 @@ extends Node3D
 # lamps and stars still say it is night.
 const FLASH_BRIGHT := 0.55   # a lightning flash brightens the frame this much at full..
 const FLASH_AMBIENT := 1.2   # ..and lifts the ambient light this much
+const OPENING_DIM_BRIGHT := 0.35   # the opening's cool light (OpeningGlide): this share of it off brightness
 const MOON_ENERGY := 0.8      # (lifted after the UI review: an evening farm was hard to see behind panels)
 const NIGHT_AMBIENT := 0.6
 const SETTING := "farm/world/use_3d"
@@ -42,6 +43,10 @@ var _grade_warmth := -1.0
 var _grade_lift := Vector3.ZERO   # main's night lift for the shadows (folded into the colour grade's dark end)
 var _grade_sat := 1.0             # and its saturation and contrast, folded into the environment's
 var _grade_contrast := 1.0
+var _day_saturation := 1.0         # the frame's saturation for the hour and weather (set_daylight)
+## The opening's cooler, softer light (OpeningGlide), 0..1: saturation and a little brightness taken away.
+var opening_cool := 0.0
+var _cooled := false
 var _changed := {}            # plots changed since the last update (index -> true)
 var _changed_all := false     # or the whole field
 var _plots_queued := false
@@ -204,7 +209,10 @@ func _process_timed(_delta: float) -> void:
 	if environment.fog_enabled:
 		_fit_fog()
 	# A lightning flash lights the whole frame for a moment (Lightning3D.flash).
-	environment.adjustment_brightness = 1.0 + lightning.flash * FLASH_BRIGHT
+	environment.adjustment_brightness = 1.0 + lightning.flash * FLASH_BRIGHT - opening_cool * OPENING_DIM_BRIGHT
+	if opening_cool > 0.0 or _cooled:   # (the opening's light warming in, every frame of its few seconds)
+		_cooled = opening_cool > 0.0
+		environment.adjustment_saturation = _day_saturation * (1.0 - opening_cool)
 	if _ambient > 0.0:   # (once the day's light is set)
 		environment.ambient_light_energy = _ambient + lightning.flash * FLASH_AMBIENT
 
@@ -287,7 +295,8 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
 	environment.ambient_light_energy = lerpf(0.4, NIGHT_AMBIENT, dark) * (1.0 - dim * 0.4)
 	var frame_sat := lerpf(Grade.value("frame_day_saturation"), Grade.value("frame_night_saturation"), dark)
-	environment.adjustment_saturation = frame_sat * (1.0 - float(weather.get("desat", 0.0))) * _grade_sat
+	_day_saturation = frame_sat * (1.0 - float(weather.get("desat", 0.0))) * _grade_sat
+	environment.adjustment_saturation = _day_saturation * (1.0 - opening_cool)
 	environment.adjustment_contrast = Grade.value("frame_contrast") * _grade_contrast
 	var low_sun := pow(1.0 - sin(maxf(s, 0.0) * PI), 3.0) if s >= 0.0 else 0.0
 	var warmth := clampf(Grade.value("base_warmth") + low_sun * Grade.value("low_sun_warmth"), 0.0, 1.0)
