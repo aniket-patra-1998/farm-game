@@ -101,8 +101,13 @@ jobs:
           # The debug APK is a gradle export (export_presets.cfg) so it can carry our own Android plugin
           # (android/plugins/farm_notices, scripts/systems/phone_notices.gd): install the build template, then build
           # the plugin's library against the template's own Godot library and put it where the export plugin finds it.
-          ./godot-bin/godot --headless --path . --install-android-build-template > template.log 2>&1 || tail -20 template.log
-          test -d android/build || { echo "No Android build template"; tail -20 template.log; exit 1; }
+          # (Godot's --install-android-build-template only works beside an export, and alone it stays open: the
+          # template is unpacked by hand, as the editor does it: android_source.zip into android/build, and its version.)
+          tpl=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          rm -rf android/build && mkdir -p android/build
+          unzip -q "$tpl/android_source.zip" -d android/build
+          echo "${GODOT_VERSION}.stable" > android/.build_version
+          touch android/build/.gdignore
           ls android/build/libs/release/ || true
           gradle -p android/plugins/farm_notices assembleRelease --no-daemon -q
           mkdir -p addons/farm_notices/bin
