@@ -125,7 +125,7 @@ class Produce extends Sprite2D:
 	var _tw: Tween
 
 	func _init() -> void:
-		visible = false
+		modulate.a = 0.0   # (a flyer, not a surface: unseen at rest, faded out when it lands)
 		trail = CPUParticles2D.new()
 		trail.local_coords = false
 		trail.emitting = false
@@ -146,7 +146,6 @@ class Produce extends Sprite2D:
 		if _tw != null:
 			_tw.kill()
 		busy = true
-		visible = true
 		trail.emitting = false
 		texture = picture
 		var px := float(look.get("px", 46))
@@ -173,6 +172,4 @@ class Produce extends Sprite2D:
 		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 		_tw.tween_callback(func() -> void: trail.emitting = false)
 		_tw.tween_property(self, "modulate:a", 0.0, 0.08)
-		_tw.tween_callback(func() -> void:
-			visible = false
-			busy = false)
+		_tw.tween_callback(func() -> void: busy = false)
