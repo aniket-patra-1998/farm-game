@@ -53,6 +53,21 @@ static func lit_hour(real_hour: float) -> float:
 	return h
 
 
+## The summer hour that looks like local `hour` in `season`: the day's colours are summer's (KEYS, SUNRISE,
+## SUNSET), so this season's sunrise and sunset (data/seasons.json `daylight`) are stretched onto summer's; a
+## winter evening at 6 pm is dark, a summer one still light (owner, 19 Nov).
+static func summer_hour(hour: float, season: String) -> float:
+	var sun: Array = Season.data().get("daylight", {}).get(season, [SUNRISE, SUNSET])
+	var rise := float(sun[0])
+	var fall := float(sun[1])
+	var h := fposmod(hour, 24.0)
+	if h < rise:
+		return h / rise * SUNRISE
+	if h < fall:
+		return SUNRISE + (h - rise) / (fall - rise) * (SUNSET - SUNRISE)
+	return SUNSET + (h - fall) / (24.0 - fall) * (24.0 - SUNSET)
+
+
 ## Local hour of the day (0 to 24) for a unix time, using the device's time zone.
 static func local_hour(unix_time: int, bias_minutes: int) -> float:
 	var secs := posmod(unix_time + bias_minutes * 60, 86400)

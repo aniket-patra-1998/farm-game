@@ -157,3 +157,17 @@ func test_363_progress_and_life_show_on_the_farm() -> void:
 	_check(Feedback.has_moment("dawn") and Sound.has_sound("crow"), "and the dawn has its rooster")
 	Game.reset_game()
 
+
+
+func test_581_the_days_shorten_with_the_season() -> void:
+	# Owner, 19 Nov: autumn kept summer's long days. Each season's sunrise and sunset (seasons.json daylight) are
+	# stretched onto summer's colours: summer is unchanged, a winter 6 pm is past the summer sunset (dusk or dark).
+	for h in [0.0, 5.5, 12.0, 18.75, 23.0]:
+		_check(absf(DayCycle.summer_hour(h, "Summer") - h) < 0.001, "summer unchanged at %s" % h)
+	var winter: Array = Season.data()["daylight"]["Winter"]
+	_check(absf(DayCycle.summer_hour(float(winter[0]), "Winter") - DayCycle.SUNRISE) < 0.001, "winter sunrise")
+	_check(absf(DayCycle.summer_hour(float(winter[1]), "Winter") - DayCycle.SUNSET) < 0.001, "winter sunset")
+	_check(DayCycle.summer_hour(18.0, "Winter") > DayCycle.SUNSET, "a winter 6 pm looks like a summer evening")
+	_check(DayCycle.summer_hour(18.0, "Autumn") > DayCycle.summer_hour(18.0, "Summer"), "autumn evenings come earlier")
+	for season: String in Season.data()["seasons"]:
+		_check(Season.data()["daylight"].has(season), "%s has its daylight" % season)

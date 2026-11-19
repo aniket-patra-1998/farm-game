@@ -549,10 +549,10 @@ func _build_next(gap: int) -> Control:
 func _build_numbers(gap: int) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", gap)
-	var fill := VBoxContainer.new()
-	fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var fill := VBoxContainer.new()   # (a short bar, not one across the sheet: owner, 19 Nov)
 	fill.alignment = BoxContainer.ALIGNMENT_CENTER
 	_bar = UiKit.word_bar()   # (the count on the bar itself: one thing, not words over a bar)
+	_bar.custom_minimum_size.x = UiTheme.size("sheet_bar_width")
 	fill.add_child(_bar)
 	row.add_child(fill)
 	_fill_block = fill
