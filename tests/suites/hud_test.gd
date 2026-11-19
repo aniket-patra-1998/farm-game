@@ -572,6 +572,48 @@ func test_358_a_swipe_and_a_streak_climb_a_scale_and_count() -> void:
 	Game.reset_game()
 
 
+## Harvest juice (wow build): the crop's picture flies from the plot in a small reused pool, never more at once
+## than the pool holds; a sweep ends on its count once, only when the farmer has no more of that work queued and
+## the run was long enough; the trail is off on the low graphics level.
+func test_560_harvest_produce_flies_pooled_and_a_sweep_ends_on_its_count() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	var fx: FxLayer = grid.fx
+	var pic := UiIcon.glow_texture()
+	for k in FxLayer.PRODUCE_POOL * 2:
+		fx.produce(Vector2(100, 400), pic)
+	_eq(fx.produce_made(), FxLayer.PRODUCE_POOL, "a fast sweep reuses the produce flyers, it never makes more")
+	fx.produce(Vector2(100, 400), null)
+	_eq(fx.produce_made(), FxLayer.PRODUCE_POOL, "and a crop with no picture flies nothing")
+	_check(not bool(Quality.value("fx_trails", "low")) and bool(Quality.value("fx_trails", "mid")),
+			"the sparkle trail is off on low, on from mid")
+	Game.player.clear_queue()
+	var least := Balance.i("feel.combo_min")
+	_check(least > 1, "a sweep needs a few in a row to say its count")
+	for k in least - 1:
+		grid.call("_run", "harvest", 0)
+	_check(not bool(grid.call("_sweep_end", "harvest", 0)), "a run shorter than that ends quietly")
+	grid.call("_run", "harvest", 0)
+	Game.player.queue.append({"kind": "harvest", "plot": 1})
+	_check(not bool(grid.call("_sweep_end", "harvest", 0)), "while more of it is queued the sweep goes on")
+	Game.player.queue.clear()
+	_check(not bool(grid.call("_sweep_end", "plow", 0)), "another kind of work's end says nothing of it")
+	var before := grid.get_child_count()
+	_check(bool(grid.call("_sweep_end", "harvest", 0)), "the sweep's last harvest says its count")
+	var said: Label = grid.get_child(before)
+	_eq(said.text, FarmGrid.COUNT_TAG % least, "the run's length, once, over the last plot")
+	Balance.override("feel.combo_min", 0)
+	_check(not bool(grid.call("_sweep_end", "harvest", 0)), "0 turns it off")
+	Balance.override("feel.combo_min", least)
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()
+
 ## The Next ready button goes to the nearest ready thing it has not shown yet, round and round, and the view
 ## travels there by itself until a finger takes it.
 func test_359_next_ready_goes_round_everything_ready() -> void:
