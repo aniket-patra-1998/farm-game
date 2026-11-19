@@ -1165,6 +1165,24 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   says. 3) While no phone run is possible, more start slices, sized with `--drop`: CropForms (-811 lines: CropModels
   names it to build a crop's look; crops are kept by ModelStore too, so the same spec/builder split), DecorModel
   (-814: Objects3D's decor looks go through Instancer.copy_of), Animal3D (-978).
+- Run 23 (19 Nov 18:54 - 19:45 IST). Godot fetched again; local main had diverged again (kept as the local branch
+  local-main-backup-1119, then `git checkout -B main origin/main`). No phone run: today's 4 are used (since 13:30
+  IST); the nightly at 02:10 IST is the next. Merged two start slices:
+  - dbb6c2d (perf/crop-spec), slice 8: CropFormSpec (scripts/world3d/crop_form_spec.gd: form_of, look, is_plot, spec,
+    forms, crops, builder()) is what CropModels and Crops3D name; CropForms (the builders) loads by path via
+    `CropFormSpec.builder()` and keeps delegates for the tools. 28,618 -> 27,782 lines; headless 16 alternating runs:
+    scripts - engine median 2,102 -> 2,052 ms, hud 3,070 -> 2,956 ms. The 105 plant files' meshes compared equal
+    surface by surface (the exporter's .scn bytes differ run to run, so compare meshes, not bytes). Test 583.
+  - perf/decor-by-path, slice 9: DecorModel loads by path (`Objects3D.decor_model()`, only in _decor_built, a
+    ModelStore miss); YoungModel.build (a mystery young, built fresh as it grows) and DecorPaint (WOOD, DARK_WOOD,
+    STONE, WHITE, HAY, LEAF; DecorModel's consts alias them, LinkModels' hedge uses LEAF) are what the start names.
+    27,782 -> 26,947 lines. Test 582. Code moved as it was (test 582 checks the colours alike).
+  - The plants exporter must be rerun when scale_guide.gd changes (it is a plants source): run it, `git checkout
+    art/` (keep the committed files), then `python3 tools/make_art_versions.py` so the versions hash those files.
+- Next run: 1) the nightly phone run's report (02:10 IST): its `gpu` phase (each owner's GPU ms, half_scale) and the
+  start marks against run 21's (scripts mark 6,782 ms on the A05s). 2) Cut the biggest GPU owner it names. 3) While
+  no phone run is possible, more start slices sized with `--drop`: Animal3D (~-1k: named by scale_guide.gd and
+  the farm's animal layer), TreeModel (481), BuildingFill (918, autoload game names it).
 
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
