@@ -276,3 +276,17 @@ func test_44_fertilizer_doubles_mastery_for_every_crop() -> void:
 		_check(not g.field.harvest(i).is_empty(), "%s picked" % id)
 		_eq(g.mastery.points_of(id) - before, 2, "%s: a fertilized crop counts twice" % id)
 	_done(g)
+
+
+func test_576_the_old_tutorial_never_asks_for_what_is_not_there() -> void:
+	# Owner, 19 Nov: "Tap your ripe crops to harvest!" floated over a field of empty plowed plots. A harvest step
+	# with nothing ripe moves on (to plowing, or planting when a plowed plot waits).
+	var g := _farm()
+	g.tutorial_step = GameState.Tutorial.HARVEST
+	_eq(g.tutorial_text(), tr("YOUR_FIRST_CROPS_ARE_READY_TAP"), "ripe starter crops: harvest them")
+	g.field.harvest(g.index_of(5, 4))
+	g.field.harvest(g.index_of(5, 5))
+	_check(not g.any_plot_in(GameState.Phase.RIPE), "nothing ripe now")
+	g.tutorial_step = GameState.Tutorial.HARVEST   # (an older save stuck on the step)
+	_eq(g.tutorial_text(), tr("CHOOSE_STRAWBERRIES_THEN_TAP_A_PLOWED"), "a plowed plot waits: plant it")
+	_done(g)

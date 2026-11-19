@@ -1157,7 +1157,18 @@ func any_plot_in(wanted: Phase) -> bool:
 ## The next step in floating words: the old tutorial's (farms from before goals), else the open Welcome
 ## chain's line (GoalSystem.welcome_say).
 func tutorial_text() -> String:
+	_fit_tutorial()
 	return tr(TUTORIAL_TEXT[tutorial_step]) if TUTORIAL_TEXT.has(tutorial_step) else goals.welcome_say()
+
+
+## The old tutorial's step never asks for what the farm doesn't have (owner, 19 Nov: "Tap your ripe crops to
+## harvest!" over a field of empty plowed plots): a harvest step with nothing ripe moves on to plowing, and a plow
+## step with a plowed plot already waiting moves on to planting.
+func _fit_tutorial() -> void:
+	if tutorial_step == Tutorial.HARVEST and not any_plot_in(Phase.RIPE):
+		tutorial_step = Tutorial.PLOW
+	if tutorial_step == Tutorial.PLOW and any_plot_in(Phase.PLOWED):
+		tutorial_step = Tutorial.PLANT
 
 
 ## Moves to the next step only when the finished step is the current one.
