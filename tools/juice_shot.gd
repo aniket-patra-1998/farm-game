@@ -30,6 +30,8 @@ func _ready() -> void:
 			var look := Balance.d("feel.produce").duplicate()
 			look.merge(JSON.parse_string(a.substr(10)), true)
 			Balance.override("feel.produce", look)
+	# (the streak is timed on the wall clock, and a slow render with --fixed-fps stretches it: hold it open)
+	Balance.override("feel.streak_gap_seconds", 3600.0)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out))
 	Game.saving_enabled = false
 	Game.reset_game()
