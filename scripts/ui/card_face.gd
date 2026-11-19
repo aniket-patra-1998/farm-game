@@ -52,6 +52,19 @@ func _notification(what: int) -> void:
 		RenderingServer.free_rid(_pic)
 
 
+## The height this card's face needs to draw whole: its padding, picture, a name's full NAME_LINES (the room
+## `_draw` keeps so a row's pictures stand level), stars, line and badge. A card list grows its cards to the
+## tallest face shown, so a seed's stars and price never run into the card below. (No text is measured: cheap.)
+func needed_height() -> float:
+	var font := get_theme_default_font()
+	var total := UiTheme.size("card_icon") + SPACE + font.get_height(UiTheme.text_px("font_card")) * NAME_LINES + SPACE
+	total += UiTheme.size("badge_height") if face.has("badge") or face.has("bar") else 0.0
+	if not (face.get("stars", []) as Array).is_empty():
+		total += SPACE + UiTheme.size("mastery_star") + MasteryStars.BAR_GAP + UiTheme.size("mastery_bar")
+	total += (SPACE + font.get_height(UiTheme.text_px("font_card_small"))) if str(face.get("line", "")) != "" else 0.0
+	return total + 2.0 * UiTheme.size("card_pad")
+
+
 ## Shows item `new_id` with `new_face` and its `new_picture` on this card.
 func show_face(new_id: String, new_face: Dictionary, new_picture: Texture2D) -> void:
 	id = new_id

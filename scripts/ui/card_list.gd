@@ -41,6 +41,7 @@ var _spare: Array[Control] = []
 var _due := false
 var _pop := false          # the panel is opening: the first cards pop in (UiFx)
 var _row_high := 0.0       # rows: the tallest row measured so far
+var _card_high := 0.0      # cards: the tallest face measured so far (at least the theme's card height)
 
 
 ## A grid of cards for the `list` ids, for a panel on a screen `view_width` wide.
@@ -185,7 +186,8 @@ func step() -> Vector2:
 	var gap := UiTheme.size("hud_gap")
 	if _is_rows():
 		return Vector2(size.x, _row_high + DIVIDER)
-	return Vector2(UiTheme.size("card_width") + gap, UiTheme.size("card_icon") + UiTheme.size("card_words") + gap)
+	return Vector2(UiTheme.size("card_width") + gap, maxf(_card_high, UiTheme.size("card_icon")
+		+ UiTheme.size("card_words")) + gap)
 
 
 func _is_rows() -> bool:
@@ -251,6 +253,13 @@ func _lay_out() -> void:
 				_row_high = need
 				taller = true
 			card.size = Vector2(size.x, _row_high)
+		else:   # (a face taller than the cards so far: every card takes its height, as rows do)
+			var high := step().y - UiTheme.size("hud_gap")
+			var need_card := (card as CardFace).needed_height()
+			if need_card > high + 0.5:
+				_card_high = need_card
+				taller = true
+			card.size.y = maxf(high, need_card)
 		if _pop:
 			UiFx.pop_now(card, order)
 			order += 1
@@ -259,8 +268,8 @@ func _lay_out() -> void:
 		_size_to_ids()
 		for k: int in _shown:
 			var row: Control = _shown[k]
-			row.position.y = k * step().y
-			row.size.y = _row_high
+			row.position.y = floorf(k / float(columns)) * step().y
+			row.size.y = step().y - (DIVIDER if _is_rows() else UiTheme.size("hud_gap"))
 		_later()
 	queue_redraw()
 
