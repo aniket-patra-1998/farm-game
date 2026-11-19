@@ -495,6 +495,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   runs the full precheck (~7 min): give `git push` a 20 min timeout. Seen in the home sheet render: each tile's
   "x1" sits over its tree picture's right edge (the count tile's corner); check against the picked look before
   moving it. Next: that badge, then the lawn's dark blotches at noon (order of work 1, taste: art-polish).
+- Art runs 19-20 (19 Nov 05:35, 06:06 IST): main only. ef8c5e6: count tiles' "x1" in the tile's bottom corner
+  (ui_kit test 528; run 19's patch, held while main was red). 70291ce: the phone type scale keeps its hierarchy
+  (UiTheme.TYPE_FLOOR_STEP: each step above body 2 units over the one below where the floor lifts it; test 342).
+  8a2242f: card grids grow to the tallest face (CardFace.needed_height, no text measured so hud test 374's scroll
+  budget holds); a seed card's stars and price ran into the card below at 2400x1080. Render panels at phone shape:
+  `xvfb-run -s "-screen 0 2400x1080x24" godot --rendering-method gl_compatibility --resolution 2400x1080 ...
+  look_shot.tscn -- --views=seeds_panel,home_panel`. Next: the other card grids at phone shape (Market, Barn,
+  Collections) and the lawn's dark blotches at noon (taste: art-polish).
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
