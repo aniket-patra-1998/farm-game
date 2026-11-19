@@ -75,7 +75,7 @@ var settings:
 var seeds:
 	get: return _panel(&"seeds")
 
-var _seed_for := ""                  # a planting vehicle waiting for its seed from the seed list ("" for the Plant tool)
+var _seed_for := ""   # a planting vehicle waiting for its seed from the seed list ("" for the Plant tool)
 var _reveal: Variant   # (a RevealCard) the reveal of a mystery egg or box (made when first needed, then kept)
 var _away: Variant   # (an AwayCard) the While you were away card (made when first needed, then kept)
 var _rest_tween: Tween
