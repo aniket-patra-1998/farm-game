@@ -1323,6 +1323,25 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   golden-hour sun, a soft rainbow after rain. Local main of this clone was an unrelated old history: kept as
   local branch stale-main-backup.
 
+- Run 10 (19 Nov 21:36-22:10 IST): no picks yet (opening glide, build reveal, touch answers, touch hearts, cloud
+  shadows). Item 5 surveyed: warm lit windows at night already exist (ModelKit.glass, set_window_glow from main) and
+  so does the golden hour (Farm3D.set_daylight: a low warm sun, longer shadows; grade low_sun_warmth), so neither was
+  rebuilt. The soft rainbow after rain was built on wow/rainbow (not merged: a new look, a sheet in the log under
+  "Wow: waiting for your look": before and as built at noon, richer at noon, as built at dusk). WeatherLayer eases
+  its own `wet` as SurfaceWeather does; static WeatherLayer.rainbow_strength(wet, rain, cover, dark, rule) (none
+  while it rains, under cloud past max_cover or at night past max_dark; fades as the farm dries) drives one
+  full-screen ColorRect with shaders/rainbow.gdshader (blend_add, colours washed by `saturation`), hidden when 0.
+  Numbers in data/weather.json "rainbow" (as built: strength 0.2, saturation 0.7; richer 0.28, 0.85, width 0.085;
+  calmer 0.14), Quality `rainbow` off on low. Test 591 (weather_events_test). Render: look_shot --weather=clear
+  --after-rain [--rainbow=<json>] [--hour=17.4] --views=all (about 1 min). Full precheck passed on the branch
+  (492 tests). Doubt: it is drawn over the whole farm (animals, trees), not behind it.
+- Next: the owner's picks (six branches wait); rebase the picked one on main, precheck, fast-forward push (test
+  numbers: build reveal 580 and touch answers 582 renumber; touch hearts 584 too; cloud shadows 590; rainbow 591;
+  cloud shadows and rainbow both add a Quality field to data/quality.json: a small conflict). Items 0-5 are all
+  built; item 6 (sound bed) waits for the owner's Kenney packs. The build's window ends at 00:40 IST, 20 Nov.
+  This clone needed Godot downloaded (4.7.2, to /home/claude/godot); its stale local main was kept as local
+  branch local-main-stale-backup.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
