@@ -55,6 +55,8 @@ func test_583_a_file_left_out_of_the_app_is_fetched_when_first_needed() -> void:
 	packs.source = FolderPackSource.new(MADE)
 	var came: Array = []
 	packs.arrived.connect(func(paths: Array[String]) -> void: came.append_array(paths))
+	_check(packs.away(GHOST) and packs.want(GHOST, false) and came.is_empty() and not ResourceLoader.exists(GHOST),
+		"asked about without fetching (a picture in the Market): it could come, and is not sent for")
 	_check(packs.want(GHOST), "wanted")
 	_check(not packs.want(GHOST), "(asked again once it is here: nothing more to fetch)")
 	_eq(came, [GHOST], "its file arrives")
@@ -70,6 +72,13 @@ func test_583_a_file_left_out_of_the_app_is_fetched_when_first_needed() -> void:
 	_check(model != null, "the animal is drawn from its fetched file")
 	if model != null:
 		model.free()
+	_check(not AssetRegistry.away("ghost_cow"), "(and is no longer away)")
+	# A picture shown of its stand-in is made again once the file is there.
+	ItemIcons._textures["ghost_cow"] = ImageTexture.new()
+	(load(ItemIcons.MAKER) as GDScript).call(&"remake", files)
+	_check(ItemIcons._waiting.has("ghost_cow"), "its picture is made again, of the file")
+	ItemIcons._textures.erase("ghost_cow")
+	ItemIcons._waiting.erase("ghost_cow")
 	AssetRegistry._extra.erase("ghost_cow")
 	AssetPacks.shared = games
 	packs.free()

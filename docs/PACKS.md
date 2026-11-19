@@ -18,6 +18,9 @@ needed, as other games do. `AssetPacks` (`scripts/systems/asset_packs.gd`) does 
 - **No network, or a bad file**: the fetch is tried again after 30 seconds, doubling to 10 minutes; the player
   is told once a session ("Some animals are still on their way"). Nothing else waits on it.
 - **Market pictures** do not need the files: every item's picture is made ahead of time and is in the app.
+  A picture that does have to be drawn on the device never fetches a pack (`AssetRegistry.fetches`: only what
+  the player owns is worth a download): it shows the stand-in, is not kept, and is made again from the file
+  when its pack arrives (`remake` in `scripts/ui/icon_maker.gd`).
 
 ## Off until there is an address
 `data/packs.json` `base_url` is empty: nothing is fetched and every file ships in the app, as before. To turn

@@ -1268,8 +1268,11 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 
 ## Limited animals (animal-varieties branch, not merged; merging is the owner's call)
 - Built (docs/LIMITED.md; nurture_test 581, hud_test's Market check, showcase_test 106): 56 limited animals and
-  21 babies as files, in the catalog for gems, a Limited section in the Market, Rare Mystery Baby and Egg, and
+  21 babies as files, in the catalog for gems, a Limited tab in the Market, Rare Mystery Baby and Egg, and
   the owner's chances (0.5% and 5%) for a home's finds to be a limited animal living there.
+- Checked through the rest of the game (limited_test 585 to 587: every one bought, fed, collected, stored, housed,
+  sold, raised, saved; none from a neighbour's gift; none in a release without them). Same sounds as their
+  families, by the owner's word: no new ones.
 - Off in the first release (`data/v1.json` `"limited": false`); the files still ship in the app (about 80 MB).
 - The touches are built (docs/LIMITED.md "Their own touches"; world3d_test 582): seen in the game as a clip at
   midday, not at night or on a phone.

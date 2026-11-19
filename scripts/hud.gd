@@ -535,14 +535,7 @@ func show_market() -> void:
 
 ## The Market on the shelf that sells `id` (an item or a kind; the first shelf after Seeds for anything else).
 func show_market_for(id: String) -> void:
-	var d := Game.catalog.get_def(id)
-	var kind := d.kind if d != null else id
-	var first := 1
-	var shelves: Array = (market.get_script() as GDScript).SHELVES
-	for k in shelves.size():
-		if str(shelves[k][0]) == kind:
-			first = k + 1   # (Seeds is tab 0)
-	book.open_tabs(tr("MARKET"), market.tabs(), first)
+	book.open_tabs(tr("MARKET"), market.tabs(), market.tab_for(id))
 
 
 ## The goal sheet (Story, Today, Projects).

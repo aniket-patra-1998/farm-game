@@ -81,15 +81,20 @@ func has(file: String) -> bool:
 	return _pack_of.has(file)
 
 
+## Whether `file` comes in a pack that is not on this device yet.
+func away(file: String) -> bool:
+	return has(file) and not _index.has(_pack_of[file])
+
+
 ## `file` is needed and is not there: if a pack brings it and there is a source, its pack is fetched (once).
-## Returns whether it is on its way (the caller draws the stand-in meanwhile and hears `arrived`).
-func want(file: String) -> bool:
-	if source == null or not has(file):
-		return false
+## Returns whether it is on its way (the caller draws the stand-in meanwhile and hears `arrived`). With `fetch`
+## false nothing is fetched (a picture in the Market: only what the player owns is worth a download), and the
+## answer is whether it could be.
+func want(file: String, fetch := true) -> bool:
+	if source == null or not away(file):
+		return false   # (nowhere to fetch from, no pack brings it, or its pack is here and does not hold it)
 	var pack: String = _pack_of[file]
-	if _index.has(pack):
-		return false   # (its pack is here and loaded: the file is there, or the pack does not hold it)
-	if not _asked.has(pack):
+	if fetch and not _asked.has(pack):
 		_asked.append(pack)
 		_next()
 	return true

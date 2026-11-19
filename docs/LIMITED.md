@@ -6,7 +6,8 @@ animal underneath (no wings, no new kinds). FarmVille had limited editions like 
 
 ## The rules
 1. **Marked limited.** Every such animal has `limited` in the catalog (`data/catalog/animals.json`), and its
-   baby too. The Market shows them in a section of their own, each card saying "Limited".
+   baby too. The Market sells them on a tab of their own, Limited, next to Animals (`HudMarket.SHELVES`; the
+   tab is not there in a release that has none), and search finds them by that word.
 2. **Bought with gems.** A limited animal is sold in the Market for gems only (`gem_cost`): about double an
    ordinary gem animal, by kind (birds and rabbits 20, pigs, sheep and goats 35, cows, horses, llamas and
    alpacas 50). It lives in its family's home and earns one and a half times the family's plain animal.
@@ -53,6 +54,20 @@ animal of that touch and colour. A shake is two moves in the file (`shake_a`, `s
 (`CoatTouch.shake_weights`); when it happens is the animal's mind's (`AnimalBehaviour.shakes`, every 14 to 30
 seconds it stands awake). To give a coat another touch: change its row in `TOUCH`, export it, and set `touch`
 in the catalog. Animals in a home shake and glint too; sparkles are for animals standing on the farm.
+
+## In the rest of the game
+A limited animal is an animal of its family in every other way, and nothing lists the limited ones by hand:
+it moves, calls (the same sound, at the same pitch) and eats as its family does, gives the family's produce,
+lives in the family's home, is kept in the Barn, sells for its gems' worth in coins, counts as an animal in
+goals and jobs, and is saved wherever it is. A limited baby is raised in the Nursery into its own animal.
+Nothing but the Market and a home's finds brings one: not a neighbour's mystery gift, a prize or a trade. A
+home with only limited animals still makes ordinary finds, of their plain kind (`LimitedSystem.plain_of`).
+`limited_test` runs every one of them through all of this, so a new limited animal added to the catalog is
+checked with no test to write.
+
+Their pictures are made like every item's (CI's `tools/bake_icons`, in the app). A picture never fetches a
+file: where one has to be drawn on the device and the animal's file is not there yet, the stand-in's picture is
+shown, not kept, and made again when the file arrives (docs/PACKS.md).
 
 ## Not in the first release
 `data/v1.json` has `"limited": false`: no find is rare and none is limited, and the animals are not on its

@@ -223,8 +223,8 @@ func test_581_limited_animals_are_sold_for_gems_and_found_only_where_one_lives()
 	_check(rare > 850 and rare < 1150, "a rare find 5%% of the time (%d in 20000)" % rare)
 	# Ordinary finds and births are drawn from the home's other animals, never its limited ones.
 	_eq(g.limited.ordinary(shed), {"cow": 6}, "ordinary finds leave the limited ones out")
-	_eq(g.limited.ordinary({"id": "cow_shed", "inside": {"galaxy_cow": 3}}), {"cow": 1},
-		"a home of limited animals only still gives its plain kind")
+	_eq(g.limited.ordinary({"id": "cow_shed", "inside": {"galaxy_cow": 3}}), {"cow": 3},
+		"a home of limited animals only still gives their plain kind")
 	# A rare baby, and a limited one in it when the chance comes up.
 	Balance.override("nurture.mystery_baby_chance", 1.0)
 	Balance.override("limited.rare_share", 1.0)

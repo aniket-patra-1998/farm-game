@@ -38,19 +38,35 @@ func held(inside: Dictionary) -> Dictionary:
 
 
 ## What an ordinary find or birth at `home` is drawn from: its animals that are not limited. A home of limited
-## animals only still gives ordinary finds: of the first plain animal it takes.
+## animals only still gives ordinary finds: of their plain kinds (`plain_of`).
 func ordinary(home: Dictionary) -> Dictionary:
 	var out := {}
 	var inside: Dictionary = home.get("inside", {})
 	for id: String in inside:
 		if not is_limited(id):
 			out[id] = int(inside[id])
-	if out.is_empty() and not inside.is_empty():
-		for id: String in game.item_data(str(home.get("id", ""))).get("holds", []):
-			if not is_limited(id) and Release.has(id):
-				out[id] = 1
-				break
+	if out.is_empty():
+		for id: String in inside:
+			var plain := plain_of(id, str(home.get("id", "")))
+			if plain != "":
+				out[plain] = int(out.get(plain, 0)) + int(inside[id])
 	return out
+
+
+## The plain animal that limited animal `id` is a coat of, among those home `home_id` takes: the first grown one
+## of its family there (a Rainbow Goose's is the Goose, though it lives on the Duck Pond), else the first grown
+## one of any. "" when the home takes none this release has.
+func plain_of(id: String, home_id: String) -> String:
+	var family := str(game.item_data(id).get("family", ""))
+	var first := ""
+	for held: String in game.item_data(home_id).get("holds", []):
+		var it := game.item_data(held)
+		if is_limited(held) or not Release.has(held) or bool(it.get("young", false)):
+			continue
+		if str(it.get("family", "")) == family:
+			return held
+		first = held if first == "" else first
+	return first
 
 
 ## Whether a find is a rare one (a Rare Mystery Baby, a Rare Mystery Egg).

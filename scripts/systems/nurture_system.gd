@@ -199,8 +199,9 @@ func give_young(young_id: String) -> bool:
 	return becomes != "" and _found(young_id, becomes)
 
 
-## Every grown kind of `kind` (tree, animal) that is not itself a rare find or a young one: what a mystery from a
-## neighbour may turn out to be (a tree's rare sapling still comes by its own chance, in `_pick_tree`).
+## Every grown kind of `kind` (tree, animal) that is not itself a rare find, a limited animal or a young one: what
+## a mystery from a neighbour may turn out to be (a tree's rare sapling still comes by its own chance, in
+## `_pick_tree`).
 func _rare_free(kind: String) -> Array[String]:
 	var rares := {}
 	for k in game.item_order:
@@ -211,7 +212,7 @@ func _rare_free(kind: String) -> Array[String]:
 	for k in game.item_order:
 		var it := game.item_data(k)
 		if str(it.get("kind", "")) == kind and not bool(it.get("young", false)) and not rares.has(k) \
-				and Release.has(k):
+				and Release.has(k) and not game.limited.is_limited(k):   # (a limited animal comes only its own way)
 			out.append(k)
 	return out
 

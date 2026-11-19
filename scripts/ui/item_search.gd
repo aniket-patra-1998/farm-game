@@ -36,6 +36,8 @@ static func words_of(id: String) -> Dictionary:
 	var kind_key := str((_data_kinds()).get(kind, ""))
 	if kind_key != "":
 		more.append(TranslationServer.translate(kind_key))
+	if Game.limited.is_limited(id):
+		more.append(TranslationServer.translate("LIMITED"))   # (found by "limited", as its Market tab is named)
 	var holds: Variant = it.get("holds", [])
 	for held: Variant in (holds if holds is Array else [holds]):
 		more.append(Game.name_of(str(held)))
