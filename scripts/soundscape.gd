@@ -81,7 +81,7 @@ func _process(delta: float) -> void:
 
 ## Works out what should be heard now and moves towards it.
 func look() -> void:
-	var hour := DayCycle.lit_hour(DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes()))
+	var hour := DayCycle.lit_hour(DayCycle.local_hour(Game.look_now(), DayCycle.device_bias_minutes()))
 	var weather: Dictionary = (_data.get("weather", {}) as Dictionary).get(str(Game.weather().get("state", "")), {})
 	_bed_db = float(_data.get("gain_db", 0.0)) + float(weather.get("bed_db", 0.0))
 	_music_db = float(_music_data().get("gain_db", 0.0)) + float(weather.get("music_db", 0.0))

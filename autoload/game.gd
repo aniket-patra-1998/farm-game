@@ -114,6 +114,7 @@ var fertilizer_bags := 0           # free fertilizer, used before coins
 var clear_until := 0               # unix time until which the weather is clear (a new farm)
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
+var skipped := 0                   # seconds of the offset from Skip 1 hour: timers move, the sky doesn't
 var tutorial_step: int = Tutorial.HARVEST
 var catalog: Catalog               # every item, as typed definitions (scripts/catalog/)
 var items := {}                    # placeable objects from data/catalog/, as dictionaries
@@ -340,6 +341,12 @@ func now() -> int:
 	return int(Time.get_unix_time_from_system()) + debug_time_offset
 
 
+## The time the farm LOOKS like (its sky, light, clock, the animals' day): now() less what Skip 1 hour added, so a
+## test skip hurries every timer but never moves the day away from the player's real time (owner, 19 Nov).
+func look_now() -> int:
+	return now() - skipped
+
+
 func add_gems(amount: int) -> void:
 	gems += amount
 	gems_changed.emit(gems)
@@ -396,6 +403,7 @@ func debug_skip(seconds: int) -> void:
 	if not OS.is_debug_build():
 		return
 	debug_time_offset += seconds
+	skipped += seconds
 	strays.check_strays()
 	daily.check_daily_gift()
 	plot_changed.emit(-1)
@@ -1149,7 +1157,15 @@ func any_plot_in(wanted: Phase) -> bool:
 ## The next step in floating words: the old tutorial's (farms from before goals), else the open Welcome
 ## chain's line (GoalSystem.welcome_say).
 func tutorial_text() -> String:
+	_fit_tutorial()
 	return tr(TUTORIAL_TEXT[tutorial_step]) if TUTORIAL_TEXT.has(tutorial_step) else goals.welcome_say()
+
+
+## The old tutorial's step never asks for what the farm doesn't have (owner, 19 Nov: "Tap your ripe crops to
+## harvest!" over a field of empty plowed plots): a harvest step with nothing ripe moves on to plowing.
+func _fit_tutorial() -> void:
+	if tutorial_step == Tutorial.HARVEST and not any_plot_in(Phase.RIPE):
+		tutorial_step = Tutorial.PLOW
 
 
 ## Moves to the next step only when the finished step is the current one.
@@ -1320,6 +1336,7 @@ func _new_game() -> void:
 	gems = Balance.i("economy.start_gems")
 	xp = 0
 	debug_time_offset = 0
+	skipped = 0
 	clear_until = now() + Balance.i("economy.fresh_farm_clear_seconds")
 	# The Welcome chain teaches a new farm (GoalSystem); the three-step tutorial stays for farms without goals.
 	tutorial_step = Tutorial.DONE if goals.active() and not goals.new_farm_chains().is_empty() else Tutorial.HARVEST
@@ -1431,6 +1448,7 @@ func open_showcase() -> Array[String]:
 ## Back from the showcase to the player's own farm, as it was left.
 func open_own_farm() -> void:
 	trace_begin("own farm")  # not-ui
+	weather_override = ""   # (the showcase's tried weather stays in the showcase)
 	save_game()
 	save_path = SAVE_PATH
 	if not saving_enabled or not load_game():

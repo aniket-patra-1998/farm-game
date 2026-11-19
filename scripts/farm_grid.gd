@@ -9,6 +9,7 @@ signal panel_requested(panel: String)   # a thing that opens a panel was tapped 
 ## Something tapped tells about itself in a small bubble above it (FarmVille's way, not a panel): `at` is where
 ## (this grid's space), `uid` the thing tapped (-1 for a plot), so its bubble can offer its panel.
 signal tapped_info(at: Vector2, title: String, line: String, uid: int)
+signal vehicle_seed_wanted(id: String)   # a planting vehicle tapped: the HUD asks for its seed, then puts it in hand
 signal tapped_rust(at: Vector2, id: String)   # a rusty vehicle's sign was tapped (`at` in the grid's space)
 
 signal placing_changed(text: String)  # "" when placement ends
@@ -892,6 +893,11 @@ func _apply_at(screen_pos: Vector2) -> void:
 		var uid: int = picker.call(screen_pos)
 		var picked := Game.object_by_uid(uid)
 		if not picked.is_empty():
+			# A rusty vehicle tapped by hand offers its repair first, wherever the tap lands on it (owner, 19 Nov:
+			# only its little sign did, so a seized vehicle seemed to do nothing).
+			if offers_repair(picked):
+				tapped_rust.emit(to_local(world), str(picked["id"]))
+				return
 			_act_on_object(picked, true)
 			return
 	var i := index_at(to_local(world))
@@ -1363,6 +1369,11 @@ func job_for(i: int) -> Dictionary:
 	return {}
 
 
+## Whether a tap by hand on `obj` offers its repair first: a vehicle with rust on it, not in for a repair now.
+func offers_repair(obj: Dictionary) -> bool:
+	return tool == "hand" and Game.kind_of(obj) == "vehicle" and Game.rust.needs_repair(str(obj["id"]))
+
+
 func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	var uid := int(obj["uid"])
 	var kind := Game.kind_of(obj)
@@ -1392,6 +1403,8 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 			_poke(uid)
 			if Game.under_construction(obj) or Game.vehicles.fuel_now() <= 0:
 				_tell(obj)
+			elif str(Game.item_data(str(obj["id"])).get("job", "")) in ["plant", "all"]:
+				vehicle_seed_wanted.emit(str(obj["id"]))   # (a seeder or the combine: its seed is picked first)
 			else:
 				set_tool("vehicle", str(obj["id"]))
 				tool_changed.emit("vehicle")

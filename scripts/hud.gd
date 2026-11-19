@@ -75,6 +75,7 @@ var settings:
 var seeds:
 	get: return _panel(&"seeds")
 
+var _seed_for := ""   # a planting vehicle waiting for its seed from the seed list ("" for the Plant tool)
 var _reveal: Variant   # (a RevealCard) the reveal of a mystery egg or box (made when first needed, then kept)
 var _away: Variant   # (an AwayCard) the While you were away card (made when first needed, then kept)
 var _rest_tween: Tween
@@ -141,8 +142,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_fit_safe_area)
 	top = HudTop.new(self)
 	top.build(root)
-	top.sky_tapped.connect(func() -> void:   # (the icons' words, on a tap)
-		show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])]))
+	top.sky_tapped.connect(_sky_tapped)
 	side = HudSide.new(self)
 	side.build(root)
 	goals = HudGoals.new(self)
@@ -160,6 +160,7 @@ func _ready() -> void:
 	book = BookPanel.new()
 	root.add_child(book)
 	goals.build(root)   # (after the book: a goal change refreshes an open sheet)
+	root.move_child(goals.column, book.get_index())   # ..but drawn under it: an open panel covers the faces (owner)
 	# One window at a time: a panel opened from the HUD (Seeds, Market, the album...) puts a building's sheet away,
 	# as a sheet opening closes the panel (show_building); else the sheet stayed drawn over the panel.
 	book.opened.connect(func() -> void:
@@ -249,14 +250,51 @@ func _moving_uid() -> int:
 	return int(grid.placement.state.get("uid", -1))
 
 
+## The clock tapped: its words (the season and the sky); on the showcase farm it tries the next weather instead, so
+## every weather can be seen there (owner, 19 Nov), then back to the real one.
+func _sky_tapped() -> void:
+	if Game.in_showcase():
+		var states: Array = Weather.ORDER + ["fog"]
+		var at := states.find(Game.weather_override)
+		if at + 1 < states.size():
+			Game.weather_override = str(states[at + 1])
+			show_message(tr("SHOWCASE_WEATHER") % tr(str(Weather.NAMES[Game.weather_override])))
+		else:
+			Game.weather_override = ""
+			show_message(tr("SHOWCASE_WEATHER_REAL"))
+		return
+	show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])])
+
+
 ## Opens the seed list (the Plant tool).
 func show_seeds() -> void:
+	_seed_for = ""
 	book.open_panel(tr("SEED_LIST"), seeds.build_seeds)
 
 
-## A seed picked: it goes in hand, and the Plant tool lights.
+## A planting vehicle (a seeder, the combine) chosen: its seed is picked first, from the same list, and the vehicle
+## is then in hand with it (owner, 19 Nov: you had to pick a seed in the Seeds menu before choosing the combine,
+## or it only plowed).
+func use_vehicle(vehicle_id: String) -> void:
+	var job := str(Game.item_data(vehicle_id).get("job", ""))
+	if job in ["plant", "all"]:
+		book.open_panel(tr("SEEDS_FOR") % str(Game.item_data(vehicle_id)["name"]), seeds.build_seeds)
+		_seed_for = vehicle_id   # (after the panel opens: the list's choice goes to the vehicle)
+		return
+	close_panels()
+	tool_selected.emit("vehicle", vehicle_id)
+
+
+## A seed picked: it goes in hand, and the Plant tool lights; or, for a planting vehicle, it goes in the vehicle.
 func choose_seed(crop_id: String) -> void:
 	book.close_panel()
+	if _seed_for != "":
+		var vehicle := _seed_for
+		_seed_for = ""
+		if grid != null:
+			grid.last_crop = crop_id
+		tool_selected.emit("vehicle", vehicle)
+		return
 	tool_selected.emit("plant", crop_id)
 	tools.show_tool("plant")
 	show_message(tr("TAP_PLOWED_PLOTS_TO_PLANT") % Game.crops[crop_id]["name"])
@@ -439,10 +477,11 @@ func _refresh() -> void:
 
 
 func _refresh_clock() -> void:
-	var hour := DayCycle.local_hour(Game.now(), DayCycle.device_bias_minutes())
+	var hour := DayCycle.local_hour(Game.look_now(), DayCycle.device_bias_minutes())
 	var weather := Game.weather()
 	var state := str(weather.get("state", "clear"))
-	var night := hour < DayCycle.SUNRISE or hour >= DayCycle.SUNSET
+	var lit := DayCycle.lit_hour(hour)   # (with "Always daytime" on, the sun icon: the icon follows the light)
+	var night := lit < DayCycle.SUNRISE or lit >= DayCycle.SUNSET
 	top.season_icon.kind = str(HudTop.SEASON_ICONS.get(Game.season(), "sun"))
 	top.weather_icon.kind = "moon" if state == "clear" and night else str(HudTop.WEATHER_ICONS.get(state, "sun"))
 	top.clock.text = DayCycle.clock_text(hour)

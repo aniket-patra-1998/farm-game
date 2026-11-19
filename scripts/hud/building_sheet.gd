@@ -699,8 +699,8 @@ func _next_size(o: Dictionary, cap: int) -> String:
 	var bigger := o.duplicate()
 	bigger["level"] = level + 1
 	var line := tr("SHEET_NEXT_SPACES") % [Game.size_name(bigger), Game.capacity(bigger) - cap]
-	var now := BuildingModel.spec(id, level)
-	var then := BuildingModel.spec(id, level + 1)
+	var now := BuildingSpec.spec(id, level)
+	var then := BuildingSpec.spec(id, level + 1)
 	for add: Array in ADDS:
 		if _count(then, str(add[0])) > _count(now, str(add[0])):
 			return line + tr("SHEET_AND") + tr(str(add[1]))

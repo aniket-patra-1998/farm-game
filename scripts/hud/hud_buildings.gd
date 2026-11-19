@@ -216,9 +216,7 @@ func add_garage_info(content: VBoxContainer) -> void:
 		var cost := Game.vehicles.vehicle_upgrade_cost(id)
 		var vid: String = id
 		var drive := hud.panel_button(tr("USE_VEHICLE"))
-		drive.pressed.connect(func() -> void:
-			hud.close_panels()
-			hud.tool_selected.emit("vehicle", vid))
+		drive.pressed.connect(func() -> void: hud.use_vehicle(vid))
 		card.add_child(drive)
 		if cost < 0:
 			card.add_child(BookPanel.text(tr("FULLY_UPGRADED"), UiTheme.HEADING))

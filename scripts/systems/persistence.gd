@@ -55,6 +55,7 @@ func snapshot() -> Dictionary:
 		"xp": game.xp,
 		"plots": game.plots,
 		"debug_time_offset": game.debug_time_offset,
+		"skipped": game.skipped,
 		"tutorial_step": game.tutorial_step,
 		"objects": game.objects,
 		"farm_size": game.farm_size,
@@ -185,6 +186,9 @@ func load_save() -> bool:
 	game.gems = int(data.get("gems", Balance.i("economy.start_gems")))
 	game.xp = int(data.get("xp", 0))
 	game.debug_time_offset = int(data.get("debug_time_offset", 0)) if OS.is_debug_build() else 0
+	# Before 19 Nov the farm's whole clock moved with Skip 1 hour (the only thing a player could add to the offset):
+	# an older save's offset is all skips, so its sky comes back to the real time at once.
+	game.skipped = int(data.get("skipped", game.debug_time_offset)) if OS.is_debug_build() else 0
 	# Saves from before the tutorial existed belong to players who already know the basics.
 	game.tutorial_step = int(data.get("tutorial_step", GameState.Tutorial.DONE))
 	# A device clock set back since the save would leave every timer in the future: all of them wait the

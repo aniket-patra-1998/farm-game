@@ -512,12 +512,12 @@ func test_391_a_grander_barn_keeps_more_company_in_its_yard() -> void:
 	fill.refresh(barn)
 	_eq([fill.residents.size(), fill._props.get_child_count()], [2, 3], "its storage size changes none of it")
 	var fp := Game.footprint("barn")
-	var spots: Array[Vector2] = [BuildingModel.yard_spot(fill._spec["fill"], fp.x, fp.y)]
+	var spots: Array[Vector2] = [BuildingSpec.yard_spot(fill._spec["fill"], fp.x, fp.y)]
 	for one: Dictionary in fill._spec["fill"]["company"]:
 		_check(one.has("at"), "each of its company has a spot of its own (%s)" % one["id"])
-		spots.append(BuildingModel.yard_spot(one, fp.x, fp.y))
+		spots.append(BuildingSpec.yard_spot(one, fp.x, fp.y))
 	var room := SpaceFit.tile_room(fp)
-	var built := BuildingModel.taken(fill._spec, fp)
+	var built := BuildingSpec.taken(fill._spec, fp)
 	for k in spots.size():
 		_check(room.has_point(spots[k]), "its company stands inside its plot")
 		_check(not built.any(func(rect: Rect2) -> bool: return rect.has_point(spots[k])),

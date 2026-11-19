@@ -40,6 +40,35 @@ func test_14_bees_only_join_a_hive_with_a_queen() -> void:
 
 
 
+func test_573_at_most_three_strays_a_week() -> void:
+	# Owner, 19 Nov: strays came every 3 to 6 hours, far too often. Now about one every two days, never more than
+	# strays.week_most (3) in any 7 days, and the count survives a save.
+	var g := _farm()
+	var most := Balance.i("strays.week_most")
+	_eq(most, 3, "three a week")
+	_check(Balance.i("strays.stray_min_gap") >= 86400, "never two in a day")
+	var came := 0
+	for k in 10:   # every gap forced open, a stray adopted at once: only the cap stops them
+		g.strays.next_stray_at = 0
+		g.strays.check_strays()
+		for o in g.objects.filter(func(o): return o.get("stray", false)):
+			g.strays.adopt_stray(int(o["uid"]))
+			came += 1
+		_skip(g, 3600)
+	_eq(came, most, "the fourth waits for the week to turn")
+	var data := {}
+	g.strays.save_to(data)
+	var h := _farm()
+	h.strays.load_from(JSON.parse_string(JSON.stringify(data)))
+	_eq(h.strays.arrived.size(), most, "the week's count is saved")
+	_skip(g, StraySystem.WEEK)
+	g.strays.next_stray_at = 0
+	g.strays.check_strays()
+	_eq(g.objects.filter(func(o): return o.get("stray", false)).size(), 1, "a week later one comes again")
+	_done(g)
+	_done(h)
+
+
 func test_15_strays_arrive_get_adopted_or_leave() -> void:
 	var g := _farm()
 	g.strays.next_stray_at = 0
@@ -731,3 +760,22 @@ func test_513_kept_strides_are_the_files_own() -> void:
 	ArtVersion._data["files"]["cow"] = "changed"
 	_check(Animal3D.kept_stride("cow") < 0.0, "a changed file's kept stride is not used")
 	ArtVersion._data = data
+
+
+func test_574_a_test_skip_hurries_timers_never_the_sky() -> void:
+	# Owner, 19 Nov: after a few presses of Skip 1 hour the farm showed 10 pm at 5 pm, for good. A skip moves every
+	# timer (now) but the farm's look (look_now: sky, clock, the animals' day) stays on the real time; an older save,
+	# whose whole offset was skips, comes back to the real time.
+	var g := _farm()
+	var look := g.look_now()
+	var t := g.now()
+	g.debug_skip(3600)
+	_eq(g.now() - t, 3600, "the timers move an hour")
+	_check(absi(g.look_now() - look) <= 1, "the sky does not")
+	var data := {"debug_time_offset": 5 * 3600}
+	var h := _farm()
+	h.debug_time_offset = int(data["debug_time_offset"])
+	h.skipped = int(data.get("skipped", h.debug_time_offset))
+	_check(absi(h.look_now() - int(Time.get_unix_time_from_system())) <= 1, "an old save's sky is back on real time")
+	_done(g)
+	_done(h)

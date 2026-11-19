@@ -57,3 +57,34 @@ func test_512_every_weighted_pick_shares_one_rule() -> void:
 			if f.ends_with(".gd") and f != "roll_system.gd":
 				_check(own.search(FileAccess.get_file_as_string(dir.path_join(f))) == null,
 					"%s picks by weight through RollSystem.weighted_index" % f)
+
+
+func test_580_rewards_that_could_run_away_are_capped() -> void:
+	# Owner, 19 Nov ("caps in many aspects"): building parts at most 5 a day, young from a pen 1 a day of each kind,
+	# mystery babies 2 a day, the stable's 100 XP and the hive's fertilize-all once a day, a vehicle's coins 10 a
+	# day, the stable's farmhand and arborist one each a week. A sure roll stops at its cap, the next day (or week)
+	# it comes up again, and the count is saved.
+	var g := _farm()
+	var want := {"daily_part": 5, "lamb": 1, "piglet": 1, "calf": 1, "foal": 1, "mystery_baby": 2, "stable_xp": 1,
+		"fertilize_all": 1, "tractor_coins": 10, "stable_farmhand": 1, "stable_arborist": 1}
+	for id: String in want:
+		var came := 0
+		for k in 30:
+			if g.rolls.roll(id, 1.0):
+				came += 1
+		_eq(came, int(want[id]), "%s: at most %d" % [id, want[id]])
+	var data := {}
+	g.rolls.save_to(data)
+	var h := _farm()
+	h.rolls.load_from(JSON.parse_string(JSON.stringify(data)))
+	_eq(h.rolls.taken("daily_part"), Vector2i(5, 5), "the day's count is saved")
+	_skip(g, 86400)
+	_check(g.rolls.roll("daily_part", 1.0), "a new day: parts again")
+	_check(not g.rolls.roll("stable_farmhand", 1.0) or g.rolls.taken("stable_farmhand").x == 1,
+		"the farmhand counts by the week")
+	_skip(g, 7 * 86400)
+	_check(g.rolls.roll("stable_farmhand", 1.0), "a new week: a farmhand again")
+	_check(g.rolls.roll("golden_harvest", 1.0) if g.rolls.ids().has("golden_harvest") else true,
+		"an uncapped roll is never stopped")
+	_done(g)
+	_done(h)

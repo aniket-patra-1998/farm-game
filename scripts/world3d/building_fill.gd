@@ -116,27 +116,27 @@ static func create(o: Dictionary, model: Node3D) -> BuildingFill:
 	f.uid = int(o.get("uid", 0))   # (a model shown outside a farm, a shop card's, has none)
 	f._id = str(o["id"])
 	f._fp = Game.footprint(f._id)
-	f._spec = BuildingModel.spec(f._id, Game.look_level(o))
+	f._spec = BuildingSpec.spec(f._id, Game.look_level(o))
 	f._own_ready = model.find_child(AssetRegistry.STATE + "fill_1", true, false) != null   # not-ui (a part's name)
 	for c in model.get_children():
-		if c.has_meta(BuildingModel.WINDOWS):
-			f._windows = c.get_meta(BuildingModel.WINDOWS)
-		if c.has_meta(BuildingModel.DOOR):
+		if c.has_meta(BuildingSpec.WINDOWS):
+			f._windows = c.get_meta(BuildingSpec.WINDOWS)
+		if c.has_meta(BuildingSpec.DOOR):
 			f._doors.append(c)
 			c.set_meta("rest_y", (c as Node3D).position.y)
 	f.refresh(o)
 	return f
 
 
-## Where the yard's animals keep off (BuildingModel.taken): the building's block grown by the stone footing its
-## walls stand on (BuildingModel.FOOT_OUT), which the block leaves out, so no animal's feet stand in it. (A
+## Where the yard's animals keep off (BuildingSpec.taken): the building's block grown by the stone footing its
+## walls stand on (BuildingSpec.FOOT_OUT), which the block leaves out, so no animal's feet stand in it. (A
 ## building on stilts has none: there is room round its legs.)
 static func kept_clear(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
-	var out := BuildingModel.taken(s, fp)
+	var out := BuildingSpec.taken(s, fp)
 	var body: Dictionary = s["body"]
 	var stilts := (s.get("features", []) as Array).any(func(f: Dictionary) -> bool: return f.get("type") == "stilts")
 	if not out.is_empty() and float(body.get("w", 0.7)) > 0.0 and not stilts:
-		out[0] = out[0].grow(BuildingModel.FOOT_OUT)
+		out[0] = out[0].grow(BuildingSpec.FOOT_OUT)
 	return out
 
 
@@ -151,7 +151,7 @@ static func shows(o: Dictionary) -> bool:
 		return false
 	return (not (def as BuildingDef).holds().is_empty()
 		or str((def as BuildingDef).data.get("holds_kind", "")) in PLANT_KINDS
-		or BuildingModel.fill_of(str(o["id"]), Game.look_level(o)).has("stock"))
+		or BuildingSpec.fill_of(str(o["id"]), Game.look_level(o)).has("stock"))
 
 
 ## Brings what's shown up to date: who's in, how near ready. Rebuilds only what changed.
@@ -216,7 +216,7 @@ static func shown_count(id: String, level: int, max_level: int, radii: Array[flo
 	var yard := SpaceFit.yard_room(Game.footprint(id))
 	var most := 0
 	for lv in range(1, level + 1):
-		var taken := kept_clear(BuildingModel.spec(id, lv), Game.footprint(id))
+		var taken := kept_clear(BuildingSpec.spec(id, lv), Game.footprint(id))
 		var lo := 0
 		var hi := mini(shown_cap(lv, max_level), radii.size())
 		while lo < hi:   # the most that fit readably: fitting only gets harder with more
@@ -365,7 +365,7 @@ func _show_company(company: Array, o: Dictionary) -> void:
 		if int(one.get("from", 1)) > look:
 			continue
 		var it := Game.item_data(str(one["id"]))
-		var spot := BuildingModel.yard_spot(one, _fp.x, _fp.y)
+		var spot := BuildingSpec.yard_spot(one, _fp.x, _fp.y)
 		match str(it.get("kind", "")):
 			"animal":
 				picks.append(str(one["id"]))
@@ -390,7 +390,7 @@ func _show_company(company: Array, o: Dictionary) -> void:
 ## just short of the nearest water trough of its yard, when one is near; Vector2.INF when none is.
 func _drink_from(at: Vector2) -> Vector2:
 	var best := Vector2.INF
-	for trough: Vector2 in BuildingModel.troughs(_spec, _fp):
+	for trough: Vector2 in BuildingSpec.troughs(_spec, _fp):
 		var way := trough - at
 		if way.length() <= DRINK_NEAR and (not best.is_finite() or way.length() < best.length()):
 			best = way.limit_length(maxf(way.length() - DRINK_SHORT, 0.0))
@@ -843,11 +843,11 @@ func _show_stock(kind: String, at: Array, o: Dictionary) -> void:
 ## A Garage with vehicles in it keeps its shutter rolled up, so they show; an empty one is shut.
 func _open_shutter(open: bool) -> void:
 	for hinge in _doors:
-		if not hinge.has_meta(BuildingModel.SLIDE):
+		if not hinge.has_meta(BuildingSpec.SLIDE):
 			continue
 		if not hinge.has_meta("rest_y"):
 			hinge.set_meta("rest_y", hinge.position.y)
-		var y := float(hinge.get_meta("rest_y")) + (float(hinge.get_meta(BuildingModel.SLIDE)) if open else 0.0)
+		var y := float(hinge.get_meta("rest_y")) + (float(hinge.get_meta(BuildingSpec.SLIDE)) if open else 0.0)
 		if not is_inside_tree() or not is_visible_in_tree():
 			hinge.position.y = y                         # not on screen yet: just be there
 			continue
@@ -874,7 +874,7 @@ func _show_trough(at: Array) -> void:
 	var root := Node3D.new()
 	var p := Vector3((1.0 - float(at[0])) * _fp.x, 0, float(at[1]) * _fp.y)
 	ModelKit.tub(root, p + Vector3(-TROUGH.x, 0, -TROUGH.z), p + Vector3(TROUGH.x, TROUGH.y, TROUGH.z), 0.018,
-		ModelKit.surface(BuildingModel.WOOD, "boards", 0.2), ModelKit.paint(FEED_GOLD) if _feed == 1 else null, 0.85)
+		ModelKit.surface(BuildingSpec.WOOD, "boards", 0.2), ModelKit.paint(FEED_GOLD) if _feed == 1 else null, 0.85)
 	_trough = ModelKit.bake(root)
 	_trough.visible = _lod <= 0   # (a detail of the near view, like the yard's far animals: _set_lod)
 	add_child(_trough)
@@ -897,7 +897,7 @@ func _show_produce(kind: String, step: int, at: Array, o: Dictionary) -> void:
 			for k in mini(n, 4):
 				var c := p + Vector3((k % 2) * 0.14 - 0.07, int(k / 2.0) * 0.09, 0)
 				ModelKit.box(root, c + Vector3(-0.06, 0, -0.05), c + Vector3(0.06, 0.08, 0.05),
-					ModelKit.surface(BuildingModel.WOOD, "boards", 0.2))
+					ModelKit.surface(BuildingSpec.WOOD, "boards", 0.2))
 				ModelKit.ball(root, c + Vector3(0, 0.08, 0), 0.05, ModelKit.paint(Color("#d93b30")), Vector3(1, 0.35, 0.8))
 		"baskets":
 			# Baskets of cut flowers.
@@ -920,7 +920,7 @@ func _show_produce(kind: String, step: int, at: Array, o: Dictionary) -> void:
 				var c := p + Vector3((k % 3) * 0.1 - 0.1, int(k / 3.0) * 0.07, int(k / 3.0) * 0.03)
 				ModelKit.ball(root, c + Vector3(0, 0.04, 0), 0.05, ModelKit.paint(Color("#f4f1ea")), Vector3(1.2, 0.8, 1))
 		"honey":
-			var shelf := ModelKit.paint(BuildingModel.WOOD)
+			var shelf := ModelKit.paint(BuildingSpec.WOOD)
 			ModelKit.box(root, p + Vector3(-0.18, 0.08, -0.05), p + Vector3(0.18, 0.1, 0.05), shelf)
 			for x: float in [-0.15, 0.15]:
 				ModelKit.box(root, p + Vector3(x - 0.015, 0, -0.04), p + Vector3(x + 0.015, 0.08, 0.04), shelf)
@@ -931,7 +931,7 @@ func _show_produce(kind: String, step: int, at: Array, o: Dictionary) -> void:
 		"hay":
 			for k in mini(n, 4):
 				var c := p + Vector3((k % 2) * 0.2 - 0.1, int(k / 2.0) * 0.12, 0)
-				ModelKit.box(root, c + Vector3(-0.09, 0, -0.07), c + Vector3(0.09, 0.12, 0.07), ModelKit.paint(BuildingModel.HAY))
+				ModelKit.box(root, c + Vector3(-0.09, 0, -0.07), c + Vector3(0.09, 0.12, 0.07), ModelKit.paint(BuildingSpec.HAY))
 		_:
 			# Crates of whatever it makes, stacked, in the colour of who makes it.
 			var inside: Dictionary = o.get("inside", {})
@@ -1092,10 +1092,10 @@ func _yard_in_view(cam: Camera3D) -> bool:
 ## and everyone out in the yard looks up.
 func celebrate() -> void:
 	for hinge in _doors:
-		var swing := float(hinge.get_meta(BuildingModel.DOOR))
+		var swing := float(hinge.get_meta(BuildingSpec.DOOR))
 		var tw := hinge.create_tween()
-		if hinge.has_meta(BuildingModel.SLIDE):
-			var up := float(hinge.get_meta(BuildingModel.SLIDE))
+		if hinge.has_meta(BuildingSpec.SLIDE):
+			var up := float(hinge.get_meta(BuildingSpec.SLIDE))
 			tw.tween_property(hinge, "position:y", hinge.position.y + up, 0.3).set_trans(Tween.TRANS_QUAD) \
 				.set_ease(Tween.EASE_OUT)
 			tw.tween_interval(DOOR_HOLD)
@@ -1123,7 +1123,7 @@ func doors_open() -> bool:
 	for hinge in _doors:
 		if absf(hinge.rotation.y) > 0.3:
 			return true
-		if hinge.has_meta(BuildingModel.SLIDE) and hinge.position.y > float(hinge.get_meta("rest_y", 0.0)) + 0.05:
+		if hinge.has_meta(BuildingSpec.SLIDE) and hinge.position.y > float(hinge.get_meta("rest_y", 0.0)) + 0.05:
 			return true
 	return false
 

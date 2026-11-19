@@ -1543,7 +1543,7 @@ func test_312_gophers_and_dogs_stand_in_their_yard_clear_of_the_building() -> vo
 		var def := Game.catalog.get_def(id)
 		if not def is BuildingDef:
 			continue
-		var kind := str(BuildingModel.fill_of(id, 1).get("stock", ""))
+		var kind := str(BuildingSpec.fill_of(id, 1).get("stock", ""))
 		if kind != "gophers" and kind != "dogs":
 			continue
 		homes += 1
@@ -1553,7 +1553,7 @@ func test_312_gophers_and_dogs_stand_in_their_yard_clear_of_the_building() -> vo
 		var radius := BuildingStock.MOUND_RADIUS if kind == "gophers" else BuildingStock.DOG_RADIUS
 		var fit := BuildingStock._in_yard(o, fp, count, radius)
 		var yard := SpaceFit.yard_room(fp)
-		var taken := BuildingModel.taken(BuildingModel.spec(id, 1), fp)
+		var taken := BuildingSpec.taken(BuildingModel.spec(id, 1), fp)
 		_check((fit["spots"] as Array).size() >= 1, "%s: at least one %s fits" % [id, kind])
 		for at: Vector2 in fit["spots"]:
 			_check(yard.has_point(at), "%s: a spot %s is inside the yard" % [id, at])
@@ -2493,3 +2493,21 @@ func test_572_the_phone_report_says_whose_meshes_cost_the_gpu() -> void:
 	_eq(LoadBenchmark.owner_of(lone), "(none)", "a node with none above it: (none)")
 	lone.free()
 	holder.free()
+
+
+func test_577_the_building_builders_compile_when_a_look_is_built() -> void:
+	# The farm asks what a building is (BuildingSpec) every sync; the builders (BuildingModel, BuildingDress, 2k
+	# lines) load by path only when a look has to be built, which a look kept on disk never needs, so the start
+	# does not compile them (docs/PERF_RUN.md, the start).
+	for path: String in ["res://scripts/world3d/objects_3d.gd", "res://scripts/world3d/building_fill.gd",
+			"res://scripts/world3d/decor_model.gd", "res://scripts/world3d/building_stock.gd",
+			"res://scripts/ui/item_icons.gd", "res://scripts/world3d/building_spec.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bBuilding(Model|Dress)\\b").search(code),
+			"%s does not name the builders" % path)
+	_eq(BuildingSpec.model().resource_path, BuildingSpec.MODEL, "the builders come from their own file")
+	for id: String in ["chicken_coop", "cow_shed"]:
+		_eq(BuildingSpec.spec(id, 2), BuildingModel.spec(id, 2), "%s: one description, asked either way" % id)
+	var built: Node3D = BuildingSpec.model().build(Game.item_data("chicken_coop"), Game.footprint("chicken_coop"))
+	_check(built != null and built.get_child_count() > 0, "a building is still built through the path")
+	built.free()

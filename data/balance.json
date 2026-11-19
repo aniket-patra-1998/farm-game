@@ -85,12 +85,16 @@
  },
  "strays": {
   "stray_min_gap": {
-   "v": 10800,
-   "note": "a new stray turns up 3 to 6 hours after the last"
+   "v": 129600,
+   "note": "a new stray turns up 36 to 60 hours after the last (about three a week; it was 3 to 6 hours, owner 19 Nov: far too often)"
   },
   "stray_max_gap": {
-   "v": 21600,
-   "note": "The longest wait, in seconds, before a new stray turns up after the last (6 hours)."
+   "v": 216000,
+   "note": "The longest wait, in seconds, before a new stray turns up after the last (60 hours)."
+  },
+  "week_most": {
+   "v": 3,
+   "note": "at most this many strays turn up in any 7 days (owner 19 Nov)"
   },
   "stray_stays": {
    "v": 86400,

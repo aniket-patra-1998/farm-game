@@ -114,7 +114,7 @@ static func _goods(root: Node3D, p: Vector3) -> void:
 		if k % 3 == 1:
 			ModelKit.ball(root, c + Vector3(0.07, 0.05, 0), 0.075, ModelKit.paint(Color("#cdb88a")), Vector3(1, 0.75, 0.8))
 		else:
-			ModelKit.box(root, c, c + Vector3(0.14, 0.1, 0.12), ModelKit.surface(BuildingModel.WOOD, "boards", 0.2))
+			ModelKit.box(root, c, c + Vector3(0.14, 0.1, 0.12), ModelKit.surface(BuildingSpec.WOOD, "boards", 0.2))
 
 
 ## Where `n` things of this radius stand in the building's yard (SpaceFit: inside its edge, clear of the building
@@ -123,7 +123,7 @@ static func _in_yard(o: Dictionary, fp: Vector2i, n: int, radius: float) -> Dict
 	var radii: Array[float] = []
 	radii.resize(n)
 	radii.fill(radius)
-	var taken := BuildingModel.taken(BuildingModel.spec(str(o.get("id", "")), Game.level_of(o)), fp)
+	var taken := BuildingSpec.taken(BuildingSpec.spec(str(o.get("id", "")), Game.level_of(o)), fp)
 	return SpaceFit.pack(SpaceFit.yard_room(fp), taken, radii, int(o.get("uid", 0)))
 
 

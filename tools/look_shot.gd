@@ -2,7 +2,7 @@ extends Node
 ## Before and after: fixed views of the showcase farm, for comparing one change at a time. Writes nine pictures
 ## (all, buildings, trees_animals, crops, fences, orchard, orchard_far, garden, garage, barn_broken, home_panel,
 ## crafting_panel, seeds_panel, collections_panel, ribbons_panel,
-## inbox_panel, goals_panel: the goal sheet on Today) into the folder given
+## inbox_panel, goals_panel: the goal sheet on Today, goals_story: on Story) into the folder given
 ## by --out=<dir> (default ci_shots/look).
 ## --hour=<h> shows another local hour than noon (6 dawn, 18.5 dusk, 22 night).
 ## --weather=<state> holds the weather (clear, rain, storm...) so two hours differ only by the day's light.
@@ -99,7 +99,8 @@ func _ready() -> void:
 	for p: Array in [["seeds_panel", hud.show_seeds], ["market_panel", hud.show_market],
 			["collections_panel", hud.show_collections],
 			["ribbons_panel", hud.show_ribbons], ["inbox_panel", hud.show_inbox],
-			["goals_panel", func() -> void: hud.show_goals(HudGoals.tab_of("daily:0"))]]:
+			["goals_panel", func() -> void: hud.show_goals(HudGoals.tab_of("daily:0"))],
+			["goals_story", func() -> void: hud.show_goals(0)]]:
 		if not (only.is_empty() or only.has(str(p[0]))):
 			continue
 		(p[1] as Callable).call()

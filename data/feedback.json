@@ -1,4 +1,6 @@
 {
+  "opening_gain_db": -14.0,
+  "_opening_note": "while a farm opens under its loading cover, every moment plays this much softer (-14 dB is about 80% quieter) and never buzzes (owner, 19 Nov: a farm's things landing one after another while it loads)",
   "_about": "Every moment the game answers with a sound and a buzz, and every colour a floating number or word takes, in one place (autoload/feedback.gd). `sound` is a name in sounds.json, `buzz` a vibration in ms (phones), `gain_db` makes the sound softer or louder. Code asks by name: Feedback.moment(\"place\"). `rarities` is the one look and sound of every find, by how rare it is (a gopher, a collectible, a bird, a baby, a stray, what a mystery item opens to): its colour, its moment, how many sparks fly and how far, how big they are, the size of its words and how long they stay.",
   "rarities": {
     "common": {"color": "#fff1c9", "moment": "find_common", "sparks": 8, "reach": 70, "size": 1.0, "words": 28, "hold": 1.5},
