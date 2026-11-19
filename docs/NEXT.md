@@ -503,6 +503,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   `xvfb-run -s "-screen 0 2400x1080x24" godot --rendering-method gl_compatibility --resolution 2400x1080 ...
   look_shot.tscn -- --views=seeds_panel,home_panel`. Next: the other card grids at phone shape (Market, Barn,
   Collections) and the lawn's dark blotches at noon (taste: art-polish).
+- Art run 21 (19 Nov 07:06 IST): main only, broken pieces at phone shape. 8aba68d: card shelves stand level with
+  mastery stars (CardFace keeps the stars' room as it keeps a name's two lines; the Market's Trees zigzagged between
+  starred and unstarred trees; hud test 354). look_shot also takes market_panel and barn_panel. 6e4375d: item pictures
+  frame a scaled model by its real height (ItemIcons._set_up passed model.transform to ScaleGuide._top, which applies
+  it again: a decor_scale'd model, the mailbox in the Barn, drew a third of its neighbours' size). Collections at
+  2400x1080 looked fine. A fresh container's first setup step can abort before `git config core.hooksPath`: set it
+  first, or the push skips the precheck (8aba68d went up so; the precheck run on it after passed, 456 tests).
+  Next: the Barn sheet's "x1" and "Place" under each name (a count tile elsewhere: check against the picked look),
+  then the lawn's dark blotches at noon (taste: art-polish).
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`
