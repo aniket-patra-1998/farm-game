@@ -44,6 +44,24 @@ first; our own touch only where it is clearly marked. Every system is built (doc
   top boost x1.5; the wooden-tok tap sound; icon glow option C (gold behind money and rewards, blue-white behind
   something new); the goal faces, the goal sheet and its calendar icon (approved 18 Nov 23:32). Parked by the owner: the Barn's weather looks (storm, wind, winter liked; a lighter rainbow).
 
+## The owner's-eye checklist (owner, 19 Nov: every review, every screen, every change)
+The owner plays on a phone, as a player, and judges what a player sees, hears and taps. Their issues of 19 Nov
+(inbox, goal sheet, neighbour faces, the clock and night, a tip over empty plots, a dead tap on a rusty vehicle, the
+combine's hidden seed step, beeping clicks and loading thuds, panels that snapped, strays every few hours) all break
+one of these. Judge on a real farm (a new one, and one played a day), not only the showcase's tidy data:
+1. Nothing contradicts itself: the clock, the light, the icons, the animals, the tips and the counts always agree
+   with the farm's real state. Two things that disagree are a bug.
+2. Every tap does the obvious thing at once: no dead taps, no hidden order of steps; what can't be done says why
+   and offers the fix on the spot.
+3. Every screen looks like its neighbours: the same panel size, line shape, spacing and style as the panels beside
+   it; nothing overflowing, overlapping, cut off, empty-boxed or stretched into long lines; small pictures in line.
+4. Sound and motion feel premium: soft, weighty, smooth; quiet when it should be (loading); no beeps, no snaps.
+5. Rewards stay special: nothing floods (caps per day or week, data/rolls.json); FarmVille's rhythm, not a slot machine.
+6. Simple but awesome: fewer, stronger moments; cheap and beautiful together; never a feature half done.
+7. The owner can see every state: the showcase shows every feature and lets them try every weather and moment.
+Depth expected: fix the cause, then find the same mistake everywhere else; ask why it was not caught and add a
+check (a test) so it cannot come back; bring the next problem before the owner finds it.
+
 ## Guardrails
 - Fix and polish only: code quality, stress tests, edge cases, phone UI checks, player progression, economy,
   bugs, cheating and bad practice, the whole farm's look, small UI, graphics and animation improvements.
