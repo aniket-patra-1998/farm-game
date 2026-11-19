@@ -1105,6 +1105,25 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   frames come first: its relaunch is on low, so run the next on a fresh install as Test Lab does; play.quality
   says). 2) The cold start (16.5-20.8 s) and the showcase cold (47 s built) after that.
 
+- Run 20 (19 Nov 15:51 - 16:45 IST). Godot fetched again; local main had diverged again (worked on a branch from
+  origin/main instead). No new phone run since 15:31 (3 used today, Pacific day; one more allowed).
+  Measured (perf_probe at --quality=low --size=2400x1080 --tiles=12, xvfb gl_compatibility): 486 visible draws,
+  323k visible triangles. Merged 7b607bd: perf_probe's "PERF visible <owner>" lines (each owner's meshes hidden a
+  few frames): Animal3D 54 draws / 144k triangles, Objects3D 240 / 85k, DecorLayer 118 / 44k, Farmer3D 1 / 15k,
+  LinkLayer 45 / 8k, Ground3D and Plots3D 8k each. With low's lod_pixels forced to 1000, Objects3D falls to 10k
+  (its LODs work), Animal3D only to 106k: the animal files' coarsest LODs stop high (cow 5,087 -> 2,543 -> 1,789;
+  chicken 6,062 -> 3,030 -> 1,484; alpaca 3,545 -> 441), as the importer makes them for meshes with blend shapes.
+  Merged (perf/farmer-lods): Farmer3D.tinted kept no LODs (rebuilt from surface_get_arrays), so the farmer drew
+  15.2k triangles at every zoom; Farmer3D.surface_lods carries them: 7.6k at the playing view on low and mid, close
+  up unchanged; rendered before/after at the phone's size: the same. Test 570. Visible on low 323k -> 318k. (Animal3D._skin, the code-built
+  animals, is not used where a file exists: every animal on the showcase is a file.)
+- Next run: 1) the phone run of this build (after its apk.yml release): play avg/p95/draws/triangles on low.
+  2) Animals are 45% of the visible triangles on low: coarser animal LODs, nothing seen changed at the playing
+  zoom. Options: the animal files' import (per-mesh LOD options in the .glb.import, e.g. a larger normal merge
+  angle) or the animal export (tools/animal_art) writing a coarser level; check each kind's coarsest level and a
+  1x before/after on low and mid at the playing zoom. 3) Draws: Objects3D 240 visible draws (buildings' parts)
+  and DecorLayer 118: Instancer batching where the parts repeat.
+
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
   UiTheme.glow(kind, fresh, px) is the one rule (data/ui_theme.json "glow": gold kinds, spread, least_px; colours
