@@ -319,8 +319,8 @@ func test_328_seed_tree_and_animal_cards_wear_their_mastery_stars() -> void:
 	var content := VBoxContainer.new()
 	hud.seeds.build_seeds(content)
 	var list: CardList = content.find_children("*", "CardList", true, false)[0]
-	var sold := Game.crop_order.filter(func(id: String) -> bool: return not Game.crops[id].get("starter", false))
-	_eq(list.ids.size(), sold.size(), "a card for every crop (Starter Seeds only while given)")
+	_eq(list.ids.size(), hud.seeds.shelf().size(),
+		"a card for every crop on the shelf: those to plant and the next to unlock (test 583)")
 	_eq(hud.seeds.seed_face(crop)["stars"], [3, 1.0], "each wearing its stars")
 	# The card's price is what a harvest pays now: three stars raise it (it showed the bare price before).
 	var price := int(Game.crops[crop]["sell_price"])
@@ -1428,5 +1428,36 @@ func test_579_the_showcase_clock_tries_every_weather() -> void:
 	hud.call("_sky_tapped")
 	Game.open_own_farm()
 	_eq(Game.weather_override, "", "the tried weather stays in the showcase")
+	main.queue_free()
+	await get_tree().process_frame
+
+
+func test_583_a_young_farm_sees_its_seeds_and_short_panels() -> void:
+	# Owner, 19 Nov (the owner's-eye pass): the seed shelf shows what can be planted and the next three to unlock,
+	# the rest folded into one line; a panel with little in it is short, not a screen-high empty sheet; and while a
+	# step's hint shows at the top, the forecast waits (one message at a time).
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var shelf: Array[String] = hud.seeds.shelf()
+	var locked := shelf.filter(func(id: String) -> bool: return not Game.can_plant(id))
+	_eq(locked.size(), mini(HudSeeds.NEXT_LOCKED, hud.seeds.ids().size() - (shelf.size() - locked.size())),
+		"only the next locked seeds")
+	_check(shelf.size() < hud.seeds.ids().size(), "a young farm's shelf is not a wall of locks")
+	hud.show_goals(0)
+	for k in 4:
+		await get_tree().process_frame
+	var view := main.get_viewport().get_visible_rect().size
+	var scroll: ScrollContainer = hud.book.get("_scroll")
+	_check(scroll.custom_minimum_size.y < view.y * BookPanel.HEIGHT_SHARE - 1.0,
+		"a sheet with one goal is short (%.0f of %.0f)" % [scroll.custom_minimum_size.y, view.y])
+	hud.book.close_panel()
+	if Game.tutorial_text() != "":
+		hud.call("_refresh_tutorial")
+		hud.call("_refresh_clock")
+		_check(not hud.top.forecast.visible, "no forecast under a hint")
 	main.queue_free()
 	await get_tree().process_frame

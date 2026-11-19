@@ -294,6 +294,9 @@ func _show_absence() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
+		PhoneNotices.schedule(self)   # (the phone tells the player while the game is closed)
+	if what == NOTIFICATION_APPLICATION_RESUMED:
+		PhoneNotices.cancel_all()
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and not OS.has_feature("mobile"):
 		_close()
 

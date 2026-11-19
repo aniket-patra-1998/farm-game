@@ -11,6 +11,7 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
+const DECOR_MODEL := "res://scripts/world3d/decor_model.gd"
 const NEVER := 1.0e9         # a time that never comes (a bloom that does not wilt): seconds on the farm's clock
 const WILT_SHARE := 0.4      # the last part of the time a bloom may stand ready over which it wilts
 const CLOCKED := &"clocked"  # on a part: surface -> its own material that ripens by the clock (`_clocked`)
@@ -779,7 +780,7 @@ static func tree_look(id: String, mask: int, look: int, from_file := true) -> No
 	var grown := ScaleGuide.factor(id)
 	return Instancer.copy_of(Instancer.key_of(["tree", id, grown, mask, look]), func() -> Node3D:
 		var tree := Node3D.new()
-		TreeModel.build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, true, look, true, TreeModel.UNSET,
+		TreeSpec.builder().build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, true, look, true, TreeSpec.UNSET,
 			mask)
 		return ModelKit.bake(tree))
 
@@ -902,9 +903,15 @@ static func decor_key(id: String, look: int, shows: String) -> String:
 	return Instancer.key_of(["decor", id, look, shows, Game.mastery.colour_of(shows)])
 
 
+## The decorations' builders (DecorModel), loaded by path when a look must be built: a look ModelStore keeps never
+## needs them, so the start does not compile them (docs/PERF_RUN.md, the start).
+static func decor_model() -> GDScript:
+	return load(DECOR_MODEL)
+
+
 static func _decor_built(id: String, look: int, shows: String) -> Node3D:
 	var fp := Game.footprint(id)
-	var built := DecorModel.build(Game.item_data(id), fp, {"uid": look, "crop": shows})
+	var built: Node3D = decor_model().build(Game.item_data(id), fp, {"uid": look, "crop": shows})
 	if not id.ends_with("_tree"):   # (a tree's crown overhangs by design)
 		built = SpaceFit.fit_model(built, fp)
 	return built
@@ -1011,7 +1018,7 @@ func _build(o: Dictionary) -> Node3D:
 						node.set_meta(BOX, batch["box"])
 						node.set_meta(PIECES, batch["pieces"])
 			"young":
-				node = SpaceFit.fit_model(DecorModel.build_young(it, o, Game.nurture.growth(o)), fp)
+				node = SpaceFit.fit_model(YoungModel.build(it, o, Game.nurture.growth(o)), fp)
 			"bloom":
 				# One of a few looks (Instancer), as for trees: from its file when it stands on its own.
 				# (one look whether in bud, in bloom or withered: its shader shows its life by the clock, `ripen`)
@@ -1166,10 +1173,10 @@ func _scenery_tree(holder: Node3D, t: Array) -> void:
 		"pine_tree":
 			pine(holder, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
 		"willow_tree":
-			TreeModel.build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false, TreeModel.UNSET,
+			TreeSpec.builder().build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false, TreeSpec.UNSET,
 				GROVE_MASK)
 		_:
-			TreeModel.build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false, TreeModel.UNSET,
+			TreeSpec.builder().build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false, TreeSpec.UNSET,
 				GROVE_MASK)
 
 
@@ -1181,7 +1188,7 @@ static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 	var root := Node3D.new()
 	root.position = base
 	parent.add_child(root)
-	ModelKit.cylinder(root, Vector3.ZERO, PINE_TRUNK_R * size, 0.22 * size, ModelKit.paint(TreeModel.BARK), -1.0, 6)
+	ModelKit.cylinder(root, Vector3.ZERO, PINE_TRUNK_R * size, 0.22 * size, ModelKit.paint(TreeSpec.BARK), -1.0, 6)
 	for k in PINE_TIERS:
 		var up := float(k) / (PINE_TIERS - 1)
 		var y := (0.14 + 0.2 * k) * size
@@ -1189,7 +1196,7 @@ static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 		var skirt := ModelKit.cylinder(root, Vector3(0, y, 0), r, lerpf(0.46, 0.34, up) * size,
 			ModelKit.paint(PINE.darkened(0.16 * (1.0 - up)).lightened(0.06 * up)), 0.0, 8 + (k % 2))
 		skirt.rotation.y = k * 0.7
-	ModelKit.sway_all(root, TreeModel.SWAY)  # bends in the wind like every tree
+	ModelKit.sway_all(root, TreeSpec.SWAY)  # bends in the wind like every tree
 
 
 # ---------------------------------------------------------------- placing

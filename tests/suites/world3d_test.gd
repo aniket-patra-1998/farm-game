@@ -2047,7 +2047,9 @@ func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
 func test_335_far_out_small_signs_fade_and_night_stays_playable() -> void:
 	_eq(ReadyMarks.minor_fade(ReadyMarks.MINOR_FADE_FROM - 1.0), 0.0, "close in, every sign shows")
 	_eq(ReadyMarks.minor_fade(ReadyMarks.MINOR_FADE_TO + 1.0), 1.0, "far out, small things' signs are gone")
-	_check(Farm3D.NIGHT_AMBIENT >= 0.4 and Farm3D.MOON_ENERGY >= 0.5, "a bright moonlit night")
+	# A deep night (the owner's pick B, 19 Nov: night must read as night), never black: the farm still shows.
+	_check(Farm3D.NIGHT_AMBIENT >= 0.2 and Farm3D.MOON_ENERGY >= 0.25, "a deep night, still playable")
+	_check(Farm3D.NIGHT_AMBIENT < 0.4, "night darker than the day's shade")
 	DayCycle.set_always_day(true)
 	_eq(DayCycle.lit_hour(23.0), DayCycle.SUNSET - 0.25, "always daytime: the night keeps the evening's light")
 	_eq(DayCycle.lit_hour(3.0), DayCycle.SUNRISE + 0.75, "and the small hours the morning's")
@@ -2513,7 +2515,7 @@ func test_577_the_building_builders_compile_when_a_look_is_built() -> void:
 	built.free()
 
 
-func test_581_the_crop_builders_compile_when_a_look_is_built() -> void:
+func test_583_the_crop_builders_compile_when_a_look_is_built() -> void:
 	# The farm asks what a crop form is (CropFormSpec) whenever it draws a plot; the builders (CropForms, 0.8k
 	# lines) load by path only when a look has to be built, which a crop drawn from its exported file never needs,
 	# so the start does not compile them (docs/PERF_RUN.md, the start).
@@ -2613,3 +2615,45 @@ func test_582_limited_animals_have_their_own_touch() -> void:
 	_check(lows[0] > -0.05 and lows[1] < -0.2, "a limited animal tosses its head (%.2f against %.2f)" % [lows[1], lows[0]])
 	_done(g)
 
+
+
+
+
+
+func test_582_the_decoration_builders_compile_when_a_look_is_built() -> void:
+	# The farm draws decorations from looks ModelStore keeps; the builders (DecorModel, 0.9k lines) load by path
+	# only when a look has to be built, and a mystery young (built fresh as it grows) has its own small builder,
+	# so the start does not compile them (docs/PERF_RUN.md, the start).
+	for path: String in ["res://scripts/world3d/objects_3d.gd", "res://scripts/world3d/link_models.gd",
+			"res://scripts/world3d/scale_guide.gd", "res://scripts/world3d/young_model.gd",
+			"res://scripts/world3d/decor_paint.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bDecorModel\\b").search(code), "%s does not name the builders" % path)
+	_eq(Objects3D.decor_model().resource_path, Objects3D.DECOR_MODEL, "the builders come from their own file")
+	_eq([DecorModel.WOOD, DecorModel.WHITE, DecorModel.LEAF], [DecorPaint.WOOD, DecorPaint.WHITE, DecorPaint.LEAF],
+		"one set of colours, asked either way")
+	var built: Node3D = Objects3D.decor_model().build(Game.item_data("hay_bale"), Game.footprint("hay_bale"), {"uid": 0})
+	_check(built != null and built.get_child_count() > 0, "a decoration is still built through the path")
+	built.free()
+	var young := YoungModel.build(Game.item_data("mystery_seedling"), {"id": "mystery_seedling", "uid": 7}, 0.5)
+	_check(young != null and young.get_child_count() > 0, "and a young")
+	young.free()
+
+
+func test_584_the_tree_builders_compile_when_a_look_is_built() -> void:
+	# The farm asks what a tree is (TreeSpec: its shape, whether it stands by itself, its sway and bark); the
+	# builders (TreeModel, 0.5k lines) load by path only when a tree's look has to be built (a lone tree comes from
+	# its file, the woods from ModelStore), so the start does not compile them (docs/PERF_RUN.md, the start).
+	for path: String in ["res://scripts/world3d/objects_3d.gd", "res://scripts/world3d/scale_guide.gd",
+			"res://scripts/world3d/building_fill.gd", "res://scripts/world3d/tree_spec.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bTreeModel\\b").search(code), "%s does not name the builders" % path)
+	_eq(TreeSpec.builder().resource_path, TreeSpec.BUILDER, "the builders come from their own file")
+	_eq([TreeModel.SWAY, TreeModel.BARK, TreeModel.UNSET, TreeModel.META_FAR],
+		[TreeSpec.SWAY, TreeSpec.BARK, TreeSpec.UNSET, TreeSpec.META_FAR], "one set of numbers, asked either way")
+	for id: String in ["apple_tree", "palm_tree", "willow"]:
+		_eq(TreeSpec.shape_of({"id": id}), TreeModel.shape_of({"id": id}), "%s: one shape, asked either way" % id)
+	var holder := Node3D.new()
+	TreeSpec.builder().build_at(holder, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, true, 3)
+	_check(holder.get_child_count() > 0, "a tree is still built through the path")
+	holder.free()

@@ -76,3 +76,7 @@ snow_cover={
 [gui]
 
 theme/custom_font="res://fonts/Poppins-Medium.ttf"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/farm_notices/plugin.cfg")

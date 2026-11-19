@@ -296,11 +296,7 @@ func build_fuel(content: VBoxContainer) -> void:
 			UiTheme.HEADING
 		)
 	)
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 18
-	bar.max_value = Balance.i("vehicles.fuel_tank")
-	bar.value = fuel
+	var bar := UiKit.thin_bar(fuel, Balance.i("vehicles.fuel_tank"))
 	card.add_child(bar)
 	var buy := hud.panel_button(tr("BUY_A_FULL_TANK_GEMS") % Balance.i("vehicles.fuel_tank_gem_cost"))
 	buy.disabled = Game.gems < Balance.i("vehicles.fuel_tank_gem_cost")
@@ -318,11 +314,7 @@ func add_nursery_info(content: VBoxContainer, o: Dictionary) -> void:
 	var line := Game.raising.babies(o)
 	var need := Game.raising.need_each()
 	card.add_child(BookPanel.text(tr("TROUGH_OF") % [Game.raising.trough(o), line.size() * need], UiTheme.BODY))
-	var bar := ProgressBar.new()
-	bar.show_percentage = false
-	bar.custom_minimum_size.y = 14
-	bar.max_value = maxf(line.size() * need, 1.0)
-	bar.value = Game.raising.trough(o)
+	var bar := UiKit.thin_bar(Game.raising.trough(o), line.size() * need)
 	card.add_child(bar)
 	if line.is_empty():
 		card.add_child(BookPanel.text(tr("NURSERY_EMPTY"), UiTheme.HEADING))

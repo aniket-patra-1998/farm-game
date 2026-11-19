@@ -195,6 +195,23 @@ static func word_bar() -> ProgressBar:
 	return bar
 
 
+## A thin bar with no words on it (a fuel tank, a trough, a nursery's feed), in the word bar's look and the theme's
+## height (owner, 19 Nov: sizes from the theme, never fixed pixels; one bar look everywhere).
+static func thin_bar(value: float, most: float) -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = UiTheme.size("thin_bar")
+	var radius := int(bar.custom_minimum_size.y / 2.0)
+	for part: Array in [["background", "track"], ["fill", "accent_soft"]]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = UiTheme.color(str(part[1]))
+		sb.set_corner_radius_all(radius)
+		bar.add_theme_stylebox_override(str(part[0]), sb)
+	bar.max_value = maxf(most, 1.0)
+	bar.value = value
+	return bar
+
+
 ## Fills a `word_bar` to `value` of `most` and writes `words` on it (its numbers the one way: UiTheme.tidy).
 static func set_bar(bar: ProgressBar, value: int, most: int, words: String) -> void:
 	bar.max_value = maxi(most, 1)

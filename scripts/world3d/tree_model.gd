@@ -10,12 +10,12 @@ extends RefCounted
 ## No two trees are the same: each is varied by its own seed (height, lean, where its clumps sit, their
 ## shade), so an orchard of one kind still reads as trees and not copies.
 
-const SWAY := 0.035                # how far a tree bends in the wind (paint3d sway, by height)
-const PATH := "res://data/tree_shapes.json"
-const BARK := Color("#8a6238")
+const SWAY := TreeSpec.SWAY        # (what the farm names is in TreeSpec: this file loads by path, TreeSpec.builder())
+const PATH := TreeSpec.PATH
+const BARK := TreeSpec.BARK
 const LEAF := Color("#4f9a3a")
 const LEAF_TOP := Color("#7cc04e")
-const UNSET := Color(0, 0, 0, 0)
+const UNSET := TreeSpec.UNSET
 const COLOUR_SEED := 4177   # offsets the colour stream from the shape stream
 const CROWN_TRIM := 1.0       # every crown is drawn this share of its data's width (0.92 of that in height): lighter
 const CROWN_REACH_MAX := 0.68  # no crown reaches further from its trunk than this (of the tree's size): never a blob
@@ -40,7 +40,7 @@ const TRUNK_TAPER := 0.85     # a trunk is a thin straight pole: its top is this
 const TRUNK_LEAN := 0.03      # and it leans no more than this (radians)
 const META_SHARE := &"trunk_share"   # on a built tree: the share of its height that is bare trunk
 const META_REACH := &"crown_reach"   # and how far its crown reaches from the trunk, of the tree's size
-const META_FAR := &"far_look"   # and what its far look needs: trunk height, crown bottom and top, reach, trunk r, leaf
+const META_FAR := TreeSpec.META_FAR   # and what its far look needs (TreeSpec)
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
 const FRUIT_READY := 30     # fruit on a full tree (they come one at a time as it ripens: _fruit)
@@ -72,28 +72,14 @@ const FOLIAGE_CORE := 0.66      # the solid mass inside the cards, of the full s
 const FOLIAGE_MIN := 8          # at least this many cards on any mass
 const TILE_FILL := 1.15     # a tree is one tile on the farm and its crown a little wider, so neighbours overlap
 
-static var _data := {}
-
-
-## Whether a tree of this kind is built to stand within the tree height range by itself (a leafy crown on a trunk
-## made long enough: `_crown_on_trunk`); palms and bananas are measured and scaled instead (ScaleGuide).
+## Whether a tree of this kind stands within the tree height range by itself (TreeSpec, kept here for the tools).
 static func stands_by_itself(it: Dictionary) -> bool:
-	return str(shape_of(it)["form"]) not in ["palm", "banana"]
+	return TreeSpec.stands_by_itself(it)
 
 
-## The shape for a tree: its form's sizes with its family's own laid over them.
+## The shape for a tree (TreeSpec).
 static func shape_of(it: Dictionary) -> Dictionary:
-	if _data.is_empty():
-		_data = DataFile.read(PATH)
-		if _data.is_empty():
-			_data = {"forms": {}, "families": {}}
-	var families: Dictionary = _data.get("families", {})
-	var own: Dictionary = families.get(str(it.get("family", "")), families.get(str(it.get("id", "")), {}))
-	var form := str(own.get("form", "round"))
-	var out: Dictionary = ((_data.get("forms", {}) as Dictionary).get(form, {}) as Dictionary).duplicate()
-	out.merge(own, true)
-	out["form"] = form
-	return out
+	return TreeSpec.shape_of(it)
 
 
 ## One of a kind's colours, chosen for this tree: the main one (`key` in the shape, or `main` when it has none)
@@ -110,8 +96,7 @@ static func _pick(sh: Dictionary, key: String, alts: String, fallback: String, r
 ## reads as painted from the same palette as the animals and the lawn beside them, not as candy. The hue is always
 ## the kind's own (the mix only softens and darkens it): a pink crown stays pink, never salmon or grey (owner, 18 Nov).
 static func tone(col: Color) -> Color:
-	shape_of({})
-	var tn: Dictionary = _data.get("leaf_tone", {})
+	var tn: Dictionary = TreeSpec.data().get("leaf_tone", {})
 	if tn.is_empty():
 		return col
 	var c := col.lerp(Color.html(str(tn.get("tint", "#8c9a52"))), float(tn.get("mix", 0.0)))
@@ -120,8 +105,7 @@ static func tone(col: Color) -> Color:
 
 ## Every form the data describes (tests build each one).
 static func forms() -> Array:
-	shape_of({})
-	return (_data.get("forms", {}) as Dictionary).keys()
+	return (TreeSpec.data().get("forms", {}) as Dictionary).keys()
 
 
 ## A tree standing on `base` under `parent`; `size` 1 is a full tree on its own tile (crown nearly as wide

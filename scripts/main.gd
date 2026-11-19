@@ -154,6 +154,8 @@ func _ready() -> void:
 ## built and drawn, as the game's first farm is, and seen whole (so every material is drawn once under the cover).
 func _on_farm_opened() -> void:
 	_fit_camera()
+	if not Game.in_showcase():
+		PhoneNotices.ask_permission()   # (Android 13+: asked once, with the farm already on screen behind it)
 	LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
 
 

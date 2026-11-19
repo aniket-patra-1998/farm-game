@@ -1165,6 +1165,36 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   says. 3) While no phone run is possible, more start slices, sized with `--drop`: CropForms (-811 lines: CropModels
   names it to build a crop's look; crops are kept by ModelStore too, so the same spec/builder split), DecorModel
   (-814: Objects3D's decor looks go through Instancer.copy_of), Animal3D (-978).
+- Run 23 (19 Nov 18:54 - 19:45 IST). Godot fetched again; local main had diverged again (kept as the local branch
+  local-main-backup-1119, then `git checkout -B main origin/main`). No phone run: today's 4 are used (since 13:30
+  IST); the nightly at 02:10 IST is the next. Merged two start slices:
+  - dbb6c2d (perf/crop-spec), slice 8: CropFormSpec (scripts/world3d/crop_form_spec.gd: form_of, look, is_plot, spec,
+    forms, crops, builder()) is what CropModels and Crops3D name; CropForms (the builders) loads by path via
+    `CropFormSpec.builder()` and keeps delegates for the tools. 28,618 -> 27,782 lines; headless 16 alternating runs:
+    scripts - engine median 2,102 -> 2,052 ms, hud 3,070 -> 2,956 ms. The 105 plant files' meshes compared equal
+    surface by surface (the exporter's .scn bytes differ run to run, so compare meshes, not bytes). Test 583.
+  - perf/decor-by-path, slice 9: DecorModel loads by path (`Objects3D.decor_model()`, only in _decor_built, a
+    ModelStore miss); YoungModel.build (a mystery young, built fresh as it grows) and DecorPaint (WOOD, DARK_WOOD,
+    STONE, WHITE, HAY, LEAF; DecorModel's consts alias them, LinkModels' hedge uses LEAF) are what the start names.
+    27,782 -> 26,947 lines. Test 582. Code moved as it was (test 582 checks the colours alike).
+  - The plants exporter must be rerun when scale_guide.gd changes (it is a plants source): run it, `git checkout
+    art/` (keep the committed files), then `python3 tools/make_art_versions.py` so the versions hash those files.
+- Next run: 1) the nightly phone run's report (02:10 IST): its `gpu` phase (each owner's GPU ms, half_scale) and the
+  start marks against run 21's (scripts mark 6,782 ms on the A05s). 2) Cut the biggest GPU owner it names. 3) While
+  no phone run is possible, more start slices sized with `--drop`: Animal3D (~-1k: named by scale_guide.gd and
+  the farm's animal layer), TreeModel (481), BuildingFill (918, autoload game names it).
+- Run 24 (19 Nov 19:51 - 20:40 IST). Godot 4.7.2 fetched again; local main had diverged (unrelated history), so
+  the run worked from a detached origin/main. No phone run: today's 4 are used; the nightly at 02:10 IST is next.
+  Slice 10 (perf/tree-spec): TreeSpec (scripts/world3d/tree_spec.gd: data, shape_of, stands_by_itself, SWAY, BARK,
+  UNSET, META_FAR, builder()) is what objects_3d, scale_guide and building_fill name; TreeModel loads by path via
+  `TreeSpec.builder()` and keeps aliases and delegates (shape_of, stands_by_itself) for the tools and tests.
+  27,066 -> 26,613 lines (tools/start_lines.py). Plants re-exported: all 105 files' meshes hash equal (scratch dumper
+  of every surface's arrays), committed art kept, art_sources/art_versions regenerated (tree_spec.gd is a plants
+  source). Test 584. Note: test 582 exists twice (farming_test and world3d_test) from two runs pushing at once.
+- Next run: 1) the nightly phone run's report (02:10 IST): its `gpu` phase and the start marks against run 21's.
+  2) Cut the biggest GPU owner it names. 3) More start slices sized with `--drop`: Animal3D (~-1k), BuildingFill
+  (~-1.1k, but it builds the fills of the first screen's buildings, so a path load saves nothing unless fills wait
+  until after the first screen).
 
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
@@ -1259,6 +1289,39 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   sound packs, item 6), or item 5, light and sky (cloud shadows, warm windows at dusk; chimney smoke exists in
   decor_motion.gd and BuildingDress). Local main in this clone was an unrelated old history: reset to origin/main,
   the old tip kept as local branch old-local-main.
+
+- Run 8 (19 Nov 19:37-20:10 IST): no picks yet (opening glide, build reveal, touch answers). Item 4's animal half,
+  touch hearts, built on wow/touch-hearts (0348626; not merged: a new look, a sheet in the log under "Wow: waiting
+  for your look", calmer and richer, noon and dusk). A loud tap on an animal with nothing to collect or give it
+  (FarmGrid._act_on_object's last path) emits FarmGrid.petted; Farm3D._petted asks Objects3D.animal_top (over its
+  back where it stands now) and WorldFx.hearts draws there: pooled WorldFx.Heart nodes (HEART_POOL 6, a curve
+  polygon with a cream rim), tween-driven, hidden when done. Balance feel.heart (calmer, the branch default: count 1,
+  px 22; richer: count 3, px 26; rise 28 and drift 44 keep it clear of the name over the animal). Test 584
+  (hud_test). tools/juice_shot.tscn --pet [--heart=<json>] renders a tap (~45 s). Doubt: the fading heart's last
+  frames touch the end of the name line. Collect and feed keep their own moments (no heart).
+- Next: the owner's picks (opening glide, build reveal, touch answers, touch hearts): rebase the picked branch on
+  main, precheck, fast-forward push. Test numbers: main now has 580-583, so build reveal's 580 and touch
+  answers' 582 take new numbers when they merge (touch hearts is 584). Then item 5, light and sky (cloud
+  shadows; warm windows at dusk: survey night_glow.gd; chimney smoke exists in decor_motion.gd and
+  BuildingDress). Item 6 waits for the owner's packs. Local main of this clone was an unrelated old history: kept
+  as local branch local-main-stale-1118.
+
+- Run 9 (19 Nov 20:36-21:10 IST): no picks yet (opening glide, build reveal, touch answers, touch hearts). Item 5's
+  first piece, cloud shadows, built on wow/cloud-shadows (923781d; not merged: a new look, a sheet in the log under
+  "Wow: waiting for your look": as built and before at noon, richer at noon, both at dusk). The 2D farm had
+  CloudShadows; the 3D farm had none. shaders/cloud_shade.gdshaderinc: cloud_light(xz, TIME), a few warped sines in
+  world space (CLOUD_DRIFT, CLOUD_SCALE), read by ground3d, crop3d and master_solid (so grass, crops and models
+  share one cloud); the global cloud_shade is set by main from the 2D shadows' strength through
+  FarmMain.cloud_shade: none below Balance feel.cloud_shade_from (0.5: clear and overcast stay crisp, so
+  ItemIcons, which now counts cloud_shade among its MOODS, can still keep pictures), up to feel.cloud_shade (0.22;
+  richer 0.32, calmer 0.15); Quality cloud_shadows off on low. Test 590 (world3d_test). Changing crop3d re-exports
+  the 105 plant files (tools/export_plants.tscn; the precheck says so). Render: look_shot --weather=partly_cloudy
+  --quality=mid --views=all (~75 s a shot). Doubt: water is not shaded.
+- Next: the owner's picks (five branches wait); rebase the picked one on main, precheck, fast-forward push (test
+  numbers: build reveal 580 and touch answers 582 renumber; touch hearts' 584 is now taken on main too; cloud
+  shadows is 590). Then the rest of item 5: warm lit windows at dusk (survey night_glow.gd, BuildingDress), a
+  golden-hour sun, a soft rainbow after rain. Local main of this clone was an unrelated old history: kept as
+  local branch stale-main-backup.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens

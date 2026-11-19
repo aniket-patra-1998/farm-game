@@ -155,7 +155,7 @@ func card(key: String) -> Control:
 		col.add_child(row)
 		return col
 	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", 14)
+	head.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
 	var pic := picture_of(key, UiTheme.size("inbox_face"))
 	pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(pic)
@@ -175,7 +175,7 @@ func card(key: String) -> Control:
 	if not buttons.is_empty():
 		var row := HBoxContainer.new()
 		row.alignment = BoxContainer.ALIGNMENT_END
-		row.add_theme_constant_override("separation", 14)
+		row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
 		for b in buttons:
 			row.add_child(b)
 		col.add_child(row)

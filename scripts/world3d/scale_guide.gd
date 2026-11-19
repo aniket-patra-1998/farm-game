@@ -21,7 +21,7 @@ static func factor(id: String) -> float:
 		return _factors[id]
 	var f := 1.0
 	var it := Game.item_data(id)
-	if str(it.get("kind", "")) == "tree" and TreeModel.stands_by_itself(it):
+	if str(it.get("kind", "")) == "tree" and TreeSpec.stands_by_itself(it):
 		_factors[id] = f   # built to stand within its range (TreeModel), so not built here just to be measured
 		return f
 	var range_of: Array = _heights().get(str(it.get("kind", "")), [])
@@ -88,7 +88,7 @@ static func model_of(id: String) -> Node3D:
 			return a
 		"tree":   # (at full size, as the guide measures it: a tree's picture is of its file, ItemIcons)
 			var t := Node3D.new()
-			TreeModel.build_at(t, mid, it, 1.0, true, PICTURE_LOOK)
+			TreeSpec.builder().build_at(t, mid, it, 1.0, true, PICTURE_LOOK)
 			return ModelKit.bake(t)
 		"vehicle":
 			return VehicleModel.build(it, false)
@@ -97,7 +97,7 @@ static func model_of(id: String) -> Node3D:
 		"bloom":
 			return BloomModel.build(it, {"id": id, "uid": 7, "t": Game.now() - int(it.get("cycle_seconds", 86400)) - 1})
 		"young":
-			return DecorModel.build_young(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
+			return YoungModel.build(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
 		"building", "barn", "crafting":
 			return Objects3D.building_look(id, Game.max_level(id))
 	return null

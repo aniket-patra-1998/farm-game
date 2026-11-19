@@ -23,3 +23,10 @@ art/pilot/**/*.import
 # Built from locale/strings.csv when Godot imports the project
 locale/*.translation
 __pycache__/
+
+# The Android build template (installed by CI for the gradle export) and the plugin built from android/plugins
+android/build/
+android/.build_version
+android/plugins/*/build/
+android/plugins/*/.gradle/
+addons/farm_notices/bin/
