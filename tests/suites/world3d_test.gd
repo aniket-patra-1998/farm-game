@@ -2513,7 +2513,7 @@ func test_577_the_building_builders_compile_when_a_look_is_built() -> void:
 	built.free()
 
 
-func test_581_the_crop_builders_compile_when_a_look_is_built() -> void:
+func test_583_the_crop_builders_compile_when_a_look_is_built() -> void:
 	# The farm asks what a crop form is (CropFormSpec) whenever it draws a plot; the builders (CropForms, 0.8k
 	# lines) load by path only when a look has to be built, which a crop drawn from its exported file never needs,
 	# so the start does not compile them (docs/PERF_RUN.md, the start).
