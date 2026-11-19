@@ -1357,6 +1357,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   reveal 580, touch answers 582, touch hearts 584. The pre-push hook re-runs the 7.5 min precheck, so main can move
   meanwhile: a rejected push is fetch, rebase, regenerate art_versions, check again. The window ends 00:40 IST.
 
+- Run 12 (19 Nov 23:35-00:15 IST): no picks yet. Run 11's open end built as a missing contact (reuses the mended
+  Barn's swell, so merged without a pick): a vehicle's finished rust repair. RustSystem.finish_repairs (on Game's
+  30 s stray_timer) closes finished repairs, which settled lazily, says each once (RUST_REPAIR_DONE) and calls
+  objects_updated; Objects3D: a vehicle in for repair is built again (shows_of writes REPAIRING after its rust)
+  and counts 0 in _step, so out of the workshop it is a step up and grow_in plays (sparkles, grand sound).
+  Test 598 (rust_test). Render: tools/juice_shot.tscn -- --mended [--every=2] (~40 s); checked at 1x: the tractor
+  swells red out of its rusted paint. Not done: a worn building's finished repair (WearSystem settles lazily the
+  same way; apply the same finish_repairs + _step rule for the AUDIT "every similar module" rule), and a repair
+  that finished while the game was closed (no moment on the first sync). The build window ends 00:40 IST.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
