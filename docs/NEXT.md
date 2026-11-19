@@ -1016,6 +1016,24 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   and Objects3D stay: the 3D farm names them). About 30-40 minutes with tests; start it early in a run. 3) Past that, the ~31k left is mostly the 3D farm itself: let the phone say whether
   compiling is still the big part before slicing further.
 
+- Run 16 (19 Nov 11:50 - 12:40 IST). No new phone report (quota frees at 13:30 IST; last run 03:02 UTC). Godot
+  fetched again to /home/claude/godot/godot. Slice 5 of the start (perf/icons-later): ItemIcons is now only the
+  lookup the first screen needs (of, sized, side, is_made, the shipped and kept files, the key, the waiting queue);
+  the renderer (slots, studio lights, develop, style, save, the models it pictures: `model`) moved to
+  scripts/ui/icon_maker.gd, no class name, loaded by path when ItemIcons.start runs, which FarmHud now calls a frame
+  after the first screen (_load_panels' first step). ItemIcons._model stays as a wrapper (tests, tools). Lines
+  compiled before the first screen 31,546 -> 30,741 (tools/start_lines.py; main had grown from 31,403 with UiFx);
+  headless, 7 alternating pairs (scratch print of StartMarks.marks() after "hud"): scripts - engine median
+  1,515 -> 1,416 ms, hud mark 1,942 -> 1,843 ms. Test 551. tools/make_art_versions.py lists icon_maker.gd as studio
+  and look code, so the studio fingerprint changed once (every picture's key: CI's bake_icons makes them again for
+  the phone build; a device's user://icons cache remakes once). Icons rendered before/after at 1x (cow, cow shed,
+  ui:coin identical to the pixel; the apple tree and a crop differ only as much as two runs of the old code do).
+- Next run: 1) after 13:30 IST, once the "Latest phone build" has this commit or later, start one phone run (A05s)
+  and log start.scripts - start.engine against run 13's 3.7 s, and whether the benchmark reached "done"; then the
+  A13 if quota allows. 2) `tools/start_lines.py -v` for what is left (~30.7k, mostly the 3D farm the first screen
+  draws): candidates HudGoals' goal sheet (~0.4k), then let the phone say whether compiling is still the big part
+  before slicing further.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.

@@ -103,8 +103,12 @@ func _panel(id: StringName) -> Variant:
 
 
 ## The panels' scripts compiled soon after the first screen, one a frame (under the loading cover, while the farm
-## builds), so the first tap on a menu does not wait for its script.
+## builds), so the first tap on a menu does not wait for its script; first, the pictures' renderer (ItemIcons).
 func _load_panels() -> void:
+	await get_tree().process_frame
+	if not is_inside_tree():
+		return
+	ItemIcons.start(self)   # the shop's pictures, made from the models when first missing (shipped ones load at once)
 	for path: String in PANEL_SCRIPTS.values() + [SHEET_SCRIPT]:
 		await get_tree().process_frame
 		if not is_inside_tree():
@@ -131,7 +135,6 @@ func _ready() -> void:
 	_root = root
 	_fit_safe_area()
 	get_viewport().size_changed.connect(_fit_safe_area)
-	ItemIcons.start(self)   # the shop's pictures, made from the models when first shown
 	top = HudTop.new(self)
 	top.build(root)
 	top.sky_tapped.connect(func() -> void:   # (the icons' words, on a tap)

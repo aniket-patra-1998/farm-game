@@ -1243,3 +1243,26 @@ func test_545_the_panels_compile_after_the_first_screen() -> void:
 		_check(is_same(panel, hud.get(id)), "%s is made once" % id)
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_551_the_pictures_renderer_compiles_after_the_first_screen() -> void:
+	# ItemIcons is the lookup the first screen needs (shipped and kept pictures); the renderer that makes a missing
+	# one from its model loads by path a frame after the first screen, so the start never compiles it or the models
+	# it pictures (docs/PERF_RUN.md, the start).
+	var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string("res://scripts/ui/item_icons.gd"),
+		"", true)
+	for cls in ["IconStyle", "IconDevelop", "GpuRead", "GoodsModel", "MaterialModel", "AssetRegistry", "Crops3D",
+			"ScaleGuide"]:
+		_check(not RegEx.create_from_string("\\b%s\\b" % cls).search(code), "ItemIcons does not name %s" % cls)
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	var hud: FarmHud = main.get("hud")
+	_check(hud.find_children("*", "SubViewport", true, false).is_empty(), "no renderer at the first screen")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(is_instance_valid(ItemIcons._shown) and ItemIcons._shown.get_script().resource_path == ItemIcons.MAKER,
+		"the renderer comes a frame later, from its own file")
+	_check(not ItemIcons.is_made("a_thing_never_asked"), "an unknown picture is not made")
+	main.queue_free()
+	await get_tree().process_frame

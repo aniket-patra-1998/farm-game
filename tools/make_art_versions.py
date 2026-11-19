@@ -30,12 +30,12 @@ BUILT = ["scripts/world3d/*.gd", "scripts/world/animals/*.gd", "scripts/world/sp
 # Where look code lives: every data file it reads must be in BUILT (--check finds them itself), so a new one can
 # never shape a look without redrawing its pictures.
 LOOK_CODE = ["scripts/world3d/*.gd", "scripts/world/animals/*.gd", "scripts/ui/ui_models.gd", "scripts/ui/item_icons.gd",
-             "scripts/season.gd"]
+             "scripts/ui/icon_maker.gd", "scripts/season.gd"]
 # (the fingerprints themselves, the files are fingerprinted; animal strides are measured from those files, each
 # kept with its file's fingerprint, and move nothing in a picture)
 NOT_LOOKS = {"data/art_versions.json", "data/assets.json", "data/animal_strides.json"}
-STUDIO = ["scripts/ui/item_icons.gd", "scripts/ui/icon_develop.gd", "scripts/ui/ui_models.gd", "scripts/ui/icon_style.gd",
-          "shaders/icon_flat.gdshader"]
+STUDIO = ["scripts/ui/item_icons.gd", "scripts/ui/icon_maker.gd", "scripts/ui/icon_develop.gd", "scripts/ui/ui_models.gd",
+          "scripts/ui/icon_style.gd", "shaders/icon_flat.gdshader"]
 SOURCES_OUT = "data/art_sources.json"
 # What each kind of exported art file is made from, and the exporter to run when any of it changes.
 SOURCES = {
