@@ -1238,7 +1238,9 @@ func test_440_info_texts_take_their_numbers_from_the_data() -> void:
 
 ## The inbox's lines keep one column: a line with no thing to show (a help, a plain gift) keeps the thing's room,
 ## so every sender's name starts where the others' do instead of jumping left under the picture above it.
-func test_524_inbox_names_stand_in_one_column() -> void:
+func test_524_an_inbox_line_says_who_and_what_with_a_small_picture() -> void:
+	# Owner, 19 Nov: one short line, "Poppy sent you a gift" with the thing's small picture beside the words; a
+	# line with no thing to show has no picture (no empty box), and every line is one height.
 	Game.saving_enabled = false
 	Game.reset_game()
 	Game.open_showcase()
@@ -1246,15 +1248,20 @@ func test_524_inbox_names_stand_in_one_column() -> void:
 	add_child(main)
 	await get_tree().process_frame
 	var hud: FarmHud = main.get("hud")
-	var widths: Array[float] = []
-	for give: Dictionary in [{"what": InboxItem.ITEM, "id": "cow", "n": 1}, {"what": InboxItem.COINS, "n": 50},
-			{"what": InboxItem.FUEL, "n": 1}]:
-		var line: Control = hud.inbox.line_for(InboxItem.make(900 + widths.size(), InboxItem.GIFT, 1, 0, give))
+	var heights: Array[float] = []
+	for give: Dictionary in [{"what": InboxItem.ITEM, "id": "cow", "n": 1}, {"what": InboxItem.COINS, "n": 50}]:
+		var item := InboxItem.make(900 + heights.size(), InboxItem.GIFT, 1, 0, give)
+		var line: Control = hud.inbox.line_for(item)
 		add_child(line)
-		widths.append(line.get_child(1).get_combined_minimum_size().x)
+		var pictures := line.get_children().filter(func(c: Node) -> bool: return c is TextureRect)
+		_eq(pictures.size(), 1 if give["what"] == InboxItem.ITEM else 0, "a picture only for a thing (%s)" % give)
+		var words: Label = line.get_child(1)
+		_eq(words.text, UiTheme.tidy(hud.inbox.sentence(item)), "the words say who and what")
+		_check(words.get_combined_minimum_size().x > 0.0 or words.clip_text, "the words keep their width")
+		heights.append(line.get_combined_minimum_size().y)
 		line.queue_free()
-	for w in widths:
-		_check(w > 0.0 and absf(w - widths[0]) < 1.0, "each inbox line keeps the thing's room (%s)" % str(widths))
+	_check(absf(heights[0] - heights[1]) < 1.0, "every line one height %s" % str(heights))
+	_check(heights[0] <= UiTheme.size("button_size") + 8.0, "a short line (%s)" % heights[0])
 	main.queue_free()
 	await get_tree().process_frame
 

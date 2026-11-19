@@ -81,6 +81,8 @@ func words_of(item: Dictionary) -> Dictionary:
 
 
 func line_for(item: Dictionary) -> Control:
+	# One short line (owner, 19 Nov): a small face, what happened in words ("Poppy sent you a gift"), the thing's
+	# small picture beside the words, then the button. A line with no thing simply has no picture: no empty box.
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
 	var from := int(item.get("from", 0))
@@ -91,30 +93,33 @@ func line_for(item: Dictionary) -> Control:
 		who = PortraitIcon.of(Game.social.look_of(Game.social.sender(item)), UiTheme.size("inbox_face"))
 	who.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(who)
-	var give: Dictionary = item["give"]
-	var what := str(give.get("what", ""))
-	if what in [InboxItem.ITEM, InboxItem.YOUNG, InboxItem.PART]:
-		var thing := UiKit.count_row([[str(give["id"]), "×%d" % int(give.get("n", 1))]], false)   # (one row high)
-		thing.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		row.add_child(thing)
-	else:   # a help or a gift with no thing to show keeps the thing's room, so every sender's name stands in one column
-		var room := Control.new()
-		room.custom_minimum_size.x = UiTheme.size("count_tile")
-		room.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(room)
-	# Just who sent it (the picture, the count and the button say the rest); a thing from your own farm says
-	# what waits for you instead ("A Cow is waiting", then Place).
-	var label := _who(item)
-	if from == InboxItem.FARM and what == InboxItem.ITEM:
-		label = tr("INBOX_WAITING") % str(Game.item_data(str(give["id"])).get("name", ""))
-	var words := BookPanel.text(label, UiTheme.HEADING)
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var words := BookPanel.text(UiTheme.tidy(sentence(item)), UiTheme.BODY)
 	words.autowrap_mode = TextServer.AUTOWRAP_OFF   # (one line, trimmed: every line of the list is one height)
 	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	words.clip_text = true
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	words.add_theme_color_override("font_color", BookPanel.SOFT)
-	row.add_child(words)
+	var give: Dictionary = item["give"]
+	var what := str(give.get("what", ""))
+	var px := UiTheme.size("inbox_thing")
+	if what in [InboxItem.ITEM, InboxItem.YOUNG, InboxItem.PART]:
+		words.size_flags_horizontal = Control.SIZE_FILL   # (the picture sits right after the words: the words keep
+		words.clip_text = false                           # their own width; names are short, InboxItem trims them)
+		words.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+		row.add_child(words)
+		var pic := TextureRect.new()
+		pic.texture = ItemIcons.of(str(give["id"]))
+		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		pic.custom_minimum_size = Vector2(px, px)
+		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(pic)
+		var gap := Control.new()
+		gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(gap)
+	else:
+		row.add_child(words)
 	var id := int(item["id"])
 	var button := hud.panel_button(tr(button_key(item)))
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
