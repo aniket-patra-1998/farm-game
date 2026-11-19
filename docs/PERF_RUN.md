@@ -100,3 +100,8 @@ by default one phone a run: a Galaxy A05s, low-end, Adreno 610). From now on:
    after; target well under half. Merge it in safe slices (one area at a time, tests passing), not one big bang.
 3. Loading and play measured on the phone once the benchmark finishes, then the biggest of those.
 Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit ships (4b84c6b) to confirm it runs.
+- 19 Nov 08:45: the first phone run of the build with 32-bit ARM (4b84c6b, on the Galaxy A13) failed in Test
+  Lab's validation ("Matrix failed during validation"), before any phone ran. Find why first (the matrix's
+  invalid-matrix details: `gcloud firebase test android run` with `--format=json`, or the REST API's
+  testMatrices.get on the matrix id: e.g. a malformed APK, quota, or the device/version pair), since it may mean
+  the 32-bit build broke the APK; then run the A05s and the A13 on it.
