@@ -745,6 +745,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Next (the window ends 08:35; the 07:35 run is the last full one): nothing decided is left in this lane. Waiting on
   the owner: the stall jam (step 8 crafting), idle coins past level 15 (step 8), the first-hour pacing; steps 5
   and 9 are new looks (a sheet first). A last run can re-measure after any owner pick, else write the summary.
+- Run 13 (19 Nov 07:35-08:20 IST): goals/7-rare-coop-2 (41292f2, test 540): the goal bot fills each egg-laying coop,
+  collects it and opens the Mystery Eggs it finds; pushed, NOT merged (needs rebase on main and a full precheck).
+  Reported: the rare coop's last stage (open 3 Mystery Eggs) takes about a month at FarmVille's egg odds.
+- Final (19 Nov 08:36 IST): the build's window is over; summary row in the log. Open, all the owner's call: the
+  bushel stall jam (crafting's payback), idle coins past level 15, the first hour's idle minutes after Welcome, the
+  rare coop's pace, the Guide hand, Starter Seeds' look; steps 5 and 9 need a sheet of options first. The scheduled
+  task could not switch itself off from a run (needs the owner's approval): disable it by hand.
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
