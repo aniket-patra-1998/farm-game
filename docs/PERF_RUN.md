@@ -136,3 +136,14 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
 - 19 Nov 15:10 (perf run 19): the phone run of 14:31 (657a40b) confirmed the cover fix (own farm whole 31.7 -> 7.7 s)
   but played at 256.5 ms a frame on mid: AutoQuality ignored every frame over 250 ms, so the A05s was never stepped
   down. Merged eb810f7: a steady run of slow frames counts, and a window that slow goes to the last rung.
+
+## Owner approvals (19 Nov 15:21): frame rate on slow phones
+Measured on the Galaxy A05s: playing the showcase at zoom 1.6 runs ~95 ms a frame on low (386 draws, 218k
+triangles) and ~256 ms on mid (541 draws, 498k triangles). The owner approved both, so they are built now (they
+are no longer "report only"):
+1. Simpler distant objects: trees, buildings, decorations and animals far from the camera drawn with simpler
+   models (LODs) or flat picture stand-ins (impostors) at far zoom; at the playing zoom nothing visible changes.
+   Target on low: under 150 draws and 100k triangles at the playing zoom on the showcase.
+2. Lower 3D resolution on low quality only: the 3D world renders at ~70% (Quality field, e.g. scale_3d 0.7, FSR or
+   bilinear) and is scaled up; the interface stays at full sharpness. Mid and high unchanged.
+Measure each on the phone (play avg_ms, p95, draws, triangles) before and after.
