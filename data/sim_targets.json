@@ -1,0 +1,6 @@
+{
+  "_about": "What the play bot (tools/balance_sim) checks a run against, so an audit sees a broken economy as a failure, not a number to read (owner, 19 Nov: 'the auditing should take care of it'). Each is checked on runs of at least min_days; style limits a target to bot styles that play that part of the game.",
+  "idle_days_most": {"v": 25, "min_days": 20, "note": "most share of days (%) with coins sitting idle past the bot's limit"},
+  "upkeep_least": {"v": 10, "min_days": 40, "style": ["builder", "crafter"], "note": "least share (%) of coins earned that repairs take"},
+  "upkeep_most": {"v": 30, "min_days": 40, "style": ["builder", "crafter"], "note": "most share (%) of coins earned that repairs take"}
+}

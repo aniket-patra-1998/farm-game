@@ -59,6 +59,10 @@ one of these. Judge on a real farm (a new one, and one played a day), not only t
 5. Rewards stay special: nothing floods (caps per day or week, data/rolls.json); FarmVille's rhythm, not a slot machine.
 6. Simple but awesome: fewer, stronger moments; cheap and beautiful together; never a feature half done.
 7. The owner can see every state: the showcase shows every feature and lets them try every weather and moment.
+8. The economy stays challenging: the play bot's targets hold (data/sim_targets.json). An economy audit runs
+   `tools/balance_sim.tscn -- --days=45 --style=builder` (and plain, casual) and treats a "TARGETS MISSED" line
+   as a bug to fix or report, never a number to note (owner, 19 Nov: repairs at under 1% of earnings and idle
+   coins on 75% of days went unflagged because the bot printed figures, not failures).
 Depth expected: fix the cause, then find the same mistake everywhere else; ask why it was not caught and add a
 check (a test) so it cannot come back; bring the next problem before the owner finds it.
 

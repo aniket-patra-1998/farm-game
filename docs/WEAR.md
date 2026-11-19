@@ -15,7 +15,7 @@ review (Claude Doc "Farm game: a harder late game", section 6 holds the owner's 
     before a building reaches level 4).
   - At level 5 a building stops: a home gives nothing, a crafting building starts nothing. Nothing is lost.
 - **Repair**: coins and the building's own materials (those of its sizes), 4, 10, 18, 28 and 40% of what the
-  building and its sizes cost at levels 1 to 5 (the owner's cap: 40%), and 10 minutes up to 4 hours. It works
+  building and its sizes cost at levels 1 to 5, the coins times the farm's growth (`wear.level_scale`), and 10 minutes up to 4 hours. It works
   as worn as it is until the repair is done, then it is like new.
 - **Sign**: the rust sign (RustMarks), one draw for vehicles and buildings; a tap on it offers the repair. A
   building worn out offers its repair on any tap by hand. (Its own picture is a new look: options first.)
@@ -32,6 +32,7 @@ Switch: `Release.on("wear")`. Numbers: Balance `wear.*`, `upgrade.*`. Rules: `sc
 vehicles' rust pace from the moment each was last settled, not level by level: close enough at these paces.)
 
 ## What the bot shows (45 days, builder style)
-Six repairs (14,400 coins) and two upgrades: well under 1% of what the farm earned. With repairs capped at 40%
-of a building's price, wear is upkeep to do, not a coin sink: buildings cost 5,000 to 12,000 while a late farm
-earns about 90,000 a day.
+Repairs first came to under 1% of what the farm earned: buildings cost 5,000 to 12,000 while a late farm earns
+about 90,000 a day. The owner asked for dearer repairs (19 Nov): a repair's coins now grow with the farm's level
+(times 1 + 0.12 x level squared, Balance `wear.level_scale`), and take 13% of earnings in that run (target 10 to
+30%, data/sim_targets.json). Idle coins on 75% of days is still missed (target 25%): an open economy question.

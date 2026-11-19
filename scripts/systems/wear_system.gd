@@ -225,6 +225,12 @@ func _worth(o: Dictionary) -> Dictionary:
 	return {"coins": coins, "materials": materials}
 
 
+## How many times a repair's coins are for how far the farm has grown (its level), so upkeep keeps pace with what
+## a bigger farm earns (owner, 19 Nov).
+func grown() -> float:
+	return 1.0 + Balance.f("wear.level_scale") * game.level() * game.level()
+
+
 ## The coins, materials and seconds a repair takes now ({} when there is nothing to repair).
 func repair_cost(uid: int) -> Dictionary:
 	var o := game.object_by_uid(uid)
@@ -238,7 +244,7 @@ func repair_cost(uid: int) -> Dictionary:
 		var n := ceili(float(worth["materials"][part]) * share)
 		if n > 0:
 			materials[part] = n
-	return {"coins": roundi(float(worth["coins"]) * share), "materials": materials,
+	return {"coins": roundi(float(worth["coins"]) * share * grown()), "materials": materials,
 		"seconds": int(Balance.a("wear.repair_seconds")[at - 1])}
 
 

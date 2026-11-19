@@ -264,6 +264,7 @@ func _play() -> void:
 	print("upkeep: %d repairs, %d coins; %d upgrades, %d coins; repairs %.0f%% of coins earned" % [_repairs,
 		_repair_coins, _upgrades, _upgrade_coins, 100.0 * _repair_coins / maxf(1.0, _earned)])
 	print(market_line())
+	print(targets_line(_days))
 	print(feed_line())
 	if style == "crafter":
 		print(craft_line())
@@ -302,6 +303,25 @@ func animal_share() -> float:
 
 ## Part 4's Market targets over the days measured: the share of days with something to buy (1 to 3 visits of
 ## income) and of days ending with idle coins over IDLE_VISITS_MAX visits of income.
+## The run against data/sim_targets.json: "targets: all met" or each one missed, so an audit can't read past it.
+func targets_line(days: int) -> String:
+	var t: Dictionary = game.read_json("res://data/sim_targets.json")
+	var n := maxi(_market_days, 1)
+	var seen := {"idle_days_most": 100.0 * _idle_days / n, "upkeep_least": 100.0 * _repair_coins / maxf(1.0, _earned),
+		"upkeep_most": 100.0 * _repair_coins / maxf(1.0, _earned)}
+	var missed: Array[String] = []
+	for key: String in seen:
+		var rule: Dictionary = t.get(key, {})
+		if rule.is_empty() or days < int(rule.get("min_days", 0)):
+			continue
+		if rule.has("style") and not (rule["style"] as Array).has(style):
+			continue
+		var bad: bool = float(seen[key]) > float(rule["v"]) if key.ends_with("_most") else float(seen[key]) < float(rule["v"])
+		if bad:
+			missed.append("%s %.1f (target %s)" % [key, float(seen[key]), str(rule["v"])])
+	return "targets: all met" if missed.is_empty() else "TARGETS MISSED: " + ", ".join(PackedStringArray(missed))
+
+
 func market_line() -> String:
 	var n := maxi(_market_days, 1)
 	return ("market: something to buy on %d%% of days, idle coins over %.0f visits on %d%% (of %d days measured);"
