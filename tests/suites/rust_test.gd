@@ -187,7 +187,7 @@ func test_415_a_rusty_vehicle_wears_the_rust_sign_and_a_tap_on_it_offers_only_it
 	await get_tree().process_frame
 	hud.bubble.to_screen = func(p: Vector2) -> Vector2: return p
 	hud.bubble.show_repair(Vector2(300, 300), "tractor")
-	_check(hud.bubble.visible and hud.bubble._act.visible and not hud.bubble._open.visible,
+	_check(UiFx.is_open(hud.bubble) and hud.bubble._act.visible and not hud.bubble._open.visible,
 		"its bubble has the Repair button and no way to the vehicle's sheet")
 	_check(hud.bubble._line.text.contains(str(int(Game.rust.repair_cost("tractor")["coins"]))), "and says what it costs")
 	# In a Garage, the Garage wears the sign of the rustiest vehicle in it.

@@ -20,6 +20,11 @@ One look for everything the player reads or presses, taken from the building she
 - **Items:** white cards with a light edge (`CardFace`, "card_face"), contents as picture tiles with counts
   (`UiKit.count_row`), progress as a light track with the accent fill (paper theme's ProgressBar).
 - **Text:** never a letter a line (`PanelText`), sizes through `UiTheme.font`, never under the smallest.
+- **Motion:** every surface opens and closes in one motion (`UiFx.open` / `close`, `open_with` for its own look):
+  it fades in, grows from 0.94 and rises 8 px into place in 0.22 s, eased out; it closes the same way back in
+  0.16 s, eased in, and is hidden only then (`is_open` is whether it is up; a closing one takes no taps). Either
+  way it turns back from where it is; a tab's page fades in (`UiFx.crossfade`, 0.12 s). A bottom sheet slides
+  instead of growing; words over the farm and full-screen cards only fade. A test holds every surface to it.
 
 ## Decisions (agreed)
 - Neighbour bar: no neighbours yet, so the bottom strip stays a placeholder (a quick bar of tools, our own touch).

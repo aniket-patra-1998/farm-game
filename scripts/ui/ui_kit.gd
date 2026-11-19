@@ -304,7 +304,7 @@ static func long_press_name(button: BaseButton, words: String) -> void:
 		name_bubble(button, button.tooltip_text if button.tooltip_text != "" else words))
 
 
-## A small name bubble over `control` that fades after a moment.
+## A small name bubble over `control` that goes after a moment.
 static func name_bubble(control: Control, words: String) -> void:
 	var bubble := PanelContainer.new()
 	bubble.add_theme_stylebox_override("panel", panel_box())
@@ -319,10 +319,10 @@ static func name_bubble(control: Control, words: String) -> void:
 	bubble.reset_size()
 	bubble.global_position = control.global_position + Vector2((control.size.x - bubble.size.x) / 2.0,
 		-bubble.size.y - UiTheme.size("hud_gap"))
-	var fade := bubble.create_tween()
-	fade.tween_interval(BUBBLE_SECONDS)
-	fade.tween_property(bubble, "modulate:a", 0.0, FloatText.FADE_TIME)
-	fade.finished.connect(bubble.queue_free)
+	UiFx.open(bubble)   # (in and out in the interface's one motion)
+	var stay := bubble.create_tween()
+	stay.tween_interval(BUBBLE_SECONDS)
+	stay.tween_callback(func() -> void: UiFx.close(bubble, bubble.queue_free))
 
 
 ## A tab of a panel (the Market's shelves): wooden when not shown, cream when it is.

@@ -4,6 +4,13 @@ extends TestSuite
 ## scaled once.
 
 const ONE_ICON_SIZE := 0.84   # a vector icon's longest drawn side, at least, of its canvas (FIT 112 of 128)
+## Everything that opens or closes (test 549): each goes through UiFx.open and UiFx.close.
+const MOTION_SURFACES := ["res://scripts/book_panel.gd", "res://scripts/hud/building_sheet.gd",
+	"res://scripts/hud/away_card.gd", "res://scripts/hud/reveal_card.gd", "res://scripts/level_up_popup.gd",
+	"res://scripts/hud/hud_bubble.gd", "res://scripts/hud.gd", "res://scripts/ui/ui_kit.gd"]
+## ..and the scripts that show or hide themselves for another reason: a sheet's tab row (shown with more than one
+## tab, inside the sheet's motion), and the one that moves everything.
+const MOTION_EXEMPT := ["sheet_tabs.gd", "ui_fx.gd"]
 
 
 func test_215_the_theme_has_every_name_the_kit_asks_for() -> void:
@@ -299,3 +306,83 @@ func test_528_a_count_sits_in_the_tiles_corner() -> void:
 		_check(label.size.y < tile.size.y or label.vertical_alignment == VERTICAL_ALIGNMENT_BOTTOM,
 			"the count is written at the bottom (short: %s)" % short)
 		t.queue_free()
+
+
+## Panel motion (docs/ART_POLISH.md): every surface that opens or closes does it through UiFx's one motion, so
+## nothing appears or vanishes in one frame. A surface's script never sets its own `visible` but to start hidden
+## (UiFx.open and close do), and none is shown or hidden from outside.
+func test_549_every_surface_opens_and_closes_through_ui_fx() -> void:
+	var own := RegEx.create_from_string("(?<![\\w.])(?:self\\.)?visible\\s*=(?!=)|(?<![\\w.])(?:show|hide)\\(\\)")
+	var outside := RegEx.create_from_string(
+		"\\b(?:book|sheet|bubble|_away|_reveal|_level_popup|_placing_bar)\\.(?:visible\\s*=(?!=)|show\\(|hide\\()")
+	var func_rx := RegEx.create_from_string("^(?:static )?func (\\w+)")
+	for dir: String in _script_dirs("res://scripts/"):
+		if dir.contains("/world3d/"):   # (the 3D farm's marks are not surfaces)
+			continue
+		for f: String in DirAccess.get_files_at(dir):
+			if not f.ends_with(".gd") or f in MOTION_EXEMPT:
+				continue
+			var in_func := ""
+			var n := 0
+			for line in FileAccess.get_file_as_string(dir + f).split("\n"):
+				n += 1
+				var code := line.get_slice("#", 0)
+				var named := func_rx.search(code)
+				if named != null:
+					in_func = named.get_string(1)
+				var starts_hidden := in_func in ["_init", "_ready"] and code.strip_edges() == "visible = false"
+				_check(starts_hidden or own.search(code) == null,
+					"%s%s:%d shows or hides itself without UiFx (UiFx.open / close)" % [dir, f, n])
+				_check(outside.search(code) == null, "%s%s:%d shows or hides a surface without UiFx" % [dir, f, n])
+	for path: String in MOTION_SURFACES:
+		var code := FileAccess.get_file_as_string(path)
+		_check(code.contains("UiFx.open") and code.contains("UiFx.close"), "%s opens and closes through UiFx" % path)
+
+
+## A panel opens from faded, closes in the motion and only then hides; reopened mid-close it turns back from where
+## it was (no jump); Game.modal_open follows it, and a closing panel takes no taps.
+func test_550_a_panel_closes_after_its_motion_and_reopens_mid_close() -> void:
+	Game.modal_open = false
+	var book := BookPanel.new()
+	add_child(book)
+	var frame := book.get("_frame") as Control
+	var dim := book.get("_dim") as Control
+	var fill := func(c: VBoxContainer) -> void: c.add_child(Label.new())
+	book.open_panel("Test", fill, BookPanel.Shape.LIST)
+	_check(book.visible and book.is_open() and Game.modal_open, "it opens and the farm is covered")
+	_check(frame.modulate.a < 0.05 and dim.modulate.a < 0.05, "it starts faded: no frame of it at rest first")
+	var last := -1.0
+	var rising := true
+	for k in TestSuite.MOTION_FRAMES:
+		if UiFx.share_of(book) >= 1.0:
+			break
+		rising = rising and frame.modulate.a >= last
+		last = frame.modulate.a
+		await get_tree().process_frame
+	_check(rising, "it fades in steadily, never back")
+	_check(frame.scale.is_equal_approx(Vector2.ONE) and is_equal_approx(dim.modulate.a, 1.0), "and rests at its size")
+	book.close_panel()
+	_check(book.visible and not book.is_open() and not Game.modal_open, "closing: still drawn, no longer open")
+	_check(dim.mouse_filter == Control.MOUSE_FILTER_IGNORE, "a closing panel takes no taps")
+	await get_tree().create_timer(UiFx.CLOSE_TIME * 0.5).timeout
+	var mid := frame.modulate.a
+	_check(book.visible and mid > 0.0 and mid < 1.0, "half closed it is half faded")
+	book.open_panel("Test", fill, BookPanel.Shape.LIST)
+	_check(book.is_open() and Game.modal_open, "reopened mid-close it is open again")
+	_check(absf(frame.modulate.a - mid) < 0.05, "and turns back from where it was")
+	_check(dim.mouse_filter == Control.MOUSE_FILTER_STOP, "and takes taps again")
+	await _motion_ends(book)
+	_check(book.is_open() and is_equal_approx(frame.modulate.a, 1.0), "it comes back to rest, not hidden")
+	book.close_panel()
+	book.close_panel()   # (a second close keeps the motion running)
+	await _motion_ends(book)
+	_check(not book.visible and not Game.modal_open, "closed: hidden once the motion ends")
+	_check(frame.scale.is_equal_approx(Vector2.ONE), "and left at its size for next time")
+	var away := Control.new()   # (not on screen: no motion to wait for)
+	away.visible = false
+	UiFx.open(away)
+	_check(away.visible and is_equal_approx(away.modulate.a, 1.0), "off the screen it opens at once")
+	UiFx.close(away)
+	_check(not away.visible, "and closes at once")
+	away.free()
+	book.queue_free()

@@ -24,6 +24,8 @@ var _reward_label: Label
 var _unlocks: HFlowContainer
 var _unlock_title: Label
 var _confetti_layer: Control
+var _dim: ColorRect
+var _center: CenterContainer   # (what moves as it opens: the card's holder, outside any container)
 
 
 func _ready() -> void:
@@ -31,12 +33,13 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 
-	var dim := ColorRect.new()
-	dim.color = Color(0, 0, 0, 0.5)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(dim)
+	_dim = ColorRect.new()
+	_dim.color = Color(0, 0, 0, 0.5)
+	_dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_dim)
 
 	var center := CenterContainer.new()
+	_center = center
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
@@ -95,12 +98,11 @@ func _ready() -> void:
 
 func celebrate(lvl: int) -> void:
 	_queue.append(lvl)
-	if not visible:
+	if not UiFx.is_open(self):
 		_show(_queue.pop_front())
 
 
 func _show(lvl: int) -> void:
-	visible = true
 	Game.modal_open = true
 	_level_label.text = str(lvl)
 	_reward_label.text = tr("COINS_GEM") % [Game.level_reward(lvl), Balance.i("economy.gems_per_level")]
@@ -129,7 +131,7 @@ func _picture(id: String) -> Control:
 
 func _next() -> void:
 	if _queue.is_empty():
-		visible = false
+		UiFx.close(self)
 		Game.modal_open = false
 	else:
 		_show(_queue.pop_front())
@@ -138,7 +140,9 @@ func _next() -> void:
 ## The card swells open like every panel (UiFx.open) and the new level swells once as it lands: the confetti is
 ## the celebration, nothing else bounces.
 func _pop_in() -> void:
-	UiFx.open(_card)
+	if UiFx.is_open(self):
+		UiFx.crossfade(_card)   # (the next level of several: the card changes, it stays up)
+	UiFx.open(self, _center, _dim)
 	_level_label.pivot_offset = _level_label.size / 2.0
 	var land := create_tween()
 	land.tween_interval(UiFx.OPEN_TIME * 0.6)

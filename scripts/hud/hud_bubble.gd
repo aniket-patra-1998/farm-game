@@ -96,21 +96,23 @@ func _present(at: Vector2, title: String, line: String, open: bool, deed: Dictio
 		(_act.get_meta("icon") as UiIcon).kind = str(deed["icon"])
 		_act.tooltip_text = str(deed["words"])   # (its long-press name: UiKit.long_press_name reads it)
 	_left = SHOW_FOR_ACTION if _open.visible or _act.visible else SHOW_FOR
-	visible = true
+	# Comes in afresh for each thing tapped, in the interface's one motion, rising a little into place (its place
+	# is kept by _follow; the rise is an offset that eases off).
+	UiFx.open_with(self, _look, true)
 	reset_size()
 	_follow()
-	# Rises a little into place as it comes in (its place is kept by _follow; the rise is an offset that eases off).
-	_rise = FloatText.RISE
-	modulate.a = 0.0
-	var t := create_tween().set_parallel()
-	t.tween_property(self, "_rise", 0.0, FloatText.RISE_TIME).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	t.tween_property(self, "modulate:a", 1.0, FloatText.RISE_TIME)
 
 
 func close() -> void:
-	visible = false
+	UiFx.close(self)   # (it fades out, still following its thing)
 	_uid = -1
 	_rusty = ""
+
+
+func _look(share: float) -> void:
+	_rise = FloatText.RISE * (1.0 - share)
+	modulate.a = share
+	_follow()
 
 
 ## Whether a placed thing has a panel worth opening from its bubble: a building (its yard, its recipes, its
@@ -156,9 +158,8 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	_left -= delta
-	if _left <= 0.0 or Game.modal_open:
+	if (_left <= 0.0 or Game.modal_open) and UiFx.is_open(self):
 		close()
-		return
 	_follow()
 
 

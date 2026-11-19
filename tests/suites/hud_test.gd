@@ -22,7 +22,7 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 	for panel in ["show_market", "show_collections", "show_ribbons", "show_settings"]:
 		hud.call(panel)
 		opened += 1
-		_check(book.visible, "%s opens the book" % panel)
+		_check(book.is_open(), "%s opens the book" % panel)
 	var seen := {}
 	for f in Game.feeds.feed_ids():
 		Game.feeds.add(f)   # so the feed cards have buttons to build
@@ -34,8 +34,8 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 		seen[key] = true
 		hud.show_building(int(o["uid"]))
 		opened += 1
-		var sheet_up: bool = hud.sheet != null and hud.sheet.visible   # (a finished building opens as its sheet)
-		_check(book.visible or sheet_up, "tapping %s opens its panel" % key)
+		var sheet_up: bool = hud.sheet != null and hud.sheet.is_open()   # (a finished building opens as its sheet)
+		_check(book.is_open() or sheet_up, "tapping %s opens its panel" % key)
 	_check(opened > 20, "many different panels were opened (%d)" % opened)
 	var box := VBoxContainer.new()
 	main.add_child(box)
@@ -115,9 +115,9 @@ func test_148_plant_asks_for_a_seed_and_the_eye_hides_the_interface() -> void:
 	var grid: FarmGrid = main.get("grid")
 	(hud.tools.buttons["plant"] as Button).pressed.emit()
 	var book: BookPanel = hud.get("book")
-	_check(book.visible, "Plant opens the seed list")
+	_check(book.is_open(), "Plant opens the seed list")
 	hud.choose_seed("strawberries")
-	_check(not book.visible, "picking a seed closes it")
+	_check(not book.is_open(), "picking a seed closes it")
 	_eq(grid.tool, "plant", "and the plant tool is in hand")
 	_eq(grid.selected_crop, "strawberries", "with that seed")
 	_check((hud.tools.buttons["plant"] as Button).button_pressed, "Plant is lit")
@@ -192,7 +192,7 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 	for strip: PanelContainer in book.page().find_children("*", "PanelContainer", true, false):
 		if strip.visible and not strip.is_queued_for_deletion() and strip.has_meta(&"about"):
 			strips += 1
-	_check(strips == 1 and placed.is_empty() and book.visible,
+	_check(strips == 1 and placed.is_empty() and book.is_open(),
 		"tapping it shows all about it at the top of the shelf, and buys nothing")
 	var bought := false
 	for card in shelf.shown():
@@ -200,7 +200,7 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 			card.pressed.emit()
 			bought = true
 	_check(bought and placed.size() == 1, "tapping an open card puts that item in hand")
-	_check(not book.visible, "and closes the Market")
+	_check(not book.is_open(), "and closes the Market")
 	main.queue_free()
 	await get_tree().process_frame
 
@@ -274,10 +274,10 @@ func test_151_a_building_panel_moves_turns_and_sells_or_says_why_not() -> void:
 				buttons[b.text] = b
 	var sell: Button = buttons[tr("TOOL_SELL")]
 	sell.pressed.emit()
-	_check(hud.sheet.visible and not Game.object_by_uid(int(coop["uid"])).is_empty(), "the first tap on Sell only asks")
+	_check(hud.sheet.is_open() and not Game.object_by_uid(int(coop["uid"])).is_empty(), "the first tap on Sell only asks")
 	_check(sell.text != tr("TOOL_SELL"), "with the price on the button (%s)" % sell.text)
 	sell.pressed.emit()
-	_check(Game.object_by_uid(int(coop["uid"])).is_empty() and not hud.sheet.visible, "the second sells it")
+	_check(Game.object_by_uid(int(coop["uid"])).is_empty() and not hud.sheet.is_open(), "the second sells it")
 	main.queue_free()
 	await get_tree().process_frame
 
@@ -428,7 +428,7 @@ func test_353_a_tapped_thing_tells_about_itself_in_a_bubble() -> void:
 	await get_tree().process_frame
 	hud.bubble.to_screen = func(p: Vector2) -> Vector2: return p
 	hud.bubble.show_at(Vector2(300, 300), "Chicken", "Ready in 14 h", -1)
-	_check(hud.bubble.visible, "the bubble shows")
+	_check(UiFx.is_open(hud.bubble), "the bubble shows")
 	_check(hud.bubble.global_position.y < 300.0, "above the thing")
 	hud.bubble.close()
 	var view := hud.get_viewport().get_visible_rect()
@@ -438,7 +438,7 @@ func test_353_a_tapped_thing_tells_about_itself_in_a_bubble() -> void:
 		hud.bubble.call("_follow")
 		_check(view.encloses(hud.bubble.get_global_rect()), "a bubble for a thing at the edge (%s) stays on the screen" % at)
 		hud.bubble.close()
-	_check(not hud.bubble.visible, "and goes")
+	_check(not UiFx.is_open(hud.bubble), "and goes")
 	hud.queue_free()
 
 
@@ -459,7 +459,7 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	_check(Game.buy_and_place("chicken_coop", spot.x, spot.y), "a Coop")
 	var coop := Game.object_at(Game.index_of(spot.x, spot.y))
 	hud.show_building(int(coop["uid"]))
-	_check(hud.sheet != null and hud.sheet.visible, "a finished home opens as its sheet")
+	_check(hud.sheet != null and hud.sheet.is_open(), "a finished home opens as its sheet")
 	_check(not (hud.get("book") as BookPanel).visible, "not as the full panel")
 	var before: Array[Node] = hud.sheet.find_children("*", "Control", true, false)
 	var words := ""
@@ -475,7 +475,7 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	# One window at a time: a panel opened from the HUD puts the sheet away (it was drawn over the panel).
 	hud.show_seeds()
 	_check((hud.get("book") as BookPanel).visible, "Seeds opens over a home's sheet")
-	_check(not hud.sheet.visible, "and the sheet goes")
+	_check(not hud.sheet.is_open(), "and the sheet goes")
 	(hud.get("book") as BookPanel).close_panel()   # (Game.modal_open is shared with the next test)
 	# A card's line too wide for it leaves off its last parts whole, never cut mid-word ("4h · 53 coins ·").
 	var f := ThemeDB.fallback_font
@@ -821,7 +821,7 @@ func test_366_a_home_sheet_fits_what_it_says_and_stays_on_the_screen() -> void:
 		hud.show_building(int(home["uid"]))
 		for f in 4:   # (the slide, and the frame its wrapped lines learn their width)
 			await get_tree().process_frame
-		await get_tree().create_timer(BuildingSheet.SLIDE + 0.05).timeout
+		await _motion_ends(hud.sheet)
 		_sheet_fits(hud.sheet, "%s's sheet" % id)
 	_check(homes >= 2, "several homes opened as sheets (%d)" % homes)
 	var sheet: BuildingSheet = hud.sheet
@@ -849,7 +849,7 @@ func test_366_a_home_sheet_fits_what_it_says_and_stays_on_the_screen() -> void:
 	sheet.close()
 	sheet.size = Vector2(sheet.size.x, sheet.get_parent_area_size().y * 3.0)
 	hud.show_building(uid)
-	await get_tree().create_timer(BuildingSheet.SLIDE + 0.05).timeout
+	await _motion_ends(sheet)
 	_sheet_fits(sheet, "opened again after a stale size")
 	sheet.close()
 	for area: Vector2 in [Vector2(360, 780), Vector2(780, 360), Vector2(2560, 1440)]:
@@ -878,7 +878,7 @@ func test_366_a_home_sheet_fits_what_it_says_and_stays_on_the_screen() -> void:
 
 func _sheet_fits(sheet: BuildingSheet, what: String) -> void:
 	var area := sheet.get_parent_area_size()
-	_check(sheet.visible, "%s is up" % what)
+	_check(sheet.is_open(), "%s is up" % what)
 	_check(absf(sheet.size.y - sheet.get_combined_minimum_size().y) < 1.0,
 		"%s is as tall as what it says (%d, needs %d)" % [what, sheet.size.y, sheet.get_combined_minimum_size().y])
 	_check(sheet.size.y < area.y * 0.8, "%s is not screen-tall (%d of %d)" % [what, sheet.size.y, area.y])
@@ -991,7 +991,7 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 	hud.open_full_panel(uid)
 	for f in 3:
 		await get_tree().process_frame
-	_check(hud.sheet.visible and not book.visible, "the menu is in the building's sheet, not another window")
+	_check(hud.sheet.is_open() and not book.is_open(), "the menu is in the building's sheet, not another window")
 	tab_row = hud.sheet.get("_tabs")
 	page = hud.sheet.get("_page")
 	var tabs: Array = hud.sheet.get("_specs")

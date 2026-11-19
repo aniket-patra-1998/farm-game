@@ -12,7 +12,6 @@ const PICTURE := 150.0        # the mystery's size on screen, in pixels
 const SHAKES := 3
 const SHAKE_REACH := 9.0      # pixels the first shake goes to either side (each next one, as much again)
 const STAY := 2.4             # seconds the prize stays if nobody taps
-const FADE := 0.16            # the card dims the farm in and out in this (UiFx.OPEN_TIME's fade)
 const SHAKE_TIME := 0.26      # one shake, out to one side, across and back, eased like a hand rocking it..
 const SHAKE_REST := 0.14      # ..and a breath before the next
 const BURST_SCALE := 1.3      # the mystery swells to this as it bursts..
@@ -73,13 +72,12 @@ func play(what: String, title: String, prize: String, rarity: String) -> void:
 	_picture.position = Vector2.ZERO
 	_picture.queue_redraw()
 	_open = false
-	visible = true
-	modulate.a = 0.0
+	UiFx.open_with(self, UiFx.fade_look(self), true)   # (only fades: its dim covers the whole screen)
 	Game.modal_open = true
 	if _tween != null:
 		_tween.kill()
 	_tween = create_tween()
-	_tween.tween_property(self, "modulate:a", 1.0, FADE)
+	_tween.tween_interval(UiFx.OPEN_TIME)
 	for k in SHAKES:
 		var reach := SHAKE_REACH * (k + 1)
 		_tween.tween_callback(func() -> void: Feedback.moment("reveal_shake"))
@@ -105,14 +103,12 @@ func play(what: String, title: String, prize: String, rarity: String) -> void:
 
 
 func close() -> void:
-	if not visible:
+	if not UiFx.is_open(self):
 		return
 	if _tween != null:
 		_tween.kill()
 	Game.modal_open = false
-	_tween = create_tween()
-	_tween.tween_property(self, "modulate:a", 0.0, FADE)
-	_tween.tween_callback(func() -> void: visible = false)
+	UiFx.close(self)
 
 
 func _gui_input(event: InputEvent) -> void:

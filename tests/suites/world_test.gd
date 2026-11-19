@@ -452,7 +452,7 @@ func test_433_a_tap_on_the_mailbox_opens_the_inbox() -> void:
 	_eq(asked, ["inbox"] as Array[String], "the mailbox asks for the inbox")
 	var hud: FarmHud = main.get("hud")
 	await get_tree().process_frame
-	_check(hud.book.visible, "and the inbox opens")
+	_check(hud.book.is_open(), "and the inbox opens")
 	hud.close_panels()
 	main.free()
 

@@ -155,8 +155,8 @@ func _ready() -> void:
 	goals.build(root)   # (after the book: a goal change refreshes an open sheet)
 	# One window at a time: a panel opened from the HUD (Seeds, Market, the album...) puts a building's sheet away,
 	# as a sheet opening closes the panel (show_building); else the sheet stayed drawn over the panel.
-	book.visibility_changed.connect(func() -> void:
-		if book.visible and sheet != null and sheet.visible:
+	book.opened.connect(func() -> void:
+		if sheet != null and sheet.is_open():
 			sheet.close())
 	_level_popup = LevelUpPopup.new()
 	root.add_child(_level_popup)
@@ -217,15 +217,18 @@ func _build_placing_bar(root: Control) -> void:
 	var cancel := FloatText.action("cross", tr("CANCEL"))
 	cancel.pressed.connect(func() -> void: cancel_place_requested.emit())
 	row.add_child(cancel)
-	_placing_bar.visible = false
+	UiFx.close(_placing_bar)   # (it starts hidden: off the screen it closes at once)
 	_top_holder(root, top_h() + 10).add_child(_placing_bar)
 
 
 ## Shows the placement banner; empty text hides it.
 func show_placing(text: String) -> void:
-	_placing_label.text = text
-	_placing_bar.visible = text != ""
-	_turn_button.visible = text != "" and Game.can_rotate(Game.object_by_uid(_moving_uid()))
+	if text != "":
+		_placing_label.text = text
+		_turn_button.visible = Game.can_rotate(Game.object_by_uid(_moving_uid()))
+		UiFx.open_with(_placing_bar, UiFx.fade_look(_placing_bar))
+	else:
+		UiFx.close(_placing_bar)   # (its words and buttons stay as they fade)
 	_refresh_tutorial()
 
 
@@ -275,7 +278,7 @@ func set_resting(on: bool) -> void:
 ## Whether something is up that a player may be reading (a home's sheet, the away card): the interface doesn't
 ## fade from under it.
 func reading() -> bool:
-	return (sheet != null and sheet.visible) or (_away != null and _away.visible)
+	return (sheet != null and sheet.is_open()) or (_away != null and UiFx.is_open(_away))
 
 
 ## The reveal of a mystery opened from a panel (an egg's colour name or RevealCard.BOX): it shakes, bursts, and
@@ -317,7 +320,7 @@ func _build_tutorial(root: Control) -> void:
 func _refresh_tutorial() -> void:
 	var text := Game.tutorial_text()
 	_tutorial.text = text
-	_tutorial.visible = text != "" and not (_placing_bar and _placing_bar.visible)
+	_tutorial.visible = text != "" and not (_placing_bar and UiFx.is_open(_placing_bar))
 	# Keep messages clear of the tutorial banner while it shows.
 	var y := top_h() + (80.0 if _tutorial.visible else 16.0)
 	_toast_holder.offset_top = y
@@ -438,7 +441,7 @@ func _refresh_book() -> void:
 
 
 func _refresh_book_timed() -> void:
-	if book.visible:
+	if book.is_open():
 		book.refresh()
 
 
@@ -516,7 +519,7 @@ func show_building_timed(uid: int) -> void:
 ## A building's everything: its sheet, tall. A building has no other window (the sheet holds its pages).
 func open_full_panel(uid: int) -> void:
 	show_building(uid)
-	if sheet != null and sheet.visible:
+	if sheet != null and sheet.is_open():
 		sheet.make_tall()
 
 
@@ -529,17 +532,17 @@ func refresh_panels() -> void:
 
 
 func refresh_panels_timed() -> void:
-	if book.visible:
+	if book.is_open():
 		book.refresh()
-	elif sheet != null and sheet.visible:
+	elif sheet != null and sheet.is_open():
 		sheet.refill_soon()
 
 
 ## The panel or sheet on screen back at its top (a recipe picked shows at the top).
 func scroll_panels_to_top() -> void:
-	if book.visible:
+	if book.is_open():
 		book.scroll_to_top()
-	elif sheet != null and sheet.visible:
+	elif sheet != null and sheet.is_open():
 		sheet.scroll_to_top()
 
 

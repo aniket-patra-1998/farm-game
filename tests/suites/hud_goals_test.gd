@@ -92,7 +92,7 @@ func test_466_faces_show_the_first_three_and_collect_once() -> void:
 	_check(HudGoals.show_of({"do": "level", "n": 3}).is_empty(), "a level task has no Show me")
 	hud.goals.show_me({"do": "buy", "what": "cow"})
 	await get_tree().process_frame
-	_check(hud.book.visible, "Show me on Buy opens the Market")
+	_check(hud.book.is_open(), "Show me on Buy opens the Market")
 	hud.book.close_panel()
 	Game.modal_open = false
 	# Every tab builds, and an empty one says so.

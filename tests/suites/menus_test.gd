@@ -46,8 +46,9 @@ func test_380_every_menu_reads_whole_on_every_screen() -> void:
 		for screen: Array in _screens(hud):
 			(screen[1] as Callable).call()
 			await _settle()
-			if hud.sheet != null and hud.sheet.visible:   # (swept where it rests, not on its way up)
-				await get_tree().create_timer(BuildingSheet.SLIDE).timeout
+			if book.is_open() or (hud.sheet != null and hud.sheet.is_open()):   # (swept where it rests, not on its way up)
+				await _motion_ends(book)
+				await _motion_ends(hud.sheet)
 				await _settle()
 			var tabs: Array = book.get("_tabs")
 			for k in maxi(tabs.size(), 1):
@@ -56,8 +57,8 @@ func test_380_every_menu_reads_whole_on_every_screen() -> void:
 					await _settle()
 				var where := "%dx%d %s%s" % [shape.x, shape.y, screen[0],
 					"" if tabs.size() < 2 else " / " + str(tabs[k][0])]
-				for part: Control in [book, hud.sheet]:
-					if part != null and part.is_visible_in_tree():
+				for part: Control in [book, hud.sheet]:   # (one on its way out is not swept)
+					if part != null and part.is_visible_in_tree() and part.call("is_open"):
 						_sweep(part, where, bad)
 						seen += 1
 			book.close_panel()
@@ -94,8 +95,8 @@ func test_369_every_building_opens_as_the_sheet() -> void:
 		hud.show_building(int(o["uid"]))
 		await _settle()
 		var sheet: BuildingSheet = hud.sheet
-		_check(sheet != null and sheet.visible and not book.visible, "%s opens as the sheet" % id)
-		if sheet == null or not sheet.visible:
+		_check(sheet != null and sheet.is_open() and not book.is_open(), "%s opens as the sheet" % id)
+		if sheet == null or not sheet.is_open():
 			continue
 		kinds[BuildingSheet.kind_of(o)] = true
 		var area := sheet.get_parent_area_size()
@@ -115,7 +116,7 @@ func test_369_every_building_opens_as_the_sheet() -> void:
 			_check((sheet.get("_collect") as Button).visible, "%s's sheet has its big button" % id)
 		hud.open_full_panel(int(o["uid"]))
 		await _settle()
-		_check(sheet.visible and not book.visible, "%s: everything is in its sheet, no other window" % id)
+		_check(sheet.is_open() and not book.is_open(), "%s: everything is in its sheet, no other window" % id)
 		sheet.close()
 		Game.modal_open = false
 	_check(seen.size() >= 6, "many buildings tapped (%d)" % seen.size())
@@ -136,7 +137,7 @@ func test_369_every_building_opens_as_the_sheet() -> void:
 	if not site.is_empty():
 		hud.show_building(int(site["uid"]))
 		await _settle()
-		_check(hud.sheet.visible and BuildingSheet.kind_of(site) == BuildingSheet.Kind.BUILD, "a site opens as the sheet")
+		_check(hud.sheet.is_open() and BuildingSheet.kind_of(site) == BuildingSheet.Kind.BUILD, "a site opens as the sheet")
 		_eq((hud.sheet.get("_collect") as Button).text, tr("ADD_MY_MATERIALS"), "its big button adds materials")
 		_check((hud.sheet.get("_detail") as Label).visible, "and it lists the materials")
 		hud.sheet.close()
@@ -302,7 +303,7 @@ func test_382_crafting_happens_in_the_sheet() -> void:
 	hud.show_building(uid)
 	await _settle()
 	var tabs: SheetTabs = hud.sheet.get("_tabs")
-	_check(hud.sheet.visible and tabs.visible and not book.visible, "its menu's tabs in the sheet, no other window")
+	_check(hud.sheet.is_open() and tabs.visible and not book.is_open(), "its menu's tabs in the sheet, no other window")
 	_eq(tabs.get_child_count(), hud.crafting.tabs(o).size(), "Make, Goods and Pantry")
 	_check((hud.sheet.get("_page") as Control).get_child_count() > 0, "its Make page is filled")
 	var r: RecipeDef = Game.crafting.recipes_of(str(o["id"]))[0]
@@ -317,7 +318,7 @@ func test_382_crafting_happens_in_the_sheet() -> void:
 	collect.pressed.emit()
 	await _settle()
 	_eq((Game.object_by_uid(uid)["slots"] as Array).size(), 0, "collected from the sheet")
-	_check(not book.visible, "and still no other window")
+	_check(not book.is_open(), "and still no other window")
 	hud.sheet.close()
 	main.queue_free()
 	await get_tree().process_frame
@@ -342,7 +343,7 @@ func test_383_the_sheet_drags_tall_and_closed() -> void:
 			BuildingSheet.Kind.HOME:
 				home_uid = int(x["uid"]) if home_uid < 0 else home_uid
 	hud.show_building(craft_uid)
-	await get_tree().create_timer(BuildingSheet.SLIDE + 0.1).timeout
+	await _motion_ends(hud.sheet)
 	var sheet: BuildingSheet = hud.sheet
 	var compact := sheet.size.y
 	await _pull(sheet, -200.0)
@@ -350,14 +351,14 @@ func test_383_the_sheet_drags_tall_and_closed() -> void:
 	_check(sheet.size.y > compact * 1.3, "and taller (%d > %d)" % [sheet.size.y, compact])
 	_check((sheet.get("_page_scroll") as Control).visible, "its page fills the tall sheet")
 	await _pull(sheet, 200.0)
-	_check(not sheet.tall and sheet.visible, "pulled down: compact")
+	_check(not sheet.tall and sheet.is_open(), "pulled down: compact")
 	await _pull(sheet, 200.0)
-	_check(not sheet.visible, "pulled down again: closed")
+	_check(not sheet.is_open(), "pulled down again: closed")
 	hud.show_building(home_uid)
-	await get_tree().create_timer(BuildingSheet.SLIDE + 0.1).timeout
+	await _motion_ends(hud.sheet)
 	var pages := (sheet.get("_tabs") as Control).visible
 	await _pull(sheet, -200.0)
-	_check(sheet.tall == pages and sheet.visible, "a home goes tall only with pages to show (pages: %s)" % pages)
+	_check(sheet.tall == pages and sheet.is_open(), "a home goes tall only with pages to show (pages: %s)" % pages)
 	sheet.close()
 	main.queue_free()
 	await get_tree().process_frame

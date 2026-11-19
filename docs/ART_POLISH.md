@@ -108,3 +108,9 @@ the inbox's letters, bubbles) appear and vanish in one frame. The fix, one motio
   (~0.12 s); nothing bounces or overshoots (POLISH.md: calm, weighty). Only modulate, scale and position: cheap
   on a phone. Input is ignored on a closing panel; Game.modal_open follows the real state.
 - A test lists every panel-like class and fails if one shows or hides without UiFx.
+- Built (19 Nov, art/panel-motion): UiFx.open / open_with / close / is_open / crossfade, 0.22 s open (cubic out,
+  from 0.94 and 8 px low), 0.16 s close (quad in), 0.12 s tab fade; its own frame clock counts a long frame (a panel
+  built as it opens) as at most 1/30 s, so the motion is never skipped. On it: BookPanel (every menu, the goal sheet,
+  settings, the inbox), BuildingSheet (slides and fades), the away card, the level-up card, the reveal card (fade),
+  the tapped thing's bubble, name bubbles, the placing bar (fade); tabs in panels and sheets fade their page in; the
+  Market's tapped-item strip fades in. Tests: ui_kit 549 (no surface shows or hides itself without UiFx) and 550.

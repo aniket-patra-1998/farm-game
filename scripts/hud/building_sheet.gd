@@ -20,6 +20,9 @@ extends PanelContainer
 ## menu (HudCrafting.tabs). A site's missing materials to buy sit under its main part. The builders ask for a
 ## page to be built again through `FarmHud.refresh_panels` (`refill_soon`).
 ##
+## It opens and closes in the interface's one motion (UiFx.open_with / close, on its timing and ease): it slides up
+## from below the screen as it fades in, and back down as it fades out; `is_open` is whether it is up.
+##
 ## Two heights: compact (as tall as what it says) and, for a building with more to show (a crafting building's
 ## recipes as a grid), tall (`TALL_SHARE` of the screen). It is dragged by its handle or any empty part of it: up
 ## to tall, down to compact, down again to close; a tap on the handle switches; a quick flick counts as a drag.
@@ -31,7 +34,6 @@ extends PanelContainer
 enum Kind { HOME, CRAFT, BUILD, BARN, OTHER, ANIMAL, YOUNG, BLOOM, VEHICLE }   # which middle and big button
 
 const MARGIN := 18.0                   # the paper's inside margin
-const SLIDE := 0.18                    # seconds the sheet takes to slide in
 const COUNT_UP := 0.6                  # seconds a collected sum takes to count up
 const WIDTH_SHARE := 0.5               # of the screen's width..
 const WIDTH_LEAST := 480.0             # ..but never narrower than this
@@ -90,8 +92,7 @@ var _kind := Kind.OTHER
 var _since := 0.0
 var _counting := false
 var _dirty := false   # the farm changed while the sheet was up: refill it this frame
-var _shown := 0.0     # how far it has slid up: 0 below the screen, 1 at rest
-var _slide: Tween
+var _shown := 0.0     # how far it has slid up: 0 below the screen, 1 at rest (UiFx's share)
 var _area := Vector2.ZERO   # the screen it was placed on (a turned phone or resized window places it again)
 var _drag := 0.0            # px it is pulled from where it rests: down positive, up negative
 var _press_y := -1.0        # where a drag began (-1: none)
@@ -119,7 +120,8 @@ func _init(owner: FarmHud) -> void:
 	_tabs = SheetTabs.new()
 	_tabs.picked.connect(func(_i: int) -> void:
 		_page_due = true
-		_fill_page())
+		_fill_page()
+		UiFx.crossfade(_page_scroll if _page_scroll.visible else _main))
 	column.add_child(_tabs)
 	_main = VBoxContainer.new()
 	_main.add_theme_constant_override("separation", gap)
@@ -205,27 +207,27 @@ func open(uid: int) -> void:
 	_refill()
 	if _uid < 0:
 		return
-	if visible:
+	if is_open():
 		return   # (already up: another home tapped, it only changes what it says)
-	visible = true
-	_shown = 0.0
-	_place()
 	# It slides by a share of the way, not to a point worked out now: it is sized by what it says, which settles
 	# a frame later (wrapped lines learn their width), and every refit puts it back on the same path.
-	_slide = create_tween()
-	_slide.tween_method(_slid, 0.0, 1.0, SLIDE).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	UiFx.open_with(self, _slid)
 
 
+## Slides it away (from where it is: pulled down, it goes on down); once gone it forgets the thing it showed.
 func close() -> void:
-	if _slide != null and _slide.is_valid():
-		_slide.kill()
 	if _settle != null and _settle.is_valid():
 		_settle.kill()
-	_drag = 0.0
 	_press_y = -1.0
-	_set_tall(false)
-	visible = false
-	_uid = -1
+	UiFx.close(self, func() -> void:
+		_drag = 0.0
+		_set_tall(false)
+		_uid = -1)
+
+
+## Whether it is up (not hidden, not on its way out).
+func is_open() -> bool:
+	return UiFx.is_open(self)
 
 
 ## Its width: a share of the screen, never narrower than a comfortable sheet, never wider than the screen.
@@ -235,6 +237,7 @@ static func width_for(area: Vector2) -> float:
 
 func _slid(share: float) -> void:
 	_shown = share
+	modulate.a = share
 	_place()
 
 
@@ -438,9 +441,7 @@ func _let_go(y: float) -> void:
 		_settle.tween_method(func(d: float) -> void:
 			_drag = d
 			_place(), _drag, get_parent_area_size().y, SETTLE).set_ease(Tween.EASE_IN)
-		_settle.tween_callback(func() -> void:
-			_drag = 0.0
-			close())
+		_settle.tween_callback(close)   # (from where the pull left it: on down, off the screen)
 		return
 	# From where it is now, eased to its new height (a pull of the difference shows it at its old height).
 	_drag = 0.0

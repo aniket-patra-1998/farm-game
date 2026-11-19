@@ -526,6 +526,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   sheet and the Goods tab drop their "x1" line (picture, name, Place). Godot was missing in this container
   (reinstalled 4.7.2 from the release zip). Open for a later look pass: the lawn's dark blotches at noon (taste:
   art-polish, which still holds the rejected c0b4a66 on a stale base).
+- Panel motion (19 Nov, one-off session, art/panel-motion; docs/ART_POLISH.md "Panel motion"): every surface opens
+  and closes through UiFx (open / open_with / close; tabs: crossfade), hidden only after its close motion. "Is it
+  up?" is now `book.is_open()` / `sheet.is_open()` / `UiFx.is_open(x)`, never `.visible` (a closing one is still
+  drawn); tests wait with TestSuite._motion_ends(host). The motion has its own frame clock (UiFx._tick_all, one
+  listener; a frame counts at most 1/30 s). Frames checked at 20:9 and 4:3 with --fixed-fps 60 (a scratch -s script
+  that saves root's image each frame_post_draw). Not touched: the helpers' flower (its own bloom), the toast and
+  floating words (already fade). Open: the level-up card still names its own colours (WOOD, SUN), not the kit's.
 
 ## Goals (the first hour and goals build; docs/FIRST_HOUR_RUN.md; rows prefixed "Goals:" in the log doc)
 - Run 1 (18 Nov 18:38-19:20 IST): step 1 is done on goals/1-record, not merged. `Game.record(verb, subject, n)`

@@ -56,7 +56,7 @@ func update() -> void:
 			c.queue_free()
 		for key in keys:
 			column.add_child(face(key))
-	if hud.book.visible:
+	if hud.book.is_open():
 		hud.book.refresh()
 
 

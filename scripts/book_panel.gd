@@ -5,7 +5,11 @@ extends Control
 ## when it has them (the Market's shelves), and scrolling content that a
 ## builder fills. Each tab's page is built once while the panel is open (going back to a tab shows it again); `refresh`
 ## builds the page again, or, when its builder marked it live (`set_live`), only updates it in place (a CardList
-## reads its faces again). Every panel of the game opens in it.
+## reads its faces again). Every panel of the game opens in it, and opens and closes in the interface's one motion
+## (UiFx.open / close: the paper fades and rises in over its dim; a tab's page fades in); `is_open` is whether it
+## is up (a closing panel is still drawn for a moment, but is no longer open).
+
+signal opened   # a panel came up from closed (or closing)
 
 ## Words on paper, by their role (the values are data/ui_theme.json's "ink", "soft" and "done"): INK for what is
 ## read, SOFT for what is said beside it (a hint, a time, a reason), HEAD for a section's heading, GOOD for done
@@ -29,6 +33,8 @@ const SECTION_PAD := 10.0   # px above and below a section's content
 
 var shape := Shape.CARDS   # what the panel open holds (`open_panel`)
 var _title: Label
+var _dim: ColorRect
+var _frame: MarginContainer   # (what moves as it opens: the paper's holder, outside any container)
 var _panel: PanelContainer
 var _content: VBoxContainer
 var _builder: Callable
@@ -47,12 +53,14 @@ func _ready() -> void:
 	visible = false
 
 	var dim := ColorRect.new()
+	_dim = dim
 	dim.color = Color(0, 0, 0, DIM)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.gui_input.connect(_on_backdrop_input)
 	add_child(dim)
 
 	var margin := MarginContainer.new()
+	_frame = margin
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 40)
@@ -157,6 +165,7 @@ func show_tab(index: int) -> void:
 	_builder = _tabs[index][1]
 	_build_tab_bar()
 	_show_page()
+	UiFx.crossfade(page())
 	_scroll.scroll_vertical = 0
 
 
@@ -165,15 +174,23 @@ func _show(title: String, builder: Callable) -> void:
 	_builder = builder
 	_fit_screen()
 	_build_tab_bar()
-	UiFx.pop_next = not visible   # (a panel opening pops its cards in; a tab or a refresh doesn't)
+	var opening := not is_open()
+	UiFx.pop_next = opening   # (a panel opening pops its cards in; a tab or a refresh doesn't)
 	UiFx.popped = 0
 	_clear_pages()
 	_build_now()
 	UiFx.pop_next = false
-	if not visible:
-		UiFx.open.call_deferred(_panel)   # (once it has its size)
-	visible = true
+	if not opening:
+		UiFx.crossfade(page())   # (another panel in the open one: its page changes, the paper stays)
+	UiFx.open(self, _frame, _dim)
 	Game.modal_open = true
+	if opening:
+		opened.emit()
+
+
+## Whether a panel is up (not hidden, not on its way out).
+func is_open() -> bool:
+	return UiFx.is_open(self)
 
 
 func _build_tab_bar() -> void:
@@ -191,8 +208,9 @@ func scroll_to_top() -> void:
 	_scroll.scroll_vertical = 0
 
 
+## Closes the panel in the one motion (hidden once it has gone); the farm takes taps again at once.
 func close_panel() -> void:
-	visible = false
+	UiFx.close(self)
 	Game.modal_open = false
 
 
@@ -205,7 +223,7 @@ func refresh() -> void:
 
 func _build_again() -> void:
 	_refresh_due = false
-	if not visible:
+	if not is_open():
 		return
 	for k: int in _pages.keys():   # (the hidden pages: a live one updates when shown again, others are rebuilt)
 		if k != _tab:

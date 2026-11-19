@@ -178,6 +178,7 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 		words.add_child(BookPanel.text(why, UiTheme.HEADING, UiTheme.color("note")))
 	words.add_child(BookPanel.text(detail_of(id, it), UiTheme.HEADING, BookPanel.SOFT))
 	strip.visible = true
+	UiFx.crossfade(strip)   # (what was tapped fades in at the top of the shelf)
 	hud.book.scroll_to_top()
 
 

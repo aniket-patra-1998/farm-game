@@ -10,13 +10,10 @@ const ICONS := {"ripe": "basket", "withered": "hoe", "ready": "ready", "hungry":
 const WIDTH := 480.0
 const GO := "›"              # not-ui: a row's "go there" mark
 const ROW_HEIGHT := 52.0
-const SLIDE := 0.22          # seconds it takes to drop in, and to leave
-const DROP := 26.0           # how far above its place it starts, in pixels
 const GAP_BELOW_BAR := 14.0
 
 var hud: FarmHud
 var _rows: VBoxContainer
-var _tween: Tween
 var _left := 0.0             # seconds until it leaves by itself
 
 
@@ -68,27 +65,14 @@ func open(rows: Array, notes: Array) -> void:
 		note.add_theme_font_size_override("font_size", UiTheme.font(UiTheme.BODY))
 		_rows.add_child(note)
 	_left = Balance.f("feel.away_card_seconds")
-	visible = true
-	modulate.a = 0.0
-	var top := FarmHud.top_h() + GAP_BELOW_BAR
-	offset_top = top - DROP
-	if _tween != null:
-		_tween.kill()
-	_tween = create_tween().set_parallel(true)
-	_tween.tween_property(self, "modulate:a", 1.0, SLIDE)
-	_tween.tween_property(self, "offset_top", top, SLIDE).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	offset_top = FarmHud.top_h() + GAP_BELOW_BAR
+	UiFx.open(self)   # (the interface's one motion: it fades and rises into place)
 	set_process(true)
 
 
 func close() -> void:
-	if not visible:
-		return
 	set_process(false)
-	if _tween != null:
-		_tween.kill()
-	_tween = create_tween()
-	_tween.tween_property(self, "modulate:a", 0.0, SLIDE)
-	_tween.tween_callback(func() -> void: visible = false)
+	UiFx.close(self)
 
 
 func _process(delta: float) -> void:

@@ -7,6 +7,7 @@ const MAIN_SCENE := preload("res://scenes/main.tscn")
 
 const TIMING_TRIES := 10   # runs of a timed piece of work; its budget holds the fastest (_fastest_ms)
 const YARDSTICK_MS := 1.9   # _yardstick at its fastest on the 2-core runner the budgets hold on
+const MOTION_FRAMES := 600  # frames a panel's motion is given to end (UiFx counts a slow frame as less time)
 
 var checks := 0
 var failures: Array[String] = []
@@ -199,5 +200,9 @@ func _open_plot(g: GameState) -> int:
 	return g.index_of(7, 7)
 
 
-
-
+## Frames pass until `host`'s open or close motion (UiFx) has ended: at rest open, or hidden.
+func _motion_ends(host: Control) -> void:
+	for k in MOTION_FRAMES:
+		if host == null or not host.visible or (UiFx.share_of(host) >= 1.0 and not UiFx.is_closing(host)):
+			return
+		await get_tree().process_frame
