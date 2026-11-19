@@ -29,6 +29,7 @@ const HOURS_DEFAULT := [8.0, 13.0, 20.0]     # local hours of the day the bot vi
 const LOOKAHEAD_VISITS := 12   # how many visits ahead a crop may ripen in
 const CASUAL_AWAY := [3, 7]    # the days a casual player skips when --away is not given
 const FIRST_HOUR_MINUTES := 60
+const NEVER := 999        # a level or moment the run never reached (a target's "at most" then misses)
 const FIRST_HOUR_MARKS := [10, 20, 30, 40, 60]   # minutes at which the first hour prints the level and coins
 const WANT_VISITS := [1.0, 3.0]   # Part 4's "something to buy": a thing costing 1 to 3 visits of income
 const IDLE_VISITS_MAX := 5.0      # Part 4: idle coins stay under about 5 visits of income
@@ -91,6 +92,8 @@ var _market_days := 0     # days measured against Part 4's Market targets (a day
 var _want_days := 0       # of those, days the Market held 1 to 3 things costing 1 to 3 visits of income
 var _per_visit := 0.0     # yesterday's income per visit (the builder's sense of what a thing costs)
 var _last_wants := []    # what the Market held on the last day measured (market_wants)
+var _stuck_days := 0      # days that ended unable to plant: too few coins for seeds and nothing growing
+var _strays_week := 0     # most strays that came in any week (StraySystem.this_week)
 var _idle_days := 0       # of those, days that ended with idle coins over IDLE_VISITS_MAX visits of income
 
 
@@ -241,6 +244,10 @@ func _play() -> void:
 			"" if here else "  (away)"])
 		coins_at_day_start = game.coins
 		harvests_at_day_start = _harvests
+		if here and game.coins < game.coins_to_plant() and not (game.any_plot_in(GameState.Phase.GROWING)
+				or game.any_plot_in(GameState.Phase.RIPE)):
+			_stuck_days += 1
+		_strays_week = maxi(_strays_week, game.strays.this_week())
 		for lvl in range(2, game.level() + 1):
 			if not _level_day.has(lvl):
 				_level_day[lvl] = day + 1
@@ -264,7 +271,7 @@ func _play() -> void:
 	print("upkeep: %d repairs, %d coins; %d upgrades, %d coins; repairs %.0f%% of coins earned" % [_repairs,
 		_repair_coins, _upgrades, _upgrade_coins, 100.0 * _repair_coins / maxf(1.0, _earned)])
 	print(market_line())
-	print(targets_line(_days))
+	print(targets_line(_days, metrics()))
 	print(feed_line())
 	if style == "crafter":
 		print(craft_line())
@@ -303,23 +310,38 @@ func animal_share() -> float:
 
 ## Part 4's Market targets over the days measured: the share of days with something to buy (1 to 3 visits of
 ## income) and of days ending with idle coins over IDLE_VISITS_MAX visits of income.
-## The run against data/sim_targets.json: "targets: all met" or each one missed, so an audit can't read past it.
-func targets_line(days: int) -> String:
-	var t: Dictionary = game.read_json("res://data/sim_targets.json")
+## What the run measured, by the names data/sim_targets.json checks (an audit's view of the economy).
+func metrics() -> Dictionary:
 	var n := maxi(_market_days, 1)
-	var seen := {"idle_days_most": 100.0 * _idle_days / n, "upkeep_least": 100.0 * _repair_coins / maxf(1.0, _earned),
-		"upkeep_most": 100.0 * _repair_coins / maxf(1.0, _earned)}
+	var m := {"idle_days_pct": 100.0 * _idle_days / n, "want_days_pct": 100.0 * _want_days / n,
+		"upkeep_pct": 100.0 * _repair_coins / maxf(1.0, _earned), "stuck_days": _stuck_days, "away_lost": away_lost,
+		"strays_week_most": _strays_week, "gems_per_week": _gems_earned * 7.0 / maxf(_days, 1)}
+	for lvl: int in [3, 10, 20]:
+		m["level%d_day" % lvl] = int(_level_day.get(lvl, NEVER))
+	if follows_goals():
+		m["projects_open"] = game.goals.project_stage.size()
+	return m
+
+
+## The run against data/sim_targets.json: "targets: all met" or every one missed, so an audit can't read past a
+## broken economy as a figure (owner, 19 Nov: "nothing should get missed by the audit bot").
+func targets_line(days: int, measured: Dictionary, first_hour := false) -> String:
 	var missed: Array[String] = []
-	for key: String in seen:
-		var rule: Dictionary = t.get(key, {})
-		if rule.is_empty() or days < int(rule.get("min_days", 0)):
+	var checked := 0
+	for rule: Dictionary in (game.read_json("res://data/sim_targets.json").get("targets", []) as Array):
+		var key := str(rule["metric"])
+		if bool(rule.get("first_hour", false)) != first_hour or not measured.has(key):
 			continue
-		if rule.has("style") and not (rule["style"] as Array).has(style):
+		if days < int(rule.get("min_days", 0)) or (rule.has("styles") and not (rule["styles"] as Array).has(style)):
 			continue
-		var bad: bool = float(seen[key]) > float(rule["v"]) if key.ends_with("_most") else float(seen[key]) < float(rule["v"])
-		if bad:
-			missed.append("%s %.1f (target %s)" % [key, float(seen[key]), str(rule["v"])])
-	return "targets: all met" if missed.is_empty() else "TARGETS MISSED: " + ", ".join(PackedStringArray(missed))
+		checked += 1
+		var v := float(measured[key])
+		if (rule.has("most") and v > float(rule["most"])) or (rule.has("least") and v < float(rule["least"])):
+			missed.append("%s %s (target %s%s)" % [key, str(snappedf(v, 0.1)), "at most " if rule.has("most")
+				else "at least ", str(rule.get("most", rule.get("least")))])
+	if missed.is_empty():
+		return "targets: all %d met" % checked
+	return "TARGETS MISSED (%d of %d): %s" % [missed.size(), checked, "; ".join(PackedStringArray(missed))]
 
 
 func market_line() -> String:
@@ -468,6 +490,9 @@ func play_first_hour() -> Dictionary:
 	lines.append(" | ".join(PackedStringArray(marks)))
 	lines.append("goals collected %d (chain steps %d, jobs swapped %d); idle minutes with goals open %d" % [
 		goals_claimed, chain_steps, swaps, out["stuck_minutes"]])
+	var first := {"stuck_minutes": out["stuck_minutes"], "coins_at_10": out["coins_at"].get(10, 0),
+		"level3_minute": int(out["minute_of_level"].get(3, NEVER))}
+	lines.append(targets_line(1, first, true))
 	var crops := []
 	for id: String in _by_crop:
 		crops.append("%s x%d" % [id, _by_crop[id]])

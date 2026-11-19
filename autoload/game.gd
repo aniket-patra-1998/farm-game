@@ -267,6 +267,7 @@ func _ready() -> void:
 	stray_timer.autostart = true
 	stray_timer.timeout.connect(strays.check_strays)
 	stray_timer.timeout.connect(daily.check_daily_gift)
+	stray_timer.timeout.connect(rust.finish_repairs)   # (a mended vehicle comes back: RustSystem)
 	add_child(stray_timer)
 	StartMarks.mark("game")   # not-ui (data and the save loaded)
 
