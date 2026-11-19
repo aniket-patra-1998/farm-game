@@ -46,6 +46,7 @@ const FIND_RISE := 40.0        # pixels between them
 const RAIN_BLUE := Color("#8fd0ff")   # the words of a rain-watered harvest
 const WORDS_PX := 30           # world px of the words that float off a plot (coins, XP, costs: FloatText's look)
 const COMBO_PX := 34           # world px of a swipe's count, a little bigger than the words beside it
+const SWEEP_PX := 44           # world px of a sweep's count at its end ("x8"), the run's one big word
 const COUNT_TAG := "x%d"     # not-ui: a count (a swipe's plots, a streak), the same in every language
 const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is walked in
 ## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
@@ -1014,9 +1015,45 @@ func _run(kind: String, i: int) -> int:
 	_streak_kind = kind
 	_streak_msec = now
 	var every := Balance.i("feel.streak_shout_every")
-	if every > 0 and _streak % every == 0:
+	if every > 0 and _streak % every == 0 and not _ends_sweep(kind):   # (the sweep's end says it bigger)
 		float_words(center_of(i) + Vector2(0, -64), COUNT_TAG % _streak, "golden", 1.3)
 	return _streak - 1
+
+
+## A streak's end (wow build): when the farmer has no more of `kind` queued and the run of it was long enough
+## (Balance `feel.combo_min`), its count pops once, bigger, over the last plot with a few sparkles: a sweep of
+## eight harvests ends on "x8". Feel only: it pays nothing. Returns whether it showed.
+func _sweep_end(kind: String, i: int) -> bool:
+	if i < 0 or not _ends_sweep(kind):
+		return false
+	var label := Label.new()
+	label.text = COUNT_TAG % _streak
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size = Vector2(200, 56)
+	label.pivot_offset = label.size / 2.0
+	label.position = center_of(i) - Vector2(100, 132)
+	label.z_index = 11
+	label.scale = Vector2.ONE * 0.4
+	FloatText.style_world(label, SWEEP_PX, Feedback.color("golden"))
+	add_child(label)
+	var tw := label.create_tween()
+	tw.tween_property(label, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(label, "position:y", label.position.y - 40.0, 0.9).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(label, "modulate:a", 0.0, 0.6).set_delay(0.3)
+	tw.tween_callback(label.queue_free)
+	world_fx.burst("sparkle", center_of(i) + Vector2(0, -96))
+	return true
+
+
+## Whether the streak of `kind` just done ends here and is long enough to say so (`_sweep_end`).
+func _ends_sweep(kind: String) -> bool:
+	var least := Balance.i("feel.combo_min")
+	if least <= 0 or _streak_kind != kind or _streak < least:
+		return false
+	for job: Dictionary in Game.player.queue:
+		if str(job.get("kind", "")) == kind:
+			return false
+	return true
 
 
 ## The farmer got to a job and did it (or found nothing left to do: an empty result).
@@ -1035,18 +1072,22 @@ func _on_action_done_timed(job: Dictionary, result: Dictionary) -> void:
 	match str(job["kind"]):
 		"harvest":
 			_show_harvest(i, job, result)
+			_sweep_end("harvest", i)
 		"plow":
 			Feedback.moment("plow", _run("plow", i))
 			world_fx.burst("dirt", center_of(i))
 			float_words(center_of(i), "-%d" % Balance.i("economy.plow_cost"), "cost")
+			_sweep_end("plow", i)
 		"plant":
 			Feedback.moment("plant", _run("plant", i))
 			world_fx.burst("dirt", center_of(i) + Vector2(0, -SLAB))
 			float_words(center_of(i), "-%d" % int(Game.crops[job["crop"]]["seed_cost"]), "cost")
+			_sweep_end("plant", i)
 		"fertilize":
 			Feedback.moment("fertilize", _run("fertilize", i))
 			float_words(center_of(i), "-%d" % Balance.i("economy.fertilizer_cost"), "cost")
 			_sparkle(center_of(i), "fert")
+			_sweep_end("fertilize", i)
 		"collect":
 			_show_collect(int(job["uid"]), result)
 		"nurture":
@@ -1190,6 +1231,8 @@ func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 	Feedback.moment("harvest", _run("harvest", i))
 	_pop_plants(i, job["crop"], job["art"])
 	world_fx.burst("leaves", at + Vector2(0, -SLAB))
+	if fx != null and ItemIcons.is_made(str(job["crop"])):   # the crop itself flies to the coins it sells for
+		fx.produce(to_screen(at + Vector2(0, -SLAB)), ItemIcons.of(str(job["crop"])))
 	_reward(at, int(result["coins"]), int(result["xp"]))
 	float_words(at, "+%d" % result["coins"], "coins")
 	float_words(at + Vector2(0, -30), tr("XP") % result["xp"], "xp")

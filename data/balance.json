@@ -817,6 +817,14 @@
    "v": 4.0,
    "note": "the farmer's next job of the same kind within this long carries the streak on (scripts/farm_grid.gd); longer and the notes start again"
   },
+  "produce": {
+   "v": {"px": 120, "rise": 110, "pop_seconds": 0.22, "hang_seconds": 0.12, "arc": 120, "fly_seconds": 0.6, "land_scale": 0.45, "trail": true, "sparks": 18, "spark_seconds": 0.45, "spark_px": 22},
+   "note": "a harvested crop's picture pops out of the plot (rising `rise` px over `pop_seconds`, shown `px` across), hangs `hang_seconds`, then arcs `arc` px high to the coin counter in `fly_seconds`, landing at `land_scale`; `trail` gives it `sparks` soft sparks living `spark_seconds`, up to `spark_px` across (only where Quality fx_trails allows) (scripts/fx/fx_layer.gd). Wow build"
+  },
+  "combo_min": {
+   "v": 5,
+   "note": "a streak of the same work at least this long says its count once, bigger, over the last plot when the farmer has no more of that work queued (the sweep's end: x8); 0 never (scripts/farm_grid.gd). Wow build"
+  },
   "streak_shout_every": {
    "v": 5,
    "note": "a streak says its count over the plot at every multiple of this (x5, x10...); 0 never"
