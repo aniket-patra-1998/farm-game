@@ -59,6 +59,6 @@ func test_575_a_farm_opens_quietly() -> void:
 	# plays about 80% quieter (opening_gain_db) and never buzzes; the read is LoadingCover.covering.
 	var data := DataFile.read(Feedback.DATA)
 	var db := float(data.get("opening_gain_db", 0.0))
-	_check(db <= -12.0 and db >= -20.0, "about 80% quieter while opening (%s dB)" % db)
+	_check(db <= -12.0 and db >= -20.0, "about 80%% quieter while opening (%s dB)" % db)
 	var code := FileAccess.get_file_as_string("res://autoload/feedback.gd")
 	_check(code.contains("LoadingCover.covering > 0"), "the cover is what hushes it")
