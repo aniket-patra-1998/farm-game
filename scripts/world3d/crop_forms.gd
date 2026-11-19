@@ -4,8 +4,9 @@ extends RefCounted
 ## pumpkin, cabbage...) drawn into a MeshBuilder at a growth stage. Which crop is which form, and each form's
 ## numbers, are in data/crop_forms.json; a crop without one falls back to its catalog shape (CropModels).
 ## Produce (a head, a fruit, a bloom) is marked with vertex alpha 0 and takes the crop's colour at draw time.
+## The farm asks CropFormSpec what a form is; these builders load by path (CropFormSpec.builder()) only when a
+## look has to be built, which a crop drawn from its exported file never needs (docs/PERF_RUN.md, the start).
 
-const PATH := "res://data/crop_forms.json"
 const PLOT := 0.163   # half a plot, in plant units (Crops3D.PLANT_SCALE to a tile), a hair over so plots join
 const TUFTS := 5       # tufts of leaves across a plot's carpet..
 const TUFTS_YOUNG := 3  # ..and across a growing plot, where soil still shows between them
@@ -27,50 +28,29 @@ const PULLED_TOPS := 2.5   # ..and its tops' leaves broader, so they read green 
 const TOWARD_VIEW := Vector3(0.7071, 0.0, 0.7071)   # the pictures look from +x +z (ItemIcons)..
 const ACROSS := Vector3(0.7071, 0.0, -0.7071)       # ..and this runs across them
 
-static var _data := {}
-
-
-static func _load() -> void:
-	if not _data.is_empty():
-		return
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-	_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {"forms": {}, "crops": {}}
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error(PATH + " is missing or not valid JSON")
-
-
-## The form a crop is drawn as: its own, or its catalog shape when it has none.
+## What a form is (data/crop_forms.json), asked of CropFormSpec: these stay for the builders below and the tools.
 static func form_of(crop_id: String, shape: String) -> String:
-	_load()
-	return str((_data["crops"] as Dictionary).get(crop_id, shape))
+	return CropFormSpec.form_of(crop_id, shape)
 
 
-## A number of the look every crop shares (data/crop_forms.json "look"): how tall a crop may stand, how much
-## its produce is enlarged.
 static func look(key: String, fallback: float) -> float:
-	_load()
-	return float((_data.get("look", {}) as Dictionary).get(key, fallback))
+	return CropFormSpec.look(key, fallback)
 
 
-## Whether `form` is drawn a plot at a time (it has a "plot": a carpet of leaves and a few big pieces of produce
-## laid out over the whole plot) and not as a plant repeated in rows.
 static func is_plot(form: String) -> bool:
-	return spec(form).has("plot")
+	return CropFormSpec.is_plot(form)
 
 
 static func spec(form: String) -> Dictionary:
-	_load()
-	return (_data["forms"] as Dictionary).get(form, {})
+	return CropFormSpec.spec(form)
 
 
 static func forms() -> Array:
-	_load()
-	return (_data["forms"] as Dictionary).keys()
+	return CropFormSpec.forms()
 
 
 static func crops() -> Dictionary:
-	_load()
-	return _data["crops"]
+	return CropFormSpec.crops()
 
 
 ## Draws `form` at a stage (`ripe` or growing, `k` how grown 0..1) into `mb`. False if there is no such form.

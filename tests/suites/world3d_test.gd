@@ -2511,3 +2511,20 @@ func test_577_the_building_builders_compile_when_a_look_is_built() -> void:
 	var built: Node3D = BuildingSpec.model().build(Game.item_data("chicken_coop"), Game.footprint("chicken_coop"))
 	_check(built != null and built.get_child_count() > 0, "a building is still built through the path")
 	built.free()
+
+
+func test_581_the_crop_builders_compile_when_a_look_is_built() -> void:
+	# The farm asks what a crop form is (CropFormSpec) whenever it draws a plot; the builders (CropForms, 0.8k
+	# lines) load by path only when a look has to be built, which a crop drawn from its exported file never needs,
+	# so the start does not compile them (docs/PERF_RUN.md, the start).
+	for path: String in ["res://scripts/world3d/crop_models.gd", "res://scripts/world3d/crops_3d.gd",
+			"res://scripts/world3d/crop_form_spec.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bCropForms\\b").search(code), "%s does not name the builders" % path)
+	_eq(CropFormSpec.builder().resource_path, CropFormSpec.BUILDER, "the builders come from their own file")
+	for form: String in CropFormSpec.forms():
+		_eq(CropFormSpec.spec(form), CropForms.spec(form), "%s: one description, asked either way" % form)
+	_eq(CropFormSpec.crops(), CropForms.crops(), "which crop is which form, asked either way")
+	var form := str(CropFormSpec.forms()[0])
+	_check(CropModels.mesh(form, "ripe", false).get_surface_count() > 0, "a crop is still built through the path")
+	_check(CropModels.mesh(form, CropModels.HARVEST, false).get_surface_count() > 0, "and its picture")

@@ -150,6 +150,13 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   ModelStore never needs them). 30,591 -> 28,526 lines before the first screen; headless, 7 alternating pairs:
   scripts - engine median 1,482 -> 1,197 ms, hud mark 1,894 -> 1,810 ms (headless keeps no looks, so there the
   builders compile during "world" instead: +148 ms). The 248 exported building files come out byte-identical.
+- 19 Nov 19:10 (perf run 23): still no phone run (today's 4 used; the nightly is next). Slice 8 of the start: what a
+  crop form is (CropFormSpec: which crop is which form, each form's numbers, the shared look) apart from the
+  builders (CropForms), which load by path (CropFormSpec.builder()) only when a crop's look must be built (a crop
+  drawn from its exported file never needs them; the pictures are made after the first screen). 28,618 -> 27,782
+  lines before the first screen; headless, 16 alternating runs each: scripts - engine median 2,102 -> 2,052 ms, hud
+  mark 3,070 -> 2,956 ms (this container ran slower than run 22's). The 105 exported plant files carry the same
+  meshes (every surface's arrays compared).
 
 ## Owner approvals (19 Nov 15:21): frame rate on slow phones
 Measured on the Galaxy A05s: playing the showcase at zoom 1.6 runs ~95 ms a frame on low (386 draws, 218k
