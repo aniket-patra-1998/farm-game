@@ -114,7 +114,7 @@ var fertilizer_bags := 0           # free fertilizer, used before coins
 var clear_until := 0               # unix time until which the weather is clear (a new farm)
 var weather_override := ""         # force a weather state (screenshots, testing); "" = the real weather
 var debug_time_offset := 0         # seconds; only changed by the debug skip button
-var skipped := 0                   # seconds of debug_time_offset that came from Skip 1 hour: timers move, the sky doesn't
+var skipped := 0                   # seconds of the offset from Skip 1 hour: timers move, the sky doesn't
 var tutorial_step: int = Tutorial.HARVEST
 var catalog: Catalog               # every item, as typed definitions (scripts/catalog/)
 var items := {}                    # placeable objects from data/catalog/, as dictionaries

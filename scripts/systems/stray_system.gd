@@ -4,10 +4,10 @@ extends GameSystem
 ## Part of the game state: reached as `Game.strays`; shared state is on `game`.
 
 
+const WEEK := 7 * 86400
+
 var next_stray_at := 0             # when the next stray may turn up
 var arrived: Array[int] = []       # when each stray of the last week turned up (the weekly cap counts these)
-
-const WEEK := 7 * 86400
 
 
 func _init(owner: GameState) -> void:
