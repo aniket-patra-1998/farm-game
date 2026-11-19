@@ -137,6 +137,13 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   but played at 256.5 ms a frame on mid: AutoQuality ignored every frame over 250 ms, so the A05s was never stepped
   down. Merged eb810f7: a steady run of slow frames counts, and a window that slow goes to the last rung.
 
+- 19 Nov 17:20 (perf run 21): the phone's play frame is GPU-bound. The play phase now reports medians of the
+  farm view's render CPU and GPU time (69ecce5); the phone run of 17:08 IST (A05s) played on low at 124.2 ms a frame
+  (p95 257.8: the phase began on mid) with GPU 93.6 ms, render CPU 3.4 ms, 380 draws, 215k triangles (medians).
+  So draws are not the wall; the GPU is (vertex or pixel work). The benchmark's new "gpu" phase (after play) hides
+  each owner's meshes and halves the 3D resolution, and says how much GPU time each takes away: the next phone run
+  says whom to cut.
+
 ## Owner approvals (19 Nov 15:21): frame rate on slow phones
 Measured on the Galaxy A05s: playing the showcase at zoom 1.6 runs ~95 ms a frame on low (386 draws, 218k
 triangles) and ~256 ms on mid (541 draws, 498k triangles). The owner approved both, so they are built now (they

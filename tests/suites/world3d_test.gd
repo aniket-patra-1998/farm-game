@@ -2477,3 +2477,19 @@ func test_571_the_phone_report_says_where_a_play_frame_goes() -> void:
 		"each list's middle value, to a tenth; nothing measured is 0")
 	var lines := LoadBenchmark.summary({"play": {"avg_ms": 95.0, "split": {"render_gpu_ms": 80.0}}})
 	_check(lines.contains("GPU 80"), "the summary says it (%s)" % lines)
+
+
+func test_572_the_phone_report_says_whose_meshes_cost_the_gpu() -> void:
+	# The A05s's play frame is GPU-bound (run 21: 93.6 ms of GPU, 3.4 ms of render CPU): the owner sweep names
+	# whose meshes the GPU time goes to, by the nearest named script above a mesh (perf_probe uses the same rule).
+	var holder := Node3D.new()
+	holder.set_script(load("res://scripts/world3d/ground_shade.gd"))
+	var mid := Node3D.new()
+	var mesh := MeshInstance3D.new()
+	holder.add_child(mid)
+	mid.add_child(mesh)
+	_eq(LoadBenchmark.owner_of(mesh), "GroundShade", "a mesh belongs to the nearest named script above it")
+	var lone := Node3D.new()
+	_eq(LoadBenchmark.owner_of(lone), "(none)", "a node with none above it: (none)")
+	lone.free()
+	holder.free()

@@ -18,6 +18,8 @@ const MARK := "BENCH "           # not-ui (what starts the report's log line; ph
 const LONG_FRAME_MS := 100.0     # a frame this long is a stall (a material drawn the first time, a load)
 const PLAY_SECONDS := 5.0        # playing at the playing zoom, measured
 const PLAY_ZOOM := 1.6           # the camera zoom a player farms at
+const GPU_FRAMES := 15           # frames timed for each GPU median of the owner sweep
+const GPU_SETTLE := 4            # frames waited first (the GPU's timestamps lag a few frames)
 const MOST_WAIT_SECONDS := 90.0  # never wait longer than this for one phase
 
 var _main: Node
@@ -66,6 +68,8 @@ func _run() -> void:
 	report["showcase_warm"] = await _phase(func() -> void: Game.open_showcase())
 	_tell(report)
 	report["play"] = await _play()
+	_tell(report)
+	report["gpu"] = await _gpu_by_owner()
 	Game.open_own_farm()
 	Game.saving_enabled = saving
 	report["done"] = true
@@ -167,6 +171,65 @@ func _play() -> Dictionary:
 		"longest_ms": snappedf(times[-1] if not times.is_empty() else 0.0, 0.1), "draws": draws, "triangles": tris,
 		"quality": Quality.level(), "max_fps": Engine.max_fps,   # (the level played at: AutoQuality may have moved it)
 		"quality_start": quality_start, "split": medians(samples)}
+
+
+## Where the GPU's time goes at the playing view (the phone's frame is GPU-bound: run 21): the farm view's GPU time
+## (median of GPU_FRAMES frames, ms) with everything drawn (`all`), then with each owner's meshes hidden (the
+## nearest named script above a mesh: Animal3D, Objects3D, DecorLayer...) as the time that goes away, and with the
+## 3D resolution halved (`half_scale`: what is left once fewer pixels are shaded; little change means the vertices
+## or the draws are the cost, a big one the pixels). Nothing is saved; everything is shown again after.
+func _gpu_by_owner() -> Dictionary:
+	var vp := get_viewport()
+	var rid := vp.get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(rid, true)
+	var groups := {}
+	var stack: Array[Node] = [get_tree().root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if n is GeometryInstance3D and (n as GeometryInstance3D).is_visible_in_tree():
+			var key := owner_of(n)
+			if not groups.has(key):
+				groups[key] = []
+			groups[key].append(n)
+	var all := await _gpu_median(rid)
+	var out := {"all": all}
+	for key: String in groups:
+		for n: GeometryInstance3D in groups[key]:
+			n.visible = false
+		var without := await _gpu_median(rid)
+		for n: GeometryInstance3D in groups[key]:
+			if is_instance_valid(n):
+				n.visible = true
+		out[key] = snappedf(all - without, 0.1)
+	var scale := vp.scaling_3d_scale
+	vp.scaling_3d_scale = scale * 0.5
+	out["half_scale"] = await _gpu_median(rid)
+	vp.scaling_3d_scale = scale
+	RenderingServer.viewport_set_measure_render_time(rid, false)
+	return out
+
+
+## The farm view's median GPU time over GPU_FRAMES frames, after GPU_SETTLE frames (its timestamps lag a few).
+func _gpu_median(rid: RID) -> float:
+	for k in GPU_SETTLE:
+		await get_tree().process_frame
+	var times := []
+	for k in GPU_FRAMES:
+		await get_tree().process_frame
+		times.append(RenderingServer.viewport_get_measured_render_time_gpu(rid))
+	return float(medians({"gpu": times})["gpu"])
+
+
+## The nearest named script above a node (itself included): whose mesh it is. "(none)" when no script names it.
+static func owner_of(n: Node) -> String:
+	var a: Node = n
+	while a != null:
+		var sc: Script = a.get_script()
+		if sc != null and sc.get_global_name() != &"":
+			return str(sc.get_global_name())
+		a = a.get_parent()
+	return "(none)"   # not-ui (a measurement key)
 
 
 ## The median of each list of samples, to a tenth (an empty list: 0).

@@ -1124,6 +1124,31 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   1x before/after on low and mid at the playing zoom. 3) Draws: Objects3D 240 visible draws (buildings' parts)
   and DecorLayer 118: Instancer batching where the parts repeat.
 
+- Run 21 (19 Nov 16:52 - 17:42 IST). Godot fetched again; local main had diverged again (worked detached on
+  origin/main). Merged 69ecce5: the benchmark's play phase reports medians (`play.split`) of the farm view's render
+  CPU and GPU time (RenderingServer measured render time), TIME_PROCESS, TIME_PHYSICS_PROCESS, draws, triangles,
+  and `quality_start`. Test 571. Phone run of 17:08 IST (A05s, build of 69ecce5, run 44516615914, done): play
+  124.2 ms a frame on low (began on mid: p95 257.8; medians 380 draws, 215k triangles), render GPU 93.6 ms, render
+  CPU 3.4 ms, script_ms 121.2 (TIME_PROCESS on the phone is about the whole frame: it likely includes the wait on
+  the GPU, so read it as not a script cost until shown otherwise), physics 0.2. So the phone is GPU-bound on low
+  (0.7 scale, no shadows, no MSAA): draw batching will not move the frame much; vertex or pixel work will.
+  Startup 16.5-ish cold as before; own farm built 8.9 s, showcase cold built 48.4 s, warm 27.5 s.
+  Then (perf/gpu-sweep, merged if its precheck passed: check `git log`): a "gpu" phase after play hides each
+  owner's meshes (LoadBenchmark.owner_of, the rule perf_probe shares) for GPU_FRAMES and reports the GPU ms each
+  takes away, plus `half_scale` (GPU ms with the 3D resolution halved: a big drop means pixels, little means
+  vertices or draws). Test 572.
+  Looked at, not built: coarser animal LODs from the import. The per-mesh import key is the glTF mesh's name
+  ("cow_cow", not "cow": `_subresources={"meshes":{"cow_cow":{...}}}` works, "generate/lods": 2 drops them);
+  lods/normal_merge_angle 180 changes nothing (cow still 2,543 -> 1,789). The cause is the vertex colours: 3,103
+  distinct colours on 3,624 vertices (3,044 positions; the UVs add no seams), so colour seams lock the simplifier.
+  A coarser level needs the animal export (tools/animal_art) to write fewer colour seams or its own far level.
+- Next run: 1) read the next phone run (the nightly at 02:10 IST, or one started after 13:30 IST on 20 Nov when the
+  quota resets; today's 4 are used): `gpu` (each owner's GPU ms, half_scale against all). 2) Cut the biggest:
+  if half_scale is far below all, the pixels (which shaders are dearest per pixel: ground, water, grass, decor
+  alpha; a cheaper low-quality path is a look change on low only: report first unless it is the approved
+  scale_3d); if not, the owner with the most GPU ms (animals: blend shapes and their triangles, the export's far
+  level above). Each with a 1x before/after.
+
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
   UiTheme.glow(kind, fresh, px) is the one rule (data/ui_theme.json "glow": gold kinds, spread, least_px; colours

@@ -281,14 +281,7 @@ func _visible_by_owner() -> void:
 		stack.append_array(n.get_children())
 		if not (n is GeometryInstance3D) or not (n as GeometryInstance3D).visible:
 			continue
-		var a: Node = n
-		var owner_name := "(none)"
-		while a != null:
-			var sc: Script = a.get_script()
-			if sc != null and sc.get_global_name() != &"":
-				owner_name = str(sc.get_global_name())
-				break
-			a = a.get_parent()
+		var owner_name := LoadBenchmark.owner_of(n)
 		if not groups.has(owner_name):
 			groups[owner_name] = []
 		groups[owner_name].append(n)
