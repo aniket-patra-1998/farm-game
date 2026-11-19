@@ -702,8 +702,8 @@ static func _tree_turn(o: Dictionary) -> Basis:
 
 
 ## Gives a building made as a file what its yard and doors need, from its parts' names (docs/ASSETS.md §1):
-## `door*` parts swing open on collect (BuildingModel.DOOR; `door_left` the other way), and `window_*` parts are
-## where animals look out (BuildingModel.WINDOWS, sized by the part's own scale).
+## `door*` parts swing open on collect (BuildingSpec.DOOR; `door_left` the other way), and `window_*` parts are
+## where animals look out (BuildingSpec.WINDOWS, sized by the part's own scale).
 static func mark_parts(model: Node3D) -> void:
 	var windows: Array = []
 	var stack: Array[Node] = [model]
@@ -714,15 +714,15 @@ static func mark_parts(model: Node3D) -> void:
 			continue
 		var part := String(n.name)
 		if part.begins_with("door") and part.contains(ROLL):
-			n.set_meta(BuildingModel.DOOR, 0.0)   # (a shutter: it rolls up by the height its name ends with)
-			n.set_meta(BuildingModel.SLIDE, part.get_slice(ROLL, 1).to_float() / 100.0)
+			n.set_meta(BuildingSpec.DOOR, 0.0)   # (a shutter: it rolls up by the height its name ends with)
+			n.set_meta(BuildingSpec.SLIDE, part.get_slice(ROLL, 1).to_float() / 100.0)
 		elif part.begins_with("door"):
-			n.set_meta(BuildingModel.DOOR, -1.0 if part.ends_with("left") else 1.0)
+			n.set_meta(BuildingSpec.DOOR, -1.0 if part.ends_with("left") else 1.0)
 		elif part.begins_with("window"):
 			windows.append({"at": _local_to(model, n as Node3D).origin, "size": WINDOW_SIZE * (n as Node3D).scale.x})
 	if not windows.is_empty():
 		var marker := Node3D.new()
-		marker.set_meta(BuildingModel.WINDOWS, windows)
+		marker.set_meta(BuildingSpec.WINDOWS, windows)
 		model.add_child(marker)
 
 
@@ -744,7 +744,7 @@ func state_of(o: Dictionary) -> Dictionary:
 		state["level"] = Game.look_level(o)
 		state["working"] = _at_work(o)
 		state["fill"] = store_fill(o)
-		state[BuildingModel.PLAN] = Release.on("plans") and not state["broken"]   # (what its next size adds, framed)
+		state[BuildingSpec.PLAN] = Release.on("plans") and not state["broken"]   # (what its next size adds, framed)
 		if Game.vip.level() > 0 and not state["broken"] and Game.building_def(str(o["id"])).shows_vip():
 			state["vip"] = Game.vip.active()   # (its badge: gold and turning, or grey metal; none before VIP 1)
 		if Game.under_construction(o):
@@ -900,7 +900,7 @@ static func building_look(id: String, level: int, broken := false) -> Node3D:
 	var it := Game.item_data(id)
 	var fp := Game.footprint(id)
 	return Instancer.copy_of(Instancer.key_of(["building", id, level, broken]),
-		func() -> Node3D: return ModelKit.bake(BuildingModel.build(it, fp, level, true, broken)))
+		func() -> Node3D: return ModelKit.bake(BuildingSpec.model().build(it, fp, level, true, broken)))
 
 
 ## Every look a farm may show that is worth having ready before it is asked for (CI keeps them in the game,
@@ -1002,7 +1002,7 @@ func _build(o: Dictionary) -> Node3D:
 				node = bloom_look(str(o["id"]), Crowding.mask(o), Instancer.variant(int(o["row"]), int(o["col"])))
 			_:
 				if Game.under_construction(o):
-					node = ModelKit.bake(BuildingModel.build_site(it, fp, Game.land.construction_progress(o)))
+					node = ModelKit.bake(BuildingSpec.model().build_site(it, fp, Game.land.construction_progress(o)))
 				else:
 					node = building_look(str(o["id"]), Game.look_level(o), bool(o.get("broken", false)))
 					AssetRegistry.apply_state(node, state_of(o))
@@ -1537,9 +1537,9 @@ func _parts(node: Node3D, o: Dictionary) -> Array[AABB]:
 		return [_bounds(node, o)]
 	var model := node.get_child(0) as Node3D
 	var fp := Game.footprint(o["id"])
-	var spec := BuildingModel.spec(str(o["id"]), Game.look_level(o))
+	var spec := BuildingSpec.spec(str(o["id"]), Game.look_level(o))
 	var out: Array[AABB] = [node.transform * (model.transform * AABB(Vector3.ZERO, Vector3(fp.x, YARD_HEIGHT, fp.y)))]
-	var taken := BuildingModel.taken(spec, fp)
+	var taken := BuildingSpec.taken(spec, fp)
 	var body: Dictionary = spec["body"]
 	var roof: Dictionary = spec["roof"]
 	for k in taken.size():

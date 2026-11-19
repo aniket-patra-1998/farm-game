@@ -93,8 +93,8 @@ func test_418_birds_on_a_pond_swim_low_and_dabble_and_stand_on_its_ice() -> void
 func test_419_animals_with_a_trough_near_go_to_it_and_drink() -> void:
 	var spec := BuildingModel.spec("cow_shed", 1)
 	var fp := Game.footprint("cow_shed")
-	_eq(BuildingModel.troughs(spec, fp).size(), 1, "a Cow Shed's yard has its water trough")
-	_check(BuildingModel.troughs(BuildingModel.spec("chicken_coop", 1), Game.footprint("chicken_coop")).is_empty(),
+	_eq(BuildingSpec.troughs(spec, fp).size(), 1, "a Cow Shed's yard has its water trough")
+	_check(BuildingSpec.troughs(BuildingModel.spec("chicken_coop", 1), Game.footprint("chicken_coop")).is_empty(),
 		"a Chicken Coop's has none")
 	var mind := AnimalBehaviour.new(AnimalRig.of(Game.item_data("cow")), 7, Vector2(14, 7))
 	mind.offset = Vector2.ZERO

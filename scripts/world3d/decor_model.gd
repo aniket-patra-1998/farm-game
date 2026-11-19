@@ -40,7 +40,7 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 		# the cabin, are the first.
 		var shows := str(o.get("crop", ""))
 		var stage := int(shows.trim_prefix(Objects3D.STAGE)) if shows.begins_with(Objects3D.STAGE) else 1
-		return ModelKit.bake(BuildingModel.build(it, fp, maxi(stage, 1)))
+		return ModelKit.bake(BuildingSpec.model().build(it, fp, maxi(stage, 1)))
 	if Game.links.group_of(id) != "":
 		# Fences, hedges, walls and paths are drawn joined up by the LinkLayer; alone (a sheet, a size guide)
 		# one is a straight piece.

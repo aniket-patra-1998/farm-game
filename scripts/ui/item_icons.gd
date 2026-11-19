@@ -107,7 +107,7 @@ static func _key(item_id: String) -> int:
 	var sized := item_id.split(SIZED)
 	var data: Variant = Game.item_data(sized[0])
 	if sized.size() > 1:
-		data = [data, BuildingModel.spec(sized[0], int(sized[1]))]
+		data = [data, BuildingSpec.spec(sized[0], int(sized[1]))]
 	return hash([data, ArtVersion.of(sized[0]), ProjectSettings.get_setting("application/config/version", "")])
 
 

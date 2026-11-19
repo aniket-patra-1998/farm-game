@@ -144,6 +144,13 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   each owner's meshes and halves the 3D resolution, and says how much GPU time each takes away: the next phone run
   says whom to cut.
 
+- 19 Nov 18:10 (perf run 22): no phone run possible until the nightly (today's 4 used). Slice 7 of the start: what a
+  building is (BuildingSpec: its description, the ground it takes, its yard's spots, its parts' names) apart from
+  the builders (BuildingModel, BuildingDress), which load by path only when a look must be built (a look kept by
+  ModelStore never needs them). 30,591 -> 28,526 lines before the first screen; headless, 7 alternating pairs:
+  scripts - engine median 1,482 -> 1,197 ms, hud mark 1,894 -> 1,810 ms (headless keeps no looks, so there the
+  builders compile during "world" instead: +148 ms). The 248 exported building files come out byte-identical.
+
 ## Owner approvals (19 Nov 15:21): frame rate on slow phones
 Measured on the Galaxy A05s: playing the showcase at zoom 1.6 runs ~95 ms a frame on low (386 draws, 218k
 triangles) and ~256 ms on mid (541 draws, 498k triangles). The owner approved both, so they are built now (they

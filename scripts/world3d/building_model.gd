@@ -6,34 +6,34 @@ extends RefCounted
 ## half-doors, yards, troughs, hay, hives, a pond...). The node's origin is the footprint's back corner;
 ## x runs along its columns and z along its rows, one unit a tile.
 
-const PATH := "res://data/building_models.json"
+const PATH := BuildingSpec.PATH
 const SKIRT_PITCH := 0.3      # the pent roof round a ground floor under an upper storey: rise over half-span
 const SKIRT_OVER := 0.1        # and how far it overhangs
 const SPILL_REACH := 0.8      # how far a lit building's light reaches over the ground, in tiles
 const SILO_CHECKS := 14   # dark panels in the chequered band of a silo
 const PLINTH := 0.13         # a building's stone footing stands this high..
-const FOOT_OUT := 0.085      # ..on a broad low course this much wider than the walls (it is battered)
+const FOOT_OUT := BuildingSpec.FOOT_OUT
 const FRIEZE := 0.075        # the board that runs round the top of the walls, under the eaves
 const FRAME_OUT := 0.04      # a window's frame stands this proud of its wall
 const PICKET_GAP := 0.12      # between a picket fence's pickets, in tiles
-const WINDOWS := &"window_spots"   # meta on a marker child: the windows animals can look out of ([{at, size}])
-const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
+const WINDOWS := BuildingSpec.WINDOWS
+const DOOR := BuildingSpec.DOOR
 const DOOR_WALL := 0.85       # the wall height a door's own height is given for
 ## The features that are one building's own (`_signature`).
-const SLIDE := "slide"   # not-ui (a meta on a door that rolls up: how far)
+const SLIDE := BuildingSpec.SLIDE
 const STORING := "storing"   # not-ui (a building type: Game.building_type)
-const PLAN := "plan"         # not-ui (the state of the part that shows what is still to be built: `_plan`)
+const PLAN := BuildingSpec.PLAN
 const PLAN_SNAP := 0.005     # two shapes within this of each other, in tiles, are the same shape
 const HARVESTING := "harvesting"   # not-ui (a building type: Game.building_type)
-const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
+const BALE := BuildingSpec.BALE
 const ROUGH_TUFTS := 8            # wisps of straw lying on a rough yard's grass
 const PATH_STEP := 0.12           # the trodden path from a yard's gate to the door: a worn patch this far apart..
 const PATH_WIDTH := Vector2(0.1, 0.15)   # ..each this wide (a radius, in tiles, at random between)
 const DUCK_HOUSE := Vector3(0.2, 0.24, 0.16)   # a duck house: half its width, its walls' height, half its depth
-const HIVE_BOX := Vector3(0.29, 0.18, 0.25)   # a beehive's box: half width, height and half depth, in tiles
+const HIVE_BOX := BuildingSpec.HIVE_BOX
 const SIGNATURES: Array[String] = ["rock", "pool", "wallow", "carrots", "fuel_pump", "mobile", "burrow"]
 ## Yard features' size (their radius in tiles, unless the data gives `r`).
-const FEATURE_R := {"rock": 0.3, "pool": 0.32, "wallow": 0.34, "carrots": 0.26, "fuel_pump": 0.18, "burrow": 0.34}
+const FEATURE_R := BuildingSpec.FEATURE_R
 const HILL := Color("#6fae45")   # a burrow's grassy hill
 const STILL_WATER := Color("#2999d6")   # painted water that does not move, in the water's own blue
 ## A goat's climbing rock: (x, z offset as shares of its radius, radius share, height share).
@@ -60,193 +60,23 @@ const SITE_WALLS := 0.45
 const SITE_RAFTERS := 0.75
 const SITE_BOARDS := 0.92
 const STONE := Color("#9b958a")
-const WOOD := Color("#8a5a36")
+const WOOD := BuildingSpec.WOOD
 const DARK := Color("#3b2a20")
-const HAY := Color("#e2c25a")
+const HAY := BuildingSpec.HAY
 const FENCE := Color("#f1ece0")
 const RAIL := Color("#a07446")
 const GROUNDS := {"dirt": Color("#9a7a52"), "straw": Color("#d9bf6a"), "grass": Color("#79a845"),
 	"mud": Color("#6e5236")}
 
-static var _data := {}
-static var _fills := {}   # fill_of, by "id|level"
-
-
-## How a building is built at a size (`level`, 1 the smallest): its own description over the defaults,
-## then each size's changes up to `level` laid on in turn (data "levels": {"2": {...}, "3": {...}}).
-## A size's "drop" first removes features of those types; its "features" are added; anything else
-## (body, roof, door: merged; windows, window_rows: replaced) changes the building itself.
-## A number of the look every building shares (data/building_models.json "look"); 1 when it is not set.
-static func _look(key: String) -> float:
-	_load()
-	return float((_data.get("look", {}) as Dictionary).get(key, 1.0))
-
-
-## The shared look laid over a building's own numbers: lower walls and a bigger door (chunky, as the farm art
-## these follow is), and for a home with a yard a smaller shed drawn back into its corner, so the yard and the
-## animals in it are most of what is seen.
-static func _styled(s: Dictionary) -> Dictionary:
-	var body: Dictionary = s["body"]
-	body["h"] = float(body.get("h", 0.85)) * _look("walls")
-	var yard := (s.get("features", []) as Array).any(func(f: Dictionary) -> bool: return f.get("type") == "yard")
-	if yard:
-		var k := _look("shed")
-		var at: Array = body.get("at", [0.5, 0.42])
-		var w := float(body.get("w", 0.7))
-		var d := float(body.get("d", 0.66))
-		body["at"] = [float(at[0]) - w * (1.0 - k) / 2.0, float(at[1]) - d * (1.0 - k) / 2.0]
-		body["w"] = w * k
-		body["d"] = d * k
-	var door: Dictionary = s.get("door", {})
-	door["w"] = float(door.get("w", 0.28)) * _look("door")
-	door["h"] = minf(float(door.get("h", 0.55)) * _look("door"), float(body["h"]) * 0.8)
-	s["door"] = door
-	return s
-
-
+## (the description and the ground a building takes: BuildingSpec, which the farm uses without the builders)
 static func spec(id: String, level := 1) -> Dictionary:
-	_load()
-	var out: Dictionary = (_data["default"] as Dictionary).duplicate(true)
-	var own: Dictionary = ((_data.get("buildings", {}) as Dictionary).get(id, {}) as Dictionary).duplicate(true)
-	var sizes: Dictionary = own.get("levels", {})
-	own.erase("levels")
-	_lay_on(out, own)
-	for l in range(2, level + 1):
-		var step: Dictionary = sizes.get(str(l), {})
-		var dropped: Array = step.get("drop", [])
-		out["features"] = (out.get("features", []) as Array).filter(
-			func(f: Dictionary) -> bool: return not dropped.has(f.get("type")))
-		(out["features"] as Array).append_array(step.get("features", []))
-		var rest := step.duplicate(true)
-		rest.erase("drop")
-		rest.erase("features")
-		_lay_on(out, rest)
-	return _styled(out)
+	return BuildingSpec.spec(id, level)
 
 
-## What a building's model says about its fill (see BuildingFill): cached, since it is asked for every sync.
-## Read-only: callers must not change it.
-static func fill_of(id: String, level := 1) -> Dictionary:
-	var key := "%s|%d" % [id, level]
-	if not _fills.has(key):
-		_fills[key] = spec(id, level).get("fill", {})
-	return _fills[key]
-
-
-## The sizes a building has changes for (2, 3...), from its description (tests check them).
 static func sizes_of(id: String) -> Array:
-	_load()
-	var own: Dictionary = (_data.get("buildings", {}) as Dictionary).get(id, {})
-	return (own.get("levels", {}) as Dictionary).keys().map(func(k: String) -> int: return int(k))
+	return BuildingSpec.sizes_of(id)
 
 
-static func _load() -> void:
-	if not _data.is_empty():
-		return
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
-	_data = parsed if typeof(parsed) == TYPE_DICTIONARY else {"default": {}, "buildings": {}}
-	if typeof(parsed) != TYPE_DICTIONARY:
-		push_error(PATH + " is missing or not valid JSON")
-
-
-static func _lay_on(out: Dictionary, changes: Dictionary) -> void:
-	for k in changes:
-		if typeof(changes[k]) == TYPE_DICTIONARY and typeof(out.get(k)) == TYPE_DICTIONARY:
-			(out[k] as Dictionary).merge(changes[k], true)
-		else:
-			out[k] = changes[k]
-
-
-## What a building at `spec` takes up on its footprint, as rectangles on the ground (x along columns, y
-## along rows): its main block and its annexes, and what stands beside it (a silo, a trough, a deck...).
-## Where animals can stand in the yard is the rest (BuildingFill).
-static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
-	var fw := float(fp.x)
-	var fd := float(fp.y)
-	var body: Dictionary = s["body"]
-	var bw := float(body.get("w", 0.7)) * fw
-	var bd := float(body.get("d", 0.66)) * fd
-	var at: Array = body.get("at", [0.5, 0.42])
-	var lo := Vector2(float(at[0]) * fw - bw / 2.0, float(at[1]) * fd - bd / 2.0)
-	var hi := lo + Vector2(bw, bd)
-	var out: Array[Rect2] = []
-	if bw > 0.0:
-		out.append(Rect2(lo, hi - lo))
-	for f: Dictionary in s.get("features", []):
-		match str(f.get("type", "")):
-			"wing":
-				var depth := float(f.get("depth", 0.32))
-				if str(f.get("side", "right")) == "front":
-					out.append(Rect2(lo.x, hi.y, bw, depth))
-				else:
-					out.append(Rect2(hi.x, lo.y, depth, bd))
-			"hay_bales" when f.has("at"):
-				var spot := yard_spot(f, fw, fd)
-				var half := Vector2(BALE.x * 2.0 + 0.04, BALE.z * 2.0) * float(f.get("scale", 1.0))
-				out.append(Rect2(spot - half, half * 2.0))
-			"rack" when f.has("at"):
-				var spot := yard_spot(f, fw, fd)
-				out.append(Rect2(spot.x - 0.28, spot.y - 0.16, 0.56, 0.32))
-			"hive":
-				var spot := yard_spot(f, fw, fd)
-				out.append(Rect2(spot.x - HIVE_BOX.x - 0.08, spot.y - HIVE_BOX.z - 0.06, HIVE_BOX.x * 2.0 + 0.16,
-					HIVE_BOX.z * 2.0 + 0.3))
-			"lean_to", "terrace", "barrels", "hay_bales":
-				out.append(Rect2(hi.x, lo.y, minf(0.5, fw - hi.x), bd))
-			"porch", "stall_doors":
-				out.append(Rect2(lo.x, hi.y, bw, 0.32))
-			"water_trough":
-				var spot := _trough_at(hi, fw, fd)
-				out.append(Rect2(spot.x - 0.22, spot.y - 0.09, 0.44, 0.18))
-			"silo":
-				var p: Array = f.get("at", [0.85, 0.2])
-				var r := float(f.get("r", 0.22)) + 0.04
-				out.append(Rect2(float(p[0]) * fw - r, float(p[1]) * fd - r, r * 2.0, r * 2.0))
-			"duck_house":
-				var p: Array = f.get("at", [0.82, 0.2])
-				out.append(Rect2(float(p[0]) * fw - 0.24, float(p[1]) * fd - 0.2, 0.48, 0.8))
-			"beehives":
-				var n := int(f.get("count", 3))
-				for k in n:
-					var x := lerpf(0.4, fw - 0.4, k / maxf(n - 1.0, 1.0))
-					out.append(Rect2(x - 0.18, fd * (0.4 + 0.2 * (k % 2)) - 0.16, 0.36, 0.32))
-			"ramp":
-				out.append(Rect2((lo.x + hi.x) / 2.0 - 0.1, hi.y, 0.2, 0.45))
-			"nest_boxes":
-				out.append(Rect2(hi.x, lo.y, 0.14, bd))
-			"rock", "pool", "wallow", "carrots", "fuel_pump", "burrow":
-				var spot := yard_spot(f, fw, fd)
-				var r := float(f.get("r", FEATURE_R.get(str(f["type"]), 0.3)))
-				out.append(Rect2(spot.x - r, spot.y - r, r * 2.0, r * 2.0))
-	return out
-
-
-## Where a yard's water trough stands, by its building's front right corner `hi` (x, z).
-static func _trough_at(hi: Vector2, fw: float, fd: float) -> Vector2:
-	return Vector2(minf(hi.x + 0.45, fw - 0.3), minf(hi.y + 0.35, fd - 0.2))
-
-
-## Where the animals of a yard can drink: the middle of each water trough in it (BuildingFill sends them).
-static func troughs(s: Dictionary, fp: Vector2i) -> Array[Vector2]:
-	var body: Dictionary = s["body"]
-	var at: Array = body.get("at", [0.5, 0.42])
-	var hi := Vector2(float(at[0]) * fp.x + float(body.get("w", 0.7)) * fp.x / 2.0,
-		float(at[1]) * fp.y + float(body.get("d", 0.66)) * fp.y / 2.0)
-	var out: Array[Vector2] = []
-	for f: Dictionary in s.get("features", []):
-		if str(f.get("type", "")) == "water_trough":
-			out.append(_trough_at(hi, fp.x, fp.y))
-	return out
-
-
-## Where a feature that stands in the yard goes: its `at` (shares of the footprint), or the front right corner.
-static func yard_spot(f: Dictionary, fw: float, fd: float) -> Vector2:
-	var at: Array = f.get("at", [0.74, 0.74])
-	return Vector2(float(at[0]) * fw, float(at[1]) * fd)
-
-
-## The whole building at its size, under a new node. `fp` is the footprint in tiles (columns, rows).
-## `active` is whether it is at work (a bakery with something in the oven): only then does its chimney smoke.
 ## `fill` is how full a crafting building is of finished things, 0 to BuildingDress.FULL: its storage parts
 ## (features marked `"part": "storage"`) show it. Its animated parts (`"part": "animated"`) move only while
 ## it is `active`. Every state is in the one model (parts named as AssetRegistry's states are); `active` and
@@ -511,7 +341,7 @@ static func build_site(it: Dictionary, fp: Vector2i, progress: float, level := 1
 	if rising > 0.0:
 		wall_top = lerpf(PLINTH + 0.1, bh, rising)
 		var wall := ModelKit.surface(Color.html(str(it.get("color", "#c0392b"))), str(body.get("walls", "boards")))
-		var t := 0.03 * _look("trim")
+		var t := 0.03 * BuildingSpec.look_of("trim")
 		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(hi.x, wall_top, lo.z + t), wall)
 		ModelKit.box(root, Vector3(lo.x, PLINTH, hi.z - t), Vector3(hi.x, wall_top, hi.z), wall)
 		ModelKit.box(root, Vector3(lo.x, PLINTH, lo.z), Vector3(lo.x + t, wall_top, hi.z), wall)
@@ -674,7 +504,7 @@ static func _body(ctx: Dictionary) -> void:
 	var wall_mat := ModelKit.surface(ctx["wall"], walls)
 	ModelKit.box(root, Vector3(lo.x, maxf(lo.y, PLINTH * 0.5), lo.z), hi, wall_mat)
 	# White corner boards.
-	var t := 0.035 * _look("trim")
+	var t := 0.035 * BuildingSpec.look_of("trim")
 	for corner: Vector2 in [Vector2(lo.x, lo.z), Vector2(hi.x, lo.z), Vector2(hi.x, hi.z), Vector2(lo.x, hi.z)]:
 		ModelKit.box(root, Vector3(corner.x - t, lo.y, corner.y - t), Vector3(corner.x + t, hi.y, corner.y + t),
 			ModelKit.paint(trim))
@@ -910,7 +740,7 @@ static func _windows(ctx: Dictionary, count: int, trim: Color, rows := 1) -> voi
 	if count <= 0:
 		return
 	var wall_h: float = (ctx["hi"] as Vector3).y - (ctx["lo"] as Vector3).y
-	var size := minf(0.2, wall_h * (0.3 if rows == 1 else 0.42 / rows)) * _look("window")
+	var size := minf(0.2, wall_h * (0.3 if rows == 1 else 0.42 / rows)) * BuildingSpec.look_of("window")
 	size = minf(size, wall_h * 0.5 / rows)   # (big, but inside its wall)
 	for row in rows:
 		var share := 0.58 if rows == 1 else lerpf(0.32, 0.74, row / (rows - 1.0))
@@ -927,7 +757,7 @@ static func _window_row(ctx: Dictionary, count: int, trim: Color, share: float, 
 	for k in count:
 		var z := lerpf(lo.z, hi.z, (k + 1.0) / (count + 1.0))
 		spots.append({"at": Vector3(hi.x, y, z), "size": size})
-		var frame := 0.03 * _look("trim")
+		var frame := 0.03 * BuildingSpec.look_of("trim")
 		# A thick frame standing proud of the wall, the glass set back in it behind a cross of bars.
 		ModelKit.box(root, Vector3(hi.x, y - size / 2 - frame, z - size / 2 - frame),
 			Vector3(hi.x + FRAME_OUT, y + size / 2 + frame, z + size / 2 + frame), ModelKit.paint(trim))
@@ -1264,7 +1094,7 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			# Smoke curling up from it (GPU-animated, one draw), while the building works.
 			DecorMotion.effect(BuildingDress.when(ctx, "working", true), "smoke", Vector3(mid.x, top + 0.22, mid.z))
 		"water_trough":
-			var spot := _trough_at(Vector2(hi.x, hi.z), fw, fd)
+			var spot := BuildingSpec.trough_at(Vector2(hi.x, hi.z), fw, fd)
 			var x := spot.x
 			var z := spot.y
 			# (a harvesting building's trough holds painted water in the water's own blue, which does not move: the
@@ -1275,7 +1105,7 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 		"hay_bales" when f.has("at"):
 			# A couple of bales in the yard: one lying square, one turned and leaning on it, each tied with two
 			# bands of twine.
-			var spot := yard_spot(f, fw, fd)
+			var spot := BuildingSpec.yard_spot(f, fw, fd)
 			for k in int(f.get("count", 2)):
 				var bale := Node3D.new()
 				var size := float(f.get("scale", 1.0))
@@ -1424,7 +1254,7 @@ static func _silo_top(root: Node3D, f: Dictionary, base: Vector3, r: float, h: f
 static func _signature(ctx: Dictionary, f: Dictionary) -> void:
 	var root: Node3D = ctx["root"]
 	var kind := str(f["type"])
-	var spot := yard_spot(f, ctx["fw"], ctx["fd"])
+	var spot := BuildingSpec.yard_spot(f, ctx["fw"], ctx["fd"])
 	var at := Vector3(spot.x, 0, spot.y)
 	var r := float(f.get("r", FEATURE_R.get(kind, 0.3)))
 	match kind:
@@ -1655,7 +1485,7 @@ static func _yard(ctx: Dictionary, f: Dictionary) -> void:
 ## of the first, over a little pent roof.
 static func _duck_house(ctx: Dictionary, f: Dictionary) -> void:
 	var root: Node3D = ctx["root"]
-	var spot := yard_spot(f, ctx["fw"], ctx["fd"]) if f.has("at") else Vector2(0.82 * float(ctx["fw"]),
+	var spot := BuildingSpec.yard_spot(f, ctx["fw"], ctx["fd"]) if f.has("at") else Vector2(0.82 * float(ctx["fw"]),
 		0.2 * float(ctx["fd"]))
 	var p := Vector3(spot.x, 0, spot.y)
 	var tiers := int(f.get("tiers", 1))
@@ -1695,7 +1525,7 @@ static func _duck_house(ctx: Dictionary, f: Dictionary) -> void:
 ## narrower over a little pent roof, and a pitched roof on top.
 static func _hive(ctx: Dictionary, f: Dictionary) -> void:
 	var root: Node3D = ctx["root"]
-	var spot := yard_spot(f, ctx["fw"], ctx["fd"])
+	var spot := BuildingSpec.yard_spot(f, ctx["fw"], ctx["fd"])
 	var it: Dictionary = ctx["it"]
 	var roof_mat := ModelKit.paint(Color.html(str(it.get("roof", "#c98a1a"))))
 	var wood := ModelKit.surface(WOOD, "boards", 0.2)
