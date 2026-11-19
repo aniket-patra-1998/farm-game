@@ -21,7 +21,7 @@ func save_to(data: Dictionary) -> void:
 
 
 func load_from(data: Dictionary) -> void:
-	var saved: Dictionary = data.get("pity", {})
+	var saved := GameSystem.int_map(data.get("pity", {}))   # a damaged count starts again from 0
 	pity = {"golden": int(saved.get("golden", 0)), "collectible": int(saved.get("collectible", 0))}
 
 

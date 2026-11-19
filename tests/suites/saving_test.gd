@@ -561,6 +561,18 @@ func test_532_a_field_of_the_wrong_kind_never_loses_the_farm() -> void:
 	h3.free()
 
 
+## The harvest pity counters load from a damaged save as counts: a word, a list or a negative number starts that
+## counter again from 0 (it stopped HarvestDrops' load with a script error); a sound one is kept.
+func test_533_damaged_pity_counters_start_again_from_zero() -> void:
+	var g := _farm()
+	var data := {"pity": {"golden": [1], "collectible": 4}}
+	g.drops.load_from(data)
+	_eq(g.drops.pity, {"golden": 0, "collectible": 4}, "a list is no count; a sound one is kept")
+	g.drops.load_from({"pity": {"golden": "x", "collectible": -3}})
+	_eq(g.drops.pity, {"golden": 0, "collectible": 0}, "a word or a negative count starts from 0")
+	g.free()
+
+
 func _write(path: String, data: Dictionary) -> void:
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(data))
