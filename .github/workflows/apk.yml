@@ -91,6 +91,24 @@ jobs:
           tail -20 import.log
           if [ "$code" -ge 128 ]; then echo "The import crashed (exit code $code)"; exit 1; fi
 
+      - name: Gradle (for the notifications plugin)
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Phone notifications (the Android build template, and the FarmNotices plugin built against it)
+        run: |
+          # The debug APK is a gradle export (export_presets.cfg) so it can carry our own Android plugin
+          # (android/plugins/farm_notices, scripts/systems/phone_notices.gd): install the build template, then build
+          # the plugin's library against the template's own Godot library and put it where the export plugin finds it.
+          ./godot-bin/godot --headless --path . --install-android-build-template > template.log 2>&1 || tail -20 template.log
+          test -d android/build || { echo "No Android build template"; tail -20 template.log; exit 1; }
+          ls android/build/libs/release/ || true
+          gradle -p android/plugins/farm_notices assembleRelease --no-daemon -q
+          mkdir -p addons/farm_notices/bin
+          cp android/plugins/farm_notices/build/outputs/aar/farm_notices-release.aar addons/farm_notices/bin/
+          ls -l addons/farm_notices/bin/
+
       - name: Bake the showcase farm's models into the game (ModelStore)
         run: |
           set +e

@@ -78,6 +78,7 @@ func quality_card() -> PanelContainer:
 	inner.add_child(BookPanel.row(tr("QUALITY"), BookPanel.choice(levels, Quality.level(),
 		func(name: String) -> void: Quality.choose(name)), " · ".join(says)))
 	inner.add_child(BookPanel.row(tr("ALWAYS_DAYTIME"), BookPanel.switch(DayCycle.always_day(), DayCycle.set_always_day)))
+	inner.add_child(BookPanel.row(tr("NOTIFY_SETTING"), BookPanel.switch(PhoneNotices.wanted(), PhoneNotices.set_wanted)))
 	if Display.has_window():
 		inner.add_child(BookPanel.row(tr("FULL_SCREEN"), BookPanel.switch(Display.fullscreen(),
 			func(on: bool) -> void: Display.set_fullscreen(on))))

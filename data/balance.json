@@ -998,5 +998,23 @@
    "v": 12,
    "note": "the span of a day's play: a job to collect from or feed animals (per_owned) asks at most what the farm's own animals give in it (each at least once)"
   }
+ },
+ "notify": {
+  "most": {
+   "v": 3,
+   "note": "phone notifications waiting at once, at most (owner, 19 Nov: few, never a flood)"
+  },
+  "gap": {
+   "v": 3600,
+   "note": "seconds at least between two notifications"
+  },
+  "quiet": {
+   "v": [22, 8],
+   "note": "local hours with no notification: one due then waits for the end (10 pm to 8 am)"
+  },
+  "wither_warning": {
+   "v": 7200,
+   "note": "seconds before a crop withers that its warning comes"
+  }
  }
 }

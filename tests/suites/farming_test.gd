@@ -290,3 +290,28 @@ func test_576_the_old_tutorial_never_asks_for_what_is_not_there() -> void:
 	g.tutorial_step = GameState.Tutorial.HARVEST   # (an older save stuck on the step)
 	_eq(g.tutorial_text(), tr("CHOOSE_PLOW_THEN_TAP_A_GRASSY"), "nothing ripe: plow next")
 	_done(g)
+
+
+func test_582_phone_notifications_are_few_true_and_never_at_night() -> void:
+	# Owner, 19 Nov: phone notifications. Planned from the farm's own timers: the next crop ready (named), the
+	# animals, the next day's gift; at most notify.most, notify.gap apart, none in the quiet hours (moved to 8 am).
+	var g := _farm()
+	var plan := PhoneNotices.plan(g)
+	_check(not plan.is_empty() and plan.size() <= Balance.i("notify.most"), "a few: %d" % plan.size())
+	var bias := DayCycle.device_bias_minutes() * 60
+	var quiet: Array = Balance.a("notify.quiet")
+	for k in plan.size():
+		var at := int(plan[k]["at"])
+		_check(at > g.now(), "in the future")
+		var hour := float(posmod(at + bias, 86400)) / 3600.0
+		_check(hour >= float(quiet[1]) and hour < float(quiet[0]), "never in the quiet hours (%.2f)" % hour)
+		if k > 0:
+			_check(at - int(plan[k - 1]["at"]) >= Balance.i("notify.gap"), "an hour apart at least")
+	var texts := plan.map(func(r: Dictionary) -> String: return str(r["text"]))
+	_check(texts.any(func(t: String) -> bool: return t.contains("ready to harvest") or t.contains("daily gift")),
+		"it says what is waiting %s" % str(texts))
+	# A moment at 11 pm is moved to the end of the quiet hours, the next morning.
+	var day := floori((g.now() + bias) / 86400.0) * 86400
+	var late := day + 23 * 3600 - bias
+	_eq(PhoneNotices._out_of_quiet(late, bias), day + 86400 + int(float(quiet[1]) * 3600) - bias, "11 pm -> 8 am")
+	_done(g)
