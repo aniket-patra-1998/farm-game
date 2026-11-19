@@ -11,9 +11,9 @@ const FIXTURE := {
 	"chains": [
 		{"id": "first", "giver": "barley", "after": [], "level": 1, "steps": [
 			{"say": "GOAL_TEST", "tasks": [{"do": "harvest", "what": "strawberries", "n": 3}],
-			 "reward": {"coins": 50, "xp": 5}},
+				"reward": {"coins": 50, "xp": 5}},
 			{"say": "GOAL_TEST", "tasks": [{"do": "plow", "what": "", "n": 2}, {"do": "level", "n": 1}],
-			 "reward": {"gems": 1, "unlock_chain": "later"}}]},
+				"reward": {"gems": 1, "unlock_chain": "later"}}]},
 		{"id": "second", "giver": "maple", "after": ["first"], "level": 1, "steps": [
 			{"say": "GOAL_TEST", "tasks": [{"do": "plant", "what": "crop", "n": 1}], "reward": {"coins": 10}}]},
 		{"id": "later", "giver": "rusty", "locked": true, "level": 1, "steps": [
@@ -142,7 +142,15 @@ func test_462_todays_jobs_are_the_days_own_and_only_what_the_farm_can_do() -> vo
 			_check(g.is_unlocked(str(j["what"])), "a crop the farm can grow")
 		if j["do"] == "collect":
 			_check(g.goals.own_count(str(j["what"])) > 0, "an animal the farm has")
-		_check(int(j["n"]) >= 6 or j["do"] == "collect", "sized from the template's range")
+		_check(int(j["n"]) >= 6 or j["do"] == "collect" or (g.crops.has(str(j["what"]))
+			and int(j["n"]) == maxi(1, g.goals.affordable_plots(str(j["what"])))), "sized from the template's range")
+	# A job to plant or harvest a named crop asks no more plots than the coins plow and sow today.
+	g.coins = 55
+	g.goals.daily_day = -1
+	g.goals.make_daily_jobs()
+	for j: Dictionary in g.goals.daily_jobs:
+		if j["do"] in ["plant", "harvest"] and g.crops.has(str(j["what"])):
+			_check(int(j["n"]) <= maxi(1, g.goals.affordable_plots(str(j["what"]))), "an affordable job: %s" % j)
 	var seen := {}
 	for j: Dictionary in jobs:
 		seen["%s %s" % [j["do"], j["what"]]] = true
@@ -466,3 +474,36 @@ func test_529_never_feeding_costs_under_30_percent_and_a_week_away_loses_nothing
 	_check(loss <= float((load(BOT) as GDScript).get_script_constant_map()["FEED_LOSS_MAX"]),
 		"never feeding loses %.0f%% of animal income (Part 4: at most 30%%)" % (loss * 100.0))
 
+
+
+## Part 4's crafter style (step 8): at level 25 it builds the Bakery with coins (clearing harvested plots to make
+## room), starts the best-paying recipe it has the bushels for, sells what is done at the next visit and counts it
+## against the building's cost (craft_line: days of crafting to pay it back).
+func test_531_the_crafter_builds_the_bakery_and_crafts() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(25)
+	var sim: Node = load(BOT).new()
+	sim.set("game", g)
+	sim.set("style", "crafter")
+	g.coins = 200000
+	sim.set("_actions", 100)
+	sim.call("_craft")
+	_check(g.crafting.owns_crafting(), "the crafter builds the Bakery")
+	_eq(int(sim.get("craft_cost")), 100000, "with coins")
+	_eq(int(sim.get("craft_built_day")), 1, "on the day it could")
+	var home: Dictionary = sim.call("_crafting_home")
+	var r := g.crafting.recipes_of("bakery")[0]
+	for c: String in r.inputs():
+		g.crafting.add_bushels(c, int(r.inputs()[c]))
+	sim.set("_actions", 100)
+	sim.call("_craft")
+	_eq((home["slots"] as Array).size(), 1, "it starts a recipe with the bushels it holds")
+	g.debug_time_offset += g.crafting.craft_seconds(r.id) + 1
+	sim.set("_actions", 100)
+	sim.call("_craft")
+	_eq(int(sim.get("craft_made")), 1, "the next visit collects the good")
+	_check(int(sim.get("craft_coins")) > int(sim.get("craft_worth")), "and sells it for more than its ingredients")
+	_check(float(sim.call("craft_payback_days")) < INF, "crafting counts against the building's cost")
+	_check(str(sim.call("craft_line")).begins_with("crafting: bakery built day 1"), "the summary line prints")
+	sim.free()
+	_done(g)

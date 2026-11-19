@@ -528,7 +528,16 @@ func _pick_job(rng: RandomNumberGenerator, taken: Array) -> Dictionary:
 		size = roundi(lerpf(float(n[0]), float(n[1]), share))
 	if t.get("per_owned", false):
 		size = mini(size, per_day_of(str(o[1])))
+	if str(t["do"]) in ["plant", "harvest"] and game.crops.has(str(o[1])):
+		size = mini(size, affordable_plots(str(o[1])))
 	return {"do": str(t["do"]), "what": o[1], "n": maxi(1, size)}
+
+
+## How many plots of crop `id` the farm's coins plow and sow now: a job to plant or harvest a named crop asks no
+## more, so today's job can be done today (a new farm with 55 coins was asked to plant 8 Eggplant, 320 coins).
+func affordable_plots(id: String) -> int:
+	var each := int(game.crops[id].get("seed_cost", 0)) + Balance.i("economy.plow_cost")
+	return game.coins / maxi(1, each)
 
 
 ## How many times the things standing on the farm that `what` names give in a day's play (a job to collect from

@@ -193,10 +193,10 @@ func _buttons(key: String) -> Array[Button]:
 			Game.goals.swap_daily(int(key.split(":")[1])))
 		out.append(swap)
 	if done:
-		var get := hud.panel_button(tr("GOAL_COLLECT"))
-		get.name = "Collect"   # not-ui (a node's name)
-		get.pressed.connect(func() -> void: collect(key))
-		out.append(get)
+		var claim := hud.panel_button(tr("GOAL_COLLECT"))
+		claim.name = "Collect"   # not-ui (a node's name)
+		claim.pressed.connect(func() -> void: collect(key))
+		out.append(claim)
 	for b in out:
 		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	return out

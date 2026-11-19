@@ -5,13 +5,18 @@ extends Node
 ## weeks take seconds. Change a number in data/balance.json (or pass `--set=section.name=value`) and run it again
 ## to see the effect before shipping it. Headless:
 ##   godot --headless --path . res://tools/balance_sim.tscn -- --days=14 --visits=3 --minutes=5 --seed=1 \
-##     [--style=plain|goals|casual|builder] [--away=3,7] [--no-feed] [--first-hour] [--set=harvest.golden_chance=0.01]
+##     [--style=plain|goals|casual|builder|crafter] [--away=3,7] [--no-feed] [--first-hour] \
+##     [--set=harvest.golden_chance=0.01]
 ## Styles (docs/PLAYER_EXPERIENCE.md Part 4): `plain` the field loop only; `goals` also does what the goal faces
 ## say (prefers the crops and things the open goals name, swaps a job it cannot do, collects every finished goal);
 ## `casual` follows goals at one visit a day and skips days 3 and 7 unless `--away` says which. `--away=3,7`: the
 ## days the bot does not come (1 is the first). `builder` follows goals and, at each visit's end, also buys the
 ## Market's progress buys it can afford (market_wants: cheapest first, at most BUILDER_BUYS a visit; frames that
 ## need materials are left, the bot never finishes one): does a player who buys keep idle coins down?
+## `crafter` follows goals, builds the Bakery (the first crafting building, coins) as soon as it unlocks and crafts
+## at every visit: finishes what is done, sells the goods, starts the best-paying recipe it has the bushels for
+## (buying the few missing ones at the Farmers Market stall); its `crafting:` line says what the building cost and
+## how many days of crafting paid it back (Part 4: about CRAFT_PAYBACK_DAYS).
 ## `--no-feed`: the bot never feeds (Part 4: a never-feeder loses at most FEED_LOSS_MAX of animal income and nothing
 ## else; compare its `animals:` line with a feeding run's). Every run reports what a stretch of away days lost
 ## (animals, trees and buildings gone; Part 4: a week away loses nothing).
@@ -29,10 +34,13 @@ const WANT_VISITS := [1.0, 3.0]   # Part 4's "something to buy": a thing costing
 const IDLE_VISITS_MAX := 5.0      # Part 4: idle coins stay under about 5 visits of income
 const BUILDER_BUYS := 3          # purchases a builder makes at a visit's end (a tap or two each)
 const FEED_LOSS_MAX := 0.3        # Part 4: a never-feeder loses at most this share of animal income
+const CRAFTER_BUILDING := "bakery"   # Part 4: "the crafter builds the Bakery early and crafts"
+const CRAFT_PAYBACK_DAYS := 7.0   # Part 4: a crafting building pays back in about a week of normal crafting
+const STALL_BUY_MOST := 4         # bushels a crafter buys at the stall to finish one recipe (more: wait for harvests)
 const WANT_SKIP_KINDS := ["decor", "crop", "material", "ingredient", "recipe", "young"]   # not progress buys
 
 var game: GameState       # the farm it plays (the real one when run as a tool)
-var style := "plain"      # plain, goals or casual
+var style := "plain"      # plain, goals, casual, builder or crafter
 var away: Array = []      # days (1 = the first) the bot does not come
 var goals_claimed := 0    # goals collected (chains, jobs, projects)
 var chain_steps := 0      # story chain steps collected
@@ -43,6 +51,14 @@ var animal_collects := 0
 var animal_base := 0.0    # what those collects pay unfed-and-unboosted (coins / the feed multiplier)
 var away_from := -1       # what lasted (_lasting) when the current away stretch began; -1: here
 var away_lost := 0        # animals, trees and buildings gone across away stretches (Part 4: none)
+var craft_built_day := -1   # the day (1 = the first) the crafter's building went up; -1: not yet
+var craft_cost := 0         # what it cost
+var craft_made := 0         # goods finished
+var craft_coins := 0        # coins from selling them
+var craft_worth := 0        # what their ingredients would have sold for at the Market
+var craft_stall_spent := 0  # coins spent on bushels at the stall
+var _day := 0               # the day being played (0 = the first)
+var _craft_crops := {}      # once the crafter's building stands: the crops its unlocked recipes use (all it plants)
 var _days := 14
 var _visits := 3
 var _seed := 1
@@ -138,7 +154,7 @@ func _visit_hours() -> Array:
 
 
 func follows_goals() -> bool:
-	return style in ["goals", "casual", "builder"] and game.goals.active()
+	return style in ["goals", "casual", "builder", "crafter"] and game.goals.active()
 
 
 func _watch_coins() -> void:
@@ -171,6 +187,7 @@ func _play() -> void:
 	var coins_at_day_start := game.coins
 	var harvests_at_day_start := 0
 	for day in _days:
+		_day = day
 		var spent_at_day_start := _spent
 		var goals_at_day_start := goals_claimed
 		var fed_at_day_start := _fed
@@ -229,6 +246,8 @@ func _play() -> void:
 		goals_claimed, chain_steps, swaps, _spent])
 	print(market_line())
 	print(feed_line())
+	if style == "crafter":
+		print(craft_line())
 	print("gems earned %d (%.1f a week), held %d" % [_gems_earned, _gems_earned * 7.0 / maxf(_days, 1), game.gems])
 	if follows_goals():
 		var at := []
@@ -470,17 +489,21 @@ func _visit(next_visits: Array) -> void:
 		_goal_buy()   # before replanting: an empty plot can still be cleared to make room for it
 		_goal_vehicles()
 		_goal_eggs()
+	if style == "crafter":
+		_craft()   # before replanting: harvested plots can still be cleared to make room for the building
 	for r in game.farm_size:
 		for c in game.farm_size:
 			var i := game.index_of(r, c)
 			if game.is_occupied(i):
 				continue
 			var ph := game.field.phase(i)
-			var crop := _best_crop(next_visits)
+			# On grass the plowing is paid too: the best crop is the best one the coins cover with it (a goal's
+			# Eggplant at 25 with 30 coins on grass left every plot bare all through a new farm's first hour).
+			var crop := _best_crop(next_visits, Balance.i("economy.plow_cost") if ph == GameState.Phase.GRASS else 0)
 			if crop == "":
 				break   # nothing affordable that a later visit finds ripe: plowing now would only waste coins
 			if ph == GameState.Phase.GRASS:
-				if game.coins - _keep < Balance.i("economy.plow_cost") + int(game.crops[crop]["seed_cost"]) or not _act():
+				if game.coins - _kept() < Balance.i("economy.plow_cost") + int(game.crops[crop]["seed_cost"]) or not _act():
 					continue
 				game.field.plow(i)
 				ph = game.field.phase(i)
@@ -496,6 +519,143 @@ func _visit(next_visits: Array) -> void:
 	if style == "builder":
 		_buy_wants()
 	_claim_goals()
+
+
+## The coins kept back from seeds for what an open goal asks to buy: only once the purse holds them. Short of
+## that, keeping would stop the planting that earns them (a new farm with 55 coins kept them all for Barley's
+## chicken and stood still through its first hour).
+func _kept() -> int:
+	return _keep if game.coins >= _keep else 0
+
+
+## The crafter's visit at its building: built first if it can be (it waits for that: the bot keeps the coins),
+## then finished crafts collected, goods sold, and the free slots filled with the best-paying recipe.
+func _craft() -> void:
+	var cr := game.crafting
+	var home := _crafting_home()
+	if home.is_empty():
+		_build_crafting()
+		return
+	var uid := int(home["uid"])
+	if cr.crafts_done(home) > 0 and _act():
+		var goods_before := _goods_held()
+		cr.finish_crafts(uid)
+		craft_made += _goods_held() - goods_before
+	for rid: String in cr.goods.keys():
+		while int(cr.goods.get(rid, 0)) > 0 and _act():
+			craft_worth += (game.catalog.get_def(rid) as RecipeDef).worth(game.catalog)
+			craft_coins += cr.sell_good(rid)
+	while cr.free_slots(home) > 0:
+		var rid := _best_recipe(home)
+		if rid == "" or not _act():
+			return
+		for c: String in cr.missing_bushels(rid):
+			for k in int(cr.missing_bushels(rid)[c]):
+				var price := cr.bushel_price(c)
+				if cr.buy_bushel(c):
+					craft_stall_spent += price
+		if not cr.start_craft(uid, rid):
+			return
+
+
+## The crafter's building, finished ({} for none yet).
+func _crafting_home() -> Dictionary:
+	for o in game.objects:
+		if game.crafting.is_crafting(o) and not game.under_construction(o):
+			return o
+	return {}
+
+
+func _goods_held() -> int:
+	var n := 0
+	for rid: String in game.crafting.goods:
+		n += int(game.crafting.goods[rid])
+	return n
+
+
+## The unlocked recipe (goods, not feed) paying most over its ingredients that the bushels held, plus at most
+## STALL_BUY_MOST bought at today's stall and affordable, can make now; "" for none.
+func _best_recipe(home: Dictionary) -> String:
+	var cr := game.crafting
+	var best := ""
+	var best_gain := 0
+	var stall := cr.market_stall()
+	for r in cr.recipes_of(str(home["id"])):
+		if not cr.recipe_unlocked(home, r.id) or r.makes_feed():
+			continue
+		var missing := cr.missing_bushels(r.id)
+		var buy := 0
+		var cost := 0
+		var short := false
+		for c: String in missing:
+			buy += int(missing[c])
+			cost += cr.bushel_price(c) * int(missing[c])
+			short = short or int(stall.get(c, 0)) < int(missing[c])
+		if short or buy > STALL_BUY_MOST or cost > game.coins:
+			continue
+		var gain := cr.good_price(r.id) - cost
+		if gain > best_gain:
+			best_gain = gain
+			best = r.id
+	return best
+
+
+## Buys and places the crafter's building once it unlocks and the coins are there.
+func _build_crafting() -> void:
+	if not game.buildings.can_buy(CRAFTER_BUILDING).ok():
+		return
+	var cost := int(game.buildings.price_of(CRAFTER_BUILDING).get("coins", 0))
+	if cost <= 0 or game.coins < cost:
+		return
+	if (_buy_somewhere(CRAFTER_BUILDING) or (_clear_area(CRAFTER_BUILDING) and _buy_somewhere(CRAFTER_BUILDING))) \
+			and game.crafting.owns_crafting():
+		craft_built_day = _day + 1
+		craft_cost = cost
+
+
+## Clears a spot of plots that grow nothing (as a player clears them with Sell) where `id` then fits, from the back
+## of the farm. True when one was cleared.
+func _clear_area(id: String) -> bool:
+	var it: Dictionary = game.items[id]
+	var w := int(it.get("w", 1))
+	var h := int(it.get("h", 1))
+	for r in range(game.farm_size - h, -1, -1):
+		for c in range(game.farm_size - w, -1, -1):
+			var tiles := []
+			for dr in h:
+				for dc in w:
+					var i := game.index_of(r + dr, c + dc)
+					if game.is_occupied(i) or game.plots[i].get("state") == "planted":
+						tiles = []
+						break
+					tiles.append(i)
+				if tiles.size() < (dr + 1) * w:
+					break
+			if tiles.size() < w * h:
+				continue
+			for i: int in tiles:
+				if game.field.phase(i) != GameState.Phase.GRASS and game.field.clear_plot(i):
+					_cleared += 1
+			return true
+	return false
+
+
+## Part 4's crafting target: what the building cost, what crafting earned since (goods sold less bushels bought
+## at the stall; harvest bushels come free beside the crop), and in how many days that pays the building back.
+func craft_line() -> String:
+	if craft_built_day < 0:
+		return "crafting: %s not built (level %d)" % [CRAFTER_BUILDING, game.level()]
+	return ("crafting: %s built day %d for %d; %d goods sold for %d (ingredients worth %d), stall bushels %d; "
+		+ "pays back in %.1f days (target about %.0f); bushels held %s") % [
+		CRAFTER_BUILDING, craft_built_day, craft_cost, craft_made, craft_coins, craft_worth, craft_stall_spent,
+		craft_payback_days(), CRAFT_PAYBACK_DAYS, game.crafting.bushels]
+
+
+## Days of crafting the building took to pay back at the rate since it was built (INF: it earns nothing).
+func craft_payback_days() -> float:
+	var days := maxf(1.0, float(_day + 1 - craft_built_day + 1))
+	var per_day := float(craft_coins - craft_stall_spent) / days
+	return float(craft_cost) / per_day if per_day > 0.0 else INF
 
 
 ## Collects every finished goal (a claim can open the next step, which may be done already).
@@ -552,6 +712,50 @@ func _want_crops() -> void:
 				_want_plant[id] = true
 			"harvest":
 				_want[id] = maxi(int(_want.get(id, 0)), left - int(growing.get(id, 0)))
+	if style == "crafter":
+		_want_craft_crops(growing)
+
+
+## The crafter plants for its next recipe: enough plots of each crop it is short of to find those bushels (a
+## harvest finds one at crafting.bushel_chance), and grows only the crops its building's recipes use.
+func _want_craft_crops(growing: Dictionary) -> void:
+	_craft_crops = {}
+	var home := _crafting_home()
+	if home.is_empty():
+		# A level before it unlocks the crafter already grows its crops: what ripens after it is built must not
+		# fill the stall with bushels nothing there uses.
+		if game.level() < int(game.items[CRAFTER_BUILDING].get("unlock_level", 1)) - 1:
+			return
+		home = {"id": CRAFTER_BUILDING, "level": 1}
+	var cr := game.crafting
+	var best: RecipeDef = null
+	for r in cr.recipes_of(str(home["id"])):
+		if not cr.recipe_unlocked(home, r.id) or r.makes_feed():
+			continue
+		var plantable := true   # every crop it needs can be planted, and its produce is held or at the stall
+		var short := cr.missing_bushels(r.id)
+		for c: String in r.inputs():
+			if game.crops.has(c):
+				plantable = plantable and game.can_plant(c)
+			elif short.has(c):
+				plantable = plantable and int(cr.market_stall().get(c, 0)) >= int(short[c])
+		if plantable and (best == null or cr.good_price(r.id) - r.worth(game.catalog)
+				> cr.good_price(best.id) - best.worth(game.catalog)):
+			best = r
+	if best == null:
+		return
+	var missing := cr.missing_bushels(best.id)
+	for c: String in missing:
+		if game.crops.has(c):
+			_craft_crops[c] = true   # only the crops this recipe still lacks: any other's bushels fill the stall
+	if _craft_crops.is_empty():
+		for c: String in best.inputs():
+			if game.crops.has(c):
+				_craft_crops[c] = true
+	for c: String in missing:
+		if game.crops.has(c):
+			var plots := ceili(float(missing[c]) / Balance.f("crafting.bushel_chance")) - int(growing.get(c, 0))
+			_want[c] = maxi(int(_want.get(c, 0)), plots)
 
 
 ## Swaps today's job the bot's farm cannot do (a recipe with no building to craft in, an animal it has not got).
@@ -816,13 +1020,15 @@ func _record(h: Dictionary) -> void:
 ## The crop with the best profit per second it takes, counting the wait until the next visit as time spent,
 ## that will be ripe at the next visit and not yet withered (a crop withers as long after ripening as it took to
 ## grow, so a player who visits once a day can't use a 12-hour crop: it's gone by the next visit).
-func _best_crop(next_visits: Array) -> String:
+func _best_crop(next_visits: Array, also_pay := 0) -> String:
 	var best := ""
 	var best_rate := -INF
 	for id: String in game.crops:
 		var crop: Dictionary = game.crops[id]
-		if not game.can_plant(id) or int(crop["seed_cost"]) > game.coins - _keep:
+		if not game.can_plant(id) or int(crop["seed_cost"]) + also_pay > game.coins - _kept():
 			continue
+		if not _craft_crops.is_empty() and not _craft_crops.has(id):
+			continue   # the crafter grows what it crafts with: other crops' bushels would fill the stall
 		var grow := float(crop["grow_seconds"])
 		var window := float(game.field.ripe_window(crop))
 		# The first visit that finds it ripe and not yet withered.
