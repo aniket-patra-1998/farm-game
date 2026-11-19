@@ -1644,7 +1644,7 @@ func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
 
 func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 	var keys := ["shadows", "shadow_splits", "shadow_distance", "glow", "scale", "lod_pixels", "pose_every",
-		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size", "animal_shadows"]
+		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size", "animal_shadows", "cloud_shadows"]
 	for name: String in Quality.LEVELS:
 		for k: String in keys:
 			_check(Quality.value(k, name) != null, "%s sets %s" % [name, k])
@@ -2567,3 +2567,33 @@ func test_584_the_tree_builders_compile_when_a_look_is_built() -> void:
 	TreeSpec.builder().build_at(holder, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, true, 3)
 	_check(holder.get_child_count() > 0, "a tree is still built through the path")
 	holder.free()
+
+
+func test_590_cloud_shadows_drift_over_the_farm_on_a_cloudy_day() -> void:
+	# Soft cloud shadows (docs/WOW_RUN.md item 5): one shader global, `cloud_shade`, that the ground, crops and
+	# every model read (shaders/cloud_shade.gdshaderinc); main sets it from the weather's 2D shadow strength,
+	# Balance feel.cloud_shade at full, none where Quality cloud_shadows is off (low).
+	var was := Quality.level()
+	var depth := Balance.f("feel.cloud_shade")
+	_check(depth > 0.0 and depth < 0.5, "the shade is soft (%s)" % depth)
+	_check(not bool(Quality.value("cloud_shadows", "low")), "low draws no cloud shadows")
+	for name: String in ["mid", "high", "ultra"]:
+		_check(bool(Quality.value("cloud_shadows", name)), "%s draws them" % name)
+	Quality.choose("mid")
+	_check(is_equal_approx(FarmMain.cloud_shade(1.0), depth), "full strength: the whole depth")
+	var from := Balance.f("feel.cloud_shade_from")
+	_check(is_equal_approx(FarmMain.cloud_shade((1.0 + from) / 2.0), depth * 0.5), "a weaker sky: lighter shade")
+	_eq(FarmMain.cloud_shade(0.0), 0.0, "night: none")
+	for state: String in ["clear", "cloudy"]:   # (the 2D shadows' strength for that sky, the sun out)
+		var cover := float(Weather.LOOKS[state]["cover"])
+		_eq(FarmMain.cloud_shade(clampf(1.0 - absf(cover - 0.45) / 0.4, 0.0, 1.0)), 0.0, "%s: none" % state)
+	Quality.choose("low")
+	_eq(FarmMain.cloud_shade(1.0), 0.0, "and none on low")
+	Quality.choose(was)
+	Engine.max_fps = 0
+	for path: String in ["res://shaders/ground3d.gdshader", "res://shaders/crop3d.gdshader",
+			"res://shaders/master_solid.gdshader"]:
+		var code := FileAccess.get_file_as_string(path)
+		_check(code.contains("cloud_shade.gdshaderinc") and code.contains("cloud_light("), "%s is shaded" % path)
+	_check(ProjectSettings.has_setting("shader_globals/cloud_shade"), "the global is declared")
+	_check(ItemIcons.MOODS.has(&"cloud_shade"), "an item picture is never kept with a cloud over it")

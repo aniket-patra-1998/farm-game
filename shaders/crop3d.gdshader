@@ -26,6 +26,9 @@ varying float gold;   // 0..1: how far this crop is mastered (its stars): fuller
 varying float ripen;  // 0..1: how far its fruit has taken its colour (1 for anything not ripening)
 varying float wilt;   // 0..1: how far a ripe plant has wilted towards withering
 varying float up;   // how far up the plant this point is, 0 at the soil
+varying vec2 cloud_xz;   // where the plant stands, for the cloud shadows
+
+#include "res://shaders/cloud_shade.gdshaderinc"
 
 void vertex() {
 	float rich_flag = step(1.0, INSTANCE_CUSTOM.z);
@@ -44,6 +47,7 @@ void vertex() {
 	VERTEX.y *= 1.0 - droop * wilt * wilt;
 	VERTEX.xz *= 1.0 + 0.12 * wilt;
 	vec3 root = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+	cloud_xz = root.xz;
 	float beat = TIME * 1.9 + root.x * 1.3 + root.z * 0.9;
 	float bend = VERTEX.y * VERTEX.y * 3.0 * (0.4 + wind) * (1.0 - 0.6 * wilt);   // (a dry plant barely sways)
 	VERTEX.x += sin(beat) * 0.05 * bend;
@@ -68,7 +72,7 @@ void fragment() {
 	fruit = mix(fruit, fruit * 0.5 + dry * 0.22, smoothstep(0.2, 1.0, wilt));
 	ALBEDO = mix(leaf, fruit, is_produce) * lit * (1.0 + 0.1 * rich);
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
-	ALBEDO *= mix(0.7, 1.0, smoothstep(0.0, 0.5, facing));
+	ALBEDO *= mix(0.7, 1.0, smoothstep(0.0, 0.5, facing)) * cloud_light(cloud_xz, TIME);
 	RIM = 0.1;
 	RIM_TINT = 0.9;
 	ROUGHNESS = mix(0.85, 0.45, is_produce);

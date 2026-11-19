@@ -23,8 +23,10 @@ global uniform float snow_cover;
 global uniform float wind;
 
 #include "res://shaders/surface_patterns.gdshaderinc"
+#include "res://shaders/cloud_shade.gdshaderinc"
 
 varying float height;
+varying vec2 world_xz;   // for the cloud shadows
 varying vec3 local_pos;
 varying vec3 local_normal;
 
@@ -38,7 +40,9 @@ void vertex() {
 		VERTEX.x += sin(beat) * bend;
 		VERTEX.z += cos(beat * 0.8) * bend * 0.6;
 	}
-	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
+	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	height = world.y;
+	world_xz = world.xz;
 }
 
 void fragment() {
@@ -71,4 +75,5 @@ void fragment() {
 		RIM = rim;
 		RIM_TINT = rim_tint;
 	}
+	ALBEDO *= cloud_light(world_xz, TIME);
 }

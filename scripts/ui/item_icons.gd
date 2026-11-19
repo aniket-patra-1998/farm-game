@@ -17,7 +17,7 @@ const SHIPPED := "res://baked/icons"   # every picture made ahead of time by CI,
 const UI := "ui:"             # an interface icon's picture is asked for as "ui:<kind>" (UiModels)
 ## The global shader values that change how the farm looks (weather, night). A picture made while any is set
 ## is shown this session but not kept, so a snowy or dark picture is never saved for good.
-const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark", &"rain"]
+const MOODS: Array[StringName] = [&"wetness", &"snow_cover", &"dark", &"rain", &"cloud_shade"]
 const CALM := 0.01
 
 ## The renderer, loaded by path when started (a frame after the first screen), so the start never compiles it.

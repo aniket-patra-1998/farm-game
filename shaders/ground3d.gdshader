@@ -54,6 +54,7 @@ const float GRAIN = 0.1;   // the live grain over the baked look
 varying vec3 world_pos;
 
 #include "res://shaders/ground_common.gdshaderinc"
+#include "res://shaders/cloud_shade.gdshaderinc"
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -95,7 +96,7 @@ void fragment() {
 		snowy = smoothstep(0.0, 0.2, snow_cover * 1.25 - (1.0 - fbm(p * 0.5 + 23.0)) * 0.4);
 		col = mix(col, vec3(0.92, 0.94, 1.0) * (0.95 + 0.05 * fine), snowy);
 	}
-	ALBEDO = col;
+	ALBEDO = col * cloud_light(p, TIME);
 	ROUGHNESS = mix(0.95 - 0.35 * wetness - 0.5 * puddle, 0.85, snowy);
 	SPECULAR = 0.15 + 0.3 * puddle;
 }

@@ -72,6 +72,10 @@ snow_cover={
 "type": "float",
 "value": 0.0
 }
+cloud_shade={
+"type": "float",
+"value": 0.0
+}
 
 [gui]
 

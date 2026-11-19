@@ -804,6 +804,14 @@
   }
  },
  "feel": {
+  "cloud_shade": {
+   "v": 0.22,
+   "note": "how deep the drifting cloud shadows shade the farm under a cloud's middle on a partly cloudy day with the sun out (main: scaled by the sun and how cloudy; 0 turns them off; Quality cloud_shadows off on low)"
+  },
+  "cloud_shade_from": {
+   "v": 0.5,
+   "note": "how much of the 2D shadows' strength (1 on a partly cloudy day, 0.125 on a clear or cloudy one) the sky needs before the 3D farm's cloud shadows begin (rising to feel.cloud_shade at full): a clear day stays crisp and its item pictures can be kept"
+  },
   "run_scale": {
    "v": [
     0,

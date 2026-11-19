@@ -337,6 +337,8 @@ func _process(_delta: float) -> void:
 	var sun := DayCycle.sun_progress(hour)
 	var cover: float = w["cover"]
 	shadows.strength = 0.0 if sun < 0.0 else (1.0 - dark) * clampf(1.0 - absf(cover - 0.45) / 0.4, 0.0, 1.0)
+	if world_3d != null:
+		ShaderGlobals.set_value(&"cloud_shade", cloud_shade(shadows.strength))
 	# Colour grade: richer by day, cool and soft at night, warm low sun, fog haze.
 	var m := grade.material as ShaderMaterial
 	var sat := lerpf(Grade.value("day_saturation"), Grade.value("night_saturation"), dark) * (1.0 - float(w["desat"]))
@@ -452,3 +454,13 @@ func _zoom_at(screen_pos: Vector2, factor: float) -> void:
 
 func _pan(screen_delta: Vector2) -> void:
 	camera.pan_by(screen_delta)
+
+
+## How deep the 3D farm's drifting cloud shadows go (the `cloud_shade` shader global) for the 2D shadows'
+## `strength` (the sun out, some cloud about): none until feel.cloud_shade_from (a clear or overcast sky), rising to
+## Balance feel.cloud_shade at full strength (a partly cloudy day); none where Quality `cloud_shadows` is off.
+static func cloud_shade(strength: float) -> float:
+	if not bool(Quality.value("cloud_shadows")):
+		return 0.0
+	var from := Balance.f("feel.cloud_shade_from")
+	return clampf((strength - from) / (1.0 - from), 0.0, 1.0) * Balance.f("feel.cloud_shade")
