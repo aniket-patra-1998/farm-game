@@ -25,6 +25,10 @@ const TILE_H := 64.0
 const EDGE_DEPTH := 28.0
 const HEADROOM := 230.0 # room above the back corner for tall things (the farmhouse sits there)
 const MEADOW_MARGIN := 40  # tiles of countryside drawn around the farm
+const SLAB := 10.0   # px a plowed plot's soil top is lifted over its tile (the 2D art's raised beds)
+## The 2D world's drawing (PlaceholderArt, ~1.7k lines): loaded by path when first drawn, or a frame after the farm
+## is made, so the start never compiles it (the 3D farm draws itself; docs/PERF_RUN.md, the start).
+const ART_SCRIPT := "res://scripts/placeholder_art.gd"
 
 
 # Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
@@ -51,6 +55,7 @@ const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is 
 
 ## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id] (see scenery()).
 static var _scenery: Array = []
+static var _art: GDScript
 
 
 var tool := "hand"   # plow, plant, fertilize, hand, harvest, move, store, sell, rotate or vehicle
@@ -150,6 +155,7 @@ func _ready() -> void:
 	world_fx.grid = self
 	world_fx.z_index = 4
 	add_child(world_fx)
+	_load_art()
 	Game.plot_changed.connect(pieces.on_plot)
 	Game.plot_changed.connect(func(_i: int) -> void: _ripe = -1)   # (the kept ripe count is made again when asked)
 	Game.objects_changed.connect(_on_objects_changed)
@@ -172,6 +178,19 @@ func _ready() -> void:
 			show_find((box[0] + box[2]) / 2.0, text, rarity))
 
 
+
+
+## The 2D world's drawing (ART_SCRIPT, PlaceholderArt's static functions), compiled the first time it is needed.
+static func art() -> GDScript:
+	if _art == null:
+		_art = load(ART_SCRIPT)
+	return _art
+
+
+## Compiled a frame after the farm is made (under the loading cover), so the first footprint drawn does not wait.
+func _load_art() -> void:
+	await get_tree().process_frame
+	art()
 
 
 ## A farm position on screen (for rewards that fly to the top bar).
@@ -305,11 +324,11 @@ func _col(i: int) -> int:
 ## Ground layer: countryside, trees around the farm, the next expansion and your grass.
 func draw_ground_on(ci: CanvasItem) -> void:
 	var n := Game.farm_size
-	PlaceholderArt.draw_meadow(ci, n, TILE_W, TILE_H, MEADOW_MARGIN)
+	art().draw_meadow(ci, n, TILE_W, TILE_H, MEADOW_MARGIN)
 	_draw_scenery(ci, n)
 	_draw_next_expansion(ci)
-	PlaceholderArt.draw_field(ci, n, TILE_W, TILE_H)
-	PlaceholderArt.draw_farm_border(ci, n, TILE_W, TILE_H)
+	art().draw_field(ci, n, TILE_W, TILE_H)
+	art().draw_farm_border(ci, n, TILE_W, TILE_H)
 
 
 
@@ -317,13 +336,13 @@ func draw_ground_on(ci: CanvasItem) -> void:
 ## Overlay: vehicle area, count signs, twinkles and hearts, and the ghost of what's being placed.
 func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 	if not _vehicle_flash.is_empty() and Time.get_ticks_msec() < int(_vehicle_flash["until"]):
-		PlaceholderArt.draw_footprint(ci, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
+		art().draw_footprint(ci, corners_of(int(_vehicle_flash["row"]), int(_vehicle_flash["col"]),
 			int(_vehicle_flash["w"]), int(_vehicle_flash["h"])), true)
 	# Plots waiting for the farmer, and the one a finger has just landed on.
 	for i: int in Game.player.queued_plots():
-		PlaceholderArt.draw_footprint(ci, corners_of(_row(i), _col(i), 1, 1), true)
+		art().draw_footprint(ci, corners_of(_row(i), _col(i), 1, 1), true)
 	if touched_plot() >= 0:
-		PlaceholderArt.draw_footprint(ci, corners_of(_row(_touch_tile), _col(_touch_tile), 1, 1), true)
+		art().draw_footprint(ci, corners_of(_row(_touch_tile), _col(_touch_tile), 1, 1), true)
 	var lifted := int(placing.get("uid", -1))
 	var t := Time.get_ticks_msec() / 1000.0
 	# In 3D a building shows how full it is on itself; the numbers come up only while you're placing
@@ -336,7 +355,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 		var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 		if o.get("stray", false):
 			var bob := sin(Time.get_ticks_msec() / 300.0) * 4.0
-			PlaceholderArt.draw_stray_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, -78 + bob))
+			art().draw_stray_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, -78 + bob))
 		if Game.under_construction(o):
 			continue
 		var counts := Vector2i(-1, -1)
@@ -345,7 +364,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 		elif Game.is_home(o):
 			counts = Vector2i(Game.inside_total(o), Game.capacity(o))
 		if counts.x >= 0 and counts_shown:
-			PlaceholderArt.draw_count_sign(ci, g, counts.x, counts.y)
+			art().draw_count_sign(ci, g, counts.x, counts.y)
 	# FarmVille's one ready sign: a soft pink triangle bobbing over each thing with something to collect (the
 	# same for buildings, trees and animals; crops show it by how they look). In 3D it is ReadyMarks'; here it is
 	# only for the 2D world.
@@ -360,7 +379,7 @@ func draw_overlay_on(ci: CanvasItem, ready: Array) -> void:
 			var fp := Game.footprint(o["id"])
 			var g := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 			var high := -110.0 if Game.is_home(o) or Game.crafting.is_crafting(o) else -70.0
-			PlaceholderArt.draw_ready_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, high), t + float(piece.uid % 7))
+			art().draw_ready_marker(ci, (g[0] + g[2]) / 2.0 + Vector2(0, high), t + float(piece.uid % 7))
 	_draw_placing(ci)
 
 
@@ -383,7 +402,7 @@ func _draw_scenery(ci: CanvasItem, n: int) -> void:
 			var g := PackedVector2Array(
 				[top_of_f(r, c), top_of_f(r, c + 1), top_of_f(r + 1, c + 1), top_of_f(r + 1, c)]
 			)
-			PlaceholderArt.draw_object(ci, Game.item_data(id), g, false, 1, 0, 0)
+			art().draw_object(ci, Game.item_data(id), g, false, 1, 0, 0)
 
 
 
@@ -411,7 +430,7 @@ func _draw_next_expansion(ci: CanvasItem) -> void:
 		return
 	var size := int(step["size"])
 	var outer := corners_of(0, 0, size, size)
-	PlaceholderArt.draw_wild_land(ci, outer)
+	art().draw_wild_land(ci, outer)
 
 
 
@@ -430,9 +449,9 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 	var corners := corners_of(int(o["row"]), int(o["col"]), fp.x, fp.y)
 	if Game.under_construction(o):
 		if Game.kind_of(o) == "vehicle":
-			PlaceholderArt.draw_chassis(ci, corners, it)
+			art().draw_chassis(ci, corners, it)
 		else:
-			PlaceholderArt.draw_frame(ci, corners, it)
+			art().draw_frame(ci, corners, it)
 		return
 	var is_ready_now := Game.has_ready(o)
 	var building := Game.is_home(o)
@@ -453,7 +472,7 @@ func draw_object_on(ci: CanvasItem, o: Dictionary, handle_flip := true) -> void:
 	if art != "":
 		SpriteBank.draw(ci, art, (corners[0] + corners[2]) / 2.0)
 	else:
-		PlaceholderArt.draw_object(ci, it, corners, is_ready_now, int(o.get("level", 1)),
+		art().draw_object(ci, it, corners, is_ready_now, int(o.get("level", 1)),
 			inside, cap, o.get("broken", false), Game.links.mask(o))
 	if flipped:
 		ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -481,14 +500,14 @@ func _draw_placing(ci: CanvasItem) -> void:
 			continue
 		var hull: PackedVector2Array = outliner.call(int(uid)) if outliner.is_valid() else PackedVector2Array()
 		if hull.size() >= 4:
-			PlaceholderArt.draw_home_outline(ci, hull, int(uid) == hovered, t)
+			art().draw_home_outline(ci, hull, int(uid) == hovered, t)
 		else:
 			var bfp := Game.footprint(b["id"])
-			PlaceholderArt.draw_home_highlight(ci, corners_of(int(b["row"]), int(b["col"]), bfp.x, bfp.y), true,
+			art().draw_home_highlight(ci, corners_of(int(b["row"]), int(b["col"]), bfp.x, bfp.y), true,
 				int(uid) == hovered, t)
 	if hovered == -1 and int(placing.get("refused", -1)) == -1:
 		var ok := Game.can_place(placing["item"], row, col, int(placing["uid"]))
-		PlaceholderArt.draw_footprint(ci, corners, ok)
+		art().draw_footprint(ci, corners, ok)
 		if ok:
 			_draw_layout_bonus(ci, corners, row, col, t)
 	var level := 1
@@ -503,7 +522,7 @@ func _draw_placing(ci: CanvasItem) -> void:
 	elif it.get("kind", "") == "building":
 		cap = Game.building_def(it["id"]).capacity(1)
 	if not pieces.three_d:  # in 3D, Objects3D shows a see-through model instead
-		PlaceholderArt.draw_object(ci, it, corners, false, level, inside, cap)
+		art().draw_object(ci, it, corners, false, level, inside, cap)
 
 
 
@@ -519,9 +538,9 @@ func _draw_layout_bonus(ci: CanvasItem, corners: PackedVector2Array, row: int, c
 	for uid in touching:
 		var n := Game.object_by_uid(uid)
 		var nfp := Game.footprint(n["id"])
-		PlaceholderArt.draw_home_highlight(ci, corners_of(int(n["row"]), int(n["col"]), nfp.x, nfp.y), true, false, t)
+		art().draw_home_highlight(ci, corners_of(int(n["row"]), int(n["col"]), nfp.x, nfp.y), true, false, t)
 	var pct := roundi(Game.adjacency.bonus_for(item, Game.adjacency.count_at(item, row, col, lifted)) * 100.0)
-	PlaceholderArt.draw_bonus_tag(ci, (corners[0] + corners[2]) / 2.0 + Vector2(0, -60), tr("SYNERGY_TAG") % pct)
+	art().draw_bonus_tag(ci, (corners[0] + corners[2]) / 2.0 + Vector2(0, -60), tr("SYNERGY_TAG") % pct)
 
 
 ## A plot's raised bed (FarmPiece): always drawn by the game, so every plot lines up into one tidy field.
@@ -530,9 +549,9 @@ func draw_bed_on(ci: CanvasItem, i: int) -> void:
 	var ph := Game.field.phase(i)
 	if ph == GameState.Phase.GRASS:
 		return
-	PlaceholderArt.draw_soil(ci, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
+	art().draw_soil(ci, top, TILE_W, TILE_H, ph != GameState.Phase.PLOWED)
 	if Game.field.is_fertilized(i):
-		PlaceholderArt.draw_fertilizer(ci, top + Vector2(0, -PlaceholderArt.SLAB), TILE_W, TILE_H)
+		art().draw_fertilizer(ci, top + Vector2(0, -SLAB), TILE_W, TILE_H)
 
 
 
@@ -542,7 +561,7 @@ func draw_plants_on(ci: CanvasItem, i: int) -> void:
 	var ph := Game.field.phase(i)
 	if ph == GameState.Phase.GRASS or ph == GameState.Phase.PLOWED:
 		return
-	var at := center_of(i) + Vector2(0, -PlaceholderArt.SLAB)
+	var at := center_of(i) + Vector2(0, -SLAB)
 	var art := Game.crop_art_for(i)
 	if art != "":
 		SpriteBank.draw(ci, art, at)
@@ -552,7 +571,7 @@ func draw_plants_on(ci: CanvasItem, i: int) -> void:
 		stage = "ripe"
 	elif ph == GameState.Phase.WITHERED:
 		stage = "withered"
-	PlaceholderArt.draw_crop(ci, at, TILE_W, TILE_H, Game.crops[Game.field.crop_at(i)], stage, Game.field.growth(i))
+	art().draw_crop(ci, at, TILE_W, TILE_H, Game.crops[Game.field.crop_at(i)], stage, Game.field.growth(i))
 
 
 
@@ -1011,7 +1030,7 @@ func _on_action_done_timed(job: Dictionary, result: Dictionary) -> void:
 			float_words(center_of(i), "-%d" % Balance.i("economy.plow_cost"), "cost")
 		"plant":
 			Feedback.moment("plant", _run("plant", i))
-			world_fx.burst("dirt", center_of(i) + Vector2(0, -PlaceholderArt.SLAB))
+			world_fx.burst("dirt", center_of(i) + Vector2(0, -SLAB))
 			float_words(center_of(i), "-%d" % int(Game.crops[job["crop"]]["seed_cost"]), "cost")
 		"fertilize":
 			Feedback.moment("fertilize", _run("fertilize", i))
@@ -1159,7 +1178,7 @@ func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 	var at := center_of(i)
 	Feedback.moment("harvest", _run("harvest", i))
 	_pop_plants(i, job["crop"], job["art"])
-	world_fx.burst("leaves", at + Vector2(0, -PlaceholderArt.SLAB))
+	world_fx.burst("leaves", at + Vector2(0, -SLAB))
 	_reward(at, int(result["coins"]), int(result["xp"]))
 	float_words(at, "+%d" % result["coins"], "coins")
 	float_words(at + Vector2(0, -30), tr("XP") % result["xp"], "xp")

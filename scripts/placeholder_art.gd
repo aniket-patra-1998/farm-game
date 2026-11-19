@@ -40,7 +40,7 @@ const MEADOW_TUFT := Color("#5f9a3e")
 
 ## Plowed plots are raised beds, like FarmVille's and like the painted crop art: a soil top lifted by
 ## SLAB px over the tile, with darker sides.
-const SLAB := 10.0
+const SLAB := FarmGrid.SLAB
 const BED_TOP := Color("#6e4c37")
 const BED_TOP_WET := Color("#5f412f")
 const BED_LEFT := Color("#4a3123")

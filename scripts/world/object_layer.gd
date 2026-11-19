@@ -102,7 +102,7 @@ func sync() -> void:
 				p.plot = int(str(key).substr(1))
 				p.plants = CropPlants.new()
 				p.plants.piece = p
-				p.plants.position = Vector2(0, -PlaceholderArt.SLAB)
+				p.plants.position = Vector2(0, -FarmGrid.SLAB)
 				p.add_child(p.plants)
 			else:
 				p.uid = int(str(key).substr(1))
@@ -218,7 +218,7 @@ func _place(p: FarmPiece) -> void:
 		p.z_index = plot_z(GameState.row_of(p.plot), GameState.col_of(p.plot))
 		p.base = grid.center_of(p.plot)
 		# In 3D the bed is Plots3D's; the plants sit on its top.
-		p.plants.position = Vector2(0, -PlaceholderArt.SLAB)
+		p.plants.position = Vector2(0, -FarmGrid.SLAB)
 		p.visible = not three_d  # in 3D, Plots3D and Crops3D draw the plot
 	else:
 		var o := Game.object_by_uid(p.uid)

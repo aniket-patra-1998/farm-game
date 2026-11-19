@@ -482,3 +482,23 @@ func test_446_every_tool_tap_on_a_thing_is_answered() -> void:
 	_eq(heard.call("sell", barn), "error", "nor sold")
 	main.free()
 	Game.reset_game()
+
+
+func test_546_the_2d_art_compiles_after_the_first_screen() -> void:
+	# The 3D farm draws itself: the 2D world's drawing (PlaceholderArt) is loaded by path (FarmGrid.art), so nothing
+	# on the way to the first screen names it (docs/PERF_RUN.md, the start); it is still there when drawn.
+	for path: String in ["res://scripts/farm_grid.gd", "res://scripts/world/object_layer.gd",
+			"res://scripts/fx/world_fx.gd", "res://scripts/world/animals/animal_art.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bPlaceholderArt\\b").search(code), "%s does not name PlaceholderArt" % path)
+	_eq(FarmGrid.art().resource_path, FarmGrid.ART_SCRIPT, "the 2D art is loaded by path")
+	_eq(FarmGrid.art().get("SLAB"), FarmGrid.SLAB, "its raised beds are the grid's")
+	Game.reset_game()
+	var main = MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(is_same(FarmGrid.art(), load(FarmGrid.ART_SCRIPT)), "compiled once")
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()

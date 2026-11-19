@@ -147,7 +147,7 @@ func pop_plants(i: int, crop_id: String, art: String) -> void:
 	var ghost := PlantsGhost.new()
 	ghost.crop = Game.crops[crop_id]
 	ghost.art = art
-	ghost.position = grid.center_of(i) + Vector2(0, -PlaceholderArt.SLAB)
+	ghost.position = grid.center_of(i) + Vector2(0, -FarmGrid.SLAB)
 	add_child(ghost)
 	var tw := ghost.create_tween()
 	tw.tween_property(ghost, "scale", Vector2(1.22, 0.78), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -175,7 +175,7 @@ class PlantsGhost extends Node2D:
 		if art != "":
 			SpriteBank.draw(self, art, Vector2.ZERO)
 		else:
-			PlaceholderArt.draw_crop(self, Vector2.ZERO, FarmGrid.TILE_W, FarmGrid.TILE_H, crop, "ripe", 1.0)
+			FarmGrid.art().draw_crop(self, Vector2.ZERO, FarmGrid.TILE_W, FarmGrid.TILE_H, crop, "ripe", 1.0)
 
 
 ## Lets go of the looks kept in statics (Game, on quit), so none is still held when the engine shuts down.

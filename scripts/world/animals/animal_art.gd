@@ -44,7 +44,7 @@ static func draw(ci: CanvasItem, ground: Vector2, it: Dictionary, ready: bool, p
 		_:
 			top = QuadrupedArt.draw(ci, ground, rig, p, body, accent)
 	if ready:   # the one ready sign everything wears, bobbing over the animal
-		PlaceholderArt.draw_ready_marker(ci, Vector2(ground.x, top - READY_LIFT), p.time)
+		FarmGrid.art().draw_ready_marker(ci, Vector2(ground.x, top - READY_LIFT), p.time)
 
 
 # ---------------------------------------------------------------- walking
