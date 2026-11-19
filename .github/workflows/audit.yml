@@ -1,0 +1,102 @@
+name: Economy audit
+
+# The play bot's economy audit (tools/audit.sh, data/sim_targets.json): every bot style plays 45 days on two
+# seeds, and the first hour; a run that misses a target fails this, naming the target and the gap it guards
+# (owner, 19-20 Nov: "nothing should get missed by the audit bot"). Runs on every push to main that can move the
+# economy, every night, and by hand. The polish loop reads its last result first (docs/POLISH.md).
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/**'
+      - 'scripts/systems/**'
+      - 'scripts/catalog/**'
+      - 'autoload/game.gd'
+      - 'tools/balance_sim.gd'
+      - 'tools/audit.sh'
+  schedule:
+    - cron: '47 20 * * *'   # 02:17 IST, before the random-play run
+  workflow_dispatch:
+
+permissions:
+  contents: read   # it only reads the repository
+
+concurrency:
+  group: economy-audit
+  cancel-in-progress: true   # (a newer push's audit replaces an older one's)
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        run:
+          - "first_hour --first-hour"
+          - "plain --style=plain"
+          - "goals --style=goals"
+          - "casual --style=casual"
+          - "builder --style=builder"
+          - "crafter --style=crafter"
+    env:
+      GODOT_VERSION: 4.7.2
+      DAYS: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: godot-bin
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p godot-bin
+          url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          for attempt in 1 2 3 4 5; do
+            if curl -fsSL --retry 3 --retry-delay 5 -o godot.zip "$url" && unzip -tq godot.zip; then
+              break
+            fi
+            echo "Download attempt $attempt failed; retrying in 15 s"
+            rm -f godot.zip
+            sleep 15
+          done
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot-bin/godot
+          chmod +x godot-bin/godot
+
+      - name: Import project
+        run: ./godot-bin/godot --headless --path . --import > import.log 2>&1 || true
+
+      - name: Play and check
+        run: |
+          set -u
+          name=$(echo "${{ matrix.run }}" | cut -d' ' -f1)
+          args=$(echo "${{ matrix.run }}" | cut -d' ' -f2-)
+          miss=0
+          for seed in 1 2; do
+            log="audit_${name}_seed${seed}.log"
+            if [ "$name" = "first_hour" ]; then
+              ./godot-bin/godot --headless --path . res://tools/balance_sim.tscn -- $args --seed=$seed > "$log" 2>&1 || true
+            else
+              ./godot-bin/godot --headless --path . res://tools/balance_sim.tscn -- --days=$DAYS --visits=3 --minutes=5 \
+                --seed=$seed $args > "$log" 2>&1 || true
+            fi
+            verdict=$(grep -E "^(targets: |TARGETS MISSED)" "$log" | tail -1)
+            [ -z "$verdict" ] && verdict="TARGETS MISSED: the run did not finish"
+            echo "$name seed $seed: $verdict" | tee -a "$GITHUB_STEP_SUMMARY"
+            case "$verdict" in TARGETS*) miss=1 ;; esac
+          done
+          exit $miss
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-logs-${{ strategy.job-index }}
+          path: audit_*.log
+          retention-days: 14
