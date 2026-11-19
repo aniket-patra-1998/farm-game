@@ -391,7 +391,7 @@ func test_550_a_panel_closes_after_its_motion_and_reopens_mid_close() -> void:
 ## The icon glow (the owner's pick C, data/ui_theme.json "glow"): gold behind money and rewards, blue-white behind
 ## something new waiting, nothing behind any other icon or one too small to carry it; one shared still image; the
 ## menu's pictures glow while their dot or count shows.
-func test_552_money_glows_gold_and_news_glows_blue_white() -> void:
+func test_553_money_glows_gold_and_news_glows_blue_white() -> void:
 	var big := 64.0
 	for kind: String in ["coin", "gem", "star", "ribbon"]:
 		_check(UiTheme.glow(kind, false, big) == UiTheme.color("glow_gold"), "%s glows gold" % kind)
