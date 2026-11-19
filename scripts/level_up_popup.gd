@@ -3,9 +3,7 @@ extends Control
 ## Full-screen level-up celebration: confetti, the new level in big type,
 ## the coin reward and everything that just unlocked. Levels reached together queue up.
 
-const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
-const CREAM := Color("#fbefd2")
 const INK := Color("#3a2614")
 const SUN := Color("#ffd34d")
 const CONFETTI := [
@@ -44,16 +42,9 @@ func _ready() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(center)
 
-	_card = PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = WOOD
-	sb.border_color = SUN
-	sb.set_border_width_all(6)
-	sb.set_corner_radius_all(28)
-	sb.set_content_margin_all(32)
-	sb.shadow_color = Color(0, 0, 0, 0.35)
-	sb.shadow_size = 12
-	_card.add_theme_stylebox_override("panel", sb)
+	_card = PanelContainer.new()   # (on the panels' paper, as every card is: owner, 19 Nov, one panel style)
+	_card.add_theme_stylebox_override("panel", UiKit.paper_box(UiTheme.size("book_margin")))
+	_card.theme = UiKit.paper_theme()
 	center.add_child(_card)
 
 	var col := VBoxContainer.new()
@@ -61,18 +52,19 @@ func _ready() -> void:
 	col.add_theme_constant_override("separation", int(UiTheme.size("section_gap")))
 	_card.add_child(col)
 
-	var eyebrow := _label(tr("LEVEL_UP"), 28, CREAM)
+	var eyebrow := _label(tr("LEVEL_UP"), UiTheme.TITLE, BookPanel.INK)
 	col.add_child(eyebrow)
 
-	_level_label = _label("", 96, SUN)
+	_level_label = _label("", UiTheme.DISPLAY, SUN)
+	_level_label.set_meta(&"title", true)   # (the big moment's number: the one text larger than a heading)
 	_level_label.add_theme_color_override("font_outline_color", WOOD_DARK)
 	_level_label.add_theme_constant_override("outline_size", 14)
 	col.add_child(_level_label)
 
-	_reward_label = _label("", 30, CREAM)
+	_reward_label = _label("", UiTheme.HEADING, BookPanel.INK)
 	col.add_child(_reward_label)
 
-	_unlock_title = _label(tr("NEW_IN_THE_MARKET"), 22, SUN)
+	_unlock_title = _label(tr("NEW_IN_THE_MARKET"), UiTheme.BODY, BookPanel.SOFT)
 	col.add_child(_unlock_title)
 
 	_unlocks = HFlowContainer.new()
@@ -86,7 +78,7 @@ func _ready() -> void:
 	go.custom_minimum_size = Vector2(UiTheme.size("wide_button_width"), UiTheme.size("button_size"))
 	go.focus_mode = Control.FOCUS_NONE
 	go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	go.add_theme_font_size_override("font_size", UiTheme.font(26))
+	UiKit.primary(go)
 	go.pressed.connect(_next)
 	col.add_child(go)
 
@@ -105,7 +97,7 @@ func celebrate(lvl: int) -> void:
 func _show(lvl: int) -> void:
 	Game.modal_open = true
 	_level_label.text = str(lvl)
-	_reward_label.text = tr("COINS_GEM") % [Game.level_reward(lvl), Balance.i("economy.gems_per_level")]
+	_reward_label.text = UiTheme.tidy(tr("COINS_GEM") % [Game.level_reward(lvl), Balance.i("economy.gems_per_level")])
 	for child in _unlocks.get_children():
 		child.queue_free()
 	# What's new, as pictures (its name on a long press): the pictures say it faster than a list of names.
