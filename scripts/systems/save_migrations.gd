@@ -36,7 +36,7 @@ static func _step(from: int, data: Dictionary) -> void:
 
 ## Saves from before land expansion stored a 12x12 grid whatever their version: copy it into the full-size grid.
 static func _widen_old_grid_in(data: Dictionary) -> void:
-	var plots: Array = data.get("plots", [])
+	var plots: Array = data["plots"] if data.get("plots") is Array else []
 	if plots.size() == GameState.OLD_GRID_SIZE * GameState.OLD_GRID_SIZE:
 		data["plots"] = widen_old_grid(plots)
 

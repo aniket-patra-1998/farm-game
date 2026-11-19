@@ -29,8 +29,9 @@ func load_from(data: Dictionary) -> void:
 	pollinated = {}
 	var saved: Dictionary = data.get("pollinated", {})
 	for c in saved:
-		var e: Array = saved[c]
-		if game.crops.has(c) and e.size() == 2:
+		var e: Variant = saved[c]
+		if game.crops.has(c) and e is Array and e.size() == 2 and SaveCheck.whole(e[0]) != null \
+				and SaveCheck.whole(e[1]) != null:
 			pollinated[c] = [int(e[0]), int(e[1])]
 
 

@@ -510,3 +510,58 @@ func test_480_a_clock_set_back_while_the_game_runs_moves_every_timer_with_it() -
 	g.debug_time_offset += BACK * 5
 	_eq(g.persistence.watch_clock(), 0, "a clock moved on is time passing, not a shift")
 	_check(near.call(int(g.plots[i]["planted_at"]), t - 100 - BACK), "so nothing moves")
+
+
+## A hand-edited or damaged save with a field of the wrong kind (nothing, a word or a list where a number or a map
+## goes) stopped the load halfway: a new farm started and was saved over the player's. Every field of a filled
+## farm's save is spoilt in turn: the farm still loads with all else kept. A save it cannot use is kept aside.
+func test_532_a_field_of_the_wrong_kind_never_loses_the_farm() -> void:
+	var path := "user://test_save_kinds.json"
+	var g := _farm()
+	g.save_path = path
+	ShowcaseFarm.build(g)
+	g.saving_enabled = true
+	g.save_game()
+	var base: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var fresh := _farm()
+	_eq(SaveCheck.match_shape(base.duplicate(true), fresh.persistence.snapshot()), 0,
+		"a filled farm's save matches a new farm's shape: nothing sound is dropped")
+	fresh.free()
+	var things := g.objects.size()
+	g.free()
+	var failed: Array[String] = []
+	for key: String in base:
+		for bad: Variant in [null, "x", [1]]:
+			var d: Dictionary = base.duplicate(true)
+			d[key] = bad
+			_write(path, d)
+			var h := _farm()
+			h.save_path = path
+			var kept := key in ["plots", "version"] or (h.load_game() and (key == "objects" or h.objects.size() == things))
+			if not kept:
+				failed.append("%s=%s" % [key, JSON.stringify(bad)])
+			h.free()
+	_eq(failed, [] as Array[String], "every spoilt field loads the farm, all else kept")
+	var d2: Dictionary = base.duplicate(true)
+	d2["pollinated"] = {"wheat": "x", "corn": [1, null]}
+	d2["finds_claimed"] = {"a": "b"}
+	_write(path, d2)
+	var h2 := _farm()
+	h2.save_path = path
+	_check(h2.load_game() and h2.bees.pollinated.is_empty() and h2.finds.claimed.is_empty(),
+		"bad entries inside a field are dropped too")
+	h2.free()
+	d2["plots"] = [{"state": "grass"}]
+	_write(path, d2)
+	DirAccess.remove_absolute(path + Persistence.UNUSABLE_SUFFIX)
+	var h3 := _farm()
+	h3.save_path = path
+	_check(not h3.load_game(), "a damaged grid cannot be used")
+	_check(FileAccess.file_exists(path + Persistence.UNUSABLE_SUFFIX), "so it is kept aside, not lost under a new farm")
+	h3.free()
+
+
+func _write(path: String, data: Dictionary) -> void:
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(JSON.stringify(data))
+	f.close()

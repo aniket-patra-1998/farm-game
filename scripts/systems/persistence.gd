@@ -7,6 +7,7 @@ extends GameSystem
 ## Moments a placed object keeps besides its "t" (a pig pen's forage, a perfect bunch's end); crafting slots'
 ## "done" too. Each moves with the clock when a device clock was set back (see shift_all).
 const OBJECT_MOMENTS: Array[String] = ["forage_until", "expires"]
+const UNUSABLE_SUFFIX := ".unusable"   # a save this game could not load, kept beside the new farm's
 const CLOCK_SLACK := 2       # seconds the device clock may step back (a network time correction) unnoticed
 
 var due_msec := -1           # when a queued save is written (-1: nothing waiting)
@@ -35,6 +36,17 @@ func save(in_background := false) -> void:
 	if not game.saving_enabled:
 		return
 	finish()
+	var data := snapshot()
+	if not in_background:
+		_write_safely(JSON.stringify(data), game.save_path)
+		return
+	var copy: Dictionary = data.duplicate(true)  # the game goes on changing `data`'s parts; the thread keeps this
+	_thread = Thread.new()
+	_thread.start(Persistence._write_snapshot.bind(copy, game.save_path))
+
+
+## Everything a save holds, as it is now (its parts are the game's own, not copies).
+func snapshot() -> Dictionary:
 	var data := {
 		"version": GameState.SAVE_VERSION,
 		"saved_at": game.now(),
@@ -59,12 +71,7 @@ func save(in_background := false) -> void:
 	}
 	for system in game.systems:
 		system.save_to(data)
-	if not in_background:
-		_write_safely(JSON.stringify(data), game.save_path)
-		return
-	var copy: Dictionary = data.duplicate(true)  # the game goes on changing `data`'s parts; the thread keeps this
-	_thread = Thread.new()
-	_thread.start(Persistence._write_snapshot.bind(copy, game.save_path))
+	return data
 
 
 ## (On the save thread.) The copy as text, then safely onto disk. Static, so the running thread holds nothing that the
@@ -140,18 +147,25 @@ func load_save() -> bool:
 	var data := read()
 	if data.is_empty():
 		return false
-	var version := int(data.get("version", 0))
+	var saved_version: Variant = SaveCheck.whole(data.get("version", 0))
+	var version := 0 if saved_version == null else int(saved_version)
+	data["version"] = version
 	if version > GameState.SAVE_VERSION:
 		# From a newer game (the app was rolled back): the new farm that follows must not overwrite it.
 		DirAccess.copy_absolute(game.save_path, "%s.v%d" % [game.save_path, version])
 		return false
 	if not SaveMigrations.upgrade(data):
+		_keep_aside()
 		return false
-	var mended := SaveCheck.clean(data, game.items, GameState.MAX_SIZE, {"state": "grass"})
+	# A field of the wrong kind (a hand-edited or damaged save: a word or nothing where a number goes) would stop the
+	# load halfway, and a new farm would start and be saved over this one: it takes its default instead.
+	var mended := SaveCheck.match_shape(data, snapshot())
+	mended += SaveCheck.clean(data, game.items, GameState.MAX_SIZE, {"state": "grass"})
 	if mended > 0:
 		push_warning("Save: %d damaged entries were dropped or mended" % mended)
 	var saved_plots: Array = data.get("plots", [])
 	if saved_plots.size() != GameState.MAX_SIZE * GameState.MAX_SIZE:
+		_keep_aside()
 		return false
 	game.farm_size = clampi(int(data.get("farm_size", GameState.START_SIZE)), GameState.START_SIZE,
 		GameState.MAX_SIZE)
@@ -213,6 +227,13 @@ func load_save() -> bool:
 		var note := game.tr("SOME_BUILDINGS_CHANGED_SHAPE_AND") % moved
 		game.absence_note = note if game.absence_note == "" else game.absence_note + "\n" + note
 	return true
+
+
+## A save this game cannot use (too old, or its grid is damaged): a copy is kept beside it, since the new farm that
+## follows is saved over it.
+func _keep_aside() -> void:
+	push_warning("Save: unusable, kept as %s%s" % [game.save_path, UNUSABLE_SUFFIX])
+	DirAccess.copy_absolute(game.save_path, game.save_path + UNUSABLE_SUFFIX)
 
 
 ## The device clock was set back `skew` seconds (since the save, or while the game ran or waited in the

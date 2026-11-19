@@ -38,7 +38,8 @@ func load_from(data: Dictionary) -> void:
 	var saved: Variant = data.get("finds_claimed", {})
 	if saved is Dictionary:
 		for k in saved:
-			claimed[str(k)] = bool(saved[k])
+			if saved[k] is bool:
+				claimed[str(k)] = saved[k]
 
 
 ## Rolls every family triggered by `work` ("harvest") and gives what turns up: [{family, id, name, rarity}].

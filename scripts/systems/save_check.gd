@@ -60,6 +60,22 @@ static func clean(data: Dictionary, known_items: Dictionary, max_size: int, empt
 	return fixed
 
 
+## Drops every field of `data` whose kind differs from the same field in `shape` (a save as the game writes it),
+## so it takes its default when loaded: a number where a list goes, a word or nothing where a number goes. Whole
+## and decimal numbers count as one kind; a field `shape` holds as nothing can be anything. Returns how many went.
+static func match_shape(data: Dictionary, shape: Dictionary) -> int:
+	var dropped := 0
+	for key: String in shape:
+		if data.has(key) and shape[key] != null and _kind(data[key]) != _kind(shape[key]):
+			data.erase(key)
+			dropped += 1
+	return dropped
+
+
+static func _kind(v: Variant) -> int:
+	return TYPE_FLOAT if v is int else typeof(v)
+
+
 ## The object as whole numbers, or an empty dictionary if it is beyond mending.
 static func _object(o: Variant, known_items: Dictionary, max_size: int) -> Dictionary:
 	if not (o is Dictionary):
