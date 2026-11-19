@@ -1306,6 +1306,23 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   BuildingDress). Item 6 waits for the owner's packs. Local main of this clone was an unrelated old history: kept
   as local branch local-main-stale-1118.
 
+- Run 9 (19 Nov 20:36-21:10 IST): no picks yet (opening glide, build reveal, touch answers, touch hearts). Item 5's
+  first piece, cloud shadows, built on wow/cloud-shadows (923781d; not merged: a new look, a sheet in the log under
+  "Wow: waiting for your look": as built and before at noon, richer at noon, both at dusk). The 2D farm had
+  CloudShadows; the 3D farm had none. shaders/cloud_shade.gdshaderinc: cloud_light(xz, TIME), a few warped sines in
+  world space (CLOUD_DRIFT, CLOUD_SCALE), read by ground3d, crop3d and master_solid (so grass, crops and models
+  share one cloud); the global cloud_shade is set by main from the 2D shadows' strength through
+  FarmMain.cloud_shade: none below Balance feel.cloud_shade_from (0.5: clear and overcast stay crisp, so
+  ItemIcons, which now counts cloud_shade among its MOODS, can still keep pictures), up to feel.cloud_shade (0.22;
+  richer 0.32, calmer 0.15); Quality cloud_shadows off on low. Test 590 (world3d_test). Changing crop3d re-exports
+  the 105 plant files (tools/export_plants.tscn; the precheck says so). Render: look_shot --weather=partly_cloudy
+  --quality=mid --views=all (~75 s a shot). Doubt: water is not shaded.
+- Next: the owner's picks (five branches wait); rebase the picked one on main, precheck, fast-forward push (test
+  numbers: build reveal 580 and touch answers 582 renumber; touch hearts' 584 is now taken on main too; cloud
+  shadows is 590). Then the rest of item 5: warm lit windows at dusk (survey night_glow.gd, BuildingDress), a
+  golden-hour sun, a soft rainbow after rain. Local main of this clone was an unrelated old history: kept as
+  local branch stale-main-backup.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
