@@ -31,6 +31,9 @@ const PANEL_SCRIPTS := {   # a panel's name -> its script (loaded when first use
 	&"inbox": "res://scripts/hud/hud_inbox.gd", &"settings": "res://scripts/hud/hud_settings.gd",
 	&"seeds": "res://scripts/hud/hud_seeds.gd"}
 const SHEET_SCRIPT := "res://scripts/hud/building_sheet.gd"   # a tapped building's sheet (loaded when first tapped)
+const REVEAL_SCRIPT := "res://scripts/hud/reveal_card.gd"   # a mystery's reveal (made when first opened)
+const AWAY_SCRIPT := "res://scripts/hud/away_card.gd"   # While you were away (made when first shown)
+const LEVEL_SCRIPT := "res://scripts/level_up_popup.gd"   # the level-up celebration (made at the first level up)
 
 
 var top: HudTop
@@ -72,14 +75,15 @@ var settings:
 var seeds:
 	get: return _panel(&"seeds")
 
-var _reveal: RevealCard   # the reveal of a mystery egg or box (made when first needed, then kept)
-var _away: AwayCard   # the While you were away card (made when first needed, then kept)
+var _reveal: Variant   # (a RevealCard) the reveal of a mystery egg or box (made when first needed, then kept)
+var _away: Variant   # (an AwayCard) the While you were away card (made when first needed, then kept)
 var _rest_tween: Tween
 var _toast: Label
 var _toast_tween: Tween
 var _toast_holder: CenterContainer
 var _tutorial: Label
-var _level_popup: LevelUpPopup
+var _level_popup: Variant   # (a LevelUpPopup) made at the first level up, in _level_slot
+var _level_slot: Control   # where the level-up stands among the HUD's layers
 var _placing_bar: PanelContainer
 var _placing_label: Label
 var _turn_button: Button
@@ -109,7 +113,7 @@ func _load_panels() -> void:
 	if not is_inside_tree():
 		return
 	ItemIcons.start(self)   # the shop's pictures, made from the models when first missing (shipped ones load at once)
-	for path: String in PANEL_SCRIPTS.values() + [SHEET_SCRIPT]:
+	for path: String in PANEL_SCRIPTS.values() + [SHEET_SCRIPT, REVEAL_SCRIPT, AWAY_SCRIPT, LEVEL_SCRIPT]:
 		await get_tree().process_frame
 		if not is_inside_tree():
 			return
@@ -161,9 +165,12 @@ func _ready() -> void:
 	book.opened.connect(func() -> void:
 		if sheet != null and sheet.is_open():
 			sheet.close())
-	_level_popup = LevelUpPopup.new()
-	root.add_child(_level_popup)
-	Game.leveled_up.connect(_level_popup.celebrate)
+	_level_slot = Control.new()   # (an empty full-screen layer: the level-up is made in it when first needed)
+	_level_slot.name = "LevelSlot"   # not-ui
+	_level_slot.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_level_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_level_slot)
+	Game.leveled_up.connect(func(lvl: int) -> void: level_popup().call("celebrate", lvl))
 	Game.leveled_up.connect(func(_l: int) -> void:
 		Feedback.moment("level_up"))
 	Game.collections_changed.connect(_refresh_book)
@@ -284,11 +291,19 @@ func reading() -> bool:
 	return (sheet != null and sheet.is_open()) or (_away != null and UiFx.is_open(_away))
 
 
+## The level-up celebration (LevelUpPopup), made the first time it is needed.
+func level_popup() -> Control:
+	if _level_popup == null:
+		_level_popup = (load(LEVEL_SCRIPT) as GDScript).new()
+		_level_slot.add_child(_level_popup)
+	return _level_popup
+
+
 ## The reveal of a mystery opened from a panel (an egg's colour name or RevealCard.BOX): it shakes, bursts, and
 ## what was inside is named in its rarity's colours, over everything.
 func reveal(what: String, title: String, prize: String, rarity: String) -> void:
 	if _reveal == null:
-		_reveal = RevealCard.new()
+		_reveal = (load(REVEAL_SCRIPT) as GDScript).new()
 		add_child(_reveal)   # (over the panels: it is the last thing added)
 	_reveal.move_to_front()
 	_reveal.play(what, title, prize, rarity)
@@ -301,7 +316,7 @@ func _show_away(rows: Array, notes: Array) -> void:
 		get_tree().create_timer(AWAY_WAIT).timeout.connect(_show_away.bind(rows, notes))
 		return
 	if _away == null:
-		_away = AwayCard.new(self)
+		_away = (load(AWAY_SCRIPT) as GDScript).new(self)
 		_root.add_child(_away)
 	_away.open(rows, notes)
 

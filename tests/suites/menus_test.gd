@@ -423,7 +423,7 @@ func test_449_the_cards_over_the_farm_read_whole_on_every_screen() -> void:
 			if other.is_visible_in_tree() and card.get_global_rect().intersects(other.get_global_rect()):
 				bad["%s away card covers %s" % [where, other.name]] = true
 		card.close()
-		var popup: LevelUpPopup = hud.get("_level_popup")
+		var popup: LevelUpPopup = hud.call("level_popup")
 		popup.call("_show", busiest)
 		await get_tree().create_timer(POP_SETTLES).timeout   # (read where it rests, not mid-pop or mid-pulse)
 		var party := {}   # (a celebration on its own dark card: its big words and light colours are its look)

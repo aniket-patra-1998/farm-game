@@ -1266,3 +1266,25 @@ func test_551_the_pictures_renderer_compiles_after_the_first_screen() -> void:
 	_check(not ItemIcons.is_made("a_thing_never_asked"), "an unknown picture is not made")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_552_the_moment_cards_compile_when_first_shown() -> void:
+	# The level-up, a mystery's reveal and the away card are made when first needed and load by path then (and a
+	# few frames after the first screen), so the start never compiles them (docs/PERF_RUN.md, the start).
+	var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string("res://scripts/hud.gd"), "", true)
+	for cls in ["LevelUpPopup", "RevealCard", "AwayCard"]:
+		_check(not RegEx.create_from_string("\\b%s\\b" % cls).search(code), "the HUD does not name %s" % cls)
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	_check(hud.get("_level_popup") == null, "no level-up at the first screen")
+	Game.leveled_up.emit(2)
+	var popup: Control = hud.get("_level_popup")
+	_check(popup != null and popup.get_script().resource_path == FarmHud.LEVEL_SCRIPT, "made at the first level up")
+	_check(popup != null and popup.get_parent() == hud.get("_level_slot") and popup.visible, "in its layer, shown")
+	_check(is_same(popup, hud.level_popup()), "made once")
+	Game.modal_open = false
+	main.queue_free()
+	await get_tree().process_frame

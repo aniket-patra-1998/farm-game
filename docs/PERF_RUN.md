@@ -126,3 +126,6 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
 - 19 Nov 11:40 (perf run 15): slice 4 of the start (the debug tools by path, StartMarks): 31.8k -> 31.4k lines.
 - 19 Nov 12:10 (perf run 16): slice 5 of the start (the pictures' renderer, scripts/ui/icon_maker.gd, loaded by path a
   frame after the first screen; ItemIcons is the lookup): 31.5k -> 30.7k lines (main had grown to 31,546).
+- 19 Nov 13:20 (perf run 17): slice 6 of the start (the moment cards by path: the level-up, a mystery's reveal and
+  the away card are made when first needed; the level-up in its own empty layer where it stood): 30,741 -> 30,352
+  lines before the first screen; headless scripts - engine median 1,666 -> 1,636 ms, hud mark 2,171 -> 2,133 ms.
