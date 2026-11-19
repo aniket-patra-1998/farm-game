@@ -506,3 +506,47 @@ func test_531_the_crafter_builds_the_bakery_and_crafts() -> void:
 	_check(str(sim.call("craft_line")).begins_with("crafting: bakery built day 1"), "the summary line prints")
 	sim.free()
 	_done(g)
+
+
+## The rare coop project's last stage (open Mystery Eggs) in the goal bot: eggs turn up only when a coop with hens
+## inside is collected, so the bot fills the coop (Fill moves the loose hens in, then hens bought into it while coins
+## spare one), collects it when ready and opens what it finds; it stopped there for ever before.
+func test_540_the_goal_bot_fills_and_collects_the_coop_for_mystery_eggs() -> void:
+	var g := _farm()
+	g.xp = g.xp_for_level(10)
+	g.goals.use_data({"chains": [], "daily": {"count": 0, "templates": []}, "projects": [
+		{"id": "eggs", "level": 1, "stages": [{"tasks": [{"do": "open_egg", "what": "", "n": 1}]}], "reward": {}}]})
+	g.goals.reset()
+	g.goals.refresh()
+	g.coins = 100000
+	var sim: Node = load(BOT).new()
+	sim.set("game", g)
+	sim.set("style", "goals")
+	sim.set("_actions", 100)
+	_check(sim.call("_buy_somewhere", "chicken_coop"), "a coop on the farm")
+	_check(sim.call("_buy_somewhere", "chicken"), "a loose hen on the farm")
+	var coop: Dictionary = {}
+	for o: Dictionary in g.objects:
+		if str(o["id"]) == "chicken_coop":
+			coop = o
+	if coop.is_empty():
+		sim.free()
+		_done(g)
+		return
+	sim.call("_goal_eggs")
+	coop = g.object_by_uid(int(coop["uid"]))
+	_eq(g.inside_total(coop), g.capacity(coop), "the coop is filled")
+	_eq(g.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "chicken").size(), 0,
+		"the loose hen moved in")
+	g.debug_time_offset += 7 * 24 * 3600
+	_check(g.is_ready(coop), "the coop is ready")
+	sim.set("_actions", 100)
+	sim.call("_goal_eggs")
+	_check(not g.is_ready(g.object_by_uid(int(coop["uid"]))), "the bot collects it (where the eggs turn up)")
+	g.mystery.mystery_eggs["white"] = 1
+	sim.set("_actions", 100)
+	sim.call("_goal_eggs")
+	_eq(int(g.mystery.mystery_eggs["white"]), 0, "and opens the egg found")
+	_check(g.goals.is_done("project:eggs"), "the goal counts it")
+	sim.free()
+	_done(g)

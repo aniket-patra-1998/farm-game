@@ -37,6 +37,8 @@ const FEED_LOSS_MAX := 0.3        # Part 4: a never-feeder loses at most this sh
 const CRAFTER_BUILDING := "bakery"   # Part 4: "the crafter builds the Bakery early and crafts"
 const CRAFT_PAYBACK_DAYS := 7.0   # Part 4: a crafting building pays back in about a week of normal crafting
 const STALL_BUY_MOST := 4         # bushels a crafter buys at the stall to finish one recipe (more: wait for harvests)
+const EGG_HEN := "chicken"         # the hen bought into a coop when a goal wants Mystery Eggs
+const EGG_HEN_SPARE := 1000       # coins a goals bot keeps in hand before buying one more hen for the coop
 const WANT_SKIP_KINDS := ["decor", "crop", "material", "ingredient", "recipe", "young"]   # not progress buys
 
 var game: GameState       # the farm it plays (the real one when run as a tool)
@@ -861,11 +863,24 @@ func _goal_vehicles() -> void:
 			return
 
 
-## Opens the Mystery Eggs held when a goal asks to open some (a tap on the egg in the Barn).
+## When a goal asks to open Mystery Eggs: fills each coop that lays them (Fill moves the loose hens in, then a
+## hen bought into it while coins spare one), collects it when ready (eggs turn up only there, more with more
+## hens inside), and opens the eggs held (a tap on the egg in the Barn).
 func _goal_eggs() -> void:
 	for task: Dictionary in _open_tasks():
 		if str(task["do"]) != "open_egg":
 			continue
+		for b in game.objects.duplicate():
+			if game.special_of(b) != "mystery_eggs" or game.under_construction(b):
+				continue
+			var uid := int(b["uid"])
+			if game.homes.fill_building(uid) > 0:
+				_act()
+			while game.inside_total(b) < game.capacity(b) and game.coins - _kept() >= EGG_HEN_SPARE \
+					and _act() and game.homes.put_in_home(uid, EGG_HEN, {"buy": true}):
+				b = game.object_by_uid(uid)
+			if game.is_ready(b) and _act():
+				game.collect(uid)
 		for colour: String in game.mystery.mystery_eggs.keys():
 			while int(game.mystery.mystery_eggs[colour]) > 0 and _act():
 				game.mystery.open_mystery_egg(colour)
