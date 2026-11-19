@@ -1071,6 +1071,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   small, the phone is GPU-bound at 2040x918 with MSAA 2x and shadows (Quality: changing mid's defaults changes the
   look: report, do not build); if large, the per-frame scripts (perf_probe's _processing list) are next.
   Also: AutoQuality steps the phone to low within the first session (the relaunch reported "low").
+  Measured after the merge (headless, perf_probe -- --quality=mid --size=2400x1080 --tiles=12): the showcase's
+  CPU frame 6.9 ms here (225 things, 769 mesh nodes, 2,357 nodes); shadow casters at full detail: Objects3D 512k
+  triangles, BuildingFill 153k, DecorLayer 130k, LinkLayer 35k. Container-to-A05s CPU is roughly 4-5x, so ~30 ms
+  of the phone's 95 ms is likely scripts and the rest the GPU (2040x918, MSAA 2x, a 2048 shadow map over 70 m):
+  confirm with a renderer probe of draws and shadow triangles at the playing zoom before choosing. A cheaper
+  shadow caster (each object's lowest LOD cast as shadow only, the look kept: `cast_shadow` on a far LOD, or
+  Instancer batches for shadows) is the first candidate that changes nothing seen; it needs a 1x before/after.
 
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
