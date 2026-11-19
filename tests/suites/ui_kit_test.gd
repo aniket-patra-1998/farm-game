@@ -272,3 +272,23 @@ static func _args(text: String, from: int) -> PackedStringArray:
 			start = k + 1
 		k += 1
 	return out
+
+
+## A count tile's number sits in its bottom corner (the label fills the tile; centred, it lay across the picture's
+## middle, over a tree's crown in an orchard's sheet). A "0/4" short of need stays a pill in the same corner.
+func test_528_a_count_sits_in_the_tiles_corner() -> void:
+	for short: bool in [false, true]:
+		var t := UiKit.count_tile(PlaceholderTexture2D.new(), "×1", "", short)
+		add_child(t)
+		await get_tree().process_frame
+		var tile: Control = t.get_child(0)
+		var label: Label
+		for c in tile.get_children():
+			if c is Label:
+				label = c
+		var text_bottom := label.position.y + label.size.y
+		_check(text_bottom >= tile.size.y - 1.0, "the count reaches the tile's bottom (short: %s): %.0f of %.0f"
+			% [short, text_bottom, tile.size.y])
+		_check(label.size.y < tile.size.y or label.vertical_alignment == VERTICAL_ALIGNMENT_BOTTOM,
+			"the count is written at the bottom (short: %s)" % short)
+		t.queue_free()

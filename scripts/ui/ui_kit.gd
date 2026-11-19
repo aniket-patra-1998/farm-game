@@ -404,7 +404,10 @@ static func count_tile(picture: Variant, count: String, name: String, short := f
 		label.size_flags_horizontal = Control.SIZE_SHRINK_END
 		label.size_flags_vertical = Control.SIZE_SHRINK_END
 	else:
-		# (Off the rounded corner by a card's padding, so the count is never cut at the tile's edge.)
+		# (Off the rounded corner by a card's padding, so the count is never cut at the tile's edge. The label
+		# fills the tile so its bottom alignment puts the count in the corner, not across the picture's middle.)
+		label.size_flags_horizontal = Control.SIZE_FILL
+		label.size_flags_vertical = Control.SIZE_FILL
 		var room := StyleBoxEmpty.new()
 		room.set_content_margin_all(UiTheme.size("card_pad"))
 		room.content_margin_top = 0
