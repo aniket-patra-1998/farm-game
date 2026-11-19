@@ -709,6 +709,19 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   never (target about 7). Reported for the owner (a crafting rule, outside goals): only crops some owned building
   uses drop bushels; or a full stall swaps out the most-held crop; or a throw-away button.
 - Next: after the owner's pick on the stall, re-measure the crafter's payback; first hour bot again with today's jobs.
+- Run 12 (19 Nov 06:35-07:05 IST): **main green again** (8af35a8, goals/9-new-farm-hour). CI's Tests ran at
+  last (gdlint fixed in run 11) and failed only test 483. Cause: `Game.reset_game` (`_new_game`) sets
+  `debug_time_offset = 0`, so the bot's and the tests' "move the clock to the first visit's hour, then reset" did
+  nothing: the first visit fell at the hour the run started (early morning IST the first hour's strawberries
+  withered before the 13:00 visit). `BalanceSim.new_farm()` resets, then sets the clock back to the last time it
+  read the first visit's hour and lets `Persistence.watch_clock` move every timer; the bot's `_ready` and tests
+  483, 503, 515, 529 use it (483 checks the hour). Checked under TZ Asia/Kolkata, America/New_York, Asia/Tokyo.
+- First hour now (seeds 1-2): Welcome done by minute 8, then 52 idle minutes at 2 coins (every plot planted,
+  open goals need coins or ripe crops). Reported for the owner (pacing against Part 2's minutes: leave, pace
+  Welcome, or an overnight-crop last step). Not built: it changes step 4's content the spec does not decide.
+- Next (the window ends 08:35; the 07:35 run is the last full one): nothing decided is left in this lane. Waiting on
+  the owner: the stall jam (step 8 crafting), idle coins past level 15 (step 8), the first-hour pacing; steps 5
+  and 9 are new looks (a sheet first). A last run can re-measure after any owner pick, else write the summary.
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
