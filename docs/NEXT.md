@@ -1347,3 +1347,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
 - Launch: privacy-safe analytics (where players quit, what they buy, unused items) for tuning the economy from real
   play; clock-tamper protection against server time with cloud saves. No AI in the game itself.
+
+## 19 Nov, late: gentler start, rare coop, late-game design
+- Merged: young-farm daily seed help (Game._help_young_farm, Balance economy.young_farm_*), Welcome's last step
+  pays 170, rare coop gives its 2 Mystery Eggs (goal reward "eggs"). Tests 585, 586.
+- Waiting on the owner: the late-game design (climbing upgrade prices + building wear, Claude Doc
+  "Farm game: a harder late game"). Build nothing of it before the six questions there are answered.
