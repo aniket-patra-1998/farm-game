@@ -116,3 +116,8 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   invalid-matrix details: `gcloud firebase test android run` with `--format=json`, or the REST API's
   testMatrices.get on the matrix id: e.g. a malformed APK, quota, or the device/version pair), since it may mean
   the 32-bit build broke the APK; then run the A05s and the A13 on it.
+- 19 Nov 09:40 (perf run 13): that failure was TEST_QUOTA_EXCEEDED (5 phone runs a day, used on 18 Nov Pacific
+  time), not the APK; phone runs again after 13:30 IST. Item 1: the app quits or dies at ~250 s, then Robo
+  relaunches it and the relaunch's start-only report hid the finished one; phone_bench now keeps the done (else
+  longest) report and prints how each process ended (cc3134d). Item 2, slice 1: the HUD's panels and the building
+  sheet load by path, 37.6k -> 34.1k lines compiled before the first screen (NEXT.md, Perf run 13).

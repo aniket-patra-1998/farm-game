@@ -418,5 +418,5 @@ class GoalFace:
 	func _draw() -> void:
 		draw_circle(size / 2.0, minf(size.x, size.y) / 2.0, UiTheme.color("paper"))
 		var edge := minf(size.x, size.y) * RING_INSET   # (the ring on the paper, not on the grass)
-		BuildingSheet.Ring.paint(self, Rect2(Vector2.ONE * edge, size - Vector2.ONE * edge * 2.0), share, "",
+		ProgressRing.paint(self, Rect2(Vector2.ONE * edge, size - Vector2.ONE * edge * 2.0), share, "",
 			get_theme_default_font())

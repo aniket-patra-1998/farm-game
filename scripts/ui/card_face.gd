@@ -127,7 +127,7 @@ func _draw() -> void:
 	if _big != null:
 		_big.visible = face.has("icon")
 	if face.has("ring"):
-		BuildingSheet.Ring.paint(self, spot, float(face["ring"][0]), str(face["ring"][1]), font)
+		ProgressRing.paint(self, spot, float(face["ring"][0]), str(face["ring"][1]), font)
 	elif face.has("icon"):
 		_show_big(spot)
 	elif picture != null:

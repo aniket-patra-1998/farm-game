@@ -560,7 +560,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   passes for every phone shape; then the checkpoint picture (noon, 20:9) under "Goals: waiting for your look".
 - Run 3 (18 Nov 21:37-22:25 IST): step 3 merged (8212d49, branch goals/3-hud-goals). `HudGoals`
   (scripts/hud/hud_goals.gd, `hud.goals`, `hud.show_goals(tab)`): up to three faces under the coin meter
-  (`GoalFace`: paper disc, `BuildingSheet.Ring.paint` ring, `UiKit.count_badge` "!" when done), rebuilt on
+  (`GoalFace`: paper disc, `ProgressRing.paint` ring, `UiKit.count_badge` "!" when done), rebuilt on
   `Game.goals_changed`; the sheet is `book.open_tabs` Story/Today/Projects; daily jobs one line (calendar, word bar,
   Show me, Swap/Collect), chains and projects a card (portrait, giver name, `say` as a locale key, a bar per task,
   Collect). Show me per verb in data/goals.json `show` (tool:<id>, seeds, market, farm:<spot kind>|farm:item);
@@ -949,6 +949,28 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   compiling is, the lever is fewer lines compiled before the first screen (scripts loaded by path after the first
   frame, nothing seen changed). 2) If "world" holds most of main's 2.2 s, time _use_3d's parts. 3) Why the app
   dies in the foreground during the wait: Test Lab's game-loop type, or a smaller logcat window.
+- Run 13 (19 Nov 08:50 - 09:40 IST). Phone (A05s, fbc450b, 03:00 UTC run): engine 1241, scripts 4953 (so ~3.7 s
+  compiling), ready 5664, data 5818, main_made 5833, world 7859, hud 7966, startup 8171 ms. The 08:45 "failed during
+  validation" (A13) was TEST_QUOTA_EXCEEDED (the Spark plan's 5 a day, all used on 18 Nov Pacific time), not the
+  32-bit APK: the next phone run can start after 08:00 UTC = 13:30 IST.
+  Why the app "dies": Robo's 240 s wait ends, the app is gone by ~250-310 s (it quits when the benchmark is done, or
+  dies), then Robo presses HOME and relaunches it, and the relaunch prints a start-only report that was the log's
+  last BENCH line. Merged cc3134d: phone_bench keeps the done line, else the longest, lists every BENCH line by
+  process and prints each reporting process's last lines (quit, crash or killed). The next phone run says which.
+  The start, slice 1 (perf/panels-later): FarmHud loads its nine panels (Market, crafting, buildings, Barn, feed,
+  books, inbox, settings, seeds) and BuildingSheet by path, on first use (and one a frame after the first screen,
+  `_load_panels`), never naming their classes; BuildingSheet.Ring is ProgressRing (scripts/ui), so CardFace and the
+  goal faces no longer pull in the sheet (which named FarmHud and so every panel). Lines compiled before the first
+  screen: 37,644 -> 34,083 (before Game made: 35,596 -> 31,967). Headless from text, autoloads + main.tscn loaded,
+  7 alternating pairs: median 1,883 -> 1,635 ms. Test 545. Panels rendered before/after (home, goals, seeds): same.
+  How lines were counted: a scratch script (not committed) walks autoloads + main scene over class names (outside
+  strings and comments), preload()s and scene resources; worth a tools/ script if later slices need it.
+- Next run: 1) after 13:30 IST start a phone run on the newest APK (A05s): `start.scripts - start.engine` against
+  3.7 s, and whether the benchmark reached "done". 2) Next slices of the start, biggest first by lines only the
+  first screen does not need (the same counting): world3d builders whose look ships as a file (PERF_RUN 2a);
+  WorldFx -> PlaceholderArt (1,664 lines, named from Game's own deps); ItemIcons/ThingIcon (shop pictures, first
+  needed when a menu opens); HudGoals' goal sheet; debug tools (LoadBenchmark, LoadTrace, ShowcaseFarm named by
+  game.gd).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens

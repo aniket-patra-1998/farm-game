@@ -34,7 +34,7 @@ func test_145_every_hud_panel_opens_on_the_showcase_farm() -> void:
 		seen[key] = true
 		hud.show_building(int(o["uid"]))
 		opened += 1
-		var sheet_up := hud.sheet != null and hud.sheet.visible   # (a finished building opens as its sheet)
+		var sheet_up: bool = hud.sheet != null and hud.sheet.visible   # (a finished building opens as its sheet)
 		_check(book.visible or sheet_up, "tapping %s opens its panel" % key)
 	_check(opened > 20, "many different panels were opened (%d)" % opened)
 	var box := VBoxContainer.new()
@@ -461,7 +461,7 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	hud.show_building(int(coop["uid"]))
 	_check(hud.sheet != null and hud.sheet.visible, "a finished home opens as its sheet")
 	_check(not (hud.get("book") as BookPanel).visible, "not as the full panel")
-	var before := hud.sheet.find_children("*", "Control", true, false)
+	var before: Array[Node] = hud.sheet.find_children("*", "Control", true, false)
 	var words := ""
 	for l: Label in hud.sheet.find_children("*", "Label", true, false):
 		words += l.text + "|"
@@ -469,7 +469,7 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	# A change on the farm, and tapping the same home again, refill it: nothing is built again.
 	Game.objects_changed.emit()
 	hud.show_building(int(coop["uid"]))
-	var after := hud.sheet.find_children("*", "Control", true, false)
+	var after: Array[Node] = hud.sheet.find_children("*", "Control", true, false)
 	_eq(after.size(), before.size(), "refilled with the same parts")
 	_check(after.size() > 0 and after[0] == before[0] and after[-1] == before[-1], "the very same ones")
 	# One window at a time: a panel opened from the HUD puts the sheet away (it was drawn over the panel).
@@ -824,7 +824,7 @@ func test_366_a_home_sheet_fits_what_it_says_and_stays_on_the_screen() -> void:
 		await get_tree().create_timer(BuildingSheet.SLIDE + 0.05).timeout
 		_sheet_fits(hud.sheet, "%s's sheet" % id)
 	_check(homes >= 2, "several homes opened as sheets (%d)" % homes)
-	var sheet := hud.sheet
+	var sheet: BuildingSheet = hud.sheet
 	if sheet == null:
 		main.queue_free()
 		await get_tree().process_frame
@@ -1218,5 +1218,28 @@ func test_525_the_top_bar_fits_the_longest_name_and_the_biggest_counters() -> vo
 				if a != b and a.get_global_rect().intersects(b.get_global_rect()):
 					_check(false, "%s: %s and %s don't overlap at the widest" % [shape, a.name, b.name])
 	window.size = was
+	main.queue_free()
+	await get_tree().process_frame
+
+
+func test_545_the_panels_compile_after_the_first_screen() -> void:
+	# The start compiles every script the first screen names (8.2 s on the Galaxy A05s, ~3.7 s of it compiling): the
+	# HUD loads its panels and the building sheet by path, so nothing on the way to the first screen names their
+	# classes (docs/PERF_RUN.md, the start). Each panel is still its own class, made once, on first use.
+	for path: String in ["res://scripts/hud.gd", "res://scripts/ui/card_face.gd", "res://scripts/hud/hud_goals.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		for cls in ["HudMarket", "HudCrafting", "HudBuildings", "HudBarn", "HudFeed", "HudBooks", "HudInbox",
+				"HudSettings", "HudSeeds", "BuildingSheet"]:
+			_check(not RegEx.create_from_string("\\b%s\\b" % cls).search(code), "%s does not name %s" % [path, cls])
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	for id: StringName in FarmHud.PANEL_SCRIPTS:
+		var panel: Variant = hud.get(id)
+		_check(panel != null and (panel as RefCounted).get_script().resource_path == FarmHud.PANEL_SCRIPTS[id],
+			"%s is its own panel" % id)
+		_check(is_same(panel, hud.get(id)), "%s is made once" % id)
 	main.queue_free()
 	await get_tree().process_frame

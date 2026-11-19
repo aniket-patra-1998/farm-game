@@ -24,12 +24,19 @@ const SUN := Color("#ffd34d")
 
 const LOCKED := Color("#d8cbb0")
 const BUTTON_EDGE := 0.5   # a panel button's edge, against the theme's button border
+const PANEL_SCRIPTS := {   # a panel's name -> its script (loaded when first used: the var of that name)
+	&"market": "res://scripts/hud/hud_market.gd", &"crafting": "res://scripts/hud/hud_crafting.gd",
+	&"buildings": "res://scripts/hud/hud_buildings.gd", &"barn": "res://scripts/hud/hud_barn.gd",
+	&"feed": "res://scripts/hud/hud_feed.gd", &"books": "res://scripts/hud/hud_books.gd",
+	&"inbox": "res://scripts/hud/hud_inbox.gd", &"settings": "res://scripts/hud/hud_settings.gd",
+	&"seeds": "res://scripts/hud/hud_seeds.gd"}
+const SHEET_SCRIPT := "res://scripts/hud/building_sheet.gd"   # a tapped building's sheet (loaded when first tapped)
 
 
 var top: HudTop
 var goals: HudGoals   # the goal faces under the coin meter and the goal sheet
 var reveals: HudReveal   # the tools and menu buttons a new farm sees as goals need them
-var sheet: BuildingSheet   # a tapped home's sheet (made when first needed, then kept)
+var sheet   # a tapped home's sheet, a BuildingSheet (made when first needed, then kept; untyped, not named here)
 var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
 var side: HudSide
@@ -43,6 +50,27 @@ var next_ready: Callable            # set by Main: goes to the next thing ready 
 var fit_view: Callable              # set by Main: shows the whole farm
 var book: BookPanel      # every full panel opens in it (panels and the sheet reach it as hud.book)
 var building_uid := -1   # the building whose panel is open
+# Each panel's script is loaded by path the first time it is used (or soon after the first screen: _load_panels),
+# never named as a class here: naming them compiled them and all they name (~3.6k lines) before the farm appeared
+# (docs/PERF_RUN.md, the start).
+var market:   # an untyped panel (its class is not named here)
+	get: return _panel(&"market")
+var crafting:
+	get: return _panel(&"crafting")
+var buildings:
+	get: return _panel(&"buildings")
+var barn:
+	get: return _panel(&"barn")
+var feed:
+	get: return _panel(&"feed")
+var books:
+	get: return _panel(&"books")
+var inbox:
+	get: return _panel(&"inbox")
+var settings:
+	get: return _panel(&"settings")
+var seeds:
+	get: return _panel(&"seeds")
 
 var _reveal: RevealCard   # the reveal of a mystery egg or box (made when first needed, then kept)
 var _away: AwayCard   # the While you were away card (made when first needed, then kept)
@@ -63,16 +91,25 @@ var _coin_roll: Tween
 
 # The panels moved out of this class (scripts/hud/): each builds its content into the book.
 var _root: Control   # the interface's root, kept inside the safe area
-@onready var market := HudMarket.new(self)
-@onready var crafting := HudCrafting.new(self)
-@onready var buildings := HudBuildings.new(self)
-@onready var barn := HudBarn.new(self)
-@onready var feed := HudFeed.new(self)
-@onready var books := HudBooks.new(self)
-@onready var inbox := HudInbox.new(self)
-@onready var settings := HudSettings.new(self)
-@onready var seeds := HudSeeds.new(self)
+var _panels := {}   # a panel's name -> the panel, made the first time it is asked for
 
+
+
+## The panel called `id` (PANEL_SCRIPTS), made the first time it is asked for.
+func _panel(id: StringName) -> Variant:
+	if not _panels.has(id):
+		_panels[id] = (load(PANEL_SCRIPTS[id]) as GDScript).new(self)
+	return _panels[id]
+
+
+## The panels' scripts compiled soon after the first screen, one a frame (under the loading cover, while the farm
+## builds), so the first tap on a menu does not wait for its script.
+func _load_panels() -> void:
+	for path: String in PANEL_SCRIPTS.values() + [SHEET_SCRIPT]:
+		await get_tree().process_frame
+		if not is_inside_tree():
+			return
+		load(path)
 
 
 ## The top strip the counters stand in (the camera keeps the farm's middle clear of it), at the interface's scale.
@@ -147,6 +184,7 @@ func _ready() -> void:
 	_refresh()
 	_refresh_clock()
 	_refresh_tutorial()
+	_load_panels()
 
 
 # ---------------------------------------------------------------- layout
@@ -439,8 +477,9 @@ func show_market_for(id: String) -> void:
 	var d := Game.catalog.get_def(id)
 	var kind := d.kind if d != null else id
 	var first := 1
-	for k in HudMarket.SHELVES.size():
-		if str(HudMarket.SHELVES[k][0]) == kind:
+	var shelves: Array = (market.get_script() as GDScript).SHELVES
+	for k in shelves.size():
+		if str(shelves[k][0]) == kind:
 			first = k + 1   # (Seeds is tab 0)
 	book.open_tabs(tr("MARKET"), market.tabs(), first)
 
@@ -463,11 +502,12 @@ func show_building_timed(uid: int) -> void:
 	PerfReadout.note(str(o.get("id", "")))   # (a building opened)
 	if o.is_empty():
 		return
-	if BuildingSheet.suits(o):
+	var sheet_script: GDScript = load(SHEET_SCRIPT)
+	if sheet_script.suits(o):
 		# Every building (and an animal to feed, a young one, a bloom, a vehicle) opens as its sheet at the bottom,
 		# the farm still in view: everything it does is in it.
 		if sheet == null:
-			sheet = BuildingSheet.new(self)
+			sheet = sheet_script.new(self)
 			book.get_parent().add_child(sheet)
 		book.close_panel()
 		sheet.open(uid)

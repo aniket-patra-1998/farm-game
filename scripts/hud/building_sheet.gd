@@ -59,7 +59,7 @@ var _uid := -1
 var _pic: TextureRect
 var _name: Label
 var _state: Label
-var _ring: Ring
+var _ring: ProgressRing
 var _bar: ProgressBar
 var _inside: HBoxContainer
 var _inside_scroll: ScrollContainer   # (a full orchard's every kind would push the sheet off the top)
@@ -503,7 +503,7 @@ func _build_head(gap: int) -> Control:
 	words.add_child(title)
 	words.add_child(_state)
 	row.add_child(words)
-	_ring = Ring.new()
+	_ring = ProgressRing.new()
 	_ring.custom_minimum_size = Vector2.ONE * UiTheme.size("panel_icon") * 0.7
 	_ring.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_ring)
@@ -796,7 +796,7 @@ func _clock_other(o: Dictionary) -> void:
 	_collect.visible = true
 	_collect.disabled = false
 	_collect.modulate.a = 1.0
-	var state := hud.buildings.state_line(o) if Game.is_building_item(str(o["id"])) else FarmGrid.status_of(o)
+	var state: String = hud.buildings.state_line(o) if Game.is_building_item(str(o["id"])) else FarmGrid.status_of(o)
 	var lines: Array[String] = []
 	match _kind:
 		Kind.CRAFT:
@@ -833,39 +833,6 @@ func _clock_other(o: Dictionary) -> void:
 	_state.visible = state != ""
 	_detail.text = "\n".join(PackedStringArray(lines))
 	_detail.visible = not lines.is_empty()
-
-
-## How far along a home is, as a ring that fills.
-class Ring:
-	extends Control
-
-	var share := 0.0: set = _set_share
-	var words := "": set = _set_words   # the time left, written in the middle
-
-	func _set_share(value: float) -> void:
-		share = value
-		queue_redraw()
-
-	func _set_words(value: String) -> void:
-		if value != words:
-			words = value
-			queue_redraw()
-
-	func _draw() -> void:
-		paint(self, Rect2(Vector2.ZERO, size), share, words, get_theme_default_font())
-
-	## Draws a ring `share` full with `words` in the middle on `on`, inside `rect` (a CardFace draws one itself).
-	static func paint(on: CanvasItem, rect: Rect2, filled: float, middle: String, font: Font) -> void:
-		var r := minf(rect.size.x, rect.size.y) / 2.0 - 4.0
-		var c := rect.get_center()
-		on.draw_arc(c, r, 0.0, TAU, 40, UiTheme.color("track"), 6.0, true)
-		if filled > 0.0:
-			on.draw_arc(c, r, -PI / 2.0, -PI / 2.0 + TAU * filled, 40, UiTheme.color("accent"), 6.0, true)
-		if middle != "":
-			var px := UiTheme.min_font()
-			var w := font.get_string_size(middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
-			on.draw_string(font, c + Vector2(-w / 2.0, px * 0.35), middle, HORIZONTAL_ALIGNMENT_LEFT, -1, px,
-				UiTheme.color("ink"))
 
 
 ## The little bar at the top of the sheet that says it can be dragged.

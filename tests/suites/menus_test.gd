@@ -93,7 +93,7 @@ func test_369_every_building_opens_as_the_sheet() -> void:
 		seen[id] = true
 		hud.show_building(int(o["uid"]))
 		await _settle()
-		var sheet := hud.sheet
+		var sheet: BuildingSheet = hud.sheet
 		_check(sheet != null and sheet.visible and not book.visible, "%s opens as the sheet" % id)
 		if sheet == null or not sheet.visible:
 			continue
@@ -343,7 +343,7 @@ func test_383_the_sheet_drags_tall_and_closed() -> void:
 				home_uid = int(x["uid"]) if home_uid < 0 else home_uid
 	hud.show_building(craft_uid)
 	await get_tree().create_timer(BuildingSheet.SLIDE + 0.1).timeout
-	var sheet := hud.sheet
+	var sheet: BuildingSheet = hud.sheet
 	var compact := sheet.size.y
 	await _pull(sheet, -200.0)
 	_check(sheet.tall, "pulled up: tall")
