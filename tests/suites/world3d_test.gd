@@ -2364,8 +2364,9 @@ func test_447_standing_decorations_have_a_contact_shade_as_animals_do() -> void:
 
 
 func test_497_the_phone_benchmark_line_reads_back_whole() -> void:
-	# The phone run (phone_bench.yml) takes the last "BENCH {..}" line in a phone's log: after every phase the
-	# report so far, so a run cut short still says what it measured, and "done" says whether it got to the end.
+	# The phone run (phone_bench.yml) reads the "BENCH {..}" lines in a phone's log: after every phase the report
+	# so far, so a run cut short still says what it measured, and "done" says whether it got to the end (it keeps
+	# the done one, else the longest: Robo relaunches the app after it quits, which starts a new report).
 	var report := {"device": {"model": "test"}, "startup_ms": 12, "done": false, "showcase_cold": {"built_ms": 3}}
 	var line := LoadBenchmark.line_of(report)
 	_check(line.begins_with("BENCH {") and line.ends_with("}") and not line.contains("\n"), "one line (%s)" % line)

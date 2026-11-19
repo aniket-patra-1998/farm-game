@@ -90,7 +90,32 @@ jobs:
           found=0
           for log in $(gcloud storage ls "$bucket/$dir/**/logcat"); do
             name=$(echo "$log" | sed "s#$bucket/$dir/##; s#/logcat##; s#/#_#g")
-            line=$(gcloud storage cat "$log" | grep -o 'BENCH {.*}' | tail -1 | sed 's/^BENCH //')
+            gcloud storage cat "$log" > logcat.txt
+            # (Robo relaunches the app after the benchmark quits, and the relaunched app starts a new report: the
+            # last BENCH line of the log was that start-only report, hiding the finished one (A05s, 19 Nov). The
+            # report kept is the finished one, else the one that got furthest: the longest.)
+            line=$(python3 -c '
+          import json, re, sys
+          best = None
+          for raw in open(sys.argv[1], errors="replace"):
+              m = re.search(r" (\d+) +\d+ [VDIWEF] godot *: BENCH (\{.*\})", raw)
+              if not m:
+                  continue
+              try:
+                  r = json.loads(m.group(2))
+              except ValueError:
+                  continue
+              print("BENCH line from process %s: done=%s, %d parts (%s)" % (m.group(1), r.get("done"), len(r),
+                  ", ".join(k for k in r if k not in ("device", "start"))), file=sys.stderr)
+              key = (bool(r.get("done")), len(m.group(2)))
+              if best is None or key >= best[0]:
+                  best = (key, m.group(2))
+          print(best[1] if best else "")' logcat.txt)
+            echo "--- $name: the app's last lines in each process that reported (how it ended: quit, crash, killed)"
+            for pid in $(grep -oE ' [0-9]+ +[0-9]+ [VDIWEF] godot *: BENCH' logcat.txt | awk '{print $1}' | sort -u); do
+              echo "process $pid:"; grep -E "^[0-9-]+ [0-9:.]+ +$pid " logcat.txt | tail -15 || true
+              grep -E "\($pid\)|pid $pid|pid=$pid" logcat.txt | grep -iE "died|kill|signal|crash|lowmem|ANR" | tail -5 || true
+            done
             echo "--- $name: the game's log lines (the last 40)"
             gcloud storage cat "$log" | grep -iE "godot|BENCH|FATAL|AndroidRuntime" | tail -40 || true
             # (why the app closed early: the A05s run of 18 Nov was closed ~4 s after the start, the Robo script's

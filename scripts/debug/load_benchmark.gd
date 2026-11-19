@@ -84,7 +84,7 @@ func _run() -> void:
 		get_tree().quit()
 
 
-## The report so far, as the log line (the last one in a log is the newest) and in FILE.
+## The report so far, as the log line (phone_bench.yml keeps a log's done line, else its longest) and in FILE.
 static func line_of(report: Dictionary) -> String:
 	return MARK + JSON.stringify(report)
 
