@@ -486,7 +486,10 @@ func _refresh_clock() -> void:
 	top.season_icon.kind = str(HudTop.SEASON_ICONS.get(Game.season(), "sun"))
 	top.weather_icon.kind = "moon" if state == "clear" and night else str(HudTop.WEATHER_ICONS.get(state, "sun"))
 	top.clock.text = DayCycle.clock_text(hour)
-	top.show_forecast(Game.forecast() if Season.enabled() else {})
+	# One message at a time at the top (owner, 19 Nov: three lines stacked over the farm): while a step's hint
+	# shows, the forecast waits.
+	var hinting := _tutorial != null and _tutorial.visible
+	top.show_forecast(Game.forecast() if Season.enabled() and not hinting else {})
 
 
 # ---------------------------------------------------------------- menus

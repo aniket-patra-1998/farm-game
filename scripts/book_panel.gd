@@ -24,6 +24,7 @@ const DIM := 0.35          # the backdrop's darkness
 ## The panel uses the screen (a phone's 20:9 especially): its scrolling area is this share of the screen's
 ## height, and it is as wide as the screen allows up to this many times the screen's height.
 const HEIGHT_SHARE := 0.66
+const LEAST_SHARE := 0.3   # a panel with little in it is this short at least (of the screen's height)
 const INFO_SIZE := 1.6   # an ⓘ's size against the text beside it
 const INFO_LEAST := 40.0   # ..and never smaller than this (a finger must hit it)
 const PICTURE_PILL := 1.4   # a picture pill's side, in panel buttons' heights
@@ -32,6 +33,7 @@ const SECTION_LINE := 1.0   # px of the thin line under a section (card_frame)
 const SECTION_PAD := 10.0   # px above and below a section's content
 
 var shape := Shape.CARDS   # what the panel open holds (`open_panel`)
+var _tallest := 0.0         # the tallest page shown since the panel opened (its height follows it)
 var _title: Label
 var _dim: ColorRect
 var _frame: MarginContainer   # (what moves as it opens: the paper's holder, outside any container)
@@ -129,6 +131,20 @@ func _fit_screen() -> void:
 	_panel.custom_minimum_size.x = width_for(view.x, view.y) if shape == Shape.CARDS \
 		else minf(UiTheme.size("book_list_width"), view.x - UiTheme.size("book_inset"))
 	_scroll.custom_minimum_size.y = view.y * HEIGHT_SHARE
+	_tallest = 0.0
+
+
+## The panel as tall as what it holds (owner, 19 Nov: a goal sheet with one goal filled the screen), between
+## LEAST_SHARE and HEIGHT_SHARE of the screen; it only grows while open, so a tab never makes it jump smaller.
+## Measured a frame after a page is built, when its lines know their width.
+func _fit_height() -> void:
+	await get_tree().process_frame
+	var shown := page()
+	if shown == null or not is_open():
+		return
+	var view := get_viewport_rect().size
+	_tallest = maxf(_tallest, shown.get_combined_minimum_size().y)
+	_scroll.custom_minimum_size.y = clampf(_tallest, view.y * LEAST_SHARE, view.y * HEIGHT_SHARE)
 
 
 ## How wide a panel is on a screen `view_w` across (and `view_h` high: the screen's own when not given): as wide
@@ -262,6 +278,7 @@ func _build_now() -> void:
 	_pages[_tab] = fresh
 	_stale.erase(_tab)
 	_builder.call(fresh)
+	_fit_height()
 
 
 ## Shows the tab open's page, building it the first time.
