@@ -4,7 +4,9 @@ extends Node
 ## to a moment after the sweep's end (run with --fixed-fps 30, so a frame is 1/30 s however slow the render).
 ## --produce=<json> tries a variant of Balance feel.produce. --hour=<h> as look_shot (12.5 noon, 18.5 dusk);
 ## --crop=<id>; --plots=<n>. --collect: a round of collecting instead (up to --plots= of the farm's animals and
-## trees made ready, the farmer collecting from each; their own pictures fly).
+## trees made ready, the farmer collecting from each; their own pictures fly). --touch: a tree, then a building,
+## tapped (each swaying or puffing), --every= frames apart for a second and a half each; --feel=<json> tries a
+## variant of Balance feel.touch.
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --fixed-fps 30 --path . res://tools/juice_shot.tscn
 
@@ -18,9 +20,12 @@ func _ready() -> void:
 	var plots := 8
 	var every := 6
 	var collect := false
+	var touch := false
 	for a in OS.get_cmdline_user_args():
 		if a == "--collect":
 			collect = true
+		if a == "--touch":
+			touch = true
 		if a.begins_with("--out="):
 			out = a.substr(6)
 		elif a.begins_with("--hour="):
@@ -31,6 +36,10 @@ func _ready() -> void:
 			plots = int(a.substr(8))
 		elif a.begins_with("--every="):
 			every = int(a.substr(8))
+		elif a.begins_with("--feel="):   # a variant of Balance feel.touch for --touch, as JSON merged over it
+			var touch_look := Balance.d("feel.touch").duplicate()
+			touch_look.merge(JSON.parse_string(a.substr(7)), true)
+			Balance.override("feel.touch", touch_look)
 		elif a.begins_with("--produce="):   # a variant of Balance feel.produce, as JSON merged over it
 			var look := Balance.d("feel.produce").duplicate()
 			look.merge(JSON.parse_string(a.substr(10)), true)
@@ -53,6 +62,9 @@ func _ready() -> void:
 	Game.weather_override = "clear"
 	var grid: FarmGrid = main.get("grid")
 	var cam: FarmCamera = main.get("camera")
+	if touch:
+		await _touch_round(grid, cam, every, out)
+		return
 	if collect:
 		await _collect_round(grid, cam, plots, every, out)
 		return
@@ -120,4 +132,36 @@ func _collect_round(grid: FarmGrid, cam: FarmCamera, most: int, every: int, out:
 		shot += 1
 		quiet = quiet + every if Game.player.queue.is_empty() else 0
 	print("juice_shot: %d frames, a round of %d collects" % [shot, uids.size()])
+	get_tree().quit()
+
+
+## A tree, then a building, tapped where they stand, frames written as for a sweep.
+func _touch_round(grid: FarmGrid, cam: FarmCamera, every: int, out: String) -> void:
+	var picks: Array[int] = []
+	for i in Game.plots.size():   # (a new farm has no tree of its own: an apple tree on free grass, still growing)
+		if Game.on_farm(i) and not Game.is_occupied(i) and GameState.row_of(i) > 4 and GameState.col_of(i) > 4:
+			Game.add_object({"uid": Game.next_uid, "id": "apple_tree", "row": GameState.row_of(i),
+				"col": GameState.col_of(i), "t": Game.now()})
+			Game.next_uid += 1
+			break
+	for kind: String in ["sway", "puff"]:
+		for obj: Dictionary in Game.objects:
+			if Objects3D.touch_answer(obj) == kind and not Game.is_ready(obj):
+				picks.append(int(obj["uid"]))
+				break
+	for k in 90:
+		await RenderingServer.frame_post_draw
+	var shot := 0
+	for u in picks:
+		var o := Game.object_by_uid(u)
+		cam.snap(grid.to_global(grid.center_of(Game.index_of(int(o["row"]), int(o["col"])))), 1.8)
+		for k in 12:
+			await RenderingServer.frame_post_draw
+		grid.call("_poke", u)
+		for n in maxi(45 / maxi(every, 1), 1):
+			for k in every:
+				await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/f%03d.png" % shot))
+			shot += 1
+	print("juice_shot: %d frames, %d things tapped" % [shot, picks.size()])
 	get_tree().quit()

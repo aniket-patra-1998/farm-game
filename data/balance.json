@@ -825,6 +825,10 @@
    "v": {"px": 120, "rise": 110, "pop_seconds": 0.22, "hang_seconds": 0.12, "arc": 120, "fly_seconds": 0.6, "land_scale": 0.45, "trail": true, "sparks": 18, "spark_seconds": 0.45, "spark_px": 22},
    "note": "a harvested crop's picture pops out of the plot (rising `rise` px over `pop_seconds`, shown `px` across), hangs `hang_seconds`, then arcs `arc` px high to the coin counter in `fly_seconds`, landing at `land_scale`; `trail` gives it `sparks` soft sparks living `spark_seconds`, up to `spark_px` across (only where Quality fx_trails allows) (scripts/fx/fx_layer.gd). Wow build"
   },
+  "touch": {
+   "v": {"sway_degrees": 8.0, "sway_swings": 3, "sway_fade": 0.5, "sway_seconds": 0.75, "leaves": 9, "leaf_size": 0.15, "leaf_life": 1.3, "leaf_fall": 0.55, "leaf_tint": "#a9cf4cf2", "puffs": 4, "puff_size": 0.3, "puff_life": 1.4, "puff_rise": 0.55, "puff_tint": "#f4efe6d9"},
+   "note": "a tapped tree leans `sway_degrees` from its trunk and rocks back in `sway_swings` swings, each `sway_fade` of the last, over `sway_seconds`, and lets `leaves` leaves go from its crown (`leaf_size` tiles, falling `leaf_fall` tiles a second for `leaf_life` s); a tapped building puffs `puffs` soft puffs from its roof (`puff_size` tiles, rising `puff_rise` for `puff_life` s); pooled, one draw (scripts/world3d/objects_3d.gd answer_touch). Wow build"
+  },
   "combo_min": {
    "v": 5,
    "note": "a streak of the same work at least this long says its count once, bigger, over the last plot when the farmer has no more of that work queued (the sweep's end: x8); 0 never (scripts/farm_grid.gd). Wow build"

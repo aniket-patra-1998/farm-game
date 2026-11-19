@@ -154,6 +154,7 @@ func _transformed(at: Vector3, grand: bool) -> void:
 ## Something was tapped: it bounces, and an animal looks round at you.
 func _poked(uid: int) -> void:
 	objects.bounce(uid)
+	objects.answer_touch(uid)   # (a tree's leaves, a building's puff)
 	objects.splash(uid, IsoProjection.ground_of(grid.last_tap_at))   # (its water, if it has any, splashes)
 	var mind := grid.life.mind(uid)
 	if mind != null:

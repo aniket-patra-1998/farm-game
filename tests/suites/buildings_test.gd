@@ -605,3 +605,26 @@ func test_381_buildings_are_known_by_their_role_not_their_id() -> void:
 			found.append("%s: %s" % [f.get_file(), m.get_string()])
 	_eq(found, [] as Array[String], "no building is checked by its id in the rules or the interface")
 	_done(g)
+
+
+## A farm that answers every touch (wow build, item 4): a tapped tree sways and lets a few leaves go, a finished
+## building puffs from its roof, anything else only bounces; the leaves and puffs are pooled (one draw), so a
+## hundred taps never hold more than the pool.
+func test_582_a_tapped_tree_sways_and_a_building_puffs() -> void:
+	var g := _farm()
+	_eq(Objects3D.touch_answer({"uid": 1, "id": "apple_tree"}), "sway", "a tree sways")
+	_eq(Objects3D.touch_answer({"uid": 2, "id": "chicken_coop"}), "puff", "a building puffs")
+	_eq(Objects3D.touch_answer({"uid": 3, "id": "chicken_coop", "construction": {}}), "", "a frame being built does not")
+	_eq(Objects3D.touch_answer({}), "", "nothing tapped, nothing answers")
+	var objects := Objects3D.new()
+	add_child(objects)
+	var feel := Balance.d("feel.touch")
+	objects.shake_loose("sway", Vector3(3, 2, 3), Vector3(1, 2, 1))
+	_eq(objects.loose_now(), int(feel["leaves"]), "a tree lets its few leaves go")
+	objects.shake_loose("puff", Vector3(5, 1.5, 5), Vector3(2, 1.5, 2))
+	_eq(objects.loose_now(), int(feel["leaves"]) + int(feel["puffs"]), "and a building its puff")
+	for k in 100:
+		objects.shake_loose("puff", Vector3(5, 1.5, 5), Vector3(2, 1.5, 2))
+	_check(objects.loose_now() <= DustPuffs.CAPACITY, "taps reuse the pool (%d)" % objects.loose_now())
+	objects.queue_free()
+	_done(g)

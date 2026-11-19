@@ -78,6 +78,7 @@ var grid: FarmGrid  # for what's being placed: its ghost follows the finger, and
 
 
 
+var _touch: DustPuffs   # what a tap shakes loose: a tree's leaves, a building's puff (answer_touch)
 var _views := {}   # uid -> {"node": Node3D, "key": String}
 var _animals: Array[Animal3D] = []
 var _synced_once := false   # the farm's first sync places everything quietly; later ones drop new things in
@@ -140,6 +141,8 @@ func _ready() -> void:
 	add_child(_rust_marks)
 	_fireworks = Fireworks3D.new()
 	add_child(_fireworks)
+	_touch = DustPuffs.new()   # (leaves let go by a tapped tree, a building's puff: pooled, one draw)
+	add_child(_touch)
 	_rings = WaterRings.new()
 	add_child(_rings)
 	sync()
@@ -1592,6 +1595,9 @@ func bounce(uid: int) -> void:
 	var node := _node(uid)
 	if node == null:
 		return
+	if touch_answer(Game.object_by_uid(uid)) == "sway":
+		_sway(node)
+		return
 	var base := Vector3.ONE
 	var tw := _tween(node)
 	tw.tween_property(node, "scale", base * Vector3(1.12, 0.84, 1.12), 0.07).set_trans(Tween.TRANS_QUAD) \
@@ -1601,6 +1607,88 @@ func bounce(uid: int) -> void:
 	UiFx.settle(tw, node, "scale", base)
 
 
+
+
+## How a tapped thing answers beyond its bounce (wow build, item 4): a tree "sway"s from its trunk and lets a few
+## leaves go, a building "puff"s from its roof; anything else "" (an animal looks round: FarmLife).
+static func touch_answer(o: Dictionary) -> String:
+	if o.is_empty():
+		return ""
+	if Game.kind_of(o) == "tree":
+		return "sway"
+	if Game.is_building_item(str(o["id"])) and not Game.under_construction(o):
+		return "puff"
+	return ""
+
+
+## A tree tapped: it leans away from the tap and rocks back, each swing smaller (Balance feel.touch), from its
+## trunk's foot, so the crown moves and the roots stay.
+func _sway(node: Node3D) -> void:
+	var feel: Dictionary = Balance.d("feel.touch")
+	var reach := deg_to_rad(float(feel["sway_degrees"]))
+	var swings := int(feel["sway_swings"])
+	var each := float(feel["sway_seconds"]) / maxf(swings, 1)
+	var tw := _tween(node)
+	node.scale = Vector3.ONE   # (a bounce cut short)
+	for k in swings:
+		var lean := reach * pow(float(feel["sway_fade"]), k) * (1.0 if k % 2 == 0 else -1.0)
+		tw.tween_property(node, "rotation:z", lean, each).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(node, "rotation:z", 0.0, each).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+## What the tap shakes loose (after the bounce): a tree's few leaves drift down from its crown, a building's
+## soft puff rises from its roof. Pooled puffs (one draw), once a tap; numbers and tints in Balance feel.touch.
+func answer_touch(uid: int) -> void:
+	var o := Game.object_by_uid(uid)
+	var answer := touch_answer(o)
+	if answer == "" or not _views.has(uid):
+		return
+	var box: AABB = _views[uid]["box"]
+	if answer == "sway":
+		box = _seen_box(_node(uid), box)   # (a tree's kept box can be its footing alone: the crown is what counts)
+	var top := Vector3(box.get_center().x, box.end.y, box.get_center().z)
+	shake_loose(answer, top, box.size)
+
+
+## The box round what is drawn of `node` now, in the farm's space (`otherwise` when nothing is drawn).
+func _seen_box(node: Node3D, otherwise: AABB) -> AABB:
+	var box := AABB()
+	var first := true
+	var to_farm := global_transform.affine_inverse()
+	for part in node.find_children("*", "", true, false):
+		if not part is VisualInstance3D:
+			continue
+		var b := to_farm * ((part as VisualInstance3D).global_transform * (part as VisualInstance3D).get_aabb())
+		box = b if first else box.merge(b)
+		first = false
+	return otherwise if first else box
+
+
+## The leaves or the puff of `answer` from the top of a thing `size` big at `top` (tests call it directly).
+func shake_loose(answer: String, top: Vector3, size: Vector3) -> void:
+	var feel: Dictionary = Balance.d("feel.touch")
+	var rng := RandomNumberGenerator.new()
+	if answer == "sway":
+		var tint := Color.html(str(feel["leaf_tint"]))
+		var crown := top - Vector3(0, size.y * (1.0 - TREE_CROWN_AT) * 0.5, 0)   # (round the crown, a little under its top)
+		for k in int(feel["leaves"]):
+			var turn := TAU * (k + rng.randf()) / maxf(int(feel["leaves"]), 1)
+			var at := crown + Vector3(cos(turn) * 0.45 * size.x, rng.randf_range(-0.1, 0.1) * size.y,
+				sin(turn) * 0.45 * size.z)
+			var drift := Vector3(rng.randf_range(-0.4, 0.4), -float(feel["leaf_fall"]), rng.randf_range(-0.4, 0.4))
+			_touch.emit(at, drift, float(feel["leaf_size"]), float(feel["leaf_life"]) * rng.randf_range(0.8, 1.2),
+				tint, 1.0)
+	elif answer == "puff":
+		var tint := Color.html(str(feel["puff_tint"]))
+		for k in int(feel["puffs"]):
+			var at := top + Vector3(rng.randf_range(-0.15, 0.15), 0.05 + 0.08 * k, rng.randf_range(-0.15, 0.15))
+			var drift := Vector3(rng.randf_range(-0.12, 0.12), float(feel["puff_rise"]), rng.randf_range(-0.12, 0.12))
+			_touch.emit(at, drift, float(feel["puff_size"]), float(feel["puff_life"]), tint, 2.4)
+
+
+## How many leaves or puffs a tap has in the air now (tests).
+func loose_now() -> int:
+	return _touch.live()
 
 
 ## Finished or upgraded: it swells up past its size and settles back, with sparkles at its feet.
