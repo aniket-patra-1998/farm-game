@@ -47,13 +47,20 @@ func snap(world_pos: Vector2, z: float) -> void:
 ## Glides over `seconds` from another view to the one it shows now, easing out of the start and into the end
 ## (the opening glide: scripts/world/opening_glide.gd). A drag, a pinch, a snap or `end_glide` ends it.
 func glide_from(world_pos: Vector2, z: float, seconds: float) -> void:
-	_glide_to = Vector3(position.x, position.y, target_zoom)
+	var goal := resting_position()   # (no jolt as the glide ends)
+	_glide_to = Vector3(goal.x, goal.y, target_zoom)
 	_glide_from = Vector3(world_pos.x, world_pos.y, clampf(z, min_zoom, max_zoom))
 	_glide_seconds = maxf(seconds, 0.001)
 	_glide_left = _glide_seconds
 	_velocity = Vector2.ZERO
 	_going = false
 	_glide_at(0.0)
+
+
+## Where the view comes to rest at its zoom: its position kept within the edges (as the spring-back keeps it).
+func resting_position() -> Vector2:
+	var lo_hi := _limits(target_zoom)
+	return position if lo_hi.size() != 2 else position.clamp(lo_hi[0], lo_hi[1])
 
 
 ## How far a glide has come, 0..1 (1: none under way).

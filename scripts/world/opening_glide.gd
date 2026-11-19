@@ -45,7 +45,7 @@ static func play(parent: Node, camera: FarmCamera, world: Farm3D) -> OpeningGlid
 	g._world = world
 	parent.add_child(g)
 	var view_h := camera.get_viewport_rect().size.y
-	var from := start_view(camera.position, camera.target_zoom, view_h, camera.min_zoom)
+	var from := start_view(camera.resting_position(), camera.target_zoom, view_h, camera.min_zoom)
 	camera.glide_from(Vector2(from.x, from.y), from.z, seconds())
 	g._light(0.0)
 	return g
