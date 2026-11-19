@@ -17,7 +17,17 @@ func test_106_the_showcase_farm_has_everything_laid_out() -> void:
 	var placed := {}
 	for o in g.objects:
 		placed[o["id"]] = int(placed.get(o["id"], 0)) + 1
+	# (Limited animals are the one exception: one lives in each home that takes them, and none stands loose: each
+	# coat is a file of its own, which the heaviest farm's budget has no room for.)
+	var homes_with := 0
+	for o in g.objects:
+		var limited := g.limited.held(o.get("inside", {}))
+		homes_with += 1 if not limited.is_empty() else 0
+		_check(limited.size() <= 1 and not g.limited.is_limited(str(o["id"])), "%s holds one limited kind at most" % o["id"])
+	_check(homes_with >= 8, "a limited animal lives in each home that takes them (%d homes)" % homes_with)
 	for id in g.items:
+		if g.limited.is_limited(id):
+			continue
 		if ZONE_KINDS.has(str(g.items[id].get("kind", ""))):
 			# (A vehicle is on the farm or parked in the Garage, never both.)
 			_check(placed.has(id) or g.buildings.owned(id) > 0, "%s is on the farm" % id)

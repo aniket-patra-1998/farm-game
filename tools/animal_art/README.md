@@ -37,6 +37,10 @@ file per hair style. It uses the same skin, drawings and painted light, with its
 - **A breed**: add a row to the family's table (for example `COWS` in `families/cow.py`). Its baby follows from the
   family's rule in `registry.py`.
 - **A bird kind**: add a row to `BIRDS` in `families/bird.py`.
+- **A limited coat** (the game's limited animals, docs/LIMITED.md): add a row to its family's table in `limited.py`,
+  made from one of the family's breeds. A pattern is asked for with `paint=dict(kind=...)` and curls with `tufts=1`
+  (`paint.py`: stripes, stars, dots, patches, rainbow, dip, band, half); the registry gives it its baby by the
+  family's rule. A coat that turns colour does it in flat bands (`paint._steps`), or its file is five times the size.
 - **A family**: write a template in `families/`. Two things are asked of it: its first shape is the body, and the
   head's shapes are marked `head=True`. Mark a part only when the animation must know it (`part="stub"`: a leg that
   slides under a shell). Then register it in `registry.py`.

@@ -241,6 +241,7 @@ func test_41_nursery_raises_babies_into_adults() -> void:
 
 func test_42_coop_mystery_eggs_follow_breeds() -> void:
 	var g := _farm(true)
+	Balance.override("limited.rare_share", 0.0)   # (no rare eggs here: this is about the breeds' colours)
 	g.coins = 1000000
 	g.xp = g.xp_for_level(4)
 	g.buy_and_place("chicken_coop", 8, 8)
@@ -263,6 +264,7 @@ func test_42_coop_mystery_eggs_follow_breeds() -> void:
 	_check(prize != "", "opening an egg gives a prize (%s)" % prize)
 	_eq(int(g.mystery.mystery_eggs[colour]), before - 1, "the egg is used up")
 	_eq(g.mystery.open_mystery_egg("golden"), "", "can't open an egg you don't have")
+	Balance.reload()
 	_done(g)
 
 

@@ -16,6 +16,11 @@ func is_young() -> bool:
 	return bool(data.get("young", false))
 
 
+## A limited animal (LimitedSystem): bought with gems, and found only where one already lives.
+func is_limited() -> bool:
+	return bool(data.get("limited", false))
+
+
 ## The baby this breed has; "" means the plain one for its home.
 func baby() -> String:
 	return str(data.get("baby", ""))
@@ -42,6 +47,10 @@ func validate(catalog) -> Array[String]:
 	var baby_def = catalog.get_def(baby())
 	if baby_def is AnimalDef and not baby_def.is_young():
 		out.append(_err("its baby %s should be marked young" % data["baby"]))
+	if is_limited() and not is_young() and (gem_cost() <= 0 or not in_market()):
+		out.append(_err("a limited animal is sold in the Market for gems (gem_cost, an unlock level)"))
+	if is_limited() and baby_def is AnimalDef and not baby_def.is_limited():
+		out.append(_err("a limited animal's baby %s should be limited too" % data["baby"]))
 	# Every animal should have somewhere to live, or be a loose-only special.
 	var homes: Array[String] = catalog.homes_of(id)
 	if homes.is_empty() and kind == "animal":

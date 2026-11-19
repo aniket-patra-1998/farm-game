@@ -281,6 +281,11 @@
           "default": false,
           "doc": "A baby: drawn small and painted as a young animal."
         },
+        "limited": {
+          "type": "bool",
+          "default": false,
+          "doc": "A limited animal (LimitedSystem, docs/LIMITED.md): a unique coat, sold in the Market for gems; a home's finds turn out to be one only where one already lives. Its baby is limited too."
+        },
         "baby": {
           "type": "string",
           "ref": "Animal",

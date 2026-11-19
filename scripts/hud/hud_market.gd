@@ -60,7 +60,12 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	if kind == "decor":
 		singles.append([_single(content), mystery_box_card])   # (the Mystery Box first among the decorations)
 	if kind != "building":
-		lists.append(_add_list(content, shelf_items(kind), tell))
+		var limited := limited_items(kind)
+		lists.append(_add_list(content, shelf_items(kind).filter(func(id: String) -> bool: return not limited.has(id)), tell))
+		if not limited.is_empty():
+			# The limited ones in a section of their own, after the rest.
+			content.add_child(BookPanel.text(tr("LIMITED"), int(UiTheme.design("font_section")), BookPanel.HEAD))
+			lists.append(_add_list(content, limited, tell))
 	else:
 		for section: Array in BUILDING_TABS:
 			var ids := building_section(str(section[0]))
@@ -126,6 +131,11 @@ func _shelf_ids(kind: String) -> Array[String]:
 ## The items of one kind for sale, in catalog order (buildings have their own sections: building_section).
 func shelf_items(kind: String) -> Array[String]:
 	return _shelves.get(kind, [] as Array[String])
+
+
+## The limited things for sale on shelf `kind` (limited animals: LimitedSystem), in catalog order.
+func limited_items(kind: String) -> Array[String]:
+	return shelf_items(kind).filter(func(id: String) -> bool: return Game.limited.is_limited(id))
 
 
 ## The buildings for sale in one section of the Buildings shelf (their catalog `tab`), in catalog order.
@@ -211,7 +221,8 @@ func card_face(id: String) -> Dictionary:
 	var detail := short_detail(id, it)
 	return {
 		"name": str(it["name"]),
-		"line": tr("NEEDS_N_FIRST") % unmet if unmet > 0 and not locked else "",
+		"line": tr("NEEDS_N_FIRST") % unmet if unmet > 0 and not locked else (
+			tr("LIMITED") if Game.limited.is_limited(id) else ""),
 		"badge": badge,
 		"locked": blocked,
 		"stars": MasteryStars.values(id),

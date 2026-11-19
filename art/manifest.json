@@ -5442,6 +5442,66 @@
    "subject": "a plump Cornish hen with glossy chestnut-brown feathers laced with black, a farm animal, full body, standing calmly"
   },
   {
+   "id": "silkie_chicken",
+   "item": "silkie_chicken",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/silkie_chicken.png"
+   ],
+   "subject": "a silkie chicken, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "peacock_chicken",
+   "item": "peacock_chicken",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/peacock_chicken.png"
+   ],
+   "subject": "a peacock chicken, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "flame_chicken",
+   "item": "flame_chicken",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/flame_chicken.png"
+   ],
+   "subject": "a flame chicken, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "bubblegum_chicken",
+   "item": "bubblegum_chicken",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/bubblegum_chicken.png"
+   ],
+   "subject": "a bubblegum chicken, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "galaxy_chicken",
+   "item": "galaxy_chicken",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_chicken.png"
+   ],
+   "subject": "a galaxy chicken, a farm animal, full body, standing calmly"
+  },
+  {
    "id": "turkey",
    "item": "turkey",
    "class": "Animal",
@@ -5476,6 +5536,66 @@
     "refs/wild_turkey.png"
    ],
    "subject": "a wild turkey with bronze-brown feathers and a fanned tail, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "peacock_turkey",
+   "item": "peacock_turkey",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/peacock_turkey.png"
+   ],
+   "subject": "a peacock turkey, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "royal_turkey",
+   "item": "royal_turkey",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/royal_turkey.png"
+   ],
+   "subject": "a royal turkey, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "autumn_turkey",
+   "item": "autumn_turkey",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/autumn_turkey.png"
+   ],
+   "subject": "a autumn turkey, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "bubblegum_turkey",
+   "item": "bubblegum_turkey",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/bubblegum_turkey.png"
+   ],
+   "subject": "a bubblegum turkey, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "midnight_turkey",
+   "item": "midnight_turkey",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/midnight_turkey.png"
+   ],
+   "subject": "a midnight turkey, a farm animal, full body, standing calmly"
   },
   {
    "id": "duck",
@@ -5526,6 +5646,66 @@
    "subject": "a black duck with a white belt of feathers around its middle, a farm animal, full body, standing calmly"
   },
   {
+   "id": "rubber_duck",
+   "item": "rubber_duck",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rubber_duck.png"
+   ],
+   "subject": "a rubber duck, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "mandarin_duck",
+   "item": "mandarin_duck",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/mandarin_duck.png"
+   ],
+   "subject": "a mandarin duck, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "rainbow_duck",
+   "item": "rainbow_duck",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_duck.png"
+   ],
+   "subject": "a rainbow duck, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "mint_duck",
+   "item": "mint_duck",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/mint_duck.png"
+   ],
+   "subject": "a mint duck, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "galaxy_duck",
+   "item": "galaxy_duck",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_duck.png"
+   ],
+   "subject": "a galaxy duck, a farm animal, full body, standing calmly"
+  },
+  {
    "id": "goose",
    "item": "goose",
    "class": "Animal",
@@ -5536,6 +5716,66 @@
     "refs/goose.png"
    ],
    "subject": "a goose, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "golden_goose",
+   "item": "golden_goose",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/golden_goose.png"
+   ],
+   "subject": "a golden goose, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "storm_goose",
+   "item": "storm_goose",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/storm_goose.png"
+   ],
+   "subject": "a storm goose, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "rainbow_goose",
+   "item": "rainbow_goose",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_goose.png"
+   ],
+   "subject": "a rainbow goose, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "pink_goose",
+   "item": "pink_goose",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/pink_goose.png"
+   ],
+   "subject": "a pink goose, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "tuxedo_goose",
+   "item": "tuxedo_goose",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/tuxedo_goose.png"
+   ],
+   "subject": "a tuxedo goose, a farm animal, full body, standing calmly"
   },
   {
    "id": "cow",
@@ -5791,6 +6031,150 @@
    "subject": "a cute baby farm animal: a belted calf, small and young, full body, standing"
   },
   {
+   "id": "strawberry_cow",
+   "item": "strawberry_cow",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/strawberry_cow.png"
+   ],
+   "subject": "a strawberry cow, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "strawberry_calf",
+   "item": "strawberry_calf",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/strawberry_calf.png"
+   ],
+   "subject": "a cute baby farm animal: a strawberry calf, small and young, full body, standing"
+  },
+  {
+   "id": "highland_cow",
+   "item": "highland_cow",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/highland_cow.png"
+   ],
+   "subject": "a highland cow, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "highland_calf",
+   "item": "highland_calf",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/highland_calf.png"
+   ],
+   "subject": "a cute baby farm animal: a highland calf, small and young, full body, standing"
+  },
+  {
+   "id": "galaxy_cow",
+   "item": "galaxy_cow",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_cow.png"
+   ],
+   "subject": "a galaxy cow, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "galaxy_calf",
+   "item": "galaxy_calf",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_calf.png"
+   ],
+   "subject": "a cute baby farm animal: a galaxy calf, small and young, full body, standing"
+  },
+  {
+   "id": "tiger_cow",
+   "item": "tiger_cow",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/tiger_cow.png"
+   ],
+   "subject": "a tiger cow, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "tiger_calf",
+   "item": "tiger_calf",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/tiger_calf.png"
+   ],
+   "subject": "a cute baby farm animal: a tiger calf, small and young, full body, standing"
+  },
+  {
+   "id": "panda_cow",
+   "item": "panda_cow",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/panda_cow.png"
+   ],
+   "subject": "a panda cow, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "panda_calf",
+   "item": "panda_calf",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/panda_calf.png"
+   ],
+   "subject": "a cute baby farm animal: a panda calf, small and young, full body, standing"
+  },
+  {
+   "id": "rainbow_cow",
+   "item": "rainbow_cow",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_cow.png"
+   ],
+   "subject": "a rainbow cow, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "rainbow_calf",
+   "item": "rainbow_calf",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_calf.png"
+   ],
+   "subject": "a cute baby farm animal: a rainbow calf, small and young, full body, standing"
+  },
+  {
    "id": "ox",
    "item": "ox",
    "class": "Animal",
@@ -5864,6 +6248,126 @@
    "subject": "a mouflon wild sheep: chestnut-brown coat, pale belly and big curled horns, a farm animal, full body, standing calmly"
   },
   {
+   "id": "cloud_sheep",
+   "item": "cloud_sheep",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/cloud_sheep.png"
+   ],
+   "subject": "a cloud sheep, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "cloud_lamb",
+   "item": "cloud_lamb",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/cloud_lamb.png"
+   ],
+   "subject": "a cute baby farm animal: a cloud lamb, small and young, full body, standing"
+  },
+  {
+   "id": "shorn_sheep",
+   "item": "shorn_sheep",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/shorn_sheep.png"
+   ],
+   "subject": "a shorn sheep, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "shorn_lamb",
+   "item": "shorn_lamb",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/shorn_lamb.png"
+   ],
+   "subject": "a cute baby farm animal: a shorn lamb, small and young, full body, standing"
+  },
+  {
+   "id": "cotton_candy_sheep",
+   "item": "cotton_candy_sheep",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/cotton_candy_sheep.png"
+   ],
+   "subject": "a cotton candy sheep, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "cotton_candy_lamb",
+   "item": "cotton_candy_lamb",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/cotton_candy_lamb.png"
+   ],
+   "subject": "a cute baby farm animal: a cotton candy lamb, small and young, full body, standing"
+  },
+  {
+   "id": "rainbow_sheep",
+   "item": "rainbow_sheep",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_sheep.png"
+   ],
+   "subject": "a rainbow sheep, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "rainbow_lamb",
+   "item": "rainbow_lamb",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_lamb.png"
+   ],
+   "subject": "a cute baby farm animal: a rainbow lamb, small and young, full body, standing"
+  },
+  {
+   "id": "golden_ram",
+   "item": "golden_ram",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/golden_ram.png"
+   ],
+   "subject": "a golden ram, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "golden_lamb",
+   "item": "golden_lamb",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/golden_lamb.png"
+   ],
+   "subject": "a cute baby farm animal: a golden lamb, small and young, full body, standing"
+  },
+  {
    "id": "llama",
    "item": "llama",
    "class": "Animal",
@@ -5887,6 +6391,66 @@
     "refs/alpaca.png"
    ],
    "subject": "a alpaca, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "cotton_candy_alpaca",
+   "item": "cotton_candy_alpaca",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/cotton_candy_alpaca.png"
+   ],
+   "subject": "a cotton candy alpaca, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "mint_alpaca",
+   "item": "mint_alpaca",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/mint_alpaca.png"
+   ],
+   "subject": "a mint alpaca, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "galaxy_alpaca",
+   "item": "galaxy_alpaca",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_alpaca.png"
+   ],
+   "subject": "a galaxy alpaca, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "rainbow_llama",
+   "item": "rainbow_llama",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_llama.png"
+   ],
+   "subject": "a rainbow llama, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "cocoa_llama",
+   "item": "cocoa_llama",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/cocoa_llama.png"
+   ],
+   "subject": "a cocoa llama, a farm animal, full body, standing calmly"
   },
   {
    "id": "pig",
@@ -5986,6 +6550,126 @@
    "subject": "a Saddleback pig: black with a white band over its shoulders and front legs, a farm animal, full body, standing calmly"
   },
   {
+   "id": "blueberry_pig",
+   "item": "blueberry_pig",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/blueberry_pig.png"
+   ],
+   "subject": "a blueberry pig, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "blueberry_piglet",
+   "item": "blueberry_piglet",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/blueberry_piglet.png"
+   ],
+   "subject": "a cute baby farm animal: a blueberry piglet, small and young, full body, standing"
+  },
+  {
+   "id": "bumblebee_pig",
+   "item": "bumblebee_pig",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/bumblebee_pig.png"
+   ],
+   "subject": "a bumblebee pig, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "bumblebee_piglet",
+   "item": "bumblebee_piglet",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/bumblebee_piglet.png"
+   ],
+   "subject": "a cute baby farm animal: a bumblebee piglet, small and young, full body, standing"
+  },
+  {
+   "id": "woolly_pig",
+   "item": "woolly_pig",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/woolly_pig.png"
+   ],
+   "subject": "a woolly pig, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "woolly_piglet",
+   "item": "woolly_piglet",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/woolly_piglet.png"
+   ],
+   "subject": "a cute baby farm animal: a woolly piglet, small and young, full body, standing"
+  },
+  {
+   "id": "rainbow_pig",
+   "item": "rainbow_pig",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_pig.png"
+   ],
+   "subject": "a rainbow pig, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "rainbow_piglet",
+   "item": "rainbow_piglet",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/rainbow_piglet.png"
+   ],
+   "subject": "a cute baby farm animal: a rainbow piglet, small and young, full body, standing"
+  },
+  {
+   "id": "golden_pig",
+   "item": "golden_pig",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/golden_pig.png"
+   ],
+   "subject": "a golden pig, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "golden_piglet",
+   "item": "golden_piglet",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/golden_piglet.png"
+   ],
+   "subject": "a cute baby farm animal: a golden piglet, small and young, full body, standing"
+  },
+  {
    "id": "goat",
    "item": "goat",
    "class": "Animal",
@@ -6020,6 +6704,66 @@
     "refs/arapawa_goat.png"
    ],
    "subject": "an Arapawa goat: dark brown and black shaggy coat with long swept-back horns, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "angora_goat",
+   "item": "angora_goat",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/angora_goat.png"
+   ],
+   "subject": "a angora goat, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "lavender_goat",
+   "item": "lavender_goat",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/lavender_goat.png"
+   ],
+   "subject": "a lavender goat, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "dalmatian_goat",
+   "item": "dalmatian_goat",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/dalmatian_goat.png"
+   ],
+   "subject": "a dalmatian goat, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "sunset_goat",
+   "item": "sunset_goat",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/sunset_goat.png"
+   ],
+   "subject": "a sunset goat, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "tuxedo_goat",
+   "item": "tuxedo_goat",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/tuxedo_goat.png"
+   ],
+   "subject": "a tuxedo goat, a farm animal, full body, standing calmly"
   },
   {
    "id": "horse",
@@ -6131,6 +6875,126 @@
    "subject": "a cute baby farm animal: a mustang foal, small and young, full body, standing"
   },
   {
+   "id": "candy_horse",
+   "item": "candy_horse",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/candy_horse.png"
+   ],
+   "subject": "a candy horse, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "candy_foal",
+   "item": "candy_foal",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/candy_foal.png"
+   ],
+   "subject": "a cute baby farm animal: a candy foal, small and young, full body, standing"
+  },
+  {
+   "id": "zebra_horse",
+   "item": "zebra_horse",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/zebra_horse.png"
+   ],
+   "subject": "a zebra horse, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "zebra_foal",
+   "item": "zebra_foal",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/zebra_foal.png"
+   ],
+   "subject": "a cute baby farm animal: a zebra foal, small and young, full body, standing"
+  },
+  {
+   "id": "galaxy_horse",
+   "item": "galaxy_horse",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_horse.png"
+   ],
+   "subject": "a galaxy horse, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "galaxy_foal",
+   "item": "galaxy_foal",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_foal.png"
+   ],
+   "subject": "a cute baby farm animal: a galaxy foal, small and young, full body, standing"
+  },
+  {
+   "id": "dapple_horse",
+   "item": "dapple_horse",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/dapple_horse.png"
+   ],
+   "subject": "a dapple horse, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "dapple_foal",
+   "item": "dapple_foal",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/dapple_foal.png"
+   ],
+   "subject": "a cute baby farm animal: a dapple foal, small and young, full body, standing"
+  },
+  {
+   "id": "feather_horse",
+   "item": "feather_horse",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/feather_horse.png"
+   ],
+   "subject": "a feather horse, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "feather_foal",
+   "item": "feather_foal",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/feather_foal.png"
+   ],
+   "subject": "a cute baby farm animal: a feather foal, small and young, full body, standing"
+  },
+  {
    "id": "donkey",
    "item": "donkey",
    "class": "Animal",
@@ -6153,6 +7017,66 @@
     "refs/rabbit.png"
    ],
    "subject": "a rabbit, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "cocoa_rabbit",
+   "item": "cocoa_rabbit",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/cocoa_rabbit.png"
+   ],
+   "subject": "a cocoa rabbit, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "dutch_rabbit",
+   "item": "dutch_rabbit",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/dutch_rabbit.png"
+   ],
+   "subject": "a dutch rabbit, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "galaxy_rabbit",
+   "item": "galaxy_rabbit",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/galaxy_rabbit.png"
+   ],
+   "subject": "a galaxy rabbit, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "strawberry_rabbit",
+   "item": "strawberry_rabbit",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/strawberry_rabbit.png"
+   ],
+   "subject": "a strawberry rabbit, a farm animal, full body, standing calmly"
+  },
+  {
+   "id": "sunset_rabbit",
+   "item": "sunset_rabbit",
+   "class": "Animal",
+   "stage": "adult",
+   "tiles": 1,
+   "fill": 0.62,
+   "refs": [
+    "refs/sunset_rabbit.png"
+   ],
+   "subject": "a sunset rabbit, a farm animal, full body, standing calmly"
   },
   {
    "id": "bee",
@@ -7951,6 +8875,18 @@
    "subject": "mystery baby"
   },
   {
+   "id": "rare_mystery_baby",
+   "item": "rare_mystery_baby",
+   "class": "Young",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [
+    "refs/rare_mystery_baby.png"
+   ],
+   "subject": "rare mystery baby"
+  },
+  {
    "id": "mystery_bulb",
    "item": "mystery_bulb",
    "class": "Young",
@@ -9217,6 +10153,16 @@
    "fill": 0.5,
    "refs": [],
    "subject": "a large shining gold egg with a swirly golden pattern and a little sparkle, a mystery egg"
+  },
+  {
+   "id": "icon_egg_rare",
+   "item": "",
+   "class": "Icon",
+   "stage": "icon",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [],
+   "subject": "a large rare egg with a swirly golden pattern and a little sparkle, a mystery egg"
   },
   {
    "id": "icon_mystery_box",

@@ -44,9 +44,10 @@ func grow_up_inside(b: Dictionary) -> Array[String]:
 	return out
 
 
-## Which baby a Dairy Farm or Horse Stable brings: a breed's own baby, likelier for the breeds it holds more of.
+## Which baby a Dairy Farm or Horse Stable brings: a breed's own baby, likelier for the breeds it holds more of
+## (never a limited one's: that comes only by its own chance, `_welcome_baby`).
 func _pick_baby(b: Dictionary, plain: String) -> String:
-	var inside: Dictionary = b.get("inside", {})
+	var inside := game.limited.ordinary(b)
 	var breeds: Array[AnimalDef] = []
 	var counts := []
 	for id in inside:
@@ -64,12 +65,17 @@ func _pick_baby(b: Dictionary, plain: String) -> String:
 ## A baby born at a home: said on the home as a find. A breed's own baby (a Pink Calf, not the plain one) is rare.
 func _born(b: Dictionary, baby: String) -> void:
 	var plain := baby in ["calf", "foal", "lamb", "piglet", "kid"]
-	game.found_on.emit(int(b["uid"]), tr("BORN") % str(game.item_data(baby)["name"]), "uncommon" if plain else "rare")
+	var rarity := "legendary" if game.limited.is_limited(baby) else ("uncommon" if plain else "rare")   # not-ui
+	game.found_on.emit(int(b["uid"]), tr("BORN") % str(game.item_data(baby)["name"]), rarity)
 
 
 ## A baby born at home `b`: it goes to the Barn, or the inbox when the Barn is full (`BarnStorage.welcome`),
-## never into the home it was born in nor onto the farm; said, and shown on the home as a find.
+## never into the home it was born in nor onto the farm; said, and shown on the home as a find. Now and then it
+## is the baby of a limited animal living there (LimitedSystem.born_at).
 func _welcome_baby(b: Dictionary, baby: String) -> void:
+	var limited := game.limited.born_at(b)
+	if limited != "":
+		baby = limited
 	var went := game.storage.welcome(baby)
 	game.message.emit(game.storage.welcome_words("A_WAS_BORN", baby, went))
 	_born(b, baby)
@@ -80,9 +86,8 @@ func building_specials(b: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	match game.special_of(b):
 		"mystery_eggs":
-			var colour := game.mystery.roll_mystery_egg(b)
+			var colour := game.mystery.find_egg(b)
 			if colour != "":
-				game.mystery.mystery_eggs[colour] = int(game.mystery.mystery_eggs.get(colour, 0)) + 1
 				var egg_name: String = game.mystery.egg_data["colours"][colour]["name"]
 				game.message.emit(tr("YOU_FOUND_A_OPEN_IT_FROM") % egg_name)
 				game.found_on.emit(int(b["uid"]), tr("FOUND") + egg_name, "rare")

@@ -1249,3 +1249,15 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
 - Launch: privacy-safe analytics (where players quit, what they buy, unused items) for tuning the economy from real
   play; clock-tamper protection against server time with cloud saves. No AI in the game itself.
+
+## Limited animals (animal-varieties branch, not merged; merging is the owner's call)
+- Built (docs/LIMITED.md; nurture_test 581, hud_test's Market check, showcase_test 106): 56 limited animals and
+  21 babies as files, in the catalog for gems, a Limited section in the Market, Rare Mystery Baby and Egg, and
+  the owner's chances (0.5% and 5%) for a home's finds to be a limited animal living there.
+- Off in the first release (`data/v1.json` `"limited": false`); the files still ship in the app (about 80 MB).
+- Next, in the owner's order: the animals' own touches (concept clips agreed 19 Nov: stars blink, colours
+  travel, a glint, a coat shake with falling hairs and a still face, embers flicker, the show-off);
+  downloading a limited animal's file when first needed; baby forms for birds and rabbits; limited dogs.
+- The showcase holds one limited animal a home and none loose: the heaviest-farm budget has 2,000 triangles
+  of room (world3d_test 338).
+

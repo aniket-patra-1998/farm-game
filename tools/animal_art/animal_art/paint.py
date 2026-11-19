@@ -7,6 +7,8 @@ import numpy as np
 from .geometry import hx
 from .shapes import E
 
+BANDS = 5      # the flat bands a coat takes to turn from one colour to another (see _steps)
+
 
 def _span(shapes):
     """Where the animal starts and ends along its length."""
@@ -28,6 +30,13 @@ def _marks(p, lo, hi):
     return out
 
 
+def _steps(t, n):
+    """A blend from 0 to 1 taken in `n` even steps: a coat that turns colour does it in flat bands, so its points are
+    shared within a band (a smooth blend gives every triangle its own colour and its own points: a file five times
+    the size)."""
+    return np.round(np.clip(t, 0, 1) * n) / n
+
+
 def pattern(p, coat, body, zlo, zhi):
     """The coat as a colour for every point: `p` is the row's `paint`."""
     kind = p["kind"]; c2 = np.array(hx(p.get("c2", "ffffff"))); c, r = body["c"], body["r"]
@@ -39,7 +48,7 @@ def pattern(p, coat, body, zlo, zhi):
         marks = _marks(p, *((0.09, 0.14) if kind == "stars" else (0.14, 0.22)))
 
         def fn(P):
-            base = coat[None, :] + (c3 - coat)[None, :] * np.clip((c[2] + r[2] * 0.9 - P[:, 2]) / (r[2] * 1.8), 0, 1)[:, None]
+            base = coat[None, :] + (c3 - coat)[None, :] * _steps((c[2] + r[2] * 0.9 - P[:, 2]) / (r[2] * 1.8), BANDS)[:, None]
             # a mark is told by where a point lies round the body, not how far out: wool and feathers carry it too
             q = (P - c) / r; far = np.linalg.norm(q, axis=1); qn = q / np.maximum(far, 1e-6)[:, None]
             lit = np.zeros(len(P), bool)
@@ -51,7 +60,8 @@ def pattern(p, coat, body, zlo, zhi):
         hues = np.array([hx(h) for h in p["hues"]])
 
         def fn(P):
-            t = np.clip((zhi - P[:, 2]) / (zhi - zlo), 0, 0.999) * (len(hues) - 1); i = t.astype(int); f = (t - i)[:, None]
+            n = len(hues) - 1; t = np.minimum(_steps((zhi - P[:, 2]) / (zhi - zlo), n * p.get("steps", 2)) * n, n - 1e-6)
+            i = t.astype(int); f = (t - i)[:, None]
             return hues[i] * (1 - f) + hues[np.minimum(i + 1, len(hues) - 1)] * f
         return fn
     if kind == "patches":       # a few big wavering patches
@@ -68,7 +78,7 @@ def pattern(p, coat, body, zlo, zhi):
             return np.where(inside[:, None], c2[None, :], coat[None, :])
         return fn
     if kind == "dip":           # the coat turns to another colour toward the ground
-        return lambda P: coat[None, :] + (c2 - coat)[None, :] * np.clip((c[1] + r[1] * 0.25 - P[:, 1]) / (r[1] * 0.9), 0, 1)[:, None]
+        return lambda P: coat[None, :] + (c2 - coat)[None, :] * _steps((c[1] + r[1] * 0.25 - P[:, 1]) / (r[1] * 0.9), BANDS)[:, None]
     if kind == "band":          # a belt round the middle
         return lambda P: np.where((np.abs(P[:, 2] - c[2]) < r[2] * 0.42)[:, None], c2[None, :], coat[None, :])
     if kind == "half":          # the back half another colour

@@ -274,6 +274,20 @@
    "note": "Away longer than this many days, a hive loses its queen."
   }
  },
+ "limited": {
+  "find_chance": {
+   "v": 0.005,
+   "note": "A Mystery Baby, a Mystery Egg or a birth at a home is one of the limited animals living there this often (owner, 19 Nov 2026: 0.5%)."
+  },
+  "rare_find_chance": {
+   "v": 0.05,
+   "note": "The same for a Rare Mystery Baby or a Rare Mystery Egg (owner, 19 Nov 2026: 5%)."
+  },
+  "rare_share": {
+   "v": 0.1,
+   "note": "A Mystery Baby or Mystery Egg found is a rare one this often (ours: about 1 in 10)."
+  }
+ },
  "nurture": {
   "supply_gems": {
    "v": {"watering_can": 2, "animal_feed": 2, "flower_food": 2},

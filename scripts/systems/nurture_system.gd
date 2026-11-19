@@ -22,6 +22,7 @@ const SUPPLIES := {
 ## withered Single Bloom. The chances and amounts are ours (sources give none).
 const SEEDLING := "mystery_seedling"
 const BABY := "mystery_baby"
+const RARE_BABY := "rare_mystery_baby"   # a rarer find: likelier to be a limited animal (LimitedSystem)
 const BULB := "mystery_bulb"
 
 var supplies := {}                 # supply id -> how many
@@ -287,20 +288,21 @@ func from_home(home: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	if not game.drops_enabled:
 		return out
-	var inside: Dictionary = home.get("inside", {})
 	if game.special_of(home) == "nursery":
 		add_supply("animal_feed", Balance.i("nurture.nursery_feed"))
 		out.append(tr("ANIMAL_FEED_N") % Balance.i("nurture.nursery_feed"))
 		return out
-	var becomes := _pick_animal(inside)
+	var becomes := _pick_animal(game.limited.ordinary(home))   # (a limited animal comes only by its own chance, below)
 	if becomes == "":
 		return out
 	if game.rolls.roll("home_feed", Balance.f("nurture.home_feed_chance")):
 		add_supply("animal_feed", 1)
 		out.append(tr("ANIMAL_FEED_N") % 1)
-	if game.rolls.roll("mystery_baby", Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost) \
-			and _found(BABY, becomes, int(home.get("uid", -1))):
-		pass   # (said on the home as a find: _found)
+	if game.rolls.roll("mystery_baby", Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost):
+		# Now and then the baby is a rare one, and now and then it is one of the home's limited animals.
+		var rare := game.limited.rare_find()
+		var limited := game.limited.found_at(home, rare)
+		_found(RARE_BABY if rare else BABY, limited if limited != "" else becomes, int(home.get("uid", -1)))
 	return out
 
 

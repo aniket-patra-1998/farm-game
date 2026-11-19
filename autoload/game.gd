@@ -137,6 +137,7 @@ var shed: GardenShedSystem
 var ribbons: RibbonsSystem
 var land: LandSystem
 var specials: BuildingSpecials
+var limited: LimitedSystem
 var mystery: MysterySystem
 var daily: DailySystem
 var storage: BarnStorage
@@ -202,6 +203,7 @@ func _init() -> void:
 	ribbons = RibbonsSystem.new(self)
 	land = LandSystem.new(self)
 	specials = BuildingSpecials.new(self)
+	limited = LimitedSystem.new(self)
 	mystery = MysterySystem.new(self)
 	daily = DailySystem.new(self)
 	storage = BarnStorage.new(self)
@@ -233,7 +235,7 @@ func _init() -> void:
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social, collecting, shop, helpers, vip, rust, rolls, goals]
+		social, collecting, shop, helpers, vip, rust, rolls, goals, limited]
 	StartMarks.mark("made")   # not-ui (the systems made)
 
 

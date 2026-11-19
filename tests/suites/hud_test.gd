@@ -173,6 +173,12 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 		for list: CardList in lists:
 			cards += list.ids.size()
 		_eq(cards, int(want.get(kind, 0)), "the %s shelf has a card for each" % kind)
+		if kind == "animal":
+			var plain := (lists[0] as CardList).ids.filter(func(id: String) -> bool: return Game.limited.is_limited(id))
+			var limited := (lists[-1] as CardList).ids.filter(func(id: String) -> bool: return Game.limited.is_limited(id))
+			_check(lists.size() == 2 and plain.is_empty() and limited.size() == (lists[-1] as CardList).ids.size(),
+				"the limited animals have a section of their own, after the rest")
+			_eq(str(hud.market.card_face(str(limited[0]))["line"]), tr("LIMITED"), "and a limited animal's card says so")
 		if kind == "building":
 			_eq(lists.size(), filled, "a grid under a heading for each section that has buildings")
 	var placed := []

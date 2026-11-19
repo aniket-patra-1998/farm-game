@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from animal_art.build import lightest, pieces  # noqa: E402
 from animal_art.motion import deform, pose  # noqa: E402
+from animal_art import limited  # noqa: E402
 from animal_art.registry import GAME, MADE  # noqa: E402
 from animal_art.rig import rig_of  # noqa: E402
 
@@ -19,7 +20,26 @@ class Registry(unittest.TestCase):
     def test_every_game_animal_can_be_built(self):
         missing = [n for names in GAME.values() for n in names if n not in MADE]
         self.assertEqual(missing, [])
-        self.assertEqual(sum(len(v) for v in GAME.values()), 73)
+        self.assertEqual(sum(len(v) for v in GAME.values()), 73 + sum(len(v) for v in limited.GAME.values()))
+
+
+class Limited(unittest.TestCase):
+    def test_limited_coats_hold_together_and_carry_their_pattern(self):
+        for name in ("highland cow", "woolly pig", "galaxy alpaca", "silkie chicken", "golden lamb", "sunset rabbit"):
+            with self.subTest(animal=name):
+                model = lightest(MADE[name][0])
+                self.assertEqual(pieces(model), 1, "fur and tufts are part of the one skin")
+                self.assertEqual(len(model["eyes"]), 2)
+        stars = np.array(lightest(MADE["galaxy alpaca"][0])["C"])
+        self.assertTrue((np.abs(stars - np.array([1.0, 0.914, 0.659])).max(axis=1) < 0.02).any(), "a fluffy coat carries its stars")
+        self.assertGreater(len(np.unique(np.round(np.array(lightest(MADE["rainbow pig"][0])["C"]), 2), axis=0)), 12,
+                           "a rainbow coat runs through many colours")
+
+    def test_every_limited_family_animal_has_its_baby(self):
+        for family, word in limited.BABY_WORDS.items():
+            for name in limited.ROWS[family]:
+                self.assertIn(limited.baby_name(name, word), MADE)
+        self.assertEqual(limited.baby_name("golden ram", "lamb"), "golden lamb")
 
 
 class BuildAndMove(unittest.TestCase):

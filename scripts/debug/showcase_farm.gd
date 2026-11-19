@@ -162,6 +162,10 @@ static func _zone_items(g: GameState, zone: String) -> Array[String]:
 	for id in g.item_order:
 		var kind := str(g.items[id].get("kind", ""))
 		# Mystery young are small: they stand with the decorations; blooms grow with the trees.
+		# Limited animals do not stand loose here: one lives in each home that takes them (_fill_homes). Each coat
+		# is a file of its own, and the heaviest farm's budget has no room for seventy more.
+		if kind == "animal" and g.limited.is_limited(id):
+			continue
 		if kind == zone or zone == "building" and g.is_building_item(id) or zone == "decor" and kind == "young" \
 				or zone == "tree" and kind == "bloom":
 			out.append(id)
@@ -217,8 +221,15 @@ static func _fill_homes(g: GameState, now: int) -> void:
 			var def := g.catalog.get_def(str(b["id"])) as BuildingDef
 			if def != null and not def.stores_anything():
 				var takes: Array[String] = []
+				var limited := false
 				for id in g.item_order:
 					if g.building_accepts(b, id):
+						# One limited animal a home, the first it takes: enough to show them (and their finds), and
+						# each coat is a file of its own, which the heaviest farm's budget has no room for.
+						if g.limited.is_limited(id):
+							if limited:
+								continue
+							limited = true
 						takes.append(id)
 				var added := true
 				while added:

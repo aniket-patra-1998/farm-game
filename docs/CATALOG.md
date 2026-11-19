@@ -10,16 +10,16 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Crops | 10 | 74 | 0 |
 | Materials | 2 | 13 | 0 |
 | Trees | 32 | 46 | 0 |
-| Animals | 15 | 68 | 0 |
+| Animals | 15 | 145 | 0 |
 | Buildings | 6 | 21 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 40 | 0 |
 | recipes | 4 | 55 | 37 |
-| young | 3 | 3 | 0 |
+| young | 3 | 4 | 0 |
 | blooms | 6 | 12 | 0 |
 | Ingredients | 3 | 22 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **114** | **468** | **43** |
+| **All** | **114** | **546** | **43** |
 
 ## Adding an item
 
@@ -138,6 +138,7 @@ Animals, loose on the farm or inside their home.
 | `rare_pig` | bool | false |  | A rare breed traded for truffles at the Pig Pen. |
 | `lost` | bool | false |  | A lost animal: only wanders onto the farm (FarmVille's lost animals) and is adopted for free; never in the Market. |
 | `young` | bool | false |  | A baby: drawn small and painted as a young animal. |
+| `limited` | bool | false |  | A limited animal (LimitedSystem, docs/LIMITED.md): a unique coat, sold in the Market for gems; a home's finds turn out to be one only where one already lives. Its baby is limited too. |
 | `baby` | string → Animal |  |  | The baby this breed has when its home brings one (a Hereford Cow has Hereford Calves). Empty: the plain calf or foal. |
 | `grows_into` | string → Animal |  |  | Grows into this animal after its first collection (Baby Turkey into Turkey, Ugly Duckling into Swan). |
 
@@ -740,6 +741,11 @@ Live in the Chicken Coop; breeds decide which Mystery Eggs turn up.
 | ✅ | Black Chicken | `black_chicken` | never sold | free | Eggs | 1 day | 60 | breed: black |
 | ✅ | Golden Chicken | `golden_chicken` | never sold | free | Golden Eggs | 1 day | 90 | breed: golden |
 | ✅ | Cornish Hen | `cornish_chicken` | never sold | free | Eggs | 1 day | 70 | breed: cornish |
+| ✅ | Silkie Chicken (a limited coat: values estimated in FarmVille's style) | `silkie_chicken` | 1 | 20 gems | Eggs | 1 day | 60 |  |
+| ✅ | Peacock Chicken (a limited coat: values estimated in FarmVille's style) | `peacock_chicken` | 1 | 20 gems | Eggs | 1 day | 60 |  |
+| ✅ | Flame Chicken (a limited coat: values estimated in FarmVille's style) | `flame_chicken` | 1 | 20 gems | Eggs | 1 day | 60 |  |
+| ✅ | Bubblegum Chicken (a limited coat: values estimated in FarmVille's style) | `bubblegum_chicken` | 1 | 20 gems | Eggs | 1 day | 60 |  |
+| ✅ | Galaxy Chicken (a limited coat: values estimated in FarmVille's style) | `galaxy_chicken` | 1 | 20 gems | Eggs | 1 day | 60 |  |
 
 ### Turkeys
 
@@ -750,6 +756,11 @@ Share the Chicken Coop. A Baby Turkey grows up after its first collection.
 | ✅ | Turkey | `turkey` | 10 | 500 | Feathers | 1 day | 120 |  |
 | ✅ | Baby Turkey | `baby_turkey` | 10 | 7 gems | Feathers | 1 day | 40 |  |
 | ✅ | Wild Turkey | `wild_turkey` | never sold | free | Feathers | 1 day | 160 |  |
+| ✅ | Peacock Turkey (a limited coat: values estimated in FarmVille's style) | `peacock_turkey` | 10 | 20 gems | Feathers | 1 day | 180 |  |
+| ✅ | Royal Turkey (a limited coat: values estimated in FarmVille's style) | `royal_turkey` | 10 | 20 gems | Feathers | 1 day | 180 |  |
+| ✅ | Autumn Turkey (a limited coat: values estimated in FarmVille's style) | `autumn_turkey` | 10 | 20 gems | Feathers | 1 day | 180 |  |
+| ✅ | Bubblegum Turkey (a limited coat: values estimated in FarmVille's style) | `bubblegum_turkey` | 10 | 20 gems | Feathers | 1 day | 180 |  |
+| ✅ | Midnight Turkey (a limited coat: values estimated in FarmVille's style) | `midnight_turkey` | 10 | 20 gems | Feathers | 1 day | 180 |  |
 
 ### Ducks
 
@@ -761,6 +772,11 @@ Live in the Duck Pond. The Ugly Duckling grows into a Swan.
 | ✅ | Ugly Duckling | `ugly_duckling` | never sold | free | Feathers | 1 day | 60 |  |
 | ✅ | Swan | `swan` | never sold | free | Feathers | 1 day | 180 |  |
 | ✅ | Belted Duck | `belted_duck` | never sold | free | Feathers | 1 day | 90 |  |
+| ✅ | Rubber Duck (a limited coat: values estimated in FarmVille's style) | `rubber_duck` | 4 | 20 gems | Feathers | 1 day | 90 |  |
+| ✅ | Mandarin Duck (a limited coat: values estimated in FarmVille's style) | `mandarin_duck` | 4 | 20 gems | Feathers | 1 day | 90 |  |
+| ✅ | Rainbow Duck (a limited coat: values estimated in FarmVille's style) | `rainbow_duck` | 4 | 20 gems | Feathers | 1 day | 90 |  |
+| ✅ | Mint Duck (a limited coat: values estimated in FarmVille's style) | `mint_duck` | 4 | 20 gems | Feathers | 1 day | 90 |  |
+| ✅ | Galaxy Duck (a limited coat: values estimated in FarmVille's style) | `galaxy_duck` | 4 | 20 gems | Feathers | 1 day | 90 |  |
 
 ### Geese
 
@@ -769,6 +785,11 @@ Share the Duck Pond.
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Goose | `goose` | 13 | 650 | Down | 1 day | 150 |  |
+| ✅ | Golden Goose (a limited coat: values estimated in FarmVille's style) | `golden_goose` | 13 | 20 gems | Down | 1 day | 225 |  |
+| ✅ | Storm Goose (a limited coat: values estimated in FarmVille's style) | `storm_goose` | 13 | 20 gems | Down | 1 day | 225 |  |
+| ✅ | Rainbow Goose (a limited coat: values estimated in FarmVille's style) | `rainbow_goose` | 13 | 20 gems | Down | 1 day | 225 |  |
+| ✅ | Pink Goose (a limited coat: values estimated in FarmVille's style) | `pink_goose` | 13 | 20 gems | Down | 1 day | 225 |  |
+| ✅ | Tuxedo Goose (a limited coat: values estimated in FarmVille's style) | `tuxedo_goose` | 13 | 20 gems | Down | 1 day | 225 |  |
 
 ### Cows
 
@@ -797,6 +818,18 @@ Live in the Dairy Farm. A bull brings calves of the breeds inside, raised in the
 | ✅ | Galician Blond Calf | `galician_blond_calf` | never sold | free | Milk | 1 day | 20 |  |
 | ✅ | Red Calf | `red_calf` | never sold | free | Milk | 1 day | 20 |  |
 | ✅ | Belted Calf | `belted_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Strawberry Cow (a limited coat: values estimated in FarmVille's style) | `strawberry_cow` | 3 | 50 gems | Milk | 1 day | 130 |  |
+| ✅ | Strawberry Calf | `strawberry_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Highland Cow (a limited coat: values estimated in FarmVille's style) | `highland_cow` | 3 | 50 gems | Milk | 1 day | 130 |  |
+| ✅ | Highland Calf | `highland_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Galaxy Cow (a limited coat: values estimated in FarmVille's style) | `galaxy_cow` | 3 | 50 gems | Milk | 1 day | 130 |  |
+| ✅ | Galaxy Calf | `galaxy_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Tiger Cow (a limited coat: values estimated in FarmVille's style) | `tiger_cow` | 3 | 50 gems | Milk | 1 day | 130 |  |
+| ✅ | Tiger Calf | `tiger_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Panda Cow (a limited coat: values estimated in FarmVille's style) | `panda_cow` | 3 | 50 gems | Milk | 1 day | 130 |  |
+| ✅ | Panda Calf | `panda_calf` | never sold | free | Milk | 1 day | 20 |  |
+| ✅ | Rainbow Cow (a limited coat: values estimated in FarmVille's style) | `rainbow_cow` | 3 | 50 gems | Milk | 1 day | 130 |  |
+| ✅ | Rainbow Calf | `rainbow_calf` | never sold | free | Milk | 1 day | 20 |  |
 
 ### Oxen
 
@@ -817,6 +850,16 @@ Live in the Sheep Pen. A ram brings lambs.
 | ✅ | Lamb | `lamb` | never sold | free | Wool | 1 day | 20 |  |
 | ✅ | Black Sheep | `black_sheep` | never sold | free | Black Wool | 1 day | 190 |  |
 | ✅ | Mouflon Sheep | `mouflon_sheep` | never sold | free | Wool | 1 day | 210 |  |
+| ✅ | Cloud Sheep (a limited coat: values estimated in FarmVille's style) | `cloud_sheep` | 5 | 35 gems | Wool | 1 day | 140 |  |
+| ✅ | Cloud Lamb | `cloud_lamb` | never sold | free | Wool | 1 day | 20 |  |
+| ✅ | Shorn Sheep (a limited coat: values estimated in FarmVille's style) | `shorn_sheep` | 5 | 35 gems | Wool | 1 day | 140 |  |
+| ✅ | Shorn Lamb | `shorn_lamb` | never sold | free | Wool | 1 day | 20 |  |
+| ✅ | Cotton Candy Sheep (a limited coat: values estimated in FarmVille's style) | `cotton_candy_sheep` | 5 | 35 gems | Wool | 1 day | 140 |  |
+| ✅ | Cotton Candy Lamb | `cotton_candy_lamb` | never sold | free | Wool | 1 day | 20 |  |
+| ✅ | Rainbow Sheep (a limited coat: values estimated in FarmVille's style) | `rainbow_sheep` | 5 | 35 gems | Wool | 1 day | 140 |  |
+| ✅ | Rainbow Lamb | `rainbow_lamb` | never sold | free | Wool | 1 day | 20 |  |
+| ✅ | Golden Ram (a limited coat: values estimated in FarmVille's style) | `golden_ram` | 5 | 35 gems | Wool | 1 day | 140 |  |
+| ✅ | Golden Lamb | `golden_lamb` | never sold | free | Wool | 1 day | 20 |  |
 
 ### Llamas and Alpacas
 
@@ -828,6 +871,11 @@ Shared: `product` = "Fleece", `cycle_seconds` = 172800
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Llama | `llama` | 18 | 1,000 | Fleece | 2 days | 320 |  |
 | ✅ | Alpaca | `alpaca` | 16 | 3,000 | Fleece | 2 days | 150 |  |
+| ✅ | Cotton Candy Alpaca (a limited coat: values estimated in FarmVille's style) | `cotton_candy_alpaca` | 16 | 50 gems | Fleece | 2 days | 225 |  |
+| ✅ | Mint Alpaca (a limited coat: values estimated in FarmVille's style) | `mint_alpaca` | 16 | 50 gems | Fleece | 2 days | 225 |  |
+| ✅ | Galaxy Alpaca (a limited coat: values estimated in FarmVille's style) | `galaxy_alpaca` | 16 | 50 gems | Fleece | 2 days | 225 |  |
+| ✅ | Rainbow Llama (a limited coat: values estimated in FarmVille's style) | `rainbow_llama` | 18 | 50 gems | Fleece | 2 days | 480 |  |
+| ✅ | Cocoa Llama (a limited coat: values estimated in FarmVille's style) | `cocoa_llama` | 18 | 50 gems | Fleece | 2 days | 480 |  |
 
 ### Pigs
 
@@ -843,6 +891,16 @@ Live in the Pig Pen and forage for truffles. Rare breeds are traded for truffles
 | ✅ | Boar | `boar` | never sold | free | Nothing | 1 day | 0 | stray, needs a pig pen |
 | ✅ | Piglet | `piglet` | never sold | free | Truffles | 1 day | 20 |  |
 | ✅ | Saddleback Pig (values estimated in FarmVille's style) | `saddleback_pig` | 35 | 5,000 | Truffles | 1 day | 260 |  |
+| ✅ | Blueberry Pig (a limited coat: values estimated in FarmVille's style) | `blueberry_pig` | 7 | 35 gems | Truffles | 1 day | 165 |  |
+| ✅ | Blueberry Piglet | `blueberry_piglet` | never sold | free | Truffles | 1 day | 20 |  |
+| ✅ | Bumblebee Pig (a limited coat: values estimated in FarmVille's style) | `bumblebee_pig` | 7 | 35 gems | Truffles | 1 day | 165 |  |
+| ✅ | Bumblebee Piglet | `bumblebee_piglet` | never sold | free | Truffles | 1 day | 20 |  |
+| ✅ | Woolly Pig (a limited coat: values estimated in FarmVille's style) | `woolly_pig` | 7 | 35 gems | Truffles | 1 day | 165 |  |
+| ✅ | Woolly Piglet | `woolly_piglet` | never sold | free | Truffles | 1 day | 20 |  |
+| ✅ | Rainbow Pig (a limited coat: values estimated in FarmVille's style) | `rainbow_pig` | 7 | 35 gems | Truffles | 1 day | 165 |  |
+| ✅ | Rainbow Piglet | `rainbow_piglet` | never sold | free | Truffles | 1 day | 20 |  |
+| ✅ | Golden Pig (a limited coat: values estimated in FarmVille's style) | `golden_pig` | 7 | 35 gems | Truffles | 1 day | 165 |  |
+| ✅ | Golden Piglet | `golden_piglet` | never sold | free | Truffles | 1 day | 20 |  |
 
 ### Goats
 
@@ -853,6 +911,11 @@ Live in the Goat Pen.
 | ✅ | Goat | `goat` | 9 | 600 | Goat Milk | 2 days | 200 |  |
 | ✅ | Boer Goat | `boer_goat` | never sold | free | Goat Milk | 2 days | 260 |  |
 | ✅ | Arapawa Goat (values estimated in FarmVille's style) | `arapawa_goat` | 55 | 8,000 | Goat Milk | 2 days | 420 |  |
+| ✅ | Angora Goat (a limited coat: values estimated in FarmVille's style) | `angora_goat` | 9 | 35 gems | Goat Milk | 2 days | 300 |  |
+| ✅ | Lavender Goat (a limited coat: values estimated in FarmVille's style) | `lavender_goat` | 9 | 35 gems | Goat Milk | 2 days | 300 |  |
+| ✅ | Dalmatian Goat (a limited coat: values estimated in FarmVille's style) | `dalmatian_goat` | 9 | 35 gems | Goat Milk | 2 days | 300 |  |
+| ✅ | Sunset Goat (a limited coat: values estimated in FarmVille's style) | `sunset_goat` | 9 | 35 gems | Goat Milk | 2 days | 300 |  |
+| ✅ | Tuxedo Goat (a limited coat: values estimated in FarmVille's style) | `tuxedo_goat` | 9 | 35 gems | Goat Milk | 2 days | 300 |  |
 
 ### Horses
 
@@ -869,6 +932,16 @@ Live in the Horse Stable. A stallion brings foals.
 | ✅ | Mustang | `mustang` | never sold | free | Horse Hair | 3 days | 360 |  |
 | ✅ | Gray Foal | `gray_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
 | ✅ | Mustang Foal | `mustang_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
+| ✅ | Candy Horse (a limited coat: values estimated in FarmVille's style) | `candy_horse` | 11 | 50 gems | Horse Hair | 3 days | 480 |  |
+| ✅ | Candy Foal | `candy_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
+| ✅ | Zebra Horse (a limited coat: values estimated in FarmVille's style) | `zebra_horse` | 11 | 50 gems | Horse Hair | 3 days | 480 |  |
+| ✅ | Zebra Foal | `zebra_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
+| ✅ | Galaxy Horse (a limited coat: values estimated in FarmVille's style) | `galaxy_horse` | 11 | 50 gems | Horse Hair | 3 days | 480 |  |
+| ✅ | Galaxy Foal | `galaxy_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
+| ✅ | Dapple Horse (a limited coat: values estimated in FarmVille's style) | `dapple_horse` | 11 | 50 gems | Horse Hair | 3 days | 480 |  |
+| ✅ | Dapple Foal | `dapple_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
+| ✅ | Feather Horse (a limited coat: values estimated in FarmVille's style) | `feather_horse` | 11 | 50 gems | Horse Hair | 3 days | 480 |  |
+| ✅ | Feather Foal | `feather_foal` | never sold | free | Horse Hair | 1 day | 20 |  |
 
 ### Donkeys
 
@@ -885,6 +958,11 @@ Live in the Rabbit Hutch.
 | | Item | id | Unlock | Cost | Gives | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ✅ | Rabbit | `rabbit` | 8 | 400 | Fur | 1 day | 100 |  |
+| ✅ | Cocoa Rabbit (a limited coat: values estimated in FarmVille's style) | `cocoa_rabbit` | 8 | 20 gems | Fur | 1 day | 150 |  |
+| ✅ | Dutch Rabbit (a limited coat: values estimated in FarmVille's style) | `dutch_rabbit` | 8 | 20 gems | Fur | 1 day | 150 |  |
+| ✅ | Galaxy Rabbit (a limited coat: values estimated in FarmVille's style) | `galaxy_rabbit` | 8 | 20 gems | Fur | 1 day | 150 |  |
+| ✅ | Strawberry Rabbit (a limited coat: values estimated in FarmVille's style) | `strawberry_rabbit` | 8 | 20 gems | Fur | 1 day | 150 |  |
+| ✅ | Sunset Rabbit (a limited coat: values estimated in FarmVille's style) | `sunset_rabbit` | 8 | 20 gems | Fur | 1 day | 150 |  |
 
 ### Bees
 
@@ -1262,11 +1340,12 @@ From Orchard harvests; 8 Watering Cans grow one into a tree of the Orchard's kin
 
 ### Babies
 
-From animal home harvests; 8 Animal Feed raise one into an animal of the home's kinds.
+From animal home harvests; 8 Animal Feed raise one into an animal of the home's kinds. A Rare Mystery Baby is the same, found less often and likelier to be one of the home's limited animals.
 
 | | Item | id |  |
 |---|---|---|
 | ✅ | Mystery Baby | `mystery_baby` |  |
+| ✅ | Rare Mystery Baby | `rare_mystery_baby` |  |
 
 ### Bulbs
 
