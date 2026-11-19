@@ -1094,13 +1094,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   of the one before) is the phone's pace and counts; a window whose median is over max_frame_ms goes straight to
   the ladder's last rung (low capped at 30). Lone hitches, resumes and first draws' uneven stalls still count for
   nothing. No level's look changes. Test 555; precheck 470 tests, 0 failed.
-- Next run: 1) read the phone run started after eb810f7's phone build (A05s): device.quality of the relaunch
-  process (expected "low"), play avg_ms (expected ~95 ms if AutoQuality stepped before the play phase; if still
-  ~256, the benchmark's process had too few counted frames before play: check how many uncovered/steady frames
-  the phases give), and the relaunch's startup. 2) Then the play frame at low (~95 ms, ~10 fps): run 18's candidates
-  (visible triangles: BuildingFill, DecorLayer, Animal3D coarser LODs; Instancer batching of the 156 BuildingFill
-  and 89 DecorLayer meshes), each with a 1x before/after. Note the benchmark's device.quality is read at start, so
-  it does not say the level played at: adding the level at play time to the "play" part would make reports clear.
+- Phone run of 15:31 IST (A05s, build of 822d40f, run 44501767398) confirms it: play 256.5 -> 128.6 ms a frame,
+  play.quality "low", max_fps 30 (stepped during the play phase: p95 259.6, so part of the 5 s was still mid; draws
+  and triangles are the phase's max, from the mid part); the relaunch starts on low (was mid): startup 7.6 s,
+  own_farm_first 16.2 -> 14.8 s. Cold start 16.5 s (20.8 last run); own farm whole 7.5 s, showcase warm 27.1 s.
+- Next run: 1) the play frame on low (~95 ms on the A05s, ~10 fps): run 18's candidates (visible triangles:
+  BuildingFill, DecorLayer, Animal3D coarser LODs; Instancer batching of the 156 BuildingFill and 89 DecorLayer
+  meshes), each with a 1x before/after; measure with perf_probe/the renderer probe at --quality=low. The next
+  phone run's play should be fully on low (the benchmark process now steps before play only if enough counted
+  frames come first: its relaunch is on low, so run the next on a fresh install as Test Lab does; play.quality
+  says). 2) The cold start (16.5-20.8 s) and the showcase cold (47 s built) after that.
 
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
