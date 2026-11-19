@@ -8,7 +8,10 @@ extends Node
 ## then waits `warmup` again. So a farm that grows from 12 by 12 to 30 by 30 is followed, and a phone that can't
 ## hold 60 runs an even 30 rather than wobbling between 30 and 40. Only the first window on a never-measured
 ## computer may step up a level (under `up_ms`; `up_on_mobile` for phones). Frames over `max_frame_ms` (a hitch,
-## a resume) aren't counted, and leaving the app starts the window again. Where the renderer can't time itself, the
+## a resume) aren't counted, unless `slow_run` of them come in a row, each within `steady_ratio` of the one before:
+## that is the phone's own pace (the Galaxy A05s on mid: ~256 ms a frame, so it was never stepped down), and a
+## window whose median is over `max_frame_ms` goes straight to the ladder's last rung. Leaving the app starts the
+## window again. Where the renderer can't time itself, the
 ## time between frames stands in (it can still tell a device that is too slow, never one with time to spare).
 ## The player's choice always wins: nothing is watched then. No screen (tests, CI): nothing runs.
 
@@ -19,6 +22,8 @@ var _costs := PackedFloat32Array()
 var _timed := true          # every frame this window was timed by the renderer
 var _first := true          # the first window on a device never measured before (it alone may step up)
 var _viewport := RID()
+var _slow_in_row := 0       # frames over `max_frame_ms` in a row, each close to the one before
+var _last_slow_ms := 0.0
 
 
 ## Starts watching under `parent` when it should (`should_watch`) and there is a screen.
@@ -77,7 +82,7 @@ func _on_level() -> void:
 ## Counts one frame: `delta` since the last (seconds), `cost_ms` its work, `timed` whether the renderer timed it.
 ## Returns the rung to move to ([level, cap]) when a window ends slow (or, the first time, fast), else [].
 func add_sample(delta: float, cost_ms: float, timed: bool) -> Array:
-	if delta * 1000.0 > float(_rules["max_frame_ms"]):
+	if not counts(delta * 1000.0):
 		return []   # a hitch or a resume: neither counted nor waited through
 	_waited += delta
 	if _waited < float(_rules["warmup"]):
@@ -93,11 +98,26 @@ func add_sample(delta: float, cost_ms: float, timed: bool) -> Array:
 	return next if next != now else []
 
 
+## Whether a frame `ms` long counts: under `max_frame_ms`, or one of a steady run of slower frames (`slow_run` in a
+## row, each within `steady_ratio` of the one before; a hitch or a first draw's stall is a lone long frame).
+func counts(ms: float) -> bool:
+	if ms <= float(_rules["max_frame_ms"]):
+		_slow_in_row = 0
+		_last_slow_ms = 0.0
+		return true
+	var steady := _last_slow_ms > 0.0 and absf(ms - _last_slow_ms) <= _last_slow_ms * float(_rules["steady_ratio"])
+	_slow_in_row = _slow_in_row + 1 if steady else 1
+	_last_slow_ms = ms
+	return _slow_in_row >= int(_rules["slow_run"])
+
+
 ## Starts the window again from the warmup (after a step, or the app coming back: not a fair frame yet).
 func restart() -> void:
 	_waited = 0.0
 	_costs.clear()
 	_timed = true
+	_slow_in_row = 0
+	_last_slow_ms = 0.0
 
 
 ## The rung in use: [level, the cap AutoQuality set (0 none)].
@@ -106,13 +126,15 @@ func rung_now() -> Array:
 
 
 ## The rung to be on after a window whose median frame took `cost_ms` on rung `now`: one down the ladder when
-## slower than `now` holds, one level up when `may_rise` and under `up_ms`, else `now`.
+## slower than `now` holds (to the last rung when over `max_frame_ms`: it can't play there at all), one level up
+## when `may_rise` and under `up_ms`, else `now`.
 func verdict(now: Array, cost_ms: float, may_rise: bool) -> Array:
 	var ladder: Array = _rules["ladder"]
 	var at := _index(ladder, now)
 	var slow := float(_rules["down_ms"]) if int(now[1]) > 0 else float(_rules["hold_ms"])
 	if cost_ms > slow:
-		var r: Array = ladder[mini(at + 1, ladder.size() - 1)]
+		var r: Array = ladder[ladder.size() - 1] if cost_ms > float(_rules["max_frame_ms"]) \
+			else ladder[mini(at + 1, ladder.size() - 1)]
 		return [str(r[0]), int(r[1])]   # (the data's numbers come as floats)
 	if may_rise and cost_ms < float(_rules["up_ms"]):
 		var up := Quality.step(str(now[0]), 1)

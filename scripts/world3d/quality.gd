@@ -15,7 +15,7 @@ const AUTO_KEY := "auto"   # the level AutoQuality measured for this device, whi
 const AUTO_CAP_KEY := "auto_cap"   # and the frame cap it found the device needs (0: none beyond the level's)
 const LEVELS: Array[String] = ["low", "mid", "high", "ultra"]
 const AUTO_RULES: Array[String] = ["warmup", "frames", "max_frame_ms", "hold_ms", "down_ms", "up_ms",
-	"up_on_mobile", "ladder"]
+	"up_on_mobile", "ladder", "slow_run", "steady_ratio"]
 const COMPUTER_ONLY: Array[String] = ["ultra"]
 const MSAA := [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X]
 

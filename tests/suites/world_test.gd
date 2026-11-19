@@ -435,6 +435,47 @@ func test_327_auto_quality_steps_down_when_frames_stay_slow_and_the_players_choi
 	Quality.notifier.emitted.emit()
 
 
+## A phone so slow that every frame is over `max_frame_ms` (the Galaxy A05s on mid: ~256 ms) is still watched: a
+## steady run of slow frames is its pace and counts, and a window that slow goes straight to the last rung. A lone
+## long frame, or slow frames that jump about (first draws, a resume), still count for nothing.
+func test_555_auto_quality_steps_a_phone_slower_than_the_hitch_limit_to_the_last_rung() -> void:
+	var rules := Quality.auto_rules()
+	var most := float(rules["max_frame_ms"])
+	var run := int(rules["slow_run"])
+	var ladder: Array = rules["ladder"]
+	var last: Array = [str(ladder[-1][0]), int(ladder[-1][1])]
+	var auto := AutoQuality.new()
+	auto._rules = rules
+	auto.mobile = true
+	_check(auto.counts(most - 1.0), "a frame under the limit counts")
+	_check(not auto.counts(most * 1.6), "a lone long frame is a hitch")
+	_check(auto.counts(16.0), "and the next quick frame counts again")
+	var uneven := [most * 1.2, most * 2.4, most * 1.1, most * 3.0, most * 1.3, most * 2.6, most * 1.2, most * 2.9,
+		most * 1.1, most * 2.5]
+	var counted := 0
+	for ms: float in uneven:
+		counted += 1 if auto.counts(ms) else 0
+	_eq(counted, 0, "slow frames that jump about (first draws) are never a pace")
+	var steady := most + 6.0
+	counted = 0
+	for k in run + 2:
+		counted += 1 if auto.counts(steady) else 0
+	_eq(counted, 3, "a steady run counts from its %d-th frame" % run)
+	_eq(auto.verdict(["mid", 0], steady, false), last, "a window over the limit: straight to the last rung")
+	_eq(auto.verdict(["mid", 0], float(rules["hold_ms"]) + 4.0, false), ["mid", 30], "a little slow: one rung")
+	# The flow: from the warmup, every frame of a phone at that pace; one window, then the last rung.
+	auto.restart()
+	var rung: Array = []
+	var n := 0
+	var window := ceili(float(rules["warmup"]) * 1000.0 / steady) + run + int(rules["frames"]) + 2
+	while rung.is_empty() and n < window * 2:
+		rung = auto.add_sample(steady / 1000.0, steady, true)
+		n += 1
+	_check(n <= window, "the warmup, the run, then one window (%d frames)" % n)
+	_eq(rung, last, "the phone that can't play mid at all goes to %s" % str(last))
+	auto.free()
+
+
 
 func test_433_a_tap_on_the_mailbox_opens_the_inbox() -> void:
 	Game.reset_game()
