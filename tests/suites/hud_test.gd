@@ -377,6 +377,9 @@ func test_334_the_interface_keeps_inside_the_safe_area() -> void:
 	_eq(inset, Vector4(0, 60, 0, 30), "a notch at the top and a gesture bar below, at the view's half scale")
 	_eq(Display.insets_for(Vector2(1920, 1080), Rect2(0, 0, 1920, 1080), Vector2(1920, 1080)), Vector4.ZERO,
 		"no cut-outs: nothing moves")
+	# Owner, 19 Nov (an iQOO 15R): icons sat in the phone's rounded corners, which no safe area reports.
+	_eq(Display.at_least(Vector4(0, 0, 90, 0), Vector4(30, 12, 30, 12)), Vector4(30, 12, 90, 12),
+		"every side keeps a phone's edge; a camera hole's side keeps its own, bigger one")
 	_check(ItemIcons.side() >= ItemIcons.SIDE and ItemIcons.side() <= ItemIcons.SIDE_MOST,
 		"pictures are made at this screen's density, within bounds")
 

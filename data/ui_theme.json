@@ -112,6 +112,8 @@
     "font_star": 18,
     "font_xp": 12,
     "hud_margin": 12,
+    "phone_edge_x": 30,
+    "phone_edge_y": 12,
     "hud_gap": 8,
     "row_gap": 12,
     "section_gap": 16,

@@ -45,11 +45,20 @@ static func apply() -> void:
 static func safe_insets(viewport: Viewport) -> Vector4:
 	if not OS.has_feature("mobile"):
 		return Vector4.ZERO
+	# A phone's rounded corners are not in its safe area (only a camera hole and the gesture bar are): every
+	# side keeps at least a phone's edge, so nothing sits in a corner's curve (owner, 19 Nov, an iQOO 15R).
+	var least := Vector4(UiTheme.size("phone_edge_x"), UiTheme.size("phone_edge_y"), UiTheme.size("phone_edge_x"),
+		UiTheme.size("phone_edge_y"))
 	var screen := Vector2(DisplayServer.screen_get_size())
 	var safe := Rect2(DisplayServer.get_display_safe_area())
 	if screen.x <= 0.0 or screen.y <= 0.0 or safe.size.x <= 0.0 or safe.size.y <= 0.0:
-		return Vector4.ZERO
-	return insets_for(screen, safe, viewport.get_visible_rect().size)
+		return least
+	return at_least(insets_for(screen, safe, viewport.get_visible_rect().size), least)
+
+
+## Each of `inset`'s sides, at least `least`'s (pure: for tests).
+static func at_least(inset: Vector4, least: Vector4) -> Vector4:
+	return Vector4(maxf(inset.x, least.x), maxf(inset.y, least.y), maxf(inset.z, least.z), maxf(inset.w, least.w))
 
 
 ## The insets of a `safe` area on a `screen` of that size, in units of a view `view` across (pure: for tests).

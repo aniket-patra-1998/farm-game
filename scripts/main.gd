@@ -17,6 +17,7 @@ const MIN_CLOSE_FACTOR := 1.5 # (and is always at least this much closer than th
 const FURTHEST_OUT := 1.25    # how far past the whole-farm view you can pull back
 const WHEEL_STEP := 1.1
 const ROOSTER_HOME := "chicken"   # not-ui: a farm with one of these (a hen, a coop) hears the dawn
+const MORNING := [5.0, 9.0]       # the hours a farm opened in the morning hears the rooster once (that day)
 const NIGHT_FROM := 0.6       # how dark it is (DayCycle's 0..1) when the animals go to sleep
 const READY_ZOOM := 2.2       # going to a ready thing zooms in to at least this many times the whole-farm view
 const DAYLIGHT_EVERY := 0.1   # seconds between updates of the 3D sun, sky light and window glow
@@ -37,6 +38,7 @@ var _base_zoom := 1.0       # zoom that shows the whole farm (you can pull back 
 var _last_input_msec := 0   # when the player last touched anything (0: not yet), for the idle view
 var _idle_after_msec := 0   # how long with no touch before the interface fades away (0 never)
 var _was_night := false     # it was night at the last look (first light after it: the rooster)
+var _crowed_day := -1       # the day the rooster last crowed (once a morning)
 var _waking := false        # the press that brought the interface back is being swallowed, to its release
 var _touches := {}          # finger index -> screen position
 var _pinch_dist := 0.0
@@ -319,8 +321,13 @@ func _process(_delta: float) -> void:
 			ModelKit.set_window_glow(dark)
 			# Night and day for the animals (they sleep in the dark), and the rooster at first light.
 			var night := dark > NIGHT_FROM
-			if _was_night and not night and Game.objects.any(
+			# First light, or the farm opened in the morning (owner, 19 Nov: only a game left open over the dawn
+			# ever heard it): once a day, on a farm with chickens to have a rooster.
+			var morning := hour >= float(MORNING[0]) and hour < float(MORNING[1])
+			var due := (_was_night or morning) and _crowed_day != Game.day_number() and LoadingCover.covering == 0
+			if not night and due and Game.objects.any(
 					func(o: Dictionary) -> bool: return str(o["id"]).contains(ROOSTER_HOME)):
+				_crowed_day = Game.day_number()
 				Feedback.moment("dawn")   # (a farm with chickens has a rooster to say so)
 			_was_night = night
 			AnimalBehaviour.night = night
