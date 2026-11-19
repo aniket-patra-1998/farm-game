@@ -208,3 +208,25 @@ func test_415_a_rusty_vehicle_wears_the_rust_sign_and_a_tap_on_it_offers_only_it
 	hud.queue_free()
 	cam.queue_free()
 	objects.queue_free()
+
+
+func test_577_a_tap_on_a_rusty_vehicle_offers_its_repair_first() -> void:
+	# Owner, 19 Nov: tapping a fully rusted vehicle did nothing (only its small sign offered the repair). A tap by
+	# hand anywhere on a vehicle with rust offers the repair; other tools, and a clean vehicle, act as before.
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var rusty := Game.objects.filter(func(o: Dictionary) -> bool:
+		return Game.kind_of(o) == "vehicle" and Game.rust.needs_repair(str(o["id"])))
+	_check(not rusty.is_empty(), "the showcase has a rusty vehicle")
+	var grid := FarmGrid.new()
+	grid.tool = "hand"
+	if not rusty.is_empty():
+		_check(grid.offers_repair(rusty[0]), "a tap by hand offers its repair")
+		grid.tool = "move"
+		_check(not grid.offers_repair(rusty[0]), "moving it still moves it")
+	grid.tool = "hand"
+	var cow := Game.objects.filter(func(o: Dictionary) -> bool: return Game.kind_of(o) != "vehicle")
+	_check(not grid.offers_repair(cow[0]), "anything else acts as before")
+	grid.free()
+	Game.reset_game()

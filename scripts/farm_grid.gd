@@ -892,6 +892,11 @@ func _apply_at(screen_pos: Vector2) -> void:
 		var uid: int = picker.call(screen_pos)
 		var picked := Game.object_by_uid(uid)
 		if not picked.is_empty():
+			# A rusty vehicle tapped by hand offers its repair first, wherever the tap lands on it (owner, 19 Nov:
+			# only its little sign did, so a seized vehicle seemed to do nothing).
+			if offers_repair(picked):
+				tapped_rust.emit(to_local(world), str(picked["id"]))
+				return
 			_act_on_object(picked, true)
 			return
 	var i := index_at(to_local(world))
@@ -1361,6 +1366,11 @@ func job_for(i: int) -> Dictionary:
 			if ph == GameState.Phase.GROWING and not Game.field.is_fertilized(i):
 				return {"kind": "fertilize", "plot": i}
 	return {}
+
+
+## Whether a tap by hand on `obj` offers its repair first: a vehicle with rust on it, not in for a repair now.
+func offers_repair(obj: Dictionary) -> bool:
+	return tool == "hand" and Game.kind_of(obj) == "vehicle" and Game.rust.needs_repair(str(obj["id"]))
 
 
 func _act_on_object(obj: Dictionary, loud: bool) -> void:
