@@ -1,6 +1,6 @@
 # The loading and performance build (owner-approved 18 Nov 2026)
 
-Hourly sessions, 20:50 IST 18 Nov to 08:35 IST 19 Nov, make the farm load and run like a big commercial farm game:
+Hourly sessions, 20:50 IST 18 Nov to 20:35 IST 19 Nov (extended by the owner at 08:31; it runs alone from 08:35), make the farm load and run like a big commercial farm game:
 the farm opens fast and whole, and a large, crowded farm stays smooth on a low-end Android phone. The look must
 not change (same models, colours and motion; an optimisation that changes how something looks is reported, not
 built). Follow CLAUDE.md and docs/POLISH.md's "Safe merging and no overlap". Log: the Claude doc "Farm game: polish
@@ -83,3 +83,13 @@ by default one phone a run: a Galaxy A05s, low-end, Adreno 610). From now on:
   is worse than a slow one.
 - Settled (19 Nov, owner): the A10 and A13 run 32-bit Android; every Android export now ships 32-bit and 64-bit ARM
   (test 535), so they install. A phone always plays in landscape (Display.ORIENTATION, held after the start).
+
+## Order of work from 19 Nov 08:35 (owner: keep the performance build going)
+1. Why the app dies in the foreground on the phone during the benchmark (runs 7 and 8): a crash would hit players
+   too. Read the logcat's last lines before "has died" (signal, OOM, ANR); switch the benchmark to Test Lab's
+   game-loop type if Robo is what ends it, so the benchmark runs every phase to its end.
+2. The start: 8.3-9.3 s on the Galaxy A05s before the first screen (~5.5 s before Game is made: the engine and
+   compiling ~50k lines of script; ~1 s data and save; ~2.2 s main._ready). Split it with the start marks, then cut
+   the biggest part, nothing seen changed.
+3. Loading and play measured on the phone once the benchmark finishes, then the biggest of those.
+Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit ships (4b84c6b) to confirm it runs.
