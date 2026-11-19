@@ -1357,7 +1357,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   reveal 580, touch answers 582, touch hearts 584. The pre-push hook re-runs the 7.5 min precheck, so main can move
   meanwhile: a rejected push is fetch, rebase, regenerate art_versions, check again. The window ends 00:40 IST.
 
-- Run 12 (19 Nov 23:35-00:15 IST): no picks yet. Run 11's open end built as a missing contact (reuses the mended
+- Run 12 (19 Nov 23:35-23:58 IST): no picks yet. Run 11's open end built as a missing contact (reuses the mended
   Barn's swell, so merged without a pick): a vehicle's finished rust repair. RustSystem.finish_repairs (on Game's
   30 s stray_timer) closes finished repairs, which settled lazily, says each once (RUST_REPAIR_DONE) and calls
   objects_updated; Objects3D: a vehicle in for repair is built again (shows_of writes REPAIRING after its rust)
