@@ -114,6 +114,11 @@ func _draw() -> void:
 	# stands level with its neighbours that have none (the content is centred, and the bar made it taller).
 	var footer_room := clampf(UiTheme.size("badge_height"), badge_high, maxf(badge_high, size.y - 2.0 * pad - total))
 	total += footer_room - badge_high
+	# And the mastery stars' room: in a shelf where some cards have stars (a tree mastered) and some none, the
+	# pictures, names and prices stand level along the row (the stars' place left empty).
+	var stars_room := (SPACE + stars_high) if not stars.is_empty() else 0.0
+	stars_room = clampf(SPACE + stars_high, stars_room, maxf(stars_room, size.y - 2.0 * pad - total))
+	total += stars_room - ((SPACE + stars_high) if not stars.is_empty() else 0.0)
 	var y := maxf(pad, (size.y - total) / 2.0)
 	picture_top = y
 	# The picture, on its own canvas item (the shine).
@@ -132,7 +137,7 @@ func _draw() -> void:
 	if not stars.is_empty():
 		var wide := UiTheme.size("mastery_star") * STARS_WIDE
 		MasteryStars.paint(self, Rect2((size.x - wide) / 2.0, y, wide, stars_high), int(stars[0]), float(stars[1]))
-		y += stars_high + SPACE
+	y += stars_room
 	draw_multiline_string(font, Vector2(pad, y + (name_room - name_high) / 2.0 + font.get_ascent(name_px)), name,
 		HORIZONTAL_ALIGNMENT_CENTER, inside, name_px, NAME_LINES, UiTheme.color("ink"))
 	y += name_room + SPACE

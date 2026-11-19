@@ -502,6 +502,27 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	_check(tops[0] > 0.0, "a card's picture was drawn")
 	_eq(tops[0], tops[1], "a one-line and a two-line name leave the picture at one height")
 	_eq(tops[0], tops[2], "a card with a bar leaves its picture at the same height")
+	# A shelf where some cards have mastery stars and some none (the Market's trees): pictures stand level too.
+	var starred := {"name": "Apple Tree", "stars": [1, 0.5], "badge": ["coin", "150"]}   # not-ui
+	var plain := {"name": "Lemon Tree", "badge": ["coin", "250"]}   # not-ui
+	var shelf_tops: Array[float] = []
+	var high := 0.0
+	for face: Dictionary in [starred, plain]:
+		var card := CardFace.new()
+		add_child(card)
+		card.show_face("tree", face, null)
+		high = maxf(high, card.needed_height())
+		card.queue_free()
+	for face: Dictionary in [starred, plain]:
+		var card := CardFace.new()
+		card.size = Vector2(UiTheme.size("card_width"), high)
+		add_child(card)
+		card.show_face("tree", face, null)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		shelf_tops.append(card.picture_top)
+		card.queue_free()
+	_eq(shelf_tops[0], shelf_tops[1], "a card with no stars leaves its picture where a starred card's is")
 	main.queue_free()
 	await get_tree().process_frame
 

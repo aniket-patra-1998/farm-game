@@ -87,7 +87,8 @@ func _ready() -> void:
 	var homes := Game.objects.filter(func(o: Dictionary) -> bool: return Game.is_home(o))
 	homes.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["inside"].size() > b["inside"].size())
 	var crafting := Game.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == "bakery")
-	for p: Array in [["home_panel", homes], ["crafting_panel", crafting]]:
+	var barns := [barn] if not barn.is_empty() else []
+	for p: Array in [["home_panel", homes], ["crafting_panel", crafting], ["barn_panel", barns]]:
 		if (p[1] as Array).is_empty() or not (only.is_empty() or only.has(str(p[0]))):
 			continue
 		hud.show_building(int(p[1][0]["uid"]))
@@ -95,7 +96,8 @@ func _ready() -> void:
 			await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + str(p[0]) + ".png"))
 		hud.book.close_panel()
-	for p: Array in [["seeds_panel", hud.show_seeds], ["collections_panel", hud.show_collections],
+	for p: Array in [["seeds_panel", hud.show_seeds], ["market_panel", hud.show_market],
+			["collections_panel", hud.show_collections],
 			["ribbons_panel", hud.show_ribbons], ["inbox_panel", hud.show_inbox],
 			["goals_panel", func() -> void: hud.show_goals(HudGoals.tab_of("daily:0"))]]:
 		if not (only.is_empty() or only.has(str(p[0]))):
