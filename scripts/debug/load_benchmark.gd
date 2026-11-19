@@ -119,7 +119,11 @@ func _phase(open: Callable) -> Dictionary:
 
 
 ## Plays at the playing zoom for PLAY_SECONDS: frame times (average, 95th percentile, longest), draws, and the level
-## and frame cap played at (the device's level at start may since have been stepped down).
+## and frame cap played at (the device's level at start may since have been stepped down: `quality_start` says the
+## level it began on). Where each frame goes, as medians (`split`): the renderer's CPU and GPU time for the farm's
+## view (the GPU's own timestamps), and the scripts' process and physics time, so a phone's slow frame says whether
+## the GPU or the CPU is the wall; with the draws and triangles' medians (the maxima above may come from a level
+## stepped down from).
 func _play() -> Dictionary:
 	var cam: FarmCamera = _main.get("camera")
 	var grid: FarmGrid = _main.get("grid")
@@ -127,6 +131,11 @@ func _play() -> Dictionary:
 		cam.snap(grid.to_global(grid.center_of(Game.index_of(Game.farm_size / 2, Game.farm_size / 2))), PLAY_ZOOM)
 	for k in 10:
 		await get_tree().process_frame
+	var rid := get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(rid, true)
+	var quality_start := Quality.level()
+	var samples := {"render_cpu_ms": [], "render_gpu_ms": [], "script_ms": [], "physics_ms": [], "draws": [],
+		"triangles": []}
 	var times: Array[float] = []
 	var draws := 0
 	var tris := 0
@@ -137,8 +146,18 @@ func _play() -> Dictionary:
 		var now := Time.get_ticks_usec()
 		times.append((now - last) / 1000.0)
 		last = now
-		draws = maxi(draws, int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)))
-		tris = maxi(tris, int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)))
+		var d := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+		var t := int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
+		draws = maxi(draws, d)
+		tris = maxi(tris, t)
+		samples["draws"].append(float(d))
+		samples["triangles"].append(float(t))
+		samples["render_cpu_ms"].append(RenderingServer.viewport_get_measured_render_time_cpu(rid)
+			+ RenderingServer.get_frame_setup_time_cpu())
+		samples["render_gpu_ms"].append(RenderingServer.viewport_get_measured_render_time_gpu(rid))
+		samples["script_ms"].append(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0)
+		samples["physics_ms"].append(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0)
+	RenderingServer.viewport_set_measure_render_time(rid, false)
 	times.sort()
 	var sum := 0.0
 	for t in times:
@@ -146,7 +165,18 @@ func _play() -> Dictionary:
 	return {"avg_ms": snappedf(sum / maxf(times.size(), 1.0), 0.1),
 		"p95_ms": snappedf(times[int(times.size() * 0.95)] if not times.is_empty() else 0.0, 0.1),
 		"longest_ms": snappedf(times[-1] if not times.is_empty() else 0.0, 0.1), "draws": draws, "triangles": tris,
-		"quality": Quality.level(), "max_fps": Engine.max_fps}   # (the level played at: AutoQuality may have moved it)
+		"quality": Quality.level(), "max_fps": Engine.max_fps,   # (the level played at: AutoQuality may have moved it)
+		"quality_start": quality_start, "split": medians(samples)}
+
+
+## The median of each list of samples, to a tenth (an empty list: 0).
+static func medians(samples: Dictionary) -> Dictionary:
+	var out := {}
+	for key in samples:
+		var list: Array = (samples[key] as Array).duplicate()
+		list.sort()
+		out[key] = snappedf(float(list[list.size() / 2]), 0.1) if not list.is_empty() else 0.0
+	return out
 
 
 func _until_whole() -> void:
@@ -182,4 +212,7 @@ static func summary(report: Dictionary) -> String:
 	var play: Dictionary = report.get("play", {})
 	lines.append("play: %s ms a frame (95%%: %s), %s draws" % [play.get("avg_ms"), play.get("p95_ms"),   # not-ui
 		play.get("draws")])
+	var split: Dictionary = play.get("split", {})
+	lines.append("frame: render CPU %s ms, GPU %s ms, scripts %s ms" % [split.get("render_cpu_ms"),   # not-ui
+		split.get("render_gpu_ms"), split.get("script_ms")])
 	return "\n".join(lines)

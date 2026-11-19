@@ -2467,3 +2467,13 @@ func test_570_the_farmer_recoloured_keeps_its_levels_of_detail() -> void:
 			_check(kept.has(edge) and kept[edge] == had[edge], "level %s: the same triangles" % edge)
 	_eq(out.get_blend_shape_count(), src.mesh.get_blend_shape_count(), "and its moves")
 	model.free()
+
+
+func test_571_the_phone_report_says_where_a_play_frame_goes() -> void:
+	# A play frame of 95 ms on the Galaxy A05s does not say whether the GPU or the scripts are the wall: the play
+	# phase keeps each frame's render CPU and GPU time and the scripts' time, reported as medians (a level stepped
+	# down mid-phase skews a maximum, not a median).
+	_eq(LoadBenchmark.medians({"gpu": [9.0, 1.0, 4.04], "none": []}), {"gpu": 4.0, "none": 0.0},
+		"each list's middle value, to a tenth; nothing measured is 0")
+	var lines := LoadBenchmark.summary({"play": {"avg_ms": 95.0, "split": {"render_gpu_ms": 80.0}}})
+	_check(lines.contains("GPU 80"), "the summary says it (%s)" % lines)
