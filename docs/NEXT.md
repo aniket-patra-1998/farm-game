@@ -1051,6 +1051,23 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   next; if compiling is still the big part, `tools/start_lines.py -v`: HudGoals' goal sheet (~0.2k), HudReveal is
   needed at start; the rest is the 3D farm the first screen draws.
 
+## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
+- Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.
+  UiTheme.glow(kind, fresh, px) is the one rule (data/ui_theme.json "glow": gold kinds, spread, least_px; colours
+  glow_gold, glow_new); UiIcon draws one shared still image behind (UiIcon.draw_glow, also the XP bar's star);
+  HudSide marks a menu picture `fresh` while its dot or count shows (Market, Collections, Inbox). Test 553;
+  tools/ui_sheet.tscn shows the menu plain and glowing (renders in 3 s: use it for UI looks, look_shot takes ~9 min).
+- Next: item 1, harvest juice. What exists (refine, don't rebuild): FxLayer (scripts/fx/fx_layer.gd) already flies
+  coins and XP stars from the plot to the counters and pulses them; the coin counter rolls (hud.gd _roll_coins);
+  FarmGrid._run keeps a streak (balance feel.streak_gap_seconds, streak notes climbing via Feedback.pitch_of) and
+  shouts "x5, x10" over the plot every feel.streak_shout_every; 3D plants pop (Farm3D crops.pop via plants_popped);
+  WorldFx bursts leaves from a pooled CPU particle set. Missing: the produce itself arcing to its counter with a
+  short sparkling trail, and one combo float "x8" when a sweep ends (instead of, or beside, the every-5 shout);
+  the same for animals, trees and buildings (_show_harvest's siblings in farm_grid.gd). A new look: build on
+  wow/harvest-juice, upload calmer/richer frames under "Wow: waiting for your look".
+- Godot is not kept between runs: fetch 4.7.2 (apk.yml's URL) into /home/claude/godot and --import once (~3 min).
+  The pre-push precheck can fail on timing-budget tests under load (card list 374): rerun, don't push around it.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
