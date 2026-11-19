@@ -1007,6 +1007,11 @@ func _show_combo(i: int) -> void:
 ## done soon after it (Balance `feel.streak_gap_seconds`), is one step further, and plays a note higher
 ## (Feedback.moment). Every few in a row the streak says its count over the plot. Feel only: it pays nothing.
 func _run(kind: String, i: int) -> int:
+	return _run_at(kind, center_of(i))
+
+
+## `_run` for work done at a point of the farm (collecting from an animal, tree or building): its count shows there.
+func _run_at(kind: String, at: Vector2) -> int:
 	var now := Time.get_ticks_msec()
 	if kind == _streak_kind and now - _streak_msec <= int(Balance.f("feel.streak_gap_seconds") * 1000.0):
 		_streak += 1
@@ -1016,7 +1021,7 @@ func _run(kind: String, i: int) -> int:
 	_streak_msec = now
 	var every := Balance.i("feel.streak_shout_every")
 	if every > 0 and _streak % every == 0 and not _ends_sweep(kind):   # (the sweep's end says it bigger)
-		float_words(center_of(i) + Vector2(0, -64), COUNT_TAG % _streak, "golden", 1.3)
+		float_words(at + Vector2(0, -64), COUNT_TAG % _streak, "golden", 1.3)
 	return _streak - 1
 
 
@@ -1024,14 +1029,19 @@ func _run(kind: String, i: int) -> int:
 ## (Balance `feel.combo_min`), its count pops once, bigger, over the last plot with a few sparkles: a sweep of
 ## eight harvests ends on "x8". Feel only: it pays nothing. Returns whether it showed.
 func _sweep_end(kind: String, i: int) -> bool:
-	if i < 0 or not _ends_sweep(kind):
+	return i >= 0 and _sweep_end_at(kind, center_of(i))
+
+
+## `_sweep_end` over a point of the farm: a collecting round's end over the last thing collected from.
+func _sweep_end_at(kind: String, at: Vector2) -> bool:
+	if not at.is_finite() or not _ends_sweep(kind):
 		return false
 	var label := Label.new()
 	label.text = COUNT_TAG % _streak
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.size = Vector2(200, 56)
 	label.pivot_offset = label.size / 2.0
-	label.position = center_of(i) - Vector2(100, 132)
+	label.position = at - Vector2(100, 132)
 	label.z_index = 11
 	label.scale = Vector2.ONE * 0.4
 	FloatText.style_world(label, SWEEP_PX, Feedback.color("golden"))
@@ -1041,7 +1051,7 @@ func _sweep_end(kind: String, i: int) -> bool:
 	tw.tween_property(label, "position:y", label.position.y - 40.0, 0.9).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(label, "modulate:a", 0.0, 0.6).set_delay(0.3)
 	tw.tween_callback(label.queue_free)
-	world_fx.burst("sparkle", center_of(i) + Vector2(0, -96))
+	world_fx.burst("sparkle", at + Vector2(0, -96))
 	return true
 
 
@@ -1089,7 +1099,7 @@ func _on_action_done_timed(job: Dictionary, result: Dictionary) -> void:
 			_sparkle(center_of(i), "fert")
 			_sweep_end("fertilize", i)
 		"collect":
-			_show_collect(int(job["uid"]), result)
+			_sweep_end_at("collect", _show_collect(int(job["uid"]), result))
 		"nurture":
 			_show_nurture(job, result)
 		"feed":
@@ -1272,10 +1282,11 @@ func _show_fed(uid: int, result: Dictionary) -> void:
 	_sparkle(at, "find")
 
 
-func _show_collect(uid: int, result: Dictionary) -> void:
+## Returns where on the farm it showed (Vector2.INF when the thing is gone), for the round's end.
+func _show_collect(uid: int, result: Dictionary) -> Vector2:
 	var obj := Game.object_by_uid(uid)
 	if obj.is_empty():
-		return
+		return Vector2.INF
 	var fp := Game.footprint(obj["id"])
 	var at := (
 		corners_of(
@@ -1287,8 +1298,10 @@ func _show_collect(uid: int, result: Dictionary) -> void:
 	) / 2.0
 	_poke(uid)
 	collected.emit(uid)
-	Feedback.moment("collect")
+	Feedback.moment("collect", _run_at("collect", at))   # a round of collecting climbs like a harvest sweep
 	world_fx.burst("sparkle", at + Vector2(0, -40))
+	if fx != null and ItemIcons.is_made(str(obj["id"])):   # the animal's, tree's or building's picture flies to the coins
+		fx.produce(to_screen(at + Vector2(0, -40)), ItemIcons.of(str(obj["id"])))
 	_reward(at + Vector2(0, -30), int(result["coins"]), int(result["xp"]))
 	float_words(at + Vector2(0, -20), "+%d" % result["coins"], "coins")
 	if int(result["xp"]) > 0:
@@ -1302,6 +1315,7 @@ func _show_collect(uid: int, result: Dictionary) -> void:
 	if not result.get("extras", []).is_empty():
 		_sparkle(at, "golden")
 	# (a drop, a collectible, a baby born: said as it was found, Game.found_on -> show_find)
+	return at
 
 
 ## Works plot `i` (or what stands on it) with the tool in hand. `loud`: a tap, which says why when nothing can be

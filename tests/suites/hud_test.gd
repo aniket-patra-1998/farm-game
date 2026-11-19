@@ -614,6 +614,41 @@ func test_560_harvest_produce_flies_pooled_and_a_sweep_ends_on_its_count() -> vo
 	await get_tree().process_frame
 	Game.reset_game()
 
+## Collecting juice (wow build, the owner's pick of harvest juice applied to animals, trees and buildings): a round
+## of collecting climbs and ends on its count like a harvest sweep, over the last thing collected from.
+func test_561_a_round_of_collecting_ends_on_its_count_over_the_last_thing() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	Game.player.clear_queue()
+	_check(not Game.objects.is_empty(), "a new farm has something to collect from")
+	var uid := int(Game.objects[0]["uid"])
+	var at: Vector2 = grid.call("_show_collect", uid, {"coins": 5, "xp": 1})
+	_check(at.is_finite(), "collecting shows over the thing collected from")
+	_check(not (grid.call("_show_collect", -12345, {"coins": 5, "xp": 1}) as Vector2).is_finite(),
+			"a thing gone from the farm shows nowhere")
+	_check(not bool(grid.call("_sweep_end_at", "collect", Vector2.INF)), "and ends no round")
+	var least := Balance.i("feel.combo_min")
+	for k in least - 2:   # (the collect shown above began the round)
+		grid.call("_run_at", "collect", at)
+	_eq(int(grid.call("_run_at", "collect", at)), least - 1, "each collect in a round is a step higher")
+	Game.player.queue.append({"kind": "collect", "uid": uid})
+	_check(not bool(grid.call("_sweep_end_at", "collect", at)), "while more collecting is queued the round goes on")
+	Game.player.queue.clear()
+	var before := grid.get_child_count()
+	_check(bool(grid.call("_sweep_end_at", "collect", at)), "the round's last collect says its count")
+	var said: Label = grid.get_child(before)
+	_eq(said.text, FarmGrid.COUNT_TAG % least, "the round's length, once")
+	_check(said.position.distance_to(at - Vector2(100, 132)) < 1.0, "over the last thing collected from")
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()
+
+
 ## The Next ready button goes to the nearest ready thing it has not shown yet, round and round, and the view
 ## travels there by itself until a finger takes it.
 func test_359_next_ready_goes_round_everything_ready() -> void:
