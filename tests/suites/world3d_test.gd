@@ -2047,7 +2047,9 @@ func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
 func test_335_far_out_small_signs_fade_and_night_stays_playable() -> void:
 	_eq(ReadyMarks.minor_fade(ReadyMarks.MINOR_FADE_FROM - 1.0), 0.0, "close in, every sign shows")
 	_eq(ReadyMarks.minor_fade(ReadyMarks.MINOR_FADE_TO + 1.0), 1.0, "far out, small things' signs are gone")
-	_check(Farm3D.NIGHT_AMBIENT >= 0.4 and Farm3D.MOON_ENERGY >= 0.5, "a bright moonlit night")
+	# A deep night (the owner's pick B, 19 Nov: night must read as night), never black: the farm still shows.
+	_check(Farm3D.NIGHT_AMBIENT >= 0.2 and Farm3D.MOON_ENERGY >= 0.25, "a deep night, still playable")
+	_check(Farm3D.NIGHT_AMBIENT < 0.4, "night darker than the day's shade")
 	DayCycle.set_always_day(true)
 	_eq(DayCycle.lit_hour(23.0), DayCycle.SUNSET - 0.25, "always daytime: the night keeps the evening's light")
 	_eq(DayCycle.lit_hour(3.0), DayCycle.SUNRISE + 0.75, "and the small hours the morning's")
