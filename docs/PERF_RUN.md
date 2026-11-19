@@ -98,6 +98,17 @@ by default one phone a run: a Galaxy A05s, low-end, Adreno 610). From now on:
    loaded by path when first opened (or on a worker thread right after the farm appears), never named as a type
    from the start-up scripts. Measure lines compiled before the first screen (and the "scripts" mark) before and
    after; target well under half. Merge it in safe slices (one area at a time, tests passing), not one big bang.
+   Slim it too (owner, 19 Nov 08:41: "do we need 50k lines?"). Measured: 49.7k lines in the game's scripts, of which
+   37.6k are code (5k comments, 7k blank; tests and tools, 19k more, never ship). By area: world3d 14.9k (the 3D
+   models built in code), systems 5.8k, the top-level scripts 4.9k, hud 3.7k, ui 3.3k, world 2.1k, autoload 1.4k.
+   Scripts already ship as compressed binary tokens (script_export_mode=2). Where the phone compiles less:
+   a. Code only needed to MAKE art that is already exported as files (art builders, docs/ASSETS.md) does not belong
+      in what a phone compiles at start: the game loads the files; the builders stay in the repo for the export
+      tools. Find each world3d builder the game still names at run time only to build a look that has a file.
+   b. Dead code: functions and scripts nothing calls (a script lists every caller; tests do not count as callers).
+   c. Logic repeated across similar modules, merged (docs/AUDIT.md's rule). Features turned off by docs/V1.md are
+      never deleted (CLAUDE.md): they are loaded only when on.
+   Log the line count before the first screen at each merge. Nothing a player sees may change.
 3. Loading and play measured on the phone once the benchmark finishes, then the biggest of those.
 Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit ships (4b84c6b) to confirm it runs.
 - 19 Nov 08:45: the first phone run of the build with 32-bit ARM (4b84c6b, on the Galaxy A13) failed in Test
