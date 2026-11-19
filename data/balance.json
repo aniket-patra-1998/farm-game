@@ -834,8 +834,8 @@
    "note": "with no touch for this long the interface fades away and the farm plays on; the next touch brings it back and does nothing else (scripts/main.gd). 0 never"
   },
   "opening_seconds": {"v": 2.6, "note": "the opening glide (scripts/world/opening_glide.gd): as the loading cover lifts on the session's first farm, the view settles onto the farm over this long; a tap ends it at once. Our own touch."},
-  "opening_zoom_from": {"v": 0.82, "note": "the glide starts this much wider than the whole-farm view (kept within the furthest zoom out)"},
-  "opening_lift": {"v": 0.22, "note": "and this share of the screen's height further up the farm: it comes down onto it"},
+  "opening_zoom_from": {"v": 0.86, "note": "the glide starts this much wider than the whole-farm view (kept within the furthest zoom out)"},
+  "opening_lift": {"v": 0.16, "note": "and this share of the screen's height further up the farm: it comes down onto it"},
   "opening_dim": {"v": 0.3, "note": "the light starts this much cooler and softer (less saturation, a little less brightness) and warms in with the glide"},
   "away_card_seconds": {
    "v": 12.0,
