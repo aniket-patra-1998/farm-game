@@ -1422,3 +1422,44 @@ func test_579_the_showcase_clock_tries_every_weather() -> void:
 	_eq(Game.weather_override, "", "the tried weather stays in the showcase")
 	main.queue_free()
 	await get_tree().process_frame
+
+## Touch hearts (wow build, item 4's animal half): an animal tapped for itself sends up a small heart over its
+## back; a thing that is not an animal sends none; the hearts are pooled, so a run of taps never makes more.
+func test_583_a_tapped_animal_sends_up_a_pooled_heart() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var grid: FarmGrid = main.get("grid")
+	Game.player.clear_queue()
+	var animal := {}
+	var other := {}
+	for o in Game.objects:
+		if Game.kind_of(o) == "animal" and Game.nurture.supply_for(o) == "" and animal.is_empty():
+			animal = o
+		elif Game.kind_of(o) != "animal" and other.is_empty():
+			other = o
+	_check(not animal.is_empty(), "a new farm has a grown animal")
+	var petted := []
+	grid.petted.connect(func(uid: int) -> void: petted.append(uid))
+	animal["t"] = Game.now()   # (just collected: nothing to collect, so the tap is for the animal itself)
+	grid.call("_act_on_object", animal, true)
+	_eq(petted, [int(animal["uid"])], "a tap on an animal with nothing to collect pets it")
+	await get_tree().process_frame
+	var fx := grid.world_fx
+	_eq(fx.hearts_now(), int(Balance.d("feel.heart")["count"]), "and its heart rises")
+	if not other.is_empty():
+		var before := fx.hearts_now()
+		grid.petted.emit(int(other["uid"]))
+		_eq(fx.hearts_now(), before, "something that is not an animal sends no heart")
+	for k in WorldFx.HEART_POOL * 3:
+		fx.hearts(Vector2(10, 10))
+	var made := 0
+	for c in fx.get_children():
+		made += int(c is WorldFx.Heart)
+	_eq(made, WorldFx.HEART_POOL, "a run of taps reuses the hearts, it never makes more")
+	main.queue_free()
+	await get_tree().process_frame
+	Game.reset_game()

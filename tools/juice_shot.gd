@@ -4,7 +4,8 @@ extends Node
 ## to a moment after the sweep's end (run with --fixed-fps 30, so a frame is 1/30 s however slow the render).
 ## --produce=<json> tries a variant of Balance feel.produce. --hour=<h> as look_shot (12.5 noon, 18.5 dusk);
 ## --crop=<id>; --plots=<n>. --collect: a round of collecting instead (up to --plots= of the farm's animals and
-## trees made ready, the farmer collecting from each; their own pictures fly).
+## trees made ready, the farmer collecting from each; their own pictures fly). --pet: the farm's first grown
+## animal tapped for itself, its heart rising (--heart=<json> tries a variant of Balance feel.heart).
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --fixed-fps 30 --path . res://tools/juice_shot.tscn
 
@@ -18,9 +19,16 @@ func _ready() -> void:
 	var plots := 8
 	var every := 6
 	var collect := false
+	var pet := false
 	for a in OS.get_cmdline_user_args():
 		if a == "--collect":
 			collect = true
+		if a == "--pet":
+			pet = true
+		if a.begins_with("--heart="):   # a variant of Balance feel.heart, as JSON merged over it
+			var heart := Balance.d("feel.heart").duplicate()
+			heart.merge(JSON.parse_string(a.substr(8)), true)
+			Balance.override("feel.heart", heart)
 		if a.begins_with("--out="):
 			out = a.substr(6)
 		elif a.begins_with("--hour="):
@@ -53,6 +61,9 @@ func _ready() -> void:
 	Game.weather_override = "clear"
 	var grid: FarmGrid = main.get("grid")
 	var cam: FarmCamera = main.get("camera")
+	if pet:
+		await _pet(grid, cam, every, out)
+		return
 	if collect:
 		await _collect_round(grid, cam, plots, every, out)
 		return
@@ -120,4 +131,25 @@ func _collect_round(grid: FarmGrid, cam: FarmCamera, most: int, every: int, out:
 		shot += 1
 		quiet = quiet + every if Game.player.queue.is_empty() else 0
 	print("juice_shot: %d frames, a round of %d collects" % [shot, uids.size()])
+	get_tree().quit()
+
+
+## The farm's first grown animal tapped for itself (nothing to collect), frames written from the tap until its
+## heart has gone.
+func _pet(grid: FarmGrid, cam: FarmCamera, every: int, out: String) -> void:
+	var animal := {}
+	for obj: Dictionary in Game.objects:
+		if Game.kind_of(obj) == "animal" and Game.nurture.supply_for(obj) == "":
+			animal = obj
+			break
+	animal["t"] = Game.now()
+	cam.snap(grid.to_global(grid.center_of(Game.index_of(int(animal["row"]), int(animal["col"])))), 1.6)
+	for k in 90:
+		await RenderingServer.frame_post_draw
+	grid.call("_act_on_object", animal, true)
+	for shot in 12:
+		for k in every:
+			await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/f%03d.png" % shot))
+	print("juice_shot: an animal petted, %s" % str(animal["id"]))
 	get_tree().quit()

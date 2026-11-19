@@ -1455,6 +1455,15 @@ func rings_node() -> WaterRings:
 	return _rings
 
 
+## Over the back of animal `uid` where it stands now, in the farm's space (Vector3.INF when it is not an animal
+## shown here): where a tap's heart rises from.
+func animal_top(uid: int) -> Vector3:
+	var node := _node(uid)
+	if not node is Animal3D:
+		return Vector3.INF
+	return node.position + Vector3(0, (node as Animal3D).reach().y, 0)
+
+
 ## Fireworks over building `uid`, which has just grown (Fireworks3D): a small burst, or a show for the Barn.
 func fireworks_over(uid: int) -> void:
 	var o := Game.object_by_uid(uid)

@@ -15,6 +15,7 @@ signal tapped_rust(at: Vector2, id: String)   # a rusty vehicle's sign was tappe
 signal placing_changed(text: String)  # "" when placement ends
 signal tool_changed(tool: String)     # the tool in hand changed here, not from the tool panel (a vehicle tapped)
 signal object_poked(uid: int)         # something on the farm was tapped: it reacts (bounce, an animal looks round)
+signal petted(uid: int)               # an animal tapped for itself (nothing to collect or give): a small heart rises
 signal plants_popped(index: int, crop_id: String)  # a plot was harvested: its plants pop off
 signal collected(uid: int)                         # a building or animal was collected from
 
@@ -1450,6 +1451,8 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	if not loud:
 		return
 	_poke(uid)
+	if kind == "animal":
+		petted.emit(uid)   # (wow build: a heart over it; a collect or a feed is answered by its own moment)
 	_tell(obj)   # (its name and when it will be ready, above it; its panel, if it has one, from the bubble)
 
 

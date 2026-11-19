@@ -5,6 +5,7 @@ extends Node2D
 ## up and away. Bursts use Godot's CPU particle emitters, pooled and reused, so busy farming costs nothing.
 
 const POOL := 6
+const HEART_POOL := 6   # hearts in the air at once: a quick run of taps reuses the oldest, never makes more
 
 const KINDS := {
 	"dirt":    {
@@ -58,6 +59,8 @@ var grid: FarmGrid
 
 var _pools := {}   # kind -> Array[CPUParticles2D]
 var _next := {}    # kind -> next emitter to use
+var _hearts: Array[Heart] = []   # pooled, hidden while idle (hearts)
+var _next_heart := 0
 
 
 func _ready() -> void:
@@ -138,6 +141,87 @@ func burst(kind: String, at: Vector2) -> void:
 	e.emitting = true
 
 
+
+
+## A tapped animal's answer (wow build, item 4): a small soft heart pops up over its back, rises and fades; a
+## richer feel lets a few go, one after another, drifting apart. Pooled and tween-driven: nothing runs between
+## taps. Numbers and colours in Balance feel.heart.
+func hearts(at: Vector2) -> void:
+	var feel: Dictionary = Balance.d("feel.heart")
+	var count := int(feel["count"])
+	for k in count:
+		var h := _free_heart()
+		h.fill = Color.html(str(feel["tint"]))
+		h.rim = Color.html(str(feel["rim"]))
+		h.px = float(feel["px"]) * (1.0 if k == 0 else float(feel["after_scale"]))
+		h.queue_redraw()
+		var side := float(feel["drift"]) + (0.0 if k == 0 else float(feel["spread"]) * (1.0 if k % 2 == 1 else -1.0))
+		var wait := float(feel["stagger"]) * k
+		var life := float(feel["seconds"])
+		h.position = at
+		h.scale = Vector2.ZERO
+		h.modulate.a = 1.0
+		h.visible = true
+		var tw := h.create_tween().set_parallel(true)
+		h.tween = tw
+		tw.tween_property(h, "scale", Vector2.ONE * float(feel["pop"]), life * 0.18).set_delay(wait) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(h, "scale", Vector2.ONE, life * 0.12).set_delay(wait + life * 0.18) \
+			.set_trans(Tween.TRANS_QUAD)
+		tw.tween_property(h, "position", at + Vector2(side, -float(feel["rise"])), life) \
+			.set_delay(wait).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tw.tween_property(h, "modulate:a", 0.0, life * 0.4).set_delay(wait + life * 0.6)
+		tw.chain().tween_callback(h.hide)
+
+
+## The hearts in the air now (tests).
+func hearts_now() -> int:
+	var n := 0
+	for h in _hearts:
+		n += int(h.visible)
+	return n
+
+
+func _free_heart() -> Heart:
+	for h in _hearts:
+		if not h.visible:
+			return h
+	if _hearts.size() < HEART_POOL:
+		var made := Heart.new()
+		made.z_index = 1
+		made.visible = false
+		add_child(made)
+		_hearts.append(made)
+		return made
+	var oldest := _hearts[_next_heart]   # (all in the air: the oldest is reused)
+	_next_heart = (_next_heart + 1) % _hearts.size()
+	if oldest.tween != null:
+		oldest.tween.kill()
+	return oldest
+
+
+## One soft heart drawn round its own origin: a cream rim, a rose fill and a small light on its left lobe.
+class Heart extends Node2D:
+	const POINTS := 28
+	var fill := Color.WHITE
+	var rim := Color.WHITE
+	var px := 22.0
+	var tween: Tween
+
+	func _draw() -> void:
+		draw_colored_polygon(_shape(px * 0.5 + 2.5), rim)
+		draw_colored_polygon(_shape(px * 0.5), fill)
+		draw_circle(Vector2(-px * 0.2, -px * 0.16), px * 0.09, Color(rim, 0.85))
+
+	## The classic heart curve, `half` across each way, its middle at the origin.
+	static func _shape(half: float) -> PackedVector2Array:
+		var pts := PackedVector2Array()
+		for k in POINTS:
+			var t := TAU * k / POINTS
+			var x := 16.0 * pow(sin(t), 3)
+			var y := 13.0 * cos(t) - 5.0 * cos(2.0 * t) - 2.0 * cos(3.0 * t) - cos(4.0 * t)
+			pts.append(Vector2(x, -y - 2.5) * (half / 16.0))
+		return pts
 
 
 ## The harvested plants jump, stretch and vanish upward, so a harvest feels like picking something.

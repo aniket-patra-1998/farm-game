@@ -127,6 +127,7 @@ func _ready() -> void:
 		grid.hatcher = func(young: int, grown: int, then: Callable) -> void: objects.hatch(young, grown, then)
 		grid.outliner = func(uid: int) -> PackedVector2Array: return objects.outline_of(uid)
 		grid.object_poked.connect(_poked)
+		grid.petted.connect(_petted)
 		grid.plants_popped.connect(crops.pop)
 		grid.collected.connect(objects.celebrate)
 		objects.landed.connect(_landed)
@@ -149,6 +150,13 @@ func _snapped(_at: Vector3, _fresh: bool) -> void:
 func _transformed(at: Vector3, grand: bool) -> void:
 	grid.world_fx.burst("sparkle", IsoProjection.grid_of(at))
 	Feedback.moment("level_up_soft" if grand else "collect_soft")
+
+
+## An animal tapped for itself: a small heart (or a few, Balance feel.heart) rises from over its back.
+func _petted(uid: int) -> void:
+	var top := objects.animal_top(uid)
+	if top.is_finite():
+		grid.world_fx.hearts(IsoProjection.grid_of(top))
 
 
 ## Something was tapped: it bounces, and an animal looks round at you.
