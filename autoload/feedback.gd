@@ -11,11 +11,13 @@ var _moments := {}
 var _floats := {}
 var _hums := {}
 var _rarities := {}
+var _opening_db := 0.0   # how much softer every moment plays while a farm opens under its cover (data: opening_gain_db)
 
 
 func _ready() -> void:
 	var data := DataFile.read(DATA)
 	_moments = data.get("moments", {})
+	_opening_db = float(data.get("opening_gain_db", 0.0))
 	_hums = data.get("hums", {})
 	_rarities = data.get("rarities", {})
 	for style: String in data.get("floats", {}):
@@ -31,11 +33,14 @@ func moment(name: String, step := 0) -> void:
 	if m.is_empty():
 		push_warning("Feedback: no moment called %s" % name)
 		return
+	# While a farm opens under its loading cover, every thing landing on it would thud at once (the showcase: a
+	# hundred thuds): moments play much softer and never buzz until the farm is shown (owner, 19 Nov).
+	var opening := LoadingCover.covering > 0
 	var sound := str(m.get("sound", ""))
 	if sound != "":
-		Sound.play(sound, float(m.get("gain_db", 0.0)), pitch_of(step))
+		Sound.play(sound, float(m.get("gain_db", 0.0)) + (_opening_db if opening else 0.0), pitch_of(step))
 	var ms := int(m.get("buzz", 0))
-	if ms > 0:
+	if ms > 0 and not opening:
 		Sound.buzz(ms)
 
 
