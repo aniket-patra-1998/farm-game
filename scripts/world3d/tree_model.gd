@@ -43,14 +43,14 @@ const META_REACH := &"crown_reach"   # and how far its crown reaches from the tr
 const META_FAR := TreeSpec.META_FAR   # and what its far look needs (TreeSpec)
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
-const FRUIT_READY := 30     # fruit on a full tree (they come one at a time as it ripens: _fruit)
-const FRUIT_R := 0.064      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
-const FRUIT_SMALL_R := 0.02
-const FRUIT_OUT := 1.2      # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
-const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
-const STEM := Color("#5a4a2a")
+const FRUIT_READY := 14     # fruit on a full tree (they come one at a time as it ripens: _fruit): few and big, so
+const FRUIT_R := 0.093      # ..each reads as a fruit (owner, 19 Nov). A round one's radius on a full-size tree..
+const FRUIT_SMALL_R := 0.029  # ..and a small one's (cherries, olives: three times as many)
+const PALM_NUT := 0.6       # a palm's nuts, of a round fruit's size, in a ring..
+const PALM_RING := 0.075    # ..this far out from the trunk (of the tree's size)
+const FRUIT_OUT := 0.97     # how far out through a leafy clump one sits (1: on its skin). Just inside, so the leaves
+							# lap over its edge and it grows there; standing proud of them it looked stuck on
 const TURN_STEP := 0.618    # each fruit's turn to grow is this much on from the one before (wrapping at 1): spread out
-const FRUIT_HANG_EVERY := 6   # one fruit in this many hangs under the crown on a stem; the rest sit on its face
 const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
 const TRUNK_TALL := 0.85    # trunks are short: a big full crown on a slim trunk, FarmVille's way
 const CROWN_GROW := 1.55    # the crown is well over a tile across: most of the tree
@@ -594,27 +594,19 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color) -> void:
 				var fruit_r := r
 				var blobs: Array = t["blobs"]
 				if not blobs.is_empty() and str(sh["form"]) != "palm":
-					# Fruit is dotted all over the crown's face, each its own size, where it shows (as FarmVille's was);
-					# one in a few hangs from the rim on a short stem.
+					# Fruit is dotted all over the crown's face, each its own size, where it shows (as FarmVille's was),
+					# in the leaves: none hangs under the crown on a stem (owner, 19 Nov).
 					var blob: Array = blobs[i % blobs.size()]
 					var face := float(blob[2]) + (i / 3) * 0.7 + rng.randf_range(-0.35, 0.35)
 					fruit_r = r * rng.randf_range(0.8, 1.15)
-					var low := (blob[0] as Vector3).y - float(blob[1]) < 0.16 * k  # a low crown: nothing hangs to the grass
-					if i % FRUIT_HANG_EVERY == 0 and not low:
-						var rim := Vector3(cos(face), rng.randf_range(-0.55, 0.05), sin(face)).normalized()
-						var anchor := (blob[0] as Vector3) + rim * float(blob[1]) * HANG_OUT
-						var drop := fruit_r * rng.randf_range(1.2, 1.9)
-						ModelKit.box(root, anchor + Vector3(-0.004, -drop, -0.004) * k,
-							anchor + Vector3(0.004, 0.0, 0.004) * k, ModelKit.paint(STEM), false)
-						p = anchor - Vector3(0, drop + fruit_r * 0.85, 0)
-						fruit_mat = shades[1 if rim.y > -0.3 else 2]
-					else:
-						var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
-						dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits on its skin)
-						p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
-						fruit_mat = shades[0 if dir.y > 0.55 else 1]
+					var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
+					dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits in its skin)
+					p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
+					fruit_mat = shades[0 if dir.y > 0.55 else (1 if dir.y > 0.12 else 2)]
 				if str(sh["form"]) == "palm":
-					# Coconuts cluster under the fronds, against the trunk.
-					p = centre + Vector3(cos(a) * 0.06 * k, -0.06 * k, sin(a) * 0.06 * k)
-				ModelKit.mark_fruit(ModelKit.ball(root, p, fruit_r, fruit_mat,
-					Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE), fposmod(i * TURN_STEP, 1.0))
+					# Coconuts cluster under the fronds, against the trunk: smaller than a crown's fruit, or the
+					# cluster is one ball.
+					fruit_r = r * PALM_NUT
+					p = centre + Vector3(cos(a) * PALM_RING * k, -0.06 * k, sin(a) * PALM_RING * k)
+				ModelKit.fruit_ball(root, p, fruit_r, fruit_mat, Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE,
+					shape == "small", fposmod(i * TURN_STEP, 1.0))

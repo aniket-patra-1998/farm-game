@@ -1371,3 +1371,18 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - 19 Nov, later: building wear and climbing upgrade prices built (docs/WEAR.md, tests 587-594). The bot's
   measure: wear is upkeep, not a coin sink (repairs under 1% of earnings with the owner's 40% cap). The idle
   coin pile is still open: asked the owner how sinks should scale with income.
+
+## Trees (tree-polish branch, not merged; merging is the owner's call)
+- Owner's decisions, 19 Nov: the trees' design and crown colours stay; enhance within them. Locked: fruit few
+  and big, in the leaves, none hanging, moving with the crown; rounder leaves tucked in (the sheet's C); a
+  Mystery Seedling grows into a little tree; four motions (leaf fall, a harvest shake, a gust, a fruit that
+  drops and can be tapped); a Rare Mystery Seedling; limited tree varieties as the animals' (same rules, same
+  prices, the Limited tab), with "variety" as one structure over animals and trees.
+- Built here (world3d_test 590, 591): the fruit (TreeModel FRUIT_*, ModelKit.fruit_ball, fruit3d's sway; bake keeps
+  fruit out of the simpler levels, which had turned it into gems from the farm's distance), the leaves
+  (ModelKit SPRIG_LEAF_*, CARD_*), the seedling's stages (YoungModel). Every tree file exported again; seen on the
+  farm in a still at midday, not on a phone.
+- Not built yet: the four motions (concept clips shown and approved; the dropped fruit is to be tappable); the
+  Rare Mystery Seedling and the limited trees wait for the limited animals (PR 18: LimitedSystem) and for the
+  varieties' own design round (five looks with their touches, and a hummingbird that nests in a limited tree, to
+  be shown as clips before building).
