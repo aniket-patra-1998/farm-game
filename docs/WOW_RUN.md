@@ -32,7 +32,7 @@ butterflies, fireflies and birds; night_glow.gd; the level-up is fireworks only 
    tapped tree shakes its leaves; a building's door or chimney puffs. Cheap, once per tap.
 5. Light and sky: drifting cloud shadows over the farm, chimney smoke, warm lit windows at dusk, a golden-hour
    sun with longer softer shadows, a soft rainbow after rain (lighter, as the owner parked it).
-6. Sound bed: day and night music variants, a soft farm ambience that changes when zoomed in (animals near you
+6. (Last, owner 19 Nov 16:42: after everything else, with the Kenney CC0 packs the owner will attach.) Sound bed: day and night music variants, a soft farm ambience that changes when zoomed in (animals near you
    heard more), and the reward sounds tuned as one family with the new wooden tap.
 Owner's picks: harvest juice RICHER (19 Nov 16:11). Declined: haptic patterns ("keep the game simple but
 awesome"): no new vibration work; prefer fewer, stronger moments over many small ones.
