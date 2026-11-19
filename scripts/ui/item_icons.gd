@@ -349,7 +349,7 @@ func _set_up(k: int, id: String) -> bool:
 	_slots[k].add_child(stage)
 	stage.add_child(model)
 	var box := SpaceFit.reach(model, model.transform)
-	var top := ScaleGuide._top(model, model.transform)
+	var top := ScaleGuide._top(model, Transform3D.IDENTITY)   # (_top applies the model's own transform itself)
 	var centre := Vector3(box.get_center().x, top * 0.45, box.get_center().y)
 	var span := maxf(maxf(box.size.x, box.size.y) * 1.2, top * 1.3)
 	if id.begins_with(UI):
