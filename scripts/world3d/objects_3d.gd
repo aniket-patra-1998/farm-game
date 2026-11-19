@@ -567,12 +567,15 @@ func _mind_of(a: Animal3D) -> AnimalBehaviour:
 
 
 ## What a view shows: when this changes, it's rebuilt.
-## How far along a building is in its life: a site counts for nothing, a finished building 100, plus 10 a level.
-## (When it goes up, the building has been finished or upgraded: see grow_in.)
+## How far along a building is in its life: a site, or the starter Barn standing broken, counts for nothing, a
+## finished building 100, plus 10 a level. (When it goes up, the building has been finished, repaired or
+## upgraded: see grow_in.)
 func _step(o: Dictionary) -> int:
 	if not Game.kind_of(o) in ["building", "barn", "crafting"]:
 		return 0
-	return 0 if Game.under_construction(o) else STEP_LEVEL + 10 * int(o.get("level", 1))
+	if Game.under_construction(o) or bool(o.get("broken", false)):
+		return 0
+	return STEP_LEVEL + 10 * int(o.get("level", 1))
 
 
 func _key(o: Dictionary) -> String:
