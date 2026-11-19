@@ -682,6 +682,27 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Step 8 still open: idle coins over 5 visits past level ~15 (the owner's call, reported in run 9); crafting's
   "pays back its building in about a week" is not measured (the bot never crafts: a crafter style would be
   next, after the Bakery unlocks at 25). Steps 5 and 9 are new looks (sheet of options first).
+- Run 11 (19 Nov 05:36-06:20 IST): nothing merged. Found first: **CI Tests on main has failed at gdlint since at
+  least 22:18 UTC 18 Nov** (8+ pushes; the tests never ran in CI): `scripts/hud/hud_goals.gd:196` `var get :=` does
+  not parse in gdlint 4 (rename it, e.g. `claim`), `tests/suites/goals_test.gd:14,16` mix tabs and a space (`\t\t\t
+  "reward"` -> four tabs). Local precheck cannot see it (no gdlint here: pypi blocked; its own line check passes).
+  And **goals test 483 fails locally on untouched main** (f7d4441), also with the clock moved 1 and 2 days: day 1
+  ends with today's jobs "harvest 8 Strawberries" (0/8) and "plant 8 Eggplant" (3/8) open; the bot has ~3-40 coins
+  through the first hour's end and day 1's visits (it spends the starter's coins in the first hour), so the day's
+  jobs (n 8 at level 3) are not met. So precheck fails and the pre-push hook blocks every code push: fix 483 first
+  (bot spending, or `_swap_undoable` swapping a job it cannot afford today), then push the lint fix.
+- Built, NOT pushed (the hook blocks it): local branch goals/8-crafter (43b7a68), kept as
+  docs/patches/goals-0001-crafter-and-lint-fix.patch (`git am` it on main). It holds the lint fixes and
+  `--style=crafter` (follows goals; a level before the Bakery unlocks it grows only Bakery crops; builds the Bakery
+  with coins at L25, clearing harvested plots for its 3x3; each visit finishes crafts, sells goods, starts the
+  best-paying unlocked recipe, buying up to STALL_BUY_MOST missing bushels at the stall; `crafting:` line: cost,
+  goods, coins, stall spend, payback days against CRAFT_PAYBACK_DAYS 7, bushels held). Test 531 passes.
+- Measured (seed 1, 35 days, crafter): Bakery built day 20 (L25); crafting **jams**: every harvest of any crop
+  drops bushels (20%, +1 per mastery star), the stall holds 100 and only crafting empties it. On the build day it
+  filled with grapes and ghost chili (no Bakery recipe uses them), then, growing only recipe crops, with one crop
+  (86 carrots or 98 wheat) so the other inputs never get in: 0-4 goods in 15 days, payback 287 days to never
+  (target about 7). Reported for the owner (a crafting rule, outside goals): only crops some owned building uses
+  drop bushels; or a full stall swaps out the most-held crop; or a throw-away button (FarmVille let you discard).
 
 ## Perf (the loading and performance build; docs/PERF_RUN.md; rows prefixed "Perf:" in the log doc)
 - Run 1 (18 Nov 20:51-21:45 IST): no phone_bench.yml run exists yet (no reports); measured here only.
