@@ -324,6 +324,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   Checked clean: the inbox limit never drops the farm's own things (they bypass it), answers due on a full inbox
   wait, settle's mail is skipped not doubled. Note: test number 526 is used twice (world3d and ui_kit), harmless.
   Next audit: cheating and save safety, round three.
+- Runs 31-33 (05:20-08:00 IST 19 Nov, cheating and save safety, round three): a save field of the wrong kind
+  (nothing, a word or a list where a number or a map goes) stopped the load halfway and a new farm was saved over
+  the player's; `SaveCheck.match_shape` drops it against `Persistence.snapshot`, an unusable save is kept aside as
+  `.unusable` (saving test 532; held as a patch while main was red, merged run 33). Spoiling every second-level
+  entry (1,464 loads): the farm always loads; HarvestDrops' pity now loads through `GameSystem.int_map` (test 533);
+  GoalSystem.load_from's goal_daily (int()/bool() of a damaged entry, lines 135-143) is the goals loop's,
+  reported. Code quality round three and whole-farm look round three (numbers side): clean. Next audit: motion
+  and animation (numbers side), then feedback and sound. The loop ends at 08:40 IST 19 Nov.
 ## Art and UX polish loop (hourly, 18 Nov 2026; rows prefixed "Art:" in the same log doc; docs/ART_POLISH.md)
 - Art run 1 (11:05 IST), nothing pushed: the pre-push precheck failed three times on timing-budget tests (search
   387, 372, 374) in the container. Redo, then push when it passes (precheck in the background, renders not
