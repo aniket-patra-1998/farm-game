@@ -91,5 +91,12 @@ by default one phone a run: a Galaxy A05s, low-end, Adreno 610). From now on:
 2. The start: 8.3-9.3 s on the Galaxy A05s before the first screen (~5.5 s before Game is made: the engine and
    compiling ~50k lines of script; ~1 s data and save; ~2.2 s main._ready). Split it with the start marks, then cut
    the biggest part, nothing seen changed.
+   If compiling is the big part (expected): compile less before the first screen. Today the main scene and Game
+   pull in nearly every script at once (the whole HUD, every panel, every world3d builder, every system). Split
+   them: the first screen needs the farm, the camera, the top bar and the systems that run a farm; panels,
+   sheets, the Market, crafting, collections, the showcase's dressing, debug and benchmark tools and similar are
+   loaded by path when first opened (or on a worker thread right after the farm appears), never named as a type
+   from the start-up scripts. Measure lines compiled before the first screen (and the "scripts" mark) before and
+   after; target well under half. Merge it in safe slices (one area at a time, tests passing), not one big bang.
 3. Loading and play measured on the phone once the benchmark finishes, then the biggest of those.
 Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit ships (4b84c6b) to confirm it runs.
