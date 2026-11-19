@@ -1214,6 +1214,18 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   moments, not started: survey Feedback "place"/"build" moments, BuildingSystem (finished construction and
   projects), FxLayer/WorldFx; a new look, so frames to the owner first. Local main of an old clone: kept as branch
   local-main-old-1636.
+- Run 6 (19 Nov 17:36-18:00 IST): no pick yet for the opening glide. Item 3 built on wow/build-reveal (not merged:
+  a new look, frames in the log under "Wow: waiting for your look"). The placing half already existed (Objects3D.drop_in:
+  falls in, squash, dust, thud) and was kept. The finish: main._reveal on Game.building_upgraded level 1 (not an
+  upgrade, not with a panel open) calls FarmCamera.visit(at, zoom, hold): go_to there, at least feel.reveal.zoom (2.0)
+  times the resting zoom, hold feel.reveal.hold_seconds (2.6; 0 turns it off), then back to where the view was at its
+  zoom; begin_drag, zoom_by or snap end the visit (no way back). Farm3D._transformed adds a dust burst when grand (the
+  scaffold comes down). Test 580 (hud_test). tools/juice_shot.tscn --build=<id> renders it (frame placed, view moved
+  aside, finished; ~1.5 min). Doubt: a building by the farm's edge cannot be centred (the edge limits hold the view).
+  Not done: the project reveals (orchard, rare coop, a repaired vehicle): reuse FarmCamera.visit when those finish.
+- Next: the owner's picks (opening glide; build reveal: as is, calmer = no zoom 1.8 s, richer = closer 3.2 s). Item 4
+  (touch answers): animal sounds wait for the sound packs (item 6); a tree's leaf shake and a building's chimney puff
+  can go first. Local main in this clone is still an old polish-loop tip (left alone; work detached on origin/main).
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
