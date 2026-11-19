@@ -9,6 +9,8 @@ extends Node
 ## With `-- --bake=<stamp>` (CI, headless, before the phone build) the models it builds are saved into the game
 ## (res://baked, ModelStore) under that stamp. With `-- --store`, models are kept on disk as a phone build keeps
 ## them: run it twice to time a farm opening from them.
+## With a renderer, "PERF visible <owner>" lines say what each owner (Animal3D, Objects3D, DecorLayer...) adds to
+## the camera's view: its meshes hidden for a few frames, the visible draws and triangles that go away.
 
 const WARM_FRAMES := 30
 
@@ -115,6 +117,7 @@ func _ready() -> void:
 		vp.get_render_info(Viewport.RENDER_INFO_TYPE_SHADOW, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME)])
 	_shadow_casters()
 	_census()
+	await _visible_by_owner()
 	_materials()
 	_breakdown()
 	await _processing()
@@ -265,6 +268,45 @@ func _census() -> void:
 	rows.sort_custom(func(x, y): return by_owner[x] > by_owner[y])
 	for k in rows:
 		print("PERF census %s: %d drawn meshes" % [k, by_owner[k]])
+
+
+## What each owner (the nearest named script above a mesh) adds to the camera's view: its meshes hidden for a
+## few frames, the visible draws and triangles that go away.
+func _visible_by_owner() -> void:
+	var vp := get_viewport()
+	var groups := {}
+	var stack: Array[Node] = [get_tree().root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		stack.append_array(n.get_children())
+		if not (n is GeometryInstance3D) or not (n as GeometryInstance3D).visible:
+			continue
+		var a: Node = n
+		var owner_name := "(none)"
+		while a != null:
+			var sc: Script = a.get_script()
+			if sc != null and sc.get_global_name() != &"":
+				owner_name = str(sc.get_global_name())
+				break
+			a = a.get_parent()
+		if not groups.has(owner_name):
+			groups[owner_name] = []
+		groups[owner_name].append(n)
+	var read := func() -> Vector2i:
+		for i in 3:
+			await get_tree().process_frame
+		return Vector2i(vp.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME),
+			vp.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME))
+	var all: Vector2i = await read.call()
+	for k in groups:
+		for n: GeometryInstance3D in groups[k]:
+			n.visible = false
+		var without: Vector2i = await read.call()
+		for n: GeometryInstance3D in groups[k]:
+			n.visible = true
+		var d := all - without
+		if d.x > 0 or d.y > 0:
+			print("PERF visible %s: %d draws, %dk triangles" % [k, d.x, d.y / 1000])
 
 
 ## Which kind of thing an Objects3D mesh belongs to: the view (a child of Objects3D) it hangs under.
