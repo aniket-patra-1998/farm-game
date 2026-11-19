@@ -1103,6 +1103,20 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   buildings: _show_collect has no _run streak yet and no product picture; the product is a name in the catalog,
   so the flyer would be the building's or animal's own picture, or a coin only). While it waits: item 2, the
   opening glide.
+- Run 3 (19 Nov 14:35-15:20 IST): run 2 was still at work when run 3 read the log (its rows came at 14:40, its push
+  at 14:42), so run 3 rebuilt item 1 by mistake; that duplicate was never pushed (kept only as a local branch).
+  Run 2's section under "Wow: waiting for your look" had no frames, so run 3 rendered its branch (tools/juice_shot.tscn,
+  6 plots, --fixed-fps 30, ~4 min each: richer at noon, calmer --produce={"px":96,"trail":false} at dusk) and
+  uploaded one sheet there. Lesson: before restarting an item, `git ls-remote origin 'refs/heads/wow/*'` and the
+  log's last 15 minutes; a run that started under an hour ago may still be working.
+- Next: the owner's pick of harvest juice (richer/calmer, or bigger/brighter), then as run 2 says. While it waits,
+  item 2, the opening glide. What exists: LoadingCover (scripts/ui/loading_cover.gd, put up from main.gd 146/156;
+  it lifts in _process once settled_frame says the frames are steady) and FarmCamera (scripts/world/farm_camera.gd:
+  snap(world, zoom), go_to(world, least_zoom) eases at GO_EASE and gives up after GO_LONGEST; any touch ends a
+  journey). The glide: as the cover lifts, snap a little higher and wider (zoom out ~0.8x), then ease to the saved
+  view over 2-3 s (a longer journey than GO_LONGEST: a duration argument or its own tween), the light warming in
+  (a ShaderGlobals tint from cool to normal); the first open of a session only; a tap skips it (the touch already
+  ends a journey). Build on wow/opening-glide; it is a new look, so frames go to the owner first.
 - Godot is not kept between runs: fetch 4.7.2 (apk.yml's URL) into /home/claude/godot and --import once (~3 min).
   The pre-push precheck can fail on timing-budget tests under load (card list 374): rerun, don't push around it.
 
