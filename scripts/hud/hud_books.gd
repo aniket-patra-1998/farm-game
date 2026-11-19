@@ -146,7 +146,7 @@ func ribbon_face(ribbon_id: String) -> Dictionary:
 		if done:
 			face["bar"] = [1.0, tr("RIBBON_DONE")]
 			face["long"] = tr("COMPLETE") % [value, r["what"]]
-		elif value > 0:   # (not started: the medal and its name only, no "0 / 25")
+		else:   # (not started too: "0 / 25", so every ribbon in the row has the same shape; owner, 19 Nov)
 			var goal := int(thresholds[earned])
 			face["bar"] = [float(mini(value, goal)) / goal, "%d / %d" % [mini(value, goal), goal]]   # not-ui
 		return face

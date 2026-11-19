@@ -9,6 +9,8 @@ extends BaseButton
 ## a long press), buyable (kept as meta for tests and the panel). In the picture's place a card may show a ring
 ## (`ring`: [share, words], a collection's progress) or a sticker icon (`icon`: [kind, tint, faded], a ribbon).
 
+const SLIVER := 4.0   # the least a pill's fill shows (px), once anything is done
+const LEAD_RADIUS := 3   # the rounding of a filling pill's leading edge (px)
 const TIDIED := ["line", "long", "count"]   # a face's words whose numbers are written short (a name has none)
 const NAME_LINES := 2     # a long name wraps to at most this many lines
 const SPACE := 2.0        # px between the parts of a card, top to bottom
@@ -202,7 +204,18 @@ func _draw_bar(font: Font, y: float) -> void:
 		if _gold == null:
 			_gold = _badge_box().duplicate() as StyleBoxFlat
 			_gold.bg_color = UiTheme.color("mastery_gold")
-		draw_style_box(_gold, Rect2(rect.position, Vector2(maxf(rect.size.y, rect.size.x * share), rect.size.y)))
+		# A little progress is a thin sliver from the left, never a round dot as wide as the pill is high (which read
+		# as a coin beside the numbers; owner, 19 Nov).
+		var wide := maxf(rect.size.x * share, SLIVER)
+		var box := _gold
+		if share < 1.0:   # (its leading edge nearly square: a bar filling, not a ball)
+			box = _gold.duplicate() as StyleBoxFlat
+			var r := mini(int(rect.size.y / 2.0), int(wide / 2.0))
+			box.corner_radius_top_left = r
+			box.corner_radius_bottom_left = r
+			box.corner_radius_top_right = mini(r, LEAD_RADIUS)
+			box.corner_radius_bottom_right = mini(r, LEAD_RADIUS)
+		draw_style_box(box, Rect2(rect.position, Vector2(wide, rect.size.y)))
 	var words := str(bar[1])
 	var w := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
 	draw_string(font, Vector2(rect.get_center().x - w / 2.0, y + (rect.size.y - font.get_height(px)) / 2.0

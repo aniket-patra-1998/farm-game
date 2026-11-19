@@ -163,7 +163,7 @@ static func picture_model(id: String) -> Node3D:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
 	mm.use_colors = true   # (as the field's: an unset instance colour is black, and every leaf would read as produce)
-	mm.mesh = CropModels.mesh(CropForms.form_of(id, str(crop.get("shape", "berry"))), CropModels.HARVEST, false)
+	mm.mesh = CropModels.mesh(CropFormSpec.form_of(id, str(crop.get("shape", "berry"))), CropModels.HARVEST, false)
 	mm.instance_count = 1
 	mm.set_instance_transform(0, Transform3D(Basis(), Vector3(0.5, 0.0, 0.5)))
 	mm.set_instance_color(0, Color.WHITE)
@@ -192,7 +192,7 @@ func _set_wind(v: float) -> void:
 ## Where a plot's plants stand, from its middle: three rows of three, or once in the middle for a crop drawn a
 ## plot at a time (CropForms.is_plot: its form lays out the whole plot).
 static func spots_of(crop_id: String) -> Array:
-	return ONE_SPOT if CropForms.is_plot(CropForms.form_of(crop_id, "")) else SPOTS
+	return ONE_SPOT if CropFormSpec.is_plot(CropFormSpec.form_of(crop_id, "")) else SPOTS
 
 
 ## A plant's turn, size and lean, each its own; a crop drawn a plot at a time (`count` 1) stands square and true,
@@ -229,7 +229,7 @@ static func stage_of(i: int) -> Array:
 				return ["seeds", 0.0, 0.0, 0.0, false]
 			if g < YOUNG_FROM:
 				return ["sprout", planted + SPROUT_FROM * grow, (YOUNG_FROM - SPROUT_FROM) * grow, SPROUT_START, false]
-			var form := CropForms.form_of(crop_id, str(Game.crops[crop_id].get("shape", "berry")))
+			var form := CropFormSpec.form_of(crop_id, str(Game.crops[crop_id].get("shape", "berry")))
 			if g < RIPEN_FROM:
 				return ["young", planted + YOUNG_FROM * grow, (RIPEN_FROM - YOUNG_FROM) * grow,
 					start_size(form, "young"), false]
@@ -303,7 +303,7 @@ func _look_of(i: int) -> Array:
 		return []
 	var crop: Dictionary = Game.crops[crop_id]
 	var col := Color.html(str(crop.get("color", "#e2453c")))
-	var key := "%s|%s|%s" % [CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
+	var key := "%s|%s|%s" % [CropFormSpec.form_of(crop_id, str(crop.get("shape", "berry"))), st[0], col.to_html(false)]
 	if not _mastered.has(crop_id):   # (asked once per crop per laying, not once per plot)
 		_mastered[crop_id] = mastered(crop_id)
 	return [key, pack(float(st[1]) - _base, float(st[2]), Game.field.is_fertilized(i), _mastered[crop_id],
@@ -389,7 +389,7 @@ func pop(i: int, crop_id: String) -> void:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
 	mm.use_colors = true   # (as above: an unset instance colour is black in the compatibility renderer)
-	mm.mesh = CropModels.mesh(CropForms.form_of(crop_id, str(crop.get("shape", "berry"))), "ripe")
+	mm.mesh = CropModels.mesh(CropFormSpec.form_of(crop_id, str(crop.get("shape", "berry"))), "ripe")
 	var spots := spots_of(crop_id)
 	mm.instance_count = spots.size()
 	for k in spots.size():

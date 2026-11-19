@@ -1243,6 +1243,22 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Next: the owner's picks (opening glide; build reveal: as is, calmer = no zoom 1.8 s, richer = closer 3.2 s). Item 4
   (touch answers): animal sounds wait for the sound packs (item 6); a tree's leaf shake and a building's chimney puff
   can go first. Local main in this clone is still an old polish-loop tip (left alone; work detached on origin/main).
+- Run 7 (19 Nov 18:37-19:15 IST): no picks yet (opening glide, build reveal). Item 4, touch answers, built on
+  wow/touch-answers (not merged: a new look, a sheet in the log under "Wow: waiting for your look", calmer and
+  richer, noon and dusk). The tap already bounced things, turned an animal's head and played its voice (FarmGrid._poke,
+  Farm3D._poked); now Objects3D.touch_answer(o) says "sway" for a tree, "puff" for a finished building: bounce()
+  sways a tree from its trunk instead of squashing it (_sway, rotation z in fading swings) and answer_touch lets
+  leaves go round its crown or a puff rise from the roof, through one pooled DustPuffs (_touch). Numbers and tints in
+  Balance feel.touch (calmer, the branch default: 8 degrees, 9 leaves of 0.15, 4 puffs of 0.3; richer: 12, 14 of 0.2,
+  6 of 0.38). Test 582 (buildings_test; the build reveal's branch also took 580: renumber whichever merges second).
+  tools/juice_shot.tscn --touch [--feel=<json>] renders a tree then a building tapped (~1.2 min). Doubt: the leaves
+  are soft round flecks (dust3d shader), faint on noon grass. Found: a tree added while the farm shows keeps a
+  footing-only box (reported for the fix lane); answer_touch measures what is drawn instead (_seen_box).
+- Next: the owner's picks (opening glide, build reveal, touch answers): rebase the picked branch on main, precheck,
+  fast-forward push. Then item 4's animal half (a small heart or note over a tapped animal; its sound waits for the
+  sound packs, item 6), or item 5, light and sky (cloud shadows, warm windows at dusk; chimney smoke exists in
+  decor_motion.gd and BuildingDress). Local main in this clone was an unrelated old history: reset to origin/main,
+  the old tip kept as local branch old-local-main.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens

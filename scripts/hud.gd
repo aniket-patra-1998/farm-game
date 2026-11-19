@@ -480,7 +480,8 @@ func _refresh_clock() -> void:
 	var hour := DayCycle.local_hour(Game.look_now(), DayCycle.device_bias_minutes())
 	var weather := Game.weather()
 	var state := str(weather.get("state", "clear"))
-	var lit := DayCycle.lit_hour(hour)   # (with "Always daytime" on, the sun icon: the icon follows the light)
+	# (with "Always daytime" on, the sun icon: the icon follows the light, in this season's day)
+	var lit := DayCycle.lit_hour(DayCycle.summer_hour(hour, Game.season()))
 	var night := lit < DayCycle.SUNRISE or lit >= DayCycle.SUNSET
 	top.season_icon.kind = str(HudTop.SEASON_ICONS.get(Game.season(), "sun"))
 	top.weather_icon.kind = "moon" if state == "clear" and night else str(HudTop.WEATHER_ICONS.get(state, "sun"))

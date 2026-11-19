@@ -43,11 +43,11 @@ static func mesh(shape: String, stage: String, from_file := true) -> ArrayMesh:
 		_cache[key] = _build(shape, stage)   # (a picture's: the camera frames it, no plot to fit)
 	if not _cache.has(key):
 		var ripe := stage == "ripe"
-		var cap := CropForms.look("height", 0.0) * (1.0 if ripe else CropForms.look("young", 1.0))
-		_cache[key] = _fit(_build(shape, stage), cap, CropForms.look("leaf_ripe", 1.0) if ripe else 1.0,
-			bool(CropForms.spec(shape).get("squash", false)),
-			0.0 if CropForms.is_plot(shape) else CropForms.look("reach", 0.0))
-		if CropForms.is_plot(shape) and stage in ["seeds", "sprout", "withered"]:
+		var cap := CropFormSpec.look("height", 0.0) * (1.0 if ripe else CropFormSpec.look("young", 1.0))
+		_cache[key] = _fit(_build(shape, stage), cap, CropFormSpec.look("leaf_ripe", 1.0) if ripe else 1.0,
+			bool(CropFormSpec.spec(shape).get("squash", false)),
+			0.0 if CropFormSpec.is_plot(shape) else CropFormSpec.look("reach", 0.0))
+		if CropFormSpec.is_plot(shape) and stage in ["seeds", "sprout", "withered"]:
 			_cache[key] = _rows(_cache[key])
 	return _cache[key]
 
@@ -168,9 +168,9 @@ static func _build(shape: String, stage: String) -> ArrayMesh:
 	rng.seed = hash(shape + stage)
 	match stage:
 		"harvest":
-			if CropForms.harvest(mb, shape, rng):
+			if CropFormSpec.builder().harvest(mb, shape, rng):
 				return mb.commit()
-			CropForms.build(mb, shape, rng, 1.0, true)   # (a form that isn't a plot: one ripe plant)
+			CropFormSpec.builder().build(mb, shape, rng, 1.0, true)   # (a form that isn't a plot: one ripe plant)
 			return mb.commit()
 		"seeds":
 			for k in 4:
@@ -189,7 +189,7 @@ static func _build(shape: String, stage: String) -> ArrayMesh:
 		_:
 			var ripe := stage == "ripe"
 			var k := 1.0 if ripe else 0.7
-			if CropForms.build(mb, shape, rng, k, ripe):
+			if CropFormSpec.builder().build(mb, shape, rng, k, ripe):
 				return mb.commit()
 			match shape:
 				"grain":
