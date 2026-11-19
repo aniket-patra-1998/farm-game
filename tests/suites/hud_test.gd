@@ -1372,3 +1372,28 @@ func test_552_the_moment_cards_compile_when_first_shown() -> void:
 	Game.modal_open = false
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_578_a_planting_vehicle_asks_for_its_seed_first() -> void:
+	# Owner, 19 Nov: the combine only planted if a seed had been picked in the Seeds menu before choosing it, else it
+	# just plowed. Choosing a seeder or the combine now opens the seed list for it; the pick puts it in hand with it.
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.open_showcase()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var grid: FarmGrid = main.get("grid")
+	grid.last_crop = ""
+	hud.use_vehicle("combine")
+	_check(hud.book.is_open(), "the seed list opens for the combine")
+	hud.choose_seed("wheat")
+	_eq(grid.tool, "vehicle", "the combine is in hand")
+	_eq(grid.selected_crop, "combine", "..the combine itself")
+	_eq(grid.last_crop, "wheat", "with the seed picked")
+	hud.show_seeds()
+	hud.choose_seed("wheat")
+	_eq(grid.tool, "plant", "the Seeds menu itself still gives the Plant tool")
+	main.queue_free()
+	await get_tree().process_frame

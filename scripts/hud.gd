@@ -47,6 +47,7 @@ var helpers: HudHelpers   # the helpers' flower, bottom left
 var interface_hidden := false
 var camera: FarmCamera              # set by Main, for the zoom buttons
 var grid: FarmGrid                  # set by Main: what is being moved (the placing bar's Turn button)
+var _seed_for := ""                  # a planting vehicle waiting for its seed from the seed list ("" for the Plant tool)
 var go_to: Callable                 # set by Main: goes to the nearest thing of a kind ("ripe", "hungry"...)
 var resting := false                # the interface has faded away over an idle farm (set_resting)
 var next_ready: Callable            # set by Main: goes to the next thing ready to take
@@ -252,12 +253,33 @@ func _moving_uid() -> int:
 
 ## Opens the seed list (the Plant tool).
 func show_seeds() -> void:
+	_seed_for = ""
 	book.open_panel(tr("SEED_LIST"), seeds.build_seeds)
 
 
-## A seed picked: it goes in hand, and the Plant tool lights.
+## A planting vehicle (a seeder, the combine) chosen: its seed is picked first, from the same list, and the vehicle
+## is then in hand with it (owner, 19 Nov: you had to pick a seed in the Seeds menu before choosing the combine,
+## or it only plowed).
+func use_vehicle(vehicle_id: String) -> void:
+	var job := str(Game.item_data(vehicle_id).get("job", ""))
+	if job in ["plant", "all"]:
+		book.open_panel(tr("SEEDS_FOR") % str(Game.item_data(vehicle_id)["name"]), seeds.build_seeds)
+		_seed_for = vehicle_id   # (after the panel opens: the list's choice goes to the vehicle)
+		return
+	close_panels()
+	tool_selected.emit("vehicle", vehicle_id)
+
+
+## A seed picked: it goes in hand, and the Plant tool lights; or, for a planting vehicle, it goes in the vehicle.
 func choose_seed(crop_id: String) -> void:
 	book.close_panel()
+	if _seed_for != "":
+		var vehicle := _seed_for
+		_seed_for = ""
+		if grid != null:
+			grid.last_crop = crop_id
+		tool_selected.emit("vehicle", vehicle)
+		return
 	tool_selected.emit("plant", crop_id)
 	tools.show_tool("plant")
 	show_message(tr("TAP_PLOWED_PLOTS_TO_PLANT") % Game.crops[crop_id]["name"])
