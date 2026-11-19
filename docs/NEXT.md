@@ -1088,14 +1088,21 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   glow_gold, glow_new); UiIcon draws one shared still image behind (UiIcon.draw_glow, also the XP bar's star);
   HudSide marks a menu picture `fresh` while its dot or count shows (Market, Collections, Inbox). Test 553;
   tools/ui_sheet.tscn shows the menu plain and glowing (renders in 3 s: use it for UI looks, look_shot takes ~9 min).
-- Next: item 1, harvest juice. What exists (refine, don't rebuild): FxLayer (scripts/fx/fx_layer.gd) already flies
-  coins and XP stars from the plot to the counters and pulses them; the coin counter rolls (hud.gd _roll_coins);
-  FarmGrid._run keeps a streak (balance feel.streak_gap_seconds, streak notes climbing via Feedback.pitch_of) and
-  shouts "x5, x10" over the plot every feel.streak_shout_every; 3D plants pop (Farm3D crops.pop via plants_popped);
-  WorldFx bursts leaves from a pooled CPU particle set. Missing: the produce itself arcing to its counter with a
-  short sparkling trail, and one combo float "x8" when a sweep ends (instead of, or beside, the every-5 shout);
-  the same for animals, trees and buildings (_show_harvest's siblings in farm_grid.gd). A new look: build on
-  wow/harvest-juice, upload calmer/richer frames under "Wow: waiting for your look".
+- Run 2 (19 Nov 13:37-14:40 IST): item 1, harvest juice, built on wow/harvest-juice (not merged: a new look, frames
+  in the log under "Wow: waiting for your look", calmer and richer). FxLayer.produce: the crop's picture pops out
+  of the plot (overshoot), hangs a beat and arcs to the coin counter, shrinking, a soft spark trail behind it (a
+  CPUParticles2D per flyer, world-space, the shared glow image); a pool of FxLayer.PRODUCE_POOL (6) reused, no new
+  node per harvest. Numbers in data/balance.json feel.produce; the trail only where Quality fx_trails (off on low).
+  FarmGrid._sweep_end: when the farmer has no more of that work queued and the run reached feel.combo_min (5),
+  the count pops once bigger (SWEEP_PX) over the last plot with sparkles ("x8"); the every-5 shout skips the
+  number the end says (_ends_sweep). Plow, plant, fertilize and harvest sweeps all end so. Test 560.
+  tools/juice_shot.tscn renders a real sweep frame by frame (--fixed-fps 30; --produce=<json> tries a variant;
+  ~10 min for 8 plots here, 6 plots is enough).
+- Next: when the owner picks, set feel.produce to the pick (calmer: px 96, no trail; richer, the branch default: px 120, trail, 18
+  sparks of 22 px), rebase wow/harvest-juice, precheck, push. Then the same for collecting (animals, trees,
+  buildings: _show_collect has no _run streak yet and no product picture; the product is a name in the catalog,
+  so the flyer would be the building's or animal's own picture, or a coin only). While it waits: item 2, the
+  opening glide.
 - Godot is not kept between runs: fetch 4.7.2 (apk.yml's URL) into /home/claude/godot and --import once (~3 min).
   The pre-push precheck can fail on timing-budget tests under load (card list 374): rerun, don't push around it.
 
