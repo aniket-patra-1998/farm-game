@@ -1342,6 +1342,21 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   This clone needed Godot downloaded (4.7.2, to /home/claude/godot); its stale local main was kept as local
   branch local-main-stale-backup.
 
+- Run 11 (19 Nov 22:35-23:20 IST): no picks yet (six branches wait). Item 3's project half surveyed: the orchard,
+  the rare coop and every building finished from a frame already go through Game.building_upgraded(uid, 1), so the
+  build reveal (wow/build-reveal) covers them once picked. What had no moment was the starter Barn's repair: merged
+  to main (d7f0c59) as a missing contact: Objects3D._step counts a broken Barn as a site, so repair_barn swells it in
+  mended (grow_in: sparkles, dust, level_up_soft), and the Barn panel closes on the repair (hud_barn) so it is seen.
+  Test 595 (world3d_test). tools/juice_shot.tscn --repair renders it (~70 s). Checked at 1x: the tarp roof gives
+  way to the mended Barn swelling past its size. Not done: a vehicle's finished rust repair (RustSystem settles
+  lazily, there is no "repair done" event yet); the build reveal's camera visit for the Barn repair (hook it in
+  main._reveal's branch when build reveal merges: a Game signal for a finished repair, or emit from repair_barn).
+  A local branch wow/project-reveal (build reveal rebased, nothing added) was not pushed.
+- Next: the owner's picks; rebase the picked branch on main, precheck, fast-forward push. Test numbers on main now
+  run to 595 (main took 590-594 for wear), so cloud shadows' 590 and the rainbow's 591 renumber too, as do build
+  reveal 580, touch answers 582, touch hearts 584. The pre-push hook re-runs the 7.5 min precheck, so main can move
+  meanwhile: a rejected push is fetch, rebase, regenerate art_versions, check again. The window ends 00:40 IST.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
