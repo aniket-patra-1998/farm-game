@@ -13,8 +13,10 @@ extends Node3D
 # lamps and stars still say it is night.
 const FLASH_BRIGHT := 0.55   # a lightning flash brightens the frame this much at full..
 const FLASH_AMBIENT := 1.2   # ..and lifts the ambient light this much
-const MOON_ENERGY := 0.8      # (lifted after the UI review: an evening farm was hard to see behind panels)
-const NIGHT_AMBIENT := 0.6
+const MOON_ENERGY := 0.3      # a deep night (owner's pick B, 19 Nov: night must read as night)
+const NIGHT_AMBIENT := 0.25   # (owner's pick B, 19 Nov)
+const NIGHT_BLUE := 0.7       # how far the shade turns moonlit blue at full night
+const MOONLIT := Color(0.55, 0.64, 0.92)
 const SETTING := "farm/world/use_3d"
 const SHADOW_DISTANCE := 90.0
 const SUN_MAX_ELEVATION := deg_to_rad(58.0)
@@ -285,6 +287,7 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.background_color = horizon
 	# Shade is lit by the sky, but mostly warm-neutral bounce light off the grass and earth.
 	environment.ambient_light_color = Color(0.86, 0.88, 0.84).lerp(top, 0.25).lerp(Color(0.75, 0.78, 0.82), cover * 0.5)
+	environment.ambient_light_color = environment.ambient_light_color.lerp(MOONLIT, dark * NIGHT_BLUE)
 	environment.ambient_light_energy = lerpf(0.4, NIGHT_AMBIENT, dark) * (1.0 - dim * 0.4)
 	var frame_sat := lerpf(Grade.value("frame_day_saturation"), Grade.value("frame_night_saturation"), dark)
 	environment.adjustment_saturation = frame_sat * (1.0 - float(weather.get("desat", 0.0))) * _grade_sat

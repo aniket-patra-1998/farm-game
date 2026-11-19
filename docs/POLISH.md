@@ -42,7 +42,7 @@ first; our own touch only where it is clearly marked. Every system is built (doc
   pins; lawn yards with a trodden path gate to door; farmer with button eyes and an open smile; inbox icon an
   envelope with a red seal; chunky flowers; calm deep water with life; storybook buildings; VIP and rust on; VIP
   top boost x1.5; the wooden-tok tap sound; icon glow option C (gold behind money and rewards, blue-white behind
-  something new); the goal faces, the goal sheet and its calendar icon (approved 18 Nov 23:32). Parked by the owner: the Barn's weather looks (storm, wind, winter liked; a lighter rainbow).
+  something new); a deep night (pick B, 19 Nov: moonlit blue, about 60% darker than noon); the goal faces, the goal sheet and its calendar icon (approved 18 Nov 23:32). Parked by the owner: the Barn's weather looks (storm, wind, winter liked; a lighter rainbow).
 
 ## The owner's-eye checklist (owner, 19 Nov: every review, every screen, every change)
 The owner plays on a phone, as a player, and judges what a player sees, hears and taps. Their issues of 19 Nov
