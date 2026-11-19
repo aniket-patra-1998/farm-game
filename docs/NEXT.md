@@ -1001,8 +1001,12 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   and log start.scripts - start.engine against run 13's 3.7 s, and whether the benchmark reached "done"; then the
   A13 if quota allows. 2) ItemIcons (~0.9k lines, `--drop=ItemIcons`): named by ui_icon, ui_kit, hud, game,
   card_list, level_up_popup and the panels; it pulls GoodsModel, UiModels, AssetRegistry in from the UI side.
-  The top bar's icons use it at start, so a slice means a small by-path accessor (e.g. UiKit.icons()) used by
-  those few start-up scripts. 3) Past that, the ~31k left is mostly the 3D farm itself: let the phone say whether
+  Not a plain by-path move: the top bar's UiIcon draws its rendered picture through ItemIcons.of / is_made at
+  the first screen, and hud.gd starts the renderer. The slice is a split: a small lookup (of, is_made, sized:
+  the baked res://baked/icons and user://icons files) that the start names, and the maker (rendering models
+  into pictures: item_icons' render code, GoodsModel, UiModels, AssetRegistry's picture parts) loaded by path
+  only when a picture is missing. Measure the split with `--drop=` on the maker's classes first (BuildingModel
+  and Objects3D stay: the 3D farm names them). About 30-40 minutes with tests; start it early in a run. 3) Past that, the ~31k left is mostly the 3D farm itself: let the phone say whether
   compiling is still the big part before slicing further.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
