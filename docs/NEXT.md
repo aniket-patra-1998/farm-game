@@ -1177,6 +1177,18 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   longer with more warm-in); merge a pick by rebasing its branch on main, precheck, fast-forward push. While they
   wait: item 3, building and project moments (a placed building rises out of a scaffold with a dust puff and a
   thud; a finished project's reveal). Survey first: Feedback moments for placing, BuildingSystem, FxLayer.
+- Run 5 (19 Nov 16:36-17:20 IST): the owner picked harvest juice RICHER (16:11): wow/harvest-juice rebased on
+  main (conflicts: quality.json's _doc, NEXT.md, art_versions regenerated) and merged (ae40bd3; feel.produce stays
+  the branch default, the richer one). Then, as the owner asked, collecting the same way, merged (ce1530f, branch
+  wow/collect-juice): _show_collect flies the thing's own picture (ItemIcons.of(obj id), when made) through
+  FxLayer.produce, climbs a note a collect (FarmGrid._run_at: _run for a point, not a plot) and a round ends on its
+  count over the last thing (_sweep_end_at; _show_collect returns where it showed, INF when gone). Test 561.
+  tools/juice_shot.tscn --collect renders a round (the new farm has 3 animals, so no "x5" in it; ~1 min).
+  Open: the flyer is the animal or tree itself, not its product (milk, eggs, apples have no icons yet).
+- Next: the opening glide still waits for the owner's pick (wow/opening-glide). Item 3, building and project
+  moments, not started: survey Feedback "place"/"build" moments, BuildingSystem (finished construction and
+  projects), FxLayer/WorldFx; a new look, so frames to the owner first. Local main of an old clone: kept as branch
+  local-main-old-1636.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
