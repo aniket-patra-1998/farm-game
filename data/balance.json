@@ -989,8 +989,8 @@
    "note": "share of the feed (Barn) or bunches (Garden Shed) that spoils a day in worn storage"
   },
   "level_scale": {
-   "v": 0.12,
-   "note": "a repair's coins grow with the farm: times 1 + this x level squared (owner, 19 Nov: repairs were under 1% of a late farm's earnings)"
+   "v": 0.75,
+   "note": "a repair's coins grow with the farm: times 1 + this x level, as its earnings do (owner, 19 Nov: repairs were under 1% of a late farm's earnings; squared, they outgrew them and went unpaid)"
   },
   "least_price": {
    "v": 2000,

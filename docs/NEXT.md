@@ -1381,3 +1381,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - 19 Nov, later: building wear and climbing upgrade prices built (docs/WEAR.md, tests 587-594). The bot's
   measure: wear is upkeep, not a coin sink (repairs under 1% of earnings with the owner's 40% cap). The idle
   coin pile is still open: asked the owner how sinks should scale with income.
+- 20 Nov: the Economy audit (tools/audit.sh, .github/workflows/audit.yml, data/sim_targets.json) checks every bot
+  style on two seeds; the bot was fixed to play like a player (it had never bought a building). Open: the
+  plain style's want_days_pct (something to buy costing 1 to 3 visits) misses on some seeds: a pacing gap in
+  the Market's middle levels, for the next economy pass.

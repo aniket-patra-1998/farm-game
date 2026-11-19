@@ -228,7 +228,7 @@ func _worth(o: Dictionary) -> Dictionary:
 ## How many times a repair's coins are for how far the farm has grown (its level), so upkeep keeps pace with what
 ## a bigger farm earns (owner, 19 Nov).
 func grown() -> float:
-	return 1.0 + Balance.f("wear.level_scale") * game.level() * game.level()
+	return 1.0 + Balance.f("wear.level_scale") * game.level()
 
 
 ## The coins, materials and seconds a repair takes now ({} when there is nothing to repair).
