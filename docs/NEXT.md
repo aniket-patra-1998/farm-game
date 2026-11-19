@@ -1034,6 +1034,23 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   draws): candidates HudGoals' goal sheet (~0.4k), then let the phone say whether compiling is still the big part
   before slicing further.
 
+- Run 17 (19 Nov 12:51 - 13:41 IST). No new phone report before 13:30 IST (last 03:02 UTC). Godot fetched again to
+  /home/claude/godot/godot (local main had diverged in a shallow clone: unshallowed, fast-forwarded). Slice 6 of the
+  start (517a910): FarmHud makes the level-up (LevelUpPopup, at the first level up, in `_level_slot`, an empty
+  full-screen layer where it stood, so it layers as before; `level_popup()`), a mystery's reveal and the away card
+  by path (REVEAL_SCRIPT, AWAY_SCRIPT, LEVEL_SCRIPT, also compiled one a frame after the first screen in
+  `_load_panels`). Lines compiled before the first screen 30,741 -> 30,352; headless, 7 alternating pairs: scripts -
+  engine median 1,666 -> 1,636 ms, hud mark 2,171 -> 2,133 ms. Level-up rendered before/after at 1x: same card;
+  the unlock pictures fill in from the container's icon cache, so compare a warm-cache run. Test 552.
+  Looked at, not built: ScaleGuide builds a model of each item to measure its height when the showcase opens
+  (17 items, ~86 ms headless): a generated data/ table of factors (like animal_strides) would skip it, but adds a
+  regenerate rule; only worth it if the phone's showcase_cold says so.
+- Next run: 1) read the phone run started at ~13:30 IST (A05s, the "Latest phone build" of 517a910 or 06d09aa:
+  the job log's BENCH line says the commit): start.scripts - start.engine against run 13's 3.7 s, start total
+  against 8,171 ms, and whether the benchmark reached "done" (if not, how each process ended). 2) Its biggest cost
+  next; if compiling is still the big part, `tools/start_lines.py -v`: HudGoals' goal sheet (~0.2k), HudReveal is
+  needed at start; the rest is the 3D farm the first screen draws.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
