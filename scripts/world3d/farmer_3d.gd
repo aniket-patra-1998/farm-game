@@ -148,7 +148,7 @@ func _build_file(look: Dictionary) -> bool:
 
 
 ## A copy of the farmer's mesh with each point coloured for the look: its own painted light times the colour of
-## the region it wears (`tints`, by REGIONS), its moves kept.
+## the region it wears (`tints`, by REGIONS), its moves and its levels of detail kept.
 static func tinted(mesh: ArrayMesh, tints: Array[Color]) -> ArrayMesh:
 	var out := ArrayMesh.new()
 	for k in mesh.get_blend_shape_count():
@@ -163,8 +163,29 @@ static func tinted(mesh: ArrayMesh, tints: Array[Color]) -> ArrayMesh:
 			var tint := tints[region]
 			colours[i] = Color(colours[i].r * tint.r, colours[i].g * tint.g, colours[i].b * tint.b, colours[i].a)
 		arrays[Mesh.ARRAY_COLOR] = colours
-		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, mesh.surface_get_blend_shape_arrays(s))
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, mesh.surface_get_blend_shape_arrays(s),
+			surface_lods(mesh, s))   # (its simpler levels kept: drawn small, it is drawn simpler)
 		out.surface_set_material(s, mesh.surface_get_material(s))
+	return out
+
+
+## Surface `s`'s simpler versions (levels of detail) as `ArrayMesh.add_surface_from_arrays` takes them
+## ({edge length: indices}): a mesh rebuilt from its arrays (recoloured, its points kept in order) keeps them,
+## which `surface_get_arrays` alone drops.
+static func surface_lods(mesh: Mesh, s: int) -> Dictionary:
+	var sd := RenderingServer.mesh_get_surface(mesh.get_rid(), s)
+	var wide := int(sd.get("vertex_count", 0)) > 65535 or int(sd.get("vertex_count", 0)) == 0
+	var out := {}
+	for lod: Dictionary in sd.get("lods", []):
+		var bytes: PackedByteArray = lod["index_data"]
+		var idx := PackedInt32Array()
+		if wide:
+			idx = bytes.to_int32_array()
+		else:
+			idx.resize(bytes.size() / 2)
+			for i in idx.size():
+				idx[i] = bytes.decode_u16(i * 2)
+		out[float(lod["edge_length"])] = idx
 	return out
 
 

@@ -2444,3 +2444,26 @@ func test_535_every_phone_installs_it_and_plays_in_landscape() -> void:
 		"the phone's manifest asks for landscape, either way up")
 	_check(Display.ORIENTATION in [DisplayServer.SCREEN_LANDSCAPE, DisplayServer.SCREEN_REVERSE_LANDSCAPE,
 		DisplayServer.SCREEN_SENSOR_LANDSCAPE], "and it is a landscape one")
+
+
+## The farmer's mesh, recoloured for the player's look, keeps the file's levels of detail: zoomed out it is drawn
+## with half the triangles (it drew all 15k at every zoom), close up exactly as before.
+func test_570_the_farmer_recoloured_keeps_its_levels_of_detail() -> void:
+	var model := AssetRegistry.instance("%s%s_%s" % [Farmer3D.FILE, "a", "short"])
+	if model == null:
+		_check(true, "(no farmer file: the farmer is built in code)")
+		return
+	var src := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	var tints: Array[Color] = []
+	for i in 6:
+		tints.append(Color(0.5, 0.6, 0.7))
+	var out := Farmer3D.tinted(src.mesh as ArrayMesh, tints)
+	for s in src.mesh.get_surface_count():
+		var had := Farmer3D.surface_lods(src.mesh, s)
+		var kept := Farmer3D.surface_lods(out, s)
+		_check(not had.is_empty(), "the file has levels of detail")
+		_eq(kept.size(), had.size(), "the recoloured farmer keeps every level")
+		for edge in had:
+			_check(kept.has(edge) and kept[edge] == had[edge], "level %s: the same triangles" % edge)
+	_eq(out.get_blend_shape_count(), src.mesh.get_blend_shape_count(), "and its moves")
+	model.free()
