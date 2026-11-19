@@ -39,13 +39,13 @@ var crops: Crops3D
 var glints: Glints3D
 var objects: Objects3D
 var farmer: Farmer3D
+## The opening's cooler, softer light (OpeningGlide), 0..1: saturation and a little brightness taken away.
+var opening_cool := 0.0
 var _grade_warmth := -1.0
 var _grade_lift := Vector3.ZERO   # main's night lift for the shadows (folded into the colour grade's dark end)
 var _grade_sat := 1.0             # and its saturation and contrast, folded into the environment's
 var _grade_contrast := 1.0
 var _day_saturation := 1.0         # the frame's saturation for the hour and weather (set_daylight)
-## The opening's cooler, softer light (OpeningGlide), 0..1: saturation and a little brightness taken away.
-var opening_cool := 0.0
 var _cooled := false
 var _changed := {}            # plots changed since the last update (index -> true)
 var _changed_all := false     # or the whole field
