@@ -62,6 +62,8 @@ func snapshot() -> Dictionary:
 		"clear_until": game.clear_until,
 		"unwithers": game.unwithers,
 		"rescued": game.rescued,
+		"born_day": game.born_day,
+		"helped_day": game.helped_day,
 		"fertilize_alls": game.fertilize_alls,
 		"parts": game.parts,
 		"farmhands": game.farmhands,
@@ -173,6 +175,9 @@ func load_save() -> bool:
 	game.clear_until = int(data.get("clear_until", 0))
 	game.unwithers = int(data.get("unwithers", Balance.i("economy.start_unwithers")))
 	game.rescued = bool(data.get("rescued", false))
+	# (a farm saved before 19 Nov is taken as grown: no young-farm help for it)
+	game.born_day = int(data.get("born_day", game.day_number() - Balance.i("economy.young_farm_days")))
+	game.helped_day = int(data.get("helped_day", -1))
 	game.fertilize_alls = int(data.get("fertilize_alls", 0))
 	var saved_parts := GameSystem.int_map(data.get("parts", {}))
 	game.parts = {}

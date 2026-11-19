@@ -13,7 +13,7 @@
       {"say": "GOAL_SAY_WELCOME_4", "tasks": [{"do": "collect", "what": "chicken", "n": 1}],
         "reward": {"coins": 150, "xp": 15}},
       {"say": "GOAL_SAY_WELCOME_5", "tasks": [{"do": "buy", "what": "apple_tree", "n": 1, "ready": true}, {"do": "collect", "what": "apple_tree", "n": 1}],
-        "reward": {"coins": 50, "xp": 80}},
+        "reward": {"coins": 170, "xp": 80}},
       {"say": "GOAL_SAY_WELCOME_6", "tasks": [{"do": "plow", "what": "", "n": 4}, {"do": "plant", "what": "", "n": 4}], "reward": {"coins": 40, "xp": 25}},
       {"say": "GOAL_SAY_WELCOME_7", "tasks": [{"do": "level", "what": "", "n": 3}], "reward": {"coins": 30, "box": "mystery_box"}},
       {"say": "GOAL_SAY_WELCOME_8", "tasks": [{"do": "plant", "what": "wheat", "n": 1}], "reward": {"coins": 50, "xp": 10}}
@@ -113,8 +113,8 @@
      "reward": {"coins": 500, "xp": 150, "item": "fountain"}},
     {"id": "rare_coop", "name": "GOAL_PROJECT_RARE_COOP", "level": 5, "stages": [
       {"tasks": [{"do": "own", "what": "chicken_coop", "n": 1}], "reward": {"coins": 200, "xp": 30}},
-      {"tasks": [{"do": "collect", "what": "chicken", "n": 20}], "reward": {"coins": 300, "xp": 50}},
-      {"tasks": [{"do": "open_egg", "what": "", "n": 3}]}],
+      {"tasks": [{"do": "collect", "what": "chicken", "n": 20}], "reward": {"coins": 300, "xp": 50, "eggs": {"white": 2}}},
+      {"tasks": [{"do": "open_egg", "what": "", "n": 2}]}],
      "reward": {"coins": 500, "xp": 200, "item": "brown_chicken"}}
   ]
 }
