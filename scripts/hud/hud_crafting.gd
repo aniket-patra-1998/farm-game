@@ -304,7 +304,7 @@ func build_goods(content: VBoxContainer) -> void:
 
 ## A good's card (CardFace): its picture and name, how many there are and what one sells for.
 func good_face(id: String) -> Dictionary:
-	return {"name": Game.name_of(id), "line": tr("TIMES_N") % int(Game.crafting.goods.get(id, 0)),
+	return {"name": Game.name_of(id), "count": tr("TIMES_N") % int(Game.crafting.goods.get(id, 0)),
 		"badge": ["coin", UiTheme.number(Game.crafting.good_price(id))]}
 
 

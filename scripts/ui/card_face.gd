@@ -9,7 +9,7 @@ extends BaseButton
 ## a long press), buyable (kept as meta for tests and the panel). In the picture's place a card may show a ring
 ## (`ring`: [share, words], a collection's progress) or a sticker icon (`icon`: [kind, tint, faded], a ribbon).
 
-const TIDIED := ["line", "long"]   # a face's words whose numbers are written short (a name has none)
+const TIDIED := ["line", "long", "count"]   # a face's words whose numbers are written short (a name has none)
 const NAME_LINES := 2     # a long name wraps to at most this many lines
 const SPACE := 2.0        # px between the parts of a card, top to bottom
 const LOCKED_PICTURE := Color(1, 1, 1, 0.45)
@@ -133,6 +133,8 @@ func _draw() -> void:
 	elif picture != null:
 		RenderingServer.canvas_item_add_texture_rect(_pic, spot, picture.get_rid(), false,
 			LOCKED_PICTURE if locked else Color.WHITE)
+	if str(face.get("count", "")) != "":
+		_draw_count(font, spot)
 	y += pic_side + SPACE
 	if not stars.is_empty():
 		var wide := UiTheme.size("mastery_star") * STARS_WIDE
@@ -175,6 +177,18 @@ func _show_big(spot: Rect2) -> void:
 	_big.modulate.a = LOCKED_PICTURE.a if icon.size() > 2 and bool(icon[2]) else 1.0
 	_big.position = spot.position
 	_big.size = spot.size
+
+
+## How many, in the picture's bottom corner as a count tile shows it (UiKit.count_tile: ink on a paper outline),
+## so a stored thing's card reads picture, name, action, the same as every count elsewhere ("×3" over the corner).
+func _draw_count(font: Font, spot: Rect2) -> void:
+	var words := str(face["count"])
+	var px := UiTheme.text_px("font_badge")
+	var wide := font.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
+	var at := Vector2(spot.end.x - wide, spot.end.y - font.get_descent(px))
+	draw_string_outline(font, at, words, HORIZONTAL_ALIGNMENT_LEFT, -1, px, int(UiTheme.size("count_outline")),
+		UiTheme.color("paper"))
+	draw_string(font, at, words, HORIZONTAL_ALIGNMENT_LEFT, -1, px, UiTheme.color("ink"))
 
 
 ## A progress pill where the badge goes: filled `share` of the way, its words in the middle ("12 / 25").

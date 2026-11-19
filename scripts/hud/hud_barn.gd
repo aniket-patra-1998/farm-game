@@ -164,7 +164,7 @@ func add_grouped(content: VBoxContainer, from: int, to: int) -> void:
 	var kinds: Array[String] = []
 	kinds.assign(first.keys())
 	var face := func(id: String) -> Dictionary:
-		return {"name": Game.name_of(id), "line": tr("TIMES_N") % count[id], "badge": ["", tr("PLACE_2")]}
+		return {"name": Game.name_of(id), "count": tr("TIMES_N") % count[id], "badge": ["", tr("PLACE_2")]}
 	var stored := CardList.make(kinds, face, func(id: String) -> void:
 		hud.close_panels()
 		hud.place_stored_requested.emit(int(first[id])), hud.get_viewport().get_visible_rect().size.x)

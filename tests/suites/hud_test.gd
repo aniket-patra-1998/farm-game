@@ -1049,7 +1049,7 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 		await get_tree().process_frame
 	lists = _lists_in(page)
 	_eq((lists[0] as CardList).ids, ["pumpkin_bread", "strawberry_shortcake"] as Array[String], "the goods on the shelf")
-	_eq((lists[0] as CardList).face_of.call("strawberry_shortcake")["line"], tr("TIMES_N") % 2, "two shortcakes")
+	_eq((lists[0] as CardList).face_of.call("strawberry_shortcake")["count"], tr("TIMES_N") % 2, "two shortcakes")
 	(lists[0] as CardList).press("strawberry_shortcake")
 	for f in 3:
 		await get_tree().process_frame
