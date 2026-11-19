@@ -34,5 +34,7 @@ butterflies, fireflies and birds; night_glow.gd; the level-up is fireworks only 
    sun with longer softer shadows, a soft rainbow after rain (lighter, as the owner parked it).
 6. Sound bed: day and night music variants, a soft farm ambience that changes when zoomed in (animals near you
    heard more), and the reward sounds tuned as one family with the new wooden tap.
+Owner's picks: harvest juice RICHER (19 Nov 16:11). Declined: haptic patterns ("keep the game simple but
+awesome"): no new vibration work; prefer fewer, stronger moments over many small ones.
 Only report (never build): a new feature (e.g. a farm postcard to share, visitors), a change to a picked look.
 Each run also adds ONE new wow idea of its own, ranked by gain for effort, to the log's "Reported, not built".
