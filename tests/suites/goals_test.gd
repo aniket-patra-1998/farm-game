@@ -259,8 +259,9 @@ func test_483_the_goal_follower_plays_a_new_farm_without_getting_stuck() -> void
 	sim.set("game", g)
 	sim.set("style", "goals")
 	var hours: Array = sim.call("_visit_hours")
-	g.debug_time_offset += int(sim.call("_seconds_until", hours[0], g.now()))   # a farm made at the first visit's hour
-	g.reset_game()
+	sim.call("new_farm")   # a farm made at the first visit's hour
+	_check(absf(DayCycle.local_hour(g.now(), DayCycle.device_bias_minutes()) - float(hours[0])) < 0.01,
+		"the new farm's clock reads the first visit's hour, whatever the hour the test runs")
 	var hour: Dictionary = sim.call("play_first_hour")
 	_eq(hour["first_harvest"], 0, "the starter's ripe plots are harvested in the first minute")
 	_check(int(hour["level_at"][10]) >= 2, "level 2 within ten minutes")
@@ -399,8 +400,7 @@ func test_515_the_goal_bot_completes_every_chain() -> void:
 	sim.set("style", "goals")
 	sim.set("_days", 21)
 	var hours: Array = sim.call("_visit_hours")
-	g.debug_time_offset += int(sim.call("_seconds_until", hours[0], g.now()))
-	g.reset_game()
+	sim.call("new_farm")   # a farm made at the first visit's hour
 	g.rng.seed = 1
 	sim.call("_play")
 	var left := []
@@ -456,8 +456,7 @@ func test_529_never_feeding_costs_under_30_percent_and_a_week_away_loses_nothing
 		if not never:
 			sim.set("away", [3, 4, 5, 6, 7, 8, 9])
 		var hours: Array = sim.call("_visit_hours")
-		g.debug_time_offset += int(sim.call("_seconds_until", hours[0], g.now()))
-		g.reset_game()
+		sim.call("new_farm")   # a farm made at the first visit's hour
 		g.rng.seed = 1
 		sim.call("_play")
 		_check(int(sim.get("animal_collects")) > 0, "the bot collects from animals")

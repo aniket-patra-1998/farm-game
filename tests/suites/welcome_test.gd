@@ -90,8 +90,7 @@ func test_503_the_bot_finishes_the_welcome_chain_in_the_first_hour() -> void:
 	var sim: Node = load("res://tools/balance_sim.gd").new()
 	sim.set("game", g)
 	sim.set("style", "goals")
-	g.debug_time_offset += int(sim.call("_seconds_until", sim.call("_visit_hours")[0], g.now()))
-	g.reset_game()
+	sim.call("new_farm")   # a farm made at the first visit's hour
 	var hour: Dictionary = sim.call("play_first_hour")
 	_check(g.goals.chains_done.has(WELCOME), "the Welcome chain is done within the hour (%s)" % [hour["lines"]])
 	_check(int(hour["level_at"][60]) >= 3, "level 3 by minute 60")

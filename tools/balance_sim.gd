@@ -124,10 +124,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	game = Game
 	game.saving_enabled = false
-	# The farm is made at the first visit's hour, as a player plays the moment they install: made earlier, the
-	# clock then skipped to that hour (up to a day with one visit) and the starter's ripe plots withered unseen.
-	game.debug_time_offset += _seconds_until(_visit_hours()[0], game.now())
-	game.reset_game()
+	new_farm()
 	game.rng.seed = _seed
 	if first_hour:
 		print("FIRST HOUR  seed=%d" % _seed)
@@ -151,6 +148,20 @@ func _visit_hours() -> Array:
 	for k in _visits:
 		out.append(7.0 + 14.0 * k / maxf(_visits - 1, 1))
 	return out
+
+
+## A new farm made at the first visit's hour, as a player plays the moment they install: made earlier, the clock
+## then skipped to that hour (up to a day with one visit) and the starter's ripe plots withered unseen. The farm is
+## made now and the clock set back to the last time it read that hour; the game moves every timer with it, as for a
+## device clock set back (Persistence.watch_clock). (Moving the clock on before Game.reset_game did nothing: the
+## reset sets the clock back to the device's, so the first visit fell at whatever hour the run started.)
+func new_farm() -> void:
+	game.reset_game()
+	var hour := DayCycle.local_hour(game.now(), DayCycle.device_bias_minutes())
+	var back := int(fposmod(hour - float(_visit_hours()[0]), 24.0) * 3600.0)
+	game.persistence.watch_clock()   # (it knows the new farm's time first)
+	game.debug_time_offset -= back
+	game.persistence.watch_clock()
 
 
 func follows_goals() -> bool:
