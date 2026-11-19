@@ -170,7 +170,7 @@ func size(key: String, fallback := 10.0) -> float:
 ## How far the body travels in one full walk cycle. Behaviour advances the gait by distance / this,
 ## and the art moves each planted foot backwards by exactly the distance walked, so feet stay planted.
 func cycle_length() -> float:
-	return AnimalArt.STRIDE * size("leg", 12.0) / AnimalArt.STANCE
+	return AnimalGait.STRIDE * size("leg", 12.0) / AnimalGait.STANCE
 
 
 ## What this animal likes to do, as weights.

@@ -29,6 +29,7 @@ const SLAB := 10.0   # px a plowed plot's soil top is lifted over its tile (the 
 ## The 2D world's drawing (PlaceholderArt, ~1.7k lines): loaded by path when first drawn, or a frame after the farm
 ## is made, so the start never compiles it (the 3D farm draws itself; docs/PERF_RUN.md, the start).
 const ART_SCRIPT := "res://scripts/placeholder_art.gd"
+const ANIMAL_ART_SCRIPT := "res://scripts/world/animals/animal_art.gd"   # the 2D animals' drawing (AnimalArt), likewise
 
 
 # Vibration on phones, in milliseconds: a light tick for a tap, firmer for a reward or a landing.
@@ -56,6 +57,7 @@ const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is 
 ## Trees around the farm, in tile coordinates outside your land: [row, col, decoration id] (see scenery()).
 static var _scenery: Array = []
 static var _art: GDScript
+static var _animal_art: GDScript
 
 
 var tool := "hand"   # plow, plant, fertilize, hand, harvest, move, store, sell, rotate or vehicle
@@ -187,10 +189,19 @@ static func art() -> GDScript:
 	return _art
 
 
+## The 2D animals' drawing (ANIMAL_ART_SCRIPT, AnimalArt's static functions), compiled the first time it is needed.
+static func animal_art() -> GDScript:
+	if _animal_art == null:
+		_animal_art = load(ANIMAL_ART_SCRIPT)
+	return _animal_art
+
+
 ## Compiled a frame after the farm is made (under the loading cover), so the first footprint drawn does not wait.
 func _load_art() -> void:
 	await get_tree().process_frame
 	art()
+	await get_tree().process_frame
+	animal_art()
 
 
 ## A farm position on screen (for rewards that fly to the top bar).

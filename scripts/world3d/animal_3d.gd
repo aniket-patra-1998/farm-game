@@ -263,7 +263,7 @@ func _build_file() -> bool:
 ## The ground one cycle of its legs covers, in tiles: its file's own walk, or the walk it is posed with.
 func stride() -> float:
 	var made := file_stride(_id) * _size if _file_mesh != null else 0.0
-	return made if made > 0.0 else maxf(AnimalArt.STRIDE * _leg / AnimalArt.STANCE, 0.001)
+	return made if made > 0.0 else maxf(AnimalGait.STRIDE * _leg / AnimalGait.STANCE, 0.001)
 
 
 ## The ground one cycle of a file-made animal's walk covers, in tiles at full size (0 when it has no file or
@@ -304,7 +304,7 @@ static func measure_stride(id: String) -> float:
 	var model := AssetRegistry.instance(id) if AssetRegistry.has_model(id) else null
 	var mi := _first_mesh(model) if model != null else null
 	if mi != null and mi.mesh is ArrayMesh and mi.mesh.get_surface_count() > 0:
-		stride = _feet_reach(mi.mesh as ArrayMesh) / AnimalArt.STANCE
+		stride = _feet_reach(mi.mesh as ArrayMesh) / AnimalGait.STANCE
 	if model != null:
 		model.free()
 	return stride
@@ -1106,14 +1106,14 @@ func _pose_quad(p: AnimalPose) -> void:
 	_body.scale = Vector3(1.0 + m.squash * 0.6, (1.0 - m.squash) * breathe, (1.0 + m.squash * 0.6) * breathe)
 	# Legs: the feet stay planted on the ground whatever the body does above them (worked out on the
 	# ground, then into the body's space for the leg's two bones).
-	var reach := AnimalArt.STRIDE * _leg * (1.0 + m.trot * 0.25)
-	var lift := AnimalArt.LIFT * _leg * (1.0 + m.trot * 0.5)
+	var reach := AnimalGait.STRIDE * _leg * (1.0 + m.trot * 0.25)
+	var lift := AnimalGait.LIFT * _leg * (1.0 + m.trot * 0.5)
 	var to_body := _body.transform.affine_inverse()
 	for leg in _legs:
 		var hip: Vector3 = leg["hip"]
 		var k: int = leg["k"]
 		var u := fposmod(p.gait + m.leg_phase(k), 1.0)
-		var off := AnimalArt.foot_offset(u, reach, lift) * p.stride
+		var off := AnimalGait.foot_offset(u, reach, lift) * p.stride
 		var hip_on_ground := _body.transform * hip
 		var foot_on_ground := Vector3(hip_on_ground.x + off.x, p.hop * _leg * 0.4 - off.y, hip_on_ground.z)
 		if k == 2:
@@ -1149,7 +1149,7 @@ func _pose_quad(p: AnimalPose) -> void:
 ## The knee (or hock) of a two-bone leg from hip to foot, bending forward for forelegs, back for hind.
 func _knee(hip: Vector3, foot: Vector3, fore: bool) -> Vector3:
 	var bone := absf(foot.y - hip.y) * 0.56
-	var j := AnimalArt.joint(Vector2(hip.x, -hip.y), Vector2(foot.x, -foot.y), bone, bone, -1.0 if fore else 1.0)
+	var j := AnimalGait.joint(Vector2(hip.x, -hip.y), Vector2(foot.x, -foot.y), bone, bone, -1.0 if fore else 1.0)
 	return Vector3(j.x, -j.y, hip.z)
 
 
@@ -1164,7 +1164,7 @@ func _pose_bird(p: AnimalPose) -> void:
 	for leg in _legs:
 		var hip: Vector3 = leg["hip"]
 		var u := fposmod(p.gait + float(leg["phase"]), 1.0)
-		var off := AnimalArt.foot_offset(u, 0.9 * _leg, 0.45 * _leg) * p.stride
+		var off := AnimalGait.foot_offset(u, 0.9 * _leg, 0.45 * _leg) * p.stride
 		# Feet planted on the ground, whatever the body's lean (worked out on the ground, then into its space).
 		var on_ground := _body.transform * hip
 		var foot := _body.transform.affine_inverse() * Vector3(on_ground.x + off.x, -off.y, on_ground.z)

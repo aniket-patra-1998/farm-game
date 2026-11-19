@@ -115,7 +115,7 @@ func _draw() -> void:
 		if not o.is_empty():
 			if animal != null and Game.art_for(o) == "":
 				# Drawn from its rig in this frame's pose: legs, head, tail and all (with its own shadow).
-				AnimalArt.draw(self, base, Game.item_data(o["id"]), is_ready(), animal.pose)
+				FarmGrid.animal_art().draw(self, base, Game.item_data(o["id"]), is_ready(), animal.pose)
 			else:
 				grid.draw_object_on(self, o, false)
 

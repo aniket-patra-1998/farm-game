@@ -491,6 +491,14 @@ func test_546_the_2d_art_compiles_after_the_first_screen() -> void:
 			"res://scripts/fx/world_fx.gd", "res://scripts/world/animals/animal_art.gd"]:
 		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
 		_check(not RegEx.create_from_string("\\bPlaceholderArt\\b").search(code), "%s does not name PlaceholderArt" % path)
+	# The 2D animals' drawing likewise (FarmGrid.animal_art); the 3D animals walk by AnimalGait.
+	for path: String in ["res://scripts/world/farm_piece.gd", "res://scripts/world/animals/animal_rig.gd",
+			"res://scripts/world3d/animal_3d.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bAnimalArt\\b").search(code), "%s does not name AnimalArt" % path)
+	_eq(FarmGrid.animal_art().resource_path, FarmGrid.ANIMAL_ART_SCRIPT, "the 2D animals are loaded by path")
+	_eq([FarmGrid.animal_art().get("STRIDE"), FarmGrid.animal_art().get("STANCE")], [AnimalGait.STRIDE, AnimalGait.STANCE],
+		"and walk by the same gait")
 	_eq(FarmGrid.art().resource_path, FarmGrid.ART_SCRIPT, "the 2D art is loaded by path")
 	_eq(FarmGrid.art().get("SLAB"), FarmGrid.SLAB, "its raised beds are the grid's")
 	Game.reset_game()
@@ -499,6 +507,7 @@ func test_546_the_2d_art_compiles_after_the_first_screen() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_check(is_same(FarmGrid.art(), load(FarmGrid.ART_SCRIPT)), "compiled once")
+	_check(is_same(FarmGrid.animal_art(), load(FarmGrid.ANIMAL_ART_SCRIPT)), "the animals' too")
 	main.queue_free()
 	await get_tree().process_frame
 	Game.reset_game()
