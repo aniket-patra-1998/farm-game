@@ -1162,13 +1162,10 @@ func tutorial_text() -> String:
 
 
 ## The old tutorial's step never asks for what the farm doesn't have (owner, 19 Nov: "Tap your ripe crops to
-## harvest!" over a field of empty plowed plots): a harvest step with nothing ripe moves on to plowing, and a plow
-## step with a plowed plot already waiting moves on to planting.
+## harvest!" over a field of empty plowed plots): a harvest step with nothing ripe moves on to plowing.
 func _fit_tutorial() -> void:
 	if tutorial_step == Tutorial.HARVEST and not any_plot_in(Phase.RIPE):
 		tutorial_step = Tutorial.PLOW
-	if tutorial_step == Tutorial.PLOW and any_plot_in(Phase.PLOWED):
-		tutorial_step = Tutorial.PLANT
 
 
 ## Moves to the next step only when the finished step is the current one.
