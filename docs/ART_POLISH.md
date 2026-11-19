@@ -96,3 +96,15 @@ log's "Reported, not built" with what and why; the owner picks before anything i
 4. Art builders are fingerprinted (data/art_sources.json): a change to a builder file needs its re-export
    (CLAUDE.md, docs/ASSETS.md); avoid touching builder files for non-visual reasons.
 5. Merge as docs/POLISH.md says (rebase, full precheck, fast-forward main), log, next step until ~50 minutes.
+
+## Panel motion (owner, 19 Nov 10:30: "panels open and close with no animation; it looks broken; it should be very smooth")
+Measured: only BookPanel and the level-up popup open with motion (UiFx.open); nothing closes with motion
+(BookPanel.close_panel just hides), and other surfaces (BuildingSheet, message boxes, the goal sheet, prompts,
+the inbox's letters, bubbles) appear and vanish in one frame. The fix, one motion language for every surface:
+- UiFx gains `close(panel, then)` beside `open`: open = fade in + scale from ~0.94 + a few px rise, ~0.22 s, ease
+  out (cubic); close = the reverse, ~0.16 s, ease in, and only then hidden (then `then`). The dim backdrop fades
+  with it. Interruptible both ways (opening while closing reverses from where it is; a second open never stacks).
+- Every panel, sheet, dialog and popup opens and closes through these two; a tab switch crossfades its page
+  (~0.12 s); nothing bounces or overshoots (POLISH.md: calm, weighty). Only modulate, scale and position: cheap
+  on a phone. Input is ignored on a closing panel; Game.modal_open follows the real state.
+- A test lists every panel-like class and fails if one shows or hides without UiFx.
