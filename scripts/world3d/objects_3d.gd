@@ -764,7 +764,7 @@ static func tree_look(id: String, mask: int, look: int, from_file := true) -> No
 	var grown := ScaleGuide.factor(id)
 	return Instancer.copy_of(Instancer.key_of(["tree", id, grown, mask, look]), func() -> Node3D:
 		var tree := Node3D.new()
-		TreeModel.build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, true, look, true, TreeModel.UNSET,
+		TreeSpec.builder().build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, true, look, true, TreeSpec.UNSET,
 			mask)
 		return ModelKit.bake(tree))
 
@@ -1157,10 +1157,10 @@ func _scenery_tree(holder: Node3D, t: Array) -> void:
 		"pine_tree":
 			pine(holder, at, 1.0 + fposmod(r * 7.0 + c * 3.0, 0.5))
 		"willow_tree":
-			TreeModel.build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false, TreeModel.UNSET,
+			TreeSpec.builder().build_at(holder, at, {"id": "willow"}, 1.15, false, int(r * 31 + c), false, TreeSpec.UNSET,
 				GROVE_MASK)
 		_:
-			TreeModel.build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false, TreeModel.UNSET,
+			TreeSpec.builder().build_at(holder, at, {"id": str(t[2])}, 1.2, false, int(r * 31 + c), false, TreeSpec.UNSET,
 				GROVE_MASK)
 
 
@@ -1172,7 +1172,7 @@ static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 	var root := Node3D.new()
 	root.position = base
 	parent.add_child(root)
-	ModelKit.cylinder(root, Vector3.ZERO, PINE_TRUNK_R * size, 0.22 * size, ModelKit.paint(TreeModel.BARK), -1.0, 6)
+	ModelKit.cylinder(root, Vector3.ZERO, PINE_TRUNK_R * size, 0.22 * size, ModelKit.paint(TreeSpec.BARK), -1.0, 6)
 	for k in PINE_TIERS:
 		var up := float(k) / (PINE_TIERS - 1)
 		var y := (0.14 + 0.2 * k) * size
@@ -1180,7 +1180,7 @@ static func pine(parent: Node3D, base: Vector3, size: float) -> void:
 		var skirt := ModelKit.cylinder(root, Vector3(0, y, 0), r, lerpf(0.46, 0.34, up) * size,
 			ModelKit.paint(PINE.darkened(0.16 * (1.0 - up)).lightened(0.06 * up)), 0.0, 8 + (k % 2))
 		skirt.rotation.y = k * 0.7
-	ModelKit.sway_all(root, TreeModel.SWAY)  # bends in the wind like every tree
+	ModelKit.sway_all(root, TreeSpec.SWAY)  # bends in the wind like every tree
 
 
 # ---------------------------------------------------------------- placing

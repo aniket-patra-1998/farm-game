@@ -1183,6 +1183,18 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   start marks against run 21's (scripts mark 6,782 ms on the A05s). 2) Cut the biggest GPU owner it names. 3) While
   no phone run is possible, more start slices sized with `--drop`: Animal3D (~-1k: named by scale_guide.gd and
   the farm's animal layer), TreeModel (481), BuildingFill (918, autoload game names it).
+- Run 24 (19 Nov 19:51 - 20:40 IST). Godot 4.7.2 fetched again; local main had diverged (unrelated history), so
+  the run worked from a detached origin/main. No phone run: today's 4 are used; the nightly at 02:10 IST is next.
+  Slice 10 (perf/tree-spec): TreeSpec (scripts/world3d/tree_spec.gd: data, shape_of, stands_by_itself, SWAY, BARK,
+  UNSET, META_FAR, builder()) is what objects_3d, scale_guide and building_fill name; TreeModel loads by path via
+  `TreeSpec.builder()` and keeps aliases and delegates (shape_of, stands_by_itself) for the tools and tests.
+  27,066 -> 26,613 lines (tools/start_lines.py). Plants re-exported: all 105 files' meshes hash equal (scratch dumper
+  of every surface's arrays), committed art kept, art_sources/art_versions regenerated (tree_spec.gd is a plants
+  source). Test 584. Note: test 582 exists twice (farming_test and world3d_test) from two runs pushing at once.
+- Next run: 1) the nightly phone run's report (02:10 IST): its `gpu` phase and the start marks against run 21's.
+  2) Cut the biggest GPU owner it names. 3) More start slices sized with `--drop`: Animal3D (~-1k), BuildingFill
+  (~-1.1k, but it builds the fills of the first screen's buildings, so a path load saves nothing unless fills wait
+  until after the first screen).
 
 ## Wow (the wow build; docs/WOW_RUN.md; rows prefixed "Wow:" in the log doc)
 - Run 1 (19 Nov 12:36-13:30 IST): item 0, the icon glow (owner's pick C), built and merged from wow/icon-glow.

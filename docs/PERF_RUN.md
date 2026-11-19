@@ -161,6 +161,11 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   (Objects3D.decor_model()) only when a look must be built (looks are kept by ModelStore); a mystery young, built
   fresh as it grows, has its own small builder (YoungModel) and the decorations' colours their own place
   (DecorPaint). 27,782 -> 26,947 lines before the first screen.
+- 19 Nov 20:00 (perf run 24): no phone run possible (today's 4 used; the nightly is next). Slice 10 of the start:
+  what a tree is (TreeSpec: its shape, whether it stands by itself, its sway, bark and far-look key) apart from the
+  builders (TreeModel), which load by path (TreeSpec.builder()) only when a tree's look must be built (a lone tree
+  comes from its file, the woods from ModelStore). 27,066 -> 26,613 lines before the first screen. The 105 exported
+  plant files carry the same meshes (every surface's arrays hashed before and after).
 
 ## Owner approvals (19 Nov 15:21): frame rate on slow phones
 Measured on the Galaxy A05s: playing the showcase at zoom 1.6 runs ~95 ms a frame on low (386 draws, 218k

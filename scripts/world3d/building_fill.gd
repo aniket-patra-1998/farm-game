@@ -703,7 +703,7 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE * ScaleGuide.factor(ids[k]), d.is_full(),
 				uid + k)
 		else:
-			var fit := clampf(TREE_CROWN / float(TreeModel.shape_of(it).get("crown_r", TREE_CROWN)), 0.7, 1.1)
+			var fit := clampf(TREE_CROWN / float(TreeSpec.shape_of(it).get("crown_r", TREE_CROWN)), 0.7, 1.1)
 			var grown := size * fit * minf(ScaleGuide.factor(ids[k]), 1.0)
 			if not stand.has(ids[k]):
 				stand[ids[k]] = {"size": grown, "at": []}
@@ -780,15 +780,15 @@ func _plant_kind(id: String) -> void:
 			var tree := Node3D.new()
 			var was := ModelKit.detail
 			ModelKit.detail = detail
-			var built := TreeModel.build_at(tree, Vector3.ZERO, it, size, true, v * 977 + 1)
+			var built: Node3D = TreeSpec.builder().build_at(tree, Vector3.ZERO, it, size, true, v * 977 + 1)
 			ModelKit.detail = was
-			measured["far"] = built.get_meta(TreeModel.META_FAR, [])
+			measured["far"] = built.get_meta(TreeSpec.META_FAR, [])
 			return ModelKit.bake(tree)), here)
 		for tree in near:
 			Objects3D.ripen(tree, _plants_cycle[0], _plants_cycle[1])   # (their fruit grows by the orchard's cycle)
 		_near_trees.append_array(near)
 		var blob := Instancer.parts_of(Instancer.key_of([key, LOD_FAR_PPU]), func() -> Node3D:
-			return TreeModel.far_from(measured.get("far", []), it, size, v * 977 + 1))
+			return TreeSpec.builder().far_from(measured.get("far", []), it, size, v * 977 + 1))
 		var far := Instancer.place(holder, blob, here)
 		for node in far:
 			node.visible = false

@@ -2548,3 +2548,22 @@ func test_582_the_decoration_builders_compile_when_a_look_is_built() -> void:
 	var young := YoungModel.build(Game.item_data("mystery_seedling"), {"id": "mystery_seedling", "uid": 7}, 0.5)
 	_check(young != null and young.get_child_count() > 0, "and a young")
 	young.free()
+
+
+func test_584_the_tree_builders_compile_when_a_look_is_built() -> void:
+	# The farm asks what a tree is (TreeSpec: its shape, whether it stands by itself, its sway and bark); the
+	# builders (TreeModel, 0.5k lines) load by path only when a tree's look has to be built (a lone tree comes from
+	# its file, the woods from ModelStore), so the start does not compile them (docs/PERF_RUN.md, the start).
+	for path: String in ["res://scripts/world3d/objects_3d.gd", "res://scripts/world3d/scale_guide.gd",
+			"res://scripts/world3d/building_fill.gd", "res://scripts/world3d/tree_spec.gd"]:
+		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
+		_check(not RegEx.create_from_string("\\bTreeModel\\b").search(code), "%s does not name the builders" % path)
+	_eq(TreeSpec.builder().resource_path, TreeSpec.BUILDER, "the builders come from their own file")
+	_eq([TreeModel.SWAY, TreeModel.BARK, TreeModel.UNSET, TreeModel.META_FAR],
+		[TreeSpec.SWAY, TreeSpec.BARK, TreeSpec.UNSET, TreeSpec.META_FAR], "one set of numbers, asked either way")
+	for id: String in ["apple_tree", "palm_tree", "willow"]:
+		_eq(TreeSpec.shape_of({"id": id}), TreeModel.shape_of({"id": id}), "%s: one shape, asked either way" % id)
+	var holder := Node3D.new()
+	TreeSpec.builder().build_at(holder, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, true, 3)
+	_check(holder.get_child_count() > 0, "a tree is still built through the path")
+	holder.free()
