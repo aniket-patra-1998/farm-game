@@ -87,6 +87,13 @@ func test_342_panel_text_is_scaled_once_and_never_too_small() -> void:
 	_eq(UiTheme.font_for(20.0, 1.0, 0.9), 18, "a design size at scale 1 and share 0.9")
 	_eq(UiTheme.font_for(30.0, 0.7, 0.9), 19, "smaller on a smaller interface, rounded")
 	_eq(UiTheme.font_for(12.0, 0.7, 0.9), UiTheme.MIN_FONT, "never under MIN_FONT")
+	var lifted: Array[int] = []
+	for step: float in UiTheme.TYPE_SCALE:
+		lifted.append(UiTheme.font_for(step, 0.5, 0.9))
+	_eq(lifted[1], UiTheme.MIN_FONT, "body lifted to the floor on a small interface")
+	for i in range(2, lifted.size()):
+		_check(lifted[i] > lifted[i - 1], "type step %d still reads larger than the one below once lifted: %s"
+			% [i, lifted])
 	_eq(BookPanel.font_px(20), UiTheme.font(20.0), "panels size their text through UiTheme.font")
 	_eq(UiTheme.design("font_section") * UiTheme.scale(), UiTheme.size("font_section"), "design is size before scale")
 	for file in ["res://scripts/hud.gd", "res://scripts/level_up_popup.gd", "res://scripts/book_panel.gd"]:

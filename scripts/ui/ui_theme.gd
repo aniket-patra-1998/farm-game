@@ -7,6 +7,9 @@ extends RefCounted
 
 const MIN_FONT := 14   # no text smaller than this many units..
 const MIN_FONT_DP := 14.0   # ..nor, on a phone, than this many dp (Android's density-independent pixels)
+## Where the smallest text lifts a size, each step of the type scale above body stays this many units above the
+## one below, so a heading, title and display still read larger than body on a phone (all drew at the floor).
+const TYPE_FLOOR_STEP := 2
 const DATA := "res://data/ui_theme.json"
 
 const BOLD := preload("res://fonts/Poppins-BoldTab.ttf")   # not-ui (its digits one width: tools/make_tabular_font.py)
@@ -137,9 +140,14 @@ static func on_scale(design_px: float) -> float:
 	return best
 
 
-## `font`'s sum on its own: `design_px` at `ui_scale` and `share`, never under `least`.
+## `font`'s sum on its own: `design_px` at `ui_scale` and `share`, never under `least`, and a step of the type
+## scale above body never under the step below it lifted (TYPE_FLOOR_STEP), so the hierarchy survives the floor.
 static func font_for(design_px: float, ui_scale: float, share: float, least := MIN_FONT) -> int:
-	return maxi(int(round(design_px * ui_scale * share)), least)
+	var floor_px := least
+	for step: float in TYPE_SCALE:
+		if step > BODY and step <= design_px:
+			floor_px += TYPE_FLOOR_STEP
+	return maxi(int(round(design_px * ui_scale * share)), floor_px)
 
 
 ## A text size from the theme's sizes (`key`, already scaled), never under `min_font`: the one way the interface's
