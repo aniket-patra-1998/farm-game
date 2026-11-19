@@ -139,6 +139,7 @@ Animals, loose on the farm or inside their home.
 | `lost` | bool | false |  | A lost animal: only wanders onto the farm (FarmVille's lost animals) and is adopted for free; never in the Market. |
 | `young` | bool | false |  | A baby: drawn small and painted as a young animal. |
 | `limited` | bool | false |  | A limited animal (LimitedSystem, docs/LIMITED.md): a unique coat, sold in the Market for gems; a home's finds turn out to be one only where one already lives. Its baby is limited too. |
+| `touch` | string | "" |  | A limited coat's own touch (CoatTouch, docs/LIMITED.md): stars (they blink), rainbow (its colours turn), sunset (they sway), glint (one runs over it), embers (they flicker), shake (a long coat shakes out); its file carries what the touch needs (tools/animal_art limited.py TOUCH). |
 | `baby` | string → Animal |  |  | The baby this breed has when its home brings one (a Hereford Cow has Hereford Calves). Empty: the plain calf or foal. |
 | `grows_into` | string → Animal |  |  | Grows into this animal after its first collection (Baby Turkey into Turkey, Ugly Duckling into Swan). |
 

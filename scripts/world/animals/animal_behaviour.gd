@@ -36,6 +36,11 @@ const TURN_HOLD := 1.6           # this far off it stands and comes round first:
 const SHUFFLE := 0.45            # how much of a stride its legs take stepping round on the spot
 const SHUFFLE_FOR := 0.2         # seconds its legs stay ready after the last step of a turn
 const JUMP_TIME := 0.32          # seconds a tapped animal's start takes, up and down
+const SHOW_TIME := 0.9           # seconds a limited animal shows off for when tapped: its head tosses, its tail goes
+const TOSS := 0.9                # how far its head swings in that, each way (of a full look)
+const TOSS_EASE := 12.0          # and how quickly the head follows the toss (a look eases at 4)
+const SHAKE_TIME := 1.1          # seconds a long coat's shake takes
+const SHAKE_EVERY := Vector2(14.0, 30.0)   # seconds from one shake to the next
 const FROLIC_AGAIN := 0.45       # chance a frolic runs straight into another
 const POKE_LOOK := 1.6           # seconds a tapped animal looks round at you
 const HUNGRY_SHARE := 0.7        # of a hungry animal's choices that are to look up and about for feed
@@ -76,6 +81,8 @@ var drink_at := Vector2.INF      ## water near enough to drink from, from its ho
 var drinking := false            ## it has gone to the water and has its head down to it
 var stride_tiles := 0.0          ## the ground one cycle of its legs covers, in tiles (its body says: Animal3D)
 var going := Vector2.ZERO        ## the way it is walking, in px (a direction; zero while it stays where it is)
+var showy := false               ## it shows off when tapped (a limited animal: its body says, Animal3D)
+var shakes := false              ## it shakes its coat out now and then (a long coat: its body says)
 
 var _rng := RandomNumberGenerator.new()
 var _left := 0.0                 # seconds left in this state
@@ -93,6 +100,9 @@ var _off_course := 0.0           # radians its body still has to come round to f
 var _shuffle := 0.0              # seconds its legs stay stepping after a turn on the spot
 var _farmer_again := 0.0        # seconds before it may turn to watch the farmer again
 var _jump := 0.0                 # seconds left of the start it gives when tapped
+var _show := 0.0                 # seconds left of its showing off
+var _shake := 0.0                # seconds left of its coat's shake
+var _shake_in := SHAKE_EVERY.x   # seconds to the next one
 
 
 func _init(animal_rig: AnimalRig, seed_value: int, wander: Vector2) -> void:
@@ -156,6 +166,15 @@ func poke() -> void:
 	_jump = JUMP_TIME
 	if is_bird():
 		pose.wing = 1.0
+	if showy:
+		_show = SHOW_TIME
+		_swish_left = SWISH_TIME
+
+
+## Its coat's shake starts now (it has one now and then on its own: `shakes`).
+func shake() -> void:
+	_shake = SHAKE_TIME
+	_shake_in = _rng.randf_range(SHAKE_EVERY.x, SHAKE_EVERY.y)
 
 
 ## Seconds left in what it's doing (tests).
@@ -278,6 +297,19 @@ func _walk(delta: float) -> void:
 	pose.gait = fposmod(pose.gait + ground / stride, 1.0)
 
 
+## A long coat is shaken out now and then, standing and awake (`pose.shake` runs 0..1 through it).
+func _shake_coat(delta: float, walking: bool) -> void:
+	if _shake > 0.0:
+		_shake = maxf(_shake - delta, 0.0)
+		pose.shake = 1.0 - _shake / SHAKE_TIME if _shake > 0.0 else 0.0
+		return
+	if not shakes or walking or state == State.SLEEP:
+		return
+	_shake_in -= delta
+	if _shake_in <= 0.0:
+		shake()
+
+
 ## The ground one cycle of its legs covers, in tiles: what its body measured (`stride_tiles`), or, with no
 ## body, its rig's stride as drawn across the screen.
 func stride_on_ground() -> float:
@@ -343,7 +375,14 @@ func _ease_body(delta: float) -> void:
 	if is_bird():
 		rate *= BIRD_HEAD  # a bird's head moves quicker than a cow's, though not in a blur
 	pose.head = move_toward(pose.head, head_to, delta * rate)
-	pose.look = lerpf(pose.look, look_to, 1.0 - exp(-delta * 4.0))
+	var look_ease := 4.0
+	if _show > 0.0:
+		# Showing off: the head tosses one way and the other, over whatever it was looking at.
+		_show = maxf(_show - delta, 0.0)
+		look_to = sin((1.0 - _show / SHOW_TIME) * TAU) * TOSS
+		look_ease = TOSS_EASE
+	pose.look = lerpf(pose.look, look_to, 1.0 - exp(-delta * look_ease))
+	_shake_coat(delta, walking)
 	pose.jaw = sin(pose.time * 11.0) * pose.head if state == State.GRAZE and not is_bird() else 0.0
 	pose.wing = move_toward(pose.wing, 1.0 if state == State.FLAP else 0.0, delta * 9.0)
 	pose.display = move_toward(pose.display, 1.0 if state == State.DISPLAY else 0.0, delta * 2.5)

@@ -23,6 +23,10 @@ global uniform float snow_cover;
 global uniform float wind;
 
 #include "res://shaders/surface_patterns.gdshaderinc"
+// A limited animal's coat touch (CoatTouch): 0 for everything else, which then pays nothing for it.
+uniform int touch = 0;
+uniform vec3 touch_colour = vec3(0.0);   // the coat's own colour (what a star fades into), as the file's colours are
+#include "res://shaders/coat_touch.gdshaderinc"
 
 varying float height;
 varying vec3 local_pos;
@@ -31,6 +35,9 @@ varying vec3 local_normal;
 void vertex() {
 	local_pos = VERTEX;
 	local_normal = NORMAL;
+	if (touch != 0) {
+		COLOR.rgb = coat_touch(touch, touch_colour, COLOR.rgb, UV, UV2, TIME);
+	}
 	if (sway > 0.0) {
 		vec3 root = MODEL_MATRIX[3].xyz;
 		float beat = TIME * 1.4 + root.x * 1.7 + root.z * 1.1;

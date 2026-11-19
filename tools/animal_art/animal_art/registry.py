@@ -140,16 +140,20 @@ def _made(fn, row):
     return make
 
 
+LIMITED = {}   # a limited animal's name -> its row (the export reads its touch and its coat from it)
 for _rows, _fn, _baby, _word in ((limited.COWS, cow, _calf, "calf"), (limited.HORSES, horse, _foal, "foal"), (limited.PIGS, pig, _piglet, "piglet"),
                                  (limited.SHEEP, sheep, _lamb, "lamb"), (limited.GOATS, goat_t, _kid, "kid"),
                                  (limited.CAMELIDS, camelid, _cria, "cria"), (limited.BIRDS, bird_t, None, "")):
     for _n, _b in _rows.items():
         MADE[_n] = (_made(_fn, _b), _b["rel"])
+        LIMITED[_n] = _b
         if _baby:
             _y = _baby(_b)
             MADE[limited.baby_name(_n, _word)] = (_made(_fn, _y), _y["rel"])
-for _n, (_coat, _pale, _paint) in limited.RABBITS.items():
-    MADE[_n] = (_made((lambda row: rabbit(row["coat"], row["pale"])), dict(coat=_coat, pale=_pale, paint=_paint)), 0.29)
+            LIMITED[limited.baby_name(_n, _word)] = _y
+for _n, _b in limited.RABBITS.items():
+    MADE[_n] = (_made((lambda row: rabbit(row["coat"], row["pale"])), _b), 0.29)
+    LIMITED[_n] = _b
 
 
 # the game's own names for animals built under a longer name here

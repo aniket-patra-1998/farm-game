@@ -110,3 +110,19 @@ def repaint(shapes, b):
             at = c + np.array([r[0] * rad * math.cos(ang), r[1] * y, r[2] * rad * math.sin(ang)]) * 0.98
             shapes.append(E(at, np.array([0.24, 0.24, 0.24]) * min(r[0], r[1]), tuple(np.minimum(1, coat * (1.1 if i % 2 else 0.86))), k=0.05))
     return shapes
+
+
+def coat_colours(b):
+    """Every colour the row's coat takes once painted (its plain colour and each band of a blend): what tells the
+    coat's points from the rest of the animal (the export marks them for the coat's touch)."""
+    coat = np.array(hx(b["coat"])); p = b.get("paint") or {}; kind = p.get("kind"); out = [coat]
+    if kind in ("stars", "dots") and p.get("c3"):
+        c3 = np.array(hx(p["c3"])); out += [coat + (c3 - coat) * k / BANDS for k in range(BANDS + 1)]
+    if kind == "dip":
+        c2 = np.array(hx(p["c2"])); out += [coat + (c2 - coat) * k / BANDS for k in range(BANDS + 1)]
+    if kind == "rainbow":
+        hues = np.array([hx(h) for h in p["hues"]]); n = len(hues) - 1; steps = n * p.get("steps", 2)
+        for k in range(steps + 1):
+            t = min(k / steps * n, n - 1e-6); i = int(t); f = t - i
+            out.append(hues[i] * (1 - f) + hues[min(i + 1, n)] * f)
+    return np.array(out)

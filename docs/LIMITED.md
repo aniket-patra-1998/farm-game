@@ -32,13 +32,33 @@ each from one of its family's breeds, with patterns painted by `paint.py` (strip
 a run of colours, a dip, a belt, a half). A coat that turns colour does it in flat bands, so a file stays
 about a megabyte.
 
+## Their own touches
+Each limited animal shows off when tapped: its usual start, then a toss of the head with the tail going, and
+sparkles in its own colour (`AnimalBehaviour.showy`, `FarmGrid._poke`). Some coats also have a touch of
+their own, named in the catalog (`touch`) and in the art tool (`limited.py` `TOUCH`):
+
+| Touch | What happens | Who |
+|---|---|---|
+| stars | only the stars blink, each at its own pace | the Galaxy coats, the Midnight Turkey |
+| rainbow | the colours turn round the colour wheel | the Rainbow coats |
+| sunset | the colours sway a little, to and fro | the Sunset Goat and Rabbit |
+| glint | a glint runs from nose to tail every few seconds | the Golden coats, the Royal Turkey, the Rubber Duck |
+| embers | warm light climbs the coat | the Flame Chicken, the Autumn Turkey |
+| shake | the coat shakes out now and then, the head still, and lets go a little fluff | the long and woolly coats |
+
+How: the colour touches are worked out per point in the vertex stage of the shared material
+(`shaders/coat_touch.gdshaderinc`; a material whose `touch` is 0 pays nothing), from what the file says of each
+point (its two UV sets: `export.py` `_touch_points`). `CoatTouch.dress` turns a touch on: one material for every
+animal of that touch and colour. A shake is two moves in the file (`shake_a`, `shake_b`) blended in turn
+(`CoatTouch.shake_weights`); when it happens is the animal's mind's (`AnimalBehaviour.shakes`, every 14 to 30
+seconds it stands awake). To give a coat another touch: change its row in `TOUCH`, export it, and set `touch`
+in the catalog. Animals in a home shake and glint too; sparkles are for animals standing on the farm.
+
 ## Not in the first release
 `data/v1.json` has `"limited": false`: no find is rare and none is limited, and the animals are not on its
 list, until the owner turns it on.
 
 ## Open
-- The animals' own touches (stars that blink, colours that travel, a glint, a coat shake, the show-off) are
-  agreed as concept clips and not built.
 - Downloading a limited animal's file when it is first needed (the owner's plan for the app's size) is not
   built: today every file ships in the app (about 80 MB for these).
 - Limited dogs (five were drawn) wait for dogs to be animals you can buy and house.

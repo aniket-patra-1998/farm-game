@@ -86,13 +86,13 @@ GEESE = {
     "tuxedo goose": dict(_BIRDS["goose"], coat="2b2624", wing="2b2624", paint=dict(kind="band", c2="f6f2ea")),
 }
 BIRDS = {**CHICKENS, **DUCKS, **TURKEYS, **GEESE}
-# a rabbit has no table: (coat, pale, paint)
+# a rabbit has no table: its coat, its pale parts, and what is painted on it
 RABBITS = {
-    "cocoa rabbit": ("6a4a32", "e0c8a8", None),
-    "dutch rabbit": ("2b2624", "f6f2ea", dict(kind="half", c2="f6f2ea")),
-    "galaxy rabbit": ("2a2a6e", "c9b8e8", dict(STARS, seed=5, n=22)),
-    "strawberry rabbit": ("f9c4d2", "fbe3ea", dict(kind="dots", c2="e8456b", seed=2, n=20)),
-    "sunset rabbit": ("f79a5a", "fbe6c8", dict(kind="rainbow", hues=SUNSET)),
+    "cocoa rabbit": dict(coat="6a4a32", pale="e0c8a8"),
+    "dutch rabbit": dict(coat="2b2624", pale="f6f2ea", paint=dict(kind="half", c2="f6f2ea")),
+    "galaxy rabbit": dict(coat="2a2a6e", pale="c9b8e8", paint=dict(STARS, seed=5, n=22)),
+    "strawberry rabbit": dict(coat="f9c4d2", pale="fbe3ea", paint=dict(kind="dots", c2="e8456b", seed=2, n=20)),
+    "sunset rabbit": dict(coat="f79a5a", pale="fbe6c8", paint=dict(kind="rainbow", hues=SUNSET)),
 }
 
 
@@ -107,3 +107,19 @@ ROWS = {"cow": COWS, "horse": HORSES, "pig": PIGS, "sheep": SHEEP, "goat": GOATS
         "turkey": TURKEYS, "goose": GEESE, "rabbit": RABBITS}
 # every limited animal by the game's family, adults then babies (the registry adds these to its GAME lists)
 GAME = {k: list(rows) + [baby_name(n, BABY_WORDS[k]) for n in rows if k in IN_GAME_BABIES] for k, rows in ROWS.items()}
+
+# Each coat's own touch in the game (docs/LIMITED.md), told to the game by the points of its file (export.py):
+# stars blink, a rainbow's colours turn, a sunset's sway, a glint runs over gold, embers flicker, a long coat shakes.
+TOUCH = {
+    "stars": ["galaxy cow", "galaxy horse", "galaxy alpaca", "galaxy chicken", "galaxy duck", "galaxy rabbit", "midnight turkey"],
+    "rainbow": ["rainbow cow", "rainbow pig", "rainbow sheep", "rainbow llama", "rainbow duck", "rainbow goose"],
+    "sunset": ["sunset goat", "sunset rabbit"],
+    "glint": ["golden pig", "golden ram", "golden goose", "royal turkey", "rubber duck"],
+    "shake": ["highland cow", "feather horse", "woolly pig", "cloud sheep", "cotton candy sheep", "angora goat", "cotton candy alpaca", "mint alpaca", "silkie chicken"],
+    "embers": ["flame chicken", "autumn turkey"],
+}
+for _touch, _names in TOUCH.items():
+    for _rows in ROWS.values():
+        for _n in _names:
+            if _n in _rows:
+                _rows[_n]["touch"] = _touch

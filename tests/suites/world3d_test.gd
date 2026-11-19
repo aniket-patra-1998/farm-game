@@ -2528,3 +2528,88 @@ func test_581_the_crop_builders_compile_when_a_look_is_built() -> void:
 	var form := str(CropFormSpec.forms()[0])
 	_check(CropModels.mesh(form, "ripe", false).get_surface_count() > 0, "a crop is still built through the path")
 	_check(CropModels.mesh(form, CropModels.HARVEST, false).get_surface_count() > 0, "and its picture")
+
+
+## A limited animal's own touch (CoatTouch): its catalog names one the game has, its file carries what the touch
+## needs, its coat is drawn with the touch on, a long coat shakes out now and then and lets go a little fluff, and
+## every limited animal shows off when tapped.
+func test_582_limited_animals_have_their_own_touch() -> void:
+	var g := _farm(true)
+	var touched := 0
+	for id: String in g.item_order:
+		var d := g.catalog.get_def(id) as AnimalDef
+		if d == null or d.touch() == "":
+			continue
+		touched += 1
+		_check(d.touch() == CoatTouch.SHAKE or CoatTouch.MODES.has(d.touch()), "%s's touch is one the game has" % id)
+		var model := AssetRegistry.instance(id)
+		var mi := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+		var arrays := mi.mesh.surface_get_arrays(0)
+		var along: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+		_check(arrays[Mesh.ARRAY_TEX_UV2] != null, "%s's file says of each point what its touch needs" % id)
+		if d.touch() == CoatTouch.SHAKE:
+			var moves: Array[String] = []
+			for k in mi.mesh.get_blend_shape_count():
+				moves.append(String(mi.mesh.get_blend_shape_name(k)))
+			_check(moves.has(CoatTouch.SHAKE_A) and moves.has(CoatTouch.SHAKE_B), "%s's file has its shake" % id)
+		else:
+			var marked := 0
+			for uv in along:
+				marked += 1 if uv.y > 0.5 else 0
+			_check(marked > 20 and marked < along.size(), "%s: its touch has its points (%d of %d)" % [id, marked, along.size()])
+		model.free()
+	_check(touched >= 40, "the touched coats are in the catalog (%d)" % touched)
+	for name: String in AnimalDef.TOUCHES:
+		_check(name == CoatTouch.SHAKE or CoatTouch.MODES.has(name), "the game draws the %s touch" % name)
+	# A coat is drawn with its touch on: one material for every animal of that touch and colour, none for the rest.
+	var one := Animal3D.create(g.item_data("galaxy_cow"), null, Vector3.ZERO)
+	var two := Animal3D.create(g.item_data("galaxy_cow"), null, Vector3.ZERO)
+	var plain := Animal3D.create(g.item_data("cow"), null, Vector3.ZERO)
+	var worn := (one.get("_file_mesh") as MeshInstance3D).get_surface_override_material(0) as ShaderMaterial
+	_check(worn != null and int(worn.get_shader_parameter(&"touch")) == int(CoatTouch.MODES["stars"]),
+		"a starry coat is drawn with its stars' touch on")
+	_check(worn == (two.get("_file_mesh") as MeshInstance3D).get_surface_override_material(0),
+		"one material for all of it")
+	_check((plain.get("_file_mesh") as MeshInstance3D).get_surface_override_material(0) == null, "a plain coat has none")
+	for a: Animal3D in [one, two, plain]:
+		a.free()
+	# A shake: nothing at its start and end, a full swing in between.
+	_check(CoatTouch.shake_weights(0.0).length() < 0.001 and CoatTouch.shake_weights(1.0).length() < 0.001,
+		"a shake starts and ends at rest")
+	_check(is_equal_approx(CoatTouch.shake_weights(0.5).length(), 1.0), "and swings fully half way through")
+	# A long coat: its mind shakes it out, standing, and its body lets go a little fluff.
+	var mind := AnimalBehaviour.new(AnimalRig.of(g.item_data("highland_cow")), 3, Vector2(60, 30))
+	var body := Animal3D.create(g.item_data("highland_cow"), mind, Vector3.ZERO)
+	add_child(body)
+	_check(mind.shakes and mind.showy, "a Highland Cow shakes its coat and shows off")
+	mind.shake()
+	mind.update(1.0 / 60.0)
+	body.update(1.0 / 60.0)
+	_check(mind.pose.shake > 0.0, "its shake begins")
+	var fluff := body.get("_fluff") as DustPuffs
+	_eq(fluff.live() if fluff != null else 0, CoatTouch.FLUFF, "and lets go a little fluff")
+	for i in ceili(AnimalBehaviour.SHAKE_TIME * 60.0) + 2:
+		mind.update(1.0 / 60.0)
+		body.update(1.0 / 60.0)
+	_check(is_zero_approx(mind.pose.shake), "and ends")
+	var shook := false
+	for i in 60 * 60:   # (a minute: one comes every 14 to 30 seconds it stands)
+		mind.update(1.0 / 60.0)
+		shook = shook or mind.pose.shake > 0.0
+	_check(shook, "it shakes on its own now and then")
+	body.free()
+	# Showing off: a limited animal tosses its head both ways when tapped; a plain one only looks round.
+	var lows: Array[float] = []
+	for id: String in ["cow", "tiger_cow"]:
+		var m := AnimalBehaviour.new(AnimalRig.of(g.item_data(id)), 5, Vector2(60, 30))
+		var b := Animal3D.create(g.item_data(id), m, Vector3.ZERO)
+		m.poke()
+		var low := 0.0
+		for i in 60:
+			m.update(1.0 / 60.0)
+			low = minf(low, m.pose.look)
+		lows.append(low)
+		b.free()
+	_check(lows[0] > -0.05 and lows[1] < -0.2, "a limited animal tosses its head (%.2f against %.2f)" % [lows[1], lows[0]])
+	_done(g)
+

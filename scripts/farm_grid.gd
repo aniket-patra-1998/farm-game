@@ -920,6 +920,11 @@ func _poke(uid: int) -> void:
 	if kind == "animal":
 		var rig := AnimalRig.of(Game.item_data(obj["id"]))
 		Sound.voice(rig.family, rig.young, str(obj["id"]))
+		if Game.limited.is_limited(str(obj["id"])):
+			# A limited animal shows off when tapped (AnimalBehaviour.showy): sparkles in its own colour.
+			var fp := Game.footprint(obj["id"])
+			var g := corners_of(int(obj["row"]), int(obj["col"]), fp.x, fp.y)
+			_sparkle((g[0] + g[2]) / 2.0, Color(str(Game.item_data(obj["id"]).get("accent", "#ffffff"))))
 	Feedback.moment("touch")
 
 

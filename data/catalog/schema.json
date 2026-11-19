@@ -286,6 +286,11 @@
           "default": false,
           "doc": "A limited animal (LimitedSystem, docs/LIMITED.md): a unique coat, sold in the Market for gems; a home's finds turn out to be one only where one already lives. Its baby is limited too."
         },
+        "touch": {
+          "type": "string",
+          "default": "",
+          "doc": "A limited coat's own touch (CoatTouch, docs/LIMITED.md): stars (they blink), rainbow (its colours turn), sunset (they sway), glint (one runs over it), embers (they flicker), shake (a long coat shakes out); its file carries what the touch needs (tools/animal_art limited.py TOUCH)."
+        },
         "baby": {
           "type": "string",
           "ref": "Animal",

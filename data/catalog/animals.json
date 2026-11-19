@@ -109,7 +109,8 @@
           "color": "#fbfaf4",
           "accent": "#ece8dc",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "peacock_chicken",
@@ -137,7 +138,8 @@
           "color": "#e0452a",
           "accent": "#f8c030",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "embers"
         },
         {
           "id": "bubblegum_chicken",
@@ -165,7 +167,8 @@
           "color": "#2a2a6e",
           "accent": "#ffe9a8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "stars"
         }
       ]
     },
@@ -235,7 +238,8 @@
           "color": "#f6f2ea",
           "accent": "#ece8dc",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "glint"
         },
         {
           "id": "autumn_turkey",
@@ -248,7 +252,8 @@
           "color": "#c8642a",
           "accent": "#8a2a1e",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "embers"
         },
         {
           "id": "bubblegum_turkey",
@@ -274,7 +279,8 @@
           "color": "#2a2a6e",
           "accent": "#ffe9a8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "stars"
         }
       ]
     },
@@ -344,7 +350,8 @@
           "color": "#f8d030",
           "accent": "#f0c020",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "glint"
         },
         {
           "id": "mandarin_duck",
@@ -372,7 +379,8 @@
           "color": "#f7a8b8",
           "accent": "#9ac8f0",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "rainbow"
         },
         {
           "id": "mint_duck",
@@ -400,7 +408,8 @@
           "color": "#2a2a6e",
           "accent": "#ffe9a8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "stars"
         }
       ]
     },
@@ -430,7 +439,8 @@
           "color": "#f2c230",
           "accent": "#e0a81c",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "glint"
         },
         {
           "id": "storm_goose",
@@ -456,7 +466,8 @@
           "color": "#f7a8b8",
           "accent": "#9ac8f0",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "rainbow"
         },
         {
           "id": "pink_goose",
@@ -798,7 +809,8 @@
           "accent": "#8a4a1c",
           "limited": true,
           "baby": "highland_calf",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "highland_calf",
@@ -811,7 +823,8 @@
           "color": "#c8742e",
           "accent": "#8a4a1c",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "shake"
         },
         {
           "id": "galaxy_cow",
@@ -826,7 +839,8 @@
           "accent": "#ffe9a8",
           "limited": true,
           "baby": "galaxy_calf",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "stars"
         },
         {
           "id": "galaxy_calf",
@@ -839,7 +853,8 @@
           "color": "#2a2a6e",
           "accent": "#ffe9a8",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "stars"
         },
         {
           "id": "tiger_cow",
@@ -910,7 +925,8 @@
           "accent": "#fff6e0",
           "limited": true,
           "baby": "rainbow_calf",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "rainbow"
         },
         {
           "id": "rainbow_calf",
@@ -923,7 +939,8 @@
           "color": "#f7a8b8",
           "accent": "#fff6e0",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "rainbow"
         }
       ]
     },
@@ -1022,7 +1039,8 @@
           "accent": "#9ad0f5",
           "limited": true,
           "baby": "cloud_lamb",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "cloud_lamb",
@@ -1035,7 +1053,8 @@
           "color": "#f4f8ff",
           "accent": "#9ad0f5",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "shake"
         },
         {
           "id": "shorn_sheep",
@@ -1078,7 +1097,8 @@
           "accent": "#9ad4f5",
           "limited": true,
           "baby": "cotton_candy_lamb",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "cotton_candy_lamb",
@@ -1091,7 +1111,8 @@
           "color": "#f9b8d4",
           "accent": "#9ad4f5",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "shake"
         },
         {
           "id": "rainbow_sheep",
@@ -1106,7 +1127,8 @@
           "accent": "#f7a8b8",
           "limited": true,
           "baby": "rainbow_lamb",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "rainbow"
         },
         {
           "id": "rainbow_lamb",
@@ -1119,7 +1141,8 @@
           "color": "#f7a8b8",
           "accent": "#f7a8b8",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "rainbow"
         },
         {
           "id": "golden_ram",
@@ -1134,7 +1157,8 @@
           "accent": "#e0a01c",
           "limited": true,
           "baby": "golden_lamb",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "glint"
         },
         {
           "id": "golden_lamb",
@@ -1147,7 +1171,8 @@
           "color": "#f2c230",
           "accent": "#e0a01c",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "glint"
         }
       ]
     },
@@ -1189,7 +1214,8 @@
           "color": "#f9b8d4",
           "accent": "#f9b8d4",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "mint_alpaca",
@@ -1201,7 +1227,8 @@
           "color": "#a8e6cf",
           "accent": "#f6f2ea",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "galaxy_alpaca",
@@ -1213,7 +1240,8 @@
           "color": "#2a2a6e",
           "accent": "#ffe9a8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "stars"
         },
         {
           "id": "rainbow_llama",
@@ -1226,7 +1254,8 @@
           "color": "#f7a8b8",
           "accent": "#f7a8b8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "rainbow"
         },
         {
           "id": "cocoa_llama",
@@ -1406,7 +1435,8 @@
           "accent": "#d9c4a0",
           "limited": true,
           "baby": "woolly_piglet",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "woolly_piglet",
@@ -1419,7 +1449,8 @@
           "color": "#efe2c8",
           "accent": "#d9c4a0",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "shake"
         },
         {
           "id": "rainbow_pig",
@@ -1433,7 +1464,8 @@
           "accent": "#e79aa0",
           "limited": true,
           "baby": "rainbow_piglet",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "rainbow"
         },
         {
           "id": "rainbow_piglet",
@@ -1446,7 +1478,8 @@
           "color": "#f7a8b8",
           "accent": "#e79aa0",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "rainbow"
         },
         {
           "id": "golden_pig",
@@ -1460,7 +1493,8 @@
           "accent": "#e08a1c",
           "limited": true,
           "baby": "golden_piglet",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "glint"
         },
         {
           "id": "golden_piglet",
@@ -1473,7 +1507,8 @@
           "color": "#f2c230",
           "accent": "#e08a1c",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "glint"
         }
       ]
     },
@@ -1532,7 +1567,8 @@
           "color": "#f8f4ea",
           "accent": "#e6dcc8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "lavender_goat",
@@ -1574,7 +1610,8 @@
           "color": "#f79a5a",
           "accent": "#8a3a5a",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "sunset"
         },
         {
           "id": "tuxedo_goat",
@@ -1781,7 +1818,8 @@
           "accent": "#ffe9a8",
           "limited": true,
           "baby": "galaxy_foal",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "stars"
         },
         {
           "id": "galaxy_foal",
@@ -1794,7 +1832,8 @@
           "color": "#2a2a6e",
           "accent": "#ffe9a8",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "stars"
         },
         {
           "id": "dapple_horse",
@@ -1839,7 +1878,8 @@
           "accent": "#f6f2ea",
           "limited": true,
           "baby": "feather_foal",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "shake"
         },
         {
           "id": "feather_foal",
@@ -1852,7 +1892,8 @@
           "color": "#2b2624",
           "accent": "#f6f2ea",
           "young": true,
-          "limited": true
+          "limited": true,
+          "touch": "shake"
         }
       ]
     },
@@ -1932,7 +1973,8 @@
           "color": "#2a2a6e",
           "accent": "#ffe9a8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "stars"
         },
         {
           "id": "strawberry_rabbit",
@@ -1960,7 +2002,8 @@
           "color": "#f79a5a",
           "accent": "#fbe6c8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "touch": "sunset"
         }
       ]
     },

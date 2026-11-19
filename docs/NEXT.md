@@ -1271,9 +1271,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   21 babies as files, in the catalog for gems, a Limited section in the Market, Rare Mystery Baby and Egg, and
   the owner's chances (0.5% and 5%) for a home's finds to be a limited animal living there.
 - Off in the first release (`data/v1.json` `"limited": false`); the files still ship in the app (about 80 MB).
-- Next, in the owner's order: the animals' own touches (concept clips agreed 19 Nov: stars blink, colours
-  travel, a glint, a coat shake with falling hairs and a still face, embers flicker, the show-off);
-  downloading a limited animal's file when first needed; baby forms for birds and rabbits; limited dogs.
+- The touches are built (docs/LIMITED.md "Their own touches"; world3d_test 582): seen in the game as a clip at
+  midday, not at night or on a phone.
+- Next: downloading a limited animal's file when first needed; baby forms for birds and rabbits; limited dogs.
 - The showcase holds one limited animal a home and none loose: the heaviest-farm budget has 2,000 triangles
   of room (world3d_test 338).
 
