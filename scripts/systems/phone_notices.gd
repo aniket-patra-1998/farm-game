@@ -10,6 +10,9 @@ const PLUGIN := "FarmNotices"           # not-ui (the Android plugin's singleton
 const SETTINGS := "notify"              # not-ui (the player's settings section)
 const ON_KEY := "on"                    # not-ui
 const HOUR := 3600
+const CANCEL_ALL := &"cancelAll"      # not-ui (the plugin's methods)
+const SCHEDULE := &"schedule"        # not-ui
+const ASK := &"askPermission"      # not-ui
 
 
 ## Whether the player wants them (Settings; on unless they turned it off).
@@ -90,7 +93,7 @@ static func schedule(g: GameState) -> void:
 	if not Engine.has_singleton(PLUGIN):
 		return
 	var phone := Engine.get_singleton(PLUGIN)
-	phone.call("cancelAll")
+	phone.call(CANCEL_ALL)
 	if not wanted() or g.save_path != GameState.SAVE_PATH:   # (never from the showcase)
 		return
 	var title: String = g.player.farm_name
@@ -98,17 +101,17 @@ static func schedule(g: GameState) -> void:
 		title = str(TranslationServer.translate("NOTIFY_TITLE"))
 	var k := 0
 	for r: Dictionary in plan(g):
-		phone.call("schedule", k, title, str(r["text"]), maxi(int(r["at"]) - g.now(), 1))
+		phone.call(SCHEDULE, k, title, str(r["text"]), maxi(int(r["at"]) - g.now(), 1))
 		k += 1
 
 
 ## The game is back: what was planned is no longer news.
 static func cancel_all() -> void:
 	if Engine.has_singleton(PLUGIN):
-		Engine.get_singleton(PLUGIN).call("cancelAll")
+		Engine.get_singleton(PLUGIN).call(CANCEL_ALL)
 
 
 ## Android 13 and later ask the player once whether the game may notify (asked after the first session's start).
 static func ask_permission() -> void:
 	if Engine.has_singleton(PLUGIN) and wanted():
-		Engine.get_singleton(PLUGIN).call("askPermission")
+		Engine.get_singleton(PLUGIN).call(ASK)
