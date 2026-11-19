@@ -1,5 +1,5 @@
 {
- "_doc": "The weather's own numbers (docs/WEATHER.md; our own touch). fog: depth fog that begins past the farm (WeatherFog in Farm3D): it starts `begin` farm half-diagonals beyond the farm's middle (1.0: its far corner, as the camera sees it), thickens over `span` farm sizes, and is at most `most` (0..1) times the state's fog; `height` and `height_density` lay a thin ground mist. storm (WeatherEvents): strikes a minute at full lightning [least, most], the share that are near, how far (tiles past the farm's edge) near and far ones strike, thunder's delay in seconds [near, far], the flash's strength and the bolt's life in seconds.",
+ "_doc": "The weather's own numbers (docs/WEATHER.md; our own touch). fog: depth fog that begins past the farm (WeatherFog in Farm3D): it starts `begin` farm half-diagonals beyond the farm's middle (1.0: its far corner, as the camera sees it), thickens over `span` farm sizes, and is at most `most` (0..1) times the state's fog; `height` and `height_density` lay a thin ground mist. storm (WeatherEvents): strikes a minute at full lightning [least, most], the share that are near, how far (tiles past the farm's edge) near and far ones strike, thunder's delay in seconds [near, far], the flash's strength and the bolt's life in seconds. rainbow (WeatherLayer, shaders/rainbow.gdshader): after rain, while the farm is still wet (full from `full_wet`, fading as it dries), the rain stopped (under `rain_below`), cloud under `max_cover` (fading in over `cover_fade`) and the sun up (dark under `max_dark`), a soft arc of added light: at most `strength`, its colours washed to `saturation` (the owner: light and gentle), its centre `centre_x` across and `centre_y` screen heights down (below the screen), `radius` and `width` in screen heights; it comes and goes at `ease` a second.",
  "fog": {"begin": 1.0, "span": 1.6, "most": 0.85, "height": 0.6, "height_density": 0.12},
  "storm": {
   "strikes_per_minute": [3.0, 7.0],
@@ -11,5 +11,7 @@
   "bolt_seconds": 0.32,
   "bolt_height": 26.0
  },
+ "rainbow": {"strength": 0.2, "saturation": 0.7, "full_wet": 0.35, "rain_below": 0.03, "max_cover": 0.6, "cover_fade": 0.2,
+  "max_dark": 0.35, "centre_x": 0.62, "centre_y": 1.2, "radius": 0.9, "width": 0.07, "ease": 0.25},
  "rain_sound": {"from": 0.05, "least_db": -12.0}
 }

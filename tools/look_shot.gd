@@ -6,6 +6,8 @@ extends Node
 ## by --out=<dir> (default ci_shots/look).
 ## --hour=<h> shows another local hour than noon (6 dawn, 18.5 dusk, 22 night).
 ## --weather=<state> holds the weather (clear, rain, storm...) so two hours differ only by the day's light.
+## --after-rain shows the farm just after rain (wet, the rain stopped: its rainbow if the sky allows);
+## --rainbow=<json> overrides data/weather.json "rainbow" for a variant, e.g. --rainbow={"strength":0.24}.
 ## --views=<a,b,...> takes only the named pictures (views and panels alike), e.g. --views=all,trees_animals.
 ## Needs a renderer:
 ##   xvfb-run godot --rendering-method gl_compatibility --path . res://tools/look_shot.tscn -- --out=/tmp/before
@@ -22,6 +24,8 @@ func _ready() -> void:
 	var hour := NOON
 	var weather := ""
 	var only := PackedStringArray()   # the pictures to take (empty: every one)
+	var after_rain := false
+	var rainbow := {}
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.substr(6)
@@ -31,6 +35,10 @@ func _ready() -> void:
 			weather = a.substr(10)
 		elif a.begins_with("--views="):   # only these pictures, e.g. all,buildings,seeds_panel
 			only = a.substr(8).split(",", false)
+		elif a == "--after-rain":   # the farm just after rain: still wet, the rain stopped
+			after_rain = true
+		elif a.begins_with("--rainbow="):   # a variant of the rainbow's look (data/weather.json "rainbow")
+			rainbow = JSON.parse_string(a.substr(10))
 		elif a.begins_with("--quality="):   # low, mid or high (default: this computer's choice)
 			level = a.substr(10)
 	var was_level := Quality.level()
@@ -49,6 +57,11 @@ func _ready() -> void:
 	Game.debug_time_offset = posmod(int(hour * 3600) - local_now, 86400)
 	Game.weather_override = weather
 	Game.goals.showcase()   # (the new hour may be a new day: today's jobs again, one done)
+	var fx := main.get("weather_fx") as WeatherLayer
+	fx.rainbow_look = rainbow
+	if after_rain:
+		fx.wet = 1.0
+		fx.rainbow = 1.0
 	await Objects3D.until_settled(get_tree())
 	for k in 12:
 		await RenderingServer.frame_post_draw

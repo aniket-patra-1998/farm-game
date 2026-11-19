@@ -1,14 +1,27 @@
 class_name WeatherLayer
 extends CanvasLayer
 ## Weather drawn over the farm in screen space: rain streaks and splashes, snowflakes and
-## lightning flashes. Main sets `look` (from Weather.current) every frame; a strike (WeatherEvents.struck)
-## flashes the screen (`flash_now`).
+## lightning flashes. Main sets `look` (from Weather.current) and `dark` every frame; a strike (WeatherEvents.struck)
+## flashes the screen (`flash_now`). After rain, while the farm is still wet and the sun is out, a soft rainbow
+## (shaders/rainbow.gdshader, data/weather.json "rainbow"; Quality `rainbow`, off on low) stands over the farm:
+## like a real one it stays where it is on the screen as the view moves, and it fades as the farm dries.
 
 const MAX_DROPS := 320
 const MAX_FLAKES := 180
 const FLASH_FALL := 2.8   # a flash fades this fast (a second)
+const RAINBOW_SHADER := preload("res://shaders/rainbow.gdshader")
+const RAINBOW_SHOWN := 0.004   # below this the rainbow's rect is hidden (no cost at all)
 
 var look := {}
+var dark := 0.0          # how dark the hour is, 0 day .. 1 night (main, from DayCycle)
+var wet := 0.0           # how wet the farm still is from rain, eased as SurfaceWeather does
+var rainbow := 0.0       # the rainbow shown now, eased toward rainbow_strength
+var rainbow_look := {}:  # tools only: overrides of data/weather.json "rainbow" (variants for a sheet)
+	set(v):
+		rainbow_look = v
+		_rule = {}
+var _rainbow: ColorRect
+var _rule := {}
 var _canvas: Node2D
 var _drops: Array = []   # Vector3(x 0..1, y 0..1, speed)
 var _flakes: Array = []  # Vector4(x, y, speed, phase)
@@ -22,6 +35,14 @@ func _ready() -> void:
 	_canvas = Node2D.new()
 	_canvas.draw.connect(_draw_weather)
 	add_child(_canvas)
+	_rainbow = ColorRect.new()
+	_rainbow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_rainbow.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_rainbow.material = ShaderMaterial.new()
+	(_rainbow.material as ShaderMaterial).shader = RAINBOW_SHADER
+	_rainbow.visible = false
+	add_child(_rainbow)
+	move_child(_rainbow, 0)   # (under the rain, which falls in front of it)
 	_rng.seed = 99
 	for k in MAX_DROPS:
 		_drops.append(Vector3(_rng.randf(), _rng.randf(), _rng.randf_range(0.9, 1.4)))
@@ -60,10 +81,54 @@ func _process(delta: float) -> void:
 			kept.append(s)
 	_splashes = kept.slice(-120)
 	_flash = maxf(0.0, _flash - delta * FLASH_FALL)
+	_advance_rainbow(rain, delta)
 	if rain > 0.0 or snow > 0.0 or _flash > 0.0 or not _splashes.is_empty():
 		_canvas.queue_redraw()
 	elif _canvas.visible:
 		_canvas.queue_redraw()
+
+
+## The rainbow's look: data/weather.json "rainbow" with this layer's overrides on top.
+func rainbow_rule() -> Dictionary:
+	if _rule.is_empty():
+		_rule = WeatherEvents.data("rainbow").duplicate()
+		_rule.merge(rainbow_look, true)
+	return _rule
+
+
+func _advance_rainbow(rain: float, delta: float) -> void:
+	wet = SurfaceWeather.ease_toward(wet, minf(rain / SurfaceWeather.RAIN_FOR_FULL, 1.0), delta,
+		SurfaceWeather.WET_RISE, SurfaceWeather.WET_FALL)
+	var r := rainbow_rule()
+	var target := 0.0
+	if bool(Quality.value("rainbow")):
+		target = rainbow_strength(wet, rain, float(look.get("cover", 0.0)), dark, r)
+	rainbow = SurfaceWeather.ease_toward(rainbow, target, delta, float(r["ease"]), float(r["ease"]))
+	_rainbow.visible = rainbow > RAINBOW_SHOWN
+	if not _rainbow.visible:
+		return
+	var m := _rainbow.material as ShaderMaterial
+	var size := get_viewport().get_visible_rect().size
+	m.set_shader_parameter("strength", rainbow * float(r["strength"]))
+	m.set_shader_parameter("saturation", float(r["saturation"]))
+	m.set_shader_parameter("aspect", size.x / maxf(size.y, 1.0))
+	m.set_shader_parameter("centre_x", float(r["centre_x"]))
+	m.set_shader_parameter("centre_y", float(r["centre_y"]))
+	m.set_shader_parameter("radius", float(r["radius"]))
+	m.set_shader_parameter("width", float(r["width"]))
+
+
+## How much of a rainbow shows (0..1) on a farm `wet` (0..1) from rain that has stopped (`rain` under the rule's
+## `rain_below`), under `cover` cloud (none past `max_cover`, fading in over the last `cover_fade` of it), at an
+## hour `dark` (none past `max_dark`: the sun must be up): full while the farm is at least `full_wet` wet, then
+## fading as it dries.
+static func rainbow_strength(wet_now: float, rain: float, cover: float, dark_now: float, rule: Dictionary) -> float:
+	if rain >= float(rule["rain_below"]) or cover >= float(rule["max_cover"]) or dark_now >= float(rule["max_dark"]):
+		return 0.0
+	var by_wet := clampf(wet_now / float(rule["full_wet"]), 0.0, 1.0)
+	var by_cover := clampf((float(rule["max_cover"]) - cover) / float(rule["cover_fade"]), 0.0, 1.0)
+	var by_sun := clampf((float(rule["max_dark"]) - dark_now) / float(rule["max_dark"]), 0.0, 1.0)
+	return by_wet * by_cover * sqrt(by_sun)
 
 
 func _draw_weather() -> void:

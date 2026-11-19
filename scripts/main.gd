@@ -330,6 +330,7 @@ func _process(_delta: float) -> void:
 		light.color = l
 	sky.weather = w
 	weather_fx.look = w
+	weather_fx.dark = dark
 	weather_events.look = w
 	# Windows light up at night and in a dark storm.
 	night.dark = maxf(dark, clampf(float(w["dim"]) * 1.6 - 0.2, 0.0, 0.7))

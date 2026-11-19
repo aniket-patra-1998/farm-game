@@ -58,3 +58,38 @@ func test_390_a_strike_draws_a_bolt_past_the_farm_and_the_fog_begins_past_it() -
 	_check(env.fog_depth_begin >= far_corner - 0.5, "it begins past the farm's far corner: the farm stays clear")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_591_a_soft_rainbow_shows_after_rain_while_the_farm_is_wet_and_the_sun_out() -> void:
+	var r := WeatherEvents.data("rainbow")
+	var clear: Dictionary = Weather.LOOKS["clear"]
+	var cover := float(clear["cover"])
+	_check(WeatherLayer.rainbow_strength(1.0, 0.0, cover, 0.0, r) == 1.0, "just after rain, sun out: a full rainbow")
+	_check(WeatherLayer.rainbow_strength(0.0, 0.0, cover, 0.0, r) == 0.0, "a dry farm: none")
+	_check(WeatherLayer.rainbow_strength(1.0, float(Weather.LOOKS["rain"]["rain"]), cover, 0.0, r) == 0.0,
+		"while it still rains: none")
+	_check(WeatherLayer.rainbow_strength(1.0, 0.0, float(Weather.LOOKS["cloudy"]["cover"]), 0.0, r) == 0.0,
+		"under a cloudy sky: none")
+	_check(WeatherLayer.rainbow_strength(1.0, 0.0, cover, 1.0, r) == 0.0, "at night: none")
+	var half := WeatherLayer.rainbow_strength(float(r["full_wet"]) * 0.5, 0.0, cover, 0.0, r)
+	_check(half > 0.0 and half < 1.0, "it fades as the farm dries (%.2f)" % half)
+	_check(float(r["strength"]) <= 0.3 and float(r["saturation"]) <= 0.8, "light and gentle, as the owner asked")
+	_check(not bool(Quality.value("rainbow", "low")) and bool(Quality.value("rainbow", "mid")), "off on low")
+	# The layer: hidden (no cost) on a dry farm; shown after rain; it dries and goes.
+	var layer := WeatherLayer.new()
+	add_child(layer)
+	layer.look = clear.duplicate()
+	layer._process(0.1)
+	_check(not layer._rainbow.visible, "a dry farm draws nothing")
+	layer.look = Weather.LOOKS["rain"].duplicate()
+	for k in 40:
+		layer._process(1.0)
+	_check(layer.wet > 0.9 and not layer._rainbow.visible, "it soaks while it rains, no rainbow yet")
+	layer.look = clear.duplicate()
+	for k in 10:
+		layer._process(1.0)
+	_check(layer._rainbow.visible == bool(Quality.value("rainbow")), "the rain stops: the rainbow comes")
+	for k in 400:
+		layer._process(1.0)
+	_check(not layer._rainbow.visible, "the farm dries: it is gone")
+	layer.queue_free()
