@@ -19,11 +19,13 @@ const LONG_FRAME_MS := 100.0     # a frame this long is a stall (a material draw
 const PLAY_SECONDS := 5.0        # playing at the playing zoom, measured
 const PLAY_ZOOM := 1.6           # the camera zoom a player farms at
 const MOST_WAIT_SECONDS := 90.0  # never wait longer than this for one phase
+const ENGINE_MARK := &"start_clock_ms"   # the Engine meta autoload/start_clock.gd sets as the engine is up
 
 
 ## When the start's steps were done, in ms since the engine began (start_mark), for the report's "start": the
-## scripts compiled (Game made), the game's data and save loaded (Game ready), the main scene's turn (main made,
-## main built). Where a phone's startup_ms goes.
+## engine up (the first autoload, StartClock), the scripts compiled (Game made), its systems made, the other
+## autoloads made, the catalog, the data and the save loaded (Game ready), the main scene's turn (main made, its
+## 3D world, its HUD, main built). Where a phone's startup_ms goes.
 static var _start_marks := {}
 
 var _main: Node
@@ -38,7 +40,10 @@ static func start_mark(step: String) -> void:
 
 ## The start's steps so far (start_mark).
 static func start_marks() -> Dictionary:
-	return _start_marks.duplicate()
+	var marks := _start_marks.duplicate()
+	if Engine.has_meta(ENGINE_MARK):
+		marks["engine"] = int(Engine.get_meta(ENGINE_MARK))
+	return marks
 
 
 ## Whether this build runs the benchmark by itself on start (the benchmark APK).

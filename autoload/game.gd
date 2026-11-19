@@ -228,16 +228,20 @@ func _init() -> void:
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
 		social, collecting, shop, helpers, vip, rust, rolls, goals]
+	LoadBenchmark.start_mark("made")   # not-ui (the systems made)
 
 
 func _ready() -> void:
+	LoadBenchmark.start_mark("ready")   # not-ui (the other autoloads made: Sound, Feedback)
 	rng.randomize()
 	if not OS.has_feature("mobile"):
 		get_tree().set_auto_accept_quit(false)   # (closing is ours: _close, so the window goes before the teardown)
 	_load_crops()
 	_load_items()
+	LoadBenchmark.start_mark("catalog")   # not-ui (crops and items read)
 	for system in systems:
 		system.load_data()
+	LoadBenchmark.start_mark("data")   # not-ui (every system's data read)
 	if not saving_enabled or not load_game():
 		_new_game()
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has(SHOWCASE_ARG):

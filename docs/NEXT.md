@@ -915,6 +915,29 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   the app, Test Lab's game-loop type (needs an intent filter, so a gradle build for the benchmark preset) is the
   way. 3) Loading after the start as in run 7's list (animal templates, garage vehicles).
 
+- Run 9 (19 Nov 04:50 - 05:40 IST) measured class-naming costs and guessed ~1.0 s of the start was classes parsed
+  again by every script naming them (its compile_probe stayed a project patch, never merged). Run 10 disproved it:
+  ModelKit padded with 2,100 more lines (named by 26 scripts) moved the headless start only +50 ms, one compile's
+  worth, not 26. The start's compiling is the ~50k lines once (~36 us a line here); compile_probe is dropped.
+- Phone runs 7 (23:59 UTC, APK of d5fabd8) and 8 (01:58 UTC nightly, APK of 8aba68d), A05s, Robo: startup_ms
+  8276 / 9313; start: scripts 4973 / 5634, game 5863 / 6918, main_made 5866 / 6924, main_built 8045 / 9089. So
+  ~5-5.6 s to Game made (engine setup + compiling, unsplit), ~0.9-1.3 s for the data and save (headless 0.22 s),
+  ~2.2 s in main._ready (headless ~0.1-0.2 s: ~11x, more than the compiling's ~4.5x, so likely GPU work). The app
+  dies in the foreground during Robo's wait (run 7: "has died: fg TOP"; run 8: "app died, no saved state" about
+  a minute before the relaunch that printed the line): the benchmark never finished a phase on the phone yet.
+- Runs 10-11 built finer start marks but could not push (main red at test 483, the goals lane; fixed on main by
+  8af35a8). Run 12 (19 Nov 07:51 - 08:40 IST) merged them: autoload/start_clock.gd is the first autoload (names no
+  script; an Engine meta) so "engine" splits the engine's setup from the compiling; Game marks "made" (systems),
+  "ready" (Sound and Feedback made), "catalog", "data"; main marks "world" (after _use_3d) and "hud". Test 526
+  checks all 11 in order. Headless (run 10): engine 104, scripts 1945, made 1946, catalog 2160, data 2163, game
+  2166 ms.
+- Next run: 1) read the phone run started after this merge: `start.engine` against `start.scripts`. If "engine" is
+  most of the ~5.5 s, it is the engine's own setup on the phone (the ~210 MB APK, Vulkan, the baked shader cache):
+  look at what loads before the first autoload (project settings, boot splash, the .pck, the shader cache); if
+  compiling is, the lever is fewer lines compiled before the first screen (scripts loaded by path after the first
+  frame, nothing seen changed). 2) If "world" holds most of main's 2.2 s, time _use_3d's parts. 3) Why the app
+  dies in the foreground during the wait: Test Lab's game-loop type, or a smaller logcat window.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.

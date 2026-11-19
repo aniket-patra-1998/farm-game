@@ -12,6 +12,7 @@ config/features=PackedStringArray("4.7", "Mobile")
 
 [autoload]
 
+StartClock="*res://autoload/start_clock.gd"
 Game="*res://autoload/game.gd"
 Sound="*res://autoload/sound.gd"
 Feedback="*res://autoload/feedback.gd"

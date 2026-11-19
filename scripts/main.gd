@@ -93,9 +93,11 @@ func _ready() -> void:
 	camera.make_current()
 	if Farm3D.enabled():
 		_use_3d()
+	LoadBenchmark.start_mark("world")   # not-ui (the farm's layers and its 3D world made)
 
 	hud = FarmHud.new()
 	add_child(hud)
+	LoadBenchmark.start_mark("hud")   # not-ui (the HUD made)
 
 	var fx := FxLayer.new()
 	fx.hud = hud

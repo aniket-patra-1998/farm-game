@@ -2375,11 +2375,13 @@ func test_497_the_phone_benchmark_line_reads_back_whole() -> void:
 
 
 func test_526_the_phone_report_says_where_the_start_went() -> void:
-	# A phone's startup_ms (8.2 s on the Galaxy A05s) is split into the start's steps, in order: every script
-	# compiled (Game made), the game's data and save loaded, the main scene made and its farm laid out.
+	# A phone's startup_ms (8.3 s on the Galaxy A05s) is split into the start's steps, in order: the engine up
+	# (the first autoload), every script compiled (Game made), its systems made, the other autoloads made, the
+	# catalog, data and save loaded, the main scene made, its 3D world, its HUD and its farm laid out.
 	var marks := LoadBenchmark.start_marks()
 	var last := 0
-	for step in ["scripts", "game", "main_made", "main_built"]:
+	for step in ["engine", "scripts", "made", "ready", "catalog", "data", "game", "main_made", "world", "hud",
+			"main_built"]:
 		_check(marks.has(step), "the start marks %s (%s)" % [step, str(marks)])
 		_check(int(marks.get(step, -1)) >= last, "after the step before it (%s)" % str(marks))
 		last = int(marks.get(step, last))
