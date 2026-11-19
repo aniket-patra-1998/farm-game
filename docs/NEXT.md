@@ -971,6 +971,25 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   WorldFx -> PlaceholderArt (1,664 lines, named from Game's own deps); ItemIcons/ThingIcon (shop pictures, first
   needed when a menu opens); HudGoals' goal sheet; debug tools (LoadBenchmark, LoadTrace, ShowcaseFarm named by
   game.gd).
+- Run 14 (19 Nov 09:50 - 10:40 IST). No new phone report (none since run 13; the quota frees at 13:30 IST). The
+  container had no Godot: fetched CI's 4.7.2 zip to /home/claude/godot/godot (~35 s import). Two more slices of the
+  start, each measured with tools/start_lines.py (new: the run-13 counting, committed; `--drop=A,B` says what a
+  slice would save before it is built, `-v` the biggest scripts and what pulls each in) and the start marks
+  (headless, `--quit-after 1` with a scratch print of LoadBenchmark.start_marks() after the "hud" mark, 7
+  alternating pairs):
+  467e12e: FarmGrid loads PlaceholderArt by path (FarmGrid.art(), and a frame after the grid is made); SLAB is
+  FarmGrid's. 34,083 -> 32,430 lines; scripts - engine median 1,666 -> 1,581 ms. a7f98b1: AnimalGait (the gait
+  numbers, foot_offset, joint) out of AnimalArt, which the 3D animals and AnimalRig named only for that; the 2D
+  animals' drawing loads by path (FarmGrid.animal_art()). 32,430 -> 31,802; 1,600 -> 1,554 ms. Test 546. The 2D
+  farm (use_3d off) rendered before/after at 1x: differences within its own animation's run-to-run noise.
+- Next run: 1) after 13:30 IST, once the "Latest phone build" has a7f98b1 or later, start one phone run (A05s;
+  the A13 too if quota allows) and read start.scripts - start.engine against run 13's 3.7 s, and whether the
+  benchmark reached "done". 2) Further slices, by `tools/start_lines.py --drop=`: ItemIcons ~0.9k (it pulls
+  BuildingModel and Objects3D in from the UI side, but the 3D world names them too, so check what drops; named in
+  18 files), the debug tools ~0.4k (LoadBenchmark's start marks would move to StartClock-sized code; LoadTrace,
+  ShowcaseFarm from game.gd), HudGoals' goal sheet ~0.4k. What is left (~31.8k) is mostly the 3D farm the first
+  screen draws, so "well under half" will not come from slicing alone: the phone run says whether compiling is
+  still the big part.
 
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens

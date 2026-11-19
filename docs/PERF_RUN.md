@@ -121,3 +121,5 @@ Phone runs: the Galaxy A05s by default; the Galaxy A13 again now that 32-bit shi
   relaunches it and the relaunch's start-only report hid the finished one; phone_bench now keeps the done (else
   longest) report and prints how each process ended (cc3134d). Item 2, slice 1: the HUD's panels and the building
   sheet load by path, 37.6k -> 34.1k lines compiled before the first screen (NEXT.md, Perf run 13).
+- 19 Nov 10:40 (perf run 14): slices 2 and 3 of the start (2D art and 2D animals loaded by path; AnimalGait):
+  34.1k -> 31.8k lines before the first screen (tools/start_lines.py counts them). No phone run yet (quota).
