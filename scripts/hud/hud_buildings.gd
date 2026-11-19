@@ -440,7 +440,7 @@ func add_expansion_card(content: VBoxContainer, o: Dictionary, uid: int) -> void
 	var coins := Game.land.expansion_coins(o)
 	if coins > 0:   # (its coins: dearer for every upgrade the farm has, docs/WEAR.md)
 		var paid := Game.coins >= coins
-		card.add_child(BookPanel.text(tr("CHECK_DONE" if paid else "CHECK_TODO") % (tr("EXPAND_COINS") %
+		card.add_child(BookPanel.text(tr("CHECK_DONE" if paid else "CHECK_TODO") % (tr("SIZE_COINS") %
 			UiTheme.number(coins)), UiTheme.HEADING, UiTheme.color("done") if paid else BookPanel.INK))
 	var verdict := Game.buildings.can_expand(o)
 	if not verdict.ok() and verdict.text != "":
