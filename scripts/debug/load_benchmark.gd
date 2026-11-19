@@ -118,7 +118,8 @@ func _phase(open: Callable) -> Dictionary:
 		"objects": Game.objects.size()}
 
 
-## Plays at the playing zoom for PLAY_SECONDS: frame times (average, 95th percentile, longest) and draws.
+## Plays at the playing zoom for PLAY_SECONDS: frame times (average, 95th percentile, longest), draws, and the level
+## and frame cap played at (the device's level at start may since have been stepped down).
 func _play() -> Dictionary:
 	var cam: FarmCamera = _main.get("camera")
 	var grid: FarmGrid = _main.get("grid")
@@ -144,7 +145,8 @@ func _play() -> Dictionary:
 		sum += t
 	return {"avg_ms": snappedf(sum / maxf(times.size(), 1.0), 0.1),
 		"p95_ms": snappedf(times[int(times.size() * 0.95)] if not times.is_empty() else 0.0, 0.1),
-		"longest_ms": snappedf(times[-1] if not times.is_empty() else 0.0, 0.1), "draws": draws, "triangles": tris}
+		"longest_ms": snappedf(times[-1] if not times.is_empty() else 0.0, 0.1), "draws": draws, "triangles": tris,
+		"quality": Quality.level(), "max_fps": Engine.max_fps}   # (the level played at: AutoQuality may have moved it)
 
 
 func _until_whole() -> void:
