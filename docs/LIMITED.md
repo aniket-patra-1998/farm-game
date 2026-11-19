@@ -55,6 +55,20 @@ animal of that touch and colour. A shake is two moves in the file (`shake_a`, `s
 seconds it stands awake). To give a coat another touch: change its row in `TOUCH`, export it, and set `touch`
 in the catalog. Animals in a home shake and glint too; sparkles are for animals standing on the farm.
 
+## Adding one
+A fixed path, the same for every new limited animal (and for a new plain breed, less step 2's data):
+1. **Draw it**: one row in its family's table in `tools/animal_art/animal_art/limited.py`, made from one of the
+   family's breeds (its coat, its pattern), and its name under its touch in `TOUCH` if it has one. Its baby
+   follows by the family's rule; its moves are the family's (walk, graze, look, blink, tail, breath).
+2. **Make it**: `bash tools/remake_animals.sh path/to/godot`. That exports its file (and its baby's), writes
+   its data from the row (`tools/make_limited.py`: the catalog entry with its gems, payout, baby and touch, its
+   place in the family's home and the Nursery, its file's entry), and brings the game's lists in step. The
+   price and payout it starts with are the family's rule; change them in the catalog afterwards if wanted.
+3. **Check it**: `bash tools/precheck.sh path/to/godot`. `limited_test` runs it through the whole game and
+   `make_limited.py --check` (here and in CI) fails if a drawn coat has no data or a limited entry no drawing.
+Nothing else is written by hand: its Market picture is made by CI's phone build, its pack by
+`tools/make_packs` (docs/PACKS.md), and its Market tab, home, finds and saving come from its data.
+
 ## In the rest of the game
 A limited animal is an animal of its family in every other way, and nothing lists the limited ones by hand:
 it moves, calls (the same sound, at the same pitch) and eats as its family does, gives the family's produce,

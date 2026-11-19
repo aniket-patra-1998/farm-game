@@ -4,6 +4,9 @@ import math
 
 
 DARK = (0.16, 0.11, 0.09)
+PALE_RIM = (0.97, 0.94, 0.86)    # the rim of an eye on a dark face, so the eye reads from the farm's distance..
+PALE_RIM_WIDE = 0.075            # ..wider than the dark outline's 0.035, which it replaces
+AMBER = (0.86, 0.56, 0.16)       # ..and the iris there, where the usual dark brown would be lost
 
 
 class Mesh:
@@ -55,9 +58,14 @@ def ell(a, b, cx=0.0, cy=0.0, n=20):
     return [(cx + a * math.cos(2 * math.pi * i / n), cy + b * math.sin(2 * math.pi * i / n)) for i in range(n)]
 
 
-def eye(m, c, u, up, out, r, lid_col, lashes=True, lid=0.4, pupil=0.8, lash=1.0, iris=(0.2, 0.12, 0.08)):
+def eye(m, c, u, up, out, r, lid_col, lashes=True, lid=0.4, pupil=0.8, lash=1.0, iris=(0.2, 0.12, 0.08), rim=None):
+    """An eye laid on the face: its outline, white, iris, pupil and two glints, the lid and its lashes. `rim`: a pale
+    rim in place of the dark outline (an eye on a dark face)."""
     a, b = r, r * 1.16
-    fan(m, c, u, up, out, ell(a + 0.035, b + 0.035), 0, DARK)
+    if rim is None:
+        fan(m, c, u, up, out, ell(a + 0.035, b + 0.035), 0, DARK)
+    else:
+        fan(m, c, u, up, out, ell(a + PALE_RIM_WIDE, b + PALE_RIM_WIDE), 0, rim)
     fan(m, c, u, up, out, ell(a, b), 1, (1, 1, 1))
     pc = (0.1 * r, -0.1 * r)
     fan(m, c, u, up, out, ell(a * pupil, b * pupil * 0.98, *pc), 2, iris)

@@ -1342,6 +1342,10 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Fetching a limited animal's file when first needed is built and off (docs/PACKS.md; packs_test 583, 584): the
   owner has to choose where the packs are hosted, then the three steps in PACKS.md turn it on. Not tried on a
   phone or a real address.
+- Adding one is a fixed path (docs/LIMITED.md "Adding one"): a row in the art tool, `tools/remake_animals.sh`,
+  `tools/precheck.sh`. `tools/make_limited.py` writes its data from the row; its `--check` runs in precheck and CI.
+- Eyes on dark faces have a pale rim and an amber iris (the owner's pick, B, for every animal: 36 files changed,
+  14 of them ordinary animals). Seen as Market pictures, not on the farm or a phone.
 - Next: baby forms for birds and rabbits; limited dogs; a real device check of touches and packs.
 - The showcase holds one limited animal a home and none loose: the heaviest-farm budget has 2,000 triangles
   of room (world3d_test 338).

@@ -42,6 +42,17 @@ class Limited(unittest.TestCase):
         self.assertEqual(limited.baby_name("golden ram", "lamb"), "golden lamb")
 
 
+class Eyes(unittest.TestCase):
+    def test_an_eye_on_a_dark_face_has_a_pale_rim(self):
+        # (a dark eye on a dark face is lost from the farm's distance: there the rim is pale and the iris amber)
+        from animal_art import decal
+        rim = np.array(decal.PALE_RIM)
+        for name, light in (("tuxedo goose", True), ("sheep", True), ("pig", False), ("rainbow pig", False)):
+            with self.subTest(animal=name):
+                colours = np.array(lightest(MADE[name][0])["C"])
+                self.assertEqual(bool((np.abs(colours - rim).max(axis=1) < 1e-3).any()), light)
+
+
 class BuildAndMove(unittest.TestCase):
     def test_models_hold_together_bind_and_pose(self):
         for name, kind in KINDS.items():

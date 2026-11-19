@@ -55,6 +55,19 @@ each made by this package's own motion. Listed in `data/assets.json` (`"budget":
 instead of the code-built animal and sets the blend shapes from the pose it already works out
 (`Animal3D._pose_file`). Moves the file doesn't have are simply not shown.
 
+One command makes every animal's file again and brings the game's lists in step (run it after any change to this
+package, or after adding a row):
+
+    bash tools/remake_animals.sh path/to/godot
+
+It exports every game animal, writes the data of any limited coat that has none yet (`tools/make_limited.py`),
+imports the files, and makes the art versions, the art manifest, the catalog document and the strides again.
+An animal whose builder did not change comes out byte for byte the same.
+
+**Eyes on dark faces**: an eye whose face is dark (`face.DARK_FACE`) gets a pale rim in place of its dark
+outline and an amber iris (`decal.PALE_RIM`, `AMBER`), or it is lost from the farm's distance. It is decided for
+each eye by the colour under it, so an animal with one eye in a dark patch has one light eye.
+
 ## Not done
 
 - **Weight**: phone-weight meshes average about 4,900 triangles. There is no mesh simplifier here; thinning is by

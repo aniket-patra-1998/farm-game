@@ -7,6 +7,7 @@ from .head import EYE_K, EYE_S, EYE_SIZE, EYE_T, Head, LASH, MOUTH, find_eye, si
 
 
 EYES = []
+DARK_FACE = 0.32  # a face darker than this (its colour's mean) gets the light eye: a pale rim and an amber iris
 
 
 def face(m, V, T, cols, wh, mouth=True, nostril=True, lashes=True, eye_k=1.0, lid=0.38, brow=None, eye_set="side", blaze=None, cleft=False,
@@ -72,7 +73,7 @@ def face(m, V, T, cols, wh, mouth=True, nostril=True, lashes=True, eye_k=1.0, li
             u = np.cross(up, out)
             if u @ hd.d3 < 0:
                 u = -u
-            lidc = tuple(fc * 0.88) if fc.mean() > 0.3 else tuple(np.minimum(1, fc * 1.08 + 0.015))
+            lidc = tuple(fc * 0.88) if fc.mean() > DARK_FACE else tuple(np.minimum(1, fc * 1.08 + 0.015))
             if wrap:
                 # a small round head curves away under a flat eye, which then stands off it like a plate. Measure the
                 # head's own curve under the eye (a smooth bowl fitted to it) and lay the whole drawing on that.
@@ -93,7 +94,8 @@ def face(m, V, T, cols, wh, mouth=True, nostril=True, lashes=True, eye_k=1.0, li
                     decal.PROJ = proj
             _e0 = m.n
             eye(m, p, u, up, out, r, lidc, lashes=lashes, lid=lid, pupil=0.82, lash=LASH,
-                iris=((0.62, 0.38, 0.16) if fc.mean() < 0.3 else (0.2, 0.12, 0.08)))
+                iris=(decal.AMBER if fc.mean() < DARK_FACE else (0.2, 0.12, 0.08)),
+                rim=(decal.PALE_RIM if fc.mean() < DARK_FACE else None))
             EYES.append((_e0, m.n, p.copy(), up.copy()))        # this eye's own points, so it can blink
             fan(m, p, u, up, out, ell(0.26 * r, 0.2 * r, -0.2 * r, -1.5 * r, 14), 0, tuple(fc * 0.45 + np.array([0.98, 0.5, 0.56]) * 0.55))
             decal.PROJ = None

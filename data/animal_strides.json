@@ -10,7 +10,7 @@
       "stride": 0.29174072607871027
     },
     "arapawa_goat": {
-      "file": "93b78dc6e299cd8b",
+      "file": "fbca423f339f97ce",
       "stride": 0.2797392587507925
     },
     "autumn_turkey": {
@@ -26,31 +26,31 @@
       "stride": 0.0
     },
     "belted_calf": {
-      "file": "3a4a43b1259f4b81",
+      "file": "44c9cc9a8cb00e2b",
       "stride": 0.26955131080842787
     },
     "belted_cow": {
-      "file": "d4172eda1e114a89",
+      "file": "247d59384408e037",
       "stride": 0.32203257564575444
     },
     "belted_duck": {
-      "file": "06ba53c6d7dc3d29",
+      "file": "58d763233855da6a",
       "stride": 0.0
     },
     "berkshire_pig": {
-      "file": "24d6fed9bdf04f5c",
+      "file": "c86ea72386bf500c",
       "stride": 0.22078428056932264
     },
     "black_chicken": {
-      "file": "2209cb6871188b96",
+      "file": "f7411a23a40ec791",
       "stride": 0.0
     },
     "black_lab": {
-      "file": "8e07586787461c37",
+      "file": "7571da9ab0c48a2a",
       "stride": 0.20458472351874074
     },
     "black_pony": {
-      "file": "18b09dbd4fd7c456",
+      "file": "6b6be4fe09ee6068",
       "stride": 0.34400932490825653
     },
     "black_sheep": {
@@ -70,7 +70,7 @@
       "stride": 0.22775601114957564
     },
     "boer_goat": {
-      "file": "64dec521675a1d75",
+      "file": "8ae88cd0ac02cfc7",
       "stride": 0.2770382189942944
     },
     "brown_calf": {
@@ -98,7 +98,7 @@
       "stride": 0.27447608449766714
     },
     "bull": {
-      "file": "308ca164520e6caa",
+      "file": "d72d1be2747427e8",
       "stride": 0.36256868512399737
     },
     "bumblebee_pig": {
@@ -110,7 +110,7 @@
       "stride": 0.14825408016481706
     },
     "calf": {
-      "file": "ff367010785a363e",
+      "file": "d34d08bc4d29f3d0",
       "stride": 0.26514006237829885
     },
     "candy_foal": {
@@ -138,7 +138,7 @@
       "stride": 0.4625219130708325
     },
     "cocoa_rabbit": {
-      "file": "a91ee55e73648578",
+      "file": "707bf349756a31ee",
       "stride": 0.054142666199514945
     },
     "cornish_chicken": {
@@ -158,7 +158,7 @@
       "stride": 0.28563060106769683
     },
     "cow": {
-      "file": "a485f7c053416ef1",
+      "file": "355462b995d0da4d",
       "stride": 0.3319968138971636
     },
     "dalmatian_goat": {
@@ -182,15 +182,15 @@
       "stride": 0.0
     },
     "dutch_rabbit": {
-      "file": "d0ad124610d7ada7",
+      "file": "b308b8d9188c6eb1",
       "stride": 0.0867957309369118
     },
     "feather_foal": {
-      "file": "716e0e4f3df41321",
+      "file": "709f63a9878753eb",
       "stride": 0.36996753225403445
     },
     "feather_horse": {
-      "file": "79a802206e639624",
+      "file": "59e0c2cb1db36d01",
       "stride": 0.45484763480001883
     },
     "flame_chicken": {
@@ -202,35 +202,35 @@
       "stride": 0.36489050234517745
     },
     "galaxy_alpaca": {
-      "file": "632e0bbfba362396",
+      "file": "cdfe16a9e51b54d3",
       "stride": 0.3371484878082429
     },
     "galaxy_calf": {
-      "file": "68d0727033232930",
+      "file": "911a2a7d2f5d5aa6",
       "stride": 0.26559043795831744
     },
     "galaxy_chicken": {
-      "file": "0a8633c8ad0b3f18",
+      "file": "ba5a9cb16eb877a1",
       "stride": 0.0
     },
     "galaxy_cow": {
-      "file": "91536f2163dbaed0",
+      "file": "c8d9908d10dc9ef5",
       "stride": 0.33212138279791803
     },
     "galaxy_duck": {
-      "file": "973f48dc95964c05",
+      "file": "67169c8a8d50ebd1",
       "stride": 0.0
     },
     "galaxy_foal": {
-      "file": "34213cec71b2f8ed",
+      "file": "9c5ab86a2a81b1b4",
       "stride": 0.3624168615187368
     },
     "galaxy_horse": {
-      "file": "5aa2be206e590ddb",
+      "file": "7535fa088fd70e34",
       "stride": 0.40793555878823806
     },
     "galaxy_rabbit": {
-      "file": "ec2133f91bef2422",
+      "file": "e4af220e099e0887",
       "stride": 0.06325877001208643
     },
     "galician_blond_calf": {
@@ -262,7 +262,7 @@
       "stride": 0.18718815859287016
     },
     "golden_lamb": {
-      "file": "0dafb28fbc7a6697",
+      "file": "d0ac47218e86b3c6",
       "stride": 0.23970596732631808
     },
     "golden_pig": {
@@ -274,7 +274,7 @@
       "stride": 0.15142417602962063
     },
     "golden_ram": {
-      "file": "c040a88d59f65f6c",
+      "file": "cd03a2ffb323a71f",
       "stride": 0.2943350422766901
     },
     "golden_retriever": {
@@ -446,7 +446,7 @@
       "stride": 0.18718815859287016
     },
     "rainbow_lamb": {
-      "file": "f1f165d66fe689d4",
+      "file": "8ff8fb0885ee020f",
       "stride": 0.19419476870567567
     },
     "rainbow_llama": {
@@ -462,7 +462,7 @@
       "stride": 0.1458580695813702
     },
     "rainbow_sheep": {
-      "file": "1c9943e549379318",
+      "file": "98015d3c52771987",
       "stride": 0.28206901324372136
     },
     "ram": {
@@ -490,19 +490,19 @@
       "stride": 0.0
     },
     "saddleback_pig": {
-      "file": "3aafdc8d5764c004",
+      "file": "2272c46b405811b3",
       "stride": 0.21240691984853438
     },
     "sheep": {
-      "file": "2bef47b96ec256d1",
+      "file": "8ce26c01b1c180c7",
       "stride": 0.28206901324372136
     },
     "shorn_lamb": {
-      "file": "acab121822099f66",
+      "file": "d6643589030257b8",
       "stride": 0.20065777484447725
     },
     "shorn_sheep": {
-      "file": "1bd7addecc21ca1e",
+      "file": "92ecc617b4831f92",
       "stride": 0.2874274167322343
     },
     "silkie_chicken": {
@@ -558,7 +558,7 @@
       "stride": 0.2667230704138356
     },
     "tiger_cow": {
-      "file": "18a7bd77098c3a59",
+      "file": "7fb869e0b94a3a23",
       "stride": 0.3332539551681088
     },
     "turkey": {
@@ -570,11 +570,11 @@
       "stride": 0.08551347399911573
     },
     "tuxedo_goat": {
-      "file": "71c0a1af2656fbb3",
+      "file": "c8185df08f96e73c",
       "stride": 0.30456361991743885
     },
     "tuxedo_goose": {
-      "file": "0d8cd5069dc6fa07",
+      "file": "4d02136332cbf0e8",
       "stride": 0.18718815859287016
     },
     "ugly_duckling": {
@@ -598,7 +598,7 @@
       "stride": 0.36439839149675063
     },
     "zebra_horse": {
-      "file": "5cc0241179266347",
+      "file": "11165451dcb23868",
       "stride": 0.41616115598909315
     }
   }

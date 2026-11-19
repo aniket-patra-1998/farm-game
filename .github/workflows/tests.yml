@@ -37,6 +37,8 @@ jobs:
           python3 tools/make_art_manifest.py --check
           python3 tools/make_notebook.py --check
           python3 tools/make_art_versions.py --check
+          pip install -q numpy
+          python3 tools/make_limited.py --check
 
       - name: Player-facing text is in locale/strings.csv
         run: python3 tools/strings_lint.py
