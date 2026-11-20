@@ -16,7 +16,14 @@ func test_590_a_trees_fruit_sits_in_its_leaves_and_moves_with_them() -> void:
 	TreeModel.build_at(holder, Vector3.ZERO, g.item_data("apple_tree"), 1.0, true, 1)
 	var fruit := holder.find_children("*", "MeshInstance3D", true, false).filter(
 		func(n: Node) -> bool: return n.has_meta(ModelKit.FRUIT))
-	_eq(fruit.size(), TreeModel.FRUIT_READY, "a full apple tree's fruit")
+	# (Of its FRUIT_READY places, those round the back of the crown are not made: the camera never sees them.)
+	_check(fruit.size() >= TreeModel.FRUIT_READY / 2 and fruit.size() <= TreeModel.FRUIT_READY,
+		"a full apple tree's fruit: those the camera can see (%d of %d)" % [fruit.size(), TreeModel.FRUIT_READY])
+	var seen := TreeModel.SEEN_FROM.rotated(Vector3.UP, -(holder.get_child(0) as Node3D).rotation.y)
+	var facing := fruit.filter(func(n: Node) -> bool:
+		var off := (n as Node3D).position
+		return Vector2(off.x, off.z).dot(Vector2(seen.x, seen.z)) > 0.0)
+	_check(facing.size() * 2 > fruit.size(), "most of it on the side the farm is seen from")
 	var crown_low := INF
 	for part in holder.find_children("*", "MeshInstance3D", true, false):
 		var m := (part as MeshInstance3D).material_override as ShaderMaterial
@@ -385,7 +392,72 @@ func _far(a: Color, b: Color) -> float:
 	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
 
 
+func test_606_a_falling_leaf_builds_nothing() -> void:
+	# The trees' life asked a tree's height by building its whole model, for every leaf: a hitch each time one fell,
+	# and dozens in a gust (20 Nov, on the phone: a lot laggier). The farm already knows how tall each tree stands.
+	Game.reset_game()
+	Game.farm_size = 20
+	Game.objects.clear()
+	Game.next_uid = 1
+	for id: String in ["apple_tree", "lemon_tree"]:
+		Game.objects.append({"uid": Game.next_uid, "id": id, "row": 5, "col": 3 + Game.next_uid * 2, "t": Game.now()})
+		Game.next_uid += 1
+	Game.rebuild_occupancy()
+	var life := TreeLife.new()
+	add_child(life)
+	var farm := Farm.new()
+	life.objects = farm
+	var tree: Dictionary = Game.objects[0]
+	_check(absf(life.crown_of(tree).y - Farm.TALL * TreeLife.CROWN_AT) < 0.001,
+		"a crown is where the farm says its tree stands")
+	life.blow()
+	for step in 240:
+		life.tick(1.0 / 60.0)
+	_check(life.leaves.live() > 10, "a gust takes leaves off the trees")
+	_check(life._tops.is_empty(), "and no tree's model was built to place them")
+	# With no farm to ask (a tool, a test), a kind is measured once, however many leaves fall.
+	life.objects = null
+	for k in 40:
+		life.shed(tree)
+	_eq(life._tops.size(), 1, "one measure for forty leaves")
+	# The farm's answer is the top of the box it keeps for each thing it shows.
+	var bare := Objects3D.new()
+	_eq(bare.height_of(1), 0.0, "a thing not shown has no height")
+	bare.free()
+	farm.free()
+	life.free()
+	Game.reset_game()
+
+
+func test_607_a_trees_fruit_stays_light() -> void:
+	# A tree's fruit is never made simpler with distance, so every ripe tree in view draws all of it: it tripled the
+	# trees' triangles on the showcase (20 Nov). Fruit round the back of the crown is not made, and no fruit is
+	# rounder than it can be seen to be.
+	for row: Array in [["apple_tree", 1000], ["orange_tree", 1000], ["cherry_tree", 1300]]:
+		var tree := _tree(str(row[0]))
+		var tris := 0
+		for part: MeshInstance3D in tree.find_children("*", "MeshInstance3D", true, false):
+			for k in part.mesh.get_surface_count():
+				var mat := part.get_active_material(k) as ShaderMaterial
+				if mat != null and mat.shader.resource_path == ModelKit.FRUIT_SHADER:
+					tris += part.mesh.surface_get_arrays(k)[Mesh.ARRAY_INDEX].size() / 3
+		_check(tris > 100 and tris <= int(row[1]), "%s's fruit is %d triangles (at most %d)" % [row[0], tris, row[1]])
+		tree.free()
+
+
 ## Something that takes the wind (as the ground and the crops do).
 class Wind:
 	extends RefCounted
 	var wind := 0.0
+
+
+## A farm that knows how tall its trees stand (as Objects3D does, from the views it keeps).
+class Farm extends Objects3D:
+	const TALL := 2.0
+
+	func height_of(_uid: int) -> float:
+		return TALL
+
+	func shake(_uid: int) -> void:
+		pass
+

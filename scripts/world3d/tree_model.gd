@@ -44,6 +44,8 @@ const META_FAR := TreeSpec.META_FAR   # and what its far look needs (TreeSpec)
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
 const SEEN_FROM := Vector3(0.7071, 0, 0.7071)   # the side of a tree the farm's camera sees
+const FRUIT_BEHIND := -0.35   # a crown's fruit facing further from the camera than this (a cosine) is hidden by it..
+const FRUIT_TOP := 0.45       # ..unless it sits this high on its clump (the camera looks down on the crown's top)
 const BUNCH_OUT := 0.13      # how far out from the stem a banana's bunch hangs, of the tree's size..
 const BUNCH_WIDE := 0.045    # ..how wide a hand of it is..
 const BANANA_R := 0.027      # ..and how thick each banana
@@ -683,6 +685,11 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color) -> void:
 					dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits in its skin)
 					p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
 					fruit_mat = shades[0 if dir.y > 0.55 else (1 if dir.y > 0.12 else 2)]
+					# A fruit round the back of the crown is never seen (the farm's camera does not turn) and a
+					# tree's fruit is never made simpler with distance, so it is not made at all.
+					var seen := SEEN_FROM.rotated(Vector3.UP, -root.rotation.y)
+					if dir.y < FRUIT_TOP and Vector2(dir.x, dir.z).normalized().dot(Vector2(seen.x, seen.z)) < FRUIT_BEHIND:
+						continue
 				if str(sh["form"]) == "palm":
 					# Coconuts cluster under the fronds, against the trunk: smaller than a crown's fruit, or the
 					# cluster is one ball.

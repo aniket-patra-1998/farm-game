@@ -194,3 +194,20 @@ Measure each on the phone (play avg_ms, p95, draws, triangles) before and after.
   If it is small, the gain is in the animals' triangle count (simpler levels nearer the camera), not in how they
   are animated; if it is large, posing fewer animals a frame or moving the always-on motions into the shader pays.
 
+## The tree polish made the farm lag (owner, 20 Nov, after PRs 18 to 21 were merged): found and fixed
+Measured on a computer at the phone benchmark's playing view, showcase farm, low quality, 900 frames at a time:
+- Scripts, a frame: 8.8 ms before the merges with no frame over 33 ms; 45 ms after, with 200 to 300 of 900 frames
+  over 33 ms and single frames of 250 to 300 ms. Cause: `TreeLife.crown_of` asked a tree's height with
+  `ScaleGuide.height_of`, which builds the tree's whole model to measure it, for every falling leaf and fruit (a
+  leaf every few seconds, dozens in a gust). Now it asks the farm (`Objects3D.height_of`: the box each view
+  already keeps). After: 8.7 ms, no frame over 33 ms. `trees_test` 606 holds it.
+- Triangles in view: 215k before the merges, 286k after. A tree's fruit is kept out of its simpler levels (it turned
+  into gems), so every ripe tree drew all of it at full roundness: about 2,470 triangles a tree, more than the rest
+  of the tree at that distance. Now fruit round the back of the crown is not made (the camera does not turn), a
+  fruit is 8 by 5 and a cherry 6 by 3: 242k in view, the trees 75k of it (119k before the fix). `trees_test` 607
+  holds it. Still about 30k over what the trees drew before the polish: fruit with levels of its own (a coarse far
+  level made by hand, not by the simplifier) is the next step if a phone run says the trees still cost more.
+- Lesson kept as a rule here: a thing that happens every frame or every few seconds must never call
+  `ScaleGuide.height_of` or `model_of` (they build a model); and a new moving thing is measured over a long
+  stretch (average and frames over 33 ms), not by a median, before it is pushed.
+

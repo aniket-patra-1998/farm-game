@@ -44,8 +44,12 @@ const SPRIG_LEAF_WIDE := 1.7   # how broad each is, of the slim leaf they were (
 const SPRIG_LEAF_ROUND := 0.45  # ..and how round its ends are (1: pointed like a blade; less: blunter)
 const CARD_DEPTH := Vector2(0.69, 0.91)  # where a leaf card sits, of the way out to the crown's skin: tucked in, so..
 const CARD_SIZE := Vector2(0.9, 1.4)     # ..fewer stick out past it; and each a little bigger, to cover as before
-const FRUIT_SEGMENTS := 12     # a tree's fruit: round enough to stay a fruit from the farm's distance..
-const FRUIT_RINGS := 6         # ..and never made simpler (bake keeps it whole: simplified, it turned into gems)
+# A tree's fruit is never made simpler with distance (bake keeps it whole: simplified, it turned into gems), so every
+# ripe tree in view draws all of its fruit, always: round enough to stay a fruit from the farm's distance, no more.
+const FRUIT_SEGMENTS := 8
+const FRUIT_RINGS := 5
+const BERRY_SEGMENTS := 6      # a cherry or an olive: three times as many to a tree and a third the size
+const BERRY_RINGS := 3
 const FRUIT_SHADER := "res://shaders/fruit3d.gdshader"
 const BLOOM_SHADER := "res://shaders/bloom3d.gdshader"
 # Meta: where the middle a part grows about is, in the part's own space (else its origin).
@@ -151,8 +155,8 @@ static func fruit_ball(parent: Node3D, centre: Vector3, r: float, mat: Material,
 	mesh.radius = r
 	mesh.height = r * 2.0
 	# (plainer in a crowd, as every ball is: an Orchard's trees are seen from further off)
-	mesh.radial_segments = scaled(BALL_SEGMENTS if small else FRUIT_SEGMENTS, 6)
-	mesh.rings = scaled(BALL_RINGS if small else FRUIT_RINGS, 3)
+	mesh.radial_segments = scaled(BERRY_SEGMENTS if small else FRUIT_SEGMENTS, 6)
+	mesh.rings = scaled(BERRY_RINGS if small else FRUIT_RINGS, 3)
 	mi.mesh = mesh
 	mi.position = centre
 	mi.scale = scale

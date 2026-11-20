@@ -1739,6 +1739,13 @@ func fill_of(uid: int) -> BuildingFill:
 
 ## Collected: the building's doors open and what it made pops off (BuildingFill.celebrate).
 ## A harvested tree shakes: it rocks to and fro about its foot and comes to rest (TreeLife).
+## How tall object `uid` stands on the farm (the top of its view's box, kept since it was shown: nothing is built
+## or measured), or 0 if it is not shown.
+func height_of(uid: int) -> float:
+	var v: Dictionary = _views.get(uid, {})
+	return (v["box"] as AABB).end.y if v.has("box") else 0.0
+
+
 func shake(uid: int) -> void:
 	var node := _node(uid)
 	if node == null:

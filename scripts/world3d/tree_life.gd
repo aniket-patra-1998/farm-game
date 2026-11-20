@@ -48,6 +48,7 @@ var _gust_in := 12.0
 var _gust_age := -1.0         # seconds into the gust blowing now (-1: none)
 var _blown := 0.0
 var _bird_in := 8.0
+var _tops := {}   # a tree's id -> how tall its kind stands, measured once (top_of, when there is no farm to ask)
 var _shiver_in := 5.0
 
 
@@ -155,7 +156,20 @@ func blow() -> void:
 ## Where tree `o`'s crown is, in the farm's space.
 func crown_of(o: Dictionary) -> Vector3:
 	var fp := Game.footprint(str(o["id"]))
-	return Vector3(int(o["col"]) + fp.x * 0.5, ScaleGuide.height_of(str(o["id"])) * CROWN_AT, int(o["row"]) + fp.y * 0.5)
+	return Vector3(int(o["col"]) + fp.x * 0.5, top_of(o) * CROWN_AT, int(o["row"]) + fp.y * 0.5)
+
+
+## How tall tree `o` stands: its own height on the farm, which the farm already knows (Objects3D.height_of). Nothing
+## is built to find it: a leaf falls every few seconds and dozens in a gust, and measuring a kind builds its whole
+## model (ScaleGuide). Only with no farm to ask (tests, tools) is its kind measured, once.
+func top_of(o: Dictionary) -> float:
+	var top := objects.height_of(int(o["uid"])) if objects != null else 0.0
+	if top > 0.0:
+		return top
+	var id := str(o["id"])
+	if not _tops.has(id):
+		_tops[id] = ScaleGuide.height_of(id)
+	return _tops[id]
 
 
 ## The colour of tree `o`'s fruit: this tree's own (a kind may have several: TreeModel.picks).
