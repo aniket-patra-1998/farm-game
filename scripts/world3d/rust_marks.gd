@@ -13,6 +13,7 @@ var _material: ShaderMaterial
 var _where: Array[Vector3] = []     # where each sign is (a CPU copy: the GPU's can't be read back everywhere)
 var _ids: Array[String] = []        # the vehicle each is for
 var _shares: Array[float] = []      # its rust, as a share of the most there is
+var _mends: Array[float] = []       # how far its repair is (0: not being repaired)
 var _zoom := 1.0
 
 
@@ -34,19 +35,22 @@ func _ready() -> void:
 
 ## Shows a sign over each of `tops` (the top centre of a rusty vehicle, or of the Garage it stands in) and none
 ## elsewhere: `ids` the vehicles, `shares` each one's rust as a share of the most there is (0..1).
-func show_at(tops: Array[Vector3], ids: Array[String], shares: Array[float]) -> void:
+## `mends`: for each sign, how far its thing's repair is (0: not in for one; a building being repaired keeps its
+## sign, mended gear turning and its pips filling: docs/WEAR.md).
+func show_at(tops: Array[Vector3], ids: Array[String], shares: Array[float], mends: Array[float] = []) -> void:
 	var where: Array[Vector3] = []
 	for top in tops:
 		where.append(top + Vector3(0, ABOVE, 0))
-	if where == _where and ids == _ids and shares == _shares:
+	if where == _where and ids == _ids and shares == _shares and mends == _mends:
 		return
 	_where = where
 	_ids = ids.duplicate()
 	_shares = shares.duplicate()
+	_mends = mends.duplicate()
 	multimesh.instance_count = where.size()
 	for k in where.size():
 		multimesh.set_instance_transform(k, Transform3D(Basis.IDENTITY, where[k]))
-		multimesh.set_instance_custom_data(k, Color(shares[k], 0, 0, 0))
+		multimesh.set_instance_custom_data(k, Color(shares[k], mends[k] if k < mends.size() else 0.0, 0, 0))
 		multimesh.set_instance_color(k, Color.WHITE)
 	visible = not where.is_empty()
 
@@ -58,6 +62,11 @@ func ids() -> Array[String]:
 
 func shares() -> Array[float]:
 	return _shares
+
+
+## ..and how far each one's repair is (0: not being repaired).
+func mends() -> Array[float]:
+	return _mends
 
 
 ## Where sign `k` hovers.

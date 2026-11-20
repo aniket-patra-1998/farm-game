@@ -61,6 +61,7 @@ const PINE_TRUNK_R := 0.055
 
 
 const STEP_LEVEL := 100       # see _step
+const MEND_LEAST := 0.02      # a repair just begun is already told from none (its sign's gear turns)
 const DROP_HEIGHT := 1.4      # tiles above the ground a new thing falls from
 const YARD_HEIGHT := 0.3      # a building's yard and fence, for taps
 const PART_HEIGHT := 1.0      # what stands beside a building (a silo, an annex), for taps
@@ -438,6 +439,7 @@ func _mark_rust() -> void:
 	var tops: Array[Vector3] = []
 	var ids: Array[String] = []
 	var shares: Array[float] = []
+	var mends: Array[float] = []
 	var rust := Game.rust
 	var wear := Game.wear
 	var rusting := rust.is_on() and not rust.vehicles.is_empty()
@@ -446,6 +448,7 @@ func _mark_rust() -> void:
 			var uid := int(o["uid"])
 			var id := ""
 			var share := 0.0
+			var mend := 0.0
 			if not _views.has(uid) or Game.under_construction(o):
 				continue
 			if rusting and Game.kind_of(o) == "vehicle":
@@ -454,16 +457,20 @@ func _mark_rust() -> void:
 				id = rust.rustiest(o.get("inside", {}))
 			if id != "":
 				share = float(rust.level(id)) / rust.max_level()
-			elif wear.needs_repair(o):   # (a worn building wears the same sign: docs/WEAR.md)
+			elif wear.needs_repair(o) or wear.repairing(uid):
+				# (A worn building wears the same sign, and keeps it while it is repaired, its gear turning and its
+				# pips filling as the repair goes: docs/WEAR.md.)
 				id = WearSystem.key_of(uid)
 				share = float(wear.level_of(o)) / wear.max_level()
+				mend = maxf(wear.repair_share(uid), MEND_LEAST) if wear.repairing(uid) else 0.0
 			if id == "":
 				continue
 			var box: AABB = _views[uid]["box"]
 			tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
 			ids.append(id)
 			shares.append(share)
-	_rust_marks.show_at(tops, ids, shares)
+			mends.append(mend)
+	_rust_marks.show_at(tops, ids, shares, mends)
 
 
 ## What drawing everything under `root` costs, counted as the renderer would (for the budget test and tools):

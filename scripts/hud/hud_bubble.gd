@@ -7,6 +7,7 @@ extends PanelContainer
 
 const SHOW_FOR := 3.0         # seconds a bubble stays..
 const SHOW_FOR_ACTION := 5.0  # ..and with a button to press
+const SHOW_FOR_OFFER := 9.0   # ..and with a price to read first (a repair's coins, materials and time)
 const GAP := 6.0              # px between the bubble's point and the thing
 const EDGE := 8.0             # px the bubble keeps from the screen's edges (a thing tapped at an edge)
 const WRAP_AFTER := 26        # characters past which a bubble's words wrap (at ui_theme's `bubble_width`)
@@ -19,6 +20,8 @@ var _rusty := ""           # the vehicle whose repair this bubble offers (show_r
 var _left := 0.0
 var _title: Label
 var _line: Label
+var _costs: HBoxContainer   # what an offer costs, each thing a tile with its count (a repair: _offer)
+var _takes: Label           # ..and how long it takes
 var _open: Button
 var _act: Button          # the one thing to do right here (Feed), done from the bubble itself
 var _rise := 0.0          # px still to rise as it comes in
@@ -36,6 +39,14 @@ func _init(owner: FarmHud) -> void:
 	col.add_child(_title)
 	_line = FloatText.label("", 16, UiTheme.color("float_line"))
 	col.add_child(_line)
+	_costs = HBoxContainer.new()
+	_costs.alignment = BoxContainer.ALIGNMENT_CENTER
+	_costs.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.5))
+	_costs.visible = false
+	col.add_child(_costs)
+	_takes = FloatText.label("", 16, UiTheme.color("float_line"))
+	_takes.visible = false
+	col.add_child(_takes)
 	_open = FloatText.action("info", tr("BUBBLE_OPEN"))
 	_open.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_open.pressed.connect(func() -> void:
@@ -79,23 +90,47 @@ func show_repair(at: Vector2, id: String) -> void:
 		return
 	_uid = -1
 	_rusty = id
-	_present(at, str(Game.item_data(id)["name"]), tr("RUST_REPAIR_BUTTON") % [int(cost["coins"]),
-		FarmGrid.format_duration(int(cost["seconds"]))], false, repair_of(id))
+	_present(at, str(Game.item_data(id)["name"]), "", false, repair_of(id))
+	_offer(int(cost["coins"]), {}, int(cost["seconds"]))
 
 
-## A worn building's repair (docs/WEAR.md): how worn, what it costs (coins and materials), how long, one button.
+## A worn building's repair (docs/WEAR.md): how worn it is, then what the repair costs, each thing a tile of its
+## own (coins, each material, short ones marked), how long it takes, and the one button. Being repaired, it says
+## how long is left and offers nothing.
 func _show_wear_repair(at: Vector2, uid: int, key: String) -> void:
-	var cost := Game.wear.repair_cost(uid)
 	var o := Game.object_by_uid(uid)
-	if cost.is_empty() or o.is_empty():
+	if o.is_empty():
 		return
-	var parts: String = BuildingSystem.describe(cost["materials"])
 	_uid = -1
 	_rusty = key
-	_present(at, Game.name_of(str(o["id"])), (tr("WEAR_LEVEL") % [Game.wear.level_of(o), Game.wear.max_level()])
-		+ "  " + tr("WEAR_REPAIR_BUTTON") % [UiTheme.number(int(cost["coins"])),
-		tr("WEAR_REPAIR_PARTS") % parts if parts != "" else "", FarmGrid.format_duration(int(cost["seconds"]))],
+	if Game.wear.repairing(uid):
+		_present(at, Game.name_of(str(o["id"])),
+			tr("RUST_REPAIR_LEFT") % FarmGrid.format_duration(Game.wear.repair_left(uid)), false, {})
+		return
+	var cost := Game.wear.repair_cost(uid)
+	if cost.is_empty():
+		return
+	_present(at, Game.name_of(str(o["id"])), tr("WEAR_LEVEL") % [Game.wear.level_of(o), Game.wear.max_level()],
 		false, repair_of(key))
+	_offer(int(cost["coins"]), cost["materials"], int(cost["seconds"]))
+
+
+## Adds what the bubble's offer costs under its words: `coins`, each of `materials` ({item id: count}) and the
+## time it takes, the things as the kit's count tiles (one the farm is short of wears the red count).
+func _offer(coins: int, materials: Dictionary, seconds: int) -> void:
+	_costs.add_child(UiKit.count_tile(UiIcon.make("coin"), UiTheme.number(coins), "", Game.coins < coins))
+	for part: String in materials:
+		var need := int(materials[part])
+		var have := int(Game.parts.get(part, 0))
+		# (What the farm has of what it needs, as a recipe's tiles say it: "2/3".)
+		_costs.add_child(UiKit.count_tile(ItemIcons.of(part), "%d/%d" % [mini(have, need), need], "", have < need))
+		(_costs.get_child(-1) as Control).tooltip_text = Game.name_of(part)
+	_costs.visible = true
+	_takes.text = UiTheme.tidy(tr("WEAR_REPAIR_TAKES") % FarmGrid.format_duration(seconds))
+	_takes.visible = true
+	_left = SHOW_FOR_OFFER
+	reset_size()
+	_follow()
 
 
 ## The bubble itself: `title` and `line` over `at`, with the button to its panel (`open`) and the one for `deed`
@@ -109,6 +144,11 @@ func _present(at: Vector2, title: String, line: String, open: bool, deed: Dictio
 	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if long else TextServer.AUTOWRAP_OFF
 	_title.custom_minimum_size.x = UiTheme.size("bubble_width") if long else 0.0
 	_line.visible = line != ""
+	for tile in _costs.get_children():   # (an offer's price is added after: _offer)
+		_costs.remove_child(tile)
+		tile.queue_free()
+	_costs.visible = false
+	_takes.visible = false
 	_open.visible = open
 	_act.visible = not deed.is_empty()
 	if _act.visible:   # (its picture says what; its words are its long-press name)

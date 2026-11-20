@@ -17,7 +17,8 @@ const DAY := 86400.0
 const KEY := "#"   # not-ui (a building's key among the rust signs' ids: "#" + its uid)
 
 ## building uid (as a string) -> {"w": wear gathered by `t`, in seconds at the size-1 pace, "t": when,
-## "p": the pace it has worn at since `t` (_pace), "fix": when its repair is done (0: not being repaired)}
+## "p": the pace it has worn at since `t` (_pace), "fix": when its repair is done (0: not being repaired),
+## "span": how long that repair takes in all (its sign fills as it goes: repair_share)}
 var buildings := {}
 var spoil_t := 0          # when spoiling was last worked out
 var daily_earned := 0.0   # the farm's coins earned a day, averaged over about a week (farm_price follows it)
@@ -86,7 +87,7 @@ func load_from(data: Dictionary) -> void:
 		var b: Variant = saved[key]
 		if typeof(b) == TYPE_DICTIONARY:
 			buildings[key] = {"w": maxf(0.0, float(b.get("w", 0.0))), "t": int(b.get("t", game.now())),
-				"p": maxf(1.0, float(b.get("p", 1.0))), "fix": int(b.get("fix", 0))}
+				"p": maxf(1.0, float(b.get("p", 1.0))), "fix": int(b.get("fix", 0)), "span": int(b.get("span", 0))}
 
 
 func shift_clock(seconds: int) -> void:
@@ -108,7 +109,12 @@ func showcase() -> void:
 	for k in worn.size():
 		var at := roundi(float(k) * max_level() / maxi(worn.size() - 1, 1))
 		buildings[str(worn[k]["uid"])] = {"w": (at + 0.3) * Balance.f("wear.level_days") * DAY, "t": game.now(),
-			"p": _pace(worn[k]), "fix": 0}
+			"p": _pace(worn[k]), "fix": 0, "span": 0}
+	# ..and one of them is in for its repair, half done (its sign turns and fills).
+	if worn.size() > 2:
+		var mid: Dictionary = buildings[str(worn[worn.size() / 2]["uid"])]
+		mid["span"] = int(Balance.a("wear.repair_seconds")[0])
+		mid["fix"] = game.now() + int(mid["span"]) / 2
 
 
 func is_on() -> bool:
@@ -141,7 +147,7 @@ func settle() -> void:
 			var key := str(o["uid"])
 			here[key] = true
 			if not buildings.has(key):
-				buildings[key] = {"w": 0.0, "t": game.now(), "p": _pace(o), "fix": 0}
+				buildings[key] = {"w": 0.0, "t": game.now(), "p": _pace(o), "fix": 0, "span": 0}
 	for key: String in buildings.keys():
 		if not here.has(key):
 			buildings.erase(key)
@@ -204,9 +210,11 @@ func seconds_until_level(o: Dictionary, n: int) -> int:
 	return ceili(left / float(b.get("p", _pace(o)))) + maxi(0, _grace_end() - game.now())
 
 
-## Whether it is too worn to work at all (a home gives nothing, a crafting building starts nothing).
+## Whether it is too worn to work at all (a home gives nothing, a crafting building starts nothing). A repair does
+## not start it again: it works as worn as it is until the repair is done, and worn out is not working (owner,
+## 20 Nov).
 func stopped(o: Dictionary) -> bool:
-	return wears(o) and level_of(o) >= max_level() and not repairing(int(o["uid"]))
+	return wears(o) and level_of(o) >= max_level()
 
 
 ## A home's coins a collect, as a share of a like-new one's.
@@ -244,6 +252,36 @@ func repair_left(uid: int) -> int:
 	if not is_on():
 		return 0
 	return maxi(0, int((buildings.get(str(uid), {}) as Dictionary).get("fix", 0)) - game.now())
+
+
+## How far along `uid`'s repair is, 0 just begun to 1 done (0 when it is not in for one): the sign over it fills.
+func repair_share(uid: int) -> float:
+	var left := repair_left(uid)
+	if left <= 0:
+		return 0.0
+	var span := int((buildings[str(uid)] as Dictionary).get("span", 0))
+	return clampf(1.0 - float(left) / span, 0.0, 1.0) if span > 0 else 0.0
+
+
+## Repairs that have finished since they were last looked at are closed (the building is like new, and wears on
+## from that moment), each said once, and the farm's looks are told. Called on the farm's half-minute timer, as
+## the vehicles' are (RustSystem.finish_repairs); returns the uids it closed.
+func finish_repairs() -> Array[int]:
+	var done: Array[int] = []
+	if not is_on():
+		return done
+	for key: String in buildings:
+		if _repaired(key):
+			_bank(key)
+			done.append(int(key))
+	for uid in done:
+		var o := game.object_by_uid(uid)
+		if not o.is_empty():
+			game.message.emit(tr("WEAR_REPAIR_DONE") % game.name_of(str(o["id"])))
+			game.objects_updated(uid)
+	if not done.is_empty():
+		game.queue_save()
+	return done
 
 
 ## What `o` and its sizes cost: its price (at least farm_price), the coins of its sizes so far, and their
@@ -306,6 +344,7 @@ func repair(uid: int) -> bool:
 	var key := str(uid)
 	_bank(key)
 	buildings[key]["fix"] = game.now() + int(cost["seconds"])
+	buildings[key]["span"] = int(cost["seconds"])
 	game.message.emit(tr("RUST_REPAIR_STARTED") % game.name_of(str(game.object_by_uid(uid)["id"])))
 	game.record("repair", str(game.object_by_uid(uid)["id"]))
 	game.inventory_changed.emit()
@@ -400,4 +439,5 @@ func _bank(key: String) -> void:
 	b["t"] = game.now()
 	if _repaired(key):
 		b["fix"] = 0
+		b["span"] = 0
 		b["p"] = _pace(game.object_by_uid(int(key)))
