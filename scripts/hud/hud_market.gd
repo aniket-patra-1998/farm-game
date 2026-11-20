@@ -137,8 +137,7 @@ func download_card() -> Control:
 	else:
 		box.add_child(BookPanel.text(UiTheme.tidy(tr("LIMITED_DOWNLOAD_WHY") % UiTheme.number(packs.total())),
 			int(UiTheme.design("font_card")), BookPanel.INK))
-		var go := UiKit.primary(Button.new())
-		go.text = tr("LIMITED_DOWNLOAD")
+		var go := UiKit.primary(hud.panel_button(tr("LIMITED_DOWNLOAD")))
 		go.pressed.connect(func() -> void:
 			packs.fetch_all()
 			hud.book.refresh())
