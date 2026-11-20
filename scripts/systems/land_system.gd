@@ -99,7 +99,7 @@ func expansion_needs(b: Dictionary) -> Dictionary:
 func expansion_coins(b: Dictionary) -> int:
 	if expansion_needs(b).is_empty():
 		return 0
-	var price := maxi(int(game.item_data(str(b["id"])).get("cost", 0)), Balance.i("wear.least_price"))
+	var price := game.wear.farm_price(int(game.item_data(str(b["id"])).get("cost", 0)))   # (grows with the farm)
 	var steps := game.level_of(b) - 1   # (0 for the second size)
 	return roundi(price * Balance.f("upgrade.size_coins") * pow(Balance.f("upgrade.step_growth"), steps)
 		* price_climb())

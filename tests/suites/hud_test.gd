@@ -1091,8 +1091,8 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 	_eq(lists.size(), 2, "Make is two card lists: the slots, the recipes")
 	var slots: CardList = lists[0]
 	var recipes: CardList = lists[1]
-	_eq(slots.ids, [HudCrafting.SLOT + "0", HudCrafting.NEXT] as Array[String],
-		"the craft under way and the next star's slot")
+	_eq(slots.ids, [HudCrafting.SLOT + "0", HudCrafting.FREE + "0", HudCrafting.NEXT] as Array[String],
+		"the craft under way, the second slot free (two at 1 star, owner 20 Nov) and the next star's slot")
 	var cooking: Dictionary = slots.face_of.call(slots.ids[0])
 	_eq(cooking["name"], Game.name_of("pumpkin_bread"), "the slot's card names what is cooking")
 	_check(cooking.has("bar") and float(cooking["bar"][0]) < 0.1, "with a bar that has just begun")
@@ -1110,8 +1110,7 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 		"the strip tells what the recipe picked gives (the first there are ingredients for)")
 	var makes: Array = seen["buttons"].get(tr("MAKE_IT"), [])
 	_eq(makes.size(), 1, "one Make button, for the recipe picked")
-	_check((makes[0] as Button).disabled and seen["words"].has(tr("EVERY_SLOT_IS_BUSY")),
-		"which can't start: every slot is busy")
+	_check(not (makes[0] as Button).disabled, "which can start: a slot is free")
 	# The craft finishes while the panel is open: it lands in Goods and the slot is free.
 	Game.debug_time_offset += 3600
 	await get_tree().create_timer(HudCrafting.TICK + 0.3).timeout
@@ -1119,7 +1118,8 @@ func test_373_the_crafting_menu_is_tabs_of_slots_recipe_cards_goods_and_a_pantry
 		await get_tree().process_frame
 	_eq(int(Game.crafting.goods.get("pumpkin_bread", 0)), 1, "the loaf is done, with the panel open")
 	lists = _lists_in(page)
-	_eq((lists[0] as CardList).ids, [HudCrafting.FREE + "0", HudCrafting.NEXT] as Array[String], "its slot shows free")
+	_eq((lists[0] as CardList).ids, [HudCrafting.FREE + "0", HudCrafting.FREE + "1", HudCrafting.NEXT] as Array[String],
+		"its slots show free")
 	(lists[1] as CardList).press("strawberry_shortcake")
 	for f in 3:
 		await get_tree().process_frame

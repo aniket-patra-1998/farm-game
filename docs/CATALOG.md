@@ -1203,12 +1203,12 @@ Shared: `tab` = "crafting", `limit_group` = "crafting", `group_limit` = 3
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Bakery | `bakery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
-| ✅ | Winery | `winery` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
-| ✅ | Spa | `spa` | 25 | 100,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
+| ✅ | Bakery | `bakery` | 25 | 100,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Winery | `winery` | 25 | 100,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Spa | `spa` | 25 | 100,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 | 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |  |  |
 | 🕓 | Spinning Mill | `spinning_mill` | 1 |  |  |  |  |  |  |  |
-| ✅ | Feed Mill | `feed_mill` | 28 | 120,000 | 3x3 | 1 / 2 / 3 / 4 | crafting | 3 crafting |  |  |
+| ✅ | Feed Mill | `feed_mill` | 28 | 120,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 
 ### Storage
 
