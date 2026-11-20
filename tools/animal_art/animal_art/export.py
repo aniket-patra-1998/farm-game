@@ -25,7 +25,9 @@ import numpy as np
 
 from .build import lightest
 from .motion import deform, pose
-from .registry import MADE
+from .geometry import hx
+from .paint import coat_colours
+from .registry import LIMITED, MADE
 from .rig import rig_of
 
 WALK_FRAMES = 8          # (the game blends between neighbours; more frames add size, not smoothness)
@@ -70,13 +72,13 @@ def export(name, path):
     V0, N0 = deform(a, W, pose(rig, _rest()), _rest(), rig)
     T = a["T"]; cols = np.array(a["C"], np.float32); bake = a["bake"]
     # one vertex per (point, colour): neighbouring triangles of different colours keep their own edge
-    key = {}; src = []; vcol = []; idx = np.zeros(T.shape, np.uint32)
+    key = {}; src = []; vcol = []; raw = []; idx = np.zeros(T.shape, np.uint32)
     for ti, t in enumerate(T):
         c = cols[ti]
         for j, v in enumerate(t):
             k = (int(v), c.tobytes())
             if k not in key:
-                key[k] = len(src); src.append(int(v)); vcol.append(c * bake[v])
+                key[k] = len(src); src.append(int(v)); vcol.append(c * bake[v]); raw.append(c)
             idx[ti, j] = key[k]
     src = np.array(src)
     # every point needs a normal: a face drawing's points (eyes, blush) have none of their own, so they take the
@@ -117,9 +119,64 @@ def export(name, path):
     # moves of parts the builder's motion doesn't turn: ears flick, wings open, a turkey's fan
     for mname, V in _part_moves(a, rig, V0).items():
         targets.append((mname, place(V[src]) - pos, np.zeros_like(nor)))
+    uv = uv2 = None
+    row = LIMITED.get(name)
+    if row is not None and row.get("touch"):
+        uv, uv2 = _touch_points(a, row, src, np.array(raw))
+        if row["touch"] == "shake":
+            for mname, V in _shake_moves(a, V0).items():
+                targets.append((mname, place(V[src]) - pos, np.zeros_like(nor)))
     colours = np.c_[np.clip(np.array(vcol, np.float32), 0, 1), np.ones(len(vcol), np.float32)]
-    _write(path, name, pos, nor, colours, idx.reshape(-1), targets)
+    _write(path, name, pos, nor, colours, idx.reshape(-1), targets, uv=uv, uv2=uv2)
     return dict(name=name, vertices=len(pos), triangles=len(T), targets=[t[0] for t in targets], scale=scale)
+
+
+def _head_of(a):
+    """How much of each point is the head (0..1): the skin's own measure, and for the hard parts the skin nearest them."""
+    from scipy.spatial import cKDTree
+    n0 = a["nsoft"]; wh = np.clip(np.asarray(a["wh"], float) * 1.6, 0, 1); rest = a["V"][n0:]
+    return np.concatenate([wh, wh[cKDTree(a["V"][:n0]).query(rest)[1]]]) if len(rest) else wh
+
+
+def _touch_points(a, row, src, raw):
+    """What a limited coat's touch needs to know of each point, carried in the file's two UV sets (the game's shader
+    reads them: shaders/coat_touch.gdshaderinc). UV: how far along the animal the point is (0 at the nose, 1 at the
+    tail), and whether it is part of what the touch moves (the stars of a starry coat; otherwise the painted coat).
+    UV2: how much of the point is the head, and a number of the point's own (a star's place in the twinkling; how
+    high up the animal the point is, for embers)."""
+    P = a["V"][src]; z = a["V"][:, 2]; top = a["V"][:, 1].max()
+    along = (z.max() - P[:, 2]) / max(z.max() - z.min(), 1e-6)
+    if row["touch"] == "stars":
+        mark = np.abs(raw - np.array(hx(row["paint"]["c2"]))).max(axis=1) < 0.02
+        own = np.modf(np.abs(np.floor(P[:, 0] * 3.1) * 0.37 + np.floor(P[:, 2] * 2.3) * 0.61 + np.floor(P[:, 1] * 2.7) * 0.83))[0]
+    else:
+        mark = np.abs(raw[:, None, :] - coat_colours(row)[None, :, :]).max(axis=2).min(axis=1) < 0.02
+        own = P[:, 1] / max(top, 1e-6)
+    return (np.stack([along, mark.astype(float)], 1).astype(np.float32),
+            np.stack([_head_of(a)[src], own], 1).astype(np.float32))
+
+
+SHAKE = dict(turn=0.2, locks=0.22, late=1.1, waves=7.5)   # a coat's shake: radians, the locks' extra and delay, waves along it
+
+
+def _shake_moves(a, V0):
+    """A long coat's shake as two moves the game blends in turn (weights sin and cos of the shake's time: together a
+    twist that runs from the shoulders to the rump). Everything above the hooves turns about the spine, the long hair
+    on the flanks further and a beat late; the head stays still."""
+    rest = a["V"]; body = a["shapes"][0]
+    spine = float(body["c"][1]) if body["kind"] == "ell" else float((body["a"][1] + body["b"][1]) / 2)
+    wide = float(body["r"][0]) if body["kind"] == "ell" else float(body["ra"]); long = rest[:, 2].max() - rest[:, 2].min()
+    y = rest[:, 1]; hold = np.clip((y - 0.13 * spine) / (0.3 * spine), 0, 1) * (1.0 - _head_of(a))
+    locks = np.clip((np.abs(rest[:, 0]) - 0.55 * wide) / (0.3 * wide), 0, 1) * np.clip((spine - y) / (0.45 * spine), 0, 1)
+    kz = SHAKE["waves"] * rest[:, 2] / long
+    turns = {"shake_a": hold * (SHAKE["turn"] * np.cos(kz) + SHAKE["locks"] * locks * np.cos(kz + SHAKE["late"])),
+             "shake_b": -hold * (SHAKE["turn"] * np.sin(kz) + SHAKE["locks"] * locks * np.sin(kz + SHAKE["late"]))}
+    out = {}
+    for mname, ang in turns.items():
+        c, s = np.cos(ang), np.sin(ang); V = V0.copy(); x, yy = V0[:, 0], V0[:, 1] - spine
+        V[:, 0] = x * c - yy * s; V[:, 1] = spine + x * s + yy * c
+        out[mname] = V
+    return out
 
 
 def _owner(a):
@@ -166,7 +223,7 @@ def _part_moves(a, rig, V0):
     return out
 
 
-def _write(path, name, pos, nor, col, ind, targets, uv=None):
+def _write(path, name, pos, nor, col, ind, targets, uv=None, uv2=None):
     blob = bytearray(); views = []; accs = []
 
     def add(arr, comps, ctype, target=None, minmax=False):
@@ -189,6 +246,8 @@ def _write(path, name, pos, nor, col, ind, targets, uv=None):
                  COLOR_0=add(col, "VEC4", FLOAT, 34962),
                  TEXCOORD_0=add(np.zeros((len(pos), 2), np.float32) if uv is None else uv, "VEC2", FLOAT,
                                 34962))   # (importers want UVs; the farmer's say whose colour a point wears)
+    if uv2 is not None:
+        attrs["TEXCOORD_1"] = add(uv2, "VEC2", FLOAT, 34962)   # (a limited coat's touch: _touch_points)
     indices = add(ind.astype(np.uint32), "SCALAR", UINT, 34963)
     # (positions only: a move's change of shading is too small to see, and normals would double the file)
     tgts = [dict(POSITION=add(dp, "VEC3", FLOAT, 34962, True)) for _n, dp, _dn in targets]

@@ -5,8 +5,8 @@ from ..geometry import cone, hx, sphere, tube
 from ..shapes import C, E, both, rotm
 
 
-def rabbit():
-    c, pale, pink = np.array(hx("d9cfc1")), np.array(hx("f5efe6")), np.array(hx("f0b4b8"))
+def rabbit(coat="d9cfc1", pale="f5efe6"):
+    c, pale, pink = np.array(hx(coat)), np.array(hx(pale)), np.array(hx("f0b4b8"))
     bodyc = lambda P: np.where(((P[:, 1] < 0.8) & (np.abs(P[:, 0]) < 0.62))[:, None], pale[None, :], c[None, :])
     s = [E((0, 1.25, -0.1), (0.95, 1.0, 1.25), bodyc), E((0, 1.08, -0.55), (1.02, 0.96, 0.9), bodyc), E((0, 1.35, 0.72), (0.76, 0.82, 0.7), bodyc),
          E((0, 2.3, 1.2), (0.8, 0.76, 0.86), tuple(c), head=True), E((0, 2.05, 1.9), (0.46, 0.38, 0.4), tuple(pale), head=True),

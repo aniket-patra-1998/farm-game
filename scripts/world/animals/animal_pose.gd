@@ -13,6 +13,7 @@ var jaw := 0.0       ## -1..1 chewing
 var blink := 0.0     ## 0 open .. 1 shut
 var ear := 0.0       ## 0 at rest .. 1 mid-flick
 var tail := 0.0      ## radians the tail swings from its rest angle
+var shake := 0.0     ## 0..1 through a shake of its coat (a long coat, now and then); 0 when it isn't shaking
 var breath := 0.0    ## -1..1, the slow rise and fall of the body
 var wing := 0.0      ## birds: 0 folded .. 1 fully open
 var display := 0.0   ## turkeys: 0 tail down .. 1 fanned out

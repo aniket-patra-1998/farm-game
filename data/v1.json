@@ -11,7 +11,8 @@
     "collections": true,
     "ribbons": true,
     "goals": true,
-    "next_ready": false
+    "next_ready": false,
+    "limited": false
   },
   "balance": {},
   "items": [

@@ -28,8 +28,14 @@ float hash(vec3 p) {
 	return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
 }
 
+#include "res://shaders/leaf_touch.gdshaderinc"
+uniform int touch = 0;   // a limited tree's touch on its leaves (leaf_touch.gdshaderinc); 0: none
+
 void vertex() {
 	tint = COLOR.rgb;
+	if (touch != 0) {
+		tint = leaf_touch(touch, tint, (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz - MODEL_MATRIX[3].xyz, TIME);
+	}
 	local = VERTEX;
 	if (sway > 0.0) {
 		vec3 root = MODEL_MATRIX[3].xyz;   // this instance's own foot: a MultiMesh's pieces each sway on their own beat

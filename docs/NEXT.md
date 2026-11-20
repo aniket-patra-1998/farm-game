@@ -1373,6 +1373,28 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Launch: privacy-safe analytics (where players quit, what they buy, unused items) for tuning the economy from real
   play; clock-tamper protection against server time with cloud saves. No AI in the game itself.
 
+## Limited animals (animal-varieties branch, not merged; merging is the owner's call)
+- Built (docs/LIMITED.md; nurture_test 581, hud_test's Market check, showcase_test 106): 56 limited animals and
+  21 babies as files, in the catalog for gems, a Limited tab in the Market, Rare Mystery Baby and Egg, and
+  the owner's chances (0.5% and 5%) for a home's finds to be a limited animal living there.
+- Checked through the rest of the game (limited_test 585 to 587: every one bought, fed, collected, stored, housed,
+  sold, raised, saved; none from a neighbour's gift; none in a release without them). Same sounds as their
+  families, by the owner's word: no new ones.
+- Off in the first release (`data/v1.json` `"limited": false`); the files still ship in the app (about 80 MB).
+- The touches are built (docs/LIMITED.md "Their own touches"; world3d_test 582): seen in the game as a clip at
+  midday, not at night or on a phone.
+- Fetching a limited animal's file when first needed is built and off (docs/PACKS.md; packs_test 583, 584): the
+  owner has to choose where the packs are hosted, then the three steps in PACKS.md turn it on. Not tried on a
+  phone or a real address.
+- Adding one is a fixed path (docs/LIMITED.md "Adding one"): a row in the art tool, `tools/remake_animals.sh`,
+  `tools/precheck.sh`. `tools/make_limited.py` writes its data from the row; its `--check` runs in precheck and CI.
+- Eyes on dark faces have a pale rim and an amber iris (the owner's pick, B, for every animal: 36 files changed,
+  14 of them ordinary animals). Seen as Market pictures, not on the farm or a phone.
+- Next: baby forms for birds and rabbits; limited dogs; a real device check of touches and packs.
+- The showcase holds one limited animal a home and none loose: the heaviest-farm budget has 2,000 triangles
+  of room (world3d_test 338).
+
+
 ## 19 Nov, late: gentler start, rare coop, late-game design
 - Merged: young-farm daily seed help (Game._help_young_farm, Balance economy.young_farm_*), Welcome's last step
   pays 170, rare coop gives its 2 Mystery Eggs (goal reward "eggs"). Tests 585, 586.
@@ -1381,6 +1403,31 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - 19 Nov, later: building wear and climbing upgrade prices built (docs/WEAR.md, tests 587-594). The bot's
   measure: wear is upkeep, not a coin sink (repairs under 1% of earnings with the owner's 40% cap). The idle
   coin pile is still open: asked the owner how sinks should scale with income.
+
+## Trees (tree-polish branch, not merged; merging is the owner's call)
+- Owner's decisions, 19 Nov: the trees' design and crown colours stay; enhance within them. Locked: fruit few
+  and big, in the leaves, none hanging, moving with the crown; rounder leaves tucked in (the sheet's C); a
+  Mystery Seedling grows into a little tree; four motions (leaf fall, a harvest shake, a gust, a fruit that
+  drops and can be tapped); a Rare Mystery Seedling; limited tree varieties as the animals' (same rules, same
+  prices, the Limited tab), with "variety" as one structure over animals and trees.
+- Built here (world3d_test 590, 591): the fruit (TreeModel FRUIT_*, ModelKit.fruit_ball, fruit3d's sway; bake keeps
+  fruit out of the simpler levels, which had turned it into gems from the farm's distance), the leaves
+  (ModelKit SPRIG_LEAF_*, CARD_*), the seedling's stages (YoungModel). Every tree file exported again; seen on the
+  farm in a still at midday, not on a phone.
+- Also built (trees_test 592 to 594): palms and banana trees drawn again (FrondMesh: feather fronds, paddle
+  leaves; frond3d.gdshader bobs each frond; their shapes in tree_shapes.json), and the four motions (TreeLife,
+  FallingBits): a leaf now and then, a gust that bends every tree and blows leaves, a ripe tree dropping a fruit,
+  a harvested tree shaking with its fruit leaping off. All for show: the dropped fruit is not picked up (owner,
+  20 Nov). Seen in the game in stills, not on a phone.
+- Limited trees: built on branch tree-varieties (on top of PR 18 and this branch; not merged). The owner's
+  decisions (20 Nov): five varieties (Galaxy, Rainbow, Golden, Sunset, Cotton Candy, with the animals' touches;
+  Galaxy a deep night blue) of every tree, sold and found by the animals' own rules and prices, on the Limited
+  tab with pictures; "variety" as one structure over animals and trees; a Rare Mystery Seedling; a hummingbird
+  that visits every limited tree and slips into its crown. All of it is in docs/LIMITED.md "Limited trees"
+  (data/varieties.json, tools/make_limited.py, TreeModel's variety look, Hummingbird, TreeLife; limited_test
+  600 to 602, trees_test 603 to 605). Limited trees have no files (built on the device). Seen in the game in
+  stills, not on a phone. Merge order: PR 18, then PR 19, then this one (it holds both).
+
 - 20 Nov: the Economy audit (tools/audit.sh, .github/workflows/audit.yml, data/sim_targets.json) checks every bot
   style on two seeds; the bot was fixed to play like a player (it had never bought a building). Open: the
   plain style's want_days_pct (something to buy costing 1 to 3 visits) misses on some seeds: a pacing gap in
@@ -1396,3 +1443,5 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   visits a day allow about 3 crafts a day; options are for the owner (markup, Bakery price, a second slot).
 - 20 Nov: owner picked a second craft slot at 1 star (every crafting building: one more slot at each star).
   Bakery payback 25 to about 20 days; now short of bushels, still over the 14-day target.
+- 20 Nov: owner left crafting to Claude: bushel_chance 0.2 to 0.3 (0.4 gained nothing), craft payback target
+  14 to 18 days (16 to 17 now). Every audit run meets every target.

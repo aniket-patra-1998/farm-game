@@ -22,6 +22,8 @@ const SUPPLIES := {
 ## withered Single Bloom. The chances and amounts are ours (sources give none).
 const SEEDLING := "mystery_seedling"
 const BABY := "mystery_baby"
+const RARE_BABY := "rare_mystery_baby"   # a rarer find: likelier to be a limited animal (LimitedSystem)
+const RARE_SEEDLING := "rare_mystery_seedling"   # ..and an Orchard's: likelier a rare variety or a limited tree
 const BULB := "mystery_bulb"
 
 var supplies := {}                 # supply id -> how many
@@ -198,8 +200,9 @@ func give_young(young_id: String) -> bool:
 	return becomes != "" and _found(young_id, becomes)
 
 
-## Every grown kind of `kind` (tree, animal) that is not itself a rare find or a young one: what a mystery from a
-## neighbour may turn out to be (a tree's rare sapling still comes by its own chance, in `_pick_tree`).
+## Every grown kind of `kind` (tree, animal) that is not itself a rare find, a limited animal or a young one: what
+## a mystery from a neighbour may turn out to be (a tree's rare sapling still comes by its own chance, in
+## `_pick_tree`).
 func _rare_free(kind: String) -> Array[String]:
 	var rares := {}
 	for k in game.item_order:
@@ -210,7 +213,7 @@ func _rare_free(kind: String) -> Array[String]:
 	for k in game.item_order:
 		var it := game.item_data(k)
 		if str(it.get("kind", "")) == kind and not bool(it.get("young", false)) and not rares.has(k) \
-				and Release.has(k):
+				and Release.has(k) and not game.limited.is_limited(k):   # (a limited animal comes only its own way)
 			out.append(k)
 	return out
 
@@ -267,14 +270,21 @@ func first_of(kind: String) -> String:
 
 # ---------------------------------------------------------------- finding them
 
-## An Orchard was harvested: a Mystery Seedling of its trees, or a Watering Can. Returns popup texts.
+## An Orchard was harvested: a Mystery Seedling of its trees, or a Watering Can. As a home's Mystery Baby
+## (from_home), the seedling is now and then a Rare one, and either may turn out to be a limited tree that
+## already stands in the Orchard (LimitedSystem); nothing else brings one. Returns popup texts.
 func from_orchard(orchard: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	if not game.drops_enabled:
 		return out
-	var becomes := _pick_tree(orchard.get("inside", {}))
-	if becomes != "" and game.rolls.roll("seedling", Balance.f("nurture.seedling_share")) \
-			and _found(SEEDLING, becomes, int(orchard.get("uid", -1))):
+	var plain := game.limited.ordinary(orchard)   # (a limited tree comes only by its own chance, below)
+	var found := false
+	if not plain.is_empty() and game.rolls.roll("seedling", Balance.f("nurture.seedling_share")):
+		var rare := game.limited.rare_find()
+		var limited := game.limited.found_at(orchard, rare)
+		found = _found(RARE_SEEDLING if rare else SEEDLING, limited if limited != "" else _pick_tree(plain, rare),
+			int(orchard.get("uid", -1)))
+	if found:
 		pass   # (said on the Orchard as a find: _found)
 	else:
 		add_supply("watering_can", 1)
@@ -287,20 +297,21 @@ func from_home(home: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	if not game.drops_enabled:
 		return out
-	var inside: Dictionary = home.get("inside", {})
 	if game.special_of(home) == "nursery":
 		add_supply("animal_feed", Balance.i("nurture.nursery_feed"))
 		out.append(tr("ANIMAL_FEED_N") % Balance.i("nurture.nursery_feed"))
 		return out
-	var becomes := _pick_animal(inside)
+	var becomes := _pick_animal(game.limited.ordinary(home))   # (a limited animal comes only by its own chance, below)
 	if becomes == "":
 		return out
 	if game.rolls.roll("home_feed", Balance.f("nurture.home_feed_chance")):
 		add_supply("animal_feed", 1)
 		out.append(tr("ANIMAL_FEED_N") % 1)
-	if game.rolls.roll("mystery_baby", Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost) \
-			and _found(BABY, becomes, int(home.get("uid", -1))):
-		pass   # (said on the home as a find: _found)
+	if game.rolls.roll("mystery_baby", Balance.f("nurture.mystery_baby_chance") * game.feeds.rare_boost):
+		# Now and then the baby is a rare one, and now and then it is one of the home's limited animals.
+		var rare := game.limited.rare_find()
+		var limited := game.limited.found_at(home, rare)
+		_found(RARE_BABY if rare else BABY, limited if limited != "" else becomes, int(home.get("uid", -1)))
 	return out
 
 
@@ -353,13 +364,15 @@ func needs_of(young_id: String) -> int:
 	return (game.catalog.defs[young_id] as YoungDef).needs()
 
 
-## A tree from an Orchard's: likelier the more of it there are; a rare variety now and then.
-func _pick_tree(inside: Dictionary) -> String:
+## A tree from an Orchard's: likelier the more of it there are; a rare variety now and then, far likelier from a
+## Rare Mystery Seedling (`from_rare`).
+func _pick_tree(inside: Dictionary, from_rare := false) -> String:
 	var id := _weighted(inside, func(k: String) -> bool: return str(game.item_data(k).get("kind", "")) == "tree")
 	if id == "":
 		return ""
 	var rare := str(game.item_data(id).get("rare_sapling", ""))
-	if rare != "" and game.items.has(rare) and game.rolls.roll("rare_sapling", Balance.f("nurture.rare_chance")):
+	var chance := Balance.f("nurture.rare_seedling_chance") if from_rare else Balance.f("nurture.rare_chance")
+	if rare != "" and game.items.has(rare) and game.rolls.roll("rare_sapling", chance):
 		return rare
 	return id
 

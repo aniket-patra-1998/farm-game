@@ -165,3 +165,115 @@ func test_123_mystery_bulbs_and_the_bloom_garden() -> void:
 		_check(g.catalog.get_def(o["becomes"]) is BloomDef and not (g.catalog.get_def(o["becomes"]) as BloomDef).is_full(),
 			"a bulb grows into a Single Bloom")
 	_done(g)
+
+
+## How many of `id` have arrived (the Barn, or the inbox when it was full).
+func _arrived(g: GameState, id: String) -> int:
+	var n := 0
+	for o: Dictionary in g.storage.stored:
+		n += 1 if str(o["id"]) == id else 0
+	for m: Dictionary in g.social.inbox:
+		n += 1 if str((m["give"] as Dictionary).get("id", "")) == id else 0
+	return n
+
+
+## Limited animals (the unique coats): sold in the Market for gems only; and a home's finds (a Mystery Baby, a
+## Mystery Egg, a birth) turn out to be one only where one already lives, 0.5% of the time, 5% for a rare find.
+func test_581_limited_animals_are_sold_for_gems_and_found_only_where_one_lives() -> void:
+	var g := _farm(true)
+	var adults := 0
+	for id: String in g.item_order:
+		var a := g.catalog.get_def(id) as AnimalDef
+		if a == null or not a.is_limited():
+			continue
+		if a.is_young():
+			_check(g.limited.is_limited(g.specials.adult_of(id)), "%s is raised into its limited animal" % id)
+			continue
+		adults += 1
+		_check(a.gem_cost() > 0 and a.coin_cost() == 0 and a.in_market(), "%s is sold for gems only" % id)
+		_check(not g.catalog.homes_of(id).is_empty(), "%s has a home" % id)
+	_check(adults >= 50, "the limited animals are in the catalog (%d)" % adults)
+	g.coins = 1000000
+	g.farm_size = GameState.MAX_SIZE
+	g.xp = g.xp_for_level(ShowcaseFarm.top_level(g))
+	g.gems = 0
+	_check(not g.can_afford_item("galaxy_cow"), "coins don't buy one")
+	g.gems = g.catalog.get_def("galaxy_cow").gem_cost()
+	_check(g.can_afford_item("galaxy_cow"), "its gems do")
+	_check(g.buy_and_place("cow_shed", 20, 20), "a dairy farm")
+	var shed := g.object_at(g.index_of(20, 20))
+	_all_materials(g, 8)
+	g.land.add_materials(int(shed["uid"]))
+	# Where none lives, nothing found is limited, however rare the find.
+	shed["inside"] = {"cow": 6}
+	var came := 0
+	for k in 2000:
+		came += 1 if g.limited.found_at(shed, true) != "" else 0
+	_eq(came, 0, "no limited animal from a home that has none")
+	# Where one lives: 0.5% of ordinary finds, 5% of rare ones, and always one that lives there.
+	shed["inside"] = {"cow": 6, "galaxy_cow": 1}
+	g.rng.seed = 7
+	var plain := 0
+	var rare := 0
+	for k in 20000:
+		var one := g.limited.found_at(shed, false)
+		plain += 1 if one != "" else 0
+		_check(one in ["", "galaxy_cow"], "it is one that lives there")
+		rare += 1 if g.limited.found_at(shed, true) != "" else 0
+	_check(plain > 60 and plain < 150, "an ordinary find is limited 0.5%% of the time (%d in 20000)" % plain)
+	_check(rare > 850 and rare < 1150, "a rare find 5%% of the time (%d in 20000)" % rare)
+	# Ordinary finds and births are drawn from the home's other animals, never its limited ones.
+	_eq(g.limited.ordinary(shed), {"cow": 6}, "ordinary finds leave the limited ones out")
+	_eq(g.limited.ordinary({"id": "cow_shed", "inside": {"galaxy_cow": 3}}), {"cow": 3},
+		"a home of limited animals only still gives their plain kind")
+	# A rare baby, and a limited one in it when the chance comes up.
+	Balance.override("nurture.mystery_baby_chance", 1.0)
+	Balance.override("limited.rare_share", 1.0)
+	Balance.override("limited.rare_find_chance", 1.0)
+	_skip(g, g.cycle_of(shed))
+	g.collect(int(shed["uid"]))
+	var babies := _young_all(g, NurtureSystem.RARE_BABY)
+	_eq(babies.size(), 1, "a Rare Mystery Baby is found")
+	_eq(str(babies[0]["becomes"]) if babies.size() == 1 else "", "galaxy_cow", "and it is the home's limited animal")
+	Balance.override("limited.rare_share", 0.0)
+	Balance.override("limited.find_chance", 0.0)
+	_skip(g, g.cycle_of(shed))
+	g.collect(int(shed["uid"]))
+	var ordinary := _young_all(g, NurtureSystem.BABY)
+	_eq(ordinary.size(), 1, "an ordinary Mystery Baby next")
+	_eq(str(ordinary[0]["becomes"]) if ordinary.size() == 1 else "", "cow", "of the home's plain kind")
+	# A birth: the limited animal's own baby when the chance comes up, and the Nursery raises it into the animal.
+	Balance.override("nurture.mystery_baby_chance", 0.0)
+	Balance.override("specials.calf_chance", 1.0)
+	Balance.override("limited.find_chance", 1.0)
+	shed["inside"] = {"cow": 6, "galaxy_cow": 1, "bull": 1}
+	_skip(g, 2 * 86400)   # (a calf a day at most)
+	g.collect(int(shed["uid"]))
+	_eq(_arrived(g, "galaxy_calf"), 1, "a limited calf is born")
+	_eq(g.specials.adult_of("galaxy_calf"), "galaxy_cow", "which grows into the limited cow")
+	Balance.override("limited.find_chance", 0.0)
+	var calves := _arrived(g, "calf")
+	_skip(g, 2 * 86400)
+	g.collect(int(shed["uid"]))
+	_eq(_arrived(g, "calf"), calves + 1, "and otherwise a plain calf, never the limited one's")
+	# An egg: a rare one, with the Coop's limited bird in it, shown when it is opened.
+	Balance.override("limited.rare_share", 1.0)
+	var coop := {"id": "chicken_coop", "uid": 9001, "inside": {"chicken": 10, "silkie_chicken": 1}}
+	var odds := [g.mystery.egg_data["chance_per_chicken"], g.mystery.egg_data["max_chance"]]
+	g.mystery.egg_data["chance_per_chicken"] = 1.0
+	g.mystery.egg_data["max_chance"] = 1.0
+	_eq(g.mystery.find_egg(coop), MysterySystem.RARE_EGG, "a Rare Mystery Egg is found")
+	g.mystery.egg_data["chance_per_chicken"] = odds[0]
+	g.mystery.egg_data["max_chance"] = odds[1]
+	_eq(g.mystery.egg_fates.get(MysterySystem.RARE_EGG, []), ["silkie_chicken"], "with the limited bird in it")
+	var kept := {}
+	g.mystery.save_to(kept)
+	g.mystery.load_from(kept)
+	_eq(g.mystery.egg_fates.get(MysterySystem.RARE_EGG, []), ["silkie_chicken"], "kept through a save")
+	_check(g.mystery.open_mystery_egg(MysterySystem.RARE_EGG) != "", "it opens")
+	_eq(g.mystery.last_rarity, "legendary", "as the rarest prize")
+	_eq(_arrived(g, "silkie_chicken"), 1, "and the limited bird arrives")
+	_check(g.mystery.egg_fates.is_empty(), "once")
+	Balance.reload()
+	_done(g)
+

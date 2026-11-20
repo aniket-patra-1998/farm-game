@@ -1,5 +1,5 @@
 {
-  "_note": "Mystery Eggs from the Chicken Coop. Colour follows the breeds in the coop; rarer colours give better prizes. Each prize: kind (coins, xp, chicken, item, materials, unwither, farmhand, arborist, gems), amount or item, weight.",
+  "_note": "Mystery Eggs from the Chicken Coop. Colour follows the breeds in the coop; rarer colours give better prizes. Each prize: kind (coins, xp, chicken, item, materials, unwither, farmhand, arborist, gems), amount or item, weight. The Rare Mystery Egg is not a breed's colour: any egg found is a rare one now and then (LimitedSystem), with better prizes and a better chance of a limited animal.",
   "chance_per_chicken": 0.005,
   "max_chance": 0.4,
   "colours": {
@@ -210,6 +210,31 @@
           "xp",
           150,
           20
+        ]
+      ]
+    },
+    "rare": {
+      "name": "Rare Mystery Egg",
+      "prizes": [
+        [
+          "gems",
+          3,
+          25
+        ],
+        [
+          "chicken",
+          "golden_chicken",
+          25
+        ],
+        [
+          "materials",
+          12,
+          25
+        ],
+        [
+          "xp",
+          200,
+          25
         ]
       ]
     }

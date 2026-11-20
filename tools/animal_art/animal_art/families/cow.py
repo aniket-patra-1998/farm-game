@@ -65,6 +65,12 @@ def cow(b):
         # dark lower legs, ears and tail tuft, a pale ring round the muzzle
         bodyc, headc, earc, muzc = tuple(coat), tuple(coat), tuple(c2), tuple(np.minimum(1, coat * 0.3 + 0.66))
         legc0 = lambda P: np.where((P[:, 1] < ll * 0.45)[:, None], c2[None, :], coat[None, :])
+    elif pat == "panda":
+        # white, with black ears, eye patches and legs, and a black band over the shoulders
+        bodyc = lambda P: np.where(((P[:, 2] > rz * 0.28) & (P[:, 2] < rz * 0.72))[:, None], c2[None, :], coat[None, :])
+        headc = lambda P: np.where(((np.abs(np.abs(P[:, 0]) - skw * 0.52) < skw * 0.3) & (np.abs(P[:, 1] - hy - skh * 0.08) < skh * 0.36) & (P[:, 2] > hz - skl * 0.1))[:, None],
+                                   c2[None, :], coat[None, :])
+        earc, muzc, legc0 = tuple(c2), tuple(coat), tuple(c2)
     else:
         if b.get("dark_front"):
             dk = coat * 0.66
@@ -100,6 +106,17 @@ def cow(b):
     s.append(C(t0, tm, 0.19, 0.14, tailc, k=0.12))
     s.append(C(tm, te, 0.14, 0.1, tailc, k=0.1))
     s.append(E(te + np.array([0, -0.22, 0]), (0.27, 0.46, 0.27), tuftc, k=0.07))
+    if b.get("fur") == "shaggy":
+        # a long coat: a fringe over the brow, locks down the cheeks, a ruff on the chest and a skirt of locks along the flanks
+        dk = tuple(coat * 0.8); lt = tuple(np.minimum(1, coat * 1.22))
+        for x in (-0.5, 0.0, 0.5):
+            s.append(E((x * skw, hy + skh * 0.5 - abs(x) * 0.1, hz + skl * 0.72), (skw * 0.34, skh * 0.62, skl * 0.34), lt if x == 0 else dk, head=True, rx=0.35, k=0.07))
+        s += both(E, (skw * 0.82, hy - skh * 0.35, hz + skl * 0.15), (0.24, 0.5, 0.32), dk, head=True, k=0.08)
+        s.append(E((0, yb - ry * 0.3, rz * 0.98), (rx * 0.72, ry * 0.85, 0.46), dk, k=0.12))
+        for i, z in enumerate(np.linspace(-rz * 0.8, rz * 0.8, 7)):
+            s += both(E, (rx * 0.9, yb - ry * 0.66, z), (0.3, 0.7, 0.26), dk if i % 2 else lt, rz=0.22, k=0.06)
+        for z in (lz, -lz - 0.03):
+            s += both(E, (lx, 0.5, z), (lr * 1.5, 0.34, lr * 1.5), lt, k=0.07)
     hard = []
     hl = {"none": 0.0, "nubs": 0.34, "short": 0.62, "up": 0.95, "long": 1.55}[b["horns"]]
     if hl > 0:

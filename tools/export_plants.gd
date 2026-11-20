@@ -23,7 +23,9 @@ func _ready() -> void:
 	var n := 0
 	for id: String in Game.item_order:
 		var kind := str(Game.items[id].get("kind", ""))
-		if not kind in ["tree", "bloom"]:
+		# (A limited tree has no file: there are five of every tree, some 60 MB of them, so each is built on the
+		# device the first time it is shown and kept there: ModelStore.)
+		if not kind in ["tree", "bloom"] or Game.limited.is_limited(id):
 			continue
 		var path := (TREES if kind == "tree" else BLOOMS) + id + ".scn"
 		_save(_tree(id) if kind == "tree" else _bloom(id), path)

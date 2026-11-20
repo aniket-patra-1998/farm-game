@@ -217,6 +217,21 @@
         "product": {
           "type": "string",
           "doc": "What it gives, as shown to the player."
+        },
+        "limited": {
+          "type": "bool",
+          "default": false,
+          "doc": "A limited animal or tree (LimitedSystem, docs/LIMITED.md): a variety sold in the Market for gems; a home's finds turn out to be one only where one already lives. A limited animal's baby is limited too."
+        },
+        "touch": {
+          "type": "string",
+          "default": "",
+          "doc": "A limited one's own touch (docs/LIMITED.md): stars (they blink), rainbow (its colours turn), sunset (they sway), glint (one runs over it), embers (they flicker), shake (it shakes out, shedding a little). An animal's file carries what its touch needs (tools/animal_art limited.py TOUCH); a tree's is drawn by its builder."
+        },
+        "variety": {
+          "type": "string",
+          "default": "",
+          "doc": "The variety a limited one is (data/varieties.json: galaxy, rainbow...): one variety can be worn by animals and by trees."
         }
       }
     },
@@ -234,6 +249,11 @@
           "type": "string",
           "ref": "Tree",
           "doc": "For a rare variety: the tree it sprouts from."
+        },
+        "limited_of": {
+          "type": "string",
+          "ref": "Tree",
+          "doc": "For a limited tree: the plain tree it is a variety of (its shape and fruit; what an Orchard of only limited trees still finds)."
         }
       },
       "lifecycle": {

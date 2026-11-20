@@ -342,7 +342,8 @@ func test_53_orchard_harvests_give_mystery_seedlings_or_watering_cans() -> void:
 	for k in 200:
 		_skip(g, g.cycle_of(orch))
 		g.collect(int(orch["uid"]))
-	var seedlings: Array = _young_all(g, "mystery_seedling")
+	# (Now and then the seedling is a Rare one: limited_test 601.)
+	var seedlings: Array = _young_all(g, "mystery_seedling") + _young_all(g, NurtureSystem.RARE_SEEDLING)
 	var cans := g.nurture.has_supply("watering_can")
 	_eq(seedlings.size() + cans, 200, "every harvest gave one or the other")
 	_check(seedlings.size() > 70 and seedlings.size() < 130, "about half of them seedlings (%d)" % seedlings.size())

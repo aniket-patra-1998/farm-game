@@ -10,6 +10,9 @@ from .families.sheep import SHEEP, sheep
 from .families.small import bee, rabbit, turtle
 
 
+from . import limited
+from .paint import repaint
+
 MADE = {"rabbit": (rabbit, 0.29), "turtle": (turtle, 0.34), "bee": (bee, 0.2),
         }
 
@@ -37,23 +40,37 @@ for _n, _b in DOGS.items():
     MADE[_n + " pup"] = ((lambda bb=_y: dog(bb)), _y["rel"])
 
 
+def _cria(b):
+    return young(b, legs=0.9, body=0.76, muzzle=0.8, skull=1.1, tail=0.9, rel=0.58, neck_len=0.72)
+
+
 for _n, _b in CAMELIDS.items():
     MADE[_n] = ((lambda bb=_b: camelid(bb)), _b["rel"])
-    _y = young(_b, legs=0.9, body=0.76, muzzle=0.8, skull=1.1, tail=0.9, rel=0.58, neck_len=0.72)
+    _y = _cria(_b)
     MADE["baby " + _n] = ((lambda bb=_y: camelid(bb)), _y["rel"])
+
+
+def _kid(b):
+    y = young(b, legs=0.9, body=0.74, muzzle=0.8, skull=1.1, tail=0.9, rel=0.55)
+    y.update(horns=0.0, beard=0.0)
+    return y
 
 
 for _n, _b in GOATS.items():
     MADE[_n] = ((lambda bb=_b: goat_t(bb)), _b["rel"])
-    _y = young(_b, legs=0.9, body=0.74, muzzle=0.8, skull=1.1, tail=0.9, rel=0.55)
-    _y.update(horns=0.0, beard=0.0)
+    _y = _kid(_b)
     MADE["kid of " + _n] = ((lambda bb=_y: goat_t(bb)), _y["rel"])
+
+
+def _lamb(b):
+    y = young(b, legs=0.92, body=0.74, muzzle=0.8, skull=1.1, tail=0.8, rel=0.55)
+    y.update(horns=False, wool=b["wool"] * 0.85)
+    return y
 
 
 for _n, _b in SHEEP.items():
     MADE[_n] = ((lambda bb=_b: sheep(bb)), _b["rel"])
-    _y = young(_b, legs=0.92, body=0.74, muzzle=0.8, skull=1.1, tail=0.8, rel=0.55)
-    _y.update(horns=False, wool=_b["wool"] * 0.85)
+    _y = _lamb(_b)
     MADE["lamb of " + _n] = ((lambda bb=_y: sheep(bb)), _y["rel"])
 
 
@@ -66,10 +83,15 @@ _y.update(horns=False, wool=0.85, coat="fbf6ec", face="d9cfc0", legs_col="d9cfc0
 MADE["lamb"] = ((lambda bb=_y: sheep(bb)), _y["rel"])
 
 
+def _piglet(b):
+    y = young(b, legs=0.82, body=0.76, muzzle=0.78, skull=1.12, tail=0.8, rel=0.5)
+    y.update(seed=8)
+    return y
+
+
 for _n, _b in PIGS.items():
     MADE[_n] = ((lambda bb=_b: pig(bb)), _b["rel"])
-    _y = young(_b, legs=0.82, body=0.76, muzzle=0.78, skull=1.12, tail=0.8, rel=0.5)
-    _y.update(seed=8)
+    _y = _piglet(_b)
     MADE[_n.replace(" pig", "") + " piglet"] = ((lambda bb=_y: pig(bb)), _y["rel"])
 
 
@@ -82,20 +104,56 @@ _y.update(coat="f9c8ca", coat2="e79aa0")
 MADE["piglet"] = ((lambda bb=_y: pig(bb)), _y["rel"])
 
 
+def _calf(b):
+    y = young(b, legs=0.86, body=0.72, muzzle=0.82, skull=1.1, tail=0.7, rel=0.6)
+    y.update(horns="none", udder=False, hump=0.0, seed=b.get("seed", 1) + 3)
+    return y
+
+
 for _n, _b in COWS.items():
     MADE[_n] = ((lambda bb=_b: cow(bb)), _b["rel"])
     if _n not in ("bull", "ox"):
-        _y = young(_b, legs=0.86, body=0.72, muzzle=0.82, skull=1.1, tail=0.7, rel=0.6)
-        _y.update(horns="none", udder=False, hump=0.0, seed=_b.get("seed", 1) + 3)
+        _y = _calf(_b)
         MADE[_n.replace(" cow", "") + " calf"] = ((lambda bb=_y: cow(bb)), _y["rel"])
+
+
+def _foal(b):
+    y = young(b, legs=0.9, body=0.7, muzzle=0.78, skull=1.08, tail=0.55, rel=0.62, mane=0.45)
+    y.update(seed=5)
+    return y
 
 
 for _n, _b in HORSES.items():
     MADE[_n] = ((lambda bb=_b: horse(bb)), _b["rel"])
     if _n != "donkey":
-        _y = young(_b, legs=0.9, body=0.7, muzzle=0.78, skull=1.08, tail=0.55, rel=0.62, mane=0.45)
-        _y.update(seed=5)
+        _y = _foal(_b)
         MADE[_n + " foal"] = ((lambda bb=_y: horse(bb)), _y["rel"])
+
+
+# limited coats (limited.py): each a row of its family, made as the family makes its breeds and then painted, with its
+# baby by the family's rule
+def _made(fn, row):
+    """A limited animal's maker: the family's template on its row, then the pattern and tufts the row asks for."""
+    def make():
+        shapes, hard, face = fn(row)
+        return repaint(shapes, row), hard, face
+    return make
+
+
+LIMITED = {}   # a limited animal's name -> its row (the export reads its touch and its coat from it)
+for _rows, _fn, _baby, _word in ((limited.COWS, cow, _calf, "calf"), (limited.HORSES, horse, _foal, "foal"), (limited.PIGS, pig, _piglet, "piglet"),
+                                 (limited.SHEEP, sheep, _lamb, "lamb"), (limited.GOATS, goat_t, _kid, "kid"),
+                                 (limited.CAMELIDS, camelid, _cria, "cria"), (limited.BIRDS, bird_t, None, "")):
+    for _n, _b in _rows.items():
+        MADE[_n] = (_made(_fn, _b), _b["rel"])
+        LIMITED[_n] = _b
+        if _baby:
+            _y = _baby(_b)
+            MADE[limited.baby_name(_n, _word)] = (_made(_fn, _y), _y["rel"])
+            LIMITED[limited.baby_name(_n, _word)] = _y
+for _n, _b in limited.RABBITS.items():
+    MADE[_n] = (_made((lambda row: rabbit(row["coat"], row["pale"])), _b), 0.29)
+    LIMITED[_n] = _b
 
 
 # the game's own names for animals built under a longer name here
@@ -126,6 +184,8 @@ GAME = {
     "turtle": ["turtle"],
     "bee": ["bee"],
 }
+for _k, _names in limited.GAME.items():
+    GAME[_k] = GAME[_k] + _names
 _IN_GAME = {n for names in GAME.values() for n in names} | {"dairy cow", "dairy calf", "pink pig", "pink piglet", "horse foal", "gray horse foal",
                                                             "white stallion"}
 PARKED = sorted(n for n in MADE if n not in _IN_GAME)      # built, but not in the game: optional additions

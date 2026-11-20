@@ -17,7 +17,26 @@ func test_106_the_showcase_farm_has_everything_laid_out() -> void:
 	var placed := {}
 	for o in g.objects:
 		placed[o["id"]] = int(placed.get(o["id"], 0)) + 1
+	# (Limited animals and trees are the one exception: one lives in each home that takes them, and none stands
+	# loose but one tree of each variety: each coat is a file of its own and every tree comes in five, which the
+	# heaviest farm's budget has no room for.)
+	var homes_with := 0
+	var loose := {}   # a tree variety -> how many of it stand loose
+	for o in g.objects:
+		var limited := g.limited.held(o.get("inside", {}))
+		homes_with += 1 if not limited.is_empty() else 0
+		_check(limited.size() <= 1, "%s holds one limited kind at most" % o["id"])
+		if g.limited.is_limited(str(o["id"])):
+			_eq(g.kind_of(o), "tree", "%s stands loose: only a limited tree does" % o["id"])
+			var variety := str(g.item_data(str(o["id"])).get("variety", ""))
+			loose[variety] = int(loose.get(variety, 0)) + 1
+	_check(homes_with >= 9, "a limited animal or tree lives in each home that takes them (%d homes)" % homes_with)
+	for variety: String in Varieties.of_trees():
+		_eq(int(loose.get(variety, 0)), 1, "one %s tree stands on the farm" % variety)
+	_eq(loose.size(), Varieties.of_trees().size(), "and no other limited thing does")
 	for id in g.items:
+		if g.limited.is_limited(id):
+			continue
 		if ZONE_KINDS.has(str(g.items[id].get("kind", ""))):
 			# (A vehicle is on the farm or parked in the Garage, never both.)
 			_check(placed.has(id) or g.buildings.owned(id) > 0, "%s is on the farm" % id)

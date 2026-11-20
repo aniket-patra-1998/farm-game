@@ -19,13 +19,21 @@
           "needs": 8,
           "grows": "tree",
           "color": "#6aa84f"
+        },
+        {
+          "id": "rare_mystery_seedling",
+          "name": "Rare Mystery Seedling",
+          "supply": "watering_can",
+          "needs": 8,
+          "grows": "tree",
+          "color": "#f2c230"
         }
       ]
     },
     {
       "id": "babies",
       "name": "Babies",
-      "doc": "From animal home harvests; 8 Animal Feed raise one into an animal of the home's kinds.",
+      "doc": "From animal home harvests; 8 Animal Feed raise one into an animal of the home's kinds. A Rare Mystery Baby is the same, found less often and likelier to be one of the home's limited animals.",
       "defaults": {},
       "variants": [
         {
@@ -35,6 +43,14 @@
           "needs": 8,
           "grows": "animal",
           "color": "#c9a46a"
+        },
+        {
+          "id": "rare_mystery_baby",
+          "name": "Rare Mystery Baby",
+          "supply": "animal_feed",
+          "needs": 8,
+          "grows": "animal",
+          "color": "#f2c230"
         }
       ]
     },

@@ -28,6 +28,7 @@ var _pass: Array[int] = []        # each slot's render under way: 0 on black, 1 
 var _read: Array[int] = []        # each slot's read back: 0 not asked, 1 under way (GpuRead), 2 come
 var _got: Array = []              # each slot's image read back
 var _blacks: Array[Image] = []    # each slot's render on black, kept until the one on white comes
+var _stand_in: Array[bool] = []   # each slot's item drawn by its stand-in (its file's pack is not here): not kept
 var _developing: Array[IconDevelop] = []
 
 
@@ -47,6 +48,9 @@ func _ready() -> void:
 		_read.append(0)
 		_got.append(null)
 		_blacks.append(null)
+		_stand_in.append(false)
+	if AssetPacks.shared != null and not AssetPacks.shared.arrived.is_connected(remake):
+		AssetPacks.shared.arrived.connect(remake)   # (a static: connected once, whichever renderer is first)
 
 
 ## One small viewport with its own world, camera and a studio's lights: a warm key with soft shadows, a cool
@@ -100,7 +104,7 @@ func _process_timed(_delta: float) -> void:
 	PerfReadout.stop("pictures_style", pt)
 	for k in SLOTS:
 		if _making[k] != "":
-			_finish(k, keep)
+			_finish(k, keep and not _stand_in[k])
 	var started := Time.get_ticks_msec()
 	for k in SLOTS:
 		if ItemIcons._waiting.is_empty() or (k > 0 and Time.get_ticks_msec() - started > BUDGET_MS):
@@ -189,12 +193,24 @@ func _show_and_keep(job: IconDevelop) -> void:
 			picture.save_png(path)))
 
 
+## Files that were not in the app have arrived (AssetPacks.arrived): the pictures shown of their stand-ins are
+## made again, of the files.
+static func remake(paths: Array[String]) -> void:
+	for id: String in ItemIcons._textures:
+		var file := AssetRegistry.file_of(AssetRegistry.entry(id.split(ItemIcons.SIZED)[0]), {})
+		if file in paths and not ItemIcons._waiting.has(id):
+			ItemIcons._waiting.append(id)
+
+
 ## Builds the item's model in slot `k` and points its camera at it, so it fills the picture. False when the item
 ## has no model (its card keeps a blank picture; nothing is drawn or saved).
 func _set_up(k: int, id: String) -> bool:
 	ModelKit.lods = false     # (a picture is drawn once, close up: simpler levels would be wasted work)
+	AssetRegistry.fetches = false   # (nor does a picture fetch a pack: a stand-in's picture is shown, not kept)
 	var model := model(id)
+	AssetRegistry.fetches = true
 	ModelKit.lods = true
+	_stand_in[k] = AssetRegistry.away(id.split(ItemIcons.SIZED)[0])
 	if model == null:
 		return false
 	var stage := Node3D.new()

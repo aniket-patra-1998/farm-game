@@ -37,6 +37,10 @@ file per hair style. It uses the same skin, drawings and painted light, with its
 - **A breed**: add a row to the family's table (for example `COWS` in `families/cow.py`). Its baby follows from the
   family's rule in `registry.py`.
 - **A bird kind**: add a row to `BIRDS` in `families/bird.py`.
+- **A limited coat** (the game's limited animals, docs/LIMITED.md): add a row to its family's table in `limited.py`,
+  made from one of the family's breeds. A pattern is asked for with `paint=dict(kind=...)` and curls with `tufts=1`
+  (`paint.py`: stripes, stars, dots, patches, rainbow, dip, band, half); the registry gives it its baby by the
+  family's rule. A coat that turns colour does it in flat bands (`paint._steps`), or its file is five times the size.
 - **A family**: write a template in `families/`. Two things are asked of it: its first shape is the body, and the
   head's shapes are marked `head=True`. Mark a part only when the animation must know it (`part="stub"`: a leg that
   slides under a shell). Then register it in `registry.py`.
@@ -45,11 +49,24 @@ file per hair style. It uses the same skin, drawings and painted light, with its
 
     python3 -m animal_art export ../../art/models/animals "chicken"
 
-writes `art/models/animals/chicken.glb`: the mesh at rest with its colours and painted light, and its moves as
+writes `art/models/animals/chicken.glb` (a limited animal's file goes to `art/models/limited/` beside it): the mesh at rest with its colours and painted light, and its moves as
 blend shapes (`export.py`: the walk cycle in 12 frames, head down, look left and right, blink, tail, breath),
 each made by this package's own motion. Listed in `data/assets.json` (`"budget": "animal"`), the game draws it
 instead of the code-built animal and sets the blend shapes from the pose it already works out
 (`Animal3D._pose_file`). Moves the file doesn't have are simply not shown.
+
+One command makes every animal's file again and brings the game's lists in step (run it after any change to this
+package, or after adding a row):
+
+    bash tools/remake_animals.sh path/to/godot
+
+It exports every game animal, writes the data of any limited coat that has none yet (`tools/make_limited.py`),
+imports the files, and makes the art versions, the art manifest, the catalog document and the strides again.
+An animal whose builder did not change comes out byte for byte the same.
+
+**Eyes on dark faces**: an eye whose face is dark (`face.DARK_FACE`) gets a pale rim in place of its dark
+outline and an amber iris (`decal.PALE_RIM`, `AMBER`), or it is lost from the farm's distance. It is decided for
+each eye by the colour under it, so an animal with one eye in a dark patch has one light eye.
 
 ## Not done
 

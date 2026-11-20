@@ -4,8 +4,12 @@ extends RefCounted
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
 ## [kind, title key] of the Market's shelves, in order.
-const SHELVES := [["tree", "TREES"], ["bloom", "BLOOMS"], ["animal", "ANIMALS"], ["building", "BUILDINGS"],
-	["vehicle", "VEHICLES"], ["decor", "DECORATIONS"]]
+const SHELVES := [["tree", "TREES"], ["bloom", "BLOOMS"], ["animal", "ANIMALS"], [LIMITED, "LIMITED"],
+	["building", "BUILDINGS"], ["vehicle", "VEHICLES"], ["decor", "DECORATIONS"]]
+## The Limited shelf is not a kind of item: the limited animals and trees (LimitedSystem) have it to themselves,
+## after the Animals shelf, and are not on their kinds' own shelves.
+const LIMITED := "limited"   # not-ui
+const LIMITED_KINDS := [["animal", "ANIMALS"], ["tree", "TREES"]]   # the Limited shelf's sections, in order
 ## The Buildings shelf in FarmVille's sections, by each building's `tab` (BuildingDef.tab), crafting buildings
 ## among them.
 const BUILDING_TABS := [["animal", "ANIMAL_BUILDINGS"], ["storage", "STORAGE_BUILDINGS"],
@@ -28,7 +32,7 @@ func _init(owner: FarmHud) -> void:
 				_sections[tab] = [] as Array[String]
 			(_sections[tab] as Array[String]).append(id)
 		else:
-			var kind := str(Game.item_data(id)["kind"])
+			var kind := LIMITED if Game.limited.is_limited(id) else str(Game.item_data(id)["kind"])
 			if not _shelves.has(kind):
 				_shelves[kind] = [] as Array[String]
 			(_shelves[kind] as Array[String]).append(id)
@@ -41,8 +45,25 @@ func tabs() -> Array:
 	var out: Array = [[tr("SEED_LIST"), hud.seeds.build_seeds]]
 	for shelf: Array in SHELVES:
 		var kind := str(shelf[0])
+		if kind == LIMITED and shelf_items(kind).is_empty():
+			continue   # (a release without limited things has no such tab)
 		out.append([tr(str(shelf[1])), func(content: VBoxContainer) -> void: build_shelf(content, kind)])
 	return out
+
+
+## The tab that sells `id` (an item, or a kind of item): Seeds is tab 0 and the shelves follow; the first shelf for
+## anything else.
+func tab_for(id: String) -> int:
+	var d := Game.catalog.get_def(id)
+	var kind := LIMITED if Game.limited.is_limited(id) else (d.kind if d != null else id)
+	var tab := 0
+	for shelf: Array in SHELVES:
+		if str(shelf[0]) == LIMITED and shelf_items(LIMITED).is_empty():
+			continue
+		tab += 1
+		if str(shelf[0]) == kind:
+			return tab
+	return 1
 
 
 ## Everything of one kind for sale, as a grid of cards (its picture, name, a line about it, its price), under a
@@ -59,7 +80,14 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	var tell := func(id: String, it: Dictionary, why: String) -> void: show_about(strip, about, id, it, why)
 	if kind == "decor":
 		singles.append([_single(content), mystery_box_card])   # (the Mystery Box first among the decorations)
-	if kind != "building":
+	if kind == LIMITED:
+		# Animals, then trees: each kind of limited thing under its own heading (when there is more than one).
+		var parts := LIMITED_KINDS.filter(func(part: Array) -> bool: return not limited_section(str(part[0])).is_empty())
+		for part: Array in parts:
+			if parts.size() > 1:
+				content.add_child(BookPanel.text(tr(str(part[1])), int(UiTheme.design("font_section")), BookPanel.HEAD))
+			lists.append(_add_list(content, limited_section(str(part[0])), tell))
+	elif kind != "building":
 		lists.append(_add_list(content, shelf_items(kind), tell))
 	else:
 		for section: Array in BUILDING_TABS:
@@ -126,6 +154,11 @@ func _shelf_ids(kind: String) -> Array[String]:
 ## The items of one kind for sale, in catalog order (buildings have their own sections: building_section).
 func shelf_items(kind: String) -> Array[String]:
 	return _shelves.get(kind, [] as Array[String])
+
+
+## The limited things of one kind (animal, tree) for sale, in catalog order: a section of the Limited shelf.
+func limited_section(kind: String) -> Array[String]:
+	return shelf_items(LIMITED).filter(func(id: String) -> bool: return str(Game.item_data(id)["kind"]) == kind)
 
 
 ## The buildings for sale in one section of the Buildings shelf (their catalog `tab`), in catalog order.

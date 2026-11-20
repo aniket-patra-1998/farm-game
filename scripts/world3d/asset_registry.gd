@@ -31,6 +31,7 @@ const CROP := "crop:"   # a crop form's entry: crop:<form> (CropModels.mesh)
 ## there keeps its meshes unsafely for threads, and meshes made on two threads at once broke each other (engine
 ## errors in about one precheck in two). Test 453 turns it on for its own few files.
 static var threaded := DisplayServer.get_name() != "headless"   # not-ui (a display server's name)
+static var fetches := true   # whether a file left out of the app has its pack fetched when asked for (IconMaker)
 static var _data := {}
 static var _read := false
 static var _scenes := {}     # path -> PackedScene, its materials already made masters
@@ -90,6 +91,13 @@ static func file_of(e: Dictionary, state: Dictionary) -> String:
 	if bool(state.get("broken", false)) and e.has("broken"):
 		return str(e["broken"])   # (standing broken: the starter Barn before it is repaired)
 	return str(e.get("model", "")).replace(LEVEL, str(int(state.get("level", 1))))
+
+
+## Whether `id`'s file is left out of the app and its pack is not on this device yet: what is drawn for it until
+## then is its stand-in.
+static func away(id: String) -> bool:
+	var file := file_of(entry(id), {})
+	return AssetPacks.shared != null and not ResourceLoader.exists(file) and AssetPacks.shared.away(file)
 
 
 ## Whether item `id` going up is drawn from files too (its entry's `site`).
@@ -194,6 +202,8 @@ static func _scene(path: String) -> PackedScene:
 	if _scenes.has(path):
 		return _scenes[path]
 	if path == "" or not ResourceLoader.exists(path):
+		if AssetPacks.shared != null and AssetPacks.shared.want(path, fetches):
+			return null   # (not in the app: its pack is on its way, and the stand-in is drawn until it arrives)
 		_say(path, "is missing")   # not-ui (a log line)
 		return null
 	var scene: PackedScene = (ResourceLoader.load_threaded_get(path) if _loading.has(path) else load(path)) as PackedScene

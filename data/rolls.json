@@ -172,6 +172,18 @@
         "per": "week",
         "most": 1
       }
+    },
+    "rare_find": {
+      "vip": false,
+      "what": "a Mystery Baby or Mystery Egg found is a rare one"
+    },
+    "limited_find": {
+      "vip": false,
+      "what": "a find or birth at a home is one of the limited animals living there (the owner's 0.5%)"
+    },
+    "limited_rare_find": {
+      "vip": false,
+      "what": "a rare find at a home is one of the limited animals living there (the owner's 5%)"
     }
   }
 }

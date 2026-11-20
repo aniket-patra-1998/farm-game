@@ -7,7 +7,10 @@ extends GameSystem
 # A prize is uncommon, rare, legendary when its share of the weights is under these.
 const RARE_SHARES: Array[float] = [0.3, 0.12, 0.04]
 
+const RARE_EGG := "rare"           # not-ui (the Rare Mystery Egg's key among data/mystery_eggs.json's colours)
+
 var mystery_eggs := {}             # egg colour -> count
+var egg_fates := {}                # egg colour -> the limited animals waiting in eggs of it (item ids, oldest first)
 var last_rarity := "common"        # how rare the prize last opened was (the reveal reads it)
 var egg_data := {}                 # data/mystery_eggs.json
 var box_data := {}                 # data/mystery_box.json
@@ -24,14 +27,25 @@ func load_data() -> void:
 
 func reset() -> void:
 	mystery_eggs = {}
+	egg_fates = {}
 
 
 func save_to(data: Dictionary) -> void:
 	data["mystery_eggs"] = mystery_eggs
+	data["egg_fates"] = egg_fates
 
 
 func load_from(data: Dictionary) -> void:
 	mystery_eggs = int_map(data.get("mystery_eggs", {}))
+	egg_fates = {}
+	var kept: Dictionary = data.get("egg_fates", {}) if data.get("egg_fates", {}) is Dictionary else {}
+	for colour: String in kept:
+		var ids: Array[String] = []
+		for id: Variant in kept[colour] if kept[colour] is Array else []:
+			if game.items.has(str(id)):
+				ids.append(str(id))
+		if not ids.is_empty():
+			egg_fates[colour] = ids
 
 
 ## The showcase: a Mystery Egg of every colour waiting to be opened.
@@ -56,6 +70,25 @@ func roll_mystery_egg(coop: Dictionary) -> String:
 	return game.item_data(inside.keys()[k]).get("breed", "white") if k >= 0 else "white"
 
 
+## A Coop gave a Mystery Egg (by `roll_mystery_egg`): now and then a rare one, and now and then with one of the
+## Coop's limited animals in it (LimitedSystem; decided now, shown when it is opened). Kept; returns its colour,
+## "" when the Coop gave none.
+func find_egg(coop: Dictionary) -> String:
+	var colour := roll_mystery_egg(coop)
+	if colour == "":
+		return ""
+	var rare: bool = egg_data["colours"].has(RARE_EGG) and game.limited.rare_find()
+	if rare:
+		colour = RARE_EGG
+	mystery_eggs[colour] = int(mystery_eggs.get(colour, 0)) + 1
+	var limited := game.limited.found_at(coop, rare)
+	if limited != "":
+		var waiting: Array = egg_fates.get(colour, [])
+		waiting.append(limited)
+		egg_fates[colour] = waiting
+	return colour
+
+
 ## Opens one Mystery Egg of a colour. Returns the prize text, or "" if none held.
 func open_mystery_egg(colour: String) -> String:
 	if int(mystery_eggs.get(colour, 0)) <= 0:
@@ -63,6 +96,12 @@ func open_mystery_egg(colour: String) -> String:
 	mystery_eggs[colour] = int(mystery_eggs[colour]) - 1
 	var won := _weighted_prize(egg_data["colours"][colour]["prizes"])
 	last_rarity = rarity_of_prize(egg_data["colours"][colour]["prizes"], won)
+	var waiting: Array = egg_fates.get(colour, [])
+	if not waiting.is_empty():
+		won = ["item", str(waiting.pop_front())]   # (a limited animal was in this one)
+		last_rarity = "legendary"   # not-ui
+		if waiting.is_empty():
+			egg_fates.erase(colour)
 	var text := give_prize(won)
 	game.record("open_egg", colour)
 	game.message.emit("%s: %s" % [egg_data["colours"][colour]["name"], text])

@@ -6,6 +6,10 @@ extends RefCounted
 
 const PAINT_SHADER := "res://shaders/paint3d.gdshader"
 const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
+const FROND_SHADER := "res://shaders/frond3d.gdshader"   # a palm's fronds, a banana tree's leaves (FrondMesh)
+const STAR_SHADER := "res://shaders/star3d.gdshader"     # a Galaxy tree's stars
+const LEAF_SHADERS: Array[String] = [CANOPY_SHADER, FOLIAGE_SHADER, FROND_SHADER]   # what a tree's leaves are drawn by
+const LEAF_TOUCHES := {"rainbow": 2, "sunset": 3, "glint": 4}   # a tree's touch -> leaf_touch.gdshaderinc's number
 const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
 # The names a model's file gives its materials (a glTF file carries plain materials; these say which they are).
@@ -36,6 +40,12 @@ const CORNICE := 0.07    # the slab under it
 const DOME_DRUM := 0.14  # and the drum it stands on
 const RIDGE_CAP := 0.045      # the cap along a ridge: half its width, and its height
 const SPRIG_LEAVES := 9        # leaves on a sprig
+const SPRIG_LEAF_WIDE := 1.7   # how broad each is, of the slim leaf they were (thin pointed leaves read as sharp)..
+const SPRIG_LEAF_ROUND := 0.45  # ..and how round its ends are (1: pointed like a blade; less: blunter)
+const CARD_DEPTH := Vector2(0.69, 0.91)  # where a leaf card sits, of the way out to the crown's skin: tucked in, so..
+const CARD_SIZE := Vector2(0.9, 1.4)     # ..fewer stick out past it; and each a little bigger, to cover as before
+const FRUIT_SEGMENTS := 12     # a tree's fruit: round enough to stay a fruit from the farm's distance..
+const FRUIT_RINGS := 6         # ..and never made simpler (bake keeps it whole: simplified, it turned into gems)
 const FRUIT_SHADER := "res://shaders/fruit3d.gdshader"
 const BLOOM_SHADER := "res://shaders/bloom3d.gdshader"
 # Meta: where the middle a part grows about is, in the part's own space (else its origin).
@@ -65,7 +75,8 @@ const CYLINDER_SIDES := 12
 
 ## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
 const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color",
-	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo"}
+	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo",
+	"res://shaders/frond3d.gdshader": "albedo", "res://shaders/star3d.gdshader": "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
 const LOD_LEVELS := &"lod_levels"   # meta on a baked mesh: how many simpler levels it carries
@@ -119,14 +130,36 @@ static func paint(col: Color, shine := 0.0, sway := 0.0) -> ShaderMaterial:
 
 ## A tree's fruit in `col`: it grows and colours on the tree (shaders/fruit3d.gdshader). Mark each fruit made
 ## with it (`mark_fruit`) so the merged model knows where each one's middle is and when its turn comes.
-static func fruit_paint(col: Color) -> ShaderMaterial:
-	var key := "fruit:%s" % col.to_html()
+## `sway`: how far its tree bends in the wind (`sway_all` gives it the tree's own, so it rides its branch).
+static func fruit_paint(col: Color, sway := 0.0) -> ShaderMaterial:
+	var key := "fruit:%s:%.3f" % [col.to_html(), sway]
 	if not _materials.has(key):
 		var m := ShaderMaterial.new()
 		m.shader = load(FRUIT_SHADER)
 		m.set_shader_parameter("albedo", col)
+		m.set_shader_parameter("sway", sway)
 		_materials[key] = m
 	return _materials[key]
+
+
+## One fruit on a tree: a round ball (`small`: a cherry or an olive, many to a tree, so a plainer one), drawn
+## with `mat` (`fruit_paint`) and marked with its turn to grow.
+static func fruit_ball(parent: Node3D, centre: Vector3, r: float, mat: Material, scale: Vector3, small: bool,
+		turn: float) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = r
+	mesh.height = r * 2.0
+	# (plainer in a crowd, as every ball is: an Orchard's trees are seen from further off)
+	mesh.radial_segments = scaled(BALL_SEGMENTS if small else FRUIT_SEGMENTS, 6)
+	mesh.rings = scaled(BALL_RINGS if small else FRUIT_RINGS, 3)
+	mi.mesh = mesh
+	mi.position = centre
+	mi.scale = scale
+	mi.material_override = mat
+	parent.add_child(mi)
+	mark_fruit(mi, turn)
+	return mi
 
 
 ## Marks a part as one fruit whose turn to grow is `turn` (0 first, 1 last).
@@ -222,6 +255,49 @@ static func shine_arrays(arrays: Array, shine: float) -> Array:
 	return out
 
 
+## A star on a Galaxy tree (shaders/star3d.gdshader) in `col`: each a small ball marked with `mark_fruit` (its
+## own number in place of a turn to grow); `sway` bends it with its tree.
+static func star_paint(col: Color, sway := 0.0) -> ShaderMaterial:
+	var key := "star:%s:%.3f" % [col.to_html(), sway]
+	if not _materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load(STAR_SHADER)
+		m.set_shader_parameter("albedo", col)
+		m.set_shader_parameter("sway", sway)
+		_materials[key] = m
+	return _materials[key]
+
+
+## Gives every leaf under `root` a limited tree's `touch` (LEAF_TOUCHES; others have nothing on the leaves): the
+## same materials, with the touch on, shared by every tree that has it.
+static func touch_all(root: Node, touch: String) -> void:
+	var which := int(LEAF_TOUCHES.get(touch, 0))
+	if which == 0:
+		return
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):   # not-ui (a class)
+		var m := mi.material_override as ShaderMaterial
+		if m == null or m.shader == null or not LEAF_SHADERS.has(m.shader.resource_path):
+			continue
+		var key := "touch:%d:%d" % [m.get_instance_id(), which]
+		if not _materials.has(key):
+			var own := m.duplicate() as ShaderMaterial
+			own.set_shader_parameter("touch", which)
+			_materials[key] = own
+		mi.material_override = _materials[key]
+
+
+## The material of a palm's fronds and a banana tree's leaves (white: the colour is in the vertices; FrondMesh
+## makes them); `sway` bends them with their tree and sets each frond bobbing.
+static func fronds(sway := 0.0) -> ShaderMaterial:
+	var key := "fronds:%.3f" % sway
+	if not _materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load(FROND_SHADER)
+		m.set_shader_parameter("sway", sway)
+		_materials[key] = m
+	return _materials[key]
+
+
 ## The leaf-pattern material of a canopy (white: the colour is in the vertices); `sway` bends it in the wind.
 static func leaves(shine := 0.0, sway := 0.0) -> ShaderMaterial:
 	var key := "leaves:%.2f:%.3f" % [shine, sway]
@@ -287,7 +363,7 @@ static func leaf_texture() -> ImageTexture:
 				if along < 0.0 or along > 1.0:
 					continue
 				var across := absf(d.dot(side))
-				var width: float = float(l[3]) * pow(sin(PI * pow(along, 0.8)), 0.85)
+				var width: float = float(l[3]) * SPRIG_LEAF_WIDE * pow(sin(PI * pow(along, 0.8)), SPRIG_LEAF_ROUND)
 				if across < width:
 					cover = 1.0
 					var vein := 1.0 - smoothstep(0.0, 0.012, across)
@@ -315,7 +391,7 @@ static func foliage_cards(parent: Node3D, centre: Vector3, radii: Vector3, rng: 
 		var a := rng.randf() * TAU
 		var r := sqrt(maxf(1.0 - y * y, 0.0))
 		var dir := Vector3(cos(a) * r, y, sin(a) * r)
-		var depth := rng.randf_range(0.8, 1.02)
+		var depth := rng.randf_range(CARD_DEPTH.x, CARD_DEPTH.y)
 		var at := dir * radii * depth
 		var out := (dir / radii).normalized()          # an ellipsoid's own outward normal
 		var along := Vector3.UP.cross(out)
@@ -330,7 +406,7 @@ static func foliage_cards(parent: Node3D, centre: Vector3, radii: Vector3, rng: 
 		if up.y < 0.0:
 			up = -up
 			right = -right
-		var size := card * rng.randf_range(0.8, 1.25)
+		var size := card * rng.randf_range(CARD_SIZE.x, CARD_SIZE.y)
 		var base := at - up * size * 0.15
 		var light := clampf(0.55 + 0.3 * out.y + 0.3 * out.dot(sun) + rng.randf_range(-0.1, 0.1), 0.25, 0.85)
 		var colour: Color = shade.call(light)
@@ -375,6 +451,14 @@ static func sway_all(root: Node, amount: float) -> void:
 		elif m != null and m.shader != null and m.shader.resource_path == FOLIAGE_SHADER:
 			var fr := float(m.get_shader_parameter("roughness"))
 			mi.material_override = foliage((1.0 - fr) / 0.6, amount)
+		elif m != null and m.shader != null and m.shader.resource_path == FROND_SHADER:
+			mi.material_override = fronds(amount)
+		elif m != null and m.shader != null and m.shader.resource_path == STAR_SHADER:
+			var star = m.get_shader_parameter("albedo")
+			mi.material_override = star_paint(star if star is Color else Color(star.x, star.y, star.z), amount)
+		elif m != null and m.shader != null and m.shader.resource_path == FRUIT_SHADER:
+			var fruit = m.get_shader_parameter("albedo")
+			mi.material_override = fruit_paint(fruit if fruit is Color else Color(fruit.x, fruit.y, fruit.z), amount)
 		elif m != null and m.shader != null and m.shader.resource_path == PAINT_SHADER:
 			var rough := float(m.get_shader_parameter("roughness"))
 			var col = m.get_shader_parameter("albedo")
@@ -1051,7 +1135,13 @@ static func bake(root: Node3D) -> Node3D:
 		if mesh.get_surface_count() == 0:
 			continue
 		if lods:
-			mesh = with_lods(mesh)
+			# (a tree's fruit: simplified, a ball of a few faces is a gem; a frond's leaflets: thin, they would go)
+			var whole: Array[int] = []
+			for k in mats.size():
+				var sm := mats[k] as ShaderMaterial
+				if sm != null and sm.shader != null and sm.shader.resource_path in [FRUIT_SHADER, FROND_SHADER, STAR_SHADER]:
+					whole.append(k)
+			mesh = with_lods(mesh, whole)
 		var mi := MeshInstance3D.new()
 		mi.mesh = mesh
 		for k in mats.size():
@@ -1198,8 +1288,9 @@ static func tint_arrays(arrays: Array, col: Color) -> Array:
 
 ## The mesh with simpler versions of itself (levels of detail) that the renderer switches to on its own when the
 ## mesh is drawn small on screen (zoomed out): each about half the triangles of the one before (meshoptimizer,
-## through ImporterMesh). Small meshes are returned as they are: they would gain nothing.
-static func with_lods(mesh: ArrayMesh) -> ArrayMesh:
+## through ImporterMesh). Small meshes are returned as they are: they would gain nothing. The surfaces in `whole`
+## keep their one full shape at every distance.
+static func with_lods(mesh: ArrayMesh, whole: Array[int] = []) -> ArrayMesh:
 	var triangles := 0
 	for k in mesh.get_surface_count():
 		var indices := mesh.surface_get_array_index_len(k)
@@ -1215,5 +1306,14 @@ static func with_lods(mesh: ArrayMesh) -> ArrayMesh:
 	for k in im.get_surface_count():
 		levels = maxi(levels, im.get_surface_lod_count(k))
 	var out := im.get_mesh()
+	if not whole.is_empty():
+		out = ArrayMesh.new()
+		for k in im.get_surface_count():
+			var simpler := {}
+			if not whole.has(k):
+				for l in im.get_surface_lod_count(k):
+					simpler[im.get_surface_lod_size(k, l)] = im.get_surface_lod_indices(k, l)
+			out.add_surface_from_arrays(im.get_surface_primitive_type(k), im.get_surface_arrays(k), [], simpler)
+			out.surface_set_material(k, im.get_surface_material(k))
 	out.set_meta(LOD_LEVELS, levels)
 	return out

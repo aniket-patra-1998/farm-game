@@ -140,6 +140,7 @@ var shed: GardenShedSystem
 var ribbons: RibbonsSystem
 var land: LandSystem
 var specials: BuildingSpecials
+var limited: LimitedSystem
 var mystery: MysterySystem
 var daily: DailySystem
 var storage: BarnStorage
@@ -196,6 +197,7 @@ var _holding := 0          # hold_updates depth
 var _held_update := false  # an objects_updated came while held
 var _held_uids := {}       # ..or only these things changed in place while held
 var _load_trace: Script = null   # LoadTrace, once a trace was begun (trace_begin)
+var _said_packs := false   # the player has been told a pack is waiting for the network (once a session)
 
 
 func _init() -> void:
@@ -206,6 +208,7 @@ func _init() -> void:
 	ribbons = RibbonsSystem.new(self)
 	land = LandSystem.new(self)
 	specials = BuildingSpecials.new(self)
+	limited = LimitedSystem.new(self)
 	mystery = MysterySystem.new(self)
 	daily = DailySystem.new(self)
 	storage = BarnStorage.new(self)
@@ -238,7 +241,7 @@ func _init() -> void:
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social, collecting, shop, helpers, vip, rust, wear, rolls, goals]
+		social, collecting, shop, helpers, vip, rust, wear, rolls, goals, limited]
 	StartMarks.mark("made")   # not-ui (the systems made)
 
 
@@ -253,6 +256,9 @@ func _ready() -> void:
 	for system in systems:
 		system.load_data()
 	StartMarks.mark("data")   # not-ui (every system's data read)
+	if AssetPacks.shared == null and self == get_node_or_null(^"/root/Game"):   # not-ui (the game's own, not a test's)
+		# Files left out of the app (docs/PACKS.md): the kept ones are loaded now, the rest fetched when first drawn.
+		AssetPacks.begin(self).waiting.connect(_packs_waiting)
 	if not saving_enabled or not load_game():
 		_new_game()
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has(SHOWCASE_ARG):
@@ -584,6 +590,13 @@ func grass_over(item_id: String, row: int, col: int) -> void:
 	for r in range(row, row + fp.y):
 		for c in range(col, col + fp.x):
 			plots[index_of(r, c)] = {"state": "grass"}
+
+
+## A pack could not be fetched (AssetPacks): said once a session; the animal keeps its stand-in till it comes.
+func _packs_waiting() -> void:
+	if not _said_packs:
+		_said_packs = true
+		message.emit(tr("PACK_WAITING"))
 
 
 func can_afford_item(item_id: String) -> bool:

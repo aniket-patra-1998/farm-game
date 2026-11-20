@@ -39,6 +39,7 @@ python3 tools/make_catalog.py --check
 python3 tools/make_art_manifest.py --check
 python3 tools/make_notebook.py --check
 python3 tools/make_art_versions.py --check
+python3 tools/make_limited.py --check
 python3 tools/strings_lint.py
 log="$(mktemp)"
 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true

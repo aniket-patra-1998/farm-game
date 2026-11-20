@@ -21,8 +21,14 @@ global uniform float wind;
 varying float height;
 varying vec3 tint;
 
+#include "res://shaders/leaf_touch.gdshaderinc"
+uniform int touch = 0;   // a limited tree's touch on its leaves (leaf_touch.gdshaderinc); 0: none
+
 void vertex() {
 	tint = COLOR.rgb;
+	if (touch != 0) {
+		tint = leaf_touch(touch, tint, (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz - MODEL_MATRIX[3].xyz, TIME);
+	}
 	float loose = 1.0 - UV.y;      // the tip of a sprig moves most, its stem hardly at all
 	vec3 root = MODEL_MATRIX[3].xyz;
 	if (sway > 0.0) {

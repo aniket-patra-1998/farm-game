@@ -106,6 +106,8 @@ var _size := 1.0                 # how big it is drawn (smaller in a small yard)
 var _file_mesh: MeshInstance3D   # made as a file: the mesh whose blend shapes pose it (null when built)
 var _file_shapes := {}           # blend shape name -> index on _file_mesh
 var _walk_frames := 0            # how many walk_NN moves the file has (the cycle is cut into that many)
+var _shaking := 0.0               # how far through a shake of its coat it last was (AnimalPose.shake)
+var _fluff: DustPuffs             # the tufts its shakes let go (made at its first shake)
 
 
 
@@ -143,6 +145,8 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1
 	a._walk_speed = maxf(stride * a.rig.num("speed", 10.0) * a.rig.scale / maxf(a.rig.cycle_length(), 0.001), 0.001)
 	if mind != null:
 		mind.stride_tiles = stride
+		mind.showy = bool(it.get("limited", false))
+		mind.shakes = a._file_shapes.has(CoatTouch.SHAKE_A)
 	a._slot = a.get_instance_id() % MAX_STRIDE
 	a.rotation.y = a.heading
 	return a
@@ -248,6 +252,7 @@ func _build_file() -> bool:
 	model.scale = Vector3.ONE * _size
 	_body.add_child(model)
 	_file_mesh = mi
+	CoatTouch.dress(mi, Game.item_data(_id))
 	for k in mi.mesh.get_blend_shape_count():
 		var move := String(mi.mesh.get_blend_shape_name(k))
 		_file_shapes[move] = k
@@ -364,6 +369,8 @@ static func _first_mesh(n: Node) -> MeshInstance3D:
 ## and breath, each a blend shape weighted by the pose value; the body's springs (lean, squash, hop) move the
 ## whole model, as they move a built one.
 func _pose_file(p: AnimalPose) -> void:
+	if _file_shapes.has(CoatTouch.SHAKE_A):
+		_pose_shake(p.shake)
 	var frames := maxi(_walk_frames, 1)
 	var at := fposmod(p.gait, 1.0) * frames
 	var k0 := int(at) % frames
@@ -399,6 +406,21 @@ func _pose_file(p: AnimalPose) -> void:
 	_body.position = Vector3(0, lift, 0)
 	_body.rotation = Vector3(motion.roll, 0, motion.pitch)
 	_body.scale = Vector3(1.0 + motion.squash * 0.6, 1.0 - motion.squash, 1.0 + motion.squash * 0.6)
+
+
+## A long coat's shake: the file's two shake moves in turn, and a little fluff let go as it starts.
+func _pose_shake(through: float) -> void:
+	var turn := CoatTouch.shake_weights(through)
+	_shape(CoatTouch.SHAKE_A, turn.x)
+	_shape(CoatTouch.SHAKE_B, turn.y)
+	if through > 0.0 and _shaking <= 0.0 and is_inside_tree():
+		if _fluff == null:
+			_fluff = DustPuffs.new()
+			_fluff.top_level = true   # (the tufts fall where they were let go, not carried along)
+			add_child(_fluff)
+			_fluff.global_transform = Transform3D.IDENTITY
+		CoatTouch.shed(_fluff, global_position, _r, Color(str(Game.item_data(_id).get("color", "#ffffff"))))
+	_shaking = through
 
 
 func _shape(move: String, weight: float) -> void:

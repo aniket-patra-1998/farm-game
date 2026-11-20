@@ -42,6 +42,12 @@ func validate(catalog) -> Array[String]:
 	var baby_def = catalog.get_def(baby())
 	if baby_def is AnimalDef and not baby_def.is_young():
 		out.append(_err("its baby %s should be marked young" % data["baby"]))
+	if is_limited() and not is_young() and (gem_cost() <= 0 or not in_market()):
+		out.append(_err("a limited animal is sold in the Market for gems (gem_cost, an unlock level)"))
+	if touch() != "" and (not is_limited() or not TOUCHES.has(touch())):
+		out.append(_err("touch is a limited animal's, one of %s" % str(TOUCHES)))
+	if is_limited() and baby_def is AnimalDef and not baby_def.is_limited():
+		out.append(_err("a limited animal's baby %s should be limited too" % data["baby"]))
 	# Every animal should have somewhere to live, or be a loose-only special.
 	var homes: Array[String] = catalog.homes_of(id)
 	if homes.is_empty() and kind == "animal":
