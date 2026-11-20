@@ -989,7 +989,7 @@
    "note": "share of the feed (Barn) or bunches (Garden Shed) that spoils a day in worn storage"
   },
   "level_scale": {
-   "v": 1.0,
+   "v": 1.6,
    "note": "repairs and upgrades are worked from at least least_price x (1 + this x level), so a cheap building on a big farm costs upkeep in step with its earnings (owner, 19 Nov); a dearer building keeps its own price"
   },
   "least_price": {

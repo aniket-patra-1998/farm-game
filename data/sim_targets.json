@@ -13,8 +13,7 @@
     {"metric": "level20_day", "least": 10, "min_days": 20, "why": "the climb must not race: levels are earned"},
     {"metric": "projects_open", "most": 0, "min_days": 40, "styles": ["goals", "builder"], "why": "the rare coop project could never finish (19 Nov)"},
     {"metric": "gems_per_week", "least": 1, "min_days": 14, "why": "a free player earns a few gems a week (Part 4)"},
-    {"metric": "stuck_minutes", "most": 15, "first_hour": true, "why": "52 of the first 60 minutes had goals open and nothing to do (19 Nov); waiting on growing crops is FarmVille, a minute with nothing growing either is a dead end"},
-    {"metric": "coins_at_10", "least": 100, "first_hour": true, "why": "the first session ended with 9 coins (19 Nov)"},
+    {"metric": "stuck_minutes", "most": 15, "first_hour": true, "why": "52 of the first 60 minutes had goals open and nothing to do, and the first session ended with 9 coins (19 Nov); waiting on growing crops is FarmVille, a minute with nothing growing either is a dead end (coins spent on crops are not: the coins-at-10-minutes target was dropped, 20 Nov, as every coin was in the ground)"},
     {"metric": "level3_minute", "most": 15, "first_hour": true, "why": "level 3 in the first quarter hour"}
   ]
 }
