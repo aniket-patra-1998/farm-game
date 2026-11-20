@@ -114,17 +114,24 @@ func test_586_limited_animals_are_saved_wherever_they_are() -> void:
 
 
 func test_587_a_release_without_them_sells_and_finds_none() -> void:
+	# Owner, 20 Nov ("I don't see the limited banner and animals"): the first release has them, the varieties of
+	# the plain kinds it lists; a release with the feature off has none.
 	var g := _farm()
 	Release.whole = false
-	_check(not Release.on(LimitedSystem.FEATURE) and not g.limited.on(), "the first release leaves them out")
+	_check(Release.on(LimitedSystem.FEATURE) and g.limited.on(), "the first release has them")
+	_check(HudMarket._for_sale("galaxy_cow") and Release.has("galaxy_cow"), "a Galaxy Cow, as it has the Cow")
+	var features: Dictionary = Release._data["features"]
+	features[LimitedSystem.FEATURE] = false
 	var shed := {"id": "cow_shed", "inside": {"cow": 4, "galaxy_cow": 2}}
 	Balance.override("limited.rare_share", 1.0)
 	Balance.override("limited.find_chance", 1.0)
 	Balance.override("limited.rare_find_chance", 1.0)
+	_check(not Release.on(LimitedSystem.FEATURE) and not g.limited.on(), "a release with them off")
 	_check(not g.limited.rare_find(), "no find is rare")
 	_eq(g.limited.found_at(shed, true), "", "none is limited, whatever lives in the home")
 	_eq(g.limited.born_at(shed), "", "nor is a baby born there")
-	_check(not HudMarket._for_sale("galaxy_cow"), "and the Market does not sell them")
+	_check(not HudMarket._for_sale("galaxy_cow") and not Release.has("galaxy_cow"), "and the Market does not sell them")
+	features[LimitedSystem.FEATURE] = true
 	Balance.reload()
 	Release.whole = true
 	_check(g.limited.on() and HudMarket._for_sale("galaxy_cow"), "with everything on, they are there")
@@ -257,7 +264,7 @@ func test_601_a_limited_tree_is_found_only_in_an_orchard_where_one_stands() -> v
 	_done(g)
 
 
-func test_602_limited_trees_are_saved_and_left_out_of_the_first_release() -> void:
+func test_602_limited_trees_are_saved_and_follow_the_release() -> void:
 	var g := _farm()
 	g.coins = 10000000
 	g.farm_size = GameState.MAX_SIZE
@@ -286,7 +293,8 @@ func test_602_limited_trees_are_saved_and_left_out_of_the_first_release() -> voi
 	var waiting: Dictionary = _young_all(h, NurtureSystem.RARE_SEEDLING)[0]
 	_eq(waiting.get("becomes"), "cotton_candy_peach_tree", "and waiting in a seedling")
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE))
-	# The Limited shelf sells them after the animals, each kind under its own heading; the first release has none.
+	# The Limited shelf sells them after the animals, each kind under its own heading; the first release has them
+	# when it has their plain tree (owner, 20 Nov).
 	var market := HudMarket.new(null)
 	var animals := market.limited_section("animal")
 	var trees := market.limited_section("tree")
@@ -296,8 +304,13 @@ func test_602_limited_trees_are_saved_and_left_out_of_the_first_release() -> voi
 	_check(not "galaxy_apple_tree" in market.shelf_items("tree"), "a limited tree is not on the Trees shelf")
 	_eq(market.tab_for("galaxy_apple_tree"), market.tab_for("galaxy_cow"), "it is found on the Limited tab")
 	Release.whole = false
-	_check(not HudMarket._for_sale("galaxy_apple_tree"), "the first release does not sell them")
+	_eq(HudMarket._for_sale("galaxy_apple_tree"), Release.has("apple_tree"),
+		"the first release sells them with their tree")
+	var features: Dictionary = Release._data["features"]
+	features[LimitedSystem.FEATURE] = false
+	_check(not HudMarket._for_sale("galaxy_apple_tree"), "a release with them off does not sell them")
 	_eq(h.limited.found_at({"id": "orchard", "inside": {"galaxy_apple_tree": 3}}, true), "", "nor finds them")
+	features[LimitedSystem.FEATURE] = true
 	Release.whole = true
 	h.queue_free()
 
