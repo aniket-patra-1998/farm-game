@@ -20,6 +20,9 @@ const KEY := "#"   # not-ui (a building's key among the rust signs' ids: "#" + i
 ## "p": the pace it has worn at since `t` (_pace), "fix": when its repair is done (0: not being repaired)}
 var buildings := {}
 var spoil_t := 0          # when spoiling was last worked out
+var daily_earned := 0.0   # the farm's coins earned a day, averaged over about a week (farm_price follows it)
+var earned_today := 0     # coins earned on `earned_day`
+var earned_day := 0
 var _spoil_carry := {}    # building uid -> the part of a spoiled thing not yet whole (spoiling is slow)
 
 
@@ -27,23 +30,55 @@ func _init(owner: GameState) -> void:
 	super(owner)
 	game.objects_changed.connect(settle)
 	game.building_upgraded.connect(func(uid: int, _level: int) -> void: _grew(uid))
+	game.did.connect(_on_did)
+
+
+## Coins earned are counted by the day, and each day that ends joins the week's average (Balance
+## wear.income_week days): what upkeep and upgrades are priced from (owner, 20 Nov: prices that follow income).
+func _on_did(verb: String, _subject: String, n: int) -> void:
+	if verb != "earn":
+		return
+	_turn_day()
+	earned_today += n
+
+
+func _turn_day() -> void:
+	var today := game.day_number()
+	if earned_day == today:
+		return
+	if earned_day > 0:
+		var days := maxf(1.0, Balance.f("wear.income_week"))
+		var gone := clampi(today - earned_day, 1, int(days))
+		for k in gone:   # (a day with nothing earned counts too)
+			daily_earned += ((float(earned_today) if k == 0 else 0.0) - daily_earned) / days
+	earned_day = today
+	earned_today = 0
 
 
 func reset() -> void:
 	buildings = {}
 	spoil_t = game.now()
 	_spoil_carry = {}
+	daily_earned = 0.0
+	earned_today = 0
+	earned_day = 0
 
 
 func save_to(data: Dictionary) -> void:
 	data["wear"] = buildings
 	data["wear_spoil_t"] = spoil_t
+	data["wear_income"] = {"daily": daily_earned, "today": earned_today, "day": earned_day}
 
 
 func load_from(data: Dictionary) -> void:
 	buildings = {}
 	_spoil_carry = {}
 	spoil_t = int(data.get("wear_spoil_t", game.now()))
+	var income: Variant = data.get("wear_income", {})
+	if typeof(income) == TYPE_DICTIONARY:
+		daily_earned = maxf(0.0, float(income.get("daily", 0.0)))
+		earned_today = maxi(0, int(income.get("today", 0)))
+		earned_day = int(income.get("day", 0))
 	var saved: Variant = data.get("wear", {})
 	if typeof(saved) != TYPE_DICTIONARY:
 		return
@@ -56,6 +91,7 @@ func load_from(data: Dictionary) -> void:
 
 func shift_clock(seconds: int) -> void:
 	spoil_t -= seconds
+	earned_day = game.day_moved_back(earned_day, seconds)
 	for key: String in buildings:
 		var b: Dictionary = buildings[key]
 		b["t"] = int(b["t"]) - seconds
@@ -225,12 +261,13 @@ func _worth(o: Dictionary) -> Dictionary:
 	return {"coins": coins, "materials": materials}
 
 
-## The price a repair or an upgrade is worked from: the building's own, but never less than a price that grows
-## with the farm (`wear.least_price` times 1 + `wear.level_scale` x level). A cheap building on a big farm costs
-## upkeep and upgrades in step with what that farm earns (owner, 19 Nov: repairs were under 1% of a late farm's
-## earnings); a dear one keeps the owner's cap, 40% of what it cost.
+## The price a repair or an upgrade is worked from: the building's own, but never less than what the farm earns in
+## Balance `wear.income_days` days (its week's average), nor than `wear.least_price`. A cheap building on a farm
+## that earns a lot costs upkeep and upgrades in step with what that farm earns (owner, 19-20 Nov: repairs were
+## under 1% of a late farm's earnings; prices should follow income); a dear one keeps the owner's 40% cap.
+## (Priced from the level before, a crafter's farm, earning less, sank 52% of its earnings into repairs.)
 func farm_price(price: int) -> int:
-	return maxi(price, roundi(Balance.i("wear.least_price") * (1.0 + Balance.f("wear.level_scale") * game.level())))
+	return maxi(price, maxi(Balance.i("wear.least_price"), roundi(daily_earned * Balance.f("wear.income_days"))))
 
 
 ## The coins, materials and seconds a repair takes now ({} when there is nothing to repair).

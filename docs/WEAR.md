@@ -36,7 +36,9 @@ The first readings (repairs under 1% of earnings, coins idle on 75 to 87% of day
 game's: it skipped every building, filled its farm with plots, never finished a frame nor bought a star, and
 each run started on the day it ran (seasons and weather follow the calendar: one seed read 31% upkeep one day,
 4% the next). Fixed (20 Nov), with every run starting on 1 June 2026 and upkeep measured over a run's last third
-(wear needs 14 days' grace and 10 days a level to show), repairs take 8 to 29% of a grown farm's earnings.
-Repairs and upgrades are worked from `farm_price`: a building's own price, never less than 2,000 x (1 + level)
-(Balance `wear.least_price`, `wear.level_scale`), so a cheap coop on a big farm costs upkeep in step with what
-that farm earns while a dear building keeps the owner's 40% cap. Idle coins: 0% of days in every style.
+(wear needs 14 days' grace and 10 days a level to show), repairs take 17 to 25% of a grown farm's earnings in every style.
+Repairs and upgrades are worked from `farm_price`: a building's own price, never less than 1.6 days of what
+the farm earns (its week's average; Balance `wear.income_days`, `wear.income_week`) nor 2,000. So upkeep and
+upgrades follow income (option 3, 20 Nov): a cheap coop on a rich farm costs upkeep in step with that farm,
+while a dear building keeps the owner's 40% cap. (Priced from the farm's level first, a crafter, earning less
+at the same level, sank 52% of its earnings into repairs.) Idle coins: 0% of days in every style.

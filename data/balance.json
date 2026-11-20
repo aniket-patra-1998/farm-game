@@ -988,13 +988,17 @@
    "v": 0.02,
    "note": "share of the feed (Barn) or bunches (Garden Shed) that spoils a day in worn storage"
   },
-  "level_scale": {
+  "income_days": {
    "v": 1.6,
-   "note": "repairs and upgrades are worked from at least least_price x (1 + this x level), so a cheap building on a big farm costs upkeep in step with its earnings (owner, 19 Nov); a dearer building keeps its own price"
+   "note": "repairs and upgrades are worked from at least this many days of what the farm earns (a week's average): upkeep and upgrades follow income (owner, 19-20 Nov); a dearer building keeps its own price"
+  },
+  "income_week": {
+   "v": 7,
+   "note": "days the farm's earnings are averaged over for income_days"
   },
   "least_price": {
    "v": 2000,
-   "note": "the least price a repair or an upgrade is worked from on a new farm (the Barn was free); it grows with level_scale"
+   "note": "the least price a repair or an upgrade is worked from (the Barn was free); a farm earning more works them from income_days of its earnings"
   },
   "repair_share": {
    "v": [
