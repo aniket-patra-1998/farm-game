@@ -123,23 +123,31 @@ func test_584_the_packs_are_the_limited_animals_and_the_export_agrees_with_the_a
 		_check(packs.source != null, "and the game has its source")
 
 
+## A source that is asked and never answers (the Download's queue is what is checked; 583 fetches for real).
+class Silent extends PackSource:
+	var asked: Array[String] = []
+
+	func fetch(name: String, _to: String, _done: Callable) -> void:
+		asked.append(name)
+
+
 func test_610_the_limited_tabs_download_fetches_every_pack() -> void:
 	# Owner, 20 Nov: "a download option in the limited tab... it first downloads everything so that placing is
-	# seamless". fetch_all sends for every pack not here; downloaded says when all are; until then a thing whose
-	# file is away can't be bought (a Verdict, said on its card), so nothing is ever drawn by a stand-in.
-	for folder: String in [MADE, KEPT]:
-		_wipe(folder)
-	var entry := PackMaker.make("ghost", {GHOST: str(AssetRegistry.entry("galaxy_cow")["model"])}, MADE)
-	_write(MADE.path_join(PackMaker.MANIFEST), {"ghost": entry})
+	# seamless". fetch_all sends for every pack not here (one after another); downloaded says when all are;
+	# until then a limited animal whose file is away can't be bought (BuildingSystem.Why.DOWNLOAD).
 	var packs := AssetPacks.new()
 	add_child(packs)
-	packs.kept = KEPT
-	packs.add_pack("ghost", [GHOST] as Array[String])
+	packs.kept = "user://test_packs_none"
+	packs.add_pack("one", ["res://art/models/limited_test/one.glb"] as Array[String])
+	packs.add_pack("two", ["res://art/models/limited_test/two.glb"] as Array[String])
 	_check(packs.downloaded(), "with nowhere to fetch from, every file is in the app")
-	packs.source = FolderPackSource.new(MADE)
-	_check(not packs.downloaded() and packs.missing() == 1 and packs.total() == 1, "one pack to download")
+	var source := Silent.new()
+	packs.source = source
+	_check(not packs.downloaded() and packs.missing() == 2 and packs.total() == 2, "two packs to download")
+	_check(not packs.downloading(), "nothing sent for yet")
 	packs.fetch_all()
-	_check(packs.downloaded() and not packs.downloading(), "the Download brings it (a folder answers at once)")
-	_check(ResourceLoader.exists(GHOST), "and its file is there")
+	_check(packs.downloading() and packs.pending() == 2, "the Download sends for both")
+	_eq(source.asked, [PackMaker.MANIFEST] as Array[String], "the list of packs first, then each in turn")
+	packs.fetch_all()
+	_eq(packs.pending(), 2, "asked twice: nothing more")
 	packs.free()
-	_check(not BuildingSystem.Why.DOWNLOAD in [BuildingSystem.Why.OK], "a reason of its own to wait")
