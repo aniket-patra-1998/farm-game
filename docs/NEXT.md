@@ -1453,3 +1453,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   showed frames of 400 ms (was 100): each falling leaf (TreeLife, PR 20) built its whole tree to measure its
   height (ScaleGuide.height_of, ~20 ms). Heights are now measured once. Limited varieties come with their
   plain kind in the first release (v1 "limited": true; Release.has). Trees still add ~30% triangles on a phone.
+- 20 Nov, night: the Market's Limited tab is last and groups its varieties under their plain kind's name
+  (HudMarket.limited_groups). A thing bought (or taken from the Barn) whose file isn't read yet is carried once
+  a worker thread has read it (AssetRegistry.file_ready, FarmGrid.start_placing): no stop to read it, and no
+  stand-in on the farm (the owner turned that idea down).

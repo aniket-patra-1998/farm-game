@@ -197,6 +197,24 @@ static func preload_files(paths: Array) -> void:
 			_loading[path] = true
 
 
+## Whether item `id`'s file is read and ready to build from, at once (always, without threads or a file of its
+## own). When not, it is asked of a worker thread: ask again each frame until it is (FarmGrid.start_placing does,
+## so a thing picked in the Market is carried once its file is read, and the game never stops to read it; owner,
+## 20 Nov: "whenever I place a limited animal on the farm the game lags").
+static func file_ready(id: String) -> bool:
+	var e := entry(id)
+	if not threaded or e.is_empty():
+		return true
+	var path := file_of(e, {})
+	if _scenes.has(path) or not ResourceLoader.exists(path):
+		return true
+	if not _loading.has(path):
+		if ResourceLoader.load_threaded_request(path, "PackedScene", true) != OK:   # not-ui (a type name)
+			return true
+		_loading[path] = true
+	return ResourceLoader.load_threaded_get_status(path) != ResourceLoader.THREAD_LOAD_IN_PROGRESS
+
+
 ## The file at `path`, loaded once; null (said once) when it can't be loaded.
 static func _scene(path: String) -> PackedScene:
 	if _scenes.has(path):

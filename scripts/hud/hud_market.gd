@@ -4,10 +4,10 @@ extends RefCounted
 ## Moved out of FarmHud: builds its content into the book panel; shared helpers (buttons, messages) are on `hud`.
 
 ## [kind, title key] of the Market's shelves, in order.
-const SHELVES := [["tree", "TREES"], ["bloom", "BLOOMS"], ["animal", "ANIMALS"], [LIMITED, "LIMITED"],
-	["building", "BUILDINGS"], ["vehicle", "VEHICLES"], ["decor", "DECORATIONS"]]
+const SHELVES := [["tree", "TREES"], ["bloom", "BLOOMS"], ["animal", "ANIMALS"], ["building", "BUILDINGS"],
+	["vehicle", "VEHICLES"], ["decor", "DECORATIONS"], [LIMITED, "LIMITED"]]
 ## The Limited shelf is not a kind of item: the limited animals and trees (LimitedSystem) have it to themselves,
-## after the Animals shelf, and are not on their kinds' own shelves.
+## last (owner, 20 Nov), and are not on their kinds' own shelves.
 const LIMITED := "limited"   # not-ui
 const LIMITED_KINDS := [["animal", "ANIMALS"], ["tree", "TREES"]]   # the Limited shelf's sections, in order
 ## The Buildings shelf in FarmVille's sections, by each building's `tab` (BuildingDef.tab), crafting buildings
@@ -81,12 +81,17 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	if kind == "decor":
 		singles.append([_single(content), mystery_box_card])   # (the Mystery Box first among the decorations)
 	if kind == LIMITED:
-		# Animals, then trees: each kind of limited thing under its own heading (when there is more than one).
+		# Animals, then trees: each kind of limited thing under its own heading (when there is more than one), and
+		# within it each plain kind's varieties under that kind's name (owner, 20 Nov: "sort the limited items by
+		# their types like chicken, cow, horse instead of showing everything at once").
 		var parts := LIMITED_KINDS.filter(func(part: Array) -> bool: return not limited_section(str(part[0])).is_empty())
 		for part: Array in parts:
 			if parts.size() > 1:
 				content.add_child(BookPanel.text(tr(str(part[1])), int(UiTheme.design("font_section")), BookPanel.HEAD))
-			lists.append(_add_list(content, limited_section(str(part[0])), tell))
+			for group: Array in limited_groups(limited_section(str(part[0]))):
+				content.add_child(BookPanel.text(UiTheme.tidy(str(group[0])), int(UiTheme.design("font_count_name")),
+					BookPanel.HEAD))
+				lists.append(_add_list(content, group[1], tell))
 	elif kind != "building":
 		lists.append(_add_list(content, shelf_items(kind), tell))
 	else:
@@ -157,6 +162,38 @@ func shelf_items(kind: String) -> Array[String]:
 
 
 ## The limited things of one kind (animal, tree) for sale, in catalog order: a section of the Limited shelf.
+## Limited things `ids` by the plain kind each is a variety of, in order: [[that kind's name, its varieties]].
+func limited_groups(ids: Array[String]) -> Array:
+	var order: Array[String] = []
+	var by := {}
+	for id in ids:
+		var plain := _plain_kind(id)
+		if not by.has(plain):
+			order.append(plain)
+			by[plain] = [] as Array[String]
+		(by[plain] as Array[String]).append(id)
+	var out := []
+	for plain in order:
+		out.append([Game.name_of(plain) if Game.items.has(plain) else plain, by[plain]])
+	return out
+
+
+## The plain kind limited `id` is a variety of: a tree names it; an animal's is the first grown, plain animal of
+## its family in the catalog.
+func _plain_kind(id: String) -> String:
+	var it := Game.item_data(id)
+	var of := str(it.get("limited_of", ""))
+	if of != "":
+		return of
+	var family := str(it.get("family", ""))
+	for other: String in Game.item_order:
+		var o := Game.item_data(other)
+		if str(o.get("family", "")) == family and str(o.get("kind", "")) == str(it.get("kind", "")) \
+				and not Game.limited.is_limited(other) and not bool(o.get("young", false)):
+			return other
+	return family
+
+
 func limited_section(kind: String) -> Array[String]:
 	return shelf_items(LIMITED).filter(func(id: String) -> bool: return str(Game.item_data(id)["kind"]) == kind)
 
