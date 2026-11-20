@@ -12,7 +12,7 @@ extends GameSystem
 
 enum Why { OK, UNKNOWN, LEVEL, COINS, GEMS, LIMIT, GROUP_LIMIT, BIGGEST, FRAME, MATERIALS, SOMEONE_INSIDE, KEPT,
 	REQUIRES, OFF_FARM, TAKEN, PLANTED, CROWDED, WRONG_KIND, FULL, NOT_BUILT, HAS_ONE, BARN_BROKEN, BUILD_FIRST,
-	CANT_STORE, NOT_A_FRAME, NOT_TURNABLE, AT_WORK }
+	CANT_STORE, NOT_A_FRAME, NOT_TURNABLE, AT_WORK, DOWNLOAD }
 
 ## How a home's fit (HousingSystem.Fit, what lights homes up while dragging) reads as a rule's answer.
 const FIT_WHY := {
@@ -125,6 +125,8 @@ func can_buy(id: String) -> Verdict:
 	var unlock := int(it.get("unlock_level", 1))
 	if game.level() < unlock:
 		return Verdict.new(Why.LEVEL, tr("UNLOCKS_AT_LEVEL") % [it["name"], unlock], tr("LEVEL") % unlock)
+	if AssetRegistry.away(id):   # (its file comes with the Limited tab's download: never a stand-in on the farm)
+		return Verdict.new(Why.DOWNLOAD, tr("LIMITED_DOWNLOAD_FIRST") % it["name"], tr("DOWNLOAD_SHORT"))
 	var unmet := Requirements.first_unmet(game, id)
 	if not unmet.is_empty():
 		return Verdict.new(Why.REQUIRES, tr("NEEDS_X") % unmet["text"], tr("NEEDS_SHORT"))

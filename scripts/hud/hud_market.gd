@@ -81,6 +81,8 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	if kind == "decor":
 		singles.append([_single(content), mystery_box_card])   # (the Mystery Box first among the decorations)
 	if kind == LIMITED:
+		if AssetPacks.shared != null and AssetPacks.shared.total() > 0 and not AssetPacks.shared.downloaded():
+			singles.append([_single(content), download_card])   # (first: the download that makes them buyable)
 		# Animals, then trees: each kind of limited thing under its own heading (when there is more than one), and
 		# within it each plain kind's varieties under that kind's name (owner, 20 Nov: "sort the limited items by
 		# their types like chicken, cow, horse instead of showing everything at once").
@@ -114,6 +116,41 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 			holder.add_child((one[1] as Callable).call())
 	update.call()
 	BookPanel.set_live(content, update)
+
+
+## The Limited tab's download (owner, 20 Nov: "a download option in the limited tab, when a player clicks it, it
+## first downloads everything so that placing is seamless; other games like BGMI do it"): the limited animals'
+## files, once, before they can be bought. Shows how far it has got; once all are here it is gone.
+func download_card() -> Control:
+	var packs := AssetPacks.shared
+	var box := VBoxContainer.new()
+	var frame := BookPanel.card_frame(box)
+	if packs == null or packs.downloaded():
+		frame.visible = false
+		return frame
+	box.add_child(BookPanel.text(tr("LIMITED_DOWNLOAD_TITLE"), int(UiTheme.design("font_count_name")), BookPanel.HEAD))
+	var done := packs.total() - packs.missing()
+	if packs.downloading():
+		box.add_child(BookPanel.text(UiTheme.tidy(tr("LIMITED_DOWNLOADING") % [UiTheme.number(done),
+			UiTheme.number(packs.total())]), int(UiTheme.design("font_card")), BookPanel.INK))
+		box.add_child(UiKit.thin_bar(done, packs.total()))
+	else:
+		box.add_child(BookPanel.text(UiTheme.tidy(tr("LIMITED_DOWNLOAD_WHY") % UiTheme.number(packs.total())),
+			int(UiTheme.design("font_card")), BookPanel.INK))
+		var go := UiKit.primary(Button.new())
+		go.text = tr("LIMITED_DOWNLOAD")
+		go.pressed.connect(func() -> void:
+			packs.fetch_all()
+			hud.book.refresh())
+		box.add_child(go)
+	if not packs.arrived.is_connected(_on_pack):
+		packs.arrived.connect(_on_pack)   # (each pack that comes moves the bar on; the last makes them buyable)
+	return frame
+
+
+func _on_pack(_paths: Array[String]) -> void:
+	if hud != null and hud.book != null and hud.book.is_open():
+		hud.book.refresh()
 
 
 ## A place on the page for one card that is built again on a refresh.
@@ -259,7 +296,7 @@ func card_face(id: String) -> Dictionary:
 	var locked := Game.level() < int(it["unlock_level"])
 	var verdict := Game.buildings.can_buy(id)
 	var blocked := locked or verdict.why in [BuildingSystem.Why.LIMIT, BuildingSystem.Why.GROUP_LIMIT,
-		BuildingSystem.Why.REQUIRES]
+		BuildingSystem.Why.REQUIRES, BuildingSystem.Why.DOWNLOAD]
 	var affordable := Game.can_afford_item(id)
 	var unmet := 0
 	for need in Requirements.list(Game, id):

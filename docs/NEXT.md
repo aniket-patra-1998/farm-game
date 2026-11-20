@@ -1457,3 +1457,6 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   (HudMarket.limited_groups). A thing bought (or taken from the Barn) whose file isn't read yet is carried once
   a worker thread has read it (AssetRegistry.file_ready, FarmGrid.start_placing): no stop to read it, and no
   stand-in on the farm (the owner turned that idea down).
+- 20 Nov, night: the Limited tab's Download (owner's ask, BGMI-style): packs on this repo's release "packs"
+  (workflow packs.yml), the app ships without art/models/limited, limited animals can't be bought until
+  downloaded (Why.DOWNLOAD). Run the "Asset packs" workflow after any limited animal file change.

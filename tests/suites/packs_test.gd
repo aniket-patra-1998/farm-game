@@ -121,3 +121,25 @@ func test_584_the_packs_are_the_limited_animals_and_the_export_agrees_with_the_a
 	if address != "":
 		_check(not presets.contains("permissions/internet=false"), "and the app may use the internet")
 		_check(packs.source != null, "and the game has its source")
+
+
+func test_610_the_limited_tabs_download_fetches_every_pack() -> void:
+	# Owner, 20 Nov: "a download option in the limited tab... it first downloads everything so that placing is
+	# seamless". fetch_all sends for every pack not here; downloaded says when all are; until then a thing whose
+	# file is away can't be bought (a Verdict, said on its card), so nothing is ever drawn by a stand-in.
+	for folder: String in [MADE, KEPT]:
+		_wipe(folder)
+	var entry := PackMaker.make("ghost", {GHOST: str(AssetRegistry.entry("galaxy_cow")["model"])}, MADE)
+	_write(MADE.path_join(PackMaker.MANIFEST), {"ghost": entry})
+	var packs := AssetPacks.new()
+	add_child(packs)
+	packs.kept = KEPT
+	packs.add_pack("ghost", [GHOST] as Array[String])
+	_check(packs.downloaded(), "with nowhere to fetch from, every file is in the app")
+	packs.source = FolderPackSource.new(MADE)
+	_check(not packs.downloaded() and packs.missing() == 1 and packs.total() == 1, "one pack to download")
+	packs.fetch_all()
+	_check(packs.downloaded() and not packs.downloading(), "the Download brings it (a folder answers at once)")
+	_check(ResourceLoader.exists(GHOST), "and its file is there")
+	packs.free()
+	_check(not BuildingSystem.Why.DOWNLOAD in [BuildingSystem.Why.OK], "a reason of its own to wait")

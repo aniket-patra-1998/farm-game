@@ -22,16 +22,20 @@ needed, as other games do. `AssetPacks` (`scripts/systems/asset_packs.gd`) does 
   the player owns is worth a download): it shows the stand-in, is not kept, and is made again from the file
   when its pack arrives (`remake` in `scripts/ui/icon_maker.gd`).
 
-## Off until there is an address
-`data/packs.json` `base_url` is empty: nothing is fetched and every file ships in the app, as before. To turn
-it on (one switch, three places; `packs_test` 584 fails if they disagree):
-1. Make the packs: `godot --headless --path . res://tools/make_packs.tscn -- --out=<folder>`, and put the
-   folder's contents (the packs and `manifest.json`) anywhere that serves files over https.
-2. Set `base_url` in `data/packs.json` to that address.
-3. In `export_presets.cfg`, add `art/models/limited/*` to each preset's `exclude_filter` and set
-   `permissions/internet=true`.
-Make the packs again whenever a limited animal's file changes, and upload them before the app that expects
-them is released (old apps keep working: their manifest entries are replaced, and kept packs stay valid).
+## On (20 Nov): the Limited tab's Download
+The owner: "a download option in the limited tab... it first downloads everything so that placing is seamless;
+other games like BGMI do it". So:
+- `data/packs.json` `base_url` is this (public) repository's release "packs"; `.github/workflows/packs.yml` makes
+  the packs (`tools/make_packs.tscn`) and uploads them there whenever a limited animal's file or the packer
+  changes on main (a pack is named by its hash: a new make is a new file).
+- The app leaves `art/models/limited/*` out and may use the internet (`export_presets.cfg`; `packs_test` 584).
+- The Market's Limited tab opens with a Download card (`HudMarket.download_card`) until every pack is here:
+  Download (`AssetPacks.fetch_all`), then a bar of packs come. Until then a limited animal whose file is away
+  can't be bought (`BuildingSystem.Why.DOWNLOAD`, said on its card), so no stand-in is drawn for one bought.
+  Once here, packs load as the game starts, and a thing bought is carried once its file is read
+  (`AssetRegistry.file_ready`). Limited trees need no download: they are built by code.
+- Still fetched on their own when first needed: a limited animal already on a farm (a save from before), and
+  the showcase's (its stand-in drawn until its pack comes).
 
 ## Tried, and not
 - Tried here: the whole path with the limited folder hidden as an exported app has it, from a folder and from
