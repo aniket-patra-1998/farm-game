@@ -20,6 +20,7 @@ signal collected(uid: int)                         # a building or animal was co
 
 
 const ITEM_SPOT := "item:"   # not-ui (spots_of: the things of one id)
+const FILE_WAIT_MOST := 10.0   # seconds a thing to carry waits for its file to be read (then it is built anyway)
 const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
 const TILE_W := 128.0
 const TILE_H := 64.0
@@ -866,12 +867,31 @@ func start_placing(item_id: String, uid := -1) -> bool:
 		if not verdict.ok():
 			info.emit(verdict.text)
 			return false
+	if not AssetRegistry.file_ready(item_id):
+		_carry_when_read(item_id, uid)   # (its file read first, on a worker thread: no stop to read it)
+		return true
 	placement.start(item_id, uid)
 	return true
 
 
+## Starts carrying `item_id` once its file is read (a frame at a time; the panel that sold it closes meanwhile,
+## and the farm goes on moving: nothing stands in for it on the farm).
+func _carry_when_read(item_id: String, uid: int) -> void:
+	var waited := 0.0
+	while not AssetRegistry.file_ready(item_id) and waited < FILE_WAIT_MOST:
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+	if is_inside_tree():
+		placement.start(item_id, uid)
+
+
 ## Placing something taken back out of the barn (free; it keeps its timers reset).
 func start_placing_stored(index: int) -> void:
+	var id := str(Game.storage.stored[index]["id"]) if index >= 0 and index < Game.storage.stored.size() else ""
+	var waited := 0.0
+	while id != "" and not AssetRegistry.file_ready(id) and waited < FILE_WAIT_MOST:   # (as start_placing)
+		await get_tree().process_frame
+		waited += get_process_delta_time()
 	placement.start_stored(index)
 
 

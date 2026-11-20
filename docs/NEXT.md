@@ -1453,12 +1453,21 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   showed frames of 400 ms (was 100): each falling leaf (TreeLife, PR 20) built its whole tree to measure its
   height (ScaleGuide.height_of, ~20 ms). Heights are now measured once. Limited varieties come with their
   plain kind in the first release (v1 "limited": true; Release.has). Trees still add ~30% triangles on a phone.
+- 20 Nov, night: the Market's Limited tab is last and groups its varieties under their plain kind's name
+  (HudMarket.limited_groups). A thing bought (or taken from the Barn) whose file isn't read yet is carried once
+  a worker thread has read it (AssetRegistry.file_ready, FarmGrid.start_placing): no stop to read it, and no
+  stand-in on the farm (the owner turned that idea down).
+- 20 Nov, night: the Limited tab's Download (owner's ask, BGMI-style): packs on this repo's release "packs"
+  (workflow packs.yml), the app ships without art/models/limited, limited animals can't be bought until
+  downloaded (Why.DOWNLOAD). Run the "Asset packs" workflow after any limited animal file change.
+
 
 ## Animals asleep (branch animal-sleep; owner, 20 Nov)
 - Built: each family's own sleeping pose as a `sleep` move in its file, and a "z z z" at each sleeper's nose
   (docs/ANIMAL_SLEEP.md has the research, the build and the measures). Every animal file was made again.
 - Seen in the running game at night in clips (land animals; the duck pond). Not on a phone.
-- Left: bees have no sleeping pose (they would be in the hive); the limited animals' packs have to be made again
-  with their new files when a host is chosen (docs/PACKS.md); a stride is now measured from the standing animal
+- After merging: run the "Asset packs" workflow (every limited animal's file changed: docs/PACKS.md). Until it
+  has run, a limited animal fetched from the old packs has no sleeping pose and hangs its head as before.
+- Left: bees have no sleeping pose (they would be in the hive). A stride is now measured from the standing animal
   alone, so some kinds' kept strides moved by up to a tenth.
 

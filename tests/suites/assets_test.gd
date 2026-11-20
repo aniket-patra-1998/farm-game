@@ -624,3 +624,28 @@ func test_523_a_window_head_keeps_the_same_triangles_as_cut_one_by_one() -> void
 	_check(not kept.is_empty() and kept.size() < idx.size(), "the cow's head is some of its triangles, not none or all")
 	_eq(kept, one_by_one, "the same triangles in the same order as judging each corner of each triangle")
 	model.free()
+
+
+func test_609_a_thing_bought_waits_for_its_file_without_stopping_the_game() -> void:
+	# Owner, 20 Nov: "whenever I place a limited animal on the farm the game lags" (its file read there and then),
+	# and no stand-in on the farm instead. A thing to carry has its file read on a worker thread first:
+	# file_ready asks for it and costs no wait; it says so once it is read; then it is built from it.
+	AssetRegistry.forget()
+	var threaded := AssetRegistry.threaded
+	AssetRegistry.threaded = true
+	var t0 := Time.get_ticks_usec()
+	var ready := AssetRegistry.file_ready("galaxy_cow")
+	_check(Time.get_ticks_usec() - t0 < 100000, "asking costs no wait")
+	for k in 5000:
+		if ready:
+			break
+		OS.delay_msec(2)
+		ready = AssetRegistry.file_ready("galaxy_cow")
+	_check(ready, "then it is read")
+	var node := AssetRegistry.instance("galaxy_cow")
+	_check(node != null, "and built from its file")
+	if node != null:
+		node.free()
+	_check(AssetRegistry.file_ready("pretend_no_such_item"), "a thing with no file of its own never waits")
+	AssetRegistry.threaded = threaded
+	AssetRegistry.forget()

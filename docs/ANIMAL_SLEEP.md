@@ -30,7 +30,8 @@ swine) · [12] hepper.com/rabbit-sleeping-positions · [13] vice.com (weird anim
   family in `registry.SLEEP`). The game blends it in with `AnimalPose.sleep`, as it does every other move, over about
   half a second. The pose places the head, so a sleeper's head is no longer hung low as well.
 - **Who sleeps this way**: an animal whose file has the move (`Animal3D.sleeps_its_own_way`; its mind is told:
-  `AnimalBehaviour.lies`). One built by code (the stand-in while a pack is on its way) hangs its head as before.
+  `AnimalBehaviour.lies`). One built by code (the stand-in while a pack is on its way), or drawn from a pack made
+  before this, hangs its head as before: run the "Asset packs" workflow after a change to the limited animals' files.
 - **The z z z** (`SleepMarks`, `shaders/sleep3d.gdshader`): one draw for the whole farm. Each animal asleep in its
   pose is in `Animal3D.sleepers`; its nose asleep is in `data/animal_sleep.json`, written with its file by the art
   tool's export. White with a dark edge, hidden by what stands in front.

@@ -100,6 +100,42 @@ func want(file: String, fetch := true) -> bool:
 	return true
 
 
+## Whether every pack is on this device (or there is no source: every file is in the app). The Market's Limited
+## tab sells what needs a pack only then (owner, 20 Nov: "a download option in the limited tab... so that placing
+## is seamless").
+func downloaded() -> bool:
+	return source == null or missing() == 0
+
+
+## How many packs are not on this device yet.
+func missing() -> int:
+	var n := 0
+	for pack: String in _files:
+		if not _index.has(pack):
+			n += 1
+	return n
+
+
+## How many packs there are in all.
+func total() -> int:
+	return _files.size()
+
+
+## Whether packs are being fetched now (or waiting to be tried again).
+func downloading() -> bool:
+	return not _asked.is_empty()
+
+
+## Fetches every pack not on this device yet, one after another (the Limited tab's Download).
+func fetch_all() -> void:
+	if source == null:
+		return
+	for pack: String in _files:
+		if not _index.has(pack) and not _asked.has(pack):
+			_asked.append(pack)
+	_next()
+
+
 ## Loads every pack kept on the device (the game's start: no network needed).
 func load_kept() -> void:
 	_index = DataFile.read_optional(kept.path_join(INDEX))   # (none kept yet: empty)
