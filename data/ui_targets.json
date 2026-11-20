@@ -9,6 +9,6 @@
     {"metric": "panel_stuck", "most": 0, "why": "closing a panel leaves nothing covering the farm"},
     {"metric": "tap_ms", "most": 300, "why": "a tap on anything on the farm answers at once (adopting a stray froze the game, 19 Nov)"},
     {"metric": "worst_frame_ms", "most": 1500, "why": "no stall in the game's own work (a frame, a visit's taps or a panel opening); headless, so the GPU is not in it"},
-    {"metric": "inbox_most", "why": "nothing floods (60 things waited in a new farm's inbox, 19 Nov)"}
+    {"metric": "inbox_most", "why": "nothing floods (60 things waited in a new farm's inbox, 19 Nov): neighbours' things, held to the limit (the farm's own deliveries, a full Barn's overflow, never are: SocialSystem.deliver)"}
   ]
 }

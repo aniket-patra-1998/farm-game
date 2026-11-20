@@ -111,7 +111,9 @@ func _checkpoint(when: String, panels: bool) -> void:
 	await _frames(SETTLE_FRAMES)
 	if panels:
 		await _check_taps(when)
-	_measured["inbox_most"] = maxi(int(_measured["inbox_most"]), Game.social.inbox.size())
+	# Neighbours' things (the farm's own deliveries, a full Barn's overflow, are never held to the limit).
+	var mail := Game.social.inbox.filter(func(i: Dictionary) -> bool: return int(i.get("from", 0)) != InboxItem.FARM)
+	_measured["inbox_most"] = maxi(int(_measured["inbox_most"]), mail.size())
 
 
 ## The HUD's parts: each whole on the screen, none over another (test 584's rule, here after days of play).
