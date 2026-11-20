@@ -298,6 +298,7 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_RESUMED:
 		PhoneNotices.cancel_all()
 		wear.spoil()   # (worn storage spoiled a little while the game was away)
+		check_rescue()   # (back to a farm that can't plant: helped now, not only at a cold start or a harvest)
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and not OS.has_feature("mobile"):
 		_close()
 

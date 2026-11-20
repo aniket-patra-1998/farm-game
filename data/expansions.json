@@ -6,7 +6,7 @@
     {"size": 16, "level": 10, "coins": 20000,   "gems": 20},
     {"size": 18, "level": 15, "coins": 50000,   "gems": 35},
     {"size": 20, "level": 20, "coins": 100000,  "gems": 50},
-    {"size": 22, "level": 25, "coins": 200000,  "gems": 75},
+    {"size": 22, "level": 20, "coins": 200000,  "gems": 75},
     {"size": 24, "level": 30, "coins": 350000,  "gems": 100},
     {"size": 26, "level": 40, "coins": 600000,  "gems": 150},
     {"size": 28, "level": 50, "coins": 1000000, "gems": 200},

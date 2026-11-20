@@ -6,6 +6,7 @@ extends RefCounted
 
 const PAINT_SHADER := "res://shaders/paint3d.gdshader"
 const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
+const FROND_SHADER := "res://shaders/frond3d.gdshader"   # a palm's fronds, a banana tree's leaves (FrondMesh)
 const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
 # The names a model's file gives its materials (a glTF file carries plain materials; these say which they are).
@@ -71,7 +72,8 @@ const CYLINDER_SIDES := 12
 
 ## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
 const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color",
-	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo"}
+	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo",
+	"res://shaders/frond3d.gdshader": "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
 const LOD_LEVELS := &"lod_levels"   # meta on a baked mesh: how many simpler levels it carries
@@ -250,6 +252,18 @@ static func shine_arrays(arrays: Array, shine: float) -> Array:
 	return out
 
 
+## The material of a palm's fronds and a banana tree's leaves (white: the colour is in the vertices; FrondMesh
+## makes them); `sway` bends them with their tree and sets each frond bobbing.
+static func fronds(sway := 0.0) -> ShaderMaterial:
+	var key := "fronds:%.3f" % sway
+	if not _materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load(FROND_SHADER)
+		m.set_shader_parameter("sway", sway)
+		_materials[key] = m
+	return _materials[key]
+
+
 ## The leaf-pattern material of a canopy (white: the colour is in the vertices); `sway` bends it in the wind.
 static func leaves(shine := 0.0, sway := 0.0) -> ShaderMaterial:
 	var key := "leaves:%.2f:%.3f" % [shine, sway]
@@ -403,6 +417,8 @@ static func sway_all(root: Node, amount: float) -> void:
 		elif m != null and m.shader != null and m.shader.resource_path == FOLIAGE_SHADER:
 			var fr := float(m.get_shader_parameter("roughness"))
 			mi.material_override = foliage((1.0 - fr) / 0.6, amount)
+		elif m != null and m.shader != null and m.shader.resource_path == FROND_SHADER:
+			mi.material_override = fronds(amount)
 		elif m != null and m.shader != null and m.shader.resource_path == FRUIT_SHADER:
 			var fruit = m.get_shader_parameter("albedo")
 			mi.material_override = fruit_paint(fruit if fruit is Color else Color(fruit.x, fruit.y, fruit.z), amount)
@@ -1082,10 +1098,11 @@ static func bake(root: Node3D) -> Node3D:
 		if mesh.get_surface_count() == 0:
 			continue
 		if lods:
-			var whole: Array[int] = []   # (a tree's fruit: simplified, a ball of a few faces is a gem)
+			# (a tree's fruit: simplified, a ball of a few faces is a gem; a frond's leaflets: thin, they would go)
+			var whole: Array[int] = []
 			for k in mats.size():
 				var sm := mats[k] as ShaderMaterial
-				if sm != null and sm.shader != null and sm.shader.resource_path == FRUIT_SHADER:
+				if sm != null and sm.shader != null and sm.shader.resource_path in [FRUIT_SHADER, FROND_SHADER]:
 					whole.append(k)
 			mesh = with_lods(mesh, whole)
 		var mi := MeshInstance3D.new()

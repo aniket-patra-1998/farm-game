@@ -29,6 +29,8 @@ const HOURS_DEFAULT := [8.0, 13.0, 20.0]     # local hours of the day the bot vi
 const LOOKAHEAD_VISITS := 12   # how many visits ahead a crop may ripen in
 const CASUAL_AWAY := [3, 7]    # the days a casual player skips when --away is not given
 const FIRST_HOUR_MINUTES := 60
+const BUILD_ROWS := 5        # the back rows a grown farm keeps for buildings (BalanceSim._kept_for_building)
+const BUILD_FROM_SIZE := 16   # the farm size from which it does
 const NEVER := 999        # a level or moment the run never reached (a target's "at most" then misses)
 const FIRST_HOUR_MARKS := [10, 20, 30, 40, 60]   # minutes at which the first hour prints the level and coins
 const WANT_VISITS := [1.0, 3.0]   # Part 4's "something to buy": a thing costing 1 to 3 visits of income
@@ -225,7 +227,10 @@ func _play() -> void:
 		var earned := game.coins - coins_at_day_start + _spent - spent_at_day_start
 		_earned += maxi(0, earned)
 		var per_visit := float(earned) / float(hours.size())
-		var idle_v := float(game.coins) / per_visit if per_visit > 0.0 else 0.0
+		# Idle: coins left over after everything worth having that is on offer now, once each (owner, 19 Nov: the
+		# late game too easy). Coins held for things on offer are being saved, not idle; the bot's own thrift is
+		# not the game's fault.
+		var idle_v := float(maxi(0, game.coins - spendable())) / per_visit if per_visit > 0.0 else 0.0
 		if per_visit > 0.0:
 			_per_visit = per_visit
 		var wants := market_wants(per_visit) if per_visit > 0.0 else []
@@ -351,6 +356,30 @@ func market_line() -> String:
 		", ".join(PackedStringArray(_last_wants))]
 
 
+## The coins everything worth having that is on offer now would take, each once: what the Market sells for
+## progress (as market_wants, any price the purse covers), the next land, every building's next size and every
+## crafting star (an audit's measure of whether coins have anything left to go to).
+func spendable() -> int:
+	var total := 0
+	for id: String in game.items:
+		var it: Dictionary = game.items[id]
+		if str(it.get("kind", "")) in WANT_SKIP_KINDS or int(it.get("unlock_level", 1)) >= 99 or not Release.has(id) \
+				or it.get("stray_only", false):
+			continue
+		var price := game.buildings.price_of(id)
+		if not price.has("gems") and game.buildings.can_buy(id).why in [BuildingSystem.Why.OK, BuildingSystem.Why.COINS]:
+			total += int(price.get("coins", 0))
+	var step := game.land.next_expansion()
+	if not step.is_empty() and game.level() >= int(step["level"]) and not step.has("gems_only"):
+		total += int(step.get("coins", 0))
+	for o in game.objects:
+		if game.is_building_item(str(o["id"])) and not game.under_construction(o):
+			total += game.land.expansion_coins(o)
+			if game.crafting.is_crafting(o):
+				total += int(game.crafting.star_cost(o).get("coins", 0))
+	return total
+
+
 ## What the Market holds now that a player would buy for progress (homes, buildings, trees, animals, vehicles,
 ## the next land; not decorations, seeds or materials) costing WANT_VISITS of `per_visit` income: ids (land is
 ## "land"). Level, limit and requirements must be met; only the coins may be short.
@@ -467,8 +496,9 @@ func play_first_hour() -> Dictionary:
 			out["first_buy"] = m
 		for l in range(level + 1, game.level() + 1):
 			out["minute_of_level"][l] = m + 1
-		if _actions >= int(_minutes * 60.0 / SECONDS_PER_ACTION) and not game.goals.open_keys().is_empty():
-			out["stuck_minutes"] += 1   # nothing at all done this minute while goals wait
+		if _actions >= int(_minutes * 60.0 / SECONDS_PER_ACTION) and not game.goals.open_keys().is_empty() \
+				and not game.any_plot_in(GameState.Phase.GROWING):
+			out["stuck_minutes"] += 1   # nothing done this minute while goals wait, and nothing growing to wait for
 		game.debug_time_offset += 60
 		if FIRST_HOUR_MARKS.has(m + 1):
 			out["level_at"][m + 1] = game.level()
@@ -527,6 +557,7 @@ static func _visits_after(hours: Array, v: int) -> Array:
 ## a later visit finds it ripe.
 func _visit(next_visits: Array) -> void:
 	_actions = int(_minutes * 60.0 / SECONDS_PER_ACTION)
+	game.check_rescue()   # (the game opened: a stuck or young farm is helped, as on a phone)
 	if follows_goals():
 		_claim_goals()   # yesterday's finished jobs first: the day's refresh replaces them
 		game.goals.refresh()
@@ -555,10 +586,13 @@ func _visit(next_visits: Array) -> void:
 		_goal_eggs()
 	if style == "crafter":
 		_craft()   # before replanting: harvested plots can still be cleared to make room for the building
+	if style != "casual":
+		_upkeep(300)   # (repairs first: a player keeps what they have working before buying more)
+		_buy_building(300)   # (before replanting too: harvested plots can make room for a building)
 	for r in game.farm_size:
 		for c in game.farm_size:
 			var i := game.index_of(r, c)
-			if game.is_occupied(i):
+			if game.is_occupied(i) or _kept_for_building(r):
 				continue
 			var ph := game.field.phase(i)
 			# On grass the plowing is paid too: the best crop is the best one the coins cover with it (a goal's
@@ -1010,8 +1044,9 @@ func _buy_building(reserve: int) -> void:
 	var best_cost := 0
 	for id: String in game.items:
 		var it: Dictionary = game.items[id]
-		# Buildings only, and not those built from collected materials (the bot never finishes a frame).
-		if game.building_def(id) == null or it.has("status") or it.has("build_materials") or id == "barn":
+		# Buildings only (a frame too: _upkeep puts in the materials the farm finds, as a player does).
+		# (every item has a status, "in_game" or "planned": the bot never bought a building here, it skipped them all)
+		if game.building_def(id) == null or str(it.get("status", "")) == "planned" or id == "barn":
 			continue
 		var price := game.buildings.price_of(id)
 		var cost := int(price.get("coins", 0))
@@ -1028,12 +1063,53 @@ func _buy_building(reserve: int) -> void:
 			if game.can_place(best, r, c) and game.buy_and_place(best, r, c):   # a tap at the end of the visit
 				_bought[best] = int(_bought.get(best, 0)) + 1
 				return
+	# No room: as a player does, clear plots that grow nothing now at the back of the farm to make it (the bot
+	# used to fill its farm with plots and then sit on its coins with nothing it could place).
+	var fp := game.footprint(best)
+	for r in range(game.farm_size - fp.x, -1, -1):
+		for c in range(game.farm_size - fp.y, -1, -1):
+			if not _clearable(r, c, fp):
+				continue
+			for dr in fp.x:
+				for dc in fp.y:
+					var i := game.index_of(r + dr, c + dc)
+					if game.field.phase(i) != GameState.Phase.GRASS and game.field.clear_plot(i):
+						_cleared += 1
+			if game.can_place(best, r, c) and game.buy_and_place(best, r, c):
+				_bought[best] = int(_bought.get(best, 0)) + 1
+			return
 
 
-## Wear (docs/WEAR.md): spoiling worked out, every building worn to level 3 or more repaired, then every building
-## that can grow a size grown, while coins stay above the reserve.
+## Whether row `r` is kept clear of fields for buildings: a farm grown past its start keeps its back BUILD_ROWS
+## rows for them, as a player lays a farm out (all but the casual bot, which never builds).
+func _kept_for_building(r: int) -> bool:
+	return style != "casual" and game.farm_size >= BUILD_FROM_SIZE and r >= game.farm_size - BUILD_ROWS
+
+
+## Whether every tile of a `fp` footprint at row, col holds no object and nothing planted (plots can be cleared).
+func _clearable(r: int, c: int, fp: Vector2i) -> bool:
+	for dr in fp.x:
+		for dc in fp.y:
+			var i := game.index_of(r + dr, c + dc)
+			if i < 0 or game.is_occupied(i) or game.plots[i].get("state") == "planted":
+				return false
+	return true
+
+
+## Wear (docs/WEAR.md) and growing, as a player does: spoiling worked out, materials put into frames, crafting
+## stars bought, every building worn to level 3 or more repaired, then every building that can grow a size grown,
+## while coins stay above the reserve.
 func _upkeep(reserve: int) -> void:
 	game.wear.spoil()
+	for o in game.objects:
+		if game.under_construction(o):
+			game.land.add_materials(int(o["uid"]))   # (the materials found go into a frame standing)
+		elif game.crafting.is_crafting(o) and not game.crafting.star_cost(o).is_empty():
+			var star := int(game.crafting.star_cost(o).get("coins", 0))
+			if game.coins >= star + reserve and game.crafting.can_add_star(int(o["uid"]), false):
+				game.crafting.add_star(int(o["uid"]), false)
+				_upgrades += 1
+				_upgrade_coins += star
 	for o in game.objects:
 		var uid := int(o["uid"])
 		if game.wear.needs_repair(o) and game.wear.level_of(o) >= 3:

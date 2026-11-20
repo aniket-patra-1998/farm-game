@@ -1396,3 +1396,8 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   Rare Mystery Seedling and the limited trees wait for the limited animals (PR 18: LimitedSystem) and for the
   varieties' own design round (five looks with their touches, and a hummingbird that nests in a limited tree, to
   be shown as clips before building).
+
+- 20 Nov: the Economy audit (tools/audit.sh, .github/workflows/audit.yml, data/sim_targets.json) checks every bot
+  style on two seeds; the bot was fixed to play like a player (it had never bought a building). Open: the
+  plain style's want_days_pct (something to buy costing 1 to 3 visits) misses on some seeds: a pacing gap in
+  the Market's middle levels, for the next economy pass.
