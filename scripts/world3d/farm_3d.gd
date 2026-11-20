@@ -39,6 +39,7 @@ var plots: Plots3D
 var crops: Crops3D
 var glints: Glints3D
 var objects: Objects3D
+var trees: TreeLife
 var farmer: Farmer3D
 var _grade_warmth := -1.0
 var _grade_lift := Vector3.ZERO   # main's night lift for the shadows (folded into the colour grade's dark end)
@@ -106,6 +107,9 @@ func _ready() -> void:
 	farmer = Farmer3D.new()
 	add_child(farmer)
 	add_child(AmbientLife.new())
+	trees = TreeLife.new()
+	trees.objects = objects
+	add_child(trees)
 	add_child(SurfaceWeather.new())
 	var trails := Trails.new()
 	add_child(trails)
@@ -131,6 +135,7 @@ func _ready() -> void:
 		grid.object_poked.connect(_poked)
 		grid.plants_popped.connect(crops.pop)
 		grid.collected.connect(objects.celebrate)
+		grid.collected.connect(trees.harvested)
 		objects.landed.connect(_landed)
 		objects.snapped.connect(_snapped)
 		objects.transformed.connect(_transformed)
@@ -306,8 +311,8 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	environment.fog_height = float(rules.get("height", 0.6))
 	environment.fog_height_density = fog * float(rules.get("height_density", 0.0))
 	_ambient = environment.ambient_light_energy
-	ground.wind = float(weather.get("wind", 0.6))
-	crops.wind = ground.wind
+	trees.winds = [ground, crops]
+	trees.calm = float(weather.get("wind", 0.6))   # (it hands the wind on, with its gusts on top)
 
 
 ## Points the light from a spot on the sky: `arc` 0 is to the right of the screen, PI/2 behind the farm,

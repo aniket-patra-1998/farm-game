@@ -1392,10 +1392,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   fruit out of the simpler levels, which had turned it into gems from the farm's distance), the leaves
   (ModelKit SPRIG_LEAF_*, CARD_*), the seedling's stages (YoungModel). Every tree file exported again; seen on the
   farm in a still at midday, not on a phone.
-- Not built yet: the four motions (concept clips shown and approved; the dropped fruit is to be tappable); the
-  Rare Mystery Seedling and the limited trees wait for the limited animals (PR 18: LimitedSystem) and for the
-  varieties' own design round (five looks with their touches, and a hummingbird that nests in a limited tree, to
-  be shown as clips before building).
+- Also built (trees_test 592 to 594): palms and banana trees drawn again (FrondMesh: feather fronds, paddle
+  leaves; frond3d.gdshader bobs each frond; their shapes in tree_shapes.json), and the four motions (TreeLife,
+  FallingBits): a leaf now and then, a gust that bends every tree and blows leaves, a ripe tree dropping a fruit,
+  a harvested tree shaking with its fruit leaping off. All for show: the dropped fruit is not picked up (owner,
+  20 Nov). Seen in the game in stills, not on a phone.
+- Not built yet, and for a branch on top of the limited animals (PR 18: LimitedSystem, the Limited tab, the
+  touches): limited trees. The owner's decisions (20 Nov): five varieties (Galaxy, Rainbow, Golden, Sunset,
+  Cotton Candy, with the animals' touches; Galaxy a deep night blue) of every tree, sold and found by the
+  animals' own rules and prices, on the Limited tab with pictures; "variety" as one structure over animals and
+  trees; a Rare Mystery Seedling; a hummingbird that visits every limited tree and slips into its crown.
 
 - 20 Nov: the Economy audit (tools/audit.sh, .github/workflows/audit.yml, data/sim_targets.json) checks every bot
   style on two seeds; the bot was fixed to play like a player (it had never bought a building). Open: the
