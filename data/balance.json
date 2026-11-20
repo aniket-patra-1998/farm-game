@@ -118,6 +118,10 @@
    "v": 0.2,
    "note": "a harvest drops a bushel of its crop, once you own a crafting building"
   },
+  "bushel_kind_cap": {
+   "v": 20,
+   "note": "bushels of one kind held at once, so eggs or carrots can't fill the stall and keep out what a recipe needs (our touch; a recipe uses at most 8 of one kind)"
+  },
   "bushel_cap": {
    "v": 100,
    "note": "bushels held at once (FarmVille's stall held 100)"
@@ -370,7 +374,7 @@
    "note": "a farm's first days in which it is helped once a day to plant (owner, 19 Nov: casual players were broke for four days)"
   },
   "young_farm_plots": {
-   "v": 8,
+   "v": 12,
    "note": "plots a young farm is helped to plow and plant once a day, when it cannot afford them and has land bare"
   },
   "rescue_coins": {
@@ -497,8 +501,8 @@
  },
  "recipes": {
   "sell_markup": {
-   "v": 1.5,
-   "note": "A 1-star good sells for its ingredients' worth times this."
+   "v": 2.0,
+   "note": "A 1-star good sells for its ingredients' worth times this (1.5 to 2.0, 20 Nov: at 1.5 a Bakery paid back in 42 days of crafting; at 2.0, 25)."
   },
   "fuel_base": {
    "v": 20,
@@ -510,7 +514,7 @@
   },
   "markup_per_star": {
    "v": 0.33,
-   "note": "Added to the markup per star above the first: a 4-star good sells for 2.5 times what went into it."
+   "note": "Added to the markup per star above the first: a 4-star good sells for 3 times what went into it."
   },
   "fuel_per_recipe_star": {
    "v": 12,
@@ -988,13 +992,17 @@
    "v": 0.02,
    "note": "share of the feed (Barn) or bunches (Garden Shed) that spoils a day in worn storage"
   },
-  "level_scale": {
-   "v": 0.75,
-   "note": "a repair's coins grow with the farm: times 1 + this x level, as its earnings do (owner, 19 Nov: repairs were under 1% of a late farm's earnings; squared, they outgrew them and went unpaid)"
+  "income_days": {
+   "v": 1.6,
+   "note": "repairs and upgrades are worked from at least this many days of what the farm earns (a week's average): upkeep and upgrades follow income (owner, 19-20 Nov); a dearer building keeps its own price"
+  },
+  "income_week": {
+   "v": 7,
+   "note": "days the farm's earnings are averaged over for income_days"
   },
   "least_price": {
    "v": 2000,
-   "note": "the price a repair is worked from for a building that cost less (the Barn was free)"
+   "note": "the least price a repair or an upgrade is worked from (the Barn was free); a farm earning more works them from income_days of its earnings"
   },
   "repair_share": {
    "v": [

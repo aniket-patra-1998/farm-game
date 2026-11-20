@@ -546,25 +546,25 @@
           "look": "a cozy country bakery cottage with cream plaster walls, a red-brown tiled roof, a big brick chimney with a curl of smoke, a striped awning over a window full of bread, and a wooden bread sign",
           "sizes": [
             {
-              "capacity": 1,
+              "capacity": 2,
               "name": "Bakery"
             },
             {
-              "capacity": 2,
+              "capacity": 3,
               "name": "2-Star Bakery",
               "coins": 50000,
               "recipe_stars": 6,
               "gems": 15
             },
             {
-              "capacity": 3,
+              "capacity": 4,
               "name": "3-Star Bakery",
               "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
-              "capacity": 4,
+              "capacity": 5,
               "name": "4-Star Bakery",
               "coins": 1000000,
               "recipe_stars": 32,
@@ -588,25 +588,25 @@
           "look": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign",
           "sizes": [
             {
-              "capacity": 1,
+              "capacity": 2,
               "name": "Winery"
             },
             {
-              "capacity": 2,
+              "capacity": 3,
               "name": "2-Star Winery",
               "coins": 50000,
               "recipe_stars": 6,
               "gems": 15
             },
             {
-              "capacity": 3,
+              "capacity": 4,
               "name": "3-Star Winery",
               "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
-              "capacity": 4,
+              "capacity": 5,
               "name": "4-Star Winery",
               "coins": 1000000,
               "recipe_stars": 32,
@@ -630,25 +630,25 @@
           "look": "a pretty pastel spa cottage with mint-green shutters, a teal roof, flower boxes, a little steaming bath tub by the door and a hanging sign with a lotus flower",
           "sizes": [
             {
-              "capacity": 1,
+              "capacity": 2,
               "name": "Spa"
             },
             {
-              "capacity": 2,
+              "capacity": 3,
               "name": "2-Star Spa",
               "coins": 50000,
               "recipe_stars": 6,
               "gems": 15
             },
             {
-              "capacity": 3,
+              "capacity": 4,
               "name": "3-Star Spa",
               "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
-              "capacity": 4,
+              "capacity": 5,
               "name": "4-Star Spa",
               "coins": 1000000,
               "recipe_stars": 32,
@@ -682,25 +682,25 @@
           "look": "a storybook tower windmill: a round cream tower on a stone foot that narrows toward the top, a red bell-shaped cap, four big cream sails that turn, an arched door in a little stone porch, and grain sacks beside it",
           "sizes": [
             {
-              "capacity": 1,
+              "capacity": 2,
               "name": "Feed Mill"
             },
             {
-              "capacity": 2,
+              "capacity": 3,
               "name": "2-Star Feed Mill",
               "coins": 50000,
               "recipe_stars": 6,
               "gems": 15
             },
             {
-              "capacity": 3,
+              "capacity": 4,
               "name": "3-Star Feed Mill",
               "coins": 150000,
               "recipe_stars": 18,
               "gems": 25
             },
             {
-              "capacity": 4,
+              "capacity": 5,
               "name": "4-Star Feed Mill",
               "coins": 1000000,
               "recipe_stars": 32,

@@ -31,6 +31,9 @@ const CASUAL_AWAY := [3, 7]    # the days a casual player skips when --away is n
 const FIRST_HOUR_MINUTES := 60
 const BUILD_ROWS := 5        # the back rows a grown farm keeps for buildings (BalanceSim._kept_for_building)
 const BUILD_FROM_SIZE := 16   # the farm size from which it does
+const SIM_START := 1793491200   # 1 Nov 2026, 00:00 UTC (the tests' season): every run's first day (new_farm)
+const UPGRADE_SPARE := 3   # the bot grows a building only with this many times its price to spare (jobs first)
+const REPAIR_AT := 2   # the wear level the bot repairs at (a careful player: before it costs much)
 const NEVER := 999        # a level or moment the run never reached (a target's "at most" then misses)
 const FIRST_HOUR_MARKS := [10, 20, 30, 40, 60]   # minutes at which the first hour prints the level and coins
 const WANT_VISITS := [1.0, 3.0]   # Part 4's "something to buy": a thing costing 1 to 3 visits of income
@@ -79,6 +82,8 @@ var _repair_coins := 0
 var _upgrades := 0          # building sizes grown and what they cost
 var _upgrade_coins := 0
 var _earned := 0            # coins earned in all (upkeep's share of it)
+var _late_earned := 0       # the same in the run's last third (the farm grown: upkeep's steady share)
+var _late_repairs := 0
 var _bought := {}         # item id -> bought
 var _cleared := 0         # plots cleared to make room for what a goal asks to buy or a vehicle
 var _last_cleared := -1
@@ -166,12 +171,26 @@ func _visit_hours() -> Array:
 ## device clock set back (Persistence.watch_clock). (Moving the clock on before Game.reset_game did nothing: the
 ## reset sets the clock back to the device's, so the first visit fell at whatever hour the run started.)
 func new_farm() -> void:
+	# Every run starts on the same date (SIM_START) whenever it runs: seasons, weather and day turns follow the
+	# calendar, so a run started on another day played another game (the audit gave 31% and 4% upkeep for one seed).
+	# The farm is made on that date, not moved there.
+	game.debug_time_offset += SIM_START - game.now()
+	game.keep_clock = true
 	game.reset_game()
+	game.keep_clock = false
+	game.persistence.forget_clock()   # (the jump to SIM_START is not a clock set back: nothing is moved for it)
+	game.persistence.watch_clock()
 	var hour := DayCycle.local_hour(game.now(), DayCycle.device_bias_minutes())
 	var back := int(fposmod(hour - float(_visit_hours()[0]), 24.0) * 3600.0)
 	game.persistence.watch_clock()   # (it knows the new farm's time first)
 	game.debug_time_offset -= back
 	game.persistence.watch_clock()
+
+
+## Whether the day being played is in the run's last third: wear has had time to build up (14 days' grace, then
+## a level every 10), so upkeep is measured there, not over a start that has none.
+func _late() -> bool:
+	return _day >= _days * 2 / 3
 
 
 func follows_goals() -> bool:
@@ -226,6 +245,8 @@ func _play() -> void:
 			game.debug_time_offset += int(_gap_after(hours, v) * 3600.0)
 		var earned := game.coins - coins_at_day_start + _spent - spent_at_day_start
 		_earned += maxi(0, earned)
+		if _late():
+			_late_earned += maxi(0, earned)
 		var per_visit := float(earned) / float(hours.size())
 		# Idle: coins left over after everything worth having that is on offer now, once each (owner, 19 Nov: the
 		# late game too easy). Coins held for things on offer are being saved, not idle; the bot's own thrift is
@@ -273,8 +294,9 @@ func _play() -> void:
 		", ".join(PackedStringArray(bought)), _expansions, game.farm_size, game.farm_size, _collected, _fed])
 	print("goals collected %d (chain steps %d, jobs swapped %d); coins spent %d" % [
 		goals_claimed, chain_steps, swaps, _spent])
-	print("upkeep: %d repairs, %d coins; %d upgrades, %d coins; repairs %.0f%% of coins earned" % [_repairs,
-		_repair_coins, _upgrades, _upgrade_coins, 100.0 * _repair_coins / maxf(1.0, _earned)])
+	print("upkeep: %d repairs, %d coins; %d upgrades, %d coins; repairs %.0f%% of coins earned (%.0f%% in the last third)"
+		% [_repairs, _repair_coins, _upgrades, _upgrade_coins, 100.0 * _repair_coins / maxf(1.0, _earned),
+		100.0 * _late_repairs / maxf(1.0, _late_earned)])
 	print(market_line())
 	print(targets_line(_days, metrics()))
 	print(feed_line())
@@ -319,12 +341,14 @@ func animal_share() -> float:
 func metrics() -> Dictionary:
 	var n := maxi(_market_days, 1)
 	var m := {"idle_days_pct": 100.0 * _idle_days / n, "want_days_pct": 100.0 * _want_days / n,
-		"upkeep_pct": 100.0 * _repair_coins / maxf(1.0, _earned), "stuck_days": _stuck_days, "away_lost": away_lost,
+		"upkeep_pct": 100.0 * _late_repairs / maxf(1.0, _late_earned), "stuck_days": _stuck_days, "away_lost": away_lost,
 		"strays_week_most": _strays_week, "gems_per_week": _gems_earned * 7.0 / maxf(_days, 1)}
 	for lvl: int in [3, 10, 20]:
 		m["level%d_day" % lvl] = int(_level_day.get(lvl, NEVER))
 	if follows_goals():
 		m["projects_open"] = game.goals.project_stage.size()
+	if style == "crafter" and not _crafting_home().is_empty():
+		m["craft_payback_days"] = craft_payback_days()
 	return m
 
 
@@ -407,6 +431,18 @@ func market_wants(per_visit: float) -> Array:
 		var land := float(step.get("coins", 0))
 		if land >= low and land <= high:
 			out.append("land")
+	# Part 4's wants include upgrades ("the next home, an upgrade, a tree"): a building's next size and a crafting
+	# star count as things to buy (they were left out, so a farm that owned every building read as wanting nothing).
+	for o in game.objects:
+		if not game.is_building_item(str(o["id"])) or game.under_construction(o):
+			continue
+		var size := float(game.land.expansion_coins(o))
+		if size >= low and size <= high:
+			out.append("size:" + str(o["id"]))
+		if game.crafting.is_crafting(o):
+			var star := float(game.crafting.star_cost(o).get("coins", 0))
+			if star >= low and star <= high:
+				out.append("star:" + str(o["id"]))
 	return out
 
 
@@ -421,6 +457,8 @@ func _buy_wants() -> void:
 	for id: String in wants:
 		if bought >= BUILDER_BUYS or _want_cost(id) > game.coins:
 			break
+		if id.contains(":"):
+			continue   # (a size or a star: _upkeep grows buildings)
 		if id == "land":
 			if game.land.expand(false):
 				_expansions += 1
@@ -588,7 +626,8 @@ func _visit(next_visits: Array) -> void:
 		_craft()   # before replanting: harvested plots can still be cleared to make room for the building
 	if style != "casual":
 		_upkeep(300)   # (repairs first: a player keeps what they have working before buying more)
-		_buy_building(300)   # (before replanting too: harvested plots can make room for a building)
+		if not follows_goals() or jobs_left() == 0:
+			_buy_building(300)   # (before replanting: harvested plots make room; after the goals' own buys)
 	for r in game.farm_size:
 		for c in game.farm_size:
 			var i := game.index_of(r, c)
@@ -1112,15 +1151,17 @@ func _upkeep(reserve: int) -> void:
 				_upgrade_coins += star
 	for o in game.objects:
 		var uid := int(o["uid"])
-		if game.wear.needs_repair(o) and game.wear.level_of(o) >= 3:
+		if game.wear.needs_repair(o) and game.wear.level_of(o) >= REPAIR_AT:
 			var cost := game.wear.repair_cost(uid)
 			if game.coins >= int(cost["coins"]) + reserve and game.wear.repair(uid):
 				_repairs += 1
 				_repair_coins += int(cost["coins"])
+				if _late():
+					_late_repairs += int(cost["coins"])
 	for o in game.objects:
 		if game.is_building_item(str(o["id"])) and game.buildings.can_expand(o).ok():
 			var coins := game.land.expansion_coins(o)
-			if game.coins >= coins + reserve and game.land.upgrade_building(int(o["uid"])):
+			if game.coins >= UPGRADE_SPARE * coins + reserve and game.land.upgrade_building(int(o["uid"])):
 				_upgrades += 1
 				_upgrade_coins += coins
 

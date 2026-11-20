@@ -139,9 +139,13 @@ func test_592_a_repair_costs_coins_and_materials_at_most_40_percent() -> void:
 	var size_parts: Dictionary = g.building_def("chicken_coop").size_materials(2)
 	_wear(g, coop, 5)
 	var cost := g.wear.repair_cost(int(coop["uid"]))
-	_check(int(cost["coins"]) <= roundi(price * 0.4 * g.wear.grown()) and int(cost["coins"]) > 0,
-		"coins: %d" % int(cost["coins"]))
-	_check(g.wear.grown() > 1.0, "a grown farm's repairs cost more")
+	_check(int(cost["coins"]) <= ceili(g.wear.farm_price(price) * 0.4) + ceili(g.land.expansion_coins(coop) * 0.4)
+		and int(cost["coins"]) > 0, "coins: %d" % int(cost["coins"]))
+	g.wear.daily_earned = 100000.0
+	_eq(g.wear.farm_price(price), roundi(100000.0 * Balance.f("wear.income_days")),
+		"a farm earning more than a coop costs works its repairs from its earnings")
+	g.wear.daily_earned = 0.0
+	_check(g.wear.farm_price(1000000) == 1000000, "a dear building keeps its own price")
 	for m: String in size_parts:
 		_check(int(cost["materials"].get(m, 0)) <= ceili(int(size_parts[m]) * 0.4) and cost["materials"].has(m),
 			"its own materials, a share: %s" % m)

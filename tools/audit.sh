@@ -5,7 +5,7 @@
 #   tools/audit.sh <godot> [days]        (default 45 days; a run of a style takes a few minutes)
 set -u
 GODOT="${1:-godot}"
-DAYS="${2:-45}"
+DAYS="${2:-60}"
 OUT="${AUDIT_OUT:-audit_out}"
 mkdir -p "$OUT"
 fail=0

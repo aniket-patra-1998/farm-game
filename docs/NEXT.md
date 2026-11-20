@@ -1385,3 +1385,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   style on two seeds; the bot was fixed to play like a player (it had never bought a building). Open: the
   plain style's want_days_pct (something to buy costing 1 to 3 visits) misses on some seeds: a pacing gap in
   the Market's middle levels, for the next economy pass.
+- 20 Nov, later: pinning the bot's date (1 Nov 2026) made two flaky goal tests fail every time, and showed why
+  they flaked: a daily "send gifts" job no player can do (the game has no way to send a gift: template
+  removed until it has one), a "collect 3 chickens" job picked the morning they were all collected (per_day_of
+  now counts only what will be ready today), and the young-farm help too small for a day's jobs after a day
+  away (8 plots to 12).
+- 20 Nov: the audit's new craft_payback_days target found crafting broken: eggs and carrots filled the stall's
+  100 bushels and the Bakery waited a year for wheat (payback 370 to 460 days). crafting.bushel_kind_cap (20 of
+  one kind) and recipes.sell_markup 1.5 to 2.0: 25 days. Still over the 14-day target: one slot and three
+  visits a day allow about 3 crafts a day; options are for the owner (markup, Bakery price, a second slot).
+- 20 Nov: owner picked a second craft slot at 1 star (every crafting building: one more slot at each star).
+  Bakery payback 25 to about 20 days; now short of bushels, still over the 14-day target.

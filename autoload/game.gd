@@ -102,6 +102,7 @@ var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
 var farm_size := START_SIZE        # usable width and depth in tiles
 var unwithers := Balance.i("economy.start_unwithers")   # Unwither items held
 var rescued := false   # a rescue was given and no harvest since: the next waits for one (no free-coins loop)
+var keep_clock := false   # a new game keeps debug_time_offset (the play bot starts every farm on one date)
 var born_day := -1     # the day this farm began (a young farm's daily help counts from it)
 var helped_day := -1   # the last day a young farm was helped to plant (once a day)
 var fertilize_alls := 0            # fertilize every growing crop at once
@@ -1365,7 +1366,8 @@ func _new_game() -> void:
 	coins = Balance.i("economy.start_coins")
 	gems = Balance.i("economy.start_gems")
 	xp = 0
-	debug_time_offset = 0
+	if not keep_clock:
+		debug_time_offset = 0
 	skipped = 0
 	born_day = day_number()
 	helped_day = born_day   # (the first day is the starting coins' and the Welcome chain's)

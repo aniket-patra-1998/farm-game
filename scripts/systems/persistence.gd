@@ -255,6 +255,8 @@ func shift_all(skew: int) -> void:
 		system.shift_clock(skew)
 	if game.clear_until > 0:
 		game.clear_until -= skew
+	game.born_day = game.day_moved_back(game.born_day, skew)   # (a farm's age, for its first-week help and wear)
+	game.helped_day = game.day_moved_back(game.helped_day, skew)
 	for o: Dictionary in game.objects:
 		for key: String in ["t"] + OBJECT_MOMENTS:
 			if o.has(key):
@@ -269,6 +271,12 @@ func shift_all(skew: int) -> void:
 
 ## Called every frame: a phone's clock set back while the game runs or waits in the background (it resumes
 ## without loading) shifts every timer as loading does, so nothing waits the difference on top. Returns the shift.
+## Forgets the latest time seen, so the next watch_clock takes the clock as it is (a new farm made on another
+## date: the play bot's runs).
+func forget_clock() -> void:
+	_seen = 0
+
+
 func watch_clock() -> int:
 	var t := game.now()
 	var skew := _seen - t if _seen > 0 and t < _seen - CLOCK_SLACK else 0
