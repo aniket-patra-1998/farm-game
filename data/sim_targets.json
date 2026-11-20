@@ -3,7 +3,7 @@
   "targets": [
     {"metric": "idle_days_pct", "most": 25, "min_days": 20, "why": "coins sat idle on 57 to 82% of days (19 Nov): the late game was too easy"},
     {"metric": "want_days_pct", "least": 70, "min_days": 10, "styles": ["plain", "goals", "builder", "crafter"], "why": "always something worth working toward in the Market (Part 4: costing 1 to 3 visits of income; a casual player's one visit is a day's income, so most things cost less than one and are bought the day they show)"},
-    {"metric": "upkeep_pct", "least": 10, "min_days": 40, "styles": ["plain", "goals", "builder", "crafter"], "why": "repairs were under 1% of earnings (19 Nov): more utilities must mean more upkeep"},
+    {"metric": "upkeep_pct", "least": 10, "min_days": 40, "styles": ["plain", "goals", "builder", "crafter"], "why": "repairs were under 1% of earnings (19 Nov): more utilities must mean more upkeep (measured over the run's last third, when wear has built up)"},
     {"metric": "upkeep_pct", "most": 30, "min_days": 40, "styles": ["plain", "goals", "builder", "crafter"], "why": "upkeep must not eat the farm"},
     {"metric": "stuck_days", "most": 0, "why": "a farm unable to plant (no coins, nothing growing) is a dead end: the casual start (19 Nov)"},
     {"metric": "away_lost", "most": 0, "why": "a week away never loses an animal, tree or building (Part 4)"},

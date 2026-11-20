@@ -41,7 +41,7 @@ jobs:
           - "crafter --style=crafter"
     env:
       GODOT_VERSION: 4.7.2
-      DAYS: 45
+      DAYS: 60
     steps:
       - uses: actions/checkout@v4
 

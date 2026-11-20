@@ -210,11 +210,11 @@ func repair_left(uid: int) -> int:
 	return maxi(0, int((buildings.get(str(uid), {}) as Dictionary).get("fix", 0)) - game.now())
 
 
-## What `o` and its sizes cost: its price (at least `wear.least_price`), the coins of its sizes so far, and their
+## What `o` and its sizes cost: its price (at least farm_price), the coins of its sizes so far, and their
 ## materials (a repair is a share of these: owner, 19 Nov, "not more than 40% of the building cost").
 func _worth(o: Dictionary) -> Dictionary:
 	var def := game.building_def(str(o["id"]))
-	var coins := maxi(int(game.item_data(str(o["id"])).get("cost", 0)), Balance.i("wear.least_price"))
+	var coins := farm_price(int(game.item_data(str(o["id"])).get("cost", 0)))
 	var materials := {}
 	for n in range(2, game.level_of(o) + 1):
 		var s := def.size(n)
@@ -225,10 +225,12 @@ func _worth(o: Dictionary) -> Dictionary:
 	return {"coins": coins, "materials": materials}
 
 
-## How many times a repair's coins are for how far the farm has grown (its level), so upkeep keeps pace with what
-## a bigger farm earns (owner, 19 Nov).
-func grown() -> float:
-	return 1.0 + Balance.f("wear.level_scale") * game.level()
+## The price a repair or an upgrade is worked from: the building's own, but never less than a price that grows
+## with the farm (`wear.least_price` times 1 + `wear.level_scale` x level). A cheap building on a big farm costs
+## upkeep and upgrades in step with what that farm earns (owner, 19 Nov: repairs were under 1% of a late farm's
+## earnings); a dear one keeps the owner's cap, 40% of what it cost.
+func farm_price(price: int) -> int:
+	return maxi(price, roundi(Balance.i("wear.least_price") * (1.0 + Balance.f("wear.level_scale") * game.level())))
 
 
 ## The coins, materials and seconds a repair takes now ({} when there is nothing to repair).
@@ -244,7 +246,7 @@ func repair_cost(uid: int) -> Dictionary:
 		var n := ceili(float(worth["materials"][part]) * share)
 		if n > 0:
 			materials[part] = n
-	return {"coins": roundi(float(worth["coins"]) * share * grown()), "materials": materials,
+	return {"coins": roundi(float(worth["coins"]) * share), "materials": materials,
 		"seconds": int(Balance.a("wear.repair_seconds")[at - 1])}
 
 

@@ -255,6 +255,8 @@ func shift_all(skew: int) -> void:
 		system.shift_clock(skew)
 	if game.clear_until > 0:
 		game.clear_until -= skew
+	game.born_day = game.day_moved_back(game.born_day, skew)   # (a farm's age, for its first-week help and wear)
+	game.helped_day = game.day_moved_back(game.helped_day, skew)
 	for o: Dictionary in game.objects:
 		for key: String in ["t"] + OBJECT_MOMENTS:
 			if o.has(key):

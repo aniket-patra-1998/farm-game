@@ -15,7 +15,7 @@ review (Claude Doc "Farm game: a harder late game", section 6 holds the owner's 
     before a building reaches level 4).
   - At level 5 a building stops: a home gives nothing, a crafting building starts nothing. Nothing is lost.
 - **Repair**: coins and the building's own materials (those of its sizes), 4, 10, 18, 28 and 40% of what the
-  building and its sizes cost at levels 1 to 5, the coins times 1 + 0.75 x the farm's level (`wear.level_scale`), and 10 minutes up to 4 hours. It works
+  building and its sizes cost at levels 1 to 5, worked from `farm_price` (below), and 10 minutes up to 4 hours. It works
   as worn as it is until the repair is done, then it is like new.
 - **Sign**: the rust sign (RustMarks), one draw for vehicles and buildings; a tap on it offers the repair. A
   building worn out offers its repair on any tap by hand. (Its own picture is a new look: options first.)
@@ -31,10 +31,12 @@ Switch: `Release.on("wear")`. Numbers: Balance `wear.*`, `upgrade.*`. Rules: `sc
 (as rust): kept is the wear gathered when its pace last changed, and when. (A Garage's wear changes its
 vehicles' rust pace from the moment each was last settled, not level by level: close enough at these paces.)
 
-## What the bot shows (45 days, every style, two seeds: the Economy audit)
+## What the bot shows (60 days, every style, two seeds: the Economy audit)
 The first readings (repairs under 1% of earnings, coins idle on 75 to 87% of days) were the bot's, not the
-game's: it skipped every building (every catalogue item has a status, and it skipped any with one), filled its
-farm with plots, never finished a frame nor bought a star. Fixed (20 Nov), a player-like bot shows repairs at 17
-to 30% of earnings with a repair's coins times 1 + 0.75 x level (Balance `wear.level_scale`; squared, repairs
-outgrew earnings and went unpaid), and idle coins within target once the 22 x 22 land opens at level 20 (it
-waited for 25: levels 18 to 25 had nothing new to buy).
+game's: it skipped every building, filled its farm with plots, never finished a frame nor bought a star, and
+each run started on the day it ran (seasons and weather follow the calendar: one seed read 31% upkeep one day,
+4% the next). Fixed (20 Nov), with every run starting on 1 June 2026 and upkeep measured over a run's last third
+(wear needs 14 days' grace and 10 days a level to show), repairs take 8 to 29% of a grown farm's earnings.
+Repairs and upgrades are worked from `farm_price`: a building's own price, never less than 2,000 x (1 + level)
+(Balance `wear.least_price`, `wear.level_scale`), so a cheap coop on a big farm costs upkeep in step with what
+that farm earns while a dear building keeps the owner's 40% cap. Idle coins: 0% of days in every style.
