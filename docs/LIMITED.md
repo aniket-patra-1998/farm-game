@@ -99,6 +99,17 @@ An animal's look in a variety is drawn by the art tool; a tree's is drawn by the
   name in `trees`, then `python3 tools/make_limited.py` and the precheck. `limited_test` 600 to 602 run every
   limited tree through the game and `trees_test` 603 to 605 check the look, the bird and the shiver.
 
+## A new variety: the order of work
+Owner, 20 Nov: a variety starts as a style, and the style is then put on animals and on trees, with their
+pictures; every variety is sold on the Limited tab.
+1. **The style**: a row in `data/varieties.json` (its name, its touch, and for trees its `leaves`), shown to the
+   owner as a sheet first, like any new look.
+2. **Trees**: its name in `trees`, then `python3 tools/make_limited.py`: every Market tree gets it.
+3. **Animals**: a row for each animal that wears it in `tools/animal_art/animal_art/limited.py`, then
+   `bash tools/remake_animals.sh` ("Adding one" above). Unlike trees, animals are drawn one by one.
+4. **Pictures and the Limited tab** need nothing: both come from the data.
+Flowers and crops have no varieties yet.
+
 ## In the rest of the game
 A limited animal is an animal of its family in every other way, and nothing lists the limited ones by hand:
 it moves, calls (the same sound, at the same pitch) and eats as its family does, gives the family's produce,
