@@ -175,6 +175,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 		leaf_col = hues[0]
 	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col,
 		"hues": hues, "hue": 0, "deep": float(variety.get("darken", 0.0)),
+		"pale": float(variety.get("pale", MIN_LEAF_SATURATION)),
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN), 0, rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN)),
 		"blobs": [], "low": INF, "high": -INF, "reach": 0.0,
@@ -369,7 +370,8 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	# The core, a soft mass in the crown's middle, then the masses around it standing clear of it: each one a
 	# clump of its own, lit on top and dark underneath, so the crown is a cluster of clumps with a scalloped outline.
 	var core := Vector3(cr * CROWN_CORE, maxf(ch * 0.5, cr * 0.4), cr * CROWN_CORE)
-	_canopy(root, mid, core, rng, _leaf_of(t), sun, -shaded, lobes, bump, shine, FOLIAGE_CARDS, float(t["deep"]))
+	_canopy(root, mid, core, rng, _leaf_of(t), sun, -shaded, lobes, bump, shine, FOLIAGE_CARDS, float(t["deep"]),
+		float(t["pale"]))
 	_measure(t, mid, core)
 	var shape := str(sh.get("shape", "round"))
 	for i in masses:
@@ -385,7 +387,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		if i % 2 == 1 and Crowding.covered(int(t["mask"]), a - root.rotation.y):
 			continue
 		_canopy(root, p, squash * size, rng, _leaf_of(t), sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine,
-			FOLIAGE_CARDS, float(t["deep"]))
+			FOLIAGE_CARDS, float(t["deep"]), float(t["pale"]))
 		_measure(t, p, squash * size)
 		(t["blobs"] as Array).append([p, size, a, squash.y])
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
@@ -421,9 +423,10 @@ static func _layout(shape: String, i: int, n: int, rng: RandomNumberGenerator) -
 ## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up
 ## in the crown catch more light than the ones low down).
 static func _canopy(root: Node3D, at: Vector3, radii: Vector3, rng: RandomNumberGenerator, leaf: Color, sun: Vector3,
-		lift: float, lobes: int, bump: float, shine: float, cards_most := FOLIAGE_CARDS, deep := 0.0) -> void:
+		lift: float, lobes: int, bump: float, shine: float, cards_most := FOLIAGE_CARDS, deep := 0.0,
+		pale := MIN_LEAF_SATURATION) -> void:
 	var shade := func(light: float) -> Color:
-		return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0)).darkened(deep)
+		return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0), pale).darkened(deep)
 	ModelKit.canopy(root, at, radii * FOLIAGE_CORE, rng, shade, sun, lobes, bump, shine)
 	var mean := (radii.x + radii.y + radii.z) / 3.0
 	var cards := ModelKit.scaled(cards_most, FOLIAGE_MIN)
@@ -474,10 +477,11 @@ static func _stars(t: Dictionary, centre: Vector3, col: Color) -> void:
 
 
 ## The leaf colour for how lit a clump is (0 deep shade .. 1 full sun): shade drifts blue-green and dark,
-## sun drifts yellow-green and bright, and the colour is richer than a flat darker/lighter of one green.
-static func _shade(leaf: Color, light: float) -> Color:
+## sun drifts yellow-green and bright, and the colour is richer than a flat darker/lighter of one green. `pale`:
+## the least saturation it is painted with (a variety with a pastel crown asks for less: data/varieties.json).
+static func _shade(leaf: Color, light: float, pale := MIN_LEAF_SATURATION) -> Color:
 	var h := leaf.h + lerpf(0.025, -0.03, light)
-	var s := clampf(maxf(leaf.s, MIN_LEAF_SATURATION) * lerpf(1.12, 0.88, light), 0.0, 1.0)
+	var s := clampf(maxf(leaf.s, pale) * lerpf(1.12, 0.88, light), 0.0, 1.0)
 	# (shade is the leaf's colour deeper, never near black)
 	var v := clampf(maxf(leaf.v, MIN_LEAF_VALUE) * lerpf(0.62, 1.4, light), 0.0, 1.0)
 	return Color.from_hsv(h, s, v)
@@ -510,7 +514,7 @@ static func _droop(t: Dictionary, centre: Vector3) -> void:
 		var at := centre + Vector3(cos(a) * cr * WILLOW_RIM, -long * 0.5, sin(a) * cr * WILLOW_RIM)
 		var radii := Vector3(cr * WILLOW_FALL_W, long * 0.5, cr * WILLOW_FALL_W)
 		_canopy(root, at, radii, rng, _leaf_of(t), sun, WILLOW_LIFT - shaded, lobes, CROWN_BUMP, float(t["shine"]),
-			WILLOW_CARDS, float(t["deep"]))
+			WILLOW_CARDS, float(t["deep"]), float(t["pale"]))
 		_measure(t, at, radii)
 
 

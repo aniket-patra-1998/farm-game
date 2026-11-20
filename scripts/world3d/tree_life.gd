@@ -25,7 +25,7 @@ const SHAKE_LEAVES := 12      # leaves that fall when a tree is harvested..
 const SHAKE_FRUIT := 6        # ..and fruit that leap off it
 const SHAKE_PUSH := 0.9       # how fast they leave the crown (tiles a second)
 const LEAP := 2.3             # how fast a harvested fruit leaps up
-const BIRD_EVERY := Vector2(14.0, 30.0)   # seconds between a hummingbird's calls at a limited tree
+const BIRD_EVERY := Vector2(14.0, 30.0)   # seconds from a hummingbird leaving to its next call at a limited tree
 const SHIVER_EVERY := Vector2(7.0, 15.0)  # ..and between one Cotton Candy tree's shiver and the next
 const SHIVER_PETALS := 5      # petals a shiver lets go
 const SHIVER_PUSH := 0.5      # ..and how fast they leave the crown (tiles a second)
@@ -184,7 +184,7 @@ func _picks(o: Dictionary) -> Array:
 ## The limited trees' own life: the hummingbird's calls and the Cotton Candy trees' shivers.
 func _limited(delta: float, trees: Array) -> void:
 	bird.tick(delta)
-	_bird_in -= delta
+	_bird_in -= delta if bird.away() else 0.0   # (the wait for the next call starts when the bird has left)
 	if _bird_in <= 0.0 and bird.away():
 		_bird_in = _rng.randf_range(BIRD_EVERY.x, BIRD_EVERY.y)
 		var limited := trees.filter(func(o: Dictionary) -> bool: return Game.limited.is_limited(str(o["id"])))

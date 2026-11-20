@@ -241,6 +241,16 @@ func test_603_a_limited_tree_wears_its_variety() -> void:
 		_eq(stars > 0, variety == "galaxy", "only a Galaxy tree has stars (%s)" % id)
 		_check(absf(_height(tree) - _height(plain)) < 0.25, "%s is the size of its plain tree" % id)
 		tree.free()
+	# A pastel variety asks for a softer crown than a plain tree's leaves are ever painted (owner, 20 Nov: Cotton
+	# Candy slightly softer); the others are as strong as any tree.
+	var pale := float(Varieties.of("cotton_candy").get("pale", 1.0))
+	var pink := Varieties.leaves("cotton_candy")[0]
+	var soft: Color = TreeSpec.builder().call(&"_shade", pink, 0.5, pale)
+	var strong: Color = TreeSpec.builder().call(&"_shade", pink, 0.5)
+	_check(pink.s < soft.s and soft.s < strong.s,
+		"a Cotton Candy crown is softer than a plain crown would be (%.2f < %.2f)" % [soft.s, strong.s])
+	for variety: String in Varieties.of_trees():
+		_eq(Varieties.of(variety).has("pale"), variety == "cotton_candy", "only Cotton Candy is pale (%s)" % variety)
 	# A plain tree is untouched.
 	for part: MeshInstance3D in plain.find_children("*", "MeshInstance3D", true, false):
 		for k in part.mesh.get_surface_count():

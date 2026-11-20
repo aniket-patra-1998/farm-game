@@ -1,5 +1,5 @@
 {
- "_doc": "The varieties limited animals and trees come in (owner, 20 Nov: one structure over both, so a variety is described once and worn by either, and a new one is a row here). A limited item names its variety (catalog `variety`). Each: its name, its touch (ProducerDef.TOUCHES), and for trees its look: `leaves` the colours of its crown's masses in turn (a palm's fronds), `darken` how much deeper they are painted than a plain crown's light would make them, `stars` the colour of the stars dotted over it. An animal's look is drawn by the art tool (tools/animal_art limited.py); its variety is the first words of its name. `trees`: the varieties every tree comes in (tools/make_limited.py writes one limited tree of each for every plain tree). `tree_gems`: a limited tree's price in gems by the level its plain tree unlocks at, as [up to this level, gems]: the animals' own three prices. `tree_pay`: what it pays, of its plain tree's payout.",
+ "_doc": "The varieties limited animals and trees come in (owner, 20 Nov: one structure over both, so a variety is described once and worn by either, and a new one is a row here). A limited item names its variety (catalog `variety`). Each: its name, its touch (ProducerDef.TOUCHES), and for trees its look: `leaves` the colours of its crown's masses in turn (a palm's fronds), `darken` how much deeper they are painted than a plain crown's light would make them, `pale` the least saturation its leaves are painted with where a soft pastel crown is wanted (a plain tree's leaves never go below 0.5, which turns a pastel into a strong colour), `stars` the colour of the stars dotted over it. An animal's look is drawn by the art tool (tools/animal_art limited.py); its variety is the first words of its name. `trees`: the varieties every tree comes in (tools/make_limited.py writes one limited tree of each for every plain tree). `tree_gems`: a limited tree's price in gems by the level its plain tree unlocks at, as [up to this level, gems]: the animals' own three prices. `tree_pay`: what it pays, of its plain tree's payout.",
  "tree_gems": [
   [
    10,
@@ -68,6 +68,7 @@
   "cotton_candy": {
    "name": "Cotton Candy",
    "touch": "shake",
+   "pale": 0.34,
    "leaves": [
     "#f7c6e0",
     "#c6e6f7",

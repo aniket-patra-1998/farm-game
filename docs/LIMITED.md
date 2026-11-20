@@ -83,8 +83,8 @@ An animal's look in a variety is drawn by the art tool; a tree's is drawn by the
   it unlocks at (`tree_gems`: 20, 35, 50, the animals' steps) and half as much again in coins (`tree_pay`). A
   change to a plain tree or a variety is followed by running the tool; `--check` fails until it is.
 - **Its look** (`TreeModel`): the plain tree's own shape and fruit with the variety's `leaves` in turn over its
-  masses and fronds, `darken` for Galaxy, the touch on its leaf materials (`leaf_touch.gdshaderinc`,
-  `ModelKit.touch_all`) and Galaxy's stars (`star3d.gdshader`). **No file**: five of every tree would be some
+  masses and fronds, `darken` for Galaxy, `pale` for Cotton Candy's soft crown, the touch on its leaf
+  materials (`leaf_touch.gdshaderinc`, `ModelKit.touch_all`) and Galaxy's stars (`star3d.gdshader`). **No file**: five of every tree would be some
   60 MB, so `tools/export_plants` leaves them out and each is built on the device when first shown and kept
   (ModelStore). Its Market picture is made from the same build.
 - **Its rules** are the animals', through the same `LimitedSystem`: sold for gems on the Limited tab (animals,
