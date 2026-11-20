@@ -31,7 +31,8 @@ const CASUAL_AWAY := [3, 7]    # the days a casual player skips when --away is n
 const FIRST_HOUR_MINUTES := 60
 const BUILD_ROWS := 5        # the back rows a grown farm keeps for buildings (BalanceSim._kept_for_building)
 const BUILD_FROM_SIZE := 16   # the farm size from which it does
-const SIM_START := 1780272000   # 1 Jun 2026, 00:00 UTC: every run's first day (BalanceSim.new_farm)
+const SIM_START := 1793491200   # 1 Nov 2026, 00:00 UTC (autumn, as the tests were made): every run's first day (BalanceSim.new_farm)
+const UPGRADE_SPARE := 3   # the bot grows a building only with this many times its price to spare (jobs first)
 const REPAIR_AT := 2   # the wear level the bot repairs at (a careful player: before it costs much)
 const NEVER := 999        # a level or moment the run never reached (a target's "at most" then misses)
 const FIRST_HOUR_MARKS := [10, 20, 30, 40, 60]   # minutes at which the first hour prints the level and coins
@@ -170,10 +171,14 @@ func _visit_hours() -> Array:
 ## device clock set back (Persistence.watch_clock). (Moving the clock on before Game.reset_game did nothing: the
 ## reset sets the clock back to the device's, so the first visit fell at whatever hour the run started.)
 func new_farm() -> void:
-	game.reset_game()
 	# Every run starts on the same date (SIM_START) whenever it runs: seasons, weather and day turns follow the
 	# calendar, so a run started on another day played another game (the audit gave 31% and 4% upkeep for one seed).
+	# The farm is made on that date, not moved there.
 	game.debug_time_offset += SIM_START - game.now()
+	game.keep_clock = true
+	game.reset_game()
+	game.keep_clock = false
+	game.persistence.forget_clock()   # (the jump to SIM_START is not a clock set back: nothing is moved for it)
 	game.persistence.watch_clock()
 	var hour := DayCycle.local_hour(game.now(), DayCycle.device_bias_minutes())
 	var back := int(fposmod(hour - float(_visit_hours()[0]), 24.0) * 3600.0)
@@ -619,7 +624,8 @@ func _visit(next_visits: Array) -> void:
 		_craft()   # before replanting: harvested plots can still be cleared to make room for the building
 	if style != "casual":
 		_upkeep(300)   # (repairs first: a player keeps what they have working before buying more)
-		_buy_building(300)   # (before replanting too: harvested plots can make room for a building)
+		if not follows_goals() or jobs_left() == 0:
+			_buy_building(300)   # (before replanting: harvested plots make room; after the goals' own buys)
 	for r in game.farm_size:
 		for c in game.farm_size:
 			var i := game.index_of(r, c)
@@ -1153,7 +1159,7 @@ func _upkeep(reserve: int) -> void:
 	for o in game.objects:
 		if game.is_building_item(str(o["id"])) and game.buildings.can_expand(o).ok():
 			var coins := game.land.expansion_coins(o)
-			if game.coins >= coins + reserve and game.land.upgrade_building(int(o["uid"])):
+			if game.coins >= UPGRADE_SPARE * coins + reserve and game.land.upgrade_building(int(o["uid"])):
 				_upgrades += 1
 				_upgrade_coins += coins
 

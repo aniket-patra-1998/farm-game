@@ -271,6 +271,12 @@ func shift_all(skew: int) -> void:
 
 ## Called every frame: a phone's clock set back while the game runs or waits in the background (it resumes
 ## without loading) shifts every timer as loading does, so nothing waits the difference on top. Returns the shift.
+## Forgets the latest time seen, so the next watch_clock takes the clock as it is (a new farm made on another
+## date: the play bot's runs).
+func forget_clock() -> void:
+	_seen = 0
+
+
 func watch_clock() -> int:
 	var t := game.now()
 	var skew := _seen - t if _seen > 0 and t < _seen - CLOCK_SLACK else 0

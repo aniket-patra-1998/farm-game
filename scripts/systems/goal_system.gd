@@ -521,6 +521,8 @@ func _pick_job(rng: RandomNumberGenerator, taken: Array) -> Dictionary:
 		for what in pick_candidates(str(t.get("what", ANY))):
 			if taken.any(func(j: Dictionary) -> bool: return j["do"] == t["do"] and j["what"] == what):
 				continue
+			if t.get("per_owned", false) and per_day_of(str(what)) <= 0:
+				continue   # (nothing of it will be ready in today's play: a job it can't be done today)
 			options.append([t, what])
 			weights.append(float(t.get("weight", 1)))
 	if options.is_empty():
@@ -546,15 +548,20 @@ func affordable_plots(id: String) -> int:
 	return game.coins / maxi(1, each)
 
 
-## How many times the things standing on the farm that `what` names give in a day's play (a job to collect from
-## them asks no more): each one's count times the times its cycle fits in goals.daily_play_hours, at least once.
+## How many times the things standing on the farm that `what` names give in a day's play from now (a job to
+## collect from them asks no more): each one when it is next ready, then once a cycle, within
+## goals.daily_play_hours. A chicken just collected gives nothing more today (the bot was asked for 3 chickens'
+## eggs the morning it had collected them all: a job that could not be done that day).
 func per_day_of(what: String) -> int:
 	var n := 0
+	var window := Balance.f("goals.daily_play_hours") * 3600.0
 	for o: Dictionary in game.objects:
 		var id := str(o["id"])
 		if matches(what, id):
-			var cycle := float(game.item_data(id).get("cycle_seconds", 86400))
-			n += maxi(1, floori(Balance.f("goals.daily_play_hours") * 3600.0 / maxf(cycle, 1.0)))
+			var cycle := maxf(float(game.item_data(id).get("cycle_seconds", 86400)), 1.0)
+			var wait := float(game.seconds_until_ready(o)) if o.has("t") else 0.0
+			if wait <= window:
+				n += 1 + floori((window - wait) / cycle)
 	return n
 
 

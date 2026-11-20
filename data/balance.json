@@ -370,7 +370,7 @@
    "note": "a farm's first days in which it is helped once a day to plant (owner, 19 Nov: casual players were broke for four days)"
   },
   "young_farm_plots": {
-   "v": 8,
+   "v": 12,
    "note": "plots a young farm is helped to plow and plant once a day, when it cannot afford them and has land bare"
   },
   "rescue_coins": {
