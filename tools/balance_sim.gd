@@ -347,6 +347,8 @@ func metrics() -> Dictionary:
 		m["level%d_day" % lvl] = int(_level_day.get(lvl, NEVER))
 	if follows_goals():
 		m["projects_open"] = game.goals.project_stage.size()
+	if style == "crafter" and not _crafting_home().is_empty():
+		m["craft_payback_days"] = craft_payback_days()
 	return m
 
 
