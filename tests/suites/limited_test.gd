@@ -304,7 +304,8 @@ func test_602_limited_trees_are_saved_and_follow_the_release() -> void:
 	_check(not "galaxy_apple_tree" in market.shelf_items("tree"), "a limited tree is not on the Trees shelf")
 	_eq(market.tab_for("galaxy_apple_tree"), market.tab_for("galaxy_cow"), "it is found on the Limited tab")
 	Release.whole = false
-	_eq(HudMarket._for_sale("galaxy_apple_tree"), Release.has("apple_tree"), "the first release sells them with their tree")
+	_eq(HudMarket._for_sale("galaxy_apple_tree"), Release.has("apple_tree"),
+		"the first release sells them with their tree")
 	var features: Dictionary = Release._data["features"]
 	features[LimitedSystem.FEATURE] = false
 	_check(not HudMarket._for_sale("galaxy_apple_tree"), "a release with them off does not sell them")
