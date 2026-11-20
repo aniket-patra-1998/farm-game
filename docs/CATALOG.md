@@ -9,17 +9,17 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 |---|---|---|---|
 | Crops | 10 | 74 | 0 |
 | Materials | 2 | 13 | 0 |
-| Trees | 32 | 46 | 0 |
+| Trees | 32 | 204 | 0 |
 | Animals | 15 | 145 | 0 |
 | Buildings | 6 | 21 | 6 |
 | Vehicles | 4 | 4 | 0 |
 | Decorations | 7 | 40 | 0 |
 | recipes | 4 | 55 | 37 |
-| young | 3 | 4 | 0 |
+| young | 3 | 5 | 0 |
 | blooms | 6 | 12 | 0 |
 | Ingredients | 3 | 22 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **114** | **546** | **43** |
+| **All** | **114** | **705** | **43** |
 
 ## Adding an item
 
@@ -116,6 +116,9 @@ Placeables that are collected every cycle.
 | `payout` | int | 0 |  | Coins per collection. |
 | `xp` | int | 1 |  | XP per collection. |
 | `product` | string |  |  | What it gives, as shown to the player. |
+| `limited` | bool | false |  | A limited animal or tree (LimitedSystem, docs/LIMITED.md): a variety sold in the Market for gems; a home's finds turn out to be one only where one already lives. A limited animal's baby is limited too. |
+| `touch` | string | "" |  | A limited one's own touch (docs/LIMITED.md): stars (they blink), rainbow (its colours turn), sunset (they sway), glint (one runs over it), embers (they flicker), shake (it shakes out, shedding a little). An animal's file carries what its touch needs (tools/animal_art limited.py TOUCH); a tree's is drawn by its builder. |
+| `variety` | string | "" |  | The variety a limited one is (data/varieties.json: galaxy, rainbow...): one variety can be worn by animals and by trees. |
 
 ### Tree (extends Producer)
 
@@ -125,6 +128,7 @@ Fruit and nut trees.
 |---|---|---|---|---|
 | `rare_sapling` | string → Tree |  |  | The rare variety an Orchard can sprout from this tree. |
 | `rare_of` | string → Tree |  |  | For a rare variety: the tree it sprouts from. |
+| `limited_of` | string → Tree |  |  | For a limited tree: the plain tree it is a variety of (its shape and fruit; what an Orchard of only limited trees still finds). |
 
 ### Animal (extends Producer)
 
@@ -138,8 +142,6 @@ Animals, loose on the farm or inside their home.
 | `rare_pig` | bool | false |  | A rare breed traded for truffles at the Pig Pen. |
 | `lost` | bool | false |  | A lost animal: only wanders onto the farm (FarmVille's lost animals) and is adopted for free; never in the Market. |
 | `young` | bool | false |  | A baby: drawn small and painted as a young animal. |
-| `limited` | bool | false |  | A limited animal (LimitedSystem, docs/LIMITED.md): a unique coat, sold in the Market for gems; a home's finds turn out to be one only where one already lives. Its baby is limited too. |
-| `touch` | string | "" |  | A limited coat's own touch (CoatTouch, docs/LIMITED.md): stars (they blink), rainbow (its colours turn), sunset (they sway), glint (one runs over it), embers (they flicker), shake (a long coat shakes out); its file carries what the touch needs (tools/animal_art limited.py TOUCH). |
 | `baby` | string → Animal |  |  | The baby this breed has when its home brings one (a Hereford Cow has Hereford Calves). Empty: the plain calf or foal. |
 | `grows_into` | string → Animal |  |  | Grows into this animal after its first collection (Baby Turkey into Turkey, Ugly Duckling into Swan). |
 
@@ -453,6 +455,11 @@ Shared: `cycle_seconds` = 172800
 |---|---|---|---|---|---|---|---|
 | ✅ | Apple Tree | `apple_tree` | 2 | 150 | 2 days | 60 |  |
 | ✅ | Honeycrisp Apple Tree | `honeycrisp_apple_tree` | never sold | free | 2 days | 90 | rare variety of apple tree |
+| ✅ | Galaxy Apple Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_apple_tree` | 2 | 20 gems | 2 days | 90 |  |
+| ✅ | Rainbow Apple Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_apple_tree` | 2 | 20 gems | 2 days | 90 |  |
+| ✅ | Golden Apple Tree (a limited variety: values estimated in FarmVille's style) | `golden_apple_tree` | 2 | 20 gems | 2 days | 90 |  |
+| ✅ | Sunset Apple Tree (a limited variety: values estimated in FarmVille's style) | `sunset_apple_tree` | 2 | 20 gems | 2 days | 90 |  |
+| ✅ | Cotton Candy Apple Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_apple_tree` | 2 | 20 gems | 2 days | 90 |  |
 
 ### Lemon Trees
 
@@ -464,6 +471,11 @@ Shared: `cycle_seconds` = 172800
 |---|---|---|---|---|---|---|---|
 | ✅ | Lemon Tree | `lemon_tree` | 4 | 250 | 2 days | 85 |  |
 | ✅ | Meyer Lemon Tree | `meyer_lemon_tree` | never sold | free | 2 days | 128 | rare variety of lemon tree |
+| ✅ | Galaxy Lemon Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_lemon_tree` | 4 | 20 gems | 2 days | 130 |  |
+| ✅ | Rainbow Lemon Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_lemon_tree` | 4 | 20 gems | 2 days | 130 |  |
+| ✅ | Golden Lemon Tree (a limited variety: values estimated in FarmVille's style) | `golden_lemon_tree` | 4 | 20 gems | 2 days | 130 |  |
+| ✅ | Sunset Lemon Tree (a limited variety: values estimated in FarmVille's style) | `sunset_lemon_tree` | 4 | 20 gems | 2 days | 130 |  |
+| ✅ | Cotton Candy Lemon Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_lemon_tree` | 4 | 20 gems | 2 days | 130 |  |
 
 ### Cherry Trees
 
@@ -473,6 +485,11 @@ Cherry trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Cherry Tree | `cherry_tree` | 6 | 400 | 3 days | 140 |  |
 | ✅ | Rainier Cherry Tree | `rainier_cherry_tree` | never sold | free | 3 days | 210 | rare variety of cherry tree |
+| ✅ | Galaxy Cherry Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_cherry_tree` | 6 | 20 gems | 3 days | 210 |  |
+| ✅ | Rainbow Cherry Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_cherry_tree` | 6 | 20 gems | 3 days | 210 |  |
+| ✅ | Golden Cherry Tree (a limited variety: values estimated in FarmVille's style) | `golden_cherry_tree` | 6 | 20 gems | 3 days | 210 |  |
+| ✅ | Sunset Cherry Tree (a limited variety: values estimated in FarmVille's style) | `sunset_cherry_tree` | 6 | 20 gems | 3 days | 210 |  |
+| ✅ | Cotton Candy Cherry Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_cherry_tree` | 6 | 20 gems | 3 days | 210 |  |
 
 ### Orange Trees
 
@@ -484,6 +501,11 @@ Shared: `cycle_seconds` = 172800
 |---|---|---|---|---|---|---|---|
 | ✅ | Orange Tree | `orange_tree` | 8 | 500 | 2 days | 120 |  |
 | ✅ | Blood Orange Tree | `blood_orange_tree` | never sold | free | 2 days | 180 | rare variety of orange tree |
+| ✅ | Galaxy Orange Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_orange_tree` | 8 | 20 gems | 2 days | 180 |  |
+| ✅ | Rainbow Orange Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_orange_tree` | 8 | 20 gems | 2 days | 180 |  |
+| ✅ | Golden Orange Tree (a limited variety: values estimated in FarmVille's style) | `golden_orange_tree` | 8 | 20 gems | 2 days | 180 |  |
+| ✅ | Sunset Orange Tree (a limited variety: values estimated in FarmVille's style) | `sunset_orange_tree` | 8 | 20 gems | 2 days | 180 |  |
+| ✅ | Cotton Candy Orange Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_orange_tree` | 8 | 20 gems | 2 days | 180 |  |
 
 ### Peach Trees
 
@@ -493,6 +515,11 @@ Peach trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Peach Tree | `peach_tree` | 10 | 800 | 3 days | 200 |  |
 | ✅ | Elberta Peach Tree | `elberta_peach_tree` | never sold | free | 3 days | 300 | rare variety of peach tree |
+| ✅ | Galaxy Peach Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_peach_tree` | 10 | 20 gems | 3 days | 300 |  |
+| ✅ | Rainbow Peach Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_peach_tree` | 10 | 20 gems | 3 days | 300 |  |
+| ✅ | Golden Peach Tree (a limited variety: values estimated in FarmVille's style) | `golden_peach_tree` | 10 | 20 gems | 3 days | 300 |  |
+| ✅ | Sunset Peach Tree (a limited variety: values estimated in FarmVille's style) | `sunset_peach_tree` | 10 | 20 gems | 3 days | 300 |  |
+| ✅ | Cotton Candy Peach Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_peach_tree` | 10 | 20 gems | 3 days | 300 |  |
 
 ### Mango Trees
 
@@ -502,6 +529,11 @@ Mango trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Mango Tree | `mango_tree` | 12 | 1,200 | 3 days | 280 |  |
 | ✅ | Alphonso Mango Tree | `alphonso_mango_tree` | never sold | free | 3 days | 420 | rare variety of mango tree |
+| ✅ | Galaxy Mango Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_mango_tree` | 12 | 35 gems | 3 days | 420 |  |
+| ✅ | Rainbow Mango Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_mango_tree` | 12 | 35 gems | 3 days | 420 |  |
+| ✅ | Golden Mango Tree (a limited variety: values estimated in FarmVille's style) | `golden_mango_tree` | 12 | 35 gems | 3 days | 420 |  |
+| ✅ | Sunset Mango Tree (a limited variety: values estimated in FarmVille's style) | `sunset_mango_tree` | 12 | 35 gems | 3 days | 420 |  |
+| ✅ | Cotton Candy Mango Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_mango_tree` | 12 | 35 gems | 3 days | 420 |  |
 
 ### Plum Trees
 
@@ -511,6 +543,10 @@ Plum trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Plum Tree | `plum_tree` | 3 | 200 | 3 days | 75 |  |
 | ✅ | Golden Plum Tree | `golden_plum_tree` | never sold | free | 3 days | 112 | rare variety of plum tree |
+| ✅ | Galaxy Plum Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_plum_tree` | 3 | 20 gems | 3 days | 110 |  |
+| ✅ | Rainbow Plum Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_plum_tree` | 3 | 20 gems | 3 days | 110 |  |
+| ✅ | Sunset Plum Tree (a limited variety: values estimated in FarmVille's style) | `sunset_plum_tree` | 3 | 20 gems | 3 days | 110 |  |
+| ✅ | Cotton Candy Plum Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_plum_tree` | 3 | 20 gems | 3 days | 110 |  |
 
 ### Fig Trees
 
@@ -520,6 +556,11 @@ Fig trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Fig Tree | `fig_tree` | 5 | 300 | 3 days | 105 |  |
 | ✅ | Black Mission Fig Tree | `black_mission_fig_tree` | never sold | free | 3 days | 158 | rare variety of fig tree |
+| ✅ | Galaxy Fig Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_fig_tree` | 5 | 20 gems | 3 days | 160 |  |
+| ✅ | Rainbow Fig Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_fig_tree` | 5 | 20 gems | 3 days | 160 |  |
+| ✅ | Golden Fig Tree (a limited variety: values estimated in FarmVille's style) | `golden_fig_tree` | 5 | 20 gems | 3 days | 160 |  |
+| ✅ | Sunset Fig Tree (a limited variety: values estimated in FarmVille's style) | `sunset_fig_tree` | 5 | 20 gems | 3 days | 160 |  |
+| ✅ | Cotton Candy Fig Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_fig_tree` | 5 | 20 gems | 3 days | 160 |  |
 
 ### Banana Trees
 
@@ -529,6 +570,11 @@ Banana trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Banana Tree | `banana_tree` | 7 | 450 | 3 days | 150 |  |
 | ✅ | Red Banana Tree | `red_banana_tree` | never sold | free | 3 days | 225 | rare variety of banana tree |
+| ✅ | Galaxy Banana Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_banana_tree` | 7 | 20 gems | 3 days | 225 |  |
+| ✅ | Rainbow Banana Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_banana_tree` | 7 | 20 gems | 3 days | 225 |  |
+| ✅ | Golden Banana Tree (a limited variety: values estimated in FarmVille's style) | `golden_banana_tree` | 7 | 20 gems | 3 days | 225 |  |
+| ✅ | Sunset Banana Tree (a limited variety: values estimated in FarmVille's style) | `sunset_banana_tree` | 7 | 20 gems | 3 days | 225 |  |
+| ✅ | Cotton Candy Banana Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_banana_tree` | 7 | 20 gems | 3 days | 225 |  |
 
 ### Avocado Trees
 
@@ -538,6 +584,11 @@ Avocado trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Avocado Tree | `avocado_tree` | 9 | 550 | 3 days | 180 |  |
 | ✅ | Hass Avocado Tree | `hass_avocado_tree` | never sold | free | 3 days | 270 | rare variety of avocado tree |
+| ✅ | Galaxy Avocado Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_avocado_tree` | 9 | 20 gems | 3 days | 270 |  |
+| ✅ | Rainbow Avocado Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_avocado_tree` | 9 | 20 gems | 3 days | 270 |  |
+| ✅ | Golden Avocado Tree (a limited variety: values estimated in FarmVille's style) | `golden_avocado_tree` | 9 | 20 gems | 3 days | 270 |  |
+| ✅ | Sunset Avocado Tree (a limited variety: values estimated in FarmVille's style) | `sunset_avocado_tree` | 9 | 20 gems | 3 days | 270 |  |
+| ✅ | Cotton Candy Avocado Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_avocado_tree` | 9 | 20 gems | 3 days | 270 |  |
 
 ### Apricot Trees
 
@@ -549,6 +600,10 @@ Shared: `cycle_seconds` = 345600
 |---|---|---|---|---|---|---|---|
 | ✅ | Apricot Tree | `apricot_tree` | 11 | 700 | 4 days | 250 |  |
 | ✅ | Golden Apricot Tree | `golden_apricot_tree` | never sold | free | 4 days | 375 | rare variety of apricot tree |
+| ✅ | Galaxy Apricot Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_apricot_tree` | 11 | 35 gems | 4 days | 375 |  |
+| ✅ | Rainbow Apricot Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_apricot_tree` | 11 | 35 gems | 4 days | 375 |  |
+| ✅ | Sunset Apricot Tree (a limited variety: values estimated in FarmVille's style) | `sunset_apricot_tree` | 11 | 35 gems | 4 days | 375 |  |
+| ✅ | Cotton Candy Apricot Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_apricot_tree` | 11 | 35 gems | 4 days | 375 |  |
 
 ### Pomegranate Trees
 
@@ -560,6 +615,11 @@ Shared: `cycle_seconds` = 432000
 |---|---|---|---|---|---|---|---|
 | ✅ | Pomegranate Tree | `pomegranate_tree` | 14 | 900 | 5 days | 340 |  |
 | ✅ | Wonderful Pomegranate Tree | `wonderful_pomegranate_tree` | never sold | free | 5 days | 510 | rare variety of pomegranate tree |
+| ✅ | Galaxy Pomegranate Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_pomegranate_tree` | 14 | 35 gems | 5 days | 510 |  |
+| ✅ | Rainbow Pomegranate Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_pomegranate_tree` | 14 | 35 gems | 5 days | 510 |  |
+| ✅ | Golden Pomegranate Tree (a limited variety: values estimated in FarmVille's style) | `golden_pomegranate_tree` | 14 | 35 gems | 5 days | 510 |  |
+| ✅ | Sunset Pomegranate Tree (a limited variety: values estimated in FarmVille's style) | `sunset_pomegranate_tree` | 14 | 35 gems | 5 days | 510 |  |
+| ✅ | Cotton Candy Pomegranate Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_pomegranate_tree` | 14 | 35 gems | 5 days | 510 |  |
 
 ### Olive Trees
 
@@ -571,6 +631,11 @@ Shared: `cycle_seconds` = 345600
 |---|---|---|---|---|---|---|---|
 | ✅ | Olive Tree | `olive_tree` | 16 | 1,100 | 4 days | 360 |  |
 | ✅ | Mission Olive Tree | `mission_olive_tree` | never sold | free | 4 days | 540 | rare variety of olive tree |
+| ✅ | Galaxy Olive Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_olive_tree` | 16 | 35 gems | 4 days | 540 |  |
+| ✅ | Rainbow Olive Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_olive_tree` | 16 | 35 gems | 4 days | 540 |  |
+| ✅ | Golden Olive Tree (a limited variety: values estimated in FarmVille's style) | `golden_olive_tree` | 16 | 35 gems | 4 days | 540 |  |
+| ✅ | Sunset Olive Tree (a limited variety: values estimated in FarmVille's style) | `sunset_olive_tree` | 16 | 35 gems | 4 days | 540 |  |
+| ✅ | Cotton Candy Olive Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_olive_tree` | 16 | 35 gems | 4 days | 540 |  |
 
 ### Coconut Trees
 
@@ -580,6 +645,11 @@ Coconut trees, and the rare variety an Orchard can sprout from them.
 |---|---|---|---|---|---|---|---|
 | ✅ | Coconut Tree | `coconut_tree` | 18 | 1,400 | 3 days | 380 |  |
 | ✅ | King Coconut Tree | `king_coconut_tree` | never sold | free | 3 days | 570 | rare variety of coconut tree |
+| ✅ | Galaxy Coconut Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_coconut_tree` | 18 | 35 gems | 3 days | 570 |  |
+| ✅ | Rainbow Coconut Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_coconut_tree` | 18 | 35 gems | 3 days | 570 |  |
+| ✅ | Golden Coconut Tree (a limited variety: values estimated in FarmVille's style) | `golden_coconut_tree` | 18 | 35 gems | 3 days | 570 |  |
+| ✅ | Sunset Coconut Tree (a limited variety: values estimated in FarmVille's style) | `sunset_coconut_tree` | 18 | 35 gems | 3 days | 570 |  |
+| ✅ | Cotton Candy Coconut Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_coconut_tree` | 18 | 35 gems | 3 days | 570 |  |
 
 ### Lime Trees
 
@@ -588,6 +658,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Lime Tree (values estimated in FarmVille's style) | `lime_tree` | 21 | 4,350 | 5 days | 1245 |  |
+| ✅ | Galaxy Lime Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_lime_tree` | 21 | 35 gems | 3 days | 1870 |  |
+| ✅ | Rainbow Lime Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_lime_tree` | 21 | 35 gems | 3 days | 1870 |  |
+| ✅ | Golden Lime Tree (a limited variety: values estimated in FarmVille's style) | `golden_lime_tree` | 21 | 35 gems | 3 days | 1870 |  |
+| ✅ | Sunset Lime Tree (a limited variety: values estimated in FarmVille's style) | `sunset_lime_tree` | 21 | 35 gems | 3 days | 1870 |  |
+| ✅ | Cotton Candy Lime Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_lime_tree` | 21 | 35 gems | 3 days | 1870 |  |
 
 ### Grapefruit Trees
 
@@ -596,6 +671,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Grapefruit Tree (values estimated in FarmVille's style) | `grapefruit_tree` | 22 | 2,700 | 3 days | 775 |  |
+| ✅ | Galaxy Grapefruit Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_grapefruit_tree` | 22 | 35 gems | 3 days | 1160 |  |
+| ✅ | Rainbow Grapefruit Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_grapefruit_tree` | 22 | 35 gems | 3 days | 1160 |  |
+| ✅ | Golden Grapefruit Tree (a limited variety: values estimated in FarmVille's style) | `golden_grapefruit_tree` | 22 | 35 gems | 3 days | 1160 |  |
+| ✅ | Sunset Grapefruit Tree (a limited variety: values estimated in FarmVille's style) | `sunset_grapefruit_tree` | 22 | 35 gems | 3 days | 1160 |  |
+| ✅ | Cotton Candy Grapefruit Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_grapefruit_tree` | 22 | 35 gems | 3 days | 1160 |  |
 
 ### Mandarin Trees
 
@@ -604,6 +684,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Mandarin Tree (values estimated in FarmVille's style) | `mandarin_tree` | 24 | 3,850 | 4 days | 1105 |  |
+| ✅ | Galaxy Mandarin Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_mandarin_tree` | 24 | 35 gems | 3 days | 1660 |  |
+| ✅ | Rainbow Mandarin Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_mandarin_tree` | 24 | 35 gems | 3 days | 1660 |  |
+| ✅ | Golden Mandarin Tree (a limited variety: values estimated in FarmVille's style) | `golden_mandarin_tree` | 24 | 35 gems | 3 days | 1660 |  |
+| ✅ | Sunset Mandarin Tree (a limited variety: values estimated in FarmVille's style) | `sunset_mandarin_tree` | 24 | 35 gems | 3 days | 1660 |  |
+| ✅ | Cotton Candy Mandarin Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_mandarin_tree` | 24 | 35 gems | 3 days | 1660 |  |
 
 ### Date Trees
 
@@ -612,6 +697,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Date Tree (values estimated in FarmVille's style) | `date_tree` | 26 | 3,100 | 3 days | 880 |  |
+| ✅ | Galaxy Date Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_date_tree` | 26 | 50 gems | 3 days | 1320 |  |
+| ✅ | Rainbow Date Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_date_tree` | 26 | 50 gems | 3 days | 1320 |  |
+| ✅ | Golden Date Tree (a limited variety: values estimated in FarmVille's style) | `golden_date_tree` | 26 | 50 gems | 3 days | 1320 |  |
+| ✅ | Sunset Date Tree (a limited variety: values estimated in FarmVille's style) | `sunset_date_tree` | 26 | 50 gems | 3 days | 1320 |  |
+| ✅ | Cotton Candy Date Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_date_tree` | 26 | 50 gems | 3 days | 1320 |  |
 
 ### Guava Trees
 
@@ -620,6 +710,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Guava Tree (values estimated in FarmVille's style) | `guava_tree` | 27 | 3,200 | 3 days | 910 |  |
+| ✅ | Galaxy Guava Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_guava_tree` | 27 | 50 gems | 3 days | 1365 |  |
+| ✅ | Rainbow Guava Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_guava_tree` | 27 | 50 gems | 3 days | 1365 |  |
+| ✅ | Golden Guava Tree (a limited variety: values estimated in FarmVille's style) | `golden_guava_tree` | 27 | 50 gems | 3 days | 1365 |  |
+| ✅ | Sunset Guava Tree (a limited variety: values estimated in FarmVille's style) | `sunset_guava_tree` | 27 | 50 gems | 3 days | 1365 |  |
+| ✅ | Cotton Candy Guava Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_guava_tree` | 27 | 50 gems | 3 days | 1365 |  |
 
 ### Persimmon Trees
 
@@ -628,6 +723,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Persimmon Tree (values estimated in FarmVille's style) | `persimmon_tree` | 29 | 4,500 | 4 days | 1285 |  |
+| ✅ | Galaxy Persimmon Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_persimmon_tree` | 29 | 50 gems | 3 days | 1930 |  |
+| ✅ | Rainbow Persimmon Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_persimmon_tree` | 29 | 50 gems | 3 days | 1930 |  |
+| ✅ | Golden Persimmon Tree (a limited variety: values estimated in FarmVille's style) | `golden_persimmon_tree` | 29 | 50 gems | 3 days | 1930 |  |
+| ✅ | Sunset Persimmon Tree (a limited variety: values estimated in FarmVille's style) | `sunset_persimmon_tree` | 29 | 50 gems | 3 days | 1930 |  |
+| ✅ | Cotton Candy Persimmon Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_persimmon_tree` | 29 | 50 gems | 3 days | 1930 |  |
 
 ### Starfruit Trees
 
@@ -636,6 +736,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Starfruit Tree (values estimated in FarmVille's style) | `starfruit_tree` | 31 | 4,750 | 4 days | 1355 |  |
+| ✅ | Galaxy Starfruit Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_starfruit_tree` | 31 | 50 gems | 3 days | 2030 |  |
+| ✅ | Rainbow Starfruit Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_starfruit_tree` | 31 | 50 gems | 3 days | 2030 |  |
+| ✅ | Golden Starfruit Tree (a limited variety: values estimated in FarmVille's style) | `golden_starfruit_tree` | 31 | 50 gems | 3 days | 2030 |  |
+| ✅ | Sunset Starfruit Tree (a limited variety: values estimated in FarmVille's style) | `sunset_starfruit_tree` | 31 | 50 gems | 3 days | 2030 |  |
+| ✅ | Cotton Candy Starfruit Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_starfruit_tree` | 31 | 50 gems | 3 days | 2030 |  |
 
 ### Passion Fruit Trees
 
@@ -644,6 +749,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Passion Fruit Tree (values estimated in FarmVille's style) | `passion_fruit_tree` | 33 | 6,250 | 5 days | 1785 |  |
+| ✅ | Galaxy Passion Fruit Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_passion_fruit_tree` | 33 | 50 gems | 3 days | 2680 |  |
+| ✅ | Rainbow Passion Fruit Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_passion_fruit_tree` | 33 | 50 gems | 3 days | 2680 |  |
+| ✅ | Golden Passion Fruit Tree (a limited variety: values estimated in FarmVille's style) | `golden_passion_fruit_tree` | 33 | 50 gems | 3 days | 2680 |  |
+| ✅ | Sunset Passion Fruit Tree (a limited variety: values estimated in FarmVille's style) | `sunset_passion_fruit_tree` | 33 | 50 gems | 3 days | 2680 |  |
+| ✅ | Cotton Candy Passion Fruit Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_passion_fruit_tree` | 33 | 50 gems | 3 days | 2680 |  |
 
 ### Jackfruit Trees
 
@@ -652,6 +762,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Jackfruit Tree (values estimated in FarmVille's style) | `jackfruit_tree` | 35 | 3,950 | 3 days | 1125 |  |
+| ✅ | Galaxy Jackfruit Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_jackfruit_tree` | 35 | 50 gems | 3 days | 1690 |  |
+| ✅ | Rainbow Jackfruit Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_jackfruit_tree` | 35 | 50 gems | 3 days | 1690 |  |
+| ✅ | Golden Jackfruit Tree (a limited variety: values estimated in FarmVille's style) | `golden_jackfruit_tree` | 35 | 50 gems | 3 days | 1690 |  |
+| ✅ | Sunset Jackfruit Tree (a limited variety: values estimated in FarmVille's style) | `sunset_jackfruit_tree` | 35 | 50 gems | 3 days | 1690 |  |
+| ✅ | Cotton Candy Jackfruit Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_jackfruit_tree` | 35 | 50 gems | 3 days | 1690 |  |
 
 ### Asian Pear Trees
 
@@ -660,6 +775,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Asian Pear Tree (values estimated in FarmVille's style) | `asian_pear_tree` | 37 | 2,750 | 2 days | 785 |  |
+| ✅ | Galaxy Asian Pear Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_asian_pear_tree` | 37 | 50 gems | 3 days | 1180 |  |
+| ✅ | Rainbow Asian Pear Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_asian_pear_tree` | 37 | 50 gems | 3 days | 1180 |  |
+| ✅ | Golden Asian Pear Tree (a limited variety: values estimated in FarmVille's style) | `golden_asian_pear_tree` | 37 | 50 gems | 3 days | 1180 |  |
+| ✅ | Sunset Asian Pear Tree (a limited variety: values estimated in FarmVille's style) | `sunset_asian_pear_tree` | 37 | 50 gems | 3 days | 1180 |  |
+| ✅ | Cotton Candy Asian Pear Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_asian_pear_tree` | 37 | 50 gems | 3 days | 1180 |  |
 
 ### Tamarind Trees
 
@@ -668,6 +788,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Tamarind Tree (values estimated in FarmVille's style) | `tamarind_tree` | 39 | 4,300 | 3 days | 1235 |  |
+| ✅ | Galaxy Tamarind Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_tamarind_tree` | 39 | 50 gems | 3 days | 1850 |  |
+| ✅ | Rainbow Tamarind Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_tamarind_tree` | 39 | 50 gems | 3 days | 1850 |  |
+| ✅ | Golden Tamarind Tree (a limited variety: values estimated in FarmVille's style) | `golden_tamarind_tree` | 39 | 50 gems | 3 days | 1850 |  |
+| ✅ | Sunset Tamarind Tree (a limited variety: values estimated in FarmVille's style) | `sunset_tamarind_tree` | 39 | 50 gems | 3 days | 1850 |  |
+| ✅ | Cotton Candy Tamarind Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_tamarind_tree` | 39 | 50 gems | 3 days | 1850 |  |
 
 ### Almond Trees
 
@@ -676,6 +801,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Almond Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `almond_tree` | 5 | 3 gems | 3 days | 255 |  |
+| ✅ | Galaxy Almond Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_almond_tree` | 5 | 20 gems | 3 days | 380 |  |
+| ✅ | Rainbow Almond Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_almond_tree` | 5 | 20 gems | 3 days | 380 |  |
+| ✅ | Golden Almond Tree (a limited variety: values estimated in FarmVille's style) | `golden_almond_tree` | 5 | 20 gems | 3 days | 380 |  |
+| ✅ | Sunset Almond Tree (a limited variety: values estimated in FarmVille's style) | `sunset_almond_tree` | 5 | 20 gems | 3 days | 380 |  |
+| ✅ | Cotton Candy Almond Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_almond_tree` | 5 | 20 gems | 3 days | 380 |  |
 
 ### Walnut Trees
 
@@ -684,6 +814,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Walnut Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `walnut_tree` | 11 | 5 gems | 3 days | 405 |  |
+| ✅ | Galaxy Walnut Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_walnut_tree` | 11 | 35 gems | 3 days | 610 |  |
+| ✅ | Rainbow Walnut Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_walnut_tree` | 11 | 35 gems | 3 days | 610 |  |
+| ✅ | Golden Walnut Tree (a limited variety: values estimated in FarmVille's style) | `golden_walnut_tree` | 11 | 35 gems | 3 days | 610 |  |
+| ✅ | Sunset Walnut Tree (a limited variety: values estimated in FarmVille's style) | `sunset_walnut_tree` | 11 | 35 gems | 3 days | 610 |  |
+| ✅ | Cotton Candy Walnut Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_walnut_tree` | 11 | 35 gems | 3 days | 610 |  |
 
 ### Cashew Trees
 
@@ -692,6 +827,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Cashew Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `cashew_tree` | 17 | 6 gems | 3 days | 525 |  |
+| ✅ | Galaxy Cashew Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_cashew_tree` | 17 | 35 gems | 3 days | 790 |  |
+| ✅ | Rainbow Cashew Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_cashew_tree` | 17 | 35 gems | 3 days | 790 |  |
+| ✅ | Golden Cashew Tree (a limited variety: values estimated in FarmVille's style) | `golden_cashew_tree` | 17 | 35 gems | 3 days | 790 |  |
+| ✅ | Sunset Cashew Tree (a limited variety: values estimated in FarmVille's style) | `sunset_cashew_tree` | 17 | 35 gems | 3 days | 790 |  |
+| ✅ | Cotton Candy Cashew Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_cashew_tree` | 17 | 35 gems | 3 days | 790 |  |
 
 ### Chestnut Trees
 
@@ -700,6 +840,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Chestnut Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `chestnut_tree` | 8 | 6 gems | 2 days | 260 |  |
+| ✅ | Galaxy Chestnut Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_chestnut_tree` | 8 | 20 gems | 3 days | 390 |  |
+| ✅ | Rainbow Chestnut Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_chestnut_tree` | 8 | 20 gems | 3 days | 390 |  |
+| ✅ | Golden Chestnut Tree (a limited variety: values estimated in FarmVille's style) | `golden_chestnut_tree` | 8 | 20 gems | 3 days | 390 |  |
+| ✅ | Sunset Chestnut Tree (a limited variety: values estimated in FarmVille's style) | `sunset_chestnut_tree` | 8 | 20 gems | 3 days | 390 |  |
+| ✅ | Cotton Candy Chestnut Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_chestnut_tree` | 8 | 20 gems | 3 days | 390 |  |
 
 ### Hazelnut Trees
 
@@ -708,6 +853,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Hazelnut Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `hazelnut_tree` | 14 | 5 gems | 2 days | 300 |  |
+| ✅ | Galaxy Hazelnut Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_hazelnut_tree` | 14 | 35 gems | 3 days | 450 |  |
+| ✅ | Rainbow Hazelnut Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_hazelnut_tree` | 14 | 35 gems | 3 days | 450 |  |
+| ✅ | Golden Hazelnut Tree (a limited variety: values estimated in FarmVille's style) | `golden_hazelnut_tree` | 14 | 35 gems | 3 days | 450 |  |
+| ✅ | Sunset Hazelnut Tree (a limited variety: values estimated in FarmVille's style) | `sunset_hazelnut_tree` | 14 | 35 gems | 3 days | 450 |  |
+| ✅ | Cotton Candy Hazelnut Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_hazelnut_tree` | 14 | 35 gems | 3 days | 450 |  |
 
 ### Pecan Trees
 
@@ -716,6 +866,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Pecan Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `pecan_tree` | 20 | 7 gems | 2 days | 400 |  |
+| ✅ | Galaxy Pecan Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_pecan_tree` | 20 | 35 gems | 3 days | 600 |  |
+| ✅ | Rainbow Pecan Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_pecan_tree` | 20 | 35 gems | 3 days | 600 |  |
+| ✅ | Golden Pecan Tree (a limited variety: values estimated in FarmVille's style) | `golden_pecan_tree` | 20 | 35 gems | 3 days | 600 |  |
+| ✅ | Sunset Pecan Tree (a limited variety: values estimated in FarmVille's style) | `sunset_pecan_tree` | 20 | 35 gems | 3 days | 600 |  |
+| ✅ | Cotton Candy Pecan Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_pecan_tree` | 20 | 35 gems | 3 days | 600 |  |
 
 ### Pistachio Trees
 
@@ -724,6 +879,11 @@ From FarmVille's tree list.
 | | Item | id | Unlock | Cost | Every | Pays | Notes |
 |---|---|---|---|---|---|---|---|
 | ✅ | Pistachio Tree (values estimated in FarmVille's style; FarmVille sold nut trees for Farm Cash) | `pistachio_tree` | 23 | 8 gems | 2 days | 450 |  |
+| ✅ | Galaxy Pistachio Tree (a limited variety: values estimated in FarmVille's style) | `galaxy_pistachio_tree` | 23 | 35 gems | 3 days | 675 |  |
+| ✅ | Rainbow Pistachio Tree (a limited variety: values estimated in FarmVille's style) | `rainbow_pistachio_tree` | 23 | 35 gems | 3 days | 675 |  |
+| ✅ | Golden Pistachio Tree (a limited variety: values estimated in FarmVille's style) | `golden_pistachio_tree` | 23 | 35 gems | 3 days | 675 |  |
+| ✅ | Sunset Pistachio Tree (a limited variety: values estimated in FarmVille's style) | `sunset_pistachio_tree` | 23 | 35 gems | 3 days | 675 |  |
+| ✅ | Cotton Candy Pistachio Tree (a limited variety: values estimated in FarmVille's style) | `cotton_candy_pistachio_tree` | 23 | 35 gems | 3 days | 675 |  |
 
 ## Animals
 
@@ -1338,6 +1498,7 @@ From Orchard harvests; 8 Watering Cans grow one into a tree of the Orchard's kin
 | | Item | id |  |
 |---|---|---|
 | ✅ | Mystery Seedling | `mystery_seedling` |  |
+| ✅ | Rare Mystery Seedling | `rare_mystery_seedling` |  |
 
 ### Babies
 

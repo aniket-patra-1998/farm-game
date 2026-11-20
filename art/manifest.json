@@ -3774,6 +3774,186 @@
    "subject": "a lush honeycrisp apple tree with a sturdy trunk and a full green canopy, laden with plenty of ripe honeycrisp apple fruit, ready to pick"
   },
   {
+   "id": "galaxy_apple_tree_harvested",
+   "item": "galaxy_apple_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_apple_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy apple tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_apple_tree_fruiting",
+   "item": "galaxy_apple_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_apple_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy apple tree with a sturdy trunk and a full green canopy, with small unripe green galaxy apple fruit among the leaves"
+  },
+  {
+   "id": "galaxy_apple_tree_ready",
+   "item": "galaxy_apple_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_apple_tree_ready.png"
+   ],
+   "subject": "a lush galaxy apple tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy apple fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_apple_tree_harvested",
+   "item": "rainbow_apple_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_apple_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow apple tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_apple_tree_fruiting",
+   "item": "rainbow_apple_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_apple_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow apple tree with a sturdy trunk and a full green canopy, with small unripe green rainbow apple fruit among the leaves"
+  },
+  {
+   "id": "rainbow_apple_tree_ready",
+   "item": "rainbow_apple_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_apple_tree_ready.png"
+   ],
+   "subject": "a lush rainbow apple tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow apple fruit, ready to pick"
+  },
+  {
+   "id": "golden_apple_tree_harvested",
+   "item": "golden_apple_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_apple_tree_harvested.png"
+   ],
+   "subject": "a lush golden apple tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_apple_tree_fruiting",
+   "item": "golden_apple_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_apple_tree_fruiting.png"
+   ],
+   "subject": "a lush golden apple tree with a sturdy trunk and a full green canopy, with small unripe green golden apple fruit among the leaves"
+  },
+  {
+   "id": "golden_apple_tree_ready",
+   "item": "golden_apple_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_apple_tree_ready.png"
+   ],
+   "subject": "a lush golden apple tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden apple fruit, ready to pick"
+  },
+  {
+   "id": "sunset_apple_tree_harvested",
+   "item": "sunset_apple_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_apple_tree_harvested.png"
+   ],
+   "subject": "a lush sunset apple tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_apple_tree_fruiting",
+   "item": "sunset_apple_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_apple_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset apple tree with a sturdy trunk and a full green canopy, with small unripe green sunset apple fruit among the leaves"
+  },
+  {
+   "id": "sunset_apple_tree_ready",
+   "item": "sunset_apple_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_apple_tree_ready.png"
+   ],
+   "subject": "a lush sunset apple tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset apple fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_apple_tree_harvested",
+   "item": "cotton_candy_apple_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_apple_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy apple tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_apple_tree_fruiting",
+   "item": "cotton_candy_apple_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_apple_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy apple tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy apple fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_apple_tree_ready",
+   "item": "cotton_candy_apple_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_apple_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy apple tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy apple fruit, ready to pick"
+  },
+  {
    "id": "lemon_tree_harvested",
    "item": "lemon_tree",
    "class": "Tree",
@@ -3844,6 +4024,186 @@
     "refs/meyer_lemon_tree_ready.png"
    ],
    "subject": "a lush meyer lemon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe meyer lemon fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_lemon_tree_harvested",
+   "item": "galaxy_lemon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_lemon_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy lemon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_lemon_tree_fruiting",
+   "item": "galaxy_lemon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_lemon_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy lemon tree with a sturdy trunk and a full green canopy, with small unripe green galaxy lemon fruit among the leaves"
+  },
+  {
+   "id": "galaxy_lemon_tree_ready",
+   "item": "galaxy_lemon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_lemon_tree_ready.png"
+   ],
+   "subject": "a lush galaxy lemon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy lemon fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_lemon_tree_harvested",
+   "item": "rainbow_lemon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_lemon_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow lemon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_lemon_tree_fruiting",
+   "item": "rainbow_lemon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_lemon_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow lemon tree with a sturdy trunk and a full green canopy, with small unripe green rainbow lemon fruit among the leaves"
+  },
+  {
+   "id": "rainbow_lemon_tree_ready",
+   "item": "rainbow_lemon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_lemon_tree_ready.png"
+   ],
+   "subject": "a lush rainbow lemon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow lemon fruit, ready to pick"
+  },
+  {
+   "id": "golden_lemon_tree_harvested",
+   "item": "golden_lemon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_lemon_tree_harvested.png"
+   ],
+   "subject": "a lush golden lemon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_lemon_tree_fruiting",
+   "item": "golden_lemon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_lemon_tree_fruiting.png"
+   ],
+   "subject": "a lush golden lemon tree with a sturdy trunk and a full green canopy, with small unripe green golden lemon fruit among the leaves"
+  },
+  {
+   "id": "golden_lemon_tree_ready",
+   "item": "golden_lemon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_lemon_tree_ready.png"
+   ],
+   "subject": "a lush golden lemon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden lemon fruit, ready to pick"
+  },
+  {
+   "id": "sunset_lemon_tree_harvested",
+   "item": "sunset_lemon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_lemon_tree_harvested.png"
+   ],
+   "subject": "a lush sunset lemon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_lemon_tree_fruiting",
+   "item": "sunset_lemon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_lemon_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset lemon tree with a sturdy trunk and a full green canopy, with small unripe green sunset lemon fruit among the leaves"
+  },
+  {
+   "id": "sunset_lemon_tree_ready",
+   "item": "sunset_lemon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_lemon_tree_ready.png"
+   ],
+   "subject": "a lush sunset lemon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset lemon fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_lemon_tree_harvested",
+   "item": "cotton_candy_lemon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_lemon_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy lemon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_lemon_tree_fruiting",
+   "item": "cotton_candy_lemon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_lemon_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy lemon tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy lemon fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_lemon_tree_ready",
+   "item": "cotton_candy_lemon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_lemon_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy lemon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy lemon fruit, ready to pick"
   },
   {
    "id": "cherry_tree_harvested",
@@ -3918,6 +4278,186 @@
    "subject": "a lush rainier cherry tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainier cherry fruit, ready to pick"
   },
   {
+   "id": "galaxy_cherry_tree_harvested",
+   "item": "galaxy_cherry_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_cherry_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy cherry tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_cherry_tree_fruiting",
+   "item": "galaxy_cherry_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_cherry_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy cherry tree with a sturdy trunk and a full green canopy, with small unripe green galaxy cherry fruit among the leaves"
+  },
+  {
+   "id": "galaxy_cherry_tree_ready",
+   "item": "galaxy_cherry_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_cherry_tree_ready.png"
+   ],
+   "subject": "a lush galaxy cherry tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy cherry fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_cherry_tree_harvested",
+   "item": "rainbow_cherry_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_cherry_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow cherry tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_cherry_tree_fruiting",
+   "item": "rainbow_cherry_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_cherry_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow cherry tree with a sturdy trunk and a full green canopy, with small unripe green rainbow cherry fruit among the leaves"
+  },
+  {
+   "id": "rainbow_cherry_tree_ready",
+   "item": "rainbow_cherry_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_cherry_tree_ready.png"
+   ],
+   "subject": "a lush rainbow cherry tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow cherry fruit, ready to pick"
+  },
+  {
+   "id": "golden_cherry_tree_harvested",
+   "item": "golden_cherry_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_cherry_tree_harvested.png"
+   ],
+   "subject": "a lush golden cherry tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_cherry_tree_fruiting",
+   "item": "golden_cherry_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_cherry_tree_fruiting.png"
+   ],
+   "subject": "a lush golden cherry tree with a sturdy trunk and a full green canopy, with small unripe green golden cherry fruit among the leaves"
+  },
+  {
+   "id": "golden_cherry_tree_ready",
+   "item": "golden_cherry_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_cherry_tree_ready.png"
+   ],
+   "subject": "a lush golden cherry tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden cherry fruit, ready to pick"
+  },
+  {
+   "id": "sunset_cherry_tree_harvested",
+   "item": "sunset_cherry_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_cherry_tree_harvested.png"
+   ],
+   "subject": "a lush sunset cherry tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_cherry_tree_fruiting",
+   "item": "sunset_cherry_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_cherry_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset cherry tree with a sturdy trunk and a full green canopy, with small unripe green sunset cherry fruit among the leaves"
+  },
+  {
+   "id": "sunset_cherry_tree_ready",
+   "item": "sunset_cherry_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_cherry_tree_ready.png"
+   ],
+   "subject": "a lush sunset cherry tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset cherry fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_cherry_tree_harvested",
+   "item": "cotton_candy_cherry_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_cherry_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy cherry tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_cherry_tree_fruiting",
+   "item": "cotton_candy_cherry_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_cherry_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy cherry tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy cherry fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_cherry_tree_ready",
+   "item": "cotton_candy_cherry_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_cherry_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy cherry tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy cherry fruit, ready to pick"
+  },
+  {
    "id": "orange_tree_harvested",
    "item": "orange_tree",
    "class": "Tree",
@@ -3988,6 +4528,186 @@
     "refs/blood_orange_tree_ready.png"
    ],
    "subject": "a lush blood orange tree with a sturdy trunk and a full green canopy, laden with plenty of ripe blood orange fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_orange_tree_harvested",
+   "item": "galaxy_orange_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_orange_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy orange tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_orange_tree_fruiting",
+   "item": "galaxy_orange_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_orange_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy orange tree with a sturdy trunk and a full green canopy, with small unripe green galaxy orange fruit among the leaves"
+  },
+  {
+   "id": "galaxy_orange_tree_ready",
+   "item": "galaxy_orange_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_orange_tree_ready.png"
+   ],
+   "subject": "a lush galaxy orange tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy orange fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_orange_tree_harvested",
+   "item": "rainbow_orange_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_orange_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow orange tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_orange_tree_fruiting",
+   "item": "rainbow_orange_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_orange_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow orange tree with a sturdy trunk and a full green canopy, with small unripe green rainbow orange fruit among the leaves"
+  },
+  {
+   "id": "rainbow_orange_tree_ready",
+   "item": "rainbow_orange_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_orange_tree_ready.png"
+   ],
+   "subject": "a lush rainbow orange tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow orange fruit, ready to pick"
+  },
+  {
+   "id": "golden_orange_tree_harvested",
+   "item": "golden_orange_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_orange_tree_harvested.png"
+   ],
+   "subject": "a lush golden orange tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_orange_tree_fruiting",
+   "item": "golden_orange_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_orange_tree_fruiting.png"
+   ],
+   "subject": "a lush golden orange tree with a sturdy trunk and a full green canopy, with small unripe green golden orange fruit among the leaves"
+  },
+  {
+   "id": "golden_orange_tree_ready",
+   "item": "golden_orange_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_orange_tree_ready.png"
+   ],
+   "subject": "a lush golden orange tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden orange fruit, ready to pick"
+  },
+  {
+   "id": "sunset_orange_tree_harvested",
+   "item": "sunset_orange_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_orange_tree_harvested.png"
+   ],
+   "subject": "a lush sunset orange tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_orange_tree_fruiting",
+   "item": "sunset_orange_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_orange_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset orange tree with a sturdy trunk and a full green canopy, with small unripe green sunset orange fruit among the leaves"
+  },
+  {
+   "id": "sunset_orange_tree_ready",
+   "item": "sunset_orange_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_orange_tree_ready.png"
+   ],
+   "subject": "a lush sunset orange tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset orange fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_orange_tree_harvested",
+   "item": "cotton_candy_orange_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_orange_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy orange tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_orange_tree_fruiting",
+   "item": "cotton_candy_orange_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_orange_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy orange tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy orange fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_orange_tree_ready",
+   "item": "cotton_candy_orange_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_orange_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy orange tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy orange fruit, ready to pick"
   },
   {
    "id": "peach_tree_harvested",
@@ -4062,6 +4782,186 @@
    "subject": "a lush elberta peach tree with a sturdy trunk and a full green canopy, laden with plenty of ripe elberta peach fruit, ready to pick"
   },
   {
+   "id": "galaxy_peach_tree_harvested",
+   "item": "galaxy_peach_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_peach_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy peach tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_peach_tree_fruiting",
+   "item": "galaxy_peach_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_peach_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy peach tree with a sturdy trunk and a full green canopy, with small unripe green galaxy peach fruit among the leaves"
+  },
+  {
+   "id": "galaxy_peach_tree_ready",
+   "item": "galaxy_peach_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_peach_tree_ready.png"
+   ],
+   "subject": "a lush galaxy peach tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy peach fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_peach_tree_harvested",
+   "item": "rainbow_peach_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_peach_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow peach tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_peach_tree_fruiting",
+   "item": "rainbow_peach_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_peach_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow peach tree with a sturdy trunk and a full green canopy, with small unripe green rainbow peach fruit among the leaves"
+  },
+  {
+   "id": "rainbow_peach_tree_ready",
+   "item": "rainbow_peach_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_peach_tree_ready.png"
+   ],
+   "subject": "a lush rainbow peach tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow peach fruit, ready to pick"
+  },
+  {
+   "id": "golden_peach_tree_harvested",
+   "item": "golden_peach_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_peach_tree_harvested.png"
+   ],
+   "subject": "a lush golden peach tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_peach_tree_fruiting",
+   "item": "golden_peach_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_peach_tree_fruiting.png"
+   ],
+   "subject": "a lush golden peach tree with a sturdy trunk and a full green canopy, with small unripe green golden peach fruit among the leaves"
+  },
+  {
+   "id": "golden_peach_tree_ready",
+   "item": "golden_peach_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_peach_tree_ready.png"
+   ],
+   "subject": "a lush golden peach tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden peach fruit, ready to pick"
+  },
+  {
+   "id": "sunset_peach_tree_harvested",
+   "item": "sunset_peach_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_peach_tree_harvested.png"
+   ],
+   "subject": "a lush sunset peach tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_peach_tree_fruiting",
+   "item": "sunset_peach_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_peach_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset peach tree with a sturdy trunk and a full green canopy, with small unripe green sunset peach fruit among the leaves"
+  },
+  {
+   "id": "sunset_peach_tree_ready",
+   "item": "sunset_peach_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_peach_tree_ready.png"
+   ],
+   "subject": "a lush sunset peach tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset peach fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_peach_tree_harvested",
+   "item": "cotton_candy_peach_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_peach_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy peach tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_peach_tree_fruiting",
+   "item": "cotton_candy_peach_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_peach_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy peach tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy peach fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_peach_tree_ready",
+   "item": "cotton_candy_peach_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_peach_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy peach tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy peach fruit, ready to pick"
+  },
+  {
    "id": "mango_tree_harvested",
    "item": "mango_tree",
    "class": "Tree",
@@ -4132,6 +5032,186 @@
     "refs/alphonso_mango_tree_ready.png"
    ],
    "subject": "a lush alphonso mango tree with a sturdy trunk and a full green canopy, laden with plenty of ripe alphonso mango fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_mango_tree_harvested",
+   "item": "galaxy_mango_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_mango_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy mango tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_mango_tree_fruiting",
+   "item": "galaxy_mango_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_mango_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy mango tree with a sturdy trunk and a full green canopy, with small unripe green galaxy mango fruit among the leaves"
+  },
+  {
+   "id": "galaxy_mango_tree_ready",
+   "item": "galaxy_mango_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_mango_tree_ready.png"
+   ],
+   "subject": "a lush galaxy mango tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy mango fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_mango_tree_harvested",
+   "item": "rainbow_mango_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_mango_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow mango tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_mango_tree_fruiting",
+   "item": "rainbow_mango_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_mango_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow mango tree with a sturdy trunk and a full green canopy, with small unripe green rainbow mango fruit among the leaves"
+  },
+  {
+   "id": "rainbow_mango_tree_ready",
+   "item": "rainbow_mango_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_mango_tree_ready.png"
+   ],
+   "subject": "a lush rainbow mango tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow mango fruit, ready to pick"
+  },
+  {
+   "id": "golden_mango_tree_harvested",
+   "item": "golden_mango_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_mango_tree_harvested.png"
+   ],
+   "subject": "a lush golden mango tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_mango_tree_fruiting",
+   "item": "golden_mango_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_mango_tree_fruiting.png"
+   ],
+   "subject": "a lush golden mango tree with a sturdy trunk and a full green canopy, with small unripe green golden mango fruit among the leaves"
+  },
+  {
+   "id": "golden_mango_tree_ready",
+   "item": "golden_mango_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_mango_tree_ready.png"
+   ],
+   "subject": "a lush golden mango tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden mango fruit, ready to pick"
+  },
+  {
+   "id": "sunset_mango_tree_harvested",
+   "item": "sunset_mango_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_mango_tree_harvested.png"
+   ],
+   "subject": "a lush sunset mango tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_mango_tree_fruiting",
+   "item": "sunset_mango_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_mango_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset mango tree with a sturdy trunk and a full green canopy, with small unripe green sunset mango fruit among the leaves"
+  },
+  {
+   "id": "sunset_mango_tree_ready",
+   "item": "sunset_mango_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_mango_tree_ready.png"
+   ],
+   "subject": "a lush sunset mango tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset mango fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_mango_tree_harvested",
+   "item": "cotton_candy_mango_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_mango_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy mango tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_mango_tree_fruiting",
+   "item": "cotton_candy_mango_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_mango_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy mango tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy mango fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_mango_tree_ready",
+   "item": "cotton_candy_mango_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_mango_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy mango tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy mango fruit, ready to pick"
   },
   {
    "id": "plum_tree_harvested",
@@ -4206,6 +5286,150 @@
    "subject": "a lush golden plum tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden plum fruit, ready to pick"
   },
   {
+   "id": "galaxy_plum_tree_harvested",
+   "item": "galaxy_plum_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_plum_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy plum tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_plum_tree_fruiting",
+   "item": "galaxy_plum_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_plum_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy plum tree with a sturdy trunk and a full green canopy, with small unripe green galaxy plum fruit among the leaves"
+  },
+  {
+   "id": "galaxy_plum_tree_ready",
+   "item": "galaxy_plum_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_plum_tree_ready.png"
+   ],
+   "subject": "a lush galaxy plum tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy plum fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_plum_tree_harvested",
+   "item": "rainbow_plum_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_plum_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow plum tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_plum_tree_fruiting",
+   "item": "rainbow_plum_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_plum_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow plum tree with a sturdy trunk and a full green canopy, with small unripe green rainbow plum fruit among the leaves"
+  },
+  {
+   "id": "rainbow_plum_tree_ready",
+   "item": "rainbow_plum_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_plum_tree_ready.png"
+   ],
+   "subject": "a lush rainbow plum tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow plum fruit, ready to pick"
+  },
+  {
+   "id": "sunset_plum_tree_harvested",
+   "item": "sunset_plum_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_plum_tree_harvested.png"
+   ],
+   "subject": "a lush sunset plum tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_plum_tree_fruiting",
+   "item": "sunset_plum_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_plum_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset plum tree with a sturdy trunk and a full green canopy, with small unripe green sunset plum fruit among the leaves"
+  },
+  {
+   "id": "sunset_plum_tree_ready",
+   "item": "sunset_plum_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_plum_tree_ready.png"
+   ],
+   "subject": "a lush sunset plum tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset plum fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_plum_tree_harvested",
+   "item": "cotton_candy_plum_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_plum_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy plum tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_plum_tree_fruiting",
+   "item": "cotton_candy_plum_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_plum_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy plum tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy plum fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_plum_tree_ready",
+   "item": "cotton_candy_plum_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_plum_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy plum tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy plum fruit, ready to pick"
+  },
+  {
    "id": "fig_tree_harvested",
    "item": "fig_tree",
    "class": "Tree",
@@ -4276,6 +5500,186 @@
     "refs/black_mission_fig_tree_ready.png"
    ],
    "subject": "a lush black mission fig tree with a sturdy trunk and a full green canopy, laden with plenty of ripe black mission fig fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_fig_tree_harvested",
+   "item": "galaxy_fig_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_fig_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy fig tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_fig_tree_fruiting",
+   "item": "galaxy_fig_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_fig_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy fig tree with a sturdy trunk and a full green canopy, with small unripe green galaxy fig fruit among the leaves"
+  },
+  {
+   "id": "galaxy_fig_tree_ready",
+   "item": "galaxy_fig_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_fig_tree_ready.png"
+   ],
+   "subject": "a lush galaxy fig tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy fig fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_fig_tree_harvested",
+   "item": "rainbow_fig_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_fig_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow fig tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_fig_tree_fruiting",
+   "item": "rainbow_fig_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_fig_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow fig tree with a sturdy trunk and a full green canopy, with small unripe green rainbow fig fruit among the leaves"
+  },
+  {
+   "id": "rainbow_fig_tree_ready",
+   "item": "rainbow_fig_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_fig_tree_ready.png"
+   ],
+   "subject": "a lush rainbow fig tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow fig fruit, ready to pick"
+  },
+  {
+   "id": "golden_fig_tree_harvested",
+   "item": "golden_fig_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_fig_tree_harvested.png"
+   ],
+   "subject": "a lush golden fig tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_fig_tree_fruiting",
+   "item": "golden_fig_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_fig_tree_fruiting.png"
+   ],
+   "subject": "a lush golden fig tree with a sturdy trunk and a full green canopy, with small unripe green golden fig fruit among the leaves"
+  },
+  {
+   "id": "golden_fig_tree_ready",
+   "item": "golden_fig_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_fig_tree_ready.png"
+   ],
+   "subject": "a lush golden fig tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden fig fruit, ready to pick"
+  },
+  {
+   "id": "sunset_fig_tree_harvested",
+   "item": "sunset_fig_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_fig_tree_harvested.png"
+   ],
+   "subject": "a lush sunset fig tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_fig_tree_fruiting",
+   "item": "sunset_fig_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_fig_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset fig tree with a sturdy trunk and a full green canopy, with small unripe green sunset fig fruit among the leaves"
+  },
+  {
+   "id": "sunset_fig_tree_ready",
+   "item": "sunset_fig_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_fig_tree_ready.png"
+   ],
+   "subject": "a lush sunset fig tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset fig fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_fig_tree_harvested",
+   "item": "cotton_candy_fig_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_fig_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy fig tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_fig_tree_fruiting",
+   "item": "cotton_candy_fig_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_fig_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy fig tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy fig fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_fig_tree_ready",
+   "item": "cotton_candy_fig_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_fig_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy fig tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy fig fruit, ready to pick"
   },
   {
    "id": "banana_tree_harvested",
@@ -4350,6 +5754,186 @@
    "subject": "a lush red banana tree with a sturdy trunk and a full green canopy, laden with plenty of ripe red banana fruit, ready to pick"
   },
   {
+   "id": "galaxy_banana_tree_harvested",
+   "item": "galaxy_banana_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_banana_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy banana tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_banana_tree_fruiting",
+   "item": "galaxy_banana_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_banana_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy banana tree with a sturdy trunk and a full green canopy, with small unripe green galaxy banana fruit among the leaves"
+  },
+  {
+   "id": "galaxy_banana_tree_ready",
+   "item": "galaxy_banana_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_banana_tree_ready.png"
+   ],
+   "subject": "a lush galaxy banana tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy banana fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_banana_tree_harvested",
+   "item": "rainbow_banana_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_banana_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow banana tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_banana_tree_fruiting",
+   "item": "rainbow_banana_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_banana_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow banana tree with a sturdy trunk and a full green canopy, with small unripe green rainbow banana fruit among the leaves"
+  },
+  {
+   "id": "rainbow_banana_tree_ready",
+   "item": "rainbow_banana_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_banana_tree_ready.png"
+   ],
+   "subject": "a lush rainbow banana tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow banana fruit, ready to pick"
+  },
+  {
+   "id": "golden_banana_tree_harvested",
+   "item": "golden_banana_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_banana_tree_harvested.png"
+   ],
+   "subject": "a lush golden banana tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_banana_tree_fruiting",
+   "item": "golden_banana_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_banana_tree_fruiting.png"
+   ],
+   "subject": "a lush golden banana tree with a sturdy trunk and a full green canopy, with small unripe green golden banana fruit among the leaves"
+  },
+  {
+   "id": "golden_banana_tree_ready",
+   "item": "golden_banana_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_banana_tree_ready.png"
+   ],
+   "subject": "a lush golden banana tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden banana fruit, ready to pick"
+  },
+  {
+   "id": "sunset_banana_tree_harvested",
+   "item": "sunset_banana_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_banana_tree_harvested.png"
+   ],
+   "subject": "a lush sunset banana tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_banana_tree_fruiting",
+   "item": "sunset_banana_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_banana_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset banana tree with a sturdy trunk and a full green canopy, with small unripe green sunset banana fruit among the leaves"
+  },
+  {
+   "id": "sunset_banana_tree_ready",
+   "item": "sunset_banana_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_banana_tree_ready.png"
+   ],
+   "subject": "a lush sunset banana tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset banana fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_banana_tree_harvested",
+   "item": "cotton_candy_banana_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_banana_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy banana tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_banana_tree_fruiting",
+   "item": "cotton_candy_banana_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_banana_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy banana tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy banana fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_banana_tree_ready",
+   "item": "cotton_candy_banana_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_banana_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy banana tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy banana fruit, ready to pick"
+  },
+  {
    "id": "avocado_tree_harvested",
    "item": "avocado_tree",
    "class": "Tree",
@@ -4420,6 +6004,186 @@
     "refs/hass_avocado_tree_ready.png"
    ],
    "subject": "a lush hass avocado tree with a sturdy trunk and a full green canopy, laden with plenty of ripe hass avocado fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_avocado_tree_harvested",
+   "item": "galaxy_avocado_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_avocado_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy avocado tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_avocado_tree_fruiting",
+   "item": "galaxy_avocado_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_avocado_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy avocado tree with a sturdy trunk and a full green canopy, with small unripe green galaxy avocado fruit among the leaves"
+  },
+  {
+   "id": "galaxy_avocado_tree_ready",
+   "item": "galaxy_avocado_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_avocado_tree_ready.png"
+   ],
+   "subject": "a lush galaxy avocado tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy avocado fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_avocado_tree_harvested",
+   "item": "rainbow_avocado_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_avocado_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow avocado tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_avocado_tree_fruiting",
+   "item": "rainbow_avocado_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_avocado_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow avocado tree with a sturdy trunk and a full green canopy, with small unripe green rainbow avocado fruit among the leaves"
+  },
+  {
+   "id": "rainbow_avocado_tree_ready",
+   "item": "rainbow_avocado_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_avocado_tree_ready.png"
+   ],
+   "subject": "a lush rainbow avocado tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow avocado fruit, ready to pick"
+  },
+  {
+   "id": "golden_avocado_tree_harvested",
+   "item": "golden_avocado_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_avocado_tree_harvested.png"
+   ],
+   "subject": "a lush golden avocado tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_avocado_tree_fruiting",
+   "item": "golden_avocado_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_avocado_tree_fruiting.png"
+   ],
+   "subject": "a lush golden avocado tree with a sturdy trunk and a full green canopy, with small unripe green golden avocado fruit among the leaves"
+  },
+  {
+   "id": "golden_avocado_tree_ready",
+   "item": "golden_avocado_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_avocado_tree_ready.png"
+   ],
+   "subject": "a lush golden avocado tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden avocado fruit, ready to pick"
+  },
+  {
+   "id": "sunset_avocado_tree_harvested",
+   "item": "sunset_avocado_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_avocado_tree_harvested.png"
+   ],
+   "subject": "a lush sunset avocado tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_avocado_tree_fruiting",
+   "item": "sunset_avocado_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_avocado_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset avocado tree with a sturdy trunk and a full green canopy, with small unripe green sunset avocado fruit among the leaves"
+  },
+  {
+   "id": "sunset_avocado_tree_ready",
+   "item": "sunset_avocado_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_avocado_tree_ready.png"
+   ],
+   "subject": "a lush sunset avocado tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset avocado fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_avocado_tree_harvested",
+   "item": "cotton_candy_avocado_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_avocado_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy avocado tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_avocado_tree_fruiting",
+   "item": "cotton_candy_avocado_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_avocado_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy avocado tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy avocado fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_avocado_tree_ready",
+   "item": "cotton_candy_avocado_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_avocado_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy avocado tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy avocado fruit, ready to pick"
   },
   {
    "id": "apricot_tree_harvested",
@@ -4494,6 +6258,150 @@
    "subject": "a lush golden apricot tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden apricot fruit, ready to pick"
   },
   {
+   "id": "galaxy_apricot_tree_harvested",
+   "item": "galaxy_apricot_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_apricot_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy apricot tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_apricot_tree_fruiting",
+   "item": "galaxy_apricot_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_apricot_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy apricot tree with a sturdy trunk and a full green canopy, with small unripe green galaxy apricot fruit among the leaves"
+  },
+  {
+   "id": "galaxy_apricot_tree_ready",
+   "item": "galaxy_apricot_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_apricot_tree_ready.png"
+   ],
+   "subject": "a lush galaxy apricot tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy apricot fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_apricot_tree_harvested",
+   "item": "rainbow_apricot_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_apricot_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow apricot tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_apricot_tree_fruiting",
+   "item": "rainbow_apricot_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_apricot_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow apricot tree with a sturdy trunk and a full green canopy, with small unripe green rainbow apricot fruit among the leaves"
+  },
+  {
+   "id": "rainbow_apricot_tree_ready",
+   "item": "rainbow_apricot_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_apricot_tree_ready.png"
+   ],
+   "subject": "a lush rainbow apricot tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow apricot fruit, ready to pick"
+  },
+  {
+   "id": "sunset_apricot_tree_harvested",
+   "item": "sunset_apricot_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_apricot_tree_harvested.png"
+   ],
+   "subject": "a lush sunset apricot tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_apricot_tree_fruiting",
+   "item": "sunset_apricot_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_apricot_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset apricot tree with a sturdy trunk and a full green canopy, with small unripe green sunset apricot fruit among the leaves"
+  },
+  {
+   "id": "sunset_apricot_tree_ready",
+   "item": "sunset_apricot_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_apricot_tree_ready.png"
+   ],
+   "subject": "a lush sunset apricot tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset apricot fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_apricot_tree_harvested",
+   "item": "cotton_candy_apricot_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_apricot_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy apricot tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_apricot_tree_fruiting",
+   "item": "cotton_candy_apricot_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_apricot_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy apricot tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy apricot fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_apricot_tree_ready",
+   "item": "cotton_candy_apricot_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_apricot_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy apricot tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy apricot fruit, ready to pick"
+  },
+  {
    "id": "pomegranate_tree_harvested",
    "item": "pomegranate_tree",
    "class": "Tree",
@@ -4564,6 +6472,186 @@
     "refs/wonderful_pomegranate_tree_ready.png"
    ],
    "subject": "a lush wonderful pomegranate tree with a sturdy trunk and a full green canopy, laden with plenty of ripe wonderful pomegranate fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_pomegranate_tree_harvested",
+   "item": "galaxy_pomegranate_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pomegranate_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy pomegranate tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_pomegranate_tree_fruiting",
+   "item": "galaxy_pomegranate_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pomegranate_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy pomegranate tree with a sturdy trunk and a full green canopy, with small unripe green galaxy pomegranate fruit among the leaves"
+  },
+  {
+   "id": "galaxy_pomegranate_tree_ready",
+   "item": "galaxy_pomegranate_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pomegranate_tree_ready.png"
+   ],
+   "subject": "a lush galaxy pomegranate tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy pomegranate fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_pomegranate_tree_harvested",
+   "item": "rainbow_pomegranate_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pomegranate_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow pomegranate tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_pomegranate_tree_fruiting",
+   "item": "rainbow_pomegranate_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pomegranate_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow pomegranate tree with a sturdy trunk and a full green canopy, with small unripe green rainbow pomegranate fruit among the leaves"
+  },
+  {
+   "id": "rainbow_pomegranate_tree_ready",
+   "item": "rainbow_pomegranate_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pomegranate_tree_ready.png"
+   ],
+   "subject": "a lush rainbow pomegranate tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow pomegranate fruit, ready to pick"
+  },
+  {
+   "id": "golden_pomegranate_tree_harvested",
+   "item": "golden_pomegranate_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pomegranate_tree_harvested.png"
+   ],
+   "subject": "a lush golden pomegranate tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_pomegranate_tree_fruiting",
+   "item": "golden_pomegranate_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pomegranate_tree_fruiting.png"
+   ],
+   "subject": "a lush golden pomegranate tree with a sturdy trunk and a full green canopy, with small unripe green golden pomegranate fruit among the leaves"
+  },
+  {
+   "id": "golden_pomegranate_tree_ready",
+   "item": "golden_pomegranate_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pomegranate_tree_ready.png"
+   ],
+   "subject": "a lush golden pomegranate tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden pomegranate fruit, ready to pick"
+  },
+  {
+   "id": "sunset_pomegranate_tree_harvested",
+   "item": "sunset_pomegranate_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pomegranate_tree_harvested.png"
+   ],
+   "subject": "a lush sunset pomegranate tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_pomegranate_tree_fruiting",
+   "item": "sunset_pomegranate_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pomegranate_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset pomegranate tree with a sturdy trunk and a full green canopy, with small unripe green sunset pomegranate fruit among the leaves"
+  },
+  {
+   "id": "sunset_pomegranate_tree_ready",
+   "item": "sunset_pomegranate_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pomegranate_tree_ready.png"
+   ],
+   "subject": "a lush sunset pomegranate tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset pomegranate fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_pomegranate_tree_harvested",
+   "item": "cotton_candy_pomegranate_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pomegranate_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy pomegranate tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_pomegranate_tree_fruiting",
+   "item": "cotton_candy_pomegranate_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pomegranate_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy pomegranate tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy pomegranate fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_pomegranate_tree_ready",
+   "item": "cotton_candy_pomegranate_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pomegranate_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy pomegranate tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy pomegranate fruit, ready to pick"
   },
   {
    "id": "olive_tree_harvested",
@@ -4638,6 +6726,186 @@
    "subject": "a lush mission olive tree with a sturdy trunk and a full green canopy, laden with plenty of ripe mission olive fruit, ready to pick"
   },
   {
+   "id": "galaxy_olive_tree_harvested",
+   "item": "galaxy_olive_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_olive_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy olive tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_olive_tree_fruiting",
+   "item": "galaxy_olive_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_olive_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy olive tree with a sturdy trunk and a full green canopy, with small unripe green galaxy olive fruit among the leaves"
+  },
+  {
+   "id": "galaxy_olive_tree_ready",
+   "item": "galaxy_olive_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_olive_tree_ready.png"
+   ],
+   "subject": "a lush galaxy olive tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy olive fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_olive_tree_harvested",
+   "item": "rainbow_olive_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_olive_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow olive tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_olive_tree_fruiting",
+   "item": "rainbow_olive_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_olive_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow olive tree with a sturdy trunk and a full green canopy, with small unripe green rainbow olive fruit among the leaves"
+  },
+  {
+   "id": "rainbow_olive_tree_ready",
+   "item": "rainbow_olive_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_olive_tree_ready.png"
+   ],
+   "subject": "a lush rainbow olive tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow olive fruit, ready to pick"
+  },
+  {
+   "id": "golden_olive_tree_harvested",
+   "item": "golden_olive_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_olive_tree_harvested.png"
+   ],
+   "subject": "a lush golden olive tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_olive_tree_fruiting",
+   "item": "golden_olive_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_olive_tree_fruiting.png"
+   ],
+   "subject": "a lush golden olive tree with a sturdy trunk and a full green canopy, with small unripe green golden olive fruit among the leaves"
+  },
+  {
+   "id": "golden_olive_tree_ready",
+   "item": "golden_olive_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_olive_tree_ready.png"
+   ],
+   "subject": "a lush golden olive tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden olive fruit, ready to pick"
+  },
+  {
+   "id": "sunset_olive_tree_harvested",
+   "item": "sunset_olive_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_olive_tree_harvested.png"
+   ],
+   "subject": "a lush sunset olive tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_olive_tree_fruiting",
+   "item": "sunset_olive_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_olive_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset olive tree with a sturdy trunk and a full green canopy, with small unripe green sunset olive fruit among the leaves"
+  },
+  {
+   "id": "sunset_olive_tree_ready",
+   "item": "sunset_olive_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_olive_tree_ready.png"
+   ],
+   "subject": "a lush sunset olive tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset olive fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_olive_tree_harvested",
+   "item": "cotton_candy_olive_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_olive_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy olive tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_olive_tree_fruiting",
+   "item": "cotton_candy_olive_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_olive_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy olive tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy olive fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_olive_tree_ready",
+   "item": "cotton_candy_olive_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_olive_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy olive tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy olive fruit, ready to pick"
+  },
+  {
    "id": "coconut_tree_harvested",
    "item": "coconut_tree",
    "class": "Tree",
@@ -4710,6 +6978,186 @@
    "subject": "a lush king coconut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe king coconut fruit, ready to pick"
   },
   {
+   "id": "galaxy_coconut_tree_harvested",
+   "item": "galaxy_coconut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_coconut_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy coconut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_coconut_tree_fruiting",
+   "item": "galaxy_coconut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_coconut_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy coconut tree with a sturdy trunk and a full green canopy, with small unripe green galaxy coconut fruit among the leaves"
+  },
+  {
+   "id": "galaxy_coconut_tree_ready",
+   "item": "galaxy_coconut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_coconut_tree_ready.png"
+   ],
+   "subject": "a lush galaxy coconut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy coconut fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_coconut_tree_harvested",
+   "item": "rainbow_coconut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_coconut_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow coconut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_coconut_tree_fruiting",
+   "item": "rainbow_coconut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_coconut_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow coconut tree with a sturdy trunk and a full green canopy, with small unripe green rainbow coconut fruit among the leaves"
+  },
+  {
+   "id": "rainbow_coconut_tree_ready",
+   "item": "rainbow_coconut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_coconut_tree_ready.png"
+   ],
+   "subject": "a lush rainbow coconut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow coconut fruit, ready to pick"
+  },
+  {
+   "id": "golden_coconut_tree_harvested",
+   "item": "golden_coconut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_coconut_tree_harvested.png"
+   ],
+   "subject": "a lush golden coconut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_coconut_tree_fruiting",
+   "item": "golden_coconut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_coconut_tree_fruiting.png"
+   ],
+   "subject": "a lush golden coconut tree with a sturdy trunk and a full green canopy, with small unripe green golden coconut fruit among the leaves"
+  },
+  {
+   "id": "golden_coconut_tree_ready",
+   "item": "golden_coconut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_coconut_tree_ready.png"
+   ],
+   "subject": "a lush golden coconut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden coconut fruit, ready to pick"
+  },
+  {
+   "id": "sunset_coconut_tree_harvested",
+   "item": "sunset_coconut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_coconut_tree_harvested.png"
+   ],
+   "subject": "a lush sunset coconut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_coconut_tree_fruiting",
+   "item": "sunset_coconut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_coconut_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset coconut tree with a sturdy trunk and a full green canopy, with small unripe green sunset coconut fruit among the leaves"
+  },
+  {
+   "id": "sunset_coconut_tree_ready",
+   "item": "sunset_coconut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_coconut_tree_ready.png"
+   ],
+   "subject": "a lush sunset coconut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset coconut fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_coconut_tree_harvested",
+   "item": "cotton_candy_coconut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_coconut_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy coconut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_coconut_tree_fruiting",
+   "item": "cotton_candy_coconut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_coconut_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy coconut tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy coconut fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_coconut_tree_ready",
+   "item": "cotton_candy_coconut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_coconut_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy coconut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy coconut fruit, ready to pick"
+  },
+  {
    "id": "lime_tree_harvested",
    "item": "lime_tree",
    "class": "Tree",
@@ -4744,6 +7192,186 @@
     "refs/lime_tree_ready.png"
    ],
    "subject": "a lush lime tree with a sturdy trunk and a full green canopy, laden with plenty of ripe lime fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_lime_tree_harvested",
+   "item": "galaxy_lime_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_lime_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy lime tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_lime_tree_fruiting",
+   "item": "galaxy_lime_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_lime_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy lime tree with a sturdy trunk and a full green canopy, with small unripe green galaxy lime fruit among the leaves"
+  },
+  {
+   "id": "galaxy_lime_tree_ready",
+   "item": "galaxy_lime_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_lime_tree_ready.png"
+   ],
+   "subject": "a lush galaxy lime tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy lime fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_lime_tree_harvested",
+   "item": "rainbow_lime_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_lime_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow lime tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_lime_tree_fruiting",
+   "item": "rainbow_lime_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_lime_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow lime tree with a sturdy trunk and a full green canopy, with small unripe green rainbow lime fruit among the leaves"
+  },
+  {
+   "id": "rainbow_lime_tree_ready",
+   "item": "rainbow_lime_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_lime_tree_ready.png"
+   ],
+   "subject": "a lush rainbow lime tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow lime fruit, ready to pick"
+  },
+  {
+   "id": "golden_lime_tree_harvested",
+   "item": "golden_lime_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_lime_tree_harvested.png"
+   ],
+   "subject": "a lush golden lime tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_lime_tree_fruiting",
+   "item": "golden_lime_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_lime_tree_fruiting.png"
+   ],
+   "subject": "a lush golden lime tree with a sturdy trunk and a full green canopy, with small unripe green golden lime fruit among the leaves"
+  },
+  {
+   "id": "golden_lime_tree_ready",
+   "item": "golden_lime_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_lime_tree_ready.png"
+   ],
+   "subject": "a lush golden lime tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden lime fruit, ready to pick"
+  },
+  {
+   "id": "sunset_lime_tree_harvested",
+   "item": "sunset_lime_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_lime_tree_harvested.png"
+   ],
+   "subject": "a lush sunset lime tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_lime_tree_fruiting",
+   "item": "sunset_lime_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_lime_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset lime tree with a sturdy trunk and a full green canopy, with small unripe green sunset lime fruit among the leaves"
+  },
+  {
+   "id": "sunset_lime_tree_ready",
+   "item": "sunset_lime_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_lime_tree_ready.png"
+   ],
+   "subject": "a lush sunset lime tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset lime fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_lime_tree_harvested",
+   "item": "cotton_candy_lime_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_lime_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy lime tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_lime_tree_fruiting",
+   "item": "cotton_candy_lime_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_lime_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy lime tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy lime fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_lime_tree_ready",
+   "item": "cotton_candy_lime_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_lime_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy lime tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy lime fruit, ready to pick"
   },
   {
    "id": "grapefruit_tree_harvested",
@@ -4782,6 +7410,186 @@
    "subject": "a lush grapefruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe grapefruit fruit, ready to pick"
   },
   {
+   "id": "galaxy_grapefruit_tree_harvested",
+   "item": "galaxy_grapefruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_grapefruit_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy grapefruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_grapefruit_tree_fruiting",
+   "item": "galaxy_grapefruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_grapefruit_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy grapefruit tree with a sturdy trunk and a full green canopy, with small unripe green galaxy grapefruit fruit among the leaves"
+  },
+  {
+   "id": "galaxy_grapefruit_tree_ready",
+   "item": "galaxy_grapefruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_grapefruit_tree_ready.png"
+   ],
+   "subject": "a lush galaxy grapefruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy grapefruit fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_grapefruit_tree_harvested",
+   "item": "rainbow_grapefruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_grapefruit_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow grapefruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_grapefruit_tree_fruiting",
+   "item": "rainbow_grapefruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_grapefruit_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow grapefruit tree with a sturdy trunk and a full green canopy, with small unripe green rainbow grapefruit fruit among the leaves"
+  },
+  {
+   "id": "rainbow_grapefruit_tree_ready",
+   "item": "rainbow_grapefruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_grapefruit_tree_ready.png"
+   ],
+   "subject": "a lush rainbow grapefruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow grapefruit fruit, ready to pick"
+  },
+  {
+   "id": "golden_grapefruit_tree_harvested",
+   "item": "golden_grapefruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_grapefruit_tree_harvested.png"
+   ],
+   "subject": "a lush golden grapefruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_grapefruit_tree_fruiting",
+   "item": "golden_grapefruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_grapefruit_tree_fruiting.png"
+   ],
+   "subject": "a lush golden grapefruit tree with a sturdy trunk and a full green canopy, with small unripe green golden grapefruit fruit among the leaves"
+  },
+  {
+   "id": "golden_grapefruit_tree_ready",
+   "item": "golden_grapefruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_grapefruit_tree_ready.png"
+   ],
+   "subject": "a lush golden grapefruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden grapefruit fruit, ready to pick"
+  },
+  {
+   "id": "sunset_grapefruit_tree_harvested",
+   "item": "sunset_grapefruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_grapefruit_tree_harvested.png"
+   ],
+   "subject": "a lush sunset grapefruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_grapefruit_tree_fruiting",
+   "item": "sunset_grapefruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_grapefruit_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset grapefruit tree with a sturdy trunk and a full green canopy, with small unripe green sunset grapefruit fruit among the leaves"
+  },
+  {
+   "id": "sunset_grapefruit_tree_ready",
+   "item": "sunset_grapefruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_grapefruit_tree_ready.png"
+   ],
+   "subject": "a lush sunset grapefruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset grapefruit fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_grapefruit_tree_harvested",
+   "item": "cotton_candy_grapefruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_grapefruit_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy grapefruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_grapefruit_tree_fruiting",
+   "item": "cotton_candy_grapefruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_grapefruit_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy grapefruit tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy grapefruit fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_grapefruit_tree_ready",
+   "item": "cotton_candy_grapefruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_grapefruit_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy grapefruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy grapefruit fruit, ready to pick"
+  },
+  {
    "id": "mandarin_tree_harvested",
    "item": "mandarin_tree",
    "class": "Tree",
@@ -4816,6 +7624,186 @@
     "refs/mandarin_tree_ready.png"
    ],
    "subject": "a lush mandarin tree with a sturdy trunk and a full green canopy, laden with plenty of ripe mandarin fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_mandarin_tree_harvested",
+   "item": "galaxy_mandarin_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_mandarin_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy mandarin tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_mandarin_tree_fruiting",
+   "item": "galaxy_mandarin_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_mandarin_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy mandarin tree with a sturdy trunk and a full green canopy, with small unripe green galaxy mandarin fruit among the leaves"
+  },
+  {
+   "id": "galaxy_mandarin_tree_ready",
+   "item": "galaxy_mandarin_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_mandarin_tree_ready.png"
+   ],
+   "subject": "a lush galaxy mandarin tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy mandarin fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_mandarin_tree_harvested",
+   "item": "rainbow_mandarin_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_mandarin_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow mandarin tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_mandarin_tree_fruiting",
+   "item": "rainbow_mandarin_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_mandarin_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow mandarin tree with a sturdy trunk and a full green canopy, with small unripe green rainbow mandarin fruit among the leaves"
+  },
+  {
+   "id": "rainbow_mandarin_tree_ready",
+   "item": "rainbow_mandarin_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_mandarin_tree_ready.png"
+   ],
+   "subject": "a lush rainbow mandarin tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow mandarin fruit, ready to pick"
+  },
+  {
+   "id": "golden_mandarin_tree_harvested",
+   "item": "golden_mandarin_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_mandarin_tree_harvested.png"
+   ],
+   "subject": "a lush golden mandarin tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_mandarin_tree_fruiting",
+   "item": "golden_mandarin_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_mandarin_tree_fruiting.png"
+   ],
+   "subject": "a lush golden mandarin tree with a sturdy trunk and a full green canopy, with small unripe green golden mandarin fruit among the leaves"
+  },
+  {
+   "id": "golden_mandarin_tree_ready",
+   "item": "golden_mandarin_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_mandarin_tree_ready.png"
+   ],
+   "subject": "a lush golden mandarin tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden mandarin fruit, ready to pick"
+  },
+  {
+   "id": "sunset_mandarin_tree_harvested",
+   "item": "sunset_mandarin_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_mandarin_tree_harvested.png"
+   ],
+   "subject": "a lush sunset mandarin tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_mandarin_tree_fruiting",
+   "item": "sunset_mandarin_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_mandarin_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset mandarin tree with a sturdy trunk and a full green canopy, with small unripe green sunset mandarin fruit among the leaves"
+  },
+  {
+   "id": "sunset_mandarin_tree_ready",
+   "item": "sunset_mandarin_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_mandarin_tree_ready.png"
+   ],
+   "subject": "a lush sunset mandarin tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset mandarin fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_mandarin_tree_harvested",
+   "item": "cotton_candy_mandarin_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_mandarin_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy mandarin tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_mandarin_tree_fruiting",
+   "item": "cotton_candy_mandarin_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_mandarin_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy mandarin tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy mandarin fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_mandarin_tree_ready",
+   "item": "cotton_candy_mandarin_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_mandarin_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy mandarin tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy mandarin fruit, ready to pick"
   },
   {
    "id": "date_tree_harvested",
@@ -4854,6 +7842,186 @@
    "subject": "a date palm tree with a tall rough trunk and a crown of long feathery fronds, laden with plenty of ripe date fruit, ready to pick"
   },
   {
+   "id": "galaxy_date_tree_harvested",
+   "item": "galaxy_date_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_date_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy date tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_date_tree_fruiting",
+   "item": "galaxy_date_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_date_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy date tree with a sturdy trunk and a full green canopy, with small unripe green galaxy date fruit among the leaves"
+  },
+  {
+   "id": "galaxy_date_tree_ready",
+   "item": "galaxy_date_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_date_tree_ready.png"
+   ],
+   "subject": "a lush galaxy date tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy date fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_date_tree_harvested",
+   "item": "rainbow_date_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_date_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow date tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_date_tree_fruiting",
+   "item": "rainbow_date_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_date_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow date tree with a sturdy trunk and a full green canopy, with small unripe green rainbow date fruit among the leaves"
+  },
+  {
+   "id": "rainbow_date_tree_ready",
+   "item": "rainbow_date_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_date_tree_ready.png"
+   ],
+   "subject": "a lush rainbow date tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow date fruit, ready to pick"
+  },
+  {
+   "id": "golden_date_tree_harvested",
+   "item": "golden_date_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_date_tree_harvested.png"
+   ],
+   "subject": "a lush golden date tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_date_tree_fruiting",
+   "item": "golden_date_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_date_tree_fruiting.png"
+   ],
+   "subject": "a lush golden date tree with a sturdy trunk and a full green canopy, with small unripe green golden date fruit among the leaves"
+  },
+  {
+   "id": "golden_date_tree_ready",
+   "item": "golden_date_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_date_tree_ready.png"
+   ],
+   "subject": "a lush golden date tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden date fruit, ready to pick"
+  },
+  {
+   "id": "sunset_date_tree_harvested",
+   "item": "sunset_date_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_date_tree_harvested.png"
+   ],
+   "subject": "a lush sunset date tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_date_tree_fruiting",
+   "item": "sunset_date_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_date_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset date tree with a sturdy trunk and a full green canopy, with small unripe green sunset date fruit among the leaves"
+  },
+  {
+   "id": "sunset_date_tree_ready",
+   "item": "sunset_date_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_date_tree_ready.png"
+   ],
+   "subject": "a lush sunset date tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset date fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_date_tree_harvested",
+   "item": "cotton_candy_date_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_date_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy date tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_date_tree_fruiting",
+   "item": "cotton_candy_date_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_date_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy date tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy date fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_date_tree_ready",
+   "item": "cotton_candy_date_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_date_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy date tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy date fruit, ready to pick"
+  },
+  {
    "id": "guava_tree_harvested",
    "item": "guava_tree",
    "class": "Tree",
@@ -4888,6 +8056,186 @@
     "refs/guava_tree_ready.png"
    ],
    "subject": "a lush guava tree with a sturdy trunk and a full green canopy, laden with plenty of ripe guava fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_guava_tree_harvested",
+   "item": "galaxy_guava_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_guava_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy guava tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_guava_tree_fruiting",
+   "item": "galaxy_guava_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_guava_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy guava tree with a sturdy trunk and a full green canopy, with small unripe green galaxy guava fruit among the leaves"
+  },
+  {
+   "id": "galaxy_guava_tree_ready",
+   "item": "galaxy_guava_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_guava_tree_ready.png"
+   ],
+   "subject": "a lush galaxy guava tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy guava fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_guava_tree_harvested",
+   "item": "rainbow_guava_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_guava_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow guava tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_guava_tree_fruiting",
+   "item": "rainbow_guava_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_guava_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow guava tree with a sturdy trunk and a full green canopy, with small unripe green rainbow guava fruit among the leaves"
+  },
+  {
+   "id": "rainbow_guava_tree_ready",
+   "item": "rainbow_guava_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_guava_tree_ready.png"
+   ],
+   "subject": "a lush rainbow guava tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow guava fruit, ready to pick"
+  },
+  {
+   "id": "golden_guava_tree_harvested",
+   "item": "golden_guava_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_guava_tree_harvested.png"
+   ],
+   "subject": "a lush golden guava tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_guava_tree_fruiting",
+   "item": "golden_guava_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_guava_tree_fruiting.png"
+   ],
+   "subject": "a lush golden guava tree with a sturdy trunk and a full green canopy, with small unripe green golden guava fruit among the leaves"
+  },
+  {
+   "id": "golden_guava_tree_ready",
+   "item": "golden_guava_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_guava_tree_ready.png"
+   ],
+   "subject": "a lush golden guava tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden guava fruit, ready to pick"
+  },
+  {
+   "id": "sunset_guava_tree_harvested",
+   "item": "sunset_guava_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_guava_tree_harvested.png"
+   ],
+   "subject": "a lush sunset guava tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_guava_tree_fruiting",
+   "item": "sunset_guava_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_guava_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset guava tree with a sturdy trunk and a full green canopy, with small unripe green sunset guava fruit among the leaves"
+  },
+  {
+   "id": "sunset_guava_tree_ready",
+   "item": "sunset_guava_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_guava_tree_ready.png"
+   ],
+   "subject": "a lush sunset guava tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset guava fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_guava_tree_harvested",
+   "item": "cotton_candy_guava_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_guava_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy guava tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_guava_tree_fruiting",
+   "item": "cotton_candy_guava_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_guava_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy guava tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy guava fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_guava_tree_ready",
+   "item": "cotton_candy_guava_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_guava_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy guava tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy guava fruit, ready to pick"
   },
   {
    "id": "persimmon_tree_harvested",
@@ -4926,6 +8274,186 @@
    "subject": "a lush persimmon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe persimmon fruit, ready to pick"
   },
   {
+   "id": "galaxy_persimmon_tree_harvested",
+   "item": "galaxy_persimmon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_persimmon_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy persimmon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_persimmon_tree_fruiting",
+   "item": "galaxy_persimmon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_persimmon_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy persimmon tree with a sturdy trunk and a full green canopy, with small unripe green galaxy persimmon fruit among the leaves"
+  },
+  {
+   "id": "galaxy_persimmon_tree_ready",
+   "item": "galaxy_persimmon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_persimmon_tree_ready.png"
+   ],
+   "subject": "a lush galaxy persimmon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy persimmon fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_persimmon_tree_harvested",
+   "item": "rainbow_persimmon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_persimmon_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow persimmon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_persimmon_tree_fruiting",
+   "item": "rainbow_persimmon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_persimmon_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow persimmon tree with a sturdy trunk and a full green canopy, with small unripe green rainbow persimmon fruit among the leaves"
+  },
+  {
+   "id": "rainbow_persimmon_tree_ready",
+   "item": "rainbow_persimmon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_persimmon_tree_ready.png"
+   ],
+   "subject": "a lush rainbow persimmon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow persimmon fruit, ready to pick"
+  },
+  {
+   "id": "golden_persimmon_tree_harvested",
+   "item": "golden_persimmon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_persimmon_tree_harvested.png"
+   ],
+   "subject": "a lush golden persimmon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_persimmon_tree_fruiting",
+   "item": "golden_persimmon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_persimmon_tree_fruiting.png"
+   ],
+   "subject": "a lush golden persimmon tree with a sturdy trunk and a full green canopy, with small unripe green golden persimmon fruit among the leaves"
+  },
+  {
+   "id": "golden_persimmon_tree_ready",
+   "item": "golden_persimmon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_persimmon_tree_ready.png"
+   ],
+   "subject": "a lush golden persimmon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden persimmon fruit, ready to pick"
+  },
+  {
+   "id": "sunset_persimmon_tree_harvested",
+   "item": "sunset_persimmon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_persimmon_tree_harvested.png"
+   ],
+   "subject": "a lush sunset persimmon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_persimmon_tree_fruiting",
+   "item": "sunset_persimmon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_persimmon_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset persimmon tree with a sturdy trunk and a full green canopy, with small unripe green sunset persimmon fruit among the leaves"
+  },
+  {
+   "id": "sunset_persimmon_tree_ready",
+   "item": "sunset_persimmon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_persimmon_tree_ready.png"
+   ],
+   "subject": "a lush sunset persimmon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset persimmon fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_persimmon_tree_harvested",
+   "item": "cotton_candy_persimmon_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_persimmon_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy persimmon tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_persimmon_tree_fruiting",
+   "item": "cotton_candy_persimmon_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_persimmon_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy persimmon tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy persimmon fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_persimmon_tree_ready",
+   "item": "cotton_candy_persimmon_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_persimmon_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy persimmon tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy persimmon fruit, ready to pick"
+  },
+  {
    "id": "starfruit_tree_harvested",
    "item": "starfruit_tree",
    "class": "Tree",
@@ -4960,6 +8488,186 @@
     "refs/starfruit_tree_ready.png"
    ],
    "subject": "a lush starfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe starfruit fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_starfruit_tree_harvested",
+   "item": "galaxy_starfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_starfruit_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy starfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_starfruit_tree_fruiting",
+   "item": "galaxy_starfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_starfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy starfruit tree with a sturdy trunk and a full green canopy, with small unripe green galaxy starfruit fruit among the leaves"
+  },
+  {
+   "id": "galaxy_starfruit_tree_ready",
+   "item": "galaxy_starfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_starfruit_tree_ready.png"
+   ],
+   "subject": "a lush galaxy starfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy starfruit fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_starfruit_tree_harvested",
+   "item": "rainbow_starfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_starfruit_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow starfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_starfruit_tree_fruiting",
+   "item": "rainbow_starfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_starfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow starfruit tree with a sturdy trunk and a full green canopy, with small unripe green rainbow starfruit fruit among the leaves"
+  },
+  {
+   "id": "rainbow_starfruit_tree_ready",
+   "item": "rainbow_starfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_starfruit_tree_ready.png"
+   ],
+   "subject": "a lush rainbow starfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow starfruit fruit, ready to pick"
+  },
+  {
+   "id": "golden_starfruit_tree_harvested",
+   "item": "golden_starfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_starfruit_tree_harvested.png"
+   ],
+   "subject": "a lush golden starfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_starfruit_tree_fruiting",
+   "item": "golden_starfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_starfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush golden starfruit tree with a sturdy trunk and a full green canopy, with small unripe green golden starfruit fruit among the leaves"
+  },
+  {
+   "id": "golden_starfruit_tree_ready",
+   "item": "golden_starfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_starfruit_tree_ready.png"
+   ],
+   "subject": "a lush golden starfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden starfruit fruit, ready to pick"
+  },
+  {
+   "id": "sunset_starfruit_tree_harvested",
+   "item": "sunset_starfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_starfruit_tree_harvested.png"
+   ],
+   "subject": "a lush sunset starfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_starfruit_tree_fruiting",
+   "item": "sunset_starfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_starfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset starfruit tree with a sturdy trunk and a full green canopy, with small unripe green sunset starfruit fruit among the leaves"
+  },
+  {
+   "id": "sunset_starfruit_tree_ready",
+   "item": "sunset_starfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_starfruit_tree_ready.png"
+   ],
+   "subject": "a lush sunset starfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset starfruit fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_starfruit_tree_harvested",
+   "item": "cotton_candy_starfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_starfruit_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy starfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_starfruit_tree_fruiting",
+   "item": "cotton_candy_starfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_starfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy starfruit tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy starfruit fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_starfruit_tree_ready",
+   "item": "cotton_candy_starfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_starfruit_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy starfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy starfruit fruit, ready to pick"
   },
   {
    "id": "passion_fruit_tree_harvested",
@@ -4998,6 +8706,186 @@
    "subject": "a lush passion fruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe passion fruit fruit, ready to pick"
   },
   {
+   "id": "galaxy_passion_fruit_tree_harvested",
+   "item": "galaxy_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_passion_fruit_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy passion fruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_passion_fruit_tree_fruiting",
+   "item": "galaxy_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_passion_fruit_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy passion fruit tree with a sturdy trunk and a full green canopy, with small unripe green galaxy passion fruit fruit among the leaves"
+  },
+  {
+   "id": "galaxy_passion_fruit_tree_ready",
+   "item": "galaxy_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_passion_fruit_tree_ready.png"
+   ],
+   "subject": "a lush galaxy passion fruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy passion fruit fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_passion_fruit_tree_harvested",
+   "item": "rainbow_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_passion_fruit_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow passion fruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_passion_fruit_tree_fruiting",
+   "item": "rainbow_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_passion_fruit_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow passion fruit tree with a sturdy trunk and a full green canopy, with small unripe green rainbow passion fruit fruit among the leaves"
+  },
+  {
+   "id": "rainbow_passion_fruit_tree_ready",
+   "item": "rainbow_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_passion_fruit_tree_ready.png"
+   ],
+   "subject": "a lush rainbow passion fruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow passion fruit fruit, ready to pick"
+  },
+  {
+   "id": "golden_passion_fruit_tree_harvested",
+   "item": "golden_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_passion_fruit_tree_harvested.png"
+   ],
+   "subject": "a lush golden passion fruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_passion_fruit_tree_fruiting",
+   "item": "golden_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_passion_fruit_tree_fruiting.png"
+   ],
+   "subject": "a lush golden passion fruit tree with a sturdy trunk and a full green canopy, with small unripe green golden passion fruit fruit among the leaves"
+  },
+  {
+   "id": "golden_passion_fruit_tree_ready",
+   "item": "golden_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_passion_fruit_tree_ready.png"
+   ],
+   "subject": "a lush golden passion fruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden passion fruit fruit, ready to pick"
+  },
+  {
+   "id": "sunset_passion_fruit_tree_harvested",
+   "item": "sunset_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_passion_fruit_tree_harvested.png"
+   ],
+   "subject": "a lush sunset passion fruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_passion_fruit_tree_fruiting",
+   "item": "sunset_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_passion_fruit_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset passion fruit tree with a sturdy trunk and a full green canopy, with small unripe green sunset passion fruit fruit among the leaves"
+  },
+  {
+   "id": "sunset_passion_fruit_tree_ready",
+   "item": "sunset_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_passion_fruit_tree_ready.png"
+   ],
+   "subject": "a lush sunset passion fruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset passion fruit fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_passion_fruit_tree_harvested",
+   "item": "cotton_candy_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_passion_fruit_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy passion fruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_passion_fruit_tree_fruiting",
+   "item": "cotton_candy_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_passion_fruit_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy passion fruit tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy passion fruit fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_passion_fruit_tree_ready",
+   "item": "cotton_candy_passion_fruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_passion_fruit_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy passion fruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy passion fruit fruit, ready to pick"
+  },
+  {
    "id": "jackfruit_tree_harvested",
    "item": "jackfruit_tree",
    "class": "Tree",
@@ -5032,6 +8920,186 @@
     "refs/jackfruit_tree_ready.png"
    ],
    "subject": "a jackfruit tree with huge knobbly green fruit hanging from the trunk, laden with plenty of ripe jackfruit fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_jackfruit_tree_harvested",
+   "item": "galaxy_jackfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_jackfruit_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy jackfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_jackfruit_tree_fruiting",
+   "item": "galaxy_jackfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_jackfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy jackfruit tree with a sturdy trunk and a full green canopy, with small unripe green galaxy jackfruit fruit among the leaves"
+  },
+  {
+   "id": "galaxy_jackfruit_tree_ready",
+   "item": "galaxy_jackfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_jackfruit_tree_ready.png"
+   ],
+   "subject": "a lush galaxy jackfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy jackfruit fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_jackfruit_tree_harvested",
+   "item": "rainbow_jackfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_jackfruit_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow jackfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_jackfruit_tree_fruiting",
+   "item": "rainbow_jackfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_jackfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow jackfruit tree with a sturdy trunk and a full green canopy, with small unripe green rainbow jackfruit fruit among the leaves"
+  },
+  {
+   "id": "rainbow_jackfruit_tree_ready",
+   "item": "rainbow_jackfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_jackfruit_tree_ready.png"
+   ],
+   "subject": "a lush rainbow jackfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow jackfruit fruit, ready to pick"
+  },
+  {
+   "id": "golden_jackfruit_tree_harvested",
+   "item": "golden_jackfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_jackfruit_tree_harvested.png"
+   ],
+   "subject": "a lush golden jackfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_jackfruit_tree_fruiting",
+   "item": "golden_jackfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_jackfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush golden jackfruit tree with a sturdy trunk and a full green canopy, with small unripe green golden jackfruit fruit among the leaves"
+  },
+  {
+   "id": "golden_jackfruit_tree_ready",
+   "item": "golden_jackfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_jackfruit_tree_ready.png"
+   ],
+   "subject": "a lush golden jackfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden jackfruit fruit, ready to pick"
+  },
+  {
+   "id": "sunset_jackfruit_tree_harvested",
+   "item": "sunset_jackfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_jackfruit_tree_harvested.png"
+   ],
+   "subject": "a lush sunset jackfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_jackfruit_tree_fruiting",
+   "item": "sunset_jackfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_jackfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset jackfruit tree with a sturdy trunk and a full green canopy, with small unripe green sunset jackfruit fruit among the leaves"
+  },
+  {
+   "id": "sunset_jackfruit_tree_ready",
+   "item": "sunset_jackfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_jackfruit_tree_ready.png"
+   ],
+   "subject": "a lush sunset jackfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset jackfruit fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_jackfruit_tree_harvested",
+   "item": "cotton_candy_jackfruit_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_jackfruit_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy jackfruit tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_jackfruit_tree_fruiting",
+   "item": "cotton_candy_jackfruit_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_jackfruit_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy jackfruit tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy jackfruit fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_jackfruit_tree_ready",
+   "item": "cotton_candy_jackfruit_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_jackfruit_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy jackfruit tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy jackfruit fruit, ready to pick"
   },
   {
    "id": "asian_pear_tree_harvested",
@@ -5070,6 +9138,186 @@
    "subject": "a lush asian pear tree with a sturdy trunk and a full green canopy, laden with plenty of ripe asian pear fruit, ready to pick"
   },
   {
+   "id": "galaxy_asian_pear_tree_harvested",
+   "item": "galaxy_asian_pear_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_asian_pear_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy asian pear tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_asian_pear_tree_fruiting",
+   "item": "galaxy_asian_pear_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_asian_pear_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy asian pear tree with a sturdy trunk and a full green canopy, with small unripe green galaxy asian pear fruit among the leaves"
+  },
+  {
+   "id": "galaxy_asian_pear_tree_ready",
+   "item": "galaxy_asian_pear_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_asian_pear_tree_ready.png"
+   ],
+   "subject": "a lush galaxy asian pear tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy asian pear fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_asian_pear_tree_harvested",
+   "item": "rainbow_asian_pear_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_asian_pear_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow asian pear tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_asian_pear_tree_fruiting",
+   "item": "rainbow_asian_pear_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_asian_pear_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow asian pear tree with a sturdy trunk and a full green canopy, with small unripe green rainbow asian pear fruit among the leaves"
+  },
+  {
+   "id": "rainbow_asian_pear_tree_ready",
+   "item": "rainbow_asian_pear_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_asian_pear_tree_ready.png"
+   ],
+   "subject": "a lush rainbow asian pear tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow asian pear fruit, ready to pick"
+  },
+  {
+   "id": "golden_asian_pear_tree_harvested",
+   "item": "golden_asian_pear_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_asian_pear_tree_harvested.png"
+   ],
+   "subject": "a lush golden asian pear tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_asian_pear_tree_fruiting",
+   "item": "golden_asian_pear_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_asian_pear_tree_fruiting.png"
+   ],
+   "subject": "a lush golden asian pear tree with a sturdy trunk and a full green canopy, with small unripe green golden asian pear fruit among the leaves"
+  },
+  {
+   "id": "golden_asian_pear_tree_ready",
+   "item": "golden_asian_pear_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_asian_pear_tree_ready.png"
+   ],
+   "subject": "a lush golden asian pear tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden asian pear fruit, ready to pick"
+  },
+  {
+   "id": "sunset_asian_pear_tree_harvested",
+   "item": "sunset_asian_pear_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_asian_pear_tree_harvested.png"
+   ],
+   "subject": "a lush sunset asian pear tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_asian_pear_tree_fruiting",
+   "item": "sunset_asian_pear_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_asian_pear_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset asian pear tree with a sturdy trunk and a full green canopy, with small unripe green sunset asian pear fruit among the leaves"
+  },
+  {
+   "id": "sunset_asian_pear_tree_ready",
+   "item": "sunset_asian_pear_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_asian_pear_tree_ready.png"
+   ],
+   "subject": "a lush sunset asian pear tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset asian pear fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_asian_pear_tree_harvested",
+   "item": "cotton_candy_asian_pear_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_asian_pear_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy asian pear tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_asian_pear_tree_fruiting",
+   "item": "cotton_candy_asian_pear_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_asian_pear_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy asian pear tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy asian pear fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_asian_pear_tree_ready",
+   "item": "cotton_candy_asian_pear_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_asian_pear_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy asian pear tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy asian pear fruit, ready to pick"
+  },
+  {
    "id": "tamarind_tree_harvested",
    "item": "tamarind_tree",
    "class": "Tree",
@@ -5104,6 +9352,186 @@
     "refs/tamarind_tree_ready.png"
    ],
    "subject": "a lush tamarind tree with a sturdy trunk and a full green canopy, laden with plenty of ripe tamarind fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_tamarind_tree_harvested",
+   "item": "galaxy_tamarind_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_tamarind_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy tamarind tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_tamarind_tree_fruiting",
+   "item": "galaxy_tamarind_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_tamarind_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy tamarind tree with a sturdy trunk and a full green canopy, with small unripe green galaxy tamarind fruit among the leaves"
+  },
+  {
+   "id": "galaxy_tamarind_tree_ready",
+   "item": "galaxy_tamarind_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_tamarind_tree_ready.png"
+   ],
+   "subject": "a lush galaxy tamarind tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy tamarind fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_tamarind_tree_harvested",
+   "item": "rainbow_tamarind_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_tamarind_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow tamarind tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_tamarind_tree_fruiting",
+   "item": "rainbow_tamarind_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_tamarind_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow tamarind tree with a sturdy trunk and a full green canopy, with small unripe green rainbow tamarind fruit among the leaves"
+  },
+  {
+   "id": "rainbow_tamarind_tree_ready",
+   "item": "rainbow_tamarind_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_tamarind_tree_ready.png"
+   ],
+   "subject": "a lush rainbow tamarind tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow tamarind fruit, ready to pick"
+  },
+  {
+   "id": "golden_tamarind_tree_harvested",
+   "item": "golden_tamarind_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_tamarind_tree_harvested.png"
+   ],
+   "subject": "a lush golden tamarind tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_tamarind_tree_fruiting",
+   "item": "golden_tamarind_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_tamarind_tree_fruiting.png"
+   ],
+   "subject": "a lush golden tamarind tree with a sturdy trunk and a full green canopy, with small unripe green golden tamarind fruit among the leaves"
+  },
+  {
+   "id": "golden_tamarind_tree_ready",
+   "item": "golden_tamarind_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_tamarind_tree_ready.png"
+   ],
+   "subject": "a lush golden tamarind tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden tamarind fruit, ready to pick"
+  },
+  {
+   "id": "sunset_tamarind_tree_harvested",
+   "item": "sunset_tamarind_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_tamarind_tree_harvested.png"
+   ],
+   "subject": "a lush sunset tamarind tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_tamarind_tree_fruiting",
+   "item": "sunset_tamarind_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_tamarind_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset tamarind tree with a sturdy trunk and a full green canopy, with small unripe green sunset tamarind fruit among the leaves"
+  },
+  {
+   "id": "sunset_tamarind_tree_ready",
+   "item": "sunset_tamarind_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_tamarind_tree_ready.png"
+   ],
+   "subject": "a lush sunset tamarind tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset tamarind fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_tamarind_tree_harvested",
+   "item": "cotton_candy_tamarind_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_tamarind_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy tamarind tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_tamarind_tree_fruiting",
+   "item": "cotton_candy_tamarind_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_tamarind_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy tamarind tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy tamarind fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_tamarind_tree_ready",
+   "item": "cotton_candy_tamarind_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_tamarind_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy tamarind tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy tamarind fruit, ready to pick"
   },
   {
    "id": "almond_tree_harvested",
@@ -5142,6 +9570,186 @@
    "subject": "a lush almond tree with a sturdy trunk and a full green canopy, laden with plenty of ripe almond fruit, ready to pick"
   },
   {
+   "id": "galaxy_almond_tree_harvested",
+   "item": "galaxy_almond_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_almond_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy almond tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_almond_tree_fruiting",
+   "item": "galaxy_almond_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_almond_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy almond tree with a sturdy trunk and a full green canopy, with small unripe green galaxy almond fruit among the leaves"
+  },
+  {
+   "id": "galaxy_almond_tree_ready",
+   "item": "galaxy_almond_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_almond_tree_ready.png"
+   ],
+   "subject": "a lush galaxy almond tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy almond fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_almond_tree_harvested",
+   "item": "rainbow_almond_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_almond_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow almond tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_almond_tree_fruiting",
+   "item": "rainbow_almond_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_almond_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow almond tree with a sturdy trunk and a full green canopy, with small unripe green rainbow almond fruit among the leaves"
+  },
+  {
+   "id": "rainbow_almond_tree_ready",
+   "item": "rainbow_almond_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_almond_tree_ready.png"
+   ],
+   "subject": "a lush rainbow almond tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow almond fruit, ready to pick"
+  },
+  {
+   "id": "golden_almond_tree_harvested",
+   "item": "golden_almond_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_almond_tree_harvested.png"
+   ],
+   "subject": "a lush golden almond tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_almond_tree_fruiting",
+   "item": "golden_almond_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_almond_tree_fruiting.png"
+   ],
+   "subject": "a lush golden almond tree with a sturdy trunk and a full green canopy, with small unripe green golden almond fruit among the leaves"
+  },
+  {
+   "id": "golden_almond_tree_ready",
+   "item": "golden_almond_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_almond_tree_ready.png"
+   ],
+   "subject": "a lush golden almond tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden almond fruit, ready to pick"
+  },
+  {
+   "id": "sunset_almond_tree_harvested",
+   "item": "sunset_almond_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_almond_tree_harvested.png"
+   ],
+   "subject": "a lush sunset almond tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_almond_tree_fruiting",
+   "item": "sunset_almond_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_almond_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset almond tree with a sturdy trunk and a full green canopy, with small unripe green sunset almond fruit among the leaves"
+  },
+  {
+   "id": "sunset_almond_tree_ready",
+   "item": "sunset_almond_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_almond_tree_ready.png"
+   ],
+   "subject": "a lush sunset almond tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset almond fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_almond_tree_harvested",
+   "item": "cotton_candy_almond_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_almond_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy almond tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_almond_tree_fruiting",
+   "item": "cotton_candy_almond_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_almond_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy almond tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy almond fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_almond_tree_ready",
+   "item": "cotton_candy_almond_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_almond_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy almond tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy almond fruit, ready to pick"
+  },
+  {
    "id": "walnut_tree_harvested",
    "item": "walnut_tree",
    "class": "Tree",
@@ -5176,6 +9784,186 @@
     "refs/walnut_tree_ready.png"
    ],
    "subject": "a lush walnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe walnut fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_walnut_tree_harvested",
+   "item": "galaxy_walnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_walnut_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy walnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_walnut_tree_fruiting",
+   "item": "galaxy_walnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_walnut_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy walnut tree with a sturdy trunk and a full green canopy, with small unripe green galaxy walnut fruit among the leaves"
+  },
+  {
+   "id": "galaxy_walnut_tree_ready",
+   "item": "galaxy_walnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_walnut_tree_ready.png"
+   ],
+   "subject": "a lush galaxy walnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy walnut fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_walnut_tree_harvested",
+   "item": "rainbow_walnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_walnut_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow walnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_walnut_tree_fruiting",
+   "item": "rainbow_walnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_walnut_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow walnut tree with a sturdy trunk and a full green canopy, with small unripe green rainbow walnut fruit among the leaves"
+  },
+  {
+   "id": "rainbow_walnut_tree_ready",
+   "item": "rainbow_walnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_walnut_tree_ready.png"
+   ],
+   "subject": "a lush rainbow walnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow walnut fruit, ready to pick"
+  },
+  {
+   "id": "golden_walnut_tree_harvested",
+   "item": "golden_walnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_walnut_tree_harvested.png"
+   ],
+   "subject": "a lush golden walnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_walnut_tree_fruiting",
+   "item": "golden_walnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_walnut_tree_fruiting.png"
+   ],
+   "subject": "a lush golden walnut tree with a sturdy trunk and a full green canopy, with small unripe green golden walnut fruit among the leaves"
+  },
+  {
+   "id": "golden_walnut_tree_ready",
+   "item": "golden_walnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_walnut_tree_ready.png"
+   ],
+   "subject": "a lush golden walnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden walnut fruit, ready to pick"
+  },
+  {
+   "id": "sunset_walnut_tree_harvested",
+   "item": "sunset_walnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_walnut_tree_harvested.png"
+   ],
+   "subject": "a lush sunset walnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_walnut_tree_fruiting",
+   "item": "sunset_walnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_walnut_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset walnut tree with a sturdy trunk and a full green canopy, with small unripe green sunset walnut fruit among the leaves"
+  },
+  {
+   "id": "sunset_walnut_tree_ready",
+   "item": "sunset_walnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_walnut_tree_ready.png"
+   ],
+   "subject": "a lush sunset walnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset walnut fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_walnut_tree_harvested",
+   "item": "cotton_candy_walnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_walnut_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy walnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_walnut_tree_fruiting",
+   "item": "cotton_candy_walnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_walnut_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy walnut tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy walnut fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_walnut_tree_ready",
+   "item": "cotton_candy_walnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_walnut_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy walnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy walnut fruit, ready to pick"
   },
   {
    "id": "cashew_tree_harvested",
@@ -5214,6 +10002,186 @@
    "subject": "a cashew tree with red-yellow cashew apples, each with a nut hanging below, laden with plenty of ripe cashew fruit, ready to pick"
   },
   {
+   "id": "galaxy_cashew_tree_harvested",
+   "item": "galaxy_cashew_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_cashew_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy cashew tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_cashew_tree_fruiting",
+   "item": "galaxy_cashew_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_cashew_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy cashew tree with a sturdy trunk and a full green canopy, with small unripe green galaxy cashew fruit among the leaves"
+  },
+  {
+   "id": "galaxy_cashew_tree_ready",
+   "item": "galaxy_cashew_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_cashew_tree_ready.png"
+   ],
+   "subject": "a lush galaxy cashew tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy cashew fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_cashew_tree_harvested",
+   "item": "rainbow_cashew_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_cashew_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow cashew tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_cashew_tree_fruiting",
+   "item": "rainbow_cashew_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_cashew_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow cashew tree with a sturdy trunk and a full green canopy, with small unripe green rainbow cashew fruit among the leaves"
+  },
+  {
+   "id": "rainbow_cashew_tree_ready",
+   "item": "rainbow_cashew_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_cashew_tree_ready.png"
+   ],
+   "subject": "a lush rainbow cashew tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow cashew fruit, ready to pick"
+  },
+  {
+   "id": "golden_cashew_tree_harvested",
+   "item": "golden_cashew_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_cashew_tree_harvested.png"
+   ],
+   "subject": "a lush golden cashew tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_cashew_tree_fruiting",
+   "item": "golden_cashew_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_cashew_tree_fruiting.png"
+   ],
+   "subject": "a lush golden cashew tree with a sturdy trunk and a full green canopy, with small unripe green golden cashew fruit among the leaves"
+  },
+  {
+   "id": "golden_cashew_tree_ready",
+   "item": "golden_cashew_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_cashew_tree_ready.png"
+   ],
+   "subject": "a lush golden cashew tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden cashew fruit, ready to pick"
+  },
+  {
+   "id": "sunset_cashew_tree_harvested",
+   "item": "sunset_cashew_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_cashew_tree_harvested.png"
+   ],
+   "subject": "a lush sunset cashew tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_cashew_tree_fruiting",
+   "item": "sunset_cashew_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_cashew_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset cashew tree with a sturdy trunk and a full green canopy, with small unripe green sunset cashew fruit among the leaves"
+  },
+  {
+   "id": "sunset_cashew_tree_ready",
+   "item": "sunset_cashew_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_cashew_tree_ready.png"
+   ],
+   "subject": "a lush sunset cashew tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset cashew fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_cashew_tree_harvested",
+   "item": "cotton_candy_cashew_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_cashew_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy cashew tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_cashew_tree_fruiting",
+   "item": "cotton_candy_cashew_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_cashew_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy cashew tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy cashew fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_cashew_tree_ready",
+   "item": "cotton_candy_cashew_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_cashew_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy cashew tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy cashew fruit, ready to pick"
+  },
+  {
    "id": "chestnut_tree_harvested",
    "item": "chestnut_tree",
    "class": "Tree",
@@ -5248,6 +10216,186 @@
     "refs/chestnut_tree_ready.png"
    ],
    "subject": "a lush chestnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe chestnut fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_chestnut_tree_harvested",
+   "item": "galaxy_chestnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_chestnut_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy chestnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_chestnut_tree_fruiting",
+   "item": "galaxy_chestnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_chestnut_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy chestnut tree with a sturdy trunk and a full green canopy, with small unripe green galaxy chestnut fruit among the leaves"
+  },
+  {
+   "id": "galaxy_chestnut_tree_ready",
+   "item": "galaxy_chestnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_chestnut_tree_ready.png"
+   ],
+   "subject": "a lush galaxy chestnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy chestnut fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_chestnut_tree_harvested",
+   "item": "rainbow_chestnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_chestnut_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow chestnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_chestnut_tree_fruiting",
+   "item": "rainbow_chestnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_chestnut_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow chestnut tree with a sturdy trunk and a full green canopy, with small unripe green rainbow chestnut fruit among the leaves"
+  },
+  {
+   "id": "rainbow_chestnut_tree_ready",
+   "item": "rainbow_chestnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_chestnut_tree_ready.png"
+   ],
+   "subject": "a lush rainbow chestnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow chestnut fruit, ready to pick"
+  },
+  {
+   "id": "golden_chestnut_tree_harvested",
+   "item": "golden_chestnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_chestnut_tree_harvested.png"
+   ],
+   "subject": "a lush golden chestnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_chestnut_tree_fruiting",
+   "item": "golden_chestnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_chestnut_tree_fruiting.png"
+   ],
+   "subject": "a lush golden chestnut tree with a sturdy trunk and a full green canopy, with small unripe green golden chestnut fruit among the leaves"
+  },
+  {
+   "id": "golden_chestnut_tree_ready",
+   "item": "golden_chestnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_chestnut_tree_ready.png"
+   ],
+   "subject": "a lush golden chestnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden chestnut fruit, ready to pick"
+  },
+  {
+   "id": "sunset_chestnut_tree_harvested",
+   "item": "sunset_chestnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_chestnut_tree_harvested.png"
+   ],
+   "subject": "a lush sunset chestnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_chestnut_tree_fruiting",
+   "item": "sunset_chestnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_chestnut_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset chestnut tree with a sturdy trunk and a full green canopy, with small unripe green sunset chestnut fruit among the leaves"
+  },
+  {
+   "id": "sunset_chestnut_tree_ready",
+   "item": "sunset_chestnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_chestnut_tree_ready.png"
+   ],
+   "subject": "a lush sunset chestnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset chestnut fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_chestnut_tree_harvested",
+   "item": "cotton_candy_chestnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_chestnut_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy chestnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_chestnut_tree_fruiting",
+   "item": "cotton_candy_chestnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_chestnut_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy chestnut tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy chestnut fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_chestnut_tree_ready",
+   "item": "cotton_candy_chestnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_chestnut_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy chestnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy chestnut fruit, ready to pick"
   },
   {
    "id": "hazelnut_tree_harvested",
@@ -5286,6 +10434,186 @@
    "subject": "a lush hazelnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe hazelnut fruit, ready to pick"
   },
   {
+   "id": "galaxy_hazelnut_tree_harvested",
+   "item": "galaxy_hazelnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_hazelnut_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy hazelnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_hazelnut_tree_fruiting",
+   "item": "galaxy_hazelnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_hazelnut_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy hazelnut tree with a sturdy trunk and a full green canopy, with small unripe green galaxy hazelnut fruit among the leaves"
+  },
+  {
+   "id": "galaxy_hazelnut_tree_ready",
+   "item": "galaxy_hazelnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_hazelnut_tree_ready.png"
+   ],
+   "subject": "a lush galaxy hazelnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy hazelnut fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_hazelnut_tree_harvested",
+   "item": "rainbow_hazelnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_hazelnut_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow hazelnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_hazelnut_tree_fruiting",
+   "item": "rainbow_hazelnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_hazelnut_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow hazelnut tree with a sturdy trunk and a full green canopy, with small unripe green rainbow hazelnut fruit among the leaves"
+  },
+  {
+   "id": "rainbow_hazelnut_tree_ready",
+   "item": "rainbow_hazelnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_hazelnut_tree_ready.png"
+   ],
+   "subject": "a lush rainbow hazelnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow hazelnut fruit, ready to pick"
+  },
+  {
+   "id": "golden_hazelnut_tree_harvested",
+   "item": "golden_hazelnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_hazelnut_tree_harvested.png"
+   ],
+   "subject": "a lush golden hazelnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_hazelnut_tree_fruiting",
+   "item": "golden_hazelnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_hazelnut_tree_fruiting.png"
+   ],
+   "subject": "a lush golden hazelnut tree with a sturdy trunk and a full green canopy, with small unripe green golden hazelnut fruit among the leaves"
+  },
+  {
+   "id": "golden_hazelnut_tree_ready",
+   "item": "golden_hazelnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_hazelnut_tree_ready.png"
+   ],
+   "subject": "a lush golden hazelnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden hazelnut fruit, ready to pick"
+  },
+  {
+   "id": "sunset_hazelnut_tree_harvested",
+   "item": "sunset_hazelnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_hazelnut_tree_harvested.png"
+   ],
+   "subject": "a lush sunset hazelnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_hazelnut_tree_fruiting",
+   "item": "sunset_hazelnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_hazelnut_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset hazelnut tree with a sturdy trunk and a full green canopy, with small unripe green sunset hazelnut fruit among the leaves"
+  },
+  {
+   "id": "sunset_hazelnut_tree_ready",
+   "item": "sunset_hazelnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_hazelnut_tree_ready.png"
+   ],
+   "subject": "a lush sunset hazelnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset hazelnut fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_hazelnut_tree_harvested",
+   "item": "cotton_candy_hazelnut_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_hazelnut_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy hazelnut tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_hazelnut_tree_fruiting",
+   "item": "cotton_candy_hazelnut_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_hazelnut_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy hazelnut tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy hazelnut fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_hazelnut_tree_ready",
+   "item": "cotton_candy_hazelnut_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_hazelnut_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy hazelnut tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy hazelnut fruit, ready to pick"
+  },
+  {
    "id": "pecan_tree_harvested",
    "item": "pecan_tree",
    "class": "Tree",
@@ -5322,6 +10650,186 @@
    "subject": "a lush pecan tree with a sturdy trunk and a full green canopy, laden with plenty of ripe pecan fruit, ready to pick"
   },
   {
+   "id": "galaxy_pecan_tree_harvested",
+   "item": "galaxy_pecan_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pecan_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy pecan tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_pecan_tree_fruiting",
+   "item": "galaxy_pecan_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pecan_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy pecan tree with a sturdy trunk and a full green canopy, with small unripe green galaxy pecan fruit among the leaves"
+  },
+  {
+   "id": "galaxy_pecan_tree_ready",
+   "item": "galaxy_pecan_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pecan_tree_ready.png"
+   ],
+   "subject": "a lush galaxy pecan tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy pecan fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_pecan_tree_harvested",
+   "item": "rainbow_pecan_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pecan_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow pecan tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_pecan_tree_fruiting",
+   "item": "rainbow_pecan_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pecan_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow pecan tree with a sturdy trunk and a full green canopy, with small unripe green rainbow pecan fruit among the leaves"
+  },
+  {
+   "id": "rainbow_pecan_tree_ready",
+   "item": "rainbow_pecan_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pecan_tree_ready.png"
+   ],
+   "subject": "a lush rainbow pecan tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow pecan fruit, ready to pick"
+  },
+  {
+   "id": "golden_pecan_tree_harvested",
+   "item": "golden_pecan_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pecan_tree_harvested.png"
+   ],
+   "subject": "a lush golden pecan tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_pecan_tree_fruiting",
+   "item": "golden_pecan_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pecan_tree_fruiting.png"
+   ],
+   "subject": "a lush golden pecan tree with a sturdy trunk and a full green canopy, with small unripe green golden pecan fruit among the leaves"
+  },
+  {
+   "id": "golden_pecan_tree_ready",
+   "item": "golden_pecan_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pecan_tree_ready.png"
+   ],
+   "subject": "a lush golden pecan tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden pecan fruit, ready to pick"
+  },
+  {
+   "id": "sunset_pecan_tree_harvested",
+   "item": "sunset_pecan_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pecan_tree_harvested.png"
+   ],
+   "subject": "a lush sunset pecan tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_pecan_tree_fruiting",
+   "item": "sunset_pecan_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pecan_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset pecan tree with a sturdy trunk and a full green canopy, with small unripe green sunset pecan fruit among the leaves"
+  },
+  {
+   "id": "sunset_pecan_tree_ready",
+   "item": "sunset_pecan_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pecan_tree_ready.png"
+   ],
+   "subject": "a lush sunset pecan tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset pecan fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_pecan_tree_harvested",
+   "item": "cotton_candy_pecan_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pecan_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy pecan tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_pecan_tree_fruiting",
+   "item": "cotton_candy_pecan_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pecan_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy pecan tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy pecan fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_pecan_tree_ready",
+   "item": "cotton_candy_pecan_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pecan_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy pecan tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy pecan fruit, ready to pick"
+  },
+  {
    "id": "pistachio_tree_harvested",
    "item": "pistachio_tree",
    "class": "Tree",
@@ -5356,6 +10864,186 @@
     "refs/pistachio_tree_ready.png"
    ],
    "subject": "a lush pistachio tree with a sturdy trunk and a full green canopy, laden with plenty of ripe pistachio fruit, ready to pick"
+  },
+  {
+   "id": "galaxy_pistachio_tree_harvested",
+   "item": "galaxy_pistachio_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pistachio_tree_harvested.png"
+   ],
+   "subject": "a lush galaxy pistachio tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "galaxy_pistachio_tree_fruiting",
+   "item": "galaxy_pistachio_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pistachio_tree_fruiting.png"
+   ],
+   "subject": "a lush galaxy pistachio tree with a sturdy trunk and a full green canopy, with small unripe green galaxy pistachio fruit among the leaves"
+  },
+  {
+   "id": "galaxy_pistachio_tree_ready",
+   "item": "galaxy_pistachio_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/galaxy_pistachio_tree_ready.png"
+   ],
+   "subject": "a lush galaxy pistachio tree with a sturdy trunk and a full green canopy, laden with plenty of ripe galaxy pistachio fruit, ready to pick"
+  },
+  {
+   "id": "rainbow_pistachio_tree_harvested",
+   "item": "rainbow_pistachio_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pistachio_tree_harvested.png"
+   ],
+   "subject": "a lush rainbow pistachio tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "rainbow_pistachio_tree_fruiting",
+   "item": "rainbow_pistachio_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pistachio_tree_fruiting.png"
+   ],
+   "subject": "a lush rainbow pistachio tree with a sturdy trunk and a full green canopy, with small unripe green rainbow pistachio fruit among the leaves"
+  },
+  {
+   "id": "rainbow_pistachio_tree_ready",
+   "item": "rainbow_pistachio_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/rainbow_pistachio_tree_ready.png"
+   ],
+   "subject": "a lush rainbow pistachio tree with a sturdy trunk and a full green canopy, laden with plenty of ripe rainbow pistachio fruit, ready to pick"
+  },
+  {
+   "id": "golden_pistachio_tree_harvested",
+   "item": "golden_pistachio_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pistachio_tree_harvested.png"
+   ],
+   "subject": "a lush golden pistachio tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "golden_pistachio_tree_fruiting",
+   "item": "golden_pistachio_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pistachio_tree_fruiting.png"
+   ],
+   "subject": "a lush golden pistachio tree with a sturdy trunk and a full green canopy, with small unripe green golden pistachio fruit among the leaves"
+  },
+  {
+   "id": "golden_pistachio_tree_ready",
+   "item": "golden_pistachio_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/golden_pistachio_tree_ready.png"
+   ],
+   "subject": "a lush golden pistachio tree with a sturdy trunk and a full green canopy, laden with plenty of ripe golden pistachio fruit, ready to pick"
+  },
+  {
+   "id": "sunset_pistachio_tree_harvested",
+   "item": "sunset_pistachio_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pistachio_tree_harvested.png"
+   ],
+   "subject": "a lush sunset pistachio tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "sunset_pistachio_tree_fruiting",
+   "item": "sunset_pistachio_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pistachio_tree_fruiting.png"
+   ],
+   "subject": "a lush sunset pistachio tree with a sturdy trunk and a full green canopy, with small unripe green sunset pistachio fruit among the leaves"
+  },
+  {
+   "id": "sunset_pistachio_tree_ready",
+   "item": "sunset_pistachio_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/sunset_pistachio_tree_ready.png"
+   ],
+   "subject": "a lush sunset pistachio tree with a sturdy trunk and a full green canopy, laden with plenty of ripe sunset pistachio fruit, ready to pick"
+  },
+  {
+   "id": "cotton_candy_pistachio_tree_harvested",
+   "item": "cotton_candy_pistachio_tree",
+   "class": "Tree",
+   "stage": "harvested",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pistachio_tree_harvested.png"
+   ],
+   "subject": "a lush cotton candy pistachio tree with a sturdy trunk and a full green canopy, with no fruit on it (just picked)"
+  },
+  {
+   "id": "cotton_candy_pistachio_tree_fruiting",
+   "item": "cotton_candy_pistachio_tree",
+   "class": "Tree",
+   "stage": "fruiting",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pistachio_tree_fruiting.png"
+   ],
+   "subject": "a lush cotton candy pistachio tree with a sturdy trunk and a full green canopy, with small unripe green cotton candy pistachio fruit among the leaves"
+  },
+  {
+   "id": "cotton_candy_pistachio_tree_ready",
+   "item": "cotton_candy_pistachio_tree",
+   "class": "Tree",
+   "stage": "ready",
+   "tiles": 1,
+   "fill": 0.8,
+   "refs": [
+    "refs/cotton_candy_pistachio_tree_ready.png"
+   ],
+   "subject": "a lush cotton candy pistachio tree with a sturdy trunk and a full green canopy, laden with plenty of ripe cotton candy pistachio fruit, ready to pick"
   },
   {
    "id": "chicken",
@@ -8861,6 +14549,18 @@
     "refs/mystery_seedling.png"
    ],
    "subject": "mystery seedling"
+  },
+  {
+   "id": "rare_mystery_seedling",
+   "item": "rare_mystery_seedling",
+   "class": "Young",
+   "stage": "placed",
+   "tiles": 1,
+   "fill": 0.5,
+   "refs": [
+    "refs/rare_mystery_seedling.png"
+   ],
+   "subject": "rare mystery seedling"
   },
   {
    "id": "mystery_baby",

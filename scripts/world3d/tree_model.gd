@@ -56,6 +56,10 @@ const BANANA_STEM := Color("#8fb84e")
 const FROND_TURN := 0.12     # how far a frond strays from its even place round the crown (radians)
 const FROND_SHADE := 0.1     # how much darker one frond may be than the next
 const LEAFLETS_FEWEST := 6   # pairs of leaflets on a frond in the thickest crowd
+const STARS := 22            # stars on a Galaxy tree's crown..
+const STARS_FEWEST := 8      # ..in the thickest crowd
+const STAR_R := Vector2(0.026, 0.046)   # a star's radius, of the tree's size
+const STAR_REACH := 0.3      # how far round a palm's head its stars stand, of the tree's size
 const FRUIT_READY := 14     # fruit on a full tree (they come one at a time as it ripens: _fruit): few and big, so
 const FRUIT_R := 0.093      # ..each reads as a fruit (owner, 19 Nov). A round one's radius on a full-size tree..
 const FRUIT_SMALL_R := 0.029  # ..and a small one's (cherries, olives: three times as many)
@@ -104,6 +108,16 @@ static func _pick(sh: Dictionary, key: String, alts: String, fallback: String, r
 	return Color.html(str(options[rng.randi() % options.size()]))
 
 
+## The colours tree `it` of look `seed_value` is painted in, of its kind's own (`sh`: its shape): [its leaves'
+## before they are toned, its fruit's]. Chosen on a stream of their own, so choosing colours never moves the
+## tree's shape, and so what falls from a tree can be drawn in its colours without building it (TreeLife).
+static func picks(it: Dictionary, sh: Dictionary, seed_value: int) -> Array[Color]:
+	var colours := RandomNumberGenerator.new()
+	colours.seed = seed_value * 7919 + hash(str(it.get("id", ""))) + COLOUR_SEED
+	var leaf_col := _pick(sh, "leaf", "leaf_alts", LEAF.to_html(), colours)
+	return [leaf_col, _pick(sh, "", "fruit_alts", "#d93b30", colours, str(it.get("color", "")))]
+
+
 ## A leaf colour in the farm's one family (data/tree_shapes.json `leaf_tone`): each kind keeps its own hue, but
 ## all are mixed a little towards one shared warm green and softened, so a row of pink, teal and orange crowns
 ## reads as painted from the same palette as the animals and the lawn beside them, not as candy. The hue is always
@@ -134,8 +148,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var sh := shape_of(it)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value * 7919 + hash(str(it.get("id", "")))
-	var colours := RandomNumberGenerator.new()   # its own stream: choosing colours must not move the tree's shape
-	colours.seed = rng.seed + COLOUR_SEED
+	var picked := picks(it, sh, seed_value)
 	# Its height: its kind's (oaks low and broad, cherries tall), and this tree's own within that.
 	var tall := float(sh.get("tall", 1.0)) * rng.randf_range(TALL_MIN, TALL_MAX)
 	var upright := str(sh["form"]) not in ["palm", "banana"]
@@ -146,7 +159,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	# This tree's own variation: a little taller or shorter, leaning a little, turned its own way.
 	var k := size * TILE_FILL * rng.randf_range(0.9, 1.1)
 	root.rotation.y = rng.randf() * TAU
-	var leaf_col := leaf if leaf.a > 0.0 else _pick(sh, "leaf", "leaf_alts", LEAF.to_html(), colours)
+	var leaf_col := leaf if leaf.a > 0.0 else picked[0]
 	leaf_col = Color.from_hsv(leaf_col.h + rng.randf_range(-LEAF_HUE_VARY, LEAF_HUE_VARY),
 		leaf_col.s * rng.randf_range(0.92, 1.05),
 		leaf_col.v * rng.randf_range(0.94, 1.04))
@@ -176,9 +189,11 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	if sh.has("blossom"):
 		_blossom(t, crown, Color.html(str(sh["blossom"])))
 	if fruit:
-		var fruit_col := _pick(sh, "", "fruit_alts", "#d93b30", colours, str(it.get("color", "")))
-		_fruit(t, crown, fruit_col)
+		_fruit(t, crown, picked[1])
+	if variety.has("stars"):
+		_stars(t, crown, Color.html(str(variety["stars"])))
 	ModelKit.sway_all(root, SWAY)
+	ModelKit.touch_all(root, str(it.get("touch", "")))
 	return root
 
 

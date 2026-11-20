@@ -112,3 +112,110 @@ func test_592_a_palms_fronds_and_a_bananas_leaves_are_real_leaves() -> void:
 	_check(float(date["lean"]) < float(palm["lean"]) and float(date["tiers"][0][0]) > float(palm["tiers"][0][0]),
 		"a date palm stands straighter and holds its fronds higher than a coconut palm")
 	_done(g)
+
+
+
+
+
+
+func test_593_leaves_flutter_down_and_fruit_bounces_then_both_are_gone() -> void:
+	var leaves := FallingBits.new()
+	var fruit := FallingBits.new(true)
+	add_child(leaves)
+	add_child(fruit)
+	leaves.drop(Vector3(0, 1.0, 0), Vector3.ZERO, Color.GREEN, 0.05)
+	fruit.drop(Vector3(0, 1.0, 0), Vector3(0.3, 0, 0), Color.RED, 0.08)
+	_eq([leaves.live(), fruit.live()], [1, 1], "one of each in the air")
+	var leaf_down := -1.0
+	var fruit_hits := 0
+	var high_again := false
+	for step in 400:
+		leaves.tick(0.02)
+		fruit.tick(0.02)
+		if leaf_down < 0.0 and leaves._down[0] >= 0.0:
+			leaf_down = step * 0.02
+		if fruit._hits[0] > fruit_hits:
+			fruit_hits = fruit._hits[0]
+		high_again = high_again or (fruit._hits[0] == 1 and fruit._pos[0].y > 0.12)
+	_check(leaf_down > 1.5, "a leaf drifts down slowly (%.1f s from a tile up)" % leaf_down)
+	_check(fruit_hits > FallingBits.BOUNCES and high_again, "a fruit bounces before it rolls to rest")
+	_eq([leaves.live(), fruit.live()], [0, 0], "both fade and are gone")
+	_check(not leaves.is_processing() and not fruit.is_processing(), "and nothing runs while nothing is falling")
+	for i in FallingBits.CAPACITY + 5:
+		leaves.drop(Vector3.ZERO, Vector3.ZERO, Color.GREEN, 0.05)
+	_eq(leaves.live(), FallingBits.CAPACITY, "more than it holds: the oldest give way")
+	leaves.free()
+	fruit.free()
+
+
+
+
+
+
+func test_594_the_trees_small_life_is_for_show() -> void:
+	# A leaf now and then, a fruit from a ripe tree, a gust, a shake when harvested: none of it changes the game.
+	Game.reset_game()
+	Game.farm_size = 20
+	Game.objects.clear()
+	Game.next_uid = 1
+	for k in 3:
+		Game.objects.append({"uid": Game.next_uid, "id": "apple_tree", "row": 5, "col": 5 + k * 2, "t": Game.now()})
+		Game.next_uid += 1
+	Game.objects.append({"uid": Game.next_uid, "id": "cow", "row": 9, "col": 9, "t": Game.now()})
+	Game.rebuild_occupancy()
+	var life := TreeLife.new()
+	add_child(life)
+	var taker := Wind.new()
+	life.winds = [taker]
+	life.calm = 0.6
+	_eq(taker.wind, 0.6, "it hands the weather's wind on")
+	_eq(life.trees().size(), 3, "it knows the farm's lone trees (not its animals)")
+	var before := [Game.coins, Game.xp, Game.objects.duplicate(true)]
+	# No tree is ripe: leaves fall, no fruit does.
+	for step in 600:
+		life.tick(0.1)
+	_check(life.leaves.live() > 0, "leaves drift down as time passes")
+	_eq(life.fruit.live(), 0, "no fruit falls from a tree that is not ripe")
+	# Ripe, one lets a fruit go now and then, in its own colour.
+	for o: Dictionary in life.trees():
+		o["t"] = Game.now() - 30 * 86400
+	life.drop_fruit(life.trees()[0])
+	_eq(life.fruit.live(), 1, "a ripe tree drops a fruit")
+	_eq(life.fruit._tint[0], life.fruit_colour(life.trees()[0]), "in the colour of its own fruit")
+	_check(life.fruit._pos[0].distance_to(life.crown_of(life.trees()[0])) < 1.0, "from its own crown")
+	# A gust rises and dies away, and blows leaves across.
+	var had := life.leaves.live()
+	life.blow()
+	var most := 0.0
+	var windiest := 0.0
+	for step in 50:
+		life.tick(0.1)
+		most = maxf(most, life.gust)
+		windiest = maxf(windiest, taker.wind)
+	_check(most > 0.9 and life.gust == 0.0, "a gust rises and is gone (%.2f at its height)" % most)
+	_check(windiest > 0.6 + TreeLife.GUST_WIND * 0.9 and is_equal_approx(taker.wind, 0.6),
+		"the wind rises with it and is the weather's again after (%.1f at most)" % windiest)
+	_check(life.leaves.live() > had, "and carries leaves off the trees")
+	# Harvested, a tree's fruit leaps off and its leaves fall; anything else is left alone.
+	had = life.leaves.live()
+	var fruit_had := life.fruit.live()
+	life.harvested(int(Game.objects[3]["uid"]))
+	_eq([life.leaves.live(), life.fruit.live()], [had, fruit_had], "a cow collected sheds nothing")
+	life.harvested(int(Game.objects[0]["uid"]))
+	_check(life.fruit.live() >= mini(fruit_had + TreeLife.SHAKE_FRUIT, FallingBits.CAPACITY)
+		and life.leaves.live() > had, "a harvested tree's fruit leaps off and leaves fall")
+	_eq([Game.coins, Game.xp], [before[0], before[1]], "none of it pays anything")
+	for k in 4:
+		_eq(Game.objects[k]["id"], (before[2] as Array)[k]["id"], "or moves anything")
+	life.free()
+	Game.reset_game()
+
+
+
+
+
+
+## Something that takes the wind (as the ground and the crops do).
+class Wind:
+	extends RefCounted
+	var wind := 0.0

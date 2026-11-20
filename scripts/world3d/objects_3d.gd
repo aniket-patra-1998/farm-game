@@ -41,6 +41,8 @@ const COVERED_BUDGET_MS := 150  # ..and under the loading cover (nothing is seen
 ## The kinds `uses_file` draws from files (a tree and a bloom come from theirs by look: tree_look, bloom_look).
 const FILE_KINDS := ["building", "barn", "crafting", "decor"]
 const TREE_LOOKS := 4     # looks of each tree kept in its file (tree_look; tools/export_plants)
+const SHAKE_LEANS := [0.11, -0.08, 0.05, -0.025]   # how far a harvested tree rocks, one way then the other (radians)
+const SHAKE_BEAT := 0.09  # seconds each rock takes
 const BLOOM_LOOKS := 4    # and of each bloom (bloom_look)
 # The share of its slots holding something finished at which a crafting building's storage parts show a quarter,
 # half and full.
@@ -1736,6 +1738,17 @@ func fill_of(uid: int) -> BuildingFill:
 
 
 ## Collected: the building's doors open and what it made pops off (BuildingFill.celebrate).
+## A harvested tree shakes: it rocks to and fro about its foot and comes to rest (TreeLife).
+func shake(uid: int) -> void:
+	var node := _node(uid)
+	if node == null:
+		return
+	var tw := _tween(node)
+	for lean: float in SHAKE_LEANS:
+		tw.tween_property(node, "rotation:z", lean, SHAKE_BEAT).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(node, "rotation:z", 0.0, SHAKE_BEAT)
+
+
 func celebrate(uid: int) -> void:
 	var fill := fill_of(uid)
 	if fill != null:
