@@ -18,6 +18,7 @@ var breath := 0.0    ## -1..1, the slow rise and fall of the body
 var wing := 0.0      ## birds: 0 folded .. 1 fully open
 var display := 0.0   ## turkeys: 0 tail down .. 1 fanned out
 var hop := 0.0       ## rabbits: 0 on the ground .. 1 top of a hop
+var sleep := 0.0     ## 0 awake .. 1 asleep in its family's own way (lying down, head tucked back, dozing on its feet)
 
 
 ## A pose for something shown still: the same for every frame, so pictures can be compared.

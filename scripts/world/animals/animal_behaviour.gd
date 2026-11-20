@@ -47,6 +47,8 @@ const HUNGRY_SHARE := 0.7        # of a hungry animal's choices that are to look
 const SLEEP_SHARE := 0.85        # of an animal's choices at night that are to sleep
 const SLEEP_HEAD := 0.75         # how low a sleeping animal's head hangs (1: grazing)
 const SLEEP_BREATH := 1.1        # a sleeper's breathing, slower than awake (2.1)
+const SLEEP_DOWN := 2.4          # how fast it settles into its sleeping pose (a second: 1 / this)..
+const SLEEP_UP := 3.2            # ..and is up again when it wakes
 const POKE_HOP := 0.45           # how high it starts when tapped (of a frolic's bounce)
 const DRINK_SHARE := 0.2         # of the choices of an animal with water near that are to go and drink
 const DRINK_REACH := 4.0         # how far past its wander range it may go for a drink (times the range)
@@ -77,6 +79,9 @@ var shown_facing := 1.0          ## eases toward facing (the turn)
 var range_px := Vector2(14, 7)   ## how far it may wander: an ellipse, flattened like the ground
 var hungry := false              ## its home is waiting to be fed (BuildingFill): it looks about instead of grazing
 var noticed := 0.0               ## seconds left looking at whoever tapped it
+## Whether its model has a sleeping pose of its own (Animal3D says: a file with the `sleep` move): then it sleeps
+## as its family does (docs/ANIMAL_SLEEP.md), not with its head hung low.
+var lies := false
 var drink_at := Vector2.INF      ## water near enough to drink from, from its home spot, in px (BuildingFill)
 var drinking := false            ## it has gone to the water and has its head down to it
 var stride_tiles := 0.0          ## the ground one cycle of its legs covers, in tiles (its body says: Animal3D)
@@ -368,9 +373,13 @@ func _ease_body(delta: float) -> void:
 		State.WALK:
 			look_to = 0.0
 		State.SLEEP:
-			head_to = SLEEP_HEAD
+			# With a sleeping pose of its own, that pose places its head (a duck's on its back, a cow's by its
+			# foreleg); without one (an animal built by code) it hangs its head low, as it always did.
+			head_to = 0.0 if lies else SLEEP_HEAD
 			if not night:
 				_left = minf(_left, 0.5)   # (dawn: it wakes)
+	var asleep := state == State.SLEEP and lies
+	pose.sleep = move_toward(pose.sleep, 1.0 if asleep else 0.0, delta * (SLEEP_DOWN if asleep else SLEEP_UP))
 	var rate := HEAD_DOWN_EASE if head_to > pose.head else HEAD_UP_EASE
 	if is_bird():
 		rate *= BIRD_HEAD  # a bird's head moves quicker than a cow's, though not in a blur

@@ -189,3 +189,23 @@ for _k, _names in limited.GAME.items():
 _IN_GAME = {n for names in GAME.values() for n in names} | {"dairy cow", "dairy calf", "pink pig", "pink piglet", "horse foal", "gray horse foal",
                                                             "white stallion"}
 PARKED = sorted(n for n in MADE if n not in _IN_GAME)      # built, but not in the game: optional additions
+
+
+# How each family sleeps (motion.asleep; the sources are in docs/ANIMAL_SLEEP.md).
+SLEEP = {"cow": "lie", "ox": "lie", "sheep": "lie", "goat": "lie", "dog": "lie", "camelid": "kush", "horse": "stand",
+         "donkey": "stand", "pig": "side", "rabbit": "loaf", "chicken": "roost", "turkey": "roost", "duck": "tuck",
+         "goose": "tuck", "turtle": "shell"}
+
+
+def sleep_of(name, rig):
+    """The way `name` sleeps: its family's, or (a parked extra in no family) the way its build sleeps."""
+    for family, names in GAME.items():
+        if name in names and family in SLEEP:
+            return SLEEP[family]
+    for word, family in (("pig", "pig"), ("horse", "horse"), ("pony", "horse"), ("foal", "horse"), ("llama", "camelid"),
+                         ("alpaca", "camelid"), ("cria", "camelid"), ("duck", "duck"), ("goose", "goose"), ("swan", "duck"),
+                         ("rabbit", "rabbit")):
+        if word in name:
+            return SLEEP[family]
+    return "roost" if rig["kind"] == "bird" else "lie"
+

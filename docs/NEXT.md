@@ -1453,3 +1453,12 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   showed frames of 400 ms (was 100): each falling leaf (TreeLife, PR 20) built its whole tree to measure its
   height (ScaleGuide.height_of, ~20 ms). Heights are now measured once. Limited varieties come with their
   plain kind in the first release (v1 "limited": true; Release.has). Trees still add ~30% triangles on a phone.
+
+## Animals asleep (branch animal-sleep; owner, 20 Nov)
+- Built: each family's own sleeping pose as a `sleep` move in its file, and a "z z z" at each sleeper's nose
+  (docs/ANIMAL_SLEEP.md has the research, the build and the measures). Every animal file was made again.
+- Seen in the running game at night in clips (land animals; the duck pond). Not on a phone.
+- Left: bees have no sleeping pose (they would be in the hive); the limited animals' packs have to be made again
+  with their new files when a host is chosen (docs/PACKS.md); a stride is now measured from the standing animal
+  alone, so some kinds' kept strides moved by up to a tenth.
+

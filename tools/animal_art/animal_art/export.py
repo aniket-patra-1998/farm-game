@@ -5,6 +5,7 @@ colours) at rest, and its moves as blend shapes, each the difference the builder
     head                 head down: grazing, pecking
     jaw                  chewing (four-legged grazers)
     hop                  the top of a hop (hoppers: the rabbit)
+    sleep                asleep, its family's own way (motion.asleep): lying, tucked, dozing on its feet
     ear_flick            ears turned out (each about its root)
     wing_flap            wings lifted open (birds), or a bee's wings at the top of a beat
     display              a turkey's tail fan tipped up and spread
@@ -51,7 +52,7 @@ def moves():
         p = _rest(); p.update(gait=k / WALK_FRAMES, stride=1.0); out.append(("walk_%02d" % k, p))
     for name, change in (("head", dict(head=1.0)), ("jaw", dict(head=0.0, jaw=1.0)), ("look_left", dict(look=1.0)), ("look_right", dict(look=-1.0)),
                          ("blink", dict(blink=1.0)), ("tail", dict(tail=1.0)), ("breath", dict(breath=1.0)),
-                         ("hop", dict(hop=1.0))):
+                         ("hop", dict(hop=1.0)), ("sleep", dict(sleep=1.0))):
         p = _rest(); p.update(change); out.append((name, p))
     return out
 
@@ -109,7 +110,11 @@ def export(name, path):
     for mname, p in moves():
         if mname == "hop" and not rig.get("hop"):
             continue   # (only a hopper hops)
+        if mname == "sleep" and not (rig["legs"] or rig.get("shell")):
+            continue   # (a bee has no pose of its own to sleep in)
         V, N = deform(a, W, pose(rig, p), p, rig)
+        if mname == "sleep":       # (a leg folded under it lies on the ground, not through it)
+            V = V.copy(); V[:, 1] = np.maximum(V[:, 1], V0[:, 1].min())
         N = fix(N)
         targets.append((mname, place(V[src]) - pos, turn(N[src]).astype(np.float32) - nor))
     if rig.get("wings"):          # a bee: its wings at the top of a beat (the builder's motion beats them by time)
@@ -128,7 +133,18 @@ def export(name, path):
                 targets.append((mname, place(V[src]) - pos, np.zeros_like(nor)))
     colours = np.c_[np.clip(np.array(vcol, np.float32), 0, 1), np.ones(len(vcol), np.float32)]
     _write(path, name, pos, nor, colours, idx.reshape(-1), targets, uv=uv, uv2=uv2)
-    return dict(name=name, vertices=len(pos), triangles=len(T), targets=[t[0] for t in targets], scale=scale)
+    return dict(name=name, vertices=len(pos), triangles=len(T), targets=[t[0] for t in targets], scale=scale,
+                nose=_sleeping_nose(rig, place))
+
+
+def _sleeping_nose(rig, place):
+    """Where the animal's nose is when it sleeps, in the game's frame (tiles from its middle on the ground, facing +X):
+    its little "z z z" rises from there (data/animal_sleep.json). None for one with no sleeping pose (a bee)."""
+    if not (rig["legs"] or rig.get("shell")):
+        return None
+    p = _rest(); p["sleep"] = 1.0
+    at = (pose(rig, p)[2] @ np.append(np.array(rig["nose"], float), 1.0))[:3]
+    return [round(float(v), 4) for v in place(at[None, :])[0]]
 
 
 def _head_of(a):

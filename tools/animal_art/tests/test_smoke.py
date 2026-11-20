@@ -53,6 +53,45 @@ class Eyes(unittest.TestCase):
                 self.assertEqual(bool((np.abs(colours - rim).max(axis=1) < 1e-3).any()), light)
 
 
+class Sleep(unittest.TestCase):
+    def test_each_family_sleeps_its_own_way(self):
+        # (owner, 20 Nov: not every animal with its head hung low, and never a water bird's head in the water:
+        # docs/ANIMAL_SLEEP.md has how each sleeps and where that was read)
+        from animal_art.registry import sleep_of
+        ways = {"cow": "lie", "sheep": "lie", "goat": "lie", "llama": "kush", "horse": "stand", "donkey": "stand",
+                "pig": "side", "rabbit": "loaf", "chicken": "roost", "turkey": "roost", "duck": "tuck", "swan": "tuck",
+                "goose": "tuck", "turtle": "shell", "galaxy cow": "lie", "rainbow duck": "tuck"}
+        for name, way in ways.items():
+            with self.subTest(animal=name):
+                model = lightest(MADE[name][0]); rig, W = rig_of(model, name)
+                self.assertEqual(rig["sleep"], way); self.assertEqual(sleep_of(name, rig), way)
+                rest, _n = deform(model, W, pose(rig, {}), {}, rig)
+                p = dict(sleep=1.0); V, _n = deform(model, W, pose(rig, p), p, rig)
+                self.assertTrue(np.isfinite(V).all())
+                top0, top1 = rest[:, 1].max(), V[:, 1].max()
+                nose0 = np.array(rig["nose"], float); nose1 = (pose(rig, p)[2] @ np.append(nose0, 1.0))[:3]
+                if way in ("lie", "kush", "side", "loaf", "roost"):
+                    self.assertLess(top1, top0 * 0.93, "it is down on the ground")
+                if way in ("stand", "tuck"):
+                    body = model["V"][W[:, 0] > 0.9]
+                    self.assertLess(abs((V[W[:, 0] > 0.9][:, 1] - body[:, 1]).mean()), 0.03 * top0, "it stays on its feet")
+                if way in ("tuck", "roost"):
+                    self.assertLess(nose1[2], nose0[2] - 0.3 * rig["r"][2], "its bill is turned back onto its back")
+                    self.assertGreater(nose1[1], rig["body"][1], "and is above its body: never down in the water")
+                if way == "stand":
+                    self.assertLess(nose1[1], nose0[1], "its head hangs")
+                    self.assertGreater(nose1[1], 0.3 * nose0[1], "but nowhere near the ground")
+                # half asleep is half way there, as the game's blend shape is
+                half = dict(sleep=0.5); H, _n = deform(model, W, pose(rig, half), half, rig)
+                self.assertTrue(np.allclose(H, (rest + V) / 2, atol=1e-6) or way == "loaf")
+
+    def test_a_bee_has_no_sleeping_pose(self):
+        from animal_art.export import moves
+        model = lightest(MADE["bee"][0]); rig, _W = rig_of(model, "bee")
+        self.assertIn("sleep", [m[0] for m in moves()])
+        self.assertFalse(rig["legs"] or rig.get("shell"), "(the export leaves its sleep move out)")
+
+
 class BuildAndMove(unittest.TestCase):
     def test_models_hold_together_bind_and_pose(self):
         for name, kind in KINDS.items():

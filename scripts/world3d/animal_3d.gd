@@ -42,6 +42,9 @@ const CONTACT_LIFT := 0.012                     # just above the grass, so it ne
 const FULL_RATE := 16
 const MAX_STRIDE := 4
 const STRIDES := "res://data/animal_strides.json"   # every kind's file_stride, kept (tools/animal_strides)
+const NOSES := "res://data/animal_sleep.json"       # where each kind's nose is asleep (tools/animal_art's export)
+const SLEEP_MOVE := "sleep"       # a file's sleeping pose (tools/animal_art: motion.asleep)   # not-ui
+const ASLEEP := 0.85              # how far into its sleeping pose an animal counts as asleep (its "z z z" shows)
 const BEE_BEAT_RATE := 60.0      # a file-made bee's wing beats (radians of the beat a second)..
 const BEE_HOVER_RATE := 3.3      # ..and its slow bob in the air (as tools/animal_art's motion)
 const BEE_HOVER := 0.4           # how high the bob goes, as a share of its body's height
@@ -58,6 +61,9 @@ static var _frame := -1          # the frame _seen counts
 static var _seen := 0            # animals on screen so far this frame
 static var _lengths := {}         # animal id -> its file's length (file_length)
 static var _strides := {}         # animal id -> the ground one cycle of its file's walk covers (file_stride)
+## The animals asleep in their sleeping pose just now (SleepMarks draws a "z z z" at each one's nose).
+static var sleepers: Array[Animal3D] = []
+static var _noses := {}           # animal id -> its nose asleep, in its model's own space (NOSES), read once
 static var _kept := {}            # animal id -> {"file": fingerprint, "stride": ..} (STRIDES, read once)
 
 static var _seen_last := 0       # and last frame, which sets this frame's stride
@@ -66,7 +72,8 @@ static var _seen_last := 0       # and last frame, which sets this frame's strid
 
 static var _templates := {}       # "id|size" -> the first animal built of it, never on screen (copied)
 var rig: AnimalRig
-var behaviour: AnimalBehaviour   # its mind, owned and updated by FarmLife
+## Its mind, owned and updated by FarmLife (told, when it is given, whether this model sleeps its own way).
+var behaviour: AnimalBehaviour: set = _set_behaviour
 var motion: AnimalMotion         # its body's weight: leaning, swaying, lagging, settling (3D only)
 var heading := 0.0               # radians around +y; 0 faces +x
 
@@ -130,6 +137,7 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
 	if Quality.notifier.emitted.is_connected(_apply_shadow):
 		Quality.notifier.emitted.disconnect(_apply_shadow)
+	sleepers.erase(self)
 
 
 static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1.0) -> Animal3D:
@@ -274,6 +282,28 @@ func stride() -> float:
 	return made if made > 0.0 else maxf(AnimalGait.STRIDE * _leg / AnimalGait.STANCE, 0.001)
 
 
+func _set_behaviour(mind: AnimalBehaviour) -> void:
+	behaviour = mind
+	if mind != null:
+		mind.lies = sleeps_its_own_way()
+
+
+## Whether its model has a sleeping pose of its own (a file made with the `sleep` move).
+func sleeps_its_own_way() -> bool:
+	return _file_shapes.has(SLEEP_MOVE)
+
+
+## Where its nose is in the world when it is asleep (its "z z z" rises from there), or Vector3.INF when its kind's
+## is not known (NOSES: written with each animal's file).
+func nose_asleep() -> Vector3:
+	if _noses.is_empty():
+		_noses = DataFile.read_optional(NOSES).get("noses", {})
+	var at: Variant = _noses.get(_id)
+	if not at is Array or (at as Array).size() != 3 or _file_mesh == null:
+		return Vector3.INF
+	return _file_mesh.global_transform * Vector3(float(at[0]), float(at[1]), float(at[2]))
+
+
 ## The ground one cycle of a file-made animal's walk covers, in tiles at full size (0 when it has no file or
 ## no walk): how far its feet reach back while they are down (the travel of its lowest points through the
 ## walk's moves), over the share of the cycle a foot is down. Once a kind: from data/animal_strides.json when it
@@ -325,10 +355,16 @@ static func _feet_reach(mesh: ArrayMesh) -> float:
 	for k in mesh.get_blend_shape_count():
 		if String(mesh.get_blend_shape_name(k)).begins_with("walk_"):   # not-ui
 			steps.append(moves[k][Mesh.ARRAY_VERTEX])
-	var box := mesh.get_aabb()
+	# (The feet: the lowest of the animal as it stands. Its file's box is no measure of that: it takes in every
+	# move, and a sleeping pose or a head tucked high changes it.)
+	var low := INF
+	var high := -INF
+	for v in rest:
+		low = minf(low, v.y)
+		high = maxf(high, v.y)
 	var reaches: Array[float] = []
 	for k in rest.size():
-		if rest[k].y > box.position.y + box.size.y * FEET_SHARE:
+		if rest[k].y > low + (high - low) * FEET_SHARE:
 			continue
 		var back := INF
 		var fore := -INF
@@ -393,6 +429,13 @@ func _pose_file(p: AnimalPose) -> void:
 	_shape("breath", p.breath * 0.5)
 	_shape("ear_flick", p.ear)
 	_shape("display", p.display)
+	_shape(SLEEP_MOVE, p.sleep)
+	var deep := p.sleep >= ASLEEP
+	if deep != sleepers.has(self):
+		if deep:
+			sleepers.append(self)
+		else:
+			sleepers.erase(self)
 	var bug := rig.type == "bug"
 	# A bee's wings beat all the time; a bird's open as it flaps.
 	_shape("wing_flap", 0.5 + 0.5 * sin(p.time * BEE_BEAT_RATE) if bug else p.wing)

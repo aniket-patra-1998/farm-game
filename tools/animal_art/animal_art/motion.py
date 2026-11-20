@@ -68,9 +68,98 @@ def seg(a0, b0, a1, b1):
     return T4(a1) @ R4(R @ S) @ T4(-a0)
 
 
+# ---------------------------------------------------------------- asleep, each family its own way
+# How each family sleeps (docs/ANIMAL_SLEEP.md has the sources): waterfowl stand or float with the head turned back
+# and the bill in the back feathers, one leg drawn up; fowl squat on the roost with the head tucked the same way;
+# cattle, sheep, goats and dogs lie on the chest with their legs folded under and the head curled to rest; llamas
+# and alpacas sit folded ("kush") with the neck laid out in front; horses and donkeys doze on their feet, head and
+# neck low, a hind leg resting on its toe; pigs lie flat on a side; rabbits sit as a loaf; a turtle draws in.
+LIE_DROP = 0.9           # how far a lying animal's belly comes down, of its height off the ground
+CURL = dict(lie=(0.55, 0.3, 0.2), kush=(0.0, 0.12, 0.0), loaf=(0.0, 0.2, 0.0))   # the head's turn, tip and tilt
+TUCK = dict(tuck=(2.55, 0.35), roost=(2.3, 0.3))            # a bird's head turned back, and tipped onto its back
+DOZE = dict(neck=0.62, tip=0.2, lean=0.05, toe=(0.07, 0.1))  # a horse on its feet: neck down, hip let go, a toe rested
+SIDE_ROLL = 1.38         # a pig flat on its side (radians about its length)
+EARS_BACK = dict(loaf=1.2)                                  # a rabbit's ears laid along its back
+DRAWN_IN = 0.8           # how far a turtle's head comes in, of the shell's half length
+
+
+def asleep(rig):
+    """The pose `rig`'s animal sleeps in: one 4x4 move per bone (as pose), for its family's way (rig["sleep"])."""
+    style = rig.get("sleep", "lie")
+    c = np.array(rig["body"], float); rx, ry, rz = rig["r"]; I = np.eye(4)
+    chest, piv, nose = (np.array(rig[q], float) for q in ("chest", "head", "nose"))
+    root = np.array(rig["tail"][0], float)
+    if rig.get("shell"):                                  # a turtle: head and legs drawn in under the shell
+        head_at = piv + np.array([0.0, -0.04, -DRAWN_IN * rz])
+        M = [I, seg(chest, piv, chest, head_at), T4(head_at - piv), I]
+        for l in rig["legs"]:
+            F = np.array(l["foot"], float); S = T4(np.array([-F[0], 0.0, c[2] - F[2]]) * 0.4); M += [S, S]
+        return M
+    leg = max(l["hip"][1] for l in rig["legs"]); belly = max(c[1] - ry, 0.0); hl = np.linalg.norm(nose - piv)
+    nlen = np.linalg.norm(piv - chest)
+
+    def legs(B, foot_at, bend=None):
+        """Each leg from its hip to where `foot_at` puts its foot (None: the leg lies as the body does)."""
+        Bi = np.linalg.inv(B); out = []
+        for l in rig["legs"]:
+            H, K, F = (np.array(l[q], float) for q in ("hip", "knee", "foot"))
+            hg = (B @ np.append(H, 1))[:3]; fw = foot_at(l, hg, F)
+            if fw is None:
+                out += [B, B]; continue
+            foot = (Bi @ np.append(fw, 1))[:3]; a_, b_ = np.linalg.norm(K - H), np.linalg.norm(F - K)
+            way = bend if bend is not None else (-1.0 if l["fore"] else 1.0)
+            j = joint(np.array([H[2], H[1]]), np.array([foot[2], foot[1]]), a_, b_, way)
+            knee = np.array([H[0], j[1], j[0]])
+            out += [B @ seg(H, K, H, knee), B @ seg(K, F, knee, foot)]
+        return out
+
+    def head(B, at, yaw=0.0, tip=0.0, tilt=0.0):
+        """The neck from the chest to `at` (the body's own space), the head turned there."""
+        R = rot((0, 1, 0), yaw) @ rot((1, 0, 0), tip) @ rot((0, 0, 1), tilt)
+        return [B @ seg(chest, piv, chest, at), B @ T4(at) @ R4(R) @ T4(-piv)]
+
+    planted = lambda l, hg, F: np.array([hg[0], F[1], hg[2]])
+    if style in ("tuck", "roost"):
+        yaw, tip = TUCK[style]
+        if style == "roost":                              # fowl: down on the roost, feet under
+            B = T4([0, -belly * 0.85, 0]); feet = planted
+        else:                                             # waterfowl: on their feet (or afloat), one leg drawn up
+            B = I
+            feet = lambda l, hg, F: np.array([hg[0], F[1] + (belly * 0.75 if l["name"] == "far" else 0.0), hg[2]])
+        at = np.array([0.22 * rx, c[1] + ry * (0.9 if style == "tuck" else 0.85), c[2] + rz * (0.05 if style == "tuck" else 0.3)])
+        return [B] + head(B, at, yaw, tip) + [B] + legs(B, feet)
+    if style == "stand":
+        B = T4(c + np.array([0, -0.015 * leg, 0])) @ R4(rot((0, 0, 1), DOZE["lean"])) @ T4(-c)
+        at = chest + rot((1, 0, 0), DOZE["neck"]) @ (piv - chest)
+        up, fwd = DOZE["toe"]
+        feet = lambda l, hg, F: np.array([hg[0], F[1] + (up * leg if l["name"] == "hind_near" else 0.0),
+                                          hg[2] + (F[2] - l["hip"][2]) + (fwd * leg if l["name"] == "hind_near" else 0.0)])
+        return [B] + head(B, at, 0.0, DOZE["tip"]) + [B @ T4(root) @ R4(rot((0, 0, 1), 0.0)) @ T4(-root)] + legs(B, feet)
+    if style == "side":
+        B = T4(np.array([c[0], rx * 0.92, c[2]])) @ R4(rot((0, 0, 1), SIDE_ROLL)) @ T4(-c)
+        return [B, B, B @ T4(piv) @ R4(rot((0, 0, 1), -0.25)) @ T4(-piv), B] + legs(B, lambda l, hg, F: None)
+    # lying on the chest (lie), a llama's kush, a rabbit's loaf: the belly down, every leg folded under, knees forward
+    drop = belly * LIE_DROP
+    B = T4(c + np.array([0, -drop, 0])) @ R4(rot((0, 0, 1), 0.06 if style == "lie" else 0.0)) @ T4(-c)
+    yaw, tip, tilt = CURL[style]
+    rest = 0.42 * hl + 0.03                               # how high the head lies, its chin near the grass
+    if style == "kush":                                   # the neck laid out in front
+        at = np.array([0.0, rest + drop, chest[2] + 0.92 * nlen])
+    elif style == "loaf":                                 # the head drawn in to the shoulders
+        at = chest + (piv - chest) * 0.7 + np.array([0.0, -0.12 * ry, 0.0])
+    else:                                                 # curled round to one side, by the foreleg
+        at = np.array([0.4 * rx, rest + drop, chest[2] + 0.5 * nlen])
+    return [B] + head(B, at, yaw, tip, tilt) + [B] + legs(B, planted, -1.0)
+
+
 # ---------------------------------------------------------------- the pose (the game's maths)
 def pose(rig, p):
-    """p: gait, stride, head, look, jaw, breath, tail (as the game's AnimalPose). Returns one 4x4 move per bone."""
+    """p: gait, stride, head, look, jaw, breath, tail (as the game's AnimalPose), and `sleep` (0 awake to 1 asleep:
+    the family's sleeping pose, blended in as the game's blend shape is). Returns one 4x4 move per bone."""
+    s = p.get("sleep", 0.0)
+    if s > 0.0 and (rig["legs"] or rig.get("shell")):
+        awake = pose(rig, {k: v for k, v in p.items() if k != "sleep"})
+        return [(1.0 - s) * a + s * b for a, b in zip(awake, asleep(rig))]
     c = np.array(rig["body"], float); rx, ry, rz = rig["r"]; bird = rig["kind"] == "bird"
     leg = max([l["hip"][1] for l in rig["legs"]] or [1.0])
     g, st = p.get("gait", 0.0), p.get("stride", 0.0); down = float(sstep(0, 1, p.get("head", 0.0)))
@@ -155,6 +244,10 @@ def deform(a, W, M, p=None, rig=None):
         V = V.copy()
         for s, e, c, up in a["eyes"]:
             V[s:e] -= np.outer((V[s:e] - c) @ up, up) * 0.93 * p["blink"]
+    if rig is not None and p.get("sleep", 0.0) > 0 and rig.get("ears") and rig.get("sleep") in EARS_BACK:
+        V = V.copy(); R = rot((1, 0, 0), -EARS_BACK[rig["sleep"]] * p["sleep"])   # asleep, its ears lie back
+        for idx, at in rig["ears"]:
+            V[idx] = (V[idx] - at) @ R.T + at
     if rig is not None and rig.get("wings"):
         V = V.copy(); ang = 0.2 + math.sin(p.get("time", 0.0) * 60.0) * 0.32
         for idx, piv, sx in rig["wings"]:

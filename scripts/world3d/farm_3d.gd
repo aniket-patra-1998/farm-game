@@ -115,6 +115,7 @@ func _ready() -> void:
 	trees = TreeLife.new()
 	trees.objects = objects
 	add_child(trees)
+	add_child(SleepMarks.new())   # (a "z z z" at every sleeping animal's nose)
 	add_child(SurfaceWeather.new())
 	var trails := Trails.new()
 	add_child(trails)

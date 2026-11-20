@@ -116,6 +116,19 @@ def measure_joints(a):
                 chest=chest, head=piv, nose=piv + np.array([0.0, 0.0, 0.5]), tail=[np.array([0.0, c[1] + 0.4 * ry, c[2] - rz])], legs=legs)
 
 
+def _ears(a, rig):
+    """[(points, root)] for each ear: its own points, and where it joins the head (its point nearest the head's
+    middle), so an ear can be turned on its own (asleep, a rabbit's lie back)."""
+    from .export import _owner
+    parts = np.array([s.get("part") or "" for s in a["shapes"]])[_owner(a)]
+    idx = np.where(parts == "ear")[0]; head = np.array(rig["head"], float); out = []
+    for side in (-1.0, 1.0):
+        one = idx[np.sign(a["V"][idx, 0]) == side]
+        if len(one) >= 5:
+            out.append((one, a["V"][one][np.argmin(np.linalg.norm(a["V"][one] - head, axis=1))]))
+    return out
+
+
 def rig_of(a, name=""):
     """The whole binding for one animal: joints measured, weights worked out, hard parts stiffened, nose found."""
     rig = measure_joints(a); rig["shell"] = any(s.get("part") == "stub" for s in a["shapes"])
@@ -124,6 +137,9 @@ def rig_of(a, name=""):
     if len(hd) > 20:
         z = a["V"][hd, 2]; rig["nose"] = a["V"][hd[z >= np.percentile(z, 99.3)]].mean(0) * np.array([0.0, 1.0, 1.0])
     rig["waddle"] = any(k in name for k in ("duck", "goose", "swan"))
+    from .registry import sleep_of
+    rig["sleep"] = sleep_of(name, rig)
+    rig["ears"] = _ears(a, rig) if rig["sleep"] == "loaf" else []
     rig["hop"] = "rabbit" in name
     if rig["kind"] == "bug":            # a bee: its wings are the hard plates above its back
         from scipy.sparse import coo_matrix
