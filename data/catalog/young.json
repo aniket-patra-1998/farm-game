@@ -19,6 +19,14 @@
           "needs": 8,
           "grows": "tree",
           "color": "#6aa84f"
+        },
+        {
+          "id": "rare_mystery_seedling",
+          "name": "Rare Mystery Seedling",
+          "supply": "watering_can",
+          "needs": 8,
+          "grows": "tree",
+          "color": "#f2c230"
         }
       ]
     },

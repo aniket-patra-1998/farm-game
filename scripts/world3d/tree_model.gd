@@ -154,7 +154,13 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	sh["crown_r"] = float(sh["crown_r"]) * (1.0 + Crowding.setting("tree", "swell") * crowd) \
 		* (CROWN_GROW if upright else 1.0) * CROWN_TRIM
 	sh["crown_h"] = float(sh["crown_h"]) * (CROWN_TRIM + 0.04)
+	# A limited variety (data/varieties.json): its own colours through the crown, deeper if it says so.
+	var variety := Varieties.of(str(it.get("variety", "")))
+	var hues := Varieties.leaves(str(it.get("variety", "")))
+	if not hues.is_empty() and leaf.a <= 0.0:
+		leaf_col = hues[0]
 	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col,
+		"hues": hues, "hue": 0, "deep": float(variety.get("darken", 0.0)),
 		"shine": float(sh.get("shine", 0.0)),
 		"lean": Vector3(rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN), 0, rng.randf_range(-TRUNK_LEAN, TRUNK_LEAN)),
 		"blobs": [], "low": INF, "high": -INF, "reach": 0.0,
@@ -347,7 +353,7 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 	# The core, a soft mass in the crown's middle, then the masses around it standing clear of it: each one a
 	# clump of its own, lit on top and dark underneath, so the crown is a cluster of clumps with a scalloped outline.
 	var core := Vector3(cr * CROWN_CORE, maxf(ch * 0.5, cr * 0.4), cr * CROWN_CORE)
-	_canopy(root, mid, core, rng, leaf, sun, -shaded, lobes, bump, shine)
+	_canopy(root, mid, core, rng, _leaf_of(t), sun, -shaded, lobes, bump, shine, FOLIAGE_CARDS, float(t["deep"]))
 	_measure(t, mid, core)
 	var shape := str(sh.get("shape", "round"))
 	for i in masses:
@@ -362,7 +368,8 @@ static func _crown(t: Dictionary, centre: Vector3) -> void:
 		# A mass on a side a neighbour covers is hidden anyway: every other one is left out, with its limb.
 		if i % 2 == 1 and Crowding.covered(int(t["mask"]), a - root.rotation.y):
 			continue
-		_canopy(root, p, squash * size, rng, leaf, sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine)
+		_canopy(root, p, squash * size, rng, _leaf_of(t), sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine,
+			FOLIAGE_CARDS, float(t["deep"]))
 		_measure(t, p, squash * size)
 		(t["blobs"] as Array).append([p, size, a, squash.y])
 		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
@@ -398,8 +405,9 @@ static func _layout(shape: String, i: int, n: int, rng: RandomNumberGenerator) -
 ## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up
 ## in the crown catch more light than the ones low down).
 static func _canopy(root: Node3D, at: Vector3, radii: Vector3, rng: RandomNumberGenerator, leaf: Color, sun: Vector3,
-		lift: float, lobes: int, bump: float, shine: float, cards_most := FOLIAGE_CARDS) -> void:
-	var shade := func(light: float) -> Color: return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0))
+		lift: float, lobes: int, bump: float, shine: float, cards_most := FOLIAGE_CARDS, deep := 0.0) -> void:
+	var shade := func(light: float) -> Color:
+		return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0)).darkened(deep)
 	ModelKit.canopy(root, at, radii * FOLIAGE_CORE, rng, shade, sun, lobes, bump, shine)
 	var mean := (radii.x + radii.y + radii.z) / 3.0
 	var cards := ModelKit.scaled(cards_most, FOLIAGE_MIN)
@@ -418,6 +426,35 @@ static func _limb(root: Node3D, from: Vector3, to: Vector3, r: float) -> void:
 	if axis.length() > 0.001:
 		limb.basis = Basis(axis.normalized(), acos(clampf(Vector3.UP.dot(dir), -1.0, 1.0)))
 	limb.position = from + line * 0.5
+
+
+## The colour of the next mass of leaves (or frond) of tree `t`: its one leaf colour, or for a limited variety
+## the variety's colours in turn (data/varieties.json `leaves`), so a Rainbow crown is many colours.
+static func _leaf_of(t: Dictionary) -> Color:
+	var hues: Array[Color] = t["hues"]
+	if hues.is_empty():
+		return t["leaf"]
+	t["hue"] = int(t["hue"]) + 1
+	return hues[(int(t["hue"]) - 1) % hues.size()]
+
+
+## A Galaxy tree's stars: small pale lights dotted over the upper faces of its crown (or round a palm's head),
+## each blinking on its own beat (star3d.gdshader).
+static func _stars(t: Dictionary, centre: Vector3, col: Color) -> void:
+	var root: Node3D = t["root"]
+	var k: float = t["k"]
+	var rng: RandomNumberGenerator = t["rng"]
+	var blobs: Array = t["blobs"]
+	var mat := ModelKit.star_paint(col)
+	for i in ModelKit.scaled(STARS, STARS_FEWEST):
+		var dir := Vector3(rng.randf_range(-1, 1), rng.randf_range(0.1, 1), rng.randf_range(-1, 1)).normalized()
+		var p := centre + dir * STAR_REACH * k
+		if not blobs.is_empty():
+			var blob: Array = blobs[i % blobs.size()]
+			dir.y *= float(blob[3])   # (a clump is flatter than it is wide)
+			p = (blob[0] as Vector3) + dir * float(blob[1])
+		var star := ModelKit.ball(root, p, rng.randf_range(STAR_R.x, STAR_R.y) * k, mat)
+		ModelKit.mark_fruit(star, rng.randf())
 
 
 ## The leaf colour for how lit a clump is (0 deep shade .. 1 full sun): shade drifts blue-green and dark,
@@ -456,8 +493,8 @@ static func _droop(t: Dictionary, centre: Vector3) -> void:
 		var long := cr * WILLOW_FALL * rng.randf_range(WILLOW_FALL_VARY_MIN, WILLOW_FALL_VARY_MAX)
 		var at := centre + Vector3(cos(a) * cr * WILLOW_RIM, -long * 0.5, sin(a) * cr * WILLOW_RIM)
 		var radii := Vector3(cr * WILLOW_FALL_W, long * 0.5, cr * WILLOW_FALL_W)
-		_canopy(root, at, radii, rng, t["leaf"], sun, WILLOW_LIFT - shaded, lobes, CROWN_BUMP, float(t["shine"]),
-			WILLOW_CARDS)
+		_canopy(root, at, radii, rng, _leaf_of(t), sun, WILLOW_LIFT - shaded, lobes, CROWN_BUMP, float(t["shine"]),
+			WILLOW_CARDS, float(t["deep"]))
 		_measure(t, at, radii)
 
 
@@ -480,7 +517,7 @@ static func _palm(t: Dictionary) -> Vector3:
 		var tier: Array = tiers[i % tiers.size()]
 		var at := Transform3D(Basis(Vector3.UP, -(TAU * i / fronds + rng.randf_range(-FROND_TURN, FROND_TURN))), top)
 		FrondMesh.feather(st, at, reach * rng.randf_range(0.9, 1.08), float(tier[0]), float(tier[1]),
-			reach * float(sh["leaflet"]), pairs, (t["leaf"] as Color).darkened(rng.randf_range(0.0, FROND_SHADE)),
+			reach * float(sh["leaflet"]), pairs, _leaf_of(t).darkened(float(t["deep"]) + rng.randf_range(0.0, FROND_SHADE)),
 			rng.randf())
 	_leaves_of(root, st)
 	return top
@@ -502,7 +539,7 @@ static func _banana(t: Dictionary) -> Vector3:
 		var length := float(sh["crown_r"]) * k * rng.randf_range(0.88, 1.08)
 		var at := Transform3D(Basis(Vector3.UP, -(TAU * i / n + rng.randf_range(-FROND_TURN, FROND_TURN))), top)
 		FrondMesh.paddle(st, at, length, float(tier[0]), float(tier[1]), length * float(sh["leaflet"]),
-			(t["leaf"] as Color).darkened(rng.randf_range(0.0, FROND_SHADE)), rng.randf())
+			_leaf_of(t).darkened(float(t["deep"]) + rng.randf_range(0.0, FROND_SHADE)), rng.randf())
 	_leaves_of(root, st)
 	return top + Vector3(0, 0.05 * k, 0)
 

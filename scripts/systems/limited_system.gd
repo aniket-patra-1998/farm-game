@@ -1,6 +1,8 @@
 class_name LimitedSystem
 extends GameSystem
-## Limited animals: the unique coats (catalog `limited`), FarmVille's limited editions.
+## Limited animals and trees: the varieties (catalog `limited`, `variety`; data/varieties.json), FarmVille's
+## limited editions. What follows is said of animals and their homes; a limited tree and an Orchard's Mystery
+## Seedlings go by the same rules.
 ## Part of the game state: reached as `Game.limited`; shared state is on `game`.
 ##
 ## They are bought in the Market with gems. Once one lives in a home, that home's finds can turn out to be another
@@ -22,10 +24,10 @@ func on() -> bool:
 	return Release.on(FEATURE)
 
 
-## Whether `id` is a limited animal (or a limited animal's baby).
+## Whether `id` is a limited animal (or a limited animal's baby) or a limited tree.
 func is_limited(id: String) -> bool:
 	var d := game.catalog.get_def(id)
-	return d is AnimalDef and (d as AnimalDef).is_limited()
+	return d is ProducerDef and (d as ProducerDef).is_limited()
 
 
 ## The limited animals among `inside` (a home's id -> how many) that this release has.
@@ -57,6 +59,9 @@ func ordinary(home: Dictionary) -> Dictionary:
 ## of its family there (a Rainbow Goose's is the Goose, though it lives on the Duck Pond), else the first grown
 ## one of any. "" when the home takes none this release has.
 func plain_of(id: String, home_id: String) -> String:
+	var of := str(game.item_data(id).get("limited_of", ""))   # (a limited tree names its plain tree)
+	if of != "":
+		return of if Release.has(of) else ""
 	var family := str(game.item_data(id).get("family", ""))
 	var first := ""
 	for held: String in game.item_data(home_id).get("holds", []):

@@ -7,6 +7,9 @@ extends RefCounted
 const PAINT_SHADER := "res://shaders/paint3d.gdshader"
 const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
 const FROND_SHADER := "res://shaders/frond3d.gdshader"   # a palm's fronds, a banana tree's leaves (FrondMesh)
+const STAR_SHADER := "res://shaders/star3d.gdshader"     # a Galaxy tree's stars
+const LEAF_SHADERS: Array[String] = [CANOPY_SHADER, FOLIAGE_SHADER, FROND_SHADER]   # what a tree's leaves are drawn by
+const LEAF_TOUCHES := {"rainbow": 2, "sunset": 3, "glint": 4}   # a tree's touch -> leaf_touch.gdshaderinc's number
 const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
 # The names a model's file gives its materials (a glTF file carries plain materials; these say which they are).
@@ -73,7 +76,7 @@ const CYLINDER_SIDES := 12
 ## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
 const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color",
 	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo",
-	"res://shaders/frond3d.gdshader": "albedo"}
+	"res://shaders/frond3d.gdshader": "albedo", "res://shaders/star3d.gdshader": "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
 const LOD_LEVELS := &"lod_levels"   # meta on a baked mesh: how many simpler levels it carries
@@ -252,6 +255,37 @@ static func shine_arrays(arrays: Array, shine: float) -> Array:
 	return out
 
 
+## A star on a Galaxy tree (shaders/star3d.gdshader) in `col`: each a small ball marked with `mark_fruit` (its
+## own number in place of a turn to grow); `sway` bends it with its tree.
+static func star_paint(col: Color, sway := 0.0) -> ShaderMaterial:
+	var key := "star:%s:%.3f" % [col.to_html(), sway]
+	if not _materials.has(key):
+		var m := ShaderMaterial.new()
+		m.shader = load(STAR_SHADER)
+		m.set_shader_parameter("albedo", col)
+		m.set_shader_parameter("sway", sway)
+		_materials[key] = m
+	return _materials[key]
+
+
+## Gives every leaf under `root` a limited tree's `touch` (LEAF_TOUCHES; others have nothing on the leaves): the
+## same materials, with the touch on, shared by every tree that has it.
+static func touch_all(root: Node, touch: String) -> void:
+	var which := int(LEAF_TOUCHES.get(touch, 0))
+	if which == 0:
+		return
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		var m := mi.material_override as ShaderMaterial
+		if m == null or m.shader == null or not LEAF_SHADERS.has(m.shader.resource_path):
+			continue
+		var key := "touch:%d:%d" % [m.get_instance_id(), which]
+		if not _materials.has(key):
+			var own := m.duplicate() as ShaderMaterial
+			own.set_shader_parameter("touch", which)
+			_materials[key] = own
+		mi.material_override = _materials[key]
+
+
 ## The material of a palm's fronds and a banana tree's leaves (white: the colour is in the vertices; FrondMesh
 ## makes them); `sway` bends them with their tree and sets each frond bobbing.
 static func fronds(sway := 0.0) -> ShaderMaterial:
@@ -419,6 +453,9 @@ static func sway_all(root: Node, amount: float) -> void:
 			mi.material_override = foliage((1.0 - fr) / 0.6, amount)
 		elif m != null and m.shader != null and m.shader.resource_path == FROND_SHADER:
 			mi.material_override = fronds(amount)
+		elif m != null and m.shader != null and m.shader.resource_path == STAR_SHADER:
+			var star = m.get_shader_parameter("albedo")
+			mi.material_override = star_paint(star if star is Color else Color(star.x, star.y, star.z), amount)
 		elif m != null and m.shader != null and m.shader.resource_path == FRUIT_SHADER:
 			var fruit = m.get_shader_parameter("albedo")
 			mi.material_override = fruit_paint(fruit if fruit is Color else Color(fruit.x, fruit.y, fruit.z), amount)
@@ -1102,7 +1139,7 @@ static func bake(root: Node3D) -> Node3D:
 			var whole: Array[int] = []
 			for k in mats.size():
 				var sm := mats[k] as ShaderMaterial
-				if sm != null and sm.shader != null and sm.shader.resource_path in [FRUIT_SHADER, FROND_SHADER]:
+				if sm != null and sm.shader != null and sm.shader.resource_path in [FRUIT_SHADER, FROND_SHADER, STAR_SHADER]:
 					whole.append(k)
 			mesh = with_lods(mesh, whole)
 		var mi := MeshInstance3D.new()

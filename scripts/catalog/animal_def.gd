@@ -3,9 +3,6 @@ extends ProducerDef
 ## An animal. Strays wander in once you own their home; everything else is bought or earned.
 
 
-const TOUCHES: Array[String] = ["stars", "rainbow", "sunset", "glint", "embers", "shake"]   # not-ui
-
-
 func is_stray_only() -> bool:
 	return bool(data.get("stray_only", false))
 
@@ -17,16 +14,6 @@ func is_lost() -> bool:
 
 func is_young() -> bool:
 	return bool(data.get("young", false))
-
-
-## A limited animal (LimitedSystem): bought with gems, and found only where one already lives.
-func is_limited() -> bool:
-	return bool(data.get("limited", false))
-
-
-## A limited coat's own touch (CoatTouch, docs/LIMITED.md): one of TOUCHES, or "" for none.
-func touch() -> String:
-	return str(data.get("touch", ""))
 
 
 ## The baby this breed has; "" means the plain one for its home.

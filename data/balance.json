@@ -305,6 +305,10 @@
    "v": 0.1,
    "note": "a seedling from a tree with a rare variety grows into the rare one"
   },
+  "rare_seedling_chance": {
+   "v": 0.5,
+   "note": "..and a Rare Mystery Seedling does this often (owner, 19 Nov: far likelier than an ordinary one)"
+  },
   "mystery_baby_chance": {
    "v": 0.08,
    "note": "per animal home harvest (our guess: FarmVille's pens varied)"

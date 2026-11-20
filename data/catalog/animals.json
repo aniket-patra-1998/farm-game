@@ -110,7 +110,8 @@
           "accent": "#ece8dc",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "silkie"
         },
         {
           "id": "peacock_chicken",
@@ -124,7 +125,8 @@
           "color": "#1f8a8a",
           "accent": "#2a5ad0",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "peacock"
         },
         {
           "id": "flame_chicken",
@@ -139,7 +141,8 @@
           "accent": "#f8c030",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "embers"
+          "touch": "embers",
+          "variety": "flame"
         },
         {
           "id": "bubblegum_chicken",
@@ -153,7 +156,8 @@
           "color": "#f9b8d4",
           "accent": "#e06aa0",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "bubblegum"
         },
         {
           "id": "galaxy_chicken",
@@ -168,7 +172,8 @@
           "accent": "#ffe9a8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         }
       ]
     },
@@ -225,7 +230,8 @@
           "color": "#1f6fa8",
           "accent": "#1f8a8a",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "peacock"
         },
         {
           "id": "royal_turkey",
@@ -239,7 +245,8 @@
           "accent": "#ece8dc",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "glint"
+          "touch": "glint",
+          "variety": "royal"
         },
         {
           "id": "autumn_turkey",
@@ -253,7 +260,8 @@
           "accent": "#8a2a1e",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "embers"
+          "touch": "embers",
+          "variety": "autumn"
         },
         {
           "id": "bubblegum_turkey",
@@ -266,7 +274,8 @@
           "color": "#f9b8d4",
           "accent": "#e88ab8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "bubblegum"
         },
         {
           "id": "midnight_turkey",
@@ -280,7 +289,8 @@
           "accent": "#ffe9a8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "midnight"
         }
       ]
     },
@@ -351,7 +361,8 @@
           "accent": "#f0c020",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "glint"
+          "touch": "glint",
+          "variety": "rubber"
         },
         {
           "id": "mandarin_duck",
@@ -365,7 +376,8 @@
           "color": "#d9702a",
           "accent": "#7a3a8a",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "mandarin"
         },
         {
           "id": "rainbow_duck",
@@ -380,7 +392,8 @@
           "accent": "#9ac8f0",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "mint_duck",
@@ -394,7 +407,8 @@
           "color": "#a8e6cf",
           "accent": "#7ad0b0",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "mint"
         },
         {
           "id": "galaxy_duck",
@@ -409,7 +423,8 @@
           "accent": "#ffe9a8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         }
       ]
     },
@@ -440,7 +455,8 @@
           "accent": "#e0a81c",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "glint"
+          "touch": "glint",
+          "variety": "golden"
         },
         {
           "id": "storm_goose",
@@ -453,7 +469,8 @@
           "color": "#7a8aa0",
           "accent": "#f6f2ea",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "storm"
         },
         {
           "id": "rainbow_goose",
@@ -467,7 +484,8 @@
           "accent": "#9ac8f0",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "pink_goose",
@@ -480,7 +498,8 @@
           "color": "#f9b8d4",
           "accent": "#e88ab8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "pink"
         },
         {
           "id": "tuxedo_goose",
@@ -493,7 +512,8 @@
           "color": "#2b2624",
           "accent": "#f6f2ea",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "tuxedo"
         }
       ]
     },
@@ -781,7 +801,8 @@
           "accent": "#e8456b",
           "limited": true,
           "baby": "strawberry_calf",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "strawberry"
         },
         {
           "id": "strawberry_calf",
@@ -794,7 +815,8 @@
           "color": "#f9c4d2",
           "accent": "#e8456b",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "strawberry"
         },
         {
           "id": "highland_cow",
@@ -810,7 +832,8 @@
           "limited": true,
           "baby": "highland_calf",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "highland"
         },
         {
           "id": "highland_calf",
@@ -824,7 +847,8 @@
           "accent": "#8a4a1c",
           "young": true,
           "limited": true,
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "highland"
         },
         {
           "id": "galaxy_cow",
@@ -840,7 +864,8 @@
           "limited": true,
           "baby": "galaxy_calf",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         },
         {
           "id": "galaxy_calf",
@@ -854,7 +879,8 @@
           "accent": "#ffe9a8",
           "young": true,
           "limited": true,
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         },
         {
           "id": "tiger_cow",
@@ -869,7 +895,8 @@
           "accent": "#3a2418",
           "limited": true,
           "baby": "tiger_calf",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "tiger"
         },
         {
           "id": "tiger_calf",
@@ -882,7 +909,8 @@
           "color": "#f2a23a",
           "accent": "#3a2418",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "tiger"
         },
         {
           "id": "panda_cow",
@@ -897,7 +925,8 @@
           "accent": "#2b2624",
           "limited": true,
           "baby": "panda_calf",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "panda"
         },
         {
           "id": "panda_calf",
@@ -910,7 +939,8 @@
           "color": "#f6f2ea",
           "accent": "#2b2624",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "panda"
         },
         {
           "id": "rainbow_cow",
@@ -926,7 +956,8 @@
           "limited": true,
           "baby": "rainbow_calf",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "rainbow_calf",
@@ -940,7 +971,8 @@
           "accent": "#fff6e0",
           "young": true,
           "limited": true,
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         }
       ]
     },
@@ -1040,7 +1072,8 @@
           "limited": true,
           "baby": "cloud_lamb",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "cloud"
         },
         {
           "id": "cloud_lamb",
@@ -1054,7 +1087,8 @@
           "accent": "#9ad0f5",
           "young": true,
           "limited": true,
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "cloud"
         },
         {
           "id": "shorn_sheep",
@@ -1069,7 +1103,8 @@
           "accent": "#f6e6da",
           "limited": true,
           "baby": "shorn_lamb",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "shorn"
         },
         {
           "id": "shorn_lamb",
@@ -1082,7 +1117,8 @@
           "color": "#f6e6da",
           "accent": "#f6e6da",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "shorn"
         },
         {
           "id": "cotton_candy_sheep",
@@ -1098,7 +1134,8 @@
           "limited": true,
           "baby": "cotton_candy_lamb",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "cotton_candy"
         },
         {
           "id": "cotton_candy_lamb",
@@ -1112,7 +1149,8 @@
           "accent": "#9ad4f5",
           "young": true,
           "limited": true,
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "cotton_candy"
         },
         {
           "id": "rainbow_sheep",
@@ -1128,7 +1166,8 @@
           "limited": true,
           "baby": "rainbow_lamb",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "rainbow_lamb",
@@ -1142,7 +1181,8 @@
           "accent": "#f7a8b8",
           "young": true,
           "limited": true,
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "golden_ram",
@@ -1158,7 +1198,8 @@
           "limited": true,
           "baby": "golden_lamb",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "glint"
+          "touch": "glint",
+          "variety": "golden"
         },
         {
           "id": "golden_lamb",
@@ -1172,7 +1213,8 @@
           "accent": "#e0a01c",
           "young": true,
           "limited": true,
-          "touch": "glint"
+          "touch": "glint",
+          "variety": "golden"
         }
       ]
     },
@@ -1215,7 +1257,8 @@
           "accent": "#f9b8d4",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "cotton_candy"
         },
         {
           "id": "mint_alpaca",
@@ -1228,7 +1271,8 @@
           "accent": "#f6f2ea",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "mint"
         },
         {
           "id": "galaxy_alpaca",
@@ -1241,7 +1285,8 @@
           "accent": "#ffe9a8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         },
         {
           "id": "rainbow_llama",
@@ -1255,7 +1300,8 @@
           "accent": "#f7a8b8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "cocoa_llama",
@@ -1268,7 +1314,8 @@
           "color": "#4a2e20",
           "accent": "#e0a860",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "cocoa"
         }
       ]
     },
@@ -1381,7 +1428,8 @@
           "accent": "#4a54a8",
           "limited": true,
           "baby": "blueberry_piglet",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "blueberry"
         },
         {
           "id": "blueberry_piglet",
@@ -1394,7 +1442,8 @@
           "color": "#8f9be8",
           "accent": "#4a54a8",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "blueberry"
         },
         {
           "id": "bumblebee_pig",
@@ -1408,7 +1457,8 @@
           "accent": "#2b2624",
           "limited": true,
           "baby": "bumblebee_piglet",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "bumblebee"
         },
         {
           "id": "bumblebee_piglet",
@@ -1421,7 +1471,8 @@
           "color": "#f8d030",
           "accent": "#2b2624",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "bumblebee"
         },
         {
           "id": "woolly_pig",
@@ -1436,7 +1487,8 @@
           "limited": true,
           "baby": "woolly_piglet",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "woolly"
         },
         {
           "id": "woolly_piglet",
@@ -1450,7 +1502,8 @@
           "accent": "#d9c4a0",
           "young": true,
           "limited": true,
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "woolly"
         },
         {
           "id": "rainbow_pig",
@@ -1465,7 +1518,8 @@
           "limited": true,
           "baby": "rainbow_piglet",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "rainbow_piglet",
@@ -1479,7 +1533,8 @@
           "accent": "#e79aa0",
           "young": true,
           "limited": true,
-          "touch": "rainbow"
+          "touch": "rainbow",
+          "variety": "rainbow"
         },
         {
           "id": "golden_pig",
@@ -1494,7 +1549,8 @@
           "limited": true,
           "baby": "golden_piglet",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "glint"
+          "touch": "glint",
+          "variety": "golden"
         },
         {
           "id": "golden_piglet",
@@ -1508,7 +1564,8 @@
           "accent": "#e08a1c",
           "young": true,
           "limited": true,
-          "touch": "glint"
+          "touch": "glint",
+          "variety": "golden"
         }
       ]
     },
@@ -1568,7 +1625,8 @@
           "accent": "#e6dcc8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "angora"
         },
         {
           "id": "lavender_goat",
@@ -1582,7 +1640,8 @@
           "color": "#c0a8e8",
           "accent": "#6a4aa8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "lavender"
         },
         {
           "id": "dalmatian_goat",
@@ -1596,7 +1655,8 @@
           "color": "#f6f2ea",
           "accent": "#3a2f27",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "dalmatian"
         },
         {
           "id": "sunset_goat",
@@ -1611,7 +1671,8 @@
           "accent": "#8a3a5a",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "sunset"
+          "touch": "sunset",
+          "variety": "sunset"
         },
         {
           "id": "tuxedo_goat",
@@ -1625,7 +1686,8 @@
           "color": "#2b2624",
           "accent": "#f6f2ea",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "tuxedo"
         }
       ]
     },
@@ -1760,7 +1822,8 @@
           "accent": "#6ac8f0",
           "limited": true,
           "baby": "candy_foal",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "candy"
         },
         {
           "id": "candy_foal",
@@ -1773,7 +1836,8 @@
           "color": "#f7b5d0",
           "accent": "#6ac8f0",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "candy"
         },
         {
           "id": "zebra_horse",
@@ -1789,7 +1853,8 @@
           "accent": "#2b2624",
           "limited": true,
           "baby": "zebra_foal",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "zebra"
         },
         {
           "id": "zebra_foal",
@@ -1802,7 +1867,8 @@
           "color": "#f6f2ea",
           "accent": "#2b2624",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "zebra"
         },
         {
           "id": "galaxy_horse",
@@ -1819,7 +1885,8 @@
           "limited": true,
           "baby": "galaxy_foal",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         },
         {
           "id": "galaxy_foal",
@@ -1833,7 +1900,8 @@
           "accent": "#ffe9a8",
           "young": true,
           "limited": true,
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         },
         {
           "id": "dapple_horse",
@@ -1849,7 +1917,8 @@
           "accent": "#8a8a94",
           "limited": true,
           "baby": "dapple_foal",
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "dapple"
         },
         {
           "id": "dapple_foal",
@@ -1862,7 +1931,8 @@
           "color": "#f6f2ea",
           "accent": "#8a8a94",
           "young": true,
-          "limited": true
+          "limited": true,
+          "variety": "dapple"
         },
         {
           "id": "feather_horse",
@@ -1879,7 +1949,8 @@
           "limited": true,
           "baby": "feather_foal",
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "feather"
         },
         {
           "id": "feather_foal",
@@ -1893,7 +1964,8 @@
           "accent": "#f6f2ea",
           "young": true,
           "limited": true,
-          "touch": "shake"
+          "touch": "shake",
+          "variety": "feather"
         }
       ]
     },
@@ -1945,7 +2017,8 @@
           "color": "#6a4a32",
           "accent": "#e0c8a8",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "cocoa"
         },
         {
           "id": "dutch_rabbit",
@@ -1959,7 +2032,8 @@
           "color": "#2b2624",
           "accent": "#f6f2ea",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "dutch"
         },
         {
           "id": "galaxy_rabbit",
@@ -1974,7 +2048,8 @@
           "accent": "#ffe9a8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "stars"
+          "touch": "stars",
+          "variety": "galaxy"
         },
         {
           "id": "strawberry_rabbit",
@@ -1988,7 +2063,8 @@
           "color": "#f9c4d2",
           "accent": "#e8456b",
           "limited": true,
-          "note": "a limited coat: values estimated in FarmVille's style"
+          "note": "a limited coat: values estimated in FarmVille's style",
+          "variety": "strawberry"
         },
         {
           "id": "sunset_rabbit",
@@ -2003,7 +2079,8 @@
           "accent": "#fbe6c8",
           "limited": true,
           "note": "a limited coat: values estimated in FarmVille's style",
-          "touch": "sunset"
+          "touch": "sunset",
+          "variety": "sunset"
         }
       ]
     },

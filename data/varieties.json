@@ -1,0 +1,171 @@
+{
+ "_doc": "The varieties limited animals and trees come in (owner, 20 Nov: one structure over both, so a variety is described once and worn by either, and a new one is a row here). A limited item names its variety (catalog `variety`). Each: its name, its touch (ProducerDef.TOUCHES), and for trees its look: `leaves` the colours of its crown's masses in turn (a palm's fronds), `darken` how much deeper they are painted than a plain crown's light would make them, `stars` the colour of the stars dotted over it. An animal's look is drawn by the art tool (tools/animal_art limited.py); its variety is the first words of its name. `trees`: the varieties every tree comes in (tools/make_limited.py writes one limited tree of each for every plain tree). `tree_gems`: a limited tree's price in gems by the level its plain tree unlocks at, as [up to this level, gems]: the animals' own three prices. `tree_pay`: what it pays, of its plain tree's payout.",
+ "tree_gems": [
+  [
+   10,
+   20
+  ],
+  [
+   24,
+   35
+  ],
+  [
+   99,
+   50
+  ]
+ ],
+ "tree_pay": 1.5,
+ "trees": [
+  "galaxy",
+  "rainbow",
+  "golden",
+  "sunset",
+  "cotton_candy"
+ ],
+ "varieties": {
+  "galaxy": {
+   "name": "Galaxy",
+   "touch": "stars",
+   "leaves": [
+    "#12103a",
+    "#1a184e",
+    "#241f66",
+    "#33267a"
+   ],
+   "darken": 0.45,
+   "stars": "#fff3c4"
+  },
+  "rainbow": {
+   "name": "Rainbow",
+   "touch": "rainbow",
+   "leaves": [
+    "#f7a8b8",
+    "#f9d27a",
+    "#a8e0a0",
+    "#8ecdf0",
+    "#c0a8f0"
+   ]
+  },
+  "golden": {
+   "name": "Golden",
+   "touch": "glint",
+   "leaves": [
+    "#f2c230",
+    "#ffd95a",
+    "#d9a520"
+   ]
+  },
+  "sunset": {
+   "name": "Sunset",
+   "touch": "sunset",
+   "leaves": [
+    "#f7b06a",
+    "#f08a5a",
+    "#e0607a",
+    "#b05a9a"
+   ]
+  },
+  "cotton_candy": {
+   "name": "Cotton Candy",
+   "touch": "shake",
+   "leaves": [
+    "#f7c6e0",
+    "#c6e6f7",
+    "#fdf4fa"
+   ]
+  },
+  "strawberry": {
+   "name": "Strawberry"
+  },
+  "highland": {
+   "name": "Highland"
+  },
+  "tiger": {
+   "name": "Tiger"
+  },
+  "panda": {
+   "name": "Panda"
+  },
+  "candy": {
+   "name": "Candy"
+  },
+  "zebra": {
+   "name": "Zebra"
+  },
+  "dapple": {
+   "name": "Dapple"
+  },
+  "feather": {
+   "name": "Feather"
+  },
+  "blueberry": {
+   "name": "Blueberry"
+  },
+  "bumblebee": {
+   "name": "Bumblebee"
+  },
+  "woolly": {
+   "name": "Woolly"
+  },
+  "cloud": {
+   "name": "Cloud"
+  },
+  "shorn": {
+   "name": "Shorn"
+  },
+  "angora": {
+   "name": "Angora"
+  },
+  "lavender": {
+   "name": "Lavender"
+  },
+  "dalmatian": {
+   "name": "Dalmatian"
+  },
+  "tuxedo": {
+   "name": "Tuxedo"
+  },
+  "mint": {
+   "name": "Mint"
+  },
+  "cocoa": {
+   "name": "Cocoa"
+  },
+  "silkie": {
+   "name": "Silkie"
+  },
+  "peacock": {
+   "name": "Peacock"
+  },
+  "flame": {
+   "name": "Flame"
+  },
+  "bubblegum": {
+   "name": "Bubblegum"
+  },
+  "rubber": {
+   "name": "Rubber"
+  },
+  "mandarin": {
+   "name": "Mandarin"
+  },
+  "royal": {
+   "name": "Royal"
+  },
+  "autumn": {
+   "name": "Autumn"
+  },
+  "midnight": {
+   "name": "Midnight"
+  },
+  "storm": {
+   "name": "Storm"
+  },
+  "pink": {
+   "name": "Pink"
+  },
+  "dutch": {
+   "name": "Dutch"
+  }
+ }
+}

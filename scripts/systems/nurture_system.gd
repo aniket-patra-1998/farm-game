@@ -23,6 +23,7 @@ const SUPPLIES := {
 const SEEDLING := "mystery_seedling"
 const BABY := "mystery_baby"
 const RARE_BABY := "rare_mystery_baby"   # a rarer find: likelier to be a limited animal (LimitedSystem)
+const RARE_SEEDLING := "rare_mystery_seedling"   # ..and an Orchard's: likelier a rare variety or a limited tree
 const BULB := "mystery_bulb"
 
 var supplies := {}                 # supply id -> how many
@@ -269,14 +270,21 @@ func first_of(kind: String) -> String:
 
 # ---------------------------------------------------------------- finding them
 
-## An Orchard was harvested: a Mystery Seedling of its trees, or a Watering Can. Returns popup texts.
+## An Orchard was harvested: a Mystery Seedling of its trees, or a Watering Can. As a home's Mystery Baby
+## (from_home), the seedling is now and then a Rare one, and either may turn out to be a limited tree that
+## already stands in the Orchard (LimitedSystem); nothing else brings one. Returns popup texts.
 func from_orchard(orchard: Dictionary) -> Array[String]:
 	var out: Array[String] = []
 	if not game.drops_enabled:
 		return out
-	var becomes := _pick_tree(orchard.get("inside", {}))
-	if becomes != "" and game.rolls.roll("seedling", Balance.f("nurture.seedling_share")) \
-			and _found(SEEDLING, becomes, int(orchard.get("uid", -1))):
+	var plain := game.limited.ordinary(orchard)   # (a limited tree comes only by its own chance, below)
+	var found := false
+	if not plain.is_empty() and game.rolls.roll("seedling", Balance.f("nurture.seedling_share")):
+		var rare := game.limited.rare_find()
+		var limited := game.limited.found_at(orchard, rare)
+		found = _found(RARE_SEEDLING if rare else SEEDLING, limited if limited != "" else _pick_tree(plain, rare),
+			int(orchard.get("uid", -1)))
+	if found:
 		pass   # (said on the Orchard as a find: _found)
 	else:
 		add_supply("watering_can", 1)
@@ -356,13 +364,15 @@ func needs_of(young_id: String) -> int:
 	return (game.catalog.defs[young_id] as YoungDef).needs()
 
 
-## A tree from an Orchard's: likelier the more of it there are; a rare variety now and then.
-func _pick_tree(inside: Dictionary) -> String:
+## A tree from an Orchard's: likelier the more of it there are; a rare variety now and then, far likelier from a
+## Rare Mystery Seedling (`from_rare`).
+func _pick_tree(inside: Dictionary, from_rare := false) -> String:
 	var id := _weighted(inside, func(k: String) -> bool: return str(game.item_data(k).get("kind", "")) == "tree")
 	if id == "":
 		return ""
 	var rare := str(game.item_data(id).get("rare_sapling", ""))
-	if rare != "" and game.items.has(rare) and game.rolls.roll("rare_sapling", Balance.f("nurture.rare_chance")):
+	var chance := Balance.f("nurture.rare_seedling_chance") if from_rare else Balance.f("nurture.rare_chance")
+	if rare != "" and game.items.has(rare) and game.rolls.roll("rare_sapling", chance):
 		return rare
 	return id
 
