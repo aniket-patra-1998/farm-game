@@ -72,7 +72,7 @@ func test_80_first_crafting_building_is_coins_the_rest_gems() -> void:
 	_eq(g.crafting.crafting_price("bakery"), {"coins": 100000}, "the first costs coins")
 	var uid := _crafting_building(g)
 	_check(g.crafting.is_crafting(g.object_by_uid(uid)), "it's a crafting building")
-	_eq(g.crafting.free_slots(g.object_by_uid(uid)), 1, "one slot at 1 star")
+	_eq(g.crafting.free_slots(g.object_by_uid(uid)), 2, "two slots at 1 star (owner, 20 Nov)")
 	_eq(g.crafting.crafting_price("winery"), {"gems": 80}, "the next costs 80 gems")
 	g.gems = 10
 	_check(not g.can_afford_item("winery"), "can't afford it without the gems")
@@ -90,7 +90,7 @@ func test_386_a_saved_crafting_building_above_four_stars_comes_down_to_four() ->
 	g.settle_objects()
 	var bakery: Dictionary = g.objects.filter(func(o): return str(o["id"]) == "bakery")[0]
 	_eq(g.level_of(bakery), 4, "a 5-star Bakery from an old save is a 4-star one")
-	_eq(g.crafting.slot_count(bakery), 4, "with four slots")
+	_eq(g.crafting.slot_count(bakery), 5, "with five slots")
 	_done(g)
 
 
@@ -130,7 +130,7 @@ func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	_eq(g.crafting.craft_problem(uid, "apple_pie"), "Unlocks at 2 stars", "2-star recipes are locked")
 	_check(g.crafting.start_craft(uid, "pumpkin_bread"), "baking")
 	_eq(g.crafting.bushels, {"wheat": 1}, "bushels used")
-	_eq(g.crafting.craft_problem(uid, "strawberry_shortcake"), "Every slot is busy", "one slot at 1 star")
+	_eq(g.crafting.free_slots(g.object_by_uid(uid)), 1, "one of its two slots still free (owner, 20 Nov)")
 	_eq(g.crafting.finish_crafts(uid), 0, "not done yet")
 	_skip(g, 1800)
 	_eq(g.crafting.finish_crafts(uid), 0, "nor after half an hour")
@@ -180,7 +180,7 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 	var coins := g.coins
 	_check(g.crafting.add_star(uid, false), "2 stars")
 	_eq(g.coins, coins - 50000, "for 50,000 coins")
-	_eq(g.crafting.free_slots(o), 2, "2 slots")
+	_eq(g.crafting.free_slots(o), 3, "3 slots")
 	_check(g.crafting.recipe_unlocked(o, "berry_wine"), "2-star recipes unlocked")
 	g.gems = 25
 	_check(g.crafting.add_star(uid, true), "3 stars for gems")
