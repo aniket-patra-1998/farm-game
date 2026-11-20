@@ -107,6 +107,7 @@ func _ints(d: Dictionary) -> Dictionary:
 
 func test_81_bushels_craft_goods_sell_and_fuel() -> void:
 	var g := _farm(true)
+	g.born_day = g.day_number() + 100000   # (its buildings never wear here: wear_test tests wear)
 	g.coins = 100000
 	g.objects = g.objects.filter(func(o): return g.kind_of(o) != "animal")
 	g.rebuild_occupancy()
@@ -213,6 +214,7 @@ func test_82_stars_mastery_and_the_farmers_market() -> void:
 
 func test_371_collecting_gives_produce_and_recipes_use_it() -> void:
 	var g := _farm(true)
+	g.born_day = g.day_number() + 100000   # (its buildings never wear here: wear_test tests wear)
 	g.coins = 10000000
 	g.xp = g.xp_for_level(30)
 	_eq(g.crafting.produce_of("cow"), "milk", "a cow gives milk")

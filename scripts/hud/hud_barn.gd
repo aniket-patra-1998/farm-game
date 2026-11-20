@@ -73,7 +73,9 @@ func build_barn_repair(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.card_frame(card))
 	var fix := hud.panel_button(tr("REPAIR_THE_BARN") if Game.storage.can_repair_barn() else tr("NOT_ENOUGH_PARTS_YET"))
 	fix.disabled = not Game.storage.can_repair_barn()
-	fix.pressed.connect(func() -> void: Game.storage.repair_barn())
+	fix.pressed.connect(func() -> void:
+		if Game.storage.repair_barn():
+			hud.close_panels())   # (the Barn swells up mended on the farm: see it, not the panel)
 	content.add_child(fix)
 
 

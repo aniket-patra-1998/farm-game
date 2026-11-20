@@ -168,6 +168,8 @@ func can_expand(b: Dictionary) -> Verdict:
 	var short := missing(need)
 	if not short.is_empty():
 		return Verdict.new(Why.MATERIALS, tr("MATERIALS_SHORT") % describe(short))
+	if game.coins < game.land.expansion_coins(b):
+		return Verdict.new(Why.COINS, tr("NOT_ENOUGH_COINS_TO_EXPAND"))
 	return yes()
 
 

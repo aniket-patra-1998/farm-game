@@ -159,6 +159,7 @@ var vehicles: VehicleSystem
 var vip: VipSystem
 var rolls: RollSystem
 var rust: RustSystem
+var wear: WearSystem                # building wear (docs/WEAR.md)
 var field: FieldSystem
 var strays: StraySystem
 var crafting: CraftingSystem
@@ -218,6 +219,7 @@ func _init() -> void:
 	vip = VipSystem.new(self)
 	rolls = RollSystem.new(self)
 	rust = RustSystem.new(self)
+	wear = WearSystem.new(self)
 	field = FieldSystem.new(self)
 	player = PlayerSystem.new(self)
 	nurture = NurtureSystem.new(self)
@@ -238,7 +240,7 @@ func _init() -> void:
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social, collecting, shop, helpers, vip, rust, rolls, goals, limited]
+		social, collecting, shop, helpers, vip, rust, wear, rolls, goals, limited]
 	StartMarks.mark("made")   # not-ui (the systems made)
 
 
@@ -264,12 +266,14 @@ func _ready() -> void:
 	check_rescue.call_deferred()
 	strays.check_strays.call_deferred()
 	daily.check_daily_gift.call_deferred()
+	wear.spoil.call_deferred()
 	_show_absence.call_deferred()
 	var stray_timer := Timer.new()
 	stray_timer.wait_time = 30.0
 	stray_timer.autostart = true
 	stray_timer.timeout.connect(strays.check_strays)
 	stray_timer.timeout.connect(daily.check_daily_gift)
+	stray_timer.timeout.connect(rust.finish_repairs)   # (a mended vehicle comes back: RustSystem)
 	add_child(stray_timer)
 	StartMarks.mark("game")   # not-ui (data and the save loaded)
 
@@ -299,6 +303,8 @@ func _notification(what: int) -> void:
 		PhoneNotices.schedule(self)   # (the phone tells the player while the game is closed)
 	if what == NOTIFICATION_APPLICATION_RESUMED:
 		PhoneNotices.cancel_all()
+		wear.spoil()   # (worn storage spoiled a little while the game was away)
+		check_rescue()   # (back to a farm that can't plant: helped now, not only at a cold start or a harvest)
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and not OS.has_feature("mobile"):
 		_close()
 
@@ -417,6 +423,7 @@ func debug_skip(seconds: int) -> void:
 	skipped += seconds
 	strays.check_strays()
 	daily.check_daily_gift()
+	wear.spoil()
 	plot_changed.emit(-1)
 	_tiles_changed.clear()   # (the whole field has just been told)
 	check_rescue()

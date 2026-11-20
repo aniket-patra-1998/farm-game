@@ -100,6 +100,10 @@
    "v": 86400,
    "note": "a stray nobody adopts wanders off after a day"
   },
+  "adopt_feeds": {
+   "v": 3,
+   "note": "feedings a stray needs to be adopted: one unit each of a feed its kind eats, from the Barn (FarmVille's adoption task)"
+  },
   "stray_adopt_xp": {
    "v": 5,
    "note": "XP for adopting a stray."
@@ -727,8 +731,12 @@
    "note": "requests and shared seedlings you can help in a day (estimate)"
   },
   "inbox_limit": {
-   "v": 60,
+   "v": 20,
    "note": "most things waiting in the inbox; newer ones are not delivered while full"
+  },
+  "mail_per_day": {
+   "v": 6,
+   "note": "most things neighbours send in a day, answers to your own posts aside (owner, 19 Nov: 60 waited on a new farm)"
   },
   "outbox_limit": {
    "v": 12,
@@ -959,6 +967,82 @@
   "top_boost": {
    "v": 1.5,
    "note": "what active VIP multiplies the buildings' bonuses and chances by at the top level; each level adds the same step from 1"
+  }
+ },
+ "wear": {
+  "level_days": {
+   "v": 10,
+   "note": "days a utility building takes to gain a level of wear at its first size (docs/WEAR.md)"
+  },
+  "size_faster": {
+   "v": 0.25,
+   "note": "how much faster a building wears for each size it has grown (more upgrades, more upkeep)"
+  },
+  "grace_days": {
+   "v": 14,
+   "note": "days from a farm's start before anything wears"
+  },
+  "goods_less": {
+   "v": 0.1,
+   "note": "share fewer coins a home gives a collect at each level of wear (at the last level, none)"
+  },
+  "craft_slower": {
+   "v": 0.15,
+   "note": "share longer a craft takes at each level of the crafting building's wear (at the last level, none starts)"
+  },
+  "room_less": {
+   "v": 0.05,
+   "note": "share less room in a storage building at each level of wear (nothing kept is thrown out)"
+  },
+  "spoil_from": {
+   "v": 4,
+   "note": "the level of wear from which some of what a storage building keeps spoils"
+  },
+  "spoil_share": {
+   "v": 0.02,
+   "note": "share of the feed (Barn) or bunches (Garden Shed) that spoils a day in worn storage"
+  },
+  "level_scale": {
+   "v": 0.75,
+   "note": "a repair's coins grow with the farm: times 1 + this x level, as its earnings do (owner, 19 Nov: repairs were under 1% of a late farm's earnings; squared, they outgrew them and went unpaid)"
+  },
+  "least_price": {
+   "v": 2000,
+   "note": "the price a repair is worked from for a building that cost less (the Barn was free)"
+  },
+  "repair_share": {
+   "v": [
+    0.04,
+    0.1,
+    0.18,
+    0.28,
+    0.4
+   ],
+   "note": "a repair's coins and materials at each level of wear, as a share of what the building and its sizes cost (owner: at most 40%); as many levels as entries, and at the last the building stops"
+  },
+  "repair_seconds": {
+   "v": [
+    600,
+    1800,
+    3600,
+    7200,
+    14400
+   ],
+   "note": "how long a building's repair takes at each level of wear"
+  }
+ },
+ "upgrade": {
+  "step_growth": {
+   "v": 1.6,
+   "note": "how many times the coins of a building's next size are of the size before (docs/WEAR.md)"
+  },
+  "owned_more": {
+   "v": 0.04,
+   "note": "share more every upgrade costs for each upgrade the farm already has (sizes and stars)"
+  },
+  "size_coins": {
+   "v": 0.5,
+   "note": "a building's second size costs this share of its price in coins (its materials too); each size on, step_growth times more"
   }
  },
  "rust": {

@@ -1,0 +1,20 @@
+{
+  "_about": "The economy audit (tools/audit.sh, the Economy audit workflow): what every play-bot run (tools/balance_sim) is checked against, so a broken economy fails the audit instead of being a figure to read (owner, 19-20 Nov: 'nothing should get missed by the audit bot'). Each target names a metric the bot measures (BalanceSim.metrics, or the first hour's), and `most` or `least`; `min_days` the shortest run it applies to; `styles` the bot styles that play that part of the game; `first_hour` for the first-hour run. `why` is the gap that put it here. A target is changed only with the owner's say: it is the game's promise, not the bot's.",
+  "targets": [
+    {"metric": "idle_days_pct", "most": 25, "min_days": 20, "why": "coins sat idle on 57 to 82% of days (19 Nov): the late game was too easy"},
+    {"metric": "want_days_pct", "least": 70, "min_days": 10, "styles": ["plain", "goals", "builder", "crafter"], "why": "always something worth working toward in the Market (Part 4: costing 1 to 3 visits of income; a casual player's one visit is a day's income, so most things cost less than one and are bought the day they show)"},
+    {"metric": "upkeep_pct", "least": 10, "min_days": 40, "styles": ["plain", "goals", "builder", "crafter"], "why": "repairs were under 1% of earnings (19 Nov): more utilities must mean more upkeep"},
+    {"metric": "upkeep_pct", "most": 30, "min_days": 40, "styles": ["plain", "goals", "builder", "crafter"], "why": "upkeep must not eat the farm"},
+    {"metric": "stuck_days", "most": 0, "why": "a farm unable to plant (no coins, nothing growing) is a dead end: the casual start (19 Nov)"},
+    {"metric": "away_lost", "most": 0, "why": "a week away never loses an animal, tree or building (Part 4)"},
+    {"metric": "strays_week_most", "most": 3, "why": "strays came every 3 to 6 hours (19 Nov): at most 3 a week"},
+    {"metric": "level3_day", "most": 1, "styles": ["plain", "goals", "builder", "crafter"], "why": "a playing farm is level 3 on its first day"},
+    {"metric": "level3_day", "most": 4, "styles": ["casual"], "why": "a casual farm sat at level 2 until day 4 (19 Nov)"},
+    {"metric": "level20_day", "least": 10, "min_days": 20, "why": "the climb must not race: levels are earned"},
+    {"metric": "projects_open", "most": 0, "min_days": 40, "styles": ["goals", "builder"], "why": "the rare coop project could never finish (19 Nov)"},
+    {"metric": "gems_per_week", "least": 1, "min_days": 14, "why": "a free player earns a few gems a week (Part 4)"},
+    {"metric": "stuck_minutes", "most": 15, "first_hour": true, "why": "52 of the first 60 minutes had goals open and nothing to do (19 Nov); waiting on growing crops is FarmVille, a minute with nothing growing either is a dead end"},
+    {"metric": "coins_at_10", "least": 100, "first_hour": true, "why": "the first session ended with 9 coins (19 Nov)"},
+    {"metric": "level3_minute", "most": 15, "first_hour": true, "why": "level 3 in the first quarter hour"}
+  ]
+}

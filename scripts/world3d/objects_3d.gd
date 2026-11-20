@@ -21,6 +21,7 @@ const HATCH_SHAKES := 3      # a mystery shakes this many times before it opens,
 const HATCH_REACH := 0.035   # ..by this much more, in tiles, to either side
 const HATCH_REST := 0.1      # seconds between shakes
 const RUST := "rust"             # not-ui: how a vehicle's rust is written in its look ("rust2")
+const REPAIRING := "fix"         # not-ui: written after a vehicle's rust while it is in for repair
 const FARMHOUSE := "farmhouse"   # not-ui
 const STAGE := "stage"           # not-ui: how the farmhouse's stage is written in its look ("stage3")
 const PIECES := &"pieces"       # meta on a batched decoration's stand-in: the pieces the DecorLayer draws it from
@@ -436,22 +437,30 @@ func _mark_rust() -> void:
 	var ids: Array[String] = []
 	var shares: Array[float] = []
 	var rust := Game.rust
-	if rust.is_on() and not rust.vehicles.is_empty():
+	var wear := Game.wear
+	var rusting := rust.is_on() and not rust.vehicles.is_empty()
+	if rusting or (wear.is_on() and not wear.buildings.is_empty()):
 		for o in Game.objects:
 			var uid := int(o["uid"])
 			var id := ""
+			var share := 0.0
 			if not _views.has(uid) or Game.under_construction(o):
 				continue
-			if Game.kind_of(o) == "vehicle":
+			if rusting and Game.kind_of(o) == "vehicle":
 				id = str(o["id"]) if (_views[uid]["node"] as Node3D).visible and rust.needs_repair(str(o["id"])) else ""
-			elif Game.special_of(o) == "garage":
+			elif rusting and Game.special_of(o) == "garage":
 				id = rust.rustiest(o.get("inside", {}))
+			if id != "":
+				share = float(rust.level(id)) / rust.max_level()
+			elif wear.needs_repair(o):   # (a worn building wears the same sign: docs/WEAR.md)
+				id = WearSystem.key_of(uid)
+				share = float(wear.level_of(o)) / wear.max_level()
 			if id == "":
 				continue
 			var box: AABB = _views[uid]["box"]
 			tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
 			ids.append(id)
-			shares.append(float(rust.level(id)) / rust.max_level())
+			shares.append(share)
 	_rust_marks.show_at(tops, ids, shares)
 
 
@@ -575,12 +584,17 @@ func _mind_of(a: Animal3D) -> AnimalBehaviour:
 
 
 ## What a view shows: when this changes, it's rebuilt.
-## How far along a building is in its life: a site counts for nothing, a finished building 100, plus 10 a level.
-## (When it goes up, the building has been finished or upgraded: see grow_in.)
+## How far along a building is in its life: a site, or the starter Barn standing broken, counts for nothing, a
+## finished building 100, plus 10 a level. (When it goes up, the building has been finished, repaired or
+## upgraded: see grow_in.) A vehicle in for repair counts for nothing too, so it swells back in mended.
 func _step(o: Dictionary) -> int:
+	if Game.kind_of(o) == "vehicle":
+		return 0 if Game.rust.repairing(str(o["id"])) else STEP_LEVEL
 	if not Game.kind_of(o) in ["building", "barn", "crafting"]:
 		return 0
-	return 0 if Game.under_construction(o) else STEP_LEVEL + 10 * int(o.get("level", 1))
+	if Game.under_construction(o) or bool(o.get("broken", false)):
+		return 0
+	return STEP_LEVEL + 10 * int(o.get("level", 1))
 
 
 func _key(o: Dictionary) -> String:
@@ -894,7 +908,8 @@ static func shows_of(o: Dictionary) -> String:
 	if str(o["id"]) == FARMHOUSE:
 		return STAGE + str(Game.farmhouse_stage())
 	if Game.kind_of(o) == "vehicle":
-		return RUST + str(Game.rust.level(str(o["id"])))   # (its rust shows in its paint: VehicleModel.build)
+		var id := str(o["id"])   # (its rust shows in its paint, VehicleModel.build; in for repair, it is built again)
+		return RUST + str(Game.rust.level(id)) + (REPAIRING if Game.rust.repairing(id) else "")
 	return str(o.get("crop", o.get("flower", "")))
 
 

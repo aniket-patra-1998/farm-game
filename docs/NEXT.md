@@ -1342,6 +1342,31 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   This clone needed Godot downloaded (4.7.2, to /home/claude/godot); its stale local main was kept as local
   branch local-main-stale-backup.
 
+- Run 11 (19 Nov 22:35-23:20 IST): no picks yet (six branches wait). Item 3's project half surveyed: the orchard,
+  the rare coop and every building finished from a frame already go through Game.building_upgraded(uid, 1), so the
+  build reveal (wow/build-reveal) covers them once picked. What had no moment was the starter Barn's repair: merged
+  to main (d7f0c59) as a missing contact: Objects3D._step counts a broken Barn as a site, so repair_barn swells it in
+  mended (grow_in: sparkles, dust, level_up_soft), and the Barn panel closes on the repair (hud_barn) so it is seen.
+  Test 595 (world3d_test). tools/juice_shot.tscn --repair renders it (~70 s). Checked at 1x: the tarp roof gives
+  way to the mended Barn swelling past its size. Not done: a vehicle's finished rust repair (RustSystem settles
+  lazily, there is no "repair done" event yet); the build reveal's camera visit for the Barn repair (hook it in
+  main._reveal's branch when build reveal merges: a Game signal for a finished repair, or emit from repair_barn).
+  A local branch wow/project-reveal (build reveal rebased, nothing added) was not pushed.
+- Next: the owner's picks; rebase the picked branch on main, precheck, fast-forward push. Test numbers on main now
+  run to 595 (main took 590-594 for wear), so cloud shadows' 590 and the rainbow's 591 renumber too, as do build
+  reveal 580, touch answers 582, touch hearts 584. The pre-push hook re-runs the 7.5 min precheck, so main can move
+  meanwhile: a rejected push is fetch, rebase, regenerate art_versions, check again. The window ends 00:40 IST.
+
+- Run 12 (19 Nov 23:35-23:58 IST): no picks yet. Run 11's open end built as a missing contact (reuses the mended
+  Barn's swell, so merged without a pick): a vehicle's finished rust repair. RustSystem.finish_repairs (on Game's
+  30 s stray_timer) closes finished repairs, which settled lazily, says each once (RUST_REPAIR_DONE) and calls
+  objects_updated; Objects3D: a vehicle in for repair is built again (shows_of writes REPAIRING after its rust)
+  and counts 0 in _step, so out of the workshop it is a step up and grow_in plays (sparkles, grand sound).
+  Test 598 (rust_test). Render: tools/juice_shot.tscn -- --mended [--every=2] (~40 s); checked at 1x: the tractor
+  swells red out of its rusted paint. Not done: a worn building's finished repair (WearSystem settles lazily the
+  same way; apply the same finish_repairs + _step rule for the AUDIT "every similar module" rule), and a repair
+  that finished while the game was closed (no moment on the first sync). The build window ends 00:40 IST.
+
 ## After the feature freeze (owner-approved ideas, 18 Nov)
 - Animal life, full version ("utility AI", looks only): herds drifting together, babies following mothers, chickens
   scattering from the farmer, the dog companion trotting alongside, reactions to the farm's own systems.
@@ -1375,3 +1400,26 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   pays 170, rare coop gives its 2 Mystery Eggs (goal reward "eggs"). Tests 585, 586.
 - Waiting on the owner: the late-game design (climbing upgrade prices + building wear, Claude Doc
   "Farm game: a harder late game"). Build nothing of it before the six questions there are answered.
+- 19 Nov, later: building wear and climbing upgrade prices built (docs/WEAR.md, tests 587-594). The bot's
+  measure: wear is upkeep, not a coin sink (repairs under 1% of earnings with the owner's 40% cap). The idle
+  coin pile is still open: asked the owner how sinks should scale with income.
+
+## Trees (tree-polish branch, not merged; merging is the owner's call)
+- Owner's decisions, 19 Nov: the trees' design and crown colours stay; enhance within them. Locked: fruit few
+  and big, in the leaves, none hanging, moving with the crown; rounder leaves tucked in (the sheet's C); a
+  Mystery Seedling grows into a little tree; four motions (leaf fall, a harvest shake, a gust, a fruit that
+  drops and can be tapped); a Rare Mystery Seedling; limited tree varieties as the animals' (same rules, same
+  prices, the Limited tab), with "variety" as one structure over animals and trees.
+- Built here (world3d_test 590, 591): the fruit (TreeModel FRUIT_*, ModelKit.fruit_ball, fruit3d's sway; bake keeps
+  fruit out of the simpler levels, which had turned it into gems from the farm's distance), the leaves
+  (ModelKit SPRIG_LEAF_*, CARD_*), the seedling's stages (YoungModel). Every tree file exported again; seen on the
+  farm in a still at midday, not on a phone.
+- Not built yet: the four motions (concept clips shown and approved; the dropped fruit is to be tappable); the
+  Rare Mystery Seedling and the limited trees wait for the limited animals (PR 18: LimitedSystem) and for the
+  varieties' own design round (five looks with their touches, and a hummingbird that nests in a limited tree, to
+  be shown as clips before building).
+
+- 20 Nov: the Economy audit (tools/audit.sh, .github/workflows/audit.yml, data/sim_targets.json) checks every bot
+  style on two seeds; the bot was fixed to play like a player (it had never bought a building). Open: the
+  plain style's want_days_pct (something to buy costing 1 to 3 visits) misses on some seeds: a pacing gap in
+  the Market's middle levels, for the next economy pass.

@@ -43,14 +43,27 @@ const META_REACH := &"crown_reach"   # and how far its crown reaches from the tr
 const META_FAR := TreeSpec.META_FAR   # and what its far look needs (TreeSpec)
 const FAR_LUMPS := 3            # a tree seen from far: its crown is this many soft lumps round the main one
 const LEAF_HUE_VARY := 0.04   # how far a tree's leaf colour may drift round its kind's, in hue
-const FRUIT_READY := 30     # fruit on a full tree (they come one at a time as it ripens: _fruit)
-const FRUIT_R := 0.064      # a round fruit's radius (a small one's: FRUIT_SMALL_R), for a full-size tree
-const FRUIT_SMALL_R := 0.02
-const FRUIT_OUT := 1.2      # how far out through a leafy clump sits (1: on its surface; less: sunk in the leaves)
-const HANG_OUT := 0.95      # where a hanging fruit's stem joins a leafy mass (1: its skin)
-const STEM := Color("#5a4a2a")
+const SEEN_FROM := Vector3(0.7071, 0, 0.7071)   # the side of a tree the farm's camera sees
+const BUNCH_OUT := 0.13      # how far out from the stem a banana's bunch hangs, of the tree's size..
+const BUNCH_WIDE := 0.045    # ..how wide a hand of it is..
+const BANANA_R := 0.027      # ..and how thick each banana
+const PALM_RINGS := 11       # rings up a palm's trunk..
+const BANANA_RINGS := 6      # ..and sheaths up a banana's stem
+const TRUNK_NARROW := 0.64   # a ringed trunk's top, of its foot's width
+const TRUNK_FOOT := 1.7      # the swell where it meets the ground, of its width
+const RING_LIGHT := 0.13     # every other ring, lighter by this
+const BANANA_STEM := Color("#8fb84e")
+const FROND_TURN := 0.12     # how far a frond strays from its even place round the crown (radians)
+const FROND_SHADE := 0.1     # how much darker one frond may be than the next
+const LEAFLETS_FEWEST := 6   # pairs of leaflets on a frond in the thickest crowd
+const FRUIT_READY := 14     # fruit on a full tree (they come one at a time as it ripens: _fruit): few and big, so
+const FRUIT_R := 0.093      # ..each reads as a fruit (owner, 19 Nov). A round one's radius on a full-size tree..
+const FRUIT_SMALL_R := 0.029  # ..and a small one's (cherries, olives: three times as many)
+const PALM_NUT := 0.6       # a palm's nuts, of a round fruit's size, in a ring..
+const PALM_RING := 0.075    # ..this far out from the trunk (of the tree's size)
+const FRUIT_OUT := 0.97     # how far out through a leafy clump one sits (1: on its skin). Just inside, so the leaves
+							# lap over its edge and it grows there; standing proud of them it looked stuck on
 const TURN_STEP := 0.618    # each fruit's turn to grow is this much on from the one before (wrapping at 1): spread out
-const FRUIT_HANG_EVERY := 6   # one fruit in this many hangs under the crown on a stem; the rest sit on its face
 const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
 const TRUNK_TALL := 0.85    # trunks are short: a big full crown on a slim trunk, FarmVille's way
 const CROWN_GROW := 1.55    # the crown is well over a tile across: most of the tree
@@ -448,74 +461,80 @@ static func _droop(t: Dictionary, centre: Vector3) -> void:
 		_measure(t, at, radii)
 
 
-## A palm: a tall trunk curving up in rings, and fronds drooping from the top in a star.
+## A palm: a trunk curving up in rings from a swollen foot, narrowing as it goes, and a crown of feather fronds
+## in tiers, the top ones reaching up and the lowest hanging (its form's `tiers`, `leaflets` and `lean`: a date
+## palm's stand stiffer and more upright than a coconut palm's).
 static func _palm(t: Dictionary) -> Vector3:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var rng: RandomNumberGenerator = t["rng"]
-	var leaf: Color = t["leaf"]
-	var h := float(sh["trunk_h"]) * k
-	var r := float(sh["trunk_r"]) * k
-	var bend := Vector3(rng.randf_range(-0.12, 0.12), 0, rng.randf_range(-0.12, 0.12))
-	var rings := 9
-	var top := Vector3.ZERO
-	for i in rings:
-		var u := float(i) / rings
-		var at := bend * (u * u) * h * 2.0 + Vector3(0, u * h, 0)
-		ModelKit.cylinder(root, at, r * lerpf(1.0, 0.75, u), h / rings * 1.02,
-			ModelKit.paint(BARK.lightened(0.12 if i % 2 == 0 else 0.0)), r * lerpf(0.95, 0.72, u), 8)
-		top = at + Vector3(0, h / rings, 0)
-	var fronds := int(sh["clumps"])
+	var top := _ringed_trunk(t, BARK, float(sh.get("lean", 0.0)), PALM_RINGS)
+	var tiers: Array = sh["tiers"]
 	var reach := float(sh["crown_r"]) * k
+	var pairs := ModelKit.scaled(int(sh["leaflets"]), LEAFLETS_FEWEST)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var fronds := int(sh["clumps"])
 	for i in fronds:
-		var a := TAU * i / fronds + rng.randf() * 0.25
-		_frond(root, top, Vector3(cos(a), 0, sin(a)), reach * rng.randf_range(0.85, 1.1), leaf, rng)
+		var tier: Array = tiers[i % tiers.size()]
+		var at := Transform3D(Basis(Vector3.UP, -(TAU * i / fronds + rng.randf_range(-FROND_TURN, FROND_TURN))), top)
+		FrondMesh.feather(st, at, reach * rng.randf_range(0.9, 1.08), float(tier[0]), float(tier[1]),
+			reach * float(sh["leaflet"]), pairs, (t["leaf"] as Color).darkened(rng.randf_range(0.0, FROND_SHADE)),
+			rng.randf())
+	_leaves_of(root, st)
 	return top
 
 
-## A frond: a spine arching out and down, with a leaf blade along it in a few bent segments.
-static func _frond(root: Node3D, from: Vector3, dir: Vector3, reach: float, leaf: Color,
-		rng: RandomNumberGenerator) -> void:
-	var mat := ModelKit.paint(leaf.darkened(rng.randf_range(0.2, 0.32)))  # (flat fronds catch the sun full on)
-	var side := Vector3(-dir.z, 0, dir.x)
-	var prev := from
-	var segments := 4
-	for s in segments:
-		var u := (s + 1.0) / segments
-		var p := from + dir * reach * u + Vector3(0, 0.12 * reach * sin(u * PI * 0.9) - 0.35 * reach * u * u, 0)
-		var w := 0.09 * reach * (1.0 - u * 0.7)
-		var mid := (prev + p) / 2.0
-		var length := prev.distance_to(p)
-		var blade := ModelKit.box(root, Vector3(-length / 2.0, -0.004, -w), Vector3(length / 2.0, 0.004, w), mat, false)
-		# The blade lies along the spine (x), flat across it (z), facing up (y).
-		var along := (p - prev).normalized()
-		var up := side.cross(along).normalized()
-		blade.transform = Transform3D(Basis(along, up, along.cross(up)), mid)
-		prev = p
-
-
-## A banana: a soft green stem, and a fan of huge paddle leaves arching out of its top.
+## A banana: a soft green stem in sheaths, and a fan of broad paddle leaves arching out of its top.
 static func _banana(t: Dictionary) -> Vector3:
 	var root: Node3D = t["root"]
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var rng: RandomNumberGenerator = t["rng"]
-	var leaf: Color = t["leaf"]
-	var h := float(sh["trunk_h"]) * k
-	ModelKit.cylinder(root, Vector3.ZERO, float(sh["trunk_r"]) * k, h, ModelKit.paint(Color("#8aa548")),
-		float(sh["trunk_r"]) * k * 0.75, 8)
-	var top := Vector3(0, h, 0)
+	var top := _ringed_trunk(t, BANANA_STEM, float(sh.get("lean", 0.0)), BANANA_RINGS)
+	var tiers: Array = sh["tiers"]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var n := int(sh["clumps"])
 	for i in n:
-		var a := TAU * i / n + rng.randf() * 0.3
-		var dir := Vector3(cos(a), 0, sin(a))
-		var length := float(sh["crown_r"]) * k * rng.randf_range(0.8, 1.1)
-		var paddle := ModelKit.ball(root, Vector3.ZERO, 1.0, ModelKit.paint(leaf.darkened(rng.randf_range(0.0, 0.1))),
-			Vector3(length * 0.55, 0.012, length * 0.16))
-		paddle.position = top + dir * length * 0.5 + Vector3(0, 0.1 * k, 0)
-		paddle.rotation = Vector3(0, -a, -0.5 + rng.randf_range(-0.2, 0.25))
+		var tier: Array = tiers[i % tiers.size()]
+		var length := float(sh["crown_r"]) * k * rng.randf_range(0.88, 1.08)
+		var at := Transform3D(Basis(Vector3.UP, -(TAU * i / n + rng.randf_range(-FROND_TURN, FROND_TURN))), top)
+		FrondMesh.paddle(st, at, length, float(tier[0]), float(tier[1]), length * float(sh["leaflet"]),
+			(t["leaf"] as Color).darkened(rng.randf_range(0.0, FROND_SHADE)), rng.randf())
+	_leaves_of(root, st)
 	return top + Vector3(0, 0.05 * k, 0)
+
+
+## A palm's or a banana's trunk: `rings` rings from a swollen foot up to its form's `trunk_h`, narrowing to
+## TRUNK_NARROW of its foot's width and leaning `lean` of its height off its foot, further the higher it goes
+## (a curve). Returns its top.
+static func _ringed_trunk(t: Dictionary, col: Color, lean: float, rings: int) -> Vector3:
+	var root: Node3D = t["root"]
+	var k: float = t["k"]
+	var sh: Dictionary = t["sh"]
+	var rng: RandomNumberGenerator = t["rng"]
+	var h := float(sh["trunk_h"]) * k
+	var r := float(sh["trunk_r"]) * k
+	var way := rng.randf() * TAU
+	var off := Vector3(cos(way), 0, sin(way)) * lean * h
+	ModelKit.ball(root, Vector3(0, r * 0.3, 0), r * TRUNK_FOOT, ModelKit.paint(col.darkened(0.12)), Vector3(1, 0.5, 1))
+	for i in rings:
+		var u := float(i) / rings
+		var wide := r * lerpf(1.0, TRUNK_NARROW, u)
+		ModelKit.cylinder(root, off * (u * u) + Vector3(0, u * h, 0), wide * 1.1, h / rings * 1.04,
+			ModelKit.paint(col.lightened(RING_LIGHT if i % 2 == 0 else 0.0)), wide * 0.9, 8)
+	return off + Vector3(0, h, 0)
+
+
+## The leaves FrondMesh laid into `st`, as one part of the tree.
+static func _leaves_of(root: Node3D, st: SurfaceTool) -> void:
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = ModelKit.fronds()
+	root.add_child(mi)
 
 
 # ---------------------------------------------------------------- blossom and fruit
@@ -560,14 +579,17 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color) -> void:
 			for b in (1 if shape == "long" else 3):
 				var a := TAU * b / 3.0 + rng.randf()
 				var at := centre + Vector3(cos(a) * cr * 0.3, -0.08 * k, sin(a) * cr * 0.3)
+				if shape == "long":   # (a banana's one bunch hangs on the side the farm is seen from)
+					at = centre + SEEN_FROM.rotated(Vector3.UP, -root.rotation.y) * BUNCH_OUT * k + Vector3(0, -0.08 * k, 0)
 				ModelKit.box(root, at + Vector3(-0.006, -0.05, -0.006) * k, at + Vector3(0.006, 0.02, 0.006) * k,
 					ModelKit.paint(Color("#6a5a2a")))
 				for i in (8 if shape == "long" else 6):
 					var ring := TAU * i / 6.0
-					var p := at + Vector3(cos(ring) * 0.035, -0.06 - 0.025 * int(i / 3.0), sin(ring) * 0.035) * k * size
+					var wide := BUNCH_WIDE if shape == "long" else 0.035
+					var p := at + Vector3(cos(ring) * wide, -0.06 - 0.025 * int(i / 3.0), sin(ring) * wide) * k * size
 					var turn := fposmod((b * 8 + i) * TURN_STEP, 1.0)
 					if shape == "long":
-						ModelKit.mark_fruit(ModelKit.ball(root, p, 0.018 * k * size, mat, Vector3(1, 3.0, 1)), turn)
+						ModelKit.mark_fruit(ModelKit.ball(root, p, BANANA_R * k * size, mat, Vector3(1, 2.6, 1)), turn)
 					else:
 						ModelKit.mark_fruit(ModelKit.ball(root, p, 0.016 * k * size, mat), turn)
 		"big":
@@ -594,27 +616,19 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color) -> void:
 				var fruit_r := r
 				var blobs: Array = t["blobs"]
 				if not blobs.is_empty() and str(sh["form"]) != "palm":
-					# Fruit is dotted all over the crown's face, each its own size, where it shows (as FarmVille's was);
-					# one in a few hangs from the rim on a short stem.
+					# Fruit is dotted all over the crown's face, each its own size, where it shows (as FarmVille's was),
+					# in the leaves: none hangs under the crown on a stem (owner, 19 Nov).
 					var blob: Array = blobs[i % blobs.size()]
 					var face := float(blob[2]) + (i / 3) * 0.7 + rng.randf_range(-0.35, 0.35)
 					fruit_r = r * rng.randf_range(0.8, 1.15)
-					var low := (blob[0] as Vector3).y - float(blob[1]) < 0.16 * k  # a low crown: nothing hangs to the grass
-					if i % FRUIT_HANG_EVERY == 0 and not low:
-						var rim := Vector3(cos(face), rng.randf_range(-0.55, 0.05), sin(face)).normalized()
-						var anchor := (blob[0] as Vector3) + rim * float(blob[1]) * HANG_OUT
-						var drop := fruit_r * rng.randf_range(1.2, 1.9)
-						ModelKit.box(root, anchor + Vector3(-0.004, -drop, -0.004) * k,
-							anchor + Vector3(0.004, 0.0, 0.004) * k, ModelKit.paint(STEM), false)
-						p = anchor - Vector3(0, drop + fruit_r * 0.85, 0)
-						fruit_mat = shades[1 if rim.y > -0.3 else 2]
-					else:
-						var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
-						dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits on its skin)
-						p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
-						fruit_mat = shades[0 if dir.y > 0.55 else 1]
+					var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
+					dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits in its skin)
+					p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
+					fruit_mat = shades[0 if dir.y > 0.55 else (1 if dir.y > 0.12 else 2)]
 				if str(sh["form"]) == "palm":
-					# Coconuts cluster under the fronds, against the trunk.
-					p = centre + Vector3(cos(a) * 0.06 * k, -0.06 * k, sin(a) * 0.06 * k)
-				ModelKit.mark_fruit(ModelKit.ball(root, p, fruit_r, fruit_mat,
-					Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE), fposmod(i * TURN_STEP, 1.0))
+					# Coconuts cluster under the fronds, against the trunk: smaller than a crown's fruit, or the
+					# cluster is one ball.
+					fruit_r = r * PALM_NUT
+					p = centre + Vector3(cos(a) * PALM_RING * k, -0.06 * k, sin(a) * PALM_RING * k)
+				ModelKit.fruit_ball(root, p, fruit_r, fruit_mat, Vector3(1, 1.3, 1) if shape == "oval" else Vector3.ONE,
+					shape == "small", fposmod(i * TURN_STEP, 1.0))

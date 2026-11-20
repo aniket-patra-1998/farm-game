@@ -27,6 +27,7 @@ const RENDER_RECHECK := 0.3   # seconds before looking again for a rendered pict
 const GROW := {"note": 1.12, "lock": 1.12}
 const GLOW_PX := 64   # the shared glow image's side (drawn scaled, filtered: soft at any size)
 
+static var _glow_tex: ImageTexture   # the one soft round image every icon's glow is drawn from
 @export var kind := "coin": set = _set_kind
 ## A muted icon (sound off, UI hidden) is drawn with a slash through it.
 @export var struck := false: set = _set_struck
@@ -38,7 +39,6 @@ const GLOW_PX := 64   # the shared glow image's side (drawn scaled, filtered: so
 ## it. Money and rewards glow gold by their kind (UiTheme.glow).
 @export var fresh := false: set = _set_fresh
 
-static var _glow_tex: ImageTexture   # the one soft round image every icon's glow is drawn from
 var _s := 1.0   # the icon's size this draw
 var _c := Vector2.ZERO
 var _r := 1.0

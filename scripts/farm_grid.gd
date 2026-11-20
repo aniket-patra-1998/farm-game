@@ -896,7 +896,8 @@ func _apply_at(screen_pos: Vector2) -> void:
 			# A rusty vehicle tapped by hand offers its repair first, wherever the tap lands on it (owner, 19 Nov:
 			# only its little sign did, so a seized vehicle seemed to do nothing).
 			if offers_repair(picked):
-				tapped_rust.emit(to_local(world), str(picked["id"]))
+				var key := WearSystem.key_of(uid) if Game.wear.stopped(picked) else str(picked["id"])
+				tapped_rust.emit(to_local(world), key)
 				return
 			_act_on_object(picked, true)
 			return
@@ -1374,9 +1375,14 @@ func job_for(i: int) -> Dictionary:
 	return {}
 
 
-## Whether a tap by hand on `obj` offers its repair first: a vehicle with rust on it, not in for a repair now.
+## Whether a tap by hand on `obj` offers its repair first: a vehicle with rust on it, not in for a repair now, or
+## a building worn out (docs/WEAR.md: it does nothing else until repaired).
 func offers_repair(obj: Dictionary) -> bool:
-	return tool == "hand" and Game.kind_of(obj) == "vehicle" and Game.rust.needs_repair(str(obj["id"]))
+	if tool != "hand":
+		return false
+	if Game.kind_of(obj) == "vehicle":
+		return Game.rust.needs_repair(str(obj["id"]))
+	return Game.wear.stopped(obj)
 
 
 func _act_on_object(obj: Dictionary, loud: bool) -> void:
@@ -1427,12 +1433,23 @@ func _act_on_object(obj: Dictionary, loud: bool) -> void:
 	if obj.get("stray", false) and tool != "move":
 		if loud:
 			_poke(uid)
-		if loud and Game.strays.adopt_stray(uid):
-			var fp0 := Game.footprint(obj["id"])
-			var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
-			var at0 := (c0[0] + c0[2]) / 2.0
-			float_words(at0 + Vector2(0, -40), tr("ADOPTED_XP") % Balance.i("strays.stray_adopt_xp"), "find", 1.4)
-			_sparkle(at0, "find")
+		if not loud:
+			return
+		# Fed to be adopted (FarmVille's adoption task): a few feedings from the Barn, then it is the farm's.
+		var fed := Game.strays.feed_stray(uid)
+		var fp0 := Game.footprint(obj["id"])
+		var c0 := corners_of(int(obj["row"]), int(obj["col"]), fp0.x, fp0.y)
+		var at0 := (c0[0] + c0[2]) / 2.0
+		match fed:
+			"adopted":
+				float_words(at0 + Vector2(0, -40), tr("ADOPTED_XP") % Balance.i("strays.stray_adopt_xp"), "find", 1.4)
+				_sparkle(at0, "find")
+			"fed":
+				float_words(at0 + Vector2(0, -40), tr("STRAY_FED") % [int(obj.get("fed_n", 0)),
+					Game.strays.feeds_needed()], "find", 1.2)
+			"STRAY_NO_FEED":
+				Feedback.moment("error")
+				Game.message.emit(tr("STRAY_NO_FEED"))
 		return
 	if tool == "move":
 		if loud:

@@ -59,6 +59,12 @@ one of these. Judge on a real farm (a new one, and one played a day), not only t
 5. Rewards stay special: nothing floods (caps per day or week, data/rolls.json); FarmVille's rhythm, not a slot machine.
 6. Simple but awesome: fewer, stronger moments; cheap and beautiful together; never a feature half done.
 7. The owner can see every state: the showcase shows every feature and lets them try every weather and moment.
+8. The economy keeps its promises: data/sim_targets.json lists each one (with the gap that put it there). The
+   Economy audit workflow (tools/audit.sh: every bot style, two seeds, 45 days, and the first hour) checks them on
+   every economy push and nightly. **Every audit run starts by reading its last result**
+   (`gh run list --workflow=audit.yml -L 1`, then the run's summary): a "TARGETS MISSED" is the run's first
+   finding, fixed or reported, never a figure to note (owner, 19-20 Nov: repairs at under 1% of earnings and idle
+   coins on 75% of days went unflagged). A new gap the owner finds gets its target added, so it is caught next time.
 Depth expected: fix the cause, then find the same mistake everywhere else; ask why it was not caught and add a
 check (a test) so it cannot come back; bring the next problem before the owner finds it.
 

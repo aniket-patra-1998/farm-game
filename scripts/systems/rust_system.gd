@@ -109,12 +109,24 @@ func gathered(id: String) -> float:
 	if not is_on() or not vehicles.has(id):
 		return 0.0
 	var v: Dictionary = vehicles[id]
-	var rate := Balance.f("rust.outside_rate") if bool(v["out"]) else 1.0
+	var rate := _rate(id, bool(v["out"]))
 	if _repaired(id):
 		return maxf(0.0, float(game.now() - int(v["fix"]))) * rate   # (it came out of its repair clean)
 	if int(v["fix"]) > 0:
 		return float(v["w"])   # (in the workshop: it gathers none)
 	return float(v["w"]) + maxf(0.0, float(game.now() - int(v["t"]))) * rate
+
+
+## How fast `id` rusts where it stands: outside, `rust.outside_rate`; in a Garage, 1, rising to the outside pace
+## as the Garage itself wears (docs/WEAR.md: a worn-out Garage keeps no rust off).
+func _rate(id: String, out: bool) -> float:
+	var outside := Balance.f("rust.outside_rate")
+	if out:
+		return outside
+	for o in game.objects:
+		if game.special_of(o) == "garage" and int((o.get("inside", {}) as Dictionary).get(id, 0)) > 0:
+			return lerpf(1.0, outside, game.wear.garage_share(o))
+	return 1.0
 
 
 ## A vehicle's level of rust: 0 clean, up to max_level().
@@ -192,6 +204,24 @@ func repair(id: String) -> bool:
 	game.objects_updated()
 	game.queue_save()
 	return true
+
+
+## Repairs that have finished since they were last looked at are closed (the vehicle comes out of the workshop
+## clean, and gathers on from that moment), each said once, and the farm's looks are told, so a mended vehicle
+## swells back in (Objects3D._step). Called on the farm's half-minute timer; returns the ids it closed.
+func finish_repairs() -> Array[String]:
+	var done: Array[String] = []
+	if not is_on():
+		return done
+	for id: String in vehicles:
+		if _repaired(id):
+			_bank(id)
+			done.append(id)
+			game.message.emit(tr("RUST_REPAIR_DONE") % str(game.item_data(id)["name"]))
+	if not done.is_empty():
+		game.objects_updated()
+		game.queue_save()
+	return done
 
 
 ## Whether its repair has finished since it was last looked at (it is clean from that moment).

@@ -2580,6 +2580,8 @@ func test_582_limited_animals_have_their_own_touch() -> void:
 		"a shake starts and ends at rest")
 	_check(is_equal_approx(CoatTouch.shake_weights(0.5).length(), 1.0), "and swings fully half way through")
 	# A long coat: its mind shakes it out, standing, and its body lets go a little fluff.
+	var was_night := AnimalBehaviour.night
+	AnimalBehaviour.night = false   # (asleep, nothing is shaken out: the test's minute is a day's)
 	var mind := AnimalBehaviour.new(AnimalRig.of(g.item_data("highland_cow")), 3, Vector2(60, 30))
 	var body := Animal3D.create(g.item_data("highland_cow"), mind, Vector3.ZERO)
 	add_child(body)
@@ -2599,6 +2601,7 @@ func test_582_limited_animals_have_their_own_touch() -> void:
 		mind.update(1.0 / 60.0)
 		shook = shook or mind.pose.shake > 0.0
 	_check(shook, "it shakes on its own now and then")
+	AnimalBehaviour.night = was_night
 	body.free()
 	# Showing off: a limited animal tosses its head both ways when tapped; a plain one only looks round.
 	var lows: Array[float] = []
@@ -2657,3 +2660,21 @@ func test_584_the_tree_builders_compile_when_a_look_is_built() -> void:
 	TreeSpec.builder().build_at(holder, Vector3.ZERO, {"id": "apple_tree", "family": "apple"}, 1.0, true, 3)
 	_check(holder.get_child_count() > 0, "a tree is still built through the path")
 	holder.free()
+
+
+func test_595_a_repaired_barn_swells_up_mended() -> void:
+	# The starter Barn standing broken counts as a site in a building's life (Objects3D._step), so the repair is a
+	# step up: the mended Barn swells in with sparkles, dust and the grand sound, as a finished building does.
+	Game.saving_enabled = false
+	Game.reset_game()
+	var objects := Objects3D.new()
+	var barn: Dictionary = Game.storage.barn().duplicate()
+	_check(not barn.is_empty(), "a new farm has its Barn")
+	barn["broken"] = true
+	var broken: int = objects._step(barn)
+	barn.erase("broken")
+	var mended: int = objects._step(barn)
+	_eq(broken, 0, "a broken Barn counts as a site")
+	_check(mended > broken, "mended, it has stepped up (it swells in: grow_in)")
+	_check(objects._key(barn) != objects._key(barn.merged({"broken": true})), "and its look is rebuilt")
+	objects.free()

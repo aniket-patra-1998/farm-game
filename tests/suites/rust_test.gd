@@ -230,3 +230,46 @@ func test_577_a_tap_on_a_rusty_vehicle_offers_its_repair_first() -> void:
 	_check(not grid.offers_repair(cow[0]), "anything else acts as before")
 	grid.free()
 	Game.reset_game()
+
+
+func test_598_a_finished_repair_is_said_once_and_the_vehicle_swells_back_in_mended() -> void:
+	# A repair settles lazily, so the farm's half-minute timer closes the finished ones (RustSystem.finish_repairs):
+	# each is said once, and the vehicle, built again out of the workshop, is a step up in Objects3D._step, so it
+	# swells back in with sparkles and the grand sound as a mended Barn does (test 595).
+	var g := _tractor_farm()
+	var said: Array[String] = []
+	g.message.connect(func(text: String) -> void: said.append(text))
+	_skip(g, 7 * DAY + 60)
+	_check(g.rust.repair("tractor"), "repair started")
+	_eq(g.rust.finish_repairs(), [] as Array[String], "nothing closes while it is in the workshop")
+	_skip(g, 600 + 1)
+	said.clear()
+	_eq(g.rust.finish_repairs(), ["tractor"] as Array[String], "the finished repair closes")
+	_eq(said.size(), 1, "and is said once")
+	_eq(g.rust.finish_repairs(), [] as Array[String], "once only")
+	_eq(g.rust.level("tractor"), 0, "it came out clean")
+	_done(g)
+	# Its look: in for repair it counts for nothing, mended it has stepped up and is built again.
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(30)
+	Game.buy_and_place("tractor", 11, 0)
+	var tractor: Dictionary = Game.objects.filter(func(o: Dictionary) -> bool: return o["id"] == "tractor")[0]
+	var objects := Objects3D.new()
+	var clean: int = objects._step(tractor)
+	var clean_key: String = objects._key(tractor)
+	Game.debug_time_offset += 7 * DAY + 60
+	_check(Game.rust.repair("tractor"), "repair started on the farm")
+	var in_shop: int = objects._step(tractor)
+	var shop_key: String = objects._key(tractor)
+	Game.debug_time_offset += 600 + 1
+	Game.rust.finish_repairs()
+	_eq(in_shop, 0, "in for repair it counts for nothing")
+	_check(objects._step(tractor) > in_shop, "mended, it has stepped up (it swells in: grow_in)")
+	_eq(objects._step(tractor), clean, "as any vehicle out of the workshop")
+	_check(objects._key(tractor) != shop_key, "and its look is built again")
+	_check(clean_key != shop_key, "as it was going in")
+	Game.debug_time_offset = 0
+	Game.reset_game()
+	objects.free()

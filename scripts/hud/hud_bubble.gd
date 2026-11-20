@@ -70,6 +70,10 @@ func show_at(at: Vector2, title: String, line: String, uid: int) -> void:
 ## costs and how long it takes, and the one button that starts it. Nothing more: the vehicle's own bubble and
 ## sheet are a tap on the vehicle.
 func show_repair(at: Vector2, id: String) -> void:
+	var uid := WearSystem.uid_of(id)
+	if uid >= 0:
+		_show_wear_repair(at, uid, id)
+		return
 	var cost := Game.rust.repair_cost(id)
 	if cost.is_empty():
 		return
@@ -77,6 +81,21 @@ func show_repair(at: Vector2, id: String) -> void:
 	_rusty = id
 	_present(at, str(Game.item_data(id)["name"]), tr("RUST_REPAIR_BUTTON") % [int(cost["coins"]),
 		FarmGrid.format_duration(int(cost["seconds"]))], false, repair_of(id))
+
+
+## A worn building's repair (docs/WEAR.md): how worn, what it costs (coins and materials), how long, one button.
+func _show_wear_repair(at: Vector2, uid: int, key: String) -> void:
+	var cost := Game.wear.repair_cost(uid)
+	var o := Game.object_by_uid(uid)
+	if cost.is_empty() or o.is_empty():
+		return
+	var parts: String = BuildingSystem.describe(cost["materials"])
+	_uid = -1
+	_rusty = key
+	_present(at, Game.name_of(str(o["id"])), (tr("WEAR_LEVEL") % [Game.wear.level_of(o), Game.wear.max_level()])
+		+ "  " + tr("WEAR_REPAIR_BUTTON") % [UiTheme.number(int(cost["coins"])),
+		tr("WEAR_REPAIR_PARTS") % parts if parts != "" else "", FarmGrid.format_duration(int(cost["seconds"]))],
+		false, repair_of(key))
 
 
 ## The bubble itself: `title` and `line` over `at`, with the button to its panel (`open`) and the one for `deed`
@@ -149,8 +168,12 @@ static func action_of(o: Dictionary) -> Dictionary:
 
 ## The repair of rusty vehicle `id` as a bubble's one thing to do (as action_of): it starts now, for coins.
 static func repair_of(id: String) -> Dictionary:
+	var uid := WearSystem.uid_of(id)
 	return {"words": TranslationServer.translate("RUST_REPAIR"), "icon": "repair", "do": func() -> void:
-		if not Game.rust.repair(id):
+		if uid >= 0:
+			if not Game.wear.repair(uid):
+				Game.message.emit(Game.wear.repair_short(uid))
+		elif not Game.rust.repair(id):
 			Game.message.emit(TranslationServer.translate("RUST_REPAIR_NO_COINS"))}
 
 

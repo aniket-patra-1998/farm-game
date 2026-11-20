@@ -68,18 +68,51 @@
   "palm": {
    "trunk_h": 1.05,
    "trunk_r": 0.05,
-   "crown_r": 0.42,
+   "crown_r": 0.6,
    "crown_h": 0.0,
-   "clumps": 9,
-   "leaf": "#4c9a34"
+   "clumps": 11,
+   "leaf": "#4c9a34",
+   "tiers": [
+    [
+     0.62,
+     0.55
+    ],
+    [
+     0.3,
+     0.6
+    ],
+    [
+     0.05,
+     0.5
+    ]
+   ],
+   "leaflet": 0.23,
+   "leaflets": 15,
+   "lean": 0.2
   },
   "banana": {
-   "trunk_h": 0.45,
-   "trunk_r": 0.06,
-   "crown_r": 0.38,
+   "trunk_h": 0.66,
+   "trunk_r": 0.07,
+   "crown_r": 0.5,
    "crown_h": 0.0,
-   "clumps": 7,
-   "leaf": "#62b04a"
+   "clumps": 8,
+   "leaf": "#62b04a",
+   "tiers": [
+    [
+     1.15,
+     0.75
+    ],
+    [
+     0.7,
+     0.8
+    ],
+    [
+     0.4,
+     0.75
+    ]
+   ],
+   "leaflet": 0.16,
+   "lean": 0.05
   },
   "bushy": {
    "tall": 0.85,
@@ -247,7 +280,27 @@
    "leaf_alts": [
     "#8aaa56",
     "#6a8a3a"
-   ]
+   ],
+   "crown_r": 0.52,
+   "clumps": 16,
+   "tiers": [
+    [
+     0.95,
+     0.5
+    ],
+    [
+     0.6,
+     0.5
+    ],
+    [
+     0.25,
+     0.45
+    ]
+   ],
+   "leaflet": 0.18,
+   "leaflets": 17,
+   "lean": 0.04,
+   "trunk_r": 0.065
   },
   "avocado": {
    "form": "oval",
@@ -515,5 +568,10 @@
  },
  "_leaf_doc": "Each kind has its own leaf colour (FarmVille's crowns were all sorts of colours, few of them plain green), chosen to stand apart from its fruit; leaf_alts are a lighter and a darker of it, so trees of one kind are not clones.",
  "_leaf_tone_doc": "Every leaf colour is mixed `mix` of the way towards `tint` (one shared warm green) and its saturation scaled by `saturation`, its hue kept exactly, so the kinds keep their own hues but sit in one family with the animals and the lawn (TreeModel.tone). Kept light (owner, 18 Nov): a pink, red or yellow crown must still read clearly as itself.",
- "leaf_tone": {"tint": "#8c9a52", "mix": 0.1, "saturation": 0.85}
+ "leaf_tone": {
+  "tint": "#8c9a52",
+  "mix": 0.1,
+  "saturation": 0.85
+ },
+ "_frond_doc": "A palm's fronds and a banana's leaves (TreeModel._palm, _banana; FrondMesh): `clumps` is how many, `crown_r` how long each is, `tiers` their [rise, droop] in turn round the crown (the first reach up, the last hang), `leaflet` a frond's longest leaflet (or a paddle's half-width) of its length, `leaflets` the pairs along a frond, `lean` how far the trunk's top leans off its foot, of its height."
 }

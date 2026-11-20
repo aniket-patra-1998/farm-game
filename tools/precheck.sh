@@ -14,7 +14,7 @@ limits = dict(re.findall(r"^(max-line-length|max-file-lines):\s*(\d+)", open(".g
 bad = []
 # What gdlint checks that a script can get wrong without noticing: the line and file limits, the order of
 # definitions at the top of a file, and the same resource loaded twice in one file.
-RANK = [("signal", 1), ("enum", 2), ("const", 3), ("@export", 5), ("static var", 6), ("var _", 6.5), ("var", 6), ("@onready", 7),
+RANK = [("signal", 1), ("enum", 2), ("const", 3), ("static var", 4), ("@export", 5), ("var _", 6.5), ("var", 6), ("@onready", 7),
         ("static func", 8), ("func", 8), ("class ", 8)]
 for f in sorted(p for d in ("autoload", "scripts", "tests", "tools") for p in pathlib.Path(d).rglob("*.gd")):
     lines = f.read_text().split("\n")
