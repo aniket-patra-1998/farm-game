@@ -180,8 +180,12 @@ func total_bushels() -> int:
 	return n
 
 
+## Adds up to `n` bushels of `crop_id`: as many as the stall has room for, and no more of one kind than
+## crafting.bushel_kind_cap (the audit's crafter held 50 eggs and 41 carrots, its stall full, and waited 370 days
+## for the wheat its Bakery needed). Returns how many were added.
 func add_bushels(crop_id: String, n: int) -> int:
 	var room := maxi(0, Balance.i("crafting.bushel_cap") - total_bushels())
+	room = mini(room, maxi(0, Balance.i("crafting.bushel_kind_cap") - int(bushels.get(crop_id, 0))))
 	var got := mini(n, room)
 	if got > 0:
 		bushels[crop_id] = int(bushels.get(crop_id, 0)) + got
