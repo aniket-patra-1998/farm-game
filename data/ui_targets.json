@@ -1,0 +1,14 @@
+{
+  "_about": "The interface audit (tools/ui_audit.tscn): what the real game, played for days by the goal bot on every screen shape, is checked against after every visit, so what the owner used to find by hand fails the audit. `why` is the gap that put it here. A target is changed only with the owner's say. inbox_most with no `most` is held to Balance social.inbox_limit.",
+  "targets": [
+    {"metric": "errors", "most": 0, "why": "no script or engine error, anywhere in days of play"},
+    {"metric": "offscreen", "most": 0, "why": "every HUD part whole on every screen (icons sat in an iQOO 15R's corners, 19 Nov)"},
+    {"metric": "in_corners", "most": 0, "why": "laid out as on a phone, every HUD part keeps clear of its rounded corners and edges (ui_theme phone_edge_x/y)"},
+    {"metric": "overlaps", "most": 0, "why": "no HUD part over another, after days of play as at the start (the goal faces under the book, 19 Nov)"},
+    {"metric": "panel_offscreen", "most": 0, "why": "every panel opens whole on the squarest and the longest screen (boxes and widths fixed for one screen, 19 Nov)"},
+    {"metric": "panel_stuck", "most": 0, "why": "closing a panel leaves nothing covering the farm"},
+    {"metric": "tap_ms", "most": 300, "why": "a tap on anything on the farm answers at once (adopting a stray froze the game, 19 Nov)"},
+    {"metric": "worst_frame_ms", "most": 1500, "why": "no stall in the game's own work (a frame, a visit's taps or a panel opening); headless, so the GPU is not in it"},
+    {"metric": "inbox_most", "why": "nothing floods (60 things waited in a new farm's inbox, 19 Nov)"}
+  ]
+}

@@ -65,6 +65,10 @@ one of these. Judge on a real farm (a new one, and one played a day), not only t
    (`gh run list --workflow=audit.yml -L 1`, then the run's summary): a "TARGETS MISSED" is the run's first
    finding, fixed or reported, never a figure to note (owner, 19-20 Nov: repairs at under 1% of earnings and idle
    coins on 75% of days went unflagged). A new gap the owner finds gets its target added, so it is caught next time.
+   The same workflow's "ui" run is the interface audit (tools/ui_audit.gd, data/ui_targets.json): the real game
+   on eight screen shapes (the owner's iQOO 15R among them), laid out as a phone and played for days by the goal
+   bot, checked after every visit for HUD parts off the screen, in a phone's corners or over each other, panels
+   that don't fit or don't close, taps slower than 300 ms, floods and script errors.
 Depth expected: fix the cause, then find the same mistake everywhere else; ask why it was not caught and add a
 check (a test) so it cannot come back; bring the next problem before the owner finds it.
 

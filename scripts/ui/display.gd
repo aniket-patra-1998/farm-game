@@ -1,5 +1,6 @@
 class_name Display
 extends RefCounted
+
 ## The game's window on a computer: it opens maximised (project.godot's window mode, so it never shows small
 ## first; a phone is always full screen), or full screen when the player chose that in Settings (PlayerSettings).
 
@@ -7,6 +8,9 @@ const ORIENTATION := DisplayServer.SCREEN_SENSOR_LANDSCAPE   # landscape, either
 
 const SECTION := "display"
 const KEY := "fullscreen"
+
+## A computer laid out as a phone (the interface audit, tools/ui_audit: phone edges kept on any screen).
+static var as_phone := false
 
 
 ## Whether this device has a window to size (a computer); a phone or a headless run has none.
@@ -43,7 +47,7 @@ static func apply() -> void:
 ## hole, rounded corners and gesture bar, in `viewport`'s own units (the stretch is taken into account). Zero on
 ## a computer or a screen with no cut-outs.
 static func safe_insets(viewport: Viewport) -> Vector4:
-	if not OS.has_feature("mobile"):
+	if not OS.has_feature("mobile") and not as_phone:
 		return Vector4.ZERO
 	# A phone's rounded corners are not in its safe area (only a camera hole and the gesture bar are): every
 	# side keeps at least a phone's edge, so nothing sits in a corner's curve (owner, 19 Nov, an iQOO 15R).

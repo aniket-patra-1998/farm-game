@@ -1445,3 +1445,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   Bakery payback 25 to about 20 days; now short of bushels, still over the 14-day target.
 - 20 Nov: owner left crafting to Claude: bushel_chance 0.2 to 0.3 (0.4 gained nothing), craft payback target
   14 to 18 days (16 to 17 now). Every audit run meets every target.
+- 20 Nov: PRs 20 (limited trees) and 21 (animation benchmark) merged. The interface audit (tools/ui_audit.gd,
+  data/ui_targets.json) joins the audit workflow: 8 screen shapes, laid out as a phone (Display.as_phone),
+  5 days of the goal bot, checked after every visit. First run: all 9 targets met (once it waited for panels'
+  glide to end). The sound pass still waits for the owner's Kenney packs (not in Downloads).
