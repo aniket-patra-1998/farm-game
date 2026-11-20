@@ -1449,3 +1449,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   data/ui_targets.json) joins the audit workflow: 8 screen shapes, laid out as a phone (Display.as_phone),
   5 days of the goal bot, checked after every visit. First run: all 9 targets met (once it waited for panels'
   glide to end). The sound pass still waits for the owner's Kenney packs (not in Downloads).
+- 20 Nov, evening: owner found the game lagging and jittering, and no limited animals. The phone benchmark
+  showed frames of 400 ms (was 100): each falling leaf (TreeLife, PR 20) built its whole tree to measure its
+  height (ScaleGuide.height_of, ~20 ms). Heights are now measured once. Limited varieties come with their
+  plain kind in the first release (v1 "limited": true; Release.has). Trees still add ~30% triangles on a phone.

@@ -94,6 +94,8 @@ func trees() -> Array:
 	if _stale:
 		_stale = false
 		_trees = Game.objects.filter(func(o: Dictionary) -> bool: return Game.kind_of(o) == "tree")
+		for o: Dictionary in _trees:   # (each kind's height measured now, once, not when its first leaf falls)
+			ScaleGuide.height_of(str(o["id"]))
 	return _trees
 
 

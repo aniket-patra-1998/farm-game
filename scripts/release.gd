@@ -18,7 +18,11 @@ static func has(id: String) -> bool:
 	_load()
 	if whole or _items.is_empty():
 		return true
-	return _items.has(id) or not (Game.items.has(id) or Game.crops.has(id))
+	if _items.has(id) or not (Game.items.has(id) or Game.crops.has(id)):
+		return true
+	# A limited variety comes with its feature, on the plain kind it is a variety of (owner, 20 Nov: "I don't see
+	# the limited banner and animals"; they were listed nowhere, so the release had none).
+	return on("limited") and Game.limited.is_limited(id) and _plain_in(id)
 
 
 ## Whether `feature` is on in this release (a feature not named in the data is on).
@@ -33,6 +37,21 @@ static func balance(key: String) -> Variant:
 	if whole:
 		return null
 	return (_data.get("balance", {}) as Dictionary).get(key, null)
+
+
+## Whether the plain kind a limited variety is a coat of is in this release (a tree names it; an animal's family
+## needs one of its plain animals listed).
+static func _plain_in(id: String) -> bool:
+	var it: Dictionary = Game.items.get(id, {})
+	var of := str(it.get("limited_of", ""))
+	if of != "":
+		return _items.has(of)
+	var family := str(it.get("family", ""))
+	for listed: String in _items:
+		var other: Dictionary = Game.items.get(listed, {})
+		if str(other.get("family", "")) == family and str(other.get("kind", "")) == str(it.get("kind", "")):
+			return true
+	return false
 
 
 static func _load() -> void:

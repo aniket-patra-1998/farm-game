@@ -2690,3 +2690,20 @@ func test_595_a_repaired_barn_swells_up_mended() -> void:
 	_check(mended > broken, "mended, it has stepped up (it swells in: grow_in)")
 	_check(objects._key(barn) != objects._key(barn.merged({"broken": true})), "and its look is rebuilt")
 	objects.free()
+
+
+func test_606_a_falling_leaf_costs_no_model_build() -> void:
+	# Owner, 20 Nov: the game lagged and jittered after the tree life came in. Each falling leaf measured its tree's
+	# height by building the whole tree (about 20 ms, every few seconds: frames of 280 ms on a computer, 400 on a
+	# phone). An item's height is measured once and remembered.
+	var g := _farm()
+	var first := Time.get_ticks_usec()
+	var h := ScaleGuide.height_of("apple_tree")
+	var once := Time.get_ticks_usec() - first
+	var again := Time.get_ticks_usec()
+	for k in 50:
+		_eq(ScaleGuide.height_of("apple_tree"), h, "the same height every time")
+	var fifty := Time.get_ticks_usec() - again
+	_check(h > 0.0, "a tree has a height")
+	_check(fifty < maxi(once, 2000), "fifty more asks cost less than one build (%d us vs %d us)" % [fifty, once])
+	_done(g)

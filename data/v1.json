@@ -12,7 +12,7 @@
     "ribbons": true,
     "goals": true,
     "next_ready": false,
-    "limited": false
+    "limited": true
   },
   "balance": {},
   "items": [

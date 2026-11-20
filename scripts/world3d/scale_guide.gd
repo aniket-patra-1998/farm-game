@@ -12,6 +12,7 @@ static var _ranges := {}
 static var _factors := {}
 static var _decor := {}
 static var _stands := {}
+static var _measured := {}   # item id -> its measured height (building a model to measure it takes ~20 ms)
 
 
 ## What to multiply an item's size by so it stands within its kind's range (1.0 when it already does, or its
@@ -65,6 +66,8 @@ static func _heights() -> Dictionary:
 
 ## An item's real height in tiles: its model built as the farm builds it and measured (0 if it has no model).
 static func height_of(id: String) -> float:
+	if _measured.has(id):
+		return _measured[id]   # (TreeLife asks for every leaf that falls: built each time, it froze the farm)
 	# Always measured at full detail, so a crowd being built (which lowers it) never changes what an item measures.
 	var detail := ModelKit.detail
 	ModelKit.detail = 1.0
@@ -74,7 +77,8 @@ static func height_of(id: String) -> float:
 		return 0.0
 	var h := _top(node, Transform3D.IDENTITY)
 	node.free()
-	return maxf(h, 0.0)
+	_measured[id] = maxf(h, 0.0)
+	return _measured[id]
 
 
 static func model_of(id: String) -> Node3D:

@@ -124,9 +124,10 @@ Their pictures are made like every item's (CI's `tools/bake_icons`, in the app).
 file: where one has to be drawn on the device and the animal's file is not there yet, the stand-in's picture is
 shown, not kept, and made again when the file arrives (docs/PACKS.md).
 
-## Not in the first release
-`data/v1.json` has `"limited": false`: no find is rare and none is limited, and the animals are not on its
-list, until the owner turns it on.
+## In the first release
+`data/v1.json` has `"limited": true` (owner, 20 Nov: "I don't see the limited banner and animals"): a limited
+variety is in the release whenever the plain kind it is a variety of is (`Release.has`: a tree's `limited_of`,
+an animal's family), so nothing needs listing one by one.
 
 ## Open
 - Downloading a limited animal's file when it is first needed is built and off (docs/PACKS.md): it needs an
