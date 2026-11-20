@@ -177,7 +177,9 @@ func _play() -> Dictionary:
 ## (median of GPU_FRAMES frames, ms) with everything drawn (`all`), then with each owner's meshes hidden (the
 ## nearest named script above a mesh: Animal3D, Objects3D, DecorLayer...) as the time that goes away, and with the
 ## 3D resolution halved (`half_scale`: what is left once fewer pixels are shaded; little change means the vertices
-## or the draws are the cost, a big one the pixels). Nothing is saved; everything is shown again after.
+## or the draws are the cost, a big one the pixels). Last, `animals_posing`: the time that goes away while the
+## animals stand as they are, still drawn (what animating them costs, apart from drawing them). Nothing is saved;
+## everything is shown again and moves again after.
 func _gpu_by_owner() -> Dictionary:
 	var vp := get_viewport()
 	var rid := vp.get_viewport_rid()
@@ -206,6 +208,14 @@ func _gpu_by_owner() -> Dictionary:
 	vp.scaling_3d_scale = scale * 0.5
 	out["half_scale"] = await _gpu_median(rid)
 	vp.scaling_3d_scale = scale
+	# What animating the animals costs the GPU, apart from drawing them: the time that goes away while they stand
+	# as they are (an animal's shapes are blended again whenever it is posed). Measured between two fresh readings
+	# of the whole view, since a phone's GPU time drifts over the sweep.
+	var before := await _gpu_median(rid)
+	Animal3D.posing = false
+	var still := await _gpu_median(rid)
+	Animal3D.posing = true
+	out["animals_posing"] = snappedf((before + await _gpu_median(rid)) * 0.5 - still, 0.1)
 	RenderingServer.viewport_set_measure_render_time(rid, false)
 	return out
 

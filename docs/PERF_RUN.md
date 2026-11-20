@@ -177,3 +177,20 @@ are no longer "report only"):
 2. Lower 3D resolution on low quality only: the 3D world renders at ~70% (Quality field, e.g. scale_3d 0.7, FSR or
    bilinear) and is scaled up; the interface stays at full sharpness. Mid and high unchanged.
 Measure each on the phone (play avg_ms, p95, draws, triangles) before and after.
+
+## Animations: is there a lighter way? (owner's question, 20 Nov; measured before anything is changed)
+- Phone (nightly run of 20 Nov, A05s, low, main 8035eb1): play 96.2 ms a frame, GPU 94.2 ms, render CPU 3.3 ms, 380
+  draws, 215k triangles. GPU by owner: Ground3D 47.4, Animal3D 23.7, Objects3D 20.7, the rest within the noise (about
+  10 ms either way); 40.1 ms is left with the 3D resolution halved, so over half the frame is pixels.
+- The same view on a computer (a temporary probe, not kept): 22 of the showcase's 112 animals are in view, all made
+  as files, 16 shapes and about 3,560 vertices each; they are 75k of the view's 215k triangles (35%) and 30 of its
+  draws. Posing one costs the CPU about 15 microseconds: all 22 are 0.3 to 0.5 ms of the 4.2 ms every script on the
+  farm takes a frame. So the scripts are not the cost: tidying the posing code would not be felt.
+- What is cheap already: trees, crops, water, flames, butterflies and falling leaves move in their shaders or as
+  batches; their scripts are inside that 4.2 ms.
+- Not known yet: how much of the animals' ~24 ms is animating them (their shapes should be blended again on the GPU each
+  time one is posed) and how much is drawing 75k triangles. The benchmark's `gpu` phase now reports
+  `animals_posing` (GPU ms that go away while the animals stand still, still drawn): the next phone run says.
+  If it is small, the gain is in the animals' triangle count (simpler levels nearer the camera), not in how they
+  are animated; if it is large, posing fewer animals a frame or moving the always-on motions into the shader pays.
+

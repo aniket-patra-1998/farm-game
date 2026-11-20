@@ -51,6 +51,9 @@ const PICK_MIN := 0.14           # the least half-width of a tap box (a chick is
 
 ## Animals are posed at least this many frames apart (the graphics quality's `pose_every`, Quality).
 static var min_stride := 1
+## Whether animals are posed at all: off, each stands as it is, still drawn (the phone benchmark turns it off for a
+## moment to say what posing them costs the GPU: LoadBenchmark's `animals_posing`).
+static var posing := true
 static var _frame := -1          # the frame _seen counts
 static var _seen := 0            # animals on screen so far this frame
 static var _lengths := {}         # animal id -> its file's length (file_length)
@@ -570,6 +573,8 @@ func _pose_bones() -> void:
 ## Poses it this frame if it's on screen and its turn has come (the animation budget, FULL_RATE): owners
 ## call this every frame instead of update().
 func animate(delta: float, cam: Camera3D) -> void:
+	if not posing:
+		return
 	if cam != null and not cam.is_position_in_frustum(global_position):
 		_pending = 0.0
 		return

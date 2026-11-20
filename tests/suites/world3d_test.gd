@@ -2495,6 +2495,18 @@ func test_572_the_phone_report_says_whose_meshes_cost_the_gpu() -> void:
 	_eq(LoadBenchmark.owner_of(lone), "(none)", "a node with none above it: (none)")
 	lone.free()
 	holder.free()
+	# What posing the animals costs is measured by stopping it for a moment (`animals_posing`): they stand as they
+	# are, still drawn, and move again after.
+	var cow := Animal3D.create(Game.item_data("cow"), null, Vector3.ZERO)
+	add_child(cow)
+	Animal3D.posing = false
+	cow.animate(0.5, null)
+	_eq(cow._pending, 0.0, "an animal is not posed while posing is off")
+	Animal3D.posing = true
+	cow._slot = Engine.get_process_frames()   # (its turn in the round-robin is now)
+	cow.animate(0.5, null)
+	_check(Animal3D._seen >= 1, "and is posed again when it is back on")
+	cow.free()
 
 
 func test_577_the_building_builders_compile_when_a_look_is_built() -> void:
