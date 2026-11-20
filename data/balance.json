@@ -115,8 +115,8 @@
  },
  "crafting": {
   "bushel_chance": {
-   "v": 0.2,
-   "note": "a harvest drops a bushel of its crop, once you own a crafting building"
+   "v": 0.3,
+   "note": "a harvest drops a bushel of its crop, once you own a crafting building (0.2 to 0.3, 20 Nov: with two slots the Bakery waited on bushels, 18 to 20 days to pay back)"
   },
   "bushel_kind_cap": {
    "v": 20,

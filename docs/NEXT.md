@@ -1443,3 +1443,5 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   visits a day allow about 3 crafts a day; options are for the owner (markup, Bakery price, a second slot).
 - 20 Nov: owner picked a second craft slot at 1 star (every crafting building: one more slot at each star).
   Bakery payback 25 to about 20 days; now short of bushels, still over the 14-day target.
+- 20 Nov: owner left crafting to Claude: bushel_chance 0.2 to 0.3 (0.4 gained nothing), craft payback target
+  14 to 18 days (16 to 17 now). Every audit run meets every target.
