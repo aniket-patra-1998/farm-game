@@ -55,6 +55,7 @@ const RING_LIGHT := 0.13     # every other ring, lighter by this
 const BANANA_STEM := Color("#8fb84e")
 const FROND_TURN := 0.12     # how far a frond strays from its even place round the crown (radians)
 const FROND_SHADE := 0.1     # how much darker one frond may be than the next
+const FROND_DEEP := 0.5    # how much of a variety's darkening its fronds take (a flat leaf has no lit side)
 const LEAFLETS_FEWEST := 6   # pairs of leaflets on a frond in the thickest crowd
 const STARS := 22            # stars on a Galaxy tree's crown..
 const STARS_FEWEST := 8      # ..in the thickest crowd
@@ -532,7 +533,8 @@ static func _palm(t: Dictionary) -> Vector3:
 		var tier: Array = tiers[i % tiers.size()]
 		var at := Transform3D(Basis(Vector3.UP, -(TAU * i / fronds + rng.randf_range(-FROND_TURN, FROND_TURN))), top)
 		FrondMesh.feather(st, at, reach * rng.randf_range(0.9, 1.08), float(tier[0]), float(tier[1]),
-			reach * float(sh["leaflet"]), pairs, _leaf_of(t).darkened(float(t["deep"]) + rng.randf_range(0.0, FROND_SHADE)),
+			reach * float(sh["leaflet"]), pairs,
+			_leaf_of(t).darkened(float(t["deep"]) * FROND_DEEP + rng.randf_range(0.0, FROND_SHADE)),
 			rng.randf())
 	_leaves_of(root, st)
 	return top
@@ -554,7 +556,7 @@ static func _banana(t: Dictionary) -> Vector3:
 		var length := float(sh["crown_r"]) * k * rng.randf_range(0.88, 1.08)
 		var at := Transform3D(Basis(Vector3.UP, -(TAU * i / n + rng.randf_range(-FROND_TURN, FROND_TURN))), top)
 		FrondMesh.paddle(st, at, length, float(tier[0]), float(tier[1]), length * float(sh["leaflet"]),
-			_leaf_of(t).darkened(float(t["deep"]) + rng.randf_range(0.0, FROND_SHADE)), rng.randf())
+			_leaf_of(t).darkened(float(t["deep"]) * FROND_DEEP + rng.randf_range(0.0, FROND_SHADE)), rng.randf())
 	_leaves_of(root, st)
 	return top + Vector3(0, 0.05 * k, 0)
 

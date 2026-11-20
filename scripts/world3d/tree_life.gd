@@ -2,8 +2,10 @@ class_name TreeLife
 extends Node3D
 ## The small life of the farm's trees (owner, 20 Nov): a leaf drifts down from one now and then; a gust bends them
 ## all and blows leaves off their crowns; a ripe tree drops a fruit; a harvested one shakes, its fruit leaps off
-## and leaves fall. All of it is for show: nothing is picked up, and nothing here changes the game. Farm3D adds
-## one, hands it the weather's wind (`calm`) and tells it of harvests (`harvested`).
+## and leaves fall. A limited tree has more: a hummingbird calls at one now and then (Hummingbird), and a Cotton
+## Candy tree shivers and lets a few petals go, as a Cotton Candy animal shakes its coat. All of it is for show:
+## nothing is picked up, and nothing here changes the game. Farm3D adds one, hands it the weather's wind (`calm`)
+## and tells it of harvests (`harvested`).
 
 const LEAF_EVERY := Vector2(1.5, 4.0)    # seconds between one idle leaf and the next, somewhere on the farm
 const DROP_EVERY := Vector2(9.0, 20.0)   # ..and between one ripe tree dropping a fruit and the next
@@ -23,6 +25,11 @@ const SHAKE_LEAVES := 12      # leaves that fall when a tree is harvested..
 const SHAKE_FRUIT := 6        # ..and fruit that leap off it
 const SHAKE_PUSH := 0.9       # how fast they leave the crown (tiles a second)
 const LEAP := 2.3             # how fast a harvested fruit leaps up
+const BIRD_EVERY := Vector2(14.0, 30.0)   # seconds between a hummingbird's calls at a limited tree
+const SHIVER_EVERY := Vector2(7.0, 15.0)  # ..and between one Cotton Candy tree's shiver and the next
+const SHIVER_PETALS := 5      # petals a shiver lets go
+const SHIVER_PUSH := 0.5      # ..and how fast they leave the crown (tiles a second)
+const SHAKES := "shake"       # the touch of a variety that shivers (data/varieties.json)   # not-ui
 
 var objects: Objects3D        # the farm's things (a harvested tree shakes there)
 var winds: Array = []         # what takes the wind (the ground, the crops: anything with `wind`)
@@ -30,6 +37,7 @@ var calm := 0.6: set = _set_calm   # the weather's own wind
 var gust := 0.0               # how much of a gust is blowing now (0..1)
 var leaves := FallingBits.new()
 var fruit := FallingBits.new(true)
+var bird := Hummingbird.new()
 
 var _rng := RandomNumberGenerator.new()
 var _trees: Array = []        # the farm's lone trees, kept until the farm changes
@@ -39,13 +47,18 @@ var _drop_in := 6.0
 var _gust_in := 12.0
 var _gust_age := -1.0         # seconds into the gust blowing now (-1: none)
 var _blown := 0.0
+var _bird_in := 8.0
+var _shiver_in := 5.0
 
 
 func _ready() -> void:
 	add_child(leaves)
 	add_child(fruit)
+	add_child(bird)
 	Game.objects_changed.connect(func() -> void: _stale = true)
-	Game.farm_opened.connect(func() -> void: _stale = true)
+	Game.farm_opened.connect(func() -> void:
+		_stale = true
+		bird.leave())
 	_rng.randomize()
 
 
@@ -73,6 +86,7 @@ func tick(delta: float) -> void:
 		blow()
 	if _gust_age >= 0.0:
 		_blow_on(delta, trees)
+	_limited(delta, trees)
 
 
 ## The farm's lone trees (an Orchard's are its own).
@@ -117,6 +131,20 @@ func harvested(uid: int) -> void:
 		fruit.drop(crown + out * CROWN_R * 0.85, out * 0.5 + Vector3(0, LEAP, 0), fruit_colour(o), FRUIT_SIZE)
 
 
+## A hummingbird calls at limited tree `o`: round its crown, in among the leaves, out and away.
+func call_at(o: Dictionary) -> void:
+	var stay := Hummingbird.NEST_TIME
+	bird.visit(crown_of(o), CROWN_R, _rng.randf() * TAU, _rng.randf_range(stay.x, stay.y))
+
+
+## Tree `o` shivers and lets a few petals go (a Cotton Candy tree's own touch).
+func shiver(o: Dictionary) -> void:
+	if objects != null:
+		objects.shake(int(o["uid"]))
+	for i in SHIVER_PETALS:
+		shed(o, SHIVER_PUSH)
+
+
 ## A gust begins: the wind rises and falls away over GUST_TIME, and leaves are blown off the trees.
 func blow() -> void:
 	_gust_age = 0.0
@@ -135,9 +163,15 @@ func fruit_colour(o: Dictionary) -> Color:
 	return _picks(o)[1]
 
 
-## ..and of its leaves, each a shade of its own.
+## ..and of its leaves, each a shade of its own (a limited tree's: one of its variety's colours).
 func leaf_colour(o: Dictionary) -> Color:
-	var toned: Color = TreeSpec.builder().call(&"tone", _picks(o)[0])
+	var variety := str(Game.item_data(str(o["id"])).get("variety", ""))
+	var hues := Varieties.leaves(variety)
+	var toned: Color
+	if hues.is_empty():
+		toned = TreeSpec.builder().call(&"tone", _picks(o)[0])
+	else:
+		toned = hues[_rng.randi() % hues.size()].darkened(float(Varieties.of(variety).get("darken", 0.0)))
 	return toned.lightened(_rng.randf_range(-LEAF_VARY, LEAF_VARY))
 
 
@@ -145,6 +179,24 @@ func _picks(o: Dictionary) -> Array:
 	var it := Game.item_data(str(o["id"]))
 	var look := Instancer.variant(int(o["row"]), int(o["col"])) % Objects3D.TREE_LOOKS
 	return TreeSpec.builder().call(&"picks", it, TreeSpec.shape_of(it), look)
+
+
+## The limited trees' own life: the hummingbird's calls and the Cotton Candy trees' shivers.
+func _limited(delta: float, trees: Array) -> void:
+	bird.tick(delta)
+	_bird_in -= delta
+	if _bird_in <= 0.0 and bird.away():
+		_bird_in = _rng.randf_range(BIRD_EVERY.x, BIRD_EVERY.y)
+		var limited := trees.filter(func(o: Dictionary) -> bool: return Game.limited.is_limited(str(o["id"])))
+		if not limited.is_empty():
+			call_at(limited[_rng.randi() % limited.size()])
+	_shiver_in -= delta
+	if _shiver_in <= 0.0:
+		_shiver_in = _rng.randf_range(SHIVER_EVERY.x, SHIVER_EVERY.y)
+		var shy := trees.filter(func(o: Dictionary) -> bool:
+			return str(Game.item_data(str(o["id"])).get("touch", "")) == SHAKES)
+		if not shy.is_empty():
+			shiver(shy[_rng.randi() % shy.size()])
 
 
 func _blow_on(delta: float, trees: Array) -> void:

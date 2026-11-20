@@ -1,4 +1,4 @@
-# Limited animals
+# Limited animals and trees
 
 Unique coats of the animals the farm already has: new colours, patterns, and more or less fur, on the same
 animal underneath (no wings, no new kinds). FarmVille had limited editions like these. The owner's rules
@@ -68,6 +68,36 @@ A fixed path, the same for every new limited animal (and for a new plain breed, 
    `make_limited.py --check` (here and in CI) fails if a drawn coat has no data or a limited entry no drawing.
 Nothing else is written by hand: its Market picture is made by CI's phone build, its pack by
 `tools/make_packs` (docs/PACKS.md), and its Market tab, home, finds and saving come from its data.
+
+## Limited trees
+Owner, 20 Nov: trees come in varieties as animals do, and everything is the same but that they are trees. A
+variety is one thing over both: a row in `data/varieties.json` (`Varieties`), named by a limited item's `variety`.
+An animal's look in a variety is drawn by the art tool; a tree's is drawn by the game from the row.
+- **Which**: every tree the Market sells, in the five varieties `trees` lists: Galaxy (a deep night blue crown
+  with stars that blink), Rainbow (each mass of leaves its own colour, the colours drifting), Golden (gold, with a
+  glint), Sunset (peach to plum, warming and cooling) and Cotton Candy (pink, blue and white; it shivers and
+  lets petals go). The touches are the animals' own names (`stars`, `rainbow`, `glint`, `sunset`, `shake`). A
+  Plum and an Apricot have four: their Golden one is the Orchard's rare variety already.
+- **Its data** is wholly its plain tree's and its variety's, written by `tools/make_limited.py`: id
+  `<variety>_<plain id>`, `limited_of`, the plain tree's level, fruit colour, cycle and shape, gems by the level
+  it unlocks at (`tree_gems`: 20, 35, 50, the animals' steps) and half as much again in coins (`tree_pay`). A
+  change to a plain tree or a variety is followed by running the tool; `--check` fails until it is.
+- **Its look** (`TreeModel`): the plain tree's own shape and fruit with the variety's `leaves` in turn over its
+  masses and fronds, `darken` for Galaxy, the touch on its leaf materials (`leaf_touch.gdshaderinc`,
+  `ModelKit.touch_all`) and Galaxy's stars (`star3d.gdshader`). **No file**: five of every tree would be some
+  60 MB, so `tools/export_plants` leaves them out and each is built on the device when first shown and kept
+  (ModelStore). Its Market picture is made from the same build.
+- **Its rules** are the animals', through the same `LimitedSystem`: sold for gems on the Limited tab (animals,
+  then trees, each under its heading), harvested alone or in an Orchard, kept in the Barn, sold for its gems'
+  worth. An Orchard's Mystery Seedling is one of the limited trees standing in it 0.5% of the time, and 5% for a
+  **Rare Mystery Seedling** (the Orchard's rare find, 1 in 10 seedlings, which is also likelier a rare variety:
+  Balance `nurture.rare_seedling_chance`). Nothing else brings one.
+- **A hummingbird** (`Hummingbird`, sent by `TreeLife`) calls at a limited tree standing on the farm now and
+  then: it flies in, circles the crown, slips in among the leaves as if its nest were there, comes out and is
+  off. One bird at a time, for show, with no sound.
+- **Adding a variety for trees**: a row in `data/varieties.json` with `leaves` (and a `touch` if it has one), its
+  name in `trees`, then `python3 tools/make_limited.py` and the precheck. `limited_test` 600 to 602 run every
+  limited tree through the game and `trees_test` 603 to 605 check the look, the bird and the shiver.
 
 ## In the rest of the game
 A limited animal is an animal of its family in every other way, and nothing lists the limited ones by hand:

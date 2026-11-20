@@ -274,7 +274,7 @@ static func touch_all(root: Node, touch: String) -> void:
 	var which := int(LEAF_TOUCHES.get(touch, 0))
 	if which == 0:
 		return
-	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):   # not-ui (a class)
 		var m := mi.material_override as ShaderMaterial
 		if m == null or m.shader == null or not LEAF_SHADERS.has(m.shader.resource_path):
 			continue

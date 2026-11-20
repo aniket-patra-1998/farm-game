@@ -1419,11 +1419,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   FallingBits): a leaf now and then, a gust that bends every tree and blows leaves, a ripe tree dropping a fruit,
   a harvested tree shaking with its fruit leaping off. All for show: the dropped fruit is not picked up (owner,
   20 Nov). Seen in the game in stills, not on a phone.
-- Not built yet, and for a branch on top of the limited animals (PR 18: LimitedSystem, the Limited tab, the
-  touches): limited trees. The owner's decisions (20 Nov): five varieties (Galaxy, Rainbow, Golden, Sunset,
-  Cotton Candy, with the animals' touches; Galaxy a deep night blue) of every tree, sold and found by the
-  animals' own rules and prices, on the Limited tab with pictures; "variety" as one structure over animals and
-  trees; a Rare Mystery Seedling; a hummingbird that visits every limited tree and slips into its crown.
+- Limited trees: built on branch tree-varieties (on top of PR 18 and this branch; not merged). The owner's
+  decisions (20 Nov): five varieties (Galaxy, Rainbow, Golden, Sunset, Cotton Candy, with the animals' touches;
+  Galaxy a deep night blue) of every tree, sold and found by the animals' own rules and prices, on the Limited
+  tab with pictures; "variety" as one structure over animals and trees; a Rare Mystery Seedling; a hummingbird
+  that visits every limited tree and slips into its crown. All of it is in docs/LIMITED.md "Limited trees"
+  (data/varieties.json, tools/make_limited.py, TreeModel's variety look, Hummingbird, TreeLife; limited_test
+  600 to 602, trees_test 603 to 605). Limited trees have no files (built on the device). Seen in the game in
+  stills, not on a phone. Merge order: PR 18, then PR 19, then this one (it holds both).
 
 - 20 Nov: the Economy audit (tools/audit.sh, .github/workflows/audit.yml, data/sim_targets.json) checks every bot
   style on two seeds; the bot was fixed to play like a player (it had never bought a building). Open: the

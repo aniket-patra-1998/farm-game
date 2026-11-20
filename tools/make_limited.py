@@ -45,6 +45,7 @@ FAMILIES = {
 }
 PAY = 1.5        # a limited animal pays this many times its family's plain animal..
 PAY_STEP = 5     # ..rounded to this many coins
+TREE_OWN = ["cycle_seconds"]   # a plain tree's own fields that its limited varieties keep
 BABY_LEVEL = 99  # a baby is never sold: it is born or found
 NOTE = "a limited coat: values estimated in FarmVille's style"
 TREE_NOTE = "a limited variety: values estimated in FarmVille's style"
@@ -89,6 +90,9 @@ def tree_entries(trees, varieties):
                      "limited_of": plain["id"], "note": TREE_NOTE}
             if v.get("touch"):
                 entry["touch"] = v["touch"]
+            for own in TREE_OWN:   # (what a tree sets apart from its family, its variety keeps: it ripens as it does)
+                if own in plain:
+                    entry[own] = plain[own]
             out.append((family, entry))
     return out
 
@@ -174,6 +178,11 @@ def main(argv):
         if entry["id"] not in tree_ids:
             family["variants"].append(entry)
             added.append(entry["id"])
+        elif by_tree[entry["id"]] != entry:
+            # (A limited tree is wholly its plain tree's and its variety's: it follows a change to either.)
+            by_tree[entry["id"]].clear()
+            by_tree[entry["id"]].update(entry)
+            filled.append(entry["id"])
     by_id.update({v["id"]: v for f in trees["families"] for v in f["variants"]})
     added += filled
     strays = sorted(i for i, v in by_id.items() if v.get("limited") and i not in wanted)

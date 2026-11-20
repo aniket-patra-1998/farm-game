@@ -215,6 +215,166 @@ func test_594_the_trees_small_life_is_for_show() -> void:
 
 
 
+func test_603_a_limited_tree_wears_its_variety() -> void:
+	# The same tree in its variety's colours, with the variety's touch; a Galaxy tree has stars. None has a file:
+	# there are five of every tree, so each is built on the device (tools/export_plants leaves them out).
+	var plain := _tree("apple_tree")
+	for variety: String in Varieties.of_trees():
+		var id := variety + "_apple_tree"
+		var it := Game.item_data(id)
+		_check(not AssetRegistry.has_model(id) and AssetRegistry.has_model("apple_tree"), "%s is built, not a file" % id)
+		var tree := _tree(id)
+		var touch := int(ModelKit.LEAF_TOUCHES.get(str(it["touch"]), 0))
+		var leafy := 0
+		var stars := 0
+		for part: MeshInstance3D in tree.find_children("*", "MeshInstance3D", true, false):
+			for k in part.mesh.get_surface_count():
+				var mat := part.get_active_material(k) as ShaderMaterial
+				if mat == null:
+					continue
+				if mat.shader.resource_path == ModelKit.STAR_SHADER:
+					stars += 1
+				elif mat.shader.resource_path in ModelKit.LEAF_SHADERS:
+					leafy += 1
+					_eq(_touch(mat), touch, "%s's leaves have its touch" % id)
+		_check(leafy > 0, "%s has leaves" % id)
+		_eq(stars > 0, variety == "galaxy", "only a Galaxy tree has stars (%s)" % id)
+		_check(absf(_height(tree) - _height(plain)) < 0.25, "%s is the size of its plain tree" % id)
+		tree.free()
+	# A plain tree is untouched.
+	for part: MeshInstance3D in plain.find_children("*", "MeshInstance3D", true, false):
+		for k in part.mesh.get_surface_count():
+			var mat := part.get_active_material(k) as ShaderMaterial
+			if mat != null and mat.shader.resource_path in ModelKit.LEAF_SHADERS:
+				_eq(_touch(mat), 0, "a plain tree's leaves have no touch")
+			_check(mat == null or mat.shader.resource_path != ModelKit.STAR_SHADER, "and no stars")
+	plain.free()
+
+
+func test_604_a_hummingbird_calls_at_a_limited_tree() -> void:
+	# Owner, 20 Nov: it circles the tree and goes in as if its nest were there. One bird, at limited trees only.
+	Game.reset_game()
+	Game.farm_size = 20
+	Game.objects.clear()
+	Game.next_uid = 1
+	for id: String in ["apple_tree", "lemon_tree"]:
+		Game.objects.append({"uid": Game.next_uid, "id": id, "row": 5, "col": 3 + Game.next_uid * 2, "t": Game.now()})
+		Game.next_uid += 1
+	Game.rebuild_occupancy()
+	var life := TreeLife.new()
+	add_child(life)
+	for step in 1500:
+		life.tick(0.1)
+		_check(life.bird.away() and not life.bird.visible, "no hummingbird comes to a farm of plain trees")
+	Game.objects.append({"uid": Game.next_uid, "id": "galaxy_apple_tree", "row": 9, "col": 9, "t": Game.now()})
+	Game.rebuild_occupancy()
+	Game.objects_changed.emit()
+	var before := [Game.coins, Game.xp, Game.objects.duplicate(true)]
+	var tree: Dictionary = Game.objects[2]
+	var crown := life.crown_of(tree)
+	var came := false
+	for step in 600:
+		life.tick(0.1)
+		came = came or not life.bird.away()
+		if came:
+			break
+	_check(came, "one comes to a limited tree before long")
+	_check(life.bird.position.distance_to(crown) > 3.0, "from far off")
+	var seen := {}
+	var nearest := INF
+	var hid := false
+	for step in 400:
+		life.tick(0.05)
+		seen[life.bird.phase] = true
+		if life.bird.phase == Hummingbird.Phase.CIRCLE:
+			var off := life.bird.position - crown
+			_check(absf(Vector2(off.x, off.z).length() - TreeLife.CROWN_R * Hummingbird.CIRCLE_R) < 0.01
+				and absf(off.y) <= Hummingbird.BOB + 0.001, "it circles the crown")
+		if life.bird.phase == Hummingbird.Phase.NEST:
+			hid = hid or not life.bird.visible
+			nearest = minf(nearest, life.bird.position.distance_to(crown))
+		elif not life.bird.away():
+			_check(life.bird.visible, "it is seen whenever it is not inside")
+		if life.bird.away():
+			break
+	for p: int in Hummingbird.Phase.values():
+		_check(seen.has(p), "its call has every part (%s)" % Hummingbird.Phase.keys()[p])
+	_check(hid and nearest < TreeLife.CROWN_R * 0.5, "it goes in among the leaves and is hidden there")
+	_check(life.bird.away() and not life.bird.visible, "and is off again")
+	_eq([Game.coins, Game.xp, Game.objects], before, "its call changes nothing")
+	# One bird: a second call waits for the first to end, and it is gone when another farm is shown.
+	life.call_at(tree)
+	_check(not life.bird.away(), "called, it comes")
+	Game.farm_opened.emit()
+	_check(life.bird.away() and not life.bird.visible, "and is gone when the farm on screen changes")
+	life.free()
+	Game.reset_game()
+
+
+func test_605_a_cotton_candy_tree_shivers_and_sheds_petals() -> void:
+	Game.reset_game()
+	Game.farm_size = 20
+	Game.objects.clear()
+	Game.next_uid = 1
+	for id: String in ["apple_tree", "galaxy_apple_tree", "cotton_candy_apple_tree"]:
+		Game.objects.append({"uid": Game.next_uid, "id": id, "row": 5, "col": 3 + Game.next_uid * 2, "t": Game.now()})
+		Game.next_uid += 1
+	Game.rebuild_occupancy()
+	var life := TreeLife.new()
+	add_child(life)
+	var candy: Dictionary = Game.objects[2]
+	life.shiver(candy)
+	_eq(life.leaves.live(), TreeLife.SHIVER_PETALS, "a shiver lets a few petals go")
+	var pale := Varieties.leaves("cotton_candy")
+	for k in life.leaves.live():
+		var near := false
+		for hue in pale:
+			near = near or _far(life.leaves._tint[k], hue) < TreeLife.LEAF_VARY * 2.0
+		_check(near, "in its variety's colours")
+		_check(life.leaves._pos[k].distance_to(life.crown_of(candy)) < 1.0, "from its own crown")
+	# Left to itself, only the Cotton Candy tree shivers (the others shed a leaf now and then, as any tree).
+	var shivers := [0]
+	life.objects = null
+	var deep := Varieties.leaves("galaxy")
+	_check(_far(life.leaf_colour(Game.objects[1]), deep[0]) < 0.6, "a Galaxy tree's leaves fall dark")
+	_eq(str(Game.item_data("galaxy_apple_tree")["touch"]) == TreeLife.SHAKES, false, "a Galaxy tree does not shiver")
+	_eq(str(Game.item_data("cotton_candy_apple_tree")["touch"]), TreeLife.SHAKES, "a Cotton Candy tree does")
+	shivers[0] = life.leaves.live()
+	life._shiver_in = 0.0
+	life._leaf_in = 100.0
+	life._gust_in = 100.0
+	life.tick(0.01)
+	_eq(life.leaves.live() - shivers[0], TreeLife.SHIVER_PETALS, "now and then it shivers by itself")
+	life.free()
+	Game.reset_game()
+
+
+## Tree `id` as the farm builds it (look 0, ripe).
+func _tree(id: String) -> Node3D:
+	var tree := Node3D.new()
+	add_child(tree)
+	TreeSpec.builder().build_at(tree, Vector3.ZERO, Game.item_data(id), ScaleGuide.factor(id), true, 0, true)
+	return tree
+
+
+## The touch a leaf material has on (0: none, never set).
+func _touch(mat: ShaderMaterial) -> int:
+	var touch: Variant = mat.get_shader_parameter("touch")
+	return int(touch) if touch != null else 0
+
+
+func _height(tree: Node3D) -> float:
+	var top := 0.0
+	for part: MeshInstance3D in tree.find_children("*", "MeshInstance3D", true, false):
+		top = maxf(top, (part.global_transform * part.get_aabb()).end.y)
+	return top
+
+
+## How far apart two colours are.
+func _far(a: Color, b: Color) -> float:
+	return Vector3(a.r - b.r, a.g - b.g, a.b - b.b).length()
+
+
 ## Something that takes the wind (as the ground and the crops do).
 class Wind:
 	extends RefCounted

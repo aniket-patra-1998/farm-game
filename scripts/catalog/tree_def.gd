@@ -19,7 +19,8 @@ func validate(catalog) -> Array[String]:
 			out.append(_err("a rare variety should pay more than %s" % parent))
 	if is_limited():
 		var plain = catalog.get_def(limited_of())
-		if not plain is TreeDef or (plain as TreeDef).is_limited() or str(plain.data.get("family", "")) != str(data.get("family", "")):
+		if not plain is TreeDef or (plain as TreeDef).is_limited() \
+				or str(plain.data.get("family", "")) != str(data.get("family", "")):
 			out.append(_err("a limited tree is a variety of a plain tree of its family (limited_of)"))
 		elif payout() <= (plain as TreeDef).payout():
 			out.append(_err("a limited tree should pay more than %s" % limited_of()))

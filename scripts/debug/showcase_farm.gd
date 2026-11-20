@@ -159,13 +159,18 @@ static func top_level(g: GameState) -> int:
 ## animals and trees by family so kinds stand together, decorations biggest first.
 static func _zone_items(g: GameState, zone: String) -> Array[String]:
 	var out: Array[String] = []
+	var varieties := {}   # a tree variety -> one of it stands here
 	for id in g.item_order:
 		var kind := str(g.items[id].get("kind", ""))
 		# Mystery young are small: they stand with the decorations; blooms grow with the trees.
 		# Limited animals do not stand loose here: one lives in each home that takes them (_fill_homes). Each coat
-		# is a file of its own, and the heaviest farm's budget has no room for seventy more.
-		if kind == "animal" and g.limited.is_limited(id):
-			continue
+		# is a file of its own, and the heaviest farm's budget has no room for seventy more. Limited trees are
+		# every tree five times over: one tree of each variety stands here (and one is in the Orchard).
+		if g.limited.is_limited(id):
+			var variety := str(g.items[id].get("variety", ""))
+			if kind != "tree" or varieties.has(variety):
+				continue
+			varieties[variety] = true
 		if kind == zone or zone == "building" and g.is_building_item(id) or zone == "decor" and kind == "young" \
 				or zone == "tree" and kind == "bloom":
 			out.append(id)
@@ -224,8 +229,8 @@ static func _fill_homes(g: GameState, now: int) -> void:
 				var limited := false
 				for id in g.item_order:
 					if g.building_accepts(b, id):
-						# One limited animal a home, the first it takes: enough to show them (and their finds), and
-						# each coat is a file of its own, which the heaviest farm's budget has no room for.
+						# One limited animal (or tree) a home, the first it takes: enough to show them (and their
+						# finds), and each coat is a file of its own, which the heaviest farm's budget has no room for.
 						if g.limited.is_limited(id):
 							if limited:
 								continue
