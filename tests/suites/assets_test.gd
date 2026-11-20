@@ -253,7 +253,7 @@ func test_388_crafting_buildings_are_gltf_files_that_follow_the_art_rules() -> v
 	var busy := mill.duplicate(true)
 	busy["slots"] = [{"r": "animal_feed_sacks", "done": Game.now() + 600, "took": 600}]
 	var full := mill.duplicate(true)
-	for k in 4:
+	for k in Game.crafting.slot_count(mill):
 		full["slots"].append({"r": "animal_feed_sacks", "done": Game.now() - 5, "took": 600})
 	_eq(objects._key(busy), objects._key(mill), "starting a craft doesn't build it again")
 	_eq(objects._key(full), objects._key(mill), "nor does filling up")
