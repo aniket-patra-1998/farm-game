@@ -1479,4 +1479,6 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Next: the phone run's `gpu` Ground3D/* split decides the ground fix (41 ms on the A05s); a full farm's
   remaining first-placing cost (25–45 ms PC, comes and goes: not found yet); opening times (7.7 s new farm on the
   A05s, mostly shader pipelines); draws (playing view 647, target 500); the app's size (351 MB, Play allows 200).
+- A tree placed among others may need a crowded look not built yet (TreeSpec + ModelKit.bake, 16-56 ms on a PC):
+  build it off the main thread or show the lone file look until it is ready; then bring `place` back to 90.
 - Targets in data/perf_targets.json only go down.
