@@ -275,7 +275,7 @@ func _gpu_by_owner() -> Dictionary:
 ## the farm's view of it shrunk (none). Everything is put back after; nothing is saved.
 func _ground_tries(rid: RID, all: float) -> Dictionary:
 	var out := {}
-	var grounds := get_tree().root.find_children("*", "Ground3D", true, false)
+	var grounds := get_tree().root.find_children("*", "Ground3D", true, false)   # not-ui
 	if grounds.is_empty():
 		return out
 	var ground := grounds[0] as Node3D
