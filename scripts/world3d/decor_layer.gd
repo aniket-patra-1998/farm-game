@@ -105,9 +105,11 @@ static func region_of(at: Vector3) -> int:
 
 func _process(delta: float) -> void:
 	if not _dirty.is_empty():
+		var pt := PerfReadout.start()
 		for key: String in _dirty.keys():
 			_lay_out(key)
 		_dirty.clear()
+		PerfReadout.stop("decor_lay_out", pt)
 	for id: int in _pulses.keys():
 		var p: Dictionary = _pulses[id]
 		p["age"] = float(p["age"]) + delta

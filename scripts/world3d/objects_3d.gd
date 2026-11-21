@@ -677,7 +677,9 @@ func _process(delta: float) -> void:
 		_light_some()
 	PerfReadout.stop("objects_light", pt)
 	if not _woods.is_empty():
+		pt = PerfReadout.start()
 		_grow_woods()
+		PerfReadout.stop("woods", pt)
 	pt = PerfReadout.start()
 	_update_placing()
 	PerfReadout.stop("placing_ghost", pt)

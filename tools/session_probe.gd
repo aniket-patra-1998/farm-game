@@ -207,7 +207,7 @@ func _settle() -> Dictionary:
 		var parts := PerfReadout._spans
 		PerfReadout._spans = {}
 		if ms > ScenePlayer.HITCH_MS * 2.0:
-			print("SESSION opening   long frame %.0f ms: %s" % [ms, ScenePlayer.parts_line(parts, ms)])
+			print("SESSION opening   long frame %.0f ms: %s" % [ms, ScenePlayer.parts_line(parts, ms, FrameClock.process_ms())])
 		last = now
 	return {"ms": (last - t0) / 1000.0, "frames": times.size(), "longest_ms": times.max() if times.size() else 0.0}
 

@@ -26,6 +26,7 @@ const SCENE_FRAMES := 30         # frames each scene plays on a phone (about 3 s
 const PANEL_FRAMES := 5          # frames each panel stays open
 const PART_MARK := "BENCH_PART "   # not-ui (a part of the report on a line of its own: _tell)
 const PARTS := ["gpu", "scenes", "filled", "filled_play", "filled_scenes", "start"]
+const LINE_MOST := 3000          # a part longer than this goes a line for each of its own parts
 const FILLED_SCENES: Array[String] = ["still", "pan", "place", "harvest", "night"]   # on the full farm
 
 var _main: Node
@@ -109,10 +110,13 @@ func _tell(report: Dictionary) -> void:
 	# and phone_bench.yml puts them back together.)
 	var core := {}
 	for key: String in report:
-		if PARTS.has(key):
-			print("%s%s %s" % [PART_MARK, key, JSON.stringify(report[key])])
-		else:
+		if not PARTS.has(key):
 			core[key] = report[key]
+		elif report[key] is Dictionary and JSON.stringify(report[key]).length() > LINE_MOST:
+			for sub: String in report[key]:   # (each scene on its own line: "scenes.place")
+				print("%s%s.%s %s" % [PART_MARK, key, sub, JSON.stringify(report[key][sub])])
+		else:
+			print("%s%s %s" % [PART_MARK, key, JSON.stringify(report[key])])
 	print(line_of(core))
 	var f := FileAccess.open(FILE, FileAccess.WRITE)
 	if f != null:
@@ -252,6 +256,7 @@ func _gpu_by_owner() -> Dictionary:
 	vp.scaling_3d_scale = scale * 0.5
 	out["half_scale"] = await _gpu_median(rid)
 	vp.scaling_3d_scale = scale
+	out.merge(await _ground_tries(rid, all))
 	# What animating the animals costs the GPU, apart from drawing them: the time that goes away while they stand
 	# as they are (an animal's shapes are blended again whenever it is posed). Measured between two fresh readings
 	# of the whole view, since a phone's GPU time drifts over the sweep.
@@ -262,6 +267,54 @@ func _gpu_by_owner() -> Dictionary:
 	out["animals_posing"] = snappedf((before + await _gpu_median(rid)) * 0.5 - still, 0.1)
 	RenderingServer.viewport_set_measure_render_time(rid, false)
 	return out
+
+
+## What the ground's own shading costs (it was 41 of the A05s's 101 ms): the GPU time that goes away with its
+## painted look turned off (`ground_live`: negative, what the bake saves), with the lawn and meadow drawn in one
+## plain unlit colour (`ground_plain`: what its shader and lighting cost beyond filling the pixels), and with only
+## the farm's view of it shrunk (none). Everything is put back after; nothing is saved.
+func _ground_tries(rid: RID, all: float) -> Dictionary:
+	var out := {}
+	var grounds := get_tree().root.find_children("*", "Ground3D", true, false)
+	if grounds.is_empty():
+		return out
+	var ground := grounds[0] as Node3D
+	var faces: Array[MeshInstance3D] = []
+	for name in ["Lawn", "Meadow"]:   # not-ui
+		var n := ground.get_node_or_null(name) as MeshInstance3D
+		if n != null:
+			faces.append(n)
+	var was: Array = faces.map(_face_material)
+	var baked: Array = []
+	for m: Variant in was:
+		baked.append((m as ShaderMaterial).get_shader_parameter("use_bake") if m is ShaderMaterial else null)
+		if m is ShaderMaterial:
+			(m as ShaderMaterial).set_shader_parameter("use_bake", false)
+	out["ground_live"] = snappedf(all - await _gpu_median(rid), 0.1)
+	for k in was.size():
+		if was[k] is ShaderMaterial and baked[k] != null:
+			(was[k] as ShaderMaterial).set_shader_parameter("use_bake", baked[k])
+	var plain := StandardMaterial3D.new()
+	plain.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	plain.albedo_color = Color(0.3, 0.45, 0.2)
+	for n in faces:
+		_set_face_material(n, plain)
+	out["ground_plain"] = snappedf(all - await _gpu_median(rid), 0.1)
+	for k in faces.size():
+		_set_face_material(faces[k], was[k])
+	out["ground_baked"] = baked.map(func(b: Variant) -> String: return str(b))
+	return out
+
+
+static func _face_material(n: MeshInstance3D) -> Material:
+	return n.material_override if n.material_override != null else n.get_surface_override_material(0)
+
+
+static func _set_face_material(n: MeshInstance3D, m: Material) -> void:
+	if n.material_override != null or n.get_surface_override_material(0) == null:
+		n.material_override = m
+	else:
+		n.set_surface_override_material(0, m)
 
 
 ## The farm view's median GPU time over GPU_FRAMES frames, after GPU_SETTLE frames (its timestamps lag a few).

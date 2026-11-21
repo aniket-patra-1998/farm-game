@@ -986,7 +986,9 @@ func _show_flag(full: bool) -> void:
 
 func _process(delta: float) -> void:
 	if not _to_plant.is_empty():
+		var pt := PerfReadout.start()
 		_plant_some()
+		PerfReadout.stop("yard_planting", pt)
 	if not _far_trees.is_empty() and Engine.get_process_frames() % PLANT_LOD_EVERY == 0:
 		var eye := get_viewport().get_camera_3d()
 		if eye != null:

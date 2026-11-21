@@ -144,7 +144,8 @@ static func _finish_saves(all: bool) -> void:
 static func _forget_old(id: String) -> PackedStringArray:
 	if _on_disk.is_empty():
 		_on_disk = {"": true}
-		for f in DirAccess.get_files_at(CACHE):
+		var listed := DirAccess.get_files_at(CACHE) if DirAccess.dir_exists_absolute(CACHE) else PackedStringArray()
+		for f in listed:   # (no folder yet: nothing old to forget, and no error said for it)
 			var named := f.get_slice("-", 0)   # (an id has no "-": "-" begins its key)
 			if not _on_disk.has(named):
 				_on_disk[named] = PackedStringArray()

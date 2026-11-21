@@ -99,10 +99,15 @@ jobs:
           best = None
           parts = {}
           for raw in open(sys.argv[1], errors="replace"):
-              p = re.search(r" (\d+) +\d+ [VDIWEF] godot *: BENCH_PART ([a-z_]+) (.*)$", raw)
+              p = re.search(r" (\d+) +\d+ [VDIWEF] godot *: BENCH_PART ([a-z_.]+) (.*)$", raw)
               if p:
                   try:
-                      parts.setdefault(p.group(1), {})[p.group(2)] = json.loads(p.group(3))
+                      key, _, sub = p.group(2).partition(".")   # ("scenes.place": one scene of the scenes)
+                      into = parts.setdefault(p.group(1), {})
+                      if sub:
+                          into.setdefault(key, {})[sub] = json.loads(p.group(3))
+                      else:
+                          into[key] = json.loads(p.group(3))
                   except ValueError:
                       print("BENCH_PART %s cut short or broken" % p.group(2), file=sys.stderr)
                   continue
