@@ -7,6 +7,11 @@ extends CanvasLayer
 const MAX_DROPS := 320
 const MAX_FLAKES := 180
 const FLASH_FALL := 2.8   # a flash fades this fast (a second)
+## Frames the weather is drawn once under the first loading cover, faintly, every kind of mark it makes: the A05s
+## froze 2.3 s the first time rain fell (its streaks and splashes drawn the first time), so they are drawn first
+## where nobody sees them.
+const WARM_FRAMES := 3
+const WARM_ALPHA := 0.02
 
 var look := {}
 var _canvas: Node2D
@@ -15,6 +20,7 @@ var _flakes: Array = []  # Vector4(x, y, speed, phase)
 var _splashes: Array = [] # Vector3(x, y, age)
 var _flash := 0.0
 var _rng := RandomNumberGenerator.new()
+var _warm_left := WARM_FRAMES   # frames still to draw the weather under the cover (none once it has)
 
 
 func _ready() -> void:
@@ -60,6 +66,10 @@ func _process(delta: float) -> void:
 			kept.append(s)
 	_splashes = kept.slice(-120)
 	_flash = maxf(0.0, _flash - delta * FLASH_FALL)
+	if _warm_left > 0 and LoadingCover.covering > 0:
+		_warm_left -= 1
+		_canvas.queue_redraw()
+		return
 	if rain > 0.0 or snow > 0.0 or _flash > 0.0 or not _splashes.is_empty():
 		_canvas.queue_redraw()
 	elif _canvas.visible:
@@ -70,6 +80,13 @@ func _draw_weather() -> void:
 	var size := get_viewport().get_visible_rect().size
 	var rain := float(look.get("rain", 0.0))
 	var snow := float(look.get("snow", 0.0))
+	if _warm_left > 0 and LoadingCover.covering > 0:   # (under the cover: every mark once, all but unseen)
+		var faint := Color(1, 1, 1, WARM_ALPHA)
+		_canvas.draw_line(Vector2.ZERO, Vector2(8, 16), faint, 1.4)
+		_canvas.draw_arc(Vector2(20, 20), 6.0, PI, TAU, 8, faint, 1.2)
+		_canvas.draw_circle(Vector2(30, 30), 2.0, faint)
+		_canvas.draw_rect(Rect2(Vector2.ZERO, size), Color(0.92, 0.95, 1.0, WARM_ALPHA))
+		return
 	if rain > 0.01:
 		var n := int(MAX_DROPS * rain)
 		var col := Color(0.82, 0.88, 0.98, 0.32 + 0.2 * rain)

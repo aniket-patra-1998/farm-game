@@ -9,6 +9,7 @@ extends RefCounted
 
 const DIR := "res://data/catalog"
 const NEVER_IN_MARKET := 99
+const RECIPE_STARS_MOST := 10   # recipes_of lists the stars up to this
 ## What a building size record may hold (schema type list<size>).
 const SIZE_KEYS := ["capacity", "name", "materials", "coins", "recipe_stars", "gems"]  # not-ui
 
@@ -22,6 +23,7 @@ var planned := {}                    ## id -> entry dictionary
 var families := {}                   ## family id -> {"id", "name", "doc", "category", "ids": [...]}
 
 var errors: Array[String] = []
+var _recipes_by_building := {}       ## building id -> its RecipeDefs in catalog order (recipes_of)
 
 
 
@@ -87,11 +89,18 @@ func of_kind(kind: String) -> Array[ItemDef]:
 
 ## Recipes made in one crafting building, by star then catalog order.
 func recipes_of(building_id: String) -> Array[RecipeDef]:
-	var out: Array[RecipeDef] = []
-	for star in range(1, 11):
+	if _recipes_by_building.is_empty():   # (sorted out once: every recipe was looked at ten times a call)
 		for d in of_kind("recipe"):
-			if (d as RecipeDef).building() == building_id and (d as RecipeDef).star() == star:
-				out.append(d as RecipeDef)
+			var r := d as RecipeDef
+			if not _recipes_by_building.has(r.building()):
+				_recipes_by_building[r.building()] = []
+			(_recipes_by_building[r.building()] as Array).append(r)
+	var out: Array[RecipeDef] = []
+	var mine: Array = _recipes_by_building.get(building_id, [])
+	for star in range(1, RECIPE_STARS_MOST + 1):   # (by star, and within a star in the catalog's order)
+		for r: RecipeDef in mine:
+			if r.star() == star:
+				out.append(r)
 	return out
 
 

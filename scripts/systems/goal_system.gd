@@ -12,6 +12,7 @@ const REVEAL_PATH := "res://data/reveal.json"   # which buttons a new farm waits
 const STATE_VERBS := ["level", "own"]   # true or not now, read from the farm rather than counted
 const PICK := "@"                         # a `what` starting with it is a pick for daily jobs (@crop_unlocked...)
 const ANY := ""                           # a `what` that matches anything done with the verb
+const PER_WHAT := "?"                      # a key in _gives_by_id: a `what` already added up (not an id)
 
 var chains: Array = []          # data: [{id, giver, after, level, steps: [{say, tasks, reward}]}]
 var daily_data := {}            # data: {count, swap, bonus, templates}
@@ -35,6 +36,7 @@ var revealed: Array[String] = []   # listed buttons this farm has been shown (th
 var sure_spent: Array[String] = []  # goal keys whose `sure` find was handed to a harvest (take_sure_find)
 
 var _chain_by_id := {}
+var _gives_by_id := {}   # what each id gives today, while the day's jobs are picked (_gives_today)
 var _ready_next := ""           # a thing just bought that a `ready` task counted (take_ready)
 var _project_by_id := {}
 
@@ -475,6 +477,7 @@ func give(reward: Dictionary) -> void:
 ## Makes today's jobs: picked from the templates for what this farm can do now, the same for the same day and
 ## farm, sized by level.
 func make_daily_jobs() -> void:
+	_gives_by_id = _gives_today()   # (looked at once for all of today's picks)
 	daily_day = game.day_number()
 	daily_jobs = []
 	daily_swaps = 0
@@ -491,6 +494,7 @@ func make_daily_jobs() -> void:
 	daily_claimed.fill(false)
 	for i in daily_jobs.size():
 		_take("daily:%d" % i)
+	_gives_by_id = {}
 
 
 ## Swaps today's job `i` for another, once a day (daily.swap). Returns whether it was swapped.
@@ -499,7 +503,9 @@ func swap_daily(i: int) -> bool:
 		return false
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash([daily_day, game.level(), "swap", i])
+	_gives_by_id = _gives_today()
 	var job := _pick_job(rng, daily_jobs)
+	_gives_by_id = {}
 	if job.is_empty():
 		return false
 	daily_jobs[i] = job
@@ -553,16 +559,31 @@ func affordable_plots(id: String) -> int:
 ## goals.daily_play_hours. A chicken just collected gives nothing more today (the bot was asked for 3 chickens'
 ## eggs the morning it had collected them all: a job that could not be done that day).
 func per_day_of(what: String) -> int:
+	if _gives_by_id.has(PER_WHAT + what):
+		return int(_gives_by_id[PER_WHAT + what])
+	var by_id := _gives_by_id if not _gives_by_id.is_empty() else _gives_today()
 	var n := 0
+	for id: String in by_id:
+		if not id.begins_with(PER_WHAT) and matches(what, id):
+			n += int(by_id[id])
+	if not _gives_by_id.is_empty():
+		_gives_by_id[PER_WHAT + what] = n   # (asked again for the next pick: known)
+	return n
+
+
+## What each kind of thing on the farm gives in a day's play from now, by item id (per_day_of adds up the ids a
+## job names): the farm looked at once, not once for each job's candidate (a full farm's day turning took 8 s
+## on a PC, every item asked of all 614 things).
+func _gives_today() -> Dictionary:
+	var out := {}
 	var window := Balance.f("goals.daily_play_hours") * 3600.0
 	for o: Dictionary in game.objects:
 		var id := str(o["id"])
-		if matches(what, id):
-			var cycle := maxf(float(game.item_data(id).get("cycle_seconds", 86400)), 1.0)
-			var wait := float(game.seconds_until_ready(o)) if o.has("t") else 0.0
-			if wait <= window:
-				n += 1 + floori((window - wait) / cycle)
-	return n
+		var cycle := maxf(float(game.item_data(id).get("cycle_seconds", 86400)), 1.0)
+		var wait := float(game.seconds_until_ready(o)) if o.has("t") else 0.0
+		if wait <= window:
+			out[id] = int(out.get(id, 0)) + 1 + floori((window - wait) / cycle)
+	return out
 
 
 ## What a daily template's `what` can be on this farm now: a pick (@crop_unlocked, @crop_quick, @animal_owned,
@@ -583,8 +604,11 @@ func pick_candidates(what: String) -> Array:
 			return _owned_of_kind("building")
 		"@recipe_known":
 			var out := []
+			var ids := {}
 			for o: Dictionary in game.objects:
-				for r: RecipeDef in game.crafting.recipes_of(str(o["id"])):
+				ids[str(o["id"])] = true   # (each kind of building asked once, not each one on the farm)
+			for id: String in ids:
+				for r: RecipeDef in game.crafting.recipes_of(id):
 					if not out.has(r.id) and game.level() >= r.unlock_level:
 						out.append(r.id)
 			return out

@@ -148,7 +148,15 @@ jobs:
             gcloud storage cat "${log%/logcat}/actions.json" 2>/dev/null | head -c 4000 || true; echo
             if [ -n "$line" ]; then
               echo "$line" > "reports/$name.json"; found=1
-              echo "--- $name: the report"; echo "REPORT $line"   # (in the log too: the artifact can't always be fetched)
+              echo "--- $name: the report, a part a line (in the log too: the artifact can't always be fetched)"
+              python3 -c 'import json, sys
+          r = json.loads(sys.argv[1])
+          for k, v in r.items():
+              if isinstance(v, dict) and len(json.dumps(v)) > 3000:
+                  for s, w in v.items():
+                      print("REPORT %s.%s %s" % (k, s, json.dumps(w)))
+              else:
+                  print("REPORT %s %s" % (k, json.dumps(v)))' "$line"
               printf '### %s\n```json\n%s\n```\n' "$name" "$line" >> "$GITHUB_STEP_SUMMARY"
             else
               printf '### %s\nNo report in the log (the app may not have finished).\n' "$name" >> "$GITHUB_STEP_SUMMARY"

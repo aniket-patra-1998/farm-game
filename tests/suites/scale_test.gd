@@ -7,6 +7,7 @@ const OBJECTS := GameState.MAX_SIZE * GameState.MAX_SIZE   # every tile of the l
 const IN_PLACE_MS := 0.2      # one thing changed where it stands (a tap's collect or feed), each
 const WHOLE_MS := 40.0        # a change to what stands where (a move, a purchase) on the whole farm
 const COLLECT_MS := 5.0       # a collect, the rule and its telling, on a full farm
+const DAILY_JOBS_MS := 200.0  # the day's jobs made on the showcase filled as farms fill
 
 
 ## Every tile of the largest farm holding a thing (900; the scaling report's 2,000 can't stand on 30x30 tiles):
@@ -304,3 +305,22 @@ func test_621_a_stray_leaving_and_one_arriving_are_told_as_what_changed() -> voi
 	var new_uid := int(Game.objects[-1]["uid"]) if Game.objects[-1].get("stray", false) else -1
 	_check(told.size() == 1 and (told[0] as Array).has(int(old["uid"])), "the one that left is in what changed")
 	_check(new_uid < 0 or (told[0] as Array).has(new_uid), "and the one that arrived")
+
+
+## The day's jobs are made quickly on a full farm (8 s on a PC, the day turning or a level gained on the showcase
+## filled as farms fill: the catalog's recipes were looked at ten times a call, every ingredient asked of every
+## item), and a building's recipes come in the same order as before (by star, then the catalog's order).
+func test_622_the_days_jobs_are_made_quickly_on_a_full_farm() -> void:
+	Game.saving_enabled = false
+	Game.open_showcase()
+	ShowcaseFarm.fill(Game)
+	var took := _fastest_ms(func() -> void: Game.goals.make_daily_jobs(), 3)
+	_check(took < DAILY_JOBS_MS, "today's jobs on %d things take %.1f ms" % [Game.objects.size(), took])
+	for building: String in ["bakery", "winery", "spa"]:
+		var slow: Array[RecipeDef] = []
+		for star in range(1, Catalog.RECIPE_STARS_MOST + 1):
+			for d in Game.catalog.of_kind("recipe"):
+				if (d as RecipeDef).building() == building and (d as RecipeDef).star() == star:
+					slow.append(d as RecipeDef)
+		_eq(Game.catalog.recipes_of(building), slow, "the %s's recipes in their order" % building)
+	Game.open_own_farm()

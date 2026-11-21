@@ -27,6 +27,12 @@ const PANEL_FRAMES := 5          # frames each panel stays open
 const PART_MARK := "BENCH_PART "   # not-ui (a part of the report on a line of its own: _tell)
 const PARTS := ["gpu", "scenes", "filled", "filled_play", "filled_scenes", "start"]
 const LINE_MOST := 3000          # a part longer than this goes a line for each of its own parts
+## The ground's shader changed one part at a time (_ground_tries): [the name, the code, what it becomes].
+const GROUND_TRIES := [
+	["ground_unlit", "render_mode cull_disabled;",   # not-ui
+		"render_mode cull_disabled, unshaded;"],   # not-ui
+	["ground_no_grain", "fine = noise(p * 7.3);", "fine = 0.5;"],   # not-ui
+	["ground_no_shade", "vec2 sw = texture(shade_map, suv).rg;", "vec2 sw = vec2(0.0);"]]   # not-ui
 const FILLED_SCENES: Array[String] = ["still", "pan", "place", "harvest", "night"]   # on the full farm
 
 var _main: Node
@@ -294,6 +300,29 @@ func _ground_tries(rid: RID, all: float) -> Dictionary:
 	for k in was.size():
 		if was[k] is ShaderMaterial and baked[k] != null:
 			(was[k] as ShaderMaterial).set_shader_parameter("use_bake", baked[k])
+	# The ground's own shader changed one part at a time (a copy, put back after): unlit, without the fine grain
+	# over the painted look, without the shade and wear under things.
+	for t: Array in GROUND_TRIES:
+		var swapped: Array = []
+		for m: Variant in was:
+			if not m is ShaderMaterial:
+				swapped.append(null)
+				continue
+			var code := ((m as ShaderMaterial).shader as Shader).code
+			if not code.contains(str(t[1])):
+				swapped.append(null)
+				continue
+			var shader := Shader.new()
+			shader.code = code.replace(str(t[1]), str(t[2]))
+			var copy := (m as ShaderMaterial).duplicate() as ShaderMaterial
+			copy.shader = shader
+			swapped.append(copy)
+		for k in faces.size():
+			if swapped[k] != null:
+				_set_face_material(faces[k], swapped[k])
+		out[str(t[0])] = snappedf(all - await _gpu_median(rid), 0.1)
+		for k in faces.size():
+			_set_face_material(faces[k], was[k])
 	var plain := StandardMaterial3D.new()
 	plain.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	plain.albedo_color = Color(0.3, 0.45, 0.2)

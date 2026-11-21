@@ -235,3 +235,11 @@ was found and done:
   benchmark holds one level throughout (`AutoQuality.paused`).
 - **The ground's 41 ms on the A05s** is split by part in the benchmark (Ground3D/Meadow, Lawn, Tufts, Flowers) so
   the fix goes where the time is. Still open, with the app's size (351 MB) and opening times.
+- **A level gained or the day turning froze a full farm for 8 s** (PC; far longer on a phone): making the day's
+  jobs looked at every recipe ten times a call (Catalog.recipes_of) and asked every ingredient of every item. Now
+  46 ms (test 622). The catalog's recipes are sorted by building once; in_release is remembered.
+- **The first rain froze the A05s for 2.3 s** (its streaks and splashes drawn the first time): the weather is drawn
+  once, faintly, under the first loading cover.
+- **The A05s, 22 Nov, low from the start**: 102 ms a frame (GPU 101, scripts 28, render CPU 5). The ground's
+  shading is 38 ms of it (drawn plain and unlit instead); its painted look saves 237 ms. The benchmark now tries
+  the ground's shader part by part (unlit, no grain, no shade map) to say which part costs.

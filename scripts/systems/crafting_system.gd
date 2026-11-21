@@ -16,6 +16,7 @@ var crafted := {}                  # recipe id -> lifetime crafts (recipe master
 var stall := {}                    # crop id -> bushels for sale at the Farmers Market today
 var stall_day := 0
 var _produce := {}                 # item id -> the ingredient it gives, or "" (found once per item)
+var _in_release := {}   # [ingredient id, Release.whole] -> whether it can be had (in_release)
 
 
 func _init(owner: GameState) -> void:
@@ -109,10 +110,15 @@ func in_release(id: String) -> bool:
 	var d := game.catalog.get_def(id)
 	if not (d is IngredientDef):
 		return Release.has(id)
-	for item_id: String in game.items:
-		if (d as IngredientDef).given_by(game.items[item_id]) and Release.has(item_id):
-			return true
-	return false
+	var key := [id, Release.whole]   # (the release line is fixed while the game runs; tests turn `whole` on)
+	if not _in_release.has(key):
+		var found := false
+		for item_id: String in game.items:   # (every item asked once per ingredient, not on every recipe looked at)
+			if (d as IngredientDef).given_by(game.items[item_id]) and Release.has(item_id):
+				found = true
+				break
+		_in_release[key] = found
+	return _in_release[key]
 
 
 ## The ingredient the thing `item_id` gives when collected ("" for none).
