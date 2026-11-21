@@ -143,7 +143,12 @@ func _settle() -> Dictionary:
 			break
 		await get_tree().process_frame
 		var now := Time.get_ticks_usec()
-		times.append((now - last) / 1000.0)
+		var ms := (now - last) / 1000.0
+		times.append(ms)
+		var parts := PerfReadout._spans
+		PerfReadout._spans = {}
+		if ms > HITCH_MS * 2.0:
+			print("SESSION opening   long frame %.0f ms: %s" % [ms, _parts_line(parts, ms)])
 		last = now
 	return {"ms": (last - t0) / 1000.0, "frames": times.size(), "longest_ms": times.max() if times.size() else 0.0}
 

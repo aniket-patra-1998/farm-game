@@ -41,7 +41,10 @@ var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _loops: Array[AudioStreamPlayer] = []
 var _loading := false
-var _warm: Array = []                     # sounds still to synthesise ahead of time
+var _warm: Array = []                     # sounds still to make ahead of time (on a worker: _warm_on_worker)
+var _warmed := {}                         # what the worker has made, waiting to go in the cache (under _warm_lock)
+var _warm_lock := Mutex.new()
+var _warm_task := -1
 
 
 func _ready() -> void:
@@ -67,14 +70,48 @@ func _ready() -> void:
 	add_child(soundscape)
 	get_tree().node_added.connect(_on_node_added)
 	_warm = _recipes.keys()
+	# Every sound is made or loaded ahead of time on a worker, not one a frame on the main thread: a recording read
+	# there (the rain's, 49 ms) or a sound made there (up to 100 ms) was a stall in a new farm's first seconds.
+	var recipes := _recipes.duplicate(true)
+	var events := _warm.duplicate()
+	_warm_task = WorkerThreadPool.add_task(func() -> void: _warm_on_worker(events, recipes), false, "sounds")
 
 
 ## Synthesises one not-yet-built sound a frame after start, so no tap ever waits for its sound.
 func _process(_delta: float) -> void:
-	if _warm.is_empty():
+	_warm_lock.lock()
+	var made := _warmed
+	_warmed = {}
+	_warm_lock.unlock()
+	for key: String in made:
+		if not _cache.has(key):
+			_cache[key] = made[key]
+	if _warm_task >= 0 and WorkerThreadPool.is_task_completed(_warm_task):
+		WorkerThreadPool.wait_for_task_completion(_warm_task)
+		_warm_task = -1
+		_warm.clear()
+	elif _warm_task < 0:
 		set_process(false)
-		return
-	stream_of(str(_warm.pop_back()))
+
+
+## Makes (or loads) each of `events`' sounds off the main thread; they go in the cache on the main thread
+## (`_process`). Reads only its arguments and makes new resources, so it is safe on a worker.
+func _warm_on_worker(events: Array, recipes: Dictionary) -> void:
+	for event: String in events:
+		var r: Dictionary = recipes.get(event, {})
+		var made := {}
+		if r.has("files"):
+			var list: Array = []
+			for path: String in r.get("files", []):
+				list.append(load(path) as AudioStream)
+			made[event + "#takes"] = list  # not-ui
+			made[event] = list[0] if not list.is_empty() else null
+		elif not r.is_empty():
+			made[event] = _build(event, r)
+		_warm_lock.lock()
+		_warmed.merge(made)
+		_warm_lock.unlock()
+
 
 
 func _on_node_added(node: Node) -> void:
@@ -141,6 +178,9 @@ func silence() -> void:
 
 
 func _exit_tree() -> void:
+	if _warm_task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_warm_task)   # (never left running on a freed node)
+		_warm_task = -1
 	silence()
 
 
@@ -228,6 +268,13 @@ func stream_of(event: String) -> AudioStream:
 		var takes := takes_of(event)
 		_cache[event] = takes[0] if not takes.is_empty() else null
 		return _cache[event]
+	var stream := _build(event, r)
+	_cache[event] = stream
+	return stream
+
+
+## An event's sound from its recipe `r`: its recording, the one made ahead of time in the game, or made now.
+static func _build(event: String, r: Dictionary) -> AudioStream:
 	var stream: AudioStream
 	if r.has("file"):
 		stream = load(str(r["file"])) as AudioStream
@@ -237,7 +284,6 @@ func stream_of(event: String) -> AudioStream:
 		stream = load(baked_path(event, r)) as AudioStream   # made ahead of time, in the game (bake_all)
 	else:
 		stream = synthesize(r)
-	_cache[event] = stream
 	return stream
 
 
