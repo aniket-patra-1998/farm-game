@@ -55,10 +55,9 @@ func check_strays() -> void:
 			game.remove_object(o)
 			changed = int(o["uid"])
 	if t >= next_stray_at and not _has_stray():
-		var uid := game.next_uid
 		if this_week() < Balance.i("strays.week_most") and _spawn_stray():
 			arrived.append(t)
-			changed = uid
+			changed = int(game.objects[-1]["uid"])   # (the stray just added: add_object puts it last)
 		next_stray_at = t + game.rng.randi_range(Balance.i("strays.stray_min_gap"), Balance.i("strays.stray_max_gap"))
 		game.queue_save()
 	if changed >= 0:

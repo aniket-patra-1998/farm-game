@@ -44,6 +44,8 @@ const MAX_STRIDE := 4
 ## Animals posed in one frame at most: a pan that brings a crowd into view at once (the stride is set by the frame
 ## before, when few were in view) posed 200 in one frame, a 242 ms stall on a PC; the rest wait a frame or two.
 const POSES_MOST := FULL_RATE * 2
+const SLOTS := 64                 # turns an animal's slot is taken from (strides up to this space them evenly)
+const PENDING_MOST := 0.5         # seconds a late pose catches up at most (never a jump of seconds at once)
 const STRIDES := "res://data/animal_strides.json"   # every kind's file_stride, kept (tools/animal_strides)
 const NOSES := "res://data/animal_sleep.json"       # where each kind's nose is asleep (tools/animal_art's export)
 const SLEEP_MOVE := "sleep"       # a file's sleeping pose (tools/animal_art: motion.asleep)   # not-ui
@@ -160,7 +162,7 @@ static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1
 		mind.stride_tiles = stride
 		mind.showy = bool(it.get("limited", false))
 		mind.shakes = a._file_shapes.has(CoatTouch.SHAKE_A)
-	a._slot = a.get_instance_id() % MAX_STRIDE
+	a._slot = a.get_instance_id() % SLOTS
 	a.rotation.y = a.heading
 	return a
 
@@ -656,16 +658,23 @@ func animate(delta: float, cam: Camera3D) -> void:
 		_posed = 0
 	_seen += 1
 	_pending += delta
-	var stride := clampi(maxi(ceili(float(_seen_last) / FULL_RATE), min_stride), 1, MAX_STRIDE)
-	if (f + _slot) % stride != 0 and not _owed:
+	if (f + _slot) % stride_for(_seen_last) != 0 and not _owed:
 		return
 	if _posed >= POSES_MOST:
-		_owed = true   # (its turn came in a crowded frame: posed first thing in a coming one)
+		_owed = true   # (its turn came in a crowded frame: posed in a coming one, before its next turn)
 		return
 	_posed += 1
 	_owed = false
-	update(_pending)
+	update(minf(_pending, PENDING_MOST))
 	_pending = 0.0
+
+
+## How many frames apart each animal is posed when `seen` are on screen: every frame for up to FULL_RATE, then
+## spaced to MAX_STRIDE; past that (a crowd of more than POSES_MOST * MAX_STRIDE) further still, so a frame is
+## never asked to pose more than POSES_MOST (a cap alone left the end of the list unposed in a big herd).
+static func stride_for(seen: int) -> int:
+	var most := maxi(MAX_STRIDE, ceili(float(seen) / POSES_MOST))
+	return clampi(maxi(ceili(float(seen) / FULL_RATE), min_stride), 1, mini(most, SLOTS))
 
 
 

@@ -72,6 +72,7 @@ var _farm_tufts := {}              # farm tile index -> its tufts (MultiMesh buf
 var _kinds_painted: Array[String] = []   # what stood on each tile when the shade was last painted (_kinds)
 var _shade_task := -1              # the worker painting the shade of a change (_paint_shade_later), -1: none
 var _shade_job := {}               # its farm size, kinds and, once painted, its image
+var _shade_next := {}              # the painting asked for while one was under way (only the latest is kept)
 var _lush := _make_lush()          # how thick the grass grows, a slow noise over the land
 var _tiles_seen := -1              # Game.tiles_revision when the shade was last checked
 var _shade_signature := 0
@@ -301,10 +302,11 @@ func _rebuild_if_moved() -> void:
 ## and growing it back, which the engine does natively) so shade and wear fall off softly round it.
 ## Repainted only when what stands where has changed.
 func _paint_shade(n: int) -> void:
+	_finish_shade(true)   # (a painting under way goes on first: what it painted is then what stands)
+	_shade_next = {}
 	var kinds := _kinds(n)
 	var signature := hash([n, kinds])
-	if signature == _shade_signature and _shade != null:
-		_kinds_painted = kinds
+	if signature == _shade_signature and _shade != null and kinds == _kinds_painted:
 		return
 	_shade_signature = signature
 	_apply_shade(n, kinds, shade_image(n, kinds))
@@ -314,7 +316,9 @@ func _paint_shade(n: int) -> void:
 ## stall on every placing); it is put on the ground at the start of the next frame (`_process`), so a change shows
 ## a frame later at most.
 func _paint_shade_later(n: int, kinds: Array[String]) -> void:
-	_finish_shade()   # (one painting at a time: the one before goes on first)
+	if _shade_task >= 0:
+		_shade_next = {"n": n, "kinds": kinds}   # (one painting at a time: the latest waits for it, the rest drop)
+		return
 	var job := {"n": n, "kinds": kinds}
 	_shade_job = job
 	_shade_task = WorkerThreadPool.add_task(func() -> void: job["image"] = shade_image(n, kinds), false,
@@ -322,13 +326,20 @@ func _paint_shade_later(n: int, kinds: Array[String]) -> void:
 	set_process(true)
 
 
+## Puts a finished painting on the ground (never waiting on the worker here), then starts the one that waited.
 func _process(_delta: float) -> void:
-	_finish_shade()
-	set_process(false)
+	_finish_shade(false)
+	if _shade_task < 0 and not _shade_next.is_empty():
+		var next := _shade_next
+		_shade_next = {}
+		_paint_shade_later(int(next["n"]), next["kinds"])
+	if _shade_task < 0 and _shade_next.is_empty():
+		set_process(false)
 
 
-func _finish_shade() -> void:
-	if _shade_task < 0:
+## The worker's painting, put on the ground once it is done (`wait`: waiting for it, else only if it is done).
+func _finish_shade(wait: bool) -> void:
+	if _shade_task < 0 or not (wait or WorkerThreadPool.is_task_completed(_shade_task)):
 		return
 	WorkerThreadPool.wait_for_task_completion(_shade_task)
 	_shade_task = -1
@@ -340,6 +351,7 @@ func _finish_shade() -> void:
 		PerfReadout.stop("ground_shade_put", pt)
 
 
+## The worker never outlives the ground.
 func _exit_tree() -> void:
 	if _shade_task >= 0:
 		WorkerThreadPool.wait_for_task_completion(_shade_task)   # (never left running on a freed ground)

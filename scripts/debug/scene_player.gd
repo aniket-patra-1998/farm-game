@@ -25,6 +25,7 @@ var place_count := 6
 var place_frames := 20         # frames after each placing
 var uncapped := false          # frames as fast as they go (a PC's probe: each frame's cost shows)
 var _notes: Array[String] = []
+var _scripts: Array[float] = []   # each frame's script time in the scene playing now
 var _doing := ""               # what the scene has just done (the thing placed), for its long frames' notes
 
 
@@ -50,6 +51,7 @@ func view(zoom := PLAY_ZOOM) -> void:
 ## Plays `scene`, its frames timed; what it did (things placed, plots harvested) comes back with the stats.
 func play(scene: String) -> Dictionary:
 	_notes.clear()
+	_scripts.clear()
 	PerfReadout._spans = {}
 	var told := {}
 	var times: Array[float] = []
@@ -125,6 +127,9 @@ func play(scene: String) -> Dictionary:
 			Game.debug_skip(3600)
 			times = await frames_of(frames, Callable())
 	var out := stats(times)
+	var scripts := stats(_scripts)   # (this frame's scripts, FrameClock: what the processor spent on the game)
+	out["scripts_p50"] = scripts["p50"]
+	out["scripts_p95"] = scripts["p95"]
 	out["long_frames"] = _notes.duplicate()
 	out.merge(told)
 	return out
@@ -158,6 +163,7 @@ func frames_of(n: int, each: Callable) -> Array[float]:
 		var now := Time.get_ticks_usec()
 		var ms := (now - last) / 1000.0
 		times.append(ms)
+		_scripts.append(FrameClock.process_ms())
 		var parts := PerfReadout._spans
 		PerfReadout._spans = {}
 		if ms > LONG_NOTE_MS and _notes.size() < NOTES_KEPT:

@@ -221,9 +221,10 @@ func _scene(farm: String, scene: String) -> Dictionary:
 	out["mem_change_mb"] = snappedf(after["mem_mb"] - before["mem_mb"], 0.01)
 	out["nodes_change"] = after["nodes"] - before["nodes"]
 	out["objects_change"] = after["objects"] - before["objects"]
-	print("SESSION %s %s: n=%d p50=%.1f p95=%.1f p99=%.1f low1=%.1f max=%.1f hitches=%d over%d=%d mem%+.1fMB nodes%+d" % [
-		farm, scene, out["frames"], out["p50"], out["p95"], out["p99"], out["low1"], out["max"], out["hitches"],
-		int(ScenePlayer.HITCH_MS), out["over_ms"], out["mem_change_mb"], out["nodes_change"]])
+	print(("SESSION %s %s: n=%d p50=%.1f p95=%.1f p99=%.1f low1=%.1f max=%.1f hitches=%d over%d=%d scripts=%.2f"
+		+ " mem%+.1fMB nodes%+d") % [farm, scene, out["frames"], out["p50"], out["p95"], out["p99"], out["low1"],
+		out["max"], out["hitches"], int(ScenePlayer.HITCH_MS), out["over_ms"], out["scripts_p50"],
+		out["mem_change_mb"], out["nodes_change"]])
 	for note: String in out["long_frames"]:
 		print("SESSION %s %s   long frame %s" % [farm, scene, note])
 	return out

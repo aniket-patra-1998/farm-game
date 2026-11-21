@@ -406,8 +406,8 @@ func _sync_changed() -> void:
 		look[uid] = true
 		var o := Game.object_by_uid(uid)
 		if not o.is_empty() and o.has("row"):
-			_add_neighbours(look, Rect2i(int(o["col"]), int(o["row"]), Game.footprint(str(o["id"])).x,
-				Game.footprint(str(o["id"])).y))
+			var fp := Game.footprint(str(o["id"]))
+			_add_neighbours(look, Rect2i(int(o["col"]), int(o["row"]), fp.x, fp.y))
 		if _views.has(uid) and _views[uid].has("rect"):
 			_add_neighbours(look, _views[uid]["rect"])   # (where it stood: those beside it lost a neighbour)
 	_changed.clear()
@@ -552,8 +552,6 @@ func _mark_rust() -> void:
 			var share := 0.0
 			var mend := 0.0
 			var kind: String = v.get("kind", "")
-			if not (kind == "vehicle" or v.get("garage", false) or v.get("wears", false)):
-				continue   # (most of a farm neither rusts nor wears: asked nothing more)
 			var o := Game.object_by_uid(uid)
 			if o.is_empty() or Game.under_construction(o):
 				continue
@@ -689,7 +687,10 @@ func _process(delta: float) -> void:
 		_rust_marks.follow(cam.size)
 	_ready_marks.follow_animals()
 	pt = PerfReadout.start()
-	for a in _animals:
+	var n := _animals.size()
+	var first := Engine.get_process_frames() % maxi(n, 1)   # (a new first each frame: a crowded frame's waiters go
+	for k in n:                                              # early in a coming one: Animal3D.POSES_MOST)
+		var a := _animals[(first + k) % n]
 		if not is_instance_valid(a):
 			continue
 		if a.behaviour == null:

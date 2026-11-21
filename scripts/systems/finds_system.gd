@@ -211,6 +211,7 @@ func _claim_if_complete(family: String) -> void:
 ## Every home of the family is at the level the finds have reached (never lower, never past its biggest size).
 func grow_homes(family: String) -> void:
 	var level := maxi(tier(family), 1)
+	game.hold_updates()   # (the homes that grew are told together, once: release_updates)
 	for o in game.objects:
 		if str(game.item_data(o["id"]).get("home_of", "")) != family or game.under_construction(o):
 			continue
@@ -219,3 +220,4 @@ func grow_homes(family: String) -> void:
 			o["level"] = to
 			game.message.emit(tr("HOME_GREW") % [game.item_data(o["id"])["name"], game.size_name(o)])
 			game.objects_updated(int(o["uid"]))   # (only a home that grew is drawn again: a find grows none, mostly)
+	game.release_updates()

@@ -41,7 +41,6 @@ var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _loops: Array[AudioStreamPlayer] = []
 var _loading := false
-var _warm: Array = []                     # sounds still to make ahead of time (on a worker: _warm_on_worker)
 var _warmed := {}                         # what the worker has made, waiting to go in the cache (under _warm_lock)
 var _warm_lock := Mutex.new()
 var _warm_task := -1
@@ -69,15 +68,15 @@ func _ready() -> void:
 	soundscape = Soundscape.new()
 	add_child(soundscape)
 	get_tree().node_added.connect(_on_node_added)
-	_warm = _recipes.keys()
 	# Every sound is made or loaded ahead of time on a worker, not one a frame on the main thread: a recording read
 	# there (the rain's, 49 ms) or a sound made there (up to 100 ms) was a stall in a new farm's first seconds.
 	var recipes := _recipes.duplicate(true)
-	var events := _warm.duplicate()
+	var events := _recipes.keys()
 	_warm_task = WorkerThreadPool.add_task(func() -> void: _warm_on_worker(events, recipes), false, "sounds")
 
 
 ## Synthesises one not-yet-built sound a frame after start, so no tap ever waits for its sound.
+## Puts what the worker has made in the cache; stops once it has made everything.
 func _process(_delta: float) -> void:
 	_warm_lock.lock()
 	var made := _warmed
@@ -89,7 +88,6 @@ func _process(_delta: float) -> void:
 	if _warm_task >= 0 and WorkerThreadPool.is_task_completed(_warm_task):
 		WorkerThreadPool.wait_for_task_completion(_warm_task)
 		_warm_task = -1
-		_warm.clear()
 	elif _warm_task < 0:
 		set_process(false)
 
@@ -111,7 +109,6 @@ func _warm_on_worker(events: Array, recipes: Dictionary) -> void:
 		_warm_lock.lock()
 		_warmed.merge(made)
 		_warm_lock.unlock()
-
 
 
 func _on_node_added(node: Node) -> void:
