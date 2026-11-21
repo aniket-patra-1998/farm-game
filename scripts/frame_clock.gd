@@ -24,7 +24,7 @@ static func start_in(parent: Node) -> void:
 		var n := FrameClock.new()
 		n._end = end
 		n.process_priority = LAST if end else FIRST
-		n.name = "FrameClockEnd" if end else "FrameClockStart"
+		n.name = "FrameClockEnd" if end else "FrameClockStart"   # not-ui
 		parent.add_child(n)
 		n.tree_exiting.connect(func() -> void: _running = false)
 

@@ -161,7 +161,7 @@ func frames_of(n: int, each: Callable) -> Array[float]:
 		var parts := PerfReadout._spans
 		PerfReadout._spans = {}
 		if ms > LONG_NOTE_MS and _notes.size() < NOTES_KEPT:
-			_notes.append("%.0f ms%s: %s" % [ms, (" (%s)" % _doing) if _doing != "" else "",
+			_notes.append("%.0f ms%s: %s" % [ms, (" (%s)" % _doing) if _doing != "" else "",   # not-ui
 				parts_line(parts, ms, FrameClock.process_ms())])
 		last = now
 		if uncapped:
