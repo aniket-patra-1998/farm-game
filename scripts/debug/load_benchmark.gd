@@ -21,6 +21,12 @@ const PLAY_ZOOM := 1.6           # the camera zoom a player farms at
 const GPU_FRAMES := 15           # frames timed for each GPU median of the owner sweep
 const GPU_SETTLE := 4            # frames waited first (the GPU's timestamps lag a few frames)
 const MOST_WAIT_SECONDS := 90.0  # never wait longer than this for one phase
+const SPLIT_OWNERS := ["Ground3D"]   # owners whose GPU time is told part by part (owner_of)
+const SCENE_FRAMES := 30         # frames each scene plays on a phone (about 3 seconds on the A05s)
+const PANEL_FRAMES := 5          # frames each panel stays open
+const PART_MARK := "BENCH_PART "   # not-ui (a part of the report on a line of its own: _tell)
+const PARTS := ["gpu", "scenes", "filled", "filled_play", "filled_scenes", "start"]
+const FILLED_SCENES: Array[String] = ["still", "pan", "place", "harvest", "night"]   # on the full farm
 
 var _main: Node
 
@@ -58,6 +64,8 @@ func _run() -> void:
 	_tell(report)   # (the report so far after every phase: a phone run cut short still says what it measured)
 	var saving := Game.saving_enabled
 	Game.saving_enabled = false
+	AutoQuality.paused = true   # (one level from start to end: a level stepped down halfway mixed two in one number)
+	PerfReadout.timing = true   # (a long frame says what it went to)
 	await _until_whole()
 	report["own_farm_first"] = {"ms_since_start": Time.get_ticks_msec()}
 	_tell(report)
@@ -70,6 +78,17 @@ func _run() -> void:
 	report["play"] = await _play()
 	_tell(report)
 	report["gpu"] = await _gpu_by_owner()
+	_tell(report)
+	report["scenes"] = await _scenes()
+	_tell(report)
+	report["filled"] = await _phase(func() -> void:
+		Game.open_showcase()
+		ShowcaseFarm.fill(Game))
+	report["filled_play"] = await _play()
+	report["filled_scenes"] = await _scenes(FILLED_SCENES)
+	_tell(report)
+	AutoQuality.paused = false
+	PerfReadout.timing = false
 	Game.open_own_farm()
 	Game.saving_enabled = saving
 	report["done"] = true
@@ -86,7 +105,15 @@ static func line_of(report: Dictionary) -> String:
 
 func _tell(report: Dictionary) -> void:
 	var line := line_of(report)
-	print(line)
+	# (A phone's log cuts a line at about 4 KB: the big parts go on lines of their own, PART_MARK and their key,
+	# and phone_bench.yml puts them back together.)
+	var core := {}
+	for key: String in report:
+		if PARTS.has(key):
+			print("%s%s %s" % [PART_MARK, key, JSON.stringify(report[key])])
+		else:
+			core[key] = report[key]
+	print(line_of(core))
 	var f := FileAccess.open(FILE, FileAccess.WRITE)
 	if f != null:
 		f.store_string(line.trim_prefix(MARK))
@@ -159,7 +186,7 @@ func _play() -> Dictionary:
 		samples["render_cpu_ms"].append(RenderingServer.viewport_get_measured_render_time_cpu(rid)
 			+ RenderingServer.get_frame_setup_time_cpu())
 		samples["render_gpu_ms"].append(RenderingServer.viewport_get_measured_render_time_gpu(rid))
-		samples["script_ms"].append(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0)
+		samples["script_ms"].append(FrameClock.process_ms())   # (this frame's: the engine's own is a second's worst)
 		samples["physics_ms"].append(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0)
 	RenderingServer.viewport_set_measure_render_time(rid, false)
 	times.sort()
@@ -171,6 +198,23 @@ func _play() -> Dictionary:
 		"longest_ms": snappedf(times[-1] if not times.is_empty() else 0.0, 0.1), "draws": draws, "triangles": tris,
 		"quality": Quality.level(), "max_fps": Engine.max_fps,   # (the level played at: AutoQuality may have moved it)
 		"quality_start": quality_start, "split": medians(samples)}
+
+
+## The farm played as a player plays it (ScenePlayer: the same scenes as tools/session_probe on a PC), each scene's
+## frames: percentiles, the longest, hitches, and its long frames named by part (as a phone has them).
+func _scenes(which: Array[String] = ScenePlayer.SCENES) -> Dictionary:
+	var player := ScenePlayer.new(_main)
+	player.frames = SCENE_FRAMES
+	player.panel_frames = PANEL_FRAMES
+	player.place_count = 3
+	player.place_frames = 10
+	player.view()
+	var out := {}
+	for scene in which:
+		var s := await player.play(scene)
+		s.erase("worst_at")
+		out[scene] = s
+	return out
 
 
 ## Where the GPU's time goes at the playing view (the phone's frame is GPU-bound: run 21): the farm view's GPU time
@@ -232,12 +276,17 @@ func _gpu_median(rid: RID) -> float:
 
 
 ## The nearest named script above a node (itself included): whose mesh it is. "(none)" when no script names it.
+## The ground is split into its parts ("Ground3D/Tufts"): it was 41 of the A05s's 101 ms, and which part costs is
+## the question.
 static func owner_of(n: Node) -> String:
 	var a: Node = n
+	var below: Node = null
 	while a != null:
 		var sc: Script = a.get_script()
 		if sc != null and sc.get_global_name() != &"":
-			return str(sc.get_global_name())
+			var key := str(sc.get_global_name())
+			return key + "/" + str(below.name) if SPLIT_OWNERS.has(key) and below != null else key
+		below = a
 		a = a.get_parent()
 	return "(none)"   # not-ui (a measurement key)
 

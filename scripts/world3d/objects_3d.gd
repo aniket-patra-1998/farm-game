@@ -96,6 +96,7 @@ var _ready_of := {}      # uid -> whether it shows the ready sign, as last worke
 var _full := true        # the queued sync looks at everything (a change), not only what time changes
 var _sweep_all := false  # the timer's look this time looks at everything, not only what time changes (FULL_EVERY)
 var _sweep_seen := 0     # things the timer's look has been past (one gone without a word shows as a shortfall)
+var _rust_watch := {}    # uid -> true: the vehicles, Garages and buildings that wear (signs: _mark_rust)
 var _changed := {}       # uid -> true: what a change said it touched (Game.changed_uids); looked at with its neighbours
 var _ticks := 0
 
@@ -296,6 +297,11 @@ func _rebuild(o: Dictionary) -> void:
 	_views[uid]["never_ready"] = GameState.NEVER_READY.has(Game.kind_of(o))
 	_views[uid]["kind"] = Game.kind_of(o)
 	_views[uid]["garage"] = Game.special_of(o) == "garage"
+	_views[uid]["wears"] = Game.wear.wears(o)
+	if _views[uid]["kind"] == "vehicle" or _views[uid]["garage"] or _views[uid]["wears"]:
+		_rust_watch[uid] = true   # (only these can wear a rust or wear sign: the rest of the farm is not asked)
+	else:
+		_rust_watch.erase(uid)
 	if o.has("row"):   # (where it stands: a change that moves or takes it away looks at its old neighbours too)
 		var fp := Game.footprint(str(o["id"]))
 		_views[uid]["rect"] = Rect2i(int(o["col"]), int(o["row"]), fp.x, fp.y)
@@ -372,6 +378,7 @@ func sync_timed() -> void:
 			else:
 				(_views[uid]["node"] as Node3D).queue_free()
 			_views.erase(uid)
+			_rust_watch.erase(uid)
 	_mark_ready()
 	if built > 0:
 		Game.trace("objects: built %d in %d ms, %d to go" % [built, Time.get_ticks_msec() - began, left])  # not-ui
@@ -415,6 +422,7 @@ func _sync_changed() -> void:
 				else:
 					(_views[uid]["node"] as Node3D).queue_free()
 				_views.erase(uid)
+				_rust_watch.erase(uid)
 				built = true
 			continue
 		if not _shown_in_place(o):
@@ -536,13 +544,15 @@ func _mark_rust() -> void:
 	var wear := Game.wear
 	var rusting := rust.is_on() and not rust.vehicles.is_empty()
 	if rusting or (wear.is_on() and not wear.buildings.is_empty()):
-		for uid: int in _views:
-			var v: Dictionary = _views[uid]
+		for uid: int in _rust_watch:
+			var v: Dictionary = _views.get(uid, {})
+			if v.is_empty():
+				continue
 			var id := ""
 			var share := 0.0
 			var mend := 0.0
 			var kind: String = v.get("kind", "")
-			if not (kind == "vehicle" or v.get("garage", false) or wear.buildings.has(str(uid))):
+			if not (kind == "vehicle" or v.get("garage", false) or v.get("wears", false)):
 				continue   # (most of a farm neither rusts nor wears: asked nothing more)
 			var o := Game.object_by_uid(uid)
 			if o.is_empty() or Game.under_construction(o):
@@ -662,22 +672,28 @@ func _process(delta: float) -> void:
 		_carry_on = false
 		_resuming = true
 		sync()
+	var pt := PerfReadout.start()
 	if _sweep >= 0:
 		_light_some()
+	PerfReadout.stop("objects_light", pt)
 	if not _woods.is_empty():
 		_grow_woods()
+	pt = PerfReadout.start()
 	_update_placing()
+	PerfReadout.stop("placing_ghost", pt)
 	var cam := get_viewport().get_camera_3d()
 	if cam != null and cam.projection == Camera3D.PROJECTION_ORTHOGONAL:
 		_ready_marks.follow(cam.size)
 		_rust_marks.follow(cam.size)
 	_ready_marks.follow_animals()
+	pt = PerfReadout.start()
 	for a in _animals:
 		if not is_instance_valid(a):
 			continue
 		if a.behaviour == null:
 			a.behaviour = _mind_of(a)
 		a.animate(delta, cam)
+	PerfReadout.stop("animals_pose", pt)
 
 
 

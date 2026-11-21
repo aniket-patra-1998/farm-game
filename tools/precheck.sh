@@ -49,3 +49,11 @@ if grep -E "Parse Error|Compile Error|Failed to load script" "$log"; then echo "
 grep -E "checks, 0 failed" "$log" || { grep -E "^FAIL|^  - " "$log"; echo "Tests didn't all pass"; exit 1; }
 if [ "$rc" != 0 ]; then echo "The tests passed but the engine crashed on quit (exit $rc)"; exit 1; fi
 python3 tools/check_godot_log.py "$log"
+# The game played as a player plays it, held to data/perf_targets.json (tools/session_probe; CI runs it too).
+plog="$(mktemp)"
+prc=0
+"$GODOT" --headless --path . res://tools/session_probe.tscn -- --quality=low --farms=new,showcase,filled \
+  --frames=120 --targets >"$plog" 2>&1 </dev/null || prc=$?
+grep -E "perf targets|PERF TARGETS" "$plog" | cut -c1-600
+grep -q "perf targets: all met" "$plog" || { echo "The session probe's targets were missed"; exit 1; }
+if [ "$prc" != 0 ]; then echo "The session probe failed (exit $prc)"; exit 1; fi

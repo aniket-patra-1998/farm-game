@@ -116,8 +116,10 @@ func _ready() -> void:
 	var plane := PlaneMesh.new()
 	_meadow.mesh = plane
 	_meadow.material_override = meadow_grass
+	_meadow.name = "Meadow"   # (named: the phone benchmark's GPU sweep times each part of the ground)
 	add_child(_meadow)
 	_slab = MeshInstance3D.new()
+	_slab.name = "Lawn"
 	add_child(_slab)
 	_slab.set_meta("grass", grass)
 	_tufts = MultiMeshInstance3D.new()
@@ -126,12 +128,14 @@ func _ready() -> void:
 	_tuft_material.shader = load("res://shaders/tuft3d.gdshader")
 	_tufts.material_override = _tuft_material
 	_tufts.visible = SHOW_TUFTS
+	_tufts.name = "Tufts"
 	add_child(_tufts)
 	_flowers = MultiMeshInstance3D.new()
 	_flowers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_flower_material = _tuft_material.duplicate() as ShaderMaterial
 	_flower_material.set_shader_parameter("flower_heads", true)
 	_flowers.material_override = _flower_material
+	_flowers.name = "Flowers"
 	add_child(_flowers)
 	_grass = [grass, meadow_grass]
 	rebuild()

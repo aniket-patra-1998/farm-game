@@ -30,9 +30,29 @@ static func level() -> String:
 	if _level == "":
 		var chosen := _kept(KEY)
 		var measured_level := _kept(AUTO_KEY)
-		_level = chosen if chosen != "" else measured_level if measured_level != "" else str(_load().get(
-			"default_phone" if OS.has_feature("mobile") else "default_computer", "mid"))
+		_level = chosen if chosen != "" else measured_level if measured_level != "" else device_default()
 	return _level
+
+
+## The level a device starts on before anything is measured: a phone on `default_phone`, a low-end one (its
+## graphics chip named in `low_end_gpus`, or less memory than `low_end_memory_mb`) on `low` (the A05s started on
+## mid and ran at 3 to 4 frames a second until AutoQuality stepped it down), a computer on `default_computer`.
+static func device_default() -> String:
+	var data := _load()
+	if not OS.has_feature("mobile"):
+		return str(data.get("default_computer", "high"))
+	if is_low_end(RenderingServer.get_video_adapter_name(), int(OS.get_memory_info().get("physical", 0)) / 1048576):
+		return "low"
+	return str(data.get("default_phone", "mid"))
+
+
+## Whether a phone with graphics chip `gpu` and `memory_mb` of memory is low-end (data/quality.json).
+static func is_low_end(gpu: String, memory_mb: int) -> bool:
+	var data := _load()
+	for name: String in data.get("low_end_gpus", []):
+		if gpu.containsn(name):
+			return true
+	return memory_mb > 0 and memory_mb < int(data.get("low_end_memory_mb", 0))
 
 
 ## Picks a level, keeps it and applies it everywhere (the 3D world through `notifier`, the frame cap here).

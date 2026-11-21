@@ -15,6 +15,7 @@ extends Node
 ## time between frames stands in (it can still tell a device that is too slow, never one with time to spare).
 ## The player's choice always wins: nothing is watched then. No screen (tests, CI): nothing runs.
 
+static var paused := false   # nothing is measured or moved while set (the phone benchmark sets it)
 var mobile := OS.has_feature("mobile")
 var _rules := {}
 var _waited := 0.0
@@ -65,8 +66,9 @@ func _notification(what: int) -> void:
 func _process(delta: float) -> void:
 	var gpu := RenderingServer.viewport_get_measured_render_time_gpu(_viewport)
 	# (The render and process times read here are the last frame's.)
-	var cpu := RenderingServer.viewport_get_measured_render_time_cpu(_viewport) \
-		+ Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+	var cpu := RenderingServer.viewport_get_measured_render_time_cpu(_viewport) + FrameClock.process_ms()
+	if paused:
+		return   # (the benchmark measures one level from start to end)
 	var rung := add_sample(delta, maxf(cpu, gpu), gpu > 0.0)
 	if not rung.is_empty():
 		Quality.keep_measured(str(rung[0]), int(rung[1]))

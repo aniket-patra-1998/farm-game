@@ -211,3 +211,27 @@ Measured on a computer at the phone benchmark's playing view, showcase farm, low
   `ScaleGuide.height_of` or `model_of` (they build a model); and a new moving thing is measured over a long
   stretch (average and frames over 33 ms), not by a median, before it is pushed.
 
+
+## The thorough check, and what it fixed (owner, 21–22 Nov: "fix all the issues, we keep circling back")
+The report: "Farm game performance check, 21 Nov 2026" (https://claude.ai/artifact/S8uvmDQePTUpfwN3gt65jE). What
+was found and done:
+- **The check that was missing.** `tools/session_probe` plays the real game through `ScenePlayer` (still, pan,
+  zoom, every panel, placing, limited animals, a harvest, rain, storm, snow, fog, night, an hour) on a new farm, a
+  30-day farm, the showcase and a full farm, and names what each long frame went to (PerfReadout parts). CI and
+  the pre-push check hold it to `data/perf_targets.json` (`--targets`, scaled by TestSuite's yardstick). The phone
+  benchmark plays the same scenes (`scenes`, `filled_scenes`) and reports in parts (BENCH_PART lines: a phone's log
+  cuts a line at about 4 KB).
+- **Placing froze a full farm** (104 ms PC, ~1 s A05s): every change looked at all 614 things. `Game.changed_uids`
+  says what a change touched; Objects3D builds that and its neighbours, wear settles those; occupancy is not
+  rebuilt when it holds; the ground's shade is painted on a worker and only the grass it reaches is laid again; the
+  ten-second safety look, ready and rust signs no longer walk the farm in one frame. Strays, bunches, hives,
+  finds, the shed, the Barn and mastery signs say which thing changed. Now ~25 ms at most on a PC (test 613).
+- **A new farm's first seconds stalled** 3–5 times up to 100 ms: sounds were made one a frame on the main thread.
+  Now on a worker (test 617).
+- **Panning into a crowd** posed 200 animals in one frame (242 ms): at most `Animal3D.POSES_MOST` a frame now.
+- **"Script time" was misread**: TIME_PROCESS is the worst frame of each second. `FrameClock` times this frame's
+  scripts; AutoQuality and the benchmark read it (test 615).
+- **Low-end phones start on low** (`low_end_gpus`, `low_end_memory_mb` in quality.json; test 614), and the
+  benchmark holds one level throughout (`AutoQuality.paused`).
+- **The ground's 41 ms on the A05s** is split by part in the benchmark (Ground3D/Meadow, Lawn, Tufts, Flowers) so
+  the fix goes where the time is. Still open, with the app's size (351 MB) and opening times.

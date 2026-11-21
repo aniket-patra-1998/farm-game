@@ -14,7 +14,8 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - `scripts/farm_grid.gd` and `scripts/world/`: farm geometry, input, placing; `scripts/world3d/`: the 3D farm,
   models built from data. `scripts/hud.gd`, `scripts/hud/`, `scripts/ui/`: the interface on one kit (docs/UI.md).
 - `autoload/sound.gd`, `autoload/feedback.gd`: sounds and the game's moments. `tests/suites/`: one `TestSuite`
-  per area. `tools/`: precheck, generators, probes (perf, contact sheet, state sheet).
+  per area. `tools/`: precheck, generators, probes (perf, contact sheet, state sheet; `session_probe`: every scene
+  of `ScenePlayer` timed, held to data/perf_targets.json in CI and the pre-push check).
 - Docs: V1.md (the first release's line), AUDIT.md (the plan), ASSETS.md and ART_BIBLE.md (art), UI.md,
   WEATHER.md, SEARCH.md, PLAYER_EXPERIENCE.md, VIP.md (VIP and the Barn), RUST.md (vehicle rust), WEAR.md
   (building wear, upgrade prices), WATER.md (water and what lives on it), ANIMAL_SLEEP.md (how each animal sleeps), LIMITED.md (limited animals and trees),
@@ -40,7 +41,8 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
 - A plot's row and column are `GameState.row_of`/`col_of`, `Game.on_farm(i)` whether it is on the farm.
 - Every new farm action is declared in `data/actions.json` for the helper that fits it (a test enforces it).
 - 3D: repeated things through `Instancer`, fitting things into space through `SpaceFit`, shader globals through
-  `ShaderGlobals`, a new costly look as a `Quality` field; hold data/perf_budget.json.
+  `ShaderGlobals`, a new costly look as a `Quality` field; hold data/perf_budget.json and data/perf_targets.json.
+  A change to things says which (`objects_updated(uid)`): listeners of `objects_changed` do only `Game.changed_uids`.
 - Art follows docs/ASSETS.md (made offline as files, one registry, a fallback, a budget). Regenerate
   docs/CATALOG.md, art/manifest.json, tools/generate_art.ipynb and data/art_versions.json after catalog or art
   changes (animal art: also data/animal_strides.json, tools/animal_strides.tscn); exported art stays tied to

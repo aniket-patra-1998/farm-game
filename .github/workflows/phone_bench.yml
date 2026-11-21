@@ -97,7 +97,15 @@ jobs:
             line=$(python3 -c '
           import json, re, sys
           best = None
+          parts = {}
           for raw in open(sys.argv[1], errors="replace"):
+              p = re.search(r" (\d+) +\d+ [VDIWEF] godot *: BENCH_PART ([a-z_]+) (.*)$", raw)
+              if p:
+                  try:
+                      parts.setdefault(p.group(1), {})[p.group(2)] = json.loads(p.group(3))
+                  except ValueError:
+                      print("BENCH_PART %s cut short or broken" % p.group(2), file=sys.stderr)
+                  continue
               m = re.search(r" (\d+) +\d+ [VDIWEF] godot *: BENCH (\{.*\})", raw)
               if not m:
                   continue
@@ -109,8 +117,13 @@ jobs:
                   ", ".join(k for k in r if k not in ("device", "start"))), file=sys.stderr)
               key = (bool(r.get("done")), len(m.group(2)))
               if best is None or key >= best[0]:
-                  best = (key, m.group(2))
-          print(best[1] if best else "")' logcat.txt)
+                  best = (key, m.group(2), m.group(1))
+          if best:
+              r = json.loads(best[1])
+              r.update(parts.get(best[2], {}))   # (the parts the same process told on lines of their own)
+              print(json.dumps(r))
+          else:
+              print("")' logcat.txt)
             echo "--- $name: the app's last lines in each process that reported (how it ended: quit, crash, killed)"
             for pid in $(grep -oE ' [0-9]+ +[0-9]+ [VDIWEF] godot *: BENCH' logcat.txt | awk '{print $1}' | sort -u); do
               echo "process $pid:"; grep -E "^[0-9-]+ [0-9:.]+ +$pid " logcat.txt | tail -15 || true

@@ -91,6 +91,12 @@ func see_farmer(at: Vector2) -> int:
 
 
 func _process(delta: float) -> void:
+	var pt := PerfReadout.start()
+	_process_timed(delta)
+	PerfReadout.stop("animals_think", pt)
+
+
+func _process_timed(delta: float) -> void:
 	_farmer_in -= delta
 	if _farmer_in <= 0.0:
 		_farmer_in = AnimalRig.farmer("every", 1.5)

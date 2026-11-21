@@ -142,6 +142,7 @@ func _ready() -> void:
 	Game.farm_expanded.connect(func(_size: int) -> void: _fit_camera())
 	_fit_camera()
 	Quality.apply_frame_cap()    # (and again whenever the level is chosen: Quality.choose)
+	FrameClock.start_in(self)    # (this frame's script time, for AutoQuality and the benchmark)
 	AutoQuality.start_in(self)   # keeps the device smooth: steps down when frames stay slow (until the player chooses)
 	# The farm is built; its first frames, while the renderer prepares every material, stay under a cover (only
 	# when the game itself is running: the screenshot and probe tools load this scene inside their own).

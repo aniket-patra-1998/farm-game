@@ -41,6 +41,9 @@ const CONTACT_LIFT := 0.012                     # just above the grass, so it ne
 ## The usual mobile budget is 10-20 fully animated characters; the minds still think every frame.
 const FULL_RATE := 16
 const MAX_STRIDE := 4
+## Animals posed in one frame at most: a pan that brings a crowd into view at once (the stride is set by the frame
+## before, when few were in view) posed 200 in one frame, a 242 ms stall on a PC; the rest wait a frame or two.
+const POSES_MOST := FULL_RATE * 2
 const STRIDES := "res://data/animal_strides.json"   # every kind's file_stride, kept (tools/animal_strides)
 const NOSES := "res://data/animal_sleep.json"       # where each kind's nose is asleep (tools/animal_art's export)
 const SLEEP_MOVE := "sleep"       # a file's sleeping pose (tools/animal_art: motion.asleep)   # not-ui
@@ -67,6 +70,7 @@ static var _noses := {}           # animal id -> its nose asleep, in its model's
 static var _kept := {}            # animal id -> {"file": fingerprint, "stride": ..} (STRIDES, read once)
 
 static var _seen_last := 0       # and last frame, which sets this frame's stride
+static var _posed := 0           # animals posed so far this frame (at most POSES_MOST)
 
 
 
@@ -108,6 +112,7 @@ var _bones: Array[Node3D] = []   # the part nodes the pose code moves, by bone i
 var _slot := 0                   # its turn in the round-robin when posed less than every frame
 
 var _pending := 0.0              # time not yet posed (while waiting its turn)
+var _owed := false               # its turn came in a frame already full of poses (POSES_MOST): next frame, first
 var _id := ""                    # its catalog id (for its file, AssetRegistry)
 var _size := 1.0                 # how big it is drawn (smaller in a small yard)
 var _file_mesh: MeshInstance3D   # made as a file: the mesh whose blend shapes pose it (null when built)
@@ -648,11 +653,17 @@ func animate(delta: float, cam: Camera3D) -> void:
 		_frame = f
 		_seen_last = _seen
 		_seen = 0
+		_posed = 0
 	_seen += 1
 	_pending += delta
 	var stride := clampi(maxi(ceili(float(_seen_last) / FULL_RATE), min_stride), 1, MAX_STRIDE)
-	if (f + _slot) % stride != 0:
+	if (f + _slot) % stride != 0 and not _owed:
 		return
+	if _posed >= POSES_MOST:
+		_owed = true   # (its turn came in a crowded frame: posed first thing in a coming one)
+		return
+	_posed += 1
+	_owed = false
 	update(_pending)
 	_pending = 0.0
 

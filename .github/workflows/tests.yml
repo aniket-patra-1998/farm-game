@@ -20,7 +20,7 @@ permissions:
 jobs:
   game-rules:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       GODOT_VERSION: 4.7.2
     steps:
@@ -100,3 +100,17 @@ jobs:
           if [ "$rc" != 0 ]; then echo "The tests passed but the engine crashed on quit (exit $rc)"; exit 1; fi
           # Any engine or script error (what the editor's Errors panel would show) fails the build too.
           python3 tools/check_godot_log.py tests.log
+
+      # The game played as a player plays it, every frame timed (tools/session_probe: every scene of ScenePlayer on
+      # a new farm, the showcase and a full farm), held to data/perf_targets.json: a stall a player would feel fails
+      # the push, with what its long frames went to (owner, 22 Nov: "we keep circling back to this").
+      - name: Session probe (stalls a player would feel)
+        run: |
+          set +e
+          ./godot-bin/godot --headless --path . res://tools/session_probe.tscn -- --quality=low \
+            --farms=new,showcase,filled --frames=120 --targets > session.log 2>&1 < /dev/null
+          rc=$?
+          set -e
+          grep -E "^SESSION [a-z]+ [a-z_]+:|long frame|perf targets|PERF TARGETS|SCRIPT ERROR" session.log | cut -c1-400
+          grep -q "perf targets: all met" session.log || { echo "The session probe's targets were missed"; exit 1; }
+          if [ "$rc" != 0 ]; then echo "The session probe failed (exit $rc)"; exit 1; fi
