@@ -76,11 +76,12 @@ jobs:
           # Results go to Test Lab's own bucket (free on the Spark plan); its path is read from the output.
           # (The Robo crawler stops after about a minute when it finds nothing to tap, before the benchmark has
           # measured all its phases and printed its report: the Pixel 6 ran and logged no BENCH line. The script
-          # robo_wait.json only waits, five minutes, so the app stays open until it has measured.)
-          python3 -c 'import json; print(json.dumps([{"eventType": "DELAYED_MESSAGE_POSTED", "delayTime": 60000}] * 5))' \
+          # robo_wait.json only waits, thirteen minutes, so the app stays open until it has measured: the scenes
+          # and the full farm (22 Nov) took the run past seven minutes, and it was cut off in the GPU sweep.)
+          python3 -c 'import json; print(json.dumps([{"eventType": "DELAYED_MESSAGE_POSTED", "delayTime": 60000}] * 13))' \
             > robo_wait.json
           gcloud firebase test android run --project "$PROJECT" --type robo --app farm-game-benchmark.apk \
-            --robo-script robo_wait.json "${args[@]}" --timeout 7m --no-record-video --no-performance-metrics 2>&1 | tee run.log || true
+            --robo-script robo_wait.json "${args[@]}" --timeout 15m --no-record-video --no-performance-metrics 2>&1 | tee run.log || true
           where=$(grep -oE 'test-lab-[a-z0-9-]+/[^]/ ]+' run.log | head -1)
           bucket="gs://${where%%/*}"
           dir="${where#*/}"
@@ -147,6 +148,7 @@ jobs:
             gcloud storage cat "${log%/logcat}/actions.json" 2>/dev/null | head -c 4000 || true; echo
             if [ -n "$line" ]; then
               echo "$line" > "reports/$name.json"; found=1
+              echo "--- $name: the report"; echo "REPORT $line"   # (in the log too: the artifact can't always be fetched)
               printf '### %s\n```json\n%s\n```\n' "$name" "$line" >> "$GITHUB_STEP_SUMMARY"
             else
               printf '### %s\nNo report in the log (the app may not have finished).\n' "$name" >> "$GITHUB_STEP_SUMMARY"
