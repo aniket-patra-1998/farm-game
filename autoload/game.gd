@@ -181,10 +181,10 @@ var tiles_revision := 0            # goes up only when which tile holds what has
 ## them (`objects_updated(uid)`: that one thing, and whatever joined or left with it); empty: anything may have
 ## changed, and a listener looks at everything. Placing one thing then costs one thing, not the whole farm.
 var changed_uids: Array[int] = []
-var _touched := {}                 # uid -> true: joined, left or moved since the farm was last told
-var _touched_all := false          # the whole list was replaced (set_objects): nothing narrower is known
 var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
 var _closing := false   # a computer's close button was pressed: going (_close)
+var _touched := {}                 # uid -> true: joined, left or moved since the farm was last told
+var _touched_all := false          # the whole list was replaced (set_objects): nothing narrower is known
 var _level := 1                    # level() remembered for this XP (and this version of the Balance numbers)
 var _level_xp := -1
 var _level_rev := -1

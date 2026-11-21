@@ -4,9 +4,9 @@ extends Node
 ## players' farms fill) it runs scenes: sitting still at the playing zoom, panning, zooming, every panel opened
 ## and closed, things bought and placed, a field harvested and replanted, rain, storm, snow, fog, night, an hour
 ## skipped. For each scene: frames, the frame time at the 50th, 95th and 99th percentile, the slowest 1% averaged,
-## the longest frame, hitches (ScenePlayer: the scenes and their stats, shared with the phone benchmark), and how memory,
-## nodes and objects moved (a leak shows as a climb that the second round repeats). Then what each script that
-## runs every frame costs, and the costly one-off jobs.
+## the longest frame, hitches (ScenePlayer: the scenes and their stats, shared with the phone benchmark), and
+## how memory, nodes and objects moved (a leak shows as a climb that the second round repeats). Then what each
+## script that runs every frame costs, and the costly one-off jobs.
 ## Headless (godot --headless), a frame's wall time is its CPU cost: the GPU needs a phone (phone_bench.yml).
 ## Run: godot --headless --path . res://tools/session_probe.tscn -- [--quality=low] [--rounds=2]
 ##   [--farms=new,played,showcase,filled]
