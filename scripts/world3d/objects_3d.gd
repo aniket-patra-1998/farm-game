@@ -94,6 +94,9 @@ var _queued := false
 var _one_due := {}       # uid -> true: things changed in place, looked at alone at the end of the frame
 var _ready_of := {}      # uid -> whether it shows the ready sign, as last worked out (the signs of one thing redone)
 var _full := true        # the queued sync looks at everything (a change), not only what time changes
+var _sweep_all := false  # the timer's look this time looks at everything, not only what time changes (FULL_EVERY)
+var _sweep_seen := 0     # things the timer's look has been past (one gone without a word shows as a shortfall)
+var _changed := {}       # uid -> true: what a change said it touched (Game.changed_uids); looked at with its neighbours
 var _ticks := 0
 
 var _scenery: Node3D
@@ -173,13 +176,18 @@ func _show_standing(id: String, shown: bool) -> void:
 ## FULL_EVERY ticks everything is, in case a change was not announced.
 func _on_tick() -> void:
 	_ticks += 1
-	if _ticks % FULL_EVERY == 0:
-		_masks_at = Vector2i(-1, -1)   # (masks and fences are looked at again, in case a change was not announced)
-		_links_at = -1
-		queue_sync()
-	elif not _queued and _sweep < 0:
+	if _ticks % FULL_EVERY == 0 and _synced_once:
+		# Everything is looked at again, in case a change was not announced: a few things a frame like the timer's
+		# look (one look at the whole of a full farm in a single frame cost 27 ms, every ten seconds).
+		_masks_at = Vector2i(-1, -1)   # (who stands beside whom, and the fences, worked out again)
+		_links_at = Game.tiles_revision
+		_links_count = Game.objects.size()
+		_links.sync(Game.objects)
+		_sweep_all = true
+	if not _queued and _sweep < 0:
 		_sweep = 0   # (a few things a frame from here: see _light_some)
 		_sweep_ready.clear()
+		_sweep_seen = 0
 
 
 ## Whether the picture of `o` can change with time alone (not only when the player or a system changes it).
@@ -188,6 +196,18 @@ static func timed(o: Dictionary) -> bool:
 
 
 func queue_sync() -> void:
+	if not Game.changed_uids.is_empty() and not (_queued and _full and _changed.is_empty()) and _synced_once:
+		# The change says what it touched (one thing placed, moved or sold): only that, and what stands beside it,
+		# is looked at (on a full farm looking at everything cost 25 ms a placing, a freeze on a phone).
+		for uid: int in Game.changed_uids:
+			_changed[uid] = true
+		_links_due = true
+		if not _queued:
+			_queued = true
+			_full = true
+			sync.call_deferred()
+		return
+	_changed.clear()
 	_full = true
 	_resuming = false   # (a change: the whole farm is looked at again)
 	_links_due = true
@@ -273,6 +293,12 @@ func _rebuild(o: Dictionary) -> void:
 	var step := _step(o)
 	_views[uid] = {"node": node, "key": _key(o), "box": _bounds(node, o), "parts": _parts(node, o), "step": step,
 		"file": uses_file(o), "states": Game.is_building_item(str(o["id"]))}
+	_views[uid]["never_ready"] = GameState.NEVER_READY.has(Game.kind_of(o))
+	_views[uid]["kind"] = Game.kind_of(o)
+	_views[uid]["garage"] = Game.special_of(o) == "garage"
+	if o.has("row"):   # (where it stands: a change that moves or takes it away looks at its old neighbours too)
+		var fp := Game.footprint(str(o["id"]))
+		_views[uid]["rect"] = Rect2i(int(o["col"]), int(o["row"]), fp.x, fp.y)
 	_views[uid]["fill"] = fill_of(uid)
 	_ground(node, o, _views[uid]["box"])
 	_dress_water(uid, o)
@@ -306,6 +332,9 @@ func sync_timed() -> void:
 			_links_at = Game.tiles_revision
 			_links_count = Game.objects.size()
 			_links.sync(Game.objects)   # first: what's new there is already known when its stand-in drops in
+	if not light and not _changed.is_empty():
+		_sync_changed()
+		return
 	if _resuming and not light:
 		_resuming = false
 		_build_todo()
@@ -361,6 +390,55 @@ func sync_timed() -> void:
 			_animals.append(v["node"])
 
 
+## Looks only at what a change touched (`_changed`) and at what stands, or stood, beside it (its neighbours'
+## looks may join with it: Crowding): each is built, made again or taken away as needed; ready signs keep what is
+## known of everything else.
+func _sync_changed() -> void:
+	var look := {}
+	for uid: int in _changed:
+		look[uid] = true
+		var o := Game.object_by_uid(uid)
+		if not o.is_empty() and o.has("row"):
+			_add_neighbours(look, Rect2i(int(o["col"]), int(o["row"]), Game.footprint(str(o["id"])).x,
+				Game.footprint(str(o["id"])).y))
+		if _views.has(uid) and _views[uid].has("rect"):
+			_add_neighbours(look, _views[uid]["rect"])   # (where it stood: those beside it lost a neighbour)
+	_changed.clear()
+	var built := false
+	for uid: int in look:
+		_ready_of.erase(uid)
+		var o := Game.object_by_uid(uid)
+		if o.is_empty() or not handles(o):
+			if _views.has(uid):
+				if _hatching.has(uid):
+					_shake_open(uid)
+				else:
+					(_views[uid]["node"] as Node3D).queue_free()
+				_views.erase(uid)
+				built = true
+			continue
+		if not _shown_in_place(o):
+			_rebuild(o)
+			built = true
+	_mark_ready(_ready_of)
+	if built:
+		_animals.clear()
+		for v in _views.values():
+			if v["node"] is Animal3D:
+				_animals.append(v["node"])
+
+
+## Adds the uids of what stands on the ring of tiles round `rect` (columns x, rows y) to `into`.
+static func _add_neighbours(into: Dictionary, rect: Rect2i) -> void:
+	for r in range(rect.position.y - 1, rect.end.y + 1):
+		for c in range(rect.position.x - 1, rect.end.x + 1):
+			if r < 0 or c < 0 or r >= Game.farm_size or c >= Game.farm_size:
+				continue
+			var n := Game.object_at(Game.index_of(r, c))
+			if not n.is_empty():
+				into[int(n["uid"])] = true
+
+
 ## How long a frame may build for: longer while a farm opens (nothing stands yet and the player is waiting for it),
 ## the usual BUILD_BUDGET_MS once it stands (so later changes never cost a hitch).
 func _budget_ms() -> int:
@@ -409,28 +487,42 @@ func _build_todo() -> void:
 ## FarmVille's one ready sign over everything that has something to collect: a building or its finished
 ## crafts, a tree, a bloom, an animal (whose sign walks with it). Over the top of what is drawn.
 func _mark_ready(known := {}) -> void:
+	var pt := PerfReadout.start()
+	_mark_ready_timed(known)
+	PerfReadout.stop("ready_marks", pt)
+
+
+func _mark_ready_timed(known: Dictionary) -> void:
 	var tops: Array[Vector3] = []
 	var minor: Array[bool] = []
 	var animals: Array[Animal3D] = []
-	for o in Game.objects:
-		var uid := int(o["uid"])
-		if GameState.NEVER_READY.has(Game.kind_of(o)) or not _views.has(uid):
-			continue
+	for uid: int in _views:
+		var v: Dictionary = _views[uid]
+		if v.get("never_ready", false):
+			continue   # (scenery, the Barn, vehicles: known when it was built, not asked on every look)
 		# (`known`: what a timer's look has just found, thing by thing, so nothing is asked twice)
-		var ready: bool = known[uid] if known.has(uid) else \
-			Game.has_ready(o)
+		var ready: bool
+		if known.has(uid):
+			ready = known[uid]
+		else:
+			var o := Game.object_by_uid(uid)
+			if o.is_empty():
+				continue
+			ready = Game.has_ready(o)
 		_ready_of[uid] = ready
 		if ready:
-			var node: Node3D = _views[uid]["node"]
+			var node: Node3D = v["node"]
 			if node is Animal3D:
 				animals.append(node as Animal3D)
 			else:
-				var box: AABB = _views[uid]["box"]
+				var box: AABB = v["box"]
 				tops.append(Vector3(box.get_center().x, box.end.y, box.get_center().z))
-				minor.append(not Game.is_building_item(str(o["id"])))   # (trees and blooms: small, fade far out)
+				minor.append(not v.get("states", false))   # (trees and blooms: small, fade far out)
 	ready_shown = tops.size() + animals.size()
 	_ready_marks.show_at(tops, animals, minor)
+	var pt := PerfReadout.start()
 	_mark_rust()
+	PerfReadout.stop("rust_marks", pt)
 
 
 ## The rust sign (RustMarks; docs/RUST.md) over every vehicle that needs a repair: over the vehicle where it
@@ -444,16 +536,20 @@ func _mark_rust() -> void:
 	var wear := Game.wear
 	var rusting := rust.is_on() and not rust.vehicles.is_empty()
 	if rusting or (wear.is_on() and not wear.buildings.is_empty()):
-		for o in Game.objects:
-			var uid := int(o["uid"])
+		for uid: int in _views:
+			var v: Dictionary = _views[uid]
 			var id := ""
 			var share := 0.0
 			var mend := 0.0
-			if not _views.has(uid) or Game.under_construction(o):
+			var kind: String = v.get("kind", "")
+			if not (kind == "vehicle" or v.get("garage", false) or wear.buildings.has(str(uid))):
+				continue   # (most of a farm neither rusts nor wears: asked nothing more)
+			var o := Game.object_by_uid(uid)
+			if o.is_empty() or Game.under_construction(o):
 				continue
-			if rusting and Game.kind_of(o) == "vehicle":
+			if rusting and kind == "vehicle":
 				id = str(o["id"]) if (_views[uid]["node"] as Node3D).visible and rust.needs_repair(str(o["id"])) else ""
-			elif rusting and Game.special_of(o) == "garage":
+			elif rusting and v.get("garage", false):
 				id = rust.rustiest(o.get("inside", {}))
 			if id != "":
 				share = float(rust.level(id)) / rust.max_level()
@@ -651,7 +747,7 @@ func _mask(o: Dictionary) -> int:
 ## work, how full its yard, how near its produce) is set here; one that has become another picture (a tree
 ## ripened, a site risen) gets the full look, which builds it. Its ready signs go up when it has been round.
 func _light_some() -> void:
-	if _queued:   # a change is about to be looked at in full
+	if _queued and _changed.is_empty():   # a change is about to be looked at in full
 		_sweep = -1
 		return
 	var began := Time.get_ticks_usec()
@@ -664,17 +760,20 @@ func _light_some() -> void:
 		if not handles(o):
 			continue
 		var uid := int(o["uid"])
+		_sweep_seen += 1
 		var v: Dictionary = _views.get(uid, {})
 		if v.is_empty():
-			queue_sync()   # (something not announced: the full look finds it)
-			return
+			_queue_changed(uid)   # (something not announced: built where it stands)
+			continue
 		if not timed(o):
 			if not GameState.NEVER_READY.has(Game.kind_of(o)):
 				_sweep_ready[uid] = Game.is_ready(o)   # (an animal: only its sign changes with time)
+			if _sweep_all and v["key"] != _key(o):
+				_queue_changed(uid)   # (changed without a word: made again, with its neighbours)
 			continue
 		if v["key"] != _key(o):
-			queue_sync()
-			return
+			_queue_changed(uid)
+			continue
 		_sweep_ready[uid] = Game.has_ready(o)
 		if v.get("file", false) or v.get("states", false):
 			AssetRegistry.apply_state(v["node"], state_of(o))
@@ -685,6 +784,20 @@ func _light_some() -> void:
 	if end >= Game.objects.size():
 		_sweep = -1
 		_mark_ready(_sweep_ready)
+		if _sweep_all and _sweep_seen != _views.size():
+			for uid: int in _views.keys():
+				if Game.object_by_uid(uid).is_empty() and not _hatching.has(uid):
+					_queue_changed(uid)   # (gone without a word: its picture is taken away)
+		_sweep_all = false
+
+
+## Looks again at `uid` alone (and its neighbours) at the end of the frame: found changed by the timer's look.
+func _queue_changed(uid: int) -> void:
+	_changed[uid] = true
+	if not _queued:
+		_queued = true
+		_full = true
+		sync.call_deferred()
 
 
 ## Whether a building is at work right now: a crafting building with something in its ovens or vats. (Other

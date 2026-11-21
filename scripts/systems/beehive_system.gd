@@ -122,7 +122,7 @@ func flower_harvest_bees(roll_queen := true) -> String:
 				return ""
 			put_bee_in(h)
 			game.record("find_bee", str(h["id"]))
-			game.objects_updated()
+			game.objects_updated(int(h["uid"]))   # (one hive gained a bee: only it is drawn again)
 			return tr("A_BEE_JOINED")
 	return ""
 

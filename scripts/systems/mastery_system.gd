@@ -126,7 +126,7 @@ func award_star(id: String, star: int) -> void:
 	if game.place_somewhere("mastery_sign"):
 		game.objects[-1]["crop"] = id
 		game.message.emit(tr("MASTERED_A_MASTERY_SIGN_WAS_PUT") % name_of(id))
-		game.objects_updated()
+		game.objects_updated(int(game.objects[-1]["uid"]))
 		return
 	# A farm with no free grass: it arrives like any new thing, never lost.
 	var went := game.storage.welcome("mastery_sign", {"crop": id})

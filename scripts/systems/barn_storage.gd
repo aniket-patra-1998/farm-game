@@ -78,7 +78,7 @@ func repair_barn() -> bool:
 	game.message.emit(tr("THE_BARN_IS_FIXED_USE_THE"))
 	game.record("repair", "barn")
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(int(b["uid"]))
 	return true
 
 
@@ -125,7 +125,7 @@ func store_object(uid: int) -> bool:
 		_send_on(o)
 		game.message.emit(tr("SENT_TO_THE_GIFT_BOX") % game.item_data(o["id"])["name"])
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(int(o["uid"]))   # (only it went: only it and its neighbours are looked at)
 	return true
 
 
@@ -209,5 +209,5 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	game.grass_over(o["id"], row, col)
 	game.add_object(o)
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(int(o["uid"]))   # (only it came out)
 	return true

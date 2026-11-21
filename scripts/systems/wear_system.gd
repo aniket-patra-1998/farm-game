@@ -141,6 +141,15 @@ func kind_of(o: Dictionary) -> String:
 func settle() -> void:
 	if not is_on():
 		return
+	if not game.changed_uids.is_empty():   # (the change says what came or went: only those)
+		for uid: int in game.changed_uids:
+			var o := game.object_by_uid(uid)
+			var key := str(uid)
+			if o.is_empty() or not wears(o):
+				buildings.erase(key)
+			elif not buildings.has(key):
+				buildings[key] = {"w": 0.0, "t": game.now(), "p": _pace(o), "fix": 0, "span": 0}
+		return
 	var here := {}
 	for o in game.objects:
 		if wears(o):

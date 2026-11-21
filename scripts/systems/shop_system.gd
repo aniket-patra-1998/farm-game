@@ -58,7 +58,7 @@ func buy_and_place(item_id: String, row: int, col: int) -> bool:
 	game.next_uid += 1
 	game.grass_over(item_id, row, col)
 	game.add_object(obj)
-	game.objects_updated()
+	game.objects_updated(int(obj["uid"]))   # (only it came: only it, and what stands beside it, is looked at)
 	return true
 
 
@@ -100,5 +100,5 @@ func sell_object(uid: int) -> bool:
 	var moved := (tr("MOVED_OUT_ONTO_THE_FARM") % held.size()) if held.size() > 0 else ""
 	game.message.emit(tr("SOLD_THE_FOR_COINS") % [game.item_data(o["id"])["name"], value, moved])
 	game.inventory_changed.emit()
-	game.objects_updated()
+	game.objects_updated(uid)   # (it went, and what it held came out: only those, and their neighbours)
 	return true

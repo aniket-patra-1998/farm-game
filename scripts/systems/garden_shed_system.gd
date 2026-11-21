@@ -35,8 +35,16 @@ func add_bunch(flower: String) -> bool:
 		return false
 	bunches.append(flower)
 	game.inventory_changed.emit()
-	game.objects_changed.emit()  # the shed shows its pots
+	_tell_shed()  # the shed shows its pots
 	return true
+
+
+## The shed (where it stands) is drawn again with its pots: only it, not the whole farm.
+func _tell_shed() -> void:
+	for o in game.objects:
+		if game.special_of(o) == "garden_shed":
+			game.objects_updated(int(o["uid"]))
+			return
 
 
 func roll_bunch(crop_id: String, i: int) -> String:
@@ -61,19 +69,19 @@ func unpack_bunch(k: int) -> int:
 	)
 	game.next_uid += 1
 	game.inventory_changed.emit()
-	game.objects_changed.emit()
+	_tell_shed()
 	return game.storage.stored.size() - 1
 
 
 ## Placed bunches wilt away after BUNCH_DAYS days.
 func expire_bunches() -> void:
-	var before := game.objects.size()
-	game.set_objects(game.objects.filter(
-		func(o): return not (o["id"] == "perfect_bunch" and game.now() >= int(o.get("expires", game.now() + 1)))
-	))
-	if game.objects.size() != before:
+	var gone := game.objects.filter(
+		func(o): return o["id"] == "perfect_bunch" and game.now() >= int(o.get("expires", game.now() + 1)))
+	for o: Dictionary in gone:   # (most checks find none: the farm is told nothing then)
+		game.remove_object(o)
+	if not gone.is_empty():
 		game.message.emit(tr("A_PERFECT_BUNCH_HAS_WILTED_AWAY"))
-		game.objects_updated()
+		game.objects_updated(int(gone[-1]["uid"]))
 
 
 ## The Garden Shed comes with free Perfect Bunches of flowers you've unlocked.

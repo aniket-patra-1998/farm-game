@@ -177,6 +177,12 @@ var systems: Array[GameSystem] = []   # all of the above, for load_data/reset/sa
 
 var objects_revision := 0          # goes up whenever anything on the farm may have changed (derived totals key on it)
 var tiles_revision := 0            # goes up only when which tile holds what has really changed (unlike the next)
+## While objects_changed is being told: the things that came, went or moved in this change, when the change knows
+## them (`objects_updated(uid)`: that one thing, and whatever joined or left with it); empty: anything may have
+## changed, and a listener looks at everything. Placing one thing then costs one thing, not the whole farm.
+var changed_uids: Array[int] = []
+var _touched := {}                 # uid -> true: joined, left or moved since the farm was last told
+var _touched_all := false          # the whole list was replaced (set_objects): nothing narrower is known
 var layout_revision := 0           # goes up whenever which tiles are covered may have changed (walking grid, etc.)
 var _closing := false   # a computer's close button was pressed: going (_close)
 var _level := 1                    # level() remembered for this XP (and this version of the Balance numbers)
@@ -534,6 +540,7 @@ func add_object(o: Dictionary) -> void:
 		return  # two things never share a uid: taps, saves and the uid index all depend on it
 	objects.append(o)
 	objects_revision += 1
+	_touched[int(o.get("uid", -1))] = true
 	if o.has("row") and o.has("col"):
 		_occupy(o)
 		tiles_revision += 1
@@ -544,6 +551,7 @@ func add_object(o: Dictionary) -> void:
 
 
 func remove_object(o: Dictionary) -> void:
+	_touched[int(o.get("uid", -1))] = true
 	objects.erase(o)
 	objects_revision += 1
 	rebuild_occupancy()
@@ -551,9 +559,27 @@ func remove_object(o: Dictionary) -> void:
 
 ## Replaces the whole list (a sweep that drops several at once).
 func set_objects(list: Array) -> void:
+	_touched_all = true
 	objects = list
 	objects_revision += 1
 	rebuild_occupancy()
+
+
+## Whether the tiles already say where `uid` and everything touched with it stand (a thing placed or sold keeps
+## them true itself); not for a thing moved, whose new tiles do not name it yet.
+func _occupancy_holds(uid: int) -> bool:
+	var uids := _touched.keys()
+	uids.append(uid)
+	for u: int in uids:
+		var o := object_by_uid(u)
+		if o.is_empty() or not (o.has("row") and o.has("col")):
+			continue
+		var fp := footprint(o["id"])
+		for r in range(int(o["row"]), int(o["row"]) + fp.y):
+			for c in range(int(o["col"]), int(o["col"]) + fp.x):
+				if int(_occupied.get(index_of(r, c), -1)) != u:
+					return false
+	return true
 
 
 func is_occupied(i: int) -> bool:
@@ -613,7 +639,10 @@ func buy_item(item_id: String) -> bool:
 
 
 func buy_and_place(item_id: String, row: int, col: int) -> bool:
-	return shop.buy_and_place(item_id, row, col)
+	var pt := PerfReadout.start()
+	var done := shop.buy_and_place(item_id, row, col)
+	PerfReadout.stop("buy_and_place", pt)
+	return done
 
 
 func move_object(uid: int, row: int, col: int) -> bool:
@@ -623,7 +652,7 @@ func move_object(uid: int, row: int, col: int) -> bool:
 	obj["row"] = row
 	obj["col"] = col
 	grass_over(obj["id"], row, col)
-	objects_updated()
+	objects_updated(uid)   # (only it moved: only it, and what stood or stands beside it, is looked at again)
 	return true
 
 
@@ -971,11 +1000,22 @@ func objects_updated(uid := -1) -> void:
 			object_changed.emit(uid)
 			queue_save()
 		return
-	rebuild_occupancy()
+	if uid < 0 or _touched_all or not _occupancy_holds(uid):
+		rebuild_occupancy()   # (a placing or a sale already keeps the tiles true: add_object, remove_object)
 	if _holding > 0:
 		_held_update = true   # (told once, when the batch ends: release_updates)
 		return
+	changed_uids.clear()
+	if uid >= 0 and not _touched_all:   # (`uid` vouches that nothing else changed in place: only what came or went)
+		_touched[uid] = true
+		for k: int in _touched:
+			changed_uids.append(k)
+	_touched.clear()
+	_touched_all = false
+	var pt := PerfReadout.start()
 	objects_changed.emit()
+	PerfReadout.stop("objects_changed_told", pt)
+	changed_uids.clear()
 	# Only the plots whose tile holds something else now are laid again: none, for a turn, a feed or an upgrade
 	# (the whole field was laid again after every change, though nothing on it had moved).
 	var tiles: Array = _tiles_changed.keys()

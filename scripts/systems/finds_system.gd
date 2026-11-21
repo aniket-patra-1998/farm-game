@@ -218,4 +218,4 @@ func grow_homes(family: String) -> void:
 		if to > game.level_of(o):
 			o["level"] = to
 			game.message.emit(tr("HOME_GREW") % [game.item_data(o["id"])["name"], game.size_name(o)])
-	game.objects_changed.emit()
+			game.objects_updated(int(o["uid"]))   # (only a home that grew is drawn again: a find grows none, mostly)

@@ -48,23 +48,21 @@ func this_week() -> int:
 func check_strays() -> void:
 	game.shed.expire_bunches()
 	var t := game.now()
-	var changed := false
-	var keep: Array = []
-	for o in game.objects:
+	var changed := -1   # (a uid that came or went: the farm is told of only those, and their neighbours)
+	for o in game.objects.duplicate():
 		if o.get("stray", false) and t - int(o["t"]) > Balance.i("strays.stray_stays"):
 			game.message.emit(tr("THE_LONELY_WANDERED_OFF") % game.item_data(o["id"])["name"].to_lower())
-			changed = true
-		else:
-			keep.append(o)
-	game.set_objects(keep)
+			game.remove_object(o)
+			changed = int(o["uid"])
 	if t >= next_stray_at and not _has_stray():
+		var uid := game.next_uid
 		if this_week() < Balance.i("strays.week_most") and _spawn_stray():
 			arrived.append(t)
-			changed = true
+			changed = uid
 		next_stray_at = t + game.rng.randi_range(Balance.i("strays.stray_min_gap"), Balance.i("strays.stray_max_gap"))
 		game.queue_save()
-	if changed:
-		game.objects_updated()
+	if changed >= 0:
+		game.objects_updated(changed)
 
 
 func _has_stray() -> bool:

@@ -69,6 +69,9 @@ var _bakes_waiting: Array = []     # [material, its viewport (weak), rect]: pain
 var _farm_flowers := {}            # farm tile index -> its flowers ([transform, colour] pairs), kept per tile
 var _meadow_flowers: Array = []    # the meadow's flowers, the same way (only the farm's size moves them)
 var _farm_tufts := {}              # farm tile index -> its tufts (MultiMesh buffer data), kept per tile
+var _kinds_painted: Array[String] = []   # what stood on each tile when the shade was last painted (_kinds)
+var _shade_task := -1              # the worker painting the shade of a change (_paint_shade_later), -1: none
+var _shade_job := {}               # its farm size, kinds and, once painted, its image
 var _lush := _make_lush()          # how thick the grass grows, a slow noise over the land
 var _tiles_seen := -1              # Game.tiles_revision when the shade was last checked
 var _shade_signature := 0
@@ -253,7 +256,8 @@ func rebuild_timed() -> void:
 		bake(_grass[0], Rect2(0, 0, n, n), BAKE_FARM_RES)
 		bake(_grass[1], Rect2(-MEADOW, -MEADOW, n + MEADOW * 2.0, n + MEADOW * 2.0), BAKE_MEADOW_RES)
 	_paint_shade(n)
-	_scatter_tufts(n)
+	if _farm_tufts.size() != n * n:
+		_scatter_tufts(n)
 
 
 
@@ -275,8 +279,18 @@ func _rebuild_if_moved() -> void:
 		return
 	_tiles_seen = Game.tiles_revision
 	# Collecting or upgrading changes nothing on the ground: only a change in what stands where does.
-	if is_inside_tree() and hash([Game.farm_size, _kinds(Game.farm_size)]) != _shade_signature:
-		rebuild()
+	if not is_inside_tree():
+		return
+	var n := Game.farm_size
+	var kinds := _kinds(n)
+	var signature := hash([n, kinds])
+	if signature == _shade_signature:
+		return
+	if n != _size or _shade == null or _farm_tufts.size() != n * n:
+		rebuild()   # (a new size: everything at once)
+		return
+	_shade_signature = signature
+	_paint_shade_later(n, kinds)
 
 
 ## The shade map: what stands on each tile, painted as blocks and blurred out (by shrinking the image
@@ -286,8 +300,51 @@ func _paint_shade(n: int) -> void:
 	var kinds := _kinds(n)
 	var signature := hash([n, kinds])
 	if signature == _shade_signature and _shade != null:
+		_kinds_painted = kinds
 		return
 	_shade_signature = signature
+	_apply_shade(n, kinds, shade_image(n, kinds))
+
+
+## Paints the shade and wear of `kinds` (what stands on each tile) on a worker thread (on a full farm it cost a
+## stall on every placing); it is put on the ground at the start of the next frame (`_process`), so a change shows
+## a frame later at most.
+func _paint_shade_later(n: int, kinds: Array[String]) -> void:
+	_finish_shade()   # (one painting at a time: the one before goes on first)
+	var job := {"n": n, "kinds": kinds}
+	_shade_job = job
+	_shade_task = WorkerThreadPool.add_task(func() -> void: job["image"] = shade_image(n, kinds), false,
+		"ground shade")
+	set_process(true)
+
+
+func _process(_delta: float) -> void:
+	_finish_shade()
+	set_process(false)
+
+
+func _finish_shade() -> void:
+	if _shade_task < 0:
+		return
+	WorkerThreadPool.wait_for_task_completion(_shade_task)
+	_shade_task = -1
+	var job := _shade_job
+	_shade_job = {}
+	if int(job["n"]) == Game.farm_size and is_inside_tree():
+		var pt := PerfReadout.start()
+		_apply_shade(int(job["n"]), job["kinds"], job["image"])
+		PerfReadout.stop("ground_shade_put", pt)
+
+
+func _exit_tree() -> void:
+	if _shade_task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_shade_task)   # (never left running on a freed ground)
+		_shade_task = -1
+
+
+## The shade (R) and wear (G) that what stands on each tile (`kinds`) casts, as an image (safe off the main
+## thread: it reads nothing but its arguments).
+static func shade_image(n: int, kinds: Array[String]) -> Image:
 	var side := (n + SHADE_PAD * 2) * SHADE_RES
 	var shade := Image.create_empty(side, side, false, Image.FORMAT_L8)
 	var wear := Image.create_empty(side, side, false, Image.FORMAT_L8)
@@ -310,7 +367,15 @@ func _paint_shade(n: int) -> void:
 	for i in side * side:
 		data[i * 2] = s_data[i]
 		data[i * 2 + 1] = w_data[i]
-	_shade = Image.create_from_data(side, side, false, Image.FORMAT_RG8, data)
+	return Image.create_from_data(side, side, false, Image.FORMAT_RG8, data)
+
+
+## Puts a painted shade on the ground; the grass the change wore or freed is laid again (only near what changed).
+func _apply_shade(n: int, kinds: Array[String], image: Image) -> void:
+	var before := _kinds_painted
+	_kinds_painted = kinds
+	_shade = image
+	var side := image.get_width()
 	if _shade_texture == null or Vector2i(_shade_texture.get_size()) != Vector2i(side, side):
 		_shade_texture = ImageTexture.create_from_image(_shade)
 	else:
@@ -319,6 +384,21 @@ func _paint_shade(n: int) -> void:
 	for m in _grass:
 		m.set_shader_parameter("shade_map", _shade_texture)
 		m.set_shader_parameter("shade_rect", rect)
+	if _farm_tufts.size() != n * n or before.size() != n * n:
+		return   # (the whole farm's tufts are laid by the rebuild that follows)
+	# Only the grass that the change wore or freed is laid again: the tiles whose kind changed, and those their
+	# wear reaches (scattering the whole farm's tufts again cost a stall on every placing).
+	var reach := ceili(WEAR_REACH) + 1
+	var near := {}
+	for i in n * n:
+		if before[i] != kinds[i]:
+			var r := i / n
+			var c := i % n
+			for rr in range(maxi(r - reach, 0), mini(r + reach + 1, n)):
+				for cc in range(maxi(c - reach, 0), mini(c + reach + 1, n)):
+					near[Game.index_of(rr, cc)] = true
+	if not near.is_empty():
+		update_tiles(near.keys())
 
 
 ## What stands on every tile of the farm, row by row ("" for nothing).
