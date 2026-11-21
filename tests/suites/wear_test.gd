@@ -161,6 +161,104 @@ func test_592_a_repair_costs_coins_and_materials_at_most_40_percent() -> void:
 	_done(g)
 
 
+func test_608_a_repair_takes_its_time_and_the_building_works_as_worn_as_it_is() -> void:
+	# Owner, 20 Nov: a building sent for repair seemed repaired at once. It takes its time (10 minutes to 4 hours),
+	# works as worn as it is meanwhile (worn out: not at all), and says when it is done.
+	var g := _grown_farm()
+	var coop := _place(g, "chicken_coop", 4, 4)
+	var uid := int(coop["uid"])
+	_wear(g, coop, 2)
+	var said: Array[String] = []
+	g.message.connect(func(words: String) -> void: said.append(words))
+	var cost := g.wear.repair_cost(uid)
+	_check(int(cost["seconds"]) >= 600, "a repair takes ten minutes at least: %d s" % int(cost["seconds"]))
+	_check(g.wear.repair(uid), "the repair starts")
+	_eq(g.wear.level_of(coop), 2, "it is as worn as it was")
+	_check(absf(g.wear.goods_factor(coop) - (1.0 - 2 * Balance.f("wear.goods_less"))) < 0.001, "and gives as it did")
+	_check(g.wear.repairing(uid) and not g.wear.needs_repair(coop), "in for its repair: it wants no other")
+	_check(g.wear.repair_share(uid) < 0.01, "just begun")
+	_skip(g, int(cost["seconds"]) / 2)
+	_check(absf(g.wear.repair_share(uid) - 0.5) < 0.02, "half way after half its time")
+	_eq(g.wear.finish_repairs(), [] as Array[int], "not done yet")
+	_eq(g.wear.level_of(coop), 2, "still as worn")
+	# Saved and loaded half way, it is still half way.
+	var kept := {}
+	g.wear.save_to(kept)
+	g.wear.load_from(kept)
+	_check(absf(g.wear.repair_share(uid) - 0.5) < 0.02, "a repair's progress is saved")
+	_skip(g, int(cost["seconds"]) / 2 + 1)
+	said.clear()
+	_eq(g.wear.finish_repairs(), [uid] as Array[int], "done when its time is up")
+	_eq(g.wear.level_of(coop), 0, "like new")
+	_eq(said, [tr("WEAR_REPAIR_DONE") % g.name_of("chicken_coop")] as Array[String], "and says so, once")
+	_eq(g.wear.finish_repairs(), [] as Array[int], "only once")
+	_check(not g.wear.repairing(uid) and g.wear.repair_share(uid) == 0.0, "no repair now")
+	# Worn out, it does not work, and a repair does not start it again until it is done.
+	_wear(g, coop, g.wear.max_level())
+	_check(g.wear.stopped(coop), "worn out: stopped")
+	_check(g.wear.repair(uid), "its repair starts")
+	_check(g.wear.stopped(coop) and g.wear.goods_factor(coop) == 0.0, "still stopped while it is repaired")
+	_skip(g, int(g.wear.repair_left(uid)) + 1)
+	g.wear.finish_repairs()
+	_check(not g.wear.stopped(coop) and g.wear.goods_factor(coop) == 1.0, "and back at work when it is done")
+	_done(g)
+
+
+func test_609_the_repair_offer_is_laid_out_and_a_building_in_repair_says_how_long() -> void:
+	# Owner, 20 Nov: the wear, the coins, the materials and the time were one long line.
+	Game.reset_game()
+	Game.born_day = Game.day_number() - 60
+	Game.coins = 1000000
+	Game.xp = Game.xp_for_level(30)
+	for m: String in ["bricks", "nails", "boards"]:
+		Game.parts[m] = 500
+	var coop := _place(Game, "chicken_coop", 4, 4)
+	var uid := int(coop["uid"])
+	Game.land.upgrade_building(uid)   # (a grown building's repair needs its sizes' materials too)
+	_wear(Game, coop, 3)
+	var cost := Game.wear.repair_cost(uid)
+	var hud := FarmHud.new()
+	add_child(hud)
+	await get_tree().process_frame
+	var bubble := hud.bubble
+	bubble.to_screen = func(p: Vector2) -> Vector2: return p
+	bubble.show_repair(Vector2(300, 300), WearSystem.key_of(uid))
+	_eq(bubble._line.text, UiTheme.tidy(tr("WEAR_LEVEL") % [3, Game.wear.max_level()]), "its line: how worn it is, only")
+	_check(not (cost["materials"] as Dictionary).is_empty(), "this repair needs materials")
+	var tiles := 1 + (cost["materials"] as Dictionary).size()
+	_eq(bubble._costs.get_child_count(), tiles, "a tile for the coins and each material")
+	_check(bubble._costs.visible and bubble._takes.visible, "shown under the line")
+	_eq(bubble._takes.text, UiTheme.tidy(tr("WEAR_REPAIR_TAKES") % FarmGrid.format_duration(int(cost["seconds"]))),
+		"the time on a line of its own")
+	_check(bubble._act.visible, "and the Repair button")
+	# A material the farm is short of wears the red count.
+	var part := str((cost["materials"] as Dictionary).keys()[0])
+	Game.parts[part] = 0
+	bubble.show_repair(Vector2(300, 300), WearSystem.key_of(uid))
+	_eq(bubble._costs.get_child_count(), tiles, "shown again, the tiles are made again")
+	var counts := bubble._costs.get_child(1).find_children("*", "Label", true, false)
+	_check((counts[0] as Label).text.begins_with("0/") and (counts[0] as Label).has_theme_stylebox_override("normal"),
+		"short: 0 of what it needs, marked")
+	Game.parts[part] = 500
+	# In for its repair, the bubble says how long is left and offers nothing more.
+	_check(Game.wear.repair(uid), "the repair starts")
+	bubble.show_repair(Vector2(300, 300), WearSystem.key_of(uid))
+	_eq(bubble._line.text, UiTheme.tidy(tr("RUST_REPAIR_LEFT") % FarmGrid.format_duration(Game.wear.repair_left(uid))),
+		"being repaired: how long is left")
+	_check(not bubble._act.visible and not bubble._costs.visible and not bubble._takes.visible, "and no offer")
+	# Its sign stays over it, and is told how far the repair is (the gear turns, the pips fill).
+	var marks := RustMarks.new()
+	add_child(marks)
+	marks.show_at([Vector3.ZERO] as Array[Vector3], [WearSystem.key_of(uid)] as Array[String], [0.6] as Array[float],
+		[0.25] as Array[float])
+	_eq(marks.mends(), [0.25] as Array[float], "the sign knows how far the repair is")
+	marks.show_at([Vector3.ZERO] as Array[Vector3], ["tractor"] as Array[String], [0.6] as Array[float])
+	_eq(marks.mends(), [] as Array[float], "a sign with no repair says none")
+	marks.queue_free()
+	hud.queue_free()
+	Game.reset_game()
+
+
 func test_593_upgrades_get_dearer_with_size_and_with_every_upgrade_owned() -> void:
 	var g := _grown_farm()
 	var coop := _place(g, "chicken_coop", 4, 4)

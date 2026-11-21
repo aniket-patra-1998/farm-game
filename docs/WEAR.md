@@ -16,9 +16,16 @@ review (Claude Doc "Farm game: a harder late game", section 6 holds the owner's 
   - At level 5 a building stops: a home gives nothing, a crafting building starts nothing. Nothing is lost.
 - **Repair**: coins and the building's own materials (those of its sizes), 4, 10, 18, 28 and 40% of what the
   building and its sizes cost at levels 1 to 5, worked from `farm_price` (below), and 10 minutes up to 4 hours. It works
-  as worn as it is until the repair is done, then it is like new.
+  as worn as it is until the repair is done, then it is like new. Worn out (level 5) it does not work, and the
+  repair does not start it again until it is done (owner, 20 Nov). A finished repair is said once
+  (`finish_repairs`, on the farm's half-minute timer, as the vehicles' are).
 - **Sign**: the rust sign (RustMarks), one draw for vehicles and buildings; a tap on it offers the repair. A
   building worn out offers its repair on any tap by hand. (Its own picture is a new look: options first.)
+  While it is repaired the building keeps the sign, blue, its gear whole and turning and its pips filling as the
+  repair goes (`repair_share`), so a repair is never taken for done; a tap says how long is left.
+- **The offer** (HudBubble): the name, "Wear 3 of 5", then a tile each for the coins and every material (what the
+  farm has of what it needs, a short one marked red), "Takes 1 h" on its own line, and the Repair button. Not one
+  line (owner, 20 Nov). A vehicle's offer is laid out the same way.
 
 ## Upgrade prices
 - A building's next size costs coins as well as materials: half its price at the second size, 1.6 times more

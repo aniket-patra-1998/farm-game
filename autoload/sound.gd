@@ -105,7 +105,7 @@ func play(event: String, gain_db := 0.0, pitch := 1.0) -> void:
 func start_loop(event: String, gain_db := 0.0) -> AudioStreamPlayer:
 	var stream := stream_of(event)
 	var always := bool((_recipes.get(event, {}) as Dictionary).get("always", false))
-	if stream == null or (_loops.size() >= MAX_LOOPS and not always):
+	if stream == null or (_capped_loops() >= MAX_LOOPS and not always):
 		return null
 	var p := AudioStreamPlayer.new()
 	p.bus = str((_recipes.get(event, {}) as Dictionary).get("bus", BUS))
@@ -114,7 +114,15 @@ func start_loop(event: String, gain_db := 0.0) -> AudioStreamPlayer:
 	add_child(p)
 	p.play()
 	_loops.append(p)
+	if always:
+		p.set_meta(&"always", true)   # (the rain and the like never take an engine's place under MAX_LOOPS)
 	return p
+
+
+## The loops counted under MAX_LOOPS: the engines, not the "always" ones (in a storm a tractor still hums).
+func _capped_loops() -> int:
+	return _loops.filter(func(p: AudioStreamPlayer) -> bool:
+		return is_instance_valid(p) and not p.has_meta(&"always")).size()
 
 
 ## Before quitting, a few frames ahead (Game's close, the test runner, the screenshots): every sound stopped and
@@ -144,8 +152,9 @@ func stop_loop(p: AudioStreamPlayer) -> void:
 		p.queue_free()
 
 
+## The loops humming that count under MAX_LOOPS (the "always" ones, the rain, are not counted).
 func loops_running() -> int:
-	return _loops.size()
+	return _capped_loops()
 
 
 ## An animal's call, by its family (a cow moos, a hen clucks); `young`: a baby's (a calf's own, or the adult's

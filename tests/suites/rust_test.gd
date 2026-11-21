@@ -189,7 +189,12 @@ func test_415_a_rusty_vehicle_wears_the_rust_sign_and_a_tap_on_it_offers_only_it
 	hud.bubble.show_repair(Vector2(300, 300), "tractor")
 	_check(UiFx.is_open(hud.bubble) and hud.bubble._act.visible and not hud.bubble._open.visible,
 		"its bubble has the Repair button and no way to the vehicle's sheet")
-	_check(hud.bubble._line.text.contains(str(int(Game.rust.repair_cost("tractor")["coins"]))), "and says what it costs")
+	# (What it costs is a tile of its own and the time a line of its own: not one long line. Owner, 20 Nov.)
+	var price := UiTheme.number(int(Game.rust.repair_cost("tractor")["coins"]))
+	_eq(hud.bubble._costs.get_child_count(), 1, "what it costs: one tile, the coins")
+	_check(not hud.bubble._costs.find_children("*", "Label", true, false).filter(
+		func(l: Label) -> bool: return l.text == price).is_empty(), "with the price on it")
+	_check(hud.bubble._takes.visible and hud.bubble._takes.text != "", "and how long it takes, under it")
 	# In a Garage, the Garage wears the sign of the rustiest vehicle in it.
 	var garage := _add_garage(Game)
 	_park(Game, garage)
