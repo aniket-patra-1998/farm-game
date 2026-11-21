@@ -261,13 +261,16 @@ func test_206_implements_go_down_to_work_and_the_engine_hums_only_while_it_is_th
 	view.free()
 	puffs.free()
 	# No more than MAX_LOOPS engines hum at once; the extra ones stay quiet instead of piling up.
+	var rains: Array[AudioStreamPlayer] = []   # (rain never takes an engine's place: in a storm a tractor hums)
+	for k in Sound.MAX_LOOPS + 1:
+		rains.append(Sound.start_loop("rain"))
 	var hums: Array[AudioStreamPlayer] = []
 	for k in Sound.MAX_LOOPS + 2:
 		var p := Feedback.hum("engine")
 		if p != null:
 			hums.append(p)
 	_eq(Sound.loops_running(), Sound.MAX_LOOPS, "the number of engines humming is capped")
-	for p in hums:
+	for p in hums + rains:
 		Sound.stop_loop(p)
 	_eq(Sound.loops_running(), humming_before, "and they all stop (a loop another test left is not ours)")
 	_done(g)
