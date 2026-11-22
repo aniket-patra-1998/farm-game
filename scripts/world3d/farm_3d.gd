@@ -219,6 +219,7 @@ func _process_timed(_delta: float) -> void:
 	var centre := grid.to_local(camera_2d.get_screen_center_position())
 	IsoProjection.aim(camera, centre, camera_2d.zoom.x, get_viewport().get_visible_rect().size.y)
 	if _fog_warm > 0 and LoadingCover.covering > 0:
+		environment.fog_enabled = true   # (drawn with fog these frames, whatever the weather says)
 		_fog_warm -= 1
 		if _fog_warm == 0:
 			environment.fog_enabled = environment.fog_density > 0.0

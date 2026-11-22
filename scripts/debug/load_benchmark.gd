@@ -213,6 +213,8 @@ func _play() -> Dictionary:
 ## The farm played as a player plays it (ScenePlayer: the same scenes as tools/session_probe on a PC), each scene's
 ## frames: percentiles, the longest, hitches, and its long frames named by part (as a phone has them).
 func _scenes(which: Array[String] = ScenePlayer.SCENES) -> Dictionary:
+	var rid := get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(rid, true)   # (each long frame's render time in its note)
 	var player := ScenePlayer.new(_main)
 	player.frames = SCENE_FRAMES
 	player.panel_frames = PANEL_FRAMES
@@ -224,6 +226,7 @@ func _scenes(which: Array[String] = ScenePlayer.SCENES) -> Dictionary:
 		var s := await player.play(scene)
 		s.erase("worst_at")
 		out[scene] = s
+	RenderingServer.viewport_set_measure_render_time(rid, false)
 	return out
 
 

@@ -167,8 +167,11 @@ func frames_of(n: int, each: Callable) -> Array[float]:
 		var parts := PerfReadout._spans
 		PerfReadout._spans = {}
 		if ms > LONG_NOTE_MS and _notes.size() < NOTES_KEPT:
-			_notes.append("%.0f ms%s: %s" % [ms, (" (%s)" % _doing) if _doing != "" else "",   # not-ui
-				parts_line(parts, ms, FrameClock.process_ms())])
+			var vp := main.get_viewport().get_viewport_rid()
+			_notes.append("%.0f ms%s: %s, render cpu %.1f gpu %.1f" % [ms,   # not-ui
+				(" (%s)" % _doing) if _doing != "" else "", parts_line(parts, ms, FrameClock.process_ms()),
+				RenderingServer.viewport_get_measured_render_time_cpu(vp),
+				RenderingServer.viewport_get_measured_render_time_gpu(vp)])
 		last = now
 		if uncapped:
 			Engine.max_fps = 0
