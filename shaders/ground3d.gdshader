@@ -47,6 +47,7 @@ global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (
 // The still look painted once into a texture (Ground3D.bake), its colour; bake_rect is the
 // texture's corner and size in tiles. Off (and the look worked out live) until the bake is ready.
 uniform bool use_bake = false;
+uniform bool shade_baked = false;   // the painting carries the shade and wear too (the farm lawn's: Ground3D.bake)
 uniform sampler2D baked : source_color, filter_linear, repeat_disable;
 uniform vec4 bake_rect = vec4(0.0, 0.0, 1.0, 1.0);
 const float GRAIN = 0.1;   // the live grain over the baked look
@@ -64,7 +65,8 @@ void fragment() {
 	vec3 col;
 	float fine;
 	vec2 buv = (p - bake_rect.xy) / bake_rect.zw;
-	if (use_bake && buv.x > 0.0 && buv.y > 0.0 && buv.x < 1.0 && buv.y < 1.0) {
+	bool painted = use_bake && buv.x > 0.0 && buv.y > 0.0 && buv.x < 1.0 && buv.y < 1.0;
+	if (painted) {
 		// The still look, painted once (Ground3D's bake), with a crisp grain on top that the texture is too
 		// coarse to hold up close.
 		col = texture(baked, buv).rgb;
@@ -74,7 +76,7 @@ void fragment() {
 		col = ground_static(p, fine);
 	}
 	vec2 suv = (p - shade_rect.xy) / shade_rect.zw;
-	if (suv.x > 0.0 && suv.y > 0.0 && suv.x < 1.0 && suv.y < 1.0) {
+	if (!(painted && shade_baked) && suv.x > 0.0 && suv.y > 0.0 && suv.x < 1.0 && suv.y < 1.0) {
 		vec2 sw = texture(shade_map, suv).rg;
 		if (sw.g > 0.004) {
 			// Wear comes in ragged, so it reads as trodden ground and not a painted stain.

@@ -65,6 +65,7 @@ var _shade: Image                  # R: shade, G: wear (see the class notes)
 var _meadow_tufts := PackedFloat32Array()   # the meadow's tufts (MultiMesh buffer), kept: they never change
 var _shade_texture: ImageTexture
 var _baked_size := -1              # the farm size the ground's still look was painted for
+var _shade_later: Array = []       # shade passes to paint once their still look is ready ([grass, rect, res])
 var _bakes_waiting: Array = []     # [material, its viewport (weak), rect]: painted this frame, read from the next
 var _farm_flowers := {}            # farm tile index -> its flowers ([transform, colour] pairs), kept per tile
 var _meadow_flowers: Array = []    # the meadow's flowers, the same way (only the farm's size moves them)
@@ -72,6 +73,7 @@ var _farm_tufts := {}              # farm tile index -> its tufts (MultiMesh buf
 var _kinds_painted: Array[String] = []   # what stood on each tile when the shade was last painted (_kinds)
 var _shade_task := -1              # the worker painting the shade of a change (_paint_shade_later), -1: none
 var _shade_job := {}               # its farm size, kinds and, once painted, its image
+var _shade_started := 0           # the frame the painting under way began
 var _shade_next := {}              # the painting asked for while one was under way (only the latest is kept)
 var _lush := _make_lush()          # how thick the grass grows, a slow noise over the land
 var _tiles_seen := -1              # Game.tiles_revision when the shade was last checked
@@ -145,13 +147,15 @@ func _ready() -> void:
 ## Paints `grass`'s still look over `rect` (in tiles) into a texture once, at `res` texels a tile, and has the
 ## ground read it from then on (a phone does one lookup a pixel instead of some forty noise samples). Painted in an
 ## off-screen viewport the frame after; until then (and with no screen at all) the ground works its look out live.
-func bake(grass: ShaderMaterial, rect: Rect2, res: int) -> void:
+## `shade_pass`: the farm lawn's (the still look is kept and a shade pass painted over it, now and after each
+## change: `with_shade` for that pass).
+func bake(grass: ShaderMaterial, rect: Rect2, res: int, shade_pass := false, with_shade := false) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
-	if grass.has_meta(&"bake"):
-		var old: Object = (grass.get_meta(&"bake") as WeakRef).get_ref()
-		if old != null:
-			(old as Node).queue_free()
+	# (A painting already shown stays until the new one is ready: _baked lets it go. Read live meanwhile, the
+	# ground cost the A05s 240 ms more a frame.)
+	var shown := grass.has_meta(&"bake") and (grass.get_meta(&"bake") as WeakRef).get_ref() != null \
+		and bool(grass.get_shader_parameter("use_bake"))
 	var vp := SubViewport.new()
 	vp.size = Vector2i(ceili(rect.size.x * res), ceili(rect.size.y * res))
 	vp.own_world_3d = true
@@ -162,6 +166,15 @@ func bake(grass: ShaderMaterial, rect: Rect2, res: int) -> void:
 		var v: Variant = grass.get_shader_parameter(name)
 		if v != null:
 			m.set_shader_parameter(name, v)   # (the same values: both shaders treat them alike)
+	var still: SubViewport = (grass.get_meta(&"still") as WeakRef).get_ref() if grass.has_meta(&"still") else null
+	with_shade = with_shade and _shade_texture != null and still != null
+	m.set_shader_parameter("with_shade", with_shade)
+	if with_shade:   # (the still look painted once is read back; only the shade is worked out)
+		m.set_shader_parameter("shade_map", _shade_texture)
+		m.set_shader_parameter("shade_rect", grass.get_shader_parameter("shade_rect"))
+		m.set_shader_parameter("use_base", true)
+		m.set_shader_parameter("base", still.get_texture())
+		m.set_shader_parameter("base_rect", Vector4(rect.position.x, rect.position.y, rect.size.x, rect.size.y))
 	var plane := MeshInstance3D.new()
 	var mesh := PlaneMesh.new()
 	mesh.size = rect.size
@@ -181,9 +194,16 @@ func bake(grass: ShaderMaterial, rect: Rect2, res: int) -> void:
 	var r4 := Vector4(rect.position.x, rect.position.y, rect.size.x, rect.size.y)
 	add_child(vp)
 	var ref: WeakRef = weakref(vp)
+	var before: Variant = grass.get_meta(&"bake") if grass.has_meta(&"bake") else null
 	grass.set_meta(&"bake", ref)
-	grass.set_shader_parameter("use_bake", false)
-	_bakes_waiting.append([grass, ref, r4])
+	if not shown:
+		grass.set_shader_parameter("use_bake", false)
+	var old_still: Variant = null
+	if not with_shade and shade_pass:
+		old_still = grass.get_meta(&"still") if grass.has_meta(&"still") else null
+		grass.set_meta(&"still", ref)   # (the still look, kept: each shade pass reads it)
+	_bakes_waiting.append([grass, ref, r4, with_shade, before, shade_pass and not with_shade, rect, res,
+		old_still])
 	if not RenderingServer.frame_post_draw.is_connected(_baked):
 		RenderingServer.frame_post_draw.connect(_baked, CONNECT_ONE_SHOT)
 
@@ -198,7 +218,20 @@ func _baked() -> void:
 		grass.set_shader_parameter("baked", vp.get_texture())
 		grass.set_shader_parameter("bake_rect", w[2])
 		grass.set_shader_parameter("use_bake", true)
+		grass.set_shader_parameter("shade_baked", w[3])
+		var old: Object = (w[4] as WeakRef).get_ref() if w[4] is WeakRef else null
+		var still: Object = (grass.get_meta(&"still") as WeakRef).get_ref() if grass.has_meta(&"still") else null
+		if old != null and old != vp and old != still:
+			(old as Node).queue_free()   # (the painting it replaces, kept on screen until now)
+		var old_still: Object = (w[8] as WeakRef).get_ref() if w[8] is WeakRef else null
+		if old_still != null and old_still != vp:
+			(old_still as Node).queue_free()   # (the still look of a farm of another size)
+		if w[5]:
+			_shade_later.append([grass, w[6], w[7]])   # (a still look painted: its shade goes over it next)
 	_bakes_waiting.clear()
+	for s: Array in _shade_later:
+		bake(s[0], s[1], s[2], true, true)
+	_shade_later.clear()
 
 
 static func _make_lush() -> FastNoiseLite:
@@ -258,7 +291,7 @@ func rebuild_timed() -> void:
 	_grass[1].set_shader_parameter("edge_n", float(n))
 	if n != _baked_size:
 		_baked_size = n
-		bake(_grass[0], Rect2(0, 0, n, n), BAKE_FARM_RES)
+		bake(_grass[0], Rect2(0, 0, n, n), BAKE_FARM_RES, true)   # (the lawn: its shade painted over it too)
 		bake(_grass[1], Rect2(-MEADOW, -MEADOW, n + MEADOW * 2.0, n + MEADOW * 2.0), BAKE_MEADOW_RES)
 	_paint_shade(n)
 	if _farm_tufts.size() != n * n:
@@ -321,14 +354,17 @@ func _paint_shade_later(n: int, kinds: Array[String]) -> void:
 		return
 	var job := {"n": n, "kinds": kinds}
 	_shade_job = job
+	_shade_started = Engine.get_process_frames()
 	_shade_task = WorkerThreadPool.add_task(func() -> void: job["image"] = shade_image(n, kinds), false,
 		"ground shade")   # not-ui
 	set_process(true)
 
 
-## Puts a finished painting on the ground (never waiting on the worker here), then starts the one that waited.
+## Puts the worker's painting on the ground (waiting for it only once a frame has gone by), then starts the one
+## that waited.
 func _process(_delta: float) -> void:
-	_finish_shade(false)
+	# (done or not, a painting started last frame goes on now: a change shows a frame later at most)
+	_finish_shade(Engine.get_process_frames() > _shade_started)
 	if _shade_task < 0 and not _shade_next.is_empty():
 		var next := _shade_next
 		_shade_next = {}
@@ -400,6 +436,8 @@ func _apply_shade(n: int, kinds: Array[String], image: Image) -> void:
 	for m in _grass:
 		m.set_shader_parameter("shade_map", _shade_texture)
 		m.set_shader_parameter("shade_rect", rect)
+	if _baked_size == n and _grass[0].has_meta(&"still"):
+		bake(_grass[0], Rect2(0, 0, n, n), BAKE_FARM_RES, true, true)   # (the shade again, over the still look)
 	if _farm_tufts.size() != n * n or before.size() != n * n:
 		return   # (the whole farm's tufts are laid by the rebuild that follows)
 	# Only the grass that the change wore or freed is laid again: the tiles whose kind changed, and those their

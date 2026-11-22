@@ -243,3 +243,9 @@ was found and done:
 - **The A05s, 22 Nov, low from the start**: 102 ms a frame (GPU 101, scripts 28, render CPU 5). The ground's
   shading is 38 ms of it (drawn plain and unlit instead); its painted look saves 237 ms. The benchmark now tries
   the ground's shader part by part (unlit, no grain, no shade map) to say which part costs.
+- **The first rain froze the A05s 1.2 s twice** even so: rain brings haze, and turning the scene's fog on makes the
+  GPU build every material's fog variant at once. Fog is on, at no density, for a few frames under the first
+  loading cover (Farm3D.FOG_WARM_FRAMES).
+- **The ground's shade and wear (17 of 102 ms on the A05s)** are painted into the lawn's still look in a light
+  second pass (ground_bake.gdshader `with_shade` over `base`), painted again after each change; the old painting
+  stays on screen until the new one is ready. The lighting (30 ms) is what remains of the ground's cost.

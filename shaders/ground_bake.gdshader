@@ -27,6 +27,16 @@ uniform float hollows = 0.4;    // how much the damp hollows darken the grass (l
 // trodden straw and earth. shade_rect is the map's corner and size in tiles.
 uniform vec3 worn : source_color = vec3(0.62, 0.58, 0.36);
 uniform float shade_strength = 0.42;
+// The farm lawn's painting carries the shade and wear too (with_shade), painted again when they change: the
+// ground then reads them from its painting, not the map and its noise each frame (17 of the A05s's 102 ms).
+uniform bool with_shade = false;
+uniform sampler2D shade_map : filter_linear, repeat_disable;
+uniform vec4 shade_rect = vec4(0.0, 0.0, 1.0, 1.0);
+// With the still look already painted (`base`, over base_rect in tiles), the shade pass reads it instead of
+// working it out again: painting the shade after each change then costs a texture read, not the whole look.
+uniform bool use_base = false;
+uniform sampler2D base : source_color, filter_linear, repeat_disable;
+uniform vec4 base_rect = vec4(0.0, 0.0, 1.0, 1.0);
 
 // The meadow's own: the woods (Ground3D paints where the trees are into forest_map, in tiles from forest_rect's
 // corner) get a forest floor, and the ground just outside the farm's raised edge is shaded where it meets it.
@@ -49,5 +59,19 @@ void vertex() {
 
 void fragment() {
 	float fine;
-	ALBEDO = ground_static(world_pos.xz, fine);
+	vec2 p = world_pos.xz;
+	vec3 col = use_base ? texture(base, (p - base_rect.xy) / base_rect.zw).rgb : ground_static(p, fine);
+	if (with_shade) {
+		fine = noise(p * 7.3);   // (the grain the ground lays over its painting, as ground3d does)
+		vec2 suv = (p - shade_rect.xy) / shade_rect.zw;
+		if (suv.x > 0.0 && suv.y > 0.0 && suv.x < 1.0 && suv.y < 1.0) {
+			vec2 sw = texture(shade_map, suv).rg;
+			if (sw.g > 0.004) {
+				float ragged = smoothstep(0.2, 0.8, sw.g * (0.6 + 0.8 * fbm(p * 1.7 + 3.0)));
+				col = mix(col, worn * (0.9 + 0.2 * fine), ragged * 0.75);
+			}
+			col *= 1.0 - shade_strength * sw.r;
+		}
+	}
+	ALBEDO = col;
 }

@@ -17,6 +17,9 @@ const MOON_ENERGY := 0.3      # a deep night (owner's pick B, 19 Nov: night must
 const NIGHT_AMBIENT := 0.25   # (owner's pick B, 19 Nov)
 const NIGHT_BLUE := 0.7       # how far the shade turns moonlit blue at full night
 const MOONLIT := Color(0.55, 0.64, 0.92)
+## Frames the fog is on (at no density) under the first loading cover: turning fog on makes the GPU build every
+## material's fog variant at once, and the A05s froze 2.4 s when the first rain's haze came; built here, unseen.
+const FOG_WARM_FRAMES := 4
 const SETTING := "farm/world/use_3d"
 const SHADOW_DISTANCE := 90.0
 const SUN_MAX_ELEVATION := deg_to_rad(58.0)
@@ -27,6 +30,7 @@ const GRADE_STEP := 0.04         # the colour grade is rebuilt only when its war
 const FILL_ENERGY := 0.32        # of the sun's: the sky's light into the shade
 
 var grid: FarmGrid
+var _fog_warm := FOG_WARM_FRAMES   # frames of fog still to draw under the cover
 var camera_2d: Camera2D
 
 var camera: Camera3D
@@ -214,6 +218,12 @@ func _process_timed(_delta: float) -> void:
 		return
 	var centre := grid.to_local(camera_2d.get_screen_center_position())
 	IsoProjection.aim(camera, centre, camera_2d.zoom.x, get_viewport().get_visible_rect().size.y)
+	if _fog_warm > 0 and LoadingCover.covering > 0:
+		_fog_warm -= 1
+		if _fog_warm == 0:
+			environment.fog_enabled = environment.fog_density > 0.0
+	elif _fog_warm > 0 and LoadingCover.covering == 0 and Engine.get_process_frames() > FOG_WARM_FRAMES * 4:
+		_fog_warm = 0   # (no cover came: nothing to warm under)
 	if environment.fog_enabled:
 		_fit_fog()
 	# A lightning flash lights the whole frame for a moment (Lightning3D.flash).
@@ -310,7 +320,7 @@ func set_daylight(hour: float, weather: Dictionary) -> void:
 	# meadow and woods fade into haze, and a thin mist lies on the ground.
 	var fog := float(weather.get("fog", 0.0))
 	var rules := WeatherEvents.data("fog")
-	environment.fog_enabled = fog > 0.01
+	environment.fog_enabled = fog > 0.01 or _fog_warm > 0   # (on under the first cover: FOG_WARM_FRAMES)
 	environment.fog_mode = Environment.FOG_MODE_DEPTH
 	environment.fog_light_color = horizon.lerp(Color(0.85, 0.88, 0.9), 0.6)
 	environment.fog_density = fog * float(rules.get("most", 0.85))
