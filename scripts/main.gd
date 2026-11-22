@@ -7,6 +7,8 @@ extends Node2D
 ## Mouse: wheel to zoom, right- or middle-drag to move. Trackpad gestures also work.
 
 const FAR_FLASH := 0.35       # the 2D world's screen flash for the farthest strike (a near one is full)
+const WARM_WEATHERS: Array[String] = ["rain", "storm", "snow", "fog"]   # under the first cover: _warm_weather
+const WARM_WEATHER_FRAMES := 4
 const SCREEN_FLASH_3D := 0.35 # in 3D the frame lights itself (Lightning3D.flash): the screen adds a little
 const INK := 0.0   # the dark outline drawn round things (grade.gdshader), 0 off: FarmVille's inked look
 const INK_FROM := 0.22    # how small a jump in light or colour is an edge (lower: more lines)
@@ -36,6 +38,8 @@ var weather_events: WeatherEvents
 var world_3d: Farm3D        # the farm in real 3D (project setting farm/world/use_3d), behind the 2D layers
 
 var _base_zoom := 1.0       # zoom that shows the whole farm (you can pull back a little past it)
+var _warm_at := 0         # frames into the weather warm-up under the first cover (-1: done)
+var _warm_was := ""       # the weather override before it
 var _last_input_msec := 0   # when the player last touched anything (0: not yet), for the idle view
 var _idle_after_msec := 0   # how long with no touch before the interface fades away (0 never)
 var _was_night := false     # it was night at the last look (first light after it: the rooster)
@@ -304,10 +308,29 @@ static func zoom_limits(side: float, base: float) -> Vector2:
 	return Vector2(base / FURTHEST_OUT, closest)
 
 
+## Under the first loading cover, every kind of weather is shown for a few frames, unseen, then the real weather
+## again: the first rain on the A05s cost two frames of 1.1 s of GPU (all it brings drawn the first time: wet
+## ground, rain on water, haze, its sky), mid-game. Shown here they are ready before the farm is.
+func _warm_weather() -> void:
+	if _warm_at < 0:
+		return
+	if LoadingCover.covering == 0:
+		if _warm_at > 0:
+			Game.weather_override = _warm_was
+		_warm_at = -1   # (once only: the first cover; no cover, nothing to do it under)
+		return
+	if _warm_at == 0:
+		_warm_was = Game.weather_override
+	var k := _warm_at / WARM_WEATHER_FRAMES
+	Game.weather_override = WARM_WEATHERS[k] if k < WARM_WEATHERS.size() else _warm_was
+	_warm_at += 1 if k < WARM_WEATHERS.size() else 0
+
+
 # ---------------------------------------------------------------- time of day
 
 func _process(_delta: float) -> void:
 	_rest_when_idle()
+	_warm_weather()
 	var hour := sky.hour
 	var look := DayCycle.sample(hour)
 	var w := Game.weather()
