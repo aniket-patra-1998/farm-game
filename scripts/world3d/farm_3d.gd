@@ -30,7 +30,6 @@ const GRADE_STEP := 0.04         # the colour grade is rebuilt only when its war
 const FILL_ENERGY := 0.32        # of the sun's: the sky's light into the shade
 
 var grid: FarmGrid
-var _fog_warm := FOG_WARM_FRAMES   # frames of fog still to draw under the cover
 var camera_2d: Camera2D
 
 var camera: Camera3D
@@ -46,6 +45,7 @@ var objects: Objects3D
 var trees: TreeLife
 var farmer: Farmer3D
 var _grade_warmth := -1.0
+var _fog_warm := FOG_WARM_FRAMES   # frames of fog still to draw under the cover
 var _grade_lift := Vector3.ZERO   # main's night lift for the shadows (folded into the colour grade's dark end)
 var _grade_sat := 1.0             # and its saturation and contrast, folded into the environment's
 var _grade_contrast := 1.0
