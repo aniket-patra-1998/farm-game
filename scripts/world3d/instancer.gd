@@ -36,6 +36,11 @@ static func variant(row: int, col: int, count := VARIANTS) -> int:
 
 ## A copy of what `build` makes (a baked Node3D), built once per `key`. The copy has its own nodes and shares
 ## the template's meshes, materials and metadata.
+## Whether `key`'s model is at hand without building it: made this session, or kept on disk (ModelStore).
+static func has_ready(key: String) -> bool:
+	return _templates.has(key) or ModelStore.has(key)
+
+
 static func copy_of(key: String, build: Callable) -> Node3D:
 	if not _templates.has(key):
 		if _templates.size() >= KEPT:

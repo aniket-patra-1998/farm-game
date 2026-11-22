@@ -324,3 +324,22 @@ func test_622_the_days_jobs_are_made_quickly_on_a_full_farm() -> void:
 					slow.append(d as RecipeDef)
 		_eq(Game.catalog.recipes_of(building), slow, "the %s's recipes in their order" % building)
 	Game.open_own_farm()
+
+
+## In play a tree placed among others is not built anew there and then (its crowded look took 160 ms on a PC): it
+## stands as it would alone until the farm next opens; a look built or kept before is used at once.
+func test_623_a_tree_placed_among_others_waits_for_its_crowded_look() -> void:
+	var objects: Objects3D = await _drawn_farm(14, [["apple_tree", 3, 3], ["apple_tree", 3, 5]])
+	var made := Instancer._templates.size()
+	Game.coins += 1000000
+	var uid := Game.next_uid
+	Game.add_object({"uid": uid, "id": "apple_tree", "row": 3, "col": 4, "t": Game.now()})
+	Game.next_uid += 1
+	Game.objects_updated(uid)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(objects.view_of(uid) != null, "the tree stands")
+	_check(objects.may_build() == false, "in play, a crowded look not built yet waits")
+	_eq(Instancer._templates.size(), made, "no crowded look was built for it in play")
+	Game.objects_changed.disconnect(objects.queue_sync)
+	objects.queue_free()

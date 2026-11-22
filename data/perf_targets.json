@@ -1,8 +1,8 @@
 {
-  "_doc": "What tools/session_probe holds on every push (the processor's side only: it runs headless, with no graphics, so a green probe says nothing of the GPU; the phone benchmark measures that) (CI, after the tests): the longest frame of each scene ScenePlayer plays (ms on the 2-core runner, scaled by TestSuite's yardstick on a slower one) and the scripts' cost a frame on each farm. A scene's own limit, else the farm's, else `default_max_ms`. Set 22 Nov 2026 from measured runs with room for noise; lowered as the game gets faster, never raised to let a regression through (the owner, 22 Nov: 'we keep circling back to this'). `place` stands at 120 until a tree's new crowded look is built off the main thread (16 to 56 ms on a PC when a placing needs one: docs/NEXT.md).",
+  "_doc": "What tools/session_probe holds on every push (the processor's side only: it runs headless, with no graphics, so a green probe says nothing of the GPU; the phone benchmark measures that) (CI, after the tests): the longest frame of each scene ScenePlayer plays (ms on the 2-core runner, scaled by TestSuite's yardstick on a slower one) and the scripts' cost a frame on each farm. A scene's own limit, else the farm's, else `default_max_ms`. Set 22 Nov 2026 from measured runs with room for noise; lowered as the game gets faster, never raised to let a regression through (the owner, 22 Nov: 'we keep circling back to this').",
   "default_max_ms": 60,
   "scenes": {"still": 40, "pan": 40, "zoom": 40, "rain": 40, "storm": 40, "snow": 50, "fog": 50, "night": 40,
-    "panels": 50, "place": 120, "limited": 90, "harvest": 90, "skip_hour": 50},
+    "panels": 50, "place": 50, "limited": 50, "harvest": 70, "skip_hour": 50},
   "farm_scenes": {"new": {"still": 90}},
   "scripts_ms": {"new": 1.0, "showcase": 2.5, "filled": 3.5},
   "open_ms": {"new": 1500, "showcase": 12000, "filled": 14000}

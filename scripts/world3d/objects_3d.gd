@@ -447,6 +447,14 @@ static func _add_neighbours(into: Dictionary, rect: Rect2i) -> void:
 				into[int(n["uid"])] = true
 
 
+## Whether a look not built yet may be built now: while a farm opens (under its cover) yes; in play a tree's or
+## bloom's crowded look waits (built and kept, it took 160 ms on a PC when a placing needed one: a freeze on a
+## phone), shown meanwhile as it stands alone, and is built the next time the farm opens. One built or kept
+## before (Instancer, ModelStore) is used at once.
+func may_build() -> bool:
+	return not _synced_once or LoadingCover.covering > 0
+
+
 ## How long a frame may build for: longer while a farm opens (nothing stands yet and the player is waiting for it),
 ## the usual BUILD_BUDGET_MS once it stands (so later changes never cost a hitch).
 func _budget_ms() -> int:
@@ -927,13 +935,16 @@ func state_of(o: Dictionary) -> Dictionary:
 ## A tree's look (one of Instancer.VARIANTS, `look`), shared. A lone tree comes from its file (one of its
 ## TREE_LOOKS, ready or not: art/models/trees, made by tools/export_plants); one standing among others
 ## (`mask`: Crowding) and a tree with no file are built once, or loaded when kept (ModelStore).
-static func tree_look(id: String, mask: int, look: int, from_file := true) -> Node3D:
+static func tree_look(id: String, mask: int, look: int, from_file := true, build_now := true) -> Node3D:
 	if from_file and mask == 0 and AssetRegistry.has_model(id):
 		return AssetRegistry.instance(id, {"look": look % TREE_LOOKS})
 	var it := Game.item_data(id)
 	var fp := Game.footprint(id)
 	var grown := ScaleGuide.factor(id)
-	return Instancer.copy_of(Instancer.key_of(["tree", id, grown, mask, look]), func() -> Node3D:
+	var key := Instancer.key_of(["tree", id, grown, mask, look])
+	if not build_now and mask != 0 and not Instancer.has_ready(key):
+		return tree_look(id, 0, look, from_file)   # (see `may_build`: its crowded look comes when the farm opens)
+	return Instancer.copy_of(key, func() -> Node3D:
 		var tree := Node3D.new()
 		TreeSpec.builder().build_at(tree, Vector3(fp.x / 2.0, 0, fp.y / 2.0), it, grown, true, look, true, TreeSpec.UNSET,
 			mask)
@@ -944,11 +955,14 @@ static func tree_look(id: String, mask: int, look: int, from_file := true) -> No
 ## file (one of its BLOOM_LOOKS, whatever its age: its shader shows its life, `ripen`; art/models/blooms, made by
 ## tools/export_plants); one standing among others (`mask`: Crowding) and a bloom with no file are built once
 ## (BloomModel), brought inside the tile and kept.
-static func bloom_look(id: String, mask: int, look: int, from_file := true) -> Node3D:
+static func bloom_look(id: String, mask: int, look: int, from_file := true, build_now := true) -> Node3D:
 	if from_file and mask == 0 and AssetRegistry.has_model(id):
 		return AssetRegistry.instance(id, {"look": look % BLOOM_LOOKS})
 	var grown := ScaleGuide.factor(id)
-	return Instancer.copy_of(Instancer.key_of(["bloom", id, grown, mask, look]), func() -> Node3D:
+	var key := Instancer.key_of(["bloom", id, grown, mask, look])
+	if not build_now and mask != 0 and not Instancer.has_ready(key):
+		return bloom_look(id, 0, look, from_file)   # (as a tree's: `may_build`)
+	return Instancer.copy_of(key, func() -> Node3D:
 		return SpaceFit.fit_model(BloomModel.build(Game.item_data(id), {"id": id, "uid": look}, grown, look, mask),
 			Game.footprint(id)))
 
@@ -1141,7 +1155,7 @@ func _build(o: Dictionary) -> Node3D:
 				var look := Instancer.variant(int(o["row"]), int(o["col"]))
 				var grown := ScaleGuide.factor(str(o["id"]))
 				var mask := Crowding.mask(o)
-				node = tree_look(str(o["id"]), mask, look)   # (one look, ready or not: its fruit grows on it, `ripen`)
+				node = tree_look(str(o["id"]), mask, look, true, may_build())   # (ready or not: its fruit grows, `ripen`)
 				# (A tree with neighbours is neither turned nor resized: which of its sides they cover is part of
 				# its look, and its crown must not reach into theirs.)
 				if mask == 0:
@@ -1178,7 +1192,8 @@ func _build(o: Dictionary) -> Node3D:
 			"bloom":
 				# One of a few looks (Instancer), as for trees: from its file when it stands on its own.
 				# (one look whether in bud, in bloom or withered: its shader shows its life by the clock, `ripen`)
-				node = bloom_look(str(o["id"]), Crowding.mask(o), Instancer.variant(int(o["row"]), int(o["col"])))
+				node = bloom_look(str(o["id"]), Crowding.mask(o), Instancer.variant(int(o["row"]), int(o["col"])), true,
+					may_build())
 			_:
 				if Game.under_construction(o):
 					node = ModelKit.bake(BuildingSpec.model().build_site(it, fp, Game.land.construction_progress(o)))

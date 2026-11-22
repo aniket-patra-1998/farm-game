@@ -36,6 +36,18 @@ static func cached(key: String, build: Callable) -> Node3D:
 
 ## The model kept for `key`, or null (none kept, or the store is off). For things built over several frames
 ## (the woods): ask first, build when null, then `keep` what was built.
+## Whether a model is kept for `key` (in the game or on the phone), without loading it.
+static func has(key: String) -> bool:
+	_start()
+	if stamp == "":
+		return false
+	var file := key.md5_text() + ".scn"
+	for dir: String in [SHIPPED, _own_dir()]:
+		if FileAccess.file_exists(dir + "/" + file) or ResourceLoader.exists(dir + "/" + file):
+			return true
+	return false
+
+
 static func fetch(key: String) -> Node3D:
 	_start()
 	if stamp == "":
