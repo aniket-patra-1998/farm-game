@@ -6,6 +6,7 @@ const GHOST := "res://art/models/limited_test/ghost.glb"   # a file no app has: 
 const MADE := "user://test_packs_made"
 const BROKEN := "user://test_packs_broken"
 const KEPT := "user://test_packs_kept"
+const KEPT_624 := "user://test_packs_kept_624"
 
 
 func _wipe(folder: String) -> void:
@@ -154,7 +155,8 @@ func test_610_the_limited_tabs_download_fetches_every_pack() -> void:
 
 
 func test_624_the_downloader_waits_its_turn_needs_room_heeds_the_app_and_packs_no_code() -> void:
-	for folder: String in [MADE, KEPT]:
+	# (Its own kept folder: 583's kept pack is loaded for the rest of the run and must stay where it is.)
+	for folder: String in [MADE, KEPT_624]:
 		_wipe(folder)
 	var model := str(AssetRegistry.entry("galaxy_cow")["model"])
 	# A pack never carries code (Google Play forbids downloading it): every script ships in the app.
@@ -168,7 +170,7 @@ func test_624_the_downloader_waits_its_turn_needs_room_heeds_the_app_and_packs_n
 	_write(MADE.path_join(PackMaker.MANIFEST), {AssetPacks.MIN_APP: 5, "ghost": entry})
 	var packs := AssetPacks.new()
 	add_child(packs)
-	packs.kept = KEPT
+	packs.kept = KEPT_624
 	packs.app_code = 4
 	packs.add_pack("ghost", files)
 	var said := {"update": 0, "room": 0, "wait": 0}
@@ -178,21 +180,21 @@ func test_624_the_downloader_waits_its_turn_needs_room_heeds_the_app_and_packs_n
 	packs.source = FolderPackSource.new(MADE)
 	packs.want(GHOST)
 	_check(said["update"] == 1 and packs.stopped and said["wait"] == 0, "an older app asks for an update, once")
-	_check(not FileAccess.file_exists(KEPT.path_join(str(entry["file"]))), "and fetches nothing")
+	_check(not FileAccess.file_exists(KEPT_624.path_join(str(entry["file"]))), "and fetches nothing")
 	packs.fetch_all()
 	_eq(said["update"], 1, "nor tries again this session")
 	packs.free()
 	# A device without room for the pack: said, nothing written, tried again later at a wait jittered around RETRY.
 	packs = AssetPacks.new()
 	add_child(packs)
-	packs.kept = KEPT
+	packs.kept = KEPT_624
 	packs.app_code = 5
 	packs.spare_bytes = 1 << 60   # (more room than any device has)
 	packs.add_pack("ghost", files)
 	packs.no_room.connect(func() -> void: said["room"] += 1)
 	packs.source = FolderPackSource.new(MADE)
 	packs.want(GHOST)
-	_check(said["room"] == 1 and not FileAccess.file_exists(KEPT.path_join(str(entry["file"]) + AssetPacks.PART)),
+	_check(said["room"] == 1 and not FileAccess.file_exists(KEPT_624.path_join(str(entry["file"]) + AssetPacks.PART)),
 		"no room: said, and nothing half-written")
 	var again := packs.get("_again") as Timer
 	_check(again != null and again.time_left > 0.0, "tried again later")
