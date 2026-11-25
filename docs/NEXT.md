@@ -1488,3 +1488,8 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - The plan and its order are in docs/PACKS.md "Online". Step 1 (the downloader made safe: jitter, room, app
   version, no code in packs; `packs_test` 624) is done. Step 2 waits on the owner's Cloudflare account and a
   domain; until then packs stay on the GitHub release.
+- 25 Nov, later: level packs (step 3) and the online-only start (step 4) pushed; 90 packs (179 MB) on Pages.
+  A05s bench (e564e26): the ground's lighting try fell from ~30 ms to 3.7 ms (vertex lighting works), but play
+  stayed ~102 ms GPU; `ground_plain` still saves 41.6 ms (the grass shader itself), the next GPU target.
+  Cloud save (step 5) waits on the owner's Play Console (Play Games Services, Saved Games, the game's app ID).
+  The Play AAB must not ship the showcase's baked models (res://baked): no AAB workflow exists yet.
