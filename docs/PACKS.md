@@ -60,7 +60,10 @@ is the point"). The plan, from the research of 25 Nov, in this order, each pushe
    written by the tool); the debug and benchmark APKs keep them, so the phone bench draws the same farm, and a
    pack the app already has is never fetched (`in_app`). About 105 MB of source files leave the AAB.
    Still to do for the AAB: it must not ship the showcase's baked models (res://baked, 138 MB in the APK).
-4. **Online-only start** (the manifest fetched to start; a dropped connection carries on with a badge).
+4. **Online-only start (done 25 Nov, `packs_test` 626).** data/packs.json `online_only`: on a phone, OnlineGate
+   fetches the packs' list while the farm opens (`AssetPacks.reach`; an online player waits for nothing).
+   Without an answer it covers the game, paused, in the loading cover's look: "You're offline" and Retry. A
+   connection lost later lets play go on (packs wait and are tried again). Off on desktops, in tests and CI.
 5. **Cloud save**: Google Play Games saved games (free, 3 MB a save; ours is about 20 KB), with a conflict choice.
 
 ## Tried, and not

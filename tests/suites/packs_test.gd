@@ -260,3 +260,29 @@ func test_625_level_packs_come_a_level_ahead_extras_last_and_never_what_the_app_
 	_eq(packs.total(), 1, "the Limited tab counts only its own pack")
 	_check(packs.limited_pack("limited_one") and not packs.limited_pack("level_06"), "a level pack is not Limited")
 	packs.free()
+
+
+func test_626_the_start_asks_the_source_and_only_a_phone_is_kept_offline() -> void:
+	for folder: String in [MADE, KEPT_624]:
+		_wipe(folder)
+	_write(MADE.path_join(PackMaker.MANIFEST), {AssetPacks.MIN_APP: 1, "a": {"file": "a.pck", "bytes": 1, "sha256": "x"}})
+	var packs := AssetPacks.new()
+	add_child(packs)
+	packs.kept = KEPT_624
+	packs.app_code = 1
+	var heard: Array = []
+	packs.reach(func(ok: bool) -> void: heard.append(ok))
+	packs.source = FolderPackSource.new(MADE)
+	packs.reach(func(ok: bool) -> void: heard.append(ok))
+	packs.source = FolderPackSource.new("user://nowhere_at_all")
+	packs.reach(func(ok: bool) -> void: heard.append(ok))
+	_eq(heard, [true, true, false], "no source: every file is here; a source that answers; one that does not")
+	_check((packs.get("_manifest") as Dictionary).has("a"), "the list that came is kept for the fetches")
+	_check(not FileAccess.file_exists(KEPT_624.path_join(PackMaker.MANIFEST + AssetPacks.REACH)), "and not left over")
+	packs.free()
+	var config: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetPacks.CONFIG))
+	_check(bool(config.get("online_only", false)), "the game plays only online (owner, 25 Nov)")
+	OnlineGate.check(self)
+	_eq(get_children().filter(func(c: Node) -> bool: return c is OnlineGate).size(), 0,
+		"not on a desktop or in tests: the gate is a phone's")
+	_wipe(MADE)

@@ -32,6 +32,7 @@ const SPARE_BYTES := 20 * 1048576     # room left on the device besides a pack a
 const MIN_APP := "_min_app_code"      # in the manifest: the oldest app (version code) its packs work with
 const LEVEL_PACKS := "res://data/level_packs.json"   # the level packs (tools/make_level_packs.py)
 const EXTRAS := 0                     # a level pack's level for the extras: fetched at the start
+const REACH := ".reach"              # the list fetched by `reach` lands beside the kept one, never on it
 const AHEAD := 1                      # level packs are fetched this many levels before they are needed
 
 static var shared: AssetPacks         # the game's own (GameState makes it); null in tests that make none
@@ -40,6 +41,7 @@ var source: PackSource                # where packs come from; null: nothing is 
 var kept := KEPT                      # the folder packs are kept in
 var app_code := 0                     # this app's version code (data/packs.json `app_code`, as exported)
 var spare_bytes := SPARE_BYTES        # room kept free besides a pack (tests ask for more than any device has)
+var online_only := false              # the game plays only online (data/packs.json; OnlineGate asks `reach`)
 var stopped := false                  # the source needs a newer app: nothing is fetched this session
 
 var _levels := {}                     # level pack -> its level (EXTRAS for the extras)
@@ -74,6 +76,7 @@ static func begin(game: GameState) -> AssetPacks:
 	var config: Dictionary = game.read_json(CONFIG)
 	packs.source = source_for(str(config.get("base_url", "")), packs)
 	packs.app_code = int(config.get("app_code", 0))
+	packs.online_only = bool(config.get("online_only", false))
 	packs.load_kept()
 	shared = packs
 	return packs
@@ -159,6 +162,22 @@ func fetch_all() -> void:
 		if not _index.has(pack) and not _asked.has(pack) and not _levels.has(pack):
 			_asked.append(pack)
 	_next()
+
+
+## Whether the source answers: its list is fetched (and kept, when none is yet), then `done(ok)`. No source:
+## every file is in the app, ok. OnlineGate asks it at the start (the game plays only online).
+func reach(done: Callable) -> void:
+	if source == null:
+		done.call(true)
+		return
+	DirAccess.make_dir_recursive_absolute(kept)
+	var to := kept.path_join(MANIFEST + REACH)
+	source.fetch(MANIFEST, to, func(came: bool) -> void:
+		var list := DataFile.read_optional(to) if came else {}
+		DirAccess.remove_absolute(to)
+		if not list.is_empty() and _manifest.is_empty() and int(list.get(MIN_APP, 0)) <= app_code:
+			_manifest = list
+		done.call(not list.is_empty()))
 
 
 ## Fetches the level packs a player at `level` may soon use (docs/PACKS.md, Online): every level up to the next

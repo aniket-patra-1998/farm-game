@@ -153,6 +153,7 @@ func _ready() -> void:
 	StartMarks.mark("main_built")   # not-ui (the farm laid out, before its first frame)
 	if get_tree().current_scene == self:
 		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
+		OnlineGate.check(self)   # (the game plays only online: asked while the farm opens, docs/PACKS.md)
 		Game.farm_opened.connect(_on_farm_opened)
 		if StartMarks.benchmark_wanted():
 			load(StartMarks.BENCHMARK).start(self)   # (the benchmark build measures loading on the phone by itself, then quits)

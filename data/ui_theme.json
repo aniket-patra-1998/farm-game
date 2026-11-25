@@ -176,6 +176,8 @@
   "badge_size": 26,
   "loading_icon": 120,
   "loading_title": 40,
+  "loading_gap": 24,
+  "loading_text_w": 620,
     "card_words": 74
   },
  "numbers": {"_doc": "UiTheme.number: in full below short_from, then short (4.8k, 125k, 1.2M), rounded down, one decimal below one_decimal_below of a unit", "short_from": 1000, "one_decimal_below": 100},
