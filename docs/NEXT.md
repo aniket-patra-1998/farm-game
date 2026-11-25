@@ -1499,7 +1499,7 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   claude/world-pass-plan.md). Step 0 done on branch world-weather (draft PR; merging is the owner's call): fire,
   embers, smoke and lamps answer rain, wind and night through the shared shader values (flame3d, spray3d
   `weather`, the new lamp3d), the bonfire steams as rain puts it out, and the shade under animals and
-  decorations is drawn stronger at night (contact3d). Tests 627 to 630 (world_rules_test).
+  decorations is drawn stronger at night (contact3d). Tests 629 to 632 (world_rules_test).
 - Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
   prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
   "more character: fur and fleece more distinct", 12% smaller on the open farm, about 60% in a yard, bees half;

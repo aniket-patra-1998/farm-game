@@ -7,7 +7,7 @@ const WIND := "global uniform float wind"
 const DARK := "global uniform float dark"
 
 
-func test_627_an_open_fire_answers_the_rain_and_the_wind() -> void:
+func test_629_an_open_fire_answers_the_rain_and_the_wind() -> void:
 	var g := _farm()
 	var fire := DecorModel.build(g.item_data("bonfire"), g.footprint("bonfire"), {"id": "bonfire", "uid": 1})
 	var flames := _with_shader(fire, "flame3d")
@@ -27,7 +27,7 @@ func test_627_an_open_fire_answers_the_rain_and_the_wind() -> void:
 	fire.free()
 
 
-func test_628_smoke_answers_the_weather_and_water_does_not() -> void:
+func test_630_smoke_answers_the_weather_and_water_does_not() -> void:
 	_eq(DecorMotion.SMOKE.get("weather"), DecorMotion.SMOKE_THINS, "smoke is thinned and beaten down by rain")
 	_eq(DecorMotion.EFFECTS["smoke"], DecorMotion.SMOKE, "which every chimney's smoke is (a file's part or a built one)")
 	for still: Dictionary in [DecorMotion.JET, DecorMotion.CASCADE, DecorMotion.POUR, DecorMotion.GRAIN_FALL,
@@ -43,7 +43,7 @@ func test_628_smoke_answers_the_weather_and_water_does_not() -> void:
 	_check(spray.code.contains(RAIN) and spray.code.contains(WIND), "a spray reads the farm's own rain and wind")
 
 
-func test_629_a_lamp_is_lit_as_night_falls() -> void:
+func test_631_a_lamp_is_lit_as_night_falls() -> void:
 	var g := _farm()
 	var post := DecorModel.build(g.item_data("lamp_post"), g.footprint("lamp_post"), {"id": "lamp_post", "uid": 1})
 	var lights := _with_shader(post, "lamp3d")
@@ -54,7 +54,7 @@ func test_629_a_lamp_is_lit_as_night_falls() -> void:
 	post.free()
 
 
-func test_630_a_things_shade_on_the_ground_reads_at_night() -> void:
+func test_632_a_things_shade_on_the_ground_reads_at_night() -> void:
 	var shade := load("res://shaders/contact3d.gdshader") as Shader
 	_check(shade.code.contains(DARK),
 		"the shade under a thing is drawn stronger at night, when no cast shadow holds it down")
