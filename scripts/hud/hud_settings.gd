@@ -12,7 +12,7 @@ const FIELD_WIDE := 3.0   # a row's field or slider, in panel buttons' least wid
 ## What each graphics level does, in a word.
 const QUALITY_EFFECTS := {"low": "GRAPHICS_LOW_EFFECT", "mid": "GRAPHICS_MID_EFFECT", "high": "GRAPHICS_HIGH_EFFECT",
 	"ultra": "GRAPHICS_ULTRA_EFFECT"}
-const FONT_LICENCE := "res://fonts/OFL.txt"   # exported by the presets' include_filter
+const FONT_LICENCE := "res://fonts/OFL.txt"   # exported by the presets' include_filter   # not-ui
 
 var hud: FarmHud
 
