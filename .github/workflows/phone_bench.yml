@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 40
     env:
       PROJECT: ${{ vars.FIREBASE_PROJECT }}
-      DEVICES: ${{ github.event.inputs.devices || vars.FTL_DEVICES || 'model=a05s,version=35' }}
+      DEVICES: ${{ github.event.inputs.devices || vars.FTL_DEVICES || 'model=a05s,version=35;model=SC-53C,version=36' }}
     steps:
       - name: Set up?
         id: ready
