@@ -203,7 +203,7 @@ var _holding := 0          # hold_updates depth
 var _held_update := false  # an objects_updated came while held
 var _held_uids := {}       # ..or only these things changed in place while held
 var _load_trace: Script = null   # LoadTrace, once a trace was begun (trace_begin)
-var _said_packs := false   # the player has been told a pack is waiting for the network (once a session)
+var _said_packs: Array[String] = []   # what the player has been told of packs (each once a session)
 
 
 func _init() -> void:
@@ -264,7 +264,10 @@ func _ready() -> void:
 	StartMarks.mark("data")   # not-ui (every system's data read)
 	if AssetPacks.shared == null and self == get_node_or_null(^"/root/Game"):   # not-ui (the game's own, not a test's)
 		# Files left out of the app (docs/PACKS.md): the kept ones are loaded now, the rest fetched when first drawn.
-		AssetPacks.begin(self).waiting.connect(_packs_waiting)
+		var packs := AssetPacks.begin(self)
+		packs.waiting.connect(_packs_said.bind("PACK_WAITING"))
+		packs.no_room.connect(_packs_said.bind("PACK_NO_ROOM"))
+		packs.update_needed.connect(_packs_said.bind("PACK_UPDATE"))
 	if not saving_enabled or not load_game():
 		_new_game()
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has(SHOWCASE_ARG):
@@ -619,11 +622,12 @@ func grass_over(item_id: String, row: int, col: int) -> void:
 			plots[index_of(r, c)] = {"state": "grass"}
 
 
-## A pack could not be fetched (AssetPacks): said once a session; the animal keeps its stand-in till it comes.
-func _packs_waiting() -> void:
-	if not _said_packs:
-		_said_packs = true
-		message.emit(tr("PACK_WAITING"))
+## A pack could not be fetched (AssetPacks: no network, no room, or the app needs an update): each said once a
+## session; the animal keeps its stand-in till it comes.
+func _packs_said(key: String) -> void:
+	if not _said_packs.has(key):
+		_said_packs.append(key)
+		message.emit(tr(key))
 
 
 func can_afford_item(item_id: String) -> bool:

@@ -1,4 +1,7 @@
 {
  "_doc": "Asset packs (AssetPacks, docs/PACKS.md): files left out of the app and brought to the device when first needed. base_url is where the packs and their manifest.json are (https://..., or a folder for trying them on a desktop); empty: nothing is fetched, and every file must be in the app. When it is set, the app's export leaves art/models/limited out and may use the internet (export_presets.cfg; tests check the two agree). Set 20 Nov (owner: the Limited tab downloads them): this repository's public release \"packs\", made and uploaded by .github/workflows/packs.yml.",
+ "_doc_app": "app_code is this app's version code (export_presets.cfg version/code; a test checks they agree). min_app_code goes into the manifest the packs are made with (tools/make_packs): raise it when packs need code a player's older app lacks, and that app asks its player to update instead of fetching them.",
+ "app_code": 1,
+ "min_app_code": 1,
  "base_url": "https://github.com/aniket-patra-1998/farm-game/releases/download/packs"
 }

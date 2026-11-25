@@ -37,6 +37,22 @@ other games like BGMI do it". So:
 - Still fetched on their own when first needed: a limited animal already on a farm (a save from before), and
   the showcase's (its stand-in drawn until its pack comes).
 
+## Online (owner, 25 Nov): the game needs the internet; files come from Cloudflare
+The owner: the game runs only online, and its files are hosted in the cloud ("if it's not scalable then what
+is the point"). The plan, from the research of 25 Nov, in this order, each pushed and tried on the A05s:
+1. **The downloader made safe (done 25 Nov, `packs_test` 624).** A retry's wait is jittered (`JITTER`), so phones
+   that lost the network together do not all come back in the same second; a pack is fetched only with room for
+   it and its copy (`no_room`, "Your phone is almost full"); the manifest says the oldest app its packs work
+   with (`_min_app_code`, from data/packs.json `min_app_code`), and an older app asks its player to update
+   instead of fetching (`update_needed`); a pack never holds code (`PackMaker.CODE`: Google Play forbids
+   downloading code, so every script ships in the app).
+2. **Cloudflare R2 behind the owner's own domain** (not the r2.dev address, which is rate limited and not for
+   production): packs uploaded by CI (the key a GitHub secret, never in the app), named by hash and cached
+   forever; the manifest cached a minute. Needs the owner's Cloudflare account and a domain.
+3. **Every item's model in a level pack**, the first levels' kept in the app; fetched a level ahead.
+4. **Online-only start** (the manifest fetched to start; a dropped connection carries on with a badge).
+5. **Cloud save**: Google Play Games saved games (free, 3 MB a save; ours is about 20 KB), with a conflict choice.
+
 ## Tried, and not
 - Tried here: the whole path with the limited folder hidden as an exported app has it, from a folder and from
   a local web server (fetch, check, keep, load, redraw; and a second start with no source). Tests:

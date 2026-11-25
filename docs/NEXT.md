@@ -1482,3 +1482,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - In play a tree's or bloom's crowded look not built yet waits for the next opening (Objects3D.may_build): it
   stands as alone meanwhile. Building it off the main thread needs ModelKit's caches made thread-safe first.
 - Targets in data/perf_targets.json only go down.
+
+## Online-only and cloud files, 25 Nov (owner: "the game runs only with active internet"; host: Cloudflare)
+- Low quality lights the ground per corner (`ground_vertex_light`, pushed bb9546e): still to time on the A05s.
+- The plan and its order are in docs/PACKS.md "Online". Step 1 (the downloader made safe: jitter, room, app
+  version, no code in packs; `packs_test` 624) is done. Step 2 waits on the owner's Cloudflare account and a
+  domain; until then packs stay on the GitHub release.

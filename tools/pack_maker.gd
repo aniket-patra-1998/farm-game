@@ -5,6 +5,9 @@ extends RefCounted
 ## tools/make_packs.tscn; the packs and the manifest then go to the address in data/packs.json.
 
 const MANIFEST := "manifest.json"
+## Never in a pack: Google Play forbids an app downloading code from anywhere but Play, so packs carry art only
+## (models, pictures, sounds) and every script ships in the app.
+const CODE := ["gd", "gdc", "cs", "dll", "so", "dex", "jar"]
 ## A file's remap as an exported game has it: where what was made of it is.
 const REMAP := "[remap]\n\nimporter=\"%s\"\ntype=\"%s\"\npath=\"%s\"\n"
 
@@ -32,7 +35,7 @@ static func make(pack: String, files: Dictionary, out: String) -> Dictionary:
 	var remaps: Array[String] = []
 	for brought: String in files:
 		var made := made_of(str(files[brought]))
-		if made.is_empty():
+		if made.is_empty() or is_code(brought) or is_code(str(made["path"])):
 			return {}
 		var remap := out.path_join("%s.%d.remap" % [pack, remaps.size()])
 		var written := FileAccess.open(remap, FileAccess.WRITE)
@@ -53,10 +56,15 @@ static func make(pack: String, files: Dictionary, out: String) -> Dictionary:
 	return {"file": file, "bytes": bytes, "sha256": sha}
 
 
+## Whether `file` is code (CODE), which never goes in a pack.
+static func is_code(file: String) -> bool:
+	return CODE.has(file.get_extension().to_lower())
+
+
 ## Makes every pack of `packs` (pack -> the res:// files it brings) into `out`, with the manifest. Returns the
-## packs that could not be made.
-static func make_all(packs: Dictionary, out: String) -> Array[String]:
-	var manifest := {}
+## packs that could not be made. The manifest also says the oldest app its packs work with (`min_app_code`).
+static func make_all(packs: Dictionary, out: String, min_app_code := 0) -> Array[String]:
+	var manifest := {AssetPacks.MIN_APP: min_app_code}
 	var failed: Array[String] = []
 	for pack: String in packs:
 		var files := {}

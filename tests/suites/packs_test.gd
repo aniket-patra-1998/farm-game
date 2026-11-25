@@ -151,3 +151,62 @@ func test_610_the_limited_tabs_download_fetches_every_pack() -> void:
 	packs.fetch_all()
 	_eq(packs.pending(), 2, "asked twice: nothing more")
 	packs.free()
+
+
+func test_624_the_downloader_waits_its_turn_needs_room_heeds_the_app_and_packs_no_code() -> void:
+	for folder: String in [MADE, KEPT]:
+		_wipe(folder)
+	var model := str(AssetRegistry.entry("galaxy_cow")["model"])
+	# A pack never carries code (Google Play forbids downloading it): every script ships in the app.
+	_check(PackMaker.is_code("res://scripts/game.gd") and PackMaker.is_code("lib/x.so") and not PackMaker.is_code(GHOST),
+		"code is told from art")
+	_check(PackMaker.make("bad", {"res://limited_test/bad.gd": model}, MADE).is_empty(), "a pack with code is not made")
+	var entry := PackMaker.make("ghost", {GHOST: model}, MADE)
+	_check(not entry.is_empty(), "an art pack is made")
+	var files: Array[String] = [GHOST]
+	# Packs made for a newer app: nothing is fetched, the player is asked to update, and nothing is retried.
+	_write(MADE.path_join(PackMaker.MANIFEST), {AssetPacks.MIN_APP: 5, "ghost": entry})
+	var packs := AssetPacks.new()
+	add_child(packs)
+	packs.kept = KEPT
+	packs.app_code = 4
+	packs.add_pack("ghost", files)
+	var said := {"update": 0, "room": 0, "wait": 0}
+	packs.update_needed.connect(func() -> void: said["update"] += 1)
+	packs.no_room.connect(func() -> void: said["room"] += 1)
+	packs.waiting.connect(func() -> void: said["wait"] += 1)
+	packs.source = FolderPackSource.new(MADE)
+	packs.want(GHOST)
+	_check(said["update"] == 1 and packs.stopped and said["wait"] == 0, "an older app asks for an update, once")
+	_check(not FileAccess.file_exists(KEPT.path_join(str(entry["file"]))), "and fetches nothing")
+	packs.fetch_all()
+	_eq(said["update"], 1, "nor tries again this session")
+	packs.free()
+	# A device without room for the pack: said, nothing written, tried again later at a wait jittered around RETRY.
+	packs = AssetPacks.new()
+	add_child(packs)
+	packs.kept = KEPT
+	packs.app_code = 5
+	packs.spare_bytes = 1 << 60   # (more room than any device has)
+	packs.add_pack("ghost", files)
+	packs.no_room.connect(func() -> void: said["room"] += 1)
+	packs.source = FolderPackSource.new(MADE)
+	packs.want(GHOST)
+	_check(said["room"] == 1 and not FileAccess.file_exists(KEPT.path_join(str(entry["file"]) + AssetPacks.PART)),
+		"no room: said, and nothing half-written")
+	var again := packs.get("_again") as Timer
+	_check(again != null and again.time_left > 0.0, "tried again later")
+	if again != null:
+		_check(again.wait_time >= AssetPacks.RETRY * (1.0 - AssetPacks.JITTER)
+			and again.wait_time <= AssetPacks.RETRY * (1.0 + AssetPacks.JITTER), "after a jittered wait")
+	packs.free()
+	# The app's version code in data/packs.json is the one exported.
+	var presets := ConfigFile.new()
+	presets.load("res://export_presets.cfg")
+	var config: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetPacks.CONFIG))
+	for section: String in presets.get_sections():
+		if section.ends_with(".options") and presets.has_section_key(section, "version/code"):
+			_eq(int(presets.get_value(section, "version/code")), int(config.get("app_code", -1)),
+				"%s exports the app_code the downloader compares" % section)
+	_check(int(config.get("min_app_code", 0)) <= int(config.get("app_code", 0)), "this app takes its own packs")
+	_wipe(MADE)

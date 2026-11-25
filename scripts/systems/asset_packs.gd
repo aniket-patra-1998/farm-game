@@ -13,6 +13,10 @@ extends Node
 signal arrived(paths: Array[String])
 ## A fetch failed (no network, or a pack that did not check out): it will be tried again.
 signal waiting
+## The device has no room for the next pack: it is tried again later (the player is asked to free some space).
+signal no_room
+## The source's packs need a newer app (manifest `_min_app_code` above `app_code`): nothing more is fetched.
+signal update_needed
 
 const CONFIG := "res://data/packs.json"
 const KEPT := "user://packs"
@@ -21,11 +25,19 @@ const MANIFEST := "manifest.json"     # at the source: pack -> {"file", "bytes",
 const PART := ".part"                 # not-ui (a file still coming)
 const RETRY := 30.0                   # seconds before a failed fetch is tried again..
 const RETRY_MOST := 600.0             # ..doubling each time to at most this
+# Each wait is up to this much shorter or longer at random, so phones that lost the network together do not
+# all come back in the same second.
+const JITTER := 0.5
+const SPARE_BYTES := 20 * 1048576     # room left on the device besides a pack and its copy being checked
+const MIN_APP := "_min_app_code"      # in the manifest: the oldest app (version code) its packs work with
 
 static var shared: AssetPacks         # the game's own (GameState makes it); null in tests that make none
 
 var source: PackSource                # where packs come from; null: nothing is fetched
 var kept := KEPT                      # the folder packs are kept in
+var app_code := 0                     # this app's version code (data/packs.json `app_code`, as exported)
+var spare_bytes := SPARE_BYTES        # room kept free besides a pack (tests ask for more than any device has)
+var stopped := false                  # the source needs a newer app: nothing is fetched this session
 
 var _files := {}                      # pack -> the res:// files it brings
 var _pack_of := {}                    # res:// file -> its pack
@@ -52,6 +64,7 @@ static func begin(game: GameState) -> AssetPacks:
 			packs.add_pack(id, files)
 	var config: Dictionary = game.read_json(CONFIG)
 	packs.source = source_for(str(config.get("base_url", "")), packs)
+	packs.app_code = int(config.get("app_code", 0))
 	packs.load_kept()
 	shared = packs
 	return packs
@@ -151,7 +164,7 @@ func pending() -> int:
 
 
 func _next() -> void:
-	if _busy or _asked.is_empty() or source == null:
+	if _busy or _asked.is_empty() or source == null or stopped:
 		return
 	_busy = true
 	DirAccess.make_dir_recursive_absolute(kept)
@@ -159,7 +172,11 @@ func _next() -> void:
 		var to := kept.path_join(MANIFEST)
 		source.fetch(MANIFEST, to, func(came: bool) -> void:
 			var list := DataFile.read_optional(to) if came else {}
-			if not list.is_empty():
+			if int(list.get(MIN_APP, 0)) > app_code:
+				stopped = true   # (packs made for a newer app: the player is asked to update; no retrying)
+				_busy = false
+				update_needed.emit()
+			elif not list.is_empty():
 				_manifest = list
 				_busy = false
 				_next()
@@ -172,6 +189,13 @@ func _next() -> void:
 		_asked.erase(pack)   # (the source has no such pack: its stand-in stays)
 		_busy = false
 		_next()
+		return
+	var dir := DirAccess.open(kept)
+	var room := dir.get_space_left() if dir != null else 0
+	if room > 0 and room < int(entry.get("bytes", 0)) * 2 + spare_bytes:   # (0: the device does not say)
+		_busy = false
+		no_room.emit()
+		_retry()
 		return
 	var part := kept.path_join(str(entry["file"]) + PART)
 	source.fetch(str(entry["file"]), part, func(came: bool) -> void: _fetched(pack, entry, part, came))
@@ -204,11 +228,17 @@ func _fetched(pack: String, entry: Dictionary, part: String, came: bool) -> void
 func _failed() -> void:
 	_busy = false
 	waiting.emit()
+	_retry()
+
+
+## Tries the wanted packs again after a wait that doubles each time (from RETRY to RETRY_MOST), made a little
+## shorter or longer at random (JITTER).
+func _retry() -> void:
 	if _again == null:
 		_again = Timer.new()
 		_again.one_shot = true
 		_again.timeout.connect(_next)
 		add_child(_again)
 	if is_inside_tree():
-		_again.start(_wait)
+		_again.start(_wait * randf_range(1.0 - JITTER, 1.0 + JITTER))
 	_wait = minf(_wait * 2.0, RETRY_MOST)
