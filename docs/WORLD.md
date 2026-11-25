@@ -27,7 +27,7 @@ by reading them in its shader: no script runs for each thing, and nothing can be
 | water | water3d | rings | | moonlit | ices over |
 | leaf, crop, flower | canopy3d, crop3d, ... | | sways | | |
 | the shade under a thing | contact3d | | | stronger (`NIGHT_MORE`) | |
-| animal | AnimalBehaviour, data/animal_rigs.json `weather` | turns its tail to it and stands about; in a storm keeps close to home; shakes it off when it stops | | sleeps its family's way | |
+| animal | AnimalBehaviour, data/animal_rigs.json `weather` | turns its tail to it and stands about; in a storm keeps close to home; one with a home goes in at its door from hard rain (`shelter_from`) and comes out after; shakes it off when it stops | | sleeps its family's way | |
 
 A fountain, a pour and a warm pool's steam are not weather's business: a spray answers only when its settings
 say how (`DecorMotion.SMOKE_THINS`, `EMBERS_DIE`, `STEAM_IN_RAIN`).
@@ -51,20 +51,28 @@ shade and where its "z z z" rises all follow its size (ScaleGuide.animal_scale, 
 
 A bigger size is never one big clunky building (the owner, 25 Nov). A building is a small unit with its own
 outline and colour; each size makes its lead unit bigger and richer and adds a smaller one or a prop beside it,
-so its top size is a small yard with one clear lead. The Beehive is the first: a straw hive on its stand
-(data/building_models.json `skep`: `rings`, `scale`, `cap` for the lead's hat; BuildingModel._skep), one at
-first, three of three sizes at its biggest, the gold band and star of a maxed building on the lead.
+so its top size is a small yard with one clear lead. Built so far:
+
+- The Beehive: a straw hive on its stand (data/building_models.json `skep`: `rings`, `scale`, `cap` for the
+  lead's hat; BuildingModel._skep), one at first, three of three sizes at its biggest, the gold band and star
+  of a maxed building on the lead.
+- The Chicken Coop: a red A-frame (low walls under a steep gable) on stub legs; at its biggest the A-frame has
+  grown and a little one stands beside it (`hut`: a small house of the building's own kind, BuildingModel._hut).
+- The Rabbit Hutch: a long low box under a green lid, its front a wire mesh; at its biggest it is longer and
+  taller, with a little hutch beside it.
+
+A body still carries the door, the ramp and the wear, so a home is restyled through its data (`body`, `roof`,
+`levels`), with no upper storey stacked on it.
 
 ## Still to come (in this order)
 
-1. Buildings as kits: one small unit a building, a lead that grows at each level, companions and props added
-   (the owner's pick, 25 Nov; concept sheets: hive, coop, hutch). The Beehive is built so (below); the coop
-   and hutch next, by their data (a low body under a steep roof, a lead that grows, a small one beside it).
+1. The other animal homes as kits (Cow Shed, Sheep Pen, Goat Pen, Horse Stable, Pig Pen, Duck Pond), each with
+   an outline and colour of its own.
 2. Animals with more character (fleece, fur and manes as distinct forms) and lighter: the bone rig shipped in
    place of the stored poses.
 3. Unmown grass at the foot of every standing thing, and things set a little into the ground (a new look: a
    sheet first).
-4. Animals in a yard go in when it rains (heads at the windows), breath in the cold (docs/WEATHER.md).
+4. Heads at the windows while animals shelter, bees into their hives, breath in the cold (docs/WEATHER.md).
 
 ## Adding a thing
 

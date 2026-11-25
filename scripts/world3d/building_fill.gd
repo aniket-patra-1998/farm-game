@@ -32,6 +32,7 @@ const DOOR_OPEN := 1.75       # radians a door swings open
 const DOOR_HOLD := 1.2        # seconds it stays open
 const PRODUCE_STEPS := 6      # piles grow in this many steps as collection nears
 const PRODUCE_SCALE := 1.5    # and are drawn this much bigger than life: they must read from across the farm
+const DOOR_STEP := 0.1        # tiles before a home's door where an animal going in from the rain is last seen
 const PEEKERS := 4            # the most animals looking out of a home's windows at once
 const PEEK_OUT := 0.1         # tiles a head sticks out past the wall
 const PEEK_POP := 0.45        # seconds a head takes to pop up
@@ -74,6 +75,7 @@ var _fp := Vector2i.ONE
 var _spec := {}
 var _who := ""                # who's inside, as last shown
 var _who_peeking := ""
+var _indoors := 0             # residents gone in from the rain, as last counted
 var _stage := ""              # how near ready, as last shown
 var _produce: Node3D
 var _peekers: Node3D           # heads looking out of the windows while the home is full
@@ -386,6 +388,19 @@ func _show_company(company: Array, o: Dictionary) -> void:
 	_stand_residents(picks, spots, 1.0)
 
 
+## Where an animal standing at `at` goes in out of the rain, from there, in the farm grid's px
+## (AnimalBehaviour.shelter_at): the step before its home's door, in the middle of the body's front; Vector2.INF
+## for a home with no walls (a pond, hives).
+func _shelter_from(at: Vector2) -> Vector2:
+	var body: Dictionary = _spec.get("body", {})
+	var bd := float(body.get("d", 0.0)) * _fp.y
+	if bd <= 0.0 or float(body.get("w", 0.0)) <= 0.0:
+		return Vector2.INF
+	var c: Array = body.get("at", [0.5, 0.42])
+	var way := Vector2(float(c[0]) * _fp.x, float(c[1]) * _fp.y + bd / 2.0 + DOOR_STEP) - at
+	return IsoProjection.grid_of(Vector3(way.x, 0, way.y))
+
+
 ## Where an animal standing at `at` goes to drink, from there, in the farm grid's px (AnimalBehaviour.drink_at):
 ## just short of the nearest water trough of its yard, when one is near; Vector2.INF when none is.
 func _drink_from(at: Vector2) -> Vector2:
@@ -425,6 +440,7 @@ func _stand_residents(picks: Array, spots: Array, size: float) -> void:
 			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
 		var at := spots[k] as Vector2
 		mind.drink_at = _drink_from(at)
+		mind.shelter_at = _shelter_from(at)
 		# (In a yard an animal is drawn smaller than at large, ScaleGuide.yard_scale: the building is its home.)
 		var a := Animal3D.create(it, mind, Vector3(at.x, 0.0, at.y), size * ScaleGuide.yard_scale(str(picks[k])))
 		add_child(a)
@@ -1021,6 +1037,13 @@ func _process(delta: float) -> void:
 	if think_hidden:
 		_idle_hidden = 0.0
 	_idle = 0.0
+	# One that went in from the rain, or came out, is hidden or shown with the next look at the zoom.
+	var indoors := 0
+	for a in residents:
+		indoors += int(a.behaviour.indoors)
+	if indoors != _indoors:
+		_indoors = indoors
+		_lod = -1
 	if not _water.is_empty():
 		_swim(delta)
 
@@ -1080,7 +1103,7 @@ func _set_lod(cam: Camera3D) -> void:
 	elif tier == 2:
 		shown = mini(residents.size(), LOD_FAR_SHOWN)
 	for k in residents.size():
-		residents[k].visible = k < shown
+		residents[k].visible = k < shown and not residents[k].behaviour.indoors   # (gone in from the rain)
 
 
 ## Whether any part of the yard (its middle or a corner) is in the camera's view.

@@ -135,6 +135,103 @@ func test_635_a_beehive_grows_by_its_lead_hive_growing_and_others_joining() -> v
 	model.free()
 
 
+func test_636_an_animal_with_a_home_goes_in_from_hard_rain_and_comes_out_after() -> void:
+	var rain_was := AnimalBehaviour.rain
+	var night_was := AnimalBehaviour.night
+	AnimalBehaviour.night = false
+	var mind := AnimalBehaviour.new(AnimalRig.of(Game.item_data("chicken")), 11, Vector2(14, 7))
+	mind.stride_tiles = 0.2
+	mind.shelter_at = Vector2(9, 4)
+	AnimalBehaviour.rain = AnimalRig.weather("turn_from", 0.3)
+	for step in 200:
+		mind.update(0.1)
+	_check(not mind.indoors, "in light rain it stays out (it only turns its tail to it)")
+	AnimalBehaviour.rain = 1.0
+	var took := 0.0
+	for step in 600:
+		mind.update(0.1)
+		if mind.indoors:
+			break
+		took += 0.1
+	_check(mind.indoors, "in hard rain it walks to its door and goes in (%.0f s)" % took)
+	_check(mind.offset.distance_to(mind.shelter_at) <= AnimalBehaviour.ARRIVED + 0.01, "at the door, not where it stood")
+	for step in 100:
+		mind.update(0.1)
+	_check(mind.indoors, "and waits the rain out indoors")
+	AnimalBehaviour.rain = 0.0
+	for step in 200:
+		mind.update(0.1)
+	_check(not mind.indoors, "the rain over, it comes out again")
+	var loose := AnimalBehaviour.new(AnimalRig.of(Game.item_data("cow")), 3, Vector2(14, 7))
+	AnimalBehaviour.rain = 1.0
+	for step in 200:
+		loose.update(0.1)
+	_check(not loose.indoors, "an animal at large has no door: it bears the rain where it stands")
+	AnimalBehaviour.rain = rain_was
+	AnimalBehaviour.night = night_was
+
+
+func test_637_the_coop_and_the_hutch_are_known_by_their_outlines_and_grow_by_a_lead() -> void:
+	# (docs/WORLD.md: a home is a small unit with its own outline; a bigger size is its body grown and a little
+	# one of its kind beside it, never the same cabin stacked higher.)
+	var coop := BuildingSpec.spec("chicken_coop", 1)
+	var hutch := BuildingSpec.spec("rabbit_hutch", 1)
+	_check(float(coop["roof"]["pitch"]) >= 1.8 and str(coop["roof"]["type"]) == "gable",
+		"the Chicken Coop is an A-frame: low walls under a steep roof")
+	_eq(str(hutch["roof"]["type"]), "shed", "the Rabbit Hutch a long low box under a lid")
+	_check(float(hutch["body"]["w"]) > float(hutch["body"]["d"]) * 1.5, "longer than it is deep")
+	_check(str(coop["roof"]["color"]) != str(hutch["roof"]["color"]), "and each has a roof colour of its own")
+	for id: String in ["chicken_coop", "rabbit_hutch"]:
+		var first := BuildingSpec.spec(id, 1)
+		var top := BuildingSpec.spec(id, Game.max_level(id))
+		_check(float(top["body"]["w"]) > float(first["body"]["w"]) and float(top["body"]["h"]) > float(first["body"]["h"]),
+			"%s: its body has grown at its biggest" % id)
+		_check((top.get("upper", {}) as Dictionary).is_empty(), "%s: not by a storey stacked on it" % id)
+		var huts: Array = (top["features"] as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == "hut")
+		_eq(huts.size(), 1, "%s: one little house of its kind has joined it" % id)
+		var fp := Game.footprint(id)
+		_check(float(huts[0]["w"]) < float(top["body"]["w"]) * fp.x and float(huts[0]["h"]) < float(top["body"]["h"]),
+			"%s: smaller than the lead" % id)
+		_check(((first["features"] as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == "hut")).is_empty(),
+			"%s: a new one stands alone" % id)
+
+
+func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
+	# FarmVille drew its buildings as compact blocks, never long low sheds, and grew them upward. Its animal homes
+	# were one low storey, a couple of animals tall, so the animals in the yard read against them; the others
+	# (barns, workshops) stand about as tall as they're deep.
+	# Two homes are known by their own outline instead (docs/WORLD.md, the owner's pick of 25 Nov): the Chicken
+	# Coop is an A-frame, tall by its roof over low walls; the Rabbit Hutch is a long low hutch.
+	var by_roof := ["chicken_coop"]
+	var long_ones := ["rabbit_hutch"]
+	var g := _farm()
+	for id in g.items:
+		if not ["building", "crafting", "barn"].has(str(g.items[id].get("kind", ""))):
+			continue
+		var fp := g.footprint(id)
+		var last_h := 0.0
+		for level in range(1, g.max_level(id) + 1):
+			var body: Dictionary = BuildingModel.spec(id, level)["body"]
+			var bw := float(body.get("w", 0.0)) * fp.x
+			var bd := float(body.get("d", 0.0)) * fp.y
+			if bw <= 0.0 or bd <= 0.0:
+				continue  # a yard with no building on it (a pond, an orchard, hives)
+			# A second storey stands on the ground floor: the building is as tall as both.
+			var upper: Dictionary = BuildingModel.spec(id, level).get("upper", {})
+			var h := float(body.get("h", 0.0)) + float(upper.get("h", 0.0))
+			var long_side := maxf(bw, bd)
+			var short_side := minf(bw, bd)
+			if by_roof.has(id):
+				h += float((BuildingModel.spec(id, level)["roof"] as Dictionary).get("pitch", 0.0)) * short_side / 2.0
+			_check(long_side / short_side <= (2.2 if long_ones.has(id) else 1.4),
+				"%s size %d is not a long shed (%.2f x %.2f)" % [id, level, bw, bd])
+			_check(h >= short_side * 0.5, "%s size %d stands tall for its size (%.2f high, %.2f deep)"
+				% [id, level, h, short_side])
+			_check(h >= last_h, "%s size %d is no lower than the size before" % [id, level])
+			last_h = h
+	_done(g)
+
+
 func _skeps(spec: Dictionary) -> Array:
 	return (spec.get("features", []) as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == "skep")
 

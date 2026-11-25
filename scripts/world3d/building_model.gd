@@ -30,6 +30,8 @@ const ROUGH_TUFTS := 8            # wisps of straw lying on a rough yard's grass
 const PATH_STEP := 0.12           # the trodden path from a yard's gate to the door: a worn patch this far apart..
 const PATH_WIDTH := Vector2(0.1, 0.15)   # ..each this wide (a radius, in tiles, at random between)
 const DUCK_HOUSE := Vector3(0.2, 0.24, 0.16)   # a duck house: half its width, its walls' height, half its depth
+const HUT_OVER := 0.06          # how far a yard's little house's roof overhangs its walls
+const HUT_DOOR := 0.45         # its way in, as a share of its front's width
 const SKEP_R := BuildingSpec.SKEP_R
 const SKEP_RINGS := 4          # coils of straw in a hive that does not say (a small one)
 const SKEP_COIL := 0.062       # a coil's height, in tiles
@@ -1130,6 +1132,8 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 						BALE.y + 0.004, BALE.z + 0.004), ModelKit.paint(HAY.darkened(0.35)), false)
 		"skep":
 			_skep(ctx, f)
+		"hut":
+			_hut(ctx, f)
 		"hay_bales":
 			var x := minf(hi.x + 0.3, fw - 0.25)
 			var z := clampf(lo.z + 0.2, 0.2, fd - 0.2)
@@ -1528,6 +1532,33 @@ static func _duck_house(ctx: Dictionary, f: Dictionary) -> void:
 			ctx["top"] = ModelKit.roof(root, "gable", lo, hi, half.z * narrow * 0.85, 0.05, roof_mat, boards)
 			ctx["upper_lo"] = lo
 			ctx["upper_hi"] = hi
+
+
+## A little house of the building's own kind standing in its yard (a second coop, a small hutch): walls in the
+## building's colours on stub legs (`stilts`) under its own kind of roof, a dark way in at the front. A building
+## grows by its body growing and one of these joining it (docs/WORLD.md), so it is always smaller than the body.
+static func _hut(ctx: Dictionary, f: Dictionary) -> void:
+	var root: Node3D = ctx["root"]
+	var s: Dictionary = ctx["spec"]
+	var spot := BuildingSpec.yard_spot(f, ctx["fw"], ctx["fd"])
+	var half := Vector2(float(f.get("w", BuildingSpec.HUT.x)), float(f.get("d", BuildingSpec.HUT.y))) / 2.0
+	var legs := float(f.get("stilts", 0.0))
+	var lo := Vector3(spot.x - half.x, legs, spot.y - half.y)
+	var hi := Vector3(spot.x + half.x, legs + float(f.get("h", BuildingSpec.HUT.z)), spot.y + half.y)
+	var wall_mat := ModelKit.surface(ctx["wall"], str((s["body"] as Dictionary).get("walls", "boards")))
+	for corner: Vector2 in [Vector2(lo.x, lo.z), Vector2(hi.x, lo.z), Vector2(hi.x, hi.z), Vector2(lo.x, hi.z)]:
+		var inward := Vector2(spot.x - corner.x, spot.y - corner.y).sign() * 0.04
+		ModelKit.box(root, Vector3(corner.x + inward.x - 0.022, 0, corner.y + inward.y - 0.022),
+			Vector3(corner.x + inward.x + 0.022, legs, corner.y + inward.y + 0.022), ModelKit.paint(WOOD))
+	ModelKit.box(root, lo, hi, wall_mat)
+	var r: Dictionary = s["roof"]
+	var roof_mat := ModelKit.surface(Color.html(str(r.get("color", "#8e3b2c"))), str(r.get("style", "shingles")), 0.0)
+	var top := ModelKit.roof(root, str(r.get("type", "gable")), lo, hi,
+		float(r.get("pitch", 0.7)) * minf(half.x, half.y), HUT_OVER, roof_mat, wall_mat)
+	ModelKit.box(root, Vector3(spot.x - half.x * HUT_DOOR, lo.y + 0.02, hi.z), Vector3(spot.x + half.x * HUT_DOOR,
+		lerpf(lo.y, hi.y, 0.85), hi.z + 0.006), ModelKit.paint(DARK), false)
+	ctx["top"] = maxf(float(ctx.get("top", 0.0)), top)
+	BuildingDress.shade_pool(root, Vector3(spot.x, 0, spot.y), half * 2.0 + Vector2(0.3, 0.3))
 
 
 ## A straw hive (a skep) on its little stand, `scale` times its size: `rings` coils of straw tapering to a knob,

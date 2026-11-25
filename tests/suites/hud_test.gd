@@ -476,7 +476,7 @@ func test_354_a_home_opens_as_a_sheet_that_is_kept_and_only_refilled() -> void:
 	var words := ""
 	for l: Label in hud.sheet.find_children("*", "Label", true, false):
 		words += l.text + "|"
-	_check(words.contains(tr("ADDS_FLOOR")), "it says what the next size adds (%s)" % words)
+	_check(words.contains(tr("ADDS_HUT")), "it says what the next size adds (%s)" % words)
 	# A change on the farm, and tapping the same home again, refill it: nothing is built again.
 	Game.objects_changed.emit()
 	hud.show_building(int(coop["uid"]))

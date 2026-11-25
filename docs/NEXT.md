@@ -1506,9 +1506,12 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   rain, stood about and huddled in storms (data/animal_rigs.json `weather`): that was there before.
   And the first building as a kit: the Beehive is straw hives on stands (building_models.json `skep`,
   BuildingModel._skep; the old stacked-box hive is gone), one at first, a lead that grew with two smaller ones
-  at its biggest (test 635; beehive_1.glb and beehive_2.glb re-exported). The coop and hutch are next: by data
-  (a low body under a steep roof, the body bigger at size 2 in place of the upper storey, a small one beside
-  it), since their bodies carry the door, windows, peeking heads and wear that tests hold.
+  at its biggest (test 635; beehive_1.glb and beehive_2.glb re-exported). The Chicken Coop (a red A-frame) and
+  the Rabbit Hutch (a long low box, green lid) are restyled through their data, with a little house of their
+  kind beside the grown body at size 2 (`hut`, BuildingModel._hut; test 637; test 107, moved to world_rules_test, lets these two
+  outlines be: tall by the roof, long). They have no windows now, so no heads look out of them. Yard animals
+  go in at their door from hard rain and come out after (AnimalBehaviour.shelter_at / indoors,
+  BuildingFill._shelter_from; data/animal_rigs.json `shelter_from`; test 636).
 - Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
   prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
   "more character: fur and fleece more distinct" (sizes: done, above);

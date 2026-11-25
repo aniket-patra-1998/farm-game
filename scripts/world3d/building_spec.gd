@@ -13,6 +13,7 @@ const DOOR := &"door_swing"   # meta on a door's hinge: which way it swings open
 const SLIDE := "slide"   # not-ui (a meta on a door that rolls up: how far)
 const PLAN := "plan"         # not-ui (the state of the part that shows what is still to be built: `_plan`)
 const BALE := Vector3(0.13, 0.15, 0.09)   # a hay bale's half length, its height and half width, in tiles
+const HUT := Vector3(0.5, 0.5, 0.2)   # a yard's little house when it does not say: its width, depth and wall height
 const SKEP_R := 0.165         # a straw hive's radius at its foot, in tiles (a hive drawn `scale` times this)..
 const SKEP_ROOM := 1.35       # ..and the room it keeps clear round it in its yard, against that radius
 const FEATURE_R := {"rock": 0.3, "pool": 0.32, "wallow": 0.34, "carrots": 0.26, "fuel_pump": 0.18, "burrow": 0.34}
@@ -153,6 +154,10 @@ static func taken(s: Dictionary, fp: Vector2i) -> Array[Rect2]:
 				var p: Array = f.get("at", [0.85, 0.2])
 				var r := float(f.get("r", 0.22)) + 0.04
 				out.append(Rect2(float(p[0]) * fw - r, float(p[1]) * fd - r, r * 2.0, r * 2.0))
+			"hut":
+				var spot := yard_spot(f, fw, fd)
+				var half := Vector2(float(f.get("w", HUT.x)), float(f.get("d", HUT.y))) / 2.0 + Vector2(0.06, 0.06)
+				out.append(Rect2(spot - half, half * 2.0 + Vector2(0.0, 0.1)))
 			"duck_house":
 				var p: Array = f.get("at", [0.82, 0.2])
 				out.append(Rect2(float(p[0]) * fw - 0.24, float(p[1]) * fd - 0.2, 0.48, 0.8))
