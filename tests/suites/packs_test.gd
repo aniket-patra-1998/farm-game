@@ -274,7 +274,7 @@ func test_626_the_start_asks_the_source_and_only_a_phone_is_kept_offline() -> vo
 	packs.reach(func(ok: bool) -> void: heard.append(ok))
 	packs.source = FolderPackSource.new(MADE)
 	packs.reach(func(ok: bool) -> void: heard.append(ok))
-	packs.source = FolderPackSource.new("user://nowhere_at_all")
+	packs.source = Unreachable.new()
 	packs.reach(func(ok: bool) -> void: heard.append(ok))
 	_eq(heard, [true, true, false], "no source: every file is here; a source that answers; one that does not")
 	_check((packs.get("_manifest") as Dictionary).has("a"), "the list that came is kept for the fetches")
@@ -286,3 +286,9 @@ func test_626_the_start_asks_the_source_and_only_a_phone_is_kept_offline() -> vo
 	_eq(get_children().filter(func(c: Node) -> bool: return c is OnlineGate).size(), 0,
 		"not on a desktop or in tests: the gate is a phone's")
 	_wipe(MADE)
+
+
+## A source that never answers yes (no network).
+class Unreachable extends PackSource:
+	func fetch(_name: String, _to: String, done: Callable) -> void:
+		done.call(false)
