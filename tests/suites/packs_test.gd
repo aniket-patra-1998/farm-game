@@ -6,6 +6,7 @@ const GHOST := "res://art/models/limited_test/ghost.glb"   # a file no app has: 
 const MADE := "user://test_packs_made"
 const BROKEN := "user://test_packs_broken"
 const KEPT := "user://test_packs_kept"
+const PRESETS := "res://export_presets.cfg"
 const KEPT_624 := "user://test_packs_kept_624"
 
 
@@ -126,7 +127,7 @@ func test_584_the_packs_are_the_limited_animals_and_the_export_agrees_with_the_a
 		"the Limited tab counts only its own packs")
 	# The Play Store build leaves the level packs' files out; the APKs keep them (the bench draws the same farm).
 	var cfg := ConfigFile.new()
-	cfg.load("res://export_presets.cfg")
+	cfg.load(PRESETS)
 	var some_file := str((DataFile.read(AssetPacks.LEVEL_PACKS)["packs"].values()[0] as Dictionary)["files"][0])
 	for n in 8:
 		var section := "preset.%d" % n
@@ -137,7 +138,7 @@ func test_584_the_packs_are_the_limited_animals_and_the_export_agrees_with_the_a
 	# One switch: with an address, the export leaves those files out and may use the internet; with none, neither.
 	var config: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetPacks.CONFIG))
 	var address := str(config.get("base_url", ""))
-	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
+	var presets := FileAccess.get_file_as_string(PRESETS)
 	_eq(presets.contains("art/models/limited/*"), address != "",
 		"the export leaves the limited files out exactly when there is an address to fetch them from")
 	if address != "":
@@ -225,7 +226,7 @@ func test_624_the_downloader_waits_its_turn_needs_room_heeds_the_app_and_packs_n
 	packs.free()
 	# The app's version code in data/packs.json is the one exported.
 	var presets := ConfigFile.new()
-	presets.load("res://export_presets.cfg")
+	presets.load(PRESETS)
 	var config: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetPacks.CONFIG))
 	for section: String in presets.get_sections():
 		if section.ends_with(".options") and presets.has_section_key(section, "version/code"):

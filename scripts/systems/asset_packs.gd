@@ -29,10 +29,10 @@ const RETRY_MOST := 600.0             # ..doubling each time to at most this
 # all come back in the same second.
 const JITTER := 0.5
 const SPARE_BYTES := 20 * 1048576     # room left on the device besides a pack and its copy being checked
-const MIN_APP := "_min_app_code"
+const MIN_APP := "_min_app_code"      # in the manifest: the oldest app (version code) its packs work with
 const LEVEL_PACKS := "res://data/level_packs.json"   # the level packs (tools/make_level_packs.py)
 const EXTRAS := 0                     # a level pack's level for the extras: fetched at the start
-const AHEAD := 1                      # level packs are fetched this many levels before they are needed      # in the manifest: the oldest app (version code) its packs work with
+const AHEAD := 1                      # level packs are fetched this many levels before they are needed
 
 static var shared: AssetPacks         # the game's own (GameState makes it); null in tests that make none
 
