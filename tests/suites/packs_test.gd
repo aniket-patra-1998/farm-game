@@ -292,3 +292,16 @@ func test_626_the_start_asks_the_source_and_only_a_phone_is_kept_offline() -> vo
 class Unreachable extends PackSource:
 	func fetch(_name: String, _to: String, done: Callable) -> void:
 		done.call(false)
+
+
+func test_628_the_play_store_build_is_barnlight_and_the_test_builds_keep_their_ids() -> void:
+	var presets := ConfigFile.new()
+	presets.load(PRESETS)
+	var ids := {}
+	for section: String in presets.get_sections():
+		if section.ends_with(".options") and presets.has_section_key(section, "package/unique_name"):
+			ids[presets.get_value(section.trim_suffix(".options"), "name")] = presets.get_value(section, "package/unique_name")
+	# (owner, 25 Nov: Barnlight. The id can never change after the first upload; the test builds keep theirs, so
+	# a phone's farm in them stays where it is.)
+	_eq(ids.get("Android (Play Store AAB)"), "com.aniketpatra.barnlight", "the Play Store id")
+	_eq(ids.get("Android (debug APK)"), "com.example.farmgame.debug", "the test build's id is unchanged")
