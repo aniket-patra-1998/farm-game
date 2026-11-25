@@ -1493,3 +1493,22 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   stayed ~102 ms GPU; `ground_plain` still saves 41.6 ms (the grass shader itself), the next GPU target.
   Cloud save (step 5) waits on the owner's Play Console (Play Games Services, Saved Games, the game's app ID).
   The Play AAB must not ship the showcase's baked models (res://baked): no AAB workflow exists yet.
+
+## Lighter animals, 26 Nov (branch animals-light, a draft PR; owner: "keep making things lighter and better looking")
+- Measured first (the models as the game ships them, 205 MB): animals 164 MB (150 files, 80%), trees 16, the
+  farmer 12, buildings 9, crops and blooms 3. An animal file was nine tenths its 17 moves, each a copy of the mesh.
+- Now an animal file is its mesh, its bones and its moves as where each bone goes (tools/animal_art export.py
+  `_rigged`; glTF skin, the moves in the mesh node's `extras`). The game adds the moves it wants bone by bone
+  (AnimalBones: rest + each move's change x its strength), which is the sum the copies gave point by point, so
+  an animal moves as it did (the tool's test holds each move to the builder's own motion). A part that moves on
+  its own (an eye, an ear, a wing, a fan) has bones of its own; a long coat's shake alone is still two blend
+  shapes. The bones are the renderer's own skeleton (RenderingServer), because a sum of moves leans and
+  stretches a bone as a Skeleton3D's poses can't: the Skeleton3D node the importer makes is left idle.
+- All 150 files made again: 164 MB -> 19.9 MB as shipped (a cow 1,031 KB -> 116 KB). The same remake carries
+  the animal polish the owner agreed on 25 Nov (clean colour borders, wider eyes, stronger colour, fleece in
+  two-tone curls, fuller manes, the cow's tuft, a fluffier rabbit).
+- Posing costs a little more script time: a walking cow 28 us against 15 (a desktop), standing 18 against 13.
+  Not measured: the GPU's side (a skinned mesh should cost a phone less than blend shapes, and can have LODs,
+  which a mesh with blend shapes never got), anything on a phone.
+- Next, same idea: the farmer (6 files, 11.7 MB, limbs as blend shapes: tools/animal_art farmer.py), then trees.
+- Tests 640 to 642 (animal_bones_test); tools/animal_art tests `Bones`.

@@ -17,12 +17,7 @@
     "res://art/models/animals/brown_calf.glb",
     "res://art/models/animals/brown_cow.glb",
     "res://art/models/animals/brown_dog.glb",
-    "res://art/models/animals/bull.glb"
-   ]
-  },
-  "extras_2": {
-   "level": 0,
-   "files": [
+    "res://art/models/animals/bull.glb",
     "res://art/models/animals/calf.glb",
     "res://art/models/animals/cornish_chicken.glb",
     "res://art/models/animals/donkey.glb",
@@ -33,12 +28,7 @@
     "res://art/models/animals/gray_horse.glb",
     "res://art/models/animals/indie_dog.glb",
     "res://art/models/animals/kunekune_pig.glb",
-    "res://art/models/animals/lamb.glb"
-   ]
-  },
-  "extras_3": {
-   "level": 0,
-   "files": [
+    "res://art/models/animals/lamb.glb",
     "res://art/models/animals/mouflon_sheep.glb",
     "res://art/models/animals/mustang.glb",
     "res://art/models/animals/mustang_foal.glb",
@@ -50,16 +40,16 @@
     "res://art/models/animals/spotted_pig.glb",
     "res://art/models/animals/stallion.glb",
     "res://art/models/animals/swan.glb",
-    "res://art/models/animals/tamworth_pig.glb"
-   ]
-  },
-  "extras_4": {
-   "level": 0,
-   "files": [
+    "res://art/models/animals/tamworth_pig.glb",
     "res://art/models/animals/turtle.glb",
     "res://art/models/animals/ugly_duckling.glb",
     "res://art/models/animals/wild_turkey.glb",
-    "res://art/models/trees/alphonso_mango_tree.scn",
+    "res://art/models/trees/alphonso_mango_tree.scn"
+   ]
+  },
+  "extras_2": {
+   "level": 0,
+   "files": [
     "res://art/models/trees/black_mission_fig_tree.scn",
     "res://art/models/trees/blood_orange_tree.scn",
     "res://art/models/trees/elberta_peach_tree.scn",

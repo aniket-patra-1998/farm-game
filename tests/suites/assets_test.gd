@@ -609,7 +609,7 @@ func test_523_a_window_head_keeps_the_same_triangles_as_cut_one_by_one() -> void
 	var arrays := mi.mesh.surface_get_arrays(0)
 	var v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
-	var all := mi.get_aabb()
+	var all := AnimalBones.box_of(mi)
 	var front := all.end.x - all.size.x * BuildingFill.HEAD_SHARE
 	var above := all.position.y + all.size.y * BuildingFill.HEAD_ABOVE
 	var one_by_one := PackedInt32Array()
