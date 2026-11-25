@@ -196,6 +196,53 @@ func test_637_the_coop_and_the_hutch_are_known_by_their_outlines_and_grow_by_a_l
 			"%s: a new one stands alone" % id)
 
 
+func test_638_a_building_at_its_biggest_marks_where_the_farm_s_star_floats() -> void:
+	# (The owner, 25 Nov: "a floating rotating star with a light glow... the same for all buildings, just the
+	# size will vary". No model carries a star of its own: it marks the place, and CrownStars draws them all.)
+	var g := _farm()
+	var kit := BuildingSpec.model()
+	var top: Node3D = kit.build(g.item_data("chicken_coop"), g.footprint("chicken_coop"), Game.max_level("chicken_coop"))
+	var first: Node3D = kit.build(g.item_data("chicken_coop"), g.footprint("chicken_coop"), 1)
+	var barn: Node3D = kit.build(g.item_data("barn"), g.footprint("barn"), Game.max_level("barn"))
+	var mark := CrownStars.mark_of(top)
+	_eq(mark.size(), 2, "a Chicken Coop at its biggest marks its star")
+	_check(CrownStars.mark_of(first).is_empty(), "a new one has none")
+	_check(CrownStars.mark_of(barn).is_empty(), "nor the Barn, whose badge stands on its roof")
+	if mark.size() == 2:
+		var at := mark[0] as Node3D
+		var box := _box_of(top)
+		_check(float(mark[1]) > 0.05 and float(mark[1]) < 0.5, "the mark names the star's size (%.2f)" % float(mark[1]))
+		_check(at.position.y > box.end.y * 0.6 and at.position.y <= box.end.y + 0.01,
+			"and stands at the top of its roof (%.2f of %.2f)" % [at.position.y, box.end.y])
+		_check(DecorMotion.is_part(at), "a part the game knows, so a model saved to a file keeps it")
+		_check(at.get_child_count() == 0 and not (at is MeshInstance3D), "with nothing to draw: the model has no star")
+	for model: Node3D in [top, first, barn]:
+		model.free()
+	_done(g)
+
+
+func test_639_one_star_floats_over_every_marked_building_sized_to_each() -> void:
+	var stars := CrownStars.new()
+	add_child(stars)
+	var tops: Array[Vector3] = [Vector3(1, 0.8, 2), Vector3(6, 2.1, 3)]
+	var radii: Array[float] = [0.17, 0.3]
+	_eq(stars.show_at(tops, radii), 2, "a star for each")
+	_check(stars.visible and stars.multimesh.visible_instance_count == 2, "drawn together, as one batch")
+	for k in 2:
+		_check(is_equal_approx(stars.where(k).y, tops[k].y + radii[k] * CrownStars.FLOAT) and
+			is_equal_approx(stars.where(k).x, tops[k].x), "star %d floats over its mark, clear of the roof" % k)
+		_check(is_equal_approx(stars.radius(k), radii[k]), "star %d is the size its building asks for" % k)
+	_check(absf(CrownStars.beat_of(0) - CrownStars.beat_of(1)) > 0.2, "no two side by side turn in step")
+	var star_code := (stars.multimesh.mesh.surface_get_material(0) as ShaderMaterial).shader.code
+	_check(star_code.contains(DARK) and star_code.contains("TIME"), "the star turns, and glows more as night falls")
+	_eq(stars.find_children("*", "MultiMeshInstance3D", true, false).size(), 1, "its halo is the one other draw")
+	var no_tops: Array[Vector3] = []
+	var no_radii: Array[float] = []
+	_eq(stars.show_at(no_tops, no_radii), 0, "none on a farm with nothing at its biggest")
+	_check(not stars.visible, "and nothing drawn")
+	stars.queue_free()
+
+
 func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 	# FarmVille drew its buildings as compact blocks, never long low sheds, and grew them upward. Its animal homes
 	# were one low storey, a couple of animals tall, so the animals in the yard read against them; the others

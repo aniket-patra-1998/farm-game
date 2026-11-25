@@ -319,6 +319,10 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
 					wrong += 0 if master or mat in shared else 1
 					lit += 1 if mat == ModelKit.glass() else 0
+			# (A building at its biggest stands as tall as its star floats: CrownStars draws it over the model's mark.)
+			var star := CrownStars.mark_of(node)
+			if not star.is_empty():
+				top = maxf(top, (star[0] as Node3D).position.y + float(star[1]) * (CrownStars.FLOAT + 1.0))
 			tall.append(top)
 			_eq(wrong, 0, "%s size %d draws with the master shader and the kit's shared materials only" % [id, level])
 			_check(lit > 0 or int(spec.get("windows", 0)) == 0 or float(spec["body"]["w"]) <= 0.0,

@@ -120,6 +120,7 @@ var _most_left := 0   # the most there was left to build since the farm last sto
 var _todo: Array[int] = []   # their uids: the next frame builds only these, without looking the farm over again
 var _resuming := false   # this sync carries on from one that ran out of time, with no change since
 var _ready_marks: ReadyMarks   # the one ready sign, over everything with something to collect
+var _crown_stars: CrownStars   # the gold star over every building at its biggest size
 var _rust_marks: RustMarks     # the rust sign, over every rusty vehicle (or the Garage it stands in)
 var _fireworks: Fireworks3D    # the fireworks over a building that has just grown
 var _rings: WaterRings         # the rings on water: swimmers' wakes, splashes, a fish's leap
@@ -147,6 +148,8 @@ func _ready() -> void:
 	add_child(_ready_marks)
 	_rust_marks = RustMarks.new()
 	add_child(_rust_marks)
+	_crown_stars = CrownStars.new()
+	add_child(_crown_stars)
 	_fireworks = Fireworks3D.new()
 	add_child(_fireworks)
 	_rings = WaterRings.new()
@@ -539,6 +542,31 @@ func _mark_ready_timed(known: Dictionary) -> void:
 	var pt := PerfReadout.start()
 	_mark_rust()
 	PerfReadout.stop("rust_marks", pt)
+	_mark_stars()
+
+
+## The gold star (CrownStars) over every finished building at its biggest size: where its model marks it
+## (CrownStars.mark_of), at the size the mark names.
+func _mark_stars() -> void:
+	var tops: Array[Vector3] = []
+	var radii: Array[float] = []
+	for uid: int in _views:
+		var v: Dictionary = _views[uid]
+		if not v.get("states", false) or not (v["node"] as Node3D).is_visible_in_tree():
+			continue   # (only buildings have sizes)
+		if not v.has("star"):
+			v["star"] = CrownStars.mark_of(v["node"])   # (looked for once a view)
+		var star: Array = v["star"]
+		if star.is_empty() or not is_instance_valid(star[0]) or not (star[0] as Node3D).is_inside_tree():
+			continue
+		tops.append(to_local((star[0] as Node3D).global_position))
+		radii.append(float(star[1]))
+	_crown_stars.show_at(tops, radii)
+
+
+## The star layer (tests and tools).
+func crown_stars_node() -> CrownStars:
+	return _crown_stars
 
 
 ## The rust sign (RustMarks; docs/RUST.md) over every vehicle that needs a repair: over the vehicle where it

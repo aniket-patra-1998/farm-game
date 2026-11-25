@@ -165,10 +165,11 @@ static func start(part: Node3D) -> void:
 		spray(part, Vector3.ZERO, EFFECTS[words[0]])
 
 
-## Whether `n` is a named part that `start` gives life to.
+## Whether `n` is a named part the game knows: one that `start` gives life to, or the mark of a building's star
+## (CrownStars.MARK: it only says where the farm's star floats).
 static func is_part(n: Node) -> bool:
 	var kind := String(n.name).split("_")[0]
-	return n is Node3D and (kind == SPIN or EFFECTS.has(kind))
+	return n is Node3D and (kind == SPIN or EFFECTS.has(kind) or kind == CrownStars.MARK)
 
 
 ## Starts every named part of a model that came from a file.

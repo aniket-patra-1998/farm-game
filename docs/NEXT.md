@@ -1512,6 +1512,10 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   outlines be: tall by the roof, long). They have no windows now, so no heads look out of them. Yard animals
   go in at their door from hard rain and come out after (AnimalBehaviour.shelter_at / indoors,
   BuildingFill._shelter_from; data/animal_rigs.json `shelter_from`; test 636).
+  A maxed building's star is no longer in its model: one star floats over each (turning, bobbing, glowing
+  more at night), drawn for the whole farm in two draws (CrownStars; crown_star3d, crown_halo3d). A model only
+  marks where (`star_<r>` at its roof's top, kept through export by DecorMotion.is_part); Objects3D._mark_stars
+  places them. All top-size building files re-exported without their star. Tests 638, 639.
 - Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
   prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
   "more character: fur and fleece more distinct" (sizes: done, above);

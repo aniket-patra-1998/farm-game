@@ -47,6 +47,14 @@ large is drawn a little smaller than its file (`animals.default`), a bee much sm
 building's yard smaller again (`yard`): the building is its home, not a prop beside giants. Its stride, its
 shade and where its "z z z" rises all follow its size (ScaleGuide.animal_scale, yard_scale; Animal3D.create).
 
+## One star for every building at its biggest
+
+A building at its biggest size wears a gold band, and a gold star floats over its lead: turning, bobbing, with a
+soft glow that is stronger at night (the owner, 25 Nov). It is the same star for every building, sized by each
+(`r` on its `crown` feature). No building's model has a star in it: the model marks the place (a part named
+`star_<radius in hundredths>` at the top of its roof, BuildingDress "crown") and CrownStars draws every star on
+the farm in two draws (the stars, their halos), as the ready signs are one. Tests 638, 639.
+
 ## Buildings grow by their lead growing and others joining
 
 A bigger size is never one big clunky building (the owner, 25 Nov). A building is a small unit with its own
@@ -54,8 +62,8 @@ outline and colour; each size makes its lead unit bigger and richer and adds a s
 so its top size is a small yard with one clear lead. Built so far:
 
 - The Beehive: a straw hive on its stand (data/building_models.json `skep`: `rings`, `scale`, `cap` for the
-  lead's hat; BuildingModel._skep), one at first, three of three sizes at its biggest, the gold band and star
-  of a maxed building on the lead.
+  lead's hat; BuildingModel._skep), one at first, three of three sizes at its biggest, the gold band of a
+  maxed building on the lead, its star floating over it.
 - The Chicken Coop: a red A-frame (low walls under a steep gable) on stub legs; at its biggest the A-frame has
   grown and a little one stands beside it (`hut`: a small house of the building's own kind, BuildingModel._hut).
 - The Rabbit Hutch: a long low box under a green lid, its front a wire mesh; at its biggest it is longer and
