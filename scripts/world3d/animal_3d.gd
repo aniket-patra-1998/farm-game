@@ -50,6 +50,8 @@ const STRIDES := "res://data/animal_strides.json"   # every kind's file_stride, 
 const NOSES := "res://data/animal_sleep.json"       # where each kind's nose is asleep (tools/animal_art's export)
 const SLEEP_MOVE := "sleep"       # a file's sleeping pose (tools/animal_art: motion.asleep)   # not-ui
 const ASLEEP := 0.85              # how far into its sleeping pose an animal counts as asleep (its "z z z" shows)
+const SHAKE_ROLL := 0.2           # radians a short coat's body rolls each way as it shakes the rain off..
+const SHAKE_TURNS := 4.0          # ..and how many times, to and fro
 const BEE_BEAT_RATE := 60.0      # a file-made bee's wing beats (radians of the beat a second)..
 const BEE_HOVER_RATE := 3.3      # ..and its slow bob in the air (as tools/animal_art's motion)
 const BEE_HOVER := 0.4           # how high the bob goes, as a share of its body's height
@@ -147,8 +149,9 @@ func _exit_tree() -> void:
 	sleepers.erase(self)
 
 
+## An animal of this kind standing at `at`, `size` times its kind's own size on the farm (ScaleGuide.animal_scale).
 static func create(it: Dictionary, mind: AnimalBehaviour, at: Vector3, size := 1.0) -> Animal3D:
-	var a := _from_template(it, size)
+	var a := _from_template(it, size * ScaleGuide.animal_scale(str(it.get("id", ""))))
 	a.behaviour = mind
 	a.home = at
 	a.position = at
@@ -454,8 +457,15 @@ func _pose_file(p: AnimalPose) -> void:
 	if bug:
 		lift += sin(p.time * BEE_HOVER_RATE) * _r.y * BEE_HOVER
 	_body.position = Vector3(0, lift, 0)
-	_body.rotation = Vector3(motion.roll, 0, motion.pitch)
+	_body.rotation = Vector3(motion.roll + (0.0 if _file_shapes.has(CoatTouch.SHAKE_A) else shake_roll(p.shake)), 0,
+		motion.pitch)
 	_body.scale = Vector3(1.0 + motion.squash * 0.6, 1.0 - motion.squash, 1.0 + motion.squash * 0.6)
+
+
+## A short coat's shake (one whose file has no shake of its own: the rain shaken off, AnimalBehaviour): its body
+## rolls to and fro about its length, `through` 0..1, nothing at the start and the end.
+static func shake_roll(through: float) -> float:
+	return sin(through * TAU * SHAKE_TURNS) * SHAKE_ROLL * sin(clampf(through, 0.0, 1.0) * PI)
 
 
 ## A long coat's shake: the file's two shake moves in turn, and a little fluff let go as it starts.

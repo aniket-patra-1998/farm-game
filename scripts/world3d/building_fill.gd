@@ -425,7 +425,8 @@ func _stand_residents(picks: Array, spots: Array, size: float) -> void:
 			Vector2(WANDER * FarmGrid.TILE_W / 2.0, WANDER * FarmGrid.TILE_H / 2.0))
 		var at := spots[k] as Vector2
 		mind.drink_at = _drink_from(at)
-		var a := Animal3D.create(it, mind, Vector3(at.x, 0.0, at.y), size)
+		# (In a yard an animal is drawn smaller than at large, ScaleGuide.yard_scale: the building is its home.)
+		var a := Animal3D.create(it, mind, Vector3(at.x, 0.0, at.y), size * ScaleGuide.yard_scale(str(picks[k])))
 		add_child(a)
 		a.update(0.0)
 		residents.append(a)

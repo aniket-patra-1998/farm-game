@@ -1499,10 +1499,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   claude/world-pass-plan.md). Step 0 done on branch world-weather (draft PR; merging is the owner's call): fire,
   embers, smoke and lamps answer rain, wind and night through the shared shader values (flame3d, spray3d
   `weather`, the new lamp3d), the bonfire steams as rain puts it out, and the shade under animals and
-  decorations is drawn stronger at night (contact3d). Tests 629 to 632 (world_rules_test).
+  decorations is drawn stronger at night (contact3d). Tests 629 to 632 (world_rules_test). Then, same branch:
+  animals are sized by data/scale_guide.json `animals` (0.88 at large, a bee 0.5, 0.68 of that in a yard:
+  ScaleGuide.animal_scale / yard_scale) and shake the rain off when it stops (AnimalBehaviour._mind_rain; a coat
+  with no shake move rolls its body, Animal3D.shake_roll). Tests 633, 634. Animals already turned their tails to
+  rain, stood about and huddled in storms (data/animal_rigs.json `weather`): that was there before.
 - Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
   prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
-  "more character: fur and fleece more distinct", 12% smaller on the open farm, about 60% in a yard, bees half;
+  "more character: fur and fleece more distinct" (sizes: done, above);
   buildings as kits with a lead that grows at each level (concept sheets, 25 Nov: hive, coop, hutch).
 - Not built: anything in "Still to come". Animal files: about 78% of each is its 17 stored poses; shipping the
   art tool's bone rig instead should cut them to about a third (an estimate, untested).

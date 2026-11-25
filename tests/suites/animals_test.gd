@@ -596,8 +596,9 @@ func test_432_animals_feet_grip_the_ground() -> void:
 	_check(made > 0.2 and made < 0.6, "a cow's walk covers a third of a tile or so a cycle (%.3f)" % made)
 	var mind := AnimalBehaviour.new(rig, 5, Vector2(60, 30))
 	var body := Animal3D.create(g.item_data("cow"), mind, Vector3.ZERO)
-	_check(is_equal_approx(mind.stride_tiles, body.stride()) and is_equal_approx(body.stride(), made),
-		"and its mind is told so")
+	# (drawn at its kind's size on the farm, its stride is that much of the file's: ScaleGuide.animal_scale)
+	_check(is_equal_approx(mind.stride_tiles, body.stride())
+		and is_equal_approx(body.stride(), made * ScaleGuide.animal_scale("cow")), "and its mind is told so")
 	body.free()
 	# A bound: up from the ground, highest half way through its flight, down again, and then on the ground.
 	var air := AnimalBehaviour.AIR

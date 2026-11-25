@@ -108,6 +108,8 @@ var _jump := 0.0                 # seconds left of the start it gives when tappe
 var _show := 0.0                 # seconds left of its showing off
 var _shake := 0.0                # seconds left of its coat's shake
 var _shake_in := SHAKE_EVERY.x   # seconds to the next one
+var _wet := false                # it has stood in rain it minded, and not shaken it off yet
+var _dry_in := 0.0               # seconds until it shakes the rain off (0: nothing to shake off)
 
 
 func _init(animal_rig: AnimalRig, seed_value: int, wander: Vector2) -> void:
@@ -143,6 +145,7 @@ func update(delta: float) -> void:
 		going = Vector2.ZERO
 	if _left <= 0.0:
 		_choose_next()
+	_mind_rain()
 	_ease_body(delta)
 	_idle_motions(delta)
 	shown_facing = move_toward(shown_facing, facing, delta * TURN_SPEED)
@@ -302,13 +305,31 @@ func _walk(delta: float) -> void:
 	pose.gait = fposmod(pose.gait + ground / stride, 1.0)
 
 
-## A long coat is shaken out now and then, standing and awake (`pose.shake` runs 0..1 through it).
+## Rain it minded has stopped: in a few seconds (AnimalRig.weather `dry_from` to `dry_to`, each animal in its
+## own time) it shakes it off, whatever its coat.
+func _mind_rain() -> void:
+	if _sheltering():
+		_wet = true
+	elif _wet:
+		_wet = false
+		_dry_in = _rng.randf_range(AnimalRig.weather("dry_from", 1.0), AnimalRig.weather("dry_to", 7.0))
+
+
+## A long coat is shaken out now and then, standing and awake (`pose.shake` runs 0..1 through it); any coat
+## once the rain stops.
 func _shake_coat(delta: float, walking: bool) -> void:
 	if _shake > 0.0:
 		_shake = maxf(_shake - delta, 0.0)
 		pose.shake = 1.0 - _shake / SHAKE_TIME if _shake > 0.0 else 0.0
 		return
-	if not shakes or walking or state == State.SLEEP:
+	if walking or state == State.SLEEP:
+		return
+	if _dry_in > 0.0:
+		_dry_in -= delta
+		if _dry_in <= 0.0:
+			shake()
+		return
+	if not shakes:
 		return
 	_shake_in -= delta
 	if _shake_in <= 0.0:

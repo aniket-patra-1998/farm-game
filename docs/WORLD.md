@@ -27,6 +27,7 @@ by reading them in its shader: no script runs for each thing, and nothing can be
 | water | water3d | rings | | moonlit | ices over |
 | leaf, crop, flower | canopy3d, crop3d, ... | | sways | | |
 | the shade under a thing | contact3d | | | stronger (`NIGHT_MORE`) | |
+| animal | AnimalBehaviour, data/animal_rigs.json `weather` | turns its tail to it and stands about; in a storm keeps close to home; shakes it off when it stops | | sleeps its family's way | |
 
 A fountain, a pour and a warm pool's steam are not weather's business: a spray answers only when its settings
 say how (`DecorMotion.SMOKE_THINS`, `EMBERS_DIE`, `STEAM_IN_RAIN`).
@@ -39,14 +40,22 @@ shade right under it (GroundShade, ContactShades: one draw for all). That shade 
 darkens wet earth and night grass by the same share as a sunlit lawn, and is drawn stronger at night, when no
 cast shadow holds a thing down.
 
+## Size
+
+Size tells what matters (data/scale_guide.json): buildings and trees stand over the animals, so an animal at
+large is drawn a little smaller than its file (`animals.default`), a bee much smaller (`ids`), and in a
+building's yard smaller again (`yard`): the building is its home, not a prop beside giants. Its stride, its
+shade and where its "z z z" rises all follow its size (ScaleGuide.animal_scale, yard_scale; Animal3D.create).
+
 ## Still to come (in this order)
 
-1. Animals answer the weather (the kind "living"): shelter in rain, a shaken coat after, breath in the cold.
-2. Cloth and loose things (flags, a scarecrow's rags, hay): heavy and dark when wet, lifted by the wind.
-3. Unmown grass at the foot of every standing thing, and things set a little into the ground.
-4. Sizes: animals smaller on the open farm, much smaller in a yard; bees half their size.
-5. Buildings as kits: one small unit a building, a lead that grows at each level, companions and props added.
-6. Animals lighter: the bone rig shipped in place of the stored poses.
+1. Buildings as kits: one small unit a building, a lead that grows at each level, companions and props added
+   (the owner's pick, 25 Nov; concept sheets: hive, coop, hutch).
+2. Animals with more character (fleece, fur and manes as distinct forms) and lighter: the bone rig shipped in
+   place of the stored poses.
+3. Unmown grass at the foot of every standing thing, and things set a little into the ground (a new look: a
+   sheet first).
+4. Animals in a yard go in when it rains (heads at the windows), breath in the cold (docs/WEATHER.md).
 
 ## Adding a thing
 

@@ -63,6 +63,53 @@ func test_632_a_things_shade_on_the_ground_reads_at_night() -> void:
 	batch.free()
 
 
+func test_633_animals_are_sized_for_the_farm_and_smaller_in_a_yard() -> void:
+	var g := _farm()
+	var cow := ScaleGuide.animal_scale("cow")
+	_check(cow < 1.0 and cow > 0.7, "an animal at large is drawn a little smaller than its file (%.2f)" % cow)
+	_check(ScaleGuide.animal_scale("bee") < cow, "a bee much smaller: a speck by its hive, not a rabbit's size")
+	var yard := ScaleGuide.yard_scale("cow")
+	_check(yard < 0.8 and yard > 0.5,
+		"in a yard an animal is drawn clearly smaller again (%.2f of its size at large)" % yard)
+	var made := Animal3D.file_stride("cow")
+	var at_large := Animal3D.create(g.item_data("cow"), null, Vector3.ZERO)
+	var at_home := Animal3D.create(g.item_data("cow"), null, Vector3.ZERO, yard)
+	_check(is_equal_approx(at_large.stride(), made * cow), "its stride is its size's: its feet still grip the ground")
+	_check(is_equal_approx(at_home.stride(), made * cow * yard), "in a yard too")
+	at_large.free()
+	at_home.free()
+
+
+func test_634_an_animal_shakes_the_rain_off_when_it_stops() -> void:
+	var rain_was := AnimalBehaviour.rain
+	var night_was := AnimalBehaviour.night
+	AnimalBehaviour.night = false
+	var mind := AnimalBehaviour.new(AnimalRig.of(Game.item_data("cow")), 7, Vector2(14, 7))
+	_check(not mind.shakes, "a cow's coat has no shake of its own")
+	AnimalBehaviour.rain = 1.0
+	mind.update(0.1)
+	_eq(mind.pose.shake, 0.0, "in the rain it stands and bears it")
+	AnimalBehaviour.rain = 0.0
+	var most := 0.0
+	var by := 0.0
+	for step in 400:
+		mind.update(0.1)
+		most = maxf(most, mind.pose.shake)
+		if most > 0.0 and by == 0.0:
+			by = step * 0.1
+	_check(most > 0.5, "the rain over, it shakes it off (%.2f through at most)" % most)
+	_check(by >= AnimalRig.weather("dry_from", 1.0) - 0.2, "in its own time, a moment after (%.1f s)" % by)
+	_eq(mind.pose.shake, 0.0, "and is done")
+	_check(is_zero_approx(Animal3D.shake_roll(0.0)) and absf(Animal3D.shake_roll(1.0)) < 0.001,
+		"a short coat's shake is its body's roll: none as it starts and ends")
+	var swing := 0.0
+	for k in 40:
+		swing = maxf(swing, absf(Animal3D.shake_roll(k / 40.0)))
+	_check(swing > 0.1 and swing <= Animal3D.SHAKE_ROLL, "and a clear roll each way between (%.2f radians)" % swing)
+	AnimalBehaviour.rain = rain_was
+	AnimalBehaviour.night = night_was
+
+
 func _with_shader(node: Node, kind: String) -> Array[ShaderMaterial]:
 	var out: Array[ShaderMaterial] = []
 	for n in node.find_children("*", "MeshInstance3D", true, false):

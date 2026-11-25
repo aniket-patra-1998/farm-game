@@ -11,6 +11,7 @@ const PICTURE_LOOK := 7   # the look an item's picture shows (of Instancer.VARIA
 static var _ranges := {}
 static var _factors := {}
 static var _decor := {}
+static var _animals := {}   # the data's `animals`
 static var _stands := {}
 static var _measured := {}   # item id -> its measured height (building a model to measure it takes ~20 ms)
 
@@ -55,6 +56,28 @@ static func decor_scale(id: String) -> float:
 		if _decor.is_empty():
 			_decor = {"default": 1.0}
 	return float((_decor.get("ids", {}) as Dictionary).get(id, _decor.get("default", 1.0)))
+
+
+## How big an animal is drawn against its file, on the open farm (the data's `animals`: its own size if it
+## has one, else `default`; 1.0 with no data).
+static func animal_scale(id: String) -> float:
+	var sizes := _animal_sizes()
+	return float((sizes.get("ids", {}) as Dictionary).get(id, sizes.get("default", 1.0)))
+
+
+## ..and in a building's yard, against that (`yard_ids`, else `yard`).
+static func yard_scale(id: String) -> float:
+	var sizes := _animal_sizes()
+	return float((sizes.get("yard_ids", {}) as Dictionary).get(id, sizes.get("yard", 1.0)))
+
+
+static func _animal_sizes() -> Dictionary:
+	if _animals.is_empty():
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(DATA))
+		_animals = (parsed as Dictionary).get("animals", {}) if parsed is Dictionary else {}
+		if _animals.is_empty():
+			_animals = {"default": 1.0}
+	return _animals
 
 
 static func _heights() -> Dictionary:
