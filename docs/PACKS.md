@@ -51,7 +51,15 @@ is the point"). The plan, from the research of 25 Nov, in this order, each pushe
    packs to https://farm-game-packs.pages.dev (packs.yml; the token a GitHub secret, never in the app); a pack
    is named by its hash and cached for good, the manifest a minute (`_headers`). Limits: 20,000 files a site,
    25 MiB a file, 500 deploys a month.
-3. **Every item's model in a level pack**, the first levels' kept in the app; fetched a level ahead.
+3. **Every item's model in a level pack (done 25 Nov, `packs_test` 584, 625).** tools/make_level_packs.py
+   writes data/level_packs.json (precheck checks it): animals, trees and buildings past `starter_level` (5) go in
+   a pack for their unlock level; what turns up unbought (strays, finds, rare trees) in `extras_N` (split under
+   Pages' 25 MiB); crops, blooms, the farmer and the Barn stay in the app. `fetch_ahead` asks every level up to
+   the next one at the start and on each level up, extras last; buying an item whose pack is not here yet says
+   "still downloading" and fetches it now. Only the Play Store AAB leaves these files out (its exclude_filter,
+   written by the tool); the debug and benchmark APKs keep them, so the phone bench draws the same farm, and a
+   pack the app already has is never fetched (`in_app`). About 105 MB of source files leave the AAB.
+   Still to do for the AAB: it must not ship the showcase's baked models (res://baked, 138 MB in the APK).
 4. **Online-only start** (the manifest fetched to start; a dropped connection carries on with a badge).
 5. **Cloud save**: Google Play Games saved games (free, 3 MB a save; ours is about 20 KB), with a conflict choice.
 

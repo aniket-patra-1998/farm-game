@@ -101,18 +101,39 @@ func test_584_the_packs_are_the_limited_animals_and_the_export_agrees_with_the_a
 	if packs == null:
 		return
 	var limited := 0
+	var levelled := 0
+	for pack: String in packs.packs():
+		if not packs.limited_pack(pack):
+			levelled += (packs.packs()[pack] as Array).size()
 	for id: String in Game.item_order:
 		var d := Game.catalog.get_def(id) as AnimalDef
 		var file := str(AssetRegistry.entry(id).get("model", ""))
 		if d != null and d.is_limited():
 			limited += 1
-			_check(file.begins_with("res://art/models/limited/") and packs.has(file), "%s's file is a pack's" % id)
-		else:
-			_check(not file.begins_with("res://art/models/limited/") and not packs.has(file), "%s's file is the app's" % id)
+			_check(file.begins_with("res://art/models/limited/") and packs.has(file)
+				and packs.limited(id), "%s's file is a Limited pack's" % id)
+		elif not file.begins_with("res://art/models/limited/") and packs.has(file):
+			_check(not packs.limited(id), "%s's file is a level pack's" % id)
+			_check(Game.catalog.get_def(id).unlock_level > int(DataFile.read(AssetPacks.LEVEL_PACKS)["starter_level"]),
+				"%s is past the starter levels" % id)
 	var brought := 0
 	for pack: String in packs.packs():
-		brought += (packs.packs()[pack] as Array).size()
-	_eq(brought, limited, "every limited animal's file is in one pack (its own, or its parent's)")
+		if packs.limited_pack(pack):
+			brought += (packs.packs()[pack] as Array).size()
+	_eq(brought, limited, "every limited animal's file is in one Limited pack (its own, or its parent's)")
+	_check(levelled > 0, "the models past the starter levels are in level packs")
+	_eq(packs.total(), packs.packs().size() - DataFile.read(AssetPacks.LEVEL_PACKS)["packs"].size(),
+		"the Limited tab counts only its own packs")
+	# The Play Store build leaves the level packs' files out; the APKs keep them (the bench draws the same farm).
+	var cfg := ConfigFile.new()
+	cfg.load("res://export_presets.cfg")
+	var some_file := str((DataFile.read(AssetPacks.LEVEL_PACKS)["packs"].values()[0] as Dictionary)["files"][0])
+	for n in 8:
+		var section := "preset.%d" % n
+		if not cfg.has_section(section):
+			continue
+		var out := str(cfg.get_value(section, "exclude_filter", "")).contains(some_file.trim_prefix("res://"))
+		_eq(out, str(cfg.get_value(section, "name")).contains("AAB"), "%s leaves the level packs out" % section)
 	# One switch: with an address, the export leaves those files out and may use the internet; with none, neither.
 	var config: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetPacks.CONFIG))
 	var address := str(config.get("base_url", ""))
@@ -212,3 +233,29 @@ func test_624_the_downloader_waits_its_turn_needs_room_heeds_the_app_and_packs_n
 				"%s exports the app_code the downloader compares" % section)
 	_check(int(config.get("min_app_code", 0)) <= int(config.get("app_code", 0)), "this app takes its own packs")
 	_wipe(MADE)
+
+
+func test_625_level_packs_come_a_level_ahead_extras_last_and_never_what_the_app_has() -> void:
+	var packs := AssetPacks.new()
+	add_child(packs)
+	packs.kept = KEPT_624
+	var a: Array[String] = ["res://nowhere/a.glb"]
+	var b: Array[String] = ["res://nowhere/b.glb"]
+	var c: Array[String] = ["res://nowhere/c.glb"]
+	var x: Array[String] = ["res://nowhere/x.glb"]
+	var had: Array[String] = [str(AssetRegistry.entry("cow")["model"])]   # (a file this app has)
+	packs.add_pack("extras", x, AssetPacks.EXTRAS)
+	packs.add_pack("level_09", c, 9)
+	packs.add_pack("level_07", b, 7)
+	packs.add_pack("level_06", a, 6)
+	packs.add_pack("level_05", had, 5)
+	packs.add_pack("limited_one", c.duplicate())
+	var silent := Silent.new()
+	packs.source = silent
+	packs.fetch_ahead(6)
+	_eq(packs.get("_asked"), ["level_06", "level_07", "extras"] as Array[String],
+		"up to the next level, lowest first, extras last; not later levels, not what the app has, not Limited packs")
+	_check(packs.in_app("level_05") and not packs.in_app("level_06"), "the app's own files are told apart")
+	_eq(packs.total(), 1, "the Limited tab counts only its own pack")
+	_check(packs.limited_pack("limited_one") and not packs.limited_pack("level_06"), "a level pack is not Limited")
+	packs.free()

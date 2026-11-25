@@ -270,6 +270,9 @@ func _ready() -> void:
 		packs.update_needed.connect(_packs_said.bind("PACK_UPDATE"))
 	if not saving_enabled or not load_game():
 		_new_game()
+	if AssetPacks.shared != null and AssetPacks.shared.get_parent() == self:
+		AssetPacks.shared.fetch_ahead(level())   # (the models of the levels just ahead, docs/PACKS.md Online)
+		leveled_up.connect(AssetPacks.shared.fetch_ahead)
 	if OS.is_debug_build() and OS.get_cmdline_user_args().has(SHOWCASE_ARG):
 		open_showcase.call_deferred()  # straight into the farm with everything on it, for testing
 	# Deferred so the HUD is connected and can show the message.

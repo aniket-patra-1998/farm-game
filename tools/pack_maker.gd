@@ -7,6 +7,10 @@ extends RefCounted
 const MANIFEST := "manifest.json"
 ## Never in a pack: Google Play forbids an app downloading code from anywhere but Play, so packs carry art only
 ## (models, pictures, sounds) and every script ships in the app.
+## Files the game saved itself (no importer): they go in a pack as they are.
+const NATIVE := ["scn", "tscn", "res", "tres"]
+## The most a pack may weigh: Cloudflare Pages serves files of up to 25 MiB (docs/PACKS.md, Online).
+const MOST_BYTES := 24 * 1048576
 const CODE := ["gd", "gdc", "cs", "dll", "so", "dex", "jar"]
 ## A file's remap as an exported game has it: where what was made of it is.
 const REMAP := "[remap]\n\nimporter=\"%s\"\ntype=\"%s\"\npath=\"%s\"\n"
@@ -34,8 +38,14 @@ static func make(pack: String, files: Dictionary, out: String) -> Dictionary:
 		return {}
 	var remaps: Array[String] = []
 	for brought: String in files:
+		if is_code(brought):
+			return {}
+		if NATIVE.has(brought.get_extension()) and str(files[brought]) == brought:   # (a scene saved by us, no import)
+			if not FileAccess.file_exists(brought) or packer.add_file(brought, brought) != OK:
+				return {}
+			continue
 		var made := made_of(str(files[brought]))
-		if made.is_empty() or is_code(brought) or is_code(str(made["path"])):
+		if made.is_empty() or is_code(str(made["path"])):
 			return {}
 		var remap := out.path_join("%s.%d.remap" % [pack, remaps.size()])
 		var written := FileAccess.open(remap, FileAccess.WRITE)
@@ -71,6 +81,9 @@ static func make_all(packs: Dictionary, out: String, min_app_code := 0) -> Array
 		for file: String in packs[pack]:
 			files[file] = file
 		var entry := make(pack, files, out)
+		if not entry.is_empty() and int(entry["bytes"]) > MOST_BYTES:
+			push_error("pack %s is %d bytes, over %d" % [pack, entry["bytes"], MOST_BYTES])   # not-ui
+			entry = {}
 		if entry.is_empty():
 			failed.append(pack)
 		else:

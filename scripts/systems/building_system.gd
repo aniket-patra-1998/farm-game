@@ -125,8 +125,11 @@ func can_buy(id: String) -> Verdict:
 	var unlock := int(it.get("unlock_level", 1))
 	if game.level() < unlock:
 		return Verdict.new(Why.LEVEL, tr("UNLOCKS_AT_LEVEL") % [it["name"], unlock], tr("LEVEL") % unlock)
-	if AssetRegistry.away(id):   # (its file comes with the Limited tab's download: never a stand-in on the farm)
-		return Verdict.new(Why.DOWNLOAD, tr("LIMITED_DOWNLOAD_FIRST") % it["name"], tr("DOWNLOAD_SHORT"))
+	if AssetRegistry.away(id):   # (its file is not here yet: never a stand-in on the farm)
+		if AssetPacks.shared.limited(id):
+			return Verdict.new(Why.DOWNLOAD, tr("LIMITED_DOWNLOAD_FIRST") % it["name"], tr("DOWNLOAD_SHORT"))
+		AssetPacks.shared.want(AssetRegistry.file_of(AssetRegistry.entry(id), {}))   # (fetched now, if not already)
+		return Verdict.new(Why.DOWNLOAD, tr("ITEM_DOWNLOADING") % it["name"], tr("DOWNLOAD_SHORT"))
 	var unmet := Requirements.first_unmet(game, id)
 	if not unmet.is_empty():
 		return Verdict.new(Why.REQUIRES, tr("NEEDS_X") % unmet["text"], tr("NEEDS_SHORT"))

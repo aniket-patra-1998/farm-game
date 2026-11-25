@@ -1,6 +1,6 @@
 name: Asset packs
 
-# The limited animals' files, packed and put where the game downloads them (docs/PACKS.md): Cloudflare Pages
+# The limited animals' files and the level packs (data/level_packs.json), packed and put where the game downloads them (docs/PACKS.md): Cloudflare Pages
 # project farm-game-packs (data/packs.json base_url; owner, 25 Nov: free, unlimited downloads, no domain). The
 # secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are the owner's; nothing in the app can upload. The Limited tab's Download fetches them (owner, 20 Nov: "a
 # download option in the limited tab... so that placing is seamless"). Runs when a limited animal's file or the
@@ -9,7 +9,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'art/models/limited/**'
+      - 'art/models/**'
+      - 'data/level_packs.json'
       - 'tools/make_packs.gd'
       - 'scripts/systems/asset_packs.gd'
       - '.github/workflows/packs.yml'

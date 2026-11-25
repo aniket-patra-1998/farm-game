@@ -29,7 +29,10 @@ const RETRY_MOST := 600.0             # ..doubling each time to at most this
 # all come back in the same second.
 const JITTER := 0.5
 const SPARE_BYTES := 20 * 1048576     # room left on the device besides a pack and its copy being checked
-const MIN_APP := "_min_app_code"      # in the manifest: the oldest app (version code) its packs work with
+const MIN_APP := "_min_app_code"
+const LEVEL_PACKS := "res://data/level_packs.json"   # the level packs (tools/make_level_packs.py)
+const EXTRAS := 0                     # a level pack's level for the extras: fetched at the start
+const AHEAD := 1                      # level packs are fetched this many levels before they are needed      # in the manifest: the oldest app (version code) its packs work with
 
 static var shared: AssetPacks         # the game's own (GameState makes it); null in tests that make none
 
@@ -39,6 +42,7 @@ var app_code := 0                     # this app's version code (data/packs.json
 var spare_bytes := SPARE_BYTES        # room kept free besides a pack (tests ask for more than any device has)
 var stopped := false                  # the source needs a newer app: nothing is fetched this session
 
+var _levels := {}                     # level pack -> its level (EXTRAS for the extras)
 var _files := {}                      # pack -> the res:// files it brings
 var _pack_of := {}                    # res:// file -> its pack
 var _manifest := {}                   # the source's list, read once a session
@@ -62,6 +66,11 @@ static func begin(game: GameState) -> AssetPacks:
 				if file != "":
 					files.append(file)
 			packs.add_pack(id, files)
+	var levelled: Dictionary = game.read_json(LEVEL_PACKS).get("packs", {})
+	for pack: String in levelled:
+		var files: Array[String] = []
+		files.assign(levelled[pack]["files"])
+		packs.add_pack(pack, files, int(levelled[pack]["level"]))
 	var config: Dictionary = game.read_json(CONFIG)
 	packs.source = source_for(str(config.get("base_url", "")), packs)
 	packs.app_code = int(config.get("app_code", 0))
@@ -77,9 +86,12 @@ static func source_for(address: String, host: Node) -> PackSource:
 	return HttpPackSource.new(address, host) if address.begins_with("http") else FolderPackSource.new(address)   # not-ui
 
 
-## Pack `pack` brings `files` (res:// paths).
-func add_pack(pack: String, files: Array[String]) -> void:
+## Pack `pack` brings `files` (res:// paths). A level pack (`level` above 0, or EXTRAS) holds models a new player
+## does not need yet (data/level_packs.json): fetched by `fetch_ahead`, not by the Limited tab.
+func add_pack(pack: String, files: Array[String], level := -1) -> void:
 	_files[pack] = files
+	if level >= 0:
+		_levels[pack] = level
 	for file in files:
 		_pack_of[file] = pack
 
@@ -124,14 +136,14 @@ func downloaded() -> bool:
 func missing() -> int:
 	var n := 0
 	for pack: String in _files:
-		if not _index.has(pack):
+		if not _index.has(pack) and not _levels.has(pack):
 			n += 1
 	return n
 
 
-## How many packs there are in all.
+## How many packs there are in all (the Limited tab's: level packs come by themselves).
 func total() -> int:
-	return _files.size()
+	return _files.size() - _levels.size()
 
 
 ## Whether packs are being fetched now (or waiting to be tried again).
@@ -144,9 +156,48 @@ func fetch_all() -> void:
 	if source == null:
 		return
 	for pack: String in _files:
-		if not _index.has(pack) and not _asked.has(pack):
+		if not _index.has(pack) and not _asked.has(pack) and not _levels.has(pack):
 			_asked.append(pack)
 	_next()
+
+
+## Fetches the level packs a player at `level` may soon use (docs/PACKS.md, Online): every level up to the next
+## one, lowest first, then the extras (what turns up unbought: strays, finds). A pack whose files the app
+## already has (the debug and benchmark builds keep them all) is not fetched.
+func fetch_ahead(level: int) -> void:
+	if source == null:
+		return
+	var due: Array[String] = []
+	for pack: String in _levels:
+		var at := int(_levels[pack])
+		if (at == EXTRAS or at <= level + AHEAD) and not _index.has(pack) and not _asked.has(pack) and not in_app(pack):
+			due.append(pack)
+	due.sort_custom(func(a: String, b: String) -> bool:
+		return _order(a) < _order(b))
+	_asked.append_array(due)
+	_next()
+
+
+## Whether item `id`'s file comes in a Limited-tab pack (not a level pack).
+func limited(id: String) -> bool:
+	var file := AssetRegistry.file_of(AssetRegistry.entry(id), {})
+	return has(file) and limited_pack(_pack_of[file])
+
+
+## Whether `pack` is a Limited-tab pack (not a level pack).
+func limited_pack(pack: String) -> bool:
+	return _files.has(pack) and not _levels.has(pack)
+
+
+## Whether the app itself has pack `pack`'s files (a build that keeps them all).
+func in_app(pack: String) -> bool:
+	var files: Array = _files.get(pack, [])
+	return not files.is_empty() and not _index.has(pack) and ResourceLoader.exists(str(files[0]))
+
+
+func _order(pack: String) -> int:
+	var at := int(_levels[pack])
+	return 1000 if at == EXTRAS else at
 
 
 ## Loads every pack kept on the device (the game's start: no network needed).
