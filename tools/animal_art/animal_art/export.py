@@ -66,6 +66,14 @@ def shown(name, rel):
     return rel if name in TRUE_SIZE else rel ** SIZE_EVEN
 
 
+VIVID = 1.12            # a coat's colour is drawn this much stronger than its row gives (greys and whites stay)
+
+
+def _vivid(c):
+    grey = float(np.mean(c))
+    return np.clip(grey + (c - grey) * VIVID, 0.0, 1.0)
+
+
 def export(name, path):
     fn, rel = MADE[name]
     a = lightest(fn)
@@ -79,7 +87,7 @@ def export(name, path):
         for j, v in enumerate(t):
             k = (int(v), c.tobytes())
             if k not in key:
-                key[k] = len(src); src.append(int(v)); vcol.append(c * bake[v]); raw.append(c)
+                key[k] = len(src); src.append(int(v)); vcol.append(_vivid(c) * bake[v]); raw.append(c)
             idx[ti, j] = key[k]
     src = np.array(src)
     # every point needs a normal: a face drawing's points (eyes, blush) have none of their own, so they take the
