@@ -1464,3 +1464,21 @@ func test_583_a_young_farm_sees_its_seeds_and_short_panels() -> void:
 		_check(not hud.top.forecast.visible, "no forecast under a hint")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_627_settings_show_the_licences_their_parts_ask_for() -> void:
+	var parts := HudSettings.licences()
+	var names: Array = parts.map(func(p: Array) -> String: return str(p[0]))
+	_check(names.has("Godot Engine") and names.has("Poppins"), "Godot's licence and the font's are shown")
+	_check(parts.size() > 5, "with every third-party part Godot lists")
+	for p: Array in parts:
+		_check(str(p[1]).length() > 20, "%s has its notice" % p[0])
+	_check(FileAccess.get_file_as_string(HudSettings.FONT_LICENCE).contains("SIL OPEN FONT LICENSE"),
+		"the font's licence is the OFL")
+	var presets := ConfigFile.new()
+	presets.load("res://export_presets.cfg")
+	for section: String in presets.get_sections():
+		if section.ends_with(".options") or not presets.has_section_key(section, "include_filter"):
+			continue
+		_check(str(presets.get_value(section, "include_filter")).contains(HudSettings.FONT_LICENCE.trim_prefix("res://")),
+			"%s ships the font's licence" % section)

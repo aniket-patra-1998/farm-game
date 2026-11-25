@@ -174,6 +174,27 @@ jobs:
             "$(comm -23 baked.txt plain.txt | wc -l) files only in the baked one:" | tee -a "$GITHUB_STEP_SUMMARY"
           comm -23 baked.txt plain.txt | sed 's#/[^/]*$##' | sort | uniq -c | head -10 | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - name: Export the Play Store bundle and measure what a phone downloads (docs/PACKS.md, Online)
+        continue-on-error: true   # (a measurement: never stops the phone build)
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ github.workspace }}/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          # The AAB leaves out the level packs' files and the showcase's baked models (export_presets.cfg); Play
+          # splits it per phone (one engine, one screen density), so its own size says little: bundletool says
+          # what a phone downloads. Debug-signed: the real upload key comes with the release workflow.
+          ./godot-bin/godot --headless --path . --export-debug "Android (Play Store AAB)" build/farm-game.aab \
+            > aab.log 2>&1 || tail -20 aab.log
+          test -s build/farm-game.aab
+          curl -fsSL -o bundletool.jar \
+            https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar
+          java -jar bundletool.jar build-apks --bundle=build/farm-game.aab --output=build/farm-game.apks \
+            --ks=debug.keystore --ks-key-alias=androiddebugkey --ks-pass=pass:android --key-pass=pass:android
+          { echo "Play bundle: $(stat -c %s build/farm-game.aab) bytes; a phone downloads (bytes, by engine):";
+            java -jar bundletool.jar get-size total --apks=build/farm-game.apks --dimensions=ABI; } \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Upload the APK
         uses: actions/upload-artifact@v4
         with:

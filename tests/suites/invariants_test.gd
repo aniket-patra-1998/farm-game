@@ -32,6 +32,7 @@ func test_194_random_play_keeps_the_farm_consistent() -> void:
 	for seed_value: int in seeds.slice(0, plan.x):
 		var g := _farm(true)
 		g.rng.seed = seed_value
+		g.persistence.watch_clock()   # (the running game's first frame: the clock seen before any jump)
 		var dice := RandomNumberGenerator.new()
 		dice.seed = seed_value
 		var placeable: Array[String] = []
