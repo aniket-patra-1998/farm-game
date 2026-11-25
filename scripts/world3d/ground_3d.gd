@@ -50,6 +50,8 @@ const FLOWER_CHANCE := 0.22        # of a meadow tile having a patch of wild flo
 
 const FLOWERS := [Color("#f5f1e6"), Color("#ffd84a"), Color("#c99be8"), Color("#ff8fa3"), Color("#8fc6ff")]
 
+const PIXEL_SHADER := "res://shaders/ground3d.gdshader"
+const VERTEX_SHADER := "res://shaders/ground3d_vertex.gdshader"
 
 var wind := 0.6: set = _set_wind
 
@@ -97,7 +99,7 @@ static func lawn_on(grass: ShaderMaterial, mown := true) -> void:
 
 func _ready() -> void:
 	var grass := ShaderMaterial.new()
-	grass.shader = load("res://shaders/ground3d.gdshader")
+	grass.shader = ground_shader()
 	var meadow_grass := grass.duplicate() as ShaderMaterial
 	# The farm's lawn is kept: an even, bright green (FarmVille's), with only a little of the countryside's
 	# patchiness (the meadow keeps the shader's own, wilder numbers).
@@ -121,6 +123,7 @@ func _ready() -> void:
 	_meadow.material_override = meadow_grass
 	_meadow.name = "Meadow"   # not-ui (named: the phone benchmark's GPU sweep times each part of the ground)
 	add_child(_meadow)
+	Quality.notifier.emitted.connect(_apply_light)
 	_slab = MeshInstance3D.new()
 	_slab.name = "Lawn"   # not-ui
 	add_child(_slab)
@@ -149,6 +152,18 @@ func _ready() -> void:
 ## off-screen viewport the frame after; until then (and with no screen at all) the ground works its look out live.
 ## `shade_pass`: the farm lawn's (the still look is kept and a shade pass painted over it, now and after each
 ## change: `with_shade` for that pass).
+## The grass shader for the quality level in use: lit per corner on a low phone (data/quality.json
+## `ground_vertex_light`: the ground is flat, so it looks the same at about 27 ms less a frame), else per pixel.
+static func ground_shader() -> Shader:
+	return load(VERTEX_SHADER if bool(Quality.value("ground_vertex_light")) else PIXEL_SHADER)
+
+
+func _apply_light() -> void:
+	var shader := ground_shader()
+	for m: Variant in [_slab.get_meta("grass"), _meadow.material_override]:
+		(m as ShaderMaterial).shader = shader
+
+
 func bake(grass: ShaderMaterial, rect: Rect2, res: int, shade_pass := false, with_shade := false) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
@@ -389,6 +404,8 @@ func _finish_shade(wait: bool) -> void:
 
 ## The worker never outlives the ground.
 func _exit_tree() -> void:
+	if Quality.notifier.emitted.is_connected(_apply_light):
+		Quality.notifier.emitted.disconnect(_apply_light)
 	if _shade_task >= 0:
 		WorkerThreadPool.wait_for_task_completion(_shade_task)   # (never left running on a freed ground)
 		_shade_task = -1

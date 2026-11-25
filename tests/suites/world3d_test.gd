@@ -1459,6 +1459,8 @@ func test_210_rain_wets_and_snow_settles_gradually_and_both_fade() -> void:
 	w.free()
 	for shader in ["ground3d", "wall3d", "paint3d", "canopy3d", "foliage3d"]:
 		var code := FileAccess.get_file_as_string("res://shaders/%s.gdshader" % shader)
+		if FileAccess.file_exists("res://shaders/%s.gdshaderinc" % shader):   # (the ground's shared body)
+			code += FileAccess.get_file_as_string("res://shaders/%s.gdshaderinc" % shader)
 		_check(code.contains("global uniform float snow_cover") and code.contains("global uniform float wetness"),
 			"%s shows the weather" % shader)
 
@@ -1644,7 +1646,7 @@ func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
 
 func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 	var keys := ["shadows", "shadow_splits", "shadow_distance", "glow", "scale", "lod_pixels", "pose_every",
-		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size", "animal_shadows"]
+		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size", "animal_shadows", "ground_vertex_light"]
 	for name: String in Quality.LEVELS:
 		for k: String in keys:
 			_check(Quality.value(k, name) != null, "%s sets %s" % [name, k])
@@ -1666,11 +1668,15 @@ func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 		_eq(Engine.max_fps, int(Quality.value("max_fps")), "%s: frame cap" % name)
 		_eq(Crops3D._shadow_setting() != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
 			bool(Quality.value("crop_shadows")), "%s: crop shadows" % name)
+		_eq(Ground3D.ground_shader().resource_path, Ground3D.VERTEX_SHADER if bool(Quality.value("ground_vertex_light"))
+			else Ground3D.PIXEL_SHADER, "%s: ground light" % name)
 	_check(int(Quality.value("max_fps", "low")) > 0, "low caps the frame rate (a cheap phone runs cooler)")
 	_eq(int(Quality.value("msaa", "low")), 0, "low draws without anti-aliasing")
 	_check(int(Quality.value("msaa", "ultra")) > int(Quality.value("msaa", "high")), "ultra smooths edges more")
 	_check(int(Quality.value("shadow_size", "ultra")) > int(Quality.value("shadow_size", "high")), "and sharper shadows")
 	_check(not bool(Quality.value("screen_grade", "low")), "low skips the full-screen grade pass")
+	_check(bool(Quality.value("ground_vertex_light", "low")), "low lights the ground per corner (27 ms on an A05s)")
+	_check(not bool(Quality.value("ground_vertex_light", "high")), "high lights it per pixel")
 	Quality.choose(was)
 	Engine.max_fps = 0
 	sun.free()
