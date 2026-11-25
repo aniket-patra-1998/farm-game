@@ -21,7 +21,8 @@ tablets. Principle: first pure FarmVille, then our own touch, clearly marked.
   (building wear, upgrade prices), WATER.md (water and what lives on it), ANIMAL_SLEEP.md (how each animal sleeps), LIMITED.md (limited animals and trees),
   PACKS.md (files fetched when first needed), NEXT.md (handoff between sessions), POLISH.md (the polish loop: vision and
   guardrails), ART_POLISH.md (its art and UX run), FIRST_HOUR_RUN.md (the first hour and goals build),
-  PERF_RUN.md (the loading and performance build), WOW_RUN.md (the wow build).
+  PERF_RUN.md (the loading and performance build), WOW_RUN.md (the wow build), WORLD.md (the rules every
+  thing obeys: weather, night, weight).
 
 ## Rules
 - Before every push `tools/precheck.sh <godot>` passes (the pre-push hook runs it: set it up once per clone

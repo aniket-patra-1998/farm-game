@@ -8,6 +8,10 @@ extends RefCounted
 ## Effects are described by data (`spray` takes the shader's settings), so decorations and buildings share
 ## them: a jet, a cascade off a rim, embers rising, a flame.
 
+## How a spray answers the weather (spray3d's `weather`; docs/WORLD.md): not at all unless it says so.
+const SMOKE_THINS := 1.0            # rain thins it and beats it down, the wind carries it
+const EMBERS_DIE := 2.0             # none in rain
+const STEAM_IN_RAIN := 3.0          # there only while it rains
 const DROP_RADIUS := 0.02           # a drop at full size (the shader scales it)
 ## Grain running off the end of a chute into the bin under it.
 const GRAIN_FALL := {"streams": 4, "per_stream": 6, "life": 0.42, "rise": 0.0, "gravity": 2.8, "reach": 0.03,
@@ -45,11 +49,15 @@ const CASCADE := {"streams": 18, "per_stream": 4, "life": 0.62, "rise": 0.05, "g
 	"reach": 0.07, "size": 1.1}
 ## Embers floating up from a fire, glowing (one each: they drift alone).
 const EMBERS := {"streams": 10, "per_stream": 1, "life": 1.8, "rise": 0.25, "gravity": -0.05,
-	"reach": 0.08, "size": 0.45, "colour": Color("#ffb347"), "glow": 3.0}
+	"reach": 0.08, "size": 0.45, "colour": Color("#ffb347"), "glow": 3.0, "weather": EMBERS_DIE}
 
 ## Smoke curling up from a chimney: soft grey puffs drifting up and spreading as they rise.
 const SMOKE := {"streams": 7, "per_stream": 1, "life": 3.2, "rise": 0.22, "gravity": -0.02, "reach": 0.18,
-	"size": 2.2, "end_size": 2.6, "colour": Color("#d9d6d0"), "sheen": 0.15, "round": true}
+	"size": 2.2, "end_size": 2.6, "colour": Color("#d9d6d0"), "sheen": 0.15, "round": true, "weather": SMOKE_THINS}
+
+## The steam off an open fire the rain is putting out: pale puffs hissing up, there only while it rains.
+const QUENCH := {"streams": 6, "per_stream": 1, "life": 2.0, "rise": 0.3, "gravity": -0.02, "reach": 0.12,
+	"size": 1.2, "end_size": 2.4, "colour": Color("#e9ecee"), "sheen": 0.1, "round": true, "weather": STEAM_IN_RAIN}
 
 ## Steam rising off a warm pool (the Spa): thin, white, slow, spreading wide.
 const STEAM := {"streams": 9, "per_stream": 1, "life": 2.6, "rise": 0.16, "gravity": -0.015, "reach": 0.22,

@@ -1493,3 +1493,20 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   stayed ~102 ms GPU; `ground_plain` still saves 41.6 ms (the grass shader itself), the next GPU target.
   Cloud save (step 5) waits on the owner's Play Console (Play Games Services, Saved Games, the game's app ID).
   The Play AAB must not ship the showcase's baked models (res://baked): no AAB workflow exists yet.
+
+## The world pass, 25 Nov (owner: "make a collective world, not do work piece by piece"; docs/WORLD.md)
+- The plan and its order are in docs/WORLD.md "Still to come" (the owner's copy: project doc
+  claude/world-pass-plan.md). Step 0 done on branch world-weather (draft PR; merging is the owner's call): fire,
+  embers, smoke and lamps answer rain, wind and night through the shared shader values (flame3d, spray3d
+  `weather`, the new lamp3d), the bonfire steams as rain puts it out, and the shade under animals and
+  decorations is drawn stronger at night (contact3d). Tests 627 to 630 (world_rules_test).
+- Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
+  prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
+  "more character: fur and fleece more distinct", 12% smaller on the open farm, about 60% in a yard, bees half;
+  buildings as kits with a lead that grows at each level (concept sheets, 25 Nov: hive, coop, hutch).
+- Not built: anything in "Still to come". Animal files: about 78% of each is its 17 stored poses; shipping the
+  art tool's bone rig instead should cut them to about a third (an estimate, untested).
+- world3d_test 101 ("moved away, its old spot is open grass again") fails when that suite is run alone
+  (`--only=world3d`), on unchanged main too; it passes in the whole run. An order dependence, not looked into.
+- A preview run of the main scene lets AutoQuality keep "low" in this machine's settings.cfg, and scale_test 620
+  then fails (pose_every 2): clear `auto`, `auto_cap` and `quality` there before the pre-push check.
