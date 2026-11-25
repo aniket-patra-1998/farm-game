@@ -46,9 +46,11 @@ is the point"). The plan, from the research of 25 Nov, in this order, each pushe
    with (`_min_app_code`, from data/packs.json `min_app_code`), and an older app asks its player to update
    instead of fetching (`update_needed`); a pack never holds code (`PackMaker.CODE`: Google Play forbids
    downloading code, so every script ships in the app).
-2. **Cloudflare R2 behind the owner's own domain** (not the r2.dev address, which is rate limited and not for
-   production): packs uploaded by CI (the key a GitHub secret, never in the app), named by hash and cached
-   forever; the manifest cached a minute. Needs the owner's Cloudflare account and a domain.
+2. **Cloudflare Pages (done 25 Nov)**: free with unlimited downloads and no domain to buy (the owner chose it
+   over R2, whose free r2.dev address is rate limited and needs a paid domain for production). CI deploys the
+   packs to https://farm-game-packs.pages.dev (packs.yml; the token a GitHub secret, never in the app); a pack
+   is named by its hash and cached for good, the manifest a minute (`_headers`). Limits: 20,000 files a site,
+   25 MiB a file, 500 deploys a month.
 3. **Every item's model in a level pack**, the first levels' kept in the app; fetched a level ahead.
 4. **Online-only start** (the manifest fetched to start; a dropped connection carries on with a badge).
 5. **Cloud save**: Google Play Games saved games (free, 3 MB a save; ours is about 20 KB), with a conflict choice.

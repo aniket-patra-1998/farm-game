@@ -1,7 +1,8 @@
 name: Asset packs
 
-# The limited animals' files, packed and put where the game downloads them (docs/PACKS.md): this repository's
-# public release "packs" (data/packs.json base_url). The Limited tab's Download fetches them (owner, 20 Nov: "a
+# The limited animals' files, packed and put where the game downloads them (docs/PACKS.md): Cloudflare Pages
+# project farm-game-packs (data/packs.json base_url; owner, 25 Nov: free, unlimited downloads, no domain). The
+# secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are the owner's; nothing in the app can upload. The Limited tab's Download fetches them (owner, 20 Nov: "a
 # download option in the limited tab... so that placing is seamless"). Runs when a limited animal's file or the
 # packer changes on main, and by hand. A pack is named by its hash, so a new make is a new file beside the old.
 on:
@@ -11,10 +12,11 @@ on:
       - 'art/models/limited/**'
       - 'tools/make_packs.gd'
       - 'scripts/systems/asset_packs.gd'
+      - '.github/workflows/packs.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write   # it uploads to the "packs" release
+  contents: read
 
 concurrency:
   group: asset-packs
@@ -59,10 +61,13 @@ jobs:
       - name: Make the packs
         run: ./godot-bin/godot --headless --path . res://tools/make_packs.tscn -- --out=packs_out
 
-      - name: Upload them to the "packs" release
+      - name: Upload them to Cloudflare Pages
         env:
-          GH_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          gh release view packs >/dev/null 2>&1 || gh release create packs --title "Asset packs" \
-            --notes "The limited animals' files, downloaded by the game (docs/PACKS.md). Made by CI; do not edit."
-          gh release upload packs packs_out/* --clobber
+          # A pack is named by its hash, so it is cached for good; the manifest only a minute, so a new make
+          # reaches every phone within that.
+          printf '/manifest.json\n  Cache-Control: public, max-age=60\n/*.pck\n  Cache-Control: public, max-age=31536000, immutable\n' > packs_out/_headers
+          npx --yes wrangler@4 pages project create farm-game-packs --production-branch=main || true
+          npx --yes wrangler@4 pages deploy packs_out --project-name=farm-game-packs --branch=main --commit-dirty=true
