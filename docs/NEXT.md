@@ -1504,6 +1504,11 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   ScaleGuide.animal_scale / yard_scale) and shake the rain off when it stops (AnimalBehaviour._mind_rain; a coat
   with no shake move rolls its body, Animal3D.shake_roll). Tests 633, 634. Animals already turned their tails to
   rain, stood about and huddled in storms (data/animal_rigs.json `weather`): that was there before.
+  And the first building as a kit: the Beehive is straw hives on stands (building_models.json `skep`,
+  BuildingModel._skep; the old stacked-box hive is gone), one at first, a lead that grew with two smaller ones
+  at its biggest (test 635; beehive_1.glb and beehive_2.glb re-exported). The coop and hutch are next: by data
+  (a low body under a steep roof, the body bigger at size 2 in place of the upper storey, a small one beside
+  it), since their bodies carry the door, windows, peeking heads and wear that tests hold.
 - Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
   prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
   "more character: fur and fleece more distinct" (sizes: done, above);

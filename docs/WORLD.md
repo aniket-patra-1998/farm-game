@@ -47,10 +47,19 @@ large is drawn a little smaller than its file (`animals.default`), a bee much sm
 building's yard smaller again (`yard`): the building is its home, not a prop beside giants. Its stride, its
 shade and where its "z z z" rises all follow its size (ScaleGuide.animal_scale, yard_scale; Animal3D.create).
 
+## Buildings grow by their lead growing and others joining
+
+A bigger size is never one big clunky building (the owner, 25 Nov). A building is a small unit with its own
+outline and colour; each size makes its lead unit bigger and richer and adds a smaller one or a prop beside it,
+so its top size is a small yard with one clear lead. The Beehive is the first: a straw hive on its stand
+(data/building_models.json `skep`: `rings`, `scale`, `cap` for the lead's hat; BuildingModel._skep), one at
+first, three of three sizes at its biggest, the gold band and star of a maxed building on the lead.
+
 ## Still to come (in this order)
 
 1. Buildings as kits: one small unit a building, a lead that grows at each level, companions and props added
-   (the owner's pick, 25 Nov; concept sheets: hive, coop, hutch).
+   (the owner's pick, 25 Nov; concept sheets: hive, coop, hutch). The Beehive is built so (below); the coop
+   and hutch next, by their data (a low body under a steep roof, a lead that grows, a small one beside it).
 2. Animals with more character (fleece, fur and manes as distinct forms) and lighter: the bone rig shipped in
    place of the stored poses.
 3. Unmown grass at the foot of every standing thing, and things set a little into the ground (a new look: a

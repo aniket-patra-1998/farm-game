@@ -110,6 +110,53 @@ func test_634_an_animal_shakes_the_rain_off_when_it_stops() -> void:
 	AnimalBehaviour.night = night_was
 
 
+func test_635_a_beehive_grows_by_its_lead_hive_growing_and_others_joining() -> void:
+	# (The owner, 25 Nov: never one big clunky building; a bigger size is a grander yard round a lead that grew.)
+	var first := _skeps(BuildingSpec.spec("beehive", 1))
+	var top := _skeps(BuildingSpec.spec("beehive", Game.max_level("beehive")))
+	_eq(first.size(), 1, "a new beehive is one small straw hive")
+	_check(top.size() >= 3, "at its biggest it is a yard of them (%d)" % top.size())
+	var sizes: Array[float] = []
+	for f in top:
+		sizes.append(float(f.get("scale", 1.0)))
+	sizes.sort()
+	_check(sizes[-1] > float(first[0].get("scale", 1.0)) * 1.25,
+		"its lead hive has grown (%.2f times a first hive)" % sizes[-1])
+	_check(sizes[0] < sizes[-1] * 0.7, "and the others are smaller: no row of clones (%s)" % [sizes])
+	_eq(top.filter(func(f: Dictionary) -> bool: return bool(f.get("cap", false))).size(), 1, "one lead, under its hat")
+	var g := _farm()
+	var model: Node3D = BuildingSpec.model().build(g.item_data("beehive"), g.footprint("beehive"),
+		Game.max_level("beehive"))
+	var box := _box_of(model)
+	var fp := g.footprint("beehive")
+	_check(box.position.x >= -0.05 and box.position.z >= -0.05 and box.end.x <= fp.x + 0.05 and box.end.z <= fp.y + 0.12,
+		"the whole yard stands on its footprint (%s)" % box)
+	_check(box.end.y < 1.35, "and its lead is a hive still, not a tower (%.2f tiles to its star's tip)" % box.end.y)
+	model.free()
+
+
+func _skeps(spec: Dictionary) -> Array:
+	return (spec.get("features", []) as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == "skep")
+
+
+func _box_of(node: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for n in node.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		if mi.mesh == null or mi.material_override == ModelKit.shade_material():
+			continue
+		var xf := mi.transform
+		var up := mi.get_parent()
+		while up != null and up != node and up is Node3D:
+			xf = (up as Node3D).transform * xf
+			up = up.get_parent()
+		var b: AABB = xf * mi.mesh.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out
+
+
 func _with_shader(node: Node, kind: String) -> Array[ShaderMaterial]:
 	var out: Array[ShaderMaterial] = []
 	for n in node.find_children("*", "MeshInstance3D", true, false):

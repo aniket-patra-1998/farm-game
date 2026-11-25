@@ -581,7 +581,7 @@
             "bee"
           ],
           "color": "#f2c230",
-          "roof": "#c98a1a",
+          "roof": "#a85a2e",
           "build_materials": {
             "smokers": 10,
             "beeswax": 10,
@@ -590,7 +590,7 @@
             "bricks": 10
           },
           "special": "beehive",
-          "look": "stacked white wooden beehive boxes on a small stand, surrounded by colourful flowers, bees buzzing around",
+          "look": "straw beehives on a small stand, surrounded by colourful flowers, bees buzzing around",
           "sizes": [
             {
               "capacity": 200
