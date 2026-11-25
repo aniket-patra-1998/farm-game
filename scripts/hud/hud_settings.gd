@@ -12,6 +12,8 @@ const FIELD_WIDE := 3.0   # a row's field or slider, in panel buttons' least wid
 ## What each graphics level does, in a word.
 const QUALITY_EFFECTS := {"low": "GRAPHICS_LOW_EFFECT", "mid": "GRAPHICS_MID_EFFECT", "high": "GRAPHICS_HIGH_EFFECT",
 	"ultra": "GRAPHICS_ULTRA_EFFECT"}
+const FONT_LICENCE := "res://fonts/OFL.txt"   # exported by the presets' include_filter
+
 var hud: FarmHud
 
 
@@ -26,6 +28,7 @@ func build_settings(content: VBoxContainer) -> void:
 	content.add_child(farm_card())
 	content.add_child(quality_card())
 	content.add_child(sound_card())
+	content.add_child(about_card())
 	if OS.is_debug_build():
 		content.add_child(showcase_card())
 		content.add_child(debug_card())
@@ -145,6 +148,44 @@ func debug_card() -> PanelContainer:
 			reset.text = tr("TAP_AGAIN_TO_RESET"))
 	row.add_child(reset)
 	return BookPanel.card_frame(inner)
+
+
+## About: the notices the game's parts ask to be shown (Godot's licence and its third-party parts, the
+## Poppins font's OFL). The sounds are CC0 or made here (art/sound/SOURCES.md): they ask for none.
+func about_card() -> PanelContainer:
+	var inner := BookPanel.card()
+	inner.add_child(BookPanel.heading(tr("SETTINGS_ABOUT")))
+	var open := hud.panel_button(tr("LICENCES"))
+	open.pressed.connect(func() -> void: hud.book.open_panel(tr("LICENCES"), build_licences, BookPanel.Shape.LIST))
+	inner.add_child(BookPanel.row(tr("LICENCES_ROW"), open))
+	return BookPanel.card_frame(inner)
+
+
+## The licences page: each part's name and its notice, as its licence asks.
+func build_licences(content: VBoxContainer) -> void:
+	for part: Array in licences():
+		var inner := BookPanel.card()
+		inner.add_child(BookPanel.heading(str(part[0])))
+		var words := BookPanel.text(str(part[1]), UiTheme.CAPTION)
+		words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		inner.add_child(words)
+		content.add_child(BookPanel.card_frame(inner))
+
+
+## [name, notice] for every part whose licence asks to be shown: Godot (its own licence), each third-party
+## component Godot lists (Engine.get_copyright_info) with its licence text, and the font.
+static func licences() -> Array:
+	var out: Array = [["Godot Engine", Engine.get_license_text()]]   # not-ui (a name)
+	var texts := Engine.get_license_info()
+	for component: Dictionary in Engine.get_copyright_info():
+		var lines := PackedStringArray()
+		for part: Dictionary in component["parts"]:
+			for holder: String in part["copyright"]:
+				lines.append("© " + holder)   # not-ui (a copyright line)
+			lines.append(str(texts.get(part["license"], part["license"])))
+		out.append([str(component["name"]), "\n".join(lines)])
+	out.append(["Poppins", FileAccess.get_file_as_string(FONT_LICENCE)])   # not-ui (a name)
+	return out
 
 
 ## Debug builds only: switch to the farm with everything on it for testing, and back to your own; and show the
