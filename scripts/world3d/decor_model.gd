@@ -9,6 +9,7 @@ extends RefCounted
 const WOOD := DecorPaint.WOOD
 const DARK_WOOD := DecorPaint.DARK_WOOD
 const STONE := DecorPaint.STONE
+const LAMP_SHADER := "res://shaders/lamp3d.gdshader"
 const WHITE := DecorPaint.WHITE
 const HAY := DecorPaint.HAY
 const LEAF := DecorPaint.LEAF
@@ -128,13 +129,15 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 				log_piece.position = c + Vector3(0, 0.08, 0)
 				log_piece.rotation = Vector3(0, TAU * k / 4.0, PI / 2.0 - 0.5)
 			# Tongues of flame licking up from the logs, embers floating off them.
-			ModelKit.ball(root, c + Vector3(0, 0.08, 0), 0.08, _glow(Color("#ff6a1f")), Vector3(1, 0.5, 1))
+			ModelKit.ball(root, c + Vector3(0, 0.08, 0), 0.08, _glow(Color("#ff6a1f"), true), Vector3(1, 0.5, 1))
 			DecorMotion.flame(root, c + Vector3(0, 0.06, 0), 0.08, 0.26, Color("#ff6a1f"), Color("#ffd35a"))
 			for k in 3:
 				var a := TAU * k / 3.0 + 0.4
 				DecorMotion.flame(root, c + Vector3(cos(a) * 0.06, 0.05, sin(a) * 0.06), 0.045, 0.15,
 					Color("#ff7a26"), Color("#ffe07a"))
 			DecorMotion.spray(root, c + Vector3(0, 0.18, 0), DecorMotion.EMBERS)
+			# (Open to the sky: rain beats the flames down to the coals, and steam hisses off them while it does.)
+			DecorMotion.spray(root, c + Vector3(0, 0.1, 0), DecorMotion.QUENCH)
 		"wheelbarrow":
 			_wheelbarrow(root, c, col)
 		"water_well":
@@ -872,15 +875,16 @@ static func _rng(id: String) -> RandomNumberGenerator:
 
 
 
-static func _glow(col: Color) -> StandardMaterial3D:
-	# Shared per colour, so the bake merges every glowing part of that colour into one draw.
-	var key := col.to_html()
+## Something that gives light of its own (shaders/lamp3d.gdshader; docs/WORLD.md): a lamp, lit as night falls,
+## or a fire's bed of coals (`fire`), which the rain dulls.
+static func _glow(col: Color, fire := false) -> ShaderMaterial:
+	# Shared per colour and kind, so the bake merges every glowing part alike into one draw.
+	var key := "%s:%s" % [col.to_html(), fire]
 	if not _glows.has(key):
-		var m := StandardMaterial3D.new()
-		m.albedo_color = col
-		m.emission_enabled = true
-		m.emission = col
-		m.emission_energy_multiplier = 2.0
+		var m := ShaderMaterial.new()
+		m.shader = load(LAMP_SHADER)
+		m.set_shader_parameter("colour", col)
+		m.set_shader_parameter("fire", 1.0 if fire else 0.0)
 		_glows[key] = m
 	return _glows[key]
 

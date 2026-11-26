@@ -9,7 +9,6 @@ uniform float specular = 0.1;
 uniform float ground_ao = 0.32;   // how dark a part gets where it touches the ground
 uniform float ao_reach = 0.22;    // and how far up the shade fades out (world units)
 uniform float edge = 0.4;         // how dark the silhouette edge goes
-uniform float rim = 0.1;          // a soft light edge on every painted part: the shape reads against what is behind
 uniform bool shine_in_alpha = false;  // each part's shine rides in its vertex alpha (a skinned animal: one surface, mixed finishes)
 uniform float sway = 0.0;         // bends in the wind by height above its foot (trees, scarecrows); 0: still
 global uniform float wetness;     // 0..1: how wet everything is (SurfaceWeather): darker, glossier
@@ -17,6 +16,9 @@ global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (
 global uniform float wind;        // the weather's wind, set once for everything (Farm3D)
 
 varying float height;
+varying float its_own;       // a number of this thing's own (finish_own): two of a kind differ a little
+varying vec3 world_pos;
+#include "res://shaders/finish.gdshaderinc"
 
 varying vec3 tint;  // the part's colour when baked into a merged mesh (white if none)
 varying float shine_v;
@@ -32,12 +34,14 @@ void vertex() {
 		VERTEX.x += sin(beat) * bend;
 		VERTEX.z += cos(beat * 0.8) * bend * 0.6;
 	}
-	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	height = world_pos.y;
+	its_own = finish_own(MODEL_MATRIX[3].xyz);
 }
 
 void fragment() {
 	float ao = mix(1.0 - ground_ao, 1.0, smoothstep(0.0, ao_reach, height));
-	ALBEDO = albedo * tint * ao;
+	ALBEDO = finish_painted(albedo * tint, world_pos, its_own, height, FOOT_REACH_LOW) * ao;
 	ROUGHNESS = shine_in_alpha ? 1.0 - shine_v * 0.6 : roughness;   // (the same curve as ModelKit.paint's `shine`)
 	SPECULAR = shine_in_alpha ? 0.1 + shine_v * 0.4 : specular;
 	// Edges darken toward the silhouette: an inked outline without extra geometry, so shapes pop against the
@@ -49,6 +53,5 @@ void fragment() {
 	float snow_amt = snow_cover * smoothstep(0.5, 0.85, up);
 	ALBEDO = mix(ALBEDO * (1.0 - 0.22 * wetness), vec3(0.93, 0.95, 1.0), snow_amt);
 	ROUGHNESS = mix(ROUGHNESS * (1.0 - 0.45 * wetness), 0.9, snow_amt);
-	RIM = rim;
-	RIM_TINT = 0.9;
+	AO = FINISH_AMBIENT;
 }

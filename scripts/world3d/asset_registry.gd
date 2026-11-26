@@ -22,7 +22,7 @@ const STAGE := "{stage}"   # not-ui (in a site's path: the construction stage's 
 ## parts carry their shine in their vertex alpha and are lit as the builders' paint is; patterned surfaces carry
 ## their pattern there.
 const NAMED := {
-	"paint": {"alpha_holds": 1, "ground_ao": 0.32, "edge": 0.4, "rim": 0.1, "rim_tint": 0.9},
+	"paint": {"alpha_holds": 1, "ground_ao": 0.32, "edge": 0.4},
 	"wall": {"alpha_holds": 2},
 }
 const CROP := "crop:"   # a crop form's entry: crop:<form> (CropModels.mesh)

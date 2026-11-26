@@ -84,6 +84,8 @@ var noticed := 0.0               ## seconds left looking at whoever tapped it
 var lies := false
 var drink_at := Vector2.INF      ## water near enough to drink from, from its home spot, in px (BuildingFill)
 var drinking := false            ## it has gone to the water and has its head down to it
+var shelter_at := Vector2.INF    ## its home's door, from its home spot, in px (BuildingFill): its way in from rain
+var indoors := false             ## it has gone in out of the rain: its body is not shown until it comes out
 var stride_tiles := 0.0          ## the ground one cycle of its legs covers, in tiles (its body says: Animal3D)
 var going := Vector2.ZERO        ## the way it is walking, in px (a direction; zero while it stays where it is)
 var showy := false               ## it shows off when tapped (a limited animal: its body says, Animal3D)
@@ -93,6 +95,7 @@ var _rng := RandomNumberGenerator.new()
 var _left := 0.0                 # seconds left in this state
 var _target := Vector2.ZERO
 var _to_drink := false           # the walk it is on ends at the water
+var _to_shelter := false         # the walk it is on ends at its home's door
 var _look_to := 0.0
 var _blink_in := 0.0
 var _blink_left := 0.0
@@ -108,6 +111,8 @@ var _jump := 0.0                 # seconds left of the start it gives when tappe
 var _show := 0.0                 # seconds left of its showing off
 var _shake := 0.0                # seconds left of its coat's shake
 var _shake_in := SHAKE_EVERY.x   # seconds to the next one
+var _wet := false                # it has stood in rain it minded, and not shaken it off yet
+var _dry_in := 0.0               # seconds until it shakes the rain off (0: nothing to shake off)
 
 
 func _init(animal_rig: AnimalRig, seed_value: int, wander: Vector2) -> void:
@@ -143,6 +148,7 @@ func update(delta: float) -> void:
 		going = Vector2.ZERO
 	if _left <= 0.0:
 		_choose_next()
+	_mind_rain()
 	_ease_body(delta)
 	_idle_motions(delta)
 	shown_facing = move_toward(shown_facing, facing, delta * TURN_SPEED)
@@ -189,6 +195,20 @@ func time_left() -> float:
 
 func _choose_next() -> void:
 	drinking = false
+	_to_shelter = false
+	# Rain hard enough to go in from, and a home with a door: it walks to the door and goes in, and waits the rain
+	# out indoors (BuildingFill does not draw it); the rain over, it is at the door again and carries on.
+	if _wants_in():
+		if not indoors:
+			_target = shelter_at
+			if absf(_target.x - offset.x) > 1.0:
+				facing = signf(_target.x - offset.x)
+			_to_shelter = true
+			_enter(State.WALK)
+		else:
+			_enter(State.IDLE)
+		return
+	indoors = false
 	# At night most of what an animal does is sleep where it stands: head low, eyes shut, breathing slow. Now and
 	# then one stirs (the rest of the time's choices), so a sleeping farm is still alive.
 	if night and _rng.randf() < SLEEP_SHARE:
@@ -250,6 +270,11 @@ func _enter(s: State, seconds := -1.0) -> void:
 		facing = signf(AnimalRig.weather("away", -1.0))
 
 
+## It rains hard enough to go indoors from (AnimalRig.weather `shelter_from`), and it has a door to go in by.
+func _wants_in() -> bool:
+	return shelter_at.is_finite() and rain >= AnimalRig.weather("shelter_from", 0.5)
+
+
 ## It rains hard enough for animals to mind (AnimalRig.weather `turn_from`).
 func _sheltering() -> bool:
 	return rain >= AnimalRig.weather("turn_from", 0.3)
@@ -285,6 +310,10 @@ func _walk(delta: float) -> void:
 			_to_drink = false
 			drinking = true
 			_enter(State.GRAZE)
+		elif _to_shelter:
+			_to_shelter = false
+			indoors = _wants_in()
+			_enter(State.IDLE)
 		else:
 			_enter(State.IDLE)
 		return
@@ -302,13 +331,31 @@ func _walk(delta: float) -> void:
 	pose.gait = fposmod(pose.gait + ground / stride, 1.0)
 
 
-## A long coat is shaken out now and then, standing and awake (`pose.shake` runs 0..1 through it).
+## Rain it minded has stopped: in a few seconds (AnimalRig.weather `dry_from` to `dry_to`, each animal in its
+## own time) it shakes it off, whatever its coat.
+func _mind_rain() -> void:
+	if _sheltering():
+		_wet = true
+	elif _wet:
+		_wet = false
+		_dry_in = _rng.randf_range(AnimalRig.weather("dry_from", 1.0), AnimalRig.weather("dry_to", 7.0))
+
+
+## A long coat is shaken out now and then, standing and awake (`pose.shake` runs 0..1 through it); any coat
+## once the rain stops.
 func _shake_coat(delta: float, walking: bool) -> void:
 	if _shake > 0.0:
 		_shake = maxf(_shake - delta, 0.0)
 		pose.shake = 1.0 - _shake / SHAKE_TIME if _shake > 0.0 else 0.0
 		return
-	if not shakes or walking or state == State.SLEEP:
+	if walking or state == State.SLEEP:
+		return
+	if _dry_in > 0.0:
+		_dry_in -= delta
+		if _dry_in <= 0.0:
+			shake()
+		return
+	if not shakes:
 		return
 	_shake_in -= delta
 	if _shake_in <= 0.0:

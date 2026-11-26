@@ -16,8 +16,11 @@ global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (
 varying vec3 local_pos;
 varying vec3 local_normal;
 varying float height;
+varying float its_own;       // a number of this thing's own (finish_own): two of a kind differ a little
+varying vec3 world_pos;
 
 #include "res://shaders/surface_patterns.gdshaderinc"
+#include "res://shaders/finish.gdshaderinc"
 
 varying vec3 tint;  // the part's colour when baked into a merged mesh (white if none)
 varying float pack; // and its style and ground shade, when they ride in the vertex alpha
@@ -27,7 +30,9 @@ void vertex() {
 	pack = COLOR.a;
 	local_pos = VERTEX;
 	local_normal = NORMAL;
-	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	height = world_pos.y;
+	its_own = finish_own(MODEL_MATRIX[3].xyz);
 }
 
 void fragment() {
@@ -43,7 +48,7 @@ void fragment() {
 	// Lighter towards the top, as the sky lights it: a wall is never one flat colour.
 	col *= mix(0.9, 1.06, smoothstep(0.0, 1.3, height));
 	col *= mix(1.0 - ao_k, 1.0, smoothstep(0.0, 0.35, height));
-	ALBEDO = col;
+	ALBEDO = finish_painted(col, world_pos, its_own, height, FOOT_REACH_WALL);
 	ROUGHNESS = style_k == 5 ? 0.45 : 0.9;
 	// Weather on the surface: wet things are darker and glossier; snow lies on what faces up.
 	float up = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y;
@@ -53,4 +58,5 @@ void fragment() {
 
 	METALLIC = style_k == 5 ? 0.3 : 0.0;
 	SPECULAR = style_k == 5 ? 0.35 : 0.08;
+	AO = FINISH_AMBIENT;
 }

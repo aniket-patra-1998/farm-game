@@ -9,7 +9,6 @@ uniform float specular = 0.1;
 uniform float ground_ao = 0.32;
 uniform float ao_reach = 0.22;
 uniform float edge = 0.42;         // the dark inked edge: stronger than a plain part's, so a crown reads against the sky and grass
-uniform float rim = 0.1;
 uniform float sway = 0.0;
 uniform float leaf_scale = 10.0;   // clusters per world unit
 uniform float leaf_dark = 0.3;     // how dark the crescent under each cluster goes
@@ -29,6 +28,8 @@ float hash(vec3 p) {
 }
 
 #include "res://shaders/leaf_touch.gdshaderinc"
+#include "res://shaders/finish.gdshaderinc"
+varying float its_own;       // a number of this thing's own (finish_own): two of a kind differ a little
 uniform int touch = 0;   // a limited tree's touch on its leaves (leaf_touch.gdshaderinc); 0: none
 
 void vertex() {
@@ -45,6 +46,7 @@ void vertex() {
 		VERTEX.z += cos(beat * 0.8) * bend * 0.6;
 	}
 	height = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
+	its_own = finish_own(MODEL_MATRIX[3].xyz);
 }
 
 void fragment() {
@@ -60,7 +62,7 @@ void fragment() {
 	float under = smoothstep(0.0, 0.45, -f.y) * cluster;
 	float over = smoothstep(0.05, 0.4, f.y) * cluster;
 	float pattern = 1.08 - leaf_dark * under + leaf_light * over;
-	ALBEDO = albedo * tint * ao * pattern;
+	ALBEDO = finish_lean(albedo * tint, its_own) * ao * pattern;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;
 	float facing = clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0);
@@ -70,6 +72,5 @@ void fragment() {
 	float snow_amt = snow_cover * smoothstep(0.5, 0.85, up);
 	ALBEDO = mix(ALBEDO * (1.0 - 0.22 * wetness), vec3(0.93, 0.95, 1.0), snow_amt);
 	ROUGHNESS = mix(ROUGHNESS * (1.0 - 0.45 * wetness), 0.9, snow_amt);
-	RIM = rim;
-	RIM_TINT = 0.9;
+	AO = FINISH_AMBIENT;
 }

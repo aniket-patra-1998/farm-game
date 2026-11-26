@@ -52,8 +52,8 @@ const SPECIAL_TABS := {                # a building's own extras (catalog `speci
 	"garage": "SHEET_TAB_VEHICLES", "garden_shed": "SHEET_TAB_BLOOMS", "saplings": "SHEET_TAB_SAPLINGS",
 	"finds_home": "SHEET_TAB_FINDS",
 }
-const ADDS := [["upper", "ADDS_FLOOR"], ["silo", "ADDS_SILO"], ["egg_chutes", "ADDS_CHUTE"],
-	["stall_doors", "ADDS_STALL"]]   # what a next size adds, most telling first: [what, its words]
+const ADDS := [["upper", "ADDS_FLOOR"], ["hut", "ADDS_HUT"], ["skep", "ADDS_HIVES"], ["silo", "ADDS_SILO"],
+	["egg_chutes", "ADDS_CHUTE"], ["stall_doors", "ADDS_STALL"]]   # what a next size adds, most telling first
 
 var hud: FarmHud
 var tall := false           # dragged up to its tall height

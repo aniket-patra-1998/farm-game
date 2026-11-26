@@ -41,9 +41,7 @@ const RACK_WIDE := 0.4
 const RACK_TALL := 0.52
 const GAUGE_WIDE := 0.11
 const GRAPE := Color("#6a3a8f")
-const STAR_R := 0.24          # a maxed building's star: its radius..
-const STAR_WAIST := 0.45      # ..how far in its inner points are..
-const STAR_THICK := 0.05      # ..and half its thickness at the middle
+const STAR_R := 0.24          # a maxed building's star: its radius when its numbers give none
 const LOWER_TAPER := 0.86     # a two-storey tower: how wide its lower storey's top is, as a share of its foot..
 const UPPER_FOOT := 0.64      # ..and its upper storey's foot..
 const UPPER_TOP := 0.5        # ..and top
@@ -224,8 +222,9 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 					cut.position = e + Vector3(-0.07 + 0.07 * k, 0.012, 0.094)
 					cut.rotation.z = -0.5
 		"crown":
-			# What a maxed building wears: a band of gold round the top of its walls, and a gold star over its
-			# roof. (It stands still: only a building's animated parts move.)
+			# What a maxed building wears: a band of gold round the top of its walls. Its gold star is not part
+			# of its model: one star floats over every such building, drawn for the whole farm at once
+			# (CrownStars). The model only marks where: a part named for the star's size at the top of its roof.
 			var gold := ModelKit.paint(GOLD, 0.8)
 			var w_lo: Vector3 = ctx.get("upper_lo", lo)
 			var w_hi: Vector3 = ctx.get("upper_hi", hi)
@@ -236,26 +235,13 @@ static func feature(ctx: Dictionary, f: Dictionary) -> bool:
 			else:
 				ModelKit.box(root, Vector3(w_lo.x - 0.022, band, w_lo.z - 0.022), Vector3(w_hi.x + 0.022, band + 0.08,
 					w_hi.z + 0.022), gold)
-			var tip := Vector3((w_lo.x + w_hi.x) / 2.0 + float(f.get("shift", 0.0)), float(ctx.get("top", w_hi.y)),
-				(w_lo.z + w_hi.z) / 2.0)
-			if not f.get("star", true):
-				return true   # (the gold alone: something else stands on its roof, as the Barn's badge does)
-			var star_r := float(f.get("r", STAR_R))   # (a small building wears a smaller star)
-			ModelKit.cylinder(root, tip, 0.016, star_r * 0.67, gold, -1.0, 6)
-			var star := Node3D.new()
-			var points: Array[Vector3] = []
-			for k in 10:
-				var reach := STAR_R * (1.0 if k % 2 == 0 else STAR_WAIST)
-				points.append(Vector3(sin(TAU * k / 10.0) * reach, cos(TAU * k / 10.0) * reach, 0))
-			var sides: Array = []
-			for k in 10:
-				sides.append([points[k], points[(k + 1) % 10], Vector3(0, 0, STAR_THICK)])
-				sides.append([points[(k + 1) % 10], points[k], Vector3(0, 0, -STAR_THICK)])
-			ModelKit.faces(star, sides, Vector3.ZERO, gold)
-			star.scale = Vector3.ONE * (star_r / STAR_R)
-			star.position = tip + Vector3(0, star_r * 1.67, 0)
-			star.rotation.y = PI / 4.0   # (turned to the camera)
-			root.add_child(star)
+			if f.get("star", true):   # (false: something else stands on its roof, as the Barn's badge does)
+				var mark := Node3D.new()
+				mark.name = "%s_%d" % [CrownStars.MARK, roundi(float(f.get("r", STAR_R)) * 100.0)]
+				mark.position = Vector3((w_lo.x + w_hi.x) / 2.0 + float(f.get("shift", 0.0)),
+					float(ctx.get("top", w_hi.y)), (w_lo.z + w_hi.z) / 2.0)
+				mark.set_meta(ModelKit.KEEP, true)
+				root.add_child(mark)
 		"vip_badge":
 			VipBadge.build(ctx, lo, hi)
 		"boiler":

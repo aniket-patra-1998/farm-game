@@ -30,6 +30,8 @@ uniform float ripe_len = 1.0;
 varying vec3 tint;     // the fruit's own colour (its shade of the kind's)
 varying float mine;    // 0..1: how far this fruit has grown
 
+#include "res://shaders/finish.gdshaderinc"
+
 void vertex() {
 	tint = COLOR.rgb;
 	vec3 middle = vec3(UV.x, UV.y, UV2.x);
@@ -55,6 +57,5 @@ void fragment() {
 	ALBEDO *= 1.0 - 0.22 * wetness;
 	ROUGHNESS = roughness * (1.0 - 0.45 * wetness);
 	SPECULAR = specular;
-	RIM = 0.1;
-	RIM_TINT = 0.9;
+	AO = FINISH_AMBIENT;
 }

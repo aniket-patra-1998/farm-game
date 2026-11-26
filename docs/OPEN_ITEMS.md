@@ -223,7 +223,8 @@ buildings (Feed Mill, Bakery, Winery, Spa), and held by tests (`world3d_test` te
   is a named part the game starts (`smoke_3`, `spin_55_2`). At the top level, crafting and full, they are 8
   draws (the budget, back from 10) and under 6,000 triangles. To fit: the Spa's pool is still painted water,
   the oven has no fire of its own, and the boiler's steam rises from the pool only.
-- A maxed building has gold roof edges, a gold band and a gold star (still: only animated parts move).
+- A maxed building has gold roof edges and a gold band; its gold star floats over it, turning, with a glow
+  (one shared layer for the whole farm: CrownStars, docs/WORLD.md).
 - The Spa is a round bathhouse under a dome (the tower body the mill uses, broad and low).
 
 Harvesting buildings (2026-11-17; rules in CLAUDE.md, held by `assets_test` test_389):

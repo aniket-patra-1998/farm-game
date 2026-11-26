@@ -34,5 +34,16 @@
       "wheelbarrow": 1.8,
       "sundial": 1.7
     }
+  },
+  "animals": {
+    "_doc": "How big an animal is drawn against its file (the owner, 25 Nov): a little smaller on the open farm, so buildings and trees stand over the animals (`default`; `ids` for a kind with a size of its own: a bee by its hive is a speck beside a rabbit), and smaller again in a building's yard (`yard`, of its open-farm size; `yard_ids` for a kind with its own), so a building with its animals reads as a home and not a prop beside giants.",
+    "default": 0.88,
+    "ids": {
+      "bee": 0.5
+    },
+    "yard": 0.68,
+    "yard_ids": {
+      "bee": 1.0
+    }
   }
 }

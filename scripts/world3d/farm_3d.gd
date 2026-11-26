@@ -205,6 +205,12 @@ func _update_changed_plots() -> void:
 func _apply_quality() -> void:
 	Quality.apply(sun, environment, get_viewport())
 	Animal3D.min_stride = int(Quality.value("pose_every"))
+	apply_quality_finish()
+
+
+## Tells every shader whether the shared finish has its brushy patches (Quality `finish_grain`).
+static func apply_quality_finish() -> void:
+	ShaderGlobals.set_value(&"finish_grain", 1.0 if bool(Quality.value("finish_grain")) else 0.0)
 
 
 func _process(_delta: float) -> void:

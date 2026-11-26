@@ -1494,6 +1494,46 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   Cloud save (step 5) waits on the owner's Play Console (Play Games Services, Saved Games, the game's app ID).
   The Play AAB must not ship the showcase's baked models (res://baked): no AAB workflow exists yet.
 
+## The world pass, 25 Nov (owner: "make a collective world, not do work piece by piece"; docs/WORLD.md)
+- The plan and its order are in docs/WORLD.md "Still to come" (the owner's copy: project doc
+  claude/world-pass-plan.md). Step 0 done on branch world-weather (draft PR; merging is the owner's call): fire,
+  embers, smoke and lamps answer rain, wind and night through the shared shader values (flame3d, spray3d
+  `weather`, the new lamp3d), the bonfire steams as rain puts it out, and the shade under animals and
+  decorations is drawn stronger at night (contact3d). Tests 629 to 632 (world_rules_test). Then, same branch:
+  animals are sized by data/scale_guide.json `animals` (0.88 at large, a bee 0.5, 0.68 of that in a yard:
+  ScaleGuide.animal_scale / yard_scale) and shake the rain off when it stops (AnimalBehaviour._mind_rain; a coat
+  with no shake move rolls its body, Animal3D.shake_roll). Tests 633, 634. Animals already turned their tails to
+  rain, stood about and huddled in storms (data/animal_rigs.json `weather`): that was there before.
+  And the first building as a kit: the Beehive is straw hives on stands (building_models.json `skep`,
+  BuildingModel._skep; the old stacked-box hive is gone), one at first, a lead that grew with two smaller ones
+  at its biggest (test 635; beehive_1.glb and beehive_2.glb re-exported). The Chicken Coop (a red A-frame) and
+  the Rabbit Hutch (a long low box, green lid) are restyled through their data, with a little house of their
+  kind beside the grown body at size 2 (`hut`, BuildingModel._hut; test 637; test 107, moved to world_rules_test, lets these two
+  outlines be: tall by the roof, long). They have no windows now, so no heads look out of them. Yard animals
+  go in at their door from hard rain and come out after (AnimalBehaviour.shelter_at / indoors,
+  BuildingFill._shelter_from; data/animal_rigs.json `shelter_from`; test 636).
+  A maxed building's star is no longer in its model: one star floats over each (turning, bobbing, glowing
+  more at night), drawn for the whole farm in two draws (CrownStars; crown_star3d, crown_halo3d). A model only
+  marks where (`star_<r>` at its roof's top, kept through export by DecorMotion.is_part); Objects3D._mark_stars
+  places them. All top-size building files re-exported without their star. Tests 638, 639.
+  One finish for everything solid (the owner's pick of 26 Nov, option C of a sheet of four; the others were
+  the look as it was, sun and shade alone, and C with an ink outline at twice the draws):
+  shaders/finish.gdshaderinc gives master_solid, paint3d, wall3d and the trees' shaders one `light()` (warm
+  sun, cool shade, less all-round light) and one painting of their colour (patches, a lean of each thing's own,
+  darker to its foot). The engine's rim and shine went with its lighting: the finish has a warm edge and a
+  glint of its own. The patches are Quality `finish_grain` (off on low). Seen by day, at night and in a storm
+  on a computer; on the shaded side fences and trunks are darker than they were. Still to do: crop3d and
+  bloom3d; the item pictures CI bakes will change with it. Tests 645, 646.
+- Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
+  prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
+  "more character: fur and fleece more distinct" (sizes: done, above);
+  buildings as kits with a lead that grows at each level (concept sheets, 25 Nov: hive, coop, hutch).
+- Not built: anything in "Still to come". Animal files: about 78% of each is its 17 stored poses; shipping the
+  art tool's bone rig instead should cut them to about a third (an estimate, untested).
+- world3d_test 101 ("moved away, its old spot is open grass again") fails when that suite is run alone
+  (`--only=world3d`), on unchanged main too; it passes in the whole run. An order dependence, not looked into.
+- A preview run of the main scene lets AutoQuality keep "low" in this machine's settings.cfg, and scale_test 620
+  then fails (pose_every 2): clear `auto`, `auto_cap` and `quality` there before the pre-push check.
 ## Lighter animals, 26 Nov (branch animals-light, a draft PR; owner: "keep making things lighter and better looking")
 - Measured first (the models as the game ships them, 205 MB): animals 164 MB (150 files, 80%), trees 16, the
   farmer 12, buildings 9, crops and blooms 3. An animal file was nine tenths its 17 moves, each a copy of the mesh.

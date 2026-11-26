@@ -48,6 +48,10 @@ environment/defaults/default_clear_color=Color(0.75, 0.89, 0.96, 1)
 
 [shader_globals]
 
+finish_grain={
+"type": "float",
+"value": 1.0
+}
 wind={
 "type": "float",
 "value": 0.6
