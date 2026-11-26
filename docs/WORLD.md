@@ -108,6 +108,10 @@ thing of its own that moves, lightly, by the shared wind:
 | Stable | a long row of stalls under a green roof | a hay loft, a cupola | the cupola's weathervane |
 | Pig Pen | a round tin ark (`barrel` roof) | a tall ark, a small one beside it | a tin vent spinning |
 
+At its grandest a home goes up, its plot being what it is (the owner, 26 Nov: "they don't look grand
+enough"): a third storey on the Dairy Farm, Sheep Pen, goat tower and Nursery (an `upper` on an `upper`), a
+little tower on the Stable (a cupola's `scale`), a silo beside the Pig Pen's ark.
+
 **A sign at every animal home's gate** (all eight, both sizes): a post with a lantern (its pane glows at night
 as the windows do, so the hive, coop and hutch are no longer dark), and a board hanging from its arm with the
 animal's own Market picture, swaying in the wind. The model has the post and a mark (`sign_cow`); a picture is

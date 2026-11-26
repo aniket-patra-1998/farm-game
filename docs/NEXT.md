@@ -1593,6 +1593,12 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   nine homes' biggest sizes are taller and wider now (two full storeys on the Dairy Farm, Stable, Sheep Pen,
   Nursery and goat tower; a bigger ark, coop, hutch and lead hive; taller silo and lookout; bigger stars).
   The 2x2 homes (coop, hutch, hive) are still small beside a 3x3 one: their plots are.
+- Asked whether to go taller on the same plot or let a maxed home take a bigger plot, the owner chose taller.
+  A home's top size now goes up a third time: `upper` may carry an `upper` (BuildingModel._upper_storey: the
+  Dairy Farm, Sheep Pen, goat tower and Nursery have three storeys), a cupola's `scale` makes it a little tower
+  (the Stable's), the Pig Pen has a silo beside its ark, the coop a weathervane, the hutch a second tier.
+  Known: four homes are tiered the same way now (three boxes, a skirt roof round each), told apart by roof
+  shape and colour.
 - Next (the owner, 26 Nov): make the buildings lighter as the animals were, the same or better looks.
 - Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
 - Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.

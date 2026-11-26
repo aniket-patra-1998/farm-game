@@ -585,7 +585,8 @@ static func _settle(ctx: Dictionary) -> void:
 ## A second storey (the top size of a big building): the ground floor under a low pent roof that runs all
 ## round it, and a smaller upper floor set back on top of it, with its own walls, windows and roof. The
 ## `upper` description (data/building_models.json) gives w and d as shares of the ground floor, h, windows,
-## and optionally its own roof, walls and colour. Returns the top of the whole building; the upper floor's
+## and optionally its own roof, walls and colour, and an `upper` of its own (a third storey, the same
+## way). Returns the top of the whole building; the upper floor's
 ## corners go in ctx as upper_lo and upper_hi (balconies and hoists hang on them).
 static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: Material, trim: Color,
 		upper: Dictionary) -> float:
@@ -621,7 +622,15 @@ static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: M
 	var up_roof: Dictionary = upper.get("roof", {})
 	var kind := str(up_roof.get("type", r.get("type", "gable")))
 	var top := uhi.y
-	if kind != "none":
+	if upper.has("upper"):
+		# A third storey stands on the second as the second does on the first (a goat tower, a barn's high
+		# monitor roof): the grandest size of a home goes up, its plot being what it is.
+		var above := ctx.duplicate()
+		above["bw"] = uw
+		above["bd"] = ud
+		above["centre"] = Vector3(c.x, 0, c.z - shift)
+		top = _upper_storey(above, ulo, uhi, own_wall, trim, upper["upper"])
+	elif kind != "none":
 		var pitch := float(up_roof.get("pitch", r.get("pitch", 0.7)))
 		var mat := roof_mat
 		if up_roof.has("color"):
@@ -1043,13 +1052,17 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var top: float = ctx.get("top", hi.y)
 			var x := (lo.x + hi.x) / 2.0
 			var z := (lo.z + hi.z) / 2.0
-			ModelKit.box(root, Vector3(x - 0.1, top - 0.08, z - 0.1), Vector3(x + 0.1, top + 0.14, z + 0.1),
-				ModelKit.paint(Color("#f3eee2")))
-			ModelKit.cylinder(root, Vector3(x, top + 0.14, z), 0.15, 0.14, ModelKit.paint(Color("#4a5d6e")), 0.0, 4)
-			ModelKit.box(root, Vector3(x - 0.005, top + 0.28, z - 0.005), Vector3(x + 0.005, top + 0.42, z + 0.005),
-				ModelKit.paint(Color("#3a3a3a")))
-			ModelKit.box(root, Vector3(x - 0.05, top + 0.38, z - 0.004), Vector3(x + 0.06, top + 0.4, z + 0.004),
-				ModelKit.paint(Color("#3a3a3a")))
+			# (`scale`: a bigger one is a home's own little tower at its grandest)
+			var k := float(f.get("scale", 1.0))
+			ModelKit.box(root, Vector3(x - 0.1 * k, top - 0.08, z - 0.1 * k), Vector3(x + 0.1 * k, top + 0.14 * k,
+				z + 0.1 * k), ModelKit.paint(Color("#f3eee2")))
+			ModelKit.cylinder(root, Vector3(x, top + 0.14 * k, z), 0.15 * k, 0.14 * k, ModelKit.paint(Color("#4a5d6e")),
+				0.0, 4)
+			ModelKit.box(root, Vector3(x - 0.005, top + 0.28 * k, z - 0.005), Vector3(x + 0.005, top + 0.28 * k + 0.14,
+				z + 0.005), ModelKit.paint(Color("#3a3a3a")))
+			ModelKit.box(root, Vector3(x - 0.05, top + 0.28 * k + 0.1, z - 0.004), Vector3(x + 0.06,
+				top + 0.28 * k + 0.12, z + 0.004), ModelKit.paint(Color("#3a3a3a")))
+			ctx["top"] = top + 0.28 * k
 		"stall_doors":
 			var n := int(f.get("count", 4))
 			for k in n:

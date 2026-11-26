@@ -193,7 +193,10 @@ func test_637_the_coop_and_the_hutch_are_known_by_their_outlines_and_grow_by_a_l
 		var top := BuildingSpec.spec(id, Game.max_level(id))
 		_check(float(top["body"]["w"]) > float(first["body"]["w"]) and float(top["body"]["h"]) > float(first["body"]["h"]),
 			"%s: its body has grown at its biggest" % id)
-		_check((top.get("upper", {}) as Dictionary).is_empty(), "%s: not by a storey stacked on it" % id)
+		# (The owner, 26 Nov: the lead "should also get one more storey" at its biggest. An A-frame has none to
+		# give; the hutch has a second tier of hutches now, on a lead that grew first.)
+		_check(id != "chicken_coop" or (top.get("upper", {}) as Dictionary).is_empty(),
+			"%s: an A-frame grows by its lead and its roof, with no storey stacked on it" % id)
 		var huts: Array = (top["features"] as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == "hut")
 		_eq(huts.size(), 1, "%s: one little house of its kind has joined it" % id)
 		var fp := Game.footprint(id)
@@ -337,7 +340,11 @@ func test_648_a_home_at_its_biggest_has_a_taller_lead_and_something_beside_it() 
 		var small := BuildingSpec.spec(id, 1)
 		var big := BuildingSpec.spec(id, g.max_level(id))
 		var tall_small := float((small["body"] as Dictionary)["h"])
-		var tall_big := float((big["body"] as Dictionary)["h"]) + float((big.get("upper", {}) as Dictionary).get("h", 0.0))
+		var tall_big := float((big["body"] as Dictionary)["h"])
+		var above: Dictionary = big.get("upper", {})
+		while not above.is_empty():   # (a storey on a storey: the grandest size goes up)
+			tall_big += float(above.get("h", 0.0))
+			above = above.get("upper", {})
 		_check(tall_big >= tall_small + STOREY, "%s's lead stands a storey taller (%.2f, then %.2f)" % [id, tall_small,
 			tall_big])
 		_check(float((big["body"] as Dictionary)["w"]) > float((small["body"] as Dictionary)["w"]),
@@ -362,6 +369,11 @@ func test_648_a_home_at_its_biggest_has_a_taller_lead_and_something_beside_it() 
 	if barn != null:
 		barn.free()
 	_eq(DecorMotion.ORBITS.find_key(DecorMotion.CIRCLING), "circling", "a way of going is known by its name")
+	# (The owner, 26 Nov: "at max level [they] don't look the part... not grand enough". A plot is what it is, so
+	# the top size goes up: a third storey, a little tower, a silo.)
+	for id: String in ["cow_shed", "sheep_pen", "goat_pen", "nursery_barn"]:
+		var top: Dictionary = BuildingSpec.spec(id, g.max_level(id)).get("upper", {})
+		_check(not (top.get("upper", {}) as Dictionary).is_empty(), "%s has a third storey at its biggest" % id)
 	var ark: Node3D = BuildingSpec.model().build(g.item_data("pig_pen"), g.footprint("pig_pen"), g.max_level("pig_pen"))
 	var spinning := ark.find_children(DecorMotion.SPIN + "_*", "Node3D", true, false)
 	_eq(spinning.size(), 1, "the ark's tin vent is one spinning part")
