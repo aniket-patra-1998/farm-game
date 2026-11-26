@@ -1579,8 +1579,13 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   (`orbit_vane_7`), so a building's file carries it and DecorMotion.start sets it going; before, only spinning
   parts and effects came through a file. A building's draws budget is 10, was 9 (data/assets.json): the one
   thing that moves at a home's biggest is a draw, and three homes stood at 9 already.
-- Still as they were: every other building (bakery, farmhouse, feed mill, garage, garden shed, log cabin,
-  nursery barn, winery, spa, dog house...). Next: the same treatment for those, in batches, a sheet each.
+- The working buildings, looked at together at their biggest: the Bakery, Feed Mill and Spa already had
+  outlines and motion of their own and are as they were. The Winery was the Bakery in burgundy: it is a stone
+  cellar under a round roof now (a vaulted second storey at its biggest, a vine shelter where its wing was).
+  The Garage has a dark red tin roof, a striped awning, oil drums and a gate sign with a tractor; the Garden
+  Shed a lean-to and a rain barrel. (A crafting building moves only while it works and a storing one not at
+  all, by their own tests: no weathervanes there.)
+- Still as they were: the farmhouse, log cabin, nursery barn, dog house, duck pond, orchard and the gardens.
 - Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
 - Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.
 

@@ -683,7 +683,7 @@
           "produces": false,
           "color": "#d8c7a8",
           "roof": "#6a2a3a",
-          "look": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign",
+          "look": "a stone wine cellar under a round burgundy roof with an arched door, a bunch of grapes over it and oak casks beside it; at its biggest a second vaulted storey, a vine shelter and a wine press",
           "sizes": [
             {
               "capacity": 2,
@@ -898,8 +898,8 @@
           "special": "garage",
           "produces": false,
           "color": "#9aa4ad",
-          "roof": "#4a5560",
-          "look": "a grey corrugated-metal farm garage with a big roll-up door, a wrench sign and a red fuel pump outside",
+          "roof": "#8a2a22",
+          "look": "a blue metal garage under a dark red tin roof with a roller door under a striped awning, a hanging sign with a tractor on it, oil drums and a red fuel pump",
           "sizes": [
             {
               "capacity": 20
@@ -920,7 +920,7 @@
           "color": "#e8dcc4",
           "roof": "#6a8a4a",
           "note": "FarmVille: 30,000 coins (or 30 Farm Cash), holds 100 Perfect Bunches, 10 free bunches when built",
-          "look": "a small white-and-green wooden garden shed with a little window box of flowers, a watering can and flower pots by the door",
+          "look": "a small cream wooden garden shed with a green roof, a lean-to at its side, a rain barrel and flowers round it",
           "sizes": [
             {
               "capacity": 100

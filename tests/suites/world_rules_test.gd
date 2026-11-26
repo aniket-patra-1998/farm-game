@@ -416,8 +416,8 @@ func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 	# Some homes are known by their own outline instead (docs/WORLD.md, the owner's picks of 25 and 26 Nov): the
 	# Chicken Coop is an A-frame, the Sheep Pen a low fold, the Pig Pen a round ark, the Dairy Farm a barn under
 	# a two-pitch roof and the Goat Pen a hut on stilts, each tall by its roof over low walls; the Rabbit Hutch
-	# is a long low hutch and the Stable a long row of stalls.
-	var by_roof := ["chicken_coop", "sheep_pen", "pig_pen", "cow_shed", "goat_pen"]
+	# is a long low hutch and the Stable a long row of stalls. The Winery is a cellar under a round roof.
+	var by_roof := ["chicken_coop", "sheep_pen", "pig_pen", "cow_shed", "goat_pen", "winery"]
 	var long_ones := ["rabbit_hutch", "horse_stable"]
 	var g := _farm()
 	for id in g.items:

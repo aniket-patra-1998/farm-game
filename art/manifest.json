@@ -13136,7 +13136,7 @@
    "refs": [
     "refs/winery_size1.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 1 of 4: a modest cottage"
+   "subject": "a stone wine cellar under a round burgundy roof with an arched door, a bunch of grapes over it and oak casks beside it; at its biggest a second vaulted storey, a vine shelter and a wine press. Star level 1 of 4: a modest cottage"
   },
   {
    "id": "winery_size2",
@@ -13148,7 +13148,7 @@
    "refs": [
     "refs/winery_size2.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 2 of 4: a little bigger, with more trim and a second window"
+   "subject": "a stone wine cellar under a round burgundy roof with an arched door, a bunch of grapes over it and oak casks beside it; at its biggest a second vaulted storey, a vine shelter and a wine press. Star level 2 of 4: a little bigger, with more trim and a second window"
   },
   {
    "id": "winery_size3",
@@ -13160,7 +13160,7 @@
    "refs": [
     "refs/winery_size3.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 3 of 4: bigger again, with a porch and more decoration"
+   "subject": "a stone wine cellar under a round burgundy roof with an arched door, a bunch of grapes over it and oak casks beside it; at its biggest a second vaulted storey, a vine shelter and a wine press. Star level 3 of 4: bigger again, with a porch and more decoration"
   },
   {
    "id": "winery_size4",
@@ -13172,7 +13172,7 @@
    "refs": [
     "refs/winery_size4.png"
    ],
-   "subject": "a stone country winery with a deep burgundy roof, big oak barrels stacked by arched wooden doors, climbing grapevines on the wall and a hanging grape-cluster sign. Star level 4 of 4: a grand version with an extra wing and flower boxes"
+   "subject": "a stone wine cellar under a round burgundy roof with an arched door, a bunch of grapes over it and oak casks beside it; at its biggest a second vaulted storey, a vine shelter and a wine press. Star level 4 of 4: a grand version with an extra wing and flower boxes"
   },
   {
    "id": "spa_size1",
@@ -13340,7 +13340,7 @@
    "refs": [
     "refs/garage_size1.png"
    ],
-   "subject": "a grey corrugated-metal farm garage with a big roll-up door, a wrench sign and a red fuel pump outside"
+   "subject": "a blue metal garage under a dark red tin roof with a roller door under a striped awning, a hanging sign with a tractor on it, oil drums and a red fuel pump"
   },
   {
    "id": "garden_shed_size1",
@@ -13352,7 +13352,7 @@
    "refs": [
     "refs/garden_shed_size1.png"
    ],
-   "subject": "a small white-and-green wooden garden shed with a little window box of flowers, a watering can and flower pots by the door"
+   "subject": "a small cream wooden garden shed with a green roof, a lean-to at its side, a rain barrel and flowers round it"
   },
   {
    "id": "gopher_garden_size1",
