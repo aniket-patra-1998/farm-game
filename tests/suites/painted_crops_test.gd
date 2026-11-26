@@ -71,3 +71,41 @@ func test_653_a_flower_is_a_painted_picture_in_bud_open_or_dry_by_the_clock() ->
 		flower.free()
 	_done(g)
 
+
+func test_654_a_painted_crops_market_picture_harvest_pop_and_idle_models() -> void:
+	var g := _farm()
+	var towards := Basis.from_euler(Vector3(ItemIcons.PITCH, ItemIcons.YAW, 0.0))
+	for crop_id: String in Game.crops:
+		var card := PaintedCrops.harvest_card(crop_id, towards)
+		_check(card != null, "%s has a picture of what it gives, gathered" % crop_id)
+		if card != null:
+			card.free()
+	var shown := ItemIcons._model("wheat")
+	_check(shown != null and shown.find_children("*", "MultiMeshInstance3D", true, false).is_empty(),
+		"a crop's Market picture is its painted harvest, not its model")
+	shown.free()
+	var flower := ItemIcons._model("rose_bloom")
+	_check(flower is PaintedBloom and (flower as PaintedBloom).shown() == PaintedBloom.OPEN,
+		"a flower's Market picture is it painted, open")
+	flower.free()
+	# A harvested plot's card springs up and is gone.
+	var layer := PaintedCrops.new()
+	add_child(layer)
+	var i := Game.index_of(2, 2)
+	var ripe_for := int(Game.crops["wheat"]["grow_seconds"]) + 1
+	Game.plots[i] = {"state": "planted", "crop": "wheat", "planted_at": Game.now() - ripe_for}
+	PaintedCrops.picture("wheat_ripe")
+	layer.update([i])
+	var before := layer.get_child_count()
+	layer.pop(i, "wheat")
+	_eq(layer.get_child_count(), before + 1, "a harvest pops the plot's card")
+	layer.free()
+	# With the crops painted, the modelled ones lay nothing out (they keep the clock a tree's fruit grows by).
+	var models := Crops3D.new()
+	models.drawn = false
+	add_child(models)
+	models.update()
+	_eq(models.plant_count(), 0, "the modelled crops draw nothing when the crops are painted")
+	models.free()
+	_done(g)
+

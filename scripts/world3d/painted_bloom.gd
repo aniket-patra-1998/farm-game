@@ -48,6 +48,14 @@ static func create(id: String, fp: Vector2i) -> PaintedBloom:
 	return out
 
 
+## Flower `id` open, as a card facing `towards` (its Market picture: IconMaker).
+static func picture_card(id: String, towards: Basis) -> Node3D:
+	var flower := create(id, Vector2i.ONE)
+	flower._show(OPEN)
+	flower._card.transform = Transform3D(towards, Vector3(0.0, flower._quad.size.y * 0.5, 0.0))
+	return flower
+
+
 func _ready() -> void:
 	var timer := Timer.new()
 	timer.wait_time = CHECK

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Paints every crop and flower as flat pictures (docs/WORLD.md "Crops are painted pictures"): a plot of each crop part
-grown and ripe, the one sprouting plot every crop shares, and each flower in bud and open, single and full bloom. A picture is written as a recipe of shapes (SVG text, `.paint`), which
+grown and ripe, what it gives gathered (its Market picture), the one sprouting plot every crop shares, and each flower
+in bud and open, single and full bloom. A picture is written as a recipe of shapes (SVG text, `.paint`), which
 the game turns into a texture on the device the first time it is shown (PaintedCrops.picture): a few kilobytes
 shipped, not an image.
 
@@ -15,7 +16,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..") + "/"
 OUT = ROOT + "art/painted/"
 SOIL = [False]   # (the game draws the bed itself: a picture is the plants alone)
 W, H, CX, CY = 512, 400, 256, 262
-LEAF = "#3f8f34"
+LEAF = "#38a02a"
 
 
 def rgb(c):
@@ -32,12 +33,21 @@ def mix(a, b, t):
     return hexc([A[i] + (B[i] - A[i]) * t for i in range(3)])
 
 
+def _hsv(c, fn):
+    import colorsys
+    h, s, v = colorsys.rgb_to_hsv(*[x / 255.0 for x in rgb(c)])
+    h, s, v = fn(h, s, v)
+    return hexc([x * 255.0 for x in colorsys.hsv_to_rgb(h % 1.0, max(0.0, min(1.0, s)), max(0.0, min(1.0, v)))])
+
+
 def dark(c, t=0.3):
-    return mix(c, "#10220f", t)
+    """A deeper tone of `c`: darker and a little richer, never greyer (shade keeps the colour's strength)."""
+    return _hsv(c, lambda h, s, v: (h, s * (1.0 + 0.25 * t), v * (1.0 - 0.8 * t)))
 
 
 def light(c, t=0.3):
-    return mix(c, "#fffbe6", t)
+    """A sunlit tone of `c`: brighter, hardly paler (mixing towards white made every crop bland)."""
+    return _hsv(c, lambda h, s, v: (h - 0.02 * t, s * (1.0 - 0.45 * t), v + (1.0 - v) * 0.9 * t))
 
 
 class Pic:
@@ -461,8 +471,7 @@ def plot(cid, shp, c, grow=1.0):
     elif cid in ROOTS:
         grid(3, lambda: root(p, r, ROOTS[cid], c))
     elif cid == "rhubarb":
-        grid(3, lambda: "".join(stalk(q, 0, q * 2.2, -46, q * 0.3, c, 5.5) for q in (-10, -3, 4, 11)) + "".join(
-            leaf(p, q * 2.2, -44, 44, 24, -90 + q * 2.4, [LEAF, dark(LEAF, 0.15)][i % 2]) for i, q in enumerate((-10, -3, 4, 11))))
+        grid(3, lambda: rhubarb(p, c))
     elif cid in FRUITS:
         kind, up = FRUITS[cid]
         if kind == "heart":
@@ -473,6 +482,55 @@ def plot(cid, shp, c, grow=1.0):
             grid(3, lambda: bush(p, r, LEAF, kind, c, 5, 0.95))
     else:   # the berries
         grid(3, lambda: bush(p, r, dark(LEAF, 0.08), "cluster", c, 5, 0.95))
+    return p
+
+
+def rhubarb(p, c):
+    return "".join(stalk(q, 0, q * 2.2, -46, q * 0.3, c, 5.5) for q in (-10, -3, 4, 11)) + "".join(
+        leaf(p, q * 2.2, -44, 44, 24, -90 + q * 2.4, [LEAF, dark(LEAF, 0.15)][i % 2]) for i, q in enumerate((-10, -3, 4, 11)))
+
+
+def harvest(cid, shp, c):
+    """What crop `cid` gives, gathered (256 x 256): its Market picture. What you pick, not the patch it grows in."""
+    p = Pic(256, 256)
+    r = random.Random(sum(map(ord, cid)) + 5)
+
+    def put(depth, x, y, k, s):
+        p.add(depth, '<g transform="translate(%.1f,%.1f) scale(%.2f)">%s</g>' % (x, y, k, s))
+    if cid in GOURDS:
+        kind = GOURDS[cid]
+        k = 1.3 if kind in ("zucchini", "cucumber") else (1.5 if kind in ("pineapple", "pattypan") else 1.2)
+        if kind not in ("pineapple", "watermelon", "square_melon", "yellow_melon"):
+            put(0, 156, 112, k * 0.8, gourd(p, r, kind, c, 0, 0))
+        put(1, 122, 150, k, gourd(p, r, kind, c, 0, 0))
+    elif cid in FLOWERS:
+        f = FLOWERS[cid]
+        for i, rot in enumerate((-20, 20, 0)):
+            p.add(i, '<g transform="translate(128,244) rotate(%d) scale(1.5)">%s</g>' % (rot, flower(p, r, f[0], c, f[1], 108, f[3], 3)))
+    elif cid in ("lilac", "lavender", "gladiolus", "amaranth", "asparagus"):
+        put(0, 128, 240, 2.0, grain(p, r, "#4f8f3a", c, SPIKES[cid][0], 96, 5))
+    elif cid == "aloe_vera":
+        put(0, 128, 222, 2.7, head(p, r, "aloe", c))
+    elif shp == "grain" and cid != "soybeans":
+        put(0, 128, 244, 2.0, grain(p, r, mix(c, "#b89a4a", 0.3), c, "droop" if cid in ("rice", "oats") else "wheat", 92, 9))
+    elif cid in ("corn", "posole_corn"):
+        put(0, 128, 248, 1.7, tall(p, r, "corn", c))
+    elif cid in ("sugarcane", "bamboo"):
+        put(0, 128, 248, 1.55, tall(p, r, "cane", c))
+    elif cid in HEADS:
+        put(0, 128, 206, 2.7, head(p, r, HEADS[cid], c))
+    elif shp == "leafy":
+        put(0, 128, 206, 2.8, head(p, r, "rosette", c))
+    elif cid in ROOTS:
+        put(0, 128, 196, 2.7, root(p, r, ROOTS[cid], c))
+    elif cid == "rhubarb":
+        put(0, 128, 226, 3.0, rhubarb(p, c))
+    else:
+        kind = FRUITS[cid][0] if cid in FRUITS else "cluster"
+        for i, a in enumerate((200, 340)):
+            put(i, 128, 150, 2.6, leaf(p, 0, 0, 44, 16, a - 360, [LEAF, dark(LEAF, 0.15)][i]))
+        for i, (x, y) in enumerate(((128, 96), (88, 160), (168, 160))):
+            put(10 + i, x, y, 3.3 if kind not in ("bunch", "boll") else 2.6, fruit(p, kind, 0, 0, 1.0, c))
     return p
 
 
@@ -519,6 +577,7 @@ def pictures():
             shp, col = v.get("shape", ""), v.get("color", "#6ab04c")
             out["crops/" + v["id"] + "_young"] = finish(plot(v["id"], shp, col, 0.6))
             out["crops/" + v["id"] + "_ripe"] = finish(plot(v["id"], shp, col))
+            out["crops/" + v["id"] + "_harvest"] = finish(harvest(v["id"], shp, col))
     out["crops/sprout"] = finish(plot("strawberries", "berry", "#6ab04c", 0.0))
     for fam in json.load(open(ROOT + "data/catalog/blooms.json"))["families"]:
         d = fam["defaults"]

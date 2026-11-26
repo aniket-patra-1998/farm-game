@@ -150,8 +150,12 @@ never turns, so a flat picture facing it is the plant.
   it bends in the wind from its foot.
 - Flowers are painted the same way (`PaintedBloom`, `art/painted/blooms`): one card to a flower, in bud until it
   is ready, open while it stands ready, and the open picture gone dry once withered; single and full bloom.
-- Switch: `Release.on("painted_crops")`, for crops and flowers. The modelled plants (`Crops3D`) are still kept up,
-  unseen, until the Market pictures and the harvest pop are painted too.
+- Market pictures are painted too: a crop's is what it gives, gathered (`<crop>_harvest`), a flower's is it open
+  (`IconMaker.model`). A harvested plot's card springs up and is gone (`PaintedCrops.pop`).
+- A made picture is kept on the device (`user://painted`, under its recipe's own mark), so only the first run
+  paints it.
+- Switch: `Release.on("painted_crops")`, for crops and flowers. With it on, `Crops3D` draws and lays out nothing;
+  it only keeps the farm's clock, which a tree's fruit grows by.
 
 ## Still to come (in this order)
 

@@ -16,6 +16,11 @@ const FRONT := Vector2(256, 387)     # ..and where the plot's nearest corner is 
 const FILL := 0.92                   # a picture's plot is this much of a tile: its bed (Plots3D.BED), and a little over
 const SHARPER := 1.0                 # a picture is made this many times its size
 const SPROUT := "sprout"             # the one picture every crop shares while it sprouts
+const HARVEST := Vector2(256, 256)   # the picture of what a crop gives (its Market picture): its size..
+const HARVEST_TILES := 1.0           # ..and how many tiles across it is shown
+const KEPT := "user://painted"       # made pictures are kept here, so only the first run paints them
+const POP_HEIGHT := 0.5              # how high a harvested plot's card springs before it is gone..
+const POP_TIME := 0.42               # ..and how long that takes
 const WAITING := -1                   # in `_asked`: not begun yet
 const CHECK := 1.0                   # seconds between looks at the clock for the next plot due to change
 
@@ -68,11 +73,23 @@ static func _paint(name: String) -> Image:
 
 
 ## The image a recipe file paints (`path`: a .paint file), or null.
+## A picture already made on this device is read back, not painted again: kept under its recipe's own mark, so a
+## changed recipe is painted afresh (only where models are kept too: ModelStore; tests and tools keep nothing).
 static func paint_at(path: String) -> Image:
 	var image := Image.new()
 	var recipe := FileAccess.get_file_as_string(path)
-	if recipe == "" or image.load_svg_from_string(recipe, SHARPER) != OK:
+	if recipe == "":
 		return null
+	var keeps := ModelStore.stamp != ""
+	var kept := "%s/%s_%d_%d.png" % [KEPT, path.get_file().get_basename(), recipe.hash(), recipe.length()]
+	if keeps and FileAccess.file_exists(kept) and image.load(kept) == OK:
+		image.generate_mipmaps()
+		return image
+	if image.load_svg_from_string(recipe, SHARPER) != OK:
+		return null
+	if keeps:
+		DirAccess.make_dir_recursive_absolute(KEPT)
+		image.save_png(kept)
 	image.generate_mipmaps()
 	return image
 
@@ -130,6 +147,45 @@ static func picture_of(crop_id: String, stage: String) -> String:
 		"ripe", "withered":
 			return crop_id + "_ripe"
 	return ""
+
+
+## What crop `crop_id` gives, gathered, as a card facing `towards` (its Market picture: IconMaker); null for none.
+static func harvest_card(crop_id: String, towards: Basis) -> Node3D:
+	var art := picture(crop_id + "_harvest")
+	if art == null:
+		return null
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE * HARVEST_TILES
+	var mat := ShaderMaterial.new()
+	mat.shader = SHADER
+	mat.set_shader_parameter("picture", art)
+	mat.set_shader_parameter("card", quad.size)
+	mat.set_shader_parameter("sway", 0.0)
+	var card := MeshInstance3D.new()
+	card.mesh = quad
+	card.material_override = mat
+	card.transform = Transform3D(towards, Vector3(0.0, HARVEST_TILES * 0.5, 0.0))
+	var root := Node3D.new()
+	root.add_child(card)
+	return root
+
+
+## Plot `i` was harvested: its ripe card springs up and is gone (the plot itself is laid out by `update`).
+func pop(i: int, crop_id: String) -> void:
+	var layer: MultiMeshInstance3D = _layers.get(crop_id + "_ripe")
+	if layer == null:
+		return
+	var ghost := MeshInstance3D.new()
+	ghost.mesh = layer.multimesh.mesh
+	ghost.material_override = layer.material_override
+	ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	ghost.transform = Transform3D(facing(), place_of(i))
+	add_child(ghost)
+	var tw := ghost.create_tween().set_parallel(true)
+	tw.tween_property(ghost, "position:y", ghost.position.y + POP_HEIGHT, POP_TIME).set_trans(Tween.TRANS_CUBIC) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(ghost, "scale", Vector3.ONE * 0.05, POP_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(ghost.queue_free)
 
 
 ## How many tiles one pixel of a picture is.

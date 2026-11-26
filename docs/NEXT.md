@@ -8,8 +8,11 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
   pictures"). This branch does the crops on the farm: all 74, four looks each.
 - Measured: 149 recipes, 8.9 MB as text, 0.5 MB zipped; a picture takes 10 to 20 ms to make on a desktop.
 - Flowers on the farm are painted too (PaintedBloom: 6 kinds, single and full, bud / open / dry; 24 recipes).
-- Not done: Market pictures of crops and flowers (still made from the models), the harvest pop for a card, keeping
-  made pictures on disk (each is made again every run), removing Crops3D, BloomModel and the crop and bloom models.
+- Market pictures of crops (what each gives, gathered: 74 more recipes) and flowers are painted; a harvest pops the
+  card; made pictures are kept on the device; with crops painted the modelled ones lay nothing out.
+- Not done: the modelled crops and flowers are still in the repo and still used where painted ones are not yet:
+  flowers standing inside the Bloom Garden (BuildingFill), the bouquet (GoodsModel), heights (ScaleGuide), the art
+  reference tool (tools/look_models.gd), and the exported crop and bloom files. Remove them once those are painted.
 - Not measured: the size in a build, the time to make a picture on a phone, frame time.
 
 ## Trees repainted (26 Nov, branch trees-light)

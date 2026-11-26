@@ -102,12 +102,13 @@ func _ready() -> void:
 	plots = Plots3D.new()
 	add_child(plots)
 	crops = Crops3D.new()
+	# Crops are painted pictures (PaintedCrops). The modelled crops then draw nothing and lay nothing out: they only
+	# keep the farm's clock, which a tree's fruit grows by.
+	crops.drawn = not Release.on("painted_crops")
 	add_child(crops)
-	if Release.on("painted_crops"):
-		# Crops are painted pictures (PaintedCrops); the modelled plants are still kept up, unseen, for what reads them.
+	if not crops.drawn:
 		painted = PaintedCrops.new()
 		add_child(painted)
-		crops.visible = false
 	glints = Glints3D.new()   # (over ripe plots that hold a find)
 	add_child(glints)
 	objects = Objects3D.new()
@@ -149,7 +150,7 @@ func _ready() -> void:
 		grid.hatcher = func(young: int, grown: int, then: Callable) -> void: objects.hatch(young, grown, then)
 		grid.outliner = func(uid: int) -> PackedVector2Array: return objects.outline_of(uid)
 		grid.object_poked.connect(_poked)
-		grid.plants_popped.connect(crops.pop)
+		grid.plants_popped.connect(painted.pop if painted != null else crops.pop)
 		grid.collected.connect(objects.celebrate)
 		grid.collected.connect(trees.harvested)
 		objects.landed.connect(_landed)

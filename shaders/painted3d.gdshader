@@ -8,7 +8,8 @@ render_mode cull_disabled, shadows_disabled;
 uniform sampler2D picture : source_color, filter_linear_mipmap, repeat_disable;
 uniform vec2 card = vec2(1.3, 1.0);   // the card's size, in tiles
 uniform float cutoff = 0.5;
-uniform float depth = 0.6;        // how much of the picture's colour shows in full sun (crown3d's `depth`)
+uniform float depth = 0.66;       // how much of the picture's colour shows in full sun (crown3d's `depth`)
+uniform float vivid = 1.2;        // how much stronger than painted its colours are shown (1: as painted)
 uniform vec3 dry : source_color = vec3(0.60, 0.48, 0.26);   // a withered plant (CropModels.DRY)
 uniform float droop = 0.16;       // how much lower a withered plot stands
 uniform float rich_size = 1.08;   // a fertilised plot's size, of an ordinary one's
@@ -39,6 +40,7 @@ void fragment() {
 	ALPHA = paint.a;
 	ALPHA_SCISSOR_THRESHOLD = cutoff;
 	vec3 col = paint.rgb;
+	col = max(mix(vec3(dot(col, vec3(0.3, 0.55, 0.15))), col, vivid), vec3(0.0));
 	col = mix(col, dry * (0.45 + 0.9 * dot(col, vec3(0.3, 0.55, 0.15))), withered);
 	col = mix(col, col * vec3(1.14, 1.05, 0.78), 0.5 * gold);
 	ALBEDO = col * depth * (1.0 - 0.2 * wetness);

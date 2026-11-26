@@ -34,6 +34,7 @@ static var clock_base := 0.0
 static var _start := {}   # form|stage -> the size that stage starts at (start_size), measured once
 
 var wind := 0.6: set = _set_wind
+var drawn := true    # false: the crops are drawn another way (PaintedCrops); this then only keeps the farm's clock
 var _due := -1   # the soonest time (Game.now) any plot's plants change look on their own; -1: none will
 
 var _mastered := {}   # crop id -> how far it is mastered, for the plots of one laying (update)
@@ -242,6 +243,8 @@ static func stage_of(i: int) -> Array:
 ## out again, from per-plot pieces kept ready. So plowing, planting or harvesting one plot touches one or two
 ## groups, not the whole field, and the clock looks again only when the soonest plot is due (`_on_clock`).
 func update(indices: Array = []) -> void:
+	if not drawn:
+		return
 	_mastered.clear()
 	var whole := indices.is_empty()
 	if whole:
