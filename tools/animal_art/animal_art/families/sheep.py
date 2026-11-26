@@ -2,7 +2,15 @@
 import numpy as np
 import math
 from ..geometry import hx
+from ..paint import second
 from ..shapes import C, E, both
+
+
+CURL = 0.46          # a curl of fleece: its radius (big enough to be a form of its own, not a ripple)
+CURL_RINGS = 5       # rings of curls from tail to shoulder..
+CURL_ROUND = 6       # ..and curls round the widest ring
+CURL_IN = 0.74       # how far out from the body's middle a curl sits, of the body's radius (the rest of it bulges)
+CURL_CREASE = 0.05   # how sharply two curls meet: the crease between them is what draws the fleece
 
 
 # ---------------------------------------------------------------- one sheep template, many breeds
@@ -40,13 +48,14 @@ def sheep(b):
         s = [E((0, yb, 0), (rx * 0.93, ry * 0.93, rz * 0.96), wool), C(nb, nt, b["neck"] * 1.2, b["neck"], wool)]
     # the fleece: curls of ONE size laid in even rings round the body, each ring set between the curls of the last
     # (like roof tiles) and the same on both sides, so the wool is regular all over and never patchy
-    cr = 0.33 * (0.86 + 0.2 * w)
-    for ri, z in enumerate(np.linspace(-rz * 0.84, rz * 0.84, 8) if w > 0 else []):
+    cr = CURL * (0.86 + 0.2 * w)
+    for ri, z in enumerate(np.linspace(-rz * 0.8, rz * 0.8, CURL_RINGS) if w > 0 else []):
         k2 = math.sqrt(max(0.05, 1 - (z / (rz * 1.02)) ** 2))
-        n = max(5, int(round(10 * k2)))
+        n = max(4, int(round(CURL_ROUND * k2)))
         ths = np.linspace(-0.6, math.pi + 0.6, n) if ri % 2 == 0 else (np.linspace(-0.6, math.pi + 0.6, n)[:-1] + (math.pi + 1.2) / (n - 1) / 2)
-        for th in ths:
-            s.append(E((rx * math.cos(th) * k2 * 0.94, yb + ry * math.sin(th) * k2 * 0.94, z), (cr, cr, cr), wool, k=0.06))
+        for j, th in enumerate(ths):
+            s.append(E((rx * math.cos(th) * k2 * CURL_IN, yb + ry * math.sin(th) * k2 * CURL_IN, z), (cr, cr, cr),
+                       wool if j % 2 == 0 else second(wool), k=CURL_CREASE))
     for zc in ((rz * 0.98, -rz * 0.98) if w > 0 else ()):
         s.append(E((0, yb + 0.05, zc), (cr, cr, cr), wool, k=0.06))
     for i in range(4 if w > 0 else 0):

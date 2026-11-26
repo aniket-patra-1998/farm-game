@@ -7,6 +7,9 @@ from .head import EYE_K, EYE_S, EYE_SIZE, EYE_T, Head, LASH, MOUTH, find_eye, si
 
 
 EYES = []
+LID_OPEN = 0.4      # every family's lid is lifted this share of the way to wide open: eyes a little wider awake
+
+
 DARK_FACE = 0.32  # a face darker than this (its colour's mean) gets the light eye: a pale rim and an amber iris
 
 
@@ -14,6 +17,7 @@ def face(m, V, T, cols, wh, mouth=True, nostril=True, lashes=True, eye_k=1.0, li
          eye_t=None, eye_s=None, wrap=False):
     """The measured face: the eye by proportion of the head, seated on its surface; then blush, nostrils and mouth."""
     hd = Head(V, T, wh, None)
+    lid += (1.0 - lid) * LID_OPEN
     if wrap:
         # a round head is as wide as it looks: measure its real half-width, so the eye may sit right on its side
         hd.half = float(np.percentile(np.abs(V[wh > 0.5][:, 0]), 97)) / 1.5
@@ -94,10 +98,11 @@ def face(m, V, T, cols, wh, mouth=True, nostril=True, lashes=True, eye_k=1.0, li
                     decal.PROJ = proj
             _e0 = m.n
             eye(m, p, u, up, out, r, lidc, lashes=lashes, lid=lid, pupil=0.82, lash=LASH,
-                iris=(decal.AMBER if fc.mean() < DARK_FACE else (0.2, 0.12, 0.08)),
+                iris=(decal.CHESTNUT if fc.mean() < DARK_FACE else (0.2, 0.12, 0.08)),
                 rim=(decal.PALE_RIM if fc.mean() < DARK_FACE else None))
             EYES.append((_e0, m.n, p.copy(), up.copy()))        # this eye's own points, so it can blink
-            fan(m, p, u, up, out, ell(0.26 * r, 0.2 * r, -0.2 * r, -1.5 * r, 14), 0, tuple(fc * 0.45 + np.array([0.98, 0.5, 0.56]) * 0.55))
+            if fc.mean() >= DARK_FACE:   # (a blush is lost on a dark face, and reads as a stray mark)
+                fan(m, p, u, up, out, ell(0.4 * r, 0.27 * r, -0.3 * r, -1.62 * r, 16), 0, tuple(fc * 0.68 + np.array([0.98, 0.5, 0.56]) * 0.32))
             decal.PROJ = None
         if brow is not None:
             hb = side_hit(V, T, hd, sx, t0 - 0.02, min(0.96, EYE_S + 0.25))

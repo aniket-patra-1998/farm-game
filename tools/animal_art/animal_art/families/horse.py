@@ -8,7 +8,7 @@ from ..shapes import C, E, both
 # ---------------------------------------------------------------- one horse template, many breeds
 HORSES = {
     "horse": dict(body=(0.8, 0.84, 1.75), legs=1.9, leg_r=0.23, neck=0.42, skull=(0.42, 0.5, 0.6), muzzle=(0.3, 0.32, 0.62),
-                  mane=0.5, tail=1.0, feather=0.0, fur=0.0, coat="9a6438", points="3a2416", dark_legs=True, blaze=False,
+                  mane=0.8, tail=1.15, feather=0.25, fur=0.0, coat="9a6438", points="3a2416", dark_legs=True, blaze=False,
                   socks=False, rel=1.19),
     "draft horse": dict(body=(1.0, 1.02, 1.85), legs=1.85, leg_r=0.32, neck=0.56, skull=(0.5, 0.58, 0.66), muzzle=(0.37, 0.39, 0.66),
                         mane=0.8, tail=1.1, feather=1.0, fur=0.0, coat="6e4326", points="24170f", dark_legs=False, blaze=True,

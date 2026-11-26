@@ -2,6 +2,7 @@
 import numpy as np
 import math
 from ..geometry import cone, hx, torus, tube
+from ..paint import second
 from ..shapes import C, E, both
 
 
@@ -85,6 +86,9 @@ def cow(b):
          E((0, hy, hz), (skw, skh, skl), headc, head=True, rx=0.35),
          E((0, hy - skh * 0.55, hz + skl * 0.95), (mw, mh, ml), muzc, head=True, rx=0.3, k=0.2),
          E((0, hy - skh * 0.68, hz + skl * 0.95 + ml * 0.72), (mw * 0.95, mh * 0.82, ml * 0.5), pink, head=True, k=0.12)]
+    # a tuft of curls on the poll, between the horns, in the coat's second tone
+    for dx, dz, rr in ((0.0, 0.0, 0.3), (-0.2, -0.16, 0.24), (0.2, -0.16, 0.24)):
+        s.append(E((dx, hy + skh * 0.88, hz - skl * 0.12 + dz), (rr, rr * 0.8, rr), second(tuple(coat)), k=0.05))
     if b["hump"] > 0:
         s.append(E((0, yb + ry * 0.8, rz * 0.48), (rx * 0.68, 0.46 * b["hump"], 0.72), bodyc, k=0.3))
     lx, lz = rx * 0.6, rz * 0.7; hoof = (0.22, 0.17, 0.14)

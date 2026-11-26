@@ -49,11 +49,14 @@ file per hair style. It uses the same skin, drawings and painted light, with its
 
     python3 -m animal_art export ../../art/models/animals "chicken"
 
-writes `art/models/animals/chicken.glb` (a limited animal's file goes to `art/models/limited/` beside it): the mesh at rest with its colours and painted light, and its moves as
-blend shapes (`export.py`: the walk cycle in 12 frames, head down, look left and right, blink, tail, breath),
-each made by this package's own motion. Listed in `data/assets.json` (`"budget": "animal"`), the game draws it
-instead of the code-built animal and sets the blend shapes from the pose it already works out
-(`Animal3D._pose_file`). Moves the file doesn't have are simply not shown.
+writes `art/models/animals/chicken.glb` (a limited animal's file goes to `art/models/limited/` beside it): the mesh with its colours and painted light, the bones it hangs on, and its moves
+(`export.py`: the walk cycle in 8 frames, head down, look left and right, blink, tail, breath), each made by this
+package's own motion and stored as where each bone goes (`export._rigged`), never as a copy of the mesh: 17 copies
+were nine tenths of a file. A part that moves on its own (an eye, an ear, a wing, a fan) has bones of its own;
+only a long coat's shake is still stored point by point. Listed in `data/assets.json` (`"budget": "animal"`),
+the game draws it instead of the code-built animal and asks for each move from the pose it already works out
+(`Animal3D._pose_file`; `AnimalBones` adds the moves up bone by bone). Moves the file doesn't have are simply
+not shown.
 
 One command makes every animal's file again and brings the game's lists in step (run it after any change to this
 package, or after adding a row):

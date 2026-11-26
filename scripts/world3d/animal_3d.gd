@@ -48,6 +48,7 @@ const SLOTS := 64                 # turns an animal's slot is taken from (stride
 const PENDING_MOST := 0.5         # seconds a late pose catches up at most (never a jump of seconds at once)
 const STRIDES := "res://data/animal_strides.json"   # every kind's file_stride, kept (tools/animal_strides)
 const NOSES := "res://data/animal_sleep.json"       # where each kind's nose is asleep (tools/animal_art's export)
+const MESH_MOVE := 1000           # in _file_shapes: from here up, a blend shape of the mesh (a long coat's shake)
 const SLEEP_MOVE := "sleep"       # a file's sleeping pose (tools/animal_art: motion.asleep)   # not-ui
 const ASLEEP := 0.85              # how far into its sleeping pose an animal counts as asleep (its "z z z" shows)
 const SHAKE_ROLL := 0.2           # radians a short coat's body rolls each way as it shakes the rain off..
@@ -71,6 +72,7 @@ static var _strides := {}         # animal id -> the ground one cycle of its fil
 ## The animals asleep in their sleeping pose just now (SleepMarks draws a "z z z" at each one's nose).
 static var sleepers: Array[Animal3D] = []
 static var _noses := {}           # animal id -> its nose asleep, in its model's own space (NOSES), read once
+static var _walk_moves: Array[String] = []   # walk frame -> its move's name (walk_move)
 static var _kept := {}            # animal id -> {"file": fingerprint, "stride": ..} (STRIDES, read once)
 
 static var _seen_last := 0       # and last frame, which sets this frame's stride
@@ -119,8 +121,9 @@ var _pending := 0.0              # time not yet posed (while waiting its turn)
 var _owed := false               # its turn came in a frame already full of poses (POSES_MOST): next frame, first
 var _id := ""                    # its catalog id (for its file, AssetRegistry)
 var _size := 1.0                 # how big it is drawn (smaller in a small yard)
-var _file_mesh: MeshInstance3D   # made as a file: the mesh whose blend shapes pose it (null when built)
-var _file_shapes := {}           # blend shape name -> index on _file_mesh
+var _file_mesh: MeshInstance3D   # made as a file: the mesh its moves pose (null when built)
+var _file_bones: AnimalBones     # ..its bones, which most of its moves move (null: the file has none)
+var _file_shapes := {}           # a move's name -> its number in _file_bones, or MESH_MOVE + its blend shape's
 var _walk_frames := 0            # how many walk_NN moves the file has (the cycle is cut into that many)
 var _shaking := 0.0               # how far through a shake of its coat it last was (AnimalPose.shake)
 var _fluff: DustPuffs             # the tufts its shakes let go (made at its first shake)
@@ -210,6 +213,7 @@ func _take_parts_of(t: Animal3D) -> void:
 	_skeleton = _mine(t, t._skeleton)
 	_casting = _mine(t, t._casting)
 	_file_mesh = _mine(t, t._file_mesh)
+	_file_bones = t._file_bones.another() if t._file_bones != null else null
 	_file_shapes = t._file_shapes
 	_walk_frames = t._walk_frames
 	_id = t._id
@@ -255,9 +259,9 @@ func _build() -> void:
 	ModelKit.round_balls = false
 
 
-## An animal made as a file (tools/animal_art's export): its mesh at rest, its moves as blend shapes
-## (FILE_MOVES), posed each frame from the same pose values as a built one (`_pose_file`). False when the file
-## has no mesh to pose (the built animal is drawn instead).
+## An animal made as a file (tools/animal_art's export): its mesh, its bones and its moves as where each bone
+## goes (AnimalBones; a long coat's shake alone is a blend shape), posed each frame from the same pose values as
+## a built one (`_pose_file`). False when the file has no mesh to pose (the built animal is drawn instead).
 func _build_file() -> bool:
 	var model := AssetRegistry.instance(_id)
 	var mi := _first_mesh(model) if model != null else null
@@ -271,12 +275,15 @@ func _build_file() -> bool:
 	_body.add_child(model)
 	_file_mesh = mi
 	CoatTouch.dress(mi, Game.item_data(_id))
+	_file_bones = AnimalBones.of(mi)
+	if _file_bones != null:
+		for k in _file_bones.moves.names.size():
+			_file_shapes[_file_bones.moves.names[k]] = k
 	for k in mi.mesh.get_blend_shape_count():
-		var move := String(mi.mesh.get_blend_shape_name(k))
-		_file_shapes[move] = k
-		if move.begins_with("walk_"):
-			_walk_frames += 1
-	var box := mi.get_aabb()
+		_file_shapes[String(mi.mesh.get_blend_shape_name(k))] = MESH_MOVE + k
+	while _file_shapes.has(walk_move(_walk_frames)):
+		_walk_frames += 1
+	var box := AnimalBones.box_of(mi)
 	_r = box.size * 0.5 * _size
 	_leg = box.size.y * _size * 0.3
 	_r.y = box.size.y * _size * 0.35
@@ -351,36 +358,41 @@ static func measure_stride(id: String) -> float:
 	var stride := 0.0
 	var model := AssetRegistry.instance(id) if AssetRegistry.has_model(id) else null
 	var mi := _first_mesh(model) if model != null else null
-	if mi != null and mi.mesh is ArrayMesh and mi.mesh.get_surface_count() > 0:
-		stride = _feet_reach(mi.mesh as ArrayMesh) / AnimalGait.STANCE
+	var moves := AnimalBones.moves_of(mi)
+	if moves != null and mi.mesh is ArrayMesh and mi.mesh.get_surface_count() > 0:
+		stride = _feet_reach(mi.mesh as ArrayMesh, moves) / AnimalGait.STANCE
 	if model != null:
 		model.free()
 	return stride
 
 
-static func _feet_reach(mesh: ArrayMesh) -> float:
-	var rest: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var moves := mesh.surface_get_blend_shape_arrays(0)
-	var steps: Array[PackedVector3Array] = []
-	for k in mesh.get_blend_shape_count():
-		if String(mesh.get_blend_shape_name(k)).begins_with("walk_"):   # not-ui
-			steps.append(moves[k][Mesh.ARRAY_VERTEX])
-	# (The feet: the lowest of the animal as it stands. Its file's box is no measure of that: it takes in every
-	# move, and a sleeping pose or a head tucked high changes it.)
+static func _feet_reach(mesh: ArrayMesh, moves: AnimalBones.Moves) -> float:
+	var arrays := mesh.surface_get_arrays(0)
+	var built: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var steps: Array[int] = []
+	for k in moves.names.size():
+		if moves.names[k].begins_with(AnimalBones.WALK):
+			steps.append(k)
+	# (The feet: the lowest of the animal as it stands.)
+	var stands := PackedVector3Array()
 	var low := INF
 	var high := -INF
-	for v in rest:
-		low = minf(low, v.y)
-		high = maxf(high, v.y)
+	for k in built.size():
+		stands.append(moves.moved(built[k], bones, weights, k * 4, -1))
+		low = minf(low, stands[k].y)
+		high = maxf(high, stands[k].y)
 	var reaches: Array[float] = []
-	for k in rest.size():
-		if rest[k].y > low + (high - low) * FEET_SHARE:
+	for k in built.size():
+		if stands[k].y > low + (high - low) * FEET_SHARE:
 			continue
 		var back := INF
 		var fore := -INF
 		for step in steps:
-			back = minf(back, step[k].x)
-			fore = maxf(fore, step[k].x)
+			var x := moves.moved(built[k], bones, weights, k * 4, step).x
+			back = minf(back, x)
+			fore = maxf(fore, x)
 		reaches.append(fore - back)
 	reaches.sort()
 	return reaches[reaches.size() >> 1] if not reaches.is_empty() and not steps.is_empty() else 0.0
@@ -394,7 +406,7 @@ static func file_length(id: String) -> float:
 			var model := AssetRegistry.instance(id)
 			var mi := _first_mesh(model) if model != null else null
 			if mi != null:
-				length = mi.get_aabb().size.x
+				length = AnimalBones.box_of(mi).size.x
 			if model != null:
 				model.free()
 		_lengths[id] = length
@@ -428,7 +440,7 @@ func _pose_file(p: AnimalPose) -> void:
 			w += (1.0 - f) * p.stride
 		if k == k1:
 			w += f * p.stride
-		_shape("walk_%02d" % k, w)
+		_shape(walk_move(k), w)
 	_shape("head", smoothstep(0.0, 1.0, p.head))
 	var look := clampf(p.look + motion.head_yaw * 0.8, -1.0, 1.0)
 	_shape("look_left", maxf(look, 0.0))
@@ -460,6 +472,15 @@ func _pose_file(p: AnimalPose) -> void:
 	_body.rotation = Vector3(motion.roll + (0.0 if _file_shapes.has(CoatTouch.SHAKE_A) else shake_roll(p.shake)), 0,
 		motion.pitch)
 	_body.scale = Vector3(1.0 + motion.squash * 0.6, 1.0 - motion.squash, 1.0 + motion.squash * 0.6)
+	if _file_bones != null:
+		_file_bones.pose(_file_mesh)
+
+
+## What walk frame `k`'s move is called in a file (worked out once each: an animal asks for all of them a frame).
+static func walk_move(k: int) -> String:
+	while _walk_moves.size() <= k:
+		_walk_moves.append("%s%02d" % [AnimalBones.WALK, _walk_moves.size()])
+	return _walk_moves[k]
 
 
 ## A short coat's shake (one whose file has no shake of its own: the rain shaken off, AnimalBehaviour): its body
@@ -483,10 +504,13 @@ func _pose_shake(through: float) -> void:
 	_shaking = through
 
 
+## Asks for `weight` of the file's move `move` (nothing when the file has none of that name).
 func _shape(move: String, weight: float) -> void:
 	var k: int = _file_shapes.get(move, -1)
-	if k >= 0:
-		_file_mesh.set_blend_shape_value(k, weight)
+	if k >= MESH_MOVE:
+		_file_mesh.set_blend_shape_value(k - MESH_MOVE, weight)
+	elif k >= 0:
+		_file_bones.want(k, weight)
 
 
 
@@ -1082,7 +1106,7 @@ func pick_box() -> AABB:
 	var half: Vector3
 	var mid := 0.0
 	if _file_mesh != null:
-		var b := _file_mesh.get_aabb()
+		var b := AnimalBones.box_of(_file_mesh)
 		half = b.size * 0.5 * _size
 		mid = b.get_center().x * _size
 	else:
