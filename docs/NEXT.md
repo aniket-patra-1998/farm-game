@@ -1510,5 +1510,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Posing costs a little more script time: a walking cow 28 us against 15 (a desktop), standing 18 against 13.
   Not measured: the GPU's side (a skinned mesh should cost a phone less than blend shapes, and can have LODs,
   which a mesh with blend shapes never got), anything on a phone.
-- Next, same idea: the farmer (6 files, 11.7 MB, limbs as blend shapes: tools/animal_art farmer.py), then trees.
-- Tests 640 to 642 (animal_bones_test); tools/animal_art tests `Bones`.
+- The farmer the same way (farmer.py `rigged`): a body bone, four bones along each limb's joint (a point near
+  a joint turns by its own share of a swing, held to 0.1% of the farmer's height in four steps), one an eye.
+  Its skin is no longer split finer along its colour borders (skin's cut gives the clean edge; rendered side
+  by side, no difference seen): 15k triangles -> 10k. 6 files, 11.7 MB -> 1.2 MB. `Farmer3D.tinted` keeps the
+  bones each point follows.
+- Every build now leaves out art/pilot and art/style (the first style trials, drawn by tools/style_preview
+  alone): 10 MB as imported, which every build had carried (export_presets.cfg, test 644).
+- What the models weigh now, as shipped: trees 16 MB, animals 19.9 (8.0 in the app, 11.9 limited, fetched),
+  buildings 8.7, the farmer 1.2, crops and blooms 3.3. Trees are next: each file is four looks of the whole
+  tree (about 3,600 points each, already stored compactly), so making them lighter is a choice about looks
+  (fewer of them, or simpler leaves), for the owner to pick. Not looked at: res://baked (CI's ready-made models
+  and icons; docs/PACKS.md), sounds (8.5 MB).
+- Tests 640 to 644 (animal_bones_test); tools/animal_art tests `Bones`.

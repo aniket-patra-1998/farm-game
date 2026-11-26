@@ -40,7 +40,8 @@ var _legs: Array[Node3D] = []
 var _arms: Array[Node3D] = []
 var _cycle := 0.0
 var _file_mesh: MeshInstance3D   # the farmer drawn from its file (null: built in code)
-var _moves := {}                 # the file's blend shapes: name -> index
+var _file_bones: AnimalBones     # ..its bones, which its moves move (as an animal file's do)
+var _moves := {}                 # the file's moves: name -> its number in _file_bones
 var _clock := 0.0
 var _swing: Array[float] = [0.0, 0.0, 0.0, 0.0]   # the file's limbs now: both legs, then both arms (radians)
 
@@ -58,6 +59,7 @@ func rebuild() -> void:
 	_legs.clear()
 	_arms.clear()
 	_file_mesh = null
+	_file_bones = null
 	_moves.clear()
 	var look: Dictionary = Game.player.look
 	if _build_file(look):
@@ -123,7 +125,8 @@ func _build_file(look: Dictionary) -> bool:
 		mi = model as MeshInstance3D if model is MeshInstance3D else null
 		for found in model.find_children("*", "MeshInstance3D", true, false):   # not-ui
 			mi = found if mi == null else mi
-	if mi == null or not mi.mesh is ArrayMesh:
+	var bones := AnimalBones.of(mi) if mi != null and mi.mesh is ArrayMesh else null
+	if bones == null:
 		if model != null:
 			model.free()
 		return false
@@ -135,8 +138,9 @@ func _build_file(look: Dictionary) -> bool:
 	add_child(_body)
 	_body.add_child(model)
 	_file_mesh = mi
-	for k in mi.mesh.get_blend_shape_count():
-		_moves[String(mi.mesh.get_blend_shape_name(k))] = k
+	_file_bones = bones
+	for k in bones.moves.names.size():
+		_moves[bones.moves.names[k]] = k
 	if str(look["hat"]) in ["straw", "cap"]:
 		var holder := Node3D.new()
 		var head := Node3D.new()
@@ -148,12 +152,9 @@ func _build_file(look: Dictionary) -> bool:
 
 
 ## A copy of the farmer's mesh with each point coloured for the look: its own painted light times the colour of
-## the region it wears (`tints`, by REGIONS), its moves and its levels of detail kept.
+## the region it wears (`tints`, by REGIONS), the bones each point follows and its levels of detail kept.
 static func tinted(mesh: ArrayMesh, tints: Array[Color]) -> ArrayMesh:
 	var out := ArrayMesh.new()
-	for k in mesh.get_blend_shape_count():
-		out.add_blend_shape(mesh.get_blend_shape_name(k))
-	out.blend_shape_mode = mesh.blend_shape_mode
 	for s in mesh.get_surface_count():
 		var arrays := mesh.surface_get_arrays(s)
 		var colours: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
@@ -163,8 +164,8 @@ static func tinted(mesh: ArrayMesh, tints: Array[Color]) -> ArrayMesh:
 			var tint := tints[region]
 			colours[i] = Color(colours[i].r * tint.r, colours[i].g * tint.g, colours[i].b * tint.b, colours[i].a)
 		arrays[Mesh.ARRAY_COLOR] = colours
-		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, mesh.surface_get_blend_shape_arrays(s),
-			surface_lods(mesh, s))   # (its simpler levels kept: drawn small, it is drawn simpler)
+		# (its simpler levels kept: drawn small, it is drawn simpler)
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], surface_lods(mesh, s))
 		out.surface_set_material(s, mesh.surface_get_material(s))
 	return out
 
@@ -192,7 +193,7 @@ static func surface_lods(mesh: Mesh, s: int) -> Dictionary:
 ## Sets one of the file's moves (nothing when the file has none by that name).
 func _move(move: String, weight: float) -> void:
 	if _moves.has(move):
-		_file_mesh.set_blend_shape_value(_moves[move], clampf(weight, 0.0, 1.0))
+		_file_bones.want(_moves[move], clampf(weight, 0.0, 1.0))
 
 
 func _process(delta: float) -> void:
@@ -233,6 +234,7 @@ func _process(delta: float) -> void:
 			_move("arm_%s_f2" % name, high)
 		_clock += delta
 		_move("blink", 1.0 if fmod(_clock, BLINK_EVERY) < BLINK_FOR else 0.0)
+		_file_bones.pose(_file_mesh)
 	else:
 		_legs[0].rotation.z = lerpf(_legs[0].rotation.z, leg, k)
 		_legs[1].rotation.z = lerpf(_legs[1].rotation.z, -leg, k)

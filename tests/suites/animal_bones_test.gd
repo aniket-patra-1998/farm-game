@@ -88,3 +88,35 @@ func test_642_an_animal_is_posed_through_its_file_s_bones() -> void:
 	cow.queue_free()
 	twin.queue_free()
 	_done(g)
+
+
+func test_643_the_farmer_s_file_keeps_its_moves_as_bones_too() -> void:
+	for body: String in ["a", "b"]:
+		var model := AssetRegistry.instance("%s%s_%s" % [Farmer3D.FILE, body, "short"])
+		var mi := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+		var moves := AnimalBones.moves_of(mi)
+		_eq(mi.mesh.get_blend_shape_count(), 0, "farmer %s: no move is a copy of the mesh" % body)
+		for move: String in ["leg_l_f", "leg_r_b", "arm_l_b", "arm_r_f1", "arm_r_f2", "blink"]:
+			_check(moves != null and moves.names.has(move), "farmer %s has the move %s" % [body, move])
+		model.free()
+	var g := _farm()
+	var farmer := Farmer3D.new()
+	add_child(farmer)
+	_check(farmer._file_bones != null, "the farmer on the farm is posed through its file's bones")
+	farmer._move("arm_l_f2", 1.0)
+	_check(farmer._file_bones.places() != farmer._file_bones.moves.rest, "raising an arm moves them")
+	farmer.queue_free()
+	_done(g)
+
+
+func test_644_no_build_carries_art_the_game_never_draws() -> void:
+	# (art/pilot and art/style are the first style trials: 10 MB in every build, drawn by a tool alone.)
+	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
+	var builds := 0
+	for line in presets.split("\n"):
+		if not line.begins_with("exclude_filter="):
+			continue
+		builds += 1
+		for left_out: String in ["art/pilot/*", "art/style/*", "tests/*", "tools/*"]:
+			_check(line.contains(left_out), "build %d leaves out %s" % [builds, left_out])
+	_check(builds >= 3, "every build says what it leaves out (%d)" % builds)

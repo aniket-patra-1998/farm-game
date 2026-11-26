@@ -2473,7 +2473,8 @@ func test_570_the_farmer_recoloured_keeps_its_levels_of_detail() -> void:
 		_eq(kept.size(), had.size(), "the recoloured farmer keeps every level")
 		for edge in had:
 			_check(kept.has(edge) and kept[edge] == had[edge], "level %s: the same triangles" % edge)
-	_eq(out.get_blend_shape_count(), src.mesh.get_blend_shape_count(), "and its moves")
+	_eq(out.surface_get_arrays(0)[Mesh.ARRAY_BONES], src.mesh.surface_get_arrays(0)[Mesh.ARRAY_BONES],
+		"and the bones each point follows")
 	model.free()
 
 

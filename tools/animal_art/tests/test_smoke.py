@@ -140,6 +140,15 @@ class Bones(unittest.TestCase):
                 self.assertLess((1.0 - np.sort(Wn, 1)[:, -E.BONES_EACH:].sum(1)).max(), 0.12)
         self.assertIn("display", [m for m, _c in E._rigged(*self._turkey())[2]])
 
+    def test_the_farmer_s_bones_make_its_moves(self):
+        from animal_art import farmer as F
+        from animal_art.export import posed
+        a = F.build("short", "a"); Wn, rest, changes = F.rigged(a)
+        tall = a["V"][:, 1].max() - a["V"][:, 1].min()
+        self.assertAlmostEqual(float(np.abs(Wn.sum(1) - 1.0).max()), 0.0, places=9)
+        for m, V in F.moves(a).items():   # (a limb's joint is held in F.RAMP steps: to a thousandth of its height)
+            self.assertLess(np.abs(posed(a, Wn, rest, changes, {m: 1.0}) - V).max() / tall, 0.002, m)
+
     def _turkey(self):
         from animal_art import export as E
         a = lightest(MADE["turkey"][0]); rig, W = rig_of(a, "turkey")
