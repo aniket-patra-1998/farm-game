@@ -410,11 +410,11 @@ static func tones(leaf: Color, deep := 0.0, pale := MIN_LEAF_SATURATION) -> Arra
 	return out
 
 
-## The tone of `set` for how lit a point is (0 deep shade .. 1 full sun): flat steps with a short blend between.
-static func _tone_at(set: Array, light: float) -> Color:
-	var x := clampf(light, 0.0, 0.999) * (set.size() - 1)
+## The tone of `palette` for how lit a point is (0 deep shade .. 1 full sun): flat steps with a short blend between.
+static func _tone_at(palette: Array, light: float) -> Color:
+	var x := clampf(light, 0.0, 0.999) * (palette.size() - 1)
 	var i := int(x)
-	return (set[i] as Color).lerp(set[i + 1], smoothstep(TONE_EDGE.x, TONE_EDGE.y, x - i))
+	return (palette[i] as Color).lerp(palette[i + 1], smoothstep(TONE_EDGE.x, TONE_EDGE.y, x - i))
 
 
 ## A crown tone as a plain paint must be given it to look the same (the crown's own shader deepens what it is
