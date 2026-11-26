@@ -25,7 +25,7 @@ by reading them in its shader: no script runs for each thing, and nothing can be
 | lamp | lamp3d | | | lit as it falls (`LIT_FROM` to `LIT_FULL`) | |
 | window | ModelKit.glass, glow3d | | | lit | |
 | water | water3d | rings | | moonlit | ices over |
-| leaf, crop, flower | canopy3d, crop3d, ... | | sways | | |
+| leaf, crop, flower | crown3d, crop3d, ... | | sways | | |
 | the shade under a thing | contact3d | | | stronger (`NIGHT_MORE`) | |
 | animal | AnimalBehaviour, data/animal_rigs.json `weather` | turns its tail to it and stands about; in a storm keeps close to home; one with a home goes in at its door from hard rain (`shelter_from`) and comes out after; shakes it off when it stops | | sleeps its family's way | |
 
@@ -46,7 +46,7 @@ a sheet of four, option C), so a cow, a coop, a fence and a tree sit in one worl
 |---|---|---|
 | `master_solid` | animals and buildings made as files | sun and shade, painted |
 | `paint3d`, `wall3d` | things built in code: fences, decorations, walls | sun and shade, painted |
-| `canopy3d`, `foliage3d`, `frond3d` | trees' leaves | sun and shade, its own lean (leaves keep their pattern) |
+| `crown3d`, `frond3d` | trees' leaves | sun and shade, its own lean (a crown's tones are painted in its vertices) |
 | `fruit3d` | fruit on a tree | sun and shade |
 | `crop3d`, `bloom3d` | crops and flowers | not yet: thin leaves lit their own way (still to come) |
 
@@ -118,6 +118,22 @@ animal's own Market picture, swaying in the wind. The model has the post and a m
 made on the phone, so the farm hangs the board there (GateSign; shaders/sign3d.gdshader): one draw a home,
 over its file's own budget.
 Tests 647 to 649.
+
+## A tree is one painted crown
+
+Owner, 26 Nov: trees as the classic farm games paint them. A leafy tree is one rounded crown of its kind's width and
+height (`TreeModel._crown`), with a few broad swells of its own, never separate balls. It is shingled all over in
+leaf sprays (`_sprayed`): each a fan of five pointed leaves lapping over the spray below. The paint is five flat
+tones of the kind's leaf colour (`TreeModel.tones`), lighter where the sun falls and at every tip, none near black.
+
+- One mesh and one draw (`crown3d.gdshader`), with no see-through cards. Nothing shades it a second time: the tones
+  are the shading, so the shader lights the whole crown nearly alike and takes no shadows.
+- Sprays are made only on the side the camera sees. So a lone tree is never turned on the farm
+  (`Objects3D._tree_turn` only sizes it); each look already stands its own way round.
+- Palms and bananas keep their fronds. A willow's hanging masses are sprayed the same way, leaves pointing down.
+- A limited variety's colours lie over the crown in patches; its touch and the wind go through the crown's shader as
+  before (`ModelKit.sway_all`, `touch_all`).
+- Fruit on a leafy crown is small and many (`CROWN_FRUIT`), sitting on the crown's skin.
 
 ## Still to come (in this order)
 

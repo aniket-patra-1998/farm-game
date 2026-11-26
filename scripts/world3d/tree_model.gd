@@ -29,12 +29,11 @@ const WILLOW_RIM := 0.7       # where they hang from, of the crown's radius out 
 const WILLOW_FALL_W := 0.26   # how wide each is, of the crown's radius
 const WILLOW_TURN_VARY := 0.2 # radians each is turned off its even spacing
 const WILLOW_LIFT := -0.05    # a little darker than the crown above (they hang in its shade)
-const WILLOW_CARDS := 24      # leaf cards on a hanging mass (narrow: far fewer than a crown mass needs)
 const FORK_STEMS := 2         # a shrubby tree's trunk forks into this many more stems..
-const FORK_LOW := 0.3         # ..between this share of its height..
-const FORK_HIGH := 0.45       # ..and this
+const FORK_LOW := 0.1         # ..between this share of its height..
+const FORK_HIGH := 0.25       # ..and this
 const FORK_SPREAD := 0.45     # each reaching out this far under the crown, of its radius
-const FORK_THIN := 0.75       # and this much thinner than the trunk
+const FORK_THIN := 0.9       # and this much thinner than the trunk
 const FORK_TURN_VARY := 0.6   # radians each is turned off its even spacing
 const TRUNK_TAPER := 0.85     # a trunk is a thin straight pole: its top is this much of its foot
 const TRUNK_LEAN := 0.03      # and it leans no more than this (radians)
@@ -68,7 +67,7 @@ const FRUIT_R := 0.093      # ..each reads as a fruit (owner, 19 Nov). A round o
 const FRUIT_SMALL_R := 0.029  # ..and a small one's (cherries, olives: three times as many)
 const PALM_NUT := 0.6       # a palm's nuts, of a round fruit's size, in a ring..
 const PALM_RING := 0.075    # ..this far out from the trunk (of the tree's size)
-const FRUIT_OUT := 0.97     # how far out through a leafy clump one sits (1: on its skin). Just inside, so the leaves
+const FRUIT_OUT := 1.04     # how far out through a leafy clump one sits (1: on its skin). Just inside, so the leaves
 							# lap over its edge and it grows there; standing proud of them it looked stuck on
 const TURN_STEP := 0.618    # each fruit's turn to grow is this much on from the one before (wrapping at 1): spread out
 const TRUNK_BULK := 0.7     # trunks are drawn a little slimmer than the data says
@@ -79,17 +78,59 @@ const TRUNK_VARY_MAX := 1.25
 const TALL_MIN := 0.85      # each tree is its own height, this much of its kind's..
 const TALL_MAX := 1.2       # ..to this much
 const STAND_TALL_MAX := 1.1    # a tree stands at least its kind's lowest height times its own tallness, up to this
-const MIN_LEAF_VALUE := 0.56   # and none is so dark its crown reads as a black mass (an orange's deep teal)
-const CROWN_CORE := 0.56       # the soft mass in a crown's middle, of the crown's radius: the clumps stand clear of it
-const CLUMP_OUT := 1.22        # a crown's clumps sit this much further out than its kind's numbers say..
-const CLUMP_SIZE := 0.9        # ..and are this much of their size: clumps of their own, not one ball
 const MIN_LEAF_SATURATION := 0.5   # no tree washes out to pale grey-green
-const CROWN_LOBES := 13      # rounded bulges on each leafy mass (data can set "lobes")
-const CROWN_BUMP := 0.13     # how far they push out ("bump")
-const FOLIAGE_CARDS := 90       # leaf cards on a crown mass (the cards' size follows the mass, so the cover does not)
-const FOLIAGE_CARD := 0.7       # a card's size, of its mass's radius
-const FOLIAGE_CORE := 0.66      # the solid mass inside the cards, of the full size: the cards make the outline
-const FOLIAGE_MIN := 8          # at least this many cards on any mass
+const WILLOW_SPRAYS_FEWEST := 16   # ..in the thickest crowd
+const SPRAYS := 300           # leaf sprays over a whole crown (those the camera never sees are not made)
+const SPRAYS_FEWEST := 150    # ..in the thickest crowd
+const SPRAY_FAN := 5          # pointed leaves in one spray
+const SPRAY_LEAF := 0.19      # a leaf's length, of its crown's radius..
+const SPRAY_LEAF_VARY := Vector2(0.85, 1.25)   # ..each its own
+const SPRAY_SPREAD := 1.9     # a spray fans this far (radians) to each side of straight up the crown
+const SPRAY_TILT := 0.38      # how far its leaves lift off the crown (0: flat on it)
+const SPRAY_DOWN := 1.72      # how far down a crown the sprays go (2: to its very underside)
+const SPRAY_SKIN := 0.97      # where a spray is rooted, of the way out to the crown's skin..
+const SPRAY_INSIDE := 0.9     # ..and where the plain shape under the sprays is
+const SPRAY_UNSEEN := 0.08    # a spray facing the camera less than this (a cosine) is not made: round the back it
+							# showed past the outline as a loose ring of leaves (owner, 26 Nov)
+const SPRAY_COVERED := 0.1    # on a side a neighbour stands by, sprays lower than this (of the crown's height) are
+							# not made: its crown hides them
+const SPRAY_WIDE := 1.2       # a crown's radius, of its kind's `crown_r`..
+const SPRAY_SQUAT := 0.744    # ..and its half height, of that radius, on a round tree
+const SPRAY_ASPECT := 0.52    # the height to width a round tree's numbers come to (a taller kind: a taller crown)..
+const SPRAY_TALL := Vector2(0.72, 1.06)   # ..within this much squatter or taller than the round tree's
+const GROVE_SHADE := 0.4      # how much of a grove's shade a crown's paint takes (all of it painted it near black)
+const CROWN_SEAT := 0.78      # a crown's middle is this much of its half height above the trunk's top
+const SWELL := Vector3(0.1, 0.07, 0.06)   # a crown's own swells: broad ones round it, finer ones, and up it
+const SWELL_MOST := 1.2       # the furthest any of them pushes its skin out
+const HANG_BELOW := 0.35      # a willow's sprays lower than this (of the crown's height) hang down..
+const HANG_LONGER := 1.5      # ..and are this much longer
+const WILLOW_SPRAYS := 40     # sprays on one of a willow's hanging masses
+const HUE_PATCHES := 3.0      # a variety's leaf colours lie over its crown in about this many patches round it
+const CROWN_FRUIT := 0.62     # fruit on a leafy crown is this much of FRUIT_R: small and many, as painted on it
+const FRUIT_SIDES := 5        # a crown's fruit is dealt out over this many sides of it
+# A crown's paint: five flat tones of its leaf colour, deepest shade first (each a share of the colour's value and
+# saturation and a drift of its hue: shade leans blue-green, sun yellow-green), and the light that picks one.
+const TONE_VALUE: Array[float] = [0.74, 0.87, 1.0, 1.2, 1.44]
+const TONE_SATURATION: Array[float] = [1.05, 1.03, 1.0, 0.95, 0.85]
+const TONE_HUE: Array[float] = [0.02, 0.01, 0.0, -0.015, -0.03]
+const TONE_EDGE := Vector2(0.43, 0.57)   # where between two tones one gives way to the next: nearly a hard step
+const LEAF_SEEN := 0.86                  # a crown's middle tone, of its kind's leaf colour in value..
+const LEAF_VALUE := Vector2(0.6, 0.8)    # ..kept within this (none near black: its edge read as black lines)..
+const DEEP_SHARE := 0.4                  # how much of a variety's `darken` its crown's paint takes (all of it: black)
+const LEAF_SATURATION_MAX := 0.82        # ..and no more saturated than this
+const SPRAY_LIGHT := 0.6      # how lit a spray is: this..
+const SPRAY_UP := 0.26        # ..more facing up..
+const SPRAY_SUN := 0.36       # ..more facing the sun..
+const SPRAY_VARY := 0.12      # ..each a little its own..
+const SPRAY_UNDER := 0.06     # ..a little less low on the crown..
+const SPRAY_DARKEST := 0.3    # ..and never less than this
+const SPRAY_STEM := -0.07     # within a leaf: its stem is darker by this, its shoulders lighter by..
+const SPRAY_EDGE := 0.02
+const SPRAY_TIP := 0.2        # ..and its tip lighter by this
+const INSIDE_SEGMENTS := 14   # the plain shape under the sprays: its grid round..
+const INSIDE_RINGS := 8       # ..and up
+const INSIDE_LIGHT := Vector2(0.42, 0.08)   # how lit it is painted (seen only in the gaps), and how much more up top
+const GOLDEN_TURN := 2.399963 # each spray is this far round from the one before: evenly over the crown, in no rows
 const TILE_FILL := 1.15     # a tree is one tile on the farm and its crown a little wider, so neighbours overlap
 
 ## Whether a tree of this kind stands within the tree height range by itself (TreeSpec, kept here for the tools).
@@ -175,7 +216,7 @@ static func build_at(parent: Node3D, base: Vector3, it: Dictionary, size := 1.0,
 	var hues := Varieties.leaves(str(it.get("variety", "")))
 	if not hues.is_empty() and leaf.a <= 0.0:
 		leaf_col = hues[0]
-	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col,
+	var t := {"root": root, "rng": rng, "k": k, "sh": sh, "crowd": crowd, "mask": mask, "leaf": leaf_col, "tall": tall,
 		"hues": hues, "hue": 0, "deep": float(variety.get("darken", 0.0)),
 		"pale": float(variety.get("pale", MIN_LEAF_SATURATION)),
 		"shine": float(sh.get("shine", 0.0)),
@@ -233,11 +274,11 @@ static func far_from(far: Array, it: Dictionary, size: float, seed_value: int) -
 	ModelKit.cylinder(out, Vector3.ZERO, float(far[4]), trunk_h, ModelKit.paint(BARK), float(far[4]) * TRUNK_TAPER, 5)
 	var mid := Vector3(0, (low + high) * 0.5, 0)
 	var half := (high - low) * 0.5
-	ModelKit.ball(out, mid, 1.0, ModelKit.paint(_shade(leaf, 0.55)), Vector3(reach * 0.8, half, reach * 0.8), true)
+	ModelKit.ball(out, mid, 1.0, ModelKit.paint(as_paint(tones(leaf)[2])), Vector3(reach * 0.8, half, reach * 0.8), true)
 	for i in FAR_LUMPS:
 		var a := TAU * i / FAR_LUMPS
 		var at := mid + Vector3(cos(a) * reach * 0.38, half * (0.25 if i == 0 else -0.1), sin(a) * reach * 0.38)
-		ModelKit.ball(out, at, 1.0, ModelKit.paint(_shade(leaf, 0.85 if i == 0 else 0.4)),
+		ModelKit.ball(out, at, 1.0, ModelKit.paint(as_paint(tones(leaf)[3 if i == 0 else 1])),
 			Vector3(reach * 0.55, half * 0.7, reach * 0.55), true)
 	return ModelKit.bake(out)
 
@@ -256,8 +297,7 @@ static func _crown_on_trunk(t: Dictionary) -> Vector3:
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
 	var first := root.get_child_count()
-	var centre := Vector3(0, float(sh["crown_h"]) * k * 0.6, 0)
-	_crown(t, centre)
+	var centre := _crown(t, Vector3.ZERO)
 	if str(sh["form"]) == "weeping":
 		_droop(t, centre)   # (measured with the crown, so the reach cap and the trunk rules take it in)
 	# The crown is drawn bigger or smaller about the trunk's top, never reaching past the cap: smaller when too
@@ -284,10 +324,7 @@ static func _crown_on_trunk(t: Dictionary) -> Vector3:
 	sh["crown_r"] = float(sh["crown_r"]) * shrink
 	sh["crown_h"] = float(sh["crown_h"]) * shrink
 	sh["trunk_h"] = h / k
-	if str(sh["form"]) == "bushy":
-		_stems(t)
-	else:
-		_trunk(t)
+	_stems(t)
 	root.set_meta(META_SHARE, (h + low) / (h + high))
 	root.set_meta(META_REACH, float(t["reach"]) * shrink / k)
 	root.set_meta(META_FAR, [h, h + low, h + high, float(t["reach"]) * shrink, float(sh["trunk_r"]) * k * TRUNK_BULK,
@@ -342,57 +379,72 @@ static func _stems(t: Dictionary) -> void:
 # ---------------------------------------------------------------- crowns
 
 
-## The leafy crown: many faceted clumps over an ellipsoid of the form's width and height, so the outline is
-## rough and every plane takes the light on its own. Sunlit tops lean yellow-green and bright, the shaded
-## underside leans blue-green and dark, each clump a little different, with a dark core so it never looks hollow.
-static func _crown(t: Dictionary, centre: Vector3) -> void:
-	var root: Node3D = t["root"]
+## How far out a crown's skin is along `d` (1: its plain ellipsoid): a few broad swells of this tree's own (`ph`:
+## where they fall) and its kind's shape. One crown with an uneven outline, never separate balls (owner, 26 Nov).
+static func _swell(d: Vector3, ph: Vector3, sh: Dictionary) -> float:
+	var around := atan2(d.z, d.x)
+	var r := 1.0 + SWELL.x * sin(3.0 * around + ph.x) * (1.0 - d.y * d.y) \
+		+ SWELL.y * sin(5.0 * around + ph.y + d.y * 3.0) + SWELL.z * sin(d.y * 5.0 + ph.z)
+	match str(sh.get("shape", "round")):
+		"teardrop":
+			r *= 1.08 - 0.4 * smoothstep(-0.2, 1.0, d.y)
+		"layers":
+			r *= 1.0 + 0.1 * sin(d.y * 8.0 + 1.0)
+	match str(sh.get("form", "round")):
+		"weeping":
+			r *= 1.0 + 0.22 * smoothstep(0.1, -0.8, d.y)
+		"spreading":
+			r *= 1.0 - 0.25 * smoothstep(0.0, -1.0, d.y)
+	return r
+
+
+## The flat tones a crown of leaf colour `leaf` is painted in, deepest shade first (TONE_VALUE). `deep` darkens
+## them all (a variety's `darken`); `pale`: the least saturation it is painted with (a pastel variety asks for less).
+static func tones(leaf: Color, deep := 0.0, pale := MIN_LEAF_SATURATION) -> Array[Color]:
+	var s := minf(maxf(leaf.s, pale), LEAF_SATURATION_MAX)
+	var v := clampf(leaf.v * LEAF_SEEN, LEAF_VALUE.x, LEAF_VALUE.y)
+	var out: Array[Color] = []
+	for i in TONE_VALUE.size():
+		out.append(Color.from_hsv(fposmod(leaf.h + TONE_HUE[i], 1.0), minf(s * TONE_SATURATION[i], 1.0),
+			minf(v * TONE_VALUE[i], 1.0)).darkened(deep * DEEP_SHARE))
+	return out
+
+
+## The tone of `palette` for how lit a point is (0 deep shade .. 1 full sun): flat steps with a short blend between.
+static func _tone_at(palette: Array, light: float) -> Color:
+	var x := clampf(light, 0.0, 0.999) * (palette.size() - 1)
+	var i := int(x)
+	return (palette[i] as Color).lerp(palette[i + 1], smoothstep(TONE_EDGE.x, TONE_EDGE.y, x - i))
+
+
+## A crown tone as a plain paint must be given it to look the same (the crown's own shader deepens what it is
+## given: ModelKit.SPRAY_DEPTH): for the same tree seen from far, which is plain shapes.
+static func as_paint(c: Color) -> Color:
+	var k := pow(ModelKit.SPRAY_DEPTH, 1.0 / ModelKit.SPRAY_CURVE)
+	return Color(c.r * k, c.g * k, c.b * k)
+
+
+## The leafy crown: one rounded mass of its kind's width and height, shingled all over in leaf sprays (`_sprayed`),
+## as the classic farm games paint a tree. Returns its middle (over a trunk top at the origin).
+static func _crown(t: Dictionary, centre: Vector3) -> Vector3:
 	var k: float = t["k"]
 	var sh: Dictionary = t["sh"]
-	var rng: RandomNumberGenerator = t["rng"]
-	var leaf: Color = t["leaf"]
-	var shine: float = t["shine"]
 	var cr := float(sh["crown_r"]) * k
-	var ch := maxf(float(sh["crown_h"]) * k, cr * 0.5)
-	var masses := ModelKit.scaled(int(sh.get("masses", 5)), 3)   # fewer in a crowd (ModelKit.detail)
-	var reach := float(sh.get("reach", 0.55))
-	var flat := float(sh.get("flat", 0.8))
-	var mass := float(sh.get("mass", 0.52))
-	# A crown is a few big leafy masses on limbs, each with small clumps along its outer edge: an uneven outline
-	# with gaps where the branches show, not a ball. Its centre is off the trunk a little, so no two sides match.
-	var mid := centre + Vector3(rng.randf_range(-0.1, 0.1) * cr, 0.0, rng.randf_range(-0.1, 0.1) * cr)
-	# The trunk's top, where the limbs fork.
-	var foot := Vector3(centre.x, centre.y - float(sh["crown_h"]) * k * 0.6, centre.z)
-	# The light in the tree's own space (the tree is turned at random, the sun is not).
-	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -float(t["root"].rotation.y))
-	# In a grove the lower crown is in its neighbours' shade.
+	# (its kind's shape, not this tree's own tallness: one tree stands taller than the next by its trunk)
+	var slim := sqrt(maxf(float(sh["crown_h"]) * k / float(t["tall"]) / cr, 0.01) / SPRAY_ASPECT)
+	var wide := cr * SPRAY_WIDE * clampf(SPRAY_TALL.y / slim, SPRAY_TALL.x, 1.0)
+	var high := cr * SPRAY_WIDE * SPRAY_SQUAT * clampf(slim, SPRAY_TALL.x, SPRAY_TALL.y)
+	var radii := Vector3(wide, high, wide)
+	var mid := Vector3(centre.x, high * CROWN_SEAT, centre.z)
+	# In a grove the crown is in its neighbours' shade.
 	var shaded := float(t["crowd"]) * Crowding.setting("tree", "shade")
-	var lobes := ModelKit.scaled(int(sh.get("lobes", CROWN_LOBES)), 5)
-	var bump := float(sh.get("bump", CROWN_BUMP))
-	# The core, a soft mass in the crown's middle, then the masses around it standing clear of it: each one a
-	# clump of its own, lit on top and dark underneath, so the crown is a cluster of clumps with a scalloped outline.
-	var core := Vector3(cr * CROWN_CORE, maxf(ch * 0.5, cr * 0.4), cr * CROWN_CORE)
-	_canopy(root, mid, core, rng, _leaf_of(t), sun, -shaded, lobes, bump, shine, FOLIAGE_CARDS, float(t["deep"]),
-		float(t["pale"]))
-	_measure(t, mid, core)
-	var shape := str(sh.get("shape", "round"))
-	for i in masses:
-		var a := i * 2.399963 + rng.randf() * 0.4
-		var lay := _layout(shape, i, masses, rng)   # (height, reach, size), each a share of the plain round tree's
-		var y := lay.x
-		var d := cr * reach * CLUMP_OUT * lay.y * rng.randf_range(0.85, 1.15)
-		d *= sqrt(maxf(1.0 - y * y * 0.6, 0.2))
-		var p := mid + Vector3(cos(a) * d, y * ch * 0.7, sin(a) * d)
-		var size := cr * mass * CLUMP_SIZE * lay.z * rng.randf_range(0.85, 1.1)
-		var squash := Vector3(rng.randf_range(1.0, 1.2), flat * rng.randf_range(0.85, 1.05), rng.randf_range(0.95, 1.15))
-		# A mass on a side a neighbour covers is hidden anyway: every other one is left out, with its limb.
-		if i % 2 == 1 and Crowding.covered(int(t["mask"]), a - root.rotation.y):
-			continue
-		_canopy(root, p, squash * size, rng, _leaf_of(t), sun, 0.1 + 0.2 * (y + 0.3) - shaded, lobes, bump, shine,
-			FOLIAGE_CARDS, float(t["deep"]), float(t["pale"]))
-		_measure(t, p, squash * size)
-		(t["blobs"] as Array).append([p, size, a, squash.y])
-		_limb(root, foot, p - Vector3(0, size * 0.45, 0), float(sh["trunk_r"]) * k * float(sh.get("limb", 0.6)))
+	t["swell"] = _sprayed(t, mid, radii, ModelKit.scaled(SPRAYS, SPRAYS_FEWEST), wide * SPRAY_LEAF, -shaded * GROVE_SHADE,
+		str(sh["form"]) == "weeping")
+	# (its swells push its sides out; its top may sit a little under its plain shape's, and is counted so)
+	_measure(t, mid, Vector3(wide * SWELL_MOST, high * SPRAY_SKIN * (1.0 - SWELL.z), wide * SWELL_MOST))
+	for i in FRUIT_SIDES:
+		(t["blobs"] as Array).append([mid, wide, TAU * i / FRUIT_SIDES, high / wide])
+	return mid
 
 
 ## Counts one leafy mass (centre and half-sizes) into the crown's real extent: its lowest and highest leaves and
@@ -403,36 +455,92 @@ static func _measure(t: Dictionary, at: Vector3, radii: Vector3) -> void:
 	t["reach"] = maxf(float(t["reach"]), Vector2(at.x, at.z).length() + maxf(radii.x, radii.z))
 
 
-## Where mass `i` of `n` sits for a kind of crown: (height, how far out, how big), as shares of the plain round
-## tree's. Round is the ordinary dome; teardrop is wide at the bottom and narrows to a top (pear); umbrella is
-## one wide flat layer (cherry, fig, olive); columnar is a tall narrow stack (pecan, avocado); layers are tiers
-## that narrow as they climb (oak, walnut).
-static func _layout(shape: String, i: int, n: int, rng: RandomNumberGenerator) -> Vector3:
-	var u := float(i) / maxf(n - 1.0, 1.0)
-	match shape:
-		"teardrop":
-			return Vector3(lerpf(-0.35, 0.65, u), lerpf(1.25, 0.4, u), lerpf(1.15, 0.65, u))
-		"umbrella":
-			return Vector3(rng.randf_range(-0.12, 0.12), 1.4, 1.1)
-		"columnar":
-			return Vector3(lerpf(-0.45, 1.1, u), 0.35, lerpf(1.0, 0.7, u))
-		"layers":
-			var tier := float(i % 3) / 2.0
-			return Vector3(lerpf(-0.4, 0.8, tier), lerpf(1.3, 0.5, tier), lerpf(1.1, 0.75, tier))
-	return Vector3(lerpf(-0.3, 0.5, fposmod(i * 0.618 + rng.randf() * 0.15, 1.0)), 1.0, 1.0)
-
-
-## One canopy mass: smooth, lumpy and shaded in its vertices (ModelKit.canopy); `lift` brightens it (masses up
-## in the crown catch more light than the ones low down).
-static func _canopy(root: Node3D, at: Vector3, radii: Vector3, rng: RandomNumberGenerator, leaf: Color, sun: Vector3,
-		lift: float, lobes: int, bump: float, shine: float, cards_most := FOLIAGE_CARDS, deep := 0.0,
-		pale := MIN_LEAF_SATURATION) -> void:
-	var shade := func(light: float) -> Color:
-		return _shade(leaf, clampf(light * 1.1 + lift * 0.4 - 0.12, 0.0, 1.0), pale).darkened(deep)
-	ModelKit.canopy(root, at, radii * FOLIAGE_CORE, rng, shade, sun, lobes, bump, shine)
-	var mean := (radii.x + radii.y + radii.z) / 3.0
-	var cards := ModelKit.scaled(cards_most, FOLIAGE_MIN)
-	ModelKit.foliage_cards(root, at, radii, rng, shade, sun, cards, mean * FOLIAGE_CARD, shine)
+## One leafy mass painted the farm's way: a plain shape underneath, seen only in the gaps, shingled all over in
+## leaf sprays, each a fan of pointed leaves (stem, two shoulders, tip) lapping over the spray below, lighter where
+## the sun falls and at every tip. One mesh and one draw, with no see-through cards. `leaf_len`: a leaf's length;
+## `lift` brightens it all; `hang`: its lower sprays hang down (a willow). Sprays round the back, which the farm's
+## camera never sees, and low on a side a neighbour hides are not made. Returns where its swells fall (`_swell`).
+static func _sprayed(t: Dictionary, at: Vector3, radii: Vector3, count: int, leaf_len: float, lift: float,
+		hang := false) -> Vector3:
+	var root: Node3D = t["root"]
+	var rng: RandomNumberGenerator = t["rng"]
+	var sh: Dictionary = t["sh"]
+	var turn := float(root.rotation.y)   # (the tree is turned at random, the sun and the camera are not)
+	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -turn)
+	var seen := (SEEN_FROM * cos(IsoProjection.PITCH) + Vector3.UP * sin(IsoProjection.PITCH)).rotated(Vector3.UP, -turn)
+	var ph := Vector3(rng.randf(), rng.randf(), rng.randf()) * TAU
+	var paints: Array = []
+	for hue: Color in t["hues"]:
+		paints.append(tones(hue, float(t["deep"]), float(t["pale"])))
+	if paints.is_empty():
+		paints.append(tones(t["leaf"], float(t["deep"]), float(t["pale"])))
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	var cols := PackedColorArray()
+	var idx := PackedInt32Array()
+	var seg := ModelKit.scaled(INSIDE_SEGMENTS, 8)
+	var rings := ModelKit.scaled(INSIDE_RINGS, 5)
+	for j in rings + 1:
+		var phi := PI * float(j) / rings
+		for i in seg + 1:
+			var th := TAU * float(i) / seg
+			var d := Vector3(sin(phi) * cos(th), cos(phi), sin(phi) * sin(th))
+			verts.append(d * radii * _swell(d, ph, sh) * SPRAY_INSIDE)
+			norms.append((d / radii).normalized())
+			cols.append(_tone_at(paints[0], INSIDE_LIGHT.x + INSIDE_LIGHT.y * d.y + lift))
+	for j in rings:
+		for i in seg:
+			var a := j * (seg + 1) + i
+			var b := a + seg + 1
+			idx.append_array(PackedInt32Array([a, a + 1, b, a + 1, b + 1, b]))
+	for k in count:
+		var y := 1.0 - SPRAY_DOWN * (k + 0.5) / count
+		var r := sqrt(1.0 - y * y)
+		var ang := k * GOLDEN_TURN + rng.randf() * 0.3
+		var d := Vector3(cos(ang) * r, y, sin(ang) * r)
+		var n := (d / radii).normalized()
+		if n.dot(seen) < SPRAY_UNSEEN or (y < SPRAY_COVERED and Crowding.covered(int(t["mask"]), ang - turn)):
+			continue
+		var p := d * radii * _swell(d, ph, sh) * SPRAY_SKIN
+		var up := Vector3.UP - n * n.y
+		up = (Vector3(cos(ang), 0, sin(ang)) if up.length_squared() < 0.03 else up).normalized()
+		var hanging := hang and y < HANG_BELOW
+		if hanging:
+			up = -up
+		var side := n.cross(up).normalized()
+		var paint: Array = paints[posmod(floori(ang / TAU * HUE_PATCHES + y * 1.5 + ph.x), paints.size())]
+		var lit := maxf(SPRAY_LIGHT + SPRAY_UP * n.y + SPRAY_SUN * n.dot(sun) + rng.randf_range(-SPRAY_VARY, SPRAY_VARY)
+			- SPRAY_UNDER * smoothstep(0.3, -0.5, y) + lift, SPRAY_DARKEST)
+		for f in SPRAY_FAN:
+			# (a spray on the very top fans all the way round; one on the side fans up and out)
+			var a := TAU * f / SPRAY_FAN if n.y >= 0.9 \
+				else lerpf(-SPRAY_SPREAD, SPRAY_SPREAD, (f + rng.randf_range(0.2, 0.8)) / SPRAY_FAN)
+			var along := (up * cos(a) + side * sin(a) + n * SPRAY_TILT).normalized()
+			var across := along.cross(n).normalized()
+			var size := leaf_len * rng.randf_range(SPRAY_LEAF_VARY.x, SPRAY_LEAF_VARY.y) * (HANG_LONGER if hanging else 1.0)
+			var first := verts.size()
+			verts.append(p)
+			verts.append(p + along * size * 0.48 - across * size * 0.36 + n * size * 0.15)
+			verts.append(p + along * size * 0.48 + across * size * 0.36 + n * size * 0.15)
+			verts.append(p + along * size * 0.92 + n * size * 0.25)
+			for own: float in [SPRAY_STEM, SPRAY_EDGE, SPRAY_EDGE, SPRAY_TIP]:
+				norms.append(n)
+				cols.append(_tone_at(paint, lit + own))
+			idx.append_array(PackedInt32Array([first, first + 1, first + 2, first + 1, first + 3, first + 2]))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	arrays[Mesh.ARRAY_COLOR] = cols
+	arrays[Mesh.ARRAY_INDEX] = idx
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.position = at
+	mi.material_override = ModelKit.sprays()   # (painted: a glossy kind's shine washed its tones out)
+	root.add_child(mi)
+	return ph
 
 
 ## A branch from one point to another: a thin tapering cylinder tipped to lie along the line.
@@ -478,17 +586,6 @@ static func _stars(t: Dictionary, centre: Vector3, col: Color) -> void:
 		ModelKit.mark_fruit(star, rng.randf())
 
 
-## The leaf colour for how lit a clump is (0 deep shade .. 1 full sun): shade drifts blue-green and dark,
-## sun drifts yellow-green and bright, and the colour is richer than a flat darker/lighter of one green. `pale`:
-## the least saturation it is painted with (a variety with a pastel crown asks for less: data/varieties.json).
-static func _shade(leaf: Color, light: float, pale := MIN_LEAF_SATURATION) -> Color:
-	var h := leaf.h + lerpf(0.025, -0.03, light)
-	var s := clampf(maxf(leaf.s, pale) * lerpf(1.12, 0.88, light), 0.0, 1.0)
-	# (shade is the leaf's colour deeper, never near black)
-	var v := clampf(maxf(leaf.v, MIN_LEAF_VALUE) * lerpf(0.62, 1.4, light), 0.0, 1.0)
-	return Color.from_hsv(h, s, v)
-
-
 ## A fruit's colour in the sun: brighter and a little warmer, never washed toward pink or white
 ## (lightening a red fruit made it salmon).
 static func _sunlit(c: Color) -> Color:
@@ -504,9 +601,7 @@ static func _droop(t: Dictionary, centre: Vector3) -> void:
 	var sh: Dictionary = t["sh"]
 	var rng: RandomNumberGenerator = t["rng"]
 	var cr := float(sh["crown_r"]) * k
-	var sun := Vector3(-0.45, 0.75, 0.5).normalized().rotated(Vector3.UP, -root.rotation.y)
 	var shaded := float(t["crowd"]) * Crowding.setting("tree", "shade")
-	var lobes := ModelKit.scaled(CROWN_LOBES, 5)
 	var n := ModelKit.scaled(WILLOW_FALLS, 5)
 	for i in n:
 		var a := TAU * i / n + rng.randf_range(-WILLOW_TURN_VARY, WILLOW_TURN_VARY)
@@ -515,8 +610,8 @@ static func _droop(t: Dictionary, centre: Vector3) -> void:
 		var long := cr * WILLOW_FALL * rng.randf_range(WILLOW_FALL_VARY_MIN, WILLOW_FALL_VARY_MAX)
 		var at := centre + Vector3(cos(a) * cr * WILLOW_RIM, -long * 0.5, sin(a) * cr * WILLOW_RIM)
 		var radii := Vector3(cr * WILLOW_FALL_W, long * 0.5, cr * WILLOW_FALL_W)
-		_canopy(root, at, radii, rng, _leaf_of(t), sun, WILLOW_LIFT - shaded, lobes, CROWN_BUMP, float(t["shine"]),
-			WILLOW_CARDS, float(t["deep"]), float(t["pale"]))
+		_sprayed(t, at, radii, ModelKit.scaled(WILLOW_SPRAYS, WILLOW_SPRAYS_FEWEST), cr * SPRAY_WIDE * SPRAY_LEAF,
+			WILLOW_LIFT - shaded * GROVE_SHADE, true)
 		_measure(t, at, radii)
 
 
@@ -680,10 +775,11 @@ static func _fruit(t: Dictionary, centre: Vector3, col: Color) -> void:
 					# in the leaves: none hangs under the crown on a stem (owner, 19 Nov).
 					var blob: Array = blobs[i % blobs.size()]
 					var face := float(blob[2]) + (i / 3) * 0.7 + rng.randf_range(-0.35, 0.35)
-					fruit_r = r * rng.randf_range(0.8, 1.15)
+					fruit_r = r * rng.randf_range(0.8, 1.15) * (1.0 if shape == "small" else CROWN_FRUIT)
 					var dir := Vector3(cos(face), rng.randf_range(-0.1, 0.9), sin(face)).normalized()
-					dir.y *= float(blob[3])   # (a clump is flatter than it is wide: the fruit sits in its skin)
-					p = (blob[0] as Vector3) + dir * float(blob[1]) * FRUIT_OUT
+					var out := FRUIT_OUT * (_swell(dir, t["swell"], sh) if t.has("swell") else 1.0)
+					dir.y *= float(blob[3])   # (a crown is flatter than it is wide: the fruit sits in its skin)
+					p = (blob[0] as Vector3) + dir * float(blob[1]) * out
 					fruit_mat = shades[0 if dir.y > 0.55 else (1 if dir.y > 0.12 else 2)]
 					# A fruit round the back of the crown is never seen (the farm's camera does not turn) and a
 					# tree's fruit is never made simpler with distance, so it is not made at all.

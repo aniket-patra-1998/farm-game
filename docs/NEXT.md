@@ -3,6 +3,17 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Trees repainted (26 Nov, branch trees-light)
+- The owner asked for trees like the classic farm games' and picked the look from samples. Built into `TreeModel`:
+  one crown shingled in leaf sprays, five flat tones, a trunk forking low (docs/WORLD.md "A tree is one painted crown").
+- Gone: the lumpy core with see-through leaf cards (`ModelKit.canopy`, `foliage_cards`, canopy3d, foliage3d).
+- Measured: tree files 16.8 MB to 10.2 MB (still four looks each); a tree is 3 draws, was 4; about 4,200 points a look,
+  was about 3,600 to 6,400 by kind. Not measured: frame time on a phone.
+- Falling leaves are shown in the crown's colours (FallingBits: the same curve and depth as crown3d).
+- Open: a crown is never made simpler from far (its sprays would vanish), so a far zoom draws every triangle;
+  two looks a tree instead of four would halve the files;
+  the finish on crops and flowers (crop3d, bloom3d) is not started.
+
 ## Decided (in the design doc)
 FarmVille footprints (with a save migration), FarmVille limits, the 5 planned buildings
 (Greenhouse, Windmill, Juice Press, Spinning Mill, Silo) each get a job, materials buyable with gems.

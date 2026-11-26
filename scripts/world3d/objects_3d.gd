@@ -901,12 +901,13 @@ func uses_file(o: Dictionary) -> bool:
 	return AssetRegistry.has_model(str(o["id"]))
 
 
-## A lone tree's own small turn and size (the same for the same tree every time).
+## A lone tree's own size (the same for the same tree every time). It is never turned: its crown's leaves are
+## made for the side the farm's camera sees and painted for where the sun is (TreeModel._sprayed), and each of
+## its looks already stands its own way round.
 static func _tree_turn(o: Dictionary) -> Basis:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(o["uid"])
-	return Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * (1.0 + rng.randf_range(-TREE_SIZE_JITTER,
-		TREE_SIZE_JITTER)))
+	return Basis.IDENTITY.scaled(Vector3.ONE * (1.0 + rng.randf_range(-TREE_SIZE_JITTER, TREE_SIZE_JITTER)))
 
 
 ## Gives a building made as a file what its yard and doors need, from its parts' names (docs/ASSETS.md §1):

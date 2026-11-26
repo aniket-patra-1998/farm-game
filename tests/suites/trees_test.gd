@@ -27,12 +27,13 @@ func test_590_a_trees_fruit_sits_in_its_leaves_and_moves_with_them() -> void:
 	var crown_low := INF
 	for part in holder.find_children("*", "MeshInstance3D", true, false):
 		var m := (part as MeshInstance3D).material_override as ShaderMaterial
-		if m != null and m.shader != null and m.shader.resource_path == ModelKit.FOLIAGE_SHADER:
-			crown_low = minf(crown_low, (part as MeshInstance3D).position.y)
+		if m != null and m.shader != null and m.shader.resource_path == ModelKit.CROWN_SHADER:
+			var crown := part as MeshInstance3D
+			crown_low = minf(crown_low, (crown.transform * crown.mesh.get_aabb()).position.y)
 	var lowest := INF
 	for f: MeshInstance3D in fruit:
 		lowest = minf(lowest, f.position.y)
-	_check(lowest > crown_low - TreeModel.FRUIT_R, "none hangs under the crown (%.2f, the crown's masses from %.2f)"
+	_check(lowest > crown_low - TreeModel.FRUIT_R, "none hangs under the crown (%.2f, the crown from %.2f)"
 		% [lowest, crown_low])
 	ModelKit.sway_all(holder, TreeSpec.SWAY)
 	for f: MeshInstance3D in fruit:
@@ -47,8 +48,8 @@ func test_590_a_trees_fruit_sits_in_its_leaves_and_moves_with_them() -> void:
 			if sm != null and sm.shader.resource_path == ModelKit.FRUIT_SHADER:
 				kept += 1
 				_eq(simpler.size(), 0, "the fruit is never made simpler (a ball of a few faces reads as a gem)")
-			elif sm != null and sm.shader.resource_path == ModelKit.FOLIAGE_SHADER:
-				_check(simpler.size() > 0, "while its leaves still are, seen from far")
+			elif sm != null and sm.shader.resource_path == ModelKit.CROWN_SHADER:
+				_eq(simpler.size(), 0, "nor are its leaf sprays (each its own small piece: they would go)")
 	_check(kept > 0, "the baked tree has its fruit")
 	baked.free()
 	_done(g)
@@ -252,8 +253,8 @@ func test_603_a_limited_tree_wears_its_variety() -> void:
 	# Candy slightly softer); the others are as strong as any tree.
 	var pale := float(Varieties.of("cotton_candy").get("pale", 1.0))
 	var pink := Varieties.leaves("cotton_candy")[0]
-	var soft: Color = TreeSpec.builder().call(&"_shade", pink, 0.5, pale)
-	var strong: Color = TreeSpec.builder().call(&"_shade", pink, 0.5)
+	var soft: Color = TreeSpec.builder().call(&"tones", pink, 0.0, pale)[2]   # (a crown's middle tone)
+	var strong: Color = TreeSpec.builder().call(&"tones", pink)[2]
 	_check(pink.s < soft.s and soft.s < strong.s,
 		"a Cotton Candy crown is softer than a plain crown would be (%.2f < %.2f)" % [soft.s, strong.s])
 	for variety: String in Varieties.of_trees():
@@ -477,3 +478,40 @@ func test_608_an_items_height_is_measured_once() -> void:
 	_check(h > 0.0, "a tree has a height")
 	_check(fifty < maxi(once, 2000), "fifty more asks cost less than one build (%d us vs %d us)" % [fifty, once])
 	_done(g)
+
+
+func test_651_a_crown_is_one_painted_shape_shingled_in_leaf_sprays() -> void:
+	# (owner, 26 Nov: trees as the classic farm games paint them. One crown, not lumps; no see-through leaf cards;
+	# no black lines round it; no loose ring of leaves behind it.)
+	var tree := Objects3D.tree_look("apple_tree", 0, 0, false)
+	add_child(tree)
+	var seen := TreeModel.SEEN_FROM * cos(IsoProjection.PITCH) + Vector3.UP * sin(IsoProjection.PITCH)
+	var crowns := 0
+	for mi: MeshInstance3D in tree.find_children("*", "MeshInstance3D", true, false):
+		for k in mi.mesh.get_surface_count():
+			var m := mi.get_active_material(k) as ShaderMaterial
+			if m == null or m.shader == null or m.shader.resource_path != ModelKit.CROWN_SHADER:
+				continue
+			crowns += 1
+			var arrays := mi.mesh.surface_get_arrays(k)
+			var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+			var colours: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+			var facing := 0
+			var darkest := 1.0
+			for i in normals.size():
+				facing += 1 if (mi.transform.basis * normals[i]).dot(seen) > 0.0 else 0
+				darkest = minf(darkest, colours[i].v)
+			_check(normals.size() > TreeModel.SPRAYS * TreeModel.SPRAY_FAN, "a crown is leaf sprays all over")
+			_check(facing * 10 > normals.size() * 9, "made for the side the farm is seen from (%d of %d)"
+				% [facing, normals.size()])
+			_check(darkest >= TreeModel.LEAF_VALUE.x * TreeModel.TONE_VALUE[0] - 0.01,
+				"and none of its tones is near black (%.2f)" % darkest)
+	_eq(crowns, 1, "a tree's whole crown is one draw")
+	tree.free()
+	_eq(Objects3D._tree_turn({"uid": 5}).get_euler().y, 0.0, "a lone tree is never turned away from the camera")
+	_check(ModelKit.WHOLE_SHADERS.has(ModelKit.CROWN_SHADER), "and its sprays are never made simpler from far")
+	var falling := FallingBits.new()
+	var leaf := falling.material_override as StandardMaterial3D
+	_check(leaf.vertex_color_is_srgb and leaf.albedo_color.v < 1.0, "a leaf falls in its crown's colours, not paler")
+	falling.free()
+

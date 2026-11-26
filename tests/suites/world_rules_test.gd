@@ -260,7 +260,7 @@ func test_645_every_solid_kind_of_thing_wears_the_one_finish() -> void:
 	for part: String in ["void light()", "LIGHT_IS_DIRECTIONAL", "FINISH_SUN", "FINISH_SKY", "SPECULAR_LIGHT"]:
 		_check(finish.contains(part), "the finish lights by sun and shade (%s)" % part)
 	var painted := {"master_solid": 2, "paint3d": 1, "wall3d": 1}
-	var leaning := ["canopy3d", "foliage3d", "frond3d"]
+	var leaning := ["crown3d", "frond3d"]
 	for kind: String in painted.keys() + leaning + ["fruit3d"]:
 		var code := FileAccess.get_file_as_string("res://shaders/%s.gdshader" % kind)
 		_check(code.contains('#include "%s"' % FINISH), "%s wears the finish" % kind)
