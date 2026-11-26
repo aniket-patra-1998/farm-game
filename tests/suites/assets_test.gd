@@ -317,7 +317,10 @@ func test_389_harvesting_buildings_follow_their_rules() -> void:
 				for k in mi.mesh.get_surface_count():
 					var mat := mi.get_active_material(k)
 					var master := mat is ShaderMaterial and (mat as ShaderMaterial).shader == AssetRegistry.MASTER
-					wrong += 0 if master or mat in shared else 1
+					# (what moves is the kit's own too: a Sheep Pen's smoke, a Dairy Farm's weathervane)
+					var moves := mat is ShaderMaterial and (mat as ShaderMaterial).shader.resource_path in [
+						DecorMotion.SPRAY_SHADER, DecorMotion.ORBIT_SHADER]
+					wrong += 0 if master or moves or mat in shared else 1
 					lit += 1 if mat == ModelKit.glass() else 0
 			# (A building at its biggest stands as tall as its star floats: CrownStars draws it over the model's mark.)
 			var star := CrownStars.mark_of(node)

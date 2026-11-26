@@ -20,6 +20,7 @@ const KINDS: Array[String] = ["crafting"]   # the kinds of building made as file
 const TYPES: Array[String] = ["harvesting", "storing"]   # ..and the types (Game.building_type)
 
 const WINDOW := "window"   # not-ui (a part's name)
+const MOVED_WHOLE := [DecorMotion.SPIN, DecorMotion.ORBIT]   # named parts that keep what is under them
 
 static var _plain: Dictionary = {}   # the plain material written for each name
 
@@ -162,7 +163,7 @@ static func _one_body(n: Node) -> void:
 ## effect running under it; every mesh gets plain materials named for the ones it was drawn with.
 static func _for_file(n: Node) -> void:
 	for c in n.get_children():
-		if c is Spinner or (DecorMotion.is_part(n) and String(n.name).split("_")[0] != DecorMotion.SPIN):
+		if c is Spinner or (DecorMotion.is_part(n) and not String(n.name).split("_")[0] in MOVED_WHOLE):
 			n.remove_child(c)
 			c.free()
 			continue
@@ -177,9 +178,12 @@ static func _for_file(n: Node) -> void:
 		var mi := n as MeshInstance3D
 		var mesh := ArrayMesh.new()
 		for k in mi.mesh.get_surface_count():
-			var named := ModelKit.file_name_of(mi.get_active_material(k))
+			# (a part that goes round by its shader is carried as paint, its colours in its points: the game sets it
+			# going again)
+			var orbiting := String(n.get_parent().name).begins_with(DecorMotion.ORBIT + "_")
+			var mat := mi.get_active_material(k)
+			var named := ModelKit.FILE_PAINT if orbiting else ModelKit.file_name_of(mat)
 			if named == "":
-				var mat := mi.get_active_material(k)
 				push_error("a file cannot carry the material of %s under %s (surface %d: %s)" % [n.name,
 					n.get_parent().name, k, (mat as ShaderMaterial).shader.resource_path if mat is ShaderMaterial
 					else str(mat)])

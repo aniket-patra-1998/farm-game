@@ -1174,6 +1174,7 @@ func _build(o: Dictionary) -> Node3D:
 			turn = _tree_turn(o)   # (as a built tree: turned and sized a little, each its own)
 		if Game.is_building_item(str(o["id"])):
 			mark_parts(node)
+			GateSign.hang(node)
 			if BuildingFill.shows(o):
 				node.add_child(BuildingFill.create(o, node))
 	else:
@@ -1227,6 +1228,7 @@ func _build(o: Dictionary) -> Node3D:
 					node = ModelKit.bake(BuildingSpec.model().build_site(it, fp, Game.land.construction_progress(o)))
 				else:
 					node = building_look(str(o["id"]), Game.look_level(o), bool(o.get("broken", false)))
+					GateSign.hang(node)
 					AssetRegistry.apply_state(node, state_of(o))
 					if BuildingFill.shows(o):
 						node.add_child(BuildingFill.create(o, node))

@@ -94,6 +94,27 @@ so its top size is a small yard with one clear lead. Built so far:
 A body still carries the door, the ramp and the wear, so a home is restyled through its data (`body`, `roof`,
 `levels`), with no upper storey stacked on it.
 
+### The five other animal homes (the owner's picks of 26 Nov, two sheets and a clip)
+
+Five homes were one house in five colours, each a storey taller at its biggest. Now each is known by its own
+outline and roof colour, and at its biggest its lead stands a storey taller with something beside it and one
+thing of its own that moves, lightly, by the shared wind:
+
+| Home | Its outline | At its biggest | What moves |
+|---|---|---|---|
+| Dairy Farm (`cow_shed`) | a cream barn under a blue two-pitch roof | two storeys, a silo | a weathervane |
+| Sheep Pen | a low stone fold under a straw-coloured roof | a second low storey, a lean-to | chimney smoke |
+| Goat Pen | a hut on stilts with a ramp, an orange roof | a two-storey tower, a lookout hut | a bird circling |
+| Stable | a long row of stalls under a green roof | a hay loft, a cupola | the cupola's weathervane |
+| Pig Pen | a round tin ark (`barrel` roof) | a tall ark, a small one beside it | a tin vent spinning |
+
+**A sign at every animal home's gate** (all eight, both sizes): a post with a lantern (its pane glows at night
+as the windows do, so the hive, coop and hutch are no longer dark), and a board hanging from its arm with the
+animal's own Market picture, swaying in the wind. The model has the post and a mark (`sign_cow`); a picture is
+made on the phone, so the farm hangs the board there (GateSign; shaders/sign3d.gdshader): one draw a home,
+over its file's own budget.
+Tests 647 to 649.
+
 ## Still to come (in this order)
 
 1. The other animal homes as kits (Cow Shed, Sheep Pen, Goat Pen, Horse Stable, Pig Pen, Duck Pond), each with

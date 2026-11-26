@@ -132,12 +132,12 @@
             "rainbow_cow"
           ],
           "color": "#9e2b25",
-          "roof": "#6b4a3a",
+          "roof": "#2f6d94",
           "one_each": [
             "bull"
           ],
           "special": "calves",
-          "look": "a big red dairy barn with a white-trimmed gambrel roof, wide doors with a white X, a silver silo beside it and milk cans by the door",
+          "look": "a cream dairy barn under a blue two-pitch roof with wide doors, a hanging sign with a cow on it at the gate and milk cans by the door; at its biggest two storeys tall with a silver silo beside it and a weathervane",
           "sizes": [
             {
               "capacity": 20,
@@ -178,12 +178,12 @@
             "cocoa_llama"
           ],
           "color": "#d9c9a3",
-          "roof": "#8a5a32",
+          "roof": "#c9a24c",
           "one_each": [
             "ram"
           ],
           "special": "lambs",
-          "look": "a fenced grassy sheep yard with a small wooden shed and a feeding trough, a few fluffy white sheep",
+          "look": "a low stone sheep fold under a wide straw-coloured roof in a grassy yard, a hanging sign with a sheep on it at the gate; at its biggest a second small storey, a lean-to and a smoking chimney",
           "sizes": [
             {
               "capacity": 20,
@@ -217,8 +217,8 @@
             "tuxedo_goat"
           ],
           "color": "#c9b48a",
-          "roof": "#6b4a2a",
-          "look": "a fenced goat yard with a small wooden shed, a climbing rock and a feeding trough, a few goats",
+          "roof": "#cf6a3a",
+          "look": "a small goat hut on stilts with a ramp and an orange roof, a climbing rock in its yard and a hanging sign with a goat on it at the gate; at its biggest a two-storey tower with a lookout hut on tall legs and a bird circling it",
           "sizes": [
             {
               "capacity": 20,
@@ -296,11 +296,11 @@
           },
           "special": "truffles",
           "color": "#b9714a",
-          "roof": "#7a5230",
+          "roof": "#b7c3ca",
           "one_each": [
             "boar"
           ],
-          "look": "a fenced muddy pig yard with a lean-to wooden shed, a mud puddle and a feeding trough, a few pink pigs",
+          "look": "a round tin pig ark with wooden ends in a muddy yard with a mud wallow, a hanging sign with a pig on it at the gate; at its biggest a tall ark with a small one beside it and a tin vent spinning on its roof",
           "sizes": [
             {
               "capacity": 30
@@ -339,7 +339,7 @@
             "feather_horse"
           ],
           "color": "#7a5233",
-          "roof": "#3f5f7a",
+          "roof": "#2f6b52",
           "one_each": [
             "stallion"
           ],
@@ -351,7 +351,7 @@
             "horseshoes": 10
           },
           "special": "foals",
-          "look": "a long low wooden horse stable with a row of half-doors, horses looking out, a small cupola on the roof and hay bales in front",
+          "look": "a long low wooden horse stable under a green roof with a row of half-doors, a hanging sign with a horse on it at the gate and hay bales in front; at its biggest a hay loft over its middle and a cupola with a weathervane",
           "sizes": [
             {
               "capacity": 20

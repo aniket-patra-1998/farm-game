@@ -39,6 +39,9 @@ const BOBBING := {"speed": 0.0, "bob": 0.025, "bob_rate": 0.25}
 const VANE := {"speed": 0.45, "swing": 0.7}
 ## A pennant streaming from its pole: swings quickly and a little, harder in wind.
 const FLUTTER := {"speed": 2.4, "swing": 0.28}
+const ORBIT := "orbit"   # a named part that goes round or swings by its shader: orbit_<way>_<n>
+# The ways a named part may go (`orbit` names a part for the one it is given; a file carries the name):
+const ORBITS := {"circling": CIRCLING, "paddling": PADDLING, "bobbing": BOBBING, "vane": VANE, "flutter": FLUTTER}
 
 ## A fountain's jet: arcs of water up from the spout and falling back round it (streams of drops one
 ## behind another along the same arc read as running water, not specks).
@@ -154,7 +157,8 @@ static func spin(parent: Node3D, at: Vector3, turn: Vector3, part: Node3D, speed
 	return merged
 
 
-## Starts what a named part asks for, by its name (docs/ASSETS.md §1): an effect under it, or its turning.
+## Starts what a named part asks for, by its name (docs/ASSETS.md §1): an effect under it, its turning (`spin`),
+## or its going round or swinging one of the ways in ORBITS (`orbit`).
 static func start(part: Node3D) -> void:
 	var words := String(part.name).split("_")
 	if words[0] == SPIN:
@@ -163,13 +167,16 @@ static func start(part: Node3D) -> void:
 		part.add_child(spinner)
 	elif EFFECTS.has(words[0]):
 		spray(part, Vector3.ZERO, EFFECTS[words[0]])
+	elif words[0] == ORBIT and words.size() > 1 and ORBITS.has(words[1]):
+		_set_orbiting(part, ORBITS[words[1]])
 
 
-## Whether `n` is a named part the game knows: one that `start` gives life to, or the mark of a building's star
-## (CrownStars.MARK: it only says where the farm's star floats).
+## Whether `n` is a named part the game knows: one that `start` gives life to, or a mark: of a building's star
+## (CrownStars.MARK: it only says where the farm's star floats) or of its signboard (GateSign.MARK).
 static func is_part(n: Node) -> bool:
 	var kind := String(n.name).split("_")[0]
-	return n is Node3D and (kind == SPIN or EFFECTS.has(kind) or kind == CrownStars.MARK)
+	return n is Node3D and (kind == SPIN or kind == ORBIT or EFFECTS.has(kind) or kind == CrownStars.MARK
+		or kind == GateSign.MARK)
 
 
 ## Starts every named part of a model that came from a file.
@@ -207,18 +214,28 @@ static func flame(parent: Node3D, at: Vector3, r: float, h: float, col: Color, t
 static func orbit(parent: Node3D, at: Vector3, part: Node3D, settings: Dictionary) -> Node3D:
 	var baked := ModelKit.bake(part)
 	# (bake frees `part`)
-	var mat := _material(ORBIT_SHADER, settings)
-	var reach := float(settings.get("radius", 0.0)) + 0.25
-	for c in baked.get_children():
-		if c is MeshInstance3D:
-			var mi := c as MeshInstance3D
-			mi.material_override = mat  # its colours are in its vertices
-			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			mi.custom_aabb = AABB(Vector3(-reach, -0.1, -reach), Vector3(reach * 2.0, 0.5, reach * 2.0))
+	# One of the ways the game knows by name is named for it (`orbit_vane_7`), so a model's file can carry it:
+	# a file holds the part as plain paint, and `start` sets it moving again.
+	var way: Variant = ORBITS.find_key(settings)
+	if way != null:
+		baked.name = "%s_%s_%d" % [ORBIT, way, parent.get_child_count()]
+	_set_orbiting(baked, settings)
 	baked.position = at
 	baked.set_meta(ModelKit.KEEP, true)
 	parent.add_child(baked)
 	return baked
+
+
+## Draws every mesh of `part` moving by `settings` (shaders/orbit3d): its colours are in its vertices.
+static func _set_orbiting(part: Node3D, settings: Dictionary) -> void:
+	var mat := _material(ORBIT_SHADER, settings)
+	var reach := float(settings.get("radius", 0.0)) + 0.25
+	for c in part.get_children():
+		if c is MeshInstance3D:
+			var mi := c as MeshInstance3D
+			mi.material_override = mat
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mi.custom_aabb = AABB(Vector3(-reach, -0.1, -reach), Vector3(reach * 2.0, 0.5, reach * 2.0))
 
 
 ## A little bird facing -z: body, head, beak and tail.

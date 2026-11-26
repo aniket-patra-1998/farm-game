@@ -36,6 +36,7 @@ const FLARE_DROP := 0.3       # ..falling this share of what the slope above wou
 const EAVE_THICK := 0.07      # a roof's edge is this thick at the eaves..
 const FASCIA := 0.03          # ..over a board this high in the trim's colour
 const DOME_FILL := 0.9   # a dome's width, as a share of the roof it stands on
+const BARREL_STEPS := 8        # the flat strips a round roof is bent from
 const CORNICE := 0.07    # the slab under it
 const DOME_DRUM := 0.14  # and the drum it stands on
 const RIDGE_CAP := 0.045      # the cap along a ridge: half its width, and its height
@@ -874,7 +875,8 @@ static func faces(parent: Node3D, list: Array, inside: Vector3, mat: Material) -
 
 ## A roof over the block from `lo` to `hi` (its walls' top corners), overhanging by `over`. Kinds:
 ## gable (ridge along the longer side), gambrel (a barn's two-pitch roof), hip, shed (one slope down to
-## the front), flat, dome. `rise` is how high the ridge stands over the walls. Returns the ridge's top.
+## the front), flat, barrel (half a pipe along the longer side), dome. `rise` is how high the ridge stands over
+## the walls. Returns the ridge's top.
 static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: float, over: float,
 		mat: Material, gable_mat: Material) -> float:
 	var y := hi.y
@@ -942,6 +944,26 @@ static func roof(parent: Node3D, kind: String, lo: Vector3, hi: Vector3, rise: f
 		"flat":
 			box(parent, Vector3(x0, y, z0), Vector3(x1, y + 0.06, z1), mat)
 			top = y + 0.06
+		"barrel":
+			# A round tin roof (a pig ark's): half a pipe along the longer side, its two ends closed in the walls'
+			# own material.
+			var arcs := []
+			var ends := []
+			var mid := (z0 + z1) / 2.0 if along_x else (x0 + x1) / 2.0
+			var half := ((z1 - z0) if along_x else (x1 - x0)) / 2.0
+			for i in BARREL_STEPS:
+				var a := Vector2(mid - cos(PI * i / BARREL_STEPS) * half, y + sin(PI * i / BARREL_STEPS) * rise)
+				var b := Vector2(mid - cos(PI * (i + 1) / BARREL_STEPS) * half, y + sin(PI * (i + 1) / BARREL_STEPS) * rise)
+				if along_x:
+					arcs.append([Vector3(x0, a.y, a.x), Vector3(x1, a.y, a.x), Vector3(x1, b.y, b.x), Vector3(x0, b.y, b.x)])
+					for x: float in [lo.x, hi.x]:
+						ends.append([Vector3(x, y, mid), Vector3(x, a.y, a.x), Vector3(x, b.y, b.x)])
+				else:
+					arcs.append([Vector3(a.x, a.y, z0), Vector3(a.x, a.y, z1), Vector3(b.x, b.y, z1), Vector3(b.x, b.y, z0)])
+					for z: float in [lo.z, hi.z]:
+						ends.append([Vector3(mid, y, z), Vector3(a.x, a.y, z), Vector3(b.x, b.y, z)])
+			faces(parent, arcs, inside, mat)
+			faces(parent, ends, inside - Vector3(0, rise, 0), gable_mat)
 		"dome":
 			# A bathhouse roof: a flat roof with a cornice, and on it a dome on a low drum, a ball on its crown.
 			var r := minf(hi.x - lo.x, hi.z - lo.z) / 2.0 * DOME_FILL

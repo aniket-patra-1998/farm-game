@@ -1563,3 +1563,24 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   (fewer of them, or simpler leaves), for the owner to pick. Not looked at: res://baked (CI's ready-made models
   and icons; docs/PACKS.md), sounds (8.5 MB).
 - Tests 640 to 644 (animal_bones_test); tools/animal_art tests `Bones`.
+
+## The animal homes, 26 Nov (branch animal-homes, a draft PR; owner: "you should be more active to finalize the buildings")
+- The five homes that were one house in five colours (Dairy Farm, Sheep Pen, Goat Pen, Stable, Pig Pen) are
+  each their own outline and roof colour now, by their data (data/building_models.json): the table is in
+  docs/WORLD.md. At its biggest each lead is a storey taller with a companion or prop beside it, and one thing
+  of its own moves. New to the kit: a `barrel` roof (ModelKit.roof), `whirligig`, `birds`, `gate_sign`.
+- Every animal home (the hive, coop and hutch too) has a sign at its gate with its animal's Market picture
+  (GateSign: the model marks the place and Objects3D hangs the board, so a home's file keeps to its budget
+  of draws and the farm pays one draw a home) and a lantern that glows at night.
+- The owner saw two sheets and a clip and said build; the calls made without asking: the Pig Pen at its biggest
+  is a tall ark (a round roof over a box base read badly), the goat tower has a bird circling it (a pennant would
+  sit where a full home's flag flies), the lantern stands on the sign's post.
+- A part that swings or circles by its shader (a weathervane, a bird: DecorMotion.orbit) is now a named part
+  (`orbit_vane_7`), so a building's file carries it and DecorMotion.start sets it going; before, only spinning
+  parts and effects came through a file. A building's draws budget is 10, was 9 (data/assets.json): the one
+  thing that moves at a home's biggest is a draw, and three homes stood at 9 already.
+- Still as they were: every other building (bakery, farmhouse, feed mill, garage, garden shed, log cabin,
+  nursery barn, winery, spa, dog house...). Next: the same treatment for those, in batches, a sheet each.
+- Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
+- Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.
+
