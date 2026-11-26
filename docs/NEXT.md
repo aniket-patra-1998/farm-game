@@ -1516,6 +1516,14 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   more at night), drawn for the whole farm in two draws (CrownStars; crown_star3d, crown_halo3d). A model only
   marks where (`star_<r>` at its roof's top, kept through export by DecorMotion.is_part); Objects3D._mark_stars
   places them. All top-size building files re-exported without their star. Tests 638, 639.
+  One finish for everything solid (the owner's pick of 26 Nov, option C of a sheet of four; the others were
+  the look as it was, sun and shade alone, and C with an ink outline at twice the draws):
+  shaders/finish.gdshaderinc gives master_solid, paint3d, wall3d and the trees' shaders one `light()` (warm
+  sun, cool shade, less all-round light) and one painting of their colour (patches, a lean of each thing's own,
+  darker to its foot). The engine's rim and shine went with its lighting: the finish has a warm edge and a
+  glint of its own. The patches are Quality `finish_grain` (off on low). Seen by day, at night and in a storm
+  on a computer; on the shaded side fences and trunks are darker than they were. Still to do: crop3d and
+  bloom3d; the item pictures CI bakes will change with it. Tests 645, 646.
 - Shown to the owner and agreed in principle: animals polished (clean colour borders, wider eyes; the
   prototype is project doc claude/art-loop/0003-animal-polish-prototype.patch, and a local branch animal-polish),
   "more character: fur and fleece more distinct" (sizes: done, above);

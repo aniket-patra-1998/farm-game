@@ -6,6 +6,8 @@ const RAIN := "global uniform float rain"
 const WIND := "global uniform float wind"
 const DARK := "global uniform float dark"
 
+const FINISH := "res://shaders/finish.gdshaderinc"
+
 
 func test_629_an_open_fire_answers_the_rain_and_the_wind() -> void:
 	var g := _farm()
@@ -241,6 +243,49 @@ func test_639_one_star_floats_over_every_marked_building_sized_to_each() -> void
 	_eq(stars.show_at(no_tops, no_radii), 0, "none on a farm with nothing at its biggest")
 	_check(not stars.visible, "and nothing drawn")
 	stars.queue_free()
+
+
+func test_645_every_solid_kind_of_thing_wears_the_one_finish() -> void:
+	# (The owner's pick of 26 Nov, sheet option C: sun and shade, painted surfaces. One rule in one file, so a
+	# cow, a coop, a fence and a tree are lit and painted alike.)
+	var finish := FileAccess.get_file_as_string(FINISH)
+	for part: String in ["void light()", "LIGHT_IS_DIRECTIONAL", "FINISH_SUN", "FINISH_SKY", "SPECULAR_LIGHT"]:
+		_check(finish.contains(part), "the finish lights by sun and shade (%s)" % part)
+	var painted := {"master_solid": 2, "paint3d": 1, "wall3d": 1}
+	var leaning := ["canopy3d", "foliage3d", "frond3d"]
+	for kind: String in painted.keys() + leaning + ["fruit3d"]:
+		var code := FileAccess.get_file_as_string("res://shaders/%s.gdshader" % kind)
+		_check(code.contains('#include "%s"' % FINISH), "%s wears the finish" % kind)
+		_check(code.contains("AO = FINISH_AMBIENT;"), "%s has a shaded side (less all-round light)" % kind)
+		_check(not code.contains("RIM = "), "%s leaves its light edge to the finish" % kind)
+		if painted.has(kind):
+			_eq(code.count("finish_painted("), painted[kind], "%s is painted wherever it sets a colour" % kind)
+		if leaning.has(kind):
+			_eq(code.count("finish_lean("), 1, "%s leans its own way (leaves keep their own pattern)" % kind)
+	# (A thing's own number comes from where it stands: the same every frame, another for its neighbour.)
+	_check(finish.contains("float finish_own(vec3 foot)"), "each thing has a number of its own from where it stands")
+	var cow := AssetRegistry.instance("cow")
+	_check(not _with_shader(cow, "master_solid").is_empty(), "an animal's file draws with a shader that wears it")
+	cow.free()
+
+
+func test_646_the_finish_s_patches_are_a_quality_s_to_give() -> void:
+	# (Sun and shade and the lean are free; the patches are worked out for every pixel of every solid thing.)
+	_check(not bool(Quality.value("finish_grain", "low")), "low goes without the brushy patches")
+	for level: String in ["mid", "high", "ultra"]:
+		_check(bool(Quality.value("finish_grain", level)), "%s has them" % level)
+	_check(FileAccess.get_file_as_string(FINISH).contains("if (finish_grain > 0.0)"),
+		"the shaders ask before working them out")
+	_check(ProjectSettings.has_setting("shader_globals/finish_grain"), "the value is one every shader shares")
+	var kept := Quality._level
+	Quality._level = "low"
+	Farm3D.apply_quality_finish()
+	_eq(float(ShaderGlobals.value(&"finish_grain", -1.0)), 0.0, "the farm tells the shaders: off on low")
+	Quality._level = "high"
+	Farm3D.apply_quality_finish()
+	_eq(float(ShaderGlobals.value(&"finish_grain", -1.0)), 1.0, "and on on high")
+	Quality._level = kept
+	Farm3D.apply_quality_finish()
 
 
 func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:

@@ -37,8 +37,10 @@ changed.
 
 - **Painted-in light** (`animal_art/look.py`): soft shadow in creases and near the ground, backs a little lighter,
   undersides a little darker, shadows cool and coloured (never grey or black). Baked into the colours once.
-- **Live light on top**: the game's sun and sky light (day, night, weather) light the asset; the master shader
-  adds a warm **rim** on the side away from the camera and the weather (`wetness`, `snow_cover`, `dark`).
+- **Live light on top**: the game's sun and sky light (day, night, weather) light the asset by the one finish
+  every solid thing shares (`shaders/finish.gdshaderinc`, docs/WORLD.md "One finish"): the sun's side warm with
+  a warm light edge, the far side in cool shade, painted patches and a lean of its own; and the weather
+  (`wetness`, `snow_cover`, `dark`).
 - **Outline**: a thin dark outline round the silhouette and along inner steps (a leg in front of a body), drawn by
   the master shader, never modelled.
 - **Grounding**: every asset sits on a soft contact shade (`ContactShades`); real sun shadows on mid and up.

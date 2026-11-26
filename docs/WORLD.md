@@ -32,6 +32,28 @@ by reading them in its shader: no script runs for each thing, and nothing can be
 A fountain, a pour and a warm pool's steam are not weather's business: a spray answers only when its settings
 say how (`DecorMotion.SMOKE_THINS`, `EMBERS_DIE`, `STEAM_IN_RAIN`).
 
+## One finish
+
+Everything solid is lit and painted by one rule (`shaders/finish.gdshaderinc`; the owner's pick of 26 Nov from
+a sheet of four, option C), so a cow, a coop, a fence and a tree sit in one world:
+
+- **Sun and shade.** The sun's side is warm; the side turned from it is filled with cool sky light; and there
+  is less flat all-round light, so a thing has a lit side and a shaded one. A lamp or a fire lights it plainly.
+- **Painted.** Broad brushy patches of lighter and darker; each thing leans a little warm or cool by a number
+  of its own (from where it stands: two of a kind are never the same colour); darker towards its foot.
+
+| Shader | Draws | Wears |
+|---|---|---|
+| `master_solid` | animals and buildings made as files | sun and shade, painted |
+| `paint3d`, `wall3d` | things built in code: fences, decorations, walls | sun and shade, painted |
+| `canopy3d`, `foliage3d`, `frond3d` | trees' leaves | sun and shade, its own lean (leaves keep their pattern) |
+| `fruit3d` | fruit on a tree | sun and shade |
+| `crop3d`, `bloom3d` | crops and flowers | not yet: thin leaves lit their own way (still to come) |
+
+The patches are worked out for every pixel, so they are a quality's to give (`finish_grain`: off on low). The
+rest costs what the engine's own lighting did. A new solid kind includes the file, calls `finish_painted` (or
+`finish_lean`) on its colour and sets `AO = FINISH_AMBIENT`. Tests 645, 646.
+
 ## Weight
 
 A thing has weight when the ground answers it. The grass darkens round the foot of buildings, under trees and
