@@ -117,5 +117,43 @@ class BuildAndMove(unittest.TestCase):
         self.assertTrue(np.allclose(V[still], model["V"][still]), "the shell does not move when the legs do")
 
 
+
+class Bones(unittest.TestCase):
+    def test_a_file_s_bones_make_every_move_the_builder_s_motion_makes(self):
+        # (export._rigged: a move is where each bone goes, never a second copy of the mesh; the bones must put every
+        # point where motion.deform does, for each move alone, the parts that move on their own included.)
+        from animal_art import export as E
+        for name in ("cow", "red chicken", "rabbit", "turkey", "bee", "turtle"):
+            with self.subTest(animal=name):
+                a = lightest(MADE[name][0]); rig, W = rig_of(a, name)
+                V0, _ = deform(a, W, pose(rig, E._rest()), E._rest(), rig)
+                Wn, rest, changes = E._rigged(a, rig, W, V0)
+                names = [m for m, _c in changes]
+                self.assertLess(np.abs(E.posed(a, Wn, rest, changes, {}) - V0).max(), 1e-9)
+                for m, p in E.moves():
+                    if m in names:
+                        V, _ = deform(a, W, pose(rig, p), p, rig)
+                        self.assertLess(np.abs(E.posed(a, Wn, rest, changes, {m: 1.0}) - V).max(), 1e-9, m)
+                self.assertIn("blink", names)
+                self.assertEqual(len([m for m in names if m.startswith("walk_")]), E.WALK_FRAMES)
+                # (the game reads four bones a point: what is left out is a sliver of the weight)
+                self.assertLess((1.0 - np.sort(Wn, 1)[:, -E.BONES_EACH:].sum(1)).max(), 0.12)
+        self.assertIn("display", [m for m, _c in E._rigged(*self._turkey())[2]])
+
+    def test_the_farmer_s_bones_make_its_moves(self):
+        from animal_art import farmer as F
+        from animal_art.export import posed
+        a = F.build("short", "a"); Wn, rest, changes = F.rigged(a)
+        tall = a["V"][:, 1].max() - a["V"][:, 1].min()
+        self.assertAlmostEqual(float(np.abs(Wn.sum(1) - 1.0).max()), 0.0, places=9)
+        for m, V in F.moves(a).items():   # (a limb's joint is held in F.RAMP steps: to a thousandth of its height)
+            self.assertLess(np.abs(posed(a, Wn, rest, changes, {m: 1.0}) - V).max() / tall, 0.002, m)
+
+    def _turkey(self):
+        from animal_art import export as E
+        a = lightest(MADE["turkey"][0]); rig, W = rig_of(a, "turkey")
+        return a, rig, W, deform(a, W, pose(rig, E._rest()), E._rest(), rig)[0]
+
+
 if __name__ == "__main__":
     unittest.main()

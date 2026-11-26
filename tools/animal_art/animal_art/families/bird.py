@@ -4,6 +4,8 @@ import math
 from ..geometry import cone, hx, sphere, tube
 from ..shapes import C, E, both, plumage, shingle
 
+FEATHER = 1.4    # every bird's feathers are drawn this much bigger than its row gives: fewer, each one whole on the mesh
+
 
 # ---------------------------------------------------------------- one bird template, many kinds
 # A bird is a row too: build, legs, neck (length, thickness at each end), head, the kind of tail, beak and feet, and
@@ -112,7 +114,7 @@ def bird_t(b):
     wk = b.get("wing_k", 1.0); wy = yb + ry * (0.12 + b.get("wing_lift", 0.0))
     s += both(E, (rx * 0.9, wy, -rz * 0.05), (0.22, ry * 0.6 * wk, rz * 0.66 * wk), wingf, k=0.08, part="wing")
     dkw = (lambda i: tuple(wingc * (0.93 - 0.06 * i))) if (pat not in ("barred", "laced", "belt") and not b.get("wing_plain")) else (lambda i: wingf)
-    fs = b.get("feathers", 0.0)
+    fs = b.get("feathers", 0.0) * FEATHER
     if fs > 0:
         # real plumage: tiles of feathers over the back, sides and breast; a ruff where the neck meets the body; and
         # a wing made of two rows of short feathers with three long ones behind

@@ -1,5 +1,5 @@
 """An animal for the game: one glTF file (.glb) with its finished mesh (colours and painted light in its vertex
-colours) at rest, and its moves as blend shapes, each the difference the builder's own motion makes:
+colours), the bones it hangs on, and its moves, each as where every bone goes:
 
     walk_00 .. walk_07   the walk cycle at full stride (the game blends between the two nearest, by its gait)
     head                 head down: grazing, pecking
@@ -13,6 +13,12 @@ colours) at rest, and its moves as blend shapes, each the difference the builder
     blink
     tail
     breath
+
+A move is stored as bones, not as every point's new place (17 copies of the mesh were most of a file): each point
+follows up to four bones (`weights`), a move says how far each bone goes from where it rests (`_rigged`), and the
+game adds the moves it wants, bone by bone, exactly as it added the points before. A part that moves on its own
+(an eye closing, an ear, a wing, a fan) gets bones of its own. Only a long coat's shake, which no bone can
+make, is still stored point by point (`_shake_moves`).
 
 The game sets their weights from the same pose values it already works out (scripts/world3d/animal_3d.gd), so
 the animal moves as the previews show. Game axes: 1 unit = 1 tile, up +Y, facing +X, standing on y = 0 over its
@@ -66,6 +72,14 @@ def shown(name, rel):
     return rel if name in TRUE_SIZE else rel ** SIZE_EVEN
 
 
+VIVID = 1.12            # a coat's colour is drawn this much stronger than its row gives (greys and whites stay)
+
+
+def _vivid(c):
+    grey = float(np.mean(c))
+    return np.clip(grey + (c - grey) * VIVID, 0.0, 1.0)
+
+
 def export(name, path):
     fn, rel = MADE[name]
     a = lightest(fn)
@@ -79,7 +93,7 @@ def export(name, path):
         for j, v in enumerate(t):
             k = (int(v), c.tobytes())
             if k not in key:
-                key[k] = len(src); src.append(int(v)); vcol.append(c * bake[v]); raw.append(c)
+                key[k] = len(src); src.append(int(v)); vcol.append(_vivid(c) * bake[v]); raw.append(c)
             idx[ti, j] = key[k]
     src = np.array(src)
     # every point needs a normal: a face drawing's points (eyes, blush) have none of their own, so they take the
@@ -105,36 +119,34 @@ def export(name, path):
     scale = shown(name, rel) / max(hi[2] - lo[2], 1e-6)
     turn = lambda P: np.stack([P[:, 2], P[:, 1], -P[:, 0]], 1)
     place = lambda P: turn((P - centre) * scale).astype(np.float32)
-    pos = place(V0[src]); nor = turn(N0[src]).astype(np.float32)
+    Wn, rest, changes = _rigged(a, rig, W, V0)
+    bones, follow = _follows(Wn)
+    built = a["vn"] / np.maximum(np.linalg.norm(a["vn"], axis=1, keepdims=True), 1e-9)
+    pos = place(a["V"][src]); nor = turn(fix(built)[src]).astype(np.float32)
+    # into the game's frame, each bone's 4x4 too
+    G = np.eye(4); G[:3, :3] = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], float) * scale; G[:3, 3] = -G[:3, :3] @ centre
+    Gi = np.linalg.inv(G); there = lambda M: G @ M @ Gi
+    stands = place(V0[src])   # (the box of the animal as it stands: the game's taps and sizes are measured by it)
     targets = []
-    for mname, p in moves():
-        if mname == "hop" and not rig.get("hop"):
-            continue   # (only a hopper hops)
-        if mname == "sleep" and not (rig["legs"] or rig.get("shell")):
-            continue   # (a bee has no pose of its own to sleep in)
-        V, N = deform(a, W, pose(rig, p), p, rig)
-        if mname == "sleep":       # (a leg folded under it lies on the ground, not through it)
-            V = V.copy(); V[:, 1] = np.maximum(V[:, 1], V0[:, 1].min())
-        N = fix(N)
-        targets.append((mname, place(V[src]) - pos, turn(N[src]).astype(np.float32) - nor))
-    if rig.get("wings"):          # a bee: its wings at the top of a beat (the builder's motion beats them by time)
-        p = _rest(); p["time"] = BEE_BEAT
-        V, N = deform(a, W, pose(rig, p), p, rig)
-        targets.append(("wing_flap", place(V[src]) - pos, np.zeros_like(nor)))
-    # moves of parts the builder's motion doesn't turn: ears flick, wings open, a turkey's fan
-    for mname, V in _part_moves(a, rig, V0).items():
-        targets.append((mname, place(V[src]) - pos, np.zeros_like(nor)))
     uv = uv2 = None
     row = LIMITED.get(name)
     if row is not None and row.get("touch"):
         uv, uv2 = _touch_points(a, row, src, np.array(raw))
         if row["touch"] == "shake":
             for mname, V in _shake_moves(a, V0).items():
-                targets.append((mname, place(V[src]) - pos, np.zeros_like(nor)))
+                targets.append((mname, place(V[src]) - place(V0[src]), None))
     colours = np.c_[np.clip(np.array(vcol, np.float32), 0, 1), np.ones(len(vcol), np.float32)]
-    _write(path, name, pos, nor, colours, idx.reshape(-1), targets, uv=uv, uv2=uv2)
-    return dict(name=name, vertices=len(pos), triangles=len(T), targets=[t[0] for t in targets], scale=scale,
-                nose=_sleeping_nose(rig, place))
+    rigging = dict(bones=bones[src], follow=follow[src], rest=[_flat(there(R)) for R in rest],
+                   moves={m: {str(k): _flat(G @ D @ Gi) for k, D in c.items()} for m, c in changes},
+                   box=[[round(float(v), 6) for v in stands.min(0)], [round(float(v), 6) for v in stands.max(0)]])
+    _write(path, name, pos, nor, colours, idx.reshape(-1), targets, uv=uv, uv2=uv2, rigging=rigging)
+    return dict(name=name, vertices=len(pos), triangles=len(T), targets=[m for m, _c in changes] + [t[0] for t in targets],
+                bones=len(rest), scale=scale, nose=_sleeping_nose(rig, place))
+
+
+def _flat(M):
+    """A 4x4 as the game reads it: its three axes, then where it moves to (12 numbers)."""
+    return [round(float(v), 6) for v in np.concatenate([M[:3, 0], M[:3, 1], M[:3, 2], M[:3, 3]])]
 
 
 def _sleeping_nose(rig, place):
@@ -203,43 +215,143 @@ def _owner(a):
     return np.argmin(D, 1)
 
 
-def _turned(V, idx, pivot, axis, ang, grow=1.0):
-    from .motion import rot
-    out = V.copy()
-    out[idx] = (V[idx] - pivot) @ rot(axis, ang).T * grow + pivot
-    return out
+def _about(pivot, axis, ang, grow=1.0):
+    """The move that turns points about `pivot` (and spreads them from it by `grow`), as one 4x4."""
+    from .motion import R4, T4, rot
+    return T4(pivot) @ R4(rot(axis, ang) * grow) @ T4(-np.array(pivot, float))
 
 
 def _part_moves(a, rig, V0):
-    """{move: points} for the parts that move on their own: each ear turns out about its root, each wing lifts
-    open about its root along the body, a turkey's fan tips up and spreads, a bee's wings beat."""
-    out = {}
+    """[(move, its points, the 4x4 that moves them)] for the parts that move on their own, as the animal stands:
+    each ear turns out about its root, each wing lifts open about its root along the body, a turkey's fan tips up
+    and spreads."""
+    out = []
     own = _owner(a); parts = np.array([s.get("part") or "" for s in a["shapes"]])[own]
-    n0 = a["nsoft"]; head = np.array(rig["head"], float); body = np.array(rig["body"], float)
+    head = np.array(rig["head"], float); body = np.array(rig["body"], float)
     for part, name in (("ear", "ear_flick"), ("wing", "wing_flap")):
         idx = np.where(parts == part)[0]
         if len(idx) < 10:
             continue
-        V = V0.copy()
         for side in (-1.0, 1.0):
             one = idx[np.sign(V0[idx, 0]) == side]
             if len(one) < 5:
                 continue
             if part == "ear":       # its root: its point nearest the head's middle; it turns out and back about the body's length
                 root = V0[one][np.argmin(np.linalg.norm(V0[one] - head, axis=1))]
-                V = _turned(V, one, root, (0, 0, 1), side * EAR_FLICK)
+                out.append((name, one, _about(root, (0, 0, 1), side * EAR_FLICK)))
             else:                   # its root: along its top edge nearest the body's middle line
                 q = V0[one]; root = np.array([q[np.argmin(np.abs(q[:, 0])), 0], q[:, 1].max(), q[:, 2].mean()])
-                V = _turned(V, one, root, (0, 0, 1), side * WING_OPEN)
-        out[name] = V
+                out.append((name, one, _about(root, (0, 0, 1), side * WING_OPEN)))
     fan = np.where(parts == "fan")[0]
     if len(fan) >= 10:
         q = V0[fan]; base = q[np.argmin(np.linalg.norm(q - body, axis=1))]
-        out["display"] = _turned(V0, fan, base, (1, 0, 0), FAN_LIFT, FAN_SPREAD)
+        out.append(("display", fan, _about(base, (1, 0, 0), FAN_LIFT, FAN_SPREAD)))
     return out
 
 
-def _write(path, name, pos, nor, col, ind, targets, uv=None, uv2=None):
+BLINK = 0.93             # how far an eye's drawing closes to a line (motion.deform)
+BONES_EACH = 4           # the bones a point may follow (what the game's renderer reads without a second set)
+STILL = 1e-6             # a bone that a move carries less than this is not written for it
+
+
+def _own_moves(a, rig):
+    """[(points, {move: 4x4}, the 4x4 at rest or None)] for what motion.deform moves by hand before the bones do:
+    each eye closing, a rabbit's ears lying back as it sleeps, a bee's wings beating."""
+    from .motion import EARS_BACK, R4, T4, rot
+    out = []
+    for s, e, c, up in a["eyes"]:
+        A = np.eye(4); A[:3, :3] -= BLINK * np.outer(up, up); A[:3, 3] = BLINK * np.array(up, float) * float(np.dot(up, c))
+        out.append((np.arange(s, e), {"blink": A}, None))
+    if rig.get("ears") and rig.get("sleep") in EARS_BACK:
+        for idx, at in rig["ears"]:
+            out.append((np.asarray(idx), {"sleep": _about(at, (1, 0, 0), -EARS_BACK[rig["sleep"]])}, None))
+    for idx, piv, sx in rig.get("wings") or []:
+        beat = lambda t: _about(piv, (0, 0, 1), sx * (0.2 + math.sin(t * 60.0) * 0.32))
+        out.append((np.asarray(idx), {"wing_flap": beat(BEE_BEAT)}, beat(0.0)))
+    return out
+
+
+def _rigged(a, rig, W, V0):
+    """The animal's bones and moves. A point follows the rig's bones by `W`; a part that also moves on its own (an
+    eye, an ear, a wing, a fan) gets its own copy of each bone it follows, so its move is that bone's too. Returns
+    (weights per point over all bones, each bone's 4x4 at rest, [(move, {bone: 4x4 change})]): a point's place is
+    the sum over its bones of weight x (rest + each wanted move's change x its strength) x the point as built,
+    which is what the builder's own motion gives for every move alone and what the game's sums gave before."""
+    n = len(a["V"]); own = _own_moves(a, rig); parts = _part_moves(a, rig, V0)
+    touched = np.zeros((n, len(own) + len(parts)), bool)
+    for k, (idx, _m, _r) in enumerate(own):
+        touched[idx, k] = True
+    for k, (_name, idx, _m) in enumerate(parts):
+        touched[idx, len(own) + k] = True
+    kinds, kind_of = np.unique(touched, axis=0, return_inverse=True); kind_of = kind_of.reshape(-1)
+    kinds = [tuple(np.where(row)[0]) for row in kinds]
+    order = sorted(range(len(kinds)), key=lambda g: len(kinds[g]))   # (the bones of the body first, as rig.weights numbers them)
+    nb = W.shape[1]; bones = []; Wn = []
+    for g in order:
+        mine = kind_of == g
+        for b in range(nb):
+            col = np.where(mine, W[:, b], 0.0)
+            if kinds[g] and not (col > STILL).any():
+                continue
+            bones.append((g, b)); Wn.append(col)
+    Wn = np.stack(Wn, 1)
+
+    def before(g, move):
+        """What the animal's own parts in `g` do before the bones move them, for `move` (None: at rest)."""
+        A = np.eye(4)
+        for k in kinds[g]:
+            if k < len(own):
+                at_rest = own[k][2] if own[k][2] is not None else np.eye(4)
+                A = A @ own[k][1].get(move, at_rest)
+        return A
+
+    M0 = pose(rig, _rest())
+    rest = [M0[b] @ before(g, None) for g, b in bones]
+    made = []
+    for mname, p in moves():
+        if mname == "hop" and not rig.get("hop"):
+            continue   # (only a hopper hops)
+        if mname == "sleep" and not (rig["legs"] or rig.get("shell")):
+            continue   # (a bee has no pose of its own to sleep in)
+        made.append((mname, p))
+    if rig.get("wings"):          # a bee: its wings at the top of a beat (the builder's motion beats them by time)
+        p = _rest(); p["time"] = BEE_BEAT; made.append(("wing_flap", p))
+    out = []
+    for mname, p in made:
+        M = pose(rig, p)
+        out.append((mname, {k: M[b] @ before(g, mname) - rest[k] for k, (g, b) in enumerate(bones)}))
+    for mname in dict.fromkeys(name for name, _i, _m in parts):   # (ears flick, wings open, a turkey's fan)
+        change = {}
+        for k, (g, _b) in enumerate(bones):
+            P = np.eye(4)
+            for t in kinds[g]:
+                if t >= len(own) and parts[t - len(own)][0] == mname:
+                    P = parts[t - len(own)][2] @ P
+            change[k] = (P - np.eye(4)) @ rest[k]
+        out.append((mname, change))
+    return Wn, rest, [(m, {k: D for k, D in c.items() if np.abs(D).max() > STILL}) for m, c in out]
+
+
+def posed(a, Wn, rest, changes, strengths):
+    """Every point where the bones put it: `strengths` {move: how much of it} (none: as the animal stands)."""
+    Vh = np.c_[a["V"], np.ones(len(a["V"]))]; out = np.zeros_like(a["V"]); by = dict(changes)
+    for k, R in enumerate(rest):
+        w = Wn[:, k:k + 1]
+        if not w.any():
+            continue
+        M = R + sum((by[m].get(k, 0.0) * s for m, s in strengths.items()), np.zeros((4, 4)))
+        out += w * (Vh @ M.T)[:, :3]
+    return out
+
+
+def _follows(Wn):
+    """Each point's strongest BONES_EACH bones and how much it follows each (summing to 1)."""
+    top = np.argsort(-Wn, axis=1)[:, :BONES_EACH]; w = np.take_along_axis(Wn, top, 1)
+    w = w / w.sum(1, keepdims=True); top = np.where(w > 0, top, 0)
+    return top.astype(np.uint16), w.astype(np.float32)
+
+
+def _write(path, name, pos, nor, col, ind, targets, uv=None, uv2=None, rigging=None):
     blob = bytearray(); views = []; accs = []
 
     def add(arr, comps, ctype, target=None, minmax=False):
@@ -257,25 +369,40 @@ def _write(path, name, pos, nor, col, ind, targets, uv=None, uv2=None):
         accs.append(acc)
         return len(accs) - 1
 
-    FLOAT, UINT = 5126, 5125
+    FLOAT, UINT, USHORT = 5126, 5125, 5123
     attrs = dict(POSITION=add(pos, "VEC3", FLOAT, 34962, True), NORMAL=add(nor, "VEC3", FLOAT, 34962),
                  COLOR_0=add(col, "VEC4", FLOAT, 34962),
                  TEXCOORD_0=add(np.zeros((len(pos), 2), np.float32) if uv is None else uv, "VEC2", FLOAT,
                                 34962))   # (importers want UVs; the farmer's say whose colour a point wears)
     if uv2 is not None:
         attrs["TEXCOORD_1"] = add(uv2, "VEC2", FLOAT, 34962)   # (a limited coat's touch: _touch_points)
+    node = dict(name=name.replace(" ", "_"), mesh=0)
+    nodes = [node]; skins = []
+    if rigging is not None:   # (the bones: nodes with nothing of their own; the game places them, move by move)
+        attrs["JOINTS_0"] = add(rigging["bones"].astype(np.uint16), "VEC4", USHORT, 34962)
+        attrs["WEIGHTS_0"] = add(rigging["follow"].astype(np.float32), "VEC4", FLOAT, 34962)
+        count = len(rigging["rest"])
+        nodes += [dict(name="rig", children=list(range(2, 2 + count)))]
+        nodes += [dict(name="bone_%02d" % k) for k in range(count)]
+        skins = [dict(joints=list(range(2, 2 + count)), skeleton=1)]
+        node["skin"] = 0
+        node["extras"] = dict(rest=rigging["rest"], moves=rigging["moves"], box=rigging["box"])
     indices = add(ind.astype(np.uint32), "SCALAR", UINT, 34963)
     # (positions only: a move's change of shading is too small to see, and normals would double the file)
     tgts = [dict(POSITION=add(dp, "VEC3", FLOAT, 34962, True)) for _n, dp, _dn in targets]
     gltf = dict(
         asset=dict(version="2.0", generator="farm-game animal_art"),
-        scene=0, scenes=[dict(nodes=[0])], nodes=[dict(name=name.replace(" ", "_"), mesh=0)],
+        scene=0, scenes=[dict(nodes=[0, 1] if skins else [0])], nodes=nodes,
         meshes=[dict(name=name.replace(" ", "_"), primitives=[dict(attributes=attrs, indices=indices, material=0, mode=4,
                                                                   targets=tgts)],
                      weights=[0.0] * len(tgts), extras=dict(targetNames=[t[0] for t in targets]))],
         materials=[dict(name="coat", pbrMetallicRoughness=dict(baseColorFactor=[1, 1, 1, 1], metallicFactor=0.0,
                                                                roughnessFactor=0.9))],
         buffers=[dict(byteLength=0)], bufferViews=views, accessors=accs)
+    if skins:
+        gltf["skins"] = skins
+    if not tgts:
+        del gltf["meshes"][0]["primitives"][0]["targets"], gltf["meshes"][0]["weights"], gltf["meshes"][0]["extras"]
     while len(blob) % 4:
         blob.append(0)
     gltf["buffers"][0]["byteLength"] = len(blob)

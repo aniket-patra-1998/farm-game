@@ -1,5 +1,6 @@
 """The player's farmer, made the way the animals are: soft shapes melted into one skin, a face drawn on it, light
-painted in, and exported as one glTF file with its moves as blend shapes.
+painted in, and exported as one glTF file with its bones and its moves as where each bone goes (export._write's rigging; the
+game adds the moves bone by bone: scripts/world3d/animal_bones.gd).
 
 FarmVille's proportions: a head nearly half the height on a slim body, large eyes, a small smile, a full head of
 hair; a T-shirt under bib overalls, rolled cuffs, round-toed boots.
@@ -8,7 +9,7 @@ The file carries no look of its own. Each point's colour is its painted light ti
 coordinate says whose colour it wears (REGIONS: skin, hair, shirt, overalls, shoes, or its own fixed colour), so
 the game colours one file for any look (scripts/world3d/farmer_3d.gd).
 
-Moves (blend shapes, each a limb turned about its joint; the game mixes them):
+Moves (each a limb turned about its joint; the game mixes them):
     leg_l_f, leg_l_b, leg_r_f, leg_r_b     a leg swung forward or back by LEG_SWING
     arm_l_b, arm_r_b                       an arm swung back by ARM_BACK
     arm_l_f1, arm_r_f1, arm_l_f2, arm_r_f2 an arm raised forward by ARM_F1, and by ARM_F2 (working: both arms out)
@@ -23,7 +24,7 @@ from scipy.spatial import cKDTree
 
 from . import decal
 from .decal import Mesh, ell, fan, frame, strip
-from .export import _write
+from .export import _flat, _follows, _write, posed
 from .geometry import cast, vnormals
 from .look import bake
 from .shapes import C, E, sdf
@@ -181,7 +182,9 @@ def _face(m, V, T, wh, kind="a"):
 def build(hair="short", kind="a", res=RES):
     """The finished model: points, triangles, a colour per triangle, the painted light, and what each point follows."""
     sh = shapes(hair, kind)
-    V, T, cols, wh = skin(sh, res=res, splits=2)
+    # (no finer triangles along its colour borders: skin's cut gives shirt, straps and skin a clean edge without them,
+    # and the farmer is a third lighter for it: 15k triangles -> 10k)
+    V, T, cols, wh = skin(sh, res=res, splits=0)
     vn = vnormals(V, T)
     m = Mesh(V, T, cols)
     eyes = _face(m, V, T, wh, kind)
@@ -232,9 +235,52 @@ def moves(a):
     shut = V.copy()
     for e0, e1, p, up in a["eyes"]:
         d = shut[e0:e1] - p
-        shut[e0:e1] = p + d - np.outer(d @ up, up) * 0.92     # an eye's drawing squeezed flat along its height
+        shut[e0:e1] = p + d - np.outer(d @ up, up) * BLINK     # an eye's drawing squeezed flat along its height
     out["blink"] = shut
     return out
+
+
+RAMP = 4                 # the bones a limb's joint is spread over: a point near the joint turns by its own share of
+                         # a swing (`_swing`), which bones hold true in this many steps
+BLINK = 0.92             # how far an eye's drawing closes (`moves`)
+
+
+def rigged(a):
+    """The farmer's bones and moves, as export._rigged gives an animal's: (weights per point over the bones, each
+    bone's 4x4 at rest, [(move, {bone: 4x4 change})]). The body is one bone; each limb has RAMP, the k-th turning
+    k/RAMP of the limb's swing, and a point follows the two its own share lies between; each eye has one, which
+    closes it. A move puts every point where `moves` does, to within the steps' fineness (tests: Bones)."""
+    V = a["V"]; n0 = a["nsoft"]
+    part = np.array(a["part"] + [None] * (len(V) - n0), dtype=object)
+    cols = [np.ones(len(V))]; changes = []
+
+    def turn(pivot, ang):
+        th = -ang; c, s = math.cos(th), math.sin(th)
+        M = np.eye(4); M[1:3, 1:3] = [[c, -s], [s, c]]; M[:3, 3] = pivot - M[:3, :3] @ pivot
+        return M
+
+    def limb(w, pivot, named):
+        first = len(cols); at = w * RAMP; low = np.clip(np.floor(at), 0, RAMP - 1); part_up = at - low
+        for k in range(1, RAMP + 1):
+            col = np.where(low == k, 1.0 - part_up, 0.0) + np.where(low == k - 1, part_up, 0.0)
+            cols.append(col); cols[0] = cols[0] - col
+        for name, ang in named:
+            changes.append((name, {first + k - 1: turn(pivot, ang * k / RAMP) - np.eye(4) for k in range(1, RAMP + 1)}))
+
+    for sx, side in ((-1, "l"), (1, "r")):
+        hip = HIP * np.array([sx, 1, 1])
+        limb((part == "leg_" + side) * _ramp(hip[1] - V[:, 1], 0.0, 0.07 * S), hip,
+             (("leg_%s_f" % side, LEG_SWING), ("leg_%s_b" % side, -LEG_SWING)))
+        sho = SHOULDER[a["kind"]] * np.array([sx, 1, 1])
+        limb((part == "arm_" + side) * _ramp(np.linalg.norm(V - sho, axis=1), 0.015 * S, 0.07 * S), sho,
+             (("arm_%s_b" % side, -ARM_BACK), ("arm_%s_f1" % side, ARM_F1), ("arm_%s_f2" % side, ARM_F2)))
+    blink = {}
+    for e0, e1, p, up in a["eyes"]:      # an eye's drawing squeezed flat along its height
+        col = np.zeros(len(V)); col[e0:e1] = 1.0; cols[0] = cols[0] - col
+        D = np.zeros((4, 4)); D[:3, :3] = -BLINK * np.outer(up, up); D[:3, 3] = BLINK * np.array(up) * float(np.dot(up, p))
+        blink[len(cols)] = D; cols.append(col)
+    changes.append(("blink", blink))
+    return np.stack(cols, 1), [np.eye(4) for _ in cols], changes
 
 
 def export(path, hair="short", kind="a"):
@@ -272,10 +318,16 @@ def export(path, hair="short", kind="a"):
     place = lambda Q: turn((Q - centre) * scale).astype(np.float32)
     pos = place(V0[src])
     nor = turn(N0[src]).astype(np.float32)
-    targets = [(name, place(Vm[src]) - pos, np.zeros_like(nor)) for name, Vm in moves(a).items()]
+    Wn, rest, changes = rigged(a)
+    bones, follow = _follows(Wn)
+    G = np.eye(4); G[:3, :3] = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], float) * scale; G[:3, 3] = -G[:3, :3] @ centre
+    Gi = np.linalg.inv(G)
+    rigging = dict(bones=bones[src], follow=follow[src], rest=[_flat(G @ R @ Gi) for R in rest],
+                   moves={m: {str(k): _flat(G @ D @ Gi) for k, D in c.items()} for m, c in changes},
+                   box=[[round(float(v), 6) for v in pos.min(0)], [round(float(v), 6) for v in pos.max(0)]])
     colours = np.c_[np.clip(np.array(vcol, np.float32), 0, 1), np.ones(len(vcol), np.float32)]
     uv = np.zeros((len(pos), 2), np.float32)
     uv[:, 0] = (np.array(vreg) + 0.5) / 8.0
     name = "farmer_%s_%s" % (kind, hair)
-    _write(path, name, pos, nor, colours, tri.reshape(-1), targets, uv=uv)
-    return dict(name=name, vertices=len(pos), triangles=len(tri), targets=[t[0] for t in targets])
+    _write(path, name, pos, nor, colours, tri.reshape(-1), [], uv=uv, rigging=rigging)
+    return dict(name=name, vertices=len(pos), triangles=len(tri), targets=[m for m, _c in changes], bones=len(rest))

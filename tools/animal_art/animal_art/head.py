@@ -4,7 +4,7 @@ import numpy as np
 from .geometry import cast
 
 
-EYE_SIZE = 0.87
+EYE_SIZE = 0.96
 
 
 LASH = 1.55

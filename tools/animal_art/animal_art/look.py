@@ -15,13 +15,13 @@ AO_STRENGTH = 1.9
 LIT_COL, SHADE_COL = np.array([1.0, 0.985, 0.95], np.float32), np.array([0.8, 0.78, 0.9], np.float32)
 
 
-LIGHT_TOP, LIGHT_UNDER = 1.04, 0.76          # backs a little lighter, undersides a little darker
+LIGHT_TOP, LIGHT_UNDER = 1.05, 0.72          # backs a little lighter, undersides a little darker
 
 
 def bake(a):
     """Painted light, per vertex: how shut-in each point is (a crease, an armpit, close to the ground) is read off the
     animal's own shapes, and turned into a soft coloured shadow; backs are lightened and undersides darkened."""
-    V, n0 = a["V"], a["nsoft"]; P = V[:n0]; N = a["vn"][:n0].copy()
+    V, n0 = a["V"], a["nsoft"]; P = V[:n0]; N = a.get("mesh_n", a["vn"])[:n0].copy()   # (the mesh's own facing: shadow is read gently)
     fp, fm = field(P + N * 0.04, a["shapes"]), field(P - N * 0.04, a["shapes"])
     flip = fp < fm; N[flip] *= -1
     # the shapes' own measure of distance runs slow or fast from place to place; read its local rate at each point,

@@ -549,7 +549,7 @@ static func _head_mesh(id: String) -> ArrayMesh:
 	var mi := Animal3D._first_mesh(model) if model != null else null
 	var out: ArrayMesh = null
 	if mi != null and mi.mesh != null:
-		var all := mi.get_aabb()
+		var all := AnimalBones.box_of(mi)
 		var bird := AnimalRig.of(Game.item_data(id)).type == "bird"   # (a bird's head sits high on a breast)
 		var front := all.end.x - all.size.x * (BIRD_HEAD_SHARE if bird else HEAD_SHARE)
 		var above := all.position.y + all.size.y * (BIRD_HEAD_ABOVE if bird else HEAD_ABOVE)
@@ -562,6 +562,8 @@ static func _head_mesh(id: String) -> ArrayMesh:
 			if kept.is_empty():
 				continue
 			arrays[Mesh.ARRAY_INDEX] = kept
+			arrays[Mesh.ARRAY_BONES] = null     # (a head at a window is still: it follows no bones)
+			arrays[Mesh.ARRAY_WEIGHTS] = null
 			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 			out.surface_set_material(out.get_surface_count() - 1, mi.get_active_material(k))
 		if out.get_surface_count() == 0:

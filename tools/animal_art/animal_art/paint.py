@@ -10,6 +10,17 @@ from .shapes import E
 BANDS = 5      # the flat bands a coat takes to turn from one colour to another (see _steps)
 
 
+SECOND_PALE = 0.86   # the second tone of a pale coat's curls and locks, against the coat..
+SECOND_DARK = 1.22   # ..and of a dark coat's (lighter: a darker tone would be lost on it)
+
+
+def second(col):
+    """The coat's second tone: every other curl of a fleece and lock of a mane is drawn in it, so each is a form
+    of its own with a clean edge, not a ripple in one mass."""
+    c = np.array(col, float)
+    return tuple(c * SECOND_PALE) if c.mean() > 0.45 else tuple(np.minimum(1.0, c * SECOND_DARK + 0.03))
+
+
 def _span(shapes):
     """Where the animal starts and ends along its length."""
     lo, hi = [], []
