@@ -35,6 +35,7 @@ var camera_2d: Camera2D
 var camera: Camera3D
 var lightning: Lightning3D   # a storm's bolts and their flash (WeatherEvents.struck)
 var sun: DirectionalLight3D
+var painted: PaintedCrops   # the crops as painted pictures, when they are (Release "painted_crops")
 var fill: DirectionalLight3D     # soft sky light from the side away from the sun, so shade keeps its form
 var environment: Environment
 var ground: Ground3D
@@ -102,6 +103,11 @@ func _ready() -> void:
 	add_child(plots)
 	crops = Crops3D.new()
 	add_child(crops)
+	if Release.on("painted_crops"):
+		# Crops are painted pictures (PaintedCrops); the modelled plants are still kept up, unseen, for what reads them.
+		painted = PaintedCrops.new()
+		add_child(painted)
+		crops.visible = false
 	glints = Glints3D.new()   # (over ripe plots that hold a find)
 	add_child(glints)
 	objects = Objects3D.new()
@@ -197,6 +203,8 @@ func _update_changed_plots() -> void:
 	_changed_all = false
 	plots.update(indices)
 	crops.update(indices)
+	if painted != null:
+		painted.update(indices)
 	glints.update(indices)
 	ground.update_tiles(indices)
 

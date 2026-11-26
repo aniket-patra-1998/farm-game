@@ -135,6 +135,22 @@ tones of the kind's leaf colour (`TreeModel.tones`), lighter where the sun falls
   before (`ModelKit.sway_all`, `touch_all`).
 - Fruit on a leafy crown is small and many (`CROWN_FRUIT`), sitting on the crown's skin.
 
+## Crops are painted pictures
+
+Owner, 26 Nov: crops as the classic farm games paint them, and a simpler way than modelling each plant. The camera
+never turns, so a flat picture facing it is the plant.
+
+- `tools/paint_plants.py` paints every crop as a recipe of shapes (SVG text, `art/painted/crops/<name>.paint`): no
+  black outlines, flat tones, light from the upper left, the tree crowns' greens. `--check` is in the pre-push check.
+- Four looks to a crop: the sprouts every crop shares, its plants part grown, ripe, and the ripe picture gone dry.
+- `PaintedCrops` turns a recipe into a texture on the device the first time it is shown, and draws one card to a
+  plot, one draw to a picture. A card stands on its bed's nearest corner, so it covers its own bed and sits behind
+  whatever stands in front of the plot.
+- `painted3d.gdshader` lights the whole card alike, as a tree's crown is, so it dims at night and darkens in rain;
+  it bends in the wind from its foot.
+- Switch: `Release.on("painted_crops")`. The modelled plants (`Crops3D`) are still kept up, unseen, until the
+  flowers, the Market pictures and the harvest pop are painted too.
+
 ## Still to come (in this order)
 
 1. The other animal homes as kits (Cow Shed, Sheep Pen, Goat Pen, Horse Stable, Pig Pen, Duck Pond), each with

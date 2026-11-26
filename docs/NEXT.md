@@ -3,6 +3,14 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Crops painted (26 Nov, branch painted-crops, on top of trees-light)
+- The owner picked painted pictures over 3D models for crops and flowers (docs/WORLD.md "Crops are painted
+  pictures"). This branch does the crops on the farm: all 74, four looks each.
+- Measured: 149 recipes, 8.9 MB as text, 0.5 MB zipped; a picture takes 10 to 20 ms to make on a desktop.
+- Not done: flowers (still 3D), Market pictures of crops (still made from the models), the harvest pop for a
+  card, keeping made pictures on disk (each is made again every run), removing Crops3D and the crop models.
+- Not measured: the size in a build, the time to make a picture on a phone, frame time.
+
 ## Trees repainted (26 Nov, branch trees-light)
 - The owner asked for trees like the classic farm games' and picked the look from samples. Built into `TreeModel`:
   one crown shingled in leaf sprays, five flat tones, a trunk forking low (docs/WORLD.md "A tree is one painted crown").

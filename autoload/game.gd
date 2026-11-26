@@ -354,6 +354,7 @@ func _exit_tree() -> void:
 	ModelKit._facet_mesh = null
 	ModelKit._facet_low = null
 	PondModel.release_statics()
+	PaintedCrops.release_statics()
 	WorldFx.release_statics()
 
 
