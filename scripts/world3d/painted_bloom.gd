@@ -19,6 +19,7 @@ static var _quad: QuadMesh    # the one card every flower is drawn on
 
 var kind := ""     # its family: rose, tulip..
 var heads := 1     # 1, or 3 for a full bloom
+var clocked := true   # false: it is only ever shown open (a picture, a flower in a garden): it watches no clock
 var _opens := 0.0  # when it is ready (Game.now)
 var _dries := NEVER   # ..and when it has withered
 var _card: MeshInstance3D
@@ -49,15 +50,19 @@ static func create(id: String, fp: Vector2i) -> PaintedBloom:
 	return out
 
 
-## Flower `id` open, as a card facing `towards` (its Market picture: IconMaker).
-static func picture_card(id: String, towards: Basis) -> Node3D:
-	var flower := create(id, Vector2i.ONE)
+## Flower `id` open, as a card facing `towards`, standing on the origin (its Market picture: IconMaker; a flower in
+## the Bloom Garden; a bouquet's).
+static func picture_card(id: String, towards: Basis) -> PaintedBloom:
+	var flower := create(id, Vector2i.ZERO)
+	flower.clocked = false
 	flower._show(OPEN)
 	flower._card.transform = Transform3D(towards, Vector3(0.0, flower._quad.size.y * 0.5, 0.0))
 	return flower
 
 
 func _ready() -> void:
+	if not clocked:
+		return
 	var timer := Timer.new()
 	timer.wait_time = CHECK
 	timer.autostart = true

@@ -349,7 +349,7 @@ func _exit_tree() -> void:
 	# (the art builders' own caches, cleared from here so their files, fingerprinted for the exported art, stay as
 	# they are: a change to them means re-exporting every plant and building)
 	for cache: Variant in [ModelKit._materials, ModelKit._meshes, ModelKit._white, ModelKit.paint_like,
-			CropModels._cache, CropModels._files, DecorMotion._materials]:
+			DecorMotion._materials]:
 		cache.clear()
 	ModelKit._facet_mesh = null
 	ModelKit._facet_low = null

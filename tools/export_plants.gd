@@ -1,57 +1,34 @@
 class_name ExportPlants
 extends Node
-## Exports every tree, bloom and crop look to files (docs/ASSETS.md: art is made ahead of time as files, asked
-## for by name through AssetRegistry), from the code builders that author them (TreeModel, BloomModel,
-## CropModels/CropForms).
-## Scenes, not glTF: the leaves' and crops' own shaders (sway, growth) only survive in Godot's format.
+## Exports every tree look to files (docs/ASSETS.md: art is made ahead of time as files, asked for by name through
+## AssetRegistry), from the code builder that authors them (TreeModel). Crops and flowers are not models: they are
+## painted pictures (tools/paint_plants.py).
+## Scenes, not glTF: the leaves' own shader (sway) only survives in Godot's format.
 ##   art/models/trees/<id>.scn    a lone tree: parts when_look_<n> (n < TREE_LOOKS), the whole tree
-##   art/models/blooms/<id>.scn   a bloom on its own: parts when_look_<n> (n < BLOOM_LOOKS), the whole bloom
-##   art/models/crops/<form>.scn  a crop form: one MeshInstance3D per stage, named after it
 ## Lists them in data/assets.json. Run: godot --headless --path . res://tools/export_plants.tscn
 
 const TREES := "res://art/models/trees/"
-const BLOOMS := "res://art/models/blooms/"
-const CROPS := "res://art/models/crops/"
 
 
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(TREES))
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(BLOOMS))
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(CROPS))
 	var listed: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AssetRegistry.DATA))
 	var assets: Dictionary = listed["assets"]
 	var n := 0
 	for id: String in Game.item_order:
-		var kind := str(Game.items[id].get("kind", ""))
 		# (A limited tree has no file: there are five of every tree, some 60 MB of them, so each is built on the
 		# device the first time it is shown and kept there: ModelStore.)
-		if not kind in ["tree", "bloom"] or Game.limited.is_limited(id):
+		if str(Game.items[id].get("kind", "")) != "tree" or Game.limited.is_limited(id):
 			continue
-		var path := (TREES if kind == "tree" else BLOOMS) + id + ".scn"
-		_save(_tree(id) if kind == "tree" else _bloom(id), path)
-		assets[id] = {"model": path, "budget": kind}
-		n += 1
-	for form: String in crop_forms():
-		var path := CROPS + form + ".scn"
-		_save(_crop(form), path)
-		assets[AssetRegistry.CROP + form] = {"model": path, "budget": "crop"}
+		var path := TREES + id + ".scn"
+		_save(_tree(id), path)
+		assets[id] = {"model": path, "budget": "tree"}
 		n += 1
 	FileAccess.open(AssetRegistry.DATA, FileAccess.WRITE).store_string(JSON.stringify(listed, "  ", false) + "\n")
 	print("exported %d plant files" % n)   # not-ui (a tool's log)
 	# The files are now what the builders make: record it, and the pictures' fingerprints (tools/make_art_versions.py).
 	OS.execute("python3", [ProjectSettings.globalize_path("res://tools/make_art_versions.py"), "--exported", "plants"])
 	get_tree().quit()
-
-
-## Every crop form the field draws (each crop's form, or its shape's).
-static func crop_forms() -> Array[String]:
-	var out: Array[String] = []
-	for crop_id: String in Game.crops:
-		var form := CropForms.form_of(crop_id, str((Game.crops[crop_id] as Dictionary).get("shape", "berry")))
-		if not form in out:
-			out.append(form)
-	out.sort()
-	return out
 
 
 func _tree(id: String) -> Node3D:
@@ -65,31 +42,6 @@ func _tree(id: String) -> Node3D:
 		var tree := Objects3D.tree_look(id, 0, look, false)
 		tree.name = "tree"   # not-ui
 		holder.add_child(tree)
-	return root
-
-
-func _bloom(id: String) -> Node3D:
-	var root := Node3D.new()
-	root.name = id
-	for look in Objects3D.BLOOM_LOOKS:
-		var holder := Node3D.new()
-		holder.name = "when_look_%d" % look
-		root.add_child(holder)
-		# (one model for its whole life, bud to withered: shaders/bloom3d.gdshader)
-		var bloom := Objects3D.bloom_look(id, 0, look, false)
-		bloom.name = "bloom"   # not-ui
-		holder.add_child(bloom)
-	return root
-
-
-func _crop(form: String) -> Node3D:
-	var root := Node3D.new()
-	root.name = form
-	for stage: String in CropModels.STAGES:
-		var mi := MeshInstance3D.new()
-		mi.name = stage
-		mi.mesh = CropModels.mesh(form, stage, false)
-		root.add_child(mi)
 	return root
 
 

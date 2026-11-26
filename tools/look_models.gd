@@ -64,7 +64,7 @@ static func model(id: String, state := "default", uid := 7) -> Node3D:
 		"decor":
 			return DecorModel.build(it, fp, {"id": id, "uid": uid})
 		"bloom":
-			return BloomModel.build(it, {"id": id, "uid": uid, "t": Game.now() - int(it.get("cycle_seconds", 86400)) - 1})
+			return PaintedBloom.picture_card(id, PaintedCrops.facing())
 		"young":
 			return DecorModel.build_young(it, {"id": id, "uid": uid, "fed": 4}, 0.5)
 	return building(id, state, uid)
@@ -103,24 +103,21 @@ static func building(id: String, state: String, uid: int) -> Node3D:
 	return node
 
 
-## A crop at young, ripe and withered side by side, as the field draws it (crop material, produce coloured).
+## A crop part grown, ripe and withered side by side: its painted pictures, each on a card (PaintedCrops).
 static func crop_row(id: String) -> Node3D:
-	var crop: Dictionary = Game.crops[id]
-	var form := CropForms.form_of(id, str(crop.get("shape", "berry")))
-	var mat := ShaderMaterial.new()
-	mat.shader = load("res://shaders/crop3d.gdshader")
-	mat.set_shader_parameter("produce_colour", Color.html(str(crop.get("color", "#e2453c"))))
 	var row := Node3D.new()
+	var size := PaintedCrops.PICTURE * PaintedCrops.tiles_per_pixel()
 	for k in 3:
-		var mmi := MultiMeshInstance3D.new()
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.use_custom_data = true
-		mm.mesh = CropModels.mesh(form, ["young", "ripe", "withered"][k])
-		mm.instance_count = 1
-		mm.set_instance_transform(0, Transform3D(Basis().scaled(Vector3.ONE * Crops3D.PLANT_SCALE), Vector3(k * 1.0, 0, 0)))
-		mm.set_instance_custom_data(0, Crops3D.pack(0.0, 0.0, false))
-		mmi.multimesh = mm
-		mmi.material_override = mat
-		row.add_child(mmi)
+		var quad := QuadMesh.new()
+		quad.size = size
+		var mat := ShaderMaterial.new()
+		mat.shader = PaintedCrops.SHADER
+		mat.set_shader_parameter("picture", PaintedCrops.picture(id + ("_young" if k == 0 else "_ripe")))
+		mat.set_shader_parameter("card", size)
+		mat.set_shader_parameter("dried", 1.0 if k == 2 else 0.0)
+		var card := MeshInstance3D.new()
+		card.mesh = quad
+		card.material_override = mat
+		card.transform = Transform3D(PaintedCrops.facing(), Vector3(k * 1.2, size.y * 0.5, 0))
+		row.add_child(card)
 	return row

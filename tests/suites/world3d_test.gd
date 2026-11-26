@@ -15,8 +15,6 @@ const LOOK_IS_CONTENTS := ["orchard", "bloom_garden"]
 const BUDGET_SEED := 7   # the showcase the draw budget is measured on (test 338)
 
 
-
-
 func test_94_the_3d_world_lines_up_with_the_2d_grid() -> void:
 	# Every tile corner and centre maps to the same place both ways.
 	for p: Vector2i in [Vector2i(0, 0), Vector2i(3, 7), Vector2i(11, 2), Vector2i(29, 29)]:
@@ -61,21 +59,6 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 		for size: String in ((data["buildings"][id] as Dictionary).get("levels", {}) as Dictionary):
 			for f: Dictionary in (data["buildings"][id]["levels"][size] as Dictionary).get("features", []):
 				_check(known.has(f.get("type")), "%s size %s: feature %s is buildable" % [id, size, f.get("type")])
-	# Every crop shape at every stage makes a mesh with something in it.
-	for shape in ["grain", "stalk", "berry", "fruit", "gourd", "root", "leafy", "flower", "spike", "fluff"]:
-		for stage in CropModels.STAGES:
-			var m := CropModels.mesh(shape, stage)
-			_check(m.get_surface_count() == 1 and m.surface_get_array_len(0) > 3, "%s %s has a mesh" % [shape, stage])
-	# Every crop has a form, and every form builds every stage.
-	for crop_id: String in CropForms.crops():
-		_check(g.crops.has(crop_id), "%s in crop_forms.json is a real crop" % crop_id)
-		_check(not CropForms.spec(CropForms.form_of(crop_id, "")).is_empty(), "%s has a form" % crop_id)
-	for crop_id: String in g.crops:
-		_check(CropForms.crops().has(crop_id), "%s has a crop form" % crop_id)
-	for form: String in CropForms.forms():
-		for stage in CropModels.STAGES:
-			var m := CropModels.mesh(form, stage)
-			_check(m.get_surface_count() == 1 and m.surface_get_array_len(0) > 3, "%s %s form has a mesh" % [form, stage])
 	_done(g)
 
 
@@ -423,7 +406,6 @@ func test_101_the_ground_knows_what_stands_on_it() -> void:
 	await get_tree().process_frame
 	_check(ground.shade_at(inside).x < 0.05, "moved away, its old spot is open grass again")
 	ground.queue_free()
-
 
 
 func test_102_bigger_buildings_look_bigger_and_sites_build_up() -> void:
@@ -832,8 +814,6 @@ func test_112_models_keep_to_a_phone_s_draw_budget() -> void:
 				_check(draws <= TREE_DRAWS, "a fruiting %s is %d draws (at most %d)" % [id, draws, TREE_DRAWS])
 				baked.free()
 	_done(g)
-
-
 
 
 ## Draws a model makes: the surfaces of its meshes (only those casting shadows, if `shadow_only`).
@@ -1294,73 +1274,6 @@ func test_193_anything_can_be_lifted_and_carried() -> void:
 	main.free()
 
 
-## What a growing plant carries for the shader, and when the farm redraws it: the numbers stay small, a stage
-## spans the right stretch of the growing time, and growing within a stage changes nothing to rebuild.
-func test_207_a_growing_plant_carries_its_stage_and_the_shader_does_the_growing() -> void:
-	# (Instance data stays small: the compatibility renderer keeps it as 16-bit floats, which overflow past 65,504
-	# and went black when a colour was packed into one big number.)
-	for started in [-200000.0, 0.0, 12.5, 90000.0]:
-		for length in [0.0, 7200.0, 172800.0, 345600.0]:
-			var data := Crops3D.pack(started, length, true)
-			_check(is_equal_approx(data.r, started / 60.0) and is_equal_approx(data.g, length / 60.0) and data.b == 1.0,
-				"start, length, richness are carried (%s)" % data)
-			for v: float in [data.r, data.g, data.b]:
-				_check(absf(v) < 20000.0, "%s is small enough for a 16-bit float" % v)
-	var saved_plots: Array = Game.plots.duplicate(true)
-	var saved_offset := Game.debug_time_offset
-	var crop_id := str(Game.crops.keys()[0])
-	var grow := float(Game.crops[crop_id]["grow_seconds"])
-	for k in Game.plots.size():
-		Game.plots[k] = {"state": "grass"}   # only this plot grows, so only it can change the picture
-	var i := Game.index_of(1, 1)
-	Game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
-	var seeds := Crops3D.stage_of(i)
-	_eq(seeds, ["seeds", 0.0, 0.0, 0.0, false], "just planted: seeds, nothing growing yet")
-	var planted := float(Game.plots[i]["planted_at"])
-	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.SPROUT_FROM + 0.01))
-	var sprout := Crops3D.stage_of(i)
-	_eq(str(sprout[0]), "sprout", "then a sprout")
-	_check(is_equal_approx(float(sprout[1]), planted + Crops3D.SPROUT_FROM * grow), "that began at the sprouting point")
-	var sprouting := (Crops3D.YOUNG_FROM - Crops3D.SPROUT_FROM) * grow
-	_check(is_equal_approx(float(sprout[2]), sprouting), "and lasts until it is young")
-	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.YOUNG_FROM + 0.01))
-	var young := Crops3D.stage_of(i)
-	_eq(str(young[0]), "young", "then a young plant")
-	var finishes := float(young[1]) + float(young[2])
-	_check(is_equal_approx(finishes, planted + Crops3D.RIPEN_FROM * grow), "which grows until the ripe plant takes over")
-	_check(float(young[3]) >= Crops3D.FROM_LEAST and float(young[3]) <= Crops3D.FROM_MOST,
-		"starting at the height the sprout ended at (%.2f of its own)" % float(young[3]))
-	# The ripe plant is drawn from before it is ripe: growing still, its fruit colouring up, so nothing snaps.
-	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.RIPEN_FROM + 0.01))
-	var ripening := Crops3D.stage_of(i)
-	_eq(str(ripening[0]), "ripe", "then the ripe plant, before it is ripe")
-	_check(bool(ripening[4]), "its fruit ripening")
-	_check(is_equal_approx(float(ripening[1]) + float(ripening[2]), planted + grow), "done growing exactly when ripe")
-	_check(float(ripening[3]) >= Crops3D.FROM_LEAST and float(ripening[3]) <= Crops3D.FROM_MOST,
-		"starting at the height the young plant ended at (%.2f of its own)" % float(ripening[3]))
-	_eq(Game.field.phase(i), GameState.Phase.GROWING, "(the crop itself is still growing)")
-	# Ripe: the same model stays, and it carries when it will start to wilt, and for how long, before it withers.
-	Game.debug_time_offset = saved_offset + int(grow) + 5
-	var ripe := Crops3D.stage_of(i)
-	_eq(str(ripe[0]), "ripe", "ripe: the same plant, no change of model")
-	_check(not bool(ripe[4]) and float(ripe[2]) < 0.0, "now carrying its wilting (a negative stretch)")
-	var window := float(Game.field.window_of(Game.plots[i], Game.crops[crop_id]))
-	_check(is_equal_approx(float(ripe[1]) - float(ripe[2]), planted + grow + window), "which ends as it withers")
-	_check(is_equal_approx(-float(ripe[2]), Crops3D.WILT_SHARE * window), "and takes the last part of its ripe time")
-	var carried := Crops3D.pack(60.0, 120.0, true, 0.5, 0.4, true)
-	_check(is_equal_approx(carried.b, 1.4) and is_equal_approx(Crops3D.mastered_in(carried), 0.5) and carried.a >= 1.0,
-		"richness, start size, mastery and ripening share two numbers and come back whole (%s)" % carried)
-	Game.debug_time_offset = saved_offset + int(grow * (Crops3D.YOUNG_FROM + 0.01))
-	# Within a stage the picture does not change, so nothing is laid out again as time passes.
-	var crops := Crops3D.new()
-	var before: Array = crops.call("_look_of", i)
-	Game.debug_time_offset += int(grow * 0.05)
-	_eq(crops.call("_look_of", i), before, "growing within a stage leaves the plot's look as it was")
-	crops.free()
-	Game.debug_time_offset = saved_offset
-	Game.plots = saved_plots
-
-
 ## Trees in a row crowd each other's crowns on screen; a tap in the middle of a crown still picks that tree, and so
 ## does a tap on its trunk.
 func test_208_a_tap_on_a_tree_in_a_grove_picks_that_tree() -> void:
@@ -1617,7 +1530,7 @@ func test_315_a_big_farm_is_built_over_frames_not_in_one_long_freeze() -> void:
 
 func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 	var keys := ["shadows", "shadow_splits", "shadow_distance", "glow", "scale", "lod_pixels", "pose_every",
-		"crop_shadows", "max_fps", "screen_grade", "msaa", "shadow_size", "animal_shadows", "ground_vertex_light"]
+		"max_fps", "screen_grade", "msaa", "shadow_size", "animal_shadows", "ground_vertex_light"]
 	for name: String in Quality.LEVELS:
 		for k: String in keys:
 			_check(Quality.value(k, name) != null, "%s sets %s" % [name, k])
@@ -1637,8 +1550,6 @@ func test_316_graphics_quality_levels_set_the_world_and_are_kept() -> void:
 		_check(is_equal_approx(vp.mesh_lod_threshold, float(Quality.value("lod_pixels"))), "%s: detail" % name)
 		_eq(vp.msaa_3d, Quality.MSAA[int(Quality.value("msaa"))], "%s: anti-aliasing" % name)
 		_eq(Engine.max_fps, int(Quality.value("max_fps")), "%s: frame cap" % name)
-		_eq(Crops3D._shadow_setting() != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
-			bool(Quality.value("crop_shadows")), "%s: crop shadows" % name)
 		_eq(Ground3D.ground_shader().resource_path, Ground3D.VERTEX_SHADER if bool(Quality.value("ground_vertex_light"))
 			else Ground3D.PIXEL_SHADER, "%s: ground light" % name)
 	_check(int(Quality.value("max_fps", "low")) > 0, "low caps the frame rate (a cheap phone runs cooler)")
@@ -1849,94 +1760,6 @@ func test_321_ready_things_wear_the_one_sign_and_the_broken_barn_looks_broken() 
 	broken.free()
 
 
-## Plot by plot: planting or clearing one plot changes only that plot's plants (the rest of the field is kept as it
-## was), and what is drawn is exactly what a full rebuild would draw.
-func test_324_one_plot_changes_only_its_own_plants() -> void:
-	Game.saving_enabled = false
-	Game.reset_game()
-	Game.farm_size = 20
-	var crop_id: String = Game.crops.keys()[0]
-	for r in 20:
-		for c in 20:
-			Game.plots[Game.index_of(r, c)] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
-	var crops := Crops3D.new()
-	add_child(crops)
-	var full := crops.plant_count()
-	_eq(full, 400 * Crops3D.spots_of(crop_id).size(), "a planted 20x20 field: its plants on every plot")
-	var i := Game.index_of(7, 7)
-	Game.plots[i] = {"state": "plowed"}
-	var began := Time.get_ticks_usec()
-	crops.update([i])
-	var one := Time.get_ticks_usec() - began
-	_eq(crops.plant_count(), full - Crops3D.spots_of(crop_id).size(), "clearing one plot takes away its plants")
-	Game.plots[i] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
-	crops.update([i])
-	_eq(crops.plant_count(), full, "and planting it again brings them back")
-	began = Time.get_ticks_usec()
-	crops.update()
-	var all := Time.get_ticks_usec() - began
-	_eq(crops.plant_count(), full, "a full look changes nothing more")
-	var fresh := Crops3D.new()
-	add_child(fresh)
-	_eq(fresh.plant_count(), crops.plant_count(), "the same as a farm built from scratch")
-	print("PERF one plot %d us, whole field (nothing changed) %d us" % [one, all])  # not-ui
-	crops.queue_free()
-	fresh.queue_free()
-	Game.reset_game()
-
-
-func test_326_beds_tufts_and_plants_follow_each_plot_and_a_smaller_farm() -> void:
-	Game.saving_enabled = false
-	Game.reset_game()
-	Game.farm_size = 12
-	var crop_id: String = Game.crops.keys()[0]
-	for r in 12:
-		for c in 12:
-			Game.plots[Game.index_of(r, c)] = {"state": "planted", "crop": crop_id, "planted_at": Game.now()}
-	var plots := Plots3D.new()
-	var ground := Ground3D.new()
-	var crops := Crops3D.new()
-	for n: Node in [plots, ground, crops]:
-		add_child(n)
-	var tufts := ground.farm_tuft_count()
-	var i := Game.index_of(3, 4)
-	Game.plots[i] = {"state": "grass"}
-	plots.update([i])
-	ground.update_tiles([i])
-	var fresh_plots := Plots3D.new()
-	var fresh_ground := Ground3D.new()
-	add_child(fresh_plots)
-	add_child(fresh_ground)
-	_eq(plots.buffer(), fresh_plots.buffer(), "one plot back to grass: every bed slot matches a field built from scratch")
-	_check(ground.farm_tuft_count() > tufts, "and grass grows tufts on it again")
-	_eq(ground.farm_tuft_count(), fresh_ground.farm_tuft_count(), "the same tufts as a fresh ground")
-	# A load or a reset can make the farm smaller: nothing it drew past the new edge stays behind.
-	Game.farm_size = 6
-	crops.update()
-	var small := Crops3D.new()
-	add_child(small)
-	_eq(crops.plant_count(), small.plant_count(), "plants on the smaller farm only")
-	_eq(crops.plant_count(), 35 * Crops3D.spots_of(crop_id).size(),
-		"six by six plots of plants, less the one back to grass")
-	plots.update([])
-	ground.update_tiles([])
-	var small_plots := Plots3D.new()
-	var small_ground := Ground3D.new()
-	add_child(small_plots)
-	add_child(small_ground)
-	_eq(plots.buffer(), small_plots.buffer(), "the beds follow the smaller farm")
-	_eq(ground.farm_tuft_count(), small_ground.farm_tuft_count(), "and so do the tufts")
-	var tufts_small := ground.farm_tuft_count()
-	ground.update_tiles([Game.index_of(10, 10)])
-	_eq(ground.farm_tuft_count(), tufts_small, "a tile off the farm now is ignored")
-	small_plots.queue_free()
-	small_ground.queue_free()
-	for n: Node in [plots, ground, crops, fresh_plots, fresh_ground, small]:
-		n.queue_free()
-	Game.reset_game()
-
-
-
 ## Decorations and blooms are built once per look and shared (Instancer): two of a kind in the same look share
 ## their meshes, and what changes a look (a sign's mastered crop) gives a new one; a bloom's
 ## life is its shader's, not a new look.
@@ -1986,38 +1809,6 @@ func _mesh_ids(node: Node) -> Array:
 	for mi in node.find_children("*", "MeshInstance3D", true, false):
 		out.append((mi as MeshInstance3D).mesh.get_instance_id())
 	return out
-
-
-## The crops' clock wakes only when the soonest plot is due to change look: before then a tick changes nothing.
-func test_333_the_crop_clock_wakes_only_when_a_plot_is_due() -> void:
-	Game.saving_enabled = false
-	Game.reset_game()
-	var crop: String = Game.crop_order[0]
-	var grow := int(Game.crops[crop]["grow_seconds"])
-	for k in Game.plots.size():
-		Game.plots[k] = {"state": "grass"}   # (only this plot grows: a new farm's own crops have their own due times)
-	var i := Game.index_of(1, 1)
-	Game.plots[i] = {"state": "planted", "crop": crop, "planted_at": Game.now()}
-	var crops := Crops3D.new()
-	add_child(crops)
-	_eq(crops.due(), int(Game.plots[i]["planted_at"]) + ceili(Crops3D.SPROUT_FROM * grow), "due when the seeds sprout")
-	var seeds: Array = crops._plot_look[i]
-	crops._on_clock()
-	_eq(crops._plot_look[i], seeds, "a tick before then changes nothing")
-	Game.debug_time_offset += ceili(Crops3D.SPROUT_FROM * grow) + 1
-	crops._on_clock()
-	_check(crops._plot_look[i] != seeds, "at the due time the sprouts show")
-	_eq(crops.due(), int(Game.plots[i]["planted_at"]) + ceili(Crops3D.YOUNG_FROM * grow), "next: young plants")
-	Game.debug_time_offset += ceili((Crops3D.YOUNG_FROM - Crops3D.SPROUT_FROM) * grow)
-	crops._on_clock()
-	_eq(crops.due(), int(Game.plots[i]["planted_at"]) + ceili(Crops3D.RIPEN_FROM * grow), "then: the ripe plant, ripening")
-	Game.debug_time_offset += grow
-	crops._on_clock()
-	_eq(Crops3D.stage_of(i)[0], "ripe", "(ripe now)")
-	_check(crops.due() > Game.now(), "and next it withers")
-	crops.free()
-	Game.debug_time_offset = 0
-	Game.reset_game()
 
 
 ## Far out over a big farm, the signs over small things fade and the buildings' stay; the night stays playable.
@@ -2112,43 +1903,6 @@ func test_345_a_kept_model_comes_back_the_same_and_shares_its_materials() -> voi
 		n.free()
 	ModelStore._remove_tree("user://test_models")
 	ModelStore.stamp = ""
-
-
-func test_353_crops_stand_level_and_show_their_harvest() -> void:
-	# Every crop stands about as tall as the next (data/crop_forms.json "look"), ripe or growing.
-	var cap := CropForms.look("height", 0.0)
-	_check(cap > 0.0, "the height crops are kept to is set")
-	for form: String in CropForms.forms():
-		_check(CropModels.mesh(form, "ripe").get_aabb().end.y <= cap + 0.001, "ripe %s stands no taller than the rest" % form)
-		_check(CropModels.mesh(form, "young").get_aabb().end.y <= cap * CropForms.look("young", 1.0) + 0.001,
-			"growing %s stands no taller than the rest" % form)
-	# A tall plant's stem is shortened under its produce, which keeps its size and stays on top.
-	var tall := MeshBuilder.new()
-	tall.cone(Vector3.ZERO, 0.01, 0.01, 0.6, Color.GREEN, 4)
-	tall.ellipsoid(Vector3(0, 0.65, 0), Vector3.ONE * 0.05, Color(1, 1, 1, 0.0))
-	var fitted := CropModels._fit(tall.commit(), 0.2)
-	_check(absf(fitted.get_aabb().end.y - 0.2) < 0.001, "a tall plant is brought down to the shared height")
-	_check(absf(fitted.get_aabb().size.x - 0.1) < 0.005, "and its produce keeps its size")
-	var cols: PackedColorArray = CropModels._fit(tall.commit(), 0.2, 0.5).surface_get_arrays(0)[Mesh.ARRAY_COLOR]
-	_check(cols[0].g < 0.6, "a ripe plant's green leaves are darkened, so its harvest stands out")
-	# A crop drawn a plot at a time stands once on its plot, covers it from edge to edge and shows its produce.
-	_check(CropForms.is_plot("watermelon") and not CropForms.is_plot("no_such_form"), "crops are drawn a plot at a time")
-	_eq(Crops3D.spots_of("watermelon").size(), 1, "such a crop stands once on its plot")
-	_eq(Crops3D.spots_of("no_such_crop").size(), 9, "a crop whose form is not, in three rows of three")
-	for form: String in CropForms.forms():
-		if CropForms.is_plot(form):
-			var box := CropModels.mesh(form, "ripe").get_aabb()
-			_check(box.size.x * Crops3D.PLANT_SCALE >= 1.0 and box.size.z * Crops3D.PLANT_SCALE >= 1.0,
-				"ripe %s covers its plot, so plots of it join" % form)
-			_check(CropModels.mesh(form, "sprout").get_aabb().size.x * Crops3D.PLANT_SCALE > 0.5,
-				"%s sprouts all over its plot" % form)
-	# Small produce is drawn bigger than asked, big produce and leaves as asked.
-	for part: Array in [[0.01, 0.0, 2.0, "small produce is drawn bigger"], [0.06, 0.0, 1.0, "big produce as asked"],
-			[0.01, 1.0, 1.0, "a leaf as asked"]]:
-		var mb := MeshBuilder.new()
-		mb.produce_scale = 2.0
-		mb.ellipsoid(Vector3.ZERO, Vector3.ONE * float(part[0]), Color(1, 1, 1, float(part[1])))
-		_check(absf(mb.commit().get_aabb().size.y - 2.0 * float(part[0]) * float(part[2])) < 0.001, str(part[3]))
 
 
 ## Standalone decorations are drawn in batches (DecorLayer): what they cost to draw follows how many kinds
@@ -2505,23 +2259,6 @@ func test_577_the_building_builders_compile_when_a_look_is_built() -> void:
 	built.free()
 
 
-func test_583_the_crop_builders_compile_when_a_look_is_built() -> void:
-	# The farm asks what a crop form is (CropFormSpec) whenever it draws a plot; the builders (CropForms, 0.8k
-	# lines) load by path only when a look has to be built, which a crop drawn from its exported file never needs,
-	# so the start does not compile them (docs/PERF_RUN.md, the start).
-	for path: String in ["res://scripts/world3d/crop_models.gd", "res://scripts/world3d/crops_3d.gd",
-			"res://scripts/world3d/crop_form_spec.gd"]:
-		var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string(path), "", true)
-		_check(not RegEx.create_from_string("\\bCropForms\\b").search(code), "%s does not name the builders" % path)
-	_eq(CropFormSpec.builder().resource_path, CropFormSpec.BUILDER, "the builders come from their own file")
-	for form: String in CropFormSpec.forms():
-		_eq(CropFormSpec.spec(form), CropForms.spec(form), "%s: one description, asked either way" % form)
-	_eq(CropFormSpec.crops(), CropForms.crops(), "which crop is which form, asked either way")
-	var form := str(CropFormSpec.forms()[0])
-	_check(CropModels.mesh(form, "ripe", false).get_surface_count() > 0, "a crop is still built through the path")
-	_check(CropModels.mesh(form, CropModels.HARVEST, false).get_surface_count() > 0, "and its picture")
-
-
 ## A limited animal's own touch (CoatTouch): its catalog names one the game has, its file carries what the touch
 ## needs, its coat is drawn with the touch on, a long coat shakes out now and then and lets go a little fluff, and
 ## every limited animal shows off when tapped.
@@ -2607,10 +2344,6 @@ func test_582_limited_animals_have_their_own_touch() -> void:
 		b.free()
 	_check(lows[0] > -0.05 and lows[1] < -0.2, "a limited animal tosses its head (%.2f against %.2f)" % [lows[1], lows[0]])
 	_done(g)
-
-
-
-
 
 
 func test_582_the_decoration_builders_compile_when_a_look_is_built() -> void:

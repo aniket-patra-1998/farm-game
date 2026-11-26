@@ -3,7 +3,7 @@ extends RefCounted
 ## The one way to set a global shader value (project.godot's [shader_globals]: wetness, snow_cover, dark,
 ## wind...). It remembers each value, because the engine can only be asked for one in the editor; code that
 ## needs to know the farm's mood (item pictures are kept only on a clear, dry day) reads `value`. A test
-## forbids setting one any other way. The one exception is `crop_clock`, set every frame by Crops3D, which
+## forbids setting one any other way. The one exception is `crop_clock`, set every frame by CropClock, which
 ## nothing reads back.
 
 static var _values := {}

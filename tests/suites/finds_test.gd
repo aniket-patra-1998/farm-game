@@ -17,10 +17,6 @@ func test_08_pity_guarantees_a_collectible_within_30_harvests() -> void:
 	_done(g)
 
 
-
-
-
-
 func test_09_collection_trade_in() -> void:
 	var g := _farm()
 	var coll: Dictionary = g.collectibles.collections[0]
@@ -44,10 +40,6 @@ func test_09_collection_trade_in() -> void:
 	g.collectibles.coll_levels[coll["id"]] = 3
 	_eq(g.collectibles.coll_level(coll), 0, "after level 3 it starts over")
 	_done(g)
-
-
-
-
 
 
 func test_74_lost_animals_wander_in_and_are_never_sold() -> void:
@@ -85,10 +77,6 @@ func test_74_lost_animals_wander_in_and_are_never_sold() -> void:
 	_done(g)
 
 
-
-
-
-
 func test_75_breeds_have_their_own_babies() -> void:
 	var g := _farm(true)
 	_eq((g.catalog.get_def("hereford_cow") as AnimalDef).baby(), "hereford_calf", "a Hereford Cow has Hereford Calves")
@@ -122,10 +110,6 @@ func test_75_breeds_have_their_own_babies() -> void:
 	_done(g)
 
 
-
-
-
-
 func test_76_baby_turkey_and_ugly_duckling_grow_up() -> void:
 	var g := _farm()
 	_check(g.place_somewhere("baby_turkey"), "a baby turkey on the farm")
@@ -147,10 +131,6 @@ func test_76_baby_turkey_and_ugly_duckling_grow_up() -> void:
 	_eq(int(pond["inside"].get("swan", 0)), 2, "ugly ducklings grew into swans")
 	_check(not pond["inside"].has("ugly_duckling"), "no ducklings left")
 	_done(g)
-
-
-
-
 
 
 func test_77_mystery_box_and_cornish_eggs() -> void:
@@ -184,10 +164,6 @@ func test_77_mystery_box_and_cornish_eggs() -> void:
 	_done(g)
 
 
-
-
-
-
 func test_78_every_new_item_has_a_home_and_art() -> void:
 	var g := _farm()
 	for id in g.item_order:
@@ -201,10 +177,6 @@ func test_78_every_new_item_has_a_home_and_art() -> void:
 	_check(g.items.has("pistachio_tree") and g.items.has("date_tree"), "the extra fruit and nut trees are in the game")
 	_eq(int(g.items["almond_tree"]["gem_cost"]), 3, "nut trees cost gems, as Farm Cash trees did in FarmVille")
 	_done(g)
-
-
-
-
 
 
 func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> void:
@@ -246,10 +218,6 @@ func test_84_collectibles_turn_up_on_every_action_and_rare_ones_are_rare() -> vo
 	_check(finds[0] > 0, "plowing, planting and fertilizing found %d collectibles in 300 rounds" % finds[0])
 	_check(finds[0] < 60, "but not too many (%d)" % finds[0])
 	_done(g)
-
-
-
-
 
 
 func test_85_fuel_found_while_plowing_once_a_day() -> void:
@@ -294,10 +262,6 @@ func test_85_fuel_found_while_plowing_once_a_day() -> void:
 	_done(g)
 
 
-
-
-
-
 func test_86_bushels_come_with_one_extra_per_mastery_star() -> void:
 	var g := _farm(true)
 	_crafting_building(g)
@@ -312,10 +276,6 @@ func test_86_bushels_come_with_one_extra_per_mastery_star() -> void:
 	_eq(int(got.get("bushels", 0)), 1 + stars, "a bushel plus one per mastery star (FarmVille)")
 	_eq(int(g.crafting.bushels["wheat"]), 1 + stars, "all of them kept")
 	_done(g)
-
-
-
-
 
 
 func test_87_perfect_bunches_and_the_garden_shed() -> void:
@@ -650,7 +610,7 @@ func test_366_a_trees_fruit_ripens_on_the_tree() -> void:
 	_check(turns.size() >= 10, "the fruit come at many different turns, not all at once (%d)" % turns.size())
 	for turn: float in turns:
 		_check(turn >= 0.0 and turn <= 1.0, "a turn is a share of the cycle (%s)" % turn)
-	Objects3D.ripen(baked, 500.0 + Crops3D.clock_base, 3600.0)   # (telling a tree its cycle is safe on any model)
+	Objects3D.ripen(baked, 500.0 + CropClock.clock_base, 3600.0)   # (telling a tree its cycle is safe on any model)
 	baked.queue_free()   # (the merged model owns what was built into it)
 	_done(g)
 	Game.saving_enabled = false
@@ -669,71 +629,6 @@ func test_366_a_trees_fruit_ripens_on_the_tree() -> void:
 	Game.reset_game()
 
 
-## Each kind of bloom is its own flower, a Full Bloom a bunch of them, and a bloom is one model for its whole life:
-## every part says which head it belongs to and when that head opens, and the plant is told its cycle and its
-## wilting, so it opens and withers little by little and is never rebuilt.
-func test_367_each_bloom_is_its_own_flower_and_one_model_for_life() -> void:
-	var g := _farm()
-	var shapes := {}
-	for kind: String in BloomModel.FORMS:
-		for full: bool in [false, true]:
-			var id := kind + ("_full_bloom" if full else "_bloom")
-			_check(g.items.has(id), "%s is in the catalog" % id)
-			_eq(BloomModel.kind_of(g.item_data(id)), kind, "%s is a %s" % [id, kind])
-			var holder := Node3D.new()
-			BloomModel.build_at(holder, Vector3.ZERO, g.item_data(id), 1.0, full, 3)
-			var baked := ModelKit.bake(holder)
-			var surfaces := 0
-			var triangles := 0
-			var turns := {}
-			var stems := 0
-			for part in baked.find_children("*", "MeshInstance3D", true, false):
-				var mesh := (part as MeshInstance3D).mesh
-				for s in mesh.get_surface_count():
-					surfaces += 1
-					var mat := (part as MeshInstance3D).get_active_material(s) as ShaderMaterial
-					_check(mat != null and mat.shader.resource_path == ModelKit.BLOOM_SHADER, "%s is all bloom paint" % id)
-					var arrays := mesh.surface_get_arrays(s)
-					triangles += (arrays[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3 if arrays[Mesh.ARRAY_INDEX] != null \
-						else (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
-					for uv2: Vector2 in (arrays[Mesh.ARRAY_TEX_UV2] as PackedVector2Array):
-						if uv2.y < 0.0:
-							stems += 1
-						else:
-							turns[snappedf(uv2.y, 0.01)] = true
-			_eq(surfaces, 1, "%s is one surface: one draw" % id)
-			_check(stems > 0 and not turns.is_empty(), "%s has stems and leaves, and heads that open" % id)
-			_eq(turns.size(), BloomModel.STEMS_FULL if full else BloomModel.STEMS_SINGLE,
-				"%s: each head has its own turn to open" % id)
-			_check(triangles < BLOOM_MOST_TRIANGLES, "%s is light (%d triangles)" % [id, triangles])
-			if not full:
-				shapes[kind] = triangles
-			baked.queue_free()
-	_eq(shapes.values().size(), 6, "six kinds")
-	var distinct := {}
-	for kind: String in shapes:
-		distinct[shapes[kind]] = true
-	_check(distinct.size() >= 5, "the kinds are different flowers, not one in six colours (%s)" % shapes)
-	_done(g)
-	Game.saving_enabled = false
-	Game.reset_game()
-	var bloom := {"uid": Game.next_uid, "id": "rose_bloom", "row": 2, "col": 2, "t": Game.now()}
-	Game.next_uid += 1
-	Game.add_object(bloom)
-	var objects := Objects3D.new()
-	add_child(objects)
-	var in_bud: String = objects.call("_key", bloom)
-	Game.debug_time_offset += Game.cycle_of(bloom) + 5
-	_check(Game.is_ready(bloom), "(the bloom is ready)")
-	_eq(objects.call("_key", bloom), in_bud, "ready, it is the same model")
-	Game.debug_time_offset += Balance.i("blooms.wither_after") + 5
-	_check(Game.is_withered(bloom), "(left too long, it has withered)")
-	_eq(objects.call("_key", bloom), in_bud, "and withered, still the same model")
-	objects.queue_free()
-	Game.debug_time_offset = 0
-	Game.reset_game()
-
-
 ## Ripening times are a material's own, shared, never per-instance shader values: the phones' renderer holds
 ## only 4,096 things with those, and a full farm of trees and blooms has more (CI's log gate caught it).
 func test_375_ripening_times_are_shared_materials_not_per_instance_values() -> void:
@@ -745,37 +640,40 @@ func test_375_ripening_times_are_shared_materials_not_per_instance_values() -> v
 	var g := _farm()
 	var made: Array[Node3D] = []
 	for k in 3:
-		var holder := Node3D.new()
-		BloomModel.build_at(holder, Vector3.ZERO, g.item_data("rose_bloom"), 1.0, false, 3)
-		made.append(ModelKit.bake(holder))
+		made.append(Objects3D.tree_look("apple_tree", 0, 0, false))
 		add_child(made[k])
-	var base := Crops3D.clock_base
+	var base := CropClock.clock_base
 	var before := Objects3D.drop_unused_timed()   # (what other things still standing are drawn with)
-	Objects3D.ripen(made[0], base + 100.0, 3600.0, base + 9000.0, 500.0)
-	Objects3D.ripen(made[1], base + 100.0, 3600.0, base + 9000.0, 500.0)
+	Objects3D.ripen(made[0], base + 100.0, 3600.0)
+	Objects3D.ripen(made[1], base + 100.0, 3600.0)
 	Objects3D.ripen(made[2], base + 700.0, 3600.0)
-	var mats: Array[ShaderMaterial] = []
-	for model in made:
-		var part := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
-		mats.append(part.get_active_material(0) as ShaderMaterial)
-	_check(mats[0] == mats[1], "two blooms with the same cycle are drawn with one material")
-	_check(mats[0] != mats[2], "one on another cycle with another")
-	_eq(float(mats[0].get_shader_parameter("ripe_from")), 100.0, "which holds when its cycle began")
-	_eq(float(mats[0].get_shader_parameter("wilt_len")), 500.0, "and how long its wilting takes")
-	_eq(float(mats[2].get_shader_parameter("wilt_from")), Objects3D.NEVER, "one that never withers is told so")
-	_eq(mats[0].shader.resource_path, ModelKit.BLOOM_SHADER, "still the bloom's own shader")
+	var mats: Array = [_fruit_paints(made[0]), _fruit_paints(made[1]), _fruit_paints(made[2])]
+	_check(not (mats[0] as Array).is_empty() and mats[0] == mats[1],
+		"two trees on the same cycle are drawn with the same materials")
+	_check(mats[0] != mats[2], "one on another cycle with others")
+	_eq(float((mats[0][0] as ShaderMaterial).get_shader_parameter("ripe_from")), 100.0, "which hold when its cycle began")
 	# Harvested: its cycle starts over on a new material; the old one is forgotten once nothing is drawn with it.
 	Objects3D.ripen(made[0], base + 5000.0, 3600.0)
 	Objects3D.ripen(made[1], base + 5000.0, 3600.0)
-	var part0 := made[0].find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
-	_eq(float((part0.get_active_material(0) as ShaderMaterial).get_shader_parameter("ripe_from")), 5000.0,
+	_eq(float((_fruit_paints(made[0])[0] as ShaderMaterial).get_shader_parameter("ripe_from")), 5000.0,
 		"a new cycle is told to the same model")
+	var each := (mats[0] as Array).size()
 	mats.clear()
-	_eq(Objects3D.drop_unused_timed() - before, 2, "only the materials in use are kept: the two cycles standing")
+	_eq(Objects3D.drop_unused_timed() - before, 2 * each, "only the materials in use are kept: the two cycles standing")
 	for model in made:
 		model.queue_free()
 	_done(g)
 
+
+## The fruit materials a tree's model is drawn with, in order.
+func _fruit_paints(model: Node) -> Array:
+	var out: Array = []
+	for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
+		for k in mi.mesh.get_surface_count():
+			var m := mi.get_active_material(k) as ShaderMaterial
+			if m != null and m.shader != null and m.shader.resource_path == ModelKit.FRUIT_SHADER:
+				out.append(m)
+	return out
 
 
 ## A set's trade-in levels and how much a held copy cuts an item's chance come from data/collections.json:

@@ -137,7 +137,7 @@ static func picture(name: String) -> Texture2D:
 	return _pictures[name]
 
 
-## The picture a crop at `stage` (Crops3D.stage_of) is shown by, or "" for none (seeds lie under the soil).
+## The picture a crop at `stage` (CropClock.stage_of) is shown by, or "" for none (seeds lie under the soil).
 static func picture_of(crop_id: String, stage: String) -> String:
 	match stage:
 		"sprout":
@@ -212,7 +212,7 @@ static func place_of(i: int) -> Vector3:
 ## are laid out again.
 func update(indices: Array = []) -> void:
 	if indices.is_empty():
-		indices = Crops3D._all_plots()
+		indices = CropClock.all_plots()
 		indices.append_array(_shown.keys())
 		_due = -1
 	var dirty := {}
@@ -232,7 +232,7 @@ func update(indices: Array = []) -> void:
 	for name: String in dirty:
 		_lay_out(name)
 	for i: int in indices:
-		var t := Crops3D.next_change(i) if Game.on_farm(i) and Game.field.crop_at(i) != "" else -1
+		var t := CropClock.next_change(i) if Game.on_farm(i) and Game.field.crop_at(i) != "" else -1
 		if t >= 0 and (_due < 0 or t < _due):
 			_due = t
 
@@ -242,12 +242,12 @@ func _look_of(i: int) -> Array:
 	var crop_id := Game.field.crop_at(i)
 	if crop_id == "" or not Game.crops.has(crop_id):
 		return []
-	var stage := str(Crops3D.stage_of(i)[0])
+	var stage := CropClock.stage_of(i)
 	var name := picture_of(crop_id, stage)
 	if name == "" or not FileAccess.file_exists(ART % name):
 		return []
 	return [name, Color(1.0 if stage == "withered" else 0.0, 1.0 if Game.field.is_fertilized(i) else 0.0,
-		Crops3D.mastered(crop_id), 0.0)]
+		CropClock.mastered(crop_id), 0.0)]
 
 
 ## The picture a plot shows now, or "" (for tests).

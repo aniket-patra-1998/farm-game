@@ -408,6 +408,10 @@ HEADS = {"cabbage": "cabbage", "broccoli": "broccoli", "artichokes": "artichoke"
 ROOTS = {"carrots": "carrot", "heirloom_carrots": "carrot", "onions": "onion", "potatoes": "potato", "ginger": "potato", "peanuts": "peanut"}
 
 
+# How big a half-grown plot's plants are painted, of ripe ones: its bed is already mostly green.
+YOUNG = 0.72
+
+
 def plot(cid, shp, c, grow=1.0):
     """One plot of crop `cid` (its catalog shape and colour): ripe, or part grown (`grow` < 1: smaller, its crop still green),
     or just sprouted (`grow` 0)."""
@@ -426,7 +430,11 @@ def plot(cid, shp, c, grow=1.0):
         return CX + (u - v) * 125, CY + (u + v) * 62.5
 
     def grid(n, fn, jitter=0.05, edge=0.72, k=1.4):
-        k *= max(grow, 0.3)
+        # (a row more each way than a plot strictly holds, the plants lapping over each other and the plot's edge: a
+        # full, close-planted bed with hardly any soil showing, as the classic farm games' are; owner, 27 Nov)
+        n += 1
+        edge = min(edge + 0.08, 0.88)
+        k *= 0.92 * max(grow, 0.3)
         for a in range(n):
             for b in range(n):
                 u = (a / (n - 1.0) * 2 - 1) * edge + r.uniform(-jitter, jitter)
@@ -439,12 +447,12 @@ def plot(cid, shp, c, grow=1.0):
              + stalk(0, 2, 0, -8, 0, "#5fa046", 2.4), 0.04, 0.78, 1.0)
     elif cid in GOURDS:
         kind = GOURDS[cid]
-        for i in range(40):
-            x, y = at(r.uniform(-0.97, 0.97), r.uniform(-0.97, 0.97))
+        for i in range(56):
+            x, y = at(r.uniform(-0.99, 0.99), r.uniform(-0.99, 0.99))
             p.add(y - 60, vine_leaf(p, x, y + 8, r.uniform(1.1, 1.5), r.uniform(-70, 70), [dark(LEAF, 0.15), LEAF, "#2f7a30"][i % 3]))
-        spots = [(-0.5, -0.5), (0.45, -0.55), (-0.02, 0.0), (-0.55, 0.5), (0.5, 0.48)]
+        spots = [(-0.55, -0.55), (0.5, -0.6), (-0.02, 0.0), (-0.6, 0.55), (0.55, 0.52), (0.0, -0.8), (0.0, 0.84)]
         if kind in ("zucchini", "cucumber", "pattypan", "squash"):
-            spots += [(0.0, -0.75), (0.0, 0.8)]
+            spots += [(-0.8, 0.0), (0.82, 0.02)]
         for (u, v) in spots:
             x, y = at(u, v)
             small = 0.62 if kind in ("pattypan",) else (0.8 if kind in ("pumpkin", "carnival", "acorn", "square_melon", "pineapple") else 1.0)
@@ -575,7 +583,7 @@ def pictures():
     for fam in crops["families"]:
         for v in fam["variants"]:
             shp, col = v.get("shape", ""), v.get("color", "#6ab04c")
-            out["crops/" + v["id"] + "_young"] = finish(plot(v["id"], shp, col, 0.6))
+            out["crops/" + v["id"] + "_young"] = finish(plot(v["id"], shp, col, YOUNG))
             out["crops/" + v["id"] + "_ripe"] = finish(plot(v["id"], shp, col))
             out["crops/" + v["id"] + "_harvest"] = finish(harvest(v["id"], shp, col))
     out["crops/sprout"] = finish(plot("strawberries", "berry", "#6ab04c", 0.0))

@@ -24,7 +24,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = "data/art_versions.json"
 # What code-built looks are made from (a change to any of them redraws the pictures of every code-built item).
 BUILT = ["scripts/world3d/*.gd", "scripts/world/animals/*.gd", "scripts/world/space_fit.gd", "scripts/season.gd",
-         "shaders/*.gdshader*", "data/building_models.json", "data/tree_shapes.json", "data/crop_forms.json",
+         "shaders/*.gdshader*", "data/building_models.json", "data/tree_shapes.json",
          "data/animal_rigs.json", "data/linking.json", "data/quality.json", "data/crowding.json", "data/dressing.json",
          "data/scale_guide.json", "data/seasons.json"]
 # Where look code lives: every data file it reads must be in BUILT (--check finds them itself), so a new one can
@@ -40,13 +40,12 @@ STUDIO = ["scripts/ui/item_icons.gd", "scripts/ui/icon_maker.gd", "scripts/ui/ic
 SOURCES_OUT = "data/art_sources.json"
 # What each kind of exported art file is made from, and the exporter to run when any of it changes.
 SOURCES = {
-    "plants": (["scripts/world3d/tree_model.gd", "scripts/world3d/tree_spec.gd", "scripts/world3d/bloom_model.gd",
-                "scripts/world3d/crop_models.gd", "scripts/world3d/crop_forms.gd", "scripts/world3d/crop_form_spec.gd", "data/scale_guide.json",
+    "plants": (["scripts/world3d/tree_model.gd", "scripts/world3d/tree_spec.gd",
+                "data/scale_guide.json",
                 "data/catalog/blooms.json",
                 "scripts/world3d/mesh_builder.gd", "scripts/world3d/model_kit.gd", "scripts/world3d/crowding.gd",
-                "scripts/world3d/scale_guide.gd", "data/tree_shapes.json", "data/crop_forms.json",
-                "shaders/crown3d.gdshader", "shaders/crop3d.gdshader",
-                "shaders/fruit3d.gdshader", "shaders/bloom3d.gdshader",
+                "scripts/world3d/scale_guide.gd", "data/tree_shapes.json",
+                "shaders/crown3d.gdshader", "shaders/fruit3d.gdshader",
                 "scripts/world3d/frond_mesh.gd", "shaders/frond3d.gdshader", "shaders/leaf_touch.gdshaderinc",
                 "tools/export_plants.gd", "tools/paint_plants.py", "scripts/world3d/painted_crops.gd",
                 "scripts/world3d/painted_bloom.gd", "shaders/painted3d.gdshader"],

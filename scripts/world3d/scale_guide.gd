@@ -122,7 +122,7 @@ static func model_of(id: String) -> Node3D:
 		"decor":
 			return Objects3D.decor_look(id, PICTURE_LOOK, "")   # (the farm's shared looks: built once)
 		"bloom":
-			return BloomModel.build(it, {"id": id, "uid": 7, "t": Game.now() - int(it.get("cycle_seconds", 86400)) - 1})
+			return PaintedBloom.picture_card(id, PaintedCrops.facing())
 		"young":
 			return YoungModel.build(it, {"id": id, "uid": 7, "fed": 4}, 0.5)
 		"building", "barn", "crafting":

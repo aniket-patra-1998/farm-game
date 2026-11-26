@@ -238,9 +238,9 @@ static func model(id: String) -> Node3D:
 	if id.contains(ItemIcons.SIZED):   # a building at one of its sizes (what its next size looks like)
 		var sized := id.split(ItemIcons.SIZED)
 		return Objects3D.building_look(sized[0], int(sized[1]))   # (shared with the farm's: built once)
-	var painted := Release.on("painted_crops")   # (crops and flowers are painted pictures: so are their pictures)
+	# (crops and flowers are painted pictures: so are their pictures, on a card facing the picture's camera)
 	var towards := Basis.from_euler(Vector3(ItemIcons.PITCH, ItemIcons.YAW, 0.0))
-	if painted and str(Game.item_data(id).get("kind", "")) == "bloom":
+	if str(Game.item_data(id).get("kind", "")) == "bloom":
 		return PaintedBloom.picture_card(id, towards)
 	var art := AssetRegistry.instance(id, PICTURED)   # (made as a file: its picture is of the file)
 	if art != null:
@@ -250,7 +250,7 @@ static func model(id: String) -> Node3D:
 		# A crop: one ripe bed of it; a crafted good or produce: the thing itself (GoodsModel); a building part
 		# likewise (null for anything unknown).
 		if Game.crops.has(id):
-			return PaintedCrops.harvest_card(id, towards) if painted else Crops3D.picture_model(id)
+			return PaintedCrops.harvest_card(id, towards)
 		var good := GoodsModel.build(id)
 		return good if good != null else MaterialModel.build(id)
 	if str(it.get("kind", "")) in ["building", "barn", "crafting"]:

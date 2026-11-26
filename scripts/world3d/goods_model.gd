@@ -340,14 +340,17 @@ static func _produce(root: Node3D, d: IngredientDef) -> void:
 				ModelKit.ball(root, stalk + along * 0.56 + Vector3(0, -0.02 * k, 0), 0.026, ModelKit.paint(STALK.darkened(0.3)))
 			ModelKit.ball(root, stalk, 0.06, ModelKit.paint(STALK))
 		"flower":
-			# A bunch of the cut flower, wrapped: the bloom's own flowers (BloomModel), so a cut rose is the farm's rose.
+			# A bunch of the cut flower, wrapped: the bloom's own painted flowers, so a cut rose is the farm's rose.
 			var family: String = (d.data.get("families", [""]) as Array)[0]
 			ModelKit.cylinder(root, C, 0.05, 0.27, ModelKit.paint(PAPER), 0.19, 10)
 			ModelKit.cylinder(root, C + Vector3(0, 0.1, 0), 0.105, 0.03, ModelKit.paint(col.lerp(GOLD, 0.5), 0.3),
 				0.12, 10)
 			var bloom := Game.item_data(family + "_full_bloom")
 			if not bloom.is_empty():
-				BloomModel.build_at(root, C + Vector3(0, 0.14, 0), bloom, BOUQUET, true, 5)
+				var flowers := PaintedBloom.picture_card(family + "_full_bloom", PaintedCrops.facing())
+				flowers.position = C + Vector3(0, 0.14, 0)
+				flowers.scale = Vector3.ONE * BOUQUET
+				root.add_child(flowers)
 		_:   # fruit: three of them, a stalk and a leaf on each
 			for k in 3:
 				var at := Vector3(cos(TAU * k / 3.0 + 0.5), 0, sin(TAU * k / 3.0 + 0.5)) * 0.15

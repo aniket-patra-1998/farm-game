@@ -718,9 +718,10 @@ func _show_plants(o: Dictionary, slots: int) -> void:
 			z = room.get_center().y + (places[k].y - (rows - 1) / 2.0) * gap
 		var it := Game.item_data(ids[k])
 		if str(it.get("kind", "")) == "bloom":
-			var d := Game.catalog.get_def(ids[k]) as BloomDef
-			BloomModel.build_at(holder, Vector3(x, 0.05, z), it, BLOOM_SIZE * ScaleGuide.factor(ids[k]), d.is_full(),
-				uid + k)
+			var flower := PaintedBloom.picture_card(ids[k], PaintedCrops.facing())   # (painted, as on the farm)
+			flower.position = Vector3(x, 0.05, z)
+			flower.scale = Vector3.ONE * BLOOM_SIZE * ScaleGuide.factor(ids[k])
+			holder.add_child(flower)
 		else:
 			var fit := clampf(TREE_CROWN / float(TreeSpec.shape_of(it).get("crown_r", TREE_CROWN)), 0.7, 1.1)
 			var grown := size * fit * minf(ScaleGuide.factor(ids[k]), 1.0)

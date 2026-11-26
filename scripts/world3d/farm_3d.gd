@@ -35,12 +35,12 @@ var camera_2d: Camera2D
 var camera: Camera3D
 var lightning: Lightning3D   # a storm's bolts and their flash (WeatherEvents.struck)
 var sun: DirectionalLight3D
-var painted: PaintedCrops   # the crops as painted pictures, when they are (Release "painted_crops")
+var clock: CropClock
 var fill: DirectionalLight3D     # soft sky light from the side away from the sun, so shade keeps its form
 var environment: Environment
 var ground: Ground3D
 var plots: Plots3D
-var crops: Crops3D
+var crops: PaintedCrops
 var glints: Glints3D
 var objects: Objects3D
 var trees: TreeLife
@@ -101,14 +101,10 @@ func _ready() -> void:
 	add_child(ground)
 	plots = Plots3D.new()
 	add_child(plots)
-	crops = Crops3D.new()
-	# Crops are painted pictures (PaintedCrops). The modelled crops then draw nothing and lay nothing out: they only
-	# keep the farm's clock, which a tree's fruit grows by.
-	crops.drawn = not Release.on("painted_crops")
+	clock = CropClock.new()   # (the clock everything that grows goes by)
+	add_child(clock)
+	crops = PaintedCrops.new()
 	add_child(crops)
-	if not crops.drawn:
-		painted = PaintedCrops.new()
-		add_child(painted)
 	glints = Glints3D.new()   # (over ripe plots that hold a find)
 	add_child(glints)
 	objects = Objects3D.new()
@@ -150,7 +146,7 @@ func _ready() -> void:
 		grid.hatcher = func(young: int, grown: int, then: Callable) -> void: objects.hatch(young, grown, then)
 		grid.outliner = func(uid: int) -> PackedVector2Array: return objects.outline_of(uid)
 		grid.object_poked.connect(_poked)
-		grid.plants_popped.connect(painted.pop if painted != null else crops.pop)
+		grid.plants_popped.connect(crops.pop)
 		grid.collected.connect(objects.celebrate)
 		grid.collected.connect(trees.harvested)
 		objects.landed.connect(_landed)
@@ -204,8 +200,6 @@ func _update_changed_plots() -> void:
 	_changed_all = false
 	plots.update(indices)
 	crops.update(indices)
-	if painted != null:
-		painted.update(indices)
 	glints.update(indices)
 	ground.update_tiles(indices)
 

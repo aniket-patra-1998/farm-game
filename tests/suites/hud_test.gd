@@ -1346,7 +1346,7 @@ func test_551_the_pictures_renderer_compiles_after_the_first_screen() -> void:
 	# it pictures (docs/PERF_RUN.md, the start).
 	var code := RegEx.create_from_string("#.*").sub(FileAccess.get_file_as_string("res://scripts/ui/item_icons.gd"),
 		"", true)
-	for cls in ["IconStyle", "IconDevelop", "GpuRead", "GoodsModel", "MaterialModel", "AssetRegistry", "Crops3D",
+	for cls in ["IconStyle", "IconDevelop", "GpuRead", "GoodsModel", "MaterialModel", "AssetRegistry", "PaintedCrops",
 			"ScaleGuide"]:
 		_check(not RegEx.create_from_string("\\b%s\\b" % cls).search(code), "ItemIcons does not name %s" % cls)
 	Game.reset_game()

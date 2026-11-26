@@ -10,9 +10,15 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 - Flowers on the farm are painted too (PaintedBloom: 6 kinds, single and full, bud / open / dry; 24 recipes).
 - Market pictures of crops (what each gives, gathered: 74 more recipes) and flowers are painted; a harvest pops the
   card; made pictures are kept on the device; with crops painted the modelled ones lay nothing out.
-- Not done: the modelled crops and flowers are still in the repo and still used where painted ones are not yet:
-  flowers standing inside the Bloom Garden (BuildingFill), the bouquet (GoodsModel), heights (ScaleGuide), the art
-  reference tool (tools/look_models.gd), and the exported crop and bloom files. Remove them once those are painted.
+- 27 Nov: the modelled crops and flowers are gone. The Bloom Garden's beds, the bouquet, heights and the art
+  reference tool show painted cards; removed Crops3D, CropModels, CropForms, CropFormSpec, BloomModel, crop3d and
+  bloom3d shaders, data/crop_forms.json, the exported crop and bloom files, Quality's crop_shadows. CropClock (new)
+  keeps the farm's clock and a plot's stage. tools/export_plants.gd exports trees only. Older entries below and
+  other docs (ARCHITECTURE, ART_BIBLE, OPEN_ITEMS, PERF_RUN, SYSTEMS_REVIEW) still name the removed classes.
+- 27 Nov: plots are planted closer (owner: thinner than the classic farm games'): a row more each way, plants
+  lapping over each other, half-grown plants bigger (paint_plants.py `grid`, `YOUNG`).
+- Super and golden harvests are rules and words (HarvestDrops, FieldSystem), not part of how a crop is drawn:
+  unchanged. A mastered crop's golden cast and a fertilised plot's bigger plants are in painted3d.
 - Not measured: the size in a build, the time to make a picture on a phone, frame time.
 
 ## Trees repainted (26 Nov, branch trees-light)
@@ -24,7 +30,7 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 - Falling leaves are shown in the crown's colours (FallingBits: the same curve and depth as crown3d).
 - Open: a crown is never made simpler from far (its sprays would vanish), so a far zoom draws every triangle;
   two looks a tree instead of four would halve the files;
-  the finish on crops and flowers (crop3d, bloom3d) is not started.
+  crops and flowers are painted cards now (see above), so the finish has nothing left to do there.
 
 ## Decided (in the design doc)
 FarmVille footprints (with a save migration), FarmVille limits, the 5 planned buildings
