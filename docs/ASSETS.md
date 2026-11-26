@@ -78,7 +78,7 @@ that read each part's shine or surface pattern from its vertex alpha (`alpha_hol
 shaders/surface_patterns.gdshaderinc, shared with the builders' own wall shader). Glass, pools of light, the
 shade at a building's foot and water are the kit's single shared materials, put back by the names the file
 gives them (`kit_glass`, `kit_glow`, `kit_shade`, `kit_water`, `kit_pond`, `kit_shine`, `kit_frame`: `ModelKit.adopt`). A crafting building is 6 to
-9 draws: walls, paint and glass, the yard's lawn, the light pools, the shade, its storage look and its animated parts.
+10 draws: walls, paint and glass, the yard's lawn, the light pools, the shade, its storage look and its animated parts.
 
 ## 4. Animation: clips, blended, with layers; crowds on the GPU
 

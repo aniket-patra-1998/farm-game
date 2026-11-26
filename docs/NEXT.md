@@ -1563,3 +1563,52 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   (fewer of them, or simpler leaves), for the owner to pick. Not looked at: res://baked (CI's ready-made models
   and icons; docs/PACKS.md), sounds (8.5 MB).
 - Tests 640 to 644 (animal_bones_test); tools/animal_art tests `Bones`.
+
+## The animal homes, 26 Nov (branch animal-homes, a draft PR; owner: "you should be more active to finalize the buildings")
+- The five homes that were one house in five colours (Dairy Farm, Sheep Pen, Goat Pen, Stable, Pig Pen) are
+  each their own outline and roof colour now, by their data (data/building_models.json): the table is in
+  docs/WORLD.md. At its biggest each lead is a storey taller with a companion or prop beside it, and one thing
+  of its own moves. New to the kit: a `barrel` roof (ModelKit.roof), `whirligig`, `birds`, `gate_sign`.
+- Every animal home (the hive, coop and hutch too) has a sign at its gate with its animal's Market picture
+  (GateSign: the model marks the place and Objects3D hangs the board, so a home's file keeps to its budget
+  of draws and the farm pays one draw a home) and a lantern that glows at night.
+- The owner saw two sheets and a clip and said build; the calls made without asking: the Pig Pen at its biggest
+  is a tall ark (a round roof over a box base read badly), the goat tower has a bird circling it (a pennant would
+  sit where a full home's flag flies), the lantern stands on the sign's post.
+- A part that swings or circles by its shader (a weathervane, a bird: DecorMotion.orbit) is now a named part
+  (`orbit_vane_7`), so a building's file carries it and DecorMotion.start sets it going; before, only spinning
+  parts and effects came through a file. A building's draws budget is 10, was 9 (data/assets.json): the one
+  thing that moves at a home's biggest is a draw, and three homes stood at 9 already.
+- The working buildings, looked at together at their biggest: the Bakery, Feed Mill and Spa already had
+  outlines and motion of their own and are as they were. The Winery was the Bakery in burgundy: it is a stone
+  cellar under a round roof now (a vaulted second storey at its biggest, a vine shelter where its wing was).
+  The Garage has a dark red tin roof, a striped awning, oil drums and a gate sign with a tractor; the Garden
+  Shed a lean-to and a rain barrel. (A crafting building moves only while it works and a storing one not at
+  all, by their own tests: no weathervanes there.)
+- The rest, looked at together: the Log Cabin was the Farmhouse in logs (it is low and wide under a long
+  roof now) and the Nursery Barn would have been the new Dairy Farm's twin (it has a rose gable roof, a
+  cupola, a crib house and a calf on its gate sign). The Farmhouse, Dog House, Duck Pond, Orchard and the
+  two gardens each had an outline of their own and are as they were. The Barn is the hero and was not touched.
+- The owner on the result: "building at max level don't look the part... they don't look grand enough". The
+  nine homes' biggest sizes are taller and wider now (two full storeys on the Dairy Farm, Stable, Sheep Pen,
+  Nursery and goat tower; a bigger ark, coop, hutch and lead hive; taller silo and lookout; bigger stars).
+  The 2x2 homes (coop, hutch, hive) are still small beside a 3x3 one: their plots are.
+- Asked whether to go taller on the same plot or let a maxed home take a bigger plot, the owner chose taller.
+  A home's top size now goes up a third time: `upper` may carry an `upper` (BuildingModel._upper_storey: the
+  Dairy Farm, Sheep Pen, goat tower and Nursery have three storeys), a cupola's `scale` makes it a little tower
+  (the Stable's), the Pig Pen has a silo beside its ark, the coop a weathervane, the hutch a second tier.
+  Known: four homes are tiered the same way now (three boxes, a skirt roof round each), told apart by roof
+  shape and colour.
+- Making the buildings lighter (the owner, 26 Nov), measured first: the building files are 8.9 MB as shipped
+  (248 files; a third of their triangles are states and plan frames that are not drawn), against the animals'
+  164 MB before their bones: there is no such saving here. On the showcase farm's playing view (perf_probe,
+  low, 12 tiles) the frame is 654 draws and 270k triangles, and a building is 5 to 12 of those draws: all the
+  buildings in view are under a tenth of the frame. Done: the pools of light windows and lamps throw were a
+  draw of nothing by day; they stand on a layer the camera looks at only at night (ModelKit.NIGHT_LAYER,
+  Farm3D.set_night; test 650): 654 -> 647 draws in that view, one fewer a building or lamp in sight.
+  Not done, and why: one surface for paint and wall (a draw a building; the shader, the exporter and every
+  file change for about 1% of a frame). The frame's weight is elsewhere: yard animals (BuildingFill, 114
+  meshes), animals at large (106), decorations (91), crops (75).
+- Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
+- Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.
+

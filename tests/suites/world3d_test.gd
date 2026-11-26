@@ -51,7 +51,7 @@ func test_95_every_thing_on_the_farm_has_a_3d_model() -> void:
 		"stall_doors", "porch", "terrace",
 		"nest_boxes", "water_trough", "hay_bales", "beehives", "trees", "pond", "sign", "flowers", "barrels",
 		"duck_house", "wing", "lean_to", "weathervane", "arch", "balcony", "hoist", "dormers", "awning", "flag",
-		"skep", "hut", "vip_badge"]
+		"skep", "hut", "vip_badge", "gate_sign", "whirligig", "birds"]
 	known.append_array(BuildingModel.SIGNATURES)
 	known.append_array(BuildingDress.FEATURES)   # (the dressing's own: sacks, a windmill, an oven...)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingModel.PATH))

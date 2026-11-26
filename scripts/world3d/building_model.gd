@@ -32,6 +32,20 @@ const PATH_WIDTH := Vector2(0.1, 0.15)   # ..each this wide (a radius, in tiles,
 const DUCK_HOUSE := Vector3(0.2, 0.24, 0.16)   # a duck house: half its width, its walls' height, half its depth
 const HUT_OVER := 0.06          # how far a yard's little house's roof overhangs its walls
 const HUT_DOOR := 0.45         # its way in, as a share of its front's width
+const TIN := Color("#cfd6da")   # a tin vent's metal
+const VENT_STALK := 0.012      # a whirligig's stalk: half its width..
+const VENT_TALL := 0.12        # ..and its height over the roof
+const VENT_BLADES := 4
+const VENT_REACH := 0.1        # how far a blade reaches from the stalk
+const VENT_TILT := 0.5         # a blade's pitch, in radians
+const VENT_SPEED := 3.0        # radians a second
+const SIGN_OUT := 0.3          # a gate sign's post stands this far past the block's right side..
+const SIGN_IN := 0.16          # ..and this far in from the footprint's front and right edges
+const SIGN_POST := 0.044       # the post's thickness
+const SIGN_TALL := 0.62        # ..and its height (the board hangs from its arm)
+const SIGN_TURN := PI / 4.0    # the arm and the board face the camera's corner
+const LANTERN := 0.042         # half the width of the lantern on the post
+const BIRD_OVER := 0.2         # how far over a roof's top its bird circles
 const SKEP_R := BuildingSpec.SKEP_R
 const SKEP_RINGS := 4          # coils of straw in a hive that does not say (a small one)
 const SKEP_COIL := 0.062       # a coil's height, in tiles
@@ -571,7 +585,8 @@ static func _settle(ctx: Dictionary) -> void:
 ## A second storey (the top size of a big building): the ground floor under a low pent roof that runs all
 ## round it, and a smaller upper floor set back on top of it, with its own walls, windows and roof. The
 ## `upper` description (data/building_models.json) gives w and d as shares of the ground floor, h, windows,
-## and optionally its own roof, walls and colour. Returns the top of the whole building; the upper floor's
+## and optionally its own roof, walls and colour, and an `upper` of its own (a third storey, the same
+## way). Returns the top of the whole building; the upper floor's
 ## corners go in ctx as upper_lo and upper_hi (balconies and hoists hang on them).
 static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: Material, trim: Color,
 		upper: Dictionary) -> float:
@@ -607,7 +622,15 @@ static func _upper_storey(ctx: Dictionary, lo: Vector3, hi: Vector3, wall_mat: M
 	var up_roof: Dictionary = upper.get("roof", {})
 	var kind := str(up_roof.get("type", r.get("type", "gable")))
 	var top := uhi.y
-	if kind != "none":
+	if upper.has("upper"):
+		# A third storey stands on the second as the second does on the first (a goat tower, a barn's high
+		# monitor roof): the grandest size of a home goes up, its plot being what it is.
+		var above := ctx.duplicate()
+		above["bw"] = uw
+		above["bd"] = ud
+		above["centre"] = Vector3(c.x, 0, c.z - shift)
+		top = _upper_storey(above, ulo, uhi, own_wall, trim, upper["upper"])
+	elif kind != "none":
 		var pitch := float(up_roof.get("pitch", r.get("pitch", 0.7)))
 		var mat := roof_mat
 		if up_roof.has("color"):
@@ -1029,13 +1052,17 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			var top: float = ctx.get("top", hi.y)
 			var x := (lo.x + hi.x) / 2.0
 			var z := (lo.z + hi.z) / 2.0
-			ModelKit.box(root, Vector3(x - 0.1, top - 0.08, z - 0.1), Vector3(x + 0.1, top + 0.14, z + 0.1),
-				ModelKit.paint(Color("#f3eee2")))
-			ModelKit.cylinder(root, Vector3(x, top + 0.14, z), 0.15, 0.14, ModelKit.paint(Color("#4a5d6e")), 0.0, 4)
-			ModelKit.box(root, Vector3(x - 0.005, top + 0.28, z - 0.005), Vector3(x + 0.005, top + 0.42, z + 0.005),
-				ModelKit.paint(Color("#3a3a3a")))
-			ModelKit.box(root, Vector3(x - 0.05, top + 0.38, z - 0.004), Vector3(x + 0.06, top + 0.4, z + 0.004),
-				ModelKit.paint(Color("#3a3a3a")))
+			# (`scale`: a bigger one is a home's own little tower at its grandest)
+			var k := float(f.get("scale", 1.0))
+			ModelKit.box(root, Vector3(x - 0.1 * k, top - 0.08, z - 0.1 * k), Vector3(x + 0.1 * k, top + 0.14 * k,
+				z + 0.1 * k), ModelKit.paint(Color("#f3eee2")))
+			ModelKit.cylinder(root, Vector3(x, top + 0.14 * k, z), 0.15 * k, 0.14 * k, ModelKit.paint(Color("#4a5d6e")),
+				0.0, 4)
+			ModelKit.box(root, Vector3(x - 0.005, top + 0.28 * k, z - 0.005), Vector3(x + 0.005, top + 0.28 * k + 0.14,
+				z + 0.005), ModelKit.paint(Color("#3a3a3a")))
+			ModelKit.box(root, Vector3(x - 0.05, top + 0.28 * k + 0.1, z - 0.004), Vector3(x + 0.06,
+				top + 0.28 * k + 0.12, z + 0.004), ModelKit.paint(Color("#3a3a3a")))
+			ctx["top"] = top + 0.28 * k
 		"stall_doors":
 			var n := int(f.get("count", 4))
 			for k in n:
@@ -1238,6 +1265,55 @@ static func _feature(ctx: Dictionary, f: Dictionary) -> void:
 			ModelKit.ball(vane, Vector3(0, 0.07, 0), 0.045, gold, Vector3(0.35, 1.0, 1.6))
 			ModelKit.ball(vane, Vector3(0, 0.11, -0.06), 0.025, gold, Vector3(0.4, 1, 1))
 			DecorMotion.orbit(root, Vector3(x, top + 0.26, z), vane, DecorMotion.VANE)
+		"whirligig":
+			# A tin vent on the roof's top, its four blades spinning (a pig ark's).
+			var vent_top: float = ctx.get("top", hi.y)
+			var vent := Vector3((lo.x + hi.x) / 2.0, vent_top, (lo.z + hi.z) / 2.0)
+			var tin := ModelKit.paint(TIN, 0.6)
+			ModelKit.box(root, vent + Vector3(-VENT_STALK, -0.02, -VENT_STALK), vent + Vector3(VENT_STALK, VENT_TALL,
+				VENT_STALK), tin)
+			var fan := Node3D.new()
+			for blade in VENT_BLADES:
+				var one := Node3D.new()
+				ModelKit.box(one, Vector3(0.01, -0.035, -0.004), Vector3(VENT_REACH, 0.035, 0.004), tin)
+				one.rotation = Vector3(VENT_TILT, blade * TAU / VENT_BLADES, 0)
+				fan.add_child(one)
+			DecorMotion.spin(root, vent + Vector3(0, VENT_TALL + 0.01, 0), Vector3.ZERO, fan, VENT_SPEED)
+			ctx["top"] = vent_top + VENT_TALL
+		"birds":
+			# A small bird circling the roof's top (a goat tower's).
+			var perch: float = ctx.get("top", hi.y)
+			DecorMotion.orbit(root, Vector3((lo.x + hi.x) / 2.0, perch + BIRD_OVER, (lo.z + hi.z) / 2.0),
+				DecorMotion.bird(Color.html(str(f.get("color", "#f3eee2")))), DecorMotion.CIRCLING)
+		"gate_sign":
+			# The post at the gate that the home's signboard hangs from (GateSign: the board itself, with the
+			# animal's Market picture, is hung in the game), turned to the camera, a lantern on its top.
+			var post := Vector3(minf(hi.x + SIGN_OUT, fw - SIGN_IN), 0, fd - SIGN_IN)
+			var wood := ModelKit.paint(WOOD)
+			var t := SIGN_POST / 2.0
+			ModelKit.box(root, post + Vector3(-t, 0, -t), post + Vector3(t, SIGN_TALL, t), wood)
+			# (The arm, turned to the camera's corner: drawn with the post, as one thing.)
+			var along := Vector3(GateSign.SIZE.x + 0.06, 0, 0).rotated(Vector3.UP, SIGN_TURN)
+			var side := Vector3(0, 0, t).rotated(Vector3.UP, SIGN_TURN)
+			var from := post + Vector3(0, SIGN_TALL - SIGN_POST, 0)
+			var up := Vector3(0, SIGN_POST, 0)
+			var a := [from - side, from + side, from + side + along, from - side + along]
+			ModelKit.faces(root, [[a[0], a[1], a[2], a[3]], [a[0] + up, a[1] + up, a[2] + up, a[3] + up],
+				[a[0], a[3], a[3] + up, a[0] + up], [a[1], a[2], a[2] + up, a[1] + up], [a[3], a[2], a[2] + up, a[3] + up]],
+				from + along / 2.0 + up / 2.0, wood)
+			var mark := Node3D.new()
+			mark.name = GateSign.mark_name(str(f["animal"]))
+			mark.position = post + Vector3(0, SIGN_TALL - SIGN_POST, 0) + Vector3(GateSign.SIZE.x / 2.0 + 0.04, 0,
+				0).rotated(Vector3.UP, SIGN_TURN)
+			mark.rotation.y = SIGN_TURN
+			mark.set_meta(ModelKit.KEEP, true)
+			root.add_child(mark)
+			# The lantern: an iron cap over a pane that glows at night, as the windows do.
+			var lamp := post + Vector3(0, SIGN_TALL, 0)
+			ModelKit.box(root, lamp + Vector3(-LANTERN, 0, -LANTERN), lamp + Vector3(LANTERN, LANTERN * 2.4, LANTERN),
+				ModelKit.glass())
+			ModelKit.cylinder(root, lamp + Vector3(0, LANTERN * 2.4, 0), LANTERN * 1.9, LANTERN * 1.3,
+				ModelKit.paint(DARK), 0.0, 4)
 		"sign":
 			var p := Vector3(
 				minf(hi.x + 0.15, fw - 0.1),

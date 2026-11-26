@@ -7,6 +7,11 @@ const WIND := "global uniform float wind"
 const DARK := "global uniform float dark"
 
 const FINISH := "res://shaders/finish.gdshaderinc"
+const HOMES: Array[String] = ["beehive", "chicken_coop", "rabbit_hutch", "cow_shed", "sheep_pen", "goat_pen",
+	"horse_stable", "pig_pen"]
+const APART := 0.12       # how far apart two homes' roof colours are at least (as RGB, each 0 to 1)
+const STOREY := 0.2       # how much taller a home's lead stands at its biggest, at least (tiles)
+const LONG_HOME := 2.5   # how many times longer than deep a home known for its length may be (a hutch, a stable)
 
 
 func test_629_an_open_fire_answers_the_rain_and_the_wind() -> void:
@@ -188,7 +193,10 @@ func test_637_the_coop_and_the_hutch_are_known_by_their_outlines_and_grow_by_a_l
 		var top := BuildingSpec.spec(id, Game.max_level(id))
 		_check(float(top["body"]["w"]) > float(first["body"]["w"]) and float(top["body"]["h"]) > float(first["body"]["h"]),
 			"%s: its body has grown at its biggest" % id)
-		_check((top.get("upper", {}) as Dictionary).is_empty(), "%s: not by a storey stacked on it" % id)
+		# (The owner, 26 Nov: the lead "should also get one more storey" at its biggest. An A-frame has none to
+		# give; the hutch has a second tier of hutches now, on a lead that grew first.)
+		_check(id != "chicken_coop" or (top.get("upper", {}) as Dictionary).is_empty(),
+			"%s: an A-frame grows by its lead and its roof, with no storey stacked on it" % id)
 		var huts: Array = (top["features"] as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == "hut")
 		_eq(huts.size(), 1, "%s: one little house of its kind has joined it" % id)
 		var fp := Game.footprint(id)
@@ -288,14 +296,172 @@ func test_646_the_finish_s_patches_are_a_quality_s_to_give() -> void:
 	Farm3D.apply_quality_finish()
 
 
+func test_647_every_animal_home_is_known_by_its_own_outline_and_colour() -> void:
+	# (The owner, 25 Nov: "many buildings look alike". Five were one house in five colours, each a storey taller
+	# at its biggest. Now each has a roof no other home has, in a colour no other home has.)
+	var roofs := {}
+	var colours := {}
+	for id: String in HOMES:
+		var roof: Dictionary = BuildingSpec.spec(id, 1)["roof"]
+		var stilted := not _of_type(BuildingSpec.spec(id, 1), "stilts").is_empty()
+		var stalls := not _of_type(BuildingSpec.spec(id, 1), "stall_doors").is_empty()
+		var body: Dictionary = BuildingSpec.spec(id, 1)["body"]
+		var long := float(body.get("w", 0.0)) > float(body.get("d", 1.0)) * 1.6
+		var outline := "%s%s%s%s" % [roof.get("type", "gable"), " on stilts" if stilted else "",
+			" of stalls" if stalls else "", ", long" if long else ""]
+		_check(not roofs.has(outline), "%s has an outline of its own (%s, as %s)" % [id, outline, roofs.get(outline, "")])
+		roofs[outline] = id
+		var colour := Color.html(str(roof.get("color", "#000000")))
+		for other: String in colours:
+			var far := Vector3(colour.r, colour.g, colour.b).distance_to(Vector3(colours[other].r, colours[other].g,
+				colours[other].b))
+			# (no nearer than the goat's orange is to the coop's red)
+			_check(far > APART, "%s's roof is not %s's colour (%.2f apart)" % [id, other, far])
+		colours[id] = colour
+	_eq(str((BuildingSpec.spec("pig_pen", 1)["roof"] as Dictionary)["type"]), "barrel", "a pig ark has a round tin roof")
+	var holder := Node3D.new()
+	var white := ModelKit.paint(Color.WHITE)
+	var top := ModelKit.roof(holder, "barrel", Vector3.ZERO, Vector3(1.0, 0.2, 0.6), 0.3, 0.0, white, white)
+	_check(is_equal_approx(top, 0.5), "a round roof rises to its middle (%.2f)" % top)
+	var box := _box_of(holder)
+	_check(is_equal_approx(box.end.y, 0.5) and is_equal_approx(box.size.z, 0.6), "half a pipe over the block (%s)" % box)
+	holder.free()
+
+
+func test_648_a_home_at_its_biggest_has_a_taller_lead_and_something_beside_it() -> void:
+	# (The owner, 25 and 26 Nov: the parts get bigger too; "the hero component in each building should also get
+	# one more storey"; never just the same building again.)
+	var beside := {"cow_shed": "silo", "sheep_pen": "lean_to", "goat_pen": "hut", "horse_stable": "cupola",
+		"pig_pen": "hut"}
+	var moving := {"cow_shed": "weathervane", "sheep_pen": "chimney", "goat_pen": "birds",
+		"horse_stable": "weathervane", "pig_pen": "whirligig"}
+	var g := _farm()
+	for id: String in beside:
+		var small := BuildingSpec.spec(id, 1)
+		var big := BuildingSpec.spec(id, g.max_level(id))
+		var tall_small := float((small["body"] as Dictionary)["h"])
+		var tall_big := float((big["body"] as Dictionary)["h"])
+		var above: Dictionary = big.get("upper", {})
+		while not above.is_empty():   # (a storey on a storey: the grandest size goes up)
+			tall_big += float(above.get("h", 0.0))
+			above = above.get("upper", {})
+		_check(tall_big >= tall_small + STOREY, "%s's lead stands a storey taller (%.2f, then %.2f)" % [id, tall_small,
+			tall_big])
+		_check(float((big["body"] as Dictionary)["w"]) > float((small["body"] as Dictionary)["w"]),
+			"%s's lead is wider too" % id)
+		_check(_of_type(small, beside[id]).is_empty() and not _of_type(big, beside[id]).is_empty(),
+			"%s gains a %s" % [id, beside[id]])
+		# (Light and alive: one thing of its own moves at its biggest, by the wind or on its own.)
+		_check(_of_type(small, moving[id]).is_empty() and not _of_type(big, moving[id]).is_empty(),
+			"%s's %s moves only at its biggest" % [id, moving[id]])
+	# (A part that swings or circles by its shader is named for the way it goes, so a home's file carries it and
+	# the game sets it going again: before, only spinning parts and effects came through a file.)
+	var barn := AssetRegistry.instance("cow_shed", {"level": g.max_level("cow_shed")})
+	var vanes := barn.find_children("%s_vane_*" % DecorMotion.ORBIT, "Node3D", true, false) if barn != null else []
+	_eq(vanes.size(), 1, "a Dairy Farm's file has its weathervane")
+	for vane: Node3D in vanes:
+		_check(DecorMotion.is_part(vane), "a part the game knows")
+		var turning := 0
+		for part in vane.get_children():
+			var drawn := (part as MeshInstance3D).material_override as ShaderMaterial
+			turning += 1 if drawn != null and drawn.shader.resource_path == DecorMotion.ORBIT_SHADER else 0
+		_check(turning > 0, "..swinging with the wind (%d of its meshes)" % turning)
+	if barn != null:
+		barn.free()
+	_eq(DecorMotion.ORBITS.find_key(DecorMotion.CIRCLING), "circling", "a way of going is known by its name")
+	# (The owner, 26 Nov: "at max level [they] don't look the part... not grand enough". A plot is what it is, so
+	# the top size goes up: a third storey, a little tower, a silo.)
+	for id: String in ["cow_shed", "sheep_pen", "goat_pen", "nursery_barn"]:
+		var top: Dictionary = BuildingSpec.spec(id, g.max_level(id)).get("upper", {})
+		_check(not (top.get("upper", {}) as Dictionary).is_empty(), "%s has a third storey at its biggest" % id)
+	var ark: Node3D = BuildingSpec.model().build(g.item_data("pig_pen"), g.footprint("pig_pen"), g.max_level("pig_pen"))
+	var spinning := ark.find_children(DecorMotion.SPIN + "_*", "Node3D", true, false)
+	_eq(spinning.size(), 1, "the ark's tin vent is one spinning part")
+	ark.free()
+	_done(g)
+
+
+func test_649_every_animal_home_hangs_its_animal_s_market_picture_at_its_gate() -> void:
+	# (The owner, 26 Nov: "a signboard with the animal icon for each building... the same icons in the market".)
+	var g := _farm()
+	for id: String in HOMES:
+		var signs := _of_type(BuildingSpec.spec(id, 1), "gate_sign")
+		_eq(signs.size(), 1, "%s has a sign at its gate" % id)
+		if signs.is_empty():
+			continue
+		var animal := str((signs[0] as Dictionary)["animal"])
+		_check((g.item_data(id).get("holds", []) as Array).has(animal),
+			"%s's sign shows an animal it holds (%s)" % [id, animal])
+		for level: int in [1, g.max_level(id)]:
+			var model: Node3D = BuildingSpec.model().build(g.item_data(id), g.footprint(id), level)
+			var mark := model.find_child(GateSign.mark_name(animal), true, false) as Node3D
+			_check(mark != null and DecorMotion.is_part(mark), "%s size %d marks where its board hangs" % [id, level])
+			if mark != null:
+				_check(mark.get_child_count() == 0, "..with no board in the model: a picture is made on the phone")
+				var fp := g.footprint(id)
+				_check(mark.position.x > 0.0 and mark.position.x < fp.x and mark.position.z > 0.0
+					and mark.position.z < fp.y, "..inside its own footprint (%s)" % mark.position)
+				var board := GateSign.hang(model)
+				_check(board != null and board.get_parent() == mark and GateSign.hang(model) == board, "..hung once")
+				var shown := board.material_override as ShaderMaterial
+				_check(shown.get_shader_parameter("picture") == ItemIcons.of(animal), "..with the Market's own picture")
+				_check(shown == GateSign.material(animal), "..on the one material all its kind share")
+			model.free()
+	var sign_code := FileAccess.get_file_as_string(GateSign.SHADER)
+	_check(sign_code.contains(WIND) and sign_code.contains(FINISH),
+		"a board sways in the shared wind and wears the finish")
+	# (A home's file is the model alone, held to its budget of draws: the farm hangs the board, one draw more.)
+	var made := AssetRegistry.instance("cow_shed")
+	var made_mark := made.find_child(GateSign.mark_name("cow"), true, false) if made != null else null
+	_check(made_mark != null and made_mark.get_child_count() == 0, "a Dairy Farm's file marks the place and no more")
+	if made != null:
+		made.free()
+	var farm_code := FileAccess.get_file_as_string("res://scripts/world3d/objects_3d.gd")
+	_eq(farm_code.count("GateSign.hang(node)"), 2, "the farm hangs it on a home from a file and on one built in its place")
+	_done(g)
+
+
+func test_650_a_pool_of_light_is_drawn_only_when_it_is_dark() -> void:
+	# (By day every building's and lamp's pool of light was a draw of nothing at all: about one draw in thirty on
+	# the showcase farm. They stand on a layer of their own, which the farm's camera looks at only at night.)
+	_check(not ModelKit.pools_show(0.0) and ModelKit.pools_show(0.3), "no pools by day, pools once it darkens")
+	var g := _farm()
+	var built: Node3D = BuildingSpec.model().build(g.item_data("bakery"), g.footprint("bakery"), 1)
+	var made := AssetRegistry.instance("bakery")
+	for model: Node3D in [built, made]:
+		var pools := 0
+		var others := 0
+		for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
+			if mi.mesh == null or mi.mesh.get_surface_count() == 0:
+				continue
+			if mi.get_active_material(0) == ModelKit.glow_material():
+				pools += 1
+				_eq(mi.layers, ModelKit.NIGHT_LAYER, "a pool of light is on the night's layer alone")
+			else:
+				others += 1 if mi.layers & ModelKit.NIGHT_LAYER != 0 else 0
+		_check(pools > 0, "a Bakery throws light from its door and windows")
+		_eq(others, 0, "and nothing else of it is on that layer")
+		model.free()
+	var farm := Farm3D.new()
+	add_child(farm)
+	farm.set_night(0.0)
+	_eq(farm.camera.cull_mask & ModelKit.NIGHT_LAYER, 0, "by day the farm's camera does not look at them")
+	farm.set_night(0.8)
+	_eq(farm.camera.cull_mask & ModelKit.NIGHT_LAYER, ModelKit.NIGHT_LAYER, "at night it does")
+	farm.queue_free()
+	_done(g)
+
+
 func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 	# FarmVille drew its buildings as compact blocks, never long low sheds, and grew them upward. Its animal homes
 	# were one low storey, a couple of animals tall, so the animals in the yard read against them; the others
 	# (barns, workshops) stand about as tall as they're deep.
-	# Two homes are known by their own outline instead (docs/WORLD.md, the owner's pick of 25 Nov): the Chicken
-	# Coop is an A-frame, tall by its roof over low walls; the Rabbit Hutch is a long low hutch.
-	var by_roof := ["chicken_coop"]
-	var long_ones := ["rabbit_hutch"]
+	# Some homes are known by their own outline instead (docs/WORLD.md, the owner's picks of 25 and 26 Nov): the
+	# Chicken Coop is an A-frame, the Sheep Pen a low fold, the Pig Pen a round ark, the Dairy Farm a barn under
+	# a two-pitch roof and the Goat Pen a hut on stilts, each tall by its roof over low walls; the Rabbit Hutch
+	# is a long low hutch and the Stable a long row of stalls. The Winery is a cellar under a round roof.
+	var by_roof := ["chicken_coop", "sheep_pen", "pig_pen", "cow_shed", "goat_pen", "winery"]
+	var long_ones := ["rabbit_hutch", "horse_stable"]
 	var g := _farm()
 	for id in g.items:
 		if not ["building", "crafting", "barn"].has(str(g.items[id].get("kind", ""))):
@@ -315,7 +481,7 @@ func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 			var short_side := minf(bw, bd)
 			if by_roof.has(id):
 				h += float((BuildingModel.spec(id, level)["roof"] as Dictionary).get("pitch", 0.0)) * short_side / 2.0
-			_check(long_side / short_side <= (2.2 if long_ones.has(id) else 1.4),
+			_check(long_side / short_side <= (LONG_HOME if long_ones.has(id) else 1.4),
 				"%s size %d is not a long shed (%.2f x %.2f)" % [id, level, bw, bd])
 			_check(h >= short_side * 0.5, "%s size %d stands tall for its size (%.2f high, %.2f deep)"
 				% [id, level, h, short_side])
@@ -325,7 +491,11 @@ func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 
 
 func _skeps(spec: Dictionary) -> Array:
-	return (spec.get("features", []) as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == "skep")
+	return _of_type(spec, "skep")
+
+
+func _of_type(spec: Dictionary, type: String) -> Array:
+	return (spec.get("features", []) as Array).filter(func(f: Dictionary) -> bool: return f.get("type") == type)
 
 
 func _box_of(node: Node3D) -> AABB:

@@ -23,7 +23,7 @@
     },
     "building": {
       "triangles": 15000.0,
-      "draws": 9.0
+      "draws": 10.0
     },
     "farmer": {
       "triangles": 21000.0,
