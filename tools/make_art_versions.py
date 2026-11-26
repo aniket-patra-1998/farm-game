@@ -45,7 +45,7 @@ SOURCES = {
                 "data/catalog/blooms.json",
                 "scripts/world3d/mesh_builder.gd", "scripts/world3d/model_kit.gd", "scripts/world3d/crowding.gd",
                 "scripts/world3d/scale_guide.gd", "data/tree_shapes.json", "data/crop_forms.json",
-                "shaders/foliage3d.gdshader", "shaders/canopy3d.gdshader", "shaders/crop3d.gdshader",
+                "shaders/crown3d.gdshader", "shaders/crop3d.gdshader",
                 "shaders/fruit3d.gdshader", "shaders/bloom3d.gdshader",
                 "scripts/world3d/frond_mesh.gd", "shaders/frond3d.gdshader", "shaders/leaf_touch.gdshaderinc",
                 "tools/export_plants.gd"],

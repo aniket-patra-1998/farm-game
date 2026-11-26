@@ -5,12 +5,15 @@ extends RefCounted
 ## (made once and reused, so a farm of buildings needs a handful of materials, not hundreds).
 
 const PAINT_SHADER := "res://shaders/paint3d.gdshader"
-const CANOPY_SHADER := "res://shaders/canopy3d.gdshader"
 const FROND_SHADER := "res://shaders/frond3d.gdshader"   # a palm's fronds, a banana tree's leaves (FrondMesh)
 const STAR_SHADER := "res://shaders/star3d.gdshader"     # a Galaxy tree's stars
-const LEAF_SHADERS: Array[String] = [CANOPY_SHADER, FOLIAGE_SHADER, FROND_SHADER]   # what a tree's leaves are drawn by
+const LEAF_SHADERS: Array[String] = [CROWN_SHADER, FROND_SHADER]   # what a tree's leaves are drawn by
 const LEAF_TOUCHES := {"rainbow": 2, "sunset": 3, "glint": 4}   # a tree's touch -> leaf_touch.gdshaderinc's number
-const FOLIAGE_SHADER := "res://shaders/foliage3d.gdshader"
+const CROWN_SHADER := "res://shaders/crown3d.gdshader"   # a crown painted in leaf sprays (TreeModel)
+# What is never made simpler when seen from far (ModelKit.bake).
+const WHOLE_SHADERS: Array[String] = [FRUIT_SHADER, FROND_SHADER, STAR_SHADER, CROWN_SHADER]
+const SPRAY_CURVE := 2.2   # a crown's painted tones are screen colours: its shader brings them to the light's scale..
+const SPRAY_DEPTH := 0.56  # ..and shows this much of that as the leaf in full sun
 const SPRIG_SIZE := 64         # the leaf-cluster texture, in pixels a side
 # The names a model's file gives its materials (a glTF file carries plain materials; these say which they are).
 # PAINT and WALL become instances of the master shader (AssetRegistry.master_for); the LIVE ones are the kit's
@@ -40,11 +43,8 @@ const BARREL_STEPS := 8        # the flat strips a round roof is bent from
 const CORNICE := 0.07    # the slab under it
 const DOME_DRUM := 0.14  # and the drum it stands on
 const RIDGE_CAP := 0.045      # the cap along a ridge: half its width, and its height
-const SPRIG_LEAVES := 9        # leaves on a sprig
 const SPRIG_LEAF_WIDE := 1.7   # how broad each is, of the slim leaf they were (thin pointed leaves read as sharp)..
 const SPRIG_LEAF_ROUND := 0.45  # ..and how round its ends are (1: pointed like a blade; less: blunter)
-const CARD_DEPTH := Vector2(0.69, 0.91)  # where a leaf card sits, of the way out to the crown's skin: tucked in, so..
-const CARD_SIZE := Vector2(0.9, 1.4)     # ..fewer stick out past it; and each a little bigger, to cover as before
 # A tree's fruit is never made simpler with distance (bake keeps it whole: simplified, it turned into gems), so every
 # ripe tree in view draws all of its fruit, always: round enough to stay a fruit from the farm's distance, no more.
 const FRUIT_SEGMENTS := 8
@@ -71,18 +71,13 @@ const BALL_SEGMENTS := 8
 const BALL_RINGS := 5
 const SMOOTH_SEGMENTS := 12   # the balls that make up an animal's body and head: round, not faceted
 const SMOOTH_RINGS := 7
-const CANOPY_SEGMENTS := 16   # a canopy's grid: around
-const CANOPY_BANDS := 4.0     # steps of light on a canopy,
-const CANOPY_BANDING := 0.55  # how firmly it keeps to them (0: smooth)
-const CANOPY_MOTTLE := 0.1    # and how much leaf-sized patches vary it
-const CANOPY_RINGS := 8       # and up
 
 const CYLINDER_SIDES := 12
 
 
 ## Shaders that tint by vertex colour, and the colour parameter each one's materials set.
 const TINT_PARAMS := {"res://shaders/paint3d.gdshader": "albedo", "res://shaders/wall3d.gdshader": "base_color",
-	"res://shaders/canopy3d.gdshader": "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo",
+	CROWN_SHADER: "albedo", FRUIT_SHADER: "albedo", BLOOM_SHADER: "albedo",
 	"res://shaders/frond3d.gdshader": "albedo", "res://shaders/star3d.gdshader": "albedo"}
 
 const WHITE_TWIN := &"white_twin"  # meta on a white twin
@@ -108,7 +103,6 @@ static var detail := 1.0
 static var round_balls := false
 static var _materials := {}  # key -> Material
 
-static var _sprig: ImageTexture
 static var _meshes := {}     # key -> Mesh (shared unit shapes)
 
 
@@ -305,144 +299,21 @@ static func fronds(sway := 0.0) -> ShaderMaterial:
 	return _materials[key]
 
 
-## The leaf-pattern material of a canopy (white: the colour is in the vertices); `sway` bends it in the wind.
-static func leaves(shine := 0.0, sway := 0.0) -> ShaderMaterial:
-	var key := "leaves:%.2f:%.3f" % [shine, sway]
+## The material of a crown painted in leaf sprays (white: the tones are in the vertices); `sway` bends it in the wind.
+static func sprays(shine := 0.0, sway := 0.0) -> ShaderMaterial:
+	var key := "sprays:%.2f:%.3f" % [shine, sway]
 	if not _materials.has(key):
 		var m := ShaderMaterial.new()
-		m.shader = load(CANOPY_SHADER)
+		m.shader = load(CROWN_SHADER)
 		m.set_shader_parameter("albedo", Color.WHITE)
 		m.set_shader_parameter("roughness", 1.0 - shine * 0.6)
 		m.set_shader_parameter("specular", 0.1 + shine * 0.4)
+		m.set_shader_parameter("curve", SPRAY_CURVE)
+		m.set_shader_parameter("depth", SPRAY_DEPTH)
 		if sway > 0.0:
 			m.set_shader_parameter("sway", sway)
 		_materials[key] = m
 	return _materials[key]
-
-
-## The material of foliage cards (white: the colour is in the vertices), with the leaf-cluster texture.
-static func foliage(shine := 0.0, sway := 0.0) -> ShaderMaterial:
-	var key := "foliage:%.2f:%.3f" % [shine, sway]
-	if not _materials.has(key):
-		var m := ShaderMaterial.new()
-		m.shader = load(FOLIAGE_SHADER)
-		m.set_shader_parameter("sprig", leaf_texture())
-		m.set_shader_parameter("roughness", 1.0 - shine * 0.6)
-		m.set_shader_parameter("specular", 0.1 + shine * 0.4)
-		if sway > 0.0:
-			m.set_shader_parameter("sway", sway)
-		_materials[key] = m
-	return _materials[key]
-
-
-## A sprig of leaves, drawn once: red is where there is leaf (the rest is cut away), green how light it is (leaf
-## tips catch the light, bases and veins are darker). The stem is at the bottom middle, the tip at the top.
-static func leaf_texture() -> ImageTexture:
-	if _sprig != null:
-		return _sprig
-	var n := SPRIG_SIZE
-	var img := Image.create(n, n, true, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 1))
-	# Leaves along a stem: a pair every so often, the longest in the middle, and one at the tip.
-	var leaves: Array = []   # [base (0..1, y up), angle from straight up, length, half width]
-	leaves.append([Vector2(0.5, 0.52), 0.0, 0.46, 0.085])
-	for k in (SPRIG_LEAVES - 1) / 2:
-		var h := 0.08 + 0.17 * k
-		var len := 0.34 - 0.03 * k
-		leaves.append([Vector2(0.5, h), -1.0 + 0.12 * k, len, 0.075])
-		leaves.append([Vector2(0.5, h + 0.04), 1.0 - 0.12 * k, len, 0.075])
-	for y in n:
-		for x in n:
-			var p := Vector2((x + 0.5) / n, 1.0 - (y + 0.5) / n)
-			var cover := 0.0
-			var light := 0.0
-			# The stem.
-			if absf(p.x - 0.5) < 0.012 and p.y < 0.6:
-				cover = 1.0
-				light = 0.5
-			for l: Array in leaves:
-				var base: Vector2 = l[0]
-				var a: float = l[1]
-				var dir := Vector2(sin(a), cos(a))
-				var side := Vector2(dir.y, -dir.x)
-				var d := p - base
-				var along: float = d.dot(dir) / float(l[2])
-				if along < 0.0 or along > 1.0:
-					continue
-				var across := absf(d.dot(side))
-				var width: float = float(l[3]) * SPRIG_LEAF_WIDE * pow(sin(PI * pow(along, 0.8)), SPRIG_LEAF_ROUND)
-				if across < width:
-					cover = 1.0
-					var vein := 1.0 - smoothstep(0.0, 0.012, across)
-					light = maxf(light, 0.62 + 0.38 * along - 0.18 * vein - 0.12 * (across / maxf(width, 0.001)))
-			img.set_pixel(x, y, Color(cover, clampf(light, 0.0, 1.0), 0.0, 1.0))
-	img.generate_mipmaps()
-	_sprig = ImageTexture.create_from_image(img)
-	return _sprig
-
-
-## Leafy foliage over an ellipsoid: `count` cards, each a sprig of leaves, spread over its upper and outer side and
-## facing outward, so the crown has a ragged leafy outline. `shade` turns how lit a card is (0 shade .. 1 sun) into its
-## colour; `sun` is the light in the mesh's own space. One mesh, one draw.
-static func foliage_cards(parent: Node3D, centre: Vector3, radii: Vector3, rng: RandomNumberGenerator,
-		shade: Callable, sun: Vector3, count: int, card: float, shine := 0.0) -> MeshInstance3D:
-	var verts := PackedVector3Array()
-	var norms := PackedVector3Array()
-	var uvs := PackedVector2Array()
-	var cols := PackedColorArray()
-	var idx := PackedInt32Array()
-	for i in count:
-		# A direction over the sphere, more of them up and out than underneath; the card sits on the surface or a
-		# little inside it, so the cards make shells of foliage.
-		var y := rng.randf_range(-0.55, 1.0)
-		var a := rng.randf() * TAU
-		var r := sqrt(maxf(1.0 - y * y, 0.0))
-		var dir := Vector3(cos(a) * r, y, sin(a) * r)
-		var depth := rng.randf_range(CARD_DEPTH.x, CARD_DEPTH.y)
-		var at := dir * radii * depth
-		var out := (dir / radii).normalized()          # an ellipsoid's own outward normal
-		var along := Vector3.UP.cross(out)
-		if along.length_squared() < 0.01:
-			along = Vector3.RIGHT
-		along = along.normalized()
-		var rise := out.cross(along).normalized()      # up the card, in its plane
-		var roll := rng.randf_range(-0.8, 0.8)
-		var right := (along * cos(roll) + rise * sin(roll)).normalized()
-		var up := (rise * cos(roll) - along * sin(roll)).normalized()
-		# sprigs reach upward and outward, they do not point at the ground
-		if up.y < 0.0:
-			up = -up
-			right = -right
-		var size := card * rng.randf_range(CARD_SIZE.x, CARD_SIZE.y)
-		var base := at - up * size * 0.15
-		var light := clampf(0.55 + 0.3 * out.y + 0.3 * out.dot(sun) + rng.randf_range(-0.1, 0.1), 0.25, 0.85)
-		var colour: Color = shade.call(light)
-		var flip := rng.randf() < 0.5
-		var start := verts.size()
-		for c in 4:
-			var cx := -0.5 if c == 0 or c == 3 else 0.5
-			var cy := 0.0 if c < 2 else 1.0
-			verts.append(base + right * cx * size + up * cy * size)
-			norms.append(out)
-			var u := cx + 0.5
-			uvs.append(Vector2(1.0 - u if flip else u, 1.0 - cy))
-			cols.append(colour)
-		idx.append_array(PackedInt32Array([start, start + 1, start + 2, start, start + 2, start + 3]))
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_NORMAL] = norms
-	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	arrays[Mesh.ARRAY_COLOR] = cols
-	arrays[Mesh.ARRAY_INDEX] = idx
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.position = centre
-	mi.material_override = foliage(shine)
-	parent.add_child(mi)
-	return mi
 
 
 ## Makes every painted part under `root` bend in the wind by `amount` (paint3d's sway, by height above
@@ -452,12 +323,9 @@ static func sway_all(root: Node, amount: float) -> void:
 	if root is MeshInstance3D:
 		var mi := root as MeshInstance3D
 		var m := mi.material_override as ShaderMaterial
-		if m != null and m.shader != null and m.shader.resource_path == CANOPY_SHADER:
-			var lr := float(m.get_shader_parameter("roughness"))
-			mi.material_override = leaves((1.0 - lr) / 0.6, amount)
-		elif m != null and m.shader != null and m.shader.resource_path == FOLIAGE_SHADER:
-			var fr := float(m.get_shader_parameter("roughness"))
-			mi.material_override = foliage((1.0 - fr) / 0.6, amount)
+		if m != null and m.shader != null and m.shader.resource_path == CROWN_SHADER:
+			var sr := float(m.get_shader_parameter("roughness"))
+			mi.material_override = sprays((1.0 - sr) / 0.6, amount)
 		elif m != null and m.shader != null and m.shader.resource_path == FROND_SHADER:
 			mi.material_override = fronds(amount)
 		elif m != null and m.shader != null and m.shader.resource_path == STAR_SHADER:
@@ -786,73 +654,6 @@ static func facet_ball(parent: Node3D, centre: Vector3, r: float, mat: Material,
 	return mi
 
 
-## A leafy canopy: one smooth, lumpy mass (an ellipsoid of `radii`, pushed out in `lobes` rounded bulges, like
-## the scalloped crown of a painted tree), shaded by vertex colour from `shade` (a Callable from how lit a point
-## is, 0 deep shade .. 1 full sun, to a colour). `sun` is the direction of the light in the mesh's own space.
-## One mesh and one draw, soft inside and rough only along its outline; the paint material is white because
-## the colour is in the vertices.
-static func canopy(parent: Node3D, centre: Vector3, radii: Vector3, rng: RandomNumberGenerator, shade: Callable,
-		sun: Vector3, lobes := 7, bump := 0.2, shine := 0.0) -> MeshInstance3D:
-	var sphere := SphereMesh.new()
-	sphere.radius = 1.0
-	sphere.height = 2.0
-	sphere.radial_segments = scaled(CANOPY_SEGMENTS, 8)
-	sphere.rings = scaled(CANOPY_RINGS, 4)
-	var arrays := sphere.get_mesh_arrays()
-	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-	var dirs: Array[Vector3] = []
-	var tones: Array[float] = []
-	for i in lobes:
-		# Bulges spread over the upper and side of the mass, a little more of them up where the light is.
-		var y := rng.randf_range(-0.35, 1.0)
-		var a := rng.randf() * TAU
-		var r := sqrt(maxf(1.0 - y * y, 0.0))
-		dirs.append(Vector3(cos(a) * r, y, sin(a) * r))
-		tones.append(rng.randf_range(-0.09, 0.09))   # each bulge a touch lighter or darker: leaves in clusters
-	var colours := PackedColorArray()
-	colours.resize(verts.size())
-	for i in verts.size():
-		var d := verts[i].normalized()
-		var push := 0.0
-		var tone := 0.0
-		for k in lobes:
-			var w := smoothstep(0.45, 1.0, d.dot(dirs[k]))
-			push += w
-			tone += w * tones[k]
-		verts[i] = d * radii * (1.0 + bump * (push - 0.35))
-		var light := clampf(0.45 + 0.4 * d.y + 0.42 * d.dot(sun) + tone + 0.08 * push, 0.0, 1.0)
-		# Painted, not smooth: light falls in a few soft bands, with a mottle of leaf-sized lighter and darker patches.
-		light = lerpf(light, roundf(light * CANOPY_BANDS) / CANOPY_BANDS, CANOPY_BANDING)
-		light = clampf(light + CANOPY_MOTTLE * sin(d.x * 11.0 + d.z * 5.0) * sin(d.y * 13.0 + d.x * 4.0)
-			* sin(d.z * 12.0 - d.y * 6.0), 0.0, 1.0)
-		colours[i] = shade.call(light)
-	# Smooth normals: the same point is one vertex (the seam of the sphere's grid is a pair) so no crease shows.
-	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
-	var acc := {}
-	for t in range(0, idx.size(), 3):
-		var fn := (verts[idx[t + 1]] - verts[idx[t]]).cross(verts[idx[t + 2]] - verts[idx[t]])
-		for j in 3:
-			var key := Vector3i((verts[idx[t + j]] * 1000.0).round())
-			acc[key] = (acc.get(key, Vector3.ZERO) as Vector3) + fn
-	var normals := PackedVector3Array()
-	normals.resize(verts.size())
-	for i in verts.size():
-		normals[i] = (acc.get(Vector3i((verts[i] * 1000.0).round()), Vector3.UP) as Vector3).normalized()
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colours
-	arrays[Mesh.ARRAY_TEX_UV] = null
-	arrays[Mesh.ARRAY_TANGENT] = null
-	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.position = centre
-	mi.material_override = leaves(shine)
-	parent.add_child(mi)
-	return mi
-
-
 ## A mesh from flat faces (each a list of 3 or 4 points), with each face's normal facing away from
 ## `inside`, so lighting is right whichever way round the points were listed.
 static func faces(parent: Node3D, list: Array, inside: Vector3, mat: Material) -> MeshInstance3D:
@@ -1172,11 +973,12 @@ static func bake(root: Node3D) -> Node3D:
 		if mesh.get_surface_count() == 0:
 			continue
 		if lods:
-			# (a tree's fruit: simplified, a ball of a few faces is a gem; a frond's leaflets: thin, they would go)
+			# (a tree's fruit: simplified, a ball of a few faces is a gem; a frond's leaflets: thin, they would go;
+			# a crown's leaf sprays: each its own small piece, they would go too and leave the plain shape under them)
 			var whole: Array[int] = []
 			for k in mats.size():
 				var sm := mats[k] as ShaderMaterial
-				if sm != null and sm.shader != null and sm.shader.resource_path in [FRUIT_SHADER, FROND_SHADER, STAR_SHADER]:
+				if sm != null and sm.shader != null and sm.shader.resource_path in WHOLE_SHADERS:
 					whole.append(k)
 			mesh = with_lods(mesh, whole)
 		var mi := MeshInstance3D.new()

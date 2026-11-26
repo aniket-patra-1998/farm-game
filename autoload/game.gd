@@ -353,7 +353,6 @@ func _exit_tree() -> void:
 		cache.clear()
 	ModelKit._facet_mesh = null
 	ModelKit._facet_low = null
-	ModelKit._sprig = null
 	PondModel.release_statics()
 	WorldFx.release_statics()
 

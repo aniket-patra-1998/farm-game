@@ -1246,7 +1246,7 @@ func test_191_a_clipped_hedge_stands_still_and_swaying_pieces_sway_on_their_own_
 	_check(not swaying, "a clipped hedge is a solid wall of leaves: it doesn't wobble in the wind")
 	for id in ["arbor", "haystack"]:
 		_check(not DecorModel.SWAY_BY_ID.has(id), "%s is solid: it stands still" % id)
-	for path in ["res://shaders/paint3d.gdshader", "res://shaders/canopy3d.gdshader"]:
+	for path in ["res://shaders/paint3d.gdshader", "res://shaders/crown3d.gdshader"]:
 		var code := FileAccess.get_file_as_string(path)
 		_check(code.contains("MODEL_MATRIX[3]") and not code.contains("NODE_POSITION_WORLD"),
 			"%s takes each instance's own foot, so pieces of a MultiMesh do not sway as one" % path)
@@ -1426,7 +1426,7 @@ func test_210_rain_wets_and_snow_settles_gradually_and_both_fade() -> void:
 	_eq(w.snow, 0.0, "and melts away")
 	_eq(w.wet, 0.0, "the ground is dry again")
 	w.free()
-	for shader in ["ground3d", "wall3d", "paint3d", "canopy3d", "foliage3d"]:
+	for shader in ["ground3d", "wall3d", "paint3d", "crown3d"]:
 		var code := FileAccess.get_file_as_string("res://shaders/%s.gdshader" % shader)
 		if FileAccess.file_exists("res://shaders/%s.gdshaderinc" % shader):   # (the ground's shared body)
 			code += FileAccess.get_file_as_string("res://shaders/%s.gdshaderinc" % shader)
