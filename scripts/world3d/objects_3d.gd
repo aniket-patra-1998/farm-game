@@ -1008,7 +1008,8 @@ func _ripen_view(v: Dictionary, o: Dictionary) -> void:
 	if v["node"] is PaintedBloom:
 		var opens := float(cycle[0]) + float(cycle[1])
 		var withers := d != null and d.withers()
-		(v["node"] as PaintedBloom).set_cycle(opens, opens + float(Balance.i("blooms.wither_after")) if withers else NEVER)
+		(v["node"] as PaintedBloom).set_cycle(opens,
+			opens + float(Balance.i("blooms.wither_after")) if withers else PaintedBloom.NEVER)
 	elif d != null and d.withers():
 		var stands := float(Balance.i("blooms.wither_after"))
 		ripen(v["node"], cycle[0], cycle[1], cycle[0] + cycle[1] + stands * (1.0 - WILT_SHARE), stands * WILT_SHARE)

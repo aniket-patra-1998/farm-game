@@ -12,6 +12,7 @@ const CHECK := 1.0                   # seconds between looks at the clock
 const BUD := "bud"
 const OPEN := "open"
 const DRY := "dry"
+const NEVER := INF   # when a flower that does not wither has withered (its times are Game.now, not the farm clock's)
 
 static var _materials := {}   # "picture|dried" -> ShaderMaterial, shared by every flower showing it
 static var _quad: QuadMesh    # the one card every flower is drawn on
@@ -19,7 +20,7 @@ static var _quad: QuadMesh    # the one card every flower is drawn on
 var kind := ""     # its family: rose, tulip..
 var heads := 1     # 1, or 3 for a full bloom
 var _opens := 0.0  # when it is ready (Game.now)
-var _dries := Objects3D.NEVER   # ..and when it has withered
+var _dries := NEVER   # ..and when it has withered
 var _card: MeshInstance3D
 var _look := ""
 
@@ -64,7 +65,7 @@ func _ready() -> void:
 	add_child(timer)
 
 
-## Tells the flower its cycle: it opens at `opens` and has withered at `dries` (Game.now; Objects3D.NEVER: never).
+## Tells the flower its cycle: it opens at `opens` and has withered at `dries` (Game.now; NEVER: it does not).
 func set_cycle(opens: float, dries: float) -> void:
 	_opens = opens
 	_dries = dries

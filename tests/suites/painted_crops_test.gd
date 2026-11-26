@@ -60,6 +60,8 @@ func test_653_a_flower_is_a_painted_picture_in_bud_open_or_dry_by_the_clock() ->
 		_eq(flower.shown(), PaintedBloom.BUD, "in bud until it is ready")
 		flower.set_cycle(now - 1.0, now + 200.0)
 		_eq(flower.shown(), PaintedBloom.OPEN, "open while it stands ready")
+		flower.set_cycle(now - 1.0, PaintedBloom.NEVER)
+		_eq(flower.shown(), PaintedBloom.OPEN, "and one that never withers stays open")
 		flower.set_cycle(now - 300.0, now - 1.0)
 		_eq(flower.shown(), PaintedBloom.DRY, "and dry once it has withered")
 		var card := flower.get_child(0) as MeshInstance3D
