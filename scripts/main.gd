@@ -345,6 +345,7 @@ func _process(_delta: float) -> void:
 			_since_daylight = 0.0
 			world_3d.set_daylight(hour, w)
 			ModelKit.set_window_glow(dark)
+			world_3d.set_night(dark)
 			# Night and day for the animals (they sleep in the dark), and the rooster at first light.
 			var night := dark > NIGHT_FROM
 			# First light, or the farm opened in the morning (owner, 19 Nov: only a game left open over the dawn

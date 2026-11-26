@@ -61,6 +61,8 @@ const KEEP := &"keep_unbaked"  # meta on a part that moves on its own: bake leav
 ## Tessellation: enough to read round at farm zoom on a phone, no more (each ball is ~170 triangles,
 ## each cylinder ~48, before the shadow pass draws them again).
 const GLASS_GLOW := 3.4      # how bright lit windows are at night (emission energy at full dark)
+const NIGHT_LAYER := 1 << 10   # the render layer of the light pools windows and lamps throw: looked at only at night
+const POOLS_FROM := 0.01       # how dark it is before a pool of light is worth drawing
 const GLOW_LIFT := 0.02      # a pool of light lies this far above the ground
 const FACET_SEGMENTS := 8     # a faceted ball: around
 const FACET_RINGS := 4        # and up
@@ -503,6 +505,12 @@ static func glass() -> StandardMaterial3D:
 	return _materials["glass"]
 
 
+## Whether the pools of light are worth drawing at `glow` (by day each was a draw of nothing at all: one a
+## building, one a lamp). The farm's camera looks at their layer only then (Farm3D.set_night).
+static func pools_show(glow: float) -> bool:
+	return glow > POOLS_FROM
+
+
 static func set_window_glow(glow: float) -> void:
 	glass().emission_energy_multiplier = glow * GLASS_GLOW
 	glow_material().set_shader_parameter("strength", glow)
@@ -564,6 +572,8 @@ static func adopt(node: Node) -> void:
 				frame_material()]
 		if live:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if mi.mesh != null and mi.mesh.get_surface_count() > 0 and mi.get_active_material(0) == glow_material():
+			mi.layers = NIGHT_LAYER
 	for c in node.get_children():
 		adopt(c)
 
@@ -638,6 +648,7 @@ static func glow_pools(parent: Node3D, pools: Array) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
 	mi.material_override = glow_material()
+	mi.layers = NIGHT_LAYER
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.position = Vector3(0, GLOW_LIFT, 0)
 	mi.set_meta(KEEP, true)

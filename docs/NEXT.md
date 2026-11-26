@@ -1599,7 +1599,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   (the Stable's), the Pig Pen has a silo beside its ark, the coop a weathervane, the hutch a second tier.
   Known: four homes are tiered the same way now (three boxes, a skirt roof round each), told apart by roof
   shape and colour.
-- Next (the owner, 26 Nov): make the buildings lighter as the animals were, the same or better looks.
+- Making the buildings lighter (the owner, 26 Nov), measured first: the building files are 8.9 MB as shipped
+  (248 files; a third of their triangles are states and plan frames that are not drawn), against the animals'
+  164 MB before their bones: there is no such saving here. On the showcase farm's playing view (perf_probe,
+  low, 12 tiles) the frame is 654 draws and 270k triangles, and a building is 5 to 12 of those draws: all the
+  buildings in view are under a tenth of the frame. Done: the pools of light windows and lamps throw were a
+  draw of nothing by day; they stand on a layer the camera looks at only at night (ModelKit.NIGHT_LAYER,
+  Farm3D.set_night; test 650): 654 -> 647 draws in that view, one fewer a building or lamp in sight.
+  Not done, and why: one surface for paint and wall (a draw a building; the shader, the exporter and every
+  file change for about 1% of a frame). The frame's weight is elsewhere: yard animals (BuildingFill, 114
+  meshes), animals at large (106), decorations (91), crops (75).
 - Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
 - Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.
 

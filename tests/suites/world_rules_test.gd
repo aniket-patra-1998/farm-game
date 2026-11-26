@@ -421,6 +421,37 @@ func test_649_every_animal_home_hangs_its_animal_s_market_picture_at_its_gate() 
 	_done(g)
 
 
+func test_650_a_pool_of_light_is_drawn_only_when_it_is_dark() -> void:
+	# (By day every building's and lamp's pool of light was a draw of nothing at all: about one draw in thirty on
+	# the showcase farm. They stand on a layer of their own, which the farm's camera looks at only at night.)
+	_check(not ModelKit.pools_show(0.0) and ModelKit.pools_show(0.3), "no pools by day, pools once it darkens")
+	var g := _farm()
+	var built: Node3D = BuildingSpec.model().build(g.item_data("bakery"), g.footprint("bakery"), 1)
+	var made := AssetRegistry.instance("bakery")
+	for model: Node3D in [built, made]:
+		var pools := 0
+		var others := 0
+		for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
+			if mi.mesh == null or mi.mesh.get_surface_count() == 0:
+				continue
+			if mi.get_active_material(0) == ModelKit.glow_material():
+				pools += 1
+				_eq(mi.layers, ModelKit.NIGHT_LAYER, "a pool of light is on the night's layer alone")
+			else:
+				others += 1 if mi.layers & ModelKit.NIGHT_LAYER != 0 else 0
+		_check(pools > 0, "a Bakery throws light from its door and windows")
+		_eq(others, 0, "and nothing else of it is on that layer")
+		model.free()
+	var farm := Farm3D.new()
+	add_child(farm)
+	farm.set_night(0.0)
+	_eq(farm.camera.cull_mask & ModelKit.NIGHT_LAYER, 0, "by day the farm's camera does not look at them")
+	farm.set_night(0.8)
+	_eq(farm.camera.cull_mask & ModelKit.NIGHT_LAYER, ModelKit.NIGHT_LAYER, "at night it does")
+	farm.queue_free()
+	_done(g)
+
+
 func test_107_buildings_are_compact_and_tall_like_farmville_s() -> void:
 	# FarmVille drew its buildings as compact blocks, never long low sheds, and grew them upward. Its animal homes
 	# were one low storey, a couple of animals tall, so the animals in the yard read against them; the others

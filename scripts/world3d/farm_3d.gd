@@ -201,6 +201,14 @@ func _update_changed_plots() -> void:
 	ground.update_tiles(indices)
 
 
+## How dark it is (0 day, 1 night): the camera looks at the pools of light windows and lamps throw only when
+## they are lit, so by day they are not drawn at all (ModelKit.NIGHT_LAYER).
+func set_night(dark: float) -> void:
+	var lit := ModelKit.pools_show(dark)
+	if camera.cull_mask & ModelKit.NIGHT_LAYER != (ModelKit.NIGHT_LAYER if lit else 0):
+		camera.cull_mask = (camera.cull_mask | ModelKit.NIGHT_LAYER) if lit else (camera.cull_mask & ~ModelKit.NIGHT_LAYER)
+
+
 ## The graphics quality in use, on this farm's sun, glow, resolution, detail and animals (Quality).
 func _apply_quality() -> void:
 	Quality.apply(sun, environment, get_viewport())
