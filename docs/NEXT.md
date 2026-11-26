@@ -1589,6 +1589,10 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   roof now) and the Nursery Barn would have been the new Dairy Farm's twin (it has a rose gable roof, a
   cupola, a crib house and a calf on its gate sign). The Farmhouse, Dog House, Duck Pond, Orchard and the
   two gardens each had an outline of their own and are as they were. The Barn is the hero and was not touched.
+- The owner on the result: "building at max level don't look the part... they don't look grand enough". The
+  nine homes' biggest sizes are taller and wider now (two full storeys on the Dairy Farm, Stable, Sheep Pen,
+  Nursery and goat tower; a bigger ark, coop, hutch and lead hive; taller silo and lookout; bigger stars).
+  The 2x2 homes (coop, hutch, hive) are still small beside a 3x3 one: their plots are.
 - Next (the owner, 26 Nov): make the buildings lighter as the animals were, the same or better looks.
 - Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
 - Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.
