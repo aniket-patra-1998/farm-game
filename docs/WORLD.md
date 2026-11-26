@@ -148,8 +148,10 @@ never turns, so a flat picture facing it is the plant.
   whatever stands in front of the plot.
 - `painted3d.gdshader` lights the whole card alike, as a tree's crown is, so it dims at night and darkens in rain;
   it bends in the wind from its foot.
-- Switch: `Release.on("painted_crops")`. The modelled plants (`Crops3D`) are still kept up, unseen, until the
-  flowers, the Market pictures and the harvest pop are painted too.
+- Flowers are painted the same way (`PaintedBloom`, `art/painted/blooms`): one card to a flower, in bud until it
+  is ready, open while it stands ready, and the open picture gone dry once withered; single and full bloom.
+- Switch: `Release.on("painted_crops")`, for crops and flowers. The modelled plants (`Crops3D`) are still kept up,
+  unseen, until the Market pictures and the harvest pop are painted too.
 
 ## Still to come (in this order)
 

@@ -1470,7 +1470,9 @@ func test_310_everything_but_trees_as_placed_stay_inside_their_tile_border() -> 
 	var view := Objects3D.new()
 	for id: String in Game.items:
 		var def := Game.catalog.get_def(id)
-		if not (def is BuildingDef or def is DecorationDef or def is BloomDef or def is VehicleDef or def is YoungDef) \
+		# (A flower is a painted card facing the camera, not a model on the ground: its picture is held to its tile's
+		# width, test 653.)
+		if not (def is BuildingDef or def is DecorationDef or def is VehicleDef or def is YoungDef) \
 				or id.ends_with("_tree") or Game.links.group_of(id) != "":
 			continue
 		var fp := Game.footprint(id)
@@ -1971,7 +1973,7 @@ func test_329_decor_and_blooms_share_built_looks_by_what_they_show() -> void:
 	var cycle := int(Game.item_data(bloom).get("cycle_seconds", 86400))
 	var young: Node3D = objects._build({"uid": 5, "id": bloom, "row": 6, "col": 6, "t": Game.now()})
 	var ready: Node3D = objects._build({"uid": 6, "id": bloom, "row": 6, "col": 6 + look, "t": Game.now() - cycle - 1})
-	_check(_mesh_ids(young) == _mesh_ids(ready), "a bloom is one model in bud and in bloom (its shader opens it)")
+	_check(_mesh_ids(young) == _mesh_ids(ready), "a bloom is one card in bud and in bloom (its picture opens it)")
 	for n: Node in [a, b, s1, s2, young, ready, objects]:
 		n.free()
 	Game.reset_game()

@@ -42,3 +42,32 @@ func test_652_a_plot_shows_its_crops_painted_picture_for_each_look() -> void:
 	_eq(layer.shown(plots[3]), "", "a harvested plot's card goes")
 	layer.free()
 	_done(g)
+
+
+func test_653_a_flower_is_a_painted_picture_in_bud_open_or_dry_by_the_clock() -> void:
+	var g := _farm()
+	for id: String in Game.item_order:
+		if str(Game.items[id].get("kind", "")) != "bloom":
+			continue
+		var flower := PaintedBloom.create(id, Game.footprint(id))
+		add_child(flower)
+		_eq(flower.heads, 3 if id.contains("full") else 1, "%s: a full bloom is three heads" % id)
+		for look: String in [PaintedBloom.BUD, PaintedBloom.OPEN]:
+			_check(PaintedCrops.paint_at(PaintedBloom.ART % ("%s_%d_%s" % [flower.kind, flower.heads, look])) != null,
+				"%s is painted %s from its recipe" % [id, look])
+		var now := float(Game.now())
+		flower.set_cycle(now + 100.0, now + 200.0)
+		_eq(flower.shown(), PaintedBloom.BUD, "in bud until it is ready")
+		flower.set_cycle(now - 1.0, now + 200.0)
+		_eq(flower.shown(), PaintedBloom.OPEN, "open while it stands ready")
+		flower.set_cycle(now - 300.0, now - 1.0)
+		_eq(flower.shown(), PaintedBloom.DRY, "and dry once it has withered")
+		var card := flower.get_child(0) as MeshInstance3D
+		var dried: float = (card.material_override as ShaderMaterial).get_shader_parameter("dried")
+		_eq(dried, 1.0, "the dry look is the open picture gone dry")
+		var foot := card.position.y - PaintedCrops.facing().y.y * (card.mesh as QuadMesh).size.y * 0.5
+		_check(foot > -0.01, "its card is not sunk in the grass (%.3f)" % foot)
+		_check((card.mesh as QuadMesh).size.x < 1.0, "and its picture is narrower than its tile")
+		flower.free()
+	_done(g)
+

@@ -1005,7 +1005,11 @@ func _ripen_view(v: Dictionary, o: Dictionary) -> void:
 		return
 	v["ripe"] = cycle
 	var d := Game.catalog.get_def(str(o["id"])) as BloomDef
-	if d != null and d.withers():
+	if v["node"] is PaintedBloom:
+		var opens := float(cycle[0]) + float(cycle[1])
+		var withers := d != null and d.withers()
+		(v["node"] as PaintedBloom).set_cycle(opens, opens + float(Balance.i("blooms.wither_after")) if withers else NEVER)
+	elif d != null and d.withers():
 		var stands := float(Balance.i("blooms.wither_after"))
 		ripen(v["node"], cycle[0], cycle[1], cycle[0] + cycle[1] + stands * (1.0 - WILT_SHARE), stands * WILT_SHARE)
 	else:
@@ -1222,8 +1226,11 @@ func _build(o: Dictionary) -> Node3D:
 			"bloom":
 				# One of a few looks (Instancer), as for trees: from its file when it stands on its own.
 				# (one look whether in bud, in bloom or withered: its shader shows its life by the clock, `ripen`)
-				node = bloom_look(str(o["id"]), Crowding.mask(o), Instancer.variant(int(o["row"]), int(o["col"])), true,
-					may_build())
+				if Release.on("painted_crops"):
+					node = PaintedBloom.create(str(o["id"]), fp)   # (flowers are painted pictures, as crops are)
+				else:
+					node = bloom_look(str(o["id"]), Crowding.mask(o), Instancer.variant(int(o["row"]), int(o["col"])),
+						true, may_build())
 			_:
 				if Game.under_construction(o):
 					node = ModelKit.bake(BuildingSpec.model().build_site(it, fp, Game.land.construction_progress(o)))

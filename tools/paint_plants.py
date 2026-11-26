@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Paints every crop as flat pictures (docs/WORLD.md "Crops are painted pictures"): a plot of it part grown and ripe,
-and the one sprouting plot every crop shares. A picture is written as a recipe of shapes (SVG text, `.paint`), which
+"""Paints every crop and flower as flat pictures (docs/WORLD.md "Crops are painted pictures"): a plot of each crop part
+grown and ripe, the one sprouting plot every crop shares, and each flower in bud and open, single and full bloom. A picture is written as a recipe of shapes (SVG text, `.paint`), which
 the game turns into a texture on the device the first time it is shown (PaintedCrops.picture): a few kilobytes
 shipped, not an image.
 
@@ -8,11 +8,11 @@ The manner is the farm's own: no black outlines (each shape is edged in its own 
 soft light from the upper left, the tree crowns' deep greens. A picture is 512 x 400, its plot a diamond 500 wide
 round (256, 262); PaintedCrops knows those numbers.
 
-Run: python3 tools/paint_plants.py   (writes art/painted/crops; --check: fails if what is there is not what it paints)"""
+Run: python3 tools/paint_plants.py   (writes art/painted/crops and art/painted/blooms; --check: fails if what is there is not what it paints)"""
 import json, math, os, random, sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..") + "/"
-OUT = ROOT + "art/painted/crops/"
+OUT = ROOT + "art/painted/"
 SOIL = [False]   # (the game draws the bed itself: a picture is the plants alone)
 W, H, CX, CY = 512, 400, 256, 262
 LEAF = "#3f8f34"
@@ -324,6 +324,7 @@ def gourd(p, r, kind, c, x, y):
 
 # ---------------------------------------------------------------- flowers
 
+BUD = [False]   # (a flower is being drawn in bud)
 PET = "M0,0 C-0.78,-0.12 -0.9,-0.82 -0.3,-1.0 C-0.12,-1.06 0.12,-1.06 0.3,-1.0 C0.9,-0.82 0.78,-0.12 0,0 Z"
 
 
@@ -337,6 +338,8 @@ def petal(p, ang, length, width, c, pointed=False):
 
 
 def flower_head(p, kind, c, accent, r):
+    if BUD[0]:
+        return shape(p, 'M0,%.1f C%.1f,%.1f %.1f,%.1f 0,%.1f C%.1f,%.1f %.1f,%.1f 0,%.1f Z' % (r * 0.5, -r * 0.5, r * 0.3, -r * 0.42, -r * 0.5, -r * 0.75, r * 0.42, -r * 0.5, r * 0.5, r * 0.3, r * 0.5), '#5aa046') + shape(p, 'M%.1f,%.1f C%.1f,%.1f %.1f,%.1f 0,%.1f C%.1f,%.1f %.1f,%.1f %.1f,%.1f Z' % (-r * 0.2, -r * 0.3, -r * 0.2, -r * 0.6, -r * 0.05, -r * 0.8, -r * 0.88, r * 0.05, -r * 0.8, r * 0.2, -r * 0.6, r * 0.2, -r * 0.3), c, 1.4)
     rnd = random.Random(int(r * 977) + len(c))
     s = '<g transform="scale(1,0.9)">'
 
@@ -481,6 +484,32 @@ def finish(p):
     return s.replace("</defs>", extra + "</defs>")
 
 
+def bloom(kind, c, accent, heads):
+    """One flower standing in its mound of soil (`kind`: its family; `heads`: 1, or 3 for a full bloom), 256 x 330, its
+    foot at (128, 300); PaintedBloom knows those numbers."""
+    p = Pic(256, 330)
+    r = random.Random(len(kind) * 31 + heads)
+    bx, by = 128, 300
+    p.add(-9, '<ellipse cx="%d" cy="%d" rx="70" ry="26" fill="%s" stroke="#4a2e1a" stroke-width="2.6"/>' % (bx, by, p.grad("#8a5c36")))
+    hk, size, tallest = {"rose": ("rose", 62, 180), "tulip": ("cup", 44, 176), "daisy": ("ray", 56, 172), "sunflower": ("ray", 68, 206),
+                         "lily": ("star", 58, 184), "iris": ("iris", 56, 190)}[kind]
+    spots = [(0, tallest, size, 0)] if heads == 1 else [(0, tallest, size * 0.9, 0), (-60, tallest - 54, size * 0.76, -16), (62, tallest - 48, size * 0.76, 16)]
+    body = ""
+    wide = kind in ("tulip", "iris", "lily")
+    for i in range(10):
+        if wide:   # long blades from the foot
+            body += leaf(p, r.uniform(-8, 8), -8, r.uniform(90, 130), 13, -90 + (i - 4.5) * 15 + r.uniform(-5, 5), [dark(LEAF, 0.2), LEAF, light(LEAF, 0.1)][i % 3])
+        else:
+            body += leaf(p, r.uniform(-6, 6), -14 - (i // 2) * 20, r.uniform(54, 76), r.uniform(17, 23), (-168 if i % 2 else -12) + r.uniform(-16, 16) + (i // 2) * (9 if i % 2 else -9),
+                         [dark(LEAF, 0.22), LEAF, light(LEAF, 0.1)][i % 3])
+    for (dx, t, sz, bend) in spots:
+        body = stalk(0, -6, dx, -t + sz * 0.3, bend, "#3f8f3a", 8) + body
+    for (dx, t, sz, bend) in sorted(spots, key=lambda q: -q[1]):
+        body += '<g transform="translate(%.1f,%.1f)">%s</g>' % (dx, -t, flower_head(p, hk, c, accent, sz))
+    p.add(0, '<g transform="translate(%d,%d)">%s</g>' % (bx, by, body))
+    return p
+
+
 def pictures():
     """Every picture's name and recipe."""
     out = {}
@@ -488,9 +517,16 @@ def pictures():
     for fam in crops["families"]:
         for v in fam["variants"]:
             shp, col = v.get("shape", ""), v.get("color", "#6ab04c")
-            out[v["id"] + "_young"] = finish(plot(v["id"], shp, col, 0.6))
-            out[v["id"] + "_ripe"] = finish(plot(v["id"], shp, col))
-    out["sprout"] = finish(plot("strawberries", "berry", "#6ab04c", 0.0))
+            out["crops/" + v["id"] + "_young"] = finish(plot(v["id"], shp, col, 0.6))
+            out["crops/" + v["id"] + "_ripe"] = finish(plot(v["id"], shp, col))
+    out["crops/sprout"] = finish(plot("strawberries", "berry", "#6ab04c", 0.0))
+    for fam in json.load(open(ROOT + "data/catalog/blooms.json"))["families"]:
+        d = fam["defaults"]
+        for heads in (1, 3):
+            for look in ("bud", "open"):
+                BUD[0] = look == "bud"
+                out["blooms/%s_%d_%s" % (fam["id"], heads, look)] = finish(bloom(fam["id"], d["color"], d["accent"], heads))
+    BUD[0] = False
     return out
 
 
@@ -499,10 +535,10 @@ if __name__ == "__main__":
     if "--check" in sys.argv:
         stale = [n for n, text in made.items() if not os.path.exists(OUT + n + ".paint") or open(OUT + n + ".paint").read() != text]
         if stale:
-            sys.exit("the painted crops are not what tools/paint_plants.py paints (%d, first %s): run it" % (len(stale), stale[0]))
-        print("the painted crops are up to date (%d pictures)" % len(made))
+            sys.exit("the painted crops and flowers are not what tools/paint_plants.py paints (%d, first %s): run it" % (len(stale), stale[0]))
+        print("the painted crops and flowers are up to date (%d pictures)" % len(made))
     else:
-        os.makedirs(OUT, exist_ok=True)
         for n, text in made.items():
+            os.makedirs(os.path.dirname(OUT + n), exist_ok=True)
             open(OUT + n + ".paint", "w").write(text)
         print("painted %d pictures" % len(made))

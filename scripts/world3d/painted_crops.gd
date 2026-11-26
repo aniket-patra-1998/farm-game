@@ -64,8 +64,13 @@ func _process(_delta: float) -> void:
 ## The image of picture `name`, painted from its recipe (10 to 20 ms on a desktop: off the main thread on the farm);
 ## null when there is none.
 static func _paint(name: String) -> Image:
+	return paint_at(ART % name)
+
+
+## The image a recipe file paints (`path`: a .paint file), or null.
+static func paint_at(path: String) -> Image:
 	var image := Image.new()
-	var recipe := FileAccess.get_file_as_string(ART % name)
+	var recipe := FileAccess.get_file_as_string(path)
 	if recipe == "" or image.load_svg_from_string(recipe, SHARPER) != OK:
 		return null
 	image.generate_mipmaps()
