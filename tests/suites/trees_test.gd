@@ -510,4 +510,8 @@ func test_651_a_crown_is_one_painted_shape_shingled_in_leaf_sprays() -> void:
 	tree.free()
 	_eq(Objects3D._tree_turn({"uid": 5}).get_euler().y, 0.0, "a lone tree is never turned away from the camera")
 	_check(ModelKit.WHOLE_SHADERS.has(ModelKit.CROWN_SHADER), "and its sprays are never made simpler from far")
+	var falling := FallingBits.new()
+	var leaf := falling.material_override as StandardMaterial3D
+	_check(leaf.vertex_color_is_srgb and leaf.albedo_color.v < 1.0, "a leaf falls in its crown's colours, not paler")
+	falling.free()
 

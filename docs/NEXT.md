@@ -9,8 +9,9 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 - Gone: the lumpy core with see-through leaf cards (`ModelKit.canopy`, `foliage_cards`, canopy3d, foliage3d).
 - Measured: tree files 16.8 MB to 10.2 MB (still four looks each); a tree is 3 draws, was 4; about 4,200 points a look,
   was about 3,600 to 6,400 by kind. Not measured: frame time on a phone.
-- Open: a crown is never made simpler from far (its sprays would vanish), so a far zoom draws every triangle; falling
-  leaves (TreeLife) still take the old paler leaf colour; two looks a tree instead of four would halve the files;
+- Falling leaves are shown in the crown's colours (FallingBits: the same curve and depth as crown3d).
+- Open: a crown is never made simpler from far (its sprays would vanish), so a far zoom draws every triangle;
+  two looks a tree instead of four would halve the files;
   the finish on crops and flowers (crop3d, bloom3d) is not started.
 
 ## Decided (in the design doc)

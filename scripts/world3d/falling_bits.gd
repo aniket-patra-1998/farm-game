@@ -53,6 +53,12 @@ func _init(of_fruit := false) -> void:
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
 	mat.roughness = 0.85
+	if not fruit:
+		# A leaf falls in its crown's colours. The crown's shader shows its painted tones as screen colours, and a
+		# share of them in full sun (ModelKit.SPRAY_CURVE, SPRAY_DEPTH): so does a leaf, or it falls pale.
+		mat.vertex_color_is_srgb = true
+		var share := pow(ModelKit.SPRAY_DEPTH, 1.0 / ModelKit.SPRAY_CURVE)
+		mat.albedo_color = Color(share, share, share)
 	material_override = mat
 	_pos.resize(CAPACITY)
 	_vel.resize(CAPACITY)
