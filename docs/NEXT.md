@@ -1585,7 +1585,11 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
   The Garage has a dark red tin roof, a striped awning, oil drums and a gate sign with a tractor; the Garden
   Shed a lean-to and a rain barrel. (A crafting building moves only while it works and a storing one not at
   all, by their own tests: no weathervanes there.)
-- Still as they were: the farmhouse, log cabin, nursery barn, dog house, duck pond, orchard and the gardens.
+- The rest, looked at together: the Log Cabin was the Farmhouse in logs (it is low and wide under a long
+  roof now) and the Nursery Barn would have been the new Dairy Farm's twin (it has a rose gable roof, a
+  cupola, a crib house and a calf on its gate sign). The Farmhouse, Dog House, Duck Pond, Orchard and the
+  two gardens each had an outline of their own and are as they were. The Barn is the hero and was not touched.
+- Next (the owner, 26 Nov): make the buildings lighter as the animals were, the same or better looks.
 - Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
 - Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.
 
