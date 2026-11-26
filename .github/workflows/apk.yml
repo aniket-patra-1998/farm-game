@@ -195,6 +195,47 @@ jobs:
             java -jar bundletool.jar get-size total --apks=build/farm-game.apks --dimensions=ABI; } \
             | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - name: Sign the Play Store bundle with the upload key (the file to upload to Play)
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          GODOT_ANDROID_KEYSTORE_RELEASE_PATH: ${{ github.workspace }}/upload.keystore
+          GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+        run: |
+          # The owner's upload key (made 26 Nov; Google keeps the app's own signing key, Play App Signing). Play takes
+          # only a higher version code each upload: this run's number, in the preset and in data/packs.json
+          # (`app_code`, which the downloader compares; test 624 keeps the two agreeing), here only, never committed.
+          if [ -z "$UPLOAD_KEYSTORE_BASE64" ]; then echo "no upload key in the secrets: skipped"; exit 0; fi
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > upload.keystore
+          python3 - "${{ github.run_number }}" <<'PY'
+          import re, sys
+          code = sys.argv[1]
+          s = open("export_presets.cfg").read()
+          parts = re.split(r"(?m)^(?=\[preset\.\d+\]$)", s)
+          i = next(n for n, p in enumerate(parts) if 'name="Android (Play Store AAB)"' in p)
+          parts[i + 1] = re.sub(r"(?m)^version/code=\d+", "version/code=" + code, parts[i + 1])
+          name = r'(?m)^version/name="([0-9]+\.[0-9]+)\.[0-9]+"'
+          parts[i + 1] = re.sub(name, r'version/name="\1.' + code + '"', parts[i + 1])
+          open("export_presets.cfg", "w").write("".join(parts))
+          p = open("data/packs.json").read()
+          open("data/packs.json", "w").write(re.sub(r'"app_code": \d+', '"app_code": ' + code, p))
+          PY
+          ./godot-bin/godot --headless --path . --export-release "Android (Play Store AAB)" build/barnlight.aab \
+            > aab-release.log 2>&1 || tail -20 aab-release.log
+          rm -f upload.keystore
+          test -s build/barnlight.aab
+          keytool -printcert -jarfile build/barnlight.aab | grep -m1 "Owner:"
+          echo "Signed Play bundle: version code ${{ github.run_number }} (artifact barnlight-aab)" \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the signed Play Store bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: barnlight-aab
+          path: build/barnlight.aab
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: Upload the APK
         uses: actions/upload-artifact@v4
         with:
