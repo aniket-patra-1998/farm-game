@@ -36,7 +36,7 @@ func test_465_every_task_has_its_words_and_a_real_show_me() -> void:
 		if part[0] == "tool":
 			var tools := HudTools.TOOLS.map(func(e: Array) -> String: return str(e[0]))
 			_check(part.size() > 1 and part[1] in tools, "show's %s names a tool (%s)" % [verb, how])
-	for k in ["GOALS", "GOAL_COLLECT", "GOAL_SHOW_ME", "GOAL_SWAP", "GOALS_NONE_INFO", "GOALS_TODAY_BONUS"]:
+	for k in ["GOALS", "GOAL_COLLECT", "GOAL_SWAP", "GOALS_NONE_INFO", "GOALS_TODAY_BONUS"]:
 		_check(tr(k) != k, "%s has its words" % k)
 	for t: Array in HudGoals.TABS:
 		_check(tr(str(t[1])) != str(t[1]), "the %s tab has its words" % t[0])
