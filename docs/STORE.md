@@ -16,7 +16,8 @@ Owner, 27 Nov: picked style B of three shown: a caption band over the game.
 
 - **Captions** are in `make_store_art.py` (`SHOTS`). They say what is in the picture; Google refuses "best",
   "free", "#1" and the like. They are English only for now.
-- **The preview video** (`store/preview.mp4`, 20 seconds, 1280x720, no sound; not kept in git: upload it to
+- **The preview video** (`store/preview.mp4`, 20 seconds, 1280x720, with the game's own music and ambience,
+  all CC0 or made here: art/sound/SOURCES.md; not kept in git: upload it to
   YouTube and give Play the link). `tools/store_film.tscn` films slow passes over the showcase farm with Godot's
   movie writer and prints where each scene starts; `tools/make_store_film.py` cuts them under the same captions
   and adds an end card:
@@ -27,4 +28,4 @@ Owner, 27 Nov: picked style B of three shown: a caption band over the game.
       python3 tools/make_store_film.py /tmp/day.avi /tmp/night.avi landmarks=55,crops=180,...,landmarks_night=58
 
 - `store/` has a `.gdignore`: none of it goes into the game.
-- **Not done.** Sound on the video; the 512x512 store icon; pictures for tablets (the same ones are accepted).
+- **Not done.** The 512x512 store icon; pictures for tablets (the same ones are accepted).
