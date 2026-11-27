@@ -25,12 +25,18 @@ static var _shared := {}          # material signature -> the material in use
 
 ## The model for `key`: loaded when kept, else built by `build` (a Node3D, never in the tree) and kept.
 static func cached(key: String, build: Callable) -> Node3D:
+	var t := PerfReadout.start()
 	var kept := fetch(key)
+	PerfReadout.stop("model_load", t)
 	if kept != null:
 		return kept
+	t = PerfReadout.start()
 	var built: Node3D = build.call()
+	PerfReadout.stop("model_build", t)
 	if built != null:
+		t = PerfReadout.start()
 		keep(key, built)
+		PerfReadout.stop("model_save", t)
 	return built
 
 

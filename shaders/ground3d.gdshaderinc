@@ -48,7 +48,7 @@ global uniform float snow_cover;  // 0..1: how much snow lies on what faces up (
 // texture's corner and size in tiles. Off (and the look worked out live) until the bake is ready.
 uniform bool use_bake = false;
 uniform bool shade_baked = false;   // the painting carries the shade and wear too (the farm lawn's: Ground3D.bake)
-uniform sampler2D baked : source_color, filter_linear, repeat_disable;
+uniform sampler2D baked : source_color, filter_linear_mipmap, repeat_disable;   // (the meadow's has mipmaps)
 uniform vec4 bake_rect = vec4(0.0, 0.0, 1.0, 1.0);
 const float GRAIN = 0.1;   // the live grain over the baked look
 

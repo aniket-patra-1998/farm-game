@@ -230,7 +230,8 @@ func _baked() -> void:
 		var vp := (w[1] as WeakRef).get_ref() as SubViewport
 		if vp == null or grass.get_meta(&"bake") != w[1]:
 			continue
-		grass.set_shader_parameter("baked", vp.get_texture())
+		grass.set_shader_parameter("baked", _meadow_mipmapped(vp) if grass == _meadow.material_override
+			else vp.get_texture())
 		grass.set_shader_parameter("bake_rect", w[2])
 		grass.set_shader_parameter("use_bake", true)
 		grass.set_shader_parameter("shade_baked", w[3])
@@ -247,6 +248,17 @@ func _baked() -> void:
 	for s: Array in _shade_later:
 		bake(s[0], s[1], s[2], true, true)
 	_shade_later.clear()
+
+
+## The meadow's painting with its smaller sizes made (mipmaps): the meadow is always seen from afar, so read
+## from the full picture each pixel jumps across it and a cheap phone's memory can't keep up (the meadow took
+## 33 of the A05s's 75 ms on a hot run). Read back once: it is painted again only when the farm grows.
+static func _meadow_mipmapped(vp: SubViewport) -> Texture2D:
+	var img := vp.get_texture().get_image()
+	if img == null or img.is_empty():
+		return vp.get_texture()
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
 
 
 static func _make_lush() -> FastNoiseLite:
