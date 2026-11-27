@@ -31,3 +31,4 @@ android/plugins/*/build/
 android/plugins/*/.gradle/
 addons/farm_notices/bin/
 addons/admob/internal/translations/*.translation
+store/preview.mp4
