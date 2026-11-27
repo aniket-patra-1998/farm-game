@@ -22,7 +22,8 @@ const ERROR_LOOK_SECONDS := 5.0
 static var shared: Analytics
 
 var config := {}
-var sdk: Object             # the SDK's singleton, or a stand-in (tests); null: nothing is sent
+var sdk: Object             # the SDK's singleton; null: nothing is sent
+var send := Callable()      # tests: takes each SDK call (method, args) in the SDK's place
 var _verbs := {}
 var _errors := {}           # error message -> times sent this session
 var _started := false
@@ -59,10 +60,11 @@ func start() -> void:
 	if not _started and on():
 		_started = true
 		var build := str(ProjectSettings.get_setting("application/config/version", "0"))
-		sdk.call("configureBuild", build)   # not-ui (an SDK call)
-		sdk.call("setEnabledErrorReporting", true)   # not-ui (an SDK call)
-		sdk.connect("remote_configs_updated", _on_configs)
-		sdk.call("init", str(config["game_key"]), str(config["secret_key"]))
+		_sdk("configureBuild", [build])   # not-ui (an SDK call)
+		_sdk("setEnabledErrorReporting", [true])   # not-ui (an SDK call)
+		if sdk.has_signal("remote_configs_updated"):   # not-ui (the SDK's signal)
+			sdk.connect("remote_configs_updated", _on_configs)
+		_sdk("init", [str(config["game_key"]), str(config["secret_key"])])
 		_tap = ErrorTap.new()
 		OS.add_logger(_tap)
 		var look := Timer.new()
@@ -71,7 +73,7 @@ func start() -> void:
 		add_child(look)
 		look.start()
 	if _started:
-		sdk.call("setEnabledEventSubmission", on())   # not-ui (an SDK call)
+		_sdk("setEnabledEventSubmission", [on()])   # not-ui (an SDK call)
 
 
 ## A design event ("buy:cow", "level:7"), with an optional number.
@@ -79,22 +81,30 @@ func design(event_id: String, value := NAN) -> void:
 	if not on():
 		return
 	if is_nan(value):
-		sdk.call("addDesignEvent", event_id, {})   # not-ui (an SDK call)
+		_sdk("addDesignEvent", [event_id, {}])   # not-ui (an SDK call)
 	else:
-		sdk.call("addDesignEventWithValue", event_id, value)   # not-ui (an SDK call)
+		_sdk("addDesignEventWithValue", [event_id, value])   # not-ui (an SDK call)
 
 
 ## A purchase, as GameAnalytics' business event: `item_type` and `item_id` ("gems", "gems_medium"), the price in the
 ## currency's smallest unit (paise, cents) and its ISO code.
 func business(item_type: String, item_id: String, amount: int, currency: String) -> void:
 	if on():
-		sdk.call("addBusinessEvent", currency, amount, item_type, item_id, "shop", {})   # not-ui (an SDK call)
+		_sdk("addBusinessEvent", [currency, amount, item_type, item_id, "shop", {}])   # not-ui (an SDK call)
 
 
 ## A rewarded ad: `action` "show" or "reward_received", at `placement` ("gift", "rescue").
 func ad(action: String, placement: String) -> void:
 	if on():
-		sdk.call("addAdEvent", action, "rewarded_video", "admob", placement, {})   # not-ui (an SDK call)
+		_sdk("addAdEvent", [action, "rewarded_video", "admob", placement, {}])   # not-ui (an SDK call)
+
+
+## One call to the SDK (or, in tests, to `send`).
+func _sdk(method: String, args: Array) -> void:
+	if send.is_valid():
+		send.call(method, args)
+	else:
+		sdk.callv(method, args)
 
 
 func _did(verb: String, subject: String, _n: int) -> void:
@@ -118,7 +128,7 @@ func _send_errors() -> void:
 		if times >= ERROR_REPEATS or not on():
 			continue
 		_errors[m] = times + 1
-		sdk.call("addErrorEvent", "error", m.left(MESSAGE_MOST), {})   # not-ui (an SDK call)
+		_sdk("addErrorEvent", ["error", m.left(MESSAGE_MOST), {}])   # not-ui (an SDK call)
 
 
 ## GameAnalytics' remote configs came: a "tuning" one tunes Balance as the hosted file does.
@@ -133,7 +143,7 @@ func _on_configs(configs: String) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and _started:
-		sdk.call("onQuit")   # not-ui (an SDK call)
+		_sdk("onQuit", [])   # not-ui (an SDK call)
 	elif what == NOTIFICATION_PREDELETE and _tap != null:
 		OS.remove_logger(_tap)
 

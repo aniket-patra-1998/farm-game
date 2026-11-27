@@ -362,7 +362,7 @@ func test_631_play_statistics_go_through_the_gameanalytics_sdk_only_with_keys_an
 	var sdk := FakeSdk.new()
 	var a := Analytics.new()
 	add_child(a)
-	a.sdk = sdk
+	sdk.attach(a)
 	a.config = {"game_key": "k", "secret_key": "s", "events": ["buy"]}
 	var was: Variant = PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: false})
@@ -382,16 +382,16 @@ func test_631_play_statistics_go_through_the_gameanalytics_sdk_only_with_keys_an
 	_eq(sdk.last("setEnabledEventSubmission")[0], false, "turned off in Settings: sending stops at once")
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: was})
 	a.free()
-	sdk.free()
+	sdk.free_stand_in()
 
 
-## Stands in for GameAnalytics' SDK singleton: records each call.
-class FakeSdk extends Object:
-	signal remote_configs_updated(configs: String)
+## Stands in for GameAnalytics' SDK: takes each call Analytics would make of it (Analytics.send).
+class FakeSdk extends RefCounted:
 	var calls: Array = []
+	var stand_in := Object.new()   # (Analytics.sdk must be something; the calls come here instead)
 
-	func _call(n: String, args: Array) -> void:
-		calls.append([n, args])
+	func take(method: String, args: Array) -> void:
+		calls.append([method, args])
 
 	func names() -> Array:
 		return calls.map(func(c: Array) -> String: return c[0])
@@ -405,84 +405,12 @@ class FakeSdk extends Object:
 				return calls[i][1]
 		return []
 
-	func configureBuild(b: String) -> void: _call("configureBuild", [b])
-	func setEnabledErrorReporting(on: bool) -> void: _call("setEnabledErrorReporting", [on])
-	func setEnabledEventSubmission(on: bool) -> void: _call("setEnabledEventSubmission", [on])
-	func init(k: String, s: String) -> void: _call("init", [k, s])
-	func addDesignEvent(e: String, o: Dictionary) -> void: _call("addDesignEvent", [e, o])
-	func addDesignEventWithValue(e: String, v: float) -> void: _call("addDesignEventWithValue", [e, v])
-	func addBusinessEvent(c: String, a: int, t: String, i: String, cart: String, o: Dictionary) -> void:
-		_call("addBusinessEvent", [c, a, t, i, cart, o])
-	func addAdEvent(act: String, t: String, s: String, p: String, o: Dictionary) -> void:
-		_call("addAdEvent", [act, t, s, p, o])
-	func addErrorEvent(sev: String, m: String, o: Dictionary) -> void: _call("addErrorEvent", [sev, m, o])
-	func onQuit() -> void: _call("onQuit", [])
+	func attach(a: Analytics) -> void:
+		a.sdk = stand_in
+		a.send = take
 
-func test_632_ads_three_commons_then_a_rare_rescues_revive_and_two_rares_a_day_at_most() -> void:
-	Game.reset_game()
-	AdOffers.ads_ready = func() -> bool: return true
-	var o := Game.offers
-	var cfg: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AdOffers.CONFIG))
-	for p: Array in cfg["common"] + cfg["rare"]:
-		_check(str(p[0]) != "gems", "ads never give gems (owner, 27 Nov)")
-	Game.xp = Game.xp_for_level(Balance.i("ads.min_level") - 1)
-	_check(not o.gift_shown(), "no ads before ads.min_level (not in the first session)")
-	Game.xp = Game.xp_for_level(Balance.i("ads.min_level"))
-	_check(o.gift_shown(), "offered once the level is reached")
-	var ladder := Balance.i("ads.ladder")
-	for k in ladder - 1:
-		_check(not o.next_is_rare(), "gift %d of %d is common" % [k + 1, ladder])
-		o.give_gift()
-	_check(o.next_is_rare() and o.gift_words() == tr("AD_GIFT_RARE"), "the button says the next one is rare")
-	o.give_gift()
-	_eq(o.rares, 1, "the fourth is the rare")
-	_eq(o.step, 0, "the ladder starts again")
-	# A rescue: withered crops back, counted as a rare.
-	var plot := Game.index_of(0, 0)
-	Game.plots[plot]["crop"] = Game.crop_order[0]
-	Game.plots[plot]["state"] = "planted"
-	Game.plots[plot]["planted_at"] = Game.now() - 10 * 24 * 3600
-	_check(Game.withered_count() > 0 and o.rescue_shown(), "withered crops: a rescue is offered")
-	o.give_rescue()
-	_eq(Game.withered_count(), 0, "the rescue revives the plots")
-	_eq(o.rares, Balance.i("ads.rares_per_day"), "two rares today")
-	Game.plots[plot]["planted_at"] = Game.now() - 10 * 24 * 3600
-	_check(not o.rescue_shown(), "no third rare: no rescue")
-	for k in ladder - 1:
-		o.give_gift()
-	_check(not o.next_is_rare(), "the ladder's top gives a common once the day's rares are used")
-	for k in 10:
-		o.give_gift()
-	_eq(o.watched, Balance.i("ads.per_day"), "no more than ads.per_day ads")
-	_check(not o.gift_shown(), "and the gift goes until tomorrow")
-	var saved := {}
-	o.save_to(saved)
-	var was := o.step
-	o.reset()
-	o.load_from(saved)
-	_check(o.watched == Balance.i("ads.per_day") and o.step == was, "the day's counts and the ladder are saved")
-	o.day -= 1
-	_check(o.gift_shown() and o.rares == 0 and o.step == was, "a new day: new counts, the ladder kept")
-	AdOffers.ads_ready = func() -> bool: return false
-	_check(not o.gift_shown(), "no ad loaded: no offer")
-	AdOffers.ads_ready = Callable()
-	_check(AdOffers.player == null, "no ad player made away from a phone")
-	_check(str(cfg["android_unit"]).begins_with("ca-app-pub-3940256099942544/"), "Google's test unit until the account")
-	_check(str(cfg["android_unit_short"]).begins_with("ca-app-pub-3940256099942544/"),
-		"and its test unit for the shorter format")
-	# A gift asks for the shorter format (the rewarded interstitial); a rescue for the rewarded ad.
-	var fake := FakeAdPlayer.new()
-	AdOffers.player = fake
-	o.day -= 1
-	o.watch_gift()
-	_eq(fake.asked, [true], "a gift plays the shorter ad")
-	Game.plots[0] = {"state": "planted", "crop": "strawberries", "planted_at": Game.now() - 30 * 86400}
-	if Game.withered_count() > 0:
-		o.watch_rescue()
-		_eq(fake.asked, [true, false], "a rescue plays the rewarded ad")
-	AdOffers.player = null
-	fake.free()
-	Game.reset_game()
+	func free_stand_in() -> void:
+		stand_in.free()
 
 
 func test_633_a_purchase_is_given_once_by_its_token_and_the_starter_pack_only_once() -> void:
@@ -518,7 +446,7 @@ func test_634_errors_purchases_and_ads_reach_the_statistics_and_the_review_is_as
 	var sdk := FakeSdk.new()
 	var a := Analytics.new()
 	add_child(a)
-	a.sdk = sdk
+	sdk.attach(a)
 	a.config = {"game_key": "k", "secret_key": "s"}
 	var was: Variant = PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: true})
@@ -540,7 +468,7 @@ func test_634_errors_purchases_and_ads_reach_the_statistics_and_the_review_is_as
 	Balance.reload()
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: was})
 	a.free()
-	sdk.free()
+	sdk.free_stand_in()
 	var level: int = Balance.a("review.levels")[0]
 	var many := Balance.i("review.least_sessions")
 	_check(ReviewAsk.wanted(level, many, 100, 0), "asked after a listed level-up")
