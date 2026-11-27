@@ -46,7 +46,7 @@ func test_79_every_building_has_fifteen_recipes_over_four_stars_made_of_what_the
 	_eq(pie.craft_seconds(), 8 * 3600, "a 4-star one takes eight")
 	_check(pie.fuel(0) > bread.fuel(0) and pie.xp() > bread.xp(), "a higher star gives more fuel and XP")
 	var bakery := g.catalog.get_def("bakery") as CraftingDef
-	_eq(bakery.unlock_level, 25, "crafting unlocks at level 25, as in FarmVille")
+	_eq(bakery.unlock_level, 15, "crafting unlocks at 15 (FarmVille: 25; the audit of 27 Nov)")
 	_eq(
 		bakery.star_cost(1),
 		{"coins": 50000, "recipe_stars": 6, "gems": 15},
@@ -69,7 +69,7 @@ func test_79_every_building_has_fifteen_recipes_over_four_stars_made_of_what_the
 
 func test_80_first_crafting_building_is_coins_the_rest_gems() -> void:
 	var g := _farm()
-	_eq(g.crafting.crafting_price("bakery"), {"coins": 100000}, "the first costs coins")
+	_eq(g.crafting.crafting_price("bakery"), {"coins": int(g.item_data("bakery")["cost"])}, "the first costs coins")
 	var uid := _crafting_building(g)
 	_check(g.crafting.is_crafting(g.object_by_uid(uid)), "it's a crafting building")
 	_eq(g.crafting.free_slots(g.object_by_uid(uid)), 2, "two slots at 1 star (owner, 20 Nov)")
