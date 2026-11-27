@@ -11,3 +11,7 @@
 - **Play Console, Android vitals**: native crashes and ANRs (freezes) of installs from Play, with stack traces, at no
   cost and with no code of ours. The first stop once the closed test runs.
 - Script errors of every session already go to GameAnalytics (Analytics.ErrorTap).
+- **Found 28 Nov (start check, 2 GB emulator):** a configuration change Godot's manifest does not list made Android
+  remake the game's activity; Godot could not make its Vulkan surface again ("Couldn't create Android Surface",
+  "Unable to create DisplayServer") and quit. The phone build now lists every configuration change in the manifest
+  (apk.yml, the build template step), so the activity is never remade.

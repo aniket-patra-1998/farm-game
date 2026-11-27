@@ -107,6 +107,20 @@ jobs:
           unzip -q "$tpl/android_source.zip" -d android/build
           echo "${GODOT_VERSION}.stable" > android/.build_version
           touch android/build/.gdignore
+          # Every configuration change handled in place (docs/CRASHES.md): Android otherwise destroys and remakes the
+          # game's activity on a change Godot's manifest does not list (a SIM's network code, the language, the font
+          # size, a keyboard...), and Godot cannot make its Vulkan surface again on the remade one: the game dies.
+          python3 - <<'PY2'
+          import re
+          p = "android/build/AndroidManifest.xml"
+          s = open(p).read()
+          every = ("mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|"
+                   "orientation|screenSize|smallestScreenSize|layoutDirection|density|colorMode|fontWeightAdjustment|"
+                   "grammaticalGender")
+          s, n = re.subn(r'android:configChanges="[^"]*"', 'android:configChanges="%s"' % every, s)
+          open(p, "w").write(s)
+          print("configChanges set on %d activities" % n)
+          PY2
 
       - name: Bake the showcase farm's models into the game (ModelStore)
         run: |
@@ -307,7 +321,7 @@ jobs:
           arch: x86_64
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          ram-size: 4096M
+          ram-size: 2048M   # (a low-end phone: where the crash showed)
           script: sh tools/start_check.sh barnlight-player.apk && cat start-check.txt >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
