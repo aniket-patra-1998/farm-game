@@ -6,7 +6,7 @@
     "tool:plant": {"verbs": ["plant"], "level": 2},
     "tool:fertilize": {"verbs": ["fertilize"], "level": 4},
     "tool:store": {"verbs": [], "level": 4},
-    "tool:sell": {"verbs": ["sell", "clear_plot"], "level": 4},
+    "tool:sell": {"verbs": ["plow", "sell", "clear_plot"], "level": 2},
     "menu:MARKET": {"verbs": ["buy", "build", "own"], "level": 3},
     "menu:COLLECTIONS": {"verbs": ["find", "trade_collection"], "level": 5},
     "menu:RIBBONS": {"verbs": [], "level": 4},

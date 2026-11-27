@@ -23,6 +23,10 @@ Game="*res://autoload/game.gd"
 Sound="*res://autoload/sound.gd"
 Feedback="*res://autoload/feedback.gd"
 
+[debug]
+
+file_logging/enable_file_logging=true
+
 [display]
 
 window/size/viewport_width=1280

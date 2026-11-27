@@ -166,8 +166,8 @@ func open_panel(title: String, builder: Callable, as_shape := Shape.CARDS) -> vo
 
 
 ## Opens a panel with tabs: `tabs` = [[name, builder]], `first` the one shown (FarmVille's Market shelves).
-func open_tabs(title: String, tabs: Array, first := 0) -> void:
-	shape = Shape.CARDS
+func open_tabs(title: String, tabs: Array, first := 0, as_shape := Shape.CARDS) -> void:
+	shape = as_shape
 	_tabs = tabs
 	_tab = clampi(first, 0, tabs.size() - 1)
 	_show(title, tabs[_tab][1])

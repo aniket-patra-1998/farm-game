@@ -170,6 +170,11 @@ func about_card() -> PanelContainer:
 	var open := hud.panel_button(tr("LICENCES"))
 	open.pressed.connect(func() -> void: hud.book.open_panel(tr("LICENCES"), build_licences, BookPanel.Shape.LIST))
 	inner.add_child(BookPanel.row(tr("LICENCES_ROW"), open))
+	var copy := hud.panel_button(tr("COPY_LOG"))
+	copy.pressed.connect(func() -> void:
+		DisplayServer.clipboard_set(CrashWatch.report())
+		hud.show_message(tr("LOG_COPIED")))
+	inner.add_child(BookPanel.row(tr("COPY_LOG_ROW"), copy))
 	return BookPanel.card_frame(inner)
 
 

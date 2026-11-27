@@ -13,8 +13,10 @@ const RING_INSET := 0.04         # the ring's way in from the face's edge, as a 
 ## The sheet's tabs: which goals each shows (the key's part before ":") and its words.
 const TABS := [["chain", "GOALS_STORY"], ["daily", "GOALS_TODAY"], ["project", "GOALS_PROJECTS"]]
 const DAILY_ICON := "calendar"
-const DAILY_PICTURE := 0.75   # a daily job's calendar, of a giver's picture (one line, not a card head)
 const PROJECT_ICON := "barn"     # a project with no thing for its reward
+const VERB_ICONS := {"plow": "hoe", "plant": "seeds", "harvest": "basket", "fertilize": "fertilizer",
+	"level": "star", "buy": "market", "build": "market", "own": "market"}   # a task with no thing's picture
+const TOOL_SPOTS := {"plow": "grass", "fertilize": "growing"}   # Show me's arrow: where each tool is used
 
 var hud: FarmHud
 var column: VBoxContainer
@@ -68,7 +70,7 @@ static func faces() -> Array[String]:
 	return keys.slice(0, FACES)
 
 
-## A goal's face: its picture in a ring of how far it is, a dot when it is done; a tap opens its tab.
+## A goal's face: its picture in a ring of how far it is, a dot when it is done; a tap opens its card.
 func face(key: String) -> Control:
 	var px := UiTheme.size("goal_face")
 	var f := GoalFace.new()
@@ -83,7 +85,7 @@ func face(key: String) -> Control:
 	pic.position = Vector2.ONE * px * FACE_INSET
 	f.tapped.connect(func() -> void:
 		Feedback.moment("tap")
-		show_goals(tab_of(key)))
+		show_goal(key))
 	return f
 
 
@@ -109,7 +111,17 @@ static func tab_of(key: String) -> int:
 ## Opens the goal sheet on tab `first`.
 func show_goals(first := 0) -> void:
 	Game.goals.refresh()
-	hud.book.open_tabs(tr("GOALS"), tabs(), first)
+	hud.book.open_tabs(tr("GOALS"), tabs(), first, BookPanel.Shape.LIST)
+
+
+## Opens one goal's card on its own (a face tapped), the panel no wider than a column, titled with its name.
+func show_goal(key: String) -> void:
+	Game.goals.refresh()
+	hud.book.open_panel(UiTheme.tidy(title_of(key)), func(content: VBoxContainer) -> void:
+		if Game.goals.open_keys().has(key):
+			content.add_child(card(key, false))
+		else:
+			content.add_child(BookPanel.text(tr("GOALS_NONE_INFO"), UiTheme.BODY, BookPanel.SOFT)), BookPanel.Shape.LIST)
 
 
 func tabs() -> Array:
@@ -137,49 +149,88 @@ func build_tab(content: VBoxContainer, kind: String) -> void:
 
 ## A goal's card: who asks (their picture, name and words), each task as a word bar with Show me, and Collect
 ## when it is done (Swap on a daily job not started, once a day).
-func card(key: String) -> Control:
+func card(key: String, titled := true) -> Control:
+	# Compact, FarmVille's quest card (owner's pick 1, 27 Nov: "compact and to the point, super clean"): who asks
+	# and one line of what they say, the tasks as picture tiles (a bar each; a tap shows the way), and a line with
+	# the reward and Collect. `titled`: the goal's name over it (a sheet of several; alone, the panel says it).
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.5))
-	var daily := key.begins_with("daily:")
+	col.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.6))
+	var say := say_of(key)
+	if titled or say != "":
+		var head := HBoxContainer.new()
+		head.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
+		var pic := picture_of(key, UiTheme.size("inbox_face"))
+		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(pic)
+		var words := VBoxContainer.new()
+		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		words.add_theme_constant_override("separation", 0)
+		if titled:
+			words.add_child(BookPanel.text(UiTheme.tidy(title_of(key)), UiTheme.HEADING))
+		if say != "":
+			var line := BookPanel.text(UiTheme.tidy(say), UiTheme.BODY, BookPanel.SOFT)
+			line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			words.add_child(line)
+		head.add_child(words)
+		col.add_child(head)
+	var tiles := HFlowContainer.new()
+	tiles.add_theme_constant_override("h_separation", int(UiTheme.size("hud_gap") * 0.6))
+	tiles.add_theme_constant_override("v_separation", int(UiTheme.size("hud_gap") * 0.6))
 	var tasks := Game.goals.tasks_of(key)
 	var at := Game.goals.progress_of(key)
-	var buttons := _buttons(key)
-	if daily and tasks.size() == 1:   # (a daily job is one line: its calendar, its bar, its buttons)
-		var row := task_row(tasks[0], at[0] if not at.is_empty() else [0, 1])
-		var pic := picture_of(key, UiTheme.size("inbox_face") * DAILY_PICTURE)
-		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		row.add_child(pic)
-		row.move_child(pic, 0)
-		for b in buttons:
-			row.add_child(b)
-		col.add_child(row)
-		return col
-	var head := HBoxContainer.new()
-	head.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
-	var pic := picture_of(key, UiTheme.size("inbox_face"))
-	pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	head.add_child(pic)
-	var words := VBoxContainer.new()
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	words.add_child(BookPanel.heading(UiTheme.tidy(title_of(key))))
-	var say := say_of(key)
-	if say != "":
-		var line := BookPanel.text(UiTheme.tidy(say), UiTheme.BODY, BookPanel.SOFT)
-		line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		words.add_child(line)
-	head.add_child(words)
-	col.add_child(head)
 	for t in tasks.size():
-		col.add_child(task_row(tasks[t], at[t] if t < at.size() else [0, 1]))
-	if not buttons.is_empty():
-		var row := HBoxContainer.new()
-		row.alignment = BoxContainer.ALIGNMENT_END
-		row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
-		for b in buttons:
-			row.add_child(b)
-		col.add_child(row)
+		tiles.add_child(task_tile(tasks[t], at[t] if t < at.size() else [0, 1]))
+	col.add_child(tiles)
+	var foot := HBoxContainer.new()
+	foot.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
+	var reward := reward_row(Game.goals.reward_of(key))
+	reward.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reward.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	foot.add_child(reward)
+	for b in _buttons(key):
+		foot.add_child(b)
+	col.add_child(foot)
 	return col
+
+
+## A reward as small pictures with their numbers (coins, XP, gems, the thing that comes), the rest in words.
+static func reward_row(reward: Dictionary) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
+	var px := UiTheme.size("goal_reward_icon")
+	var rest := reward.duplicate()
+	for f: Array in [["coins", "coin"], ["xp", "star"], ["gems", "gem"]]:
+		if rest.has(f[0]):
+			row.add_child(_reward_bit(UiIcon.make(str(f[1]), px), UiTheme.number(int(rest[f[0]]))))
+			rest.erase(f[0])
+	for f in ["place", "item"]:
+		if rest.has(f) and ItemIcons.of(str(rest[f])) != null:
+			var tex := TextureRect.new()
+			tex.texture = ItemIcons.of(str(rest[f]))
+			tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex.custom_minimum_size = Vector2(px, px)
+			var bit := _reward_bit(tex, UiTheme.tidy(Game.name_of(str(rest[f]))))
+			bit.tooltip_text = Game.name_of(str(rest[f]))
+			row.add_child(bit)
+			rest.erase(f)
+	if not rest.is_empty():
+		var more := BookPanel.text(reward_words(rest), UiTheme.CAPTION, BookPanel.SOFT)
+		more.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(more)
+	return row
+
+
+static func _reward_bit(picture: Control, words: String) -> HBoxContainer:
+	var bit := HBoxContainer.new()
+	bit.add_theme_constant_override("separation", int(UiTheme.size("row_gap") * 0.4))
+	picture.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bit.add_child(picture)
+	var label := BookPanel.text(words, UiTheme.BODY)
+	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bit.add_child(label)
+	return bit
 
 
 ## A goal's buttons: Swap on a daily job not done (once a day), Collect on a done goal.
@@ -202,43 +253,67 @@ func _buttons(key: String) -> Array[Button]:
 	return out
 
 
-## One task: "Harvest Strawberry 6 / 10" on a word bar, and Show me while it is not done.
-func task_row(task: Dictionary, at: Array) -> Control:
-	# One line like the inbox's (owner, 19 Nov: no bar across the whole panel): the thing's small picture, what to
-	# do in words on the left, a short bar with the count, then Show me.
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
+## One task as a tile: the thing's picture, what to do in a few words, a bar with the count; the whole tile is
+## Show me while it is not done (the arrow then points), still with a green edge when it is.
+func task_tile(task: Dictionary, at: Array) -> Control:
 	var have := mini(int(at[0]), int(at[1]))
 	var need := int(at[1])
-	var what := str(task.get("what", GoalSystem.ANY))
+	var done := have >= need
+	var w := UiTheme.size("goal_tile_width")
+	var pad := UiTheme.size("card_pad")
+	var tile := Button.new()
+	tile.focus_mode = Control.FOCUS_NONE
+	var sb := UiKit.card_box("card_face")
+	if done:
+		sb.border_color = UiTheme.color("accent")
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		tile.add_theme_stylebox_override(state, sb)
+	var inner := VBoxContainer.new()
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.alignment = BoxContainer.ALIGNMENT_CENTER
+	inner.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") * 0.3))
+	inner.position = Vector2(pad, pad)
 	var px := UiTheme.size("goal_task_icon")
-	if not Game.item_data(what).is_empty():
+	var picture := _task_picture(task, px)
+	picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	picture.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	inner.add_child(picture)
+	var words := BookPanel.text(UiTheme.tidy(task_words(task)), UiTheme.CAPTION)
+	words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	words.autowrap_mode = TextServer.AUTOWRAP_OFF
+	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	words.clip_text = true
+	words.custom_minimum_size.x = w - pad * 2.0
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_child(words)
+	var bar := UiKit.word_bar()
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	UiKit.set_bar(bar, have, need, "%s / %s" % [UiTheme.number(have), UiTheme.number(need)])
+	inner.add_child(bar)
+	tile.add_child(inner)
+	inner.size = Vector2(w - pad * 2.0, inner.get_combined_minimum_size().y)
+	tile.custom_minimum_size = Vector2(w, inner.size.y + pad * 2.0)
+	tile.tooltip_text = UiTheme.tidy(task_words(task))
+	if not done and not show_of(task).is_empty():
+		tile.name = "ShowMe"   # not-ui (a node's name)
+		UiFx.press_bounce(tile)
+		tile.pressed.connect(func() -> void: show_me(task))
+	else:
+		tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tile
+
+
+## A task's picture: its thing's, else the tool the verb uses (Plow: the hoe), else the goal's calendar.
+static func _task_picture(task: Dictionary, px: float) -> Control:
+	var what := str(task.get("what", GoalSystem.ANY))
+	if what != GoalSystem.ANY and ItemIcons.of(what) != null:
 		var pic := TextureRect.new()
 		pic.texture = ItemIcons.of(what)
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		pic.custom_minimum_size = Vector2(px, px)
-		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		row.add_child(pic)
-	var words := BookPanel.text(UiTheme.tidy(task_words(task)), UiTheme.BODY)
-	words.autowrap_mode = TextServer.AUTOWRAP_OFF
-	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	words.clip_text = true
-	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(words)
-	var bar := UiKit.word_bar()
-	bar.custom_minimum_size.x = UiTheme.size("goal_bar_width")
-	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	UiKit.set_bar(bar, have, need, "%s / %s" % [UiTheme.number(have), UiTheme.number(need)])
-	row.add_child(bar)
-	if have < need and not show_of(task).is_empty():
-		var show := hud.panel_button(tr("GOAL_SHOW_ME"))
-		show.name = "ShowMe"   # not-ui (a node's name)
-		show.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		show.pressed.connect(func() -> void: show_me(task))
-		row.add_child(show)
-	return row
+		return pic
+	return UiIcon.make(str(VERB_ICONS.get(str(task.get("do", "")), DAILY_ICON)), px)
 
 
 ## A task in words, without its numbers: "Harvest Strawberry", "Plow plots", "Reach level 5".
@@ -303,25 +378,59 @@ static func show_of(task: Dictionary) -> Dictionary:
 	return {}
 
 
-## Show me: the tool in hand, the Seeds, the Market on the thing's shelf, or the view to its place.
+## Show me: the tool in hand, the Seeds, the Market on the thing's shelf, or the view to its place, and then an
+## arrow (GuideArrow, no words: owner, 27 Nov) at what to tap: a plot to work, the thing on the farm, its card in
+## the Market, or the tool button when the farm has nothing to work yet.
 func show_me(task: Dictionary) -> void:
 	Feedback.moment("tap")
 	var to := show_of(task)
 	hud.book.close_panel()
 	if to.has("tool"):
-		hud.tool_selected.emit(str(to["tool"]), "")
-		hud.tools.show_tool(str(to["tool"]))
+		var tool := str(to["tool"])
+		hud.tool_selected.emit(tool, "")
+		hud.tools.show_tool(tool)
+		_point_farm(str(TOOL_SPOTS.get(tool, "")), tool)
 	elif to.has("seeds"):
 		var crop := str(to["seeds"])
 		if Game.crops.has(crop) and Game.can_plant(crop):
 			hud.choose_seed(crop)
+			_point_farm("plowed", "plow")
 		else:
 			hud.show_seeds()
 	elif to.has("market"):
 		hud.show_market_for(str(to["market"]))
+		_point_card(str(to["market"]))
 	elif to.has("farm"):
-		if hud.go_to.is_valid():
-			hud.go_to.call(str(to["farm"]))
+		_point_farm(str(to["farm"]), "")
+
+
+## The arrow at the nearest spot of `kind` (the view goes there), or at tool `fallback`'s button when there is none.
+func _point_farm(kind: String, fallback: String) -> void:
+	var spot: Dictionary = hud.go_to.call(kind) if kind != "" and hud.go_to.is_valid() else {}
+	if not spot.is_empty() and hud.grid != null:
+		var grid := hud.grid
+		var at: Vector2 = spot["at"]
+		GuideArrow.point(hud, func() -> Vector2:
+			return grid.to_screen(at) if is_instance_valid(grid) else Vector2.INF)
+	elif hud.tools.buttons.has(fallback):
+		GuideArrow.point(hud, GuideArrow.at_control(hud.tools.buttons[fallback]))
+
+
+## The arrow at `id`'s card in the open Market (its shelf scrolled to it), while that card shows it.
+func _point_card(id: String) -> void:
+	var list: CardList = null
+	for c in hud.find_children("*", "CardList", true, false):
+		if (c as CardList).is_visible_in_tree() and (c as CardList).bring_into_view(id):
+			list = c
+			break
+	if list == null:
+		return
+	await hud.get_tree().process_frame
+	await hud.get_tree().process_frame   # (the list fills the cards it scrolled to)
+	if is_instance_valid(list):
+		GuideArrow.point(hud, func() -> Vector2:
+			var card := list.card_of(id) if is_instance_valid(list) else null
+			return card.get_global_rect().get_center() if card != null and card.is_visible_in_tree() else Vector2.INF)
 
 
 ## Collects a finished goal: the reward, its sound, and a word of what came.

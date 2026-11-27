@@ -272,6 +272,7 @@ func _ready() -> void:
 	if AssetPacks.shared == null and self == get_node_or_null(^"/root/Game"):   # not-ui (the game's own, not a test's)
 		# Files left out of the app (docs/PACKS.md): the kept ones are loaded now, the rest fetched when first drawn.
 		Analytics.begin(self)   # (play statistics: data/analytics.json, nothing sent without its keys)
+		CrashWatch.begin()   # (whether the last session crashed, and its log kept: docs/CRASHES.md)
 		AdOffers.begin_ads(self)   # (the ad player, Android only: docs/ADS.md)
 		PurchaseSystem.begin_store(self)   # (Google Play Billing, Android only: docs/PURCHASES.md)
 		ReviewAsk.begin(self)   # (Google Play's in-app review after a happy level-up, Android only)
@@ -325,8 +326,12 @@ func _show_absence() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
+		if self == get_node_or_null(^"/root/Game"):   # not-ui (the game's own, not a test's)
+			CrashWatch.away()
 		PhoneNotices.schedule(self)   # (the phone tells the player while the game is closed)
 	if what == NOTIFICATION_APPLICATION_RESUMED:
+		if self == get_node_or_null(^"/root/Game"):   # not-ui (the game's own, not a test's)
+			CrashWatch.in_front()
 		PhoneNotices.cancel_all()
 		wear.spoil()   # (worn storage spoiled a little while the game was away)
 		check_rescue()   # (back to a farm that can't plant: helped now, not only at a cold start or a harvest)

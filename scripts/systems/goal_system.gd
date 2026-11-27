@@ -408,6 +408,33 @@ func claim(key: String) -> Dictionary:
 	return reward
 
 
+## What collecting goal `key` will give (shown on its card before it is done); the daily bonus is not counted.
+func reward_of(key: String) -> Dictionary:
+	var part := key.split(":", true, 1)
+	match part[0]:
+		"chain":
+			if not _chain_by_id.has(part[1]):
+				return {}
+			var steps: Array = _chain_by_id[part[1]]["steps"]
+			var step := int(chain_step.get(part[1], 0))
+			return (steps[step] as Dictionary).get("reward", {}) if step < steps.size() else {}
+		"project":
+			if not _project_by_id.has(part[1]):
+				return {}
+			var p: Dictionary = _project_by_id[part[1]]
+			var stage := int(project_stage.get(part[1], 0))
+			if stage + 1 < (p["stages"] as Array).size():
+				return (p["stages"][stage] as Dictionary).get("reward", {})
+			return p.get("reward", {})
+		"daily":
+			var i := int(part[1])
+			if i < 0 or i >= daily_jobs.size():
+				return {}
+			return {"coins": Balance.i("goals.daily_coins_per") * int(daily_jobs[i]["n"]),
+				"xp": Balance.i("goals.daily_xp")}
+	return {}
+
+
 func _claim_chain(id: String) -> Dictionary:
 	var c: Dictionary = _chain_by_id[id]
 	var step := int(chain_step[id])

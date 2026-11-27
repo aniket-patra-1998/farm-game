@@ -99,6 +99,12 @@ func ad(action: String, placement: String) -> void:
 		_sdk("addAdEvent", [action, "rewarded_video", "admob", placement, {}])   # not-ui (an SDK call)
 
 
+## The last session crashed (CrashWatch): one critical error event with the end of its log.
+func crash(tail: String) -> void:
+	if on():
+		_sdk("addErrorEvent", ["critical", ("crash: " + tail.right(MESSAGE_MOST - 7)), {}])   # not-ui (an SDK call)
+
+
 ## One call to the SDK (or, in tests, to `send`).
 func _sdk(method: String, args: Array) -> void:
 	if send.is_valid():

@@ -181,6 +181,25 @@ func shown() -> Array:
 	return out
 
 
+## Scrolls the list so the card of `id` is in view (Show me); false when the list does not hold it.
+func bring_into_view(id: String) -> bool:
+	var k := ids.find(id)
+	if k < 0:
+		return false
+	if _scroll != null:
+		_scroll.scroll_vertical = int(floorf(k / float(columns)) * step().y)
+	return true
+
+
+## The card (or row) showing `id` now, or null when it is not on screen.
+func card_of(id: String) -> Control:
+	for k: int in _shown:
+		var c: Control = _shown[k]
+		if str(c.get_meta(&"id", "")) == id:
+			return c
+	return null
+
+
 ## The size of one place in the list with the gap after it.
 func step() -> Vector2:
 	var gap := UiTheme.size("hud_gap")

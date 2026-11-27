@@ -54,6 +54,9 @@ const SWIPE_STEP_MIN := 4.0  # screen pixels: the finest step a swipe's path is 
 ## Tools a one-finger drag farms with, plot after plot (swipe to farm); with any other tool a drag moves the view.
 const BUBBLE_LIFT := 46.0          # a tapped thing's bubble floats this far (px) above its footprint's middle..
 const BUBBLE_LIFT_PER_TILE := 34.0 # ..and this much more per tile of its size (a barn is taller than a hen)
+## The plot spots `spots_of` finds, by their phase.
+const PLOT_SPOTS := {"ripe": GameState.Phase.RIPE, "withered": GameState.Phase.WITHERED,
+	"grass": GameState.Phase.GRASS, "plowed": GameState.Phase.PLOWED, "growing": GameState.Phase.GROWING}
 const HOLD_TO_LIFT := 0.45   # seconds a finger rests on something before it is picked up (by the clock, so a
 							# slow frame can never turn a quick tap into a hold)
 
@@ -686,18 +689,19 @@ func _swipe_over(screen_pos: Vector2) -> void:
 	_act(i, false)
 
 
-## Where things of one `kind` are right now, as {key, at, uid}: "ripe" and "withered" plots, "ready" things (the ones
+## Where things of one `kind` are right now, as {key, at, uid}: plots by phase (PLOT_SPOTS: "ripe", "withered",
+## and for Show me "grass", "plowed", "growing"), "ready" things (the ones
 ## that wear a ready sign), "hungry" ones and a "stray". `at` is its middle on the ground (this node's
 ## coordinates), `uid` -1 for a plot. For the Next ready button and the away card's rows.
 func spots_of(kind: String) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	if kind == "ripe" or kind == "withered":
-		var phase := GameState.Phase.RIPE if kind == "ripe" else GameState.Phase.WITHERED
+	if PLOT_SPOTS.has(kind):
+		var phase: int = PLOT_SPOTS[kind]
 		var n := Game.farm_size
 		for r in n:
 			for c in n:
 				var i := Game.index_of(r, c)
-				if not Game.is_occupied(i) and Game.field.phase(i) == phase:
+				if Game.on_farm(i) and not Game.is_occupied(i) and Game.field.phase(i) == phase:
 					out.append({"key": "p%d" % i, "at": center_of(i), "uid": -1})   # not-ui
 		return out
 	for o in Game.objects:
