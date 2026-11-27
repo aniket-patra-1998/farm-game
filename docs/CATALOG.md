@@ -1203,7 +1203,7 @@ Shared: `tab` = "crafting", `limit_group` = "crafting", `group_limit` = 3
 
 | | Item | id | Unlock | Cost | Size | Holds | Tab | Limit | Built from | Special |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | Bakery | `bakery` | 25 | 100,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
+| ✅ | Bakery | `bakery` | 15 | 60,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 | ✅ | Winery | `winery` | 25 | 100,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 | ✅ | Spa | `spa` | 25 | 100,000 | 3x3 | 2 / 3 / 4 / 5 | crafting | 3 crafting |  |  |
 | 🕓 | Juice Press | `juice_press` | 1 |  |  |  |  |  |  |  |
