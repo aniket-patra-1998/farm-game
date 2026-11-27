@@ -28,10 +28,11 @@ Owner, 27 Nov: picked style B of three shown: a caption band over the game.
       python3 tools/make_store_film.py /tmp/day.avi /tmp/night.avi landmarks=55,crops=180,...,landmarks_night=58
 
 - `store/` has a `.gdignore`: none of it goes into the game.
-- **The icon.** `python3 tools/make_app_icon.py` draws it (shapes, not a picture of the game: a horse, a cow in
-  a straw hat, a sheep and a pig before the barn with its window alight, fruit trees to either side, flowers at
-  their feet) and writes `store/icon_512.png` for the listing and `art/app_icon/` for the app itself: `icon.png`
-  (project.godot) and the two layers of Android's adaptive icon, set in every export preset. The owner turned
-  down pictures of the Barn and a single cow's face, and chose the four animals with the barn, trees and
-  flowers (27 Nov).
+- **The icon.** `python3 tools/make_app_icon.py` draws it (shapes, not a picture of the game): the barn at
+  dusk, its window and open door alight and the light spilling over the field; a windmill, a tree, a cow and a
+  horse dark against the setting sun, a sheep and a pig in the field, sunflowers in the near corners. It writes
+  `store/icon_512.png` for the listing and `art/app_icon/` for the app itself: `icon.png` (project.godot) and
+  the two layers of Android's adaptive icon, set in every export preset. The owner turned down pictures of the
+  Barn and two bright cartoon icons (a cow's face; four animals before the barn: "too immature"), and picked
+  this style from a sheet of four (27 Nov).
 - **Not done.** Pictures for tablets (the same ones are accepted).
