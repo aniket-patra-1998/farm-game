@@ -236,25 +236,6 @@
     "res://art/models/trees/pomegranate_tree.scn"
    ]
   },
-  "level_15": {
-   "level": 15,
-   "files": [
-    "res://art/models/buildings/bakery_1.glb",
-    "res://art/models/buildings/bakery_2.glb",
-    "res://art/models/buildings/bakery_3.glb",
-    "res://art/models/buildings/bakery_4.glb",
-    "res://art/models/buildings/bakery_site_0.glb",
-    "res://art/models/buildings/bakery_site_1.glb",
-    "res://art/models/buildings/bakery_site_2.glb",
-    "res://art/models/buildings/bakery_site_3.glb",
-    "res://art/models/buildings/bakery_site_4.glb",
-    "res://art/models/buildings/bakery_site_5.glb",
-    "res://art/models/buildings/bakery_site_6.glb",
-    "res://art/models/buildings/bakery_site_7.glb",
-    "res://art/models/buildings/bakery_site_8.glb",
-    "res://art/models/buildings/bakery_site_9.glb"
-   ]
-  },
   "level_16": {
    "level": 16,
    "files": [
@@ -333,6 +314,20 @@
   "level_25": {
    "level": 25,
    "files": [
+    "res://art/models/buildings/bakery_1.glb",
+    "res://art/models/buildings/bakery_2.glb",
+    "res://art/models/buildings/bakery_3.glb",
+    "res://art/models/buildings/bakery_4.glb",
+    "res://art/models/buildings/bakery_site_0.glb",
+    "res://art/models/buildings/bakery_site_1.glb",
+    "res://art/models/buildings/bakery_site_2.glb",
+    "res://art/models/buildings/bakery_site_3.glb",
+    "res://art/models/buildings/bakery_site_4.glb",
+    "res://art/models/buildings/bakery_site_5.glb",
+    "res://art/models/buildings/bakery_site_6.glb",
+    "res://art/models/buildings/bakery_site_7.glb",
+    "res://art/models/buildings/bakery_site_8.glb",
+    "res://art/models/buildings/bakery_site_9.glb",
     "res://art/models/buildings/spa_1.glb",
     "res://art/models/buildings/spa_2.glb",
     "res://art/models/buildings/spa_3.glb",

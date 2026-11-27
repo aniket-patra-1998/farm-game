@@ -78,7 +78,8 @@ static func begin(game: GameState) -> AssetPacks:
 	packs.source = source_for(str(config.get("base_url", "")), packs)
 	packs.app_code = int(config.get("app_code", 0))
 	packs.online_only = bool(config.get("online_only", false))
-	packs.fetch_tuning()
+	if OS.has_feature("mobile"):   # not-ui (a phone's; desktop runs, CI's too, stay off the network)
+		packs.fetch_tuning()
 	packs.load_kept()
 	shared = packs
 	return packs
