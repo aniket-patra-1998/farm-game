@@ -291,8 +291,13 @@ func task_tile(task: Dictionary, at: Array) -> Control:
 	UiKit.set_bar(bar, have, need, "%s / %s" % [UiTheme.number(have), UiTheme.number(need)])
 	inner.add_child(bar)
 	tile.add_child(inner)
-	inner.size = Vector2(w - pad * 2.0, inner.get_combined_minimum_size().y)
-	tile.custom_minimum_size = Vector2(w, inner.size.y + pad * 2.0)
+	tile.custom_minimum_size = Vector2(w, UiTheme.size("panel_button_height"))
+	var fit := func() -> void:   # (once in the tree, when its words know their font: as tall as what it holds)
+		var high := inner.get_combined_minimum_size().y
+		inner.size = Vector2(w - pad * 2.0, high)
+		tile.custom_minimum_size.y = maxf(high + pad * 2.0, UiTheme.size("panel_button_height"))
+	tile.ready.connect(fit)
+	inner.minimum_size_changed.connect(fit)
 	tile.tooltip_text = UiTheme.tidy(task_words(task))
 	if not done and not show_of(task).is_empty():
 		tile.name = "ShowMe"   # not-ui (a node's name)

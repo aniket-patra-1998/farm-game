@@ -128,6 +128,21 @@ jobs:
           grep -E "^ICONS" icons.log || tail -20 icons.log
           du -sh baked
 
+      - name: Play statistics keys (GameAnalytics, from the secrets GA_GAME_KEY and GA_SECRET_KEY)
+        env:
+          GA_GAME_KEY: ${{ secrets.GA_GAME_KEY }}
+          GA_SECRET_KEY: ${{ secrets.GA_SECRET_KEY }}
+        run: |
+          # Put in the build only, never committed. No secrets: no statistics, as before.
+          if [ -z "$GA_GAME_KEY" ] || [ -z "$GA_SECRET_KEY" ]; then echo "no GameAnalytics keys: none sent"; exit 0; fi
+          python3 - <<'PY2'
+          import json, os
+          d = json.load(open("data/analytics.json"))
+          d["game_key"], d["secret_key"] = os.environ["GA_GAME_KEY"], os.environ["GA_SECRET_KEY"]
+          json.dump(d, open("data/analytics.json", "w"), indent=1)
+          PY2
+          echo "GameAnalytics keys are in this build"
+
       - name: Export the debug APK
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ github.workspace }}/debug.keystore
@@ -268,3 +283,41 @@ jobs:
           fi
           gh release upload apk-latest build/farm-game-debug.apk build/farm-game-benchmark.apk \
             build/farm-game-benchmark-plain.apk --clobber
+
+  # The player APK started on an Android emulator (x86_64, which runs our ARM build through Android's own
+  # translation): does it open, and if not, the phone's log says why (artifact player-start-log). docs/CRASHES.md.
+  start-check:
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: barnlight-player-apk
+      - name: Let the emulator use the machine's virtualisation
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Install, start and watch the game for a minute
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            adb install -r barnlight-player.apk
+            adb logcat -c
+            adb shell monkey -p com.aniketpatra.barnlight -c android.intent.category.LAUNCHER 1
+            sleep 60
+            adb logcat -d > player-start.log || true
+            if adb shell pidof com.aniketpatra.barnlight; then echo "STARTED: the game is running after a minute" | tee -a "$GITHUB_STEP_SUMMARY"; else echo "NOT RUNNING: the game died (see player-start-log)" | tee -a "$GITHUB_STEP_SUMMARY"; fi
+            grep -E "FATAL|AndroidRuntime|DEBUG   :|godot|Godot|SCRIPT ERROR|ERROR:" player-start.log | head -80 | tee -a "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-start-log
+          path: player-start.log
+          if-no-files-found: ignore
+          retention-days: 14
