@@ -146,7 +146,7 @@ static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport)
 	var scale := float(value("scale"))
 	if high > 0.0 and float(up.get("max_3d_height", 0)) > 0.0:
 		scale = minf(scale, float(up["max_3d_height"]) / high)
-	var fsr := scale < 1.0 and RenderingServer.get_current_rendering_method() == "forward_plus"   # not-ui (only it has FSR 1)
+	var fsr := scale < 1.0 and RenderingServer.get_current_rendering_method() == "forward_plus"   # not-ui
 	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if fsr else Viewport.SCALING_3D_MODE_BILINEAR
 	viewport.fsr_sharpness = float(up.get("fsr_sharpness", 0.2))
 	viewport.scaling_3d_scale = scale
