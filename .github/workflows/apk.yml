@@ -291,6 +291,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: barnlight-player-apk
@@ -306,18 +307,14 @@ jobs:
           arch: x86_64
           target: google_apis
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: |
-            adb install -r barnlight-player.apk
-            adb logcat -c
-            adb shell monkey -p com.aniketpatra.barnlight -c android.intent.category.LAUNCHER 1
-            sleep 60
-            adb logcat -d > player-start.log || true
-            if adb shell pidof com.aniketpatra.barnlight; then echo "STARTED: the game is running after a minute" | tee -a "$GITHUB_STEP_SUMMARY"; else echo "NOT RUNNING: the game died (see player-start-log)" | tee -a "$GITHUB_STEP_SUMMARY"; fi
-            grep -E "FATAL|AndroidRuntime|DEBUG   :|godot|Godot|SCRIPT ERROR|ERROR:" player-start.log | head -80 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          ram-size: 4096M
+          script: sh tools/start_check.sh barnlight-player.apk && cat start-check.txt >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: player-start-log
-          path: player-start.log
+          path: |
+            player-start.log
+            start-check.txt
           if-no-files-found: ignore
           retention-days: 14
