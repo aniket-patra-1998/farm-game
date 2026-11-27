@@ -3,6 +3,12 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Version 1 has 13 more items (27 Nov)
+- 27 Nov (owner): 13 built items switched on for version 1 (data/v1.json), so something new unlocks every level
+  or two up to 20: crops peppers 12, blueberries 16, lavender 17, potatoes 20, rye 21, coffee 23; trees mango 12,
+  pomegranate 14, olive 16, coconut 18; animals goose 13, alpaca 16, llama 18 (their homes were already in).
+  Looked at in the game; not run through the balance simulation.
+
 ## Weather and the harvest (27 Nov, main)
 - docs/WEATHER.md "Weather and the harvest": ripe crops spoil in weather their family can't take; loved weather
   pays 20% more (crops and trees). Not yet: a forecast warning for ripe crops at risk; the Bloom Garden's blooms.
