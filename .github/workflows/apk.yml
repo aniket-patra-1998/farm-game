@@ -200,6 +200,7 @@ jobs:
           # (`app_code`, which the downloader compares; test 624 keeps the two agreeing), here only, never committed.
           if [ -z "$UPLOAD_KEYSTORE_BASE64" ]; then echo "no upload key in the secrets: skipped"; exit 0; fi
           echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > upload.keystore
+          trap 'rm -f upload.keystore' EXIT
           python3 - "${{ github.run_number }}" <<'PY'
           import re, sys
           code = sys.argv[1]
@@ -215,8 +216,18 @@ jobs:
           PY
           ./godot-bin/godot --headless --path . --export-release "Android (Play Store AAB)" build/barnlight.aab \
             > aab-release.log 2>&1 || tail -20 aab-release.log
-          rm -f upload.keystore
           test -s build/barnlight.aab
+          # The same bundle as one installable APK, signed with the same key: exactly what a player gets (release
+          # build: no showcase, no debug tools), for the owner to install and check before testers do.
+          test -s bundletool.jar || curl -fsSL -o bundletool.jar \
+            https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar
+          java -jar bundletool.jar build-apks --mode=universal --bundle=build/barnlight.aab \
+            --output=build/barnlight.apks --ks=upload.keystore --ks-key-alias="$GODOT_ANDROID_KEYSTORE_RELEASE_USER" \
+            --ks-pass="pass:$GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD" \
+            --key-pass="pass:$GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD" || echo "no player APK made"
+          rm -f upload.keystore
+          unzip -o -q build/barnlight.apks universal.apk -d build && mv build/universal.apk build/barnlight-player.apk \
+            || true
           keytool -printcert -jarfile build/barnlight.aab | grep -m1 "Owner:"
           echo "Signed Play bundle: version code ${{ github.run_number }} (artifact barnlight-aab)" \
             >> "$GITHUB_STEP_SUMMARY"
@@ -226,6 +237,14 @@ jobs:
         with:
           name: barnlight-aab
           path: build/barnlight.aab
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Keep the player APK (the Play bundle as one installable file)
+        uses: actions/upload-artifact@v4
+        with:
+          name: barnlight-player-apk
+          path: build/barnlight-player.apk
           if-no-files-found: ignore
           retention-days: 30
 
