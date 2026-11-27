@@ -1,10 +1,18 @@
 {
- "_doc": "Play statistics (owner, 27 Nov: measure real players, as studios do). Sent to GameAnalytics' collector over HTTPS (its REST API, no plugin), anonymous: a random id made on the phone, never a name, email or advertising id. Empty keys: nothing is sent. Create a free GameAnalytics game and put its game key and secret here (the SDKs ship them in the app the same way). sandbox: their test server (true until the keys are real). Events: what `events` names, as design events; purchases as business events (real revenue); the game's errors as error events. An init call first, as the SDKs do; events wait on the phone until the collector takes them.",
+ "_doc": "Play statistics (owner, 27 Nov: measure real players, as studios do), through GameAnalytics' own Godot SDK (addons/GameAnalytics; free plan, no player limit): anonymous, the SDK's random id, never a name or email. Empty keys: nothing is sent. Create a free GameAnalytics game and put its game key and secret here (every SDK ships them in the app). Events: what `events` names, as design events, and level-ups; purchases as business events, rewarded ads as ad events, the game's errors as error events. A remote config named \"tuning\" (JSON, Balance keys) tunes the game as data/remote/tuning.json does.",
  "game_key": "",
  "secret_key": "",
- "sandbox": true,
- "flush_seconds": 60,
- "batch_most": 50,
- "queue_most": 500,
- "events": ["buy", "build", "expand", "start_craft", "craft", "upgrade", "repair", "open_box", "open_egg", "daily_bonus", "adopt"]
+ "events": [
+  "buy",
+  "build",
+  "expand",
+  "start_craft",
+  "craft",
+  "upgrade",
+  "repair",
+  "open_box",
+  "open_egg",
+  "daily_bonus",
+  "adopt"
+ ]
 }

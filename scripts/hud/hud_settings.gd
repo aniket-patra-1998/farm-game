@@ -164,7 +164,9 @@ func about_card() -> PanelContainer:
 	inner.add_child(BookPanel.heading(tr("SETTINGS_ABOUT")))
 	inner.add_child(BookPanel.row(tr("SHARE_STATS"), BookPanel.switch(
 		bool(PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)), func(on: bool) -> void:
-			PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: on}))))
+			PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: on})
+			if Analytics.shared != null:
+				Analytics.shared.start())))   # (on: starts; off: stops sending at once)
 	var open := hud.panel_button(tr("LICENCES"))
 	open.pressed.connect(func() -> void: hud.book.open_panel(tr("LICENCES"), build_licences, BookPanel.Shape.LIST))
 	inner.add_child(BookPanel.row(tr("LICENCES_ROW"), open))

@@ -1,71 +1,100 @@
 class_name Analytics
 extends Node
-## Play statistics (data/analytics.json; owner, 27 Nov: measure real players, as studios do): a few design events
-## from the farm's own event stream (Game.did, the verbs listed in the file), level-ups, and each session's start
-## and length, sent in batches to GameAnalytics' collector (its REST API: signed HTTPS POSTs, no native plugin).
-## Anonymous: a random id kept on the phone. Nothing is sent without keys in the file, or when the player turns
-## "Share play statistics" off in Settings (PlayerSettings "privacy"/"stats"). As GameAnalytics' own SDKs do: an
-## init call first (it says whether the game is enabled and the server's clock, so event times are the server's),
-## events kept on the phone until the collector takes them (offline play loses nothing), the game's errors sent as
-## error events (each message at most ERROR_REPEATS times a session), and purchases as business events.
+## Play statistics (data/analytics.json; owner, 27 Nov: measure real players, as studios do), through GameAnalytics'
+## own Godot SDK (addons/GameAnalytics, a GDExtension: its native Android SDK underneath; free plan): sessions,
+## the queue kept on the phone while offline, the user id and the server's clock are the SDK's. The game sends a
+## few design events from the farm's own event stream (Game.did, the verbs listed in the file) and level-ups,
+## purchases as business events, rewarded ads as ad events, and its own errors (a Godot Logger, ErrorTap) as error
+## events, each message at most ERROR_REPEATS times a session. GameAnalytics' remote configs, when the dashboard
+## has a "tuning" config (the hosted tuning file's form: {"values": {...}}), tune Balance (Balance.take_remote).
+## Nothing is sent without keys in the file, or when the player turns "Share play statistics" off in Settings
+## (PlayerSettings "privacy"/"stats"). Where the SDK isn't loaded (a 32-bit phone: it ships for arm64), no statistics.
 
 const CONFIG := "res://data/analytics.json"
-const ID_FILE := "user://analytics_id.txt"
-const HOST := "https://api.gameanalytics.com"
-const SANDBOX_HOST := "https://sandbox-api.gameanalytics.com"
-const SDK := "rest api v2"   # not-ui
-const JSON_TYPE := "Content-Type: application/json"   # not-ui (a header)
+const SINGLETON := "GameAnalytics"   # not-ui
 const SETTINGS := ["privacy", "stats"]
-const QUEUE_FILE := "user://analytics_queue.json"
 const ERROR_REPEATS := 10   # the same error message, at most this many times a session (GameAnalytics' advice)
 const ERRORS_MOST := 50     # errors sent in one session in all
 const MESSAGE_MOST := 8000  # characters of an error's message (the collector's limit is 8192)
+const TUNING := "tuning"    # the remote config whose value (JSON) tunes Balance
+const ERROR_LOOK_SECONDS := 5.0
 
 static var shared: Analytics
 
 var config := {}
-var user_id := ""
-var session_id := ""
-var session_num := 1
-var queue: Array[Dictionary] = []
-var _started := 0.0
-var _sending := false
-var _clock: Timer
+var sdk: Object             # the SDK's singleton, or a stand-in (tests); null: nothing is sent
 var _verbs := {}
-var _clock_offset := 0     # the collector's clock minus the phone's, in seconds (from init)
-var _enabled := true       # the collector's say (init): false stops sending
-var _errors := {}          # error message -> times sent this session
+var _errors := {}           # error message -> times sent this session
+var _started := false
 var _tap: ErrorTap
 
 
-## Made once by the game (like AssetPacks): reads the file, listens to the farm and starts the session.
+## Made once by the game (like AssetPacks): reads the file, listens to the farm and starts the SDK.
 static func begin(game: GameState) -> Analytics:
 	var a := Analytics.new()
 	a.name = "Analytics"   # not-ui (a node name)
 	a.config = game.read_json(CONFIG)
-	for v: String in a.config.get("events", []):
-		a._verbs[v] = true
+	a.sdk = Engine.get_singleton(SINGLETON) if Engine.has_singleton(SINGLETON) else null
 	shared = a
 	game.add_child(a)
 	game.did.connect(a._did)
 	game.leveled_up.connect(func(level: int) -> void: a.design("level:%d" % level))
-	a._start()
+	a._count_session()
+	a.start()
 	return a
 
 
-## Whether events go out: keys in the file and the player not opted out.
+## Whether events go out: the SDK here, keys in the file and the player not opted out.
 func on() -> bool:
-	return str(config.get("game_key", "")) != "" and str(config.get("secret_key", "")) != "" \
+	return sdk != null and str(config.get("game_key", "")) != "" and str(config.get("secret_key", "")) != "" \
 		and bool(PlayerSettings.value(SETTINGS[0], SETTINGS[1], true))
 
 
-## A design event ("buy:cow", "ad:rescue:taken"), with an optional number.
+## Starts the SDK once (when on), or stops sending while the player has statistics off.
+func start() -> void:
+	for v: String in config.get("events", []):
+		_verbs[v] = true
+	if sdk == null:
+		return
+	if not _started and on():
+		_started = true
+		var build := str(ProjectSettings.get_setting("application/config/version", "0"))
+		sdk.call("configureBuild", build)   # not-ui (an SDK call)
+		sdk.call("setEnabledErrorReporting", true)   # not-ui (an SDK call)
+		sdk.connect("remote_configs_updated", _on_configs)
+		sdk.call("init", str(config["game_key"]), str(config["secret_key"]))
+		_tap = ErrorTap.new()
+		OS.add_logger(_tap)
+		var look := Timer.new()
+		look.wait_time = ERROR_LOOK_SECONDS
+		look.timeout.connect(_send_errors)
+		add_child(look)
+		look.start()
+	if _started:
+		sdk.call("setEnabledEventSubmission", on())   # not-ui (an SDK call)
+
+
+## A design event ("buy:cow", "level:7"), with an optional number.
 func design(event_id: String, value := NAN) -> void:
-	var e := _base("design")
-	e["event_id"] = event_id
-	if not is_nan(value):
-		e["value"] = value
-	_add(e)
+	if not on():
+		return
+	if is_nan(value):
+		sdk.call("addDesignEvent", event_id, {})   # not-ui (an SDK call)
+	else:
+		sdk.call("addDesignEventWithValue", event_id, value)   # not-ui (an SDK call)
+
+
+## A purchase, as GameAnalytics' business event: `item_type` and `item_id` ("gems", "gems_medium"), the price in the
+## currency's smallest unit (paise, cents) and its ISO code.
+func business(item_type: String, item_id: String, amount: int, currency: String) -> void:
+	if on():
+		sdk.call("addBusinessEvent", currency, amount, item_type, item_id, "shop", {})   # not-ui (an SDK call)
+
+
+## A rewarded ad: `action` "show" or "reward_received", at `placement` ("gift", "rescue").
+func ad(action: String, placement: String) -> void:
+	if on():
+		sdk.call("addAdEvent", action, "rewarded_video", "admob", placement, {})   # not-ui (an SDK call)
 
 
 func _did(verb: String, subject: String, _n: int) -> void:
@@ -73,43 +102,10 @@ func _did(verb: String, subject: String, _n: int) -> void:
 		design("%s:%s" % [verb, subject] if subject != "" else verb)
 
 
-func _start() -> void:
-	user_id = _id()
-	_load_queue()
-	_init_call()
-	_tap = ErrorTap.new()
-	OS.add_logger(_tap)
-	session_num = int(PlayerSettings.value(SETTINGS[0], "sessions", 0)) + 1
-	PlayerSettings.keep(SETTINGS[0], {"sessions": session_num})
-	session_id = _uuid()
-	_started = Time.get_unix_time_from_system()
-	_add(_base("user"))
-	_clock = Timer.new()
-	_clock.wait_time = float(config.get("flush_seconds", 60))
-	_clock.timeout.connect(flush)
-	add_child(_clock)
-	_clock.start()
-
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
-		var e := _base("session_end")
-		e["length"] = int(Time.get_unix_time_from_system() - _started)
-		_add(e)
-		_save_queue()
-		flush()
-	elif what == NOTIFICATION_PREDELETE and _tap != null:
-		OS.remove_logger(_tap)
-
-
-## A purchase, as GameAnalytics' business event: `event_id` "type:item" ("gems:gems_medium"), the price in the
-## currency's smallest unit (paise, cents) and its ISO code, and how many purchases this player has made.
-func business(event_id: String, amount: int, currency: String) -> void:
-	var n := int(PlayerSettings.value(SETTINGS[0], "purchases", 0)) + 1
-	PlayerSettings.keep(SETTINGS[0], {"purchases": n})
-	var e := _base("business")
-	e.merge({"event_id": event_id, "amount": amount, "currency": currency, "transaction_num": n, "cart_type": "shop"})
-	_add(e)
+## The sessions played on this phone (the review ask waits for a few), counted whether or not statistics go out.
+func _count_session() -> void:
+	var n := int(PlayerSettings.value(SETTINGS[0], "sessions", 0)) + 1
+	PlayerSettings.keep(SETTINGS[0], {"sessions": n})
 
 
 ## The errors the game logged since the last look (ErrorTap, from any thread), as error events: each message a
@@ -119,118 +115,27 @@ func _send_errors() -> void:
 		if _errors.size() >= ERRORS_MOST and not _errors.has(m):
 			continue
 		var times := int(_errors.get(m, 0))
-		if times >= ERROR_REPEATS:
+		if times >= ERROR_REPEATS or not on():
 			continue
 		_errors[m] = times + 1
-		var e := _base("error")
-		e.merge({"severity": "error", "message": m.left(MESSAGE_MOST)})
-		_add(e)
+		sdk.call("addErrorEvent", "error", m.left(MESSAGE_MOST), {})   # not-ui (an SDK call)
 
 
-## The collector's init: whether the game is enabled, and its clock (event times are sent in its time).
-func _init_call() -> void:
-	if not on():
+## GameAnalytics' remote configs came: a "tuning" one tunes Balance as the hosted file does.
+func _on_configs(configs: String) -> void:
+	var all: Variant = JSON.parse_string(configs)
+	if not all is Dictionary or not (all as Dictionary).has(TUNING):
 		return
-	var body := JSON.stringify({"platform": _platform(), "os_version": _os_version(), "sdk_version": SDK})
-	var http := HTTPRequest.new()
-	add_child(http)
-	http.request_completed.connect(func(_r: int, code: int, _h: PackedStringArray, b: PackedByteArray) -> void:
-		http.queue_free()
-		var answer: Variant = JSON.parse_string(b.get_string_from_utf8()) if code == 200 else null
-		if answer is Dictionary:
-			_enabled = bool(answer.get("enabled", true))
-			if answer.has("server_ts"):
-				_clock_offset = int(answer["server_ts"]) - int(Time.get_unix_time_from_system()))
-	http.request(_host() + "/v2/%s/init" % config["game_key"],
-		["Authorization: " + signature(body, str(config["secret_key"])), JSON_TYPE],   # not-ui (headers)
-		HTTPClient.METHOD_POST, body)
+	var tuning: Variant = JSON.parse_string(str(all[TUNING]))
+	if tuning is Dictionary:
+		Balance.take_remote(tuning)
 
 
-func _load_queue() -> void:
-	for e: Variant in DataFile.read_optional(QUEUE_FILE).get("events", []):
-		if e is Dictionary:
-			queue.append(e)
-
-
-func _save_queue() -> void:
-	var f := FileAccess.open(QUEUE_FILE, FileAccess.WRITE)
-	if f != null:
-		f.store_string(JSON.stringify({"events": queue}))
-
-
-func _host() -> String:
-	return SANDBOX_HOST if bool(config.get("sandbox", true)) else HOST
-
-
-static func _platform() -> String:
-	return "android" if OS.has_feature("android") else OS.get_name().to_lower()
-
-
-static func _os_version() -> String:
-	return "%s %s" % [_platform(), OS.get_version()]
-
-
-func _add(e: Dictionary) -> void:
-	if not on():
-		return
-	queue.append(e)
-	if queue.size() > int(config.get("queue_most", 500)):
-		queue.pop_front()   # (the oldest go first when the phone has been offline a long time)
-
-
-## Sends what is queued, at most batch_most at a time; kept for the next try if the collector does not take it.
-func flush() -> void:
-	_send_errors()
-	if _sending or queue.is_empty() or not on() or not _enabled:
-		return
-	var batch: Array[Dictionary] = queue.slice(0, int(config.get("batch_most", 50)))
-	var body := JSON.stringify(batch)
-	var http := HTTPRequest.new()
-	add_child(http)
-	_sending = true
-	http.request_completed.connect(func(_result: int, code: int, _h: PackedStringArray, _b: PackedByteArray) -> void:
-		_sending = false
-		http.queue_free()
-		if code == 200 or code == 400:   # (400: the collector refused the batch as malformed; resending won't help)
-			queue = queue.slice(batch.size())
-			_save_queue())
-	var url := "%s/v2/%s/events" % [_host(), config["game_key"]]
-	var auth := "Authorization: " + signature(body, str(config["secret_key"]))   # not-ui (a header)
-	http.request(url, [auth, JSON_TYPE], HTTPClient.METHOD_POST, body)
-
-
-## The collector's Authorization header: base64 of the HMAC-SHA256 of the body, keyed by the secret.
-static func signature(body: String, secret: String) -> String:
-	var h := HMACContext.new()
-	h.start(HashingContext.HASH_SHA256, secret.to_utf8_buffer())
-	h.update(body.to_utf8_buffer())
-	return Marshalls.raw_to_base64(h.finish())
-
-
-func _base(category: String) -> Dictionary:
-	return {"category": category, "v": 2, "user_id": user_id, "session_id": session_id, "session_num": session_num,
-		"client_ts": int(Time.get_unix_time_from_system()) + _clock_offset, "sdk_version": SDK,
-		"platform": _platform(), "os_version": _os_version(),
-		"device": OS.get_model_name(), "manufacturer": "unknown", "build": str(ProjectSettings.get_setting(
-			"application/config/version", "0"))}
-
-
-func _id() -> String:
-	if FileAccess.file_exists(ID_FILE):
-		return FileAccess.get_file_as_string(ID_FILE).strip_edges()
-	var id := _uuid()
-	var f := FileAccess.open(ID_FILE, FileAccess.WRITE)
-	if f != null:
-		f.store_string(id)
-	return id
-
-
-static func _uuid() -> String:
-	var b := Crypto.new().generate_random_bytes(16)
-	b[6] = (b[6] & 0x0f) | 0x40
-	b[8] = (b[8] & 0x3f) | 0x80
-	var h := b.hex_encode()
-	return "%s-%s-%s-%s-%s" % [h.substr(0, 8), h.substr(8, 4), h.substr(12, 4), h.substr(16, 4), h.substr(20)]
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and _started:
+		sdk.call("onQuit")   # not-ui (an SDK call)
+	elif what == NOTIFICATION_PREDELETE and _tap != null:
+		OS.remove_logger(_tap)
 
 
 ## The game's errors, caught as Godot logs them (OS.add_logger): from any thread, so kept under a lock until the
@@ -259,4 +164,3 @@ class ErrorTap extends Logger:
 		_waiting.clear()
 		_lock.unlock()
 		return out
-

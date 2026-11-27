@@ -141,7 +141,7 @@ func _watch(kind: String, reward: Callable) -> void:
 	if not _can_watch():
 		return
 	if Analytics.shared != null:
-		Analytics.shared.design("ad:%s:shown" % kind)
+		Analytics.shared.ad("show", kind)
 	if player != null:
 		player.call("play", reward, kind == GIFT)   # not-ui (a gift plays the shorter format when there is one)
 
@@ -176,7 +176,7 @@ func _give(prize: Array) -> String:
 
 func _done(kind: String, words: String) -> void:
 	if Analytics.shared != null:
-		Analytics.shared.design("ad:%s:taken" % kind)
+		Analytics.shared.ad("reward_received", kind)
 	if words != "":
 		game.message.emit(tr("AD_GOT") % words)
 	game.inventory_changed.emit()

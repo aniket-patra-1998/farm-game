@@ -4,6 +4,12 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
 
+
+## Ready-made pieces in place of our own (27 Nov, main; owner picked all three)
+- Statistics: GameAnalytics' official Godot SDK 3.2.0 (addons/GameAnalytics, GDExtension; Android arm64 and Linux
+  binaries only). analytics.gd is now a thin layer: design, business, ad and error events; a remote config named
+  "tuning" tunes Balance. Our REST client (signing, queue, init call) is gone. Tests 631, 634 use a stand-in SDK.
+
 ## Resolution as big mobile games do it (27 Nov, main)
 - Owner, 27 Nov (picked three of four): below full scale the 3D is brought up with AMD FSR 1 (Godot's own; not in
   the Compatibility renderer), never drawn taller than 1080 px (data/quality.json `upscale`), and Settings has a

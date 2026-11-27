@@ -355,33 +355,68 @@ func test_630_the_audit_of_27_nov_holds_a_floor_a_deal_scarce_helpers_and_no_lat
 	_check(Balance.f("specials.stable_helper_chance") <= 0.06, "a Stable harvest rarely gives a helper")
 
 
-func test_631_play_statistics_are_signed_anonymous_and_only_sent_with_keys_and_consent() -> void:
-	_eq(Analytics.signature('[{"a":1}]', "secret"), "gHmw+IsZj83w2dtS8MK8pKCOwmHkzqMSyhKNVZ7e16g=",
-		"the collector's HMAC-SHA256 header, base64")
+func test_631_play_statistics_go_through_the_gameanalytics_sdk_only_with_keys_and_consent() -> void:
 	var shipped: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Analytics.CONFIG))
-	for verb: String in shipped["events"]:
-		_check((JSON.parse_string(FileAccess.get_file_as_string("res://data/events.json"))["verbs"] as Dictionary)
-			.has(verb), "an event the farm records: %s" % verb)
+	_check(str(shipped.get("game_key", "")) == "" or str(shipped.get("secret_key", "")) != "", "keys come in pairs")
+	_check(FileAccess.file_exists("res://addons/GameAnalytics/GameAnalytics.gdextension"), "the official SDK is in")
+	var sdk := FakeSdk.new()
 	var a := Analytics.new()
 	add_child(a)
-	a.config = {"game_key": "", "secret_key": ""}
-	a.design("buy:cow")
-	_eq(a.queue.size(), 0, "no keys: nothing kept to send")
-	a.config = {"game_key": "k", "secret_key": "s"}
+	a.sdk = sdk
+	a.config = {"game_key": "k", "secret_key": "s", "events": ["buy"]}
 	var was: Variant = PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: false})
+	a.start()
 	a.design("buy:cow")
-	_eq(a.queue.size(), 0, "the player turned it off: nothing kept")
+	_eq(sdk.calls.size(), 0, "opted out: the SDK is not even started")
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: true})
-	a.user_id = Analytics._uuid()
-	a.design("buy:cow", 3.0)
-	_eq(a.queue.size(), 1, "with keys and consent, kept to send")
-	var e: Dictionary = a.queue[0]
-	_check(e["category"] == "design" and e["event_id"] == "buy:cow" and e["value"] == 3.0, "a design event")
-	_check(str(e["user_id"]).length() == 36 and not e.has("email") and not e.has("name"), "an anonymous random id")
+	a.start()
+	_check(sdk.names().has("init"), "with keys and consent the SDK starts")
+	a._did("buy", "cow", 1)
+	a._did("harvest", "wheat", 1)
+	_check(sdk.names().has("addDesignEvent") and sdk.last("addDesignEvent")[0] == "buy:cow",
+		"listed verbs become design events")
+	_eq(sdk.count("addDesignEvent"), 1, "others don't")
+	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: false})
+	a.start()
+	_eq(sdk.last("setEnabledEventSubmission")[0], false, "turned off in Settings: sending stops at once")
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: was})
 	a.free()
+	sdk.free()
 
+
+## Stands in for GameAnalytics' SDK singleton: records each call.
+class FakeSdk extends Object:
+	signal remote_configs_updated(configs: String)
+	var calls: Array = []
+
+	func _call(n: String, args: Array) -> void:
+		calls.append([n, args])
+
+	func names() -> Array:
+		return calls.map(func(c: Array) -> String: return c[0])
+
+	func count(n: String) -> int:
+		return names().count(n)
+
+	func last(n: String) -> Array:
+		for i in range(calls.size() - 1, -1, -1):
+			if calls[i][0] == n:
+				return calls[i][1]
+		return []
+
+	func configureBuild(b: String) -> void: _call("configureBuild", [b])
+	func setEnabledErrorReporting(on: bool) -> void: _call("setEnabledErrorReporting", [on])
+	func setEnabledEventSubmission(on: bool) -> void: _call("setEnabledEventSubmission", [on])
+	func init(k: String, s: String) -> void: _call("init", [k, s])
+	func addDesignEvent(e: String, o: Dictionary) -> void: _call("addDesignEvent", [e, o])
+	func addDesignEventWithValue(e: String, v: float) -> void: _call("addDesignEventWithValue", [e, v])
+	func addBusinessEvent(c: String, a: int, t: String, i: String, cart: String, o: Dictionary) -> void:
+		_call("addBusinessEvent", [c, a, t, i, cart, o])
+	func addAdEvent(act: String, t: String, s: String, p: String, o: Dictionary) -> void:
+		_call("addAdEvent", [act, t, s, p, o])
+	func addErrorEvent(sev: String, m: String, o: Dictionary) -> void: _call("addErrorEvent", [sev, m, o])
+	func onQuit() -> void: _call("onQuit", [])
 
 func test_632_ads_three_commons_then_a_rare_rescues_revive_and_two_rares_a_day_at_most() -> void:
 	Game.reset_game()
@@ -479,27 +514,33 @@ func test_633_a_purchase_is_given_once_by_its_token_and_the_starter_pack_only_on
 	Game.reset_game()
 
 
-func test_634_errors_and_purchases_reach_the_statistics_and_the_review_is_asked_rarely() -> void:
+func test_634_errors_purchases_and_ads_reach_the_statistics_and_the_review_is_asked_rarely() -> void:
+	var sdk := FakeSdk.new()
 	var a := Analytics.new()
 	add_child(a)
+	a.sdk = sdk
 	a.config = {"game_key": "k", "secret_key": "s"}
 	var was: Variant = PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: true})
-	a.business("gems:gems_medium", 44900, "INR")
-	var e: Dictionary = a.queue[-1]
-	_check(e["category"] == "business" and e["amount"] == 44900 and e["currency"] == "INR"
-		and int(e["transaction_num"]) >= 1, "a purchase is a business event with its price")
+	a.start()
+	a.business("gems", "gems_medium", 44900, "INR")
+	_eq(sdk.last("addBusinessEvent").slice(0, 4), ["INR", 44900, "gems", "gems_medium"], "a purchase with its price")
+	a.ad("reward_received", "gift")
+	_eq(sdk.last("addAdEvent").slice(0, 4), ["reward_received", "rewarded_video", "admob", "gift"], "an ad event")
 	Analytics.ErrorTap.take()
 	var tap := Analytics.ErrorTap.new()
 	for k in Analytics.ERROR_REPEATS + 5:
 		tap._log_error("f", "res://x.gd", 3, "", "the same error", false, Logger.ERROR_TYPE_ERROR, [])
 	tap._log_error("f", "res://x.gd", 4, "", "a warning", false, Logger.ERROR_TYPE_WARNING, [])
-	var before := a.queue.size()
 	a._send_errors()
-	_eq(a.queue.size() - before, Analytics.ERROR_REPEATS, "one error message at most ERROR_REPEATS times; no warnings")
-	_eq(a.queue[-1]["category"], "error", "sent as error events")
+	_eq(sdk.count("addErrorEvent"), Analytics.ERROR_REPEATS, "one error message at most ERROR_REPEATS times; no warnings")
+	var before := Balance.i("ads.per_day")
+	a._on_configs(JSON.stringify({"tuning": JSON.stringify({"values": {"ads.per_day": before + 1}})}))
+	_eq(Balance.i("ads.per_day"), before + 1, "a remote config named tuning tunes Balance")
+	Balance.reload()
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: was})
 	a.free()
+	sdk.free()
 	var level: int = Balance.a("review.levels")[0]
 	var many := Balance.i("review.least_sessions")
 	_check(ReviewAsk.wanted(level, many, 100, 0), "asked after a listed level-up")

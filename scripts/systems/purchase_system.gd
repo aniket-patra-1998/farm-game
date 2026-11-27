@@ -145,7 +145,7 @@ func _give(id: String) -> void:
 	if bool(p.get("one_time", false)):
 		owned[id] = true
 	if Analytics.shared != null and amounts.has(id):   # (a business event: real revenue in the statistics)
-		Analytics.shared.business(("pack:" if bool(p.get("one_time", false)) else "gems:") + id,
+		Analytics.shared.business("pack" if bool(p.get("one_time", false)) else "gems", id,
 			int(amounts[id][0]), str(amounts[id][1]))
 	game.message.emit(tr("STORE_THANKS") % words(id))
 	game.inventory_changed.emit()
