@@ -419,7 +419,7 @@ func _point_farm(kind: String, fallback: String) -> void:
 ## The arrow at `id`'s card in the open Market (its shelf scrolled to it), while that card shows it.
 func _point_card(id: String) -> void:
 	var list: CardList = null
-	for c in hud.find_children("*", "CardList", true, false):
+	for c in hud.find_children("*", "CardList", true, false):   # not-ui (a class name)
 		if (c as CardList).is_visible_in_tree() and (c as CardList).bring_into_view(id):
 			list = c
 			break
