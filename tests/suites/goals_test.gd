@@ -475,8 +475,8 @@ func test_529_never_feeding_costs_under_30_percent_and_a_week_away_loses_nothing
 
 
 
-## Part 4's crafter style (step 8): at its unlock level it builds the Bakery with coins (clearing harvested plots to make
-## room), starts the best-paying recipe it has the bushels for, sells what is done at the next visit and counts it
+## Part 4's crafter style (step 8): at its unlock level it builds the Bakery with coins (clearing harvested plots
+## to make room), starts the best-paying recipe it has the bushels for, sells what is done at the next visit and counts it
 ## against the building's cost (craft_line: days of crafting to pay it back).
 func test_531_the_crafter_builds_the_bakery_and_crafts() -> void:
 	var g := _farm()
