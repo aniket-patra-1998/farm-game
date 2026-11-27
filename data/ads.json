@@ -1,7 +1,8 @@
 {
- "_comment": "Rewarded ads (docs/ADS.md). Owner, 27 Nov: three normal ads give a common reward, the fourth a guaranteed rare; a crop rescue revives the withered plots; at most Balance ads.rares_per_day rares a day from ads, no gems. Rewards are prizes as in data/mystery_box.json: [kind, amount, weight]; coins and xp add Balance ads.coins_per_level / xp_per_level times the level. Test ids from Google's own list until the AdMob account exists. publisher_id (pub-...: AdMob, Settings) also makes app-ads.txt, served at the packs site's root by CI (.github/workflows/packs.yml): AdMob checks it on the developer website the Play page names, so that website is https://farm-game-packs.pages.dev.",
+ "_comment": "Rewarded ads (docs/ADS.md). Owner, 27 Nov: three normal ads give a common reward, the fourth a guaranteed rare; a crop rescue revives the withered plots; at most Balance ads.rares_per_day rares a day from ads, no gems. Rewards are prizes as in data/mystery_box.json: [kind, amount, weight]; coins and xp add Balance ads.coins_per_level / xp_per_level times the level. android_unit is the rewarded ad (a rescue); android_unit_short the rewarded interstitial, the shorter format, played for the gift ladder (\"\" to play the rewarded ad there too). Test ids from Google's own list until the AdMob account exists. publisher_id (pub-...: AdMob, Settings) also makes app-ads.txt, served at the packs site's root by CI (.github/workflows/packs.yml): AdMob checks it on the developer website the Play page names, so that website is https://farm-game-packs.pages.dev.",
  "publisher_id": "",
  "android_unit": "ca-app-pub-3940256099942544/5224354917",
+ "android_unit_short": "ca-app-pub-3940256099942544/5354046379",
  "max_content_rating": "PG",
  "common": [
   ["coins", 50, 3],

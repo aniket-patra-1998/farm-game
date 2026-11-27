@@ -143,7 +143,7 @@ func _watch(kind: String, reward: Callable) -> void:
 	if Analytics.shared != null:
 		Analytics.shared.design("ad:%s:shown" % kind)
 	if player != null:
-		player.call("play", reward)   # not-ui
+		player.call("play", reward, kind == GIFT)   # not-ui (a gift plays the shorter format when there is one)
 
 
 ## One prize from a weighted list ([kind, amount, weight]); one the farm can't use yet (fuel with no

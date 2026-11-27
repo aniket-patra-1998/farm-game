@@ -1281,7 +1281,8 @@ func _show_harvest(i: int, job: Dictionary, result: Dictionary) -> void:
 	if result.get("rain", false):   # (the rain that watered it, said where the coins are)
 		float_words(at + Vector2(0, 26), tr("RAINED_ON") % roundi(Balance.f("seasons.rain_bonus") * 100.0), RAIN_BLUE, 1.4)
 	if str(result.get("loved", "")) != "":   # (the weather it loves: WeatherEffects)
-		float_words(at + Vector2(0, 52), Game.weather_fx.loved_words(str(result["loved"])), "part", 1.4)
+		float_words(at + Vector2(0, 52), Game.weather_fx.loved_words(str(result["loved"]),
+			float(result.get("loved_share", 1.0))), "part", 1.4)
 	if result.get("part", "") != "":
 		float_words(at + Vector2(0, -128), "+1 " + GameState.part_names[result["part"]], "part", 1.6)
 	if result.get("bushel", "") != "":
@@ -1341,7 +1342,8 @@ func _show_collect(uid: int, result: Dictionary) -> Vector2:
 	if int(result["xp"]) > 0:
 		float_words(at + Vector2(0, -50), tr("XP") % result["xp"], "xp")
 	if str(result.get("loved", "")) != "":   # (the weather it loves: WeatherEffects)
-		float_words(at + Vector2(0, 6), Game.weather_fx.loved_words(str(result["loved"])), "part", 1.4)
+		float_words(at + Vector2(0, 6), Game.weather_fx.loved_words(str(result["loved"]),
+			float(result.get("loved_share", 1.0))), "part", 1.4)
 	if result.get("part", "") != "":
 		float_words(at + Vector2(0, -118), "+1 " + GameState.part_names[result["part"]], "part", 1.6)
 	var lift := -150

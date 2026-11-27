@@ -82,7 +82,8 @@ func spoils_at(i: int, ripe_at: int, withers_at: int) -> int:
 	return at
 
 
-## The weather a crop (`kind` "crops") or tree ("trees") of `family` loved while it grew from `from_t` to `to_t`,
+## The weather a crop (`kind` "crops"), tree ("trees") or bloom ("blooms") of `family` loved while it grew from
+## `from_t` to `to_t`,
 ## when it had enough of it (Balance weather.love_share), or "".
 func loved(kind: String, family: String, from_t: int, to_t: int) -> String:
 	if not on() or to_t <= from_t:
@@ -108,9 +109,35 @@ func loved(kind: String, family: String, from_t: int, to_t: int) -> String:
 	return best
 
 
-## The words for a loved weather ("Loved the sun +20%"), said on the harvest.
-func loved_words(state: String) -> String:
-	return tr("LOVED_WEATHER") % [tr(LOVED.get(state, "LOVED_SUN")), roundi(Balance.f("weather.loved_bonus") * 100.0)]
+## What stood in a home of plants (an Orchard, a Bloom Garden) and loved the weather since it was last
+## harvested: {"state": the weather most of them loved ("" for none), "share": how much of what is inside loved
+## its weather, 0..1}. Each tree or bloom inside is asked as it would be standing alone.
+func loved_inside(home: Dictionary) -> Dictionary:
+	var counts := {}
+	var all := 0
+	var loving := 0
+	var inside: Dictionary = home.get("inside", {})
+	for id: String in inside:
+		var n := int(inside[id])
+		var it := game.item_data(id)
+		all += n
+		var state := loved(str(it.get("kind", "")) + "s", str(it.get("family", "")), int(home.get("t", game.now())),
+			game.now())
+		if state != "":
+			loving += n
+			counts[state] = int(counts.get(state, 0)) + n
+	var best := ""
+	for state: String in counts:
+		if best == "" or int(counts[state]) > int(counts[best]):
+			best = state
+	return {"state": best, "share": float(loving) / maxi(all, 1)}
+
+
+## The words for a loved weather ("Loved the sun +20%"), said on the harvest; `share` is how much of a home's
+## plants loved it (the bonus is that much of the whole).
+func loved_words(state: String, share := 1.0) -> String:
+	return tr("LOVED_WEATHER") % [tr(LOVED.get(state, "LOVED_SUN")),
+		maxi(1, roundi(Balance.f("weather.loved_bonus") * share * 100.0))]
 
 
 static func _sets(d: Dictionary) -> Dictionary:

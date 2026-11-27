@@ -24,4 +24,8 @@ Owner, 27 Nov: ads should feel like a choice, not a chore, and the helpers stay 
   data/ads.json, and set up the consent message in AdMob (Privacy & messaging).
 - **app-ads.txt.** Put the AdMob publisher id in data/ads.json `publisher_id`: CI then serves app-ads.txt at
   https://farm-game-packs.pages.dev/app-ads.txt; name that site as the developer website on the Play page.
-- **Next.** Rescues for weather damage once weather withers crops; the shorter rewarded-interstitial format for the ladder.
+- **Two formats (27 Nov).** A rescue plays the rewarded ad (`android_unit`); the gift ladder plays the shorter
+  rewarded interstitial (`android_unit_short`; leave it "" to play the rewarded ad there too). Both are kept
+  loaded; if the one asked for is not, the other plays. The gift is still chosen on a button that says what it
+  gives, which is the opt-in Google asks of that format. Not yet tried on a phone.
+- **Next.** Rescues for weather damage once weather withers crops.

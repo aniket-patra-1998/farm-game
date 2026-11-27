@@ -433,6 +433,20 @@ func test_632_ads_three_commons_then_a_rare_rescues_revive_and_two_rares_a_day_a
 	AdOffers.ads_ready = Callable()
 	_check(AdOffers.player == null, "no ad player made away from a phone")
 	_check(str(cfg["android_unit"]).begins_with("ca-app-pub-3940256099942544/"), "Google's test unit until the account")
+	_check(str(cfg["android_unit_short"]).begins_with("ca-app-pub-3940256099942544/"),
+		"and its test unit for the shorter format")
+	# A gift asks for the shorter format (the rewarded interstitial); a rescue for the rewarded ad.
+	var fake := FakeAdPlayer.new()
+	AdOffers.player = fake
+	o.day -= 1
+	o.watch_gift()
+	_eq(fake.asked, [true], "a gift plays the shorter ad")
+	Game.plots[0] = {"state": "planted", "crop": "strawberries", "planted_at": Game.now() - 30 * 86400}
+	if Game.withered_count() > 0:
+		o.watch_rescue()
+		_eq(fake.asked, [true, false], "a rescue plays the rewarded ad")
+	AdOffers.player = null
+	fake.free()
 	Game.reset_game()
 
 
@@ -492,3 +506,16 @@ func test_634_errors_and_purchases_reach_the_statistics_and_the_review_is_asked_
 	_check(not ReviewAsk.wanted(level + 1, many, 100, 0), "not after any other")
 	_check(not ReviewAsk.wanted(level, many - 1, 100, 0), "not in the first sessions")
 	_check(not ReviewAsk.wanted(level, many, 100, 100 - Balance.i("review.gap_days") + 1), "not again too soon")
+
+
+## Stands in for the ad player (rewarded_ads.gd): always loaded, and it notes which format each play asked for.
+class FakeAdPlayer:
+	extends Node
+	var asked: Array = []
+
+	func loaded() -> bool:
+		return true
+
+	func play(on_reward: Callable, short := false) -> void:
+		asked.append(short)
+		on_reward.call()

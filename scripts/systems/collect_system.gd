@@ -7,6 +7,10 @@ extends GameSystem
 ## CraftingSystem.roll_produce). A bonus drop and a collectible are said on the thing itself, in their rarity's
 ## colours (`Game.found_on`). Reached as `Game.collecting`; `Game.collect` asks it.
 
+## The specials of the homes that hold plants (an Orchard's trees, a Bloom Garden's blooms): the weather they
+## loved pays for the share of them that had it (WeatherEffects.loved_inside).
+const PLANT_HOMES := ["saplings", "blooms"]   # not-ui
+
 
 ## Returns {"coins", "xp", "drop", "drop_text", "name"} or {} if nothing was ready.
 func collect(uid: int) -> Dictionary:
@@ -19,11 +23,17 @@ func collect(uid: int) -> Dictionary:
 	var earned := roundi(game.object_payout(obj).x * game.feeds.coin_multiplier(obj) * game.adjacency.coin_multiplier(obj)
 		* game.wear.goods_factor(obj))
 	var loved := ""
-	if game.kind_of(obj) == "tree":   # (a tree that grew through the weather it loves gives more: WeatherEffects)
-		loved = game.weather_fx.loved("trees", str(game.item_data(obj["id"]).get("family", "")),
+	var loved_share := 1.0
+	var kind := game.kind_of(obj)
+	if kind == "tree" or kind == "bloom":   # (grown through the weather it loves, it gives more: WeatherEffects)
+		loved = game.weather_fx.loved(kind + "s", str(game.item_data(obj["id"]).get("family", "")),
 			int(obj.get("t", game.now())), game.now())
-		if loved != "":
-			earned = roundi(earned * (1.0 + Balance.f("weather.loved_bonus")))
+	elif game.special_of(obj) in PLANT_HOMES:   # (an Orchard, a Bloom Garden: for the share inside that had it)
+		var had := game.weather_fx.loved_inside(obj)
+		loved = str(had["state"])
+		loved_share = float(had["share"])
+	if loved != "":
+		earned = roundi(earned * (1.0 + Balance.f("weather.loved_bonus") * loved_share))
 	game.feeds.rare_boost = game.feeds.rare_multiplier(obj)
 	var gained := 0
 	var drop := game.drops.roll_drop("", 0)
@@ -92,4 +102,5 @@ func collect(uid: int) -> Dictionary:
 		game.message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
 	game.objects_updated(uid)
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
-		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras, "loved": loved}
+		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras, "loved": loved,
+		"loved_share": loved_share}

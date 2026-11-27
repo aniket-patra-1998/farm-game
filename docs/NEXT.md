@@ -33,12 +33,17 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 
 ## Weather and the harvest (27 Nov, main)
 - docs/WEATHER.md "Weather and the harvest": ripe crops spoil in weather their family can't take; loved weather
-  pays 20% more (crops and trees). Not yet: a forecast warning for ripe crops at risk; the Bloom Garden's blooms.
+  pays 20% more (crops, trees, and since 27 Nov blooms: alone, and by share in a Bloom Garden or Orchard).
+  Not done: weather does not spoil blooms (they keep their own withering).
+- Winter trees (owner, 27 Nov, shown four options): keep them as they are, leaves with a small snow cap; no bare
+  branches. Nothing changed.
 
 ## Rewarded ads (27 Nov, main)
 - docs/ADS.md. AdMob plugin v5.1.0 vendored (addons/admob: runtime, editor exporter, core Android "ads" library;
   no samples, C#, mediation; ios/bin/package.gd is a stub so headless exports don't fetch iOS binaries).
 - The gift ladder (3 commons, then a guaranteed rare) and the crop rescue; 2 rares a day at most, no gems; test ids. Test 632.
+- 27 Nov: the gift ladder plays the shorter rewarded interstitial (`android_unit_short` in data/ads.json), a
+  rescue the rewarded ad; either plays when the other is not loaded. Not tried on a phone.
 - Not yet seen on a phone: the consent form and a test ad playing. Next: weather rescues.
 
 ## Crops painted (26 Nov, branch painted-crops, on top of trees-light)

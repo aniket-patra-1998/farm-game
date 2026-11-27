@@ -231,6 +231,22 @@ func test_655_rain_spoils_ripe_berries_left_out_and_loved_weather_pays_more() ->
 	_eq(g.weather_fx.loved("crops", "berries", wet, wet + length), "", "berries don't love rain")
 	_eq(g.weather_fx.loved("trees", "banana", wet, wet + length), "rain", "and bananas love it")
 	_check(not g.weather_fx.loved_words("rain").contains("%s"), "the harvest says it")
+	# Blooms have their weather too: irises the rain, roses the sun; and a home of plants gives the bonus for the
+	# share of what stands in it that had its weather.
+	_eq(g.weather_fx.loved("blooms", "iris", wet, wet + length), "rain", "irises love the rain")
+	_eq(g.weather_fx.loved("blooms", "rose", wet, wet + length), "", "roses do not")
+	var was := g.debug_time_offset
+	g.debug_time_offset += wet + length - g.now()
+	var garden := {"id": "bloom_garden", "t": wet, "inside": {"iris_bloom": 3, "rose_bloom": 1}}
+	var had := g.weather_fx.loved_inside(garden)
+	_eq(had["state"], "rain", "a Bloom Garden's irises loved the rain")
+	_eq(had["share"], 0.75, "three of its four blooms")
+	_check(g.weather_fx.loved_words("rain", 0.75).contains("15"), "so the harvest says three quarters of the bonus")
+	_eq(g.weather_fx.loved_inside({"id": "orchard", "t": wet, "inside": {"banana_tree": 2}})["share"], 1.0,
+		"an Orchard of bananas loved it whole")
+	_eq(g.weather_fx.loved_inside({"id": "bloom_garden", "t": wet, "inside": {"rose_bloom": 2}})["state"], "",
+		"a garden of roses not at all")
+	g.debug_time_offset = was
 	var fx: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(WeatherEffects.CONFIG))
 	var families := {}
 	for f: Dictionary in JSON.parse_string(FileAccess.get_file_as_string("res://data/catalog/crops.json"))["families"]:

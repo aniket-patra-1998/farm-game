@@ -134,5 +134,7 @@ data/weather_effects.json, by crop and tree family, from what growers know; `Wea
   its time gives `weather.loved_bonus` (20%) more, said on the harvest ("Loved the rain +20%"): sun for berries,
   melons, grapes, cotton and the citrus, date, fig, olive, pomegranate, apricot, avocado and guava trees; rain
   for grain and beans and banana, coconut and mango trees; frost for roots and apple, cherry, peach and plum
-  trees (winter chill); mist for herbs. Plain rain still waters every crop (`seasons.rain_bonus`).
+  trees (winter chill); mist for herbs. Blooms too (27 Nov): sun for roses, sunflowers and daisies, rain for
+  irises and lilies, frost for tulips. An Orchard or Bloom Garden gives the bonus for the share of what stands in
+  it that had its weather (`WeatherEffects.loved_inside`), and says that much ("Loved the rain +15%"). Plain rain still waters every crop (`seasons.rain_bonus`).
 - Off on a young farm (`seasons.from_level`), in a new farm's clear spell, and with the seasons off. Test 655.
