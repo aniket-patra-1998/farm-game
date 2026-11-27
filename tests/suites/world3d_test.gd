@@ -2422,7 +2422,7 @@ func test_658_fsr_upscale_a_1080p_ceiling_and_a_frame_rate_of_the_players_own() 
 	Quality.choose("low")
 	Quality.apply(sun, env, vp)
 	_check(vp.scaling_3d_scale < 1.0, "low draws it smaller")
-	var fsr_here := RenderingServer.get_current_rendering_method() != "gl_compatibility"
+	var fsr_here := RenderingServer.get_current_rendering_method() == "forward_plus"   # (only Forward+ has FSR 1)
 	_eq(vp.scaling_3d_mode == Viewport.SCALING_3D_MODE_FSR, fsr_here, "and brings it up with FSR where it can")
 	Quality.choose_fps(60)
 	_eq(Engine.max_fps, 60, "the player's 60 wins over low's 30 cap")

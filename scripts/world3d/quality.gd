@@ -139,13 +139,14 @@ static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport)
 	viewport.msaa_3d = MSAA[clampi(int(value("msaa")), 0, MSAA.size() - 1)]
 	sun.directional_shadow_max_distance = float(value("shadow_distance"))
 	env.glow_enabled = bool(value("glow"))
-	# (Drawn smaller and brought up with AMD FSR 1 where the renderer has it, and never taller than the ceiling.)
+	# (Drawn smaller and brought up with AMD FSR 1 where the renderer has it: Forward+ only, so phones on the Mobile
+	# renderer scale plainly; never taller than the ceiling.)
 	var up: Dictionary = _load().get("upscale", {})
 	var high := float(viewport.size.y if viewport is Window else viewport.get_visible_rect().size.y)
 	var scale := float(value("scale"))
 	if high > 0.0 and float(up.get("max_3d_height", 0)) > 0.0:
 		scale = minf(scale, float(up["max_3d_height"]) / high)
-	var fsr := scale < 1.0 and RenderingServer.get_current_rendering_method() != "gl_compatibility"   # not-ui
+	var fsr := scale < 1.0 and RenderingServer.get_current_rendering_method() == "forward_plus"   # not-ui (only it has FSR 1)
 	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if fsr else Viewport.SCALING_3D_MODE_BILINEAR
 	viewport.fsr_sharpness = float(up.get("fsr_sharpness", 0.2))
 	viewport.scaling_3d_scale = scale
