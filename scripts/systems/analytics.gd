@@ -11,6 +11,7 @@ const ID_FILE := "user://analytics_id.txt"
 const HOST := "https://api.gameanalytics.com"
 const SANDBOX_HOST := "https://sandbox-api.gameanalytics.com"
 const SDK := "rest api v2"   # not-ui
+const JSON_TYPE := "Content-Type: application/json"   # not-ui (a header)
 const SETTINGS := ["privacy", "stats"]
 
 static var shared: Analytics
@@ -29,7 +30,7 @@ var _verbs := {}
 ## Made once by the game (like AssetPacks): reads the file, listens to the farm and starts the session.
 static func begin(game: GameState) -> Analytics:
 	var a := Analytics.new()
-	a.name = "Analytics"
+	a.name = "Analytics"   # not-ui (a node name)
 	a.config = game.read_json(CONFIG)
 	for v: String in a.config.get("events", []):
 		a._verbs[v] = true
@@ -106,8 +107,8 @@ func flush() -> void:
 		if code == 200:
 			queue = queue.slice(batch.size()))
 	var url := "%s/v2/%s/events" % [SANDBOX_HOST if bool(config.get("sandbox", true)) else HOST, config["game_key"]]
-	http.request(url, ["Authorization: " + signature(body, str(config["secret_key"])), "Content-Type: application/json"],
-		HTTPClient.METHOD_POST, body)
+	var auth := "Authorization: " + signature(body, str(config["secret_key"]))   # not-ui (a header)
+	http.request(url, [auth, JSON_TYPE], HTTPClient.METHOD_POST, body)
 
 
 ## The collector's Authorization header: base64 of the HMAC-SHA256 of the body, keyed by the secret.
