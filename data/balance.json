@@ -569,6 +569,18 @@
   }
  },
  "weather": {
+  "spoil_grace_seconds": {
+   "v": 3600,
+   "note": "a ripe crop that spoils in this weather (data/weather_effects.json) withers this long after the weather comes: time to harvest it"
+  },
+  "love_share": {
+   "v": 0.34,
+   "note": "a crop or tree that grew through its loved weather for at least this share of its time gives weather.loved_bonus more"
+  },
+  "loved_bonus": {
+   "v": 0.2,
+   "note": "the extra a crop's sale or a tree's coins give for growing in the weather it loves (rain on any crop gives seasons.rain_bonus, 0.1)"
+  },
   "block_seconds": {
    "v": 10800,
    "note": "One weather per block of this many seconds (3 hours)."

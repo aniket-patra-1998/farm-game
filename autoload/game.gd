@@ -151,6 +151,7 @@ var nurture: NurtureSystem
 var raising: RaisingSystem
 var social: SocialSystem
 var offers: AdOffers                  # rewarded ads the player chooses (docs/ADS.md)
+var weather_fx: WeatherEffects        # what the weather does to the harvest (docs/WEATHER.md)
 var finds: FindsSystem
 var feeds: FeedSystem
 var adjacency: AdjacencySystem
@@ -234,6 +235,7 @@ func _init() -> void:
 	raising = RaisingSystem.new(self)
 	social = SocialSystem.new(self)
 	offers = AdOffers.new(self)
+	weather_fx = WeatherEffects.new(self)
 	finds = FindsSystem.new(self)
 	feeds = FeedSystem.new(self)
 	adjacency = AdjacencySystem.new(self)
@@ -250,7 +252,7 @@ func _init() -> void:
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
 		social, collecting, shop, helpers, vip, rust, wear, rolls, goals, limited,
-		offers]
+		offers, weather_fx]
 	StartMarks.mark("made")   # not-ui (the systems made)
 
 

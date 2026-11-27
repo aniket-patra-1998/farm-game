@@ -45,10 +45,8 @@ func phase(i: int) -> GameState.Phase:
 			var grow := int(crop["grow_seconds"])
 			if age < grow:
 				return GameState.Phase.GROWING
-			var window := window_of(p, crop)
-			if age < grow + window:
-				return GameState.Phase.RIPE
-			return GameState.Phase.WITHERED
+			var ripe_at := int(p["planted_at"]) + grow
+			return GameState.Phase.RIPE if game.now() < withers_at(i, ripe_at, crop) else GameState.Phase.WITHERED
 	return GameState.Phase.GRASS
 
 
@@ -61,8 +59,21 @@ func next_phase_at(i: int) -> int:
 	var ripe := int(p["planted_at"]) + int(crop["grow_seconds"])
 	if game.now() < ripe:
 		return ripe
-	var window := window_of(p, crop)
-	return ripe + window if game.now() < ripe + window else -1
+	var withers := withers_at(i, ripe, crop)
+	return withers if game.now() < withers else -1
+
+
+## When plot `i`'s crop (ripe at `ripe_at`) withers: its ripe window's end, or sooner when weather it can't take
+## comes while it waits (WeatherEffects).
+func withers_at(i: int, ripe_at := -1, crop := {}) -> int:
+	var p: Dictionary = game.plots[i]
+	if crop.is_empty():
+		crop = game.crops[p["crop"]]
+	if ripe_at < 0:
+		ripe_at = int(p["planted_at"]) + int(crop["grow_seconds"])
+	var end := ripe_at + window_of(p, crop)
+	var spoil := game.weather_fx.spoils_at(i, ripe_at, end)
+	return spoil if spoil >= 0 else end
 
 
 ## How long plot `p`'s crop stays ripe before it withers: the crop's own time, longer for pollinated seeds,
@@ -266,6 +277,10 @@ func harvest(i: int) -> Dictionary:
 	var rained := game.rained_between(planted_at, planted_at + int(crop["grow_seconds"]))
 	if rained:
 		bonus += Balance.f("seasons.rain_bonus")
+	var loved := game.weather_fx.loved("crops", str(crop.get("family", "")), planted_at,
+		planted_at + int(crop["grow_seconds"]))
+	if loved != "":
+		bonus += Balance.f("weather.loved_bonus")
 	var off: bool = game.plots[i].get("off", false)
 	var earned := sells_for(crop_id, off, bonus)
 	var gained := int(crop["xp"])
@@ -330,4 +345,4 @@ func harvest(i: int) -> Dictionary:
 	return {"coins": earned, "xp": gained, "crop": crop_id, "bee": bee_news,
 		"pollinated": seeds, "drop": drop.get("type", ""), "drop_text": drop.get("text", ""), "part": part,
 		"bushel": crop_id if bushels > 0 else "", "bushels": bushels, "bunch": bunch, "found": found,
-		"feed": feed_found, "feed_rich": rich, "rain": rained, "off": off}
+		"feed": feed_found, "feed_rich": rich, "rain": rained, "loved": loved, "off": off}

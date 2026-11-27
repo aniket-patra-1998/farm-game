@@ -58,7 +58,7 @@ func update(indices: Array = []) -> void:
 		if crop.is_empty():
 			continue
 		var ripe_at := int(p["planted_at"]) + int(crop["grow_seconds"])
-		_held[i] = {"from": ripe_at, "to": ripe_at + Game.field.window_of(p, crop),
+		_held[i] = {"from": ripe_at, "to": Game.field.withers_at(i, ripe_at, crop),
 			"color": Feedback.rarity(rarity)["color"]}
 	_lay()
 

@@ -121,3 +121,18 @@ full rain, then it eases off, and the farm is wet and alive for a while after.
 - Frogs are scenery: a tap does nothing.
 - No lightning rod.
 - The South Asia monsoon region's own longer, heavier rains: later, not now.
+
+## Weather and the harvest (owner, 27 Nov)
+
+data/weather_effects.json, by crop and tree family, from what growers know; `WeatherEffects` (`Game.weather_fx`).
+- **Spoils when ripe.** A ripe crop left out in weather it can't take withers `weather.spoil_grace_seconds`
+  (1 hour) after the weather comes: rain on berries and flowers; storms on those, grain and cotton; snow (frost)
+  on gourds, vegetables, beans, herbs, sweets, cotton and flowers. Growing crops are never harmed, so harvesting
+  in time always saves them; a withered field can be rescued (Unwither, or a rescue ad: docs/ADS.md).
+  `FieldSystem.withers_at` is the one wither time (phase, the away report, glints, phone notices use it).
+- **Loved weather.** A crop or tree that grew through its loved weather for at least `weather.love_share` of
+  its time gives `weather.loved_bonus` (20%) more, said on the harvest ("Loved the rain +20%"): sun for berries,
+  melons, grapes, cotton and the citrus, date, fig, olive, pomegranate, apricot, avocado and guava trees; rain
+  for grain and beans and banana, coconut and mango trees; frost for roots and apple, cherry, peach and plum
+  trees (winter chill); mist for herbs. Plain rain still waters every crop (`seasons.rain_bonus`).
+- Off on a young farm (`seasons.from_level`), in a new farm's clear spell, and with the seasons off. Test 655.

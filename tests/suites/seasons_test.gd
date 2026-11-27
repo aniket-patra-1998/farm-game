@@ -74,6 +74,8 @@ func test_362_an_off_season_crop_pays_more_and_withers_sooner_and_rain_waters() 
 	_skip(g, int(wheat["grow_seconds"]) + 5)
 	var got := g.field.harvest(a)
 	var bonus := Balance.f("seasons.rain_bonus") if rained else 0.0
+	if str(got.get("loved", "")) != "":   # (wheat is a grain: it loves the rain too, WeatherEffects)
+		bonus += Balance.f("weather.loved_bonus")
 	_eq(int(got["coins"]), int(round(float(wheat["sell_price"]) * (1.0 + bonus) * Balance.f("seasons.off_price_mult"))),
 		"and sells for more (rain %s)" % rained)
 	_eq(bool(got["rain"]), rained, "the harvest says whether rain watered it")
@@ -168,3 +170,59 @@ func test_581_the_days_shorten_with_the_season() -> void:
 	_check(DayCycle.summer_hour(18.0, "Autumn") > DayCycle.summer_hour(18.0, "Summer"), "autumn evenings come earlier")
 	for season: String in Season.data()["seasons"]:
 		_check(Season.data()["daylight"].has(season), "%s has its daylight" % season)
+
+
+## The weather and the harvest (owner, 27 Nov): rain rots ripe berries left out, a root crop doesn't mind, and a
+## crop that grew in the weather it loves sells for more.
+func test_655_rain_spoils_ripe_berries_left_out_and_loved_weather_pays_more() -> void:
+	Season.active = true
+	Season.set_region("monsoon", false)
+	var g := _farm()
+	g.debug_time_offset = _at(7, 15) - int(Time.get_unix_time_from_system())
+	g.clear_until = 0
+	g.xp = g.xp_for_level(Balance.i("seasons.from_level") + 1)
+	var length := Weather.block()
+	var start := g.now() - g.now() % length
+	var wet := -1
+	for k in 400:
+		var t := start + (k + 2) * length
+		if g.weather_state_at(t) == "rain" and g.weather_state_at(t - length) != "rain" \
+				and g.weather_state_at(t - 2 * length) != "rain" and g.weather_state_at(t - 2 * length) != "storm" \
+				and g.weather_state_at(t - length) != "storm":
+			wet = t
+			break
+	_check(wet > 0, "a rain spell after a dry one, in the monsoon")
+	var berries := 0
+	var roots := 1
+	for i in [berries, roots]:
+		g.plots[i]["state"] = "planted"
+		g.plots[i]["crop"] = "strawberries" if i == berries else "potatoes"
+	for i in [berries, roots]:   # (both ripe just before the rain, with time left to wait)
+		var grow := int(g.crops[g.plots[i]["crop"]]["grow_seconds"])
+		g.plots[i]["planted_at"] = wet - length - grow
+	var grace := Balance.i("weather.spoil_grace_seconds")
+	_eq(g.field.withers_at(berries), mini(wet + grace, g.plots[berries]["planted_at"]
+		+ int(g.crops["strawberries"]["grow_seconds"]) + g.field.window_of(g.plots[berries], g.crops["strawberries"])),
+		"ripe berries spoil an hour into the rain (unless they wither sooner anyway)")
+	var end := int(g.plots[roots]["planted_at"]) + int(g.crops["potatoes"]["grow_seconds"]) \
+		+ g.field.window_of(g.plots[roots], g.crops["potatoes"])
+	_eq(g.field.withers_at(roots), end, "potatoes don't mind the rain")
+	g.xp = 0
+	g.weather_fx.reset()
+	_check(not g.weather_fx.on(), "a young farm's crops are never spoiled by weather")
+	g.xp = g.xp_for_level(Balance.i("seasons.from_level") + 1)
+	# Loved weather: rice loves the rain it grew in.
+	_eq(g.weather_fx.loved("crops", "grains", wet, wet + length), "rain", "grain grown through rain loved it")
+	_eq(g.weather_fx.loved("crops", "berries", wet, wet + length), "", "berries don't love rain")
+	_eq(g.weather_fx.loved("trees", "banana", wet, wet + length), "rain", "and bananas love it")
+	_check(not g.weather_fx.loved_words("rain").contains("%s"), "the harvest says it")
+	var fx: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(WeatherEffects.CONFIG))
+	var families := {}
+	for f: Dictionary in JSON.parse_string(FileAccess.get_file_as_string("res://data/catalog/crops.json"))["families"]:
+		families[f["id"]] = true
+	for state: String in fx["spoils_ripe"]:
+		for f: String in fx["spoils_ripe"][state]:
+			_check(families.has(f), "a crop family: %s" % f)
+	_done(g)
+	Season.set_region("", false)
+	Season.active = false

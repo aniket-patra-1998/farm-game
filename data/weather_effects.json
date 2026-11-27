@@ -1,0 +1,23 @@
+{
+ "_doc": "What the weather does to crops and trees (docs/WEATHER.md 'Weather and the harvest'; owner, 27 Nov; our own touch). Families as in data/catalog/crops.json and trees.json. `spoils_ripe`: a ripe crop of these families left out in this weather withers (Balance weather.spoil_grace_seconds after the weather comes), as growers know: rain rots ripe berries and flowers, storms flatten grain and rot cotton, frost kills the tender crops. Growing crops are never harmed. `loves`: a crop or tree that grew through this weather for at least Balance weather.love_share of its time gives Balance weather.loved_bonus more: sun sweetens berries, melons, grapes and cotton and the sun-loving fruit trees; rain feeds rice, beans and the tropical trees; frost sweetens roots and gives temperate fruit trees their winter chill; misty mornings give shade-grown herbs (tea) their flavour. Plain rain still waters every crop (Balance seasons.rain_bonus).",
+ "spoils_ripe": {
+  "rain": ["berries", "flowers"],
+  "storm": ["berries", "flowers", "grains", "fibre"],
+  "snow": ["gourds", "vegetables", "beans", "herbs", "sweets", "fibre", "flowers"]
+ },
+ "loves": {
+  "crops": {
+   "clear": ["berries", "gourds", "sweets", "fibre"],
+   "partly_cloudy": ["berries", "gourds", "sweets", "fibre"],
+   "rain": ["grains", "beans"],
+   "snow": ["roots"],
+   "fog": ["herbs"]
+  },
+  "trees": {
+   "clear": ["lemon", "orange", "lime", "grapefruit", "mandarin", "date", "fig", "olive", "pomegranate", "apricot", "avocado", "guava"],
+   "partly_cloudy": ["lemon", "orange", "lime", "grapefruit", "mandarin", "date", "fig", "olive", "pomegranate", "apricot", "avocado", "guava"],
+   "rain": ["banana", "coconut", "mango"],
+   "snow": ["apple", "cherry", "peach", "plum"]
+  }
+ }
+}

@@ -41,7 +41,7 @@ static func plan(g: GameState) -> Array:
 		if left > 0 and (crop_at < 0 or left < crop_at):
 			crop_at = left
 			crop = str(p["crop"])
-		var withers := left + g.field.ripe_window(g.crops[p["crop"]]) - Balance.i("notify.wither_warning")
+		var withers := g.field.withers_at(i) - g.now() - Balance.i("notify.wither_warning")
 		if withers > 0 and (wither_at < 0 or withers < wither_at):
 			wither_at = withers
 	if crop_at > 0:

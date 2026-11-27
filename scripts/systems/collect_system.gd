@@ -18,6 +18,12 @@ func collect(uid: int) -> Dictionary:
 	# Fed or hungry, and touching its own kind.
 	var earned := roundi(game.object_payout(obj).x * game.feeds.coin_multiplier(obj) * game.adjacency.coin_multiplier(obj)
 		* game.wear.goods_factor(obj))
+	var loved := ""
+	if game.kind_of(obj) == "tree":   # (a tree that grew through the weather it loves gives more: WeatherEffects)
+		loved = game.weather_fx.loved("trees", str(game.item_data(obj["id"]).get("family", "")),
+			int(obj.get("t", game.now())), game.now())
+		if loved != "":
+			earned = roundi(earned * (1.0 + Balance.f("weather.loved_bonus")))
 	game.feeds.rare_boost = game.feeds.rare_multiplier(obj)
 	var gained := 0
 	var drop := game.drops.roll_drop("", 0)
@@ -86,4 +92,4 @@ func collect(uid: int) -> Dictionary:
 		game.message.emit(tr("A_LANDED_ON_YOUR_FARM_COLLECTION") % [drop["name"].to_lower(), drop["collection"]])
 	game.objects_updated(uid)
 	return {"coins": earned, "xp": gained, "drop": drop.get("type", ""),
-		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras}
+		"drop_text": drop.get("text", ""), "name": name_before, "part": part, "extras": extras, "loved": loved}
