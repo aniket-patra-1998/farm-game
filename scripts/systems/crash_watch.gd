@@ -68,8 +68,9 @@ static func tail_of(path: String, lines: int) -> String:
 ## What Settings copies: how many crashes, the last crash's log, and the end of this run's log.
 static func report() -> String:
 	var parts: PackedStringArray = []
-	parts.append("Barnlight %s, %s, crashes: %d" % [ProjectSettings.get_setting("application/config/version", ""),   # not-ui (a report)
-		OS.get_model_name(), int(PlayerSettings.value(SECTION, "count", 0))])
+	var version := str(ProjectSettings.get_setting("application/config/version", ""))
+	var crashes := int(PlayerSettings.value(SECTION, "count", 0))
+	parts.append("Barnlight %s, %s, crashes: %d" % [version, OS.get_model_name(), crashes])   # not-ui (a report)
 	if FileAccess.file_exists(KEPT):
 		parts.append("--- last crash ---\n" + FileAccess.get_file_as_string(KEPT))   # not-ui (a report)
 	parts.append("--- this run ---\n" + tail_of(LOGS.path_join(LIVE_LOG), TAIL_LINES))   # not-ui (a report)
