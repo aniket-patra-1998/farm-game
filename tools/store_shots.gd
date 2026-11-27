@@ -80,8 +80,8 @@ func _views() -> Array:
 	return views
 
 
-func _save(out: String, name_: String) -> void:
-	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + name_ + ".png"))
+func _save(out: String, file_name: String) -> void:
+	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out + "/" + file_name + ".png"))
 
 
 ## The middle of the things `wanted` picks, as (row, col); (-1, -1) when there are none.

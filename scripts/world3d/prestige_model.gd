@@ -228,8 +228,8 @@ static func _square(root: Node3D, c: Vector3) -> void:
 	ModelKit.box(root, c + Vector3(-half, 0, -half), c + Vector3(half, 0.05, half),
 		ModelKit.surface(PLASTER, "stone", 0.2, FINE))
 	for k in 4:
-		var in_ := half - 0.12
-		var at := c + Vector3(in_ if k % 2 == 0 else -in_, 0.05, in_ if k < 2 else -in_)
+		var inset := half - 0.12
+		var at := c + Vector3(inset if k % 2 == 0 else -inset, 0.05, inset if k < 2 else -inset)
 		ModelKit.cylinder(root, at, 0.07, 0.3, ModelKit.surface(STONE, "stone", 0.35, FINE), 0.055, 8)
 		ModelKit.ball(root, at + Vector3(0, 0.34, 0), 0.055, ModelKit.paint(GOLD, 0.6))
 
