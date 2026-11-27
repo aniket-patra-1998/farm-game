@@ -4,6 +4,24 @@
 
 Kept in the order we agreed: stress round done first, then visual detail, then the farming-core roadmap.
 
+## Parked ideas and open looks (owner, 27 Nov)
+- **The Ecosystem (parked by the owner, 27 Nov).** Once the Goat Pen, Dairy Farm, Chicken Coop, Beehive and Duck
+  Pond are all at their biggest size they can be joined into one special building, after real integrated farms:
+  the round duck pond in the centre with a footpath ring, the four homes at the four corners with their yards,
+  one boundary round it all, so it reads as one connected place and not five buildings side by side. Decided so
+  far: 7x7 tiles, two benefits of its own (compost: fertiliser with each collection; bees: fields near it count
+  as pollinated), no barn added. Not decided: cost, whether it can be split back, first release or after. Found
+  while sketching it: at 7x7 with a pond that size the homes come out at about 60% of their size alone; homes
+  bigger than today need about 9x9. No look has been approved and no game code exists. The write-up is in the
+  claude.ai project (`claude/ecosystem-concept.md`).
+- **Animals in the painted look (waiting on the owner).** A sample was shown (flat tones, no gloss, richer colour,
+  bodies and motion untouched). To fix before building it: browns turn orange under the colour boost, and the
+  tone edges are patchy on round bodies. Wild birds were not in the sample.
+- **Left over from the painted trees, crops and flowers (pull requests 28 and 29):** a crown is never simplified
+  from far; a tree still has four looks where two would halve its files; a flower's bud has not been looked at in
+  the game; the kept-pictures cache (`user://painted`) has only run on a desktop; frame speed with painted crops
+  has not been measured on a phone.
+
 ## Performance (stress round, part 2)
 - Draw calls on the max farm: about 2,800 (was 8,000; the woods are baked per area and yard animals thin out
   when zoomed out). Next biggest: buildings (~45 surfaces each); use `tools/perf_probe` census to find them.
