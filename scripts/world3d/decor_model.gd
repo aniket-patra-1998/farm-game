@@ -19,7 +19,8 @@ const IDS := ["farmhouse", "log_cabin", "dirt_path", "brick_path", "stone_path",
 	"bonfire", "wheelbarrow",
 	"water_well", "flower_bed", "pink_flamingo", "bench", "birdhouse", "birdbath", "picnic_table", "garden_gnome",
 	"lamp_post", "sundial", "small_pond", "fountain", "arbor", "wooden_bridge", "gazebo", "pine_tree", "oak_tree",
-	"maple_tree", "willow_tree", "mastery_sign", "mailbox", "farm_stand", "perfect_bunch"]
+	"maple_tree", "willow_tree", "mastery_sign", "mailbox", "farm_stand", "perfect_bunch",
+	"hot_air_balloon", "clock_tower", "stone_castle"]   # (the last three: PrestigeModel)
 
 
 
@@ -193,6 +194,8 @@ static func build(it: Dictionary, fp: Vector2i, o: Dictionary) -> Node3D:
 			_bridge(root, c, col, int(o.get("uid", 0)))
 		"gazebo":
 			_gazebo(root, c, col, Color("#4f7f8a"))
+		"hot_air_balloon", "clock_tower", "stone_castle":
+			PrestigeModel.build(id, root, c, col, Color.html(str(it.get("accent", "#f4efe4"))))
 		"pine_tree":
 			Objects3D.pine(root, c, 1.1)
 		"oak_tree", "maple_tree", "willow_tree":

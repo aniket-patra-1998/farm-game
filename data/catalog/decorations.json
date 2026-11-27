@@ -450,6 +450,49 @@
           "shape": "flowerbed"
         }
       ]
+    },
+    {
+      "id": "prestige",
+      "name": "Prestige",
+      "doc": "Big showpieces to save coins for (owner, 27 Nov): no power, only pride. Their shape is the old 2D stand-in only; PrestigeModel draws them.",
+      "variants": [
+        {
+          "id": "hot_air_balloon",
+          "name": "Hot Air Balloon",
+          "unlock_level": 20,
+          "cost": 75000,
+          "shape": "gazebo",
+          "color": "#d8443a",
+          "accent": "#f3d34a",
+          "w": 3,
+          "h": 3,
+          "art_fill": 0.95
+        },
+        {
+          "id": "clock_tower",
+          "name": "Clock Tower",
+          "unlock_level": 25,
+          "cost": 150000,
+          "shape": "lamp",
+          "color": "#a8563c",
+          "accent": "#e0b43c",
+          "w": 2,
+          "h": 2,
+          "art_fill": 0.95
+        },
+        {
+          "id": "stone_castle",
+          "name": "Stone Castle",
+          "unlock_level": 30,
+          "cost": 500000,
+          "shape": "cabin",
+          "color": "#b9b2a4",
+          "accent": "#c9443a",
+          "w": 4,
+          "h": 4,
+          "art_fill": 0.95
+        }
+      ]
     }
   ]
 }

@@ -171,8 +171,10 @@ static func _zone_items(g: GameState, zone: String) -> Array[String]:
 			if kind != "tree" or varieties.has(variety):
 				continue
 			varieties[variety] = true
-		if kind == zone or zone == "building" and g.is_building_item(id) or zone == "decor" and kind == "young" \
-				or zone == "tree" and kind == "bloom":
+		# (The prestige pieces are as big as buildings: they stand with the buildings, which pack the big ones.)
+		var big := kind == "decor" and PrestigeModel.IDS.has(id)
+		if kind == zone and not big or zone == "building" and (g.is_building_item(id) or big) \
+				or zone == "decor" and kind == "young" or zone == "tree" and kind == "bloom":
 			out.append(id)
 	if zone == "building" or zone == "decor":
 		out.sort_custom(func(a: String, b: String) -> bool:
@@ -252,7 +254,8 @@ static func _fill_homes(g: GameState, now: int) -> void:
 		var cycle := g.cycle_of(b)
 		if cycle > 0 and not g.under_construction(b):
 			b["t"] = now - (cycle + 1 if k % READY_EVERY != READY_EVERY - 1 else int(cycle * PART_WAY))
-		k += 1
+		if not PrestigeModel.IDS.has(str(b["id"])):
+			k += 1   # (the prestige pieces, laid out with the buildings, don't shift which homes are ready)
 
 
 ## Parks every other vehicle standing on the farm in Garage `garage`, so both are seen: vehicles in a Garage and

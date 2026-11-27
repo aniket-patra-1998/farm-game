@@ -13989,6 +13989,42 @@
    "subject": "a perfect bunch of fresh-cut garden flowers tied with a ribbon, standing in a little wicker basket"
   },
   {
+   "id": "hot_air_balloon",
+   "item": "hot_air_balloon",
+   "class": "Decoration",
+   "stage": "placed",
+   "tiles": 3,
+   "fill": 0.95,
+   "refs": [
+    "refs/hot_air_balloon.png"
+   ],
+   "subject": "a hot air balloon, a farm decoration"
+  },
+  {
+   "id": "clock_tower",
+   "item": "clock_tower",
+   "class": "Decoration",
+   "stage": "placed",
+   "tiles": 2,
+   "fill": 0.95,
+   "refs": [
+    "refs/clock_tower.png"
+   ],
+   "subject": "a clock tower, a farm decoration"
+  },
+  {
+   "id": "stone_castle",
+   "item": "stone_castle",
+   "class": "Decoration",
+   "stage": "placed",
+   "tiles": 4,
+   "fill": 0.95,
+   "refs": [
+    "refs/stone_castle.png"
+   ],
+   "subject": "a stone castle, a farm decoration"
+  },
+  {
    "id": "good_pumpkin_bread",
    "item": "pumpkin_bread",
    "class": "Recipe",

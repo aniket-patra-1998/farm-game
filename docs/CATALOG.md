@@ -13,13 +13,13 @@ Every item in the game, generated from `data/catalog/` by `tools/make_catalog.py
 | Animals | 15 | 145 | 0 |
 | Buildings | 6 | 21 | 6 |
 | Vehicles | 4 | 4 | 0 |
-| Decorations | 7 | 40 | 0 |
+| Decorations | 8 | 43 | 0 |
 | recipes | 4 | 55 | 37 |
 | young | 3 | 5 | 0 |
 | blooms | 6 | 12 | 0 |
 | Ingredients | 3 | 22 | 0 |
 | Collectibles | 22 sets | 110 | 0 |
-| **All** | **114** | **705** | **43** |
+| **All** | **115** | **708** | **43** |
 
 ## Adding an item
 
@@ -1354,6 +1354,16 @@ Given, never bought.
 |---|---|---|---|---|---|---|
 | ✅ | Mastery Sign | `mastery_sign` | never sold | free | 1x1 | mastery |
 | ✅ | Perfect Bunch (Found while harvesting flowers (FarmVille's Perfect Bunches); lasts 14 days once placed) | `perfect_bunch` | never sold | free | 1x1 | flowerbed |
+
+### Prestige
+
+Big showpieces to save coins for (owner, 27 Nov): no power, only pride. Their shape is the old 2D stand-in only; PrestigeModel draws them.
+
+| | Item | id | Unlock | Cost | Size | Shape |
+|---|---|---|---|---|---|---|
+| ✅ | Hot Air Balloon | `hot_air_balloon` | 20 | 75,000 | 3x3 | gazebo |
+| ✅ | Clock Tower | `clock_tower` | 25 | 150,000 | 2x2 | lamp |
+| ✅ | Stone Castle | `stone_castle` | 30 | 500,000 | 4x4 | cabin |
 
 ## recipes
 

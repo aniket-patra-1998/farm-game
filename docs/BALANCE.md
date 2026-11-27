@@ -39,3 +39,9 @@ Findings:
   12-24 hours: the choice of crop is the whole game for them (they sit at level 1-2 for the first days).
 - Drops per 1000 harvests at 0 stars: golden 6, collectible 62-80 (pity at 30 lifts it), bird 29, super 54, bonus 44.
 - Weather (summer): clear 49%, partly cloudy 25%, cloudy 10%, rain 9%, storm 2%, fog 4%; spells average 2.9 blocks (about 9 hours).
+
+## Prestige decorations (owner, 27 Nov)
+Coin sinks for the late game, pride only (no XP past level 15, no power): Hot Air Balloon (level 20, 75,000),
+Clock Tower (25, 150,000), Stone Castle (30, 500,000); PrestigeModel draws them. The owner picked three of four
+candidates (the Golden Farmer Statue was left out). The 60-day sims still meet every target.
+
