@@ -25,7 +25,6 @@ const NAMED := {
 	"paint": {"alpha_holds": 1, "ground_ao": 0.32, "edge": 0.4},
 	"wall": {"alpha_holds": 2},
 }
-const CROP := "crop:"   # a crop form's entry: crop:<form> (CropModels.mesh)
 
 ## Whether files load on worker threads (preload_files). Not without a screen (tests, tools): the stand-in renderer
 ## there keeps its meshes unsafely for threads, and meshes made on two threads at once broke each other (engine

@@ -276,7 +276,7 @@ func _jobs(farm: String) -> Dictionary:
 	var text := JSON.stringify(data)
 	out["save_json_ms"] = (Time.get_ticks_usec() - t) / 1000.0
 	out["save_bytes"] = text.length()
-	for pair in [["Crops3D", "rebuild"], ["Plots3D", "rebuild"], ["Ground3D", "rebuild"], ["Objects3D", "sync"]]:
+	for pair in [["Plots3D", "rebuild"], ["Ground3D", "rebuild"], ["Objects3D", "sync"]]:
 		var n := get_tree().root.find_child(pair[0], true, false)
 		if n != null and n.has_method(pair[1]):
 			t = Time.get_ticks_usec()

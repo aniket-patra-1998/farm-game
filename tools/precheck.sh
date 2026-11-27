@@ -41,6 +41,7 @@ python3 tools/make_notebook.py --check
 python3 tools/make_art_versions.py --check
 python3 tools/make_limited.py --check
 python3 tools/make_level_packs.py --check
+python3 tools/paint_plants.py --check
 python3 tools/strings_lint.py
 log="$(mktemp)"
 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true

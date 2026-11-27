@@ -225,7 +225,7 @@ func _processing() -> void:
 				if n.has_method("_process"):
 					n._process(1.0 / 60.0)
 		print("PERF   %s x%d: %.2fms a frame" % [path, by[path].size(), (Time.get_ticks_usec() - t) / 1000.0 / RUNS])
-	for pair in [["ObjectLayer", "refresh_all"], ["Crops3D", "rebuild"], ["Plots3D", "rebuild"], ["Ground3D", "rebuild"]]:
+	for pair in [["ObjectLayer", "refresh_all"], ["Plots3D", "rebuild"], ["Ground3D", "rebuild"]]:
 		var n := _find(get_tree().root, pair[0])
 		if n != null:
 			var t := Time.get_ticks_usec()

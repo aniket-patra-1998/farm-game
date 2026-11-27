@@ -25,7 +25,7 @@ by reading them in its shader: no script runs for each thing, and nothing can be
 | lamp | lamp3d | | | lit as it falls (`LIT_FROM` to `LIT_FULL`) | |
 | window | ModelKit.glass, glow3d | | | lit | |
 | water | water3d | rings | | moonlit | ices over |
-| leaf, crop, flower | crown3d, crop3d, ... | | sways | | |
+| leaf, crop, flower | crown3d, painted3d, ... | | sways | | |
 | the shade under a thing | contact3d | | | stronger (`NIGHT_MORE`) | |
 | animal | AnimalBehaviour, data/animal_rigs.json `weather` | turns its tail to it and stands about; in a storm keeps close to home; one with a home goes in at its door from hard rain (`shelter_from`) and comes out after; shakes it off when it stops | | sleeps its family's way | |
 
@@ -48,7 +48,7 @@ a sheet of four, option C), so a cow, a coop, a fence and a tree sit in one worl
 | `paint3d`, `wall3d` | things built in code: fences, decorations, walls | sun and shade, painted |
 | `crown3d`, `frond3d` | trees' leaves | sun and shade, its own lean (a crown's tones are painted in its vertices) |
 | `fruit3d` | fruit on a tree | sun and shade |
-| `crop3d`, `bloom3d` | crops and flowers | not yet: thin leaves lit their own way (still to come) |
+| `painted3d` | crops and flowers (painted cards) | the whole card lit alike, as a crown is |
 
 The patches are worked out for every pixel, so they are a quality's to give (`finish_grain`: off on low). The
 rest costs what the engine's own lighting did. A new solid kind includes the file, calls `finish_painted` (or
@@ -134,6 +134,32 @@ tones of the kind's leaf colour (`TreeModel.tones`), lighter where the sun falls
 - A limited variety's colours lie over the crown in patches; its touch and the wind go through the crown's shader as
   before (`ModelKit.sway_all`, `touch_all`).
 - Fruit on a leafy crown is small and many (`CROWN_FRUIT`), sitting on the crown's skin.
+
+## Crops are painted pictures
+
+Owner, 26 Nov: crops as the classic farm games paint them, and a simpler way than modelling each plant. The camera
+never turns, so a flat picture facing it is the plant.
+
+- `tools/paint_plants.py` paints every crop as a recipe of shapes (SVG text, `art/painted/crops/<name>.paint`): no
+  black outlines, flat tones, light from the upper left, the tree crowns' greens. `--check` is in the pre-push check.
+- Four looks to a crop: the sprouts every crop shares, its plants part grown, ripe, and the ripe picture gone dry.
+- `PaintedCrops` turns a recipe into a texture on the device the first time it is shown, and draws one card to a
+  plot, one draw to a picture. A card stands on its bed's nearest corner, so it covers its own bed and sits behind
+  whatever stands in front of the plot.
+- `painted3d.gdshader` lights the whole card alike, as a tree's crown is, so it dims at night and darkens in rain;
+  it bends in the wind from its foot.
+- Flowers are painted the same way (`PaintedBloom`, `art/painted/blooms`): one card to a flower, in bud until it
+  is ready, open while it stands ready, and the open picture gone dry once withered; single and full bloom.
+- Market pictures are painted too: a crop's is what it gives, gathered (`<crop>_harvest`), a flower's is it open
+  (`IconMaker.model`). A harvested plot's card springs up and is gone (`PaintedCrops.pop`).
+- A made picture is kept on the device (`user://painted`, under its recipe's own mark), so only the first run
+  paints it.
+- A plot is planted close: a row more each way than it strictly holds, the plants lapping over each other and
+  the bed's edge, so a ripe field shows hardly any soil (owner, 27 Nov); a half-grown plot's plants are `YOUNG` of
+  ripe ones.
+- There are no modelled crops or flowers any more (27 Nov): the Bloom Garden's beds, the bouquet, the height guide
+  and the art reference tool show the same cards. `CropClock` keeps the farm's clock (the shaders' `crop_clock`,
+  which a tree's fruit grows by) and says which look a plot shows (`stage_of`, `next_change`, `mastered`).
 
 ## Still to come (in this order)
 

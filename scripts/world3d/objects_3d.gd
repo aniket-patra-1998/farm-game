@@ -12,10 +12,8 @@ signal landed(at: Vector3)  # something dropped onto the farm: a puff of dust th
 const MODELLED := ["building", "barn", "crafting", "tree", "animal", "vehicle", "decor", "young", "bloom"]
 const TIMED_KINDS := ["tree", "bloom", "building", "barn", "crafting", "young"]   # what time alone can change
 const DECOR_MODEL := "res://scripts/world3d/decor_model.gd"
-const NEVER := 1.0e9         # a time that never comes (a bloom that does not wilt): seconds on the farm's clock
-const WILT_SHARE := 0.4      # the last part of the time a bloom may stand ready over which it wilts
 const CLOCKED := &"clocked"  # on a part: surface -> its own material that ripens by the clock (`_clocked`)
-const TIMES: Array[StringName] = [&"ripe_from", &"ripe_len", &"wilt_from", &"wilt_len"]   # what `timed_material` sets
+const TIMES: Array[StringName] = [&"ripe_from", &"ripe_len"]   # what `timed_material` sets
 const TIMED_KEPT := 256      # timed materials kept before the ones nothing is drawn with are dropped
 const HATCH_SHAKES := 3      # a mystery shakes this many times before it opens, each harder..
 const HATCH_REACH := 0.035   # ..by this much more, in tiles, to either side
@@ -38,12 +36,11 @@ const VARIED_DECOR := ["wooden_bridge", "pine_tree", "oak_tree", "maple_tree", "
 const BUILD_BUDGET_MS := 12
 const OPENING_BUDGET_MS := 40   # ..and while a farm opens (nothing stands yet, the player waits for it): more a frame
 const COVERED_BUDGET_MS := 150  # ..and under the loading cover (nothing is seen, so a frame may build for long)
-## The kinds `uses_file` draws from files (a tree and a bloom come from theirs by look: tree_look, bloom_look).
+## The kinds `uses_file` draws from files (a tree comes from its by look: tree_look).
 const FILE_KINDS := ["building", "barn", "crafting", "decor"]
 const TREE_LOOKS := 4     # looks of each tree kept in its file (tree_look; tools/export_plants)
 const SHAKE_LEANS := [0.11, -0.08, 0.05, -0.025]   # how far a harvested tree rocks, one way then the other (radians)
 const SHAKE_BEAT := 0.09  # seconds each rock takes
-const BLOOM_LOOKS := 4    # and of each bloom (bloom_look)
 # The share of its slots holding something finished at which a crafting building's storage parts show a quarter,
 # half and full.
 const FILL_FROM: Array[float] = [0.25, 0.5, 1.0]
@@ -980,22 +977,6 @@ static func tree_look(id: String, mask: int, look: int, from_file := true, build
 		return ModelKit.bake(tree))
 
 
-## A bloom's look (one of Instancer.VARIANTS, `look`), shared, as a tree's is. A bloom on its own comes from its
-## file (one of its BLOOM_LOOKS, whatever its age: its shader shows its life, `ripen`; art/models/blooms, made by
-## tools/export_plants); one standing among others (`mask`: Crowding) and a bloom with no file are built once
-## (BloomModel), brought inside the tile and kept.
-static func bloom_look(id: String, mask: int, look: int, from_file := true, build_now := true) -> Node3D:
-	if from_file and mask == 0 and AssetRegistry.has_model(id):
-		return AssetRegistry.instance(id, {"look": look % BLOOM_LOOKS})
-	var grown := ScaleGuide.factor(id)
-	var key := Instancer.key_of(["bloom", id, grown, mask, look])
-	if not build_now and mask != 0 and not Instancer.has_ready(key):
-		return bloom_look(id, 0, look, from_file)   # (as a tree's: `may_build`)
-	return Instancer.copy_of(key, func() -> Node3D:
-		return SpaceFit.fit_model(BloomModel.build(Game.item_data(id), {"id": id, "uid": look}, grown, look, mask),
-			Game.footprint(id)))
-
-
 ## Starts a tree's fruit growing, or a bloom opening, for the cycle it is in, when that is not the one its model
 ## was last told. A bloom that withers is told too when its wilting starts (the last part of the time it may
 ## stand ready, `WILT_SHARE`) so it withers little by little; one that never withers is told nothing of it.
@@ -1004,10 +985,12 @@ func _ripen_view(v: Dictionary, o: Dictionary) -> void:
 	if v.get("ripe") == cycle:
 		return
 	v["ripe"] = cycle
-	var d := Game.catalog.get_def(str(o["id"])) as BloomDef
-	if d != null and d.withers():
-		var stands := float(Balance.i("blooms.wither_after"))
-		ripen(v["node"], cycle[0], cycle[1], cycle[0] + cycle[1] + stands * (1.0 - WILT_SHARE), stands * WILT_SHARE)
+	if v["node"] is PaintedBloom:
+		var d := Game.catalog.get_def(str(o["id"])) as BloomDef
+		var opens := float(cycle[0]) + float(cycle[1])
+		var withers := d != null and d.withers()
+		(v["node"] as PaintedBloom).set_cycle(opens,
+			opens + float(Balance.i("blooms.wither_after")) if withers else PaintedBloom.NEVER)
 	else:
 		ripen(v["node"], cycle[0], cycle[1])
 
@@ -1022,9 +1005,8 @@ func _ripen_view(v: Dictionary, o: Dictionary) -> void:
 ## holds them (`timed_material`), shared by everything with the same material and the same times (an orchard's
 ## trees, everything collected in one sweep). Not per-instance shader values: a renderer holds only so many of
 ## those (4,096 things on the phones' renderer), and a full farm of trees and blooms has more.
-static func ripen(node: Node, from_unix: float, cycle: float, wilt_unix := -1.0, wilt_takes := 1.0) -> void:
-	_time_parts(node, [from_unix - Crops3D.clock_base, maxf(cycle, 1.0),
-		NEVER if wilt_unix < 0.0 else wilt_unix - Crops3D.clock_base, maxf(wilt_takes, 1.0)])
+static func ripen(node: Node, from_unix: float, cycle: float) -> void:
+	_time_parts(node, [from_unix - CropClock.clock_base, maxf(cycle, 1.0)])
 
 
 static func _time_parts(node: Node, times: Array) -> void:
@@ -1049,16 +1031,15 @@ static func _clocked(mi: MeshInstance3D, s: int) -> ShaderMaterial:
 	if not kept.has(s):
 		var m := (mi.material_override if s < 0 else (mi.mesh.surface_get_material(s) if mi.get_surface_override_material(s)
 			== null else mi.get_surface_override_material(s))) as ShaderMaterial
-		kept[s] = m if m != null and m.shader != null and m.shader.resource_path in [ModelKit.FRUIT_SHADER,
-			ModelKit.BLOOM_SHADER] else null
+		kept[s] = m if m != null and m.shader != null and m.shader.resource_path == ModelKit.FRUIT_SHADER else null
 		mi.set_meta(CLOCKED, kept)
 	return kept[s]
 
 
-## `base`, as a copy that ripens (and wilts) at `times` ([ripe from, ripe length, wilt from, wilt length], in
-## seconds on the farm's clock): one copy for each material and times, kept while anything is drawn with it.
+## `base`, as a copy that ripens at `times` ([ripe from, ripe length], in seconds on the farm's clock): one copy
+## for each material and times, kept while anything is drawn with it.
 static func timed_material(base: ShaderMaterial, times: Array) -> ShaderMaterial:
-	var key := "%d|%.0f|%.0f|%.0f|%.0f" % [base.get_instance_id(), times[0], times[1], times[2], times[3]]
+	var key := "%d|%.0f|%.0f" % [base.get_instance_id(), times[0], times[1]]
 	if not _timed.has(key):
 		if _timed.size() >= TIMED_KEPT:
 			drop_unused_timed()
@@ -1222,8 +1203,7 @@ func _build(o: Dictionary) -> Node3D:
 			"bloom":
 				# One of a few looks (Instancer), as for trees: from its file when it stands on its own.
 				# (one look whether in bud, in bloom or withered: its shader shows its life by the clock, `ripen`)
-				node = bloom_look(str(o["id"]), Crowding.mask(o), Instancer.variant(int(o["row"]), int(o["col"])), true,
-					may_build())
+				node = PaintedBloom.create(str(o["id"]), fp)   # (flowers are painted pictures, as crops are)
 			_:
 				if Game.under_construction(o):
 					node = ModelKit.bake(BuildingSpec.model().build_site(it, fp, Game.land.construction_progress(o)))

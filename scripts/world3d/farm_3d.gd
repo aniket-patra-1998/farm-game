@@ -35,11 +35,12 @@ var camera_2d: Camera2D
 var camera: Camera3D
 var lightning: Lightning3D   # a storm's bolts and their flash (WeatherEvents.struck)
 var sun: DirectionalLight3D
+var clock: CropClock
 var fill: DirectionalLight3D     # soft sky light from the side away from the sun, so shade keeps its form
 var environment: Environment
 var ground: Ground3D
 var plots: Plots3D
-var crops: Crops3D
+var crops: PaintedCrops
 var glints: Glints3D
 var objects: Objects3D
 var trees: TreeLife
@@ -100,7 +101,9 @@ func _ready() -> void:
 	add_child(ground)
 	plots = Plots3D.new()
 	add_child(plots)
-	crops = Crops3D.new()
+	clock = CropClock.new()   # (the clock everything that grows goes by)
+	add_child(clock)
+	crops = PaintedCrops.new()
 	add_child(crops)
 	glints = Glints3D.new()   # (over ripe plots that hold a find)
 	add_child(glints)
