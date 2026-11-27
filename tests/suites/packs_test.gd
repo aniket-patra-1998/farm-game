@@ -353,3 +353,31 @@ func test_630_the_audit_of_27_nov_holds_a_floor_a_deal_scarce_helpers_and_no_lat
 	Game.reset_game()
 	# Helpers are scarce in play.
 	_check(Balance.f("specials.stable_helper_chance") <= 0.06, "a Stable harvest rarely gives a helper")
+
+
+func test_631_play_statistics_are_signed_anonymous_and_only_sent_with_keys_and_consent() -> void:
+	_eq(Analytics.signature('[{"a":1}]', "secret"), "gHmw+IsZj83w2dtS8MK8pKCOwmHkzqMSyhKNVZ7e16g=",
+		"the collector's HMAC-SHA256 header, base64")
+	var shipped: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Analytics.CONFIG))
+	for verb: String in shipped["events"]:
+		_check((JSON.parse_string(FileAccess.get_file_as_string("res://data/events.json"))["verbs"] as Dictionary)
+			.has(verb), "an event the farm records: %s" % verb)
+	var a := Analytics.new()
+	add_child(a)
+	a.config = {"game_key": "", "secret_key": ""}
+	a.design("buy:cow")
+	_eq(a.queue.size(), 0, "no keys: nothing kept to send")
+	a.config = {"game_key": "k", "secret_key": "s"}
+	var was: Variant = PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)
+	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: false})
+	a.design("buy:cow")
+	_eq(a.queue.size(), 0, "the player turned it off: nothing kept")
+	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: true})
+	a.user_id = Analytics._uuid()
+	a.design("buy:cow", 3.0)
+	_eq(a.queue.size(), 1, "with keys and consent, kept to send")
+	var e: Dictionary = a.queue[0]
+	_check(e["category"] == "design" and e["event_id"] == "buy:cow" and e["value"] == 3.0, "a design event")
+	_check(str(e["user_id"]).length() == 36 and not e.has("email") and not e.has("name"), "an anonymous random id")
+	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: was})
+	a.free()

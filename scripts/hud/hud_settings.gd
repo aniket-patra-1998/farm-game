@@ -155,6 +155,9 @@ func debug_card() -> PanelContainer:
 func about_card() -> PanelContainer:
 	var inner := BookPanel.card()
 	inner.add_child(BookPanel.heading(tr("SETTINGS_ABOUT")))
+	inner.add_child(BookPanel.row(tr("SHARE_STATS"), BookPanel.switch(
+		bool(PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)), func(on: bool) -> void:
+			PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: on}))))
 	var open := hud.panel_button(tr("LICENCES"))
 	open.pressed.connect(func() -> void: hud.book.open_panel(tr("LICENCES"), build_licences, BookPanel.Shape.LIST))
 	inner.add_child(BookPanel.row(tr("LICENCES_ROW"), open))

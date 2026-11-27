@@ -264,6 +264,7 @@ func _ready() -> void:
 	StartMarks.mark("data")   # not-ui (every system's data read)
 	if AssetPacks.shared == null and self == get_node_or_null(^"/root/Game"):   # not-ui (the game's own, not a test's)
 		# Files left out of the app (docs/PACKS.md): the kept ones are loaded now, the rest fetched when first drawn.
+		Analytics.begin(self)   # (play statistics: data/analytics.json, nothing sent without its keys)
 		var packs := AssetPacks.begin(self)
 		packs.waiting.connect(_packs_said.bind("PACK_WAITING"))
 		packs.no_room.connect(_packs_said.bind("PACK_NO_ROOM"))

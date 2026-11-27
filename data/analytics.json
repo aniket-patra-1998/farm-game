@@ -1,0 +1,10 @@
+{
+ "_doc": "Play statistics (owner, 27 Nov: measure real players, as studios do). Sent to GameAnalytics' collector over HTTPS (its REST API, no plugin), anonymous: a random id made on the phone, never a name, email or advertising id. Empty keys: nothing is sent. Create a free GameAnalytics game and put its game key and secret here (the SDKs ship them in the app the same way). sandbox: their test server (true until the keys are real). Events: what EVENTS names, as design events.",
+ "game_key": "",
+ "secret_key": "",
+ "sandbox": true,
+ "flush_seconds": 60,
+ "batch_most": 50,
+ "queue_most": 500,
+ "events": ["buy", "build", "expand", "start_craft", "craft", "upgrade", "repair", "open_box", "open_egg", "daily_bonus", "adopt"]
+}
