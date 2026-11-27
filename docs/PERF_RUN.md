@@ -1,5 +1,7 @@
 # The loading and performance build (owner-approved 18 Nov 2026)
 
+> Since 27 Nov (PR 29) crops and flowers are painted pictures (`PaintedCrops`, `PaintedBloom`, docs/WORLD.md); `Crops3D`, `CropModels`, `CropForms`, `CropFormSpec`, `BloomModel` and the crop3d and bloom3d shaders named below are gone. What follows is the record of that time.
+
 Hourly sessions, 20:50 IST 18 Nov to 20:35 IST 19 Nov (extended by the owner at 08:31; it runs alone from 08:35), make the farm load and run like a big commercial farm game:
 the farm opens fast and whole, and a large, crowded farm stays smooth on a low-end Android phone. The look must
 not change (same models, colours and motion; an optimisation that changes how something looks is reported, not

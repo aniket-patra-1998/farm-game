@@ -1,5 +1,7 @@
 # Open items
 
+> Since 27 Nov (PR 29) crops and flowers are painted pictures (`PaintedCrops`, `PaintedBloom`, docs/WORLD.md); `Crops3D`, `CropModels`, `CropForms`, `CropFormSpec`, `BloomModel` and the crop3d and bloom3d shaders named below are gone. What follows is the record of that time.
+
 Kept in the order we agreed: stress round done first, then visual detail, then the farming-core roadmap.
 
 ## Performance (stress round, part 2)

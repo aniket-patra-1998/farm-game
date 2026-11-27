@@ -8,7 +8,7 @@ Marks: strong / ok / thin / missing. Written Nov 2026 from the code, docs/AUDIT.
 
 | System | Rules | Feel | Life | Scale | Best next upgrade |
 |---|---|---|---|---|---|
-| Plots and crops (FieldSystem, Crops3D) | strong | ok | ok | strong | Planting/plowing trails the farmer's tool; crops sway with wind (done) but ripe crops should shimmer and "call" (a soft pulse) so ready plots read from afar; harvest streak (chain-tap combo) with rising pitch. |
+| Plots and crops (FieldSystem, PaintedCrops) | strong | ok | ok | strong | Planting/plowing trails the farmer's tool; crops sway with wind (done) but ripe crops should shimmer and "call" (a soft pulse) so ready plots read from afar; harvest streak (chain-tap combo) with rising pitch. |
 | Farmer (PlayerSystem, Farmer3D) | strong | ok | ok | ok | Tool-specific animations (hoe, seed toss, scythe, bucket), idle fidgets, footstep dust, look-at the thing being worked; avatar customisation (missing). |
 | Animals (Animal3D, AnimalMotion, minds) | ok | strong | strong | ok | Off-screen throttling (done for homes, do for free animals); animal needs shown above the head (hungry, happy) via one shared bubble layer; petting, following, sleeping at night. |
 | Animal homes (BuildingFill) | ok | ok | strong | ok | Interior tour: tap shows residents' names and ready timers; babies in Nursery; feed troughs that empty and refill. |

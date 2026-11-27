@@ -16,8 +16,8 @@ changed.
 - **Detail where the eye goes**: faces, doors, the thing's signature feature (`BuildingModel.SIGNATURES`). Plain
   elsewhere.
 - **Nothing is paper.** A petal, a leaf, a stem has a body: thick stems, a few big petals to a head, fat leaves
-  (`BloomModel`: its blades are closed, rounded shapes). A custom `light()` in a shader divides the light's colour
-  by PI as the engine's own shading does, or its things are lit three times as brightly as the farm (bloom3d).
+  (the tree crowns: their leaves are closed, rounded shapes). A custom `light()` in a shader divides the light's colour
+  by PI as the engine's own shading does, or its things are lit three times as brightly as the farm (painted3d, crown3d).
 
 ## Faces (animals and anything with a face)
 
