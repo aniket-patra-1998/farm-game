@@ -29,8 +29,8 @@ const PARTS := ["gpu", "scenes", "filled", "filled_play", "filled_scenes", "star
 const LINE_MOST := 3000          # a part longer than this goes a line for each of its own parts
 ## The ground's shader changed one part at a time (_ground_tries): [the name, the code, what it becomes].
 const GROUND_TRIES := [
-	["ground_unlit", "render_mode cull_disabled;",   # not-ui
-		"render_mode cull_disabled, unshaded;"],   # not-ui
+	["ground_unlit", "render_mode cull_disabled",   # not-ui (both shaders: per pixel and per corner)
+		"render_mode unshaded, cull_disabled"],   # not-ui
 	["ground_no_grain", "fine = noise(p * 7.3);", "fine = 0.5;"],   # not-ui
 	["ground_no_shade", "vec2 sw = texture(shade_map, suv).rg;", "vec2 sw = vec2(0.0);"]]   # not-ui
 const FILLED_SCENES: Array[String] = ["still", "pan", "place", "harvest", "night"]   # on the full farm
@@ -266,6 +266,7 @@ func _gpu_by_owner() -> Dictionary:
 	out["half_scale"] = await _gpu_median(rid)
 	vp.scaling_3d_scale = scale
 	out.merge(await _ground_tries(rid, all))
+	out["context"] = _context()
 	# What animating the animals costs the GPU, apart from drawing them: the time that goes away while they stand
 	# as they are (an animal's shapes are blended again whenever it is posed). Measured between two fresh readings
 	# of the whole view, since a phone's GPU time drifts over the sweep.
@@ -276,6 +277,25 @@ func _gpu_by_owner() -> Dictionary:
 	out["animals_posing"] = snappedf((before + await _gpu_median(rid)) * 0.5 - still, 0.1)
 	RenderingServer.viewport_set_measure_render_time(rid, false)
 	return out
+
+
+## What the sweep saw (the same farm differs by the hour and the weather): the weather now, how wet and snowy the
+## ground is, the local hour, the lights lit and the ground's shader.
+func _context() -> Dictionary:
+	var lights := 0
+	for n: Node in get_tree().root.find_children("*", "Light3D", true, false):   # not-ui
+		if (n as Light3D).is_visible_in_tree():
+			lights += 1
+	var shader := ""
+	var grounds := get_tree().root.find_children("*", "Ground3D", true, false)   # not-ui
+	if not grounds.is_empty():
+		var lawn := grounds[0].get_node_or_null("Lawn") as MeshInstance3D   # not-ui
+		var m := _face_material(lawn) if lawn != null else null
+		if m is ShaderMaterial and (m as ShaderMaterial).shader != null:
+			shader = (m as ShaderMaterial).shader.resource_path.get_file()
+	return {"weather": Game.weather_state_at(Game.now()), "wetness": ShaderGlobals.value(&"wetness"),
+		"snow": ShaderGlobals.value(&"snow_cover"), "hour": snappedf(DayCycle.local_hour(Game.now(),
+		DayCycle.device_bias_minutes()), 0.1), "lights": lights, "ground_shader": shader}
 
 
 ## What the ground's own shading costs (it was 41 of the A05s's 101 ms): the GPU time that goes away with its
