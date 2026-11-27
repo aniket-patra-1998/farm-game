@@ -28,4 +28,8 @@ Owner, 27 Nov: picked style B of three shown: a caption band over the game.
       python3 tools/make_store_film.py /tmp/day.avi /tmp/night.avi landmarks=55,crops=180,...,landmarks_night=58
 
 - `store/` has a `.gdignore`: none of it goes into the game.
-- **Not done.** The 512x512 store icon; pictures for tablets (the same ones are accepted).
+- **The icon.** `python3 tools/make_app_icon.py` draws it (shapes, not a picture of the game: a cow in a straw
+  hat, the barn with its window alight behind her, a sunflower, wheat) and writes `store/icon_512.png` for the
+  listing and `art/app_icon/` for the app itself: `icon.png` (project.godot) and the two layers of Android's
+  adaptive icon, set in every export preset. The owner chose the drawn mascot over pictures of the Barn (27 Nov).
+- **Not done.** Pictures for tablets (the same ones are accepted).

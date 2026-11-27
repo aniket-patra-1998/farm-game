@@ -7,7 +7,8 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 - docs/STORE.md: eight screenshots and the feature graphic in `store/`, in the style the owner picked (a caption
   band over the game), made by tools/store_shots.tscn and tools/make_store_art.py from the showcase farm.
   The preview video is made by tools/store_film.tscn and tools/make_store_film.py (store/preview.mp4, not in git).
-  It carries the game's own music and ambience. Not done: the store icon, the YouTube upload.
+  It carries the game's own music and ambience. The icon (store and app) is drawn by tools/make_app_icon.py.
+  Not done: the YouTube upload.
 
 ## Landmarks rebuilt, and the Limited tab made short (27 Nov, branch prestige-looks)
 - The three prestige decorations are landmarks (`"landmark": true` in the catalog; `DecorationDef.is_landmark`).
