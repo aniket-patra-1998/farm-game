@@ -257,3 +257,31 @@ func test_655_rain_spoils_ripe_berries_left_out_and_loved_weather_pays_more() ->
 	_done(g)
 	Season.set_region("", false)
 	Season.active = false
+
+
+## Open blooms and the weather (owner, 27 Nov): a storm spoils an open Single Bloom left out, a tulip takes frost.
+func test_659_a_storm_spoils_an_open_bloom_and_tulips_take_the_frost() -> void:
+	Season.active = true
+	var g := _farm()
+	g.xp = g.xp_for_level(Balance.i("seasons.from_level") + 1)
+	g.clear_until = 0
+	var rose := {"id": "", "t": 0}
+	var tulip := {"id": "", "t": 0}
+	for d: ItemDef in g.catalog.of_kind("bloom"):
+		var id := d.id
+		var fam := str(g.item_data(id).get("family", ""))
+		if fam == "rose" and rose["id"] == "":
+			rose["id"] = id
+		if fam == "tulip" and tulip["id"] == "":
+			tulip["id"] = id
+	_check(rose["id"] != "" and tulip["id"] != "", "a rose and a tulip in the catalog")
+	for b: Dictionary in [rose, tulip]:
+		b["t"] = g.now() - g.cycle_of(b) - 60   # (open a minute ago)
+	g.weather_fx.try_weather("storm")
+	_check(g.is_withered(rose) == g.catalog.get_def(rose["id"]).withers(), "a storm spoils an open rose at once")
+	g.weather_fx.try_weather("snow")
+	_check(not g.is_withered(tulip), "a tulip takes the frost")
+	g.weather_fx.try_weather("")
+	_check(not g.is_withered(rose), "and the real weather is back")
+	_done(g)
+	Season.active = false

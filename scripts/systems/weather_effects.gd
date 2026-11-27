@@ -16,6 +16,7 @@ const LOVED := {
 var tried := ""     # a weather tried on the showcase farm (its clock), "" none: it spoils what it would at once
 var tried_at := 0
 var _spoils := {}   # state -> {family: true}
+var _bloom_spoils := {}   # state -> {bloom family: true}
 var _loves := {}    # "crops" / "trees" -> state -> {family: true}
 var _kept := {}     # "plot:planted_at" -> the time its crop spoils, or -1
 
@@ -27,6 +28,7 @@ func _init(owner: GameState) -> void:
 func load_data() -> void:
 	var d := game.read_json(CONFIG)
 	_spoils = _sets(d.get("spoils_ripe", {}))
+	_bloom_spoils = _sets(d.get("blooms_spoil", {}))
 	for kind: String in (d.get("loves", {}) as Dictionary):
 		_loves[kind] = _sets(d["loves"][kind])
 
@@ -80,6 +82,27 @@ func spoils_at(i: int, ripe_at: int, withers_at: int) -> int:
 	at = at if at >= 0 and at < withers_at else -1
 	_kept[key] = at
 	return at
+
+
+## When an open Single Bloom (`family`, ready at `ready_at`) is spoiled by weather it can't take before
+## `withers_at`, or -1: the same rule as a ripe crop's (spoils_at), with the blooms' own list.
+func bloom_spoils_at(family: String, ready_at: int, withers_at: int) -> int:
+	if not on():
+		return -1
+	if tried != "":
+		var since := maxi(ready_at, tried_at)
+		return since if (_bloom_spoils.get(tried, {}) as Dictionary).has(family) and since < withers_at else -1
+	var length := Weather.block()
+	var t := maxi(ready_at, game.clear_until)
+	t -= posmod(t, length)
+	for k in GameState.RAIN_LOOK_MOST:
+		if t >= withers_at:
+			break
+		if (_bloom_spoils.get(game.weather_state_at(t), {}) as Dictionary).has(family):
+			var at := maxi(t, ready_at) + Balance.i("weather.spoil_grace_seconds")
+			return at if at < withers_at else -1
+		t += length
+	return -1
 
 
 ## The weather a crop (`kind` "crops"), tree ("trees") or bloom ("blooms") of `family` loved while it grew from

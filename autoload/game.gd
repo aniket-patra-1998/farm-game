@@ -831,7 +831,16 @@ func is_withered(obj: Dictionary) -> bool:
 	var d := catalog.get_def(str(obj.get("id", "")))
 	if not d is BloomDef or not (d as BloomDef).withers():
 		return false
-	return now() - int(obj["t"]) >= cycle_of(obj) + Balance.i("blooms.wither_after")
+	return now() >= bloom_withers_at(obj)
+
+
+## When an open Single Bloom withers: blooms.wither_after after it opens, or sooner when weather it can't take
+## comes while it waits (WeatherEffects.bloom_spoils_at).
+func bloom_withers_at(obj: Dictionary) -> int:
+	var ready_at := int(obj["t"]) + cycle_of(obj)
+	var end := ready_at + Balance.i("blooms.wither_after")
+	var spoil := weather_fx.bloom_spoils_at(str(item_data(str(obj["id"])).get("family", "")), ready_at, end)
+	return spoil if spoil >= 0 else end
 
 
 func seconds_until_ready(obj: Dictionary) -> int:

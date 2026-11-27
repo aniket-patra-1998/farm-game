@@ -996,8 +996,7 @@ func _ripen_view(v: Dictionary, o: Dictionary) -> void:
 		var d := Game.catalog.get_def(str(o["id"])) as BloomDef
 		var opens := float(cycle[0]) + float(cycle[1])
 		var withers := d != null and d.withers()
-		(v["node"] as PaintedBloom).set_cycle(opens,
-			opens + float(Balance.i("blooms.wither_after")) if withers else PaintedBloom.NEVER)
+		(v["node"] as PaintedBloom).set_cycle(opens, float(Game.bloom_withers_at(o)) if withers else PaintedBloom.NEVER)
 	else:
 		ripen(v["node"], cycle[0], cycle[1])
 
