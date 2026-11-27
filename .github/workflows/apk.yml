@@ -112,7 +112,11 @@ jobs:
           # size, a keyboard...), and Godot cannot make its Vulkan surface again on the remade one: the game dies.
           python3 - <<'PY2'
           import re
-          p = "android/build/AndroidManifest.xml"
+          import glob
+          found = [f for f in glob.glob("android/build/**/AndroidManifest.xml", recursive=True)
+                   if "configChanges" in open(f).read()]
+          print("manifests:", found)
+          p = found[0]
           s = open(p).read()
           every = ("mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|"
                    "orientation|screenSize|smallestScreenSize|layoutDirection|density|colorMode|fontWeightAdjustment|"
