@@ -1,0 +1,10 @@
+{
+ "_comment": "Rewarded ads (docs/ADS.md): the ad unit and what each offer gives. Test ids from Google's own list until the AdMob account exists; how many a day is Balance ads.daily_caps (remote-tunable).",
+ "android_unit": "ca-app-pub-3940256099942544/5224354917",
+ "max_content_rating": "PG",
+ "offers": {
+  "unwither": {"unwithers": 1},
+  "fuel": {"fuel_tanks": 1},
+  "farmhand": {"farmhands": 1}
+ }
+}

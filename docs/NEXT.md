@@ -3,6 +3,12 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Rewarded ads (27 Nov, main)
+- docs/ADS.md. AdMob plugin v5.1.0 vendored (addons/admob: runtime, editor exporter, core Android "ads" library;
+  no samples, C#, mediation; ios/bin/package.gd is a stub so headless exports don't fetch iOS binaries).
+- Three offers in the Barn's boosts (unwither, fuel, farmhand), capped daily, from level 4; test ids. Test 632.
+- Not yet seen on a phone: the consent form and a test ad playing. Next offers: daily bonus, box, find.
+
 ## Crops painted (26 Nov, branch painted-crops, on top of trees-light)
 - The owner picked painted pictures over 3D models for crops and flowers (docs/WORLD.md "Crops are painted
   pictures"). This branch does the crops on the farm: all 74, four looks each.

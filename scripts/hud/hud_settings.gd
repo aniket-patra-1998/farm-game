@@ -12,6 +12,7 @@ const FIELD_WIDE := 3.0   # a row's field or slider, in panel buttons' least wid
 ## What each graphics level does, in a word.
 const QUALITY_EFFECTS := {"low": "GRAPHICS_LOW_EFFECT", "mid": "GRAPHICS_MID_EFFECT", "high": "GRAPHICS_HIGH_EFFECT",
 	"ultra": "GRAPHICS_ULTRA_EFFECT"}
+const ADMOB_LICENCE := "res://addons/admob/LICENSE"   # exported by the include_filter too   # not-ui
 const FONT_LICENCE := "res://fonts/OFL.txt"   # exported by the presets' include_filter   # not-ui
 
 var hud: FarmHud
@@ -188,6 +189,7 @@ static func licences() -> Array:
 			lines.append(str(texts.get(part["license"], part["license"])))
 		out.append([str(component["name"]), "\n".join(lines)])
 	out.append(["Poppins", FileAccess.get_file_as_string(FONT_LICENCE)])   # not-ui (a name)
+	out.append(["AdMob plugin (Poing Studios)", FileAccess.get_file_as_string(ADMOB_LICENCE)])   # not-ui (a name)
 	return out
 
 

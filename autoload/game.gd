@@ -150,6 +150,7 @@ var mastery: MasterySystem
 var nurture: NurtureSystem
 var raising: RaisingSystem
 var social: SocialSystem
+var offers: AdOffers                  # rewarded ads the player chooses (docs/ADS.md)
 var finds: FindsSystem
 var feeds: FeedSystem
 var adjacency: AdjacencySystem
@@ -232,6 +233,7 @@ func _init() -> void:
 	nurture = NurtureSystem.new(self)
 	raising = RaisingSystem.new(self)
 	social = SocialSystem.new(self)
+	offers = AdOffers.new(self)
 	finds = FindsSystem.new(self)
 	feeds = FeedSystem.new(self)
 	adjacency = AdjacencySystem.new(self)
@@ -247,7 +249,8 @@ func _init() -> void:
 	persistence = Persistence.new(self)
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
-		social, collecting, shop, helpers, vip, rust, wear, rolls, goals, limited]
+		social, collecting, shop, helpers, vip, rust, wear, rolls, goals, limited,
+		offers]
 	StartMarks.mark("made")   # not-ui (the systems made)
 
 
@@ -265,6 +268,7 @@ func _ready() -> void:
 	if AssetPacks.shared == null and self == get_node_or_null(^"/root/Game"):   # not-ui (the game's own, not a test's)
 		# Files left out of the app (docs/PACKS.md): the kept ones are loaded now, the rest fetched when first drawn.
 		Analytics.begin(self)   # (play statistics: data/analytics.json, nothing sent without its keys)
+		AdOffers.begin_ads(self)   # (the ad player, Android only: docs/ADS.md)
 		var packs := AssetPacks.begin(self)
 		packs.waiting.connect(_packs_said.bind("PACK_WAITING"))
 		packs.no_room.connect(_packs_said.bind("PACK_NO_ROOM"))

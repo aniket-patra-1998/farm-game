@@ -1,5 +1,10 @@
 ; Engine configuration file.
-; Open this folder in Godot 4.7 or newer.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
@@ -26,10 +31,18 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=4
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/admob/plugin.cfg", "res://addons/farm_notices/plugin.cfg")
+
 [farm]
 
 art/use_painted_art=false
 world/use_3d=true
+
+[gui]
+
+theme/custom_font="res://fonts/Poppins-Medium.ttf"
 
 [input_devices]
 
@@ -41,9 +54,9 @@ locale/translations=PackedStringArray("res://locale/strings.en.translation")
 
 [rendering]
 
-anti_aliasing/quality/msaa_3d=1
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_3d=1
 environment/defaults/default_clear_color=Color(0.75, 0.89, 0.96, 1)
 
 [shader_globals]
@@ -76,11 +89,3 @@ snow_cover={
 "type": "float",
 "value": 0.0
 }
-
-[gui]
-
-theme/custom_font="res://fonts/Poppins-Medium.ttf"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/farm_notices/plugin.cfg")

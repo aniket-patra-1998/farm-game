@@ -1133,5 +1133,15 @@
    "v": 7200,
    "note": "seconds before a crop withers that its warning comes"
   }
+ },
+ "ads": {
+  "min_level": {
+   "v": 4,
+   "note": "rewarded ads are offered from this level (Google: never in the first minutes; the tutorial ends near level 3)"
+  },
+  "daily_caps": {
+   "v": {"unwither": 3, "fuel": 2, "farmhand": 1},
+   "note": "rewarded ads each offer may be watched per day (studio practice: a few per offer, about 6 a day in all)"
+  }
  }
 }

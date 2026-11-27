@@ -381,3 +381,37 @@ func test_631_play_statistics_are_signed_anonymous_and_only_sent_with_keys_and_c
 	_check(str(e["user_id"]).length() == 36 and not e.has("email") and not e.has("name"), "an anonymous random id")
 	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: was})
 	a.free()
+
+
+func test_632_rewarded_ads_are_chosen_capped_daily_given_only_when_watched_and_not_too_early() -> void:
+	Game.reset_game()
+	AdOffers.ads_ready = func() -> bool: return true
+	var o := Game.offers
+	_check(not o.ids().is_empty(), "offers in data/ads.json")
+	for id: String in o.ids():
+		_check(Balance.d("ads.daily_caps").has(id), "a daily cap for %s" % id)
+		_check(o.words(id).contains("%") == false and o.words(id) != "", "the button says what it gives first")
+	Game.xp = Game.xp_for_level(Balance.i("ads.min_level") - 1)
+	_check(not o.shown("farmhand"), "no ads before ads.min_level (not in the first session)")
+	Game.xp = Game.xp_for_level(Balance.i("ads.min_level"))
+	_check(o.shown("farmhand"), "offered once the level is reached")
+	var had := Game.farmhands
+	o.give("farmhand")
+	_eq(Game.farmhands, had + 1, "a watched ad gives its reward")
+	for k in 5:
+		o.give("farmhand")
+	_eq(Game.farmhands, had + Balance.d("ads.daily_caps")["farmhand"], "no more than the day's cap")
+	_check(not o.shown("farmhand"), "and the offer goes until tomorrow")
+	o.day -= 1
+	_check(o.shown("farmhand"), "a new day, a new cap")
+	AdOffers.ads_ready = func() -> bool: return false
+	_check(not o.shown("unwither"), "no ad loaded: no offer")
+	var saved := {}
+	o.save_to(saved)
+	o.load_from(saved)
+	_eq(o.taken.size(), saved["ads_taken"].size(), "the day's count is saved")
+	AdOffers.ads_ready = Callable()
+	_check(AdOffers.player == null, "no ad player made away from a phone")
+	var cfg: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AdOffers.CONFIG))
+	_check(str(cfg["android_unit"]).begins_with("ca-app-pub-3940256099942544/"), "Google's test unit until the account")
+	Game.reset_game()
