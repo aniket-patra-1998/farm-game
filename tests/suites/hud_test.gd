@@ -162,8 +162,8 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 		if int(it["unlock_level"]) >= 99:
 			continue
 		var shelf := "building" if Game.catalog.get_def(id) is BuildingDef else str(it["kind"])
-		if Game.limited.is_limited(id):
-			shelf = HudMarket.LIMITED   # (the limited animals have a shelf to themselves)
+		if hud.market.on_limited_shelf(id):
+			shelf = HudMarket.LIMITED   # (the limited animals and trees and the landmarks have a shelf to themselves)
 		want[shelf] = int(want.get(shelf, 0)) + 1
 		if shelf == "building":
 			_eq(int(sections.get(id, 0)), 1, "%s is in exactly one section of the Buildings shelf" % id)
@@ -174,13 +174,21 @@ func test_149_the_market_shelves_are_tabs_of_item_cards() -> void:
 		var lists := book.page().find_children("*", "CardList", true, false)
 		for list: CardList in lists:
 			cards += list.ids.size()
-		_eq(cards, int(want.get(kind, 0)), "the %s shelf has a card for each" % kind)
-		if kind == "animal" or kind == HudMarket.LIMITED:
+		if kind == HudMarket.LIMITED:
+			# Its front is the landmarks and a card for each kind; every limited thing is under one of the kinds.
+			var kinds: Array[String] = hud.market.limited_kinds("animal") + hud.market.limited_kinds("tree")
+			_eq(cards, hud.market.landmarks().size() + kinds.size(), "the limited shelf has its landmarks and a card a kind")
+			var under: int = hud.market.landmarks().size()
+			for first in kinds:
+				under += hud.market.limited_of_kind(hud.market._plain_kind(first)).size()
+			_eq(under, int(want.get(kind, 0)), "and everything it sells is a landmark or under a kind's card")
+		else:
+			_eq(cards, int(want.get(kind, 0)), "the %s shelf has a card for each" % kind)
+		if kind == "animal":
 			var limited := 0
 			for id: String in (lists[0] as CardList).ids:
 				limited += 1 if Game.limited.is_limited(id) else 0
-			_eq(limited, (lists[0] as CardList).ids.size() if kind == HudMarket.LIMITED else 0,
-				"the limited animals are on the Limited shelf and no other (%s)" % kind)
+			_eq(limited, 0, "the limited animals are on the Limited shelf and no other (%s)" % kind)
 		if kind == "building":
 			_eq(lists.size(), filled, "a grid under a heading for each section that has buildings")
 	var placed := []

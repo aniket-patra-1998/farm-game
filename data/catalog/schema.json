@@ -529,6 +529,10 @@
       "kind": "decor",
       "doc": "Scenery. 1 XP per 100 coins (at least 5).",
       "fields": {
+        "landmark": {
+          "type": "boolean",
+          "doc": "A showpiece to save for (a castle, a clock tower): sold at the head of the Market's Limited shelf, not among the decorations."
+        },
         "shape": {
           "type": "string",
           "doc": "Placeholder drawing (fence, hedge, haybale, ...). Starter scenery is drawn by id instead."

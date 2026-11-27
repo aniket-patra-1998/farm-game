@@ -458,6 +458,7 @@
       "variants": [
         {
           "id": "hot_air_balloon",
+          "landmark": true,
           "name": "Hot Air Balloon",
           "unlock_level": 20,
           "cost": 75000,
@@ -470,26 +471,28 @@
         },
         {
           "id": "clock_tower",
+          "landmark": true,
           "name": "Clock Tower",
           "unlock_level": 25,
           "cost": 150000,
           "shape": "lamp",
           "color": "#a8563c",
           "accent": "#e0b43c",
-          "w": 2,
-          "h": 2,
+          "w": 3,
+          "h": 3,
           "art_fill": 0.95
         },
         {
           "id": "stone_castle",
+          "landmark": true,
           "name": "Stone Castle",
           "unlock_level": 30,
           "cost": 500000,
           "shape": "cabin",
           "color": "#b9b2a4",
           "accent": "#c9443a",
-          "w": 4,
-          "h": 4,
+          "w": 5,
+          "h": 5,
           "art_fill": 0.95
         }
       ]

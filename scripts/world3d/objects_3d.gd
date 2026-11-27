@@ -754,6 +754,13 @@ func _step(o: Dictionary) -> int:
 	return STEP_LEVEL + 10 * int(o.get("level", 1))
 
 
+## Whether decoration `id` is drawn as a model of its own, not in a batch with its like: a landmark, whose parts
+## move by script (a clock's hands, a balloon riding the air) and of which a farm has one or two.
+static func stands_alone(id: String) -> bool:
+	var d := Game.catalog.get_def(id) as DecorationDef
+	return d != null and d.is_landmark()
+
+
 func _key(o: Dictionary) -> String:
 	# A plain decoration (most of a decorated farm) shows nothing but what it is and where it stands: its key is
 	# made without asking about ripeness, neighbours, withering or work, which it has none of.
@@ -1186,7 +1193,7 @@ func _build(o: Dictionary) -> Node3D:
 					# eight times over, the same each time, and so many looks overflowed what the Instancer keeps.)
 					var look := Instancer.variant(int(o["row"]), int(o["col"])) if VARIED_DECOR.has(str(o["id"])) else 0
 					var shows := shows_of(o)
-					if VARIED_DECOR.has(str(o["id"])):
+					if VARIED_DECOR.has(str(o["id"])) or stands_alone(str(o["id"])):
 						node = decor_look(str(o["id"]), look, shows)
 					else:
 						# Drawn in a batch with every other of its look (DecorLayer): here it is only a stand-in,
