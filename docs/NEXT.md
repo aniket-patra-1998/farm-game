@@ -12,6 +12,9 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 - Notifications: the Notification Scheduler plugin 6.0 (addons/NotificationSchedulerPlugin) in place of our own
   Java plugin (android/plugins/farm_notices, removed with its CI build): notices now survive a phone restart.
   Small icon: the white barn (assets/NotificationSchedulerPlugin/android). Not yet seen on a phone.
+- Rain and snow: Godot's GPUParticles2D (scripts/weather_layer.gd) in place of marks drawn on the CPU each frame:
+  rain streaks aligned to their fall, splash rings that grow and fade, snow in two depths born across the sky with
+  a turbulent sway. Gradient pictures made in code. Lightning's flash is still a drawn rect. Not yet on a phone.
 
 ## Resolution as big mobile games do it (27 Nov, main)
 - Owner, 27 Nov (picked three of four): below full scale the 3D is brought up with AMD FSR 1 (Godot's own; not in
