@@ -13,6 +13,8 @@ const LOVED := {
 	"clear": "LOVED_SUN", "partly_cloudy": "LOVED_SUN", "rain": "LOVED_RAIN", "snow": "LOVED_FROST", "fog": "LOVED_MIST",
 }
 
+var tried := ""     # a weather tried on the showcase farm (its clock), "" none: it spoils what it would at once
+var tried_at := 0
 var _spoils := {}   # state -> {family: true}
 var _loves := {}    # "crops" / "trees" -> state -> {family: true}
 var _kept := {}     # "plot:planted_at" -> the time its crop spoils, or -1
@@ -31,6 +33,16 @@ func load_data() -> void:
 
 func reset() -> void:
 	_kept.clear()
+	tried = ""
+
+
+## The showcase's clock tried weather `state` ("" back to the real one): ripe crops it spoils wither at once, so
+## the farm shows it (owner, 27 Nov: "these should be withered"). The real weather is the date's, as always.
+func try_weather(state: String) -> void:
+	tried = state
+	tried_at = game.now()
+	_kept.clear()
+	game.plot_changed.emit(-1)   # (every plot's look and wither time asked again)
 
 
 ## Whether the weather touches the harvest on this farm now.
@@ -49,6 +61,10 @@ func spoils_at(i: int, ripe_at: int, withers_at: int) -> int:
 	if _kept.size() > KEPT_MOST:
 		_kept.clear()
 	var family := str(game.crops.get(str(p.get("crop", "")), {}).get("family", ""))
+	if tried != "":   # (the showcase's tried weather: what it spoils, spoiled from the moment it was tried)
+		var hurt_now := (_spoils.get(tried, {}) as Dictionary).has(family)
+		var since := maxi(ripe_at, tried_at)
+		return since if hurt_now and since < withers_at else -1
 	var at := -1
 	var length := Weather.block()
 	var t := maxi(ripe_at, game.clear_until)

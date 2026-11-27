@@ -262,6 +262,7 @@ func _sky_tapped() -> void:
 		else:
 			Game.weather_override = ""
 			show_message(tr("SHOWCASE_WEATHER_REAL"))
+		Game.weather_fx.try_weather(Game.weather_override)   # (its spoiling shows at once: WeatherEffects)
 		return
 	show_message("%s · %s" % [tr("SEASON_" + Game.season().to_upper()), tr(Game.weather()["name"])])
 

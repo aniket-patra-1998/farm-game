@@ -68,10 +68,10 @@ const LOOKS := {
 		"fog": 0.75,
 		"lightning": 0.0
 	},
-	"snow":          {
-		"cover": 0.85,
-		"dim": 0.06,
-		"desat": 0.25,
+	"snow":          {   # (a bright, high-key day: snow light is cold, not grey; owner, 27 Nov: "the snow is weird")
+		"cover": 0.7,
+		"dim": 0.0,
+		"desat": 0.1,
 		"rain": 0.0,
 		"snow": 0.8,
 		"fog": 0.15,
