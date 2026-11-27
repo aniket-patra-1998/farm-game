@@ -9,6 +9,9 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 - Statistics: GameAnalytics' official Godot SDK 3.2.0 (addons/GameAnalytics, GDExtension; Android arm64 and Linux
   binaries only). analytics.gd is now a thin layer: design, business, ad and error events; a remote config named
   "tuning" tunes Balance. Our REST client (signing, queue, init call) is gone. Tests 631, 634 use a stand-in SDK.
+- Notifications: the Notification Scheduler plugin 6.0 (addons/NotificationSchedulerPlugin) in place of our own
+  Java plugin (android/plugins/farm_notices, removed with its CI build): notices now survive a phone restart.
+  Small icon: the white barn (assets/NotificationSchedulerPlugin/android). Not yet seen on a phone.
 
 ## Resolution as big mobile games do it (27 Nov, main)
 - Owner, 27 Nov (picked three of four): below full scale the 3D is brought up with AMD FSR 1 (Godot's own; not in

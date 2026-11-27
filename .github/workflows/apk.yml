@@ -96,11 +96,10 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
-      - name: Phone notifications (the Android build template, and the FarmNotices plugin built against it)
+      - name: The Android build template (gradle exports carry the plugins' libraries)
         run: |
-          # The debug APK is a gradle export (export_presets.cfg) so it can carry our own Android plugin
-          # (android/plugins/farm_notices, scripts/systems/phone_notices.gd): install the build template, then build
-          # the plugin's library against the template's own Godot library and put it where the export plugin finds it.
+          # The debug APK and the Play bundle are gradle exports (export_presets.cfg), so the plugins' Android
+          # libraries (ads, billing, review, notifications, statistics) go in: install the build template.
           # (Godot's --install-android-build-template only works beside an export, and alone it stays open: the
           # template is unpacked by hand, as the editor does it: android_source.zip into android/build, and its version.)
           tpl=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
@@ -108,12 +107,6 @@ jobs:
           unzip -q "$tpl/android_source.zip" -d android/build
           echo "${GODOT_VERSION}.stable" > android/.build_version
           touch android/build/.gdignore
-          ls android/build/libs/release/ || true
-          # (on Java 17, as Godot's own export: the runner's default Java is too new for gradle)
-          JAVA_HOME="$JAVA_HOME_17_X64" gradle -p android/plugins/farm_notices assembleRelease --no-daemon -q
-          mkdir -p addons/farm_notices/bin
-          cp android/plugins/farm_notices/build/outputs/aar/farm_notices-release.aar addons/farm_notices/bin/
-          ls -l addons/farm_notices/bin/
 
       - name: Bake the showcase farm's models into the game (ModelStore)
         run: |

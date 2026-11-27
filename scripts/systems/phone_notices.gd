@@ -4,15 +4,19 @@ extends RefCounted
 ## the background it plans the few moments worth telling the player about from the farm's own timers, and the
 ## phone shows them while the game is closed; coming back cancels the rest. Local only, no server.
 ## What is said, at most how many, how far apart and the quiet night hours are data (Balance `notify.*`); the
-## Android side is the FarmNotices plugin (android/plugins/farm_notices), absent on a computer (then nothing).
+## Android side is the Notification Scheduler plugin (addons/NotificationSchedulerPlugin, MIT: exact alarms where
+## allowed, Android 13's permission, and notices kept through a phone restart), absent on a computer (then nothing).
+## Its small icon is the white barn in assets/NotificationSchedulerPlugin/android.
 
-const PLUGIN := "FarmNotices"           # not-ui (the Android plugin's singleton)
+const PLUGIN := "NotificationSchedulerPlugin"   # not-ui (the Android plugin's singleton)
+const SCRIPT := "res://addons/NotificationSchedulerPlugin/NotificationScheduler.gd"   # not-ui
 const SETTINGS := "notify"              # not-ui (the player's settings section)
 const ON_KEY := "on"                    # not-ui
 const HOUR := 3600
-const CANCEL_ALL := &"cancelAll"      # not-ui (the plugin's methods)
-const SCHEDULE := &"schedule"        # not-ui
-const ASK := &"askPermission"      # not-ui
+const CHANNEL := "farm"                 # not-ui (the notification channel's id)
+const ICON := "ic_barnlight"            # not-ui (the small icon's drawable)
+
+static var _phone: Node   # the plugin's NotificationScheduler, made on first need (Android only)
 
 
 ## Whether the player wants them (Settings; on unless they turned it off).
@@ -99,28 +103,50 @@ static func _out_of_quiet(at: int, bias: int) -> int:
 
 ## The game went to the background: the phone is given the plan (nothing on a computer, or when turned off).
 static func schedule(g: GameState) -> void:
-	if not Engine.has_singleton(PLUGIN):
+	var phone := _scheduler()
+	if phone == null:
 		return
-	var phone := Engine.get_singleton(PLUGIN)
-	phone.call(CANCEL_ALL)
+	cancel_all()
 	if not wanted() or g.save_path != GameState.SAVE_PATH:   # (never from the showcase)
 		return
 	var title: String = g.player.farm_name
 	if title == "":
 		title = str(TranslationServer.translate("NOTIFY_TITLE"))
-	var k := 0
+	var k := 1
 	for r: Dictionary in plan(g):
-		phone.call(SCHEDULE, k, title, str(r["text"]), maxi(int(r["at"]) - g.now(), 1))
+		phone.call("schedule", NotificationData.new().set_id(k).set_channel_id(CHANNEL).set_title(title)   # not-ui
+			.set_content(str(r["text"])).set_small_icon_name(ICON).set_delay(maxi(int(r["at"]) - g.now(), 1)))
 		k += 1
 
 
 ## The game is back: what was planned is no longer news.
 static func cancel_all() -> void:
-	if Engine.has_singleton(PLUGIN):
-		Engine.get_singleton(PLUGIN).call(CANCEL_ALL)
+	var phone := _scheduler()
+	if phone == null:
+		return
+	for k in range(1, Balance.i("notify.most") + 1):
+		phone.call("cancel", k)   # not-ui
 
 
 ## Android 13 and later ask the player once whether the game may notify (asked after the first session's start).
 static func ask_permission() -> void:
-	if Engine.has_singleton(PLUGIN) and wanted():
-		Engine.get_singleton(PLUGIN).call(ASK)
+	var phone := _scheduler()
+	if phone != null and wanted() and not bool(phone.call("has_post_notifications_permission")):   # not-ui
+		phone.call("request_post_notifications_permission")   # not-ui
+
+
+## The plugin's node, made once and kept in the tree, with the farm's channel (null where there is no plugin).
+static func _scheduler() -> Node:
+	if _phone != null and is_instance_valid(_phone):
+		return _phone
+	if not Engine.has_singleton(PLUGIN):
+		return null
+	_phone = (load(SCRIPT) as GDScript).new()
+	_phone.name = "PhoneNotices"   # not-ui (a node name)
+	(Engine.get_main_loop() as SceneTree).root.add_child(_phone)
+	_phone.call("initialize")   # not-ui
+	_phone.call("create_notification_channel", NotificationChannel.new().set_id(CHANNEL)   # not-ui
+		.set_name(str(TranslationServer.translate("NOTIFY_CHANNEL")))
+		.set_description(str(TranslationServer.translate("NOTIFY_CHANNEL_SAYS")))
+		.set_importance(NotificationChannel.Importance.DEFAULT))
+	return _phone

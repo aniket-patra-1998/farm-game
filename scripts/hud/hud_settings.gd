@@ -200,6 +200,8 @@ static func licences() -> Array:
 	out.append(["AdMob plugin (Poing Studios)", FileAccess.get_file_as_string(ADMOB_LICENCE)])   # not-ui (a name)
 	out.append(["Google Play Billing plugin (Godot)", FileAccess.get_file_as_string(BILLING_LICENCE)])   # not-ui
 	out.append(["In-app Review plugin (Cengiz)", "MIT License. Copyright (c) 2024-present Cengiz."])   # not-ui
+	out.append(["Notification Scheduler plugin", "MIT License. Copyright (c) 2025 Godot Mobile Plugins."])   # not-ui
+	out.append(["GameAnalytics SDK", "MIT License. Copyright (c) 2026 GameAnalytics."])   # not-ui
 	return out
 
 
