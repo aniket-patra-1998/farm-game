@@ -147,18 +147,15 @@ func _init_call() -> void:
 
 
 func _load_queue() -> void:
-	var kept: Variant = JSON.parse_string(FileAccess.get_file_as_string(QUEUE_FILE)) \
-		if FileAccess.file_exists(QUEUE_FILE) else null
-	if kept is Array:
-		for e: Variant in kept:
-			if e is Dictionary:
-				queue.append(e)
+	for e: Variant in DataFile.read_optional(QUEUE_FILE).get("events", []):
+		if e is Dictionary:
+			queue.append(e)
 
 
 func _save_queue() -> void:
 	var f := FileAccess.open(QUEUE_FILE, FileAccess.WRITE)
 	if f != null:
-		f.store_string(JSON.stringify(queue))
+		f.store_string(JSON.stringify({"events": queue}))
 
 
 func _host() -> String:
