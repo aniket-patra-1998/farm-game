@@ -3,6 +3,12 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Version 1 has 13 more items (27 Nov)
+- 27 Nov (owner): 13 built items switched on for version 1 (data/v1.json), so something new unlocks every level
+  or two up to 20: crops peppers 12, blueberries 16, lavender 17, potatoes 20, rye 21, coffee 23; trees mango 12,
+  pomegranate 14, olive 16, coconut 18; animals goose 13, alpaca 16, llama 18 (their homes were already in).
+  Looked at in the game; not run through the balance simulation.
+
 ## Launch plumbing (27 Nov, main)
 - Analytics as GameAnalytics' SDKs do it: init call (enabled flag, server clock), queue kept on the phone, errors
   through a Godot Logger (ErrorTap) as error events, purchases as business events. app-ads.txt from
