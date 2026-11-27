@@ -8,6 +8,11 @@ const STARTER_SCENERY := ["farmhouse", "mailbox", "farm_stand"]  ## drawn by id,
 const OPENS := {"mailbox": "inbox"}   ## a tap on these opens a panel of the interface (FarmHud.show_panel)
 
 
+## Buy XP only below economy.decor_xp_until_level (audit 27 Nov: idle coins bought levels).
+func buy_xp() -> int:
+	return super.buy_xp() if Game.level() < Balance.i("economy.decor_xp_until_level") else 0
+
+
 ## The panel a tap on it opens ("" for none): the mailbox opens the inbox.
 func opens() -> String:
 	return OPENS.get(id, "")

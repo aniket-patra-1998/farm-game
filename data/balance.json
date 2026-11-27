@@ -182,7 +182,7 @@
    "note": "Horse Stable harvest with a stallion inside"
   },
   "stable_helper_chance": {
-   "v": 0.15,
+   "v": 0.06,
    "note": "Stable harvest: a farmhand, and separately an arborist"
   },
   "stable_xp_chance": {
@@ -387,6 +387,18 @@
   }
  },
  "economy": {
+  "decor_xp_until_level": {
+   "v": 15,
+   "note": "decorations give buy XP only below this level (audit 27 Nov: idle coins bought levels)"
+  },
+  "keep_coins_until_level": {
+   "v": 5,
+   "note": "the level from which economy.keep_coins no longer holds a buy back"
+  },
+  "keep_coins": {
+   "v": 60,
+   "note": "coins a new player keeps for plowing and seeds: a buy that would leave fewer is refused until economy.keep_coins_until_level (audit 27 Nov: the first hour went dead at 4 coins)"
+  },
   "young_farm_days": {
    "v": 7,
    "note": "a farm's first days in which it is helped once a day to plant (owner, 19 Nov: casual players were broke for four days)"
@@ -448,7 +460,7 @@
    "note": "a new farm starts in fair weather for this long"
   },
   "start_coins": {
-   "v": 200,
+   "v": 300,
    "note": "Coins a new farm starts with."
   },
   "start_gems": {
@@ -480,7 +492,7 @@
    "note": "XP for plowing one plot."
   },
   "xp_per_level_after_table": {
-   "v": 1000,
+   "v": 1250,
    "note": "XP for the first level beyond the level table."
   },
   "xp_growth_after_table": {
@@ -492,28 +504,7 @@
    "note": "a crop's price, per mastery star (MasterySystem has the stars)"
   },
   "level_xp": {
-   "v": [
-    0,
-    12,
-    160,
-    300,
-    485,
-    700,
-    965,
-    1290,
-    1650,
-    2055,
-    2495,
-    2980,
-    3500,
-    4065,
-    4670,
-    5315,
-    5995,
-    6720,
-    7485,
-    8290
-   ],
+   "v": [0, 12, 160, 300, 485, 754, 1085, 1491, 1941, 2447, 2997, 3603, 4253, 4959, 5715, 6521, 7371, 8277, 9233, 10239],
    "note": "Total XP needed to reach level n is entry n-1. Tuned with tools/balance_sim: level 20 in about two weeks at three visits a day. Level 2 at 12 comes in the first visit (two ripe plots and about ten plowed), the first level-up a new player sees."
   }
  },
@@ -544,6 +535,14 @@
   }
  },
  "market": {
+  "deal_min_cost": {
+   "v": 300,
+   "note": "the cheapest coin price an item may have to be today's deal"
+  },
+  "deal_off": {
+   "v": 0.2,
+   "note": "today's deal: one Market item a day this much cheaper (audit 27 Nov: something to want every visit)"
+  },
   "sell_share": {
    "v": 0.05,
    "note": "FarmVille sold anything back for 5% of its price"
@@ -1045,7 +1044,7 @@
  },
  "upgrade": {
   "step_growth": {
-   "v": 1.6,
+   "v": 1.85,
    "note": "how many times the coins of a building's next size are of the size before (docs/WEAR.md)"
   },
   "owned_more": {

@@ -32,6 +32,7 @@ const SPARE_BYTES := 20 * 1048576     # room left on the device besides a pack a
 const MIN_APP := "_min_app_code"      # in the manifest: the oldest app (version code) its packs work with
 const LEVEL_PACKS := "res://data/level_packs.json"   # the level packs (tools/make_level_packs.py)
 const EXTRAS := 0                     # a level pack's level for the extras: fetched at the start
+const TUNING := "tuning.json"         # remote tuning beside the manifest (Balance.REMOTE)
 const REACH := ".reach"              # the list fetched by `reach` lands beside the kept one, never on it
 const AHEAD := 1                      # level packs are fetched this many levels before they are needed
 
@@ -77,6 +78,7 @@ static func begin(game: GameState) -> AssetPacks:
 	packs.source = source_for(str(config.get("base_url", "")), packs)
 	packs.app_code = int(config.get("app_code", 0))
 	packs.online_only = bool(config.get("online_only", false))
+	packs.fetch_tuning()
 	packs.load_kept()
 	shared = packs
 	return packs
@@ -162,6 +164,19 @@ func fetch_all() -> void:
 		if not _index.has(pack) and not _asked.has(pack) and not _levels.has(pack):
 			_asked.append(pack)
 	_next()
+
+
+## Fetches the remote tuning (TUNING, beside the manifest) into Balance.REMOTE, for the next start (Balance reads
+## it then: a number never changes under a running session). A file that is not good JSON is not kept.
+func fetch_tuning() -> void:
+	if source == null:
+		return
+	var part := Balance.REMOTE + PART
+	source.fetch(TUNING, part, func(came: bool) -> void:
+		if came and not DataFile.read_optional(part).is_empty():
+			DirAccess.rename_absolute(part, Balance.REMOTE)
+		else:
+			DirAccess.remove_absolute(part))
 
 
 ## Whether the source answers: its list is fetched (and kept, when none is yet), then `done(ok)`. No source:

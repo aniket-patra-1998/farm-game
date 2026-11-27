@@ -1,0 +1,5 @@
+{
+ "_doc": "Remote tuning (docs/PACKS.md, Online): deployed beside the packs by .github/workflows/packs.yml and fetched at every start; a phone uses it from its next start. Keys are data/balance.json's \"section.name\"; a key or type that file lacks is ignored. Change a number here to tune the live game without an app update; keep it small and say why in this note.",
+ "version": 1,
+ "values": {}
+}

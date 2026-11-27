@@ -28,6 +28,10 @@ const FIT_WHY := {
 ## How many of one item a farm may hold, by kind (FarmVille capped these too). Buildings are BuildingDef.limit().
 ## Buildings that stay where they are: the starter Barn and the Farmhouse.
 const KEPT := ["barn", "farmhouse"]
+const DAY_SECONDS := 86400
+
+var _deal_key := ""   # the day and level today's deal was chosen for
+var _deal := ""
 
 
 ## Whether something can be done, and if not, why (with the message to show).
@@ -146,6 +150,9 @@ func can_buy(id: String) -> Verdict:
 		return Verdict.new(Why.GEMS, tr("NOT_ENOUGH_GEMS_FOR_A") % it["name"])
 	if price.has("coins") and game.coins < int(price["coins"]):
 		return Verdict.new(Why.COINS, tr("NOT_ENOUGH_COINS_FOR_A") % it["name"])
+	if price.has("coins") and game.level() < Balance.i("economy.keep_coins_until_level") \
+			and game.coins - int(price["coins"]) < Balance.i("economy.keep_coins") and not game.goals.asks_to_buy(id):
+		return Verdict.new(Why.COINS, tr("KEEP_COINS_FOR_FIELDS") % UiTheme.number(Balance.i("economy.keep_coins")))
 	return yes()
 
 
@@ -156,7 +163,29 @@ func price_of(id: String) -> Dictionary:
 		return game.crafting.crafting_price(id)
 	if it.has("gem_cost"):
 		return {"gems": int(it["gem_cost"])}
+	if id == deal_id():
+		return {"coins": roundi(int(it.get("cost", 0)) * (1.0 - Balance.f("market.deal_off")))}
 	return {"coins": int(it.get("cost", 0))}
+
+
+## Today's deal (audit 27 Nov: something to want every visit): one Market item a day, market.deal_off cheaper,
+## chosen by the date from what this player can buy for coins (market.deal_min_cost and up, not limited). The same
+## all day for the same level; "" when none fits.
+func deal_id() -> String:
+	var key := "%d:%d" % [int(game.now() / DAY_SECONDS), game.level()]
+	if key == _deal_key:
+		return _deal
+	_deal_key = key
+	var pool: Array[String] = []
+	for id: String in game.item_order:
+		var it := game.item_data(id)
+		if it.has("gem_cost") or str(it.get("kind", "")) in ["crop", "crafting", "material"] \
+				or int(it.get("cost", 0)) < Balance.i("market.deal_min_cost") \
+				or int(it.get("unlock_level", 1)) > game.level() or not Release.has(id) or game.limited.is_limited(id):
+			continue
+		pool.append(id)
+	_deal = pool[hash(int(game.now() / DAY_SECONDS)) % pool.size()] if not pool.is_empty() else ""
+	return _deal
 
 
 ## Can building `b` grow to its next size now?

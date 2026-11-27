@@ -12,7 +12,7 @@
     ["gems", 20, 2],
     ["fertilize_all", 2, 8],
     ["unwither", 2, 6],
-    ["farmhand", 2, 4],
-    ["arborist", 2, 4]
+    ["farmhand", 2, 2],
+    ["arborist", 2, 2]
   ]
 }

@@ -347,8 +347,10 @@ func price_of(id: String, it: Dictionary) -> Array:
 			else ["coin", UiTheme.number(int(price["coins"]))]
 	if it.has("gem_cost"):
 		return ["gem", UiTheme.number(int(it["gem_cost"]))]
-	if int(it["cost"]) > 0:
-		return ["coin", UiTheme.number(int(it["cost"]))]
+	var coins := int(Game.buildings.price_of(id).get("coins", 0))   # (today's deal included: BuildingSystem)
+	if coins > 0:
+		return ["coin", tr("DEAL_PRICE") % UiTheme.number(coins) if id == Game.buildings.deal_id()
+			else UiTheme.number(coins)]
 	return ["", tr("FREE_FRAME")]
 
 

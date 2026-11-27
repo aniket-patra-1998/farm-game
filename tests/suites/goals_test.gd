@@ -475,7 +475,7 @@ func test_529_never_feeding_costs_under_30_percent_and_a_week_away_loses_nothing
 
 
 
-## Part 4's crafter style (step 8): at level 25 it builds the Bakery with coins (clearing harvested plots to make
+## Part 4's crafter style (step 8): at its unlock level it builds the Bakery with coins (clearing harvested plots to make
 ## room), starts the best-paying recipe it has the bushels for, sells what is done at the next visit and counts it
 ## against the building's cost (craft_line: days of crafting to pay it back).
 func test_531_the_crafter_builds_the_bakery_and_crafts() -> void:
@@ -488,7 +488,7 @@ func test_531_the_crafter_builds_the_bakery_and_crafts() -> void:
 	sim.set("_actions", 100)
 	sim.call("_craft")
 	_check(g.crafting.owns_crafting(), "the crafter builds the Bakery")
-	_eq(int(sim.get("craft_cost")), 100000, "with coins")
+	_eq(int(sim.get("craft_cost")), int(Game.item_data("bakery")["cost"]), "with coins")
 	_eq(int(sim.get("craft_built_day")), 1, "on the day it could")
 	var home: Dictionary = sim.call("_crafting_home")
 	var r := g.crafting.recipes_of("bakery")[0]

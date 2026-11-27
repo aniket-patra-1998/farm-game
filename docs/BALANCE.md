@@ -11,6 +11,15 @@ plays the real game with a tidy bot (visits a few times a day, harvests everythi
 ripe and not yet withered at the next visit, plows as coins allow) and prints per-day level, coins and drops, the
 drop rates the real rolls give over 100,000 harvests, and the weather's shares and spells per season.
 
+## The audit of 27 Nov (owner: "not too easy"; helpers scarce, ads a capped second route)
+Applied: levels 6 to 20 take 25% more XP; a new player keeps economy.keep_coins for fields until level 5 (a buy an
+open goal asks for is never held back); today's deal (market.deal_off on one item a day); decorations give no XP
+from level 15; upgrade and expansion steps grow by 1.85 (was 1.6); the Bakery unlocks at 15 for 60,000; a Stable
+harvest gives a helper 6% of the time (was 15%) and the Mystery Box's helpers weigh half; start coins 300. Sim
+(seed 1, 35 days): engaged (3 visits, builder) level 20 on day 18, casual (1 visit) on day 28; something to buy on
+81 to 82% of days (casual was 36%); the Bakery pays back in 5.5 days. Still open: an engaged builder holds about
+190,000 coins by day 30 (new sinks, or tuning from real players through data/remote/tuning.json).
+
 ## Pace (seed 1, 35 days; the bot also buys land, trees and animals, and has about 5 minutes of work per visit)
 Target: the FarmVille pace, level 20 in about two weeks for someone who visits three times a day, and four to five
 weeks for someone who visits once a day. The level table (`economy.level_xp`, 8290 XP for level 20, then 1000 a

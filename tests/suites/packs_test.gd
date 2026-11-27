@@ -305,3 +305,51 @@ func test_628_the_play_store_build_is_barnlight_and_the_test_builds_keep_their_i
 	# a phone's farm in them stays where it is.)
 	_eq(ids.get("Android (Play Store AAB)"), "com.aniketpatra.barnlight", "the Play Store id")
 	_eq(ids.get("Android (debug APK)"), "com.example.farmgame.debug", "the test build's id is unchanged")
+
+
+func test_629_remote_tuning_takes_only_numbers_the_file_knows_and_wins_over_it() -> void:
+	var was := Balance.f("specials.stable_helper_chance")
+	var taken := Balance.take_remote({"values": {"specials.stable_helper_chance": 0.5, "no.such_key": 3.0,
+		"economy.level_xp": "not a list"}})
+	_eq(taken, 1, "only a known key with the file's type is taken")
+	_eq(Balance.f("specials.stable_helper_chance"), 0.5, "and it wins over data/balance.json")
+	Balance.take_remote({})
+	_eq(Balance.f("specials.stable_helper_chance"), was, "an empty tuning puts the file's number back")
+	var shipped: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/remote/tuning.json"))
+	for key: String in shipped.get("values", {}):
+		_check(Balance.has(key), "the shipped tuning names a real number: %s" % key)
+	_check(Balance.REMOTE.begins_with("user://") and AssetPacks.TUNING == "tuning.json", "fetched beside the packs")
+
+
+func test_630_the_audit_of_27_nov_holds_a_floor_a_deal_scarce_helpers_and_no_late_decor_xp() -> void:
+	Game.reset_game()
+	# A new player keeps enough to plow and plant.
+	var cheap := ""
+	for id: String in Game.item_order:
+		var it := Game.item_data(id)
+		if str(it.get("kind", "")) == "decor" and int(it.get("unlock_level", 1)) <= 1 and not it.has("gem_cost") \
+				and int(it.get("cost", 0)) > 0:
+			cheap = id
+			break
+	_check(cheap != "", "a level-1 decoration to try")
+	Game.coins = int(Game.item_data(cheap)["cost"]) + Balance.i("economy.keep_coins") - 1
+	_eq(Game.buildings.can_buy(cheap).why, BuildingSystem.Why.COINS, "a buy leaving under the floor is held back")
+	Game.coins += 1
+	_check(Game.buildings.can_buy(cheap).ok(), "one that leaves the floor is not")
+	# Today's deal: one item, cheaper, the same all day.
+	Game.coins = 1000000
+	Game.xp = int(Balance.a("economy.level_xp")[14])
+	var deal := Game.buildings.deal_id()
+	_check(deal != "" and deal == Game.buildings.deal_id(), "a deal, the same when asked again")
+	if deal != "":
+		var full := int(Game.item_data(deal)["cost"])
+		_eq(int(Game.buildings.price_of(deal)["coins"]), roundi(full * (1.0 - Balance.f("market.deal_off"))),
+			"the deal is market.deal_off cheaper")
+		_check(full >= Balance.i("market.deal_min_cost") and not Game.limited.is_limited(deal), "and a fit item")
+	# Decorations stop paying XP at economy.decor_xp_until_level.
+	var d := Game.catalog.get_def(cheap)
+	Game.xp = int(Balance.a("economy.level_xp")[Balance.i("economy.decor_xp_until_level") - 1])
+	_eq(d.buy_xp(), 0, "no decoration XP from its level")
+	Game.reset_game()
+	# Helpers are scarce in play.
+	_check(Balance.f("specials.stable_helper_chance") <= 0.06, "a Stable harvest rarely gives a helper")

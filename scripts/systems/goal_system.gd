@@ -251,6 +251,15 @@ func open_keys() -> Array[String]:
 	return out
 
 
+## Whether an open goal asks the player to buy `id` (the first-hour coin floor never holds such a buy back).
+func asks_to_buy(id: String) -> bool:
+	for key in open_keys():
+		for t: Dictionary in tasks_of(key):
+			if str(t.get("do", "")) == "buy" and str(t.get("what", "")) == id:
+				return true
+	return false
+
+
 ## The tasks of a goal now (its step or stage; a daily job is one task).
 func tasks_of(key: String) -> Array:
 	var part := key.split(":", true, 1)

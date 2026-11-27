@@ -238,7 +238,7 @@ func input(event: InputEvent) -> void:
 			if source.has("buy"):
 				var hfp := Game.footprint(home["id"])
 				grid.float_words(grid.corners_of(int(home["row"]), int(home["col"]), hfp.x, hfp.y)[2],
-					"-%d" % int(Game.item_data(state["item"])["cost"]), "cost")
+					"-%d" % int(Game.buildings.price_of(state["item"]).get("coins", 0)), "cost")
 			cancel()
 		else:
 			_refuse("")

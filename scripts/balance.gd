@@ -6,12 +6,18 @@ extends RefCounted
 ## A key that isn't there is a bug: it's reported once and reads as 0 (a test and the lint catch it before it ships).
 
 const PATH := "res://data/balance.json"
+## Remote tuning (docs/PACKS.md, Online): numbers fetched from the packs' host (tuning.json beside the manifest) and
+## kept here; read at the next start, so a number never changes under a running session. Only keys this file
+## knows are taken, so a typo there changes nothing.
+const REMOTE := "user://tuning.json"
 
 static var revision := 0                  # counts every change of the numbers, so what is cached from them can tell
 static var _values: Dictionary = {}     # "section.name" -> value
 static var _notes: Dictionary = {}      # "section.name" -> what it is
 static var _loaded := false
 static var _missing: Dictionary = {}
+static var _remote: Dictionary = {}     # "section.name" -> the value tuning.json sets (wins over the file and Release)
+static var remote_on := true            # tests and tools that want the file's numbers only turn it off
 
 
 static func _load() -> void:
@@ -29,6 +35,20 @@ static func _load() -> void:
 			var e: Dictionary = entries[name]
 			_values["%s.%s" % [section, name]] = e["v"]
 			_notes["%s.%s" % [section, name]] = str(e.get("note", ""))
+	if remote_on:
+		take_remote(DataFile.read_optional(REMOTE))
+
+
+## The values of a tuning file (`{"values": {"section.name": value}}`) this file knows; the rest are left out.
+## Returns how many were taken.
+static func take_remote(tuning: Dictionary) -> int:
+	_remote = {}
+	var values: Dictionary = tuning.get("values", {})
+	for key: String in values:
+		if _values.has(key) and typeof(values[key]) == typeof(_values[key]):
+			_remote[key] = values[key]
+	revision += 1
+	return _remote.size()
 
 
 ## A number as a float.
@@ -79,6 +99,7 @@ static func override(key: String, value: Variant) -> void:
 static func reload() -> void:
 	_loaded = false
 	_values = {}
+	_remote = {}
 	_notes = {}
 	revision += 1
 	_load()
@@ -86,6 +107,8 @@ static func reload() -> void:
 
 static func _value(key: String) -> Variant:
 	_load()
+	if _remote.has(key):
+		return _remote[key]
 	var released: Variant = Release.balance(key)   # (this release's own value: docs/V1.md)
 	if released != null:
 		return released
