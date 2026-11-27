@@ -5,7 +5,8 @@ extends CanvasLayer
 ## flashes the screen (`flash_now`).
 
 const MAX_DROPS := 320
-const MAX_FLAKES := 180
+const MAX_FLAKES := 260
+const FLAKE_SCREEN := 1080.0   # flake sizes are for a screen this tall (in pixels)
 const FLASH_FALL := 2.8   # a flash fades this fast (a second)
 ## Frames the weather is drawn once under the first loading cover, faintly, every kind of mark it makes: the A05s
 ## froze 2.3 s the first time rain fell (its streaks and splashes drawn the first time), so they are drawn first
@@ -32,7 +33,8 @@ func _ready() -> void:
 	for k in MAX_DROPS:
 		_drops.append(Vector3(_rng.randf(), _rng.randf(), _rng.randf_range(0.9, 1.4)))
 	for k in MAX_FLAKES:
-		_flakes.append(Vector4(_rng.randf(), _rng.randf(), _rng.randf_range(0.6, 1.2), _rng.randf() * TAU))
+		# depth 0 (far: small, faint, slow) to 1 (near: big, soft, quicker), most of them far, as snow is seen
+		_flakes.append(Vector4(_rng.randf(), _rng.randf(), pow(_rng.randf(), 1.8), _rng.randf() * TAU))
 
 
 ## A lightning strike's flash on the screen, `strength` 0..1 (a near strike is brighter).
@@ -54,8 +56,8 @@ func _process(delta: float) -> void:
 		_drops[k] = d
 	for k in _flakes.size():
 		var f: Vector4 = _flakes[k]
-		f.y += delta * 0.09 * f.z
-		f.x += delta * 0.02 * sin(f.y * 9.0 + f.w)
+		f.y += delta * (0.035 + 0.075 * f.z)
+		f.x += delta * (0.008 + 0.022 * f.z) * sin(f.y * 7.0 + f.w)   # (each drifts on its own sway)
 		if f.y > 1.02:
 			f = Vector4(_rng.randf(), -0.02, f.z, f.w)
 		_flakes[k] = f
@@ -104,6 +106,9 @@ func _draw_weather() -> void:
 		for k in n:
 			var f: Vector4 = _flakes[k]
 			var p := Vector2(f.x * size.x, f.y * size.y)
-			_canvas.draw_circle(p, 1.6 + 1.6 * f.z, Color(1, 1, 1, 0.85))
+			var r := (1.0 + 3.0 * f.z) * size.y / FLAKE_SCREEN   # (sized to the screen: the same on every phone)
+			var a := (0.35 + 0.5 * f.z) * snow
+			_canvas.draw_circle(p, r * 1.9, Color(1, 1, 1, a * 0.22))   # a soft edge, so it reads as a flake
+			_canvas.draw_circle(p, r, Color(1, 1, 1, a))
 	if _flash > 0.0:
 		_canvas.draw_rect(Rect2(Vector2.ZERO, size), Color(0.92, 0.95, 1.0, 0.55 * _flash * _flash))

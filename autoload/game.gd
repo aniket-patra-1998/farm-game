@@ -1561,6 +1561,7 @@ func open_showcase() -> Array[String]:
 func open_own_farm() -> void:
 	trace_begin("own farm")  # not-ui
 	weather_override = ""   # (the showcase's tried weather stays in the showcase)
+	weather_fx.try_weather("")
 	save_game()
 	save_path = SAVE_PATH
 	if not saving_enabled or not load_game():

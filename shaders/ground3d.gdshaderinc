@@ -95,7 +95,12 @@ void fragment() {
 	}
 	if (snow_cover > 0.001) {
 		snowy = smoothstep(0.0, 0.2, snow_cover * 1.25 - (1.0 - fbm(p * 0.5 + 23.0)) * 0.4);
-		col = mix(col, vec3(0.92, 0.94, 1.0) * (0.95 + 0.05 * fine), snowy);
+		// Snow is not flat paper: soft drifts with cool blue hollows, and the odd glint where the sun catches it.
+		float drift = noise(p * 0.45 + 7.0);
+		vec3 snow = mix(vec3(0.82, 0.87, 0.95), vec3(0.97, 0.98, 1.0), smoothstep(0.2, 0.8, drift));
+		snow *= 0.96 + 0.06 * fine;
+		snow += vec3(0.1) * step(0.985, noise(p * 41.0)) * snow_cover;
+		col = mix(col, snow, snowy);
 	}
 	ALBEDO = col;
 	ROUGHNESS = mix(0.95 - 0.35 * wetness - 0.5 * puddle, 0.85, snowy);

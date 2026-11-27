@@ -14,6 +14,7 @@ extends Node
 const MAIN_SCENE := preload("res://scenes/main.tscn")
 const VIEWS := [["all", 15, 15, 0.55], ["buildings", 4, 8, 1.0], ["trees_animals", 20, 12, 1.0], ["crops", 27, 14, 1.3]]
 const NOON := 12.5
+const SETTLE_SECONDS := 300.0   # how long a held weather has lasted when the pictures are taken
 
 
 func _ready() -> void:
@@ -48,6 +49,9 @@ func _ready() -> void:
 	var local_now := int(Time.get_unix_time_from_system()) + DayCycle.device_bias_minutes() * 60
 	Game.debug_time_offset = posmod(int(hour * 3600) - local_now, 86400)
 	Game.weather_override = weather
+	if weather != "":   # (a held weather has settled: snow lies and rain has wet everything, as after minutes)
+		for sw: Node in get_tree().root.find_children("*", "SurfaceWeather", true, false):   # not-ui
+			(sw as SurfaceWeather).advance(Game.weather(), SETTLE_SECONDS)
 	Game.goals.showcase()   # (the new hour may be a new day: today's jobs again, one done)
 	await Objects3D.until_settled(get_tree())
 	for k in 12:

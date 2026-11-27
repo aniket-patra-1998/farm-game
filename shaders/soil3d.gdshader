@@ -13,6 +13,7 @@ uniform float half_width = 0.45;  // the bed's foot from its middle, in tiles (P
 uniform float top_half = 0.40;    // ..and where its flat top ends (less Plots3D.BEVEL)
 uniform float corner = 0.06;      // how round the bed's corners are
 
+global uniform float snow_cover;  // 0..1 (SurfaceWeather): snow settles on the ridges first, the furrows last
 varying vec3 world_pos;
 varying vec3 world_normal;
 varying vec3 local;
@@ -61,6 +62,11 @@ void fragment() {
 	col = mix(col, furrow * 1.15, rim * 0.6);
 	float wet = tint.a;
 	col = mix(col, col * vec3(0.7, 0.66, 0.68), wet);
+	if (snow_cover > 0.001) {
+		float drift = noise(p * 3.1);
+		float snowy = smoothstep(0.0, 0.35, snow_cover * 1.3 - trough * 0.55 - drift * 0.3);
+		col = mix(col, vec3(0.9, 0.93, 0.98) * (0.94 + 0.08 * crumb), snowy);
+	}
 	ALBEDO = col;
 	ROUGHNESS = mix(1.0, 0.55, wet);
 	SPECULAR = 0.15;

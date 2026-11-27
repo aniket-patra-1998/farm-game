@@ -214,6 +214,14 @@ func test_655_rain_spoils_ripe_berries_left_out_and_loved_weather_pays_more() ->
 	var risk := g.field.at_risk()
 	_check(int(risk.get("count", 0)) >= 1 and int(risk.get("at", 0)) == wet + grace,
 		"the forecast warns of the berries before the rain spoils them")
+	# The showcase's clock tries snow: ripe berries (frost-proof) stay, a ripe flower withers at once.
+	var bloom := free[0]
+	g.plots[bloom]["crop"] = "sunflowers"
+	g.plots[bloom]["planted_at"] = g.now() - int(g.crops["sunflowers"]["grow_seconds"]) - 60
+	g.weather_fx.try_weather("snow")
+	_eq(g.field.phase(bloom), GameState.Phase.WITHERED, "a tried snow withers a ripe flower at once")
+	g.weather_fx.try_weather("")
+	_eq(g.field.phase(bloom), GameState.Phase.RIPE, "and the real weather is back")
 	g.xp = 0
 	g.weather_fx.reset()
 	_check(not g.weather_fx.on(), "a young farm's crops are never spoiled by weather")
