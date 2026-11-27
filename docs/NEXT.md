@@ -3,6 +3,10 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Purchases (27 Nov, main)
+- docs/PURCHASES.md: Play Billing plugin 3.3.0, three gem packs and a starter pack on the Market's Gems tab.
+  Not yet tried: needs a Play Console upload and license testers.
+
 ## Weather and the harvest (27 Nov, main)
 - docs/WEATHER.md "Weather and the harvest": ripe crops spoil in weather their family can't take; loved weather
   pays 20% more (crops and trees). Not yet: a forecast warning for ripe crops at risk; the Bloom Garden's blooms.

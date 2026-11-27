@@ -152,6 +152,7 @@ var raising: RaisingSystem
 var social: SocialSystem
 var offers: AdOffers                  # rewarded ads the player chooses (docs/ADS.md)
 var weather_fx: WeatherEffects        # what the weather does to the harvest (docs/WEATHER.md)
+var purchases: PurchaseSystem         # gem packs and the starter pack (docs/PURCHASES.md)
 var finds: FindsSystem
 var feeds: FeedSystem
 var adjacency: AdjacencySystem
@@ -236,6 +237,7 @@ func _init() -> void:
 	social = SocialSystem.new(self)
 	offers = AdOffers.new(self)
 	weather_fx = WeatherEffects.new(self)
+	purchases = PurchaseSystem.new(self)
 	finds = FindsSystem.new(self)
 	feeds = FeedSystem.new(self)
 	adjacency = AdjacencySystem.new(self)
@@ -252,7 +254,7 @@ func _init() -> void:
 	systems = [field, drops, collectibles, shed, ribbons, land, specials, mystery, daily, storage, bees, links, pigpen,
 		vehicles, strays, crafting, homes, buildings, mastery, player, nurture, raising, finds, feeds, adjacency, boosts,
 		social, collecting, shop, helpers, vip, rust, wear, rolls, goals, limited,
-		offers, weather_fx]
+		offers, weather_fx, purchases]
 	StartMarks.mark("made")   # not-ui (the systems made)
 
 
@@ -271,6 +273,7 @@ func _ready() -> void:
 		# Files left out of the app (docs/PACKS.md): the kept ones are loaded now, the rest fetched when first drawn.
 		Analytics.begin(self)   # (play statistics: data/analytics.json, nothing sent without its keys)
 		AdOffers.begin_ads(self)   # (the ad player, Android only: docs/ADS.md)
+		PurchaseSystem.begin_store(self)   # (Google Play Billing, Android only: docs/PURCHASES.md)
 		var packs := AssetPacks.begin(self)
 		packs.waiting.connect(_packs_said.bind("PACK_WAITING"))
 		packs.no_room.connect(_packs_said.bind("PACK_NO_ROOM"))

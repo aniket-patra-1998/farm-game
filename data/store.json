@@ -1,0 +1,9 @@
+{
+ "_comment": "In-app purchases (docs/PURCHASES.md): Play Console product ids and what each gives. Prices live in Play Console (suggested: gems_small and starter_pack at the lowest tier, Rs 89 / $0.99; gems_medium Rs 449 / $4.99; gems_large Rs 899 / $9.99); the game shows Play's own price text. Bigger packs give more gems per rupee (+20%, +30%), the studio norm. The starter pack is one-time and worth several times its price (the norm for a first purchase).",
+ "products": [
+  {"id": "starter_pack", "one_time": true, "gems": 60, "coins": 10000, "farmhands": 2, "unwithers": 3, "fertilize_alls": 2},
+  {"id": "gems_small", "gems": 40},
+  {"id": "gems_medium", "gems": 240},
+  {"id": "gems_large", "gems": 520}
+ ]
+}

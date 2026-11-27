@@ -536,6 +536,12 @@ func show_market() -> void:
 	book.open_tabs(tr("MARKET"), market.tabs(), 1)   # (the first shelf after Seeds: trees, as FarmVille opened)
 
 
+## The Market on its Gems page (the gem meter's +).
+func show_gems() -> void:
+	var tabs: Array = market.tabs()
+	book.open_tabs(tr("MARKET"), tabs, tabs.size() - 1)
+
+
 ## The Market on the shelf that sells `id` (an item or a kind; the first shelf after Seeds for anything else).
 func show_market_for(id: String) -> void:
 	book.open_tabs(tr("MARKET"), market.tabs(), market.tab_for(id))

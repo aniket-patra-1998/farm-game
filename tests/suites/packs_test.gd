@@ -434,3 +434,32 @@ func test_632_ads_three_commons_then_a_rare_rescues_revive_and_two_rares_a_day_a
 	_check(AdOffers.player == null, "no ad player made away from a phone")
 	_check(str(cfg["android_unit"]).begins_with("ca-app-pub-3940256099942544/"), "Google's test unit until the account")
 	Game.reset_game()
+
+
+func test_633_a_purchase_is_given_once_by_its_token_and_the_starter_pack_only_once() -> void:
+	Game.reset_game()
+	var s := Game.purchases
+	_check(PurchaseSystem.client == null and not s.open(), "no store away from a Play build")
+	_eq(s.on_sale()[0], "starter_pack", "the starter pack first, while not bought")
+	var gems := Game.gems
+	var pack := {"purchase_token": "t1", "product_ids": ["gems_medium"], "purchase_state": PurchaseSystem.PURCHASED}
+	s.take(pack)
+	_eq(Game.gems, gems + 240, "a paid pack gives its gems")
+	s.take(pack)
+	_eq(Game.gems, gems + 240, "the same purchase handed back again (not yet consumed) is not given twice")
+	s.take({"purchase_token": "t2", "product_ids": ["gems_small"], "purchase_state": PurchaseSystem.PENDING})
+	_eq(Game.gems, gems + 240, "a pending one waits for its payment")
+	var hands := Game.farmhands
+	s.take({"purchase_token": "t3", "product_ids": ["starter_pack"], "purchase_state": PurchaseSystem.PURCHASED})
+	_eq(Game.farmhands, hands + 2, "the starter pack's contents")
+	_check(not s.on_sale().has("starter_pack"), "and it leaves the shop once bought")
+	_check(s.words("starter_pack").contains("60") and s.words("gems_large").contains("520"), "each says what it gives")
+	var saved := {}
+	s.save_to(saved)
+	s.reset()
+	s.load_from(saved)
+	_check(s.owned.has("starter_pack") and s.given.has("t1"), "owned and given are saved")
+	var shop: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(PurchaseSystem.CONFIG))
+	for p: Dictionary in shop["products"]:
+		_check(HudMarket.PACK_NAMES.has(p["id"]), "a name for %s" % p["id"])
+	Game.reset_game()

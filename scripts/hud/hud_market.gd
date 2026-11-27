@@ -10,6 +10,9 @@ const SHELVES := [["tree", "TREES"], ["bloom", "BLOOMS"], ["animal", "ANIMALS"],
 ## last (owner, 20 Nov), and are not on their kinds' own shelves.
 const LIMITED := "limited"   # not-ui
 const LIMITED_KINDS := [["animal", "ANIMALS"], ["tree", "TREES"]]   # the Limited shelf's sections, in order
+## The Gems page's pack names, by data/store.json's product ids.
+const PACK_NAMES := {"starter_pack": "STORE_STARTER_PACK", "gems_small": "STORE_GEMS_SMALL",
+	"gems_medium": "STORE_GEMS_MEDIUM", "gems_large": "STORE_GEMS_LARGE"}   # (data/store.json's products)
 ## The Buildings shelf in FarmVille's sections, by each building's `tab` (BuildingDef.tab), crafting buildings
 ## among them.
 const BUILDING_TABS := [["animal", "ANIMAL_BUILDINGS"], ["storage", "STORAGE_BUILDINGS"],
@@ -48,7 +51,26 @@ func tabs() -> Array:
 		if kind == LIMITED and shelf_items(kind).is_empty():
 			continue   # (a release without limited things has no such tab)
 		out.append([tr(str(shelf[1])), func(content: VBoxContainer) -> void: build_shelf(content, kind)])
+	out.append([tr("GEM_SHOP"), build_gems])   # (last: the gem meter's + opens it, docs/PURCHASES.md)
 	return out
+
+
+## The Gems page: the starter pack (until bought) and the three gem packs, each with what it gives and Play's own
+## price; where the store can't sell (not a Play build, offline, Play not answered yet) it says so.
+func build_gems(content: VBoxContainer) -> void:
+	var store := Game.purchases
+	if not store.open():
+		content.add_child(BookPanel.info(tr("GEM_SHOP"), tr("STORE_UNAVAILABLE"), UiTheme.HEADING, BookPanel.SOFT))
+		return
+	for id: String in store.on_sale():
+		var box := VBoxContainer.new()
+		box.add_child(BookPanel.text(tr(str(PACK_NAMES.get(id, "GEM_SHOP"))), int(UiTheme.design("font_count_name")),
+			BookPanel.HEAD))
+		box.add_child(BookPanel.text(UiTheme.tidy(store.words(id)), int(UiTheme.design("font_card")), BookPanel.INK))
+		var buy := UiKit.primary(hud.panel_button(str(store.prices.get(id, ""))))
+		buy.pressed.connect(store.buy.bind(id))
+		box.add_child(buy)
+		content.add_child(BookPanel.card_frame(box))
 
 
 ## The tab that sells `id` (an item, or a kind of item): Seeds is tab 0 and the shelves follow; the first shelf for
