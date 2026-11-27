@@ -463,3 +463,32 @@ func test_633_a_purchase_is_given_once_by_its_token_and_the_starter_pack_only_on
 	for p: Dictionary in shop["products"]:
 		_check(HudMarket.PACK_NAMES.has(p["id"]), "a name for %s" % p["id"])
 	Game.reset_game()
+
+
+func test_634_errors_and_purchases_reach_the_statistics_and_the_review_is_asked_rarely() -> void:
+	var a := Analytics.new()
+	add_child(a)
+	a.config = {"game_key": "k", "secret_key": "s"}
+	var was: Variant = PlayerSettings.value(Analytics.SETTINGS[0], Analytics.SETTINGS[1], true)
+	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: true})
+	a.business("gems:gems_medium", 44900, "INR")
+	var e: Dictionary = a.queue[-1]
+	_check(e["category"] == "business" and e["amount"] == 44900 and e["currency"] == "INR"
+		and int(e["transaction_num"]) >= 1, "a purchase is a business event with its price")
+	Analytics.ErrorTap.take()
+	var tap := Analytics.ErrorTap.new()
+	for k in Analytics.ERROR_REPEATS + 5:
+		tap._log_error("f", "res://x.gd", 3, "", "the same error", false, Logger.ERROR_TYPE_ERROR, [])
+	tap._log_error("f", "res://x.gd", 4, "", "a warning", false, Logger.ERROR_TYPE_WARNING, [])
+	var before := a.queue.size()
+	a._send_errors()
+	_eq(a.queue.size() - before, Analytics.ERROR_REPEATS, "one error message at most ERROR_REPEATS times; no warnings")
+	_eq(a.queue[-1]["category"], "error", "sent as error events")
+	PlayerSettings.keep(Analytics.SETTINGS[0], {Analytics.SETTINGS[1]: was})
+	a.free()
+	var level: int = Balance.a("review.levels")[0]
+	var many := Balance.i("review.least_sessions")
+	_check(ReviewAsk.wanted(level, many, 100, 0), "asked after a listed level-up")
+	_check(not ReviewAsk.wanted(level + 1, many, 100, 0), "not after any other")
+	_check(not ReviewAsk.wanted(level, many - 1, 100, 0), "not in the first sessions")
+	_check(not ReviewAsk.wanted(level, many, 100, 100 - Balance.i("review.gap_days") + 1), "not again too soon")

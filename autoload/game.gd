@@ -274,6 +274,7 @@ func _ready() -> void:
 		Analytics.begin(self)   # (play statistics: data/analytics.json, nothing sent without its keys)
 		AdOffers.begin_ads(self)   # (the ad player, Android only: docs/ADS.md)
 		PurchaseSystem.begin_store(self)   # (Google Play Billing, Android only: docs/PURCHASES.md)
+		ReviewAsk.begin(self)   # (Google Play's in-app review after a happy level-up, Android only)
 		var packs := AssetPacks.begin(self)
 		packs.waiting.connect(_packs_said.bind("PACK_WAITING"))
 		packs.no_room.connect(_packs_said.bind("PACK_NO_ROOM"))

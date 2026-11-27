@@ -14,6 +14,7 @@ builds only).
   kept so it is never given twice; then a pack is consumed and the starter pack acknowledged (unacknowledged
   purchases are refunded by Play after 3 days). On every start Play hands back what was paid but not consumed, so
   a crash mid-purchase still delivers once. Pending payments (cash, UPI collect) wait and arrive when paid.
+- **Statistics.** Each purchase is a GameAnalytics business event with Play's price and currency.
 - **No server.** Single-player: purchases are not checked by a server of our own (Play's signature could be, later).
 - **Testing.** Needs a build uploaded to Play Console (internal testing) and license testers (Play Console →
   Setup → License testing): their purchases are free test purchases. Test 633 covers the rules.

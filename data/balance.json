@@ -1171,5 +1171,19 @@
    "v": 2,
    "note": "a common XP reward adds this times the level to its base"
   }
+ },
+ "review": {
+  "levels": {
+   "v": [6, 12, 20],
+   "note": "the level-ups after which Google's in-app review may be asked for (a happy moment; Google shows it rarely anyway)"
+  },
+  "least_sessions": {
+   "v": 3,
+   "note": "never before the player's third session (Google: not on first launch)"
+  },
+  "gap_days": {
+   "v": 30,
+   "note": "days at least between two asks"
+  }
  }
 }

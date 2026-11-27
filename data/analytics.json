@@ -1,5 +1,5 @@
 {
- "_doc": "Play statistics (owner, 27 Nov: measure real players, as studios do). Sent to GameAnalytics' collector over HTTPS (its REST API, no plugin), anonymous: a random id made on the phone, never a name, email or advertising id. Empty keys: nothing is sent. Create a free GameAnalytics game and put its game key and secret here (the SDKs ship them in the app the same way). sandbox: their test server (true until the keys are real). Events: what EVENTS names, as design events.",
+ "_doc": "Play statistics (owner, 27 Nov: measure real players, as studios do). Sent to GameAnalytics' collector over HTTPS (its REST API, no plugin), anonymous: a random id made on the phone, never a name, email or advertising id. Empty keys: nothing is sent. Create a free GameAnalytics game and put its game key and secret here (the SDKs ship them in the app the same way). sandbox: their test server (true until the keys are real). Events: what `events` names, as design events; purchases as business events (real revenue); the game's errors as error events. An init call first, as the SDKs do; events wait on the phone until the collector takes them.",
  "game_key": "",
  "secret_key": "",
  "sandbox": true,

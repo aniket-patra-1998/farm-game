@@ -22,4 +22,6 @@ Owner, 27 Nov: ads should feel like a choice, not a chore, and the helpers stay 
 - **Ids.** Google's test app id (the plugin's default, project setting admob/general/android/app_id) and
   test rewarded unit until the AdMob account exists; then put the real ones in project settings and
   data/ads.json, and set up the consent message in AdMob (Privacy & messaging).
+- **app-ads.txt.** Put the AdMob publisher id in data/ads.json `publisher_id`: CI then serves app-ads.txt at
+  https://farm-game-packs.pages.dev/app-ads.txt; name that site as the developer website on the Play page.
 - **Next.** Rescues for weather damage once weather withers crops; the shorter rewarded-interstitial format for the ladder.

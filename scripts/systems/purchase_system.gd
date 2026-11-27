@@ -24,6 +24,7 @@ static var client: Node   # the BillingClient, on an Android build with the plug
 var owned := {}          # one-time product id -> true (the starter pack, once bought)
 var given: Array = []    # purchase tokens already given (newest last)
 var prices := {}         # product id -> Play's price text ("₹89.00"), once Play answered
+var amounts := {}        # product id -> [price in the currency's smallest unit, ISO currency] (for the statistics)
 var _products := {}      # product id -> what it gives (data/store.json)
 var _order: Array[String] = []
 
@@ -143,8 +144,9 @@ func _give(id: String) -> void:
 	game.fertilize_alls += int(p.get("fertilize_alls", 0))
 	if bool(p.get("one_time", false)):
 		owned[id] = true
-	if Analytics.shared != null:
-		Analytics.shared.design("purchase:%s" % id)
+	if Analytics.shared != null and amounts.has(id):   # (a business event: real revenue in the statistics)
+		Analytics.shared.business(("pack:" if bool(p.get("one_time", false)) else "gems:") + id,
+			int(amounts[id][0]), str(amounts[id][1]))
 	game.message.emit(tr("STORE_THANKS") % words(id))
 	game.inventory_changed.emit()
 
@@ -160,7 +162,10 @@ func _on_details(r: Dictionary) -> void:
 	for d: Dictionary in r.get("product_details", []):
 		var offers: Variant = d.get("one_time_purchase_offer_details_list")
 		if offers is Array and not (offers as Array).is_empty():
-			prices[str(d["product_id"])] = str((offers as Array)[0].get("formatted_price", ""))
+			var offer: Dictionary = (offers as Array)[0]
+			prices[str(d["product_id"])] = str(offer.get("formatted_price", ""))
+			amounts[str(d["product_id"])] = [roundi(int(offer.get("price_amount_micros", 0)) / 10000.0),
+				str(offer.get("price_currency_code", ""))]   # (micros to paise or cents)
 	game.inventory_changed.emit()   # (the Gems page shows the prices once they come)
 
 

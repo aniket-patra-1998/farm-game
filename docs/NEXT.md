@@ -3,6 +3,11 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Launch plumbing (27 Nov, main)
+- Analytics as GameAnalytics' SDKs do it: init call (enabled flag, server clock), queue kept on the phone, errors
+  through a Godot Logger (ErrorTap) as error events, purchases as business events. app-ads.txt from
+  data/ads.json publisher_id. In-app review (InappReview plugin 5.2) after level-ups 6/12/20 (ReviewAsk). Test 634.
+
 ## Purchases (27 Nov, main)
 - docs/PURCHASES.md: Play Billing plugin 3.3.0, three gem packs and a starter pack on the Market's Gems tab.
   Not yet tried: needs a Play Console upload and license testers.

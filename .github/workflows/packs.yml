@@ -12,6 +12,7 @@ on:
       - 'art/models/**'
       - 'data/level_packs.json'
       - 'data/remote/**'
+      - 'data/ads.json'
       - 'tools/make_packs.gd'
       - 'scripts/systems/asset_packs.gd'
       - '.github/workflows/packs.yml'
@@ -73,5 +74,9 @@ jobs:
           printf '/manifest.json\n  Cache-Control: public, max-age=60\n/tuning.json\n  Cache-Control: public, max-age=60\n/*.pck\n  Cache-Control: public, max-age=31536000, immutable\n' > packs_out/_headers
           cp data/remote/tuning.json packs_out/tuning.json   # (remote tuning: Balance.REMOTE)
           mkdir -p packs_out/privacy && cp data/remote/site/privacy.html packs_out/privacy/index.html   # (Play's privacy URL)
+          pub=$(python3 -c 'import json; print(json.load(open("data/ads.json")).get("publisher_id", ""))')
+          if [ -n "$pub" ]; then   # (AdMob's app-ads.txt, once the AdMob account's publisher id is in data/ads.json)
+            echo "google.com, $pub, DIRECT, f08c47fec0942fa0" > packs_out/app-ads.txt
+          fi
           npx --yes wrangler@4 pages project create farm-game-packs --production-branch=main || true
           npx --yes wrangler@4 pages deploy packs_out --project-name=farm-game-packs --branch=main --commit-dirty=true

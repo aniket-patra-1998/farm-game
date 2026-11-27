@@ -13,6 +13,7 @@ const FIELD_WIDE := 3.0   # a row's field or slider, in panel buttons' least wid
 const QUALITY_EFFECTS := {"low": "GRAPHICS_LOW_EFFECT", "mid": "GRAPHICS_MID_EFFECT", "high": "GRAPHICS_HIGH_EFFECT",
 	"ultra": "GRAPHICS_ULTRA_EFFECT"}
 const ADMOB_LICENCE := "res://addons/admob/LICENSE"   # exported by the include_filter too   # not-ui
+const BILLING_LICENCE := "res://addons/GodotGooglePlayBilling/LICENSE"   # exported by the include_filter   # not-ui
 const FONT_LICENCE := "res://fonts/OFL.txt"   # exported by the presets' include_filter   # not-ui
 
 var hud: FarmHud
@@ -190,6 +191,8 @@ static func licences() -> Array:
 		out.append([str(component["name"]), "\n".join(lines)])
 	out.append(["Poppins", FileAccess.get_file_as_string(FONT_LICENCE)])   # not-ui (a name)
 	out.append(["AdMob plugin (Poing Studios)", FileAccess.get_file_as_string(ADMOB_LICENCE)])   # not-ui (a name)
+	out.append(["Google Play Billing plugin (Godot)", FileAccess.get_file_as_string(BILLING_LICENCE)])   # not-ui
+	out.append(["In-app Review plugin (Cengiz)", "MIT License. Copyright (c) 2024-present Cengiz."])   # not-ui
 	return out
 
 
