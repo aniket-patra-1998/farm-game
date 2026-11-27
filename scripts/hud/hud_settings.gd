@@ -82,6 +82,11 @@ func quality_card() -> PanelContainer:
 		says.append("%s: %s" % [tr(QUALITY_WORDS[name]), tr(QUALITY_EFFECTS[name])])   # not-ui (a list)
 	inner.add_child(BookPanel.row(tr("QUALITY"), BookPanel.choice(levels, Quality.level(),
 		func(name: String) -> void: Quality.choose(name)), " · ".join(says)))
+	var rates: Array = []   # (the frame rate apart from the level, as big mobile games offer it)
+	for fps: Variant in Quality.fps_choices():
+		rates.append([str(int(fps)), tr("FPS_AUTO") if int(fps) == 0 else UiTheme.number(int(fps))])
+	inner.add_child(BookPanel.row(tr("FRAME_RATE"), BookPanel.choice(rates, str(Quality.fps_choice()),
+		func(fps: String) -> void: Quality.choose_fps(int(fps))), tr("FRAME_RATE_SAYS")))
 	inner.add_child(BookPanel.row(tr("ALWAYS_DAYTIME"), BookPanel.switch(DayCycle.always_day(), DayCycle.set_always_day)))
 	inner.add_child(BookPanel.row(tr("NOTIFY_SETTING"), BookPanel.switch(PhoneNotices.wanted(), PhoneNotices.set_wanted)))
 	if Display.has_window():

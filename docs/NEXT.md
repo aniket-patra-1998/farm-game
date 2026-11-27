@@ -3,6 +3,13 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+
+## Resolution as big mobile games do it (27 Nov, main)
+- Owner, 27 Nov (picked three of four): below full scale the 3D is brought up with AMD FSR 1 (Godot's own; not in
+  the Compatibility renderer), never drawn taller than 1080 px (data/quality.json `upscale`), and Settings has a
+  Frame rate (Auto / 30 / 60) apart from Graphics (`Quality.fps_choice`; the player's pick wins over the level's
+  and AutoQuality's caps). Not done (not picked): dynamic resolution. Test 658. Not yet seen on a phone.
+
 ## Store pictures (27 Nov, branch store-art)
 - docs/STORE.md: eight screenshots and the feature graphic in `store/`, in the style the owner picked (a caption
   band over the game), made by tools/store_shots.tscn and tools/make_store_art.py from the showcase farm.

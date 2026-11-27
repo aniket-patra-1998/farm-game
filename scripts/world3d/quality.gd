@@ -13,6 +13,7 @@ const SECTION := "graphics"
 const KEY := "quality"
 const AUTO_KEY := "auto"   # the level AutoQuality measured for this device, while the player hasn't chosen
 const AUTO_CAP_KEY := "auto_cap"   # and the frame cap it found the device needs (0: none beyond the level's)
+const FPS_KEY := "fps"   # the frame rate the player picked in Settings (0: the level's own; 30 or 60)
 const LEVELS: Array[String] = ["low", "mid", "high", "ultra"]
 const AUTO_RULES: Array[String] = ["warmup", "frames", "max_frame_ms", "hold_ms", "down_ms", "up_ms",
 	"up_on_mobile", "ladder", "slow_run", "steady_ratio"]
@@ -138,8 +139,16 @@ static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport)
 	viewport.msaa_3d = MSAA[clampi(int(value("msaa")), 0, MSAA.size() - 1)]
 	sun.directional_shadow_max_distance = float(value("shadow_distance"))
 	env.glow_enabled = bool(value("glow"))
-	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
-	viewport.scaling_3d_scale = float(value("scale"))
+	# (Drawn smaller and brought up with AMD FSR 1 where the renderer has it, and never taller than the ceiling.)
+	var up: Dictionary = _load().get("upscale", {})
+	var high := float(viewport.size.y if viewport is Window else viewport.get_visible_rect().size.y)
+	var scale := float(value("scale"))
+	if high > 0.0 and float(up.get("max_3d_height", 0)) > 0.0:
+		scale = minf(scale, float(up["max_3d_height"]) / high)
+	var fsr := scale < 1.0 and RenderingServer.get_current_rendering_method() != "gl_compatibility"   # not-ui
+	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if fsr else Viewport.SCALING_3D_MODE_BILINEAR
+	viewport.fsr_sharpness = float(up.get("fsr_sharpness", 0.2))
+	viewport.scaling_3d_scale = scale
 	viewport.mesh_lod_threshold = float(value("lod_pixels"))
 
 
@@ -147,8 +156,29 @@ static func apply(sun: DirectionalLight3D, env: Environment, viewport: Viewport)
 ## none; the screen's refresh still limits it). Set when the game starts and whenever the level or the cap
 ## changes, apart from any one 3D world.
 static func apply_frame_cap() -> void:
+	if fps_choice() > 0:   # (the player's own pick in Settings wins: smoother, or cooler and longer on battery)
+		Engine.max_fps = fps_choice()
+		return
 	var caps := [int(value("max_fps")), measured_cap()].filter(func(c: int) -> bool: return c > 0)
 	Engine.max_fps = caps.min() if not caps.is_empty() else 0
+
+
+## The frame rate the player picked (Settings, apart from the graphics level, as big mobile games offer it): 0 for
+## the level's own, or one of data/quality.json `fps_choices`.
+static func fps_choice() -> int:
+	return int(PlayerSettings.value(SECTION, FPS_KEY, 0))
+
+
+static func fps_choices() -> Array[int]:
+	var out: Array[int] = []
+	for f: Variant in _load().get("fps_choices", [0, 30, 60]):
+		out.append(int(f))
+	return out
+
+
+static func choose_fps(fps: int) -> void:
+	PlayerSettings.keep(SECTION, {FPS_KEY: fps})
+	apply_frame_cap()
 
 
 static func _load() -> Dictionary:

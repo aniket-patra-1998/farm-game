@@ -2401,3 +2401,35 @@ func test_595_a_repaired_barn_swells_up_mended() -> void:
 	_check(mended > broken, "mended, it has stepped up (it swells in: grow_in)")
 	_check(objects._key(barn) != objects._key(barn.merged({"broken": true})), "and its look is rebuilt")
 	objects.free()
+
+
+## As big mobile games do: the 3D drawn smaller is brought up with FSR 1 (where the renderer has it), never
+## drawn taller than the ceiling, and the frame rate is the player's own pick apart from the graphics level.
+func test_658_fsr_upscale_a_1080p_ceiling_and_a_frame_rate_of_the_players_own() -> void:
+	var was_fps := Quality.fps_choice()
+	var was_level := Quality.level()
+	var sun := DirectionalLight3D.new()
+	var env := Environment.new()
+	var vp := SubViewport.new()
+	vp.size = Vector2i(3200, 1440)
+	add_child(vp)
+	Quality.choose("high")
+	Quality.apply(sun, env, vp)
+	_check(absf(vp.scaling_3d_scale - 1080.0 / 1440.0) < 0.01, "a 1440p screen draws its 3D at 1080p at most")
+	vp.size = Vector2i(1600, 720)
+	Quality.apply(sun, env, vp)
+	_eq(vp.scaling_3d_scale, 1.0, "a 720p screen on high is drawn whole")
+	Quality.choose("low")
+	Quality.apply(sun, env, vp)
+	_check(vp.scaling_3d_scale < 1.0, "low draws it smaller")
+	var fsr_here := RenderingServer.get_current_rendering_method() != "gl_compatibility"
+	_eq(vp.scaling_3d_mode == Viewport.SCALING_3D_MODE_FSR, fsr_here, "and brings it up with FSR where it can")
+	Quality.choose_fps(60)
+	_eq(Engine.max_fps, 60, "the player's 60 wins over low's 30 cap")
+	Quality.choose_fps(0)
+	_eq(Engine.max_fps, int(Quality.value("max_fps")), "Auto follows the level")
+	_check(Quality.fps_choices().has(30) and Quality.fps_choices().has(60), "30 and 60 offered")
+	Quality.choose_fps(was_fps)
+	Quality.choose(was_level)
+	vp.free()
+	sun.free()
