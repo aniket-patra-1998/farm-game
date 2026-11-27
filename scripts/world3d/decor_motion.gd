@@ -23,6 +23,8 @@ const POUR := {"streams": 3, "per_stream": 6, "life": 0.36, "rise": 0.0, "gravit
 const EFFECTS := {"smoke": SMOKE, "steam": STEAM, "jet": JET, "pour": POUR, "grain": GRAIN_FALL,
 	"sparkle": SPARKLE}
 const SPIN := "spin"     # a part that turns about its own upright (its name carries the speed)
+const CLOCK := "clock"   # a clock face's two hands, turned to the farm's hour (ClockHands)
+const SWAY := "sway"     # a part that floats: rises, falls and leans a little (Swayer)
 const PUFF_SIDES := 8               # a smoke puff's roundness
 const PUFF_RINGS := 4
 const SPRAY_SHADER := "res://shaders/spray3d.gdshader"
@@ -165,6 +167,10 @@ static func start(part: Node3D) -> void:
 		var spinner := Spinner.new()
 		spinner.speed = (words[1].to_float() if words.size() > 1 else 100.0) / 100.0
 		part.add_child(spinner)
+	elif words[0] == CLOCK:
+		part.add_child(ClockHands.new())
+	elif words[0] == SWAY:
+		part.add_child(Swayer.new())
 	elif EFFECTS.has(words[0]):
 		spray(part, Vector3.ZERO, EFFECTS[words[0]])
 	elif words[0] == ORBIT and words.size() > 1 and ORBITS.has(words[1]):
@@ -175,7 +181,8 @@ static func start(part: Node3D) -> void:
 ## (CrownStars.MARK: it only says where the farm's star floats) or of its signboard (GateSign.MARK).
 static func is_part(n: Node) -> bool:
 	var kind := String(n.name).split("_")[0]
-	return n is Node3D and (kind == SPIN or kind == ORBIT or EFFECTS.has(kind) or kind == CrownStars.MARK
+	return n is Node3D and (kind == SPIN or kind == CLOCK or kind == SWAY or kind == ORBIT or EFFECTS.has(kind)
+		or kind == CrownStars.MARK
 		or kind == GateSign.MARK)
 
 

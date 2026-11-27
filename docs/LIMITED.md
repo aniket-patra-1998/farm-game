@@ -7,7 +7,11 @@ animal underneath (no wings, no new kinds). FarmVille had limited editions like 
 ## The rules
 1. **Marked limited.** Every such animal has `limited` in the catalog (`data/catalog/animals.json`), and its
    baby too. The Market sells them on a tab of their own, Limited, next to Animals (`HudMarket.SHELVES`; the
-   tab is not there in a release that has none), and search finds them by that word.
+   tab is not there in a release that has none), and search finds them by that word. The tab opens short (owner,
+   27 Nov: every variety at once was "too clunky and messy"): the landmarks first (the prestige decorations:
+   `DecorationDef.is_landmark`), then one card for each kind that has limited varieties, animals and then trees
+   (`limited_kinds`, `kind_face`); a tap on a kind's card shows only its varieties, with a way back
+   (`_build_limited`). Sent to a limited thing (search, a goal), the tab opens on its kind (`tab_for`).
 2. **Bought with gems.** A limited animal is sold in the Market for gems only (`gem_cost`): about double an
    ordinary gem animal, by kind (birds and rabbits 20, pigs, sheep and goats 35, cows, horses, llamas and
    alpacas 50). It lives in its family's home and earns one and a half times the family's plain animal.
@@ -88,7 +92,7 @@ An animal's look in a variety is drawn by the art tool; a tree's is drawn by the
   60 MB, so `tools/export_plants` leaves them out and each is built on the device when first shown and kept
   (ModelStore). Its Market picture is made from the same build.
 - **Its rules** are the animals', through the same `LimitedSystem`: sold for gems on the Limited tab (animals,
-  then trees, each under its heading), harvested alone or in an Orchard, kept in the Barn, sold for its gems'
+  then trees, a card a kind), harvested alone or in an Orchard, kept in the Barn, sold for its gems'
   worth. An Orchard's Mystery Seedling is one of the limited trees standing in it 0.5% of the time, and 5% for a
   **Rare Mystery Seedling** (the Orchard's rare find, 1 in 10 seedlings, which is also likelier a rare variety:
   Balance `nurture.rare_seedling_chance`). Nothing else brings one.

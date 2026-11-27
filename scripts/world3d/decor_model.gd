@@ -878,6 +878,11 @@ static func _rng(id: String) -> RandomNumberGenerator:
 
 
 
+## A lamp's glass in `col`: dim by day, alight after dark (shaders/lamp3d). Shared per colour.
+static func lamp_glass(col: Color) -> ShaderMaterial:
+	return _glow(col)
+
+
 ## Something that gives light of its own (shaders/lamp3d.gdshader; docs/WORLD.md): a lamp, lit as night falls,
 ## or a fire's bed of coals (`fire`), which the rain dulls.
 static func _glow(col: Color, fire := false) -> ShaderMaterial:

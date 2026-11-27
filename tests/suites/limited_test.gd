@@ -300,7 +300,8 @@ func test_602_limited_trees_are_saved_and_follow_the_release() -> void:
 	var trees := market.limited_section("tree")
 	_check(animals.size() >= 50 and trees.size() >= 150,
 		"the Limited shelf has both (%d, %d)" % [animals.size(), trees.size()])
-	_eq(animals.size() + trees.size(), market.shelf_items(HudMarket.LIMITED).size(), "and nothing else")
+	_eq(animals.size() + trees.size() + market.landmarks().size(), market.shelf_items(HudMarket.LIMITED).size(),
+		"and, with the landmarks, nothing else")
 	_check(not "galaxy_apple_tree" in market.shelf_items("tree"), "a limited tree is not on the Trees shelf")
 	_eq(market.tab_for("galaxy_apple_tree"), market.tab_for("galaxy_cow"), "it is found on the Limited tab")
 	Release.whole = false

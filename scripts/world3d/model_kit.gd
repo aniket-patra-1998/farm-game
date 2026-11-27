@@ -325,9 +325,10 @@ static func sway_all(root: Node, amount: float) -> void:
 
 
 ## A wall or roof surface with a pattern (see shaders/wall3d.gdshader): boards, logs, stone, plaster,
-## shingles, metal or planks (a barn's upright boards).
-static func surface(col: Color, style: String, ao := 0.45) -> ShaderMaterial:
-	var key := "surface:%s:%s:%.2f" % [col.to_html(), style, ao]
+## shingles, metal or planks (a barn's upright boards). `scale` is the pattern's size (1 a building's; under 1
+## finer courses, for something so big that a building's stones would make a toy of it).
+static func surface(col: Color, style: String, ao := 0.45, scale := 1.0) -> ShaderMaterial:
+	var key := "surface:%s:%s:%.2f:%.2f" % [col.to_html(), style, ao, scale]
 	if not _materials.has(key):
 		var m := ShaderMaterial.new()
 		m.shader = load("res://shaders/wall3d.gdshader")
@@ -335,6 +336,7 @@ static func surface(col: Color, style: String, ao := 0.45) -> ShaderMaterial:
 		m.set_shader_parameter("style", ["boards", "logs", "stone", "plaster", "shingles", "metal",
 			"planks"].find(style))
 		m.set_shader_parameter("ground_ao", ao)
+		m.set_shader_parameter("scale", scale)
 		_materials[key] = m
 	return _materials[key]
 

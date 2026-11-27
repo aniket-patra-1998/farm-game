@@ -18,6 +18,12 @@ func opens() -> String:
 	return OPENS.get(id, "")
 
 
+## Whether it is a showpiece to save for (a castle, a clock tower): the Market sells those at the head of its
+## Limited shelf.
+func is_landmark() -> bool:
+	return bool(data.get("landmark", false))
+
+
 ## Whether its pieces join their neighbours (see Linking): they turn themselves, so the player doesn't.
 func joins() -> bool:
 	return not Linking.group_of_shape(str(data.get("shape", ""))).is_empty()

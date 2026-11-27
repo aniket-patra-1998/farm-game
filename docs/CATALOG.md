@@ -200,6 +200,7 @@ Scenery. 1 XP per 100 coins (at least 5).
 
 | Field | Type | Default | Required | Meaning |
 |---|---|---|---|---|
+| `landmark` | boolean |  |  | A showpiece to save for (a castle, a clock tower): sold at the head of the Market's Limited shelf, not among the decorations. |
 | `shape` | string |  |  | Placeholder drawing (fence, hedge, haybale, ...). Starter scenery is drawn by id instead. |
 | `style` | string |  |  | How a joining piece is built (fences: rail, picket, tall, gate); see LinkModels. |
 | `variant` | string |  |  | Shape variant (pine, oak, willow for shade trees). |
@@ -1362,8 +1363,8 @@ Big showpieces to save coins for (owner, 27 Nov): no power, only pride. Their sh
 | | Item | id | Unlock | Cost | Size | Shape |
 |---|---|---|---|---|---|---|
 | ✅ | Hot Air Balloon | `hot_air_balloon` | 20 | 75,000 | 3x3 | gazebo |
-| ✅ | Clock Tower | `clock_tower` | 25 | 150,000 | 2x2 | lamp |
-| ✅ | Stone Castle | `stone_castle` | 30 | 500,000 | 4x4 | cabin |
+| ✅ | Clock Tower | `clock_tower` | 25 | 150,000 | 3x3 | lamp |
+| ✅ | Stone Castle | `stone_castle` | 30 | 500,000 | 5x5 | cabin |
 
 ## recipes
 

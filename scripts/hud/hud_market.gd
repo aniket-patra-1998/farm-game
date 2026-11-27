@@ -22,6 +22,7 @@ var hud: FarmHud
 var _shelves := {}    # kind -> the ids for sale on that shelf, worked out once at load (the catalog doesn't change)
 var _sections := {}   # building tab -> its ids
 var _shelf_names := {}   # id -> the shelf it is on (a search result says it)
+var _limited_kind := ""  # the plain kind whose varieties the Limited shelf shows ("": its front, a card a kind)
 
 
 func _init(owner: FarmHud) -> void:
@@ -35,7 +36,7 @@ func _init(owner: FarmHud) -> void:
 				_sections[tab] = [] as Array[String]
 			(_sections[tab] as Array[String]).append(id)
 		else:
-			var kind := LIMITED if Game.limited.is_limited(id) else str(Game.item_data(id)["kind"])
+			var kind := LIMITED if on_limited_shelf(id) else str(Game.item_data(id)["kind"])
 			if not _shelves.has(kind):
 				_shelves[kind] = [] as Array[String]
 			(_shelves[kind] as Array[String]).append(id)
@@ -45,6 +46,7 @@ func _init(owner: FarmHud) -> void:
 ## Box opens the Decorations shelf and more land closes the Buildings shelf (no Specials tab of its own). Each
 ## shelf is a tab of the book.
 func tabs() -> Array:
+	_limited_kind = ""   # (the Market opens with the Limited shelf at its front)
 	var out: Array = [[tr("SEED_LIST"), hud.seeds.build_seeds]]
 	for shelf: Array in SHELVES:
 		var kind := str(shelf[0])
@@ -77,7 +79,9 @@ func build_gems(content: VBoxContainer) -> void:
 ## anything else.
 func tab_for(id: String) -> int:
 	var d := Game.catalog.get_def(id)
-	var kind := LIMITED if Game.limited.is_limited(id) else (d.kind if d != null else id)
+	var kind := LIMITED if on_limited_shelf(id) else (d.kind if d != null else id)
+	if Game.limited.is_limited(id):
+		_limited_kind = _plain_kind(id)   # (the shelf opens on that kind's varieties)
 	var tab := 0
 	for shelf: Array in SHELVES:
 		if str(shelf[0]) == LIMITED and shelf_items(LIMITED).is_empty():
@@ -105,17 +109,7 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 	if kind == LIMITED:
 		if AssetPacks.shared != null and AssetPacks.shared.total() > 0 and not AssetPacks.shared.downloaded():
 			singles.append([_single(content), download_card])   # (first: the download that makes them buyable)
-		# Animals, then trees: each kind of limited thing under its own heading (when there is more than one), and
-		# within it each plain kind's varieties under that kind's name (owner, 20 Nov: "sort the limited items by
-		# their types like chicken, cow, horse instead of showing everything at once").
-		var parts := LIMITED_KINDS.filter(func(part: Array) -> bool: return not limited_section(str(part[0])).is_empty())
-		for part: Array in parts:
-			if parts.size() > 1:
-				content.add_child(BookPanel.text(tr(str(part[1])), int(UiTheme.design("font_section")), BookPanel.HEAD))
-			for group: Array in limited_groups(limited_section(str(part[0]))):
-				content.add_child(BookPanel.text(UiTheme.tidy(str(group[0])), int(UiTheme.design("font_count_name")),
-					BookPanel.HEAD))
-				lists.append(_add_list(content, group[1], tell))
+		lists.append_array(_build_limited(content, tell))
 	elif kind != "building":
 		lists.append(_add_list(content, shelf_items(kind), tell))
 	else:
@@ -138,6 +132,69 @@ func build_shelf(content: VBoxContainer, kind: String) -> void:
 			holder.add_child((one[1] as Callable).call())
 	update.call()
 	BookPanel.set_live(content, update)
+
+
+## The Limited shelf (owner, 27 Nov: "too clunky and messy"; it was every variety at once, a heading and a
+## half-empty row a kind, nineteen screens of them). Its front is short: the landmarks (the showpieces to save
+## for), then one card for each kind that has limited varieties, animals and then trees; a tap on a kind's card
+## shows only that kind's varieties, with a way back. Returns the card lists it made.
+func _build_limited(content: VBoxContainer, tell: Callable) -> Array[CardList]:
+	var lists: Array[CardList] = []
+	var section := int(UiTheme.design("font_section"))
+	if _limited_kind != "":
+		var back := UiKit.quiet_button("‹ " + tr("LIMITED"), section)
+		back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		back.pressed.connect(func() -> void: _show_limited(content, ""))
+		content.add_child(back)
+		content.add_child(BookPanel.text(UiTheme.tidy(Game.name_of(_limited_kind) if Game.items.has(_limited_kind)
+			else _limited_kind), section, BookPanel.HEAD))
+		lists.append(_add_list(content, limited_of_kind(_limited_kind), tell))
+		return lists
+	if not landmarks().is_empty():
+		content.add_child(BookPanel.text(tr("LANDMARKS"), section, BookPanel.HEAD))
+		lists.append(_add_list(content, landmarks(), tell))
+	for part: Array in LIMITED_KINDS:
+		var kinds := limited_kinds(str(part[0]))
+		if kinds.is_empty():
+			continue
+		content.add_child(BookPanel.text(tr(str(part[1])), section, BookPanel.HEAD))
+		var list := CardList.make(kinds, kind_face, func(first: String) -> void: _show_limited(content, _plain_kind(first)),
+			hud.get_viewport().get_visible_rect().size.x)
+		list.search_menu = ""   # (the landmarks' list, or none, searches: a kind's card is not a thing for sale)
+		content.add_child(list)
+		lists.append(list)
+	return lists
+
+
+## Turns the Limited shelf to one kind's varieties (`kind` a plain kind's id), or back to its front (""), from the
+## top.
+func _show_limited(content: VBoxContainer, kind: String) -> void:
+	_limited_kind = kind
+	for c in content.get_children():
+		content.remove_child(c)
+		c.queue_free()
+	build_shelf(content, LIMITED)
+	var scroll := content.get_parent()
+	while scroll != null and not scroll is ScrollContainer:
+		scroll = scroll.get_parent()
+	if scroll != null:
+		(scroll as ScrollContainer).scroll_vertical = 0
+
+
+## A kind's card on the Limited shelf's front, by the first of its varieties (whose picture it wears): the plain
+## kind's name and how many varieties it has.
+func kind_face(first: String) -> Dictionary:
+	var plain := _plain_kind(first)
+	return {
+		"name": Game.name_of(plain) if Game.items.has(plain) else plain,
+		"line": "",
+		"badge": ["", tr("N_VARIETIES") % UiTheme.number(limited_of_kind(plain).size())],
+		"locked": false,
+		"stars": [],
+		"long": "",
+		"buyable": true,
+		"why": "",
+	}
 
 
 ## The Limited tab's download (owner, 20 Nov: "a download option in the limited tab, when a player clicks it, it
@@ -250,6 +307,34 @@ func _plain_kind(id: String) -> String:
 				and not Game.limited.is_limited(other) and not bool(o.get("young", false)):
 			return other
 	return family
+
+
+## Whether `id` is sold on the Limited shelf: a limited animal or tree, or a landmark.
+func on_limited_shelf(id: String) -> bool:
+	if Game.limited.is_limited(id):
+		return true
+	var d := Game.catalog.get_def(id) as DecorationDef
+	return d != null and d.is_landmark()
+
+
+## The landmarks for sale (the showpieces to save for), in catalog order.
+func landmarks() -> Array[String]:
+	return shelf_items(LIMITED).filter(func(id: String) -> bool: return not Game.limited.is_limited(id))
+
+
+## The first variety of each plain kind that has limited ones of `kind` (animal, tree), in order: the kinds'
+## cards on the Limited shelf's front.
+func limited_kinds(kind: String) -> Array[String]:
+	var out: Array[String] = []
+	for group: Array in limited_groups(limited_section(kind)):
+		out.append(str((group[1] as Array[String])[0]))
+	return out
+
+
+## The limited varieties of one plain kind (its id) for sale, in catalog order.
+func limited_of_kind(plain: String) -> Array[String]:
+	return shelf_items(LIMITED).filter(func(id: String) -> bool:
+		return Game.limited.is_limited(id) and _plain_kind(id) == plain)
 
 
 func limited_section(kind: String) -> Array[String]:

@@ -42,6 +42,9 @@ Findings:
 
 ## Prestige decorations (owner, 27 Nov)
 Coin sinks for the late game, pride only (no XP past level 15, no power): Hot Air Balloon (level 20, 75,000),
-Clock Tower (25, 150,000), Stone Castle (30, 500,000); PrestigeModel draws them. The owner picked three of four
+Clock Tower (25, 150,000), Stone Castle (30, 500,000); PrestigeModel draws them (rebuilt 27 Nov, the owner:
+"not up to the mark": the castle 5x5 with a moat and its drawbridge down, the tower 3x3 on a square with hands
+that tell the farm's hour, the balloon bigger and riding the air), and the Market sells them at the head of its
+Limited tab (Landmarks). The owner picked three of four
 candidates (the Golden Farmer Statue was left out). The 60-day sims still meet every target.
 

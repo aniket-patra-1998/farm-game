@@ -3,6 +3,19 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## Landmarks rebuilt, and the Limited tab made short (27 Nov, branch prestige-looks)
+- The three prestige decorations are landmarks (`"landmark": true` in the catalog; `DecorationDef.is_landmark`).
+  Rebuilt in `PrestigeModel` after the owner's "not up to the mark": fine stonework (`ModelKit.surface`'s new
+  `scale`), the castle on 5x5 with a moat, an open drawbridge on chains, a keep with lit windows; the clock tower
+  on 3x3, its hands turned to the farm's hour (`ClockHands`, a `clock_*` part) and its dials alight at night; the
+  balloon bigger, floating (`Swayer`, a `sway_*` part). Landmarks are drawn as models of their own
+  (`Objects3D.stands_alone`), since a batch runs no scripts. Looks seen by the owner as the work went; no
+  separate sheet was approved.
+- The Market sells them under Landmarks at the head of the Limited tab, which now shows a card a kind and opens
+  a kind's varieties on a tap (`HudMarket._build_limited`). Tests 656, 657.
+- Not done: the balance simulation was not rerun (prices unchanged; only footprints grew); not seen on a phone;
+  the clock tower's Market picture is still slim because the tower is tall.
+
 ## Launch plumbing (27 Nov, main)
 - Analytics as GameAnalytics' SDKs do it: init call (enabled flag, server clock), queue kept on the phone, errors
   through a Godot Logger (ErrorTap) as error events, purchases as business events. app-ads.txt from

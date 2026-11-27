@@ -14005,7 +14005,7 @@
    "item": "clock_tower",
    "class": "Decoration",
    "stage": "placed",
-   "tiles": 2,
+   "tiles": 3,
    "fill": 0.95,
    "refs": [
     "refs/clock_tower.png"
@@ -14017,7 +14017,7 @@
    "item": "stone_castle",
    "class": "Decoration",
    "stage": "placed",
-   "tiles": 4,
+   "tiles": 5,
    "fill": 0.95,
    "refs": [
     "refs/stone_castle.png"
