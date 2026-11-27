@@ -72,5 +72,6 @@ jobs:
           # reaches every phone within that.
           printf '/manifest.json\n  Cache-Control: public, max-age=60\n/tuning.json\n  Cache-Control: public, max-age=60\n/*.pck\n  Cache-Control: public, max-age=31536000, immutable\n' > packs_out/_headers
           cp data/remote/tuning.json packs_out/tuning.json   # (remote tuning: Balance.REMOTE)
+          mkdir -p packs_out/privacy && cp data/remote/site/privacy.html packs_out/privacy/index.html   # (Play's privacy URL)
           npx --yes wrangler@4 pages project create farm-game-packs --production-branch=main || true
           npx --yes wrangler@4 pages deploy packs_out --project-name=farm-game-packs --branch=main --commit-dirty=true
