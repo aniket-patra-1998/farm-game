@@ -130,6 +130,8 @@ fails a change that breaks a budget.
 ## 8. Pictures and sound
 
 - **Item pictures** are rendered from the same assets by CI (`tools/bake_icons`), never on a phone.
+- **People's pictures** (`art/portraits`: the two farmers, the six neighbours) are drawn by
+  `tools/make_portraits.py`; a look's `portrait` names one and `PortraitIcon` shows it.
 - **Sound**: recordings (`.ogg`) or recipes baked by CI; the registry maps sound ids the same way.
 
 ## 9. Checks in CI

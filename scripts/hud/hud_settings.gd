@@ -8,6 +8,7 @@ const QUALITY_WORDS := {"low": "GRAPHICS_LOW", "mid": "GRAPHICS_MID", "high": "G
 
 const KIND_WORDS := {"a": "FARMER_BOY", "b": "FARMER_GIRL"}   # the look's body -> its words
 const FARMER_STYLES := {"a": "short", "b": "long"}   # a look's body -> its picture's hair (PortraitIcon)
+const FARMER_PICTURES := {"a": "farmer_boy", "b": "farmer_girl"}   # a look's body -> its picture (art/portraits)
 const FIELD_WIDE := 3.0   # a row's field or slider, in panel buttons' least widths
 ## What each graphics level does, in a word.
 const QUALITY_EFFECTS := {"low": "GRAPHICS_LOW_EFFECT", "mid": "GRAPHICS_MID_EFFECT", "high": "GRAPHICS_HIGH_EFFECT",
@@ -54,6 +55,7 @@ func farm_card() -> PanelContainer:
 	for kind: String in KIND_WORDS:   # (a boy with short hair, a girl with long: a picture each)
 		var face := Game.player.look.duplicate()
 		face["style"] = FARMER_STYLES[kind]
+		face["portrait"] = FARMER_PICTURES[kind]
 		farmers.append([kind, tr(KIND_WORDS[kind]), PortraitIcon.of(face, UiTheme.size("panel_button_height"))])
 	inner.add_child(BookPanel.row(tr("YOUR_FARMER"), BookPanel.choice(farmers, str(Game.player.look["body"]),
 		func(kind: String) -> void:
