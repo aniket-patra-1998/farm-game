@@ -62,7 +62,7 @@ func start() -> void:
 		var build := str(ProjectSettings.get_setting("application/config/version", "0"))
 		_sdk("configureBuild", [build])   # not-ui (an SDK call)
 		_sdk("setEnabledErrorReporting", [true])   # not-ui (an SDK call)
-		if sdk.has_signal("remote_configs_updated"):   # not-ui (the SDK's signal)
+		if sdk != null and sdk.has_signal("remote_configs_updated"):   # not-ui (the SDK's signal)
 			sdk.connect("remote_configs_updated", _on_configs)
 		_sdk("init", [str(config["game_key"]), str(config["secret_key"])])
 		_tap = ErrorTap.new()
