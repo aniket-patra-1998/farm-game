@@ -24,7 +24,7 @@ var season_icon: UiIcon
 var weather_icon: UiIcon
 var forecast: Label   # under the clock: "Rain at 4:00 pm: watered crops pay +10%" (hidden when nothing is due)
 var xp: UiXpBar
-var _forecast_at := -2   # the forecast last shown (its time; -1 none)
+var _forecast_key := ""   # the forecast last shown (its time, and the crops at risk)
 
 
 func _init(owner: FarmHud) -> void:
@@ -105,10 +105,17 @@ func build(root: Control) -> void:
 ## The forecast line for what the sky does next (Game.forecast: {name, at, starts}; {} hides it): rain to come
 ## says what it is worth, rain falling says when it stops.
 func show_forecast(next: Dictionary) -> void:
-	var at_unix := int(next.get("at", -1))
-	if at_unix == _forecast_at:
-		return   # (asked every second; it changes every few hours)
-	_forecast_at = at_unix
+	# Ripe crops the weather will spoil come first: when, and how many (WeatherEffects; owner, 27 Nov).
+	var risk := Game.field.at_risk()
+	var key := "%d:%d:%d" % [int(next.get("at", -1)), int(risk.get("count", 0)), int(risk.get("at", 0))]
+	if key == _forecast_key:
+		return   # (asked every second; it changes every few hours, or when a crop at risk is picked)
+	_forecast_key = key
+	if not risk.is_empty():
+		forecast.visible = true
+		forecast.text = tr("FORECAST_SPOILS") % [int(risk["count"]),
+			DayCycle.clock_text(DayCycle.local_hour(int(risk["at"]), DayCycle.device_bias_minutes()))]
+		return
 	forecast.visible = not next.is_empty()
 	if next.is_empty():
 		return

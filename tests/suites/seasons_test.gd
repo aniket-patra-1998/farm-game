@@ -192,14 +192,18 @@ func test_655_rain_spoils_ripe_berries_left_out_and_loved_weather_pays_more() ->
 			wet = t
 			break
 	_check(wet > 0, "a rain spell after a dry one, in the monsoon")
-	var berries := 0
-	var roots := 1
+	var free: Array[int] = []
+	for i in g.plots.size():
+		if g.on_farm(i) and g.plots[i].get("state", "grass") != "planted" and free.size() < 2:
+			free.append(i)
+	var berries := free[0]
+	var roots := free[1]
 	for i in [berries, roots]:
 		g.plots[i]["state"] = "planted"
 		g.plots[i]["crop"] = "strawberries" if i == berries else "potatoes"
 	for i in [berries, roots]:   # (both ripe just before the rain, with time left to wait)
 		var grow := int(g.crops[g.plots[i]["crop"]]["grow_seconds"])
-		g.plots[i]["planted_at"] = wet - length - grow
+		g.plots[i]["planted_at"] = wet - 3600 - grow
 	var grace := Balance.i("weather.spoil_grace_seconds")
 	_eq(g.field.withers_at(berries), mini(wet + grace, g.plots[berries]["planted_at"]
 		+ int(g.crops["strawberries"]["grow_seconds"]) + g.field.window_of(g.plots[berries], g.crops["strawberries"])),
@@ -207,6 +211,9 @@ func test_655_rain_spoils_ripe_berries_left_out_and_loved_weather_pays_more() ->
 	var end := int(g.plots[roots]["planted_at"]) + int(g.crops["potatoes"]["grow_seconds"]) \
 		+ g.field.window_of(g.plots[roots], g.crops["potatoes"])
 	_eq(g.field.withers_at(roots), end, "potatoes don't mind the rain")
+	var risk := g.field.at_risk()
+	_check(int(risk.get("count", 0)) >= 1 and int(risk.get("at", 0)) == wet + grace,
+		"the forecast warns of the berries before the rain spoils them")
 	g.xp = 0
 	g.weather_fx.reset()
 	_check(not g.weather_fx.on(), "a young farm's crops are never spoiled by weather")

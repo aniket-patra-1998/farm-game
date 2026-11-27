@@ -63,6 +63,28 @@ func next_phase_at(i: int) -> int:
 	return withers if game.now() < withers else -1
 
 
+## The crops the weather will spoil (WeatherEffects): how many, and when the first goes ({} when none), so the
+## forecast can say "harvest soon". A crop counts once it is planted: it spoils only if still unpicked by then.
+func at_risk() -> Dictionary:
+	if not game.weather_fx.on():
+		return {}
+	var n := 0
+	var first := -1
+	var now := game.now()
+	for i in game.plots.size():
+		var p: Dictionary = game.plots[i]
+		if p.get("state") != "planted" or not game.on_farm(i) or not game.crops.has(p.get("crop", "")):
+			continue
+		var crop: Dictionary = game.crops[p["crop"]]
+		var ripe_at := int(p["planted_at"]) + int(crop["grow_seconds"])
+		var end := ripe_at + window_of(p, crop)
+		var spoil := game.weather_fx.spoils_at(i, ripe_at, end)
+		if spoil > now:
+			n += 1
+			first = spoil if first < 0 else mini(first, spoil)
+	return {} if n == 0 else {"count": n, "at": first}
+
+
 ## When plot `i`'s crop (ripe at `ripe_at`) withers: its ripe window's end, or sooner when weather it can't take
 ## comes while it waits (WeatherEffects).
 func withers_at(i: int, ripe_at := -1, crop := {}) -> int:
