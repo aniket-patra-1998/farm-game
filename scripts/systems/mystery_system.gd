@@ -136,6 +136,10 @@ func give_prize(prize: Array) -> String:
 			game.farmhands += int(prize[1])
 		"arborist":
 			game.arborists += int(prize[1])
+		"gardener":
+			game.gardeners += int(prize[1])
+		"fertilizer":
+			game.fertilizer_bags += int(prize[1])
 		"fuel":
 			game.vehicles.add_fuel(int(prize[1]))
 		"fertilize_all":
@@ -163,6 +167,10 @@ static func prize_words(prize: Array) -> String:
 			return TranslationServer.translate("FARMHAND_2") % n
 		"arborist":
 			return TranslationServer.translate("ARBORIST_2") % n
+		"gardener":
+			return TranslationServer.translate("GARDENER_N") % n
+		"fertilizer":
+			return TranslationServer.translate("FERTILIZER_2") % n
 		"fuel":
 			return TranslationServer.translate("SOCIAL_FUEL") % n
 		"fertilize_all":

@@ -1,10 +1,21 @@
 {
- "_comment": "Rewarded ads (docs/ADS.md): the ad unit and what each offer gives. Test ids from Google's own list until the AdMob account exists; how many a day is Balance ads.daily_caps (remote-tunable).",
+ "_comment": "Rewarded ads (docs/ADS.md). Owner, 27 Nov: three normal ads give a common reward, the fourth a guaranteed rare; a crop rescue revives the withered plots; at most Balance ads.rares_per_day rares a day from ads, no gems. Rewards are prizes as in data/mystery_box.json: [kind, amount, weight]; coins and xp add Balance ads.coins_per_level / xp_per_level times the level. Test ids from Google's own list until the AdMob account exists.",
  "android_unit": "ca-app-pub-3940256099942544/5224354917",
  "max_content_rating": "PG",
- "offers": {
-  "unwither": {"unwithers": 1},
-  "fuel": {"fuel_tanks": 1},
-  "farmhand": {"farmhands": 1}
- }
+ "common": [
+  ["coins", 50, 3],
+  ["xp", 10, 2],
+  ["fertilizer", 1, 2],
+  ["materials", 2, 2],
+  ["fuel", 25, 1]
+ ],
+ "rare": [
+  ["farmhand", 1, 3],
+  ["arborist", 1, 2],
+  ["gardener", 1, 2],
+  ["unwither", 1, 2],
+  ["fertilize_all", 1, 2],
+  ["fuel", 150, 1],
+  ["mystery_box", 1, 1]
+ ]
 }

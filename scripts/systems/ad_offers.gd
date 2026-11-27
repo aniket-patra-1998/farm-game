@@ -1,23 +1,27 @@
 class_name AdOffers
 extends GameSystem
-## Rewarded ads the player chooses (docs/ADS.md; owner, 27 Nov: ads that feel like a choice, not a chore): each
-## offer is a button beside the thing it helps (the Barn's boosts), says first what it gives, and may be taken a
-## few times a day (Balance ads.daily_caps). Skipping one costs nothing: everything it gives is also found by
-## playing. None before Balance ads.min_level. What each gives is data/ads.json; the ad itself is rewarded_ads.gd.
+## Rewarded ads the player chooses (docs/ADS.md; owner, 27 Nov). Two kinds:
+## - the gift ladder: three ads each give a common reward, the fourth a guaranteed rare (the ad-chest pattern);
+## - a rescue: crops have withered, and an ad revives exactly those plots (counts as a rare).
+## At most Balance ads.rares_per_day rares a day from ads in all, ads.per_day ads, none before ads.min_level.
+## Rewards are data/ads.json's prizes, given as the Mystery Box gives them. The ad itself is rewarded_ads.gd.
 ## Part of the game state: reached as `Game.offers`.
 
 const CONFIG := "res://data/ads.json"
 const PLAYER := "res://scripts/systems/rewarded_ads.gd"
-const WORDS := {
-	"unwithers": "AD_GIVES_UNWITHERS", "fuel_tanks": "AD_GIVES_FUEL_TANKS", "farmhands": "AD_GIVES_FARMHANDS",
-}
+const GIFT := "gift"       # not-ui (analytics names)
+const RESCUE := "rescue"   # not-ui
+const BOX := "mystery_box"   # not-ui (a prize kind this file adds: a Mystery Box opened)
 
 static var ads_ready := Callable()   # tests: stands in for the player's loaded()
 static var player: Node              # the ad player (rewarded_ads.gd), on Android only
 
-var day := 0                 # the day `taken` counts
-var taken := {}              # offer id -> ads watched for it today
-var _gives := {}             # offer id -> {count name: amount} (data/ads.json)
+var day := 0          # the day the counts below are for
+var watched := 0      # ads watched today
+var step := 0         # gift ads watched since the last rare (the ladder, 0 to ads.ladder - 1)
+var rares := 0        # rare rewards given today (ladder and rescues)
+var _common: Array = []
+var _rare: Array = []
 
 
 func _init(owner: GameState) -> void:
@@ -36,12 +40,16 @@ static func begin_ads(game: GameState) -> void:
 
 
 func load_data() -> void:
-	_gives = game.read_json(CONFIG).get("offers", {})
+	var d := game.read_json(CONFIG)
+	_common = d.get("common", [])
+	_rare = d.get("rare", [])
 
 
 func reset() -> void:
 	day = game.day_number()
-	taken = {}
+	watched = 0
+	step = 0
+	rares = 0
 
 
 func shift_clock(seconds: int) -> void:
@@ -49,71 +57,128 @@ func shift_clock(seconds: int) -> void:
 
 
 func save_to(data: Dictionary) -> void:
-	data["ads_day"] = day
-	data["ads_taken"] = taken.duplicate()
+	data["ads"] = {"day": day, "watched": watched, "step": step, "rares": rares}
 
 
 func load_from(data: Dictionary) -> void:
-	day = int(data.get("ads_day", game.day_number()))
-	taken = int_map(data.get("ads_taken", {}))
+	var d := int_map(data.get("ads", {}))
+	day = int(d.get("day", game.day_number()))
+	watched = int(d.get("watched", 0))
+	step = clampi(int(d.get("step", 0)), 0, maxi(Balance.i("ads.ladder") - 1, 0))
+	rares = int(d.get("rares", 0))
 
 
-## The offers there are (data/ads.json), in its order.
-func ids() -> Array:
-	return _gives.keys()
-
-
-## Ads still to watch today for `id`.
-func left(id: String) -> int:
+## Whether the next gift ad gives a rare (the ladder's last step, and a rare left today).
+func next_is_rare() -> bool:
 	_roll_day()
-	return maxi(0, int(Balance.d("ads.daily_caps").get(id, 0)) - int(taken.get(id, 0)))
+	return step >= Balance.i("ads.ladder") - 1 and rares < Balance.i("ads.rares_per_day")
 
 
-## Whether `id` is offered now: the level reached, some left today and an ad ready to play.
-func shown(id: String) -> bool:
-	if game.level() < Balance.i("ads.min_level") or left(id) <= 0:
+## Whether the gift ad is offered now.
+func gift_shown() -> bool:
+	return _can_watch()
+
+
+## Whether a rescue is offered now: crops withered, and a rare left today.
+func rescue_shown() -> bool:
+	return _can_watch() and game.withered_count() > 0 and rares < Balance.i("ads.rares_per_day")
+
+
+## The gift button's words: how far up the ladder, or that this one is rare.
+func gift_words() -> String:
+	if next_is_rare():
+		return tr("AD_GIFT_RARE")
+	return tr("AD_GIFT") % [step + 1, Balance.i("ads.ladder")]
+
+
+func rescue_words() -> String:
+	return tr("AD_RESCUE") % game.withered_count()
+
+
+func watch_gift() -> void:
+	_watch(GIFT, give_gift)
+
+
+func watch_rescue() -> void:
+	_watch(RESCUE, give_rescue)
+
+
+## A watched gift ad: a common reward, or the ladder's rare.
+func give_gift() -> void:
+	_roll_day()
+	if watched >= Balance.i("ads.per_day"):
+		return
+	watched += 1
+	var rare := next_is_rare()
+	step = 0 if step >= Balance.i("ads.ladder") - 1 else step + 1
+	if rare:
+		rares += 1
+	var words := _give(_draw(_rare if rare else _common))
+	_done(GIFT + ("_rare" if rare else ""), words)
+
+
+## A watched rescue ad: every withered crop back to ripe.
+func give_rescue() -> void:
+	_roll_day()
+	if watched >= Balance.i("ads.per_day") or rares >= Balance.i("ads.rares_per_day") or game.withered_count() == 0:
+		return
+	watched += 1
+	rares += 1
+	game.revive_withered()
+	_done(RESCUE, "")
+
+
+func _can_watch() -> bool:
+	_roll_day()
+	if game.level() < Balance.i("ads.min_level") or watched >= Balance.i("ads.per_day"):
 		return false
 	if ads_ready.is_valid():
 		return bool(ads_ready.call())
 	return player != null and bool(player.call("loaded"))   # not-ui
 
 
-## What `id` gives, as the button says it before the ad ("Watch an ad: 1 Farmhand").
-func words(id: String) -> String:
-	var parts := PackedStringArray()
-	for k: String in (_gives.get(id, {}) as Dictionary):
-		parts.append(tr(WORDS.get(k, "")) % int(_gives[id][k]))
-	return tr("WATCH_AN_AD") % ", ".join(parts)
-
-
-## Plays the ad for `id`; its reward comes only when Google says it was watched (give).
-func watch(id: String) -> void:
-	if not shown(id):
+func _watch(kind: String, reward: Callable) -> void:
+	if not _can_watch():
 		return
 	if Analytics.shared != null:
-		Analytics.shared.design("ad:%s:shown" % id)
+		Analytics.shared.design("ad:%s:shown" % kind)
 	if player != null:
-		player.call("play", give.bind(id))   # not-ui
+		player.call("play", reward)   # not-ui
 
 
-## The reward for a watched ad: the offer's counts added, one fewer left today.
-func give(id: String) -> void:
-	_roll_day()
-	if left(id) <= 0 or not _gives.has(id):
-		return
-	taken[id] = int(taken.get(id, 0)) + 1
-	for k: String in (_gives[id] as Dictionary):
-		var n := int(_gives[id][k])
-		match k:
-			"unwithers":
-				game.add_unwithers(n)
-			"fuel_tanks":
-				game.vehicles.fuel_tanks += n
-			"farmhands":
-				game.farmhands += n
+## One prize from a weighted list ([kind, amount, weight]); one the farm can't use yet (fuel with no
+## vehicle) is left out.
+func _draw(prizes: Array) -> Array:
+	var usable: Array = []
+	for p: Array in prizes:
+		if str(p[0]) != "fuel" or game.vehicles.fuel_unlocked:
+			usable.append(p)
+	var weights: Array = []
+	for p: Array in usable:
+		weights.append(p[2])
+	var i := RollSystem.weighted_index(game.rng, weights)
+	return usable[i] if i >= 0 else []
+
+
+func _give(prize: Array) -> String:
+	if prize.is_empty():
+		return ""
+	if str(prize[0]) == BOX:
+		return game.mystery.gift_box()   # (it says what came out itself)
+	var p := prize.duplicate()
+	match str(p[0]):
+		"coins":
+			p[1] = int(p[1]) + Balance.i("ads.coins_per_level") * game.level()
+		"xp":
+			p[1] = int(p[1]) + Balance.i("ads.xp_per_level") * game.level()
+	return game.mystery.give_prize(p)
+
+
+func _done(kind: String, words: String) -> void:
 	if Analytics.shared != null:
-		Analytics.shared.design("ad:%s:taken" % id)
-	game.message.emit(tr("AD_THANKS"))
+		Analytics.shared.design("ad:%s:taken" % kind)
+	if words != "":
+		game.message.emit(tr("AD_GOT") % words)
 	game.inventory_changed.emit()
 	game.queue_save()
 
@@ -122,4 +187,5 @@ func _roll_day() -> void:
 	var today := game.day_number()
 	if today != day:
 		day = today
-		taken = {}
+		watched = 0
+		rares = 0   # (the ladder's step carries over: progress is never lost)

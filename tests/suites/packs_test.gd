@@ -383,35 +383,54 @@ func test_631_play_statistics_are_signed_anonymous_and_only_sent_with_keys_and_c
 	a.free()
 
 
-func test_632_rewarded_ads_are_chosen_capped_daily_given_only_when_watched_and_not_too_early() -> void:
+func test_632_ads_three_commons_then_a_rare_rescues_revive_and_two_rares_a_day_at_most() -> void:
 	Game.reset_game()
 	AdOffers.ads_ready = func() -> bool: return true
 	var o := Game.offers
-	_check(not o.ids().is_empty(), "offers in data/ads.json")
-	for id: String in o.ids():
-		_check(Balance.d("ads.daily_caps").has(id), "a daily cap for %s" % id)
-		_check(o.words(id).contains("%") == false and o.words(id) != "", "the button says what it gives first")
+	var cfg: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AdOffers.CONFIG))
+	for p: Array in cfg["common"] + cfg["rare"]:
+		_check(str(p[0]) != "gems", "ads never give gems (owner, 27 Nov)")
 	Game.xp = Game.xp_for_level(Balance.i("ads.min_level") - 1)
-	_check(not o.shown("farmhand"), "no ads before ads.min_level (not in the first session)")
+	_check(not o.gift_shown(), "no ads before ads.min_level (not in the first session)")
 	Game.xp = Game.xp_for_level(Balance.i("ads.min_level"))
-	_check(o.shown("farmhand"), "offered once the level is reached")
-	var had := Game.farmhands
-	o.give("farmhand")
-	_eq(Game.farmhands, had + 1, "a watched ad gives its reward")
-	for k in 5:
-		o.give("farmhand")
-	_eq(Game.farmhands, had + Balance.d("ads.daily_caps")["farmhand"], "no more than the day's cap")
-	_check(not o.shown("farmhand"), "and the offer goes until tomorrow")
-	o.day -= 1
-	_check(o.shown("farmhand"), "a new day, a new cap")
-	AdOffers.ads_ready = func() -> bool: return false
-	_check(not o.shown("unwither"), "no ad loaded: no offer")
+	_check(o.gift_shown(), "offered once the level is reached")
+	var ladder := Balance.i("ads.ladder")
+	for k in ladder - 1:
+		_check(not o.next_is_rare(), "gift %d of %d is common" % [k + 1, ladder])
+		o.give_gift()
+	_check(o.next_is_rare() and o.gift_words() == tr("AD_GIFT_RARE"), "the button says the next one is rare")
+	o.give_gift()
+	_eq(o.rares, 1, "the fourth is the rare")
+	_eq(o.step, 0, "the ladder starts again")
+	# A rescue: withered crops back, counted as a rare.
+	var plot := Game.index_of(0, 0)
+	Game.plots[plot]["crop"] = Game.crop_order[0]
+	Game.plots[plot]["state"] = "planted"
+	Game.plots[plot]["planted_at"] = Game.now() - 10 * 24 * 3600
+	_check(Game.withered_count() > 0 and o.rescue_shown(), "withered crops: a rescue is offered")
+	o.give_rescue()
+	_eq(Game.withered_count(), 0, "the rescue revives the plots")
+	_eq(o.rares, Balance.i("ads.rares_per_day"), "two rares today")
+	Game.plots[plot]["planted_at"] = Game.now() - 10 * 24 * 3600
+	_check(not o.rescue_shown(), "no third rare: no rescue")
+	for k in ladder - 1:
+		o.give_gift()
+	_check(not o.next_is_rare(), "the ladder's top gives a common once the day's rares are used")
+	for k in 10:
+		o.give_gift()
+	_eq(o.watched, Balance.i("ads.per_day"), "no more than ads.per_day ads")
+	_check(not o.gift_shown(), "and the gift goes until tomorrow")
 	var saved := {}
 	o.save_to(saved)
+	var was := o.step
+	o.reset()
 	o.load_from(saved)
-	_eq(o.taken.size(), saved["ads_taken"].size(), "the day's count is saved")
+	_check(o.watched == Balance.i("ads.per_day") and o.step == was, "the day's counts and the ladder are saved")
+	o.day -= 1
+	_check(o.gift_shown() and o.rares == 0 and o.step == was, "a new day: new counts, the ladder kept")
+	AdOffers.ads_ready = func() -> bool: return false
+	_check(not o.gift_shown(), "no ad loaded: no offer")
 	AdOffers.ads_ready = Callable()
 	_check(AdOffers.player == null, "no ad player made away from a phone")
-	var cfg: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(AdOffers.CONFIG))
 	_check(str(cfg["android_unit"]).begins_with("ca-app-pub-3940256099942544/"), "Google's test unit until the account")
 	Game.reset_game()

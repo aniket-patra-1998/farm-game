@@ -38,9 +38,10 @@ func add_boosts(content: VBoxContainer) -> void:
 		boosts.append([tr("FUEL_TANKS") % [Game.vehicles.fuel_now(), Balance.i("vehicles.fuel_tank"),
 			Game.vehicles.fuel_tanks], true, func() -> void:
 				hud.sheet.show_page("SHEET_TAB_FUEL")])   # (the Barn's own Fuel page)
-	for id: String in Game.offers.ids():   # (a rewarded ad beside the boosts it gives: docs/ADS.md)
-		if Game.offers.shown(id):
-			boosts.append([Game.offers.words(id), true, Game.offers.watch.bind(id)])
+	if Game.offers.rescue_shown():   # (rewarded ads beside the boosts: docs/ADS.md)
+		boosts.append([Game.offers.rescue_words(), true, Game.offers.watch_rescue])
+	if Game.offers.gift_shown():
+		boosts.append([Game.offers.gift_words(), true, Game.offers.watch_gift])
 	for entry: Array in boosts:
 		var use := hud.panel_button(str(entry[0]))
 		use.disabled = not bool(entry[1])

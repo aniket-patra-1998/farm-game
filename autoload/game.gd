@@ -1159,8 +1159,7 @@ func withered_count() -> int:
 
 ## Brings every withered crop back to ripe. Uses an Unwither item, or gems if none are left.
 func use_unwither() -> bool:
-	var count := withered_count()
-	if count == 0:
+	if withered_count() == 0:
 		message.emit(tr("NOTHING_HAS_WITHERED_SAVE_IT_FOR"))
 		return false
 	if unwithers > 0:
@@ -1168,6 +1167,13 @@ func use_unwither() -> bool:
 	elif not spend_gems(Balance.i("economy.unwither_gem_cost")):
 		message.emit(tr("NO_UNWITHER_LEFT_AND_NOT_ENOUGH"))
 		return false
+	revive_withered()
+	return true
+
+
+## Every withered crop back to ripe, paid for already (an Unwither, gems, or a rescue ad: AdOffers).
+func revive_withered() -> void:
+	var count := withered_count()
 	var t := now()
 	for r in farm_size:
 		for c in farm_size:
@@ -1179,7 +1185,6 @@ func use_unwither() -> bool:
 	plot_changed.emit(-1)
 	_tiles_changed.clear()   # (the whole field has just been told)
 	queue_save()
-	return true
 
 
 func add_unwithers(n: int) -> void:

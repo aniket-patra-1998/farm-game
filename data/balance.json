@@ -1139,9 +1139,25 @@
    "v": 4,
    "note": "rewarded ads are offered from this level (Google: never in the first minutes; the tutorial ends near level 3)"
   },
-  "daily_caps": {
-   "v": {"unwither": 3, "fuel": 2, "farmhand": 1},
-   "note": "rewarded ads each offer may be watched per day (studio practice: a few per offer, about 6 a day in all)"
+  "per_day": {
+   "v": 8,
+   "note": "rewarded ads a player may watch a day in all (two ladders; studio practice is 5 to 10)"
+  },
+  "ladder": {
+   "v": 4,
+   "note": "every this-many-th gift ad is a guaranteed rare, the others common (owner, 27 Nov; the ad-chest pattern)"
+  },
+  "rares_per_day": {
+   "v": 2,
+   "note": "rare rewards a day from ads, ladder and rescues together (owner, 27 Nov: helpers stay scarce)"
+  },
+  "coins_per_level": {
+   "v": 20,
+   "note": "a common coin reward adds this times the level to its base (about one harvest's worth)"
+  },
+  "xp_per_level": {
+   "v": 2,
+   "note": "a common XP reward adds this times the level to its base"
   }
  }
 }

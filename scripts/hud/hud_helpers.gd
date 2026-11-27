@@ -55,7 +55,11 @@ func build(root: Control) -> void:
 	_add_petal("fertilizer", "HELPER_FERTILIZE_ALL", func() -> int: return Game.fertilize_alls,
 		func() -> void: Game.bees.use_fertilize_all())
 	_add_petal("unwither", "HELPER_UNWITHER", func() -> int: return Game.unwithers if Game.unwithers > 0 else -1,
-		func() -> void: Game.use_unwither())
+		func() -> void:   # (none left: a rescue ad first, when one is offered, before gems: docs/ADS.md)
+			if Game.unwithers <= 0 and Game.offers.rescue_shown():
+				Game.offers.watch_rescue()
+			else:
+				Game.use_unwither())
 	_add_petal("farmhand", "FARMHANDS", func() -> int: return Game.farmhands,
 		func() -> void: Game.use_helper("animal"))
 	_add_petal("arborist", "ARBORISTS", func() -> int: return Game.arborists,
