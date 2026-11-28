@@ -484,7 +484,7 @@ func _point_near(kind: String) -> bool:
 	if spot.is_empty():
 		return false
 	var at := _top_of(spot)
-	GuideArrow.point(hud, func() -> Vector2: return grid.to_screen(at) if is_instance_valid(grid) else Vector2.INF)
+	GuideArrow.point(hud, GuideArrow.at_farm(grid, at))
 	return true
 
 
@@ -495,8 +495,7 @@ func _point_farm(kind: String, fallback: String) -> bool:
 	if not spot.is_empty() and hud.grid != null:
 		var grid := hud.grid
 		var at := _top_of(spot)
-		GuideArrow.point(hud, func() -> Vector2:
-			return grid.to_screen(at) if is_instance_valid(grid) else Vector2.INF)
+		GuideArrow.point(hud, GuideArrow.at_farm(grid, at))
 		return true
 	if hud.tools.buttons.has(fallback):
 		GuideArrow.point(hud, GuideArrow.at_control(hud.tools.buttons[fallback]))
@@ -514,12 +513,7 @@ func point_at_card(id: String) -> bool:
 		if want == "":
 			continue
 		list.bring_into_view(want)
-		GuideArrow.point(hud, func() -> Vector2:
-			var card := list.card_of(want) if is_instance_valid(list) else null
-			if card == null or not card.is_visible_in_tree():
-				return Vector2.INF
-			var r := card.get_global_rect()
-			return Vector2(r.get_center().x, r.position.y))
+		GuideArrow.point(hud, GuideArrow.at_card(list, want))
 		return true
 	return false
 
@@ -536,12 +530,7 @@ func _point_card(id: String) -> void:
 	await hud.get_tree().process_frame
 	await hud.get_tree().process_frame   # (the list fills the cards it scrolled to)
 	if is_instance_valid(list):
-		GuideArrow.point(hud, func() -> Vector2:
-			var card := list.card_of(id) if is_instance_valid(list) else null
-			if card == null or not card.is_visible_in_tree():
-				return Vector2.INF
-			var r := card.get_global_rect()
-			return Vector2(r.get_center().x, r.position.y))
+		GuideArrow.point(hud, GuideArrow.at_card(list, id))
 
 
 ## Collects a finished goal: the reward, its sound, and a word of what came.

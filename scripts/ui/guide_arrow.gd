@@ -40,12 +40,34 @@ static func point(parent: Node, where: Callable) -> GuideArrow:
 
 
 ## The top middle of a Control on screen while it is shown (for `target`): the arrow points down at its top.
+## Held weakly: a control freed (its panel closed) just ends the arrow. Every target below does the same.
 static func at_control(c: Control) -> Callable:
+	var ref: WeakRef = weakref(c)
 	return func() -> Vector2:
-		if not is_instance_valid(c) or not c.is_visible_in_tree():
-			return Vector2.INF
-		var r := c.get_global_rect()
-		return Vector2(r.get_center().x, r.position.y)   # (its top: the arrow comes down onto it, owner, 28 Nov)
+		return top_of_control(ref.get_ref() as Control)
+
+
+## `id`'s card in `list` while it shows it (a list reuses its cards as it scrolls).
+static func at_card(list: CardList, id: String) -> Callable:
+	var ref: WeakRef = weakref(list)
+	return func() -> Vector2:
+		var l := ref.get_ref() as CardList
+		return top_of_control(l.card_of(id)) if l != null else Vector2.INF
+
+
+## A point `at` of the farm grid (FarmGrid local), where the view shows it now.
+static func at_farm(grid: FarmGrid, at: Vector2) -> Callable:
+	var ref: WeakRef = weakref(grid)
+	return func() -> Vector2:
+		var g := ref.get_ref() as FarmGrid
+		return g.to_screen(at) if g != null else Vector2.INF
+
+
+static func top_of_control(c: Control) -> Vector2:
+	if c == null or not c.is_visible_in_tree():
+		return Vector2.INF
+	var r := c.get_global_rect()
+	return Vector2(r.get_center().x, r.position.y)   # (its top: the arrow comes down onto it, owner, 28 Nov)
 
 
 func _process(delta: float) -> void:

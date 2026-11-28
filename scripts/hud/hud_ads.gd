@@ -43,9 +43,13 @@ func build(root: Control, menu: VBoxContainer) -> void:
 	look.autostart = true
 	look.timeout.connect(refresh)
 	gift.add_child(look)
-	Game.plot_changed.connect(func(_i: int) -> void: refresh())
+	Game.plot_changed.connect(_on_plot)   # (methods, not lambdas: gone with the HUD, never called on a freed one)
 	Game.inventory_changed.connect(refresh)
 	refresh.call_deferred()
+
+
+func _on_plot(_i: int) -> void:
+	refresh()
 
 
 ## Shows each offer while it can be watched, with its words now.
