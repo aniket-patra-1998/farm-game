@@ -10,6 +10,12 @@ on:
       ram:
         description: "Emulator memory (a low-end phone: 3072M)"
         default: "4096M"
+      api:
+        description: "Android version's API level (Android 16: 36)"
+        default: "36"
+      build:
+        description: "player (the Play build) or debug (the test app)"
+        default: "player"
 permissions:
   contents: read
   actions: read
@@ -21,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: barnlight-player-apk
+          name: ${{ inputs.build == 'debug' && 'farm-game-debug-apk' || 'barnlight-player-apk' }}
           run-id: ${{ inputs.run_id }}
           github-token: ${{ github.token }}
       - name: Let the emulator use the machine's virtualisation
@@ -31,9 +37,9 @@ jobs:
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: ${{ inputs.api }}
           arch: x86_64
           target: google_apis
           ram-size: ${{ inputs.ram }}
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: sh tools/start_check.sh barnlight-player.apk && cat start-check.txt >> "$GITHUB_STEP_SUMMARY"
+          script: sh tools/start_check.sh ${{ inputs.build == 'debug' && 'farm-game-debug.apk com.example.farmgame.debug' || 'barnlight-player.apk com.aniketpatra.barnlight' }} && cat start-check.txt >> "$GITHUB_STEP_SUMMARY"

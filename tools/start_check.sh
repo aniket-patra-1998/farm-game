@@ -1,9 +1,9 @@
 #!/bin/sh
 # The player APK started on an emulator and watched (CI: apk.yml's start-check, start-check.yml): prints whether it
 # is still running after a minute and the log lines that say why it died (crash, memory, script errors).
-# docs/CRASHES.md. Needs adb with one device, the APK at $1.
+# docs/CRASHES.md. Needs adb with one device, the APK at $1 (its package $2).
 APK="${1:-barnlight-player.apk}"
-PKG=com.aniketpatra.barnlight
+PKG="${2:-com.aniketpatra.barnlight}"
 adb install -r "$APK"
 adb logcat -c
 adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
