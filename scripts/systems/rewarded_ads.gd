@@ -14,6 +14,7 @@ var _short: RewardedInterstitialAd   # the shorter format (a rewarded interstiti
 var _loading := false
 var _loading_short := false
 var _on_reward := Callable()
+var _ads_ready := false   # AdMob said it is ready (MobileAds.initialize's listener)
 var _retry: Timer
 
 
@@ -57,7 +58,13 @@ func _start() -> void:
 	var rc := RequestConfiguration.new()
 	rc.max_ad_content_rating = str(config.get("max_content_rating", "PG"))   # not-ui (an AdMob rating)
 	MobileAds.set_request_configuration(rc)
-	MobileAds.initialize()
+	# Ads load only once AdMob says it is ready (Google's order: a load before it crashed the game on Android 16,
+	# start check 28 Nov), and only from the level the offers start at (a new farm loads none: a lighter start).
+	var ready_now := OnInitializationCompleteListener.new()
+	ready_now.on_initialization_complete = func(_status: InitializationStatus) -> void:
+		_ads_ready = true
+		_load()
+	MobileAds.initialize(ready_now)
 	_retry = Timer.new()
 	_retry.wait_time = RETRY_SECONDS
 	_retry.one_shot = true
@@ -65,18 +72,20 @@ func _start() -> void:
 		_load()
 		_load_short())
 	add_child(_retry)
-	_load()
-	_load_short()
 
 
 func _load() -> void:
-	if _ad != null or _loading:
+	if not _ads_ready or _ad != null or _loading:
+		return
+	if Game.level() < Balance.i("ads.min_level"):
+		_retry.start()   # (no offers yet: look again in a minute)
 		return
 	_loading = true
 	var cb := RewardedAdLoadCallback.new()
 	cb.on_ad_loaded = func(ad: RewardedAd) -> void:
 		_loading = false
 		_ad = ad
+		_load_short()   # (one load at a time: the shorter format after the rewarded one)
 		var screen := FullScreenContentCallback.new()
 		screen.on_ad_dismissed_full_screen_content = _used
 		screen.on_ad_failed_to_show_full_screen_content = func(_e: AdError) -> void: _used()
@@ -88,6 +97,8 @@ func _load() -> void:
 
 
 func _load_short() -> void:
+	if not _ads_ready or Game.level() < Balance.i("ads.min_level"):
+		return
 	var unit := str(config.get("android_unit_short", ""))
 	if unit == "" or _short != null or _loading_short:
 		return
