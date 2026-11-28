@@ -7,7 +7,8 @@ extends RefCounted
 ## when the first cover has lifted; everything stays changeable in Settings.
 
 const GIVER_KEY := "chain:welcome"   # whose picture asks (the Welcome chain's giver)
-const NAMES := 12                    # FARM_NAME_1..12: the ready names
+const READY_NAMES := ["FARM_NAME_1", "FARM_NAME_2", "FARM_NAME_3", "FARM_NAME_4", "FARM_NAME_5", "FARM_NAME_6",
+	"FARM_NAME_7", "FARM_NAME_8", "FARM_NAME_9", "FARM_NAME_10", "FARM_NAME_11", "FARM_NAME_12"]
 const WAIT_STEP := 0.2               # seconds between looks for the loading cover
 
 var hud: FarmHud
@@ -110,7 +111,7 @@ func _closed() -> void:
 func ready_name(but := "") -> String:
 	var name := but
 	for _try in 8:
-		name = tr("FARM_NAME_%d" % (randi() % NAMES + 1))   # not-ui (a locale key)
+		name = tr(READY_NAMES[randi() % READY_NAMES.size()])
 		if name != but:
 			break
 	return name
