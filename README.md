@@ -2,9 +2,14 @@
 
 Single-player farming game for Android phones and tablets, built with Godot 4.
 
-**[Download the latest phone build (APK)](https://github.com/aniket-patra-1998/farm-game/releases/download/apk-latest/farm-game-debug.apk)**:
-rebuilt after every push to main and installs over the last one. For frame rates: Settings > Testing > Show
-performance numbers.
+**[Download the player build (APK)](https://github.com/aniket-patra-1998/farm-game/releases/download/apk-latest/barnlight-player.apk)**:
+exactly what players get from the Play Store (no debug tools; installs as "Barnlight").
+
+**[Download the test build (APK)](https://github.com/aniket-patra-1998/farm-game/releases/download/apk-latest/farm-game-debug.apk)**:
+with the showcase and debug tools (installs beside it as "Barnlight (test)"). For frame rates: Settings > Testing >
+Show performance numbers.
+
+Both are rebuilt after every push to main and install over the last one.
 This is milestone 1 of the V1 plan: the core farm.
 
 ## What works

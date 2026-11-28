@@ -308,6 +308,8 @@ jobs:
           fi
           gh release upload apk-latest build/farm-game-debug.apk build/farm-game-benchmark.apk \
             build/farm-game-benchmark-plain.apk --clobber
+          # The player APK (the Play bundle as one installable file: no debug tools), when the upload key made one.
+          if [ -s build/barnlight-player.apk ]; then gh release upload apk-latest build/barnlight-player.apk --clobber; fi
 
   # The player APK started on an Android emulator (x86_64, which runs our ARM build through Android's own
   # translation): does it open, and if not, the phone's log says why (artifact player-start-log). docs/CRASHES.md.
