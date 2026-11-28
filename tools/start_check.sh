@@ -16,7 +16,7 @@ adb logcat -d -v time > player-start.log || true
     echo "STARTED: the game is still running after 75 s"
   fi
   echo "--- why (crash, memory, errors) ---"
-  grep -E "F DEBUG|F libc|Fatal signal|SIGSEGV|SIGABRT|backtrace|#[0-9]+ pc|lmkd|lowmemorykiller|Kill '|killing|OutOfMemory|FATAL|E godot|SCRIPT ERROR|ANR in|has died" player-start.log | grep -v "E godot   :    at:" | head -120
+  grep -E "AndroidRuntime|Caused by|F/DEBUG|F/libc|F DEBUG|F libc|Fatal signal|SIGSEGV|SIGABRT|backtrace|#[0-9]+ pc|lmkd|lowmemorykiller|Kill '|killing|OutOfMemory|FATAL|E godot|SCRIPT ERROR|ANR in|has died" player-start.log | grep -v "E godot   :    at:" | head -120
   echo "--- the game's last lines ---"
   grep -E "godot|Godot" player-start.log | tail -40
 } | tee start-check.txt
