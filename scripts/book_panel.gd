@@ -54,6 +54,12 @@ var _pages := {}            # tab -> its page (a VBoxContainer in the content), 
 var _stale := {}            # tabs whose live page missed a refresh while hidden
 
 
+## A panel freed while open (its farm closed, the showcase left) lets the farm take taps again.
+func _exit_tree() -> void:
+	if is_open():
+		Game.modal_open = false
+
+
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP

@@ -281,7 +281,13 @@ func test_483_the_goal_follower_plays_a_new_farm_without_getting_stuck() -> void
 		# fresh crops wait for the next sowing; since goals credit the day's work, 28 Nov, the bot is a step ahead
 		# and sows more before leaving. A farm with withered crops is not held to every job.)
 		var lost := g.withered_count() > 0 and day == 3
-		_check(day == 2 or lost or sim.call("jobs_left") == 0, "day %d: every job done by its last visit; open %s" % [day,
+		# (Jobs the bot has no hand for, pollinating and feeding, may be left: the guided start's sure find makes
+		# the farm level faster, so day 3's jobs reach them; the bot's own reach, not the game's.)
+		var left := 0
+		for key: String in g.goals.open_keys():
+			if key.begins_with("daily:") and not str(g.goals.tasks_of(key)[0]["do"]) in ["pollinate", "feed"]:
+				left += 1
+		_check(day == 2 or lost or left == 0, "day %d: every job done by its last visit; open %s" % [day,
 			g.goals.open_keys().map(func(k: String) -> Array: return [g.goals.tasks_of(k), g.goals.progress_of(k)])])
 	_check(int(got[1]) > 0 and int(got[3]) > 0, "goals collected every day it comes: %s" % got)
 	_eq(got[2], 0, "nothing on the day it is away")
