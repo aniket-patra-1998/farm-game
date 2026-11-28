@@ -5,6 +5,13 @@ Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 
 
 
+## People's pictures (27 Nov, branch portraits)
+- The two farmers in Settings and the six neighbours each have a drawn picture of their own in art/portraits
+  (tools/make_portraits.py: soft light and shadow, no outlines; the owner found the code-drawn faces "too bad"
+  and picked this style from a sheet of three). A look's `portrait` names the picture (data/social.json,
+  HudSettings.FARMER_PICTURES); PortraitIcon shows it and still draws a face for a look that names none.
+  Test 660. Not seen on a phone.
+
 ## Ready-made pieces in place of our own (27 Nov, main; owner picked all three)
 - Statistics: GameAnalytics' official Godot SDK 3.2.0 (addons/GameAnalytics, GDExtension; Android arm64 and Linux
   binaries only). analytics.gd is now a thin layer: design, business, ad and error events; a remote config named

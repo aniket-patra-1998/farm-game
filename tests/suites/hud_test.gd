@@ -1490,3 +1490,27 @@ func test_627_settings_show_the_licences_their_parts_ask_for() -> void:
 			continue
 		_check(str(presets.get_value(section, "include_filter")).contains(HudSettings.FONT_LICENCE.trim_prefix("res://")),
 			"%s ships the font's licence" % section)
+
+
+## Every person the game shows has a picture of her own (art/portraits, tools/make_portraits.py: the owner found
+## the faces drawn by code "too bad"): the two farmers in Settings and each neighbour. PortraitIcon shows it, no
+## two people share one, and a look that names no picture is still drawn as a face.
+func test_660_people_have_their_own_pictures() -> void:
+	var looks: Array[Dictionary] = []
+	for who: String in HudSettings.FARMER_PICTURES.values():
+		looks.append({"portrait": who})
+	var social: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/social.json"))
+	for neighbour: Dictionary in social["neighbours"]:
+		looks.append(neighbour["look"])
+	var seen := {}
+	for look: Dictionary in looks:
+		var who := str(look.get("portrait", ""))
+		var face := PortraitIcon.of(look, 44.0)
+		_check(who != "" and face.picture != null, "a picture for %s" % [who if who != "" else str(look)])
+		_check(not seen.has(who), "and nobody else's (%s)" % who)
+		seen[who] = true
+		face.free()
+	_check(seen.size() == 8, "two farmers and six neighbours (%d)" % seen.size())
+	var stranger := PortraitIcon.of({"skin": "#f1c7a1", "hair": "#6b4423", "style": "short"}, 44.0)
+	_check(stranger.picture == null, "a look that names no picture is drawn as a face")
+	stranger.free()

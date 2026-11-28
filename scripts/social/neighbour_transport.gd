@@ -11,7 +11,7 @@ func roster() -> Array[String]:
 	return []
 
 
-## How neighbour `name` looks, for their portrait (PortraitIcon): {skin, hair, style, shirt}, or {}.
+## How neighbour `name` looks, for their portrait (PortraitIcon): {portrait, skin, hair, style, shirt}, or {}.
 func look_of(_name: String) -> Dictionary:
 	return {}
 

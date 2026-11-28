@@ -1,23 +1,41 @@
 class_name PortraitIcon
 extends UiIcon
-## A neighbour's face for the neighbours' strip and their mail, in the icons' sticker style (our own touch; on
-## Facebook FarmVille showed your friends' photos): their skin, hair in one of a few styles (short, long, bun, a
-## cap, a straw hat), eyes, a smile, rosy cheeks and the collar of their shirt, all from data/social.json `look`.
+## A person's face: the farmer a player picks in Settings, and a neighbour's in their mail and on a goal (our own
+## touch; on Facebook FarmVille showed your friends' photos). A look that names a `portrait` shows that picture
+## (art/portraits, drawn by tools/make_portraits.py: soft light and shadow, a face of her own for each; the owner
+## found the faces drawn here "too bad" and picked that style, 27 Nov). A look without one, such as a stranger
+## the game has no picture of, is still drawn here in the icons' sticker style from its skin, hair in one of a few
+## styles (short, long, bun, a cap, a straw hat), and shirt.
 
 const STYLES: Array[String] = ["short", "long", "bun", "cap", "straw_hat"]
 const HEAD_TOP := 0.68   # the top of the head, up from the middle (in the icon's units)
+const PICTURES := "res://art/portraits/%s.png"   # a look's `portrait` -> its picture
+const PICTURE_FILL := 0.96   # how much of the icon's box a picture fills
 
 var look := {}
+var picture: Texture2D   # the person's drawn picture, when the look names one
 
 
-## The portrait for `face_look` ({skin, hair, style, shirt}) at `px` across.
+## The portrait for `face_look` ({skin, hair, style, shirt, and a `portrait` when she has a picture}) at `px`
+## across.
 static func of(face_look: Dictionary, px: float) -> PortraitIcon:
 	var p := PortraitIcon.new()
 	p.kind = "portrait"
 	p.look = face_look
+	p.picture = picture_of(face_look)
+	if p.picture != null:   # a picture is shown much smaller than it is drawn
+		p.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	p.custom_minimum_size = Vector2(px, px)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return p
+
+
+## The picture `face_look` names, or null when it names none or the file is not there.
+static func picture_of(face_look: Dictionary) -> Texture2D:
+	var who := str(face_look.get("portrait", ""))
+	if who == "" or not ResourceLoader.exists(PICTURES % who):
+		return null
+	return load(PICTURES % who) as Texture2D
 
 
 func _col(key: String, otherwise: String) -> Color:
@@ -30,6 +48,10 @@ func _draw() -> void:
 		return
 	_c = size / 2.0
 	_r = _s / 2.0 * 0.86
+	if picture != null:
+		var half := Vector2.ONE * _s / 2.0 * PICTURE_FILL
+		draw_texture_rect(picture, Rect2(_c - half, half * 2.0), false)
+		return
 	_painted()
 
 
