@@ -36,6 +36,7 @@ const SECTION_LINE := 1.0   # px of the thin line under a section (card_frame)
 const SECTION_PAD := 10.0   # px above and below a section's content
 
 var shape := Shape.CARDS   # what the panel open holds (`open_panel`)
+var _least := LEAST_SHARE   # the shortest this panel is, of the screen's height
 var _tallest := 0.0         # the tallest page shown since the panel opened (its height follows it)
 var _title: Label
 var _dim: ColorRect
@@ -141,7 +142,7 @@ func _fit_screen() -> void:
 	var view := get_viewport_rect().size
 	_panel.custom_minimum_size.x = width_for(view.x, view.y) if shape == Shape.CARDS \
 		else minf(UiTheme.size("book_list_width"), view.x - UiTheme.size("book_inset"))
-	_scroll.custom_minimum_size.y = view.y * HEIGHT_SHARE
+	_scroll.custom_minimum_size.y = view.y * (HEIGHT_SHARE if _least > 0.0 else _least)
 	_tallest = 0.0
 
 
@@ -160,7 +161,7 @@ func _fit_height() -> void:
 		var high := shown.get_combined_minimum_size().y
 		var settling := Engine.get_process_frames() - _opened_frame <= FIT_FRAMES + 1
 		_tallest = high if settling else maxf(_tallest, high)
-		_scroll.custom_minimum_size.y = clampf(_tallest, view.y * LEAST_SHARE, view.y * HEIGHT_SHARE)
+		_scroll.custom_minimum_size.y = clampf(_tallest, view.y * _least, view.y * HEIGHT_SHARE)
 
 
 ## How wide a panel is on a screen `view_w` across (and `view_h` high: the screen's own when not given): as wide
@@ -174,8 +175,10 @@ static func width_for(view_w: float, view_h := -1.0) -> float:
 ## builder(content: VBoxContainer) fills the panel; it runs again on refresh(). `as_shape`: CARDS (a shelf of
 ## cards: as wide as the screen allows) or LIST (rows and choices, Settings, the inbox: a column as wide as its
 ## words need, `book_list_width`).
-func open_panel(title: String, builder: Callable, as_shape := Shape.CARDS) -> void:
+## `short`: a card of a few lines (a step's Well done) is as short as its lines, not LEAST_SHARE of the screen.
+func open_panel(title: String, builder: Callable, as_shape := Shape.CARDS, short := false) -> void:
 	shape = as_shape
+	_least = 0.0 if short else LEAST_SHARE
 	_tabs = []
 	_tab = 0
 	_show(title, builder)
@@ -184,6 +187,7 @@ func open_panel(title: String, builder: Callable, as_shape := Shape.CARDS) -> vo
 ## Opens a panel with tabs: `tabs` = [[name, builder]], `first` the one shown (FarmVille's Market shelves).
 func open_tabs(title: String, tabs: Array, first := 0, as_shape := Shape.CARDS) -> void:
 	shape = as_shape
+	_least = LEAST_SHARE
 	_tabs = tabs
 	_tab = clampi(first, 0, tabs.size() - 1)
 	_show(title, tabs[_tab][1])

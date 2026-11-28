@@ -3,6 +3,17 @@
 Read this, CLAUDE.md, and the design doc "Farm game: buildings, end to end"
 (https://claude.ai/artifact/BCxz5VHsfe6G7dSQnHLWsf) before starting. Don't re-read whole files: grep.
 
+## The guided start as a spotlight (28 Nov, main; owner's pick A of three)
+- GuideArrow is a spotlight while guiding (HudGuide sets GuideArrow.spot_allowed): the screen dims but for a
+  circle (`guide_hole`) round the target, a gold ring pulses and a drawn hand taps. A tap outside does nothing and
+  rests the spotlight for REST_MS; no spotlight while something is in hand, behind a level-up, or before HudIntro.
+- Maple's bubble (HudGuide.strip) sits bottom-left over the tools (moves up when the target falls under it), hides
+  while a panel or sheet is open; pips for the steps. Well done is a short card (BookPanel.open_panel `short`).
+- Check it as the owner sees it: guided_play_test with GUIDE_SHOTS and a renderer at 1600x720 (the test's header).
+  That run found and fixed: Place's own tap dropping the chicken back (Placement waits for a press of its own),
+  Place pushed off the inbox's edge, plow's arrow on grass behind the Hay Bale (FarmGrid.nearest_tappable).
+- Open: steps 11-13 complete at once for a player who already did them (credit from `recent`); the last screen.
+
 
 
 ## Ready-made pieces in place of our own (27 Nov, main; owner picked all three)

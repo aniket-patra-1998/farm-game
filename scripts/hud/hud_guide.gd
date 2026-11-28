@@ -11,6 +11,7 @@ extends RefCounted
 const KEY := "chain:welcome"         # not-ui (the guided chain's goal key)
 const CHAIN := "welcome"             # not-ui
 const POINT_EVERY := 2.5             # seconds between looks for whether the arrow should point again
+const BUBBLE_Z := 101                # above the spotlight (GuideArrow: z 100)
 const WATCH_EVERY := 0.25            # seconds between looks for a panel or sheet opening or closing
 const DONE_PANEL := "GuideDone"      # not-ui (node names: tests find them)
 const READY_PANEL := "GuideReady"    # not-ui
@@ -23,6 +24,8 @@ var _say: Label
 var _shown_done := -1    # the step whose Well done card is up (or was: it is not shown twice)
 var _was_guiding := false
 var _scene := ""         # what was open at the last watch (the book, a sheet, a thing in hand)
+var _pips: HBoxContainer # a pip a step: done, this one, to come
+var _high := false       # the bubble moved up (the spotlight fell where it stands)
 
 
 func _init(owner: FarmHud) -> void:
@@ -35,32 +38,45 @@ static func guiding() -> bool:
 		bool(Game.goals.chain_of(CHAIN).get("guided", false))
 
 
-func build(root: Control, y: float) -> void:
+func build(root: Control, _y: float) -> void:
+	# Maple's bubble (owner's pick A, 28 Nov): her face and one line at the bottom-left, clear of the top bar and of
+	# what to tap (it moves up when the spotlight would fall under it), with the steps as pips under her words.
 	strip = PanelContainer.new()
 	strip.name = "GuideStrip"   # not-ui (a node's name)
-	var sb := UiKit.card_box("card_face")
-	sb.set_content_margin_all(UiTheme.size("card_pad"))
-	strip.add_theme_stylebox_override("panel", sb)
-	strip.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	strip.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	strip.offset_top = y
+	strip.add_theme_stylebox_override("panel", UiKit.paper_box(UiTheme.size("card_pad")))
+	strip.z_index = BUBBLE_Z   # (over the spotlight's dark: Maple speaks in the light)
 	root.add_child(strip)
+	_place_strip(false)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.add_child(row)
-	_face = HudGoals.picture_of(KEY, UiTheme.size("goal_task_icon"))
+	_face = HudGoals.picture_of(KEY, UiTheme.size("guide_face"))
 	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_face.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_face)
-	_count = BookPanel.text("", UiTheme.CAPTION, BookPanel.GOOD)
-	_count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_count)
-	_say = BookPanel.text("", UiTheme.BODY)
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_theme_constant_override("separation", int(UiTheme.size("hud_gap") / 2.0))
+	row.add_child(col)
+	var head := HBoxContainer.new()
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(head)
+	var who := BookPanel.text(UiTheme.tidy(HudGoals.giver_of(CHAIN)), UiTheme.CAPTION, UiTheme.color("accent_text"))
+	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(who)
+	_count = BookPanel.text("", UiTheme.CAPTION, BookPanel.SOFT)
+	head.add_child(_count)
+	_say = BookPanel.text("", UiTheme.HEADING)
 	_say.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_say.custom_minimum_size.x = UiTheme.size("guide_strip_width")
-	_say.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_say)
+	col.add_child(_say)
+	_pips = HBoxContainer.new()
+	_pips.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pips.add_theme_constant_override("separation", int(UiTheme.size("pip_gap")))
+	col.add_child(_pips)
+	GuideArrow.spot_allowed = _spot_allowed
+	_hear_book.call_deferred()
 	strip.gui_input.connect(func(e: InputEvent) -> void:   # (a tap on the strip: Show me, on the release)
 		if e is InputEventMouseButton and not e.pressed and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 			strip.accept_event()
@@ -86,7 +102,7 @@ func refresh() -> void:
 	if strip == null or not is_instance_valid(strip):
 		return
 	var on := guiding()
-	strip.visible = on and not hud.interface_hidden and _after_intro()
+	strip.visible = on and not hud.interface_hidden and _after_intro() and not _covered()
 	if _was_guiding and not on and Game.goals.chains_done.has(CHAIN):
 		_was_guiding = false
 		_show_ready.call_deferred()
@@ -96,8 +112,9 @@ func refresh() -> void:
 		return
 	var step := int(Game.goals.chain_step[CHAIN])
 	var steps: Array = Game.goals.chain_of(CHAIN).get("steps", [])
-	_count.text = tr("GUIDE_STEP") % [step + 1, steps.size()]
+	_count.text = UiTheme.tidy(tr("GUIDE_STEP") % [step + 1, steps.size()])
 	_say.text = UiTheme.tidy(HudGoals.say_of(KEY))
+	_fill_pips(step, steps.size())
 	if Game.goals.is_done(KEY) and _shown_done != step:
 		_shown_done = step
 		_show_done.call_deferred(step)
@@ -128,11 +145,14 @@ func _watch() -> void:
 		hud.grid != null and hud.grid.placing.is_empty()]
 	if now != _scene:
 		_scene = now
+		_clear_arrows()   # (what it pointed at was in what just opened or closed)
+		refresh()
 		_point_again()
+	_dodge()
 
 
 func _point_again() -> void:
-	if not _after_intro():
+	if not _after_intro() or Time.get_ticks_msec() < GuideArrow.rest_until:
 		return
 	if guiding() and Game.goals.is_done(KEY) and _shown_done == -1:
 		refresh()   # (a Well done that waited for a panel or a placing to finish)
@@ -176,16 +196,17 @@ func _show_done(step: int) -> void:
 	if Game.modal_open or (hud.grid != null and not hud.grid.placing.is_empty()) or _busy():
 		_shown_done = -1   # (not over a panel, a placing or a press under way: asked again in a moment)
 		return
+	_clear_arrows()   # (no spotlight left over the card)
 	var learn := str((Game.goals.chain_of(CHAIN)["steps"][step] as Dictionary).get("learn", ""))
 	var reward := Game.goals.reward_of(KEY)
 	hud.book.open_panel(tr("GUIDE_WELL_DONE"), func(content: VBoxContainer) -> void:
 		content.name = DONE_PANEL
 		var head := HBoxContainer.new()
 		head.add_theme_constant_override("separation", int(UiTheme.size("row_gap")))
-		var pic := HudGoals.picture_of(KEY, UiTheme.size("inbox_face"))
+		var pic := HudGoals.picture_of(KEY, UiTheme.size("guide_face"))
 		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		head.add_child(pic)
-		var words := BookPanel.text(UiTheme.tidy(tr(learn)) if learn != "" else "", UiTheme.BODY)
+		var words := BookPanel.text(UiTheme.tidy(tr(learn)) if learn != "" else "", UiTheme.HEADING)
 		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		head.add_child(words)
@@ -195,13 +216,13 @@ func _show_done(step: int) -> void:
 		gets.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		gets.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		foot.add_child(gets)
-		var next := hud.panel_button(tr("GUIDE_NEXT"))
+		var next := UiKit.primary(hud.panel_button(tr("GUIDE_NEXT")))
 		next.name = "GuideNext"   # not-ui (a node's name)
 		next.pressed.connect(func() -> void:
 			hud.book.close_panel()
 			Game.goals.claim(KEY))
 		foot.add_child(next)
-		content.add_child(foot), BookPanel.Shape.LIST)
+		content.add_child(foot), BookPanel.Shape.LIST, true)
 
 
 ## "Your farm is ready": the guided start is over and everything is open.
@@ -213,5 +234,80 @@ func _show_ready() -> void:
 		go.name = "GuideGo"   # not-ui (a node's name)
 		go.size_flags_horizontal = Control.SIZE_SHRINK_END
 		go.pressed.connect(func() -> void: hud.book.close_panel())
-		content.add_child(go), BookPanel.Shape.LIST)
+		content.add_child(go), BookPanel.Shape.LIST, true)
 	hud.ads.refresh()
+
+
+## A panel up: the spotlight on the farm goes that moment, not a watch later (the book is made after the guide).
+func _hear_book() -> void:
+	if hud.book != null and not hud.book.opened.is_connected(_watch):
+		hud.book.opened.connect(_watch)
+
+
+## The bubble at the bottom-left over the tools, or (`high`) up at the left under the portrait.
+func _place_strip(high: bool) -> void:
+	_high = high
+	var gap := UiTheme.size("hud_gap")
+	if high:
+		strip.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		strip.grow_vertical = Control.GROW_DIRECTION_END
+		strip.offset_top = FarmHud.top_h() + UiTheme.size("guide_high_drop")
+		strip.offset_bottom = strip.offset_top
+	else:
+		strip.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		strip.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		strip.offset_bottom = -FarmHud.bottom_h() - gap
+		strip.offset_top = strip.offset_bottom
+	strip.grow_horizontal = Control.GROW_DIRECTION_END
+	strip.offset_left = gap
+	strip.offset_right = gap
+
+
+## Moves the bubble up when the spotlight falls under it, and back down when it doesn't.
+func _dodge() -> void:
+	var at := Vector2.INF
+	for a in hud.find_children("*", "GuideArrow", true, false):   # not-ui (a class name)
+		if (a as GuideArrow).target.is_valid():
+			at = (a as GuideArrow).target.call()
+	if at == Vector2.INF:
+		return
+	var reach := GuideArrow.hole_radius() * 2.0
+	var under := strip.get_global_rect().grow(reach).has_point(at)
+	if under:
+		_place_strip(not _high)
+
+
+## Whether a panel or a building's sheet is up (the bubble steps aside: the spotlight and hand show the way there).
+func _covered() -> bool:
+	return hud.book.is_open() or (hud.sheet != null and hud.sheet.is_open())
+
+
+## Whether the arrow may be a spotlight now: guiding, nothing in hand, no other card (a level-up) over the farm.
+func _spot_allowed() -> bool:
+	if not guiding() or not _after_intro() or hud.interface_hidden:
+		return false
+	if hud.grid != null and (not hud.grid.placing.is_empty() or hud.grid.carrying_soon != ""):
+		return false
+	return not Game.modal_open or _covered()
+
+
+func _clear_arrows() -> void:
+	for a in hud.find_children("*", "GuideArrow", true, false):   # not-ui (a class name)
+		a.queue_free()
+
+
+## A pip a step: the done ones filled, this one in the accent, the rest empty.
+func _fill_pips(step: int, steps: int) -> void:
+	if _pips.get_child_count() != steps:
+		for c in _pips.get_children():
+			c.free()
+		for k in steps:
+			var pip := Panel.new()
+			pip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			pip.custom_minimum_size = Vector2(UiTheme.size("pip_w"), UiTheme.size("pip_h"))
+			_pips.add_child(pip)
+	for k in steps:
+		var sb := StyleBoxFlat.new()
+		sb.set_corner_radius_all(int(UiTheme.size("pip_h") / 2.0))
+		sb.bg_color = UiTheme.color("done" if k < step else ("accent" if k == step else "track"))
+		(_pips.get_child(k) as Panel).add_theme_stylebox_override("panel", sb)

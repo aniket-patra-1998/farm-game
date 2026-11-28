@@ -15,6 +15,7 @@ const REST_FADE := 1.4     # seconds the interface takes to fade away over an id
 const WAKE_FADE := 0.2     # ..and to come back at a touch
 const AWAY_WAIT := 0.5     # seconds between looks for a panel to close before the away card shows
 const TOAST_SECONDS := 1.8 # seconds a message stays before it fades (FloatText.FADE_TIME)
+const TOAST_BELOW := 44.0  # px a message sits below the placing words' row (both at once overlapped, 28 Nov)
 
 const WOOD := Color("#7a4f2c")
 const WOOD_DARK := Color("#5c3a1e")
@@ -410,7 +411,7 @@ func _top_holder(root: Control, y: float) -> CenterContainer:
 func _build_toast(root: Control) -> void:
 	_toast = FloatText.label("", 22)   # (floating words, no box: FloatText)
 	_toast.modulate.a = 0.0
-	_toast_holder = _top_holder(root, top_h() + 16)
+	_toast_holder = _top_holder(root, top_h() + 16 + TOAST_BELOW)   # (under the placing words, not over them)
 	_toast_holder.add_child(_toast)
 
 

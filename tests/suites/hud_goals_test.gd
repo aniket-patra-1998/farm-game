@@ -223,3 +223,62 @@ func test_666_show_me_always_shows_something() -> void:
 		await get_tree().create_timer(0.3).timeout
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_670_the_guided_spotlight_lets_through_only_its_circle() -> void:
+	# (Owner's pick A, 28 Nov: the screen dims but for what to tap; a tap elsewhere does nothing, and the spotlight
+	# goes away for a while so a player who wants something else can do it.)
+	var layer := CanvasLayer.new()   # (over whatever else the tests left on screen, as the HUD is)
+	layer.layer = 50
+	add_child(layer)
+	var root := Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(root)
+	var inside := Button.new()
+	inside.position = Vector2(300, 300)
+	inside.size = Vector2(60, 60)
+	root.add_child(inside)
+	var outside := Button.new()
+	outside.position = Vector2(40, 40)
+	outside.size = Vector2(60, 60)
+	root.add_child(outside)
+	var hits := {"in": 0, "out": 0}
+	inside.pressed.connect(func() -> void: hits["in"] += 1)
+	outside.pressed.connect(func() -> void: hits["out"] += 1)
+	var was: Callable = GuideArrow.spot_allowed
+	GuideArrow.spot_allowed = func() -> bool: return true
+	GuideArrow.rest_until = 0
+	var arrow := GuideArrow.point(root, GuideArrow.at_control(inside))
+	await get_tree().create_timer(GuideArrow.GRACE + 0.1).timeout
+	_check(arrow.spotlit(), "the arrow is a spotlight while guiding")
+	await _tap_at(outside.get_global_rect().get_center())
+	await get_tree().process_frame
+	_eq(hits["out"], 0, "a tap outside its circle does nothing")
+	_check(GuideArrow.rest_until > Time.get_ticks_msec(), "and sends the spotlight away for a while")
+	arrow = GuideArrow.point(root, GuideArrow.at_control(inside))
+	await get_tree().create_timer(GuideArrow.GRACE + 0.1).timeout
+	_check(not arrow.spotlit(), "it stays away")
+	await _tap_at(outside.get_global_rect().get_center())
+	await get_tree().process_frame
+	_eq(hits["out"], 1, "so the next tap does what the player wanted")
+	GuideArrow.rest_until = 0
+	arrow = GuideArrow.point(root, GuideArrow.at_control(inside))
+	await get_tree().create_timer(GuideArrow.GRACE + 0.1).timeout
+	await _tap_at(inside.get_global_rect().get_center())
+	await get_tree().process_frame
+	_eq(hits["in"], 1, "a tap in the circle reaches what it lights")
+	GuideArrow.spot_allowed = was
+	layer.queue_free()
+	await get_tree().process_frame
+
+
+func _tap_at(at: Vector2) -> void:
+	var tf := get_viewport().get_final_transform()
+	for down: bool in [true, false]:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = down
+		e.position = tf * at
+		Input.parse_input_event(e)
+		await get_tree().process_frame
