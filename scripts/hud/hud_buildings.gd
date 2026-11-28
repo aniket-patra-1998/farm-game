@@ -47,13 +47,18 @@ func state_line(o: Dictionary) -> String:
 ## A home for what's found while farming (the Gopher Garden): each kind with how many you have (a question
 ## mark for the ones not found yet) and what it takes to grow.
 func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
-	var family := str(Game.item_data(o["id"]).get("home_of", ""))
+	content.add_child(finds_card(str(Game.item_data(o["id"]).get("home_of", "")), Game.size_name(o)))
+
+
+## A family's finds as one card (the home's sheet, and Collections before the home is built): each kind with
+## how many you have (a question mark for the ones not found yet), what it takes to grow, and what it helps.
+static func finds_card(family: String, heading: String) -> PanelContainer:
 	var fam: Dictionary = Game.finds.families.get(family, {})
 	var card := BookPanel.card()
 	card.add_theme_constant_override("separation", int(UiTheme.size("hud_gap")))
-	card.add_child(BookPanel.text(Game.size_name(o), UiTheme.HEADING))
-	card.add_child(BookPanel.text(tr("FINDS_HOME_FOUND") % [fam.get("name", family), Game.finds.total(family),
-		Game.finds.distinct(family), (fam.get("kinds", []) as Array).size()], UiTheme.HEADING))
+	card.add_child(BookPanel.text(heading, UiTheme.HEADING))
+	card.add_child(BookPanel.text(TranslationServer.translate("FINDS_HOME_FOUND") % [fam.get("name", family),
+		Game.finds.total(family), Game.finds.distinct(family), (fam.get("kinds", []) as Array).size()], UiTheme.HEADING))
 	for kind: Dictionary in fam.get("kinds", []):
 		var n := Game.finds.count(str(kind["id"]))
 		card.add_child(BookPanel.text("%s  ×%d  (%s)" % [kind["name"], n, kind["rarity"]] if n > 0
@@ -65,11 +70,13 @@ func build_finds_home(content: VBoxContainer, o: Dictionary) -> void:
 			next_at = int(t)
 			break
 	if next_at > 0:
-		card.add_child(BookPanel.text(tr("FINDS_HOME_NEXT") % next_at, UiTheme.HEADING, BookPanel.SOFT))
+		card.add_child(BookPanel.text(TranslationServer.translate("FINDS_HOME_NEXT") % next_at, UiTheme.HEADING,
+			BookPanel.SOFT))
 	for target: String in fam.get("helps", {}):
-		card.add_child(BookPanel.text(tr("FINDS_HELPS") % [roundi(float(fam["helps"][target]) * 100.0),
+		card.add_child(BookPanel.text(TranslationServer.translate("FINDS_HELPS") % [
+			roundi(float(fam["helps"][target]) * 100.0),
 			str(Game.finds.families.get(target, {}).get("name", target)).to_lower()], UiTheme.HEADING, BookPanel.HEAD))
-	content.add_child(BookPanel.card_frame(card))
+	return BookPanel.card_frame(card)
 
 
 

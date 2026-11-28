@@ -34,7 +34,7 @@ func can_rotate() -> bool:
 
 
 func can_sell() -> bool:
-	return id != "farmhouse"
+	return id != "farmhouse" and id != "mailbox"
 
 
 func validate(catalog) -> Array[String]:

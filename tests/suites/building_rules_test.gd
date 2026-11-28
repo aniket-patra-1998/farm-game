@@ -296,3 +296,20 @@ func test_521_a_thing_put_down_for_the_player_keeps_the_placing_rule() -> void:
 	_check(g.place_somewhere("apple_tree"), "with only spots by the Coop left, a tree still lands")
 	_check(Vector2i(int(g.objects[-1]["row"]), int(g.objects[-1]["col"])) in ring, "beside the Coop")
 	_done(g)
+
+
+func test_665_the_mailbox_stays_and_a_lost_one_comes_back() -> void:
+	# (Owner, 28 Nov: the mailbox was sold by mistake, and with it the way to the inbox on the farm.)
+	var g := _farm()
+	var box := {}
+	for o: Dictionary in g.objects:
+		if str(o["id"]) == GameState.MAILBOX:
+			box = o
+	_check(not box.is_empty(), "a new farm has its mailbox")
+	_eq(g.buildings.can_sell(box).why, BuildingSystem.Why.KEPT, "the mailbox can't be sold")
+	_check(not g.restore_mailbox(), "a farm with its mailbox gets no second one")
+	g.remove_object(box)   # (as a save from before 28 Nov, where it was sold)
+	_check(g.restore_mailbox(), "a farm without one gets it back")
+	var back := g.objects.filter(func(o: Dictionary) -> bool: return str(o["id"]) == GameState.MAILBOX)
+	_eq(back.size(), 1, "one mailbox, at its spot")
+	_done(g)

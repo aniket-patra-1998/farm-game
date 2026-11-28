@@ -4,7 +4,7 @@ extends GameSystem
 ##   can_buy      its level, its price, and how many one farm may have (FarmVille: 5 Dairy Farms, 3
 ##                crafting buildings in all, 1 of most others)
 ##   can_expand   the next size: not past the biggest, not while it's still a frame, materials in hand
-##   can_sell     not the Barn or Farmhouse, not with anyone inside (they'd have nowhere to go)
+##   can_sell     not the Barn, Farmhouse or Mailbox, not with anyone inside (they'd have nowhere to go)
 ## and the materials a frame or a size still needs can be bought with gems, as FarmVille sold them for
 ## Farm Cash. Who may move into a home is the housing system's (Game.homes.fit), which answers the same way.
 ## The UI asks here and shows the reason; it never repeats a rule. Reached as `Game.buildings`; it keeps
@@ -27,7 +27,7 @@ const FIT_WHY := {
 
 ## How many of one item a farm may hold, by kind (FarmVille capped these too). Buildings are BuildingDef.limit().
 ## Buildings that stay where they are: the starter Barn and the Farmhouse.
-const KEPT := ["barn", "farmhouse"]
+const KEPT := ["barn", "farmhouse", "mailbox"]   # (the mailbox opens the inbox: sold by mistake, 28 Nov)
 const DAY_SECONDS := 86400
 
 var _deal_key := ""   # the day and level today's deal was chosen for

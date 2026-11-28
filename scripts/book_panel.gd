@@ -26,6 +26,7 @@ const OPEN_GUARD_FRAMES := 2
 ## The panel uses the screen (a phone's 20:9 especially): its scrolling area is this share of the screen's
 ## height, and it is as wide as the screen allows up to this many times the screen's height.
 const HEIGHT_SHARE := 0.66
+const FIT_FRAMES := 3     # frames the height is measured over as a page is shown
 const LEAST_SHARE := 0.3   # a panel with little in it is this short at least (of the screen's height)
 const INFO_SIZE := 1.6   # an ⓘ's size against the text beside it
 const INFO_LEAST := 40.0   # ..and never smaller than this (a finger must hit it)
@@ -141,14 +142,19 @@ func _fit_screen() -> void:
 ## The panel as tall as what it holds (owner, 19 Nov: a goal sheet with one goal filled the screen), between
 ## LEAST_SHARE and HEIGHT_SHARE of the screen; it only grows while open, so a tab never makes it jump smaller.
 ## Measured a frame after a page is built, when its lines know their width.
+## While it opens (FIT_FRAMES), the height follows what the page measures each frame, smaller too: wrapped words
+## measure tall until they know their width (a goal card opened at two-thirds of the screen, mostly empty, 28 Nov).
 func _fit_height() -> void:
-	await get_tree().process_frame
-	var shown := page()
-	if shown == null or not is_open():
-		return
-	var view := get_viewport_rect().size
-	_tallest = maxf(_tallest, shown.get_combined_minimum_size().y)
-	_scroll.custom_minimum_size.y = clampf(_tallest, view.y * LEAST_SHARE, view.y * HEIGHT_SHARE)
+	for i in FIT_FRAMES:
+		await get_tree().process_frame
+		var shown := page()
+		if shown == null or not is_open():
+			return
+		var view := get_viewport_rect().size
+		var high := shown.get_combined_minimum_size().y
+		var settling := Engine.get_process_frames() - _opened_frame <= FIT_FRAMES + 1
+		_tallest = high if settling else maxf(_tallest, high)
+		_scroll.custom_minimum_size.y = clampf(_tallest, view.y * LEAST_SHARE, view.y * HEIGHT_SHARE)
 
 
 ## How wide a panel is on a screen `view_w` across (and `view_h` high: the screen's own when not given): as wide
@@ -285,7 +291,17 @@ func _build_now() -> void:
 	_pages[_tab] = fresh
 	_stale.erase(_tab)
 	_builder.call(fresh)
+	_let_drags_through(fresh)
 	_fit_height()
+
+
+## Cards (panels) in a page let a drag through to the scroll, so the page scrolls wherever a finger drags, as on
+## any phone (a PanelContainer stops input by default: Settings, all cards, would not scroll, 28 Nov). Taps on
+## them still reach them first.
+static func _let_drags_through(page: Node) -> void:
+	for c in page.find_children("*", "", true, false):
+		if (c is PanelContainer or c is Panel) and (c as Control).mouse_filter == Control.MOUSE_FILTER_STOP:
+			(c as Control).mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 ## Shows the tab open's page, building it the first time.

@@ -1151,6 +1151,18 @@
    "v": 1,
    "note": "rewarded ads are offered from this level (owner, 28 Nov: no level gate; a rewarded ad is the player's own choice)"
   },
+  "coins_round": {
+   "v": 10,
+   "note": "a watch-for-coins ad gives what is missing for the buy, rounded up to this (owner's pick 3, 28 Nov)"
+  },
+  "coins_most_base": {
+   "v": 200,
+   "note": "the most coins one ad gives at a buy, plus coins_most_per_level a level; past it the ad is not offered"
+  },
+  "coins_most_per_level": {
+   "v": 50,
+   "note": "see coins_most_base"
+  },
   "per_day": {
    "v": 15,
    "note": "rewarded ads a player may watch a day in all (owner, 27 Nov: casual games cap at 15 to 20; past the day's rares the ladder gives commons)"

@@ -34,6 +34,8 @@ var seeds := {}                 # seeds a goal gave (Starter Seeds): crop id -> 
 var reveal_data := {}           # data/reveal.json: {after, buttons: {button -> {verbs, level, inbox}}}
 var revealed: Array[String] = []   # listed buttons this farm has been shown (they stay)
 var sure_spent: Array[String] = []  # goal keys whose `sure` find was handed to a harvest (take_sure_find)
+var recent := {}                # today's work not yet spent on a collected goal: "verb|subject" -> how many
+var recent_day := 0             # the day `recent` is for
 
 var _chain_by_id := {}
 var _gives_by_id := {}   # what each id gives today, while the day's jobs are picked (_gives_today)
@@ -79,6 +81,8 @@ func reset() -> void:
 	seeds = {}
 	revealed = []
 	sure_spent = []
+	recent = {}
+	recent_day = 0
 
 
 ## The chains a brand-new farm starts on (`new_farm`: the Welcome chain), at their first step. A farm saved
@@ -107,6 +111,7 @@ func save_to(data: Dictionary) -> void:
 	data["goal_seeds"] = seeds.duplicate()
 	data["goal_revealed"] = revealed.duplicate()
 	data["goal_sure_spent"] = sure_spent.duplicate()
+	data["goal_recent"] = {"day": recent_day, "done": recent.duplicate()}
 
 
 func load_from(data: Dictionary) -> void:
@@ -122,6 +127,13 @@ func load_from(data: Dictionary) -> void:
 			chains_done.append(id)
 	revealed = _strings(data.get("goal_revealed", []))
 	sure_spent = _strings(data.get("goal_sure_spent", []))
+	var rd: Variant = data.get("goal_recent", {})
+	var done: Variant = (rd as Dictionary).get("done", {}) if typeof(rd) == TYPE_DICTIONARY else {}
+	if typeof(done) == TYPE_DICTIONARY:
+		recent_day = maxi(0, int((rd as Dictionary).get("day", 0)))
+		for k: Variant in done:
+			if typeof(done[k]) in [TYPE_INT, TYPE_FLOAT] and int(done[k]) > 0:
+				recent[str(k)] = int(done[k])
 	var held := int_map(data.get("goal_seeds", {}))
 	for id: String in held:
 		if game.crops.has(id) and int(held[id]) > 0:
@@ -335,15 +347,70 @@ func matches(what: String, subject: String) -> bool:
 		what == "crop" and game.crops.has(subject))
 
 
+## A goal opening: its counts start from what was already done today (owner, 28 Nov: a hen collected just before
+## its goal opened had to wait a day; games credit work already done). Not today's jobs (they are today's work
+## by design), not a task that makes its thing come `ready`, not the state verbs (read from the farm anyway).
 func _take(key: String) -> void:
+	var tasks := tasks_of(key)
 	progress[key] = []
-	progress[key].resize(tasks_of(key).size())
+	progress[key].resize(tasks.size())
 	progress[key].fill(0)
+	if key.begins_with("daily:"):
+		return
+	_age_recent()
+	for t in tasks.size():
+		var task: Dictionary = tasks[t]
+		if STATE_VERBS.has(str(task["do"])) or task.get("ready", false):
+			continue
+		progress[key][t] = mini(_recent_of(task), int(task.get("n", 1)))
+
+
+## How much of today's unspent work `task` covers.
+func _recent_of(task: Dictionary) -> int:
+	var n := 0
+	for k: String in recent:
+		var part := k.split("|", true, 1)
+		if part[0] == str(task["do"]) and matches(str(task.get("what", ANY)), part[1] if part.size() > 1 else ""):
+			n += int(recent[k])
+	return n
+
+
+## Today's work, kept to credit goals that open later today.
+func _note_recent(verb: String, subject: String, n: int) -> void:
+	_age_recent()
+	var k := verb + "|" + subject
+	recent[k] = int(recent.get(k, 0)) + n
+
+
+## A collected goal spends the work its tasks needed, so the next goal is not paid by the same harvests twice.
+func _spend_recent(key: String) -> void:
+	_age_recent()
+	for task: Dictionary in tasks_of(key):
+		if STATE_VERBS.has(str(task["do"])):
+			continue
+		var need := int(task.get("n", 1))
+		for k: String in recent.keys():
+			if need <= 0:
+				break
+			var part := k.split("|", true, 1)
+			if part[0] == str(task["do"]) and matches(str(task.get("what", ANY)), part[1] if part.size() > 1 else ""):
+				var used := mini(need, int(recent[k]))
+				recent[k] = int(recent[k]) - used
+				need -= used
+				if int(recent[k]) <= 0:
+					recent.erase(k)
+
+
+func _age_recent() -> void:
+	if recent_day != game.day_number():
+		recent = {}
+		recent_day = game.day_number()
 
 
 func _on_did(verb: String, subject: String, n: int) -> void:
 	if not active():
 		return
+	_note_recent(verb, subject, n)
 	var changed := false
 	for key in open_keys():
 		var tasks := tasks_of(key)
@@ -394,6 +461,8 @@ func claim(key: String) -> Dictionary:
 		return {}
 	var part := key.split(":", true, 1)
 	var reward := {}
+	if part[0] != "daily":
+		_spend_recent(key)
 	match part[0]:
 		"chain":
 			reward = _claim_chain(part[1])

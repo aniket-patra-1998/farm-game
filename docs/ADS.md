@@ -29,3 +29,13 @@ Owner, 27 Nov: ads should feel like a choice, not a chore, and the helpers stay 
   loaded; if the one asked for is not, the other plays. The gift is still chosen on a button that says what it
   gives, which is the opt-in Google asks of that format. Not yet tried on a phone.
 - **Next.** Rescues for weather damage once weather withers crops.
+
+## Where they are offered (owner's picks 1, 2 and 3, 28 Nov)
+The Barn's Boosts tab hid them. Now (HudAds, HudMarket.show_about):
+1. **Free gift**: a button at the top of the side menu while an ad is ready, its badge the ladder (2/4, or ★ when
+   the next is the rare).
+2. **Revive**: a button over the toolbar while crops are withered ("Watch an ad: revive 6 withered crops").
+3. **Coins**: tapping something in the Market you are short of coins for offers "Watch an ad for N coins": what is
+   missing rounded up to `ads.coins_round`, never more than `ads.coins_most_base` + `ads.coins_most_per_level` a
+   level (past that, no offer). Counts toward the day's `per_day`; not counted as earned.
+No level gate (`min_level` 1). Ads load only after AdMob says it is ready (a load before crashed Android 16).

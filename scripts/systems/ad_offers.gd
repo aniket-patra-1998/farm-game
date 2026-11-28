@@ -1,8 +1,10 @@
 class_name AdOffers
 extends GameSystem
-## Rewarded ads the player chooses (docs/ADS.md; owner, 27 Nov). Two kinds:
+## Rewarded ads the player chooses (docs/ADS.md; owner, 27 Nov; placements 28 Nov: a gift button always on screen,
+## a revive on the farm, watch for coins at a buy). Three kinds:
 ## - the gift ladder: three ads each give a common reward, the fourth a guaranteed rare (the ad-chest pattern);
-## - a rescue: crops have withered, and an ad revives exactly those plots (counts as a rare).
+## - a rescue: crops have withered, and an ad revives exactly those plots (counts as a rare);
+## - coins: short of coins for something in the Market, an ad gives what is missing (up to ads.coins_most_*).
 ## At most Balance ads.rares_per_day rares a day from ads in all, ads.per_day ads, none before ads.min_level.
 ## Rewards are data/ads.json's prizes, given as the Mystery Box gives them. The ad itself is rewarded_ads.gd.
 ## Part of the game state: reached as `Game.offers`.
@@ -11,6 +13,7 @@ const CONFIG := "res://data/ads.json"
 const PLAYER := "res://scripts/systems/rewarded_ads.gd"
 const GIFT := "gift"       # not-ui (analytics names)
 const RESCUE := "rescue"   # not-ui
+const COINS := "coins"     # not-ui (short of coins at a buy: watch for what is missing)
 const BOX := "mystery_box"   # not-ui (a prize kind this file adds: a Mystery Box opened)
 
 static var ads_ready := Callable()   # tests: stands in for the player's loaded()
@@ -93,6 +96,33 @@ func gift_words() -> String:
 
 func rescue_words() -> String:
 	return tr("AD_RESCUE") % game.withered_count()
+
+
+## The coins an ad gives a player `short` of coins for a buy: what is missing, rounded up to ads.coins_round;
+## 0 when that is more than an ad gives (ads.coins_most_base + ads.coins_most_per_level a level) or no ad is
+## offered now.
+func coins_offer(short: int) -> int:
+	if short <= 0 or not _can_watch():
+		return 0
+	var step_by := maxi(Balance.i("ads.coins_round"), 1)
+	var n := ceili(float(short) / step_by) * step_by
+	var most := Balance.i("ads.coins_most_base") + Balance.i("ads.coins_most_per_level") * game.level()
+	return n if n <= most else 0
+
+
+func watch_coins(n: int) -> void:
+	if n > 0:
+		_watch(COINS, func() -> void: give_coins(n))
+
+
+## A watched coins ad: the coins it promised.
+func give_coins(n: int) -> void:
+	_roll_day()
+	if watched >= Balance.i("ads.per_day") or n <= 0:
+		return
+	watched += 1
+	game.add_coins(n, false)   # (not earned by farming: no earn goal counts it)
+	_done(COINS, tr("AD_COINS_GOT") % UiTheme.number(n))
 
 
 func watch_gift() -> void:

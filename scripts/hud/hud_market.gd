@@ -390,6 +390,15 @@ func show_about(strip: PanelContainer, about: VBoxContainer, id: String, it: Dic
 	if why != "":
 		words.add_child(BookPanel.text(why, UiTheme.HEADING, UiTheme.color("note")))
 	words.add_child(BookPanel.text(detail_of(id, it), UiTheme.HEADING, BookPanel.SOFT))
+	# Short of coins for it: an ad for what is missing, beside the reason (owner's pick 3, 28 Nov).
+	var price := int(Game.buildings.price_of(id).get("coins", 0))
+	var offer := Game.offers.coins_offer(price - Game.coins) if price > Game.coins else 0
+	if offer > 0:
+		var watch := hud.panel_button(tr("AD_FOR_COINS") % UiTheme.number(offer))
+		watch.name = "WatchForCoins"   # not-ui (a node's name)
+		watch.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		watch.pressed.connect(func() -> void: Game.offers.watch_coins(offer))
+		words.add_child(watch)
 	strip.visible = true
 	UiFx.crossfade(strip)   # (what was tapped fades in at the top of the shelf)
 	hud.book.scroll_to_top()

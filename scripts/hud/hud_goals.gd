@@ -14,6 +14,7 @@ const RING_INSET := 0.04         # the ring's way in from the face's edge, as a 
 const TABS := [["chain", "GOALS_STORY"], ["daily", "GOALS_TODAY"], ["project", "GOALS_PROJECTS"]]
 const DAILY_ICON := "calendar"
 const PROJECT_ICON := "barn"     # a project with no thing for its reward
+const TILE_LINES := 2   # a task tile's words: up to two lines
 const VERB_ICONS := {"plow": "hoe", "plant": "seeds", "harvest": "basket", "fertilize": "fertilizer",
 	"level": "star", "buy": "market", "build": "market", "own": "market"}   # a task with no thing's picture
 const TOOL_SPOTS := {"plow": "grass", "fertilize": "growing"}   # Show me's arrow: where each tool is used
@@ -280,9 +281,8 @@ func task_tile(task: Dictionary, at: Array) -> Control:
 	inner.add_child(picture)
 	var words := BookPanel.text(UiTheme.tidy(task_words(task)), UiTheme.CAPTION)
 	words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	words.autowrap_mode = TextServer.AUTOWRAP_OFF
-	words.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	words.clip_text = true
+	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART   # (whole words on up to two lines: never "Harvest…")
+	words.max_lines_visible = TILE_LINES
 	words.custom_minimum_size.x = w - pad * 2.0
 	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_child(words)
@@ -406,19 +406,41 @@ func show_me(task: Dictionary) -> void:
 		hud.show_market_for(str(to["market"]))
 		_point_card(str(to["market"]))
 	elif to.has("farm"):
-		_point_farm(str(to["farm"]), "")
+		var kind := str(to["farm"])
+		if _point_farm(kind, ""):
+			return
+		# Nothing of that kind on the farm yet: the step before it, so Show me never does nothing (28 Nov).
+		if kind == "ripe":   # (nothing ripe: what is growing, else plant, else plow)
+			if not _point_farm("growing", ""):
+				if _has_spot("plowed"):
+					hud.show_seeds()
+				else:
+					hud.tool_selected.emit("plow", "")
+					hud.tools.show_tool("plow")
+					_point_farm("grass", "plow")
+		elif kind.begins_with(FarmGrid.ITEM_SPOT):   # (the thing is not on the farm: its shelf in the Market)
+			var id := kind.trim_prefix(FarmGrid.ITEM_SPOT)
+			hud.show_market_for(id)
+			_point_card(id)
 
 
-## The arrow at the nearest spot of `kind` (the view goes there), or at tool `fallback`'s button when there is none.
-func _point_farm(kind: String, fallback: String) -> void:
+func _has_spot(kind: String) -> bool:
+	return hud.grid != null and not hud.grid.spots_of(kind).is_empty()
+
+
+## The arrow at the nearest spot of `kind` (the view goes there), or at tool `fallback`'s button when there is
+## none; whether it found a spot.
+func _point_farm(kind: String, fallback: String) -> bool:
 	var spot: Dictionary = hud.go_to.call(kind) if kind != "" and hud.go_to.is_valid() else {}
 	if not spot.is_empty() and hud.grid != null:
 		var grid := hud.grid
 		var at: Vector2 = spot["at"]
 		GuideArrow.point(hud, func() -> Vector2:
 			return grid.to_screen(at) if is_instance_valid(grid) else Vector2.INF)
-	elif hud.tools.buttons.has(fallback):
+		return true
+	if hud.tools.buttons.has(fallback):
 		GuideArrow.point(hud, GuideArrow.at_control(hud.tools.buttons[fallback]))
+	return false
 
 
 ## The arrow at `id`'s card in the open Market (its shelf scrolled to it), while that card shows it.
@@ -493,6 +515,9 @@ static func giver_of(chain_id: String) -> String:
 ## What the giver says on the step the chain is on (a locale key in the data); "" for others.
 static func say_of(key: String) -> String:
 	var part := key.split(":", true, 1)
+	if part[0] == "project":   # (a project says what it is: its own line, the same every stage)
+		var said := str(Game.goals.project_of(part[1]).get("say", ""))
+		return TranslationServer.translate(said) if said != "" else ""
 	if part[0] != "chain":
 		return ""
 	var c := Game.goals.chain_of(part[1])

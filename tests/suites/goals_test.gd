@@ -506,3 +506,32 @@ func test_531_the_crafter_builds_the_bakery_and_crafts() -> void:
 	_check(str(sim.call("craft_line")).begins_with("crafting: bakery built day 1"), "the summary line prints")
 	sim.free()
 	_done(g)
+
+
+func test_662_work_done_today_counts_for_a_goal_that_opens_later() -> void:
+	# (Owner, 28 Nov: a hen collected just before its goal opened meant a day's wait.)
+	var g := _goal_farm()
+	g.record("plow", "", 2)   # plowed before the first chain's second step asks for 2 plowed plots
+	g.record("harvest", "strawberries", 3)
+	_check(g.goals.is_done("chain:first"), "the open step counted the harvests")
+	g.goals.claim("chain:first")
+	var p := g.goals.progress_of("chain:first")
+	_eq(int(p[0][0]), 2, "the next step opens with the plowing already done today")
+	g.goals.claim("chain:first")
+	_check(g.goals.open_keys().has("chain:second"), "the next chain opened")
+	g.record("plant", "strawberries", 1)
+	_check(g.goals.is_done("chain:second"), "and it counts as usual")
+	# A collected goal spends its work: the same plowing does not pay a goal that opens after it.
+	_eq(g.goals._recent_of({"do": "plow", "what": ""}), 0, "the plowing was spent on the step that used it")
+	_eq(g.goals._recent_of({"do": "harvest", "what": "strawberries"}), 0, "and the harvests on theirs")
+	# Tomorrow, yesterday's work counts for nothing new.
+	g.record("plow", "", 5)
+	g.debug_time_offset += 86400
+	g.goals._age_recent()
+	_eq(g.goals._recent_of({"do": "plow", "what": ""}), 0, "a new day starts with nothing to credit")
+	# Saved and loaded, today's credit stays.
+	g.record("plow", "", 4)
+	var data := {}
+	g.goals.save_to(data)
+	g.goals.load_from(data)
+	_eq(g.goals._recent_of({"do": "plow", "what": ""}), 4, "today's credit survives a save")

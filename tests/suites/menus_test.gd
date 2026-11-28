@@ -488,3 +488,40 @@ func test_584_the_hud_fits_every_screen_without_overlaps() -> void:
 	Game.open_own_farm()
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_663_a_finger_dragged_on_a_card_scrolls_the_panel() -> void:
+	# (28 Nov: Settings would not scroll on a phone: its cards stopped the drag.)
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	for i in 5:
+		await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	hud.show_settings()
+	await get_tree().create_timer(0.6).timeout
+	var sc: ScrollContainer = hud.book.get("_scroll")
+	var r := sc.get_global_rect()
+	_check(sc.get_v_scroll_bar().max_value > sc.get_v_scroll_bar().page, "Settings is taller than its panel")
+	var tf := get_viewport().get_final_transform()
+	var from := Vector2(r.position.x + r.size.x * 0.3, r.end.y - 40.0)
+	var to := Vector2(from.x, r.position.y + 40.0)
+	var e := InputEventScreenTouch.new()
+	e.pressed = true
+	e.position = tf * from
+	Input.parse_input_event(e)
+	await get_tree().process_frame
+	for i in 10:
+		var d := InputEventScreenDrag.new()
+		d.position = tf * from.lerp(to, (i + 1) / 10.0)
+		d.relative = tf.basis_xform((to - from) / 10.0)
+		Input.parse_input_event(d)
+		await get_tree().process_frame
+	var u := InputEventScreenTouch.new()
+	u.position = tf * to
+	Input.parse_input_event(u)
+	await get_tree().create_timer(0.3).timeout
+	_check(sc.scroll_vertical > 0, "a drag up on a card scrolled it (%d)" % sc.scroll_vertical)
+	main.queue_free()
+	await get_tree().process_frame

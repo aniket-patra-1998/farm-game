@@ -41,7 +41,9 @@ func update() -> void:
 			continue
 		button.visible = Game.goals.shows(b)
 		if fresh.has(b):
-			UiFx.shine.call_deferred(button)   # (after the row has made room for it)
+			(func() -> void:   # (after the row has made room for it, if it is still there then)
+				if is_instance_valid(button):
+					UiFx.shine(button)).call_deferred()
 
 
 func _on_level(_l: int) -> void:

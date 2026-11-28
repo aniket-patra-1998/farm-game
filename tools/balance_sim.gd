@@ -24,6 +24,7 @@ extends Node
 ## its numbers (first harvest, levels, coins, goals) and stop.
 ## Reads the real systems, so a rule change shows up here too. A test drives it on its own farm (`game`).
 
+const SEED_RESERVE := 150   # coins a goal buy leaves for seeds (_goal_buy)
 const SECONDS_PER_ACTION := 1.15   # the farmer works 0.75 s at each job and walks a little between them
 const HOURS_DEFAULT := [8.0, 13.0, 20.0]     # local hours of the day the bot visits (with --visits=3)
 const LOOKAHEAD_VISITS := 12   # how many visits ahead a crop may ripen in
@@ -921,6 +922,10 @@ func _goal_buy() -> void:
 			continue
 		var id := _goal_item(str(task.get("what", "")))
 		if id == "" or not game.buildings.can_buy(id).ok():
+			continue
+		# (Never the seed money: a player keeps enough to sow the fields again before buying for a goal, or the
+		# farm stalls with nothing growing; goals credited with the day's work came faster and spent it, 28 Nov.)
+		if game.coins - int(game.buildings.price_of(id).get("coins", 0)) < SEED_RESERVE:
 			continue
 		if not _buy_somewhere(id) and _clear_a_plot():
 			_buy_somewhere(id)

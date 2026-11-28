@@ -44,6 +44,7 @@ var sheet   # a tapped home's sheet, a BuildingSheet (made when first needed, th
 var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
 var side: HudSide
+var ads: HudAds   # the rewarded ads on the farm: the Free gift button and Revive (owner's picks, 28 Nov)
 var helpers: HudHelpers   # the helpers' flower, bottom left
 var interface_hidden := false
 var camera: FarmCamera              # set by Main, for the zoom buttons
@@ -146,6 +147,8 @@ func _ready() -> void:
 	top.sky_tapped.connect(_sky_tapped)
 	side = HudSide.new(self)
 	side.build(root)
+	ads = HudAds.new(self)
+	ads.build(root, side.menu)
 	goals = HudGoals.new(self)
 	intro = HudIntro.new(self)
 	tools = HudTools.new(self)
@@ -309,8 +312,11 @@ func set_interface_hidden(on: bool) -> void:
 	var all: Array[Control] = top.hideable()
 	all.append(tools.panel)
 	all.append_array(side.hideable())
+	all.append(ads.rescue)
 	for c in all:
 		c.visible = not on
+	if not on:
+		ads.refresh()   # (its offers show only while an ad can be watched)
 	goals.update()
 
 

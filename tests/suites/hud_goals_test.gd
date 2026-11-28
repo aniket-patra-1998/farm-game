@@ -170,3 +170,52 @@ func test_660_a_new_farm_is_named_once_by_its_first_screen() -> void:
 	_check(Game.player.farm_name == before, "and the name kept")
 	main.queue_free()
 	await get_tree().process_frame
+
+
+func test_664_a_find_with_no_home_yet_says_where_it_is_and_shows_in_collections() -> void:
+	# (Owner, 28 Nov: a gopher found before the Gopher Garden was nowhere to be seen.)
+	Game.saving_enabled = false
+	Game.reset_game()
+	var said := []
+	var hear := func(m: String) -> void: said.append(m)
+	Game.message.connect(hear)
+	Game.finds.add("gopher", Game.finds.pick("gopher"))
+	Game.message.disconnect(hear)
+	_check(said.size() == 1 and str(said[0]).contains(str(Game.item_data("gopher_garden")["name"])),
+		"the message names the home it waits for: %s" % [said])
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	var face: Dictionary = hud.books.set_face(HudBooks.FINDS + "gopher")
+	_eq(str(face["ring"][1]), "1/5", "Collections shows the gophers found, one kind of five")
+	main.queue_free()
+	await get_tree().process_frame
+
+
+func test_666_show_me_always_shows_something() -> void:
+	# (Owner, 28 Nov: the Tractor's "harvest" did nothing on a farm with nothing ripe.)
+	Game.saving_enabled = false
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	for i in 5:
+		await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	for i in Game.farm_size * Game.farm_size:   # (nothing ripe or growing anywhere: a bare farm)
+		if Game.on_farm(i) and Game.object_at(i).is_empty():
+			Game.field.clear_plot(i) if Game.field.has_method("clear_plot") else null
+	var data: Dictionary = DataFile.read(GoalSystem.DATA_PATH)
+	for verb: String in data["show"]:
+		if verb in ["buy", "build", "own", "collect", "feed", "upgrade", "start_craft", "craft"]:
+			continue   # (things named by id: shown in the Market or on the farm by HudGoals' own tests)
+		hud.goals.show_me({"do": verb, "what": "", "n": 1})
+		await get_tree().process_frame
+		var arrows := hud.find_children("*", "GuideArrow", true, false).size()
+		_check(arrows > 0 or hud.book.visible, "Show me for %s does something (an arrow or a panel)" % verb)
+		hud.book.close_panel()
+		for a in hud.find_children("*", "GuideArrow", true, false):
+			a.queue_free()
+		await get_tree().create_timer(0.3).timeout
+	main.queue_free()
+	await get_tree().process_frame

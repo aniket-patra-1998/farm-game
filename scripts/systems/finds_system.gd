@@ -145,6 +145,21 @@ func pick(family: String) -> Dictionary:
 	return kinds[k] if k >= 0 else {}
 
 
+## The item that is this family's home (the Gopher Garden for gophers), "" when it has none.
+func home_of(family: String) -> String:
+	for id: String in game.items:
+		if str(game.items[id].get("home_of", "")) == family:
+			return id
+	return ""
+
+
+func _home_on_farm(home: String) -> bool:
+	for o: Dictionary in game.objects:
+		if str(o["id"]) == home:
+			return true
+	return false
+
+
 ## One more of `kind` found; pays the collection reward the first time the family is complete.
 func add(family: String, kind: Dictionary) -> Dictionary:
 	var id := str(kind["id"])
@@ -152,7 +167,12 @@ func add(family: String, kind: Dictionary) -> Dictionary:
 	game.record("find", id)
 	game.collections_changed.emit()
 	var custom := str(families[family].get("message", ""))
-	game.message.emit(tr(custom) if custom != "" else tr("YOU_FOUND_A_FIND") % [kind["name"], families[family]["name"]])
+	var said: String = tr(custom) if custom != "" else tr("YOU_FOUND_A_FIND") % [kind["name"], families[family]["name"]]
+	var home := home_of(family)
+	if home != "" and not _home_on_farm(home):   # (where it is: kept for its home, owner, 28 Nov)
+		said += " " + tr("FIND_WAITS_FOR_HOME") % [game.item_data(home)["name"],
+			int(game.item_data(home).get("unlock_level", 1))]
+	game.message.emit(said)
 	if str(families[family].get("grant", "")) == "queen_bee":
 		game.bees.receive_queen()
 	_claim_if_complete(family)

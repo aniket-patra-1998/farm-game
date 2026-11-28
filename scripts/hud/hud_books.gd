@@ -6,8 +6,10 @@ extends RefCounted
 const RARITY_KEYS := {"common": "RARITY_COMMON", "uncommon": "RARITY_UNCOMMON", "rare": "RARITY_RARE"}
 
 const RING_SHARE := 0.55   # a set card's ring against the card
+const FINDS := "finds:"   # not-ui (a card id: a family of finds, not a collection)
 
 var hud: FarmHud
+
 
 
 func _init(owner: FarmHud) -> void:
@@ -20,9 +22,17 @@ func build_collections(content: VBoxContainer) -> void:
 	content.add_child(BookPanel.info(
 		tr("ITEMS_TURN_UP_WHILE_YOU_FARM"), tr("ITEMS_TURN_UP_WHILE_YOU_FARM_INFO"), UiTheme.HEADING, BookPanel.SOFT))
 	var ids: Array[String] = []
+	for family: String in Game.finds.families:   # (what was found and has a home: shown here too, owner, 28 Nov)
+		if Game.finds.home_of(family) != "" and Game.finds.total(family) > 0:
+			ids.append(FINDS + family)
 	for coll in Game.collectibles.collections:
 		ids.append(str(coll["id"]))
 	var list := CardList.make(ids, set_face, func(coll_id: String) -> void:
+		if coll_id.begins_with(FINDS):
+			var family := coll_id.trim_prefix(FINDS)
+			hud.book.open_panel(str(Game.finds.families[family]["name"]), func(c: VBoxContainer) -> void:
+				build_finds(c, family))
+			return
 		hud.book.open_panel(str(_set_of(coll_id)["name"]), func(c: VBoxContainer) -> void: build_collection(c, coll_id)),
 		hud.get_viewport().get_visible_rect().size.x)
 	list.search_menu = "collections"
@@ -33,6 +43,15 @@ func build_collections(content: VBoxContainer) -> void:
 ## One set's card face: a ring (items held of the set's items) with the count in it, its name, and Ready once it
 ## can be traded in.
 func set_face(coll_id: String) -> Dictionary:
+	if coll_id.begins_with(FINDS):   # (a family of finds: kinds found of its kinds, and how many in all)
+		var family := coll_id.trim_prefix(FINDS)
+		var kinds := (Game.finds.families[family].get("kinds", []) as Array).size()
+		var distinct := Game.finds.distinct(family)
+		return {
+			"name": str(Game.finds.families[family]["name"]),
+			"ring": [float(distinct) / maxf(kinds, 1.0), "%d/%d" % [distinct, kinds]],   # not-ui
+			"line": tr("FINDS_FOUND_IN_ALL") % Game.finds.total(family),
+		}
 	var coll := _set_of(coll_id)
 	var items: Array = coll["items"]
 	var held := 0
@@ -44,6 +63,15 @@ func set_face(coll_id: String) -> Dictionary:
 		"line": tr("SLOT_READY") if Game.collectibles.can_trade_in(coll) else "",
 		"line_colour": BookPanel.GOOD,
 	}
+
+
+## A family of finds opened from Collections: its card, and where they live (or wait).
+func build_finds(content: VBoxContainer, family: String) -> void:
+	var home := Game.finds.home_of(family)
+	content.add_child(HudBuildings.finds_card(family, str(Game.finds.families[family]["name"])))
+	if home != "":
+		content.add_child(BookPanel.text(tr("FINDS_LIVE_IN") % [Game.item_data(home)["name"],
+			int(Game.item_data(home).get("unlock_level", 1))], UiTheme.BODY, BookPanel.SOFT))
 
 
 func _set_of(coll_id: String) -> Dictionary:

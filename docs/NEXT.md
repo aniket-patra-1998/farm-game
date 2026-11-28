@@ -1710,3 +1710,16 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - Not checked: on a phone; the sign's picture on a device that has not made its pictures yet (blank until made).
 - Tests 647 to 649 (world_rules_test); test 107 lets the five be known by their outlines.
 
+
+## 28 Nov: the owner's fixes batch
+- Goal faces open on the tap's release (they shut again at once); backdrop ignores the opening tap's twin.
+- Goal card: fits its content while opening (BookPanel._fit_height), task words wrap to two lines, Show me always
+  does something (nothing ripe: growing, else seeds, else plow; a thing not on the farm: its Market shelf), finds
+  and earnings show the way (harvest), projects have a line of their own (`say`).
+- Goals credit work done earlier today when they open (GoalSystem.recent; a collected goal spends its work).
+- Mailbox can't be sold (KEPT) and a lost one comes back after a load; finds with no home yet say where they wait
+  and show in Collections ("finds:<family>" cards).
+- Panels scroll by a drag on their cards (PanelContainers pass drags: BookPanel._let_drags_through).
+- First screen (HudIntro, owner's pick III). Ads: Free gift button, Revive, coins in the Market (docs/ADS.md).
+- Open: collection set cards show rings only (the items inside have pictures); a picture in the ring needs CardFace
+  to draw both. The mailbox not opening on the owner's phone did not reproduce (tests open it with any tool).

@@ -227,6 +227,9 @@ func load_save() -> bool:
 	if extra_vehicles > 0:
 		var vnote := game.tr("EXTRA_VEHICLES_SOLD_BACK") % extra_vehicles
 		game.absence_note = vnote if game.absence_note == "" else game.absence_note + "\n" + vnote
+	if not game.in_showcase() and game.restore_mailbox():
+		var mnote := game.tr("MAILBOX_BACK")
+		game.absence_note = mnote if game.absence_note == "" else game.absence_note + "\n" + mnote
 	var spilled := game.storage.spill_over()
 	if spilled > 0:
 		var snote := game.tr("BARN_OVERFLOW_TO_INBOX") % spilled

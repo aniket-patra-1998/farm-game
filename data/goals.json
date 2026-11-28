@@ -1,6 +1,6 @@
 {
   "_about": "Goals (docs/PLAYER_EXPERIENCE.md Part 1), read by GoalSystem. chains: the neighbours' story chains ({id, giver, after, level, locked?, steps: [{say, tasks, reward}]}); daily: today's jobs ({count, swap, bonus, templates: [{do, what, n: [low, high], weight, level}]}); projects: long goals ({id, level, stages: [{tasks, reward?}], reward}). A task is {do, what, n}: `do` a verb of data/events.json or a state verb (level, own); `what` an item or crop id, a kind (animal, tree, crop...), \"\" for anything, or for daily jobs a pick (@crop_unlocked, @crop_quick: one that ripens within goals.daily_crop_hours, @animal_owned, @tree_owned, @building_owned, @recipe_known); a template's needs (an id or a kind) keeps it until the farm has one; a template's per_owned caps its n at what the farm's own things give in a day (GoalSystem.per_day_of). A chain step's `say` and a project's `name` are locale keys. show: where a task's Show me goes, by verb (tool:<id>, seeds, market, farm:<kind of spot> or farm:item for the task's own thing; HudGoals). Rewards: coins, xp, gems, item or place (to the Barn or inbox), box (a Mystery Box), parts ({material id: n}, to the materials), unlock_chain. A `find` task with sure: true makes the next harvest a find while it is open (once per goal: the broken Tractor's first find, which brings out Collections). A chain with new_farm (Welcome) opens on a brand-new farm (a farm saved before it skips it); a reward `seeds` gives one plot of gift seeds (Starter Seeds), `ready` with `place` makes the gift ready to harvest at once, and a task with `ready` makes the thing it counts as bought come ready (the first tree). daily.level: the level today's jobs start at. The six neighbours' chains follow each other in two lines (Barley, Poppy, Hazel; Maple, Clover, Rusty), so at most two are open with today's jobs; projects: rebuilding the broken Tractor (from level 2; materials from harvests, its first find guaranteed, the Tractor at the end), the orchard, the coop of rare breeds.",
-  "show": {"plow": "tool:plow", "plant": "seeds", "harvest": "farm:ripe", "fertilize": "tool:fertilize",
+  "show": {"plow": "tool:plow", "plant": "seeds", "harvest": "farm:ripe", "find": "farm:ripe", "earn": "farm:ripe", "fertilize": "tool:fertilize",
     "collect": "farm:item", "feed": "farm:item", "upgrade": "farm:item", "start_craft": "farm:item", "craft": "farm:item",
     "buy": "market", "build": "market", "own": "market"},
   "chains": [
@@ -97,7 +97,7 @@
     ]
   },
   "projects": [
-    {"id": "tractor", "name": "GOAL_PROJECT_TRACTOR", "level": 2, "stages": [
+    {"id": "tractor", "say": "GOAL_PROJECT_TRACTOR_SAY", "name": "GOAL_PROJECT_TRACTOR", "level": 2, "stages": [
       {"tasks": [{"do": "harvest", "what": "", "n": 6}, {"do": "find", "what": "", "n": 1, "sure": true}],
        "reward": {"coins": 50, "xp": 15, "parts": {"vehicle_parts": 2}}},
       {"tasks": [{"do": "harvest", "what": "", "n": 40}], "reward": {"coins": 150, "xp": 30, "parts": {"vehicle_parts": 3}}},
@@ -105,12 +105,12 @@
        "reward": {"coins": 300, "xp": 50, "parts": {"vehicle_parts": 5}}},
       {"tasks": [{"do": "harvest", "what": "", "n": 300}]}],
      "reward": {"xp": 200, "item": "tractor"}},
-    {"id": "orchard", "name": "GOAL_PROJECT_ORCHARD", "level": 4, "stages": [
+    {"id": "orchard", "say": "GOAL_PROJECT_ORCHARD_SAY", "name": "GOAL_PROJECT_ORCHARD", "level": 4, "stages": [
       {"tasks": [{"do": "own", "what": "apple_tree", "n": 3}], "reward": {"coins": 150, "xp": 30}},
       {"tasks": [{"do": "own", "what": "plum_tree", "n": 3}], "reward": {"coins": 250, "xp": 40}},
       {"tasks": [{"do": "own", "what": "lemon_tree", "n": 3}]}],
      "reward": {"coins": 500, "xp": 150, "item": "fountain"}},
-    {"id": "rare_coop", "name": "GOAL_PROJECT_RARE_COOP", "level": 5, "stages": [
+    {"id": "rare_coop", "say": "GOAL_PROJECT_RARE_COOP_SAY", "name": "GOAL_PROJECT_RARE_COOP", "level": 5, "stages": [
       {"tasks": [{"do": "own", "what": "chicken_coop", "n": 1}], "reward": {"coins": 200, "xp": 30}},
       {"tasks": [{"do": "collect", "what": "chicken", "n": 20}], "reward": {"coins": 300, "xp": 50, "eggs": {"white": 2}}},
       {"tasks": [{"do": "open_egg", "what": "", "n": 2}]}],

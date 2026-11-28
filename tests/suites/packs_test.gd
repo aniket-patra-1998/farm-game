@@ -488,3 +488,47 @@ class FakeAdPlayer:
 	func play(on_reward: Callable, short := false) -> void:
 		asked.append(short)
 		on_reward.call()
+
+
+func test_667_the_ads_ladder_rescue_and_coins_and_where_they_are_offered() -> void:
+	# (Owner, 27-28 Nov: three commons then a rare, a rescue for withered crops, coins for a buy; offered on the
+	# farm itself: a Free gift button, Revive over the toolbar, and in the Market. No level gate.)
+	var g := _farm()
+	AdOffers.ads_ready = func() -> bool: return true
+	_check(g.offers.gift_shown(), "a gift is offered from the first level")
+	var rare_at := Balance.i("ads.ladder")
+	for k in rare_at - 1:
+		_check(not g.offers.next_is_rare(), "gift %d is common" % (k + 1))
+		g.offers.give_gift()
+	_check(g.offers.next_is_rare(), "gift %d is the guaranteed rare" % rare_at)
+	g.offers.give_gift()
+	_check(not g.offers.next_is_rare(), "and the ladder starts again")
+	var before := g.coins
+	var n := g.offers.coins_offer(123)
+	_eq(n % Balance.i("ads.coins_round"), 0, "a coins ad gives a round number (%d)" % n)
+	_check(n >= 123, "at least what is missing")
+	g.offers.give_coins(n)
+	_eq(g.coins, before + n, "and gives it")
+	_eq(g.offers.coins_offer(1000000), 0, "no ad for more than an ad gives")
+	AdOffers.ads_ready = func() -> bool: return false
+	_check(not g.offers.gift_shown() and g.offers.coins_offer(10) == 0, "nothing is offered with no ad ready")
+	AdOffers.ads_ready = Callable()
+	_done(g)
+	# On the farm: the gift button shows while an ad is ready, and hides when not.
+	Game.saving_enabled = false
+	Game.reset_game()
+	AdOffers.ads_ready = func() -> bool: return true
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	for i in 3:
+		await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	hud.ads.refresh()
+	_check(hud.ads.gift.is_visible_in_tree(), "the Free gift button is on the farm's screen")
+	_check(not hud.ads.rescue.visible, "Revive waits for withered crops")
+	AdOffers.ads_ready = func() -> bool: return false
+	hud.ads.refresh()
+	_check(not hud.ads.gift.visible, "and goes when no ad is ready")
+	AdOffers.ads_ready = Callable()
+	main.queue_free()
+	await get_tree().process_frame

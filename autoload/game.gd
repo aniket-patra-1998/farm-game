@@ -36,6 +36,8 @@ signal inbox_changed             # the neighbours' mail changed (arrived, claime
 enum Phase { GRASS, PLOWED, GROWING, RIPE, WITHERED }
 enum Tutorial { HARVEST, PLOW, PLANT, DONE }
 
+const MAILBOX := "mailbox"   # not-ui (an item id: the inbox on the farm)
+const MAILBOX_SPOT := Vector2i(4, 0)   # its row and column on a new farm
 const DAY_MARKER_SHIFT := 2 * 86400   # a clock step back from which day markers move with it (day_moved_back)
 const WET: Array[String] = ["rain", "storm"]               # the weather that waters the fields
 const FALLING: Array[String] = ["rain", "storm", "snow"]   # the weather the forecast speaks of
@@ -1497,7 +1499,7 @@ func _new_game() -> void:
 	# Scenery, a few animals and a run-down barn, so the farm feels lived in from the start.
 	_add_starter_object("farmhouse", 0, 0)
 	_add_starter_object("barn", 0, 8, {"broken": true})
-	_add_starter_object("mailbox", 4, 0)
+	_add_starter_object(MAILBOX, MAILBOX_SPOT.x, MAILBOX_SPOT.y)
 	_add_starter_object("farm_stand", 4, 1)
 	# The animals have their first collect waiting, so the first session also teaches collecting (a starter
 	# animal placed with a fresh timer stood a whole cycle, a day or more, before its first tap).
@@ -1513,6 +1515,22 @@ func _new_game() -> void:
 	fertilizer_bags = 0
 	rebuild_occupancy()
 	save_game()
+
+
+## A farm that lost its mailbox (it could be sold before 28 Nov) gets it back after a load: at its own spot
+## when that is free, else through the Barn (or the inbox). Whether it came back.
+func restore_mailbox() -> bool:
+	for o in objects:
+		if str(o["id"]) == MAILBOX:
+			return false
+	for o in storage.stored:
+		if str(o["id"]) == MAILBOX:
+			return false
+	if buildings.can_place(MAILBOX, MAILBOX_SPOT.x, MAILBOX_SPOT.y).ok():
+		_add_starter_object(MAILBOX, MAILBOX_SPOT.x, MAILBOX_SPOT.y)
+	else:
+		storage.welcome(MAILBOX)
+	return true
 
 
 func _add_starter_object(item_id: String, row: int, col: int, extra := {}) -> void:
