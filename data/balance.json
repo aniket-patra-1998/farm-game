@@ -1148,8 +1148,8 @@
  },
  "ads": {
   "min_level": {
-   "v": 4,
-   "note": "rewarded ads are offered from this level (Google: never in the first minutes; the tutorial ends near level 3)"
+   "v": 1,
+   "note": "rewarded ads are offered from this level (owner, 28 Nov: no level gate; a rewarded ad is the player's own choice)"
   },
   "per_day": {
    "v": 15,

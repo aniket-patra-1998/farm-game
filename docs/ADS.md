@@ -13,7 +13,7 @@ Owner, 27 Nov: ads should feel like a choice, not a chore, and the helpers stay 
   - A rescue: crops withered, and an ad revives exactly those plots, from the Barn or the Unwither petal when
     no Unwither is left (before gems). It counts as a rare.
   - Balance `ads`: `rares_per_day` 2 (ladder and rescues together; past it the ladder's top gives a common),
-    `per_day` 15, `ladder` 4, `min_level` 4 (never in the first session). Remote-tunable.
+    `per_day` 15, `ladder` 4, `min_level` 1 (owner, 28 Nov: no level gate). Remote-tunable.
 - **Code.** `AdOffers` (`Game.offers`): caps, the day's count (saved), the reward. `rewarded_ads.gd` (loaded by path on Android only): the ad,
   Android only, through Poing Studios' AdMob plugin v5.1.0 (addons/admob, MIT, core "ads" library only, no
   mediation). It asks Google's consent form (UMP) where the law wants it, then keeps one ad loaded; an offer
