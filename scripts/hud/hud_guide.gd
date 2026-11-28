@@ -125,11 +125,11 @@ func _point_again() -> void:
 		if str(wanted.get("do", "")) in ["plant", "buy", "build", "own", "take_out"]:
 			hud.goals.point_at_card(id)
 		elif str(wanted.get("do", "")) == "repair":
-			var fix := hud.find_child("RepairBarn", true, false) as Control
+			var fix := hud.find_child("RepairBarn", true, false) as Control   # not-ui (a node name)
 			if fix != null and fix.is_visible_in_tree():
 				GuideArrow.point(hud, GuideArrow.at_control(fix))
 		elif str(wanted.get("do", "")) == "claim":   # (the mailbox open: its Place for the thing)
-			var take := hud.book.find_child("Take_" + id, true, false) as Control
+			var take := hud.book.find_child("Take_" + id, true, false) as Control   # not-ui (a node name)
 			if take != null and take.is_visible_in_tree():
 				GuideArrow.point(hud, GuideArrow.at_control(take))
 		return
