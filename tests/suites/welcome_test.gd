@@ -241,3 +241,57 @@ func test_522_the_broken_tractor_project_opens_at_level_2_and_its_first_harvest_
 	var p := g.goals.project_of("tractor")
 	_eq(str(p["reward"]["item"]), "tractor", "the Tractor itself stands at the end")
 	_done(g)
+
+
+func _tap(at: Vector2) -> void:
+	var tf := get_viewport().get_final_transform()
+	for down: bool in [true, false]:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = down
+		e.position = tf * at
+		Input.parse_input_event(e)
+		await get_tree().process_frame
+
+
+func test_668_the_guided_start_runs_a_step_at_a_time_with_real_taps() -> void:
+	# (Owner's pick A, 28 Nov: the first half hour one step at a time, Hay Day's way.)
+	Game.saving_enabled = false
+	Game.reset_game()
+	AdOffers.ads_ready = func() -> bool: return true
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	for i in 5:
+		await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	_check(HudGuide.guiding(), "a new farm starts guided")
+	_check(hud.guide.strip.is_visible_in_tree(), "its strip shows")
+	var steps := (Game.goals.chain_of(HudGuide.CHAIN)["steps"] as Array).size()
+	_eq(str(hud.guide._count.text), "1 / %d" % steps, "at the first step")
+	_eq(HudGoals.faces(), [HudGuide.KEY] as Array[String], "only the guided goal's face shows")
+	hud.ads.refresh()
+	_check(not hud.ads.gift.visible, "no ads while it guides")
+	await get_tree().create_timer(HudGuide.POINT_EVERY + 0.3).timeout
+	_check(not hud.find_children("*", "GuideArrow", true, false).is_empty(), "the arrow points by itself")
+	Game.record("harvest", "strawberries", 2)   # (the step's work)
+	await get_tree().create_timer(0.6).timeout
+	_check(hud.book.visible and hud.book.find_child(HudGuide.DONE_PANEL, true, false) != null, "Well done opens")
+	var next := hud.book.find_child("GuideNext", true, false) as Control
+	_check(next != null, "with Next")
+	if next != null:
+		await _tap(next.get_global_rect().get_center())
+		await get_tree().create_timer(0.6).timeout
+	_eq(int(Game.goals.chain_step.get(HudGuide.CHAIN, -1)), 1, "Next collected the step")
+	_eq(str(hud.guide._count.text), "2 / %d" % steps, "and the strip moved on")
+	# The end: every step done opens "Your farm is ready", and the ads come.
+	Game.goals.chain_step.erase(HudGuide.CHAIN)
+	Game.goals.chains_done.append(HudGuide.CHAIN)
+	Game.goals_changed.emit()
+	await get_tree().create_timer(0.6).timeout
+	_check(hud.book.find_child(HudGuide.READY_PANEL, true, false) != null, "the end says the farm is ready")
+	_check(not hud.guide.strip.visible, "and the strip goes")
+	hud.ads.refresh()
+	_check(hud.ads.gift.visible, "the gift ad comes after it")
+	AdOffers.ads_ready = Callable()
+	main.queue_free()
+	await get_tree().process_frame

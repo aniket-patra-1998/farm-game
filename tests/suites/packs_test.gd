@@ -517,6 +517,8 @@ func test_667_the_ads_ladder_rescue_and_coins_and_where_they_are_offered() -> vo
 	# On the farm: the gift button shows while an ad is ready, and hides when not.
 	Game.saving_enabled = false
 	Game.reset_game()
+	Game.goals.chain_step.erase(HudGuide.CHAIN)   # (past the guided start, which holds the ads back)
+	Game.goals.chains_done.append(HudGuide.CHAIN)
 	AdOffers.ads_ready = func() -> bool: return true
 	var main := MAIN_SCENE.instantiate()
 	add_child(main)

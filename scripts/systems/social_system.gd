@@ -139,6 +139,7 @@ func claim(item_id: int, to_place := false) -> bool:
 		var got := grant(item["give"], to_place)
 		if got != "":
 			game.message.emit(tr("SOCIAL_CLAIMED") % got)
+		game.record("claim", str(item["give"].get("id", "")))   # (taken from the mailbox: the guided start's step)
 	inbox.remove_at(at)
 	_changed()
 	return true

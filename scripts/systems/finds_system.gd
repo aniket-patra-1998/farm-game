@@ -72,7 +72,7 @@ func decide(work: String, stars := 0) -> Array:
 ## Tractor project's first find), as `decide` gives it: [[family, kind id]], or [] when none is owed. Asked at the
 ## harvest, not at planting, so a crop already growing when the goal opened brings it too.
 func sure() -> Array:
-	if not game.drops_enabled or not Release.on("finds"):
+	if not Release.on("finds"):   # (owed by a goal, not luck: given even where random drops are off, as in tests)
 		return []
 	var kind := _sure_find()
 	return [kind] if not kind.is_empty() and game.goals.take_sure_find() else []

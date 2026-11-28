@@ -1,22 +1,27 @@
 {
   "_about": "Goals (docs/PLAYER_EXPERIENCE.md Part 1), read by GoalSystem. chains: the neighbours' story chains ({id, giver, after, level, locked?, steps: [{say, tasks, reward}]}); daily: today's jobs ({count, swap, bonus, templates: [{do, what, n: [low, high], weight, level}]}); projects: long goals ({id, level, stages: [{tasks, reward?}], reward}). A task is {do, what, n}: `do` a verb of data/events.json or a state verb (level, own); `what` an item or crop id, a kind (animal, tree, crop...), \"\" for anything, or for daily jobs a pick (@crop_unlocked, @crop_quick: one that ripens within goals.daily_crop_hours, @animal_owned, @tree_owned, @building_owned, @recipe_known); a template's needs (an id or a kind) keeps it until the farm has one; a template's per_owned caps its n at what the farm's own things give in a day (GoalSystem.per_day_of). A chain step's `say` and a project's `name` are locale keys. show: where a task's Show me goes, by verb (tool:<id>, seeds, market, farm:<kind of spot> or farm:item for the task's own thing; HudGoals). Rewards: coins, xp, gems, item or place (to the Barn or inbox), box (a Mystery Box), parts ({material id: n}, to the materials), unlock_chain. A `find` task with sure: true makes the next harvest a find while it is open (once per goal: the broken Tractor's first find, which brings out Collections). A chain with new_farm (Welcome) opens on a brand-new farm (a farm saved before it skips it); a reward `seeds` gives one plot of gift seeds (Starter Seeds), `ready` with `place` makes the gift ready to harvest at once, and a task with `ready` makes the thing it counts as bought come ready (the first tree). daily.level: the level today's jobs start at. The six neighbours' chains follow each other in two lines (Barley, Poppy, Hazel; Maple, Clover, Rusty), so at most two are open with today's jobs; projects: rebuilding the broken Tractor (from level 2; materials from harvests, its first find guaranteed, the Tractor at the end), the orchard, the coop of rare breeds.",
-  "show": {"plow": "tool:plow", "plant": "seeds", "harvest": "farm:ripe", "find": "farm:ripe", "earn": "farm:ripe", "fertilize": "tool:fertilize",
+  "show": {"plow": "tool:plow", "plant": "seeds", "harvest": "farm:ripe", "repair": "farm:item", "claim": "farm:item:mailbox", "take_out": "farm:item:barn", "move": "farm:item", "find": "farm:ripe", "earn": "farm:ripe", "fertilize": "tool:fertilize",
     "collect": "farm:item", "feed": "farm:item", "upgrade": "farm:item", "start_craft": "farm:item", "craft": "farm:item",
     "buy": "market", "build": "market", "own": "market"},
   "chains": [
-    {"id": "welcome", "giver": "Maple", "new_farm": true, "steps": [
-      {"say": "GOAL_SAY_WELCOME_1", "tasks": [{"do": "harvest", "what": "", "n": 2}], "reward": {"coins": 20, "xp": 5}},
-      {"say": "GOAL_SAY_WELCOME_2", "tasks": [{"do": "plow", "what": "", "n": 2}, {"do": "plant", "what": "strawberries", "n": 2}],
+    {"id": "welcome", "giver": "Maple", "new_farm": true, "guided": true, "steps": [
+      {"say": "GOAL_SAY_WELCOME_1", "learn": "GUIDE_LEARN_1", "tasks": [{"do": "harvest", "what": "", "n": 2}], "reward": {"coins": 20, "xp": 5}},
+      {"say": "GOAL_SAY_WELCOME_2", "learn": "GUIDE_LEARN_2", "tasks": [{"do": "plow", "what": "", "n": 2}, {"do": "plant", "what": "strawberries", "n": 2}],
         "reward": {"seeds": "starter_seeds", "coins": 30, "xp": 5}},
-      {"say": "GOAL_SAY_WELCOME_3", "tasks": [{"do": "plant", "what": "starter_seeds", "n": 1}, {"do": "harvest", "what": "starter_seeds", "n": 1}],
+      {"say": "GOAL_SAY_WELCOME_3", "learn": "GUIDE_LEARN_3", "tasks": [{"do": "plant", "what": "starter_seeds", "n": 1}, {"do": "harvest", "what": "starter_seeds", "n": 1}],
         "reward": {"place": "chicken", "ready": true, "xp": 10}},
-      {"say": "GOAL_SAY_WELCOME_4", "tasks": [{"do": "collect", "what": "chicken", "n": 1}],
+      {"say": "GOAL_SAY_WELCOME_4", "learn": "GUIDE_LEARN_4", "tasks": [{"do": "claim", "what": "chicken", "n": 1}, {"do": "collect", "what": "chicken", "n": 1}],
         "reward": {"coins": 150, "xp": 15}},
-      {"say": "GOAL_SAY_WELCOME_5", "tasks": [{"do": "buy", "what": "apple_tree", "n": 1, "ready": true}, {"do": "collect", "what": "apple_tree", "n": 1}],
-        "reward": {"coins": 170, "xp": 80}},
-      {"say": "GOAL_SAY_WELCOME_6", "tasks": [{"do": "plow", "what": "", "n": 4}, {"do": "plant", "what": "", "n": 4}], "reward": {"coins": 40, "xp": 25}},
-      {"say": "GOAL_SAY_WELCOME_7", "tasks": [{"do": "level", "what": "", "n": 3}], "reward": {"coins": 30, "box": "mystery_box"}},
-      {"say": "GOAL_SAY_WELCOME_8", "tasks": [{"do": "plant", "what": "wheat", "n": 1}], "reward": {"coins": 50, "xp": 10}}
+      {"say": "GOAL_SAY_WELCOME_5", "learn": "GUIDE_LEARN_5", "tasks": [{"do": "buy", "what": "apple_tree", "n": 1, "ready": true}, {"do": "collect", "what": "apple_tree", "n": 1}],
+        "reward": {"coins": 170, "xp": 80, "parts": {"bricks": 5, "nails": 5, "boards": 5}}},
+      {"say": "GOAL_SAY_WELCOME_BARN", "learn": "GUIDE_LEARN_BARN", "tasks": [{"do": "repair", "what": "barn", "n": 1}], "reward": {"item": "hay_bale", "xp": 20}},
+      {"say": "GOAL_SAY_WELCOME_DECOR", "learn": "GUIDE_LEARN_DECOR", "tasks": [{"do": "take_out", "what": "hay_bale", "n": 1}], "reward": {"coins": 20, "xp": 10}},
+      {"say": "GOAL_SAY_WELCOME_MOVE", "learn": "GUIDE_LEARN_MOVE", "tasks": [{"do": "move", "what": "hay_bale", "n": 1}], "reward": {"xp": 5}},
+      {"say": "GOAL_SAY_WELCOME_FERT", "learn": "GUIDE_LEARN_FERT", "tasks": [{"do": "fertilize", "what": "", "n": 1}], "reward": {"coins": 20, "xp": 10}},
+      {"say": "GOAL_SAY_WELCOME_6", "learn": "GUIDE_LEARN_6", "tasks": [{"do": "plow", "what": "", "n": 4}, {"do": "plant", "what": "", "n": 4}], "reward": {"coins": 40, "xp": 25}},
+      {"say": "GOAL_SAY_WELCOME_FIND", "learn": "GUIDE_LEARN_FIND", "tasks": [{"do": "find", "what": "", "n": 1, "sure": true}], "reward": {"box": "mystery_box", "xp": 15}},
+      {"say": "GOAL_SAY_WELCOME_7", "learn": "GUIDE_LEARN_7", "tasks": [{"do": "level", "what": "", "n": 3}], "reward": {"coins": 30}},
+      {"say": "GOAL_SAY_WELCOME_8", "learn": "GUIDE_LEARN_8", "tasks": [{"do": "plant", "what": "wheat", "n": 1}], "reward": {"coins": 50, "xp": 10}}
     ]},
     {"id": "barley_coop", "giver": "Barley", "after": ["welcome"], "level": 3, "steps": [
       {"say": "GOAL_SAY_BARLEY_1", "tasks": [{"do": "buy", "what": "chicken", "n": 1}, {"do": "collect", "what": "chicken", "n": 3}],

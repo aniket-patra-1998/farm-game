@@ -10,7 +10,7 @@
     "menu:MARKET": {"verbs": ["buy", "build", "own"], "level": 3},
     "menu:COLLECTIONS": {"verbs": ["find", "trade_collection"], "level": 5},
     "menu:RIBBONS": {"verbs": [], "level": 4},
-    "menu:INBOX": {"verbs": ["help", "gift", "share"], "level": 3, "inbox": true},
+    "menu:INBOX": {"verbs": ["help", "gift", "share", "claim"], "level": 3, "inbox": true},
     "menu:SETTINGS": {"verbs": [], "level": 2}
   }
 }

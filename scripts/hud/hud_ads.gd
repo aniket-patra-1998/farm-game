@@ -52,12 +52,13 @@ func build(root: Control, menu: VBoxContainer) -> void:
 func refresh() -> void:
 	if gift == null or not is_instance_valid(gift):
 		return
-	gift.visible = Game.offers.gift_shown()
+	var later := HudGuide.guiding()   # (the guided start teaches the farm first: its offers come after it)
+	gift.visible = Game.offers.gift_shown() and not later
 	_gift_badge.text = "★" if Game.offers.next_is_rare() else "%d/%d" % [   # not-ui (a sign and a count)
 		Game.offers.step + 1, Balance.i("ads.ladder")]
 	_gift_badge.get_parent().visible = gift.visible
 	gift.tooltip_text = Game.offers.gift_words()
-	var show_rescue := Game.offers.rescue_shown()
+	var show_rescue := Game.offers.rescue_shown() and not later
 	if show_rescue:
 		rescue.text = Game.offers.rescue_words()
 	rescue.visible = show_rescue

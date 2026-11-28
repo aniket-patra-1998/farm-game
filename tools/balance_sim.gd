@@ -620,6 +620,7 @@ func _visit(next_visits: Array) -> void:
 						game.field.plow(i)
 	if follows_goals():
 		_goal_buy()   # before replanting: an empty plot can still be cleared to make room for it
+		_goal_chores()
 		_goal_vehicles()
 		_goal_eggs()
 	if style == "crafter":
@@ -912,6 +913,38 @@ func _swap_undoable() -> void:
 			swaps += 1
 
 
+## The guided start's chores a player does when asked (28 Nov): mends the Barn, moves the thing named, and
+## fertilizes a growing crop.
+func _goal_chores() -> void:
+	for task: Dictionary in _open_tasks():
+		var what := str(task.get("what", ""))
+		match str(task["do"]):
+			"repair":
+				if what == "barn" and game.storage.can_repair_barn() and _act():
+					game.storage.repair_barn()
+			"move":
+				for o: Dictionary in game.objects:
+					if str(o["id"]) == what:
+						_move_somewhere(o)
+						break
+			"fertilize":
+				for i in game.plots.size():
+					if game.on_farm(i) and game.field.phase(i) == GameState.Phase.GROWING \
+							and not game.field.is_fertilized(i) and _act():
+						game.field.fertilize(i)
+						break
+
+
+## Moves `o` to the first other spot it fits (a player tidying the farm).
+func _move_somewhere(o: Dictionary) -> void:
+	for r in game.farm_size:
+		for c in game.farm_size:
+			if (r != int(o["row"]) or c != int(o["col"])) and game.can_place(str(o["id"]), r, c, int(o["uid"])):
+				if _act():
+					game.move_object(int(o["uid"]), r, c)
+				return
+
+
 ## Buys what an open goal asks to buy or own, when the coins reach (before the bot's own spending): the thing
 ## itself, or for a kind ("own 6 trees") the cheapest of that kind on sale. When nothing fits, an empty plot is
 ## cleared to make room (as a player clears one with Sell).
@@ -1192,6 +1225,7 @@ func _upkeep(reserve: int) -> void:
 func _spend() -> void:
 	var reserve := 300
 	_goal_buy()
+	_goal_chores()
 	_upkeep(reserve)
 	while game.land.can_expand_with_coins() and game.coins >= int(game.land.next_expansion()["coins"]) + reserve:
 		if not game.land.expand(false):

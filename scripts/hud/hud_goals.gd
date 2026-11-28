@@ -68,6 +68,8 @@ static func faces() -> Array[String]:
 	if not Game.goals.active():
 		return []
 	var keys := Game.goals.open_keys()
+	if HudGuide.guiding():   # (the guided start shows its own goal only: one thing at a time, Hay Day's way)
+		return keys.filter(func(k: String) -> bool: return k == HudGuide.KEY)
 	return keys.slice(0, FACES)
 
 
@@ -426,6 +428,51 @@ func show_me(task: Dictionary) -> void:
 
 func _has_spot(kind: String) -> bool:
 	return hud.grid != null and not hud.grid.spots_of(kind).is_empty()
+
+
+## Points at where `task` is done without opening anything or moving the view (the guided start's arrow, which
+## comes back by itself): its tool's button, the Market's, or the nearest spot on the farm (at the screen's edge
+## when it is off screen). Whether it pointed.
+func point_only(task: Dictionary) -> bool:
+	var to := show_of(task)
+	var button: Control = null
+	if to.has("tool"):
+		var kind := str(TOOL_SPOTS.get(str(to["tool"]), ""))
+		if hud.grid.tool == str(to["tool"]) and kind != "" and _point_near(kind):
+			return true
+		button = hud.tools.buttons.get(str(to["tool"]))
+	elif to.has("seeds"):
+		if hud.grid.tool == "plant" and _point_near("plowed"):
+			return true
+		button = hud.tools.buttons.get("plant" if _has_spot("plowed") else "plow")
+	elif to.has("market"):
+		button = hud.side.buttons.get("MARKET")
+	elif to.has("farm"):
+		var kind := str(to["farm"])
+		if _point_near(kind):
+			return true
+		if kind == "ripe" and _point_near("growing"):
+			return true
+		button = hud.tools.buttons.get("plant" if _has_spot("plowed") else "plow") if kind == "ripe" else null
+	if button != null and button.is_visible_in_tree():
+		GuideArrow.point(hud, GuideArrow.at_control(button))
+		return true
+	return false
+
+
+## The arrow at the spot of `kind` nearest the middle of the screen, without moving the view.
+func _point_near(kind: String) -> bool:
+	if hud.grid == null:
+		return false
+	var grid := hud.grid
+	var screen_middle := hud.get_viewport().get_visible_rect().get_center()
+	var middle := grid.to_local(grid.get_canvas_transform().affine_inverse() * screen_middle)
+	var spot := FarmGrid.nearest_spot(grid.spots_of(kind), middle)
+	if spot.is_empty():
+		return false
+	var at: Vector2 = spot["at"]
+	GuideArrow.point(hud, func() -> Vector2: return grid.to_screen(at) if is_instance_valid(grid) else Vector2.INF)
+	return true
 
 
 ## The arrow at the nearest spot of `kind` (the view goes there), or at tool `fallback`'s button when there is

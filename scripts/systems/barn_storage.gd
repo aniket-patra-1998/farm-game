@@ -210,4 +210,5 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	game.add_object(o)
 	game.inventory_changed.emit()
 	game.objects_updated(int(o["uid"]))   # (only it came out)
+	game.record("take_out", str(o["id"]))
 	return true

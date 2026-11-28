@@ -45,6 +45,7 @@ var bubble: HudBubble   # what a tapped thing says about itself, above it
 var tools: HudTools
 var side: HudSide
 var ads: HudAds   # the rewarded ads on the farm: the Free gift button and Revive (owner's picks, 28 Nov)
+var guide: HudGuide   # the guided start: a new farm's first steps, one at a time (owner's pick A, 28 Nov)
 var helpers: HudHelpers   # the helpers' flower, bottom left
 var interface_hidden := false
 var camera: FarmCamera              # set by Main, for the zoom buttons
@@ -158,6 +159,8 @@ func _ready() -> void:
 	helpers = HudHelpers.new(self)
 	helpers.build(root)
 	_build_tutorial(root)
+	guide = HudGuide.new(self)
+	guide.build(root, top_h() + 8)
 	_build_toast(root)
 	bubble = HudBubble.new(self)
 	root.add_child(bubble)
@@ -317,6 +320,7 @@ func set_interface_hidden(on: bool) -> void:
 		c.visible = not on
 	if not on:
 		ads.refresh()   # (its offers show only while an ad can be watched)
+	guide.refresh()
 	goals.update()
 
 
@@ -385,7 +389,7 @@ func _build_tutorial(root: Control) -> void:
 func _refresh_tutorial() -> void:
 	var text := Game.tutorial_text()
 	_tutorial.text = text
-	_tutorial.visible = text != "" and not (_placing_bar and UiFx.is_open(_placing_bar))
+	_tutorial.visible = text != "" and not (_placing_bar and UiFx.is_open(_placing_bar)) and not HudGuide.guiding()
 	# Keep messages clear of the tutorial banner while it shows.
 	var y := top_h() + (80.0 if _tutorial.visible else 16.0)
 	_toast_holder.offset_top = y

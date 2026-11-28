@@ -1723,3 +1723,9 @@ Open, from the owner's play on a phone (each a look: show a sheet of options fir
 - First screen (HudIntro, owner's pick III). Ads: Free gift button, Revive, coins in the Market (docs/ADS.md).
 - Open: collection set cards show rings only (the items inside have pictures); a picture in the ring needs CardFace
   to draw both. The mailbox not opening on the owner's phone did not reproduce (tests open it with any tool).
+- Guided start (owner's pick A): the Welcome chain is `guided` and 13 steps (data/goals.json): mailbox claim,
+  Barn mend (parts from the Apple Tree step), take out and place the Hay Bale, move it, fertilize, a sure find.
+  HudGuide: the strip, the arrow that comes back (HudGoals.point_only), Well done cards (Next collects), "Your farm
+  is ready" at the end; only the guided face shows and ads wait for the end. New verbs claim, take_out, move.
+  Left out of the owner's 19 (said why): selling crops (coins come at harvest), the Mystery Box (it opens itself),
+  a helper (nothing ready to work that early), Barley's letter (his goals open at the end).

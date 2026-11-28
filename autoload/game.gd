@@ -680,6 +680,7 @@ func move_object(uid: int, row: int, col: int) -> bool:
 	obj["col"] = col
 	grass_over(obj["id"], row, col)
 	objects_updated(uid)   # (only it moved: only it, and what stood or stands beside it, is looked at again)
+	record("move", str(obj["id"]))
 	return true
 
 
