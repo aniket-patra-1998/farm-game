@@ -132,5 +132,41 @@ func test_661_a_real_tap_on_each_goal_face_opens_its_card() -> void:
 		_check(hud.book.visible, "a tap on %s opens its card and it stays open" % f.name)
 		hud.book.close_panel()
 		await get_tree().create_timer(0.4).timeout
+
+func test_660_a_new_farm_is_named_once_by_its_first_screen() -> void:
+	Game.saving_enabled = false
+	Game.reset_game()
+	_check(not Game.player.introduced, "a brand-new farm has not had its first screen")
+	var saved := {}
+	Game.player.save_to(saved)
+	saved.erase("introduced")
+	Game.player.load_from(saved)
+	_check(Game.player.introduced, "a farm saved before the first screen never gets it")
+	Game.reset_game()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	await hud.intro.open_when_ready(main)
+	_check(hud.book.visible, "it opens over the new farm")
+	_check(Game.player.farm_name != "", "with a ready name (%s)" % Game.player.farm_name)
+	var field := hud.book.find_child("FarmName", true, false) as LineEdit
+	var go := hud.book.find_child("LetsGo", true, false) as Button
+	_check(field != null and go != null, "a name to change and Let's go")
+	var before := Game.player.farm_name
+	_check(hud.intro.ready_name(before) != before, "Another gives another name")
+	await get_tree().create_timer(0.4).timeout   # (open: then a real tap, press and release, on Let's go)
+	var at: Vector2 = get_viewport().get_final_transform() * go.get_global_rect().get_center()
+	for down: bool in [true, false]:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.pressed = down
+		e.position = at
+		Input.parse_input_event(e)
+		await get_tree().process_frame
+	await get_tree().create_timer(0.6).timeout
+	_check(not hud.book.visible, "Let's go closes it")
+	_check(Game.player.introduced, "Let's go: done for good")
+	_check(Game.player.farm_name == before, "and the name kept")
 	main.queue_free()
 	await get_tree().process_frame

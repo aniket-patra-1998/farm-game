@@ -38,6 +38,7 @@ const LEVEL_SCRIPT := "res://scripts/level_up_popup.gd"   # the level-up celebra
 
 var top: HudTop
 var goals: HudGoals   # the goal faces under the coin meter and the goal sheet
+var intro: HudIntro   # a brand-new farm's first screen (its name, farmer and region)
 var reveals: HudReveal   # the tools and menu buttons a new farm sees as goals need them
 var sheet   # a tapped home's sheet, a BuildingSheet (made when first needed, then kept; untyped, not named here)
 var bubble: HudBubble   # what a tapped thing says about itself, above it
@@ -146,6 +147,7 @@ func _ready() -> void:
 	side = HudSide.new(self)
 	side.build(root)
 	goals = HudGoals.new(self)
+	intro = HudIntro.new(self)
 	tools = HudTools.new(self)
 	tools.build(root)
 	reveals = HudReveal.new(self)

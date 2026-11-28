@@ -32,6 +32,7 @@ const DEFAULT_LOOK := {"body": "a", "skin": "#f1c9a5", "hair": "#5a3a1e", "hair_
 
 var farmer_name := ""
 var farm_name := ""
+var introduced := true   # the first screen was shown (HudIntro); a brand-new farm starts without it
 var look := DEFAULT_LOOK.duplicate()
 var pos := Vector2.ZERO          # where the farmer stands, in tiles (x: col, y: row; a tile's centre is +0.5)
 var facing := Vector2(1, 1)      # the way they face (tiles)
@@ -61,6 +62,7 @@ func _init(owner: GameState) -> void:
 func reset() -> void:
 	farmer_name = ""
 	farm_name = ""
+	introduced = false
 	look = DEFAULT_LOOK.duplicate()
 	pos = Vector2(game.farm_size / 2.0, game.farm_size / 2.0)
 	facing = Vector2(1, 1)
@@ -93,6 +95,7 @@ func set_kind(kind: String) -> void:
 func save_to(data: Dictionary) -> void:
 	data["farmer_name"] = farmer_name
 	data["farm_name"] = farm_name
+	data["introduced"] = introduced
 	data["farmer_look"] = look
 	data["farmer_pos"] = [pos.x, pos.y]
 
@@ -101,6 +104,7 @@ func load_from(data: Dictionary) -> void:
 	reset()
 	farmer_name = fit_name(str(data.get("farmer_name", "")))
 	farm_name = fit_name(str(data.get("farm_name", "")))
+	introduced = bool(data.get("introduced", true))   # (a farm saved before the first screen: never shown it)
 	var saved: Variant = data.get("farmer_look", {})
 	if typeof(saved) == TYPE_DICTIONARY:
 		for k in DEFAULT_LOOK:

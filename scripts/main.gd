@@ -154,6 +154,7 @@ func _ready() -> void:
 	if get_tree().current_scene == self:
 		LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
 		OnlineGate.check(self)   # (the game plays only online: asked while the farm opens, docs/PACKS.md)
+		hud.intro.open_when_ready(self)   # (a brand-new farm: its name, farmer and region, once the cover lifts)
 		Game.farm_opened.connect(_on_farm_opened)
 		if StartMarks.benchmark_wanted():
 			load(StartMarks.BENCHMARK).start(self)   # (the benchmark build measures loading on the phone by itself, then quits)
@@ -166,6 +167,7 @@ func _on_farm_opened() -> void:
 	if not Game.in_showcase():
 		PhoneNotices.ask_permission()   # (Android 13+: asked once, with the farm already on screen behind it)
 	LoadingCover.cover(self, Game.player.farm_name if Game.player.farm_name != "" else tr("MY_FARM"), world_3d)
+	hud.intro.open_when_ready(self)   # (a new farm started in Settings gets its first screen too)
 
 
 ## The farm drawn in 3D: its world goes behind every 2D layer; the 2D sky, ground and the pieces that
