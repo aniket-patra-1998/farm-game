@@ -110,7 +110,8 @@ func current_task() -> Dictionary:
 
 ## The arrow comes back while the step is open and nothing else is up (a panel, a placing, an arrow already).
 func _point_again() -> void:
-	if not guiding() or hud.book.is_open() or not hud.find_children("*", "GuideArrow", true, false).is_empty():
+	var arrows := hud.find_children("*", "GuideArrow", true, false)   # not-ui (a class name)
+	if not guiding() or hud.book.is_open() or not arrows.is_empty():
 		return
 	if hud.grid != null and not hud.grid.placing.is_empty():
 		return
