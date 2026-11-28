@@ -426,6 +426,17 @@ func show_me(task: Dictionary) -> void:
 			_point_card(id)
 
 
+## Where the arrow comes down on a spot (FarmGrid local): the top of what stands there, as tall as its 3D model
+## is drawn (owner, 28 Nov: "always point at the top of any object"), or the plot itself.
+func _top_of(spot: Dictionary) -> Vector2:
+	var at: Vector2 = spot["at"]
+	var uid := int(spot.get("uid", -1))
+	var world: Variant = hud.get_parent().get("world_3d") if hud.get_parent() != null else null
+	if uid >= 0 and world != null and is_instance_valid(world) and (world as Farm3D).objects != null:
+		at.y -= (world as Farm3D).objects.height_of(uid) * IsoProjection.HEIGHT_PX
+	return at
+
+
 func _has_spot(kind: String) -> bool:
 	return hud.grid != null and not hud.grid.spots_of(kind).is_empty()
 
@@ -442,7 +453,9 @@ func point_only(task: Dictionary) -> bool:
 			return true
 		button = hud.tools.buttons.get(str(to["tool"]))
 	elif to.has("seeds"):
-		if hud.grid.tool == "plant" and _point_near("plowed"):
+		var crop := str(to["seeds"])
+		var right_seed := crop == "" or hud.grid.selected_crop == crop   # (another seed in hand: pick this one first)
+		if hud.grid.tool == "plant" and right_seed and _point_near("plowed"):
 			return true
 		button = hud.tools.buttons.get("plant" if _has_spot("plowed") else "plow")
 	elif to.has("market"):
@@ -470,7 +483,7 @@ func _point_near(kind: String) -> bool:
 	var spot := FarmGrid.nearest_spot(grid.spots_of(kind), middle)
 	if spot.is_empty():
 		return false
-	var at: Vector2 = spot["at"]
+	var at := _top_of(spot)
 	GuideArrow.point(hud, func() -> Vector2: return grid.to_screen(at) if is_instance_valid(grid) else Vector2.INF)
 	return true
 
@@ -481,12 +494,33 @@ func _point_farm(kind: String, fallback: String) -> bool:
 	var spot: Dictionary = hud.go_to.call(kind) if kind != "" and hud.go_to.is_valid() else {}
 	if not spot.is_empty() and hud.grid != null:
 		var grid := hud.grid
-		var at: Vector2 = spot["at"]
+		var at := _top_of(spot)
 		GuideArrow.point(hud, func() -> Vector2:
 			return grid.to_screen(at) if is_instance_valid(grid) else Vector2.INF)
 		return true
 	if hud.tools.buttons.has(fallback):
 		GuideArrow.point(hud, GuideArrow.at_control(hud.tools.buttons[fallback]))
+	return false
+
+
+## The guided start's arrow at `id`'s card in whatever list is open (the Seeds, the Market), or at the first card
+## when the step takes any (`id` ""). Whether one was found.
+func point_at_card(id: String) -> bool:
+	for c in hud.find_children("*", "CardList", true, false):   # not-ui (a class name)
+		var list := c as CardList
+		if not list.is_visible_in_tree() or list.ids.is_empty():
+			continue
+		var want := id if list.ids.has(id) else (str(list.ids[0]) if id == "" else "")
+		if want == "":
+			continue
+		list.bring_into_view(want)
+		GuideArrow.point(hud, func() -> Vector2:
+			var card := list.card_of(want) if is_instance_valid(list) else null
+			if card == null or not card.is_visible_in_tree():
+				return Vector2.INF
+			var r := card.get_global_rect()
+			return Vector2(r.get_center().x, r.position.y))
+		return true
 	return false
 
 
@@ -504,7 +538,10 @@ func _point_card(id: String) -> void:
 	if is_instance_valid(list):
 		GuideArrow.point(hud, func() -> Vector2:
 			var card := list.card_of(id) if is_instance_valid(list) else null
-			return card.get_global_rect().get_center() if card != null and card.is_visible_in_tree() else Vector2.INF)
+			if card == null or not card.is_visible_in_tree():
+				return Vector2.INF
+			var r := card.get_global_rect()
+			return Vector2(r.get_center().x, r.position.y))
 
 
 ## Collects a finished goal: the reward, its sound, and a word of what came.

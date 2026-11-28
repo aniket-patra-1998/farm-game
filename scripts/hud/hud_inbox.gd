@@ -122,6 +122,7 @@ func line_for(item: Dictionary) -> Control:
 		row.add_child(words)
 	var id := int(item["id"])
 	var button := hud.panel_button(tr(button_key(item)))
+	button.name = "Take_" + str(give.get("id", ""))   # not-ui (a node's name: the guided start points at it)
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.disabled = InboxItem.is_help(item) and Game.social.helps_left() <= 0
 	button.pressed.connect(func() -> void: _take(id, what == InboxItem.ITEM))

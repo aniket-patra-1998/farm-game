@@ -15,7 +15,7 @@ const HEAD := 0.55          # the head's length, of the arrow's
 const STEM := 0.36          # the stem's width, of the arrow's width
 const WIDTH := 0.8          # the arrow's width, of its length
 const EDGE := 0.12          # its outline, of its width
-const GAP := 0.15           # the gap between its tip and the target, of its length
+const GAP := 0.08           # the gap between its tip and the target (an object's top), of its length
 const SHADOW := Color(0, 0, 0, 0.3)
 const SHADOW_DROP := 3.0
 
@@ -39,12 +39,13 @@ static func point(parent: Node, where: Callable) -> GuideArrow:
 	return a
 
 
-## The middle of a Control on screen while it is shown (for `target`).
+## The top middle of a Control on screen while it is shown (for `target`): the arrow points down at its top.
 static func at_control(c: Control) -> Callable:
 	return func() -> Vector2:
 		if not is_instance_valid(c) or not c.is_visible_in_tree():
 			return Vector2.INF
-		return c.get_global_rect().get_center()
+		var r := c.get_global_rect()
+		return Vector2(r.get_center().x, r.position.y)   # (its top: the arrow comes down onto it, owner, 28 Nov)
 
 
 func _process(delta: float) -> void:

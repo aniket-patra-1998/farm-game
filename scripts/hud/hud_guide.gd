@@ -114,7 +114,24 @@ func _point_again() -> void:
 		refresh()   # (a Well done that waited for a panel or a placing to finish)
 		return
 	var arrows := hud.find_children("*", "GuideArrow", true, false)   # not-ui (a class name)
-	if not guiding() or hud.book.is_open() or not arrows.is_empty():
+	if not guiding() or not arrows.is_empty():
+		return
+	var sheet_up: bool = hud.sheet != null and hud.sheet.is_open()
+	if Game.modal_open and not hud.book.is_open() and not sheet_up:   # (a level-up card or a reveal: it first)
+		return
+	if hud.book.is_open() or sheet_up:   # (a list or a building open for this step: the arrow at what to tap)
+		var wanted := current_task()
+		var id := str(wanted.get("what", ""))
+		if str(wanted.get("do", "")) in ["plant", "buy", "build", "own", "take_out"]:
+			hud.goals.point_at_card(id)
+		elif str(wanted.get("do", "")) == "repair":
+			var fix := hud.find_child("RepairBarn", true, false) as Control
+			if fix != null and fix.is_visible_in_tree():
+				GuideArrow.point(hud, GuideArrow.at_control(fix))
+		elif str(wanted.get("do", "")) == "claim":   # (the mailbox open: its Place for the thing)
+			var take := hud.book.find_child("Take_" + id, true, false) as Control
+			if take != null and take.is_visible_in_tree():
+				GuideArrow.point(hud, GuideArrow.at_control(take))
 		return
 	if hud.grid != null and not hud.grid.placing.is_empty():
 		return
@@ -132,7 +149,7 @@ func _busy() -> bool:
 func _show_done(step: int) -> void:
 	if not guiding() or int(Game.goals.chain_step.get(CHAIN, -1)) != step:
 		return
-	if hud.book.is_open() or (hud.grid != null and not hud.grid.placing.is_empty()) or _busy():
+	if Game.modal_open or (hud.grid != null and not hud.grid.placing.is_empty()) or _busy():
 		_shown_done = -1   # (not over a panel, a placing or a press under way: asked again in a moment)
 		return
 	var learn := str((Game.goals.chain_of(CHAIN)["steps"][step] as Dictionary).get("learn", ""))

@@ -45,6 +45,11 @@ func build(root: Control) -> void:
 		b.button_group = _group
 		var id := str(t[0])
 		b.pressed.connect(func() -> void: _pick(id))
+		if id == "plant":   # (a tool in hand takes no second press in its group: the seed list opens again anyway)
+			b.gui_input.connect(func(e: InputEvent) -> void:
+				if b.button_pressed and e is InputEventMouseButton and not e.pressed \
+						and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+					_pick(id))
 		buttons[id] = b
 		row.add_child(b)
 	(buttons[FIRST] as Button).button_pressed = true
