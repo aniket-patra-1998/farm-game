@@ -229,6 +229,10 @@ func load_save() -> bool:
 	if extra_vehicles > 0:
 		var vnote := game.tr("EXTRA_VEHICLES_SOLD_BACK") % extra_vehicles
 		game.absence_note = vnote if game.absence_note == "" else game.absence_note + "\n" + vnote
+	for o: Dictionary in game.objects:   # (a vehicle placed from the Barn before 28 Nov came with no fuel)
+		if game.kind_of(o) == "vehicle":
+			game.vehicles.on_vehicle_bought()
+			break
 	if not game.in_showcase() and game.restore_mailbox():
 		var mnote := game.tr("MAILBOX_BACK")
 		game.absence_note = mnote if game.absence_note == "" else game.absence_note + "\n" + mnote

@@ -110,6 +110,9 @@ func current_task() -> Dictionary:
 
 ## The arrow comes back while the step is open and nothing else is up (a panel, a placing, an arrow already).
 func _point_again() -> void:
+	if guiding() and Game.goals.is_done(KEY) and _shown_done == -1:
+		refresh()   # (a Well done that waited for a panel or a placing to finish)
+		return
 	var arrows := hud.find_children("*", "GuideArrow", true, false)   # not-ui (a class name)
 	if not guiding() or hud.book.is_open() or not arrows.is_empty():
 		return
@@ -120,9 +123,17 @@ func _point_again() -> void:
 		hud.goals.point_only(task)
 
 
+## A finger or the mouse down on the farm (a press, a drag or a hold under way): the card waits for it.
+func _busy() -> bool:
+	return Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+
+
 ## "Well done": what the step taught, its reward, and Next (which collects it).
 func _show_done(step: int) -> void:
 	if not guiding() or int(Game.goals.chain_step.get(CHAIN, -1)) != step:
+		return
+	if hud.book.is_open() or (hud.grid != null and not hud.grid.placing.is_empty()) or _busy():
+		_shown_done = -1   # (not over a panel, a placing or a press under way: asked again in a moment)
 		return
 	var learn := str((Game.goals.chain_of(CHAIN)["steps"][step] as Dictionary).get("learn", ""))
 	var reward := Game.goals.reward_of(KEY)

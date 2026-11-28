@@ -211,4 +211,6 @@ func place_from_storage(index: int, row: int, col: int) -> bool:
 	game.inventory_changed.emit()
 	game.objects_updated(int(o["uid"]))   # (only it came out)
 	game.record("take_out", str(o["id"]))
+	if game.kind_of(o) == "vehicle":   # (a vehicle given, not bought: the rebuilt Tractor, fuel and all)
+		game.vehicles.on_vehicle_bought()
 	return true

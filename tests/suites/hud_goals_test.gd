@@ -207,7 +207,7 @@ func test_666_show_me_always_shows_something() -> void:
 			Game.field.clear_plot(i) if Game.field.has_method("clear_plot") else null
 	var data: Dictionary = DataFile.read(GoalSystem.DATA_PATH)
 	for verb: String in data["show"]:
-		if verb in ["buy", "build", "own", "collect", "feed", "upgrade", "start_craft", "craft"]:
+		if verb in ["buy", "build", "own", "collect", "feed", "upgrade", "start_craft", "craft", "repair", "move"]:
 			continue   # (things named by id: shown in the Market or on the farm by HudGoals' own tests)
 		hud.goals.show_me({"do": verb, "what": "", "n": 1})
 		await get_tree().process_frame
