@@ -21,6 +21,8 @@ const SOFT := Color("#8a7763")
 const HEAD := Color("#3a2614")
 const GOOD := Color("#3c7a2a")   # (the "done" green: the accent itself is too light for words)
 const DIM := 0.35          # the backdrop's darkness
+const OPEN_GUARD_MS := 300 # a tap on the backdrop this soon after opening is the opening tap's twin, not a close
+const OPEN_GUARD_FRAMES := 2
 ## The panel uses the screen (a phone's 20:9 especially): its scrolling area is this share of the screen's
 ## height, and it is as wide as the screen allows up to this many times the screen's height.
 const HEIGHT_SHARE := 0.66
@@ -44,6 +46,8 @@ var _tab_bar: HBoxContainer
 var _tabs: Array = []          # [[name, builder]] of the panel open, or empty
 var _tab := 0
 var _scroll: ScrollContainer
+var _opened_msec := 0      # when it last opened from closed (the backdrop's guard)
+var _opened_frame := 0     # and in which frame
 var _refresh_due := false   # a refresh is waiting for the end of the frame
 var _pages := {}            # tab -> its page (a VBoxContainer in the content), built once while the panel is open
 var _stale := {}            # tabs whose live page missed a refresh while hidden
@@ -191,6 +195,9 @@ func _show(title: String, builder: Callable) -> void:
 	_fit_screen()
 	_build_tab_bar()
 	var opening := not is_open()
+	if opening:
+		_opened_msec = Time.get_ticks_msec()
+		_opened_frame = Engine.get_process_frames()
 	UiFx.pop_next = opening   # (a panel opening pops its cards in; a tab or a refresh doesn't)
 	UiFx.popped = 0
 	_clear_pages()
@@ -299,8 +306,18 @@ func _clear_pages() -> void:
 	_stale.clear()
 
 
+## Opened by the tap still under way: within OPEN_GUARD_MS or the next OPEN_GUARD_FRAMES frames (a slow first
+## build can take longer than the guard's time, and the twin comes the frame after).
+func _just_opened() -> bool:
+	return Time.get_ticks_msec() - _opened_msec <= OPEN_GUARD_MS \
+			or Engine.get_process_frames() - _opened_frame <= OPEN_GUARD_FRAMES
+
+
 func _on_backdrop_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
+	# (Not the very tap that opened it: on a phone one touch also arrives as a mouse press, and when the button
+	# that opened the panel lies outside the paper, as the goal faces do beside a narrow card, that second event
+	# lands on the backdrop and closed the panel at once.)
+	if event is InputEventMouseButton and event.pressed and not _just_opened():
 		close_panel()
 
 

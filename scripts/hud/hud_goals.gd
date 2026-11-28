@@ -541,12 +541,22 @@ class GoalFace:
 			dot.text = "!"   # not-ui (a sign, not a word)
 			dot.get_parent().name = "Done"   # not-ui (a node's name)
 
+	var _down := false
+
+	# A tap is a press and its release on the face, as a Button's (the release, not the press, opens the goal:
+	# opened on the press, the rest of that tap, and on a phone its mouse twin, landed on the new card and its
+	# backdrop and shut it again, 28 Nov). Mouse events only: touches arrive as them (emulate_mouse_from_touch).
 	func _gui_input(e: InputEvent) -> void:
-		if (e is InputEventMouseButton and (e as InputEventMouseButton).pressed
-				and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT) \
-				or (e is InputEventScreenTouch and (e as InputEventScreenTouch).pressed):
-			accept_event()
-			tapped.emit()
+		var b := e as InputEventMouseButton
+		if b == null or b.button_index != MOUSE_BUTTON_LEFT:
+			return
+		accept_event()
+		if b.pressed:
+			_down = true
+		elif _down:
+			_down = false
+			if Rect2(Vector2.ZERO, size).has_point(b.position):
+				tapped.emit()
 
 	func _draw() -> void:
 		draw_circle(size / 2.0, minf(size.x, size.y) / 2.0, UiTheme.color("paper"))

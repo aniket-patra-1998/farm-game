@@ -106,3 +106,31 @@ func test_466_faces_show_the_first_three_and_collect_once() -> void:
 	await get_tree().process_frame
 	Game.goals.load_data()
 	Game.goals.reset()
+
+
+func test_661_a_real_tap_on_each_goal_face_opens_its_card() -> void:
+	# (28 Nov: a face opened its card on the press, and the rest of that tap shut it again: nothing seemed to happen.)
+	Game.saving_enabled = false
+	Game.reset_game()
+	Game.xp = 5000
+	Game.goals.refresh()
+	var main := MAIN_SCENE.instantiate()
+	add_child(main)
+	for i in 10:
+		await get_tree().process_frame
+	var hud: FarmHud = main.get("hud")
+	for f: Control in hud.goals.column.get_children():
+		var at: Vector2 = get_viewport().get_final_transform() * f.get_global_rect().get_center()
+		for down: bool in [true, false]:
+			var e := InputEventMouseButton.new()
+			e.button_index = MOUSE_BUTTON_LEFT
+			e.pressed = down
+			e.position = at
+			Input.parse_input_event(e)
+			await get_tree().process_frame
+		await get_tree().create_timer(0.4).timeout
+		_check(hud.book.visible, "a tap on %s opens its card and it stays open" % f.name)
+		hud.book.close_panel()
+		await get_tree().create_timer(0.4).timeout
+	main.queue_free()
+	await get_tree().process_frame

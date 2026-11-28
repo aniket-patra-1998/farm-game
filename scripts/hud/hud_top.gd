@@ -65,8 +65,8 @@ func build(root: Control) -> void:
 	sky.alignment = BoxContainer.ALIGNMENT_CENTER
 	sky.add_theme_constant_override("separation", 4)
 	sky.mouse_filter = Control.MOUSE_FILTER_STOP
-	sky.gui_input.connect(func(e: InputEvent) -> void:
-		if (e is InputEventMouseButton and e.pressed) or (e is InputEventScreenTouch and e.pressed):
+	sky.gui_input.connect(func(e: InputEvent) -> void:   # (on the release, mouse only: one tap, one call; HudGoals)
+		if e is InputEventMouseButton and not e.pressed and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 			sky_tapped.emit())
 	middle.add_child(sky)
 	var px := UiTheme.size("font_clock") * SKY_ICON
