@@ -247,8 +247,15 @@ jobs:
           p = open("data/packs.json").read()
           open("data/packs.json", "w").write(re.sub(r'"app_code": \d+', '"app_code": ' + code, p))
           PY
-          ./godot-bin/godot --headless --path . --export-release "Android (Play Store AAB)" build/barnlight.aab \
-            > aab-release.log 2>&1 || tail -20 aab-release.log
+          # With its shaders compiled ahead, as the debug APK's are (the export step's `baked`: Vulkan under a virtual
+          # screen; headless, the baker is skipped without a word, and the phone compiled every shader at its first
+          # start: the player build sat on the start-up logo, 28 Nov). Headless only if that export fails.
+          timeout 1200 xvfb-run -a -s "-screen 0 1280x720x24" ./godot-bin/godot --rendering-driver vulkan \
+            --rendering-method mobile --path . --export-release "Android (Play Store AAB)" build/barnlight.aab \
+            > aab-release.log 2>&1 || { echo "The baked release export stopped"; rm -f build/barnlight.aab; }
+          grep -iE "shader|error" aab-release.log | grep -v "Storing File" | head -10 || true
+          test -s build/barnlight.aab || ./godot-bin/godot --headless --path . --export-release \
+            "Android (Play Store AAB)" build/barnlight.aab > aab-release.log 2>&1 || tail -20 aab-release.log
           test -s build/barnlight.aab
           # The same bundle as one installable APK, signed with the same key: exactly what a player gets (release
           # build: no showcase, no debug tools), for the owner to install and check before testers do.
