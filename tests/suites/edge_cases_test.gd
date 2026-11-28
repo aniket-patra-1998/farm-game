@@ -134,6 +134,11 @@ func test_438_a_rescue_spent_elsewhere_waits_for_a_harvest() -> void:
 	g.coins = 0   # spent on a decoration instead of seeds
 	g.check_rescue()
 	_eq(g.coins, 0, "no second rescue without a harvest (else buy, reopen, rescued: free coins for ever)")
+	g.debug_time_offset += 86400
+	g.check_rescue()
+	_check(g.coins >= rescue, "but a farm still stuck the next day is helped again: never locked for good (%d)" % g.coins)
+	g.debug_time_offset -= 86400
+	g.coins = 0
 	g.coins = rescue
 	var i := g.index_of(3, 3)
 	g.plots[i] = {"state": "grass"}

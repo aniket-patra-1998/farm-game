@@ -24,7 +24,6 @@ extends Node
 ## its numbers (first harvest, levels, coins, goals) and stop.
 ## Reads the real systems, so a rule change shows up here too. A test drives it on its own farm (`game`).
 
-const SEED_RESERVE := 150   # coins a goal buy leaves for seeds (_goal_buy)
 const SECONDS_PER_ACTION := 1.15   # the farmer works 0.75 s at each job and walks a little between them
 const HOURS_DEFAULT := [8.0, 13.0, 20.0]     # local hours of the day the bot visits (with --visits=3)
 const LOOKAHEAD_VISITS := 12   # how many visits ahead a crop may ripen in
@@ -925,11 +924,28 @@ func _goal_buy() -> void:
 			continue
 		# (Never the seed money: a player keeps enough to sow the fields again before buying for a goal, or the
 		# farm stalls with nothing growing; goals credited with the day's work came faster and spent it, 28 Nov.)
-		if game.coins - int(game.buildings.price_of(id).get("coins", 0)) < SEED_RESERVE:
+		if game.coins - int(game.buildings.price_of(id).get("coins", 0)) < _seed_money():
 			continue
 		if not _buy_somewhere(id) and _clear_a_plot():
 			_buy_somewhere(id)
 		return
+
+
+## The coins to sow every field plot once with the cheapest seed (what a goal buy leaves: _goal_buy).
+func _seed_money() -> int:
+	if not game.goals.past_welcome():
+		return 0   # (the Welcome chain's buys are the tutorial's own: its gifts pay for them)
+	var cheapest := INF
+	for id: String in game.crops:
+		if game.can_plant(id):
+			cheapest = minf(cheapest, float(game.crops[id]["seed_cost"]))
+	if cheapest == INF:
+		return 0
+	var fields := 0
+	for i in game.plots.size():
+		if game.on_farm(i) and game.field.phase(i) != GameState.Phase.GRASS:
+			fields += 1
+	return int(cheapest) * fields
 
 
 ## Buys `id` on the first free spot from the back of the farm. False when nothing fits.

@@ -104,6 +104,7 @@ var plots: Array[Dictionary] = []  # MAX_SIZE * MAX_SIZE entries, row-major
 var farm_size := START_SIZE        # usable width and depth in tiles
 var unwithers := Balance.i("economy.start_unwithers")   # Unwither items held
 var rescued := false   # a rescue was given and no harvest since: the next waits for one (no free-coins loop)
+var rescued_day := -1  # the day of the last rescue: a farm still stuck the next day is rescued again (never locked)
 var keep_clock := false   # a new game keeps debug_time_offset (the play bot starts every farm on one date)
 var born_day := -1     # the day this farm began (a young farm's daily help counts from it)
 var helped_day := -1   # the last day a young farm was helped to plant (once a day)
@@ -1234,12 +1235,14 @@ func check_rescue() -> void:
 		return
 	if any_plot_in(Phase.GROWING) or any_plot_in(Phase.RIPE):
 		return
-	if rescued:
-		return   # rescued already and spent it on something else: the next one waits for a harvest
+	if rescued and rescued_day == day_number():
+		return   # rescued today and spent it on something else: the next waits for a harvest, or tomorrow
+		# (28 Nov: crops withered while away with no coins left and the rescue spent once: the farm was stuck for good)
 	var gift := Balance.i("economy.rescue_coins") - coins
 	if gift <= 0:
 		return
 	rescued = true
+	rescued_day = day_number()
 	add_coins(gift, false)
 	message.emit(tr("YOU_FOUND_COINS_IN_THE_BARN") % gift)
 
@@ -1478,6 +1481,7 @@ func _new_game() -> void:
 	farm_size = START_SIZE
 	unwithers = Balance.i("economy.start_unwithers")
 	rescued = false
+	rescued_day = -1
 	fertilize_alls = 0
 	absence_items = []
 	absence_note = ""
