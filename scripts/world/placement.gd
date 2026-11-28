@@ -18,8 +18,11 @@ func _init(owner: FarmGrid) -> void:
 	grid = owner
 
 
-func start(item_id: String, uid := -1) -> void:
+## `held`: the finger that started it is still down (holding to lift), so its release puts the thing down.
+func start(item_id: String, uid := -1, held := false) -> void:
 	state = {"item": item_id, "uid": uid, "row": -1, "col": -1}
+	if held:
+		state["down"] = true
 	if uid != -1:
 		var o := Game.object_by_uid(uid)
 		state["row"] = int(o["row"])
@@ -208,6 +211,12 @@ func input(event: InputEvent) -> void:
 			return
 		pos = d.position
 	else:
+		return
+	# A finger lifted that went down before the hand filled is the tap that filled it (the inbox's Place, the
+	# Market's Buy: its release reaches the farm too) and drops nothing: the chicken went straight back, 28 Nov.
+	if event is InputEventScreenTouch and not released:
+		state["down"] = true
+	elif not state.get("down", false):
 		return
 	if not grid.on_farm_area(pos):
 		return

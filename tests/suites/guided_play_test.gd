@@ -1,6 +1,10 @@
 extends TestSuite
 ## A player who only follows the arrow and taps Next (owner, 28 Nov: "check the game the way I play it"): real
 ## touches from a new farm to the end of the guided start; anything that leaves him with nothing to tap is a gap.
+## Run it with a renderer on a phone's shape to see it as he does (it caught the inbox's Place off the panel's
+## edge, the chicken dropped back by Place's own tap, the arrow on grass behind the Hay Bale, 28 Nov):
+##   GUIDE_SHOTS=/tmp/shots xvfb-run -s "-screen 0 1600x720x24" godot --rendering-method gl_compatibility \
+##     --resolution 1600x720 --path . res://tests/run_tests.tscn -- --only=guided_play
 
 var gaps: Array[String] = []
 
@@ -41,6 +45,7 @@ func _gap(s: String) -> void:
 func test_669_a_player_who_only_follows_the_arrow_finishes_the_guided_start() -> void:
 	Game.saving_enabled = false
 	Game.reset_game()
+	Game.player.introduced = true   # (the first screen is its own test, hud_goals_test: here the guide from there)
 	var main := MAIN_SCENE.instantiate()
 	add_child(main)
 	for i in 10:
@@ -60,6 +65,7 @@ func test_669_a_player_who_only_follows_the_arrow_finishes_the_guided_start() ->
 			last_step = step
 			still = 0
 		still += 1
+		_shot("s%02d_%03d" % [step + 1, it])
 		if still > 60:
 			_gap("stuck at step %d: %s (tasks %s %s)" % [step + 1, HudGoals.say_of(HudGuide.KEY),
 				Game.goals.tasks_of(HudGuide.KEY), Game.goals.progress_of(HudGuide.KEY)])
@@ -119,6 +125,9 @@ func test_669_a_player_who_only_follows_the_arrow_finishes_the_guided_start() ->
 			hud.sheet.call("close")
 			await get_tree().create_timer(0.5).timeout
 			continue
+		if grid.carrying_soon != "":   # (its file being read: the hand fills in a moment)
+			await get_tree().create_timer(0.3).timeout
+			continue
 		if not grid.placing.is_empty():
 			var id := str(grid.placing.get("item", ""))
 			var placed := false
@@ -126,9 +135,11 @@ func test_669_a_player_who_only_follows_the_arrow_finishes_the_guided_start() ->
 				for c in range(4, Game.farm_size - 4):
 					if Game.can_place(id, r, c):
 						var fp := Game.footprint(id)
-						var cs := grid.corners_of(r, c, fp.x, fp.y)
+						# (the tile under the finger, as Placement centres the footprint on it)
+						var cs := grid.corners_of(r + int(fp.y / 2.0), c + int(fp.x / 2.0), 1, 1)
 						var mid: Vector2 = (cs[0] + cs[2]) / 2.0
 						cam.snap(grid.to_global(mid), cam.target_zoom)
+						await get_tree().process_frame
 						await get_tree().process_frame
 						await _tap(grid.to_screen(mid))
 						placed = true
@@ -161,3 +172,12 @@ func test_669_a_player_who_only_follows_the_arrow_finishes_the_guided_start() ->
 		print("GAPLIST ", g)
 	main.queue_free()
 	await get_tree().process_frame
+
+
+## With GUIDE_SHOTS=<dir> set (and a renderer), a picture of every turn: how the guided start looks to a player.
+func _shot(tag: String) -> void:
+	var dir := OS.get_environment("GUIDE_SHOTS")
+	if dir.is_empty() or DisplayServer.get_name() == "headless":
+		return
+	DirAccess.make_dir_recursive_absolute(dir)
+	get_viewport().get_texture().get_image().save_png(dir.path_join(tag + ".png"))

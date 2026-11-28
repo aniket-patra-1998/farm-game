@@ -19,7 +19,7 @@ on:
         required: false
         default: farm-game-benchmark.apk
   schedule:
-    - cron: "40 20 * * *"   # 02:10 IST
+    - cron: "10 9 * * *"   # 14:40 IST: after Test Lab's daily quota resets (midnight Pacific, 08:00 UTC)
 
 concurrency:
   group: phone-bench
@@ -28,7 +28,7 @@ concurrency:
 jobs:
   bench:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 75   # a second phone can wait half an hour in Test Lab's queue (28 Nov)
     env:
       PROJECT: ${{ vars.FIREBASE_PROJECT }}
       DEVICES: ${{ github.event.inputs.devices || vars.FTL_DEVICES || 'model=a05s,version=35;model=SC-53C,version=36' }}

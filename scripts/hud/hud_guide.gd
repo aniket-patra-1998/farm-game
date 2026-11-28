@@ -11,6 +11,7 @@ extends RefCounted
 const KEY := "chain:welcome"         # not-ui (the guided chain's goal key)
 const CHAIN := "welcome"             # not-ui
 const POINT_EVERY := 2.5             # seconds between looks for whether the arrow should point again
+const WATCH_EVERY := 0.25            # seconds between looks for a panel or sheet opening or closing
 const DONE_PANEL := "GuideDone"      # not-ui (node names: tests find them)
 const READY_PANEL := "GuideReady"    # not-ui
 
@@ -21,6 +22,7 @@ var _count: Label
 var _say: Label
 var _shown_done := -1    # the step whose Well done card is up (or was: it is not shown twice)
 var _was_guiding := false
+var _scene := ""         # what was open at the last watch (the book, a sheet, a thing in hand)
 
 
 func _init(owner: FarmHud) -> void:
@@ -70,6 +72,11 @@ func build(root: Control, y: float) -> void:
 	look.autostart = true
 	look.timeout.connect(_point_again)
 	strip.add_child(look)
+	var watch := Timer.new()   # (a panel or sheet just opened or closed: the arrow moves at once, not up to 2.5 s on)
+	watch.wait_time = WATCH_EVERY
+	watch.autostart = true
+	watch.timeout.connect(_watch)
+	strip.add_child(watch)
 	Game.goals_changed.connect(refresh)
 	refresh.call_deferred()
 
@@ -79,7 +86,7 @@ func refresh() -> void:
 	if strip == null or not is_instance_valid(strip):
 		return
 	var on := guiding()
-	strip.visible = on and not hud.interface_hidden
+	strip.visible = on and not hud.interface_hidden and _after_intro()
 	if _was_guiding and not on and Game.goals.chains_done.has(CHAIN):
 		_was_guiding = false
 		_show_ready.call_deferred()
@@ -109,7 +116,24 @@ func current_task() -> Dictionary:
 
 
 ## The arrow comes back while the step is open and nothing else is up (a panel, a placing, an arrow already).
+## Whether the first screen (HudIntro) is behind the player: until then the guide neither shows nor points.
+static func _after_intro() -> bool:
+	return Game.player.introduced or Game.in_showcase()
+
+
+func _watch() -> void:
+	if not guiding() or not _after_intro():
+		return
+	var now := "%s %s %s" % [hud.book.is_open(), hud.sheet != null and hud.sheet.is_open(),
+		hud.grid != null and hud.grid.placing.is_empty()]
+	if now != _scene:
+		_scene = now
+		_point_again()
+
+
 func _point_again() -> void:
+	if not _after_intro():
+		return
 	if guiding() and Game.goals.is_done(KEY) and _shown_done == -1:
 		refresh()   # (a Well done that waited for a panel or a placing to finish)
 		return
@@ -133,8 +157,8 @@ func _point_again() -> void:
 			if take != null and take.is_visible_in_tree():
 				GuideArrow.point(hud, GuideArrow.at_control(take))
 		return
-	if hud.grid != null and not hud.grid.placing.is_empty():
-		return
+	if hud.grid != null and (not hud.grid.placing.is_empty() or hud.grid.carrying_soon != ""):
+		return   # (a thing in hand, or about to be: the arrow would send the player off to the Barn meanwhile)
 	var task := current_task()
 	if not task.is_empty():
 		hud.goals.point_only(task)

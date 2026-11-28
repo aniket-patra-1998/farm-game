@@ -105,6 +105,8 @@ func _closed() -> void:
 		Game.player.set_farm_name(ready_name())
 	Game.queue_save()
 	hud.top.show_name()
+	if hud.guide != null:
+		hud.guide.refresh()   # (Maple's strip and arrow come up only now: nothing behind the first screen)
 
 
 ## One of the ready names, not `but` (the one showing).

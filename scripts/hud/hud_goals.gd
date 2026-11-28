@@ -480,7 +480,7 @@ func _point_near(kind: String) -> bool:
 	var grid := hud.grid
 	var screen_middle := hud.get_viewport().get_visible_rect().get_center()
 	var middle := grid.to_local(grid.get_canvas_transform().affine_inverse() * screen_middle)
-	var spot := FarmGrid.nearest_spot(grid.spots_of(kind), middle)
+	var spot := grid.nearest_tappable(grid.spots_of(kind), middle)
 	if spot.is_empty():
 		return false
 	var at := _top_of(spot)

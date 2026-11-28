@@ -102,11 +102,10 @@ func line_for(item: Dictionary) -> Control:
 	var give: Dictionary = item["give"]
 	var what := str(give.get("what", ""))
 	var px := UiTheme.size("inbox_thing")
+	row.add_child(words)
 	if what in [InboxItem.ITEM, InboxItem.YOUNG, InboxItem.PART]:
-		words.size_flags_horizontal = Control.SIZE_FILL   # (the picture sits right after the words: the words keep
-		words.clip_text = false                           # their own width; names are short, InboxItem trims them)
-		words.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
-		row.add_child(words)
+		# The picture after the words; the words give way (trimmed) so the button always stays inside the panel (a
+		# long line once pushed Place past the panel's edge on a phone, where a tap closed the inbox, 28 Nov).
 		var pic := TextureRect.new()
 		pic.texture = ItemIcons.of(str(give["id"]))
 		pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -114,12 +113,6 @@ func line_for(item: Dictionary) -> Control:
 		pic.custom_minimum_size = Vector2(px, px)
 		pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(pic)
-		var gap := Control.new()
-		gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(gap)
-	else:
-		row.add_child(words)
 	var id := int(item["id"])
 	var button := hud.panel_button(tr(button_key(item)))
 	button.name = "Take_" + str(give.get("id", ""))   # not-ui (a node's name: the guided start points at it)

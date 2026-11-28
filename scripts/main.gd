@@ -234,7 +234,7 @@ func go_to_next_ready() -> void:
 ## The away card's rows: the view travels to the nearest thing of `kind` ("ripe", "withered", "ready", "hungry",
 ## "stray": FarmGrid.spots_of) and it is pointed out.
 func go_to_kind(kind: String) -> Dictionary:
-	var spot := FarmGrid.nearest_spot(grid.spots_of(kind), grid.to_local(camera.global_position))
+	var spot := grid.nearest_tappable(grid.spots_of(kind), grid.to_local(camera.global_position))
 	if not spot.is_empty():
 		grid.point_out(spot)
 	_travel_to(spot)

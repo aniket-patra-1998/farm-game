@@ -149,6 +149,9 @@ func test_660_a_new_farm_is_named_once_by_its_first_screen() -> void:
 	var hud: FarmHud = main.get("hud")
 	await hud.intro.open_when_ready(main)
 	_check(hud.book.visible, "it opens over the new farm")
+	await get_tree().create_timer(HudGuide.WATCH_EVERY * 2.0).timeout
+	_check(not hud.guide.strip.is_visible_in_tree() and hud.find_children("*", "GuideArrow", true, false).is_empty(),
+		"Maple's strip and arrow wait behind it (owner, 28 Nov: the first second looked broken)")
 	_check(Game.player.farm_name != "", "with a ready name (%s)" % Game.player.farm_name)
 	var field := hud.book.find_child("FarmName", true, false) as LineEdit
 	var go := hud.book.find_child("LetsGo", true, false) as Button
@@ -167,6 +170,7 @@ func test_660_a_new_farm_is_named_once_by_its_first_screen() -> void:
 	await get_tree().create_timer(0.6).timeout
 	_check(not hud.book.visible, "Let's go closes it")
 	_check(Game.player.introduced, "Let's go: done for good")
+	_check(hud.guide.strip.is_visible_in_tree(), "then the guide comes up")
 	_check(Game.player.farm_name == before, "and the name kept")
 	main.queue_free()
 	await get_tree().process_frame

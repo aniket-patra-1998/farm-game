@@ -20,6 +20,8 @@ signal collected(uid: int)                         # a building or animal was co
 
 
 const ITEM_SPOT := "item:"   # not-ui (spots_of: the things of one id)
+const TAP_REACH: Array[Vector2] = [Vector2.ZERO, Vector2(0, 18), Vector2(0, -12), Vector2(16, 0), Vector2(-16, 0)]
+const TAPPABLE_TRIES := 24   # nearest spots tried for one a tap reaches (each a pick against the farm's things)
 const FILE_WAIT_MOST := 10.0   # seconds a thing to carry waits for its file to be read (then it is built anyway)
 const MAX := GameState.MAX_SIZE # plots are indexed on the full-size grid
 const TILE_W := 128.0
@@ -72,6 +74,7 @@ var last_crop := ""      # the last seed picked; the Seeder and Combine plant it
 
 ## Putting things on the farm (see Placement).
 var placement: Placement
+var carrying_soon := ""   # what goes into the hand once its file is read (the guide waits for it, not the Barn)
 var placing: Dictionary:     # what is in hand while placing (see Placement.state)
 	get:
 		return placement.state
@@ -740,6 +743,27 @@ static func nearest_spot(spots: Array[Dictionary], from: Vector2) -> Dictionary:
 	return best
 
 
+## The nearest spot to `from` that a tap reaches: an empty plot hidden behind a thing (the Hay Bale in front of
+## the grass the arrow chose, 28 Nov) is passed over, since a tap there opens the thing. Things' own spots count.
+func nearest_tappable(spots: Array[Dictionary], from: Vector2) -> Dictionary:
+	var by_distance := spots.duplicate()
+	by_distance.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return from.distance_squared_to(a["at"]) < from.distance_squared_to(b["at"]))
+	for s: Dictionary in by_distance.slice(0, TAPPABLE_TRIES):
+		if int(s["uid"]) >= 0 or not picker.is_valid() or _clear_at(to_screen(s["at"])):
+			return s
+	return nearest_spot(spots, from)
+
+
+## Whether nothing stands over the screen around `screen_pos` (the tip of the arrow and a finger's width round
+## it), so a tap there reaches the ground.
+func _clear_at(screen_pos: Vector2) -> bool:
+	for d: Vector2 in TAP_REACH:
+		if int(picker.call(screen_pos + d)) >= 0:
+			return false
+	return true
+
+
 ## Points a spot out when the view goes to it: a thing hops, a plot sparkles.
 func point_out(spot: Dictionary) -> void:
 	if int(spot["uid"]) >= 0:
@@ -834,7 +858,7 @@ func _process(_delta: float) -> void:
 	if obj.is_empty():
 		return  # nothing here to lift: the press carries on as a tap or a drag
 	_pressing = false  # it is picked up now (or refused, with its reason), so this press is not a tap
-	if start_placing(str(obj["id"]), uid):
+	if start_placing(str(obj["id"]), uid, true):   # (the finger that lifted it is still down: its release drops it)
 		Feedback.moment("place")
 		_poke(uid)
 	else:
@@ -865,37 +889,41 @@ func tile_at_screen(screen_pos: Vector2) -> Vector2i:
 ## Picks up something to place: a new item (`uid` -1), or one on the farm, which goes only if the rules let it
 ## move (Game.buildings.can_move); otherwise the reason is shown. Every way of moving (the Move tool, holding
 ## to lift, a building's panel) comes through here.
-func start_placing(item_id: String, uid := -1) -> bool:
+func start_placing(item_id: String, uid := -1, held := false) -> bool:
 	if uid != -1:
 		var verdict := Game.buildings.can_move(Game.object_by_uid(uid))
 		if not verdict.ok():
 			info.emit(verdict.text)
 			return false
 	if not AssetRegistry.file_ready(item_id):
-		_carry_when_read(item_id, uid)   # (its file read first, on a worker thread: no stop to read it)
+		_carry_when_read(item_id, uid, held)   # (its file read first, on a worker thread: no stop to read it)
 		return true
-	placement.start(item_id, uid)
+	placement.start(item_id, uid, held)
 	return true
 
 
 ## Starts carrying `item_id` once its file is read (a frame at a time; the panel that sold it closes meanwhile,
 ## and the farm goes on moving: nothing stands in for it on the farm).
-func _carry_when_read(item_id: String, uid: int) -> void:
+func _carry_when_read(item_id: String, uid: int, held := false) -> void:
 	var waited := 0.0
+	carrying_soon = item_id
 	while not AssetRegistry.file_ready(item_id) and waited < FILE_WAIT_MOST:
 		await get_tree().process_frame
 		waited += get_process_delta_time()
+	carrying_soon = ""
 	if is_inside_tree():
-		placement.start(item_id, uid)
+		placement.start(item_id, uid, held)
 
 
 ## Placing something taken back out of the barn (free; it keeps its timers reset).
 func start_placing_stored(index: int) -> void:
 	var id := str(Game.storage.stored[index]["id"]) if index >= 0 and index < Game.storage.stored.size() else ""
 	var waited := 0.0
+	carrying_soon = id
 	while id != "" and not AssetRegistry.file_ready(id) and waited < FILE_WAIT_MOST:   # (as start_placing)
 		await get_tree().process_frame
 		waited += get_process_delta_time()
+	carrying_soon = ""
 	placement.start_stored(index)
 
 

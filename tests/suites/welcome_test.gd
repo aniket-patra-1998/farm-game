@@ -258,6 +258,7 @@ func test_668_the_guided_start_runs_a_step_at_a_time_with_real_taps() -> void:
 	# (Owner's pick A, 28 Nov: the first half hour one step at a time, Hay Day's way.)
 	Game.saving_enabled = false
 	Game.reset_game()
+	Game.player.introduced = true   # (the guide waits for the first screen to close)
 	AdOffers.ads_ready = func() -> bool: return true
 	var main := MAIN_SCENE.instantiate()
 	add_child(main)
