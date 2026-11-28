@@ -65,8 +65,6 @@ func test_669_a_player_who_only_follows_the_arrow_finishes_the_guided_start() ->
 				Game.goals.tasks_of(HudGuide.KEY), Game.goals.progress_of(HudGuide.KEY)])
 			break
 		var arrows := hud.find_children("*", "GuideArrow", true, false)
-		if false:
-			print("  dbg ", it, " title ", hud.book.get("_title").text, " next ", hud.book.find_child("GuideNext", true, false), " sheet ", hud.sheet != null and hud.sheet.is_open(), " shown_done ", hud.guide._shown_done, " done ", Game.goals.is_done(HudGuide.KEY), " busy ", hud.guide._busy(), " placing ", grid.placing.is_empty(), " resting ", hud.resting, " modal ", Game.modal_open, " arrows ", arrows.size(), " target ", (arrows[0] as GuideArrow).target.call() if not arrows.is_empty() else Vector2.INF, " plant btn ", hud.tools.buttons["plant"].get_global_rect().get_center(), " book ", hud.book.visible, " tool ", grid.tool, " crop ", grid.selected_crop, " seeds held ", Game.goals.seeds, " plowed ", grid.spots_of("plowed").size(), " task ", hud.guide.current_task(), " show ", HudGoals.show_of(hud.guide.current_task()))
 		var target := Vector2.INF
 		if not arrows.is_empty() and (arrows[0] as GuideArrow).target.is_valid():
 			target = (arrows[0] as GuideArrow).target.call()
@@ -155,7 +153,8 @@ func test_669_a_player_who_only_follows_the_arrow_finishes_the_guided_start() ->
 		else:
 			await _tap(target + Vector2(0, 14))
 		await get_tree().create_timer(0.4).timeout
-	_check(not HudGuide.guiding(), "a player who only follows the arrow and taps Next finishes the guided start: %s" % [gaps])
+	_check(not HudGuide.guiding(), "a player who only follows the arrow and taps Next finishes the guided start: %s"
+		% [gaps])
 	print("END guiding ", HudGuide.guiding(), " step ", int(Game.goals.chain_step.get(HudGuide.CHAIN, -1)) + 1,
 		" minute ", Game.skipped / 60, " level ", Game.level(), " coins ", Game.coins)
 	for g in gaps:
